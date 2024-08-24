@@ -26,7 +26,7 @@
 /* We leave more room in smaller hash but do not let it
  * grow to have unused hole too much.
  */
-#define INITIAL_FREE(sz_log2) ((1 << (sz_log2)) * (sz_log2 - 3) / (sz_log2))
+#define INITIAL_FREE(sz_log2) ((1 << (sz_log2)) * ((sz_log2)-3) / (sz_log2))
 
 /* A prime rather carefully chosen between 2^16..2^17, so that
  * HASHBASE < INITIAL_FREE(17).  We want to keep the maximum hashtable
@@ -64,7 +64,9 @@ static struct spanhash_top *spanhash_rehash(struct spanhash_top *orig)
         struct spanhash *o = &(orig->data[i]);
         int              bucket;
         if (!o->cnt)
+        {
             continue;
+        }
         bucket = o->hashval & (sz - 1);
         while (1)
         {
@@ -77,7 +79,9 @@ static struct spanhash_top *spanhash_rehash(struct spanhash_top *orig)
                 break;
             }
             if (sz <= bucket)
+            {
                 bucket = 0;
+            }
         }
     }
     free(orig);
@@ -87,7 +91,8 @@ static struct spanhash_top *spanhash_rehash(struct spanhash_top *orig)
 static struct spanhash_top *add_spanhash(struct spanhash_top *top,
                                          unsigned int hashval, int cnt)
 {
-    int              bucket, lim;
+    int              bucket;
+    int              lim;
     struct spanhash *h;
 
     lim    = (1 << top->alloc_log2);
@@ -101,7 +106,9 @@ static struct spanhash_top *add_spanhash(struct spanhash_top *top,
             h->cnt     = cnt;
             top->free--;
             if (top->free < 0)
+            {
                 return spanhash_rehash(top);
+            }
             return top;
         }
         if (h->hashval == hashval)
@@ -110,7 +117,9 @@ static struct spanhash_top *add_spanhash(struct spanhash_top *top,
             return top;
         }
         if (lim <= bucket)
+        {
             bucket = 0;
+        }
     }
 }
 
@@ -121,9 +130,13 @@ static int spanhash_cmp(const void *a_, const void *b_)
 
     /* A count of zero compares at the end.. */
     if (!a->cnt)
+    {
         return !b->cnt ? 0 : 1;
+    }
     if (!b->cnt)
+    {
         return -1;
+    }
     return a->hashval < b->hashval ? -1 : a->hashval > b->hashval ? 1
                                                                   : 0;
 }
@@ -131,8 +144,11 @@ static int spanhash_cmp(const void *a_, const void *b_)
 static struct spanhash_top *hash_chars(struct repository    *r,
                                        struct diff_filespec *one)
 {
-    int                  i, n;
-    unsigned int         accum1, accum2, hashval;
+    int                  i;
+    int                  n;
+    unsigned int         accum1;
+    unsigned int         accum2;
+    unsigned int         hashval;
     struct spanhash_top *hash;
     unsigned char       *buf     = one->data;
     unsigned int         sz      = one->size;
@@ -155,13 +171,17 @@ static struct spanhash_top *hash_chars(struct repository    *r,
 
         /* Ignore CR in CRLF sequence if text */
         if (is_text && c == '\r' && sz && *buf == '\n')
+        {
             continue;
+        }
 
         accum1 = (accum1 << 7) ^ (accum2 >> 25);
         accum2 = (accum2 << 7) ^ (old_1 >> 25);
         accum1 += c;
         if (++n < 64 && c != '\n')
+        {
             continue;
+        }
         hashval = (accum1 + accum2 * 0x61) % HASHBASE;
         hash    = add_spanhash(hash, hashval, n);
         n       = 0;
@@ -172,7 +192,7 @@ static struct spanhash_top *hash_chars(struct repository    *r,
         hashval = (accum1 + accum2 * 0x61) % HASHBASE;
         hash    = add_spanhash(hash, hashval, n);
     }
-    QSORT(hash->data, (size_t)1ul << hash->alloc_log2, spanhash_cmp);
+    QSORT(hash->data, (size_t)1UL << hash->alloc_log2, spanhash_cmp);
     return hash;
 }
 
@@ -184,26 +204,37 @@ int diffcore_count_changes(struct repository    *r,
                            unsigned long        *src_copied,
                            unsigned long        *literal_added)
 {
-    struct spanhash     *s, *d;
-    struct spanhash_top *src_count, *dst_count;
-    unsigned long        sc, la;
+    struct spanhash     *s;
+    struct spanhash     *d;
+    struct spanhash_top *src_count;
+    struct spanhash_top *dst_count;
+    unsigned long        sc;
+    unsigned long        la;
 
     src_count = dst_count = NULL;
     if (src_count_p)
+    {
         src_count = *src_count_p;
+    }
     if (!src_count)
     {
         src_count = hash_chars(r, src);
         if (src_count_p)
+        {
             *src_count_p = src_count;
+        }
     }
     if (dst_count_p)
+    {
         dst_count = *dst_count_p;
+    }
     if (!dst_count)
     {
         dst_count = hash_chars(r, dst);
         if (dst_count_p)
+        {
             *dst_count_p = dst_count;
+        }
     }
     sc = la = 0;
 
@@ -211,13 +242,18 @@ int diffcore_count_changes(struct repository    *r,
     d = dst_count->data;
     for (;;)
     {
-        unsigned dst_cnt, src_cnt;
+        unsigned dst_cnt;
+        unsigned src_cnt;
         if (!s->cnt)
+        {
             break; /* we checked all in src */
+        }
         while (d->cnt)
         {
             if (d->hashval >= s->hashval)
+            {
                 break;
+            }
             la += d->cnt;
             d++;
         }
@@ -234,7 +270,9 @@ int diffcore_count_changes(struct repository    *r,
             sc += src_cnt;
         }
         else
+        {
             sc += dst_cnt;
+        }
         s++;
     }
     while (d->cnt)
@@ -244,9 +282,13 @@ int diffcore_count_changes(struct repository    *r,
     }
 
     if (!src_count_p)
+    {
         free(src_count);
+    }
     if (!dst_count_p)
+    {
         free(dst_count);
+    }
     *src_copied    = sc;
     *literal_added = la;
     return 0;

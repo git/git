@@ -135,7 +135,9 @@ __attribute__((format(printf, 1, 2))) static void loginfo(const char *err, ...)
 {
     va_list params;
     if (!verbose)
+    {
         return;
+    }
     va_start(params, err);
     logreport(LOG_INFO, err, params);
     va_end(params);
@@ -176,10 +178,13 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
              * rewrite them to "~alice/%s" or
              * "~alice/%s/foo".
              */
-            int         namlen, restlen = strlen(dir);
-            const char *slash = strchr(dir, '/');
+            int         namlen;
+            int         restlen = strlen(dir);
+            const char *slash   = strchr(dir, '/');
             if (!slash)
+            {
                 slash = dir + restlen;
+            }
             namlen = slash - dir;
             restlen -= namlen;
             loginfo("userpath <%s>, request <%s>, namlen %d, restlen %d, slash <%s>", user_path, dir, namlen, restlen, slash);
@@ -208,21 +213,35 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
         while (strbuf_expand_step(&expanded_path, &format))
         {
             if (skip_prefix(format, "%", &format))
+            {
                 strbuf_addch(&expanded_path, '%');
+            }
             else if (skip_prefix(format, "H", &format))
+            {
                 strbuf_addbuf(&expanded_path, &hi->hostname);
+            }
             else if (skip_prefix(format, "CH", &format))
+            {
                 strbuf_addstr(&expanded_path,
                               get_canon_hostname(hi));
+            }
             else if (skip_prefix(format, "IP", &format))
+            {
                 strbuf_addstr(&expanded_path,
                               get_ip_address(hi));
+            }
             else if (skip_prefix(format, "P", &format))
+            {
                 strbuf_addbuf(&expanded_path, &hi->tcp_port);
+            }
             else if (skip_prefix(format, "D", &format))
+            {
                 strbuf_addstr(&expanded_path, directory);
+            }
             else
+            {
                 strbuf_addch(&expanded_path, '%');
+            }
         }
 
         rlen = strlcpy(interp_path, expanded_path.buf,
@@ -289,14 +308,18 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
         {
             int len = strlen(*pp);
             if (len <= pathlen && !memcmp(*pp, path, len) && (path[len] == '\0' || (!strict_paths && path[len] == '/')))
+            {
                 return path;
+            }
         }
     }
     else
     {
         /* be backwards compatible */
         if (!strict_paths)
+        {
             return path;
+        }
     }
 
     logerror("'%s': not in directory list", path);
@@ -316,7 +339,9 @@ struct daemon_service
 static int daemon_error(const char *dir, const char *msg)
 {
     if (!informative_errors)
+    {
         msg = "access denied or repository not exported";
+    }
     packet_write_fmt(1, "ERR %s: %s", msg, dir);
     return -1;
 }
@@ -363,7 +388,9 @@ static int run_access_hook(struct daemon_service *service, const char *dir,
         seen_errors = 1;
     }
     if (finish_command(&child))
+    {
         seen_errors = 1;
+    }
 
     if (!seen_errors)
     {
@@ -374,10 +401,14 @@ static int run_access_hook(struct daemon_service *service, const char *dir,
 error_return:
     strbuf_ltrim(&buf);
     if (!buf.len)
+    {
         strbuf_addstr(&buf, "service rejected");
+    }
     eol = strchr(buf.buf, '\n');
     if (eol)
+    {
         *eol = '\0';
+    }
     errno = EACCES;
     daemon_error(dir, buf.buf);
     strbuf_release(&buf);
@@ -401,7 +432,9 @@ static int run_service(const char *dir, struct daemon_service *service,
     }
 
     if (!(path = path_ok(dir, hi)))
+    {
         return daemon_error(dir, "no such repository");
+    }
 
     /*
      * Security on the cheap.
@@ -440,7 +473,9 @@ static int run_service(const char *dir, struct daemon_service *service,
      * repository depending on the phase of the moon.
      */
     if (access_hook && run_access_hook(service, dir, path, hi))
+    {
         return -1;
+    }
 
     /*
      * We'll ignore SIGTERM from now on, we have a
@@ -480,7 +515,9 @@ static int run_service_command(struct child_process *cld)
     cld->git_cmd = 1;
     cld->err     = -1;
     if (start_command(cld))
+    {
         return -1;
+    }
 
     close(0);
     close(1);
@@ -564,15 +601,23 @@ static void parse_host_and_port(char *hostport, char **host,
 
         end = strchr(hostport, ']');
         if (!end)
+        {
             die("Invalid request ('[' without ']')");
+        }
         *end  = '\0';
         *host = hostport + 1;
         if (!end[1])
+        {
             *port = NULL;
+        }
         else if (end[1] == ':')
+        {
             *port = end + 2;
+        }
         else
+        {
             die("Garbage after end of host part");
+        }
     }
     else
     {
@@ -597,14 +642,20 @@ static void sanitize_client(struct strbuf *out, const char *in)
     for (; *in; in++)
     {
         if (is_dir_sep(*in))
+        {
             continue;
+        }
         if (*in == '.' && (!out->len || out->buf[out->len - 1] == '.'))
+        {
             continue;
+        }
         strbuf_addch(out, *in);
     }
 
     while (out->len && out->buf[out->len - 1] == '.')
+    {
         strbuf_setlen(out, out->len - 1);
+    }
 }
 
 /*
@@ -644,7 +695,9 @@ static char *parse_host_arg(struct hostinfo *hi, char *extra_args, int buflen)
                 char *port;
                 parse_host_and_port(val, &host, &port);
                 if (port)
+                {
                     sanitize_client(&hi->tcp_port, port);
+                }
                 canonicalize_client(&hi->hostname, host);
                 hi->hostname_lookup_done = 0;
             }
@@ -653,7 +706,9 @@ static char *parse_host_arg(struct hostinfo *hi, char *extra_args, int buflen)
             extra_args = val + vallen;
         }
         if (extra_args < end && *extra_args)
+        {
             die("Invalid request");
+        }
     }
 
     return extra_args;
@@ -685,7 +740,9 @@ static void parse_extra_args(struct hostinfo *hi, struct strvec *env,
         if (*arg)
         {
             if (git_protocol.len > 0)
+            {
                 strbuf_addch(&git_protocol, ':');
+            }
             strbuf_addstr(&git_protocol, arg);
         }
     }
@@ -725,11 +782,15 @@ static void lookup_hostname(struct hostinfo *hi)
             strbuf_addstr(&hi->ip_address, addrbuf);
 
             if (ai->ai_canonname)
+            {
                 sanitize_client(&hi->canon_hostname,
                                 ai->ai_canonname);
+            }
             else
+            {
                 strbuf_addbuf(&hi->canon_hostname,
                               &hi->ip_address);
+            }
 
             freeaddrinfo(ai);
         }
@@ -774,21 +835,28 @@ static void set_keep_alive(int sockfd)
     if (setsockopt(sockfd, SOL_SOCKET, SO_KEEPALIVE, &ka, sizeof(ka)) < 0)
     {
         if (errno != ENOTSOCK)
+        {
             logerror("unable to set SO_KEEPALIVE on socket: %s",
                      strerror(errno));
+        }
     }
 }
 
 static int execute(void)
 {
     char           *line = packet_buffer;
-    int             pktlen, len, i;
-    char           *addr = getenv("REMOTE_ADDR"), *port = getenv("REMOTE_PORT");
-    struct hostinfo hi  = HOSTINFO_INIT;
-    struct strvec   env = STRVEC_INIT;
+    int             pktlen;
+    int             len;
+    int             i;
+    char           *addr = getenv("REMOTE_ADDR");
+    char           *port = getenv("REMOTE_PORT");
+    struct hostinfo hi   = HOSTINFO_INIT;
+    struct strvec   env  = STRVEC_INIT;
 
     if (addr)
+    {
         loginfo("Connection from %s:%s", addr, port);
+    }
 
     set_keep_alive(0);
     alarm(init_timeout ? init_timeout : timeout);
@@ -797,11 +865,15 @@ static int execute(void)
 
     len = strlen(line);
     if (len && line[len - 1] == '\n')
+    {
         line[len - 1] = 0;
+    }
 
     /* parse additional args hidden behind a NUL byte */
     if (len != pktlen)
+    {
         parse_extra_args(&hi, &env, line + len + 1, pktlen - len - 1);
+    }
 
     for (i = 0; i < ARRAY_SIZE(daemon_service); i++)
     {
@@ -834,16 +906,22 @@ static int addrcmp(const struct sockaddr_storage *s1,
     const struct sockaddr *sa2 = (const struct sockaddr *)s2;
 
     if (sa1->sa_family != sa2->sa_family)
+    {
         return sa1->sa_family - sa2->sa_family;
+    }
     if (sa1->sa_family == AF_INET)
+    {
         return memcmp(&((struct sockaddr_in *)s1)->sin_addr,
                       &((struct sockaddr_in *)s2)->sin_addr,
                       sizeof(struct in_addr));
+    }
 #ifndef NO_IPV6
     if (sa1->sa_family == AF_INET6)
+    {
         return memcmp(&((struct sockaddr_in6 *)s1)->sin6_addr,
                       &((struct sockaddr_in6 *)s2)->sin6_addr,
                       sizeof(struct in6_addr));
+    }
 #endif
     return 0;
 }
@@ -861,15 +939,20 @@ static struct child
 
 static void add_child(struct child_process *cld, struct sockaddr *addr, socklen_t addrlen)
 {
-    struct child *newborn, **cradle;
+    struct child  *newborn;
+    struct child **cradle;
 
     CALLOC_ARRAY(newborn, 1);
     live_children++;
     memcpy(&newborn->cld, cld, sizeof(*cld));
     memcpy(&newborn->address, addr, addrlen);
     for (cradle = &firstborn; *cradle; cradle = &(*cradle)->next)
+    {
         if (!addrcmp(&(*cradle)->address, &newborn->address))
+        {
             break;
+        }
+    }
     newborn->next = *cradle;
     *cradle       = newborn;
 }
@@ -882,17 +965,22 @@ static void add_child(struct child_process *cld, struct sockaddr *addr, socklen_
  */
 static void kill_some_child(void)
 {
-    const struct child *blanket, *next;
+    const struct child *blanket;
+    const struct child *next;
 
     if (!(blanket = firstborn))
+    {
         return;
+    }
 
     for (; (next = blanket->next); blanket = next)
+    {
         if (!addrcmp(&blanket->address, &next->address))
         {
             kill(blanket->cld.pid, SIGTERM);
             break;
         }
+    }
 }
 
 static void check_dead_children(void)
@@ -900,13 +988,17 @@ static void check_dead_children(void)
     int   status;
     pid_t pid;
 
-    struct child **cradle, *blanket;
+    struct child **cradle;
+    struct child  *blanket;
     for (cradle = &firstborn; (blanket = *cradle);)
+    {
         if ((pid = waitpid(blanket->cld.pid, &status, WNOHANG)) > 1)
         {
             const char *dead = "";
             if (status)
+            {
                 dead = " (with error)";
+            }
             loginfo("[%" PRIuMAX "] Disconnected%s", (uintmax_t)pid, dead);
 
             /* remove the child */
@@ -916,7 +1008,10 @@ static void check_dead_children(void)
             free(blanket);
         }
         else
+        {
             cradle = &blanket->next;
+        }
+    }
 }
 
 static struct strvec cld_argv = STRVEC_INIT;
@@ -960,12 +1055,16 @@ static void          handle(int incoming, struct sockaddr *addr, socklen_t addrl
 
     strvec_pushv(&cld.args, cld_argv.v);
     cld.in  = incoming;
-    cld.out = dup(incoming);
+    cld.out = fcntl(incoming, F_DUPFD_CLOEXEC);
 
     if (start_command(&cld))
+    {
         logerror("unable to fork");
+    }
     else
+    {
         add_child(&cld, addr, addrlen);
+    }
 }
 
 static void child_handler(int signo UNUSED)
@@ -983,7 +1082,9 @@ static int set_reuse_addr(int sockfd)
     int on = 1;
 
     if (!reuseaddr)
+    {
         return 0;
+    }
     return setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR,
                       &on, sizeof(on));
 }
@@ -1023,11 +1124,13 @@ static const char *ip2str(int family, struct sockaddr *sin, socklen_t len)
 
 static int setup_named_sock(char *listen_addr, int listen_port, struct socketlist *socklist)
 {
-    int             socknum = 0;
-    char            pbuf[NI_MAXSERV];
-    struct addrinfo hints, *ai0, *ai;
-    int             gai;
-    long            flags;
+    int              socknum = 0;
+    char             pbuf[NI_MAXSERV];
+    struct addrinfo  hints;
+    struct addrinfo *ai0;
+    struct addrinfo *ai;
+    int              gai;
+    long             flags;
 
     xsnprintf(pbuf, sizeof(pbuf), "%d", listen_port);
     memset(&hints, 0, sizeof(hints));
@@ -1049,7 +1152,9 @@ static int setup_named_sock(char *listen_addr, int listen_port, struct socketlis
 
         sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
         if (sockfd < 0)
+        {
             continue;
+        }
         if (sockfd >= FD_SETSIZE)
         {
             logerror("Socket descriptor too large");
@@ -1095,7 +1200,9 @@ static int setup_named_sock(char *listen_addr, int listen_port, struct socketlis
 
         flags = fcntl(sockfd, F_GETFD, 0);
         if (flags >= 0)
+        {
             fcntl(sockfd, F_SETFD, flags | FD_CLOEXEC);
+        }
 
         ALLOC_GROW(socklist->list, socklist->nr + 1, socklist->alloc);
         socklist->list[socklist->nr++] = sockfd;
@@ -1175,18 +1282,23 @@ static int setup_named_sock(char *listen_addr, int listen_port, struct socketlis
 static void socksetup(struct string_list *listen_addr, int listen_port, struct socketlist *socklist)
 {
     if (!listen_addr->nr)
+    {
         setup_named_sock(NULL, listen_port, socklist);
+    }
     else
     {
-        int i, socknum;
+        int i;
+        int socknum;
         for (i = 0; i < listen_addr->nr; i++)
         {
             socknum = setup_named_sock(listen_addr->items[i].string,
                                        listen_port, socklist);
 
             if (socknum == 0)
+            {
                 logerror("unable to allocate any listen sockets for host %s on port %u",
                          listen_addr->items[i].string, listen_port);
+            }
         }
     }
 }
@@ -1281,7 +1393,9 @@ struct credentials
 static void drop_privileges(struct credentials *cred)
 {
     if (cred && (initgroups(cred->pass->pw_name, cred->gid) || setgid(cred->gid) || setuid(cred->pass->pw_uid)))
+    {
         die("cannot drop privileges");
+    }
 }
 
 static struct credentials *prepare_credentials(const char *user_name,
@@ -1291,15 +1405,21 @@ static struct credentials *prepare_credentials(const char *user_name,
 
     c.pass = getpwnam(user_name);
     if (!c.pass)
+    {
         die("user not found - %s", user_name);
+    }
 
     if (!group_name)
+    {
         c.gid = c.pass->pw_gid;
+    }
     else
     {
         struct group *group = getgrnam(group_name);
         if (!group)
+        {
             die("group not found - %s", group_name);
+        }
 
         c.gid = group->gr_gid;
     }
@@ -1315,8 +1435,10 @@ static int serve(struct string_list *listen_addr, int listen_port,
 
     socksetup(listen_addr, listen_port, &socklist);
     if (socklist.nr == 0)
+    {
         die("unable to allocate any listen sockets on port %u",
             listen_port);
+    }
 
     drop_privileges(cred);
 
@@ -1329,10 +1451,13 @@ int cmd_main(int argc, const char **argv)
 {
     int                 listen_port = 0;
     struct string_list  listen_addr = STRING_LIST_INIT_DUP;
-    int                 serve_mode = 0, inetd_mode = 0;
-    const char         *pid_file = NULL, *user_name = NULL, *group_name = NULL;
-    int                 detach = 0;
-    struct credentials *cred   = NULL;
+    int                 serve_mode  = 0;
+    int                 inetd_mode  = 0;
+    const char         *pid_file    = NULL;
+    const char         *user_name   = NULL;
+    const char         *group_name  = NULL;
+    int                 detach      = 0;
+    struct credentials *cred        = NULL;
     int                 i;
     int                 ret;
 
@@ -1384,7 +1509,7 @@ int cmd_main(int argc, const char **argv)
                 log_destination = LOG_DESTINATION_SYSLOG;
                 continue;
             }
-            else if (!strcmp(v, "stderr"))
+            if (!strcmp(v, "stderr"))
             {
                 log_destination = LOG_DESTINATION_STDERR;
                 continue;
@@ -1421,7 +1546,9 @@ int cmd_main(int argc, const char **argv)
         {
             max_connections = atoi(v);
             if (max_connections < 0)
+            {
                 max_connections = 0; /* unlimited */
+            }
             continue;
         }
         if (!strcmp(arg, "--strict-paths"))
@@ -1514,7 +1641,7 @@ int cmd_main(int argc, const char **argv)
             ok_paths = &argv[i + 1];
             break;
         }
-        else if (arg[0] != '-')
+        if (arg[0] != '-')
         {
             ok_paths = &argv[i];
             break;
@@ -1526,9 +1653,13 @@ int cmd_main(int argc, const char **argv)
     if (log_destination == LOG_DESTINATION_UNSET)
     {
         if (inetd_mode || detach)
+        {
             log_destination = LOG_DESTINATION_SYSLOG;
+        }
         else
+        {
             log_destination = LOG_DESTINATION_STDERR;
+        }
     }
 
     if (log_destination == LOG_DESTINATION_SYSLOG)
@@ -1537,34 +1668,52 @@ int cmd_main(int argc, const char **argv)
         set_die_routine(daemon_die);
     }
     else
+    {
         /* avoid splitting a message in the middle */
         setvbuf(stderr, NULL, _IOFBF, 4096);
+    }
 
     if (inetd_mode && (detach || group_name || user_name))
+    {
         die("--detach, --user and --group are incompatible with --inetd");
+    }
 
     if (inetd_mode && (listen_port || (listen_addr.nr > 0)))
+    {
         die("--listen= and --port= are incompatible with --inetd");
+    }
     else if (listen_port == 0)
+    {
         listen_port = DEFAULT_GIT_PORT;
+    }
 
     if (group_name && !user_name)
+    {
         die("--group supplied without --user");
+    }
 
     if (user_name)
+    {
         cred = prepare_credentials(user_name, group_name);
+    }
 
     if (strict_paths && (!ok_paths || !*ok_paths))
+    {
         die("option --strict-paths requires '<directory>' arguments");
+    }
 
     if (base_path && !is_directory(base_path))
+    {
         die("base-path '%s' does not exist or is not a directory",
             base_path);
+    }
 
     if (log_destination != LOG_DESTINATION_STDERR)
     {
         if (!freopen("/dev/null", "w", stderr))
+        {
             die_errno("failed to redirect stderr to /dev/null");
+        }
     }
 
     if (inetd_mode || serve_mode)
@@ -1576,17 +1725,23 @@ int cmd_main(int argc, const char **argv)
         if (detach)
         {
             if (daemonize())
+            {
                 die("--detach not supported on this platform");
+            }
         }
 
         if (pid_file)
+        {
             write_file(pid_file, "%" PRIuMAX, (uintmax_t)getpid());
+        }
 
         /* prepare argv for serving-processes */
         strvec_push(&cld_argv, argv[0]); /* git-daemon */
         strvec_push(&cld_argv, "--serve");
         for (i = 1; i < argc; ++i)
+        {
             strvec_push(&cld_argv, argv[i]);
+        }
 
         ret = serve(&listen_addr, listen_port, cred);
     }

@@ -12,18 +12,24 @@ static int    order_cnt;
 
 static void prepare_order(const char *orderfile)
 {
-    int           cnt, pass;
+    int           cnt;
+    int           pass;
     struct strbuf sb = STRBUF_INIT;
     void         *map;
-    char         *cp, *endp;
+    char         *cp;
+    char         *endp;
     ssize_t       sz;
 
     if (order)
+    {
         return;
+    }
 
     sz = strbuf_read_file(&sb, orderfile, 0);
     if (sz < 0)
+    {
         die_errno(_("failed to read orderfile '%s'"), orderfile);
+    }
     map  = strbuf_detach(&sb, NULL);
     endp = (char *)map + sz;
 
@@ -35,12 +41,18 @@ static void prepare_order(const char *orderfile)
         {
             char *ep;
             for (ep = cp; ep < endp && *ep != '\n'; ep++)
+            {
                 ;
+            }
             /* cp to ep has one line */
             if (*cp == '\n' || *cp == '#')
+            {
                 ; /* comment */
+            }
             else if (pass == 0)
+            {
                 cnt++;
+            }
             else
             {
                 if (*ep == '\n')
@@ -55,7 +67,9 @@ static void prepare_order(const char *orderfile)
                 cnt++;
             }
             if (ep < endp)
+            {
                 ep++;
+            }
             cp = ep;
         }
         if (pass == 0)
@@ -79,10 +93,14 @@ static int match_order(const char *path)
         {
             char *cp;
             if (!wildmatch(order[i], p.buf, 0))
+            {
                 return i;
+            }
             cp = strrchr(p.buf, '/');
             if (!cp)
+            {
                 break;
+            }
             *cp = 0;
         }
     }
@@ -91,11 +109,14 @@ static int match_order(const char *path)
 
 static int compare_objs_order(const void *a_, const void *b_)
 {
-    struct obj_order const *a, *b;
+    struct obj_order const *a;
+    struct obj_order const *b;
     a = (struct obj_order const *)a_;
     b = (struct obj_order const *)b_;
     if (a->order != b->order)
+    {
         return a->order - b->order;
+    }
     return a->orig_order - b->orig_order;
 }
 
@@ -105,7 +126,9 @@ void order_objects(const char *orderfile, obj_path_fn_t obj_path,
     int i;
 
     if (!nr)
+    {
         return;
+    }
 
     prepare_order(orderfile);
     for (i = 0; i < nr; i++)
@@ -130,14 +153,19 @@ void diffcore_order(const char *orderfile)
     int                       i;
 
     if (!q->nr)
+    {
         return;
+    }
 
     ALLOC_ARRAY(o, q->nr);
     for (i = 0; i < q->nr; i++)
+    {
         o[i].obj = q->queue[i];
+    }
     order_objects(orderfile, pair_pathtwo, o, q->nr);
     for (i = 0; i < q->nr; i++)
+    {
         q->queue[i] = o[i].obj;
+    }
     free(o);
-    return;
 }

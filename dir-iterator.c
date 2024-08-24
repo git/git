@@ -75,7 +75,9 @@ repeat:
     }
 
     if (is_dot_or_dotdot(de->d_name))
+    {
         goto repeat;
+    }
 
     *out = de;
     return 0;
@@ -95,7 +97,9 @@ static int push_level(struct dir_iterator_int *iter)
     level = &iter->levels[iter->levels_nr++];
 
     if (!is_dir_sep(iter->base.path.buf[iter->base.path.len - 1]))
+    {
         strbuf_addch(&iter->base.path, '/');
+    }
     level->prefix_len = iter->base.path.len;
 
     level->dir = opendir(iter->base.path.buf);
@@ -129,10 +133,12 @@ static int push_level(struct dir_iterator_int *iter)
             if (ret < 0)
             {
                 if (errno != ENOENT && iter->flags & DIR_ITERATOR_PEDANTIC)
+                {
                     return -1;
+                }
                 continue;
             }
-            else if (ret > 0)
+            if (ret > 0)
             {
                 break;
             }
@@ -158,8 +164,10 @@ static int pop_level(struct dir_iterator_int *iter)
         &iter->levels[iter->levels_nr - 1];
 
     if (level->dir && closedir(level->dir))
+    {
         warning_errno("error closing directory '%s'",
                       iter->base.path.buf);
+    }
     level->dir = NULL;
     string_list_clear(&level->entries, 0);
 
@@ -174,7 +182,8 @@ static int pop_level(struct dir_iterator_int *iter)
 static int prepare_next_entry_data(struct dir_iterator_int *iter,
                                    const char              *name)
 {
-    int err, saved_errno;
+    int err;
+    int saved_errno;
 
     strbuf_addstr(&iter->base.path, name);
     /*
@@ -188,7 +197,9 @@ static int prepare_next_entry_data(struct dir_iterator_int *iter,
 
     saved_errno = errno;
     if (err && errno != ENOENT)
+    {
         warning_errno("failed to stat '%s'", iter->base.path.buf);
+    }
 
     errno = saved_errno;
     return err;
@@ -202,9 +213,13 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
     if (S_ISDIR(iter->base.st.st_mode) && push_level(iter))
     {
         if (errno != ENOENT && iter->flags & DIR_ITERATOR_PEDANTIC)
+        {
             goto error_out;
+        }
         if (iter->levels_nr == 0)
+        {
             goto error_out;
+        }
     }
 
     /* Loop until we find an entry that we can give back to the caller. */
@@ -223,10 +238,12 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
             if (ret < 0)
             {
                 if (iter->flags & DIR_ITERATOR_PEDANTIC)
+                {
                     goto error_out;
+                }
                 continue;
             }
-            else if (ret > 0)
+            if (ret > 0)
             {
                 if (pop_level(iter) == 0)
                     return dir_iterator_abort(dir_iterator);
@@ -240,7 +257,9 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
             if (level->entries_idx >= level->entries.nr)
             {
                 if (pop_level(iter) == 0)
+                {
                     return dir_iterator_abort(dir_iterator);
+                }
                 continue;
             }
 
@@ -250,7 +269,9 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
         if (prepare_next_entry_data(iter, name))
         {
             if (errno != ENOENT && iter->flags & DIR_ITERATOR_PEDANTIC)
+            {
                 goto error_out;
+            }
             continue;
         }
 
@@ -293,7 +314,8 @@ struct dir_iterator *dir_iterator_begin(const char *path, unsigned int flags)
 {
     struct dir_iterator_int *iter         = xcalloc(1, sizeof(*iter));
     struct dir_iterator     *dir_iterator = &iter->base;
-    int                      saved_errno, err;
+    int                      saved_errno;
+    int                      err;
 
     strbuf_init(&iter->base.path, PATH_MAX);
     strbuf_addstr(&iter->base.path, path);

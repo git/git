@@ -133,16 +133,26 @@ struct delta_index
 
 struct delta_index *create_delta_index(const void *buf, unsigned long bufsize)
 {
-    unsigned int                 i, hsize, hmask, entries, prev_val, *hash_count;
-    const unsigned char         *data, *buffer = buf;
-    struct delta_index          *index;
-    struct unpacked_index_entry *entry, **hash;
-    struct index_entry          *packed_entry, **packed_hash;
-    void                        *mem;
-    unsigned long                memsize;
+    unsigned int                  i;
+    unsigned int                  hsize;
+    unsigned int                  hmask;
+    unsigned int                  entries;
+    unsigned int                  prev_val;
+    unsigned int                 *hash_count;
+    const unsigned char          *data;
+    const unsigned char          *buffer = buf;
+    struct delta_index           *index;
+    struct unpacked_index_entry  *entry;
+    struct unpacked_index_entry **hash;
+    struct index_entry           *packed_entry;
+    struct index_entry          **packed_hash;
+    void                         *mem;
+    unsigned long                 memsize;
 
     if (!buf || !bufsize)
+    {
         return NULL;
+    }
 
     /* Determine index hash size.  Note that indexing skips the
        first byte to allow for optimizing the Rabin's polynomial
@@ -157,8 +167,10 @@ struct delta_index *create_delta_index(const void *buf, unsigned long bufsize)
         entries = 0xfffffffeU / RABIN_WINDOW;
     }
     hsize = entries / 4;
-    for (i = 4; (1u << i) < hsize; i++)
+    for (i = 4; (1U << i) < hsize; i++)
+    {
         ;
+    }
     hsize = 1 << i;
     hmask = hsize - 1;
 
@@ -166,7 +178,9 @@ struct delta_index *create_delta_index(const void *buf, unsigned long bufsize)
     memsize = sizeof(*hash) * hsize + sizeof(*entry) * entries;
     mem     = malloc(memsize);
     if (!mem)
+    {
         return NULL;
+    }
     hash  = mem;
     mem   = hash + hsize;
     entry = mem;
@@ -189,7 +203,9 @@ struct delta_index *create_delta_index(const void *buf, unsigned long bufsize)
     {
         unsigned int val = 0;
         for (i = 1; i <= RABIN_WINDOW; i++)
+        {
             val = ((val << 8) | data[i]) ^ T[val >> RABIN_SHIFT];
+        }
         if (val == prev_val)
         {
             /* keep the lowest of consecutive identical blocks */
@@ -225,7 +241,9 @@ struct delta_index *create_delta_index(const void *buf, unsigned long bufsize)
         int acc;
 
         if (hash_count[i] <= HASH_LIMIT)
+        {
             continue;
+        }
 
         /* We leave exactly HASH_LIMIT entries in the bucket */
         entries -= hash_count[i] - HASH_LIMIT;
@@ -296,7 +314,9 @@ struct delta_index *create_delta_index(const void *buf, unsigned long bufsize)
          */
         packed_hash[i] = packed_entry;
         for (entry = hash[i]; entry; entry = entry->next)
+        {
             *packed_entry++ = entry->entry;
+        }
     }
 
     /* Sentinel value to indicate the length of the last hash bucket */
@@ -316,9 +336,10 @@ void free_delta_index(struct delta_index *index)
 unsigned long sizeof_delta_index(struct delta_index *index)
 {
     if (index)
+    {
         return index->memsize;
-    else
-        return 0;
+    }
+    return 0;
 }
 
 /*
@@ -332,25 +353,38 @@ void *
                  const void *trg_buf, unsigned long trg_size,
                  unsigned long *delta_size, unsigned long max_size)
 {
-    unsigned int         i, val;
-    off_t                outpos, moff;
-    size_t               l, outsize, msize;
+    unsigned int         i;
+    unsigned int         val;
+    off_t                outpos;
+    off_t                moff;
+    size_t               l;
+    size_t               outsize;
+    size_t               msize;
     int                  inscnt;
-    const unsigned char *ref_data, *ref_top, *data, *top;
+    const unsigned char *ref_data;
+    const unsigned char *ref_top;
+    const unsigned char *data;
+    const unsigned char *top;
     unsigned char       *out;
 
     *delta_size = 0;
 
     if (!trg_buf || !trg_size)
+    {
         return NULL;
+    }
 
     outpos  = 0;
     outsize = 8192;
     if (max_size && outsize >= max_size)
+    {
         outsize = max_size + MAX_OP_SIZE + 1;
+    }
     out = malloc(outsize);
     if (!out)
+    {
         return NULL;
+    }
 
     /* store reference buffer size */
     l = index->src_size;
@@ -400,20 +434,30 @@ void *
                 const unsigned char *src      = data;
                 unsigned int         ref_size = ref_top - ref;
                 if (entry->val != val)
+                {
                     continue;
+                }
                 if (ref_size > top - src)
+                {
                     ref_size = top - src;
+                }
                 if (ref_size <= msize)
+                {
                     break;
+                }
                 while (ref_size-- && *src++ == *ref)
+                {
                     ref++;
+                }
                 if (msize < ref - entry->ptr)
                 {
                     /* this is our best match so far */
                     msize = ref - entry->ptr;
                     moff  = entry->ptr - ref_data;
-                    if (msize >= 4096) /* good enough */
+                    if (msize >= 4096)
+                    { /* good enough */
                         break;
+                    }
                 }
             }
         }
@@ -421,7 +465,9 @@ void *
         if (msize < 4)
         {
             if (!inscnt)
+            {
                 outpos++;
+            }
             out[outpos++] = *data++;
             inscnt++;
             if (inscnt == 0x7f)
@@ -446,7 +492,9 @@ void *
                     data--;
                     outpos--;
                     if (--inscnt)
+                    {
                         continue;
+                    }
                     outpos--; /* remove count slot */
                     inscnt--; /* make it -1 */
                     break;
@@ -463,18 +511,30 @@ void *
             i  = 0x80;
 
             if (moff & 0x000000ff)
+            {
                 out[outpos++] = moff >> 0, i |= 0x01;
+            }
             if (moff & 0x0000ff00)
+            {
                 out[outpos++] = moff >> 8, i |= 0x02;
+            }
             if (moff & 0x00ff0000)
+            {
                 out[outpos++] = moff >> 16, i |= 0x04;
+            }
             if (moff & 0xff000000)
+            {
                 out[outpos++] = moff >> 24, i |= 0x08;
+            }
 
             if (msize & 0x00ff)
+            {
                 out[outpos++] = msize >> 0, i |= 0x10;
+            }
             if (msize & 0xff00)
+            {
                 out[outpos++] = msize >> 8, i |= 0x20;
+            }
 
             *op = i;
 
@@ -483,15 +543,19 @@ void *
             msize = left;
 
             if (moff > 0xffffffff)
+            {
                 msize = 0;
+            }
 
             if (msize < 4096)
             {
                 int j;
                 val = 0;
                 for (j = -RABIN_WINDOW; j < 0; j++)
+                {
                     val = ((val << 8) | data[j])
                           ^ T[val >> RABIN_SHIFT];
+                }
             }
         }
 
@@ -500,9 +564,13 @@ void *
             void *tmp = out;
             outsize   = outsize * 3 / 2;
             if (max_size && outsize >= max_size)
+            {
                 outsize = max_size + MAX_OP_SIZE + 1;
+            }
             if (max_size && outpos > max_size)
+            {
                 break;
+            }
             out = realloc(out, outsize);
             if (!out)
             {
@@ -513,7 +581,9 @@ void *
     }
 
     if (inscnt)
+    {
         out[outpos - inscnt - 1] = inscnt;
+    }
 
     if (max_size && outpos > max_size)
     {

@@ -43,18 +43,26 @@ static int check_removed(const struct cache_entry *ce, struct stat *st)
     int stat_err;
 
     if (!(ce->ce_flags & CE_FSMONITOR_VALID))
+    {
         stat_err = lstat(ce->name, st);
+    }
     else
+    {
         stat_err = fake_lstat(ce, st);
+    }
     if (stat_err < 0)
     {
         if (!is_missing_file_error(errno))
+        {
             return -1;
+        }
         return 1;
     }
 
     if (has_symlink_leading_path(ce->name, ce_namelen(ce)))
+    {
         return 1;
+    }
     if (S_ISDIR(st->st_mode))
     {
         struct object_id sub;
@@ -71,7 +79,9 @@ static int check_removed(const struct cache_entry *ce, struct stat *st)
          * a directory --- the blob was removed!
          */
         if (!S_ISGITLINK(ce->ce_mode) && repo_resolve_gitlink_ref(the_repository, ce->name, "HEAD", &sub))
+        {
             return 1;
+        }
     }
     return 0;
 }
@@ -94,12 +104,18 @@ static int match_stat_with_submodule(struct diff_options      *diffopt,
     {
         struct diff_flags orig_flags = diffopt->flags;
         if (!diffopt->flags.override_submodule_config)
+        {
             set_diffopt_flags_from_submodule_config(diffopt, ce->name);
+        }
         if (diffopt->flags.ignore_submodules)
+        {
             changed = 0;
+        }
         else if (!diffopt->flags.ignore_dirty_submodules && (!changed || diffopt->flags.dirty_submodules))
+        {
             *dirty_submodule = is_submodule_modified(ce->name,
                                                      diffopt->flags.ignore_untracked_in_submodules);
+        }
         diffopt->flags = orig_flags;
     }
     return changed;
@@ -107,7 +123,8 @@ static int match_stat_with_submodule(struct diff_options      *diffopt,
 
 void run_diff_files(struct rev_info *revs, unsigned int option)
 {
-    int                 entries, i;
+    int                 entries;
+    int                 i;
     int                 diff_unmerged_stage = revs->max_count;
     unsigned            ce_option           = ((option & DIFF_RACY_IS_MODIFIED)
                                                    ? CE_MATCH_RACY_IS_DIRTY
@@ -120,18 +137,24 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
     refresh_fsmonitor(istate);
 
     if (diff_unmerged_stage < 0)
+    {
         diff_unmerged_stage = 2;
+    }
     entries = istate->cache_nr;
     for (i = 0; i < entries; i++)
     {
-        unsigned int            oldmode, newmode;
+        unsigned int            oldmode;
+        unsigned int            newmode;
         struct cache_entry     *ce = istate->cache[i];
         int                     changed;
         unsigned                dirty_submodule = 0;
-        const struct object_id *old_oid, *new_oid;
+        const struct object_id *old_oid;
+        const struct object_id *new_oid;
 
         if (diff_can_quit_early(&revs->diffopt))
+        {
             break;
+        }
 
         /*
          * NEEDSWORK:
@@ -143,10 +166,14 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
          * if/when we add the "--error-unmatch" option to "git diff".
          */
         if (!ce_path_match(istate, ce, &revs->prune_data, revs->ps_matched))
+        {
             continue;
+        }
 
-        if (revs->diffopt.prefix && strncmp(ce->name, revs->diffopt.prefix, revs->diffopt.prefix_length))
+        if (revs->diffopt.prefix && strncmp(ce->name, revs->diffopt.prefix, revs->diffopt.prefix_length) != 0)
+        {
             continue;
+        }
 
         if (ce_stage(ce))
         {
@@ -171,7 +198,9 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 
             changed = check_removed(ce, &st);
             if (!changed)
+            {
                 wt_mode = ce_mode_from_stat(ce, st.st_mode);
+            }
             else
             {
                 if (changed < 0)
@@ -188,8 +217,10 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
                 struct cache_entry *nce = istate->cache[i];
                 int                 stage;
 
-                if (strcmp(ce->name, nce->name))
+                if (strcmp(ce->name, nce->name) != 0)
+                {
                     break;
+                }
 
                 /* Stage #2 (ours) is the first parent,
                  * stage #3 (theirs) is the second.
@@ -208,7 +239,9 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 
                 /* diff against the proper unmerged stage */
                 if (stage == diff_unmerged_stage)
+                {
                     ce = nce;
+                }
                 i++;
             }
             /*
@@ -230,13 +263,19 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
              */
             pair = diff_unmerge(&revs->diffopt, ce->name);
             if (wt_mode)
+            {
                 pair->two->mode = wt_mode;
+            }
             if (ce_stage(ce) != diff_unmerged_stage)
+            {
                 continue;
+            }
         }
 
         if (ce_uptodate(ce) || ce_skip_worktree(ce))
+        {
             continue;
+        }
 
         /*
          * When CE_VALID is set (via "update-index --assume-unchanged"
@@ -271,7 +310,7 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
                                ce->name, 0);
                 continue;
             }
-            else if (revs->diffopt.ita_invisible_in_index && ce_intent_to_add(ce))
+            if (revs->diffopt.ita_invisible_in_index && ce_intent_to_add(ce))
             {
                 newmode = ce_mode_from_stat(ce, st.st_mode);
                 diff_addremove(&revs->diffopt, '+', newmode,
@@ -289,7 +328,9 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
             ce_mark_uptodate(ce);
             mark_fsmonitor_valid(istate, ce);
             if (!revs->diffopt.flags.find_copies_harder)
+            {
                 continue;
+            }
         }
         oldmode = ce->ce_mode;
         old_oid = &ce->oid;
@@ -337,8 +378,10 @@ static int get_stat_data(const struct index_state *istate,
         struct stat st;
         changed = check_removed(ce, &st);
         if (changed < 0)
+        {
             return -1;
-        else if (changed)
+        }
+        if (changed)
         {
             if (match_missing)
             {
@@ -384,7 +427,9 @@ static void show_new_file(struct rev_info          *revs,
     if (get_stat_data(istate, new_file, &oid, &mode, cached, match_missing,
                       &dirty_submodule, &revs->diffopt)
         < 0)
+    {
         return;
+    }
 
     diff_index_show_file(revs, "+", new_file, oid, !is_null_oid(oid), mode, dirty_submodule);
 }
@@ -395,7 +440,8 @@ static int show_modified(struct rev_info          *revs,
                          int                       report_missing,
                          int cached, int match_missing)
 {
-    unsigned int            mode, oldmode;
+    unsigned int            mode;
+    unsigned int            oldmode;
     const struct object_id *oid;
     unsigned                dirty_submodule = 0;
     struct index_state     *istate          = revs->diffopt.repo->index;
@@ -419,9 +465,11 @@ static int show_modified(struct rev_info          *revs,
         < 0)
     {
         if (report_missing)
+        {
             diff_index_show_file(revs, "-", old_entry,
                                  &old_entry->oid, 1, old_entry->ce_mode,
                                  0);
+        }
         return -1;
     }
 
@@ -451,7 +499,9 @@ static int show_modified(struct rev_info          *revs,
 
     oldmode = old_entry->ce_mode;
     if (mode == oldmode && oideq(oid, &old_entry->oid) && !dirty_submodule && !revs->diffopt.flags.find_copies_harder)
+    {
         return 0;
+    }
 
     diff_change(&revs->diffopt, oldmode, mode,
                 &old_entry->oid, oid, 1, !is_null_oid(oid),
@@ -470,7 +520,8 @@ static void do_oneway_diff(struct unpack_trees_options *o,
                            const struct cache_entry    *tree)
 {
     struct rev_info *revs = o->unpack_data;
-    int              match_missing, cached;
+    int              match_missing;
+    int              cached;
 
     /*
      * i-t-a entries do not actually exist in the index (if we're
@@ -480,7 +531,9 @@ static void do_oneway_diff(struct unpack_trees_options *o,
     {
         idx = NULL;
         if (!tree)
+        {
             return; /* nothing to diff.. */
+        }
     }
 
     /* if the entry is not checked out, don't examine work tree */
@@ -493,8 +546,10 @@ static void do_oneway_diff(struct unpack_trees_options *o,
         struct diff_filepair *pair;
         pair = diff_unmerge(&revs->diffopt, idx->name);
         if (tree)
+        {
             fill_filespec(pair->one, &tree->oid, 1,
                           tree->ce_mode);
+        }
         return;
     }
 
@@ -556,7 +611,9 @@ static int oneway_diff(const struct cache_entry *const *src,
      * delete of the tree and a create of the file.
      */
     if (tree == o->df_conflict_entry)
+    {
         tree = NULL;
+    }
 
     if (ce_path_match(revs->diffopt.repo->index,
                       idx ? idx : tree,
@@ -584,8 +641,10 @@ static int diff_cache(struct rev_info        *revs,
 
     tree = parse_tree_indirect(tree_oid);
     if (!tree)
+    {
         return error("bad tree object %s",
                      tree_name ? tree_name : oid_to_hex(tree_oid));
+    }
     memset(&opts, 0, sizeof(opts));
     opts.head_idx            = 1;
     opts.index_only          = cached;
@@ -612,7 +671,9 @@ void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb)
     {
         struct object *obj = revs->pending.objects[i].item;
         if (obj->flags)
+        {
             die(_("--merge-base does not work with ranges"));
+        }
     }
 
     /*
@@ -621,26 +682,38 @@ void diff_get_merge_base(const struct rev_info *revs, struct object_id *mb)
      * misleading error message.
      */
     if (revs->pending.nr < 1 || revs->pending.nr > 2)
+    {
         BUG("unexpected revs->pending.nr: %d", revs->pending.nr);
+    }
 
     for (i = 0; i < revs->pending.nr; i++)
+    {
         mb_child[i] = lookup_commit_reference(the_repository, &revs->pending.objects[i].item->oid);
+    }
     if (revs->pending.nr == 1)
     {
         struct object_id oid;
 
         if (repo_get_oid(the_repository, "HEAD", &oid))
+        {
             die(_("unable to get HEAD"));
+        }
 
         mb_child[1] = lookup_commit_reference(the_repository, &oid);
     }
 
     if (repo_get_merge_bases(the_repository, mb_child[0], mb_child[1], &merge_bases) < 0)
+    {
         exit(128);
+    }
     if (!merge_bases)
+    {
         die(_("no merge base found"));
+    }
     if (merge_bases->next)
+    {
         die(_("multiple merge bases found"));
+    }
 
     oidcpy(mb, &merge_bases->item->object.oid);
 
@@ -658,7 +731,9 @@ void run_diff_index(struct rev_info *revs, unsigned int option)
     struct index_state        *istate = revs->diffopt.repo->index;
 
     if (revs->pending.nr != 1)
+    {
         BUG("run_diff_index must be passed exactly one tree");
+    }
 
     trace_performance_enter();
     ent = revs->pending.objects;
@@ -677,7 +752,9 @@ void run_diff_index(struct rev_info *revs, unsigned int option)
     }
 
     if (diff_cache(revs, &oid, name, cached))
+    {
         exit(128);
+    }
 
     diff_set_mnemonic_prefix(&revs->diffopt, "c/", cached ? "i/" : "w/");
     diffcore_fix_diff_index();
@@ -696,7 +773,9 @@ int do_diff_cache(const struct object_id *tree_oid, struct diff_options *opt)
     revs.diffopt.no_free = 1;
 
     if (diff_cache(&revs, tree_oid, NULL, 1))
+    {
         exit(128);
+    }
 
     release_revisions(&revs);
     return 0;
@@ -724,7 +803,9 @@ int index_differs_from(struct repository *r,
          * and ignore_submodules from passed flags.
          */
         if (flags->override_submodule_config)
+        {
             rev.diffopt.flags.ignore_submodules = flags->ignore_submodules;
+        }
     }
     rev.diffopt.ita_invisible_in_index = ita_invisible_in_index;
     run_diff_index(&rev, DIFF_INDEX_CACHED);

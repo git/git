@@ -51,8 +51,11 @@ static int should_break(struct repository    *r,
      * The value we return is 1 if we want the pair to be broken,
      * or 0 if we do not.
      */
-    unsigned long delta_size, max_size;
-    unsigned long src_copied, literal_added, src_removed;
+    unsigned long delta_size;
+    unsigned long max_size;
+    unsigned long src_copied;
+    unsigned long literal_added;
+    unsigned long src_removed;
 
     struct diff_populate_filespec_options options = {0};
 
@@ -67,7 +70,9 @@ static int should_break(struct repository    *r,
     }
 
     if (src->oid_valid && dst->oid_valid && oideq(&src->oid, &dst->oid))
+    {
         return 0; /* they are the same */
+    }
 
     if (r == the_repository && repo_has_promisor_remote(the_repository))
     {
@@ -76,29 +81,43 @@ static int should_break(struct repository    *r,
     }
 
     if (diff_populate_filespec(r, src, &options) || diff_populate_filespec(r, dst, &options))
+    {
         return 0; /* error but caught downstream */
+    }
 
     max_size = ((src->size > dst->size) ? src->size : dst->size);
     if (max_size < MINIMUM_BREAK_SIZE)
+    {
         return 0; /* we do not break too small filepair */
+    }
 
     if (!src->size)
+    {
         return 0; /* we do not let empty files get renamed */
+    }
 
     if (diffcore_count_changes(r, src, dst,
                                &src->cnt_data, &dst->cnt_data,
                                &src_copied, &literal_added))
+    {
         return 0;
+    }
 
     /* sanity */
     if (src->size < src_copied)
+    {
         src_copied = src->size;
+    }
     if (dst->size < literal_added + src_copied)
     {
         if (src_copied < dst->size)
+        {
             literal_added = dst->size - src_copied;
+        }
         else
+        {
             literal_added = 0;
+        }
     }
     src_removed = src->size - src_copied;
 
@@ -109,20 +128,26 @@ static int should_break(struct repository    *r,
      */
     *merge_score_p = (int)(src_removed * MAX_SCORE / src->size);
     if (*merge_score_p > break_score)
+    {
         return 1;
+    }
 
     /* Extent of damage, which counts both inserts and
      * deletes.
      */
     delta_size = src_removed + literal_added;
     if (delta_size * MAX_SCORE / max_size < break_score)
+    {
         return 0;
+    }
 
     /* If you removed a lot without adding new material, that is
      * not really a rewrite.
      */
     if ((src->size * break_score < src_removed * MAX_SCORE) && (literal_added * 20 < src_removed) && (literal_added * 20 < src_copied))
+    {
         return 0;
+    }
 
     return 1;
 }
@@ -173,9 +198,13 @@ void diffcore_break(struct repository *r, int break_score)
     break_score = (break_score & 0xFFFF);
 
     if (!break_score)
+    {
         break_score = DEFAULT_BREAK_SCORE;
+    }
     if (!merge_score)
+    {
         merge_score = DEFAULT_MERGE_SCORE;
+    }
 
     DIFF_QUEUE_CLEAR(&outq);
 
@@ -194,7 +223,8 @@ void diffcore_break(struct repository *r, int break_score)
                              break_score, &score))
             {
                 /* Split this into delete and create */
-                struct diff_filespec *null_one, *null_two;
+                struct diff_filespec *null_one;
+                struct diff_filespec *null_two;
                 struct diff_filepair *dp;
 
                 /* Set score to 0 for the pair that
@@ -204,7 +234,9 @@ void diffcore_break(struct repository *r, int break_score)
                  * small files.
                  */
                 if (score < merge_score)
+                {
                     score = 0;
+                }
 
                 /* deletion of one */
                 null_one        = alloc_filespec(p->one->path);
@@ -232,8 +264,6 @@ void diffcore_break(struct repository *r, int break_score)
     }
     free(q->queue);
     *q = outq;
-
-    return;
 }
 
 static void merge_broken(struct diff_filepair     *p,
@@ -241,7 +271,9 @@ static void merge_broken(struct diff_filepair     *p,
                          struct diff_queue_struct *outq)
 {
     /* p and pp are broken pairs we want to merge */
-    struct diff_filepair *c = p, *d = pp, *dp;
+    struct diff_filepair *c = p;
+    struct diff_filepair *d = pp;
+    struct diff_filepair *dp;
     if (DIFF_FILE_VALID(p->one))
     {
         /* this must be a delete half */
@@ -250,13 +282,21 @@ static void merge_broken(struct diff_filepair     *p,
     }
     /* Sanity check */
     if (!DIFF_FILE_VALID(d->one))
+    {
         die("internal error in merge #1");
+    }
     if (DIFF_FILE_VALID(d->two))
+    {
         die("internal error in merge #2");
+    }
     if (DIFF_FILE_VALID(c->one))
+    {
         die("internal error in merge #3");
+    }
     if (!DIFF_FILE_VALID(c->two))
+    {
         die("internal error in merge #4");
+    }
 
     dp        = diff_queue(outq, d->one, c->two);
     dp->score = p->score;
@@ -277,7 +317,8 @@ void diffcore_merge_broken(void)
 {
     struct diff_queue_struct *q = &diff_queued_diff;
     struct diff_queue_struct  outq;
-    int                       i, j;
+    int                       i;
+    int                       j;
 
     DIFF_QUEUE_CLEAR(&outq);
 
@@ -285,9 +326,11 @@ void diffcore_merge_broken(void)
     {
         struct diff_filepair *p = q->queue[i];
         if (!p)
+        {
             /* we already merged this with its peer */
             continue;
-        else if (p->broken_pair && !strcmp(p->one->path, p->two->path))
+        }
+        if (p->broken_pair && !strcmp(p->one->path, p->two->path))
         {
             /* If the peer also survived rename/copy, then
              * we merge them back together.
@@ -314,6 +357,4 @@ void diffcore_merge_broken(void)
     }
     free(q->queue);
     *q = outq;
-
-    return;
 }

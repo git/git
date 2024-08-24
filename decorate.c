@@ -26,7 +26,9 @@ static void *insert_decoration(struct decoration *n, const struct object *base, 
             return old;
         }
         if (++j >= size)
+        {
             j = 0;
+        }
     }
     entries[j].base       = base;
     entries[j].decoration = decoration;
@@ -50,7 +52,9 @@ static void grow_decoration(struct decoration *n)
         void                *decoration = old_entries[i].decoration;
 
         if (!decoration)
+        {
             continue;
+        }
         insert_decoration(n, base, decoration);
     }
     free(old_entries);
@@ -62,7 +66,9 @@ void *add_decoration(struct decoration *n, const struct object *obj,
     int nr = n->nr + 1;
 
     if (nr > n->size * 2 / 3)
+    {
         grow_decoration(n);
+    }
     return insert_decoration(n, obj, decoration);
 }
 
@@ -72,17 +78,25 @@ void *lookup_decoration(struct decoration *n, const struct object *obj)
 
     /* nothing to lookup */
     if (!n->size)
+    {
         return NULL;
+    }
     j = hash_obj(obj, n->size);
     for (;;)
     {
         struct decoration_entry *ref = n->entries + j;
         if (ref->base == obj)
+        {
             return ref->decoration;
+        }
         if (!ref->base)
+        {
             return NULL;
+        }
         if (++j == n->size)
+        {
             j = 0;
+        }
     }
 }
 
@@ -95,7 +109,9 @@ void clear_decoration(struct decoration *n, void (*free_cb)(void *))
         {
             void *d = n->entries[i].decoration;
             if (d)
+            {
                 free_cb(d);
+            }
         }
     }
 

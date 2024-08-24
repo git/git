@@ -62,8 +62,10 @@ static void dir_file_stats_objects(const char          *full_path,
     struct stat    st;
 
     if (!stat(full_path, &st))
+    {
         strbuf_addf(buf, "%-70s %16" PRIuMAX "\n", file_name,
                     (uintmax_t)st.st_size);
+    }
 }
 
 static int dir_file_stats(struct object_directory *object_dir, void *data)
@@ -85,11 +87,17 @@ static int count_files(struct strbuf *path)
     int            count = 0;
 
     if (!dir)
+    {
         return 0;
+    }
 
     while ((e = readdir_skip_dot_and_dotdot(dir)) != NULL)
+    {
         if (get_dtype(e, path, 0) == DT_REG)
+        {
             count++;
+        }
+    }
 
     closedir(dir);
     return count;
@@ -106,7 +114,9 @@ static void loose_objs_stats(struct strbuf *buf, const char *path)
     size_t         base_path_len;
 
     if (!dir)
+    {
         return;
+    }
 
     strbuf_addstr(buf, "Object directory stats for ");
     strbuf_add_absolute_path(buf, path);
@@ -117,6 +127,7 @@ static void loose_objs_stats(struct strbuf *buf, const char *path)
     base_path_len = count_path.len;
 
     while ((e = readdir_skip_dot_and_dotdot(dir)) != NULL)
+    {
         if (get_dtype(e, &count_path, 0) == DT_DIR && strlen(e->d_name) == 2 && !hex_to_bytes(&c, e->d_name, 1))
         {
             strbuf_setlen(&count_path, base_path_len);
@@ -124,6 +135,7 @@ static void loose_objs_stats(struct strbuf *buf, const char *path)
             total += (count = count_files(&count_path));
             strbuf_addf(buf, "%s : %7d files\n", e->d_name, count);
         }
+    }
 
     strbuf_addf(buf, "Total: %d loose objects", total);
 
@@ -153,7 +165,9 @@ static int add_directory_to_archiver(struct strvec *archiver_args,
     }
 
     if (!at_root)
+    {
         strbuf_addf(&buf, "%s/", path);
+    }
     len = buf.len;
     strvec_pushf(archiver_args, "--prefix=%s", buf.buf);
 
@@ -170,13 +184,19 @@ static int add_directory_to_archiver(struct strvec *archiver_args,
         strbuf_addstr(&buf, e->d_name);
 
         if (dtype == DT_REG)
+        {
             strvec_pushf(archiver_args, "--add-file=%s", buf.buf);
+        }
         else if (dtype != DT_DIR)
+        {
             warning(_("skipping '%s', which is neither file nor "
                       "directory"),
                     buf.buf);
+        }
         else if (recurse && add_directory_to_archiver(archiver_args, buf.buf, recurse) < 0)
+        {
             res = -1;
+        }
 
         strbuf_release(&abspath);
     }
@@ -190,9 +210,11 @@ int create_diagnostics_archive(struct strbuf *zip_path, enum diagnose_mode mode)
 {
     struct strvec      archiver_args = STRVEC_INIT;
     char             **argv_copy     = NULL;
-    int                stdout_fd = -1, archiver_fd = -1;
-    struct strbuf      buf = STRBUF_INIT;
-    int                res, i;
+    int                stdout_fd     = -1;
+    int                archiver_fd   = -1;
+    struct strbuf      buf           = STRBUF_INIT;
+    int                res;
+    int                i;
     struct archive_dir archive_dirs[] = {
         {".git", 0},
         {".git/hooks", 0},
@@ -206,7 +228,7 @@ int create_diagnostics_archive(struct strbuf *zip_path, enum diagnose_mode mode)
         goto diagnose_cleanup;
     }
 
-    stdout_fd = dup(STDOUT_FILENO);
+    stdout_fd = fcntl(STDOUT_FILENO, F_DUPFD_CLOEXEC);
     if (stdout_fd < 0)
     {
         res = error_errno(_("could not duplicate stdout"));
