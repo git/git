@@ -30,7 +30,9 @@ static void create_directories(const char *path, int path_len,
             len++;
         } while (len < path_len && path[len] != '/');
         if (len >= path_len)
+        {
             break;
+        }
         buf[len] = 0;
 
         /*
@@ -41,7 +43,9 @@ static void create_directories(const char *path, int path_len,
          * stat() function instead of the lstat() function.
          */
         if (has_dirs_only_path(buf, len, state->base_dir_len))
+        {
             continue; /* ok, it is already a directory. */
+        }
 
         /*
          * If this mkdir() would fail, it could be that there
@@ -52,7 +56,9 @@ static void create_directories(const char *path, int path_len,
         if (mkdir(buf, 0777))
         {
             if (errno == EEXIST && state->force && !unlink_or_warn(buf) && !mkdir(buf, 0777))
+            {
                 continue;
+            }
             die_errno("cannot create directory at '%s'", buf);
         }
     }
@@ -66,7 +72,9 @@ static void remove_subtree(struct strbuf *path)
     int            origlen = path->len;
 
     if (!dir)
+    {
         die_errno("cannot opendir '%s'", path->buf);
+    }
     while ((de = readdir_skip_dot_and_dotdot(dir)) != NULL)
     {
         struct stat st;
@@ -74,22 +82,30 @@ static void remove_subtree(struct strbuf *path)
         strbuf_addch(path, '/');
         strbuf_addstr(path, de->d_name);
         if (lstat(path->buf, &st))
+        {
             die_errno("cannot lstat '%s'", path->buf);
+        }
         if (S_ISDIR(st.st_mode))
+        {
             remove_subtree(path);
+        }
         else if (unlink(path->buf))
+        {
             die_errno("cannot unlink '%s'", path->buf);
+        }
         strbuf_setlen(path, origlen);
     }
     closedir(dir);
     if (rmdir(path->buf))
+    {
         die_errno("cannot rmdir '%s'", path->buf);
+    }
 }
 
 static int create_file(const char *path, unsigned int mode)
 {
     mode = (mode & 0100) ? 0777 : 0666;
-    return open(path, O_WRONLY | O_CREAT | O_EXCL, mode);
+    return open(path, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, mode);
 }
 
 void *read_blob_entry(const struct cache_entry *ce, size_t *size)
@@ -103,7 +119,9 @@ void *read_blob_entry(const struct cache_entry *ce, size_t *size)
     if (blob_data)
     {
         if (type == OBJ_BLOB)
+        {
             return blob_data;
+        }
         free(blob_data);
     }
     return NULL;
@@ -118,10 +136,8 @@ static int open_output_fd(char *path, const struct cache_entry *ce, int to_tempf
                   symlink ? ".merge_link_XXXXXX" : ".merge_file_XXXXXX");
         return mkstemp(path);
     }
-    else
-    {
-        return create_file(path, !symlink ? ce->ce_mode : 0666);
-    }
+
+    return create_file(path, !symlink ? ce->ce_mode : 0666);
 }
 
 int fstat_checkout_output(int fd, const struct checkout *state, struct stat *st)
@@ -144,14 +160,18 @@ static int streaming_write_entry(const struct cache_entry *ce, char *path,
 
     fd = open_output_fd(path, ce, to_tempfile);
     if (fd < 0)
+    {
         return -1;
+    }
 
     result |= stream_blob_to_fd(fd, &ce->oid, filter, 1);
     *fstat_done = fstat_checkout_output(fd, state, statbuf);
     result |= close(fd);
 
     if (result)
+    {
         unlink(path);
+    }
     return result;
 }
 
@@ -173,7 +193,9 @@ static int remove_available_paths(struct string_list_item *item, void *cb_data)
 
     available = string_list_lookup(available_paths, item->string);
     if (available)
+    {
         available->util = item->util;
+    }
     return !available;
 }
 
@@ -187,16 +209,21 @@ int finish_delayed_checkout(struct checkout *state, int show_progress)
     int                      errs            = 0;
     unsigned                 processed_paths = 0;
     off_t                    filtered_bytes  = 0;
-    struct string_list_item *filter, *path;
+    struct string_list_item *filter;
+    struct string_list_item *path;
     struct progress         *progress = NULL;
     struct delayed_checkout *dco      = state->delayed_checkout;
 
     if (!state->delayed_checkout)
+    {
         return errs;
+    }
 
     dco->state = CE_RETRY;
     if (show_progress)
+    {
         progress = start_delayed_progress(_("Filtering content"), dco->paths.nr);
+    }
     while (dco->filters.nr > 0)
     {
         for_each_string_list_item(filter, &dco->filters)
@@ -260,7 +287,9 @@ int finish_delayed_checkout(struct checkout *state, int show_progress)
                     display_throughput(progress, filtered_bytes);
                 }
                 else
+                {
                     errs = 1;
+                }
             }
 
             string_list_clear(&available_paths, 0);
@@ -305,7 +334,9 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
 {
     unsigned int             ce_mode_s_ifmt = ce->ce_mode & S_IFMT;
     struct delayed_checkout *dco            = state->delayed_checkout;
-    int                      fd, ret, fstat_done = 0;
+    int                      fd;
+    int                      ret;
+    int                      fstat_done = 0;
     char                    *new_blob;
     struct strbuf            buf = STRBUF_INIT;
     size_t                   size;
@@ -322,7 +353,9 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
     {
         struct stream_filter *filter = get_stream_filter_ca(ca, &ce->oid);
         if (filter && !streaming_write_entry(ce, path, filter, state, to_tempfile, &fstat_done, &st))
+        {
             goto finish;
+        }
     }
 
     switch (ce_mode_s_ifmt)
@@ -330,20 +363,26 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
         case S_IFLNK:
             new_blob = read_blob_entry(ce, &size);
             if (!new_blob)
+            {
                 return error("unable to read sha1 file of %s (%s)",
                              ce->name, oid_to_hex(&ce->oid));
+            }
 
             /*
              * We can't make a real symlink; write out a regular file entry
              * with the symlink destination as its contents.
              */
             if (!has_symlinks || to_tempfile)
+            {
                 goto write_file_entry;
+            }
 
             ret = symlink(new_blob, path);
             free(new_blob);
             if (ret)
+            {
                 return error_errno("unable to create symlink %s", path);
+            }
             break;
 
         case S_IFREG:
@@ -360,8 +399,10 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
             {
                 new_blob = read_blob_entry(ce, &size);
                 if (!new_blob)
+                {
                     return error("unable to read sha1 file of %s (%s)",
                                  ce->name, oid_to_hex(&ce->oid));
+                }
             }
 
             /*
@@ -413,23 +454,33 @@ static int write_entry(struct cache_entry *ce, char *path, struct conv_attrs *ca
 
             wrote = write_in_full(fd, new_blob, size);
             if (!to_tempfile)
+            {
                 fstat_done = fstat_checkout_output(fd, state, &st);
+            }
             close(fd);
             free(new_blob);
             if (wrote < 0)
+            {
                 return error("unable to write file %s", path);
+            }
             break;
 
         case S_IFGITLINK:
             if (to_tempfile)
+            {
                 return error("cannot create temporary submodule %s", ce->name);
+            }
             if (mkdir(path, 0777) < 0)
+            {
                 return error("cannot create submodule directory %s", path);
+            }
             sub = submodule_from_ce(ce);
             if (sub)
+            {
                 return submodule_move_head(ce->name, state->super_prefix,
                                            NULL, oid_to_hex(&ce->oid),
                                            state->force ? SUBMODULE_MOVE_HEAD_FORCE : 0);
+            }
             break;
 
         default:
@@ -440,12 +491,16 @@ finish:
     if (state->refresh_cache)
     {
         if (!fstat_done && lstat(ce->name, &st) < 0)
+        {
             return error_errno("unable to stat just-written file %s",
                                ce->name);
+        }
         update_ce_after_write(state, ce, &st);
     }
     if (nr_checkouts)
+    {
         (*nr_checkouts)++;
+    }
 delayed:
     return 0;
 }
@@ -459,7 +514,9 @@ static int check_path(const char *path, int len, struct stat *st, int skiplen)
     const char *slash = path + len;
 
     while (path < slash && *slash != '/')
+    {
         slash--;
+    }
     if (!has_dirs_only_path(path, slash - path, skiplen))
     {
         errno = ENOENT;
@@ -471,7 +528,8 @@ static int check_path(const char *path, int len, struct stat *st, int skiplen)
 static void mark_colliding_entries(const struct checkout *state,
                                    struct cache_entry *ce, struct stat *st)
 {
-    int i, trust_ino = check_stat;
+    int i;
+    int trust_ino = check_stat;
 
 #if defined(GIT_WINDOWS_NATIVE) || defined(__CYGWIN__)
     trust_ino = 0;
@@ -493,13 +551,16 @@ static void mark_colliding_entries(const struct checkout *state,
              * after the given cache_entry in the array.
              */
             if (parallel_checkout_status() == PC_RUNNING)
+            {
                 continue;
-            else
-                break;
+            }
+            break;
         }
 
         if (dup->ce_flags & (CE_MATCHED | CE_VALID | CE_SKIP_WORKTREE))
+        {
             continue;
+        }
 
         if ((trust_ino && !match_stat_data(&dup->ce_stat_data, st)) || paths_collide(ce->name, dup->name))
         {
@@ -520,11 +581,13 @@ int checkout_entry_ca(struct cache_entry *ce, struct conv_attrs *ca,
     if (ce->ce_flags & CE_WT_REMOVE)
     {
         if (topath)
+        {
             /*
              * No content and thus no path to create, so we have
              * no pathname to return.
              */
             BUG("Can't remove entry to a path");
+        }
         unlink_entry(ce, state->super_prefix);
         return 0;
     }
@@ -560,32 +623,41 @@ int checkout_entry_ca(struct cache_entry *ce, struct conv_attrs *ca,
             {
                 struct stat sb;
                 if (lstat(ce->name, &sb))
+                {
                     die(_("could not stat file '%s'"), ce->name);
+                }
                 if (!(st.st_mode & S_IFDIR))
+                {
                     unlink_or_warn(ce->name);
+                }
 
                 return submodule_move_head(ce->name, state->super_prefix,
                                            NULL, oid_to_hex(&ce->oid), 0);
             }
-            else
-                return submodule_move_head(ce->name, state->super_prefix,
-                                           "HEAD", oid_to_hex(&ce->oid),
-                                           state->force ? SUBMODULE_MOVE_HEAD_FORCE : 0);
+            return submodule_move_head(ce->name, state->super_prefix,
+                                       "HEAD", oid_to_hex(&ce->oid),
+                                       state->force ? SUBMODULE_MOVE_HEAD_FORCE : 0);
         }
 
         if (!changed)
+        {
             return 0;
+        }
         if (!state->force)
         {
             if (!state->quiet)
+            {
                 fprintf(stderr,
                         "%s already exists, no checkout\n",
                         path.buf);
+            }
             return -1;
         }
 
         if (state->clone)
+        {
             mark_colliding_entries(state, ce, &st);
+        }
 
         /*
          * We unlink the old file, to get the new one with the
@@ -597,7 +669,9 @@ int checkout_entry_ca(struct cache_entry *ce, struct conv_attrs *ca,
         {
             /* If it is a gitlink, leave it alone! */
             if (S_ISGITLINK(ce->ce_mode))
+            {
                 return 0;
+            }
             /*
              * We must avoid replacing submodules' leading
              * directories with symbolic links, lest recursive
@@ -611,14 +685,20 @@ int checkout_entry_ca(struct cache_entry *ce, struct conv_attrs *ca,
              * just as well keep the directories during a clone.
              */
             if (state->clone && S_ISLNK(ce->ce_mode))
+            {
                 return 0;
+            }
             remove_subtree(&path);
         }
         else if (unlink(path.buf))
+        {
             return error_errno("unable to unlink old '%s'", path.buf);
+        }
     }
     else if (state->not_new)
+    {
         return 0;
+    }
 
     create_directories(path.buf, path.len, state);
 
@@ -629,7 +709,9 @@ int checkout_entry_ca(struct cache_entry *ce, struct conv_attrs *ca,
     }
 
     if (!enqueue_checkout(ce, ca, nr_checkouts))
+    {
         return 0;
+    }
 
     return write_entry(ce, path.buf, ca, state, 0, nr_checkouts);
 }
@@ -644,9 +726,13 @@ void unlink_entry(const struct cache_entry *ce, const char *super_prefix)
                             SUBMODULE_MOVE_HEAD_FORCE);
     }
     if (check_leading_path(ce->name, ce_namelen(ce), 1) >= 0)
+    {
         return;
+    }
     if (remove_or_warn(ce->ce_mode, ce->name))
+    {
         return;
+    }
     schedule_dir_for_removal(ce->name, ce_namelen(ce));
 }
 

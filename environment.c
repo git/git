@@ -149,20 +149,29 @@ const char *const local_repo_env[] = {
 static char *expand_namespace(const char *raw_namespace)
 {
     struct strbuf   buf = STRBUF_INIT;
-    struct strbuf **components, **c;
+    struct strbuf **components;
+    struct strbuf **c;
 
     if (!raw_namespace || !*raw_namespace)
+    {
         return xstrdup("");
+    }
 
     strbuf_addstr(&buf, raw_namespace);
     components = strbuf_split(&buf, '/');
     strbuf_reset(&buf);
     for (c = components; *c; c++)
+    {
         if (strcmp((*c)->buf, "/") != 0)
+        {
             strbuf_addf(&buf, "refs/namespaces/%s", (*c)->buf);
+        }
+    }
     strbuf_list_free(components);
     if (check_refname_format(buf.buf, 0))
+    {
         die(_("bad git namespace path \"%s\""), raw_namespace);
+    }
     strbuf_addch(&buf, '/');
     return strbuf_detach(&buf, NULL);
 }
@@ -172,7 +181,9 @@ const char *getenv_safe(struct strvec *argv, const char *name)
     const char *value = getenv(name);
 
     if (!value)
+    {
         return NULL;
+    }
 
     strvec_push(argv, value);
     return argv->v[argv->nr - 1];
@@ -200,7 +211,9 @@ void setup_git_env(const char *git_dir)
     strvec_clear(&to_free);
 
     if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
+    {
         disable_replace_refs();
+    }
     replace_ref_base     = getenv(GIT_REPLACE_REF_BASE_ENVIRONMENT);
     git_replace_ref_base = xstrdup(replace_ref_base ? replace_ref_base
                                                     : "refs/replace/");
@@ -210,10 +223,14 @@ void setup_git_env(const char *git_dir)
     git_namespace = expand_namespace(getenv(GIT_NAMESPACE_ENVIRONMENT));
     shallow_file  = getenv(GIT_SHALLOW_FILE_ENVIRONMENT);
     if (shallow_file)
+    {
         set_alternate_shallow_file(the_repository, shallow_file, 0);
+    }
 
     if (git_env_bool(NO_LAZY_FETCH_ENVIRONMENT, 0))
+    {
         fetch_if_missing = 0;
+    }
 }
 
 int is_bare_repository(void)
@@ -231,21 +248,27 @@ int have_git_dir(void)
 const char *get_git_dir(void)
 {
     if (!the_repository->gitdir)
+    {
         BUG("git environment hasn't been setup");
+    }
     return the_repository->gitdir;
 }
 
 const char *get_git_common_dir(void)
 {
     if (!the_repository->commondir)
+    {
         BUG("git environment hasn't been setup");
+    }
     return the_repository->commondir;
 }
 
 const char *get_git_namespace(void)
 {
     if (!git_namespace)
+    {
         BUG("git environment hasn't been setup");
+    }
     return git_namespace;
 }
 
@@ -253,7 +276,9 @@ const char *strip_namespace(const char *namespaced_ref)
 {
     const char *out;
     if (skip_prefix(namespaced_ref, get_git_namespace(), &out))
+    {
         return out;
+    }
     return NULL;
 }
 
@@ -272,10 +297,12 @@ void set_git_work_tree(const char *new_work_tree)
 
         strbuf_realpath(&realpath, new_work_tree, 1);
         new_work_tree = realpath.buf;
-        if (strcmp(new_work_tree, the_repository->worktree))
+        if (strcmp(new_work_tree, the_repository->worktree) != 0)
+        {
             die("internal error: work tree has already been set\n"
                 "Current worktree: %s\nNew worktree: %s",
                 the_repository->worktree, new_work_tree);
+        }
         strbuf_release(&realpath);
         return;
     }
@@ -291,7 +318,9 @@ const char *get_git_work_tree(void)
 const char *get_object_directory(void)
 {
     if (!the_repository->objects->odb)
+    {
         BUG("git environment hasn't been setup");
+    }
     return the_repository->objects->odb->path;
 }
 
@@ -306,7 +335,9 @@ int odb_mkstemp(struct strbuf *temp_filename, const char *pattern)
     git_path_buf(temp_filename, "objects/%s", pattern);
     fd = git_mkstemp_mode(temp_filename->buf, mode);
     if (0 <= fd)
+    {
         return fd;
+    }
 
     /* slow path */
     /* some mkstemp implementations erase temp_filename on failure */
@@ -319,26 +350,32 @@ int odb_pack_keep(const char *name)
 {
     int fd;
 
-    fd = open(name, O_RDWR | O_CREAT | O_EXCL, 0600);
+    fd = open(name, O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
     if (0 <= fd)
+    {
         return fd;
+    }
 
     /* slow path */
     safe_create_leading_directories_const(name);
-    return open(name, O_RDWR | O_CREAT | O_EXCL, 0600);
+    return open(name, O_RDWR | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
 }
 
 char *get_index_file(void)
 {
     if (!the_repository->index_file)
+    {
         BUG("git environment hasn't been setup");
+    }
     return the_repository->index_file;
 }
 
 char *get_graft_file(struct repository *r)
 {
     if (!r->graft_file)
+    {
         BUG("git environment hasn't been setup");
+    }
     return r->graft_file;
 }
 
@@ -361,7 +398,9 @@ static void update_relative_gitdir(const char *name UNUSED,
                      path);
     set_git_dir_1(path);
     if (tmp_objdir)
+    {
         tmp_objdir_reapply_primary_odb(tmp_objdir, old_cwd, new_cwd);
+    }
     free(path);
 }
 
@@ -377,7 +416,9 @@ void set_git_dir(const char *path, int make_realpath)
 
     set_git_dir_1(path);
     if (!is_absolute_path(path))
+    {
         chdir_notify_register(NULL, update_relative_gitdir, NULL);
+    }
 
     strbuf_release(&realpath);
 }
@@ -409,7 +450,9 @@ int get_shared_repository(void)
         const char *var = "core.sharedrepository";
         const char *value;
         if (!git_config_get_value(var, &value))
+        {
             the_shared_repository = git_config_perm(var, value);
+        }
         need_shared_repository_from_config = 0;
     }
     return the_shared_repository;

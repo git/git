@@ -72,7 +72,9 @@ static int git_get_exec_path_from_argv0(struct strbuf *buf, const char *argv0)
     const char *slash;
 
     if (!argv0 || !*argv0)
+    {
         return -1;
+    }
 
     slash = find_last_dir_sep(argv0);
     if (slash)
@@ -244,7 +246,9 @@ void git_resolve_executable_dir(const char *argv0)
     resolved = strbuf_detach(&buf, NULL);
     slash    = find_last_dir_sep(resolved);
     if (slash)
+    {
         resolved[slash - resolved] = '\0';
+    }
 
     executable_dirname = resolved;
     trace_printf("trace: resolved executable dir: %s\n",
@@ -276,7 +280,9 @@ char *system_path(const char *path)
     struct strbuf d = STRBUF_INIT;
 
     if (is_absolute_path(path))
+    {
         return xstrdup(path);
+    }
 
     strbuf_addf(&d, "%s/%s", system_prefix(), path);
     return strbuf_detach(&d, NULL);
@@ -300,9 +306,13 @@ const char *git_exec_path(void)
     {
         const char *env = getenv(EXEC_PATH_ENVIRONMENT);
         if (env && *env)
+        {
             exec_path_value = xstrdup(env);
+        }
         else
+        {
             exec_path_value = system_path(GIT_EXEC_PATH);
+        }
     }
     return exec_path_value;
 }
@@ -326,9 +336,13 @@ void setup_path(void)
     add_path(&new_path, exec_path);
 
     if (old_path)
+    {
         strbuf_addstr(&new_path, old_path);
+    }
     else
+    {
         strbuf_addstr(&new_path, _PATH_DEFPATH);
+    }
 
     setenv("PATH", new_path.buf, 1);
 
@@ -372,11 +386,15 @@ int execl_git_cmd(const char *cmd, ...)
     {
         arg = argv[argc++] = va_arg(param, char *);
         if (!arg)
+        {
             break;
+        }
     }
     va_end(param);
     if (MAX_ARGS <= argc)
+    {
         return error(_("too many args to run %s"), cmd);
+    }
 
     argv[argc] = NULL;
     return execv_git_cmd(argv);
