@@ -961,13 +961,20 @@ add_library(xdiff STATIC ${libxdiff_SOURCES})
 #reftable
 # parse_makefile_for_sources(reftable_SOURCES "REFTABLE_OBJS")
 set(reftable_SOURCES
-    xdiff/xdiffi.c
-    xdiff/xemit.c
-    xdiff/xhistogram.c
-    xdiff/xmerge.c
-    xdiff/xpatience.c
-    xdiff/xprepare.c
-    xdiff/xutils.c
+    reftable/basics.c
+    reftable/error.c
+    reftable/block.c
+    reftable/blocksource.c
+    reftable/iter.c
+    reftable/publicbasics.c
+    reftable/merged.c
+    reftable/pq.c
+    reftable/reader.c
+    reftable/record.c
+    reftable/generic.c
+    reftable/stack.c
+    reftable/tree.c
+    reftable/writer.c
 )
 
 list(TRANSFORM reftable_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
