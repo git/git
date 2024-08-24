@@ -43,7 +43,9 @@ int hex_to_bytes(unsigned char *binary, const char *hex, size_t len)
         unsigned int val = (hexval(hex[0]) << 4) | hexval(hex[1]);
 
         if (val & ~0xff)
+        {
             return -1;
+        }
         *binary++ = val;
     }
     return 0;

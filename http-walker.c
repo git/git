@@ -89,10 +89,14 @@ static void start_object_request(struct object_request *obj_req)
 static void finish_object_request(struct object_request *obj_req)
 {
     if (finish_http_object_request(obj_req->req))
+    {
         return;
+    }
 
     if (obj_req->req->rename == 0)
+    {
         walker_say(obj_req->walker, "got %s\n", oid_to_hex(&obj_req->oid));
+    }
 }
 
 static void process_object_response(void *callback_data)
@@ -131,7 +135,9 @@ static void process_object_response(void *callback_data)
 static void release_object_request(struct object_request *obj_req)
 {
     if (obj_req->req != NULL && obj_req->req->localfile != -1)
+    {
         error("fd leakage in release: %d", obj_req->req->localfile);
+    }
 
     list_del(&obj_req->node);
     free(obj_req);
@@ -140,7 +146,9 @@ static void release_object_request(struct object_request *obj_req)
 static int fill_active_slot(void *data UNUSED)
 {
     struct object_request *obj_req;
-    struct list_head      *pos, *tmp, *head = &object_queue_head;
+    struct list_head      *pos;
+    struct list_head      *tmp;
+    struct list_head      *head = &object_queue_head;
 
     list_for_each_safe(pos, tmp, head)
     {
@@ -148,7 +156,9 @@ static int fill_active_slot(void *data UNUSED)
         if (obj_req->state == WAITING)
         {
             if (repo_has_object_file(the_repository, &obj_req->oid))
+            {
                 obj_req->state = COMPLETE;
+            }
             else
             {
                 start_object_request(obj_req);
@@ -194,7 +204,9 @@ static int is_alternate_allowed(const char *url)
     {
         const char *end;
         if (skip_prefix(url, protocols[i], &end) && starts_with(end, "://"))
+        {
             break;
+        }
     }
 
     if (i >= ARRAY_SIZE(protocols))
@@ -242,13 +254,17 @@ static void process_alternates_response(void *callback_data)
             active_requests++;
             slot->in_use = 1;
             if (slot->finished)
+            {
                 (*slot->finished) = 0;
+            }
             if (!start_active_slot(slot))
             {
                 cdata->got_alternates = -1;
                 slot->in_use          = 0;
                 if (slot->finished)
+                {
                     (*slot->finished) = 1;
+                }
             }
             return;
         }
@@ -270,7 +286,9 @@ static void process_alternates_response(void *callback_data)
     {
         int posn = i;
         while (posn < alt_req->buffer->len && data[posn] != '\n')
+        {
             posn++;
+        }
         if (data[posn] == '\n')
         {
             int              okay      = 0;
@@ -359,7 +377,9 @@ static void process_alternates_response(void *callback_data)
                     newalt->packs       = NULL;
 
                     while (tail->next != NULL)
+                    {
                         tail = tail->next;
+                    }
                     tail->next = newalt;
                 }
                 else
@@ -394,13 +414,17 @@ static void fetch_alternates(struct walker *walker, const char *base)
 
     /* Nothing to do if they've already been fetched */
     if (cdata->got_alternates == 1)
+    {
         return;
+    }
 
     /* Start the fetch */
     cdata->got_alternates = 0;
 
     if (walker->get_verbosely)
+    {
         fprintf(stderr, "Getting alternates list for %s\n", base);
+    }
 
     strbuf_addf(&url, "%s/objects/info/http-alternates", base);
 
@@ -424,9 +448,13 @@ static void fetch_alternates(struct walker *walker, const char *base)
     alt_req.slot          = slot;
 
     if (start_active_slot(slot))
+    {
         run_active_slot(slot);
+    }
     else
+    {
         cdata->got_alternates = -1;
+    }
 
     strbuf_release(&buffer);
     strbuf_release(&url);
@@ -437,10 +465,14 @@ static int fetch_indices(struct walker *walker, struct alt_base *repo)
     int ret;
 
     if (repo->got_indices)
+    {
         return 0;
+    }
 
     if (walker->get_verbosely)
+    {
         fprintf(stderr, "Getting pack list for %s\n", repo->base);
+    }
 
     switch (http_get_info_packs(repo->base, &repo->packs))
     {
@@ -465,10 +497,14 @@ static int http_fetch_pack(struct walker *walker, struct alt_base *repo, unsigne
     struct http_pack_request *preq;
 
     if (fetch_indices(walker, repo))
+    {
         return -1;
+    }
     target = find_sha1_pack(sha1, repo->packs);
     if (!target)
+    {
         return -1;
+    }
     close_pack_index(target);
 
     if (walker->get_verbosely)
@@ -481,7 +517,9 @@ static int http_fetch_pack(struct walker *walker, struct alt_base *repo, unsigne
 
     preq = new_http_pack_request(target->hash, repo->base);
     if (!preq)
+    {
         goto abort;
+    }
     preq->slot->results = &results;
 
     if (start_active_slot(preq->slot))
@@ -503,7 +541,9 @@ static int http_fetch_pack(struct walker *walker, struct alt_base *repo, unsigne
     ret = finish_http_pack_request(preq);
     release_http_pack_request(preq);
     if (ret)
+    {
         return ret;
+    }
     http_install_packfile(target, &repo->packs);
 
     return 0;
@@ -523,27 +563,36 @@ static int fetch_object(struct walker *walker, unsigned char *hash)
     int                         ret     = 0;
     struct object_request      *obj_req = NULL;
     struct http_object_request *req;
-    struct list_head           *pos, *head = &object_queue_head;
+    struct list_head           *pos;
+    struct list_head           *head = &object_queue_head;
 
     list_for_each(pos, head)
     {
         obj_req = list_entry(pos, struct object_request, node);
         if (hasheq(obj_req->oid.hash, hash, the_repository->hash_algo))
+        {
             break;
+        }
     }
     if (!obj_req)
+    {
         return error("Couldn't find request for %s in the queue", hex);
+    }
 
     if (repo_has_object_file(the_repository, &obj_req->oid))
     {
         if (obj_req->req)
+        {
             abort_http_object_request(obj_req->req);
+        }
         abort_object_request(obj_req);
         return 0;
     }
 
     while (obj_req->state == WAITING)
+    {
         step_active_slots();
+    }
 
     /*
      * obj_req->req might change when fetching alternates in the callback
@@ -551,7 +600,9 @@ static int fetch_object(struct walker *walker, unsigned char *hash)
      * is used only after we're done with slots.
      */
     while (obj_req->state == ACTIVE)
+    {
         run_active_slot(obj_req->req->slot);
+    }
 
     req = obj_req->req;
 
@@ -571,11 +622,15 @@ static int fetch_object(struct walker *walker, unsigned char *hash)
     else if (req->curl_result != CURLE_OK && req->http_code != 416)
     {
         if (missing_target(req))
+        {
             ret = -1; /* Be silent, it is probably in a pack. */
+        }
         else
+        {
             ret = error("%s (curl_result = %d, http_code = %ld, sha1 = %s)",
                         req->errorstr, req->curl_result,
                         req->http_code, hex);
+        }
     }
     else if (req->zret != Z_STREAM_END)
     {
@@ -605,11 +660,15 @@ static int fetch(struct walker *walker, unsigned char *hash)
     struct alt_base    *altbase = data->alt;
 
     if (!fetch_object(walker, hash))
+    {
         return 0;
+    }
     while (altbase)
     {
         if (!http_fetch_pack(walker, altbase, hash))
+        {
             return 0;
+        }
         fetch_alternates(walker, data->alt->base);
         altbase = altbase->next;
     }
@@ -626,7 +685,8 @@ static int fetch_ref(struct walker *walker, struct ref *ref)
 static void cleanup(struct walker *walker)
 {
     struct walker_data *data = walker->data;
-    struct alt_base    *alt, *alt_next;
+    struct alt_base    *alt;
+    struct alt_base    *alt_next;
 
     if (data)
     {
@@ -654,7 +714,9 @@ struct walker *get_http_walker(const char *url)
     data->alt       = xmalloc(sizeof(*data->alt));
     data->alt->base = xstrdup(url);
     for (s = data->alt->base + strlen(data->alt->base) - 1; *s == '/'; --s)
+    {
         *s = 0;
+    }
 
     data->alt->got_indices = 0;
     data->alt->packs       = NULL;

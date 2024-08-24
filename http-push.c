@@ -187,9 +187,9 @@ struct remote_ls_ctx
 /* get_dav_token_headers options */
 enum dav_header_flag
 {
-    DAV_HEADER_IF      = (1u << 0),
-    DAV_HEADER_LOCK    = (1u << 1),
-    DAV_HEADER_TIMEOUT = (1u << 2)
+    DAV_HEADER_IF      = (1U << 0),
+    DAV_HEADER_LOCK    = (1U << 1),
+    DAV_HEADER_TIMEOUT = (1U << 2)
 };
 
 static char *xml_entities(const char *s)
@@ -406,13 +406,17 @@ static void start_put(struct transfer_request *request)
     stream.next_in  = (void *)hdr;
     stream.avail_in = hdrlen;
     while (git_deflate(&stream, 0) == Z_OK)
+    {
         ; /* nothing */
+    }
 
     /* Then the data itself.. */
     stream.next_in  = unpacked;
     stream.avail_in = len;
     while (git_deflate(&stream, Z_FINISH) == Z_OK)
+    {
         ; /* nothing */
+    }
     git_deflate_end(&stream);
     free(unpacked);
 
@@ -541,9 +545,13 @@ static void release_request(struct transfer_request *request)
     else
     {
         while (entry && entry->next != request)
+        {
             entry = entry->next;
+        }
         if (entry)
+        {
             entry->next = request->next;
+        }
     }
 
     free(request->url);
@@ -563,7 +571,9 @@ static void finish_request(struct transfer_request *request)
     check_locks();
 
     if (request->headers)
+    {
         curl_slist_free_all(request->headers);
+    }
 
     /* URL is reused for MOVE after PUT and used during FETCH */
     if (request->state != RUN_PUT && request->state != RUN_FETCH_PACKED)
@@ -607,8 +617,10 @@ static void finish_request(struct transfer_request *request)
         if (request->curl_result == CURLE_OK)
         {
             if (push_verbosely)
+            {
                 fprintf(stderr, "    sent %s\n",
                         oid_to_hex(&request->obj->oid));
+            }
             request->obj->flags |= REMOTE;
             release_request(request);
         }
@@ -626,8 +638,12 @@ static void finish_request(struct transfer_request *request)
         obj_req = (struct http_object_request *)request->userData;
 
         if (finish_http_object_request(obj_req) == 0)
+        {
             if (obj_req->rename == 0)
+            {
                 request->obj->flags |= (LOCAL | REMOTE);
+            }
+        }
 
         /* Try fetching packed if necessary */
         if (request->obj->flags & LOCAL)
@@ -636,7 +652,9 @@ static void finish_request(struct transfer_request *request)
             release_request(request);
         }
         else
+        {
             start_fetch_packed(request);
+        }
     }
     else if (request->state == RUN_FETCH_PACKED)
     {
@@ -653,14 +671,20 @@ static void finish_request(struct transfer_request *request)
             if (preq)
             {
                 if (finish_http_pack_request(preq) == 0)
+                {
                     fail = 0;
+                }
                 release_http_pack_request(preq);
             }
         }
         if (fail)
+        {
             repo->can_update_info_refs = 0;
+        }
         else
+        {
             http_install_packfile(request->target, &repo->packs);
+        }
         release_request(request);
     }
 }
@@ -671,7 +695,9 @@ static int fill_active_slot(void *data UNUSED)
     struct transfer_request *request;
 
     if (aborted || !is_running_queue)
+    {
         return 0;
+    }
 
     for (request = request_queue_head; request; request = request->next)
     {
@@ -680,7 +706,7 @@ static int fill_active_slot(void *data UNUSED)
             start_fetch_loose(request);
             return 1;
         }
-        else if (pushing && request->state == NEED_PUSH)
+        if (pushing && request->state == NEED_PUSH)
         {
             if (remote_dir_exists[request->obj->oid.hash[0]] == 1)
             {
@@ -709,9 +735,13 @@ static void add_fetch_request(struct object *obj)
      * or is already in the request queue
      */
     if (remote_dir_exists[obj->oid.hash[0]] == -1)
+    {
         get_remote_object_list(obj->oid.hash[0]);
+    }
     if (obj->flags & (LOCAL | FETCHING))
+    {
         return;
+    }
 
     obj->flags |= FETCHING;
     request            = xmalloc(sizeof(*request));
@@ -740,9 +770,13 @@ static int add_send_request(struct object *obj, struct remote_lock *lock)
      * or is already in the request queue
      */
     if (remote_dir_exists[obj->oid.hash[0]] == -1)
+    {
         get_remote_object_list(obj->oid.hash[0]);
+    }
     if (obj->flags & (REMOTE | PUSHING))
+    {
         return 0;
+    }
     target = find_sha1_pack(obj->oid.hash, repo->packs);
     if (target)
     {
@@ -771,7 +805,9 @@ static int fetch_indices(void)
     int ret;
 
     if (push_verbosely)
+    {
         fprintf(stderr, "Getting pack list\n");
+    }
 
     switch (http_get_info_packs(repo->url, &repo->packs))
     {
@@ -792,15 +828,21 @@ static void one_remote_object(const struct object_id *oid)
 
     obj = lookup_object(the_repository, oid);
     if (!obj)
+    {
         obj = parse_object(the_repository, oid);
+    }
 
     /* Ignore remote objects that don't exist locally */
     if (!obj)
+    {
         return;
+    }
 
     obj->flags |= REMOTE;
     if (!object_list_contains(objects, obj))
+    {
         object_list_insert(obj, &objects);
+    }
 }
 
 static void handle_lockprop_ctx(struct xml_ctx *ctx, int tag_closed)
@@ -844,7 +886,9 @@ static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
         {
             const char *arg;
             if (skip_prefix(ctx->cdata, "Second-", &arg))
+            {
                 lock->timeout = strtol(arg, NULL, 10);
+            }
         }
         else if (!strcmp(ctx->name, DAV_ACTIVELOCK_TOKEN))
         {
@@ -867,12 +911,17 @@ static void
 {
     struct xml_ctx *ctx = (struct xml_ctx *)userData;
     const char     *c   = strchr(name, ':');
-    int             old_namelen, new_len;
+    int             old_namelen;
+    int             new_len;
 
     if (!c)
+    {
         c = name;
+    }
     else
+    {
         c++;
+    }
 
     old_namelen = strlen(ctx->name);
     new_len     = old_namelen + strlen(c) + 2;
@@ -899,9 +948,13 @@ static void
     ctx->userFunc(ctx, 1);
 
     if (!c)
+    {
         c = name;
+    }
     else
+    {
         c++;
+    }
 
     ep  = ctx->name + strlen(ctx->name) - strlen(c) - 1;
     *ep = 0;
@@ -1060,10 +1113,14 @@ static int unlock_remote(struct remote_lock *lock)
     {
         run_active_slot(slot);
         if (results.curl_result == CURLE_OK)
+        {
             rc = 1;
+        }
         else
+        {
             fprintf(stderr, "UNLOCK HTTP error %ld\n",
                     results.http_code);
+        }
     }
     else
     {
@@ -1079,9 +1136,13 @@ static int unlock_remote(struct remote_lock *lock)
     else
     {
         while (prev && prev->next != lock)
+        {
             prev = prev->next;
+        }
         if (prev)
+        {
             prev->next = lock->next;
+        }
     }
 
     free(lock->owner);
@@ -1123,10 +1184,14 @@ static int get_oid_hex_from_objpath(const char *path, struct object_id *oid)
     oid->algo = hash_algo_by_ptr(the_hash_algo);
 
     if (strlen(path) != the_hash_algo->hexsz + 1)
+    {
         return -1;
+    }
 
     if (hex_to_bytes(oid->hash, path, 1))
+    {
         return -1;
+    }
     path += 2;
     path++; /* skip '/' */
 
@@ -1146,7 +1211,9 @@ static void process_ls_object(struct remote_ls_ctx *ls)
     }
 
     if (!skip_prefix(path, "objects/", &path) || get_oid_hex_from_objpath(path, &oid))
+    {
         return;
+    }
 
     one_remote_object(&oid);
 }
@@ -1160,7 +1227,9 @@ static void process_ls_ref(struct remote_ls_ctx *ls)
     }
 
     if (!(ls->dentry_flags & IS_DIR))
+    {
         one_remote_ref(ls->dentry_name);
+    }
 }
 
 static void handle_remote_ls_ctx(struct xml_ctx *ctx, int tag_closed)
@@ -1181,7 +1250,7 @@ static void handle_remote_ls_ctx(struct xml_ctx *ctx, int tag_closed)
                 {
                     ls->userFunc(ls);
                 }
-                if (strcmp(ls->dentry_name, ls->path) && ls->flags & RECURSIVE)
+                if (strcmp(ls->dentry_name, ls->path) != 0 && ls->flags & RECURSIVE)
                 {
                     remote_ls(ls->dentry_name,
                               ls->flags,
@@ -1209,10 +1278,14 @@ static void handle_remote_ls_ctx(struct xml_ctx *ctx, int tag_closed)
             {
                 const char *url = repo->url;
                 if (repo->path)
+                {
                     url = repo->path;
-                if (strncmp(path, url, repo->path_len))
+                }
+                if (strncmp(path, url, repo->path_len) != 0)
+                {
                     error("Parsed path '%s' does not match url: '%s'",
                           path, url);
+                }
                 else
                 {
                     path += repo->path_len;
@@ -1377,8 +1450,10 @@ static int locking_available(void)
             }
             XML_ParserFree(parser);
             if (!lock_flags)
+            {
                 error("no DAV locking support on %s",
                       repo->url);
+            }
         }
         else
         {
@@ -1416,7 +1491,9 @@ static struct object_list **process_blob(struct blob         *blob,
     obj->flags |= LOCAL;
 
     if (obj->flags & (UNINTERESTING | SEEN))
+    {
         return p;
+    }
 
     obj->flags |= SEEN;
     return add_one_object(obj, p);
@@ -1432,9 +1509,13 @@ static struct object_list **process_tree(struct tree         *tree,
     obj->flags |= LOCAL;
 
     if (obj->flags & (UNINTERESTING | SEEN))
+    {
         return p;
+    }
     if (parse_tree(tree) < 0)
+    {
         die("bad tree object %s", oid_to_hex(&obj->oid));
+    }
 
     obj->flags |= SEEN;
     p = add_one_object(obj, p);
@@ -1442,6 +1523,7 @@ static struct object_list **process_tree(struct tree         *tree,
     init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
 
     while (tree_entry(&desc, &entry))
+    {
         switch (object_type(entry.mode))
         {
             case OBJ_TREE:
@@ -1456,6 +1538,7 @@ static struct object_list **process_tree(struct tree         *tree,
                 /* Subproject commit - not in this repository */
                 break;
         }
+    }
 
     free_tree_buffer(tree);
     return p;
@@ -1474,7 +1557,9 @@ static int get_delta(struct rev_info *revs, struct remote_lock *lock)
                          p);
         commit->object.flags |= LOCAL;
         if (!(commit->object.flags & UNINTERESTING))
+        {
             count += add_send_request(&commit->object, lock);
+        }
     }
 
     for (i = 0; i < revs->pending.nr; i++)
@@ -1484,7 +1569,9 @@ static int get_delta(struct rev_info *revs, struct remote_lock *lock)
         const char                *name  = entry->name;
 
         if (obj->flags & (UNINTERESTING | SEEN))
+        {
             continue;
+        }
         if (obj->type == OBJ_TAG)
         {
             obj->flags |= SEEN;
@@ -1507,7 +1594,9 @@ static int get_delta(struct rev_info *revs, struct remote_lock *lock)
     while (objects)
     {
         if (!(objects->item->flags & UNINTERESTING))
+        {
             count += add_send_request(objects->item, lock);
+        }
         objects = objects->next;
     }
 
@@ -1629,8 +1718,10 @@ static void add_remote_info_ref(struct remote_ls_ctx *ls)
     {
         o = deref_tag(the_repository, o, ls->dentry_name, 0);
         if (o)
+        {
             strbuf_addf(buf, "%s\t%s^{}\n",
                         oid_to_hex(&o->oid), ls->dentry_name);
+        }
     }
     free(ref);
 }
@@ -1698,15 +1789,19 @@ static void fetch_symref(const char *path, char **symref, struct object_id *oid)
     const char   *name;
 
     if (http_get_strbuf(url, &buffer, NULL) != HTTP_OK)
+    {
         die("Couldn't get %s for remote symref\n%s", url,
             curl_errorstr);
+    }
     free(url);
 
     FREE_AND_NULL(*symref);
     oidclr(oid, the_repository->hash_algo);
 
     if (buffer.len == 0)
+    {
         return;
+    }
 
     /* Cut off trailing newline. */
     strbuf_rtrim(&buffer);
@@ -1732,7 +1827,9 @@ static int verify_merge_base(struct object_id *head_oid, struct ref *remote)
     int            ret    = repo_in_merge_bases(the_repository, branch, head);
 
     if (ret < 0)
+    {
         exit(128);
+    }
     return ret;
 }
 
@@ -1754,18 +1851,26 @@ static int delete_remote_branch(const char *pattern, int force)
     {
         char *name    = refs->name;
         int   namelen = strlen(name);
-        if (namelen < patlen || memcmp(name + namelen - patlen, pattern, patlen))
+        if (namelen < patlen || memcmp(name + namelen - patlen, pattern, patlen) != 0)
+        {
             continue;
+        }
         if (namelen != patlen && name[namelen - patlen - 1] != '/')
+        {
             continue;
+        }
         match++;
         remote_ref = refs;
     }
     if (match == 0)
+    {
         return error("No remote branch matches %s", pattern);
+    }
     if (match != 1)
+    {
         return error("More than one remote branch matches %s",
                      pattern);
+    }
 
     /*
      * Remote HEAD must be a symref (not exactly foolproof; a remote
@@ -1773,14 +1878,18 @@ static int delete_remote_branch(const char *pattern, int force)
      */
     fetch_symref("HEAD", &symref, &head_oid);
     if (!symref)
+    {
         return error("Remote HEAD is not a symref");
+    }
 
     /* Remote branch must not be the remote HEAD */
     for (i = 0; symref && i < MAXDEPTH; i++)
     {
         if (!strcmp(remote_ref->name, symref))
+        {
             return error("Remote branch %s is the current HEAD",
                          remote_ref->name);
+        }
         fetch_symref(symref, &symref, &head_oid);
     }
 
@@ -1789,18 +1898,28 @@ static int delete_remote_branch(const char *pattern, int force)
     {
         /* Remote HEAD must resolve to a known object */
         if (symref)
+        {
             return error("Remote HEAD symrefs too deep");
+        }
         if (is_null_oid(&head_oid))
+        {
             return error("Unable to resolve remote HEAD");
+        }
         if (!repo_has_object_file(the_repository, &head_oid))
+        {
             return error("Remote HEAD resolves to object %s\nwhich does not exist locally, perhaps you need to fetch?", oid_to_hex(&head_oid));
+        }
 
         /* Remote branch must resolve to a known object */
         if (is_null_oid(&remote_ref->old_oid))
+        {
             return error("Unable to resolve remote branch %s",
                          remote_ref->name);
+        }
         if (!repo_has_object_file(the_repository, &remote_ref->old_oid))
+        {
             return error("Remote branch %s resolves to object %s\nwhich does not exist locally, perhaps you need to fetch?", remote_ref->name, oid_to_hex(&remote_ref->old_oid));
+        }
 
         /* Remote branch must be an ancestor of remote HEAD */
         if (!verify_merge_base(&head_oid, remote_ref))
@@ -1817,7 +1936,9 @@ static int delete_remote_branch(const char *pattern, int force)
     /* Send delete request */
     fprintf(stderr, "Removing remote branch '%s'\n", remote_ref->name);
     if (dry_run)
+    {
         return 0;
+    }
     url           = xstrfmt("%s%s", repo->url, remote_ref->name);
     slot          = get_active_slot();
     slot->results = &results;
@@ -1827,8 +1948,10 @@ static int delete_remote_branch(const char *pattern, int force)
         run_active_slot(slot);
         free(url);
         if (results.curl_result != CURLE_OK)
+        {
             return error("DELETE request failed (%d/%ld)",
                          results.curl_result, results.http_code);
+        }
     }
     else
     {
@@ -1866,7 +1989,8 @@ int cmd_main(int argc, const char **argv)
     int                      rc = 0;
     int                      i;
     int                      new_refs;
-    struct ref              *ref, *local_refs;
+    struct ref              *ref;
+    struct ref              *local_refs;
 
     CALLOC_ARRAY(repo, 1);
 
@@ -1915,7 +2039,9 @@ int cmd_main(int argc, const char **argv)
                 continue;
             }
             if (!strcmp(arg, "-h"))
+            {
                 usage(http_push_usage);
+            }
         }
         if (!repo->url)
         {
@@ -1926,7 +2052,9 @@ int cmd_main(int argc, const char **argv)
             {
                 repo->path = strchr(path + 2, '/');
                 if (repo->path)
+                {
                     repo->path_len = strlen(repo->path);
+                }
             }
             continue;
         }
@@ -1935,10 +2063,14 @@ int cmd_main(int argc, const char **argv)
     }
 
     if (!repo->url)
+    {
         usage(http_push_usage);
+    }
 
     if (delete_branch && rs.nr != 1)
+    {
         die("You must specify only one branch name when deleting a remote branch");
+    }
 
     setup_git_directory();
 
@@ -1965,7 +2097,9 @@ int cmd_main(int argc, const char **argv)
     {
         info_ref_lock = lock_remote("info/refs", LOCK_TIME);
         if (info_ref_lock)
+        {
             repo->can_update_info_refs = 1;
+        }
         else
         {
             error("cannot lock existing info/refs");
@@ -1974,7 +2108,9 @@ int cmd_main(int argc, const char **argv)
         }
     }
     if (repo->has_info_packs)
+    {
         fetch_indices();
+    }
 
     /* Get a list of all local and remote heads to validate refspecs */
     local_refs = get_local_heads();
@@ -1991,7 +2127,9 @@ int cmd_main(int argc, const char **argv)
             fprintf(stderr, "Unable to delete remote branch %s\n",
                     branch);
             if (helper_status)
+            {
                 printf("error %s cannot remove\n", branch);
+            }
         }
         goto cleanup;
     }
@@ -2006,7 +2144,9 @@ int cmd_main(int argc, const char **argv)
     {
         fprintf(stderr, "No refs in common and none specified; doing nothing.\n");
         if (helper_status)
+        {
             printf("error null no match\n");
+        }
         rc = 0;
         goto cleanup;
     }
@@ -2018,7 +2158,9 @@ int cmd_main(int argc, const char **argv)
         struct strvec   commit_argv = STRVEC_INIT;
 
         if (!ref->peer_ref)
+        {
             continue;
+        }
 
         if (is_null_oid(&ref->peer_ref->new_oid))
         {
@@ -2026,11 +2168,15 @@ int cmd_main(int argc, const char **argv)
             {
                 error("Could not remove %s", ref->name);
                 if (helper_status)
+                {
                     printf("error %s cannot remove\n", ref->name);
+                }
                 rc = -4;
             }
             else if (helper_status)
+            {
                 printf("ok %s\n", ref->name);
+            }
             new_refs++;
             continue;
         }
@@ -2038,10 +2184,14 @@ int cmd_main(int argc, const char **argv)
         if (oideq(&ref->old_oid, &ref->peer_ref->new_oid))
         {
             if (push_verbosely)
+            {
                 /* stable plumbing output; do not modify or localize */
                 fprintf(stderr, "'%s': up-to-date\n", ref->name);
+            }
             if (helper_status)
+            {
                 printf("ok %s up to date\n", ref->name);
+            }
             continue;
         }
 
@@ -2066,7 +2216,9 @@ int cmd_main(int argc, const char **argv)
                     ref->name,
                     ref->peer_ref->name);
                 if (helper_status)
+                {
                     printf("error %s non-fast forward\n", ref->name);
+                }
                 rc = -2;
                 continue;
             }
@@ -2075,14 +2227,18 @@ int cmd_main(int argc, const char **argv)
         new_refs++;
 
         fprintf(stderr, "updating '%s'", ref->name);
-        if (strcmp(ref->name, ref->peer_ref->name))
+        if (strcmp(ref->name, ref->peer_ref->name) != 0)
+        {
             fprintf(stderr, " using '%s'", ref->peer_ref->name);
+        }
         fprintf(stderr, "\n  from %s\n  to   %s\n",
                 oid_to_hex(&ref->old_oid), oid_to_hex(&ref->new_oid));
         if (dry_run)
         {
             if (helper_status)
+            {
                 printf("ok %s\n", ref->name);
+            }
             continue;
         }
 
@@ -2093,7 +2249,9 @@ int cmd_main(int argc, const char **argv)
             fprintf(stderr, "Unable to lock remote branch %s\n",
                     ref->name);
             if (helper_status)
+            {
                 printf("error %s lock error\n", ref->name);
+            }
             rc = 1;
             continue;
         }
@@ -2103,8 +2261,10 @@ int cmd_main(int argc, const char **argv)
         strvec_push(&commit_argv, "--objects");
         strvec_push(&commit_argv, oid_to_hex(&ref->new_oid));
         if (!push_all && !is_null_oid(&ref->old_oid))
+        {
             strvec_pushf(&commit_argv, "^%s",
                          oid_to_hex(&ref->old_oid));
+        }
         repo_init_revisions(the_repository, &revs, setup_git_directory());
         setup_revisions(commit_argv.nr, commit_argv.v, &revs, NULL);
         revs.edge_hint = 0; /* just in case */
@@ -2112,7 +2272,9 @@ int cmd_main(int argc, const char **argv)
         /* Generate a list of objects that need to be pushed */
         pushing = 0;
         if (prepare_revision_walk(&revs))
+        {
             die("revision walk setup failed");
+        }
         mark_edges_uninteresting(&revs, NULL, 0);
         objects_to_send = get_delta(&revs, ref_lock);
         finish_all_active_slots();
@@ -2121,19 +2283,27 @@ int cmd_main(int argc, const char **argv)
            convenient time to pack them first if appropriate. */
         pushing = 1;
         if (objects_to_send)
+        {
             fprintf(stderr, "    sending %d objects\n",
                     objects_to_send);
+        }
 
         run_request_queue();
 
         /* Update the remote branch if all went well */
         if (aborted || !update_remote(&ref->new_oid, ref_lock))
+        {
             rc = 1;
+        }
 
         if (!rc)
+        {
             fprintf(stderr, "    done\n");
+        }
         if (helper_status)
+        {
             printf("%s %s\n", !rc ? "ok" : "error", ref->name);
+        }
         unlock_remote(ref_lock);
         check_locks();
         strvec_clear(&commit_argv);
@@ -2147,7 +2317,9 @@ int cmd_main(int argc, const char **argv)
         {
             fprintf(stderr, "Updating remote server info\n");
             if (!dry_run)
+            {
                 update_remote_info_refs(info_ref_lock);
+            }
         }
         else
         {
@@ -2157,7 +2329,9 @@ int cmd_main(int argc, const char **argv)
 
 cleanup:
     if (info_ref_lock)
+    {
         unlock_remote(info_ref_lock);
+    }
     free(repo);
 
     http_cleanup();

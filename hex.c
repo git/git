@@ -12,7 +12,9 @@ static int get_hash_hex_algop(const char *hex, unsigned char *hash,
     {
         int val = hex2chr(hex);
         if (val < 0)
+        {
             return -1;
+        }
         *hash++ = val;
         hex += 2;
     }
@@ -32,8 +34,10 @@ int get_oid_hex_algop(const char *hex, struct object_id *oid,
     {
         oid_set_algo(oid, algop);
         if (algop->rawsz != GIT_MAX_RAWSZ)
+        {
             memset(oid->hash + algop->rawsz, 0,
                    GIT_MAX_RAWSZ - algop->rawsz);
+        }
     }
     return ret;
 }
@@ -48,7 +52,9 @@ int get_oid_hex_any(const char *hex, struct object_id *oid)
     for (i = GIT_HASH_NALGOS - 1; i > 0; i--)
     {
         if (!get_oid_hex_algop(hex, oid, &hash_algos[i]))
+        {
             return i;
+        }
     }
     return GIT_HASH_UNKNOWN;
 }
@@ -64,7 +70,9 @@ int parse_oid_hex_algop(const char *hex, struct object_id *oid,
 {
     int ret = get_oid_hex_algop(hex, oid, algop);
     if (!ret)
+    {
         *end = hex + algop->hexsz;
+    }
     return ret;
 }
 
@@ -72,7 +80,9 @@ int parse_oid_hex_any(const char *hex, struct object_id *oid, const char **end)
 {
     int ret = get_oid_hex_any(hex, oid);
     if (ret)
+    {
         *end = hex + hash_algos[ret].hexsz;
+    }
     return ret;
 }
 
@@ -93,7 +103,9 @@ char *hash_to_hex_algop_r(char *buffer, const unsigned char *hash,
      * using the default hash.
      */
     if (algop == &hash_algos[0])
+    {
         algop = the_hash_algo;
+    }
 
     for (i = 0; i < algop->rawsz; i++)
     {

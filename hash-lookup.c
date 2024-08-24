@@ -62,11 +62,16 @@ int oid_pos(const struct object_id *oid, const void *table, size_t nr,
     size_t mi = 0;
 
     if (!nr)
+    {
         return -1;
+    }
 
     if (nr != 1)
     {
-        size_t lov, hiv, miv, ofs;
+        size_t lov;
+        size_t hiv;
+        size_t miv;
+        size_t ofs;
 
         for (ofs = 0; ofs < the_hash_algo->rawsz - 2; ofs += 2)
         {
@@ -74,9 +79,13 @@ int oid_pos(const struct object_id *oid, const void *table, size_t nr,
             hiv = take2(fn(nr - 1, table), ofs);
             miv = take2(oid, ofs);
             if (miv < lov)
+            {
                 return -1;
+            }
             if (hiv < miv)
+            {
                 return index_pos_to_insert_pos(nr);
+            }
             if (lov != hiv)
             {
                 /*
@@ -87,7 +96,9 @@ int oid_pos(const struct object_id *oid, const void *table, size_t nr,
                  */
                 mi = (nr - 1) * (miv - lov) / (hiv - lov);
                 if (lo <= mi && mi < hi)
+                {
                     break;
+                }
                 BUG("assertion failed in binary search");
             }
         }
@@ -98,11 +109,17 @@ int oid_pos(const struct object_id *oid, const void *table, size_t nr,
         int cmp;
         cmp = oidcmp(fn(mi, table), oid);
         if (!cmp)
+        {
             return mi;
+        }
         if (cmp > 0)
+        {
             hi = mi;
+        }
         else
+        {
             lo = mi + 1;
+        }
         mi = lo + (hi - lo) / 2;
     } while (lo < hi);
     return index_pos_to_insert_pos(lo);
@@ -111,7 +128,8 @@ int oid_pos(const struct object_id *oid, const void *table, size_t nr,
 int bsearch_hash(const unsigned char *hash, const uint32_t *fanout_nbo,
                  const unsigned char *table, size_t stride, uint32_t *result)
 {
-    uint32_t hi, lo;
+    uint32_t hi;
+    uint32_t lo;
 
     hi = ntohl(fanout_nbo[*hash]);
     lo = ((*hash == 0x0) ? 0 : ntohl(fanout_nbo[*hash - 1]));
@@ -125,16 +143,24 @@ int bsearch_hash(const unsigned char *hash, const uint32_t *fanout_nbo,
         if (!cmp)
         {
             if (result)
+            {
                 *result = mi;
+            }
             return 1;
         }
         if (cmp > 0)
+        {
             hi = mi;
+        }
         else
+        {
             lo = mi + 1;
+        }
     }
 
     if (result)
+    {
         *result = lo;
+    }
     return 0;
 }

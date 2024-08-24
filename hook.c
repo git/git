@@ -66,7 +66,9 @@ static int pick_next_hook(struct child_process *cp,
     const char          *hook_path = hook_cb->hook_path;
 
     if (!hook_path)
+    {
         return 0;
+    }
 
     cp->no_stdin = 1;
     strvec_pushv(&cp->env, hook_cb->options->env.v);
@@ -115,7 +117,9 @@ static int notify_hook_finished(int                result,
     hook_cb->rc |= result;
 
     if (opt->invoked_hook)
+    {
         *opt->invoked_hook = 1;
+    }
 
     return 0;
 }
@@ -152,13 +156,19 @@ int run_hooks_opt(struct repository *r, const char *hook_name,
     };
 
     if (!options)
+    {
         BUG("a struct run_hooks_opt must be provided to run_hooks");
+    }
 
     if (options->invoked_hook)
+    {
         *options->invoked_hook = 0;
+    }
 
     if (!hook_path && !options->error_if_missing)
+    {
         goto cleanup;
+    }
 
     if (!hook_path)
     {
@@ -196,7 +206,9 @@ int run_hooks_l(struct repository *r, const char *hook_name, ...)
 
     va_start(ap, hook_name);
     while ((arg = va_arg(ap, const char *)))
+    {
         strvec_push(&opt.args, arg);
+    }
     va_end(ap);
 
     return run_hooks_opt(r, hook_name, &opt);

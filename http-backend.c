@@ -59,9 +59,13 @@ static struct string_list *get_parameters(void)
 
             i = string_list_lookup(query_params, name);
             if (!i)
+            {
                 i = string_list_insert(query_params, name);
+            }
             else
+            {
                 free(i->util);
+            }
             i->util = value;
         }
     }
@@ -86,7 +90,9 @@ __attribute__((format(printf, 2, 3))) static void format_write(int fd, const cha
     n = vsnprintf(buffer, sizeof(buffer), fmt, args);
     va_end(args);
     if (n >= sizeof(buffer))
+    {
         die("protocol error: impossibly long line");
+    }
 
     write_or_die(fd, buffer, n);
 }
@@ -144,7 +150,9 @@ __attribute__((format(printf, 2, 3))) static NORETURN void not_found(struct strb
 
     va_start(params, err);
     if (err && *err)
+    {
         vfprintf(stderr, err, params);
+    }
     va_end(params);
     exit(0);
 }
@@ -159,7 +167,9 @@ __attribute__((format(printf, 2, 3))) static NORETURN void forbidden(struct strb
 
     va_start(params, err);
     if (err && *err)
+    {
         vfprintf(stderr, err, params);
+    }
     va_end(params);
     exit(0);
 }
@@ -167,7 +177,9 @@ __attribute__((format(printf, 2, 3))) static NORETURN void forbidden(struct strb
 static void select_getanyfile(struct strbuf *hdr)
 {
     if (!getanyfile)
+    {
         forbidden(hdr, "Unsupported service: getanyfile");
+    }
 }
 
 static void send_strbuf(struct strbuf *hdr,
@@ -188,11 +200,15 @@ static void send_local_file(struct strbuf *hdr, const char *the_type,
     int         fd;
     struct stat sb;
 
-    fd = open(p, O_RDONLY);
+    fd = open(p, O_RDONLY | O_CLOEXEC);
     if (fd < 0)
+    {
         not_found(hdr, "Cannot open '%s': %s", p, strerror(errno));
+    }
     if (fstat(fd, &sb) < 0)
+    {
         die_errno("Cannot stat '%s'", p);
+    }
 
     hdr_int(hdr, content_length, sb.st_size);
     hdr_str(hdr, content_type, the_type);
@@ -203,9 +219,13 @@ static void send_local_file(struct strbuf *hdr, const char *the_type,
     {
         ssize_t n = xread(fd, buf, buf_alloc);
         if (n < 0)
+        {
             die_errno("Cannot read '%s'", p);
+        }
         if (!n)
+        {
             break;
+        }
         write_or_die(1, buf, n);
     }
     close(fd);
@@ -243,8 +263,9 @@ static void get_idx_file(struct strbuf *hdr, char *name)
 
 static void http_config(void)
 {
-    int           i, value = 0;
-    struct strbuf var = STRBUF_INIT;
+    int           i;
+    int           value = 0;
+    struct strbuf var   = STRBUF_INIT;
 
     git_config_get_bool("http.getanyfile", &getanyfile);
     git_config_get_ulong("http.maxrequestbuffer", &max_request_buffer);
@@ -254,7 +275,9 @@ static void http_config(void)
         struct rpc_service *svc = &rpc_service[i];
         strbuf_addf(&var, "http.%s", svc->config_name);
         if (!git_config_get_bool(var.buf, &value))
+        {
             svc->enabled = value;
+        }
         strbuf_reset(&var);
     }
 
@@ -268,7 +291,9 @@ static struct rpc_service *select_service(struct strbuf *hdr, const char *name)
     int                 i;
 
     if (!skip_prefix(name, "git-", &svc_name))
+    {
         forbidden(hdr, "Unsupported service: '%s'", name);
+    }
 
     for (i = 0; i < ARRAY_SIZE(rpc_service); i++)
     {
@@ -281,7 +306,9 @@ static struct rpc_service *select_service(struct strbuf *hdr, const char *name)
     }
 
     if (!svc)
+    {
         forbidden(hdr, "Unsupported service: '%s'", name);
+    }
 
     if (svc->enabled < 0)
     {
@@ -289,14 +316,18 @@ static struct rpc_service *select_service(struct strbuf *hdr, const char *name)
         svc->enabled     = (user && *user) ? 1 : 0;
     }
     if (!svc->enabled)
+    {
         forbidden(hdr, "Service not enabled: '%s'", svc->name);
+    }
     return svc;
 }
 
 static void write_to_child(int out, const unsigned char *buf, ssize_t len, const char *prog_name)
 {
     if (write_in_full(out, buf, len) < 0)
+    {
         die("unable to write to '%s'", prog_name);
+    }
 }
 
 /*
@@ -306,11 +337,14 @@ static void write_to_child(int out, const unsigned char *buf, ssize_t len, const
  */
 static ssize_t read_request_eof(int fd, unsigned char **out)
 {
-    size_t         len = 0, alloc = 8192;
-    unsigned char *buf = xmalloc(alloc);
+    size_t         len   = 0;
+    size_t         alloc = 8192;
+    unsigned char *buf   = xmalloc(alloc);
 
     if (max_request_buffer < alloc)
+    {
         max_request_buffer = alloc;
+    }
 
     while (1)
     {
@@ -333,13 +367,17 @@ static ssize_t read_request_eof(int fd, unsigned char **out)
 
         /* otherwise, grow and try again (if we can) */
         if (alloc == max_request_buffer)
+        {
             die("request was larger than our maximum size (%lu);"
                 " try setting GIT_HTTP_MAX_REQUEST_BUFFER",
                 max_request_buffer);
+        }
 
         alloc = alloc_nr(alloc);
         if (alloc > max_request_buffer)
+        {
             alloc = max_request_buffer;
+        }
         REALLOC_ARRAY(buf, alloc);
     }
 }
@@ -373,16 +411,19 @@ static ssize_t get_content_length(void)
     const char *str = getenv("CONTENT_LENGTH");
 
     if (str && *str && !git_parse_ssize_t(str, &val))
+    {
         die("failed to parse CONTENT_LENGTH: %s", str);
+    }
     return val;
 }
 
 static ssize_t read_request(int fd, unsigned char **out, ssize_t req_len)
 {
     if (req_len < 0)
+    {
         return read_request_eof(fd, out);
-    else
-        return read_request_fixed_len(fd, req_len, out);
+    }
+    return read_request_fixed_len(fd, req_len, out);
 }
 
 static void inflate_request(const char *prog_name, int out, int buffer_input, ssize_t req_len)
@@ -405,26 +446,38 @@ static void inflate_request(const char *prog_name, int out, int buffer_input, ss
         if (buffer_input)
         {
             if (full_request)
+            {
                 n = 0; /* nothing left to read */
+            }
             else
+            {
                 n = read_request(0, &full_request, req_len);
+            }
             stream.next_in = full_request;
         }
         else
         {
             ssize_t buffer_len;
             if (req_len_defined && req_remaining_len <= sizeof(in_buf))
+            {
                 buffer_len = req_remaining_len;
+            }
             else
+            {
                 buffer_len = sizeof(in_buf);
+            }
             n              = xread(0, in_buf, buffer_len);
             stream.next_in = in_buf;
             if (req_len_defined && n > 0)
+            {
                 req_remaining_len -= n;
+            }
         }
 
         if (n <= 0)
+        {
             die("request ended in the middle of the gzip stream");
+        }
         stream.avail_in = n;
 
         while (0 < stream.avail_in)
@@ -436,14 +489,18 @@ static void inflate_request(const char *prog_name, int out, int buffer_input, ss
 
             ret = git_inflate(&stream, Z_NO_FLUSH);
             if (ret != Z_OK && ret != Z_STREAM_END)
+            {
                 die("zlib error inflating request, result %d", ret);
+            }
 
             n = stream.total_out - cnt;
             write_to_child(out, out_buf, stream.total_out - cnt, prog_name);
             cnt = stream.total_out;
 
             if (ret == Z_STREAM_END)
+            {
                 goto done;
+            }
         }
     }
 
@@ -458,7 +515,9 @@ static void copy_request(const char *prog_name, int out, ssize_t req_len)
     unsigned char *buf;
     ssize_t        n = read_request(0, &buf, req_len);
     if (n < 0)
+    {
         die_errno("error reading request body");
+    }
     write_to_child(out, buf, n, prog_name);
     close(out);
     free(buf);
@@ -474,7 +533,9 @@ static void pipe_fixed_length(const char *prog_name, int out, size_t req_len)
         size_t  chunk_length = remaining_len > sizeof(buf) ? sizeof(buf) : remaining_len;
         ssize_t n            = xread(0, buf, chunk_length);
         if (n < 0)
+        {
             die_errno("Reading request failed");
+        }
         write_to_child(out, buf, n, prog_name);
         remaining_len -= n;
     }
@@ -492,40 +553,64 @@ static void run_service(const char **argv, int buffer_input)
     ssize_t              req_len         = get_content_length();
 
     if (encoding && (!strcmp(encoding, "gzip") || !strcmp(encoding, "x-gzip")))
+    {
         gzipped_request = 1;
+    }
 
     if (!user || !*user)
+    {
         user = "anonymous";
+    }
     if (!host || !*host)
+    {
         host = "(none)";
+    }
 
     if (!getenv("GIT_COMMITTER_NAME"))
+    {
         strvec_pushf(&cld.env, "GIT_COMMITTER_NAME=%s", user);
+    }
     if (!getenv("GIT_COMMITTER_EMAIL"))
+    {
         strvec_pushf(&cld.env,
                      "GIT_COMMITTER_EMAIL=%s@http.%s", user, host);
+    }
 
     strvec_pushv(&cld.args, argv);
     if (buffer_input || gzipped_request || req_len >= 0)
+    {
         cld.in = -1;
+    }
     cld.git_cmd          = 1;
     cld.clean_on_exit    = 1;
     cld.wait_after_clean = 1;
     if (start_command(&cld))
+    {
         exit(1);
+    }
 
     close(1);
     if (gzipped_request)
+    {
         inflate_request(argv[0], cld.in, buffer_input, req_len);
+    }
     else if (buffer_input)
+    {
         copy_request(argv[0], cld.in, req_len);
+    }
     else if (req_len >= 0)
+    {
         pipe_fixed_length(argv[0], cld.in, req_len);
+    }
     else
+    {
         close(0);
+    }
 
     if (finish_command(&cld))
+    {
         exit(1);
+    }
 }
 
 static int show_text_ref(const char *name, const char *referent UNUSED, const struct object_id *oid,
@@ -535,14 +620,18 @@ static int show_text_ref(const char *name, const char *referent UNUSED, const st
     struct strbuf *buf       = cb_data;
     struct object *o         = parse_object(the_repository, oid);
     if (!o)
+    {
         return 0;
+    }
 
     strbuf_addf(buf, "%s\t%s\n", oid_to_hex(oid), name_nons);
     if (o->type == OBJ_TAG)
     {
         o = deref_tag(the_repository, o, name, 0);
         if (!o)
+        {
             return 0;
+        }
         strbuf_addf(buf, "%s\t%s^{}\n", oid_to_hex(&o->oid),
                     name_nons);
     }
@@ -600,7 +689,9 @@ static int show_head_ref(const char *refname, const char *referent UNUSED, const
                                                      NULL, NULL);
 
         if (target)
+        {
             strbuf_addf(buf, "ref: %s\n", strip_namespace(target));
+        }
     }
     else
     {
@@ -632,14 +723,18 @@ static void get_info_packs(struct strbuf *hdr, char *arg UNUSED)
     for (p = get_all_packs(the_repository); p; p = p->next)
     {
         if (p->pack_local)
+        {
             cnt++;
+        }
     }
 
     strbuf_grow(&buf, cnt * 53 + 2);
     for (p = get_all_packs(the_repository); p; p = p->next)
     {
         if (p->pack_local)
+        {
             strbuf_addf(&buf, "P %s\n", p->pack_name + objdirlen + 6);
+        }
     }
     strbuf_addch(&buf, '\n');
 
@@ -653,9 +748,11 @@ static void check_content_type(struct strbuf *hdr, const char *accepted_type)
     const char *actual_type = getenv("CONTENT_TYPE");
 
     if (!actual_type)
+    {
         actual_type = "";
+    }
 
-    if (strcmp(actual_type, accepted_type))
+    if (strcmp(actual_type, accepted_type) != 0)
     {
         http_status(hdr, 415, "Unsupported Media Type");
         hdr_nocache(hdr);
@@ -675,8 +772,10 @@ static void service_rpc(struct strbuf *hdr, char *service_name)
     struct strbuf       buf  = STRBUF_INIT;
 
     strvec_push(&argv, svc->name);
-    if (strcmp(service_name, "git-upload-archive"))
+    if (strcmp(service_name, "git-upload-archive") != 0)
+    {
         strvec_push(&argv, "--stateless-rpc");
+    }
     strvec_push(&argv, ".");
 
     strbuf_reset(&buf);
@@ -728,16 +827,22 @@ static char *getdir(void)
     if (root && *root)
     {
         if (!pathinfo || !*pathinfo)
+        {
             die("GIT_PROJECT_ROOT is set but PATH_INFO is not");
+        }
         if (daemon_avoid_alias(pathinfo))
+        {
             die("'%s': aliased", pathinfo);
+        }
         end_url_with_slash(&buf, root);
         if (pathinfo[0] == '/')
+        {
             pathinfo++;
+        }
         strbuf_addstr(&buf, pathinfo);
         return strbuf_detach(&buf, NULL);
     }
-    else if (path && *path)
+    if (path && *path)
     {
         return xstrdup(path);
     }
@@ -779,7 +884,9 @@ static int bad_request(struct strbuf *hdr, const struct service_cmd *c)
                 !strcmp(c->method, "GET") ? "GET, HEAD" : c->method);
     }
     else
+    {
         http_status(hdr, 400, "Bad Request");
+    }
     hdr_nocache(hdr);
     end_headers(hdr);
     return 0;
@@ -799,9 +906,13 @@ int cmd_main(int argc UNUSED, const char **argv UNUSED)
     set_die_is_recursing_routine(die_webcgi_recursing);
 
     if (!method)
+    {
         die("No REQUEST_METHOD from server");
+    }
     if (!strcmp(method, "HEAD"))
+    {
         method = "GET";
+    }
     dir = getdir();
 
     for (i = 0; i < ARRAY_SIZE(services); i++)
@@ -812,7 +923,9 @@ int cmd_main(int argc UNUSED, const char **argv UNUSED)
         int                 ret;
 
         if (regcomp(&re, c->pattern, REG_EXTENDED))
+        {
             die("Bogus regex in service table: %s", c->pattern);
+        }
         ret = regexec(&re, dir, 1, out, 0);
         regfree(&re);
 
@@ -820,8 +933,10 @@ int cmd_main(int argc UNUSED, const char **argv UNUSED)
         {
             size_t n;
 
-            if (strcmp(method, c->method))
+            if (strcmp(method, c->method) != 0)
+            {
                 return bad_request(&hdr, c);
+            }
 
             cmd               = c;
             n                 = out[0].rm_eo - out[0].rm_so;
@@ -832,13 +947,19 @@ int cmd_main(int argc UNUSED, const char **argv UNUSED)
     }
 
     if (!cmd)
+    {
         not_found(&hdr, "Request not supported: '%s'", dir);
+    }
 
     setup_path();
     if (!enter_repo(dir, 0))
+    {
         not_found(&hdr, "Not a git repository: '%s'", dir);
+    }
     if (!getenv("GIT_HTTP_EXPORT_ALL") && access("git-daemon-export-ok", F_OK))
+    {
         not_found(&hdr, "Repository not exported: '%s'", dir);
+    }
     free(dir);
 
     http_config();
@@ -846,7 +967,9 @@ int cmd_main(int argc UNUSED, const char **argv UNUSED)
                                        max_request_buffer);
     proto_header       = getenv("HTTP_GIT_PROTOCOL");
     if (proto_header)
+    {
         setenv(GIT_PROTOCOL_ENVIRONMENT, proto_header, 0);
+    }
 
     cmd->imp(&hdr, cmd_arg);
     free(cmd_arg);

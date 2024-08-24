@@ -36,7 +36,9 @@ static int fetch_using_walker(const char *raw_url, int get_verbosely,
     rc = walker_fetch(walker, commits, commit_id, write_ref, url);
 
     if (commits_on_stdin)
+    {
         walker_targets_free(commits, commit_id, write_ref);
+    }
 
     if (walker->corrupt_object_found)
     {
@@ -65,7 +67,9 @@ static void fetch_single_packfile(struct object_id *packfile_hash,
 
     preq = new_direct_http_pack_request(packfile_hash->hash, xstrdup(url));
     if (!preq)
+    {
         die("couldn't create http pack request");
+    }
     preq->slot->results              = &results;
     preq->index_pack_args            = index_pack_args;
     preq->preserve_index_pack_stdout = 1;
@@ -97,7 +101,9 @@ static void fetch_single_packfile(struct object_id *packfile_hash,
     }
 
     if ((ret = finish_http_pack_request(preq)))
+    {
         die("finish_http_pack_request gave result %d", ret);
+    }
 
     release_http_pack_request(preq);
     http_cleanup();
@@ -158,13 +164,17 @@ int cmd_main(int argc, const char **argv)
             const char *end;
 
             if (nongit)
+            {
                 die(_("not a git repository"));
+            }
 
             packfile = 1;
             if (parse_oid_hex_algop(p, &packfile_hash, &end,
                                     the_repository->hash_algo)
                 || *end)
+            {
                 die(_("argument to --packfile must be a valid hash (got '%s')"), p);
+            }
         }
         else if (skip_prefix(argv[arg], "--index-pack-arg=", &p))
         {
@@ -173,10 +183,14 @@ int cmd_main(int argc, const char **argv)
         arg++;
     }
     if (argc != arg + 2 - (commits_on_stdin || packfile))
+    {
         usage(http_fetch_usage);
+    }
 
     if (nongit)
+    {
         die(_("not a git repository"));
+    }
 
     trace2_cmd_name("http-fetch");
 
@@ -185,7 +199,9 @@ int cmd_main(int argc, const char **argv)
     if (packfile)
     {
         if (!index_pack_args.nr)
+        {
             die(_("the option '%s' requires '%s'"), "--packfile", "--index-pack-args");
+        }
 
         fetch_single_packfile(&packfile_hash, argv[arg],
                               index_pack_args.v);
@@ -194,7 +210,9 @@ int cmd_main(int argc, const char **argv)
     }
 
     if (index_pack_args.nr)
+    {
         die(_("the option '%s' requires '%s'"), "--index-pack-args", "--packfile");
+    }
 
     if (commits_on_stdin)
     {
