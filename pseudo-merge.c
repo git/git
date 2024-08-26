@@ -183,11 +183,12 @@ done:
 	return ret;
 }
 
-void load_pseudo_merges_from_config(struct string_list *list)
+void load_pseudo_merges_from_config(struct repository *r,
+				    struct string_list *list)
 {
 	struct string_list_item *item;
 
-	git_config(pseudo_merge_config, list);
+	repo_config(r, pseudo_merge_config, list);
 
 	for_each_string_list_item(item, list) {
 		struct pseudo_merge_group *group = item->util;
@@ -429,8 +430,7 @@ static void sort_pseudo_merge_matches(struct pseudo_merge_matches *matches)
 	QSORT(matches->unstable, matches->unstable_nr, commit_date_cmp);
 }
 
-void select_pseudo_merges(struct bitmap_writer *writer,
-			  struct commit **commits, size_t commits_nr)
+void select_pseudo_merges(struct bitmap_writer *writer)
 {
 	struct progress *progress = NULL;
 	uint32_t i;

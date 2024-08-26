@@ -53,7 +53,7 @@ void bitmap_writer_init(struct bitmap_writer *writer, struct repository *r,
 
 	string_list_init_dup(&writer->pseudo_merge_groups);
 
-	load_pseudo_merges_from_config(&writer->pseudo_merge_groups);
+	load_pseudo_merges_from_config(r, &writer->pseudo_merge_groups);
 }
 
 static void free_pseudo_merge_commit_idx(struct pseudo_merge_commit_idx *idx)
@@ -695,8 +695,7 @@ void bitmap_writer_select_commits(struct bitmap_writer *writer,
 		for (i = 0; i < indexed_commits_nr; ++i)
 			bitmap_writer_push_commit(writer, indexed_commits[i], 0);
 
-		select_pseudo_merges(writer, indexed_commits,
-				     indexed_commits_nr);
+		select_pseudo_merges(writer);
 
 		return;
 	}
@@ -738,7 +737,7 @@ void bitmap_writer_select_commits(struct bitmap_writer *writer,
 
 	stop_progress(&writer->progress);
 
-	select_pseudo_merges(writer, indexed_commits, indexed_commits_nr);
+	select_pseudo_merges(writer);
 }
 
 

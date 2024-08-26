@@ -10,6 +10,7 @@ struct commit;
 struct string_list;
 struct bitmap_index;
 struct bitmap_writer;
+struct repository;
 
 /*
  * A pseudo-merge group tracks the set of non-bitmapped reference tips
@@ -72,7 +73,7 @@ struct pseudo_merge_matches {
  * entry keys are the pseudo-merge group names, and the values are
  * pointers to the pseudo_merge_group structure itself.
  */
-void load_pseudo_merges_from_config(struct string_list *list);
+void load_pseudo_merges_from_config(struct repository *r, struct string_list *list);
 
 /*
  * A pseudo-merge commit index (pseudo_merge_commit_idx) maps a
@@ -94,8 +95,7 @@ struct pseudo_merge_commit_idx {
  *
  * Optionally shows a progress meter.
  */
-void select_pseudo_merges(struct bitmap_writer *writer,
-			  struct commit **commits, size_t commits_nr);
+void select_pseudo_merges(struct bitmap_writer *writer);
 
 /*
  * Represents a serialized view of a file containing pseudo-merge(s)
