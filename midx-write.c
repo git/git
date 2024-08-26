@@ -858,10 +858,9 @@ static int write_midx_bitmap(const char *midx_name,
 	for (i = 0; i < pdata->nr_objects; i++)
 		index[i] = &pdata->objects[i].idx;
 
-	bitmap_writer_init(&writer, the_repository);
+	bitmap_writer_init(&writer, the_repository, pdata);
 	bitmap_writer_show_progress(&writer, flags & MIDX_PROGRESS);
-	bitmap_writer_build_type_index(&writer, pdata, index,
-				       pdata->nr_objects);
+	bitmap_writer_build_type_index(&writer, index);
 
 	/*
 	 * bitmap_writer_finish expects objects in lex order, but pack_order
@@ -880,13 +879,12 @@ static int write_midx_bitmap(const char *midx_name,
 		index[pack_order[i]] = &pdata->objects[i].idx;
 
 	bitmap_writer_select_commits(&writer, commits, commits_nr);
-	ret = bitmap_writer_build(&writer, pdata);
+	ret = bitmap_writer_build(&writer);
 	if (ret < 0)
 		goto cleanup;
 
 	bitmap_writer_set_checksum(&writer, midx_hash);
-	bitmap_writer_finish(&writer, index, pdata->nr_objects, bitmap_name,
-			     options);
+	bitmap_writer_finish(&writer, index, bitmap_name, options);
 
 cleanup:
 	free(index);
