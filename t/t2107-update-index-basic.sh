@@ -5,6 +5,7 @@ test_description='basic update-index tests
 Tests for command-line parsing and basic operation.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'update-index --nonsense fails' '
