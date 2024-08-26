@@ -130,11 +130,9 @@ Fixes since v2.46
 
  * The credential helper to talk to OSX keychain sometimes sent
    garbage bytes after the username, which has been corrected.
-   (merge b201316835 jk/osxkeychain-username-is-nul-terminated later to maint).
 
  * A recent update broke "git ls-remote" used outside a repository,
    which has been corrected.
-   (merge 9e89dcb66a ps/ls-remote-out-of-repo-fix later to maint).
 
  * The patch parser in 'git apply' has been a bit more lenient against
    unexpected mode bits, like 100664, recorded on extended header lines.
@@ -143,7 +141,6 @@ Fixes since v2.46
  * "git config --value=foo --fixed-value section.key newvalue" barfed
    when the existing value in the configuration file used the
    valueless true syntax, which has been corrected.
-   (merge 615d2de3b4 tb/config-fixed-value-with-valueless-true later to maint).
 
  * The patch parser in "git patch-id" has been tightened to avoid
    getting confused by lines that look like a patch header in the log
@@ -152,19 +149,15 @@ Fixes since v2.46
 
  * "git reflog expire" failed to honor annotated tags when computing
    reachable commits.
-   (merge 5133ead528 jc/reflog-expire-lookup-commit-fix later to maint).
 
  * A flakey test and incorrect calls to strtoX() functions have been
    fixed.
-   (merge ec60bb9fc4 kl/test-fixes later to maint).
 
  * Follow-up on 2.45.1 regression fix.
-   (merge ee0be850b0 jc/safe-directory later to maint).
 
  * "git rev-list ... | git diff-tree -p --remerge-diff --stdin" should
    behave more or less like "git log -p --remerge-diff" but instead it
    crashed, forgetting to prepare a temporary object store needed.
-   (merge a77554ea09 xx/diff-tree-remerge-diff-fix later to maint).
 
  * "git bundle unbundle" outside a repository triggered a BUG()
    unnecessarily, which has been corrected.
@@ -180,14 +173,6 @@ Fixes since v2.46
 
  * Other code cleanup, docfix, build fix, etc.
    (merge bb0498b1bb jc/how-to-maintain-updates later to maint).
-   (merge 7c7516b8db jc/jl-git-no-advice-fix later to maint).
-   (merge c3d034df16 jc/leakfix-hashfile later to maint).
-   (merge d98d9c77e5 jc/leakfix-mailmap later to maint).
-   (merge c199707496 jr/ls-files-expand-literal-doc later to maint).
-   (merge e2e373ba82 ss/packed-ref-store-leakfix later to maint).
-   (merge 0c4d5aa22d rs/use-decimal-width later to maint).
-   (merge 67be8c4de5 jc/document-use-of-local later to maint).
-   (merge 098be29f5b rs/t-example-simplify later to maint).
    (merge 0d66f601a9 jc/tests-no-useless-tee later to maint).
    (merge 170cdfc5a4 jc/grammo-fixes later to maint).
    (merge 983555a1f2 jc/how-to-maintain-updates later to maint).
