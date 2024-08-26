@@ -1215,7 +1215,7 @@ static int canonicalize_ceiling_entry(struct string_list_item *item,
 }
 
 struct safe_directory_data {
-	const char *path;
+	char *path;
 	int is_safe;
 };
 
@@ -1235,17 +1235,45 @@ static int safe_directory_cb(const char *key, const char *value,
 		char *allowed = NULL;
 
 		if (!git_config_pathname(&allowed, key, value)) {
-			const char *check = allowed ? allowed : value;
-			if (ends_with(check, "/*")) {
-				size_t len = strlen(check);
-				if (!fspathncmp(check, data->path, len - 1))
+			char *normalized = NULL;
+
+			/*
+			 * Setting safe.directory to a non-absolute path
+			 * makes little sense---it won't be relative to
+			 * the configuration file the item is defined in.
+			 * Except for ".", which means "if we are at the top
+			 * level of a repository, then it is OK", which is
+			 * slightly tighter than "*" that allows discovery.
+			 */
+			if (!is_absolute_path(allowed) && strcmp(allowed, ".")) {
+				warning(_("safe.directory '%s' not absolute"),
+					allowed);
+				goto next;
+			}
+
+			/*
+			 * A .gitconfig in $HOME may be shared across
+			 * different machines and safe.directory entries
+			 * may or may not exist as paths on all of these
+			 * machines.  In other words, it is not a warning
+			 * worthy event when there is no such path on this
+			 * machine---the entry may be useful elsewhere.
+			 */
+			normalized = real_pathdup(allowed, 0);
+			if (!normalized)
+				goto next;
+
+			if (ends_with(normalized, "/*")) {
+				size_t len = strlen(normalized);
+				if (!fspathncmp(normalized, data->path, len - 1))
 					data->is_safe = 1;
-			} else if (!fspathcmp(data->path, check)) {
+			} else if (!fspathcmp(data->path, normalized)) {
 				data->is_safe = 1;
 			}
-		}
-		if (allowed != value)
+		next:
+			free(normalized);
 			free(allowed);
+		}
 	}
 
 	return 0;
@@ -1263,9 +1291,7 @@ static int ensure_valid_ownership(const char *gitfile,
 				  const char *worktree, const char *gitdir,
 				  struct strbuf *report)
 {
-	struct safe_directory_data data = {
-		.path = worktree ? worktree : gitdir
-	};
+	struct safe_directory_data data = { 0 };
 
 	if (!git_env_bool("GIT_TEST_ASSUME_DIFFERENT_OWNER", 0) &&
 	    (!gitfile || is_path_owned_by_current_user(gitfile, report)) &&
@@ -1274,12 +1300,22 @@ static int ensure_valid_ownership(const char *gitfile,
 		return 1;
 
 	/*
+	 * normalize the data.path for comparison with normalized paths
+	 * that come from the configuration file.  The path is unsafe
+	 * if it cannot be normalized.
+	 */
+	data.path = real_pathdup(worktree ? worktree : gitdir, 0);
+	if (!data.path)
+		return 0;
+
+	/*
 	 * data.path is the "path" that identifies the repository and it is
 	 * constant regardless of what failed above. data.is_safe should be
 	 * initialized to false, and might be changed by the callback.
 	 */
 	git_protected_config(safe_directory_cb, &data);
 
+	free(data.path);
 	return data.is_safe;
 }
 
