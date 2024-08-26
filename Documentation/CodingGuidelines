@@ -303,7 +303,9 @@ For C programs:
      v12.01, 2022-03-28).
 
  - Variables have to be declared at the beginning of the block, before
-   the first statement (i.e. -Wdeclaration-after-statement).
+   the first statement (i.e. -Wdeclaration-after-statement).  It is
+   encouraged to have a blank line between the end of the declarations
+   and the first statement in the block.
 
  - NULL pointers shall be written as NULL, not as 0.
 
@@ -322,6 +324,13 @@ For C programs:
 
         while( condition )
 		func (bar+1);
+
+ - A binary operator (other than ",") and ternary conditional "?:"
+   have a space on each side of the operator to separate it from its
+   operands.  E.g. "A + 1", not "A+1".
+
+ - A unary operator (other than "." and "->") have no space between it
+   and its operand.  E.g. "(char *)ptr", not "(char *) ptr".
 
  - Do not explicitly compare an integral value with constant 0 or '\0',
    or a pointer value with constant NULL.  For instance, to validate that
