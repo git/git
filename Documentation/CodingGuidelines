@@ -185,8 +185,8 @@ For shell scripts specifically (not exhaustive):
 
  - Even though "local" is not part of POSIX, we make heavy use of it
    in our test suite.  We do not use it in scripted Porcelains, and
-   hopefully nobody starts using "local" before they are reimplemented
-   in C ;-)
+   hopefully nobody starts using "local" before all shells that matter
+   support it (notably, ksh from AT&T Research does not support it yet).
 
  - Some versions of shell do not understand "export variable=value",
    so we write "variable=value" and then "export variable" on two
