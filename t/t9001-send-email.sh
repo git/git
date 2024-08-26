@@ -2084,22 +2084,24 @@ test_dump_aliases '--dump-aliases mailrc format' \
 	'bob' \
 	'chloe' \
 	'eve' <<-\EOF
-	alias alice   Alice W Land <awol@example.com>
-	alias eve     Eve <eve@example.com>
-	alias bob     Robert Bobbyton <bob@example.com>
+	alias alice   "Alice W Land <awol@example.com>"
+	alias eve     "Eve <eve@example.com>"
+	alias bob     "Robert Bobbyton <bob@example.com>"
 	alias chloe   chloe@example.com
 	EOF
 
 test_dump_aliases '--dump-aliases pine format' \
 	'pine' \
 	'alice' \
+	'bcgrp' \
 	'bob' \
 	'chloe' \
 	'eve' <<-\EOF
-	alice	Alice W Land	<awol@example.com>
-	eve	Eve	<eve@example.com>
-	bob	Robert	Bobbyton <bob@example.com>
+	alice	Alice W Land	awol@example.com		Friend
+	eve	Eve	eve@example.com
+	bob	Robert Bobbyton	bob@example.com
 	chloe		chloe@example.com
+	bcgrp		(bob, chloe, Other <o@example.com>)
 	EOF
 
 test_dump_aliases '--dump-aliases gnus format' \
@@ -2116,6 +2118,110 @@ test_dump_aliases '--dump-aliases gnus format' \
 
 test_expect_success '--dump-aliases must be used alone' '
 	test_must_fail git send-email --dump-aliases --to=janice@example.com -1 refs/heads/accounting
+'
+
+test_translate_aliases () {
+	msg="$1" && shift &&
+	filetype="$1" && shift &&
+	aliases="$1" && shift &&
+	printf '%s\n' "$@" >expect &&
+	cat >.tmp-email-aliases &&
+	printf '%s\n' "$aliases" >aliases &&
+
+	test_expect_success $PREREQ "$msg" '
+		clean_fake_sendmail && rm -fr outdir &&
+		git config --replace-all sendemail.aliasesfile \
+			"$(pwd)/.tmp-email-aliases" &&
+		git config sendemail.aliasfiletype "$filetype" &&
+		git send-email --translate-aliases <aliases 2>errors >actual &&
+		test_cmp expect actual
+	'
+}
+
+test_translate_aliases '--translate-aliases sendmail format' \
+	'sendmail' \
+	'alice bcgrp' \
+	'Alice W Land <awol@example.com>' \
+	'Robert Bobbyton <bob@example.com>' \
+	'chloe@example.com' \
+	'Other <o@example.com>' <<-\EOF
+	alice: Alice W Land <awol@example.com>
+	bob: Robert Bobbyton <bob@example.com>
+	chloe: chloe@example.com
+	abgroup: alice, bob
+	bcgrp: bob, chloe, Other <o@example.com>
+	EOF
+
+test_translate_aliases '--translate-aliases mutt format' \
+	'mutt' \
+	'donald bob' \
+	'Donald C Carlton <donc@example.com>' \
+	'Robert Bobbyton <bob@example.com>' <<-\EOF
+	alias alice Alice W Land <awol@example.com>
+	alias donald Donald C Carlton <donc@example.com>
+	alias bob Robert Bobbyton <bob@example.com>
+	alias chloe chloe@example.com
+	EOF
+
+test_translate_aliases '--translate-aliases mailrc format' \
+	'mailrc' \
+	'chloe eve alice' \
+	'chloe@example.com' \
+	'Eve <eve@example.com>' \
+	'Alice W Land <awol@example.com>' <<-\EOF
+	alias alice   "Alice W Land <awol@example.com>"
+	alias eve     "Eve <eve@example.com>"
+	alias bob     "Robert Bobbyton <bob@example.com>"
+	alias chloe   chloe@example.com
+	EOF
+
+test_translate_aliases '--translate-aliases pine format' \
+	'pine' \
+	'eve bob bcgrp' \
+	'eve@example.com' \
+	'bob@example.com' \
+	'bob@example.com' \
+	'chloe@example.com' \
+	'Other <o@example.com>' <<-\EOF
+	alice	Alice W Land	awol@example.com		Friend
+	eve	Eve	eve@example.com
+	bob	Robert Bobbyton	bob@example.com
+	chloe		chloe@example.com
+	bcgrp		(bob, chloe, Other <o@example.com>)
+	EOF
+
+test_translate_aliases '--translate-aliases gnus format' \
+	'gnus' \
+	'alice chloe eve' \
+	'awol@example.com' \
+	'chloe@example.com' \
+	'eve@example.com' <<-\EOF
+	(define-mail-alias "alice" "awol@example.com")
+	(define-mail-alias "eve" "eve@example.com")
+	(define-mail-alias "bob" "bob@example.com")
+	(define-mail-alias "chloe" "chloe@example.com")
+	EOF
+
+test_expect_success $PREREQ '--translate-aliases passes valid addresses through' '
+	cat >expect <<-\EOF &&
+	Other <o@example.com>
+	EOF
+	cat >aliases <<-\EOF &&
+	Other <o@example.com>
+	EOF
+	git send-email --translate-aliases <aliases >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success $PREREQ '--translate-aliases passes unknown aliases through' '
+	cat >expect <<-\EOF &&
+	blargh
+	EOF
+	cat >aliases <<-\EOF &&
+	blargh
+	EOF
+	git send-email --translate-aliases <aliases >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success $PREREQ 'aliases and sendemail.identity' '
