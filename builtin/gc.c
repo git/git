@@ -1160,6 +1160,12 @@ static int pack_loose(struct maintenance_run_opts *opts)
 
 	pack_proc.in = -1;
 
+	/*
+	 * git-pack-objects(1) ends up writing the pack hash to stdout, which
+	 * we do not care for.
+	 */
+	pack_proc.out = -1;
+
 	if (start_command(&pack_proc)) {
 		error(_("failed to start 'git pack-objects' process"));
 		return 1;
@@ -1429,8 +1435,11 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts,
 	free(lock_path);
 
 	/* Failure to daemonize is ok, we'll continue in foreground. */
-	if (opts->detach > 0)
+	if (opts->detach > 0) {
+		trace2_region_enter("maintenance", "detach", the_repository);
 		daemonize();
+		trace2_region_leave("maintenance", "detach", the_repository);
+	}
 
 	for (i = 0; !found_selected && i < TASK__COUNT; i++)
 		found_selected = tasks[i].selected_order >= 0;
