@@ -49,22 +49,47 @@ test_expect_success 'run [--auto|--quiet]' '
 		git maintenance run --auto 2>/dev/null &&
 	GIT_TRACE2_EVENT="$(pwd)/run-no-quiet.txt" \
 		git maintenance run --no-quiet 2>/dev/null &&
-	test_subcommand git gc --quiet <run-no-auto.txt &&
-	test_subcommand ! git gc --auto --quiet <run-auto.txt &&
-	test_subcommand git gc --no-quiet <run-no-quiet.txt
+	test_subcommand git gc --quiet --no-detach <run-no-auto.txt &&
+	test_subcommand ! git gc --auto --quiet --no-detach <run-auto.txt &&
+	test_subcommand git gc --no-quiet --no-detach <run-no-quiet.txt
 '
 
 test_expect_success 'maintenance.auto config option' '
 	GIT_TRACE2_EVENT="$(pwd)/default" git commit --quiet --allow-empty -m 1 &&
-	test_subcommand git maintenance run --auto --quiet <default &&
+	test_subcommand git maintenance run --auto --quiet --detach <default &&
 	GIT_TRACE2_EVENT="$(pwd)/true" \
 		git -c maintenance.auto=true \
 		commit --quiet --allow-empty -m 2 &&
-	test_subcommand git maintenance run --auto --quiet  <true &&
+	test_subcommand git maintenance run --auto --quiet --detach <true &&
 	GIT_TRACE2_EVENT="$(pwd)/false" \
 		git -c maintenance.auto=false \
 		commit --quiet --allow-empty -m 3 &&
-	test_subcommand ! git maintenance run --auto --quiet  <false
+	test_subcommand ! git maintenance run --auto --quiet --detach <false
+'
+
+for cfg in maintenance.autoDetach gc.autoDetach
+do
+	test_expect_success "$cfg=true config option" '
+		test_when_finished "rm -f trace" &&
+		test_config $cfg true &&
+		GIT_TRACE2_EVENT="$(pwd)/trace" git commit --quiet --allow-empty -m 1 &&
+		test_subcommand git maintenance run --auto --quiet --detach <trace
+	'
+
+	test_expect_success "$cfg=false config option" '
+		test_when_finished "rm -f trace" &&
+		test_config $cfg false &&
+		GIT_TRACE2_EVENT="$(pwd)/trace" git commit --quiet --allow-empty -m 1 &&
+		test_subcommand git maintenance run --auto --quiet --no-detach <trace
+	'
+done
+
+test_expect_success "maintenance.autoDetach overrides gc.autoDetach" '
+	test_when_finished "rm -f trace" &&
+	test_config maintenance.autoDetach false &&
+	test_config gc.autoDetach true &&
+	GIT_TRACE2_EVENT="$(pwd)/trace" git commit --quiet --allow-empty -m 1 &&
+	test_subcommand git maintenance run --auto --quiet --no-detach <trace
 '
 
 test_expect_success 'register uses XDG_CONFIG_HOME config if it exists' '
@@ -129,9 +154,9 @@ test_expect_success 'run --task=<task>' '
 		git maintenance run --task=commit-graph 2>/dev/null &&
 	GIT_TRACE2_EVENT="$(pwd)/run-both.txt" \
 		git maintenance run --task=commit-graph --task=gc 2>/dev/null &&
-	test_subcommand ! git gc --quiet <run-commit-graph.txt &&
-	test_subcommand git gc --quiet <run-gc.txt &&
-	test_subcommand git gc --quiet <run-both.txt &&
+	test_subcommand ! git gc --quiet --no-detach <run-commit-graph.txt &&
+	test_subcommand git gc --quiet --no-detach <run-gc.txt &&
+	test_subcommand git gc --quiet --no-detach <run-both.txt &&
 	test_subcommand git commit-graph write --split --reachable --no-progress <run-commit-graph.txt &&
 	test_subcommand ! git commit-graph write --split --reachable --no-progress <run-gc.txt &&
 	test_subcommand git commit-graph write --split --reachable --no-progress <run-both.txt
@@ -906,6 +931,45 @@ test_expect_success 'failed schedule prevents config change' '
 			git -C failcase maintenance start &&
 		test_must_fail git -C failcase config maintenance.auto || return 1
 	done
+'
+
+test_expect_success '--no-detach causes maintenance to not run in background' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		# Prepare the repository such that git-maintenance(1) ends up
+		# outputting something.
+		test_commit something &&
+		git config set maintenance.gc.enabled false &&
+		git config set maintenance.loose-objects.enabled true &&
+		git config set maintenance.loose-objects.auto 1 &&
+		git config set maintenance.incremental-repack.enabled true &&
+
+		# We have no better way to check whether or not the task ran in
+		# the background than to verify whether it output anything. The
+		# next testcase checks the reverse, making this somewhat safer.
+		git maintenance run --no-detach >out 2>&1 &&
+		test_line_count = 1 out
+	)
+'
+
+test_expect_success '--detach causes maintenance to run in background' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		test_commit something &&
+		git config set maintenance.gc.enabled false &&
+		git config set maintenance.loose-objects.enabled true &&
+		git config set maintenance.loose-objects.auto 1 &&
+		git config set maintenance.incremental-repack.enabled true &&
+
+		git maintenance run --detach >out 2>&1 &&
+		test_must_be_empty out
+	)
 '
 
 test_done

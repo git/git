@@ -40,7 +40,8 @@ use, it'll affect how the auto pack limit works.
 
 gc.autoDetach::
 	Make `git gc --auto` return immediately and run in the background
-	if the system supports it. Default is true.
+	if the system supports it. Default is true. This config variable acts
+	as a fallback in case `maintenance.autoDetach` is not set.
 
 gc.bigPackThreshold::
 	If non-zero, all non-cruft packs larger than this limit are kept

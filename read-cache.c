@@ -3195,18 +3195,24 @@ static int write_split_index(struct index_state *istate,
 	return ret;
 }
 
-static const char *shared_index_expire = "2.weeks.ago";
-
 static unsigned long get_shared_index_expire_date(void)
 {
 	static unsigned long shared_index_expire_date;
 	static int shared_index_expire_date_prepared;
 
 	if (!shared_index_expire_date_prepared) {
+		const char *shared_index_expire = "2.weeks.ago";
+		char *value = NULL;
+
 		repo_config_get_expiry(the_repository, "splitindex.sharedindexexpire",
-				       &shared_index_expire);
+				       &value);
+		if (value)
+			shared_index_expire = value;
+
 		shared_index_expire_date = approxidate(shared_index_expire);
 		shared_index_expire_date_prepared = 1;
+
+		free(value);
 	}
 
 	return shared_index_expire_date;

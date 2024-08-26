@@ -2694,9 +2694,10 @@ void git_protected_config(config_fn_t fn, void *data)
 	configset_iter(&protected_config, fn, data);
 }
 
-int repo_config_get_expiry(struct repository *r, const char *key, const char **output)
+int repo_config_get_expiry(struct repository *r, const char *key, char **output)
 {
-	int ret = repo_config_get_string(r, key, (char **)output);
+	int ret = repo_config_get_string(r, key, output);
+
 	if (ret)
 		return ret;
 	if (strcmp(*output, "now")) {

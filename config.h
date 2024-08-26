@@ -672,7 +672,7 @@ int repo_config_get_split_index(struct repository *r);
 int repo_config_get_max_percent_split_change(struct repository *r);
 
 /* This dies if the configured or default date is in the future */
-int repo_config_get_expiry(struct repository *r, const char *key, const char **output);
+int repo_config_get_expiry(struct repository *r, const char *key, char **output);
 
 /* parse either "this many days" integer, or "5.days.ago" approxidate */
 int repo_config_get_expiry_in_days(struct repository *r, const char *key,

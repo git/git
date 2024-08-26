@@ -338,14 +338,14 @@ test_expect_success 'gc.maxCruftSize sets appropriate repack options' '
 	test_subcommand $cruft_max_size_opts --max-cruft-size=3145728 <trace2.txt
 '
 
-run_and_wait_for_auto_gc () {
+run_and_wait_for_gc () {
 	# We read stdout from gc for the side effect of waiting until the
 	# background gc process exits, closing its fd 9.  Furthermore, the
 	# variable assignment from a command substitution preserves the
 	# exit status of the main gc process.
 	# Note: this fd trickery doesn't work on Windows, but there is no
 	# need to, because on Win the auto gc always runs in the foreground.
-	doesnt_matter=$(git gc --auto 9>&1)
+	doesnt_matter=$(git gc "$@" 9>&1)
 }
 
 test_expect_success 'background auto gc does not run if gc.log is present and recent but does if it is old' '
@@ -361,7 +361,7 @@ test_expect_success 'background auto gc does not run if gc.log is present and re
 	test-tool chmtime =-345600 .git/gc.log &&
 	git gc --auto &&
 	test_config gc.logexpiry 2.days &&
-	run_and_wait_for_auto_gc &&
+	run_and_wait_for_gc --auto &&
 	ls .git/objects/pack/pack-*.pack >packs &&
 	test_line_count = 1 packs
 '
@@ -391,9 +391,46 @@ test_expect_success 'background auto gc respects lock for all operations' '
 	printf "%d %s" "$shell_pid" "$hostname" >.git/gc.pid &&
 
 	# our gc should exit zero without doing anything
-	run_and_wait_for_auto_gc &&
+	run_and_wait_for_gc --auto &&
 	(ls -1 .git/refs/heads .git/reftable >actual || true) &&
 	test_cmp expect actual
+'
+
+test_expect_success '--detach overrides gc.autoDetach=false' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		# Prepare the repository such that git-gc(1) ends up repacking.
+		test_commit "$(test_oid blob17_1)" &&
+		test_commit "$(test_oid blob17_2)" &&
+		git config gc.autodetach false &&
+		git config gc.auto 2 &&
+
+		# Note that we cannot use `test_cmp` here to compare stderr
+		# because it may contain output from `set -x`.
+		run_and_wait_for_gc --auto --detach 2>actual &&
+		test_grep "Auto packing the repository in background for optimum performance." actual
+	)
+'
+
+test_expect_success '--no-detach overrides gc.autoDetach=true' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		# Prepare the repository such that git-gc(1) ends up repacking.
+		test_commit "$(test_oid blob17_1)" &&
+		test_commit "$(test_oid blob17_2)" &&
+		git config gc.autodetach true &&
+		git config gc.auto 2 &&
+
+		GIT_PROGRESS_DELAY=0 git gc --auto --no-detach 2>output &&
+		test_grep "Auto packing the repository for optimum performance." output &&
+		test_grep "Collecting referenced commits: 2, done." output
+	)
 '
 
 # DO NOT leave a detached auto gc process running near the end of the
