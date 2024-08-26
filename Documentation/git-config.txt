@@ -309,7 +309,7 @@ recommended to migrate to the new syntax.
 	Replaced by `git config get [--value=<pattern>] <name>`.
 
 --get-all <name> [<value-pattern>]::
-	Replaced by `git config get [--value=<pattern>] --all --show-names <name>`.
+	Replaced by `git config get [--value=<pattern>] --all <name>`.
 
 --get-regexp <name-regexp>::
 	Replaced by `git config get --all --show-names --regexp <name-regexp>`.
