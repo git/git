@@ -322,7 +322,7 @@ static void t_alloc(struct hashmap *map, unsigned int ignore_case)
 	free(removed);
 }
 
-static void t_intern(struct hashmap *map, unsigned int ignore_case)
+static void t_intern(void)
 {
 	const char *values[] = { "value1", "Value1", "value2", "value2" };
 
@@ -356,6 +356,6 @@ int cmd_main(int argc UNUSED, const char **argv UNUSED)
 	TEST(setup(t_iterate, 0), "iterate works");
 	TEST(setup(t_iterate, 1), "iterate (case insensitive) works");
 	TEST(setup(t_alloc, 0), "grow / shrink works");
-	TEST(setup(t_intern, 0), "string interning works");
+	TEST(t_intern(), "string interning works");
 	return test_done();
 }

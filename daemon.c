@@ -1177,13 +1177,13 @@ static int service_loop(struct socketlist *socklist)
 
 struct credentials;
 
-static void drop_privileges(struct credentials *cred)
+static void drop_privileges(struct credentials *cred UNUSED)
 {
 	/* nothing */
 }
 
-static struct credentials *prepare_credentials(const char *user_name,
-    const char *group_name)
+static struct credentials *prepare_credentials(const char *user_name UNUSED,
+					       const char *group_name UNUSED)
 {
 	die("--user not supported on this platform");
 }

@@ -945,7 +945,7 @@ static void t_corrupt_table(void)
 	strbuf_release(&buf);
 }
 
-int cmd_main(int argc, const char *argv[])
+int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 {
 	TEST(t_buffer(), "strbuf works as blocksource");
 	TEST(t_corrupt_table(), "read-write on corrupted table");

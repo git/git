@@ -2392,9 +2392,10 @@ struct do_for_each_reflog_help {
 	void *cb_data;
 };
 
-static int do_for_each_reflog_helper(const char *refname, const char *referent,
+static int do_for_each_reflog_helper(const char *refname,
+				     const char *referent UNUSED,
 				     const struct object_id *oid UNUSED,
-				     int flags,
+				     int flags UNUSED,
 				     void *cb_data)
 {
 	struct do_for_each_reflog_help *hp = cb_data;

@@ -31,7 +31,7 @@
 	"\x10\x11\x12\x13\x14\x15\x16\x17\x18\x19\x1a\x1b\x1c\x1d\x1e\x1f" \
 	"\x7f"
 
-int cmd_main(int argc, const char **argv) {
+int cmd_main(int argc UNUSED, const char **argv UNUSED) {
 	TEST_CHAR_CLASS(isspace, " \n\r\t");
 	TEST_CHAR_CLASS(isdigit, DIGIT);
 	TEST_CHAR_CLASS(isalpha, LOWER UPPER);

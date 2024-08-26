@@ -192,7 +192,7 @@ static void socket_perror(const char *func, struct imap_socket *sock, int ret)
 
 #ifdef NO_OPENSSL
 static int ssl_socket_connect(struct imap_socket *sock UNUSED,
-			      const struct imap_server_conf *cfg,
+			      const struct imap_server_conf *cfg UNUSED,
 			      int use_tls_only UNUSED)
 {
 	fprintf(stderr, "SSL requested but SSL support not compiled in\n");

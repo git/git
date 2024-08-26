@@ -105,7 +105,7 @@ static void t_addstr(struct strbuf *buf, const void *data)
 	check_str(buf->buf + orig_len, text);
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd_main(int argc UNUSED, const char **argv UNUSED)
 {
 	if (!TEST(t_static_init(), "static initialization works"))
 		test_skip_all("STRBUF_INIT is broken");

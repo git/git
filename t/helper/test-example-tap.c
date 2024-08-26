@@ -70,7 +70,7 @@ static void t_empty(void)
 	; /* empty */
 }
 
-int cmd__example_tap(int argc, const char **argv)
+int cmd__example_tap(int argc UNUSED, const char **argv UNUSED)
 {
 	check(1);
 

@@ -19,7 +19,7 @@
 		} \
 	} while (0)
 
-int cmd_main(int argc, const char **argv)
+int cmd_main(int argc UNUSED, const char **argv UNUSED)
 {
 	if_test ("static initialization") {
 		struct strvec vec = STRVEC_INIT;

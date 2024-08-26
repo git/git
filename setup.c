@@ -1907,7 +1907,7 @@ struct template_dir_cb_data {
 };
 
 static int template_dir_cb(const char *key, const char *value,
-			   const struct config_context *ctx, void *d)
+			   const struct config_context *ctx UNUSED, void *d)
 {
 	struct template_dir_cb_data *data = d;
 

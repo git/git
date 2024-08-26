@@ -22,7 +22,7 @@ static ssize_t strbuf_add_void(void *b, const void *data, const size_t sz)
 	return sz;
 }
 
-static int noop_flush(void *arg)
+static int noop_flush(void *arg UNUSED)
 {
 	return 0;
 }
@@ -452,7 +452,7 @@ static void t_default_write_opts(void)
 }
 
 
-int cmd_main(int argc, const char *argv[])
+int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 {
 	TEST(t_default_write_opts(), "merged table with default write opts");
 	TEST(t_merged_logs(), "merged table with multiple log updates for same ref");

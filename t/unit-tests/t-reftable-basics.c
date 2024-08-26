@@ -20,7 +20,7 @@ static int integer_needle_lesseq(size_t i, void *_args)
 	return args->needle <= args->haystack[i];
 }
 
-int cmd_main(int argc, const char *argv[])
+int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 {
 	if_test ("binary search with binsearch works") {
 		int haystack[] = { 2, 4, 6, 8, 10 };

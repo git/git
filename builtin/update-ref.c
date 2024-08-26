@@ -274,7 +274,7 @@ static void parse_cmd_update(struct ref_transaction *transaction,
 }
 
 static void parse_cmd_symref_update(struct ref_transaction *transaction,
-				    const char *next, const char *end)
+				    const char *next, const char *end UNUSED)
 {
 	char *refname, *new_target, *old_arg;
 	char *old_target = NULL;
@@ -360,7 +360,7 @@ static void parse_cmd_create(struct ref_transaction *transaction,
 
 
 static void parse_cmd_symref_create(struct ref_transaction *transaction,
-				    const char *next, const char *end)
+				    const char *next, const char *end UNUSED)
 {
 	struct strbuf err = STRBUF_INIT;
 	char *refname, *new_target;
@@ -423,7 +423,7 @@ static void parse_cmd_delete(struct ref_transaction *transaction,
 
 
 static void parse_cmd_symref_delete(struct ref_transaction *transaction,
-				    const char *next, const char *end)
+				    const char *next, const char *end UNUSED)
 {
 	struct strbuf err = STRBUF_INIT;
 	char *refname, *old_target;
@@ -479,7 +479,7 @@ static void parse_cmd_verify(struct ref_transaction *transaction,
 }
 
 static void parse_cmd_symref_verify(struct ref_transaction *transaction,
-				    const char *next, const char *end)
+				    const char *next, const char *end UNUSED)
 {
 	struct strbuf err = STRBUF_INIT;
 	struct object_id old_oid;

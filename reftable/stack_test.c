@@ -399,7 +399,7 @@ static void test_reftable_stack_auto_compaction_fails_gracefully(void)
 	clear_dir(dir);
 }
 
-static int write_error(struct reftable_writer *wr, void *arg)
+static int write_error(struct reftable_writer *wr UNUSED, void *arg)
 {
 	return *((int *)arg);
 }
@@ -816,7 +816,7 @@ static void test_reflog_expire(void)
 	reftable_log_record_release(&log);
 }
 
-static int write_nothing(struct reftable_writer *wr, void *arg)
+static int write_nothing(struct reftable_writer *wr, void *arg UNUSED)
 {
 	reftable_writer_set_limits(wr, 1, 1);
 	return 0;
@@ -1084,7 +1084,7 @@ static void test_reftable_stack_compaction_concurrent_clean(void)
 	clear_dir(dir);
 }
 
-int stack_test_main(int argc, const char *argv[])
+int stack_test_main(int argc UNUSED, const char *argv[] UNUSED)
 {
 	RUN_TEST(test_empty_add);
 	RUN_TEST(test_read_file);

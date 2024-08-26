@@ -69,7 +69,7 @@ static void test_prio_queue(int *input, size_t input_size,
 #define TEST_INPUT(input, result) \
 	test_prio_queue(input, ARRAY_SIZE(input), result, ARRAY_SIZE(result))
 
-int cmd_main(int argc, const char **argv)
+int cmd_main(int argc UNUSED, const char **argv UNUSED)
 {
 	TEST(TEST_INPUT(((int []){ 2, 6, 3, 10, 9, 5, 7, 4, 5, 8, 1, DUMP }),
 			((int []){ 1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 10 })),

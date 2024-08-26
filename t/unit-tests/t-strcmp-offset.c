@@ -24,7 +24,7 @@ static void check_strcmp_offset(const char *string1, const char *string2,
 				 expect_offset),                           \
 	     "strcmp_offset(%s, %s) works", #string1, #string2)
 
-int cmd_main(int argc, const char **argv)
+int cmd_main(int argc UNUSED, const char **argv UNUSED)
 {
 	TEST_STRCMP_OFFSET("abc", "abc", 0, 3);
 	TEST_STRCMP_OFFSET("abc", "def", -1, 0);

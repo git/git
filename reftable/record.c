@@ -516,7 +516,7 @@ static void reftable_obj_record_release(void *rec)
 	memset(obj, 0, sizeof(struct reftable_obj_record));
 }
 
-static void reftable_obj_record_print(const void *rec, int hash_size)
+static void reftable_obj_record_print(const void *rec, int hash_size UNUSED)
 {
 	const struct reftable_obj_record *obj = rec;
 	char hex[GIT_MAX_HEXSZ + 1] = { 0 };
@@ -532,7 +532,7 @@ static void reftable_obj_record_print(const void *rec, int hash_size)
 }
 
 static void reftable_obj_record_copy_from(void *rec, const void *src_rec,
-					  int hash_size)
+					  int hash_size UNUSED)
 {
 	struct reftable_obj_record *obj = rec;
 	const struct reftable_obj_record *src =
@@ -559,7 +559,7 @@ static uint8_t reftable_obj_record_val_type(const void *rec)
 }
 
 static int reftable_obj_record_encode(const void *rec, struct string_view s,
-				      int hash_size)
+				      int hash_size UNUSED)
 {
 	const struct reftable_obj_record *r = rec;
 	struct string_view start = s;
@@ -594,7 +594,8 @@ static int reftable_obj_record_encode(const void *rec, struct string_view s,
 
 static int reftable_obj_record_decode(void *rec, struct strbuf key,
 				      uint8_t val_type, struct string_view in,
-				      int hash_size, struct strbuf *scratch UNUSED)
+				      int hash_size UNUSED,
+				      struct strbuf *scratch UNUSED)
 {
 	struct string_view start = in;
 	struct reftable_obj_record *r = rec;
@@ -647,12 +648,13 @@ static int reftable_obj_record_decode(void *rec, struct strbuf key,
 	return start.len - in.len;
 }
 
-static int not_a_deletion(const void *p)
+static int not_a_deletion(const void *p UNUSED)
 {
 	return 0;
 }
 
-static int reftable_obj_record_equal_void(const void *a, const void *b, int hash_size)
+static int reftable_obj_record_equal_void(const void *a, const void *b,
+					  int hash_size UNUSED)
 {
 	struct reftable_obj_record *ra = (struct reftable_obj_record *) a;
 	struct reftable_obj_record *rb = (struct reftable_obj_record *) b;
@@ -1066,7 +1068,7 @@ static void reftable_index_record_key(const void *r, struct strbuf *dest)
 }
 
 static void reftable_index_record_copy_from(void *rec, const void *src_rec,
-					    int hash_size)
+					    int hash_size UNUSED)
 {
 	struct reftable_index_record *dst = rec;
 	const struct reftable_index_record *src = src_rec;
@@ -1082,13 +1084,13 @@ static void reftable_index_record_release(void *rec)
 	strbuf_release(&idx->last_key);
 }
 
-static uint8_t reftable_index_record_val_type(const void *rec)
+static uint8_t reftable_index_record_val_type(const void *rec UNUSED)
 {
 	return 0;
 }
 
 static int reftable_index_record_encode(const void *rec, struct string_view out,
-					int hash_size)
+					int hash_size UNUSED)
 {
 	const struct reftable_index_record *r =
 		(const struct reftable_index_record *)rec;
@@ -1104,8 +1106,10 @@ static int reftable_index_record_encode(const void *rec, struct string_view out,
 }
 
 static int reftable_index_record_decode(void *rec, struct strbuf key,
-					uint8_t val_type, struct string_view in,
-					int hash_size, struct strbuf *scratch UNUSED)
+					uint8_t val_type UNUSED,
+					struct string_view in,
+					int hash_size UNUSED,
+					struct strbuf *scratch UNUSED)
 {
 	struct string_view start = in;
 	struct reftable_index_record *r = rec;
@@ -1122,7 +1126,8 @@ static int reftable_index_record_decode(void *rec, struct strbuf key,
 	return start.len - in.len;
 }
 
-static int reftable_index_record_equal(const void *a, const void *b, int hash_size)
+static int reftable_index_record_equal(const void *a, const void *b,
+				       int hash_size UNUSED)
 {
 	struct reftable_index_record *ia = (struct reftable_index_record *) a;
 	struct reftable_index_record *ib = (struct reftable_index_record *) b;
@@ -1137,7 +1142,7 @@ static int reftable_index_record_cmp(const void *_a, const void *_b)
 	return strbuf_cmp(&a->last_key, &b->last_key);
 }
 
-static void reftable_index_record_print(const void *rec, int hash_size)
+static void reftable_index_record_print(const void *rec, int hash_size UNUSED)
 {
 	const struct reftable_index_record *idx = rec;
 	/* TODO: escape null chars? */
