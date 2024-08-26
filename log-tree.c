@@ -31,6 +31,7 @@
 #include "tree.h"
 #include "wildmatch.h"
 #include "write-or-die.h"
+#include "pager.h"
 
 static struct decoration name_decoration = { "object names" };
 static int decoration_loaded;
@@ -411,16 +412,6 @@ void show_decorations(struct rev_info *opt, struct commit *commit)
 	strbuf_release(&sb);
 }
 
-static unsigned int digits_in_number(unsigned int number)
-{
-	unsigned int i = 10, result = 1;
-	while (i <= number) {
-		i *= 10;
-		result++;
-	}
-	return result;
-}
-
 void fmt_output_subject(struct strbuf *filename,
 			const char *subject,
 			struct rev_info *info)
@@ -464,7 +455,7 @@ void fmt_output_email_subject(struct strbuf *sb, struct rev_info *opt)
 		strbuf_addf(sb, "Subject: [%s%s%0*d/%d] ",
 			    opt->subject_prefix,
 			    *opt->subject_prefix ? " " : "",
-			    digits_in_number(opt->total),
+			    decimal_width(opt->total),
 			    opt->nr, opt->total);
 	} else if (opt->total == 0 && opt->subject_prefix && *opt->subject_prefix) {
 		strbuf_addf(sb, "Subject: [%s] ",
