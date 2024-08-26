@@ -2704,6 +2704,15 @@ test_expect_success '--get and --get-all with --fixed-value' '
 	test_must_fail git config --file=config --get-regexp --fixed-value fixed+ non-existent
 '
 
+test_expect_success '--fixed-value with value-less configuration' '
+	test_when_finished rm -f config &&
+	cat >config <<-\EOF &&
+	[section]
+		key
+	EOF
+	git config --file=config --fixed-value section.key value pattern
+'
+
 test_expect_success 'includeIf.hasconfig:remote.*.url' '
 	git init hasremoteurlTest &&
 	test_when_finished "rm -rf hasremoteurlTest" &&
