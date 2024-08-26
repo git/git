@@ -264,6 +264,48 @@ ahead-behind:<committish>::
 	commits ahead and behind, respectively, when comparing the output
 	ref to the `<committish>` specified in the format.
 
+is-base:<committish>::
+	In at most one row, `(<committish>)` will appear to indicate the ref
+	that is most likely the ref used as a starting point for the branch
+	that produced `<committish>`. This choice is made using a heuristic:
+	choose the ref that minimizes the number of commits in the
+	first-parent history of `<committish>` and not in the first-parent
+	history of the ref.
++
+For example, consider the following figure of first-parent histories of
+several refs:
++
+----
+*--*--*--*--*--* refs/heads/A
+\
+ \
+  *--*--*--* refs/heads/B
+   \     \
+    \     \
+     *     * refs/heads/C
+      \
+       \
+	*--* refs/heads/D
+----
++
+Here, if `A`, `B`, and `C` are the filtered references, and the format
+string is `%(refname):%(is-base:D)`, then the output would be
++
+----
+refs/heads/A:
+refs/heads/B:(D)
+refs/heads/C:
+----
++
+This is because the first-parent history of `D` has its earliest
+intersection with the first-parent histories of the filtered refs at a
+common first-parent ancestor of `B` and `C` and ties are broken by the
+earliest ref in the sorted order.
++
+Note that this token will not appear if the first-parent history of
+`<committish>` does not intersect the first-parent histories of the
+filtered refs.
+
 describe[:options]::
 	A human-readable name, like linkgit:git-describe[1];
 	empty string for undescribable commits. The `describe` string may

@@ -1229,3 +1229,129 @@ done:
 	repo_clear_commit_marks(r, SEEN);
 	free_commit_list(stack);
 }
+
+/*
+ * This slab initializes integers to zero, so use "-1" for "tip is best" and
+ * "i + 1" for "bases[i] is best".
+ */
+define_commit_slab(best_branch_base, int);
+static struct best_branch_base best_branch_base;
+#define get_best(c) (*best_branch_base_at(&best_branch_base, (c)))
+#define set_best(c,v) (*best_branch_base_at(&best_branch_base, (c)) = (v))
+
+int get_branch_base_for_tip(struct repository *r,
+			    struct commit *tip,
+			    struct commit **bases,
+			    size_t bases_nr)
+{
+	int best_index = -1;
+	struct commit *branch_point = NULL;
+	struct prio_queue queue = { compare_commits_by_gen_then_commit_date };
+	int found_missing_gen = 0;
+
+	if (!bases_nr)
+		return -1;
+
+	repo_parse_commit(r, tip);
+	if (commit_graph_generation(tip) == GENERATION_NUMBER_INFINITY)
+		found_missing_gen = 1;
+
+	/* Check for missing generation numbers. */
+	for (size_t i = 0; i < bases_nr; i++) {
+		struct commit *c = bases[i];
+		repo_parse_commit(r, c);
+		if (commit_graph_generation(c) == GENERATION_NUMBER_INFINITY)
+			found_missing_gen = 1;
+	}
+
+	if (found_missing_gen) {
+		struct commit **commits;
+		size_t commits_nr = bases_nr + 1;
+
+		CALLOC_ARRAY(commits, commits_nr);
+		COPY_ARRAY(commits, bases, bases_nr);
+		commits[bases_nr] = tip;
+		ensure_generations_valid(r, commits, commits_nr);
+		free(commits);
+	}
+
+	/* Initialize queue and slab now that generations are guaranteed. */
+	init_best_branch_base(&best_branch_base);
+	set_best(tip, -1);
+	prio_queue_put(&queue, tip);
+
+	for (size_t i = 0; i < bases_nr; i++) {
+		struct commit *c = bases[i];
+		int best = get_best(c);
+
+		/* Has this already been marked as best by another commit? */
+		if (best) {
+			if (best == -1) {
+				/* We agree at this position. Stop now. */
+				best_index = i + 1;
+				goto cleanup;
+			}
+			continue;
+		}
+
+		set_best(c, i + 1);
+		prio_queue_put(&queue, c);
+	}
+
+	while (queue.nr) {
+		struct commit *c = prio_queue_get(&queue);
+		int best_for_c = get_best(c);
+		int best_for_p, positive;
+		struct commit *parent;
+
+		/* Have we reached a known branch point? It's optimal. */
+		if (c == branch_point)
+			break;
+
+		repo_parse_commit(r, c);
+		if (!c->parents)
+			continue;
+
+		parent = c->parents->item;
+		repo_parse_commit(r, parent);
+		best_for_p = get_best(parent);
+
+		if (!best_for_p) {
+			/* 'parent' is new, so pass along best_for_c. */
+			set_best(parent, best_for_c);
+			prio_queue_put(&queue, parent);
+			continue;
+		}
+
+		if (best_for_p > 0 && best_for_c > 0) {
+			/* Collision among bases. Minimize. */
+			if (best_for_c < best_for_p)
+				set_best(parent, best_for_c);
+			continue;
+		}
+
+		/*
+		 * At this point, we have reached a commit that is reachable
+		 * from the tip, either from 'c' or from an earlier commit to
+		 * have 'parent' as its first parent.
+		 *
+		 * Update 'best_index' to match the minimum of all base indices
+		 * to reach 'parent'.
+		 */
+
+		/* Exactly one is positive due to initial conditions. */
+		positive = (best_for_c < 0) ? best_for_p : best_for_c;
+
+		if (best_index < 0 || positive < best_index)
+			best_index = positive;
+
+		/* No matter what, track that the parent is reachable from tip. */
+		set_best(parent, -1);
+		branch_point = parent;
+	}
+
+cleanup:
+	clear_best_branch_base(&best_branch_base);
+	clear_prio_queue(&queue);
+	return best_index > 0 ? best_index - 1 : -1;
+}

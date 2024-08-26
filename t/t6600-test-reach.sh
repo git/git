@@ -612,4 +612,125 @@ test_expect_success 'for-each-ref merged:none' '
 		--format="%(refname)" --stdin
 '
 
+# For get_branch_base_for_tip, we only care about
+# first-parent history. Here is the test graph with
+# second parents removed:
+#
+#             (10,10)
+#            /
+#         (10,9)    (9,10)
+#        /         /
+#    (10,8)    (9,9)      (8,10)
+#   /         /          /
+#         ( continued...)
+#   \     /        /           /
+#    (3,1)     (2,2)      (1,3)
+#        \     /          /
+#         (2,1)      (1,2)
+#              \    /
+#              (1,1)
+#
+# In short, for a commit (i,j), the first-parent history
+# walks all commits (i, k) with k from j to 1, then the
+# commits (l, 1) with l from i to 1.
+
+test_expect_success 'get_branch_base_for_tip: none reach' '
+	# (2,3) branched from the first tip (i,4) in X with i > 2
+	cat >input <<-\EOF &&
+		A:commit-2-3
+		X:commit-1-2
+		X:commit-1-4
+		X:commit-4-4
+		X:commit-8-4
+		X:commit-10-4
+	EOF
+	echo "get_branch_base_for_tip(A,X):2" >expect &&
+	test_all_modes get_branch_base_for_tip
+'
+
+test_expect_success 'get_branch_base_for_tip: equal to tip' '
+	# (2,3) branched from the first tip (i,4) in X with i > 2
+	cat >input <<-\EOF &&
+		A:commit-8-4
+		X:commit-1-2
+		X:commit-1-4
+		X:commit-4-4
+		X:commit-8-4
+		X:commit-10-4
+	EOF
+	echo "get_branch_base_for_tip(A,X):3" >expect &&
+	test_all_modes get_branch_base_for_tip
+'
+
+test_expect_success 'get_branch_base_for_tip: all reach tip' '
+	# (2,3) branched from the first tip (i,4) in X with i > 2
+	cat >input <<-\EOF &&
+		A:commit-4-1
+		X:commit-4-2
+		X:commit-5-1
+	EOF
+	echo "get_branch_base_for_tip(A,X):0" >expect &&
+	test_all_modes get_branch_base_for_tip
+'
+
+test_expect_success 'for-each-ref is-base: none reach' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-4-2
+	refs/heads/commit-4-4
+	refs/heads/commit-8-4
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-1-1:
+	refs/heads/commit-4-2:(commit-2-3)
+	refs/heads/commit-4-4:
+	refs/heads/commit-8-4:
+	EOF
+	run_all_modes git for-each-ref \
+		--format="%(refname):%(is-base:commit-2-3)" --stdin
+'
+
+test_expect_success 'for-each-ref is-base: all reach' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-4-2
+	refs/heads/commit-5-1
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-4-2:(commit-4-1)
+	refs/heads/commit-5-1:
+	EOF
+	run_all_modes git for-each-ref \
+		--format="%(refname):%(is-base:commit-4-1)" --stdin
+'
+
+test_expect_success 'for-each-ref is-base: equal to tip' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-4-2
+	refs/heads/commit-5-1
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-4-2:(commit-4-2)
+	refs/heads/commit-5-1:
+	EOF
+	run_all_modes git for-each-ref \
+		--format="%(refname):%(is-base:commit-4-2)" --stdin
+'
+
+test_expect_success 'for-each-ref is-base:multiple' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-4-2
+	refs/heads/commit-4-4
+	refs/heads/commit-8-4
+	EOF
+	cat >expect <<-\EOF &&
+	refs/heads/commit-1-1[-]
+	refs/heads/commit-4-2[(commit-2-3)-]
+	refs/heads/commit-4-4[-]
+	refs/heads/commit-8-4[-(commit-6-5)]
+	EOF
+	run_all_modes git for-each-ref \
+		--format="%(refname)[%(is-base:commit-2-3)-%(is-base:commit-6-5)]" --stdin
+'
+
 test_done

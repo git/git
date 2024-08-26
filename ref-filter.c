@@ -169,6 +169,7 @@ enum atom_type {
 	ATOM_ELSE,
 	ATOM_REST,
 	ATOM_AHEADBEHIND,
+	ATOM_ISBASE,
 };
 
 /*
@@ -890,6 +891,23 @@ static int ahead_behind_atom_parser(struct ref_format *format,
 	return 0;
 }
 
+static int is_base_atom_parser(struct ref_format *format,
+			       struct used_atom *atom UNUSED,
+			       const char *arg, struct strbuf *err)
+{
+	struct string_list_item *item;
+
+	if (!arg)
+		return strbuf_addf_ret(err, -1, _("expected format: %%(is-base:<committish>)"));
+
+	item = string_list_append(&format->is_base_tips, arg);
+	item->util = lookup_commit_reference_by_name(arg);
+	if (!item->util)
+		die("failed to find '%s'", arg);
+
+	return 0;
+}
+
 static int head_atom_parser(struct ref_format *format UNUSED,
 			    struct used_atom *atom,
 			    const char *arg, struct strbuf *err)
@@ -955,6 +973,7 @@ static struct {
 	[ATOM_ELSE] = { "else", SOURCE_NONE },
 	[ATOM_REST] = { "rest", SOURCE_NONE, FIELD_STR, rest_atom_parser },
 	[ATOM_AHEADBEHIND] = { "ahead-behind", SOURCE_OTHER, FIELD_STR, ahead_behind_atom_parser },
+	[ATOM_ISBASE] = { "is-base", SOURCE_OTHER, FIELD_STR, is_base_atom_parser },
 	/*
 	 * Please update $__git_ref_fieldlist in git-completion.bash
 	 * when you add new atoms
@@ -2340,6 +2359,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 	int i;
 	struct object_info empty = OBJECT_INFO_INIT;
 	int ahead_behind_atoms = 0;
+	int is_base_atoms = 0;
 
 	CALLOC_ARRAY(ref->value, used_atom_cnt);
 
@@ -2488,6 +2508,15 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 				/* Not a commit. */
 				v->s = xstrdup("");
 			}
+			continue;
+		} else if (atom_type == ATOM_ISBASE) {
+			if (ref->is_base && ref->is_base[is_base_atoms]) {
+				v->s = xstrfmt("(%s)", ref->is_base[is_base_atoms]);
+				free(ref->is_base[is_base_atoms]);
+			} else {
+				v->s = xstrdup("");
+			}
+			is_base_atoms++;
 			continue;
 		} else
 			continue;
@@ -2895,6 +2924,7 @@ static void free_array_item(struct ref_array_item *item)
 		free(item->value);
 	}
 	free(item->counts);
+	free(item->is_base);
 	free(item);
 }
 
@@ -3059,6 +3089,49 @@ void filter_ahead_behind(struct repository *r,
 	free(commits);
 }
 
+void filter_is_base(struct repository *r,
+		    struct ref_format *format,
+		    struct ref_array *array)
+{
+	struct commit **bases;
+	size_t bases_nr = 0;
+	struct ref_array_item **back_index;
+
+	if (!format->is_base_tips.nr || !array->nr)
+		return;
+
+	CALLOC_ARRAY(back_index, array->nr);
+	CALLOC_ARRAY(bases, array->nr);
+
+	for (size_t i = 0; i < array->nr; i++) {
+		const char *name = array->items[i]->refname;
+		struct commit *c = lookup_commit_reference_by_name_gently(name, 1);
+
+		CALLOC_ARRAY(array->items[i]->is_base, format->is_base_tips.nr);
+
+		if (!c)
+			continue;
+
+		back_index[bases_nr] = array->items[i];
+		bases[bases_nr] = c;
+		bases_nr++;
+	}
+
+	for (size_t i = 0; i < format->is_base_tips.nr; i++) {
+		struct commit *tip = format->is_base_tips.items[i].util;
+		int base_index = get_branch_base_for_tip(r, tip, bases, bases_nr);
+
+		if (base_index < 0)
+			continue;
+
+		/* Store the string for use in output later. */
+		back_index[base_index]->is_base[i] = xstrdup(format->is_base_tips.items[i].string);
+	}
+
+	free(back_index);
+	free(bases);
+}
+
 static int do_filter_refs(struct ref_filter *filter, unsigned int type, each_ref_fn fn, void *cb_data)
 {
 	int ret = 0;
@@ -3152,7 +3225,8 @@ static inline int can_do_iterative_format(struct ref_filter *filter,
 	return !(filter->reachable_from ||
 		 filter->unreachable_from ||
 		 sorting ||
-		 format->bases.nr);
+		 format->bases.nr ||
+		 format->is_base_tips.nr);
 }
 
 void filter_and_format_refs(struct ref_filter *filter, unsigned int type,
@@ -3176,6 +3250,7 @@ void filter_and_format_refs(struct ref_filter *filter, unsigned int type,
 		struct ref_array array = { 0 };
 		filter_refs(&array, filter, type);
 		filter_ahead_behind(the_repository, format, &array);
+		filter_is_base(the_repository, format, &array);
 		ref_array_sort(sorting, &array);
 		print_formatted_ref_array(&array, format);
 		ref_array_clear(&array);

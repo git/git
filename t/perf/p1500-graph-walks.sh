@@ -20,6 +20,21 @@ test_expect_success 'setup' '
 		echo tag-$ref ||
 		return 1
 	done >tags &&
+
+	echo "A:HEAD" >test-tool-refs &&
+	for line in $(cat refs)
+	do
+		echo "X:$line" >>test-tool-refs || return 1
+	done &&
+	echo "A:HEAD" >test-tool-tags &&
+	for line in $(cat tags)
+	do
+		echo "X:$line" >>test-tool-tags || return 1
+	done &&
+
+	commit=$(git commit-tree $(git rev-parse HEAD^{tree})) &&
+	git update-ref refs/heads/disjoint-base $commit &&
+
 	git commit-graph write --reachable
 '
 
@@ -45,6 +60,22 @@ test_perf 'contains: git branch --merged' '
 
 test_perf 'contains: git tag --merged' '
 	xargs git tag --merged=HEAD <tags
+'
+
+test_perf 'is-base check: test-tool reach (refs)' '
+	test-tool reach get_branch_base_for_tip <test-tool-refs
+'
+
+test_perf 'is-base check: test-tool reach (tags)' '
+	test-tool reach get_branch_base_for_tip <test-tool-tags
+'
+
+test_perf 'is-base check: git for-each-ref' '
+	git for-each-ref --format="%(is-base:HEAD)" --stdin <refs
+'
+
+test_perf 'is-base check: git for-each-ref (disjoint-base)' '
+	git for-each-ref --format="%(is-base:refs/heads/disjoint-base)" --stdin <refs
 '
 
 test_done
