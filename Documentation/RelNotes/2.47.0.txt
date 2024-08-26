@@ -35,6 +35,14 @@ UI, Workflows & Features
    environment variables, but now they can be configured in the user's
    global and system wide configuration.
 
+ * "git send-email" learned "--translate-aliases" option that reads
+   addresses from the standard input and emits the result of applying
+   aliases on them to the standard output.
+
+ * 'git for-each-ref' learned a new "--format" atom to find the branch
+   that the history leading to a given commit "%(is-base:<commit>)" is
+   likely based on.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -84,6 +92,10 @@ Performance, Internal Implementation, Development Support etc.
  * Use of API functions that implicitly depend on the_repository
    object in the config subsystem has been rewritten to pass a
    repository object through the callchain.
+
+ * Drop unused parameters from functions.
+
+ * Mark unused parameters as UNUSED to squelch -Wunused warnings.
 
 
 Fixes since v2.46
@@ -158,6 +170,14 @@ Fixes since v2.46
    unnecessarily, which has been corrected.
    (merge 96a9a3e42e ps/bundle-outside-repo-fix later to maint).
 
+ * Maintenance tasks other than "gc" now properly go background when
+   "git maintenance" runs them.
+
+ * We created a useless pseudo-merge reachability bitmap that is about
+   0 commits, and attempted to include commits that are not in packs,
+   which made no sense.  These bugs have been corrected.
+   (merge a72dfab8b8 tb/pseudo-merge-bitmap-fixes later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge bb0498b1bb jc/how-to-maintain-updates later to maint).
    (merge 7c7516b8db jc/jl-git-no-advice-fix later to maint).
@@ -172,3 +192,4 @@ Fixes since v2.46
    (merge 170cdfc5a4 jc/grammo-fixes later to maint).
    (merge 983555a1f2 jc/how-to-maintain-updates later to maint).
    (merge e3209bd4df ps/stash-keep-untrack-empty-fix later to maint).
+   (merge 44db6f75cc jc/coding-style-c-operator-with-spaces later to maint).
