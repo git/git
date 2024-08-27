@@ -31,20 +31,24 @@ test_pack_objects_reused_all () {
 	: >trace2.txt &&
 	GIT_TRACE2_EVENT="$PWD/trace2.txt" \
 		git pack-objects --stdout --revs --all --delta-base-offset \
-		>/dev/null &&
+		>got.pack &&
 
 	test_pack_reused "$1" <trace2.txt &&
-	test_packs_reused "$2" <trace2.txt
+	test_packs_reused "$2" <trace2.txt &&
+
+	git index-pack --strict -o got.idx got.pack
 }
 
 # test_pack_objects_reused <pack-reused> <packs-reused>
 test_pack_objects_reused () {
 	: >trace2.txt &&
 	GIT_TRACE2_EVENT="$PWD/trace2.txt" \
-		git pack-objects --stdout --revs >/dev/null &&
+		git pack-objects --stdout --revs >got.pack &&
 
 	test_pack_reused "$1" <trace2.txt &&
-	test_packs_reused "$2" <trace2.txt
+	test_packs_reused "$2" <trace2.txt &&
+
+	git index-pack --strict -o got.idx got.pack
 }
 
 test_expect_success 'preferred pack is reused for single-pack reuse' '
@@ -65,7 +69,7 @@ test_expect_success 'multi-pack reuse is disabled by default' '
 	test_pack_objects_reused_all 3 1
 '
 
-test_expect_success 'feature.experimental implies multi-pack reuse' '
+test_expect_failure 'feature.experimental implies multi-pack reuse' '
 	test_config feature.experimental true &&
 
 	test_pack_objects_reused_all 6 2
@@ -82,7 +86,7 @@ test_expect_success 'enable multi-pack reuse' '
 	git config pack.allowPackReuse multi
 '
 
-test_expect_success 'reuse all objects from subset of bitmapped packs' '
+test_expect_failure 'reuse all objects from subset of bitmapped packs' '
 	test_commit C &&
 	git repack -d &&
 
@@ -96,7 +100,7 @@ test_expect_success 'reuse all objects from subset of bitmapped packs' '
 	test_pack_objects_reused 6 2 <in
 '
 
-test_expect_success 'reuse all objects from all packs' '
+test_expect_failure 'reuse all objects from all packs' '
 	test_pack_objects_reused_all 9 3
 '
 
@@ -190,7 +194,7 @@ test_expect_success 'omit delta with uninteresting base (same pack)' '
 	test_pack_objects_reused 3 1 <in
 '
 
-test_expect_success 'omit delta from uninteresting base (cross pack)' '
+test_expect_failure 'omit delta from uninteresting base (cross pack)' '
 	cat >in <<-EOF &&
 	$(git rev-parse $base)
 	^$(git rev-parse $delta)
