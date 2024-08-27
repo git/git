@@ -709,8 +709,10 @@ static int parse_signature_option(const char *arg)
         return S_GRADE;
     }
     if (!strcmp(arg, "key"))
+    {
         return S_KEY;
-    else if (!strcmp(arg, "fingerprint"))
+    }
+    if (!strcmp(arg, "fingerprint"))
         return S_FINGERPRINT;
     else if (!strcmp(arg, "primarykeyfingerprint"))
         return S_PRI_KEY_FP;

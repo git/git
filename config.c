@@ -473,7 +473,9 @@ static int include_condition_is_true(const struct key_value_info *kvi,
     }
     if (skip_prefix_mem(cond, cond_len, "hasconfig:remote.*.url:", &cond,
                         &cond_len))
+    {
         return include_by_remote_url(inc, cond, cond_len);
+    }
 
     /* unknown conditionals are always false */
     return 0;

@@ -5709,14 +5709,19 @@ const char *get_revision_mark(const struct rev_info *revs, const struct commit *
     if (!revs || revs->left_right)
     {
         if (commit->object.flags & SYMMETRIC_LEFT)
+        {
             return "<";
-        else
-            return ">";
+        }
+        return ">";
     }
     else if (revs->graph)
+    {
         return "*";
+    }
     else if (revs->cherry_mark)
+    {
         return "+";
+    }
     return "";
 }
 

@@ -43,11 +43,9 @@ static enum
     {
         return UNBORN_IGNORE;
     }
-    else
-    {
-        die(_("invalid value for '%s': '%s'"),
-            "lsrefs.unborn", str);
-    }
+
+    die(_("invalid value for '%s': '%s'"),
+        "lsrefs.unborn", str);
 }
 
 /*
