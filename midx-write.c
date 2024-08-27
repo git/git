@@ -692,9 +692,10 @@ static int midx_pack_order_cmp(const void *va, const void *vb)
         return -1;
     }
     if (a->offset > b->offset)
+    {
         return 1;
-    else
-        return 0;
+    }
+    return 0;
 }
 
 static uint32_t *midx_pack_order(struct write_midx_context *ctx)

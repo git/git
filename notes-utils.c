@@ -127,9 +127,10 @@ static combine_notes_fn parse_combine_notes_fn(const char *v)
         return combine_notes_concatenate;
     }
     if (!strcasecmp(v, "cat_sort_uniq"))
+    {
         return combine_notes_cat_sort_uniq;
-    else
-        return NULL;
+    }
+    return NULL;
 }
 
 static int notes_rewrite_config(const char *k, const char *v,

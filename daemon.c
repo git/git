@@ -1348,7 +1348,7 @@ static int service_loop(struct socketlist *socklist)
 #endif
                 } ss;
                 socklen_t sslen    = sizeof(ss);
-                int       incoming = accept(pfd[i].fd, &ss.sa, &sslen);
+                int       incoming = accept4(pfd[i].fd, &ss.sa, &sslen, SOCK_CLOEXEC);
                 if (incoming < 0)
                 {
                     switch (errno)

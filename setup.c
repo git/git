@@ -820,11 +820,15 @@ static enum extension_result handle_extension(const char               *var,
         unsigned int format;
 
         if (!value)
+        {
             return config_error_nonbool(var);
+        }
         format = ref_storage_format_by_name(value);
         if (format == REF_STORAGE_FORMAT_UNKNOWN)
+        {
             return error(_("invalid value for '%s': '%s'"),
                          "extensions.refstorage", value);
+        }
         data->ref_storage_format = format;
         return EXTENSION_OK;
     }
