@@ -14,13 +14,13 @@
 /*
  * The iterator is exhausted and has been freed.
  */
-#define ITER_DONE -1
+#define ITER_DONE (-1)
 
 /*
  * The iterator experienced an error. The iteration has been aborted
  * and the iterator has been freed.
  */
-#define ITER_ERROR -2
+#define ITER_ERROR (-2)
 
 /*
  * Return values for selector functions for merge iterators. The

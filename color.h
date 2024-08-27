@@ -73,7 +73,7 @@ struct strbuf;
  * returned from git_config_colorbool. The "auto" value can be returned from
  * config_colorbool, and will be converted by want_color() into either 0 or 1.
  */
-#define GIT_COLOR_UNKNOWN -1
+#define GIT_COLOR_UNKNOWN (-1)
 #define GIT_COLOR_NEVER   0
 #define GIT_COLOR_ALWAYS  1
 #define GIT_COLOR_AUTO    2

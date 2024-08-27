@@ -936,7 +936,9 @@ set(libgit_SOURCES
     ws.c
     wt-status.c
     xdiff-interface.c
+)
 
+set(libgit_HEADERS
     abspath.h
     add-interactive.h
     advice.h
@@ -1148,6 +1150,7 @@ set(libgit_SOURCES
 )
 
 list(TRANSFORM libgit_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
+list(TRANSFORM libgit_HEADERS PREPEND "${CMAKE_SOURCE_DIR}/")
 list(TRANSFORM compat_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
 # add_library(libgit ${libgit_SOURCES})
 add_library(libgit ${libgit_SOURCES} ${compat_SOURCES})
@@ -1375,6 +1378,7 @@ set(git_SOURCES
     builtin/worktree.c
     builtin/write-tree.c
 )
+
 
 list(TRANSFORM git_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
 add_executable(git ${CMAKE_SOURCE_DIR}/git.c ${git_SOURCES})

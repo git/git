@@ -212,7 +212,9 @@ static inline void diff_flags_or(struct diff_flags       *a,
     int         i;
 
     for (i = 0; i < sizeof(struct diff_flags); i++)
+    {
         tmp_a[i] |= tmp_b[i];
+    }
 }
 
 #define DIFF_XDL_TST(opts, flag) ((opts)->xdl_opts & XDF_##flag)

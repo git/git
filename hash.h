@@ -259,7 +259,9 @@ static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2, 
      * here, so that it can optimize for this case as much as possible.
      */
     if (algop->rawsz == GIT_MAX_RAWSZ)
+    {
         return memcmp(sha1, sha2, GIT_MAX_RAWSZ);
+    }
     return memcmp(sha1, sha2, GIT_SHA1_RAWSZ);
 }
 
@@ -270,7 +272,9 @@ static inline int hasheq(const unsigned char *sha1, const unsigned char *sha2, c
      * compiler can properly inline it and avoid calling memcmp.
      */
     if (algop->rawsz == GIT_MAX_RAWSZ)
+    {
         return !memcmp(sha1, sha2, GIT_MAX_RAWSZ);
+    }
     return !memcmp(sha1, sha2, GIT_SHA1_RAWSZ);
 }
 
@@ -306,7 +310,9 @@ static inline void oidread(struct object_id *oid, const unsigned char *hash,
 {
     memcpy(oid->hash, hash, algop->rawsz);
     if (algop->rawsz < GIT_MAX_RAWSZ)
+    {
         memset(oid->hash + algop->rawsz, 0, GIT_MAX_RAWSZ - algop->rawsz);
+    }
     oid->algo = hash_algo_by_ptr(algop);
 }
 

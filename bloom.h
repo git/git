@@ -48,7 +48,7 @@ struct bloom_filter_settings
         1, 7, 10, DEFAULT_BLOOM_MAX_CHANGES \
     }
 #define BITS_PER_WORD               8
-#define BLOOMDATA_CHUNK_HEADER_SIZE 3 * sizeof(uint32_t)
+#define BLOOMDATA_CHUNK_HEADER_SIZE (3 * sizeof(uint32_t))
 
 /*
  * A bloom_filter struct represents a data segment to

@@ -168,7 +168,9 @@ struct blame_scoreboard
 static inline struct blame_origin *blame_origin_incref(struct blame_origin *o)
 {
     if (o)
+    {
         o->refcnt++;
+    }
     return o;
 }
 void blame_origin_decref(struct blame_origin *o);

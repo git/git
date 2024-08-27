@@ -195,7 +195,9 @@ static inline uint32_t pack_name_hash(const char *name)
     uint32_t c, hash = 0;
 
     if (!name)
+    {
         return 0;
+    }
 
     /*
      * This effectively just creates a sortable number from the
@@ -205,7 +207,9 @@ static inline uint32_t pack_name_hash(const char *name)
     while ((c = *name++) != 0)
     {
         if (isspace(c))
+        {
             continue;
+        }
         hash = (hash >> 2) + (c << 24);
     }
     return hash;
@@ -220,7 +224,9 @@ static inline void oe_set_type(struct object_entry *e,
                                enum object_type     type)
 {
     if (type >= OBJ_ANY)
+    {
         BUG("OBJ_ANY cannot be set in pack-objects code");
+    }
 
     e->type_valid = type >= OBJ_NONE;
     e->type_      = (unsigned)type;
@@ -243,9 +249,10 @@ static inline struct packed_git *oe_in_pack(const struct packing_data *pack,
                                             const struct object_entry *e)
 {
     if (pack->in_pack_by_idx)
+    {
         return pack->in_pack_by_idx[e->in_pack_idx];
-    else
-        return pack->in_pack[e - pack->objects];
+    }
+    return pack->in_pack[e - pack->objects];
 }
 
 void oe_map_new_pack(struct packing_data *pack);
@@ -281,7 +288,9 @@ static inline unsigned int oe_tree_depth(struct packing_data *pack,
                                          struct object_entry *e)
 {
     if (!pack->tree_depth)
+    {
         return 0;
+    }
     return pack->tree_depth[e - pack->objects];
 }
 
@@ -290,7 +299,9 @@ static inline void oe_set_layer(struct packing_data *pack,
                                 unsigned char        layer)
 {
     if (!pack->layer)
+    {
         CALLOC_ARRAY(pack->layer, pack->nr_alloc);
+    }
     pack->layer[e - pack->objects] = layer;
 }
 
@@ -298,7 +309,9 @@ static inline uint32_t oe_cruft_mtime(struct packing_data *pack,
                                       struct object_entry *e)
 {
     if (!pack->cruft_mtime)
+    {
         return 0;
+    }
     return pack->cruft_mtime[e - pack->objects];
 }
 
@@ -307,7 +320,9 @@ static inline void oe_set_cruft_mtime(struct packing_data *pack,
                                       uint32_t             mtime)
 {
     if (!pack->cruft_mtime)
+    {
         CALLOC_ARRAY(pack->cruft_mtime, pack->nr_alloc);
+    }
     pack->cruft_mtime[e - pack->objects] = mtime;
 }
 

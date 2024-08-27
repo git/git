@@ -20,7 +20,9 @@ void cmdnames_release(struct cmdnames *cmds);
 static inline void mput_char(char c, unsigned int num)
 {
     while (num--)
+    {
         putchar(c);
+    }
 }
 
 void list_common_cmds_help(void);
@@ -64,8 +66,8 @@ static inline void list_config_item(struct string_list *list,
     {                                                                      \
         int i;                                                             \
         for (i = 0; i < ARRAY_SIZE(array); i++)                            \
-            if (array[i])                                                  \
-                list_config_item(list, prefix, array[i]);                  \
+            if ((array)[i])                                                \
+                list_config_item(list, prefix, (array)[i]);                \
     }                                                                      \
     struct string_list
 
@@ -77,8 +79,8 @@ static inline void list_config_item(struct string_list *list,
         for (i = 0; i < ARRAY_SIZE(extra); i++)                            \
             list_config_item(list, prefix, extra[i]);                      \
         for (i = 0; i < ARRAY_SIZE(array); i++)                            \
-            if (array[i])                                                  \
-                list_config_item(list, prefix, array[i]);                  \
+            if ((array)[i])                                                \
+                list_config_item(list, prefix, (array)[i]);                \
     }                                                                      \
     struct string_list
 

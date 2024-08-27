@@ -191,10 +191,10 @@ struct hashmap
 
 /* hashmap functions */
 
-#define HASHMAP_INIT(fn, data)           \
-    {                                    \
-        .cmpfn = fn, .cmpfn_data = data, \
-        .do_count_items = 1              \
+#define HASHMAP_INIT(fn, data)               \
+    {                                        \
+        .cmpfn = (fn), .cmpfn_data = (data), \
+        .do_count_items = 1                  \
     }
 
 /*
@@ -308,7 +308,9 @@ static inline void hashmap_entry_init(struct hashmap_entry *e,
 static inline unsigned int hashmap_get_size(struct hashmap *map)
 {
     if (map->do_count_items)
+    {
         return map->private_size;
+    }
 
     BUG("hashmap_get_size: size not set");
     return 0;
@@ -484,13 +486,13 @@ static inline struct hashmap_entry *hashmap_iter_first(struct hashmap      *map,
  * iterate through @map using @iter, @var is a pointer to a type
  * containing a @member which is a "struct hashmap_entry"
  */
-#define hashmap_for_each_entry(map, iter, var, member)                     \
-    for (var = NULL, /* for systems without typeof */                      \
-         var = hashmap_iter_first_entry_offset(map, iter,                  \
-                                               OFFSETOF_VAR(var, member)); \
-         var;                                                              \
-         var = hashmap_iter_next_entry_offset(iter,                        \
-                                              OFFSETOF_VAR(var, member)))
+#define hashmap_for_each_entry(map, iter, var, member)                       \
+    for ((var) = NULL, /* for systems without typeof */                      \
+         (var) = hashmap_iter_first_entry_offset(map, iter,                  \
+                                                 OFFSETOF_VAR(var, member)); \
+         var;                                                                \
+         (var) = hashmap_iter_next_entry_offset(iter,                        \
+                                                OFFSETOF_VAR(var, member)))
 
 /*
  * returns a pointer of type matching @keyvar, or NULL if nothing found.
@@ -521,7 +523,7 @@ static inline struct hashmap_entry *hashmap_iter_first(struct hashmap      *map,
 #define hashmap_for_each_entry_from(map, var, member) \
     for (;                                            \
          var;                                         \
-         var = hashmap_get_next_entry(map, var, member))
+         (var) = hashmap_get_next_entry(map, var, member))
 
 /*
  * Disable item counting and automatic rehashing when adding/removing items.
@@ -549,11 +551,15 @@ static inline void hashmap_enable_item_counting(struct hashmap *map)
     struct hashmap_iter iter;
 
     if (map->do_count_items)
+    {
         return;
+    }
 
     hashmap_iter_init(map, &iter);
     while (hashmap_iter_next(&iter))
+    {
         n++;
+    }
 
     map->do_count_items = 1;
     map->private_size   = n;

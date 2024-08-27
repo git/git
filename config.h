@@ -27,7 +27,7 @@ struct object_id;
 #define CONFIG_INVALID_KEY        1
 #define CONFIG_NO_SECTION_OR_NAME 2
 /* repo_config_set_gently(), repo_config_set_multivar_gently() return the above or these: */
-#define CONFIG_NO_LOCK         -1
+#define CONFIG_NO_LOCK         (-1)
 #define CONFIG_INVALID_FILE    3
 #define CONFIG_NO_WRITE        4
 #define CONFIG_NOTHING_SET     5
