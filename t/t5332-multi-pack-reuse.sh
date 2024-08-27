@@ -69,7 +69,7 @@ test_expect_success 'multi-pack reuse is disabled by default' '
 	test_pack_objects_reused_all 3 1
 '
 
-test_expect_failure 'feature.experimental implies multi-pack reuse' '
+test_expect_success 'feature.experimental implies multi-pack reuse' '
 	test_config feature.experimental true &&
 
 	test_pack_objects_reused_all 6 2
@@ -86,7 +86,7 @@ test_expect_success 'enable multi-pack reuse' '
 	git config pack.allowPackReuse multi
 '
 
-test_expect_failure 'reuse all objects from subset of bitmapped packs' '
+test_expect_success 'reuse all objects from subset of bitmapped packs' '
 	test_commit C &&
 	git repack -d &&
 
@@ -100,7 +100,7 @@ test_expect_failure 'reuse all objects from subset of bitmapped packs' '
 	test_pack_objects_reused 6 2 <in
 '
 
-test_expect_failure 'reuse all objects from all packs' '
+test_expect_success 'reuse all objects from all packs' '
 	test_pack_objects_reused_all 9 3
 '
 
@@ -194,7 +194,7 @@ test_expect_success 'omit delta with uninteresting base (same pack)' '
 	test_pack_objects_reused 3 1 <in
 '
 
-test_expect_failure 'omit delta from uninteresting base (cross pack)' '
+test_expect_success 'omit delta from uninteresting base (cross pack)' '
 	cat >in <<-EOF &&
 	$(git rev-parse $base)
 	^$(git rev-parse $delta)
@@ -234,6 +234,29 @@ test_expect_success 'non-omitted delta in MIDX preferred pack' '
 	git show-index <$packdir/pack-$p1.idx >expect &&
 
 	test_pack_objects_reused_all $(wc -l <expect) 1
+'
+
+test_expect_success 'duplicate objects' '
+	git init duplicate-objects &&
+	(
+		cd duplicate-objects &&
+
+		git config pack.allowPackReuse multi &&
+
+		test_commit base &&
+
+		git repack -a &&
+
+		git rev-parse HEAD^{tree} >in &&
+		p="$(git pack-objects $packdir/pack <in)" &&
+
+		git multi-pack-index write --bitmap --preferred-pack=pack-$p.idx &&
+
+		objects_nr="$(git rev-list --count --all --objects)" &&
+		packs_nr="$(find $packdir -type f -name "pack-*.pack" | wc -l)" &&
+
+		test_pack_objects_reused_all $objects_nr $packs_nr
+	)
 '
 
 test_done
