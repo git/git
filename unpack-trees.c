@@ -3555,7 +3555,7 @@ int twoway_merge(const struct cache_entry *const *src,
              */
             return merged_entry(newtree, current, o);
         }
-        else if (S_ISSPARSEDIR(current->ce_mode))
+        if (S_ISSPARSEDIR(current->ce_mode))
         {
             /*
              * The sparse directories differ, but we don't know whether that's
@@ -3565,10 +3565,9 @@ int twoway_merge(const struct cache_entry *const *src,
              */
             return merged_sparse_dir(src, 3, o);
         }
-        else
-            return reject_merge(current, o);
+        return reject_merge(current, o);
     }
-    else if (newtree)
+    if (newtree)
     {
         if (oldtree && !o->initial_checkout)
         {

@@ -35,7 +35,9 @@ enum rebase_type rebase_parse_value(const char *value)
         return REBASE_INTERACTIVE;
     }
     if (!strcmp(value, "preserve") || !strcmp(value, "p"))
+    {
         error(_("%s: 'preserve' superseded by 'merges'"), value);
+    }
     /*
      * Please update _git_config() in git-completion.bash when you
      * add new rebase modes.

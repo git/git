@@ -286,30 +286,34 @@ static int set_git_option(struct git_transport_options *opts,
         opts->keep = !!value;
         return 0;
     }
-    else if (!strcmp(name, TRANS_OPT_UPDATE_SHALLOW))
+    if (!strcmp(name, TRANS_OPT_UPDATE_SHALLOW))
     {
         opts->update_shallow = !!value;
         return 0;
     }
-    else if (!strcmp(name, TRANS_OPT_DEPTH))
+    if (!strcmp(name, TRANS_OPT_DEPTH))
     {
         if (!value)
+        {
             opts->depth = 0;
+        }
         else
         {
             char *end;
             opts->depth = strtol(value, &end, 0);
             if (*end)
+            {
                 die(_("transport: invalid depth option '%s'"), value);
+            }
         }
         return 0;
     }
-    else if (!strcmp(name, TRANS_OPT_DEEPEN_SINCE))
+    if (!strcmp(name, TRANS_OPT_DEEPEN_SINCE))
     {
         opts->deepen_since = value;
         return 0;
     }
-    else if (!strcmp(name, TRANS_OPT_DEEPEN_NOT))
+    if (!strcmp(name, TRANS_OPT_DEEPEN_NOT))
     {
         opts->deepen_not = (const struct string_list *)value;
         return 0;

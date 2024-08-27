@@ -713,11 +713,17 @@ static int parse_signature_option(const char *arg)
         return S_KEY;
     }
     if (!strcmp(arg, "fingerprint"))
+    {
         return S_FINGERPRINT;
-    else if (!strcmp(arg, "primarykeyfingerprint"))
+    }
+    if (!strcmp(arg, "primarykeyfingerprint"))
+    {
         return S_PRI_KEY_FP;
-    else if (!strcmp(arg, "trustlevel"))
+    }
+    if (!strcmp(arg, "trustlevel"))
+    {
         return S_TRUST_LEVEL;
+    }
     return -1;
 }
 

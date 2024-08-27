@@ -771,9 +771,10 @@ enum commit_msg_cleanup_mode get_cleanup_mode(const char *cleanup_arg,
         return COMMIT_MSG_CLEANUP_ALL;
     }
     if (!strcmp(cleanup_arg, "scissors"))
+    {
         return use_editor ? COMMIT_MSG_CLEANUP_SCISSORS : COMMIT_MSG_CLEANUP_SPACE;
-    else
-        die(_("Invalid cleanup mode %s"), cleanup_arg);
+    }
+    die(_("Invalid cleanup mode %s"), cleanup_arg);
 }
 
 /*

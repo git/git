@@ -5714,11 +5714,11 @@ const char *get_revision_mark(const struct rev_info *revs, const struct commit *
         }
         return ">";
     }
-    else if (revs->graph)
+    if (revs->graph)
     {
         return "*";
     }
-    else if (revs->cherry_mark)
+    if (revs->cherry_mark)
     {
         return "+";
     }

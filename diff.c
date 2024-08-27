@@ -268,7 +268,9 @@ long parse_algorithm_value(const char *value)
         return XDF_PATIENCE_DIFF;
     }
     if (!strcasecmp(value, "histogram"))
+    {
         return XDF_HISTOGRAM_DIFF;
+    }
     /*
      * Please update $__git_diff_algorithms in git-completion.bash
      * when you add new algorithms.
@@ -380,13 +382,18 @@ static int parse_color_moved(const char *arg)
         return COLOR_MOVED_ZEBRA;
     }
     if (!strcmp(arg, "default"))
+    {
         return COLOR_MOVED_DEFAULT;
-    else if (!strcmp(arg, "dimmed-zebra"))
+    }
+    if (!strcmp(arg, "dimmed-zebra"))
+    {
         return COLOR_MOVED_ZEBRA_DIM;
-    else if (!strcmp(arg, "dimmed_zebra"))
+    }
+    if (!strcmp(arg, "dimmed_zebra"))
+    {
         return COLOR_MOVED_ZEBRA_DIM;
-    else
-        return error(_("color moved setting must be one of 'no', 'default', 'blocks', 'zebra', 'dimmed-zebra', 'plain'"));
+    }
+    return error(_("color moved setting must be one of 'no', 'default', 'blocks', 'zebra', 'dimmed-zebra', 'plain'"));
 }
 
 static unsigned parse_color_moved_ws(const char *arg)

@@ -52,7 +52,9 @@ static int parse_pattern_type_arg(const char *opt, const char *arg)
         return GREP_PATTERN_TYPE_FIXED;
     }
     if (!strcmp(arg, "perl"))
+    {
         return GREP_PATTERN_TYPE_PCRE;
+    }
     die("bad %s argument: %s", opt, arg);
 }
 
