@@ -3014,8 +3014,10 @@ static int verify_absent_1(const struct cache_entry     *ce,
     }
 
     if (submodule_from_ce(ce))
+    {
         return check_submodule_move_head(ce, oid_to_hex(&ce->oid),
                                          NULL, o);
+    }
 
     return check_ok_to_remove(ce->name, ce_namelen(ce),
                               ce_to_dtype(ce), ce, &st,
@@ -3542,7 +3544,7 @@ int twoway_merge(const struct cache_entry *const *src,
             /* 20 or 21 */
             return merged_entry(newtree, current, o);
         }
-        else if (current && !oldtree && newtree && S_ISSPARSEDIR(current->ce_mode) != S_ISSPARSEDIR(newtree->ce_mode) && ce_stage(current) == 0)
+        if (current && !oldtree && newtree && S_ISSPARSEDIR(current->ce_mode) != S_ISSPARSEDIR(newtree->ce_mode) && ce_stage(current) == 0)
         {
             /*
              * This case is a directory/file conflict across the sparse-index

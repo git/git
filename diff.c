@@ -264,8 +264,10 @@ long parse_algorithm_value(const char *value)
         return XDF_NEED_MINIMAL;
     }
     if (!strcasecmp(value, "patience"))
+    {
         return XDF_PATIENCE_DIFF;
-    else if (!strcasecmp(value, "histogram"))
+    }
+    if (!strcasecmp(value, "histogram"))
         return XDF_HISTOGRAM_DIFF;
     /*
      * Please update $__git_diff_algorithms in git-completion.bash
@@ -374,8 +376,10 @@ static int parse_color_moved(const char *arg)
         return COLOR_MOVED_BLOCKS;
     }
     if (!strcmp(arg, "zebra"))
+    {
         return COLOR_MOVED_ZEBRA;
-    else if (!strcmp(arg, "default"))
+    }
+    if (!strcmp(arg, "default"))
         return COLOR_MOVED_DEFAULT;
     else if (!strcmp(arg, "dimmed-zebra"))
         return COLOR_MOVED_ZEBRA_DIM;
@@ -4588,7 +4592,9 @@ static const char *get_compact_summary(const struct diff_filepair *p, int is_ren
         return "mode +x";
     }
     if ((p->one->mode & 0777) == 0755 && (p->two->mode & 0777) == 0644)
+    {
         return "mode -x";
+    }
     return NULL;
 }
 

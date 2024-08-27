@@ -281,7 +281,7 @@ static int set_git_option(struct git_transport_options *opts,
         opts->followtags = !!value;
         return 0;
     }
-    else if (!strcmp(name, TRANS_OPT_KEEP))
+    if (!strcmp(name, TRANS_OPT_KEEP))
     {
         opts->keep = !!value;
         return 0;
