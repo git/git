@@ -2379,6 +2379,128 @@ test_expect_success $PREREQ 'leading and trailing whitespaces are removed' '
 	test_cmp expected-list actual-list
 '
 
+test_expect_success $PREREQ 'mailmap support with --to' '
+	clean_fake_sendmail &&
+	test_config mailmap.file "mailmap.test" &&
+	cat >mailmap.test <<-EOF &&
+	Some Body <someone@example.com> <someone@example.org>
+	EOF
+	git format-patch --stdout -1 >a.patch &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--to=someone@example.org \
+		--mailmap \
+		a.patch \
+		2>errors >out &&
+	grep "^!someone@example\.com!$" commandline1
+'
+
+test_expect_success $PREREQ 'sendemail.mailmap configuration' '
+	clean_fake_sendmail &&
+	test_config mailmap.file "mailmap.test" &&
+	test_config sendemail.mailmap "true" &&
+	cat >mailmap.test <<-EOF &&
+	Some Body <someone@example.com> <someone@example.org>
+	EOF
+	git format-patch --stdout -1 >a.patch &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--to=someone@example.org \
+		a.patch \
+		2>errors >out &&
+	grep "^!someone@example\.com!$" commandline1
+'
+
+test_expect_success $PREREQ 'sendemail.mailmap.file configuration' '
+	clean_fake_sendmail &&
+	test_config sendemail.mailmap.file "mailmap.test" &&
+	test_config sendemail.mailmap "true" &&
+	cat >mailmap.test <<-EOF &&
+	Some Body <someone@example.com> <someone@example.org>
+	EOF
+	git format-patch --stdout -1 >a.patch &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--to=someone@example.org \
+		a.patch \
+		2>errors >out &&
+	grep "^!someone@example\.com!$" commandline1
+'
+
+test_expect_success $PREREQ 'sendemail.mailmap identity overrides configuration' '
+	clean_fake_sendmail &&
+	test_config sendemail.cloud.mailmap.file "mailmap.test" &&
+	test_config sendemail.mailmap "false" &&
+	test_config sendemail.cloud.mailmap "true" &&
+	cat >mailmap.test <<-EOF &&
+	Some Body <someone@example.com> <someone@example.org>
+	EOF
+	git format-patch --stdout -1 >a.patch &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--identity=cloud \
+		--to=someone@example.org \
+		a.patch \
+		2>errors >out &&
+	grep "^!someone@example\.com!$" commandline1
+'
+
+test_expect_success $PREREQ '--no-mailmap overrides configuration' '
+	clean_fake_sendmail &&
+	test_config sendemail.cloud.mailmap.file "mailmap.test" &&
+	test_config sendemail.mailmap "false" &&
+	test_config sendemail.cloud.mailmap "true" &&
+	cat >mailmap.test <<-EOF &&
+	Some Body <someone@example.com> <someone@example.org>
+	EOF
+	git format-patch --stdout -1 >a.patch &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--identity=cloud \
+		--to=someone@example.org \
+		--no-mailmap \
+		a.patch \
+		2>errors >out &&
+	grep "^!someone@example\.org!$" commandline1
+'
+
+test_expect_success $PREREQ 'mailmap support in To header' '
+	clean_fake_sendmail &&
+	test_config mailmap.file "mailmap.test" &&
+	cat >mailmap.test <<-EOF &&
+	<someone@example.com> <someone@example.org>
+	EOF
+	git format-patch --stdout -1 --to=someone@example.org >a.patch &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--mailmap \
+		a.patch \
+		2>errors >out &&
+	grep "^!someone@example\.com!$" commandline1
+'
+
+test_expect_success $PREREQ 'mailmap support in Cc header' '
+	clean_fake_sendmail &&
+	test_config mailmap.file "mailmap.test" &&
+	cat >mailmap.test <<-EOF &&
+	<someone@example.com> <someone@example.org>
+	EOF
+	git format-patch --stdout -1 --cc=someone@example.org >a.patch &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		--mailmap \
+		a.patch \
+		2>errors >out &&
+	grep "^!someone@example\.com!$" commandline1
+'
+
 test_expect_success $PREREQ 'test using command name with --sendmail-cmd' '
 	clean_fake_sendmail &&
 	PATH="$PWD:$PATH" \
