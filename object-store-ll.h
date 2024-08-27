@@ -150,7 +150,8 @@ static inline int pack_map_entry_cmp(const void *cmp_data        UNUSED,
                                      const void                 *keydata)
 {
     const char              *key = keydata;
-    const struct packed_git *pg1, *pg2;
+    const struct packed_git *pg1;
+    const struct packed_git *pg2;
 
     pg1 = container_of(entry, const struct packed_git, packmap_ent);
     pg2 = container_of(entry2, const struct packed_git, packmap_ent);
@@ -440,13 +441,17 @@ extern pthread_mutex_t obj_read_mutex;
 static inline void obj_read_lock(void)
 {
     if (obj_read_use_lock)
+    {
         pthread_mutex_lock(&obj_read_mutex);
+    }
 }
 
 static inline void obj_read_unlock(void)
 {
     if (obj_read_use_lock)
+    {
         pthread_mutex_unlock(&obj_read_mutex);
+    }
 }
 
 /*

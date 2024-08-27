@@ -60,11 +60,11 @@ void *reftable_calloc(size_t nelem, size_t elsize);
 #define REFTABLE_ALLOC_GROW(x, nr, alloc)     \
     do                                        \
     {                                         \
-        if ((nr) > alloc)                     \
+        if ((nr) > (alloc))                   \
         {                                     \
-            alloc = 2 * (alloc) + 1;          \
-            if (alloc < (nr))                 \
-                alloc = (nr);                 \
+            (alloc) = 2 * (alloc) + 1;        \
+            if ((alloc) < (nr))               \
+                (alloc) = (nr);               \
             REFTABLE_REALLOC_ARRAY(x, alloc); \
         }                                     \
     } while (0)

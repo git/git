@@ -22,7 +22,9 @@ static inline void get_compiler_info(struct strbuf *info)
 #endif
 
     if (len == info->len)
+    {
         strbuf_addstr(info, _("no compiler information available\n"));
+    }
 }
 
 static inline void get_libc_info(struct strbuf *info)
@@ -34,7 +36,9 @@ static inline void get_libc_info(struct strbuf *info)
 #endif
 
     if (len == info->len)
+    {
         strbuf_addstr(info, _("no libc information available\n"));
+    }
 }
 
 #endif /* COMPILER_H */

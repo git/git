@@ -16,7 +16,9 @@ static inline void openssl_SHA1_Init(struct openssl_SHA1_CTX *ctx)
 
     ctx->ectx = EVP_MD_CTX_new();
     if (!ctx->ectx)
+    {
         die("EVP_MD_CTX_new: out of memory");
+    }
 
     EVP_DigestInit_ex(ctx->ectx, type, NULL);
 }

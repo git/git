@@ -357,7 +357,9 @@ static inline time_t git_time(time_t *tloc)
     gettimeofday(&tv, NULL);
 
     if (tloc)
+    {
         *tloc = tv.tv_sec;
+    }
     return tv.tv_sec;
 }
 #define time git_time
@@ -553,7 +555,9 @@ static inline void extract_id_from_env(const char *env, uid_t *id)
         /* silent overflow errors could trigger a bug here */
         env_id = strtoul(real_uid, &endptr, 10);
         if (!*endptr && !errno)
+        {
             *id = env_id;
+        }
     }
 }
 
@@ -564,15 +568,18 @@ static inline int is_path_owned_by_current_uid(const char           *path,
     uid_t       euid;
 
     if (lstat(path, &st))
+    {
         return 0;
+    }
 
     euid = geteuid();
     if (euid == ROOT_UID)
     {
         if (st.st_uid == ROOT_UID)
+        {
             return 1;
-        else
-            extract_id_from_env("SUDO_UID", &euid);
+        }
+        extract_id_from_env("SUDO_UID", &euid);
     }
 
     return st.st_uid == euid;
@@ -755,8 +762,10 @@ static inline bool strip_suffix_mem(const char *buf, size_t *len,
                                     const char *suffix)
 {
     size_t suflen = strlen(suffix);
-    if (*len < suflen || memcmp(buf + (*len - suflen), suffix, suflen))
+    if (*len < suflen || memcmp(buf + (*len - suflen), suffix, suflen) != 0)
+    {
         return false;
+    }
     *len -= suflen;
     return true;
 }
@@ -994,8 +1003,10 @@ int git_atexit(void (*handler)(void));
 static inline size_t st_add(size_t a, size_t b)
 {
     if (unsigned_add_overflows(a, b))
+    {
         die("size_t overflow: %" PRIuMAX " + %" PRIuMAX,
             (uintmax_t)a, (uintmax_t)b);
+    }
     return a + b;
 }
 #define st_add3(a, b, c)    st_add(st_add((a), (b)), (c))
@@ -1004,48 +1015,60 @@ static inline size_t st_add(size_t a, size_t b)
 static inline size_t st_mult(size_t a, size_t b)
 {
     if (unsigned_mult_overflows(a, b))
+    {
         die("size_t overflow: %" PRIuMAX " * %" PRIuMAX,
             (uintmax_t)a, (uintmax_t)b);
+    }
     return a * b;
 }
 
 static inline size_t st_sub(size_t a, size_t b)
 {
     if (a < b)
+    {
         die("size_t underflow: %" PRIuMAX " - %" PRIuMAX,
             (uintmax_t)a, (uintmax_t)b);
+    }
     return a - b;
 }
 
 static inline size_t st_left_shift(size_t a, unsigned shift)
 {
     if (unsigned_left_shift_overflows(a, shift))
+    {
         die("size_t overflow: %" PRIuMAX " << %u",
             (uintmax_t)a, shift);
+    }
     return a << shift;
 }
 
 static inline unsigned long cast_size_t_to_ulong(size_t a)
 {
     if (a != (unsigned long)a)
+    {
         die("object too large to read on this platform: %" PRIuMAX " is cut off to %lu",
             (uintmax_t)a, (unsigned long)a);
+    }
     return (unsigned long)a;
 }
 
 static inline uint32_t cast_size_t_to_uint32_t(size_t a)
 {
     if (a != (uint32_t)a)
+    {
         die("object too large to read on this platform: %" PRIuMAX " is cut off to %u",
             (uintmax_t)a, (uint32_t)a);
+    }
     return (uint32_t)a;
 }
 
 static inline int cast_size_t_to_int(size_t a)
 {
     if (a > INT_MAX)
+    {
         die("number too large to represent as int on this platform: %" PRIuMAX,
             (uintmax_t)a);
+    }
     return (int)a;
 }
 
@@ -1102,14 +1125,18 @@ static inline int cast_size_t_to_int(size_t a)
 static inline void copy_array(void *dst, const void *src, size_t n, size_t size)
 {
     if (n)
+    {
         memcpy(dst, src, st_mult(size, n));
+    }
 }
 
 #define MOVE_ARRAY(dst, src, n) move_array((dst), (src), (n), sizeof(*(dst)) + BARF_UNLESS_COPYABLE((dst), (src)))
 static inline void move_array(void *dst, const void *src, size_t n, size_t size)
 {
     if (n)
+    {
         memmove(dst, src, st_mult(size, n));
+    }
 }
 
 #define DUP_ARRAY(dst, src, n)                                             \
@@ -1267,7 +1294,9 @@ static inline char *xstrdup_or_null(const char *str)
 static inline size_t xsize_t(off_t len)
 {
     if (len < 0 || (uintmax_t)len > SIZE_MAX)
+    {
         die("Cannot handle files this big");
+    }
     return (size_t)len;
 }
 
@@ -1325,10 +1354,14 @@ static inline int strtoul_ui(char const *s, int base, unsigned int *result)
     errno = 0;
     /* negative values would be accepted by strtoul */
     if (strchr(s, '-'))
+    {
         return -1;
+    }
     ul = strtoul(s, &p, base);
     if (errno || *p || p == s || (unsigned int)ul != ul)
+    {
         return -1;
+    }
     *result = ul;
     return 0;
 }
@@ -1341,7 +1374,9 @@ static inline int strtol_i(char const *s, int base, int *result)
     errno = 0;
     ul    = strtol(s, &p, base);
     if (errno || *p || p == s || (int)ul != ul)
+    {
         return -1;
+    }
     *result = ul;
     return 0;
 }
@@ -1357,7 +1392,9 @@ static inline void sane_qsort(void *base, size_t nmemb, size_t size,
                               int (*compar)(const void *, const void *))
 {
     if (nmemb > 1)
+    {
         qsort(base, nmemb, size, compar);
+    }
 }
 
 #define STABLE_QSORT(base, n, compar) \

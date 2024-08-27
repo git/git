@@ -116,7 +116,9 @@ static inline struct object_id *oidset_iter_next(struct oidset_iter *iter)
     for (; iter->iter != kh_end(iter->set); iter->iter++)
     {
         if (kh_exist(iter->set, iter->iter))
+        {
             return &kh_key(iter->set, iter->iter++);
+        }
     }
     return NULL;
 }

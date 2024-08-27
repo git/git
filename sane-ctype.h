@@ -47,19 +47,24 @@ extern const signed char   hexval_table[256];
 static inline int sane_case(int x, int high)
 {
     if (sane_istest(x, GIT_ALPHA))
+    {
         x = (x & ~0x20) | high;
+    }
     return x;
 }
 
 static inline int sane_iscase(int x, int is_lower)
 {
     if (!sane_istest(x, GIT_ALPHA))
+    {
         return 0;
+    }
 
     if (is_lower)
+    {
         return (x & 0x20) != 0;
-    else
-        return (x & 0x20) == 0;
+    }
+    return (x & 0x20) == 0;
 }
 
 #endif

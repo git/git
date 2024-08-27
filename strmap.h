@@ -193,7 +193,9 @@ static inline int strintmap_get(struct strintmap *map, const char *str)
 {
     struct strmap_entry *result = strmap_get_entry(&map->map, str);
     if (!result)
+    {
         return map->default_value;
+    }
     return (intptr_t)result->value;
 }
 

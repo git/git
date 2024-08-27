@@ -167,12 +167,18 @@ void strbuf_grow(struct strbuf *sb, size_t amount);
 static inline void strbuf_setlen(struct strbuf *sb, size_t len)
 {
     if (len > (sb->alloc ? sb->alloc - 1 : 0))
+    {
         BUG("strbuf_setlen() beyond buffer");
+    }
     sb->len = len;
     if (sb->buf != strbuf_slopbuf)
+    {
         sb->buf[len] = '\0';
+    }
     else
+    {
         assert(!strbuf_slopbuf[0]);
+    }
 }
 
 /**
@@ -531,8 +537,7 @@ static inline int strbuf_strip_suffix(struct strbuf *sb, const char *suffix)
         strbuf_setlen(sb, sb->len);
         return 1;
     }
-    else
-        return 0;
+    return 0;
 }
 
 /**
@@ -626,7 +631,9 @@ void strbuf_addstr_xml_quoted(struct strbuf *sb,
 static inline void strbuf_complete(struct strbuf *sb, char term)
 {
     if (sb->len && sb->buf[sb->len - 1] != term)
+    {
         strbuf_addch(sb, term);
+    }
 }
 
 static inline void strbuf_complete_line(struct strbuf *sb)

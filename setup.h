@@ -91,7 +91,9 @@ static inline int discover_git_directory(struct strbuf *commondir,
                                          struct strbuf *gitdir)
 {
     if (discover_git_directory_reason(commondir, gitdir) <= 0)
+    {
         return -1;
+    }
     return 0;
 }
 

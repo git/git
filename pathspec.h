@@ -150,9 +150,10 @@ static inline int ps_strcmp(const struct pathspec_item *item,
                             const char *s1, const char *s2)
 {
     if (item->magic & PATHSPEC_ICASE)
+    {
         return strcasecmp(s1, s2);
-    else
-        return strcmp(s1, s2);
+    }
+    return strcmp(s1, s2);
 }
 
 enum ps_skip_worktree_action
@@ -172,7 +173,9 @@ static inline int matches_skip_worktree(const struct pathspec *pathspec,
                                         int item, char **seen_ptr)
 {
     if (!*seen_ptr)
+    {
         *seen_ptr = find_pathspecs_matching_skip_worktree(pathspec);
+    }
     return (*seen_ptr)[item];
 }
 int match_pathspec_attrs(struct index_state *istate,

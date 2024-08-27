@@ -49,7 +49,7 @@ extern "C"
 #define DOSTORESTATE58
 #define DOSTORESTATE65
 
-#define CHECK_DVMASK(_DVMASK) (0 != _DVMASK[0])
+#define CHECK_DVMASK(_DVMASK) (0 != (_DVMASK)[0])
 
 #if defined(__cplusplus)
 }

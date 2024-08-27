@@ -15,7 +15,7 @@ https://developers.google.com/open-source/licenses/bsd
 #define EXPECT_ERR(c)                                              \
     do                                                             \
     {                                                              \
-        if (c != 0)                                                \
+        if ((c) != 0)                                              \
         {                                                          \
             fflush(stderr);                                        \
             fflush(stdout);                                        \

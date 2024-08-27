@@ -170,7 +170,9 @@ static inline struct passwd *getpwnam(const char *name)
 static inline int fcntl(int fd, int cmd, ...)
 {
     if (cmd == F_GETFD || cmd == F_SETFD)
+    {
         return 0;
+    }
     errno = EINVAL;
     return -1;
 }
@@ -491,8 +493,12 @@ HANDLE winansi_get_osfhandle(int fd);
 static inline void convert_slashes(char *path)
 {
     for (; *path; path++)
+    {
         if (*path == '\\')
+        {
             *path = '/';
+        }
+    }
 }
 #define PATH_SEP ';'
 char *mingw_query_user_email(void);
