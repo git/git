@@ -318,7 +318,7 @@ static int set_git_option(struct git_transport_options *opts,
         opts->deepen_not = (const struct string_list *)value;
         return 0;
     }
-    else if (!strcmp(name, TRANS_OPT_DEEPEN_RELATIVE))
+    if (!strcmp(name, TRANS_OPT_DEEPEN_RELATIVE))
     {
         opts->deepen_relative = !!value;
         return 0;
