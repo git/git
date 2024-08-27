@@ -1072,7 +1072,7 @@ static void write_reused_pack_one(struct packed_git *reuse_packfile,
 		fixup = find_reused_offset(offset) -
 			find_reused_offset(base_offset);
 		if (fixup) {
-			unsigned char ofs_header[10];
+			unsigned char ofs_header[MAX_PACK_OBJECT_HEADER];
 			unsigned i, ofs_len;
 			off_t ofs = offset - base_offset - fixup;
 
