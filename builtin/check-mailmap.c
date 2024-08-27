@@ -25,13 +25,17 @@ static void check_mailmap(struct string_list *mailmap, const char *contact)
 	size_t namelen, maillen;
 	struct ident_split ident;
 
-	if (split_ident_line(&ident, contact, strlen(contact)))
-		die(_("unable to parse contact: %s"), contact);
-
-	name = ident.name_begin;
-	namelen = ident.name_end - ident.name_begin;
-	mail = ident.mail_begin;
-	maillen = ident.mail_end - ident.mail_begin;
+	if (!split_ident_line(&ident, contact, strlen(contact))) {
+		name = ident.name_begin;
+		namelen = ident.name_end - ident.name_begin;
+		mail = ident.mail_begin;
+		maillen = ident.mail_end - ident.mail_begin;
+	} else {
+		name = NULL;
+		namelen = 0;
+		mail = contact;
+		maillen = strlen(contact);
+	}
 
 	map_user(mailmap, &mail, &maillen, &name, &namelen);
 
