@@ -31,6 +31,8 @@ DEALINGS IN THE SOFTWARE.
 /*#pragma optimize("a", on)*/
 #endif
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 /*#define FULLSANITYCHECKS*/
 
 #include "nedmalloc.h"

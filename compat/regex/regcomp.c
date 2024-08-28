@@ -17,6 +17,8 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 #if defined __TANDEM
  /* This is currently duplicated from git-compat-utils.h */
 # ifdef NO_INTPTR_T
