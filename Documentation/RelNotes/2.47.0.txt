@@ -43,6 +43,9 @@ UI, Workflows & Features
    that the history leading to a given commit "%(is-base:<commit>)" is
    likely based on.
 
+ * The command line prompt support used to be littered with bash-isms,
+   which has been corrected to work with more shells.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -170,6 +173,8 @@ Fixes since v2.46
    0 commits, and attempted to include commits that are not in packs,
    which made no sense.  These bugs have been corrected.
    (merge a72dfab8b8 tb/pseudo-merge-bitmap-fixes later to maint).
+
+ * "git rebase -x --quiet" was not quiet, which was corrected.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge bb0498b1bb jc/how-to-maintain-updates later to maint).
