@@ -359,7 +359,7 @@ static void t_index_block_read_write(void)
 		reftable_record_release(&recs[i]);
 }
 
-int cmd_main(int argc, const char *argv[])
+int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 {
 	TEST(t_index_block_read_write(), "read-write operations on index blocks work");
 	TEST(t_log_block_read_write(), "read-write operations on log blocks work");
