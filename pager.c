@@ -234,6 +234,8 @@ int term_columns(void)
  */
 void term_clear_line(void)
 {
+	if (!isatty(2))
+		return;
 	if (is_terminal_dumb())
 		/*
 		 * Fall back to print a terminal width worth of space
