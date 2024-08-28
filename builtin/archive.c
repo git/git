@@ -76,7 +76,10 @@ static int run_remote_archiver(int argc, const char **argv,
 			     PARSE_OPT_KEEP_UNKNOWN_OPT |	\
 			     PARSE_OPT_NO_INTERNAL_HELP	)
 
-int cmd_archive(int argc, const char **argv, const char *prefix)
+int cmd_archive(int argc,
+		const char **argv,
+		const char *prefix,
+		struct repository *repo UNUSED)
 {
 	const char *exec = "git-upload-archive";
 	char *output = NULL;

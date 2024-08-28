@@ -14,7 +14,10 @@ static const char diff_cache_usage[] =
 "\n"
 COMMON_DIFF_OPTIONS_HELP;
 
-int cmd_diff_index(int argc, const char **argv, const char *prefix)
+int cmd_diff_index(int argc,
+		   const char **argv,
+		   const char *prefix,
+		   struct repository *repo UNUSED)
 {
 	struct rev_info rev;
 	unsigned int option = 0;

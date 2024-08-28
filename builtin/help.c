@@ -631,7 +631,10 @@ static void opt_mode_usage(int argc, const char *opt_mode,
 	no_help_format(opt_mode, fmt);
 }
 
-int cmd_help(int argc, const char **argv, const char *prefix)
+int cmd_help(int argc,
+	     const char **argv,
+	     const char *prefix,
+	     struct repository *repo UNUSED)
 {
 	int nongit;
 	enum help_format parsed_help_format;

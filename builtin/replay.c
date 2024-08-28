@@ -274,7 +274,10 @@ static struct commit *pick_regular_commit(struct commit *pickme,
 	return create_commit(result->tree, pickme, replayed_base);
 }
 
-int cmd_replay(int argc, const char **argv, const char *prefix)
+int cmd_replay(int argc,
+	       const char **argv,
+	       const char *prefix,
+	       struct repository *repo UNUSED)
 {
 	const char *advance_name_opt = NULL;
 	char *advance_name = NULL;

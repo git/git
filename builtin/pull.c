@@ -977,7 +977,10 @@ static void show_advice_pull_non_ff(void)
 		 "invocation.\n"));
 }
 
-int cmd_pull(int argc, const char **argv, const char *prefix)
+int cmd_pull(int argc,
+	     const char **argv,
+	     const char *prefix,
+	     struct repository *repository UNUSED)
 {
 	const char *repo, **refspecs;
 	struct oid_array merge_heads = OID_ARRAY_INIT;

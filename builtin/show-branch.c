@@ -632,7 +632,10 @@ static int parse_reflog_param(const struct option *opt, const char *arg,
 	return 0;
 }
 
-int cmd_show_branch(int ac, const char **av, const char *prefix)
+int cmd_show_branch(int ac,
+		const char **av,
+		const char *prefix,
+		struct repository *repo UNUSED)
 {
 	struct commit *rev[MAX_REVS], *commit;
 	char *reflog_msg[MAX_REVS] = {0};

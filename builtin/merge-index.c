@@ -73,7 +73,10 @@ static void merge_all(void)
 	}
 }
 
-int cmd_merge_index(int argc, const char **argv, const char *prefix UNUSED)
+int cmd_merge_index(int argc,
+		    const char **argv,
+		    const char *prefix UNUSED,
+		    struct repository *repo UNUSED)
 {
 	int i, force_file = 0;
 

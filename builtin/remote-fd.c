@@ -53,7 +53,10 @@ static void command_loop(int input_fd, int output_fd)
 	}
 }
 
-int cmd_remote_fd(int argc, const char **argv, const char *prefix)
+int cmd_remote_fd(int argc,
+		  const char **argv,
+		  const char *prefix,
+		  struct repository *repo UNUSED)
 {
 	int input_fd = -1;
 	int output_fd = -1;

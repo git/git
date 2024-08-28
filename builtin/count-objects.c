@@ -95,7 +95,10 @@ static char const * const count_objects_usage[] = {
 	NULL
 };
 
-int cmd_count_objects(int argc, const char **argv, const char *prefix)
+int cmd_count_objects(int argc,
+		      const char **argv,
+		      const char *prefix,
+		      struct repository *repo UNUSED)
 {
 	int human_readable = 0;
 	struct option opts[] = {

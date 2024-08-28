@@ -704,7 +704,10 @@ static int edit_branch_description(const char *branch_name)
 	return 0;
 }
 
-int cmd_branch(int argc, const char **argv, const char *prefix)
+int cmd_branch(int argc,
+	       const char **argv,
+	       const char *prefix,
+	       struct repository *repo UNUSED)
 {
 	/* possible actions */
 	int delete = 0, rename = 0, copy = 0, list = 0,

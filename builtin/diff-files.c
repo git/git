@@ -17,7 +17,10 @@ static const char diff_files_usage[] =
 "\n"
 COMMON_DIFF_OPTIONS_HELP;
 
-int cmd_diff_files(int argc, const char **argv, const char *prefix)
+int cmd_diff_files(int argc,
+		   const char **argv,
+		   const char *prefix,
+		   struct repository *repo UNUSED)
 {
 	struct rev_info rev;
 	int result;

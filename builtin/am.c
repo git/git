@@ -2298,7 +2298,10 @@ static int parse_opt_show_current_patch(const struct option *opt, const char *ar
 	return 0;
 }
 
-int cmd_am(int argc, const char **argv, const char *prefix)
+int cmd_am(int argc,
+	   const char **argv,
+	   const char *prefix,
+	   struct repository *repo UNUSED)
 {
 	struct am_state state;
 	int binary = -1;

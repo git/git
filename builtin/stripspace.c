@@ -29,7 +29,10 @@ enum stripspace_mode {
 	COMMENT_LINES
 };
 
-int cmd_stripspace(int argc, const char **argv, const char *prefix)
+int cmd_stripspace(int argc,
+		   const char **argv,
+		   const char *prefix,
+		   struct repository *repo UNUSED)
 {
 	struct strbuf buf = STRBUF_INIT;
 	enum stripspace_mode mode = STRIP_DEFAULT;

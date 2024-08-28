@@ -113,7 +113,10 @@ static const char * const checkout_worker_usage[] = {
 	NULL
 };
 
-int cmd_checkout__worker(int argc, const char **argv, const char *prefix)
+int cmd_checkout__worker(int argc,
+			 const char **argv,
+			 const char *prefix,
+			 struct repository *repo UNUSED)
 {
 	struct checkout state = CHECKOUT_INIT;
 	struct option checkout_worker_options[] = {

@@ -956,7 +956,10 @@ static int path_exists(const char *path)
 	return !stat(path, &sb);
 }
 
-int cmd_clone(int argc, const char **argv, const char *prefix)
+int cmd_clone(int argc,
+	      const char **argv,
+	      const char *prefix,
+	      struct repository *repository UNUSED)
 {
 	int is_bundle = 0, is_local;
 	int reject_shallow = 0;

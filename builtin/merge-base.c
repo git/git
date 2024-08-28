@@ -143,7 +143,10 @@ static int handle_fork_point(int argc, const char **argv)
 	return 0;
 }
 
-int cmd_merge_base(int argc, const char **argv, const char *prefix)
+int cmd_merge_base(int argc,
+		   const char **argv,
+		   const char *prefix,
+		   struct repository *repo UNUSED)
 {
 	struct commit **rev;
 	int rev_nr = 0;

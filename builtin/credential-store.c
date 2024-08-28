@@ -170,7 +170,10 @@ static void lookup_credential(const struct string_list *fns, struct credential *
 			return; /* Found credential */
 }
 
-int cmd_credential_store(int argc, const char **argv, const char *prefix)
+int cmd_credential_store(int argc,
+			 const char **argv,
+			 const char *prefix,
+			 struct repository *repo UNUSED)
 {
 	const char * const usage[] = {
 		"git credential-store [<options>] <action>",

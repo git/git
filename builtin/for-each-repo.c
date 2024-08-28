@@ -29,7 +29,10 @@ static int run_command_on_repo(const char *path, int argc, const char ** argv)
 	return run_command(&child);
 }
 
-int cmd_for_each_repo(int argc, const char **argv, const char *prefix)
+int cmd_for_each_repo(int argc,
+		      const char **argv,
+		      const char *prefix,
+		      struct repository *repo UNUSED)
 {
 	static const char *config_key = NULL;
 	int keep_going = 0;

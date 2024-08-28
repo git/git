@@ -108,7 +108,10 @@ static void diff_tree_tweak_rev(struct rev_info *rev)
 	}
 }
 
-int cmd_diff_tree(int argc, const char **argv, const char *prefix)
+int cmd_diff_tree(int argc,
+		  const char **argv,
+		  const char *prefix,
+		  struct repository *repo UNUSED)
 {
 	char line[1000];
 	struct object *tree1, *tree2;

@@ -11,7 +11,10 @@ static const char * const diagnose_usage[] = {
 	NULL
 };
 
-int cmd_diagnose(int argc, const char **argv, const char *prefix)
+int cmd_diagnose(int argc,
+		 const char **argv,
+		 const char *prefix,
+		 struct repository *repo UNUSED)
 {
 	struct strbuf zip_path = STRBUF_INIT;
 	time_t now = time(NULL);

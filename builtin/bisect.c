@@ -1411,7 +1411,10 @@ static int cmd_bisect__run(int argc, const char **argv, const char *prefix UNUSE
 	return res;
 }
 
-int cmd_bisect(int argc, const char **argv, const char *prefix)
+int cmd_bisect(int argc,
+	       const char **argv,
+	       const char *prefix,
+	       struct repository *repo UNUSED)
 {
 	int res = 0;
 	parse_opt_subcommand_fn *fn = NULL;
