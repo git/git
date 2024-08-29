@@ -262,8 +262,9 @@ For C programs:
    like "error: unused parameter 'foo' [-Werror=unused-parameter]",
    which indicates that a function ignores its argument. If the unused
    parameter can't be removed (e.g., because the function is used as a
-   callback and has to match a certain interface), you can annotate the
-   individual parameters with the UNUSED keyword, like "int foo UNUSED".
+   callback and has to match a certain interface), you can annotate
+   the individual parameters with the UNUSED (or MAYBE_UNUSED)
+   keyword, like "int foo UNUSED".
 
  - We try to support a wide range of C compilers to compile Git with,
    including old ones.  As of Git v2.35.0 Git requires C99 (we check
