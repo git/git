@@ -803,6 +803,8 @@ test_expect_success 'update-index --remove outside sparse definition' '
 	test_sparse_match git diff --cached --name-status &&
 	test_cmp expect sparse-checkout-out &&
 
+	test_sparse_match git diff-index --cached HEAD &&
+
 	# Reset the state
 	test_all_match git reset --hard &&
 
@@ -811,6 +813,8 @@ test_expect_success 'update-index --remove outside sparse definition' '
 	test_sparse_match git update-index --remove --ignore-skip-worktree-entries folder1/a &&
 	test_sparse_match git diff --cached --name-status &&
 	test_must_be_empty sparse-checkout-out &&
+
+	test_sparse_match git diff-index --cached HEAD &&
 
 	# Reset the state
 	test_all_match git reset --hard &&
@@ -823,7 +827,9 @@ test_expect_success 'update-index --remove outside sparse definition' '
 	D	folder1/a
 	EOF
 	test_sparse_match git diff --cached --name-status &&
-	test_cmp expect sparse-checkout-out
+	test_cmp expect sparse-checkout-out &&
+
+	test_sparse_match git diff-index --cached HEAD
 '
 
 test_expect_success 'update-index with directories' '
@@ -1551,7 +1557,7 @@ test_expect_success 'sparse-index is not expanded: describe' '
 	ensure_not_expanded describe
 '
 
-test_expect_success 'sparse index is not expanded: diff' '
+test_expect_success 'sparse index is not expanded: diff and diff-index' '
 	init_repos &&
 
 	write_script edit-contents <<-\EOF &&
@@ -1568,6 +1574,7 @@ test_expect_success 'sparse index is not expanded: diff' '
 	test_all_match git diff --cached &&
 	ensure_not_expanded diff &&
 	ensure_not_expanded diff --cached &&
+	ensure_not_expanded diff-index --cached HEAD &&
 
 	# Add file outside cone
 	test_all_match git reset --hard &&
@@ -1582,6 +1589,7 @@ test_expect_success 'sparse index is not expanded: diff' '
 	test_all_match git diff --cached &&
 	ensure_not_expanded diff &&
 	ensure_not_expanded diff --cached &&
+	ensure_not_expanded diff-index --cached HEAD &&
 
 	# Merge conflict outside cone
 	# The sparse checkout will report a warning that is not in the
@@ -1594,7 +1602,8 @@ test_expect_success 'sparse index is not expanded: diff' '
 	test_all_match git diff &&
 	test_all_match git diff --cached &&
 	ensure_not_expanded diff &&
-	ensure_not_expanded diff --cached
+	ensure_not_expanded diff --cached &&
+	ensure_not_expanded diff-index --cached HEAD
 '
 
 test_expect_success 'sparse index is not expanded: show and rev-parse' '
