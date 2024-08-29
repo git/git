@@ -96,9 +96,15 @@ Performance, Internal Implementation, Development Support etc.
    object in the config subsystem has been rewritten to pass a
    repository object through the callchain.
 
- * Drop unused parameters from functions.
+ * Unused parameters have been either marked as UNUSED to squelch
+   -Wunused warnings or dropped from many functions..
 
- * Mark unused parameters as UNUSED to squelch -Wunused warnings.
+ * The code in the reftable library has been cleaned up by discarding
+   unused "generic" interface.
+
+ * The underlying machinery for "git diff-index" has long been made to
+   expand the sparse index as needed, but the command fully expanded
+   the sparse index upfront, which now has been taught not to do.
 
 
 Fixes since v2.46
