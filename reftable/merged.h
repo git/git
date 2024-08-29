@@ -12,8 +12,8 @@ https://developers.google.com/open-source/licenses/bsd
 #include "system.h"
 
 struct reftable_merged_table {
-	struct reftable_table *stack;
-	size_t stack_len;
+	struct reftable_reader **readers;
+	size_t readers_len;
 	uint32_t hash_id;
 
 	/* If unset, produce deletions. This is useful for compaction. For the

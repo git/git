@@ -179,13 +179,6 @@ static void test_reftable_stack_add_one(void)
 	EXPECT(0 == strcmp("master", dest.value.symref));
 	EXPECT(st->readers_len > 0);
 
-	printf("testing print functionality:\n");
-	err = reftable_stack_print_directory(dir, GIT_SHA1_FORMAT_ID);
-	EXPECT_ERR(err);
-
-	err = reftable_stack_print_directory(dir, GIT_SHA256_FORMAT_ID);
-	EXPECT(err == REFTABLE_FORMAT_ERROR);
-
 #ifndef GIT_WINDOWS_NATIVE
 	strbuf_addstr(&scratch, dir);
 	strbuf_addstr(&scratch, "/tables.list");
@@ -347,9 +340,9 @@ static void test_reftable_stack_transaction_api_performs_auto_compaction(void)
 		 * all tables in the stack.
 		 */
 		if (i != n)
-			EXPECT(st->merged->stack_len == i + 1);
+			EXPECT(st->merged->readers_len == i + 1);
 		else
-			EXPECT(st->merged->stack_len == 1);
+			EXPECT(st->merged->readers_len == 1);
 	}
 
 	reftable_stack_destroy(st);
@@ -375,7 +368,7 @@ static void test_reftable_stack_auto_compaction_fails_gracefully(void)
 
 	err = reftable_stack_add(st, write_test_ref, &ref);
 	EXPECT_ERR(err);
-	EXPECT(st->merged->stack_len == 1);
+	EXPECT(st->merged->readers_len == 1);
 	EXPECT(st->stats.attempts == 0);
 	EXPECT(st->stats.failures == 0);
 
@@ -390,7 +383,7 @@ static void test_reftable_stack_auto_compaction_fails_gracefully(void)
 	ref.update_index = 2;
 	err = reftable_stack_add(st, write_test_ref, &ref);
 	EXPECT_ERR(err);
-	EXPECT(st->merged->stack_len == 2);
+	EXPECT(st->merged->readers_len == 2);
 	EXPECT(st->stats.attempts == 1);
 	EXPECT(st->stats.failures == 1);
 
@@ -881,7 +874,7 @@ static void test_reftable_stack_auto_compaction(void)
 
 		err = reftable_stack_auto_compact(st);
 		EXPECT_ERR(err);
-		EXPECT(i < 3 || st->merged->stack_len < 2 * fastlog2(i));
+		EXPECT(i < 3 || st->merged->readers_len < 2 * fastlog2(i));
 	}
 
 	EXPECT(reftable_stack_compaction_stats(st)->entries_written <
@@ -905,7 +898,7 @@ static void test_reftable_stack_auto_compaction_with_locked_tables(void)
 	EXPECT_ERR(err);
 
 	write_n_ref_tables(st, 5);
-	EXPECT(st->merged->stack_len == 5);
+	EXPECT(st->merged->readers_len == 5);
 
 	/*
 	 * Given that all tables we have written should be roughly the same
@@ -925,7 +918,7 @@ static void test_reftable_stack_auto_compaction_with_locked_tables(void)
 	err = reftable_stack_auto_compact(st);
 	EXPECT_ERR(err);
 	EXPECT(st->stats.failures == 0);
-	EXPECT(st->merged->stack_len == 4);
+	EXPECT(st->merged->readers_len == 4);
 
 	reftable_stack_destroy(st);
 	strbuf_release(&buf);
@@ -970,9 +963,9 @@ static void test_reftable_stack_add_performs_auto_compaction(void)
 		 * all tables in the stack.
 		 */
 		if (i != n)
-			EXPECT(st->merged->stack_len == i + 1);
+			EXPECT(st->merged->readers_len == i + 1);
 		else
-			EXPECT(st->merged->stack_len == 1);
+			EXPECT(st->merged->readers_len == 1);
 	}
 
 	reftable_stack_destroy(st);
@@ -994,7 +987,7 @@ static void test_reftable_stack_compaction_with_locked_tables(void)
 	EXPECT_ERR(err);
 
 	write_n_ref_tables(st, 3);
-	EXPECT(st->merged->stack_len == 3);
+	EXPECT(st->merged->readers_len == 3);
 
 	/* Lock one of the tables that we're about to compact. */
 	strbuf_reset(&buf);
@@ -1008,7 +1001,7 @@ static void test_reftable_stack_compaction_with_locked_tables(void)
 	err = reftable_stack_compact_all(st, NULL);
 	EXPECT(err == REFTABLE_LOCK_ERROR);
 	EXPECT(st->stats.failures == 1);
-	EXPECT(st->merged->stack_len == 3);
+	EXPECT(st->merged->readers_len == 3);
 
 	reftable_stack_destroy(st);
 	strbuf_release(&buf);

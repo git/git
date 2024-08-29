@@ -12,7 +12,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable/merged.h"
 #include "reftable/reader.h"
 #include "reftable/reftable-error.h"
-#include "reftable/reftable-generic.h"
 #include "reftable/reftable-merged.h"
 #include "reftable/reftable-writer.h"
 
@@ -94,10 +93,8 @@ merged_table_from_records(struct reftable_ref_record **refs,
 			  struct strbuf *buf, const size_t n)
 {
 	struct reftable_merged_table *mt = NULL;
-	struct reftable_table *tabs;
 	int err;
 
-	REFTABLE_CALLOC_ARRAY(tabs, n);
 	REFTABLE_CALLOC_ARRAY(*readers, n);
 	REFTABLE_CALLOC_ARRAY(*source, n);
 
@@ -108,10 +105,9 @@ merged_table_from_records(struct reftable_ref_record **refs,
 		err = reftable_new_reader(&(*readers)[i], &(*source)[i],
 					  "name");
 		check(!err);
-		reftable_table_from_reader(&tabs[i], (*readers)[i]);
 	}
 
-	err = reftable_new_merged_table(&mt, tabs, n, GIT_SHA1_FORMAT_ID);
+	err = reftable_merged_table_new(&mt, *readers, n, GIT_SHA1_FORMAT_ID);
 	check(!err);
 	return mt;
 }
@@ -272,10 +268,8 @@ merged_table_from_log_records(struct reftable_log_record **logs,
 			      struct strbuf *buf, const size_t n)
 {
 	struct reftable_merged_table *mt = NULL;
-	struct reftable_table *tabs;
 	int err;
 
-	REFTABLE_CALLOC_ARRAY(tabs, n);
 	REFTABLE_CALLOC_ARRAY(*readers, n);
 	REFTABLE_CALLOC_ARRAY(*source, n);
 
@@ -286,10 +280,9 @@ merged_table_from_log_records(struct reftable_log_record **logs,
 		err = reftable_new_reader(&(*readers)[i], &(*source)[i],
 					  "name");
 		check(!err);
-		reftable_table_from_reader(&tabs[i], (*readers)[i]);
 	}
 
-	err = reftable_new_merged_table(&mt, tabs, n, GIT_SHA1_FORMAT_ID);
+	err = reftable_merged_table_new(&mt, *readers, n, GIT_SHA1_FORMAT_ID);
 	check(!err);
 	return mt;
 }
@@ -418,7 +411,6 @@ static void t_default_write_opts(void)
 	};
 	int err;
 	struct reftable_block_source source = { 0 };
-	struct reftable_table *tab = reftable_calloc(1, sizeof(*tab));
 	uint32_t hash_id;
 	struct reftable_reader *rd = NULL;
 	struct reftable_merged_table *merged = NULL;
@@ -440,10 +432,9 @@ static void t_default_write_opts(void)
 	hash_id = reftable_reader_hash_id(rd);
 	check_int(hash_id, ==, GIT_SHA1_FORMAT_ID);
 
-	reftable_table_from_reader(&tab[0], rd);
-	err = reftable_new_merged_table(&merged, tab, 1, GIT_SHA256_FORMAT_ID);
+	err = reftable_merged_table_new(&merged, &rd, 1, GIT_SHA256_FORMAT_ID);
 	check_int(err, ==, REFTABLE_FORMAT_ERROR);
-	err = reftable_new_merged_table(&merged, tab, 1, GIT_SHA1_FORMAT_ID);
+	err = reftable_merged_table_new(&merged, &rd, 1, GIT_SHA1_FORMAT_ID);
 	check(!err);
 
 	reftable_reader_free(rd);
