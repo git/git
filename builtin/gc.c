@@ -967,7 +967,7 @@ static int dfs_on_ref(const char *refname UNUSED,
 	return result;
 }
 
-static int should_write_commit_graph(struct gc_config *cfg)
+static int should_write_commit_graph(struct gc_config *cfg UNUSED)
 {
 	int result;
 	struct cg_auto_data data;
@@ -1005,7 +1005,7 @@ static int run_write_commit_graph(struct maintenance_run_opts *opts)
 }
 
 static int maintenance_task_commit_graph(struct maintenance_run_opts *opts,
-					 struct gc_config *cfg)
+					 struct gc_config *cfg UNUSED)
 {
 	prepare_repo_settings(the_repository);
 	if (!the_repository->settings.core_commit_graph)
@@ -1040,7 +1040,7 @@ static int fetch_remote(struct remote *remote, void *cbdata)
 }
 
 static int maintenance_task_prefetch(struct maintenance_run_opts *opts,
-				     struct gc_config *cfg)
+				     struct gc_config *cfg UNUSED)
 {
 	if (for_each_remote(fetch_remote, opts)) {
 		error(_("failed to prefetch remotes"));
@@ -1051,7 +1051,7 @@ static int maintenance_task_prefetch(struct maintenance_run_opts *opts,
 }
 
 static int maintenance_task_gc(struct maintenance_run_opts *opts,
-			       struct gc_config *cfg)
+			       struct gc_config *cfg UNUSED)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 
@@ -1100,7 +1100,7 @@ static int loose_object_count(const struct object_id *oid UNUSED,
 	return 0;
 }
 
-static int loose_object_auto_condition(struct gc_config *cfg)
+static int loose_object_auto_condition(struct gc_config *cfg UNUSED)
 {
 	int count = 0;
 
@@ -1192,12 +1192,12 @@ static int pack_loose(struct maintenance_run_opts *opts)
 }
 
 static int maintenance_task_loose_objects(struct maintenance_run_opts *opts,
-					  struct gc_config *cfg)
+					  struct gc_config *cfg UNUSED)
 {
 	return prune_packed(opts) || pack_loose(opts);
 }
 
-static int incremental_repack_auto_condition(struct gc_config *cfg)
+static int incremental_repack_auto_condition(struct gc_config *cfg UNUSED)
 {
 	struct packed_git *p;
 	int incremental_repack_auto_limit = 10;
@@ -1317,7 +1317,7 @@ static int multi_pack_index_repack(struct maintenance_run_opts *opts)
 }
 
 static int maintenance_task_incremental_repack(struct maintenance_run_opts *opts,
-					       struct gc_config *cfg)
+					       struct gc_config *cfg UNUSED)
 {
 	prepare_repo_settings(the_repository);
 	if (!the_repository->settings.core_multi_pack_index) {
