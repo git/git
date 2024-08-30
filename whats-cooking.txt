@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2024, #10; Tue, 27)
-X-master-at: 159f2d50e75c17382c9f4eb7cbda671a6fa612d1
-X-next-at: e2cf493099269321c3f806dcf91c7f00c1e1932a
+Subject: What's cooking in git.git (Aug 2024, #11; Fri, 30)
+X-master-at: 4590f2e9412378c61eac95966709c78766d326ba
+X-next-at: e5961a9dc9590638e72dd338e78d082f29b3e746
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2024, #10; Tue, 27)
+What's cooking in git.git (Aug 2024, #11; Fri, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,124 +48,199 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ds/for-each-ref-is-base (2024-08-14) 4 commits
-  (merged to 'next' on 2024-08-20 at dd5da48f40)
- + p1500: add is-base performance tests
- + for-each-ref: add 'is-base' token
- + commit: add gentle reference lookup method
- + commit-reach: add get_branch_base_for_tip
+* ah/git-prompt-portability (2024-08-20) 8 commits
+  (merged to 'next' on 2024-08-21 at 14fa411577)
+ + git-prompt: support custom 0-width PS1 markers
+ + git-prompt: ta-da! document usage in other shells
+ + git-prompt: don't use shell $'...'
+ + git-prompt: add some missing quotes
+ + git-prompt: replace [[...]] with standard code
+ + git-prompt: don't use shell arrays
+ + git-prompt: fix uninitialized variable
+ + git-prompt: use here-doc instead of here-string
 
- 'git for-each-ref' learned a new "--format" atom to find the branch
- that the history leading to a given commit "%(is-base:<commit>)" is
- likely based on.
- source: <pull.1768.v3.git.1723631490.gitgitgadget@gmail.com>
+ The command line prompt support used to be littered with bash-isms,
+ which has been corrected to work with more shells.
 
-
-* jc/coding-style-c-operator-with-spaces (2024-08-20) 1 commit
-  (merged to 'next' on 2024-08-21 at 36bbb9022a)
- + CodingGuidelines: spaces around C operators
-
- Write down whitespacing rules around C opeators.
- source: <xmqq7ccb6if8.fsf@gitster.g>
+ source: <pull.1750.v4.git.git.1724118513.gitgitgadget@gmail.com>
 
 
-* jk/drop-unused-parameters (2024-08-17) 5 commits
-  (merged to 'next' on 2024-08-19 at f5c703013d)
- + diff-lib: drop unused index argument from get_stat_data()
- + ref-filter: drop unused parameters from email_atom_option_parser()
- + pack-bitmap: drop unused parameters from select_pseudo_merges()
- + pack-bitmap: load writer config from repository parameter
- + refs: drop some unused parameters from create_symref_lock()
+* cp/unit-test-reftable-block (2024-08-28) 12 commits
+  (merged to 'next' on 2024-08-28 at 4974e39ddb)
+ + t-reftable-block: mark unused argv/argc
+  (merged to 'next' on 2024-08-22 at 234d8701da)
+ + t-reftable-block: add tests for index blocks
+ + t-reftable-block: add tests for obj blocks
+ + t-reftable-block: add tests for log blocks
+ + t-reftable-block: remove unnecessary variable 'j'
+ + t-reftable-block: use xstrfmt() instead of xstrdup()
+ + t-reftable-block: use block_iter_reset() instead of block_iter_close()
+ + t-reftable-block: use reftable_record_key() instead of strbuf_addstr()
+ + t-reftable-block: use reftable_record_equal() instead of check_str()
+ + t-reftable-block: release used block reader
+ + t: harmonize t-reftable-block.c with coding guidelines
+ + t: move reftable/block_test.c to the unit testing framework
 
- Drop unused parameters from functions.
- source: <20240817072621.GA1535666@coredump.intra.peff.net>
+ Another test for reftable library ported to the unit test framework.
+ cf. <ZsbdFU9aBQvqE3pb@tanuki>
 
-
-* jk/mark-unused-parameters (2024-08-20) 16 commits
-  (merged to 'next' on 2024-08-20 at 610d16d751)
- + t-hashmap: stop calling setup() for t_intern() test
-  (merged to 'next' on 2024-08-19 at f85d6096c9)
- + scalar: mark unused parameters in dummy function
- + daemon: mark unused parameters in non-posix fallbacks
- + setup: mark unused parameter in config callback
- + test-mergesort: mark unused parameters in trivial callback
- + t-hashmap: mark unused parameters in callback function
- + reftable: mark unused parameters in virtual functions
- + reftable: drop obsolete test function declarations
- + reftable: ignore unused argc/argv in test functions
- + unit-tests: ignore unused argc/argv
- + t/helper: mark more unused argv/argc arguments
- + oss-fuzz: mark unused argv/argc argument
- + refs: mark unused parameters in do_for_each_reflog_helper()
- + refs: mark unused parameters in ref_store fsck callbacks
- + update-ref: mark more unused parameters in parser callbacks
- + imap-send: mark unused parameter in ssl_socket_connect() fallback
-
- Mark unused parameters as UNUSED to squelch -Wunused warnings.
- source: <20240817082101.GA6761@coredump.intra.peff.net>
+ source: <20240821124150.4463-1-chandrapratap3519@gmail.com>
 
 
-* jk/send-email-translate-aliases (2024-08-17) 3 commits
-  (merged to 'next' on 2024-08-19 at dd207c3560)
- + send-email: teach git send-email option to translate aliases
- + t9001-send-email.sh: update alias list used for pine test
- + t9001-send-email.sh: fix quoting for mailrc --dump-aliases test
+* ds/sparse-diff-index (2024-08-22) 1 commit
+  (merged to 'next' on 2024-08-23 at d33f670977)
+ + diff-index: integrate with the sparse index
 
- "git send-email" learned "--translate-aliases" option that reads
- addresses from the standard input and emits the result of applying
- aliases on them to the standard output.
- source: <20240813-jk-translate-alias-send-email-v2-0-912db4eb6846@gmail.com>
+ The underlying machinery for "git diff-index" has long been made to
+ expand the sparse index as needed, but the command fully expanded
+ the sparse index upfront, which now has been taught not to do.
 
-
-* ps/maintenance-detach-fix (2024-08-16) 7 commits
-  (merged to 'next' on 2024-08-16 at 5db1344236)
- + run-command: fix detaching when running auto maintenance
- + builtin/maintenance: add a `--detach` flag
- + builtin/gc: add a `--detach` flag
- + builtin/gc: stop processing log file on signal
- + builtin/gc: fix leaking config values
- + builtin/gc: refactor to read config into structure
- + config: fix constness of out parameter for `git_config_get_expiry()`
- (this branch is used by ps/maintenance-detach-fix-more.)
-
- Maintenance tasks other than "gc" now properly go background when
- "git maintenance" runs them.
- source: <cover.1723804990.git.ps@pks.im>
+ source: <pull.1777.git.1724342607793.gitgitgadget@gmail.com>
 
 
-* ps/maintenance-detach-fix-more (2024-08-21) 3 commits
-  (merged to 'next' on 2024-08-22 at cbb6723488)
- + builtin/maintenance: fix loose objects task emitting pack hash
- + t7900: exercise detaching via trace2 regions
- + t7900: fix flaky test due to leaking background job
- (this branch uses ps/maintenance-detach-fix.)
+* gt/unit-test-urlmatch-normalization (2024-08-20) 1 commit
+  (merged to 'next' on 2024-08-21 at 3efed1ed8d)
+ + t: migrate t0110-urlmatch-normalization to the new framework
 
- A tests for "git maintenance" that were broken on Windows have been
- corrected.
- cf. <ZsbPiGJlgxWiM-t9@tanuki>
- source: <cover.1724053639.git.ps@pks.im>
+ Another rewrite of test.
+
+ source: <20240820152008.21354-2-shyamthakkar001@gmail.com>
 
 
-* tb/pseudo-merge-bitmap-fixes (2024-08-15) 8 commits
-  (merged to 'next' on 2024-08-19 at 10cc82b2fb)
- + pseudo-merge.c: ensure pseudo-merge groups are closed
- + pseudo-merge.c: do not generate empty pseudo-merge commits
- + t/t5333-pseudo-merge-bitmaps.sh: demonstrate empty pseudo-merge groups
- + pack-bitmap-write.c: select pseudo-merges even for small bitmaps
- + pack-bitmap: drop redundant args from `bitmap_writer_finish()`
- + pack-bitmap: drop redundant args from `bitmap_writer_build()`
- + pack-bitmap: drop redundant args from `bitmap_writer_build_type_index()`
- + pack-bitmap: initialize `bitmap_writer_init()` with packing_data
- (this branch is used by tb/incremental-midx-part-2.)
+* mt/rebase-x-quiet (2024-08-21) 1 commit
+  (merged to 'next' on 2024-08-22 at 1018555d89)
+ + rebase --exec: respect --quiet
 
- We created a useless pseudo-merge reachability bitmap that is about
- 0 commits, and attempted to include commits that are not in packs,
- which made no sense.  These bugs have been corrected.
- cf. <20240817104412.GE551779@coredump.intra.peff.net>
- source: <cover.1723743050.git.me@ttaylorr.com>
+ "git rebase -x --quiet" was not quiet, which was corrected.
+
+ source: <f105b34b8e6b33448f4d0ef07d51b7bbf4e71aaa.1724203912.git.matheus.tavb@gmail.com>
+
+
+* ps/reftable-drop-generic (2024-08-28) 17 commits
+  (merged to 'next' on 2024-08-28 at 987000f60d)
+ + reftable: mark unused parameters in empty iterator functions
+  (merged to 'next' on 2024-08-22 at c6706c1b16)
+ + reftable/generic: drop interface
+ + t/helper: refactor to not use `struct reftable_table`
+ + t/helper: use `hash_to_hex_algop()` to print hashes
+ + t/helper: inline printing of reftable records
+ + t/helper: inline `reftable_table_print()`
+ + t/helper: inline `reftable_stack_print_directory()`
+ + t/helper: inline `reftable_reader_print_file()`
+ + t/helper: inline `reftable_dump_main()`
+ + reftable/dump: drop unused `compact_stack()`
+ + reftable/generic: move generic iterator code into iterator interface
+ + reftable/iter: drop double-checking logic
+ + reftable/stack: open-code reading refs
+ + reftable/merged: stop using generic tables in the merged table
+ + reftable/merged: rename `reftable_new_merged_table()`
+ + reftable/merged: expose functions to initialize iterators
+ + Merge branch 'ps/reftable-stack-compaction' into ps/reftable-drop-generic
+
+ The code in the reftable library has been cleaned up by discarding
+ unused "generic" interface.
+
+ source: <cover.1724308389.git.ps@pks.im>
 
 --------------------------------------------------
 [New Topics]
+
+* tb/multi-pack-reuse-fix (2024-08-27) 5 commits
+ - builtin/pack-objects.c: do not open-code `MAX_PACK_OBJECT_HEADER`
+ - pack-bitmap.c: avoid repeated `pack_pos_to_offset()` during reuse
+ - builtin/pack-objects.c: translate bit positions during pack-reuse
+ - pack-bitmap: tag bitmapped packs with their corresponding MIDX
+ - t/t5332-multi-pack-reuse.sh: verify pack generation with --strict
+
+ A data corruption bug when multi-pack-index is used and the same
+ objects are stored in multiple packfiles has been corrected.
+
+ Needs review.
+ source: <cover.1724793201.git.me@ttaylorr.com>
+
+
+* jk/unused-parameters (2024-08-28) 7 commits
+  (merged to 'next' on 2024-08-30 at 2c5169ff52)
+ + CodingGuidelines: mention -Wunused-parameter and UNUSED
+ + config.mak.dev: enable -Wunused-parameter by default
+ + compat: mark unused parameters in win32/mingw functions
+ + compat: disable -Wunused-parameter in win32/headless.c
+ + compat: disable -Wunused-parameter in 3rd-party code
+ + t-reftable-readwrite: mark unused parameter in callback function
+ + gc: mark unused config parameter in virtual functions
+ (this branch is used by jc/maybe-unused.)
+
+ Make our codebase compilable with the -Werror=unused-parameter
+ option.
+
+ Will merge to 'master'.
+ source: <20240828035722.GA3998881@coredump.intra.peff.net>
+ source: <CAPig+cQLr+vAzkt8UJNVCeE8osGEcEfFunG36oqxa0k8JamJzQ@mail.gmail.com>
+
+
+* es/chainlint-message-updates (2024-08-29) 2 commits
+ - chainlint: reduce annotation noise-factor
+ - chainlint: make error messages self-explanatory
+
+ The error messages from the test script checker have been improved.
+
+ Expecting a reroll.
+ cf. <CAPig+cQ+6am7-BSnWZz5=C0Q1Vyng0T4goB+ZE9TKJMrpi_Jpg@mail.gmail.com>
+ source: <20240829091625.41297-1-ericsunshine@charter.net>
+
+
+* ps/environ-wo-the-repository (2024-08-30) 21 commits
+ - environment: stop storing "core.notesRef" globally
+ - environment: stop storing "core.warnAmbiguousRefs" globally
+ - environment: stop storing "core.preferSymlinkRefs" globally
+ - environment: stop storing "core.logAllRefUpdates" globally
+ - refs: stop modifying global `log_all_ref_updates` variable
+ - branch: stop modifying `log_all_ref_updates` variable
+ - repo-settings: track defaults close to `struct repo_settings`
+ - repo-settings: split out declarations into a standalone header
+ - environment: guard state depending on a repository
+ - environment: reorder header to split out `the_repository`-free section
+ - environment: move `set_git_dir()` and related into setup layer
+ - environment: make `get_git_namespace()` self-contained
+ - environment: move `odb_mkstemp()` into object layer
+ - config: make dependency on repo in `read_early_config()` explicit
+ - config: document `read_early_config()` and `read_very_early_config()`
+ - environment: make `get_git_work_tree()` accept a repository
+ - environment: make `get_graft_file()` accept a repository
+ - environment: make `get_index_file()` accept a repository
+ - environment: make `get_object_directory()` accept a repository
+ - environment: make `get_git_common_dir()` accept a repository
+ - environment: make `get_git_dir()` accept a repository
+
+ Code clean-up.
+
+ Needs review.
+ source: <cover.1725008897.git.ps@pks.im>
+
+
+* jc/maybe-unused (2024-08-29) 2 commits
+  (merged to 'next' on 2024-08-30 at e5961a9dc9)
+ + CodingGuidelines: also mention MAYBE_UNUSED
+ + Merge branch 'jk/unused-parameters' into jc/maybe-unused
+ (this branch uses jk/unused-parameters.)
+
+ Developer doc updates.
+
+ Will merge to 'master'.
+ source: <xmqq4j73w5up.fsf_-_@gitster.g>
+
+
+* jk/maybe-unused-cleanup (2024-08-29) 2 commits
+ - grep: prefer UNUSED to MAYBE_UNUSED for pcre allocators
+ - gc: drop MAYBE_UNUSED annotation from used parameter
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <20240829200807.GA430283@coredump.intra.peff.net>
+
+--------------------------------------------------
+[Cooking]
 
 * rs/remote-leakfix (2024-08-23) 1 commit
   (merged to 'next' on 2024-08-26 at 77eb8b251e)
@@ -236,8 +311,6 @@ Release tarballs are available at:
  Needs review.
  source: <cover.1724656120.git.ps@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * dh/runtime-prefix-on-zos (2024-08-22) 1 commit
   (merged to 'next' on 2024-08-25 at 54a7e6c9c4)
@@ -247,18 +320,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <pull.1769.git.git.1724334732249.gitgitgadget@gmail.com>
-
-
-* ds/sparse-diff-index (2024-08-22) 1 commit
-  (merged to 'next' on 2024-08-23 at d33f670977)
- + diff-index: integrate with the sparse index
-
- The underlying machinery for "git diff-index" has long been made to
- expand the sparse index as needed, but the command fully expanded
- the sparse index upfront, which now has been taught not to do.
-
- Will merge to 'master'.
- source: <pull.1777.git.1724342607793.gitgitgadget@gmail.com>
 
 
 * cl/config-regexp-docfix (2024-08-23) 1 commit
@@ -294,17 +355,17 @@ Release tarballs are available at:
  source: <cover.1724363615.git.steadmon@google.com>
 
 
-* jk/send-email-mailmap (2024-08-20) 3 commits
- - send-email: add mailmap support via sendemail.mailmap and --mailmap
- - check-mailmap: add options for additional mailmap sources
- - check-mailmap: accept "user@host" contacts
+* jk/send-email-mailmap (2024-08-27) 3 commits
+  (merged to 'next' on 2024-08-30 at a5cf30460a)
+ + send-email: add mailmap support via sendemail.mailmap and --mailmap
+ + check-mailmap: add options for additional mailmap sources
+ + check-mailmap: accept "user@host" contacts
 
  "git send-email" learned "--mailmap" option to allow rewriting the
  recipient addresses.
 
- Expecting a reroll.
- cf. <3e4ba368-ab44-4940-856a-800e0ba7ff9f@intel.com>
- source: <20240819-jk-send-email-mailmap-support-v2-0-d212c3f9e505@gmail.com>
+ Will merge to 'master'.
+ source: <20240827-jk-send-email-mailmap-support-v3-0-bec5ba9be391@gmail.com>
 
 
 * ps/leakfixes-part-5 (2024-08-22) 21 commits
@@ -337,7 +398,9 @@ Release tarballs are available at:
  source: <cover.1724315484.git.ps@pks.im>
 
 
-* sj/ref-contents-check (2024-08-27) 4 commits
+* sj/ref-contents-check (2024-08-28) 6 commits
+ - SQUASH??? -Wunused-parameter fix
+ - SQUASH??? remove unused parameters
  - ref: add symlink ref check for files backend
  - ref: add symbolic ref content check for files backend
  - ref: add regular ref content check for files backend
@@ -372,7 +435,6 @@ Release tarballs are available at:
  + reftable/stack: inline `stack_compact_range_stats()`
  + reftable/blocksource: drop malloc block source
  + Merge branch 'ps/reftable-drop-generic' into ps/reftable-concurrent-compaction
- (this branch uses ps/reftable-drop-generic.)
 
  The code path for compacting reftable files saw some bugfixes
  against concurrent operation.
@@ -381,52 +443,8 @@ Release tarballs are available at:
  source: <cover.1724420744.git.ps@pks.im>
 
 
-* ah/git-prompt-portability (2024-08-20) 8 commits
-  (merged to 'next' on 2024-08-21 at 14fa411577)
- + git-prompt: support custom 0-width PS1 markers
- + git-prompt: ta-da! document usage in other shells
- + git-prompt: don't use shell $'...'
- + git-prompt: add some missing quotes
- + git-prompt: replace [[...]] with standard code
- + git-prompt: don't use shell arrays
- + git-prompt: fix uninitialized variable
- + git-prompt: use here-doc instead of here-string
-
- The command line prompt support used to be littered with bash-isms,
- which has been corrected to work with more shells.
-
- Will merge to 'master'.
- source: <pull.1750.v4.git.git.1724118513.gitgitgadget@gmail.com>
-
-
-* ps/reftable-drop-generic (2024-08-22) 16 commits
-  (merged to 'next' on 2024-08-22 at c6706c1b16)
- + reftable/generic: drop interface
- + t/helper: refactor to not use `struct reftable_table`
- + t/helper: use `hash_to_hex_algop()` to print hashes
- + t/helper: inline printing of reftable records
- + t/helper: inline `reftable_table_print()`
- + t/helper: inline `reftable_stack_print_directory()`
- + t/helper: inline `reftable_reader_print_file()`
- + t/helper: inline `reftable_dump_main()`
- + reftable/dump: drop unused `compact_stack()`
- + reftable/generic: move generic iterator code into iterator interface
- + reftable/iter: drop double-checking logic
- + reftable/stack: open-code reading refs
- + reftable/merged: stop using generic tables in the merged table
- + reftable/merged: rename `reftable_new_merged_table()`
- + reftable/merged: expose functions to initialize iterators
- + Merge branch 'ps/reftable-stack-compaction' into ps/reftable-drop-generic
- (this branch is used by ps/reftable-concurrent-compaction.)
-
- The code in the reftable library has been cleaned up by discarding
- unused "generic" interface.
-
- Will merge to 'master'.
- source: <cover.1724308389.git.ps@pks.im>
-
-
-* tb/incremental-midx-part-2 (2024-08-15) 15 commits
+* tb/incremental-midx-part-2 (2024-08-28) 16 commits
+ - fixup! midx: implement writing incremental MIDX bitmaps
  - midx: implement writing incremental MIDX bitmaps
  - pack-bitmap.c: use `ewah_or_iterator` for type bitmap iterators
  - pack-bitmap.c: keep track of each layer's type bitmaps
@@ -447,26 +465,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <cover.1723760847.git.me@ttaylorr.com>
-
-
-* mt/rebase-x-quiet (2024-08-21) 1 commit
-  (merged to 'next' on 2024-08-22 at 1018555d89)
- + rebase --exec: respect --quiet
-
- "git rebase -x --quiet" was not quiet, which was corrected.
-
- Will merge to 'master'.
- source: <f105b34b8e6b33448f4d0ef07d51b7bbf4e71aaa.1724203912.git.matheus.tavb@gmail.com>
-
-
-* gt/unit-test-urlmatch-normalization (2024-08-20) 1 commit
-  (merged to 'next' on 2024-08-21 at 3efed1ed8d)
- + t: migrate t0110-urlmatch-normalization to the new framework
-
- Another rewrite of test.
-
- Will merge to 'master'.
- source: <20240820152008.21354-2-shyamthakkar001@gmail.com>
 
 
 * ps/clar-unit-test (2024-08-20) 13 commits
@@ -490,27 +488,6 @@ Release tarballs are available at:
  Need to decide how to fill feature gap with our home-grown one
  cf. <b87700d2-0c9a-4d0c-9ee4-e6a91278d596@gmail.com>
  source: <cover.1724159966.git.ps@pks.im>
-
-
-* cp/unit-test-reftable-block (2024-08-21) 11 commits
-  (merged to 'next' on 2024-08-22 at 234d8701da)
- + t-reftable-block: add tests for index blocks
- + t-reftable-block: add tests for obj blocks
- + t-reftable-block: add tests for log blocks
- + t-reftable-block: remove unnecessary variable 'j'
- + t-reftable-block: use xstrfmt() instead of xstrdup()
- + t-reftable-block: use block_iter_reset() instead of block_iter_close()
- + t-reftable-block: use reftable_record_key() instead of strbuf_addstr()
- + t-reftable-block: use reftable_record_equal() instead of check_str()
- + t-reftable-block: release used block reader
- + t: harmonize t-reftable-block.c with coding guidelines
- + t: move reftable/block_test.c to the unit testing framework
-
- Another test for reftable library ported to the unit test framework.
-
- Will merge to 'master'.
- cf. <ZsbdFU9aBQvqE3pb@tanuki>
- source: <20240821124150.4463-1-chandrapratap3519@gmail.com>
 
 
 * js/libgit-rust (2024-08-09) 5 commits
@@ -573,8 +550,7 @@ Release tarballs are available at:
  been revamped.  The sources, at least for the simple cases, got
  vastly pleasant to work with.
 
- Will merge to 'next'?
- cf. <xmqqzfp8cm30.fsf@gitster.g>
+ cf. <1986021.PYKUYFuaPT@cayenne>
  source: <pull.1766.v3.git.1723389612.gitgitgadget@gmail.com>
 
 
@@ -609,12 +585,13 @@ Release tarballs are available at:
 --------------------------------------------------
 [Will discard]
 
-* pp/add-parse-range-unit-test (2024-05-27) 1 commit
+* pp/add-parse-range-unit-test (2024-08-28) 2 commits
+ - SQUASH???
  - apply: add unit tests for parse_range
 
  A unit test for code that parses the hunk offset and length from a
  patch fragment header as been added.
 
- Expecting a reroll for too long.
+ Has been expecting a reroll for too long.
  cf. <b7eca313-9ea8-4132-ba1d-ed9236e07095@gmail.com>
  source: <pull.1677.v2.git.git.1716710073910.gitgitgadget@gmail.com>
