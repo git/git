@@ -59,6 +59,24 @@ test_expect_success 'do partial clone 1, backfill gets all objects' '
 	test_line_count = 0 revs2
 '
 
+test_expect_success 'do partial clone 2, backfill batch size' '
+	git clone --no-checkout --filter=blob:none	\
+		--single-branch --branch=main 		\
+		"file://$(pwd)/srv.bare" backfill2 &&
+
+	GIT_TRACE2_EVENT="$(pwd)/batch-trace" git \
+		-C backfill2 backfill --batch-size=20 &&
+
+	# Batches were used
+	test_trace2_data promisor fetch_count 20 <batch-trace >matches &&
+	test_line_count = 2 matches &&
+	test_trace2_data promisor fetch_count 8 <batch-trace &&
+
+	# No more missing objects!
+	git -C backfill2 rev-list --quiet --objects --missing=print HEAD >revs2 &&
+	test_line_count = 0 revs2
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
