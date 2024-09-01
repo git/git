@@ -48,6 +48,15 @@ If you want the path-walk API to emit `UNINTERESTING` objects based on the
 commit walk's boundary, be sure to set `revs.boundary` so the boundary
 commits are emitted.
 
+`commits`, `blobs`, `trees`::
+	By default, these members are enabled and signal that the path-walk
+	API should call the `path_fn` on objects of these types. Specialized
+	applications could disable some options to make it simpler to walk
+	the objects or to have fewer calls to `path_fn`.
++
+While it is possible to walk only commits in this way, consumers would be
+better off using the revision walk API instead.
+
 Examples
 --------
 
