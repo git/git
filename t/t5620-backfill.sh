@@ -77,6 +77,12 @@ test_expect_success 'do partial clone 2, backfill batch size' '
 	test_line_count = 0 revs2
 '
 
+test_expect_success 'backfill --sparse without sparse-checkout fails' '
+	git init not-sparse &&
+	test_must_fail git -C not-sparse backfill --sparse 2>err &&
+	grep "problem loading sparse-checkout" err
+'
+
 test_expect_success 'backfill --sparse' '
 	git clone --sparse --filter=blob:none		\
 		--single-branch --branch=main 		\
@@ -105,7 +111,12 @@ test_expect_success 'backfill --sparse' '
 	test_trace2_data promisor fetch_count 8 <sparse-trace2 &&
 	test_trace2_data path-walk paths 15 <sparse-trace2 &&
 	git -C backfill3 rev-list --quiet --objects --missing=print HEAD >missing &&
-	test_line_count = 24 missing
+	test_line_count = 24 missing &&
+
+	# Disabling the --sparse option (on by default) will download everything
+	git -C backfill3 backfill --no-sparse &&
+	git -C backfill3 rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 0 missing
 '
 
 test_expect_success 'backfill --sparse without cone mode' '
