@@ -1,4 +1,4 @@
-#!/bin/sh
+ccc #!/bin/sh
 
 GVF=GIT-VERSION-FILE
 DEF_VER=v2.44.GIT
