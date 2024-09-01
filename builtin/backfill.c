@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE /* for core_apply_sparse_checkout */
+
 #include "builtin.h"
 #include "git-compat-util.h"
 #include "config.h"
@@ -5,6 +7,7 @@
 #include "repository.h"
 #include "commit.h"
 #include "dir.h"
+#include "environment.h"
 #include "hex.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -135,6 +138,9 @@ int cmd_backfill(int argc, const char **argv, const char *prefix, struct reposit
 			     0);
 
 	repo_config(repo, git_default_config, NULL);
+
+	if (ctx.sparse < 0)
+		ctx.sparse = core_apply_sparse_checkout;
 
 	return do_backfill(&ctx);
 }
