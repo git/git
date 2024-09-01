@@ -4,6 +4,7 @@
 #include "parse-options.h"
 #include "repository.h"
 #include "commit.h"
+#include "dir.h"
 #include "hex.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -21,7 +22,7 @@
 #include "path-walk.h"
 
 static const char * const builtin_backfill_usage[] = {
-	N_("git backfill [--batch-size=<n>]"),
+	N_("git backfill [--batch-size=<n>] [--[no-]sparse]"),
 	NULL
 };
 
@@ -29,6 +30,7 @@ struct backfill_context {
 	struct repository *repo;
 	struct oid_array current_batch;
 	size_t batch_size;
+	int sparse;
 };
 
 static void clear_backfill_context(struct backfill_context *ctx)
@@ -84,6 +86,12 @@ static int do_backfill(struct backfill_context *ctx)
 	struct path_walk_info info = PATH_WALK_INFO_INIT;
 	int ret;
 
+	if (ctx->sparse) {
+		CALLOC_ARRAY(info.pl, 1);
+		if (get_sparse_checkout_patterns(info.pl))
+			return error(_("problem loading sparse-checkout"));
+	}
+
 	repo_init_revisions(ctx->repo, &revs, "");
 	handle_revision_arg("HEAD", &revs, 0, 0);
 
@@ -110,10 +118,13 @@ int cmd_backfill(int argc, const char **argv, const char *prefix, struct reposit
 		.repo = repo,
 		.current_batch = OID_ARRAY_INIT,
 		.batch_size = 16000,
+		.sparse = 0,
 	};
 	struct option options[] = {
 		OPT_INTEGER(0, "batch-size", &ctx.batch_size,
 			    N_("Minimun number of objects to request at a time")),
+		OPT_BOOL(0, "sparse", &ctx.sparse,
+			 N_("Restrict the missing objects to the current sparse-checkout")),
 		OPT_END(),
 	};
 
