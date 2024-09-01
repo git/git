@@ -5,6 +5,7 @@
 #include "repository.h"
 #include "commit.h"
 #include "dir.h"
+#include "environment.h"
 #include "hex.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -135,6 +136,9 @@ int cmd_backfill(int argc, const char **argv, const char *prefix)
 			     0);
 
 	git_config(git_default_config, NULL);
+
+	if (ctx.sparse < 0)
+		ctx.sparse = core_apply_sparse_checkout;
 
 	return do_backfill(&ctx);
 }
