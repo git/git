@@ -48,7 +48,8 @@ OPTIONS
 
 --[no-]sparse::
 	Only download objects if they appear at a path that matches the
-	current sparse-checkout.
+	current sparse-checkout. If the sparse-checkout feature is enabled,
+	then `--sparse` is assumed and can be disabled with `--no-sparse`.
 
 SEE ALSO
 --------
