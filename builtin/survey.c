@@ -7,6 +7,7 @@
 #include "parse-options.h"
 #include "progress.h"
 #include "ref-filter.h"
+#include "strbuf.h"
 #include "strvec.h"
 #include "trace2.h"
 
@@ -78,6 +79,160 @@ struct survey_context {
 static void clear_survey_context(struct survey_context *ctx)
 {
 	strvec_clear(&ctx->refs);
+}
+
+struct survey_table {
+	const char *table_name;
+	struct strvec header;
+	struct strvec *rows;
+	size_t rows_nr;
+	size_t rows_alloc;
+};
+
+#define SURVEY_TABLE_INIT {	\
+	.header = STRVEC_INIT,	\
+}
+
+static void clear_table(struct survey_table *table)
+{
+	strvec_clear(&table->header);
+	for (size_t i = 0; i < table->rows_nr; i++)
+		strvec_clear(&table->rows[i]);
+	free(table->rows);
+}
+
+static void insert_table_rowv(struct survey_table *table, ...)
+{
+	va_list ap;
+	char *arg;
+	ALLOC_GROW(table->rows, table->rows_nr + 1, table->rows_alloc);
+
+	memset(&table->rows[table->rows_nr], 0, sizeof(struct strvec));
+
+	va_start(ap, table);
+	while ((arg = va_arg(ap, char *)))
+		strvec_push(&table->rows[table->rows_nr], arg);
+	va_end(ap);
+
+	table->rows_nr++;
+}
+
+#define SECTION_SEGMENT "========================================"
+#define SECTION_SEGMENT_LEN 40
+static const char *section_line = SECTION_SEGMENT
+				  SECTION_SEGMENT
+				  SECTION_SEGMENT
+				  SECTION_SEGMENT;
+static const size_t section_len = 4 * SECTION_SEGMENT_LEN;
+
+static void print_table_title(const char *name, size_t *widths, size_t nr)
+{
+	size_t width = 3 * (nr - 1);
+
+	for (size_t i = 0; i < nr; i++)
+		width += widths[i];
+
+	if (width > section_len)
+		width = section_len;
+
+	printf("\n%s\n%.*s\n", name, (int)width, section_line);
+}
+
+static void print_row_plaintext(struct strvec *row, size_t *widths)
+{
+	static struct strbuf line = STRBUF_INIT;
+	strbuf_setlen(&line, 0);
+
+	for (size_t i = 0; i < row->nr; i++) {
+		const char *str = row->v[i];
+		size_t len = strlen(str);
+		if (i)
+			strbuf_add(&line, " | ", 3);
+		strbuf_addchars(&line, ' ', widths[i] - len);
+		strbuf_add(&line, str, len);
+	}
+	printf("%s\n", line.buf);
+}
+
+static void print_divider_plaintext(size_t *widths, size_t nr)
+{
+	static struct strbuf line = STRBUF_INIT;
+	strbuf_setlen(&line, 0);
+
+	for (size_t i = 0; i < nr; i++) {
+		if (i)
+			strbuf_add(&line, "-+-", 3);
+		strbuf_addchars(&line, '-', widths[i]);
+	}
+	printf("%s\n", line.buf);
+}
+
+static void print_table_plaintext(struct survey_table *table)
+{
+	size_t *column_widths;
+	size_t columns_nr = table->header.nr;
+	CALLOC_ARRAY(column_widths, columns_nr);
+
+	for (size_t i = 0; i < columns_nr; i++) {
+		column_widths[i] = strlen(table->header.v[i]);
+
+		for (size_t j = 0; j < table->rows_nr; j++) {
+			size_t rowlen = strlen(table->rows[j].v[i]);
+			if (column_widths[i] < rowlen)
+				column_widths[i] = rowlen;
+		}
+	}
+
+	print_table_title(table->table_name, column_widths, columns_nr);
+	print_row_plaintext(&table->header, column_widths);
+	print_divider_plaintext(column_widths, columns_nr);
+
+	for (size_t j = 0; j < table->rows_nr; j++)
+		print_row_plaintext(&table->rows[j], column_widths);
+
+	free(column_widths);
+}
+
+static void survey_report_plaintext_refs(struct survey_context *ctx)
+{
+	struct survey_report_ref_summary *refs = &ctx->report.refs;
+	struct survey_table table = SURVEY_TABLE_INIT;
+
+	table.table_name = _("REFERENCES SUMMARY");
+
+	strvec_push(&table.header, _("Ref Type"));
+	strvec_push(&table.header, _("Count"));
+
+	if (ctx->opts.refs.want_all_refs || ctx->opts.refs.want_branches) {
+		char *fmt = xstrfmt("%"PRIuMAX"", (uintmax_t)refs->branches_nr);
+		insert_table_rowv(&table, _("Branches"), fmt, NULL);
+		free(fmt);
+	}
+
+	if (ctx->opts.refs.want_all_refs || ctx->opts.refs.want_remotes) {
+		char *fmt = xstrfmt("%"PRIuMAX"", (uintmax_t)refs->remote_refs_nr);
+		insert_table_rowv(&table, _("Remote refs"), fmt, NULL);
+		free(fmt);
+	}
+
+	if (ctx->opts.refs.want_all_refs || ctx->opts.refs.want_tags) {
+		char *fmt = xstrfmt("%"PRIuMAX"", (uintmax_t)refs->tags_nr);
+		insert_table_rowv(&table, _("Tags (all)"), fmt, NULL);
+		free(fmt);
+		fmt = xstrfmt("%"PRIuMAX"", (uintmax_t)refs->tags_annotated_nr);
+		insert_table_rowv(&table, _("Tags (annotated)"), fmt, NULL);
+		free(fmt);
+	}
+
+	print_table_plaintext(&table);
+	clear_table(&table);
+}
+
+static void survey_report_plaintext(struct survey_context *ctx)
+{
+	printf("GIT SURVEY for \"%s\"\n", ctx->repo->worktree);
+	printf("-----------------------------------------------------\n");
+	survey_report_plaintext_refs(ctx);
 }
 
 /*
@@ -316,6 +471,8 @@ int cmd_survey(int argc, const char **argv, const char *prefix, struct repositor
 	fixup_refs_wanted(&ctx);
 
 	survey_phase_refs(&ctx);
+
+	survey_report_plaintext(&ctx);
 
 	clear_survey_context(&ctx);
 	return 0;
