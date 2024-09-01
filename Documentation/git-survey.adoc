@@ -65,6 +65,13 @@ OUTPUT
 By default, `git survey` will print information about the repository in a
 human-readable format that includes overviews and tables.
 
+References Summary
+~~~~~~~~~~~~~~~~~~
+
+The references summary includes a count of each kind of reference,
+including branches, remote refs, and tags (split by "all" and
+"annotated").
+
 GIT
 ---
 Part of the linkgit:git[1] suite
