@@ -21,7 +21,23 @@ test_expect_success 'create a semi-interesting repo' '
 
 test_expect_success 'git survey (default)' '
 	git survey >out 2>err &&
-	test_line_count = 0 err
+	test_line_count = 0 err &&
+
+	tr , " " >expect <<-EOF &&
+	GIT SURVEY for "$(pwd)"
+	-----------------------------------------------------
+
+	REFERENCES SUMMARY
+	========================
+	,       Ref Type | Count
+	-----------------+------
+	,       Branches |     1
+	     Remote refs |     0
+	      Tags (all) |     0
+	Tags (annotated) |     0
+	EOF
+
+	test_cmp expect out
 '
 
 test_done
