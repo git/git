@@ -3,7 +3,7 @@
 #include "strbuf.h"
 #include "hex.h"
 
-static int init_hash_algo(void)
+int init_hash_algo(void)
 {
 	static int algo = -1;
 
