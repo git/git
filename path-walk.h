@@ -6,6 +6,7 @@
 
 struct rev_info;
 struct oid_array;
+struct pattern_list;
 
 /**
  * The type of a function pointer for the method that is called on a list of
@@ -46,6 +47,16 @@ struct path_walk_info {
 	 * walk the children of such trees.
 	 */
 	int prune_all_uninteresting;
+
+	/**
+	 * Specify a sparse-checkout definition to match our paths to. Do not
+	 * walk outside of this sparse definition. If the patterns are in
+	 * cone mode, then the search may prune directories that are outside
+	 * of the cone. If not in cone mode, then all tree paths will be
+	 * explored but the path_fn will only be called when the path matches
+	 * the sparse-checkout patterns.
+	 */
+	struct pattern_list *pl;
 };
 
 #define PATH_WALK_INFO_INIT {   \
