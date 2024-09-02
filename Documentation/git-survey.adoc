@@ -72,6 +72,12 @@ The references summary includes a count of each kind of reference,
 including branches, remote refs, and tags (split by "all" and
 "annotated").
 
+Reachable Object Summary
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+The reachable object summary shows the total number of each kind of Git
+object, including tags, commits, trees, and blobs.
+
 GIT
 ---
 Part of the linkgit:git[1] suite
