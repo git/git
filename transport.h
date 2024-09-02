@@ -342,4 +342,8 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 /* common method used by transport-helper.c and send-pack.c */
 void reject_atomic_push(struct ref *refs, int mirror_mode);
 
+/* common method to parse push-option or server-option from config */
+int parse_transport_option(const char *var, const char *value,
+			   struct string_list *transport_options);
+
 #endif
