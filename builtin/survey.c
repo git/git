@@ -61,13 +61,34 @@ struct survey_report_object_summary {
 };
 
 /**
+ * For some category given by 'label', count the number of objects
+ * that match that label along with the on-disk size and the size
+ * after decompressing (both with delta bases and zlib).
+ */
+struct survey_report_object_size_summary {
+	char *label;
+	size_t nr;
+	size_t disk_size;
+	size_t inflated_size;
+	size_t num_missing;
+};
+
+/**
  * This struct contains all of the information that needs to be printed
  * at the end of the exploration of the repository and its references.
  */
 struct survey_report {
 	struct survey_report_ref_summary refs;
 	struct survey_report_object_summary reachable_objects;
+
+	struct survey_report_object_size_summary *by_type;
 };
+
+#define REPORT_TYPE_COMMIT 0
+#define REPORT_TYPE_TREE 1
+#define REPORT_TYPE_BLOB 2
+#define REPORT_TYPE_TAG 3
+#define REPORT_TYPE_COUNT 4
 
 struct survey_context {
 	struct repository *repo;
@@ -280,12 +301,48 @@ static void survey_report_plaintext_reachable_object_summary(struct survey_conte
 	clear_table(&table);
 }
 
+static void survey_report_object_sizes(const char *title,
+				       const char *categories,
+				       struct survey_report_object_size_summary *summary,
+				       size_t summary_nr)
+{
+	struct survey_table table = SURVEY_TABLE_INIT;
+	table.table_name = title;
+
+	strvec_push(&table.header, categories);
+	strvec_push(&table.header, _("Count"));
+	strvec_push(&table.header, _("Disk Size"));
+	strvec_push(&table.header, _("Inflated Size"));
+
+	for (size_t i = 0; i < summary_nr; i++) {
+		char *label_str =  xstrdup(summary[i].label);
+		char *nr_str = xstrfmt("%"PRIuMAX, (uintmax_t)summary[i].nr);
+		char *disk_str = xstrfmt("%"PRIuMAX, (uintmax_t)summary[i].disk_size);
+		char *inflate_str = xstrfmt("%"PRIuMAX, (uintmax_t)summary[i].inflated_size);
+
+		insert_table_rowv(&table, label_str, nr_str,
+				  disk_str, inflate_str, NULL);
+
+		free(label_str);
+		free(nr_str);
+		free(disk_str);
+		free(inflate_str);
+	}
+
+	print_table_plaintext(&table);
+	clear_table(&table);
+}
+
 static void survey_report_plaintext(struct survey_context *ctx)
 {
 	printf("GIT SURVEY for \"%s\"\n", ctx->repo->worktree);
 	printf("-----------------------------------------------------\n");
 	survey_report_plaintext_refs(ctx);
 	survey_report_plaintext_reachable_object_summary(ctx);
+	survey_report_object_sizes(_("TOTAL OBJECT SIZES BY TYPE"),
+				   _("Object Type"),
+				   ctx->report.by_type,
+				   REPORT_TYPE_COUNT);
 }
 
 /*
@@ -498,6 +555,68 @@ static void increment_object_counts(
 	}
 }
 
+static void increment_totals(struct survey_context *ctx,
+			     struct oid_array *oids,
+			     struct survey_report_object_size_summary *summary)
+{
+	for (size_t i = 0; i < oids->nr; i++) {
+		struct object_info oi = OBJECT_INFO_INIT;
+		unsigned oi_flags = OBJECT_INFO_FOR_PREFETCH;
+		unsigned long object_length = 0;
+		off_t disk_sizep = 0;
+		enum object_type type;
+
+		oi.typep = &type;
+		oi.sizep = &object_length;
+		oi.disk_sizep = &disk_sizep;
+
+		if (oid_object_info_extended(ctx->repo, &oids->oid[i],
+					     &oi, oi_flags) < 0) {
+			summary->num_missing++;
+		} else {
+			summary->nr++;
+			summary->disk_size += disk_sizep;
+			summary->inflated_size += object_length;
+		}
+	}
+}
+
+static void increment_object_totals(struct survey_context *ctx,
+				    struct oid_array *oids,
+				    enum object_type type)
+{
+	struct survey_report_object_size_summary *total;
+	struct survey_report_object_size_summary summary = { 0 };
+
+	increment_totals(ctx, oids, &summary);
+
+	switch (type) {
+	case OBJ_COMMIT:
+		total = &ctx->report.by_type[REPORT_TYPE_COMMIT];
+		break;
+
+	case OBJ_TREE:
+		total = &ctx->report.by_type[REPORT_TYPE_TREE];
+		break;
+
+	case OBJ_BLOB:
+		total = &ctx->report.by_type[REPORT_TYPE_BLOB];
+		break;
+
+	case OBJ_TAG:
+		total = &ctx->report.by_type[REPORT_TYPE_TAG];
+		break;
+
+	default:
+		BUG("No other type allowed");
+	}
+
+	total->nr += summary.nr;
+	total->disk_size += summary.disk_size;
+	total->inflated_size += summary.inflated_size;
+	total->num_missing += summary.num_missing;
+}
+
 static int survey_objects_path_walk_fn(const char *path,
 				       struct oid_array *oids,
 				       enum object_type type,
@@ -507,8 +626,18 @@ static int survey_objects_path_walk_fn(const char *path,
 
 	increment_object_counts(&ctx->report.reachable_objects,
 				type, oids->nr);
+	increment_object_totals(ctx, oids, type);
 
 	return 0;
+}
+
+static void initialize_report(struct survey_context *ctx)
+{
+	CALLOC_ARRAY(ctx->report.by_type, REPORT_TYPE_COUNT);
+	ctx->report.by_type[REPORT_TYPE_COMMIT].label = xstrdup(_("Commits"));
+	ctx->report.by_type[REPORT_TYPE_TREE].label = xstrdup(_("Trees"));
+	ctx->report.by_type[REPORT_TYPE_BLOB].label = xstrdup(_("Blobs"));
+	ctx->report.by_type[REPORT_TYPE_TAG].label = xstrdup(_("Tags"));
 }
 
 static void survey_phase_objects(struct survey_context *ctx)
@@ -523,12 +652,15 @@ static void survey_phase_objects(struct survey_context *ctx)
 	info.path_fn = survey_objects_path_walk_fn;
 	info.path_fn_data = ctx;
 
+	initialize_report(ctx);
+
 	repo_init_revisions(ctx->repo, &revs, "");
 	revs.tag_objects = 1;
 
 	for (size_t i = 0; i < ctx->ref_array.nr; i++) {
 		struct ref_array_item *item = ctx->ref_array.items[i];
 		add_pending_oid(&revs, NULL, &item->objectname, add_flags);
+		display_progress(ctx->progress, ++(ctx->progress_nr));
 	}
 
 	walk_objects_by_path(&info);
