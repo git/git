@@ -73,6 +73,119 @@ struct survey_report_object_size_summary {
 	size_t num_missing;
 };
 
+typedef int (*survey_top_cmp)(void *v1, void *v2);
+
+MAYBE_UNUSED
+static int cmp_by_nr(void *v1, void *v2)
+{
+	struct survey_report_object_size_summary *s1 = v1;
+	struct survey_report_object_size_summary *s2 = v2;
+
+	if (s1->nr < s2->nr)
+		return -1;
+	if (s1->nr > s2->nr)
+		return 1;
+	return 0;
+}
+
+MAYBE_UNUSED
+static int cmp_by_disk_size(void *v1, void *v2)
+{
+	struct survey_report_object_size_summary *s1 = v1;
+	struct survey_report_object_size_summary *s2 = v2;
+
+	if (s1->disk_size < s2->disk_size)
+		return -1;
+	if (s1->disk_size > s2->disk_size)
+		return 1;
+	return 0;
+}
+
+MAYBE_UNUSED
+static int cmp_by_inflated_size(void *v1, void *v2)
+{
+	struct survey_report_object_size_summary *s1 = v1;
+	struct survey_report_object_size_summary *s2 = v2;
+
+	if (s1->inflated_size < s2->inflated_size)
+		return -1;
+	if (s1->inflated_size > s2->inflated_size)
+		return 1;
+	return 0;
+}
+
+/**
+ * Store a list of "top" categories by some sorting function. When
+ * inserting a new category, reorder the list and free the one that
+ * got ejected (if any).
+ */
+struct survey_report_top_table {
+	const char *name;
+	survey_top_cmp cmp_fn;
+	size_t nr;
+	size_t alloc;
+
+	/**
+	 * 'data' stores an array of structs and must be cast into
+	 * the proper array type before evaluating an index.
+	 */
+	void *data;
+};
+
+MAYBE_UNUSED
+static void init_top_sizes(struct survey_report_top_table *top,
+			   size_t limit, const char *name,
+			   survey_top_cmp cmp)
+{
+	struct survey_report_object_size_summary *sz_array;
+
+	top->name = name;
+	top->cmp_fn = cmp;
+	top->alloc = limit;
+	top->nr = 0;
+
+	CALLOC_ARRAY(sz_array, limit);
+	top->data = sz_array;
+}
+
+MAYBE_UNUSED
+static void clear_top_sizes(struct survey_report_top_table *top)
+{
+	struct survey_report_object_size_summary *sz_array = top->data;
+
+	for (size_t i = 0; i < top->nr; i++)
+		free(sz_array[i].label);
+	free(sz_array);
+}
+
+MAYBE_UNUSED
+static void maybe_insert_into_top_size(struct survey_report_top_table *top,
+				       struct survey_report_object_size_summary *summary)
+{
+	struct survey_report_object_size_summary *sz_array = top->data;
+	size_t pos = top->nr;
+
+	/* Compare against list from the bottom. */
+	while (pos > 0 && top->cmp_fn(&sz_array[pos - 1], summary) < 0)
+		pos--;
+
+	/* Not big enough! */
+	if (pos >= top->alloc)
+		return;
+
+	/* We need to shift the data. */
+	if (top->nr == top->alloc)
+		free(sz_array[top->nr - 1].label);
+	else
+		top->nr++;
+
+	for (size_t i = top->nr - 1; i > pos; i--)
+		memcpy(&sz_array[i], &sz_array[i - 1], sizeof(*sz_array));
+
+	memcpy(&sz_array[pos], summary, sizeof(*summary));
+	sz_array[pos].label = xstrdup(summary->label);
+}
+
 /**
  * This struct contains all of the information that needs to be printed
  * at the end of the exploration of the repository and its references.
