@@ -25,6 +25,11 @@ test_expect_success 'create a semi-interesting repo' '
 	git update-ref -d refs/tags/two
 '
 
+test_expect_success 'git survey --progress' '
+	GIT_PROGRESS_DELAY=0 git survey --all-refs --progress >out 2>err &&
+	grep "Preparing object walk" err
+'
+
 approximate_sizes() {
 	# very simplistic approximate rounding
 	sed -Ee "s/  *(1[0-9][0-9])( |$)/ ~0.1kB\2/g" \
