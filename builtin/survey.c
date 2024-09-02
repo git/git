@@ -2,13 +2,20 @@
 
 #include "builtin.h"
 #include "config.h"
+#include "environment.h"
+#include "hex.h"
 #include "object.h"
+#include "object-name.h"
 #include "object-store-ll.h"
 #include "parse-options.h"
+#include "path-walk.h"
 #include "progress.h"
 #include "ref-filter.h"
+#include "refs.h"
+#include "revision.h"
 #include "strbuf.h"
 #include "strvec.h"
+#include "tag.h"
 #include "trace2.h"
 
 static const char * const survey_usage[] = {
@@ -46,12 +53,20 @@ struct survey_report_ref_summary {
 	size_t unknown_nr;
 };
 
+struct survey_report_object_summary {
+	size_t commits_nr;
+	size_t tags_nr;
+	size_t trees_nr;
+	size_t blobs_nr;
+};
+
 /**
  * This struct contains all of the information that needs to be printed
  * at the end of the exploration of the repository and its references.
  */
 struct survey_report {
 	struct survey_report_ref_summary refs;
+	struct survey_report_object_summary reachable_objects;
 };
 
 struct survey_context {
@@ -74,10 +89,12 @@ struct survey_context {
 	size_t progress_total;
 
 	struct strvec refs;
+	struct ref_array ref_array;
 };
 
 static void clear_survey_context(struct survey_context *ctx)
 {
+	ref_array_clear(&ctx->ref_array);
 	strvec_clear(&ctx->refs);
 }
 
@@ -128,9 +145,13 @@ static const size_t section_len = 4 * SECTION_SEGMENT_LEN;
 static void print_table_title(const char *name, size_t *widths, size_t nr)
 {
 	size_t width = 3 * (nr - 1);
+	size_t min_width = strlen(name);
 
 	for (size_t i = 0; i < nr; i++)
 		width += widths[i];
+
+	if (width < min_width)
+		width = min_width;
 
 	if (width > section_len)
 		width = section_len;
@@ -228,11 +249,43 @@ static void survey_report_plaintext_refs(struct survey_context *ctx)
 	clear_table(&table);
 }
 
+static void survey_report_plaintext_reachable_object_summary(struct survey_context *ctx)
+{
+	struct survey_report_object_summary *objs = &ctx->report.reachable_objects;
+	struct survey_table table = SURVEY_TABLE_INIT;
+	char *fmt;
+
+	table.table_name = _("REACHABLE OBJECT SUMMARY");
+
+	strvec_push(&table.header, _("Object Type"));
+	strvec_push(&table.header, _("Count"));
+
+	fmt = xstrfmt("%"PRIuMAX"", (uintmax_t)objs->tags_nr);
+	insert_table_rowv(&table, _("Tags"), fmt, NULL);
+	free(fmt);
+
+	fmt = xstrfmt("%"PRIuMAX"", (uintmax_t)objs->commits_nr);
+	insert_table_rowv(&table, _("Commits"), fmt, NULL);
+	free(fmt);
+
+	fmt = xstrfmt("%"PRIuMAX"", (uintmax_t)objs->trees_nr);
+	insert_table_rowv(&table, _("Trees"), fmt, NULL);
+	free(fmt);
+
+	fmt = xstrfmt("%"PRIuMAX"", (uintmax_t)objs->blobs_nr);
+	insert_table_rowv(&table, _("Blobs"), fmt, NULL);
+	free(fmt);
+
+	print_table_plaintext(&table);
+	clear_table(&table);
+}
+
 static void survey_report_plaintext(struct survey_context *ctx)
 {
 	printf("GIT SURVEY for \"%s\"\n", ctx->repo->worktree);
 	printf("-----------------------------------------------------\n");
 	survey_report_plaintext_refs(ctx);
+	survey_report_plaintext_reachable_object_summary(ctx);
 }
 
 /*
@@ -380,15 +433,13 @@ static void do_load_refs(struct survey_context *ctx,
  */
 static void survey_phase_refs(struct survey_context *ctx)
 {
-	struct ref_array ref_array = { 0 };
-
 	trace2_region_enter("survey", "phase/refs", ctx->repo);
-	do_load_refs(ctx, &ref_array);
+	do_load_refs(ctx, &ctx->ref_array);
 
-	ctx->report.refs.refs_nr = ref_array.nr;
-	for (size_t i = 0; i < ref_array.nr; i++) {
+	ctx->report.refs.refs_nr = ctx->ref_array.nr;
+	for (size_t i = 0; i < ctx->ref_array.nr; i++) {
 		unsigned long size;
-		struct ref_array_item *item = ref_array.items[i];
+		struct ref_array_item *item = ctx->ref_array.items[i];
 
 		switch (item->kind) {
 		case FILTER_REFS_TAGS:
@@ -418,8 +469,72 @@ static void survey_phase_refs(struct survey_context *ctx)
 	}
 
 	trace2_region_leave("survey", "phase/refs", ctx->repo);
+}
 
-	ref_array_clear(&ref_array);
+static void increment_object_counts(
+		struct survey_report_object_summary *summary,
+		enum object_type type,
+		size_t nr)
+{
+	switch (type) {
+	case OBJ_COMMIT:
+		summary->commits_nr += nr;
+		break;
+
+	case OBJ_TREE:
+		summary->trees_nr += nr;
+		break;
+
+	case OBJ_BLOB:
+		summary->blobs_nr += nr;
+		break;
+
+	case OBJ_TAG:
+		summary->tags_nr += nr;
+		break;
+
+	default:
+		break;
+	}
+}
+
+static int survey_objects_path_walk_fn(const char *path,
+				       struct oid_array *oids,
+				       enum object_type type,
+				       void *data)
+{
+	struct survey_context *ctx = data;
+
+	increment_object_counts(&ctx->report.reachable_objects,
+				type, oids->nr);
+
+	return 0;
+}
+
+static void survey_phase_objects(struct survey_context *ctx)
+{
+	struct rev_info revs = REV_INFO_INIT;
+	struct path_walk_info info = PATH_WALK_INFO_INIT;
+	unsigned int add_flags = 0;
+
+	trace2_region_enter("survey", "phase/objects", ctx->repo);
+
+	info.revs = &revs;
+	info.path_fn = survey_objects_path_walk_fn;
+	info.path_fn_data = ctx;
+
+	repo_init_revisions(ctx->repo, &revs, "");
+	revs.tag_objects = 1;
+
+	for (size_t i = 0; i < ctx->ref_array.nr; i++) {
+		struct ref_array_item *item = ctx->ref_array.items[i];
+		add_pending_oid(&revs, NULL, &item->objectname, add_flags);
+	}
+
+	walk_objects_by_path(&info);
+
+	release_revisions(&revs);
+	trace2_region_leave("survey", "phase/objects", ctx->repo);
 }
 
 int cmd_survey(int argc, const char **argv, const char *prefix, struct repository *repo)
@@ -471,6 +586,8 @@ int cmd_survey(int argc, const char **argv, const char *prefix, struct repositor
 	fixup_refs_wanted(&ctx);
 
 	survey_phase_refs(&ctx);
+
+	survey_phase_objects(&ctx);
 
 	survey_report_plaintext(&ctx);
 
