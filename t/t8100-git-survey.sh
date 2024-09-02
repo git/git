@@ -25,9 +25,34 @@ test_expect_success 'create a semi-interesting repo' '
 	git update-ref -d refs/tags/two
 '
 
+approximate_sizes() {
+	# very simplistic approximate rounding
+	sed -Ee "s/  *(1[0-9][0-9])( |$)/ ~0.1kB\2/g" \
+	  -e "s/  *(4[6-9][0-9]|5[0-6][0-9])( |$)/ ~0.5kB\2/g" \
+	  -e "s/  *(5[6-9][0-9]|6[0-6][0-9])( |$)/ ~0.6kB\2/g" \
+	  -e "s/  *1(4[89][0-9]|5[0-8][0-9])( |$)/ ~1.5kB\2/g" \
+	  -e "s/  *1(69[0-9]|7[0-9][0-9])( |$)/ ~1.7kB\2/g" \
+	  -e "s/  *1(79[0-9]|8[0-9][0-9])( |$)/ ~1.8kB\2/g" \
+	  -e "s/  *2(1[0-9][0-9]|20[0-1])( |$)/ ~2.1kB\2/g" \
+	  -e "s/  *2(3[0-9][0-9]|4[0-1][0-9])( |$)/ ~2.3kB\2/g" \
+	  -e "s/  *2(5[0-9][0-9]|6[0-1][0-9])( |$)/ ~2.5kB\2/g" \
+	 "$@"
+}
+
 test_expect_success 'git survey (default)' '
 	git survey --all-refs >out 2>err &&
 	test_line_count = 0 err &&
+
+	test_oid_cache <<-EOF &&
+	commits_sizes sha1:~1.5kB | ~2.1kB
+	commits_sizes sha256:~1.8kB | ~2.5kB
+	trees_sizes sha1:~0.5kB | ~1.7kB
+	trees_sizes sha256:~0.6kB | ~2.3kB
+	blobs_sizes sha1:~0.1kB | ~0.1kB
+	blobs_sizes sha256:~0.1kB | ~0.1kB
+	tags_sizes sha1:~0.5kB | ~0.5kB
+	tags_sizes sha256:~0.5kB | ~0.6kB
+	EOF
 
 	tr , " " >expect <<-EOF &&
 	GIT SURVEY for "$(pwd)"
@@ -50,9 +75,19 @@ test_expect_success 'git survey (default)' '
 	    Commits |    10
 	      Trees |    10
 	      Blobs |    10
+
+	TOTAL OBJECT SIZES BY TYPE
+	===============================================
+	Object Type | Count | Disk Size | Inflated Size
+	------------+-------+-----------+--------------
+	    Commits |    10 | $(test_oid commits_sizes)
+	      Trees |    10 | $(test_oid trees_sizes)
+	      Blobs |    10 | $(test_oid blobs_sizes)
+	       Tags |     4 | $(test_oid tags_sizes)
 	EOF
 
-	test_cmp expect out
+	approximate_sizes out >out-edited &&
+	test_cmp expect out-edited
 '
 
 test_done
