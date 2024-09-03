@@ -10,6 +10,7 @@ https://developers.google.com/open-source/licenses/bsd
 
 #include "system.h"
 
+#include "copy.h"
 #include "reftable-reader.h"
 #include "merged.h"
 #include "basics.h"
@@ -125,6 +126,7 @@ static void write_n_ref_tables(struct reftable_stack *st,
 			.value_type = REFTABLE_REF_VAL1,
 		};
 
+		strbuf_reset(&buf);
 		strbuf_addf(&buf, "refs/heads/branch-%04u", (unsigned) i);
 		ref.refname = buf.buf;
 		set_test_hash(ref.value.val1, i);
@@ -1035,10 +1037,8 @@ static void test_reftable_stack_compaction_concurrent(void)
 static void unclean_stack_close(struct reftable_stack *st)
 {
 	/* break abstraction boundary to simulate unclean shutdown. */
-	int i = 0;
-	for (; i < st->readers_len; i++) {
-		reftable_reader_free(st->readers[i]);
-	}
+	for (size_t i = 0; i < st->readers_len; i++)
+		reftable_reader_decref(st->readers[i]);
 	st->readers_len = 0;
 	FREE_AND_NULL(st->readers);
 }
@@ -1077,6 +1077,112 @@ static void test_reftable_stack_compaction_concurrent_clean(void)
 	clear_dir(dir);
 }
 
+static void test_reftable_stack_read_across_reload(void)
+{
+	struct reftable_write_options opts = { 0 };
+	struct reftable_stack *st1 = NULL, *st2 = NULL;
+	struct reftable_ref_record rec = { 0 };
+	struct reftable_iterator it = { 0 };
+	char *dir = get_tmp_dir(__LINE__);
+	int err;
+
+	/* Create a first stack and set up an iterator for it. */
+	err = reftable_new_stack(&st1, dir, &opts);
+	EXPECT_ERR(err);
+	write_n_ref_tables(st1, 2);
+	EXPECT(st1->merged->readers_len == 2);
+	reftable_stack_init_ref_iterator(st1, &it);
+	err = reftable_iterator_seek_ref(&it, "");
+	EXPECT_ERR(err);
+
+	/* Set up a second stack for the same directory and compact it. */
+	err = reftable_new_stack(&st2, dir, &opts);
+	EXPECT_ERR(err);
+	EXPECT(st2->merged->readers_len == 2);
+	err = reftable_stack_compact_all(st2, NULL);
+	EXPECT_ERR(err);
+	EXPECT(st2->merged->readers_len == 1);
+
+	/*
+	 * Verify that we can continue to use the old iterator even after we
+	 * have reloaded its stack.
+	 */
+	err = reftable_stack_reload(st1);
+	EXPECT_ERR(err);
+	EXPECT(st1->merged->readers_len == 1);
+	err = reftable_iterator_next_ref(&it, &rec);
+	EXPECT_ERR(err);
+	EXPECT(!strcmp(rec.refname, "refs/heads/branch-0000"));
+	err = reftable_iterator_next_ref(&it, &rec);
+	EXPECT_ERR(err);
+	EXPECT(!strcmp(rec.refname, "refs/heads/branch-0001"));
+	err = reftable_iterator_next_ref(&it, &rec);
+	EXPECT(err > 0);
+
+	reftable_ref_record_release(&rec);
+	reftable_iterator_destroy(&it);
+	reftable_stack_destroy(st1);
+	reftable_stack_destroy(st2);
+	clear_dir(dir);
+}
+
+static void test_reftable_stack_reload_with_missing_table(void)
+{
+	struct reftable_write_options opts = { 0 };
+	struct reftable_stack *st = NULL;
+	struct reftable_ref_record rec = { 0 };
+	struct reftable_iterator it = { 0 };
+	struct strbuf table_path = STRBUF_INIT, content = STRBUF_INIT;
+	char *dir = get_tmp_dir(__LINE__);
+	int err;
+
+	/* Create a first stack and set up an iterator for it. */
+	err = reftable_new_stack(&st, dir, &opts);
+	EXPECT_ERR(err);
+	write_n_ref_tables(st, 2);
+	EXPECT(st->merged->readers_len == 2);
+	reftable_stack_init_ref_iterator(st, &it);
+	err = reftable_iterator_seek_ref(&it, "");
+	EXPECT_ERR(err);
+
+	/*
+	 * Update the tables.list file with some garbage data, while reusing
+	 * our old readers. This should trigger a partial reload of the stack,
+	 * where we try to reuse our old readers.
+	*/
+	strbuf_addf(&content, "%s\n", st->readers[0]->name);
+	strbuf_addf(&content, "%s\n", st->readers[1]->name);
+	strbuf_addstr(&content, "garbage\n");
+	strbuf_addf(&table_path, "%s.lock", st->list_file);
+	write_file_buf(table_path.buf, content.buf, content.len);
+	err = rename(table_path.buf, st->list_file);
+	EXPECT_ERR(err);
+
+	err = reftable_stack_reload(st);
+	EXPECT(err == -4);
+	EXPECT(st->merged->readers_len == 2);
+
+	/*
+	 * Even though the reload has failed, we should be able to continue
+	 * using the iterator.
+	*/
+	err = reftable_iterator_next_ref(&it, &rec);
+	EXPECT_ERR(err);
+	EXPECT(!strcmp(rec.refname, "refs/heads/branch-0000"));
+	err = reftable_iterator_next_ref(&it, &rec);
+	EXPECT_ERR(err);
+	EXPECT(!strcmp(rec.refname, "refs/heads/branch-0001"));
+	err = reftable_iterator_next_ref(&it, &rec);
+	EXPECT(err > 0);
+
+	reftable_ref_record_release(&rec);
+	reftable_iterator_destroy(&it);
+	reftable_stack_destroy(st);
+	strbuf_release(&table_path);
+	strbuf_release(&content);
+	clear_dir(dir);
+}
+
 int stack_test_main(int argc UNUSED, const char *argv[] UNUSED)
 {
 	RUN_TEST(test_empty_add);
@@ -1099,6 +1205,8 @@ int stack_test_main(int argc UNUSED, const char *argv[] UNUSED)
 	RUN_TEST(test_reftable_stack_auto_compaction_fails_gracefully);
 	RUN_TEST(test_reftable_stack_update_index_check);
 	RUN_TEST(test_reftable_stack_uptodate);
+	RUN_TEST(test_reftable_stack_read_across_reload);
+	RUN_TEST(test_reftable_stack_reload_with_missing_table);
 	RUN_TEST(test_suggest_compaction_segment);
 	RUN_TEST(test_suggest_compaction_segment_nothing);
 	return 0;

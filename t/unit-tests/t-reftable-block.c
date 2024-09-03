@@ -29,11 +29,11 @@ static void t_ref_block_read_write(void)
 	int ret;
 	struct block_reader br = { 0 };
 	struct block_iter it = BLOCK_ITER_INIT;
-	struct strbuf want = STRBUF_INIT;
+	struct strbuf want = STRBUF_INIT, buf = STRBUF_INIT;
 
 	REFTABLE_CALLOC_ARRAY(block.data, block_size);
 	block.len = block_size;
-	block.source = malloc_block_source();
+	block_source_from_strbuf(&block.source ,&buf);
 	block_writer_init(&bw, BLOCK_TYPE_REF, block.data, block_size,
 			  header_off, hash_size(GIT_SHA1_FORMAT_ID));
 
@@ -99,6 +99,7 @@ static void t_ref_block_read_write(void)
 	reftable_record_release(&rec);
 	reftable_block_done(&br.block);
 	strbuf_release(&want);
+	strbuf_release(&buf);
 	for (i = 0; i < N; i++)
 		reftable_record_release(&recs[i]);
 }

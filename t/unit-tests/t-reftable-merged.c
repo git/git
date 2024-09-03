@@ -102,7 +102,7 @@ merged_table_from_records(struct reftable_ref_record **refs,
 		write_test_table(&buf[i], refs[i], sizes[i]);
 		block_source_from_strbuf(&(*source)[i], &buf[i]);
 
-		err = reftable_new_reader(&(*readers)[i], &(*source)[i],
+		err = reftable_reader_new(&(*readers)[i], &(*source)[i],
 					  "name");
 		check(!err);
 	}
@@ -115,7 +115,7 @@ merged_table_from_records(struct reftable_ref_record **refs,
 static void readers_destroy(struct reftable_reader **readers, const size_t n)
 {
 	for (size_t i = 0; i < n; i++)
-		reftable_reader_free(readers[i]);
+		reftable_reader_decref(readers[i]);
 	reftable_free(readers);
 }
 
@@ -277,7 +277,7 @@ merged_table_from_log_records(struct reftable_log_record **logs,
 		write_test_log_table(&buf[i], logs[i], sizes[i], i + 1);
 		block_source_from_strbuf(&(*source)[i], &buf[i]);
 
-		err = reftable_new_reader(&(*readers)[i], &(*source)[i],
+		err = reftable_reader_new(&(*readers)[i], &(*source)[i],
 					  "name");
 		check(!err);
 	}
@@ -426,7 +426,7 @@ static void t_default_write_opts(void)
 
 	block_source_from_strbuf(&source, &buf);
 
-	err = reftable_new_reader(&rd, &source, "filename");
+	err = reftable_reader_new(&rd, &source, "filename");
 	check(!err);
 
 	hash_id = reftable_reader_hash_id(rd);
@@ -437,7 +437,7 @@ static void t_default_write_opts(void)
 	err = reftable_merged_table_new(&merged, &rd, 1, GIT_SHA1_FORMAT_ID);
 	check(!err);
 
-	reftable_reader_free(rd);
+	reftable_reader_decref(rd);
 	reftable_merged_table_free(merged);
 	strbuf_release(&buf);
 }

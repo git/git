@@ -205,7 +205,7 @@ static void t_log_write_read(void)
 	struct reftable_log_record log = { 0 };
 	int n;
 	struct reftable_iterator it = { 0 };
-	struct reftable_reader rd = { 0 };
+	struct reftable_reader *reader;
 	struct reftable_block_source source = { 0 };
 	struct strbuf buf = STRBUF_INIT;
 	struct reftable_writer *w =
@@ -246,10 +246,10 @@ static void t_log_write_read(void)
 
 	block_source_from_strbuf(&source, &buf);
 
-	err = init_reader(&rd, &source, "file.log");
+	err = reftable_reader_new(&reader, &source, "file.log");
 	check(!err);
 
-	reftable_reader_init_ref_iterator(&rd, &it);
+	reftable_reader_init_ref_iterator(reader, &it);
 
 	err = reftable_iterator_seek_ref(&it, names[N - 1]);
 	check(!err);
@@ -264,7 +264,7 @@ static void t_log_write_read(void)
 	reftable_iterator_destroy(&it);
 	reftable_ref_record_release(&ref);
 
-	reftable_reader_init_log_iterator(&rd, &it);
+	reftable_reader_init_log_iterator(reader, &it);
 
 	err = reftable_iterator_seek_log(&it, "");
 	check(!err);
@@ -285,7 +285,7 @@ static void t_log_write_read(void)
 	/* cleanup. */
 	strbuf_release(&buf);
 	free_names(names);
-	reader_close(&rd);
+	reftable_reader_decref(reader);
 }
 
 static void t_log_zlib_corruption(void)
@@ -294,7 +294,7 @@ static void t_log_zlib_corruption(void)
 		.block_size = 256,
 	};
 	struct reftable_iterator it = { 0 };
-	struct reftable_reader rd = { 0 };
+	struct reftable_reader *reader;
 	struct reftable_block_source source = { 0 };
 	struct strbuf buf = STRBUF_INIT;
 	struct reftable_writer *w =
@@ -337,18 +337,18 @@ static void t_log_zlib_corruption(void)
 
 	block_source_from_strbuf(&source, &buf);
 
-	err = init_reader(&rd, &source, "file.log");
+	err = reftable_reader_new(&reader, &source, "file.log");
 	check(!err);
 
-	reftable_reader_init_log_iterator(&rd, &it);
+	reftable_reader_init_log_iterator(reader, &it);
 	err = reftable_iterator_seek_log(&it, "refname");
 	check_int(err, ==, REFTABLE_ZLIB_ERROR);
 
 	reftable_iterator_destroy(&it);
 
 	/* cleanup. */
+	reftable_reader_decref(reader);
 	strbuf_release(&buf);
-	reader_close(&rd);
 }
 
 static void t_table_read_write_sequential(void)
@@ -358,7 +358,7 @@ static void t_table_read_write_sequential(void)
 	int N = 50;
 	struct reftable_iterator it = { 0 };
 	struct reftable_block_source source = { 0 };
-	struct reftable_reader rd = { 0 };
+	struct reftable_reader *reader;
 	int err = 0;
 	int j = 0;
 
@@ -366,10 +366,10 @@ static void t_table_read_write_sequential(void)
 
 	block_source_from_strbuf(&source, &buf);
 
-	err = init_reader(&rd, &source, "file.ref");
+	err = reftable_reader_new(&reader, &source, "file.ref");
 	check(!err);
 
-	reftable_reader_init_ref_iterator(&rd, &it);
+	reftable_reader_init_ref_iterator(reader, &it);
 	err = reftable_iterator_seek_ref(&it, "");
 	check(!err);
 
@@ -384,11 +384,11 @@ static void t_table_read_write_sequential(void)
 		reftable_ref_record_release(&ref);
 	}
 	check_int(j, ==, N);
+
 	reftable_iterator_destroy(&it);
+	reftable_reader_decref(reader);
 	strbuf_release(&buf);
 	free_names(names);
-
-	reader_close(&rd);
 }
 
 static void t_table_write_small_table(void)
@@ -407,7 +407,7 @@ static void t_table_read_api(void)
 	char **names;
 	struct strbuf buf = STRBUF_INIT;
 	int N = 50;
-	struct reftable_reader rd = { 0 };
+	struct reftable_reader *reader;
 	struct reftable_block_source source = { 0 };
 	int err;
 	struct reftable_log_record log = { 0 };
@@ -417,10 +417,10 @@ static void t_table_read_api(void)
 
 	block_source_from_strbuf(&source, &buf);
 
-	err = init_reader(&rd, &source, "file.ref");
+	err = reftable_reader_new(&reader, &source, "file.ref");
 	check(!err);
 
-	reftable_reader_init_ref_iterator(&rd, &it);
+	reftable_reader_init_ref_iterator(reader, &it);
 	err = reftable_iterator_seek_ref(&it, names[0]);
 	check(!err);
 
@@ -430,7 +430,7 @@ static void t_table_read_api(void)
 	strbuf_release(&buf);
 	free_names(names);
 	reftable_iterator_destroy(&it);
-	reader_close(&rd);
+	reftable_reader_decref(reader);
 	strbuf_release(&buf);
 }
 
@@ -439,7 +439,7 @@ static void t_table_read_write_seek(int index, int hash_id)
 	char **names;
 	struct strbuf buf = STRBUF_INIT;
 	int N = 50;
-	struct reftable_reader rd = { 0 };
+	struct reftable_reader *reader;
 	struct reftable_block_source source = { 0 };
 	int err;
 	int i = 0;
@@ -452,17 +452,18 @@ static void t_table_read_write_seek(int index, int hash_id)
 
 	block_source_from_strbuf(&source, &buf);
 
-	err = init_reader(&rd, &source, "file.ref");
+	err = reftable_reader_new(&reader, &source, "file.ref");
 	check(!err);
-	check_int(hash_id, ==, reftable_reader_hash_id(&rd));
+	check_int(hash_id, ==, reftable_reader_hash_id(reader));
 
-	if (!index)
-		rd.ref_offsets.index_offset = 0;
-	else
-		check_int(rd.ref_offsets.index_offset, >, 0);
+	if (!index) {
+		reader->ref_offsets.index_offset = 0;
+	} else {
+		check_int(reader->ref_offsets.index_offset, >, 0);
+	}
 
 	for (i = 1; i < N; i++) {
-		reftable_reader_init_ref_iterator(&rd, &it);
+		reftable_reader_init_ref_iterator(reader, &it);
 		err = reftable_iterator_seek_ref(&it, names[i]);
 		check(!err);
 		err = reftable_iterator_next_ref(&it, &ref);
@@ -478,7 +479,7 @@ static void t_table_read_write_seek(int index, int hash_id)
 	strbuf_addstr(&pastLast, names[N - 1]);
 	strbuf_addstr(&pastLast, "/");
 
-	reftable_reader_init_ref_iterator(&rd, &it);
+	reftable_reader_init_ref_iterator(reader, &it);
 	err = reftable_iterator_seek_ref(&it, pastLast.buf);
 	if (err == 0) {
 		struct reftable_ref_record ref = { 0 };
@@ -493,7 +494,7 @@ static void t_table_read_write_seek(int index, int hash_id)
 
 	strbuf_release(&buf);
 	free_names(names);
-	reader_close(&rd);
+	reftable_reader_decref(reader);
 }
 
 static void t_table_read_write_seek_linear(void)
@@ -525,7 +526,7 @@ static void t_table_refs_for(int indexed)
 	int i = 0;
 	int n;
 	int err;
-	struct reftable_reader rd;
+	struct reftable_reader *reader;
 	struct reftable_block_source source = { 0 };
 
 	struct strbuf buf = STRBUF_INIT;
@@ -573,17 +574,17 @@ static void t_table_refs_for(int indexed)
 
 	block_source_from_strbuf(&source, &buf);
 
-	err = init_reader(&rd, &source, "file.ref");
+	err = reftable_reader_new(&reader, &source, "file.ref");
 	check(!err);
 	if (!indexed)
-		rd.obj_offsets.is_present = 0;
+		reader->obj_offsets.is_present = 0;
 
-	reftable_reader_init_ref_iterator(&rd, &it);
+	reftable_reader_init_ref_iterator(reader, &it);
 	err = reftable_iterator_seek_ref(&it, "");
 	check(!err);
 	reftable_iterator_destroy(&it);
 
-	err = reftable_reader_refs_for(&rd, &it, want_hash);
+	err = reftable_reader_refs_for(reader, &it, want_hash);
 	check(!err);
 
 	for (j = 0; ; j++) {
@@ -600,7 +601,7 @@ static void t_table_refs_for(int indexed)
 	strbuf_release(&buf);
 	free_names(want_names);
 	reftable_iterator_destroy(&it);
-	reader_close(&rd);
+	reftable_reader_decref(reader);
 }
 
 static void t_table_refs_for_no_index(void)
@@ -635,7 +636,7 @@ static void t_write_empty_table(void)
 
 	block_source_from_strbuf(&source, &buf);
 
-	err = reftable_new_reader(&rd, &source, "filename");
+	err = reftable_reader_new(&rd, &source, "filename");
 	check(!err);
 
 	reftable_reader_init_ref_iterator(rd, &it);
@@ -646,7 +647,7 @@ static void t_write_empty_table(void)
 	check_int(err, >, 0);
 
 	reftable_iterator_destroy(&it);
-	reftable_reader_free(rd);
+	reftable_reader_decref(rd);
 	strbuf_release(&buf);
 }
 
@@ -844,7 +845,7 @@ static void t_write_multiple_indices(void)
 	check_int(stats->log_stats.index_offset, >, 0);
 
 	block_source_from_strbuf(&source, &writer_buf);
-	err = reftable_new_reader(&reader, &source, "filename");
+	err = reftable_reader_new(&reader, &source, "filename");
 	check(!err);
 
 	/*
@@ -857,7 +858,7 @@ static void t_write_multiple_indices(void)
 
 	reftable_iterator_destroy(&it);
 	reftable_writer_free(writer);
-	reftable_reader_free(reader);
+	reftable_reader_decref(reader);
 	strbuf_release(&writer_buf);
 	strbuf_release(&buf);
 }
@@ -901,7 +902,7 @@ static void t_write_multi_level_index(void)
 	check_int(stats->ref_stats.max_index_level, ==, 2);
 
 	block_source_from_strbuf(&source, &writer_buf);
-	err = reftable_new_reader(&reader, &source, "filename");
+	err = reftable_reader_new(&reader, &source, "filename");
 	check(!err);
 
 	/*
@@ -913,7 +914,7 @@ static void t_write_multi_level_index(void)
 
 	reftable_iterator_destroy(&it);
 	reftable_writer_free(writer);
-	reftable_reader_free(reader);
+	reftable_reader_decref(reader);
 	strbuf_release(&writer_buf);
 	strbuf_release(&buf);
 }
@@ -922,11 +923,11 @@ static void t_corrupt_table_empty(void)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct reftable_block_source source = { 0 };
-	struct reftable_reader rd = { 0 };
+	struct reftable_reader *reader;
 	int err;
 
 	block_source_from_strbuf(&source, &buf);
-	err = init_reader(&rd, &source, "file.log");
+	err = reftable_reader_new(&reader, &source, "file.log");
 	check_int(err, ==, REFTABLE_FORMAT_ERROR);
 }
 
@@ -935,13 +936,14 @@ static void t_corrupt_table(void)
 	uint8_t zeros[1024] = { 0 };
 	struct strbuf buf = STRBUF_INIT;
 	struct reftable_block_source source = { 0 };
-	struct reftable_reader rd = { 0 };
+	struct reftable_reader *reader;
 	int err;
 	strbuf_add(&buf, zeros, sizeof(zeros));
 
 	block_source_from_strbuf(&source, &buf);
-	err = init_reader(&rd, &source, "file.log");
+	err = reftable_reader_new(&reader, &source, "file.log");
 	check_int(err, ==, REFTABLE_FORMAT_ERROR);
+
 	strbuf_release(&buf);
 }
 

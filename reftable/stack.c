@@ -186,7 +186,7 @@ void reftable_stack_destroy(struct reftable_stack *st)
 			if (names && !has_name(names, name)) {
 				stack_filename(&filename, st, name);
 			}
-			reftable_reader_free(st->readers[i]);
+			reftable_reader_decref(st->readers[i]);
 
 			if (filename.len) {
 				/* On Windows, can only unlink after closing. */
@@ -226,6 +226,8 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 {
 	size_t cur_len = !st->merged ? 0 : st->merged->readers_len;
 	struct reftable_reader **cur = stack_copy_readers(st, cur_len);
+	struct reftable_reader **reused = NULL;
+	size_t reused_len = 0, reused_alloc = 0;
 	size_t names_len = names_length(names);
 	struct reftable_reader **new_readers =
 		reftable_calloc(names_len, sizeof(*new_readers));
@@ -245,6 +247,18 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 			if (cur[i] && 0 == strcmp(cur[i]->name, name)) {
 				rd = cur[i];
 				cur[i] = NULL;
+
+				/*
+				 * When reloading the stack fails, we end up
+				 * releasing all new readers. This also
+				 * includes the reused readers, even though
+				 * they are still in used by the old stack. We
+				 * thus need to keep them alive here, which we
+				 * do by bumping their refcount.
+				 */
+				REFTABLE_ALLOC_GROW(reused, reused_len + 1, reused_alloc);
+				reused[reused_len++] = rd;
+				reftable_reader_incref(rd);
 				break;
 			}
 		}
@@ -258,7 +272,7 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 			if (err < 0)
 				goto done;
 
-			err = reftable_new_reader(&rd, &src, name);
+			err = reftable_reader_new(&rd, &src, name);
 			if (err < 0)
 				goto done;
 		}
@@ -273,37 +287,47 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 	if (err < 0)
 		goto done;
 
-	st->readers_len = new_readers_len;
-	if (st->merged)
-		reftable_merged_table_free(st->merged);
-	if (st->readers) {
-		reftable_free(st->readers);
-	}
-	st->readers = new_readers;
-	new_readers = NULL;
-	new_readers_len = 0;
-
-	new_merged->suppress_deletions = 1;
-	st->merged = new_merged;
+	/*
+	 * Close the old, non-reused readers and proactively try to unlink
+	 * them. This is done for systems like Windows, where the underlying
+	 * file of such an open reader wouldn't have been possible to be
+	 * unlinked by the compacting process.
+	 */
 	for (i = 0; i < cur_len; i++) {
 		if (cur[i]) {
 			const char *name = reader_name(cur[i]);
 			stack_filename(&table_path, st, name);
-
-			reader_close(cur[i]);
-			reftable_reader_free(cur[i]);
-
-			/* On Windows, can only unlink after closing. */
+			reftable_reader_decref(cur[i]);
 			unlink(table_path.buf);
 		}
 	}
 
+	/* Update the stack to point to the new tables. */
+	if (st->merged)
+		reftable_merged_table_free(st->merged);
+	new_merged->suppress_deletions = 1;
+	st->merged = new_merged;
+
+	if (st->readers)
+		reftable_free(st->readers);
+	st->readers = new_readers;
+	st->readers_len = new_readers_len;
+	new_readers = NULL;
+	new_readers_len = 0;
+
+	/*
+	 * Decrement the refcount of reused readers again. This only needs to
+	 * happen on the successful case, because on the unsuccessful one we
+	 * decrement their refcount via `new_readers`.
+	 */
+	for (i = 0; i < reused_len; i++)
+		reftable_reader_decref(reused[i]);
+
 done:
-	for (i = 0; i < new_readers_len; i++) {
-		reader_close(new_readers[i]);
-		reftable_reader_free(new_readers[i]);
-	}
+	for (i = 0; i < new_readers_len; i++)
+		reftable_reader_decref(new_readers[i]);
 	reftable_free(new_readers);
+	reftable_free(reused);
 	reftable_free(cur);
 	strbuf_release(&table_path);
 	return err;
@@ -1328,17 +1352,9 @@ done:
 	strbuf_release(&table_name);
 	free_names(names);
 
-	return err;
-}
-
-static int stack_compact_range_stats(struct reftable_stack *st,
-				     size_t first, size_t last,
-				     struct reftable_log_expiry_config *config,
-				     unsigned int flags)
-{
-	int err = stack_compact_range(st, first, last, config, flags);
 	if (err == REFTABLE_LOCK_ERROR)
 		st->stats.failures++;
+
 	return err;
 }
 
@@ -1346,7 +1362,7 @@ int reftable_stack_compact_all(struct reftable_stack *st,
 			       struct reftable_log_expiry_config *config)
 {
 	size_t last = st->merged->readers_len ? st->merged->readers_len - 1 : 0;
-	return stack_compact_range_stats(st, 0, last, config, 0);
+	return stack_compact_range(st, 0, last, config, 0);
 }
 
 static int segment_size(struct segment *s)
@@ -1452,8 +1468,8 @@ int reftable_stack_auto_compact(struct reftable_stack *st)
 					   st->opts.auto_compaction_factor);
 	reftable_free(sizes);
 	if (segment_size(&seg) > 0)
-		return stack_compact_range_stats(st, seg.start, seg.end - 1,
-						 NULL, STACK_COMPACT_RANGE_BEST_EFFORT);
+		return stack_compact_range(st, seg.start, seg.end - 1,
+					   NULL, STACK_COMPACT_RANGE_BEST_EFFORT);
 
 	return 0;
 }
@@ -1540,12 +1556,12 @@ static void remove_maybe_stale_table(struct reftable_stack *st, uint64_t max,
 	if (err < 0)
 		goto done;
 
-	err = reftable_new_reader(&rd, &src, name);
+	err = reftable_reader_new(&rd, &src, name);
 	if (err < 0)
 		goto done;
 
 	update_idx = reftable_reader_max_update_index(rd);
-	reftable_reader_free(rd);
+	reftable_reader_decref(rd);
 
 	if (update_idx <= max) {
 		unlink(table_path.buf);
