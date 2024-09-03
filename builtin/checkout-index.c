@@ -4,13 +4,12 @@
  * Copyright (C) 2005 Linus Torvalds
  *
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
 #include "lockfile.h"
 #include "quote.h"
-#include "repository.h"
 #include "cache-tree.h"
 #include "parse-options.h"
 #include "entry.h"

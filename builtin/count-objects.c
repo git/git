@@ -3,14 +3,13 @@
  *
  * Copyright (c) 2006 Junio C Hamano
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "dir.h"
 #include "environment.h"
 #include "gettext.h"
 #include "path.h"
-#include "repository.h"
 #include "parse-options.h"
 #include "quote.h"
 #include "packfile.h"

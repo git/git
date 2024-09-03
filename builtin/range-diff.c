@@ -1,10 +1,11 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "gettext.h"
 #include "object-name.h"
 #include "parse-options.h"
 #include "range-diff.h"
 #include "config.h"
-#include "repository.h"
+
 
 static const char * const builtin_range_diff_usage[] = {
 N_("git range-diff [<options>] <old-base>..<old-tip> <new-base>..<new-tip>"),

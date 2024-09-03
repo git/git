@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "environment.h"
@@ -10,7 +11,7 @@
 #include "strvec.h"
 #include "object-name.h"
 #include "parse-options.h"
-#include "repository.h"
+
 #include "dir.h"
 #include "commit-slab.h"
 #include "date.h"

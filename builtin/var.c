@@ -3,7 +3,9 @@
  *
  * Copyright (C) Eric Biederman, 2005
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
+
 #include "attr.h"
 #include "config.h"
 #include "editor.h"

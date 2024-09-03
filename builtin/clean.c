@@ -5,7 +5,7 @@
  *
  * Based on git-clean.sh by Pavel Roskin
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "config.h"
@@ -14,7 +14,6 @@
 #include "parse-options.h"
 #include "path.h"
 #include "read-cache-ll.h"
-#include "repository.h"
 #include "setup.h"
 #include "string-list.h"
 #include "quote.h"

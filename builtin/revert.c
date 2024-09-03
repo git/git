@@ -1,9 +1,9 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "git-compat-util.h"
 #include "builtin.h"
 #include "parse-options.h"
 #include "diff.h"
 #include "gettext.h"
-#include "repository.h"
 #include "revision.h"
 #include "rerere.h"
 #include "sequencer.h"

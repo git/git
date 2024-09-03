@@ -1,7 +1,7 @@
 /*
  * GIT - The information manager from hell
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "refs.h"
 #include "setup.h"

@@ -9,13 +9,12 @@
  *
  * Copyright (c) 2006 Shawn O. Pearce
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "date.h"
 #include "environment.h"
 #include "hex.h"
-#include "repository.h"
 #include "config.h"
 #include "tempfile.h"
 #include "lockfile.h"

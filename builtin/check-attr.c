@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "attr.h"
@@ -5,7 +6,6 @@
 #include "gettext.h"
 #include "object-name.h"
 #include "quote.h"
-#include "repository.h"
 #include "setup.h"
 #include "parse-options.h"
 #include "write-or-die.h"

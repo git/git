@@ -5,11 +5,11 @@
  *
  * Based on git-verify-tag
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
 #include "object-name.h"
-#include "repository.h"
 #include "commit.h"
 #include "parse-options.h"
 #include "gpg-interface.h"

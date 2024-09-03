@@ -1,9 +1,9 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "path.h"
-#include "repository.h"
 #include "run-command.h"
 #include "string-list.h"
 
