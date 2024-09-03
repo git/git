@@ -385,6 +385,10 @@ include shared.mak
 # supports calling _NSGetExecutablePath to retrieve the path of the running
 # executable.
 #
+# When using RUNTIME_PREFIX, define HAVE_ZOS_GET_EXECUTABLE_PATH if your platform
+# supports calling __getprogramdir and getprogname to retrieve the path of the
+# running executable.
+#
 # When using RUNTIME_PREFIX, define HAVE_WPGMPTR if your platform offers
 # the global variable _wpgmptr containing the absolute path of the current
 # executable (this is the case on Windows).
@@ -2155,6 +2159,10 @@ endif
 
 ifdef HAVE_NS_GET_EXECUTABLE_PATH
 	BASIC_CFLAGS += -DHAVE_NS_GET_EXECUTABLE_PATH
+endif
+
+ifdef HAVE_ZOS_GET_EXECUTABLE_PATH
+        BASIC_CFLAGS += -DHAVE_ZOS_GET_EXECUTABLE_PATH
 endif
 
 ifdef HAVE_WPGMPTR
