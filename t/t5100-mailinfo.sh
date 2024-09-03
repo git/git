@@ -5,6 +5,7 @@
 
 test_description='git mailinfo and git mailsplit test'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 DATA="$TEST_DIRECTORY/t5100"

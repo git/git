@@ -32,28 +32,27 @@ static int use_sideband_colors(void)
 
 	const char *key = "color.remote";
 	struct strbuf sb = STRBUF_INIT;
-	char *value;
+	const char *value;
 	int i;
 
 	if (use_sideband_colors_cached >= 0)
 		return use_sideband_colors_cached;
 
-	if (!git_config_get_string(key, &value)) {
+	if (!git_config_get_string_tmp(key, &value))
 		use_sideband_colors_cached = git_config_colorbool(key, value);
-	} else if (!git_config_get_string("color.ui", &value)) {
+	else if (!git_config_get_string_tmp("color.ui", &value))
 		use_sideband_colors_cached = git_config_colorbool("color.ui", value);
-	} else {
+	else
 		use_sideband_colors_cached = GIT_COLOR_AUTO;
-	}
 
 	for (i = 0; i < ARRAY_SIZE(keywords); i++) {
 		strbuf_reset(&sb);
 		strbuf_addf(&sb, "%s.%s", key, keywords[i].keyword);
-		if (git_config_get_string(sb.buf, &value))
+		if (git_config_get_string_tmp(sb.buf, &value))
 			continue;
-		if (color_parse(value, keywords[i].color))
-			continue;
+		color_parse(value, keywords[i].color);
 	}
+
 	strbuf_release(&sb);
 	return use_sideband_colors_cached;
 }

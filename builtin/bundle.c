@@ -221,7 +221,9 @@ static int cmd_bundle_unbundle(int argc, const char **argv, const char *prefix) 
 			 &extra_index_pack_args, 0) ||
 		list_bundle_refs(&header, argc, argv);
 	bundle_header_release(&header);
+
 cleanup:
+	strvec_clear(&extra_index_pack_args);
 	free(bundle_file);
 	return ret;
 }

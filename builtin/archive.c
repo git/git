@@ -100,13 +100,16 @@ int cmd_archive(int argc, const char **argv, const char *prefix)
 	if (output)
 		create_output_file(output);
 
-	if (remote)
-		return run_remote_archiver(argc, argv, remote, exec, output);
+	if (remote) {
+		ret = run_remote_archiver(argc, argv, remote, exec, output);
+		goto out;
+	}
 
 	setvbuf(stderr, NULL, _IOLBF, BUFSIZ);
 
 	ret = write_archive(argc, argv, prefix, the_repository, output, 0);
 
+out:
 	free(output);
 	return ret;
 }

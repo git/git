@@ -243,6 +243,17 @@ static struct branch *make_branch(struct remote_state *remote_state,
 	return ret;
 }
 
+static void branch_release(struct branch *branch)
+{
+	free((char *)branch->name);
+	free((char *)branch->refname);
+	free(branch->remote_name);
+	free(branch->pushremote_name);
+	for (int i = 0; i < branch->merge_nr; i++)
+		refspec_item_clear(branch->merge[i]);
+	free(branch->merge);
+}
+
 static struct rewrite *make_rewrite(struct rewrites *r,
 				    const char *base, size_t len)
 {
@@ -261,6 +272,14 @@ static struct rewrite *make_rewrite(struct rewrites *r,
 	ret->base = xstrndup(base, len);
 	ret->baselen = len;
 	return ret;
+}
+
+static void rewrites_release(struct rewrites *r)
+{
+	for (int i = 0; i < r->rewrite_nr; i++)
+		free((char *)r->rewrite[i]->base);
+	free(r->rewrite);
+	memset(r, 0, sizeof(*r));
 }
 
 static void add_instead_of(struct rewrite *rewrite, const char *instead_of)
@@ -373,8 +392,10 @@ static int handle_config(const char *key, const char *value,
 			return -1;
 		branch = make_branch(remote_state, name, namelen);
 		if (!strcmp(subkey, "remote")) {
+			FREE_AND_NULL(branch->remote_name);
 			return git_config_string(&branch->remote_name, key, value);
 		} else if (!strcmp(subkey, "pushremote")) {
+			FREE_AND_NULL(branch->pushremote_name);
 			return git_config_string(&branch->pushremote_name, key, value);
 		} else if (!strcmp(subkey, "merge")) {
 			if (!value)
@@ -406,9 +427,11 @@ static int handle_config(const char *key, const char *value,
 		return 0;
 
 	/* Handle remote.* variables */
-	if (!name && !strcmp(subkey, "pushdefault"))
+	if (!name && !strcmp(subkey, "pushdefault")) {
+		FREE_AND_NULL(remote_state->pushremote_name);
 		return git_config_string(&remote_state->pushremote_name, key,
 					 value);
+	}
 
 	if (!name)
 		return 0;
@@ -475,12 +498,15 @@ static int handle_config(const char *key, const char *value,
 		else if (!strcmp(value, "--tags"))
 			remote->fetch_tags = 2;
 	} else if (!strcmp(subkey, "proxy")) {
+		FREE_AND_NULL(remote->http_proxy);
 		return git_config_string(&remote->http_proxy,
 					 key, value);
 	} else if (!strcmp(subkey, "proxyauthmethod")) {
+		FREE_AND_NULL(remote->http_proxy_authmethod);
 		return git_config_string(&remote->http_proxy_authmethod,
 					 key, value);
 	} else if (!strcmp(subkey, "vcs")) {
+		FREE_AND_NULL(remote->foreign_vcs);
 		return git_config_string(&remote->foreign_vcs, key, value);
 	}
 	return 0;
@@ -1318,18 +1344,21 @@ static int match_explicit(struct ref *src, struct ref *dst,
 			  struct ref ***dst_tail,
 			  struct refspec_item *rs)
 {
-	struct ref *matched_src, *matched_dst;
-	int allocated_src;
+	struct ref *matched_src = NULL, *matched_dst = NULL;
+	int allocated_src = 0, ret;
 
 	const char *dst_value = rs->dst;
 	char *dst_guess;
 
-	if (rs->pattern || rs->matching || rs->negative)
-		return 0;
+	if (rs->pattern || rs->matching || rs->negative) {
+		ret = 0;
+		goto out;
+	}
 
-	matched_src = matched_dst = NULL;
-	if (match_explicit_lhs(src, rs, &matched_src, &allocated_src) < 0)
-		return -1;
+	if (match_explicit_lhs(src, rs, &matched_src, &allocated_src) < 0) {
+		ret = -1;
+		goto out;
+	}
 
 	if (!dst_value) {
 		int flag;
@@ -1368,18 +1397,30 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		      dst_value);
 		break;
 	}
-	if (!matched_dst)
-		return -1;
-	if (matched_dst->peer_ref)
-		return error(_("dst ref %s receives from more than one src"),
-			     matched_dst->name);
-	else {
+
+	if (!matched_dst) {
+		ret = -1;
+		goto out;
+	}
+
+	if (matched_dst->peer_ref) {
+		ret = error(_("dst ref %s receives from more than one src"),
+			    matched_dst->name);
+		goto out;
+	} else {
 		matched_dst->peer_ref = allocated_src ?
 					matched_src :
 					copy_ref(matched_src);
 		matched_dst->force = rs->force;
+		matched_src = NULL;
 	}
-	return 0;
+
+	ret = 0;
+
+out:
+	if (allocated_src)
+		free_one_ref(matched_src);
+	return ret;
 }
 
 static int match_explicit_refs(struct ref *src, struct ref *dst,
@@ -2040,6 +2081,8 @@ static struct ref *get_expanded_map(const struct ref *remote_refs,
 		    !ignore_symref_update(expn_name, &scratch)) {
 			struct ref *cpy = copy_ref(ref);
 
+			if (cpy->peer_ref)
+				free_one_ref(cpy->peer_ref);
 			cpy->peer_ref = alloc_ref(expn_name);
 			if (refspec->force)
 				cpy->peer_ref->force = 1;
@@ -2797,16 +2840,26 @@ struct remote_state *remote_state_new(void)
 
 void remote_state_clear(struct remote_state *remote_state)
 {
+	struct hashmap_iter iter;
+	struct branch *b;
 	int i;
 
 	for (i = 0; i < remote_state->remotes_nr; i++)
 		remote_clear(remote_state->remotes[i]);
 	FREE_AND_NULL(remote_state->remotes);
+	FREE_AND_NULL(remote_state->pushremote_name);
 	remote_state->remotes_alloc = 0;
 	remote_state->remotes_nr = 0;
 
+	rewrites_release(&remote_state->rewrites);
+	rewrites_release(&remote_state->rewrites_push);
+
 	hashmap_clear_and_free(&remote_state->remotes_hash, struct remote, ent);
-	hashmap_clear_and_free(&remote_state->branches_hash, struct remote, ent);
+	hashmap_for_each_entry(&remote_state->branches_hash, &iter, b, ent) {
+		branch_release(b);
+		free(b);
+	}
+	hashmap_clear(&remote_state->branches_hash);
 }
 
 /*

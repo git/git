@@ -1731,11 +1731,8 @@ static int do_fetch(struct transport *transport,
 			goto cleanup;
 
 		retcode = ref_transaction_commit(transaction, &err);
-		if (retcode) {
-			ref_transaction_free(transaction);
-			transaction = NULL;
+		if (retcode)
 			goto cleanup;
-		}
 	}
 
 	commit_fetch_head(&fetch_head);
@@ -1803,8 +1800,11 @@ cleanup:
 		if (transaction && ref_transaction_abort(transaction, &err) &&
 		    err.len)
 			error("%s", err.buf);
+		transaction = NULL;
 	}
 
+	if (transaction)
+		ref_transaction_free(transaction);
 	display_state_release(&display_state);
 	close_fetch_head(&fetch_head);
 	strbuf_release(&err);

@@ -338,5 +338,6 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 
 	free_refs(remote_refs);
 	free_refs(local_refs);
+	refspec_clear(&rs);
 	return ret;
 }

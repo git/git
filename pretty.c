@@ -63,7 +63,7 @@ static int git_pretty_formats_config(const char *var, const char *value,
 				     void *cb UNUSED)
 {
 	struct cmt_fmt_map *commit_format = NULL;
-	const char *name;
+	const char *name, *stripped;
 	char *fmt;
 	int i;
 
@@ -90,15 +90,21 @@ static int git_pretty_formats_config(const char *var, const char *value,
 		commit_formats_len++;
 	}
 
+	free((char *)commit_format->name);
 	commit_format->name = xstrdup(name);
 	commit_format->format = CMIT_FMT_USERFORMAT;
 	if (git_config_string(&fmt, var, value))
 		return -1;
 
-	if (skip_prefix(fmt, "format:", &commit_format->user_format)) {
+	free((char *)commit_format->user_format);
+	if (skip_prefix(fmt, "format:", &stripped)) {
 		commit_format->is_tformat = 0;
-	} else if (skip_prefix(fmt, "tformat:", &commit_format->user_format)) {
+		commit_format->user_format = xstrdup(stripped);
+		free(fmt);
+	} else if (skip_prefix(fmt, "tformat:", &stripped)) {
 		commit_format->is_tformat = 1;
+		commit_format->user_format = xstrdup(stripped);
+		free(fmt);
 	} else if (strchr(fmt, '%')) {
 		commit_format->is_tformat = 1;
 		commit_format->user_format = fmt;
@@ -1770,6 +1776,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 		}
 	trailer_out:
 		string_list_clear(&filter_list, 0);
+		strbuf_release(&kvsepbuf);
 		strbuf_release(&sepbuf);
 		return ret;
 	}

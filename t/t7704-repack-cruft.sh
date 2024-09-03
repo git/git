@@ -2,6 +2,7 @@
 
 test_description='git repack works correctly'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 objdir=.git/objects

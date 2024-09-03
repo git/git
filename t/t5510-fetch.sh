@@ -5,6 +5,7 @@ test_description='Per branch config variables affects "git fetch".
 
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-bundle.sh
 

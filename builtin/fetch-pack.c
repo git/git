@@ -46,7 +46,7 @@ static void add_sought_entry(struct ref ***sought, int *nr, int *alloc,
 int cmd_fetch_pack(int argc, const char **argv, const char *prefix UNUSED)
 {
 	int i, ret;
-	struct ref *ref = NULL;
+	struct ref *fetched_refs = NULL, *remote_refs = NULL;
 	const char *dest = NULL;
 	struct ref **sought = NULL;
 	int nr_sought = 0, alloc_sought = 0;
@@ -228,19 +228,20 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix UNUSED)
 	version = discover_version(&reader);
 	switch (version) {
 	case protocol_v2:
-		get_remote_refs(fd[1], &reader, &ref, 0, NULL, NULL,
+		get_remote_refs(fd[1], &reader, &remote_refs, 0, NULL, NULL,
 				args.stateless_rpc);
 		break;
 	case protocol_v1:
 	case protocol_v0:
-		get_remote_heads(&reader, &ref, 0, NULL, &shallow);
+		get_remote_heads(&reader, &remote_refs, 0, NULL, &shallow);
 		break;
 	case protocol_unknown_version:
 		BUG("unknown protocol version");
 	}
 
-	ref = fetch_pack(&args, fd, ref, sought, nr_sought,
+	fetched_refs = fetch_pack(&args, fd, remote_refs, sought, nr_sought,
 			 &shallow, pack_lockfiles_ptr, version);
+
 	if (pack_lockfiles.nr) {
 		int i;
 
@@ -260,7 +261,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix UNUSED)
 	if (finish_connect(conn))
 		return 1;
 
-	ret = !ref;
+	ret = !fetched_refs;
 
 	/*
 	 * If the heads to pull were given, we should have consumed
@@ -270,11 +271,14 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix UNUSED)
 	 */
 	ret |= report_unmatched_refs(sought, nr_sought);
 
-	while (ref) {
+	for (struct ref *ref = fetched_refs; ref; ref = ref->next)
 		printf("%s %s\n",
 		       oid_to_hex(&ref->old_oid), ref->name);
-		ref = ref->next;
-	}
 
+	for (size_t i = 0; i < nr_sought; i++)
+		free_one_ref(sought[i]);
+	free(sought);
+	free_refs(fetched_refs);
+	free_refs(remote_refs);
 	return ret;
 }

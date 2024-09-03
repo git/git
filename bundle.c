@@ -644,10 +644,8 @@ int unbundle(struct repository *r, struct bundle_header *header,
 	if (flags & VERIFY_BUNDLE_FSCK)
 		strvec_push(&ip.args, "--fsck-objects");
 
-	if (extra_index_pack_args) {
+	if (extra_index_pack_args)
 		strvec_pushv(&ip.args, extra_index_pack_args->v);
-		strvec_clear(extra_index_pack_args);
-	}
 
 	ip.in = bundle_fd;
 	ip.no_stdout = 1;
