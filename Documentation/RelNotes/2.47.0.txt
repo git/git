@@ -46,6 +46,8 @@ UI, Workflows & Features
  * The command line prompt support used to be littered with bash-isms,
    which has been corrected to work with more shells.
 
+ * Support for the RUNTIME_PREFIX feature has been added to z/OS port.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -105,6 +107,9 @@ Performance, Internal Implementation, Development Support etc.
  * The underlying machinery for "git diff-index" has long been made to
    expand the sparse index as needed, but the command fully expanded
    the sparse index upfront, which now has been taught not to do.
+
+ * More trace2 events at key points on push and fetch code paths have
+   been added.
 
 
 Fixes since v2.46
@@ -182,6 +187,9 @@ Fixes since v2.46
 
  * "git rebase -x --quiet" was not quiet, which was corrected.
 
+ * The code path for compacting reftable files saw some bugfixes
+   against concurrent operation.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge bb0498b1bb jc/how-to-maintain-updates later to maint).
    (merge 0d66f601a9 jc/tests-no-useless-tee later to maint).
@@ -189,3 +197,6 @@ Fixes since v2.46
    (merge 983555a1f2 jc/how-to-maintain-updates later to maint).
    (merge e3209bd4df ps/stash-keep-untrack-empty-fix later to maint).
    (merge 44db6f75cc jc/coding-style-c-operator-with-spaces later to maint).
+   (merge 596f4ff6ad cl/config-regexp-docfix later to maint).
+   (merge 4881328617 aa/cat-file-batch-output-doc later to maint).
+   (merge 1609470409 jc/config-doc-update later to maint).
