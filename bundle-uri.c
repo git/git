@@ -13,6 +13,7 @@
 #include "config.h"
 #include "fetch-pack.h"
 #include "remote.h"
+#include "trace2.h"
 
 static struct {
 	enum bundle_list_heuristic heuristic;
@@ -799,6 +800,8 @@ int fetch_bundle_uri(struct repository *r, const char *uri,
 		.id = xstrdup(""),
 	};
 
+	trace2_region_enter("fetch", "fetch-bundle-uri", the_repository);
+
 	init_bundle_list(&list);
 
 	/*
@@ -824,6 +827,7 @@ cleanup:
 	for_all_bundles_in_list(&list, unlink_bundle, NULL);
 	clear_bundle_list(&list);
 	clear_remote_bundle_info(&bundle, NULL);
+	trace2_region_leave("fetch", "fetch-bundle-uri", the_repository);
 	return result;
 }
 

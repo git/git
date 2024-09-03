@@ -75,6 +75,7 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 	int i;
 	int rc;
 
+	trace2_region_enter("send_pack", "pack_objects", the_repository);
 	strvec_push(&po.args, "pack-objects");
 	strvec_push(&po.args, "--all-progress-implied");
 	strvec_push(&po.args, "--revs");
@@ -146,8 +147,10 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 		 */
 		if (rc > 128 && rc != 141)
 			error("pack-objects died of signal %d", rc - 128);
+		trace2_region_leave("send_pack", "pack_objects", the_repository);
 		return -1;
 	}
+	trace2_region_leave("send_pack", "pack_objects", the_repository);
 	return 0;
 }
 
@@ -170,6 +173,7 @@ static int receive_status(struct packet_reader *reader, struct ref *refs)
 	int new_report = 0;
 	int once = 0;
 
+	trace2_region_enter("send_pack", "receive_status", the_repository);
 	hint = NULL;
 	ret = receive_unpack_status(reader);
 	while (1) {
@@ -268,6 +272,7 @@ static int receive_status(struct packet_reader *reader, struct ref *refs)
 			new_report = 1;
 		}
 	}
+	trace2_region_leave("send_pack", "receive_status", the_repository);
 	return ret;
 }
 
@@ -512,8 +517,11 @@ int send_pack(struct send_pack_args *args,
 	}
 
 	git_config_get_bool("push.negotiate", &push_negotiate);
-	if (push_negotiate)
+	if (push_negotiate) {
+		trace2_region_enter("send_pack", "push_negotiate", the_repository);
 		get_commons_through_negotiation(args->url, remote_refs, &commons);
+		trace2_region_leave("send_pack", "push_negotiate", the_repository);
+	}
 
 	if (!git_config_get_bool("push.usebitmaps", &use_bitmaps))
 		args->disable_bitmaps = !use_bitmaps;
@@ -641,10 +649,11 @@ int send_pack(struct send_pack_args *args,
 	/*
 	 * Finally, tell the other end!
 	 */
-	if (!args->dry_run && push_cert_nonce)
+	if (!args->dry_run && push_cert_nonce) {
 		cmds_sent = generate_push_cert(&req_buf, remote_refs, args,
 					       cap_buf.buf, push_cert_nonce);
-	else if (!args->dry_run)
+		trace2_printf("Generated push certificate");
+	} else if (!args->dry_run) {
 		for (ref = remote_refs; ref; ref = ref->next) {
 			char *old_hex, *new_hex;
 
@@ -664,6 +673,7 @@ int send_pack(struct send_pack_args *args,
 						 old_hex, new_hex, ref->name);
 			}
 		}
+	}
 
 	if (use_push_options) {
 		struct string_list_item *item;
