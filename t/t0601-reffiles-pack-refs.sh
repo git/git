@@ -161,13 +161,6 @@ test_expect_success 'test --exclude takes precedence over --include' '
 	git pack-refs --include "refs/heads/pack*" --exclude "refs/heads/pack*" &&
 	test -f .git/refs/heads/dont_pack5'
 
-test_expect_success '--auto packs and prunes refs as usual' '
-	git branch auto &&
-	test_path_is_file .git/refs/heads/auto &&
-	git pack-refs --auto --all &&
-	test_path_is_missing .git/refs/heads/auto
-'
-
 test_expect_success 'see if up-to-date packed refs are preserved' '
 	git branch q &&
 	git pack-refs --all --prune &&
@@ -367,14 +360,25 @@ test_expect_success 'pack-refs does not drop broken refs during deletion' '
 	test_cmp expect actual
 '
 
-test_expect_success 'maintenance --auto unconditionally packs loose refs' '
-	git update-ref refs/heads/something HEAD &&
-	test_path_is_file .git/refs/heads/something &&
-	git rev-parse refs/heads/something >expect &&
-	git maintenance run --task=pack-refs --auto &&
-	test_path_is_missing .git/refs/heads/something &&
-	git rev-parse refs/heads/something >actual &&
-	test_cmp expect actual
-'
+for command in "git pack-refs --all --auto" "git maintenance run --task=pack-refs --auto"
+do
+	test_expect_success "$command unconditionally packs loose refs" '
+		test_when_finished "rm -rf repo" &&
+		git init repo &&
+		(
+			cd repo &&
+			git config set maintenance.auto false &&
+			test_commit initial &&
+
+			git update-ref refs/heads/something HEAD &&
+			test_path_is_file .git/refs/heads/something &&
+			git rev-parse refs/heads/something >expect &&
+			$command &&
+			test_path_is_missing .git/refs/heads/something &&
+			git rev-parse refs/heads/something >actual &&
+			test_cmp expect actual
+		)
+	'
+done
 
 test_done
