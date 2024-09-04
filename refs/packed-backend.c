@@ -1250,6 +1250,24 @@ int packed_refs_is_locked(struct ref_store *ref_store)
 	return is_lock_file_locked(&refs->lock);
 }
 
+int packed_refs_size(struct ref_store *ref_store,
+		     size_t *out)
+{
+	struct packed_ref_store *refs = packed_downcast(ref_store, REF_STORE_READ,
+							"packed_refs_size");
+	struct stat st;
+
+	if (stat(refs->path, &st) < 0) {
+		if (errno != ENOENT)
+			return -1;
+		*out = 0;
+		return 0;
+	}
+
+	*out = st.st_size;
+	return 0;
+}
+
 /*
  * The packed-refs header line that we write out. Perhaps other traits
  * will be added later.

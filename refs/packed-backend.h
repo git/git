@@ -28,6 +28,13 @@ void packed_refs_unlock(struct ref_store *ref_store);
 int packed_refs_is_locked(struct ref_store *ref_store);
 
 /*
+ * Obtain the size of the `packed-refs` file. Reports `0` as size in case there
+ * is no packed-refs file. Returns 0 on success, negative otherwise.
+ */
+int packed_refs_size(struct ref_store *ref_store,
+		     size_t *out);
+
+/*
  * Return true if `transaction` really needs to be carried out against
  * the specified packed_ref_store, or false if it can be skipped
  * (i.e., because it is an obvious NOOP). `ref_store` must be locked
