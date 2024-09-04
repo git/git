@@ -1004,6 +1004,59 @@ foreach(unit_test ${unit_test_PROGRAMS})
 	endif()
 endforeach()
 
+parse_makefile_for_scripts(unit_tests_SUITES "UNIT_TESTS_SUITES" "")
+
+set(clar_decls "")
+set(clar_cbs "")
+set(clar_cbs_count 0)
+set(clar_suites "static struct clar_suite _clar_suites[] = {\n")
+list(LENGTH unit_tests_SUITES clar_suites_count)
+foreach(suite ${unit_tests_SUITES})
+	file(STRINGS "${CMAKE_SOURCE_DIR}/t/unit-tests/${suite}.c" decls
+		REGEX "^void test_${suite}__[a-zA-Z_0-9][a-zA-Z_0-9]*\\(void\\)$")
+
+	list(LENGTH decls decls_count)
+	string(REGEX REPLACE "void (test_${suite}__([a-zA-Z_0-9]*))\\(void\\)" "    { \"\\2\", &\\1 },\n" cbs ${decls})
+	string(JOIN "" cbs ${cbs})
+	list(TRANSFORM decls PREPEND "extern ")
+	string(JOIN ";\n" decls ${decls})
+
+	string(APPEND clar_decls "${decls};\n")
+	string(APPEND clar_cbs
+		"static const struct clar_func _clar_cb_${suite}[] = {\n"
+		${cbs}
+		"};\n")
+	string(APPEND clar_suites
+		"    {\n"
+		"        \"${suite}\",\n"
+		"        { NULL, NULL },\n"
+		"        { NULL, NULL },\n"
+		"        _clar_cb_${suite}, ${decls_count}, 1\n"
+		"    },\n")
+	math(EXPR clar_cbs_count "${clar_cbs_count}+${decls_count}")
+endforeach()
+string(APPEND clar_suites
+	"};\n"
+	"static const size_t _clar_suite_count = ${clar_suites_count};\n"
+	"static const size_t _clar_callback_count = ${clar_cbs_count};\n")
+file(WRITE "${CMAKE_BINARY_DIR}/t/unit-tests/clar-decls.h" "${clar_decls}")
+file(WRITE "${CMAKE_BINARY_DIR}/t/unit-tests/clar.suite" "${clar_decls}" "${clar_cbs}" "${clar_suites}")
+
+list(TRANSFORM unit_tests_SUITES PREPEND "${CMAKE_SOURCE_DIR}/t/unit-tests/")
+list(TRANSFORM unit_tests_SUITES APPEND ".c")
+add_library(unit-tests-lib ${unit_tests_SUITES} "${CMAKE_SOURCE_DIR}/t/unit-tests/clar/clar.c")
+target_include_directories(unit-tests-lib PRIVATE "${CMAKE_SOURCE_DIR}/t/unit-tests")
+add_executable(unit-tests "${CMAKE_SOURCE_DIR}/t/unit-tests/unit-test.c")
+target_link_libraries(unit-tests unit-tests-lib common-main)
+set_target_properties(unit-tests
+	PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/t/unit-tests/bin)
+if(MSVC)
+	set_target_properties(unit-tests
+		PROPERTIES RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_BINARY_DIR}/t/unit-tests/bin)
+	set_target_properties(unit-tests
+		PROPERTIES RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_BINARY_DIR}/t/unit-tests/bin)
+endif()
+
 #test-tool
 parse_makefile_for_sources(test-tool_SOURCES "TEST_BUILTINS_OBJS")
 add_library(test-lib OBJECT ${CMAKE_SOURCE_DIR}/t/unit-tests/test-lib.c)
