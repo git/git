@@ -140,4 +140,22 @@ int csprng_bytes(void *buf, size_t len);
  */
 uint32_t git_rand(void);
 
+/* Provide log2 of the given `size_t`. */
+static inline unsigned log2u(uintmax_t sz)
+{
+	unsigned l = 0;
+
+	/*
+	 * Technically this isn't required, but it helps the compiler optimize
+	 * this to a `bsr` instruction.
+	 */
+	if (!sz)
+		return 0;
+
+	for (; sz; sz >>= 1)
+		l++;
+
+	return l - 1;
+}
+
 #endif /* WRAPPER_H */
