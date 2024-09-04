@@ -1331,6 +1331,8 @@ THIRD_PARTY_SOURCES += compat/poll/%
 THIRD_PARTY_SOURCES += compat/regex/%
 THIRD_PARTY_SOURCES += sha1collisiondetection/%
 THIRD_PARTY_SOURCES += sha1dc/%
+THIRD_PARTY_SOURCES += $(UNIT_TEST_DIR)/clar/%
+THIRD_PARTY_SOURCES += $(UNIT_TEST_DIR)/clar/clar/%
 
 UNIT_TEST_PROGRAMS += t-ctype
 UNIT_TEST_PROGRAMS += t-example-decorate
@@ -3261,7 +3263,7 @@ $(SP_OBJ): %.sp: %.c %.o
 .PHONY: sparse
 sparse: $(SP_OBJ)
 
-EXCEPT_HDRS := $(GENERATED_H) unicode-width.h compat/% xdiff/%
+EXCEPT_HDRS := $(GENERATED_H) unicode-width.h compat/% xdiff/% $(UNIT_TEST_DIR)/clar/% $(UNIT_TEST_DIR)/clar/clar/%
 ifndef OPENSSL_SHA1
 	EXCEPT_HDRS += sha1/openssl.h
 endif
