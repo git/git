@@ -68,7 +68,7 @@
 #		define PRIxZ "Ix"
 #	endif
 
-#	if defined(_MSC_VER) || defined(__MINGW32__)
+#	if defined(_MSC_VER) || (defined(__MINGW32__) && !defined(__MINGW64_VERSION_MAJOR))
 	typedef struct stat STAT_T;
 #	else
 	typedef struct _stat STAT_T;
