@@ -22,6 +22,7 @@ struct type_and_oid_list
 {
 	enum object_type type;
 	struct oid_array oids;
+	int maybe_interesting;
 };
 
 #define TYPE_AND_OID_LIST_INIT { \
@@ -124,6 +125,8 @@ static int add_children(struct path_walk_context *ctx,
 			strmap_put(&ctx->paths_to_lists, path.buf, list);
 			string_list_append(&ctx->path_stack, path.buf);
 		}
+		if (!(o->flags & UNINTERESTING))
+			list->maybe_interesting = 1;
 		oid_array_append(&list->oids, &entry.oid);
 	}
 
@@ -144,6 +147,40 @@ static int walk_path(struct path_walk_context *ctx,
 	int ret = 0;
 
 	list = strmap_get(&ctx->paths_to_lists, path);
+
+	if (ctx->info->prune_all_uninteresting) {
+		/*
+		 * This is true if all objects were UNINTERESTING
+		 * when added to the list.
+		 */
+		if (!list->maybe_interesting)
+			return 0;
+
+		/*
+		 * But it's still possible that the objects were set
+		 * as UNINTERESTING after being added. Do a quick check.
+		 */
+		list->maybe_interesting = 0;
+		for (size_t i = 0;
+		     !list->maybe_interesting && i < list->oids.nr;
+		     i++) {
+			if (list->type == OBJ_TREE) {
+				struct tree *t = lookup_tree(ctx->repo,
+							     &list->oids.oid[i]);
+				if (t && !(t->object.flags & UNINTERESTING))
+					list->maybe_interesting = 1;
+			} else {
+				struct blob *b = lookup_blob(ctx->repo,
+							     &list->oids.oid[i]);
+				if (b && !(b->object.flags & UNINTERESTING))
+					list->maybe_interesting = 1;
+			}
+		}
+
+		/* We have confirmed that all objects are UNINTERESTING. */
+		if (!list->maybe_interesting)
+			return 0;
+	}
 
 	/* Evaluate function pointer on this data, if requested. */
 	if ((list->type == OBJ_TREE && ctx->info->trees) ||
@@ -187,7 +224,7 @@ static void clear_strmap(struct strmap *map)
 int walk_objects_by_path(struct path_walk_info *info)
 {
 	const char *root_path = "";
-	int ret = 0;
+	int ret = 0, has_uninteresting = 0;
 	size_t commits_nr = 0, paths_nr = 0;
 	struct commit *c;
 	struct type_and_oid_list *root_tree_list;
@@ -199,6 +236,7 @@ int walk_objects_by_path(struct path_walk_info *info)
 		.path_stack = STRING_LIST_INIT_DUP,
 		.paths_to_lists = STRMAP_INIT
 	};
+	struct oidset root_tree_set = OIDSET_INIT;
 
 	trace2_region_enter("path-walk", "commit-walk", info->revs->repo);
 
@@ -211,6 +249,7 @@ int walk_objects_by_path(struct path_walk_info *info)
 	/* Insert a single list for the root tree into the paths. */
 	CALLOC_ARRAY(root_tree_list, 1);
 	root_tree_list->type = OBJ_TREE;
+	root_tree_list->maybe_interesting = 1;
 	strmap_put(&ctx.paths_to_lists, root_path, root_tree_list);
 
 	/*
@@ -301,10 +340,17 @@ int walk_objects_by_path(struct path_walk_info *info)
 		oid = get_commit_tree_oid(c);
 		t = lookup_tree(info->revs->repo, oid);
 
-		if (t)
+		if (t) {
+			oidset_insert(&root_tree_set, oid);
 			oid_array_append(&root_tree_list->oids, oid);
-		else
+		} else {
 			warning("could not find tree %s", oid_to_hex(oid));
+		}
+
+		if (t && (c->object.flags & UNINTERESTING)) {
+			t->object.flags |= UNINTERESTING;
+			has_uninteresting = 1;
+		}
 	}
 
 	trace2_data_intmax("path-walk", ctx.repo, "commits", commits_nr);
@@ -316,6 +362,21 @@ int walk_objects_by_path(struct path_walk_info *info)
 				    info->path_fn_data);
 	oid_array_clear(&commit_list->oids);
 	free(commit_list);
+
+	/*
+	 * Before performing a DFS of our paths and emitting them as interesting,
+	 * do a full walk of the trees to distribute the UNINTERESTING bit. Use
+	 * the sparse algorithm if prune_all_uninteresting was set.
+	 */
+	if (has_uninteresting) {
+		trace2_region_enter("path-walk", "uninteresting-walk", info->revs->repo);
+		if (info->prune_all_uninteresting)
+			mark_trees_uninteresting_sparse(ctx.repo, &root_tree_set);
+		else
+			mark_trees_uninteresting_dense(ctx.repo, &root_tree_set);
+		trace2_region_leave("path-walk", "uninteresting-walk", info->revs->repo);
+	}
+	oidset_clear(&root_tree_set);
 
 	string_list_append(&ctx.path_stack, root_path);
 
