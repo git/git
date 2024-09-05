@@ -489,6 +489,15 @@ void prepare_shallow_info(struct shallow_info *info, struct oid_array *sa)
 
 void clear_shallow_info(struct shallow_info *info)
 {
+	if (info->used_shallow) {
+		for (size_t i = 0; i < info->shallow->nr; i++)
+			free(info->used_shallow[i]);
+		free(info->used_shallow);
+	}
+
+	free(info->need_reachability_test);
+	free(info->reachable);
+	free(info->shallow_ref);
 	free(info->ours);
 	free(info->theirs);
 }
