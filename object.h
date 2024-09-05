@@ -7,6 +7,7 @@ struct buffer_slab;
 struct repository;
 
 struct parsed_object_pool {
+	struct repository *repo;
 	struct object **obj_hash;
 	int nr_objs, obj_hash_size;
 
@@ -31,8 +32,9 @@ struct parsed_object_pool {
 	struct buffer_slab *buffer_slab;
 };
 
-struct parsed_object_pool *parsed_object_pool_new(void);
+struct parsed_object_pool *parsed_object_pool_new(struct repository *repo);
 void parsed_object_pool_clear(struct parsed_object_pool *o);
+void parsed_object_pool_reset_commit_grafts(struct parsed_object_pool *o);
 
 struct object_list {
 	struct object *item;

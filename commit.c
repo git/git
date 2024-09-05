@@ -177,7 +177,7 @@ int commit_graft_pos(struct repository *r, const struct object_id *oid)
 		       commit_graft_oid_access);
 }
 
-static void unparse_commit(struct repository *r, const struct object_id *oid)
+void unparse_commit(struct repository *r, const struct object_id *oid)
 {
 	struct commit *c = lookup_commit(r, oid);
 
@@ -316,18 +316,6 @@ int for_each_commit_graft(each_commit_graft_fn fn, void *cb_data)
 	for (i = ret = 0; i < the_repository->parsed_objects->grafts_nr && !ret; i++)
 		ret = fn(the_repository->parsed_objects->grafts[i], cb_data);
 	return ret;
-}
-
-void reset_commit_grafts(struct repository *r)
-{
-	int i;
-
-	for (i = 0; i < r->parsed_objects->grafts_nr; i++) {
-		unparse_commit(r, &r->parsed_objects->grafts[i]->oid);
-		free(r->parsed_objects->grafts[i]);
-	}
-	r->parsed_objects->grafts_nr = 0;
-	r->parsed_objects->commit_graft_prepared = 0;
 }
 
 struct commit_buffer {

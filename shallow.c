@@ -97,7 +97,7 @@ static void reset_repository_shallow(struct repository *r)
 {
 	r->parsed_objects->is_shallow = -1;
 	stat_validity_clear(r->parsed_objects->shallow_stat);
-	reset_commit_grafts(r);
+	parsed_object_pool_reset_commit_grafts(r->parsed_objects);
 }
 
 int commit_shallow_file(struct repository *r, struct shallow_lock *lk)
