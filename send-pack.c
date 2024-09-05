@@ -508,7 +508,8 @@ int send_pack(struct send_pack_args *args,
 	if (!remote_refs) {
 		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
 			"Perhaps you should specify a branch.\n");
-		return 0;
+		ret = 0;
+		goto out;
 	}
 
 	git_config_get_bool("push.negotiate", &push_negotiate);
@@ -615,12 +616,11 @@ int send_pack(struct send_pack_args *args,
 			 * atomically, abort the whole operation.
 			 */
 			if (use_atomic) {
-				strbuf_release(&req_buf);
-				strbuf_release(&cap_buf);
 				reject_atomic_push(remote_refs, args->send_mirror);
 				error("atomic push failed for ref %s. status: %d\n",
 				      ref->name, ref->status);
-				return args->porcelain ? 0 : -1;
+				ret = args->porcelain ? 0 : -1;
+				goto out;
 			}
 			/* else fallthrough */
 		default:
@@ -682,8 +682,6 @@ int send_pack(struct send_pack_args *args,
 		write_or_die(out, req_buf.buf, req_buf.len);
 		packet_flush(out);
 	}
-	strbuf_release(&req_buf);
-	strbuf_release(&cap_buf);
 
 	if (use_sideband && cmds_sent) {
 		memset(&demux, 0, sizeof(demux));
@@ -721,7 +719,9 @@ int send_pack(struct send_pack_args *args,
 				finish_async(&demux);
 			}
 			fd[1] = -1;
-			return -1;
+
+			ret = -1;
+			goto out;
 		}
 		if (!args->stateless_rpc)
 			/* Closed by pack_objects() via start_command() */
@@ -746,10 +746,12 @@ int send_pack(struct send_pack_args *args,
 	}
 
 	if (ret < 0)
-		return ret;
+		goto out;
 
-	if (args->porcelain)
-		return 0;
+	if (args->porcelain) {
+		ret = 0;
+		goto out;
+	}
 
 	for (ref = remote_refs; ref; ref = ref->next) {
 		switch (ref->status) {
@@ -758,8 +760,16 @@ int send_pack(struct send_pack_args *args,
 		case REF_STATUS_OK:
 			break;
 		default:
-			return -1;
+			ret = -1;
+			goto out;
 		}
 	}
-	return 0;
+
+	ret = 0;
+
+out:
+	oid_array_clear(&commons);
+	strbuf_release(&req_buf);
+	strbuf_release(&cap_buf);
+	return ret;
 }
