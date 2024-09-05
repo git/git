@@ -162,7 +162,7 @@ int repo_write_loose_object_map(struct repository *repo)
 errout:
 	rollback_lock_file(&lock);
 	strbuf_release(&buf);
-	error_errno(_("failed to write loose object index %s\n"), path.buf);
+	error_errno(_("failed to write loose object index %s"), path.buf);
 	strbuf_release(&path);
 	return -1;
 }
@@ -197,7 +197,7 @@ static int write_one_object(struct repository *repo, const struct object_id *oid
 	strbuf_release(&path);
 	return 0;
 errout:
-	error_errno(_("failed to write loose object index %s\n"), path.buf);
+	error_errno(_("failed to write loose object index %s"), path.buf);
 	close(fd);
 	rollback_lock_file(&lock);
 	strbuf_release(&buf);

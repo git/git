@@ -1614,7 +1614,7 @@ static void receive_packfile_uris(struct packet_reader *reader,
 	while (packet_reader_read(reader) == PACKET_READ_NORMAL) {
 		if (reader->pktlen < the_hash_algo->hexsz ||
 		    reader->line[the_hash_algo->hexsz] != ' ')
-			die("expected '<hash> <uri>', got: %s\n", reader->line);
+			die("expected '<hash> <uri>', got: %s", reader->line);
 
 		string_list_append(uris, reader->line);
 	}

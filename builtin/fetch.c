@@ -1161,7 +1161,7 @@ static int store_updated_refs(struct display_state *display_state,
 		opt.exclude_hidden_refs_section = "fetch";
 		rm = ref_map;
 		if (check_connected(iterate_ref_map, &rm, &opt)) {
-			rc = error(_("%s did not send all necessary objects\n"),
+			rc = error(_("%s did not send all necessary objects"),
 				   display_state->url);
 			goto abort;
 		}
@@ -1458,7 +1458,7 @@ static void set_option(struct transport *transport, const char *name, const char
 		die(_("option \"%s\" value \"%s\" is not valid for %s"),
 		    name, value, transport->url);
 	if (r > 0)
-		warning(_("option \"%s\" is ignored for %s\n"),
+		warning(_("option \"%s\" is ignored for %s"),
 			name, transport->url);
 }
 

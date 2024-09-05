@@ -917,7 +917,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 		} else {
 			/* for a submodule removal (mode:0000000), don't warn */
 			if (p->mod_dst)
-				warning(_("unexpected mode %o\n"), p->mod_dst);
+				warning(_("unexpected mode %o"), p->mod_dst);
 		}
 	}
 

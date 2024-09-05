@@ -626,7 +626,7 @@ int send_pack(struct send_pack_args *args,
 				strbuf_release(&req_buf);
 				strbuf_release(&cap_buf);
 				reject_atomic_push(remote_refs, args->send_mirror);
-				error("atomic push failed for ref %s. status: %d\n",
+				error("atomic push failed for ref %s. status: %d",
 				      ref->name, ref->status);
 				return args->porcelain ? 0 : -1;
 			}
