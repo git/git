@@ -1525,6 +1525,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	}
 
 cleanup:
+	string_list_clear(&keep_pack_list, 0);
 	string_list_clear(&names, 1);
 	existing_packs_release(&existing);
 	free_pack_geometry(&geometry);
