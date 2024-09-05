@@ -64,4 +64,28 @@ do
 	'
 done
 
+test_perf 'thin pack with --path-walk' '
+	git pack-objects --thin --stdout --revs --sparse --path-walk <in-thin >out
+'
+
+test_size 'thin pack size with --path-walk' '
+	wc -c <out
+'
+
+test_perf 'big pack with --path-walk' '
+	git pack-objects --stdout --revs --sparse --path-walk <in-big >out
+'
+
+test_size 'big pack size with --path-walk' '
+	wc -c <out
+'
+
+test_perf 'repack with --path-walk' '
+	git repack -adf --path-walk
+'
+
+test_size 'repack size with --path-walk' '
+	wc -c <.git/objects/pack/pack-*.pack
+'
+
 test_done
