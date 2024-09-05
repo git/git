@@ -51,10 +51,12 @@ int unregister_shallow(const struct object_id *oid)
 	int pos = commit_graft_pos(the_repository, oid);
 	if (pos < 0)
 		return -1;
-	if (pos + 1 < the_repository->parsed_objects->grafts_nr)
+	if (pos + 1 < the_repository->parsed_objects->grafts_nr) {
+		free(the_repository->parsed_objects->grafts[pos]);
 		MOVE_ARRAY(the_repository->parsed_objects->grafts + pos,
 			   the_repository->parsed_objects->grafts + pos + 1,
 			   the_repository->parsed_objects->grafts_nr - pos - 1);
+	}
 	the_repository->parsed_objects->grafts_nr--;
 	return 0;
 }
