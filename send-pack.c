@@ -501,7 +501,7 @@ int send_pack(struct send_pack_args *args,
 	unsigned cmds_sent = 0;
 	int ret;
 	struct async demux;
-	const char *push_cert_nonce = NULL;
+	char *push_cert_nonce = NULL;
 	struct packet_reader reader;
 	int use_bitmaps;
 
@@ -550,10 +550,11 @@ int send_pack(struct send_pack_args *args,
 
 	if (args->push_cert != SEND_PACK_PUSH_CERT_NEVER) {
 		size_t len;
-		push_cert_nonce = server_feature_value("push-cert", &len);
-		if (push_cert_nonce) {
-			reject_invalid_nonce(push_cert_nonce, len);
-			push_cert_nonce = xmemdupz(push_cert_nonce, len);
+		const char *nonce = server_feature_value("push-cert", &len);
+
+		if (nonce) {
+			reject_invalid_nonce(nonce, len);
+			push_cert_nonce = xmemdupz(nonce, len);
 		} else if (args->push_cert == SEND_PACK_PUSH_CERT_ALWAYS) {
 			die(_("the receiving end does not support --signed push"));
 		} else if (args->push_cert == SEND_PACK_PUSH_CERT_IF_ASKED) {
@@ -771,5 +772,6 @@ out:
 	oid_array_clear(&commons);
 	strbuf_release(&req_buf);
 	strbuf_release(&cap_buf);
+	free(push_cert_nonce);
 	return ret;
 }
