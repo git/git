@@ -1150,11 +1150,14 @@ int add_header_signature(struct strbuf *buf, struct strbuf *sig, const struct gi
 
 static int sign_commit_to_strbuf(struct strbuf *sig, struct strbuf *buf, const char *keyid)
 {
+	char *keyid_to_free = NULL;
+	int ret = 0;
 	if (!keyid || !*keyid)
-		keyid = get_signing_key();
+		keyid = keyid_to_free = get_signing_key();
 	if (sign_buffer(buf, sig, keyid))
-		return -1;
-	return 0;
+		ret = -1;
+	free(keyid_to_free);
+	return ret;
 }
 
 int parse_signed_commit(const struct commit *commit,
