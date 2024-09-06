@@ -48,6 +48,9 @@ UI, Workflows & Features
 
  * Support for the RUNTIME_PREFIX feature has been added to z/OS port.
 
+ * "git send-email" learned "--mailmap" option to allow rewriting the
+   recipient addresses.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -110,6 +113,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * More trace2 events at key points on push and fetch code paths have
    been added.
+
+ * Make our codebase compilable with the -Werror=unused-parameter
+   option.
 
 
 Fixes since v2.46
