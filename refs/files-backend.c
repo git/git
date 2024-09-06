@@ -1946,10 +1946,13 @@ static int commit_ref_update(struct files_ref_store *refs,
 	return 0;
 }
 
+#ifdef NO_SYMLINK_HEAD
+#define create_ref_symlink(a, b) (-1)
+#else
 static int create_ref_symlink(struct ref_lock *lock, const char *target)
 {
 	int ret = -1;
-#ifndef NO_SYMLINK_HEAD
+
 	char *ref_path = get_locked_file_path(&lock->lk);
 	unlink(ref_path);
 	ret = symlink(target, ref_path);
@@ -1957,9 +1960,9 @@ static int create_ref_symlink(struct ref_lock *lock, const char *target)
 
 	if (ret)
 		fprintf(stderr, "no symlink - falling back to symbolic ref\n");
-#endif
 	return ret;
 }
+#endif
 
 static int create_symref_lock(struct ref_lock *lock, const char *target,
 			      struct strbuf *err)
