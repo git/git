@@ -54,7 +54,6 @@ ifeq ($(filter extra-all,$(DEVOPTS)),)
 DEVELOPER_CFLAGS += -Wno-empty-body
 DEVELOPER_CFLAGS += -Wno-missing-field-initializers
 DEVELOPER_CFLAGS += -Wno-sign-compare
-DEVELOPER_CFLAGS += -Wno-unused-parameter
 endif
 endif
 
