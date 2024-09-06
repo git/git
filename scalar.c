@@ -410,7 +410,7 @@ static int cmd_clone(int argc, const char **argv)
 {
 	const char *branch = NULL;
 	int full_clone = 0, single_branch = 0, show_progress = isatty(2);
-	int src = 1;
+	int src = 1, tags = 1;
 	struct option clone_options[] = {
 		OPT_STRING('b', "branch", &branch, N_("<branch>"),
 			   N_("branch to checkout after clone")),
@@ -421,11 +421,13 @@ static int cmd_clone(int argc, const char **argv)
 			    "be checked out")),
 		OPT_BOOL(0, "src", &src,
 			 N_("create repository within 'src' directory")),
+		OPT_BOOL(0, "tags", &tags,
+			 N_("specify if tags should be fetched during clone")),
 		OPT_END(),
 	};
 	const char * const clone_usage[] = {
 		N_("scalar clone [--single-branch] [--branch <main-branch>] [--full-clone]\n"
-		   "\t[--[no-]src] <url> [<enlistment>]"),
+		   "\t[--[no-]src] [--[no-]tags] <url> [<enlistment>]"),
 		NULL
 	};
 	const char *url;
@@ -504,6 +506,11 @@ static int cmd_clone(int argc, const char **argv)
 		goto cleanup;
 	}
 
+	if (!tags && set_config("remote.origin.tagOpt=--no-tags")) {
+		res = error(_("could not disable tags in '%s'"), dir);
+		goto cleanup;
+	}
+
 	if (!full_clone &&
 	    (res = run_git("sparse-checkout", "init", "--cone", NULL)))
 		goto cleanup;
@@ -513,7 +520,9 @@ static int cmd_clone(int argc, const char **argv)
 
 	if ((res = run_git("fetch", "--quiet",
 				show_progress ? "--progress" : "--no-progress",
-				"origin", NULL))) {
+				"origin",
+				(tags ? NULL : "--no-tags"),
+				NULL))) {
 		warning(_("partial clone failed; attempting full clone"));
 
 		if (set_config("remote.origin.promisor") ||

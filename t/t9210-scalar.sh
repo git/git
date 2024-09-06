@@ -169,6 +169,24 @@ test_expect_success 'scalar clone' '
 	)
 '
 
+test_expect_success 'scalar clone --no-... opts' '
+	# Note: redirect stderr always to avoid having a verbose test
+	# run result in a difference in the --[no-]progress option.
+	GIT_TRACE2_EVENT="$(pwd)/no-opt-trace" scalar clone \
+		--no-tags --no-src \
+		"file://$(pwd)" no-opts --single-branch 2>/dev/null &&
+
+	test_subcommand git fetch --quiet --no-progress \
+			origin --no-tags <no-opt-trace &&
+	(
+		cd no-opts &&
+
+		test_cmp_config --no-tags remote.origin.tagopt &&
+		git for-each-ref --format="%(refname)" refs/tags/ >tags &&
+		test_line_count = 0 tags
+	)
+'
+
 test_expect_success 'scalar reconfigure' '
 	git init one/src &&
 	scalar register one &&
