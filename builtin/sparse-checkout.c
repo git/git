@@ -338,7 +338,6 @@ static int write_patterns_and_update(struct pattern_list *pl)
 
 	fd = hold_lock_file_for_update(&lk, sparse_filename,
 				      LOCK_DIE_ON_ERROR);
-	free(sparse_filename);
 
 	result = update_working_directory(pl);
 	if (result) {
@@ -355,10 +354,12 @@ static int write_patterns_and_update(struct pattern_list *pl)
 		write_patterns_to_file(fp, pl);
 
 	fflush(fp);
-	commit_lock_file(&lk);
+	if (commit_lock_file(&lk))
+		die_errno(_("unable to write %s"), sparse_filename);
 
 out:
 	clear_pattern_list(pl);
+	free(sparse_filename);
 	return result;
 }
 
