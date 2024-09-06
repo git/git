@@ -260,7 +260,7 @@ static int pack_refs_condition(UNUSED struct gc_config *cfg)
 	return 1;
 }
 
-static int maintenance_task_pack_refs(MAYBE_UNUSED struct maintenance_run_opts *opts,
+static int maintenance_task_pack_refs(struct maintenance_run_opts *opts,
 				      UNUSED struct gc_config *cfg)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
