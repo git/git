@@ -327,7 +327,6 @@ static int write_patterns_and_update(struct pattern_list *pl)
 {
 	char *sparse_filename;
 	FILE *fp;
-	int fd;
 	struct lock_file lk = LOCK_INIT;
 	int result;
 
@@ -336,8 +335,7 @@ static int write_patterns_and_update(struct pattern_list *pl)
 	if (safe_create_leading_directories(sparse_filename))
 		die(_("failed to create directory for sparse-checkout file"));
 
-	fd = hold_lock_file_for_update(&lk, sparse_filename,
-				      LOCK_DIE_ON_ERROR);
+	hold_lock_file_for_update(&lk, sparse_filename, LOCK_DIE_ON_ERROR);
 
 	result = update_working_directory(pl);
 	if (result) {
@@ -346,14 +344,15 @@ static int write_patterns_and_update(struct pattern_list *pl)
 		goto out;
 	}
 
-	fp = xfdopen(fd, "w");
+	fp = fdopen_lock_file(&lk, "w");
+	if (!fp)
+		die_errno(_("unable to fdopen %s"), get_lock_file_path(&lk));
 
 	if (core_sparse_checkout_cone)
 		write_cone_to_file(fp, pl);
 	else
 		write_patterns_to_file(fp, pl);
 
-	fflush(fp);
 	if (commit_lock_file(&lk))
 		die_errno(_("unable to write %s"), sparse_filename);
 
