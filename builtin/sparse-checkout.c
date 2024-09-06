@@ -343,9 +343,8 @@ static int write_patterns_and_update(struct pattern_list *pl)
 	result = update_working_directory(pl);
 	if (result) {
 		rollback_lock_file(&lk);
-		clear_pattern_list(pl);
 		update_working_directory(NULL);
-		return result;
+		goto out;
 	}
 
 	fp = xfdopen(fd, "w");
@@ -358,9 +357,9 @@ static int write_patterns_and_update(struct pattern_list *pl)
 	fflush(fp);
 	commit_lock_file(&lk);
 
+out:
 	clear_pattern_list(pl);
-
-	return 0;
+	return result;
 }
 
 enum sparse_checkout_mode {
