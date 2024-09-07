@@ -674,4 +674,19 @@ do
 	'
 done
 
+# The following test is not necessarily a permanent choice, but since we do not
+# have a "name hash version" bit in the .bitmap file format, we cannot write the
+# full-name hash values into the .bitmap file without risking breakage later.
+#
+# TODO: Make these compatible in the future and replace this test with the
+# expected behavior when both are specified.
+test_expect_success '--full-name-hash and --write-bitmap-index are incompatible' '
+	test_must_fail git pack-objects base --all \
+		--full-name-hash --write-bitmap-index 2>err &&
+	grep incompatible err &&
+
+	# --stdout option silently removes --write-bitmap-index
+	git pack-objects --stdout --all --full-name-hash --write-bitmap-index >out
+'
+
 test_done
