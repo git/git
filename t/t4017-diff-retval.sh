@@ -143,4 +143,20 @@ test_expect_success 'option errors are not confused by --exit-code' '
 	grep '^usage:' err
 '
 
+for option in --exit-code --quiet
+do
+	test_expect_success "git diff $option returns 1 for copied file" "
+		git reset --hard &&
+		cp a copy &&
+		git add copy &&
+		test_expect_code 1 git diff $option --cached --find-copies-harder
+	"
+
+	test_expect_success "git diff $option returns 1 for renamed file" "
+		git reset --hard &&
+		git mv a renamed &&
+		test_expect_code 1 git diff $option --cached
+	"
+done
+
 test_done

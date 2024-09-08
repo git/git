@@ -4587,6 +4587,9 @@ static void run_diff_cmd(const struct external_diff *pgm,
 		builtin_diff(name, other ? other : name,
 			     one, two, xfrm_msg, must_show_header,
 			     o, complete_rewrite);
+		if (p->status == DIFF_STATUS_COPIED ||
+		    p->status == DIFF_STATUS_RENAMED)
+			o->found_changes = 1;
 	} else {
 		fprintf(o->file, "* Unmerged path %s\n", name);
 		o->found_changes = 1;
