@@ -2003,8 +2003,7 @@ test_expect_success GPG 'show good signature with custom format' '
 		--format="$GRADE_FORMAT" >actual &&
 	test_cmp expect actual
 '
-test_expect_success GPGSSH 'show good signature with custom format
-			    with ssh' '
+test_expect_success GPGSSH 'show good signature with custom format with ssh' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	FINGERPRINT=$(ssh-keygen -lf "${GPGSSH_KEY_PRIMARY}" | awk "{print \$2;}") &&
 	cat >expect.tmpl <<-\EOF &&
