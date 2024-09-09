@@ -82,6 +82,46 @@ test_expect_success 'apply with --3way with merge.conflictStyle = diff3' '
 	test_apply_with_3way
 '
 
+test_apply_with_3way_favoritism () {
+	apply_arg=$1
+	merge_arg=$2
+
+	# Merging side should be similar to applying this patch
+	git diff ...side >P.diff &&
+
+	# The corresponding conflicted merge
+	git reset --hard &&
+	git checkout main^0 &&
+	git merge --no-commit $merge_arg side &&
+	git ls-files -s >expect.ls &&
+	print_sanitized_conflicted_diff >expect.diff &&
+
+	# should apply successfully
+	git reset --hard &&
+	git checkout main^0 &&
+	git apply --index --3way $apply_arg P.diff &&
+	git ls-files -s >actual.ls &&
+	print_sanitized_conflicted_diff >actual.diff &&
+
+	# The result should resemble the corresponding merge
+	test_cmp expect.ls actual.ls &&
+	test_cmp expect.diff actual.diff
+}
+
+test_expect_success 'apply with --3way --ours' '
+	test_apply_with_3way_favoritism --ours -Xours
+'
+
+test_expect_success 'apply with --3way --theirs' '
+	test_apply_with_3way_favoritism --theirs -Xtheirs
+'
+
+test_expect_success 'apply with --3way --union' '
+	echo "* merge=union" >.gitattributes &&
+	test_apply_with_3way_favoritism --union &&
+	rm .gitattributes
+'
+
 test_expect_success 'apply with --3way with rerere enabled' '
 	test_config rerere.enabled true &&
 
