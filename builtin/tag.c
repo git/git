@@ -702,6 +702,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 cleanup:
 	ref_sorting_release(sorting);
 	ref_filter_clear(&filter);
+	ref_format_clear(&format);
 	strbuf_release(&buf);
 	strbuf_release(&ref);
 	strbuf_release(&reflog_msg);

@@ -221,4 +221,7 @@ void filter_is_base(struct repository *r,
 void ref_filter_init(struct ref_filter *filter);
 void ref_filter_clear(struct ref_filter *filter);
 
+void ref_format_init(struct ref_format *format);
+void ref_format_clear(struct ref_format *format);
+
 #endif /*  REF_FILTER_H  */
