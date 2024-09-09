@@ -2237,7 +2237,7 @@ static void fill_remote_ref_details(struct used_atom *atom, const char *refname,
 		const char *merge;
 
 		merge = remote_ref_for_branch(branch, atom->u.remote_ref.push);
-		*s = xstrdup(merge ? merge : "");
+		*s = merge ? merge : xstrdup("");
 	} else
 		BUG("unhandled RR_* enum");
 }
