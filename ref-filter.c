@@ -2008,9 +2008,17 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, struct exp
 			v->s = strbuf_detach(&s, NULL);
 		} else if (atom->u.contents.option == C_TRAILERS) {
 			struct strbuf s = STRBUF_INIT;
+			const char *msg;
+			char *to_free = NULL;
+
+			if (siglen)
+				msg = to_free = xmemdupz(subpos, sigpos - subpos);
+			else
+				msg = subpos;
 
 			/* Format the trailer info according to the trailer_opts given */
-			format_trailers_from_commit(&atom->u.contents.trailer_opts, subpos, &s);
+			format_trailers_from_commit(&atom->u.contents.trailer_opts, msg, &s);
+			free(to_free);
 
 			v->s = strbuf_detach(&s, NULL);
 		} else if (atom->u.contents.option == C_BARE)

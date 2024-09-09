@@ -1835,6 +1835,24 @@ sig_crlf="$(printf "%s" "$sig" | append_cr; echo dummy)"
 sig_crlf=${sig_crlf%dummy}
 test_atom refs/tags/fake-sig-crlf contents:signature "$sig_crlf"
 
+test_expect_success 'set up tag with signature and trailers' '
+	git tag -F - fake-sig-trailer <<-\EOF
+	this is the subject
+
+	this is the body
+
+	My-Trailer: foo
+	-----BEGIN PGP SIGNATURE-----
+
+	not a real signature, but we just care about the
+	subject/body/trailer parsing.
+	-----END PGP SIGNATURE-----
+	EOF
+'
+
+# use "separator=" here to suppress the terminating newline
+test_atom refs/tags/fake-sig-trailer trailers:separator= 'My-Trailer: foo'
+
 test_expect_success 'git for-each-ref --stdin: empty' '
 	>in &&
 	git for-each-ref --format="%(refname)" --stdin <in >actual &&
