@@ -1560,6 +1560,25 @@ test_trailer_option '%(trailers:separator,key_value_separator) changes both sepa
 	Reviewed-by,A U Thor <author@example.com>,Signed-off-by,A U Thor <author@example.com>
 	EOF
 
+test_expect_success 'multiple %(trailers) use their own options' '
+	git tag -F - tag-with-trailers <<-\EOF &&
+	body
+
+	one: foo
+	one: bar
+	two: baz
+	two: qux
+	EOF
+	t1="%(trailers:key=one,key_value_separator=W,separator=X)" &&
+	t2="%(trailers:key=two,key_value_separator=Y,separator=Z)" &&
+	git for-each-ref --format="$t1%0a$t2" refs/tags/tag-with-trailers >actual &&
+	cat >expect <<-\EOF &&
+	oneWfooXoneWbar
+	twoYbazZtwoYqux
+	EOF
+	test_cmp expect actual
+'
+
 test_failing_trailer_option () {
 	title=$1 option=$2
 	cat >expect

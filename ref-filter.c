@@ -75,11 +75,11 @@ struct refname_atom {
 	int lstrip, rstrip;
 };
 
-static struct ref_trailer_buf {
+struct ref_trailer_buf {
 	struct string_list filter_list;
 	struct strbuf sepbuf;
 	struct strbuf kvsepbuf;
-} ref_trailer_buf = {STRING_LIST_INIT_NODUP, STRBUF_INIT, STRBUF_INIT};
+};
 
 static struct expand_data {
 	struct object_id oid;
@@ -201,6 +201,7 @@ static struct used_atom {
 			enum { C_BARE, C_BODY, C_BODY_DEP, C_LENGTH, C_LINES,
 			       C_SIG, C_SUB, C_SUB_SANITIZE, C_TRAILERS } option;
 			struct process_trailer_options trailer_opts;
+			struct ref_trailer_buf *trailer_buf;
 			unsigned int nlines;
 		} contents;
 		struct {
@@ -568,12 +569,24 @@ static int trailers_atom_parser(struct ref_format *format UNUSED,
 	if (arg) {
 		const char *argbuf = xstrfmt("%s)", arg);
 		char *invalid_arg = NULL;
+		struct ref_trailer_buf *tb;
+
+		/*
+		 * Do not inline these directly into the used_atom struct!
+		 * When we parse them in format_set_trailers_options(),
+		 * we will make pointer references directly to them,
+		 * which will not survive a realloc() of the used_atom list.
+		 * They must be allocated in a separate, stable struct.
+		 */
+		atom->u.contents.trailer_buf = tb = xmalloc(sizeof(*tb));
+		string_list_init_nodup(&tb->filter_list);
+		strbuf_init(&tb->sepbuf, 0);
+		strbuf_init(&tb->kvsepbuf, 0);
 
 		if (format_set_trailers_options(&atom->u.contents.trailer_opts,
-		    &ref_trailer_buf.filter_list,
-		    &ref_trailer_buf.sepbuf,
-		    &ref_trailer_buf.kvsepbuf,
-		    &argbuf, &invalid_arg)) {
+						&tb->filter_list,
+						&tb->sepbuf, &tb->kvsepbuf,
+						&argbuf, &invalid_arg)) {
 			if (!invalid_arg)
 				strbuf_addf(err, _("expected %%(trailers:key=<value>)"));
 			else
@@ -2988,6 +3001,17 @@ void ref_array_clear(struct ref_array *array)
 		struct used_atom *atom = &used_atom[i];
 		if (atom->atom_type == ATOM_HEAD)
 			free(atom->u.head);
+		else if (atom->atom_type == ATOM_TRAILERS ||
+			 (atom->atom_type == ATOM_CONTENTS &&
+			  atom->u.contents.option == C_TRAILERS)) {
+			struct ref_trailer_buf *tb = atom->u.contents.trailer_buf;
+			if (tb) {
+				string_list_clear(&tb->filter_list, 0);
+				strbuf_release(&tb->sepbuf);
+				strbuf_release(&tb->kvsepbuf);
+				free(tb);
+			}
+		}
 		free((char *)atom->name);
 	}
 	FREE_AND_NULL(used_atom);
