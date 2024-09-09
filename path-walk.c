@@ -13,6 +13,7 @@
 #include "revision.h"
 #include "string-list.h"
 #include "strmap.h"
+#include "tag.h"
 #include "trace2.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -204,12 +205,85 @@ int walk_objects_by_path(struct path_walk_info *info)
 	CALLOC_ARRAY(commit_list, 1);
 	commit_list->type = OBJ_COMMIT;
 
+	if (info->tags)
+		info->revs->tag_objects = 1;
+
 	/* Insert a single list for the root tree into the paths. */
 	CALLOC_ARRAY(root_tree_list, 1);
 	root_tree_list->type = OBJ_TREE;
 	strmap_put(&ctx.paths_to_lists, root_path, root_tree_list);
+
+	/*
+	 * Set these values before preparing the walk to catch
+	 * lightweight tags pointing to non-commits.
+	 */
+	info->revs->blob_objects = info->blobs;
+	info->revs->tree_objects = info->trees;
+
 	if (prepare_revision_walk(info->revs))
 		die(_("failed to setup revision walk"));
+
+	info->revs->blob_objects = info->revs->tree_objects = 0;
+
+	if (info->tags) {
+		struct oid_array tagged_blob_list = OID_ARRAY_INIT;
+		struct oid_array tags = OID_ARRAY_INIT;
+
+		trace2_region_enter("path-walk", "tag-walk", info->revs->repo);
+
+		/*
+		 * Walk any pending objects at this point, but they should only
+		 * be tags.
+		 */
+		for (size_t i = 0; i < info->revs->pending.nr; i++) {
+			struct object_array_entry *pending = info->revs->pending.objects + i;
+			struct object *obj = pending->item;
+
+			if (obj->type == OBJ_COMMIT)
+				continue;
+
+			while (obj->type == OBJ_TAG) {
+				struct tag *tag = lookup_tag(info->revs->repo,
+							     &obj->oid);
+				if (oid_array_lookup(&tags, &obj->oid) < 0)
+					oid_array_append(&tags, &obj->oid);
+				obj = tag->tagged;
+			}
+
+			switch (obj->type) {
+			case OBJ_TREE:
+				if (info->trees &&
+				    oid_array_lookup(&root_tree_list->oids, &obj->oid) < 0)
+					oid_array_append(&root_tree_list->oids, &obj->oid);
+				break;
+
+			case OBJ_BLOB:
+				if (info->blobs &&
+				    oid_array_lookup(&tagged_blob_list, &obj->oid) < 0)
+					oid_array_append(&tagged_blob_list, &obj->oid);
+				break;
+
+			case OBJ_COMMIT:
+				/* Make sure it is in the object walk */
+				add_pending_object(info->revs, obj, "");
+				break;
+
+			default:
+				BUG("should not see any other type here");
+			}
+		}
+
+		info->path_fn("", &tags, OBJ_TAG, info->path_fn_data);
+
+		if (tagged_blob_list.nr && info->blobs)
+			info->path_fn("/tagged-blobs", &tagged_blob_list, OBJ_BLOB,
+				      info->path_fn_data);
+
+		trace2_data_intmax("path-walk", ctx.repo, "tags", tags.nr);
+		trace2_region_leave("path-walk", "tag-walk", info->revs->repo);
+		oid_array_clear(&tags);
+		oid_array_clear(&tagged_blob_list);
+	}
 
 	while ((c = get_revision(info->revs))) {
 		struct object_id *oid;
