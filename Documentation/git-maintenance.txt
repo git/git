@@ -107,6 +107,9 @@ with the prefetch task, the objects necessary to complete a later real fetch
 would already be obtained, making the real fetch faster.  In the ideal case,
 it will just become an update to a bunch of remote-tracking branches without
 any object transfer.
++
+The `remote.<name>.skipFetchAll` configuration can be used to
+exclude a particular remote from getting prefetched.
 
 gc::
 	Clean up unnecessary files and optimize the local repository. "GC"
