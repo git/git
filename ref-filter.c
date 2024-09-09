@@ -233,7 +233,7 @@ static struct used_atom {
 			enum { S_BARE, S_GRADE, S_SIGNER, S_KEY,
 			       S_FINGERPRINT, S_PRI_KEY_FP, S_TRUST_LEVEL } option;
 		} signature;
-		const char **describe_args;
+		struct strvec describe_args;
 		struct refname_atom refname;
 		char *head;
 	} u;
@@ -693,7 +693,7 @@ static int describe_atom_parser(struct ref_format *format UNUSED,
 				struct used_atom *atom,
 				const char *arg, struct strbuf *err)
 {
-	struct strvec args = STRVEC_INIT;
+	strvec_init(&atom->u.describe_args);
 
 	for (;;) {
 		int found = 0;
@@ -702,13 +702,12 @@ static int describe_atom_parser(struct ref_format *format UNUSED,
 		if (!arg || !*arg)
 			break;
 
-		found = describe_atom_option_parser(&args, &arg, err);
+		found = describe_atom_option_parser(&atom->u.describe_args, &arg, err);
 		if (found < 0)
 			return found;
 		if (!found)
 			return err_bad_arg(err, "describe", bad_arg);
 	}
-	atom->u.describe_args = strvec_detach(&args);
 	return 0;
 }
 
@@ -1941,7 +1940,7 @@ static void grab_describe_values(struct atom_value *val, int deref,
 
 		cmd.git_cmd = 1;
 		strvec_push(&cmd.args, "describe");
-		strvec_pushv(&cmd.args, atom->u.describe_args);
+		strvec_pushv(&cmd.args, atom->u.describe_args.v);
 		strvec_push(&cmd.args, oid_to_hex(&commit->object.oid));
 		if (pipe_command(&cmd, NULL, 0, &out, 0, &err, 0) < 0) {
 			error(_("failed to run 'describe'"));
@@ -3004,6 +3003,8 @@ void ref_array_clear(struct ref_array *array)
 		struct used_atom *atom = &used_atom[i];
 		if (atom->atom_type == ATOM_HEAD)
 			free(atom->u.head);
+		else if (atom->atom_type == ATOM_DESCRIBE)
+			strvec_clear(&atom->u.describe_args);
 		else if (atom->atom_type == ATOM_TRAILERS ||
 			 (atom->atom_type == ATOM_CONTENTS &&
 			  atom->u.contents.option == C_TRAILERS)) {
