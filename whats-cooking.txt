@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2024, #02; Sun, 8)
+Subject: What's cooking in git.git (Sep 2024, #03; Mon, 9)
 X-master-at: 4c42d5ff284067fa32837421408bebfef996bf81
-X-next-at: a52a31f161238e49828c2297ec5c26a7f3b8c689
+X-next-at: a09f0889bb33dc86ffe53d14730c994b00d10e9e
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2024, #02; Sun, 8)
+What's cooking in git.git (Sep 2024, #03; Mon, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,64 +46,63 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* jc/maybe-unused (2024-08-29) 2 commits
-  (merged to 'next' on 2024-08-30 at e5961a9dc9)
- + CodingGuidelines: also mention MAYBE_UNUSED
- + Merge branch 'jk/unused-parameters' into jc/maybe-unused
- (this branch uses jk/unused-parameters.)
+* rj/cygwin-has-dev-tty (2024-09-08) 1 commit
+  (merged to 'next' on 2024-09-09 at 5c5726050f)
+ + config.mak.uname: add HAVE_DEV_TTY to cygwin config section
 
- Developer doc updates.
- source: <xmqq4j73w5up.fsf_-_@gitster.g>
+ Cygwin does have /dev/tty support that is needed by things like
+ single-key input mode.
 
-
-* jc/unused-on-windows (2024-08-30) 1 commit
-  (merged to 'next' on 2024-08-30 at a2a2aa6e59)
- + refs/files-backend: work around -Wunused-parameter
-
- Fix more fallouts from -Werror=unused-parameter.
- source: <xmqqjzfxrekm.fsf@gitster.g>
+ Will merge to 'master'.
+ source: <e3339b4d-dab1-4247-b70e-d3224bab1b6b@ramsayjones.plus.com>
 
 
-* jk/maybe-unused-cleanup (2024-08-29) 2 commits
-  (merged to 'next' on 2024-08-30 at 0ff6ea5748)
- + grep: prefer UNUSED to MAYBE_UNUSED for pcre allocators
- + gc: drop MAYBE_UNUSED annotation from used parameter
+* ah/apply-3way-ours (2024-09-09) 1 commit
+ - apply: support --ours, --theirs, and --union for three-way merges
 
- Code clean-up.
- source: <20240829200807.GA430283@coredump.intra.peff.net>
+ "git apply --3way" learned to take "--ours" and other options.
 
-
-* jk/send-email-mailmap (2024-08-27) 3 commits
-  (merged to 'next' on 2024-08-30 at a5cf30460a)
- + send-email: add mailmap support via sendemail.mailmap and --mailmap
- + check-mailmap: add options for additional mailmap sources
- + check-mailmap: accept "user@host" contacts
-
- "git send-email" learned "--mailmap" option to allow rewriting the
- recipient addresses.
- source: <20240827-jk-send-email-mailmap-support-v3-0-bec5ba9be391@gmail.com>
+ Will merge to 'next'.
+ source: <20240909141109.3102-2-alexhenrie24@gmail.com>
 
 
-* jk/unused-parameters (2024-08-28) 7 commits
-  (merged to 'next' on 2024-08-30 at 2c5169ff52)
- + CodingGuidelines: mention -Wunused-parameter and UNUSED
- + config.mak.dev: enable -Wunused-parameter by default
- + compat: mark unused parameters in win32/mingw functions
- + compat: disable -Wunused-parameter in win32/headless.c
- + compat: disable -Wunused-parameter in 3rd-party code
- + t-reftable-readwrite: mark unused parameter in callback function
- + gc: mark unused config parameter in virtual functions
- (this branch is used by jc/maybe-unused.)
+* ds/pack-name-hash-tweak (2024-09-09) 4 commits
+ - p5313: add size comparison test
+ - p5314: add a size test for name-hash collisions
+ - git-repack: update usage to match docs
+ - pack-objects: add --full-name-hash option
 
- Make our codebase compilable with the -Werror=unused-parameter
- option.
- source: <20240828035722.GA3998881@coredump.intra.peff.net>
- source: <CAPig+cQLr+vAzkt8UJNVCeE8osGEcEfFunG36oqxa0k8JamJzQ@mail.gmail.com>
+ In a repository with too many (more than --window size) similarly
+ named files, "git repack" would not find good delta-base candidate
+ and worse, it may not use a blob from exactly the same path as a
+ good delta-base candidate.  Optionally replace the name hash so
+ that only blobs at the same path and nothing else are used as
+ delta-base candidate.
+
+ Needs review.
+ source: <pull.1785.git.1725890210.gitgitgadget@gmail.com>
+
+
+* ps/reftable-exclude (2024-09-09) 7 commits
+ - refs/reftable: wire up support for exclude patterns
+ - reftable/reader: make table iterator reseekable
+ - t/unit-tests: introduce reftable library
+ - Makefile: stop listing test library objects twice
+ - builtin/receive-pack: fix exclude patterns when announcing refs
+ - refs: properly apply exclude patterns to namespaced refs
+ - Merge branch 'cp/unit-test-reftable-stack' into ps/reftable-exclude
+ (this branch uses cp/unit-test-reftable-stack.)
+
+ The reftable backend learned to more efficiently handle exclude
+ patterns while enumerating the refs.
+
+ Needs review.
+ source: <cover.1725881266.git.ps@pks.im>
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * ds/doc-wholesale-disabling-advice-messages (2024-09-06) 1 commit
   (merged to 'next' on 2024-09-07 at a52a31f161)
@@ -131,12 +130,13 @@ Release tarballs are available at:
 
 
 * bl/trailers-and-incomplete-last-line-fix (2024-09-06) 1 commit
- - interpret-trailers: handle message without trailing newline
+  (merged to 'next' on 2024-09-09 at a09f0889bb)
+ + interpret-trailers: handle message without trailing newline
 
  The interpret-trailers command failed to recognise the end of the
  message when the commit log ends in an incomplete line.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20240906145743.2059405-1-brianmlyles@gmail.com>
 
 
@@ -150,28 +150,28 @@ Release tarballs are available at:
  source: <20240906153003.110200-2-ischis2@cox.net>
 
 
-* jc/doc-skip-fetch-all-and-prefetch (2024-09-07) 1 commit
- - doc: remote.*.skip{DefaultUpdate,FetchAll} stops prefetch
+* jc/doc-skip-fetch-all-and-prefetch (2024-09-09) 1 commit
+  (merged to 'next' on 2024-09-09 at a2bf302636)
+ + doc: remote.*.skip{DefaultUpdate,FetchAll} stops prefetch
 
  Doc updates.
 
- Will merge to 'next'.
- source: <xmqq8qw3xvob.fsf_-_@gitster.g>
+ Will merge to 'master'.
+ source: <xmqqseu8u8m0.fsf@gitster.g>
 
 
 * rs/diff-exit-code-fix (2024-09-08) 2 commits
- - diff: report dirty submodules as changes in builtin_diff()
- - diff: report copies and renames as changes in run_diff_cmd()
+  (merged to 'next' on 2024-09-09 at f52bb4afb2)
+ + diff: report dirty submodules as changes in builtin_diff()
+ + diff: report copies and renames as changes in run_diff_cmd()
 
  In a few corner cases "git diff --exit-code" failed to report
  "changes" (e.g., renamed without any content change), which has
  been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <0864c86a-5562-4780-92c5-59d6c1a35aad@web.de>
 
---------------------------------------------------
-[Cooking]
 
 * jk/free-commit-buffer-of-skipped-commits (2024-08-30) 1 commit
   (merged to 'next' on 2024-09-03 at a8fb72a4d5)
@@ -226,17 +226,19 @@ Release tarballs are available at:
  source: <pull.1772.v2.git.1725289979450.gitgitgadget@gmail.com>
 
 
-* cp/unit-test-reftable-stack (2024-09-08) 6 commits
- - t-reftable-stack: add test for stack iterators
- - t-reftable-stack: add test for non-default compaction factor
- - t-reftable-stack: use reftable_ref_record_equal() to compare ref records
- - t-reftable-stack: use Git's tempfile API instead of mkstemp()
- - t: harmonize t-reftable-stack.c with coding guidelines
- - t: move reftable/stack_test.c to the unit testing framework
+* cp/unit-test-reftable-stack (2024-09-09) 6 commits
+  (merged to 'next' on 2024-09-09 at 0dddbbb60d)
+ + t-reftable-stack: add test for stack iterators
+ + t-reftable-stack: add test for non-default compaction factor
+ + t-reftable-stack: use reftable_ref_record_equal() to compare ref records
+ + t-reftable-stack: use Git's tempfile API instead of mkstemp()
+ + t: harmonize t-reftable-stack.c with coding guidelines
+ + t: move reftable/stack_test.c to the unit testing framework
+ (this branch is used by ps/reftable-exclude.)
 
  Another reftable test migrated to the unit-test framework.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240908041632.4948-1-chandrapratap3519@gmail.com>
 
 
