@@ -567,7 +567,8 @@ static int trailers_atom_parser(struct ref_format *format UNUSED,
 	atom->u.contents.trailer_opts.no_divider = 1;
 
 	if (arg) {
-		const char *argbuf = xstrfmt("%s)", arg);
+		char *argbuf = xstrfmt("%s)", arg);
+		const char *arg = argbuf;
 		char *invalid_arg = NULL;
 		struct ref_trailer_buf *tb;
 
@@ -579,21 +580,23 @@ static int trailers_atom_parser(struct ref_format *format UNUSED,
 		 * They must be allocated in a separate, stable struct.
 		 */
 		atom->u.contents.trailer_buf = tb = xmalloc(sizeof(*tb));
-		string_list_init_nodup(&tb->filter_list);
+		string_list_init_dup(&tb->filter_list);
 		strbuf_init(&tb->sepbuf, 0);
 		strbuf_init(&tb->kvsepbuf, 0);
 
 		if (format_set_trailers_options(&atom->u.contents.trailer_opts,
 						&tb->filter_list,
 						&tb->sepbuf, &tb->kvsepbuf,
-						&argbuf, &invalid_arg)) {
+						&arg, &invalid_arg)) {
 			if (!invalid_arg)
 				strbuf_addf(err, _("expected %%(trailers:key=<value>)"));
 			else
 				strbuf_addf(err, _("unknown %%(trailers) argument: %s"), invalid_arg);
 			free(invalid_arg);
+			free(argbuf);
 			return -1;
 		}
+		free(argbuf);
 	}
 	atom->u.contents.option = C_TRAILERS;
 	return 0;
