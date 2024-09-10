@@ -12,6 +12,7 @@
 #include "upload-pack.h"
 #include "bundle-uri.h"
 #include "trace2.h"
+#include "promisor-remote.h"
 
 static int advertise_sid = -1;
 static int advertise_object_info = -1;
@@ -30,6 +31,26 @@ static int agent_advertise(struct repository *r UNUSED,
 		strbuf_addstr(value, git_user_agent_sanitized());
 	return 1;
 }
+
+static int promisor_remote_advertise(struct repository *r,
+				     struct strbuf *value)
+{
+	if (value) {
+		char *info = promisor_remote_info(r);
+		if (!info)
+			return 0;
+		strbuf_addstr(value, info);
+		free(info);
+	}
+	return 1;
+}
+
+static void promisor_remote_receive(struct repository *r,
+				    const char *remotes)
+{
+	mark_promisor_remotes_as_accepted(r, remotes);
+}
+
 
 static int object_format_advertise(struct repository *r,
 				   struct strbuf *value)
@@ -156,6 +177,11 @@ static struct protocol_capability capabilities[] = {
 		.name = "bundle-uri",
 		.advertise = bundle_uri_advertise,
 		.command = bundle_uri_command,
+	},
+	{
+		.name = "promisor-remote",
+		.advertise = promisor_remote_advertise,
+		.receive = promisor_remote_receive,
 	},
 };
 
