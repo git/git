@@ -651,6 +651,7 @@ sub check_test {
 	$self->{nerrs} += @$problems;
 	return unless $emit_all || @$problems;
 	my $c = main::fd_colors(1);
+	my ($erropen, $errclose) = -t 1 ? ("$c->{rev}$c->{red}", $c->{reset}) : ('?!', '?!');
 	my $start = 0;
 	my $checked = '';
 	for (sort {$a->[1]->[2] <=> $b->[1]->[2]} @$problems) {
@@ -659,7 +660,7 @@ sub check_test {
 		my $err = format_problem($label);
 		$checked .= substr($body, $start, $pos - $start);
 		$checked .= ' ' unless $checked =~ /\s$/;
-		$checked .= "$c->{rev}$c->{red}?!LINT: $err?!$c->{reset}";
+		$checked .= "${erropen}LINT: $err$errclose";
 		$checked .= ' ' unless $pos >= length($body) ||
 		    substr($body, $pos, 1) =~ /^\s/;
 		$start = $pos;
