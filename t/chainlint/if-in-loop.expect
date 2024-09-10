@@ -5,8 +5,8 @@
 6 		then
 7 			echo "err"
 8 			exit 1
-9 		fi ?!AMP?!
+9 		fi ?!LINT: missing '&&'?!
 10 		foo
-11 	done ?!AMP?!
+11 	done ?!LINT: missing '&&'?!
 12 	bar
 13 )

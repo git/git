@@ -1,7 +1,7 @@
 2 (
 3 	if test -n ""
 4 	then
-5 		echo very ?!AMP?!
+5 		echo very ?!LINT: missing '&&'?!
 6 		echo empty
 7 	elif test -z ""
 8 	then
@@ -11,7 +11,7 @@
 12 		cat <<-\EOF
 13 		bar
 14 		EOF
-15 	fi ?!AMP?!
+15 	fi ?!LINT: missing '&&'?!
 16 	echo poodle
 17 ) &&
 18 (

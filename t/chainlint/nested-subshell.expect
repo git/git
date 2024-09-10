@@ -7,7 +7,7 @@
 8 
 9 	cd foo &&
 10 	(
-11 		echo a ?!AMP?!
+11 		echo a ?!LINT: missing '&&'?!
 12 		echo b
 13 	) >file
 14 )

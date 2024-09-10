@@ -1,20 +1,20 @@
 2 (
 3 	foo &&
 4 	{
-5 		echo a ?!AMP?!
+5 		echo a ?!LINT: missing '&&'?!
 6 		echo b
 7 	} &&
 8 	bar &&
 9 	{
 10 		echo c
-11 	} ?!AMP?!
+11 	} ?!LINT: missing '&&'?!
 12 	baz
 13 ) &&
 14 
 15 {
-16 	echo a; ?!AMP?! echo b
+16 	echo a; ?!LINT: missing '&&'?! echo b
 17 } &&
-18 { echo a; ?!AMP?! echo b; } &&
+18 { echo a; ?!LINT: missing '&&'?! echo b; } &&
 19 
 20 {
 21 	echo "${var}9" &&

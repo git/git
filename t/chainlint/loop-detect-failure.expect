@@ -11,5 +11,5 @@
 12 do
 13 	printf "%"$n"s" X > r2/large.$n &&
 14 	git -C r2 add large.$n &&
-15 	git -C r2 commit -m "$n" ?!LOOP?!
+15 	git -C r2 commit -m "$n" ?!LINT: missing '|| return 1'?!
 16 done

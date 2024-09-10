@@ -1,2 +1,2 @@
-2 	echo "we should find this" ?!AMP?!
+2 	echo "we should find this" ?!LINT: missing '&&'?!
 3 	echo "even though our heredoc has its indent stripped"

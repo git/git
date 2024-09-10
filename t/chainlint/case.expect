@@ -9,11 +9,11 @@
 10 	case "$x" in
 11 	x) foo ;;
 12 	*) bar ;;
-13 	esac ?!AMP?!
+13 	esac ?!LINT: missing '&&'?!
 14 	foobar
 15 ) &&
 16 (
 17 	case "$x" in 1) true;; esac &&
-18 	case "$y" in 2) false;; esac ?!AMP?!
+18 	case "$y" in 2) false;; esac ?!LINT: missing '&&'?!
 19 	foobar
 20 )

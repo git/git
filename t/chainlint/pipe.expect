@@ -4,7 +4,7 @@
 5 	baz &&
 6 
 7 	fish |
-8 	cow ?!AMP?!
+8 	cow ?!LINT: missing '&&'?!
 9 
 10 	sunder
 11 )

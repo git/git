@@ -1,6 +1,6 @@
 2 (
 3 	foobar && # comment 1
-4 	barfoo ?!AMP?! # wrong position for &&
+4 	barfoo ?!LINT: missing '&&'?! # wrong position for &&
 5 	flibble "not a # comment"
 6 ) &&
 7 

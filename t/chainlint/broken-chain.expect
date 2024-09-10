@@ -1,6 +1,6 @@
 2 (
 3 	foo &&
-4 	bar ?!AMP?!
+4 	bar ?!LINT: missing '&&'?!
 5 	baz &&
 6 	wop
 7 )

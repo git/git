@@ -3,6 +3,6 @@
 4 		fossil
 5 		vegetable
 6 		END
-7 		wiffle) ?!AMP?!
+7 		wiffle) ?!LINT: missing '&&'?!
 8 	echo $x
 9 )

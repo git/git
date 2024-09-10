@@ -2,6 +2,6 @@
 3    marcia ||
 4    kevin
 5 then
-6 	echo "nomads" ?!AMP?!
+6 	echo "nomads" ?!LINT: missing '&&'?!
 7 	echo "for sure"
 8 fi
