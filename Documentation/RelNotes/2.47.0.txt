@@ -51,6 +51,10 @@ UI, Workflows & Features
  * "git send-email" learned "--mailmap" option to allow rewriting the
    recipient addresses.
 
+ * "git mergetool" learned to use VSCode as a merge backend.
+
+ * "git pack-redundant" has been marked for removal in Git 3.0.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -196,6 +200,11 @@ Fixes since v2.46
  * The code path for compacting reftable files saw some bugfixes
    against concurrent operation.
 
+ * The code forgot to discard unnecessary in-core commit buffer data
+   for commits that "git log --skip=<number>" traversed but omitted
+   from the output, which has been corrected.
+   (merge 6bd2ae67a5 jk/free-commit-buffer-of-skipped-commits later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge bb0498b1bb jc/how-to-maintain-updates later to maint).
    (merge 0d66f601a9 jc/tests-no-useless-tee later to maint).
@@ -206,3 +215,4 @@ Fixes since v2.46
    (merge 596f4ff6ad cl/config-regexp-docfix later to maint).
    (merge 4881328617 aa/cat-file-batch-output-doc later to maint).
    (merge 1609470409 jc/config-doc-update later to maint).
+   (merge d4dc0efd7d rj/compat-terminal-unused-fix later to maint).
