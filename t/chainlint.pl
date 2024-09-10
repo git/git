@@ -587,6 +587,7 @@ sub new {
 	my $class = shift @_;
 	my $self = $class->SUPER::new(@_);
 	$self->{ntests} = 0;
+	$self->{nerrs} = 0;
 	return $self;
 }
 
@@ -634,6 +635,7 @@ sub check_test {
 	my $parser = TestParser->new(\$body);
 	my @tokens = $parser->parse();
 	my $problems = $parser->{problems};
+	$self->{nerrs} += @$problems;
 	return unless $emit_all || @$problems;
 	my $c = main::fd_colors(1);
 	my $start = 0;
@@ -641,15 +643,16 @@ sub check_test {
 	for (sort {$a->[1]->[2] <=> $b->[1]->[2]} @$problems) {
 		my ($label, $token) = @$_;
 		my $pos = $token->[2];
-		$checked .= substr($body, $start, $pos - $start) . " ?!$label?! ";
+		$checked .= substr($body, $start, $pos - $start);
+		$checked .= ' ' unless $checked =~ /\s$/;
+		$checked .= "$c->{rev}$c->{red}?!$label?!$c->{reset}";
+		$checked .= ' ' unless $pos >= length($body) ||
+		    substr($body, $pos, 1) =~ /^\s/;
 		$start = $pos;
 	}
 	$checked .= substr($body, $start);
 	$checked =~ s/^/$lineno++ . ' '/mge;
 	$checked =~ s/^\d+ \n//;
-	$checked =~ s/(\s) \?!/$1?!/mg;
-	$checked =~ s/\?! (\s)/?!$1/mg;
-	$checked =~ s/(\?![^?]+\?!)/$c->{rev}$c->{red}$1$c->{reset}/mg;
 	$checked =~ s/^\d+/$c->{dim}$&$c->{reset}/mg;
 	$checked .= "\n" unless $checked =~ /\n$/;
 	push(@{$self->{output}}, "$c->{blue}# chainlint: $title$c->{reset}\n$checked");
@@ -791,9 +794,9 @@ sub check_script {
 			my $c = fd_colors(1);
 			my $s = join('', @{$parser->{output}});
 			$emit->("$c->{bold}$c->{blue}# chainlint: $path$c->{reset}\n" . $s);
-			$nerrs += () = $s =~ /\?![^?]+\?!/g;
 		}
 		$ntests += $parser->{ntests};
+		$nerrs += $parser->{nerrs};
 	}
 	return [$id, $nscripts, $ntests, $nerrs];
 }
