@@ -4407,6 +4407,7 @@ static struct commit *get_revision_internal(struct rev_info *revs)
 				c = get_revision_1(revs);
 				if (!c)
 					break;
+				free_commit_buffer(revs->repo->parsed_objects, c);
 			}
 		}
 
