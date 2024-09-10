@@ -1001,6 +1001,7 @@ struct ref_formatting_stack {
 	struct ref_formatting_stack *prev;
 	struct strbuf output;
 	void (*at_end)(struct ref_formatting_stack **stack);
+	void (*at_end_data_free)(void *data);
 	void *at_end_data;
 };
 
@@ -1169,6 +1170,8 @@ static void pop_stack_element(struct ref_formatting_stack **stack)
 	if (prev)
 		strbuf_addbuf(&prev->output, &current->output);
 	strbuf_release(&current->output);
+	if (current->at_end_data_free)
+		current->at_end_data_free(current->at_end_data);
 	free(current);
 	*stack = prev;
 }
@@ -1228,15 +1231,13 @@ static void if_then_else_handler(struct ref_formatting_stack **stack)
 	}
 
 	*stack = cur;
-	free(if_then_else);
 }
 
 static int if_atom_handler(struct atom_value *atomv, struct ref_formatting_state *state,
 			   struct strbuf *err UNUSED)
 {
 	struct ref_formatting_stack *new_stack;
-	struct if_then_else *if_then_else = xcalloc(1,
-						    sizeof(struct if_then_else));
+	struct if_then_else *if_then_else = xcalloc(1, sizeof(*if_then_else));
 
 	if_then_else->str = atomv->atom->u.if_then_else.str;
 	if_then_else->cmp_status = atomv->atom->u.if_then_else.cmp_status;
@@ -1245,6 +1246,7 @@ static int if_atom_handler(struct atom_value *atomv, struct ref_formatting_state
 	new_stack = state->stack;
 	new_stack->at_end = if_then_else_handler;
 	new_stack->at_end_data = if_then_else;
+	new_stack->at_end_data_free = free;
 	return 0;
 }
 
