@@ -98,7 +98,7 @@ test_expect_success 'stripspace outside repository' '
 	nongit git stripspace -s </dev/null
 '
 
-test_expect_success 'remote-http outside repository' '
+test_expect_success LIBCURL 'remote-http outside repository' '
 	test_must_fail git remote-http 2>actual &&
 	test_grep "^error: remote-curl" actual &&
 	(
