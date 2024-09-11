@@ -337,7 +337,8 @@ test_expect_success 'expect def_params for query command' '
 # remote-curl.c rather than git.c.  Confirm that we get def_param
 # events from both layers.
 #
-test_expect_success 'expect def_params for remote-curl and _run_dashed_' '
+test_expect_success LIBCURL \
+		'expect def_params for remote-curl and _run_dashed_' '
 	test_when_finished "rm prop.perf actual" &&
 
 	test_config_global "trace2.configParams" "cfg.prop.*" &&
@@ -366,7 +367,8 @@ test_expect_success 'expect def_params for remote-curl and _run_dashed_' '
 # an executable built from http-fetch.c.  Confirm that we get
 # def_param events from both layers.
 #
-test_expect_success 'expect def_params for http-fetch and _run_dashed_' '
+test_expect_success LIBCURL \
+		'expect def_params for http-fetch and _run_dashed_' '
 	test_when_finished "rm prop.perf actual" &&
 
 	test_config_global "trace2.configParams" "cfg.prop.*" &&
