@@ -37,9 +37,18 @@ ubuntu-*|ubuntu32-*)
 	# Required so that apt doesn't wait for user input on certain packages.
 	export DEBIAN_FRONTEND=noninteractive
 
+	case "$distro" in
+	ubuntu-*)
+		SVN='libsvn-perl subversion'
+		;;
+	*)
+		SVN=
+		;;
+	esac
+
 	sudo apt-get -q update
 	sudo apt-get -q -y install \
-		language-pack-is libsvn-perl apache2 cvs cvsps git gnupg subversion \
+		language-pack-is apache2 cvs cvsps git gnupg $SVN \
 		make libssl-dev libcurl4-openssl-dev libexpat-dev wget sudo default-jre \
 		tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl \
 		libemail-valid-perl libio-pty-perl libio-socket-ssl-perl libnet-smtp-ssl-perl libdbd-sqlite3-perl libcgi-pm-perl \

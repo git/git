@@ -339,8 +339,8 @@ jobs:
           image: alpine
           distro: alpine-latest
         - jobname: linux32
-          image: daald/ubuntu32:xenial
-          distro: ubuntu32-16.04
+          image: i386/ubuntu:focal
+          distro: ubuntu32-20.04
         - jobname: pedantic
           image: fedora
           distro: fedora-latest
