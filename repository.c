@@ -112,6 +112,13 @@ const char *repo_get_object_directory(struct repository *repo)
 	return repo->objects->odb->path;
 }
 
+const char *repo_get_index_file(struct repository *repo)
+{
+	if (!repo->index_file)
+		BUG("repository hasn't been set up");
+	return repo->index_file;
+}
+
 static void repo_set_commondir(struct repository *repo,
 			       const char *commondir)
 {

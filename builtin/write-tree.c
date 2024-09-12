@@ -6,7 +6,6 @@
 
 #include "builtin.h"
 #include "config.h"
-#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "tree.h"
@@ -44,7 +43,8 @@ int cmd_write_tree(int argc, const char **argv, const char *cmd_prefix)
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
 
-	ret = write_index_as_tree(&oid, the_repository->index, get_index_file(),
+	ret = write_index_as_tree(&oid, the_repository->index,
+				  repo_get_index_file(the_repository),
 				  flags, tree_prefix);
 	switch (ret) {
 	case 0:

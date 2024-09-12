@@ -306,13 +306,6 @@ int odb_pack_keep(const char *name)
 	return open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
 }
 
-char *get_index_file(void)
-{
-	if (!the_repository->index_file)
-		BUG("git environment hasn't been setup");
-	return the_repository->index_file;
-}
-
 char *get_graft_file(struct repository *r)
 {
 	if (!r->graft_file)

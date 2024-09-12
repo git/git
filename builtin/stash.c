@@ -540,8 +540,8 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 					 NULL, NULL, NULL))
 		return error(_("could not write index"));
 
-	if (write_index_as_tree(&c_tree, the_repository->index, get_index_file(), 0,
-				NULL))
+	if (write_index_as_tree(&c_tree, the_repository->index,
+				repo_get_index_file(the_repository), 0, NULL))
 		return error(_("cannot apply a stash in the middle of a merge"));
 
 	if (index) {
@@ -566,7 +566,7 @@ static int do_apply_stash(const char *prefix, struct stash_info *info,
 			discard_index(the_repository->index);
 			repo_read_index(the_repository);
 			if (write_index_as_tree(&index_tree, the_repository->index,
-						get_index_file(), 0, NULL))
+						repo_get_index_file(the_repository), 0, NULL))
 				return error(_("could not save index tree"));
 
 			reset_head();
@@ -1406,8 +1406,8 @@ static int do_create_stash(const struct pathspec *ps, struct strbuf *stash_msg_b
 
 	strbuf_addf(&commit_tree_label, "index on %s\n", msg.buf);
 	commit_list_insert(head_commit, &parents);
-	if (write_index_as_tree(&info->i_tree, the_repository->index, get_index_file(), 0,
-				NULL) ||
+	if (write_index_as_tree(&info->i_tree, the_repository->index,
+				repo_get_index_file(the_repository), 0, NULL) ||
 	    commit_tree(commit_tree_label.buf, commit_tree_label.len,
 			&info->i_tree, parents, &info->i_commit, NULL, NULL)) {
 		if (!quiet)
@@ -1905,7 +1905,7 @@ int cmd_stash(int argc, const char **argv, const char *prefix)
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
 
-	index_file = get_index_file();
+	index_file = repo_get_index_file(the_repository);
 	strbuf_addf(&stash_index_path, "%s.stash.%" PRIuMAX, index_file,
 		    (uintmax_t)pid);
 

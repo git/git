@@ -1239,7 +1239,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		if (newfd < 0) {
 			if (refresh_args.flags & REFRESH_QUIET)
 				exit(128);
-			unable_to_lock_die(get_index_file(), lock_error);
+			unable_to_lock_die(repo_get_index_file(the_repository), lock_error);
 		}
 		if (write_locked_index(the_repository->index, &lock_file, COMMIT_LOCK))
 			die("Unable to write new index file");
