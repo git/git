@@ -1555,14 +1555,6 @@ static int git_default_core_config(const char *var, const char *value,
 		return git_config_string(&check_roundtrip_encoding, var, value);
 	}
 
-	if (!strcmp(var, "core.notesref")) {
-		if (!value)
-			return config_error_nonbool(var);
-		free(notes_ref_name);
-		notes_ref_name = xstrdup(value);
-		return 0;
-	}
-
 	if (!strcmp(var, "core.editor")) {
 		FREE_AND_NULL(editor_program);
 		return git_config_string(&editor_program, var, value);

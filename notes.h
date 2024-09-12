@@ -4,6 +4,7 @@
 #include "string-list.h"
 
 struct object_id;
+struct repository;
 struct strbuf;
 
 /*
@@ -70,7 +71,7 @@ extern struct notes_tree {
  * 3. The value of the core.notesRef config variable, if set
  * 4. GIT_NOTES_DEFAULT_REF (i.e. "refs/notes/commits")
  */
-const char *default_notes_ref(void);
+char *default_notes_ref(struct repository *repo);
 
 /*
  * Flags controlling behaviour of notes tree initialization

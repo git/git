@@ -67,7 +67,6 @@ enum push_default_type push_default = PUSH_DEFAULT_UNSPECIFIED;
 #define OBJECT_CREATION_MODE OBJECT_CREATION_USES_HARDLINKS
 #endif
 enum object_creation_mode object_creation_mode = OBJECT_CREATION_MODE;
-char *notes_ref_name;
 int grafts_keep_true_parents;
 int core_apply_sparse_checkout;
 int core_sparse_checkout_cone;
