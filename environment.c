@@ -122,8 +122,6 @@ int core_preload_index = 1;
 /* This is set by setup_git_dir_gently() and/or git_default_config() */
 char *git_work_tree_cfg;
 
-static char *git_namespace;
-
 /*
  * Repository-local GIT_* environment variables; see environment.h for details.
  */
@@ -145,27 +143,6 @@ const char * const local_repo_env[] = {
 	GIT_COMMON_DIR_ENVIRONMENT,
 	NULL
 };
-
-static char *expand_namespace(const char *raw_namespace)
-{
-	struct strbuf buf = STRBUF_INIT;
-	struct strbuf **components, **c;
-
-	if (!raw_namespace || !*raw_namespace)
-		return xstrdup("");
-
-	strbuf_addstr(&buf, raw_namespace);
-	components = strbuf_split(&buf, '/');
-	strbuf_reset(&buf);
-	for (c = components; *c; c++)
-		if (strcmp((*c)->buf, "/") != 0)
-			strbuf_addf(&buf, "refs/namespaces/%s", (*c)->buf);
-	strbuf_list_free(components);
-	if (check_refname_format(buf.buf, 0))
-		die(_("bad git namespace path \"%s\""), raw_namespace);
-	strbuf_addch(&buf, '/');
-	return strbuf_detach(&buf, NULL);
-}
 
 const char *getenv_safe(struct strvec *argv, const char *name)
 {
@@ -205,8 +182,6 @@ void setup_git_env(const char *git_dir)
 							  : "refs/replace/");
 	update_ref_namespace(NAMESPACE_REPLACE, git_replace_ref_base);
 
-	free(git_namespace);
-	git_namespace = expand_namespace(getenv(GIT_NAMESPACE_ENVIRONMENT));
 	shallow_file = getenv(GIT_SHALLOW_FILE_ENVIRONMENT);
 	if (shallow_file)
 		set_alternate_shallow_file(the_repository, shallow_file, 0);
@@ -229,9 +204,35 @@ int have_git_dir(void)
 
 const char *get_git_namespace(void)
 {
-	if (!git_namespace)
-		BUG("git environment hasn't been setup");
-	return git_namespace;
+	static const char *namespace;
+
+	struct strbuf buf = STRBUF_INIT;
+	struct strbuf **components, **c;
+	const char *raw_namespace;
+
+	if (namespace)
+		return namespace;
+
+	raw_namespace = getenv(GIT_NAMESPACE_ENVIRONMENT);
+	if (!raw_namespace || !*raw_namespace) {
+		namespace = "";
+		return namespace;
+	}
+
+	strbuf_addstr(&buf, raw_namespace);
+	components = strbuf_split(&buf, '/');
+	strbuf_reset(&buf);
+	for (c = components; *c; c++)
+		if (strcmp((*c)->buf, "/") != 0)
+			strbuf_addf(&buf, "refs/namespaces/%s", (*c)->buf);
+	strbuf_list_free(components);
+	if (check_refname_format(buf.buf, 0))
+		die(_("bad git namespace path \"%s\""), raw_namespace);
+	strbuf_addch(&buf, '/');
+
+	namespace = strbuf_detach(&buf, NULL);
+
+	return namespace;
 }
 
 const char *strip_namespace(const char *namespaced_ref)
