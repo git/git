@@ -102,6 +102,28 @@ int use_optional_locks(void);
 const char *get_git_namespace(void);
 const char *strip_namespace(const char *namespaced_ref);
 
+/*
+ * TODO: All the below state either explicitly or implicitly relies on
+ * `the_repository`. We should eventually get rid of these and make the
+ * dependency on a repository explicit:
+ *
+ *   - `setup_git_env()` ideally shouldn't exist as it modifies global state,
+ *     namely the environment. The current process shouldn't ever access that
+ *     state via envvars though, but should instead consult a `struct
+ *     repository`. When spawning new processes, we would ideally also pass a
+ *     `struct repository` and then set up the environment variables for the
+ *     child process, only.
+ *
+ *   - `have_git_dir()` should not have to exist at all. Instead, we should
+ *     decide on whether or not we have a `struct repository`.
+ *
+ *   - All the global config variables should become tied to a repository. Like
+ *     this, we'd correctly honor repository-local configuration and be able to
+ *     distinguish configuration values from different repositories.
+ *
+ * Please do not add new global config variables here.
+ */
+# ifdef USE_THE_REPOSITORY_VARIABLE
 void setup_git_env(const char *git_dir);
 
 /*
@@ -213,4 +235,5 @@ extern const char *comment_line_str;
 extern char *comment_line_str_to_free;
 extern int auto_comment_line_char;
 
-#endif
+# endif /* USE_THE_REPOSITORY_VARIABLE */
+#endif /* ENVIRONMENT_H */

@@ -1,6 +1,9 @@
 /*
  * Copyright (C) 2008 Linus Torvalds
  */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "pathspec.h"
 #include "dir.h"
