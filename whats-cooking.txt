@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2024, #03; Mon, 9)
-X-master-at: 4c42d5ff284067fa32837421408bebfef996bf81
-X-next-at: a09f0889bb33dc86ffe53d14730c994b00d10e9e
+Subject: What's cooking in git.git (Sep 2024, #04; Thu, 12)
+X-master-at: 57974d46a4d5a079471c4f7eaa5933b1922299e4
+X-next-at: 47ca7c9db903a97a4f176f2884133618062d7d4e
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2024, #03; Mon, 9)
+What's cooking in git.git (Sep 2024, #04; Thu, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,7 +46,221 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ah/mergetols-vscode (2024-09-01) 1 commit
+  (merged to 'next' on 2024-09-04 at 425c5c83e2)
+ + mergetools: vscode: new tool
+
+ "git mergetool" learned to use VSCode as a merge backend.
+ source: <20240902025918.99657-1-alexhenrie24@gmail.com>
+
+
+* gt/unit-test-oid-array (2024-09-01) 1 commit
+  (merged to 'next' on 2024-09-05 at 92d0881bb0)
+ + t: port helper/test-oid-array.c to unit-tests/t-oid-array.c
+
+ Another unit-test.
+ 
+ source: <20240901212649.4910-1-shyamthakkar001@gmail.com>
+
+
+* jc/mailinfo-header-cleanup (2024-08-20) 1 commit
+  (merged to 'next' on 2024-09-05 at 9a30adb035)
+ + mailinfo: we parse fixed headers
+
+ Code clean-up.
+  cf. <Zsb1rGQbglHMiBHI@tanuki>
+ source: <xmqq1q2i6gw7.fsf@gitster.g>
+
+
+* jk/free-commit-buffer-of-skipped-commits (2024-08-30) 1 commit
+  (merged to 'next' on 2024-09-03 at a8fb72a4d5)
+ + revision: free commit buffers for skipped commits
+
+ The code forgot to discard unnecessary in-core commit buffer data
+ for commits that "git log --skip=<number>" traversed but omitted
+ from the output, which has been corrected.
+ source: <20240830205331.GA1038751@coredump.intra.peff.net>
+
+
+* jk/messages-with-excess-lf-fix (2024-09-05) 1 commit
+  (merged to 'next' on 2024-09-06 at edb0958483)
+ + drop trailing newline from warning/error/die messages
+
+ One-line messages to "die" and other helper functions will get LF
+ added by these helper functions, but many existing messages had an
+ unnecessary LF at the end, which have been corrected.
+ 
+ source: <20240905085149.GA2340826@coredump.intra.peff.net>
+
+
+* kl/cat-file-on-sparse-index (2024-09-04) 2 commits
+  (merged to 'next' on 2024-09-06 at a3c78e9398)
+ + builtin/cat-file: mark 'git cat-file' sparse-index compatible
+ + t1092: allow run_on_* functions to use standard input
+
+ "git cat-file" works well with the sparse-index, and gets marked as
+ such.
+ 
+ source: <pull.1770.v4.git.git.1725401207.gitgitgadget@gmail.com>
+
+
+* ps/declare-pack-redundamt-dead (2024-09-03) 1 commit
+  (merged to 'next' on 2024-09-04 at 6a97b07329)
+ + Documentation/BreakingChanges: announce removal of git-pack-redundant(1)
+
+ "git pack-redundant" has been marked for removal in Git 3.0.
+ source: <a6be9f5e9eb1f426b1a17b89e3db1bc7532758b5.1725264748.git.ps@pks.im>
+
+
+* ps/index-pack-outside-repo-fix (2024-09-04) 1 commit
+  (merged to 'next' on 2024-09-05 at d7ff867595)
+ + builtin/index-pack: fix segfaults when running outside of a repo
+
+ "git verify-pack" and "git index-pack" started dying outside a
+ repository, which has been corrected.
+ 
+ source: <9a4267b8854312351f82286b6025d0a3d0e66743.1725429169.git.ps@pks.im>
+
+
+* ps/pack-refs-auto-heuristics (2024-09-04) 3 commits
+  (merged to 'next' on 2024-09-06 at 068ed2f7ae)
+ + refs/files: use heuristic to decide whether to repack with `--auto`
+ + t0601: merge tests for auto-packing of refs
+ + wrapper: introduce `log2u()`
+
+ "git pack-refs --auto" for the files backend was too aggressive,
+ which has been a bit tamed.
+ 
+ source: <cover.1725439407.git.ps@pks.im>
+
+
+* rj/compat-terminal-unused-fix (2024-09-01) 1 commit
+  (merged to 'next' on 2024-09-04 at 4ad97be799)
+ + compat/terminal: mark parameter of git_terminal_prompt() UNUSED
+
+ Build fix.
+ source: <ce1c1d66-e0eb-4143-b334-1a83c0492415@ramsayjones.plus.com>
+
+
+* sp/mailmap (2024-09-06) 1 commit
+  (merged to 'next' on 2024-09-07 at aa952cf271)
+ + .mailmap document current address.
+
+ Update to a mailmap entry.
+ source: <20240906153003.110200-2-ischis2@cox.net>
+
+
+* tb/multi-pack-reuse-fix (2024-08-27) 5 commits
+  (merged to 'next' on 2024-09-06 at 552494ec2f)
+ + builtin/pack-objects.c: do not open-code `MAX_PACK_OBJECT_HEADER`
+ + pack-bitmap.c: avoid repeated `pack_pos_to_offset()` during reuse
+ + builtin/pack-objects.c: translate bit positions during pack-reuse
+ + pack-bitmap: tag bitmapped packs with their corresponding MIDX
+ + t/t5332-multi-pack-reuse.sh: verify pack generation with --strict
+
+ A data corruption bug when multi-pack-index is used and the same
+ objects are stored in multiple packfiles has been corrected.
+  cf. <20240905091043.GB2556395@coredump.intra.peff.net>
+ source: <cover.1724793201.git.me@ttaylorr.com>
+
+--------------------------------------------------
 [New Topics]
+
+* jc/ci-upload-artifact-and-linux32 (2024-09-09) 1 commit
+  (merged to 'next' on 2024-09-11 at 62991bef5b)
+ + ci: remove 'Upload failed tests' directories' step from linux32 jobs
+ (this branch is used by jk/ci-linux32-update.)
+
+ CI started failing completely for linux32 jobs, as the step to
+ upload failed test directory uses GitHub actions that is deprecated
+ and is now disabled.  Remove the step so at least we will know if
+ the tests are passing.
+
+ Will merge to 'master'.
+ source: <xmqqy140o2kb.fsf@gitster.g>
+
+
+* jk/ref-filter-trailer-fixes (2024-09-10) 10 commits
+  (merged to 'next' on 2024-09-10 at ce7299fe2e)
+ + ref-filter: fix leak with unterminated %(if) atoms
+ + ref-filter: add ref_format_clear() function
+ + ref-filter: fix leak when formatting %(push:remoteref)
+ + ref-filter: fix leak with %(describe) arguments
+ + ref-filter: fix leak of %(trailers) "argbuf"
+ + ref-filter: store ref_trailer_buf data per-atom
+ + ref-filter: drop useless cast in trailers_atom_parser()
+ + ref-filter: strip signature when parsing tag trailers
+ + ref-filter: avoid extra copies of payload/signature
+ + t6300: drop newline from wrapped test title
+
+ Bugfixes and leak plugging in "git for-each-ref --format=..." code
+ paths.
+
+ Will merge to 'master'.
+ source: <20240909230758.GA921697@coredump.intra.peff.net>
+
+
+* jk/ci-linux32-update (2024-09-12) 4 commits
+ - ci: use regular action versions for linux32 job
+ - ci: use more recent linux32 image
+ - ci: unify ubuntu and ubuntu32 dependencies
+ - ci: drop run-docker scripts
+ (this branch uses jc/ci-upload-artifact-and-linux32.)
+
+ CI updates
+
+ Will merge to 'next'.
+ source: <20240912094238.GA589050@coredump.intra.peff.net>
+
+
+* jk/interop-test-build-options (2024-09-12) 1 commit
+ - t/interop: allow per-version make options
+
+ The support to customize build options to adjust for older versions
+ and/or older systems for the interop tests has been improved.
+
+ Will merge to 'next'.
+ source: <20240911061009.GA1538383@coredump.intra.peff.net>
+
+
+* jk/no-openssl-with-openssl-sha1 (2024-09-12) 1 commit
+ - imap-send: handle NO_OPENSSL even when openssl exists
+
+ The "imap-send" now allows to be compiled with NO_OPENSSL and
+ OPENSSL_SHA1 defined together.
+
+ Will merge to 'next'.
+ source: <20240911061257.GA1538490@coredump.intra.peff.net>
+
+
+* ma/test-libcurl-prereq (2024-09-11) 2 commits
+ - t0211: add missing LIBCURL prereq
+ - t1517: add missing LIBCURL prereq
+
+ Test portability fix.
+
+ Will merge to 'next'.
+ source: <cover.1726049108.git.martin.agren@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* cc/promisor-remote-capability (2024-09-10) 4 commits
+ - promisor-remote: check advertised name or URL
+ - Add 'promisor-remote' capability to protocol v2
+ - strbuf: refactor strbuf_trim_trailing_ch()
+ - version: refactor strbuf_sanitize()
+
+ The v2 protocol learned to allow the server to advertise possible
+ promisor remotes, and the client to respond with what promissor
+ remotes it uses, so that the server side can omit objects that the
+ client can lazily obtain from these other promissor remotes.
+
+ Comments?
+ source: <20240910163000.1985723-1-christian.couder@gmail.com>
+
 
 * rj/cygwin-has-dev-tty (2024-09-08) 1 commit
   (merged to 'next' on 2024-09-09 at 5c5726050f)
@@ -60,11 +274,12 @@ Release tarballs are available at:
 
 
 * ah/apply-3way-ours (2024-09-09) 1 commit
- - apply: support --ours, --theirs, and --union for three-way merges
+  (merged to 'next' on 2024-09-10 at 989ba9708b)
+ + apply: support --ours, --theirs, and --union for three-way merges
 
  "git apply --3way" learned to take "--ours" and other options.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240909141109.3102-2-alexhenrie24@gmail.com>
 
 
@@ -101,8 +316,6 @@ Release tarballs are available at:
  Needs review.
  source: <cover.1725881266.git.ps@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * ds/doc-wholesale-disabling-advice-messages (2024-09-06) 1 commit
   (merged to 'next' on 2024-09-07 at a52a31f161)
@@ -140,16 +353,6 @@ Release tarballs are available at:
  source: <20240906145743.2059405-1-brianmlyles@gmail.com>
 
 
-* sp/mailmap (2024-09-06) 1 commit
-  (merged to 'next' on 2024-09-07 at aa952cf271)
- + .mailmap document current address.
-
- Update to a mailmap entry.
-
- Will merge to 'master'.
- source: <20240906153003.110200-2-ischis2@cox.net>
-
-
 * jc/doc-skip-fetch-all-and-prefetch (2024-09-09) 1 commit
   (merged to 'next' on 2024-09-09 at a2bf302636)
  + doc: remote.*.skip{DefaultUpdate,FetchAll} stops prefetch
@@ -173,48 +376,6 @@ Release tarballs are available at:
  source: <0864c86a-5562-4780-92c5-59d6c1a35aad@web.de>
 
 
-* jk/free-commit-buffer-of-skipped-commits (2024-08-30) 1 commit
-  (merged to 'next' on 2024-09-03 at a8fb72a4d5)
- + revision: free commit buffers for skipped commits
-
- The code forgot to discard unnecessary in-core commit buffer data
- for commits that "git log --skip=<number>" traversed but omitted
- from the output, which has been corrected.
-
- Will merge to 'master'.
- source: <20240830205331.GA1038751@coredump.intra.peff.net>
-
-
-* ah/mergetols-vscode (2024-09-01) 1 commit
-  (merged to 'next' on 2024-09-04 at 425c5c83e2)
- + mergetools: vscode: new tool
-
- "git mergetool" learned to use VSCode as a merge backend.
-
- Will merge to 'master'.
- source: <20240902025918.99657-1-alexhenrie24@gmail.com>
-
-
-* rj/compat-terminal-unused-fix (2024-09-01) 1 commit
-  (merged to 'next' on 2024-09-04 at 4ad97be799)
- + compat/terminal: mark parameter of git_terminal_prompt() UNUSED
-
- Build fix.
-
- Will merge to 'master'.
- source: <ce1c1d66-e0eb-4143-b334-1a83c0492415@ramsayjones.plus.com>
-
-
-* ps/declare-pack-redundamt-dead (2024-09-03) 1 commit
-  (merged to 'next' on 2024-09-04 at 6a97b07329)
- + Documentation/BreakingChanges: announce removal of git-pack-redundant(1)
-
- "git pack-redundant" has been marked for removal in Git 3.0.
-
- Will merge to 'master'.
- source: <a6be9f5e9eb1f426b1a17b89e3db1bc7532758b5.1725264748.git.ps@pks.im>
-
-
 * pw/rebase-autostash-fix (2024-09-03) 1 commit
  - rebase: apply and cleanup autostash when rebase fails to start
 
@@ -222,7 +383,7 @@ Release tarballs are available at:
  changes when the command gets aborted after giving back control
  asking for hlep in conflict resolution.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.1772.v2.git.1725289979450.gitgitgadget@gmail.com>
 
 
@@ -242,42 +403,6 @@ Release tarballs are available at:
  source: <20240908041632.4948-1-chandrapratap3519@gmail.com>
 
 
-* kl/cat-file-on-sparse-index (2024-09-04) 2 commits
-  (merged to 'next' on 2024-09-06 at a3c78e9398)
- + builtin/cat-file: mark 'git cat-file' sparse-index compatible
- + t1092: allow run_on_* functions to use standard input
-
- "git cat-file" works well with the sparse-index, and gets marked as
- such.
-
- Will merge to 'master'.
- source: <pull.1770.v4.git.git.1725401207.gitgitgadget@gmail.com>
-
-
-* ps/index-pack-outside-repo-fix (2024-09-04) 1 commit
-  (merged to 'next' on 2024-09-05 at d7ff867595)
- + builtin/index-pack: fix segfaults when running outside of a repo
-
- "git verify-pack" and "git index-pack" started dying outside a
- repository, which has been corrected.
-
- Will merge to 'master'.
- source: <9a4267b8854312351f82286b6025d0a3d0e66743.1725429169.git.ps@pks.im>
-
-
-* ps/pack-refs-auto-heuristics (2024-09-04) 3 commits
-  (merged to 'next' on 2024-09-06 at 068ed2f7ae)
- + refs/files: use heuristic to decide whether to repack with `--auto`
- + t0601: merge tests for auto-packing of refs
- + wrapper: introduce `log2u()`
-
- "git pack-refs --auto" for the files backend was too aggressive,
- which has been a bit tamed.
-
- Will merge to 'master'.
- source: <cover.1725439407.git.ps@pks.im>
-
-
 * ds/scalar-no-tags (2024-09-06) 1 commit
   (merged to 'next' on 2024-09-07 at fc06d19cfb)
  + scalar: add --no-tags option to 'scalar clone'
@@ -288,8 +413,7 @@ Release tarballs are available at:
  source: <pull.1780.v2.git.1725654102035.gitgitgadget@gmail.com>
 
 
-* jc/pass-repo-to-builtins (2024-09-05) 4 commits
- - fixup! builtin: remove USE_THE_REPOSITORY_VARIABLE from builtin.h
+* jc/pass-repo-to-builtins (2024-09-11) 3 commits
  - add: pass in repo variable instead of global the_repository
  - builtin: remove USE_THE_REPOSITORY_VARIABLE from builtin.h
  - builtin: add a repository parameter for builtin functions
@@ -298,20 +422,8 @@ Release tarballs are available at:
  been updated to pass the repository, if known, together with the
  prefix value.
 
- Needs review.
- source: <pull.1778.git.git.1725555467.gitgitgadget@gmail.com>
-
-
-* jk/messages-with-excess-lf-fix (2024-09-05) 1 commit
-  (merged to 'next' on 2024-09-06 at edb0958483)
- + drop trailing newline from warning/error/die messages
-
- One-line messages to "die" and other helper functions will get LF
- added by these helper functions, but many existing messages had an
- unnecessary LF at the end, which have been corrected.
-
- Will merge to 'master'.
- source: <20240905085149.GA2340826@coredump.intra.peff.net>
+ Will merge to 'next'?
+ source: <pull.1778.v2.git.git.1726001960.gitgitgadget@gmail.com>
 
 
 * tb/weak-sha1-for-tail-sum (2024-09-06) 9 commits
@@ -332,34 +444,19 @@ Release tarballs are available at:
  source: <cover.1725651952.git.me@ttaylorr.com>
 
 
-* tb/multi-pack-reuse-fix (2024-08-27) 5 commits
-  (merged to 'next' on 2024-09-06 at 552494ec2f)
- + builtin/pack-objects.c: do not open-code `MAX_PACK_OBJECT_HEADER`
- + pack-bitmap.c: avoid repeated `pack_pos_to_offset()` during reuse
- + builtin/pack-objects.c: translate bit positions during pack-reuse
- + pack-bitmap: tag bitmapped packs with their corresponding MIDX
- + t/t5332-multi-pack-reuse.sh: verify pack generation with --strict
-
- A data corruption bug when multi-pack-index is used and the same
- objects are stored in multiple packfiles has been corrected.
-
- Will merge to 'master'.
- cf. <20240905091043.GB2556395@coredump.intra.peff.net>
- source: <cover.1724793201.git.me@ttaylorr.com>
-
-
-* es/chainlint-message-updates (2024-08-29) 2 commits
- - chainlint: reduce annotation noise-factor
- - chainlint: make error messages self-explanatory
+* es/chainlint-message-updates (2024-09-10) 3 commits
+  (merged to 'next' on 2024-09-11 at a3fd02a009)
+ + chainlint: reduce annotation noise-factor
+ + chainlint: make error messages self-explanatory
+ + chainlint: don't be fooled by "?!...?!" in test body
 
  The error messages from the test script checker have been improved.
 
- Expecting a reroll.
- cf. <CAPig+cQ+6am7-BSnWZz5=C0Q1Vyng0T4goB+ZE9TKJMrpi_Jpg@mail.gmail.com>
- source: <20240829091625.41297-1-ericsunshine@charter.net>
+ Will merge to 'master'.
+ source: <20240910041013.68948-1-ericsunshine@charter.net>
 
 
-* ps/environ-wo-the-repository (2024-08-30) 21 commits
+* ps/environ-wo-the-repository (2024-09-12) 21 commits
  - environment: stop storing "core.notesRef" globally
  - environment: stop storing "core.warnAmbiguousRefs" globally
  - environment: stop storing "core.preferSymlinkRefs" globally
@@ -372,7 +469,7 @@ Release tarballs are available at:
  - environment: reorder header to split out `the_repository`-free section
  - environment: move `set_git_dir()` and related into setup layer
  - environment: make `get_git_namespace()` self-contained
- - environment: move `odb_mkstemp()` into object layer
+ - environment: move object database functions into object layer
  - config: make dependency on repo in `read_early_config()` explicit
  - config: document `read_early_config()` and `read_very_early_config()`
  - environment: make `get_git_work_tree()` accept a repository
@@ -384,18 +481,8 @@ Release tarballs are available at:
 
  Code clean-up.
 
- Needs review.
- source: <cover.1725008897.git.ps@pks.im>
-
-
-* gt/unit-test-oid-array (2024-09-01) 1 commit
-  (merged to 'next' on 2024-09-05 at 92d0881bb0)
- + t: port helper/test-oid-array.c to unit-tests/t-oid-array.c
-
- Another unit-test.
-
- Will merge to 'master'.
- source: <20240901212649.4910-1-shyamthakkar001@gmail.com>
+ Will merge to 'next'.
+ source: <cover.1726139990.git.ps@pks.im>
 
 
 * gt/unit-test-oidset (2024-08-25) 1 commit
@@ -433,7 +520,7 @@ Release tarballs are available at:
 
  More leakfixes.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <cover.1725530720.git.ps@pks.im>
 
 
@@ -448,19 +535,8 @@ Release tarballs are available at:
  wouldn't have written itself (e.g., missing terminating end-of-line
  after the full object name).
 
- Ready?
+ Expecting a reroll.
  source: <Ztb-mgl50cwGVO8A@ArchLinux>
-
-
-* jc/mailinfo-header-cleanup (2024-08-20) 1 commit
-  (merged to 'next' on 2024-09-05 at 9a30adb035)
- + mailinfo: we parse fixed headers
-
- Code clean-up.
-
- Will merge to 'master'.
- cf. <Zsb1rGQbglHMiBHI@tanuki>
- source: <xmqq1q2i6gw7.fsf@gitster.g>
 
 
 * tb/incremental-midx-part-2 (2024-08-28) 16 commits
@@ -487,7 +563,9 @@ Release tarballs are available at:
  source: <cover.1723760847.git.me@ttaylorr.com>
 
 
-* ps/clar-unit-test (2024-09-04) 14 commits
+* ps/clar-unit-test (2024-09-10) 15 commits
+  (merged to 'next' on 2024-09-11 at ccc0289490)
+ + Makefile: rename clar-related variables to avoid confusion
   (merged to 'next' on 2024-09-05 at 87fb0a399a)
  + clar: add CMake support
  + t/unit-tests: convert ctype tests to use clar
@@ -512,7 +590,8 @@ Release tarballs are available at:
  source: <cover.1725459142.git.ps@pks.im>
 
 
-* js/libgit-rust (2024-09-06) 6 commits
+* js/libgit-rust (2024-09-09) 7 commits
+ . SQUASH???
  . Makefile: add option to build and test libgit-rs and libgit-rs-sys
  . libgit: add higher-level libgit crate
  . config: add git_configset_alloc() and git_configset_clear_and_free()
@@ -528,12 +607,13 @@ Release tarballs are available at:
 
 
 * jc/range-diff-lazy-setup (2024-08-09) 2 commits
- - remerge-diff: clean up temporary objdir at a central place
- - remerge-diff: lazily prepare temporary objdir on demand
+  (merged to 'next' on 2024-09-10 at 2e04a06b22)
+ + remerge-diff: clean up temporary objdir at a central place
+ + remerge-diff: lazily prepare temporary objdir on demand
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqr0ax9vlk.fsf@gitster.g>
 
 
@@ -580,59 +660,14 @@ Release tarballs are available at:
  source: <20240823224630.1180772-1-e@80x24.org>
 
 --------------------------------------------------
-[Will discard]
-
-* cc/promisor-remote-capability (2024-07-31) 4 commits
- - promisor-remote: check advertised name or URL
- - Add 'promisor-remote' capability to protocol v2
- - strbuf: refactor strbuf_trim_trailing_ch()
- - version: refactor strbuf_sanitize()
-
- The v2 protocol learned to allow the server to advertise possible
- promisor remotes, and the client to respond with what promissor
- remotes it uses, so that the server side can omit objects that the
- client can lazily obtain from these other promissor remotes.
-
- Will discard.
- Has been expecting a reroll for too long.
- cf. <ZrDYIFolRlERFdUT@tanuki>
- source: <20240731134014.2299361-1-christian.couder@gmail.com>
-
+[Discarded]
 
 * tc/fetch-bundle-uri (2024-07-24) 3 commits
- - fetch: use bundle URIs when having creationToken heuristic
- - transport: introduce transport_has_remote_bundle_uri()
- - clone: remove double bundle list clear code
+ . fetch: use bundle URIs when having creationToken heuristic
+ . transport: introduce transport_has_remote_bundle_uri()
+ . clone: remove double bundle list clear code
 
  Allow "git fetch" take advantage of bundleURI feature.
 
- Will discard.
  Has been expecting a reroll for too long.
  source: <ZqObobw8FsDMkllm@tanuki>
-
---------------------------------------------------
-[Discarded]
-
-* pp/add-parse-range-unit-test (2024-08-28) 2 commits
- . SQUASH???
- . apply: add unit tests for parse_range
-
- A unit test for code that parses the hunk offset and length from a
- patch fragment header as been added.
-
- Has been expecting a reroll for too long.
- cf. <b7eca313-9ea8-4132-ba1d-ed9236e07095@gmail.com>
- source: <pull.1677.v2.git.git.1716710073910.gitgitgadget@gmail.com>
-
-
-* sk/enable-prefetch-per-remote (2024-09-05) 1 commit
- . remote: prefetch config
-
- The prefetch task of "git maintenance" learned to honor the
- "remote.<name>.prefetch" configuration variable, which can be used
- to selectively disable prefetching from selected remote
- repositories.
-
- Retracted.
- cf. <CAG=Um+0X3Umt-2TQ-BGeefqdGxfVoy2Ug0tGKLycrX=_pj=oJw@mail.gmail.com>
- source: <pull.1779.v4.git.1725565398681.gitgitgadget@gmail.com>
