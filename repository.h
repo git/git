@@ -210,6 +210,7 @@ const char *repo_get_git_dir(struct repository *repo);
 const char *repo_get_common_dir(struct repository *repo);
 const char *repo_get_object_directory(struct repository *repo);
 const char *repo_get_index_file(struct repository *repo);
+const char *repo_get_graft_file(struct repository *repo);
 
 /*
  * Define a custom repository layout. Any field can be NULL, which

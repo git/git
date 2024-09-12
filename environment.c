@@ -306,13 +306,6 @@ int odb_pack_keep(const char *name)
 	return open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
 }
 
-char *get_graft_file(struct repository *r)
-{
-	if (!r->graft_file)
-		BUG("git environment hasn't been setup");
-	return r->graft_file;
-}
-
 static void set_git_dir_1(const char *path)
 {
 	xsetenv(GIT_DIR_ENVIRONMENT, path, 1);
