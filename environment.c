@@ -228,13 +228,6 @@ int have_git_dir(void)
 		|| the_repository->gitdir;
 }
 
-const char *get_git_dir(void)
-{
-	if (!the_repository->gitdir)
-		BUG("git environment hasn't been setup");
-	return the_repository->gitdir;
-}
-
 const char *get_git_common_dir(void)
 {
 	if (!the_repository->commondir)
@@ -352,7 +345,8 @@ static void update_relative_gitdir(const char *name UNUSED,
 				   const char *new_cwd,
 				   void *data UNUSED)
 {
-	char *path = reparent_relative_path(old_cwd, new_cwd, get_git_dir());
+	char *path = reparent_relative_path(old_cwd, new_cwd,
+					    repo_get_git_dir(the_repository));
 	struct tmp_objdir *tmp_objdir = tmp_objdir_unapply_primary_odb();
 
 	trace_printf_key(&trace_setup_key,

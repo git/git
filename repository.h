@@ -206,6 +206,8 @@ struct repository {
 extern struct repository *the_repository;
 #endif
 
+const char *repo_get_git_dir(struct repository *repo);
+
 /*
  * Define a custom repository layout. Any field can be NULL, which
  * will default back to the path according to the default layout.

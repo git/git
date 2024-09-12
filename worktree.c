@@ -57,7 +57,7 @@ static void add_head_info(struct worktree *wt)
 
 static int is_current_worktree(struct worktree *wt)
 {
-	char *git_dir = absolute_pathdup(get_git_dir());
+	char *git_dir = absolute_pathdup(repo_get_git_dir(the_repository));
 	const char *wt_git_dir = get_worktree_git_dir(wt);
 	int is_current = !fspathcmp(git_dir, absolute_path(wt_git_dir));
 	free(git_dir);
@@ -171,7 +171,7 @@ struct worktree **get_worktrees(void)
 const char *get_worktree_git_dir(const struct worktree *wt)
 {
 	if (!wt)
-		return get_git_dir();
+		return repo_get_git_dir(the_repository);
 	else if (!wt->id)
 		return get_git_common_dir();
 	else

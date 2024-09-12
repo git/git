@@ -6,6 +6,8 @@
  *
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "advice.h"
@@ -2212,7 +2214,7 @@ void read_early_config(config_fn_t cb, void *data)
 
 	if (have_git_dir()) {
 		opts.commondir = get_git_common_dir();
-		opts.git_dir = get_git_dir();
+		opts.git_dir = repo_get_git_dir(the_repository);
 	/*
 	 * When setup_git_directory() was not yet asked to discover the
 	 * GIT_DIR, we ask discover_git_directory() to figure out whether there

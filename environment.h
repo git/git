@@ -106,7 +106,6 @@ int have_git_dir(void);
 extern int is_bare_repository_cfg;
 int is_bare_repository(void);
 extern char *git_work_tree_cfg;
-const char *get_git_dir(void);
 const char *get_git_common_dir(void);
 const char *get_object_directory(void);
 char *get_index_file(void);

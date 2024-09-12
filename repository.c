@@ -91,6 +91,13 @@ static void expand_base_dir(char **out, const char *in,
 		*out = xstrfmt("%s/%s", base_dir, def_in);
 }
 
+const char *repo_get_git_dir(struct repository *repo)
+{
+	if (!repo->gitdir)
+		BUG("repository hasn't been set up");
+	return repo->gitdir;
+}
+
 static void repo_set_commondir(struct repository *repo,
 			       const char *commondir)
 {
