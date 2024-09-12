@@ -198,7 +198,7 @@ int git_config_from_parameters(config_fn_t fn, void *data);
  * `the_repository` has not yet been set up, try to discover the Git
  * directory to read the configuration from.
  */
-void read_early_config(config_fn_t cb, void *data);
+void read_early_config(struct repository *repo, config_fn_t cb, void *data);
 
 /*
  * Read config but only enumerate system and global settings.
