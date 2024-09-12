@@ -75,6 +75,7 @@ struct files_ref_store {
 	unsigned int store_flags;
 
 	char *gitcommondir;
+	enum log_refs_config log_all_ref_updates;
 
 	struct ref_cache *loose;
 
@@ -107,6 +108,7 @@ static struct ref_store *files_ref_store_init(struct repository *repo,
 	refs->gitcommondir = strbuf_detach(&sb, NULL);
 	refs->packed_ref_store =
 		packed_ref_store_init(repo, refs->gitcommondir, flags);
+	refs->log_all_ref_updates = repo_settings_get_log_all_ref_updates(repo);
 
 	chdir_notify_reparent("files-backend $GIT_DIR", &refs->base.gitdir);
 	chdir_notify_reparent("files-backend $GIT_COMMONDIR",
@@ -1704,7 +1706,7 @@ static int log_ref_setup(struct files_ref_store *refs,
 			 const char *refname, int force_create,
 			 int *logfd, struct strbuf *err)
 {
-	enum log_refs_config log_refs_cfg = log_all_ref_updates;
+	enum log_refs_config log_refs_cfg = refs->log_all_ref_updates;
 	struct strbuf logfile_sb = STRBUF_INIT;
 	char *logfile;
 

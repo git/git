@@ -124,3 +124,19 @@ void prepare_repo_settings(struct repository *r)
 	 */
 	r->settings.command_requires_full_index = 1;
 }
+
+enum log_refs_config repo_settings_get_log_all_ref_updates(struct repository *repo)
+{
+	const char *value;
+
+	if (!repo_config_get_string_tmp(repo, "core.logallrefupdates", &value)) {
+		if (value && !strcasecmp(value, "always"))
+			return LOG_REFS_ALWAYS;
+		else if (git_config_bool("core.logallrefupdates", value))
+			return LOG_REFS_NORMAL;
+		else
+			return LOG_REFS_NONE;
+	}
+
+	return LOG_REFS_UNSET;
+}
