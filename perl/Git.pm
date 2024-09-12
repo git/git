@@ -197,11 +197,11 @@ sub repository {
 		my ($bare, $dir) = split /\n/, $out, 2;
 
 		require Cwd;
-		if ($bare ne 'true') {
-			require File::Spec;
-			File::Spec->file_name_is_absolute($dir) or $dir = $opts{Directory} . '/' . $dir;
-			$opts{Repository} = Cwd::abs_path($dir);
+		require File::Spec;
+		File::Spec->file_name_is_absolute($dir) or $dir = $opts{Directory} . '/' . $dir;
+		$opts{Repository} = Cwd::abs_path($dir);
 
+		if ($bare ne 'true') {
 			# If --git-dir went ok, this shouldn't die either.
 			my $prefix = $search->command_oneline('rev-parse', '--show-prefix');
 			$dir = Cwd::abs_path($opts{Directory}) . '/';
@@ -214,8 +214,6 @@ sub repository {
 			$opts{WorkingCopy} = $dir;
 			$opts{WorkingSubdir} = $prefix;
 
-		} else {
-			$opts{Repository} = Cwd::abs_path($dir);
 		}
 
 		delete $opts{Directory};
