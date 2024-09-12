@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "config.h"
+#include "repo-settings.h"
 #include "repository.h"
 #include "midx.h"
 
