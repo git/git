@@ -33,7 +33,7 @@ fedora-*)
 	dnf -yq update >/dev/null &&
 	dnf -yq install make gcc findutils diffutils perl python3 gettext zlib-devel expat-devel openssl-devel curl-devel pcre2-devel >/dev/null
 	;;
-ubuntu-*)
+ubuntu-*|ubuntu32-*)
 	# Required so that apt doesn't wait for user input on certain packages.
 	export DEBIAN_FRONTEND=noninteractive
 
@@ -45,25 +45,23 @@ ubuntu-*)
 		libemail-valid-perl libio-pty-perl libio-socket-ssl-perl libnet-smtp-ssl-perl libdbd-sqlite3-perl libcgi-pm-perl \
 		${CC_PACKAGE:-${CC:-gcc}} $PYTHON_PACKAGE
 
-	mkdir --parents "$CUSTOM_PATH"
-	wget --quiet --directory-prefix="$CUSTOM_PATH" \
-		"$P4WHENCE/bin.linux26x86_64/p4d" "$P4WHENCE/bin.linux26x86_64/p4"
-	chmod a+x "$CUSTOM_PATH/p4d" "$CUSTOM_PATH/p4"
+	case "$distro" in
+	ubuntu-*)
+		mkdir --parents "$CUSTOM_PATH"
 
-	wget --quiet "$LFSWHENCE/git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
-	tar -xzf "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz" \
-		-C "$CUSTOM_PATH" --strip-components=1 "git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs"
-	rm "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
+		wget --quiet --directory-prefix="$CUSTOM_PATH" \
+			"$P4WHENCE/bin.linux26x86_64/p4d" "$P4WHENCE/bin.linux26x86_64/p4"
+		chmod a+x "$CUSTOM_PATH/p4d" "$CUSTOM_PATH/p4"
 
-	wget --quiet "$JGITWHENCE" --output-document="$CUSTOM_PATH/jgit"
-	chmod a+x "$CUSTOM_PATH/jgit"
-	;;
-ubuntu32-*)
-	sudo linux32 --32bit i386 sh -c '
-		apt update >/dev/null &&
-		apt install -y build-essential libcurl4-openssl-dev \
-			libssl-dev libexpat-dev gettext python >/dev/null
-	'
+		wget --quiet "$LFSWHENCE/git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
+		tar -xzf "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz" \
+			-C "$CUSTOM_PATH" --strip-components=1 "git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs"
+		rm "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
+
+		wget --quiet "$JGITWHENCE" --output-document="$CUSTOM_PATH/jgit"
+		chmod a+x "$CUSTOM_PATH/jgit"
+		;;
+	esac
 	;;
 macos-*)
 	export HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1
