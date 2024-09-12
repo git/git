@@ -2055,17 +2055,18 @@ static int try_partial_reuse(struct bitmap_index *bitmap_git,
 			     struct bitmapped_pack *pack,
 			     size_t bitmap_pos,
 			     uint32_t pack_pos,
+			     off_t offset,
 			     struct bitmap *reuse,
 			     struct pack_window **w_curs)
 {
-	off_t offset, delta_obj_offset;
+	off_t delta_obj_offset;
 	enum object_type type;
 	unsigned long size;
 
 	if (pack_pos >= pack->p->num_objects)
 		return -1; /* not actually in the pack */
 
-	offset = delta_obj_offset = pack_pos_to_offset(pack->p, pack_pos);
+	delta_obj_offset = offset;
 	type = unpack_object_header(pack->p, w_curs, &offset, &size);
 	if (type < 0)
 		return -1; /* broken packfile, punt */
@@ -2184,6 +2185,7 @@ static void reuse_partial_packfile_from_bitmap_1(struct bitmap_index *bitmap_git
 		for (offset = 0; offset < BITS_IN_EWORD; offset++) {
 			size_t bit_pos;
 			uint32_t pack_pos;
+			off_t ofs;
 
 			if (word >> offset == 0)
 				break;
@@ -2198,7 +2200,6 @@ static void reuse_partial_packfile_from_bitmap_1(struct bitmap_index *bitmap_git
 
 			if (bitmap_is_midx(bitmap_git)) {
 				uint32_t midx_pos;
-				off_t ofs;
 
 				midx_pos = pack_pos_to_midx(bitmap_git->midx, bit_pos);
 				ofs = nth_midxed_offset(bitmap_git->midx, midx_pos);
@@ -2213,10 +2214,12 @@ static void reuse_partial_packfile_from_bitmap_1(struct bitmap_index *bitmap_git
 					BUG("advanced beyond the end of pack %s (%"PRIuMAX" > %"PRIu32")",
 					    pack_basename(pack->p), (uintmax_t)pack_pos,
 					    pack->p->num_objects);
+
+				ofs = pack_pos_to_offset(pack->p, pack_pos);
 			}
 
 			if (try_partial_reuse(bitmap_git, pack, bit_pos,
-					      pack_pos, reuse, &w_curs) < 0) {
+					      pack_pos, ofs, reuse, &w_curs) < 0) {
 				/*
 				 * try_partial_reuse indicated we couldn't reuse
 				 * any bits, so there is no point in trying more
@@ -2322,6 +2325,7 @@ void reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 		packs[packs_nr].pack_int_id = pack_int_id;
 		packs[packs_nr].bitmap_nr = pack->num_objects;
 		packs[packs_nr].bitmap_pos = 0;
+		packs[packs_nr].from_midx = bitmap_git->midx;
 
 		objects_nr = packs[packs_nr++].bitmap_nr;
 	}

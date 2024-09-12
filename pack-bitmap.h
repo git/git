@@ -60,6 +60,7 @@ struct bitmapped_pack {
 	uint32_t bitmap_pos;
 	uint32_t bitmap_nr;
 
+	struct multi_pack_index *from_midx; /* MIDX only */
 	uint32_t pack_int_id; /* MIDX only */
 };
 
