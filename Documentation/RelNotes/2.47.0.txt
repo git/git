@@ -55,6 +55,10 @@ UI, Workflows & Features
 
  * "git pack-redundant" has been marked for removal in Git 3.0.
 
+ * One-line messages to "die" and other helper functions will get LF
+   added by these helper functions, but many existing messages had an
+   unnecessary LF at the end, which have been corrected.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -120,6 +124,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * Make our codebase compilable with the -Werror=unused-parameter
    option.
+
+ * "git cat-file" works well with the sparse-index, and gets marked as
+   such.
 
 
 Fixes since v2.46
@@ -205,6 +212,17 @@ Fixes since v2.46
    from the output, which has been corrected.
    (merge 6bd2ae67a5 jk/free-commit-buffer-of-skipped-commits later to maint).
 
+ * "git verify-pack" and "git index-pack" started dying outside a
+   repository, which has been corrected.
+   (merge b2dbf97f47 ps/index-pack-outside-repo-fix later to maint).
+
+ * A data corruption bug when multi-pack-index is used and the same
+   objects are stored in multiple packfiles has been corrected.
+
+ * "git pack-refs --auto" for the files backend was too aggressive,
+   which has been a bit tamed.
+   (merge c3459ae9ef ps/pack-refs-auto-heuristics later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge bb0498b1bb jc/how-to-maintain-updates later to maint).
    (merge 0d66f601a9 jc/tests-no-useless-tee later to maint).
@@ -216,3 +234,4 @@ Fixes since v2.46
    (merge 4881328617 aa/cat-file-batch-output-doc later to maint).
    (merge 1609470409 jc/config-doc-update later to maint).
    (merge d4dc0efd7d rj/compat-terminal-unused-fix later to maint).
+   (merge be10ac7037 jc/mailinfo-header-cleanup later to maint).
