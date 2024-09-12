@@ -208,6 +208,7 @@ extern struct repository *the_repository;
 
 const char *repo_get_git_dir(struct repository *repo);
 const char *repo_get_common_dir(struct repository *repo);
+const char *repo_get_object_directory(struct repository *repo);
 
 /*
  * Define a custom repository layout. Any field can be NULL, which

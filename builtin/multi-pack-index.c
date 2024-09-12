@@ -1,7 +1,6 @@
 #include "builtin.h"
 #include "abspath.h"
 #include "config.h"
-#include "environment.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "midx.h"
@@ -9,6 +8,7 @@
 #include "trace2.h"
 #include "object-store-ll.h"
 #include "replace-object.h"
+#include "repository.h"
 
 #define BUILTIN_MIDX_WRITE_USAGE \
 	N_("git multi-pack-index [<options>] write [--preferred-pack=<pack>]" \
@@ -63,7 +63,7 @@ static int parse_object_dir(const struct option *opt, const char *arg,
 	char **value = opt->value;
 	free(*value);
 	if (unset)
-		*value = xstrdup(get_object_directory());
+		*value = xstrdup(repo_get_object_directory(the_repository));
 	else
 		*value = real_pathdup(arg, 1);
 	return 0;

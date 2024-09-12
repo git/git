@@ -1,7 +1,6 @@
 #include "builtin.h"
 #include "commit.h"
 #include "config.h"
-#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "parse-options.h"
@@ -95,7 +94,7 @@ static int graph_verify(int argc, const char **argv, const char *prefix)
 		usage_with_options(builtin_commit_graph_verify_usage, options);
 
 	if (!opts.obj_dir)
-		opts.obj_dir = get_object_directory();
+		opts.obj_dir = repo_get_object_directory(the_repository);
 	if (opts.shallow)
 		flags |= COMMIT_GRAPH_VERIFY_SHALLOW;
 	if (opts.progress)
@@ -275,7 +274,7 @@ static int graph_write(int argc, const char **argv, const char *prefix)
 	if (opts.reachable + opts.stdin_packs + opts.stdin_commits > 1)
 		die(_("use at most one of --reachable, --stdin-commits, or --stdin-packs"));
 	if (!opts.obj_dir)
-		opts.obj_dir = get_object_directory();
+		opts.obj_dir = repo_get_object_directory(the_repository);
 	if (opts.append)
 		flags |= COMMIT_GRAPH_WRITE_APPEND;
 	if (opts.split)

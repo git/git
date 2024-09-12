@@ -13,6 +13,7 @@
 #include "strvec.h"
 #include "quote.h"
 #include "object-store-ll.h"
+#include "repository.h"
 
 struct tmp_objdir {
 	struct strbuf path;
@@ -132,7 +133,8 @@ struct tmp_objdir *tmp_objdir_create(const char *prefix)
 	 * can recognize any stale objdirs left behind by a crash and delete
 	 * them.
 	 */
-	strbuf_addf(&t->path, "%s/tmp_objdir-%s-XXXXXX", get_object_directory(), prefix);
+	strbuf_addf(&t->path, "%s/tmp_objdir-%s-XXXXXX",
+		    repo_get_object_directory(the_repository), prefix);
 
 	if (!mkdtemp(t->path.buf)) {
 		/* free, not destroy, as we never touched the filesystem */
@@ -152,7 +154,7 @@ struct tmp_objdir *tmp_objdir_create(const char *prefix)
 	}
 
 	env_append(&t->env, ALTERNATE_DB_ENVIRONMENT,
-		   absolute_path(get_object_directory()));
+		   absolute_path(repo_get_object_directory(the_repository)));
 	env_replace(&t->env, DB_ENVIRONMENT, absolute_path(t->path.buf));
 	env_replace(&t->env, GIT_QUARANTINE_ENVIRONMENT,
 		    absolute_path(t->path.buf));
@@ -267,7 +269,7 @@ int tmp_objdir_migrate(struct tmp_objdir *t)
 	}
 
 	strbuf_addbuf(&src, &t->path);
-	strbuf_addstr(&dst, get_object_directory());
+	strbuf_addstr(&dst, repo_get_object_directory(the_repository));
 
 	ret = migrate_paths(&src, &dst);
 
