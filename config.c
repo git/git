@@ -2213,7 +2213,7 @@ void read_early_config(config_fn_t cb, void *data)
 	opts.respect_includes = 1;
 
 	if (have_git_dir()) {
-		opts.commondir = get_git_common_dir();
+		opts.commondir = repo_get_common_dir(the_repository);
 		opts.git_dir = repo_get_git_dir(the_repository);
 	/*
 	 * When setup_git_directory() was not yet asked to discover the

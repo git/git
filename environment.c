@@ -228,13 +228,6 @@ int have_git_dir(void)
 		|| the_repository->gitdir;
 }
 
-const char *get_git_common_dir(void)
-{
-	if (!the_repository->commondir)
-		BUG("git environment hasn't been setup");
-	return the_repository->commondir;
-}
-
 const char *get_git_namespace(void)
 {
 	if (!git_namespace)
