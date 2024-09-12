@@ -126,6 +126,11 @@ const char *repo_get_graft_file(struct repository *repo)
 	return repo->graft_file;
 }
 
+const char *repo_get_work_tree(struct repository *repo)
+{
+	return repo->worktree;
+}
+
 static void repo_set_commondir(struct repository *repo,
 			       const char *commondir)
 {

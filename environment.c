@@ -219,7 +219,7 @@ void setup_git_env(const char *git_dir)
 int is_bare_repository(void)
 {
 	/* if core.bare is not 'false', let's see if there is a work tree */
-	return is_bare_repository_cfg && !get_git_work_tree();
+	return is_bare_repository_cfg && !repo_get_work_tree(the_repository);
 }
 
 int have_git_dir(void)
@@ -266,11 +266,6 @@ void set_git_work_tree(const char *new_work_tree)
 	}
 	git_work_tree_initialized = 1;
 	repo_set_worktree(the_repository, new_work_tree);
-}
-
-const char *get_git_work_tree(void)
-{
-	return the_repository->worktree;
 }
 
 int odb_mkstemp(struct strbuf *temp_filename, const char *pattern)

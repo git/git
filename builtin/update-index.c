@@ -1194,7 +1194,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				  "remove or change it, if you really want to "
 				  "enable the untracked cache"));
 		add_untracked_cache(the_repository->index);
-		report(_("Untracked cache enabled for '%s'"), get_git_work_tree());
+		report(_("Untracked cache enabled for '%s'"), repo_get_work_tree(the_repository));
 		break;
 	default:
 		BUG("bad untracked_cache value: %d", untracked_cache);

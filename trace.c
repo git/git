@@ -25,7 +25,6 @@
 
 #include "git-compat-util.h"
 #include "abspath.h"
-#include "environment.h"
 #include "repository.h"
 #include "quote.h"
 #include "setup.h"
@@ -308,7 +307,7 @@ void trace_repo_setup(void)
 
 	cwd = xgetcwd();
 
-	if (!(git_work_tree = get_git_work_tree()))
+	if (!(git_work_tree = repo_get_work_tree(the_repository)))
 		git_work_tree = "(null)";
 
 	if (!startup_info->prefix)
