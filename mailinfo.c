@@ -348,9 +348,8 @@ static void cleanup_subject(struct mailinfo *mi, struct strbuf *subject)
 	strbuf_trim(subject);
 }
 
-#define MAX_HDR_PARSED 10
-static const char *header[MAX_HDR_PARSED] = {
-	"From","Subject","Date",
+static const char * const header[] = {
+	"From", "Subject", "Date",
 };
 
 static inline int skip_header(const struct strbuf *line, const char *hdr,
@@ -585,7 +584,7 @@ static int check_header(struct mailinfo *mi,
 	struct strbuf sb = STRBUF_INIT;
 
 	/* search for the interesting parts */
-	for (i = 0; header[i]; i++) {
+	for (i = 0; i < ARRAY_SIZE(header); i++) {
 		if ((!hdr_data[i] || overwrite) &&
 		    parse_header(line, header[i], mi, &sb)) {
 			handle_header(&hdr_data[i], &sb);
@@ -627,7 +626,7 @@ static int is_inbody_header(const struct mailinfo *mi,
 {
 	int i;
 	const char *val;
-	for (i = 0; header[i]; i++)
+	for (i = 0; i < ARRAY_SIZE(header); i++)
 		if (!mi->s_hdr_data[i] && skip_header(line, header[i], &val))
 			return 1;
 	return 0;
@@ -774,7 +773,7 @@ static int check_inbody_header(struct mailinfo *mi, const struct strbuf *line)
 		return is_format_patch_separator(line->buf + 1, line->len - 1);
 	if (starts_with(line->buf, "[PATCH]") && isspace(line->buf[7])) {
 		int i;
-		for (i = 0; header[i]; i++)
+		for (i = 0; i < ARRAY_SIZE(header); i++)
 			if (!strcmp("Subject", header[i])) {
 				handle_header(&mi->s_hdr_data[i], line);
 				return 1;
@@ -826,7 +825,7 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 		 * We may have already read "secondary headers"; purge
 		 * them to give ourselves a clean restart.
 		 */
-		for (i = 0; header[i]; i++) {
+		for (i = 0; i < ARRAY_SIZE(header); i++) {
 			if (mi->s_hdr_data[i])
 				strbuf_release(mi->s_hdr_data[i]);
 			FREE_AND_NULL(mi->s_hdr_data[i]);
@@ -1157,7 +1156,7 @@ static void handle_info(struct mailinfo *mi)
 	struct strbuf *hdr;
 	int i;
 
-	for (i = 0; header[i]; i++) {
+	for (i = 0; i < ARRAY_SIZE(header); i++) {
 		/* only print inbody headers if we output a patch file */
 		if (mi->patch_lines && mi->s_hdr_data[i])
 			hdr = mi->s_hdr_data[i];
@@ -1208,8 +1207,8 @@ int mailinfo(struct mailinfo *mi, const char *msg, const char *patch)
 		return -1;
 	}
 
-	mi->p_hdr_data = xcalloc(MAX_HDR_PARSED, sizeof(*(mi->p_hdr_data)));
-	mi->s_hdr_data = xcalloc(MAX_HDR_PARSED, sizeof(*(mi->s_hdr_data)));
+	mi->p_hdr_data = xcalloc(ARRAY_SIZE(header), sizeof(*(mi->p_hdr_data)));
+	mi->s_hdr_data = xcalloc(ARRAY_SIZE(header), sizeof(*(mi->s_hdr_data)));
 
 	do {
 		peek = fgetc(mi->input);
@@ -1292,7 +1291,7 @@ void clear_mailinfo(struct mailinfo *mi)
 	strbuf_release(&mi->inbody_header_accum);
 	free(mi->message_id);
 
-	for (size_t i = 0; header[i]; i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(header); i++) {
 		if (!mi->p_hdr_data[i])
 			continue;
 		strbuf_release(mi->p_hdr_data[i]);
@@ -1300,7 +1299,7 @@ void clear_mailinfo(struct mailinfo *mi)
 	}
 	free(mi->p_hdr_data);
 
-	for (size_t i = 0; header[i]; i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(header); i++) {
 		if (!mi->s_hdr_data[i])
 			continue;
 		strbuf_release(mi->s_hdr_data[i]);
