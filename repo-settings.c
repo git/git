@@ -140,3 +140,12 @@ enum log_refs_config repo_settings_get_log_all_ref_updates(struct repository *re
 
 	return LOG_REFS_UNSET;
 }
+
+int repo_settings_get_warn_ambiguous_refs(struct repository *repo)
+{
+	prepare_repo_settings(repo);
+	if (repo->settings.warn_ambiguous_refs < 0)
+		repo_cfg_bool(repo, "core.warnambiguousrefs",
+			      &repo->settings.warn_ambiguous_refs, 1);
+	return repo->settings.warn_ambiguous_refs;
+}

@@ -19,6 +19,7 @@
 #include "path.h"
 #include "diff.h"
 #include "read-cache-ll.h"
+#include "repo-settings.h"
 #include "repository.h"
 #include "revision.h"
 #include "setup.h"
@@ -899,7 +900,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (opt_with_value(arg, "--abbrev-ref", &arg)) {
 				abbrev_ref = 1;
-				abbrev_ref_strict = warn_ambiguous_refs;
+				abbrev_ref_strict =
+					repo_settings_get_warn_ambiguous_refs(the_repository);
 				if (arg) {
 					if (!strcmp(arg, "strict"))
 						abbrev_ref_strict = 1;

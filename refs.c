@@ -730,7 +730,7 @@ int expand_ref(struct repository *repo, const char *str, int len,
 		if (r) {
 			if (!refs_found++)
 				*ref = xstrdup(r);
-			if (!warn_ambiguous_refs)
+			if (!repo_settings_get_warn_ambiguous_refs(repo))
 				break;
 		} else if ((flag & REF_ISSYMREF) && strcmp(fullref.buf, "HEAD")) {
 			warning(_("ignoring dangling symref %s"), fullref.buf);
@@ -775,7 +775,7 @@ int repo_dwim_log(struct repository *r, const char *str, int len,
 			if (oid)
 				oidcpy(oid, &hash);
 		}
-		if (!warn_ambiguous_refs)
+		if (!repo_settings_get_warn_ambiguous_refs(r))
 			break;
 	}
 	strbuf_release(&path);
