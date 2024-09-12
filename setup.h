@@ -94,6 +94,9 @@ static inline int discover_git_directory(struct strbuf *commondir,
 	return 0;
 }
 
+void set_git_dir(const char *path, int make_realpath);
+void set_git_work_tree(const char *tree);
+
 const char *setup_git_directory_gently(int *);
 const char *setup_git_directory(void);
 char *prefix_path(const char *prefix, int len, const char *path);
