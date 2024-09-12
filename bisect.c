@@ -1130,16 +1130,6 @@ cleanup:
 	return res;
 }
 
-static inline int log2i(int n)
-{
-	int log2 = 0;
-
-	for (; n > 1; n >>= 1)
-		log2++;
-
-	return log2;
-}
-
 static inline int exp2i(int n)
 {
 	return 1 << n;
@@ -1162,7 +1152,7 @@ int estimate_bisect_steps(int all)
 	if (all < 3)
 		return 0;
 
-	n = log2i(all);
+	n = log2u(all);
 	e = exp2i(n);
 	x = all - e;
 

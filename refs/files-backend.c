@@ -1311,6 +1311,68 @@ static int should_pack_ref(struct files_ref_store *refs,
 	return 0;
 }
 
+static int should_pack_refs(struct files_ref_store *refs,
+			    struct pack_refs_opts *opts)
+{
+	struct ref_iterator *iter;
+	size_t packed_size;
+	size_t refcount = 0;
+	size_t limit;
+	int ret;
+
+	if (!(opts->flags & PACK_REFS_AUTO))
+		return 1;
+
+	ret = packed_refs_size(refs->packed_ref_store, &packed_size);
+	if (ret < 0)
+		die("cannot determine packed-refs size");
+
+	/*
+	 * Packing loose references into the packed-refs file scales with the
+	 * number of references we're about to write. We thus decide whether we
+	 * repack refs by weighing the current size of the packed-refs file
+	 * against the number of loose references. This is done such that we do
+	 * not repack too often on repositories with a huge number of
+	 * references, where we can expect a lot of churn in the number of
+	 * references.
+	 *
+	 * As a heuristic, we repack if the number of loose references in the
+	 * repository exceeds `log2(nr_packed_refs) * 5`, where we estimate
+	 * `nr_packed_refs = packed_size / 100`, which scales as following:
+	 *
+	 * - 1kB ~ 10 packed refs: 16 refs
+	 * - 10kB ~ 100 packed refs: 33 refs
+	 * - 100kB ~ 1k packed refs: 49 refs
+	 * - 1MB ~ 10k packed refs: 66 refs
+	 * - 10MB ~ 100k packed refs: 82 refs
+	 * - 100MB ~ 1m packed refs: 99 refs
+	 *
+	 * We thus allow roughly 16 additional loose refs per factor of ten of
+	 * packed refs. This heuristic may be tweaked in the future, but should
+	 * serve as a sufficiently good first iteration.
+	 */
+	limit = log2u(packed_size / 100) * 5;
+	if (limit < 16)
+		limit = 16;
+
+	iter = cache_ref_iterator_begin(get_loose_ref_cache(refs, 0), NULL,
+					refs->base.repo, 0);
+	while ((ret = ref_iterator_advance(iter)) == ITER_OK) {
+		if (should_pack_ref(refs, iter->refname, iter->oid,
+				    iter->flags, opts))
+			refcount++;
+		if (refcount >= limit) {
+			ref_iterator_abort(iter);
+			return 1;
+		}
+	}
+
+	if (ret != ITER_DONE)
+		die("error while iterating over references");
+
+	return 0;
+}
+
 static int files_pack_refs(struct ref_store *ref_store,
 			   struct pack_refs_opts *opts)
 {
@@ -1322,6 +1384,9 @@ static int files_pack_refs(struct ref_store *ref_store,
 	struct ref_to_prune *refs_to_prune = NULL;
 	struct strbuf err = STRBUF_INIT;
 	struct ref_transaction *transaction;
+
+	if (!should_pack_refs(refs, opts))
+		return 0;
 
 	transaction = ref_store_transaction_begin(refs->packed_ref_store, &err);
 	if (!transaction)
