@@ -20,6 +20,7 @@ static void repo_cfg_int(struct repository *r, const char *key, int *dest,
 
 void prepare_repo_settings(struct repository *r)
 {
+	const struct repo_settings defaults = REPO_SETTINGS_INIT;
 	int experimental;
 	int value;
 	const char *strval;
@@ -29,13 +30,11 @@ void prepare_repo_settings(struct repository *r)
 	if (!r->gitdir)
 		BUG("Cannot add settings for uninitialized repository");
 
-	if (r->settings.initialized++)
+	if (r->settings.initialized)
 		return;
 
-	/* Defaults */
-	r->settings.index_version = -1;
-	r->settings.core_untracked_cache = UNTRACKED_CACHE_KEEP;
-	r->settings.fetch_negotiation_algorithm = FETCH_NEGOTIATION_CONSECUTIVE;
+	memcpy(&r->settings, &defaults, sizeof(defaults));
+	r->settings.initialized++;
 
 	/* Booleans config or default, cascades to other settings */
 	repo_cfg_bool(r, "feature.manyfiles", &manyfiles, 0);

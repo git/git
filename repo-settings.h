@@ -50,6 +50,11 @@ struct repo_settings {
 
 	int core_multi_pack_index;
 };
+#define REPO_SETTINGS_INIT { \
+	.index_version = -1, \
+	.core_untracked_cache = UNTRACKED_CACHE_KEEP, \
+	.fetch_negotiation_algorithm = FETCH_NEGOTIATION_CONSECUTIVE, \
+}
 
 void prepare_repo_settings(struct repository *r);
 
