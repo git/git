@@ -56,4 +56,11 @@ Fixes since Git 2.46
    behave more or less like "git log -p --remerge-diff" but instead it
    crashed, forgetting to prepare a temporary object store needed.
 
+ * The patch parser in "git patch-id" has been tightened to avoid
+   getting confused by lines that look like a patch header in the log
+   message.
+
+ * "git bundle unbundle" outside a repository triggered a BUG()
+   unnecessarily, which has been corrected.
+
 Also contains minor documentation updates and code clean-ups.
