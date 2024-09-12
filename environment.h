@@ -1,22 +1,6 @@
 #ifndef ENVIRONMENT_H
 #define ENVIRONMENT_H
 
-struct strvec;
-
-/*
- * The character that begins a commented line in user-editable file
- * that is subject to stripspace.
- */
-extern const char *comment_line_str;
-extern char *comment_line_str_to_free;
-extern int auto_comment_line_char;
-
-/*
- * Wrapper of getenv() that returns a strdup value. This value is kept
- * in argv to be freed later.
- */
-const char *getenv_safe(struct strvec *argv, const char *name);
-
 /* Double-check local_repo_env below if you add to this list. */
 #define GIT_DIR_ENVIRONMENT "GIT_DIR"
 #define GIT_COMMON_DIR_ENVIRONMENT "GIT_COMMON_DIR"
@@ -86,6 +70,8 @@ const char *getenv_safe(struct strvec *argv, const char *name);
  */
 #define GIT_IMPLICIT_WORK_TREE_ENVIRONMENT "GIT_IMPLICIT_WORK_TREE"
 
+#define ALTERNATE_DB_ENVIRONMENT "GIT_ALTERNATE_OBJECT_DIRECTORIES"
+
 /*
  * Repository-local GIT_* environment variables; these will be cleared
  * when git spawns a sub-process that runs inside another repository.
@@ -93,6 +79,28 @@ const char *getenv_safe(struct strvec *argv, const char *name);
  * parameter of a run-command invocation, or to do a simple walk.
  */
 extern const char * const local_repo_env[];
+
+struct strvec;
+
+/*
+ * Wrapper of getenv() that returns a strdup value. This value is kept
+ * in argv to be freed later.
+ */
+const char *getenv_safe(struct strvec *argv, const char *name);
+
+/*
+ * Should we print an ellipsis after an abbreviated SHA-1 value
+ * when doing diff-raw output or indicating a detached HEAD?
+ */
+int print_sha1_ellipsis(void);
+
+/*
+ * Returns the boolean value of $GIT_OPTIONAL_LOCKS (or the default value).
+ */
+int use_optional_locks(void);
+
+const char *get_git_namespace(void);
+const char *strip_namespace(const char *namespaced_ref);
 
 void setup_git_env(const char *git_dir);
 
@@ -102,13 +110,19 @@ void setup_git_env(const char *git_dir);
  */
 int have_git_dir(void);
 
+/*
+ * Accessors for the core.sharedrepository config which lazy-load the value
+ * from the config (if not already set). The "reset" function can be
+ * used to unset "set" or cached value, meaning that the value will be loaded
+ * fresh from the config file on the next call to get_shared_repository().
+ */
+void set_shared_repository(int value);
+int get_shared_repository(void);
+void reset_shared_repository(void);
+
 extern int is_bare_repository_cfg;
 int is_bare_repository(void);
 extern char *git_work_tree_cfg;
-const char *get_git_namespace(void);
-const char *strip_namespace(const char *namespaced_ref);
-
-#define ALTERNATE_DB_ENVIRONMENT "GIT_ALTERNATE_OBJECT_DIRECTORIES"
 
 /* Environment bits from configuration mechanism */
 extern int trust_executable_bit;
@@ -134,16 +148,6 @@ extern unsigned long big_file_threshold;
 extern unsigned long pack_size_limit_cfg;
 extern int max_allowed_tree_depth;
 
-/*
- * Accessors for the core.sharedrepository config which lazy-load the value
- * from the config (if not already set). The "reset" function can be
- * used to unset "set" or cached value, meaning that the value will be loaded
- * fresh from the config file on the next call to get_shared_repository().
- */
-void set_shared_repository(int value);
-int get_shared_repository(void);
-void reset_shared_repository(void);
-
 extern int core_preload_index;
 extern int precomposed_unicode;
 extern int protect_hfs;
@@ -152,11 +156,6 @@ extern int protect_ntfs;
 extern int core_apply_sparse_checkout;
 extern int core_sparse_checkout_cone;
 extern int sparse_expect_files_outside_of_patterns;
-
-/*
- * Returns the boolean value of $GIT_OPTIONAL_LOCKS (or the default value).
- */
-int use_optional_locks(void);
 
 enum log_refs_config {
 	LOG_REFS_UNSET = -1,
@@ -172,6 +171,7 @@ enum rebase_setup_type {
 	AUTOREBASE_REMOTE,
 	AUTOREBASE_ALWAYS
 };
+extern enum rebase_setup_type autorebase;
 
 enum push_default_type {
 	PUSH_DEFAULT_NOTHING = 0,
@@ -181,15 +181,12 @@ enum push_default_type {
 	PUSH_DEFAULT_CURRENT,
 	PUSH_DEFAULT_UNSPECIFIED
 };
-
-extern enum rebase_setup_type autorebase;
 extern enum push_default_type push_default;
 
 enum object_creation_mode {
 	OBJECT_CREATION_USES_HARDLINKS = 0,
 	OBJECT_CREATION_USES_RENAMES = 1
 };
-
 extern enum object_creation_mode object_creation_mode;
 
 extern char *notes_ref_name;
@@ -209,9 +206,11 @@ extern char *askpass_program;
 extern char *excludes_file;
 
 /*
- * Should we print an ellipsis after an abbreviated SHA-1 value
- * when doing diff-raw output or indicating a detached HEAD?
+ * The character that begins a commented line in user-editable file
+ * that is subject to stripspace.
  */
-int print_sha1_ellipsis(void);
+extern const char *comment_line_str;
+extern char *comment_line_str_to_free;
+extern int auto_comment_line_char;
 
 #endif
