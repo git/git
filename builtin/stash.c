@@ -484,7 +484,7 @@ static void unstage_changes_unless_new(struct object_id *orig_tree)
 					 "         to make room.\n"),
 				       ce->name, new_path.buf);
 				if (rename(ce->name, new_path.buf))
-					die("Failed to move %s to %s\n",
+					die("Failed to move %s to %s",
 					    ce->name, new_path.buf);
 				strbuf_release(&new_path);
 			}

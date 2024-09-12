@@ -38,7 +38,7 @@ static void normalize_argv_string(const char **var, const char *input)
 		*var = input;
 
 	if (*var && (**var == '<' || **var == '('))
-		die("Bad value: %s\n", input);
+		die("Bad value: %s", input);
 }
 
 struct test_data {
@@ -78,12 +78,12 @@ static int test_function(struct test_data *data, char *(*func)(char *input),
 		if (!strcmp(to, data[i].to))
 			continue;
 		if (!data[i].alternative)
-			error("FAIL: %s(%s) => '%s' != '%s'\n",
+			error("FAIL: %s(%s) => '%s' != '%s'",
 				funcname, data[i].from, to, data[i].to);
 		else if (!strcmp(to, data[i].alternative))
 			continue;
 		else
-			error("FAIL: %s(%s) => '%s' != '%s', '%s'\n",
+			error("FAIL: %s(%s) => '%s' != '%s', '%s'",
 				funcname, data[i].from, to, data[i].to,
 				data[i].alternative);
 		failed = 1;

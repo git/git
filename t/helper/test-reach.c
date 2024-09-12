@@ -67,13 +67,13 @@ int cmd__reach(int ac, const char **av)
 		peeled = deref_tag_noverify(the_repository, orig);
 
 		if (!peeled)
-			die("failed to load commit for input %s resulting in oid %s\n",
+			die("failed to load commit for input %s resulting in oid %s",
 			    buf.buf, oid_to_hex(&oid));
 
 		c = object_as_type(peeled, OBJ_COMMIT, 0);
 
 		if (!c)
-			die("failed to load commit for input %s resulting in oid %s\n",
+			die("failed to load commit for input %s resulting in oid %s",
 			    buf.buf, oid_to_hex(&oid));
 
 		switch (buf.buf[0]) {
