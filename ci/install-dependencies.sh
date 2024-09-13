@@ -55,6 +55,11 @@ ubuntu-*|ubuntu32-*)
 		${CC_PACKAGE:-${CC:-gcc}} $PYTHON_PACKAGE
 
 	case "$distro" in
+	ubuntu-16.04)
+		# Does not support JGit, but we also don't really care about
+		# the others. We rather care whether Git still compiles and
+		# runs fine overall.
+		;;
 	ubuntu-*)
 		mkdir --parents "$CUSTOM_PATH"
 
