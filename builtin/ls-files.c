@@ -5,8 +5,8 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
-#include "repository.h"
 #include "config.h"
 #include "convert.h"
 #include "quote.h"

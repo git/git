@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "tree-walk.h"
 #include "xdiff-interface.h"
@@ -10,7 +11,6 @@
 #include "object-name.h"
 #include "object-store-ll.h"
 #include "parse-options.h"
-#include "repository.h"
 #include "blob.h"
 #include "merge-blobs.h"
 #include "quote.h"

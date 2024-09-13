@@ -1,7 +1,7 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "hex.h"
 #include "read-cache-ll.h"
-#include "repository.h"
 #include "run-command.h"
 #include "sparse-index.h"
 

@@ -1,6 +1,7 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
-#include "repository.h"
+
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"

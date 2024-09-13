@@ -4,6 +4,7 @@
  * Based on git-am.sh by Junio C Hamano.
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "advice.h"
@@ -38,7 +39,6 @@
 #include "string-list.h"
 #include "pager.h"
 #include "path.h"
-#include "repository.h"
 #include "pretty.h"
 
 /**

@@ -1,9 +1,9 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "refs.h"
-#include "repository.h"
 #include "revision.h"
 
 static char const * const pack_refs_usage[] = {

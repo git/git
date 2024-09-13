@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2006 Johannes Schindelin
  */
+#define USE_THE_REPOSITORY_VARIABLE
 
 #include "builtin.h"
 #include "abspath.h"
@@ -18,7 +19,7 @@
 #include "string-list.h"
 #include "parse-options.h"
 #include "read-cache-ll.h"
-#include "repository.h"
+
 #include "setup.h"
 #include "strvec.h"
 #include "submodule.h"

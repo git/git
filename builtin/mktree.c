@@ -3,6 +3,7 @@
  *
  * Copyright (c) Junio C Hamano, 2006, 2009
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "gettext.h"
 #include "hex.h"

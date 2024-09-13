@@ -7,8 +7,9 @@
  *
  * Clone a repository into a different directory that does not yet exist.
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
+
 #include "abspath.h"
 #include "advice.h"
 #include "config.h"

@@ -1,10 +1,10 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "config.h"
 #include "color.h"
 #include "editor.h"
 #include "environment.h"
-#include "repository.h"
 #include "gettext.h"
 #include "ident.h"
 #include "parse-options.h"

@@ -3,7 +3,7 @@
  *
  * Copyright (C) Linus Torvalds 2006
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "advice.h"
 #include "config.h"
@@ -15,7 +15,7 @@
 #include "object-name.h"
 #include "parse-options.h"
 #include "read-cache.h"
-#include "repository.h"
+
 #include "string-list.h"
 #include "setup.h"
 #include "sparse-index.h"

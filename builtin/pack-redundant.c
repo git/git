@@ -5,11 +5,12 @@
 * This file is licensed under the GPL v2.
 *
 */
+#define USE_THE_REPOSITORY_VARIABLE
 
 #include "builtin.h"
 #include "gettext.h"
 #include "hex.h"
-#include "repository.h"
+
 #include "packfile.h"
 #include "object-store-ll.h"
 

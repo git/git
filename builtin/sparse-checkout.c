@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "dir.h"
@@ -7,7 +8,6 @@
 #include "object-name.h"
 #include "parse-options.h"
 #include "pathspec.h"
-#include "repository.h"
 #include "strbuf.h"
 #include "string-list.h"
 #include "lockfile.h"

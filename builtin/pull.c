@@ -6,6 +6,7 @@
  * Fetch one or more remote refs and merge it/them into the current HEAD.
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "advice.h"
 #include "config.h"

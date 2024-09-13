@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "advice.h"
@@ -17,7 +18,6 @@
 #include "read-cache-ll.h"
 #include "refs.h"
 #include "remote.h"
-#include "repository.h"
 #include "run-command.h"
 #include "hook.h"
 #include "sigchain.h"

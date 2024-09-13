@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "commit.h"
@@ -5,7 +6,6 @@
 #include "environment.h"
 #include "gettext.h"
 #include "string-list.h"
-#include "repository.h"
 #include "revision.h"
 #include "utf8.h"
 #include "mailmap.h"

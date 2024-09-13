@@ -2,13 +2,13 @@
  * Copyright (c) 2006 Franck Bui-Huu
  * Copyright (c) 2006 Rene Scharfe
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "archive.h"
 #include "gettext.h"
 #include "transport.h"
 #include "parse-options.h"
 #include "pkt-line.h"
-#include "repository.h"
 
 static void create_output_file(const char *output_file)
 {

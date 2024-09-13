@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "commit.h"
@@ -5,7 +6,6 @@
 #include "hex.h"
 #include "object-name.h"
 #include "parse-options.h"
-#include "repository.h"
 #include "commit-reach.h"
 
 static int show_merge_base(struct commit **rev, int rev_nr, int show_all)

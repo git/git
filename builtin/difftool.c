@@ -11,8 +11,9 @@
  *
  * Copyright (C) 2016 Johannes Schindelin
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
+
 #include "abspath.h"
 #include "config.h"
 #include "copy.h"

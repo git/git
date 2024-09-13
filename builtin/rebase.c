@@ -3,8 +3,9 @@
  *
  * Copyright (c) 2018 Pratik Karki
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
+
 #include "abspath.h"
 #include "environment.h"
 #include "gettext.h"

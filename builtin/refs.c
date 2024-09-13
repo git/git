@@ -1,9 +1,9 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "fsck.h"
 #include "parse-options.h"
 #include "refs.h"
-#include "repository.h"
 #include "strbuf.h"
 
 #define REFS_MIGRATE_USAGE \

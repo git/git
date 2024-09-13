@@ -2,6 +2,7 @@
  * Another stupid program, this one parsing the headers of an
  * email to figure out authorship and subject
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "environment.h"

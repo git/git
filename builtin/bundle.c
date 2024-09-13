@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "gettext.h"
@@ -5,7 +6,6 @@
 #include "strvec.h"
 #include "parse-options.h"
 #include "pkt-line.h"
-#include "repository.h"
 #include "bundle.h"
 
 /*

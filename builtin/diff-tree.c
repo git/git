@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "diff.h"
@@ -6,7 +7,6 @@
 #include "hex.h"
 #include "log-tree.h"
 #include "read-cache-ll.h"
-#include "repository.h"
 #include "revision.h"
 #include "tmp-objdir.h"
 #include "tree.h"

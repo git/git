@@ -1,12 +1,12 @@
 /*
  * Copyright (c) 2006 Franck Bui-Huu
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "archive.h"
 #include "path.h"
 #include "pkt-line.h"
 #include "sideband.h"
-#include "repository.h"
 #include "run-command.h"
 #include "strvec.h"
 

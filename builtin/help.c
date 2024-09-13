@@ -1,6 +1,8 @@
+
 /*
  * Builtin help command
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "exec-cmd.h"
