@@ -63,4 +63,13 @@ Fixes since Git 2.46
  * "git bundle unbundle" outside a repository triggered a BUG()
    unnecessarily, which has been corrected.
 
+ * The code forgot to discard unnecessary in-core commit buffer data
+   for commits that "git log --skip=<number>" traversed but omitted
+   from the output, which has been corrected.
+
+ * "git verify-pack" and "git index-pack" started dying outside a
+   repository, which has been corrected.
+
+ * A corner case bug in "git stash" was fixed.
+
 Also contains minor documentation updates and code clean-ups.
