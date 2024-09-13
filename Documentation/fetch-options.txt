@@ -1,6 +1,7 @@
 --[no-]all::
-	Fetch all remotes. This overrides the configuration variable
-	`fetch.all`.
+	Fetch all remotes, except for the ones that has the
+	`remote.<name>.skipFetchAll` configuration variable set.
+	This overrides the configuration variable fetch.all`.
 
 -a::
 --append::

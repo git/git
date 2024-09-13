@@ -42,14 +42,15 @@ remote.<name>.mirror::
 	as if the `--mirror` option was given on the command line.
 
 remote.<name>.skipDefaultUpdate::
-	If true, this remote will be skipped by default when updating
-	using linkgit:git-fetch[1] or the `update` subcommand of
-	linkgit:git-remote[1].
+	A deprecated synonym to `remote.<name>.skipFetchAll` (if
+	both are set in the configuration files with different
+	values, the value of the last occurrence will be used).
 
 remote.<name>.skipFetchAll::
-	If true, this remote will be skipped by default when updating
-	using linkgit:git-fetch[1] or the `update` subcommand of
-	linkgit:git-remote[1].
+	If true, this remote will be skipped when updating
+	using linkgit:git-fetch[1], the `update` subcommand of
+	linkgit:git-remote[1], and ignored by the prefetch task
+	of `git maitenance`.
 
 remote.<name>.receivepack::
 	The default program to execute on the remote side when pushing.  See
