@@ -406,6 +406,7 @@ test_expect_success 'v0 clients can handle multiple symrefs' '
 test_expect_success 'helper with refspec capability fails gracefully' '
 	mkdir test-bin &&
 	write_script test-bin/git-remote-foo <<-EOF &&
+	read capabilities
 	echo import
 	echo refspec ${SQ}*:*${SQ}
 	EOF
