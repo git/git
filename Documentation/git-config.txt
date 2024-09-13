@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git config list' [<file-option>] [<display-option>] [--includes]
-'git config get' [<file-option>] [<display-option>] [--includes] [--all] [--regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] <name>
+'git config get' [<file-option>] [<display-option>] [--includes] [--all] [--regexp] [--value=<value>] [--fixed-value] [--default=<default>] <name>
 'git config set' [<file-option>] [--type=<type>] [--all] [--value=<value>] [--fixed-value] <name> <value>
 'git config unset' [<file-option>] [--all] [--value=<value>] [--fixed-value] <name> <value>
 'git config rename-section' [<file-option>] <old-name> <new-name>
@@ -309,7 +309,7 @@ recommended to migrate to the new syntax.
 	Replaced by `git config get [--value=<pattern>] <name>`.
 
 --get-all <name> [<value-pattern>]::
-	Replaced by `git config get [--value=<pattern>] --all --show-names <name>`.
+	Replaced by `git config get [--value=<pattern>] --all <name>`.
 
 --get-regexp <name-regexp>::
 	Replaced by `git config get --all --show-names --regexp <name-regexp>`.
