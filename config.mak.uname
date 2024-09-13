@@ -248,6 +248,7 @@ ifeq ($(uname_O),Cygwin)
         else
 		NO_REGEX = UnfortunatelyYes
         endif
+	HAVE_DEV_TTY = YesPlease
 	HAVE_ALLOCA_H = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	NO_FAST_WORKING_DIRECTORY = UnfortunatelyYes
