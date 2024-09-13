@@ -1671,7 +1671,28 @@ static int do_push_stash(const struct pathspec *ps, const char *stash_msg, int q
 			}
 		}
 
-		if (keep_index == 1 && !is_null_oid(&info.i_tree)) {
+		/*
+		 * When keeping staged entries, we need to reset the working
+		 * directory to match the state of our index. This can be
+		 * skipped when the index is the empty tree, because there is
+		 * nothing to reset in that case:
+		 *
+		 *   - When the index has any file, regardless of whether
+		 *     staged or not, the tree cannot be empty by definition
+		 *     and thus we enter the condition.
+		 *
+		 *   - When the index has no files, the only thing we need to
+		 *     care about is untracked files when `--include-untracked`
+		 *     is given. But as we already execute git-clean(1) further
+		 *     up to delete such untracked files we don't have to do
+		 *     anything here, either.
+		 *
+		 * We thus skip calling git-checkout(1) in this case, also
+		 * because running it on an empty tree will cause it to fail
+		 * due to the pathspec not matching anything.
+		 */
+		if (keep_index == 1 && !is_null_oid(&info.i_tree) &&
+		    !is_empty_tree_oid(&info.i_tree, the_repository->hash_algo)) {
 			struct child_process cp = CHILD_PROCESS_INIT;
 
 			cp.git_cmd = 1;
