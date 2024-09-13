@@ -167,7 +167,10 @@ int interactive_add(const char **argv, const char *prefix, int patch)
 	return ret;
 }
 
-static int edit_patch(int argc, const char **argv, const char *prefix)
+static int edit_patch(int argc,
+		      const char **argv,
+		      const char *prefix,
+		      struct repository *repo UNUSED)
 {
 	char *file = git_pathdup("ADD_EDIT.patch");
 	struct child_process child = CHILD_PROCESS_INIT;
@@ -358,7 +361,10 @@ static int add_files(struct dir_struct *dir, int flags)
 	return exit_status;
 }
 
-int cmd_add(int argc, const char **argv, const char *prefix)
+int cmd_add(int argc,
+	    const char **argv,
+	    const char *prefix,
+	    struct repository *repo UNUSED)
 {
 	int exit_status = 0;
 	struct pathspec pathspec;
@@ -387,7 +393,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (edit_interactive) {
 		if (pathspec_from_file)
 			die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--edit");
-		return(edit_patch(argc, argv, prefix));
+		return(edit_patch(argc, argv, prefix, the_repository));
 	}
 	argc--;
 	argv++;

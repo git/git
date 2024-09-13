@@ -147,7 +147,10 @@ static void remove_temporary_files(const char *path)
 	closedir(dir);
 }
 
-int cmd_prune(int argc, const char **argv, const char *prefix)
+int cmd_prune(int argc,
+	      const char **argv,
+	      const char *prefix,
+	      struct repository *repo UNUSED)
 {
 	struct rev_info revs;
 	int exclude_promisor_objects = 0;

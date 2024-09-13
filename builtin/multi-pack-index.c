@@ -267,8 +267,10 @@ static int cmd_multi_pack_index_repack(int argc, const char **argv,
 			   (size_t)opts.batch_size, opts.flags);
 }
 
-int cmd_multi_pack_index(int argc, const char **argv,
-			 const char *prefix)
+int cmd_multi_pack_index(int argc,
+			 const char **argv,
+			 const char *prefix,
+			 struct repository *repo UNUSED)
 {
 	int res;
 	parse_opt_subcommand_fn *fn = NULL;

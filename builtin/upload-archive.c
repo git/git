@@ -18,7 +18,10 @@ static const char deadchild[] =
 
 #define MAX_ARGS (64)
 
-int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
+int cmd_upload_archive_writer(int argc,
+			      const char **argv,
+			      const char *prefix,
+			      struct repository *repo UNUSED)
 {
 	struct strvec sent_argv = STRVEC_INIT;
 	const char *arg_cmd = "argument ";
@@ -76,7 +79,10 @@ static ssize_t process_input(int child_fd, int band)
 	return sz;
 }
 
-int cmd_upload_archive(int argc, const char **argv, const char *prefix)
+int cmd_upload_archive(int argc,
+const char **argv,
+const char *prefix,
+struct repository *repo UNUSED)
 {
 	struct child_process writer = CHILD_PROCESS_INIT;
 

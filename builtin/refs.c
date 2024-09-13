@@ -90,7 +90,10 @@ static int cmd_refs_verify(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
-int cmd_refs(int argc, const char **argv, const char *prefix)
+int cmd_refs(int argc,
+	     const char **argv,
+	     const char *prefix,
+	     struct repository *repo UNUSED)
 {
 	const char * const refs_usage[] = {
 		REFS_MIGRATE_USAGE,

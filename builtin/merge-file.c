@@ -53,7 +53,10 @@ static int diff_algorithm_cb(const struct option *opt,
 	return 0;
 }
 
-int cmd_merge_file(int argc, const char **argv, const char *prefix)
+int cmd_merge_file(int argc,
+		   const char **argv,
+		   const char *prefix,
+		   struct repository *repo UNUSED)
 {
 	const char *names[3] = { 0 };
 	mmfile_t mmfs[3] = { 0 };

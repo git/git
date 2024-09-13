@@ -51,7 +51,10 @@ static int check_ref_format_branch(const char *arg)
 	return 0;
 }
 
-int cmd_check_ref_format(int argc, const char **argv, const char *prefix)
+int cmd_check_ref_format(int argc,
+			 const char **argv,
+			 const char *prefix,
+			 struct repository *repo UNUSED)
 {
 	int i;
 	int normalize = 0;

@@ -31,7 +31,7 @@
 
 struct cmd_struct {
 	const char *cmd;
-	int (*fn)(int, const char **, const char *);
+	int (*fn)(int, const char **, const char *, struct repository *);
 	unsigned int option;
 };
 
@@ -441,7 +441,7 @@ static int handle_alias(int *argcp, const char ***argv)
 	return ret;
 }
 
-static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
+static int run_builtin(struct cmd_struct *p, int argc, const char **argv, struct repository *repo)
 {
 	int status, help;
 	struct stat st;
@@ -479,9 +479,9 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 	trace_argv_printf(argv, "trace: built-in: git");
 	trace2_cmd_name(p->cmd);
 
-	validate_cache_entries(the_repository->index);
-	status = p->fn(argc, argv, prefix);
-	validate_cache_entries(the_repository->index);
+	validate_cache_entries(repo->index);
+	status = p->fn(argc, argv, prefix, (p->option & RUN_SETUP)? repo : NULL);
+	validate_cache_entries(repo->index);
 
 	if (status)
 		return status;
@@ -736,7 +736,7 @@ static void handle_builtin(int argc, const char **argv)
 
 	builtin = get_builtin(cmd);
 	if (builtin)
-		exit(run_builtin(builtin, argc, argv));
+		exit(run_builtin(builtin, argc, argv, the_repository));
 	strvec_clear(&args);
 }
 

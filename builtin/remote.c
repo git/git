@@ -1754,7 +1754,10 @@ out:
 	return 0;
 }
 
-int cmd_remote(int argc, const char **argv, const char *prefix)
+int cmd_remote(int argc,
+	       const char **argv,
+	       const char *prefix,
+	       struct repository *repo UNUSED)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option options[] = {

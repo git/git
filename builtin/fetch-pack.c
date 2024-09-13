@@ -43,7 +43,10 @@ static void add_sought_entry(struct ref ***sought, int *nr, int *alloc,
 	(*sought)[*nr - 1] = ref;
 }
 
-int cmd_fetch_pack(int argc, const char **argv, const char *prefix UNUSED)
+int cmd_fetch_pack(int argc,
+		   const char **argv,
+		   const char *prefix UNUSED,
+		   struct repository *repo UNUSED)
 {
 	int i, ret;
 	struct ref *ref = NULL;

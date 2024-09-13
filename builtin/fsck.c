@@ -925,7 +925,10 @@ static struct option fsck_opts[] = {
 	OPT_END(),
 };
 
-int cmd_fsck(int argc, const char **argv, const char *prefix)
+int cmd_fsck(int argc,
+	     const char **argv,
+	     const char *prefix,
+	     struct repository *repo UNUSED)
 {
 	int i;
 	struct object_directory *odb;

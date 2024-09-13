@@ -9,7 +9,10 @@ static const char * const fmt_merge_msg_usage[] = {
 	NULL
 };
 
-int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
+int cmd_fmt_merge_msg(int argc,
+		      const char **argv,
+		      const char *prefix,
+		      struct repository *repo UNUSED)
 {
 	char *inpath = NULL;
 	const char *message = NULL;

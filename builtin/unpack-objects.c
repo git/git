@@ -601,7 +601,10 @@ static void unpack_all(void)
 		die("unresolved deltas left after unpacking");
 }
 
-int cmd_unpack_objects(int argc, const char **argv, const char *prefix UNUSED)
+int cmd_unpack_objects(int argc,
+		       const char **argv,
+		       const char *prefix UNUSED,
+		       struct repository *repo UNUSED)
 {
 	int i;
 	struct object_id oid;

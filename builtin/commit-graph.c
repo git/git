@@ -331,7 +331,10 @@ cleanup:
 	return result;
 }
 
-int cmd_commit_graph(int argc, const char **argv, const char *prefix)
+int cmd_commit_graph(int argc,
+		     const char **argv,
+		     const char *prefix,
+		     struct repository *repo UNUSED)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option builtin_commit_graph_options[] = {

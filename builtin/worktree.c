@@ -1392,7 +1392,10 @@ static int repair(int ac, const char **av, const char *prefix)
 	return rc;
 }
 
-int cmd_worktree(int ac, const char **av, const char *prefix)
+int cmd_worktree(int ac,
+		 const char **av,
+		 const char *prefix,
+		 struct repository *repo UNUSED)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option options[] = {

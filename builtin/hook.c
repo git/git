@@ -66,7 +66,10 @@ usage:
 	usage_with_options(builtin_hook_run_usage, run_options);
 }
 
-int cmd_hook(int argc, const char **argv, const char *prefix)
+int cmd_hook(int argc,
+	     const char **argv,
+	     const char *prefix,
+	     struct repository *repo UNUSED)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option builtin_hook_options[] = {

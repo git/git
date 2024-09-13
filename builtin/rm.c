@@ -261,7 +261,10 @@ static struct option builtin_rm_options[] = {
 	OPT_END(),
 };
 
-int cmd_rm(int argc, const char **argv, const char *prefix)
+int cmd_rm(int argc,
+	   const char **argv,
+	   const char *prefix,
+	   struct repository *repo UNUSED)
 {
 	struct lock_file lock_file = LOCK_INIT;
 	int i, ret = 0;

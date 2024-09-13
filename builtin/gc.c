@@ -657,7 +657,10 @@ static void gc_before_repack(struct maintenance_run_opts *opts,
 	}
 }
 
-int cmd_gc(int argc, const char **argv, const char *prefix)
+int cmd_gc(int argc,
+const char **argv,
+const char *prefix,
+struct repository *repo UNUSED)
 {
 	int aggressive = 0;
 	int quiet = 0;
@@ -2890,7 +2893,10 @@ static const char * const builtin_maintenance_usage[] = {
 	NULL,
 };
 
-int cmd_maintenance(int argc, const char **argv, const char *prefix)
+int cmd_maintenance(int argc,
+		    const char **argv,
+		    const char *prefix,
+		    struct repository *repo UNUSED)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option builtin_maintenance_options[] = {

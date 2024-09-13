@@ -17,7 +17,10 @@ static const char * const upload_pack_usage[] = {
 	NULL
 };
 
-int cmd_upload_pack(int argc, const char **argv, const char *prefix)
+int cmd_upload_pack(int argc,
+		    const char **argv,
+		    const char *prefix,
+		    struct repository *repo UNUSED)
 {
 	const char *dir;
 	int strict = 0;

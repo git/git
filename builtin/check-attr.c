@@ -107,7 +107,10 @@ static NORETURN void error_with_usage(const char *msg)
 	usage_with_options(check_attr_usage, check_attr_options);
 }
 
-int cmd_check_attr(int argc, const char **argv, const char *prefix)
+int cmd_check_attr(int argc,
+		   const char **argv,
+		   const char *prefix,
+		   struct repository *repo UNUSED)
 {
 	struct attr_check *check;
 	struct object_id initialized_oid;

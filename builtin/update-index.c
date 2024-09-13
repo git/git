@@ -917,7 +917,10 @@ static enum parse_opt_result reupdate_callback(
 	return 0;
 }
 
-int cmd_update_index(int argc, const char **argv, const char *prefix)
+int cmd_update_index(int argc,
+		     const char **argv,
+		     const char *prefix,
+		     struct repository *repo UNUSED)
 {
 	int newfd, entries, has_errors = 0, nul_term_line = 0;
 	enum uc_mode untracked_cache = UC_UNSPECIFIED;
