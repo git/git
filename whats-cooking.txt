@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2024, #04; Thu, 12)
-X-master-at: 57974d46a4d5a079471c4f7eaa5933b1922299e4
-X-next-at: 47ca7c9db903a97a4f176f2884133618062d7d4e
+Subject: What's cooking in git.git (Sep 2024, #05; Fri, 13)
+X-master-at: ed155187b429a2a6b6475efe1767053df37ccfe1
+X-next-at: 578e378164b3590ff9a370eb478d1fbaa7be2050
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2024, #04; Thu, 12)
+What's cooking in git.git (Sep 2024, #05; Fri, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,11 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+As we have been accumulating many small fixes on the 'master' front,
+I merged them to 'maint' and tagged the result as Git 2.46.1.  I
+expect Git 2.46.2, primarily with CI fixes and not much more, to
+follow shortly.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,125 +53,125 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ah/mergetols-vscode (2024-09-01) 1 commit
-  (merged to 'next' on 2024-09-04 at 425c5c83e2)
- + mergetools: vscode: new tool
+* bl/trailers-and-incomplete-last-line-fix (2024-09-06) 1 commit
+  (merged to 'next' on 2024-09-09 at a09f0889bb)
+ + interpret-trailers: handle message without trailing newline
 
- "git mergetool" learned to use VSCode as a merge backend.
- source: <20240902025918.99657-1-alexhenrie24@gmail.com>
-
-
-* gt/unit-test-oid-array (2024-09-01) 1 commit
-  (merged to 'next' on 2024-09-05 at 92d0881bb0)
- + t: port helper/test-oid-array.c to unit-tests/t-oid-array.c
-
- Another unit-test.
+ The interpret-trailers command failed to recognise the end of the
+ message when the commit log ends in an incomplete line.
  
- source: <20240901212649.4910-1-shyamthakkar001@gmail.com>
+ source: <20240906145743.2059405-1-brianmlyles@gmail.com>
 
 
-* jc/mailinfo-header-cleanup (2024-08-20) 1 commit
-  (merged to 'next' on 2024-09-05 at 9a30adb035)
- + mailinfo: we parse fixed headers
+* ds/doc-wholesale-disabling-advice-messages (2024-09-06) 1 commit
+  (merged to 'next' on 2024-09-07 at a52a31f161)
+ + advice: recommend GIT_ADVICE=0 for tools
 
- Code clean-up.
-  cf. <Zsb1rGQbglHMiBHI@tanuki>
- source: <xmqq1q2i6gw7.fsf@gitster.g>
-
-
-* jk/free-commit-buffer-of-skipped-commits (2024-08-30) 1 commit
-  (merged to 'next' on 2024-09-03 at a8fb72a4d5)
- + revision: free commit buffers for skipped commits
-
- The code forgot to discard unnecessary in-core commit buffer data
- for commits that "git log --skip=<number>" traversed but omitted
- from the output, which has been corrected.
- source: <20240830205331.GA1038751@coredump.intra.peff.net>
-
-
-* jk/messages-with-excess-lf-fix (2024-09-05) 1 commit
-  (merged to 'next' on 2024-09-06 at edb0958483)
- + drop trailing newline from warning/error/die messages
-
- One-line messages to "die" and other helper functions will get LF
- added by these helper functions, but many existing messages had an
- unnecessary LF at the end, which have been corrected.
+ The environment GIT_ADVICE has been intentionally kept undocumented
+ to discourage its use by interactive users.  Add documentation to
+ help tool writers.
  
- source: <20240905085149.GA2340826@coredump.intra.peff.net>
+ source: <pull.1781.v2.git.1725654155162.gitgitgadget@gmail.com>
 
 
-* kl/cat-file-on-sparse-index (2024-09-04) 2 commits
-  (merged to 'next' on 2024-09-06 at a3c78e9398)
- + builtin/cat-file: mark 'git cat-file' sparse-index compatible
- + t1092: allow run_on_* functions to use standard input
+* ds/scalar-no-tags (2024-09-06) 1 commit
+  (merged to 'next' on 2024-09-07 at fc06d19cfb)
+ + scalar: add --no-tags option to 'scalar clone'
 
- "git cat-file" works well with the sparse-index, and gets marked as
- such.
+ The "scalar clone" command learned the "--no-tags" option.
  
- source: <pull.1770.v4.git.git.1725401207.gitgitgadget@gmail.com>
+ source: <pull.1780.v2.git.1725654102035.gitgitgadget@gmail.com>
 
 
-* ps/declare-pack-redundamt-dead (2024-09-03) 1 commit
-  (merged to 'next' on 2024-09-04 at 6a97b07329)
- + Documentation/BreakingChanges: announce removal of git-pack-redundant(1)
+* jc/doc-skip-fetch-all-and-prefetch (2024-09-09) 1 commit
+  (merged to 'next' on 2024-09-09 at a2bf302636)
+ + doc: remote.*.skip{DefaultUpdate,FetchAll} stops prefetch
 
- "git pack-redundant" has been marked for removal in Git 3.0.
- source: <a6be9f5e9eb1f426b1a17b89e3db1bc7532758b5.1725264748.git.ps@pks.im>
-
-
-* ps/index-pack-outside-repo-fix (2024-09-04) 1 commit
-  (merged to 'next' on 2024-09-05 at d7ff867595)
- + builtin/index-pack: fix segfaults when running outside of a repo
-
- "git verify-pack" and "git index-pack" started dying outside a
- repository, which has been corrected.
+ Doc updates.
  
- source: <9a4267b8854312351f82286b6025d0a3d0e66743.1725429169.git.ps@pks.im>
+ source: <xmqqseu8u8m0.fsf@gitster.g>
 
 
-* ps/pack-refs-auto-heuristics (2024-09-04) 3 commits
-  (merged to 'next' on 2024-09-06 at 068ed2f7ae)
- + refs/files: use heuristic to decide whether to repack with `--auto`
- + t0601: merge tests for auto-packing of refs
- + wrapper: introduce `log2u()`
+* jk/sparse-fdleak-fix (2024-09-06) 3 commits
+  (merged to 'next' on 2024-09-07 at 2551aeee9e)
+ + sparse-checkout: use fdopen_lock_file() instead of xfdopen()
+ + sparse-checkout: check commit_lock_file when writing patterns
+ + sparse-checkout: consolidate cleanup when writing patterns
 
- "git pack-refs --auto" for the files backend was too aggressive,
- which has been a bit tamed.
+ A file descriptor left open is now properly closed when "git
+ sparse-checkout" updates the sparse patterns.
  
- source: <cover.1725439407.git.ps@pks.im>
+ source: <20240906034557.GA3693911@coredump.intra.peff.net>
 
 
-* rj/compat-terminal-unused-fix (2024-09-01) 1 commit
-  (merged to 'next' on 2024-09-04 at 4ad97be799)
- + compat/terminal: mark parameter of git_terminal_prompt() UNUSED
+* rj/cygwin-has-dev-tty (2024-09-08) 1 commit
+  (merged to 'next' on 2024-09-09 at 5c5726050f)
+ + config.mak.uname: add HAVE_DEV_TTY to cygwin config section
 
- Build fix.
- source: <ce1c1d66-e0eb-4143-b334-1a83c0492415@ramsayjones.plus.com>
-
-
-* sp/mailmap (2024-09-06) 1 commit
-  (merged to 'next' on 2024-09-07 at aa952cf271)
- + .mailmap document current address.
-
- Update to a mailmap entry.
- source: <20240906153003.110200-2-ischis2@cox.net>
+ Cygwin does have /dev/tty support that is needed by things like
+ single-key input mode.
+ 
+ source: <e3339b4d-dab1-4247-b70e-d3224bab1b6b@ramsayjones.plus.com>
 
 
-* tb/multi-pack-reuse-fix (2024-08-27) 5 commits
-  (merged to 'next' on 2024-09-06 at 552494ec2f)
- + builtin/pack-objects.c: do not open-code `MAX_PACK_OBJECT_HEADER`
- + pack-bitmap.c: avoid repeated `pack_pos_to_offset()` during reuse
- + builtin/pack-objects.c: translate bit positions during pack-reuse
- + pack-bitmap: tag bitmapped packs with their corresponding MIDX
- + t/t5332-multi-pack-reuse.sh: verify pack generation with --strict
+* rs/diff-exit-code-fix (2024-09-08) 2 commits
+  (merged to 'next' on 2024-09-09 at f52bb4afb2)
+ + diff: report dirty submodules as changes in builtin_diff()
+ + diff: report copies and renames as changes in run_diff_cmd()
 
- A data corruption bug when multi-pack-index is used and the same
- objects are stored in multiple packfiles has been corrected.
-  cf. <20240905091043.GB2556395@coredump.intra.peff.net>
- source: <cover.1724793201.git.me@ttaylorr.com>
+ In a few corner cases "git diff --exit-code" failed to report
+ "changes" (e.g., renamed without any content change), which has
+ been corrected.
+ 
+ source: <0864c86a-5562-4780-92c5-59d6c1a35aad@web.de>
 
 --------------------------------------------------
 [New Topics]
+
+* bb/unicode-width-table-16 (2024-09-12) 1 commit
+  (merged to 'next' on 2024-09-13 at 87dc391469)
+ + unicode: update the width tables to Unicode 16
+
+ Update the character width table for Unicode 16.
+
+ Will merge to 'master'.
+ source: <20240912204047.1020213-1-dev+git@drbeat.li>
+
+
+* jc/strbuf-commented-something (2024-09-12) 2 commits
+ - strbuf: retire strbuf_commented_lines()
+ - strbuf: retire strbuf_commented_addf()
+
+ Update two functions whose callers always pass the same global
+ variable to omit the redundant parameter and use the global in the
+ callee themselves.
+
+ On hold.
+ source: <20240912205301.1809355-1-gitster@pobox.com>
+
+
+* jk/git-pm-bare-repo-fix (2024-09-13) 2 commits
+  (merged to 'next' on 2024-09-13 at 7f9bb8501c)
+ + Git.pm: use "rev-parse --absolute-git-dir" rather than perl code
+ + Git.pm: fix bare repository search with Directory option
+
+ In Git 2.39, Git.pm stopped working in a bare repository, which has
+ been corrected.
+
+ Will merge to 'master'.
+ source: <20240912223413.GA649897@coredump.intra.peff.net>
+
+
+* jc/t5512-sigpipe-fix (2024-09-13) 1 commit
+ - t5512.40 sometimes dies by SIGPIPE
+
+ Test fix.
+
+ Will merge to 'next'.
+ source: <xmqqmskbwe1a.fsf@gitster.g>
+
+--------------------------------------------------
+[Cooking]
 
 * jc/ci-upload-artifact-and-linux32 (2024-09-09) 1 commit
   (merged to 'next' on 2024-09-11 at 62991bef5b)
@@ -202,50 +207,53 @@ Release tarballs are available at:
  source: <20240909230758.GA921697@coredump.intra.peff.net>
 
 
-* jk/ci-linux32-update (2024-09-12) 4 commits
- - ci: use regular action versions for linux32 job
- - ci: use more recent linux32 image
- - ci: unify ubuntu and ubuntu32 dependencies
- - ci: drop run-docker scripts
+* jk/ci-linux32-update (2024-09-13) 5 commits
+  (merged to 'next' on 2024-09-13 at e937339388)
+ + ci: add Ubuntu 16.04 job to GitLab CI
+ + ci: use regular action versions for linux32 job
+ + ci: use more recent linux32 image
+ + ci: unify ubuntu and ubuntu32 dependencies
+ + ci: drop run-docker scripts
  (this branch uses jc/ci-upload-artifact-and-linux32.)
 
  CI updates
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240912094238.GA589050@coredump.intra.peff.net>
 
 
 * jk/interop-test-build-options (2024-09-12) 1 commit
- - t/interop: allow per-version make options
+  (merged to 'next' on 2024-09-13 at 0ab66e77a1)
+ + t/interop: allow per-version make options
 
  The support to customize build options to adjust for older versions
  and/or older systems for the interop tests has been improved.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240911061009.GA1538383@coredump.intra.peff.net>
 
 
 * jk/no-openssl-with-openssl-sha1 (2024-09-12) 1 commit
- - imap-send: handle NO_OPENSSL even when openssl exists
+  (merged to 'next' on 2024-09-13 at 07f5e4856d)
+ + imap-send: handle NO_OPENSSL even when openssl exists
 
  The "imap-send" now allows to be compiled with NO_OPENSSL and
  OPENSSL_SHA1 defined together.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240911061257.GA1538490@coredump.intra.peff.net>
 
 
 * ma/test-libcurl-prereq (2024-09-11) 2 commits
- - t0211: add missing LIBCURL prereq
- - t1517: add missing LIBCURL prereq
+  (merged to 'next' on 2024-09-13 at 6d4ad6b054)
+ + t0211: add missing LIBCURL prereq
+ + t1517: add missing LIBCURL prereq
 
  Test portability fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1726049108.git.martin.agren@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * cc/promisor-remote-capability (2024-09-10) 4 commits
  - promisor-remote: check advertised name or URL
@@ -260,17 +268,6 @@ Release tarballs are available at:
 
  Comments?
  source: <20240910163000.1985723-1-christian.couder@gmail.com>
-
-
-* rj/cygwin-has-dev-tty (2024-09-08) 1 commit
-  (merged to 'next' on 2024-09-09 at 5c5726050f)
- + config.mak.uname: add HAVE_DEV_TTY to cygwin config section
-
- Cygwin does have /dev/tty support that is needed by things like
- single-key input mode.
-
- Will merge to 'master'.
- source: <e3339b4d-dab1-4247-b70e-d3224bab1b6b@ramsayjones.plus.com>
 
 
 * ah/apply-3way-ours (2024-09-09) 1 commit
@@ -317,73 +314,15 @@ Release tarballs are available at:
  source: <cover.1725881266.git.ps@pks.im>
 
 
-* ds/doc-wholesale-disabling-advice-messages (2024-09-06) 1 commit
-  (merged to 'next' on 2024-09-07 at a52a31f161)
- + advice: recommend GIT_ADVICE=0 for tools
-
- The environment GIT_ADVICE has been intentionally kept undocumented
- to discourage its use by interactive users.  Add documentation to
- help tool writers.
-
- Will merge to 'master'.
- source: <pull.1781.v2.git.1725654155162.gitgitgadget@gmail.com>
-
-
-* jk/sparse-fdleak-fix (2024-09-06) 3 commits
-  (merged to 'next' on 2024-09-07 at 2551aeee9e)
- + sparse-checkout: use fdopen_lock_file() instead of xfdopen()
- + sparse-checkout: check commit_lock_file when writing patterns
- + sparse-checkout: consolidate cleanup when writing patterns
-
- A file descriptor left open is now properly closed when "git
- sparse-checkout" updates the sparse patterns.
-
- Will merge to 'master'.
- source: <20240906034557.GA3693911@coredump.intra.peff.net>
-
-
-* bl/trailers-and-incomplete-last-line-fix (2024-09-06) 1 commit
-  (merged to 'next' on 2024-09-09 at a09f0889bb)
- + interpret-trailers: handle message without trailing newline
-
- The interpret-trailers command failed to recognise the end of the
- message when the commit log ends in an incomplete line.
-
- Will merge to 'master'.
- source: <20240906145743.2059405-1-brianmlyles@gmail.com>
-
-
-* jc/doc-skip-fetch-all-and-prefetch (2024-09-09) 1 commit
-  (merged to 'next' on 2024-09-09 at a2bf302636)
- + doc: remote.*.skip{DefaultUpdate,FetchAll} stops prefetch
-
- Doc updates.
-
- Will merge to 'master'.
- source: <xmqqseu8u8m0.fsf@gitster.g>
-
-
-* rs/diff-exit-code-fix (2024-09-08) 2 commits
-  (merged to 'next' on 2024-09-09 at f52bb4afb2)
- + diff: report dirty submodules as changes in builtin_diff()
- + diff: report copies and renames as changes in run_diff_cmd()
-
- In a few corner cases "git diff --exit-code" failed to report
- "changes" (e.g., renamed without any content change), which has
- been corrected.
-
- Will merge to 'master'.
- source: <0864c86a-5562-4780-92c5-59d6c1a35aad@web.de>
-
-
 * pw/rebase-autostash-fix (2024-09-03) 1 commit
- - rebase: apply and cleanup autostash when rebase fails to start
+  (merged to 'next' on 2024-09-13 at 6b41d66efd)
+ + rebase: apply and cleanup autostash when rebase fails to start
 
  "git rebase --autostash" failed to resurrect the autostashed
  changes when the command gets aborted after giving back control
  asking for hlep in conflict resolution.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1772.v2.git.1725289979450.gitgitgadget@gmail.com>
 
 
@@ -403,18 +342,9 @@ Release tarballs are available at:
  source: <20240908041632.4948-1-chandrapratap3519@gmail.com>
 
 
-* ds/scalar-no-tags (2024-09-06) 1 commit
-  (merged to 'next' on 2024-09-07 at fc06d19cfb)
- + scalar: add --no-tags option to 'scalar clone'
-
- The "scalar clone" command learned the "--no-tags" option.
-
- Will merge to 'master'.
- source: <pull.1780.v2.git.1725654102035.gitgitgadget@gmail.com>
-
-
-* jc/pass-repo-to-builtins (2024-09-11) 3 commits
+* jc/pass-repo-to-builtins (2024-09-13) 4 commits
  - add: pass in repo variable instead of global the_repository
+ - builtin: remove USE_THE_REPOSITORY for those without the_repository
  - builtin: remove USE_THE_REPOSITORY_VARIABLE from builtin.h
  - builtin: add a repository parameter for builtin functions
 
@@ -423,7 +353,7 @@ Release tarballs are available at:
  prefix value.
 
  Will merge to 'next'?
- source: <pull.1778.v2.git.git.1726001960.gitgitgadget@gmail.com>
+ source: <pull.1778.v3.git.git.1726262177.gitgitgadget@gmail.com>
 
 
 * tb/weak-sha1-for-tail-sum (2024-09-06) 9 commits
@@ -495,48 +425,48 @@ Release tarballs are available at:
 
 
 * ps/leakfixes-part-6 (2024-09-05) 22 commits
- - builtin/repack: fix leaking keep-pack list
- - merge-ort: fix two leaks when handling directory rename modifications
- - match-trees: fix leaking prefixes in `shift_tree()`
- - builtin/fmt-merge-msg: fix leaking buffers
- - builtin/grep: fix leaking object context
- - builtin/pack-objects: plug leaking list of keep-packs
- - builtin/repack: fix leaking line buffer when packing promisors
- - negotiator/skipping: fix leaking commit entries
- - shallow: fix leaking members of `struct shallow_info`
- - shallow: free grafts when unregistering them
- - object: clear grafts when clearing parsed object pool
- - gpg-interface: fix misdesigned signing key interfaces
- - send-pack: fix leaking push cert nonce
- - remote: fix leak in reachability check of a remote-tracking ref
- - remote: fix leaking tracking refs
- - builtin/submodule--helper: fix leaking refs on push-check
- - submodule: fix leaking fetch task data
- - upload-pack: fix leaking child process data on reachability checks
- - builtin/push: fix leaking refspec query result
- - send-pack: fix leaking common object IDs
- - fetch-pack: fix memory leaks on fetch negotiation
- - t/test-lib: allow skipping leak checks for passing tests
+  (merged to 'next' on 2024-09-13 at 9be3125b10)
+ + builtin/repack: fix leaking keep-pack list
+ + merge-ort: fix two leaks when handling directory rename modifications
+ + match-trees: fix leaking prefixes in `shift_tree()`
+ + builtin/fmt-merge-msg: fix leaking buffers
+ + builtin/grep: fix leaking object context
+ + builtin/pack-objects: plug leaking list of keep-packs
+ + builtin/repack: fix leaking line buffer when packing promisors
+ + negotiator/skipping: fix leaking commit entries
+ + shallow: fix leaking members of `struct shallow_info`
+ + shallow: free grafts when unregistering them
+ + object: clear grafts when clearing parsed object pool
+ + gpg-interface: fix misdesigned signing key interfaces
+ + send-pack: fix leaking push cert nonce
+ + remote: fix leak in reachability check of a remote-tracking ref
+ + remote: fix leaking tracking refs
+ + builtin/submodule--helper: fix leaking refs on push-check
+ + submodule: fix leaking fetch task data
+ + upload-pack: fix leaking child process data on reachability checks
+ + builtin/push: fix leaking refspec query result
+ + send-pack: fix leaking common object IDs
+ + fetch-pack: fix memory leaks on fetch negotiation
+ + t/test-lib: allow skipping leak checks for passing tests
 
  More leakfixes.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1725530720.git.ps@pks.im>
 
 
-* sj/ref-contents-check (2024-09-03) 4 commits
+* sj/ref-contents-check (2024-09-13) 5 commits
  - ref: add symlink ref content check for files backend
  - ref: add symref content check for files backend
- - ref: add regular ref content check for files backend
+ - ref: add more strict checks for regular refs
+ - ref: port git-fsck(1) regular refs check for files backend
  - ref: initialize "fsck_ref_report" with zero
 
  "git fsck" learned to issue warnings on "curiously formatted" ref
  contents that have always been taken valid but something Git
  wouldn't have written itself (e.g., missing terminating end-of-line
  after the full object name).
-
- Expecting a reroll.
- source: <Ztb-mgl50cwGVO8A@ArchLinux>
+ source: <ZuRzCyjQFilGhj8j@ArchLinux>
 
 
 * tb/incremental-midx-part-2 (2024-08-28) 16 commits
@@ -638,7 +568,7 @@ Release tarballs are available at:
  been revamped.  The sources, at least for the simple cases, got
  vastly pleasant to work with.
 
- Waiting for comments.
+ Will merge to 'next'.
  source: <pull.1766.v4.git.1725573126.gitgitgadget@gmail.com>
 
 
@@ -658,16 +588,3 @@ Release tarballs are available at:
 
  Waiting for review responses.
  source: <20240823224630.1180772-1-e@80x24.org>
-
---------------------------------------------------
-[Discarded]
-
-* tc/fetch-bundle-uri (2024-07-24) 3 commits
- . fetch: use bundle URIs when having creationToken heuristic
- . transport: introduce transport_has_remote_bundle_uri()
- . clone: remove double bundle list clear code
-
- Allow "git fetch" take advantage of bundleURI feature.
-
- Has been expecting a reroll for too long.
- source: <ZqObobw8FsDMkllm@tanuki>
