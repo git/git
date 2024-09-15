@@ -50,7 +50,7 @@ mode_diff() {
 	defined($line) or next;
 	if (/^ /) { $line++; next }
 	if (/^[-+]\s*(.*)/) {
-		print "$file:$line: $1\n";
+		print "$file:$line:1: $1\n";
 		$line = undef;
 	}
 	'
