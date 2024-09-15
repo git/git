@@ -1324,7 +1324,7 @@ test_expect_success $PREREQ 'cc list is sanitized' '
 	Reviewed-by: Füñný Nâmé <odd_?=mail@example.com>
 	Reported-by: bugger on Jira
 	Reported-by: Douglas Reporter <doug@example.com> [from Jira profile]
-	BugID: 12345
+	BugID: 12345should-not-appear
 	Co-developed-by: "C. O. Developer" <codev@example.com>
 	Signed-off-by: A. U. Thor <thor.au@example.com>
 	EOF
@@ -1337,7 +1337,7 @@ test_expect_success $PREREQ 'cc list is sanitized' '
 " <odd_?=mail@example.com>" actual-show-all-headers &&
 	test_grep "^(body) Ignoring Reported-by .* bugger on Jira" actual-show-all-headers &&
 	test_grep "^(body) Adding cc: Douglas Reporter <doug@example.com>" actual-show-all-headers &&
-	test_grep ! "12345" actual-show-all-headers &&
+	test_grep ! "12345should-not-appear" actual-show-all-headers &&
 	test_grep "^(body) Adding cc: \"C. O. Developer\" <codev@example.com>" actual-show-all-headers &&
 	test_grep "^(body) Adding cc: \"A. U. Thor\" <thor.au@example.com>" actual-show-all-headers
 '
