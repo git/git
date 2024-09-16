@@ -136,6 +136,10 @@ Performance, Internal Implementation, Development Support etc.
  * "git cat-file" works well with the sparse-index, and gets marked as
    such.
 
+ * CI started failing completely for linux32 jobs, as the step to
+   upload failed test directory uses GitHub actions that is deprecated
+   and is now disabled.
+
 
 Fixes since v2.46
 -----------------
