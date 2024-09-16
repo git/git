@@ -328,6 +328,7 @@ static int table_iter_seek_to(struct table_iter *ti, uint64_t off, uint8_t typ)
 	ti->typ = block_reader_type(&ti->br);
 	ti->block_off = off;
 	block_iter_seek_start(&ti->bi, &ti->br);
+	ti->is_finished = 0;
 	return 0;
 }
 
