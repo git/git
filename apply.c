@@ -3561,6 +3561,7 @@ static int three_way_merge(struct apply_state *state,
 			   const struct object_id *theirs)
 {
 	mmfile_t base_file, our_file, their_file;
+	struct ll_merge_options merge_opts = LL_MERGE_OPTIONS_INIT;
 	mmbuffer_t result = { NULL };
 	enum ll_merge_result status;
 
@@ -3573,12 +3574,13 @@ static int three_way_merge(struct apply_state *state,
 	read_mmblob(&base_file, base);
 	read_mmblob(&our_file, ours);
 	read_mmblob(&their_file, theirs);
+	merge_opts.variant = state->merge_variant;
 	status = ll_merge(&result, path,
 			  &base_file, "base",
 			  &our_file, "ours",
 			  &their_file, "theirs",
 			  state->repo->index,
-			  NULL);
+			  &merge_opts);
 	if (status == LL_MERGE_BINARY_CONFLICT)
 		warning("Cannot merge binary files: %s (%s vs. %s)",
 			path, "ours", "theirs");
@@ -5151,6 +5153,15 @@ int apply_parse_options(int argc, const char **argv,
 			N_("also apply the patch (use with --stat/--summary/--check)")),
 		OPT_BOOL('3', "3way", &state->threeway,
 			 N_( "attempt three-way merge, fall back on normal patch if that fails")),
+		OPT_SET_INT_F(0, "ours", &state->merge_variant,
+			N_("for conflicts, use our version"),
+			XDL_MERGE_FAVOR_OURS, PARSE_OPT_NONEG),
+		OPT_SET_INT_F(0, "theirs", &state->merge_variant,
+			N_("for conflicts, use their version"),
+			XDL_MERGE_FAVOR_THEIRS, PARSE_OPT_NONEG),
+		OPT_SET_INT_F(0, "union", &state->merge_variant,
+			N_("for conflicts, use a union version"),
+			XDL_MERGE_FAVOR_UNION, PARSE_OPT_NONEG),
 		OPT_FILENAME(0, "build-fake-ancestor", &state->fake_ancestor,
 			N_("build a temporary index based on embedded index information")),
 		/* Think twice before adding "--nul" synonym to this */
@@ -5190,5 +5201,10 @@ int apply_parse_options(int argc, const char **argv,
 		OPT_END()
 	};
 
-	return parse_options(argc, argv, state->prefix, builtin_apply_options, apply_usage, 0);
+	argc = parse_options(argc, argv, state->prefix, builtin_apply_options, apply_usage, 0);
+
+	if (state->merge_variant && !state->threeway)
+		die(_("--ours, --theirs, and --union require --3way"));
+
+	return argc;
 }
