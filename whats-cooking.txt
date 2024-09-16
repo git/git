@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2024, #05; Fri, 13)
-X-master-at: ed155187b429a2a6b6475efe1767053df37ccfe1
-X-next-at: 578e378164b3590ff9a370eb478d1fbaa7be2050
+Subject: What's cooking in git.git (Sep 2024, #06; Mon, 16)
+X-master-at: 3969d78396e707c5a900dd5e15c365c54bef0283
+X-next-at: 625da3ddd7012469a8c79a2a1d31aeffc5154afe
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2024, #05; Fri, 13)
+What's cooking in git.git (Sep 2024, #06; Mon, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,11 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-As we have been accumulating many small fixes on the 'master' front,
-I merged them to 'maint' and tagged the result as Git 2.46.1.  I
-expect Git 2.46.2, primarily with CI fixes and not much more, to
-follow shortly.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -53,80 +48,170 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* bl/trailers-and-incomplete-last-line-fix (2024-09-06) 1 commit
-  (merged to 'next' on 2024-09-09 at a09f0889bb)
- + interpret-trailers: handle message without trailing newline
+* ah/apply-3way-ours (2024-09-09) 1 commit
+  (merged to 'next' on 2024-09-10 at 989ba9708b)
+ + apply: support --ours, --theirs, and --union for three-way merges
 
- The interpret-trailers command failed to recognise the end of the
- message when the commit log ends in an incomplete line.
+ "git apply --3way" learned to take "--ours" and other options.
  
- source: <20240906145743.2059405-1-brianmlyles@gmail.com>
+ source: <20240909141109.3102-2-alexhenrie24@gmail.com>
 
 
-* ds/doc-wholesale-disabling-advice-messages (2024-09-06) 1 commit
-  (merged to 'next' on 2024-09-07 at a52a31f161)
- + advice: recommend GIT_ADVICE=0 for tools
+* cp/unit-test-reftable-stack (2024-09-09) 6 commits
+  (merged to 'next' on 2024-09-09 at 0dddbbb60d)
+ + t-reftable-stack: add test for stack iterators
+ + t-reftable-stack: add test for non-default compaction factor
+ + t-reftable-stack: use reftable_ref_record_equal() to compare ref records
+ + t-reftable-stack: use Git's tempfile API instead of mkstemp()
+ + t: harmonize t-reftable-stack.c with coding guidelines
+ + t: move reftable/stack_test.c to the unit testing framework
+ (this branch is used by ps/reftable-alloc-failures and ps/reftable-exclude.)
 
- The environment GIT_ADVICE has been intentionally kept undocumented
- to discourage its use by interactive users.  Add documentation to
- help tool writers.
+ Another reftable test migrated to the unit-test framework.
  
- source: <pull.1781.v2.git.1725654155162.gitgitgadget@gmail.com>
+ source: <20240908041632.4948-1-chandrapratap3519@gmail.com>
 
 
-* ds/scalar-no-tags (2024-09-06) 1 commit
-  (merged to 'next' on 2024-09-07 at fc06d19cfb)
- + scalar: add --no-tags option to 'scalar clone'
+* jc/range-diff-lazy-setup (2024-08-09) 2 commits
+  (merged to 'next' on 2024-09-10 at 2e04a06b22)
+ + remerge-diff: clean up temporary objdir at a central place
+ + remerge-diff: lazily prepare temporary objdir on demand
 
- The "scalar clone" command learned the "--no-tags" option.
+ Code clean-up.
  
- source: <pull.1780.v2.git.1725654102035.gitgitgadget@gmail.com>
+ source: <xmqqr0ax9vlk.fsf@gitster.g>
 
 
-* jc/doc-skip-fetch-all-and-prefetch (2024-09-09) 1 commit
-  (merged to 'next' on 2024-09-09 at a2bf302636)
- + doc: remote.*.skip{DefaultUpdate,FetchAll} stops prefetch
+* jk/ref-filter-trailer-fixes (2024-09-10) 10 commits
+  (merged to 'next' on 2024-09-10 at ce7299fe2e)
+ + ref-filter: fix leak with unterminated %(if) atoms
+ + ref-filter: add ref_format_clear() function
+ + ref-filter: fix leak when formatting %(push:remoteref)
+ + ref-filter: fix leak with %(describe) arguments
+ + ref-filter: fix leak of %(trailers) "argbuf"
+ + ref-filter: store ref_trailer_buf data per-atom
+ + ref-filter: drop useless cast in trailers_atom_parser()
+ + ref-filter: strip signature when parsing tag trailers
+ + ref-filter: avoid extra copies of payload/signature
+ + t6300: drop newline from wrapped test title
 
- Doc updates.
+ Bugfixes and leak plugging in "git for-each-ref --format=..." code
+ paths.
  
- source: <xmqqseu8u8m0.fsf@gitster.g>
-
-
-* jk/sparse-fdleak-fix (2024-09-06) 3 commits
-  (merged to 'next' on 2024-09-07 at 2551aeee9e)
- + sparse-checkout: use fdopen_lock_file() instead of xfdopen()
- + sparse-checkout: check commit_lock_file when writing patterns
- + sparse-checkout: consolidate cleanup when writing patterns
-
- A file descriptor left open is now properly closed when "git
- sparse-checkout" updates the sparse patterns.
- 
- source: <20240906034557.GA3693911@coredump.intra.peff.net>
-
-
-* rj/cygwin-has-dev-tty (2024-09-08) 1 commit
-  (merged to 'next' on 2024-09-09 at 5c5726050f)
- + config.mak.uname: add HAVE_DEV_TTY to cygwin config section
-
- Cygwin does have /dev/tty support that is needed by things like
- single-key input mode.
- 
- source: <e3339b4d-dab1-4247-b70e-d3224bab1b6b@ramsayjones.plus.com>
-
-
-* rs/diff-exit-code-fix (2024-09-08) 2 commits
-  (merged to 'next' on 2024-09-09 at f52bb4afb2)
- + diff: report dirty submodules as changes in builtin_diff()
- + diff: report copies and renames as changes in run_diff_cmd()
-
- In a few corner cases "git diff --exit-code" failed to report
- "changes" (e.g., renamed without any content change), which has
- been corrected.
- 
- source: <0864c86a-5562-4780-92c5-59d6c1a35aad@web.de>
+ source: <20240909230758.GA921697@coredump.intra.peff.net>
 
 --------------------------------------------------
 [New Topics]
+
+* jk/diag-unexpected-remote-helper-death (2024-09-14) 1 commit
+  (merged to 'next' on 2024-09-16 at f2aa29beac)
+ + print an error when remote helpers die during capabilities
+
+ When a remote-helper dies before Git writes to it, SIGPIPE killed
+ Git silently.  We now explain the situation a bit better to the end
+ user in our error message.
+
+ Will merge to 'master'.
+ source: <20240914064130.GA1284567@coredump.intra.peff.net>
+
+
+* ak/typofixes (2024-09-16) 3 commits
+ - cbtree: fix a typo
+ - bloom: fix a typo
+ - attr: fix a typo
+
+ source: <20240915230522.129253-1-algonell@gmail.com>
+
+
+* jk/jump-quickfix-fixes (2024-09-16) 2 commits
+ - git-jump: ignore deleted files in diff mode
+ - git-jump: always specify column 1 for diff entries
+
+ source: <20240915111119.GA2017770@coredump.intra.peff.net>
+
+
+* jk/t9001-deflake (2024-09-16) 1 commit
+ - t9001: use a more distinct fake BugID
+
+ source: <20240915113115.GA2019070@coredump.intra.peff.net>
+
+
+* ps/apply-leakfix (2024-09-16) 6 commits
+ - apply: refactor `struct image` to use a `struct strbuf`
+ - apply: rename members that track line count and allocation length
+ - apply: refactor code to drop `line_allocated`
+ - apply: introduce macro and function to init images
+ - apply: rename functions operating on `struct image`
+ - apply: reorder functions to move image-related things together
+
+ source: <cover.1726470385.git.ps@pks.im>
+
+
+* ps/leakfixes-part-7 (2024-09-16) 24 commits
+ - diffcore-break: fix leaking filespecs when merging broken pairs
+ - revision: fix leaking parents when simplifying commits
+ - builtin/maintenance: fix leak in `get_schedule_cmd()`
+ - builtin/maintenance: fix leaking config string
+ - promisor-remote: fix leaking partial clone filter
+ - grep: fix leaking grep pattern
+ - submodule: fix leaking submodule ODB paths
+ - trace2: destroy context stored in thread-local storage
+ - builtin/difftool: plug several trivial memory leaks
+ - builtin/repack: fix leaking configuration
+ - diffcore-order: fix leaking buffer when parsing orderfiles
+ - parse-options: free previous value of `OPTION_FILENAME`
+ - diff: fix leaking orderfile option
+ - builtin/pull: fix leaking "ff" option
+ - dir: fix off by one errors for ignored and untracked entries
+ - builtin/submodule--helper: fix leaking remote ref on errors
+ - t/helper: fix leaking subrepo in nested submodule config helper
+ - builtin/submodule--helper: fix leaking error buffer
+ - builtin/submodule--helper: clear child process when not running it
+ - submodule: fix leaking update strategy
+ - git: fix leaking argv when handling builtins
+ - builtin/help: fix leaking `html_path` when reading config multiple times
+ - builtin/help: fix dangling reference to `html_path`
+ - Merge branch 'ps/leakfixes-part-6' into ps/leakfixes-part-7
+ (this branch uses ps/leakfixes-part-6.)
+
+ source: <cover.1726484308.git.ps@pks.im>
+
+
+* ps/reftable-alloc-failures (2024-09-16) 24 commits
+ - reftable: handle trivial allocation failures
+ - reftable/tree: handle allocation failures
+ - reftable/pq: handle allocation failures when adding entries
+ - reftable/block: handle allocation failures
+ - reftable/blocksource: handle allocation failures
+ - reftable/iter: handle allocation failures when creating indexed table iter
+ - reftable/stack: handle allocation failures in auto compaction
+ - reftable/stack: handle allocation failures in `stack_compact_range()`
+ - reftable/stack: handle allocation failures in `reftable_new_stack()`
+ - reftable/stack: handle allocation failures on reload
+ - reftable/reader: handle allocation failures in `reader_init_iter()`
+ - reftable/reader: handle allocation failures for unindexed reader
+ - reftable/merged: handle allocation failures in `merged_table_init_iter()`
+ - reftable/writer: handle allocation failures in `reftable_new_writer()`
+ - reftable/writer: handle allocation failures in `writer_index_hash()`
+ - reftable/record: handle allocation failures when decoding records
+ - reftable/record: handle allocation failures on copy
+ - reftable/basics: handle allocation failures in `parse_names()`
+ - reftable/basics: handle allocation failures in `reftable_calloc()`
+ - reftable: introduce `reftable_strdup()`
+ - reftable/basics: merge "publicbasics" into "basics"
+ - reftable/error: introduce out-of-memory error code
+ - Merge branch 'ps/reftable-exclude' into ps/reftable-alloc-failures
+ - Merge branch 'cp/unit-test-reftable-stack' into ps/reftable-alloc-failures
+ (this branch uses ps/reftable-exclude.)
+
+ The reftable library is now prepared to expect that the memory
+ allocation function given to it may fail to allocate and to deal
+ with such an error.
+
+ source: <cover.1726489647.git.ps@pks.im>
+
+--------------------------------------------------
+[Cooking]
 
 * bb/unicode-width-table-16 (2024-09-12) 1 commit
   (merged to 'next' on 2024-09-13 at 87dc391469)
@@ -163,15 +248,14 @@ Release tarballs are available at:
 
 
 * jc/t5512-sigpipe-fix (2024-09-13) 1 commit
- - t5512.40 sometimes dies by SIGPIPE
+  (merged to 'next' on 2024-09-16 at 96075b5dd1)
+ + t5512.40 sometimes dies by SIGPIPE
 
  Test fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqmskbwe1a.fsf@gitster.g>
 
---------------------------------------------------
-[Cooking]
 
 * jc/ci-upload-artifact-and-linux32 (2024-09-09) 1 commit
   (merged to 'next' on 2024-09-11 at 62991bef5b)
@@ -185,26 +269,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <xmqqy140o2kb.fsf@gitster.g>
-
-
-* jk/ref-filter-trailer-fixes (2024-09-10) 10 commits
-  (merged to 'next' on 2024-09-10 at ce7299fe2e)
- + ref-filter: fix leak with unterminated %(if) atoms
- + ref-filter: add ref_format_clear() function
- + ref-filter: fix leak when formatting %(push:remoteref)
- + ref-filter: fix leak with %(describe) arguments
- + ref-filter: fix leak of %(trailers) "argbuf"
- + ref-filter: store ref_trailer_buf data per-atom
- + ref-filter: drop useless cast in trailers_atom_parser()
- + ref-filter: strip signature when parsing tag trailers
- + ref-filter: avoid extra copies of payload/signature
- + t6300: drop newline from wrapped test title
-
- Bugfixes and leak plugging in "git for-each-ref --format=..." code
- paths.
-
- Will merge to 'master'.
- source: <20240909230758.GA921697@coredump.intra.peff.net>
 
 
 * jk/ci-linux32-update (2024-09-13) 5 commits
@@ -270,16 +334,6 @@ Release tarballs are available at:
  source: <20240910163000.1985723-1-christian.couder@gmail.com>
 
 
-* ah/apply-3way-ours (2024-09-09) 1 commit
-  (merged to 'next' on 2024-09-10 at 989ba9708b)
- + apply: support --ours, --theirs, and --union for three-way merges
-
- "git apply --3way" learned to take "--ours" and other options.
-
- Will merge to 'master'.
- source: <20240909141109.3102-2-alexhenrie24@gmail.com>
-
-
 * ds/pack-name-hash-tweak (2024-09-09) 4 commits
  - p5313: add size comparison test
  - p5314: add a size test for name-hash collisions
@@ -297,7 +351,7 @@ Release tarballs are available at:
  source: <pull.1785.git.1725890210.gitgitgadget@gmail.com>
 
 
-* ps/reftable-exclude (2024-09-09) 7 commits
+* ps/reftable-exclude (2024-09-16) 7 commits
  - refs/reftable: wire up support for exclude patterns
  - reftable/reader: make table iterator reseekable
  - t/unit-tests: introduce reftable library
@@ -305,13 +359,13 @@ Release tarballs are available at:
  - builtin/receive-pack: fix exclude patterns when announcing refs
  - refs: properly apply exclude patterns to namespaced refs
  - Merge branch 'cp/unit-test-reftable-stack' into ps/reftable-exclude
- (this branch uses cp/unit-test-reftable-stack.)
+ (this branch is used by ps/reftable-alloc-failures.)
 
  The reftable backend learned to more efficiently handle exclude
  patterns while enumerating the refs.
 
- Needs review.
- source: <cover.1725881266.git.ps@pks.im>
+ Will merge to 'next'?
+ source: <cover.1726476401.git.ps@pks.im>
 
 
 * pw/rebase-autostash-fix (2024-09-03) 1 commit
@@ -324,22 +378,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <pull.1772.v2.git.1725289979450.gitgitgadget@gmail.com>
-
-
-* cp/unit-test-reftable-stack (2024-09-09) 6 commits
-  (merged to 'next' on 2024-09-09 at 0dddbbb60d)
- + t-reftable-stack: add test for stack iterators
- + t-reftable-stack: add test for non-default compaction factor
- + t-reftable-stack: use reftable_ref_record_equal() to compare ref records
- + t-reftable-stack: use Git's tempfile API instead of mkstemp()
- + t: harmonize t-reftable-stack.c with coding guidelines
- + t: move reftable/stack_test.c to the unit testing framework
- (this branch is used by ps/reftable-exclude.)
-
- Another reftable test migrated to the unit-test framework.
-
- Will merge to 'master'.
- source: <20240908041632.4948-1-chandrapratap3519@gmail.com>
 
 
 * jc/pass-repo-to-builtins (2024-09-13) 4 commits
@@ -370,7 +408,8 @@ Release tarballs are available at:
  The checksum at the tail of files are now computed without
  collision detection protection.
 
- Will merge to 'next'?
+ Expecting a reroll.
+ cf. <ZugMUv1xbnjYH-el@pks.im>
  source: <cover.1725651952.git.me@ttaylorr.com>
 
 
@@ -387,31 +426,32 @@ Release tarballs are available at:
 
 
 * ps/environ-wo-the-repository (2024-09-12) 21 commits
- - environment: stop storing "core.notesRef" globally
- - environment: stop storing "core.warnAmbiguousRefs" globally
- - environment: stop storing "core.preferSymlinkRefs" globally
- - environment: stop storing "core.logAllRefUpdates" globally
- - refs: stop modifying global `log_all_ref_updates` variable
- - branch: stop modifying `log_all_ref_updates` variable
- - repo-settings: track defaults close to `struct repo_settings`
- - repo-settings: split out declarations into a standalone header
- - environment: guard state depending on a repository
- - environment: reorder header to split out `the_repository`-free section
- - environment: move `set_git_dir()` and related into setup layer
- - environment: make `get_git_namespace()` self-contained
- - environment: move object database functions into object layer
- - config: make dependency on repo in `read_early_config()` explicit
- - config: document `read_early_config()` and `read_very_early_config()`
- - environment: make `get_git_work_tree()` accept a repository
- - environment: make `get_graft_file()` accept a repository
- - environment: make `get_index_file()` accept a repository
- - environment: make `get_object_directory()` accept a repository
- - environment: make `get_git_common_dir()` accept a repository
- - environment: make `get_git_dir()` accept a repository
+  (merged to 'next' on 2024-09-16 at c08e3eb6b8)
+ + environment: stop storing "core.notesRef" globally
+ + environment: stop storing "core.warnAmbiguousRefs" globally
+ + environment: stop storing "core.preferSymlinkRefs" globally
+ + environment: stop storing "core.logAllRefUpdates" globally
+ + refs: stop modifying global `log_all_ref_updates` variable
+ + branch: stop modifying `log_all_ref_updates` variable
+ + repo-settings: track defaults close to `struct repo_settings`
+ + repo-settings: split out declarations into a standalone header
+ + environment: guard state depending on a repository
+ + environment: reorder header to split out `the_repository`-free section
+ + environment: move `set_git_dir()` and related into setup layer
+ + environment: make `get_git_namespace()` self-contained
+ + environment: move object database functions into object layer
+ + config: make dependency on repo in `read_early_config()` explicit
+ + config: document `read_early_config()` and `read_very_early_config()`
+ + environment: make `get_git_work_tree()` accept a repository
+ + environment: make `get_graft_file()` accept a repository
+ + environment: make `get_index_file()` accept a repository
+ + environment: make `get_object_directory()` accept a repository
+ + environment: make `get_git_common_dir()` accept a repository
+ + environment: make `get_git_dir()` accept a repository
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1726139990.git.ps@pks.im>
 
 
@@ -448,6 +488,7 @@ Release tarballs are available at:
  + send-pack: fix leaking common object IDs
  + fetch-pack: fix memory leaks on fetch negotiation
  + t/test-lib: allow skipping leak checks for passing tests
+ (this branch is used by ps/leakfixes-part-7.)
 
  More leakfixes.
 
@@ -536,17 +577,6 @@ Release tarballs are available at:
  source: <20240906221853.257984-1-calvinwan@google.com>
 
 
-* jc/range-diff-lazy-setup (2024-08-09) 2 commits
-  (merged to 'next' on 2024-09-10 at 2e04a06b22)
- + remerge-diff: clean up temporary objdir at a central place
- + remerge-diff: lazily prepare temporary objdir on demand
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <xmqqr0ax9vlk.fsf@gitster.g>
-
-
 * jc/too-many-arguments (2024-08-06) 4 commits
  - miscellaneous: avoid "too many arguments"
  - notes: avoid "too many arguments"
@@ -560,15 +590,16 @@ Release tarballs are available at:
 
 
 * ja/doc-synopsis-markup (2024-09-05) 3 commits
- - doc: apply synopsis simplification on git-clone and git-init
- - doc: update the guidelines to reflect the current formatting rules
- - doc: introduce a synopsis typesetting
+  (merged to 'next' on 2024-09-16 at d471154a0b)
+ + doc: apply synopsis simplification on git-clone and git-init
+ + doc: update the guidelines to reflect the current formatting rules
+ + doc: introduce a synopsis typesetting
 
  The way AsciiDoc is used for SYNOPSIS part of the manual pages has
  been revamped.  The sources, at least for the simple cases, got
  vastly pleasant to work with.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1766.v4.git.1725573126.gitgitgadget@gmail.com>
 
 
