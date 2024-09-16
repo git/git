@@ -7,6 +7,7 @@ https://developers.google.com/open-source/licenses/bsd
 */
 
 #include "test-lib.h"
+#include "lib-reftable.h"
 #include "reftable/basics.h"
 #include "reftable/blocksource.h"
 #include "reftable/reader.h"
@@ -14,22 +15,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable/reftable-writer.h"
 
 static const int update_index = 5;
-
-static void set_test_hash(uint8_t *p, int i)
-{
-	memset(p, (uint8_t)i, hash_size(GIT_SHA1_FORMAT_ID));
-}
-
-static ssize_t strbuf_add_void(void *b, const void *data, size_t sz)
-{
-	strbuf_add(b, data, sz);
-	return sz;
-}
-
-static int noop_flush(void *arg UNUSED)
-{
-	return 0;
-}
 
 static void t_buffer(void)
 {
@@ -62,61 +47,34 @@ static void write_table(char ***names, struct strbuf *buf, int N,
 		.block_size = block_size,
 		.hash_id = hash_id,
 	};
-	struct reftable_writer *w =
-		reftable_new_writer(&strbuf_add_void, &noop_flush, buf, &opts);
-	struct reftable_ref_record ref = { 0 };
-	int i = 0, n;
-	struct reftable_log_record log = { 0 };
-	const struct reftable_stats *stats = NULL;
+	struct reftable_ref_record *refs;
+	struct reftable_log_record *logs;
+	int i;
 
 	REFTABLE_CALLOC_ARRAY(*names, N + 1);
+	REFTABLE_CALLOC_ARRAY(refs, N);
+	REFTABLE_CALLOC_ARRAY(logs, N);
 
-	reftable_writer_set_limits(w, update_index, update_index);
 	for (i = 0; i < N; i++) {
-		char name[100];
-		int n;
-
-		snprintf(name, sizeof(name), "refs/heads/branch%02d", i);
-
-		ref.refname = name;
-		ref.update_index = update_index;
-		ref.value_type = REFTABLE_REF_VAL1;
-		set_test_hash(ref.value.val1, i);
-		(*names)[i] = xstrdup(name);
-
-		n = reftable_writer_add_ref(w, &ref);
-		check_int(n, ==, 0);
+		refs[i].refname = (*names)[i] = xstrfmt("refs/heads/branch%02d", i);
+		refs[i].update_index = update_index;
+		refs[i].value_type = REFTABLE_REF_VAL1;
+		t_reftable_set_hash(refs[i].value.val1, i, GIT_SHA1_FORMAT_ID);
 	}
 
 	for (i = 0; i < N; i++) {
-		char name[100];
-		int n;
-
-		snprintf(name, sizeof(name), "refs/heads/branch%02d", i);
-
-		log.refname = name;
-		log.update_index = update_index;
-		log.value_type = REFTABLE_LOG_UPDATE;
-		set_test_hash(log.value.update.new_hash, i);
-		log.value.update.message = (char *) "message";
-
-		n = reftable_writer_add_log(w, &log);
-		check_int(n, ==, 0);
+		logs[i].refname = (*names)[i];
+		logs[i].update_index = update_index;
+		logs[i].value_type = REFTABLE_LOG_UPDATE;
+		t_reftable_set_hash(logs[i].value.update.new_hash, i,
+				    GIT_SHA1_FORMAT_ID);
+		logs[i].value.update.message = (char *) "message";
 	}
 
-	n = reftable_writer_close(w);
-	check_int(n, ==, 0);
+	t_reftable_write_to_buf(buf, refs, N, logs, N, &opts);
 
-	stats = reftable_writer_stats(w);
-	for (i = 0; i < stats->ref_stats.blocks; i++) {
-		int off = i * opts.block_size;
-		if (!off)
-			off = header_size((hash_id == GIT_SHA256_FORMAT_ID) ? 2 : 1);
-		check_char(buf->buf[off], ==, 'r');
-	}
-
-	check_int(stats->log_stats.blocks, >, 0);
-	reftable_writer_free(w);
+	free(refs);
+	free(logs);
 }
 
 static void t_log_buffer_size(void)
@@ -138,8 +96,7 @@ static void t_log_buffer_size(void)
 					   .time = 0x5e430672,
 					   .message = (char *) "commit: 9\n",
 				   } } };
-	struct reftable_writer *w =
-		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
+	struct reftable_writer *w = t_reftable_strbuf_writer(&buf, &opts);
 
 	/* This tests buffer extension for log compression. Must use a random
 	   hash, to ensure that the compressed part is larger than the original.
@@ -181,8 +138,7 @@ static void t_log_overflow(void)
 			},
 		},
 	};
-	struct reftable_writer *w =
-		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
+	struct reftable_writer *w = t_reftable_strbuf_writer(&buf, &opts);
 
 	memset(msg, 'x', sizeof(msg) - 1);
 	reftable_writer_set_limits(w, update_index, update_index);
@@ -208,8 +164,7 @@ static void t_log_write_read(void)
 	struct reftable_reader *reader;
 	struct reftable_block_source source = { 0 };
 	struct strbuf buf = STRBUF_INIT;
-	struct reftable_writer *w =
-		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
+	struct reftable_writer *w = t_reftable_strbuf_writer(&buf, &opts);
 	const struct reftable_stats *stats = NULL;
 	reftable_writer_set_limits(w, 0, N);
 	for (i = 0; i < N; i++) {
@@ -229,8 +184,10 @@ static void t_log_write_read(void)
 		log.refname = names[i];
 		log.update_index = i;
 		log.value_type = REFTABLE_LOG_UPDATE;
-		set_test_hash(log.value.update.old_hash, i);
-		set_test_hash(log.value.update.new_hash, i + 1);
+		t_reftable_set_hash(log.value.update.old_hash, i,
+				    GIT_SHA1_FORMAT_ID);
+		t_reftable_set_hash(log.value.update.new_hash, i + 1,
+				    GIT_SHA1_FORMAT_ID);
 
 		err = reftable_writer_add_log(w, &log);
 		check(!err);
@@ -297,8 +254,7 @@ static void t_log_zlib_corruption(void)
 	struct reftable_reader *reader;
 	struct reftable_block_source source = { 0 };
 	struct strbuf buf = STRBUF_INIT;
-	struct reftable_writer *w =
-		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
+	struct reftable_writer *w = t_reftable_strbuf_writer(&buf, &opts);
 	const struct reftable_stats *stats = NULL;
 	char message[100] = { 0 };
 	int err, i, n;
@@ -528,15 +484,12 @@ static void t_table_refs_for(int indexed)
 	int err;
 	struct reftable_reader *reader;
 	struct reftable_block_source source = { 0 };
-
 	struct strbuf buf = STRBUF_INIT;
-	struct reftable_writer *w =
-		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
-
+	struct reftable_writer *w = t_reftable_strbuf_writer(&buf, &opts);
 	struct reftable_iterator it = { 0 };
 	int j;
 
-	set_test_hash(want_hash, 4);
+	t_reftable_set_hash(want_hash, 4, GIT_SHA1_FORMAT_ID);
 
 	for (i = 0; i < N; i++) {
 		uint8_t hash[GIT_SHA1_RAWSZ];
@@ -552,8 +505,10 @@ static void t_table_refs_for(int indexed)
 		ref.refname = name;
 
 		ref.value_type = REFTABLE_REF_VAL2;
-		set_test_hash(ref.value.val2.value, i / 4);
-		set_test_hash(ref.value.val2.target_value, 3 + i / 4);
+		t_reftable_set_hash(ref.value.val2.value, i / 4,
+				    GIT_SHA1_FORMAT_ID);
+		t_reftable_set_hash(ref.value.val2.target_value, 3 + i / 4,
+				    GIT_SHA1_FORMAT_ID);
 
 		/* 80 bytes / entry, so 3 entries per block. Yields 17
 		 */
@@ -618,8 +573,7 @@ static void t_write_empty_table(void)
 {
 	struct reftable_write_options opts = { 0 };
 	struct strbuf buf = STRBUF_INIT;
-	struct reftable_writer *w =
-		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
+	struct reftable_writer *w = t_reftable_strbuf_writer(&buf, &opts);
 	struct reftable_block_source source = { 0 };
 	struct reftable_reader *rd = NULL;
 	struct reftable_ref_record rec = { 0 };
@@ -657,8 +611,7 @@ static void t_write_object_id_min_length(void)
 		.block_size = 75,
 	};
 	struct strbuf buf = STRBUF_INIT;
-	struct reftable_writer *w =
-		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
+	struct reftable_writer *w = t_reftable_strbuf_writer(&buf, &opts);
 	struct reftable_ref_record ref = {
 		.update_index = 1,
 		.value_type = REFTABLE_REF_VAL1,
@@ -692,8 +645,7 @@ static void t_write_object_id_length(void)
 		.block_size = 75,
 	};
 	struct strbuf buf = STRBUF_INIT;
-	struct reftable_writer *w =
-		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
+	struct reftable_writer *w = t_reftable_strbuf_writer(&buf, &opts);
 	struct reftable_ref_record ref = {
 		.update_index = 1,
 		.value_type = REFTABLE_REF_VAL1,
@@ -726,8 +678,7 @@ static void t_write_empty_key(void)
 {
 	struct reftable_write_options opts = { 0 };
 	struct strbuf buf = STRBUF_INIT;
-	struct reftable_writer *w =
-		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
+	struct reftable_writer *w = t_reftable_strbuf_writer(&buf, &opts);
 	struct reftable_ref_record ref = {
 		.refname = (char *) "",
 		.update_index = 1,
@@ -749,8 +700,7 @@ static void t_write_key_order(void)
 {
 	struct reftable_write_options opts = { 0 };
 	struct strbuf buf = STRBUF_INIT;
-	struct reftable_writer *w =
-		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
+	struct reftable_writer *w = t_reftable_strbuf_writer(&buf, &opts);
 	struct reftable_ref_record refs[2] = {
 		{
 			.refname = (char *) "b",
@@ -798,7 +748,7 @@ static void t_write_multiple_indices(void)
 	struct reftable_reader *reader;
 	int err, i;
 
-	writer = reftable_new_writer(&strbuf_add_void, &noop_flush, &writer_buf, &opts);
+	writer = t_reftable_strbuf_writer(&writer_buf, &opts);
 	reftable_writer_set_limits(writer, 1, 1);
 	for (i = 0; i < 100; i++) {
 		struct reftable_ref_record ref = {
@@ -876,7 +826,7 @@ static void t_write_multi_level_index(void)
 	struct reftable_reader *reader;
 	int err;
 
-	writer = reftable_new_writer(&strbuf_add_void, &noop_flush, &writer_buf, &opts);
+	writer = t_reftable_strbuf_writer(&writer_buf, &opts);
 	reftable_writer_set_limits(writer, 1, 1);
 	for (size_t i = 0; i < 200; i++) {
 		struct reftable_ref_record ref = {
