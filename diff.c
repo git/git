@@ -12,6 +12,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "tempfile.h"
+#include "revision.h"
 #include "quote.h"
 #include "diff.h"
 #include "diffcore.h"
@@ -29,6 +30,7 @@
 #include "merge-ll.h"
 #include "string-list.h"
 #include "strvec.h"
+#include "tmp-objdir.h"
 #include "graph.h"
 #include "oid-array.h"
 #include "packfile.h"
@@ -7088,9 +7090,15 @@ void diffcore_std(struct diff_options *options)
 	options->found_follow = 0;
 }
 
-int diff_result_code(struct diff_options *opt)
+int diff_result_code(struct rev_info *revs)
 {
+	struct diff_options *opt = &revs->diffopt;
 	int result = 0;
+
+	if (revs->remerge_diff) {
+		tmp_objdir_destroy(revs->remerge_objdir);
+		revs->remerge_objdir = NULL;
+	}
 
 	diff_warn_rename_limit("diff.renameLimit",
 			       opt->needed_rename_limit,

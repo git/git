@@ -716,7 +716,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 				BUG("malformed internal diff-index command line");
 			run_diff_index(&revs, 0);
 
-			if (!diff_result_code(&revs.diffopt))
+			if (!diff_result_code(&revs))
 				suffix = NULL;
 			else
 				suffix = dirty;

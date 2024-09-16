@@ -672,7 +672,7 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 	setup_revisions(diff_files_args.nr, diff_files_args.v, &rev, &opt);
 	run_diff_files(&rev, 0);
 
-	if (!diff_result_code(&rev.diffopt)) {
+	if (!diff_result_code(&rev)) {
 		print_status(flags, ' ', path, ce_oid,
 			     displaypath);
 	} else if (!(flags & OPT_CACHED)) {
