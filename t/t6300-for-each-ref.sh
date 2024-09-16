@@ -5,6 +5,7 @@
 
 test_description='for-each-ref test'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 GNUPGHOME_NOT_USED=$GNUPGHOME
 . "$TEST_DIRECTORY"/lib-gpg.sh
@@ -1560,6 +1561,25 @@ test_trailer_option '%(trailers:separator,key_value_separator) changes both sepa
 	Reviewed-by,A U Thor <author@example.com>,Signed-off-by,A U Thor <author@example.com>
 	EOF
 
+test_expect_success 'multiple %(trailers) use their own options' '
+	git tag -F - tag-with-trailers <<-\EOF &&
+	body
+
+	one: foo
+	one: bar
+	two: baz
+	two: qux
+	EOF
+	t1="%(trailers:key=one,key_value_separator=W,separator=X)" &&
+	t2="%(trailers:key=two,key_value_separator=Y,separator=Z)" &&
+	git for-each-ref --format="$t1%0a$t2" refs/tags/tag-with-trailers >actual &&
+	cat >expect <<-\EOF &&
+	oneWfooXoneWbar
+	twoYbazZtwoYqux
+	EOF
+	test_cmp expect actual
+'
+
 test_failing_trailer_option () {
 	title=$1 option=$2
 	cat >expect
@@ -1835,6 +1855,24 @@ sig_crlf="$(printf "%s" "$sig" | append_cr; echo dummy)"
 sig_crlf=${sig_crlf%dummy}
 test_atom refs/tags/fake-sig-crlf contents:signature "$sig_crlf"
 
+test_expect_success 'set up tag with signature and trailers' '
+	git tag -F - fake-sig-trailer <<-\EOF
+	this is the subject
+
+	this is the body
+
+	My-Trailer: foo
+	-----BEGIN PGP SIGNATURE-----
+
+	not a real signature, but we just care about the
+	subject/body/trailer parsing.
+	-----END PGP SIGNATURE-----
+	EOF
+'
+
+# use "separator=" here to suppress the terminating newline
+test_atom refs/tags/fake-sig-trailer trailers:separator= 'My-Trailer: foo'
+
 test_expect_success 'git for-each-ref --stdin: empty' '
 	>in &&
 	git for-each-ref --format="%(refname)" --stdin <in >actual &&
@@ -2003,8 +2041,7 @@ test_expect_success GPG 'show good signature with custom format' '
 		--format="$GRADE_FORMAT" >actual &&
 	test_cmp expect actual
 '
-test_expect_success GPGSSH 'show good signature with custom format
-			    with ssh' '
+test_expect_success GPGSSH 'show good signature with custom format with ssh' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	FINGERPRINT=$(ssh-keygen -lf "${GPGSSH_KEY_PRIMARY}" | awk "{print \$2;}") &&
 	cat >expect.tmpl <<-\EOF &&

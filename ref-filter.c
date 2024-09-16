@@ -75,11 +75,11 @@ struct refname_atom {
 	int lstrip, rstrip;
 };
 
-static struct ref_trailer_buf {
+struct ref_trailer_buf {
 	struct string_list filter_list;
 	struct strbuf sepbuf;
 	struct strbuf kvsepbuf;
-} ref_trailer_buf = {STRING_LIST_INIT_NODUP, STRBUF_INIT, STRBUF_INIT};
+};
 
 static struct expand_data {
 	struct object_id oid;
@@ -201,6 +201,7 @@ static struct used_atom {
 			enum { C_BARE, C_BODY, C_BODY_DEP, C_LENGTH, C_LINES,
 			       C_SIG, C_SUB, C_SUB_SANITIZE, C_TRAILERS } option;
 			struct process_trailer_options trailer_opts;
+			struct ref_trailer_buf *trailer_buf;
 			unsigned int nlines;
 		} contents;
 		struct {
@@ -232,7 +233,7 @@ static struct used_atom {
 			enum { S_BARE, S_GRADE, S_SIGNER, S_KEY,
 			       S_FINGERPRINT, S_PRI_KEY_FP, S_TRUST_LEVEL } option;
 		} signature;
-		const char **describe_args;
+		struct strvec describe_args;
 		struct refname_atom refname;
 		char *head;
 	} u;
@@ -566,21 +567,36 @@ static int trailers_atom_parser(struct ref_format *format UNUSED,
 	atom->u.contents.trailer_opts.no_divider = 1;
 
 	if (arg) {
-		const char *argbuf = xstrfmt("%s)", arg);
+		char *argbuf = xstrfmt("%s)", arg);
+		const char *arg = argbuf;
 		char *invalid_arg = NULL;
+		struct ref_trailer_buf *tb;
+
+		/*
+		 * Do not inline these directly into the used_atom struct!
+		 * When we parse them in format_set_trailers_options(),
+		 * we will make pointer references directly to them,
+		 * which will not survive a realloc() of the used_atom list.
+		 * They must be allocated in a separate, stable struct.
+		 */
+		atom->u.contents.trailer_buf = tb = xmalloc(sizeof(*tb));
+		string_list_init_dup(&tb->filter_list);
+		strbuf_init(&tb->sepbuf, 0);
+		strbuf_init(&tb->kvsepbuf, 0);
 
 		if (format_set_trailers_options(&atom->u.contents.trailer_opts,
-		    &ref_trailer_buf.filter_list,
-		    &ref_trailer_buf.sepbuf,
-		    &ref_trailer_buf.kvsepbuf,
-		    &argbuf, &invalid_arg)) {
+						&tb->filter_list,
+						&tb->sepbuf, &tb->kvsepbuf,
+						&arg, &invalid_arg)) {
 			if (!invalid_arg)
 				strbuf_addf(err, _("expected %%(trailers:key=<value>)"));
 			else
 				strbuf_addf(err, _("unknown %%(trailers) argument: %s"), invalid_arg);
-			free((char *)invalid_arg);
+			free(invalid_arg);
+			free(argbuf);
 			return -1;
 		}
+		free(argbuf);
 	}
 	atom->u.contents.option = C_TRAILERS;
 	return 0;
@@ -677,7 +693,7 @@ static int describe_atom_parser(struct ref_format *format UNUSED,
 				struct used_atom *atom,
 				const char *arg, struct strbuf *err)
 {
-	struct strvec args = STRVEC_INIT;
+	strvec_init(&atom->u.describe_args);
 
 	for (;;) {
 		int found = 0;
@@ -686,13 +702,12 @@ static int describe_atom_parser(struct ref_format *format UNUSED,
 		if (!arg || !*arg)
 			break;
 
-		found = describe_atom_option_parser(&args, &arg, err);
+		found = describe_atom_option_parser(&atom->u.describe_args, &arg, err);
 		if (found < 0)
 			return found;
 		if (!found)
 			return err_bad_arg(err, "describe", bad_arg);
 	}
-	atom->u.describe_args = strvec_detach(&args);
 	return 0;
 }
 
@@ -986,6 +1001,7 @@ struct ref_formatting_stack {
 	struct ref_formatting_stack *prev;
 	struct strbuf output;
 	void (*at_end)(struct ref_formatting_stack **stack);
+	void (*at_end_data_free)(void *data);
 	void *at_end_data;
 };
 
@@ -1154,6 +1170,8 @@ static void pop_stack_element(struct ref_formatting_stack **stack)
 	if (prev)
 		strbuf_addbuf(&prev->output, &current->output);
 	strbuf_release(&current->output);
+	if (current->at_end_data_free)
+		current->at_end_data_free(current->at_end_data);
 	free(current);
 	*stack = prev;
 }
@@ -1213,15 +1231,13 @@ static void if_then_else_handler(struct ref_formatting_stack **stack)
 	}
 
 	*stack = cur;
-	free(if_then_else);
 }
 
 static int if_atom_handler(struct atom_value *atomv, struct ref_formatting_state *state,
 			   struct strbuf *err UNUSED)
 {
 	struct ref_formatting_stack *new_stack;
-	struct if_then_else *if_then_else = xcalloc(1,
-						    sizeof(struct if_then_else));
+	struct if_then_else *if_then_else = xcalloc(1, sizeof(*if_then_else));
 
 	if_then_else->str = atomv->atom->u.if_then_else.str;
 	if_then_else->cmp_status = atomv->atom->u.if_then_else.cmp_status;
@@ -1230,6 +1246,7 @@ static int if_atom_handler(struct atom_value *atomv, struct ref_formatting_state
 	new_stack = state->stack;
 	new_stack->at_end = if_then_else_handler;
 	new_stack->at_end_data = if_then_else;
+	new_stack->at_end_data_free = free;
 	return 0;
 }
 
@@ -1833,15 +1850,9 @@ static void find_subpos(const char *buf,
 			size_t *nonsiglen,
 			const char **sig, size_t *siglen)
 {
-	struct strbuf payload = STRBUF_INIT;
-	struct strbuf signature = STRBUF_INIT;
 	const char *eol;
 	const char *end = buf + strlen(buf);
 	const char *sigstart;
-
-	/* parse signature first; we might not even have a subject line */
-	parse_signature(buf, end - buf, &payload, &signature);
-	strbuf_release(&payload);
 
 	/* skip past header until we hit empty line */
 	while (*buf && *buf != '\n') {
@@ -1853,8 +1864,10 @@ static void find_subpos(const char *buf,
 	/* skip any empty lines */
 	while (*buf == '\n')
 		buf++;
-	*sig = strbuf_detach(&signature, siglen);
+	/* parse signature first; we might not even have a subject line */
 	sigstart = buf + parse_signed_buffer(buf, strlen(buf));
+	*sig = sigstart;
+	*siglen = end - *sig;
 
 	/* subject is first non-empty line */
 	*sub = buf;
@@ -1929,7 +1942,7 @@ static void grab_describe_values(struct atom_value *val, int deref,
 
 		cmd.git_cmd = 1;
 		strvec_push(&cmd.args, "describe");
-		strvec_pushv(&cmd.args, atom->u.describe_args);
+		strvec_pushv(&cmd.args, atom->u.describe_args.v);
 		strvec_push(&cmd.args, oid_to_hex(&commit->object.oid));
 		if (pipe_command(&cmd, NULL, 0, &out, 0, &err, 0) < 0) {
 			error(_("failed to run 'describe'"));
@@ -2012,16 +2025,23 @@ static void grab_sub_body_contents(struct atom_value *val, int deref, struct exp
 			v->s = strbuf_detach(&s, NULL);
 		} else if (atom->u.contents.option == C_TRAILERS) {
 			struct strbuf s = STRBUF_INIT;
+			const char *msg;
+			char *to_free = NULL;
+
+			if (siglen)
+				msg = to_free = xmemdupz(subpos, sigpos - subpos);
+			else
+				msg = subpos;
 
 			/* Format the trailer info according to the trailer_opts given */
-			format_trailers_from_commit(&atom->u.contents.trailer_opts, subpos, &s);
+			format_trailers_from_commit(&atom->u.contents.trailer_opts, msg, &s);
+			free(to_free);
 
 			v->s = strbuf_detach(&s, NULL);
 		} else if (atom->u.contents.option == C_BARE)
 			v->s = xstrdup(subpos);
 
 	}
-	free((void *)sigpos);
 }
 
 /*
@@ -2219,7 +2239,7 @@ static void fill_remote_ref_details(struct used_atom *atom, const char *refname,
 		const char *merge;
 
 		merge = remote_ref_for_branch(branch, atom->u.remote_ref.push);
-		*s = xstrdup(merge ? merge : "");
+		*s = merge ? merge : xstrdup("");
 	} else
 		BUG("unhandled RR_* enum");
 }
@@ -2985,6 +3005,19 @@ void ref_array_clear(struct ref_array *array)
 		struct used_atom *atom = &used_atom[i];
 		if (atom->atom_type == ATOM_HEAD)
 			free(atom->u.head);
+		else if (atom->atom_type == ATOM_DESCRIBE)
+			strvec_clear(&atom->u.describe_args);
+		else if (atom->atom_type == ATOM_TRAILERS ||
+			 (atom->atom_type == ATOM_CONTENTS &&
+			  atom->u.contents.option == C_TRAILERS)) {
+			struct ref_trailer_buf *tb = atom->u.contents.trailer_buf;
+			if (tb) {
+				string_list_clear(&tb->filter_list, 0);
+				strbuf_release(&tb->sepbuf);
+				strbuf_release(&tb->kvsepbuf);
+				free(tb);
+			}
+		}
 		free((char *)atom->name);
 	}
 	FREE_AND_NULL(used_atom);
@@ -3589,4 +3622,17 @@ void ref_filter_clear(struct ref_filter *filter)
 	free_commit_list(filter->reachable_from);
 	free_commit_list(filter->unreachable_from);
 	ref_filter_init(filter);
+}
+
+void ref_format_init(struct ref_format *format)
+{
+	struct ref_format blank = REF_FORMAT_INIT;
+	memcpy(format, &blank, sizeof(blank));
+}
+
+void ref_format_clear(struct ref_format *format)
+{
+	string_list_clear(&format->bases, 0);
+	string_list_clear(&format->is_base_tips, 0);
+	ref_format_init(format);
 }
