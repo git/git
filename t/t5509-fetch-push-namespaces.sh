@@ -96,6 +96,7 @@ test_expect_success 'hide namespaced refs with transfer.hideRefs' '
 '
 
 test_expect_success 'check that transfer.hideRefs does not match unstripped refs' '
+	git -C pushee pack-refs --all &&
 	GIT_NAMESPACE=namespace \
 		git -C pushee -c transfer.hideRefs=refs/namespaces/namespace/refs/tags \
 		ls-remote "ext::git %s ." >actual &&
