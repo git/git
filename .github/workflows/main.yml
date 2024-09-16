@@ -339,8 +339,8 @@ jobs:
           image: alpine
           distro: alpine-latest
         - jobname: linux32
-          image: daald/ubuntu32:xenial
-          distro: ubuntu32-16.04
+          image: i386/ubuntu:focal
+          distro: ubuntu32-20.04
         - jobname: pedantic
           image: fedora
           distro: fedora-latest
@@ -350,17 +350,17 @@ jobs:
     runs-on: ubuntu-latest
     container: ${{matrix.vector.image}}
     steps:
-    - uses: actions/checkout@v4
-      if: matrix.vector.jobname != 'linux32'
-    - uses: actions/checkout@v1 # cannot be upgraded because Node.js Actions aren't supported in this container
+    - name: prepare libc6 for actions
       if: matrix.vector.jobname == 'linux32'
+      run: apt -q update && apt -q -y install libc6-amd64 lib64stdc++6
+    - uses: actions/checkout@v4
     - run: ci/install-dependencies.sh
     - run: ci/run-build-and-tests.sh
     - name: print test failures
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
       run: ci/print-test-failures.sh
     - name: Upload failed tests' directories
-      if: failure() && env.FAILED_TEST_ARTIFACTS != '' && matrix.vector.jobname != 'linux32'
+      if: failure() && env.FAILED_TEST_ARTIFACTS != ''
       uses: actions/upload-artifact@v4
       with:
         name: failed-tests-${{matrix.vector.jobname}}

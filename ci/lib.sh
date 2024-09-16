@@ -336,7 +336,14 @@ ubuntu-*)
 	fi
 	MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/$PYTHON_PACKAGE"
 
-	export GIT_TEST_HTTPD=true
+	case "$distro" in
+	ubuntu-16.04)
+		# Apache is too old for HTTP/2.
+		;;
+	*)
+		export GIT_TEST_HTTPD=true
+		;;
+	esac
 
 	# The Linux build installs the defined dependency versions below.
 	# The OS X build installs much more recent versions, whichever
