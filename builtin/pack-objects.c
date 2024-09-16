@@ -4669,6 +4669,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 cleanup:
 	clear_packing_data(&to_pack);
 	list_objects_filter_release(&filter_options);
+	string_list_clear(&keep_pack_list, 0);
 	strvec_clear(&rp);
 
 	return 0;

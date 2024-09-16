@@ -2958,7 +2958,9 @@ static int push_check(int argc, const char **argv, const char *prefix UNUSED)
 				    rs->src);
 			}
 		}
+
 		refspec_clear(&refspec);
+		free_refs(local_refs);
 	}
 	free(head);
 

@@ -67,6 +67,8 @@ int cmd_fmt_merge_msg(int argc, const char **argv, const char *prefix)
 		return ret;
 	write_in_full(STDOUT_FILENO, output.buf, output.len);
 
+	strbuf_release(&input);
+	strbuf_release(&output);
 	free(inpath);
 	return 0;
 }

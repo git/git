@@ -51,10 +51,12 @@ int unregister_shallow(const struct object_id *oid)
 	int pos = commit_graft_pos(the_repository, oid);
 	if (pos < 0)
 		return -1;
-	if (pos + 1 < the_repository->parsed_objects->grafts_nr)
+	if (pos + 1 < the_repository->parsed_objects->grafts_nr) {
+		free(the_repository->parsed_objects->grafts[pos]);
 		MOVE_ARRAY(the_repository->parsed_objects->grafts + pos,
 			   the_repository->parsed_objects->grafts + pos + 1,
 			   the_repository->parsed_objects->grafts_nr - pos - 1);
+	}
 	the_repository->parsed_objects->grafts_nr--;
 	return 0;
 }
@@ -97,7 +99,7 @@ static void reset_repository_shallow(struct repository *r)
 {
 	r->parsed_objects->is_shallow = -1;
 	stat_validity_clear(r->parsed_objects->shallow_stat);
-	reset_commit_grafts(r);
+	parsed_object_pool_reset_commit_grafts(r->parsed_objects);
 }
 
 int commit_shallow_file(struct repository *r, struct shallow_lock *lk)
@@ -487,6 +489,15 @@ void prepare_shallow_info(struct shallow_info *info, struct oid_array *sa)
 
 void clear_shallow_info(struct shallow_info *info)
 {
+	if (info->used_shallow) {
+		for (size_t i = 0; i < info->shallow->nr; i++)
+			free(info->used_shallow[i]);
+		free(info->used_shallow);
+	}
+
+	free(info->need_reachability_test);
+	free(info->reachable);
+	free(info->shallow_ref);
 	free(info->ours);
 	free(info->theirs);
 }

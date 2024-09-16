@@ -54,7 +54,7 @@ void initialize_repository(struct repository *repo)
 {
 	repo->objects = raw_object_store_new();
 	repo->remote_state = remote_state_new();
-	repo->parsed_objects = parsed_object_pool_new();
+	repo->parsed_objects = parsed_object_pool_new(repo);
 	ALLOC_ARRAY(repo->index, 1);
 	index_state_init(repo->index, repo);
 

@@ -183,7 +183,7 @@ int commit_graft_pos(struct repository *r, const struct object_id *oid)
 		       commit_graft_oid_access);
 }
 
-static void unparse_commit(struct repository *r, const struct object_id *oid)
+void unparse_commit(struct repository *r, const struct object_id *oid)
 {
 	struct commit *c = lookup_commit(r, oid);
 
@@ -322,18 +322,6 @@ int for_each_commit_graft(each_commit_graft_fn fn, void *cb_data)
 	for (i = ret = 0; i < the_repository->parsed_objects->grafts_nr && !ret; i++)
 		ret = fn(the_repository->parsed_objects->grafts[i], cb_data);
 	return ret;
-}
-
-void reset_commit_grafts(struct repository *r)
-{
-	int i;
-
-	for (i = 0; i < r->parsed_objects->grafts_nr; i++) {
-		unparse_commit(r, &r->parsed_objects->grafts[i]->oid);
-		free(r->parsed_objects->grafts[i]);
-	}
-	r->parsed_objects->grafts_nr = 0;
-	r->parsed_objects->commit_graft_prepared = 0;
 }
 
 struct commit_buffer {
@@ -1156,11 +1144,14 @@ int add_header_signature(struct strbuf *buf, struct strbuf *sig, const struct gi
 
 static int sign_commit_to_strbuf(struct strbuf *sig, struct strbuf *buf, const char *keyid)
 {
+	char *keyid_to_free = NULL;
+	int ret = 0;
 	if (!keyid || !*keyid)
-		keyid = get_signing_key();
+		keyid = keyid_to_free = get_signing_key();
 	if (sign_buffer(buf, sig, keyid))
-		return -1;
-	return 0;
+		ret = -1;
+	free(keyid_to_free);
+	return ret;
 }
 
 int parse_signed_commit(const struct commit *commit,
