@@ -285,11 +285,10 @@ struct image {
 	struct line *line;
 };
 
-static void clear_image(struct image *image)
+static void image_clear(struct image *image)
 {
 	free(image->buf);
 	free(image->line_allocated);
-	memset(image, 0, sizeof(*image));
 }
 
 static uint32_t hash_line(const char *cp, size_t len)
@@ -304,7 +303,7 @@ static uint32_t hash_line(const char *cp, size_t len)
 	return h;
 }
 
-static void add_line_info(struct image *img, const char *bol, size_t len, unsigned flag)
+static void image_add_line(struct image *img, const char *bol, size_t len, unsigned flag)
 {
 	ALLOC_GROW(img->line_allocated, img->nr + 1, img->alloc);
 	img->line_allocated[img->nr].len = len;
@@ -318,7 +317,7 @@ static void add_line_info(struct image *img, const char *bol, size_t len, unsign
  * attach it to "image" and add line-based index to it.
  * "image" now owns the "buf".
  */
-static void prepare_image(struct image *image, char *buf, size_t len,
+static void image_prepare(struct image *image, char *buf, size_t len,
 			  int prepare_linetable)
 {
 	const char *cp, *ep;
@@ -338,13 +337,13 @@ static void prepare_image(struct image *image, char *buf, size_t len,
 			;
 		if (next < ep)
 			next++;
-		add_line_info(image, cp, next - cp, 0);
+		image_add_line(image, cp, next - cp, 0);
 		cp = next;
 	}
 	image->line = image->line_allocated;
 }
 
-static void remove_first_line(struct image *img)
+static void image_remove_first_line(struct image *img)
 {
 	img->buf += img->line[0].len;
 	img->len -= img->line[0].len;
@@ -352,7 +351,7 @@ static void remove_first_line(struct image *img)
 	img->nr--;
 }
 
-static void remove_last_line(struct image *img)
+static void image_remove_last_line(struct image *img)
 {
 	img->len -= img->line[--img->nr].len;
 }
@@ -2322,7 +2321,7 @@ static void update_pre_post_images(struct image *preimage,
 	 * are not losing preimage->buf -- apply_one_fragment() will
 	 * free "oldlines".
 	 */
-	prepare_image(&fixed_preimage, buf, len, 1);
+	image_prepare(&fixed_preimage, buf, len, 1);
 	assert(postlen
 	       ? fixed_preimage.nr == preimage->nr
 	       : fixed_preimage.nr <= preimage->nr);
@@ -2874,7 +2873,7 @@ static void update_image(struct apply_state *state,
 	nr = img->nr + postimage->nr - preimage_limit;
 	if (preimage_limit < postimage->nr) {
 		/*
-		 * NOTE: this knows that we never call remove_first_line()
+		 * NOTE: this knows that we never call image_remove_first_line()
 		 * on anything other than pre/post image.
 		 */
 		REALLOC_ARRAY(img->line, nr);
@@ -2957,8 +2956,8 @@ static int apply_one_fragment(struct apply_state *state,
 				break;
 			*old++ = '\n';
 			strbuf_addch(&newlines, '\n');
-			add_line_info(&preimage, "\n", 1, LINE_COMMON);
-			add_line_info(&postimage, "\n", 1, LINE_COMMON);
+			image_add_line(&preimage, "\n", 1, LINE_COMMON);
+			image_add_line(&postimage, "\n", 1, LINE_COMMON);
 			is_blank_context = 1;
 			break;
 		case ' ':
@@ -2968,7 +2967,7 @@ static int apply_one_fragment(struct apply_state *state,
 			/* fallthrough */
 		case '-':
 			memcpy(old, patch + 1, plen);
-			add_line_info(&preimage, old, plen,
+			image_add_line(&preimage, old, plen,
 				      (first == ' ' ? LINE_COMMON : 0));
 			old += plen;
 			if (first == '-')
@@ -2988,7 +2987,7 @@ static int apply_one_fragment(struct apply_state *state,
 			else {
 				ws_fix_copy(&newlines, patch + 1, plen, ws_rule, &state->applied_after_fixing_ws);
 			}
-			add_line_info(&postimage, newlines.buf + start, newlines.len - start,
+			image_add_line(&postimage, newlines.buf + start, newlines.len - start,
 				      (first == '+' ? 0 : LINE_COMMON));
 			if (first == '+' &&
 			    (ws_rule & WS_BLANK_AT_EOF) &&
@@ -3082,14 +3081,14 @@ static int apply_one_fragment(struct apply_state *state,
 		 * just reduce the larger context.
 		 */
 		if (leading >= trailing) {
-			remove_first_line(&preimage);
-			remove_first_line(&postimage);
+			image_remove_first_line(&preimage);
+			image_remove_first_line(&postimage);
 			pos--;
 			leading--;
 		}
 		if (trailing > leading) {
-			remove_last_line(&preimage);
-			remove_last_line(&postimage);
+			image_remove_last_line(&preimage);
+			image_remove_last_line(&postimage);
 			trailing--;
 		}
 	}
@@ -3103,7 +3102,7 @@ static int apply_one_fragment(struct apply_state *state,
 					found_new_blank_lines_at_end);
 			if (state->ws_error_action == correct_ws_error) {
 				while (new_blank_lines_at_end--)
-					remove_last_line(&postimage);
+					image_remove_last_line(&postimage);
 			}
 			/*
 			 * We would want to prevent write_out_results()
@@ -3181,12 +3180,12 @@ static int apply_binary_fragment(struct apply_state *state,
 				  fragment->size, &len);
 		if (!dst)
 			return -1;
-		clear_image(img);
+		image_clear(img);
 		img->buf = dst;
 		img->len = len;
 		return 0;
 	case BINARY_LITERAL_DEFLATED:
-		clear_image(img);
+		image_clear(img);
 		img->len = fragment->size;
 		img->buf = xmemdupz(fragment->patch, img->len);
 		return 0;
@@ -3241,7 +3240,7 @@ static int apply_binary(struct apply_state *state,
 
 	get_oid_hex(patch->new_oid_prefix, &oid);
 	if (is_null_oid(&oid)) {
-		clear_image(img);
+		image_clear(img);
 		return 0; /* deletion patch */
 	}
 
@@ -3257,7 +3256,7 @@ static int apply_binary(struct apply_state *state,
 			return error(_("the necessary postimage %s for "
 				       "'%s' cannot be read"),
 				     patch->new_oid_prefix, name);
-		clear_image(img);
+		image_clear(img);
 		img->buf = result;
 		img->len = size;
 	} else {
@@ -3533,7 +3532,7 @@ static int load_preimage(struct apply_state *state,
 	}
 
 	img = strbuf_detach(&buf, &len);
-	prepare_image(image, img, len, !patch->is_binary);
+	image_prepare(image, img, len, !patch->is_binary);
 	return 0;
 }
 
@@ -3542,7 +3541,7 @@ static int resolve_to(struct image *image, const struct object_id *result_id)
 	unsigned long size;
 	enum object_type type;
 
-	clear_image(image);
+	image_clear(image);
 
 	image->buf = repo_read_object_file(the_repository, result_id, &type,
 					   &size);
@@ -3589,7 +3588,7 @@ static int three_way_merge(struct apply_state *state,
 		free(result.ptr);
 		return -1;
 	}
-	clear_image(image);
+	image_clear(image);
 	image->buf = result.ptr;
 	image->len = result.size;
 
@@ -3636,7 +3635,7 @@ static int load_current(struct apply_state *state,
 	else if (status)
 		return -1;
 	img = strbuf_detach(&buf, &len);
-	prepare_image(image, img, len, !patch->is_binary);
+	image_prepare(image, img, len, !patch->is_binary);
 	return 0;
 }
 
@@ -3671,15 +3670,15 @@ static int try_threeway(struct apply_state *state,
 		fprintf(stderr, _("Performing three-way merge...\n"));
 
 	img = strbuf_detach(&buf, &len);
-	prepare_image(&tmp_image, img, len, 1);
+	image_prepare(&tmp_image, img, len, 1);
 	/* Apply the patch to get the post image */
 	if (apply_fragments(state, &tmp_image, patch) < 0) {
-		clear_image(&tmp_image);
+		image_clear(&tmp_image);
 		return -1;
 	}
 	/* post_oid is theirs */
 	write_object_file(tmp_image.buf, tmp_image.len, OBJ_BLOB, &post_oid);
-	clear_image(&tmp_image);
+	image_clear(&tmp_image);
 
 	/* our_oid is ours */
 	if (patch->is_new) {
@@ -3692,7 +3691,7 @@ static int try_threeway(struct apply_state *state,
 				     patch->old_name);
 	}
 	write_object_file(tmp_image.buf, tmp_image.len, OBJ_BLOB, &our_oid);
-	clear_image(&tmp_image);
+	image_clear(&tmp_image);
 
 	/* in-core three-way merge between post and our using pre as base */
 	status = three_way_merge(state, image, patch->new_name,
@@ -3740,7 +3739,7 @@ static int apply_data(struct apply_state *state, struct patch *patch,
 
 		/* Note: with --reject, apply_fragments() returns 0 */
 		if (patch->direct_to_threeway || apply_fragments(state, &image, patch) < 0) {
-			clear_image(&image);
+			image_clear(&image);
 			return -1;
 		}
 	}
