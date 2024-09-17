@@ -38,6 +38,8 @@
 #include "wildmatch.h"
 #include "ws.h"
 
+#define parse_range apply_parse_fragment_range
+
 struct gitdiff_data {
 	struct strbuf *root;
 	int linenr;
@@ -1442,8 +1444,8 @@ static int parse_num(const char *line, unsigned long *p)
 	return ptr - line;
 }
 
-static int parse_range(const char *line, int len, int offset, const char *expect,
-		       unsigned long *p1, unsigned long *p2)
+int apply_parse_fragment_range(const char *line, int len, int offset, const char *expect,
+			 unsigned long *p1, unsigned long *p2)
 {
 	int digits, ex;
 
