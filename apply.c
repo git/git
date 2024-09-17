@@ -281,7 +281,6 @@ struct image {
 	size_t len;
 	size_t nr;
 	size_t alloc;
-	struct line *line_allocated;
 	struct line *line;
 };
 #define IMAGE_INIT { 0 }
@@ -295,7 +294,7 @@ static void image_init(struct image *image)
 static void image_clear(struct image *image)
 {
 	free(image->buf);
-	free(image->line_allocated);
+	free(image->line);
 	image_init(image);
 }
 
@@ -313,10 +312,10 @@ static uint32_t hash_line(const char *cp, size_t len)
 
 static void image_add_line(struct image *img, const char *bol, size_t len, unsigned flag)
 {
-	ALLOC_GROW(img->line_allocated, img->nr + 1, img->alloc);
-	img->line_allocated[img->nr].len = len;
-	img->line_allocated[img->nr].hash = hash_line(bol, len);
-	img->line_allocated[img->nr].flag = flag;
+	ALLOC_GROW(img->line, img->nr + 1, img->alloc);
+	img->line[img->nr].len = len;
+	img->line[img->nr].hash = hash_line(bol, len);
+	img->line[img->nr].flag = flag;
 	img->nr++;
 }
 
@@ -348,15 +347,15 @@ static void image_prepare(struct image *image, char *buf, size_t len,
 		image_add_line(image, cp, next - cp, 0);
 		cp = next;
 	}
-	image->line = image->line_allocated;
 }
 
 static void image_remove_first_line(struct image *img)
 {
 	img->buf += img->line[0].len;
 	img->len -= img->line[0].len;
-	img->line++;
 	img->nr--;
+	if (img->nr)
+		MOVE_ARRAY(img->line, img->line + 1, img->nr);
 }
 
 static void image_remove_last_line(struct image *img)
@@ -2335,7 +2334,7 @@ static void update_pre_post_images(struct image *preimage,
 	       : fixed_preimage.nr <= preimage->nr);
 	for (i = 0; i < fixed_preimage.nr; i++)
 		fixed_preimage.line[i].flag = preimage->line[i].flag;
-	free(preimage->line_allocated);
+	free(preimage->line);
 	*preimage = fixed_preimage;
 
 	/*
@@ -2879,14 +2878,12 @@ static void update_image(struct apply_state *state,
 
 	/* Adjust the line table */
 	nr = img->nr + postimage->nr - preimage_limit;
-	if (preimage_limit < postimage->nr) {
+	if (preimage_limit < postimage->nr)
 		/*
 		 * NOTE: this knows that we never call image_remove_first_line()
 		 * on anything other than pre/post image.
 		 */
 		REALLOC_ARRAY(img->line, nr);
-		img->line_allocated = img->line;
-	}
 	if (preimage_limit != postimage->nr)
 		MOVE_ARRAY(img->line + applied_pos + postimage->nr,
 			   img->line + applied_pos + preimage_limit,
@@ -3027,8 +3024,8 @@ static int apply_one_fragment(struct apply_state *state,
 	    newlines.len > 0 && newlines.buf[newlines.len - 1] == '\n') {
 		old--;
 		strbuf_setlen(&newlines, newlines.len - 1);
-		preimage.line_allocated[preimage.nr - 1].len--;
-		postimage.line_allocated[postimage.nr - 1].len--;
+		preimage.line[preimage.nr - 1].len--;
+		postimage.line[postimage.nr - 1].len--;
 	}
 
 	leading = frag->leading;
@@ -3062,8 +3059,6 @@ static int apply_one_fragment(struct apply_state *state,
 	preimage.len = old - oldlines;
 	postimage.buf = newlines.buf;
 	postimage.len = newlines.len;
-	preimage.line = preimage.line_allocated;
-	postimage.line = postimage.line_allocated;
 
 	for (;;) {
 
@@ -3151,8 +3146,8 @@ static int apply_one_fragment(struct apply_state *state,
 out:
 	free(oldlines);
 	strbuf_release(&newlines);
-	free(preimage.line_allocated);
-	free(postimage.line_allocated);
+	free(preimage.line);
+	free(postimage.line);
 
 	return (applied_pos < 0);
 }
@@ -3752,7 +3747,7 @@ static int apply_data(struct apply_state *state, struct patch *patch,
 	patch->result = image.buf;
 	patch->resultsize = image.len;
 	add_to_fn_table(state, patch);
-	free(image.line_allocated);
+	free(image.line);
 
 	if (0 < patch->is_delete && patch->resultsize)
 		return error(_("removal patch leaves file contents"));
