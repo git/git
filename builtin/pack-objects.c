@@ -266,7 +266,7 @@ struct configured_exclusion {
 static struct oidmap configured_exclusions;
 
 static struct oidset excluded_by_config;
-static int use_full_name_hash;
+static int use_full_name_hash = -1;
 
 static inline uint32_t pack_name_hash_fn(const char *name)
 {
@@ -4586,8 +4586,10 @@ int cmd_pack_objects(int argc,
 	if (pack_to_stdout || !rev_list_all)
 		write_bitmap_index = 0;
 
-	if (write_bitmap_index && use_full_name_hash)
+	if (write_bitmap_index && use_full_name_hash > 0)
 		die(_("currently, the --full-name-hash option is incompatible with --write-bitmap-index"));
+	if (use_full_name_hash < 0)
+		use_full_name_hash = git_env_bool("GIT_TEST_FULL_NAME_HASH", 0);
 
 	if (use_delta_islands)
 		strvec_push(&rp, "--topo-order");
