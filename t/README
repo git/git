@@ -491,6 +491,10 @@ a test and then fails then the whole test run will abort. This can help to make
 sure the expected tests are executed and not silently skipped when their
 dependency breaks or is simply not present in a new environment.
 
+GIT_TEST_FULL_NAME_HASH=<boolean>, when true, sets the default name-hash
+function in 'git pack-objects' to be the one used by the --full-name-hash
+option.
+
 Naming Tests
 ------------
 
