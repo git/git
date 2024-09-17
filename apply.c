@@ -284,11 +284,19 @@ struct image {
 	struct line *line_allocated;
 	struct line *line;
 };
+#define IMAGE_INIT { 0 }
+
+static void image_init(struct image *image)
+{
+	struct image empty = IMAGE_INIT;
+	memcpy(image, &empty, sizeof(*image));
+}
 
 static void image_clear(struct image *image)
 {
 	free(image->buf);
 	free(image->line_allocated);
+	image_init(image);
 }
 
 static uint32_t hash_line(const char *cp, size_t len)
@@ -322,7 +330,7 @@ static void image_prepare(struct image *image, char *buf, size_t len,
 {
 	const char *cp, *ep;
 
-	memset(image, 0, sizeof(*image));
+	image_clear(image);
 	image->buf = buf;
 	image->len = len;
 
@@ -2314,7 +2322,7 @@ static void update_pre_post_images(struct image *preimage,
 {
 	int i, ctx, reduced;
 	char *new_buf, *old_buf, *fixed;
-	struct image fixed_preimage;
+	struct image fixed_preimage = IMAGE_INIT;
 
 	/*
 	 * Update the preimage with whitespace fixes.  Note that we
@@ -2910,11 +2918,9 @@ static int apply_one_fragment(struct apply_state *state,
 	int hunk_linenr = frag->linenr;
 	unsigned long leading, trailing;
 	int pos, applied_pos;
-	struct image preimage;
-	struct image postimage;
+	struct image preimage = IMAGE_INIT;
+	struct image postimage = IMAGE_INIT;
 
-	memset(&preimage, 0, sizeof(preimage));
-	memset(&postimage, 0, sizeof(postimage));
 	oldlines = xmalloc(size);
 	strbuf_init(&newlines, size);
 
@@ -3650,7 +3656,7 @@ static int try_threeway(struct apply_state *state,
 	size_t len;
 	int status;
 	char *img;
-	struct image tmp_image;
+	struct image tmp_image = IMAGE_INIT;
 
 	/* No point falling back to 3-way merge in these cases */
 	if (patch->is_delete ||
@@ -3727,7 +3733,7 @@ static int try_threeway(struct apply_state *state,
 static int apply_data(struct apply_state *state, struct patch *patch,
 		      struct stat *st, const struct cache_entry *ce)
 {
-	struct image image;
+	struct image image = IMAGE_INIT;
 
 	if (load_preimage(state, &image, patch, st, ce) < 0)
 		return -1;
