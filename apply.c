@@ -279,9 +279,8 @@ struct line {
 struct image {
 	char *buf;
 	size_t len;
-	size_t nr;
-	size_t alloc;
 	struct line *line;
+	size_t line_nr, line_alloc;
 };
 #define IMAGE_INIT { 0 }
 
@@ -312,11 +311,11 @@ static uint32_t hash_line(const char *cp, size_t len)
 
 static void image_add_line(struct image *img, const char *bol, size_t len, unsigned flag)
 {
-	ALLOC_GROW(img->line, img->nr + 1, img->alloc);
-	img->line[img->nr].len = len;
-	img->line[img->nr].hash = hash_line(bol, len);
-	img->line[img->nr].flag = flag;
-	img->nr++;
+	ALLOC_GROW(img->line, img->line_nr + 1, img->line_alloc);
+	img->line[img->line_nr].len = len;
+	img->line[img->line_nr].hash = hash_line(bol, len);
+	img->line[img->line_nr].flag = flag;
+	img->line_nr++;
 }
 
 /*
@@ -353,14 +352,14 @@ static void image_remove_first_line(struct image *img)
 {
 	img->buf += img->line[0].len;
 	img->len -= img->line[0].len;
-	img->nr--;
-	if (img->nr)
-		MOVE_ARRAY(img->line, img->line + 1, img->nr);
+	img->line_nr--;
+	if (img->line_nr)
+		MOVE_ARRAY(img->line, img->line + 1, img->line_nr);
 }
 
 static void image_remove_last_line(struct image *img)
 {
-	img->len -= img->line[--img->nr].len;
+	img->len -= img->line[--img->line_nr].len;
 }
 
 /* fmt must contain _one_ %s and no other substitution */
@@ -2330,9 +2329,9 @@ static void update_pre_post_images(struct image *preimage,
 	 */
 	image_prepare(&fixed_preimage, buf, len, 1);
 	assert(postlen
-	       ? fixed_preimage.nr == preimage->nr
-	       : fixed_preimage.nr <= preimage->nr);
-	for (i = 0; i < fixed_preimage.nr; i++)
+	       ? fixed_preimage.line_nr == preimage->line_nr
+	       : fixed_preimage.line_nr <= preimage->line_nr);
+	for (i = 0; i < fixed_preimage.line_nr; i++)
 		fixed_preimage.line[i].flag = preimage->line[i].flag;
 	free(preimage->line);
 	*preimage = fixed_preimage;
@@ -2353,7 +2352,7 @@ static void update_pre_post_images(struct image *preimage,
 		new_buf = old_buf;
 	fixed = preimage->buf;
 
-	for (i = reduced = ctx = 0; i < postimage->nr; i++) {
+	for (i = reduced = ctx = 0; i < postimage->line_nr; i++) {
 		size_t l_len = postimage->line[i].len;
 		if (!(postimage->line[i].flag & LINE_COMMON)) {
 			/* an added line -- no counterparts in preimage */
@@ -2367,7 +2366,7 @@ static void update_pre_post_images(struct image *preimage,
 		old_buf += l_len;
 
 		/* and find the corresponding one in the fixed preimage */
-		while (ctx < preimage->nr &&
+		while (ctx < preimage->line_nr &&
 		       !(preimage->line[ctx].flag & LINE_COMMON)) {
 			fixed += preimage->line[ctx].len;
 			ctx++;
@@ -2377,7 +2376,7 @@ static void update_pre_post_images(struct image *preimage,
 		 * preimage is expected to run out, if the caller
 		 * fixed addition of trailing blank lines.
 		 */
-		if (preimage->nr <= ctx) {
+		if (preimage->line_nr <= ctx) {
 			reduced++;
 			continue;
 		}
@@ -2399,7 +2398,7 @@ static void update_pre_post_images(struct image *preimage,
 
 	/* Fix the length of the whole thing */
 	postimage->len = new_buf - postimage->buf;
-	postimage->nr -= reduced;
+	postimage->line_nr -= reduced;
 }
 
 /*
@@ -2482,7 +2481,7 @@ static int line_by_line_fuzzy_match(struct image *img,
 	 * we are removing blank lines at the end of the file.)
 	 */
 	buf = preimage_eof = preimage->buf + preoff;
-	for ( ; i < preimage->nr; i++)
+	for ( ; i < preimage->line_nr; i++)
 		preoff += preimage->line[i].len;
 	preimage_end = preimage->buf + preoff;
 	for ( ; buf < preimage_end; buf++)
@@ -2522,12 +2521,12 @@ static int match_fragment(struct apply_state *state,
 	int preimage_limit;
 	int ret;
 
-	if (preimage->nr + current_lno <= img->nr) {
+	if (preimage->line_nr + current_lno <= img->line_nr) {
 		/*
 		 * The hunk falls within the boundaries of img.
 		 */
-		preimage_limit = preimage->nr;
-		if (match_end && (preimage->nr + current_lno != img->nr)) {
+		preimage_limit = preimage->line_nr;
+		if (match_end && (preimage->line_nr + current_lno != img->line_nr)) {
 			ret = 0;
 			goto out;
 		}
@@ -2540,7 +2539,7 @@ static int match_fragment(struct apply_state *state,
 		 * match with img, and the remainder of the preimage
 		 * must be blank.
 		 */
-		preimage_limit = img->nr - current_lno;
+		preimage_limit = img->line_nr - current_lno;
 	} else {
 		/*
 		 * The hunk extends beyond the end of the img and
@@ -2565,7 +2564,7 @@ static int match_fragment(struct apply_state *state,
 		}
 	}
 
-	if (preimage_limit == preimage->nr) {
+	if (preimage_limit == preimage->line_nr) {
 		/*
 		 * Do we have an exact match?  If we were told to match
 		 * at the end, size must be exactly at current+fragsize,
@@ -2637,7 +2636,7 @@ static int match_fragment(struct apply_state *state,
 
 	/* First count added lines in postimage */
 	postlen = 0;
-	for (i = 0; i < postimage->nr; i++) {
+	for (i = 0; i < postimage->line_nr; i++) {
 		if (!(postimage->line[i].flag & LINE_COMMON))
 			postlen += postimage->line[i].len;
 	}
@@ -2699,7 +2698,7 @@ static int match_fragment(struct apply_state *state,
 	 * empty or only contain whitespace (if WS_BLANK_AT_EOL is
 	 * false).
 	 */
-	for ( ; i < preimage->nr; i++) {
+	for ( ; i < preimage->line_nr; i++) {
 		size_t fixstart = fixed.len; /* start of the fixed preimage */
 		size_t oldlen = preimage->line[i].len;
 		int j;
@@ -2754,7 +2753,7 @@ static int find_pos(struct apply_state *state,
 	 * than `match_beginning`.
 	 */
 	if (state->allow_overlap && match_beginning && match_end &&
-	    img->nr - preimage->nr != 0)
+	    img->line_nr - preimage->line_nr != 0)
 		match_beginning = 0;
 
 	/*
@@ -2765,15 +2764,15 @@ static int find_pos(struct apply_state *state,
 	if (match_beginning)
 		line = 0;
 	else if (match_end)
-		line = img->nr - preimage->nr;
+		line = img->line_nr - preimage->line_nr;
 
 	/*
 	 * Because the comparison is unsigned, the following test
 	 * will also take care of a negative line number that can
 	 * result when match_end and preimage is larger than the target.
 	 */
-	if ((size_t) line > img->nr)
-		line = img->nr;
+	if ((size_t) line > img->line_nr)
+		line = img->line_nr;
 
 	current = 0;
 	for (i = 0; i < line; i++)
@@ -2796,7 +2795,7 @@ static int find_pos(struct apply_state *state,
 			return current_lno;
 
 	again:
-		if (backwards_lno == 0 && forwards_lno == img->nr)
+		if (backwards_lno == 0 && forwards_lno == img->line_nr)
 			break;
 
 		if (i & 1) {
@@ -2809,7 +2808,7 @@ static int find_pos(struct apply_state *state,
 			current = backwards;
 			current_lno = backwards_lno;
 		} else {
-			if (forwards_lno == img->nr) {
+			if (forwards_lno == img->line_nr) {
 				i++;
 				goto again;
 			}
@@ -2852,9 +2851,9 @@ static void update_image(struct apply_state *state,
 	 * to the number of lines in the preimage that falls
 	 * within the boundaries.
 	 */
-	preimage_limit = preimage->nr;
-	if (preimage_limit > img->nr - applied_pos)
-		preimage_limit = img->nr - applied_pos;
+	preimage_limit = preimage->line_nr;
+	if (preimage_limit > img->line_nr - applied_pos)
+		preimage_limit = img->line_nr - applied_pos;
 
 	for (i = 0; i < applied_pos; i++)
 		applied_at += img->line[i].len;
@@ -2877,22 +2876,22 @@ static void update_image(struct apply_state *state,
 	result[img->len] = '\0';
 
 	/* Adjust the line table */
-	nr = img->nr + postimage->nr - preimage_limit;
-	if (preimage_limit < postimage->nr)
+	nr = img->line_nr + postimage->line_nr - preimage_limit;
+	if (preimage_limit < postimage->line_nr)
 		/*
 		 * NOTE: this knows that we never call image_remove_first_line()
 		 * on anything other than pre/post image.
 		 */
 		REALLOC_ARRAY(img->line, nr);
-	if (preimage_limit != postimage->nr)
-		MOVE_ARRAY(img->line + applied_pos + postimage->nr,
+	if (preimage_limit != postimage->line_nr)
+		MOVE_ARRAY(img->line + applied_pos + postimage->line_nr,
 			   img->line + applied_pos + preimage_limit,
-			   img->nr - (applied_pos + preimage_limit));
-	COPY_ARRAY(img->line + applied_pos, postimage->line, postimage->nr);
+			   img->line_nr - (applied_pos + preimage_limit));
+	COPY_ARRAY(img->line + applied_pos, postimage->line, postimage->line_nr);
 	if (!state->allow_overlap)
-		for (i = 0; i < postimage->nr; i++)
+		for (i = 0; i < postimage->line_nr; i++)
 			img->line[applied_pos + i].flag |= LINE_PATCHED;
-	img->nr = nr;
+	img->line_nr = nr;
 }
 
 /*
@@ -3024,8 +3023,8 @@ static int apply_one_fragment(struct apply_state *state,
 	    newlines.len > 0 && newlines.buf[newlines.len - 1] == '\n') {
 		old--;
 		strbuf_setlen(&newlines, newlines.len - 1);
-		preimage.line[preimage.nr - 1].len--;
-		postimage.line[postimage.nr - 1].len--;
+		preimage.line[preimage.line_nr - 1].len--;
+		postimage.line[postimage.line_nr - 1].len--;
 	}
 
 	leading = frag->leading;
@@ -3096,7 +3095,7 @@ static int apply_one_fragment(struct apply_state *state,
 
 	if (applied_pos >= 0) {
 		if (new_blank_lines_at_end &&
-		    preimage.nr + applied_pos >= img->nr &&
+		    preimage.line_nr + applied_pos >= img->line_nr &&
 		    (ws_rule & WS_BLANK_AT_EOF) &&
 		    state->ws_error_action != nowarn_ws_error) {
 			record_ws_error(state, WS_BLANK_AT_EOF, "+", 1,
