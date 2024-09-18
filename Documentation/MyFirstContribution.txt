@@ -811,13 +811,12 @@ unavailable, using some unknown workaround instead.
 
 The following handful of patches add the psuh command and implement some
 handy features on top of it.
-
-This patchset is part of the MyFirstContribution tutorial and should not
-be merged.
 ----
 
-At this point the tutorial diverges, in order to demonstrate two
-different methods of formatting your patchset and getting it reviewed.
+This completes the coding section of the tutorial. The remainder demonstrates
+two different methods for formatting patchsets and getting them reviewed. Follow
+these when you are sending a real change to the git project to be reviewed, _do
+**NOT**_ send the 'psuh' patchset we just created to the mailing lists.
 
 The first method to be covered is GitGitGadget, which is useful for those
 already familiar with GitHub's common pull request workflow. This method
