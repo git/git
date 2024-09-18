@@ -184,20 +184,8 @@ int cmd_psuh(int argc, const char **argv, const char *prefix)
 Let's try to build it.  Open `Makefile`, find where `builtin/pull.o` is added
 to `BUILTIN_OBJS`, and add `builtin/psuh.o` in the same way next to it in
 alphabetical order. Once you've done so, move to the top-level directory and
-build simply with `make`. Also add the `DEVELOPER=1` variable to turn on
-some additional warnings:
-
-----
-$ echo DEVELOPER=1 >config.mak
-$ make
-----
-
-NOTE: When you are developing the Git project, it's preferred that you use the
-`DEVELOPER` flag; if there's some reason it doesn't work for you, you can turn
-it off, but it's a good idea to mention the problem to the mailing list.
-
-Great, now your new command builds happily on its own. But nobody invokes it.
-Let's change that.
+build simply with `make`. Your new command builds happily on its own. But
+nobody invokes it. Let's change that.
 
 The list of commands lives in `git.c`. We can register a new command by adding
 a `cmd_struct` to the `commands[]` array. `struct cmd_struct` takes a string
@@ -285,10 +273,24 @@ on the reference implementation linked at the top of this document.
 === Implementation
 
 It's probably useful to do at least something besides printing out a string.
-Let's start by having a look at everything we get.
+Before we get into coding, let's add the `DEVELOPER=1` variable to turn on
+some additional warnings:
 
-Modify your `cmd_psuh` implementation to dump the args you're passed, keeping
-existing `printf()` calls in place:
+----
+$ echo DEVELOPER=1 >config.mak
+$ make
+...
+error: unused parameter ‘argc’ [-Werror=unused-parameter]
+...
+cc1: all warnings being treated as errors
+make: *** [Makefile:NNNN: psuh.o] Error 1
+make: *** Waiting for unfinished jobs....
+----
+
+Oh no! The new command doesn't use any of its arguments yet, which breaks the
+build with developer warnings. Let's add some implementation code that uses the
+inputs to get rid of these warnings. Modify your `cmd_psuh` implementation to
+dump the args you're passed, keeping existing `printf()` calls in place:
 
 ----
 	int i;
@@ -306,6 +308,10 @@ existing `printf()` calls in place:
 	       prefix ? "/" : "", prefix ? prefix : "");
 
 ----
+
+NOTE: When you are developing the Git project, it's preferred that you use the
+`DEVELOPER` flag; if there's some reason it doesn't work for you, you can turn
+it off, but it's a good idea to mention the problem to the mailing list.
 
 Build and try it. As you may expect, there's pretty much just whatever we give
 on the command line, including the name of our command. (If `prefix` is empty
