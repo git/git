@@ -118,10 +118,22 @@ struct object_entry {
 	unsigned ext_base:1; /* delta_idx points outside packlist */
 };
 
+/**
+ * A packing region is a section of the packing_data.objects array
+ * as given by a starting index and a number of elements.
+ */
+struct packing_region {
+	uint32_t start;
+	uint32_t nr;
+};
+
 struct packing_data {
 	struct repository *repo;
 	struct object_entry *objects;
 	uint32_t nr_objects, nr_alloc;
+
+	struct packing_region *regions;
+	uint32_t nr_regions, nr_regions_alloc;
 
 	int32_t *index;
 	uint32_t index_size;
