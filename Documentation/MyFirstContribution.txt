@@ -414,6 +414,7 @@ Add the following includes:
 ----
 #include "commit.h"
 #include "pretty.h"
+#include "strbuf.h"
 ----
 
 Then, add the following lines within your implementation of `cmd_psuh()` near
