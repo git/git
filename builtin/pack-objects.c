@@ -3206,6 +3206,50 @@ static int should_attempt_deltas(struct object_entry *entry)
 	return 1;
 }
 
+static void find_deltas_for_region(struct object_entry *list UNUSED,
+				   struct packing_region *region,
+				   unsigned int *processed)
+{
+	struct object_entry **delta_list;
+	uint32_t delta_list_nr = 0;
+
+	ALLOC_ARRAY(delta_list, region->nr);
+	for (uint32_t i = 0; i < region->nr; i++) {
+		struct object_entry *entry = to_pack.objects + region->start + i;
+		if (should_attempt_deltas(entry))
+			delta_list[delta_list_nr++] = entry;
+	}
+
+	QSORT(delta_list, delta_list_nr, type_size_sort);
+	find_deltas(delta_list, &delta_list_nr, window, depth, processed);
+	free(delta_list);
+}
+
+static void find_deltas_by_region(struct object_entry *list,
+				  struct packing_region *regions,
+				  uint32_t start, uint32_t nr)
+{
+	unsigned int processed = 0;
+	uint32_t progress_nr;
+
+	if (!nr)
+		return;
+
+	progress_nr = regions[nr - 1].start + regions[nr - 1].nr;
+
+	if (progress)
+		progress_state = start_progress(_("Compressing objects by path"),
+						progress_nr);
+
+	while (nr--)
+		find_deltas_for_region(list,
+				       &regions[start++],
+				       &processed);
+
+	display_progress(progress_state, progress_nr);
+	stop_progress(&progress_state);
+}
+
 static void prepare_pack(int window, int depth)
 {
 	struct object_entry **delta_list;
@@ -3229,6 +3273,10 @@ static void prepare_pack(int window, int depth)
 
 	if (!to_pack.nr_objects || !window || !depth)
 		return;
+
+	if (path_walk)
+		find_deltas_by_region(to_pack.objects, to_pack.regions,
+				      0, to_pack.nr_regions);
 
 	ALLOC_ARRAY(delta_list, to_pack.nr_objects);
 	nr_deltas = n = 0;
@@ -4167,10 +4215,8 @@ static int add_objects_by_path(const char *path,
 			       enum object_type type,
 			       void *data)
 {
-	struct object_entry **delta_list;
 	size_t oe_start = to_pack.nr_objects;
 	size_t oe_end;
-	unsigned int sub_list_size;
 	unsigned int *processed = data;
 
 	/*
@@ -4203,32 +4249,17 @@ static int add_objects_by_path(const char *path,
 	if (oe_end == oe_start || !window)
 		return 0;
 
-	sub_list_size = 0;
-	ALLOC_ARRAY(delta_list, oe_end - oe_start);
+	ALLOC_GROW(to_pack.regions,
+		   to_pack.nr_regions + 1,
+		   to_pack.nr_regions_alloc);
 
-	for (size_t i = 0; i < oe_end - oe_start; i++) {
-		struct object_entry *entry = to_pack.objects + oe_start + i;
+	to_pack.regions[to_pack.nr_regions].start = oe_start;
+	to_pack.regions[to_pack.nr_regions].nr = oe_end - oe_start;
+	to_pack.nr_regions++;
 
-		if (!should_attempt_deltas(entry))
-			continue;
+	*processed += oids->nr;
+	display_progress(progress_state, *processed);
 
-		delta_list[sub_list_size++] = entry;
-	}
-
-	/*
-	 * Find delta bases among this list of objects that all match the same
-	 * path. This causes the delta compression to be interleaved in the
-	 * object walk, which can lead to confusing progress indicators. This is
-	 * also incompatible with threaded delta calculations. In the future,
-	 * consider creating a list of regions in the full to_pack.objects array
-	 * that could be picked up by the threaded delta computation.
-	 */
-	if (sub_list_size && window) {
-		QSORT(delta_list, sub_list_size, type_size_sort);
-		find_deltas(delta_list, &sub_list_size, window, depth, processed);
-	}
-
-	free(delta_list);
 	return 0;
 }
 
