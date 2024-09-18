@@ -546,9 +546,9 @@ Go ahead and commit your new documentation change.
 [[add-usage]]
 === Adding Usage Text
 
-Try and run `./bin-wrappers/git psuh -h`. Your command should crash at the end.
-That's because `-h` is a special case which your command should handle by
-printing usage.
+Try and run `./bin-wrappers/git psuh -h`. This command should print help text,
+but since we don't do anything with our command's arguments yet, it instead runs
+plainly.
 
 Take a look at `Documentation/technical/api-parse-options.txt`. This is a handy
 tool for pulling out options you need to be able to handle, and it takes a
