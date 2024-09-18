@@ -41,7 +41,7 @@ test_perf 'thin pack with --path-walk' '
 '
 
 test_size 'thin pack size with --path-walk' '
-	wc -c <out
+	test_file_size out
 '
 
 test_perf 'big pack' '
@@ -65,7 +65,7 @@ test_perf 'big pack with --path-walk' '
 '
 
 test_size 'big pack size with --path-walk' '
-	wc -c <out
+	test_file_size out
 '
 
 test_perf 'repack' '
@@ -91,7 +91,8 @@ test_perf 'repack with --path-walk' '
 '
 
 test_size 'repack size with --path-walk' '
-	wc -c <.git/objects/pack/pack-*.pack
+	pack=$(ls .git/objects/pack/pack-*.pack) &&
+	test_file_size "$pack"
 '
 
 test_done
