@@ -51,4 +51,5 @@ commits are emitted.
 Examples
 --------
 
-See example usages in future changes.
+See example usages in:
+	`t/helper/test-path-walk.c`
