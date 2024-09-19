@@ -2275,7 +2275,7 @@ int stream_loose_object(struct input_stream *in_stream, size_t len,
 
 	/*
 	 * Common steps for write_loose_object and stream_loose_object to
-	 * end writing loose oject:
+	 * end writing loose object:
 	 *
 	 *  - End the compression of zlib stream.
 	 *  - Get the calculated oid.
