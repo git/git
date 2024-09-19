@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2024, #06; Mon, 16)
-X-master-at: 3969d78396e707c5a900dd5e15c365c54bef0283
-X-next-at: 625da3ddd7012469a8c79a2a1d31aeffc5154afe
+Subject: What's cooking in git.git (Sep 2024, #07; Wed, 18)
+X-master-at: 6531f31ef3bead57a3255fa08efa6e7553c5a9a7
+X-next-at: cf0dbffa2232233e2e6152dc28148e12ec9aa900
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2024, #06; Mon, 16)
+What's cooking in git.git (Sep 2024, #07; Wed, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,62 +46,84 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* ah/apply-3way-ours (2024-09-09) 1 commit
-  (merged to 'next' on 2024-09-10 at 989ba9708b)
- + apply: support --ours, --theirs, and --union for three-way merges
+* jc/cmake-unit-test-updates (2024-09-18) 4 commits
+ - cmake: generalize the handling of the `UNIT_TEST_OBJS` list
+ - cmake: stop looking for `REFTABLE_TEST_OBJS` in the Makefile
+ - cmake: rename clar-related variables to avoid confusion
+ - Merge branch 'ps/reftable-exclude' into jc/cmake-unit-test-updates
+ (this branch uses ps/reftable-exclude.)
 
- "git apply --3way" learned to take "--ours" and other options.
- 
- source: <20240909141109.3102-2-alexhenrie24@gmail.com>
+ CMake adjustments for recent changes around unit tests.
 
-
-* cp/unit-test-reftable-stack (2024-09-09) 6 commits
-  (merged to 'next' on 2024-09-09 at 0dddbbb60d)
- + t-reftable-stack: add test for stack iterators
- + t-reftable-stack: add test for non-default compaction factor
- + t-reftable-stack: use reftable_ref_record_equal() to compare ref records
- + t-reftable-stack: use Git's tempfile API instead of mkstemp()
- + t: harmonize t-reftable-stack.c with coding guidelines
- + t: move reftable/stack_test.c to the unit testing framework
- (this branch is used by ps/reftable-alloc-failures and ps/reftable-exclude.)
-
- Another reftable test migrated to the unit-test framework.
- 
- source: <20240908041632.4948-1-chandrapratap3519@gmail.com>
-
-
-* jc/range-diff-lazy-setup (2024-08-09) 2 commits
-  (merged to 'next' on 2024-09-10 at 2e04a06b22)
- + remerge-diff: clean up temporary objdir at a central place
- + remerge-diff: lazily prepare temporary objdir on demand
-
- Code clean-up.
- 
- source: <xmqqr0ax9vlk.fsf@gitster.g>
-
-
-* jk/ref-filter-trailer-fixes (2024-09-10) 10 commits
-  (merged to 'next' on 2024-09-10 at ce7299fe2e)
- + ref-filter: fix leak with unterminated %(if) atoms
- + ref-filter: add ref_format_clear() function
- + ref-filter: fix leak when formatting %(push:remoteref)
- + ref-filter: fix leak with %(describe) arguments
- + ref-filter: fix leak of %(trailers) "argbuf"
- + ref-filter: store ref_trailer_buf data per-atom
- + ref-filter: drop useless cast in trailers_atom_parser()
- + ref-filter: strip signature when parsing tag trailers
- + ref-filter: avoid extra copies of payload/signature
- + t6300: drop newline from wrapped test title
-
- Bugfixes and leak plugging in "git for-each-ref --format=..." code
- paths.
- 
- source: <20240909230758.GA921697@coredump.intra.peff.net>
+ Will merge to 'next'.
+ source: <pull.1797.git.1726687769585.gitgitgadget@gmail.com>
 
 --------------------------------------------------
-[New Topics]
+[Graduated to 'master']
+
+* es/chainlint-message-updates (2024-09-10) 3 commits
+  (merged to 'next' on 2024-09-11 at a3fd02a009)
+ + chainlint: reduce annotation noise-factor
+ + chainlint: make error messages self-explanatory
+ + chainlint: don't be fooled by "?!...?!" in test body
+
+ The error messages from the test script checker have been improved.
+ source: <20240910041013.68948-1-ericsunshine@charter.net>
+
+
+* jc/ci-upload-artifact-and-linux32 (2024-09-09) 1 commit
+  (merged to 'next' on 2024-09-11 at 62991bef5b)
+ + ci: remove 'Upload failed tests' directories' step from linux32 jobs
+ (this branch is used by jk/ci-linux32-update.)
+
+ CI started failing completely for linux32 jobs, as the step to
+ upload failed test directory uses GitHub actions that is deprecated
+ and is now disabled.  Remove the step so at least we will know if
+ the tests are passing.
+ source: <xmqqy140o2kb.fsf@gitster.g>
+
+
+* jk/ci-linux32-update (2024-09-13) 5 commits
+  (merged to 'next' on 2024-09-13 at e937339388)
+ + ci: add Ubuntu 16.04 job to GitLab CI
+ + ci: use regular action versions for linux32 job
+ + ci: use more recent linux32 image
+ + ci: unify ubuntu and ubuntu32 dependencies
+ + ci: drop run-docker scripts
+ (this branch uses jc/ci-upload-artifact-and-linux32.)
+
+ CI updates
+ source: <20240912094238.GA589050@coredump.intra.peff.net>
+
+
+* ps/clar-unit-test (2024-09-10) 15 commits
+  (merged to 'next' on 2024-09-11 at ccc0289490)
+ + Makefile: rename clar-related variables to avoid confusion
+  (merged to 'next' on 2024-09-05 at 87fb0a399a)
+ + clar: add CMake support
+ + t/unit-tests: convert ctype tests to use clar
+ + t/unit-tests: convert strvec tests to use clar
+ + t/unit-tests: implement test driver
+ + Makefile: wire up the clar unit testing framework
+ + Makefile: do not use sparse on third-party sources
+ + Makefile: make hdr-check depend on generated headers
+ + Makefile: fix sparse dependency on GENERATED_H
+ + clar: stop including `shellapi.h` unnecessarily
+ + clar(win32): avoid compile error due to unused `fs_copy()`
+ + clar: avoid compile error with mingw-w64
+ + t/clar: fix compatibility with NonStop
+ + t: import the clar unit testing framework
+ + t: do not pass GIT_TEST_OPTS to unit tests with prove
+
+ Import clar unit tests framework libgit2 folks invented for our
+ use.
+ cf. <d5b1c95b-cbdc-4711-849e-c2cfc67787ee@gmail.com>
+ source: <cover.1725459142.git.ps@pks.im>
+
+--------------------------------------------------
+[Cooking]
 
 * jk/diag-unexpected-remote-helper-death (2024-09-14) 1 commit
   (merged to 'next' on 2024-09-16 at f2aa29beac)
@@ -116,35 +138,53 @@ Release tarballs are available at:
 
 
 * ak/typofixes (2024-09-16) 3 commits
- - cbtree: fix a typo
- - bloom: fix a typo
- - attr: fix a typo
+  (merged to 'next' on 2024-09-16 at 4bbdd5ce45)
+ + cbtree: fix a typo
+ + bloom: fix a typo
+ + attr: fix a typo
 
+ Trivial typofixes.
+
+ Will merge to 'master'.
  source: <20240915230522.129253-1-algonell@gmail.com>
 
 
 * jk/jump-quickfix-fixes (2024-09-16) 2 commits
- - git-jump: ignore deleted files in diff mode
- - git-jump: always specify column 1 for diff entries
+  (merged to 'next' on 2024-09-16 at 53aa9e5b22)
+ + git-jump: ignore deleted files in diff mode
+ + git-jump: always specify column 1 for diff entries
 
+ A few usability fixes to "git jump" (in contrib/).
+
+ Will merge to 'master'.
  source: <20240915111119.GA2017770@coredump.intra.peff.net>
 
 
 * jk/t9001-deflake (2024-09-16) 1 commit
- - t9001: use a more distinct fake BugID
+  (merged to 'next' on 2024-09-16 at 285ebc4223)
+ + t9001: use a more distinct fake BugID
 
+ Test fix.
+
+ Will merge to 'master'.
  source: <20240915113115.GA2019070@coredump.intra.peff.net>
 
 
-* ps/apply-leakfix (2024-09-16) 6 commits
- - apply: refactor `struct image` to use a `struct strbuf`
- - apply: rename members that track line count and allocation length
- - apply: refactor code to drop `line_allocated`
- - apply: introduce macro and function to init images
- - apply: rename functions operating on `struct image`
- - apply: reorder functions to move image-related things together
+* ps/apply-leakfix (2024-09-17) 6 commits
+  (merged to 'next' on 2024-09-18 at 99e318345e)
+ + apply: refactor `struct image` to use a `struct strbuf`
+ + apply: rename members that track line count and allocation length
+ + apply: refactor code to drop `line_allocated`
+ + apply: introduce macro and function to init images
+ + apply: rename functions operating on `struct image`
+ + apply: reorder functions to move image-related things together
 
- source: <cover.1726470385.git.ps@pks.im>
+ "git apply" had custom buffer management code that predated before
+ use of strbuf got widespread, which has been updated to use strbuf,
+ which also plugged some memory leaks.
+
+ Will merge to 'master'.
+ source: <cover.1726567217.git.ps@pks.im>
 
 
 * ps/leakfixes-part-7 (2024-09-16) 24 commits
@@ -174,6 +214,9 @@ Release tarballs are available at:
  - Merge branch 'ps/leakfixes-part-6' into ps/leakfixes-part-7
  (this branch uses ps/leakfixes-part-6.)
 
+ More leak-fixes.
+
+ Needs review.
  source: <cover.1726484308.git.ps@pks.im>
 
 
@@ -208,10 +251,9 @@ Release tarballs are available at:
  allocation function given to it may fail to allocate and to deal
  with such an error.
 
+ Needs review.
  source: <cover.1726489647.git.ps@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * bb/unicode-width-table-16 (2024-09-12) 1 commit
   (merged to 'next' on 2024-09-13 at 87dc391469)
@@ -255,35 +297,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <xmqqmskbwe1a.fsf@gitster.g>
-
-
-* jc/ci-upload-artifact-and-linux32 (2024-09-09) 1 commit
-  (merged to 'next' on 2024-09-11 at 62991bef5b)
- + ci: remove 'Upload failed tests' directories' step from linux32 jobs
- (this branch is used by jk/ci-linux32-update.)
-
- CI started failing completely for linux32 jobs, as the step to
- upload failed test directory uses GitHub actions that is deprecated
- and is now disabled.  Remove the step so at least we will know if
- the tests are passing.
-
- Will merge to 'master'.
- source: <xmqqy140o2kb.fsf@gitster.g>
-
-
-* jk/ci-linux32-update (2024-09-13) 5 commits
-  (merged to 'next' on 2024-09-13 at e937339388)
- + ci: add Ubuntu 16.04 job to GitLab CI
- + ci: use regular action versions for linux32 job
- + ci: use more recent linux32 image
- + ci: unify ubuntu and ubuntu32 dependencies
- + ci: drop run-docker scripts
- (this branch uses jc/ci-upload-artifact-and-linux32.)
-
- CI updates
-
- Will merge to 'master'.
- source: <20240912094238.GA589050@coredump.intra.peff.net>
 
 
 * jk/interop-test-build-options (2024-09-12) 1 commit
@@ -352,19 +365,20 @@ Release tarballs are available at:
 
 
 * ps/reftable-exclude (2024-09-16) 7 commits
- - refs/reftable: wire up support for exclude patterns
- - reftable/reader: make table iterator reseekable
- - t/unit-tests: introduce reftable library
- - Makefile: stop listing test library objects twice
- - builtin/receive-pack: fix exclude patterns when announcing refs
- - refs: properly apply exclude patterns to namespaced refs
- - Merge branch 'cp/unit-test-reftable-stack' into ps/reftable-exclude
- (this branch is used by ps/reftable-alloc-failures.)
+  (merged to 'next' on 2024-09-18 at 1f00fce314)
+ + refs/reftable: wire up support for exclude patterns
+ + reftable/reader: make table iterator reseekable
+ + t/unit-tests: introduce reftable library
+ + Makefile: stop listing test library objects twice
+ + builtin/receive-pack: fix exclude patterns when announcing refs
+ + refs: properly apply exclude patterns to namespaced refs
+ + Merge branch 'cp/unit-test-reftable-stack' into ps/reftable-exclude
+ (this branch is used by jc/cmake-unit-test-updates and ps/reftable-alloc-failures.)
 
  The reftable backend learned to more efficiently handle exclude
  patterns while enumerating the refs.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <cover.1726476401.git.ps@pks.im>
 
 
@@ -381,16 +395,17 @@ Release tarballs are available at:
 
 
 * jc/pass-repo-to-builtins (2024-09-13) 4 commits
- - add: pass in repo variable instead of global the_repository
- - builtin: remove USE_THE_REPOSITORY for those without the_repository
- - builtin: remove USE_THE_REPOSITORY_VARIABLE from builtin.h
- - builtin: add a repository parameter for builtin functions
+  (merged to 'next' on 2024-09-16 at 7711bb0214)
+ + add: pass in repo variable instead of global the_repository
+ + builtin: remove USE_THE_REPOSITORY for those without the_repository
+ + builtin: remove USE_THE_REPOSITORY_VARIABLE from builtin.h
+ + builtin: add a repository parameter for builtin functions
 
  The convention to calling into built-in command implementation has
  been updated to pass the repository, if known, together with the
  prefix value.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1778.v3.git.git.1726262177.gitgitgadget@gmail.com>
 
 
@@ -411,18 +426,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <ZugMUv1xbnjYH-el@pks.im>
  source: <cover.1725651952.git.me@ttaylorr.com>
-
-
-* es/chainlint-message-updates (2024-09-10) 3 commits
-  (merged to 'next' on 2024-09-11 at a3fd02a009)
- + chainlint: reduce annotation noise-factor
- + chainlint: make error messages self-explanatory
- + chainlint: don't be fooled by "?!...?!" in test body
-
- The error messages from the test script checker have been improved.
-
- Will merge to 'master'.
- source: <20240910041013.68948-1-ericsunshine@charter.net>
 
 
 * ps/environ-wo-the-repository (2024-09-12) 21 commits
@@ -496,7 +499,7 @@ Release tarballs are available at:
  source: <cover.1725530720.git.ps@pks.im>
 
 
-* sj/ref-contents-check (2024-09-13) 5 commits
+* sj/ref-contents-check (2024-09-18) 5 commits
  - ref: add symlink ref content check for files backend
  - ref: add symref content check for files backend
  - ref: add more strict checks for regular refs
@@ -507,6 +510,8 @@ Release tarballs are available at:
  contents that have always been taken valid but something Git
  wouldn't have written itself (e.g., missing terminating end-of-line
  after the full object name).
+
+ Needs review.
  source: <ZuRzCyjQFilGhj8j@ArchLinux>
 
 
@@ -532,33 +537,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <cover.1723760847.git.me@ttaylorr.com>
-
-
-* ps/clar-unit-test (2024-09-10) 15 commits
-  (merged to 'next' on 2024-09-11 at ccc0289490)
- + Makefile: rename clar-related variables to avoid confusion
-  (merged to 'next' on 2024-09-05 at 87fb0a399a)
- + clar: add CMake support
- + t/unit-tests: convert ctype tests to use clar
- + t/unit-tests: convert strvec tests to use clar
- + t/unit-tests: implement test driver
- + Makefile: wire up the clar unit testing framework
- + Makefile: do not use sparse on third-party sources
- + Makefile: make hdr-check depend on generated headers
- + Makefile: fix sparse dependency on GENERATED_H
- + clar: stop including `shellapi.h` unnecessarily
- + clar(win32): avoid compile error due to unused `fs_copy()`
- + clar: avoid compile error with mingw-w64
- + t/clar: fix compatibility with NonStop
- + t: import the clar unit testing framework
- + t: do not pass GIT_TEST_OPTS to unit tests with prove
-
- Import clar unit tests framework libgit2 folks invented for our
- use.
-
- Will merge to 'master'.
- cf. <d5b1c95b-cbdc-4711-849e-c2cfc67787ee@gmail.com>
- source: <cover.1725459142.git.ps@pks.im>
 
 
 * js/libgit-rust (2024-09-09) 7 commits
