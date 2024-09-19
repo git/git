@@ -1,0 +1,4 @@
+clar.suite
+.clarcache
+clar_test
+*.o
