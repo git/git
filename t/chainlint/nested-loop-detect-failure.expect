@@ -2,8 +2,8 @@
 3 do
 4 	for j in 0 1 2 3 4 5 6 7 8 9;
 5 	do
-6 		echo "$i$j" >"path$i$j" ?!LOOP?!
-7 	done ?!LOOP?!
+6 		echo "$i$j" >"path$i$j" ?!LINT: missing '|| return 1'?!
+7 	done ?!LINT: missing '|| return 1'?!
 8 done &&
 9 
 10 for i in 0 1 2 3 4 5 6 7 8 9;
@@ -18,7 +18,7 @@
 19 do
 20 	for j in 0 1 2 3 4 5 6 7 8 9;
 21 	do
-22 		echo "$i$j" >"path$i$j" ?!LOOP?!
+22 		echo "$i$j" >"path$i$j" ?!LINT: missing '|| return 1'?!
 23 	done || return 1
 24 done &&
 25 

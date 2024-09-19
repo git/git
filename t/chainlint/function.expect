@@ -4,8 +4,8 @@
 5 
 6 remove_object() {
 7 	file=$(sha1_file "$*") &&
-8 	test -e "$file" ?!AMP?!
+8 	test -e "$file" ?!LINT: missing '&&'?!
 9 	rm -f "$file"
-10 } ?!AMP?!
+10 } ?!LINT: missing '&&'?!
 11 
 12 sha1_file arg && remove_object arg

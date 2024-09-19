@@ -2,7 +2,7 @@
 3 	bar
 4 ) &&
 5 
-6 (cd foo ?!AMP?!
+6 (cd foo ?!LINT: missing '&&'?!
 7 	bar
 8 ) &&
 9 
@@ -13,5 +13,5 @@
 14 (cd foo &&
 15 	bar) &&
 16 
-17 (cd foo ?!AMP?!
+17 (cd foo ?!LINT: missing '&&'?!
 18 	bar)

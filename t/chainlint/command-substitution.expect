@@ -4,6 +4,6 @@
 5 	baz
 6 ) &&
 7 (
-8 	bar=$(gobble blocks) ?!AMP?!
+8 	bar=$(gobble blocks) ?!LINT: missing '&&'?!
 9 	baz
 10 )

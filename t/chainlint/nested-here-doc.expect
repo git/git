@@ -18,7 +18,7 @@
 19 	toink
 20 	INPUT_END
 21 
-22 	cat <<-\EOT ?!AMP?!
+22 	cat <<-\EOT ?!LINT: missing '&&'?!
 23 	text goes here
 24 	data <<EOF
 25 		data goes here

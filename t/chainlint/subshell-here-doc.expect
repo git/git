@@ -6,7 +6,7 @@
 7 	nevermore...
 8 	EOF
 9 
-10 	cat <<EOF >bip ?!AMP?!
+10 	cat <<EOF >bip ?!LINT: missing '&&'?!
 11 	fish fly high
 12 EOF
 13 

@@ -4,6 +4,6 @@
 5 	echo failed!
 6 	false
 7 else
-8 	echo it went okay ?!AMP?!
+8 	echo it went okay ?!LINT: missing '&&'?!
 9 	congratulate user
 10 fi

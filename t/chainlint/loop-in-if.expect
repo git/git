@@ -3,10 +3,10 @@
 4 	then
 5 		while true
 6 		do
-7 			echo "pop" ?!AMP?!
-8 			echo "glup" ?!LOOP?!
-9 		done ?!AMP?!
+7 			echo "pop" ?!LINT: missing '&&'?!
+8 			echo "glup" ?!LINT: missing '|| exit 1'?!
+9 		done ?!LINT: missing '&&'?!
 10 		foo
-11 	fi ?!AMP?!
+11 	fi ?!LINT: missing '&&'?!
 12 	bar
 13 )

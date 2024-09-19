@@ -1,5 +1,5 @@
 2 command_which_is_run &&
-3 cat >expect <<\EOF ?!UNCLOSED-HEREDOC?! &&
+3 cat >expect <<\EOF ?!LINT: unclosed heredoc?! &&
 4 	we try to end the here-doc below,
 5 	but the indentation throws us off
 6 	since the operator is not "<<-".

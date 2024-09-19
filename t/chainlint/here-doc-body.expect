@@ -1,7 +1,7 @@
-2 	echo "missing chain before" ?!AMP?!
+2 	echo "missing chain before" ?!LINT: missing '&&'?!
 3 	cat >file <<-\EOF &&
 4 	inside inner here-doc
 5 	these are not shell commands
 6 	EOF
-7 	echo "missing chain after" ?!AMP?!
+7 	echo "missing chain after" ?!LINT: missing '&&'?!
 8 	echo "but this line is OK because it's the end"

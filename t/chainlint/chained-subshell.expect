@@ -1,10 +1,10 @@
 2 mkdir sub && (
 3 	cd sub &&
-4 	foo the bar ?!AMP?!
+4 	foo the bar ?!LINT: missing '&&'?!
 5 	nuff said
 6 ) &&
 7 
 8 cut "-d " -f actual | (read s1 s2 s3 &&
-9 test -f $s1 ?!AMP?!
+9 test -f $s1 ?!LINT: missing '&&'?!
 10 test $(cat $s2) = tree2path1 &&
 11 test $(cat $s3) = tree3path1)

@@ -9,9 +9,9 @@
 # Input arguments are pathnames of shell scripts containing test definitions,
 # or globs referencing a collection of scripts. For each problem discovered,
 # the pathname of the script containing the test is printed along with the test
-# name and the test body with a `?!FOO?!` annotation at the location of each
-# detected problem, where "FOO" is a tag such as "AMP" which indicates a broken
-# &&-chain. Returns zero if no problems are discovered, otherwise non-zero.
+# name and the test body with a `?!LINT: ...?!` annotation at the location of
+# each detected problem, where "..." is an explanation of the problem. Returns
+# zero if no problems are discovered, otherwise non-zero.
 
 use warnings;
 use strict;
@@ -181,7 +181,7 @@ sub swallow_heredocs {
 			$self->{lineno} += () = $body =~ /\n/sg;
 			next;
 		}
-		push(@{$self->{parser}->{problems}}, ['UNCLOSED-HEREDOC', $tag]);
+		push(@{$self->{parser}->{problems}}, ['HEREDOC', $tag]);
 		$$b =~ /(?:\G|\n).*\z/gc; # consume rest of input
 		my $body = substr($$b, $start, pos($$b) - $start);
 		$self->{lineno} += () = $body =~ /\n/sg;
@@ -238,6 +238,7 @@ sub new {
 		stop => [],
 		output => [],
 		heredocs => {},
+		insubshell => 0,
 	} => $class;
 	$self->{lexer} = Lexer->new($self, $s);
 	return $self;
@@ -296,8 +297,11 @@ sub parse_group {
 
 sub parse_subshell {
 	my $self = shift @_;
-	return ($self->parse(qr/^\)$/),
-		$self->expect(')'));
+	$self->{insubshell}++;
+	my @tokens = ($self->parse(qr/^\)$/),
+		      $self->expect(')'));
+	$self->{insubshell}--;
+	return @tokens;
 }
 
 sub parse_case_pattern {
@@ -528,7 +532,7 @@ sub parse_loop_body {
 	return @tokens if ends_with(\@tokens, [qr/^\|\|$/, "\n", qr/^echo$/, qr/^.+$/]);
 	# flag missing "return/exit" handling explicit failure in loop body
 	my $n = find_non_nl(\@tokens);
-	push(@{$self->{problems}}, ['LOOP', $tokens[$n]]);
+	push(@{$self->{problems}}, [$self->{insubshell} ? 'LOOPEXIT' : 'LOOPRETURN', $tokens[$n]]);
 	return @tokens;
 }
 
@@ -587,6 +591,7 @@ sub new {
 	my $class = shift @_;
 	my $self = $class->SUPER::new(@_);
 	$self->{ntests} = 0;
+	$self->{nerrs} = 0;
 	return $self;
 }
 
@@ -619,6 +624,15 @@ sub unwrap {
 	return $s
 }
 
+sub format_problem {
+	local $_ = shift;
+	/^AMP$/ && return "missing '&&'";
+	/^LOOPRETURN$/ && return "missing '|| return 1'";
+	/^LOOPEXIT$/ && return "missing '|| exit 1'";
+	/^HEREDOC$/ && return 'unclosed heredoc';
+	die("unrecognized problem type '$_'\n");
+}
+
 sub check_test {
 	my $self = shift @_;
 	my $title = unwrap(shift @_);
@@ -634,22 +648,26 @@ sub check_test {
 	my $parser = TestParser->new(\$body);
 	my @tokens = $parser->parse();
 	my $problems = $parser->{problems};
+	$self->{nerrs} += @$problems;
 	return unless $emit_all || @$problems;
 	my $c = main::fd_colors(1);
+	my ($erropen, $errclose) = -t 1 ? ("$c->{rev}$c->{red}", $c->{reset}) : ('?!', '?!');
 	my $start = 0;
 	my $checked = '';
 	for (sort {$a->[1]->[2] <=> $b->[1]->[2]} @$problems) {
 		my ($label, $token) = @$_;
 		my $pos = $token->[2];
-		$checked .= substr($body, $start, $pos - $start) . " ?!$label?! ";
+		my $err = format_problem($label);
+		$checked .= substr($body, $start, $pos - $start);
+		$checked .= ' ' unless $checked =~ /\s$/;
+		$checked .= "${erropen}LINT: $err$errclose";
+		$checked .= ' ' unless $pos >= length($body) ||
+		    substr($body, $pos, 1) =~ /^\s/;
 		$start = $pos;
 	}
 	$checked .= substr($body, $start);
 	$checked =~ s/^/$lineno++ . ' '/mge;
 	$checked =~ s/^\d+ \n//;
-	$checked =~ s/(\s) \?!/$1?!/mg;
-	$checked =~ s/\?! (\s)/?!$1/mg;
-	$checked =~ s/(\?![^?]+\?!)/$c->{rev}$c->{red}$1$c->{reset}/mg;
 	$checked =~ s/^\d+/$c->{dim}$&$c->{reset}/mg;
 	$checked .= "\n" unless $checked =~ /\n$/;
 	push(@{$self->{output}}, "$c->{blue}# chainlint: $title$c->{reset}\n$checked");
@@ -791,9 +809,9 @@ sub check_script {
 			my $c = fd_colors(1);
 			my $s = join('', @{$parser->{output}});
 			$emit->("$c->{bold}$c->{blue}# chainlint: $path$c->{reset}\n" . $s);
-			$nerrs += () = $s =~ /\?![^?]+\?!/g;
 		}
 		$ntests += $parser->{ntests};
+		$nerrs += $parser->{nerrs};
 	}
 	return [$id, $nscripts, $ntests, $nerrs];
 }

@@ -1,19 +1,19 @@
 2 (
-3 	cat foo ; ?!AMP?! echo bar ?!AMP?!
-4 	cat foo ; ?!AMP?! echo bar
+3 	cat foo ; ?!LINT: missing '&&'?! echo bar ?!LINT: missing '&&'?!
+4 	cat foo ; ?!LINT: missing '&&'?! echo bar
 5 ) &&
 6 (
-7 	cat foo ; ?!AMP?! echo bar &&
-8 	cat foo ; ?!AMP?! echo bar
+7 	cat foo ; ?!LINT: missing '&&'?! echo bar &&
+8 	cat foo ; ?!LINT: missing '&&'?! echo bar
 9 ) &&
 10 (
 11 	echo "foo; bar" &&
-12 	cat foo; ?!AMP?! echo bar
+12 	cat foo; ?!LINT: missing '&&'?! echo bar
 13 ) &&
 14 (
 15 	foo;
 16 ) &&
 17 (cd foo &&
 18 	for i in a b c; do
-19 		echo; ?!LOOP?!
+19 		echo; ?!LINT: missing '|| exit 1'?!
 20 	done)

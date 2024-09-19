@@ -6,6 +6,6 @@
 7 		# minor numbers of cows (or do they?)
 8 		baz &&
 9 		snaff
-10 	) ?!AMP?!
+10 	) ?!LINT: missing '&&'?!
 11 	fuzzy
 12 )

@@ -1,5 +1,5 @@
 2 echo nobody home && {
-3 	test the doohicky ?!AMP?!
+3 	test the doohicky ?!LINT: missing '&&'?!
 4 	right now
 5 } &&
 6 

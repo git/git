@@ -1,2 +1,2 @@
-8 	echo "actual test commands" ?!AMP?!
+8 	echo "actual test commands" ?!LINT: missing '&&'?!
 9 	echo "that should be checked"

@@ -4,7 +4,7 @@
 5 chunks: oid_fanout oid_lookup commit_metadata generation_data bloom_indexes bloom_data
 6 EOF
 7 
-8 cat >expect << -EOF ?!AMP?!
+8 cat >expect << -EOF ?!LINT: missing '&&'?!
 9 this is not indented
 10 -EOF
 11 

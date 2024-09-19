@@ -1606,7 +1606,7 @@ if test "${GIT_TEST_CHAIN_LINT:-1}" != 0 &&
    test "${GIT_TEST_EXT_CHAIN_LINT:-1}" != 0
 then
 	"$PERL_PATH" "$TEST_DIRECTORY/chainlint.pl" "$0" ||
-		BUG "lint error (see '?!...!? annotations above)"
+		BUG "lint error (see 'LINT' annotations above)"
 fi
 
 # Last-minute variable setup

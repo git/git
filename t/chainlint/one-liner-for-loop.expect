@@ -3,7 +3,7 @@
 4 	cd dir-rename-and-content &&
 5 	test_write_lines 1 2 3 4 5 >foo &&
 6 	mkdir olddir &&
-7 	for i in a b c; do echo $i >olddir/$i; ?!LOOP?! done ?!AMP?!
+7 	for i in a b c; do echo $i >olddir/$i; ?!LINT: missing '|| exit 1'?! done ?!LINT: missing '&&'?!
 8 	git add foo olddir &&
 9 	git commit -m "original" &&
 10 )

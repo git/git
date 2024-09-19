@@ -3,7 +3,7 @@
 4 		line 2
 5 		line 3" &&
 6 	y="line 1
-7 		line2" ?!AMP?!
+7 		line2" ?!LINT: missing '&&'?!
 8 	foobar
 9 ) &&
 10 (
