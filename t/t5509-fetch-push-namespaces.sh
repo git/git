@@ -96,6 +96,7 @@ test_expect_success 'hide namespaced refs with transfer.hideRefs' '
 '
 
 test_expect_success 'check that transfer.hideRefs does not match unstripped refs' '
+	git -C pushee pack-refs --all &&
 	GIT_NAMESPACE=namespace \
 		git -C pushee -c transfer.hideRefs=refs/namespaces/namespace/refs/tags \
 		ls-remote "ext::git %s ." >actual &&
@@ -121,6 +122,14 @@ test_expect_success 'try to update a hidden ref' '
 test_expect_success 'try to update a ref that is not hidden' '
 	test_config -C pushee transfer.hideRefs refs/namespaces/namespace/refs/heads/main &&
 	git -C original push pushee-namespaced main
+'
+
+test_expect_success 'git-receive-pack(1) with transfer.hideRefs does not match unstripped refs during advertisement' '
+	git -C pushee update-ref refs/namespaces/namespace/refs/heads/foo/1 refs/namespaces/namespace/refs/heads/main &&
+	git -C pushee pack-refs --all &&
+	test_config -C pushee transfer.hideRefs refs/namespaces/namespace/refs/heads/foo &&
+	GIT_TRACE_PACKET="$(pwd)/trace" git -C original push pushee-namespaced main &&
+	test_grep refs/heads/foo/1 trace
 '
 
 test_expect_success 'try to update a hidden full ref' '

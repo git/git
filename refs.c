@@ -1517,6 +1517,19 @@ const char **hidden_refs_to_excludes(const struct strvec *hide_refs)
 	return hide_refs->v;
 }
 
+const char **get_namespaced_exclude_patterns(const char **exclude_patterns,
+					     const char *namespace,
+					     struct strvec *out)
+{
+	if (!namespace || !*namespace || !exclude_patterns || !*exclude_patterns)
+		return exclude_patterns;
+
+	for (size_t i = 0; exclude_patterns[i]; i++)
+		strvec_pushf(out, "%s%s", namespace, exclude_patterns[i]);
+
+	return out->v;
+}
+
 const char *find_descendant_ref(const char *dirname,
 				const struct string_list *extras,
 				const struct string_list *skip)
@@ -1634,11 +1647,19 @@ int refs_for_each_namespaced_ref(struct ref_store *refs,
 				 const char **exclude_patterns,
 				 each_ref_fn fn, void *cb_data)
 {
-	struct strbuf buf = STRBUF_INIT;
+	struct strvec namespaced_exclude_patterns = STRVEC_INIT;
+	struct strbuf prefix = STRBUF_INIT;
 	int ret;
-	strbuf_addf(&buf, "%srefs/", get_git_namespace());
-	ret = do_for_each_ref(refs, buf.buf, exclude_patterns, fn, 0, 0, cb_data);
-	strbuf_release(&buf);
+
+	exclude_patterns = get_namespaced_exclude_patterns(exclude_patterns,
+							   get_git_namespace(),
+							   &namespaced_exclude_patterns);
+
+	strbuf_addf(&prefix, "%srefs/", get_git_namespace());
+	ret = do_for_each_ref(refs, prefix.buf, exclude_patterns, fn, 0, 0, cb_data);
+
+	strvec_clear(&namespaced_exclude_patterns);
+	strbuf_release(&prefix);
 	return ret;
 }
 
@@ -1719,6 +1740,7 @@ int refs_for_each_fullref_in_prefixes(struct ref_store *ref_store,
 				      const char **exclude_patterns,
 				      each_ref_fn fn, void *cb_data)
 {
+	struct strvec namespaced_exclude_patterns = STRVEC_INIT;
 	struct string_list prefixes = STRING_LIST_INIT_DUP;
 	struct string_list_item *prefix;
 	struct strbuf buf = STRBUF_INIT;
@@ -1730,6 +1752,10 @@ int refs_for_each_fullref_in_prefixes(struct ref_store *ref_store,
 		strbuf_addstr(&buf, namespace);
 	namespace_len = buf.len;
 
+	exclude_patterns = get_namespaced_exclude_patterns(exclude_patterns,
+							   namespace,
+							   &namespaced_exclude_patterns);
+
 	for_each_string_list_item(prefix, &prefixes) {
 		strbuf_addstr(&buf, prefix->string);
 		ret = refs_for_each_fullref_in(ref_store, buf.buf,
@@ -1739,6 +1765,7 @@ int refs_for_each_fullref_in_prefixes(struct ref_store *ref_store,
 		strbuf_setlen(&buf, namespace_len);
 	}
 
+	strvec_clear(&namespaced_exclude_patterns);
 	string_list_clear(&prefixes, 0);
 	strbuf_release(&buf);
 	return ret;
