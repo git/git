@@ -140,6 +140,11 @@ Performance, Internal Implementation, Development Support etc.
    upload failed test directory uses GitHub actions that is deprecated
    and is now disabled.
 
+ * Import clar unit tests framework libgit2 folks invented for our
+   use.
+
+ * The error messages from the test script checker have been improved.
+
 
 Fixes since v2.46
 -----------------
