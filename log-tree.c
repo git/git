@@ -248,6 +248,27 @@ void load_ref_decorations(struct decoration_filter *filter, int flags)
 	}
 }
 
+void load_branch_decorations(void)
+{
+	if (!decoration_loaded) {
+		struct string_list decorate_refs_exclude = STRING_LIST_INIT_NODUP;
+		struct string_list decorate_refs_exclude_config = STRING_LIST_INIT_NODUP;
+		struct string_list decorate_refs_include = STRING_LIST_INIT_NODUP;
+		struct decoration_filter decoration_filter = {
+			.include_ref_pattern = &decorate_refs_include,
+			.exclude_ref_pattern = &decorate_refs_exclude,
+			.exclude_ref_config_pattern = &decorate_refs_exclude_config,
+		};
+
+		string_list_append(&decorate_refs_include, "refs/heads/");
+		load_ref_decorations(&decoration_filter, 0);
+
+		string_list_clear(&decorate_refs_exclude, 0);
+		string_list_clear(&decorate_refs_exclude_config, 0);
+		string_list_clear(&decorate_refs_include, 0);
+	}
+}
+
 static void show_parents(struct commit *commit, int abbrev, FILE *file)
 {
 	struct commit_list *p;
