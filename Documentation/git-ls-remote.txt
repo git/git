@@ -81,6 +81,9 @@ OPTIONS
 	character.
 	When multiple `--server-option=<option>` are given, they are all
 	sent to the other side in the order listed on the command line.
+	When no `--server-option=<option>` is given from the command line,
+	the values of configuration variable `remote.<name>.serverOption`
+	are used instead.
 
 <repository>::
 	The "remote" repository to query.  This parameter can be

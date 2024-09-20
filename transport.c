@@ -334,6 +334,9 @@ static struct ref *handshake(struct transport *transport, int for_push,
 	data->version = discover_version(&reader);
 	switch (data->version) {
 	case protocol_v2:
+		if ((!transport->server_options || !transport->server_options->nr) &&
+		    transport->remote->server_options.nr)
+			transport->server_options = &transport->remote->server_options;
 		if (server_feature_v2("session-id", &server_sid))
 			trace2_data_string("transfer", NULL, "server-sid", server_sid);
 		if (must_list_refs)
