@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2024, #07; Wed, 18)
-X-master-at: 6531f31ef3bead57a3255fa08efa6e7553c5a9a7
-X-next-at: cf0dbffa2232233e2e6152dc28148e12ec9aa900
+Subject: What's cooking in git.git (Sep 2024, #08; Fri, 20)
+X-master-at: 94b60adee30619a05296cf5ed6addb0e6d4e25dc
+X-next-at: 96924663e5beccee39a6b05a056c6eb90f5c7fd4
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2024, #07; Wed, 18)
+What's cooking in git.git (Sep 2024, #08; Fri, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,82 +48,224 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* jc/cmake-unit-test-updates (2024-09-18) 4 commits
- - cmake: generalize the handling of the `UNIT_TEST_OBJS` list
- - cmake: stop looking for `REFTABLE_TEST_OBJS` in the Makefile
- - cmake: rename clar-related variables to avoid confusion
- - Merge branch 'ps/reftable-exclude' into jc/cmake-unit-test-updates
- (this branch uses ps/reftable-exclude.)
+* ak/refs-symref-referent-typofix (2024-09-19) 1 commit
+  (merged to 'next' on 2024-09-19 at 1b00b05df1)
+ + ref-filter: fix a typo
 
- CMake adjustments for recent changes around unit tests.
+ Typofix.
+
+ Will merge to 'master'.
+ source: <9697dc1c81db33dca7e4a3c093ee83cdc0efea1e.1726770881.git.gitgitgadget@gmail.com>
+
+
+* ak/typofix-2.46-maint (2024-09-19) 19 commits
+  (merged to 'next' on 2024-09-19 at 07777d1f11)
+ + upload-pack: fix a typo
+ + sideband: fix a typo
+ + setup: fix a typo
+ + run-command: fix a typo
+ + revision: fix a typo
+ + refs: fix typos
+ + rebase: fix a typo
+ + read-cache-ll: fix a typo
+ + pretty: fix a typo
+ + object-file: fix a typo
+ + merge-ort: fix typos
+ + merge-ll: fix a typo
+ + http: fix a typo
+ + gpg-interface: fix a typo
+ + git-p4: fix typos
+ + git-instaweb: fix a typo
+ + fsmonitor-settings: fix a typo
+ + diffcore-rename: fix typos
+ + config.mak.dev: fix a typo
+
+ Typofix.
+
+ Will merge to 'master'.
+ source: <pull.1794.git.1726770880.gitgitgadget@gmail.com>
+
+
+* cb/ci-freebsd-13-4 (2024-09-20) 1 commit
+ - ci: update FreeBSD image to 13.4
+
+ CI updates.
 
  Will merge to 'next'.
- source: <pull.1797.git.1726687769585.gitgitgadget@gmail.com>
+ source: <20240920201409.8723-1-carenas@gmail.com>
+
+
+* cw/fix-reachable-in-repo-with-promisor (2024-09-19) 2 commits
+ - fetch-pack.c: do not declare local commits as "have" in partial repos
+ - packfile: split promisor objects oidset into two
+
+ "git gc" in a partial clone (i.e. lacking objects that can be
+ lazily fetched from promisor remotes) collected more than objects
+ that promisor-remote can give.
+
+ Needs review.
+ source: <20240802073143.56731-1-hanyang.tony@bytedance.com>
+
+
+* ds/background-maintenance-with-credential (2024-09-20) 3 commits
+ - scalar: configure maintenance during 'reconfigure'
+ - maintenance: add custom config to background jobs
+ - credential: add new interactive config option
+
+ source: <pull.1798.git.1726790423.gitgitgadget@gmail.com>
+
+
+* jc/breaking-changes-early-adopter-option (2024-09-19) 1 commit
+ - BreakingChanges: early adopter option
+
+ Describe the policy to introduce breaking changes.
+
+ Comments?
+ source: <xmqq7cb77810.fsf@gitster.g>
+
+
+* ps/ci-gitlab-upgrade (2024-09-19) 1 commit
+  (merged to 'next' on 2024-09-19 at 907c53944e)
+ + gitlab-ci: upgrade machine type of Linux runners
+
+ CI updates.
+
+ Will merge to 'master'.
+ source: <0dfcb4a7b38ca66ec50775928ecfb31c4bc2008b.1726642142.git.ps@pks.im>
+
+
+* ps/reftable-concurrent-writes (2024-09-19) 3 commits
+ - refs/reftable: reload locked stack when preparing transaction
+ - reftable/stack: allow locking of outdated stacks
+ - refs/reftable: introduce "reftable.lockTimeout"
+
+ Give timeout to the locking code to write to reftable.
+
+ Will merge to 'next'?
+ source: <cover.1726653185.git.ps@pks.im>
+
+
+* pw/submodule-process-sigpipe (2024-09-20) 1 commit
+ - submodule status: propagate SIGPIPE
+
+ When a subprocess to work in a submodule spawned by "git submodule"
+ fails with SIGPIPE, the parent Git process caught the death of it,
+ but gave a generic "failed to work in that submodule", which was
+ misleading.  We now behave as if the parent got SIGPIPE and die.
+
+ Will merge to 'next'?
+ source: <pull.1799.git.1726837642511.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Graduated to 'master']
 
-* es/chainlint-message-updates (2024-09-10) 3 commits
-  (merged to 'next' on 2024-09-11 at a3fd02a009)
- + chainlint: reduce annotation noise-factor
- + chainlint: make error messages self-explanatory
- + chainlint: don't be fooled by "?!...?!" in test body
+* bb/unicode-width-table-16 (2024-09-12) 1 commit
+  (merged to 'next' on 2024-09-13 at 87dc391469)
+ + unicode: update the width tables to Unicode 16
 
- The error messages from the test script checker have been improved.
- source: <20240910041013.68948-1-ericsunshine@charter.net>
-
-
-* jc/ci-upload-artifact-and-linux32 (2024-09-09) 1 commit
-  (merged to 'next' on 2024-09-11 at 62991bef5b)
- + ci: remove 'Upload failed tests' directories' step from linux32 jobs
- (this branch is used by jk/ci-linux32-update.)
-
- CI started failing completely for linux32 jobs, as the step to
- upload failed test directory uses GitHub actions that is deprecated
- and is now disabled.  Remove the step so at least we will know if
- the tests are passing.
- source: <xmqqy140o2kb.fsf@gitster.g>
+ Update the character width table for Unicode 16.
+ 
+ source: <20240912204047.1020213-1-dev+git@drbeat.li>
 
 
-* jk/ci-linux32-update (2024-09-13) 5 commits
-  (merged to 'next' on 2024-09-13 at e937339388)
- + ci: add Ubuntu 16.04 job to GitLab CI
- + ci: use regular action versions for linux32 job
- + ci: use more recent linux32 image
- + ci: unify ubuntu and ubuntu32 dependencies
- + ci: drop run-docker scripts
- (this branch uses jc/ci-upload-artifact-and-linux32.)
+* jk/git-pm-bare-repo-fix (2024-09-13) 2 commits
+  (merged to 'next' on 2024-09-13 at 7f9bb8501c)
+ + Git.pm: use "rev-parse --absolute-git-dir" rather than perl code
+ + Git.pm: fix bare repository search with Directory option
 
- CI updates
- source: <20240912094238.GA589050@coredump.intra.peff.net>
+ In Git 2.39, Git.pm stopped working in a bare repository, which has
+ been corrected.
+ 
+ source: <20240912223413.GA649897@coredump.intra.peff.net>
 
 
-* ps/clar-unit-test (2024-09-10) 15 commits
-  (merged to 'next' on 2024-09-11 at ccc0289490)
- + Makefile: rename clar-related variables to avoid confusion
-  (merged to 'next' on 2024-09-05 at 87fb0a399a)
- + clar: add CMake support
- + t/unit-tests: convert ctype tests to use clar
- + t/unit-tests: convert strvec tests to use clar
- + t/unit-tests: implement test driver
- + Makefile: wire up the clar unit testing framework
- + Makefile: do not use sparse on third-party sources
- + Makefile: make hdr-check depend on generated headers
- + Makefile: fix sparse dependency on GENERATED_H
- + clar: stop including `shellapi.h` unnecessarily
- + clar(win32): avoid compile error due to unused `fs_copy()`
- + clar: avoid compile error with mingw-w64
- + t/clar: fix compatibility with NonStop
- + t: import the clar unit testing framework
- + t: do not pass GIT_TEST_OPTS to unit tests with prove
+* jk/interop-test-build-options (2024-09-12) 1 commit
+  (merged to 'next' on 2024-09-13 at 0ab66e77a1)
+ + t/interop: allow per-version make options
 
- Import clar unit tests framework libgit2 folks invented for our
- use.
- cf. <d5b1c95b-cbdc-4711-849e-c2cfc67787ee@gmail.com>
- source: <cover.1725459142.git.ps@pks.im>
+ The support to customize build options to adjust for older versions
+ and/or older systems for the interop tests has been improved.
+ 
+ source: <20240911061009.GA1538383@coredump.intra.peff.net>
+
+
+* jk/no-openssl-with-openssl-sha1 (2024-09-12) 1 commit
+  (merged to 'next' on 2024-09-13 at 07f5e4856d)
+ + imap-send: handle NO_OPENSSL even when openssl exists
+
+ The "imap-send" now allows to be compiled with NO_OPENSSL and
+ OPENSSL_SHA1 defined together.
+ 
+ source: <20240911061257.GA1538490@coredump.intra.peff.net>
+
+
+* ma/test-libcurl-prereq (2024-09-11) 2 commits
+  (merged to 'next' on 2024-09-13 at 6d4ad6b054)
+ + t0211: add missing LIBCURL prereq
+ + t1517: add missing LIBCURL prereq
+
+ Test portability fix.
+ 
+ source: <cover.1726049108.git.martin.agren@gmail.com>
+
+
+* ps/leakfixes-part-6 (2024-09-05) 22 commits
+  (merged to 'next' on 2024-09-13 at 9be3125b10)
+ + builtin/repack: fix leaking keep-pack list
+ + merge-ort: fix two leaks when handling directory rename modifications
+ + match-trees: fix leaking prefixes in `shift_tree()`
+ + builtin/fmt-merge-msg: fix leaking buffers
+ + builtin/grep: fix leaking object context
+ + builtin/pack-objects: plug leaking list of keep-packs
+ + builtin/repack: fix leaking line buffer when packing promisors
+ + negotiator/skipping: fix leaking commit entries
+ + shallow: fix leaking members of `struct shallow_info`
+ + shallow: free grafts when unregistering them
+ + object: clear grafts when clearing parsed object pool
+ + gpg-interface: fix misdesigned signing key interfaces
+ + send-pack: fix leaking push cert nonce
+ + remote: fix leak in reachability check of a remote-tracking ref
+ + remote: fix leaking tracking refs
+ + builtin/submodule--helper: fix leaking refs on push-check
+ + submodule: fix leaking fetch task data
+ + upload-pack: fix leaking child process data on reachability checks
+ + builtin/push: fix leaking refspec query result
+ + send-pack: fix leaking common object IDs
+ + fetch-pack: fix memory leaks on fetch negotiation
+ + t/test-lib: allow skipping leak checks for passing tests
+ (this branch is used by ps/leakfixes-part-7.)
+
+ More leakfixes.
+ 
+ source: <cover.1725530720.git.ps@pks.im>
+
+
+* pw/rebase-autostash-fix (2024-09-03) 1 commit
+  (merged to 'next' on 2024-09-13 at 6b41d66efd)
+ + rebase: apply and cleanup autostash when rebase fails to start
+
+ "git rebase --autostash" failed to resurrect the autostashed
+ changes when the command gets aborted after giving back control
+ asking for hlep in conflict resolution.
+ 
+ source: <pull.1772.v2.git.1725289979450.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Cooking]
+
+* jc/cmake-unit-test-updates (2024-09-18) 4 commits
+  (merged to 'next' on 2024-09-19 at d892dcdcdd)
+ + cmake: generalize the handling of the `UNIT_TEST_OBJS` list
+ + cmake: stop looking for `REFTABLE_TEST_OBJS` in the Makefile
+ + cmake: rename clar-related variables to avoid confusion
+ + Merge branch 'ps/reftable-exclude' into jc/cmake-unit-test-updates
+ (this branch uses ps/reftable-exclude.)
+
+ CMake adjustments for recent changes around unit tests.
+
+ Will merge to 'master'.
+ source: <pull.1797.git.1726687769585.gitgitgadget@gmail.com>
+
 
 * jk/diag-unexpected-remote-helper-death (2024-09-14) 1 commit
   (merged to 'next' on 2024-09-16 at f2aa29beac)
@@ -212,11 +354,10 @@ Release tarballs are available at:
  - builtin/help: fix leaking `html_path` when reading config multiple times
  - builtin/help: fix dangling reference to `html_path`
  - Merge branch 'ps/leakfixes-part-6' into ps/leakfixes-part-7
- (this branch uses ps/leakfixes-part-6.)
 
  More leak-fixes.
 
- Needs review.
+ Will merge to 'next'?
  source: <cover.1726484308.git.ps@pks.im>
 
 
@@ -255,16 +396,6 @@ Release tarballs are available at:
  source: <cover.1726489647.git.ps@pks.im>
 
 
-* bb/unicode-width-table-16 (2024-09-12) 1 commit
-  (merged to 'next' on 2024-09-13 at 87dc391469)
- + unicode: update the width tables to Unicode 16
-
- Update the character width table for Unicode 16.
-
- Will merge to 'master'.
- source: <20240912204047.1020213-1-dev+git@drbeat.li>
-
-
 * jc/strbuf-commented-something (2024-09-12) 2 commits
  - strbuf: retire strbuf_commented_lines()
  - strbuf: retire strbuf_commented_addf()
@@ -277,18 +408,6 @@ Release tarballs are available at:
  source: <20240912205301.1809355-1-gitster@pobox.com>
 
 
-* jk/git-pm-bare-repo-fix (2024-09-13) 2 commits
-  (merged to 'next' on 2024-09-13 at 7f9bb8501c)
- + Git.pm: use "rev-parse --absolute-git-dir" rather than perl code
- + Git.pm: fix bare repository search with Directory option
-
- In Git 2.39, Git.pm stopped working in a bare repository, which has
- been corrected.
-
- Will merge to 'master'.
- source: <20240912223413.GA649897@coredump.intra.peff.net>
-
-
 * jc/t5512-sigpipe-fix (2024-09-13) 1 commit
   (merged to 'next' on 2024-09-16 at 96075b5dd1)
  + t5512.40 sometimes dies by SIGPIPE
@@ -297,39 +416,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <xmqqmskbwe1a.fsf@gitster.g>
-
-
-* jk/interop-test-build-options (2024-09-12) 1 commit
-  (merged to 'next' on 2024-09-13 at 0ab66e77a1)
- + t/interop: allow per-version make options
-
- The support to customize build options to adjust for older versions
- and/or older systems for the interop tests has been improved.
-
- Will merge to 'master'.
- source: <20240911061009.GA1538383@coredump.intra.peff.net>
-
-
-* jk/no-openssl-with-openssl-sha1 (2024-09-12) 1 commit
-  (merged to 'next' on 2024-09-13 at 07f5e4856d)
- + imap-send: handle NO_OPENSSL even when openssl exists
-
- The "imap-send" now allows to be compiled with NO_OPENSSL and
- OPENSSL_SHA1 defined together.
-
- Will merge to 'master'.
- source: <20240911061257.GA1538490@coredump.intra.peff.net>
-
-
-* ma/test-libcurl-prereq (2024-09-11) 2 commits
-  (merged to 'next' on 2024-09-13 at 6d4ad6b054)
- + t0211: add missing LIBCURL prereq
- + t1517: add missing LIBCURL prereq
-
- Test portability fix.
-
- Will merge to 'master'.
- source: <cover.1726049108.git.martin.agren@gmail.com>
 
 
 * cc/promisor-remote-capability (2024-09-10) 4 commits
@@ -347,10 +433,12 @@ Release tarballs are available at:
  source: <20240910163000.1985723-1-christian.couder@gmail.com>
 
 
-* ds/pack-name-hash-tweak (2024-09-09) 4 commits
+* ds/pack-name-hash-tweak (2024-09-19) 6 commits
+ - test-tool: add helper for name-hash values
  - p5313: add size comparison test
- - p5314: add a size test for name-hash collisions
  - git-repack: update usage to match docs
+ - pack-objects: add GIT_TEST_FULL_NAME_HASH
+ - repack: test --full-name-hash option
  - pack-objects: add --full-name-hash option
 
  In a repository with too many (more than --window size) similarly
@@ -360,8 +448,8 @@ Release tarballs are available at:
  that only blobs at the same path and nothing else are used as
  delta-base candidate.
 
- Needs review.
- source: <pull.1785.git.1725890210.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1785.v2.git.1726692381.gitgitgadget@gmail.com>
 
 
 * ps/reftable-exclude (2024-09-16) 7 commits
@@ -380,18 +468,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <cover.1726476401.git.ps@pks.im>
-
-
-* pw/rebase-autostash-fix (2024-09-03) 1 commit
-  (merged to 'next' on 2024-09-13 at 6b41d66efd)
- + rebase: apply and cleanup autostash when rebase fails to start
-
- "git rebase --autostash" failed to resurrect the autostashed
- changes when the command gets aborted after giving back control
- asking for hlep in conflict resolution.
-
- Will merge to 'master'.
- source: <pull.1772.v2.git.1725289979450.gitgitgadget@gmail.com>
 
 
 * jc/pass-repo-to-builtins (2024-09-13) 4 commits
@@ -465,38 +541,6 @@ Release tarballs are available at:
 
  Expecting a reroll.
  source: <20240824172028.39419-1-shyamthakkar001@gmail.com>
-
-
-* ps/leakfixes-part-6 (2024-09-05) 22 commits
-  (merged to 'next' on 2024-09-13 at 9be3125b10)
- + builtin/repack: fix leaking keep-pack list
- + merge-ort: fix two leaks when handling directory rename modifications
- + match-trees: fix leaking prefixes in `shift_tree()`
- + builtin/fmt-merge-msg: fix leaking buffers
- + builtin/grep: fix leaking object context
- + builtin/pack-objects: plug leaking list of keep-packs
- + builtin/repack: fix leaking line buffer when packing promisors
- + negotiator/skipping: fix leaking commit entries
- + shallow: fix leaking members of `struct shallow_info`
- + shallow: free grafts when unregistering them
- + object: clear grafts when clearing parsed object pool
- + gpg-interface: fix misdesigned signing key interfaces
- + send-pack: fix leaking push cert nonce
- + remote: fix leak in reachability check of a remote-tracking ref
- + remote: fix leaking tracking refs
- + builtin/submodule--helper: fix leaking refs on push-check
- + submodule: fix leaking fetch task data
- + upload-pack: fix leaking child process data on reachability checks
- + builtin/push: fix leaking refspec query result
- + send-pack: fix leaking common object IDs
- + fetch-pack: fix memory leaks on fetch negotiation
- + t/test-lib: allow skipping leak checks for passing tests
- (this branch is used by ps/leakfixes-part-7.)
-
- More leakfixes.
-
- Will merge to 'master'.
- source: <cover.1725530720.git.ps@pks.im>
 
 
 * sj/ref-contents-check (2024-09-18) 5 commits
