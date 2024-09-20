@@ -386,6 +386,9 @@ GIT_TEST_PASSING_SANITIZE_LEAK=check when combined with "--immediate"
 will run to completion faster, and result in the same failing
 tests.
 
+GIT_TEST_PASSING_SANITIZE_LEAK=check-failing behaves the same as "check",
+but skips all tests which are already marked as leak-free.
+
 GIT_TEST_PROTOCOL_VERSION=<n>, when set, makes 'protocol.version'
 default to n.
 

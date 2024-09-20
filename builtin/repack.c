@@ -425,9 +425,11 @@ static void repack_promisor_objects(const struct pack_objects_args *args,
 
 		free(promisor_name);
 	}
+
 	fclose(out);
 	if (finish_command(&cmd))
 		die(_("could not finish pack-objects to repack promisor objects"));
+	strbuf_release(&line);
 }
 
 struct pack_geometry {
@@ -1541,6 +1543,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	}
 
 cleanup:
+	string_list_clear(&keep_pack_list, 0);
 	string_list_clear(&names, 1);
 	existing_packs_release(&existing);
 	free_pack_geometry(&geometry);

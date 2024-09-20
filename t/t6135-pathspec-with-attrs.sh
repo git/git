@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='test labels in pathspecs'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup a tree' '

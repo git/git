@@ -294,18 +294,22 @@ void shift_tree(struct repository *r,
 		unsigned short mode;
 
 		if (!*del_prefix)
-			return;
+			goto out;
 
 		if (get_tree_entry(r, hash2, del_prefix, shifted, &mode))
 			die("cannot find path %s in tree %s",
 			    del_prefix, oid_to_hex(hash2));
-		return;
+		goto out;
 	}
 
 	if (!*add_prefix)
-		return;
+		goto out;
 
 	splice_tree(hash1, add_prefix, hash2, shifted);
+
+out:
+	free(add_prefix);
+	free(del_prefix);
 }
 
 /*

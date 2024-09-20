@@ -160,7 +160,7 @@ static int do_sign(struct strbuf *buffer, struct object_id **compat_oid,
 	const struct git_hash_algo *compat = the_repository->compat_hash_algo;
 	struct strbuf sig = STRBUF_INIT, compat_sig = STRBUF_INIT;
 	struct strbuf compat_buf = STRBUF_INIT;
-	const char *keyid = get_signing_key();
+	char *keyid = get_signing_key();
 	int ret = -1;
 
 	if (sign_buffer(buffer, &sig, keyid))
@@ -190,6 +190,7 @@ out:
 	strbuf_release(&sig);
 	strbuf_release(&compat_sig);
 	strbuf_release(&compat_buf);
+	free(keyid);
 	return ret;
 }
 

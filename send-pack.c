@@ -353,7 +353,8 @@ static int generate_push_cert(struct strbuf *req_buf,
 {
 	const struct ref *ref;
 	struct string_list_item *item;
-	char *signing_key_id = xstrdup(get_signing_key_id());
+	char *signing_key_id = get_signing_key_id();
+	char *signing_key = get_signing_key();
 	const char *cp, *np;
 	struct strbuf cert = STRBUF_INIT;
 	int update_seen = 0;
@@ -386,7 +387,7 @@ static int generate_push_cert(struct strbuf *req_buf,
 	if (!update_seen)
 		goto free_return;
 
-	if (sign_buffer(&cert, &cert, get_signing_key()))
+	if (sign_buffer(&cert, &cert, signing_key))
 		die(_("failed to sign the push certificate"));
 
 	packet_buf_write(req_buf, "push-cert%c%s", 0, cap_string);
@@ -399,6 +400,7 @@ static int generate_push_cert(struct strbuf *req_buf,
 
 free_return:
 	free(signing_key_id);
+	free(signing_key);
 	strbuf_release(&cert);
 	return update_seen;
 }
@@ -506,14 +508,15 @@ int send_pack(struct send_pack_args *args,
 	unsigned cmds_sent = 0;
 	int ret;
 	struct async demux;
-	const char *push_cert_nonce = NULL;
+	char *push_cert_nonce = NULL;
 	struct packet_reader reader;
 	int use_bitmaps;
 
 	if (!remote_refs) {
 		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
 			"Perhaps you should specify a branch.\n");
-		return 0;
+		ret = 0;
+		goto out;
 	}
 
 	git_config_get_bool("push.negotiate", &push_negotiate);
@@ -557,10 +560,11 @@ int send_pack(struct send_pack_args *args,
 
 	if (args->push_cert != SEND_PACK_PUSH_CERT_NEVER) {
 		size_t len;
-		push_cert_nonce = server_feature_value("push-cert", &len);
-		if (push_cert_nonce) {
-			reject_invalid_nonce(push_cert_nonce, len);
-			push_cert_nonce = xmemdupz(push_cert_nonce, len);
+		const char *nonce = server_feature_value("push-cert", &len);
+
+		if (nonce) {
+			reject_invalid_nonce(nonce, len);
+			push_cert_nonce = xmemdupz(nonce, len);
 		} else if (args->push_cert == SEND_PACK_PUSH_CERT_ALWAYS) {
 			die(_("the receiving end does not support --signed push"));
 		} else if (args->push_cert == SEND_PACK_PUSH_CERT_IF_ASKED) {
@@ -623,12 +627,11 @@ int send_pack(struct send_pack_args *args,
 			 * atomically, abort the whole operation.
 			 */
 			if (use_atomic) {
-				strbuf_release(&req_buf);
-				strbuf_release(&cap_buf);
 				reject_atomic_push(remote_refs, args->send_mirror);
 				error("atomic push failed for ref %s. status: %d",
 				      ref->name, ref->status);
-				return args->porcelain ? 0 : -1;
+				ret = args->porcelain ? 0 : -1;
+				goto out;
 			}
 			/* else fallthrough */
 		default:
@@ -692,8 +695,6 @@ int send_pack(struct send_pack_args *args,
 		write_or_die(out, req_buf.buf, req_buf.len);
 		packet_flush(out);
 	}
-	strbuf_release(&req_buf);
-	strbuf_release(&cap_buf);
 
 	if (use_sideband && cmds_sent) {
 		memset(&demux, 0, sizeof(demux));
@@ -731,7 +732,9 @@ int send_pack(struct send_pack_args *args,
 				finish_async(&demux);
 			}
 			fd[1] = -1;
-			return -1;
+
+			ret = -1;
+			goto out;
 		}
 		if (!args->stateless_rpc)
 			/* Closed by pack_objects() via start_command() */
@@ -756,10 +759,12 @@ int send_pack(struct send_pack_args *args,
 	}
 
 	if (ret < 0)
-		return ret;
+		goto out;
 
-	if (args->porcelain)
-		return 0;
+	if (args->porcelain) {
+		ret = 0;
+		goto out;
+	}
 
 	for (ref = remote_refs; ref; ref = ref->next) {
 		switch (ref->status) {
@@ -768,8 +773,17 @@ int send_pack(struct send_pack_args *args,
 		case REF_STATUS_OK:
 			break;
 		default:
-			return -1;
+			ret = -1;
+			goto out;
 		}
 	}
-	return 0;
+
+	ret = 0;
+
+out:
+	oid_array_clear(&commons);
+	strbuf_release(&req_buf);
+	strbuf_release(&cap_buf);
+	free(push_cert_nonce);
+	return ret;
 }

@@ -110,6 +110,8 @@ static inline int repo_parse_commit_no_graph(struct repository *r,
 
 void parse_commit_or_die(struct commit *item);
 
+void unparse_commit(struct repository *r, const struct object_id *oid);
+
 struct buffer_slab;
 struct buffer_slab *allocate_commit_buffer_slab(void);
 void free_commit_buffer_slab(struct buffer_slab *bs);
@@ -242,7 +244,6 @@ int commit_graft_pos(struct repository *r, const struct object_id *oid);
 int register_commit_graft(struct repository *r, struct commit_graft *, int);
 void prepare_commit_graft(struct repository *r);
 struct commit_graft *lookup_commit_graft(struct repository *r, const struct object_id *oid);
-void reset_commit_grafts(struct repository *r);
 
 struct commit *get_fork_point(const char *refname, struct commit *commit);
 

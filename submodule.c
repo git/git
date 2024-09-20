@@ -1883,6 +1883,8 @@ int fetch_submodules(struct repository *r,
 out:
 	free_submodules_data(&spf.changed_submodule_names);
 	string_list_clear(&spf.seen_submodule_names, 0);
+	strbuf_release(&spf.submodules_with_errors);
+	free(spf.oid_fetch_tasks);
 	return spf.result;
 }
 
