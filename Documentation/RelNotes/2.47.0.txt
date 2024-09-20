@@ -240,17 +240,33 @@ Fixes since v2.46
  * In a few corner cases "git diff --exit-code" failed to report
    "changes" (e.g., renamed without any content change), which has
    been corrected.
-   (merge 11591850dd rs/diff-exit-code-fix later to maint).
 
  * Cygwin does have /dev/tty support that is needed by things like
    single-key input mode.
-   (merge 39ba986b0e rj/cygwin-has-dev-tty later to maint).
 
  * The interpret-trailers command failed to recognise the end of the
    message when the commit log ends in an incomplete line.
-   (merge c02414a997 bl/trailers-and-incomplete-last-line-fix later to maint).
+
+ * "git rebase --autostash" failed to resurrect the autostashed
+   changes when the command gets aborted after giving back control
+   asking for hlep in conflict resolution.
+   (merge bf6ab087d1 pw/rebase-autostash-fix later to maint).
+
+ * The "imap-send" now allows to be compiled with NO_OPENSSL and
+   OPENSSL_SHA1 defined together.
+   (merge 997950a750 jk/no-openssl-with-openssl-sha1 later to maint).
+
+ * The support to customize build options to adjust for older versions
+   and/or older systems for the interop tests has been improved.
+   (merge 22ef5f02a8 jk/interop-test-build-options later to maint).
+
+ * Update the character width table for Unicode 16.
+   (merge 44dc651132 bb/unicode-width-table-16 later to maint).
+
+ * In Git 2.39, Git.pm stopped working in a bare repository, which has
+   been corrected.
+   (merge d3edb0bdde jk/git-pm-bare-repo-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge be10ac7037 jc/mailinfo-header-cleanup later to maint).
-   (merge 9a36ea37ae jc/doc-skip-fetch-all-and-prefetch later to maint).
    (merge 4460e052e0 jc/range-diff-lazy-setup later to maint).
