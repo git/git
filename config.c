@@ -2731,6 +2731,16 @@ int repo_config_get_expiry_in_days(struct repository *r, const char *key,
 	return -1; /* thing exists but cannot be parsed */
 }
 
+int repo_config_get_worktree_use_relative_paths(struct repository *r)
+{
+	int val;
+
+	if (!repo_config_get_maybe_bool(r, "worktree.userelativepaths", &val))
+		return val;
+
+	return 0; /* by default, absolute paths are used */
+}
+
 int repo_config_get_split_index(struct repository *r)
 {
 	int val;

@@ -679,6 +679,21 @@ int repo_config_get_expiry_in_days(struct repository *r, const char *key,
 				   timestamp_t *, timestamp_t now);
 
 /**
+ * Retrieves the configuration that determines if worktrees should use relative paths.
+ *
+ * This function checks the "worktree.userelativepaths" configuration.
+ * If the configuration was found and is a valid boolean value, the function returns that value.
+ * If the configuration was not found or invalid, the function returns 0,
+ * indicating that by default, absolute paths are used for worktrees.
+ *
+ * Return:
+ * - 1: If "worktree.userelativepaths" is set to true (use relative paths).
+ * - 0: If "worktree.userelativepaths" is set to false or is not set
+ *      (use absolute paths by default).
+ */
+int repo_config_get_worktree_use_relative_paths(struct repository *r);
+
+/**
  * First prints the error message specified by the caller in `err` and then
  * dies printing the line number and the file name of the highest priority
  * value for the configuration variable `key`.

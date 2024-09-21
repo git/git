@@ -597,6 +597,75 @@ void write_untracked_extension(struct strbuf *out, struct untracked_cache *untra
 void add_untracked_cache(struct index_state *istate);
 void remove_untracked_cache(struct index_state *istate);
 
+/**
+ * connect_work_tree_and_git_dir - Create a .git file in the worktree that
+ *                                 points to the main repository.
+ *
+ * @work_tree_: The path to the worktree that needs to be connected. This can
+ *              be either an absolute or relative path.
+ * @git_dir_: The path to the main repository's git directory (.git). This can
+ *            be either an absolute or relative path.
+ * @use_relative_paths_: Flag indicating whether to use relative paths when
+ *                       creating the connection. If non-zero, a relative path
+ *                       between the git directory and the worktree is used.
+ *                       Otherwise, absolute paths are used.
+ *
+ * This function creates a `.git` file in the specified worktree directory,
+ * which contains either a relative or absolute path pointing back to the main
+ * repository's .git directory. This connection allows the worktree to function
+ * as an independent working directory while still being linked to the main
+ * repository.
+ *
+ * If `use_relative_paths_` is set to non-zero, the function writes a relative
+ * path from the worktree to the git directory in the `.git` file. If the
+ * worktree path is provided as a relative path, it is first converted to an
+ * absolute path before determining the relative path.
+ *
+ * If `use_relative_paths_` is zero, the function writes an absolute path to
+ * the git directory in the `.git` file.
+ *
+ * In case of any errors during directory creation or file writing, the
+ * function terminates execution with an error message.
+ */
+void connect_work_tree_and_git_dir(const char *work_tree_,
+				   const char *git_dir_,
+				   int use_relative_paths_);
+
+/**
+ * connect_gitdir_file_and_work_tree - Connect a gitdir file to a worktree.
+ *
+ * @wt_dir_: The path to the worktree directory. This can be either an
+ *           absolute or relative path.
+ * @wt_name_: The name of the worktree as it appears in the git repository's
+ *            worktrees directory.
+ * @use_relative_paths_: Flag indicating whether to use relative paths when
+ *                       creating the connection. If non-zero, a relative path
+ *                       between the git directory and the worktree is used.
+ *                       Otherwise, absolute paths are used.
+ *
+ * This function creates a gitdir file in the git repository's worktrees
+ * directory, which contains a path to the worktree directory. The path
+ * can be relative or absolute based on the value of `use_relative_paths_`.
+ *
+ * The gitdir file is created under the worktrees directory with a name that
+ * matches the `wt_name_` parameter. The file contains a reference to the
+ * worktree's `.git` file.
+ *
+ * If `use_relative_paths_` is set to non-zero, the function writes a relative
+ * path from the repository root to the worktree in the gitdir file. If the
+ * worktree path is provided as a relative path, it is first converted to an
+ * absolute path before determining the relative path.
+ *
+ * If `use_relative_paths_` is zero, the function writes an absolute path to
+ * the work tree in the gitdir file.
+ *
+ * In case of any errors during directory creation or file writing, the
+ * function terminates execution with an error message.
+ */
+void connect_gitdir_file_and_work_tree(const char *wt_dir_,
+				       const char *wt_name_,
+				       int use_relative_paths_);
+
 /*
  * Connect a worktree to a git directory by creating (or overwriting) a
  * '.git' file containing the location of the git directory. In the git
@@ -604,9 +673,9 @@ void remove_untracked_cache(struct index_state *istate);
  * When `recurse_into_nested` is set, recurse into any nested submodules,
  * connecting them as well.
  */
-void connect_work_tree_and_git_dir(const char *work_tree,
-				   const char *git_dir,
-				   int recurse_into_nested);
+void connect_submodule_work_tree_and_git_dir(const char *work_tree,
+					     const char *git_dir,
+					     int recurse_into_nested);
 void relocate_gitdir(const char *path,
 		     const char *old_git_dir,
 		     const char *new_git_dir);

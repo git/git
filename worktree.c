@@ -328,17 +328,6 @@ int validate_worktree(const struct worktree *wt, struct strbuf *errmsg,
 		goto done;
 	}
 
-	/*
-	 * Make sure "gitdir" file points to a real .git file and that
-	 * file points back here.
-	 */
-	if (!is_absolute_path(wt->path)) {
-		strbuf_addf_gently(errmsg,
-				   _("'%s' file does not contain absolute path to the working tree location"),
-				   git_common_path("worktrees/%s/gitdir", wt->id));
-		goto done;
-	}
-
 	if (flags & WT_VALIDATE_WORKTREE_MISSING_OK &&
 	    !file_exists(wt->path)) {
 		ret = 0;
@@ -372,19 +361,30 @@ done:
 
 void update_worktree_location(struct worktree *wt, const char *path_)
 {
-	struct strbuf path = STRBUF_INIT;
+	struct strbuf worktree_new_path = STRBUF_INIT;
+	int use_relative_paths = 0;
 
 	if (is_main_worktree(wt))
 		BUG("can't relocate main worktree");
 
-	strbuf_realpath(&path, path_, 1);
-	if (fspathcmp(wt->path, path.buf)) {
-		write_file(git_common_path("worktrees/%s/gitdir", wt->id),
-			   "%s/.git", path.buf);
-		free(wt->path);
-		wt->path = strbuf_detach(&path, NULL);
-	}
-	strbuf_release(&path);
+	strbuf_realpath(&worktree_new_path, path_, 1);
+
+	use_relative_paths = repo_config_get_worktree_use_relative_paths(the_repository);
+	connect_work_tree_and_git_dir(worktree_new_path.buf,
+				      git_common_path("worktrees/%s", wt->id),
+				      use_relative_paths);
+	connect_gitdir_file_and_work_tree(worktree_new_path.buf, wt->id,
+					  use_relative_paths);
+
+	/* Update worktree's path */
+	free(wt->path);
+	/*
+	TODO: This is setting the worktree's path to an absolute path, not
+	sure if always correct, especially when using relative paths.
+	*/
+	wt->path = strbuf_detach(&worktree_new_path, NULL);
+
+	strbuf_release(&worktree_new_path);
 }
 
 int is_worktree_being_rebased(const struct worktree *wt,
@@ -564,21 +564,25 @@ static void repair_gitfile(struct worktree *wt,
 {
 	struct strbuf dotgit = STRBUF_INIT;
 	struct strbuf repo = STRBUF_INIT;
-	char *backlink;
+	char *backlink = NULL;
 	const char *repair = NULL;
+	char *abs_wt_path = NULL;
 	int err;
+	int use_relative_paths = 0;
+
+	abs_wt_path = worktree_real_pathdup_for_wt(wt);
 
 	/* missing worktree can't be repaired */
-	if (!file_exists(wt->path))
-		return;
+	if (!file_exists(abs_wt_path))
+		goto done;
 
-	if (!is_directory(wt->path)) {
+	if (!is_directory(abs_wt_path)) {
 		fn(1, wt->path, _("not a directory"), cb_data);
-		return;
+		goto done;
 	}
 
 	strbuf_realpath(&repo, git_common_path("worktrees/%s", wt->id), 1);
-	strbuf_addf(&dotgit, "%s/.git", wt->path);
+	strbuf_addf(&dotgit, "%s/.git", abs_wt_path);
 	backlink = xstrdup_or_null(read_gitfile_gently(dotgit.buf, &err));
 
 	if (err == READ_GITFILE_ERR_NOT_A_FILE)
@@ -590,10 +594,16 @@ static void repair_gitfile(struct worktree *wt,
 
 	if (repair) {
 		fn(0, wt->path, repair, cb_data);
-		write_file(dotgit.buf, "gitdir: %s", repo.buf);
+
+		use_relative_paths =
+			repo_config_get_worktree_use_relative_paths(the_repository);
+		connect_work_tree_and_git_dir(abs_wt_path, repo.buf,
+					      use_relative_paths);
 	}
 
+done:
 	free(backlink);
+	free(abs_wt_path);
 	strbuf_release(&repo);
 	strbuf_release(&dotgit);
 }
@@ -682,9 +692,11 @@ void repair_worktree_at_path(const char *path,
 	struct strbuf realdotgit = STRBUF_INIT;
 	struct strbuf gitdir = STRBUF_INIT;
 	struct strbuf olddotgit = STRBUF_INIT;
+	struct strbuf abs_wt_path_sb = STRBUF_INIT;
 	char *backlink = NULL;
 	const char *repair = NULL;
 	int err;
+	int use_relative_paths = 0;
 
 	if (!fn)
 		fn = repair_noop;
@@ -717,16 +729,26 @@ void repair_worktree_at_path(const char *path,
 		repair = _("gitdir unreadable");
 	else {
 		strbuf_rtrim(&olddotgit);
+		if (!is_absolute_path(olddotgit.buf))
+			strbuf_realpath_forgiving(&olddotgit, olddotgit.buf, 1);
+
 		if (fspathcmp(olddotgit.buf, realdotgit.buf))
 			repair = _("gitdir incorrect");
 	}
 
 	if (repair) {
 		fn(0, gitdir.buf, repair, cb_data);
-		write_file(gitdir.buf, "%s", realdotgit.buf);
+
+		use_relative_paths =
+			repo_config_get_worktree_use_relative_paths(the_repository);
+
+		strbuf_add_real_path(&abs_wt_path_sb, path);
+		connect_gitdir_file_and_work_tree(abs_wt_path_sb.buf, basename(backlink),
+						  use_relative_paths);
 	}
 done:
 	free(backlink);
+	strbuf_release(&abs_wt_path_sb);
 	strbuf_release(&olddotgit);
 	strbuf_release(&gitdir);
 	strbuf_release(&realdotgit);

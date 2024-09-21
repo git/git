@@ -1806,7 +1806,7 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 		      "git dir"), sm_gitdir);
 	}
 
-	connect_work_tree_and_git_dir(clone_data_path, sm_gitdir, 0);
+	connect_submodule_work_tree_and_git_dir(clone_data_path, sm_gitdir, 0);
 
 	p = git_pathdup_submodule(clone_data_path, "config");
 	if (!p)

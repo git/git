@@ -1,6 +1,8 @@
 #ifndef ABSPATH_H
 #define ABSPATH_H
 
+struct worktree;
+
 int is_directory(const char *);
 char *strbuf_realpath(struct strbuf *resolved, const char *path,
 		      int die_on_error);
@@ -24,6 +26,48 @@ char *prefix_filename(const char *prefix, const char *path);
 
 /* Likewise, but path=="-" always yields "-" */
 char *prefix_filename_except_for_dash(const char *prefix, const char *path);
+
+/**
+ * worktree_real_pathdup - Duplicate the absolute path of a worktree.
+ *
+ * @wt_path: The path to the worktree. This can be either an absolute or
+ *           relative path.
+ *
+ * Return: A newly allocated string containing the absolute path. If the input
+ *         path is already absolute, it returns a duplicate of the input path.
+ *         If the path is relative, it constructs the absolute path by appending
+ *         the relative path to the repository directory. The repository
+ *         directory is derived from get_git_common_dir(), and the '.git' suffix
+ *         is removed if present.
+ *
+ *         The returned path is resolved into its canonical form using
+ *         strbuf_realpath_forgiving to handle symbolic links or non-existent
+ *         paths gracefully.
+ *
+ * The caller is responsible for freeing the returned string when it is no
+ * longer needed.
+ */
+char *worktree_real_pathdup(const char *wt_path);
+
+/**
+ * worktree_real_pathdup_for_wt - Duplicate the absolute path of a worktree from
+ *                                a worktree structure.
+ *
+ * @wt: A pointer to the worktree structure.
+ *
+ * Return: A newly allocated string containing the absolute path of the worktree.
+ *         If the worktree's path is relative, it constructs the absolute path
+ *         by appending the relative path to the repository directory (derived
+ *         from get_git_common_dir()). If the path is already absolute, it returns
+ *         a duplicate of the worktree's path.
+ *
+ * The caller is responsible for freeing the returned string when it is no
+ * longer needed.
+ *
+ * This function is similar to worktree_real_pathdup() but takes a pointer to a
+ * worktree structure instead of a raw path.
+ */
+char *worktree_real_pathdup_for_wt(struct worktree *wt);
 
 static inline int is_absolute_path(const char *path)
 {

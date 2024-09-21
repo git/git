@@ -1,6 +1,9 @@
 #include "git-compat-util.h"
 #include "abspath.h"
+#include "environment.h"
+#include "path.h"
 #include "strbuf.h"
+#include "worktree.h"
 
 /*
  * Do not use this for inspecting *tracked* content.  When path is a
@@ -288,6 +291,41 @@ char *prefix_filename_except_for_dash(const char *pfx, const char *arg)
 	if (!strcmp(arg, "-"))
 		return xstrdup(arg);
 	return prefix_filename(pfx, arg);
+}
+
+char *worktree_real_pathdup(const char *wt_path)
+{
+	struct strbuf abs_wt_path_sb = STRBUF_INIT;
+	char *retval = NULL;
+	char *git_dir_real_path = NULL;
+	char *repo_real_path = NULL;
+
+	if (!is_absolute_path(wt_path)) {
+		git_dir_real_path = real_pathdup(get_git_common_dir(), 1);
+		repo_real_path = strip_path_suffix(git_dir_real_path, ".git");
+		if (repo_real_path) {
+			strbuf_addf(&abs_wt_path_sb, "%s/%s", repo_real_path,
+				    wt_path);
+		} else {
+			strbuf_addf(&abs_wt_path_sb, "%s/%s", git_dir_real_path,
+				    wt_path);
+		}
+
+		strbuf_realpath_forgiving(&abs_wt_path_sb, abs_wt_path_sb.buf, 1);
+		retval = strbuf_detach(&abs_wt_path_sb, NULL);
+	} else {
+		retval = xstrdup(wt_path);
+	}
+
+	free(git_dir_real_path);
+	free(repo_real_path);
+	strbuf_release(&abs_wt_path_sb);
+	return retval;
+}
+
+char *worktree_real_pathdup_for_wt(struct worktree *wt)
+{
+	return worktree_real_pathdup(wt->path);
 }
 
 void strbuf_add_absolute_path(struct strbuf *sb, const char *path)

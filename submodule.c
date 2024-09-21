@@ -1672,7 +1672,7 @@ get_fetch_task_from_changed(struct submodule_parallel_fetch *spf,
 		 * core.worktree when they are populated/unpopulated by
 		 * "git checkout" (and similar commands, see
 		 * submodule_move_head() and
-		 * connect_work_tree_and_git_dir()), but if the
+		 * connect_submodule_work_tree_and_git_dir()), but if the
 		 * submodule is unpopulated in another way (e.g. "git
 		 * rm", "rm -r"), core.worktree will still be set even
 		 * though the directory doesn't exist, and the child
@@ -2149,7 +2149,7 @@ int submodule_move_head(const char *path, const char *super_prefix,
 	if (flags & SUBMODULE_MOVE_HEAD_FORCE)
 		/*
 		 * Pass non NULL pointer to is_submodule_populated_gently
-		 * to prevent die()-ing. We'll use connect_work_tree_and_git_dir
+		 * to prevent die()-ing. We'll use connect_submodule_work_tree_and_git_dir
 		 * to fixup the submodule in the force case later.
 		 */
 		error_code_ptr = &error_code;
@@ -2196,7 +2196,8 @@ int submodule_move_head(const char *path, const char *super_prefix,
 				die(_("refusing to create/use '%s' in another "
 				      "submodule's git dir"),
 				    gitdir.buf);
-			connect_work_tree_and_git_dir(path, gitdir.buf, 0);
+			connect_submodule_work_tree_and_git_dir(path,
+								gitdir.buf, 0);
 			strbuf_release(&gitdir);
 
 			/* make sure the index is clean as well */
@@ -2207,7 +2208,8 @@ int submodule_move_head(const char *path, const char *super_prefix,
 			struct strbuf gitdir = STRBUF_INIT;
 			submodule_name_to_gitdir(&gitdir, the_repository,
 						 sub->name);
-			connect_work_tree_and_git_dir(path, gitdir.buf, 1);
+			connect_submodule_work_tree_and_git_dir(path,
+								gitdir.buf, 1);
 			strbuf_release(&gitdir);
 		}
 	}
@@ -2459,7 +2461,7 @@ void absorb_git_dir_into_superproject(const char *path,
 		if (!sub)
 			die(_("could not lookup name for submodule '%s'"), path);
 		submodule_name_to_gitdir(&sub_gitdir, the_repository, sub->name);
-		connect_work_tree_and_git_dir(path, sub_gitdir.buf, 0);
+		connect_submodule_work_tree_and_git_dir(path, sub_gitdir.buf, 0);
 		strbuf_release(&sub_gitdir);
 	} else {
 		/* Is it already absorbed into the superprojects git dir? */
