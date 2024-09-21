@@ -790,7 +790,7 @@ merge commit.
 
 SEE ALSO
 --------
-linkgit:git-am[1], linkgit:git-send-email[1]
+linkgit:git-am[1], linkgit:git-apply[1], linkgit:git-send-email[1]
 
 GIT
 ---
