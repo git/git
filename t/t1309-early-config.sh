@@ -97,7 +97,14 @@ test_expect_success 'early config and onbranch' '
 
 test_expect_success 'onbranch config outside of git repo' '
 	test_config_global includeIf.onbranch:topic.path non-existent &&
-	nongit git help
+
+	nongit git help &&
+
+	test_expect_code 129 nongit git --git-dir=noexist archive -h 2>err &&
+	test_must_be_empty err &&
+
+	test_expect_code 129 nongit git --git-dir=noexist fsck -h 2>err &&
+	test_must_be_empty err
 '
 
 test_done

@@ -305,7 +305,7 @@ static int include_by_branch(const char *cond, size_t cond_len)
 	int flags;
 	int ret;
 	struct strbuf pattern = STRBUF_INIT;
-	const char *refname = !the_repository->gitdir ?
+	const char *refname = !startup_info->have_repository ?
 		NULL : refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
 					       "HEAD", 0, NULL, &flags);
 	const char *shortname;
