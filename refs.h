@@ -3,6 +3,7 @@
 
 #include "commit.h"
 #include "repository.h"
+#include "repo-settings.h"
 
 struct fsck_options;
 struct object_id;
@@ -111,7 +112,8 @@ int refs_verify_refname_available(struct ref_store *refs,
 
 int refs_ref_exists(struct ref_store *refs, const char *refname);
 
-int should_autocreate_reflog(const char *refname);
+int should_autocreate_reflog(enum log_refs_config log_all_ref_updates,
+			     const char *refname);
 
 int is_branch(const char *refname);
 

@@ -1,4 +1,7 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "../git-compat-util.h"
+#include "../config.h"
 #include "../copy.h"
 #include "../environment.h"
 #include "../gettext.h"
@@ -6,6 +9,7 @@
 #include "../hex.h"
 #include "../fsck.h"
 #include "../refs.h"
+#include "../repo-settings.h"
 #include "refs-internal.h"
 #include "ref-cache.h"
 #include "packed-backend.h"
@@ -72,6 +76,8 @@ struct files_ref_store {
 	unsigned int store_flags;
 
 	char *gitcommondir;
+	enum log_refs_config log_all_ref_updates;
+	int prefer_symlink_refs;
 
 	struct ref_cache *loose;
 
@@ -104,6 +110,8 @@ static struct ref_store *files_ref_store_init(struct repository *repo,
 	refs->gitcommondir = strbuf_detach(&sb, NULL);
 	refs->packed_ref_store =
 		packed_ref_store_init(repo, refs->gitcommondir, flags);
+	refs->log_all_ref_updates = repo_settings_get_log_all_ref_updates(repo);
+	repo_config_get_bool(repo, "core.prefersymlinkrefs", &refs->prefer_symlink_refs);
 
 	chdir_notify_reparent("files-backend $GIT_DIR", &refs->base.gitdir);
 	chdir_notify_reparent("files-backend $GIT_COMMONDIR",
@@ -1506,6 +1514,7 @@ static int write_ref_to_lockfile(struct files_ref_store *refs,
 static int commit_ref_update(struct files_ref_store *refs,
 			     struct ref_lock *lock,
 			     const struct object_id *oid, const char *logmsg,
+			     int flags,
 			     struct strbuf *err);
 
 /*
@@ -1649,7 +1658,7 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 	oidcpy(&lock->old_oid, &orig_oid);
 
 	if (write_ref_to_lockfile(refs, lock, &orig_oid, 0, &err) ||
-	    commit_ref_update(refs, lock, &orig_oid, logmsg, &err)) {
+	    commit_ref_update(refs, lock, &orig_oid, logmsg, 0, &err)) {
 		error("unable to write current sha1 into %s: %s", newrefname, err.buf);
 		strbuf_release(&err);
 		goto rollback;
@@ -1666,14 +1675,11 @@ static int files_copy_or_rename_ref(struct ref_store *ref_store,
 		goto rollbacklog;
 	}
 
-	flag = log_all_ref_updates;
-	log_all_ref_updates = LOG_REFS_NONE;
 	if (write_ref_to_lockfile(refs, lock, &orig_oid, 0, &err) ||
-	    commit_ref_update(refs, lock, &orig_oid, NULL, &err)) {
+	    commit_ref_update(refs, lock, &orig_oid, NULL, REF_SKIP_CREATE_REFLOG, &err)) {
 		error("unable to write current sha1 into %s: %s", oldrefname, err.buf);
 		strbuf_release(&err);
 	}
-	log_all_ref_updates = flag;
 
  rollbacklog:
 	if (logmoved && rename(sb_newref.buf, sb_oldref.buf))
@@ -1768,13 +1774,17 @@ static int log_ref_setup(struct files_ref_store *refs,
 			 const char *refname, int force_create,
 			 int *logfd, struct strbuf *err)
 {
+	enum log_refs_config log_refs_cfg = refs->log_all_ref_updates;
 	struct strbuf logfile_sb = STRBUF_INIT;
 	char *logfile;
+
+	if (log_refs_cfg == LOG_REFS_UNSET)
+		log_refs_cfg = is_bare_repository() ? LOG_REFS_NONE : LOG_REFS_NORMAL;
 
 	files_reflog_path(refs, &logfile_sb, refname);
 	logfile = strbuf_detach(&logfile_sb, NULL);
 
-	if (force_create || should_autocreate_reflog(refname)) {
+	if (force_create || should_autocreate_reflog(log_refs_cfg, refname)) {
 		if (raceproof_create_file(logfile, open_or_create_logfile, logfd)) {
 			if (errno == ENOENT)
 				strbuf_addf(err, "unable to create directory for '%s': "
@@ -1862,9 +1872,6 @@ static int files_log_ref_write(struct files_ref_store *refs,
 
 	if (flags & REF_SKIP_CREATE_REFLOG)
 		return 0;
-
-	if (log_all_ref_updates == LOG_REFS_UNSET)
-		log_all_ref_updates = is_bare_repository() ? LOG_REFS_NONE : LOG_REFS_NORMAL;
 
 	result = log_ref_setup(refs, refname,
 			       flags & REF_FORCE_CREATE_REFLOG,
@@ -1954,6 +1961,7 @@ static int write_ref_to_lockfile(struct files_ref_store *refs,
 static int commit_ref_update(struct files_ref_store *refs,
 			     struct ref_lock *lock,
 			     const struct object_id *oid, const char *logmsg,
+			     int flags,
 			     struct strbuf *err)
 {
 	files_assert_main_repository(refs, "commit_ref_update");
@@ -1961,7 +1969,7 @@ static int commit_ref_update(struct files_ref_store *refs,
 	clear_loose_ref_cache(refs);
 	if (files_log_ref_write(refs, lock->ref_name,
 				&lock->old_oid, oid,
-				logmsg, 0, err)) {
+				logmsg, flags, err)) {
 		char *old_msg = strbuf_detach(err, NULL);
 		strbuf_addf(err, "cannot update the ref '%s': %s",
 			    lock->ref_name, old_msg);
@@ -1994,7 +2002,7 @@ static int commit_ref_update(struct files_ref_store *refs,
 			struct strbuf log_err = STRBUF_INIT;
 			if (files_log_ref_write(refs, "HEAD",
 						&lock->old_oid, oid,
-						logmsg, 0, &log_err)) {
+						logmsg, flags, &log_err)) {
 				error("%s", log_err.buf);
 				strbuf_release(&log_err);
 			}
@@ -3005,7 +3013,7 @@ static int files_transaction_finish(struct ref_store *ref_store,
 		 * We try creating a symlink, if that succeeds we continue to the
 		 * next update. If not, we try and create a regular symref.
 		 */
-		if (update->new_target && prefer_symlink_refs)
+		if (update->new_target && refs->prefer_symlink_refs)
 			if (!create_ref_symlink(lock, update->new_target))
 				continue;
 

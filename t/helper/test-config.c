@@ -96,7 +96,8 @@ int cmd__config(int argc, const char **argv)
 	struct config_set cs;
 
 	if (argc == 3 && !strcmp(argv[1], "read_early_config")) {
-		read_early_config(early_config_cb, (void *)argv[2]);
+		read_early_config(the_repository, early_config_cb,
+				  (void *)argv[2]);
 		return 0;
 	}
 

@@ -12,6 +12,7 @@
 #include "pack-objects.h"
 #include "pack-revindex.h"
 #include "path.h"
+#include "repository.h"
 #include "strbuf.h"
 
 void reset_pack_idx_option(struct pack_idx_option *opts)
@@ -473,7 +474,7 @@ char *index_pack_lockfile(int ip_out, int *is_well_formed)
 		packname[len-1] = 0;
 		if (skip_prefix(packname, "keep\t", &name))
 			return xstrfmt("%s/pack/pack-%s.keep",
-				       get_object_directory(), name);
+				       repo_get_object_directory(the_repository), name);
 		return NULL;
 	}
 	if (is_well_formed)

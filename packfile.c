@@ -30,7 +30,7 @@ char *odb_pack_name(struct strbuf *buf,
 		    const char *ext)
 {
 	strbuf_reset(buf);
-	strbuf_addf(buf, "%s/pack/pack-%s.%s", get_object_directory(),
+	strbuf_addf(buf, "%s/pack/pack-%s.%s", repo_get_object_directory(the_repository),
 		    hash_to_hex(hash), ext);
 	return buf->buf;
 }

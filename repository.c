@@ -91,6 +91,46 @@ static void expand_base_dir(char **out, const char *in,
 		*out = xstrfmt("%s/%s", base_dir, def_in);
 }
 
+const char *repo_get_git_dir(struct repository *repo)
+{
+	if (!repo->gitdir)
+		BUG("repository hasn't been set up");
+	return repo->gitdir;
+}
+
+const char *repo_get_common_dir(struct repository *repo)
+{
+	if (!repo->commondir)
+		BUG("repository hasn't been set up");
+	return repo->commondir;
+}
+
+const char *repo_get_object_directory(struct repository *repo)
+{
+	if (!repo->objects->odb)
+		BUG("repository hasn't been set up");
+	return repo->objects->odb->path;
+}
+
+const char *repo_get_index_file(struct repository *repo)
+{
+	if (!repo->index_file)
+		BUG("repository hasn't been set up");
+	return repo->index_file;
+}
+
+const char *repo_get_graft_file(struct repository *repo)
+{
+	if (!repo->graft_file)
+		BUG("repository hasn't been set up");
+	return repo->graft_file;
+}
+
+const char *repo_get_work_tree(struct repository *repo)
+{
+	return repo->worktree;
+}
+
 static void repo_set_commondir(struct repository *repo,
 			       const char *commondir)
 {

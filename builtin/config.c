@@ -807,8 +807,8 @@ static void location_options_init(struct config_location_options *opts,
 	else
 		opts->options.respect_includes = opts->respect_includes_opt;
 	if (startup_info->have_repository) {
-		opts->options.commondir = get_git_common_dir();
-		opts->options.git_dir = get_git_dir();
+		opts->options.commondir = repo_get_common_dir(the_repository);
+		opts->options.git_dir = repo_get_git_dir(the_repository);
 	}
 }
 

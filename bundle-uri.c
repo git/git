@@ -4,7 +4,6 @@
 #include "bundle-uri.h"
 #include "bundle.h"
 #include "copy.h"
-#include "environment.h"
 #include "gettext.h"
 #include "refs.h"
 #include "run-command.h"
@@ -14,6 +13,7 @@
 #include "fetch-pack.h"
 #include "remote.h"
 #include "trace2.h"
+#include "object-store-ll.h"
 
 static struct {
 	enum bundle_list_heuristic heuristic;

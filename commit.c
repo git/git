@@ -292,14 +292,14 @@ static int read_graft_file(struct repository *r, const char *graft_file)
 
 void prepare_commit_graft(struct repository *r)
 {
-	char *graft_file;
+	const char *graft_file;
 
 	if (r->parsed_objects->commit_graft_prepared)
 		return;
 	if (!startup_info->have_repository)
 		return;
 
-	graft_file = get_graft_file(r);
+	graft_file = repo_get_graft_file(r);
 	read_graft_file(r, graft_file);
 	/* make sure shallows are read */
 	is_repository_shallow(r);

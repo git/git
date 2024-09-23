@@ -2,6 +2,8 @@
  * Utilities for paths and pathnames
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "environment.h"

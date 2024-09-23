@@ -2,7 +2,6 @@
 
 #include "git-compat-util.h"
 #include "dir.h"
-#include "environment.h"
 #include "hex.h"
 #include "repository.h"
 #include "refs.h"
@@ -342,7 +341,8 @@ static int write_pack_info_file(struct update_info_ctx *uic)
 
 static int update_info_packs(int force)
 {
-	char *infofile = mkpathdup("%s/info/packs", get_object_directory());
+	char *infofile = mkpathdup("%s/info/packs",
+				   repo_get_object_directory(the_repository));
 	int ret;
 
 	init_pack_info(infofile, force);

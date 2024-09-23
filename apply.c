@@ -30,6 +30,7 @@
 #include "path.h"
 #include "quote.h"
 #include "read-cache.h"
+#include "repository.h"
 #include "rerere.h"
 #include "apply.h"
 #include "entry.h"
@@ -4113,7 +4114,7 @@ static int read_apply_cache(struct apply_state *state)
 {
 	if (state->index_file)
 		return read_index_from(state->repo->index, state->index_file,
-				       get_git_dir());
+				       repo_get_git_dir(the_repository));
 	else
 		return repo_read_index(state->repo);
 }
