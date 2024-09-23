@@ -4,6 +4,7 @@
  * Based on git-am.sh by Junio C Hamano.
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "advice.h"
@@ -38,7 +39,6 @@
 #include "string-list.h"
 #include "pager.h"
 #include "path.h"
-#include "repository.h"
 #include "pretty.h"
 
 /**
@@ -2303,7 +2303,10 @@ static int parse_opt_show_current_patch(const struct option *opt, const char *ar
 	return 0;
 }
 
-int cmd_am(int argc, const char **argv, const char *prefix)
+int cmd_am(int argc,
+	   const char **argv,
+	   const char *prefix,
+	   struct repository *repo UNUSED)
 {
 	struct am_state state;
 	int binary = -1;

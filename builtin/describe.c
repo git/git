@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "environment.h"
@@ -571,7 +572,10 @@ static int option_parse_exact_match(const struct option *opt, const char *arg,
 	return 0;
 }
 
-int cmd_describe(int argc, const char **argv, const char *prefix)
+int cmd_describe(int argc,
+		 const char **argv,
+		 const char *prefix,
+		 struct repository *repo UNUSED )
 {
 	int contains = 0;
 	struct option options[] = {
@@ -650,7 +654,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 			argv_copy[i] = args.v[i];
 		argv_copy[args.nr] = NULL;
 
-		ret = cmd_name_rev(args.nr, argv_copy, prefix);
+		ret = cmd_name_rev(args.nr, argv_copy, prefix, the_repository);
 
 		strvec_clear(&args);
 		free(argv_copy);

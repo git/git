@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "environment.h"
@@ -10,7 +11,7 @@
 #include "strvec.h"
 #include "object-name.h"
 #include "parse-options.h"
-#include "repository.h"
+
 #include "dir.h"
 #include "commit-slab.h"
 #include "date.h"
@@ -632,7 +633,10 @@ static int parse_reflog_param(const struct option *opt, const char *arg,
 	return 0;
 }
 
-int cmd_show_branch(int ac, const char **av, const char *prefix)
+int cmd_show_branch(int ac,
+		const char **av,
+		const char *prefix,
+		struct repository *repo UNUSED)
 {
 	struct commit *rev[MAX_REVS], *commit;
 	char *reflog_msg[MAX_REVS] = {0};

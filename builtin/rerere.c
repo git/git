@@ -1,8 +1,9 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
 #include "parse-options.h"
-#include "repository.h"
+
 #include "string-list.h"
 #include "rerere.h"
 #include "xdiff/xdiff.h"
@@ -48,7 +49,10 @@ static int diff_two(const char *file1, const char *label1,
 	return ret;
 }
 
-int cmd_rerere(int argc, const char **argv, const char *prefix)
+int cmd_rerere(int argc,
+	       const char **argv,
+	       const char *prefix,
+	       struct repository *repo UNUSED)
 {
 	struct string_list merge_rr = STRING_LIST_INIT_DUP;
 	int i, autoupdate = -1, flags = 0;

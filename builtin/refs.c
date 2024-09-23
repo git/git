@@ -1,9 +1,9 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "fsck.h"
 #include "parse-options.h"
 #include "refs.h"
-#include "repository.h"
 #include "strbuf.h"
 
 #define REFS_MIGRATE_USAGE \
@@ -90,7 +90,10 @@ static int cmd_refs_verify(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
-int cmd_refs(int argc, const char **argv, const char *prefix)
+int cmd_refs(int argc,
+	     const char **argv,
+	     const char *prefix,
+	     struct repository *repo UNUSED)
 {
 	const char * const refs_usage[] = {
 		REFS_MIGRATE_USAGE,

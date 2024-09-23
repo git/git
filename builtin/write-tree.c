@@ -3,7 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
@@ -11,14 +11,16 @@
 #include "tree.h"
 #include "cache-tree.h"
 #include "parse-options.h"
-#include "repository.h"
 
 static const char * const write_tree_usage[] = {
 	N_("git write-tree [--missing-ok] [--prefix=<prefix>/]"),
 	NULL
 };
 
-int cmd_write_tree(int argc, const char **argv, const char *cmd_prefix)
+int cmd_write_tree(int argc,
+		   const char **argv,
+		   const char *cmd_prefix,
+		   struct repository *repo UNUSED)
 {
 	int flags = 0, ret;
 	const char *tree_prefix = NULL;

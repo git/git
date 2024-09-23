@@ -5,11 +5,12 @@
 * This file is licensed under the GPL v2.
 *
 */
+#define USE_THE_REPOSITORY_VARIABLE
 
 #include "builtin.h"
 #include "gettext.h"
 #include "hex.h"
-#include "repository.h"
+
 #include "packfile.h"
 #include "object-store-ll.h"
 
@@ -561,11 +562,8 @@ static void load_all(void)
 	}
 }
 
-int cmd_pack_redundant(int argc, const char **argv, const char *prefix UNUSED)
-{
-	int i;
-	int i_still_use_this = 0;
-	struct pack_list *min = NULL, *red, *pl;
+int cmd_pack_redundant(int argc, const char **argv, const char *prefix UNUSED, struct repository *repo UNUSED) {
+	int i; int i_still_use_this = 0; struct pack_list *min = NULL, *red, *pl;
 	struct llist *ignore;
 	struct object_id *oid;
 	char buf[GIT_MAX_HEXSZ + 2]; /* hex hash + \n + \0 */

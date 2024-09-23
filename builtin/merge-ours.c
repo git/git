@@ -7,15 +7,19 @@
  *
  * Pretend we resolved the heads, but declare our tree trumps everybody else.
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "git-compat-util.h"
 #include "builtin.h"
 #include "diff.h"
-#include "repository.h"
+
 
 static const char builtin_merge_ours_usage[] =
 	"git merge-ours <base>... -- HEAD <remote>...";
 
-int cmd_merge_ours(int argc, const char **argv, const char *prefix UNUSED)
+int cmd_merge_ours(int argc,
+		   const char **argv,
+		   const char *prefix UNUSED,
+		   struct repository *repo UNUSED)
 {
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(builtin_merge_ours_usage);

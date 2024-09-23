@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "gettext.h"
@@ -287,7 +288,10 @@ static void init_socket_directory(const char *path)
 	free(path_copy);
 }
 
-int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
+int cmd_credential_cache_daemon(int argc,
+				const char **argv,
+				const char *prefix,
+				struct repository *repo UNUSED)
 {
 	struct tempfile *socket_file;
 	const char *socket_path;
@@ -330,7 +334,10 @@ int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
 
 #else
 
-int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
+int cmd_credential_cache_daemon(int argc,
+const char **argv,
+const char *prefix,
+struct repository *repo UNUSED)
 {
 	const char * const usage[] = {
 		"git credential-cache--daemon [--debug] <socket-path>",

@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
@@ -287,7 +288,10 @@ static int exclude_existing_callback(const struct option *opt, const char *arg,
 	return 0;
 }
 
-int cmd_show_ref(int argc, const char **argv, const char *prefix)
+int cmd_show_ref(int argc,
+const char **argv,
+const char *prefix,
+struct repository *repo UNUSED)
 {
 	struct exclude_existing_options exclude_existing_opts = {0};
 	struct patterns_options patterns_opts = {0};

@@ -1,6 +1,7 @@
 /*
  * "git push"
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "advice.h"
 #include "branch.h"
@@ -13,7 +14,6 @@
 #include "transport.h"
 #include "parse-options.h"
 #include "pkt-line.h"
-#include "repository.h"
 #include "submodule.h"
 #include "submodule-config.h"
 #include "send-pack.h"
@@ -548,7 +548,10 @@ static int git_push_config(const char *k, const char *v,
 	return git_default_config(k, v, ctx, NULL);
 }
 
-int cmd_push(int argc, const char **argv, const char *prefix)
+int cmd_push(int argc,
+	     const char **argv,
+	     const char *prefix,
+	     struct repository *repository UNUSED)
 {
 	int flags = 0;
 	int tags = 0;

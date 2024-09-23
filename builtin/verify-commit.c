@@ -5,11 +5,11 @@
  *
  * Based on git-verify-tag
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
 #include "object-name.h"
-#include "repository.h"
 #include "commit.h"
 #include "parse-options.h"
 #include "gpg-interface.h"
@@ -51,7 +51,10 @@ static int verify_commit(const char *name, unsigned flags)
 	return run_gpg_verify((struct commit *)obj, flags);
 }
 
-int cmd_verify_commit(int argc, const char **argv, const char *prefix)
+int cmd_verify_commit(int argc,
+		      const char **argv,
+		      const char *prefix,
+		      struct repository *repo UNUSED)
 {
 	int i = 1, verbose = 0, had_error = 0;
 	unsigned flags = 0;

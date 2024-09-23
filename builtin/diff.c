@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2006 Junio C Hamano
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "ewah/ewok.h"
@@ -393,7 +393,10 @@ static void symdiff_release(struct symdiff *sdiff)
 	bitmap_free(sdiff->skip);
 }
 
-int cmd_diff(int argc, const char **argv, const char *prefix)
+int cmd_diff(int argc,
+	     const char **argv,
+	     const char *prefix,
+	     struct repository *repo UNUSED)
 {
 	int i;
 	struct rev_info rev;

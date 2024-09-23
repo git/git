@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "commit.h"
@@ -5,7 +6,6 @@
 #include "environment.h"
 #include "gettext.h"
 #include "string-list.h"
-#include "repository.h"
 #include "revision.h"
 #include "utf8.h"
 #include "mailmap.h"
@@ -378,7 +378,10 @@ void shortlog_finish_setup(struct shortlog *log)
 	string_list_sort(&log->trailers);
 }
 
-int cmd_shortlog(int argc, const char **argv, const char *prefix)
+int cmd_shortlog(int argc,
+		 const char **argv,
+		 const char *prefix,
+		 struct repository *repo UNUSED)
 {
 	struct shortlog log = { STRING_LIST_INIT_NODUP };
 	struct rev_info rev;

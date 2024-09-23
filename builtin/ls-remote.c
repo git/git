@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "gettext.h"
 #include "hex.h"
@@ -37,7 +38,10 @@ static int tail_match(const struct strvec *pattern, const char *path)
 	return 0;
 }
 
-int cmd_ls_remote(int argc, const char **argv, const char *prefix)
+int cmd_ls_remote(int argc,
+		  const char **argv,
+		  const char *prefix,
+		  struct repository *repo UNUSED)
 {
 	const char *dest = NULL;
 	unsigned flags = 0;

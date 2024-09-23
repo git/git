@@ -5,7 +5,7 @@
  *
  * Based on git-clean.sh by Pavel Roskin
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "config.h"
@@ -14,7 +14,6 @@
 #include "parse-options.h"
 #include "path.h"
 #include "read-cache-ll.h"
-#include "repository.h"
 #include "setup.h"
 #include "string-list.h"
 #include "quote.h"
@@ -915,7 +914,10 @@ static void correct_untracked_entries(struct dir_struct *dir)
 	dir->nr = dst;
 }
 
-int cmd_clean(int argc, const char **argv, const char *prefix)
+int cmd_clean(int argc,
+	      const char **argv,
+	      const char *prefix,
+	      struct repository *repo UNUSED)
 {
 	int i, res;
 	int dry_run = 0, remove_directories = 0, quiet = 0, ignored = 0;

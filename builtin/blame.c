@@ -4,7 +4,7 @@
  * Copyright (c) 2006, 2014 by its authors
  * See COPYING for licensing conditions
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "color.h"
@@ -12,7 +12,6 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
-#include "repository.h"
 #include "commit.h"
 #include "diff.h"
 #include "revision.h"
@@ -864,7 +863,10 @@ static void build_ignorelist(struct blame_scoreboard *sb,
 	}
 }
 
-int cmd_blame(int argc, const char **argv, const char *prefix)
+int cmd_blame(int argc,
+	      const char **argv,
+	      const char *prefix,
+	      struct repository *repo UNUSED)
 {
 	struct rev_info revs;
 	char *path = NULL;

@@ -3,13 +3,14 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
 #include "hex.h"
 #include "object-name.h"
 #include "object-store-ll.h"
-#include "repository.h"
+
 #include "commit.h"
 #include "parse-options.h"
 
@@ -90,7 +91,10 @@ static int parse_file_arg_callback(const struct option *opt,
 	return 0;
 }
 
-int cmd_commit_tree(int argc, const char **argv, const char *prefix)
+int cmd_commit_tree(int argc,
+		    const char **argv,
+		    const char *prefix,
+		    struct repository *repo UNUSED)
 {
 	static struct strbuf buffer = STRBUF_INIT;
 	struct commit_list *parents = NULL;

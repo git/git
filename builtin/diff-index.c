@@ -1,10 +1,10 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "diff.h"
 #include "diff-merges.h"
 #include "commit.h"
 #include "preload-index.h"
-#include "repository.h"
 #include "revision.h"
 #include "setup.h"
 
@@ -14,7 +14,10 @@ static const char diff_cache_usage[] =
 "\n"
 COMMON_DIFF_OPTIONS_HELP;
 
-int cmd_diff_index(int argc, const char **argv, const char *prefix)
+int cmd_diff_index(int argc,
+		   const char **argv,
+		   const char *prefix,
+		   struct repository *repo UNUSED)
 {
 	struct rev_info rev;
 	unsigned int option = 0;

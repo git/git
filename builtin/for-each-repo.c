@@ -1,9 +1,9 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "path.h"
-#include "repository.h"
 #include "run-command.h"
 #include "string-list.h"
 
@@ -29,7 +29,10 @@ static int run_command_on_repo(const char *path, int argc, const char ** argv)
 	return run_command(&child);
 }
 
-int cmd_for_each_repo(int argc, const char **argv, const char *prefix)
+int cmd_for_each_repo(int argc,
+		      const char **argv,
+		      const char *prefix,
+		      struct repository *repo UNUSED)
 {
 	static const char *config_key = NULL;
 	int keep_going = 0;

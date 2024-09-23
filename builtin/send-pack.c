@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "hex.h"
@@ -147,7 +148,10 @@ static int send_pack_config(const char *k, const char *v,
 	return git_default_config(k, v, ctx, cb);
 }
 
-int cmd_send_pack(int argc, const char **argv, const char *prefix)
+int cmd_send_pack(int argc,
+		  const char **argv,
+		  const char *prefix,
+		  struct repository *repo UNUSED)
 {
 	struct refspec rs = REFSPEC_INIT_PUSH;
 	const char *remote_name = NULL;

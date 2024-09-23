@@ -4,6 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  * Copyright (C) Junio C Hamano, 2005
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "config.h"
@@ -84,7 +85,10 @@ static void hash_stdin_paths(const char *type, int no_filters, unsigned flags,
 	strbuf_release(&unquoted);
 }
 
-int cmd_hash_object(int argc, const char **argv, const char *prefix)
+int cmd_hash_object(int argc,
+		    const char **argv,
+		    const char *prefix,
+		    struct repository *repo UNUSED)
 {
 	static const char * const hash_object_usage[] = {
 		N_("git hash-object [-t <type>] [-w] [--path=<file> | --no-filters]\n"

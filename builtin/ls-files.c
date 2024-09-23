@@ -5,8 +5,8 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
-#include "repository.h"
 #include "config.h"
 #include "convert.h"
 #include "quote.h"
@@ -561,7 +561,10 @@ static int option_parse_exclude_standard(const struct option *opt,
 	return 0;
 }
 
-int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
+int cmd_ls_files(int argc,
+		 const char **argv,
+		 const char *cmd_prefix,
+		 struct repository *repo UNUSED)
 {
 	int require_work_tree = 0, show_tag = 0, i;
 	char *max_prefix;

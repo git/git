@@ -16,6 +16,7 @@
 #include "parse-options.h"
 #include "prompt.h"
 #include "fsmonitor-ipc.h"
+#include "repository.h"
 
 #ifndef NO_CURL
 #include "git-curl-compat.h" /* For LIBCURL_VERSION only */
@@ -775,7 +776,7 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 	}
 }
 
-int cmd_version(int argc, const char **argv, const char *prefix)
+int cmd_version(int argc, const char **argv, const char *prefix, struct repository *repository UNUSED)
 {
 	struct strbuf buf = STRBUF_INIT;
 	int build_options = 0;

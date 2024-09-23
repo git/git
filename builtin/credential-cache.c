@@ -137,7 +137,10 @@ static void announce_capabilities(void)
 	credential_announce_capabilities(&c, stdout);
 }
 
-int cmd_credential_cache(int argc, const char **argv, const char *prefix)
+int cmd_credential_cache(int argc,
+			 const char **argv,
+			 const char *prefix,
+			 struct repository *repo UNUSED)
 {
 	const char *socket_path_arg = NULL;
 	char *socket_path;

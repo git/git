@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "diff.h"
@@ -214,7 +215,10 @@ static int git_patch_id_config(const char *var, const char *value,
 	return git_default_config(var, value, ctx, cb);
 }
 
-int cmd_patch_id(int argc, const char **argv, const char *prefix)
+int cmd_patch_id(int argc,
+		 const char **argv,
+		 const char *prefix,
+		 struct repository *repo UNUSED)
 {
 	/* if nothing is set, default to unstable */
 	struct patch_id_opts config = {0, 0};

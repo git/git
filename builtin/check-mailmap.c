@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
@@ -47,7 +48,10 @@ static void check_mailmap(struct string_list *mailmap, const char *contact)
 	printf("<%.*s>\n", (int)maillen, mail);
 }
 
-int cmd_check_mailmap(int argc, const char **argv, const char *prefix)
+int cmd_check_mailmap(int argc,
+		      const char **argv,
+		      const char *prefix,
+		      struct repository *repo UNUSED)
 {
 	int i;
 	struct string_list mailmap = STRING_LIST_INIT_NODUP;

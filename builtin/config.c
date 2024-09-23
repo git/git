@@ -1,10 +1,10 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "config.h"
 #include "color.h"
 #include "editor.h"
 #include "environment.h"
-#include "repository.h"
 #include "gettext.h"
 #include "ident.h"
 #include "parse-options.h"
@@ -1392,7 +1392,10 @@ out:
 	return ret;
 }
 
-int cmd_config(int argc, const char **argv, const char *prefix)
+int cmd_config(int argc,
+	       const char **argv,
+	       const char *prefix,
+	       struct repository *repo UNUSED)
 {
 	parse_opt_subcommand_fn *subcommand = NULL;
 	struct option subcommand_opts[] = {

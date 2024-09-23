@@ -5,6 +5,7 @@
  *
  * Based on git-verify-tag.sh
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
@@ -19,7 +20,10 @@ static const char * const verify_tag_usage[] = {
 		NULL
 };
 
-int cmd_verify_tag(int argc, const char **argv, const char *prefix)
+int cmd_verify_tag(int argc,
+		   const char **argv,
+		   const char *prefix,
+		   struct repository *repo UNUSED)
 {
 	int i = 1, verbose = 0, had_error = 0;
 	unsigned flags = 0;

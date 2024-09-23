@@ -3,7 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "bulk-checkin.h"
 #include "config.h"
@@ -22,7 +22,6 @@
 #include "pathspec.h"
 #include "dir.h"
 #include "read-cache.h"
-#include "repository.h"
 #include "setup.h"
 #include "sparse-index.h"
 #include "split-index.h"
@@ -917,7 +916,10 @@ static enum parse_opt_result reupdate_callback(
 	return 0;
 }
 
-int cmd_update_index(int argc, const char **argv, const char *prefix)
+int cmd_update_index(int argc,
+		     const char **argv,
+		     const char *prefix,
+		     struct repository *repo UNUSED)
 {
 	int newfd, entries, has_errors = 0, nul_term_line = 0;
 	enum uc_mode untracked_cache = UC_UNSPECIFIED;

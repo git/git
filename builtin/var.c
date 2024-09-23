@@ -3,7 +3,9 @@
  *
  * Copyright (C) Eric Biederman, 2005
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
+
 #include "attr.h"
 #include "config.h"
 #include "editor.h"
@@ -210,7 +212,10 @@ static int show_config(const char *var, const char *value,
 	return git_default_config(var, value, ctx, cb);
 }
 
-int cmd_var(int argc, const char **argv, const char *prefix UNUSED)
+int cmd_var(int argc,
+	    const char **argv,
+	    const char *prefix UNUSED,
+	    struct repository *repo UNUSED)
 {
 	const struct git_var *git_var;
 	char *val;

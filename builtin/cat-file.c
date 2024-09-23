@@ -3,7 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "convert.h"
@@ -191,7 +191,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			const char *ls_args[3] = { NULL };
 			ls_args[0] =  "ls-tree";
 			ls_args[1] =  obj_name;
-			ret = cmd_ls_tree(2, ls_args, NULL);
+			ret = cmd_ls_tree(2, ls_args, NULL, the_repository);
 			goto cleanup;
 		}
 
@@ -923,7 +923,10 @@ static int batch_option_callback(const struct option *opt,
 	return 0;
 }
 
-int cmd_cat_file(int argc, const char **argv, const char *prefix)
+int cmd_cat_file(int argc,
+		 const char **argv,
+		 const char *prefix,
+		 struct repository *repo UNUSED)
 {
 	int opt = 0;
 	int opt_cw = 0;

@@ -2,6 +2,7 @@
  * Another stupid program, this one parsing the headers of an
  * email to figure out authorship and subject
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "environment.h"
@@ -48,7 +49,10 @@ static int parse_opt_quoted_cr(const struct option *opt, const char *arg, int un
 	return 0;
 }
 
-int cmd_mailinfo(int argc, const char **argv, const char *prefix)
+int cmd_mailinfo(int argc,
+		 const char **argv,
+		 const char *prefix,
+		 struct repository *repo UNUSED)
 {
 	struct metainfo_charset meta_charset;
 	struct mailinfo mi;

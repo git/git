@@ -3,6 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "environment.h"
@@ -11,7 +12,6 @@
 #include "parse-options.h"
 #include "path.h"
 #include "refs.h"
-#include "repository.h"
 #include "setup.h"
 #include "strbuf.h"
 
@@ -70,7 +70,10 @@ static const char *const init_db_usage[] = {
  * On the other hand, it might just make lookup slower and messier. You
  * be the judge.  The default case is to have one DB per managed directory.
  */
-int cmd_init_db(int argc, const char **argv, const char *prefix)
+int cmd_init_db(int argc,
+		const char **argv,
+		const char *prefix,
+		struct repository *repo UNUSED)
 {
 	const char *git_dir;
 	const char *real_git_dir = NULL;

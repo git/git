@@ -1,9 +1,9 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "git-compat-util.h"
 #include "builtin.h"
 #include "parse-options.h"
 #include "diff.h"
 #include "gettext.h"
-#include "repository.h"
 #include "revision.h"
 #include "rerere.h"
 #include "sequencer.h"
@@ -261,7 +261,10 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 	return sequencer_pick_revisions(the_repository, opts);
 }
 
-int cmd_revert(int argc, const char **argv, const char *prefix)
+int cmd_revert(int argc,
+	       const char **argv,
+	       const char *prefix,
+	       struct repository *repo UNUSED)
 {
 	struct replay_opts opts = REPLAY_OPTS_INIT;
 	int res;
@@ -275,7 +278,10 @@ int cmd_revert(int argc, const char **argv, const char *prefix)
 	return res;
 }
 
-int cmd_cherry_pick(int argc, const char **argv, const char *prefix)
+int cmd_cherry_pick(int argc,
+const char **argv,
+const char *prefix,
+struct repository *repo UNUSED)
 {
 	struct replay_opts opts = REPLAY_OPTS_INIT;
 	int res;

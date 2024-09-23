@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "delta.h"
@@ -1718,7 +1719,10 @@ static void show_pack_info(int stat_only)
 	free(chain_histogram);
 }
 
-int cmd_index_pack(int argc, const char **argv, const char *prefix)
+int cmd_index_pack(int argc,
+		   const char **argv,
+		   const char *prefix,
+		   struct repository *repo UNUSED)
 {
 	int i, fix_thin_pack = 0, verify = 0, stat_only = 0, rev_index;
 	const char *curr_index;

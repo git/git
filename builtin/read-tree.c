@@ -3,7 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
@@ -16,7 +16,6 @@
 #include "cache-tree.h"
 #include "unpack-trees.h"
 #include "parse-options.h"
-#include "repository.h"
 #include "resolve-undo.h"
 #include "setup.h"
 #include "sparse-index.h"
@@ -108,7 +107,10 @@ static int git_read_tree_config(const char *var, const char *value,
 	return git_default_config(var, value, ctx, cb);
 }
 
-int cmd_read_tree(int argc, const char **argv, const char *cmd_prefix)
+int cmd_read_tree(int argc,
+		  const char **argv,
+		  const char *cmd_prefix,
+		  struct repository *repo UNUSED)
 {
 	int i, stage = 0;
 	struct object_id oid;

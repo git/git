@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "gettext.h"
@@ -5,7 +6,6 @@
 #include "strvec.h"
 #include "parse-options.h"
 #include "pkt-line.h"
-#include "repository.h"
 #include "bundle.h"
 
 /*
@@ -228,7 +228,10 @@ cleanup:
 	return ret;
 }
 
-int cmd_bundle(int argc, const char **argv, const char *prefix)
+int cmd_bundle(int argc,
+	       const char **argv,
+	       const char *prefix,
+	       struct repository *repo UNUSED)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option options[] = {

@@ -1,13 +1,13 @@
 /*
  * "git fetch"
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "advice.h"
 #include "config.h"
 #include "gettext.h"
 #include "environment.h"
 #include "hex.h"
-#include "repository.h"
 #include "refs.h"
 #include "refspec.h"
 #include "object-name.h"
@@ -2138,7 +2138,10 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 	return exit_code;
 }
 
-int cmd_fetch(int argc, const char **argv, const char *prefix)
+int cmd_fetch(int argc,
+	      const char **argv,
+	      const char *prefix,
+	      struct repository *repo UNUSED)
 {
 	struct fetch_config config = {
 		.display_format = DISPLAY_FORMAT_FULL,

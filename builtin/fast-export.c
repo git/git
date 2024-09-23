@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2007 Johannes E. Schindelin
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
@@ -1180,7 +1181,10 @@ static int parse_opt_anonymize_map(const struct option *opt,
 	return 0;
 }
 
-int cmd_fast_export(int argc, const char **argv, const char *prefix)
+int cmd_fast_export(int argc,
+		    const char **argv,
+		    const char *prefix,
+		    struct repository *repo UNUSED)
 {
 	struct rev_info revs;
 	struct commit *commit;

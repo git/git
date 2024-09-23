@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "credential.h"
 #include "builtin.h"
@@ -6,7 +8,10 @@
 static const char usage_msg[] =
 	"git credential (fill|approve|reject)";
 
-int cmd_credential(int argc, const char **argv, const char *prefix UNUSED)
+int cmd_credential(int argc,
+		   const char **argv,
+		   const char *prefix UNUSED,
+		   struct repository *repo UNUSED)
 {
 	const char *op;
 	struct credential c = CREDENTIAL_INIT;

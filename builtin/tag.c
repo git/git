@@ -5,7 +5,7 @@
  *                    Carlos Rica <jasampler@gmail.com>
  * Based on git-tag.sh and mktag.c by Linus Torvalds.
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "advice.h"
 #include "config.h"
@@ -458,7 +458,10 @@ static int strbuf_check_tag_ref(struct strbuf *sb, const char *name)
 	return check_refname_format(sb->buf, 0);
 }
 
-int cmd_tag(int argc, const char **argv, const char *prefix)
+int cmd_tag(int argc,
+	    const char **argv,
+	    const char *prefix,
+	    struct repository *repo UNUSED)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct strbuf ref = STRBUF_INIT;

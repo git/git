@@ -254,7 +254,10 @@ struct oid_array;
 struct ref;
 int for_each_commit_graft(each_commit_graft_fn, void *);
 
-int interactive_add(const char **argv, const char *prefix, int patch);
+int interactive_add(struct repository *repo,
+		    const char **argv,
+		    const char *prefix,
+		    int patch);
 
 struct commit_extra_header {
 	struct commit_extra_header *next;

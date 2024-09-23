@@ -1,6 +1,7 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
-#include "repository.h"
+
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
@@ -2480,7 +2481,10 @@ static int delete_only(struct command *commands)
 	return 1;
 }
 
-int cmd_receive_pack(int argc, const char **argv, const char *prefix)
+int cmd_receive_pack(int argc,
+		     const char **argv,
+		     const char *prefix,
+		     struct repository *repo UNUSED)
 {
 	int advertise_refs = 0;
 	struct command *commands;

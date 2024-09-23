@@ -7,8 +7,9 @@
  *
  * Clone a repository into a different directory that does not yet exist.
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
+
 #include "abspath.h"
 #include "advice.h"
 #include "config.h"
@@ -956,7 +957,10 @@ static int path_exists(const char *path)
 	return !stat(path, &sb);
 }
 
-int cmd_clone(int argc, const char **argv, const char *prefix)
+int cmd_clone(int argc,
+	      const char **argv,
+	      const char *prefix,
+	      struct repository *repository UNUSED)
 {
 	int is_bundle = 0, is_local;
 	int reject_shallow = 0;

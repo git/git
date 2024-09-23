@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "tree-walk.h"
 #include "xdiff-interface.h"
@@ -10,7 +11,6 @@
 #include "object-name.h"
 #include "object-store-ll.h"
 #include "parse-options.h"
-#include "repository.h"
 #include "blob.h"
 #include "merge-blobs.h"
 #include "quote.h"
@@ -526,7 +526,10 @@ static int real_merge(struct merge_tree_options *o,
 	return !result.clean; /* result.clean < 0 handled above */
 }
 
-int cmd_merge_tree(int argc, const char **argv, const char *prefix)
+int cmd_merge_tree(int argc,
+		   const char **argv,
+		   const char *prefix,
+		   struct repository *repo UNUSED)
 {
 	struct merge_tree_options o = { .show_messages = -1 };
 	struct strvec xopts = STRVEC_INIT;

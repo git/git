@@ -6,7 +6,7 @@
  * Based on git-notes.sh by Johannes Schindelin,
  * and builtin/tag.c by Kristian Høgsberg and Carlos Rica.
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "editor.h"
@@ -17,7 +17,7 @@
 #include "object-name.h"
 #include "object-store-ll.h"
 #include "path.h"
-#include "repository.h"
+
 #include "pretty.h"
 #include "refs.h"
 #include "exec-cmd.h"
@@ -1102,7 +1102,10 @@ static int get_ref(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-int cmd_notes(int argc, const char **argv, const char *prefix)
+int cmd_notes(int argc,
+	      const char **argv,
+	      const char *prefix,
+	      struct repository *repo UNUSED)
 {
 	const char *override_notes_ref = NULL;
 	parse_opt_subcommand_fn *fn = NULL;

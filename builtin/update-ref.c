@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
@@ -6,7 +7,6 @@
 #include "object-name.h"
 #include "parse-options.h"
 #include "quote.h"
-#include "repository.h"
 
 static const char * const git_update_ref_usage[] = {
 	N_("git update-ref [<options>] -d <refname> [<old-oid>]"),
@@ -713,7 +713,10 @@ static void update_refs_stdin(void)
 	strbuf_release(&input);
 }
 
-int cmd_update_ref(int argc, const char **argv, const char *prefix)
+int cmd_update_ref(int argc,
+		   const char **argv,
+		   const char *prefix,
+		   struct repository *repo UNUSED)
 {
 	const char *refname, *oldval;
 	struct object_id oid, oldoid;

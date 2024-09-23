@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "config.h"
@@ -10,7 +11,7 @@
 #include "compat/fsmonitor/fsm-health.h"
 #include "compat/fsmonitor/fsm-listen.h"
 #include "fsmonitor--daemon.h"
-#include "repository.h"
+
 #include "simple-ipc.h"
 #include "khash.h"
 #include "run-command.h"
@@ -1522,7 +1523,10 @@ static int try_to_start_background_daemon(void)
 	}
 }
 
-int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix)
+int cmd_fsmonitor__daemon(int argc,
+			  const char **argv,
+			  const char *prefix,
+			  struct repository *repo UNUSED)
 {
 	const char *subcmd;
 	enum fsmonitor_reason reason;
@@ -1585,7 +1589,7 @@ int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix)
 }
 
 #else
-int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix UNUSED)
+int cmd_fsmonitor__daemon(int argc, const char **argv, const char *prefix UNUSED, struct repository *repo UNUSED)
 {
 	struct option options[] = {
 		OPT_END()

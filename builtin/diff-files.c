@@ -3,13 +3,13 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "diff.h"
 #include "diff-merges.h"
 #include "commit.h"
 #include "preload-index.h"
-#include "repository.h"
 #include "revision.h"
 
 static const char diff_files_usage[] =
@@ -17,7 +17,10 @@ static const char diff_files_usage[] =
 "\n"
 COMMON_DIFF_OPTIONS_HELP;
 
-int cmd_diff_files(int argc, const char **argv, const char *prefix)
+int cmd_diff_files(int argc,
+		   const char **argv,
+		   const char *prefix,
+		   struct repository *repo UNUSED)
 {
 	struct rev_info rev;
 	int result;

@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "commit.h"
@@ -513,7 +514,10 @@ static int try_bitmap_disk_usage(struct rev_info *revs,
 	return 0;
 }
 
-int cmd_rev_list(int argc, const char **argv, const char *prefix)
+int cmd_rev_list(int argc,
+		 const char **argv,
+		 const char *prefix,
+		 struct repository *repo UNUSED)
 {
 	struct rev_info revs;
 	struct rev_list_info info;

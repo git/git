@@ -11,8 +11,9 @@
  *
  * Copyright (C) 2016 Johannes Schindelin
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
+
 #include "abspath.h"
 #include "config.h"
 #include "copy.h"
@@ -691,7 +692,10 @@ static int run_file_diff(int prompt, const char *prefix,
 	return run_command(child);
 }
 
-int cmd_difftool(int argc, const char **argv, const char *prefix)
+int cmd_difftool(int argc,
+		 const char **argv,
+		 const char *prefix,
+		 struct repository *repo UNUSED)
 {
 	int use_gui_tool = -1, dir_diff = 0, prompt = -1, symlinks = 0,
 	    tool_help = 0, no_index = 0;

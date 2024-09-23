@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "dir.h"
@@ -7,7 +8,6 @@
 #include "object-name.h"
 #include "parse-options.h"
 #include "pathspec.h"
-#include "repository.h"
 #include "strbuf.h"
 #include "string-list.h"
 #include "lockfile.h"
@@ -1029,7 +1029,10 @@ static int sparse_checkout_check_rules(int argc, const char **argv, const char *
 	return ret;
 }
 
-int cmd_sparse_checkout(int argc, const char **argv, const char *prefix)
+int cmd_sparse_checkout(int argc,
+			const char **argv,
+			const char *prefix,
+			struct repository *repo UNUSED)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option builtin_sparse_checkout_options[] = {
