@@ -132,6 +132,7 @@ static void read_input_file(struct strbuf *sb, const char *file)
 		if (strbuf_read(sb, fileno(stdin), 0) < 0)
 			die_errno(_("could not read from stdin"));
 	}
+	strbuf_complete_line(sb);
 }
 
 static void interpret_trailers(const struct process_trailer_options *opts,
