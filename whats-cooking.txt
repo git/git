@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2024, #08; Fri, 20)
-X-master-at: 94b60adee30619a05296cf5ed6addb0e6d4e25dc
-X-next-at: 96924663e5beccee39a6b05a056c6eb90f5c7fd4
+Subject: What's cooking in git.git (Sep 2024, #09; Mon, 23)
+X-master-at: 6258f68c3c1092c901337895c864073dcdea9213
+X-next-at: 9e56e24342b63402383dac8197c69a61bde831a1
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2024, #08; Fri, 20)
+What's cooking in git.git (Sep 2024, #09; Mon, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,10 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+A bit more topics that have already graduated to 'master' have been
+merged down to 'maint' and Git 2.46.2 has been tagged.  Since many
+people were out last week, not many topics have moved.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -46,7 +50,145 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ak/typofixes (2024-09-16) 3 commits
+  (merged to 'next' on 2024-09-16 at 4bbdd5ce45)
+ + cbtree: fix a typo
+ + bloom: fix a typo
+ + attr: fix a typo
+
+ Trivial typofixes.
+ 
+ source: <20240915230522.129253-1-algonell@gmail.com>
+
+
+* jc/pass-repo-to-builtins (2024-09-13) 4 commits
+  (merged to 'next' on 2024-09-16 at 7711bb0214)
+ + add: pass in repo variable instead of global the_repository
+ + builtin: remove USE_THE_REPOSITORY for those without the_repository
+ + builtin: remove USE_THE_REPOSITORY_VARIABLE from builtin.h
+ + builtin: add a repository parameter for builtin functions
+
+ The convention to calling into built-in command implementation has
+ been updated to pass the repository, if known, together with the
+ prefix value.
+ 
+ source: <pull.1778.v3.git.git.1726262177.gitgitgadget@gmail.com>
+
+
+* jc/t5512-sigpipe-fix (2024-09-13) 1 commit
+  (merged to 'next' on 2024-09-16 at 96075b5dd1)
+ + t5512.40 sometimes dies by SIGPIPE
+
+ Test fix.
+ 
+ source: <xmqqmskbwe1a.fsf@gitster.g>
+
+
+* jk/diag-unexpected-remote-helper-death (2024-09-14) 1 commit
+  (merged to 'next' on 2024-09-16 at f2aa29beac)
+ + print an error when remote helpers die during capabilities
+
+ When a remote-helper dies before Git writes to it, SIGPIPE killed
+ Git silently.  We now explain the situation a bit better to the end
+ user in our error message.
+ 
+ source: <20240914064130.GA1284567@coredump.intra.peff.net>
+
+
+* jk/jump-quickfix-fixes (2024-09-16) 2 commits
+  (merged to 'next' on 2024-09-16 at 53aa9e5b22)
+ + git-jump: ignore deleted files in diff mode
+ + git-jump: always specify column 1 for diff entries
+
+ A few usability fixes to "git jump" (in contrib/).
+ 
+ source: <20240915111119.GA2017770@coredump.intra.peff.net>
+
+
+* jk/t9001-deflake (2024-09-16) 1 commit
+  (merged to 'next' on 2024-09-16 at 285ebc4223)
+ + t9001: use a more distinct fake BugID
+
+ Test fix.
+ 
+ source: <20240915113115.GA2019070@coredump.intra.peff.net>
+
+
+* ps/environ-wo-the-repository (2024-09-12) 21 commits
+  (merged to 'next' on 2024-09-16 at c08e3eb6b8)
+ + environment: stop storing "core.notesRef" globally
+ + environment: stop storing "core.warnAmbiguousRefs" globally
+ + environment: stop storing "core.preferSymlinkRefs" globally
+ + environment: stop storing "core.logAllRefUpdates" globally
+ + refs: stop modifying global `log_all_ref_updates` variable
+ + branch: stop modifying `log_all_ref_updates` variable
+ + repo-settings: track defaults close to `struct repo_settings`
+ + repo-settings: split out declarations into a standalone header
+ + environment: guard state depending on a repository
+ + environment: reorder header to split out `the_repository`-free section
+ + environment: move `set_git_dir()` and related into setup layer
+ + environment: make `get_git_namespace()` self-contained
+ + environment: move object database functions into object layer
+ + config: make dependency on repo in `read_early_config()` explicit
+ + config: document `read_early_config()` and `read_very_early_config()`
+ + environment: make `get_git_work_tree()` accept a repository
+ + environment: make `get_graft_file()` accept a repository
+ + environment: make `get_index_file()` accept a repository
+ + environment: make `get_object_directory()` accept a repository
+ + environment: make `get_git_common_dir()` accept a repository
+ + environment: make `get_git_dir()` accept a repository
+
+ Code clean-up.
+ 
+ source: <cover.1726139990.git.ps@pks.im>
+
+--------------------------------------------------
 [New Topics]
+
+* es/worktree-repair-copied (2024-09-23) 1 commit
+ - worktree: repair copied repository and linked worktrees
+
+ The heuristics in "git worktree repair" can be confused when a
+ worktree and its repository are copied and break correctly
+ configured worktree and repository that point at each other, which
+ has been corrected.
+
+ Needs review.
+ source: <20240923075416.54289-1-ericsunshine@charter.net>
+
+
+* rs/archive-with-attr-pathspec-fix (2024-09-23) 1 commit
+ - archive: load index before pathspec checks
+
+ "git archive" with pathspec magic that uses the attribute
+ information did not work well, which has been corrected.
+
+ Will merge to 'next'.
+ source: <66c3e9fa-ecfe-4af2-a970-c1afdbc2b7f2@web.de>
+
+
+* rs/commit-graph-ununleak (2024-09-23) 1 commit
+ - commit-graph: remove unnecessary UNLEAK
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <c3a712d5-8e50-453d-be90-f5bf34de744c@web.de>
+
+
+* rs/diff-exit-code-binary (2024-09-23) 1 commit
+ - diff: report modified binary files as changes in builtin_diff()
+
+ "git diff --exit-code" ignored modified binary files, which has
+ been corrected.
+
+ Will merge to 'next'.
+ source: <500a8e0a-9fbd-4b7b-b2f2-026a4293bc9f@web.de>
+
+--------------------------------------------------
+[Cooking]
 
 * ak/refs-symref-referent-typofix (2024-09-19) 1 commit
   (merged to 'next' on 2024-09-19 at 1b00b05df1)
@@ -87,11 +229,12 @@ Release tarballs are available at:
 
 
 * cb/ci-freebsd-13-4 (2024-09-20) 1 commit
- - ci: update FreeBSD image to 13.4
+  (merged to 'next' on 2024-09-23 at 18be138bfd)
+ + ci: update FreeBSD image to 13.4
 
  CI updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20240920201409.8723-1-carenas@gmail.com>
 
 
@@ -112,6 +255,13 @@ Release tarballs are available at:
  - maintenance: add custom config to background jobs
  - credential: add new interactive config option
 
+ Background tasks "git maintenance" runs may need to use credential
+ information when going over the network, but a credential helper
+ may work only in an interactive environment, and end up blocking a
+ scheduled task waiting for UI.  Credential helpers can now behave
+ differently when they are not running interactively.
+
+ Will merge to 'next'.
  source: <pull.1798.git.1726790423.gitgitgadget@gmail.com>
 
 
@@ -141,7 +291,7 @@ Release tarballs are available at:
 
  Give timeout to the locking code to write to reftable.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <cover.1726653185.git.ps@pks.im>
 
 
@@ -153,105 +303,9 @@ Release tarballs are available at:
  but gave a generic "failed to work in that submodule", which was
  misleading.  We now behave as if the parent got SIGPIPE and die.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.1799.git.1726837642511.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Graduated to 'master']
-
-* bb/unicode-width-table-16 (2024-09-12) 1 commit
-  (merged to 'next' on 2024-09-13 at 87dc391469)
- + unicode: update the width tables to Unicode 16
-
- Update the character width table for Unicode 16.
- 
- source: <20240912204047.1020213-1-dev+git@drbeat.li>
-
-
-* jk/git-pm-bare-repo-fix (2024-09-13) 2 commits
-  (merged to 'next' on 2024-09-13 at 7f9bb8501c)
- + Git.pm: use "rev-parse --absolute-git-dir" rather than perl code
- + Git.pm: fix bare repository search with Directory option
-
- In Git 2.39, Git.pm stopped working in a bare repository, which has
- been corrected.
- 
- source: <20240912223413.GA649897@coredump.intra.peff.net>
-
-
-* jk/interop-test-build-options (2024-09-12) 1 commit
-  (merged to 'next' on 2024-09-13 at 0ab66e77a1)
- + t/interop: allow per-version make options
-
- The support to customize build options to adjust for older versions
- and/or older systems for the interop tests has been improved.
- 
- source: <20240911061009.GA1538383@coredump.intra.peff.net>
-
-
-* jk/no-openssl-with-openssl-sha1 (2024-09-12) 1 commit
-  (merged to 'next' on 2024-09-13 at 07f5e4856d)
- + imap-send: handle NO_OPENSSL even when openssl exists
-
- The "imap-send" now allows to be compiled with NO_OPENSSL and
- OPENSSL_SHA1 defined together.
- 
- source: <20240911061257.GA1538490@coredump.intra.peff.net>
-
-
-* ma/test-libcurl-prereq (2024-09-11) 2 commits
-  (merged to 'next' on 2024-09-13 at 6d4ad6b054)
- + t0211: add missing LIBCURL prereq
- + t1517: add missing LIBCURL prereq
-
- Test portability fix.
- 
- source: <cover.1726049108.git.martin.agren@gmail.com>
-
-
-* ps/leakfixes-part-6 (2024-09-05) 22 commits
-  (merged to 'next' on 2024-09-13 at 9be3125b10)
- + builtin/repack: fix leaking keep-pack list
- + merge-ort: fix two leaks when handling directory rename modifications
- + match-trees: fix leaking prefixes in `shift_tree()`
- + builtin/fmt-merge-msg: fix leaking buffers
- + builtin/grep: fix leaking object context
- + builtin/pack-objects: plug leaking list of keep-packs
- + builtin/repack: fix leaking line buffer when packing promisors
- + negotiator/skipping: fix leaking commit entries
- + shallow: fix leaking members of `struct shallow_info`
- + shallow: free grafts when unregistering them
- + object: clear grafts when clearing parsed object pool
- + gpg-interface: fix misdesigned signing key interfaces
- + send-pack: fix leaking push cert nonce
- + remote: fix leak in reachability check of a remote-tracking ref
- + remote: fix leaking tracking refs
- + builtin/submodule--helper: fix leaking refs on push-check
- + submodule: fix leaking fetch task data
- + upload-pack: fix leaking child process data on reachability checks
- + builtin/push: fix leaking refspec query result
- + send-pack: fix leaking common object IDs
- + fetch-pack: fix memory leaks on fetch negotiation
- + t/test-lib: allow skipping leak checks for passing tests
- (this branch is used by ps/leakfixes-part-7.)
-
- More leakfixes.
- 
- source: <cover.1725530720.git.ps@pks.im>
-
-
-* pw/rebase-autostash-fix (2024-09-03) 1 commit
-  (merged to 'next' on 2024-09-13 at 6b41d66efd)
- + rebase: apply and cleanup autostash when rebase fails to start
-
- "git rebase --autostash" failed to resurrect the autostashed
- changes when the command gets aborted after giving back control
- asking for hlep in conflict resolution.
- 
- source: <pull.1772.v2.git.1725289979450.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * jc/cmake-unit-test-updates (2024-09-18) 4 commits
   (merged to 'next' on 2024-09-19 at d892dcdcdd)
@@ -265,51 +319,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <pull.1797.git.1726687769585.gitgitgadget@gmail.com>
-
-
-* jk/diag-unexpected-remote-helper-death (2024-09-14) 1 commit
-  (merged to 'next' on 2024-09-16 at f2aa29beac)
- + print an error when remote helpers die during capabilities
-
- When a remote-helper dies before Git writes to it, SIGPIPE killed
- Git silently.  We now explain the situation a bit better to the end
- user in our error message.
-
- Will merge to 'master'.
- source: <20240914064130.GA1284567@coredump.intra.peff.net>
-
-
-* ak/typofixes (2024-09-16) 3 commits
-  (merged to 'next' on 2024-09-16 at 4bbdd5ce45)
- + cbtree: fix a typo
- + bloom: fix a typo
- + attr: fix a typo
-
- Trivial typofixes.
-
- Will merge to 'master'.
- source: <20240915230522.129253-1-algonell@gmail.com>
-
-
-* jk/jump-quickfix-fixes (2024-09-16) 2 commits
-  (merged to 'next' on 2024-09-16 at 53aa9e5b22)
- + git-jump: ignore deleted files in diff mode
- + git-jump: always specify column 1 for diff entries
-
- A few usability fixes to "git jump" (in contrib/).
-
- Will merge to 'master'.
- source: <20240915111119.GA2017770@coredump.intra.peff.net>
-
-
-* jk/t9001-deflake (2024-09-16) 1 commit
-  (merged to 'next' on 2024-09-16 at 285ebc4223)
- + t9001: use a more distinct fake BugID
-
- Test fix.
-
- Will merge to 'master'.
- source: <20240915113115.GA2019070@coredump.intra.peff.net>
 
 
 * ps/apply-leakfix (2024-09-17) 6 commits
@@ -408,16 +417,6 @@ Release tarballs are available at:
  source: <20240912205301.1809355-1-gitster@pobox.com>
 
 
-* jc/t5512-sigpipe-fix (2024-09-13) 1 commit
-  (merged to 'next' on 2024-09-16 at 96075b5dd1)
- + t5512.40 sometimes dies by SIGPIPE
-
- Test fix.
-
- Will merge to 'master'.
- source: <xmqqmskbwe1a.fsf@gitster.g>
-
-
 * cc/promisor-remote-capability (2024-09-10) 4 commits
  - promisor-remote: check advertised name or URL
  - Add 'promisor-remote' capability to protocol v2
@@ -448,7 +447,8 @@ Release tarballs are available at:
  that only blobs at the same path and nothing else are used as
  delta-base candidate.
 
- Will merge to 'next'?
+ On hold.
+ cf. <34346998-deac-4e1f-9d5f-218f664e9e08@gmail.com>
  source: <pull.1785.v2.git.1726692381.gitgitgadget@gmail.com>
 
 
@@ -470,21 +470,6 @@ Release tarballs are available at:
  source: <cover.1726476401.git.ps@pks.im>
 
 
-* jc/pass-repo-to-builtins (2024-09-13) 4 commits
-  (merged to 'next' on 2024-09-16 at 7711bb0214)
- + add: pass in repo variable instead of global the_repository
- + builtin: remove USE_THE_REPOSITORY for those without the_repository
- + builtin: remove USE_THE_REPOSITORY_VARIABLE from builtin.h
- + builtin: add a repository parameter for builtin functions
-
- The convention to calling into built-in command implementation has
- been updated to pass the repository, if known, together with the
- prefix value.
-
- Will merge to 'master'.
- source: <pull.1778.v3.git.git.1726262177.gitgitgadget@gmail.com>
-
-
 * tb/weak-sha1-for-tail-sum (2024-09-06) 9 commits
  - csum-file.c: use fast SHA-1 implementation when available
  - Makefile: allow specifying a SHA-1 for non-cryptographic uses
@@ -502,36 +487,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <ZugMUv1xbnjYH-el@pks.im>
  source: <cover.1725651952.git.me@ttaylorr.com>
-
-
-* ps/environ-wo-the-repository (2024-09-12) 21 commits
-  (merged to 'next' on 2024-09-16 at c08e3eb6b8)
- + environment: stop storing "core.notesRef" globally
- + environment: stop storing "core.warnAmbiguousRefs" globally
- + environment: stop storing "core.preferSymlinkRefs" globally
- + environment: stop storing "core.logAllRefUpdates" globally
- + refs: stop modifying global `log_all_ref_updates` variable
- + branch: stop modifying `log_all_ref_updates` variable
- + repo-settings: track defaults close to `struct repo_settings`
- + repo-settings: split out declarations into a standalone header
- + environment: guard state depending on a repository
- + environment: reorder header to split out `the_repository`-free section
- + environment: move `set_git_dir()` and related into setup layer
- + environment: make `get_git_namespace()` self-contained
- + environment: move object database functions into object layer
- + config: make dependency on repo in `read_early_config()` explicit
- + config: document `read_early_config()` and `read_very_early_config()`
- + environment: make `get_git_work_tree()` accept a repository
- + environment: make `get_graft_file()` accept a repository
- + environment: make `get_index_file()` accept a repository
- + environment: make `get_object_directory()` accept a repository
- + environment: make `get_git_common_dir()` accept a repository
- + environment: make `get_git_dir()` accept a repository
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <cover.1726139990.git.ps@pks.im>
 
 
 * gt/unit-test-oidset (2024-08-25) 1 commit
@@ -621,7 +576,8 @@ Release tarballs are available at:
  been revamped.  The sources, at least for the simple cases, got
  vastly pleasant to work with.
 
- Will merge to 'master'.
+ On hold.
+ cf. <xmqqh6a6496d.fsf@gitster.g>
  source: <pull.1766.v4.git.1725573126.gitgitgadget@gmail.com>
 
 
