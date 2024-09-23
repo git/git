@@ -117,7 +117,7 @@ Cf. <20140304174806.GA11561@sigill.intra.peff.net>.
 
 * The git-pack-redundant(1) command can be used to remove redundant pack files.
   The subcommand is unusably slow and the reason why nobody reports it as a
-  performance bug is suspected to be the absense of users. We have nominated
+  performance bug is suspected to be the absence of users. We have nominated
   the command for removal and have started to emit a user-visible warning in
   c3b58472be (pack-redundant: gauge the usage before proposing its removal,
   2020-08-25) whenever the command is executed.

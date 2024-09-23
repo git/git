@@ -54,7 +54,7 @@ implementation, for very large changes).
 
 For non-technical decisions such as community norms or processes, it is up to
 the community as a whole to implement and sustain agreed-upon changes.
-The project leadership committe (PLC) may help the implementation of
+The project leadership committee (PLC) may help the implementation of
 policy decisions.
 
 

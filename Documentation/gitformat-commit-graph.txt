@@ -122,7 +122,7 @@ All multi-byte numbers are in network byte order.
       for commits with corrected commit date offsets that cannot be
       stored within 31 bits.
     * Generation Data Overflow chunk is present only when Generation Data
-      chunk is present and atleast one corrected commit date offset cannot
+      chunk is present and at least one corrected commit date offset cannot
       be stored within 31 bits.
 
 ==== Extra Edge List (ID: {'E', 'D', 'G', 'E'}) [Optional]
