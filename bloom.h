@@ -18,7 +18,7 @@ struct bloom_filter_settings {
 
 	/*
 	 * The number of times a path is hashed, i.e. the
-	 * number of bit positions tht cumulatively
+	 * number of bit positions that cumulatively
 	 * determine whether a path is present in the
 	 * Bloom filter.
 	 */

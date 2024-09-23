@@ -187,7 +187,7 @@ static void all_attrs_init(struct attr_hashmap *map, struct attr_check *check)
 }
 
 /*
- * Atribute name cannot begin with "builtin_" which
+ * Attribute name cannot begin with "builtin_" which
  * is a reserved namespace for built in attributes values.
  */
 static int attr_name_reserved(const char *name)
