@@ -89,11 +89,18 @@ static int recvline(struct helper_data *helper, struct strbuf *buffer)
 	return recvline_fh(helper->out, buffer);
 }
 
-static void write_constant(int fd, const char *str)
+static int write_constant_gently(int fd, const char *str)
 {
 	if (debug)
 		fprintf(stderr, "Debug: Remote helper: -> %s", str);
 	if (write_in_full(fd, str, strlen(str)) < 0)
+		return -1;
+	return 0;
+}
+
+static void write_constant(int fd, const char *str)
+{
+	if (write_constant_gently(fd, str) < 0)
 		die_errno(_("full write to remote helper failed"));
 }
 
@@ -168,13 +175,16 @@ static struct child_process *get_helper(struct transport *transport)
 		die_errno(_("can't dup helper output fd"));
 	data->out = xfdopen(duped, "r");
 
-	write_constant(helper->in, "capabilities\n");
+	sigchain_push(SIGPIPE, SIG_IGN);
+	if (write_constant_gently(helper->in, "capabilities\n") < 0)
+		die("remote helper '%s' aborted session", data->name);
+	sigchain_pop(SIGPIPE);
 
 	while (1) {
 		const char *capname, *arg;
 		int mandatory = 0;
 		if (recvline(data, &buf))
-			exit(128);
+			die("remote helper '%s' aborted session", data->name);
 
 		if (!*buf.buf)
 			break;

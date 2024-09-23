@@ -344,4 +344,15 @@ test_expect_success 'fetch tag' '
 	compare_refs local v1.0 server v1.0
 '
 
+test_expect_success 'totally broken helper reports failure message' '
+	write_script git-remote-broken <<-\EOF &&
+	read cap_cmd
+	exit 1
+	EOF
+	test_must_fail \
+		env PATH="$PWD:$PATH" \
+		git clone broken://example.com/foo.git 2>stderr &&
+	grep aborted stderr
+'
+
 test_done
