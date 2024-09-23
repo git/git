@@ -145,6 +145,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * The error messages from the test script checker have been improved.
 
+ * The convention to calling into built-in command implementation has
+   been updated to pass the repository, if known, together with the
+   prefix value.
+
 
 Fixes since v2.46
 -----------------
@@ -267,6 +271,16 @@ Fixes since v2.46
    been corrected.
    (merge d3edb0bdde jk/git-pm-bare-repo-fix later to maint).
 
+ * When a remote-helper dies before Git writes to it, SIGPIPE killed
+   Git silently.  We now explain the situation a bit better to the end
+   user in our error message.
+   (merge 6e7fac9bca jk/diag-unexpected-remote-helper-death later to maint).
+
+ * A few usability fixes to "git jump" (in contrib/).
+   (merge 083b82544d jk/jump-quickfix-fixes later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge be10ac7037 jc/mailinfo-header-cleanup later to maint).
    (merge 4460e052e0 jc/range-diff-lazy-setup later to maint).
+   (merge 0627c58e7a ak/typofixes later to maint).
+   (merge 83799f1500 jk/t9001-deflake later to maint).
