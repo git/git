@@ -683,6 +683,7 @@ void repair_worktree_at_path(const char *path,
 	struct strbuf gitdir = STRBUF_INIT;
 	struct strbuf olddotgit = STRBUF_INIT;
 	char *backlink = NULL;
+	char *inferred_backlink = NULL;
 	const char *repair = NULL;
 	int err;
 
@@ -698,18 +699,54 @@ void repair_worktree_at_path(const char *path,
 		goto done;
 	}
 
+	inferred_backlink = infer_backlink(realdotgit.buf);
 	backlink = xstrdup_or_null(read_gitfile_gently(realdotgit.buf, &err));
 	if (err == READ_GITFILE_ERR_NOT_A_FILE) {
 		fn(1, realdotgit.buf, _("unable to locate repository; .git is not a file"), cb_data);
 		goto done;
 	} else if (err == READ_GITFILE_ERR_NOT_A_REPO) {
-		if (!(backlink = infer_backlink(realdotgit.buf))) {
+		if (inferred_backlink) {
+			/*
+			 * Worktree's .git file does not point at a repository
+			 * but we found a .git/worktrees/<id> in this
+			 * repository with the same <id> as recorded in the
+			 * worktree's .git file so make the worktree point at
+			 * the discovered .git/worktrees/<id>. (Note: backlink
+			 * is already NULL, so no need to free it first.)
+			 */
+			backlink = inferred_backlink;
+			inferred_backlink = NULL;
+		} else {
 			fn(1, realdotgit.buf, _("unable to locate repository; .git file does not reference a repository"), cb_data);
 			goto done;
 		}
 	} else if (err) {
 		fn(1, realdotgit.buf, _("unable to locate repository; .git file broken"), cb_data);
 		goto done;
+	}
+
+	/*
+	 * If we got this far, either the worktree's .git file pointed at a
+	 * valid repository (i.e. read_gitfile_gently() returned success) or
+	 * the .git file did not point at a repository but we were able to
+	 * infer a suitable new value for the .git file by locating a
+	 * .git/worktrees/<id> in *this* repository corresponding to the <id>
+	 * recorded in the worktree's .git file.
+	 *
+	 * However, if, at this point, inferred_backlink is non-NULL (i.e. we
+	 * found a suitable .git/worktrees/<id> in *this* repository) *and* the
+	 * worktree's .git file points at a valid repository *and* those two
+	 * paths differ, then that indicates that the user probably *copied*
+	 * the main and linked worktrees to a new location as a unit rather
+	 * than *moving* them. Thus, the copied worktree's .git file actually
+	 * points at the .git/worktrees/<id> in the *original* repository, not
+	 * in the "copy" repository. In this case, point the "copy" worktree's
+	 * .git file at the "copy" repository.
+	 */
+	if (inferred_backlink && fspathcmp(backlink, inferred_backlink)) {
+		free(backlink);
+		backlink = inferred_backlink;
+		inferred_backlink = NULL;
 	}
 
 	strbuf_addf(&gitdir, "%s/gitdir", backlink);
@@ -727,6 +764,7 @@ void repair_worktree_at_path(const char *path,
 	}
 done:
 	free(backlink);
+	free(inferred_backlink);
 	strbuf_release(&olddotgit);
 	strbuf_release(&gitdir);
 	strbuf_release(&realdotgit);
