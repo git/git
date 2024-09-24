@@ -4438,7 +4438,7 @@ int cmd_pack_objects(int argc,
 				N_("protocol"),
 				N_("exclude any configured uploadpack.blobpackfileuri with this protocol")),
 		OPT_BOOL(0, "full-name-hash", &use_full_name_hash,
-			 N_("optimize delta compression across identical path names over time")),
+			 N_("(EXPERIMENTAL!) optimize delta compression across identical path names over time")),
 		OPT_END(),
 	};
 
