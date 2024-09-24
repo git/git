@@ -2,6 +2,7 @@
 #define PARSE_OPTIONS_H
 
 #include "gettext.h"
+#include "repository.h"
 
 /**
  * Refer to Documentation/technical/api-parse-options.txt for the API doc.
@@ -14,6 +15,7 @@ enum parse_opt_type {
 	OPTION_NUMBER,
 	OPTION_ALIAS,
 	OPTION_SUBCOMMAND,
+	OPTION_REPO_SUBCOMMAND,
 	/* options with no arguments */
 	OPTION_BIT,
 	OPTION_NEGBIT,
@@ -74,6 +76,11 @@ typedef enum parse_opt_result parse_opt_ll_cb(struct parse_opt_ctx_t *ctx,
 
 typedef int parse_opt_subcommand_fn(int argc, const char **argv,
 				    const char *prefix);
+
+typedef int parse_opt_subcommand_repo_fn(struct repository *repo,
+					 int argc, const char **argv,
+					 const char *prefix);
+
 
 /*
  * `type`::
@@ -158,6 +165,7 @@ struct option {
 	parse_opt_ll_cb *ll_callback;
 	intptr_t extra;
 	parse_opt_subcommand_fn *subcommand_fn;
+	parse_opt_subcommand_repo_fn *subcommand_repo_fn;
 };
 
 #define OPT_BIT_F(s, l, v, h, b, f) { \
@@ -366,6 +374,16 @@ struct option {
 	.subcommand_fn = (fn), \
 }
 #define OPT_SUBCOMMAND(l, v, fn)    OPT_SUBCOMMAND_F((l), (v), (fn), 0)
+
+#define OPT_SUBCOMMAND_REPO_F(l, v, repo_fn) { \
+	.type = OPTION_REPO_SUBCOMMAND, \
+	.long_name = (l), \
+	.value = (v), \
+	.flags = 0, \
+	.subcommand_repo_fn = (repo_fn), \
+}
+#define OPT_REPO_SUBCOMMAND(l, v, repo_fn)    OPT_SUBCOMMAND_REPO_F((l), (v), (repo_fn))
+
 
 /*
  * parse_options() will filter out the processed options and leave the

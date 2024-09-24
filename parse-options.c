@@ -470,13 +470,19 @@ static enum parse_opt_result parse_nodash_opt(struct parse_opt_ctx_t *p,
 static enum parse_opt_result parse_subcommand(const char *arg,
 					      const struct option *options)
 {
-	for (; options->type != OPTION_END; options++)
+	for (; options->type != OPTION_END; options++) {
 		if (options->type == OPTION_SUBCOMMAND &&
 		    !strcmp(options->long_name, arg)) {
 			*(parse_opt_subcommand_fn **)options->value = options->subcommand_fn;
 			return PARSE_OPT_SUBCOMMAND;
 		}
 
+		if (options->type == OPTION_REPO_SUBCOMMAND &&
+		    !strcmp(options->long_name, arg)) {
+			*(parse_opt_subcommand_repo_fn **)options->value = options->subcommand_repo_fn;
+			return PARSE_OPT_SUBCOMMAND;
+		}
+	}
 	return PARSE_OPT_UNKNOWN;
 }
 
@@ -575,7 +581,8 @@ static void parse_options_check(const struct option *opts)
 static int has_subcommands(const struct option *options)
 {
 	for (; options->type != OPTION_END; options++)
-		if (options->type == OPTION_SUBCOMMAND)
+		if (options->type == OPTION_SUBCOMMAND ||
+		    options->type == OPTION_REPO_SUBCOMMAND)
 			return 1;
 	return 0;
 }
