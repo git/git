@@ -375,7 +375,7 @@ static void start_put(struct transfer_request *request)
 	/* Set it up */
 	git_deflate_init(&stream, zlib_compression_level);
 	size = git_deflate_bound(&stream, len + hdrlen);
-	strbuf_init(&request->buffer.buf, size);
+	strbuf_grow(&request->buffer.buf, size);
 	request->buffer.posn = 0;
 
 	/* Compress it */
@@ -515,6 +515,7 @@ static void release_request(struct transfer_request *request)
 
 	free(request->url);
 	free(request->dest);
+	strbuf_release(&request->buffer.buf);
 	free(request);
 }
 
@@ -655,6 +656,7 @@ static void add_fetch_request(struct object *obj)
 	CALLOC_ARRAY(request, 1);
 	request->obj = obj;
 	request->state = NEED_FETCH;
+	strbuf_init(&request->buffer.buf, 0);
 	request->next = request_queue_head;
 	request_queue_head = request;
 
@@ -689,6 +691,7 @@ static int add_send_request(struct object *obj, struct remote_lock *lock)
 	request->obj = obj;
 	request->lock = lock;
 	request->state = NEED_PUSH;
+	strbuf_init(&request->buffer.buf, 0);
 	request->next = request_queue_head;
 	request_queue_head = request;
 
