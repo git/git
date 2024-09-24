@@ -1374,9 +1374,13 @@ static int get_delta(struct rev_info *revs, struct remote_lock *lock)
 	}
 
 	while (objects) {
+		struct object_list *next = objects->next;
+
 		if (!(objects->item->flags & UNINTERESTING))
 			count += add_send_request(objects->item, lock);
-		objects = objects->next;
+
+		free(objects);
+		objects = next;
 	}
 
 	return count;
