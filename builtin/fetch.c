@@ -456,6 +456,7 @@ static void filter_prefetch_refspec(struct refspec *rs)
 
 			free(rs->items[i].src);
 			free(rs->items[i].dst);
+			free(rs->raw[i]);
 
 			for (j = i + 1; j < rs->nr; j++) {
 				rs->items[j - 1] = rs->items[j];
