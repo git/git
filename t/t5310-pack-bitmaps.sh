@@ -27,6 +27,32 @@ has_any () {
 	grep -Ff "$1" "$2"
 }
 
+# Since name-hash values are stored in the .bitmap files, add a test
+# that checks that the name-hash calculations are stable across versions.
+# Not exhaustive, but these hashing algorithms would be hard to change
+# without causing deviations here.
+test_expect_success 'name-hash value stability' '
+	cat >names <<-\EOF &&
+	first
+	second
+	third
+	one-long-enough-for-collisions
+	two-long-enough-for-collisions
+	EOF
+
+	test-tool name-hash <names >out &&
+
+	cat >expect <<-\EOF &&
+	2582249472	3109209818	first
+	2289942528	3781118409	second
+	2300837888	3028707182	third
+	2544516325	3241327563	one-long-enough-for-collisions
+	2544516325	4207880830	two-long-enough-for-collisions
+	EOF
+
+	test_cmp expect out
+'
+
 test_bitmap_cases () {
 	writeLookupTable=false
 	for i in "$@"

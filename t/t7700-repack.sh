@@ -777,6 +777,13 @@ test_expect_success 'repack -ad cleans up old .tmp-* packs' '
 	test_must_be_empty tmpfiles
 '
 
+test_expect_success '--full-name-hash option passes through to pack-objects' '
+	GIT_TRACE2_EVENT="$(pwd)/full-trace.txt" \
+		git repack -a --full-name-hash &&
+	test_subcommand_flex git pack-objects --full-name-hash <full-trace.txt
+'
+
+
 test_expect_success 'setup for update-server-info' '
 	git init update-server-info &&
 	test_commit -C update-server-info message
