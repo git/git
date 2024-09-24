@@ -770,7 +770,7 @@ static int prepare_transaction_update(struct write_transaction_table_arg **out,
 		if (ret)
 			return ret;
 
-		ret = reftable_stack_new_addition(&addition, stack);
+		ret = reftable_stack_new_addition(&addition, stack, 0);
 		if (ret) {
 			if (ret == REFTABLE_LOCK_ERROR)
 				strbuf_addstr(err, "cannot lock references");
@@ -2207,7 +2207,7 @@ static int reftable_be_reflog_expire(struct ref_store *ref_store,
 	if (ret < 0)
 		goto done;
 
-	ret = reftable_stack_new_addition(&add, stack);
+	ret = reftable_stack_new_addition(&add, stack, 0);
 	if (ret < 0)
 		goto done;
 

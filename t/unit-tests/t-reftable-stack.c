@@ -271,7 +271,7 @@ static void t_reftable_stack_transaction_api(void)
 
 	reftable_addition_destroy(add);
 
-	err = reftable_stack_new_addition(&add, st);
+	err = reftable_stack_new_addition(&add, st, 0);
 	check(!err);
 
 	err = reftable_addition_add(add, write_test_ref, &ref);
@@ -289,6 +289,68 @@ static void t_reftable_stack_transaction_api(void)
 
 	reftable_ref_record_release(&dest);
 	reftable_stack_destroy(st);
+	clear_dir(dir);
+}
+
+static void t_reftable_stack_transaction_with_reload(void)
+{
+	char *dir = get_tmp_dir(__LINE__);
+	struct reftable_stack *st1 = NULL, *st2 = NULL;
+	int err;
+	struct reftable_addition *add = NULL;
+	struct reftable_ref_record refs[2] = {
+		{
+			.refname = (char *) "refs/heads/a",
+			.update_index = 1,
+			.value_type = REFTABLE_REF_VAL1,
+			.value.val1 = { '1' },
+		},
+		{
+			.refname = (char *) "refs/heads/b",
+			.update_index = 2,
+			.value_type = REFTABLE_REF_VAL1,
+			.value.val1 = { '1' },
+		},
+	};
+	struct reftable_ref_record ref = { 0 };
+
+	err = reftable_new_stack(&st1, dir, NULL);
+	check(!err);
+	err = reftable_new_stack(&st2, dir, NULL);
+	check(!err);
+
+	err = reftable_stack_new_addition(&add, st1, 0);
+	check(!err);
+	err = reftable_addition_add(add, write_test_ref, &refs[0]);
+	check(!err);
+	err = reftable_addition_commit(add);
+	check(!err);
+	reftable_addition_destroy(add);
+
+	/*
+	 * The second stack is now outdated, which we should notice. We do not
+	 * create the addition and lock the stack by default, but allow the
+	 * reload to happen when REFTABLE_STACK_NEW_ADDITION_RELOAD is set.
+	 */
+	err = reftable_stack_new_addition(&add, st2, 0);
+	check_int(err, ==, REFTABLE_OUTDATED_ERROR);
+	err = reftable_stack_new_addition(&add, st2, REFTABLE_STACK_NEW_ADDITION_RELOAD);
+	check(!err);
+	err = reftable_addition_add(add, write_test_ref, &refs[1]);
+	check(!err);
+	err = reftable_addition_commit(add);
+	check(!err);
+	reftable_addition_destroy(add);
+
+	for (size_t i = 0; i < ARRAY_SIZE(refs); i++) {
+		err = reftable_stack_read_ref(st2, refs[i].refname, &ref);
+		check(!err);
+		check(reftable_ref_record_equal(&refs[i], &ref, GIT_SHA1_RAWSZ));
+	}
+
+	reftable_ref_record_release(&ref);
+	reftable_stack_destroy(st1);
+	reftable_stack_destroy(st2);
 	clear_dir(dir);
 }
 
@@ -322,7 +384,7 @@ static void t_reftable_stack_transaction_api_performs_auto_compaction(void)
 		 */
 		st->opts.disable_auto_compact = i != n;
 
-		err = reftable_stack_new_addition(&add, st);
+		err = reftable_stack_new_addition(&add, st, 0);
 		check(!err);
 
 		err = reftable_addition_add(add, write_test_ref, &ref);
@@ -1314,6 +1376,7 @@ int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 	TEST(t_reftable_stack_reload_with_missing_table(), "stack iteration with garbage tables");
 	TEST(t_reftable_stack_tombstone(), "'tombstone' refs in stack");
 	TEST(t_reftable_stack_transaction_api(), "update transaction to stack");
+	TEST(t_reftable_stack_transaction_with_reload(), "transaction with reload");
 	TEST(t_reftable_stack_transaction_api_performs_auto_compaction(), "update transaction triggers auto-compaction");
 	TEST(t_reftable_stack_update_index_check(), "update transactions with equal update indices");
 	TEST(t_reftable_stack_uptodate(), "stack must be reloaded before ref update");
