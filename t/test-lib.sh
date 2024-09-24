@@ -847,6 +847,7 @@ test_failure_ () {
 			GIT_EXIT_OK=t
 			exit 0
 		fi
+		check_test_results_san_file_ "$test_failure"
 		_error_exit
 	fi
 	finalize_test_case_output failure "$failure_label" "$@"
