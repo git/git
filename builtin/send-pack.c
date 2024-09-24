@@ -343,5 +343,6 @@ int cmd_send_pack(int argc,
 	free_refs(remote_refs);
 	free_refs(local_refs);
 	refspec_clear(&rs);
+	oid_array_clear(&shallow);
 	return ret;
 }

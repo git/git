@@ -294,5 +294,6 @@ int cmd_fetch_pack(int argc,
 	free_refs(fetched_refs);
 	free_refs(remote_refs);
 	list_objects_filter_release(&args.filter_options);
+	oid_array_clear(&shallow);
 	return ret;
 }
