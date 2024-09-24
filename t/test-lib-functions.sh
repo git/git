@@ -926,7 +926,8 @@ test_expect_success () {
 		test_body_or_stdin test_body "$2"
 		test -n "$test_skip_test_preamble" ||
 		say >&3 "expecting success of $TEST_NUMBER.$test_count '$1': $test_body"
-		if test_run_ "$test_body"
+		if test_run_ "$test_body" &&
+		   check_test_results_san_file_empty_
 		then
 			test_ok_ "$1"
 		else

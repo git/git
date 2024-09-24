@@ -1215,12 +1215,13 @@ test_atexit_handler () {
 	teardown_malloc_check
 }
 
+check_test_results_san_file_empty_ () {
+	test -z "$TEST_RESULTS_SAN_FILE" ||
+	test "$(nr_san_dir_leaks_)" = 0
+}
+
 check_test_results_san_file_ () {
-	if test -z "$TEST_RESULTS_SAN_FILE"
-	then
-		return
-	fi &&
-	if test "$(nr_san_dir_leaks_)" = 0
+	if check_test_results_san_file_empty_
 	then
 		return
 	fi &&
