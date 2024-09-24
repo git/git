@@ -28,6 +28,13 @@ struct repo_path_cache {
 	char *merge_head;
 	char *fetch_head;
 	char *shallow;
+	char *bisect_terms;
+	char *bisect_ancestors_ok;
+	char *bisect_start;
+	char *bisect_log;
+	char *bisect_names;
+	char *bisect_first_parent;
+	char *bisect_run;
 };
 
 struct repository {
