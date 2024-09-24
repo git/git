@@ -913,6 +913,7 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 			result = XML_Parse(parser, in_buffer.buf,
 					   in_buffer.len, 1);
 			free(ctx.name);
+			free(ctx.cdata);
 			if (result != XML_STATUS_OK) {
 				fprintf(stderr, "XML error: %s\n",
 					XML_ErrorString(
@@ -1170,6 +1171,7 @@ static void remote_ls(const char *path, int flags,
 			result = XML_Parse(parser, in_buffer.buf,
 					   in_buffer.len, 1);
 			free(ctx.name);
+			free(ctx.cdata);
 
 			if (result != XML_STATUS_OK) {
 				fprintf(stderr, "XML error: %s\n",
