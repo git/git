@@ -25,7 +25,7 @@ test_perf 'thin pack' '
 '
 
 test_size 'thin pack size' '
-	wc -c <out
+	test_file_size out
 '
 
 test_perf 'thin pack with --full-name-hash' '
@@ -33,7 +33,7 @@ test_perf 'thin pack with --full-name-hash' '
 '
 
 test_size 'thin pack size with --full-name-hash' '
-	wc -c <out
+	test_file_size out
 '
 
 test_perf 'big pack' '
@@ -41,7 +41,7 @@ test_perf 'big pack' '
 '
 
 test_size 'big pack size' '
-	wc -c <out
+	test_file_size out
 '
 
 test_perf 'big pack with --full-name-hash' '
@@ -49,7 +49,7 @@ test_perf 'big pack with --full-name-hash' '
 '
 
 test_size 'big pack size with --full-name-hash' '
-	wc -c <out
+	test_file_size out
 '
 
 test_perf 'repack' '
@@ -57,7 +57,8 @@ test_perf 'repack' '
 '
 
 test_size 'repack size' '
-	wc -c <.git/objects/pack/pack-*.pack
+	pack=$(ls .git/objects/pack/pack-*.pack) &&
+	test_file_size "$pack"
 '
 
 test_perf 'repack with --full-name-hash' '
@@ -65,7 +66,8 @@ test_perf 'repack with --full-name-hash' '
 '
 
 test_size 'repack size with --full-name-hash' '
-	wc -c <.git/objects/pack/pack-*.pack
+	pack=$(ls .git/objects/pack/pack-*.pack) &&
+	test_file_size "$pack"
 '
 
 test_done
