@@ -404,7 +404,15 @@ test_expect_success CMDLINE_LIMIT \
 	)
 '
 
-test_expect_success 'large fetch-pack requests can be sent using chunked encoding' '
+# This is a temporary work-around for libcurl v8.10.0 on the macos-* runners;
+# see https://github.com/git-for-windows/git/issues/5159 for full details
+test_lazy_prereq UNBROKEN_HTTP2 '
+	test "$HTTP_PROTO" = HTTP/2 &&
+	test -z "$(brew info -q curl 2>/dev/null |
+		sed -n "/^Installed/{N;s/.*8\\.10\\.0.*/BROKEN HTTP2/p;}")"
+'
+
+test_expect_success UNBROKEN_HTTP2 'large fetch-pack requests can be sent using chunked encoding' '
 	GIT_TRACE_CURL=true git -c http.postbuffer=65536 \
 		clone --bare "$HTTPD_URL/smart/repo.git" split.git 2>err &&
 	{
