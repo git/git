@@ -19,5 +19,6 @@ int cmd__name_hash(int argc UNUSED, const char **argv UNUSED)
 		printf("%10"PRIu32"\t%10"PRIu32"\t%s\n", name_hash, full_hash, line.buf);
 	}
 
+	strbuf_release(&line);
 	return 0;
 }
