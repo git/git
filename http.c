@@ -800,6 +800,7 @@ static int redact_sensitive_header(struct strbuf *header, size_t offset)
 
 		strbuf_setlen(header, sensitive_header - header->buf);
 		strbuf_addbuf(header, &redacted_header);
+		strbuf_release(&redacted_header);
 		ret = 1;
 	}
 	return ret;
