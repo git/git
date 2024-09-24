@@ -717,8 +717,14 @@ static int fetch_refs(struct transport *transport,
 		return -1;
 	}
 
-	if (!data->get_refs_list_called)
-		get_refs_list_using_list(transport, 0);
+	if (!data->get_refs_list_called) {
+		/*
+		 * We do not care about the list of refs returned, but only
+		 * that the "list" command was sent.
+		 */
+		struct ref *dummy = get_refs_list_using_list(transport, 0);
+		free_refs(dummy);
+	}
 
 	count = 0;
 	for (i = 0; i < nr_heads; i++)
