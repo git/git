@@ -1902,7 +1902,7 @@ test_subcommand_flex () {
 		shift
 	fi
 
-	local expr="$(printf '"%s",.*' "$@")"
+	local expr="$(printf '"%s".*' "$@")"
 
 	if test -n "$negate"
 	then
