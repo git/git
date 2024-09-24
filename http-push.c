@@ -1972,6 +1972,7 @@ int cmd_main(int argc, const char **argv)
  cleanup:
 	if (info_ref_lock)
 		unlock_remote(info_ref_lock);
+	free(repo->url);
 	free(repo);
 
 	http_cleanup();
