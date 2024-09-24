@@ -1719,7 +1719,7 @@ int cmd_main(int argc, const char **argv)
 	int rc = 0;
 	int i;
 	int new_refs;
-	struct ref *ref, *local_refs;
+	struct ref *ref, *local_refs = NULL;
 
 	CALLOC_ARRAY(repo, 1);
 
@@ -1997,6 +1997,7 @@ int cmd_main(int argc, const char **argv)
 	}
 
 	refspec_clear(&rs);
+	free_refs(local_refs);
 
 	return rc;
 }
