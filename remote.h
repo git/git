@@ -409,6 +409,7 @@ struct push_cas_option {
 };
 
 int parseopt_push_cas_option(const struct option *, const char *arg, int unset);
+void clear_cas_option(struct push_cas_option *);
 
 int is_empty_cas(const struct push_cas_option *);
 void apply_push_cas(struct push_cas_option *, struct remote *, struct ref *);
