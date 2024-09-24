@@ -579,7 +579,17 @@ static void cleanup(struct walker *walker)
 	if (data) {
 		alt = data->alt;
 		while (alt) {
+			struct packed_git *pack;
+
 			alt_next = alt->next;
+
+			pack = alt->packs;
+			while (pack) {
+				struct packed_git *pack_next = pack->next;
+				close_pack(pack);
+				free(pack);
+				pack = pack_next;
+			}
 
 			free(alt->base);
 			free(alt);
