@@ -389,7 +389,7 @@ test_expect_success 'onbranch without repository' '
 	test_must_fail nongit git config get foo.bar
 '
 
-test_expect_failure 'onbranch without repository but explicit nonexistent Git directory' '
+test_expect_success 'onbranch without repository but explicit nonexistent Git directory' '
 	test_when_finished "rm -f .gitconfig config.inc" &&
 	git config set -f .gitconfig "includeIf.onbranch:**.path" config.inc &&
 	git config set -f config.inc foo.bar baz &&
