@@ -216,9 +216,10 @@ static inline uint32_t pack_full_name_hash(const char *name)
 		return 0;
 
 	/*
-	 * Just do the dumbest thing possible: add random multiples of a
-	 * large prime number with a binary shift. Goal is not cryptographic,
-	 * but generally uniformly distributed.
+	 * Do the simplest thing that will resemble pseudo-randomness: add
+	 * random multiples of a large prime number with a binary shift.
+	 * The goal is not to be cryptographic, but to be generally
+	 * uniformly distributed.
 	 */
 	while ((c = *name++) != 0) {
 		hash += c * bigp;
