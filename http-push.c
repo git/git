@@ -1983,5 +1983,7 @@ int cmd_main(int argc, const char **argv)
 		request = next_request;
 	}
 
+	refspec_clear(&rs);
+
 	return rc;
 }
