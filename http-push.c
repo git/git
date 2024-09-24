@@ -1183,6 +1183,7 @@ static void remote_ls(const char *path, int flags,
 	}
 
 	free(ls.path);
+	free(ls.dentry_name);
 	free(url);
 	strbuf_release(&out_buffer.buf);
 	strbuf_release(&in_buffer);
