@@ -582,9 +582,10 @@ static void finish_request(struct transfer_request *request)
 			if (obj_req->rename == 0)
 				request->obj->flags |= (LOCAL | REMOTE);
 
+		release_http_object_request(&obj_req);
+
 		/* Try fetching packed if necessary */
 		if (request->obj->flags & LOCAL) {
-			release_http_object_request(&obj_req);
 			release_request(request);
 		} else
 			start_fetch_packed(request);
