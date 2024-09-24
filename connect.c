@@ -1485,6 +1485,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 
 				free(hostandport);
 				free(path);
+				child_process_clear(conn);
 				free(conn);
 				strbuf_release(&cmd);
 				return NULL;
