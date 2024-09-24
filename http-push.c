@@ -514,6 +514,7 @@ static void release_request(struct transfer_request *request)
 	}
 
 	free(request->url);
+	free(request->dest);
 	free(request);
 }
 
@@ -651,11 +652,8 @@ static void add_fetch_request(struct object *obj)
 		return;
 
 	obj->flags |= FETCHING;
-	request = xmalloc(sizeof(*request));
+	CALLOC_ARRAY(request, 1);
 	request->obj = obj;
-	request->url = NULL;
-	request->lock = NULL;
-	request->headers = NULL;
 	request->state = NEED_FETCH;
 	request->next = request_queue_head;
 	request_queue_head = request;
@@ -687,11 +685,9 @@ static int add_send_request(struct object *obj, struct remote_lock *lock)
 	}
 
 	obj->flags |= PUSHING;
-	request = xmalloc(sizeof(*request));
+	CALLOC_ARRAY(request, 1);
 	request->obj = obj;
-	request->url = NULL;
 	request->lock = lock;
-	request->headers = NULL;
 	request->state = NEED_PUSH;
 	request->next = request_queue_head;
 	request_queue_head = request;
