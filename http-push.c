@@ -437,9 +437,11 @@ static void start_move(struct transfer_request *request)
 	if (start_active_slot(slot)) {
 		request->slot = slot;
 		request->state = RUN_MOVE;
+		request->headers = dav_headers;
 	} else {
 		request->state = ABORTED;
 		FREE_AND_NULL(request->url);
+		curl_slist_free_all(dav_headers);
 	}
 }
 
@@ -1398,6 +1400,7 @@ static int update_remote(const struct object_id *oid, struct remote_lock *lock)
 	if (start_active_slot(slot)) {
 		run_active_slot(slot);
 		strbuf_release(&out_buffer.buf);
+		curl_slist_free_all(dav_headers);
 		if (results.curl_result != CURLE_OK) {
 			fprintf(stderr,
 				"PUT error: curl result=%d, HTTP code=%ld\n",
@@ -1407,6 +1410,7 @@ static int update_remote(const struct object_id *oid, struct remote_lock *lock)
 		}
 	} else {
 		strbuf_release(&out_buffer.buf);
+		curl_slist_free_all(dav_headers);
 		fprintf(stderr, "Unable to start PUT request\n");
 		return 0;
 	}
@@ -1516,6 +1520,7 @@ static void update_remote_info_refs(struct remote_lock *lock)
 					results.curl_result, results.http_code);
 			}
 		}
+		curl_slist_free_all(dav_headers);
 	}
 	strbuf_release(&buffer.buf);
 }
