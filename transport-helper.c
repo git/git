@@ -1023,6 +1023,7 @@ static int push_refs_with_push(struct transport *transport,
 			if (atomic) {
 				reject_atomic_push(remote_refs, mirror);
 				string_list_clear(&cas_options, 0);
+				strbuf_release(&buf);
 				return 0;
 			} else
 				continue;
