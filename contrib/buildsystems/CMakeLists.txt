@@ -970,18 +970,15 @@ if(BUILD_TESTING)
 add_executable(test-fake-ssh ${CMAKE_SOURCE_DIR}/t/helper/test-fake-ssh.c)
 target_link_libraries(test-fake-ssh common-main)
 
-#reftable-tests
-parse_makefile_for_sources(test-reftable_SOURCES "REFTABLE_TEST_OBJS")
-list(TRANSFORM test-reftable_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/")
-
 #unit-tests
-add_library(unit-test-lib OBJECT ${CMAKE_SOURCE_DIR}/t/unit-tests/test-lib.c)
-add_library(unit-test-lib-oid OBJECT ${CMAKE_SOURCE_DIR}/t/unit-tests/lib-oid.c)
+parse_makefile_for_sources(unit-test_SOURCES "UNIT_TEST_OBJS")
+list(TRANSFORM unit-test_SOURCES REPLACE "\\$\\(UNIT_TEST_DIR\\)/" "${CMAKE_SOURCE_DIR}/t/unit-tests/")
+add_library(unit-test-lib STATIC ${unit-test_SOURCES})
 
 parse_makefile_for_scripts(unit_test_PROGRAMS "UNIT_TEST_PROGRAMS" "")
 foreach(unit_test ${unit_test_PROGRAMS})
 	add_executable("${unit_test}" "${CMAKE_SOURCE_DIR}/t/unit-tests/${unit_test}.c")
-	target_link_libraries("${unit_test}" unit-test-lib unit-test-lib-oid common-main)
+	target_link_libraries("${unit_test}" unit-test-lib common-main)
 	set_target_properties("${unit_test}"
 		PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/t/unit-tests/bin)
 	if(MSVC)
@@ -1004,14 +1001,14 @@ foreach(unit_test ${unit_test_PROGRAMS})
 	endif()
 endforeach()
 
-parse_makefile_for_scripts(unit_tests_SUITES "UNIT_TESTS_SUITES" "")
+parse_makefile_for_scripts(clar_test_SUITES "CLAR_TEST_SUITES" "")
 
 set(clar_decls "")
 set(clar_cbs "")
 set(clar_cbs_count 0)
 set(clar_suites "static struct clar_suite _clar_suites[] = {\n")
-list(LENGTH unit_tests_SUITES clar_suites_count)
-foreach(suite ${unit_tests_SUITES})
+list(LENGTH clar_test_SUITES clar_suites_count)
+foreach(suite ${clar_test_SUITES})
 	file(STRINGS "${CMAKE_SOURCE_DIR}/t/unit-tests/${suite}.c" decls
 		REGEX "^void test_${suite}__[a-zA-Z_0-9][a-zA-Z_0-9]*\\(void\\)$")
 
@@ -1042,9 +1039,9 @@ string(APPEND clar_suites
 file(WRITE "${CMAKE_BINARY_DIR}/t/unit-tests/clar-decls.h" "${clar_decls}")
 file(WRITE "${CMAKE_BINARY_DIR}/t/unit-tests/clar.suite" "${clar_decls}" "${clar_cbs}" "${clar_suites}")
 
-list(TRANSFORM unit_tests_SUITES PREPEND "${CMAKE_SOURCE_DIR}/t/unit-tests/")
-list(TRANSFORM unit_tests_SUITES APPEND ".c")
-add_library(unit-tests-lib ${unit_tests_SUITES} "${CMAKE_SOURCE_DIR}/t/unit-tests/clar/clar.c")
+list(TRANSFORM clar_test_SUITES PREPEND "${CMAKE_SOURCE_DIR}/t/unit-tests/")
+list(TRANSFORM clar_test_SUITES APPEND ".c")
+add_library(unit-tests-lib ${clar_test_SUITES} "${CMAKE_SOURCE_DIR}/t/unit-tests/clar/clar.c")
 target_include_directories(unit-tests-lib PRIVATE "${CMAKE_SOURCE_DIR}/t/unit-tests")
 add_executable(unit-tests "${CMAKE_SOURCE_DIR}/t/unit-tests/unit-test.c")
 target_link_libraries(unit-tests unit-tests-lib common-main)
@@ -1062,7 +1059,7 @@ parse_makefile_for_sources(test-tool_SOURCES "TEST_BUILTINS_OBJS")
 add_library(test-lib OBJECT ${CMAKE_SOURCE_DIR}/t/unit-tests/test-lib.c)
 
 list(TRANSFORM test-tool_SOURCES PREPEND "${CMAKE_SOURCE_DIR}/t/helper/")
-add_executable(test-tool ${CMAKE_SOURCE_DIR}/t/helper/test-tool.c ${test-tool_SOURCES} ${test-reftable_SOURCES})
+add_executable(test-tool ${CMAKE_SOURCE_DIR}/t/helper/test-tool.c ${test-tool_SOURCES})
 target_link_libraries(test-tool test-lib common-main)
 
 set_target_properties(test-fake-ssh test-tool
