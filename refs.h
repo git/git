@@ -861,6 +861,15 @@ int ref_is_hidden(const char *, const char *, const struct strvec *);
  */
 const char **hidden_refs_to_excludes(const struct strvec *hide_refs);
 
+/*
+ * Prefix all exclude patterns with the namespace, if any. This is required
+ * because exclude patterns apply to the stripped reference name, not the full
+ * reference name with the namespace.
+ */
+const char **get_namespaced_exclude_patterns(const char **exclude_patterns,
+					     const char *namespace,
+					     struct strvec *out);
+
 /* Is this a per-worktree ref living in the refs/ namespace? */
 int is_per_worktree_ref(const char *refname);
 

@@ -7,6 +7,7 @@ https://developers.google.com/open-source/licenses/bsd
 */
 
 #include "test-lib.h"
+#include "lib-reftable.h"
 #include "reftable/blocksource.h"
 #include "reftable/constants.h"
 #include "reftable/merged.h"
@@ -15,77 +16,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable/reftable-merged.h"
 #include "reftable/reftable-writer.h"
 
-static ssize_t strbuf_add_void(void *b, const void *data, const size_t sz)
-{
-	strbuf_add(b, data, sz);
-	return sz;
-}
-
-static int noop_flush(void *arg UNUSED)
-{
-	return 0;
-}
-
-static void write_test_table(struct strbuf *buf,
-			     struct reftable_ref_record refs[], const size_t n)
-{
-	uint64_t min = 0xffffffff;
-	uint64_t max = 0;
-	size_t i;
-	int err;
-
-	struct reftable_write_options opts = {
-		.block_size = 256,
-	};
-	struct reftable_writer *w = NULL;
-	for (i = 0; i < n; i++) {
-		uint64_t ui = refs[i].update_index;
-		if (ui > max)
-			max = ui;
-		if (ui < min)
-			min = ui;
-	}
-
-	w = reftable_new_writer(&strbuf_add_void, &noop_flush, buf, &opts);
-	reftable_writer_set_limits(w, min, max);
-
-	for (i = 0; i < n; i++) {
-		uint64_t before = refs[i].update_index;
-		int n = reftable_writer_add_ref(w, &refs[i]);
-		check_int(n, ==, 0);
-		check_int(before, ==, refs[i].update_index);
-	}
-
-	err = reftable_writer_close(w);
-	check(!err);
-
-	reftable_writer_free(w);
-}
-
-static void write_test_log_table(struct strbuf *buf, struct reftable_log_record logs[],
-				 const size_t n, const uint64_t update_index)
-{
-	int err;
-
-	struct reftable_write_options opts = {
-		.block_size = 256,
-		.exact_log_message = 1,
-	};
-	struct reftable_writer *w = NULL;
-	w = reftable_new_writer(&strbuf_add_void, &noop_flush, buf, &opts);
-	reftable_writer_set_limits(w, update_index, update_index);
-
-	for (size_t i = 0; i < n; i++) {
-		int err = reftable_writer_add_log(w, &logs[i]);
-		check(!err);
-	}
-
-	err = reftable_writer_close(w);
-	check(!err);
-
-	reftable_writer_free(w);
-}
-
 static struct reftable_merged_table *
 merged_table_from_records(struct reftable_ref_record **refs,
 			  struct reftable_block_source **source,
@@ -93,13 +23,16 @@ merged_table_from_records(struct reftable_ref_record **refs,
 			  struct strbuf *buf, const size_t n)
 {
 	struct reftable_merged_table *mt = NULL;
+	struct reftable_write_options opts = {
+		.block_size = 256,
+	};
 	int err;
 
 	REFTABLE_CALLOC_ARRAY(*readers, n);
 	REFTABLE_CALLOC_ARRAY(*source, n);
 
 	for (size_t i = 0; i < n; i++) {
-		write_test_table(&buf[i], refs[i], sizes[i]);
+		t_reftable_write_to_buf(&buf[i], refs[i], sizes[i], NULL, 0, &opts);
 		block_source_from_strbuf(&(*source)[i], &buf[i]);
 
 		err = reftable_reader_new(&(*readers)[i], &(*source)[i],
@@ -261,6 +194,81 @@ static void t_merged_refs(void)
 	reftable_free(bs);
 }
 
+static void t_merged_seek_multiple_times(void)
+{
+	struct reftable_ref_record r1[] = {
+		{
+			.refname = (char *) "a",
+			.update_index = 1,
+			.value_type = REFTABLE_REF_VAL1,
+			.value.val1 = { 1 },
+		},
+		{
+			.refname = (char *) "c",
+			.update_index = 1,
+			.value_type = REFTABLE_REF_VAL1,
+			.value.val1 = { 2 },
+		}
+	};
+	struct reftable_ref_record r2[] = {
+		{
+			.refname = (char *) "b",
+			.update_index = 2,
+			.value_type = REFTABLE_REF_VAL1,
+			.value.val1 = { 3 },
+		},
+		{
+			.refname = (char *) "d",
+			.update_index = 2,
+			.value_type = REFTABLE_REF_VAL1,
+			.value.val1 = { 4 },
+		},
+	};
+	struct reftable_ref_record *refs[] = {
+		r1, r2,
+	};
+	size_t sizes[] = {
+		ARRAY_SIZE(r1), ARRAY_SIZE(r2),
+	};
+	struct strbuf bufs[] = {
+		STRBUF_INIT, STRBUF_INIT,
+	};
+	struct reftable_block_source *sources = NULL;
+	struct reftable_reader **readers = NULL;
+	struct reftable_ref_record rec = { 0 };
+	struct reftable_iterator it = { 0 };
+	struct reftable_merged_table *mt;
+
+	mt = merged_table_from_records(refs, &sources, &readers, sizes, bufs, 2);
+	merged_table_init_iter(mt, &it, BLOCK_TYPE_REF);
+
+	for (size_t i = 0; i < 5; i++) {
+		int err = reftable_iterator_seek_ref(&it, "c");
+		check(!err);
+
+		err = reftable_iterator_next_ref(&it, &rec);
+		check(!err);
+		err = reftable_ref_record_equal(&rec, &r1[1], GIT_SHA1_RAWSZ);
+		check(err == 1);
+
+		err = reftable_iterator_next_ref(&it, &rec);
+		check(!err);
+		err = reftable_ref_record_equal(&rec, &r2[1], GIT_SHA1_RAWSZ);
+		check(err == 1);
+
+		err = reftable_iterator_next_ref(&it, &rec);
+		check(err > 0);
+	}
+
+	for (size_t i = 0; i < ARRAY_SIZE(bufs); i++)
+		strbuf_release(&bufs[i]);
+	readers_destroy(readers, ARRAY_SIZE(refs));
+	reftable_ref_record_release(&rec);
+	reftable_iterator_destroy(&it);
+	reftable_merged_table_free(mt);
+	reftable_free(sources);
+}
+
 static struct reftable_merged_table *
 merged_table_from_log_records(struct reftable_log_record **logs,
 			      struct reftable_block_source **source,
@@ -268,13 +276,17 @@ merged_table_from_log_records(struct reftable_log_record **logs,
 			      struct strbuf *buf, const size_t n)
 {
 	struct reftable_merged_table *mt = NULL;
+	struct reftable_write_options opts = {
+		.block_size = 256,
+		.exact_log_message = 1,
+	};
 	int err;
 
 	REFTABLE_CALLOC_ARRAY(*readers, n);
 	REFTABLE_CALLOC_ARRAY(*source, n);
 
 	for (size_t i = 0; i < n; i++) {
-		write_test_log_table(&buf[i], logs[i], sizes[i], i + 1);
+		t_reftable_write_to_buf(&buf[i], NULL, 0, logs[i], sizes[i], &opts);
 		block_source_from_strbuf(&(*source)[i], &buf[i]);
 
 		err = reftable_reader_new(&(*readers)[i], &(*source)[i],
@@ -402,9 +414,7 @@ static void t_default_write_opts(void)
 {
 	struct reftable_write_options opts = { 0 };
 	struct strbuf buf = STRBUF_INIT;
-	struct reftable_writer *w =
-		reftable_new_writer(&strbuf_add_void, &noop_flush, &buf, &opts);
-
+	struct reftable_writer *w = t_reftable_strbuf_writer(&buf, &opts);
 	struct reftable_ref_record rec = {
 		.refname = (char *) "master",
 		.update_index = 1,
@@ -448,6 +458,7 @@ int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 	TEST(t_default_write_opts(), "merged table with default write opts");
 	TEST(t_merged_logs(), "merged table with multiple log updates for same ref");
 	TEST(t_merged_refs(), "merged table with multiple updates to same ref");
+	TEST(t_merged_seek_multiple_times(), "merged table can seek multiple times");
 	TEST(t_merged_single_record(), "ref ocurring in only one record can be fetched");
 
 	return test_done();

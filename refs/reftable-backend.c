@@ -22,6 +22,7 @@
 #include "../repo-settings.h"
 #include "../setup.h"
 #include "../strmap.h"
+#include "../trace2.h"
 #include "parse.h"
 #include "refs-internal.h"
 
@@ -451,9 +452,80 @@ struct reftable_ref_iterator {
 
 	const char *prefix;
 	size_t prefix_len;
+	char **exclude_patterns;
+	size_t exclude_patterns_index;
+	size_t exclude_patterns_strlen;
 	unsigned int flags;
 	int err;
 };
+
+/*
+ * Handle exclude patterns. Returns either `1`, which tells the caller that the
+ * current reference shall not be shown. Or `0`, which indicates that it should
+ * be shown.
+ */
+static int should_exclude_current_ref(struct reftable_ref_iterator *iter)
+{
+	while (iter->exclude_patterns[iter->exclude_patterns_index]) {
+		const char *pattern = iter->exclude_patterns[iter->exclude_patterns_index];
+		char *ref_after_pattern;
+		int cmp;
+
+		/*
+		 * Lazily cache the pattern length so that we don't have to
+		 * recompute it every time this function is called.
+		 */
+		if (!iter->exclude_patterns_strlen)
+			iter->exclude_patterns_strlen = strlen(pattern);
+
+		/*
+		 * When the reference name is lexicographically bigger than the
+		 * current exclude pattern we know that it won't ever match any
+		 * of the following references, either. We thus advance to the
+		 * next pattern and re-check whether it matches.
+		 *
+		 * Otherwise, if it's smaller, then we do not have a match and
+		 * thus want to show the current reference.
+		 */
+		cmp = strncmp(iter->ref.refname, pattern,
+			      iter->exclude_patterns_strlen);
+		if (cmp > 0) {
+			iter->exclude_patterns_index++;
+			iter->exclude_patterns_strlen = 0;
+			continue;
+		}
+		if (cmp < 0)
+			return 0;
+
+		/*
+		 * The reference shares a prefix with the exclude pattern and
+		 * shall thus be omitted. We skip all references that match the
+		 * pattern by seeking to the first reference after the block of
+		 * matches.
+		 *
+		 * This is done by appending the highest possible character to
+		 * the pattern. Consequently, all references that have the
+		 * pattern as prefix and whose suffix starts with anything in
+		 * the range [0x00, 0xfe] are skipped. And given that 0xff is a
+		 * non-printable character that shouldn't ever be in a ref name,
+		 * we'd not yield any such record, either.
+		 *
+		 * Note that the seeked-to reference may also be excluded. This
+		 * is not handled here though, but the caller is expected to
+		 * loop and re-verify the next reference for us.
+		 */
+		ref_after_pattern = xstrfmt("%s%c", pattern, 0xff);
+		iter->err = reftable_iterator_seek_ref(&iter->iter, ref_after_pattern);
+		iter->exclude_patterns_index++;
+		iter->exclude_patterns_strlen = 0;
+		trace2_counter_add(TRACE2_COUNTER_ID_REFTABLE_RESEEKS, 1);
+
+		free(ref_after_pattern);
+		return 1;
+	}
+
+	return 0;
+}
 
 static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 {
@@ -484,6 +556,9 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			iter->err = 1;
 			break;
 		}
+
+		if (iter->exclude_patterns && should_exclude_current_ref(iter))
+			continue;
 
 		if (iter->flags & DO_FOR_EACH_PER_WORKTREE_ONLY &&
 		    parse_worktree_ref(iter->ref.refname, NULL, NULL, NULL) !=
@@ -574,6 +649,11 @@ static int reftable_ref_iterator_abort(struct ref_iterator *ref_iterator)
 		(struct reftable_ref_iterator *)ref_iterator;
 	reftable_ref_record_release(&iter->ref);
 	reftable_iterator_destroy(&iter->iter);
+	if (iter->exclude_patterns) {
+		for (size_t i = 0; iter->exclude_patterns[i]; i++)
+			free(iter->exclude_patterns[i]);
+		free(iter->exclude_patterns);
+	}
 	free(iter);
 	return ITER_DONE;
 }
@@ -584,9 +664,53 @@ static struct ref_iterator_vtable reftable_ref_iterator_vtable = {
 	.abort = reftable_ref_iterator_abort
 };
 
+static int qsort_strcmp(const void *va, const void *vb)
+{
+	const char *a = *(const char **)va;
+	const char *b = *(const char **)vb;
+	return strcmp(a, b);
+}
+
+static char **filter_exclude_patterns(const char **exclude_patterns)
+{
+	size_t filtered_size = 0, filtered_alloc = 0;
+	char **filtered = NULL;
+
+	if (!exclude_patterns)
+		return NULL;
+
+	for (size_t i = 0; ; i++) {
+		const char *exclude_pattern = exclude_patterns[i];
+		int has_glob = 0;
+
+		if (!exclude_pattern)
+			break;
+
+		for (const char *p = exclude_pattern; *p; p++) {
+			has_glob = is_glob_special(*p);
+			if (has_glob)
+				break;
+		}
+		if (has_glob)
+			continue;
+
+		ALLOC_GROW(filtered, filtered_size + 1, filtered_alloc);
+		filtered[filtered_size++] = xstrdup(exclude_pattern);
+	}
+
+	if (filtered_size) {
+		QSORT(filtered, filtered_size, qsort_strcmp);
+		ALLOC_GROW(filtered, filtered_size + 1, filtered_alloc);
+		filtered[filtered_size++] = NULL;
+	}
+
+	return filtered;
+}
+
 static struct reftable_ref_iterator *ref_iterator_for_stack(struct reftable_ref_store *refs,
 							    struct reftable_stack *stack,
 							    const char *prefix,
+							    const char **exclude_patterns,
 							    int flags)
 {
 	struct reftable_ref_iterator *iter;
@@ -599,6 +723,7 @@ static struct reftable_ref_iterator *ref_iterator_for_stack(struct reftable_ref_
 	iter->base.oid = &iter->oid;
 	iter->flags = flags;
 	iter->refs = refs;
+	iter->exclude_patterns = filter_exclude_patterns(exclude_patterns);
 
 	ret = refs->err;
 	if (ret)
@@ -620,7 +745,7 @@ done:
 
 static struct ref_iterator *reftable_be_iterator_begin(struct ref_store *ref_store,
 						       const char *prefix,
-						       const char **exclude_patterns UNUSED,
+						       const char **exclude_patterns,
 						       unsigned int flags)
 {
 	struct reftable_ref_iterator *main_iter, *worktree_iter;
@@ -631,7 +756,8 @@ static struct ref_iterator *reftable_be_iterator_begin(struct ref_store *ref_sto
 		required_flags |= REF_STORE_ODB;
 	refs = reftable_be_downcast(ref_store, required_flags, "ref_iterator_begin");
 
-	main_iter = ref_iterator_for_stack(refs, refs->main_stack, prefix, flags);
+	main_iter = ref_iterator_for_stack(refs, refs->main_stack, prefix,
+					   exclude_patterns, flags);
 
 	/*
 	 * The worktree stack is only set when we're in an actual worktree
@@ -645,7 +771,8 @@ static struct ref_iterator *reftable_be_iterator_begin(struct ref_store *ref_sto
 	 * Otherwise we merge both the common and the per-worktree refs into a
 	 * single iterator.
 	 */
-	worktree_iter = ref_iterator_for_stack(refs, refs->worktree_stack, prefix, flags);
+	worktree_iter = ref_iterator_for_stack(refs, refs->worktree_stack, prefix,
+					       exclude_patterns, flags);
 	return merge_ref_iterator_begin(&worktree_iter->base, &main_iter->base,
 					ref_iterator_select, NULL);
 }

@@ -7,16 +7,12 @@ https://developers.google.com/open-source/licenses/bsd
 */
 
 #include "test-lib.h"
+#include "lib-reftable.h"
 #include "reftable/merged.h"
 #include "reftable/reader.h"
 #include "reftable/reftable-error.h"
 #include "reftable/stack.h"
 #include <dirent.h>
-
-static void set_test_hash(uint8_t *p, int i)
-{
-	memset(p, (uint8_t)i, hash_size(GIT_SHA1_FORMAT_ID));
-}
 
 static void clear_dir(const char *dirname)
 {
@@ -125,7 +121,7 @@ static void write_n_ref_tables(struct reftable_stack *st,
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "refs/heads/branch-%04"PRIuMAX, (uintmax_t)i);
 		ref.refname = buf.buf;
-		set_test_hash(ref.value.val1, i);
+		t_reftable_set_hash(ref.value.val1, i, GIT_SHA1_FORMAT_ID);
 
 		err = reftable_stack_add(st, &write_test_ref, &ref);
 		check(!err);
@@ -470,13 +466,13 @@ static void t_reftable_stack_add(void)
 		refs[i].refname = xstrdup(buf);
 		refs[i].update_index = i + 1;
 		refs[i].value_type = REFTABLE_REF_VAL1;
-		set_test_hash(refs[i].value.val1, i);
+		t_reftable_set_hash(refs[i].value.val1, i, GIT_SHA1_FORMAT_ID);
 
 		logs[i].refname = xstrdup(buf);
 		logs[i].update_index = N + i + 1;
 		logs[i].value_type = REFTABLE_LOG_UPDATE;
 		logs[i].value.update.email = xstrdup("identity@invalid");
-		set_test_hash(logs[i].value.update.new_hash, i);
+		t_reftable_set_hash(logs[i].value.update.new_hash, i, GIT_SHA1_FORMAT_ID);
 	}
 
 	for (i = 0; i < N; i++) {
@@ -562,14 +558,14 @@ static void t_reftable_stack_iterator(void)
 		refs[i].refname = xstrfmt("branch%02"PRIuMAX, (uintmax_t)i);
 		refs[i].update_index = i + 1;
 		refs[i].value_type = REFTABLE_REF_VAL1;
-		set_test_hash(refs[i].value.val1, i);
+		t_reftable_set_hash(refs[i].value.val1, i, GIT_SHA1_FORMAT_ID);
 
 		logs[i].refname = xstrfmt("branch%02"PRIuMAX, (uintmax_t)i);
 		logs[i].update_index = i + 1;
 		logs[i].value_type = REFTABLE_LOG_UPDATE;
 		logs[i].value.update.email = xstrdup("johndoe@invalid");
 		logs[i].value.update.message = xstrdup("commit\n");
-		set_test_hash(logs[i].value.update.new_hash, i);
+		t_reftable_set_hash(logs[i].value.update.new_hash, i, GIT_SHA1_FORMAT_ID);
 	}
 
 	for (i = 0; i < N; i++) {
@@ -704,7 +700,8 @@ static void t_reftable_stack_tombstone(void)
 		refs[i].update_index = i + 1;
 		if (i % 2 == 0) {
 			refs[i].value_type = REFTABLE_REF_VAL1;
-			set_test_hash(refs[i].value.val1, i);
+			t_reftable_set_hash(refs[i].value.val1, i,
+					    GIT_SHA1_FORMAT_ID);
 		}
 
 		logs[i].refname = xstrdup(buf);
@@ -712,7 +709,8 @@ static void t_reftable_stack_tombstone(void)
 		logs[i].update_index = 42;
 		if (i % 2 == 0) {
 			logs[i].value_type = REFTABLE_LOG_UPDATE;
-			set_test_hash(logs[i].value.update.new_hash, i);
+			t_reftable_set_hash(logs[i].value.update.new_hash, i,
+					    GIT_SHA1_FORMAT_ID);
 			logs[i].value.update.email =
 				xstrdup("identity@invalid");
 		}
@@ -844,7 +842,8 @@ static void t_reflog_expire(void)
 		logs[i].value_type = REFTABLE_LOG_UPDATE;
 		logs[i].value.update.time = i;
 		logs[i].value.update.email = xstrdup("identity@invalid");
-		set_test_hash(logs[i].value.update.new_hash, i);
+		t_reftable_set_hash(logs[i].value.update.new_hash, i,
+				    GIT_SHA1_FORMAT_ID);
 	}
 
 	for (i = 1; i <= N; i++) {
