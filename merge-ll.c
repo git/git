@@ -334,7 +334,7 @@ static int read_merge_config(const char *var, const char *value,
 		 *    %X - the revision for our version
 		 *    %Y - the revision for their version
 		 *
-		 * If the file is not named indentically in all versions, then each
+		 * If the file is not named identically in all versions, then each
 		 * revision is joined with the corresponding path, separated by a colon.
 		 * The external merge driver should write the results in the
 		 * file named by %A, and signal that it has done with zero exit

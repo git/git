@@ -17,7 +17,7 @@ enum ref_storage_format ref_storage_format_by_name(const char *name);
 const char *ref_storage_format_to_name(enum ref_storage_format ref_storage_format);
 
 /*
- * Resolve a reference, recursively following symbolic refererences.
+ * Resolve a reference, recursively following symbolic references.
  *
  * Return the name of the non-symbolic reference that ultimately pointed
  * at the resolved object name.  The return value, if not NULL, is a
@@ -490,7 +490,7 @@ int refs_delete_reflog(struct ref_store *refs, const char *refname);
  * from UTC.  Its absolute value is formed by multiplying the hour
  * part by 100 and adding the minute part.  For example, 1 hour ahead
  * of UTC, CET == "+0100", is represented as positive one hundred (not
- * postiive sixty).
+ * positive sixty).
  *
  * The msg parameter is a single complete line; a reflog message given
  * to refs_delete_ref, refs_update_ref, etc. is returned to the
@@ -997,7 +997,7 @@ struct ref_store *get_worktree_ref_store(const struct worktree *wt);
 
 /*
  * Some of the names specified by refs have special meaning to Git.
- * Organize these namespaces in a comon 'ref_namespace' array for
+ * Organize these namespaces in a common 'ref_namespace' array for
  * reference from multiple places in the codebase.
  */
 

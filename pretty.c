@@ -2205,7 +2205,7 @@ static void strbuf_add_tabexpand(struct strbuf *sb, struct grep_opt *opt,
 }
 
 /*
- * pp_handle_indent() prints out the intendation, and
+ * pp_handle_indent() prints out the indentation, and
  * the whole line (without the final newline), after
  * de-tabifying.
  */

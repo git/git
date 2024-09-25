@@ -69,7 +69,7 @@ DEVELOPER_CFLAGS += -Wno-missing-braces
 endif
 endif
 
-# Old versions of clang complain about initializaing a
+# Old versions of clang complain about initializing a
 # struct-within-a-struct using just "{0}" rather than "{{0}}".  This
 # error is considered a false-positive and not worth fixing, because
 # new clang versions do not, so just disable it.

@@ -400,7 +400,7 @@ static void parse_ssh_output(struct signature_check *sigc)
 	 * Note that "PRINCIPAL" can contain whitespace, "RSA" and
 	 * "SHA256" part could be a different token that names of
 	 * the algorithms used, and "FINGERPRINT" is a hexadecimal
-	 * string.  By finding the last occurence of " with ", we can
+	 * string.  By finding the last occurrence of " with ", we can
 	 * reliably parse out the PRINCIPAL.
 	 */
 	sigc->result = 'B';

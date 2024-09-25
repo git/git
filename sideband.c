@@ -191,7 +191,7 @@ int demultiplex_sideband(const char *me, int status,
 			int linelen = brk - b;
 
 			/*
-			 * For message accross packet boundary, there would have
+			 * For message across packet boundary, there would have
 			 * a nonempty "scratch" buffer from last call of this
 			 * function, and there may have a leading CR/LF in "buf".
 			 * For this case we should add a clear-to-eol suffix to

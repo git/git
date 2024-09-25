@@ -1707,7 +1707,7 @@ void run_active_slot(struct active_request_slot *slot)
 	 * The value of slot->finished we set before the loop was used
 	 * to set our "finished" variable when our request completed.
 	 *
-	 * 1. The slot may not have been reused for another requst
+	 * 1. The slot may not have been reused for another request
 	 *    yet, in which case it still has &finished.
 	 *
 	 * 2. The slot may already be in-use to serve another request,

@@ -524,7 +524,7 @@ static void setup_original_cwd(void)
 	 * directory we inherited from our parent process, which is a
 	 * directory we want to avoid removing.
 	 *
-	 * For convience, we would like to have the path relative to the
+	 * For convenience, we would like to have the path relative to the
 	 * worktree instead of an absolute path.
 	 *
 	 * Yes, startup_info->original_cwd is usually the same as 'prefix',
