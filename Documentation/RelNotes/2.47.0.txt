@@ -149,6 +149,13 @@ Performance, Internal Implementation, Development Support etc.
    been updated to pass the repository, if known, together with the
    prefix value.
 
+ * "git apply" had custom buffer management code that predated before
+   use of strbuf got widespread, which has been updated to use strbuf,
+   which also plugged some memory leaks.
+
+ * The reftable backend learned to more efficiently handle exclude
+   patterns while enumerating the refs.
+
 
 Fixes since v2.46
 -----------------
@@ -284,3 +291,5 @@ Fixes since v2.46
    (merge 4460e052e0 jc/range-diff-lazy-setup later to maint).
    (merge 0627c58e7a ak/typofixes later to maint).
    (merge 83799f1500 jk/t9001-deflake later to maint).
+   (merge e02cc08a88 ak/typofix-2.46-maint later to maint).
+   (merge 5c5d29e1c4 ps/ci-gitlab-upgrade later to maint).
