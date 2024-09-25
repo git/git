@@ -219,6 +219,21 @@ static void add_children_by_path(struct repository *r,
 	free_tree_buffer(tree);
 }
 
+void mark_trees_uninteresting_dense(struct repository *r,
+				    struct oidset *trees)
+{
+	struct object_id *oid;
+	struct oidset_iter iter;
+
+	oidset_iter_init(trees, &iter);
+	while ((oid = oidset_iter_next(&iter))) {
+		struct tree *tree = lookup_tree(r, oid);
+
+		if (tree->object.flags & UNINTERESTING)
+			mark_tree_contents_uninteresting(r, tree);
+	}
+}
+
 void mark_trees_uninteresting_sparse(struct repository *r,
 				     struct oidset *trees)
 {
