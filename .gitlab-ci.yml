@@ -9,6 +9,8 @@ workflow:
 
 test:linux:
   image: $image
+  tags:
+    - saas-linux-medium-amd64
   variables:
     CUSTOM_PATH: "/custom"
   before_script:
