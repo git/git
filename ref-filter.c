@@ -2385,7 +2385,7 @@ static int populate_value(struct ref_array_item *ref, struct strbuf *err)
 	CALLOC_ARRAY(ref->value, used_atom_cnt);
 
 	/**
-	 * NEEDSWORK: The following code might be unncessary if all codepaths
+	 * NEEDSWORK: The following code might be unnecessary if all codepaths
 	 * that call populate_value() populates the symref member of ref_array_item
 	 * like in apply_ref_filter(). Currently pretty_print_ref() is the only codepath
 	 * that calls populate_value() without first populating symref.
