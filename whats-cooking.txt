@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2024, #09; Mon, 23)
-X-master-at: 6258f68c3c1092c901337895c864073dcdea9213
-X-next-at: 9e56e24342b63402383dac8197c69a61bde831a1
+Subject: What's cooking in git.git (Sep 2024, #10; Wed, 25)
+X-master-at: a116aba5d54bf44c6fc27fa1a4c2431d53cf8ff5
+X-next-at: caf1b0c932622a79da5dc26acbfbcfe828fa7bc8
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2024, #09; Mon, 23)
+What's cooking in git.git (Sep 2024, #10; Wed, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -52,151 +52,12 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ak/typofixes (2024-09-16) 3 commits
-  (merged to 'next' on 2024-09-16 at 4bbdd5ce45)
- + cbtree: fix a typo
- + bloom: fix a typo
- + attr: fix a typo
-
- Trivial typofixes.
- 
- source: <20240915230522.129253-1-algonell@gmail.com>
-
-
-* jc/pass-repo-to-builtins (2024-09-13) 4 commits
-  (merged to 'next' on 2024-09-16 at 7711bb0214)
- + add: pass in repo variable instead of global the_repository
- + builtin: remove USE_THE_REPOSITORY for those without the_repository
- + builtin: remove USE_THE_REPOSITORY_VARIABLE from builtin.h
- + builtin: add a repository parameter for builtin functions
-
- The convention to calling into built-in command implementation has
- been updated to pass the repository, if known, together with the
- prefix value.
- 
- source: <pull.1778.v3.git.git.1726262177.gitgitgadget@gmail.com>
-
-
-* jc/t5512-sigpipe-fix (2024-09-13) 1 commit
-  (merged to 'next' on 2024-09-16 at 96075b5dd1)
- + t5512.40 sometimes dies by SIGPIPE
-
- Test fix.
- 
- source: <xmqqmskbwe1a.fsf@gitster.g>
-
-
-* jk/diag-unexpected-remote-helper-death (2024-09-14) 1 commit
-  (merged to 'next' on 2024-09-16 at f2aa29beac)
- + print an error when remote helpers die during capabilities
-
- When a remote-helper dies before Git writes to it, SIGPIPE killed
- Git silently.  We now explain the situation a bit better to the end
- user in our error message.
- 
- source: <20240914064130.GA1284567@coredump.intra.peff.net>
-
-
-* jk/jump-quickfix-fixes (2024-09-16) 2 commits
-  (merged to 'next' on 2024-09-16 at 53aa9e5b22)
- + git-jump: ignore deleted files in diff mode
- + git-jump: always specify column 1 for diff entries
-
- A few usability fixes to "git jump" (in contrib/).
- 
- source: <20240915111119.GA2017770@coredump.intra.peff.net>
-
-
-* jk/t9001-deflake (2024-09-16) 1 commit
-  (merged to 'next' on 2024-09-16 at 285ebc4223)
- + t9001: use a more distinct fake BugID
-
- Test fix.
- 
- source: <20240915113115.GA2019070@coredump.intra.peff.net>
-
-
-* ps/environ-wo-the-repository (2024-09-12) 21 commits
-  (merged to 'next' on 2024-09-16 at c08e3eb6b8)
- + environment: stop storing "core.notesRef" globally
- + environment: stop storing "core.warnAmbiguousRefs" globally
- + environment: stop storing "core.preferSymlinkRefs" globally
- + environment: stop storing "core.logAllRefUpdates" globally
- + refs: stop modifying global `log_all_ref_updates` variable
- + branch: stop modifying `log_all_ref_updates` variable
- + repo-settings: track defaults close to `struct repo_settings`
- + repo-settings: split out declarations into a standalone header
- + environment: guard state depending on a repository
- + environment: reorder header to split out `the_repository`-free section
- + environment: move `set_git_dir()` and related into setup layer
- + environment: make `get_git_namespace()` self-contained
- + environment: move object database functions into object layer
- + config: make dependency on repo in `read_early_config()` explicit
- + config: document `read_early_config()` and `read_very_early_config()`
- + environment: make `get_git_work_tree()` accept a repository
- + environment: make `get_graft_file()` accept a repository
- + environment: make `get_index_file()` accept a repository
- + environment: make `get_object_directory()` accept a repository
- + environment: make `get_git_common_dir()` accept a repository
- + environment: make `get_git_dir()` accept a repository
-
- Code clean-up.
- 
- source: <cover.1726139990.git.ps@pks.im>
-
---------------------------------------------------
-[New Topics]
-
-* es/worktree-repair-copied (2024-09-23) 1 commit
- - worktree: repair copied repository and linked worktrees
-
- The heuristics in "git worktree repair" can be confused when a
- worktree and its repository are copied and break correctly
- configured worktree and repository that point at each other, which
- has been corrected.
-
- Needs review.
- source: <20240923075416.54289-1-ericsunshine@charter.net>
-
-
-* rs/archive-with-attr-pathspec-fix (2024-09-23) 1 commit
- - archive: load index before pathspec checks
-
- "git archive" with pathspec magic that uses the attribute
- information did not work well, which has been corrected.
-
- Will merge to 'next'.
- source: <66c3e9fa-ecfe-4af2-a970-c1afdbc2b7f2@web.de>
-
-
-* rs/commit-graph-ununleak (2024-09-23) 1 commit
- - commit-graph: remove unnecessary UNLEAK
-
- Code clean-up.
-
- Will merge to 'next'.
- source: <c3a712d5-8e50-453d-be90-f5bf34de744c@web.de>
-
-
-* rs/diff-exit-code-binary (2024-09-23) 1 commit
- - diff: report modified binary files as changes in builtin_diff()
-
- "git diff --exit-code" ignored modified binary files, which has
- been corrected.
-
- Will merge to 'next'.
- source: <500a8e0a-9fbd-4b7b-b2f2-026a4293bc9f@web.de>
-
---------------------------------------------------
-[Cooking]
-
 * ak/refs-symref-referent-typofix (2024-09-19) 1 commit
   (merged to 'next' on 2024-09-19 at 1b00b05df1)
  + ref-filter: fix a typo
 
  Typofix.
-
- Will merge to 'master'.
+ 
  source: <9697dc1c81db33dca7e4a3c093ee83cdc0efea1e.1726770881.git.gitgitgadget@gmail.com>
 
 
@@ -223,9 +84,213 @@ Release tarballs are available at:
  + config.mak.dev: fix a typo
 
  Typofix.
+ 
+ source: <pull.1794.git.1726770880.gitgitgadget@gmail.com>
+
+
+* jc/cmake-unit-test-updates (2024-09-18) 4 commits
+  (merged to 'next' on 2024-09-19 at d892dcdcdd)
+ + cmake: generalize the handling of the `UNIT_TEST_OBJS` list
+ + cmake: stop looking for `REFTABLE_TEST_OBJS` in the Makefile
+ + cmake: rename clar-related variables to avoid confusion
+ + Merge branch 'ps/reftable-exclude' into jc/cmake-unit-test-updates
+ (this branch uses ps/reftable-exclude.)
+
+ CMake adjustments for recent changes around unit tests.
+ 
+ source: <pull.1797.git.1726687769585.gitgitgadget@gmail.com>
+
+
+* ps/apply-leakfix (2024-09-17) 6 commits
+  (merged to 'next' on 2024-09-18 at 99e318345e)
+ + apply: refactor `struct image` to use a `struct strbuf`
+ + apply: rename members that track line count and allocation length
+ + apply: refactor code to drop `line_allocated`
+ + apply: introduce macro and function to init images
+ + apply: rename functions operating on `struct image`
+ + apply: reorder functions to move image-related things together
+
+ "git apply" had custom buffer management code that predated before
+ use of strbuf got widespread, which has been updated to use strbuf,
+ which also plugged some memory leaks.
+ 
+ source: <cover.1726567217.git.ps@pks.im>
+
+
+* ps/ci-gitlab-upgrade (2024-09-19) 1 commit
+  (merged to 'next' on 2024-09-19 at 907c53944e)
+ + gitlab-ci: upgrade machine type of Linux runners
+
+ CI updates.
+ 
+ source: <0dfcb4a7b38ca66ec50775928ecfb31c4bc2008b.1726642142.git.ps@pks.im>
+
+
+* ps/reftable-exclude (2024-09-16) 7 commits
+  (merged to 'next' on 2024-09-18 at 1f00fce314)
+ + refs/reftable: wire up support for exclude patterns
+ + reftable/reader: make table iterator reseekable
+ + t/unit-tests: introduce reftable library
+ + Makefile: stop listing test library objects twice
+ + builtin/receive-pack: fix exclude patterns when announcing refs
+ + refs: properly apply exclude patterns to namespaced refs
+ + Merge branch 'cp/unit-test-reftable-stack' into ps/reftable-exclude
+ (this branch is used by jc/cmake-unit-test-updates and ps/reftable-alloc-failures.)
+
+ The reftable backend learned to more efficiently handle exclude
+ patterns while enumerating the refs.
+ 
+ source: <cover.1726476401.git.ps@pks.im>
+
+--------------------------------------------------
+[New Topics]
+
+* ak/doc-sparse-co-typofix (2024-09-23) 1 commit
+  (merged to 'next' on 2024-09-24 at 74edc0657c)
+ + Documentation/technical: fix a typo
+
+ Docfix.
 
  Will merge to 'master'.
- source: <pull.1794.git.1726770880.gitgitgadget@gmail.com>
+ source: <20240920082815.8192-1-algonell@gmail.com>
+
+
+* ds/sparse-checkout-expansion-advice (2024-09-23) 1 commit
+ - sparse-checkout: disable advice in 'disable'
+
+ When "git sparse-checkout disable" turns a sparse checkout into a
+ regular checkout, the index is fully expanded.  This totally
+ expected behaviour however had an "oops, we are expanding the
+ index" advice message, which has been corrected.
+
+ Comments?
+ source: <pull.1800.git.1727119882901.gitgitgadget@gmail.com>
+
+
+* jk/sendemail-mailmap-doc (2024-09-25) 1 commit
+  (merged to 'next' on 2024-09-25 at d4f69efebf)
+ + send-email: document --mailmap and associated configuration
+
+ Docfix.
+
+ Will merge to 'master'.
+ source: <20240923222429.4102405-1-jacob.e.keller@intel.com>
+
+
+* ak/typofix-builtins (2024-09-24) 1 commit
+  (merged to 'next' on 2024-09-24 at d7702a68b7)
+ + builtin: fix typos
+
+ Typofix.
+
+ Will merge to 'master'.
+ source: <20240924130906.21392-1-algonell@gmail.com>
+
+
+* ps/includeif-onbranch-cornercase-fix (2024-09-24) 2 commits
+  (merged to 'next' on 2024-09-24 at 229c0bf0e5)
+ + config: fix evaluating "onbranch" with nonexistent git dir
+ + t1305: exercise edge cases of "onbranch" includes
+
+ "git --git-dir=nowhere cmd" failed to properly notice that it
+ wasn't in any repository while processing includeIf.onbranch
+ configuration and instead crashed.
+
+ Will merge to 'master'.
+ source: <cover.1727171197.git.ps@pks.im>
+
+
+* jk/http-leakfixes (2024-09-25) 28 commits
+ - http-push: clean up local_refs at exit
+ - http-push: clean up loose request when falling back to packed
+ - http-push: clean up objects list
+ - http-push: free xml_ctx.cdata after use
+ - http-push: free remote_ls_ctx.dentry_name
+ - http-push: free transfer_request strbuf
+ - http-push: free transfer_request dest field
+ - http-push: free curl header lists
+ - http-push: free repo->url string
+ - http-push: clear refspecs before exiting
+ - http-walker: free fake packed_git list
+ - remote-curl: free HEAD ref with free_one_ref()
+ - http: stop leaking buffer in http_get_info_packs()
+ - http: call git_inflate_end() when releasing http_object_request
+ - http: fix leak of http_object_request struct
+ - http: fix leak when redacting cookies from curl trace
+ - transport-helper: fix leak of dummy refs_list
+ - fetch-pack: clear pack lockfiles list
+ - fetch: free "raw" string when shrinking refspec
+ - transport-helper: fix strbuf leak in push_refs_with_push()
+ - send-pack: free cas options before exit
+ - commit: avoid leaking already-saved buffer
+ - fetch-pack, send-pack: clean up shallow oid array
+ - fetch-pack: free object filter before exiting
+ - connect: clear child process before freeing in diagnostic mode
+ - fetch-pack: fix leaking sought refs
+ - shallow: fix leak when unregistering last shallow root
+ - http-fetch: clear leaking git-index-pack(1) arguments
+
+ Leakfixes.
+
+ Needs review.
+ source: <20240924214930.GA1143523@coredump.intra.peff.net>
+
+
+* jk/test-lsan-improvements (2024-09-25) 3 commits
+ - test-lib: check for leak logs after every test
+ - test-lib: show leak-sanitizer logs on --immediate failure
+ - test-lib: stop showing old leak logs
+
+ Usability improvements for running tests in leak-checking mode.
+
+ Needs review.
+ source: <20240924213404.GA1142219@coredump.intra.peff.net>
+
+--------------------------------------------------
+[Cooking]
+
+* es/worktree-repair-copied (2024-09-23) 1 commit
+ - worktree: repair copied repository and linked worktrees
+
+ The heuristics in "git worktree repair" can be confused when a
+ worktree and its repository are copied and break correctly
+ configured worktree and repository that point at each other, which
+ has been corrected.
+
+ Needs review.
+ source: <20240923075416.54289-1-ericsunshine@charter.net>
+
+
+* rs/archive-with-attr-pathspec-fix (2024-09-23) 1 commit
+  (merged to 'next' on 2024-09-24 at a81fb17e49)
+ + archive: load index before pathspec checks
+
+ "git archive" with pathspec magic that uses the attribute
+ information did not work well, which has been corrected.
+
+ Will merge to 'master'.
+ source: <66c3e9fa-ecfe-4af2-a970-c1afdbc2b7f2@web.de>
+
+
+* rs/commit-graph-ununleak (2024-09-23) 1 commit
+  (merged to 'next' on 2024-09-24 at 5845eca9ce)
+ + commit-graph: remove unnecessary UNLEAK
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <c3a712d5-8e50-453d-be90-f5bf34de744c@web.de>
+
+
+* rs/diff-exit-code-binary (2024-09-23) 1 commit
+  (merged to 'next' on 2024-09-24 at 1e597c407c)
+ + diff: report modified binary files as changes in builtin_diff()
+
+ "git diff --exit-code" ignored modified binary files, which has
+ been corrected.
+
+ Will merge to 'master'.
+ source: <500a8e0a-9fbd-4b7b-b2f2-026a4293bc9f@web.de>
 
 
 * cb/ci-freebsd-13-4 (2024-09-20) 1 commit
@@ -251,9 +316,10 @@ Release tarballs are available at:
 
 
 * ds/background-maintenance-with-credential (2024-09-20) 3 commits
- - scalar: configure maintenance during 'reconfigure'
- - maintenance: add custom config to background jobs
- - credential: add new interactive config option
+  (merged to 'next' on 2024-09-24 at 379a7a1003)
+ + scalar: configure maintenance during 'reconfigure'
+ + maintenance: add custom config to background jobs
+ + credential: add new interactive config option
 
  Background tasks "git maintenance" runs may need to use credential
  information when going over the network, but a credential helper
@@ -261,7 +327,7 @@ Release tarballs are available at:
  scheduled task waiting for UI.  Credential helpers can now behave
  differently when they are not running interactively.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1798.git.1726790423.gitgitgadget@gmail.com>
 
 
@@ -274,68 +340,29 @@ Release tarballs are available at:
  source: <xmqq7cb77810.fsf@gitster.g>
 
 
-* ps/ci-gitlab-upgrade (2024-09-19) 1 commit
-  (merged to 'next' on 2024-09-19 at 907c53944e)
- + gitlab-ci: upgrade machine type of Linux runners
-
- CI updates.
-
- Will merge to 'master'.
- source: <0dfcb4a7b38ca66ec50775928ecfb31c4bc2008b.1726642142.git.ps@pks.im>
-
-
-* ps/reftable-concurrent-writes (2024-09-19) 3 commits
- - refs/reftable: reload locked stack when preparing transaction
- - reftable/stack: allow locking of outdated stacks
- - refs/reftable: introduce "reftable.lockTimeout"
+* ps/reftable-concurrent-writes (2024-09-24) 3 commits
+  (merged to 'next' on 2024-09-24 at 04df72ad69)
+ + refs/reftable: reload locked stack when preparing transaction
+ + reftable/stack: allow locking of outdated stacks
+ + refs/reftable: introduce "reftable.lockTimeout"
 
  Give timeout to the locking code to write to reftable.
 
- Will merge to 'next'.
- source: <cover.1726653185.git.ps@pks.im>
+ Will merge to 'master'.
+ source: <cover.1727155858.git.ps@pks.im>
 
 
 * pw/submodule-process-sigpipe (2024-09-20) 1 commit
- - submodule status: propagate SIGPIPE
+  (merged to 'next' on 2024-09-24 at 9e1ce951c6)
+ + submodule status: propagate SIGPIPE
 
  When a subprocess to work in a submodule spawned by "git submodule"
  fails with SIGPIPE, the parent Git process caught the death of it,
  but gave a generic "failed to work in that submodule", which was
  misleading.  We now behave as if the parent got SIGPIPE and die.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1799.git.1726837642511.gitgitgadget@gmail.com>
-
-
-* jc/cmake-unit-test-updates (2024-09-18) 4 commits
-  (merged to 'next' on 2024-09-19 at d892dcdcdd)
- + cmake: generalize the handling of the `UNIT_TEST_OBJS` list
- + cmake: stop looking for `REFTABLE_TEST_OBJS` in the Makefile
- + cmake: rename clar-related variables to avoid confusion
- + Merge branch 'ps/reftable-exclude' into jc/cmake-unit-test-updates
- (this branch uses ps/reftable-exclude.)
-
- CMake adjustments for recent changes around unit tests.
-
- Will merge to 'master'.
- source: <pull.1797.git.1726687769585.gitgitgadget@gmail.com>
-
-
-* ps/apply-leakfix (2024-09-17) 6 commits
-  (merged to 'next' on 2024-09-18 at 99e318345e)
- + apply: refactor `struct image` to use a `struct strbuf`
- + apply: rename members that track line count and allocation length
- + apply: refactor code to drop `line_allocated`
- + apply: introduce macro and function to init images
- + apply: rename functions operating on `struct image`
- + apply: reorder functions to move image-related things together
-
- "git apply" had custom buffer management code that predated before
- use of strbuf got widespread, which has been updated to use strbuf,
- which also plugged some memory leaks.
-
- Will merge to 'master'.
- source: <cover.1726567217.git.ps@pks.im>
 
 
 * ps/leakfixes-part-7 (2024-09-16) 24 commits
@@ -367,10 +394,11 @@ Release tarballs are available at:
  More leak-fixes.
 
  Will merge to 'next'?
+ cf. <ZulXjXSozNrXgMUM@pks.im>
  source: <cover.1726484308.git.ps@pks.im>
 
 
-* ps/reftable-alloc-failures (2024-09-16) 24 commits
+* ps/reftable-alloc-failures (2024-09-24) 24 commits
  - reftable: handle trivial allocation failures
  - reftable/tree: handle allocation failures
  - reftable/pq: handle allocation failures when adding entries
@@ -395,14 +423,13 @@ Release tarballs are available at:
  - reftable/error: introduce out-of-memory error code
  - Merge branch 'ps/reftable-exclude' into ps/reftable-alloc-failures
  - Merge branch 'cp/unit-test-reftable-stack' into ps/reftable-alloc-failures
- (this branch uses ps/reftable-exclude.)
 
  The reftable library is now prepared to expect that the memory
  allocation function given to it may fail to allocate and to deal
  with such an error.
 
- Needs review.
- source: <cover.1726489647.git.ps@pks.im>
+ Will merge to 'next'?
+ source: <cover.1727158127.git.ps@pks.im>
 
 
 * jc/strbuf-commented-something (2024-09-12) 2 commits
@@ -452,30 +479,11 @@ Release tarballs are available at:
  source: <pull.1785.v2.git.1726692381.gitgitgadget@gmail.com>
 
 
-* ps/reftable-exclude (2024-09-16) 7 commits
-  (merged to 'next' on 2024-09-18 at 1f00fce314)
- + refs/reftable: wire up support for exclude patterns
- + reftable/reader: make table iterator reseekable
- + t/unit-tests: introduce reftable library
- + Makefile: stop listing test library objects twice
- + builtin/receive-pack: fix exclude patterns when announcing refs
- + refs: properly apply exclude patterns to namespaced refs
- + Merge branch 'cp/unit-test-reftable-stack' into ps/reftable-exclude
- (this branch is used by jc/cmake-unit-test-updates and ps/reftable-alloc-failures.)
-
- The reftable backend learned to more efficiently handle exclude
- patterns while enumerating the refs.
-
- Will merge to 'master'.
- source: <cover.1726476401.git.ps@pks.im>
-
-
-* tb/weak-sha1-for-tail-sum (2024-09-06) 9 commits
- - csum-file.c: use fast SHA-1 implementation when available
+* tb/weak-sha1-for-tail-sum (2024-09-24) 8 commits
+ - csum-file.c: use unsafe SHA-1 implementation when available
  - Makefile: allow specifying a SHA-1 for non-cryptographic uses
- - hash.h: scaffolding for _fast hashing variants
+ - hash.h: scaffolding for _unsafe hashing variants
  - sha1: do not redefine `platform_SHA_CTX` and friends
- - i5500-git-daemon.sh: use compile-able version of Git without OpenSSL
  - pack-objects: use finalize_object_file() to rename pack/idx/etc
  - finalize_object_file(): implement collision check
  - finalize_object_file(): refactor unlink_or_warn() placement
@@ -484,9 +492,8 @@ Release tarballs are available at:
  The checksum at the tail of files are now computed without
  collision detection protection.
 
- Expecting a reroll.
- cf. <ZugMUv1xbnjYH-el@pks.im>
- source: <cover.1725651952.git.me@ttaylorr.com>
+ Needs review.
+ source: <cover.1727199118.git.me@ttaylorr.com>
 
 
 * gt/unit-test-oidset (2024-08-25) 1 commit
@@ -566,19 +573,18 @@ Release tarballs are available at:
  source: <20240806003539.3292562-1-gitster@pobox.com>
 
 
-* ja/doc-synopsis-markup (2024-09-05) 3 commits
-  (merged to 'next' on 2024-09-16 at d471154a0b)
- + doc: apply synopsis simplification on git-clone and git-init
- + doc: update the guidelines to reflect the current formatting rules
- + doc: introduce a synopsis typesetting
+* ja/doc-synopsis-markup (2024-09-24) 3 commits
+ - doc: apply synopsis simplification on git-clone and git-init
+ - doc: update the guidelines to reflect the current formatting rules
+ - doc: introduce a synopsis typesetting
 
  The way AsciiDoc is used for SYNOPSIS part of the manual pages has
  been revamped.  The sources, at least for the simple cases, got
  vastly pleasant to work with.
 
- On hold.
- cf. <xmqqh6a6496d.fsf@gitster.g>
- source: <pull.1766.v4.git.1725573126.gitgitgadget@gmail.com>
+ Reverted out of 'next', and then replaced.
+ Will merge to 'next'?
+ source: <pull.1766.v5.git.1727161730.gitgitgadget@gmail.com>
 
 
 * ew/cat-file-optim (2024-08-25) 10 commits
