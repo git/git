@@ -15,6 +15,36 @@
 #include "block-sha1/sha1.h"
 #endif
 
+#if defined(SHA1_APPLE_UNSAFE)
+#  include <CommonCrypto/CommonDigest.h>
+#  define platform_SHA_CTX_unsafe CC_SHA1_CTX
+#  define platform_SHA1_Init_unsafe CC_SHA1_Init
+#  define platform_SHA1_Update_unsafe CC_SHA1_Update
+#  define platform_SHA1_Final_unsafe CC_SHA1_Final
+#elif defined(SHA1_OPENSSL_UNSAFE)
+#  include <openssl/sha.h>
+#  if defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 3
+#    define SHA1_NEEDS_CLONE_HELPER_UNSAFE
+#    include "sha1/openssl.h"
+#    define platform_SHA_CTX_unsafe openssl_SHA1_CTX
+#    define platform_SHA1_Init_unsafe openssl_SHA1_Init
+#    define platform_SHA1_Clone_unsafe openssl_SHA1_Clone
+#    define platform_SHA1_Update_unsafe openssl_SHA1_Update
+#    define platform_SHA1_Final_unsafe openssl_SHA1_Final
+#  else
+#    define platform_SHA_CTX_unsafe SHA_CTX
+#    define platform_SHA1_Init_unsafe SHA1_Init
+#    define platform_SHA1_Update_unsafe SHA1_Update
+#    define platform_SHA1_Final_unsafe SHA1_Final
+#  endif
+#elif defined(SHA1_BLK_UNSAFE)
+#  include "block-sha1/sha1.h"
+#  define platform_SHA_CTX_unsafe blk_SHA_CTX
+#  define platform_SHA1_Init_unsafe blk_SHA1_Init
+#  define platform_SHA1_Update_unsafe blk_SHA1_Update
+#  define platform_SHA1_Final_unsafe blk_SHA1_Final
+#endif
+
 #if defined(SHA256_NETTLE)
 #include "sha256/nettle.h"
 #elif defined(SHA256_GCRYPT)
