@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='cruft pack related pack-objects tests'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 objdir=.git/objects
