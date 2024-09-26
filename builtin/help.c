@@ -52,7 +52,7 @@ static enum help_action {
 	HELP_ACTION_CONFIG_SECTIONS_FOR_COMPLETION,
 } cmd_mode;
 
-static const char *html_path;
+static char *html_path;
 static int verbose = 1;
 static enum help_format help_format = HELP_FORMAT_NONE;
 static int exclude_guides;
@@ -409,6 +409,7 @@ static int git_help_config(const char *var, const char *value,
 	if (!strcmp(var, "help.htmlpath")) {
 		if (!value)
 			return config_error_nonbool(var);
+		free(html_path);
 		html_path = xstrdup(value);
 		return 0;
 	}
