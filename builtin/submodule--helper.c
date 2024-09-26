@@ -363,9 +363,13 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 	if (!info->quiet)
 		printf(_("Entering '%s'\n"), displaypath);
 
-	if (info->argv[0] && run_command(&cp))
-		die(_("run_command returned non-zero status for %s\n."),
-			displaypath);
+	if (info->argv[0]) {
+		if (run_command(&cp))
+			die(_("run_command returned non-zero status for %s\n."),
+			    displaypath);
+	} else {
+		child_process_clear(&cp);
+	}
 
 	if (info->recursive) {
 		struct child_process cpr = CHILD_PROCESS_INIT;
