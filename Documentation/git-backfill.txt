@@ -9,7 +9,7 @@ git-backfill - Download missing objects in a partial clone
 SYNOPSIS
 --------
 [verse]
-'git backfill' [--batch-size=<n>] [--[no-]sparse]
+(EXPERIMENTAL) 'git backfill' [--batch-size=<n>] [--[no-]sparse]
 
 DESCRIPTION
 -----------
