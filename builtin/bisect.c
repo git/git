@@ -16,13 +16,31 @@
 #include "quote.h"
 #include "revision.h"
 
-static REPO_GIT_PATH_FUNC(bisect_terms, "BISECT_TERMS")
-static REPO_GIT_PATH_FUNC(bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
-static REPO_GIT_PATH_FUNC(bisect_start, "BISECT_START")
-static REPO_GIT_PATH_FUNC(bisect_log, "BISECT_LOG")
-static REPO_GIT_PATH_FUNC(bisect_names, "BISECT_NAMES")
-static REPO_GIT_PATH_FUNC(bisect_first_parent, "BISECT_FIRST_PARENT")
-static REPO_GIT_PATH_FUNC(bisect_run, "BISECT_RUN")
+struct bisect_paths {
+	char *bisect_terms;
+	char *bisect_ancestors_ok;
+	char *bisect_start;
+	char *bisect_log;
+	char *bisect_names;
+	char *bisect_first_parent;
+	char *bisect_run;
+}
+
+#define BISECT_GIT_PATH_FUNC(var, filename) \
+	const char *git_path_##var(struct bisect_paths *paths) \
+	{ \
+		if (!paths.var) \
+			paths.var = repo_git_path(r, filename); \
+		return paths.var; \
+	}
+
+static BISECT_GIT_PATH_FUNC(bisect_terms, "BISECT_TERMS")
+static BISECT_GIT_PATH_FUNC(bisect_ancestors_ok, "BISECT_ANCESTORS_OK")
+static BISECT_GIT_PATH_FUNC(bisect_start, "BISECT_START")
+static BISECT_GIT_PATH_FUNC(bisect_log, "BISECT_LOG")
+static BISECT_GIT_PATH_FUNC(bisect_names, "BISECT_NAMES")
+static BISECT_GIT_PATH_FUNC(bisect_first_parent, "BISECT_FIRST_PARENT")
+static BISECT_GIT_PATH_FUNC(bisect_run, "BISECT_RUN")
 
 #define BUILTIN_GIT_BISECT_START_USAGE \
 	N_("git bisect start [--term-(new|bad)=<term> --term-(old|good)=<term>]" \
@@ -282,8 +300,12 @@ static void log_commit(struct repository *repo,
 	free(label);
 }
 
-static int bisect_write(struct repository *repo, const char *state, const char *rev,
-			const struct bisect_terms *terms, int nolog)
+static int bisect_write(struct repository *repo,
+			const char *bisect_log_path,
+			const char *state,
+			const char *rev,
+			const struct bisect_terms *terms,
+			int nolog)
 {
 	struct strbuf tag = STRBUF_INIT;
 	struct object_id oid;
@@ -311,7 +333,7 @@ static int bisect_write(struct repository *repo, const char *state, const char *
 		goto finish;
 	}
 
-	fp = fopen(git_path_bisect_log(repo), "a");
+	fp = fopen(bisect_log_path, "a");
 	if (!fp) {
 		res = error_errno(_("couldn't open the file '%s'"), git_path_bisect_log(repo));
 		goto finish;
@@ -481,13 +503,14 @@ static int bisect_next_check(struct repository *repo,
 	return decide_next(repo, terms, current_term, !state.nr_good, !state.nr_bad);
 }
 
-static int get_terms(struct repository *repo, struct bisect_terms *terms)
+static int get_terms(const char *bisect_terms_path,
+		     struct bisect_terms *terms)
 {
 	struct strbuf str = STRBUF_INIT;
 	FILE *fp = NULL;
 	int res = 0;
 
-	fp = fopen(git_path_bisect_terms(repo), "r");
+	fp = fopen(bisect_terms_path, "r");
 	if (!fp) {
 		res = -1;
 		goto finish;
@@ -507,10 +530,11 @@ finish:
 }
 
 static int bisect_terms(struct repository *repo,
+			const char *bisect_terms_path,
 			struct bisect_terms *terms,
 			const char *option)
 {
-	if (get_terms(repo, terms))
+	if (get_terms(bisect_terms_path, terms))
 		return error(_("no terms defined"));
 
 	if (!option) {
@@ -706,6 +730,7 @@ static enum bisect_error bisect_auto_next(struct repository *repo,
 }
 
 static enum bisect_error bisect_start(struct repository *repo,
+				      const char *bisect_log_path,
 				      struct bisect_terms *terms,
 				      int argc,
 				      const char **argv)
@@ -878,7 +903,7 @@ static enum bisect_error bisect_start(struct repository *repo,
 	write_file(git_path_bisect_names(repo), "%s\n", bisect_names.buf);
 
 	for (i = 0; i < states.nr; i++)
-		if (bisect_write(repo, states.items[i].string,
+		if (bisect_write(repo, bisect_log_path, states.items[i].string,
 				 revs.items[i].string, terms, 1)) {
 			res = BISECT_FAILED;
 			goto finish;
@@ -1057,7 +1082,7 @@ static int process_replay_line(struct repository *repo,
 	rev = word_end + strspn(word_end, " \t");
 	*word_end = '\0'; /* NUL-terminate the word */
 
-	get_terms(repo, terms);
+	get_terms(bisect_terms_path, terms);
 	if (check_and_set_terms(repo, terms, p))
 		return -1;
 
@@ -1366,11 +1391,13 @@ static int cmd_bisect__terms(struct repository *repo,
 {
 	int res;
 	struct bisect_terms terms = { 0 };
+	struct bisect_paths paths = { 0 };
+	const char *bisect_terms_path = repo_git_path(r, filename)
 
 	if (argc > 1)
 		return error(_("'%s' requires 0 or 1 argument"),
 			     "git bisect terms");
-	res = bisect_terms(repo, &terms, argc == 1 ? argv[0] : NULL);
+	res = bisect_terms(repo, &terms, argc == 1 ? argv[0] : NULL, paths);
 	free_terms(&terms);
 	return res;
 }
