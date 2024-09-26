@@ -10,6 +10,7 @@
 #include "hex.h"
 #include "object.h"
 #include "oid-array.h"
+#include "repository.h"
 #include "revision.h"
 #include "string-list.h"
 #include "strmap.h"
@@ -118,6 +119,23 @@ static int add_children(struct path_walk_context *ctx,
 		 */
 		if (type == OBJ_TREE)
 			strbuf_addch(&path, '/');
+
+		if (ctx->info->pl) {
+			int dtype;
+			enum pattern_match_result match;
+			match = path_matches_pattern_list(path.buf, path.len,
+							  path.buf + base_len, &dtype,
+							  ctx->info->pl,
+							  ctx->repo->index);
+
+			if (ctx->info->pl->use_cone_patterns &&
+			    match == NOT_MATCHED)
+				continue;
+			else if (!ctx->info->pl->use_cone_patterns &&
+				 type == OBJ_BLOB &&
+				 match != MATCHED)
+				continue;
+		}
 
 		if (!(list = strmap_get(&ctx->paths_to_lists, path.buf))) {
 			CALLOC_ARRAY(list, 1);
