@@ -25,7 +25,7 @@
 #include "path-walk.h"
 
 static const char * const builtin_backfill_usage[] = {
-	N_("git backfill [--batch-size=<n>] [--[no-]sparse]"),
+	N_("(EXPERIMENTAL) git backfill [--batch-size=<n>] [--[no-]sparse]"),
 	NULL
 };
 
