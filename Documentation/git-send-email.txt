@@ -414,6 +414,12 @@ exists when 'git send-email' is asked to add it (especially note that
 Failure to do so may not produce the expected result in the
 recipient's MUA.
 
+--[no-]mailmap::
+	Use the mailmap file (see linkgit:gitmailmap[5]) to map all
+	addresses to their canonical real name and email address. Additional
+	mailmap data specific to git-send-email may be provided using the
+	`sendemail.mailmap.file` or `sendemail.mailmap.blob` configuration
+	values. Defaults to `sendemail.mailmap`.
 
 Administering
 ~~~~~~~~~~~~~
