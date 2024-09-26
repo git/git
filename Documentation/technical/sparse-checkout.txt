@@ -287,7 +287,7 @@ everything behaves like a dense checkout with a few exceptions (e.g. branch
 checkouts and switches write fewer things, knowing the VFS will lazily
 write the rest on an as-needed basis).
 
-Since there is no publically available VFS-related code for folks to try,
+Since there is no publicly available VFS-related code for folks to try,
 the number of folks who can test such a usecase is limited.
 
 The primary reason to note the Behavior C usecase is that as we fix things
