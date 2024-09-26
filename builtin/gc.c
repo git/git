@@ -1476,9 +1476,9 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts,
 
 static void initialize_maintenance_strategy(void)
 {
-	char *config_str;
+	const char *config_str;
 
-	if (git_config_get_string("maintenance.strategy", &config_str))
+	if (git_config_get_string_tmp("maintenance.strategy", &config_str))
 		return;
 
 	if (!strcasecmp(config_str, "incremental")) {
