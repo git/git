@@ -507,7 +507,7 @@ static int get_common_prefix_len(const char *common_prefix)
 	common_prefix_len = strlen(common_prefix);
 
 	/*
-	 * If the prefix has a trailing slash, strip it so that submodules wont
+	 * If the prefix has a trailing slash, strip it so that submodules won't
 	 * be pruned from the index.
 	 */
 	if (common_prefix[common_prefix_len - 1] == '/')
