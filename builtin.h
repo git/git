@@ -231,6 +231,7 @@ int cmd_sparse_checkout(int argc, const char **argv, const char *prefix, struct 
 int cmd_status(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_stash(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_stripspace(int argc, const char **argv, const char *prefix, struct repository *repo);
+int cmd_survey(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_submodule__helper(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_switch(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_symbolic_ref(int argc, const char **argv, const char *prefix, struct repository *repo);
