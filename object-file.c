@@ -1911,6 +1911,8 @@ int finalize_object_file(const char *tmpfile, const char *filename)
 		goto try_rename;
 	else if (link(tmpfile, filename))
 		ret = errno;
+	else
+		unlink_or_warn(tmpfile);
 
 	/*
 	 * Coda hack - coda doesn't like cross-directory links,
@@ -1932,12 +1934,15 @@ int finalize_object_file(const char *tmpfile, const char *filename)
 		else
 			ret = errno;
 	}
-	unlink_or_warn(tmpfile);
 	if (ret) {
 		if (ret != EEXIST) {
+			int saved_errno = errno;
+			unlink_or_warn(tmpfile);
+			errno = saved_errno;
 			return error_errno(_("unable to write file %s"), filename);
 		}
 		/* FIXME!!! Collision check here ? */
+		unlink_or_warn(tmpfile);
 	}
 
 out:
