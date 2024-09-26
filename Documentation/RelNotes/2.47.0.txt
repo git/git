@@ -156,6 +156,9 @@ Performance, Internal Implementation, Development Support etc.
  * The reftable backend learned to more efficiently handle exclude
    patterns while enumerating the refs.
 
+ * CI updates.  FreeBSD image has been updated to 13.4.
+   (merge 2eeb29702e cb/ci-freebsd-13-4 later to maint).
+
 
 Fixes since v2.46
 -----------------
@@ -285,6 +288,10 @@ Fixes since v2.46
 
  * A few usability fixes to "git jump" (in contrib/).
    (merge 083b82544d jk/jump-quickfix-fixes later to maint).
+
+ * "git diff --exit-code" ignored modified binary files, which has
+   been corrected.
+   (merge 9a41735af6 rs/diff-exit-code-binary later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge be10ac7037 jc/mailinfo-header-cleanup later to maint).
