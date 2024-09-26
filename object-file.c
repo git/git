@@ -1904,6 +1904,7 @@ static void write_object_file_prepare_literally(const struct git_hash_algo *algo
  */
 int finalize_object_file(const char *tmpfile, const char *filename)
 {
+	struct stat st;
 	int ret = 0;
 
 	if (object_creation_mode == OBJECT_CREATION_USES_RENAMES)
@@ -1924,9 +1925,12 @@ int finalize_object_file(const char *tmpfile, const char *filename)
 	 */
 	if (ret && ret != EEXIST) {
 	try_rename:
-		if (!rename(tmpfile, filename))
+		if (!stat(filename, &st))
+			ret = EEXIST;
+		else if (!rename(tmpfile, filename))
 			goto out;
-		ret = errno;
+		else
+			ret = errno;
 	}
 	unlink_or_warn(tmpfile);
 	if (ret) {
