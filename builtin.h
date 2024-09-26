@@ -239,6 +239,7 @@ int cmd_status(int argc, const char **argv, const char *prefix);
 int cmd_stash(int argc, const char **argv, const char *prefix);
 int cmd_stripspace(int argc, const char **argv, const char *prefix);
 int cmd_submodule__helper(int argc, const char **argv, const char *prefix);
+int cmd_survey(int argc, const char **argv, const char *prefix);
 int cmd_switch(int argc, const char **argv, const char *prefix);
 int cmd_symbolic_ref(int argc, const char **argv, const char *prefix);
 int cmd_tag(int argc, const char **argv, const char *prefix);
