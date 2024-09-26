@@ -1393,9 +1393,8 @@ static struct combine_diff_path *find_paths_generic(const struct object_id *oid,
 {
 	struct combine_diff_path *paths = NULL;
 	int i, num_parent = parents->nr;
-
 	int output_format = opt->output_format;
-	const char *orderfile = opt->orderfile;
+	char *orderfile = opt->orderfile;
 
 	opt->output_format = DIFF_FORMAT_NO_OUTPUT;
 	/* tell diff_tree to emit paths in sorted (=tree) order */

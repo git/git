@@ -235,7 +235,7 @@ enum diff_submodule_format {
  * diffcore library with.
  */
 struct diff_options {
-	const char *orderfile;
+	char *orderfile;
 
 	/*
 	 * "--rotate-to=<file>" would start showing at <file> and when

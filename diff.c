@@ -441,8 +441,10 @@ int git_diff_ui_config(const char *var, const char *value,
 	}
 	if (!strcmp(var, "diff.wordregex"))
 		return git_config_string(&diff_word_regex_cfg, var, value);
-	if (!strcmp(var, "diff.orderfile"))
+	if (!strcmp(var, "diff.orderfile")) {
+		FREE_AND_NULL(diff_order_file_cfg);
 		return git_config_pathname(&diff_order_file_cfg, var, value);
+	}
 
 	if (!strcmp(var, "diff.ignoresubmodules")) {
 		if (!value)
@@ -4775,7 +4777,7 @@ void repo_diff_setup(struct repository *r, struct diff_options *options)
 	if (diff_indent_heuristic)
 		DIFF_XDL_SET(options, INDENT_HEURISTIC);
 
-	options->orderfile = diff_order_file_cfg;
+	options->orderfile = xstrdup_or_null(diff_order_file_cfg);
 
 	if (!options->flags.ignore_submodule_set)
 		options->flags.ignore_untracked_in_submodules = 1;
@@ -6727,6 +6729,7 @@ void diff_free(struct diff_options *options)
 		FREE_AND_NULL(options->objfind);
 	}
 
+	FREE_AND_NULL(options->orderfile);
 	for (size_t i = 0; i < options->anchors_nr; i++)
 		free(options->anchors[i]);
 	FREE_AND_NULL(options->anchors);
