@@ -1092,7 +1092,7 @@ parse_done:
 
 	revs.disable_stdin = 1;
 	setup_revisions(argc, argv, &revs, NULL);
-	if (!revs.pending.nr && is_bare_repository()) {
+	if (!revs.pending.nr && repo_is_bare(the_repository)) {
 		struct commit *head_commit;
 		struct object_id head_oid;
 

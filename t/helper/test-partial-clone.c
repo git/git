@@ -19,7 +19,7 @@ static void object_info(const char *gitdir, const char *oid_hex)
 	struct object_info oi = {.sizep = &size};
 	const char *p;
 
-	if (repo_init(&r, gitdir, NULL))
+	if (repo_init(&r, gitdir, NULL, -1))
 		die("could not init repo");
 	if (parse_oid_hex_algop(oid_hex, &oid, &p, r.hash_algo))
 		die("could not parse oid");

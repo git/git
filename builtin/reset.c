@@ -448,7 +448,7 @@ int cmd_reset(int argc,
 	if (reset_type != SOFT && (reset_type != MIXED || repo_get_work_tree(the_repository)))
 		setup_work_tree();
 
-	if (reset_type == MIXED && is_bare_repository())
+	if (reset_type == MIXED && repo_is_bare(the_repository))
 		die(_("%s reset is not allowed in a bare repository"),
 		    _(reset_type_names[reset_type]));
 

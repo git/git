@@ -766,8 +766,8 @@ static int check_repository_format_gently(const char *gitdir, struct repository_
 
 	if (!has_common) {
 		if (candidate->is_bare != -1) {
-			is_bare_repository_cfg = candidate->is_bare;
-			if (is_bare_repository_cfg == 1)
+			the_repository->is_bare_cfg = candidate->is_bare;
+			if (the_repository->is_bare_cfg == 1)
 				inside_work_tree = -1;
 		}
 		if (candidate->work_tree) {
@@ -1030,7 +1030,7 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 	/* #3, #7, #11, #15, #19, #23, #27, #31 (see t1510) */
 	if (work_tree_env)
 		set_git_work_tree(work_tree_env);
-	else if (is_bare_repository_cfg > 0) {
+	else if (the_repository->is_bare_cfg > 0) {
 		if (git_work_tree_cfg) {
 			/* #22.2, #30 */
 			warning("core.bare and core.worktree do not make sense");
@@ -1116,7 +1116,7 @@ static const char *setup_discovered_git_dir(const char *gitdir,
 	}
 
 	/* #16.2, #17.2, #20.2, #21.2, #24, #25, #28, #29 (see t1510) */
-	if (is_bare_repository_cfg > 0) {
+	if (the_repository->is_bare_cfg > 0) {
 		set_git_dir(gitdir, (offset != cwd->len));
 		if (chdir(cwd->buf))
 			die_errno(_("cannot come back to cwd"));
@@ -2323,7 +2323,7 @@ static int create_default_files(const char *template_path,
 	if (init_shared_repository != -1)
 		set_shared_repository(init_shared_repository);
 
-	is_bare_repository_cfg = !work_tree;
+	the_repository->is_bare_cfg = !work_tree;
 
 	/*
 	 * We would have created the above under user's umask -- under
@@ -2349,7 +2349,7 @@ static int create_default_files(const char *template_path,
 	}
 	git_config_set("core.filemode", filemode ? "true" : "false");
 
-	if (is_bare_repository())
+	if (repo_is_bare(the_repository))
 		git_config_set("core.bare", "true");
 	else {
 		git_config_set("core.bare", "false");

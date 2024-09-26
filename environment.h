@@ -144,8 +144,7 @@ void set_shared_repository(int value);
 int get_shared_repository(void);
 void reset_shared_repository(void);
 
-extern int is_bare_repository_cfg;
-int is_bare_repository(void);
+int is_bare_repository(struct repository *repo);
 extern char *git_work_tree_cfg;
 
 /* Environment bits from configuration mechanism */
