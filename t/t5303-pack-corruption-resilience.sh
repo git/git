@@ -44,9 +44,14 @@ create_new_pack() {
 }
 
 do_repack() {
+    for f in $pack.*
+    do
+	    mv $f "$(echo $f | sed -e 's/pack-/pack-corrupt-/')" || return 1
+    done &&
     pack=$(printf "$blob_1\n$blob_2\n$blob_3\n" |
           git pack-objects $@ .git/objects/pack/pack) &&
-    pack=".git/objects/pack/pack-${pack}"
+    pack=".git/objects/pack/pack-${pack}" &&
+    rm -f .git/objects/pack/pack-corrupt-*
 }
 
 do_corrupt_object() {
