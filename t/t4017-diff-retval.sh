@@ -145,6 +145,14 @@ test_expect_success 'option errors are not confused by --exit-code' '
 
 for option in --exit-code --quiet
 do
+	test_expect_success "git diff $option returns 1 for changed binary file" "
+		test_when_finished 'rm -f .gitattributes' &&
+		git reset --hard &&
+		echo a binary >.gitattributes &&
+		echo 2 >>a &&
+		test_expect_code 1 git diff $option
+	"
+
 	test_expect_success "git diff $option returns 1 for copied file" "
 		git reset --hard &&
 		cp a copy &&

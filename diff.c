@@ -3675,6 +3675,7 @@ static void builtin_diff(const char *name_a,
 			emit_diff_symbol(o, DIFF_SYMBOL_BINARY_FILES,
 					 sb.buf, sb.len, 0);
 			strbuf_release(&sb);
+			o->found_changes = 1;
 			goto free_ab_and_return;
 		}
 		if (fill_mmfile(o->repo, &mf1, one) < 0 ||
