@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2024, #10; Wed, 25)
-X-master-at: a116aba5d54bf44c6fc27fa1a4c2431d53cf8ff5
-X-next-at: caf1b0c932622a79da5dc26acbfbcfe828fa7bc8
+Subject: What's cooking in git.git (Sep 2024, #11; Thu, 26)
+X-master-at: 3857aae53f3633b7de63ad640737c657387ae0c6
+X-next-at: e261f169bdc0d967eadb9c1eae13d86b6873c213
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2024, #10; Wed, 25)
+What's cooking in git.git (Sep 2024, #11; Thu, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,9 +17,7 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-A bit more topics that have already graduated to 'master' have been
-merged down to 'maint' and Git 2.46.2 has been tagged.  Since many
-people were out last week, not many topics have moved.
+An early preview release Git 2.47-rc0 has been tagged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -52,108 +50,48 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ak/refs-symref-referent-typofix (2024-09-19) 1 commit
-  (merged to 'next' on 2024-09-19 at 1b00b05df1)
- + ref-filter: fix a typo
-
- Typofix.
- 
- source: <9697dc1c81db33dca7e4a3c093ee83cdc0efea1e.1726770881.git.gitgitgadget@gmail.com>
-
-
-* ak/typofix-2.46-maint (2024-09-19) 19 commits
-  (merged to 'next' on 2024-09-19 at 07777d1f11)
- + upload-pack: fix a typo
- + sideband: fix a typo
- + setup: fix a typo
- + run-command: fix a typo
- + revision: fix a typo
- + refs: fix typos
- + rebase: fix a typo
- + read-cache-ll: fix a typo
- + pretty: fix a typo
- + object-file: fix a typo
- + merge-ort: fix typos
- + merge-ll: fix a typo
- + http: fix a typo
- + gpg-interface: fix a typo
- + git-p4: fix typos
- + git-instaweb: fix a typo
- + fsmonitor-settings: fix a typo
- + diffcore-rename: fix typos
- + config.mak.dev: fix a typo
-
- Typofix.
- 
- source: <pull.1794.git.1726770880.gitgitgadget@gmail.com>
-
-
-* jc/cmake-unit-test-updates (2024-09-18) 4 commits
-  (merged to 'next' on 2024-09-19 at d892dcdcdd)
- + cmake: generalize the handling of the `UNIT_TEST_OBJS` list
- + cmake: stop looking for `REFTABLE_TEST_OBJS` in the Makefile
- + cmake: rename clar-related variables to avoid confusion
- + Merge branch 'ps/reftable-exclude' into jc/cmake-unit-test-updates
- (this branch uses ps/reftable-exclude.)
-
- CMake adjustments for recent changes around unit tests.
- 
- source: <pull.1797.git.1726687769585.gitgitgadget@gmail.com>
-
-
-* ps/apply-leakfix (2024-09-17) 6 commits
-  (merged to 'next' on 2024-09-18 at 99e318345e)
- + apply: refactor `struct image` to use a `struct strbuf`
- + apply: rename members that track line count and allocation length
- + apply: refactor code to drop `line_allocated`
- + apply: introduce macro and function to init images
- + apply: rename functions operating on `struct image`
- + apply: reorder functions to move image-related things together
-
- "git apply" had custom buffer management code that predated before
- use of strbuf got widespread, which has been updated to use strbuf,
- which also plugged some memory leaks.
- 
- source: <cover.1726567217.git.ps@pks.im>
-
-
-* ps/ci-gitlab-upgrade (2024-09-19) 1 commit
-  (merged to 'next' on 2024-09-19 at 907c53944e)
- + gitlab-ci: upgrade machine type of Linux runners
-
- CI updates.
- 
- source: <0dfcb4a7b38ca66ec50775928ecfb31c4bc2008b.1726642142.git.ps@pks.im>
-
-
-* ps/reftable-exclude (2024-09-16) 7 commits
-  (merged to 'next' on 2024-09-18 at 1f00fce314)
- + refs/reftable: wire up support for exclude patterns
- + reftable/reader: make table iterator reseekable
- + t/unit-tests: introduce reftable library
- + Makefile: stop listing test library objects twice
- + builtin/receive-pack: fix exclude patterns when announcing refs
- + refs: properly apply exclude patterns to namespaced refs
- + Merge branch 'cp/unit-test-reftable-stack' into ps/reftable-exclude
- (this branch is used by jc/cmake-unit-test-updates and ps/reftable-alloc-failures.)
-
- The reftable backend learned to more efficiently handle exclude
- patterns while enumerating the refs.
- 
- source: <cover.1726476401.git.ps@pks.im>
-
---------------------------------------------------
-[New Topics]
-
 * ak/doc-sparse-co-typofix (2024-09-23) 1 commit
   (merged to 'next' on 2024-09-24 at 74edc0657c)
  + Documentation/technical: fix a typo
 
  Docfix.
-
- Will merge to 'master'.
  source: <20240920082815.8192-1-algonell@gmail.com>
 
+
+* ak/typofix-builtins (2024-09-24) 1 commit
+  (merged to 'next' on 2024-09-24 at d7702a68b7)
+ + builtin: fix typos
+
+ Typofix.
+ source: <20240924130906.21392-1-algonell@gmail.com>
+
+
+* cb/ci-freebsd-13-4 (2024-09-20) 1 commit
+  (merged to 'next' on 2024-09-23 at 18be138bfd)
+ + ci: update FreeBSD image to 13.4
+
+ CI updates.
+ source: <20240920201409.8723-1-carenas@gmail.com>
+
+
+* jk/sendemail-mailmap-doc (2024-09-25) 1 commit
+  (merged to 'next' on 2024-09-25 at d4f69efebf)
+ + send-email: document --mailmap and associated configuration
+
+ Docfix.
+ source: <20240923222429.4102405-1-jacob.e.keller@intel.com>
+
+
+* rs/diff-exit-code-binary (2024-09-23) 1 commit
+  (merged to 'next' on 2024-09-24 at 1e597c407c)
+ + diff: report modified binary files as changes in builtin_diff()
+
+ "git diff --exit-code" ignored modified binary files, which has
+ been corrected.
+ source: <500a8e0a-9fbd-4b7b-b2f2-026a4293bc9f@web.de>
+
+--------------------------------------------------
+[Cooking]
 
 * ds/sparse-checkout-expansion-advice (2024-09-23) 1 commit
  - sparse-checkout: disable advice in 'disable'
@@ -165,26 +103,6 @@ Release tarballs are available at:
 
  Comments?
  source: <pull.1800.git.1727119882901.gitgitgadget@gmail.com>
-
-
-* jk/sendemail-mailmap-doc (2024-09-25) 1 commit
-  (merged to 'next' on 2024-09-25 at d4f69efebf)
- + send-email: document --mailmap and associated configuration
-
- Docfix.
-
- Will merge to 'master'.
- source: <20240923222429.4102405-1-jacob.e.keller@intel.com>
-
-
-* ak/typofix-builtins (2024-09-24) 1 commit
-  (merged to 'next' on 2024-09-24 at d7702a68b7)
- + builtin: fix typos
-
- Typofix.
-
- Will merge to 'master'.
- source: <20240924130906.21392-1-algonell@gmail.com>
 
 
 * ps/includeif-onbranch-cornercase-fix (2024-09-24) 2 commits
@@ -246,8 +164,6 @@ Release tarballs are available at:
  Needs review.
  source: <20240924213404.GA1142219@coredump.intra.peff.net>
 
---------------------------------------------------
-[Cooking]
 
 * es/worktree-repair-copied (2024-09-23) 1 commit
  - worktree: repair copied repository and linked worktrees
@@ -280,27 +196,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <c3a712d5-8e50-453d-be90-f5bf34de744c@web.de>
-
-
-* rs/diff-exit-code-binary (2024-09-23) 1 commit
-  (merged to 'next' on 2024-09-24 at 1e597c407c)
- + diff: report modified binary files as changes in builtin_diff()
-
- "git diff --exit-code" ignored modified binary files, which has
- been corrected.
-
- Will merge to 'master'.
- source: <500a8e0a-9fbd-4b7b-b2f2-026a4293bc9f@web.de>
-
-
-* cb/ci-freebsd-13-4 (2024-09-20) 1 commit
-  (merged to 'next' on 2024-09-23 at 18be138bfd)
- + ci: update FreeBSD image to 13.4
-
- CI updates.
-
- Will merge to 'master'.
- source: <20240920201409.8723-1-carenas@gmail.com>
 
 
 * cw/fix-reachable-in-repo-with-promisor (2024-09-19) 2 commits
