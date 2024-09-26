@@ -2,6 +2,7 @@
 
 test_description='rewrite diff on binary file'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # We must be large enough to meet the MINIMUM_BREAK_SIZE
