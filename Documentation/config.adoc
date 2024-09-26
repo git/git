@@ -539,6 +539,8 @@ include::config/status.adoc[]
 
 include::config/submodule.adoc[]
 
+include::config/survey.adoc[]
+
 include::config/tag.adoc[]
 
 include::config/tar.adoc[]
