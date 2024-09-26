@@ -141,6 +141,7 @@ manpages = {
   'git-status.adoc' : 1,
   'git-stripspace.adoc' : 1,
   'git-submodule.adoc' : 1,
+  'git-survey.adoc' : 1,
   'git-svn.adoc' : 1,
   'git-switch.adoc' : 1,
   'git-symbolic-ref.adoc' : 1,
