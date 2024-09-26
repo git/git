@@ -424,6 +424,11 @@ int parse_submodule_update_strategy(const char *value,
 	return 0;
 }
 
+void submodule_update_strategy_release(struct submodule_update_strategy *strategy)
+{
+	free((char *) strategy->command);
+}
+
 const char *submodule_update_type_to_string(enum submodule_update_type type)
 {
 	switch (type) {

@@ -95,7 +95,7 @@ static void free_one_config(struct submodule_entry *entry)
 	free((void *) entry->config->branch);
 	free((void *) entry->config->url);
 	free((void *) entry->config->ignore);
-	free((void *) entry->config->update_strategy.command);
+	submodule_update_strategy_release(&entry->config->update_strategy);
 	free(entry->config);
 }
 
