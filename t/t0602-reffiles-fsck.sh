@@ -189,7 +189,48 @@ test_expect_success 'regular ref content should be checked (individual)' '
 		EOF
 		rm $branch_dir_prefix/a/b/branch-bad &&
 		test_cmp expect err || return 1
-	done
+	done &&
+
+	printf "%s" "$(git rev-parse main)" >$branch_dir_prefix/branch-no-newline &&
+	git refs verify 2>err &&
+	cat >expect <<-EOF &&
+	warning: refs/heads/branch-no-newline: refMissingNewline: misses LF at the end
+	EOF
+	rm $branch_dir_prefix/branch-no-newline &&
+	test_cmp expect err &&
+
+	for trailing_content in " garbage" "    more garbage"
+	do
+		printf "%s" "$(git rev-parse main)$trailing_content" >$branch_dir_prefix/branch-garbage &&
+		git refs verify 2>err &&
+		cat >expect <<-EOF &&
+		warning: refs/heads/branch-garbage: trailingRefContent: has trailing garbage: '\''$trailing_content'\''
+		EOF
+		rm $branch_dir_prefix/branch-garbage &&
+		test_cmp expect err || return 1
+	done &&
+
+	printf "%s\n\n\n" "$(git rev-parse main)" >$branch_dir_prefix/branch-garbage-special &&
+	git refs verify 2>err &&
+	cat >expect <<-EOF &&
+	warning: refs/heads/branch-garbage-special: trailingRefContent: has trailing garbage: '\''
+
+
+	'\''
+	EOF
+	rm $branch_dir_prefix/branch-garbage-special &&
+	test_cmp expect err &&
+
+	printf "%s\n\n\n  garbage" "$(git rev-parse main)" >$branch_dir_prefix/branch-garbage-special &&
+	git refs verify 2>err &&
+	cat >expect <<-EOF &&
+	warning: refs/heads/branch-garbage-special: trailingRefContent: has trailing garbage: '\''
+
+
+	  garbage'\''
+	EOF
+	rm $branch_dir_prefix/branch-garbage-special &&
+	test_cmp expect err
 '
 
 test_expect_success 'regular ref content should be checked (aggregate)' '
@@ -207,12 +248,16 @@ test_expect_success 'regular ref content should be checked (aggregate)' '
 	printf "%s" $bad_content_1 >$tag_dir_prefix/tag-bad-1 &&
 	printf "%s" $bad_content_2 >$tag_dir_prefix/tag-bad-2 &&
 	printf "%s" $bad_content_3 >$branch_dir_prefix/a/b/branch-bad &&
+	printf "%s" "$(git rev-parse main)" >$branch_dir_prefix/branch-no-newline &&
+	printf "%s garbage" "$(git rev-parse main)" >$branch_dir_prefix/branch-garbage &&
 
 	test_must_fail git refs verify 2>err &&
 	cat >expect <<-EOF &&
 	error: refs/heads/a/b/branch-bad: badRefContent: $bad_content_3
 	error: refs/tags/tag-bad-1: badRefContent: $bad_content_1
 	error: refs/tags/tag-bad-2: badRefContent: $bad_content_2
+	warning: refs/heads/branch-garbage: trailingRefContent: has trailing garbage: '\'' garbage'\''
+	warning: refs/heads/branch-no-newline: refMissingNewline: misses LF at the end
 	EOF
 	sort err >sorted_err &&
 	test_cmp expect sorted_err
@@ -260,7 +305,15 @@ test_expect_success 'ref content checks should work with worktrees' '
 		EOF
 		rm $worktree2_refdir_prefix/bad-branch-2 &&
 		test_cmp expect err || return 1
-	done
+	done &&
+
+	printf "%s" "$(git rev-parse HEAD)" >$worktree1_refdir_prefix/branch-no-newline &&
+	git refs verify 2>err &&
+	cat >expect <<-EOF &&
+	warning: worktrees/worktree-1/refs/worktree/branch-no-newline: refMissingNewline: misses LF at the end
+	EOF
+	rm $worktree1_refdir_prefix/branch-no-newline &&
+	test_cmp expect err
 '
 
 test_done
