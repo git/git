@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git 2.46.0\n"
+"Project-Id-Version: git 2.47.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2024-07-20 21:56+0100\n"
-"PO-Revision-Date: 2024-07-21 14:53+0100\n"
+"POT-Creation-Date: 2024-09-19 02:06+0000\n"
+"PO-Revision-Date: 2024-09-28 15:45+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Svenska <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -542,7 +542,7 @@ msgid ""
 "/ - search for a hunk matching the given regex\n"
 "s - split the current hunk into smaller hunks\n"
 "e - manually edit the current hunk\n"
-"p - print the current hunk\n"
+"p - print the current hunk, 'P' to use the pager\n"
 "? - print help\n"
 msgstr ""
 "j - lämna stycket obestämt, se nästa obestämda stycke\n"
@@ -553,7 +553,7 @@ msgstr ""
 "/ - sök efter stycke som motsvarar angivet reguljärt uttryck\n"
 "s - dela aktuellt stycke i mindre styckens\n"
 "e - redigera aktuellt stycke manuellt\n"
-"p - visa aktuellt stycke\n"
+"p - visa aktuellt stycke, ”P” för att använda bläddrare\n"
 "? - visa hjälp\n"
 
 #, c-format
@@ -664,7 +664,7 @@ msgstr ""
 "som lämpligt för att ange lösning och checka in."
 
 msgid "Exiting because of an unresolved conflict."
-msgstr "Avslutar på grund av olöst konflikgt."
+msgstr "Avslutar på grund av olöst konflikt."
 
 msgid "You have not concluded your merge (MERGE_HEAD exists)."
 msgstr "Du har inte avslutat sammanslagningen (MERGE_HEAD finns)."
@@ -1229,6 +1229,15 @@ msgstr ""
 "försök en trevägssammanslagning, fall tillbaka på normal patch om det "
 "misslyckas"
 
+msgid "for conflicts, use our version"
+msgstr "för konflikter, använd vår version"
+
+msgid "for conflicts, use their version"
+msgstr "för konflikter, använd deras version"
+
+msgid "for conflicts, use a union version"
+msgstr "för konflikter, använd en förenad version"
+
 msgid "build a temporary index based on embedded index information"
 msgstr "bygg ett temporärt index baserat på inbyggd indexinformation"
 
@@ -1273,6 +1282,9 @@ msgstr "lägg till <rot> i alla filnamn"
 
 msgid "don't return error for empty patches"
 msgstr "ge inte någon felkod för tomma patchar"
+
+msgid "--ours, --theirs, and --union require --3way"
+msgstr "--ours, --theirs, och --union kräver --3way"
 
 #, c-format
 msgid "cannot stream blob %s"
@@ -2440,9 +2452,6 @@ msgstr ""
 "ogiltigt argument %s för ”git bisect terms”.\n"
 "Flaggor som stöds är: --term-good|--term-old och --term-bad|--term-new."
 
-msgid "revision walk setup failed\n"
-msgstr "misslyckades starta revisionstraversering\n"
-
 #, c-format
 msgid "could not open '%s' for appending"
 msgstr "kunde inte öppna ”%s” för tillägg"
@@ -3414,9 +3423,14 @@ msgstr "git check-mailmap [<flaggor>] <kontakt>..."
 msgid "also read contacts from stdin"
 msgstr "läs även kontakter från standard in"
 
-#, c-format
-msgid "unable to parse contact: %s"
-msgstr "kan inte tolka kontakt: %s"
+msgid "read additional mailmap entries from file"
+msgstr "läs ytterligare mailmap-poster från fil"
+
+msgid "blob"
+msgstr "blob"
+
+msgid "read additional mailmap entries from blob"
+msgstr "läs ytterligare mailmap-poster från blob"
 
 msgid "no contacts specified"
 msgstr "inga kontakter angavs"
@@ -3763,6 +3777,10 @@ msgstr "sökvägar kan inte användas vid byte av gren"
 #, c-format
 msgid "'%s' cannot be used with switching branches"
 msgstr "”%s” kan inte användas vid byte av gren"
+
+#, c-format
+msgid "'%s' needs the paths to check out"
+msgstr "”%s” behöver sökvägar att checka ut"
 
 #, c-format
 msgid "'%s' cannot be used with '%s'"
@@ -4521,7 +4539,7 @@ msgstr "git commit-tree: misslyckades läsa"
 msgid ""
 "git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
 "           [--dry-run] [(-c | -C | --squash) <commit> | --fixup [(amend|"
-"reword):]<commit>)]\n"
+"reword):]<commit>]\n"
 "           [-F <file> | -m <msg>] [--reset-author] [--allow-empty]\n"
 "           [--allow-empty-message] [--no-verify] [-e] [--author=<author>]\n"
 "           [--date=<date>] [--cleanup=<mode>] [--[no-]status]\n"
@@ -4531,7 +4549,7 @@ msgid ""
 msgstr ""
 "git commit [-a | --interactive | --patch] [-s] [-v] [-u<läge>] [--amend]\n"
 "           [--dry-run] [(-c | -C | --squash) <incheckning> | --fixup [(amend|"
-"reword):]<incheckning>)]\n"
+"reword):]<incheckning>]\n"
 "           [-F <fil> | -m <medd>] [--reset-author] [--allow-empty]\n"
 "           [--allow-empty-message] [--no-verify] [-e] [--"
 "author=<författare>]\n"
@@ -5022,12 +5040,10 @@ msgstr "git config list [<filflagga>] [<visningsflagga>] [--includes]"
 
 msgid ""
 "git config get [<file-option>] [<display-option>] [--includes] [--all] [--"
-"regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] "
-"<name>"
+"regexp] [--value=<value>] [--fixed-value] [--default=<default>] <name>"
 msgstr ""
 "git config get [<filflagga>] [<visningsflagga>] [--includes] [--all] [--"
-"regexp=<reguttr>] [--value=<värde>] [--fixed-value] [--default=<förval>] "
-"<namn>"
+"regexp] [--value=<värde>] [--fixed-value] [--default=<förval>] <namn>"
 
 msgid ""
 "git config set [<file-option>] [--type=<type>] [--all] [--value=<value>] [--"
@@ -5054,6 +5070,15 @@ msgstr "git config edit [<filflagga>]"
 
 msgid "git config [<file-option>] --get-colorbool <name> [<stdout-is-tty>]"
 msgstr "git config [<filflagga>] --get-colorbool <namn> [<stdout-är-tty>]"
+
+msgid ""
+"git config get [<file-option>] [<display-option>] [--includes] [--all] [--"
+"regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] "
+"<name>"
+msgstr ""
+"git config get [<filflagga>] [<visningsflagga>] [--includes] [--all] [--"
+"regexp=<reguttr>] [--value=<värde>] [--fixed-value] [--default=<förval>] "
+"<namn>"
 
 msgid ""
 "git config set [<file-option>] [--type=<type>] [--comment=<message>] [--all] "
@@ -5853,8 +5878,8 @@ msgstr ""
 "false” för att undvika testet\n"
 
 #, c-format
-msgid "%s did not send all necessary objects\n"
-msgstr "%s sände inte alla nödvändiga objekt\n"
+msgid "%s did not send all necessary objects"
+msgstr "%s sände inte alla nödvändiga objekt"
 
 #, c-format
 msgid "rejected %s because shallow roots are not allowed to be updated"
@@ -5891,8 +5916,8 @@ msgid "option \"%s\" value \"%s\" is not valid for %s"
 msgstr "flaggan ”%s” med värdet ”%s” är inte giltigt för %s"
 
 #, c-format
-msgid "option \"%s\" is ignored for %s\n"
-msgstr "flaggan ”%s” ignoreras för %s\n"
+msgid "option \"%s\" is ignored for %s"
+msgstr "flaggan ”%s” ignoreras för %s"
 
 #, c-format
 msgid "%s is not a valid object"
@@ -6568,6 +6593,9 @@ msgstr "var mer grundlig (ökar körtiden)"
 msgid "enable auto-gc mode"
 msgstr "aktivera auto-gc-läge"
 
+msgid "perform garbage collection in the background"
+msgstr "utför skräpsamling i bakgrunden"
+
 msgid "force running gc even if there may be another gc running"
 msgstr "tvinga gc-körning även om en annan gc kanske körs"
 
@@ -6663,6 +6691,9 @@ msgstr "uppgiften ”%s” kan inte väljas flera gånger"
 
 msgid "run tasks based on the state of the repository"
 msgstr "kör uppgifter baserad på arkivets tillstånd"
+
+msgid "perform maintenance in the background"
+msgstr "utför underhåll i bakgrunden"
 
 msgid "frequency"
 msgstr "frekvens"
@@ -7521,9 +7552,6 @@ msgstr "-L<intervall>:<fil> kan inte användas med sökvägsspecifikation"
 msgid "Final output: %d %s\n"
 msgstr "Slututdata: %d %s\n"
 
-msgid "unable to create temporary object directory"
-msgstr "kan inte skapa temporär objektkatalog"
-
 #, c-format
 msgid "git show %s: bad file"
 msgstr "git show %s: felaktig fil"
@@ -8080,15 +8108,6 @@ msgstr "använd diff3-baserad sammanslagning"
 msgid "use a zealous diff3 based merge"
 msgstr "använd nitisk diff3-baserad sammanslagning"
 
-msgid "for conflicts, use our version"
-msgstr "för konflikter, använd vår version"
-
-msgid "for conflicts, use their version"
-msgstr "för konflikter, använd deras version"
-
-msgid "for conflicts, use a union version"
-msgstr "för konflikter, använd en förenad version"
-
 msgid "<algorithm>"
 msgstr "<algoritm>"
 
@@ -8552,6 +8571,9 @@ msgstr "paket att återanvända vid beräkning av multipaketsbitkarta"
 
 msgid "write multi-pack bitmap"
 msgstr "skriv flerpaketsbitkarta"
+
+msgid "write a new incremental MIDX"
+msgstr "skriv en ny inkrementell MIDX"
 
 msgid "write multi-pack index containing only given indexes"
 msgstr "skriv flerpaketsindex som endast innehåller angivna index"
@@ -10546,6 +10568,9 @@ msgstr "felaktigt referensformat: %s"
 msgid "git refs migrate --ref-format=<format> [--dry-run]"
 msgstr "git refs migrate --ref-format=<format> [--dry-run]"
 
+msgid "git refs verify [--strict] [--verbose]"
+msgstr "git refs verify [--strict] [--verbose]"
+
 msgid "specify the reference format to convert to"
 msgstr "ange referensformatet att konvertera till"
 
@@ -10558,6 +10583,12 @@ msgstr "saknad --ref-format=<format>"
 #, c-format
 msgid "repository already uses '%s' format"
 msgstr "arkivet använder redan ”%s”-format"
+
+msgid "enable strict checking"
+msgstr "aktivera strikt kontroll"
+
+msgid "'git refs verify' takes no arguments"
+msgstr "”git refs verify” tar inget argument"
 
 msgid ""
 "git remote add [-t <branch>] [-m <master>] [-f] [--tags | --no-tags] [--"
@@ -11978,11 +12009,11 @@ msgstr "referensen existerar inte"
 msgid "failed to look up reference"
 msgstr "misslyckades slå upp referensen"
 
-msgid "only show tags (can be combined with branches)"
-msgstr "visa endast taggar (kan kombineras med grenar)"
+msgid "only show tags (can be combined with --branches)"
+msgstr "visa endast taggar (kan kombineras med --branches)"
 
-msgid "only show branches (can be combined with tags)"
-msgstr "visa endast grenar (kan kombineras med taggar)"
+msgid "only show branches (can be combined with --tags)"
+msgstr "visa endast grenar (kan kombineras med --tags)"
 
 msgid "check for reference existence without resolving"
 msgstr "kontrollerar att referensen existerar utan att slå upp dem"
@@ -12033,6 +12064,10 @@ msgstr "misslyckades ta bort katalogen ”%s”"
 
 msgid "failed to create directory for sparse-checkout file"
 msgstr "misslyckades skapa katalog för ”sparse-checkout”-filen"
+
+#, c-format
+msgid "unable to fdopen %s"
+msgstr "kan inte utföra fdopen %s"
 
 msgid "failed to initialize worktree config"
 msgstr "misslyckades initiera arbetskataloginställning"
@@ -12485,8 +12520,8 @@ msgid "couldn't hash object from '%s'"
 msgstr "kunde inte hasha objekt från ”%s”"
 
 #, c-format
-msgid "unexpected mode %o\n"
-msgstr "okänt läge %o\n"
+msgid "unexpected mode %o"
+msgstr "okänt läge %o"
 
 msgid "use the commit stored in the index instead of the submodule HEAD"
 msgstr "använd incechkning lagrad i indexet istället för undermodulens HEAD"
@@ -17031,13 +17066,16 @@ msgstr ""
 msgid "Unable to create '%s.lock': %s"
 msgstr "Kunde inte skapa ”%s.lock”: %s"
 
+msgid "unable to create temporary object directory"
+msgstr "kan inte skapa temporär objektkatalog"
+
 #, c-format
 msgid "could not write loose object index %s"
 msgstr "kunde inte skriva löst objektindex %s"
 
 #, c-format
-msgid "failed to write loose object index %s\n"
-msgstr "misslyckades skriva löst objektindex %s\n"
+msgid "failed to write loose object index %s"
+msgstr "misslyckades skriva löst objektindex %s"
 
 #, c-format
 msgid "unexpected line: '%s'"
@@ -17586,6 +17624,17 @@ msgstr "kunde inte läsa paket{"
 msgid "could not open index for %s"
 msgstr "kunde inte öppna indexet för %s"
 
+#, c-format
+msgid "unable to link '%s' to '%s'"
+msgstr "kan inte länka ”%s” till ”%s”"
+
+#, c-format
+msgid "failed to clear multi-pack-index at %s"
+msgstr "misslyckades städa multi-pack-index på %s"
+
+msgid "cannot write incremental MIDX with bitmap"
+msgstr "kan inte skriva inkrementell MIDX med bitkarta"
+
 msgid "ignoring existing multi-pack-index; checksum mismatch"
 msgstr "ignorerar befintlig multi-pack-index; felaktig kontrollsumma"
 
@@ -17614,17 +17663,32 @@ msgstr "inga paketfiler att indexera."
 msgid "refusing to write multi-pack .bitmap without any objects"
 msgstr "kunde inte skriva fler-paketsbitkarta utan några objekt"
 
+msgid "unable to create temporary MIDX layer"
+msgstr "kan inte skapa temporärt MIDX-lager"
+
 msgid "could not write multi-pack bitmap"
 msgstr "kunde inte skriva fler-paketsbitkarta"
 
+msgid "unable to open multi-pack-index chain file"
+msgstr "kan inte öppna kedjefil för multi-pack-index"
+
+msgid "unable to rename new multi-pack-index layer"
+msgstr "kan inte byta namn på nytt multi-pack-index-lager"
+
 msgid "could not write multi-pack-index"
 msgstr "kunde inte skriva flerpakets-index"
+
+msgid "cannot expire packs from an incremental multi-pack-index"
+msgstr "kan inte låta tid gå ut för paket från inkrementellt multi-pack-index"
 
 msgid "Counting referenced objects"
 msgstr "Räknar refererade objekt"
 
 msgid "Finding and deleting unreferenced packfiles"
 msgstr "Ser efter och tar bort orefererade packfiler"
+
+msgid "cannot repack an incremental multi-pack-index"
+msgstr "kunde packa om ett inkrementellt multi-pack-index"
 
 msgid "could not start pack-objects"
 msgstr "kunde inte starta pack-objects"
@@ -17687,6 +17751,27 @@ msgstr "paketnamnstycke för multi-pack-index är för kort"
 msgid "multi-pack-index pack names out of order: '%s' before '%s'"
 msgstr "paketnamn för multi-pack-index i fel ordning: ”%s” före ”%s”"
 
+msgid "multi-pack-index chain file too small"
+msgstr "kedjefilen för multi-pack-index är för liten"
+
+#, c-format
+msgid "pack count in base MIDX too high: %<PRIuMAX>"
+msgstr "antalet paket i bas-MIDX för högt: %<PRIuMAX>"
+
+#, c-format
+msgid "object count in base MIDX too high: %<PRIuMAX>"
+msgstr "antalet object i bas-MIDX för högt: %<PRIuMAX>"
+
+#, c-format
+msgid "invalid multi-pack-index chain: line '%s' not a hash"
+msgstr "ogiltig kedja för multi-pack-index: raden ”%s” är inte ett hash-värde"
+
+msgid "unable to find all multi-pack index files"
+msgstr "kan inte hitta alla indexfiler för multi-pack"
+
+msgid "invalid MIDX object position, MIDX is likely corrupt"
+msgstr "ogiltig MIDX-objektposition, MIDX är troligtvis trasig"
+
 #, c-format
 msgid "bad pack-int-id: %u (%u total packs)"
 msgstr "bad pack-int-id: %u (%u paket totalt)"
@@ -17703,10 +17788,6 @@ msgstr "multi-pack-index innehåller 64-bitars offset, men off_t är för liten"
 
 msgid "multi-pack-index large offset out of bounds"
 msgstr "stort offset för mult-pack-index utanför gränsen"
-
-#, c-format
-msgid "failed to clear multi-pack-index at %s"
-msgstr "misslyckades städa multi-pack-index på %s"
 
 msgid "multi-pack-index file exists, but failed to parse"
 msgstr "multi-pack-indexfilen finns, men kunde inte tolkas"
@@ -19219,6 +19300,10 @@ msgid "expected format: %%(ahead-behind:<committish>)"
 msgstr "förväntat format: %%(ahead-behind:<incheckning-igt>)"
 
 #, c-format
+msgid "expected format: %%(is-base:<committish>)"
+msgstr "förväntat format: %%(is-base:<incheckning-igt>)"
+
+#, c-format
 msgid "malformed field name: %.*s"
 msgstr "felformat fältnamn: %.*s"
 
@@ -19449,6 +19534,13 @@ msgid ""
 msgstr ""
 "kan inte läsa referensen ”%s”: förväntade symbolisk referens med målet ”%s”: "
 "men är en vanlig referens"
+
+#, c-format
+msgid "cannot open directory %s"
+msgstr "kunde inte öppna katalogen %s"
+
+msgid "Checking references consistency"
+msgstr "Kontrollerar konsistens för referenser"
 
 #, c-format
 msgid "refname is dangerous: %s"
@@ -20077,12 +20169,15 @@ msgstr "hämta endast metadata för grenen som skall checkas ut"
 msgid "create repository within 'src' directory"
 msgstr "skapa arkiv inuti katalogen ”src”"
 
+msgid "specify if tags should be fetched during clone"
+msgstr "ange om taggar ska hämtas vid kloning"
+
 msgid ""
 "scalar clone [--single-branch] [--branch <main-branch>] [--full-clone]\n"
-"\t[--[no-]src] <url> [<enlistment>]"
+"\t[--[no-]src] [--[no-]tags] <url> [<enlistment>]"
 msgstr ""
 "scalar clone [--single-branch] [--branch <huvudgren>] [--full-clone]\n"
-"\t[--[no-]src] <url> [<enrollering>]"
+"\t[--[no-]src] [--[no-]tags] <url> [<enrollering>]"
 
 #, c-format
 msgid "cannot deduce worktree name from '%s'"
@@ -20099,6 +20194,10 @@ msgstr "misslyckades hämta standardgren för ”%s”"
 #, c-format
 msgid "could not configure remote in '%s'"
 msgstr "kunde inte ställa in fjärr i ”%s”"
+
+#, c-format
+msgid "could not disable tags in '%s'"
+msgstr "kunde inte inaktivera taggar i ”%s”"
 
 #, c-format
 msgid "could not configure '%s'"
@@ -21162,6 +21261,10 @@ msgid "failed to stat '%*s%s%s'"
 msgstr "misslyckades ta status på ”%*ss%s%s”"
 
 #, c-format
+msgid "safe.directory '%s' not absolute"
+msgstr "safe.directory ”%s” är inte absolut"
+
+#, c-format
 msgid ""
 "detected dubious ownership in repository at '%s'\n"
 "%sTo add an exception for this directory, call:\n"
@@ -21623,6 +21726,24 @@ msgstr "igenkänningstecken"
 
 msgid "command token to send to the server"
 msgstr "igenkänningstecken för kommando att sända till servern"
+
+msgid "unit-test [<options>]"
+msgstr "unit-test [<flaggor>]"
+
+msgid "immediately exit upon the first failed test"
+msgstr "avsluta omedelbart vid det första misslyckade testet"
+
+msgid "suite[::test]"
+msgstr "svit[::test]"
+
+msgid "run only test suite or individual test <suite[::test]>"
+msgstr "kör endast testsviten eller individuella testet <svit[::test]>"
+
+msgid "suite"
+msgstr "svit"
+
+msgid "exclude test suite <suite>"
+msgstr "uteslut testsviten <svit>"
 
 #, c-format
 msgid "running trailer command '%s' failed"
@@ -22793,6 +22914,9 @@ msgstr "”%s.final” innehåller det skrivna brevet.\n"
 msgid "--dump-aliases incompatible with other options\n"
 msgstr "--dump-aliases är inkompatibelt med andra flaggor\n"
 
+msgid "--dump-aliases and --translate-aliases are mutually exclusive\n"
+msgstr "--dump-aliases och --translate-aliases är ömsesidigt utelsutande\n"
+
 msgid ""
 "fatal: found configuration options for 'sendmail'\n"
 "git-send-email is configured with the sendemail.* options - note the 'e'.\n"
@@ -23093,3 +23217,10 @@ msgstr ""
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
+
+#~ msgid "revision walk setup failed\n"
+#~ msgstr "misslyckades starta revisionstraversering\n"
+
+#, c-format
+#~ msgid "unable to parse contact: %s"
+#~ msgstr "kan inte tolka kontakt: %s"
