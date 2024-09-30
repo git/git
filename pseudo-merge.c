@@ -87,7 +87,7 @@ static void pseudo_merge_group_init(struct pseudo_merge_group *group)
 {
 	memset(group, 0, sizeof(struct pseudo_merge_group));
 
-	strmap_init_with_options(&group->matches, NULL, 0);
+	strmap_init_with_options(&group->matches, NULL, 1);
 
 	group->decay = DEFAULT_PSEUDO_MERGE_DECAY;
 	group->max_merges = DEFAULT_PSEUDO_MERGE_MAX_MERGES;
@@ -275,7 +275,7 @@ static int find_pseudo_merge_group_for_ref(const char *refname,
 		matches = strmap_get(&group->matches, group_name.buf);
 		if (!matches) {
 			matches = xcalloc(1, sizeof(*matches));
-			strmap_put(&group->matches, strbuf_detach(&group_name, NULL),
+			strmap_put(&group->matches, group_name.buf,
 				   matches);
 		}
 
