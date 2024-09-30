@@ -2055,7 +2055,6 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	}
 
 	if (safe_create_leading_directories(ctx->graph_name)) {
-		UNLEAK(ctx->graph_name);
 		error(_("unable to create leading directories of %s"),
 			ctx->graph_name);
 		return -1;
