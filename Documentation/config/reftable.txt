@@ -46,3 +46,11 @@ reftable.geometricFactor::
 By default, the geometric sequence uses a factor of 2, meaning that for any
 table, the next-biggest table must at least be twice as big. A maximum factor
 of 256 is supported.
+
+reftable.lockTimeout::
+	Whenever the reftable backend appends a new table to the stack, it has
+	to lock the central "tables.list" file before updating it. This config
+	controls how long the process will wait to acquire the lock in case
+	another process has already acquired it. Value 0 means not to retry at
+	all; -1 means to try indefinitely. Default is 100 (i.e., retry for
+	100ms).
