@@ -110,6 +110,9 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 	const char * const * usage_str = revert_or_cherry_pick_usage(opts);
 	const char *me = action_name(opts);
 	const char *cleanup_arg = NULL;
+	const char sentinel_value;
+	const char *strategy = &sentinel_value;
+	const char *gpg_sign = &sentinel_value;
 	enum empty_action empty_opt = EMPTY_COMMIT_UNSPECIFIED;
 	int cmd = 0;
 	struct option base_options[] = {
@@ -125,10 +128,10 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 		OPT_CALLBACK('m', "mainline", opts, N_("parent-number"),
 			     N_("select mainline parent"), option_parse_m),
 		OPT_RERERE_AUTOUPDATE(&opts->allow_rerere_auto),
-		OPT_STRING(0, "strategy", &opts->strategy, N_("strategy"), N_("merge strategy")),
+		OPT_STRING(0, "strategy", &strategy, N_("strategy"), N_("merge strategy")),
 		OPT_STRVEC('X', "strategy-option", &opts->xopts, N_("option"),
 			N_("option for merge strategy")),
-		{ OPTION_STRING, 'S', "gpg-sign", &opts->gpg_sign, N_("key-id"),
+		{ OPTION_STRING, 'S', "gpg-sign", &gpg_sign, N_("key-id"),
 		  N_("GPG sign commit"), PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
 		OPT_END()
 	};
@@ -240,8 +243,14 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 		usage_with_options(usage_str, options);
 
 	/* These option values will be free()d */
-	opts->gpg_sign = xstrdup_or_null(opts->gpg_sign);
-	opts->strategy = xstrdup_or_null(opts->strategy);
+	if (gpg_sign != &sentinel_value) {
+		free(opts->gpg_sign);
+		opts->gpg_sign = xstrdup_or_null(gpg_sign);
+	}
+	if (strategy != &sentinel_value) {
+		free(opts->strategy);
+		opts->strategy = xstrdup_or_null(strategy);
+	}
 	if (!opts->strategy && getenv("GIT_TEST_MERGE_ALGORITHM"))
 		opts->strategy = xstrdup(getenv("GIT_TEST_MERGE_ALGORITHM"));
 	free(options);
