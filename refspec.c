@@ -225,7 +225,7 @@ void refspec_clear(struct refspec *rs)
 	rs->nr = 0;
 
 	for (i = 0; i < rs->raw_nr; i++)
-		free((char *)rs->raw[i]);
+		free(rs->raw[i]);
 	FREE_AND_NULL(rs->raw);
 	rs->raw_alloc = 0;
 	rs->raw_nr = 0;

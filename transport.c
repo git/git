@@ -414,7 +414,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	struct git_transport_data *data = transport->data;
 	struct ref *refs = NULL;
 	struct fetch_pack_args args;
-	struct ref *refs_tmp = NULL;
+	struct ref *refs_tmp = NULL, **to_fetch_dup = NULL;
 
 	memset(&args, 0, sizeof(args));
 	args.uploadpack = data->options.uploadpack;
@@ -477,6 +477,14 @@ static int fetch_refs_via_pack(struct transport *transport,
 		goto cleanup;
 	}
 
+	/*
+	 * Create a shallow copy of `sought` so that we can free all of its entries.
+	 * This is because `fetch_pack()` will modify the array to evict some
+	 * entries, but won't free those.
+	 */
+	DUP_ARRAY(to_fetch_dup, to_fetch, nr_heads);
+	to_fetch = to_fetch_dup;
+
 	refs = fetch_pack(&args, data->fd,
 			  refs_tmp ? refs_tmp : transport->remote_refs,
 			  to_fetch, nr_heads, &data->shallow,
@@ -500,6 +508,7 @@ cleanup:
 		ret = -1;
 	data->conn = NULL;
 
+	free(to_fetch_dup);
 	free_refs(refs_tmp);
 	free_refs(refs);
 	list_objects_filter_release(&args.filter_options);

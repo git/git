@@ -595,7 +595,8 @@ int repo_parse_commit_internal(struct repository *r,
 	}
 
 	ret = parse_commit_buffer(r, item, buffer, size, 0);
-	if (save_commit_buffer && !ret) {
+	if (save_commit_buffer && !ret &&
+	    !get_cached_commit_buffer(r, item, NULL)) {
 		set_commit_buffer(r, item, buffer, size);
 		return 0;
 	}

@@ -74,7 +74,7 @@ static void start_object_request(struct object_request *obj_req)
 	obj_req->state = ACTIVE;
 	if (!start_active_slot(slot)) {
 		obj_req->state = ABORTED;
-		release_http_object_request(req);
+		release_http_object_request(&req);
 		return;
 	}
 }
@@ -110,7 +110,7 @@ static void process_object_response(void *callback_data)
 		if (obj_req->repo->next) {
 			obj_req->repo =
 				obj_req->repo->next;
-			release_http_object_request(obj_req->req);
+			release_http_object_request(&obj_req->req);
 			start_object_request(obj_req);
 			return;
 		}
@@ -495,7 +495,7 @@ static int fetch_object(struct walker *walker, unsigned char *hash)
 
 	if (repo_has_object_file(the_repository, &obj_req->oid)) {
 		if (obj_req->req)
-			abort_http_object_request(obj_req->req);
+			abort_http_object_request(&obj_req->req);
 		abort_object_request(obj_req);
 		return 0;
 	}
@@ -543,7 +543,7 @@ static int fetch_object(struct walker *walker, unsigned char *hash)
 		strbuf_release(&buf);
 	}
 
-	release_http_object_request(req);
+	release_http_object_request(&obj_req->req);
 	release_object_request(obj_req);
 	return ret;
 }
@@ -579,7 +579,17 @@ static void cleanup(struct walker *walker)
 	if (data) {
 		alt = data->alt;
 		while (alt) {
+			struct packed_git *pack;
+
 			alt_next = alt->next;
+
+			pack = alt->packs;
+			while (pack) {
+				struct packed_git *pack_next = pack->next;
+				close_pack(pack);
+				free(pack);
+				pack = pack_next;
+			}
 
 			free(alt->base);
 			free(alt);

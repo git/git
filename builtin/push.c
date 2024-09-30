@@ -669,6 +669,7 @@ int cmd_push(int argc,
 	rc = do_push(flags, push_options, remote);
 	string_list_clear(&push_options_cmdline, 0);
 	string_list_clear(&push_options_config, 0);
+	clear_cas_option(&cas);
 	if (rc == -1)
 		usage_with_options(push_usage, options);
 	else

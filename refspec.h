@@ -43,7 +43,7 @@ struct refspec {
 	int alloc;
 	int nr;
 
-	const char **raw;
+	char **raw;
 	int raw_alloc;
 	int raw_nr;
 
