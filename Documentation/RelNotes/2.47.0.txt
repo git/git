@@ -159,6 +159,9 @@ Performance, Internal Implementation, Development Support etc.
  * CI updates.  FreeBSD image has been updated to 13.4.
    (merge 2eeb29702e cb/ci-freebsd-13-4 later to maint).
 
+ * Give timeout to the locking code to write to reftable, instead of
+   failing on the first failure without retrying.
+
 
 Fixes since v2.46
 -----------------
@@ -292,6 +295,27 @@ Fixes since v2.46
  * "git diff --exit-code" ignored modified binary files, which has
    been corrected.
    (merge 9a41735af6 rs/diff-exit-code-binary later to maint).
+
+ * When a subprocess to work in a submodule spawned by "git submodule"
+   fails with SIGPIPE, the parent Git process caught the death of it,
+   but gave a generic "failed to work in that submodule", which was
+   misleading.  We now behave as if the parent got SIGPIPE and die.
+   (merge 082caf527e pw/submodule-process-sigpipe later to maint).
+
+ * "git archive" with pathspec magic that uses the attribute
+   information did not work well, which has been corrected.
+   (merge 296743a7ca rs/archive-with-attr-pathspec-fix later to maint).
+
+ * Background tasks "git maintenance" runs may need to use credential
+   information when going over the network, but a credential helper
+   may work only in an interactive environment, and end up blocking a
+   scheduled task waiting for UI.  Credential helpers can now behave
+   differently when they are not running interactively.
+   (merge b9183b0a02 ds/background-maintenance-with-credential later to maint).
+
+ * "git --git-dir=nowhere cmd" failed to properly notice that it
+   wasn't in any repository while processing includeIf.onbranch
+   configuration and instead crashed.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge be10ac7037 jc/mailinfo-header-cleanup later to maint).
