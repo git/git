@@ -3124,6 +3124,7 @@ out:
 	if (f)
 		free_hashfile(f);
 	strbuf_release(&sb);
+	free(eoie_c);
 	free(ieot);
 	return ret;
 }
