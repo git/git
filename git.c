@@ -711,6 +711,7 @@ static void strip_extension(const char **argv)
 static void handle_builtin(int argc, const char **argv)
 {
 	struct strvec args = STRVEC_INIT;
+	const char **argv_copy = NULL;
 	const char *cmd;
 	struct cmd_struct *builtin;
 
@@ -731,13 +732,28 @@ static void handle_builtin(int argc, const char **argv)
 		}
 
 		argc++;
-		argv = args.v;
+
+		/*
+		 * `run_builtin()` will modify the argv array, so we need to
+		 * create a shallow copy such that we can free all of its
+		 * strings.
+		 */
+		CALLOC_ARRAY(argv_copy, argc + 1);
+		COPY_ARRAY(argv_copy, args.v, argc);
+
+		argv = argv_copy;
 	}
 
 	builtin = get_builtin(cmd);
-	if (builtin)
-		exit(run_builtin(builtin, argc, argv, the_repository));
+	if (builtin) {
+		int ret = run_builtin(builtin, argc, argv, the_repository);
+		strvec_clear(&args);
+		free(argv_copy);
+		exit(ret);
+	}
+
 	strvec_clear(&args);
+	free(argv_copy);
 }
 
 static void execv_dashed_external(const char **argv)

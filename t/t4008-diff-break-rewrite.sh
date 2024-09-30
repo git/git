@@ -21,6 +21,8 @@ With -B, this should be detected as two complete rewrites.
 
 Further, with -B and -M together, these should turn into two renames.
 '
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh ;# test-lib chdir's into trash
 

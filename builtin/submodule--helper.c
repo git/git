@@ -364,9 +364,13 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 	if (!info->quiet)
 		printf(_("Entering '%s'\n"), displaypath);
 
-	if (info->argv[0] && run_command(&cp))
-		die(_("run_command returned non-zero status for %s\n."),
-			displaypath);
+	if (info->argv[0]) {
+		if (run_command(&cp))
+			die(_("run_command returned non-zero status for %s\n."),
+			    displaypath);
+	} else {
+		child_process_clear(&cp);
+	}
 
 	if (info->recursive) {
 		struct child_process cpr = CHILD_PROCESS_INIT;
@@ -1618,6 +1622,8 @@ static int add_possible_reference_from_superproject(
 				; /* nothing */
 			}
 		}
+
+		strbuf_release(&err);
 		strbuf_release(&sb);
 	}
 
@@ -2022,6 +2028,7 @@ struct update_data {
 static void update_data_release(struct update_data *ud)
 {
 	free(ud->displaypath);
+	submodule_update_strategy_release(&ud->update_strategy);
 	module_list_release(&ud->list);
 }
 
@@ -2642,15 +2649,20 @@ static int update_submodule(struct update_data *update_data)
 
 		if (!update_data->nofetch) {
 			if (fetch_in_submodule(update_data->sm_path, update_data->depth,
-					      0, NULL))
+					      0, NULL)) {
+				free(remote_ref);
 				return die_message(_("Unable to fetch in submodule path '%s'"),
 						   update_data->sm_path);
+			}
 		}
 
 		if (repo_resolve_gitlink_ref(the_repository, update_data->sm_path,
-					     remote_ref, &update_data->oid))
-			return die_message(_("Unable to find %s revision in submodule path '%s'"),
-					   remote_ref, update_data->sm_path);
+					     remote_ref, &update_data->oid)) {
+			ret = die_message(_("Unable to find %s revision in submodule path '%s'"),
+					  remote_ref, update_data->sm_path);
+			free(remote_ref);
+			return ret;
+		}
 
 		free(remote_ref);
 	}

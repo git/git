@@ -4,6 +4,7 @@ test_description='git merge
 
 Testing pull.* configuration parsing and other things.'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
