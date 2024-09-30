@@ -675,7 +675,7 @@ static void show_diff_of_diff(struct rev_info *opt)
 		struct diff_queue_struct dq;
 
 		memcpy(&dq, &diff_queued_diff, sizeof(diff_queued_diff));
-		DIFF_QUEUE_CLEAR(&diff_queued_diff);
+		diff_queue_init(&diff_queued_diff);
 
 		fprintf_ln(opt->diffopt.file, "\n%s", opt->idiff_title);
 		show_interdiff(opt->idiff_oid1, opt->idiff_oid2, 2,
@@ -694,7 +694,7 @@ static void show_diff_of_diff(struct rev_info *opt)
 		};
 
 		memcpy(&dq, &diff_queued_diff, sizeof(diff_queued_diff));
-		DIFF_QUEUE_CLEAR(&diff_queued_diff);
+		diff_queue_init(&diff_queued_diff);
 
 		fprintf_ln(opt->diffopt.file, "\n%s", opt->rdiff_title);
 		/*

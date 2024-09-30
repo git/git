@@ -787,15 +787,14 @@ static void move_diff_queue(struct diff_queue_struct *dst,
 			    struct diff_queue_struct *src)
 {
 	assert(src != dst);
-	memcpy(dst, src, sizeof(struct diff_queue_struct));
-	DIFF_QUEUE_CLEAR(src);
+	memcpy(dst, src, sizeof(*dst));
+	diff_queue_init(src);
 }
 
 static void filter_diffs_for_paths(struct line_log_data *range, int keep_deletions)
 {
 	int i;
-	struct diff_queue_struct outq;
-	DIFF_QUEUE_CLEAR(&outq);
+	struct diff_queue_struct outq = DIFF_QUEUE_INIT;
 
 	for (i = 0; i < diff_queued_diff.nr; i++) {
 		struct diff_filepair *p = diff_queued_diff.queue[i];
@@ -850,12 +849,12 @@ static void queue_diffs(struct line_log_data *range,
 		clear_pathspec(&opt->pathspec);
 		parse_pathspec_from_ranges(&opt->pathspec, range);
 	}
-	DIFF_QUEUE_CLEAR(&diff_queued_diff);
+	diff_queue_clear(&diff_queued_diff);
 	diff_tree_oid(parent_tree_oid, tree_oid, "", opt);
 	if (opt->detect_rename && diff_might_be_rename()) {
 		/* must look at the full tree diff to detect renames */
 		clear_pathspec(&opt->pathspec);
-		DIFF_QUEUE_CLEAR(&diff_queued_diff);
+		diff_queue_clear(&diff_queued_diff);
 
 		diff_tree_oid(parent_tree_oid, tree_oid, "", opt);
 
@@ -1097,7 +1096,7 @@ static struct diff_filepair *diff_filepair_dup(struct diff_filepair *pair)
 static void free_diffqueues(int n, struct diff_queue_struct *dq)
 {
 	for (int i = 0; i < n; i++)
-		diff_free_queue(&dq[i]);
+		diff_queue_clear(&dq[i]);
 	free(dq);
 }
 
@@ -1200,7 +1199,7 @@ static int process_ranges_ordinary_commit(struct rev_info *rev, struct commit *c
 	if (parent)
 		add_line_range(rev, parent, parent_range);
 	free_line_log_data(parent_range);
-	diff_free_queue(&queue);
+	diff_queue_clear(&queue);
 	return changed;
 }
 
