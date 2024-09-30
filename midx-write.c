@@ -1445,6 +1445,8 @@ static int write_midx_internal(const char *object_dir,
 			return -1;
 		}
 
+		strbuf_release(&final_midx_name);
+
 		keep_hashes[ctx.num_multi_pack_indexes_before] =
 			xstrdup(hash_to_hex(midx_hash));
 
