@@ -733,6 +733,9 @@ static int cmd_reconfigure(int argc, const char **argv)
 
 		the_repository = old_repo;
 
+		if (toggle_maintenance(1) >= 0)
+			succeeded = 1;
+
 loop_end:
 		if (!succeeded) {
 			res = -1;

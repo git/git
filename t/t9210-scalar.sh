@@ -194,8 +194,11 @@ test_expect_success 'scalar reconfigure' '
 	scalar reconfigure one &&
 	test true = "$(git -C one/src config core.preloadIndex)" &&
 	git -C one/src config core.preloadIndex false &&
-	scalar reconfigure -a &&
-	test true = "$(git -C one/src config core.preloadIndex)"
+	rm one/src/cron.txt &&
+	GIT_TRACE2_EVENT="$(pwd)/reconfigure" scalar reconfigure -a &&
+	test_path_is_file one/src/cron.txt &&
+	test true = "$(git -C one/src config core.preloadIndex)" &&
+	test_subcommand git maintenance start <reconfigure
 '
 
 test_expect_success 'scalar reconfigure --all with includeIf.onbranch' '
