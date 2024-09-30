@@ -64,6 +64,12 @@ static void free_pseudo_merge_commit_idx(struct pseudo_merge_commit_idx *idx)
 	free(idx);
 }
 
+static void pseudo_merge_group_release_cb(void *payload, const char *name UNUSED)
+{
+	pseudo_merge_group_release(payload);
+	free(payload);
+}
+
 void bitmap_writer_free(struct bitmap_writer *writer)
 {
 	uint32_t i;
@@ -82,6 +88,8 @@ void bitmap_writer_free(struct bitmap_writer *writer)
 	kh_foreach_value(writer->pseudo_merge_commits, idx,
 			 free_pseudo_merge_commit_idx(idx));
 	kh_destroy_oid_map(writer->pseudo_merge_commits);
+	string_list_clear_func(&writer->pseudo_merge_groups,
+			       pseudo_merge_group_release_cb);
 
 	for (i = 0; i < writer->selected_nr; i++) {
 		struct bitmapped_commit *bc = &writer->selected[i];

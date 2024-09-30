@@ -97,6 +97,25 @@ static void pseudo_merge_group_init(struct pseudo_merge_group *group)
 	group->stable_size = DEFAULT_PSEUDO_MERGE_STABLE_SIZE;
 }
 
+void pseudo_merge_group_release(struct pseudo_merge_group *group)
+{
+	struct hashmap_iter iter;
+	struct strmap_entry *e;
+
+	regfree(group->pattern);
+	free(group->pattern);
+
+	strmap_for_each_entry(&group->matches, &iter, e) {
+		struct pseudo_merge_matches *matches = e->value;
+		free(matches->stable);
+		free(matches->unstable);
+		free(matches);
+	}
+	strmap_clear(&group->matches, 0);
+
+	free(group->merges);
+}
+
 static int pseudo_merge_config(const char *var, const char *value,
 			       const struct config_context *ctx,
 			       void *cb_data)
