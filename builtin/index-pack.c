@@ -1505,7 +1505,7 @@ static void rename_tmp_packfile(const char **final_name,
 				struct strbuf *name, unsigned char *hash,
 				const char *ext, int make_read_only_if_same)
 {
-	if (*final_name != curr_name) {
+	if (!*final_name || strcmp(*final_name, curr_name)) {
 		if (!*final_name)
 			*final_name = odb_pack_name(name, hash, ext);
 		if (finalize_object_file(curr_name, *final_name))
@@ -1726,7 +1726,7 @@ int cmd_index_pack(int argc,
 {
 	int i, fix_thin_pack = 0, verify = 0, stat_only = 0, rev_index;
 	const char *curr_index;
-	const char *curr_rev_index = NULL;
+	char *curr_rev_index = NULL;
 	const char *index_name = NULL, *pack_name = NULL, *rev_index_name = NULL;
 	const char *keep_msg = NULL;
 	const char *promisor_msg = NULL;
@@ -1968,8 +1968,7 @@ int cmd_index_pack(int argc,
 		free((void *) curr_pack);
 	if (!index_name)
 		free((void *) curr_index);
-	if (!rev_index_name)
-		free((void *) curr_rev_index);
+	free(curr_rev_index);
 
 	/*
 	 * Let the caller know this pack is not self contained

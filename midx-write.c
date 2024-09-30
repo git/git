@@ -649,7 +649,7 @@ static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
 				     struct write_midx_context *ctx)
 {
 	struct strbuf buf = STRBUF_INIT;
-	const char *tmp_file;
+	char *tmp_file;
 
 	trace2_region_enter("midx", "write_midx_reverse_index", the_repository);
 
@@ -662,6 +662,7 @@ static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
 		die(_("cannot store reverse index file"));
 
 	strbuf_release(&buf);
+	free(tmp_file);
 
 	trace2_region_leave("midx", "write_midx_reverse_index", the_repository);
 }

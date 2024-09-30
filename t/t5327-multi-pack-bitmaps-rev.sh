@@ -2,6 +2,7 @@
 
 test_description='exercise basic multi-pack bitmap functionality (.rev files)'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "${TEST_DIRECTORY}/lib-bitmap.sh"
 

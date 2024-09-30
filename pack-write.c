@@ -212,15 +212,15 @@ static void write_rev_trailer(struct hashfile *f, const unsigned char *hash)
 	hashwrite(f, hash, the_hash_algo->rawsz);
 }
 
-const char *write_rev_file(const char *rev_name,
-			   struct pack_idx_entry **objects,
-			   uint32_t nr_objects,
-			   const unsigned char *hash,
-			   unsigned flags)
+char *write_rev_file(const char *rev_name,
+		     struct pack_idx_entry **objects,
+		     uint32_t nr_objects,
+		     const unsigned char *hash,
+		     unsigned flags)
 {
 	uint32_t *pack_order;
 	uint32_t i;
-	const char *ret;
+	char *ret;
 
 	if (!(flags & WRITE_REV) && !(flags & WRITE_REV_VERIFY))
 		return NULL;
@@ -238,13 +238,14 @@ const char *write_rev_file(const char *rev_name,
 	return ret;
 }
 
-const char *write_rev_file_order(const char *rev_name,
-				 uint32_t *pack_order,
-				 uint32_t nr_objects,
-				 const unsigned char *hash,
-				 unsigned flags)
+char *write_rev_file_order(const char *rev_name,
+			   uint32_t *pack_order,
+			   uint32_t nr_objects,
+			   const unsigned char *hash,
+			   unsigned flags)
 {
 	struct hashfile *f;
+	char *path;
 	int fd;
 
 	if ((flags & WRITE_REV) && (flags & WRITE_REV_VERIFY))
@@ -254,12 +255,13 @@ const char *write_rev_file_order(const char *rev_name,
 		if (!rev_name) {
 			struct strbuf tmp_file = STRBUF_INIT;
 			fd = odb_mkstemp(&tmp_file, "pack/tmp_rev_XXXXXX");
-			rev_name = strbuf_detach(&tmp_file, NULL);
+			path = strbuf_detach(&tmp_file, NULL);
 		} else {
 			unlink(rev_name);
 			fd = xopen(rev_name, O_CREAT|O_EXCL|O_WRONLY, 0600);
+			path = xstrdup(rev_name);
 		}
-		f = hashfd(fd, rev_name);
+		f = hashfd(fd, path);
 	} else if (flags & WRITE_REV_VERIFY) {
 		struct stat statbuf;
 		if (stat(rev_name, &statbuf)) {
@@ -270,22 +272,24 @@ const char *write_rev_file_order(const char *rev_name,
 				die_errno(_("could not stat: %s"), rev_name);
 		}
 		f = hashfd_check(rev_name);
-	} else
+		path = xstrdup(rev_name);
+	} else {
 		return NULL;
+	}
 
 	write_rev_header(f);
 
 	write_rev_index_positions(f, pack_order, nr_objects);
 	write_rev_trailer(f, hash);
 
-	if (rev_name && adjust_shared_perm(rev_name) < 0)
-		die(_("failed to make %s readable"), rev_name);
+	if (adjust_shared_perm(path) < 0)
+		die(_("failed to make %s readable"), path);
 
 	finalize_hashfile(f, NULL, FSYNC_COMPONENT_PACK_METADATA,
 			  CSUM_HASH_IN_STREAM | CSUM_CLOSE |
 			  ((flags & WRITE_IDX_VERIFY) ? 0 : CSUM_FSYNC));
 
-	return rev_name;
+	return path;
 }
 
 static void write_mtimes_header(struct hashfile *f)
@@ -549,7 +553,7 @@ void stage_tmp_packfiles(struct strbuf *name_buffer,
 			 unsigned char hash[],
 			 char **idx_tmp_name)
 {
-	const char *rev_tmp_name = NULL;
+	char *rev_tmp_name = NULL;
 	char *mtimes_tmp_name = NULL;
 
 	if (adjust_shared_perm(pack_tmp_name))
@@ -575,7 +579,7 @@ void stage_tmp_packfiles(struct strbuf *name_buffer,
 	if (mtimes_tmp_name)
 		rename_tmp_packfile(name_buffer, mtimes_tmp_name, "mtimes");
 
-	free((char *)rev_tmp_name);
+	free(rev_tmp_name);
 	free(mtimes_tmp_name);
 }
 
