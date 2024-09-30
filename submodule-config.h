@@ -136,4 +136,7 @@ struct submodule_entry_list {
 void submodules_of_tree(struct repository *r,
 			const struct object_id *treeish_name,
 			struct submodule_entry_list *ret);
+
+void submodule_entry_list_release(struct submodule_entry_list *list);
+
 #endif /* SUBMODULE_CONFIG_H */
