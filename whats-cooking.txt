@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2024, #11; Thu, 26)
+Subject: What's cooking in git.git (Sep 2024, #12; Sun, 29)
 X-master-at: 3857aae53f3633b7de63ad640737c657387ae0c6
-X-next-at: e261f169bdc0d967eadb9c1eae13d86b6873c213
+X-next-at: c52b418c92d127f8efa6c22f3765e715a23f2229
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2024, #11; Thu, 26)
+What's cooking in git.git (Sep 2024, #12; Sun, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,7 +17,14 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-An early preview release Git 2.47-rc0 has been tagged.
+A handful of topics in 'next' will be flushed to 'master' and then
+we will tag -rc1 in the middle of this week.
+
+Unfortunately our CI jobs seem to be failing due to
+https://lore.kernel.org/git/xmqqmsk37926.fsf@gitster.g/ The
+regression in libCurl 8.10.0 has been identified and corrected in
+the upstream, but apparently it takes time for the fix to percolate
+down.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,60 +55,37 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* ak/doc-sparse-co-typofix (2024-09-23) 1 commit
-  (merged to 'next' on 2024-09-24 at 74edc0657c)
- + Documentation/technical: fix a typo
+* ej/cat-file-remote-object-info (2024-09-27) 6 commits
+ - cat-file: add remote-object-info to batch-command
+ - cat-file: add declaration of variable i inside its for loop
+ - transport: add client support for object-info
+ - serve: advertise object-info feature
+ - fetch-pack: move fetch initialization
+ - fetch-pack: refactor packet writing
 
- Docfix.
- source: <20240920082815.8192-1-algonell@gmail.com>
-
-
-* ak/typofix-builtins (2024-09-24) 1 commit
-  (merged to 'next' on 2024-09-24 at d7702a68b7)
- + builtin: fix typos
-
- Typofix.
- source: <20240924130906.21392-1-algonell@gmail.com>
+ source: <20240926013856.35527-1-eric.peijian@gmail.com>
 
 
-* cb/ci-freebsd-13-4 (2024-09-20) 1 commit
-  (merged to 'next' on 2024-09-23 at 18be138bfd)
- + ci: update FreeBSD image to 13.4
+* jc/doc-discarding-stalled-topics (2024-09-26) 1 commit
+ - howto-maintain-git: discarding inactive topics
 
- CI updates.
- source: <20240920201409.8723-1-carenas@gmail.com>
-
-
-* jk/sendemail-mailmap-doc (2024-09-25) 1 commit
-  (merged to 'next' on 2024-09-25 at d4f69efebf)
- + send-email: document --mailmap and associated configuration
-
- Docfix.
- source: <20240923222429.4102405-1-jacob.e.keller@intel.com>
-
-
-* rs/diff-exit-code-binary (2024-09-23) 1 commit
-  (merged to 'next' on 2024-09-24 at 1e597c407c)
- + diff: report modified binary files as changes in builtin_diff()
-
- "git diff --exit-code" ignored modified binary files, which has
- been corrected.
- source: <500a8e0a-9fbd-4b7b-b2f2-026a4293bc9f@web.de>
+ source: <xmqqikuii60q.fsf@gitster.g>
 
 --------------------------------------------------
 [Cooking]
 
 * ds/sparse-checkout-expansion-advice (2024-09-23) 1 commit
- - sparse-checkout: disable advice in 'disable'
+  (merged to 'next' on 2024-09-27 at e670bccf7e)
+ + sparse-checkout: disable advice in 'disable'
 
  When "git sparse-checkout disable" turns a sparse checkout into a
  regular checkout, the index is fully expanded.  This totally
  expected behaviour however had an "oops, we are expanding the
  index" advice message, which has been corrected.
 
- Comments?
+ Will merge to 'master'.
  source: <pull.1800.git.1727119882901.gitgitgadget@gmail.com>
 
 
@@ -119,38 +103,39 @@ Release tarballs are available at:
 
 
 * jk/http-leakfixes (2024-09-25) 28 commits
- - http-push: clean up local_refs at exit
- - http-push: clean up loose request when falling back to packed
- - http-push: clean up objects list
- - http-push: free xml_ctx.cdata after use
- - http-push: free remote_ls_ctx.dentry_name
- - http-push: free transfer_request strbuf
- - http-push: free transfer_request dest field
- - http-push: free curl header lists
- - http-push: free repo->url string
- - http-push: clear refspecs before exiting
- - http-walker: free fake packed_git list
- - remote-curl: free HEAD ref with free_one_ref()
- - http: stop leaking buffer in http_get_info_packs()
- - http: call git_inflate_end() when releasing http_object_request
- - http: fix leak of http_object_request struct
- - http: fix leak when redacting cookies from curl trace
- - transport-helper: fix leak of dummy refs_list
- - fetch-pack: clear pack lockfiles list
- - fetch: free "raw" string when shrinking refspec
- - transport-helper: fix strbuf leak in push_refs_with_push()
- - send-pack: free cas options before exit
- - commit: avoid leaking already-saved buffer
- - fetch-pack, send-pack: clean up shallow oid array
- - fetch-pack: free object filter before exiting
- - connect: clear child process before freeing in diagnostic mode
- - fetch-pack: fix leaking sought refs
- - shallow: fix leak when unregistering last shallow root
- - http-fetch: clear leaking git-index-pack(1) arguments
+  (merged to 'next' on 2024-09-27 at c52b418c92)
+ + http-push: clean up local_refs at exit
+ + http-push: clean up loose request when falling back to packed
+ + http-push: clean up objects list
+ + http-push: free xml_ctx.cdata after use
+ + http-push: free remote_ls_ctx.dentry_name
+ + http-push: free transfer_request strbuf
+ + http-push: free transfer_request dest field
+ + http-push: free curl header lists
+ + http-push: free repo->url string
+ + http-push: clear refspecs before exiting
+ + http-walker: free fake packed_git list
+ + remote-curl: free HEAD ref with free_one_ref()
+ + http: stop leaking buffer in http_get_info_packs()
+ + http: call git_inflate_end() when releasing http_object_request
+ + http: fix leak of http_object_request struct
+ + http: fix leak when redacting cookies from curl trace
+ + transport-helper: fix leak of dummy refs_list
+ + fetch-pack: clear pack lockfiles list
+ + fetch: free "raw" string when shrinking refspec
+ + transport-helper: fix strbuf leak in push_refs_with_push()
+ + send-pack: free cas options before exit
+ + commit: avoid leaking already-saved buffer
+ + fetch-pack, send-pack: clean up shallow oid array
+ + fetch-pack: free object filter before exiting
+ + connect: clear child process before freeing in diagnostic mode
+ + fetch-pack: fix leaking sought refs
+ + shallow: fix leak when unregistering last shallow root
+ + http-fetch: clear leaking git-index-pack(1) arguments
 
  Leakfixes.
 
- Needs review.
+ Will merge to 'master'.
  source: <20240924214930.GA1143523@coredump.intra.peff.net>
 
 
@@ -260,37 +245,38 @@ Release tarballs are available at:
  source: <pull.1799.git.1726837642511.gitgitgadget@gmail.com>
 
 
-* ps/leakfixes-part-7 (2024-09-16) 24 commits
- - diffcore-break: fix leaking filespecs when merging broken pairs
- - revision: fix leaking parents when simplifying commits
- - builtin/maintenance: fix leak in `get_schedule_cmd()`
- - builtin/maintenance: fix leaking config string
- - promisor-remote: fix leaking partial clone filter
- - grep: fix leaking grep pattern
- - submodule: fix leaking submodule ODB paths
- - trace2: destroy context stored in thread-local storage
- - builtin/difftool: plug several trivial memory leaks
- - builtin/repack: fix leaking configuration
- - diffcore-order: fix leaking buffer when parsing orderfiles
- - parse-options: free previous value of `OPTION_FILENAME`
- - diff: fix leaking orderfile option
- - builtin/pull: fix leaking "ff" option
- - dir: fix off by one errors for ignored and untracked entries
- - builtin/submodule--helper: fix leaking remote ref on errors
- - t/helper: fix leaking subrepo in nested submodule config helper
- - builtin/submodule--helper: fix leaking error buffer
- - builtin/submodule--helper: clear child process when not running it
- - submodule: fix leaking update strategy
- - git: fix leaking argv when handling builtins
- - builtin/help: fix leaking `html_path` when reading config multiple times
- - builtin/help: fix dangling reference to `html_path`
- - Merge branch 'ps/leakfixes-part-6' into ps/leakfixes-part-7
+* ps/leakfixes-part-7 (2024-09-27) 24 commits
+  (merged to 'next' on 2024-09-27 at 8c1aa7e558)
+ + diffcore-break: fix leaking filespecs when merging broken pairs
+ + revision: fix leaking parents when simplifying commits
+ + builtin/maintenance: fix leak in `get_schedule_cmd()`
+ + builtin/maintenance: fix leaking config string
+ + promisor-remote: fix leaking partial clone filter
+ + grep: fix leaking grep pattern
+ + submodule: fix leaking submodule ODB paths
+ + trace2: destroy context stored in thread-local storage
+ + builtin/difftool: plug several trivial memory leaks
+ + builtin/repack: fix leaking configuration
+ + diffcore-order: fix leaking buffer when parsing orderfiles
+ + parse-options: free previous value of `OPTION_FILENAME`
+ + diff: fix leaking orderfile option
+ + builtin/pull: fix leaking "ff" option
+ + dir: fix off by one errors for ignored and untracked entries
+ + builtin/submodule--helper: fix leaking remote ref on errors
+ + t/helper: fix leaking subrepo in nested submodule config helper
+ + builtin/submodule--helper: fix leaking error buffer
+ + builtin/submodule--helper: clear child process when not running it
+ + submodule: fix leaking update strategy
+ + git: fix leaking argv when handling builtins
+ + builtin/help: fix leaking `html_path` when reading config multiple times
+ + builtin/help: fix dangling reference to `html_path`
+ + Merge branch 'ps/leakfixes-part-6' into ps/leakfixes-part-7
 
  More leak-fixes.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <ZulXjXSozNrXgMUM@pks.im>
- source: <cover.1726484308.git.ps@pks.im>
+ source: <cover.1727351062.git.ps@pks.im>
 
 
 * ps/reftable-alloc-failures (2024-09-24) 24 commits
@@ -323,7 +309,8 @@ Release tarballs are available at:
  allocation function given to it may fail to allocate and to deal
  with such an error.
 
- Will merge to 'next'?
+ Expecting a reroll (v3).
+ cf. <ZvVO73dp4dbtxKi8@pks.im>
  source: <cover.1727158127.git.ps@pks.im>
 
 
@@ -374,7 +361,7 @@ Release tarballs are available at:
  source: <pull.1785.v2.git.1726692381.gitgitgadget@gmail.com>
 
 
-* tb/weak-sha1-for-tail-sum (2024-09-24) 8 commits
+* tb/weak-sha1-for-tail-sum (2024-09-27) 8 commits
  - csum-file.c: use unsafe SHA-1 implementation when available
  - Makefile: allow specifying a SHA-1 for non-cryptographic uses
  - hash.h: scaffolding for _unsafe hashing variants
@@ -387,17 +374,10 @@ Release tarballs are available at:
  The checksum at the tail of files are now computed without
  collision detection protection.
 
- Needs review.
- source: <cover.1727199118.git.me@ttaylorr.com>
-
-
-* gt/unit-test-oidset (2024-08-25) 1 commit
- - unit-tests: add tests for oidset.h
-
- Another unit-test.
-
- Expecting a reroll.
- source: <20240824172028.39419-1-shyamthakkar001@gmail.com>
+ Will merge to 'next'.
+ cf. <20240927035712.GH567395@coredump.intra.peff.net>
+ cf. <CABPp-BH3y96DjapzLPJ+vCoChQiD_wR9uLc3QPsXqzSUr4AFvQ@mail.gmail.com>
+ source: <cover.1727364141.git.me@ttaylorr.com>
 
 
 * sj/ref-contents-check (2024-09-18) 5 commits
@@ -478,7 +458,7 @@ Release tarballs are available at:
  vastly pleasant to work with.
 
  Reverted out of 'next', and then replaced.
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.1766.v5.git.1727161730.gitgitgadget@gmail.com>
 
 
@@ -498,3 +478,14 @@ Release tarballs are available at:
 
  Waiting for review responses.
  source: <20240823224630.1180772-1-e@80x24.org>
+
+--------------------------------------------------
+[Discarded]
+
+* gt/unit-test-oidset (2024-08-25) 1 commit
+ . unit-tests: add tests for oidset.h
+
+ Another unit-test.
+
+ Has been expecting a reroll for too long.
+ source: <20240824172028.39419-1-shyamthakkar001@gmail.com>
