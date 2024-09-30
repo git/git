@@ -306,13 +306,16 @@ static int include_by_branch(struct config_include_data *data,
 	int flags;
 	int ret;
 	struct strbuf pattern = STRBUF_INIT;
-	const char *refname = (!data->repo || !data->repo->gitdir) ?
-		NULL : refs_resolve_ref_unsafe(get_main_ref_store(data->repo),
-					       "HEAD", 0, NULL, &flags);
-	const char *shortname;
+	const char *refname, *shortname;
 
-	if (!refname || !(flags & REF_ISSYMREF)	||
-			!skip_prefix(refname, "refs/heads/", &shortname))
+	if (!data->repo || data->repo->ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
+		return 0;
+
+	refname = refs_resolve_ref_unsafe(get_main_ref_store(data->repo),
+					  "HEAD", 0, NULL, &flags);
+	if (!refname ||
+	    !(flags & REF_ISSYMREF) ||
+	    !skip_prefix(refname, "refs/heads/", &shortname))
 		return 0;
 
 	strbuf_add(&pattern, cond, cond_len);
