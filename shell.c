@@ -143,6 +143,7 @@ static void run_shell(void)
 		}
 
 		free(argv);
+		free(split_args);
 		free(rawargs);
 	} while (!done);
 }
@@ -216,9 +217,8 @@ int cmd_main(int argc, const char **argv)
 	count = split_cmdline(prog, &user_argv);
 	if (count >= 0) {
 		if (is_valid_cmd_name(user_argv[0])) {
-			prog = make_cmd(user_argv[0]);
-			user_argv[0] = prog;
-			execv(user_argv[0], (char *const *) user_argv);
+			char *cmd = make_cmd(user_argv[0]);
+			execv(cmd, (char *const *) user_argv);
 		}
 		free(prog);
 		free(user_argv);
