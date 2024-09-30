@@ -913,6 +913,7 @@ static void write_pseudo_merges(struct bitmap_writer *writer,
 	for (i = 0; i < writer->pseudo_merges_nr; i++)
 		bitmap_free(commits_bitmap[i]);
 
+	oid_array_clear(&commits);
 	free(pseudo_merge_ofs);
 	free(commits_bitmap);
 }
