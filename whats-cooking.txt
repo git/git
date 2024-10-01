@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2024, #12; Sun, 29)
-X-master-at: 3857aae53f3633b7de63ad640737c657387ae0c6
-X-next-at: c52b418c92d127f8efa6c22f3765e715a23f2229
+Subject: What's cooking in git.git (Oct 2024, #01; Tue, 1)
+X-master-at: e9356ba3ea2a6754281ff7697b3e5a1697b21e24
+X-next-at: 3d1fbeb9078808ccf955c44b37814338e1b24555
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2024, #12; Sun, 29)
+What's cooking in git.git (Oct 2024, #01; Tue, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -55,7 +55,144 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ds/background-maintenance-with-credential (2024-09-20) 3 commits
+  (merged to 'next' on 2024-09-24 at 379a7a1003)
+ + scalar: configure maintenance during 'reconfigure'
+ + maintenance: add custom config to background jobs
+ + credential: add new interactive config option
+
+ Background tasks "git maintenance" runs may need to use credential
+ information when going over the network, but a credential helper
+ may work only in an interactive environment, and end up blocking a
+ scheduled task waiting for UI.  Credential helpers can now behave
+ differently when they are not running interactively.
+ source: <pull.1798.git.1726790423.gitgitgadget@gmail.com>
+
+
+* ps/includeif-onbranch-cornercase-fix (2024-09-24) 2 commits
+  (merged to 'next' on 2024-09-24 at 229c0bf0e5)
+ + config: fix evaluating "onbranch" with nonexistent git dir
+ + t1305: exercise edge cases of "onbranch" includes
+
+ "git --git-dir=nowhere cmd" failed to properly notice that it
+ wasn't in any repository while processing includeIf.onbranch
+ configuration and instead crashed.
+ source: <cover.1727171197.git.ps@pks.im>
+
+
+* ps/reftable-concurrent-writes (2024-09-24) 3 commits
+  (merged to 'next' on 2024-09-24 at 04df72ad69)
+ + refs/reftable: reload locked stack when preparing transaction
+ + reftable/stack: allow locking of outdated stacks
+ + refs/reftable: introduce "reftable.lockTimeout"
+
+ Give timeout to the locking code to write to reftable.
+ source: <cover.1727155858.git.ps@pks.im>
+
+
+* pw/submodule-process-sigpipe (2024-09-20) 1 commit
+  (merged to 'next' on 2024-09-24 at 9e1ce951c6)
+ + submodule status: propagate SIGPIPE
+
+ When a subprocess to work in a submodule spawned by "git submodule"
+ fails with SIGPIPE, the parent Git process caught the death of it,
+ but gave a generic "failed to work in that submodule", which was
+ misleading.  We now behave as if the parent got SIGPIPE and die.
+ source: <pull.1799.git.1726837642511.gitgitgadget@gmail.com>
+
+
+* rs/archive-with-attr-pathspec-fix (2024-09-23) 1 commit
+  (merged to 'next' on 2024-09-24 at a81fb17e49)
+ + archive: load index before pathspec checks
+
+ "git archive" with pathspec magic that uses the attribute
+ information did not work well, which has been corrected.
+ source: <66c3e9fa-ecfe-4af2-a970-c1afdbc2b7f2@web.de>
+
+
+* rs/commit-graph-ununleak (2024-09-23) 1 commit
+  (merged to 'next' on 2024-09-24 at 5845eca9ce)
+ + commit-graph: remove unnecessary UNLEAK
+
+ Code clean-up.
+ source: <c3a712d5-8e50-453d-be90-f5bf34de744c@web.de>
+
+--------------------------------------------------
 [New Topics]
+
+* jc/a-commands-without-the-repo (2024-09-30) 4 commits
+ - archive: remove the_repository global variable
+ - apply: remove the_repository global variable
+ - annotate: remove usage of the_repository global
+ - git: pass in repo for RUN_SETUP_GENTLY
+
+ Commands that can also work outside Git have learned to take the
+ repository instance "repo" when we know we are in a repository, and
+ NULL when we are not, in a parameter.  The uses of the_repository
+ variable in a few of them have been removed using the new calling
+ convention.
+
+ Comments?
+ source: <pull.1788.v2.git.git.1727718030.gitgitgadget@gmail.com>
+
+
+* kn/osx-fsmonitor-with-submodules-fix (2024-09-30) 1 commit
+ - fsmonitor OSX: fix hangs for submodules
+
+ macOS with fsmonitor daemon can hang forever when a submodule is
+ involved, which has been corrected.
+
+ Will merge to 'next'?
+ source: <pull.1802.git.1727577690390.gitgitgadget@gmail.com>
+
+
+* ps/leakfixes-part-8 (2024-09-30) 25 commits
+ - builtin/send-pack: fix leaking list of push options
+ - remote: fix leaking push reports
+ - t/helper: fix leaks in proc-receive helper
+ - pack-write: fix return parameter of `write_rev_file_order()`
+ - revision: fix leaking saved parents
+ - revision: fix memory leaks when rewriting parents
+ - midx-write: fix leaking buffer
+ - pack-bitmap-write: fix leaking OID array
+ - pseudo-merge: fix leaking strmap keys
+ - pseudo-merge: fix various memory leaks
+ - line-log: fix several memory leaks
+ - diff: improve lifecycle management of diff queues
+ - builtin/revert: fix leaking `gpg_sign` and `strategy` config
+ - t/helper: fix leaking repository in partial-clone helper
+ - builtin/clone: fix leaking repo state when cloning with bundle URIs
+ - builtin/pack-redundant: fix various memory leaks
+ - builtin/stash: fix leaking `pathspec_from_file`
+ - submodule: fix leaking submodule entry list
+ - wt-status: fix leaking buffer with sparse directories
+ - shell: fix leaking strings
+ - scalar: fix leaking repositories
+ - read-cache: fix leaking hash context in `do_write_index()`
+ - builtin/annotate: fix leaking args vector
+ - Merge branch 'jk/http-leakfixes' into ps/leakfixes-part-8
+ - Merge branch 'ps/leakfixes-part-7' into ps/leakfixes-part-8
+ (this branch uses jk/http-leakfixes and ps/leakfixes-part-7.)
+
+ More leakfixes.
+
+ Comments?
+ source: <cover.1727687410.git.ps@pks.im>
+
+
+* tb/notes-amlog-doc (2024-09-30) 2 commits
+ - Documentation: mention the amlog in howto/maintain-git.txt
+ - howto-maintain: mention notes/amlog policy
+
+ Document "amlog" notes.
+
+ Comments?
+ source: <a4b1da93e16d88323181f8f8444f01d96e09ef45.1727729100.git.me@ttaylorr.com>
+
+--------------------------------------------------
+[Cooking]
 
 * ej/cat-file-remote-object-info (2024-09-27) 6 commits
  - cat-file: add remote-object-info to batch-command
@@ -65,16 +202,21 @@ Release tarballs are available at:
  - fetch-pack: move fetch initialization
  - fetch-pack: refactor packet writing
 
+ "git cat-file --batch" and friends can optionally ask a remote
+ server about objects it does not have.
+
+ Comments?
  source: <20240926013856.35527-1-eric.peijian@gmail.com>
 
 
 * jc/doc-discarding-stalled-topics (2024-09-26) 1 commit
  - howto-maintain-git: discarding inactive topics
 
+ Document that inactive topics are subject to be discarded.
+
+ Will merge to 'next'.
  source: <xmqqikuii60q.fsf@gitster.g>
 
---------------------------------------------------
-[Cooking]
 
 * ds/sparse-checkout-expansion-advice (2024-09-23) 1 commit
   (merged to 'next' on 2024-09-27 at e670bccf7e)
@@ -87,19 +229,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <pull.1800.git.1727119882901.gitgitgadget@gmail.com>
-
-
-* ps/includeif-onbranch-cornercase-fix (2024-09-24) 2 commits
-  (merged to 'next' on 2024-09-24 at 229c0bf0e5)
- + config: fix evaluating "onbranch" with nonexistent git dir
- + t1305: exercise edge cases of "onbranch" includes
-
- "git --git-dir=nowhere cmd" failed to properly notice that it
- wasn't in any repository while processing includeIf.onbranch
- configuration and instead crashed.
-
- Will merge to 'master'.
- source: <cover.1727171197.git.ps@pks.im>
 
 
 * jk/http-leakfixes (2024-09-25) 28 commits
@@ -132,6 +261,7 @@ Release tarballs are available at:
  + fetch-pack: fix leaking sought refs
  + shallow: fix leak when unregistering last shallow root
  + http-fetch: clear leaking git-index-pack(1) arguments
+ (this branch is used by ps/leakfixes-part-8.)
 
  Leakfixes.
 
@@ -162,27 +292,6 @@ Release tarballs are available at:
  source: <20240923075416.54289-1-ericsunshine@charter.net>
 
 
-* rs/archive-with-attr-pathspec-fix (2024-09-23) 1 commit
-  (merged to 'next' on 2024-09-24 at a81fb17e49)
- + archive: load index before pathspec checks
-
- "git archive" with pathspec magic that uses the attribute
- information did not work well, which has been corrected.
-
- Will merge to 'master'.
- source: <66c3e9fa-ecfe-4af2-a970-c1afdbc2b7f2@web.de>
-
-
-* rs/commit-graph-ununleak (2024-09-23) 1 commit
-  (merged to 'next' on 2024-09-24 at 5845eca9ce)
- + commit-graph: remove unnecessary UNLEAK
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <c3a712d5-8e50-453d-be90-f5bf34de744c@web.de>
-
-
 * cw/fix-reachable-in-repo-with-promisor (2024-09-19) 2 commits
  - fetch-pack.c: do not declare local commits as "have" in partial repos
  - packfile: split promisor objects oidset into two
@@ -195,22 +304,6 @@ Release tarballs are available at:
  source: <20240802073143.56731-1-hanyang.tony@bytedance.com>
 
 
-* ds/background-maintenance-with-credential (2024-09-20) 3 commits
-  (merged to 'next' on 2024-09-24 at 379a7a1003)
- + scalar: configure maintenance during 'reconfigure'
- + maintenance: add custom config to background jobs
- + credential: add new interactive config option
-
- Background tasks "git maintenance" runs may need to use credential
- information when going over the network, but a credential helper
- may work only in an interactive environment, and end up blocking a
- scheduled task waiting for UI.  Credential helpers can now behave
- differently when they are not running interactively.
-
- Will merge to 'master'.
- source: <pull.1798.git.1726790423.gitgitgadget@gmail.com>
-
-
 * jc/breaking-changes-early-adopter-option (2024-09-19) 1 commit
  - BreakingChanges: early adopter option
 
@@ -218,31 +311,6 @@ Release tarballs are available at:
 
  Comments?
  source: <xmqq7cb77810.fsf@gitster.g>
-
-
-* ps/reftable-concurrent-writes (2024-09-24) 3 commits
-  (merged to 'next' on 2024-09-24 at 04df72ad69)
- + refs/reftable: reload locked stack when preparing transaction
- + reftable/stack: allow locking of outdated stacks
- + refs/reftable: introduce "reftable.lockTimeout"
-
- Give timeout to the locking code to write to reftable.
-
- Will merge to 'master'.
- source: <cover.1727155858.git.ps@pks.im>
-
-
-* pw/submodule-process-sigpipe (2024-09-20) 1 commit
-  (merged to 'next' on 2024-09-24 at 9e1ce951c6)
- + submodule status: propagate SIGPIPE
-
- When a subprocess to work in a submodule spawned by "git submodule"
- fails with SIGPIPE, the parent Git process caught the death of it,
- but gave a generic "failed to work in that submodule", which was
- misleading.  We now behave as if the parent got SIGPIPE and die.
-
- Will merge to 'master'.
- source: <pull.1799.git.1726837642511.gitgitgadget@gmail.com>
 
 
 * ps/leakfixes-part-7 (2024-09-27) 24 commits
@@ -271,6 +339,7 @@ Release tarballs are available at:
  + builtin/help: fix leaking `html_path` when reading config multiple times
  + builtin/help: fix dangling reference to `html_path`
  + Merge branch 'ps/leakfixes-part-6' into ps/leakfixes-part-7
+ (this branch is used by ps/leakfixes-part-8.)
 
  More leak-fixes.
 
@@ -279,7 +348,7 @@ Release tarballs are available at:
  source: <cover.1727351062.git.ps@pks.im>
 
 
-* ps/reftable-alloc-failures (2024-09-24) 24 commits
+* ps/reftable-alloc-failures (2024-09-30) 24 commits
  - reftable: handle trivial allocation failures
  - reftable/tree: handle allocation failures
  - reftable/pq: handle allocation failures when adding entries
@@ -309,9 +378,9 @@ Release tarballs are available at:
  allocation function given to it may fail to allocate and to deal
  with such an error.
 
- Expecting a reroll (v3).
- cf. <ZvVO73dp4dbtxKi8@pks.im>
- source: <cover.1727158127.git.ps@pks.im>
+ Expecting a reroll.
+ cf. <Zvrsd5JQr8RAhSaN@pks.im>
+ source: <cover.1727680272.git.ps@pks.im>
 
 
 * jc/strbuf-commented-something (2024-09-12) 2 commits
@@ -362,29 +431,34 @@ Release tarballs are available at:
 
 
 * tb/weak-sha1-for-tail-sum (2024-09-27) 8 commits
- - csum-file.c: use unsafe SHA-1 implementation when available
- - Makefile: allow specifying a SHA-1 for non-cryptographic uses
- - hash.h: scaffolding for _unsafe hashing variants
- - sha1: do not redefine `platform_SHA_CTX` and friends
- - pack-objects: use finalize_object_file() to rename pack/idx/etc
- - finalize_object_file(): implement collision check
- - finalize_object_file(): refactor unlink_or_warn() placement
- - finalize_object_file(): check for name collision before renaming
+  (merged to 'next' on 2024-09-30 at 1b4caadd94)
+ + csum-file.c: use unsafe SHA-1 implementation when available
+ + Makefile: allow specifying a SHA-1 for non-cryptographic uses
+ + hash.h: scaffolding for _unsafe hashing variants
+ + sha1: do not redefine `platform_SHA_CTX` and friends
+ + pack-objects: use finalize_object_file() to rename pack/idx/etc
+ + finalize_object_file(): implement collision check
+ + finalize_object_file(): refactor unlink_or_warn() placement
+ + finalize_object_file(): check for name collision before renaming
 
  The checksum at the tail of files are now computed without
  collision detection protection.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <20240927035712.GH567395@coredump.intra.peff.net>
  cf. <CABPp-BH3y96DjapzLPJ+vCoChQiD_wR9uLc3QPsXqzSUr4AFvQ@mail.gmail.com>
  source: <cover.1727364141.git.me@ttaylorr.com>
 
 
-* sj/ref-contents-check (2024-09-18) 5 commits
+* sj/ref-contents-check (2024-09-30) 9 commits
  - ref: add symlink ref content check for files backend
- - ref: add symref content check for files backend
+ - t0602: add ref content checks for worktrees
+ - ref: enhance escape situation for worktrees
+ - ref: add escape check for the referent of symref
+ - ref: add basic symref content check for files backend
  - ref: add more strict checks for regular refs
  - ref: port git-fsck(1) regular refs check for files backend
+ - builtin/refs: support multiple worktrees check for refs.
  - ref: initialize "fsck_ref_report" with zero
 
  "git fsck" learned to issue warnings on "curiously formatted" ref
@@ -393,7 +467,8 @@ Release tarballs are available at:
  after the full object name).
 
  Needs review.
- source: <ZuRzCyjQFilGhj8j@ArchLinux>
+ cf. <xmqqikud6kc0.fsf@gitster.g>
+ source: <Zvj-DgHqtC30KjJe@ArchLinux>
 
 
 * tb/incremental-midx-part-2 (2024-08-28) 16 commits
@@ -449,16 +524,16 @@ Release tarballs are available at:
 
 
 * ja/doc-synopsis-markup (2024-09-24) 3 commits
- - doc: apply synopsis simplification on git-clone and git-init
- - doc: update the guidelines to reflect the current formatting rules
- - doc: introduce a synopsis typesetting
+  (merged to 'next' on 2024-09-30 at 15ec13edec)
+ + doc: apply synopsis simplification on git-clone and git-init
+ + doc: update the guidelines to reflect the current formatting rules
+ + doc: introduce a synopsis typesetting
 
  The way AsciiDoc is used for SYNOPSIS part of the manual pages has
  been revamped.  The sources, at least for the simple cases, got
  vastly pleasant to work with.
 
- Reverted out of 'next', and then replaced.
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1766.v5.git.1727161730.gitgitgadget@gmail.com>
 
 
