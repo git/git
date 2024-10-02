@@ -598,6 +598,10 @@ int reftable_reader_new(struct reftable_reader **out,
 	int err;
 
 	REFTABLE_CALLOC_ARRAY(r, 1);
+	if (!r) {
+		err = REFTABLE_OUT_OF_MEMORY_ERROR;
+		goto done;
+	}
 
 	/*
 	 * We need one extra byte to read the type of first block. We also
@@ -627,7 +631,11 @@ int reftable_reader_new(struct reftable_reader **out,
 
 	r->size = file_size - footer_size(r->version);
 	r->source = *source;
-	r->name = xstrdup(name);
+	r->name = reftable_strdup(name);
+	if (!r->name) {
+		err = REFTABLE_OUT_OF_MEMORY_ERROR;
+		goto done;
+	}
 	r->hash_id = 0;
 	r->refcount = 1;
 

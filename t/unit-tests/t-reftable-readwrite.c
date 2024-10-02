@@ -52,8 +52,11 @@ static void write_table(char ***names, struct strbuf *buf, int N,
 	int i;
 
 	REFTABLE_CALLOC_ARRAY(*names, N + 1);
+	check(*names != NULL);
 	REFTABLE_CALLOC_ARRAY(refs, N);
+	check(refs != NULL);
 	REFTABLE_CALLOC_ARRAY(logs, N);
+	check(logs != NULL);
 
 	for (i = 0; i < N; i++) {
 		refs[i].refname = (*names)[i] = xstrfmt("refs/heads/branch%02d", i);
@@ -150,23 +153,25 @@ static void t_log_overflow(void)
 
 static void t_log_write_read(void)
 {
-	int N = 2;
-	char **names = reftable_calloc(N + 1, sizeof(*names));
-	int err;
 	struct reftable_write_options opts = {
 		.block_size = 256,
 	};
 	struct reftable_ref_record ref = { 0 };
-	int i = 0;
 	struct reftable_log_record log = { 0 };
-	int n;
 	struct reftable_iterator it = { 0 };
 	struct reftable_reader *reader;
 	struct reftable_block_source source = { 0 };
 	struct strbuf buf = STRBUF_INIT;
 	struct reftable_writer *w = t_reftable_strbuf_writer(&buf, &opts);
 	const struct reftable_stats *stats = NULL;
+	int N = 2, err, i, n;
+	char **names;
+
+	names = reftable_calloc(N + 1, sizeof(*names));
+	check(names != NULL);
+
 	reftable_writer_set_limits(w, 0, N);
+
 	for (i = 0; i < N; i++) {
 		char name[256];
 		struct reftable_ref_record ref = { 0 };
@@ -178,6 +183,7 @@ static void t_log_write_read(void)
 		err = reftable_writer_add_ref(w, &ref);
 		check(!err);
 	}
+
 	for (i = 0; i < N; i++) {
 		struct reftable_log_record log = { 0 };
 
@@ -476,8 +482,7 @@ static void t_table_read_write_seek_index(void)
 
 static void t_table_refs_for(int indexed)
 {
-	int N = 50;
-	char **want_names = reftable_calloc(N + 1, sizeof(*want_names));
+	char **want_names;
 	int want_names_len = 0;
 	uint8_t want_hash[GIT_SHA1_RAWSZ];
 
@@ -485,15 +490,15 @@ static void t_table_refs_for(int indexed)
 		.block_size = 256,
 	};
 	struct reftable_ref_record ref = { 0 };
-	int i = 0;
-	int n;
-	int err;
 	struct reftable_reader *reader;
 	struct reftable_block_source source = { 0 };
 	struct strbuf buf = STRBUF_INIT;
 	struct reftable_writer *w = t_reftable_strbuf_writer(&buf, &opts);
 	struct reftable_iterator it = { 0 };
-	int j;
+	int N = 50, n, j, err, i;
+
+	want_names = reftable_calloc(N + 1, sizeof(*want_names));
+	check(want_names != NULL);
 
 	t_reftable_set_hash(want_hash, 4, GIT_SHA1_FORMAT_ID);
 

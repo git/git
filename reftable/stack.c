@@ -116,6 +116,11 @@ static int fd_read_lines(int fd, char ***namesp)
 	}
 
 	REFTABLE_ALLOC_ARRAY(buf, size + 1);
+	if (!buf) {
+		err = REFTABLE_OUT_OF_MEMORY_ERROR;
+		goto done;
+	}
+
 	if (read_in_full(fd, buf, size) != size) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
@@ -140,6 +145,8 @@ int read_lines(const char *filename, char ***namesp)
 	if (fd < 0) {
 		if (errno == ENOENT) {
 			REFTABLE_CALLOC_ARRAY(*namesp, 1);
+			if (!*namesp)
+				return REFTABLE_OUT_OF_MEMORY_ERROR;
 			return 0;
 		}
 
@@ -420,6 +427,10 @@ static int reftable_stack_reload_maybe_reuse(struct reftable_stack *st,
 			}
 
 			REFTABLE_CALLOC_ARRAY(names, 1);
+			if (!names) {
+				err = REFTABLE_OUT_OF_MEMORY_ERROR;
+				goto out;
+			}
 		} else {
 			err = fd_read_lines(fd, &names);
 			if (err < 0)
@@ -779,7 +790,11 @@ int reftable_stack_new_addition(struct reftable_addition **dest,
 {
 	int err = 0;
 	struct reftable_addition empty = REFTABLE_ADDITION_INIT;
+
 	REFTABLE_CALLOC_ARRAY(*dest, 1);
+	if (!*dest)
+		return REFTABLE_OUT_OF_MEMORY_ERROR;
+
 	**dest = empty;
 	err = reftable_stack_init_addition(*dest, st);
 	if (err) {
@@ -886,7 +901,12 @@ int reftable_addition_add(struct reftable_addition *add,
 
 	REFTABLE_ALLOC_GROW(add->new_tables, add->new_tables_len + 1,
 			    add->new_tables_cap);
+	if (!add->new_tables) {
+		err = REFTABLE_OUT_OF_MEMORY_ERROR;
+		goto done;
+	}
 	add->new_tables[add->new_tables_len++] = strbuf_detach(&next_name, NULL);
+
 done:
 	delete_tempfile(&tab_file);
 	strbuf_release(&temp_tab_file_name);

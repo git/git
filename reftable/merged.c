@@ -203,6 +203,9 @@ int reftable_merged_table_new(struct reftable_merged_table **dest,
 	}
 
 	REFTABLE_CALLOC_ARRAY(m, 1);
+	if (!m)
+		return REFTABLE_OUT_OF_MEMORY_ERROR;
+
 	m->readers = readers;
 	m->readers_len = n;
 	m->min = first_min;

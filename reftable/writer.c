@@ -49,8 +49,14 @@ static int padded_write(struct reftable_writer *w, uint8_t *data, size_t len,
 {
 	int n = 0;
 	if (w->pending_padding > 0) {
-		uint8_t *zeroed = reftable_calloc(w->pending_padding, sizeof(*zeroed));
-		int n = w->write(w->write_arg, zeroed, w->pending_padding);
+		uint8_t *zeroed;
+		int n;
+
+		zeroed = reftable_calloc(w->pending_padding, sizeof(*zeroed));
+		if (!zeroed)
+			return -1;
+
+		n = w->write(w->write_arg, zeroed, w->pending_padding);
 		if (n < 0)
 			return n;
 
@@ -767,6 +773,9 @@ static int writer_flush_nonempty_block(struct reftable_writer *w)
 	 * case we will end up with a multi-level index.
 	 */
 	REFTABLE_ALLOC_GROW(w->index, w->index_len + 1, w->index_cap);
+	if (!w->index)
+		return REFTABLE_OUT_OF_MEMORY_ERROR;
+
 	index_record.offset = w->next;
 	strbuf_reset(&index_record.last_key);
 	strbuf_addbuf(&index_record.last_key, &w->block_writer->last_key);

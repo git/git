@@ -32,6 +32,7 @@ static void t_ref_block_read_write(void)
 	struct strbuf want = STRBUF_INIT, buf = STRBUF_INIT;
 
 	REFTABLE_CALLOC_ARRAY(block.data, block_size);
+	check(block.data != NULL);
 	block.len = block_size;
 	block_source_from_strbuf(&block.source ,&buf);
 	ret = block_writer_init(&bw, BLOCK_TYPE_REF, block.data, block_size,
@@ -125,6 +126,7 @@ static void t_log_block_read_write(void)
 	struct strbuf want = STRBUF_INIT, buf = STRBUF_INIT;
 
 	REFTABLE_CALLOC_ARRAY(block.data, block_size);
+	check(block.data != NULL);
 	block.len = block_size;
 	block_source_from_strbuf(&block.source ,&buf);
 	ret = block_writer_init(&bw, BLOCK_TYPE_LOG, block.data, block_size,
@@ -214,6 +216,7 @@ static void t_obj_block_read_write(void)
 	struct strbuf want = STRBUF_INIT, buf = STRBUF_INIT;
 
 	REFTABLE_CALLOC_ARRAY(block.data, block_size);
+	check(block.data != NULL);
 	block.len = block_size;
 	block_source_from_strbuf(&block.source, &buf);
 	ret = block_writer_init(&bw, BLOCK_TYPE_OBJ, block.data, block_size,
@@ -297,6 +300,7 @@ static void t_index_block_read_write(void)
 	struct strbuf want = STRBUF_INIT, buf = STRBUF_INIT;
 
 	REFTABLE_CALLOC_ARRAY(block.data, block_size);
+	check(block.data != NULL);
 	block.len = block_size;
 	block_source_from_strbuf(&block.source, &buf);
 	ret = block_writer_init(&bw, BLOCK_TYPE_INDEX, block.data, block_size,

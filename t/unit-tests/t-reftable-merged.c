@@ -29,7 +29,9 @@ merged_table_from_records(struct reftable_ref_record **refs,
 	int err;
 
 	REFTABLE_CALLOC_ARRAY(*readers, n);
+	check(*readers != NULL);
 	REFTABLE_CALLOC_ARRAY(*source, n);
+	check(*source != NULL);
 
 	for (size_t i = 0; i < n; i++) {
 		t_reftable_write_to_buf(&buf[i], refs[i], sizes[i], NULL, 0, &opts);
@@ -285,7 +287,9 @@ merged_table_from_log_records(struct reftable_log_record **logs,
 	int err;
 
 	REFTABLE_CALLOC_ARRAY(*readers, n);
+	check(*readers != NULL);
 	REFTABLE_CALLOC_ARRAY(*source, n);
+	check(*source != NULL);
 
 	for (size_t i = 0; i < n; i++) {
 		t_reftable_write_to_buf(&buf[i], NULL, 0, logs[i], sizes[i], &opts);
