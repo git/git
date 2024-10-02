@@ -152,11 +152,19 @@ uint64_t tr2tls_absolute_elapsed(uint64_t us)
 	return us - tr2tls_us_start_process;
 }
 
+static void tr2tls_key_destructor(void *payload)
+{
+	struct tr2tls_thread_ctx *ctx = payload;
+	free((char *)ctx->thread_name);
+	free(ctx->array_us_start);
+	free(ctx);
+}
+
 void tr2tls_init(void)
 {
 	tr2tls_start_process_clock();
 
-	pthread_key_create(&tr2tls_key, NULL);
+	pthread_key_create(&tr2tls_key, tr2tls_key_destructor);
 	init_recursive_mutex(&tr2tls_mutex);
 
 	tr2tls_thread_main =

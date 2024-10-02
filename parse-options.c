@@ -60,12 +60,12 @@ static enum parse_opt_result get_arg(struct parse_opt_ctx_t *p,
 	return 0;
 }
 
-static void fix_filename(const char *prefix, char **file)
+static char *fix_filename(const char *prefix, const char *file)
 {
 	if (!file || !*file)
-		; /* leave as NULL */
+		return NULL;
 	else
-		*file = prefix_filename_except_for_dash(prefix, *file);
+		return prefix_filename_except_for_dash(prefix, file);
 }
 
 static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
@@ -129,18 +129,24 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 		return 0;
 
 	case OPTION_FILENAME:
+	{
+		const char *value;
+
+		FREE_AND_NULL(*(char **)opt->value);
+
 		err = 0;
+
 		if (unset)
-			*(const char **)opt->value = NULL;
+			value = NULL;
 		else if (opt->flags & PARSE_OPT_OPTARG && !p->opt)
-			*(const char **)opt->value = (const char *)opt->defval;
+			value = (const char *) opt->defval;
 		else
-			err = get_arg(p, opt, flags, (const char **)opt->value);
+			err = get_arg(p, opt, flags, &value);
 
 		if (!err)
-			fix_filename(p->prefix, (char **)opt->value);
+			*(char **)opt->value = fix_filename(p->prefix, value);
 		return err;
-
+	}
 	case OPTION_CALLBACK:
 	{
 		const char *p_arg = NULL;

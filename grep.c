@@ -843,11 +843,11 @@ static void free_grep_pat(struct grep_pat *pattern)
 				free_pcre2_pattern(p);
 			else
 				regfree(&p->regexp);
-			free(p->pattern);
 			break;
 		default:
 			break;
 		}
+		free(p->pattern);
 		free(p);
 	}
 }

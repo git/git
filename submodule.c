@@ -175,11 +175,11 @@ void stage_updated_gitmodules(struct index_state *istate)
 		die(_("staging updated .gitmodules failed"));
 }
 
-static struct string_list added_submodule_odb_paths = STRING_LIST_INIT_NODUP;
+static struct string_list added_submodule_odb_paths = STRING_LIST_INIT_DUP;
 
 void add_submodule_odb_by_path(const char *path)
 {
-	string_list_insert(&added_submodule_odb_paths, xstrdup(path));
+	string_list_insert(&added_submodule_odb_paths, path);
 }
 
 int register_all_submodule_odb_as_alternates(void)
@@ -422,6 +422,11 @@ int parse_submodule_update_strategy(const char *value,
 		dst->command = xstrdup(value + 1);
 
 	return 0;
+}
+
+void submodule_update_strategy_release(struct submodule_update_strategy *strategy)
+{
+	free((char *) strategy->command);
 }
 
 const char *submodule_update_type_to_string(enum submodule_update_type type)
