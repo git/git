@@ -1421,7 +1421,7 @@ static int stack_compact_range(struct reftable_stack *st,
 		struct lock_file *table_lock = &table_locks[i];
 		char *table_path = get_locked_file_path(table_lock);
 		unlink(table_path);
-		free(table_path);
+		reftable_free(table_path);
 	}
 
 done:

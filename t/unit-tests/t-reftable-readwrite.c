@@ -76,8 +76,8 @@ static void write_table(char ***names, struct strbuf *buf, int N,
 
 	t_reftable_write_to_buf(buf, refs, N, logs, N, &opts);
 
-	free(refs);
-	free(logs);
+	reftable_free(refs);
+	reftable_free(logs);
 }
 
 static void t_log_buffer_size(void)
