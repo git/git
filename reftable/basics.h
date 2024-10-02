@@ -73,6 +73,20 @@ char *reftable_strdup(const char *str);
 	} while (0)
 #define REFTABLE_FREE_AND_NULL(p) do { reftable_free(p); (p) = NULL; } while (0)
 
+#ifndef REFTABLE_ALLOW_BANNED_ALLOCATORS
+# define REFTABLE_BANNED(func) use_reftable_##func##_instead
+# undef malloc
+# define malloc(sz) REFTABLE_BANNED(malloc)
+# undef realloc
+# define realloc(ptr, sz) REFTABLE_BANNED(realloc)
+# undef free
+# define free(ptr) REFTABLE_BANNED(free)
+# undef calloc
+# define calloc(nelem, elsize) REFTABLE_BANNED(calloc)
+# undef strdup
+# define strdup(str) REFTABLE_BANNED(strdup)
+#endif
+
 /* Find the longest shared prefix size of `a` and `b` */
 struct strbuf;
 int common_prefix_size(struct strbuf *a, struct strbuf *b);
