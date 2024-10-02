@@ -30,7 +30,7 @@ struct reftable_reader_offsets {
 
 /* The state for reading a reftable file. */
 struct reftable_reader {
-	/* for convience, associate a name with the instance. */
+	/* for convenience, associate a name with the instance. */
 	char *name;
 	struct reftable_block_source source;
 
