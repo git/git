@@ -162,6 +162,11 @@ Performance, Internal Implementation, Development Support etc.
  * Give timeout to the locking code to write to reftable, instead of
    failing on the first failure without retrying.
 
+ * The checksum at the tail of files are now computed without
+   collision detection protection.  This is safe as the consumer of
+   the information to protect itself from replay attacks checks for
+   hash collisions independently.
+
 
 Fixes since v2.46
 -----------------
@@ -316,6 +321,12 @@ Fixes since v2.46
  * "git --git-dir=nowhere cmd" failed to properly notice that it
    wasn't in any repository while processing includeIf.onbranch
    configuration and instead crashed.
+
+ * When "git sparse-checkout disable" turns a sparse checkout into a
+   regular checkout, the index is fully expanded.  This totally
+   expected behaviour however had an "oops, we are expanding the
+   index" advice message, which has been corrected.
+   (merge 537e516a39 ds/sparse-checkout-expansion-advice later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge be10ac7037 jc/mailinfo-header-cleanup later to maint).
