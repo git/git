@@ -924,6 +924,11 @@ static int sparse_checkout_disable(int argc, const char **argv,
 			     builtin_sparse_checkout_disable_options,
 			     builtin_sparse_checkout_disable_usage, 0);
 
+	/*
+	 * Disable the advice message for expanding a sparse index, as we
+	 * are expecting to do that when disabling sparse-checkout.
+	 */
+	give_advice_on_expansion = 0;
 	repo_read_index(the_repository);
 
 	memset(&pl, 0, sizeof(pl));

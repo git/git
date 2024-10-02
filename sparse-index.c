@@ -21,9 +21,10 @@
  * advice for advice.sparseIndexExpanded when expanding a sparse index to a full
  * one. However, this is sometimes done on purpose, such as in the sparse-checkout
  * builtin, even when index.sparse=false. This may be disabled in
- * convert_to_sparse().
+ * convert_to_sparse() or by commands that know they will lead to a full
+ * expansion, but this message is not actionable.
  */
-static int give_advice_on_expansion = 1;
+int give_advice_on_expansion = 1;
 #define ADVICE_MSG \
 	"The sparse index is expanding to a full index, a slow operation.\n"   \
 	"Your working directory likely has contents that are outside of\n"     \
