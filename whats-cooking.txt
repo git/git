@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2024, #01; Tue, 1)
-X-master-at: e9356ba3ea2a6754281ff7697b3e5a1697b21e24
-X-next-at: 3d1fbeb9078808ccf955c44b37814338e1b24555
+Subject: What's cooking in git.git (Oct 2024, #02; Wed, 2)
+X-master-at: 111e864d69c84284441b083966c2065c2e9a4e78
+X-next-at: 43b9d002c88c60350760fe38edf0e36e2e3da4bb
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2024, #01; Tue, 1)
+What's cooking in git.git (Oct 2024, #02; Wed, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,14 +17,17 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-A handful of topics in 'next' will be flushed to 'master' and then
-we will tag -rc1 in the middle of this week.
+Git 2.47-rc1 has been tagged.  From here on, we expect the flow of
+new topics to slow down and contributors are encouraged to focus
+more on finding and fixing possible regressions relative to Git
+2.46, the last feature release.
 
 Unfortunately our CI jobs seem to be failing due to
-https://lore.kernel.org/git/xmqqmsk37926.fsf@gitster.g/ The
-regression in libCurl 8.10.0 has been identified and corrected in
-the upstream, but apparently it takes time for the fix to percolate
-down.
+https://lore.kernel.org/git/xmqqmsk37926.fsf@gitster.g/
+
+The regression in libCurl 8.10.0 has been identified and corrected
+in the upstream, but apparently it takes time for the fix to
+percolate down.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -57,167 +60,6 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ds/background-maintenance-with-credential (2024-09-20) 3 commits
-  (merged to 'next' on 2024-09-24 at 379a7a1003)
- + scalar: configure maintenance during 'reconfigure'
- + maintenance: add custom config to background jobs
- + credential: add new interactive config option
-
- Background tasks "git maintenance" runs may need to use credential
- information when going over the network, but a credential helper
- may work only in an interactive environment, and end up blocking a
- scheduled task waiting for UI.  Credential helpers can now behave
- differently when they are not running interactively.
- source: <pull.1798.git.1726790423.gitgitgadget@gmail.com>
-
-
-* ps/includeif-onbranch-cornercase-fix (2024-09-24) 2 commits
-  (merged to 'next' on 2024-09-24 at 229c0bf0e5)
- + config: fix evaluating "onbranch" with nonexistent git dir
- + t1305: exercise edge cases of "onbranch" includes
-
- "git --git-dir=nowhere cmd" failed to properly notice that it
- wasn't in any repository while processing includeIf.onbranch
- configuration and instead crashed.
- source: <cover.1727171197.git.ps@pks.im>
-
-
-* ps/reftable-concurrent-writes (2024-09-24) 3 commits
-  (merged to 'next' on 2024-09-24 at 04df72ad69)
- + refs/reftable: reload locked stack when preparing transaction
- + reftable/stack: allow locking of outdated stacks
- + refs/reftable: introduce "reftable.lockTimeout"
-
- Give timeout to the locking code to write to reftable.
- source: <cover.1727155858.git.ps@pks.im>
-
-
-* pw/submodule-process-sigpipe (2024-09-20) 1 commit
-  (merged to 'next' on 2024-09-24 at 9e1ce951c6)
- + submodule status: propagate SIGPIPE
-
- When a subprocess to work in a submodule spawned by "git submodule"
- fails with SIGPIPE, the parent Git process caught the death of it,
- but gave a generic "failed to work in that submodule", which was
- misleading.  We now behave as if the parent got SIGPIPE and die.
- source: <pull.1799.git.1726837642511.gitgitgadget@gmail.com>
-
-
-* rs/archive-with-attr-pathspec-fix (2024-09-23) 1 commit
-  (merged to 'next' on 2024-09-24 at a81fb17e49)
- + archive: load index before pathspec checks
-
- "git archive" with pathspec magic that uses the attribute
- information did not work well, which has been corrected.
- source: <66c3e9fa-ecfe-4af2-a970-c1afdbc2b7f2@web.de>
-
-
-* rs/commit-graph-ununleak (2024-09-23) 1 commit
-  (merged to 'next' on 2024-09-24 at 5845eca9ce)
- + commit-graph: remove unnecessary UNLEAK
-
- Code clean-up.
- source: <c3a712d5-8e50-453d-be90-f5bf34de744c@web.de>
-
---------------------------------------------------
-[New Topics]
-
-* jc/a-commands-without-the-repo (2024-09-30) 4 commits
- - archive: remove the_repository global variable
- - apply: remove the_repository global variable
- - annotate: remove usage of the_repository global
- - git: pass in repo for RUN_SETUP_GENTLY
-
- Commands that can also work outside Git have learned to take the
- repository instance "repo" when we know we are in a repository, and
- NULL when we are not, in a parameter.  The uses of the_repository
- variable in a few of them have been removed using the new calling
- convention.
-
- Comments?
- source: <pull.1788.v2.git.git.1727718030.gitgitgadget@gmail.com>
-
-
-* kn/osx-fsmonitor-with-submodules-fix (2024-09-30) 1 commit
- - fsmonitor OSX: fix hangs for submodules
-
- macOS with fsmonitor daemon can hang forever when a submodule is
- involved, which has been corrected.
-
- Will merge to 'next'?
- source: <pull.1802.git.1727577690390.gitgitgadget@gmail.com>
-
-
-* ps/leakfixes-part-8 (2024-09-30) 25 commits
- - builtin/send-pack: fix leaking list of push options
- - remote: fix leaking push reports
- - t/helper: fix leaks in proc-receive helper
- - pack-write: fix return parameter of `write_rev_file_order()`
- - revision: fix leaking saved parents
- - revision: fix memory leaks when rewriting parents
- - midx-write: fix leaking buffer
- - pack-bitmap-write: fix leaking OID array
- - pseudo-merge: fix leaking strmap keys
- - pseudo-merge: fix various memory leaks
- - line-log: fix several memory leaks
- - diff: improve lifecycle management of diff queues
- - builtin/revert: fix leaking `gpg_sign` and `strategy` config
- - t/helper: fix leaking repository in partial-clone helper
- - builtin/clone: fix leaking repo state when cloning with bundle URIs
- - builtin/pack-redundant: fix various memory leaks
- - builtin/stash: fix leaking `pathspec_from_file`
- - submodule: fix leaking submodule entry list
- - wt-status: fix leaking buffer with sparse directories
- - shell: fix leaking strings
- - scalar: fix leaking repositories
- - read-cache: fix leaking hash context in `do_write_index()`
- - builtin/annotate: fix leaking args vector
- - Merge branch 'jk/http-leakfixes' into ps/leakfixes-part-8
- - Merge branch 'ps/leakfixes-part-7' into ps/leakfixes-part-8
- (this branch uses jk/http-leakfixes and ps/leakfixes-part-7.)
-
- More leakfixes.
-
- Comments?
- source: <cover.1727687410.git.ps@pks.im>
-
-
-* tb/notes-amlog-doc (2024-09-30) 2 commits
- - Documentation: mention the amlog in howto/maintain-git.txt
- - howto-maintain: mention notes/amlog policy
-
- Document "amlog" notes.
-
- Comments?
- source: <a4b1da93e16d88323181f8f8444f01d96e09ef45.1727729100.git.me@ttaylorr.com>
-
---------------------------------------------------
-[Cooking]
-
-* ej/cat-file-remote-object-info (2024-09-27) 6 commits
- - cat-file: add remote-object-info to batch-command
- - cat-file: add declaration of variable i inside its for loop
- - transport: add client support for object-info
- - serve: advertise object-info feature
- - fetch-pack: move fetch initialization
- - fetch-pack: refactor packet writing
-
- "git cat-file --batch" and friends can optionally ask a remote
- server about objects it does not have.
-
- Comments?
- source: <20240926013856.35527-1-eric.peijian@gmail.com>
-
-
-* jc/doc-discarding-stalled-topics (2024-09-26) 1 commit
- - howto-maintain-git: discarding inactive topics
-
- Document that inactive topics are subject to be discarded.
-
- Will merge to 'next'.
- source: <xmqqikuii60q.fsf@gitster.g>
-
-
 * ds/sparse-checkout-expansion-advice (2024-09-23) 1 commit
   (merged to 'next' on 2024-09-27 at e670bccf7e)
  + sparse-checkout: disable advice in 'disable'
@@ -226,8 +68,6 @@ Release tarballs are available at:
  regular checkout, the index is fully expanded.  This totally
  expected behaviour however had an "oops, we are expanding the
  index" advice message, which has been corrected.
-
- Will merge to 'master'.
  source: <pull.1800.git.1727119882901.gitgitgadget@gmail.com>
 
 
@@ -264,19 +104,190 @@ Release tarballs are available at:
  (this branch is used by ps/leakfixes-part-8.)
 
  Leakfixes.
-
- Will merge to 'master'.
  source: <20240924214930.GA1143523@coredump.intra.peff.net>
 
 
+* ps/leakfixes-part-7 (2024-09-27) 24 commits
+  (merged to 'next' on 2024-09-27 at 8c1aa7e558)
+ + diffcore-break: fix leaking filespecs when merging broken pairs
+ + revision: fix leaking parents when simplifying commits
+ + builtin/maintenance: fix leak in `get_schedule_cmd()`
+ + builtin/maintenance: fix leaking config string
+ + promisor-remote: fix leaking partial clone filter
+ + grep: fix leaking grep pattern
+ + submodule: fix leaking submodule ODB paths
+ + trace2: destroy context stored in thread-local storage
+ + builtin/difftool: plug several trivial memory leaks
+ + builtin/repack: fix leaking configuration
+ + diffcore-order: fix leaking buffer when parsing orderfiles
+ + parse-options: free previous value of `OPTION_FILENAME`
+ + diff: fix leaking orderfile option
+ + builtin/pull: fix leaking "ff" option
+ + dir: fix off by one errors for ignored and untracked entries
+ + builtin/submodule--helper: fix leaking remote ref on errors
+ + t/helper: fix leaking subrepo in nested submodule config helper
+ + builtin/submodule--helper: fix leaking error buffer
+ + builtin/submodule--helper: clear child process when not running it
+ + submodule: fix leaking update strategy
+ + git: fix leaking argv when handling builtins
+ + builtin/help: fix leaking `html_path` when reading config multiple times
+ + builtin/help: fix dangling reference to `html_path`
+ + Merge branch 'ps/leakfixes-part-6' into ps/leakfixes-part-7
+ (this branch is used by ps/leakfixes-part-8.)
+
+ More leak-fixes.
+ cf. <ZulXjXSozNrXgMUM@pks.im>
+ source: <cover.1727351062.git.ps@pks.im>
+
+
+* tb/weak-sha1-for-tail-sum (2024-09-27) 8 commits
+  (merged to 'next' on 2024-09-30 at 1b4caadd94)
+ + csum-file.c: use unsafe SHA-1 implementation when available
+ + Makefile: allow specifying a SHA-1 for non-cryptographic uses
+ + hash.h: scaffolding for _unsafe hashing variants
+ + sha1: do not redefine `platform_SHA_CTX` and friends
+ + pack-objects: use finalize_object_file() to rename pack/idx/etc
+ + finalize_object_file(): implement collision check
+ + finalize_object_file(): refactor unlink_or_warn() placement
+ + finalize_object_file(): check for name collision before renaming
+
+ The checksum at the tail of files are now computed without
+ collision detection protection.  This is safe as the consumer of
+ the information to protect itself from replay attacks checks for
+ hash collisions independently.
+ cf. <20240927035712.GH567395@coredump.intra.peff.net>
+ cf. <CABPp-BH3y96DjapzLPJ+vCoChQiD_wR9uLc3QPsXqzSUr4AFvQ@mail.gmail.com>
+ source: <cover.1727364141.git.me@ttaylorr.com>
+
+--------------------------------------------------
+[New Topics]
+
+* ds/read-cache-mempool-leakfix (2024-10-01) 1 commit
+  (merged to 'next' on 2024-10-02 at c0eac890ac)
+ + read-cache: free threaded memory pool
+
+ Leakfix.
+
+ Will merge to 'master'.
+ source: <pull.1801.v2.git.1727804265033.gitgitgadget@gmail.com>
+
+
+* kn/fsmonitor-event-listener-fix (2024-10-02) 1 commit
+ - fsmonitor: fix hangs by delayed fs event listening
+
+ Under high load, fsmonitor process can hang at start-up, which has
+ been corrected.
+
+ Comments?
+ source: <pull.1804.git.1727862424713.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* jc/a-commands-without-the-repo (2024-09-30) 4 commits
+ - archive: remove the_repository global variable
+ - apply: remove the_repository global variable
+ - annotate: remove usage of the_repository global
+ - git: pass in repo for RUN_SETUP_GENTLY
+
+ Commands that can also work outside Git have learned to take the
+ repository instance "repo" when we know we are in a repository, and
+ NULL when we are not, in a parameter.  The uses of the_repository
+ variable in a few of them have been removed using the new calling
+ convention.
+
+ Comments?
+ source: <pull.1788.v2.git.git.1727718030.gitgitgadget@gmail.com>
+
+
+* kn/osx-fsmonitor-with-submodules-fix (2024-10-01) 1 commit
+ - fsmonitor OSX: fix hangs for submodules
+
+ macOS with fsmonitor daemon can hang forever when a submodule is
+ involved, which has been corrected.
+
+ Expecting a reroll.
+ cf. <CAOTNsDygwBkNdFX4K_ixL5kP-AvDxWWVXkvfkmV4Kh04ozdYkA@mail.gmail.com>
+ source: <pull.1802.v3.git.1727810964571.gitgitgadget@gmail.com>
+
+
+* ps/leakfixes-part-8 (2024-09-30) 25 commits
+ - builtin/send-pack: fix leaking list of push options
+ - remote: fix leaking push reports
+ - t/helper: fix leaks in proc-receive helper
+ - pack-write: fix return parameter of `write_rev_file_order()`
+ - revision: fix leaking saved parents
+ - revision: fix memory leaks when rewriting parents
+ - midx-write: fix leaking buffer
+ - pack-bitmap-write: fix leaking OID array
+ - pseudo-merge: fix leaking strmap keys
+ - pseudo-merge: fix various memory leaks
+ - line-log: fix several memory leaks
+ - diff: improve lifecycle management of diff queues
+ - builtin/revert: fix leaking `gpg_sign` and `strategy` config
+ - t/helper: fix leaking repository in partial-clone helper
+ - builtin/clone: fix leaking repo state when cloning with bundle URIs
+ - builtin/pack-redundant: fix various memory leaks
+ - builtin/stash: fix leaking `pathspec_from_file`
+ - submodule: fix leaking submodule entry list
+ - wt-status: fix leaking buffer with sparse directories
+ - shell: fix leaking strings
+ - scalar: fix leaking repositories
+ - read-cache: fix leaking hash context in `do_write_index()`
+ - builtin/annotate: fix leaking args vector
+ - Merge branch 'jk/http-leakfixes' into ps/leakfixes-part-8
+ - Merge branch 'ps/leakfixes-part-7' into ps/leakfixes-part-8
+
+ More leakfixes.
+
+ Will merge to 'next'.
+ source: <cover.1727687410.git.ps@pks.im>
+
+
+* tb/notes-amlog-doc (2024-09-30) 2 commits
+ - Documentation: mention the amlog in howto/maintain-git.txt
+ - howto-maintain: mention notes/amlog policy
+
+ Document "amlog" notes.
+
+ Comments?
+ source: <a4b1da93e16d88323181f8f8444f01d96e09ef45.1727729100.git.me@ttaylorr.com>
+
+
+* ej/cat-file-remote-object-info (2024-09-27) 6 commits
+ - cat-file: add remote-object-info to batch-command
+ - cat-file: add declaration of variable i inside its for loop
+ - transport: add client support for object-info
+ - serve: advertise object-info feature
+ - fetch-pack: move fetch initialization
+ - fetch-pack: refactor packet writing
+
+ "git cat-file --batch" and friends can optionally ask a remote
+ server about objects it does not have.
+
+ Comments?
+ source: <20240926013856.35527-1-eric.peijian@gmail.com>
+
+
+* jc/doc-discarding-stalled-topics (2024-09-26) 1 commit
+  (merged to 'next' on 2024-10-02 at adb0d84fd4)
+ + howto-maintain-git: discarding inactive topics
+
+ Document that inactive topics are subject to be discarded.
+
+ Will merge to 'master'.
+ source: <xmqqikuii60q.fsf@gitster.g>
+
+
 * jk/test-lsan-improvements (2024-09-25) 3 commits
- - test-lib: check for leak logs after every test
- - test-lib: show leak-sanitizer logs on --immediate failure
- - test-lib: stop showing old leak logs
+  (merged to 'next' on 2024-10-02 at 3d8303fcfe)
+ + test-lib: check for leak logs after every test
+ + test-lib: show leak-sanitizer logs on --immediate failure
+ + test-lib: stop showing old leak logs
 
  Usability improvements for running tests in leak-checking mode.
 
- Needs review.
+ Will merge to 'master'.
  source: <20240924213404.GA1142219@coredump.intra.peff.net>
 
 
@@ -313,74 +324,42 @@ Release tarballs are available at:
  source: <xmqq7cb77810.fsf@gitster.g>
 
 
-* ps/leakfixes-part-7 (2024-09-27) 24 commits
-  (merged to 'next' on 2024-09-27 at 8c1aa7e558)
- + diffcore-break: fix leaking filespecs when merging broken pairs
- + revision: fix leaking parents when simplifying commits
- + builtin/maintenance: fix leak in `get_schedule_cmd()`
- + builtin/maintenance: fix leaking config string
- + promisor-remote: fix leaking partial clone filter
- + grep: fix leaking grep pattern
- + submodule: fix leaking submodule ODB paths
- + trace2: destroy context stored in thread-local storage
- + builtin/difftool: plug several trivial memory leaks
- + builtin/repack: fix leaking configuration
- + diffcore-order: fix leaking buffer when parsing orderfiles
- + parse-options: free previous value of `OPTION_FILENAME`
- + diff: fix leaking orderfile option
- + builtin/pull: fix leaking "ff" option
- + dir: fix off by one errors for ignored and untracked entries
- + builtin/submodule--helper: fix leaking remote ref on errors
- + t/helper: fix leaking subrepo in nested submodule config helper
- + builtin/submodule--helper: fix leaking error buffer
- + builtin/submodule--helper: clear child process when not running it
- + submodule: fix leaking update strategy
- + git: fix leaking argv when handling builtins
- + builtin/help: fix leaking `html_path` when reading config multiple times
- + builtin/help: fix dangling reference to `html_path`
- + Merge branch 'ps/leakfixes-part-6' into ps/leakfixes-part-7
- (this branch is used by ps/leakfixes-part-8.)
-
- More leak-fixes.
-
- Will merge to 'master'.
- cf. <ZulXjXSozNrXgMUM@pks.im>
- source: <cover.1727351062.git.ps@pks.im>
-
-
-* ps/reftable-alloc-failures (2024-09-30) 24 commits
- - reftable: handle trivial allocation failures
- - reftable/tree: handle allocation failures
- - reftable/pq: handle allocation failures when adding entries
- - reftable/block: handle allocation failures
- - reftable/blocksource: handle allocation failures
- - reftable/iter: handle allocation failures when creating indexed table iter
- - reftable/stack: handle allocation failures in auto compaction
- - reftable/stack: handle allocation failures in `stack_compact_range()`
- - reftable/stack: handle allocation failures in `reftable_new_stack()`
- - reftable/stack: handle allocation failures on reload
- - reftable/reader: handle allocation failures in `reader_init_iter()`
- - reftable/reader: handle allocation failures for unindexed reader
- - reftable/merged: handle allocation failures in `merged_table_init_iter()`
- - reftable/writer: handle allocation failures in `reftable_new_writer()`
- - reftable/writer: handle allocation failures in `writer_index_hash()`
- - reftable/record: handle allocation failures when decoding records
- - reftable/record: handle allocation failures on copy
- - reftable/basics: handle allocation failures in `parse_names()`
- - reftable/basics: handle allocation failures in `reftable_calloc()`
- - reftable: introduce `reftable_strdup()`
- - reftable/basics: merge "publicbasics" into "basics"
- - reftable/error: introduce out-of-memory error code
- - Merge branch 'ps/reftable-exclude' into ps/reftable-alloc-failures
- - Merge branch 'cp/unit-test-reftable-stack' into ps/reftable-alloc-failures
+* ps/reftable-alloc-failures (2024-10-02) 27 commits
+  (merged to 'next' on 2024-10-02 at a6d42d51d4)
+ + reftable/basics: ban standard allocator functions
+ + reftable: introduce `REFTABLE_FREE_AND_NULL()`
+ + reftable: fix calls to free(3P)
+ + reftable: handle trivial allocation failures
+ + reftable/tree: handle allocation failures
+ + reftable/pq: handle allocation failures when adding entries
+ + reftable/block: handle allocation failures
+ + reftable/blocksource: handle allocation failures
+ + reftable/iter: handle allocation failures when creating indexed table iter
+ + reftable/stack: handle allocation failures in auto compaction
+ + reftable/stack: handle allocation failures in `stack_compact_range()`
+ + reftable/stack: handle allocation failures in `reftable_new_stack()`
+ + reftable/stack: handle allocation failures on reload
+ + reftable/reader: handle allocation failures in `reader_init_iter()`
+ + reftable/reader: handle allocation failures for unindexed reader
+ + reftable/merged: handle allocation failures in `merged_table_init_iter()`
+ + reftable/writer: handle allocation failures in `reftable_new_writer()`
+ + reftable/writer: handle allocation failures in `writer_index_hash()`
+ + reftable/record: handle allocation failures when decoding records
+ + reftable/record: handle allocation failures on copy
+ + reftable/basics: handle allocation failures in `parse_names()`
+ + reftable/basics: handle allocation failures in `reftable_calloc()`
+ + reftable: introduce `reftable_strdup()`
+ + reftable/basics: merge "publicbasics" into "basics"
+ + reftable/error: introduce out-of-memory error code
+ + Merge branch 'ps/reftable-exclude' into ps/reftable-alloc-failures
+ + Merge branch 'cp/unit-test-reftable-stack' into ps/reftable-alloc-failures
 
  The reftable library is now prepared to expect that the memory
  allocation function given to it may fail to allocate and to deal
  with such an error.
 
- Expecting a reroll.
- cf. <Zvrsd5JQr8RAhSaN@pks.im>
- source: <cover.1727680272.git.ps@pks.im>
+ Will cook in 'next'.
+ source: <cover.1727866394.git.ps@pks.im>
 
 
 * jc/strbuf-commented-something (2024-09-12) 2 commits
@@ -428,26 +407,6 @@ Release tarballs are available at:
  On hold.
  cf. <34346998-deac-4e1f-9d5f-218f664e9e08@gmail.com>
  source: <pull.1785.v2.git.1726692381.gitgitgadget@gmail.com>
-
-
-* tb/weak-sha1-for-tail-sum (2024-09-27) 8 commits
-  (merged to 'next' on 2024-09-30 at 1b4caadd94)
- + csum-file.c: use unsafe SHA-1 implementation when available
- + Makefile: allow specifying a SHA-1 for non-cryptographic uses
- + hash.h: scaffolding for _unsafe hashing variants
- + sha1: do not redefine `platform_SHA_CTX` and friends
- + pack-objects: use finalize_object_file() to rename pack/idx/etc
- + finalize_object_file(): implement collision check
- + finalize_object_file(): refactor unlink_or_warn() placement
- + finalize_object_file(): check for name collision before renaming
-
- The checksum at the tail of files are now computed without
- collision detection protection.
-
- Will merge to 'master'.
- cf. <20240927035712.GH567395@coredump.intra.peff.net>
- cf. <CABPp-BH3y96DjapzLPJ+vCoChQiD_wR9uLc3QPsXqzSUr4AFvQ@mail.gmail.com>
- source: <cover.1727364141.git.me@ttaylorr.com>
 
 
 * sj/ref-contents-check (2024-09-30) 9 commits
@@ -533,7 +492,7 @@ Release tarballs are available at:
  been revamped.  The sources, at least for the simple cases, got
  vastly pleasant to work with.
 
- Will merge to 'master'.
+ Will cook in 'next'.
  source: <pull.1766.v5.git.1727161730.gitgitgadget@gmail.com>
 
 
