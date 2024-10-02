@@ -82,6 +82,9 @@
 #  ifdef platform_SHA1_Clone
 #    define platform_SHA1_Clone_unsafe platform_SHA1_Clone
 #  endif
+#  ifdef SHA1_NEEDS_CLONE_HELPER
+#    define SHA1_NEEDS_CLONE_HELPER_UNSAFE
+#  endif
 #endif
 
 #define git_SHA_CTX		platform_SHA_CTX
