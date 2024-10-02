@@ -117,7 +117,13 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
  */
 int stream_object_signature(struct repository *r, const struct object_id *oid);
 
+enum finalize_object_file_flags {
+	FOF_SKIP_COLLISION_CHECK = 1,
+};
+
 int finalize_object_file(const char *tmpfile, const char *filename);
+int finalize_object_file_flags(const char *tmpfile, const char *filename,
+			       enum finalize_object_file_flags flags);
 
 /* Helper to check and "touch" a file */
 int check_and_freshen_file(const char *fn, int freshen);

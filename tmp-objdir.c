@@ -206,9 +206,11 @@ static int read_dir_paths(struct string_list *out, const char *path)
 	return 0;
 }
 
-static int migrate_paths(struct strbuf *src, struct strbuf *dst);
+static int migrate_paths(struct strbuf *src, struct strbuf *dst,
+			 enum finalize_object_file_flags flags);
 
-static int migrate_one(struct strbuf *src, struct strbuf *dst)
+static int migrate_one(struct strbuf *src, struct strbuf *dst,
+		       enum finalize_object_file_flags flags)
 {
 	struct stat st;
 
@@ -220,12 +222,18 @@ static int migrate_one(struct strbuf *src, struct strbuf *dst)
 				return -1;
 		} else if (errno != EEXIST)
 			return -1;
-		return migrate_paths(src, dst);
+		return migrate_paths(src, dst, flags);
 	}
-	return finalize_object_file(src->buf, dst->buf);
+	return finalize_object_file_flags(src->buf, dst->buf, flags);
 }
 
-static int migrate_paths(struct strbuf *src, struct strbuf *dst)
+static int is_loose_object_shard(const char *name)
+{
+	return strlen(name) == 2 && isxdigit(name[0]) && isxdigit(name[1]);
+}
+
+static int migrate_paths(struct strbuf *src, struct strbuf *dst,
+			 enum finalize_object_file_flags flags)
 {
 	size_t src_len = src->len, dst_len = dst->len;
 	struct string_list paths = STRING_LIST_INIT_DUP;
@@ -239,11 +247,15 @@ static int migrate_paths(struct strbuf *src, struct strbuf *dst)
 
 	for (i = 0; i < paths.nr; i++) {
 		const char *name = paths.items[i].string;
+		enum finalize_object_file_flags flags_copy = flags;
 
 		strbuf_addf(src, "/%s", name);
 		strbuf_addf(dst, "/%s", name);
 
-		ret |= migrate_one(src, dst);
+		if (is_loose_object_shard(name))
+			flags_copy |= FOF_SKIP_COLLISION_CHECK;
+
+		ret |= migrate_one(src, dst, flags_copy);
 
 		strbuf_setlen(src, src_len);
 		strbuf_setlen(dst, dst_len);
@@ -271,7 +283,7 @@ int tmp_objdir_migrate(struct tmp_objdir *t)
 	strbuf_addbuf(&src, &t->path);
 	strbuf_addstr(&dst, repo_get_object_directory(the_repository));
 
-	ret = migrate_paths(&src, &dst);
+	ret = migrate_paths(&src, &dst, 0);
 
 	strbuf_release(&src);
 	strbuf_release(&dst);
