@@ -4,7 +4,7 @@
 #include "trace2/tr2_ctr.h"
 
 /*
- * A global counter block to aggregrate values from the partial sums
+ * A global counter block to aggregate values from the partial sums
  * from each thread.
  */
 static struct tr2_counter_block final_counter_block; /* access under tr2tls_mutex */
