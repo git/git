@@ -71,6 +71,7 @@ char *reftable_strdup(const char *str);
 			REFTABLE_REALLOC_ARRAY(x, alloc); \
 		} \
 	} while (0)
+#define REFTABLE_FREE_AND_NULL(p) do { reftable_free(p); (p) = NULL; } while (0)
 
 /* Find the longest shared prefix size of `a` and `b` */
 struct strbuf;

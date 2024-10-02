@@ -551,9 +551,9 @@ done:
 void block_writer_release(struct block_writer *bw)
 {
 	deflateEnd(bw->zstream);
-	FREE_AND_NULL(bw->zstream);
-	FREE_AND_NULL(bw->restarts);
-	FREE_AND_NULL(bw->compressed);
+	REFTABLE_FREE_AND_NULL(bw->zstream);
+	REFTABLE_FREE_AND_NULL(bw->restarts);
+	REFTABLE_FREE_AND_NULL(bw->compressed);
 	strbuf_release(&bw->last_key);
 	/* the block is not owned. */
 }

@@ -1149,7 +1149,7 @@ static void unclean_stack_close(struct reftable_stack *st)
 	for (size_t i = 0; i < st->readers_len; i++)
 		reftable_reader_decref(st->readers[i]);
 	st->readers_len = 0;
-	FREE_AND_NULL(st->readers);
+	REFTABLE_FREE_AND_NULL(st->readers);
 }
 
 static void t_reftable_stack_compaction_concurrent_clean(void)

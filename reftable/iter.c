@@ -237,7 +237,7 @@ void reftable_iterator_destroy(struct reftable_iterator *it)
 		return;
 	it->ops->close(it->iter_arg);
 	it->ops = NULL;
-	FREE_AND_NULL(it->iter_arg);
+	REFTABLE_FREE_AND_NULL(it->iter_arg);
 }
 
 int reftable_iterator_seek_ref(struct reftable_iterator *it,

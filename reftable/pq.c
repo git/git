@@ -68,6 +68,6 @@ int merged_iter_pqueue_add(struct merged_iter_pqueue *pq, const struct pq_entry 
 
 void merged_iter_pqueue_release(struct merged_iter_pqueue *pq)
 {
-	FREE_AND_NULL(pq->heap);
+	REFTABLE_FREE_AND_NULL(pq->heap);
 	memset(pq, 0, sizeof(*pq));
 }

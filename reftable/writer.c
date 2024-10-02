@@ -593,7 +593,7 @@ static void object_record_free(void *void_arg UNUSED, void *key)
 {
 	struct obj_index_tree_node *entry = key;
 
-	FREE_AND_NULL(entry->offsets);
+	REFTABLE_FREE_AND_NULL(entry->offsets);
 	strbuf_release(&entry->hash);
 	reftable_free(entry);
 }
@@ -709,7 +709,7 @@ static void writer_clear_index(struct reftable_writer *w)
 {
 	for (size_t i = 0; w->index && i < w->index_len; i++)
 		strbuf_release(&w->index[i].last_key);
-	FREE_AND_NULL(w->index);
+	REFTABLE_FREE_AND_NULL(w->index);
 	w->index_len = 0;
 	w->index_cap = 0;
 }

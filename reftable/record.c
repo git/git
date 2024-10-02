@@ -476,8 +476,8 @@ static void reftable_obj_record_key(const void *r, struct strbuf *dest)
 static void reftable_obj_record_release(void *rec)
 {
 	struct reftable_obj_record *obj = rec;
-	FREE_AND_NULL(obj->hash_prefix);
-	FREE_AND_NULL(obj->offsets);
+	REFTABLE_FREE_AND_NULL(obj->hash_prefix);
+	REFTABLE_FREE_AND_NULL(obj->offsets);
 	memset(obj, 0, sizeof(struct reftable_obj_record));
 }
 
@@ -834,10 +834,10 @@ static int reftable_log_record_decode(void *rec, struct strbuf key,
 	if (val_type != r->value_type) {
 		switch (r->value_type) {
 		case REFTABLE_LOG_UPDATE:
-			FREE_AND_NULL(r->value.update.message);
+			REFTABLE_FREE_AND_NULL(r->value.update.message);
 			r->value.update.message_cap = 0;
-			FREE_AND_NULL(r->value.update.email);
-			FREE_AND_NULL(r->value.update.name);
+			REFTABLE_FREE_AND_NULL(r->value.update.email);
+			REFTABLE_FREE_AND_NULL(r->value.update.name);
 			break;
 		case REFTABLE_LOG_DELETION:
 			break;

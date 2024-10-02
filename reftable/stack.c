@@ -203,7 +203,7 @@ void reftable_stack_destroy(struct reftable_stack *st)
 
 	err = read_lines(st->list_file, &names);
 	if (err < 0) {
-		FREE_AND_NULL(names);
+		REFTABLE_FREE_AND_NULL(names);
 	}
 
 	if (st->readers) {
@@ -224,7 +224,7 @@ void reftable_stack_destroy(struct reftable_stack *st)
 		}
 		strbuf_release(&filename);
 		st->readers_len = 0;
-		FREE_AND_NULL(st->readers);
+		REFTABLE_FREE_AND_NULL(st->readers);
 	}
 
 	if (st->list_fd >= 0) {
@@ -232,8 +232,8 @@ void reftable_stack_destroy(struct reftable_stack *st)
 		st->list_fd = -1;
 	}
 
-	FREE_AND_NULL(st->list_file);
-	FREE_AND_NULL(st->reftable_dir);
+	REFTABLE_FREE_AND_NULL(st->list_file);
+	REFTABLE_FREE_AND_NULL(st->reftable_dir);
 	reftable_free(st);
 	free_names(names);
 }

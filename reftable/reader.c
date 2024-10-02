@@ -678,7 +678,7 @@ void reftable_reader_decref(struct reftable_reader *r)
 	if (--r->refcount)
 		return;
 	block_source_close(&r->source);
-	FREE_AND_NULL(r->name);
+	REFTABLE_FREE_AND_NULL(r->name);
 	reftable_free(r);
 }
 
