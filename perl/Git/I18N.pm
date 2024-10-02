@@ -111,7 +111,7 @@ L<Locale::Messages>'s ngettext function or passthrough fallback function.
 =head2 N__($)
 
 No-operation that only returns its argument. Use this if you want xgettext to
-extract the text to the pot template but do not want to trigger retrival of the
+extract the text to the pot template but do not want to trigger retrieval of the
 translation at run time.
 
 =head1 AUTHOR
