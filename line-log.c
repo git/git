@@ -897,16 +897,6 @@ static void print_line(const char *prefix, char first,
 		fputs("\\ No newline at end of file\n", file);
 }
 
-static const char *output_prefix(struct diff_options *opt)
-{
-	if (opt->output_prefix) {
-		struct strbuf *sb = opt->output_prefix(opt, opt->output_prefix_data);
-		return sb->buf;
-	} else {
-		return "";
-	}
-}
-
 static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *range)
 {
 	unsigned int i, j = 0;
@@ -916,7 +906,7 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
 	struct diff_ranges *diff = &range->diff;
 
 	struct diff_options *opt = &rev->diffopt;
-	const char *prefix = output_prefix(opt);
+	const char *prefix = diff_line_prefix(opt);
 	const char *c_reset = diff_get_color(opt->use_color, DIFF_RESET);
 	const char *c_frag = diff_get_color(opt->use_color, DIFF_FRAGINFO);
 	const char *c_meta = diff_get_color(opt->use_color, DIFF_METAINFO);
@@ -1011,7 +1001,7 @@ out:
  */
 static void dump_diff_hacky(struct rev_info *rev, struct line_log_data *range)
 {
-	const char *prefix = output_prefix(&rev->diffopt);
+	const char *prefix = diff_line_prefix(&rev->diffopt);
 
 	fprintf(rev->diffopt.file, "%s\n", prefix);
 
