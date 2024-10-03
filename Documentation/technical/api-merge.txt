@@ -1,4 +1,4 @@
-merge API
+Merge API
 =========
 
 The merge API helps a program to reconcile two competing sets of
