@@ -316,6 +316,9 @@ static const char *diff_output_prefix_callback(struct diff_options *opt, void *d
 
 	assert(opt);
 
+	if (!graph)
+		return opt->line_prefix;
+
 	strbuf_reset(&msgbuf);
 	if (opt->line_prefix)
 		strbuf_addstr(&msgbuf, opt->line_prefix);
