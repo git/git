@@ -923,10 +923,10 @@ int log_tree_diff_flush(struct rev_info *opt)
 			 */
 			int pch = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_PATCH;
 			if (opt->diffopt.output_prefix) {
-				struct strbuf *msg = NULL;
+				const char *msg;
 				msg = opt->diffopt.output_prefix(&opt->diffopt,
 					opt->diffopt.output_prefix_data);
-				fwrite(msg->buf, msg->len, 1, opt->diffopt.file);
+				fwrite(msg, strlen(msg), 1, opt->diffopt.file);
 			}
 
 			/*

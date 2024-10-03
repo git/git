@@ -2315,12 +2315,10 @@ const char *diff_get_color(int diff_use_color, enum color_diff ix)
 
 const char *diff_line_prefix(struct diff_options *opt)
 {
-	struct strbuf *msgbuf;
-	if (!opt->output_prefix)
-		return "";
+	if (opt->output_prefix)
+		return opt->output_prefix(opt, opt->output_prefix_data);
 
-	msgbuf = opt->output_prefix(opt, opt->output_prefix_data);
-	return msgbuf->buf;
+	return "";
 }
 
 static unsigned long sane_truncate_line(char *line, unsigned long len)
