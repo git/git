@@ -122,6 +122,13 @@ Note that before v1.9.0 release, the version numbers used to be
 structured slightly differently.  vX.Y.Z were feature releases while
 vX.Y.Z.W were maintenance releases for vX.Y.Z.
 
+Because most of the lines of code in Git are written by individual
+contributors, and contributions come in the form of e-mailed patches
+published on the mailing list, the project maintains a mapping from
+individual commits to the Message-Id of the e-mail that resulted in
+the commit, to help tracking the origin of the changes. The notes
+in "refs/notes/amlog" are used for this purpose, and are published
+along with the broken-out branches to the maintainer's repository.
 
 A Typical Git Day
 -----------------
@@ -164,6 +171,43 @@ by doing the following:
 
    In practice, almost no patch directly goes to 'master' or
    'maint'.
+
+   Applying the e-mailed patches using "git am" automatically records
+   the mappings from 'Message-Id' to the applied commit in the "amlog"
+   notes. Periodically check that this is working with "git show -s
+   --notes=amlog $commit".
+
+   This mapping is maintained with the aid of the "post-applypatch"
+   hook found in the 'todo' branch. That hook should be installed
+   before applying patches. It is also helpful to carry forward any
+   relevant amlog entries when rebasing, so the following config may
+   be useful:
+
+      [notes]
+	rewriteRef = refs/notes/amlog
+
+   Avoid "cherry-pick", as it does not propagate notes by design. Use
+   either "git commit --amend" or "git rebase" to make corrections to
+   an existing commit, even for a single-patch topic.
+
+   Make sure that a push refspec for 'refs/notes/amlog' is in the
+   remote configuration for publishing repositories. A few sample
+   configurations look like the following:
+
+      [remote "github"]
+	url = https://github.com/gitster/git
+	pushurl = github.com:gitster/git.git
+	mirror
+
+      [remote "github2"]
+	url = https://github.com/git/git
+	fetch = +refs/heads/*:refs/remotes/github2/*
+	pushurl = github.com:git/git.git
+	push = refs/heads/maint:refs/heads/maint
+	push = refs/heads/master:refs/heads/master
+	push = refs/heads/next:refs/heads/next
+	push = +refs/heads/seen:refs/heads/seen
+	push = +refs/notes/amlog
 
  - Review the last issue of "What's cooking" message, review the
    topics ready for merging (topic->master and topic->maint).  Use
