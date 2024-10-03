@@ -307,24 +307,28 @@ struct git_graph {
 	 * stored as an index into the array column_colors.
 	 */
 	unsigned short default_column_color;
+
+	/*
+	 * Scratch buffer for generating prefixes to be used with
+	 * diff_output_prefix_callback().
+	 */
+	struct strbuf prefix_buf;
 };
 
 static const char *diff_output_prefix_callback(struct diff_options *opt, void *data)
 {
 	struct git_graph *graph = data;
-	static struct strbuf msgbuf = STRBUF_INIT;
 
 	assert(opt);
 
 	if (!graph)
 		return opt->line_prefix;
 
-	strbuf_reset(&msgbuf);
+	strbuf_reset(&graph->prefix_buf);
 	if (opt->line_prefix)
-		strbuf_addstr(&msgbuf, opt->line_prefix);
-	if (graph)
-		graph_padding_line(graph, &msgbuf);
-	return msgbuf.buf;
+		strbuf_addstr(&graph->prefix_buf, opt->line_prefix);
+	graph_padding_line(graph, &graph->prefix_buf);
+	return graph->prefix_buf.buf;
 }
 
 static const struct diff_options *default_diffopt;
@@ -394,6 +398,7 @@ struct git_graph *graph_init(struct rev_info *opt)
 	 * The diff output prefix callback, with this we can make
 	 * all the diff output to align with the graph lines.
 	 */
+	strbuf_init(&graph->prefix_buf, 0);
 	opt->diffopt.output_prefix = diff_output_prefix_callback;
 	opt->diffopt.output_prefix_data = graph;
 
@@ -409,6 +414,7 @@ void graph_clear(struct git_graph *graph)
 	free(graph->new_columns);
 	free(graph->mapping);
 	free(graph->old_mapping);
+	strbuf_release(&graph->prefix_buf);
 	free(graph);
 }
 
