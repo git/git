@@ -309,7 +309,7 @@ struct git_graph {
 	unsigned short default_column_color;
 };
 
-static struct strbuf *diff_output_prefix_callback(struct diff_options *opt, void *data)
+static const char *diff_output_prefix_callback(struct diff_options *opt, void *data)
 {
 	struct git_graph *graph = data;
 	static struct strbuf msgbuf = STRBUF_INIT;
@@ -321,7 +321,7 @@ static struct strbuf *diff_output_prefix_callback(struct diff_options *opt, void
 		strbuf_addstr(&msgbuf, opt->line_prefix);
 	if (graph)
 		graph_padding_line(graph, &msgbuf);
-	return &msgbuf;
+	return msgbuf.buf;
 }
 
 static const struct diff_options *default_diffopt;

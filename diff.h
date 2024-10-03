@@ -94,7 +94,7 @@ typedef void (*add_remove_fn_t)(struct diff_options *options,
 typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 		struct diff_options *options, void *data);
 
-typedef struct strbuf *(*diff_prefix_fn_t)(struct diff_options *opt, void *data);
+typedef const char *(*diff_prefix_fn_t)(struct diff_options *opt, void *data);
 
 #define DIFF_FORMAT_RAW		0x0001
 #define DIFF_FORMAT_DIFFSTAT	0x0002

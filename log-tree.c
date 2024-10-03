@@ -922,12 +922,7 @@ int log_tree_diff_flush(struct rev_info *opt)
 			 * diff/diffstat output for readability.
 			 */
 			int pch = DIFF_FORMAT_DIFFSTAT | DIFF_FORMAT_PATCH;
-			if (opt->diffopt.output_prefix) {
-				struct strbuf *msg = NULL;
-				msg = opt->diffopt.output_prefix(&opt->diffopt,
-					opt->diffopt.output_prefix_data);
-				fwrite(msg->buf, msg->len, 1, opt->diffopt.file);
-			}
+			fputs(diff_line_prefix(&opt->diffopt), opt->diffopt.file);
 
 			/*
 			 * We may have shown three-dashes line early
