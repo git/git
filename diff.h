@@ -274,7 +274,6 @@ struct diff_options {
 	const char *single_follow;
 	const char *a_prefix, *b_prefix;
 	const char *line_prefix;
-	size_t line_prefix_length;
 
 	/**
 	 * collection of boolean options that affects the operation, but some do

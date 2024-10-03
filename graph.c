@@ -74,10 +74,7 @@ static void graph_show_line_prefix(const struct diff_options *diffopt)
 	if (!diffopt || !diffopt->line_prefix)
 		return;
 
-	fwrite(diffopt->line_prefix,
-	       sizeof(char),
-	       diffopt->line_prefix_length,
-	       diffopt->file);
+	fputs(diffopt->line_prefix, diffopt->file);
 }
 
 static const char **column_colors;
@@ -321,8 +318,7 @@ static struct strbuf *diff_output_prefix_callback(struct diff_options *opt, void
 
 	strbuf_reset(&msgbuf);
 	if (opt->line_prefix)
-		strbuf_add(&msgbuf, opt->line_prefix,
-			   opt->line_prefix_length);
+		strbuf_addstr(&msgbuf, opt->line_prefix);
 	if (graph)
 		graph_padding_line(graph, &msgbuf);
 	return &msgbuf;
