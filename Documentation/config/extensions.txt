@@ -9,7 +9,7 @@ work and will produce hard-to-diagnose issues.
 
 extensions.compatObjectFormat::
 
-	Specify a compatitbility hash algorithm to use.  The acceptable values
+	Specify a compatibility hash algorithm to use.  The acceptable values
 	are `sha1` and `sha256`.  The value specified must be different from the
 	value of extensions.objectFormat.  This allows client level
 	interoperability between git repositories whose objectFormat matches

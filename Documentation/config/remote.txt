@@ -50,7 +50,7 @@ remote.<name>.skipFetchAll::
 	If true, this remote will be skipped when updating
 	using linkgit:git-fetch[1], the `update` subcommand of
 	linkgit:git-remote[1], and ignored by the prefetch task
-	of `git maitenance`.
+	of `git maintenance`.
 
 remote.<name>.receivepack::
 	The default program to execute on the remote side when pushing.  See

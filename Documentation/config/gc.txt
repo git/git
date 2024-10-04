@@ -163,7 +163,7 @@ gc.repackFilterTo::
 	containing the filtered out objects. **WARNING:** The
 	specified location should be accessible, using for example the
 	Git alternates mechanism, otherwise the repo could be
-	considered corrupt by Git as it migh not be able to access the
+	considered corrupt by Git as it might not be able to access the
 	objects in that packfile. See the `--filter-to=<dir>` option
 	of linkgit:git-repack[1] and the `objects/info/alternates`
 	section of linkgit:gitrepository-layout[5].
