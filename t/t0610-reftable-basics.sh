@@ -450,15 +450,22 @@ test_expect_success 'ref transaction: retry acquiring tables.list lock' '
 	)
 '
 
-test_expect_success 'ref transaction: many concurrent writers' '
+# This test fails most of the time on Windows systems. The root cause is
+# that Windows does not allow us to rename the "tables.list.lock" file into
+# place when "tables.list" is open for reading by a concurrent process.
+test_expect_success !WINDOWS 'ref transaction: many concurrent writers' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
 		cd repo &&
-		# Set a high timeout such that a busy CI machine will not abort
-		# early. 10 seconds should hopefully be ample of time to make
-		# this non-flaky.
-		git config set reftable.lockTimeout 10000 &&
+		# Set a high timeout. While a couple of seconds should be
+		# plenty, using the address sanitizer will significantly slow
+		# us down here. So we are aiming way higher than you would ever
+		# think is necessary just to keep us from flaking. We could
+		# also lock indefinitely by passing -1, but that could
+		# potentially block CI jobs indefinitely if there was a bug
+		# here.
+		git config set reftable.lockTimeout 300000 &&
 		test_commit --no-tag initial &&
 
 		head=$(git rev-parse HEAD) &&
