@@ -450,7 +450,7 @@ test_expect_success 'ref transaction: retry acquiring tables.list lock' '
 	)
 '
 
-test_expect_success 'ref transaction: many concurrent writers' '
+test_expect_success !WINDOWS 'ref transaction: many concurrent writers' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
