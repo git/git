@@ -411,7 +411,7 @@ merge_cmd () {
 			-f "$FINAL_CMD" '"$LOCAL"' '"$BASE"' '"$REMOTE"' '"$MERGED"'
 	else
 		# If there is no BASE (example: a merge conflict in a new file
-		# with the same name created in both braches which didn't exist
+		# with the same name created in both branches which didn't exist
 		# before), close all BASE windows using vim's "quit" command
 
 		FINAL_CMD=$(echo "$FINAL_CMD" | \
