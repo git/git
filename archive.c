@@ -536,7 +536,8 @@ static void parse_treeish_arg(const char **argv,
 		opts.fn = oneway_merge;
 		init_tree_desc(&t, &tree->object.oid, tree->buffer, tree->size);
 		if (unpack_trees(1, &t, &opts))
-			die(_("unable to checkout working tree"));
+			die(_("failed to unpack tree object %s"),
+			    oid_to_hex(&tree->object.oid));
 
 		git_attr_set_direction(GIT_ATTR_INDEX);
 	}
