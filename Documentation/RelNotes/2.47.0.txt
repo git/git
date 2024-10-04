@@ -335,3 +335,5 @@ Fixes since v2.46
    (merge 83799f1500 jk/t9001-deflake later to maint).
    (merge e02cc08a88 ak/typofix-2.46-maint later to maint).
    (merge 5c5d29e1c4 ps/ci-gitlab-upgrade later to maint).
+   (merge 9c4c840901 jc/doc-discarding-stalled-topics later to maint).
+   (merge 5e6f359f6b ds/read-cache-mempool-leakfix later to maint).
