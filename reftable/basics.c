@@ -152,9 +152,11 @@ char **parse_names(char *buf, int size)
 			next = end;
 		}
 		if (p < next) {
-			REFTABLE_ALLOC_GROW(names, names_len + 1, names_cap);
-			if (!names)
+			char **names_grown = names;
+			REFTABLE_ALLOC_GROW(names_grown, names_len + 1, names_cap);
+			if (!names_grown)
 				goto err;
+			names = names_grown;
 
 			names[names_len] = reftable_strdup(p);
 			if (!names[names_len++])
