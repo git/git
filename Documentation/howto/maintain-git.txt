@@ -67,7 +67,22 @@ the mailing list after each feature release is made:
    before getting merged to 'master'.
 
  - 'seen' branch is used to publish other proposed changes that do
-   not yet pass the criteria set for 'next' (see above).
+   not yet pass the criteria set for 'next' (see above), but there
+   is no promise that 'seen' will contain everything.  A topic that
+   had no reviewer reaction may not be picked up.
+
+   - A new topic will first get merged to 'seen', unless it is
+     trivially correct and clearly urgent, in which case it may be
+     directly merged to 'next' or even to 'master'.
+
+   - If a topic that was picked up to 'seen' becomes and stays
+     inactive for 3 calendar weeks without having seen a clear
+     consensus that it is good enough to be moved to 'next', the
+     topic may be discarded from 'seen'.  Interested parties are
+     still free to revive the topic.  For the purpose of this
+     guideline, the definition of being "inactive" is that nobody
+     has discussed the topic, no new iteration of the topic was
+     posted, and no responses to the review comments were given.
 
  - The tips of 'master' and 'maint' branches will not be rewound to
    allow people to build their own customization on top of them.
