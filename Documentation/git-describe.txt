@@ -38,14 +38,16 @@ OPTIONS
 	Commit-ish object names to describe.  Defaults to HEAD if omitted.
 
 --dirty[=<mark>]::
---broken[=<mark>]::
-	Describe the state of the working tree.  When the working
+	Describe the state of the working tree.  When the working 
 	tree matches HEAD, the output is the same as "git describe
-	HEAD".  If the working tree has local modification "-dirty"
-	is appended to it.  If a repository is corrupt and Git
-	cannot determine if there is local modification, Git will
-	error out, unless `--broken' is given, which appends
-	the suffix "-broken" instead.
+        HEAD".  If the working tree has local modification, "-dirty" 
+	is appended to it.
+
+--broken[=<mark>]::
+	If a repository is corrupt and Git cannot determine 
+	if there is local modification, Git will error out, 
+	unless `--broken' is given, which appends the 
+	suffix "-broken" instead.
 
 --all::
 	Instead of using only the annotated tags, use any ref
