@@ -66,6 +66,7 @@ static int no_whole_file_rename;
 static int show_progress;
 static char repeated_meta_color[COLOR_MAXLEN];
 static int coloring_mode;
+static char *default_blame_ignore_revs_file = ".git-blame-ignore-revs";
 static struct string_list ignore_revs_file_list = STRING_LIST_INIT_DUP;
 static int mark_unblamable_lines;
 static int mark_ignored_lines;
@@ -1103,6 +1104,11 @@ parse_done:
 			die("no such ref: HEAD");
 
 		add_pending_object(&revs, &head_commit->object, "HEAD");
+	}
+
+	// check for ENOENT for .git-blame-ignore-revs in the repository
+	if (access(default_blame_ignore_revs_file, F_OK) == 0) {
+		string_list_append(&ignore_revs_file_list, default_blame_ignore_revs_file);
 	}
 
 	init_scoreboard(&sb);
