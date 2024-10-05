@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2024, #02; Wed, 2)
-X-master-at: 111e864d69c84284441b083966c2065c2e9a4e78
-X-next-at: 43b9d002c88c60350760fe38edf0e36e2e3da4bb
+Subject: What's cooking in git.git (Oct 2024, #03; Fri, 4)
+X-master-at: 90fe3800b92a49173530828c0a17951abd30f0e1
+X-next-at: ecfaa0ad0fec27eefd921f5ae74cad15ff483641
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2024, #02; Wed, 2)
+What's cooking in git.git (Oct 2024, #03; Fri, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -21,13 +21,6 @@ Git 2.47-rc1 has been tagged.  From here on, we expect the flow of
 new topics to slow down and contributors are encouraged to focus
 more on finding and fixing possible regressions relative to Git
 2.46, the last feature release.
-
-Unfortunately our CI jobs seem to be failing due to
-https://lore.kernel.org/git/xmqqmsk37926.fsf@gitster.g/
-
-The regression in libCurl 8.10.0 has been identified and corrected
-in the upstream, but apparently it takes time for the fix to
-percolate down.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -60,117 +53,134 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ds/sparse-checkout-expansion-advice (2024-09-23) 1 commit
-  (merged to 'next' on 2024-09-27 at e670bccf7e)
- + sparse-checkout: disable advice in 'disable'
+* ak/doc-typofix (2024-09-23) 2 commits
+  (merged to 'next' on 2024-10-04 at f667f89519)
+ + Documentation: fix typos
+ + Documentation/config: fix typos
 
- When "git sparse-checkout disable" turns a sparse checkout into a
- regular checkout, the index is fully expanded.  This totally
- expected behaviour however had an "oops, we are expanding the
- index" advice message, which has been corrected.
- source: <pull.1800.git.1727119882901.gitgitgadget@gmail.com>
+ Typofixes.
+ source: <20240923110343.12388-2-algonell@gmail.com>
 
 
-* jk/http-leakfixes (2024-09-25) 28 commits
-  (merged to 'next' on 2024-09-27 at c52b418c92)
- + http-push: clean up local_refs at exit
- + http-push: clean up loose request when falling back to packed
- + http-push: clean up objects list
- + http-push: free xml_ctx.cdata after use
- + http-push: free remote_ls_ctx.dentry_name
- + http-push: free transfer_request strbuf
- + http-push: free transfer_request dest field
- + http-push: free curl header lists
- + http-push: free repo->url string
- + http-push: clear refspecs before exiting
- + http-walker: free fake packed_git list
- + remote-curl: free HEAD ref with free_one_ref()
- + http: stop leaking buffer in http_get_info_packs()
- + http: call git_inflate_end() when releasing http_object_request
- + http: fix leak of http_object_request struct
- + http: fix leak when redacting cookies from curl trace
- + transport-helper: fix leak of dummy refs_list
- + fetch-pack: clear pack lockfiles list
- + fetch: free "raw" string when shrinking refspec
- + transport-helper: fix strbuf leak in push_refs_with_push()
- + send-pack: free cas options before exit
- + commit: avoid leaking already-saved buffer
- + fetch-pack, send-pack: clean up shallow oid array
- + fetch-pack: free object filter before exiting
- + connect: clear child process before freeing in diagnostic mode
- + fetch-pack: fix leaking sought refs
- + shallow: fix leak when unregistering last shallow root
- + http-fetch: clear leaking git-index-pack(1) arguments
- (this branch is used by ps/leakfixes-part-8.)
+* ak/typofix-2.46-maint (2024-10-03) 4 commits
+  (merged to 'next' on 2024-10-04 at dd35f48cf2)
+ + perl: fix a typo
+ + mergetool: fix a typo
+ + reftable: fix a typo
+ + trace2: fix typos
 
- Leakfixes.
- source: <20240924214930.GA1143523@coredump.intra.peff.net>
+ Typofixes.
+ source: <20241002223816.14858-1-algonell@gmail.com>
 
-
-* ps/leakfixes-part-7 (2024-09-27) 24 commits
-  (merged to 'next' on 2024-09-27 at 8c1aa7e558)
- + diffcore-break: fix leaking filespecs when merging broken pairs
- + revision: fix leaking parents when simplifying commits
- + builtin/maintenance: fix leak in `get_schedule_cmd()`
- + builtin/maintenance: fix leaking config string
- + promisor-remote: fix leaking partial clone filter
- + grep: fix leaking grep pattern
- + submodule: fix leaking submodule ODB paths
- + trace2: destroy context stored in thread-local storage
- + builtin/difftool: plug several trivial memory leaks
- + builtin/repack: fix leaking configuration
- + diffcore-order: fix leaking buffer when parsing orderfiles
- + parse-options: free previous value of `OPTION_FILENAME`
- + diff: fix leaking orderfile option
- + builtin/pull: fix leaking "ff" option
- + dir: fix off by one errors for ignored and untracked entries
- + builtin/submodule--helper: fix leaking remote ref on errors
- + t/helper: fix leaking subrepo in nested submodule config helper
- + builtin/submodule--helper: fix leaking error buffer
- + builtin/submodule--helper: clear child process when not running it
- + submodule: fix leaking update strategy
- + git: fix leaking argv when handling builtins
- + builtin/help: fix leaking `html_path` when reading config multiple times
- + builtin/help: fix dangling reference to `html_path`
- + Merge branch 'ps/leakfixes-part-6' into ps/leakfixes-part-7
- (this branch is used by ps/leakfixes-part-8.)
-
- More leak-fixes.
- cf. <ZulXjXSozNrXgMUM@pks.im>
- source: <cover.1727351062.git.ps@pks.im>
-
-
-* tb/weak-sha1-for-tail-sum (2024-09-27) 8 commits
-  (merged to 'next' on 2024-09-30 at 1b4caadd94)
- + csum-file.c: use unsafe SHA-1 implementation when available
- + Makefile: allow specifying a SHA-1 for non-cryptographic uses
- + hash.h: scaffolding for _unsafe hashing variants
- + sha1: do not redefine `platform_SHA_CTX` and friends
- + pack-objects: use finalize_object_file() to rename pack/idx/etc
- + finalize_object_file(): implement collision check
- + finalize_object_file(): refactor unlink_or_warn() placement
- + finalize_object_file(): check for name collision before renaming
-
- The checksum at the tail of files are now computed without
- collision detection protection.  This is safe as the consumer of
- the information to protect itself from replay attacks checks for
- hash collisions independently.
- cf. <20240927035712.GH567395@coredump.intra.peff.net>
- cf. <CABPp-BH3y96DjapzLPJ+vCoChQiD_wR9uLc3QPsXqzSUr4AFvQ@mail.gmail.com>
- source: <cover.1727364141.git.me@ttaylorr.com>
-
---------------------------------------------------
-[New Topics]
 
 * ds/read-cache-mempool-leakfix (2024-10-01) 1 commit
   (merged to 'next' on 2024-10-02 at c0eac890ac)
  + read-cache: free threaded memory pool
 
  Leakfix.
-
- Will merge to 'master'.
  source: <pull.1801.v2.git.1727804265033.gitgitgadget@gmail.com>
 
+
+* jc/doc-discarding-stalled-topics (2024-09-26) 1 commit
+  (merged to 'next' on 2024-10-02 at adb0d84fd4)
+ + howto-maintain-git: discarding inactive topics
+
+ Document that inactive topics are subject to be discarded.
+ source: <xmqqikuii60q.fsf@gitster.g>
+
+
+* jk/test-lsan-improvements (2024-09-25) 3 commits
+  (merged to 'next' on 2024-10-02 at 3d8303fcfe)
+ + test-lib: check for leak logs after every test
+ + test-lib: show leak-sanitizer logs on --immediate failure
+ + test-lib: stop showing old leak logs
+
+ Usability improvements for running tests in leak-checking mode.
+ source: <20240924213404.GA1142219@coredump.intra.peff.net>
+
+
+* kn/osx-fsmonitor-with-submodules-fix (2024-10-04) 1 commit
+  (merged to 'next' on 2024-10-04 at 5a9a8775f8)
+ + fsmonitor OSX: fix hangs for submodules
+
+ macOS with fsmonitor daemon can hang forever when a submodule is
+ involved, which has been corrected.
+ source: <pull.1802.v4.git.1728000433326.gitgitgadget@gmail.com>
+
+
+* mh/w-unused-fix (2024-10-02) 1 commit
+  (merged to 'next' on 2024-10-04 at 9a52af034e)
+ + utf8.h: squelch unused-parameter warnings with NO_ICONV
+
+ Buildfix.
+ source: <20241002200140.2123584-1-mh@glandium.org>
+
+
+* ps/reftable-concurrent-writes (2024-10-04) 1 commit
+  (merged to 'next' on 2024-10-04 at f705b3334a)
+ + t0610: work around flaky test with concurrent writers
+
+ Test fix.
+ source: <f3874c7e923846e453499e89f00dd4f8862e4c40.1728055880.git.ps@pks.im>
+
+
+* rs/archive-with-attr-pathspec-fix (2024-10-03) 1 commit
+  (merged to 'next' on 2024-10-04 at cc1087dcc0)
+ + archive: fix misleading error message
+
+ Message update.
+ source: <faed1d0e-86a8-4dcd-a27f-19dcd9f89f37@web.de>
+
+
+* tb/weak-sha1-for-tail-sum (2024-10-03) 1 commit
+  (merged to 'next' on 2024-10-04 at c970b9a3e9)
+ + hash.h: set NEEDS_CLONE_HELPER_UNSAFE in fallback mode
+
+ Build fix.
+ source: <20241002232618.GA3442753@coredump.intra.peff.net>
+
+--------------------------------------------------
+[New Topics]
+
+* ds/line-log-asan-fix (2024-10-03) 1 commit
+  (merged to 'next' on 2024-10-04 at ee702f6c95)
+ + line-log: protect inner strbuf from free
+ (this branch is used by jk/output-prefix-cleanup.)
+
+ Use after free and double freeing at the end in "git log -L... -p"
+ had been identified and fixed.
+
+ Will cook in 'next'.
+ source: <05c21616c350b5141c17fde1aa5d3aea881c6031.1727956724.git.gitgitgadget@gmail.com>
+
+
+* sk/doc-maintenance-schedule (2024-10-03) 1 commit
+  (merged to 'next' on 2024-10-04 at 2d3722c29d)
+ + doc: add a note about staggering of maintenance
+
+ Doc update to clarify how periodical maintenance are scheduled,
+ spread across time to avoid thundering hurds.
+
+ Will cook in 'next'.
+ source: <pull.1794.git.git.1727945877922.gitgitgadget@gmail.com>
+
+
+* jk/output-prefix-cleanup (2024-10-03) 5 commits
+  (merged to 'next' on 2024-10-04 at 06298d1525)
+ + diff: store graph prefix buf in git_graph struct
+ + diff: return line_prefix directly when possible
+ + diff: return const char from output_prefix callback
+ + diff: drop line_prefix_length field
+ + line-log: use diff_line_prefix() instead of custom helper
+ (this branch uses ds/line-log-asan-fix.)
+
+ Code clean-up.
+
+ Will cook in 'next'.
+ source: <pull.1806.v2.git.1727956724.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * kn/fsmonitor-event-listener-fix (2024-10-02) 1 commit
  - fsmonitor: fix hangs by delayed fs event listening
@@ -181,14 +191,13 @@ Release tarballs are available at:
  Comments?
  source: <pull.1804.git.1727862424713.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
-* jc/a-commands-without-the-repo (2024-09-30) 4 commits
- - archive: remove the_repository global variable
- - apply: remove the_repository global variable
- - annotate: remove usage of the_repository global
- - git: pass in repo for RUN_SETUP_GENTLY
+* jc/a-commands-without-the-repo (2024-10-04) 5 commits
+ . SQUASH??? uninitialized variable use fix
+ . archive: remove the_repository global variable
+ . apply: remove the_repository global variable
+ . annotate: remove usage of the_repository global
+ . git: pass in repo for RUN_SETUP_GENTLY
 
  Commands that can also work outside Git have learned to take the
  repository instance "repo" when we know we are in a repository, and
@@ -200,58 +209,48 @@ Release tarballs are available at:
  source: <pull.1788.v2.git.git.1727718030.gitgitgadget@gmail.com>
 
 
-* kn/osx-fsmonitor-with-submodules-fix (2024-10-01) 1 commit
- - fsmonitor OSX: fix hangs for submodules
-
- macOS with fsmonitor daemon can hang forever when a submodule is
- involved, which has been corrected.
-
- Expecting a reroll.
- cf. <CAOTNsDygwBkNdFX4K_ixL5kP-AvDxWWVXkvfkmV4Kh04ozdYkA@mail.gmail.com>
- source: <pull.1802.v3.git.1727810964571.gitgitgadget@gmail.com>
-
-
 * ps/leakfixes-part-8 (2024-09-30) 25 commits
- - builtin/send-pack: fix leaking list of push options
- - remote: fix leaking push reports
- - t/helper: fix leaks in proc-receive helper
- - pack-write: fix return parameter of `write_rev_file_order()`
- - revision: fix leaking saved parents
- - revision: fix memory leaks when rewriting parents
- - midx-write: fix leaking buffer
- - pack-bitmap-write: fix leaking OID array
- - pseudo-merge: fix leaking strmap keys
- - pseudo-merge: fix various memory leaks
- - line-log: fix several memory leaks
- - diff: improve lifecycle management of diff queues
- - builtin/revert: fix leaking `gpg_sign` and `strategy` config
- - t/helper: fix leaking repository in partial-clone helper
- - builtin/clone: fix leaking repo state when cloning with bundle URIs
- - builtin/pack-redundant: fix various memory leaks
- - builtin/stash: fix leaking `pathspec_from_file`
- - submodule: fix leaking submodule entry list
- - wt-status: fix leaking buffer with sparse directories
- - shell: fix leaking strings
- - scalar: fix leaking repositories
- - read-cache: fix leaking hash context in `do_write_index()`
- - builtin/annotate: fix leaking args vector
- - Merge branch 'jk/http-leakfixes' into ps/leakfixes-part-8
- - Merge branch 'ps/leakfixes-part-7' into ps/leakfixes-part-8
+  (merged to 'next' on 2024-10-04 at 3cfb5747d2)
+ + builtin/send-pack: fix leaking list of push options
+ + remote: fix leaking push reports
+ + t/helper: fix leaks in proc-receive helper
+ + pack-write: fix return parameter of `write_rev_file_order()`
+ + revision: fix leaking saved parents
+ + revision: fix memory leaks when rewriting parents
+ + midx-write: fix leaking buffer
+ + pack-bitmap-write: fix leaking OID array
+ + pseudo-merge: fix leaking strmap keys
+ + pseudo-merge: fix various memory leaks
+ + line-log: fix several memory leaks
+ + diff: improve lifecycle management of diff queues
+ + builtin/revert: fix leaking `gpg_sign` and `strategy` config
+ + t/helper: fix leaking repository in partial-clone helper
+ + builtin/clone: fix leaking repo state when cloning with bundle URIs
+ + builtin/pack-redundant: fix various memory leaks
+ + builtin/stash: fix leaking `pathspec_from_file`
+ + submodule: fix leaking submodule entry list
+ + wt-status: fix leaking buffer with sparse directories
+ + shell: fix leaking strings
+ + scalar: fix leaking repositories
+ + read-cache: fix leaking hash context in `do_write_index()`
+ + builtin/annotate: fix leaking args vector
+ + Merge branch 'jk/http-leakfixes' into ps/leakfixes-part-8
+ + Merge branch 'ps/leakfixes-part-7' into ps/leakfixes-part-8
 
  More leakfixes.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <cover.1727687410.git.ps@pks.im>
 
 
-* tb/notes-amlog-doc (2024-09-30) 2 commits
- - Documentation: mention the amlog in howto/maintain-git.txt
- - howto-maintain: mention notes/amlog policy
+* tb/notes-amlog-doc (2024-10-03) 1 commit
+  (merged to 'next' on 2024-10-04 at e73c8753e8)
+ + Documentation: mention the amlog in howto/maintain-git.txt
 
  Document "amlog" notes.
 
- Comments?
- source: <a4b1da93e16d88323181f8f8444f01d96e09ef45.1727729100.git.me@ttaylorr.com>
+ Will cook in 'next'.
+ source: <88a13b9f2b6e7fbed517a7e268e4e371d84a9a10.1727917792.git.me@ttaylorr.com>
 
 
 * ej/cat-file-remote-object-info (2024-09-27) 6 commits
@@ -267,28 +266,6 @@ Release tarballs are available at:
 
  Comments?
  source: <20240926013856.35527-1-eric.peijian@gmail.com>
-
-
-* jc/doc-discarding-stalled-topics (2024-09-26) 1 commit
-  (merged to 'next' on 2024-10-02 at adb0d84fd4)
- + howto-maintain-git: discarding inactive topics
-
- Document that inactive topics are subject to be discarded.
-
- Will merge to 'master'.
- source: <xmqqikuii60q.fsf@gitster.g>
-
-
-* jk/test-lsan-improvements (2024-09-25) 3 commits
-  (merged to 'next' on 2024-10-02 at 3d8303fcfe)
- + test-lib: check for leak logs after every test
- + test-lib: show leak-sanitizer logs on --immediate failure
- + test-lib: stop showing old leak logs
-
- Usability improvements for running tests in leak-checking mode.
-
- Will merge to 'master'.
- source: <20240924213404.GA1142219@coredump.intra.peff.net>
 
 
 * es/worktree-repair-copied (2024-09-23) 1 commit
@@ -324,7 +301,9 @@ Release tarballs are available at:
  source: <xmqq7cb77810.fsf@gitster.g>
 
 
-* ps/reftable-alloc-failures (2024-10-02) 27 commits
+* ps/reftable-alloc-failures (2024-10-04) 28 commits
+  (merged to 'next' on 2024-10-04 at 5649ef3dd7)
+ + reftable/basics: fix segfault when growing `names` array fails
   (merged to 'next' on 2024-10-02 at a6d42d51d4)
  + reftable/basics: ban standard allocator functions
  + reftable: introduce `REFTABLE_FREE_AND_NULL()`
@@ -359,6 +338,7 @@ Release tarballs are available at:
  with such an error.
 
  Will cook in 'next'.
+ source: <CAPig+cT7nni11bGmNyYCQZ0P0QZ_HG-izPtsymq==sUOkOn-Lw@mail.gmail.com>
  source: <cover.1727866394.git.ps@pks.im>
 
 
@@ -389,7 +369,7 @@ Release tarballs are available at:
  source: <20240910163000.1985723-1-christian.couder@gmail.com>
 
 
-* ds/pack-name-hash-tweak (2024-09-19) 6 commits
+* ds/pack-name-hash-tweak (2024-10-04) 6 commits
  - test-tool: add helper for name-hash values
  - p5313: add size comparison test
  - git-repack: update usage to match docs
@@ -430,7 +410,8 @@ Release tarballs are available at:
  source: <Zvj-DgHqtC30KjJe@ArchLinux>
 
 
-* tb/incremental-midx-part-2 (2024-08-28) 16 commits
+* tb/incremental-midx-part-2 (2024-10-04) 17 commits
+ - fixup! pack-bitmap.c: open and store incremental bitmap layers
  - fixup! midx: implement writing incremental MIDX bitmaps
  - midx: implement writing incremental MIDX bitmaps
  - pack-bitmap.c: use `ewah_or_iterator` for type bitmap iterators
@@ -452,6 +433,7 @@ Release tarballs are available at:
 
  Needs review.
  source: <cover.1723760847.git.me@ttaylorr.com>
+ source: <ZwBsbW5jsFw0mxKk@nand.local>
 
 
 * js/libgit-rust (2024-09-09) 7 commits
