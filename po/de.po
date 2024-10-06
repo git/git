@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2024-07-19 19:21+0200\n"
-"PO-Revision-Date: 2024-07-19 19:25+0200\n"
+"POT-Creation-Date: 2024-10-05 16:17+0200\n"
+"PO-Revision-Date: 2024-10-05 16:18+0200\n"
 "Last-Translator: Ralf Thielow <ralf.thielow@gmail.com>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -566,7 +566,7 @@ msgid ""
 "/ - search for a hunk matching the given regex\n"
 "s - split the current hunk into smaller hunks\n"
 "e - manually edit the current hunk\n"
-"p - print the current hunk\n"
+"p - print the current hunk, 'P' to use the pager\n"
 "? - print help\n"
 msgstr ""
 "j - diesen Patch-Block unbestimmt lassen, nächsten unbestimmten Patch-Block "
@@ -579,7 +579,7 @@ msgstr ""
 "/ - nach Patch-Block suchen, der regulärem Ausdruck entspricht\n"
 "s - aktuellen Patch-Block in kleinere Patch-Blöcke aufteilen\n"
 "e - aktuellen Patch-Block manuell editieren\n"
-"p - aktuellen Patch-Block anzeigen\n"
+"p - aktuellen Patch-Block anzeigen, 'P' um Anzeigeprogramm zu benutzen\n"
 "? - Hilfe anzeigen\n"
 
 #, c-format
@@ -1280,6 +1280,15 @@ msgid "attempt three-way merge, fall back on normal patch if that fails"
 msgstr ""
 "versuche 3-Wege-Merge, weiche auf normalen Patch aus, wenn dies fehlschlägt"
 
+msgid "for conflicts, use our version"
+msgstr "bei Konflikten unsere Variante verwenden"
+
+msgid "for conflicts, use their version"
+msgstr "bei Konflikten ihre Variante verwenden"
+
+msgid "for conflicts, use a union version"
+msgstr "bei Konflikten eine gemeinsame Variante verwenden"
+
 msgid "build a temporary index based on embedded index information"
 msgstr ""
 "einen temporären Index, basierend auf den integrierten Index-Informationen, "
@@ -1328,6 +1337,9 @@ msgstr "<Wurzelverzeichnis> vor alle Dateinamen stellen"
 
 msgid "don't return error for empty patches"
 msgstr "keinen Fehler für leere Patches zurückgeben"
+
+msgid "--ours, --theirs, and --union require --3way"
+msgstr "--ours, --theirs, und --union erfordern --3way"
 
 #, c-format
 msgid "cannot stream blob %s"
@@ -1400,6 +1412,10 @@ msgstr "Kein gültiger Objektname: %s"
 #, c-format
 msgid "not a tree object: %s"
 msgstr "Kein Tree-Objekt: %s"
+
+#, c-format
+msgid "failed to unpack tree object %s"
+msgstr "Tree-Objekt %s konnte nicht entpackt werden"
 
 #, c-format
 msgid "File not found: %s"
@@ -2525,9 +2541,6 @@ msgstr ""
 "Ungültiges Argument %s für 'git bisect terms'.\n"
 "Unterstützte Optionen sind: --term-good|--term-old und --term-bad|--term-new."
 
-msgid "revision walk setup failed\n"
-msgstr "Einrichtung des Revisionsgangs fehlgeschlagen\n"
-
 #, c-format
 msgid "could not open '%s' for appending"
 msgstr "konnte '%s' nicht zum Anhängen öffnen"
@@ -3533,9 +3546,14 @@ msgstr "git check-mailmap [<Optionen>] <Kontakt>..."
 msgid "also read contacts from stdin"
 msgstr "ebenfalls Kontakte von der Standard-Eingabe lesen"
 
-#, c-format
-msgid "unable to parse contact: %s"
-msgstr "konnte Kontakt nicht parsen: %s"
+msgid "read additional mailmap entries from file"
+msgstr "zusätzliche mailmap-Einträge aus Datei lesen"
+
+msgid "blob"
+msgstr "Blob"
+
+msgid "read additional mailmap entries from blob"
+msgstr "zusätzliche mailmap-Einträge aus Blob lesen"
 
 msgid "no contacts specified"
 msgstr "keine Kontakte angegeben"
@@ -3896,6 +3914,10 @@ msgstr "Pfade können nicht beim Wechseln von Branches verwendet werden"
 #, c-format
 msgid "'%s' cannot be used with switching branches"
 msgstr "'%s' kann nicht beim Wechseln von Branches verwendet werden"
+
+#, c-format
+msgid "'%s' needs the paths to check out"
+msgstr "'%s' benötigt die Pfade zum Auschecken"
 
 #, c-format
 msgid "'%s' cannot be used with '%s'"
@@ -4693,7 +4715,7 @@ msgstr "git commit-tree: Fehler beim Lesen"
 msgid ""
 "git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
 "           [--dry-run] [(-c | -C | --squash) <commit> | --fixup [(amend|"
-"reword):]<commit>)]\n"
+"reword):]<commit>]\n"
 "           [-F <file> | -m <msg>] [--reset-author] [--allow-empty]\n"
 "           [--allow-empty-message] [--no-verify] [-e] [--author=<author>]\n"
 "           [--date=<date>] [--cleanup=<mode>] [--[no-]status]\n"
@@ -4703,7 +4725,7 @@ msgid ""
 msgstr ""
 "git commit [-a | --interactive | --patch] [-s] [-v] [-u<Modus>] [--amend]\n"
 "           [--dry-run] [(-c | -C | --squash) <Commit> | --fixup [(amend|"
-"reword):]<Commit>)]\n"
+"reword):]<Commit>]\n"
 "           [-F <Datei> | -m <Nachricht>] [--reset-author] [--allow-empty]\n"
 "           [--allow-empty-message] [--no-verify] [-e] [--author=<Autor>]\n"
 "           [--date=<Datum>] [--cleanup=<Modus>] [--[no-]status]\n"
@@ -5207,11 +5229,10 @@ msgstr "git config list [<Datei-Option>] [<Anzeige-Option>] [--includes]"
 
 msgid ""
 "git config get [<file-option>] [<display-option>] [--includes] [--all] [--"
-"regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] "
-"<name>"
+"regexp] [--value=<value>] [--fixed-value] [--default=<default>] <name>"
 msgstr ""
 "git config get [<Datei-Option>] [<Anzeige-Option>] [--includes] [--all] [--"
-"regexp=<Regex>] [--value=<Wert>] [--fixed-value] [--default=<Standardwert>] "
+"regexp] [--value=<Wert>] [--fixed-value] [--default=<Standardwert>] "
 "<Name>"
 
 msgid ""
@@ -5241,6 +5262,15 @@ msgid "git config [<file-option>] --get-colorbool <name> [<stdout-is-tty>]"
 msgstr ""
 "git config [<Datei-Option>] --get-colorbool <Name> [<Standard-Ausgabe-ist-"
 "Terminal>]"
+
+msgid ""
+"git config get [<file-option>] [<display-option>] [--includes] [--all] [--"
+"regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] "
+"<name>"
+msgstr ""
+"git config get [<Datei-Option>] [<Anzeige-Option>] [--includes] [--all] [--"
+"regexp=<Regex>] [--value=<Wert>] [--fixed-value] [--default=<Standardwert>] "
+"<Name>"
 
 msgid ""
 "git config set [<file-option>] [--type=<type>] [--comment=<message>] [--all] "
@@ -6061,8 +6091,8 @@ msgstr ""
 "zu umgehen.\n"
 
 #, c-format
-msgid "%s did not send all necessary objects\n"
-msgstr "%s hat nicht alle erforderlichen Objekte gesendet\n"
+msgid "%s did not send all necessary objects"
+msgstr "%s hat nicht alle erforderlichen Objekte gesendet"
 
 #, c-format
 msgid "rejected %s because shallow roots are not allowed to be updated"
@@ -6101,8 +6131,8 @@ msgid "option \"%s\" value \"%s\" is not valid for %s"
 msgstr "Option \"%s\" Wert \"%s\" ist nicht gültig für %s"
 
 #, c-format
-msgid "option \"%s\" is ignored for %s\n"
-msgstr "Option \"%s\" wird ignoriert für %s\n"
+msgid "option \"%s\" is ignored for %s"
+msgstr "Option \"%s\" wird für %s ignoriert"
 
 #, c-format
 msgid "%s is not a valid object"
@@ -6792,6 +6822,9 @@ msgstr "mehr Gründlichkeit (erhöht Laufzeit)"
 msgid "enable auto-gc mode"
 msgstr "\"auto-gc\" Modus aktivieren"
 
+msgid "perform garbage collection in the background"
+msgstr "Garbage Collection im Hintergrund ausführen"
+
 msgid "force running gc even if there may be another gc running"
 msgstr ""
 "Ausführung von \"git gc\" erzwingen, selbst wenn ein anderes\n"
@@ -6894,6 +6927,9 @@ msgstr "Aufgabe '%s' kann nicht mehrfach ausgewählt werden"
 
 msgid "run tasks based on the state of the repository"
 msgstr "Aufgaben abhängig vom Zustand des Repositories ausführen"
+
+msgid "perform maintenance in the background"
+msgstr "Wartung im Hintergrund ausführen"
 
 msgid "frequency"
 msgstr "Häufigkeit"
@@ -7771,9 +7807,6 @@ msgstr "-L<Bereich>:<Datei> kann nicht mit Pfadspezifikation verwendet werden"
 msgid "Final output: %d %s\n"
 msgstr "letzte Ausgabe: %d %s\n"
 
-msgid "unable to create temporary object directory"
-msgstr "konnte temporäres Objektverzeichnis nicht erstellen"
-
 #, c-format
 msgid "git show %s: bad file"
 msgstr "git show %s: ungültige Datei"
@@ -8353,15 +8386,6 @@ msgstr "einen diff3 basierten Merge verwenden"
 msgid "use a zealous diff3 based merge"
 msgstr "einen eifrigen diff3 basierten Merge verwenden"
 
-msgid "for conflicts, use our version"
-msgstr "bei Konflikten unsere Variante verwenden"
-
-msgid "for conflicts, use their version"
-msgstr "bei Konflikten ihre Variante verwenden"
-
-msgid "for conflicts, use a union version"
-msgstr "bei Konflikten eine gemeinsame Variante verwenden"
-
 msgid "<algorithm>"
 msgstr "<Algorithmus>"
 
@@ -8840,6 +8864,9 @@ msgstr ""
 
 msgid "write multi-pack bitmap"
 msgstr "schreibe Multi-Pack-Bitmap"
+
+msgid "write a new incremental MIDX"
+msgstr "ein neues inkrementelles MIDX schreiben"
 
 msgid "write multi-pack index containing only given indexes"
 msgstr "Multi-Pack-Index schreiben, der nur die gegebenen Indexe enthält"
@@ -10930,6 +10957,9 @@ msgstr "Ungültiges Format für Referenzen: %s"
 msgid "git refs migrate --ref-format=<format> [--dry-run]"
 msgstr "git refs migrate --ref-format=<Format> [--dry-run]"
 
+msgid "git refs verify [--strict] [--verbose]"
+msgstr "git refs verify [--strict] [--verbose]"
+
 msgid "specify the reference format to convert to"
 msgstr "das Referenzformat angeben, in das konvertiert werden soll"
 
@@ -10942,6 +10972,12 @@ msgstr "fehlendes --ref-format=<Format>"
 #, c-format
 msgid "repository already uses '%s' format"
 msgstr "das Repository verwendet bereits das Format '%s'"
+
+msgid "enable strict checking"
+msgstr "strenge Kontrolle aktivieren"
+
+msgid "'git refs verify' takes no arguments"
+msgstr "'git refs verify' nimmt keine Argumente an"
 
 msgid ""
 "git remote add [-t <branch>] [-m <master>] [-f] [--tags | --no-tags] [--"
@@ -12397,11 +12433,11 @@ msgstr "Referenz nicht vorhanden"
 msgid "failed to look up reference"
 msgstr "Fehler beim Nachschlagen der Referenz"
 
-msgid "only show tags (can be combined with branches)"
-msgstr "nur Tags anzeigen (kann mit Branches kombiniert werden)"
+msgid "only show tags (can be combined with --branches)"
+msgstr "nur Tags anzeigen (kann mit --branches kombiniert werden)"
 
-msgid "only show branches (can be combined with tags)"
-msgstr "nur Branches anzeigen (kann mit Tags kombiniert werden)"
+msgid "only show branches (can be combined with --tags)"
+msgstr "nur Branches anzeigen (kann mit --tags kombiniert werden)"
 
 msgid "check for reference existence without resolving"
 msgstr "Prüfung auf Vorhandensein einer Referenz, ohne diese aufzulösen"
@@ -12459,6 +12495,10 @@ msgid "failed to create directory for sparse-checkout file"
 msgstr ""
 "Fehler beim Erstellen eines Verzeichnisses für Datei eines partiellen "
 "Checkouts"
+
+#, c-format
+msgid "unable to fdopen %s"
+msgstr "kann %s nicht öffnen"
 
 msgid "failed to initialize worktree config"
 msgstr "Fehler beim Initialisieren der Arbeitsverzeichnis-Konfiguration"
@@ -12927,8 +12967,8 @@ msgid "couldn't hash object from '%s'"
 msgstr "Hash eines Objektes von '%s' konnte nicht erzeugt werden"
 
 #, c-format
-msgid "unexpected mode %o\n"
-msgstr "unerwarteter Modus %o\n"
+msgid "unexpected mode %o"
+msgstr "unerwarteter Modus %o"
 
 msgid "use the commit stored in the index instead of the submodule HEAD"
 msgstr ""
@@ -17635,13 +17675,16 @@ msgstr ""
 msgid "Unable to create '%s.lock': %s"
 msgstr "Konnte '%s.lock' nicht erstellen: %s"
 
+msgid "unable to create temporary object directory"
+msgstr "konnte temporäres Objektverzeichnis nicht erstellen"
+
 #, c-format
 msgid "could not write loose object index %s"
 msgstr "konnte den losen Objektindex %s nicht schreiben"
 
 #, c-format
-msgid "failed to write loose object index %s\n"
-msgstr "Fehler beim Schreiben des losen Objektindexes %s\n"
+msgid "failed to write loose object index %s"
+msgstr "Fehler beim Schreiben des losen Objektindex %s"
 
 #, c-format
 msgid "unexpected line: '%s'"
@@ -18213,6 +18256,17 @@ msgstr "Paket konnte nicht geladen werden"
 msgid "could not open index for %s"
 msgstr "konnte Index für %s nicht öffnen"
 
+#, c-format
+msgid "unable to link '%s' to '%s'"
+msgstr "kann '%s' nicht mit '%s' verknüpfen"
+
+#, c-format
+msgid "failed to clear multi-pack-index at %s"
+msgstr "Fehler beim Löschen des Multi-Pack-Index bei %s"
+
+msgid "cannot write incremental MIDX with bitmap"
+msgstr "kann kein inkrementelles MIDX mit Bitmap schreiben"
+
 msgid "ignoring existing multi-pack-index; checksum mismatch"
 msgstr ""
 "ignoriere existierenden Multi-Pack-Index; Prüfsumme stimmt nicht überein"
@@ -18242,17 +18296,33 @@ msgstr "keine Packdateien zum Indizieren."
 msgid "refusing to write multi-pack .bitmap without any objects"
 msgstr "Schreiben der Multi-Pack-Bitmap ohne Objekte abgelehnt"
 
+msgid "unable to create temporary MIDX layer"
+msgstr "konnte keine temporäre MIDX-Ebene erstellen"
+
 msgid "could not write multi-pack bitmap"
 msgstr "Multi-Pack-Bitmap konnte nicht geschrieben werden"
 
+msgid "unable to open multi-pack-index chain file"
+msgstr "Multi-Pack-Indexketten-Datei kann nicht geöffnet werden"
+
+msgid "unable to rename new multi-pack-index layer"
+msgstr "neue Multi-Pack-Index-Ebene konnte nicht umbenannt werden"
+
 msgid "could not write multi-pack-index"
 msgstr "Multi-Pack-Index konnte nicht geschrieben werden"
+
+msgid "cannot expire packs from an incremental multi-pack-index"
+msgstr ""
+"kann Pakete aus einem inkrementellen Multi-Pack-Index nicht ablaufen lassen"
 
 msgid "Counting referenced objects"
 msgstr "Referenzierte Objekte zählen"
 
 msgid "Finding and deleting unreferenced packfiles"
 msgstr "Suchen und Löschen von unreferenzierten Pack-Dateien"
+
+msgid "cannot repack an incremental multi-pack-index"
+msgstr "kann einen inkrementellen Multi-Pack-Index nicht neu packen"
 
 msgid "could not start pack-objects"
 msgstr "Konnte 'pack-objects' nicht ausführen"
@@ -18316,6 +18386,27 @@ msgstr "multi-pack-index Pack-Name Chunk ist zu klein"
 msgid "multi-pack-index pack names out of order: '%s' before '%s'"
 msgstr "Falsche Reihenfolge bei Multi-Pack-Index Pack-Namen: '%s' vor '%s'"
 
+msgid "multi-pack-index chain file too small"
+msgstr "Multi-Pack-Index-Kettendatei zu klein"
+
+#, c-format
+msgid "pack count in base MIDX too high: %<PRIuMAX>"
+msgstr "Paketanzahl im Basis-MIDX zu hoch: %<PRIuMAX>"
+
+#, c-format
+msgid "object count in base MIDX too high: %<PRIuMAX>"
+msgstr "Objektanzahl in Basis-MIDX zu hoch: %<PRIuMAX>"
+
+#, c-format
+msgid "invalid multi-pack-index chain: line '%s' not a hash"
+msgstr "ungültige Multi-Pack-Index-Kette: Zeile '%s' ist kein Hash"
+
+msgid "unable to find all multi-pack index files"
+msgstr "konnte nicht alle Multi-Pack-Indexdateien finden"
+
+msgid "invalid MIDX object position, MIDX is likely corrupt"
+msgstr "ungültige MIDX-Objektposition, MIDX ist wahrscheinlich beschädigt"
+
 #, c-format
 msgid "bad pack-int-id: %u (%u total packs)"
 msgstr "Ungültige pack-int-id: %u (%u Pakete insgesamt)"
@@ -18333,10 +18424,6 @@ msgstr ""
 
 msgid "multi-pack-index large offset out of bounds"
 msgstr "multi-pack-index großer Offset außerhalb der Grenzen"
-
-#, c-format
-msgid "failed to clear multi-pack-index at %s"
-msgstr "Fehler beim Löschen des Multi-Pack-Index bei %s"
 
 msgid "multi-pack-index file exists, but failed to parse"
 msgstr "Multi-Pack-Index-Datei existiert, aber das Parsen schlug fehl"
@@ -18556,6 +18643,14 @@ msgid "missing mapping of %s to %s"
 msgstr "fehlende Abbildung von %s auf %s"
 
 #, c-format
+msgid "unable to open %s"
+msgstr "kann %s nicht öffnen"
+
+#, c-format
+msgid "files '%s' and '%s' differ in contents"
+msgstr "die Dateien '%s' und '%s' unterscheiden sich im Inhalt"
+
+#, c-format
 msgid "unable to write file %s"
 msgstr "Konnte Datei %s nicht schreiben."
 
@@ -18640,10 +18735,6 @@ msgstr "%s: nicht unterstützte Dateiart"
 #, c-format
 msgid "%s is not a valid '%s' object"
 msgstr "%s ist kein gültiges '%s' Objekt"
-
-#, c-format
-msgid "unable to open %s"
-msgstr "kann %s nicht öffnen"
 
 #, c-format
 msgid "hash mismatch for %s (expected %s)"
@@ -19882,6 +19973,10 @@ msgid "expected format: %%(ahead-behind:<committish>)"
 msgstr "erwartetes Format: %%(ahead-behind:<Commit>)"
 
 #, c-format
+msgid "expected format: %%(is-base:<committish>)"
+msgstr "erwartetes Format: %%(is-base:<committish>)"
+
+#, c-format
 msgid "malformed field name: %.*s"
 msgstr "Fehlerhafter Feldname: %.*s"
 
@@ -20119,6 +20214,13 @@ msgid ""
 msgstr ""
 "kann Referenz '%s' nicht sperren: erwartete symbolische Referenz mit Ziel "
 "'%s': ist aber eine reguläre Referenz"
+
+#, c-format
+msgid "cannot open directory %s"
+msgstr "Verzeichnis %s kann nicht geöffnet werden"
+
+msgid "Checking references consistency"
+msgstr "Überprüfung der Konsistenz der Referenzen"
 
 #, c-format
 msgid "refname is dangerous: %s"
@@ -20766,12 +20868,15 @@ msgstr "lade nur Metadaten des Branches herunter, der ausgecheckt wird"
 msgid "create repository within 'src' directory"
 msgstr "Repository im Verzeichnis 'src' erstellen"
 
+msgid "specify if tags should be fetched during clone"
+msgstr "Angabe, ob Tags während des Klonens abgerufen werden sollen"
+
 msgid ""
 "scalar clone [--single-branch] [--branch <main-branch>] [--full-clone]\n"
-"\t[--[no-]src] <url> [<enlistment>]"
+"\t[--[no-]src] [--[no-]tags] <url> [<enlistment>]"
 msgstr ""
 "scalar clone [--single-branch] [--branch <Haupt-Branch>] [--full-clone]\n"
-"\t[--[no-]src] <URL> [<Eintragung>]"
+"\t[--[no-]src] [--[no-]tags] <URL> [<Eintragung>]"
 
 #, c-format
 msgid "cannot deduce worktree name from '%s'"
@@ -20788,6 +20893,10 @@ msgstr "Fehler beim Abfragen des Default-Branches für '%s'"
 #, c-format
 msgid "could not configure remote in '%s'"
 msgstr "konnte Remote-Repository in '%s' nicht konfigurieren"
+
+#, c-format
+msgid "could not disable tags in '%s'"
+msgstr "konnte die Tags in '%s' nicht deaktivieren"
 
 #, c-format
 msgid "could not configure '%s'"
@@ -21872,6 +21981,10 @@ msgid "failed to stat '%*s%s%s'"
 msgstr "Konnte '%*s%s%s' nicht lesen."
 
 #, c-format
+msgid "safe.directory '%s' not absolute"
+msgstr "safe.directory '%s' nicht absolut"
+
+#, c-format
 msgid ""
 "detected dubious ownership in repository at '%s'\n"
 "%sTo add an exception for this directory, call:\n"
@@ -22338,6 +22451,24 @@ msgstr "Token"
 
 msgid "command token to send to the server"
 msgstr "Befehlstoken, der an den Server gesendet werden soll"
+
+msgid "unit-test [<options>]"
+msgstr "unit-test [<Optionen>]"
+
+msgid "immediately exit upon the first failed test"
+msgstr "beim ersten fehlgeschlagenen Test sofort abbrechen"
+
+msgid "suite[::test]"
+msgstr "suite[::test]"
+
+msgid "run only test suite or individual test <suite[::test]>"
+msgstr "nur Testsuite oder einzelnen Test ausführen <suite[::test]>"
+
+msgid "suite"
+msgstr "Suite"
+
+msgid "exclude test suite <suite>"
+msgstr "Testsuite <Suite> ausschließen"
 
 #, c-format
 msgid "running trailer command '%s' failed"
@@ -23587,6 +23718,10 @@ msgstr "'%s.final' enthält die verfasste E-Mail.\n"
 
 msgid "--dump-aliases incompatible with other options\n"
 msgstr "--dump-aliases ist mit anderen Optionen inkompatibel\n"
+
+msgid "--dump-aliases and --translate-aliases are mutually exclusive\n"
+msgstr ""
+"--dump-aliases und --translate-aliases schließen sich gegenseitig aus\n"
 
 msgid ""
 "fatal: found configuration options for 'sendmail'\n"
