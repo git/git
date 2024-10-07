@@ -1105,6 +1105,14 @@ parse_done:
 		add_pending_object(&revs, &head_commit->object, "HEAD");
 	}
 
+	/*
+	* By default, add .git-blame-ignore-revs to the list of files
+	* containing revisions to ignore if it exists.
+	*/
+	if (access(".git-blame-ignore-revs", F_OK) == 0) {
+		string_list_append(&ignore_revs_file_list, ".git-blame-ignore-revs");
+	}
+
 	init_scoreboard(&sb);
 	sb.revs = &revs;
 	sb.contents_from = contents_from;
