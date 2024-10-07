@@ -178,7 +178,7 @@ named with three dotted decimal digits (e.g., "1.8.5"), but we have
 switched the versioning scheme and "feature releases" are named with
 three-dotted decimal digits that ends with ".0" (e.g., "1.9.0").
 
-The last such release was 2.46 done on Jul 29th, 2024.  We aim to keep
+The last such release was 2.47 done on Oct 7th, 2024.  We aim to keep
 that the tip of the "master" branch is always more stable than any of
 the released versions.
 
