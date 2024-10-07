@@ -278,8 +278,10 @@ int walk_objects_by_path(struct path_walk_info *info)
 			struct object_array_entry *pending = info->revs->pending.objects + i;
 			struct object *obj = pending->item;
 
-			if (obj->type == OBJ_COMMIT)
+			if (obj->type == OBJ_COMMIT || obj->flags & SEEN)
 				continue;
+
+			obj->flags |= SEEN;
 
 			while (obj->type == OBJ_TAG) {
 				struct tag *tag = lookup_tag(info->revs->repo,
@@ -341,8 +343,12 @@ int walk_objects_by_path(struct path_walk_info *info)
 		t = lookup_tree(info->revs->repo, oid);
 
 		if (t) {
-			oidset_insert(&root_tree_set, oid);
-			oid_array_append(&root_tree_list->oids, oid);
+			if (t->object.flags & SEEN)
+				continue;
+			t->object.flags |= SEEN;
+
+			if (!oidset_insert(&root_tree_set, oid))
+				oid_array_append(&root_tree_list->oids, oid);
 		} else {
 			warning("could not find tree %s", oid_to_hex(oid));
 		}
