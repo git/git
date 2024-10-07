@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2024, #03; Fri, 4)
-X-master-at: 90fe3800b92a49173530828c0a17951abd30f0e1
-X-next-at: ecfaa0ad0fec27eefd921f5ae74cad15ff483641
+Subject: What's cooking in git.git (Oct 2024, #04; Sun, 6)
+X-master-at: 777489f9e09c8d0dd6b12f9d90de6376330577a2
+X-next-at: 4ca455297942c5c9616351bc68bad2034c719206
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2024, #03; Fri, 4)
+What's cooking in git.git (Oct 2024, #04; Sun, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,10 +17,7 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Git 2.47-rc1 has been tagged.  From here on, we expect the flow of
-new topics to slow down and contributors are encouraged to focus
-more on finding and fixing possible regressions relative to Git
-2.46, the last feature release.
+Git 2.47 (final) has been tagged.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -51,96 +48,7 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ak/doc-typofix (2024-09-23) 2 commits
-  (merged to 'next' on 2024-10-04 at f667f89519)
- + Documentation: fix typos
- + Documentation/config: fix typos
-
- Typofixes.
- source: <20240923110343.12388-2-algonell@gmail.com>
-
-
-* ak/typofix-2.46-maint (2024-10-03) 4 commits
-  (merged to 'next' on 2024-10-04 at dd35f48cf2)
- + perl: fix a typo
- + mergetool: fix a typo
- + reftable: fix a typo
- + trace2: fix typos
-
- Typofixes.
- source: <20241002223816.14858-1-algonell@gmail.com>
-
-
-* ds/read-cache-mempool-leakfix (2024-10-01) 1 commit
-  (merged to 'next' on 2024-10-02 at c0eac890ac)
- + read-cache: free threaded memory pool
-
- Leakfix.
- source: <pull.1801.v2.git.1727804265033.gitgitgadget@gmail.com>
-
-
-* jc/doc-discarding-stalled-topics (2024-09-26) 1 commit
-  (merged to 'next' on 2024-10-02 at adb0d84fd4)
- + howto-maintain-git: discarding inactive topics
-
- Document that inactive topics are subject to be discarded.
- source: <xmqqikuii60q.fsf@gitster.g>
-
-
-* jk/test-lsan-improvements (2024-09-25) 3 commits
-  (merged to 'next' on 2024-10-02 at 3d8303fcfe)
- + test-lib: check for leak logs after every test
- + test-lib: show leak-sanitizer logs on --immediate failure
- + test-lib: stop showing old leak logs
-
- Usability improvements for running tests in leak-checking mode.
- source: <20240924213404.GA1142219@coredump.intra.peff.net>
-
-
-* kn/osx-fsmonitor-with-submodules-fix (2024-10-04) 1 commit
-  (merged to 'next' on 2024-10-04 at 5a9a8775f8)
- + fsmonitor OSX: fix hangs for submodules
-
- macOS with fsmonitor daemon can hang forever when a submodule is
- involved, which has been corrected.
- source: <pull.1802.v4.git.1728000433326.gitgitgadget@gmail.com>
-
-
-* mh/w-unused-fix (2024-10-02) 1 commit
-  (merged to 'next' on 2024-10-04 at 9a52af034e)
- + utf8.h: squelch unused-parameter warnings with NO_ICONV
-
- Buildfix.
- source: <20241002200140.2123584-1-mh@glandium.org>
-
-
-* ps/reftable-concurrent-writes (2024-10-04) 1 commit
-  (merged to 'next' on 2024-10-04 at f705b3334a)
- + t0610: work around flaky test with concurrent writers
-
- Test fix.
- source: <f3874c7e923846e453499e89f00dd4f8862e4c40.1728055880.git.ps@pks.im>
-
-
-* rs/archive-with-attr-pathspec-fix (2024-10-03) 1 commit
-  (merged to 'next' on 2024-10-04 at cc1087dcc0)
- + archive: fix misleading error message
-
- Message update.
- source: <faed1d0e-86a8-4dcd-a27f-19dcd9f89f37@web.de>
-
-
-* tb/weak-sha1-for-tail-sum (2024-10-03) 1 commit
-  (merged to 'next' on 2024-10-04 at c970b9a3e9)
- + hash.h: set NEEDS_CLONE_HELPER_UNSAFE in fallback mode
-
- Build fix.
- source: <20241002232618.GA3442753@coredump.intra.peff.net>
-
---------------------------------------------------
-[New Topics]
+[Cooking]
 
 * ds/line-log-asan-fix (2024-10-03) 1 commit
   (merged to 'next' on 2024-10-04 at ee702f6c95)
@@ -179,8 +87,6 @@ Release tarballs are available at:
  Will cook in 'next'.
  source: <pull.1806.v2.git.1727956724.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * kn/fsmonitor-event-listener-fix (2024-10-02) 1 commit
  - fsmonitor: fix hangs by delayed fs event listening
@@ -192,12 +98,10 @@ Release tarballs are available at:
  source: <pull.1804.git.1727862424713.gitgitgadget@gmail.com>
 
 
-* jc/a-commands-without-the-repo (2024-10-04) 5 commits
- . SQUASH??? uninitialized variable use fix
- . archive: remove the_repository global variable
- . apply: remove the_repository global variable
- . annotate: remove usage of the_repository global
- . git: pass in repo for RUN_SETUP_GENTLY
+* jc/a-commands-without-the-repo (2024-10-06) 3 commits
+ - archive: remove the_repository global variable
+ - annotate: remove usage of the_repository global
+ - git: pass in repo to builtin based on setup_git_directory_gently
 
  Commands that can also work outside Git have learned to take the
  repository instance "repo" when we know we are in a repository, and
@@ -206,7 +110,7 @@ Release tarballs are available at:
  convention.
 
  Comments?
- source: <pull.1788.v2.git.git.1727718030.gitgitgadget@gmail.com>
+ source: <pull.1788.v3.git.git.1728099043.gitgitgadget@gmail.com>
 
 
 * ps/leakfixes-part-8 (2024-09-30) 25 commits
