@@ -808,6 +808,8 @@ static int traverse_by_cache_tree(int pos, int nr_entries, int nr_names,
 
 	if (!o->merge)
 		BUG("We need cache-tree to do this optimization");
+	if (nr_entries + pos > o->src_index->cache_nr)
+		return error(_("corrupted cache-tree has entries not present in index"));
 
 	/*
 	 * Do what unpack_callback() and unpack_single_entry() normally
