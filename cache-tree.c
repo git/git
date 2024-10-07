@@ -934,6 +934,11 @@ static int verify_one(struct repository *r,
 		pos = 0;
 	}
 
+	if (it->entry_count + pos > istate->cache_nr) {
+		ret = error(_("corrupted cache-tree has entries not present in index"));
+		goto out;
+	}
+
 	i = 0;
 	while (i < it->entry_count) {
 		struct cache_entry *ce = istate->cache[pos + i];
