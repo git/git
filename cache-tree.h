@@ -33,7 +33,7 @@ struct cache_tree *cache_tree_read(const char *buffer, unsigned long size);
 
 int cache_tree_fully_valid(struct cache_tree *);
 int cache_tree_update(struct index_state *, int);
-void cache_tree_verify(struct repository *, struct index_state *);
+int cache_tree_verify(struct repository *, struct index_state *);
 
 /* bitmasks to write_index_as_tree flags */
 #define WRITE_TREE_MISSING_OK 1
