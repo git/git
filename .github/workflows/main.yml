@@ -113,13 +113,15 @@ jobs:
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     steps:
     - uses: actions/checkout@v4
-    - uses: git-for-windows/setup-git-for-windows-sdk@v1
+    - name: setup SDK
+      shell: powershell
+      run: ci/install-sdk.ps1
     - name: build
-      shell: bash
+      shell: powershell
       env:
         HOME: ${{runner.workspace}}
         NO_PERL: 1
-      run: . /etc/profile && ci/make-test-artifacts.sh artifacts
+      run: git-sdk/usr/bin/bash.exe -l -c 'ci/make-test-artifacts.sh artifacts'
     - name: zip up tracked files
       run: git archive -o artifacts/tracked.tar.gz HEAD
     - name: upload tracked files and build artifacts
@@ -147,10 +149,12 @@ jobs:
     - name: extract tracked files and build artifacts
       shell: bash
       run: tar xf artifacts.tar.gz && tar xf tracked.tar.gz
-    - uses: git-for-windows/setup-git-for-windows-sdk@v1
+    - name: setup SDK
+      shell: powershell
+      run: ci/install-sdk.ps1
     - name: test
-      shell: bash
-      run: . /etc/profile && ci/run-test-slice.sh ${{matrix.nr}} 10
+      shell: powershell
+      run: git-sdk/usr/bin/bash.exe -l -c 'ci/run-test-slice.sh ${{matrix.nr}} 10'
     - name: print test failures
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
       shell: bash
