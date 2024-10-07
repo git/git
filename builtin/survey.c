@@ -869,7 +869,7 @@ int cmd_survey(int argc, const char **argv, const char *prefix, struct repositor
 		.opts = {
 			.verbose = 0,
 			.show_progress = -1, /* defaults to isatty(2) */
-			.top_nr = 100,
+			.top_nr = 10,
 
 			.refs.want_all_refs = -1,
 
