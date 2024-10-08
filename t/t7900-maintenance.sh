@@ -646,6 +646,22 @@ test_expect_success !MINGW 'register and unregister with regex metacharacters' '
 		maintenance.repo "$(pwd)/$META"
 '
 
+test_expect_success 'start without GIT_TEST_MAINT_SCHEDULER' '
+	test_when_finished "rm -rf crontab.log script repo" &&
+	mkdir script &&
+	write_script script/crontab <<-EOF &&
+	echo "\$*" >>"$(pwd)"/crontab.log
+	EOF
+	git init repo &&
+	(
+		cd repo &&
+		sane_unset GIT_TEST_MAINT_SCHEDULER &&
+		PATH="$(pwd)/../script:$PATH" git maintenance start --scheduler=crontab
+	) &&
+	test_grep -- -l crontab.log &&
+	test_grep -- git_cron_edit_tmp crontab.log
+'
+
 test_expect_success 'start --scheduler=<scheduler>' '
 	test_expect_code 129 git maintenance start --scheduler=foo 2>err &&
 	test_grep "unrecognized --scheduler argument" err &&
