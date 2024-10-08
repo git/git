@@ -741,6 +741,12 @@ void fsm_listen__loop(struct fsmonitor_daemon_state *state)
 	    start_rdcw_watch(data->watch_gitdir) == -1)
 		goto force_error_stop;
 
+	/*
+	 * Now that we've established the rdcw watches, we can start
+	 * serving clients.
+	 */
+	ipc_server_start_async(state->ipc_server_data);
+
 	for (;;) {
 		dwWait = WaitForMultipleObjects(data->nr_listener_handles,
 						data->hListener,
