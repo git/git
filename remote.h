@@ -4,6 +4,7 @@
 #include "hash.h"
 #include "hashmap.h"
 #include "refspec.h"
+#include "string-list.h"
 #include "strvec.h"
 
 struct option;
@@ -104,6 +105,8 @@ struct remote {
 
 	/* The method used for authenticating against `http_proxy`. */
 	char *http_proxy_authmethod;
+
+	struct string_list server_options;
 };
 
 /**
