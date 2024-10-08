@@ -328,6 +328,7 @@ struct ipc_server_data {
 	int back_pos;
 	int front_pos;
 
+	int started;
 	int shutdown_requested;
 	int is_stopped;
 };
@@ -824,10 +825,10 @@ static int setup_listener_socket(
 /*
  * Start IPC server in a pool of background threads.
  */
-int ipc_server_run_async(struct ipc_server_data **returned_server_data,
-			 const char *path, const struct ipc_server_opts *opts,
-			 ipc_server_application_cb *application_cb,
-			 void *application_data)
+int ipc_server_init_async(struct ipc_server_data **returned_server_data,
+			  const char *path, const struct ipc_server_opts *opts,
+			  ipc_server_application_cb *application_cb,
+			  void *application_data)
 {
 	struct unix_ss_socket *server_socket = NULL;
 	struct ipc_server_data *server_data;
@@ -888,6 +889,12 @@ int ipc_server_run_async(struct ipc_server_data **returned_server_data,
 	server_data->accept_thread->fd_send_shutdown = sv[0];
 	server_data->accept_thread->fd_wait_shutdown = sv[1];
 
+	/*
+	 * Hold work-available mutex so that no work can start until
+	 * we unlock it.
+	 */
+	pthread_mutex_lock(&server_data->work_available_mutex);
+
 	if (pthread_create(&server_data->accept_thread->pthread_id, NULL,
 			   accept_thread_proc, server_data->accept_thread))
 		die_errno(_("could not start accept_thread '%s'"), path);
@@ -918,6 +925,15 @@ int ipc_server_run_async(struct ipc_server_data **returned_server_data,
 	return 0;
 }
 
+void ipc_server_start_async(struct ipc_server_data *server_data)
+{
+	if (!server_data || server_data->started)
+		return;
+
+	server_data->started = 1;
+	pthread_mutex_unlock(&server_data->work_available_mutex);
+}
+
 /*
  * Gently tell the IPC server treads to shutdown.
  * Can be run on any thread.
@@ -933,7 +949,9 @@ int ipc_server_stop_async(struct ipc_server_data *server_data)
 
 	trace2_region_enter("ipc-server", "server-stop-async", NULL);
 
-	pthread_mutex_lock(&server_data->work_available_mutex);
+	/* If we haven't started yet, we are already holding lock. */
+	if (server_data->started)
+		pthread_mutex_lock(&server_data->work_available_mutex);
 
 	server_data->shutdown_requested = 1;
 
