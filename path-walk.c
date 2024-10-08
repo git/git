@@ -360,11 +360,11 @@ int walk_objects_by_path(struct path_walk_info *info)
 		oid = get_commit_tree_oid(c);
 		t = lookup_tree(info->revs->repo, oid);
 
-		if (t->object.flags & SEEN)
-			continue;
-		t->object.flags |= SEEN;
-
 		if (t) {
+			if (t->object.flags & SEEN)
+				continue;
+			t->object.flags |= SEEN;
+
 			if (!oidset_insert(&root_tree_set, oid))
 				oid_array_append(&root_tree_list->oids, oid);
 		} else {
