@@ -197,4 +197,23 @@ test_expect_success 'repair moved main and linked worktrees' '
 	test_cmp expect-gitfile sidemoved/.git
 '
 
+test_expect_success 'repair copied main and linked worktrees' '
+	test_when_finished "rm -rf orig dup" &&
+	mkdir -p orig &&
+	git -C orig init main &&
+	test_commit -C orig/main nothing &&
+	git -C orig/main worktree add ../linked &&
+	cp orig/main/.git/worktrees/linked/gitdir orig/main.expect &&
+	cp orig/linked/.git orig/linked.expect &&
+	cp -R orig dup &&
+	sed "s,orig/linked/\.git$,dup/linked/.git," orig/main.expect >dup/main.expect &&
+	sed "s,orig/main/\.git/worktrees/linked$,dup/main/.git/worktrees/linked," \
+		orig/linked.expect >dup/linked.expect &&
+	git -C dup/main worktree repair ../linked &&
+	test_cmp orig/main.expect orig/main/.git/worktrees/linked/gitdir &&
+	test_cmp orig/linked.expect orig/linked/.git &&
+	test_cmp dup/main.expect dup/main/.git/worktrees/linked/gitdir &&
+	test_cmp dup/linked.expect dup/linked/.git
+'
+
 test_done
