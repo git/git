@@ -110,6 +110,12 @@ struct worktree *get_linked_worktree(const char *id,
 	strbuf_rtrim(&worktree_path);
 	strbuf_strip_suffix(&worktree_path, "/.git");
 
+	if (!is_absolute_path(worktree_path.buf)) {
+	    strbuf_strip_suffix(&path, "gitdir");
+	    strbuf_addbuf(&path, &worktree_path);
+	    strbuf_realpath_forgiving(&worktree_path, path.buf, 0);
+	}
+
 	CALLOC_ARRAY(worktree, 1);
 	worktree->repo = the_repository;
 	worktree->path = strbuf_detach(&worktree_path, NULL);
@@ -373,18 +379,29 @@ done:
 void update_worktree_location(struct worktree *wt, const char *path_)
 {
 	struct strbuf path = STRBUF_INIT;
+	struct strbuf repo = STRBUF_INIT;
+	struct strbuf file = STRBUF_INIT;
+	struct strbuf tmp = STRBUF_INIT;
 
 	if (is_main_worktree(wt))
 		BUG("can't relocate main worktree");
 
+	strbuf_realpath(&repo, git_common_path("worktrees/%s", wt->id), 1);
 	strbuf_realpath(&path, path_, 1);
 	if (fspathcmp(wt->path, path.buf)) {
-		write_file(git_common_path("worktrees/%s/gitdir", wt->id),
-			   "%s/.git", path.buf);
+		strbuf_addf(&file, "%s/gitdir", repo.buf);
+		write_file(file.buf, "%s/.git", relative_path(path.buf, repo.buf, &tmp));
+		strbuf_reset(&file);
+		strbuf_addf(&file, "%s/.git", path.buf);
+		write_file(file.buf, "gitdir: %s", relative_path(repo.buf, path.buf, &tmp));
+
 		free(wt->path);
 		wt->path = strbuf_detach(&path, NULL);
 	}
 	strbuf_release(&path);
+	strbuf_release(&repo);
+	strbuf_release(&file);
+	strbuf_release(&tmp);
 }
 
 int is_worktree_being_rebased(const struct worktree *wt,
@@ -564,38 +581,52 @@ static void repair_gitfile(struct worktree *wt,
 {
 	struct strbuf dotgit = STRBUF_INIT;
 	struct strbuf repo = STRBUF_INIT;
-	char *backlink;
+	struct strbuf backlink = STRBUF_INIT;
+	struct strbuf tmp = STRBUF_INIT;
+	char *dotgit_contents = NULL;
 	const char *repair = NULL;
 	int err;
 
 	/* missing worktree can't be repaired */
 	if (!file_exists(wt->path))
-		return;
+		goto done;
 
 	if (!is_directory(wt->path)) {
 		fn(1, wt->path, _("not a directory"), cb_data);
-		return;
+		goto done;
 	}
 
 	strbuf_realpath(&repo, git_common_path("worktrees/%s", wt->id), 1);
 	strbuf_addf(&dotgit, "%s/.git", wt->path);
-	backlink = xstrdup_or_null(read_gitfile_gently(dotgit.buf, &err));
+	dotgit_contents = xstrdup_or_null(read_gitfile_gently(dotgit.buf, &err));
+
+	if (dotgit_contents) {
+		if (is_absolute_path(dotgit_contents)) {
+			strbuf_addstr(&backlink, dotgit_contents);
+		} else {
+			strbuf_addf(&backlink, "%s/%s", wt->path, dotgit_contents);
+			strbuf_realpath_forgiving(&backlink, backlink.buf, 0);
+		}
+	}
 
 	if (err == READ_GITFILE_ERR_NOT_A_FILE)
 		fn(1, wt->path, _(".git is not a file"), cb_data);
 	else if (err)
 		repair = _(".git file broken");
-	else if (fspathcmp(backlink, repo.buf))
+	else if (fspathcmp(backlink.buf, repo.buf))
 		repair = _(".git file incorrect");
 
 	if (repair) {
 		fn(0, wt->path, repair, cb_data);
-		write_file(dotgit.buf, "gitdir: %s", repo.buf);
+		write_file(dotgit.buf, "gitdir: %s", relative_path(repo.buf, wt->path, &tmp));
 	}
 
-	free(backlink);
+done:
+	free(dotgit_contents);
 	strbuf_release(&repo);
 	strbuf_release(&dotgit);
+	strbuf_release(&backlink);
+	strbuf_release(&tmp);
 }
 
 static void repair_noop(int iserr UNUSED,
@@ -615,6 +646,59 @@ void repair_worktrees(worktree_repair_fn fn, void *cb_data)
 		fn = repair_noop;
 	for (; *wt; wt++)
 		repair_gitfile(*wt, fn, cb_data);
+	free_worktrees(worktrees);
+}
+
+void repair_worktree_after_gitdir_move(struct worktree *wt, const char *old_path)
+{
+	struct strbuf path = STRBUF_INIT;
+	struct strbuf repo = STRBUF_INIT;
+	struct strbuf gitdir = STRBUF_INIT;
+	struct strbuf dotgit = STRBUF_INIT;
+	struct strbuf olddotgit = STRBUF_INIT;
+	struct strbuf tmp = STRBUF_INIT;
+
+	if (is_main_worktree(wt))
+		goto done;
+
+	strbuf_realpath(&repo, git_common_path("worktrees/%s", wt->id), 1);
+	strbuf_addf(&gitdir, "%s/gitdir", repo.buf);
+
+	if (strbuf_read_file(&olddotgit, gitdir.buf, 0) < 0)
+		goto done;
+
+	strbuf_rtrim(&olddotgit);
+	if (is_absolute_path(olddotgit.buf)) {
+		strbuf_addbuf(&dotgit, &olddotgit);
+	} else {
+		strbuf_addf(&dotgit, "%s/worktrees/%s/%s", old_path, wt->id, olddotgit.buf);
+		strbuf_realpath_forgiving(&dotgit, dotgit.buf, 0);
+	}
+
+	if (!file_exists(dotgit.buf))
+		goto done;
+
+	strbuf_addbuf(&path, &dotgit);
+	strbuf_strip_suffix(&path, "/.git");
+
+	write_file(dotgit.buf, "gitdir: %s", relative_path(repo.buf, path.buf, &tmp));
+	write_file(gitdir.buf, "%s", relative_path(dotgit.buf, repo.buf, &tmp));
+done:
+	strbuf_release(&path);
+	strbuf_release(&repo);
+	strbuf_release(&gitdir);
+	strbuf_release(&dotgit);
+	strbuf_release(&olddotgit);
+	strbuf_release(&tmp);
+}
+
+void repair_worktrees_after_gitdir_move(const char *old_path)
+{
+	struct worktree **worktrees = get_worktrees_internal(1);
+	struct worktree **wt = worktrees + 1; /* +1 skips main worktree */
+
+	for (; *wt; wt++)
+		repair_worktree_after_gitdir_move(*wt, old_path);
 	free_worktrees(worktrees);
 }
 
@@ -684,6 +768,8 @@ void repair_worktree_at_path(const char *path,
 	struct strbuf inferred_backlink = STRBUF_INIT;
 	struct strbuf gitdir = STRBUF_INIT;
 	struct strbuf olddotgit = STRBUF_INIT;
+	struct strbuf realolddotgit = STRBUF_INIT;
+	struct strbuf tmp = STRBUF_INIT;
 	char *dotgit_contents = NULL;
 	const char *repair = NULL;
 	int err;
@@ -701,9 +787,17 @@ void repair_worktree_at_path(const char *path,
 	}
 
 	infer_backlink(realdotgit.buf, &inferred_backlink);
+	strbuf_realpath_forgiving(&inferred_backlink, inferred_backlink.buf, 0);
 	dotgit_contents = xstrdup_or_null(read_gitfile_gently(realdotgit.buf, &err));
 	if (dotgit_contents) {
-		strbuf_addstr(&backlink, dotgit_contents);
+		if (is_absolute_path(dotgit_contents)) {
+			strbuf_addstr(&backlink, dotgit_contents);
+		} else {
+			strbuf_addbuf(&backlink, &realdotgit);
+			strbuf_strip_suffix(&backlink, ".git");
+			strbuf_addstr(&backlink, dotgit_contents);
+			strbuf_realpath_forgiving(&backlink, backlink.buf, 0);
+		}
 	} else if (err == READ_GITFILE_ERR_NOT_A_FILE) {
 		fn(1, realdotgit.buf, _("unable to locate repository; .git is not a file"), cb_data);
 		goto done;
@@ -721,7 +815,7 @@ void repair_worktree_at_path(const char *path,
 			fn(1, realdotgit.buf, _("unable to locate repository; .git file does not reference a repository"), cb_data);
 			goto done;
 		}
-	} else if (err) {
+	} else {
 		fn(1, realdotgit.buf, _("unable to locate repository; .git file broken"), cb_data);
 		goto done;
 	}
@@ -753,90 +847,117 @@ void repair_worktree_at_path(const char *path,
 		repair = _("gitdir unreadable");
 	else {
 		strbuf_rtrim(&olddotgit);
-		if (fspathcmp(olddotgit.buf, realdotgit.buf))
+		if (is_absolute_path(olddotgit.buf)) {
+			strbuf_addbuf(&realolddotgit, &olddotgit);
+		} else {
+			strbuf_addf(&realolddotgit, "%s/%s", backlink.buf, olddotgit.buf);
+			strbuf_realpath_forgiving(&realolddotgit, realolddotgit.buf, 0);
+		}
+		if (fspathcmp(realolddotgit.buf, realdotgit.buf))
 			repair = _("gitdir incorrect");
 	}
 
 	if (repair) {
 		fn(0, gitdir.buf, repair, cb_data);
-		write_file(gitdir.buf, "%s", realdotgit.buf);
+		write_file(gitdir.buf, "%s", relative_path(realdotgit.buf, backlink.buf, &tmp));
 	}
 done:
 	free(dotgit_contents);
 	strbuf_release(&olddotgit);
+	strbuf_release(&realolddotgit);
 	strbuf_release(&backlink);
 	strbuf_release(&inferred_backlink);
 	strbuf_release(&gitdir);
 	strbuf_release(&realdotgit);
 	strbuf_release(&dotgit);
+	strbuf_release(&tmp);
 }
 
 int should_prune_worktree(const char *id, struct strbuf *reason, char **wtpath, timestamp_t expire)
 {
 	struct stat st;
-	char *path;
+	struct strbuf dotgit = STRBUF_INIT;
+	struct strbuf gitdir = STRBUF_INIT;
+	struct strbuf repo = STRBUF_INIT;
+	struct strbuf file = STRBUF_INIT;
+	char *path = NULL;
+	int rc = 0;
 	int fd;
 	size_t len;
 	ssize_t read_result;
 
 	*wtpath = NULL;
-	if (!is_directory(git_path("worktrees/%s", id))) {
+	strbuf_realpath(&repo, git_common_path("worktrees/%s", id), 1);
+	strbuf_addf(&gitdir, "%s/gitdir", repo.buf);
+	if (!is_directory(repo.buf)) {
 		strbuf_addstr(reason, _("not a valid directory"));
-		return 1;
+		rc = 1;
+		goto done;
 	}
-	if (file_exists(git_path("worktrees/%s/locked", id)))
-		return 0;
-	if (stat(git_path("worktrees/%s/gitdir", id), &st)) {
+	strbuf_addf(&file, "%s/locked", repo.buf);
+	if (file_exists(file.buf)) {
+		goto done;
+	}
+	if (stat(gitdir.buf, &st)) {
 		strbuf_addstr(reason, _("gitdir file does not exist"));
-		return 1;
+		rc = 1;
+		goto done;
 	}
-	fd = open(git_path("worktrees/%s/gitdir", id), O_RDONLY);
+	fd = open(gitdir.buf, O_RDONLY);
 	if (fd < 0) {
 		strbuf_addf(reason, _("unable to read gitdir file (%s)"),
 			    strerror(errno));
-		return 1;
+		rc = 1;
+		goto done;
 	}
 	len = xsize_t(st.st_size);
 	path = xmallocz(len);
 
 	read_result = read_in_full(fd, path, len);
+	close(fd);
 	if (read_result < 0) {
 		strbuf_addf(reason, _("unable to read gitdir file (%s)"),
 			    strerror(errno));
-		close(fd);
-		free(path);
-		return 1;
-	}
-	close(fd);
-
-	if (read_result != len) {
+		rc = 1;
+		goto done;
+	} else if (read_result != len) {
 		strbuf_addf(reason,
 			    _("short read (expected %"PRIuMAX" bytes, read %"PRIuMAX")"),
 			    (uintmax_t)len, (uintmax_t)read_result);
-		free(path);
-		return 1;
+		rc = 1;
+		goto done;
 	}
 	while (len && (path[len - 1] == '\n' || path[len - 1] == '\r'))
 		len--;
 	if (!len) {
 		strbuf_addstr(reason, _("invalid gitdir file"));
-		free(path);
-		return 1;
+		rc = 1;
+		goto done;
 	}
 	path[len] = '\0';
-	if (!file_exists(path)) {
-		if (stat(git_path("worktrees/%s/index", id), &st) ||
-		    st.st_mtime <= expire) {
+	if (is_absolute_path(path)) {
+		strbuf_addstr(&dotgit, path);
+	} else {
+		strbuf_addf(&dotgit, "%s/%s", repo.buf, path);
+		strbuf_realpath_forgiving(&dotgit, dotgit.buf, 0);
+	}
+	if (!file_exists(dotgit.buf)) {
+		strbuf_reset(&file);
+		strbuf_addf(&file, "%s/index", repo.buf);
+		if (stat(file.buf, &st) || st.st_mtime <= expire) {
 			strbuf_addstr(reason, _("gitdir file points to non-existent location"));
-			free(path);
-			return 1;
-		} else {
-			*wtpath = path;
-			return 0;
+			rc = 1;
+			goto done;
 		}
 	}
-	*wtpath = path;
-	return 0;
+	*wtpath = strbuf_detach(&dotgit, NULL);
+done:
+	free(path);
+	strbuf_release(&dotgit);
+	strbuf_release(&gitdir);
+	strbuf_release(&repo);
+	strbuf_release(&file);
+	return rc;
 }
 
 static int move_config_setting(const char *key, const char *value,

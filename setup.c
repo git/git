@@ -2420,7 +2420,7 @@ static void separate_git_dir(const char *git_dir, const char *git_link)
 
 		if (rename(src, git_dir))
 			die_errno(_("unable to move %s to %s"), src, git_dir);
-		repair_worktrees(NULL, NULL);
+		repair_worktrees_after_gitdir_move(src);
 	}
 
 	write_file(git_link, "gitdir: %s", git_dir);
