@@ -12,6 +12,12 @@ TEST_CREATE_REPO_NO_TEMPLATE=1
 
 GIT_TRACE_WORKING_TREE_ENCODING=1 && export GIT_TRACE_WORKING_TREE_ENCODING
 
+if ! test_have_prereq ICONV
+then
+	skip_all='skipping working tree encoding tests; iconv not available'
+	test_done
+fi
+
 test_expect_success 'setup test files' '
 	git config core.eol lf &&
 

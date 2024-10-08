@@ -8,6 +8,12 @@ test_description='commit and log output encodings'
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
+if ! test_have_prereq ICONV
+then
+	skip_all='skipping commit i18n tests; iconv not available'
+	test_done
+fi
+
 compare_with () {
 	git show -s $1 | sed -e '1,/^$/d' -e 's/^    //' >current &&
 	case "$3" in

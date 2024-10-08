@@ -34,7 +34,7 @@ test_expect_success 'parallel-checkout with ident' '
 	)
 '
 
-test_expect_success 'parallel-checkout with re-encoding' '
+test_expect_success ICONV 'parallel-checkout with re-encoding' '
 	set_checkout_config 2 0 &&
 	git init encoding &&
 	(
