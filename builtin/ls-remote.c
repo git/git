@@ -173,5 +173,6 @@ int cmd_ls_remote(int argc,
 	transport_ls_refs_options_release(&transport_options);
 
 	strvec_clear(&pattern);
+	string_list_clear(&server_options, 0);
 	return status;
 }
