@@ -2,6 +2,7 @@ default:
   timeout: 2h
 
 stages:
+  - build
   - test
   - analyze
 
@@ -107,6 +108,38 @@ test:osx:
     paths:
       - t/failed-test-artifacts
     when: on_failure
+
+build:mingw64:
+  stage: build
+  tags:
+    - saas-windows-medium-amd64
+  variables:
+    NO_PERL: 1
+  before_script:
+    - ./ci/install-sdk.ps1 -directory "git-sdk"
+  script:
+    - git-sdk/usr/bin/bash.exe -l -c 'ci/make-test-artifacts.sh artifacts'
+  artifacts:
+    paths:
+      - artifacts
+      - git-sdk
+
+test:mingw64:
+  stage: test
+  tags:
+    - saas-windows-medium-amd64
+  needs:
+    - job: "build:mingw64"
+      artifacts: true
+  before_script:
+    - git-sdk/usr/bin/bash.exe -l -c 'tar xf artifacts/artifacts.tar.gz'
+    - New-Item -Path .git/info -ItemType Directory
+    - New-Item .git/info/exclude -ItemType File -Value "/git-sdk"
+  script:
+    - git-sdk/usr/bin/bash.exe -l -c "ci/run-test-slice.sh $CI_NODE_INDEX $CI_NODE_TOTAL"
+  after_script:
+    - git-sdk/usr/bin/bash.exe -l -c 'ci/print-test-failures.sh'
+  parallel: 10
 
 test:fuzz-smoke-tests:
   image: ubuntu:latest
