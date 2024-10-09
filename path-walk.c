@@ -299,26 +299,28 @@ int walk_objects_by_path(struct path_walk_info *info)
 			if (obj->type == OBJ_COMMIT || obj->flags & SEEN)
 				continue;
 
-			obj->flags |= SEEN;
-
 			while (obj->type == OBJ_TAG) {
 				struct tag *tag = lookup_tag(info->revs->repo,
 							     &obj->oid);
-				if (oid_array_lookup(&tags, &obj->oid) < 0)
+				if (!(obj->flags & SEEN)) {
+					obj->flags |= SEEN;
 					oid_array_append(&tags, &obj->oid);
+				}
 				obj = tag->tagged;
 			}
 
+			if ((obj->flags & SEEN))
+				continue;
+			obj->flags |= SEEN;
+
 			switch (obj->type) {
 			case OBJ_TREE:
-				if (info->trees &&
-				    oid_array_lookup(&root_tree_list->oids, &obj->oid) < 0)
+				if (info->trees)
 					oid_array_append(&root_tree_list->oids, &obj->oid);
 				break;
 
 			case OBJ_BLOB:
-				if (info->blobs &&
-				    oid_array_lookup(&tagged_blob_list, &obj->oid) < 0)
+				if (info->blobs)
 					oid_array_append(&tagged_blob_list, &obj->oid);
 				break;
 
