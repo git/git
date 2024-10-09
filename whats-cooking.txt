@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2024, #04; Sun, 6)
+Subject: What's cooking in git.git (Oct 2024, #05; Tue, 8)
 X-master-at: 777489f9e09c8d0dd6b12f9d90de6376330577a2
 X-next-at: 4ca455297942c5c9616351bc68bad2034c719206
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2024, #04; Sun, 6)
+What's cooking in git.git (Oct 2024, #05; Tue, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,7 +17,9 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Git 2.47 (final) has been tagged.
+Git 2.47 (final) has been tagged, and the 'maint' branch now points
+at v2.47.0.  Let's hope we didn't introduce too many regressions
+this time.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -46,6 +48,156 @@ pages):
 Release tarballs are available at:
 
 	https://www.kernel.org/pub/software/scm/git/
+
+--------------------------------------------------
+[New Topics]
+
+* cw/worktree-relative (2024-10-08) 4 commits
+ - worktree: add test for path handling in linked worktrees
+ - worktree: link worktrees with relative paths
+ - worktree: refactor infer_backlink() to use *strbuf
+ - Merge branch 'es/worktree-repair-copied' into cw/worktrees-relative
+ (this branch uses es/worktree-repair-copied.)
+
+ An extra worktree attached to a repository points at each other to
+ allow finding the repository from the worktree and vice versa
+ possible.  Turn this linkage to relative paths.
+
+ Will merge to 'next'?
+ source: <20241007-wt_relative_paths-v3-0-622cf18c45eb@pm.me>
+
+
+* ds/path-walk (2024-10-08) 17 commits
+ - pack-objects: thread the path-based compression
+ - pack-objects: refactor path-walk delta phase
+ - scalar: enable path-walk during push via config
+ - pack-objects: enable --path-walk via config
+ - repack: update usage to match docs
+ - repack: add --path-walk option
+ - pack-objects: introduce GIT_TEST_PACK_PATH_WALK
+ - p5313: add performance tests for --path-walk
+ - pack-objects: update usage to match docs
+ - pack-objects: add --path-walk option
+ - pack-objects: extract should_attempt_deltas()
+ - path-walk: add prune_all_uninteresting option
+ - revision: create mark_trees_uninteresting_dense()
+ - path-walk: allow visiting tags
+ - path-walk: allow consumer to specify object types
+ - t6601: add helper for testing path-walk API
+ - path-walk: introduce an object walk by path
+
+ source: <pull.1813.git.1728396723.gitgitgadget@gmail.com>
+
+
+* hy/partial-repack-fix (2024-10-08) 3 commits
+ . partial-clone: update doc
+ . t0410: adapt tests to repack changes
+ . repack: pack everything into packfile
+
+ "git repack" avoids losing local objects that are reachable from
+ objects in a packfile fetched from a promisor remote.
+
+ Comments?
+ Breaks CI.
+ cf. <xmqqzfnexlku.fsf@gitster.g>
+ source: <20241008081350.8950-1-hanyang.tony@bytedance.com>
+
+
+* jh/config-unset-doc-fix (2024-10-08) 1 commit
+ - git-config.1: remove value from positional args in unset usage
+
+ Docfix.
+
+ Will merge to 'next'.
+ source: <20241008142920.570244-2-joshiheinrichs@gmail.com>
+
+
+* jk/fsmonitor-event-listener-race-fix (2024-10-08) 2 commits
+ - fsmonitor: initialize fs event listener before accepting clients
+ - simple-ipc: split async server initialization and running
+
+ On macOS, fsmonitor can fall into a race condition that results in
+ a client waiting forever to be notified for an event that have
+ already happened.  This problem has been corrected.
+
+ Will merge to 'next'.
+ source: <20241008083121.GA676391@coredump.intra.peff.net>
+
+
+* js/doc-platform-support-link-fix (2024-10-07) 1 commit
+ - docs: fix the `maintain-git` links in `technical/platform-support`
+
+ Docfix.
+
+ Will merge to 'next'.
+ source: <pull.1812.git.1728337764963.gitgitgadget@gmail.com>
+
+
+* kh/merge-tree-doc (2024-10-08) 2 commits
+ - doc: merge-tree: use || directly
+ - doc: merge-tree: provide a commit message
+
+ Docfix.
+
+ Comments?
+ source: <cover.1728413450.git.code@khaugsbakk.name>
+
+
+* pb/clar-build-fix (2024-10-07) 1 commit
+ - Makefile: fix dependency for $(UNIT_TEST_DIR)/clar/clar.o
+
+ Build fix.
+
+ Will merge to 'next'.
+ source: <pull.1810.git.1728323033680.gitgitgadget@gmail.com>
+
+
+* ps/cache-tree-w-broken-index-entry (2024-10-07) 3 commits
+ - unpack-trees: detect mismatching number of cache-tree/index entries
+ - cache-tree: detect mismatching number of index entries
+ - cache-tree: refactor verification to return error codes
+
+ Fail gracefully instead of crashing when attempting to write the
+ contents of a corrupt in-core index as a tree object.
+
+ Comments?
+ source: <cover.1728275640.git.ps@pks.im>
+
+
+* ps/maintenance-start-crash-fix (2024-10-08) 1 commit
+ - builtin/gc: fix crash when running `git maintenance start`
+
+ "git maintenance start" crashed due to an uninitialized variable
+ reference, which has been corrected.
+
+ Will merge to 'next'.
+ Brown paper bag fix.
+ source: <976c97081af7c62960bd71d1b70039657e7cb711.1728389731.git.ps@pks.im>
+
+
+* ua/t3404-cleanup (2024-10-07) 2 commits
+ - t3404: employing test_line_count() to replace test
+ - t3404: avoid losing exit status with focus on `git show` and `git cat-file`
+
+ Test update.
+
+ Will merge to 'next'?
+ source: <pull.1805.v6.git.git.1728299466.gitgitgadget@gmail.com>
+
+
+* xx/remote-server-option-config (2024-10-08) 5 commits
+ - ls-remote: leakfix for not clearing server_options
+ - fetch: respect --server-option when fetching multiple remotes
+ - transport.c::handshake: make use of server options from remote
+ - remote: introduce remote.<name>.serverOption configuration
+ - transport: introduce parse_transport_option() method
+
+ A new configuration variable remote.<name>.serverOption makes the
+ transport layer act as if the --serverOption=<value> option is
+ given from the command line.
+
+ Will merge to 'next'.
+ source: <pull.1776.v3.git.git.1728358699.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Cooking]
@@ -86,16 +238,6 @@ Release tarballs are available at:
 
  Will cook in 'next'.
  source: <pull.1806.v2.git.1727956724.gitgitgadget@gmail.com>
-
-
-* kn/fsmonitor-event-listener-fix (2024-10-02) 1 commit
- - fsmonitor: fix hangs by delayed fs event listening
-
- Under high load, fsmonitor process can hang at start-up, which has
- been corrected.
-
- Comments?
- source: <pull.1804.git.1727862424713.gitgitgadget@gmail.com>
 
 
 * jc/a-commands-without-the-repo (2024-10-06) 3 commits
@@ -174,6 +316,7 @@ Release tarballs are available at:
 
 * es/worktree-repair-copied (2024-09-23) 1 commit
  - worktree: repair copied repository and linked worktrees
+ (this branch is used by cw/worktree-relative.)
 
  The heuristics in "git worktree repair" can be confused when a
  worktree and its repository are copied and break correctly
@@ -273,26 +416,6 @@ Release tarballs are available at:
  source: <20240910163000.1985723-1-christian.couder@gmail.com>
 
 
-* ds/pack-name-hash-tweak (2024-10-04) 6 commits
- - test-tool: add helper for name-hash values
- - p5313: add size comparison test
- - git-repack: update usage to match docs
- - pack-objects: add GIT_TEST_FULL_NAME_HASH
- - repack: test --full-name-hash option
- - pack-objects: add --full-name-hash option
-
- In a repository with too many (more than --window size) similarly
- named files, "git repack" would not find good delta-base candidate
- and worse, it may not use a blob from exactly the same path as a
- good delta-base candidate.  Optionally replace the name hash so
- that only blobs at the same path and nothing else are used as
- delta-base candidate.
-
- On hold.
- cf. <34346998-deac-4e1f-9d5f-218f664e9e08@gmail.com>
- source: <pull.1785.v2.git.1726692381.gitgitgadget@gmail.com>
-
-
 * sj/ref-contents-check (2024-09-30) 9 commits
  - ref: add symlink ref content check for files backend
  - t0602: add ref content checks for worktrees
@@ -340,20 +463,18 @@ Release tarballs are available at:
  source: <ZwBsbW5jsFw0mxKk@nand.local>
 
 
-* js/libgit-rust (2024-09-09) 7 commits
- . SQUASH???
+* js/libgit-rust (2024-10-08) 5 commits
  . Makefile: add option to build and test libgit-rs and libgit-rs-sys
  . libgit: add higher-level libgit crate
- . config: add git_configset_alloc() and git_configset_clear_and_free()
- . libgit-sys: add repo initialization and config access
+ . libgit-sys: also export some config_set functions
  . libgit-sys: introduce Rust wrapper for libgit.a
  . common-main: split init and exit code into new files
 
  An rust binding to libgit.a functions has been introduced.
 
- Expecting a reroll.
- cf. <xmqqv7z8tjd7.fsf@gitster.g>
- source: <20240906221853.257984-1-calvinwan@google.com>
+ Needs review.
+ Seems to get dependencies wrong.
+ source: <cover.1728429158.git.steadmon@google.com>
 
 
 * jc/too-many-arguments (2024-08-06) 4 commits
@@ -409,3 +530,34 @@ Release tarballs are available at:
 
  Has been expecting a reroll for too long.
  source: <20240824172028.39419-1-shyamthakkar001@gmail.com>
+
+
+* kn/fsmonitor-event-listener-fix (2024-10-02) 1 commit
+ . fsmonitor: fix hangs by delayed fs event listening
+
+ Under high load, fsmonitor process can hang at start-up, which has
+ been corrected.
+
+ Superseded by the jk/fsmonitor-event-listener-race-fix topic
+ cf. <CAOTNsDyxmRZ155vV-Jh=1obMnR+F4ExY9B136fiGk0Vd23-zrw@mail.gmail.com>
+ source: <pull.1804.git.1727862424713.gitgitgadget@gmail.com>
+
+
+* ds/pack-name-hash-tweak (2024-10-04) 6 commits
+ . test-tool: add helper for name-hash values
+ . p5313: add size comparison test
+ . git-repack: update usage to match docs
+ . pack-objects: add GIT_TEST_FULL_NAME_HASH
+ . repack: test --full-name-hash option
+ . pack-objects: add --full-name-hash option
+
+ In a repository with too many (more than --window size) similarly
+ named files, "git repack" would not find good delta-base candidate
+ and worse, it may not use a blob from exactly the same path as a
+ good delta-base candidate.  Optionally replace the name hash so
+ that only blobs at the same path and nothing else are used as
+ delta-base candidate.
+
+ Retracted.
+ cf. <f89ba1ef-4cd4-4963-8de0-0323216246aa@gmail.com>
+ source: <pull.1785.v2.git.1726692381.gitgitgadget@gmail.com>
