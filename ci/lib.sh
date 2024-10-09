@@ -250,8 +250,13 @@ then
 	CI_TYPE=gitlab-ci
 	CI_BRANCH="$CI_COMMIT_REF_NAME"
 	CI_COMMIT="$CI_COMMIT_SHA"
-	case "$CI_JOB_IMAGE" in
-	macos-*)
+
+	case "$OS,$CI_JOB_IMAGE" in
+	Windows_NT,*)
+		CI_OS_NAME=windows
+		JOBS=$NUMBER_OF_PROCESSORS
+		;;
+	*,macos-*)
 		# GitLab CI has Python installed via multiple package managers,
 		# most notably via asdf and Homebrew. Ensure that our builds
 		# pick up the Homebrew one by prepending it to our PATH as the
@@ -259,9 +264,12 @@ then
 		export PATH="$(brew --prefix)/bin:$PATH"
 
 		CI_OS_NAME=osx
+		JOBS=$(nproc)
 		;;
-	alpine:*|fedora:*|ubuntu:*)
-		CI_OS_NAME=linux;;
+	*,alpine:*|*,fedora:*|*,ubuntu:*)
+		CI_OS_NAME=linux
+		JOBS=$(nproc)
+		;;
 	*)
 		echo "Could not identify OS image" >&2
 		env >&2
@@ -272,6 +280,7 @@ then
 	CI_JOB_ID="$CI_JOB_ID"
 	CC="${CC_PACKAGE:-${CC:-gcc}}"
 	DONT_SKIP_TAGS=t
+
 	handle_failed_tests () {
 		create_failed_test_artifacts
 		return 1
@@ -280,7 +289,6 @@ then
 	cache_dir="$HOME/none"
 
 	distro=$(echo "$CI_JOB_IMAGE" | tr : -)
-	JOBS=$(nproc)
 else
 	echo "Could not identify CI type" >&2
 	env >&2
