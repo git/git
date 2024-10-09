@@ -1,6 +1,10 @@
 default:
   timeout: 2h
 
+stages:
+  - test
+  - analyze
+
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -9,6 +13,8 @@ workflow:
 
 test:linux:
   image: $image
+  stage: test
+  needs: [ ]
   tags:
     - saas-linux-medium-amd64
   variables:
@@ -67,6 +73,8 @@ test:linux:
 
 test:osx:
   image: $image
+  stage: test
+  needs: [ ]
   tags:
     - saas-macos-medium-m1
   variables:
@@ -102,6 +110,8 @@ test:osx:
 
 test:fuzz-smoke-tests:
   image: ubuntu:latest
+  stage: test
+  needs: [ ]
   variables:
     CC: clang
   before_script:
@@ -111,6 +121,8 @@ test:fuzz-smoke-tests:
 
 static-analysis:
   image: ubuntu:22.04
+  stage: analyze
+  needs: [ ]
   variables:
     jobname: StaticAnalysis
   before_script:
@@ -121,6 +133,8 @@ static-analysis:
 
 check-whitespace:
   image: ubuntu:latest
+  stage: analyze
+  needs: [ ]
   before_script:
     - ./ci/install-dependencies.sh
   # Since $CI_MERGE_REQUEST_TARGET_BRANCH_SHA is only defined for merged
@@ -135,6 +149,8 @@ check-whitespace:
 
 check-style:
   image: ubuntu:latest
+  stage: analyze
+  needs: [ ]
   allow_failure: true
   variables:
     CC: clang
@@ -153,6 +169,8 @@ check-style:
 
 documentation:
   image: ubuntu:latest
+  stage: analyze
+  needs: [ ]
   variables:
     jobname: Documentation
   before_script:
