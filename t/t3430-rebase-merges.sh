@@ -108,19 +108,19 @@ test_expect_success 'generate correct todo list' '
 
 	reset onto
 	pick $b B
-	label E
+	label first
 
 	reset onto
 	pick $c C
 	label branch-point
 	pick $f F
 	pick $g G
-	label H
+	label second
 
 	reset branch-point # C
 	pick $d D
-	merge -C $e E # E
-	merge -C $h H # H
+	merge -C $e first # E
+	merge -C $h second # H
 
 	EOF
 
@@ -462,11 +462,11 @@ test_expect_success 'A root commit can be a cousin, treat it that way' '
 '
 
 test_expect_success 'labels that are object IDs are rewritten' '
-	git checkout -b third B &&
+	git checkout --detach B &&
 	test_commit I &&
 	third=$(git rev-parse HEAD) &&
 	git checkout -b labels main &&
-	git merge --no-commit third &&
+	git merge --no-commit $third &&
 	test_tick &&
 	git commit -m "Merge commit '\''$third'\'' into labels" &&
 	echo noop >script-from-scratch &&
