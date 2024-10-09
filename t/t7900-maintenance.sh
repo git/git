@@ -646,7 +646,7 @@ test_expect_success !MINGW 'register and unregister with regex metacharacters' '
 		maintenance.repo "$(pwd)/$META"
 '
 
-test_expect_success 'start without GIT_TEST_MAINT_SCHEDULER' '
+test_expect_success !MINGW,!DARWIN 'start without GIT_TEST_MAINT_SCHEDULER' '
 	test_when_finished "rm -rf crontab.log script repo" &&
 	mkdir script &&
 	write_script script/crontab <<-EOF &&
