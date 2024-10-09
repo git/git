@@ -232,6 +232,11 @@ void load_ref_decorations(struct decoration_filter *filter, int flags)
 			for_each_string_list_item(item, filter->exclude_ref_config_pattern) {
 				normalize_glob_ref(item, NULL, item->string);
 			}
+
+			/* normalize_glob_ref duplicates the strings */
+			filter->exclude_ref_pattern->strdup_strings = 1;
+			filter->include_ref_pattern->strdup_strings = 1;
+			filter->exclude_ref_config_pattern->strdup_strings = 1;
 		}
 		decoration_loaded = 1;
 		decoration_flags = flags;
