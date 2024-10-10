@@ -368,17 +368,23 @@ static int unbundle_from_file(struct repository *r, const char *file)
 	struct strbuf bundle_ref = STRBUF_INIT;
 	size_t bundle_prefix_len;
 
-	if ((bundle_fd = read_bundle_header(file, &header)) < 0)
-		return 1;
+	bundle_fd = read_bundle_header(file, &header);
+	if (bundle_fd < 0) {
+		result = 1;
+		goto cleanup;
+	}
 
 	/*
 	 * Skip the reachability walk here, since we will be adding
 	 * a reachable ref pointing to the new tips, which will reach
 	 * the prerequisite commits.
 	 */
-	if ((result = unbundle(r, &header, bundle_fd, NULL,
-			       VERIFY_BUNDLE_QUIET | (fetch_pack_fsck_objects() ? VERIFY_BUNDLE_FSCK : 0))))
-		return 1;
+	result = unbundle(r, &header, bundle_fd, NULL,
+			  VERIFY_BUNDLE_QUIET | (fetch_pack_fsck_objects() ? VERIFY_BUNDLE_FSCK : 0));
+	if (result) {
+		result = 1;
+		goto cleanup;
+	}
 
 	/*
 	 * Convert all refs/heads/ from the bundle into refs/bundles/
@@ -407,6 +413,8 @@ static int unbundle_from_file(struct repository *r, const char *file)
 				0, UPDATE_REFS_MSG_ON_ERR);
 	}
 
+cleanup:
+	strbuf_release(&bundle_ref);
 	bundle_header_release(&header);
 	return result;
 }
