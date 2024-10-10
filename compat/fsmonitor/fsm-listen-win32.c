@@ -431,9 +431,9 @@ static int recv_rdcw_watch(struct one_watch *watch)
 	 * but I observed ERROR_ACCESS_DENIED (0x05) errors during
 	 * testing.
 	 *
-	 * Note that we only get notificaiton events for events
+	 * Note that we only get notification events for events
 	 * *within* the directory, not *on* the directory itself.
-	 * (These might be properies of the parent directory, for
+	 * (These might be properties of the parent directory, for
 	 * example).
 	 *
 	 * NEEDSWORK: We might try to check for the deleted directory
