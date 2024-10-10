@@ -1794,7 +1794,7 @@ static const char *get_frequency(enum schedule_priority schedule)
  *     | Input |                     Output                      |
  *     | *cmd  | return code |       *out        | *is_available |
  *     +-------+-------------+-------------------+---------------+
- *     | "foo" |    false    | NULL              |  (unchanged)  |
+ *     | "foo" |    false    | "foo" (allocated) |  (unchanged)  |
  *     +-------+-------------+-------------------+---------------+
  *
  *   GIT_TEST_MAINT_SCHEDULER set to “foo:./mock_foo.sh,bar:./mock_bar.sh”
@@ -1812,8 +1812,11 @@ static int get_schedule_cmd(const char *cmd, int *is_available, char **out)
 	struct string_list_item *item;
 	struct string_list list = STRING_LIST_INIT_NODUP;
 
-	if (!testing)
+	if (!testing) {
+		if (out)
+			*out = xstrdup(cmd);
 		return 0;
+	}
 
 	if (is_available)
 		*is_available = 0;
