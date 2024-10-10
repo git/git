@@ -196,5 +196,12 @@ int cmd__proc_receive(int argc, const char **argv)
 	packet_flush(1);
 	sigchain_pop(SIGPIPE);
 
+	while (commands) {
+		struct command *next = commands->next;
+		free(commands);
+		commands = next;
+	}
+	string_list_clear(&push_options, 0);
+
 	return 0;
 }

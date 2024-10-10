@@ -1759,7 +1759,7 @@ static int push_stash(int argc, const char **argv, const char *prefix,
 	int quiet = 0;
 	int pathspec_file_nul = 0;
 	const char *stash_msg = NULL;
-	const char *pathspec_from_file = NULL;
+	char *pathspec_from_file = NULL;
 	struct pathspec ps;
 	struct option options[] = {
 		OPT_BOOL('k', "keep-index", &keep_index,
@@ -1821,7 +1821,9 @@ static int push_stash(int argc, const char **argv, const char *prefix,
 
 	ret = do_push_stash(&ps, stash_msg, quiet, keep_index, patch_mode,
 			    include_untracked, only_staged);
+
 	clear_pathspec(&ps);
+	free(pathspec_from_file);
 	return ret;
 }
 

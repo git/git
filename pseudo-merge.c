@@ -87,7 +87,7 @@ static void pseudo_merge_group_init(struct pseudo_merge_group *group)
 {
 	memset(group, 0, sizeof(struct pseudo_merge_group));
 
-	strmap_init_with_options(&group->matches, NULL, 0);
+	strmap_init_with_options(&group->matches, NULL, 1);
 
 	group->decay = DEFAULT_PSEUDO_MERGE_DECAY;
 	group->max_merges = DEFAULT_PSEUDO_MERGE_MAX_MERGES;
@@ -95,6 +95,25 @@ static void pseudo_merge_group_init(struct pseudo_merge_group *group)
 	group->threshold = DEFAULT_PSEUDO_MERGE_THRESHOLD;
 	group->stable_threshold = DEFAULT_PSEUDO_MERGE_STABLE_THRESHOLD;
 	group->stable_size = DEFAULT_PSEUDO_MERGE_STABLE_SIZE;
+}
+
+void pseudo_merge_group_release(struct pseudo_merge_group *group)
+{
+	struct hashmap_iter iter;
+	struct strmap_entry *e;
+
+	regfree(group->pattern);
+	free(group->pattern);
+
+	strmap_for_each_entry(&group->matches, &iter, e) {
+		struct pseudo_merge_matches *matches = e->value;
+		free(matches->stable);
+		free(matches->unstable);
+		free(matches);
+	}
+	strmap_clear(&group->matches, 0);
+
+	free(group->merges);
 }
 
 static int pseudo_merge_config(const char *var, const char *value,
@@ -256,7 +275,7 @@ static int find_pseudo_merge_group_for_ref(const char *refname,
 		matches = strmap_get(&group->matches, group_name.buf);
 		if (!matches) {
 			matches = xcalloc(1, sizeof(*matches));
-			strmap_put(&group->matches, strbuf_detach(&group_name, NULL),
+			strmap_put(&group->matches, group_name.buf,
 				   matches);
 		}
 

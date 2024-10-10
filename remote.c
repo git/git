@@ -868,6 +868,20 @@ struct strvec *push_url_of_remote(struct remote *remote)
 	return remote->pushurl.nr ? &remote->pushurl : &remote->url;
 }
 
+void ref_push_report_free(struct ref_push_report *report)
+{
+	while (report) {
+		struct ref_push_report *next = report->next;
+
+		free(report->ref_name);
+		free(report->old_oid);
+		free(report->new_oid);
+		free(report);
+
+		report = next;
+	}
+}
+
 static int match_name_with_pattern(const char *key, const char *name,
 				   const char *value, char **result)
 {
@@ -1122,6 +1136,7 @@ void free_one_ref(struct ref *ref)
 	if (!ref)
 		return;
 	free_one_ref(ref->peer_ref);
+	ref_push_report_free(ref->report);
 	free(ref->remote_status);
 	free(ref->tracking_ref);
 	free(ref->symref);

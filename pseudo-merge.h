@@ -51,6 +51,8 @@ struct pseudo_merge_group {
 	timestamp_t stable_threshold;
 };
 
+void pseudo_merge_group_release(struct pseudo_merge_group *group);
+
 struct pseudo_merge_matches {
 	struct commit **stable;
 	struct commit **unstable;

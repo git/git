@@ -3250,6 +3250,7 @@ static int remove_duplicate_parents(struct rev_info *revs, struct commit *commit
 		struct commit *parent = p->item;
 		if (parent->object.flags & TMP_MARK) {
 			*pp = p->next;
+			free(p);
 			if (ts)
 				compact_treesame(revs, commit, surviving_parents);
 			continue;
@@ -4005,6 +4006,7 @@ int rewrite_parents(struct rev_info *revs, struct commit *commit,
 			break;
 		case rewrite_one_noparents:
 			*pp = parent->next;
+			free(parent);
 			continue;
 		case rewrite_one_error:
 			return -1;
@@ -4205,10 +4207,18 @@ static void save_parents(struct rev_info *revs, struct commit *commit)
 		*pp = EMPTY_PARENT_LIST;
 }
 
+static void free_saved_parent(struct commit_list **parents)
+{
+	if (*parents != EMPTY_PARENT_LIST)
+		free_commit_list(*parents);
+}
+
 static void free_saved_parents(struct rev_info *revs)
 {
-	if (revs->saved_parents_slab)
-		clear_saved_parents(revs->saved_parents_slab);
+	if (!revs->saved_parents_slab)
+		return;
+	deep_clear_saved_parents(revs->saved_parents_slab, free_saved_parent);
+	FREE_AND_NULL(revs->saved_parents_slab);
 }
 
 struct commit_list *get_saved_parents(struct rev_info *revs, const struct commit *commit)

@@ -649,7 +649,7 @@ static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
 				     struct write_midx_context *ctx)
 {
 	struct strbuf buf = STRBUF_INIT;
-	const char *tmp_file;
+	char *tmp_file;
 
 	trace2_region_enter("midx", "write_midx_reverse_index", the_repository);
 
@@ -662,6 +662,7 @@ static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
 		die(_("cannot store reverse index file"));
 
 	strbuf_release(&buf);
+	free(tmp_file);
 
 	trace2_region_leave("midx", "write_midx_reverse_index", the_repository);
 }
@@ -1444,6 +1445,8 @@ static int write_midx_internal(const char *object_dir,
 			error_errno(_("unable to rename new multi-pack-index layer"));
 			return -1;
 		}
+
+		strbuf_release(&final_midx_name);
 
 		keep_hashes[ctx.num_multi_pack_indexes_before] =
 			xstrdup(hash_to_hex(midx_hash));

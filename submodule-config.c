@@ -901,8 +901,9 @@ static void traverse_tree_submodules(struct repository *r,
 	struct submodule_tree_entry *st_entry;
 	struct name_entry name_entry;
 	char *tree_path = NULL;
+	char *tree_buf;
 
-	fill_tree_descriptor(r, &tree, treeish_name);
+	tree_buf = fill_tree_descriptor(r, &tree, treeish_name);
 	while (tree_entry(&tree, &name_entry)) {
 		if (prefix)
 			tree_path =
@@ -930,6 +931,8 @@ static void traverse_tree_submodules(struct repository *r,
 						 &name_entry.oid, out);
 		free(tree_path);
 	}
+
+	free(tree_buf);
 }
 
 void submodules_of_tree(struct repository *r,
@@ -941,6 +944,16 @@ void submodules_of_tree(struct repository *r,
 	out->entry_alloc = 0;
 
 	traverse_tree_submodules(r, treeish_name, NULL, treeish_name, out);
+}
+
+void submodule_entry_list_release(struct submodule_entry_list *list)
+{
+	for (size_t i = 0; i < list->entry_nr; i++) {
+		free(list->entries[i].name_entry);
+		repo_clear(list->entries[i].repo);
+		free(list->entries[i].repo);
+	}
+	free(list->entries);
 }
 
 void submodule_free(struct repository *r)

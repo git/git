@@ -738,6 +738,7 @@ static int submodule_create_branch(struct repository *r,
 
 	strbuf_release(&child_err);
 	strbuf_release(&out_buf);
+	free(out_prefix);
 	return ret;
 }
 
@@ -794,7 +795,7 @@ void create_branches_recursively(struct repository *r, const char *name,
 	create_branch(r, name, start_committish, force, 0, reflog, quiet,
 		      BRANCH_TRACK_NEVER, dry_run);
 	if (dry_run)
-		return;
+		goto out;
 	/*
 	 * NEEDSWORK If tracking was set up in the superproject but not the
 	 * submodule, users might expect "git branch --recurse-submodules" to
@@ -815,8 +816,11 @@ void create_branches_recursively(struct repository *r, const char *name,
 			die(_("submodule '%s': cannot create branch '%s'"),
 			    submodule_entry_list.entries[i].submodule->name,
 			    name);
-		repo_clear(submodule_entry_list.entries[i].repo);
 	}
+
+out:
+	submodule_entry_list_release(&submodule_entry_list);
+	free(branch_point);
 }
 
 void remove_merge_branch_state(struct repository *r)

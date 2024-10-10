@@ -1390,8 +1390,8 @@ static struct bitmap *find_objects(struct bitmap_index *bitmap_git,
 		}
 
 		base = bitmap_new();
-		if (!cascade_pseudo_merges_1(bitmap_git, base, roots_bitmap))
-			bitmap_free(roots_bitmap);
+		cascade_pseudo_merges_1(bitmap_git, base, roots_bitmap);
+		bitmap_free(roots_bitmap);
 	}
 
 	/*

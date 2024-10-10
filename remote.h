@@ -126,12 +126,14 @@ int remote_has_url(struct remote *remote, const char *url);
 struct strvec *push_url_of_remote(struct remote *remote);
 
 struct ref_push_report {
-	const char *ref_name;
+	char *ref_name;
 	struct object_id *old_oid;
 	struct object_id *new_oid;
 	unsigned int forced_update:1;
 	struct ref_push_report *next;
 };
+
+void ref_push_report_free(struct ref_push_report *);
 
 struct ref {
 	struct ref *next;
