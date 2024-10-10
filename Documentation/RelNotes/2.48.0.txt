@@ -1,0 +1,35 @@
+Git v2.48 Release Notes
+=======================
+
+UI, Workflows & Features
+------------------------
+
+Performance, Internal Implementation, Development Support etc.
+--------------------------------------------------------------
+
+ * Document "amlog" notes.
+   (merge ddfb5bcfc6 tb/notes-amlog-doc later to maint).
+
+ * The way AsciiDoc is used for SYNOPSIS part of the manual pages has
+   been revamped.  The sources, at least for the simple cases, got
+   vastly pleasant to work with.
+
+ * The reftable library is now prepared to expect that the memory
+   allocation function given to it may fail to allocate and to deal
+   with such an error.
+
+
+Fixes since v2.47
+-----------------
+
+ * Doc update to clarify how periodical maintenance are scheduled,
+   spread across time to avoid thundering hurds.
+   (merge 3d6ab4177d sk/doc-maintenance-schedule later to maint).
+
+ * Use after free and double freeing at the end in "git log -L... -p"
+   had been identified and fixed.
+   (merge fc5589d6c1 ds/line-log-asan-fix later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 66893a14d0 ps/leakfixes-part-8 later to maint).
+   (merge 1164e270b5 jk/output-prefix-cleanup later to maint).
