@@ -14,6 +14,7 @@ https://developers.google.com/open-source/licenses/bsd
  */
 
 #include "system.h"
+#include "reftable-basics.h"
 
 /* Bigendian en/decoding of integers */
 
@@ -37,9 +38,12 @@ size_t binsearch(size_t sz, int (*f)(size_t k, void *args), void *args);
  */
 void free_names(char **a);
 
-/* parse a newline separated list of names. `size` is the length of the buffer,
- * without terminating '\0'. Empty names are discarded. */
-void parse_names(char *buf, int size, char ***namesp);
+/*
+ * Parse a newline separated list of names. `size` is the length of the buffer,
+ * without terminating '\0'. Empty names are discarded. Returns a `NULL`
+ * pointer when allocations fail.
+ */
+char **parse_names(char *buf, int size);
 
 /* compares two NULL-terminated arrays of strings. */
 int names_equal(const char **a, const char **b);
@@ -53,6 +57,7 @@ void *reftable_malloc(size_t sz);
 void *reftable_realloc(void *p, size_t sz);
 void reftable_free(void *p);
 void *reftable_calloc(size_t nelem, size_t elsize);
+char *reftable_strdup(const char *str);
 
 #define REFTABLE_ALLOC_ARRAY(x, alloc) (x) = reftable_malloc(st_mult(sizeof(*(x)), (alloc)))
 #define REFTABLE_CALLOC_ARRAY(x, alloc) (x) = reftable_calloc((alloc), sizeof(*(x)))
@@ -66,9 +71,26 @@ void *reftable_calloc(size_t nelem, size_t elsize);
 			REFTABLE_REALLOC_ARRAY(x, alloc); \
 		} \
 	} while (0)
+#define REFTABLE_FREE_AND_NULL(p) do { reftable_free(p); (p) = NULL; } while (0)
+
+#ifndef REFTABLE_ALLOW_BANNED_ALLOCATORS
+# define REFTABLE_BANNED(func) use_reftable_##func##_instead
+# undef malloc
+# define malloc(sz) REFTABLE_BANNED(malloc)
+# undef realloc
+# define realloc(ptr, sz) REFTABLE_BANNED(realloc)
+# undef free
+# define free(ptr) REFTABLE_BANNED(free)
+# undef calloc
+# define calloc(nelem, elsize) REFTABLE_BANNED(calloc)
+# undef strdup
+# define strdup(str) REFTABLE_BANNED(strdup)
+#endif
 
 /* Find the longest shared prefix size of `a` and `b` */
 struct strbuf;
 int common_prefix_size(struct strbuf *a, struct strbuf *b);
+
+int hash_size(uint32_t id);
 
 #endif

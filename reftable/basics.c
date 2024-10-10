@@ -6,7 +6,68 @@ license that can be found in the LICENSE file or at
 https://developers.google.com/open-source/licenses/bsd
 */
 
+#define REFTABLE_ALLOW_BANNED_ALLOCATORS
 #include "basics.h"
+#include "reftable-basics.h"
+
+static void *(*reftable_malloc_ptr)(size_t sz);
+static void *(*reftable_realloc_ptr)(void *, size_t);
+static void (*reftable_free_ptr)(void *);
+
+void *reftable_malloc(size_t sz)
+{
+	if (reftable_malloc_ptr)
+		return (*reftable_malloc_ptr)(sz);
+	return malloc(sz);
+}
+
+void *reftable_realloc(void *p, size_t sz)
+{
+	if (reftable_realloc_ptr)
+		return (*reftable_realloc_ptr)(p, sz);
+	return realloc(p, sz);
+}
+
+void reftable_free(void *p)
+{
+	if (reftable_free_ptr)
+		reftable_free_ptr(p);
+	else
+		free(p);
+}
+
+void *reftable_calloc(size_t nelem, size_t elsize)
+{
+	void *p;
+
+	if (nelem && elsize > SIZE_MAX / nelem)
+		return NULL;
+
+	p = reftable_malloc(nelem * elsize);
+	if (!p)
+		return NULL;
+
+	memset(p, 0, nelem * elsize);
+	return p;
+}
+
+char *reftable_strdup(const char *str)
+{
+	size_t len = strlen(str);
+	char *result = reftable_malloc(len + 1);
+	if (!result)
+		return NULL;
+	memcpy(result, str, len + 1);
+	return result;
+}
+
+void reftable_set_alloc(void *(*malloc)(size_t),
+			void *(*realloc)(void *, size_t), void (*free)(void *))
+{
+	reftable_malloc_ptr = malloc;
+	reftable_realloc_ptr = realloc;
+	reftable_free_ptr = free;
+}
 
 void put_be24(uint8_t *out, uint32_t i)
 {
@@ -75,14 +136,14 @@ size_t names_length(const char **names)
 	return p - names;
 }
 
-void parse_names(char *buf, int size, char ***namesp)
+char **parse_names(char *buf, int size)
 {
 	char **names = NULL;
 	size_t names_cap = 0;
 	size_t names_len = 0;
-
 	char *p = buf;
 	char *end = buf + size;
+
 	while (p < end) {
 		char *next = strchr(p, '\n');
 		if (next && next < end) {
@@ -91,15 +152,29 @@ void parse_names(char *buf, int size, char ***namesp)
 			next = end;
 		}
 		if (p < next) {
-			REFTABLE_ALLOC_GROW(names, names_len + 1, names_cap);
-			names[names_len++] = xstrdup(p);
+			char **names_grown = names;
+			REFTABLE_ALLOC_GROW(names_grown, names_len + 1, names_cap);
+			if (!names_grown)
+				goto err;
+			names = names_grown;
+
+			names[names_len] = reftable_strdup(p);
+			if (!names[names_len++])
+				goto err;
 		}
 		p = next + 1;
 	}
 
 	REFTABLE_REALLOC_ARRAY(names, names_len + 1);
 	names[names_len] = NULL;
-	*namesp = names;
+
+	return names;
+
+err:
+	for (size_t i = 0; i < names_len; i++)
+		reftable_free(names[i]);
+	reftable_free(names);
+	return NULL;
 }
 
 int names_equal(const char **a, const char **b)
@@ -120,4 +195,16 @@ int common_prefix_size(struct strbuf *a, struct strbuf *b)
 	}
 
 	return p;
+}
+
+int hash_size(uint32_t id)
+{
+	switch (id) {
+	case 0:
+	case GIT_SHA1_FORMAT_ID:
+		return GIT_SHA1_RAWSZ;
+	case GIT_SHA256_FORMAT_ID:
+		return GIT_SHA256_RAWSZ;
+	}
+	abort();
 }
