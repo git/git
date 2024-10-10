@@ -10,19 +10,19 @@ Git supports ssh, git, http, and https protocols (in addition, ftp
 and ftps can be used for fetching, but this is inefficient and
 deprecated; do not use them).
 
-The native transport (i.e. git:// URL) does no authentication and
+The native transport (i.e. `git://` URL) does no authentication and
 should be used with caution on unsecured networks.
 
 The following syntaxes may be used with them:
 
-- ++ssh://++{startsb}__<user>__++@++{endsb}__<host>__{startsb}++:++__<port>__{endsb}++/++__<path-to-git-repo>__
-- ++git://++__<host>__{startsb}:__<port>__{endsb}++/++__<path-to-git-repo>__
-- ++http++{startsb}++s++{endsb}++://++__<host>__{startsb}++:++__<port>__{endsb}++/++__<path-to-git-repo>__
-- ++ftp++{startsb}++s++{endsb}++://++__<host>__{startsb}++:++__<port>__{endsb}++/++__<path-to-git-repo>__
+- `ssh://[<user>@]<host>[:<port>]/<path-to-git-repo>`
+- `git://<host>[:<port>]/<path-to-git-repo>`
+- `http[s]://<host>[:<port>]/<path-to-git-repo>`
+- `ftp[s]://<host>[:<port>]/<path-to-git-repo>`
 
 An alternative scp-like syntax may also be used with the ssh protocol:
 
-- {startsb}__<user>__++@++{endsb}__<host>__++:/++__<path-to-git-repo>__
+- `[<user>@]<host>:/<path-to-git-repo>`
 
 This syntax is only recognized if there are no slashes before the
 first colon. This helps differentiate a local path that contains a
@@ -30,17 +30,17 @@ colon. For example the local path `foo:bar` could be specified as an
 absolute path or `./foo:bar` to avoid being misinterpreted as an ssh
 url.
 
-The ssh and git protocols additionally support ++~++__<username>__ expansion:
+The ssh and git protocols additionally support `~<username>` expansion:
 
-- ++ssh://++{startsb}__<user>__++@++{endsb}__<host>__{startsb}++:++__<port>__{endsb}++/~++__<user>__++/++__<path-to-git-repo>__
-- ++git://++__<host>__{startsb}++:++__<port>__{endsb}++/~++__<user>__++/++__<path-to-git-repo>__
-- {startsb}__<user>__++@++{endsb}__<host>__++:~++__<user>__++/++__<path-to-git-repo>__
+- `ssh://[<user>@]<host>[:<port>]/~<user>/<path-to-git-repo>`
+- `git://<host>[:<port>]/~<user>/<path-to-git-repo>`
+- `[<user>@]<host>:~<user>/<path-to-git-repo>`
 
 For local repositories, also supported by Git natively, the following
 syntaxes may be used:
 
 - `/path/to/repo.git/`
-- ++file:///path/to/repo.git/++
+- `file:///path/to/repo.git/`
 
 ifndef::git-clone[]
 These two syntaxes are mostly equivalent, except when cloning, when
@@ -57,11 +57,11 @@ endif::git-clone[]
 accept a suitable bundle file. See linkgit:git-bundle[1].
 
 When Git doesn't know how to handle a certain transport protocol, it
-attempts to use the `remote-`{empty}__<transport>__ remote helper, if one
+attempts to use the `remote-<transport>` remote helper, if one
 exists. To explicitly request a remote helper, the following syntax
 may be used:
 
-- _<transport>_::__<address>__
+- `<transport>::<address>`
 
 where _<address>_ may be a path, a server and path, or an arbitrary
 URL-like string recognized by the specific remote helper being

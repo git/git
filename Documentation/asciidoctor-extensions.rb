@@ -1,5 +1,7 @@
 require 'asciidoctor'
 require 'asciidoctor/extensions'
+require 'asciidoctor/converter/docbook5'
+require 'asciidoctor/converter/html5'
 
 module Git
   module Documentation
@@ -39,10 +41,95 @@ module Git
         output
       end
     end
+
+    class SynopsisBlock < Asciidoctor::Extensions::BlockProcessor
+
+      use_dsl
+      named :synopsis
+      parse_content_as :simple
+
+      def process parent, reader, attrs
+        outlines = reader.lines.map do |l|
+          l.gsub(/(\.\.\.?)([^\]$.])/, '`\1`\2')
+           .gsub(%r{([\[\] |()>]|^)([-a-zA-Z0-9:+=~@,/_^\$]+)}, '\1{empty}`\2`{empty}')
+           .gsub(/(<[-a-zA-Z0-9.]+>)/, '__\\1__')
+           .gsub(']', ']{empty}')
+        end
+        create_block parent, :verse, outlines, attrs
+      end
+    end
+
+    class GitDBConverter < Asciidoctor::Converter::DocBook5Converter
+
+      extend Asciidoctor::Converter::Config
+      register_for 'docbook5'
+
+      def convert_inline_quoted node
+        if (type = node.type) == :asciimath
+          # NOTE fop requires jeuclid to process mathml markup
+          asciimath_available? ? %(<inlineequation>#{(::AsciiMath.parse node.text).to_mathml 'mml:', 'xmlns:mml' => 'http://www.w3.org/1998/Math/MathML'}</inlineequation>) : %(<inlineequation><mathphrase><![CDATA[#{node.text}]]></mathphrase></inlineequation>)
+        elsif type == :latexmath
+          # unhandled math; pass source to alt and required mathphrase element; dblatex will process alt as LaTeX math
+          %(<inlineequation><alt><![CDATA[#{equation = node.text}]]></alt><mathphrase><![CDATA[#{equation}]]></mathphrase></inlineequation>)
+        elsif type == :monospaced
+          node.text.gsub(/(\.\.\.?)([^\]$.])/, '<literal>\1</literal>\2')
+              .gsub(%r{([\[\s|()>.]|^|\]|&gt;)(\.?([-a-zA-Z0-9:+=~@,/_^\$]+\.{0,2})+)}, '\1<literal>\2</literal>')
+              .gsub(/(&lt;[-a-zA-Z0-9.]+&gt;)/, '<emphasis>\1</emphasis>')
+        else
+          open, close, supports_phrase = QUOTE_TAGS[type]
+          text = node.text
+          if node.role
+            if supports_phrase
+              quoted_text = %(#{open}<phrase role="#{node.role}">#{text}</phrase>#{close})
+            else
+              quoted_text = %(#{open.chop} role="#{node.role}">#{text}#{close})
+            end
+          else
+            quoted_text = %(#{open}#{text}#{close})
+          end
+          node.id ? %(<anchor#{common_attributes node.id, nil, text}/>#{quoted_text}) : quoted_text
+        end
+      end
+    end
+
+    # register a html5 converter that takes in charge to convert monospaced text into Git style synopsis
+    class GitHTMLConverter < Asciidoctor::Converter::Html5Converter
+
+      extend Asciidoctor::Converter::Config
+      register_for 'html5'
+
+      def convert_inline_quoted node
+        if node.type == :monospaced
+          node.text.gsub(/(\.\.\.?)([^\]$.])/, '<code>\1</code>\2')
+              .gsub(%r{([\[\s|()>.]|^|\]|&gt;)(\.?([-a-zA-Z0-9:+=~@,/_^\$]+\.{0,2})+)}, '\1<code>\2</code>')
+              .gsub(/(&lt;[-a-zA-Z0-9.]+&gt;)/, '<em>\1</em>')
+
+        else
+          open, close, tag = QUOTE_TAGS[node.type]
+          if node.id
+            class_attr = node.role ? %( class="#{node.role}") : ''
+            if tag
+              %(#{open.chop} id="#{node.id}"#{class_attr}>#{node.text}#{close})
+            else
+              %(<span id="#{node.id}"#{class_attr}>#{open}#{node.text}#{close}</span>)
+            end
+          elsif node.role
+            if tag
+              %(#{open.chop} class="#{node.role}">#{node.text}#{close})
+            else
+              %(<span class="#{node.role}">#{open}#{node.text}#{close}</span>)
+            end
+          else
+            %(#{open}#{node.text}#{close})
+          end
+        end
+      end
+    end
   end
 end
 
 Asciidoctor::Extensions.register do
   inline_macro Git::Documentation::LinkGitProcessor, :linkgit
+  block Git::Documentation::SynopsisBlock
   postprocessor Git::Documentation::DocumentPostProcessor
 end

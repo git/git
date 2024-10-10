@@ -8,12 +8,12 @@ git-init - Create an empty Git repository or reinitialize an existing one
 
 SYNOPSIS
 --------
-[verse]
-`git init` [`-q` | `--quiet`] [`--bare`] [++--template=++__<template-directory>__]
-	  [`--separate-git-dir` _<git-dir>_] [++--object-format=++__<format>__]
-	  [++--ref-format=++__<format>__]
-	  [`-b` _<branch-name>_ | ++--initial-branch=++__<branch-name>__]
-	  [++--shared++[++=++__<permissions>__]] [_<directory>_]
+[synopsis]
+git init [-q | --quiet] [--bare] [--template=<template-directory>]
+	 [--separate-git-dir <git-dir>] [--object-format=<format>]
+	 [--ref-format=<format>]
+	 [-b <branch-name> | --initial-branch=<branch-name>]
+	 [--shared[=<permissions>]] [<directory>]
 
 
 DESCRIPTION
@@ -25,11 +25,11 @@ directory with subdirectories for `objects`, `refs/heads`,
 commits will be created (see the `--initial-branch` option below
 for its name).
 
-If the `$GIT_DIR` environment variable is set then it specifies a path
+If the `GIT_DIR` environment variable is set then it specifies a path
 to use instead of `./.git` for the base of the repository.
 
 If the object storage directory is specified via the
-`$GIT_OBJECT_DIRECTORY` environment variable then the sha1 directories
+`GIT_OBJECT_DIRECTORY` environment variable then the sha1 directories
 are created underneath; otherwise, the default `$GIT_DIR/objects`
 directory is used.
 
@@ -51,26 +51,22 @@ Only print error and warning messages; all other output will be suppressed.
 Create a bare repository. If `GIT_DIR` environment is not set, it is set to the
 current working directory.
 
-++--object-format=++__<format>__::
-
+`--object-format=<format>`::
 Specify the given object _<format>_ (hash algorithm) for the repository.  The valid
 values are `sha1` and (if enabled) `sha256`.  `sha1` is the default.
 +
 include::object-format-disclaimer.txt[]
 
-++--ref-format=++__<format>__::
-
+`--ref-format=<format>`::
 Specify the given ref storage _<format>_ for the repository. The valid values are:
 +
 include::ref-storage-format.txt[]
 
-++--template=++__<template-directory>__::
-
+`--template=<template-directory>`::
 Specify the directory from which templates will be used.  (See the "TEMPLATE
 DIRECTORY" section below.)
 
-++--separate-git-dir=++__<git-dir>__::
-
+`--separate-git-dir=<git-dir>`::
 Instead of initializing the repository as a directory to either `$GIT_DIR` or
 `./.git/`, create a text file there containing the path to the actual
 repository.  This file acts as a filesystem-agnostic Git symbolic link to the
@@ -78,15 +74,14 @@ repository.
 +
 If this is a reinitialization, the repository will be moved to the specified path.
 
-`-b` _<branch-name>_::
-++--initial-branch=++__<branch-name>__::
-
+`-b <branch-name>`::
+`--initial-branch=<branch-name>`::
 Use _<branch-name>_ for the initial branch in the newly created
 repository.  If not specified, fall back to the default name (currently
 `master`, but this is subject to change in the future; the name can be
 customized via the `init.defaultBranch` configuration variable).
 
-++--shared++[++=++(`false`|`true`|`umask`|`group`|`all`|`world`|`everybody`|_<perm>_)]::
+`--shared[=(false|true|umask|group|all|world|everybody|<perm>)]`::
 
 Specify that the Git repository is to be shared amongst several users.  This
 allows users belonging to the same group to push into that

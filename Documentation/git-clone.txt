@@ -8,16 +8,16 @@ git-clone - Clone a repository into a new directory
 
 SYNOPSIS
 --------
-[verse]
-`git clone` [++--template=++__<template-directory>__]
-	  [`-l`] [`-s`] [`--no-hardlinks`] [`-q`] [`-n`] [`--bare`] [`--mirror`]
-	  [`-o` _<name>_] [`-b` _<name>_] [`-u` _<upload-pack>_] [`--reference` _<repository>_]
-	  [`--dissociate`] [`--separate-git-dir` _<git-dir>_]
-	  [`--depth` _<depth>_] [`--`[`no-`]{empty}`single-branch`] [`--no-tags`]
-	  [++--recurse-submodules++[++=++__<pathspec>__]] [++--++[++no-++]{empty}++shallow-submodules++]
-	  [`--`[`no-`]{empty}`remote-submodules`] [`--jobs` _<n>_] [`--sparse`] [`--`[`no-`]{empty}`reject-shallow`]
-	  [++--filter=++__<filter-spec>__] [`--also-filter-submodules`]] [`--`] _<repository>_
-	  [_<directory>_]
+[synopsis]
+git clone [--template=<template-directory>]
+	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare] [--mirror]
+	  [-o <name>] [-b <name>] [-u <upload-pack>] [--reference <repository>]
+	  [--dissociate] [--separate-git-dir <git-dir>]
+	  [--depth <depth>] [--[no-]single-branch] [--no-tags]
+	  [--recurse-submodules[=<pathspec>]] [--[no-]shallow-submodules]
+	  [--[no-]remote-submodules] [--jobs <n>] [--sparse] [--[no-]reject-shallow]
+	  [--filter=<filter-spec>] [--also-filter-submodules]] [--] <repository>
+	  [<directory>]
 
 DESCRIPTION
 -----------
@@ -52,7 +52,7 @@ OPTIONS
 	to save space when possible.
 +
 If the repository is specified as a local path (e.g., `/path/to/repo`),
-this is the default, and --local is essentially a no-op.  If the
+this is the default, and `--local` is essentially a no-op.  If the
 repository is specified as a URL, then this flag is ignored (and we
 never use the local optimizations).  Specifying `--no-local` will
 override the default when `/path/to/repo` is given, using the regular
@@ -64,8 +64,8 @@ prevent the unintentional copying of files by dereferencing the symbolic
 links.
 +
 *NOTE*: this operation can race with concurrent modification to the
-source repository, similar to running `cp -r src dst` while modifying
-`src`.
+source repository, similar to running `cp -r <src> <dst>` while modifying
+_<src>_.
 
 `--no-hardlinks`::
 	Force the cloning process from a repository on a local
@@ -101,7 +101,7 @@ If you want to break the dependency of a repository cloned with `--shared` on
 its source repository, you can simply run `git repack -a` to copy all
 objects from the source repository into a pack in the cloned repository.
 
-`--reference`[`-if-able`] _<repository>_::
+`--reference[-if-able] <repository>`::
 	If the reference _<repository>_ is on the local machine,
 	automatically setup `.git/objects/info/alternates` to
 	obtain objects from the reference _<repository>_.  Using
@@ -142,17 +142,17 @@ objects from the source repository into a pack in the cloned repository.
 	is specified. This flag forces progress status even if the
 	standard error stream is not directed to a terminal.
 
-++--server-option=++__<option>__::
+`--server-option=<option>`::
 	Transmit the given string to the server when communicating using
 	protocol version 2.  The given string must not contain a NUL or LF
 	character.  The server's handling of server options, including
 	unknown ones, is server-specific.
-	When multiple ++--server-option=++__<option>__ are given, they are all
+	When multiple `--server-option=<option>` are given, they are all
 	sent to the other side in the order listed on the command line.
 
 `-n`::
 `--no-checkout`::
-	No checkout of HEAD is performed after the clone is complete.
+	No checkout of `HEAD` is performed after the clone is complete.
 
 `--`[`no-`]`reject-shallow`::
 	Fail if the source repository is a shallow repository.
@@ -162,7 +162,7 @@ objects from the source repository into a pack in the cloned repository.
 `--bare`::
 	Make a 'bare' Git repository.  That is, instead of
 	creating _<directory>_ and placing the administrative
-	files in _<directory>_`/.git`, make the _<directory>_
+	files in `<directory>/.git`, make the _<directory>_
 	itself the `$GIT_DIR`. This obviously implies the `--no-checkout`
 	because there is nowhere to check out the working tree.
 	Also the branch heads at the remote are copied directly
@@ -177,13 +177,13 @@ objects from the source repository into a pack in the cloned repository.
 	linkgit:git-sparse-checkout[1] command can be used to grow the
 	working directory as needed.
 
-++--filter=++__<filter-spec>__::
+`--filter=<filter-spec>`::
 	Use the partial clone feature and request that the server sends
 	a subset of reachable objects according to a given object filter.
 	When using `--filter`, the supplied _<filter-spec>_ is used for
 	the partial clone filter. For example, `--filter=blob:none` will
 	filter out all blobs (file contents) until needed by Git. Also,
-	++--filter=blob:limit=++__<size>__ will filter out all blobs of size
+	`--filter=blob:limit=<size>` will filter out all blobs of size
 	at least _<size>_. For more details on filter specifications, see
 	the `--filter` option in linkgit:git-rev-list[1].
 
@@ -208,11 +208,11 @@ objects from the source repository into a pack in the cloned repository.
 
 `-b` _<name>_::
 `--branch` _<name>_::
-	Instead of pointing the newly created HEAD to the branch pointed
-	to by the cloned repository's HEAD, point to _<name>_ branch
+	Instead of pointing the newly created `HEAD` to the branch pointed
+	to by the cloned repository's `HEAD`, point to _<name>_ branch
 	instead. In a non-bare repository, this is the branch that will
 	be checked out.
-	`--branch` can also take tags and detaches the HEAD at that commit
+	`--branch` can also take tags and detaches the `HEAD` at that commit
 	in the resulting repository.
 
 `-u` _<upload-pack>_::
@@ -221,12 +221,12 @@ objects from the source repository into a pack in the cloned repository.
 	via ssh, this specifies a non-default path for the command
 	run on the other end.
 
-++--template=++__<template-directory>__::
+`--template=<template-directory>`::
 	Specify the directory from which templates will be used;
 	(See the "TEMPLATE DIRECTORY" section of linkgit:git-init[1].)
 
-`-c` __<key>__++=++__<value>__::
-`--config` __<key>__++=++__<value>__::
+`-c` `<key>=<value>`::
+`--config` `<key>=<value>`::
 	Set a configuration variable in the newly-created repository;
 	this takes effect immediately after the repository is
 	initialized, but before the remote history is fetched or any
@@ -239,25 +239,25 @@ objects from the source repository into a pack in the cloned repository.
 Due to limitations of the current implementation, some configuration
 variables do not take effect until after the initial fetch and checkout.
 Configuration variables known to not take effect are:
-++remote.++__<name>__++.mirror++ and ++remote.++__<name>__++.tagOpt++.  Use the
+`remote.<name>.mirror` and `remote.<name>.tagOpt`.  Use the
 corresponding `--mirror` and `--no-tags` options instead.
 
-`--depth` _<depth>_::
+`--depth <depth>`::
 	Create a 'shallow' clone with a history truncated to the
 	specified number of commits. Implies `--single-branch` unless
 	`--no-single-branch` is given to fetch the histories near the
 	tips of all branches. If you want to clone submodules shallowly,
 	also pass `--shallow-submodules`.
 
-++--shallow-since=++__<date>__::
+`--shallow-since=<date>`::
 	Create a shallow clone with a history after the specified time.
 
-++--shallow-exclude=++__<revision>__::
+`--shallow-exclude=<revision>`::
 	Create a shallow clone with a history, excluding commits
 	reachable from a specified remote branch or tag.  This option
 	can be specified multiple times.
 
-`--`[`no-`]`single-branch`::
+`--[no-]single-branch`::
 	Clone only the history leading to the tip of a single branch,
 	either specified by the `--branch` option or the primary
 	branch remote's `HEAD` points at.
@@ -279,13 +279,13 @@ maintain a branch with no references other than a single cloned
 branch. This is useful e.g. to maintain minimal clones of the default
 branch of some repository for search indexing.
 
-`--recurse-submodules`[`=`{empty}__<pathspec>__]::
+`--recurse-submodules[=<pathspec>]`::
 	After the clone is created, initialize and clone submodules
-	within based on the provided _<pathspec>_.  If no _=<pathspec>_ is
+	within based on the provided _<pathspec>_.  If no `=<pathspec>` is
 	provided, all submodules are initialized and cloned.
 	This option can be given multiple times for pathspecs consisting
 	of multiple entries.  The resulting clone has `submodule.active` set to
-	the provided pathspec, or "." (meaning all submodules) if no
+	the provided pathspec, or "`.`" (meaning all submodules) if no
 	pathspec is provided.
 +
 Submodules are initialized and cloned using their default settings. This is
@@ -295,23 +295,23 @@ the clone is finished. This option is ignored if the cloned repository does
 not have a worktree/checkout (i.e. if any of `--no-checkout`/`-n`, `--bare`,
 or `--mirror` is given)
 
-`--`[`no-`]`shallow-submodules`::
+`--[no-]shallow-submodules`::
 	All submodules which are cloned will be shallow with a depth of 1.
 
-`--`[`no-`]`remote-submodules`::
+`--[no-]remote-submodules`::
 	All submodules which are cloned will use the status of the submodule's
 	remote-tracking branch to update the submodule, rather than the
 	superproject's recorded SHA-1. Equivalent to passing `--remote` to
 	`git submodule update`.
 
-`--separate-git-dir=`{empty}__<git-dir>__::
+`--separate-git-dir=<git-dir>`::
 	Instead of placing the cloned repository where it is supposed
 	to be, place the cloned repository at the specified directory,
 	then make a filesystem-agnostic Git symbolic link to there.
 	The result is Git repository can be separated from working
 	tree.
 
-`--ref-format=`{empty}__<ref-format>__::
+`--ref-format=<ref-format>`::
 
 Specify the given ref storage format for the repository. The valid values are:
 +
@@ -334,7 +334,7 @@ _<directory>_::
 	for `host.xz:foo/.git`).  Cloning into an existing directory
 	is only allowed if the directory is empty.
 
-`--bundle-uri=`{empty}__<uri>__::
+`--bundle-uri=<uri>`::
 	Before fetching from the remote, fetch a bundle from the given
 	_<uri>_ and unbundle the data into the local repository. The refs
 	in the bundle will be stored under the hidden `refs/bundle/*`

@@ -119,6 +119,7 @@ Documentation)
 
 	test -n "$ALREADY_HAVE_ASCIIDOCTOR" ||
 	sudo gem install --version 1.5.8 asciidoctor
+	sudo gem install concurrent-ruby
 	;;
 esac
 

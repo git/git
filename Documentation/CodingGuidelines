@@ -828,78 +828,80 @@ Markup:
    _<new-branch-name>_
    _<template-directory>_
 
- A placeholder is not enclosed in backticks, as it is not a literal.
-
  When needed, use a distinctive identifier for placeholders, usually
  made of a qualification and a type:
    _<git-dir>_
    _<key-id>_
 
- When literal and placeholders are mixed, each markup is applied for
- each sub-entity. If they are stuck, a special markup, called
- unconstrained formatting is required.
- Unconstrained formating for placeholders is __<like-this>__
- Unconstrained formatting for literal formatting is ++like this++
-   `--jobs` _<n>_
-   ++--sort=++__<key>__
-   __<directory>__++/.git++
-   ++remote.++__<name>__++.mirror++
+ Git's Asciidoc processor has been tailored to treat backticked text
+ as complex synopsis. When literal and placeholders are mixed, you can
+ use the backtick notation which will take care of correctly typesetting
+ the content.
+   `--jobs <n>`
+   `--sort=<key>`
+   `<directory>/.git`
+   `remote.<name>.mirror`
+   `ssh://[<user>@]<host>[:<port>]/<path-to-git-repo>`
 
- caveat: ++ unconstrained format is not verbatim and may expand
- content. Use Asciidoc escapes inside them.
+As a side effect, backquoted placeholders are correctly typeset, but
+this style is not recommended.
 
 Synopsis Syntax
 
- Syntax grammar is formatted neither as literal nor as placeholder.
+ The synopsis (a paragraph with [synopsis] attribute) is automatically
+ formatted by the toolchain and does not need typesetting.
 
  A few commented examples follow to provide reference when writing or
  modifying command usage strings and synopsis sections in the manual
  pages:
 
  Possibility of multiple occurrences is indicated by three dots:
-   _<file>_...
+   <file>...
    (One or more of <file>.)
 
  Optional parts are enclosed in square brackets:
-   [_<file>_...]
+   [<file>...]
    (Zero or more of <file>.)
 
-   ++--exec-path++[++=++__<path>__]
+ An optional parameter needs to be typeset with unconstrained pairs
+   [<repository>]
+
+   --exec-path[=<path>]
    (Option with an optional argument.  Note that the "=" is inside the
    brackets.)
 
-   [_<patch>_...]
+   [<patch>...]
    (Zero or more of <patch>.  Note that the dots are inside, not
    outside the brackets.)
 
  Multiple alternatives are indicated with vertical bars:
-   [`-q` | `--quiet`]
-   [`--utf8` | `--no-utf8`]
+   [-q | --quiet]
+   [--utf8 | --no-utf8]
 
  Use spacing around "|" token(s), but not immediately after opening or
  before closing a [] or () pair:
-   Do: [`-q` | `--quiet`]
-   Don't: [`-q`|`--quiet`]
+   Do: [-q | --quiet]
+   Don't: [-q|--quiet]
 
  Don't use spacing around "|" tokens when they're used to separate the
  alternate arguments of an option:
-    Do: ++--track++[++=++(`direct`|`inherit`)]`
-    Don't: ++--track++[++=++(`direct` | `inherit`)]
+    Do: --track[=(direct|inherit)]
+    Don't: --track[=(direct | inherit)]
 
  Parentheses are used for grouping:
-   [(_<rev>_ | _<range>_)...]
+   [(<rev>|<range>)...]
    (Any number of either <rev> or <range>.  Parens are needed to make
    it clear that "..." pertains to both <rev> and <range>.)
 
-   [(`-p` _<parent>_)...]
+   [(-p <parent>)...]
    (Any number of option -p, each with one <parent> argument.)
 
-   `git remote set-head` _<name>_ (`-a` | `-d` | _<branch>_)
+   git remote set-head <name> (-a|-d|<branch>)
    (One and only one of "-a", "-d" or "<branch>" _must_ (no square
    brackets) be provided.)
 
  And a somewhat more contrived example:
-   `--diff-filter=[(A|C|D|M|R|T|U|X|B)...[*]]`
+   --diff-filter=[(A|C|D|M|R|T|U|X|B)...[*]]
    Here "=" is outside the brackets, because "--diff-filter=" is a
    valid usage.  "*" has its own pair of brackets, because it can
    (optionally) be specified only when one or more of the letters is
