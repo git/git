@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2024, #05; Tue, 8)
-X-master-at: 777489f9e09c8d0dd6b12f9d90de6376330577a2
-X-next-at: 4ca455297942c5c9616351bc68bad2034c719206
+Subject: What's cooking in git.git (Oct 2024, #06; Thu, 10)
+X-master-at: ef8ce8f3d4344fd3af049c17eeba5cd20d98b69f
+X-next-at: 0c40f5c971f3310010a64ee1c93f32448bf6ba73
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2024, #05; Tue, 8)
+What's cooking in git.git (Oct 2024, #06; Thu, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,9 +17,9 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Git 2.47 (final) has been tagged, and the 'maint' branch now points
-at v2.47.0.  Let's hope we didn't introduce too many regressions
-this time.
+Git 2.47 (final) has been tagged, the 'maint' branch now points
+at v2.47.0, the first batch of topics for 2.48 are now in 'master',
+and 'next' has been rewound, directly on top of 2.47.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -50,7 +50,286 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ds/line-log-asan-fix (2024-10-03) 1 commit
+  (merged to 'next' on 2024-10-04 at ee702f6c95)
+ + line-log: protect inner strbuf from free
+ (this branch is used by jk/output-prefix-cleanup.)
+
+ Use after free and double freeing at the end in "git log -L... -p"
+ had been identified and fixed.
+ source: <05c21616c350b5141c17fde1aa5d3aea881c6031.1727956724.git.gitgitgadget@gmail.com>
+
+
+* ja/doc-synopsis-markup (2024-09-24) 3 commits
+  (merged to 'next' on 2024-09-30 at 15ec13edec)
+ + doc: apply synopsis simplification on git-clone and git-init
+ + doc: update the guidelines to reflect the current formatting rules
+ + doc: introduce a synopsis typesetting
+
+ The way AsciiDoc is used for SYNOPSIS part of the manual pages has
+ been revamped.  The sources, at least for the simple cases, got
+ vastly pleasant to work with.
+ source: <pull.1766.v5.git.1727161730.gitgitgadget@gmail.com>
+
+
+* jk/output-prefix-cleanup (2024-10-03) 5 commits
+  (merged to 'next' on 2024-10-04 at 06298d1525)
+ + diff: store graph prefix buf in git_graph struct
+ + diff: return line_prefix directly when possible
+ + diff: return const char from output_prefix callback
+ + diff: drop line_prefix_length field
+ + line-log: use diff_line_prefix() instead of custom helper
+ (this branch uses ds/line-log-asan-fix.)
+
+ Code clean-up.
+ source: <pull.1806.v2.git.1727956724.gitgitgadget@gmail.com>
+
+
+* ps/leakfixes-part-8 (2024-09-30) 25 commits
+  (merged to 'next' on 2024-10-04 at 3cfb5747d2)
+ + builtin/send-pack: fix leaking list of push options
+ + remote: fix leaking push reports
+ + t/helper: fix leaks in proc-receive helper
+ + pack-write: fix return parameter of `write_rev_file_order()`
+ + revision: fix leaking saved parents
+ + revision: fix memory leaks when rewriting parents
+ + midx-write: fix leaking buffer
+ + pack-bitmap-write: fix leaking OID array
+ + pseudo-merge: fix leaking strmap keys
+ + pseudo-merge: fix various memory leaks
+ + line-log: fix several memory leaks
+ + diff: improve lifecycle management of diff queues
+ + builtin/revert: fix leaking `gpg_sign` and `strategy` config
+ + t/helper: fix leaking repository in partial-clone helper
+ + builtin/clone: fix leaking repo state when cloning with bundle URIs
+ + builtin/pack-redundant: fix various memory leaks
+ + builtin/stash: fix leaking `pathspec_from_file`
+ + submodule: fix leaking submodule entry list
+ + wt-status: fix leaking buffer with sparse directories
+ + shell: fix leaking strings
+ + scalar: fix leaking repositories
+ + read-cache: fix leaking hash context in `do_write_index()`
+ + builtin/annotate: fix leaking args vector
+ + Merge branch 'jk/http-leakfixes' into ps/leakfixes-part-8
+ + Merge branch 'ps/leakfixes-part-7' into ps/leakfixes-part-8
+
+ More leakfixes.
+ source: <cover.1727687410.git.ps@pks.im>
+
+
+* ps/reftable-alloc-failures (2024-10-04) 28 commits
+  (merged to 'next' on 2024-10-04 at 5649ef3dd7)
+ + reftable/basics: fix segfault when growing `names` array fails
+  (merged to 'next' on 2024-10-02 at a6d42d51d4)
+ + reftable/basics: ban standard allocator functions
+ + reftable: introduce `REFTABLE_FREE_AND_NULL()`
+ + reftable: fix calls to free(3P)
+ + reftable: handle trivial allocation failures
+ + reftable/tree: handle allocation failures
+ + reftable/pq: handle allocation failures when adding entries
+ + reftable/block: handle allocation failures
+ + reftable/blocksource: handle allocation failures
+ + reftable/iter: handle allocation failures when creating indexed table iter
+ + reftable/stack: handle allocation failures in auto compaction
+ + reftable/stack: handle allocation failures in `stack_compact_range()`
+ + reftable/stack: handle allocation failures in `reftable_new_stack()`
+ + reftable/stack: handle allocation failures on reload
+ + reftable/reader: handle allocation failures in `reader_init_iter()`
+ + reftable/reader: handle allocation failures for unindexed reader
+ + reftable/merged: handle allocation failures in `merged_table_init_iter()`
+ + reftable/writer: handle allocation failures in `reftable_new_writer()`
+ + reftable/writer: handle allocation failures in `writer_index_hash()`
+ + reftable/record: handle allocation failures when decoding records
+ + reftable/record: handle allocation failures on copy
+ + reftable/basics: handle allocation failures in `parse_names()`
+ + reftable/basics: handle allocation failures in `reftable_calloc()`
+ + reftable: introduce `reftable_strdup()`
+ + reftable/basics: merge "publicbasics" into "basics"
+ + reftable/error: introduce out-of-memory error code
+ + Merge branch 'ps/reftable-exclude' into ps/reftable-alloc-failures
+ + Merge branch 'cp/unit-test-reftable-stack' into ps/reftable-alloc-failures
+
+ The reftable library is now prepared to expect that the memory
+ allocation function given to it may fail to allocate and to deal
+ with such an error.
+ source: <CAPig+cT7nni11bGmNyYCQZ0P0QZ_HG-izPtsymq==sUOkOn-Lw@mail.gmail.com>
+ source: <cover.1727866394.git.ps@pks.im>
+
+
+* sk/doc-maintenance-schedule (2024-10-03) 1 commit
+  (merged to 'next' on 2024-10-04 at 2d3722c29d)
+ + doc: add a note about staggering of maintenance
+
+ Doc update to clarify how periodical maintenance are scheduled,
+ spread across time to avoid thundering hurds.
+ source: <pull.1794.git.git.1727945877922.gitgitgadget@gmail.com>
+
+
+* tb/notes-amlog-doc (2024-10-03) 1 commit
+  (merged to 'next' on 2024-10-04 at e73c8753e8)
+ + Documentation: mention the amlog in howto/maintain-git.txt
+
+ Document "amlog" notes.
+ source: <88a13b9f2b6e7fbed517a7e268e4e371d84a9a10.1727917792.git.me@ttaylorr.com>
+
+--------------------------------------------------
 [New Topics]
+
+* aa/t7300-modernize (2024-10-09) 1 commit
+ - t7300-clean.sh: use test_path_* helper functions for error logging
+
+ Test modernization.
+
+ Will merge to 'next'.
+ source: <pull.1811.v4.git.1728498122419.gitgitgadget@gmail.com>
+
+
+* bf/set-head-symref (2024-10-10) 6 commits
+ - fetch: set remote/HEAD if it does not exist
+ - refs_update_symref: add create_only option
+ - transaction: add TRANSACTION_CREATE_EXISTS error
+ - set-head: better output for --auto
+ - set-head: add new variable for readability
+ - refs_update_symref: atomically record overwritten ref
+
+ When "git fetch $remote" notices that refs/remotes/$remote/HEAD is
+ missing and discovers what branch the other side points with its
+ HEAD, refs/remotes/$remote/HEAD is updated to point to it.
+
+ Comments?
+ source: <20241010133022.1733542-1-bence@ferdinandy.com>
+
+
+* db/submodule-fetch-with-remote-name-fix (2024-10-09) 1 commit
+ - submodule: correct remote name with fetch
+
+ A "git fetch" from the superproject going down to a submodule used
+ a wrong remote when the default remote names are set differently
+ between them.
+
+ Comments?
+ source: <20241009033257.1316690-1-daniel@mariadb.org>
+
+
+* jc/doc-refspec-syntax (2024-10-09) 1 commit
+ - doc: clarify <src> in refspec syntax
+
+ Doc updates.
+
+ Will merge to 'next'.
+ source: <xmqqy137wtyz.fsf@gitster.g>
+
+
+* kh/checkout-ignore-other-docfix (2024-10-10) 1 commit
+ - checkout: refer to other-worktree branch, not ref
+
+ Doc updates.
+
+ Will merge to 'next'.
+ source: <fcfbcd3868bda75dd0463e04739047e74d239d32.1728585467.git.code@khaugsbakk.name>
+
+
+* kn/loose-object-layer-wo-global-hash (2024-10-09) 1 commit
+ - loose: don't rely on repository global state
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <CAOLa=ZRMaw-PAsZ9s0zJ2zp_suMppi=ZrT67B__LU1tWZSvuUQ@mail.gmail.com>
+
+
+* ng/rebase-merges-branch-name-as-label (2024-10-09) 3 commits
+ - rebase-merges: try and use branch names as labels
+ - rebase-update-refs: extract load_branch_decorations
+ - load_branch_decorations: fix memory leak with non-static filters
+
+ "git rebase --rebase-merges" now uses branch names as labels when
+ able.
+
+ Will merge to 'next'.
+ source: <pull.1784.v3.git.git.1728460700.gitgitgadget@gmail.com>
+
+
+* ps/build (2024-10-09) 24 commits
+ - Introduce support for the Meson build system
+ - Documentation: add comparison of build systems
+ - t: allow overriding build dir
+ - t: better support for out-of-tree builds
+ - Makefile: simplify building of templates
+ - Makefile: allow "bin-wrappers/" directory to exist
+ - Makefile: consistently use PERL_PATH
+ - Makefile: consistently use @PLACEHOLDER@ to substitute
+ - Makefile: use common template for GIT-BUILD-OPTIONS
+ - Makefile: refactor generators to be PWD-independent
+ - Makefile: refactor GIT-VERSION-GEN to be reusable
+ - Makefile: extract script to massage Perl scripts
+ - Makefile: extract script to generate clar declarations
+ - http: fix build error on FreeBSD
+ - builtin/credential-cache: fix missing parameter for stub function
+ - t/unit-tests: update clar unit test framework
+ - t7300: work around platform-specific behaviour with long paths on MinGW
+ - t5500, t5601: skip tests which exercise paths with '[::1]' on Cygwin
+ - t3404: work around platform-specific behaviour on macOS 10.15
+ - t1401: make invocation of tar(1) work with Win32-provided one
+ - t/lib-gpg: fix setup of GNUPGHOME in MinGW
+ - t/lib-gitweb: test against the build version of gitweb
+ - t/test-lib: wire up NO_ICONV prerequisite
+ - t/test-lib: fix quoting of TEST_RESULTS_SAN_FILE
+
+ Build procedure update plus introduction of Mason based builds
+
+ Needs review.
+ source: <cover.1728485139.git.ps@pks.im>
+
+
+* ps/ci-gitlab-windows (2024-10-09) 5 commits
+ - gitlab-ci: exercise Git on Windows
+ - gitlab-ci: introduce stages and dependencies
+ - ci: handle Windows-based CI jobs in GitLab CI
+ - ci: create script to set up Git for Windows SDK
+ - t7300: work around platform-specific behaviour with long paths on MinGW
+
+ Enable Windows-based CI in GitLab.
+
+ WIll merge to 'next'.
+ source: <cover.1728480039.git.ps@pks.im>
+
+
+* ak/typofixes (2024-10-10) 6 commits
+ - t: fix typos
+ - t/helper: fix a typo
+ - t/perf: fix typos
+ - t/unit-tests: fix typos
+ - contrib: fix typos
+ - compat: fix typos
+
+ Typofixes.
+
+ Comments?
+ source: <20241010151223.311719-1-algonell@gmail.com>
+
+
+* tc/bundle-uri-leakfix (2024-10-10) 1 commit
+ - bundle-uri: plug leak in unbundle_from_file()
+
+ Leakfix.
+
+ Will merge to 'next'.
+ source: <20241010091249.1895960-1-toon@iotcl.com>
+
+
+* xx/protocol-v2-doc-markup-fix (2024-10-10) 1 commit
+ - Documentation/gitprotocol-v2.txt: fix a slight inconsistency in format
+
+ Docfix.
+
+ Will merge to 'next'.
+ source: <pull.1807.git.git.1728566443089.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * cw/worktree-relative (2024-10-08) 4 commits
  - worktree: add test for path handling in linked worktrees
@@ -86,6 +365,12 @@ Release tarballs are available at:
  - t6601: add helper for testing path-walk API
  - path-walk: introduce an object walk by path
 
+ A new algorithm for object graph traversal to favor visiting the
+ objects at the same tree path in succession (as opposed to visiting
+ objects that are different between trees as we walk commit
+ histories) is introduced to optimize object packing.
+
+ Needs review.
  source: <pull.1813.git.1728396723.gitgitgadget@gmail.com>
 
 
@@ -104,43 +389,46 @@ Release tarballs are available at:
 
 
 * jh/config-unset-doc-fix (2024-10-08) 1 commit
- - git-config.1: remove value from positional args in unset usage
+  (merged to 'next' on 2024-10-10 at a87ffb09b6)
+ + git-config.1: remove value from positional args in unset usage
 
  Docfix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20241008142920.570244-2-joshiheinrichs@gmail.com>
 
 
 * jk/fsmonitor-event-listener-race-fix (2024-10-08) 2 commits
- - fsmonitor: initialize fs event listener before accepting clients
- - simple-ipc: split async server initialization and running
+  (merged to 'next' on 2024-10-10 at 0c40f5c971)
+ + fsmonitor: initialize fs event listener before accepting clients
+ + simple-ipc: split async server initialization and running
 
  On macOS, fsmonitor can fall into a race condition that results in
  a client waiting forever to be notified for an event that have
  already happened.  This problem has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20241008083121.GA676391@coredump.intra.peff.net>
 
 
 * js/doc-platform-support-link-fix (2024-10-07) 1 commit
- - docs: fix the `maintain-git` links in `technical/platform-support`
+  (merged to 'next' on 2024-10-10 at 55316158e7)
+ + docs: fix the `maintain-git` links in `technical/platform-support`
+
+ Docfix.
+
+ Will merge to 'master'.
+ source: <pull.1812.git.1728337764963.gitgitgadget@gmail.com>
+
+
+* kh/merge-tree-doc (2024-10-09) 1 commit
+ - doc: merge-tree: improve example script
 
  Docfix.
 
  Will merge to 'next'.
- source: <pull.1812.git.1728337764963.gitgitgadget@gmail.com>
-
-
-* kh/merge-tree-doc (2024-10-08) 2 commits
- - doc: merge-tree: use || directly
- - doc: merge-tree: provide a commit message
-
- Docfix.
-
- Comments?
- source: <cover.1728413450.git.code@khaugsbakk.name>
+ cf. <CABPp-BE=JfoZp19Va-1oF60ADBUibGDwDkFX-Zytx7A3uJ__gg@mail.gmail.com>
+ source: <c7e0d76e71eef56c6279e0f7e82a2d194f78d2a4.1728492617.git.code@khaugsbakk.name>
 
 
 * pb/clar-build-fix (2024-10-07) 1 commit
@@ -148,7 +436,8 @@ Release tarballs are available at:
 
  Build fix.
 
- Will merge to 'next'.
+ Expecting a reroll.
+ cf. <C05B01E0-5007-4FB9-94CD-CBE74E79F9B7@gmail.com>
  source: <pull.1810.git.1728323033680.gitgitgadget@gmail.com>
 
 
@@ -164,15 +453,14 @@ Release tarballs are available at:
  source: <cover.1728275640.git.ps@pks.im>
 
 
-* ps/maintenance-start-crash-fix (2024-10-08) 1 commit
+* ps/maintenance-start-crash-fix (2024-10-10) 1 commit
  - builtin/gc: fix crash when running `git maintenance start`
 
  "git maintenance start" crashed due to an uninitialized variable
  reference, which has been corrected.
 
  Will merge to 'next'.
- Brown paper bag fix.
- source: <976c97081af7c62960bd71d1b70039657e7cb711.1728389731.git.ps@pks.im>
+ source: <a5b1433abfd84cb627efc17f52e0d644ee207bb0.1728538282.git.ps@pks.im>
 
 
 * ua/t3404-cleanup (2024-10-07) 2 commits
@@ -186,58 +474,19 @@ Release tarballs are available at:
 
 
 * xx/remote-server-option-config (2024-10-08) 5 commits
- - ls-remote: leakfix for not clearing server_options
- - fetch: respect --server-option when fetching multiple remotes
- - transport.c::handshake: make use of server options from remote
- - remote: introduce remote.<name>.serverOption configuration
- - transport: introduce parse_transport_option() method
+  (merged to 'next' on 2024-10-10 at 0e38c7f8c5)
+ + ls-remote: leakfix for not clearing server_options
+ + fetch: respect --server-option when fetching multiple remotes
+ + transport.c::handshake: make use of server options from remote
+ + remote: introduce remote.<name>.serverOption configuration
+ + transport: introduce parse_transport_option() method
 
  A new configuration variable remote.<name>.serverOption makes the
  transport layer act as if the --serverOption=<value> option is
  given from the command line.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1776.v3.git.git.1728358699.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Cooking]
-
-* ds/line-log-asan-fix (2024-10-03) 1 commit
-  (merged to 'next' on 2024-10-04 at ee702f6c95)
- + line-log: protect inner strbuf from free
- (this branch is used by jk/output-prefix-cleanup.)
-
- Use after free and double freeing at the end in "git log -L... -p"
- had been identified and fixed.
-
- Will cook in 'next'.
- source: <05c21616c350b5141c17fde1aa5d3aea881c6031.1727956724.git.gitgitgadget@gmail.com>
-
-
-* sk/doc-maintenance-schedule (2024-10-03) 1 commit
-  (merged to 'next' on 2024-10-04 at 2d3722c29d)
- + doc: add a note about staggering of maintenance
-
- Doc update to clarify how periodical maintenance are scheduled,
- spread across time to avoid thundering hurds.
-
- Will cook in 'next'.
- source: <pull.1794.git.git.1727945877922.gitgitgadget@gmail.com>
-
-
-* jk/output-prefix-cleanup (2024-10-03) 5 commits
-  (merged to 'next' on 2024-10-04 at 06298d1525)
- + diff: store graph prefix buf in git_graph struct
- + diff: return line_prefix directly when possible
- + diff: return const char from output_prefix callback
- + diff: drop line_prefix_length field
- + line-log: use diff_line_prefix() instead of custom helper
- (this branch uses ds/line-log-asan-fix.)
-
- Code clean-up.
-
- Will cook in 'next'.
- source: <pull.1806.v2.git.1727956724.gitgitgadget@gmail.com>
 
 
 * jc/a-commands-without-the-repo (2024-10-06) 3 commits
@@ -253,50 +502,6 @@ Release tarballs are available at:
 
  Comments?
  source: <pull.1788.v3.git.git.1728099043.gitgitgadget@gmail.com>
-
-
-* ps/leakfixes-part-8 (2024-09-30) 25 commits
-  (merged to 'next' on 2024-10-04 at 3cfb5747d2)
- + builtin/send-pack: fix leaking list of push options
- + remote: fix leaking push reports
- + t/helper: fix leaks in proc-receive helper
- + pack-write: fix return parameter of `write_rev_file_order()`
- + revision: fix leaking saved parents
- + revision: fix memory leaks when rewriting parents
- + midx-write: fix leaking buffer
- + pack-bitmap-write: fix leaking OID array
- + pseudo-merge: fix leaking strmap keys
- + pseudo-merge: fix various memory leaks
- + line-log: fix several memory leaks
- + diff: improve lifecycle management of diff queues
- + builtin/revert: fix leaking `gpg_sign` and `strategy` config
- + t/helper: fix leaking repository in partial-clone helper
- + builtin/clone: fix leaking repo state when cloning with bundle URIs
- + builtin/pack-redundant: fix various memory leaks
- + builtin/stash: fix leaking `pathspec_from_file`
- + submodule: fix leaking submodule entry list
- + wt-status: fix leaking buffer with sparse directories
- + shell: fix leaking strings
- + scalar: fix leaking repositories
- + read-cache: fix leaking hash context in `do_write_index()`
- + builtin/annotate: fix leaking args vector
- + Merge branch 'jk/http-leakfixes' into ps/leakfixes-part-8
- + Merge branch 'ps/leakfixes-part-7' into ps/leakfixes-part-8
-
- More leakfixes.
-
- Will cook in 'next'.
- source: <cover.1727687410.git.ps@pks.im>
-
-
-* tb/notes-amlog-doc (2024-10-03) 1 commit
-  (merged to 'next' on 2024-10-04 at e73c8753e8)
- + Documentation: mention the amlog in howto/maintain-git.txt
-
- Document "amlog" notes.
-
- Will cook in 'next'.
- source: <88a13b9f2b6e7fbed517a7e268e4e371d84a9a10.1727917792.git.me@ttaylorr.com>
 
 
 * ej/cat-file-remote-object-info (2024-09-27) 6 commits
@@ -346,47 +551,6 @@ Release tarballs are available at:
 
  Comments?
  source: <xmqq7cb77810.fsf@gitster.g>
-
-
-* ps/reftable-alloc-failures (2024-10-04) 28 commits
-  (merged to 'next' on 2024-10-04 at 5649ef3dd7)
- + reftable/basics: fix segfault when growing `names` array fails
-  (merged to 'next' on 2024-10-02 at a6d42d51d4)
- + reftable/basics: ban standard allocator functions
- + reftable: introduce `REFTABLE_FREE_AND_NULL()`
- + reftable: fix calls to free(3P)
- + reftable: handle trivial allocation failures
- + reftable/tree: handle allocation failures
- + reftable/pq: handle allocation failures when adding entries
- + reftable/block: handle allocation failures
- + reftable/blocksource: handle allocation failures
- + reftable/iter: handle allocation failures when creating indexed table iter
- + reftable/stack: handle allocation failures in auto compaction
- + reftable/stack: handle allocation failures in `stack_compact_range()`
- + reftable/stack: handle allocation failures in `reftable_new_stack()`
- + reftable/stack: handle allocation failures on reload
- + reftable/reader: handle allocation failures in `reader_init_iter()`
- + reftable/reader: handle allocation failures for unindexed reader
- + reftable/merged: handle allocation failures in `merged_table_init_iter()`
- + reftable/writer: handle allocation failures in `reftable_new_writer()`
- + reftable/writer: handle allocation failures in `writer_index_hash()`
- + reftable/record: handle allocation failures when decoding records
- + reftable/record: handle allocation failures on copy
- + reftable/basics: handle allocation failures in `parse_names()`
- + reftable/basics: handle allocation failures in `reftable_calloc()`
- + reftable: introduce `reftable_strdup()`
- + reftable/basics: merge "publicbasics" into "basics"
- + reftable/error: introduce out-of-memory error code
- + Merge branch 'ps/reftable-exclude' into ps/reftable-alloc-failures
- + Merge branch 'cp/unit-test-reftable-stack' into ps/reftable-alloc-failures
-
- The reftable library is now prepared to expect that the memory
- allocation function given to it may fail to allocate and to deal
- with such an error.
-
- Will cook in 'next'.
- source: <CAPig+cT7nni11bGmNyYCQZ0P0QZ_HG-izPtsymq==sUOkOn-Lw@mail.gmail.com>
- source: <cover.1727866394.git.ps@pks.im>
 
 
 * jc/strbuf-commented-something (2024-09-12) 2 commits
@@ -464,16 +628,15 @@ Release tarballs are available at:
 
 
 * js/libgit-rust (2024-10-08) 5 commits
- . Makefile: add option to build and test libgit-rs and libgit-rs-sys
- . libgit: add higher-level libgit crate
- . libgit-sys: also export some config_set functions
- . libgit-sys: introduce Rust wrapper for libgit.a
- . common-main: split init and exit code into new files
+ - Makefile: add option to build and test libgit-rs and libgit-rs-sys
+ - libgit: add higher-level libgit crate
+ - libgit-sys: also export some config_set functions
+ - libgit-sys: introduce Rust wrapper for libgit.a
+ - common-main: split init and exit code into new files
 
  An rust binding to libgit.a functions has been introduced.
 
  Needs review.
- Seems to get dependencies wrong.
  source: <cover.1728429158.git.steadmon@google.com>
 
 
@@ -487,20 +650,6 @@ Release tarballs are available at:
 
  On hold.
  source: <20240806003539.3292562-1-gitster@pobox.com>
-
-
-* ja/doc-synopsis-markup (2024-09-24) 3 commits
-  (merged to 'next' on 2024-09-30 at 15ec13edec)
- + doc: apply synopsis simplification on git-clone and git-init
- + doc: update the guidelines to reflect the current formatting rules
- + doc: introduce a synopsis typesetting
-
- The way AsciiDoc is used for SYNOPSIS part of the manual pages has
- been revamped.  The sources, at least for the simple cases, got
- vastly pleasant to work with.
-
- Will cook in 'next'.
- source: <pull.1766.v5.git.1727161730.gitgitgadget@gmail.com>
 
 
 * ew/cat-file-optim (2024-08-25) 10 commits
@@ -519,45 +668,3 @@ Release tarballs are available at:
 
  Waiting for review responses.
  source: <20240823224630.1180772-1-e@80x24.org>
-
---------------------------------------------------
-[Discarded]
-
-* gt/unit-test-oidset (2024-08-25) 1 commit
- . unit-tests: add tests for oidset.h
-
- Another unit-test.
-
- Has been expecting a reroll for too long.
- source: <20240824172028.39419-1-shyamthakkar001@gmail.com>
-
-
-* kn/fsmonitor-event-listener-fix (2024-10-02) 1 commit
- . fsmonitor: fix hangs by delayed fs event listening
-
- Under high load, fsmonitor process can hang at start-up, which has
- been corrected.
-
- Superseded by the jk/fsmonitor-event-listener-race-fix topic
- cf. <CAOTNsDyxmRZ155vV-Jh=1obMnR+F4ExY9B136fiGk0Vd23-zrw@mail.gmail.com>
- source: <pull.1804.git.1727862424713.gitgitgadget@gmail.com>
-
-
-* ds/pack-name-hash-tweak (2024-10-04) 6 commits
- . test-tool: add helper for name-hash values
- . p5313: add size comparison test
- . git-repack: update usage to match docs
- . pack-objects: add GIT_TEST_FULL_NAME_HASH
- . repack: test --full-name-hash option
- . pack-objects: add --full-name-hash option
-
- In a repository with too many (more than --window size) similarly
- named files, "git repack" would not find good delta-base candidate
- and worse, it may not use a blob from exactly the same path as a
- good delta-base candidate.  Optionally replace the name hash so
- that only blobs at the same path and nothing else are used as
- delta-base candidate.
-
- Retracted.
- cf. <f89ba1ef-4cd4-4963-8de0-0323216246aa@gmail.com>
- source: <pull.1785.v2.git.1726692381.gitgitgadget@gmail.com>
