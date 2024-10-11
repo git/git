@@ -1716,7 +1716,7 @@ static struct option *add_common_switch_branch_options(
 			   N_("update ignored files (default)"),
 			   PARSE_OPT_NOCOMPLETE),
 		OPT_BOOL(0, "ignore-other-worktrees", &opts->ignore_other_worktrees,
-			 N_("do not check if another worktree is holding the given ref")),
+			 N_("do not check if another worktree is using this branch")),
 		OPT_END()
 	};
 	struct option *newopts = parse_options_concat(prevopts, options);
