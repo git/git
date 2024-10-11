@@ -724,7 +724,7 @@ sub tweak_graduated {
 
 	# Remove the "Will merge" marker from topics that have graduated.
 	for ($td->{'text'}) {
-		s/\n Will merge to '$MASTER'\.(\n|$)//s;
+		s/\n Will merge to '$MASTER'\.(\n|$)/ /s;
 	}
 }
 
@@ -853,7 +853,7 @@ sub wildo_match {
 	if (/^Will (?:\S+ ){0,2}(fast-track|hold|keep|merge|drop|discard|cook|kick|defer|eject|be re-?rolled|wait)[,. ]/ ||
 	    /^Not urgent/ || /^Not ready/ || /^Waiting for / || /^Under discussion/ ||
 	    /^Can wait in / || /^Still / || /^Stuck / || /^On hold/ || /^Breaks / ||
-	    /^Inviting / ||
+	    /^Inviting / || /^Comments/ ||
 	    /^Needs? / || /^Expecting / || /^May want to / || /^Under review/) {
 		return 1;
 	}
