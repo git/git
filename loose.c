@@ -1,10 +1,9 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "hash.h"
 #include "path.h"
 #include "object-store.h"
 #include "hex.h"
+#include "repository.h"
 #include "wrapper.h"
 #include "gettext.h"
 #include "loose.h"
@@ -142,8 +141,8 @@ int repo_write_loose_object_map(struct repository *repo)
 
 	for (; iter != kh_end(map); iter++) {
 		if (kh_exist(map, iter)) {
-			if (oideq(&kh_key(map, iter), the_hash_algo->empty_tree) ||
-			    oideq(&kh_key(map, iter), the_hash_algo->empty_blob))
+			if (oideq(&kh_key(map, iter), repo->hash_algo->empty_tree) ||
+			    oideq(&kh_key(map, iter), repo->hash_algo->empty_blob))
 				continue;
 			strbuf_addf(&buf, "%s %s\n", oid_to_hex(&kh_key(map, iter)), oid_to_hex(kh_value(map, iter)));
 			if (write_in_full(fd, buf.buf, buf.len) < 0)
