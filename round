@@ -1,8 +1,11 @@
 #!/bin/sh
 
 # Give names of targets to use on the command line
-# coccicheck and address,undefined are not enabled by default
-default="sparse hdr-check sha256 leaks test check-docs doc"
+# by default the following would *not* run
+# coccicheck
+# address,undefined
+# test
+default="sparse hdr-check check-docs sha256 leaks doc"
 skip=" "
 more=" "
 
