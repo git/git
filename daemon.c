@@ -1308,17 +1308,21 @@ int cmd_main(int argc, const char **argv)
 			continue;
 		}
 		if (skip_prefix(arg, "--timeout=", &v)) {
-			timeout = atoi(v);
+			if (strtoul_ui(v, 10, &timeout) < 0) {
+				die("'%s': not a valid integer for --timeout", v);
+			}
 			continue;
 		}
 		if (skip_prefix(arg, "--init-timeout=", &v)) {
-			init_timeout = atoi(v);
+			if (strtoul_ui(v, 10, &init_timeout) < 0) {
+				die("'%s': not a valid integer for --init-timeout", v);
+			}
 			continue;
 		}
 		if (skip_prefix(arg, "--max-connections=", &v)) {
-			max_connections = atoi(v);
-			if (max_connections < 0)
-				max_connections = 0;	        /* unlimited */
+			if (strtol_i(v, 10, &max_connections) != 0 || max_connections < 0) {
+				max_connections = 0;  /* unlimited */
+			}
 			continue;
 		}
 		if (!strcmp(arg, "--strict-paths")) {
