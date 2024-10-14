@@ -20,6 +20,7 @@ credential-from-url-gently
 date
 pack-headers
 pack-idx
+parse-attr-line
 "
 
 for fuzzer in $fuzzers; do

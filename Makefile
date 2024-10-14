@@ -2426,6 +2426,7 @@ FUZZ_OBJS += oss-fuzz/fuzz-credential-from-url-gently.o
 FUZZ_OBJS += oss-fuzz/fuzz-date.o
 FUZZ_OBJS += oss-fuzz/fuzz-pack-headers.o
 FUZZ_OBJS += oss-fuzz/fuzz-pack-idx.o
+FUZZ_OBJS += oss-fuzz/fuzz-parse-attr-line.o
 .PHONY: fuzz-objs
 fuzz-objs: $(FUZZ_OBJS)
 
