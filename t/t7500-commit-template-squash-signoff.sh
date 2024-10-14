@@ -46,6 +46,15 @@ test_expect_success 'nonexistent template file in config should return error' '
 	)
 '
 
+test_expect_success 'nonexistent optional template file in config' '
+	test_config commit.template ":(optional)$PWD"/notexist &&
+	(
+		GIT_EDITOR="echo hello >\"\$1\"" &&
+		export GIT_EDITOR &&
+		git commit --allow-empty
+	)
+'
+
 # From now on we'll use a template file that exists.
 TEMPLATE="$PWD"/template
 
