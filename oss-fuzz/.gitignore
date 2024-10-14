@@ -1,5 +1,6 @@
 fuzz-commit-graph
 fuzz-config
+fuzz-credential-from-url-gently
 fuzz-date
 fuzz-pack-headers
 fuzz-pack-idx
