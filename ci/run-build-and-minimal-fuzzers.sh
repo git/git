@@ -21,6 +21,7 @@ date
 pack-headers
 pack-idx
 parse-attr-line
+url-decode-mem
 "
 
 for fuzzer in $fuzzers; do
