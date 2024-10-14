@@ -50,33 +50,33 @@ test_expect_success 'nonexistent template file in config should return error' '
 TEMPLATE="$PWD"/template
 
 test_expect_success 'unedited template should not commit' '
-	echo "template line" > "$TEMPLATE" &&
-	test_must_fail git commit --template "$TEMPLATE"
+	echo "template line" >"$TEMPLATE" &&
+	test_must_fail git commit --allow-empty --template "$TEMPLATE"
 '
 
 test_expect_success 'unedited template with comments should not commit' '
-	echo "# comment in template" >> "$TEMPLATE" &&
-	test_must_fail git commit --template "$TEMPLATE"
+	echo "# comment in template" >>"$TEMPLATE" &&
+	test_must_fail git commit --allow-empty --template "$TEMPLATE"
 '
 
 test_expect_success 'a Signed-off-by line by itself should not commit' '
 	(
 		test_set_editor "$TEST_DIRECTORY"/t7500/add-signed-off &&
-		test_must_fail git commit --template "$TEMPLATE"
+		test_must_fail git commit --allow-empty --template "$TEMPLATE"
 	)
 '
 
 test_expect_success 'adding comments to a template should not commit' '
 	(
 		test_set_editor "$TEST_DIRECTORY"/t7500/add-comments &&
-		test_must_fail git commit --template "$TEMPLATE"
+		test_must_fail git commit --allow-empty --template "$TEMPLATE"
 	)
 '
 
 test_expect_success 'adding real content to a template should commit' '
 	(
 		test_set_editor "$TEST_DIRECTORY"/t7500/add-content &&
-		git commit --template "$TEMPLATE"
+		git commit --allow-empty --template "$TEMPLATE"
 	) &&
 	commit_msg_is "template linecommit message"
 '
