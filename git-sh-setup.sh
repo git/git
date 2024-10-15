@@ -41,7 +41,7 @@ git_broken_path_fix () {
 	esac
 }
 
-# @@BROKEN_PATH_FIX@@
+# @BROKEN_PATH_FIX@
 
 # Source git-sh-i18n for gettext support.
 . "$(git --exec-path)/git-sh-i18n"
@@ -154,7 +154,7 @@ git_pager() {
 	else
 		GIT_PAGER=cat
 	fi
-	for vardef in @@PAGER_ENV@@
+	for vardef in @PAGER_ENV@
 	do
 		var=${vardef%%=*}
 		eval ": \"\${$vardef}\" && export $var"
@@ -280,7 +280,7 @@ get_author_ident_from_commit () {
 # remove lines from $1 that are not in $2, leaving only common lines.
 create_virtual_base() {
 	sz0=$(wc -c <"$1")
-	@@DIFF@@ -u -La/"$1" -Lb/"$1" "$1" "$2" | git apply --no-add
+	@DIFF@ -u -La/"$1" -Lb/"$1" "$1" "$2" | git apply --no-add
 	sz1=$(wc -c <"$1")
 
 	# If we do not have enough common material, it is not
