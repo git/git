@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2024, #07; Fri, 11)
-X-master-at: ef8ce8f3d4344fd3af049c17eeba5cd20d98b69f
-X-next-at: 07ac214952ed4a8d73389044a5d428bf90feeb11
+Subject: What's cooking in git.git (Oct 2024, #08; Tue, 15)
+X-master-at: 15030f9556f545b167b1879b877a5d780252dc16
+X-next-at: 2ce7280b5b5206cf0407241649e42080b873d9cc
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2024, #07; Fri, 11)
+What's cooking in git.git (Oct 2024, #08; Tue, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,9 +17,17 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Git 2.47 (final) has been tagged, the 'maint' branch now points
-at v2.47.0, the first batch of topics for 2.48 are now in 'master',
-and 'next' has been rewound, directly on top of 2.47.
+This is the first pushout from the interim maintainer. A handful of
+topics which were marked as "Will merge to 'master'" have done so, and
+'next' does not contain any new topics. I'll plan on doing another
+integration cycle towards the end of this week that will graduate some
+more topics to 'master', as well as add new topics to 'next'.
+
+Please take a close look through the report below, and make sure that
+the various integration branches look OK. I spent quite a bit of time
+refreshing my memory on how Junio's scripts work, but there is still
+room for error. If you see something that looks wrong, please let me
+know.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -50,7 +58,170 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* jh/config-unset-doc-fix (2024-10-08) 1 commit
+  (merged to 'next' on 2024-10-10 at a87ffb09b6)
+ + git-config.1: remove value from positional args in unset usage
+
+ Docfix.
+
+ source: <20241008142920.570244-2-joshiheinrichs@gmail.com>
+
+
+* jk/fsmonitor-event-listener-race-fix (2024-10-08) 2 commits
+  (merged to 'next' on 2024-10-10 at 0c40f5c971)
+ + fsmonitor: initialize fs event listener before accepting clients
+ + simple-ipc: split async server initialization and running
+
+ On macOS, fsmonitor can fall into a race condition that results in
+ a client waiting forever to be notified for an event that have
+ already happened.  This problem has been corrected.
+
+ source: <20241008083121.GA676391@coredump.intra.peff.net>
+
+
+* js/doc-platform-support-link-fix (2024-10-07) 1 commit
+  (merged to 'next' on 2024-10-10 at 55316158e7)
+ + docs: fix the `maintain-git` links in `technical/platform-support`
+
+ Docfix.
+
+ source: <pull.1812.git.1728337764963.gitgitgadget@gmail.com>
+
+
+* xx/remote-server-option-config (2024-10-08) 5 commits
+  (merged to 'next' on 2024-10-10 at 0e38c7f8c5)
+ + ls-remote: leakfix for not clearing server_options
+ + fetch: respect --server-option when fetching multiple remotes
+ + transport.c::handshake: make use of server options from remote
+ + remote: introduce remote.<name>.serverOption configuration
+ + transport: introduce parse_transport_option() method
+
+ A new configuration variable remote.<name>.serverOption makes the
+ transport layer act as if the --serverOption=<value> option is
+ given from the command line.
+
+ source: <pull.1776.v3.git.git.1728358699.gitgitgadget@gmail.com>
+
+--------------------------------------------------
 [New Topics]
+
+* am/git-blame-ignore-revs-by-default (2024-10-14) 2 commits
+ - blame: introduce --override-ignore-revs to bypass ignore revisions list
+ - blame: respect .git-blame-ignore-revs automatically
+
+ Teaches 'git blame' to treat '.git-blame-ignore-revs' as if it were
+ passed as '--ignore-revs-file' by default.
+
+ source: <pull.1809.v2.git.1728707867.gitgitgadget@gmail.com>
+
+
+* jh/optional-path (2024-10-14) 3 commits
+ - parseopt: values of pathname type can be prefixed with :(optional)
+ - config: values of pathname type can be prefixed with :(optional)
+ - t7500: make each piece more independent
+
+ Teaches the configuration mechanism that values of type pathname may
+ be prefixed with ':(optional)' to be treated as such.
+
+ source: <20241014204427.1712182-1-gitster@pobox.com>
+
+
+* kn/ci-clang-format-tidy (2024-10-14) 3 commits
+ - clang-format: don't align expressions after linebreaks
+ - clang-format: align consecutive macro definitions
+ - clang-format: re-adjust line break penalties
+
+ Updates the '.clang-format' to match project conventions.
+
+ source: <cover.1728697428.git.karthik.188@gmail.com>
+
+
+* la/trailer-info (2024-10-14) 1 commit
+ - trailer: spread usage of "trailer_block" language
+
+ Refactoring.
+
+ source: <pull.1811.git.git.1728820722580.gitgitgadget@gmail.com>
+
+
+* ps/cmake-clar (2024-10-15) 3 commits
+ - cmake: set up proper dependencies for generated clar headers
+ - cmake: fix compilation of clar-based unit tests
+ - Makefile: extract script to generate clar declarations
+
+ Buildfix for unit tests when using CMake.
+
+ source: <cover.1728985514.git.ps@pks.im>
+
+
+* ps/platform-compat-fixes (2024-10-15) 10 commits
+ - http: fix build error on FreeBSD
+ - builtin/credential-cache: fix missing parameter for stub function
+ - t7300: work around platform-specific behaviour with long paths on MinGW
+ - t5500, t5601: skip tests which exercise paths with '[::1]' on Cygwin
+ - t3404: work around platform-specific behaviour on macOS 10.15
+ - t1401: make invocation of tar(1) work with Win32-provided one
+ - t/lib-gpg: fix setup of GNUPGHOME in MinGW
+ - t/lib-gitweb: test against the build version of gitweb
+ - t/test-lib: wire up NO_ICONV prerequisite
+ - t/test-lib: fix quoting of TEST_RESULTS_SAN_FILE
+
+ Various platform compatibility fixes split out of the larger effort
+ to use Meson as the primary build tool.
+
+ Appears to break CI on Windows.
+ cf. <Zw8AaF4VOaQO+P2M@nand.local>
+ source: <cover.1728992306.git.ps@pks.im>
+
+
+* ps/reftable-strbuf (2024-10-14) 10 commits
+ - reftable: handle trivial `reftable_buf` errors
+ - reftable/stack: adapt `stack_filename()` to handle allocation failures
+ - reftable/record: adapt `reftable_record_key()` to handle allocation failures
+ - reftable/stack: adapt `format_name()` to handle allocation failures
+ - t/unit-tests: check for `reftable_buf` allocation errors
+ - reftable/blocksource: adapt interface name
+ - reftable: convert from `strbuf` to `reftable_buf`
+ - reftable/basics: provide new `reftable_buf` interface
+ - reftable: stop using `strbuf_addf()`
+ - reftable: stop using `strbuf_addbuf()`
+
+ Implements a new reftable-specific strbuf replacement to reduce
+ reftable's dependency on Git-specific data structures.
+
+ source: <cover.1728910726.git.ps@pks.im>
+
+
+* ps/upgrade-clar (2024-10-14) 2 commits
+ - Makefile: adjust sed command for generating "clar-decls.h"
+ - t/unit-tests: update clar to 0810a36
+
+ Buildfix and upgrade of Clar to a newer version.
+
+ source: <cover.1728903464.git.ps@pks.im>
+
+
+* wf/diff-highlight-install (2024-10-14) 1 commit
+ - diff-highlight: make install link into DESTDIR
+
+ Adds an 'install' recipe to diff-highlight's Makefile.
+
+ source: <pull.938.v3.git.git.1728764613835.gitgitgadget@gmail.com>
+
+
+* wm/shortlog-hash (2024-10-15) 1 commit
+ - builtin/shortlog: explicitly set hash algo when there is no repo
+
+ Teaches 'shortlog' to explicitly use SHA-1 when operating outside of
+ a repository.
+
+ Breaks CI.
+ source: <20241015114826.715158-1-wolf@oriole.systems>
+
+--------------------------------------------------
+[Cooking]
 
 * bc/drop-ancient-libcurl-and-perl (2024-10-11) 13 commits
  - gitweb: make use of s///r
@@ -73,8 +244,8 @@ Release tarballs are available at:
  source: <20241010235621.738239-1-sandals@crustytoothpaste.net>
 
 
-* co/t6050-pipefix (2024-10-11) 1 commit
- - t6050: do not lose exit status of Git to pipes
+* co/t6050-pipefix (2024-10-15) 1 commit
+ - t6050: avoid pipes with upstream Git commands
 
  Avoid losing exit status by having Git command being tested on the
  upstream side of a pipe.
@@ -82,10 +253,10 @@ Release tarballs are available at:
  Needs review.
  There is at least one known broken conversion.
  cf. <CAPig+cRLdzAEA-G=L81yR9dmm8Y-5VEU7ybyohKmbq9=0bDUaQ@mail.gmail.com>
- source: <20241011154555.584917-1-chizobajames21@gmail.com>
+ source: <20241015112645.415955-1-chizobajames21@gmail.com>
 
 
-* es/oss-fuzz (2024-10-11) 3 commits
+* es/oss-fuzz (2024-10-15) 3 commits
  - fuzz: port fuzz-url-decode-mem from OSS-Fuzz
  - fuzz: port fuzz-parse-attr-line from OSS-Fuzz
  - fuzz: port fuzz-credential-from-url-gently from OSS-Fuzz
@@ -93,7 +264,7 @@ Release tarballs are available at:
  Backport oss-fuzz tests for us to our codebase.
 
  Needs review.
- source: <cover.1728594659.git.steadmon@google.com>
+ source: <cover.1728939687.git.steadmon@google.com>
 
 
 * tb/cross-pack-delta-reuse (2024-10-11) 11 commits
@@ -124,8 +295,6 @@ Release tarballs are available at:
  Will merge to 'next'.
  source: <20241011191150.825255-1-bence@ferdinandy.com>
 
---------------------------------------------------
-[Cooking]
 
 * aa/t7300-modernize (2024-10-09) 1 commit
   (merged to 'next' on 2024-10-11 at e3a8d7f6c4)
@@ -137,22 +306,23 @@ Release tarballs are available at:
  source: <pull.1811.v4.git.1728498122419.gitgitgadget@gmail.com>
 
 
-* bf/set-head-symref (2024-10-10) 6 commits
+* bf/set-head-symref (2024-10-15) 6 commits
  - fetch: set remote/HEAD if it does not exist
- - refs_update_symref: add create_only option
- - transaction: add TRANSACTION_CREATE_EXISTS error
- - set-head: better output for --auto
- - set-head: add new variable for readability
- - refs_update_symref: atomically record overwritten ref
+ - refs: add create_only option to refs_update_symref
+ - refs: add TRANSACTION_CREATE_EXISTS error
+ - remote set-head: better output for --auto
+ - remote set-head: add new variable for readability
+ - refs: atomically record overwritten ref in update_symref
 
  When "git fetch $remote" notices that refs/remotes/$remote/HEAD is
  missing and discovers what branch the other side points with its
  HEAD, refs/remotes/$remote/HEAD is updated to point to it.
 
- Expecting a reroll.
  Needs to shed files backend dependency a bit more.
+ Breaks CI.
+ cf. <Zw8IKyPkG0Hr6/5t@nand.local>
  cf. <D4SUTJDV0Y04.3Q8YED2MVOKBL@ferdinandy.com>
- source: <20241010133022.1733542-1-bence@ferdinandy.com>
+ source: <20241014225431.1394565-1-bence@ferdinandy.com>
 
 
 * db/submodule-fetch-with-remote-name-fix (2024-10-09) 1 commit
@@ -292,10 +462,10 @@ Release tarballs are available at:
 
 
 * cw/worktree-relative (2024-10-08) 4 commits
- - worktree: add test for path handling in linked worktrees
- - worktree: link worktrees with relative paths
- - worktree: refactor infer_backlink() to use *strbuf
- - Merge branch 'es/worktree-repair-copied' into cw/worktrees-relative
+ + worktree: add test for path handling in linked worktrees
+ + worktree: link worktrees with relative paths
+ + worktree: refactor infer_backlink() to use *strbuf
+ + Merge branch 'es/worktree-repair-copied' into cw/worktrees-relative
  (this branch uses es/worktree-repair-copied.)
 
  An extra worktree attached to a repository points at each other to
@@ -334,10 +504,10 @@ Release tarballs are available at:
  source: <pull.1813.git.1728396723.gitgitgadget@gmail.com>
 
 
-* hy/partial-repack-fix (2024-10-08) 3 commits
- . partial-clone: update doc
- . t0410: adapt tests to repack changes
- . repack: pack everything into packfile
+* hy/partial-repack-fix (2024-10-15) 3 commits
+ - partial-clone: update doc
+ - t0410: adapt tests to repack changes
+ - repack: pack everything into packfile
 
  "git repack" avoids losing local objects that are reachable from
  objects in a packfile fetched from a promisor remote.
@@ -346,40 +516,7 @@ Release tarballs are available at:
  cf. <xmqqa5faec4x.fsf@gitster.g>
  Breaks CI.
  cf. <xmqqzfnexlku.fsf@gitster.g>
- source: <20241008081350.8950-1-hanyang.tony@bytedance.com>
-
-
-* jh/config-unset-doc-fix (2024-10-08) 1 commit
-  (merged to 'next' on 2024-10-10 at a87ffb09b6)
- + git-config.1: remove value from positional args in unset usage
-
- Docfix.
-
- Will merge to 'master'.
- source: <20241008142920.570244-2-joshiheinrichs@gmail.com>
-
-
-* jk/fsmonitor-event-listener-race-fix (2024-10-08) 2 commits
-  (merged to 'next' on 2024-10-10 at 0c40f5c971)
- + fsmonitor: initialize fs event listener before accepting clients
- + simple-ipc: split async server initialization and running
-
- On macOS, fsmonitor can fall into a race condition that results in
- a client waiting forever to be notified for an event that have
- already happened.  This problem has been corrected.
-
- Will merge to 'master'.
- source: <20241008083121.GA676391@coredump.intra.peff.net>
-
-
-* js/doc-platform-support-link-fix (2024-10-07) 1 commit
-  (merged to 'next' on 2024-10-10 at 55316158e7)
- + docs: fix the `maintain-git` links in `technical/platform-support`
-
- Docfix.
-
- Will merge to 'master'.
- source: <pull.1812.git.1728337764963.gitgitgadget@gmail.com>
+ source: <20241014032546.68427-1-hanyang.tony@bytedance.com>
 
 
 * kh/merge-tree-doc (2024-10-09) 1 commit
@@ -403,9 +540,9 @@ Release tarballs are available at:
 
 
 * ps/cache-tree-w-broken-index-entry (2024-10-07) 3 commits
- - unpack-trees: detect mismatching number of cache-tree/index entries
- - cache-tree: detect mismatching number of index entries
- - cache-tree: refactor verification to return error codes
+ + unpack-trees: detect mismatching number of cache-tree/index entries
+ + cache-tree: detect mismatching number of index entries
+ + cache-tree: refactor verification to return error codes
 
  Fail gracefully instead of crashing when attempting to write the
  contents of a corrupt in-core index as a tree object.
@@ -425,30 +562,15 @@ Release tarballs are available at:
  source: <a5b1433abfd84cb627efc17f52e0d644ee207bb0.1728538282.git.ps@pks.im>
 
 
-* ua/t3404-cleanup (2024-10-07) 2 commits
- - t3404: employing test_line_count() to replace test
+* ua/t3404-cleanup (2024-10-14) 3 commits
+ - parse: replace atoi() with strtoul_ui() and strtol_i()
+ - t3404: replace test with test_line_count()
  - t3404: avoid losing exit status with focus on `git show` and `git cat-file`
 
  Test update.
 
  Will merge to 'next'?
- source: <pull.1805.v6.git.git.1728299466.gitgitgadget@gmail.com>
-
-
-* xx/remote-server-option-config (2024-10-08) 5 commits
-  (merged to 'next' on 2024-10-10 at 0e38c7f8c5)
- + ls-remote: leakfix for not clearing server_options
- + fetch: respect --server-option when fetching multiple remotes
- + transport.c::handshake: make use of server options from remote
- + remote: introduce remote.<name>.serverOption configuration
- + transport: introduce parse_transport_option() method
-
- A new configuration variable remote.<name>.serverOption makes the
- transport layer act as if the --serverOption=<value> option is
- given from the command line.
-
- Will merge to 'master'.
- source: <pull.1776.v3.git.git.1728358699.gitgitgadget@gmail.com>
+ source: <pull.1810.git.git.1728774574.gitgitgadget@gmail.com>
 
 
 * jc/a-commands-without-the-repo (2024-10-11) 3 commits
@@ -482,7 +604,7 @@ Release tarballs are available at:
 
 
 * es/worktree-repair-copied (2024-09-23) 1 commit
- - worktree: repair copied repository and linked worktrees
+ + worktree: repair copied repository and linked worktrees
  (this branch is used by cw/worktree-relative.)
 
  The heuristics in "git worktree repair" can be confused when a
