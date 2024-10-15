@@ -4,6 +4,11 @@ Git v2.48 Release Notes
 UI, Workflows & Features
 ------------------------
 
+ * A new configuration variable remote.<name>.serverOption makes the
+   transport layer act as if the --serverOption=<value> option is
+   given from the command line.
+
+
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
 
@@ -30,6 +35,13 @@ Fixes since v2.47
    had been identified and fixed.
    (merge fc5589d6c1 ds/line-log-asan-fix later to maint).
 
+ * On macOS, fsmonitor can fall into a race condition that results in
+   a client waiting forever to be notified for an event that have
+   already happened.  This problem has been corrected.
+   (merge 51907f8fee jk/fsmonitor-event-listener-race-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 66893a14d0 ps/leakfixes-part-8 later to maint).
    (merge 1164e270b5 jk/output-prefix-cleanup later to maint).
+   (merge f36b8cbaef jh/config-unset-doc-fix later to maint).
+   (merge 4154ed4108 js/doc-platform-support-link-fix later to maint).
