@@ -432,59 +432,44 @@ static int for_each_filter_refs(const char *refname, const char *referent,
 	return filter->fn(refname, referent, oid, flags, filter->cb_data);
 }
 
-struct warn_if_dangling_data {
-	struct ref_store *refs;
-	FILE *fp;
-	const char *refname;
-	const struct string_list *refnames;
-	const char *msg_fmt;
-};
-
-static int warn_if_dangling_symref(const char *refname, const char *referent UNUSED,
-				   const struct object_id *oid UNUSED,
-				   int flags, void *cb_data)
+static int append_symref(const char *refname, const char *referent UNUSED,
+			 const struct object_id *oid UNUSED, int flags,
+			 void *cb_data)
 {
-	struct warn_if_dangling_data *d = cb_data;
-	const char *resolves_to;
+	struct string_list *symrefs = cb_data;
 
-	if (!(flags & REF_ISSYMREF))
-		return 0;
-
-	resolves_to = refs_resolve_ref_unsafe(d->refs, refname, 0, NULL, NULL);
-	if (!resolves_to
-	    || (d->refname
-		? strcmp(resolves_to, d->refname)
-		: !string_list_has_string(d->refnames, resolves_to))) {
-		return 0;
-	}
-
-	fprintf(d->fp, d->msg_fmt, refname);
-	fputc('\n', d->fp);
+	if (flags & REF_ISSYMREF)
+		string_list_append(symrefs, refname);
 	return 0;
 }
 
-void refs_warn_dangling_symref(struct ref_store *refs, FILE *fp,
-			       const char *msg_fmt, const char *refname)
+int refs_get_symrefs(struct ref_store *refs, struct string_list *symrefs)
 {
-	struct warn_if_dangling_data data = {
-		.refs = refs,
-		.fp = fp,
-		.refname = refname,
-		.msg_fmt = msg_fmt,
-	};
-	refs_for_each_rawref(refs, warn_if_dangling_symref, &data);
+	return refs_for_each_rawref(refs, append_symref, symrefs);
 }
 
-void refs_warn_dangling_symrefs(struct ref_store *refs, FILE *fp,
-				const char *msg_fmt, const struct string_list *refnames)
+int refs_get_dangling_symrefs(struct ref_store *refs,
+			      const struct string_list *purned_refnames,
+			      struct string_list *dangling_refnames)
 {
-	struct warn_if_dangling_data data = {
-		.refs = refs,
-		.fp = fp,
-		.refnames = refnames,
-		.msg_fmt = msg_fmt,
-	};
-	refs_for_each_rawref(refs, warn_if_dangling_symref, &data);
+	struct string_list symrefs = STRING_LIST_INIT_NODUP;
+	struct string_list_item *item;
+	const char *resolves_to;
+	int ret;
+
+	ret = refs_get_symrefs(refs, &symrefs);
+	if (!ret)
+		return ret;
+	for_each_string_list_item (item, &symrefs) {
+		resolves_to = refs_resolve_ref_unsafe(refs, item->string, 0,
+						      NULL, NULL);
+		if (!resolves_to &&
+		    string_list_has_string(purned_refnames, resolves_to)) {
+			string_list_append(dangling_refnames, item->string);
+		}
+	}
+	string_list_clear(&symrefs, 0);
+	return 0;
 }
 
 int refs_for_each_tag_ref(struct ref_store *refs, each_ref_fn fn, void *cb_data)

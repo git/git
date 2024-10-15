@@ -1377,6 +1377,24 @@ out:
 	return ret;
 }
 
+static void warn_dangling_ref(struct ref *ref,
+			      struct string_list *symrefs)
+{
+	const char *resolves_to;
+	struct string_list_item *symref;
+	const char *dangling_msg = dry_run ? _("   (%s will become dangling)") :
+					     _("   (%s has become dangling)");
+	for_each_string_list_item (symref, symrefs) {
+		resolves_to = refs_resolve_ref_unsafe(
+			get_main_ref_store(the_repository), symref->string, 0,
+			NULL, NULL);
+		if (resolves_to && strcmp(resolves_to, ref->name) == 0) {
+			fprintf(stderr, dangling_msg, symref->string);
+			fputc('\n', stderr);
+		}
+	}
+}
+
 static int prune_refs(struct display_state *display_state,
 		      struct refspec *rs,
 		      struct ref_transaction *transaction,
@@ -1385,9 +1403,6 @@ static int prune_refs(struct display_state *display_state,
 	int result = 0;
 	struct ref *ref, *stale_refs = get_stale_heads(rs, ref_map);
 	struct strbuf err = STRBUF_INIT;
-	const char *dangling_msg = dry_run
-		? _("   (%s will become dangling)")
-		: _("   (%s has become dangling)");
 
 	if (!dry_run) {
 		if (transaction) {
@@ -1413,14 +1428,19 @@ static int prune_refs(struct display_state *display_state,
 	if (verbosity >= 0) {
 		int summary_width = transport_summary_width(stale_refs);
 
+		struct string_list symrefs = STRING_LIST_INIT_NODUP;
+
+
+		refs_get_symrefs(get_main_ref_store(the_repository), &symrefs);
+
 		for (ref = stale_refs; ref; ref = ref->next) {
 			display_ref_update(display_state, '-', _("[deleted]"), NULL,
 					   _("(none)"), ref->name,
 					   &ref->new_oid, &ref->old_oid,
 					   summary_width);
-			refs_warn_dangling_symref(get_main_ref_store(the_repository),
-						  stderr, dangling_msg, ref->name);
+			warn_dangling_ref(ref, &symrefs);
 		}
+		string_list_clear(&symrefs, 0);
 	}
 
 cleanup:
@@ -1686,12 +1706,14 @@ static int do_fetch(struct transport *transport,
 		 * explicitly (via command line or configuration); we
 		 * don't care whether --tags was specified.
 		 */
+		trace2_region_enter("fetch", "prune_refs", the_repository);
 		if (rs->nr) {
 			retcode = prune_refs(&display_state, rs, transaction, ref_map);
 		} else {
 			retcode = prune_refs(&display_state, &transport->remote->fetch,
 					     transaction, ref_map);
 		}
+		trace2_region_leave("fetch", "prune_refs", the_repository);
 		if (retcode != 0)
 			retcode = 1;
 	}

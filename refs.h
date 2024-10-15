@@ -394,10 +394,10 @@ static inline const char *has_glob_specials(const char *pattern)
 	return strpbrk(pattern, "?*[");
 }
 
-void refs_warn_dangling_symref(struct ref_store *refs, FILE *fp,
-			       const char *msg_fmt, const char *refname);
-void refs_warn_dangling_symrefs(struct ref_store *refs, FILE *fp,
-				const char *msg_fmt, const struct string_list *refnames);
+int refs_get_symrefs(struct ref_store *refs, struct string_list *symrefs);
+
+int refs_get_dangling_symrefs(struct ref_store *refs, const struct string_list *refnames,
+			       struct string_list *dangling_refnames);
 
 /*
  * Flags for controlling behaviour of pack_refs()
