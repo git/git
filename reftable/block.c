@@ -60,7 +60,7 @@ static int block_writer_register_restart(struct block_writer *w, int n,
 	w->next += n;
 
 	strbuf_reset(&w->last_key);
-	strbuf_addbuf(&w->last_key, key);
+	strbuf_add(&w->last_key, key->buf, key->len);
 	w->entries++;
 	return 0;
 }

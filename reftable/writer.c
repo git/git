@@ -225,7 +225,7 @@ static int writer_index_hash(struct reftable_writer *w, struct strbuf *hash)
 		*key = empty;
 
 		strbuf_reset(&key->hash);
-		strbuf_addbuf(&key->hash, hash);
+		strbuf_add(&key->hash, hash->buf, hash->len);
 		tree_insert(&w->obj_index_tree, key,
 			    &obj_index_tree_node_compare);
 	} else {
@@ -256,7 +256,7 @@ static int writer_add_record(struct reftable_writer *w,
 	}
 
 	strbuf_reset(&w->last_key);
-	strbuf_addbuf(&w->last_key, &key);
+	strbuf_add(&w->last_key, key.buf, key.len);
 	if (!w->block_writer) {
 		err = writer_reinit_block_writer(w, reftable_record_type(rec));
 		if (err < 0)
@@ -778,7 +778,8 @@ static int writer_flush_nonempty_block(struct reftable_writer *w)
 
 	index_record.offset = w->next;
 	strbuf_reset(&index_record.last_key);
-	strbuf_addbuf(&index_record.last_key, &w->block_writer->last_key);
+	strbuf_add(&index_record.last_key, w->block_writer->last_key.buf,
+		   w->block_writer->last_key.len);
 	w->index[w->index_len] = index_record;
 	w->index_len++;
 

@@ -1031,7 +1031,7 @@ static void reftable_index_record_key(const void *r, struct strbuf *dest)
 {
 	const struct reftable_index_record *rec = r;
 	strbuf_reset(dest);
-	strbuf_addbuf(dest, &rec->last_key);
+	strbuf_add(dest, rec->last_key.buf, rec->last_key.len);
 }
 
 static int reftable_index_record_copy_from(void *rec, const void *src_rec,
@@ -1041,7 +1041,7 @@ static int reftable_index_record_copy_from(void *rec, const void *src_rec,
 	const struct reftable_index_record *src = src_rec;
 
 	strbuf_reset(&dst->last_key);
-	strbuf_addbuf(&dst->last_key, &src->last_key);
+	strbuf_add(&dst->last_key, src->last_key.buf, src->last_key.len);
 	dst->offset = src->offset;
 
 	return 0;
@@ -1085,7 +1085,7 @@ static int reftable_index_record_decode(void *rec, struct strbuf key,
 	int n = 0;
 
 	strbuf_reset(&r->last_key);
-	strbuf_addbuf(&r->last_key, &key);
+	strbuf_add(&r->last_key, key.buf, key.len);
 
 	n = get_var_int(&r->offset, &in);
 	if (n < 0)
