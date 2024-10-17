@@ -623,14 +623,14 @@ int reftable_stack_add(struct reftable_stack *st,
 	return 0;
 }
 
-static void format_name(struct reftable_buf *dest, uint64_t min, uint64_t max)
+static int format_name(struct reftable_buf *dest, uint64_t min, uint64_t max)
 {
 	char buf[100];
 	uint32_t rnd = (uint32_t)git_rand();
 	snprintf(buf, sizeof(buf), "0x%012" PRIx64 "-0x%012" PRIx64 "-%08x",
 		 min, max, rnd);
 	reftable_buf_reset(dest);
-	reftable_buf_addstr(dest, buf);
+	return reftable_buf_addstr(dest, buf);
 }
 
 struct reftable_addition {
@@ -846,7 +846,10 @@ int reftable_addition_add(struct reftable_addition *add,
 	int tab_fd;
 
 	reftable_buf_reset(&next_name);
-	format_name(&next_name, add->next_update_index, add->next_update_index);
+
+	err = format_name(&next_name, add->next_update_index, add->next_update_index);
+	if (err < 0)
+		goto done;
 
 	stack_filename(&temp_tab_file_name, add->stack, next_name.buf);
 	reftable_buf_addstr(&temp_tab_file_name, ".temp.XXXXXX");
@@ -893,7 +896,9 @@ int reftable_addition_add(struct reftable_addition *add,
 		goto done;
 	}
 
-	format_name(&next_name, wr->min_update_index, wr->max_update_index);
+	err = format_name(&next_name, wr->min_update_index, wr->max_update_index);
+	if (err < 0)
+		goto done;
 	reftable_buf_addstr(&next_name, ".ref");
 	stack_filename(&tab_file_name, add->stack, next_name.buf);
 
@@ -944,9 +949,11 @@ static int stack_compact_locked(struct reftable_stack *st,
 	struct tempfile *tab_file;
 	int tab_fd, err = 0;
 
-	format_name(&next_name,
-		    reftable_reader_min_update_index(st->readers[first]),
-		    reftable_reader_max_update_index(st->readers[last]));
+	err = format_name(&next_name, reftable_reader_min_update_index(st->readers[first]),
+			  reftable_reader_max_update_index(st->readers[last]));
+	if (err < 0)
+		goto done;
+
 	stack_filename(&tab_file_path, st, next_name.buf);
 	reftable_buf_addstr(&tab_file_path, ".temp.XXXXXX");
 
@@ -1370,8 +1377,11 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * it into place now.
 	 */
 	if (!is_empty_table) {
-		format_name(&new_table_name, st->readers[first]->min_update_index,
-			    st->readers[last]->max_update_index);
+		err = format_name(&new_table_name, st->readers[first]->min_update_index,
+				  st->readers[last]->max_update_index);
+		if (err < 0)
+			goto done;
+
 		reftable_buf_addstr(&new_table_name, ".ref");
 		stack_filename(&new_table_path, st, new_table_name.buf);
 
