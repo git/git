@@ -31,13 +31,16 @@ static void reftable_addition_close(struct reftable_addition *add);
 static int reftable_stack_reload_maybe_reuse(struct reftable_stack *st,
 					     int reuse_open);
 
-static void stack_filename(struct reftable_buf *dest, struct reftable_stack *st,
-			   const char *name)
+static int stack_filename(struct reftable_buf *dest, struct reftable_stack *st,
+			  const char *name)
 {
+	int err;
 	reftable_buf_reset(dest);
-	reftable_buf_addstr(dest, st->reftable_dir);
-	reftable_buf_addstr(dest, "/");
-	reftable_buf_addstr(dest, name);
+	if ((err = reftable_buf_addstr(dest, st->reftable_dir)) < 0 ||
+	    (err = reftable_buf_addstr(dest, "/")) < 0 ||
+	    (err = reftable_buf_addstr(dest, name)) < 0)
+		return err;
+	return 0;
 }
 
 static ssize_t reftable_fd_write(void *arg, const void *data, size_t sz)
@@ -211,13 +214,16 @@ void reftable_stack_destroy(struct reftable_stack *st)
 		struct reftable_buf filename = REFTABLE_BUF_INIT;
 		for (i = 0; i < st->readers_len; i++) {
 			const char *name = reader_name(st->readers[i]);
+			int try_unlinking = 1;
+
 			reftable_buf_reset(&filename);
 			if (names && !has_name(names, name)) {
-				stack_filename(&filename, st, name);
+				if (stack_filename(&filename, st, name) < 0)
+					try_unlinking = 0;
 			}
 			reftable_reader_decref(st->readers[i]);
 
-			if (filename.len) {
+			if (try_unlinking && filename.len) {
 				/* On Windows, can only unlink after closing. */
 				unlink(filename.buf);
 			}
@@ -310,7 +316,10 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 
 		if (!rd) {
 			struct reftable_block_source src = { NULL };
-			stack_filename(&table_path, st, name);
+
+			err = stack_filename(&table_path, st, name);
+			if (err < 0)
+				goto done;
 
 			err = reftable_block_source_from_file(&src,
 							      table_path.buf);
@@ -341,7 +350,11 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 	for (i = 0; i < cur_len; i++) {
 		if (cur[i]) {
 			const char *name = reader_name(cur[i]);
-			stack_filename(&table_path, st, name);
+
+			err = stack_filename(&table_path, st, name);
+			if (err < 0)
+				goto done;
+
 			reftable_reader_decref(cur[i]);
 			unlink(table_path.buf);
 		}
@@ -700,8 +713,8 @@ static void reftable_addition_close(struct reftable_addition *add)
 	size_t i;
 
 	for (i = 0; i < add->new_tables_len; i++) {
-		stack_filename(&nm, add->stack, add->new_tables[i]);
-		unlink(nm.buf);
+		if (!stack_filename(&nm, add->stack, add->new_tables[i]))
+			unlink(nm.buf);
 		reftable_free(add->new_tables[i]);
 		add->new_tables[i] = NULL;
 	}
@@ -851,7 +864,9 @@ int reftable_addition_add(struct reftable_addition *add,
 	if (err < 0)
 		goto done;
 
-	stack_filename(&temp_tab_file_name, add->stack, next_name.buf);
+	err = stack_filename(&temp_tab_file_name, add->stack, next_name.buf);
+	if (err < 0)
+		goto done;
 	reftable_buf_addstr(&temp_tab_file_name, ".temp.XXXXXX");
 
 	tab_file = mks_tempfile(temp_tab_file_name.buf);
@@ -900,7 +915,10 @@ int reftable_addition_add(struct reftable_addition *add,
 	if (err < 0)
 		goto done;
 	reftable_buf_addstr(&next_name, ".ref");
-	stack_filename(&tab_file_name, add->stack, next_name.buf);
+
+	err = stack_filename(&tab_file_name, add->stack, next_name.buf);
+	if (err < 0)
+		goto done;
 
 	/*
 	  On windows, this relies on rand() picking a unique destination name.
@@ -954,7 +972,9 @@ static int stack_compact_locked(struct reftable_stack *st,
 	if (err < 0)
 		goto done;
 
-	stack_filename(&tab_file_path, st, next_name.buf);
+	err = stack_filename(&tab_file_path, st, next_name.buf);
+	if (err < 0)
+		goto done;
 	reftable_buf_addstr(&tab_file_path, ".temp.XXXXXX");
 
 	tab_file = mks_tempfile(tab_file_path.buf);
@@ -1174,7 +1194,9 @@ static int stack_compact_range(struct reftable_stack *st,
 	}
 
 	for (i = last + 1; i > first; i--) {
-		stack_filename(&table_name, st, reader_name(st->readers[i - 1]));
+		err = stack_filename(&table_name, st, reader_name(st->readers[i - 1]));
+		if (err < 0)
+			goto done;
 
 		err = hold_lock_file_for_update(&table_locks[nlocks],
 						table_name.buf, LOCK_NO_DEREF);
@@ -1383,7 +1405,10 @@ static int stack_compact_range(struct reftable_stack *st,
 			goto done;
 
 		reftable_buf_addstr(&new_table_name, ".ref");
-		stack_filename(&new_table_path, st, new_table_name.buf);
+
+		err = stack_filename(&new_table_path, st, new_table_name.buf);
+		if (err < 0)
+			goto done;
 
 		err = rename_tempfile(&new_table, new_table_path.buf);
 		if (err < 0) {
@@ -1677,7 +1702,10 @@ static void remove_maybe_stale_table(struct reftable_stack *st, uint64_t max,
 	struct reftable_block_source src = { NULL };
 	struct reftable_reader *rd = NULL;
 	struct reftable_buf table_path = REFTABLE_BUF_INIT;
-	stack_filename(&table_path, st, name);
+
+	err = stack_filename(&table_path, st, name);
+	if (err < 0)
+		goto done;
 
 	err = reftable_block_source_from_file(&src, table_path.buf);
 	if (err < 0)
