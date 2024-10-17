@@ -113,8 +113,8 @@ int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 		};
 
 		for (size_t i = 0; i < ARRAY_SIZE(cases); i++) {
-			reftable_buf_addstr(&a, cases[i].a);
-			reftable_buf_addstr(&b, cases[i].b);
+			check(!reftable_buf_addstr(&a, cases[i].a));
+			check(!reftable_buf_addstr(&b, cases[i].b));
 			check_int(common_prefix_size(&a, &b), ==, cases[i].want);
 			reftable_buf_reset(&a);
 			reftable_buf_reset(&b);

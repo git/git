@@ -167,7 +167,7 @@ static void t_log_block_read_write(void)
 	for (i = 0; i < N; i++) {
 		block_iter_reset(&it);
 		reftable_buf_reset(&want);
-		reftable_buf_addstr(&want, recs[i].u.log.refname);
+		check(!reftable_buf_addstr(&want, recs[i].u.log.refname));
 
 		ret = block_iter_seek_key(&it, &br, &want);
 		check_int(ret, ==, 0);
@@ -314,7 +314,7 @@ static void t_index_block_read_write(void)
 
 		reftable_buf_init(&recs[i].u.idx.last_key);
 		recs[i].type = BLOCK_TYPE_INDEX;
-		reftable_buf_addstr(&recs[i].u.idx.last_key, buf);
+		check(!reftable_buf_addstr(&recs[i].u.idx.last_key, buf));
 		recs[i].u.idx.offset = i;
 
 		ret = block_writer_add(&bw, &recs[i]);

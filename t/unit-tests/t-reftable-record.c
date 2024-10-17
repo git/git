@@ -335,14 +335,14 @@ static void t_key_roundtrip(void)
 	int n, m;
 	uint8_t rt_extra;
 
-	reftable_buf_addstr(&last_key, "refs/heads/master");
-	reftable_buf_addstr(&key, "refs/tags/bla");
+	check(!reftable_buf_addstr(&last_key, "refs/heads/master"));
+	check(!reftable_buf_addstr(&key, "refs/tags/bla"));
 	extra = 6;
 	n = reftable_encode_key(&restart, dest, last_key, key, extra);
 	check(!restart);
 	check_int(n, >, 0);
 
-	reftable_buf_addstr(&roundtrip, "refs/heads/master");
+	check(!reftable_buf_addstr(&roundtrip, "refs/heads/master"));
 	m = reftable_decode_key(&roundtrip, &rt_extra, dest);
 	check_int(n, ==, m);
 	check(!reftable_buf_cmp(&key, &roundtrip));
@@ -469,9 +469,9 @@ static void t_reftable_index_record_comparison(void)
 			.u.idx.last_key = REFTABLE_BUF_INIT,
 		},
 	};
-	reftable_buf_addstr(&in[0].u.idx.last_key, "refs/heads/master");
-	reftable_buf_addstr(&in[1].u.idx.last_key, "refs/heads/master");
-	reftable_buf_addstr(&in[2].u.idx.last_key, "refs/heads/branch");
+	check(!reftable_buf_addstr(&in[0].u.idx.last_key, "refs/heads/master"));
+	check(!reftable_buf_addstr(&in[1].u.idx.last_key, "refs/heads/master"));
+	check(!reftable_buf_addstr(&in[2].u.idx.last_key, "refs/heads/branch"));
 
 	check(!reftable_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
 	check(!reftable_record_cmp(&in[0], &in[1]));
@@ -510,7 +510,7 @@ static void t_reftable_index_record_roundtrip(void)
 	int n, m;
 	uint8_t extra;
 
-	reftable_buf_addstr(&in.u.idx.last_key, "refs/heads/master");
+	check(!reftable_buf_addstr(&in.u.idx.last_key, "refs/heads/master"));
 	reftable_record_key(&in, &key);
 	t_copy(&in);
 

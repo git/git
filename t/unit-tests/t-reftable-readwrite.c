@@ -23,7 +23,7 @@ static void t_buffer(void)
 	struct reftable_block out = { 0 };
 	int n;
 	uint8_t in[] = "hello";
-	reftable_buf_add(&buf, in, sizeof(in));
+	check(!reftable_buf_add(&buf, in, sizeof(in)));
 	block_source_from_buf(&source, &buf);
 	check_int(block_source_size(&source), ==, 6);
 	n = block_source_read_block(&source, &out, 0, sizeof(in));
@@ -443,8 +443,8 @@ static void t_table_read_write_seek(int index, int hash_id)
 		reftable_iterator_destroy(&it);
 	}
 
-	reftable_buf_addstr(&pastLast, names[N - 1]);
-	reftable_buf_addstr(&pastLast, "/");
+	check(!reftable_buf_addstr(&pastLast, names[N - 1]));
+	check(!reftable_buf_addstr(&pastLast, "/"));
 
 	err = reftable_reader_init_ref_iterator(reader, &it);
 	check(!err);
@@ -901,7 +901,7 @@ static void t_corrupt_table(void)
 	struct reftable_block_source source = { 0 };
 	struct reftable_reader *reader;
 	int err;
-	reftable_buf_add(&buf, zeros, sizeof(zeros));
+	check(!reftable_buf_add(&buf, zeros, sizeof(zeros)));
 
 	block_source_from_buf(&source, &buf);
 	err = reftable_reader_new(&reader, &source, "file.log");

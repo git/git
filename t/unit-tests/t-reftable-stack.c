@@ -172,17 +172,17 @@ static void t_reftable_stack_add_one(void)
 	check_int(st->readers_len, >, 0);
 
 #ifndef GIT_WINDOWS_NATIVE
-	reftable_buf_addstr(&scratch, dir);
-	reftable_buf_addstr(&scratch, "/tables.list");
+	check(!reftable_buf_addstr(&scratch, dir));
+	check(!reftable_buf_addstr(&scratch, "/tables.list"));
 	err = stat(scratch.buf, &stat_result);
 	check(!err);
 	check_int((stat_result.st_mode & 0777), ==, opts.default_permissions);
 
 	reftable_buf_reset(&scratch);
-	reftable_buf_addstr(&scratch, dir);
-	reftable_buf_addstr(&scratch, "/");
+	check(!reftable_buf_addstr(&scratch, dir));
+	check(!reftable_buf_addstr(&scratch, "/"));
 	/* do not try at home; not an external API for reftable. */
-	reftable_buf_addstr(&scratch, st->readers[0]->name);
+	check(!reftable_buf_addstr(&scratch, st->readers[0]->name));
 	err = stat(scratch.buf, &stat_result);
 	check(!err);
 	check_int((stat_result.st_mode & 0777), ==, opts.default_permissions);
@@ -432,10 +432,10 @@ static void t_reftable_stack_auto_compaction_fails_gracefully(void)
 	 * Adding a new table to the stack should not be impacted by this, even
 	 * though auto-compaction will now fail.
 	 */
-	reftable_buf_addstr(&table_path, dir);
-	reftable_buf_addstr(&table_path, "/");
-	reftable_buf_addstr(&table_path, st->readers[0]->name);
-	reftable_buf_addstr(&table_path, ".lock");
+	check(!reftable_buf_addstr(&table_path, dir));
+	check(!reftable_buf_addstr(&table_path, "/"));
+	check(!reftable_buf_addstr(&table_path, st->readers[0]->name));
+	check(!reftable_buf_addstr(&table_path, ".lock"));
 	write_file_buf(table_path.buf, "", 0);
 
 	ref.update_index = 2;
@@ -575,17 +575,17 @@ static void t_reftable_stack_add(void)
 	}
 
 #ifndef GIT_WINDOWS_NATIVE
-	reftable_buf_addstr(&path, dir);
-	reftable_buf_addstr(&path, "/tables.list");
+	check(!reftable_buf_addstr(&path, dir));
+	check(!reftable_buf_addstr(&path, "/tables.list"));
 	err = stat(path.buf, &stat_result);
 	check(!err);
 	check_int((stat_result.st_mode & 0777), ==, opts.default_permissions);
 
 	reftable_buf_reset(&path);
-	reftable_buf_addstr(&path, dir);
-	reftable_buf_addstr(&path, "/");
+	check(!reftable_buf_addstr(&path, dir));
+	check(!reftable_buf_addstr(&path, "/"));
 	/* do not try at home; not an external API for reftable. */
-	reftable_buf_addstr(&path, st->readers[0]->name);
+	check(!reftable_buf_addstr(&path, st->readers[0]->name));
 	err = stat(path.buf, &stat_result);
 	check(!err);
 	check_int((stat_result.st_mode & 0777), ==, opts.default_permissions);
@@ -1078,10 +1078,10 @@ static void t_reftable_stack_auto_compaction_with_locked_tables(void)
 	 * size, we expect that auto-compaction will want to compact all of the
 	 * tables. Locking any of the tables will keep it from doing so.
 	 */
-	reftable_buf_addstr(&buf, dir);
-	reftable_buf_addstr(&buf, "/");
-	reftable_buf_addstr(&buf, st->readers[2]->name);
-	reftable_buf_addstr(&buf, ".lock");
+	check(!reftable_buf_addstr(&buf, dir));
+	check(!reftable_buf_addstr(&buf, "/"));
+	check(!reftable_buf_addstr(&buf, st->readers[2]->name));
+	check(!reftable_buf_addstr(&buf, ".lock"));
 	write_file_buf(buf.buf, "", 0);
 
 	/*
@@ -1164,10 +1164,10 @@ static void t_reftable_stack_compaction_with_locked_tables(void)
 	check_int(st->merged->readers_len, ==, 3);
 
 	/* Lock one of the tables that we're about to compact. */
-	reftable_buf_addstr(&buf, dir);
-	reftable_buf_addstr(&buf, "/");
-	reftable_buf_addstr(&buf, st->readers[1]->name);
-	reftable_buf_addstr(&buf, ".lock");
+	check(!reftable_buf_addstr(&buf, dir));
+	check(!reftable_buf_addstr(&buf, "/"));
+	check(!reftable_buf_addstr(&buf, st->readers[1]->name));
+	check(!reftable_buf_addstr(&buf, ".lock"));
 	write_file_buf(buf.buf, "", 0);
 
 	/*
@@ -1324,13 +1324,13 @@ static void t_reftable_stack_reload_with_missing_table(void)
 	 * our old readers. This should trigger a partial reload of the stack,
 	 * where we try to reuse our old readers.
 	*/
-	reftable_buf_addstr(&content, st->readers[0]->name);
-	reftable_buf_addstr(&content, "\n");
-	reftable_buf_addstr(&content, st->readers[1]->name);
-	reftable_buf_addstr(&content, "\n");
-	reftable_buf_addstr(&content, "garbage\n");
-	reftable_buf_addstr(&table_path, st->list_file);
-	reftable_buf_addstr(&table_path, ".lock");
+	check(!reftable_buf_addstr(&content, st->readers[0]->name));
+	check(!reftable_buf_addstr(&content, "\n"));
+	check(!reftable_buf_addstr(&content, st->readers[1]->name));
+	check(!reftable_buf_addstr(&content, "\n"));
+	check(!reftable_buf_addstr(&content, "garbage\n"));
+	check(!reftable_buf_addstr(&table_path, st->list_file));
+	check(!reftable_buf_addstr(&table_path, ".lock"));
 	write_file_buf(table_path.buf, content.buf, content.len);
 	err = rename(table_path.buf, st->list_file);
 	check(!err);
