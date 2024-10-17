@@ -271,7 +271,7 @@ test_expect_success 'setup worktree' '
 # Some refs (refs/bisect/*, pseudorefs) are kept per worktree, so they should
 # only appear in the for-each-reflog output if it is called from the correct
 # worktree, which is exercised in this test. This test is poorly written for
-# mulitple reasons: 1) it creates invalidly formatted log entres. 2) it uses
+# multiple reasons: 1) it creates invalidly formatted log entries. 2) it uses
 # direct FS access for creating the reflogs. 3) PSEUDO-WT and refs/bisect/random
 # do not create reflogs by default, so it is not testing a realistic scenario.
 test_expect_success 'for_each_reflog()' '
