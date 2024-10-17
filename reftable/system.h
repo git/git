@@ -13,7 +13,6 @@ https://developers.google.com/open-source/licenses/bsd
 
 #include "git-compat-util.h"
 #include "lockfile.h"
-#include "strbuf.h"
 #include "tempfile.h"
 #include "hash.h" /* hash ID, sizes.*/
 #include "dir.h" /* remove_dir_recursively, for tests.*/

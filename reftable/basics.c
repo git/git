@@ -260,7 +260,7 @@ int names_equal(const char **a, const char **b)
 	return a[i] == b[i];
 }
 
-int common_prefix_size(struct strbuf *a, struct strbuf *b)
+int common_prefix_size(struct reftable_buf *a, struct reftable_buf *b)
 {
 	int p = 0;
 	for (; p < a->len && p < b->len; p++) {

@@ -57,7 +57,9 @@ int reftable_buf_setlen(struct reftable_buf *buf, size_t len);
 int reftable_buf_cmp(const struct reftable_buf *a, const struct reftable_buf *b);
 
 /*
- * Add the given bytes to the buffer. Returns 0 on success,
+ * Append `len` bytes from `data` to the buffer. This function works with
+ * arbitrary byte sequences, including ones that contain embedded NUL
+ * characters. As such, we use `void *` as input type. Returns 0 on success,
  * REFTABLE_OUT_OF_MEMORY_ERROR on allocation failure.
  */
 int reftable_buf_add(struct reftable_buf *buf, const void *data, size_t len);
@@ -144,8 +146,7 @@ char *reftable_strdup(const char *str);
 #endif
 
 /* Find the longest shared prefix size of `a` and `b` */
-struct strbuf;
-int common_prefix_size(struct strbuf *a, struct strbuf *b);
+int common_prefix_size(struct reftable_buf *a, struct reftable_buf *b);
 
 int hash_size(uint32_t id);
 

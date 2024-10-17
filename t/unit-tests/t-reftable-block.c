@@ -20,7 +20,7 @@ static void t_ref_block_read_write(void)
 	const size_t block_size = 1024;
 	struct reftable_block block = { 0 };
 	struct block_writer bw = {
-		.last_key = STRBUF_INIT,
+		.last_key = REFTABLE_BUF_INIT,
 	};
 	struct reftable_record rec = {
 		.type = BLOCK_TYPE_REF,
@@ -29,7 +29,7 @@ static void t_ref_block_read_write(void)
 	int ret;
 	struct block_reader br = { 0 };
 	struct block_iter it = BLOCK_ITER_INIT;
-	struct strbuf want = STRBUF_INIT, buf = STRBUF_INIT;
+	struct reftable_buf want = REFTABLE_BUF_INIT, buf = REFTABLE_BUF_INIT;
 
 	REFTABLE_CALLOC_ARRAY(block.data, block_size);
 	check(block.data != NULL);
@@ -100,8 +100,8 @@ static void t_ref_block_read_write(void)
 	block_iter_close(&it);
 	reftable_record_release(&rec);
 	reftable_block_done(&br.block);
-	strbuf_release(&want);
-	strbuf_release(&buf);
+	reftable_buf_release(&want);
+	reftable_buf_release(&buf);
 	for (i = 0; i < N; i++)
 		reftable_record_release(&recs[i]);
 }
@@ -114,7 +114,7 @@ static void t_log_block_read_write(void)
 	const size_t block_size = 2048;
 	struct reftable_block block = { 0 };
 	struct block_writer bw = {
-		.last_key = STRBUF_INIT,
+		.last_key = REFTABLE_BUF_INIT,
 	};
 	struct reftable_record rec = {
 		.type = BLOCK_TYPE_LOG,
@@ -123,7 +123,7 @@ static void t_log_block_read_write(void)
 	int ret;
 	struct block_reader br = { 0 };
 	struct block_iter it = BLOCK_ITER_INIT;
-	struct strbuf want = STRBUF_INIT, buf = STRBUF_INIT;
+	struct reftable_buf want = REFTABLE_BUF_INIT, buf = REFTABLE_BUF_INIT;
 
 	REFTABLE_CALLOC_ARRAY(block.data, block_size);
 	check(block.data != NULL);
@@ -166,8 +166,8 @@ static void t_log_block_read_write(void)
 
 	for (i = 0; i < N; i++) {
 		block_iter_reset(&it);
-		strbuf_reset(&want);
-		strbuf_addstr(&want, recs[i].u.log.refname);
+		reftable_buf_reset(&want);
+		reftable_buf_addstr(&want, recs[i].u.log.refname);
 
 		ret = block_iter_seek_key(&it, &br, &want);
 		check_int(ret, ==, 0);
@@ -190,8 +190,8 @@ static void t_log_block_read_write(void)
 	block_iter_close(&it);
 	reftable_record_release(&rec);
 	reftable_block_done(&br.block);
-	strbuf_release(&want);
-	strbuf_release(&buf);
+	reftable_buf_release(&want);
+	reftable_buf_release(&buf);
 	for (i = 0; i < N; i++)
 		reftable_record_release(&recs[i]);
 }
@@ -204,7 +204,7 @@ static void t_obj_block_read_write(void)
 	const size_t block_size = 1024;
 	struct reftable_block block = { 0 };
 	struct block_writer bw = {
-		.last_key = STRBUF_INIT,
+		.last_key = REFTABLE_BUF_INIT,
 	};
 	struct reftable_record rec = {
 		.type = BLOCK_TYPE_OBJ,
@@ -213,7 +213,7 @@ static void t_obj_block_read_write(void)
 	int ret;
 	struct block_reader br = { 0 };
 	struct block_iter it = BLOCK_ITER_INIT;
-	struct strbuf want = STRBUF_INIT, buf = STRBUF_INIT;
+	struct reftable_buf want = REFTABLE_BUF_INIT, buf = REFTABLE_BUF_INIT;
 
 	REFTABLE_CALLOC_ARRAY(block.data, block_size);
 	check(block.data != NULL);
@@ -273,8 +273,8 @@ static void t_obj_block_read_write(void)
 	block_iter_close(&it);
 	reftable_record_release(&rec);
 	reftable_block_done(&br.block);
-	strbuf_release(&want);
-	strbuf_release(&buf);
+	reftable_buf_release(&want);
+	reftable_buf_release(&buf);
 	for (i = 0; i < N; i++)
 		reftable_record_release(&recs[i]);
 }
@@ -287,17 +287,17 @@ static void t_index_block_read_write(void)
 	const size_t block_size = 1024;
 	struct reftable_block block = { 0 };
 	struct block_writer bw = {
-		.last_key = STRBUF_INIT,
+		.last_key = REFTABLE_BUF_INIT,
 	};
 	struct reftable_record rec = {
 		.type = BLOCK_TYPE_INDEX,
-		.u.idx.last_key = STRBUF_INIT,
+		.u.idx.last_key = REFTABLE_BUF_INIT,
 	};
 	size_t i = 0;
 	int ret;
 	struct block_reader br = { 0 };
 	struct block_iter it = BLOCK_ITER_INIT;
-	struct strbuf want = STRBUF_INIT, buf = STRBUF_INIT;
+	struct reftable_buf want = REFTABLE_BUF_INIT, buf = REFTABLE_BUF_INIT;
 
 	REFTABLE_CALLOC_ARRAY(block.data, block_size);
 	check(block.data != NULL);
@@ -312,9 +312,9 @@ static void t_index_block_read_write(void)
 
 		snprintf(buf, sizeof(buf), "branch%02"PRIuMAX, (uintmax_t)i);
 
-		strbuf_init(&recs[i].u.idx.last_key, 9);
+		reftable_buf_init(&recs[i].u.idx.last_key);
 		recs[i].type = BLOCK_TYPE_INDEX;
-		strbuf_addstr(&recs[i].u.idx.last_key, buf);
+		reftable_buf_addstr(&recs[i].u.idx.last_key, buf);
 		recs[i].u.idx.offset = i;
 
 		ret = block_writer_add(&bw, &recs[i]);
@@ -365,8 +365,8 @@ static void t_index_block_read_write(void)
 	block_iter_close(&it);
 	reftable_record_release(&rec);
 	reftable_block_done(&br.block);
-	strbuf_release(&want);
-	strbuf_release(&buf);
+	reftable_buf_release(&want);
+	reftable_buf_release(&buf);
 	for (i = 0; i < N; i++)
 		reftable_record_release(&recs[i]);
 }

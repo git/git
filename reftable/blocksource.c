@@ -27,7 +27,7 @@ static void strbuf_close(void *b UNUSED)
 static int strbuf_read_block(void *v, struct reftable_block *dest, uint64_t off,
 			     uint32_t size)
 {
-	struct strbuf *b = v;
+	struct reftable_buf *b = v;
 	assert(off + size <= b->len);
 	REFTABLE_CALLOC_ARRAY(dest->data, size);
 	if (!dest->data)
@@ -39,7 +39,7 @@ static int strbuf_read_block(void *v, struct reftable_block *dest, uint64_t off,
 
 static uint64_t strbuf_size(void *b)
 {
-	return ((struct strbuf *)b)->len;
+	return ((struct reftable_buf *)b)->len;
 }
 
 static struct reftable_block_source_vtable strbuf_vtable = {
@@ -50,7 +50,7 @@ static struct reftable_block_source_vtable strbuf_vtable = {
 };
 
 void block_source_from_strbuf(struct reftable_block_source *bs,
-			      struct strbuf *buf)
+			      struct reftable_buf *buf)
 {
 	assert(!bs->ops);
 	bs->ops = &strbuf_vtable;

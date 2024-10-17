@@ -16,7 +16,7 @@ static int t_reader_seek_once(void)
 	struct reftable_ref_record ref = { 0 };
 	struct reftable_iterator it = { 0 };
 	struct reftable_reader *reader;
-	struct strbuf buf = STRBUF_INIT;
+	struct reftable_buf buf = REFTABLE_BUF_INIT;
 	int ret;
 
 	t_reftable_write_to_buf(&buf, records, ARRAY_SIZE(records), NULL, 0, NULL);
@@ -40,7 +40,7 @@ static int t_reader_seek_once(void)
 	reftable_ref_record_release(&ref);
 	reftable_iterator_destroy(&it);
 	reftable_reader_decref(reader);
-	strbuf_release(&buf);
+	reftable_buf_release(&buf);
 	return 0;
 }
 
@@ -57,7 +57,7 @@ static int t_reader_reseek(void)
 	struct reftable_ref_record ref = { 0 };
 	struct reftable_iterator it = { 0 };
 	struct reftable_reader *reader;
-	struct strbuf buf = STRBUF_INIT;
+	struct reftable_buf buf = REFTABLE_BUF_INIT;
 	int ret;
 
 	t_reftable_write_to_buf(&buf, records, ARRAY_SIZE(records), NULL, 0, NULL);
@@ -84,7 +84,7 @@ static int t_reader_reseek(void)
 	reftable_ref_record_release(&ref);
 	reftable_iterator_destroy(&it);
 	reftable_reader_decref(reader);
-	strbuf_release(&buf);
+	reftable_buf_release(&buf);
 	return 0;
 }
 

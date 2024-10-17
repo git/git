@@ -38,7 +38,7 @@ int footer_size(int version)
 }
 
 static int block_writer_register_restart(struct block_writer *w, int n,
-					 int is_restart, struct strbuf *key)
+					 int is_restart, struct reftable_buf *key)
 {
 	int rlen = w->restart_len;
 	if (rlen >= MAX_RESTARTS) {
@@ -59,8 +59,8 @@ static int block_writer_register_restart(struct block_writer *w, int n,
 
 	w->next += n;
 
-	strbuf_reset(&w->last_key);
-	strbuf_add(&w->last_key, key->buf, key->len);
+	reftable_buf_reset(&w->last_key);
+	reftable_buf_add(&w->last_key, key->buf, key->len);
 	w->entries++;
 	return 0;
 }
@@ -98,8 +98,8 @@ uint8_t block_writer_type(struct block_writer *bw)
    empty key. */
 int block_writer_add(struct block_writer *w, struct reftable_record *rec)
 {
-	struct strbuf empty = STRBUF_INIT;
-	struct strbuf last =
+	struct reftable_buf empty = REFTABLE_BUF_INIT;
+	struct reftable_buf last =
 		w->entries % w->restart_interval == 0 ? empty : w->last_key;
 	struct string_view out = {
 		.buf = w->buf + w->next,
@@ -109,7 +109,7 @@ int block_writer_add(struct block_writer *w, struct reftable_record *rec)
 	struct string_view start = out;
 
 	int is_restart = 0;
-	struct strbuf key = STRBUF_INIT;
+	struct reftable_buf key = REFTABLE_BUF_INIT;
 	int n = 0;
 	int err = -1;
 
@@ -133,7 +133,7 @@ int block_writer_add(struct block_writer *w, struct reftable_record *rec)
 	err = block_writer_register_restart(w, start.len - out.len, is_restart,
 					    &key);
 done:
-	strbuf_release(&key);
+	reftable_buf_release(&key);
 	return err;
 }
 
@@ -325,7 +325,7 @@ uint8_t block_reader_type(const struct block_reader *r)
 	return r->block.data[r->header_off];
 }
 
-int block_reader_first_key(const struct block_reader *br, struct strbuf *key)
+int block_reader_first_key(const struct block_reader *br, struct reftable_buf *key)
 {
 	int off = br->header_off + 4, n;
 	struct string_view in = {
@@ -334,7 +334,7 @@ int block_reader_first_key(const struct block_reader *br, struct strbuf *key)
 	};
 	uint8_t extra = 0;
 
-	strbuf_reset(key);
+	reftable_buf_reset(key);
 
 	n = reftable_decode_key(key, &extra, in);
 	if (n < 0)
@@ -355,13 +355,13 @@ void block_iter_seek_start(struct block_iter *it, const struct block_reader *br)
 	it->block = br->block.data;
 	it->block_len = br->block_len;
 	it->hash_size = br->hash_size;
-	strbuf_reset(&it->last_key);
+	reftable_buf_reset(&it->last_key);
 	it->next_off = br->header_off + 4;
 }
 
 struct restart_needle_less_args {
 	int error;
-	struct strbuf needle;
+	struct reftable_buf needle;
 	const struct block_reader *reader;
 };
 
@@ -433,7 +433,7 @@ int block_iter_next(struct block_iter *it, struct reftable_record *rec)
 
 void block_iter_reset(struct block_iter *it)
 {
-	strbuf_reset(&it->last_key);
+	reftable_buf_reset(&it->last_key);
 	it->next_off = 0;
 	it->block = NULL;
 	it->block_len = 0;
@@ -442,12 +442,12 @@ void block_iter_reset(struct block_iter *it)
 
 void block_iter_close(struct block_iter *it)
 {
-	strbuf_release(&it->last_key);
-	strbuf_release(&it->scratch);
+	reftable_buf_release(&it->last_key);
+	reftable_buf_release(&it->scratch);
 }
 
 int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
-			struct strbuf *want)
+			struct reftable_buf *want)
 {
 	struct restart_needle_less_args args = {
 		.needle = *want,
@@ -537,7 +537,7 @@ int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
 		 * with themselves.
 		 */
 		reftable_record_key(&rec, &it->last_key);
-		if (strbuf_cmp(&it->last_key, want) >= 0) {
+		if (reftable_buf_cmp(&it->last_key, want) >= 0) {
 			it->next_off = prev_off;
 			goto done;
 		}
@@ -554,7 +554,7 @@ void block_writer_release(struct block_writer *bw)
 	REFTABLE_FREE_AND_NULL(bw->zstream);
 	REFTABLE_FREE_AND_NULL(bw->restarts);
 	REFTABLE_FREE_AND_NULL(bw->compressed);
-	strbuf_release(&bw->last_key);
+	reftable_buf_release(&bw->last_key);
 	/* the block is not owned. */
 }
 
