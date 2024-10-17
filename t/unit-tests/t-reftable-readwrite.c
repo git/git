@@ -753,12 +753,13 @@ static void t_write_multiple_indices(void)
 	struct reftable_write_options opts = {
 		.block_size = 100,
 	};
-	struct strbuf writer_buf = STRBUF_INIT, buf = STRBUF_INIT;
+	struct strbuf writer_buf = STRBUF_INIT;
 	struct reftable_block_source source = { 0 };
 	struct reftable_iterator it = { 0 };
 	const struct reftable_stats *stats;
 	struct reftable_writer *writer;
 	struct reftable_reader *reader;
+	char buf[128];
 	int err, i;
 
 	writer = t_reftable_strbuf_writer(&writer_buf, &opts);
@@ -770,9 +771,8 @@ static void t_write_multiple_indices(void)
 			.value.val1 = {i},
 		};
 
-		strbuf_reset(&buf);
-		strbuf_addf(&buf, "refs/heads/%04d", i);
-		ref.refname = buf.buf,
+		snprintf(buf, sizeof(buf), "refs/heads/%04d", i);
+		ref.refname = buf;
 
 		err = reftable_writer_add_ref(writer, &ref);
 		check(!err);
@@ -788,9 +788,8 @@ static void t_write_multiple_indices(void)
 			},
 		};
 
-		strbuf_reset(&buf);
-		strbuf_addf(&buf, "refs/heads/%04d", i);
-		log.refname = buf.buf,
+		snprintf(buf, sizeof(buf), "refs/heads/%04d", i);
+		log.refname = buf;
 
 		err = reftable_writer_add_log(writer, &log);
 		check(!err);
@@ -824,7 +823,6 @@ static void t_write_multiple_indices(void)
 	reftable_writer_free(writer);
 	reftable_reader_decref(reader);
 	strbuf_release(&writer_buf);
-	strbuf_release(&buf);
 }
 
 static void t_write_multi_level_index(void)
@@ -848,10 +846,10 @@ static void t_write_multi_level_index(void)
 			.value_type = REFTABLE_REF_VAL1,
 			.value.val1 = {i},
 		};
+		char buf[128];
 
-		strbuf_reset(&buf);
-		strbuf_addf(&buf, "refs/heads/%03" PRIuMAX, (uintmax_t)i);
-		ref.refname = buf.buf,
+		snprintf(buf, sizeof(buf), "refs/heads/%03" PRIuMAX, (uintmax_t)i);
+		ref.refname = buf;
 
 		err = reftable_writer_add_ref(writer, &ref);
 		check(!err);

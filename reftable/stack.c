@@ -1387,12 +1387,18 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * have just written. In case the compacted table became empty we
 	 * simply skip writing it.
 	 */
-	for (i = 0; i < first_to_replace; i++)
-		strbuf_addf(&tables_list_buf, "%s\n", names[i]);
-	if (!is_empty_table)
-		strbuf_addf(&tables_list_buf, "%s\n", new_table_name.buf);
-	for (i = last_to_replace + 1; names[i]; i++)
-		strbuf_addf(&tables_list_buf, "%s\n", names[i]);
+	for (i = 0; i < first_to_replace; i++) {
+		strbuf_addstr(&tables_list_buf, names[i]);
+		strbuf_addstr(&tables_list_buf, "\n");
+	}
+	if (!is_empty_table) {
+		strbuf_addstr(&tables_list_buf, new_table_name.buf);
+		strbuf_addstr(&tables_list_buf, "\n");
+	}
+	for (i = last_to_replace + 1; names[i]; i++) {
+		strbuf_addstr(&tables_list_buf, names[i]);
+		strbuf_addstr(&tables_list_buf, "\n");
+	}
 
 	err = write_in_full(get_lock_file_fd(&tables_list_lock),
 			    tables_list_buf.buf, tables_list_buf.len);

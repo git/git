@@ -308,10 +308,13 @@ static void t_index_block_read_write(void)
 	check(!ret);
 
 	for (i = 0; i < N; i++) {
-		strbuf_init(&recs[i].u.idx.last_key, 9);
+		char buf[128];
 
+		snprintf(buf, sizeof(buf), "branch%02"PRIuMAX, (uintmax_t)i);
+
+		strbuf_init(&recs[i].u.idx.last_key, 9);
 		recs[i].type = BLOCK_TYPE_INDEX;
-		strbuf_addf(&recs[i].u.idx.last_key, "branch%02"PRIuMAX, (uintmax_t)i);
+		strbuf_addstr(&recs[i].u.idx.last_key, buf);
 		recs[i].u.idx.offset = i;
 
 		ret = block_writer_add(&bw, &recs[i]);
