@@ -20,7 +20,7 @@ static int t_reader_seek_once(void)
 	int ret;
 
 	t_reftable_write_to_buf(&buf, records, ARRAY_SIZE(records), NULL, 0, NULL);
-	block_source_from_strbuf(&source, &buf);
+	block_source_from_buf(&source, &buf);
 
 	ret = reftable_reader_new(&reader, &source, "name");
 	check(!ret);
@@ -61,7 +61,7 @@ static int t_reader_reseek(void)
 	int ret;
 
 	t_reftable_write_to_buf(&buf, records, ARRAY_SIZE(records), NULL, 0, NULL);
-	block_source_from_strbuf(&source, &buf);
+	block_source_from_buf(&source, &buf);
 
 	ret = reftable_reader_new(&reader, &source, "name");
 	check(!ret);

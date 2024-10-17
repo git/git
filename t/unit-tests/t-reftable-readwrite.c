@@ -24,7 +24,7 @@ static void t_buffer(void)
 	int n;
 	uint8_t in[] = "hello";
 	reftable_buf_add(&buf, in, sizeof(in));
-	block_source_from_strbuf(&source, &buf);
+	block_source_from_buf(&source, &buf);
 	check_int(block_source_size(&source), ==, 6);
 	n = block_source_read_block(&source, &out, 0, sizeof(in));
 	check_int(n, ==, sizeof(in));
@@ -207,7 +207,7 @@ static void t_log_write_read(void)
 	reftable_writer_free(w);
 	w = NULL;
 
-	block_source_from_strbuf(&source, &buf);
+	block_source_from_buf(&source, &buf);
 
 	err = reftable_reader_new(&reader, &source, "file.log");
 	check(!err);
@@ -298,7 +298,7 @@ static void t_log_zlib_corruption(void)
 	/* corrupt the data. */
 	buf.buf[50] ^= 0x99;
 
-	block_source_from_strbuf(&source, &buf);
+	block_source_from_buf(&source, &buf);
 
 	err = reftable_reader_new(&reader, &source, "file.log");
 	check(!err);
@@ -328,7 +328,7 @@ static void t_table_read_write_sequential(void)
 
 	write_table(&names, &buf, N, 256, GIT_SHA1_FORMAT_ID);
 
-	block_source_from_strbuf(&source, &buf);
+	block_source_from_buf(&source, &buf);
 
 	err = reftable_reader_new(&reader, &source, "file.ref");
 	check(!err);
@@ -380,7 +380,7 @@ static void t_table_read_api(void)
 
 	write_table(&names, &buf, N, 256, GIT_SHA1_FORMAT_ID);
 
-	block_source_from_strbuf(&source, &buf);
+	block_source_from_buf(&source, &buf);
 
 	err = reftable_reader_new(&reader, &source, "file.ref");
 	check(!err);
@@ -416,7 +416,7 @@ static void t_table_read_write_seek(int index, int hash_id)
 
 	write_table(&names, &buf, N, 256, hash_id);
 
-	block_source_from_strbuf(&source, &buf);
+	block_source_from_buf(&source, &buf);
 
 	err = reftable_reader_new(&reader, &source, "file.ref");
 	check(!err);
@@ -538,7 +538,7 @@ static void t_table_refs_for(int indexed)
 	reftable_writer_free(w);
 	w = NULL;
 
-	block_source_from_strbuf(&source, &buf);
+	block_source_from_buf(&source, &buf);
 
 	err = reftable_reader_new(&reader, &source, "file.ref");
 	check(!err);
@@ -600,7 +600,7 @@ static void t_write_empty_table(void)
 
 	check_int(buf.len, ==, header_size(1) + footer_size(1));
 
-	block_source_from_strbuf(&source, &buf);
+	block_source_from_buf(&source, &buf);
 
 	err = reftable_reader_new(&rd, &source, "filename");
 	check(!err);
@@ -806,7 +806,7 @@ static void t_write_multiple_indices(void)
 	check_int(stats->obj_stats.index_offset, >, 0);
 	check_int(stats->log_stats.index_offset, >, 0);
 
-	block_source_from_strbuf(&source, &writer_buf);
+	block_source_from_buf(&source, &writer_buf);
 	err = reftable_reader_new(&reader, &source, "filename");
 	check(!err);
 
@@ -863,7 +863,7 @@ static void t_write_multi_level_index(void)
 	stats = reftable_writer_stats(writer);
 	check_int(stats->ref_stats.max_index_level, ==, 2);
 
-	block_source_from_strbuf(&source, &writer_buf);
+	block_source_from_buf(&source, &writer_buf);
 	err = reftable_reader_new(&reader, &source, "filename");
 	check(!err);
 
@@ -889,7 +889,7 @@ static void t_corrupt_table_empty(void)
 	struct reftable_reader *reader;
 	int err;
 
-	block_source_from_strbuf(&source, &buf);
+	block_source_from_buf(&source, &buf);
 	err = reftable_reader_new(&reader, &source, "file.log");
 	check_int(err, ==, REFTABLE_FORMAT_ERROR);
 }
@@ -903,7 +903,7 @@ static void t_corrupt_table(void)
 	int err;
 	reftable_buf_add(&buf, zeros, sizeof(zeros));
 
-	block_source_from_strbuf(&source, &buf);
+	block_source_from_buf(&source, &buf);
 	err = reftable_reader_new(&reader, &source, "file.log");
 	check_int(err, ==, REFTABLE_FORMAT_ERROR);
 

@@ -35,7 +35,7 @@ merged_table_from_records(struct reftable_ref_record **refs,
 
 	for (size_t i = 0; i < n; i++) {
 		t_reftable_write_to_buf(&buf[i], refs[i], sizes[i], NULL, 0, &opts);
-		block_source_from_strbuf(&(*source)[i], &buf[i]);
+		block_source_from_buf(&(*source)[i], &buf[i]);
 
 		err = reftable_reader_new(&(*readers)[i], &(*source)[i],
 					  "name");
@@ -293,7 +293,7 @@ merged_table_from_log_records(struct reftable_log_record **logs,
 
 	for (size_t i = 0; i < n; i++) {
 		t_reftable_write_to_buf(&buf[i], NULL, 0, logs[i], sizes[i], &opts);
-		block_source_from_strbuf(&(*source)[i], &buf[i]);
+		block_source_from_buf(&(*source)[i], &buf[i]);
 
 		err = reftable_reader_new(&(*readers)[i], &(*source)[i],
 					  "name");
@@ -442,7 +442,7 @@ static void t_default_write_opts(void)
 	check(!err);
 	reftable_writer_free(w);
 
-	block_source_from_strbuf(&source, &buf);
+	block_source_from_buf(&source, &buf);
 
 	err = reftable_reader_new(&rd, &source, "filename");
 	check(!err);
