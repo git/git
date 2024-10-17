@@ -143,6 +143,10 @@ test_expect_success 'shortlog from non-git directory refuses extra arguments' '
 	test_grep "too many arguments" out
 '
 
+test_expect_success 'shortlog --author from non-git directory does not segfault' '
+	nongit git shortlog --author=author </dev/null
+'
+
 test_expect_success 'shortlog should add newline when input line matches wraplen' '
 	cat >expect <<\EOF &&
 A U Thor (2):
