@@ -111,9 +111,12 @@ int block_writer_add(struct block_writer *w, struct reftable_record *rec)
 	int is_restart = 0;
 	struct reftable_buf key = REFTABLE_BUF_INIT;
 	int n = 0;
-	int err = -1;
+	int err;
 
-	reftable_record_key(rec, &key);
+	err = reftable_record_key(rec, &key);
+	if (err < 0)
+		goto done;
+
 	if (!key.len) {
 		err = REFTABLE_API_ERROR;
 		goto done;
@@ -121,13 +124,17 @@ int block_writer_add(struct block_writer *w, struct reftable_record *rec)
 
 	n = reftable_encode_key(&is_restart, out, last, key,
 				reftable_record_val_type(rec));
-	if (n < 0)
+	if (n < 0) {
+		err = -1;
 		goto done;
+	}
 	string_view_consume(&out, n);
 
 	n = reftable_record_encode(rec, out, w->hash_size);
-	if (n < 0)
+	if (n < 0) {
+		err = -1;
 		goto done;
+	}
 	string_view_consume(&out, n);
 
 	err = block_writer_register_restart(w, start.len - out.len, is_restart,
@@ -522,6 +529,10 @@ int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
 			goto done;
 		}
 
+		err = reftable_record_key(&rec, &it->last_key);
+		if (err < 0)
+			goto done;
+
 		/*
 		 * Check whether the current key is greater or equal to the
 		 * sought-after key. In case it is greater we know that the
@@ -536,7 +547,6 @@ int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
 		 * to `last_key` now, and naturally all keys share a prefix
 		 * with themselves.
 		 */
-		reftable_record_key(&rec, &it->last_key);
 		if (reftable_buf_cmp(&it->last_key, want) >= 0) {
 			it->next_off = prev_off;
 			goto done;

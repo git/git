@@ -40,7 +40,7 @@ int put_var_int(struct string_view *dest, uint64_t val);
 /* Methods for records. */
 struct reftable_record_vtable {
 	/* encode the key of to a uint8_t reftable_buf. */
-	void (*key)(const void *rec, struct reftable_buf *dest);
+	int (*key)(const void *rec, struct reftable_buf *dest);
 
 	/* The record type of ('r' for ref). */
 	uint8_t type;
@@ -137,7 +137,7 @@ void reftable_record_init(struct reftable_record *rec, uint8_t typ);
 /* see struct record_vtable */
 int reftable_record_cmp(struct reftable_record *a, struct reftable_record *b);
 int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, int hash_size);
-void reftable_record_key(struct reftable_record *rec, struct reftable_buf *dest);
+int reftable_record_key(struct reftable_record *rec, struct reftable_buf *dest);
 int reftable_record_copy_from(struct reftable_record *rec,
 			      struct reftable_record *src, int hash_size);
 uint8_t reftable_record_val_type(struct reftable_record *rec);

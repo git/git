@@ -356,7 +356,9 @@ static int table_iter_seek_linear(struct table_iter *ti,
 	int err;
 
 	reftable_record_init(&rec, reftable_record_type(want));
-	reftable_record_key(want, &want_key);
+	err = reftable_record_key(want, &want_key);
+	if (err < 0)
+		goto done;
 
 	/*
 	 * First we need to locate the block that must contain our record. To
@@ -439,7 +441,9 @@ static int table_iter_seek_indexed(struct table_iter *ti,
 	};
 	int err;
 
-	reftable_record_key(rec, &want_index.u.idx.last_key);
+	err = reftable_record_key(rec, &want_index.u.idx.last_key);
+	if (err < 0)
+		goto done;
 
 	/*
 	 * The index may consist of multiple levels, where each level may have

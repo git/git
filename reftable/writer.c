@@ -249,7 +249,10 @@ static int writer_add_record(struct reftable_writer *w,
 	struct reftable_buf key = REFTABLE_BUF_INIT;
 	int err;
 
-	reftable_record_key(rec, &key);
+	err = reftable_record_key(rec, &key);
+	if (err < 0)
+		goto done;
+
 	if (reftable_buf_cmp(&w->last_key, &key) >= 0) {
 		err = REFTABLE_API_ERROR;
 		goto done;

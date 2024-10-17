@@ -207,12 +207,12 @@ int reftable_decode_key(struct reftable_buf *last_key, uint8_t *extra,
 	return start_len - in.len;
 }
 
-static void reftable_ref_record_key(const void *r, struct reftable_buf *dest)
+static int reftable_ref_record_key(const void *r, struct reftable_buf *dest)
 {
 	const struct reftable_ref_record *rec =
 		(const struct reftable_ref_record *)r;
 	reftable_buf_reset(dest);
-	reftable_buf_addstr(dest, rec->refname);
+	return reftable_buf_addstr(dest, rec->refname);
 }
 
 static int reftable_ref_record_copy_from(void *rec, const void *src_rec,
@@ -465,12 +465,12 @@ static struct reftable_record_vtable reftable_ref_record_vtable = {
 	.cmp = &reftable_ref_record_cmp_void,
 };
 
-static void reftable_obj_record_key(const void *r, struct reftable_buf *dest)
+static int reftable_obj_record_key(const void *r, struct reftable_buf *dest)
 {
 	const struct reftable_obj_record *rec =
 		(const struct reftable_obj_record *)r;
 	reftable_buf_reset(dest);
-	reftable_buf_add(dest, rec->hash_prefix, rec->hash_prefix_len);
+	return reftable_buf_add(dest, rec->hash_prefix, rec->hash_prefix_len);
 }
 
 static void reftable_obj_record_release(void *rec)
@@ -664,19 +664,27 @@ static struct reftable_record_vtable reftable_obj_record_vtable = {
 	.cmp = &reftable_obj_record_cmp_void,
 };
 
-static void reftable_log_record_key(const void *r, struct reftable_buf *dest)
+static int reftable_log_record_key(const void *r, struct reftable_buf *dest)
 {
 	const struct reftable_log_record *rec =
 		(const struct reftable_log_record *)r;
-	int len = strlen(rec->refname);
+	int len = strlen(rec->refname), err;
 	uint8_t i64[8];
 	uint64_t ts = 0;
+
 	reftable_buf_reset(dest);
-	reftable_buf_add(dest, (uint8_t *)rec->refname, len + 1);
+	err = reftable_buf_add(dest, (uint8_t *)rec->refname, len + 1);
+	if (err < 0)
+		return err;
 
 	ts = (~ts) - rec->update_index;
 	put_be64(&i64[0], ts);
-	reftable_buf_add(dest, i64, sizeof(i64));
+
+	err = reftable_buf_add(dest, i64, sizeof(i64));
+	if (err < 0)
+		return err;
+
+	return 0;
 }
 
 static int reftable_log_record_copy_from(void *rec, const void *src_rec,
@@ -1027,11 +1035,11 @@ static struct reftable_record_vtable reftable_log_record_vtable = {
 	.cmp = &reftable_log_record_cmp_void,
 };
 
-static void reftable_index_record_key(const void *r, struct reftable_buf *dest)
+static int reftable_index_record_key(const void *r, struct reftable_buf *dest)
 {
 	const struct reftable_index_record *rec = r;
 	reftable_buf_reset(dest);
-	reftable_buf_add(dest, rec->last_key.buf, rec->last_key.len);
+	return reftable_buf_add(dest, rec->last_key.buf, rec->last_key.len);
 }
 
 static int reftable_index_record_copy_from(void *rec, const void *src_rec,
@@ -1124,9 +1132,9 @@ static struct reftable_record_vtable reftable_index_record_vtable = {
 	.cmp = &reftable_index_record_cmp,
 };
 
-void reftable_record_key(struct reftable_record *rec, struct reftable_buf *dest)
+int reftable_record_key(struct reftable_record *rec, struct reftable_buf *dest)
 {
-	reftable_record_vtable(rec)->key(reftable_record_data(rec), dest);
+	return reftable_record_vtable(rec)->key(reftable_record_data(rec), dest);
 }
 
 int reftable_record_encode(struct reftable_record *rec, struct string_view dest,
