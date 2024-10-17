@@ -102,7 +102,9 @@ static int decode_string(struct reftable_buf *dest, struct string_view in)
 {
 	int start_len = in.len;
 	uint64_t tsize = 0;
-	int n = get_var_int(&tsize, &in);
+	int n, err;
+
+	n = get_var_int(&tsize, &in);
 	if (n <= 0)
 		return -1;
 	string_view_consume(&in, n);
@@ -110,7 +112,10 @@ static int decode_string(struct reftable_buf *dest, struct string_view in)
 		return -1;
 
 	reftable_buf_reset(dest);
-	reftable_buf_add(dest, in.buf, tsize);
+	err = reftable_buf_add(dest, in.buf, tsize);
+	if (err < 0)
+		return err;
+
 	string_view_consume(&in, tsize);
 
 	return start_len - in.len;
@@ -189,7 +194,7 @@ int reftable_decode_key(struct reftable_buf *last_key, uint8_t *extra,
 	int start_len = in.len;
 	uint64_t prefix_len = 0;
 	uint64_t suffix_len = 0;
-	int n;
+	int err, n;
 
 	n = reftable_decode_keylen(in, &prefix_len, &suffix_len, extra);
 	if (n < 0)
@@ -200,8 +205,14 @@ int reftable_decode_key(struct reftable_buf *last_key, uint8_t *extra,
 	    prefix_len > last_key->len)
 		return -1;
 
-	reftable_buf_setlen(last_key, prefix_len);
-	reftable_buf_add(last_key, in.buf, suffix_len);
+	err = reftable_buf_setlen(last_key, prefix_len);
+	if (err < 0)
+		return err;
+
+	err = reftable_buf_add(last_key, in.buf, suffix_len);
+	if (err < 0)
+		return err;
+
 	string_view_consume(&in, suffix_len);
 
 	return start_len - in.len;
@@ -1047,9 +1058,12 @@ static int reftable_index_record_copy_from(void *rec, const void *src_rec,
 {
 	struct reftable_index_record *dst = rec;
 	const struct reftable_index_record *src = src_rec;
+	int err;
 
 	reftable_buf_reset(&dst->last_key);
-	reftable_buf_add(&dst->last_key, src->last_key.buf, src->last_key.len);
+	err = reftable_buf_add(&dst->last_key, src->last_key.buf, src->last_key.len);
+	if (err < 0)
+		return err;
 	dst->offset = src->offset;
 
 	return 0;
@@ -1090,10 +1104,12 @@ static int reftable_index_record_decode(void *rec, struct reftable_buf key,
 {
 	struct string_view start = in;
 	struct reftable_index_record *r = rec;
-	int n = 0;
+	int err, n = 0;
 
 	reftable_buf_reset(&r->last_key);
-	reftable_buf_add(&r->last_key, key.buf, key.len);
+	err = reftable_buf_add(&r->last_key, key.buf, key.len);
+	if (err < 0)
+		return err;
 
 	n = get_var_int(&r->offset, &in);
 	if (n < 0)

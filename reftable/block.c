@@ -40,7 +40,9 @@ int footer_size(int version)
 static int block_writer_register_restart(struct block_writer *w, int n,
 					 int is_restart, struct reftable_buf *key)
 {
-	int rlen = w->restart_len;
+	int rlen, err;
+
+	rlen = w->restart_len;
 	if (rlen >= MAX_RESTARTS) {
 		is_restart = 0;
 	}
@@ -60,7 +62,10 @@ static int block_writer_register_restart(struct block_writer *w, int n,
 	w->next += n;
 
 	reftable_buf_reset(&w->last_key);
-	reftable_buf_add(&w->last_key, key->buf, key->len);
+	err = reftable_buf_add(&w->last_key, key->buf, key->len);
+	if (err < 0)
+		return err;
+
 	w->entries++;
 	return 0;
 }

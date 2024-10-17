@@ -217,6 +217,7 @@ static int writer_index_hash(struct reftable_writer *w, struct reftable_buf *has
 	node = tree_search(w->obj_index_tree, &want, &obj_index_tree_node_compare);
 	if (!node) {
 		struct obj_index_tree_node empty = OBJ_INDEX_TREE_NODE_INIT;
+		int err;
 
 		key = reftable_malloc(sizeof(*key));
 		if (!key)
@@ -225,7 +226,9 @@ static int writer_index_hash(struct reftable_writer *w, struct reftable_buf *has
 		*key = empty;
 
 		reftable_buf_reset(&key->hash);
-		reftable_buf_add(&key->hash, hash->buf, hash->len);
+		err = reftable_buf_add(&key->hash, hash->buf, hash->len);
+		if (err < 0)
+			return err;
 		tree_insert(&w->obj_index_tree, key,
 			    &obj_index_tree_node_compare);
 	} else {
@@ -259,7 +262,10 @@ static int writer_add_record(struct reftable_writer *w,
 	}
 
 	reftable_buf_reset(&w->last_key);
-	reftable_buf_add(&w->last_key, key.buf, key.len);
+	err = reftable_buf_add(&w->last_key, key.buf, key.len);
+	if (err < 0)
+		goto done;
+
 	if (!w->block_writer) {
 		err = writer_reinit_block_writer(w, reftable_record_type(rec));
 		if (err < 0)
@@ -334,8 +340,10 @@ int reftable_writer_add_ref(struct reftable_writer *w,
 		goto out;
 
 	if (!w->opts.skip_index_objects && reftable_ref_record_val1(ref)) {
-		reftable_buf_add(&buf, (char *)reftable_ref_record_val1(ref),
-			   hash_size(w->opts.hash_id));
+		err = reftable_buf_add(&buf, (char *)reftable_ref_record_val1(ref),
+				       hash_size(w->opts.hash_id));
+		if (err < 0)
+			goto out;
 
 		err = writer_index_hash(w, &buf);
 		if (err < 0)
@@ -344,8 +352,10 @@ int reftable_writer_add_ref(struct reftable_writer *w,
 
 	if (!w->opts.skip_index_objects && reftable_ref_record_val2(ref)) {
 		reftable_buf_reset(&buf);
-		reftable_buf_add(&buf, reftable_ref_record_val2(ref),
-			   hash_size(w->opts.hash_id));
+		err = reftable_buf_add(&buf, reftable_ref_record_val2(ref),
+				       hash_size(w->opts.hash_id));
+		if (err < 0)
+			goto out;
 
 		err = writer_index_hash(w, &buf);
 		if (err < 0)
@@ -407,17 +417,27 @@ int reftable_writer_add_log(struct reftable_writer *w,
 
 	input_log_message = log->value.update.message;
 	if (!w->opts.exact_log_message && log->value.update.message) {
-		reftable_buf_addstr(&cleaned_message, log->value.update.message);
+		err = reftable_buf_addstr(&cleaned_message, log->value.update.message);
+		if (err < 0)
+			goto done;
+
 		while (cleaned_message.len &&
-		       cleaned_message.buf[cleaned_message.len - 1] == '\n')
-			reftable_buf_setlen(&cleaned_message,
-				      cleaned_message.len - 1);
+		       cleaned_message.buf[cleaned_message.len - 1] == '\n') {
+			err = reftable_buf_setlen(&cleaned_message,
+						  cleaned_message.len - 1);
+			if (err < 0)
+				goto done;
+		}
 		if (strchr(cleaned_message.buf, '\n')) {
 			/* multiple lines not allowed. */
 			err = REFTABLE_API_ERROR;
 			goto done;
 		}
-		reftable_buf_addstr(&cleaned_message, "\n");
+
+		err = reftable_buf_addstr(&cleaned_message, "\n");
+		if (err < 0)
+			goto done;
+
 		log->value.update.message = cleaned_message.buf;
 	}
 
@@ -781,8 +801,10 @@ static int writer_flush_nonempty_block(struct reftable_writer *w)
 
 	index_record.offset = w->next;
 	reftable_buf_reset(&index_record.last_key);
-	reftable_buf_add(&index_record.last_key, w->block_writer->last_key.buf,
-		   w->block_writer->last_key.len);
+	err = reftable_buf_add(&index_record.last_key, w->block_writer->last_key.buf,
+			       w->block_writer->last_key.len);
+	if (err < 0)
+		return err;
 	w->index[w->index_len] = index_record;
 	w->index_len++;
 

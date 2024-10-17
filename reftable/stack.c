@@ -78,8 +78,9 @@ int reftable_new_stack(struct reftable_stack **dest, const char *dir,
 	*dest = NULL;
 
 	reftable_buf_reset(&list_file_name);
-	reftable_buf_addstr(&list_file_name, dir);
-	reftable_buf_addstr(&list_file_name, "/tables.list");
+	if ((err = reftable_buf_addstr(&list_file_name, dir)) < 0 ||
+	    (err = reftable_buf_addstr(&list_file_name, "/tables.list")) < 0)
+		goto out;
 
 	p->list_file = reftable_buf_detach(&list_file_name);
 	p->list_fd = -1;
@@ -747,12 +748,14 @@ int reftable_addition_commit(struct reftable_addition *add)
 		goto done;
 
 	for (i = 0; i < add->stack->merged->readers_len; i++) {
-		reftable_buf_addstr(&table_list, add->stack->readers[i]->name);
-		reftable_buf_addstr(&table_list, "\n");
+		if ((err = reftable_buf_addstr(&table_list, add->stack->readers[i]->name)) < 0 ||
+		    (err = reftable_buf_addstr(&table_list, "\n")) < 0)
+			goto done;
 	}
 	for (i = 0; i < add->new_tables_len; i++) {
-		reftable_buf_addstr(&table_list, add->new_tables[i]);
-		reftable_buf_addstr(&table_list, "\n");
+		if ((err = reftable_buf_addstr(&table_list, add->new_tables[i])) < 0 ||
+		    (err = reftable_buf_addstr(&table_list, "\n")) < 0)
+			goto done;
 	}
 
 	err = write_in_full(lock_file_fd, table_list.buf, table_list.len);
@@ -867,7 +870,10 @@ int reftable_addition_add(struct reftable_addition *add,
 	err = stack_filename(&temp_tab_file_name, add->stack, next_name.buf);
 	if (err < 0)
 		goto done;
-	reftable_buf_addstr(&temp_tab_file_name, ".temp.XXXXXX");
+
+	err = reftable_buf_addstr(&temp_tab_file_name, ".temp.XXXXXX");
+	if (err < 0)
+		goto done;
 
 	tab_file = mks_tempfile(temp_tab_file_name.buf);
 	if (!tab_file) {
@@ -914,7 +920,10 @@ int reftable_addition_add(struct reftable_addition *add,
 	err = format_name(&next_name, wr->min_update_index, wr->max_update_index);
 	if (err < 0)
 		goto done;
-	reftable_buf_addstr(&next_name, ".ref");
+
+	err = reftable_buf_addstr(&next_name, ".ref");
+	if (err < 0)
+		goto done;
 
 	err = stack_filename(&tab_file_name, add->stack, next_name.buf);
 	if (err < 0)
@@ -975,7 +984,10 @@ static int stack_compact_locked(struct reftable_stack *st,
 	err = stack_filename(&tab_file_path, st, next_name.buf);
 	if (err < 0)
 		goto done;
-	reftable_buf_addstr(&tab_file_path, ".temp.XXXXXX");
+
+	err = reftable_buf_addstr(&tab_file_path, ".temp.XXXXXX");
+	if (err < 0)
+		goto done;
 
 	tab_file = mks_tempfile(tab_file_path.buf);
 	if (!tab_file) {
@@ -1404,7 +1416,9 @@ static int stack_compact_range(struct reftable_stack *st,
 		if (err < 0)
 			goto done;
 
-		reftable_buf_addstr(&new_table_name, ".ref");
+		err = reftable_buf_addstr(&new_table_name, ".ref");
+		if (err < 0)
+			goto done;
 
 		err = stack_filename(&new_table_path, st, new_table_name.buf);
 		if (err < 0)
@@ -1423,16 +1437,19 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * simply skip writing it.
 	 */
 	for (i = 0; i < first_to_replace; i++) {
-		reftable_buf_addstr(&tables_list_buf, names[i]);
-		reftable_buf_addstr(&tables_list_buf, "\n");
+		if ((err = reftable_buf_addstr(&tables_list_buf, names[i])) < 0 ||
+		    (err = reftable_buf_addstr(&tables_list_buf, "\n")) < 0)
+		      goto done;
 	}
 	if (!is_empty_table) {
-		reftable_buf_addstr(&tables_list_buf, new_table_name.buf);
-		reftable_buf_addstr(&tables_list_buf, "\n");
+		if ((err = reftable_buf_addstr(&tables_list_buf, new_table_name.buf)) < 0 ||
+		    (err = reftable_buf_addstr(&tables_list_buf, "\n")) < 0)
+			goto done;
 	}
 	for (i = last_to_replace + 1; names[i]; i++) {
-		reftable_buf_addstr(&tables_list_buf, names[i]);
-		reftable_buf_addstr(&tables_list_buf, "\n");
+		if ((err = reftable_buf_addstr(&tables_list_buf, names[i])) < 0 ||
+		    (err = reftable_buf_addstr(&tables_list_buf, "\n")) < 0)
+			goto done;
 	}
 
 	err = write_in_full(get_lock_file_fd(&tables_list_lock),
