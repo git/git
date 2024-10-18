@@ -708,7 +708,7 @@ test_expect_success 'reset with wildcard pathspec' '
 	test_all_match git ls-files -s -- deep &&
 
 	# The following `git reset`s result in updating the index on files with
-	# `skip-worktree` enabled. To avoid failing due to discrepencies in reported
+	# `skip-worktree` enabled. To avoid failing due to discrepancies in reported
 	# "modified" files, `test_sparse_match` reset is performed separately from
 	# "full-checkout" reset, then the index contents of all repos are verified.
 
@@ -824,7 +824,7 @@ test_expect_success 'update-index --remove outside sparse definition' '
 	# Reset the state
 	test_all_match git reset --hard &&
 
-	# --force-remove supercedes --ignore-skip-worktree-entries, removing
+	# --force-remove supersedes --ignore-skip-worktree-entries, removing
 	# a skip-worktree file from the index (and disk) when both are specified
 	# with --remove
 	test_sparse_match git update-index --force-remove --ignore-skip-worktree-entries folder1/a &&
@@ -2081,7 +2081,7 @@ test_expect_success 'grep is not expanded' '
 test_expect_failure 'grep within submodules is not expanded' '
 	init_repos_as_submodules &&
 
-	# do not use ensure_not_expanded() here, becasue `grep` should be
+	# do not use ensure_not_expanded() here, because `grep` should be
 	# run in the superproject, not in "./sparse-index"
 	GIT_TRACE2_EVENT="$(pwd)/trace2.txt" \
 	git grep --cached --recurse-submodules a -- "*/folder1/*" &&
