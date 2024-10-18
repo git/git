@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2024, #08; Tue, 15)
-X-master-at: 15030f9556f545b167b1879b877a5d780252dc16
-X-next-at: 2ce7280b5b5206cf0407241649e42080b873d9cc
+Subject: What's cooking in git.git (Oct 2024, #09; Fri, 18)
+X-master-at: 34b6ce9b30747131b6e781ff718a45328aa887d0
+X-next-at: 1226f6d8faf60d03cbb3b021c68d48364bf67ac0
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2024, #08; Tue, 15)
+What's cooking in git.git (Oct 2024, #09; Fri, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,17 +17,11 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-This is the first pushout from the interim maintainer. A handful of
-topics which were marked as "Will merge to 'master'" have done so, and
-'next' does not contain any new topics. I'll plan on doing another
-integration cycle towards the end of this week that will graduate some
-more topics to 'master', as well as add new topics to 'next'.
-
-Please take a close look through the report below, and make sure that
-the various integration branches look OK. I spent quite a bit of time
-refreshing my memory on how Junio's scripts work, but there is still
-room for error. If you see something that looks wrong, please let me
-know.
+This is the second integration round from the interim maintainer. Some
+more topics which were marked to graduate to 'master' have done so,
+and 'next' has some new topics that have moved down. A large handful
+of topics are awaiting review or discussion, so please take a look at
+those marked as such below.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -35,15 +29,19 @@ repositories have only a subset of branches.
 
 With maint, master, next, seen, todo:
 
+	https://github.com/git/git/
+
+(Note that other usual spots are not updated while Junio is on
+vacation, including the below):
+
 	git://git.kernel.org/pub/scm/git/git.git/
 	git://repo.or.cz/alt-git.git/
 	https://kernel.googlesource.com/pub/scm/git/git/
-	https://github.com/git/git/
 	https://gitlab.com/git-scm/git/
 
 With all the integration branches and topics broken out:
 
-	https://github.com/gitster/git/
+	https://github.com/ttaylorr/git/
 
 Even though the preformatted documentation in HTML and man format
 are not sources, they are published in these repositories for
@@ -60,52 +58,144 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* jh/config-unset-doc-fix (2024-10-08) 1 commit
-  (merged to 'next' on 2024-10-10 at a87ffb09b6)
- + git-config.1: remove value from positional args in unset usage
+* aa/t7300-modernize (2024-10-09) 1 commit
+  (merged to 'next' on 2024-10-11 at e3a8d7f6c4)
+ + t7300-clean.sh: use test_path_* helper functions for error logging
+
+ Test modernization.
+
+ source: <pull.1811.v4.git.1728498122419.gitgitgadget@gmail.com>
+
+
+* jc/doc-refspec-syntax (2024-10-09) 1 commit
+  (merged to 'next' on 2024-10-11 at 912ed5fae8)
+ + doc: clarify <src> in refspec syntax
+
+ Doc updates.
+
+ source: <xmqqy137wtyz.fsf@gitster.g>
+
+
+* kh/checkout-ignore-other-docfix (2024-10-10) 1 commit
+  (merged to 'next' on 2024-10-11 at ed66b60f52)
+ + checkout: refer to other-worktree branch, not ref
+
+ Doc updates.
+
+ source: <fcfbcd3868bda75dd0463e04739047e74d239d32.1728585467.git.code@khaugsbakk.name>
+
+
+* kh/merge-tree-doc (2024-10-09) 1 commit
+  (merged to 'next' on 2024-10-11 at b22c213d6c)
+ + doc: merge-tree: improve example script
+
+ Docfix.
+ cf. <CABPp-BE=JfoZp19Va-1oF60ADBUibGDwDkFX-Zytx7A3uJ__gg@mail.gmail.com>
+ source: <c7e0d76e71eef56c6279e0f7e82a2d194f78d2a4.1728492617.git.code@khaugsbakk.name>
+
+
+* kn/loose-object-layer-wo-global-hash (2024-10-09) 1 commit
+  (merged to 'next' on 2024-10-11 at 99252fb6cc)
+ + loose: don't rely on repository global state
+
+ Code clean-up.
+
+ source: <CAOLa=ZRMaw-PAsZ9s0zJ2zp_suMppi=ZrT67B__LU1tWZSvuUQ@mail.gmail.com>
+
+
+* ng/rebase-merges-branch-name-as-label (2024-10-09) 3 commits
+  (merged to 'next' on 2024-10-11 at a5785fd206)
+ + rebase-merges: try and use branch names as labels
+ + rebase-update-refs: extract load_branch_decorations
+ + load_branch_decorations: fix memory leak with non-static filters
+
+ "git rebase --rebase-merges" now uses branch names as labels when
+ able.
+
+ source: <pull.1784.v3.git.git.1728460700.gitgitgadget@gmail.com>
+
+
+* ps/maintenance-start-crash-fix (2024-10-10) 1 commit
+  (merged to 'next' on 2024-10-11 at c54df41815)
+ + builtin/gc: fix crash when running `git maintenance start`
+
+ "git maintenance start" crashed due to an uninitialized variable
+ reference, which has been corrected.
+
+ source: <a5b1433abfd84cb627efc17f52e0d644ee207bb0.1728538282.git.ps@pks.im>
+
+
+* tc/bundle-uri-leakfix (2024-10-10) 1 commit
+  (merged to 'next' on 2024-10-11 at 07ac214952)
+ + bundle-uri: plug leak in unbundle_from_file()
+
+ Leakfix.
+
+ source: <20241010091249.1895960-1-toon@iotcl.com>
+
+
+* xx/protocol-v2-doc-markup-fix (2024-10-10) 1 commit
+  (merged to 'next' on 2024-10-11 at 37932adca4)
+ + Documentation/gitprotocol-v2.txt: fix a slight inconsistency in format
 
  Docfix.
 
- source: <20241008142920.570244-2-joshiheinrichs@gmail.com>
-
-
-* jk/fsmonitor-event-listener-race-fix (2024-10-08) 2 commits
-  (merged to 'next' on 2024-10-10 at 0c40f5c971)
- + fsmonitor: initialize fs event listener before accepting clients
- + simple-ipc: split async server initialization and running
-
- On macOS, fsmonitor can fall into a race condition that results in
- a client waiting forever to be notified for an event that have
- already happened.  This problem has been corrected.
-
- source: <20241008083121.GA676391@coredump.intra.peff.net>
-
-
-* js/doc-platform-support-link-fix (2024-10-07) 1 commit
-  (merged to 'next' on 2024-10-10 at 55316158e7)
- + docs: fix the `maintain-git` links in `technical/platform-support`
-
- Docfix.
-
- source: <pull.1812.git.1728337764963.gitgitgadget@gmail.com>
-
-
-* xx/remote-server-option-config (2024-10-08) 5 commits
-  (merged to 'next' on 2024-10-10 at 0e38c7f8c5)
- + ls-remote: leakfix for not clearing server_options
- + fetch: respect --server-option when fetching multiple remotes
- + transport.c::handshake: make use of server options from remote
- + remote: introduce remote.<name>.serverOption configuration
- + transport: introduce parse_transport_option() method
-
- A new configuration variable remote.<name>.serverOption makes the
- transport layer act as if the --serverOption=<value> option is
- given from the command line.
-
- source: <pull.1776.v3.git.git.1728358699.gitgitgadget@gmail.com>
+ source: <pull.1807.git.git.1728566443089.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
+
+* ak/typofix (2024-10-17) 1 commit
+ + t: fix typos
+
+ More typofixes.
+
+ source: <20241017112835.10100-1-algonell@gmail.com>
+
+
+* jc/optional-path (2024-10-14) 3 commits
+ - parseopt: values of pathname type can be prefixed with :(optional)
+ - config: values of pathname type can be prefixed with :(optional)
+ - t7500: make each piece more independent
+
+ Teach configuration values of type "pathname" a new ':(optional)'
+ suffix.
+
+ source: <20241014204427.1712182-1-gitster@pobox.com>
+
+
+* kh/update-ref (2024-10-16) 6 commits
+ - doc: mutually link update-ref and symbolic-ref
+ - doc: update-ref: discuss symbolic links
+ - doc: update-ref: remove confusing paragraph
+ - doc: update-ref: demote symlink to last section
+ - doc: update-ref: remove safety paragraphs
+ - doc: update-ref: drop “flag”
+
+ Documentation updates to 'git-update-ref(1)'.
+
+ source: <cover.1729017728.git.code@khaugsbakk.name>
+
+
+* ps/ref-filter-sort (2024-10-17) 1 commit
+ - ref-filter: format iteratively with lexicographic refname sorting
+
+ Teaches the ref-filter machinery to recognize and avoid cases where
+ sorting would be redundant.
+
+ Will merge to 'next'?
+ source: <e0daa6a2eac97c2b18a53399b7c124fc8d3d238d.1729141657.git.ps@pks.im>
+
+
+* sk/msvc-warnings (2024-10-17) 1 commit
+ + mingw.c: Fix complier warnings for a 64 bit msvc
+
+ Fixes compile time warnings with 64-bit MSVC.
+
+ source: <20241017171820.2679-2-soekkle@freenet.de>
+
+--------------------------------------------------
+[Cooking]
 
 * am/git-blame-ignore-revs-by-default (2024-10-14) 2 commits
  - blame: introduce --override-ignore-revs to bypass ignore revisions list
@@ -115,17 +205,6 @@ Release tarballs are available at:
  passed as '--ignore-revs-file' by default.
 
  source: <pull.1809.v2.git.1728707867.gitgitgadget@gmail.com>
-
-
-* jh/optional-path (2024-10-14) 3 commits
- - parseopt: values of pathname type can be prefixed with :(optional)
- - config: values of pathname type can be prefixed with :(optional)
- - t7500: make each piece more independent
-
- Teaches the configuration mechanism that values of type pathname may
- be prefixed with ':(optional)' to be treated as such.
-
- source: <20241014204427.1712182-1-gitster@pobox.com>
 
 
 * kn/ci-clang-format-tidy (2024-10-14) 3 commits
@@ -156,7 +235,7 @@ Release tarballs are available at:
  source: <cover.1728985514.git.ps@pks.im>
 
 
-* ps/platform-compat-fixes (2024-10-15) 10 commits
+* ps/platform-compat-fixes (2024-10-16) 10 commits
  - http: fix build error on FreeBSD
  - builtin/credential-cache: fix missing parameter for stub function
  - t7300: work around platform-specific behaviour with long paths on MinGW
@@ -171,12 +250,11 @@ Release tarballs are available at:
  Various platform compatibility fixes split out of the larger effort
  to use Meson as the primary build tool.
 
- Appears to break CI on Windows.
- cf. <Zw8AaF4VOaQO+P2M@nand.local>
- source: <cover.1728992306.git.ps@pks.im>
+ Will merge to 'next'?
+ source: <cover.1729060405.git.ps@pks.im>
 
 
-* ps/reftable-strbuf (2024-10-14) 10 commits
+* ps/reftable-strbuf (2024-10-17) 10 commits
  - reftable: handle trivial `reftable_buf` errors
  - reftable/stack: adapt `stack_filename()` to handle allocation failures
  - reftable/record: adapt `reftable_record_key()` to handle allocation failures
@@ -191,7 +269,8 @@ Release tarballs are available at:
  Implements a new reftable-specific strbuf replacement to reduce
  reftable's dependency on Git-specific data structures.
 
- source: <cover.1728910726.git.ps@pks.im>
+ Will merge to 'next'?
+ source: <cover.1729140565.git.ps@pks.im>
 
 
 * ps/upgrade-clar (2024-10-14) 2 commits
@@ -211,17 +290,15 @@ Release tarballs are available at:
  source: <pull.938.v3.git.git.1728764613835.gitgitgadget@gmail.com>
 
 
-* wm/shortlog-hash (2024-10-15) 1 commit
- - builtin/shortlog: explicitly set hash algo when there is no repo
+* wm/shortlog-hash (2024-10-17) 1 commit
+ + builtin/shortlog: explicitly set hash algo when there is no repo
 
  Teaches 'shortlog' to explicitly use SHA-1 when operating outside of
  a repository.
 
- Breaks CI.
- source: <20241015114826.715158-1-wolf@oriole.systems>
+ Will merge to 'next'.
+ source: <20241017093528.18157-1-wolf@oriole.systems>
 
---------------------------------------------------
-[Cooking]
 
 * bc/drop-ancient-libcurl-and-perl (2024-10-11) 13 commits
  - gitweb: make use of s///r
@@ -256,7 +333,7 @@ Release tarballs are available at:
  source: <20241015112645.415955-1-chizobajames21@gmail.com>
 
 
-* es/oss-fuzz (2024-10-15) 3 commits
+* es/oss-fuzz (2024-10-16) 3 commits
  - fuzz: port fuzz-url-decode-mem from OSS-Fuzz
  - fuzz: port fuzz-parse-attr-line from OSS-Fuzz
  - fuzz: port fuzz-credential-from-url-gently from OSS-Fuzz
@@ -288,95 +365,40 @@ Release tarballs are available at:
 
 
 * bf/t-readme-mention-reftable (2024-10-11) 1 commit
- - t/README: add missing value for GIT_TEST_DEFAULT_REF_FORMAT
+ (merged to 'next' on 2024-10-18 at b246cb10d4)
+ + t/README: add missing value for GIT_TEST_DEFAULT_REF_FORMAT
 
  Doc update.
 
- Will merge to 'next'.
  source: <20241011191150.825255-1-bence@ferdinandy.com>
 
 
-* aa/t7300-modernize (2024-10-09) 1 commit
-  (merged to 'next' on 2024-10-11 at e3a8d7f6c4)
- + t7300-clean.sh: use test_path_* helper functions for error logging
-
- Test modernization.
-
- Will merge to 'master'.
- source: <pull.1811.v4.git.1728498122419.gitgitgadget@gmail.com>
-
-
 * bf/set-head-symref (2024-10-15) 6 commits
- - fetch: set remote/HEAD if it does not exist
- - refs: add create_only option to refs_update_symref
- - refs: add TRANSACTION_CREATE_EXISTS error
- - remote set-head: better output for --auto
- - remote set-head: add new variable for readability
- - refs: atomically record overwritten ref in update_symref
+ . fetch: set remote/HEAD if it does not exist
+ . refs: add create_only option to refs_update_symref
+ . refs: add TRANSACTION_CREATE_EXISTS error
+ . remote set-head: better output for --auto
+ . remote set-head: add new variable for readability
+ . refs: atomically record overwritten ref in update_symref
 
  When "git fetch $remote" notices that refs/remotes/$remote/HEAD is
  missing and discovers what branch the other side points with its
  HEAD, refs/remotes/$remote/HEAD is updated to point to it.
 
  Needs to shed files backend dependency a bit more.
- Breaks CI.
- cf. <Zw8IKyPkG0Hr6/5t@nand.local>
  cf. <D4SUTJDV0Y04.3Q8YED2MVOKBL@ferdinandy.com>
  source: <20241014225431.1394565-1-bence@ferdinandy.com>
 
 
 * db/submodule-fetch-with-remote-name-fix (2024-10-09) 1 commit
- - submodule: correct remote name with fetch
+ (merged to 'next' on 2024-10-18 at a473d0df83)
+ + submodule: correct remote name with fetch
 
  A "git fetch" from the superproject going down to a submodule used
  a wrong remote when the default remote names are set differently
  between them.
 
- Will merge to 'next'?
  source: <20241009033257.1316690-1-daniel@mariadb.org>
-
-
-* jc/doc-refspec-syntax (2024-10-09) 1 commit
-  (merged to 'next' on 2024-10-11 at 912ed5fae8)
- + doc: clarify <src> in refspec syntax
-
- Doc updates.
-
- Will merge to 'master'.
- source: <xmqqy137wtyz.fsf@gitster.g>
-
-
-* kh/checkout-ignore-other-docfix (2024-10-10) 1 commit
-  (merged to 'next' on 2024-10-11 at ed66b60f52)
- + checkout: refer to other-worktree branch, not ref
-
- Doc updates.
-
- Will merge to 'master'.
- source: <fcfbcd3868bda75dd0463e04739047e74d239d32.1728585467.git.code@khaugsbakk.name>
-
-
-* kn/loose-object-layer-wo-global-hash (2024-10-09) 1 commit
-  (merged to 'next' on 2024-10-11 at 99252fb6cc)
- + loose: don't rely on repository global state
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <CAOLa=ZRMaw-PAsZ9s0zJ2zp_suMppi=ZrT67B__LU1tWZSvuUQ@mail.gmail.com>
-
-
-* ng/rebase-merges-branch-name-as-label (2024-10-09) 3 commits
-  (merged to 'next' on 2024-10-11 at a5785fd206)
- + rebase-merges: try and use branch names as labels
- + rebase-update-refs: extract load_branch_decorations
- + load_branch_decorations: fix memory leak with non-static filters
-
- "git rebase --rebase-merges" now uses branch names as labels when
- able.
-
- Will merge to 'master'.
- source: <pull.1784.v3.git.git.1728460700.gitgitgadget@gmail.com>
 
 
 * ps/build (2024-10-09) 24 commits
@@ -414,54 +436,34 @@ Release tarballs are available at:
 
 
 * ps/ci-gitlab-windows (2024-10-09) 5 commits
- - gitlab-ci: exercise Git on Windows
- - gitlab-ci: introduce stages and dependencies
- - ci: handle Windows-based CI jobs in GitLab CI
- - ci: create script to set up Git for Windows SDK
- - t7300: work around platform-specific behaviour with long paths on MinGW
+ (merged to 'next' on 2024-10-18 at 58a3be436a)
+ + gitlab-ci: exercise Git on Windows
+ + gitlab-ci: introduce stages and dependencies
+ + ci: handle Windows-based CI jobs in GitLab CI
+ + ci: create script to set up Git for Windows SDK
+ + t7300: work around platform-specific behaviour with long paths on MinGW
 
  Enable Windows-based CI in GitLab.
 
- WIll merge to 'next'.
  source: <cover.1728480039.git.ps@pks.im>
 
 
 * ak/typofixes (2024-10-10) 6 commits
- - t: fix typos
- - t/helper: fix a typo
- - t/perf: fix typos
- - t/unit-tests: fix typos
- - contrib: fix typos
- - compat: fix typos
+ (merged to 'next' on 2024-10-18 at c45095cae5)
+ + t: fix typos
+ + t/helper: fix a typo
+ + t/perf: fix typos
+ + t/unit-tests: fix typos
+ + contrib: fix typos
+ + compat: fix typos
 
  Typofixes.
 
- Will merge to 'next'?
- git-gui part was ejected--it should be routed via git-gui maintainer
  source: <20241010151223.311719-1-algonell@gmail.com>
 
 
-* tc/bundle-uri-leakfix (2024-10-10) 1 commit
-  (merged to 'next' on 2024-10-11 at 07ac214952)
- + bundle-uri: plug leak in unbundle_from_file()
-
- Leakfix.
-
- Will merge to 'master'.
- source: <20241010091249.1895960-1-toon@iotcl.com>
-
-
-* xx/protocol-v2-doc-markup-fix (2024-10-10) 1 commit
-  (merged to 'next' on 2024-10-11 at 37932adca4)
- + Documentation/gitprotocol-v2.txt: fix a slight inconsistency in format
-
- Docfix.
-
- Will merge to 'master'.
- source: <pull.1807.git.git.1728566443089.gitgitgadget@gmail.com>
-
-
 * cw/worktree-relative (2024-10-08) 4 commits
+ (merged to 'next' on 2024-10-18 at efc01c616e)
  + worktree: add test for path handling in linked worktrees
  + worktree: link worktrees with relative paths
  + worktree: refactor infer_backlink() to use *strbuf
@@ -472,7 +474,6 @@ Release tarballs are available at:
  allow finding the repository from the worktree and vice versa
  possible.  Turn this linkage to relative paths.
 
- Will merge to 'next'?
  source: <20241007-wt_relative_paths-v3-0-622cf18c45eb@pm.me>
 
 
@@ -504,42 +505,30 @@ Release tarballs are available at:
  source: <pull.1813.git.1728396723.gitgitgadget@gmail.com>
 
 
-* hy/partial-repack-fix (2024-10-15) 3 commits
- - partial-clone: update doc
- - t0410: adapt tests to repack changes
- - repack: pack everything into packfile
+* hy/partial-repack-fix (2024-10-16) 3 commits
+ . partial-clone: update doc
+ . t0410: adapt tests to repack changes
+ . repack: pack everything into packfile
 
  "git repack" avoids losing local objects that are reachable from
  objects in a packfile fetched from a promisor remote.
 
  Expecting a reroll.
  cf. <xmqqa5faec4x.fsf@gitster.g>
- Breaks CI.
- cf. <xmqqzfnexlku.fsf@gitster.g>
  source: <20241014032546.68427-1-hanyang.tony@bytedance.com>
 
 
-* kh/merge-tree-doc (2024-10-09) 1 commit
-  (merged to 'next' on 2024-10-11 at b22c213d6c)
- + doc: merge-tree: improve example script
-
- Docfix.
-
- Will merge to 'master'.
- cf. <CABPp-BE=JfoZp19Va-1oF60ADBUibGDwDkFX-Zytx7A3uJ__gg@mail.gmail.com>
- source: <c7e0d76e71eef56c6279e0f7e82a2d194f78d2a4.1728492617.git.code@khaugsbakk.name>
-
-
 * pb/clar-build-fix (2024-10-11) 1 commit
- - Makefile: fix dependency for $(UNIT_TEST_DIR)/clar/clar.o
+ (merged to 'next' on 2024-10-18 at ae6e80b047)
+ + Makefile: fix dependency for $(UNIT_TEST_DIR)/clar/clar.o
 
  Build fix.
 
- Will merge to 'next'.
  source: <pull.1810.v2.git.1728667787227.gitgitgadget@gmail.com>
 
 
 * ps/cache-tree-w-broken-index-entry (2024-10-07) 3 commits
+ (merged to 'next' on 2024-10-18 at 0048cdba0b)
  + unpack-trees: detect mismatching number of cache-tree/index entries
  + cache-tree: detect mismatching number of index entries
  + cache-tree: refactor verification to return error codes
@@ -547,19 +536,7 @@ Release tarballs are available at:
  Fail gracefully instead of crashing when attempting to write the
  contents of a corrupt in-core index as a tree object.
 
- Will merge to 'next'?
  source: <cover.1728275640.git.ps@pks.im>
-
-
-* ps/maintenance-start-crash-fix (2024-10-10) 1 commit
-  (merged to 'next' on 2024-10-11 at c54df41815)
- + builtin/gc: fix crash when running `git maintenance start`
-
- "git maintenance start" crashed due to an uninitialized variable
- reference, which has been corrected.
-
- Will merge to 'master'.
- source: <a5b1433abfd84cb627efc17f52e0d644ee207bb0.1728538282.git.ps@pks.im>
 
 
 * ua/t3404-cleanup (2024-10-14) 3 commits
@@ -574,9 +551,10 @@ Release tarballs are available at:
 
 
 * jc/a-commands-without-the-repo (2024-10-11) 3 commits
- - archive: remove the_repository global variable
- - annotate: remove usage of the_repository global
- - git: pass in repo to builtin based on setup_git_directory_gently
+ (merged to 'next' on 2024-10-18 at b428982db3)
+ + archive: remove the_repository global variable
+ + annotate: remove usage of the_repository global
+ + git: pass in repo to builtin based on setup_git_directory_gently
 
  Commands that can also work outside Git have learned to take the
  repository instance "repo" when we know we are in a repository, and
@@ -584,7 +562,6 @@ Release tarballs are available at:
  variable in a few of them have been removed using the new calling
  convention.
 
- Will merge to 'next'?
  source: <pull.1788.v4.git.git.1728594828.gitgitgadget@gmail.com>
 
 
@@ -629,11 +606,11 @@ Release tarballs are available at:
 
 
 * jc/breaking-changes-early-adopter-option (2024-10-11) 1 commit
- - BreakingChanges: early adopter option
+ (merged to 'next' on 2024-10-18 at 899fb7e75f)
+ + BreakingChanges: early adopter option
 
  Describe the policy to introduce breaking changes.
 
- Needs review.
  source: <xmqq1q0mcnt8.fsf@gitster.g>
 
 
@@ -713,7 +690,7 @@ Release tarballs are available at:
  source: <ZwBsbW5jsFw0mxKk@nand.local>
 
 
-* js/libgit-rust (2024-10-08) 5 commits
+* js/libgit-rust (2024-10-16) 5 commits
  - Makefile: add option to build and test libgit-rs and libgit-rs-sys
  - libgit: add higher-level libgit crate
  - libgit-sys: also export some config_set functions
@@ -723,7 +700,7 @@ Release tarballs are available at:
  An rust binding to libgit.a functions has been introduced.
 
  Needs review.
- source: <cover.1728429158.git.steadmon@google.com>
+ source: <cover.1729032373.git.steadmon@google.com>
 
 
 * jc/too-many-arguments (2024-08-06) 4 commits
