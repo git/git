@@ -1870,7 +1870,7 @@ test_expect_success '--update-refs adds commands with --rebase-merges' '
 		pick $(git log -1 --format=%h branch2~1) F
 		pick $(git log -1 --format=%h branch2) I
 		update-ref refs/heads/branch2
-		label merge
+		label branch2
 		reset onto
 		pick $(git log -1 --format=%h refs/heads/second) J
 		update-ref refs/heads/second
@@ -1881,7 +1881,7 @@ test_expect_success '--update-refs adds commands with --rebase-merges' '
 		update-ref refs/heads/third
 		pick $(git log -1 --format=%h HEAD~2) M
 		update-ref refs/heads/no-conflict-branch
-		merge -C $(git log -1 --format=%h HEAD~1) merge # merge
+		merge -C $(git log -1 --format=%h HEAD~1) branch2 # merge
 		update-ref refs/heads/merge-branch
 		EOF
 
