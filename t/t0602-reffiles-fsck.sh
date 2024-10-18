@@ -96,4 +96,63 @@ test_expect_success 'ref name check should be adapted into fsck messages' '
 	test_must_be_empty err
 '
 
+test_expect_success 'ref name check should work for multiple worktrees' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+
+	cd repo &&
+	test_commit initial &&
+	git checkout -b branch-1 &&
+	test_commit second &&
+	git checkout -b branch-2 &&
+	test_commit third &&
+	git checkout -b branch-3 &&
+	git worktree add ./worktree-1 branch-1 &&
+	git worktree add ./worktree-2 branch-2 &&
+	worktree1_refdir_prefix=.git/worktrees/worktree-1/refs/worktree &&
+	worktree2_refdir_prefix=.git/worktrees/worktree-2/refs/worktree &&
+
+	(
+		cd worktree-1 &&
+		git update-ref refs/worktree/branch-4 refs/heads/branch-3
+	) &&
+	(
+		cd worktree-2 &&
+		git update-ref refs/worktree/branch-4 refs/heads/branch-3
+	) &&
+
+	cp $worktree1_refdir_prefix/branch-4 $worktree1_refdir_prefix/.branch-2 &&
+	cp $worktree2_refdir_prefix/branch-4 $worktree2_refdir_prefix/branch-2. &&
+
+	test_must_fail git refs verify 2>err &&
+	cat >expect <<-EOF &&
+	error: worktrees/worktree-1/refs/worktree/.branch-2: badRefName: invalid refname format
+	error: worktrees/worktree-2/refs/worktree/branch-2.: badRefName: invalid refname format
+	EOF
+	sort err >sorted_err &&
+	test_cmp expect sorted_err &&
+
+	(
+		cd worktree-1 &&
+		test_must_fail git refs verify 2>err &&
+		cat >expect <<-EOF &&
+		error: worktrees/worktree-1/refs/worktree/.branch-2: badRefName: invalid refname format
+		error: worktrees/worktree-2/refs/worktree/branch-2.: badRefName: invalid refname format
+		EOF
+		sort err >sorted_err &&
+		test_cmp expect sorted_err
+	) &&
+
+	(
+		cd worktree-2 &&
+		test_must_fail git refs verify 2>err &&
+		cat >expect <<-EOF &&
+		error: worktrees/worktree-1/refs/worktree/.branch-2: badRefName: invalid refname format
+		error: worktrees/worktree-2/refs/worktree/branch-2.: badRefName: invalid refname format
+		EOF
+		sort err >sorted_err &&
+		test_cmp expect sorted_err
+	)
+'
+
 test_done

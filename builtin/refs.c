@@ -5,6 +5,7 @@
 #include "parse-options.h"
 #include "refs.h"
 #include "strbuf.h"
+#include "worktree.h"
 
 #define REFS_MIGRATE_USAGE \
 	N_("git refs migrate --ref-format=<format> [--dry-run]")
@@ -66,6 +67,7 @@ out:
 static int cmd_refs_verify(int argc, const char **argv, const char *prefix)
 {
 	struct fsck_options fsck_refs_options = FSCK_REFS_OPTIONS_DEFAULT;
+	struct worktree **worktrees, **p;
 	const char * const verify_usage[] = {
 		REFS_VERIFY_USAGE,
 		NULL,
@@ -75,7 +77,7 @@ static int cmd_refs_verify(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "strict", &fsck_refs_options.strict, N_("enable strict checking")),
 		OPT_END(),
 	};
-	int ret;
+	int ret = 0;
 
 	argc = parse_options(argc, argv, prefix, options, verify_usage, 0);
 	if (argc)
@@ -84,9 +86,15 @@ static int cmd_refs_verify(int argc, const char **argv, const char *prefix)
 	git_config(git_fsck_config, &fsck_refs_options);
 	prepare_repo_settings(the_repository);
 
-	ret = refs_fsck(get_main_ref_store(the_repository), &fsck_refs_options);
+	worktrees = get_worktrees();
+	for (p = worktrees; *p; p++) {
+		struct worktree *wt = *p;
+		ret |= refs_fsck(get_worktree_ref_store(wt), &fsck_refs_options, wt);
+	}
+
 
 	fsck_options_clear(&fsck_refs_options);
+	free_worktrees(worktrees);
 	return ret;
 }
 
