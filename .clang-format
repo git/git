@@ -32,6 +32,9 @@ AlignConsecutiveAssignments: false
 # double b = 3.14;
 AlignConsecutiveDeclarations: false
 
+# Align consecutive macro definitions.
+AlignConsecutiveMacros: true
+
 # Align escaped newlines as far left as possible
 # #define A   \
 #   int aaaa; \
