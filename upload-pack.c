@@ -53,6 +53,7 @@ enum allow_uor {
 	/* Allow request of a sha1 if it is reachable from a ref (possibly hidden ref). */
 	ALLOW_REACHABLE_SHA1 = 0x02,
 	/* Allow request of any sha1. Implies ALLOW_TIP_SHA1 and ALLOW_REACHABLE_SHA1. */
+	/* As this flag implies other two flags, be careful when it must be disabled. */
 	ALLOW_ANY_SHA1 = 0x07
 };
 
@@ -1368,7 +1369,7 @@ static int upload_pack_config(const char *var, const char *value,
 		if (git_config_bool(var, value))
 			data->allow_uor |= ALLOW_ANY_SHA1;
 		else
-			data->allow_uor &= ~ALLOW_ANY_SHA1;
+			data->allow_uor &= ~(ALLOW_ANY_SHA1 -(ALLOW_TIP_SHA1|ALLOW_REACHABLE_SHA1));
 	} else if (!strcmp("uploadpack.keepalive", var)) {
 		data->keepalive = git_config_int(var, value, ctx->kvi);
 		if (!data->keepalive)
