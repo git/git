@@ -13,6 +13,7 @@
 #include "../lockfile.h"
 #include "../chdir-notify.h"
 #include "../statinfo.h"
+#include "../worktree.h"
 #include "../wrapper.h"
 #include "../write-or-die.h"
 #include "../trace2.h"
@@ -1754,8 +1755,13 @@ static struct ref_iterator *packed_reflog_iterator_begin(struct ref_store *ref_s
 }
 
 static int packed_fsck(struct ref_store *ref_store UNUSED,
-		       struct fsck_options *o UNUSED)
+		       struct fsck_options *o UNUSED,
+		       struct worktree *wt)
 {
+
+	if (!is_main_worktree(wt))
+		return 0;
+
 	return 0;
 }
 

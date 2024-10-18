@@ -420,10 +420,11 @@ static int debug_reflog_expire(struct ref_store *ref_store, const char *refname,
 }
 
 static int debug_fsck(struct ref_store *ref_store,
-		      struct fsck_options *o)
+		      struct fsck_options *o,
+		      struct worktree *wt)
 {
 	struct debug_ref_store *drefs = (struct debug_ref_store *)ref_store;
-	int res = drefs->refs->be->fsck(drefs->refs, o);
+	int res = drefs->refs->be->fsck(drefs->refs, o, wt);
 	trace_printf_key(&trace_refs, "fsck: %d\n", res);
 	return res;
 }

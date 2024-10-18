@@ -549,7 +549,8 @@ int check_refname_format(const char *refname, int flags);
  * reflogs are consistent, and non-zero otherwise. The errors will be
  * written to stderr.
  */
-int refs_fsck(struct ref_store *refs, struct fsck_options *o);
+int refs_fsck(struct ref_store *refs, struct fsck_options *o,
+	      struct worktree *wt);
 
 /*
  * Apply the rules from check_refname_format, but mutate the result until it
