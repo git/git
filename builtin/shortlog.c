@@ -407,6 +407,18 @@ int cmd_shortlog(int argc,
 
 	struct parse_opt_ctx_t ctx;
 
+	/*
+	 * NEEDSWORK: Later on we'll call parse_revision_opt which relies on
+	 * the hash algorithm being set but since we are operating outside of a
+	 * Git repository we cannot determine one. This is only needed because
+	 * parse_revision_opt expects hexsz for --abbrev which is irrelevant
+	 * for shortlog outside of a git repository. For now explicitly set
+	 * SHA1, but ideally the parsing machinery would be split between
+	 * git/nongit so that we do not have to do this.
+	 */
+	if (nongit && !the_hash_algo)
+		repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
+
 	git_config(git_default_config, NULL);
 	shortlog_init(&log);
 	repo_init_revisions(the_repository, &rev, prefix);
