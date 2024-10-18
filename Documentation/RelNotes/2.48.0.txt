@@ -8,6 +8,8 @@ UI, Workflows & Features
    transport layer act as if the --serverOption=<value> option is
    given from the command line.
 
+ * "git rebase --rebase-merges" now uses branch names as labels when
+   able.
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -40,8 +42,19 @@ Fixes since v2.47
    already happened.  This problem has been corrected.
    (merge 51907f8fee jk/fsmonitor-event-listener-race-fix later to maint).
 
+ * "git maintenance start" crashed due to an uninitialized variable
+   reference, which has been corrected.
+   (merge c95547a394 ps/maintenance-start-crash-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 66893a14d0 ps/leakfixes-part-8 later to maint).
    (merge 1164e270b5 jk/output-prefix-cleanup later to maint).
    (merge f36b8cbaef jh/config-unset-doc-fix later to maint).
    (merge 4154ed4108 js/doc-platform-support-link-fix later to maint).
+   (merge 77af53f56f aa/t7300-modernize later to maint).
+   (merge 8ead1bba3e jc/doc-refspec-syntax later to maint).
+   (merge 432f666aa6 kn/loose-object-layer-wo-global-hash later to maint).
+   (merge c4b8fb6ef2 kh/merge-tree-doc later to maint).
+   (merge b8139c8f4e kh/checkout-ignore-other-docfix later to maint).
+   (merge 6dab49b9fb tc/bundle-uri-leakfix later to maint).
+   (merge f1ed39987b xx/protocol-v2-doc-markup-fix later to maint).
