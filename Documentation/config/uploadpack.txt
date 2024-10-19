@@ -25,7 +25,11 @@ uploadpack.allowReachableSHA1InWant::
 uploadpack.allowAnySHA1InWant::
 	Allow `upload-pack` to accept a fetch request that asks for any
 	object at all.
-	Defaults to `false`.
+	It implies `uploadpack.allowTipSHA1InWant` and
+	`uploadpack.allowReachableSHA1InWant`. If set to `true` it will
+	enable both of them, it set to `false` it will disable both of
+	them.
+	By default not set.
 
 uploadpack.keepAlive::
 	When `upload-pack` has started `pack-objects`, there may be a
