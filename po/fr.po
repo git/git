@@ -13191,7 +13191,7 @@ msgid ""
 "the superproject is not on any branch"
 msgstr ""
 "La branche du sous-module %s est configurée pour hériter de la branche du "
-"superprojet, mais le superprojet n'est sur aucune branche"
+"super-projet, mais le super-projet n'est sur aucune branche"
 
 #, c-format
 msgid "Unable to find current revision in submodule path '%s'"
@@ -18284,7 +18284,7 @@ msgstr "échec de l'écriture de l'index de multi-paquet"
 
 msgid "cannot expire packs from an incremental multi-pack-index"
 msgstr ""
-"impossible d'expirer les paquets dpuis un index multi-paquet incrémental"
+"impossible d'expirer les paquets depuis un index multi-paquet incrémental"
 
 msgid "Counting referenced objects"
 msgstr "Comptage des objets référencés"
@@ -19270,7 +19270,7 @@ msgid "use <n> digits to display object names"
 msgstr "utiliser <n> chiffres pour afficher les noms des objets"
 
 msgid "prefixed path to initial superproject"
-msgstr "chemin préfixé vers le superprojet initial"
+msgstr "chemin préfixé vers le super-projet initial"
 
 msgid "how to strip spaces and #comments from message"
 msgstr "comment éliminer les espaces et les commentaires # du message"
