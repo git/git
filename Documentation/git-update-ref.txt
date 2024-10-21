@@ -190,6 +190,10 @@ otherwise it will just try to read them and update them as a regular
 file (i.e. it will allow the filesystem to follow them, but will
 overwrite such a symlink to somewhere else with a regular filename).
 
+SEE ALSO
+--------
+linkgit:git-symbolic-ref[1]
+
 GIT
 ---
 Part of the linkgit:git[1] suite
