@@ -2872,14 +2872,14 @@ static void set_untracked_ident(struct untracked_cache *uc)
 static unsigned new_untracked_cache_flags(struct index_state *istate)
 {
 	struct repository *repo = istate->repo;
-	char *val;
+	const char *val;
 
 	/*
 	 * This logic is coordinated with the setting of these flags in
 	 * wt-status.c#wt_status_collect_untracked(), and the evaluation
 	 * of the config setting in commit.c#git_status_config()
 	 */
-	if (!repo_config_get_string(repo, "status.showuntrackedfiles", &val) &&
+	if (!repo_config_get_string_tmp(repo, "status.showuntrackedfiles", &val) &&
 	    !strcmp(val, "all"))
 		return 0;
 
