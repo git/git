@@ -1056,6 +1056,8 @@ static void do_invalidate_gitignore(struct untracked_cache_dir *dir)
 {
 	int i;
 	dir->valid = 0;
+	for (size_t i = 0; i < dir->untracked_nr; i++)
+		free(dir->untracked[i]);
 	dir->untracked_nr = 0;
 	for (i = 0; i < dir->dirs_nr; i++)
 		do_invalidate_gitignore(dir->dirs[i]);
@@ -1083,6 +1085,8 @@ static void invalidate_directory(struct untracked_cache *uc,
 		uc->dir_invalidated++;
 
 	dir->valid = 0;
+	for (size_t i = 0; i < dir->untracked_nr; i++)
+		free(dir->untracked[i]);
 	dir->untracked_nr = 0;
 	for (i = 0; i < dir->dirs_nr; i++)
 		dir->dirs[i]->recurse = 0;
@@ -3573,6 +3577,8 @@ static void write_one_dir(struct untracked_cache_dir *untracked,
 	 * for safety..
 	 */
 	if (!untracked->valid) {
+		for (size_t i = 0; i < untracked->untracked_nr; i++)
+			free(untracked->untracked[i]);
 		untracked->untracked_nr = 0;
 		untracked->check_only = 0;
 	}
@@ -3905,6 +3911,8 @@ static void invalidate_one_directory(struct untracked_cache *uc,
 {
 	uc->dir_invalidated++;
 	ucd->valid = 0;
+	for (size_t i = 0; i < ucd->untracked_nr; i++)
+		free(ucd->untracked[i]);
 	ucd->untracked_nr = 0;
 }
 
