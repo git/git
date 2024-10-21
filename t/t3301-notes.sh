@@ -1567,4 +1567,67 @@ test_expect_success 'empty notes do not invoke the editor' '
 	git notes remove HEAD
 '
 
+test_expect_success 'git notes add with -m/-F invokes editor with -e' '
+	test_commit 19th &&
+	echo "edited" >expect &&
+	MSG="$(cat expect)" git notes add -m "initial" -e &&
+	git notes show >actual &&
+	test_cmp expect actual &&
+	git notes remove HEAD &&
+
+	# Add a note using -F and edit it
+	echo "initial" >note_file &&
+	MSG="$(cat expect)" git notes add -F note_file -e &&
+	git notes show >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git notes append with -m/-F invokes the editor with -e' '
+	test_commit 20th &&
+	cat >expect <<-EOF &&
+		initial
+
+		edited
+	EOF
+	git notes add -m "initial" &&
+	MSG="edited" git notes append -m "appended" -e &&
+
+	# Verify the note content was appended and edited
+	git notes show >actual &&
+	test_cmp expect actual &&
+	git notes remove HEAD &&
+
+	# Append a note using -F and edit it
+	echo "note from file" >note_file &&
+	git notes add -m "initial" &&
+	MSG="edited" git notes append -F note_file -e &&
+
+	# Verify notes from file has been edited in editor and appended
+	git notes show >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git notes with a combination of -m, -F and -e invokes editor' '
+	test_commit 21st &&
+	echo "foo-file-1" >note_1 &&
+	echo "foo-file-2" >note_2 &&
+	echo "edited" >expect &&
+
+	MSG=$(cat expect) git notes append -F note_1 -m "message-1" -F note_2 -e &&
+
+	# Verify that combined messages from file and -m have been edited
+	git notes show >actual &&
+	test_cmp expect actual
+'
+test_expect_success 'git notes append aborts when editor fails with -e' '
+	test_commit 22nd &&
+	echo "foo-file-1" >note_1 &&
+
+	# Try to append a note with -F and -e, but make the editor fail
+	test_env GIT_EDITOR="false" test_must_fail git notes append -F note_1 -e &&
+
+	# Verify that no note was added due to editor failure
+	test_must_fail git notes show
+'
+
 test_done
