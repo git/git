@@ -25,6 +25,12 @@ value is <old-oid>.  You can specify 40 "0" or an empty string
 as <old-oid> to make sure that the ref you are creating does
 not exist.
 
+The final arguments are object names; this command without any options
+does not support updating a symbolic ref to point to another ref (see
+linkgit:git-symbolic-ref[1]).  But `git update-ref --stdin` does have
+the `symref-*` commands so that regular refs and symbolic refs can be
+committed in the same transaction.
+
 If --no-deref is given, <ref> itself is overwritten, rather than
 the result of following the symbolic pointers.
 
