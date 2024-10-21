@@ -29,14 +29,6 @@ It also allows a "ref" file to be a symbolic pointer to another
 ref file by starting with the four-byte header sequence of
 "ref:".
 
-More importantly, it allows the update of a ref file to follow
-these symbolic pointers, whether they are symlinks or these
-"regular file symbolic refs".  It follows *real* symlinks only
-if they start with "refs/": otherwise it will just try to read
-them and update them as a regular file (i.e. it will allow the
-filesystem to follow them, but will overwrite such a symlink to
-somewhere else with a regular filename).
-
 If --no-deref is given, <ref> itself is overwritten, rather than
 the result of following the symbolic pointers.
 
@@ -184,6 +176,17 @@ value supplied to the -m option.
 An update will fail (without changing <ref>) if the current user is
 unable to create a new log file, append to the existing log file
 or does not have committer information available.
+
+NOTES
+-----
+
+Symbolic refs were initially implemented using symbolic links.  This is
+now deprecated since not all filesystems support symbolic links.
+
+This command follows *real* symlinks only if they start with "refs/":
+otherwise it will just try to read them and update them as a regular
+file (i.e. it will allow the filesystem to follow them, but will
+overwrite such a symlink to somewhere else with a regular filename).
 
 GIT
 ---
