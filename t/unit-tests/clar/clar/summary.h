@@ -66,16 +66,12 @@ struct clar_summary *clar_summary_init(const char *filename)
 	struct clar_summary *summary;
 	FILE *fp;
 
-	if ((fp = fopen(filename, "w")) == NULL) {
-		perror("fopen");
-		return NULL;
-	}
+	if ((fp = fopen(filename, "w")) == NULL)
+		clar_abort("Failed to open the summary file '%s': %s.\n",
+			   filename, strerror(errno));
 
-	if ((summary = malloc(sizeof(struct clar_summary))) == NULL) {
-		perror("malloc");
-		fclose(fp);
-		return NULL;
-	}
+	if ((summary = malloc(sizeof(struct clar_summary))) == NULL)
+		clar_abort("Failed to allocate summary.\n");
 
 	summary->filename = filename;
 	summary->fp = fp;
