@@ -183,6 +183,15 @@
 	git@vger.kernel.org mailing list if you see this error, as
 	we need to know what tools created such a file.
 
+`symrefTargetIsNotARef`::
+	(INFO) The target of a symbolic reference points neither to
+	a root reference nor to a reference starting with "refs/".
+	Although we allow create a symref pointing to the referent which
+	is outside the "ref" by using `git symbolic-ref`, we may tighten
+	the rule in the future. Report to the git@vger.kernel.org
+	mailing list if you see this error, as we need to know what tools
+	created such a file.
+
 `trailingRefContent`::
 	(INFO) A loose ref has trailing content. As valid implementations
 	of Git never created such a loose ref file, it may become an

@@ -3513,6 +3513,7 @@ static int files_fsck_symref_target(struct fsck_options *o,
 				    struct fsck_ref_report *report,
 				    struct strbuf *referent)
 {
+	int is_referent_root;
 	char orig_last_byte;
 	size_t orig_len;
 	int ret = 0;
@@ -3521,8 +3522,17 @@ static int files_fsck_symref_target(struct fsck_options *o,
 	orig_last_byte = referent->buf[orig_len - 1];
 	strbuf_rtrim(referent);
 
-	if (!is_root_ref(referent->buf) &&
-	    check_refname_format(referent->buf, 0)) {
+	is_referent_root = is_root_ref(referent->buf);
+	if (!is_referent_root &&
+	    !starts_with(referent->buf, "refs/") &&
+	    !starts_with(referent->buf, "worktrees/")) {
+		ret = fsck_report_ref(o, report,
+				      FSCK_MSG_SYMREF_TARGET_IS_NOT_A_REF,
+				      "points to non-ref target '%s'", referent->buf);
+
+	}
+
+	if (!is_referent_root && check_refname_format(referent->buf, 0)) {
 		ret = fsck_report_ref(o, report,
 				      FSCK_MSG_BAD_REFERENT_NAME,
 				      "points to invalid refname '%s'", referent->buf);
