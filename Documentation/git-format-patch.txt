@@ -250,7 +250,7 @@ is not complete yet ("WIP" stands for "Work In Progress").
 +
 If the convention of the receiving community for a particular extra
 string is to have it _after_ the subject prefix, the string _<rfc>_
-can be prefixed with a dash ("`-`") to signal that the the rest of
+can be prefixed with a dash ("`-`") to signal that the rest of
 the _<rfc>_ string should be appended to the subject prefix instead,
 e.g., `--rfc='-(WIP)'` results in "PATCH (WIP)".
 
