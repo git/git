@@ -55,7 +55,7 @@ for reading but not for writing (so we'll never write through a
 ref symlink to some other tree, if you have copied a whole
 archive by creating a symlink tree).
 
-With `-d` flag, it deletes the named <ref> after verifying it
+With `-d`, it deletes the named <ref> after verifying that it
 still contains <old-oid>.
 
 With `--stdin`, update-ref reads instructions from standard input and
