@@ -444,6 +444,7 @@ static int handle_alias(int *argcp, const char ***argv)
 static int run_builtin(struct cmd_struct *p, int argc, const char **argv, struct repository *repo)
 {
 	int status, help;
+	int no_repo = 1;
 	struct stat st;
 	const char *prefix;
 	int run_setup = (p->option & (RUN_SETUP | RUN_SETUP_GENTLY));
@@ -455,9 +456,9 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv, struct
 
 	if (run_setup & RUN_SETUP) {
 		prefix = setup_git_directory();
+		no_repo = 0;
 	} else if (run_setup & RUN_SETUP_GENTLY) {
-		int nongit_ok;
-		prefix = setup_git_directory_gently(&nongit_ok);
+		prefix = setup_git_directory_gently(&no_repo);
 	} else {
 		prefix = NULL;
 	}
@@ -480,7 +481,7 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv, struct
 	trace2_cmd_name(p->cmd);
 
 	validate_cache_entries(repo->index);
-	status = p->fn(argc, argv, prefix, (p->option & RUN_SETUP)? repo : NULL);
+	status = p->fn(argc, argv, prefix, no_repo ? NULL : repo);
 	validate_cache_entries(repo->index);
 
 	if (status)

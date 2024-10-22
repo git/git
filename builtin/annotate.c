@@ -4,7 +4,6 @@
  * Copyright (C) 2006 Ryan Anderson
  */
 
-#define USE_THE_REPOSITORY_VARIABLE
 #include "git-compat-util.h"
 #include "builtin.h"
 #include "strvec.h"
@@ -12,7 +11,7 @@
 int cmd_annotate(int argc,
 		 const char **argv,
 		 const char *prefix,
-		 struct repository *repo UNUSED)
+		 struct repository *repo)
 {
 	struct strvec args = STRVEC_INIT;
 	const char **args_copy;
@@ -29,7 +28,7 @@ int cmd_annotate(int argc,
 	CALLOC_ARRAY(args_copy, args.nr + 1);
 	COPY_ARRAY(args_copy, args.v, args.nr);
 
-	ret = cmd_blame(args.nr, args_copy, prefix, the_repository);
+	ret = cmd_blame(args.nr, args_copy, prefix, repo);
 
 	strvec_clear(&args);
 	free(args_copy);
