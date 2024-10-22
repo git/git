@@ -34,4 +34,10 @@ test_expect_failure 'ls-tree does not yet support negated pathspec' '
 	test_cmp expect actual
 '
 
+test_expect_failure 'ls-tree does not yet support wildcard pathspec' '
+	git ls-files "a*" >expect &&
+	git ls-tree --name-only -r HEAD "a*" >actual &&
+	test_cmp expect actual
+'
+
 test_done
