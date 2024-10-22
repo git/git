@@ -660,8 +660,6 @@ char *repo_default_branch_name(struct repository *r, int quiet)
 
 	if (!ret) {
 		ret = xstrdup("master");
-		if (!quiet)
-			advise(_(default_branch_name_advice), ret);
 	}
 
 	full_ref = xstrfmt("refs/heads/%s", ret);
