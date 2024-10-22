@@ -298,6 +298,7 @@ SEE ALSO
 --------
 linkgit:git-init[1],
 linkgit:git-clone[1],
+linkgit:git-config[1],
 linkgit:git-fetch[1],
 linkgit:git-pack-refs[1],
 linkgit:git-gc[1],
