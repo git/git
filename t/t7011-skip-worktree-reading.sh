@@ -32,24 +32,24 @@ setup_absent() {
 }
 
 test_absent() {
-	echo "100644 $EMPTY_BLOB 0	1" > expected &&
-	git ls-files --stage 1 > result &&
+	echo "100644 $EMPTY_BLOB 0	1" >expected &&
+	git ls-files --stage 1 >result &&
 	test_cmp expected result &&
 	test ! -f 1
 }
 
 setup_dirty() {
 	git update-index --force-remove 1 &&
-	echo dirty > 1 &&
+	echo dirty >1 &&
 	git update-index --add --cacheinfo 100644 $EMPTY_BLOB 1 &&
 	git update-index --skip-worktree 1
 }
 
 test_dirty() {
-	echo "100644 $EMPTY_BLOB 0	1" > expected &&
-	git ls-files --stage 1 > result &&
+	echo "100644 $EMPTY_BLOB 0	1" >expected &&
+	git ls-files --stage 1 >result &&
 	test_cmp expected result &&
-	echo dirty > expected
+	echo dirty >expected
 	test_cmp expected 1
 }
 
@@ -59,7 +59,7 @@ test_expect_success 'setup' '
 	touch ./1 ./2 sub/1 sub/2 &&
 	git add 1 2 sub/1 sub/2 &&
 	git update-index --skip-worktree 1 sub/1 &&
-	git ls-files -t > result &&
+	git ls-files -t >result &&
 	test_cmp expect.skip result
 '
 
@@ -86,7 +86,7 @@ test_expect_success 'update-index --remove' '
 	setup_dirty &&
 	git update-index --remove 1 &&
 	test -z "$(git ls-files 1)" &&
-	echo dirty > expected &&
+	echo dirty >expected &&
 	test_cmp expected 1
 '
 
@@ -110,16 +110,16 @@ test_expect_success 'ls-files --modified' '
 	test -z "$(git ls-files -m)"
 '
 
-echo ":000000 100644 $ZERO_OID $EMPTY_BLOB A	1" > expected
+echo ":000000 100644 $ZERO_OID $EMPTY_BLOB A	1" >expected
 test_expect_success 'diff-index does not examine skip-worktree absent entries' '
 	setup_absent &&
-	git diff-index HEAD -- 1 > result &&
+	git diff-index HEAD -- 1 >result &&
 	test_cmp expected result
 '
 
 test_expect_success 'diff-index does not examine skip-worktree dirty entries' '
 	setup_dirty &&
-	git diff-index HEAD -- 1 > result &&
+	git diff-index HEAD -- 1 >result &&
 	test_cmp expected result
 '
 
