@@ -125,7 +125,7 @@ test_expect_success 'fast-export --show-original-ids | git fast-import' '
 	test $MUSS = $(git rev-parse --verify refs/tags/muss)
 '
 
-test_expect_success 'reencoding iso-8859-7' '
+test_expect_success ICONV 'reencoding iso-8859-7' '
 
 	test_when_finished "git reset --hard HEAD~1" &&
 	test_config i18n.commitencoding iso-8859-7 &&
@@ -421,7 +421,7 @@ M 100644 :1 there
 
 EOF
 
-test_expect_success 'dropping tag of filtered out object' '
+test_expect_success ICONV 'dropping tag of filtered out object' '
 (
 	cd limit-by-paths &&
 	git fast-export --tag-of-filtered-object=drop mytag -- there > output &&
@@ -438,7 +438,7 @@ msg
 
 EOF
 
-test_expect_success 'rewriting tag of filtered out object' '
+test_expect_success ICONV 'rewriting tag of filtered out object' '
 (
 	cd limit-by-paths &&
 	git fast-export --tag-of-filtered-object=rewrite mytag -- there > output &&
@@ -667,7 +667,7 @@ M 100644 :13 file
 
 EOF
 
-test_expect_success 'avoid uninteresting refs' '
+test_expect_success ICONV 'avoid uninteresting refs' '
 	> tmp-marks &&
 	git fast-export --import-marks=tmp-marks \
 		--export-marks=tmp-marks main > /dev/null &&
@@ -686,7 +686,7 @@ from :14
 
 EOF
 
-test_expect_success 'refs are updated even if no commits need to be exported' '
+test_expect_success ICONV 'refs are updated even if no commits need to be exported' '
 	> tmp-marks &&
 	git fast-export --import-marks=tmp-marks \
 		--export-marks=tmp-marks main > /dev/null &&
