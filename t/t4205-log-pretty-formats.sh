@@ -137,7 +137,7 @@ test_expect_success ICONV 'NUL separation with --stat' '
 test_expect_failure 'NUL termination with --stat' '
 	stat0_part=$(git diff --stat HEAD^ HEAD) &&
 	stat1_part=$(git diff-tree --no-commit-id --stat --root HEAD^) &&
-	printf "add bar\n$stat0_part\n\0$(commit_msg)\n$stat1_part\n0" >expected &&
+	printf "add bar\n$stat0_part\n\0$(commit_msg)\n$stat1_part\n\0" >expected &&
 	git log -z --stat --pretty="tformat:%s" >actual &&
 	test_cmp expected actual
 '
