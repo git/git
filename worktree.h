@@ -132,6 +132,16 @@ typedef void (* worktree_repair_fn)(int iserr, const char *path,
 void repair_worktrees(worktree_repair_fn, void *cb_data);
 
 /*
+ * Repair the linked worktrees after the gitdir has been moved.
+ */
+void repair_worktrees_after_gitdir_move(const char *old_path);
+
+/*
+ * Repair the linked worktree after the gitdir has been moved.
+ */
+void repair_worktree_after_gitdir_move(struct worktree *wt, const char *old_path);
+
+/*
  * Repair administrative files corresponding to the worktree at the given path.
  * The worktree's .git file pointing at the repository must be intact for the
  * repair to succeed. Useful for re-associating an orphaned worktree with the
