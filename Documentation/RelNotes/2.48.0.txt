@@ -25,6 +25,10 @@ Performance, Internal Implementation, Development Support etc.
    allocation function given to it may fail to allocate and to deal
    with such an error.
 
+ * An extra worktree attached to a repository points at each other to
+   allow finding the repository from the worktree and vice versa
+   possible.  Turn this linkage to relative paths.
+
 
 Fixes since v2.47
 -----------------
@@ -45,6 +49,10 @@ Fixes since v2.47
  * "git maintenance start" crashed due to an uninitialized variable
    reference, which has been corrected.
    (merge c95547a394 ps/maintenance-start-crash-fix later to maint).
+
+ * Fail gracefully instead of crashing when attempting to write the
+   contents of a corrupt in-core index as a tree object.
+   (merge ecb5c4318c ps/cache-tree-w-broken-index-entry later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 66893a14d0 ps/leakfixes-part-8 later to maint).
