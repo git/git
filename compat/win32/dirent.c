@@ -27,7 +27,7 @@ DIR *opendir(const char *name)
 	DIR *dir;
 
 	/* convert name to UTF-16 and check length < MAX_PATH */
-	if ((len = xutftowcs_path(pattern, name)) < 0)
+	if ((len = xutftowcs_path(pattern, name)) < 0 || len > MAX_PATH)
 		return NULL;
 
 	/* append optional '/' and wildcard '*' */
