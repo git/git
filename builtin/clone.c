@@ -401,6 +401,15 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest,
 				 */
 				if (lstat(dest->buf, &st))
 					die(_("hardlink cannot be checked at '%s'"), dest->buf);
+
+				if (st.st_ino != iter->st.st_ino) {
+					/* For some filesystems (for example overlayfs within docker),
+					 * creating hardlink may change inode of source file, so to avoid false failure
+					 * reload lstat of source file before doing sanity-check.
+					 */
+					if (lstat(src->buf, &iter->st))
+						die(_("after created hardlink, lstat on source failed '%s'"), src->buf);
+				}
 				if (st.st_mode != iter->st.st_mode ||
 				    st.st_ino != iter->st.st_ino ||
 				    st.st_dev != iter->st.st_dev ||
