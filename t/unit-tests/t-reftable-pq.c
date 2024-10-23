@@ -9,6 +9,7 @@ https://developers.google.com/open-source/licenses/bsd
 #include "test-lib.h"
 #include "reftable/constants.h"
 #include "reftable/pq.h"
+#include "strbuf.h"
 
 static void merged_iter_pqueue_check(const struct merged_iter_pqueue *pq)
 {

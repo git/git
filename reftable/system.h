@@ -12,7 +12,6 @@ https://developers.google.com/open-source/licenses/bsd
 /* This header glues the reftable library to the rest of Git */
 
 #include "git-compat-util.h"
-#include "lockfile.h"
 
 /*
  * An implementation-specific temporary file. By making this specific to the
@@ -53,5 +52,49 @@ int tmpfile_delete(struct reftable_tmpfile *t);
  * active. Return 0 on success, a reftable error code on error.
  */
 int tmpfile_rename(struct reftable_tmpfile *t, const char *path);
+
+/*
+ * An implementation-specific file lock. Same as with `reftable_tmpfile`,
+ * making this specific to the implementation makes it possible to tie this
+ * into signal or atexit handlers such that we know to clean up stale locks on
+ * abnormal exits.
+ */
+struct reftable_flock {
+	const char *path;
+	int fd;
+	void *priv;
+};
+#define REFTABLE_FLOCK_INIT ((struct reftable_flock){ .fd = -1, })
+
+/*
+ * Acquire the lock for the given target path by exclusively creating a file
+ * with ".lock" appended to it. If that lock exists, we wait up to `timeout_ms`
+ * to acquire the lock. If `timeout_ms` is 0 we don't wait, if it is negative
+ * we block indefinitely.
+ *
+ * Retrun 0 on success, a reftable error code on error.
+ */
+int flock_acquire(struct reftable_flock *l, const char *target_path,
+		  long timeout_ms);
+
+/*
+ * Close the lockfile's file descriptor without removing the lock itself. This
+ * is a no-op in case the lockfile has already been closed beforehand. Returns
+ * 0 on success, a reftable error code on error.
+ */
+int flock_close(struct reftable_flock *l);
+
+/*
+ * Release the lock by unlinking the lockfile. This is a no-op in case the
+ * lockfile has already been released or committed beforehand. Returns 0 on
+ * success, a reftable error code on error.
+ */
+int flock_release(struct reftable_flock *l);
+
+/*
+ * Commit the lock by renaming the lockfile into place. Returns 0 on success, a
+ * reftable error code on error.
+ */
+int flock_commit(struct reftable_flock *l);
 
 #endif

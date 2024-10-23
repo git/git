@@ -2,6 +2,7 @@
 #include "test-lib.h"
 #include "reftable/constants.h"
 #include "reftable/writer.h"
+#include "strbuf.h"
 
 void t_reftable_set_hash(uint8_t *p, int i, enum reftable_hash id)
 {
