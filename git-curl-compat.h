@@ -29,28 +29,6 @@
  */
 
 /**
- * CURLOPT_LOGIN_OPTIONS was added in 7.34.0, released in December
- * 2013.
- *
- * If we start requiring 7.34.0 we might also be able to remove the
- * code conditional on USE_CURL_FOR_IMAP_SEND in imap-send.c, see
- * 1e16b255b95 (git-imap-send: use libcurl for implementation,
- * 2014-11-09) and the check it added for "072200" in the Makefile.
-
- */
-#if LIBCURL_VERSION_NUM >= 0x072200
-#define GIT_CURL_HAVE_CURLOPT_LOGIN_OPTIONS 1
-#endif
-
-/**
- * CURL_SSLVERSION_TLSv1_[012] was added in 7.34.0, released in
- * December 2013.
- */
-#if LIBCURL_VERSION_NUM >= 0x072200
-#define GIT_CURL_HAVE_CURL_SSLVERSION_TLSv1_0
-#endif
-
-/**
  * CURLOPT_PINNEDPUBLICKEY was added in 7.39.0, released in November
  * 2014. CURLE_SSL_PINNEDPUBKEYNOTMATCH was added in that same version.
  */
