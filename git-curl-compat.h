@@ -29,14 +29,6 @@
  */
 
 /**
- * CURLSSLSET_{NO_BACKENDS,OK,TOO_LATE,UNKNOWN_BACKEND} were added in
- * 7.56.0, released in September 2017.
- */
-#if LIBCURL_VERSION_NUM >= 0x073800
-#define GIT_CURL_HAVE_CURLSSLSET_NO_BACKENDS
-#endif
-
-/**
  * Versions before curl 7.66.0 (September 2019) required manually setting the
  * transfer-encoding for a streaming POST; after that this is handled
  * automatically.
