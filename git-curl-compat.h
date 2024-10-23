@@ -29,14 +29,6 @@
  */
 
 /**
- * CURL_SSLVERSION_TLSv1_3 was added in 7.53.0, released in February
- * 2017.
- */
-#if LIBCURL_VERSION_NUM >= 0x073400
-#define GIT_CURL_HAVE_CURL_SSLVERSION_TLSv1_3 1
-#endif
-
-/**
  * CURLSSLSET_{NO_BACKENDS,OK,TOO_LATE,UNKNOWN_BACKEND} were added in
  * 7.56.0, released in September 2017.
  */
