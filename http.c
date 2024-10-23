@@ -1048,11 +1048,7 @@ static CURL *get_curl_handle(void)
 
 	if (http_ssl_backend && !strcmp("schannel", http_ssl_backend) &&
 	    !http_schannel_check_revoke) {
-#ifdef GIT_CURL_HAVE_CURLSSLOPT_NO_REVOKE
 		curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NO_REVOKE);
-#else
-		warning(_("CURLSSLOPT_NO_REVOKE not supported with cURL < 7.44.0"));
-#endif
 	}
 
 	if (http_proactive_auth != PROACTIVE_AUTH_NONE)

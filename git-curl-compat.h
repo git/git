@@ -29,16 +29,6 @@
  */
 
 /**
- * CURLSSLOPT_NO_REVOKE was added in 7.44.0, released in August 2015.
- *
- * The CURLSSLOPT_NO_REVOKE is, has always been a macro, not an enum
- * field (checked on curl version 7.78.0)
- */
-#if LIBCURL_VERSION_NUM >= 0x072c00
-#define GIT_CURL_HAVE_CURLSSLOPT_NO_REVOKE 1
-#endif
-
-/**
  * CURLOPT_PROXY_CAINFO was added in 7.52.0, released in August 2017.
  */
 #if LIBCURL_VERSION_NUM >= 0x073400
