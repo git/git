@@ -774,7 +774,7 @@ do
 	# file with scheme
 	for p in file
 	do
-		test_expect_success !MINGW "fetch-pack --diag-url $p://$h/$r" '
+		test_expect_success !WINDOWS "fetch-pack --diag-url $p://$h/$r" '
 			check_prot_path $p://$h/$r $p "/$r"
 		'
 		test_expect_success MINGW "fetch-pack --diag-url $p://$h/$r" '
@@ -784,7 +784,7 @@ do
 			check_prot_path $p:///$r $p "/$r"
 		'
 		# No "/~" -> "~" conversion for file
-		test_expect_success !MINGW "fetch-pack --diag-url $p://$h/~$r" '
+		test_expect_success !WINDOWS "fetch-pack --diag-url $p://$h/~$r" '
 			check_prot_path $p://$h/~$r $p "/~$r"
 		'
 		test_expect_success MINGW "fetch-pack --diag-url $p://$h/~$r" '
@@ -806,11 +806,17 @@ do
 	p=ssh
 	for h in host [::1]
 	do
-		test_expect_success "fetch-pack --diag-url $h:$r" '
+		expectation="success"
+		if test_have_prereq CYGWIN && test "$h" = "[::1]"
+		then
+			expectation="failure"
+		fi
+
+		test_expect_$expectation "fetch-pack --diag-url $h:$r" '
 			check_prot_host_port_path $h:$r $p "$h" NONE "$r"
 		'
 		# Do "/~" -> "~" conversion
-		test_expect_success "fetch-pack --diag-url $h:/~$r" '
+		test_expect_$expectation "fetch-pack --diag-url $h:/~$r" '
 			check_prot_host_port_path $h:/~$r $p "$h" NONE "~$r"
 		'
 	done

@@ -28,7 +28,12 @@ check_mailinfo () {
 
 for mail in 00*
 do
-	test_expect_success "mailinfo $mail" '
+	case "$mail" in
+	0004)
+		prereq=ICONV;;
+	esac
+
+	test_expect_success $prereq "mailinfo $mail" '
 		check_mailinfo "$mail" "" &&
 		if test -f "$DATA/msg$mail--scissors"
 		then
@@ -56,7 +61,12 @@ test_expect_success 'split box with rfc2047 samples' \
 
 for mail in rfc2047/00*
 do
-	test_expect_success "mailinfo $mail" '
+	case "$mail" in
+	rfc2047/0001)
+		prereq=ICONV;;
+	esac
+
+	test_expect_success $prereq "mailinfo $mail" '
 		git mailinfo -u "$mail-msg" "$mail-patch" <"$mail" >"$mail-info" &&
 		echo msg &&
 		test_cmp "$DATA/empty" "$mail-msg" &&

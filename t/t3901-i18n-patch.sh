@@ -11,6 +11,12 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
+if ! test_have_prereq ICONV
+then
+	skip_all='skipping patch i18n tests; iconv not available'
+	test_done
+fi
+
 check_encoding () {
 	# Make sure characters are not corrupted
 	cnt="$1" header="$2" i=1 j=0

@@ -3676,7 +3676,7 @@ test_expect_success !MINGW 'W: get-mark & empty orphan commit with erroneous thi
 ### series X (other new features)
 ###
 
-test_expect_success 'X: handling encoding' '
+test_expect_success ICONV 'X: handling encoding' '
 	test_tick &&
 	cat >input <<-INPUT_END &&
 	commit refs/heads/encoding
