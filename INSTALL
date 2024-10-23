@@ -119,7 +119,7 @@ Issues of note:
 	- A POSIX-compliant shell is required to run some scripts needed
 	  for everyday use (e.g. "bisect", "request-pull").
 
-	- "Perl" version 5.8.1 or later is needed to use some of the
+	- "Perl" version 5.26.0 or later is needed to use some of the
 	  features (e.g. sending patches using "git send-email",
 	  interacting with svn repositories with "git svn").  If you can
 	  live without these, use NO_PERL.  Note that recent releases of
