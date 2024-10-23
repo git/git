@@ -33,7 +33,7 @@ struct reftable_write_options {
 	/* 4-byte identifier ("sha1", "s256") of the hash.
 	 * Defaults to SHA1 if unset
 	 */
-	uint32_t hash_id;
+	enum reftable_hash hash_id;
 
 	/* Default mode for creating files. If unset, use 0666 (+umask) */
 	unsigned int default_permissions;

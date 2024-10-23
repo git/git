@@ -148,7 +148,7 @@ char *reftable_strdup(const char *str);
 /* Find the longest shared prefix size of `a` and `b` */
 int common_prefix_size(struct reftable_buf *a, struct reftable_buf *b);
 
-int hash_size(uint32_t id);
+int hash_size(enum reftable_hash id);
 
 /*
  * Format IDs that identify the hash function used by a reftable. Note that

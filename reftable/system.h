@@ -14,8 +14,5 @@ https://developers.google.com/open-source/licenses/bsd
 #include "git-compat-util.h"
 #include "lockfile.h"
 #include "tempfile.h"
-#include "hash.h" /* hash ID, sizes.*/
-
-int hash_size(uint32_t id);
 
 #endif
