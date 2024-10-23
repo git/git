@@ -20,7 +20,7 @@ static struct reftable_merged_table *
 merged_table_from_records(struct reftable_ref_record **refs,
 			  struct reftable_block_source **source,
 			  struct reftable_reader ***readers, const size_t *sizes,
-			  struct strbuf *buf, const size_t n)
+			  struct reftable_buf *buf, const size_t n)
 {
 	struct reftable_merged_table *mt = NULL;
 	struct reftable_write_options opts = {
@@ -35,7 +35,7 @@ merged_table_from_records(struct reftable_ref_record **refs,
 
 	for (size_t i = 0; i < n; i++) {
 		t_reftable_write_to_buf(&buf[i], refs[i], sizes[i], NULL, 0, &opts);
-		block_source_from_strbuf(&(*source)[i], &buf[i]);
+		block_source_from_buf(&(*source)[i], &buf[i]);
 
 		err = reftable_reader_new(&(*readers)[i], &(*source)[i],
 					  "name");
@@ -75,7 +75,7 @@ static void t_merged_single_record(void)
 
 	struct reftable_ref_record *refs[] = { r1, r2, r3 };
 	size_t sizes[] = { ARRAY_SIZE(r1), ARRAY_SIZE(r2), ARRAY_SIZE(r3) };
-	struct strbuf bufs[3] = { STRBUF_INIT, STRBUF_INIT, STRBUF_INIT };
+	struct reftable_buf bufs[3] = { REFTABLE_BUF_INIT, REFTABLE_BUF_INIT, REFTABLE_BUF_INIT };
 	struct reftable_block_source *bs = NULL;
 	struct reftable_reader **readers = NULL;
 	struct reftable_merged_table *mt =
@@ -97,7 +97,7 @@ static void t_merged_single_record(void)
 	readers_destroy(readers, 3);
 	reftable_merged_table_free(mt);
 	for (size_t i = 0; i < ARRAY_SIZE(bufs); i++)
-		strbuf_release(&bufs[i]);
+		reftable_buf_release(&bufs[i]);
 	reftable_free(bs);
 }
 
@@ -152,7 +152,7 @@ static void t_merged_refs(void)
 
 	struct reftable_ref_record *refs[] = { r1, r2, r3 };
 	size_t sizes[3] = { ARRAY_SIZE(r1), ARRAY_SIZE(r2), ARRAY_SIZE(r3) };
-	struct strbuf bufs[3] = { STRBUF_INIT, STRBUF_INIT, STRBUF_INIT };
+	struct reftable_buf bufs[3] = { REFTABLE_BUF_INIT, REFTABLE_BUF_INIT, REFTABLE_BUF_INIT };
 	struct reftable_block_source *bs = NULL;
 	struct reftable_reader **readers = NULL;
 	struct reftable_merged_table *mt =
@@ -192,7 +192,7 @@ static void t_merged_refs(void)
 	reftable_free(out);
 
 	for (i = 0; i < 3; i++)
-		strbuf_release(&bufs[i]);
+		reftable_buf_release(&bufs[i]);
 	readers_destroy(readers, 3);
 	reftable_merged_table_free(mt);
 	reftable_free(bs);
@@ -234,8 +234,8 @@ static void t_merged_seek_multiple_times(void)
 	size_t sizes[] = {
 		ARRAY_SIZE(r1), ARRAY_SIZE(r2),
 	};
-	struct strbuf bufs[] = {
-		STRBUF_INIT, STRBUF_INIT,
+	struct reftable_buf bufs[] = {
+		REFTABLE_BUF_INIT, REFTABLE_BUF_INIT,
 	};
 	struct reftable_block_source *sources = NULL;
 	struct reftable_reader **readers = NULL;
@@ -265,7 +265,7 @@ static void t_merged_seek_multiple_times(void)
 	}
 
 	for (size_t i = 0; i < ARRAY_SIZE(bufs); i++)
-		strbuf_release(&bufs[i]);
+		reftable_buf_release(&bufs[i]);
 	readers_destroy(readers, ARRAY_SIZE(refs));
 	reftable_ref_record_release(&rec);
 	reftable_iterator_destroy(&it);
@@ -277,7 +277,7 @@ static struct reftable_merged_table *
 merged_table_from_log_records(struct reftable_log_record **logs,
 			      struct reftable_block_source **source,
 			      struct reftable_reader ***readers, const size_t *sizes,
-			      struct strbuf *buf, const size_t n)
+			      struct reftable_buf *buf, const size_t n)
 {
 	struct reftable_merged_table *mt = NULL;
 	struct reftable_write_options opts = {
@@ -293,7 +293,7 @@ merged_table_from_log_records(struct reftable_log_record **logs,
 
 	for (size_t i = 0; i < n; i++) {
 		t_reftable_write_to_buf(&buf[i], NULL, 0, logs[i], sizes[i], &opts);
-		block_source_from_strbuf(&(*source)[i], &buf[i]);
+		block_source_from_buf(&(*source)[i], &buf[i]);
 
 		err = reftable_reader_new(&(*readers)[i], &(*source)[i],
 					  "name");
@@ -361,7 +361,7 @@ static void t_merged_logs(void)
 
 	struct reftable_log_record *logs[] = { r1, r2, r3 };
 	size_t sizes[3] = { ARRAY_SIZE(r1), ARRAY_SIZE(r2), ARRAY_SIZE(r3) };
-	struct strbuf bufs[3] = { STRBUF_INIT, STRBUF_INIT, STRBUF_INIT };
+	struct reftable_buf bufs[3] = { REFTABLE_BUF_INIT, REFTABLE_BUF_INIT, REFTABLE_BUF_INIT };
 	struct reftable_block_source *bs = NULL;
 	struct reftable_reader **readers = NULL;
 	struct reftable_merged_table *mt = merged_table_from_log_records(
@@ -412,7 +412,7 @@ static void t_merged_logs(void)
 	reftable_free(out);
 
 	for (i = 0; i < 3; i++)
-		strbuf_release(&bufs[i]);
+		reftable_buf_release(&bufs[i]);
 	readers_destroy(readers, 3);
 	reftable_merged_table_free(mt);
 	reftable_free(bs);
@@ -421,7 +421,7 @@ static void t_merged_logs(void)
 static void t_default_write_opts(void)
 {
 	struct reftable_write_options opts = { 0 };
-	struct strbuf buf = STRBUF_INIT;
+	struct reftable_buf buf = REFTABLE_BUF_INIT;
 	struct reftable_writer *w = t_reftable_strbuf_writer(&buf, &opts);
 	struct reftable_ref_record rec = {
 		.refname = (char *) "master",
@@ -442,7 +442,7 @@ static void t_default_write_opts(void)
 	check(!err);
 	reftable_writer_free(w);
 
-	block_source_from_strbuf(&source, &buf);
+	block_source_from_buf(&source, &buf);
 
 	err = reftable_reader_new(&rd, &source, "filename");
 	check(!err);
@@ -457,7 +457,7 @@ static void t_default_write_opts(void)
 
 	reftable_reader_decref(rd);
 	reftable_merged_table_free(merged);
-	strbuf_release(&buf);
+	reftable_buf_release(&buf);
 }
 
 

@@ -116,7 +116,7 @@ static void t_reftable_ref_record_compare_name(void)
 
 static void t_reftable_ref_record_roundtrip(void)
 {
-	struct strbuf scratch = STRBUF_INIT;
+	struct reftable_buf scratch = REFTABLE_BUF_INIT;
 
 	for (int i = REFTABLE_REF_DELETION; i < REFTABLE_NR_REF_VALUETYPES; i++) {
 		struct reftable_record in = {
@@ -124,7 +124,7 @@ static void t_reftable_ref_record_roundtrip(void)
 			.u.ref.value_type = i,
 		};
 		struct reftable_record out = { .type = BLOCK_TYPE_REF };
-		struct strbuf key = STRBUF_INIT;
+		struct reftable_buf key = REFTABLE_BUF_INIT;
 		uint8_t buffer[1024] = { 0 };
 		struct string_view dest = {
 			.buf = buffer,
@@ -166,11 +166,11 @@ static void t_reftable_ref_record_roundtrip(void)
 						 GIT_SHA1_RAWSZ));
 		reftable_record_release(&in);
 
-		strbuf_release(&key);
+		reftable_buf_release(&key);
 		reftable_record_release(&out);
 	}
 
-	strbuf_release(&scratch);
+	reftable_buf_release(&scratch);
 }
 
 static void t_reftable_log_record_comparison(void)
@@ -262,7 +262,7 @@ static void t_reftable_log_record_roundtrip(void)
 			.value_type = REFTABLE_LOG_UPDATE,
 		}
 	};
-	struct strbuf scratch = STRBUF_INIT;
+	struct reftable_buf scratch = REFTABLE_BUF_INIT;
 	set_hash(in[0].value.update.new_hash, 1);
 	set_hash(in[0].value.update.old_hash, 2);
 	set_hash(in[2].value.update.new_hash, 3);
@@ -274,7 +274,7 @@ static void t_reftable_log_record_roundtrip(void)
 
 	for (size_t i = 0; i < ARRAY_SIZE(in); i++) {
 		struct reftable_record rec = { .type = BLOCK_TYPE_LOG };
-		struct strbuf key = STRBUF_INIT;
+		struct reftable_buf key = REFTABLE_BUF_INIT;
 		uint8_t buffer[1024] = { 0 };
 		struct string_view dest = {
 			.buf = buffer,
@@ -313,11 +313,11 @@ static void t_reftable_log_record_roundtrip(void)
 		check(reftable_log_record_equal(&in[i], &out.u.log,
 						 GIT_SHA1_RAWSZ));
 		reftable_log_record_release(&in[i]);
-		strbuf_release(&key);
+		reftable_buf_release(&key);
 		reftable_record_release(&out);
 	}
 
-	strbuf_release(&scratch);
+	reftable_buf_release(&scratch);
 }
 
 static void t_key_roundtrip(void)
@@ -327,30 +327,30 @@ static void t_key_roundtrip(void)
 		.buf = buffer,
 		.len = sizeof(buffer),
 	};
-	struct strbuf last_key = STRBUF_INIT;
-	struct strbuf key = STRBUF_INIT;
-	struct strbuf roundtrip = STRBUF_INIT;
+	struct reftable_buf last_key = REFTABLE_BUF_INIT;
+	struct reftable_buf key = REFTABLE_BUF_INIT;
+	struct reftable_buf roundtrip = REFTABLE_BUF_INIT;
 	int restart;
 	uint8_t extra;
 	int n, m;
 	uint8_t rt_extra;
 
-	strbuf_addstr(&last_key, "refs/heads/master");
-	strbuf_addstr(&key, "refs/tags/bla");
+	check(!reftable_buf_addstr(&last_key, "refs/heads/master"));
+	check(!reftable_buf_addstr(&key, "refs/tags/bla"));
 	extra = 6;
 	n = reftable_encode_key(&restart, dest, last_key, key, extra);
 	check(!restart);
 	check_int(n, >, 0);
 
-	strbuf_addstr(&roundtrip, "refs/heads/master");
+	check(!reftable_buf_addstr(&roundtrip, "refs/heads/master"));
 	m = reftable_decode_key(&roundtrip, &rt_extra, dest);
 	check_int(n, ==, m);
-	check(!strbuf_cmp(&key, &roundtrip));
+	check(!reftable_buf_cmp(&key, &roundtrip));
 	check_int(rt_extra, ==, extra);
 
-	strbuf_release(&last_key);
-	strbuf_release(&key);
-	strbuf_release(&roundtrip);
+	reftable_buf_release(&last_key);
+	reftable_buf_release(&key);
+	reftable_buf_release(&roundtrip);
 }
 
 static void t_reftable_obj_record_comparison(void)
@@ -413,7 +413,7 @@ static void t_reftable_obj_record_roundtrip(void)
 			.hash_prefix_len = 5,
 		},
 	};
-	struct strbuf scratch = STRBUF_INIT;
+	struct reftable_buf scratch = REFTABLE_BUF_INIT;
 
 	for (size_t i = 0; i < ARRAY_SIZE(recs); i++) {
 		uint8_t buffer[1024] = { 0 };
@@ -427,7 +427,7 @@ static void t_reftable_obj_record_roundtrip(void)
 				.obj = recs[i],
 			},
 		};
-		struct strbuf key = STRBUF_INIT;
+		struct reftable_buf key = REFTABLE_BUF_INIT;
 		struct reftable_record out = { .type = BLOCK_TYPE_OBJ };
 		int n, m;
 		uint8_t extra;
@@ -443,11 +443,11 @@ static void t_reftable_obj_record_roundtrip(void)
 		check_int(n, ==, m);
 
 		check(reftable_record_equal(&in, &out, GIT_SHA1_RAWSZ));
-		strbuf_release(&key);
+		reftable_buf_release(&key);
 		reftable_record_release(&out);
 	}
 
-	strbuf_release(&scratch);
+	reftable_buf_release(&scratch);
 }
 
 static void t_reftable_index_record_comparison(void)
@@ -456,22 +456,22 @@ static void t_reftable_index_record_comparison(void)
 		{
 			.type = BLOCK_TYPE_INDEX,
 			.u.idx.offset = 22,
-			.u.idx.last_key = STRBUF_INIT,
+			.u.idx.last_key = REFTABLE_BUF_INIT,
 		},
 		{
 			.type = BLOCK_TYPE_INDEX,
 			.u.idx.offset = 32,
-			.u.idx.last_key = STRBUF_INIT,
+			.u.idx.last_key = REFTABLE_BUF_INIT,
 		},
 		{
 			.type = BLOCK_TYPE_INDEX,
 			.u.idx.offset = 32,
-			.u.idx.last_key = STRBUF_INIT,
+			.u.idx.last_key = REFTABLE_BUF_INIT,
 		},
 	};
-	strbuf_addstr(&in[0].u.idx.last_key, "refs/heads/master");
-	strbuf_addstr(&in[1].u.idx.last_key, "refs/heads/master");
-	strbuf_addstr(&in[2].u.idx.last_key, "refs/heads/branch");
+	check(!reftable_buf_addstr(&in[0].u.idx.last_key, "refs/heads/master"));
+	check(!reftable_buf_addstr(&in[1].u.idx.last_key, "refs/heads/master"));
+	check(!reftable_buf_addstr(&in[2].u.idx.last_key, "refs/heads/branch"));
 
 	check(!reftable_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
 	check(!reftable_record_cmp(&in[0], &in[1]));
@@ -493,7 +493,7 @@ static void t_reftable_index_record_roundtrip(void)
 		.type = BLOCK_TYPE_INDEX,
 		.u.idx = {
 			.offset = 42,
-			.last_key = STRBUF_INIT,
+			.last_key = REFTABLE_BUF_INIT,
 		},
 	};
 	uint8_t buffer[1024] = { 0 };
@@ -501,21 +501,21 @@ static void t_reftable_index_record_roundtrip(void)
 		.buf = buffer,
 		.len = sizeof(buffer),
 	};
-	struct strbuf scratch = STRBUF_INIT;
-	struct strbuf key = STRBUF_INIT;
+	struct reftable_buf scratch = REFTABLE_BUF_INIT;
+	struct reftable_buf key = REFTABLE_BUF_INIT;
 	struct reftable_record out = {
 		.type = BLOCK_TYPE_INDEX,
-		.u.idx = { .last_key = STRBUF_INIT },
+		.u.idx = { .last_key = REFTABLE_BUF_INIT },
 	};
 	int n, m;
 	uint8_t extra;
 
-	strbuf_addstr(&in.u.idx.last_key, "refs/heads/master");
+	check(!reftable_buf_addstr(&in.u.idx.last_key, "refs/heads/master"));
 	reftable_record_key(&in, &key);
 	t_copy(&in);
 
 	check(!reftable_record_is_deletion(&in));
-	check(!strbuf_cmp(&key, &in.u.idx.last_key));
+	check(!reftable_buf_cmp(&key, &in.u.idx.last_key));
 	n = reftable_record_encode(&in, dest, GIT_SHA1_RAWSZ);
 	check_int(n, >, 0);
 
@@ -527,9 +527,9 @@ static void t_reftable_index_record_roundtrip(void)
 	check(reftable_record_equal(&in, &out, GIT_SHA1_RAWSZ));
 
 	reftable_record_release(&out);
-	strbuf_release(&key);
-	strbuf_release(&scratch);
-	strbuf_release(&in.u.idx.last_key);
+	reftable_buf_release(&key);
+	reftable_buf_release(&scratch);
+	reftable_buf_release(&in.u.idx.last_key);
 }
 
 int cmd_main(int argc UNUSED, const char *argv[] UNUSED)

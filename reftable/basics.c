@@ -9,6 +9,7 @@ https://developers.google.com/open-source/licenses/bsd
 #define REFTABLE_ALLOW_BANNED_ALLOCATORS
 #include "basics.h"
 #include "reftable-basics.h"
+#include "reftable-error.h"
 
 static void *(*reftable_malloc_ptr)(size_t sz);
 static void *(*reftable_realloc_ptr)(void *, size_t);
@@ -67,6 +68,79 @@ void reftable_set_alloc(void *(*malloc)(size_t),
 	reftable_malloc_ptr = malloc;
 	reftable_realloc_ptr = realloc;
 	reftable_free_ptr = free;
+}
+
+void reftable_buf_init(struct reftable_buf *buf)
+{
+	struct reftable_buf empty = REFTABLE_BUF_INIT;
+	*buf = empty;
+}
+
+void reftable_buf_release(struct reftable_buf *buf)
+{
+	reftable_free(buf->buf);
+	reftable_buf_init(buf);
+}
+
+void reftable_buf_reset(struct reftable_buf *buf)
+{
+	if (buf->alloc) {
+		buf->len = 0;
+		buf->buf[0] = '\0';
+	}
+}
+
+int reftable_buf_setlen(struct reftable_buf *buf, size_t len)
+{
+	if (len > buf->len)
+		return -1;
+	if (len == buf->len)
+		return 0;
+	buf->buf[len] = '\0';
+	buf->len = len;
+	return 0;
+}
+
+int reftable_buf_cmp(const struct reftable_buf *a, const struct reftable_buf *b)
+{
+	size_t len = a->len < b->len ? a->len : b->len;
+	if (len) {
+		int cmp = memcmp(a->buf, b->buf, len);
+		if (cmp)
+			return cmp;
+	}
+	return a->len < b->len ? -1 : a->len != b->len;
+}
+
+int reftable_buf_add(struct reftable_buf *buf, const void *data, size_t len)
+{
+	size_t newlen = buf->len + len;
+
+	if (newlen + 1 > buf->alloc) {
+		char *reallocated = buf->buf;
+		REFTABLE_ALLOC_GROW(reallocated, newlen + 1, buf->alloc);
+		if (!reallocated)
+			return REFTABLE_OUT_OF_MEMORY_ERROR;
+		buf->buf = reallocated;
+	}
+
+	memcpy(buf->buf + buf->len, data, len);
+	buf->buf[newlen] = '\0';
+	buf->len = newlen;
+
+	return 0;
+}
+
+int reftable_buf_addstr(struct reftable_buf *buf, const char *s)
+{
+	return reftable_buf_add(buf, s, strlen(s));
+}
+
+char *reftable_buf_detach(struct reftable_buf *buf)
+{
+	char *result = buf->buf;
+	reftable_buf_init(buf);
+	return result;
 }
 
 void put_be24(uint8_t *out, uint32_t i)
@@ -186,7 +260,7 @@ int names_equal(const char **a, const char **b)
 	return a[i] == b[i];
 }
 
-int common_prefix_size(struct strbuf *a, struct strbuf *b)
+int common_prefix_size(struct reftable_buf *a, struct reftable_buf *b)
 {
 	int p = 0;
 	for (; p < a->len && p < b->len; p++) {

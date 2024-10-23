@@ -13,21 +13,21 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable-blocksource.h"
 #include "reftable-error.h"
 
-static void strbuf_return_block(void *b UNUSED, struct reftable_block *dest)
+static void reftable_buf_return_block(void *b UNUSED, struct reftable_block *dest)
 {
 	if (dest->len)
 		memset(dest->data, 0xff, dest->len);
 	reftable_free(dest->data);
 }
 
-static void strbuf_close(void *b UNUSED)
+static void reftable_buf_close(void *b UNUSED)
 {
 }
 
-static int strbuf_read_block(void *v, struct reftable_block *dest, uint64_t off,
-			     uint32_t size)
+static int reftable_buf_read_block(void *v, struct reftable_block *dest,
+				   uint64_t off, uint32_t size)
 {
-	struct strbuf *b = v;
+	struct reftable_buf *b = v;
 	assert(off + size <= b->len);
 	REFTABLE_CALLOC_ARRAY(dest->data, size);
 	if (!dest->data)
@@ -37,23 +37,23 @@ static int strbuf_read_block(void *v, struct reftable_block *dest, uint64_t off,
 	return size;
 }
 
-static uint64_t strbuf_size(void *b)
+static uint64_t reftable_buf_size(void *b)
 {
-	return ((struct strbuf *)b)->len;
+	return ((struct reftable_buf *)b)->len;
 }
 
-static struct reftable_block_source_vtable strbuf_vtable = {
-	.size = &strbuf_size,
-	.read_block = &strbuf_read_block,
-	.return_block = &strbuf_return_block,
-	.close = &strbuf_close,
+static struct reftable_block_source_vtable reftable_buf_vtable = {
+	.size = &reftable_buf_size,
+	.read_block = &reftable_buf_read_block,
+	.return_block = &reftable_buf_return_block,
+	.close = &reftable_buf_close,
 };
 
-void block_source_from_strbuf(struct reftable_block_source *bs,
-			      struct strbuf *buf)
+void block_source_from_buf(struct reftable_block_source *bs,
+			   struct reftable_buf *buf)
 {
 	assert(!bs->ops);
-	bs->ops = &strbuf_vtable;
+	bs->ops = &reftable_buf_vtable;
 	bs->arg = buf;
 }
 

@@ -55,7 +55,7 @@ void iterator_set_empty(struct reftable_iterator *it)
 static void filtering_ref_iterator_close(void *iter_arg)
 {
 	struct filtering_ref_iterator *fri = iter_arg;
-	strbuf_release(&fri->oid);
+	reftable_buf_release(&fri->oid);
 	reftable_iterator_destroy(&fri->it);
 }
 
@@ -115,7 +115,7 @@ static void indexed_table_ref_iter_close(void *p)
 	block_iter_close(&it->cur);
 	reftable_block_done(&it->block_reader.block);
 	reftable_free(it->offsets);
-	strbuf_release(&it->oid);
+	reftable_buf_release(&it->oid);
 }
 
 static int indexed_table_ref_iter_next_block(struct indexed_table_ref_iter *it)
@@ -197,7 +197,10 @@ int indexed_table_ref_iter_new(struct indexed_table_ref_iter **dest,
 
 	*itr = empty;
 	itr->r = r;
-	strbuf_add(&itr->oid, oid, oid_len);
+
+	err = reftable_buf_add(&itr->oid, oid, oid_len);
+	if (err < 0)
+		goto out;
 
 	itr->offsets = offsets;
 	itr->offset_len = offset_len;

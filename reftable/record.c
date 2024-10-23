@@ -98,19 +98,24 @@ const unsigned char *reftable_ref_record_val2(const struct reftable_ref_record *
 	}
 }
 
-static int decode_string(struct strbuf *dest, struct string_view in)
+static int decode_string(struct reftable_buf *dest, struct string_view in)
 {
 	int start_len = in.len;
 	uint64_t tsize = 0;
-	int n = get_var_int(&tsize, &in);
+	int n, err;
+
+	n = get_var_int(&tsize, &in);
 	if (n <= 0)
 		return -1;
 	string_view_consume(&in, n);
 	if (in.len < tsize)
 		return -1;
 
-	strbuf_reset(dest);
-	strbuf_add(dest, in.buf, tsize);
+	reftable_buf_reset(dest);
+	err = reftable_buf_add(dest, in.buf, tsize);
+	if (err < 0)
+		return err;
+
 	string_view_consume(&in, tsize);
 
 	return start_len - in.len;
@@ -133,7 +138,7 @@ static int encode_string(const char *str, struct string_view s)
 }
 
 int reftable_encode_key(int *restart, struct string_view dest,
-			struct strbuf prev_key, struct strbuf key,
+			struct reftable_buf prev_key, struct reftable_buf key,
 			uint8_t extra)
 {
 	struct string_view start = dest;
@@ -183,13 +188,13 @@ int reftable_decode_keylen(struct string_view in,
 	return start_len - in.len;
 }
 
-int reftable_decode_key(struct strbuf *last_key, uint8_t *extra,
+int reftable_decode_key(struct reftable_buf *last_key, uint8_t *extra,
 			struct string_view in)
 {
 	int start_len = in.len;
 	uint64_t prefix_len = 0;
 	uint64_t suffix_len = 0;
-	int n;
+	int err, n;
 
 	n = reftable_decode_keylen(in, &prefix_len, &suffix_len, extra);
 	if (n < 0)
@@ -200,19 +205,25 @@ int reftable_decode_key(struct strbuf *last_key, uint8_t *extra,
 	    prefix_len > last_key->len)
 		return -1;
 
-	strbuf_setlen(last_key, prefix_len);
-	strbuf_add(last_key, in.buf, suffix_len);
+	err = reftable_buf_setlen(last_key, prefix_len);
+	if (err < 0)
+		return err;
+
+	err = reftable_buf_add(last_key, in.buf, suffix_len);
+	if (err < 0)
+		return err;
+
 	string_view_consume(&in, suffix_len);
 
 	return start_len - in.len;
 }
 
-static void reftable_ref_record_key(const void *r, struct strbuf *dest)
+static int reftable_ref_record_key(const void *r, struct reftable_buf *dest)
 {
 	const struct reftable_ref_record *rec =
 		(const struct reftable_ref_record *)r;
-	strbuf_reset(dest);
-	strbuf_addstr(dest, rec->refname);
+	reftable_buf_reset(dest);
+	return reftable_buf_addstr(dest, rec->refname);
 }
 
 static int reftable_ref_record_copy_from(void *rec, const void *src_rec,
@@ -350,9 +361,9 @@ static int reftable_ref_record_encode(const void *rec, struct string_view s,
 	return start.len - s.len;
 }
 
-static int reftable_ref_record_decode(void *rec, struct strbuf key,
+static int reftable_ref_record_decode(void *rec, struct reftable_buf key,
 				      uint8_t val_type, struct string_view in,
-				      int hash_size, struct strbuf *scratch)
+				      int hash_size, struct reftable_buf *scratch)
 {
 	struct reftable_ref_record *r = rec;
 	struct string_view start = in;
@@ -415,7 +426,7 @@ static int reftable_ref_record_decode(void *rec, struct strbuf key,
 			goto done;
 		}
 		string_view_consume(&in, n);
-		r->value.symref = strbuf_detach(scratch, NULL);
+		r->value.symref = reftable_buf_detach(scratch);
 	} break;
 
 	case REFTABLE_REF_DELETION:
@@ -465,12 +476,12 @@ static struct reftable_record_vtable reftable_ref_record_vtable = {
 	.cmp = &reftable_ref_record_cmp_void,
 };
 
-static void reftable_obj_record_key(const void *r, struct strbuf *dest)
+static int reftable_obj_record_key(const void *r, struct reftable_buf *dest)
 {
 	const struct reftable_obj_record *rec =
 		(const struct reftable_obj_record *)r;
-	strbuf_reset(dest);
-	strbuf_add(dest, rec->hash_prefix, rec->hash_prefix_len);
+	reftable_buf_reset(dest);
+	return reftable_buf_add(dest, rec->hash_prefix, rec->hash_prefix_len);
 }
 
 static void reftable_obj_record_release(void *rec)
@@ -547,10 +558,10 @@ static int reftable_obj_record_encode(const void *rec, struct string_view s,
 	return start.len - s.len;
 }
 
-static int reftable_obj_record_decode(void *rec, struct strbuf key,
+static int reftable_obj_record_decode(void *rec, struct reftable_buf key,
 				      uint8_t val_type, struct string_view in,
 				      int hash_size UNUSED,
-				      struct strbuf *scratch UNUSED)
+				      struct reftable_buf *scratch UNUSED)
 {
 	struct string_view start = in;
 	struct reftable_obj_record *r = rec;
@@ -664,19 +675,27 @@ static struct reftable_record_vtable reftable_obj_record_vtable = {
 	.cmp = &reftable_obj_record_cmp_void,
 };
 
-static void reftable_log_record_key(const void *r, struct strbuf *dest)
+static int reftable_log_record_key(const void *r, struct reftable_buf *dest)
 {
 	const struct reftable_log_record *rec =
 		(const struct reftable_log_record *)r;
-	int len = strlen(rec->refname);
+	int len = strlen(rec->refname), err;
 	uint8_t i64[8];
 	uint64_t ts = 0;
-	strbuf_reset(dest);
-	strbuf_add(dest, (uint8_t *)rec->refname, len + 1);
+
+	reftable_buf_reset(dest);
+	err = reftable_buf_add(dest, (uint8_t *)rec->refname, len + 1);
+	if (err < 0)
+		return err;
 
 	ts = (~ts) - rec->update_index;
 	put_be64(&i64[0], ts);
-	strbuf_add(dest, i64, sizeof(i64));
+
+	err = reftable_buf_add(dest, i64, sizeof(i64));
+	if (err < 0)
+		return err;
+
+	return 0;
 }
 
 static int reftable_log_record_copy_from(void *rec, const void *src_rec,
@@ -807,9 +826,9 @@ static int reftable_log_record_encode(const void *rec, struct string_view s,
 	return start.len - s.len;
 }
 
-static int reftable_log_record_decode(void *rec, struct strbuf key,
+static int reftable_log_record_decode(void *rec, struct reftable_buf key,
 				      uint8_t val_type, struct string_view in,
-				      int hash_size, struct strbuf *scratch)
+				      int hash_size, struct reftable_buf *scratch)
 {
 	struct string_view start = in;
 	struct reftable_log_record *r = rec;
@@ -1027,11 +1046,11 @@ static struct reftable_record_vtable reftable_log_record_vtable = {
 	.cmp = &reftable_log_record_cmp_void,
 };
 
-static void reftable_index_record_key(const void *r, struct strbuf *dest)
+static int reftable_index_record_key(const void *r, struct reftable_buf *dest)
 {
 	const struct reftable_index_record *rec = r;
-	strbuf_reset(dest);
-	strbuf_addbuf(dest, &rec->last_key);
+	reftable_buf_reset(dest);
+	return reftable_buf_add(dest, rec->last_key.buf, rec->last_key.len);
 }
 
 static int reftable_index_record_copy_from(void *rec, const void *src_rec,
@@ -1039,9 +1058,12 @@ static int reftable_index_record_copy_from(void *rec, const void *src_rec,
 {
 	struct reftable_index_record *dst = rec;
 	const struct reftable_index_record *src = src_rec;
+	int err;
 
-	strbuf_reset(&dst->last_key);
-	strbuf_addbuf(&dst->last_key, &src->last_key);
+	reftable_buf_reset(&dst->last_key);
+	err = reftable_buf_add(&dst->last_key, src->last_key.buf, src->last_key.len);
+	if (err < 0)
+		return err;
 	dst->offset = src->offset;
 
 	return 0;
@@ -1050,7 +1072,7 @@ static int reftable_index_record_copy_from(void *rec, const void *src_rec,
 static void reftable_index_record_release(void *rec)
 {
 	struct reftable_index_record *idx = rec;
-	strbuf_release(&idx->last_key);
+	reftable_buf_release(&idx->last_key);
 }
 
 static uint8_t reftable_index_record_val_type(const void *rec UNUSED)
@@ -1074,18 +1096,20 @@ static int reftable_index_record_encode(const void *rec, struct string_view out,
 	return start.len - out.len;
 }
 
-static int reftable_index_record_decode(void *rec, struct strbuf key,
+static int reftable_index_record_decode(void *rec, struct reftable_buf key,
 					uint8_t val_type UNUSED,
 					struct string_view in,
 					int hash_size UNUSED,
-					struct strbuf *scratch UNUSED)
+					struct reftable_buf *scratch UNUSED)
 {
 	struct string_view start = in;
 	struct reftable_index_record *r = rec;
-	int n = 0;
+	int err, n = 0;
 
-	strbuf_reset(&r->last_key);
-	strbuf_addbuf(&r->last_key, &key);
+	reftable_buf_reset(&r->last_key);
+	err = reftable_buf_add(&r->last_key, key.buf, key.len);
+	if (err < 0)
+		return err;
 
 	n = get_var_int(&r->offset, &in);
 	if (n < 0)
@@ -1101,14 +1125,14 @@ static int reftable_index_record_equal(const void *a, const void *b,
 	struct reftable_index_record *ia = (struct reftable_index_record *) a;
 	struct reftable_index_record *ib = (struct reftable_index_record *) b;
 
-	return ia->offset == ib->offset && !strbuf_cmp(&ia->last_key, &ib->last_key);
+	return ia->offset == ib->offset && !reftable_buf_cmp(&ia->last_key, &ib->last_key);
 }
 
 static int reftable_index_record_cmp(const void *_a, const void *_b)
 {
 	const struct reftable_index_record *a = _a;
 	const struct reftable_index_record *b = _b;
-	return strbuf_cmp(&a->last_key, &b->last_key);
+	return reftable_buf_cmp(&a->last_key, &b->last_key);
 }
 
 static struct reftable_record_vtable reftable_index_record_vtable = {
@@ -1124,9 +1148,9 @@ static struct reftable_record_vtable reftable_index_record_vtable = {
 	.cmp = &reftable_index_record_cmp,
 };
 
-void reftable_record_key(struct reftable_record *rec, struct strbuf *dest)
+int reftable_record_key(struct reftable_record *rec, struct reftable_buf *dest)
 {
-	reftable_record_vtable(rec)->key(reftable_record_data(rec), dest);
+	return reftable_record_vtable(rec)->key(reftable_record_data(rec), dest);
 }
 
 int reftable_record_encode(struct reftable_record *rec, struct string_view dest,
@@ -1151,9 +1175,9 @@ uint8_t reftable_record_val_type(struct reftable_record *rec)
 	return reftable_record_vtable(rec)->val_type(reftable_record_data(rec));
 }
 
-int reftable_record_decode(struct reftable_record *rec, struct strbuf key,
+int reftable_record_decode(struct reftable_record *rec, struct reftable_buf key,
 			   uint8_t extra, struct string_view src, int hash_size,
-			   struct strbuf *scratch)
+			   struct reftable_buf *scratch)
 {
 	return reftable_record_vtable(rec)->decode(reftable_record_data(rec),
 						   key, extra, src, hash_size,
@@ -1294,7 +1318,7 @@ void reftable_record_init(struct reftable_record *rec, uint8_t typ)
 	case BLOCK_TYPE_OBJ:
 		return;
 	case BLOCK_TYPE_INDEX:
-		strbuf_init(&rec->u.idx.last_key, 0);
+		reftable_buf_init(&rec->u.idx.last_key);
 		return;
 	default:
 		BUG("unhandled record type");
