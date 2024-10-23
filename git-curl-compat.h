@@ -29,14 +29,6 @@
  */
 
 /**
- * CURLOPT_TCP_KEEPALIVE was added in 7.25.0, released in March 2012.
- */
-#if LIBCURL_VERSION_NUM >= 0x071900
-#define GITCURL_HAVE_CURLOPT_TCP_KEEPALIVE 1
-#endif
-
-
-/**
  * CURLOPT_LOGIN_OPTIONS was added in 7.34.0, released in December
  * 2013.
  *

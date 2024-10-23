@@ -716,34 +716,10 @@ static int has_proxy_cert_password(void)
 }
 #endif
 
-#ifdef GITCURL_HAVE_CURLOPT_TCP_KEEPALIVE
 static void set_curl_keepalive(CURL *c)
 {
 	curl_easy_setopt(c, CURLOPT_TCP_KEEPALIVE, 1);
 }
-
-#else
-static int sockopt_callback(void *client, curl_socket_t fd, curlsocktype type)
-{
-	int ka = 1;
-	int rc;
-	socklen_t len = (socklen_t)sizeof(ka);
-
-	if (type != CURLSOCKTYPE_IPCXN)
-		return 0;
-
-	rc = setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&ka, len);
-	if (rc < 0)
-		warning_errno("unable to set SO_KEEPALIVE on socket");
-
-	return CURL_SOCKOPT_OK;
-}
-
-static void set_curl_keepalive(CURL *c)
-{
-	curl_easy_setopt(c, CURLOPT_SOCKOPTFUNCTION, sockopt_callback);
-}
-#endif
 
 /* Return 1 if redactions have been made, 0 otherwise. */
 static int redact_sensitive_header(struct strbuf *header, size_t offset)
