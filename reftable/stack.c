@@ -1493,9 +1493,15 @@ static int stack_compact_range(struct reftable_stack *st,
 	 */
 	for (i = 0; i < nlocks; i++) {
 		struct lock_file *table_lock = &table_locks[i];
-		char *table_path = get_locked_file_path(table_lock);
-		unlink(table_path);
-		reftable_free(table_path);
+		const char *lock_path = get_lock_file_path(table_lock);
+
+		reftable_buf_reset(&table_name);
+		err = reftable_buf_add(&table_name, lock_path,
+				       strlen(lock_path) - strlen(".lock"));
+		if (err)
+			continue;
+
+		unlink(table_name.buf);
 	}
 
 done:
