@@ -1412,15 +1412,18 @@ static int prune_refs(struct display_state *display_state,
 
 	if (verbosity >= 0) {
 		int summary_width = transport_summary_width(stale_refs);
+	    struct string_list symrefs = STRING_LIST_INIT_NODUP;
+	    refs_get_symrefs(get_main_ref_store(the_repository), &symrefs);
 
 		for (ref = stale_refs; ref; ref = ref->next) {
 			display_ref_update(display_state, '-', _("[deleted]"), NULL,
 					   _("(none)"), ref->name,
 					   &ref->new_oid, &ref->old_oid,
 					   summary_width);
-			refs_warn_dangling_symref(get_main_ref_store(the_repository),
-						  stderr, dangling_msg, ref->name);
+	        refs_warn_dangling_symref(get_main_ref_store(the_repository), stderr,
+				      dangling_msg, ref->name, &symrefs);
 		}
+	    string_list_clear(&symrefs, 0);
 	}
 
 cleanup:
