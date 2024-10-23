@@ -8,6 +8,7 @@ https://developers.google.com/open-source/licenses/bsd
 
 #include "test-lib.h"
 #include "lib-reftable.h"
+#include "dir.h"
 #include "reftable/merged.h"
 #include "reftable/reader.h"
 #include "reftable/reftable-error.h"
