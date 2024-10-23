@@ -63,9 +63,7 @@ static char *ssl_key;
 static char *ssl_key_type;
 static char *ssl_capath;
 static char *curl_no_proxy;
-#ifdef GIT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY
 static char *ssl_pinnedkey;
-#endif
 static char *ssl_cainfo;
 static long curl_low_speed_limit = -1;
 static long curl_low_speed_time = -1;
@@ -509,12 +507,7 @@ static int http_options(const char *var, const char *value,
 	}
 
 	if (!strcmp("http.pinnedpubkey", var)) {
-#ifdef GIT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY
 		return git_config_pathname(&ssl_pinnedkey, var, value);
-#else
-		warning(_("Public key pinning not supported with cURL < 7.39.0"));
-		return 0;
-#endif
 	}
 
 	if (!strcmp("http.extraheader", var)) {
@@ -1104,10 +1097,8 @@ static CURL *get_curl_handle(void)
 		curl_easy_setopt(result, CURLOPT_SSLKEYTYPE, ssl_key_type);
 	if (ssl_capath)
 		curl_easy_setopt(result, CURLOPT_CAPATH, ssl_capath);
-#ifdef GIT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY
 	if (ssl_pinnedkey)
 		curl_easy_setopt(result, CURLOPT_PINNEDPUBLICKEY, ssl_pinnedkey);
-#endif
 	if (http_ssl_backend && !strcmp("schannel", http_ssl_backend) &&
 	    !http_schannel_use_ssl_cainfo) {
 		curl_easy_setopt(result, CURLOPT_CAINFO, NULL);
@@ -1825,10 +1816,8 @@ static int handle_curl_result(struct slot_results *results)
 		 */
 		credential_reject(&cert_auth);
 		return HTTP_NOAUTH;
-#ifdef GIT_CURL_HAVE_CURLE_SSL_PINNEDPUBKEYNOTMATCH
 	} else if (results->curl_result == CURLE_SSL_PINNEDPUBKEYNOTMATCH) {
 		return HTTP_NOMATCHPUBLICKEY;
-#endif
 	} else if (missing_target(results))
 		return HTTP_MISSING_TARGET;
 	else if (results->http_code == 401) {
