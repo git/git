@@ -29,21 +29,6 @@
  */
 
 /**
- * CURLOPT_PROXY_CAINFO was added in 7.52.0, released in August 2017.
- */
-#if LIBCURL_VERSION_NUM >= 0x073400
-#define GIT_CURL_HAVE_CURLOPT_PROXY_CAINFO 1
-#endif
-
-/**
- * CURLOPT_PROXY_{KEYPASSWD,SSLCERT,SSLKEY} was added in 7.52.0,
- * released in August 2017.
- */
-#if LIBCURL_VERSION_NUM >= 0x073400
-#define GIT_CURL_HAVE_CURLOPT_PROXY_KEYPASSWD 1
-#endif
-
-/**
  * CURL_SSLVERSION_TLSv1_3 was added in 7.53.0, released in February
  * 2017.
  */
