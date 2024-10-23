@@ -980,7 +980,6 @@ static long get_curl_allowed_protocols(int from_user, struct strbuf *list)
 	return bits;
 }
 
-#ifdef GIT_CURL_HAVE_CURL_HTTP_VERSION_2
 static int get_curl_http_version_opt(const char *version_string, long *opt)
 {
 	int i;
@@ -1003,8 +1002,6 @@ static int get_curl_http_version_opt(const char *version_string, long *opt)
 	return -1; /* not found */
 }
 
-#endif
-
 static CURL *get_curl_handle(void)
 {
 	CURL *result = curl_easy_init();
@@ -1022,7 +1019,6 @@ static CURL *get_curl_handle(void)
 		curl_easy_setopt(result, CURLOPT_SSL_VERIFYHOST, 2);
 	}
 
-#ifdef GIT_CURL_HAVE_CURL_HTTP_VERSION_2
     if (curl_http_version) {
 		long opt;
 		if (!get_curl_http_version_opt(curl_http_version, &opt)) {
@@ -1030,7 +1026,6 @@ static CURL *get_curl_handle(void)
 			curl_easy_setopt(result, CURLOPT_HTTP_VERSION, opt);
 		}
     }
-#endif
 
 	curl_easy_setopt(result, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
 	curl_easy_setopt(result, CURLOPT_HTTPAUTH, CURLAUTH_ANY);

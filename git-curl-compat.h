@@ -29,17 +29,6 @@
  */
 
 /**
- * CURL_HTTP_VERSION_2 was added in 7.43.0, released in June 2015.
- *
- * The CURL_HTTP_VERSION_2 alias (but not CURL_HTTP_VERSION_2_0) has
- * always been a macro, not an enum field (checked on curl version
- * 7.78.0)
- */
-#if LIBCURL_VERSION_NUM >= 0x072b00
-#define GIT_CURL_HAVE_CURL_HTTP_VERSION_2 1
-#endif
-
-/**
  * CURLSSLOPT_NO_REVOKE was added in 7.44.0, released in August 2015.
  *
  * The CURLSSLOPT_NO_REVOKE is, has always been a macro, not an enum
