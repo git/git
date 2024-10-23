@@ -3692,6 +3692,34 @@ test_expect_success 'X: handling encoding' '
 	git log -1 --format=%B encoding | grep $(printf "\317\200")
 '
 
+test_expect_success 'X: replace ref that becomes useless is removed' '
+	git init -qb main testrepo &&
+	cd testrepo &&
+	(
+		test_commit test &&
+
+		test_commit msg somename content &&
+
+		git mv somename othername &&
+		NEW_TREE=$(git write-tree) &&
+		MSG="$(git log -1 --format=%B HEAD)" &&
+		NEW_COMMIT=$(git commit-tree -p HEAD^1 -m "$MSG" $NEW_TREE) &&
+		git replace main $NEW_COMMIT &&
+
+		echo more >>othername &&
+		git add othername &&
+		git commit -qm more &&
+
+		git fast-export --all >tmp &&
+		sed -e s/othername/somename/ tmp >tmp2 &&
+		git fast-import --force <tmp2 2>msgs &&
+
+		grep "Dropping.*since it would point to itself" msgs &&
+		git show-ref >refs &&
+		! grep refs/replace refs
+	)
+'
+
 ###
 ### series Y (submodules and hash algorithms)
 ###
