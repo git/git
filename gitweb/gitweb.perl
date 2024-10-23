@@ -1188,7 +1188,7 @@ sub evaluate_and_validate_params {
 		if ($search_use_regexp) {
 			$search_regexp = $searchtext;
 			if (!eval { qr/$search_regexp/; 1; }) {
-				(my $error = $@) =~ s/ at \S+ line \d+.*\n?//;
+				my $error = $@ =~ s/ at \S+ line \d+.*\n?//r;
 				die_error(400, "Invalid search regexp '$search_regexp'",
 				          esc_html($error));
 			}
@@ -2700,7 +2700,7 @@ sub git_cmd {
 # Try to avoid using this function wherever possible.
 sub quote_command {
 	return join(' ',
-		map { my $a = $_; $a =~ s/(['!])/'\\$1'/g; "'$a'" } @_ );
+		map { my $a = $_ =~ s/(['!])/'\\$1'/gr; "'$a'" } @_ );
 }
 
 # get HEAD ref of given project as hash
