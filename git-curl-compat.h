@@ -29,13 +29,6 @@
  */
 
 /**
- * CURL_SOCKOPT_OK was added in 7.21.5, released in April 2011.
- */
-#if LIBCURL_VERSION_NUM < 0x071505
-#define CURL_SOCKOPT_OK 0
-#endif
-
-/**
  * CURLOPT_TCP_KEEPALIVE was added in 7.25.0, released in March 2012.
  */
 #if LIBCURL_VERSION_NUM >= 0x071900
