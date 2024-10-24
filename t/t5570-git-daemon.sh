@@ -8,6 +8,31 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/lib-git-daemon.sh
+
+test_expect_success 'daemon rejects invalid --init-timeout values' '
+	for arg in "3a" "-3"
+	do
+		test_must_fail git daemon --init-timeout="$arg" 2>err &&
+		test_grep "fatal: invalid init-timeout ${SQ}$arg${SQ}, expecting a non-negative integer" err ||
+		return 1
+	done
+'
+
+test_expect_success 'daemon rejects invalid --timeout values' '
+	for arg in "3a" "-3"
+	do
+		test_must_fail git daemon --timeout="$arg" 2>err &&
+		test_grep "fatal: invalid timeout ${SQ}$arg${SQ}, expecting a non-negative integer" err ||
+		return 1
+	done
+'
+
+test_expect_success 'daemon rejects invalid --max-connections values' '
+	arg='3a' &&
+	test_must_fail git daemon --max-connections=3a 2>err &&
+	test_grep "fatal: invalid max-connections ${SQ}$arg${SQ}, expecting an integer" err
+'
+
 start_git_daemon
 
 check_verbose_connect () {
