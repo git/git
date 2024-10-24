@@ -608,34 +608,34 @@ test_expect_success 'merge-msg with "merging" an annotated tag' '
 
 	git checkout main^0 &&
 	git commit --allow-empty -m "One step ahead" &&
-	git tag -a -m "An annotated one" annote HEAD &&
+	git tag -a -m "An annotated one" annotate HEAD &&
 
 	git checkout main &&
-	git fetch . annote &&
+	git fetch . annotate &&
 
 	git fmt-merge-msg <.git/FETCH_HEAD >actual &&
 	{
 		cat <<-\EOF
-		Merge tag '\''annote'\''
+		Merge tag '\''annotate'\''
 
 		An annotated one
 
-		* tag '\''annote'\'':
+		* tag '\''annotate'\'':
 		  One step ahead
 		EOF
 	} >expected &&
 	test_cmp expected actual &&
 
 	test_when_finished "git reset --hard" &&
-	annote=$(git rev-parse annote) &&
-	git merge --no-commit --no-ff $annote &&
+	annotate=$(git rev-parse annotate) &&
+	git merge --no-commit --no-ff $annotate &&
 	{
 		cat <<-EOF
-		Merge tag '\''$annote'\''
+		Merge tag '\''$annotate'\''
 
 		An annotated one
 
-		* tag '\''$annote'\'':
+		* tag '\''$annotate'\'':
 		  One step ahead
 		EOF
 	} >expected &&

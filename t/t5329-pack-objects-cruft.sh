@@ -690,7 +690,7 @@ test_expect_success 'cruft --local drops unreachable objects' '
 	test_when_finished "rm -fr alternate repo" &&
 
 	test_commit -C alternate base &&
-	# Pack all objects in alterate so that the cruft repack in "repo" sees
+	# Pack all objects in alternate so that the cruft repack in "repo" sees
 	# the object it dropped due to `--local` as packed. Otherwise this
 	# object would not appear packed anywhere (since it is not packed in
 	# alternate and likewise not part of the cruft pack in the other repo

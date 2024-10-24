@@ -204,7 +204,7 @@ test_expect_success 'push recurse-submodules last one wins on command line' '
 		cd work/gar/bage &&
 		>recurse-check-on-command-line-overriding-earlier-command-line &&
 		git add recurse-check-on-command-line-overriding-earlier-command-line &&
-		git commit -m "Recurse on command-line overridiing earlier command-line junk"
+		git commit -m "Recurse on command-line overriding earlier command-line junk"
 	) &&
 	(
 		cd work &&

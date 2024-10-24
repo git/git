@@ -765,7 +765,7 @@ done
 # by the FSMonitor response to skip those recursive calls.  That is,
 # even if FSMonitor says that the mtime of the submodule directory
 # hasn't changed and it could be implicitly marked valid, we must
-# not take that shortcut.  We need to force the recusion into the
+# not take that shortcut.  We need to force the recursion into the
 # submodule so that we get a summary of the status *within* the
 # submodule.
 

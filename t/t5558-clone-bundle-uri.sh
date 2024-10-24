@@ -945,7 +945,7 @@ test_expect_success 'creationToken heuristic with failed downloads (clone)' '
 		--bundle-uri="$HTTPD_URL/bundle-list" \
 		"$HTTPD_URL/smart/fetch.git" download-3 &&
 
-	# As long as we have continguous successful downloads,
+	# As long as we have contiguous successful downloads,
 	# we _do_ set these configs.
 	test_cmp_config -C download-3 "$HTTPD_URL/bundle-list" fetch.bundleuri &&
 	test_cmp_config -C download-3 3 fetch.bundlecreationtoken &&
@@ -1189,7 +1189,7 @@ test_expect_success 'creationToken heuristic with failed downloads (fetch)' '
 	GIT_TRACE2_EVENT="$(pwd)/trace-fetch-3.txt" \
 		git -C fetch-3 fetch origin &&
 
-	# As long as we have continguous successful downloads,
+	# As long as we have contiguous successful downloads,
 	# we _do_ set the maximum creation token.
 	test_cmp_config -C fetch-3 6 fetch.bundlecreationtoken &&
 

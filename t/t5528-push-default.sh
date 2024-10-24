@@ -147,7 +147,7 @@ test_expect_success 'push from/to new branch fails with upstream and simple ' '
 #  - the default push succeeds
 #
 # A previous test expected this to fail, but for the wrong reasons:
-# it expected a fail becaause the branch is new and cannot be pushed, but
+# it expected to fail because the branch is new and cannot be pushed, but
 # in fact it was failing because of an ambiguous remote
 #
 test_expect_failure 'push from/to new branch fails with matching ' '

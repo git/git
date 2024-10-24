@@ -22,7 +22,7 @@ test_expect_success 'setup' '
 	git -C super submodule add ../sub sub2 &&
 
 	# Remove submodule.<name>.active entries in order to test in an
-	# environment where only URLs are present in the conifg
+	# environment where only URLs are present in the config
 	git -C super config --unset submodule.sub1.active &&
 	git -C super config --unset submodule.sub2.active &&
 

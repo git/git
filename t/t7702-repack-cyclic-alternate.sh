@@ -18,7 +18,7 @@ test_expect_success setup '
 	echo "$(pwd)"/.git/objects/../objects >.git/objects/info/alternates
 '
 
-test_expect_success 're-packing repository with itsself as alternate' '
+test_expect_success 're-packing repository with itself as alternate' '
 	git repack -adl &&
 	git fsck
 '
