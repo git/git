@@ -2160,14 +2160,6 @@ int has_object_kept_pack(const struct object_id *oid, unsigned flags)
 	return find_kept_pack_entry(the_repository, oid, flags, &e);
 }
 
-int has_pack_index(const unsigned char *sha1)
-{
-	struct stat st;
-	if (stat(sha1_pack_index_name(sha1), &st))
-		return 0;
-	return 1;
-}
-
 int for_each_object_in_pack(struct packed_git *p,
 			    each_packed_object_fn cb, void *data,
 			    enum for_each_object_flags flags)

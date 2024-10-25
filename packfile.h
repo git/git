@@ -193,8 +193,6 @@ int find_kept_pack_entry(struct repository *r, const struct object_id *oid, unsi
 int has_object_pack(const struct object_id *oid);
 int has_object_kept_pack(const struct object_id *oid, unsigned flags);
 
-int has_pack_index(const unsigned char *sha1);
-
 /*
  * Return 1 if an object in a promisor packfile is or refers to the given
  * object, 0 otherwise.

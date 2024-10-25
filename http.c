@@ -2420,15 +2420,17 @@ static char *fetch_pack_index(unsigned char *hash, const char *base_url)
 static int fetch_and_setup_pack_index(struct packed_git **packs_head,
 	unsigned char *sha1, const char *base_url)
 {
-	struct packed_git *new_pack;
+	struct packed_git *new_pack, *p;
 	char *tmp_idx = NULL;
 	int ret;
 
-	if (has_pack_index(sha1)) {
-		new_pack = parse_pack_index(sha1, sha1_pack_index_name(sha1));
-		if (!new_pack)
-			return -1; /* parse_pack_index() already issued error message */
-		goto add_pack;
+	/*
+	 * If we already have the pack locally, no need to fetch its index or
+	 * even add it to list; we already have all of its objects.
+	 */
+	for (p = get_all_packs(the_repository); p; p = p->next) {
+		if (hasheq(p->hash, sha1, the_repository->hash_algo))
+			return 0;
 	}
 
 	tmp_idx = fetch_pack_index(sha1, base_url);
@@ -2450,7 +2452,6 @@ static int fetch_and_setup_pack_index(struct packed_git **packs_head,
 	if (ret)
 		return -1;
 
-add_pack:
 	new_pack->next = *packs_head;
 	*packs_head = new_pack;
 	return 0;
