@@ -237,13 +237,22 @@ static struct packed_git *alloc_packed_git(int extra)
 	return p;
 }
 
+static char *pack_path_from_idx(const char *idx_path)
+{
+	size_t len;
+	if (!strip_suffix(idx_path, ".idx", &len))
+		BUG("idx path does not end in .idx: %s", idx_path);
+	return xstrfmt("%.*s.pack", (int)len, idx_path);
+}
+
 struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path)
 {
-	const char *path = sha1_pack_name(sha1);
+	char *path = pack_path_from_idx(idx_path);
 	size_t alloc = st_add(strlen(path), 1);
 	struct packed_git *p = alloc_packed_git(alloc);
 
 	memcpy(p->pack_name, path, alloc); /* includes NUL */
+	free(path);
 	hashcpy(p->hash, sha1, the_repository->hash_algo);
 	if (check_packed_git_idx(idx_path, p)) {
 		free(p);

@@ -335,7 +335,7 @@ test_expect_success 'fetch can handle previously-fetched .idx files' '
 	count_fetches 1 pack one.trace &&
 	GIT_TRACE_CURL=$PWD/two.trace git --git-dir=clone_packed_branches.git \
 		fetch "$HTTPD_URL"/dumb/repo_packed_branches.git branch2:branch2 &&
-	count_fetches 0 idx two.trace &&
+	count_fetches 1 idx two.trace &&
 	count_fetches 1 pack two.trace
 '
 
@@ -519,6 +519,16 @@ test_expect_success 'fetching via http alternates works' '
 	git -C "$child" update-server-info &&
 
 	git -c http.followredirects=true clone "$HTTPD_URL/dumb/alt-child.git"
+'
+
+test_expect_success 'dumb http can fetch index v1' '
+	server=$HTTPD_DOCUMENT_ROOT_PATH/idx-v1.git &&
+	git init --bare "$server" &&
+	git -C "$server" --work-tree=. commit --allow-empty -m foo &&
+	git -C "$server" -c pack.indexVersion=1 gc &&
+
+	git clone "$HTTPD_URL/dumb/idx-v1.git" &&
+	git -C idx-v1 fsck
 '
 
 test_done
