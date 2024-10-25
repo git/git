@@ -79,8 +79,13 @@ struct packed_git *get_all_packs(struct repository *r);
  */
 unsigned long repo_approximate_object_count(struct repository *r);
 
-struct packed_git *find_sha1_pack(const unsigned char *sha1,
-				  struct packed_git *packs);
+/*
+ * Find the pack within the "packs" list whose index contains the object "oid".
+ * For general object lookups, you probably don't want this; use
+ * find_pack_entry() instead.
+ */
+struct packed_git *find_oid_pack(const struct object_id *oid,
+				 struct packed_git *packs);
 
 void pack_report(void);
 

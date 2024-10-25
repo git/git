@@ -2010,13 +2010,13 @@ int is_pack_valid(struct packed_git *p)
 	return !open_packed_git(p);
 }
 
-struct packed_git *find_sha1_pack(const unsigned char *sha1,
-				  struct packed_git *packs)
+struct packed_git *find_oid_pack(const struct object_id *oid,
+				 struct packed_git *packs)
 {
 	struct packed_git *p;
 
 	for (p = packs; p; p = p->next) {
-		if (find_pack_entry_one(sha1, p))
+		if (find_pack_entry_one(oid->hash, p))
 			return p;
 	}
 	return NULL;

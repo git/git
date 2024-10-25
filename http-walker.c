@@ -432,7 +432,7 @@ static int http_fetch_pack(struct walker *walker, struct alt_base *repo,
 
 	if (fetch_indices(walker, repo))
 		return -1;
-	target = find_sha1_pack(oid->hash, repo->packs);
+	target = find_oid_pack(oid, repo->packs);
 	if (!target)
 		return -1;
 	close_pack_index(target);
