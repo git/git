@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2024, #10; Tue, 22)
-X-master-at: fd3785337beb285ed7fd67ce6fc3d3bed2097b40
-X-next-at: 0d6d43b58acc8d3aa85089b1bdf2e30d60228685
+Subject: What's cooking in git.git (Oct 2024, #11; Fri, 25)
+X-master-at: 6a11438f43469f3815f2f0fc997bd45792ff04c0
+X-next-at: 085561eb38e0fbe071c2f9c2c4d2d8fe946eb186
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2024, #10; Tue, 22)
+What's cooking in git.git (Oct 2024, #11; Fri, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,12 +17,14 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-This is the third integration round from the interim maintainer. A
-couple of topics have graduated from 'next', and there are 10 topics
-in 'next' that should graduate before the next integration round. As
-last time, there are still a large handful of topics are awaiting
-review or discussion, so please take a look at those marked as such
-below.
+This is the fourth integration round from the interim maintainer. Some
+more topics have graduated onto 'master', and a handful of new ones
+have been picked up into 'next' and so on.
+
+There are still more topics waiting for discussion that are stuck and
+would benefit from review. I encourage you to please take a look at
+those topics if you have not reviewed them, and pay the benefit others
+have given you forward by reviewing topics that are awaiting feedback.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -59,47 +61,159 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* cw/worktree-relative (2024-10-08) 4 commits
- (merged to 'next' on 2024-10-18 at efc01c616e)
- + worktree: add test for path handling in linked worktrees
- + worktree: link worktrees with relative paths
- + worktree: refactor infer_backlink() to use *strbuf
- + Merge branch 'es/worktree-repair-copied' into cw/worktrees-relative
- (this branch uses es/worktree-repair-copied.)
+* ak/typofix (2024-10-17) 1 commit
+ (merged to 'next' on 2024-10-18 at 83df4b3265)
+ + t: fix typos
+ (this branch is used by ak/t1016-cleanup.)
 
- An extra worktree attached to a repository points at each other to
- allow finding the repository from the worktree and vice versa
- possible.  Turn this linkage to relative paths.
- source: <20241007-wt_relative_paths-v3-0-622cf18c45eb@pm.me>
+ More typofixes.
+
+ source: <20241017112835.10100-1-algonell@gmail.com>
 
 
-* es/worktree-repair-copied (2024-09-23) 1 commit
- + worktree: repair copied repository and linked worktrees
- (this branch is used by cw/worktree-relative.)
+* ak/typofixes (2024-10-10) 6 commits
+ (merged to 'next' on 2024-10-18 at c45095cae5)
+ + t: fix typos
+ + t/helper: fix a typo
+ + t/perf: fix typos
+ + t/unit-tests: fix typos
+ + contrib: fix typos
+ + compat: fix typos
 
- The heuristics in "git worktree repair" can be confused when et
- worktree and its repository are copied and break correctly
- configured worktree and repository that point at each other, which
- has been corrected.
+ Typofixes.
 
- source: <20240923075416.54289-1-ericsunshine@charter.net>
+ source: <20241010151223.311719-1-algonell@gmail.com>
 
 
-* ps/cache-tree-w-broken-index-entry (2024-10-07) 3 commits
- (merged to 'next' on 2024-10-18 at 0048cdba0b)
- + unpack-trees: detect mismatching number of cache-tree/index entries
- + cache-tree: detect mismatching number of index entries
- + cache-tree: refactor verification to return error codes
+* bf/t-readme-mention-reftable (2024-10-11) 1 commit
+ (merged to 'next' on 2024-10-18 at b246cb10d4)
+ + t/README: add missing value for GIT_TEST_DEFAULT_REF_FORMAT
 
- Fail gracefully instead of crashing when attempting to write the
- contents of a corrupt in-core index as a tree object.
- source: <cover.1728275640.git.ps@pks.im>
+ Doc update.
+
+ source: <20241011191150.825255-1-bence@ferdinandy.com>
+
+
+* db/submodule-fetch-with-remote-name-fix (2024-10-09) 1 commit
+ (merged to 'next' on 2024-10-18 at a473d0df83)
+ + submodule: correct remote name with fetch
+
+ A "git fetch" from the superproject going down to a submodule used
+ a wrong remote when the default remote names are set differently
+ between them.
+
+ source: <20241009033257.1316690-1-daniel@mariadb.org>
+
+
+* jc/a-commands-without-the-repo (2024-10-11) 3 commits
+ (merged to 'next' on 2024-10-18 at b428982db3)
+ + archive: remove the_repository global variable
+ + annotate: remove usage of the_repository global
+ + git: pass in repo to builtin based on setup_git_directory_gently
+
+ Commands that can also work outside Git have learned to take the
+ repository instance "repo" when we know we are in a repository, and
+ NULL when we are not, in a parameter.  The uses of the_repository
+ variable in a few of them have been removed using the new calling
+ convention.
+
+ source: <pull.1788.v4.git.git.1728594828.gitgitgadget@gmail.com>
+
+
+* pb/clar-build-fix (2024-10-11) 1 commit
+ (merged to 'next' on 2024-10-18 at ae6e80b047)
+ + Makefile: fix dependency for $(UNIT_TEST_DIR)/clar/clar.o
+
+ Build fix.
+
+ source: <pull.1810.v2.git.1728667787227.gitgitgadget@gmail.com>
+
+
+* ps/ci-gitlab-windows (2024-10-09) 5 commits
+ (merged to 'next' on 2024-10-18 at 58a3be436a)
+ + gitlab-ci: exercise Git on Windows
+ + gitlab-ci: introduce stages and dependencies
+ + ci: handle Windows-based CI jobs in GitLab CI
+ + ci: create script to set up Git for Windows SDK
+ + t7300: work around platform-specific behaviour with long paths on MinGW
+
+ Enable Windows-based CI in GitLab.
+
+ source: <cover.1728480039.git.ps@pks.im>
+
+
+* sk/msvc-warnings (2024-10-17) 1 commit
+ (merged to 'next' on 2024-10-18 at 954a1eb93d)
+ + mingw.c: Fix complier warnings for a 64 bit msvc
+
+ Fixes compile time warnings with 64-bit MSVC.
+
+ source: <20241017171820.2679-2-soekkle@freenet.de>
+
+
+* wm/shortlog-hash (2024-10-17) 1 commit
+ (merged to 'next' on 2024-10-18 at 25307069e9)
+ + builtin/shortlog: explicitly set hash algo when there is no repo
+
+ Teaches 'shortlog' to explicitly use SHA-1 when operating outside of
+ a repository.
+
+ source: <20241017093528.18157-1-wolf@oriole.systems>
 
 --------------------------------------------------
 [New Topics]
 
+* ak/more-typofixes (2024-10-24) 1 commit
+ + t: fix typos
+
+ More typofixes.
+
+ source: <20241024114721.14270-1-algonell@gmail.com>
+
+
+* ps/mingw-rename (2024-10-24) 3 commits
+ - compat/mingw: support POSIX semantics for atomic renames
+ - compat/mingw: allow deletion of most opened files
+ - compat/mingw: share file handles created via `CreateFileW()`
+
+ Teaches the MinGW compatibility layer to support POSIX semantics for
+ atomic renames when other process(es) have a file opened at the
+ destination path.
+
+ Will merge to 'next'?
+ source: <cover.1729770140.git.ps@pks.im>
+
+
+* ps/reftable-detach (2024-10-23) 8 commits
+ - reftable/system: provide thin wrapper for lockfile subsystem
+ - reftable/stack: drop only use of `get_locked_file_path()`
+ - reftable/system: provide thin wrapper for tempfile subsystem
+ - reftable/stack: stop using `fsync_component()` directly
+ - reftable/system: stop depending on "hash.h"
+ - reftable: explicitly handle hash format IDs
+ - reftable/system: move "dir.h" to its only user
+ - Merge branch 'ps/reftable-strbuf' into ps/reftable-detach
+ (this branch uses ps/reftable-strbuf.)
+
+ Isolates the reftable subsystem from the rest of Git's codebase by
+ using fewer pieces of Git's infrastructure.
+
+ source: <cover.1729677003.git.ps@pks.im>
+
+
+* sk/t9101-cleanup (2024-10-23) 1 commit
+ + t9101: ensure no whitespace after redirect
+
+ Test cleanup.
+
+ source: <20241023121113.915310-1-kuforiji98@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * ak/t1016-cleanup (2024-10-22) 1 commit
- - t1016: clean up style
+ (merged to 'next' on 2024-10-22 at 1dd1717591)
+ + t1016: clean up style
  (this branch uses ak/typofix.)
 
  Test cleanup.
@@ -112,16 +226,19 @@ Release tarballs are available at:
  - doc: consolidate extensions in git-config documentation
 
  Centralize documentation for repository extensions into a single place.
+
+ Will merge to 'next'?
  source: <20241021-cleanup-extension-docs-v1-1-ab02cece3132@pm.me>
 
 
-* kh/mv-breakage (2024-10-21) 1 commit
- - t7001: add' failure test which triggers assertion
+* kh/mv-breakage (2024-10-23) 1 commit
+ (merged to 'next' on 2024-10-25 at db92c3efa1)
+ + t7001: add failure test which triggers assertion
 
  Demonstrate an assertion failure in 'git mv'.
 
- Will merge to 'next'?
- source: <29d71db280c972c91174bd0a501af66be72643af.1729462326.git.code@khaugsbakk.name>
+ Will merge to 'master'?
+ source: <c4ada0b787736ecd5aee986b1b8a4f90ccb84e21.1729631436.git.code@khaugsbakk.name>
 
 
 * kh/submitting-patches (2024-10-21) 1 commit
@@ -144,14 +261,14 @@ Release tarballs are available at:
  source: <20241020173216.40852-2-ken@kmatsui.me>
 
 
-* kn/arbitrary-suffixes (2024-10-21) 1 commit
+* kn/arbitrary-suffixes (2024-10-24) 1 commit
  - CodingGuidelines: discourage arbitrary suffixes in function names
 
-  Update the project's CodingGuidelines to discourage naming functions
-  with a "_1()" suffix.
+ Update the project's CodingGuidelines to discourage naming functions
+ with a "_1()" suffix.
 
- Under discussion.
- source: <20241021124145.636561-1-karthik.188@gmail.com>
+ Will merge to 'next'?
+ source: <20241024105357.2605168-1-karthik.188@gmail.com>
 
 
 * ks/t4205-fixup (2024-10-21) 1 commit
@@ -195,44 +312,48 @@ Release tarballs are available at:
 
 
 * ps/upload-pack-doc (2024-10-21) 1 commit
- - doc: document how uploadpack.allowAnySHA1InWant impact other allow options
+ (merged to 'next' on 2024-10-25 at ede395593c)
+ + doc: document how uploadpack.allowAnySHA1InWant impact other allow options
 
  Documentation update to clarify that 'uploadpack.allowAnySHA1InWant'
  implies both 'allowTipSHA1InWant' and 'allowReachableSHA1InWant'.
 
- Will merge to 'next'?
+ Will merge to 'master'?
  source: <pull.1814.v2.git.git.1729355997353.gitgitgadget@gmail.com>
 
 
 * rj/cygwin-exit (2024-10-18) 1 commit
- - credential-cache: treat ECONNABORTED like ECONNRESET
+ (merged to 'next' on 2024-10-25 at a3acd18921)
+ + credential-cache: treat ECONNABORTED like ECONNRESET
 
  Treat ECONNABORTED the same as ECONNRESET in 'git credential-cache' to
  work around a possible Cygwin regression. This resolves a race condition
  caused by changes in Cygwin's handling of socket closures, allowing the
  client to exit cleanly when encountering ECONNABORTED.
 
- Will merge to 'next'?
+ Will merge to 'master'?
  source: <20241018052952.GE2408674@coredump.intra.peff.net>
 
 
 * rs/grep-lookahead (2024-10-22) 1 commit
- - grep: disable lookahead on error
+ (merged to 'next' on 2024-10-25 at 44fc090a5e)
+ + grep: disable lookahead on error
 
  Fix 'git grep' regression on macOS by disabling lookahead when
  encountering invalid UTF-8 byte sequences.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <7a51a68e-5f9d-4444-a568-9ca180bc4c6b@web.de>
 
 
 * sa/notes-edit (2024-10-21) 1 commit
- - notes: teach the -e option to edit messages in editor
+ (merged to 'next on 2024-10-25 at 29b26e5ca6)
+ + notes: teach the -e option to edit messages in editor
 
  Teach 'git notes add' and 'git notes append' a new '-e' flag,
  instructing them to open the note in $GIT_EDITOR before saving.
 
- Needs review.
+ Will merge to 'master'?
  source: <pull.1817.v4.git.1729534340786.gitgitgadget@gmail.com>
 
 
@@ -241,28 +362,32 @@ Release tarballs are available at:
  + t7011: ensure no whitespace after redirect
 
  Test cleanup.
- source: <20241018191744.209746-1-kuforiji98@gmail.com>
+
+ Will merge to 'master'.
+ source: <20241019163439.274656-1-kuforiji98@gmail.com>
 
 
 * ss/duplicate-typos (2024-10-21) 1 commit
- - global: Fix duplicate word typos
+ (merged to 'next' on 2024-10-25 at a55ee8bc52)
+ + global: Fix duplicate word typos
 
  Typofixes.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <6ce47185-690d-415e-95c9-06a3b828be29e@cs-ware.de>
 
 
-* ua/atoi (2024-10-22) 3 commits
- - imap: replace atoi() with strtol_i() for UIDVALIDITY and UIDNEXT parsing
- - merge: replace atoi() with strtol_i() for marker size validation
- - daemon: replace atoi() with strtoul_ui() and strtol_i()
+* ua/atoi (2024-10-24) 3 commits
+ (merged to 'next' on 2024-10-25 at ecd980f7eb)
+ + imap: replace atoi() with strtol_i() for UIDVALIDITY and UIDNEXT parsing
+ + merge: replace atoi() with strtol_i() for marker size validation
+ + daemon: replace atoi() with strtoul_ui() and strtol_i()
 
  Replace various calls to atoi() with strtol_i() and strtoul_ui(), and
  add improved error handling.
 
- Under review.
- source: <pull.1810.v3.git.git.1729574624.gitgitgadget@gmail.com>
+ Will merge to 'master'?
+ source: <pull.1810.v6.git.git.1729729499.gitgitgadget@gmail.com>
 
 
 * y5/diff-pager (2024-10-21) 1 commit
@@ -271,21 +396,8 @@ Release tarballs are available at:
  Delay setting up the pager in 'git diff' until after the diff contents
  itself is fully prepared.
 
- Under review.
+ Needs review.
  source: <pull.1817.git.git.1729370390416.gitgitgadget@gmail.com>
-
---------------------------------------------------
-[Cooking]
-
-* ak/typofix (2024-10-17) 1 commit
- (merged to 'next' on 2024-10-18 at 83df4b3265)
- + t: fix typos
- (this branch is used by ak/t1016-cleanup.)
-
- More typofixes.
-
- Will merge to 'master'.
- source: <20241017112835.10100-1-algonell@gmail.com>
 
 
 * jc/optional-path (2024-10-14) 3 commits
@@ -301,12 +413,13 @@ Release tarballs are available at:
 
 
 * kh/update-ref (2024-10-21) 6 commits
- - Documentation: mutually link update-ref and symbolic-ref
- - Documentation/git-update-ref.txt: discuss symbolic refs
- - Documentation/git-update-ref.txt: remove confusing paragraph
- - Documentation/git-update-ref.txt: demote symlink to last section
- - Documentation/git-update-ref.txt: remove safety paragraphs
- - Documentation/git-update-ref.txt: drop “flag”
+ (merged to 'next' on 2024-10-25 at 317cc41dd3)
+ + Documentation: mutually link update-ref and symbolic-ref
+ + Documentation/git-update-ref.txt: discuss symbolic refs
+ + Documentation/git-update-ref.txt: remove confusing paragraph
+ + Documentation/git-update-ref.txt: demote symlink to last section
+ + Documentation/git-update-ref.txt: remove safety paragraphs
+ + Documentation/git-update-ref.txt: drop “flag”
 
  Documentation updates to 'git-update-ref(1)'.
 
@@ -321,17 +434,8 @@ Release tarballs are available at:
  Teaches the ref-filter machinery to recognize and avoid cases where
  sorting would be redundant.
 
- source: <d23c3e3ee7fdb49fcd05b4f2e52dd2a1cfdc10f2.1729510342.git.ps@pks.im>
-
-
-* sk/msvc-warnings (2024-10-17) 1 commit
- (merged to 'next' on 2024-10-18 at 954a1eb93d)
- + mingw.c: Fix complier warnings for a 64 bit msvc
-
- Fixes compile time warnings with 64-bit MSVC.
-
  Will merge to 'master'.
- source: <20241017171820.2679-2-soekkle@freenet.de>
+ source: <d23c3e3ee7fdb49fcd05b4f2e52dd2a1cfdc10f2.1729510342.git.ps@pks.im>
 
 
 * am/git-blame-ignore-revs-by-default (2024-10-14) 2 commits
@@ -351,7 +455,7 @@ Release tarballs are available at:
 
  Updates the '.clang-format' to match project conventions.
 
- Needs review.
+ Will merge to 'next'?
  source: <cover.1729241030.git.karthik.188@gmail.com>
 
 
@@ -381,6 +485,7 @@ Release tarballs are available at:
  Various platform compatibility fixes split out of the larger effort
  to use Meson as the primary build tool.
 
+ Will merge to 'master'.
  source: <cover.1729060405.git.ps@pks.im>
 
 
@@ -396,10 +501,12 @@ Release tarballs are available at:
  + reftable/basics: provide new `reftable_buf` interface
  + reftable: stop using `strbuf_addf()`
  + reftable: stop using `strbuf_addbuf()`
+ (this branch is used by ps/reftable-detach.)
 
  Implements a new reftable-specific strbuf replacement to reduce
  reftable's dependency on Git-specific data structures.
 
+ Will merge to 'master'.
  source: <cover.1729140565.git.ps@pks.im>
 
 
@@ -409,6 +516,7 @@ Release tarballs are available at:
  - Makefile: extract script to generate clar declarations
  - Makefile: adjust sed command for generating "clar-decls.h"
  - t/unit-tests: update clar to 206accb
+ (this branch is used by ps/build.)
 
  Buildfix and upgrade of Clar to a newer version.
 
@@ -425,20 +533,8 @@ Release tarballs are available at:
  source: <pull.938.v3.git.git.1728764613835.gitgitgadget@gmail.com>
 
 
-* wm/shortlog-hash (2024-10-17) 1 commit
- (merged to 'next' on 2024-10-18 at 25307069e9)
- + builtin/shortlog: explicitly set hash algo when there is no repo
-
- Teaches 'shortlog' to explicitly use SHA-1 when operating outside of
- a repository.
-
- Will merge to 'master'.
- source: <20241017093528.18157-1-wolf@oriole.systems>
-
-
-* bc/drop-ancient-libcurl-and-perl (2024-10-11) 13 commits
+* bc/drop-ancient-libcurl-and-perl (2024-10-23) 12 commits
  - gitweb: make use of s///r
- - INSTALL: require Perl 5.26.0
  - Require Perl 5.26.0
  - INSTALL: document requirement for libcurl 7.61.0
  - git-curl-compat: remove check for curl 7.56.0
@@ -454,7 +550,7 @@ Release tarballs are available at:
  Drop support for older libcURL and Perl.
 
  Under discussion.
- source: <20241010235621.738239-1-sandals@crustytoothpaste.net>
+ source: <20241023004600.1645313-1-sandals@crustytoothpaste.net>
 
 
 * co/t6050-pipefix (2024-10-22) 1 commit
@@ -464,6 +560,7 @@ Release tarballs are available at:
  Avoid losing exit status by having Git command being tested on the
  upstream side of a pipe.
 
+ Will merge to 'master'.
  source: <20241022012701.8959-1-chizobajames21@gmail.com>
 
 
@@ -498,107 +595,52 @@ Release tarballs are available at:
  source: <cover.1728505840.git.me@ttaylorr.com>
 
 
-* bf/t-readme-mention-reftable (2024-10-11) 1 commit
- (merged to 'next' on 2024-10-18 at b246cb10d4)
- + t/README: add missing value for GIT_TEST_DEFAULT_REF_FORMAT
-
- Doc update.
-
- Will merge to 'master'.
- source: <20241011191150.825255-1-bence@ferdinandy.com>
-
-
-* bf/set-head-symref (2024-10-21) 8 commits
- . fetch set_head: handle mirrored bare repositories
- . fetch: set remote/HEAD if it does not exist
- . refs: add create_only option to refs_update_symref_extended
- . refs: add TRANSACTION_CREATE_EXISTS error
- . remote set-head: better output for --auto
- . remote set-head: refactor for readability
- . refs: atomically record overwritten ref in update_symref
- . t/t5505-remote: set default branch to main
+* bf/set-head-symref (2024-10-23) 8 commits
+ - fetch set_head: handle mirrored bare repositories
+ - fetch: set remote/HEAD if it does not exist
+ - refs: add create_only option to refs_update_symref_extended
+ - refs: add TRANSACTION_CREATE_EXISTS error
+ - remote set-head: better output for --auto
+ - remote set-head: refactor for readability
+ - refs: atomically record overwritten ref in update_symref
+ - t/t5505-remote: set default branch to main
 
  When "git fetch $remote" notices that refs/remotes/$remote/HEAD is
  missing and discovers what branch the other side points with its
  HEAD, refs/remotes/$remote/HEAD is updated to point to it.
 
- Needs to shed files backend dependency a bit more.
- cf. <D4SUTJDV0Y04.3Q8YED2MVOKBL@ferdinandy.com>
- Appears to break CI.
- cf. <ZxfjWnZF4EbtVH12@nand.local>
- source: <20241021134354.705636-1-bence@ferdinandy.com>
+ Needs review.
+ source: <20241023153736.257733-1-bence@ferdinandy.com>
 
 
-* db/submodule-fetch-with-remote-name-fix (2024-10-09) 1 commit
- (merged to 'next' on 2024-10-18 at a473d0df83)
- + submodule: correct remote name with fetch
-
- A "git fetch" from the superproject going down to a submodule used
- a wrong remote when the default remote names are set differently
- between them.
-
- Will merge to 'master'.
- source: <20241009033257.1316690-1-daniel@mariadb.org>
-
-
-* ps/build (2024-10-18) 20 commits
- . Introduce support for the Meson build system
- . Documentation: add comparison of build systems
- . t: allow overriding build dir
- . t: better support for out-of-tree builds
- . Makefile: simplify building of templates
- . Makefile: allow "bin-wrappers/" directory to exist
- . Makefile: refactor generators to be PWD-independent
- . Makefile: refactor GIT-VERSION-GEN to be reusable
- . Makefile: extract script to generate gitweb.cgi
- . Makefile: extract script to massage Shell scripts
- . Makefile: use "generate-perl.sh" to massage Perl library
- . Makefile: extract script to massage Perl scripts
- . Makefile: consistently use PERL_PATH
- . Makefile: consistently use @PLACEHOLDER@ to substitute
- . Makefile: use common template for GIT-BUILD-OPTIONS
- . Merge branch 'ps/platform-compat-fixes' into ps/build
- . Merge branch 'ps/upgrade-clar' into ps/build
- . Makefile: adjust sed command for generating "clar-decls.h"
- . t/unit-tests: update clar to 0810a36
- . Merge branch 'ps/cmake-clar' into ps/build
- (this branch uses ps/cmake-clar and ps/platform-compat-fixes.)
+* ps/build (2024-10-24) 21 commits
+ - meson: fix conflicts with in-flight topics
+ - Introduce support for the Meson build system
+ - Documentation: add comparison of build systems
+ - t: allow overriding build dir
+ - t: better support for out-of-tree builds
+ - Documentation: extract script to generate a list of mergetools
+ - Documentation: teach "cmd-list.perl" about out-of-tree builds
+ - Documentation: allow sourcing generated includes from separate dir
+ - Makefile: simplify building of templates
+ - Makefile: allow "bin-wrappers/" directory to exist
+ - Makefile: refactor generators to be PWD-independent
+ - Makefile: refactor GIT-VERSION-GEN to be reusable
+ - Makefile: extract script to generate gitweb.cgi
+ - Makefile: extract script to massage Shell scripts
+ - Makefile: use "generate-perl.sh" to massage Perl library
+ - Makefile: extract script to massage Perl scripts
+ - Makefile: consistently use PERL_PATH
+ - Makefile: consistently use @PLACEHOLDER@ to substitute
+ - Makefile: use common template for GIT-BUILD-OPTIONS
+ - Merge branch 'ps/platform-compat-fixes' into ps/build
+ - Merge branch 'ps/upgrade-clar' into ps/build
+ (this branch uses ps/platform-compat-fixes and ps/upgrade-clar.)
 
  Build procedure update plus introduction of Mason based builds
 
  Needs review.
- Tentatively dropped from 'seen', for a circular dependency.
- cf. https://github.com/git/git/actions/runs/11299216196
- source: <cover.1729254070.git.ps@pks.im>
-
-
-* ps/ci-gitlab-windows (2024-10-09) 5 commits
- (merged to 'next' on 2024-10-18 at 58a3be436a)
- + gitlab-ci: exercise Git on Windows
- + gitlab-ci: introduce stages and dependencies
- + ci: handle Windows-based CI jobs in GitLab CI
- + ci: create script to set up Git for Windows SDK
- + t7300: work around platform-specific behaviour with long paths on MinGW
-
- Enable Windows-based CI in GitLab.
-
- Will merge to 'master'.
- source: <cover.1728480039.git.ps@pks.im>
-
-
-* ak/typofixes (2024-10-10) 6 commits
- (merged to 'next' on 2024-10-18 at c45095cae5)
- + t: fix typos
- + t/helper: fix a typo
- + t/perf: fix typos
- + t/unit-tests: fix typos
- + contrib: fix typos
- + compat: fix typos
-
- Typofixes.
-
- Will merge to 'master'.
- source: <20241010151223.311719-1-algonell@gmail.com>
+ source: <cover.1729771605.git.ps@pks.im>
 
 
 * ds/path-walk (2024-10-08) 17 commits
@@ -625,7 +667,8 @@ Release tarballs are available at:
  objects that are different between trees as we walk commit
  histories) is introduced to optimize object packing.
 
- Needs review.
+ Expecting a reroll.
+ cf. <dd18a858-31bf-497d-bb19-d371102dfa2a@gmail.com>
  source: <pull.1813.git.1728396723.gitgitgadget@gmail.com>
 
 
@@ -642,40 +685,15 @@ Release tarballs are available at:
  source: <20241014032546.68427-1-hanyang.tony@bytedance.com>
 
 
-* pb/clar-build-fix (2024-10-11) 1 commit
- (merged to 'next' on 2024-10-18 at ae6e80b047)
- + Makefile: fix dependency for $(UNIT_TEST_DIR)/clar/clar.o
-
- Build fix.
-
- Will merge to 'master'.
- source: <pull.1810.v2.git.1728667787227.gitgitgadget@gmail.com>
-
-
 * ua/t3404-cleanup (2024-10-14) 2 commits
- - t3404: replace test with test_line_count()
- - t3404: avoid losing exit status with focus on `git show` and `git cat-file`
+ (merged to 'next' on 2024-10-25 at 26b7b76329)
+ + t3404: replace test with test_line_count()
+ + t3404: avoid losing exit status with focus on `git show` and `git cat-file`
 
  Test update.
 
- Will merge to 'next'?
+ Will merge to 'master'?
  source: <pull.1810.git.git.1728774574.gitgitgadget@gmail.com>
-
-
-* jc/a-commands-without-the-repo (2024-10-11) 3 commits
- (merged to 'next' on 2024-10-18 at b428982db3)
- + archive: remove the_repository global variable
- + annotate: remove usage of the_repository global
- + git: pass in repo to builtin based on setup_git_directory_gently
-
- Commands that can also work outside Git have learned to take the
- repository instance "repo" when we know we are in a repository, and
- NULL when we are not, in a parameter.  The uses of the_repository
- variable in a few of them have been removed using the new calling
- convention.
-
- Will merge to 'master'.
- source: <pull.1788.v4.git.git.1728594828.gitgitgadget@gmail.com>
 
 
 * ej/cat-file-remote-object-info (2024-09-27) 6 commits
@@ -701,7 +719,8 @@ Release tarballs are available at:
  lazily fetched from promisor remotes) collected more than objects
  that promisor-remote can give.
 
- Needs review.
+ Appears to break CI.
+ cf. https://github.com/ttaylorr/git/actions/runs/11523538245
  source: <20240802073143.56731-1-hanyang.tony@bytedance.com>
 
 
