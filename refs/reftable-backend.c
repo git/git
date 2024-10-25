@@ -2131,7 +2131,7 @@ static int write_reflog_existence_table(struct reftable_writer *writer,
 	reftable_writer_set_limits(writer, ts, ts);
 
 	/*
-	 * The existence entry has both old and new object ID set to the the
+	 * The existence entry has both old and new object ID set to the
 	 * null object ID. Our iterators are aware of this and will not present
 	 * them to their callers.
 	 */

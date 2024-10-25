@@ -78,7 +78,7 @@ UI, Workflows & Features
    turn on cover letters automatically (unless told never to enable
    cover letter with "--no-cover-letter" and such).
 
- * The "--heads" option of "ls-remote" and "show-ref" has been been
+ * The "--heads" option of "ls-remote" and "show-ref" has been
    deprecated; "--branches" replaces "--heads".
 
  * For over a year, setting add.interactive.useBuiltin configuration

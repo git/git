@@ -13,7 +13,7 @@ that appears to be "backwards" from what other project developers
 expect. This howto presents a suggested integration workflow for
 maintaining a central repository.
 
-Suppose that that central repository has this history:
+Suppose that the central repository has this history:
 
 ------------
     ---o---o---A

@@ -62,7 +62,7 @@ trap "end_group 'CI setup'" EXIT
 # something went wrong.
 #
 # We already enabled tracing executed commands earlier. This helps by showing
-# how # environment variables are set and and dependencies are installed.
+# how # environment variables are set and dependencies are installed.
 set -e
 
 skip_branch_tip_with_tag () {

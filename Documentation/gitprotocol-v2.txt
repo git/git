@@ -776,7 +776,7 @@ This would allow for optimizing the common case of servers who'd like
 to provide one "big bundle" containing only their "main" branch,
 and/or incremental updates thereof.
 +
-A client receiving such a a response MAY assume that they can skip
+A client receiving such a response MAY assume that they can skip
 retrieving the header from a bundle at the indicated URI, and thus
 save themselves and the server(s) the request(s) needed to inspect the
 headers of that bundle or bundles.
