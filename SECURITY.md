@@ -56,7 +56,7 @@ Note: there is currently a bug in the "Check daily for updates" code, where it m
 
 ## Snapshot versions ('nightly builds')
 
-Git for Windows also provides snapshots (these are not releases) of the the current development as per git-for-Windows/git's `master` branch at the [Snapshots](https://wingit.blob.core.windows.net/files/index.html) page. This link is also listed in the footer of the [Git for Windows](https://gitforwindows.org/) home page.
+Git for Windows also provides snapshots (these are not releases) of the current development as per git-for-Windows/git's `master` branch at the [Snapshots](https://wingit.blob.core.windows.net/files/index.html) page. This link is also listed in the footer of the [Git for Windows](https://gitforwindows.org/) home page.
 
 Note: even if those builds are not exactly "nightly", they are sometimes referred to as "nightly builds" to keep with other projects' nomenclature.
 
