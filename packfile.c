@@ -1240,7 +1240,7 @@ off_t get_delta_base(struct packed_git *p,
 	} else if (type == OBJ_REF_DELTA) {
 		/* The base entry _must_ be in the same pack */
 		struct object_id oid;
-		hashcpy(oid.hash, base_info, the_repository->hash_algo);
+		oidread(&oid, base_info, the_repository->hash_algo);
 		base_offset = find_pack_entry_one(&oid, p);
 		*curpos += the_hash_algo->rawsz;
 	} else
