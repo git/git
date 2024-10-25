@@ -467,7 +467,7 @@ int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 	TEST(t_merged_logs(), "merged table with multiple log updates for same ref");
 	TEST(t_merged_refs(), "merged table with multiple updates to same ref");
 	TEST(t_merged_seek_multiple_times(), "merged table can seek multiple times");
-	TEST(t_merged_single_record(), "ref ocurring in only one record can be fetched");
+	TEST(t_merged_single_record(), "ref occurring in only one record can be fetched");
 
 	return test_done();
 }

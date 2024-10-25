@@ -9,7 +9,7 @@
  * ("clean", "smudge", etc).
  *
  * When --always-delay is given all pathnames with the "can-delay" flag
- * that don't appear on the list bellow are delayed with a count of 1
+ * that don't appear on the list below are delayed with a count of 1
  * (see more below).
  *
  * This implementation supports special test cases:

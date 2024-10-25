@@ -3296,7 +3296,7 @@ __gitcomp_directories ()
 		#       i.e. which are *already* part of their
 		#       sparse-checkout.  Thus, normal file and directory
 		#       completion is always useless for "git
-		#       sparse-checkout add" and is also probelmatic for
+		#       sparse-checkout add" and is also problematic for
 		#       "git sparse-checkout set" unless using it to
 		#       strictly narrow the checkout.
 		COMPREPLY=( "" )
@@ -3698,7 +3698,7 @@ _git_worktree ()
 		# Here we are not completing an --option, it's either the
 		# path or a ref.
 		case "$prev" in
-		-b|-B)	# Complete refs for branch to be created/reseted.
+		-b|-B)	# Complete refs for branch to be created/reset.
 			__git_complete_refs
 			;;
 		-*)	# The previous word is an -o|--option without an

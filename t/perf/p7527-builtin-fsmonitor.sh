@@ -95,7 +95,7 @@ test_expect_success "Setup borrowed repo (fsm+uc)" "
 # time is not useful.
 #
 # Create a temp branch and do all work relative to it so that we don't
-# accidentially alter the real ballast branch.
+# accidentally alter the real ballast branch.
 #
 test_expect_success "Setup borrowed repo (temp ballast branch)" "
 	test_might_fail git -C $REPO checkout $BALLAST_BR &&
