@@ -32,13 +32,6 @@ struct pack_entry {
 char *odb_pack_name(struct strbuf *buf, const unsigned char *sha1, const char *ext);
 
 /*
- * Return the name of the (local) packfile with the specified sha1 in
- * its name.  The return value is a pointer to memory that is
- * overwritten each time this function is called.
- */
-char *sha1_pack_name(const unsigned char *sha1);
-
-/*
  * Return the name of the (local) pack index file with the specified
  * sha1 in its name.  The return value is a pointer to memory that is
  * overwritten each time this function is called.
