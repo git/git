@@ -154,10 +154,10 @@ int nth_packed_object_id(struct object_id *, struct packed_git *, uint32_t n);
 off_t nth_packed_object_offset(const struct packed_git *, uint32_t n);
 
 /*
- * If the object named sha1 is present in the specified packfile,
+ * If the object named by oid is present in the specified packfile,
  * return its offset within the packfile; otherwise, return 0.
  */
-off_t find_pack_entry_one(const unsigned char *sha1, struct packed_git *);
+off_t find_pack_entry_one(const struct object_id *oid, struct packed_git *);
 
 int is_pack_valid(struct packed_git *);
 void *unpack_entry(struct repository *r, struct packed_git *, off_t, enum object_type *, unsigned long *);

@@ -1239,7 +1239,9 @@ off_t get_delta_base(struct packed_git *p,
 		*curpos += used;
 	} else if (type == OBJ_REF_DELTA) {
 		/* The base entry _must_ be in the same pack */
-		base_offset = find_pack_entry_one(base_info, p);
+		struct object_id oid;
+		hashcpy(oid.hash, base_info, the_repository->hash_algo);
+		base_offset = find_pack_entry_one(&oid, p);
 		*curpos += the_hash_algo->rawsz;
 	} else
 		die("I am totally screwed");
@@ -1971,11 +1973,10 @@ off_t nth_packed_object_offset(const struct packed_git *p, uint32_t n)
 	}
 }
 
-off_t find_pack_entry_one(const unsigned char *sha1,
-				  struct packed_git *p)
+off_t find_pack_entry_one(const struct object_id *oid,
+			  struct packed_git *p)
 {
 	const unsigned char *index = p->index_data;
-	struct object_id oid;
 	uint32_t result;
 
 	if (!index) {
@@ -1983,8 +1984,7 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 			return 0;
 	}
 
-	hashcpy(oid.hash, sha1, the_repository->hash_algo);
-	if (bsearch_pack(&oid, p, &result))
+	if (bsearch_pack(oid, p, &result))
 		return nth_packed_object_offset(p, result);
 	return 0;
 }
@@ -2016,7 +2016,7 @@ struct packed_git *find_oid_pack(const struct object_id *oid,
 	struct packed_git *p;
 
 	for (p = packs; p; p = p->next) {
-		if (find_pack_entry_one(oid->hash, p))
+		if (find_pack_entry_one(oid, p))
 			return p;
 	}
 	return NULL;
@@ -2033,7 +2033,7 @@ static int fill_pack_entry(const struct object_id *oid,
 	    oidset_contains(&p->bad_objects, oid))
 		return 0;
 
-	offset = find_pack_entry_one(oid->hash, p);
+	offset = find_pack_entry_one(oid, p);
 	if (!offset)
 		return 0;
 

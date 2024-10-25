@@ -987,7 +987,7 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 		}
 
 		m_offset = e.offset;
-		p_offset = find_pack_entry_one(oid.hash, e.p);
+		p_offset = find_pack_entry_one(&oid, e.p);
 
 		if (m_offset != p_offset)
 			midx_report(_("incorrect object offset for oid[%d] = %s: %"PRIx64" != %"PRIx64),

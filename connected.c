@@ -78,7 +78,7 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 			for (p = get_all_packs(the_repository); p; p = p->next) {
 				if (!p->pack_promisor)
 					continue;
-				if (find_pack_entry_one(oid->hash, p))
+				if (find_pack_entry_one(oid, p))
 					goto promisor_pack_found;
 			}
 			/*
@@ -144,7 +144,7 @@ no_promisor_pack_found:
 		 * are sure the ref is good and not sending it to
 		 * rev-list for verification.
 		 */
-		if (new_pack && find_pack_entry_one(oid->hash, new_pack))
+		if (new_pack && find_pack_entry_one(oid, new_pack))
 			continue;
 
 		if (fprintf(rev_list_in, "%s\n", oid_to_hex(oid)) < 0)
