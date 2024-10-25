@@ -418,7 +418,7 @@ test_expect_success 'in_vain not triggered before first ACK' '
 	test_grep "remote: Total 3 " log
 '
 
-test_expect_success 'in_vain resetted upon ACK' '
+test_expect_success 'in_vain reset upon ACK' '
 	test_when_finished rm -f log trace2 &&
 	rm -rf myserver myclient &&
 	git init myserver &&

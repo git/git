@@ -203,7 +203,7 @@ then
 	graph_git_behavior 'alternate: commit 13 vs 6' commits/13 origin/commits/6 "fork"
 fi
 
-test_expect_success 'test merge stragety constants' '
+test_expect_success 'test merge strategy constants' '
 	git clone . merge-2 &&
 	(
 		cd merge-2 &&
