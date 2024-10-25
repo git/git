@@ -29,6 +29,13 @@ Performance, Internal Implementation, Development Support etc.
    allow finding the repository from the worktree and vice versa
    possible.  Turn this linkage to relative paths.
 
+ * Enable Windows-based CI in GitLab.
+
+ * Commands that can also work outside Git have learned to take the
+   repository instance "repo" when we know we are in a repository, and
+   NULL when we are not, in a parameter.  The uses of the_repository
+   variable in a few of them have been removed using the new calling
+   convention.
 
 Fixes since v2.47
 -----------------
@@ -54,6 +61,18 @@ Fixes since v2.47
    contents of a corrupt in-core index as a tree object.
    (merge ecb5c4318c ps/cache-tree-w-broken-index-entry later to maint).
 
+ * A "git fetch" from the superproject going down to a submodule used
+   a wrong remote when the default remote names are set differently
+   between them.
+   (merge 0c1a9987da db/submodule-fetch-with-remote-name-fix later to maint).
+
+ * Fixes compile time warnings with 64-bit MSVC.
+   (merge 386d372031 sk/msvc-warnings later to maint).
+
+ * Teaches 'shortlog' to explicitly use SHA-1 when operating outside
+   of a repository.
+   (merge b33001645e wm/shortlog-hash later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 66893a14d0 ps/leakfixes-part-8 later to maint).
    (merge 1164e270b5 jk/output-prefix-cleanup later to maint).
@@ -66,3 +85,6 @@ Fixes since v2.47
    (merge b8139c8f4e kh/checkout-ignore-other-docfix later to maint).
    (merge 6dab49b9fb tc/bundle-uri-leakfix later to maint).
    (merge f1ed39987b xx/protocol-v2-doc-markup-fix later to maint).
+   (merge 41869f7447 ak/typofixes later to maint).
+   (merge f1eea0b620 ak/typofix later to maint).
+   (merge dcd590a39d bf/t-readme-mention-reftable later to maint).
