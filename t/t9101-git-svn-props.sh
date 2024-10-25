@@ -21,32 +21,32 @@ a_empty_cr=
 a_empty_crlf=
 
 cd import
-	cat >> kw.c <<\EOF
+	cat >>kw.c <<\EOF
 /* Somebody prematurely put a keyword into this file */
 /* $Id$ */
 EOF
 
-	printf "Hello\r\nWorld\r\n" > crlf
+	printf "Hello\r\nWorld\r\n" >crlf
 	a_crlf=$(git hash-object -w crlf)
-	printf "Hello\rWorld\r" > cr
+	printf "Hello\rWorld\r" >cr
 	a_cr=$(git hash-object -w cr)
-	printf "Hello\nWorld\n" > lf
+	printf "Hello\nWorld\n" >lf
 	a_lf=$(git hash-object -w lf)
 
-	printf "Hello\r\nWorld" > ne_crlf
+	printf "Hello\r\nWorld" >ne_crlf
 	a_ne_crlf=$(git hash-object -w ne_crlf)
-	printf "Hello\nWorld" > ne_lf
+	printf "Hello\nWorld" >ne_lf
 	a_ne_lf=$(git hash-object -w ne_lf)
-	printf "Hello\rWorld" > ne_cr
+	printf "Hello\rWorld" >ne_cr
 	a_ne_cr=$(git hash-object -w ne_cr)
 
 	touch empty
 	a_empty=$(git hash-object -w empty)
-	printf "\n" > empty_lf
+	printf "\n" >empty_lf
 	a_empty_lf=$(git hash-object -w empty_lf)
-	printf "\r" > empty_cr
+	printf "\r" >empty_cr
 	a_empty_cr=$(git hash-object -w empty_cr)
-	printf "\r\n" > empty_crlf
+	printf "\r\n" >empty_crlf
 	a_empty_crlf=$(git hash-object -w empty_crlf)
 
 	svn_cmd import --no-auto-props -m 'import for git svn' . "$svnrepo" >/dev/null
@@ -57,10 +57,10 @@ test_expect_success 'checkout working copy from svn' 'svn co "$svnrepo" test_wc'
 test_expect_success 'setup some commits to svn' '
 	(
 		cd test_wc &&
-		echo Greetings >> kw.c &&
+		echo Greetings >>kw.c &&
 		poke kw.c &&
 		svn_cmd commit -m "Not yet an Id" &&
-		echo Hello world >> kw.c &&
+		echo Hello world >>kw.c &&
 		poke kw.c &&
 		svn_cmd commit -m "Modified file, but still not yet an Id" &&
 		svn_cmd propset svn:keywords Id kw.c &&
@@ -75,7 +75,7 @@ test_expect_success 'fetch revisions from svn' 'git svn fetch'
 name='test svn:keywords ignoring'
 test_expect_success "$name" \
 	'git checkout -b mybranch remotes/git-svn &&
-	echo Hi again >> kw.c &&
+	echo Hi again >>kw.c &&
 	git commit -a -m "test keywords ignoring" &&
 	git svn set-tree remotes/git-svn..mybranch &&
 	git pull . remotes/git-svn'
@@ -106,8 +106,8 @@ done
 
 
 cd test_wc
-	printf '$Id$\rHello\rWorld\r' > cr
-	printf '$Id$\rHello\rWorld' > ne_cr
+	printf '$Id$\rHello\rWorld\r' >cr
+	printf '$Id$\rHello\rWorld' >ne_cr
 	a_cr=$(printf '$Id$\r\nHello\r\nWorld\r\n' | git hash-object --stdin)
 	a_ne_cr=$(printf '$Id$\r\nHello\r\nWorld' | git hash-object --stdin)
 	test_expect_success 'Set CRLF on cr files' \
@@ -126,7 +126,7 @@ b_ne_cr="$(git hash-object ne_cr)"
 test_expect_success 'CRLF + $Id$' "test '$a_cr' = '$b_cr'"
 test_expect_success 'CRLF + $Id$ (no newline)' "test '$a_ne_cr' = '$b_ne_cr'"
 
-cat > show-ignore.expect <<\EOF
+cat >show-ignore.expect <<\EOF
 
 # /
 /no-such-file*
@@ -153,7 +153,7 @@ no-such-file*
 ' . &&
 		svn_cmd commit -m 'propset svn:ignore'
 	) &&
-	git svn show-ignore > show-ignore.got &&
+	git svn show-ignore >show-ignore.got &&
 	cmp show-ignore.expect show-ignore.got
 "
 
