@@ -91,7 +91,7 @@ test_expect_success 'parallel-checkout with eol conversions' '
 
 # Entries that require an external filter are not eligible for parallel
 # checkout. Check that both the parallel-eligible and non-eligible entries are
-# properly writen in a single checkout operation.
+# properly written in a single checkout operation.
 #
 test_expect_success 'parallel-checkout and external filter' '
 	set_checkout_config 2 0 &&
