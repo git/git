@@ -37,6 +37,15 @@ char *odb_pack_name(struct strbuf *buf, const unsigned char *sha1, const char *e
  */
 const char *pack_basename(struct packed_git *p);
 
+/*
+ * Parse the pack idx file found at idx_path and create a packed_git struct
+ * which can be used with find_pack_entry_one().
+ *
+ * You probably don't want to use this function! It skips most of the normal
+ * sanity checks (including whether we even have the matching .pack file),
+ * and does not add the resulting packed_git struct to the internal list of
+ * packs. You probably want add_packed_git() instead.
+ */
 struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path);
 
 typedef void each_file_in_pack_dir_fn(const char *full_path, size_t full_path_len,
@@ -193,7 +202,7 @@ int is_promisor_object(const struct object_id *oid);
  *
  * This function should not be used directly. It is exposed here only so that we
  * have a convenient entry-point for fuzz testing. For real uses, you should
- * probably use open_pack_index() or parse_pack_index() instead.
+ * probably use open_pack_index() instead.
  */
 int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
 	     size_t idx_size, struct packed_git *p);
