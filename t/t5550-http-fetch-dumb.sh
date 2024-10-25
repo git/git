@@ -307,6 +307,14 @@ test_expect_success 'fetch notices corrupt idx' '
 	)
 '
 
+# usage: count_fetches <nr> <extension> <trace_file>
+count_fetches () {
+	# ignore grep exit code; it may return non-zero if we are expecting no
+	# matches
+	grep "GET .*objects/pack/pack-[a-z0-9]*.$2" "$3" >trace.count
+	test_line_count = "$1" trace.count
+}
+
 test_expect_success 'fetch can handle previously-fetched .idx files' '
 	git checkout --orphan branch1 &&
 	echo base >file &&
@@ -321,8 +329,14 @@ test_expect_success 'fetch can handle previously-fetched .idx files' '
 	git push "$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git branch2 &&
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git repack -d &&
 	git --bare init clone_packed_branches.git &&
-	git --git-dir=clone_packed_branches.git fetch "$HTTPD_URL"/dumb/repo_packed_branches.git branch1:branch1 &&
-	git --git-dir=clone_packed_branches.git fetch "$HTTPD_URL"/dumb/repo_packed_branches.git branch2:branch2
+	GIT_TRACE_CURL=$PWD/one.trace git --git-dir=clone_packed_branches.git \
+		fetch "$HTTPD_URL"/dumb/repo_packed_branches.git branch1:branch1 &&
+	count_fetches 2 idx one.trace &&
+	count_fetches 1 pack one.trace &&
+	GIT_TRACE_CURL=$PWD/two.trace git --git-dir=clone_packed_branches.git \
+		fetch "$HTTPD_URL"/dumb/repo_packed_branches.git branch2:branch2 &&
+	count_fetches 0 idx two.trace &&
+	count_fetches 1 pack two.trace
 '
 
 test_expect_success 'did not use upload-pack service' '
