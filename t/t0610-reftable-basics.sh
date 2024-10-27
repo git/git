@@ -450,10 +450,12 @@ test_expect_success 'ref transaction: retry acquiring tables.list lock' '
 	)
 '
 
-# This test fails most of the time on Windows systems. The root cause is
+# This test fails most of the time on Cygwin systems. The root cause is
 # that Windows does not allow us to rename the "tables.list.lock" file into
-# place when "tables.list" is open for reading by a concurrent process.
-test_expect_success !WINDOWS 'ref transaction: many concurrent writers' '
+# place when "tables.list" is open for reading by a concurrent process. We have
+# worked around that in our MinGW-based rename emulation, but the Cygwin
+# emulation seems to be insufficient.
+test_expect_success !CYGWIN 'ref transaction: many concurrent writers' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
