@@ -45,6 +45,10 @@ test_expect_success 'setup helper scripts' '
 	test -z "$pexpiry" || echo password_expiry_utc=$pexpiry
 	EOF
 
+	write_script git-credential-cntrl-in-username <<-\EOF &&
+	printf "username=\\007latrix Lestrange\\n"
+	EOF
+
 	PATH="$PWD:$PATH"
 '
 
@@ -532,6 +536,19 @@ test_expect_success 'match percent-encoded values in username' '
 	EOF
 '
 
+test_expect_success 'match percent-encoded values in hostname' '
+	test_config "credential.https://a%20b%20c/.helper" "$HELPER" &&
+	check fill <<-\EOF
+	url=https://a b c/
+	--
+	protocol=https
+	host=a b c
+	username=foo
+	password=bar
+	--
+	EOF
+'
+
 test_expect_success 'fetch with multiple path components' '
 	test_unconfig credential.helper &&
 	test_config credential.https://example.com/foo/repo.git.helper "verbatim foo bar" &&
@@ -721,6 +738,22 @@ test_expect_success 'url parser rejects embedded newlines' '
 	test_cmp expect stderr
 '
 
+test_expect_success 'url parser rejects embedded carriage returns' '
+	test_config credential.helper "!true" &&
+	test_must_fail git credential fill 2>stderr <<-\EOF &&
+	url=https://example%0d.com/
+	EOF
+	cat >expect <<-\EOF &&
+	fatal: credential value for host contains carriage return
+	If this is intended, set `credential.protectProtocol=false`
+	EOF
+	test_cmp expect stderr &&
+	GIT_ASKPASS=true \
+	git -c credential.protectProtocol=false credential fill <<-\EOF
+	url=https://example%0d.com/
+	EOF
+'
+
 test_expect_success 'host-less URLs are parsed as empty host' '
 	check fill "verbatim foo bar" <<-\EOF
 	url=cert:///path/to/cert.pem
@@ -828,6 +861,22 @@ test_expect_success 'credential config with partial URLs' '
 		-c credential.with%0anewline.username=uh-oh \
 		credential fill <stdin 2>stderr &&
 	test_grep "skipping credential lookup for key" stderr
+'
+
+BEL="$(printf '\007')"
+
+test_expect_success 'interactive prompt is sanitized' '
+	check fill cntrl-in-username <<-EOF
+	protocol=https
+	host=example.org
+	--
+	protocol=https
+	host=example.org
+	username=${BEL}latrix Lestrange
+	password=askpass-password
+	--
+	askpass: Password for ${SQ}https://%07latrix%20Lestrange@example.org${SQ}:
+	EOF
 '
 
 test_done
