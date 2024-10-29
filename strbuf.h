@@ -346,6 +346,7 @@ int strbuf_expand_step(struct strbuf *sb, const char **formatp);
 void strbuf_addbuf_percentquote(struct strbuf *dst, const struct strbuf *src);
 
 #define STRBUF_ENCODE_SLASH 1
+#define STRBUF_ENCODE_HOST_AND_PORT 2
 
 /**
  * Append the contents of a string to a strbuf, percent-encoding any characters
