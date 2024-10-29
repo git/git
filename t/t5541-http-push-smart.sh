@@ -351,7 +351,7 @@ test_expect_success 'push over smart http with auth' '
 	git push "$HTTPD_URL"/auth/smart/test_repo.git &&
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git" \
 		log -1 --format=%s >actual &&
-	expect_askpass both user@host &&
+	expect_askpass both user%40host &&
 	test_cmp expect actual
 '
 
@@ -363,7 +363,7 @@ test_expect_success 'push to auth-only-for-push repo' '
 	git push "$HTTPD_URL"/auth-push/smart/test_repo.git &&
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/test_repo.git" \
 		log -1 --format=%s >actual &&
-	expect_askpass both user@host &&
+	expect_askpass both user%40host &&
 	test_cmp expect actual
 '
 
@@ -393,7 +393,7 @@ test_expect_success 'push into half-auth-complete requires password' '
 	git push "$HTTPD_URL/half-auth-complete/smart/half-auth.git" &&
 	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/half-auth.git" \
 		log -1 --format=%s >actual &&
-	expect_askpass both user@host &&
+	expect_askpass both user%40host &&
 	test_cmp expect actual
 '
 
