@@ -319,6 +319,20 @@ You can also see what references it offers:
 $ git ls-remote mybundle
 ----------------
 
+DISCUSSION
+----------
+
+A naive way to make a full backup of a repository is to use something to
+the effect of `cp -a <repo> <destination>`.  This is discouraged since
+the repository could be written to during the copy operation.  In turn
+some files at `<destination>` could be corrupted.
+
+This is why it is recommended to use Git tooling for making repository
+backups, either with this command or with e.g. linkgit:git-clone[1].
+
+See also linkgit:gitfaq[7], section "TRANSFERS" for a discussion of the
+problems associated with file syncing across systems.
+
 FILE FORMAT
 -----------
 
