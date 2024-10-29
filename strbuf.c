@@ -500,7 +500,9 @@ void strbuf_add_percentencode(struct strbuf *dst, const char *src, int flags)
 		unsigned char ch = src[i];
 		if (ch <= 0x1F || ch >= 0x7F ||
 		    (ch == '/' && (flags & STRBUF_ENCODE_SLASH)) ||
-		    strchr(URL_UNSAFE_CHARS, ch))
+		    ((flags & STRBUF_ENCODE_HOST_AND_PORT) ?
+		     !isalnum(ch) && !strchr("-.:[]", ch) :
+		     !!strchr(URL_UNSAFE_CHARS, ch)))
 			strbuf_addf(dst, "%%%02X", (unsigned char)ch);
 		else
 			strbuf_addch(dst, ch);
