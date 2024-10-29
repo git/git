@@ -365,12 +365,6 @@ jobs:
       with:
         name: failed-tests-${{matrix.vector.jobname}}
         path: ${{env.FAILED_TEST_ARTIFACTS}}
-    - name: Upload failed tests' directories
-      if: failure() && env.FAILED_TEST_ARTIFACTS != '' && matrix.vector.jobname == 'linux32'
-      uses: actions/upload-artifact@v1 # cannot be upgraded because Node.js Actions aren't supported in this container
-      with:
-        name: failed-tests-${{matrix.vector.jobname}}
-        path: ${{env.FAILED_TEST_ARTIFACTS}}
   static-analysis:
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
