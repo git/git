@@ -9,6 +9,7 @@ https://developers.google.com/open-source/licenses/bsd
 #ifndef RECORD_H
 #define RECORD_H
 
+#include "basics.h"
 #include "system.h"
 
 #include <stdint.h>
@@ -38,8 +39,8 @@ int put_var_int(struct string_view *dest, uint64_t val);
 
 /* Methods for records. */
 struct reftable_record_vtable {
-	/* encode the key of to a uint8_t strbuf. */
-	void (*key)(const void *rec, struct strbuf *dest);
+	/* encode the key of to a uint8_t reftable_buf. */
+	int (*key)(const void *rec, struct reftable_buf *dest);
 
 	/* The record type of ('r' for ref). */
 	uint8_t type;
@@ -54,9 +55,9 @@ struct reftable_record_vtable {
 	int (*encode)(const void *rec, struct string_view dest, int hash_size);
 
 	/* decode data from `src` into the record. */
-	int (*decode)(void *rec, struct strbuf key, uint8_t extra,
+	int (*decode)(void *rec, struct reftable_buf key, uint8_t extra,
 		      struct string_view src, int hash_size,
-		      struct strbuf *scratch);
+		      struct reftable_buf *scratch);
 
 	/* deallocate and null the record. */
 	void (*release)(void *rec);
@@ -83,7 +84,7 @@ int reftable_is_block_type(uint8_t typ);
 /* Encode `key` into `dest`. Sets `is_restart` to indicate a restart. Returns
  * number of bytes written. */
 int reftable_encode_key(int *is_restart, struct string_view dest,
-			struct strbuf prev_key, struct strbuf key,
+			struct reftable_buf prev_key, struct reftable_buf key,
 			uint8_t extra);
 
 /* Decode a record's key lengths. */
@@ -96,13 +97,13 @@ int reftable_decode_keylen(struct string_view in,
  * Decode into `last_key` and `extra` from `in`. `last_key` is expected to
  * contain the decoded key of the preceding record, if any.
  */
-int reftable_decode_key(struct strbuf *last_key, uint8_t *extra,
+int reftable_decode_key(struct reftable_buf *last_key, uint8_t *extra,
 			struct string_view in);
 
 /* reftable_index_record are used internally to speed up lookups. */
 struct reftable_index_record {
 	uint64_t offset; /* Offset of block */
-	struct strbuf last_key; /* Last key of the block. */
+	struct reftable_buf last_key; /* Last key of the block. */
 };
 
 /* reftable_obj_record stores an object ID => ref mapping. */
@@ -136,15 +137,15 @@ void reftable_record_init(struct reftable_record *rec, uint8_t typ);
 /* see struct record_vtable */
 int reftable_record_cmp(struct reftable_record *a, struct reftable_record *b);
 int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, int hash_size);
-void reftable_record_key(struct reftable_record *rec, struct strbuf *dest);
+int reftable_record_key(struct reftable_record *rec, struct reftable_buf *dest);
 int reftable_record_copy_from(struct reftable_record *rec,
 			      struct reftable_record *src, int hash_size);
 uint8_t reftable_record_val_type(struct reftable_record *rec);
 int reftable_record_encode(struct reftable_record *rec, struct string_view dest,
 			   int hash_size);
-int reftable_record_decode(struct reftable_record *rec, struct strbuf key,
+int reftable_record_decode(struct reftable_record *rec, struct reftable_buf key,
 			   uint8_t extra, struct string_view src,
-			   int hash_size, struct strbuf *scratch);
+			   int hash_size, struct reftable_buf *scratch);
 int reftable_record_is_deletion(struct reftable_record *rec);
 
 static inline uint8_t reftable_record_type(struct reftable_record *rec)
