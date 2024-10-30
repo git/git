@@ -45,6 +45,10 @@ test_expect_success 'setup helper scripts' '
 	test -z "$pexpiry" || echo password_expiry_utc=$pexpiry
 	EOF
 
+	write_script git-credential-cntrl-in-username <<-\EOF &&
+	printf "username=\\007latrix Lestrange\\n"
+	EOF
+
 	PATH="$PWD:$PATH"
 '
 
@@ -823,6 +827,22 @@ test_expect_success 'credential config with partial URLs' '
 		-c credential.with%0anewline.username=uh-oh \
 		credential fill <stdin >stdout 2>stderr &&
 	test_i18ngrep "skipping credential lookup for key" stderr
+'
+
+BEL="$(printf '\007')"
+
+test_expect_success 'interactive prompt is sanitized' '
+	check fill cntrl-in-username <<-EOF
+	protocol=https
+	host=example.org
+	--
+	protocol=https
+	host=example.org
+	username=${BEL}latrix Lestrange
+	password=askpass-password
+	--
+	askpass: Password for ${SQ}https://%07latrix%20Lestrange@example.org${SQ}:
+	EOF
 '
 
 test_done
