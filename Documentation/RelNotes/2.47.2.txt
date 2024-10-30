@@ -1,0 +1,7 @@
+Git v2.47.2 Release Notes
+=========================
+
+This release merges up the fix that appears in v2.40.4, v2.41.3,
+v2.42.4, v2.43.6, v2.44.3, v2.45.3 and v2.46.3 to address the
+security issues CVE-2024-50349 and CVE-2024-52006; see the release
+notes for these versions for details.
