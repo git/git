@@ -37,6 +37,13 @@ Performance, Internal Implementation, Development Support etc.
    variable in a few of them have been removed using the new calling
    convention.
 
+ * The reftable sub-system grew a new reftable-specific strbuf
+   replacement to reduce its dependency on Git-specific data
+   structures.
+
+ * The ref-filter machinery learns to recognize and avoid cases where
+   sorting would be redundant.
+
 Fixes since v2.47
 -----------------
 
@@ -88,3 +95,7 @@ Fixes since v2.47
    (merge 41869f7447 ak/typofixes later to maint).
    (merge f1eea0b620 ak/typofix later to maint).
    (merge dcd590a39d bf/t-readme-mention-reftable later to maint).
+   (merge 52acf6771b kh/submitting-patches later to maint).
+   (merge a73070fbd4 ks/t4205-fixup later to maint).
+   (merge 9e362dd060 co/t6050-pipefix later to maint).
+   (merge 91687cd13f sk/t7011-cleanup later to maint).
