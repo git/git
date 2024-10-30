@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2024, #11; Fri, 25)
-X-master-at: 6a11438f43469f3815f2f0fc997bd45792ff04c0
-X-next-at: 085561eb38e0fbe071c2f9c2c4d2d8fe946eb186
+Subject: What's cooking in git.git (Oct 2024, #12; Wed, 30)
+X-master-at: 23d289d273d861f0a6244480e89ff937f66efa77
+X-next-at: 8800431eeacca56afc106ed9e72ebe59bca077b0
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2024, #11; Fri, 25)
+What's cooking in git.git (Oct 2024, #12; Wed, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,14 +17,14 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-This is the fourth integration round from the interim maintainer. Some
-more topics have graduated onto 'master', and a handful of new ones
-have been picked up into 'next' and so on.
+This is the fifth integration round from the interim maintainer. A
+large number of topics are currently sitting in 'next' and will likely
+graduate to 'master' before the end of the week.
 
-There are still more topics waiting for discussion that are stuck and
-would benefit from review. I encourage you to please take a look at
-those topics if you have not reviewed them, and pay the benefit others
-have given you forward by reviewing topics that are awaiting feedback.
+Regrettably, there continue to be lots of topics that are stuck
+waiting for more discussion and would benefit from review. Please have
+a look at any topics that you feel comfortable reviewing and please do
+so if you find the time.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -61,117 +61,122 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ak/typofix (2024-10-17) 1 commit
- (merged to 'next' on 2024-10-18 at 83df4b3265)
- + t: fix typos
- (this branch is used by ak/t1016-cleanup.)
+* co/t6050-pipefix (2024-10-22) 1 commit
+ (merged to 'next' on 2024-10-22 at d377ddbb64)
+ + t6050: avoid pipes with upstream Git commands
 
- More typofixes.
+ Avoid losing exit status by having Git command being tested on the
+ upstream side of a pipe.
 
- source: <20241017112835.10100-1-algonell@gmail.com>
-
-
-* ak/typofixes (2024-10-10) 6 commits
- (merged to 'next' on 2024-10-18 at c45095cae5)
- + t: fix typos
- + t/helper: fix a typo
- + t/perf: fix typos
- + t/unit-tests: fix typos
- + contrib: fix typos
- + compat: fix typos
-
- Typofixes.
-
- source: <20241010151223.311719-1-algonell@gmail.com>
+ source: <20241022012701.8959-1-chizobajames21@gmail.com>
 
 
-* bf/t-readme-mention-reftable (2024-10-11) 1 commit
- (merged to 'next' on 2024-10-18 at b246cb10d4)
- + t/README: add missing value for GIT_TEST_DEFAULT_REF_FORMAT
+* kh/submitting-patches (2024-10-21) 1 commit
+ (merged to 'next' on 2024-10-22 at 0882adfc45)
+ + SubmittingPatches: tags -> trailers
 
- Doc update.
+ Docfix.
 
- source: <20241011191150.825255-1-bence@ferdinandy.com>
-
-
-* db/submodule-fetch-with-remote-name-fix (2024-10-09) 1 commit
- (merged to 'next' on 2024-10-18 at a473d0df83)
- + submodule: correct remote name with fetch
-
- A "git fetch" from the superproject going down to a submodule used
- a wrong remote when the default remote names are set differently
- between them.
-
- source: <20241009033257.1316690-1-daniel@mariadb.org>
+ source: <d3a1ba01104da8496d52308c07c5c274fd30b0c2.1729443395.git.code@khaugsbakk.name>
 
 
-* jc/a-commands-without-the-repo (2024-10-11) 3 commits
- (merged to 'next' on 2024-10-18 at b428982db3)
- + archive: remove the_repository global variable
- + annotate: remove usage of the_repository global
- + git: pass in repo to builtin based on setup_git_directory_gently
+* ks/t4205-fixup (2024-10-21) 1 commit
+ (merged to 'next' on 2024-10-22 at daa85d02c3)
+ + t4205: fix typo in 'NUL termination with --stat'
 
- Commands that can also work outside Git have learned to take the
- repository instance "repo" when we know we are in a repository, and
- NULL when we are not, in a parameter.  The uses of the_repository
- variable in a few of them have been removed using the new calling
- convention.
+ Testfix.
 
- source: <pull.1788.v4.git.git.1728594828.gitgitgadget@gmail.com>
+ source: <20241020191910.31096-1-five231003@gmail.com>
 
 
-* pb/clar-build-fix (2024-10-11) 1 commit
- (merged to 'next' on 2024-10-18 at ae6e80b047)
- + Makefile: fix dependency for $(UNIT_TEST_DIR)/clar/clar.o
+* ps/ref-filter-sort (2024-10-21) 1 commit
+ (merged to 'next' on 2024-10-22 at 6313df7028)
+ + ref-filter: format iteratively with lexicographic refname sorting
 
- Build fix.
+ Teaches the ref-filter machinery to recognize and avoid cases where
+ sorting would be redundant.
 
- source: <pull.1810.v2.git.1728667787227.gitgitgadget@gmail.com>
-
-
-* ps/ci-gitlab-windows (2024-10-09) 5 commits
- (merged to 'next' on 2024-10-18 at 58a3be436a)
- + gitlab-ci: exercise Git on Windows
- + gitlab-ci: introduce stages and dependencies
- + ci: handle Windows-based CI jobs in GitLab CI
- + ci: create script to set up Git for Windows SDK
- + t7300: work around platform-specific behaviour with long paths on MinGW
-
- Enable Windows-based CI in GitLab.
-
- source: <cover.1728480039.git.ps@pks.im>
+ source: <d23c3e3ee7fdb49fcd05b4f2e52dd2a1cfdc10f2.1729510342.git.ps@pks.im>
 
 
-* sk/msvc-warnings (2024-10-17) 1 commit
- (merged to 'next' on 2024-10-18 at 954a1eb93d)
- + mingw.c: Fix complier warnings for a 64 bit msvc
+* ps/reftable-strbuf (2024-10-17) 10 commits
+ (merged to 'next' on 2024-10-22 at 469c11aca4)
+ + reftable: handle trivial `reftable_buf` errors
+ + reftable/stack: adapt `stack_filename()` to handle allocation failures
+ + reftable/record: adapt `reftable_record_key()` to handle allocation failures
+ + reftable/stack: adapt `format_name()` to handle allocation failures
+ + t/unit-tests: check for `reftable_buf` allocation errors
+ + reftable/blocksource: adapt interface name
+ + reftable: convert from `strbuf` to `reftable_buf`
+ + reftable/basics: provide new `reftable_buf` interface
+ + reftable: stop using `strbuf_addf()`
+ + reftable: stop using `strbuf_addbuf()`
+ (this branch is used by ps/reftable-detach.)
 
- Fixes compile time warnings with 64-bit MSVC.
+ Implements a new reftable-specific strbuf replacement to reduce
+ reftable's dependency on Git-specific data structures.
 
- source: <20241017171820.2679-2-soekkle@freenet.de>
+ source: <cover.1729140565.git.ps@pks.im>
 
 
-* wm/shortlog-hash (2024-10-17) 1 commit
- (merged to 'next' on 2024-10-18 at 25307069e9)
- + builtin/shortlog: explicitly set hash algo when there is no repo
+* sk/t7011-cleanup (2024-10-22) 1 commit
+ (merged to 'next' on 2024-10-22 at 4273cb6260)
+ + t7011: ensure no whitespace after redirect
 
- Teaches 'shortlog' to explicitly use SHA-1 when operating outside of
- a repository.
+ Test cleanup.
 
- source: <20241017093528.18157-1-wolf@oriole.systems>
+ source: <20241019163439.274656-1-kuforiji98@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
+* as/show-index-uninitialized-hash (2024-10-27) 1 commit
+ - show-index: fix uninitialized hash function
+
+ Regression fix for 'show-index' when run outside of a repository.
+
+ Expecting a reroll.
+ cf. <26d1bd3c-4f90-4406-8a1f-2eb085c46bab@gmail.com>
+ source: <20241026120950.72727-1-abhijeet.nkt@gmail.com>
+
+
+* jk/dumb-http-finalize (2024-10-25) 11 commits
+ (merged to 'next' on 2024-10-30 at 00932eb724)
+ + packfile: use oidread() instead of hashcpy() to fill object_id
+ + packfile: use object_id in find_pack_entry_one()
+ + packfile: convert find_sha1_pack() to use object_id
+ + http-walker: use object_id instead of bare hash
+ + packfile: warn people away from parse_packed_git()
+ + packfile: drop sha1_pack_index_name()
+ + packfile: drop sha1_pack_name()
+ + packfile: drop has_pack_index()
+ + dumb-http: store downloaded pack idx as tempfile
+ + t5550: count fetches in "previously-fetched .idx" test
+ + midx: avoid duplicate packed_git entries
+ (this branch is used by kn/the-repository.)
+
+ The dumb-http code regressed when the result of re-indexing a pack
+ yielded an *.idx file that differs in content from the *.idx file it
+ downloaded from the remote. This has been corrected by no longer
+ relying on the *.idx file we got from the remote.
+
+ Will merge to 'master'.
+ source: <20241025064148.GA2110169@coredump.intra.peff.net>
+
+--------------------------------------------------
+[Cooking]
+
 * ak/more-typofixes (2024-10-24) 1 commit
+ (merged to 'next' on 2024-10-25 at 63e3f967f3)
  + t: fix typos
 
  More typofixes.
 
+ Will merge to 'master'.
  source: <20241024114721.14270-1-algonell@gmail.com>
 
 
-* ps/mingw-rename (2024-10-24) 3 commits
+* ps/mingw-rename (2024-10-27) 3 commits
  - compat/mingw: support POSIX semantics for atomic renames
  - compat/mingw: allow deletion of most opened files
  - compat/mingw: share file handles created via `CreateFileW()`
@@ -180,8 +185,8 @@ Release tarballs are available at:
  atomic renames when other process(es) have a file opened at the
  destination path.
 
- Will merge to 'next'?
- source: <cover.1729770140.git.ps@pks.im>
+ Waiting for final ack before 'next'.
+ source: <cover.1730042775.git.ps@pks.im>
 
 
 * ps/reftable-detach (2024-10-23) 8 commits
@@ -193,41 +198,42 @@ Release tarballs are available at:
  - reftable: explicitly handle hash format IDs
  - reftable/system: move "dir.h" to its only user
  - Merge branch 'ps/reftable-strbuf' into ps/reftable-detach
- (this branch uses ps/reftable-strbuf.)
 
  Isolates the reftable subsystem from the rest of Git's codebase by
  using fewer pieces of Git's infrastructure.
 
+ Needs review.
  source: <cover.1729677003.git.ps@pks.im>
 
 
 * sk/t9101-cleanup (2024-10-23) 1 commit
+ (merged to 'next' on 2024-10-25 at 43a35137b5)
  + t9101: ensure no whitespace after redirect
 
  Test cleanup.
 
+ Will merge to 'master'.
  source: <20241023121113.915310-1-kuforiji98@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * ak/t1016-cleanup (2024-10-22) 1 commit
  (merged to 'next' on 2024-10-22 at 1dd1717591)
  + t1016: clean up style
- (this branch uses ak/typofix.)
 
  Test cleanup.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20241022110730.7655-1-algonell@gmail.com>
 
 
 * cw/config-extensions (2024-10-22) 1 commit
- - doc: consolidate extensions in git-config documentation
+ (merged to 'next' on 2024-10-30 at 875fa0b619)
+ + doc: consolidate extensions in git-config documentation
+ (this branch is used by cw/worktree-extension.)
 
  Centralize documentation for repository extensions into a single place.
 
- Will merge to 'next'?
+ Will merge to 'master'?
  source: <20241021-cleanup-extension-docs-v1-1-ab02cece3132@pm.me>
 
 
@@ -237,18 +243,8 @@ Release tarballs are available at:
 
  Demonstrate an assertion failure in 'git mv'.
 
- Will merge to 'master'?
- source: <c4ada0b787736ecd5aee986b1b8a4f90ccb84e21.1729631436.git.code@khaugsbakk.name>
-
-
-* kh/submitting-patches (2024-10-21) 1 commit
- (merged to 'next' on 2024-10-22 at 0882adfc45)
- + SubmittingPatches: tags -> trailers
-
- Docfix.
-
  Will merge to 'master'.
- source: <d3a1ba01104da8496d52308c07c5c274fd30b0c2.1729443395.git.code@khaugsbakk.name>
+ source: <c4ada0b787736ecd5aee986b1b8a4f90ccb84e21.1729631436.git.code@khaugsbakk.name>
 
 
 * km/config-remote-by-name (2024-10-21) 1 commit
@@ -262,23 +258,14 @@ Release tarballs are available at:
 
 
 * kn/arbitrary-suffixes (2024-10-24) 1 commit
- - CodingGuidelines: discourage arbitrary suffixes in function names
+ (merged to 'next' on 2024-10-30 at 3eedf30c6c)
+ + CodingGuidelines: discourage arbitrary suffixes in function names
 
  Update the project's CodingGuidelines to discourage naming functions
  with a "_1()" suffix.
 
- Will merge to 'next'?
- source: <20241024105357.2605168-1-karthik.188@gmail.com>
-
-
-* ks/t4205-fixup (2024-10-21) 1 commit
- (merged to 'next' on 2024-10-22 at daa85d02c3)
- + t4205: fix typo in 'NUL termination with --stat'
-
- Testfix.
-
  Will merge to 'master'.
- source: <20241020191910.31096-1-five231003@gmail.com>
+ source: <20241024105357.2605168-1-karthik.188@gmail.com>
 
 
 * ps/leakfixes-part-9 (2024-10-21) 22 commits
@@ -318,7 +305,7 @@ Release tarballs are available at:
  Documentation update to clarify that 'uploadpack.allowAnySHA1InWant'
  implies both 'allowTipSHA1InWant' and 'allowReachableSHA1InWant'.
 
- Will merge to 'master'?
+ Will merge to 'master'.
  source: <pull.1814.v2.git.git.1729355997353.gitgitgadget@gmail.com>
 
 
@@ -331,7 +318,7 @@ Release tarballs are available at:
  caused by changes in Cygwin's handling of socket closures, allowing the
  client to exit cleanly when encountering ECONNABORTED.
 
- Will merge to 'master'?
+ Will merge to 'master'.
  source: <20241018052952.GE2408674@coredump.intra.peff.net>
 
 
@@ -353,18 +340,8 @@ Release tarballs are available at:
  Teach 'git notes add' and 'git notes append' a new '-e' flag,
  instructing them to open the note in $GIT_EDITOR before saving.
 
- Will merge to 'master'?
- source: <pull.1817.v4.git.1729534340786.gitgitgadget@gmail.com>
-
-
-* sk/t7011-cleanup (2024-10-22) 1 commit
- (merged to 'next' on 2024-10-22 at 4273cb6260)
- + t7011: ensure no whitespace after redirect
-
- Test cleanup.
-
  Will merge to 'master'.
- source: <20241019163439.274656-1-kuforiji98@gmail.com>
+ source: <pull.1817.v4.git.1729534340786.gitgitgadget@gmail.com>
 
 
 * ss/duplicate-typos (2024-10-21) 1 commit
@@ -386,7 +363,7 @@ Release tarballs are available at:
  Replace various calls to atoi() with strtol_i() and strtoul_ui(), and
  add improved error handling.
 
- Will merge to 'master'?
+ Will merge to 'master'.
  source: <pull.1810.v6.git.git.1729729499.gitgitgadget@gmail.com>
 
 
@@ -423,19 +400,8 @@ Release tarballs are available at:
 
  Documentation updates to 'git-update-ref(1)'.
 
- Under discussion.
- source: <cover.1729543007.git.code@khaugsbakk.name>
-
-
-* ps/ref-filter-sort (2024-10-21) 1 commit
- (merged to 'next' on 2024-10-22 at 6313df7028)
- + ref-filter: format iteratively with lexicographic refname sorting
-
- Teaches the ref-filter machinery to recognize and avoid cases where
- sorting would be redundant.
-
  Will merge to 'master'.
- source: <d23c3e3ee7fdb49fcd05b4f2e52dd2a1cfdc10f2.1729510342.git.ps@pks.im>
+ source: <cover.1729543007.git.code@khaugsbakk.name>
 
 
 * am/git-blame-ignore-revs-by-default (2024-10-14) 2 commits
@@ -450,12 +416,13 @@ Release tarballs are available at:
 
 
 * kn/ci-clang-format-tidy (2024-10-18) 2 commits
- - clang-format: align consecutive macro definitions
- - clang-format: re-adjust line break penalties
+ (merged to 'next' on 2024-10-30 at d063e828d5)
+ + clang-format: align consecutive macro definitions
+ + clang-format: re-adjust line break penalties
 
  Updates the '.clang-format' to match project conventions.
 
- Will merge to 'next'?
+ Will merge to 'master'?
  source: <cover.1729241030.git.karthik.188@gmail.com>
 
 
@@ -468,8 +435,9 @@ Release tarballs are available at:
  source: <pull.1811.git.git.1728820722580.gitgitgadget@gmail.com>
 
 
-* ps/platform-compat-fixes (2024-10-16) 10 commits
+* ps/platform-compat-fixes (2024-10-28) 11 commits
  (merged to 'next' on 2024-10-22 at 46b99d8301)
+ + t6006: fix prereq handling with `test_format ()`
  + http: fix build error on FreeBSD
  + builtin/credential-cache: fix missing parameter for stub function
  + t7300: work around platform-specific behaviour with long paths on MinGW
@@ -480,47 +448,27 @@ Release tarballs are available at:
  + t/lib-gitweb: test against the build version of gitweb
  + t/test-lib: wire up NO_ICONV prerequisite
  + t/test-lib: fix quoting of TEST_RESULTS_SAN_FILE
- (this branch is used by ps/build.)
 
  Various platform compatibility fixes split out of the larger effort
  to use Meson as the primary build tool.
 
  Will merge to 'master'.
  source: <cover.1729060405.git.ps@pks.im>
-
-
-* ps/reftable-strbuf (2024-10-17) 10 commits
- (merged to 'next' on 2024-10-22 at 469c11aca4)
- + reftable: handle trivial `reftable_buf` errors
- + reftable/stack: adapt `stack_filename()` to handle allocation failures
- + reftable/record: adapt `reftable_record_key()` to handle allocation failures
- + reftable/stack: adapt `format_name()` to handle allocation failures
- + t/unit-tests: check for `reftable_buf` allocation errors
- + reftable/blocksource: adapt interface name
- + reftable: convert from `strbuf` to `reftable_buf`
- + reftable/basics: provide new `reftable_buf` interface
- + reftable: stop using `strbuf_addf()`
- + reftable: stop using `strbuf_addbuf()`
- (this branch is used by ps/reftable-detach.)
-
- Implements a new reftable-specific strbuf replacement to reduce
- reftable's dependency on Git-specific data structures.
-
- Will merge to 'master'.
- source: <cover.1729140565.git.ps@pks.im>
+ source: <zod73s7j77gjj2f62clg3utxlxnclbyhjjz3yc74x7zyh35fzy@blwhzqefxyrs>
 
 
 * ps/upgrade-clar (2024-10-21) 5 commits
- - cmake: set up proper dependencies for generated clar headers
- - cmake: fix compilation of clar-based unit tests
- - Makefile: extract script to generate clar declarations
- - Makefile: adjust sed command for generating "clar-decls.h"
- - t/unit-tests: update clar to 206accb
+ (merged to 'next' on 2024-10-30 at b8b092bb78)
+ + cmake: set up proper dependencies for generated clar headers
+ + cmake: fix compilation of clar-based unit tests
+ + Makefile: extract script to generate clar declarations
+ + Makefile: adjust sed command for generating "clar-decls.h"
+ + t/unit-tests: update clar to 206accb
  (this branch is used by ps/build.)
 
  Buildfix and upgrade of Clar to a newer version.
 
- Needs review.
+ Will merge to 'master'?
  source: <cover.1729506329.git.ps@pks.im>
 
 
@@ -553,17 +501,6 @@ Release tarballs are available at:
  source: <20241023004600.1645313-1-sandals@crustytoothpaste.net>
 
 
-* co/t6050-pipefix (2024-10-22) 1 commit
- (merged to 'next' on 2024-10-22 at d377ddbb64)
- + t6050: avoid pipes with upstream Git commands
-
- Avoid losing exit status by having Git command being tested on the
- upstream side of a pipe.
-
- Will merge to 'master'.
- source: <20241022012701.8959-1-chizobajames21@gmail.com>
-
-
 * es/oss-fuzz (2024-10-16) 3 commits
  - fuzz: port fuzz-url-decode-mem from OSS-Fuzz
  - fuzz: port fuzz-parse-attr-line from OSS-Fuzz
@@ -591,7 +528,7 @@ Release tarballs are available at:
  Allow pack-objects to reuse an existing delta in a packfile, when
  it ends up sending the base object from a different packfile.
 
- It seems to break the tests when merged to 'seen'.
+ Needs review.
  source: <cover.1728505840.git.me@ttaylorr.com>
 
 
@@ -613,7 +550,7 @@ Release tarballs are available at:
  source: <20241023153736.257733-1-bence@ferdinandy.com>
 
 
-* ps/build (2024-10-24) 21 commits
+* ps/build (2024-10-24) 31 commits
  - meson: fix conflicts with in-flight topics
  - Introduce support for the Meson build system
  - Documentation: add comparison of build systems
@@ -635,11 +572,21 @@ Release tarballs are available at:
  - Makefile: use common template for GIT-BUILD-OPTIONS
  - Merge branch 'ps/platform-compat-fixes' into ps/build
  - Merge branch 'ps/upgrade-clar' into ps/build
- (this branch uses ps/platform-compat-fixes and ps/upgrade-clar.)
+ + http: fix build error on FreeBSD
+ + builtin/credential-cache: fix missing parameter for stub function
+ + t7300: work around platform-specific behaviour with long paths on MinGW
+ + t5500, t5601: skip tests which exercise paths with '[::1]' on Cygwin
+ + t3404: work around platform-specific behaviour on macOS 10.15
+ + t1401: make invocation of tar(1) work with Win32-provided one
+ + t/lib-gpg: fix setup of GNUPGHOME in MinGW
+ + t/lib-gitweb: test against the build version of gitweb
+ + t/test-lib: wire up NO_ICONV prerequisite
+ + t/test-lib: fix quoting of TEST_RESULTS_SAN_FILE
+ (this branch uses ps/upgrade-clar.)
 
  Build procedure update plus introduction of Mason based builds
 
- Needs review.
+ Under discussion.
  source: <cover.1729771605.git.ps@pks.im>
 
 
@@ -680,8 +627,7 @@ Release tarballs are available at:
  "git repack" avoids losing local objects that are reachable from
  objects in a packfile fetched from a promisor remote.
 
- Expecting a reroll.
- cf. <xmqqa5faec4x.fsf@gitster.g>
+ Need review.
  source: <20241014032546.68427-1-hanyang.tony@bytedance.com>
 
 
@@ -692,11 +638,11 @@ Release tarballs are available at:
 
  Test update.
 
- Will merge to 'master'?
+ Will merge to 'master'.
  source: <pull.1810.git.git.1728774574.gitgitgadget@gmail.com>
 
 
-* ej/cat-file-remote-object-info (2024-09-27) 6 commits
+* ej/cat-file-remote-object-info (2024-10-29) 6 commits
  - cat-file: add remote-object-info to batch-command
  - cat-file: add declaration of variable i inside its for loop
  - transport: add client support for object-info
@@ -708,12 +654,12 @@ Release tarballs are available at:
  server about objects it does not have.
 
  Needs review.
- source: <20240926013856.35527-1-eric.peijian@gmail.com>
+ source: <20241028203457.19715-1-eric.peijian@gmail.com>
 
 
 * cw/fix-reachable-in-repo-with-promisor (2024-09-19) 2 commits
- - fetch-pack.c: do not declare local commits as "have" in partial repos
- - packfile: split promisor objects oidset into two
+ . fetch-pack.c: do not declare local commits as "have" in partial repos
+ . packfile: split promisor objects oidset into two
 
  "git gc" in a partial clone (i.e. lacking objects that can be
  lazily fetched from promisor remotes) collected more than objects
@@ -730,7 +676,7 @@ Release tarballs are available at:
 
  Describe the policy to introduce breaking changes.
 
- Will merge to 'master'?
+ Will merge to 'master'.
  source: <xmqq1q0mcnt8.fsf@gitster.g>
 
 
