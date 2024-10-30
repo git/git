@@ -75,7 +75,7 @@ test_expect_success 'setup' '
 	git config --unset i18n.commitEncoding
 '
 
-# usage: test_format [argument...] name format_string [failure] <expected_output
+# usage: test_format [argument...] name format_string [success|failure] [prereq] <expected_output
 test_format () {
 	local args=
 	while true
@@ -89,7 +89,7 @@ test_format () {
 		esac
 	done
 	cat >expect.$1
-	test_expect_${3:-success} "format $1" "
+	test_expect_${3:-success} $4 "format $1" "
 		git rev-list $args --pretty=format:'$2' main >output.$1 &&
 		test_cmp expect.$1 output.$1
 	"
@@ -218,7 +218,7 @@ Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
 EOF
 
-test_format ICONV encoding %e <<EOF
+test_format encoding %e success ICONV <<EOF
 commit $head2
 $test_encoding
 commit $head1
@@ -394,7 +394,7 @@ test_expect_success 'setup complex body' '
 	head3_short=$(git rev-parse --short $head3)
 '
 
-test_format ICONV complex-encoding %e <<EOF
+test_format complex-encoding %e success ICONV <<EOF
 commit $head3
 $test_encoding
 commit $head2
