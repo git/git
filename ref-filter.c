@@ -3244,21 +3244,40 @@ int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int
 	return ret;
 }
 
+struct ref_sorting {
+	struct ref_sorting *next;
+	int atom; /* index into used_atom array (internal) */
+	enum ref_sorting_order sort_flags;
+};
+
 static inline int can_do_iterative_format(struct ref_filter *filter,
 					  struct ref_sorting *sorting,
 					  struct ref_format *format)
 {
 	/*
+	 * Reference backends sort patterns lexicographically by refname, so if
+	 * the sorting options ask for exactly that we are able to do iterative
+	 * formatting.
+	 *
+	 * Note that we do not have to worry about multiple name patterns,
+	 * either. Those get sorted and deduplicated eventually in
+	 * `refs_for_each_fullref_in_prefixes()`, so we return names in the
+	 * correct ordering here, too.
+	 */
+	if (sorting && (sorting->next ||
+			sorting->sort_flags ||
+			used_atom[sorting->atom].atom_type != ATOM_REFNAME))
+		return 0;
+
+	/*
 	 * Filtering & formatting results within a single ref iteration
 	 * callback is not compatible with options that require
 	 * post-processing a filtered ref_array. These include:
 	 * - filtering on reachability
-	 * - sorting the filtered results
 	 * - including ahead-behind information in the formatted output
 	 */
 	return !(filter->reachable_from ||
 		 filter->unreachable_from ||
-		 sorting ||
 		 format->bases.nr ||
 		 format->is_base_tips.nr);
 }
@@ -3315,12 +3334,6 @@ static int memcasecmp(const void *vs1, const void *vs2, size_t n)
 	}
 	return 0;
 }
-
-struct ref_sorting {
-	struct ref_sorting *next;
-	int atom; /* index into used_atom array (internal) */
-	enum ref_sorting_order sort_flags;
-};
 
 static int cmp_ref_sorting(struct ref_sorting *s, struct ref_array_item *a, struct ref_array_item *b)
 {
