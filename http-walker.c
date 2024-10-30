@@ -147,14 +147,14 @@ static int fill_active_slot(void *data UNUSED)
 	return 0;
 }
 
-static void prefetch(struct walker *walker, unsigned char *sha1)
+static void prefetch(struct walker *walker, const struct object_id *oid)
 {
 	struct object_request *newreq;
 	struct walker_data *data = walker->data;
 
 	newreq = xmalloc(sizeof(*newreq));
 	newreq->walker = walker;
-	oidread(&newreq->oid, sha1, the_repository->hash_algo);
+	oidcpy(&newreq->oid, oid);
 	newreq->repo = data->alt;
 	newreq->state = WAITING;
 	newreq->req = NULL;
@@ -422,7 +422,8 @@ static int fetch_indices(struct walker *walker, struct alt_base *repo)
 	return ret;
 }
 
-static int http_fetch_pack(struct walker *walker, struct alt_base *repo, unsigned char *sha1)
+static int http_fetch_pack(struct walker *walker, struct alt_base *repo,
+			   const struct object_id *oid)
 {
 	struct packed_git *target;
 	int ret;
@@ -431,7 +432,7 @@ static int http_fetch_pack(struct walker *walker, struct alt_base *repo, unsigne
 
 	if (fetch_indices(walker, repo))
 		return -1;
-	target = find_sha1_pack(sha1, repo->packs);
+	target = find_oid_pack(oid, repo->packs);
 	if (!target)
 		return -1;
 	close_pack_index(target);
@@ -440,7 +441,7 @@ static int http_fetch_pack(struct walker *walker, struct alt_base *repo, unsigne
 		fprintf(stderr, "Getting pack %s\n",
 			hash_to_hex(target->hash));
 		fprintf(stderr, " which contains %s\n",
-			hash_to_hex(sha1));
+			oid_to_hex(oid));
 	}
 
 	preq = new_http_pack_request(target->hash, repo->base);
@@ -477,9 +478,9 @@ static void abort_object_request(struct object_request *obj_req)
 	release_object_request(obj_req);
 }
 
-static int fetch_object(struct walker *walker, unsigned char *hash)
+static int fetch_object(struct walker *walker, const struct object_id *oid)
 {
-	char *hex = hash_to_hex(hash);
+	char *hex = oid_to_hex(oid);
 	int ret = 0;
 	struct object_request *obj_req = NULL;
 	struct http_object_request *req;
@@ -487,7 +488,7 @@ static int fetch_object(struct walker *walker, unsigned char *hash)
 
 	list_for_each(pos, head) {
 		obj_req = list_entry(pos, struct object_request, node);
-		if (hasheq(obj_req->oid.hash, hash, the_repository->hash_algo))
+		if (oideq(&obj_req->oid, oid))
 			break;
 	}
 	if (!obj_req)
@@ -548,20 +549,20 @@ static int fetch_object(struct walker *walker, unsigned char *hash)
 	return ret;
 }
 
-static int fetch(struct walker *walker, unsigned char *hash)
+static int fetch(struct walker *walker, const struct object_id *oid)
 {
 	struct walker_data *data = walker->data;
 	struct alt_base *altbase = data->alt;
 
-	if (!fetch_object(walker, hash))
+	if (!fetch_object(walker, oid))
 		return 0;
 	while (altbase) {
-		if (!http_fetch_pack(walker, altbase, hash))
+		if (!http_fetch_pack(walker, altbase, oid))
 			return 0;
 		fetch_alternates(walker, data->alt->base);
 		altbase = altbase->next;
 	}
-	return error("Unable to find %s under %s", hash_to_hex(hash),
+	return error("Unable to find %s under %s", oid_to_hex(oid),
 		     data->alt->base);
 }
 
