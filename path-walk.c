@@ -8,6 +8,7 @@
 #include "dir.h"
 #include "hashmap.h"
 #include "hex.h"
+#include "list-objects.h"
 #include "object.h"
 #include "oid-array.h"
 #include "revision.h"
@@ -24,6 +25,7 @@ struct type_and_oid_list
 {
 	enum object_type type;
 	struct oid_array oids;
+	int maybe_interesting;
 };
 
 #define TYPE_AND_OID_LIST_INIT { \
@@ -140,6 +142,9 @@ static int add_children(struct path_walk_context *ctx,
 		if (o->flags & SEEN)
 			continue;
 		o->flags |= SEEN;
+
+		if (!(o->flags & UNINTERESTING))
+			list->maybe_interesting = 1;
 		oid_array_append(&list->oids, &entry.oid);
 	}
 
@@ -163,6 +168,43 @@ static int walk_path(struct path_walk_context *ctx,
 
 	if (!list)
 		BUG("provided path '%s' that had no associated list", path);
+
+	if (ctx->info->prune_all_uninteresting) {
+		/*
+		 * This is true if all objects were UNINTERESTING
+		 * when added to the list.
+		 */
+		if (!list->maybe_interesting)
+			return 0;
+
+		/*
+		 * But it's still possible that the objects were set
+		 * as UNINTERESTING after being added. Do a quick check.
+		 */
+		list->maybe_interesting = 0;
+		for (size_t i = 0;
+		     !list->maybe_interesting && i < list->oids.nr;
+		     i++) {
+			if (list->type == OBJ_TREE) {
+				struct tree *t = lookup_tree(ctx->repo,
+							     &list->oids.oid[i]);
+				if (t && !(t->object.flags & UNINTERESTING))
+					list->maybe_interesting = 1;
+			} else if (list->type == OBJ_BLOB) {
+				struct blob *b = lookup_blob(ctx->repo,
+							     &list->oids.oid[i]);
+				if (b && !(b->object.flags & UNINTERESTING))
+					list->maybe_interesting = 1;
+			} else {
+				/* Tags are always interesting if visited. */
+				list->maybe_interesting = 1;
+			}
+		}
+
+		/* We have confirmed that all objects are UNINTERESTING. */
+		if (!list->maybe_interesting)
+			return 0;
+	}
 
 	/* Evaluate function pointer on this data, if requested. */
 	if ((list->type == OBJ_TREE && ctx->info->trees) ||
@@ -196,6 +238,26 @@ static void clear_strmap(struct strmap *map)
 	}
 	strmap_clear(map, 1);
 	strmap_init(map);
+}
+
+static struct repository *edge_repo;
+static struct type_and_oid_list *edge_tree_list;
+
+static void show_edge(struct commit *commit)
+{
+	struct tree *t = repo_get_commit_tree(edge_repo, commit);
+
+	if (!t)
+		return;
+
+	if (commit->object.flags & UNINTERESTING)
+		t->object.flags |= UNINTERESTING;
+
+	if (t->object.flags & SEEN)
+		return;
+	t->object.flags |= SEEN;
+
+	oid_array_append(&edge_tree_list->oids, &t->object.oid);
 }
 
 static void setup_pending_objects(struct path_walk_info *info,
@@ -306,6 +368,7 @@ static void setup_pending_objects(struct path_walk_info *info,
 		if (tagged_blobs->oids.nr) {
 			const char *tagged_blob_path = "/tagged-blobs";
 			tagged_blobs->type = OBJ_BLOB;
+			tagged_blobs->maybe_interesting = 1;
 			push_to_stack(ctx, tagged_blob_path);
 			strmap_put(&ctx->paths_to_lists, tagged_blob_path, tagged_blobs);
 		} else {
@@ -317,6 +380,7 @@ static void setup_pending_objects(struct path_walk_info *info,
 		if (tags->oids.nr) {
 			const char *tag_path = "/tags";
 			tags->type = OBJ_TAG;
+			tags->maybe_interesting = 1;
 			push_to_stack(ctx, tag_path);
 			strmap_put(&ctx->paths_to_lists, tag_path, tags);
 		} else {
@@ -359,6 +423,7 @@ int walk_objects_by_path(struct path_walk_info *info)
 	/* Insert a single list for the root tree into the paths. */
 	CALLOC_ARRAY(root_tree_list, 1);
 	root_tree_list->type = OBJ_TREE;
+	root_tree_list->maybe_interesting = 1;
 	strmap_put(&ctx.paths_to_lists, root_path, root_tree_list);
 	push_to_stack(&ctx, root_path);
 
@@ -371,6 +436,14 @@ int walk_objects_by_path(struct path_walk_info *info)
 
 	if (prepare_revision_walk(info->revs))
 		die(_("failed to setup revision walk"));
+
+	/* Walk trees to mark them as UNINTERESTING. */
+	edge_repo = info->revs->repo;
+	edge_tree_list = root_tree_list;
+	mark_edges_uninteresting(info->revs, show_edge,
+				 info->prune_all_uninteresting);
+	edge_repo = NULL;
+	edge_tree_list = NULL;
 
 	info->revs->blob_objects = info->revs->tree_objects = 0;
 
