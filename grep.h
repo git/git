@@ -2,17 +2,17 @@
 #define GREP_H
 #include "color.h"
 #ifdef USE_LIBPCRE2
-#define PCRE2_CODE_UNIT_WIDTH 8
-#include <pcre2.h>
-#if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 36) || PCRE2_MAJOR >= 11
-#define GIT_PCRE2_VERSION_10_36_OR_HIGHER
-#endif
-#if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 35) || PCRE2_MAJOR >= 11
-#define GIT_PCRE2_VERSION_10_35_OR_HIGHER
-#endif
-#if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 34) || PCRE2_MAJOR >= 11
-#define GIT_PCRE2_VERSION_10_34_OR_HIGHER
-#endif
+# define PCRE2_CODE_UNIT_WIDTH 8
+# include <pcre2.h>
+# if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 36) || PCRE2_MAJOR >= 11
+#  define GIT_PCRE2_VERSION_10_36_OR_HIGHER
+# endif
+# if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 35) || PCRE2_MAJOR >= 11
+#  define GIT_PCRE2_VERSION_10_35_OR_HIGHER
+# endif
+# if (PCRE2_MAJOR >= 10 && PCRE2_MINOR >= 34) || PCRE2_MAJOR >= 11
+#  define GIT_PCRE2_VERSION_10_34_OR_HIGHER
+# endif
 #else
 typedef int pcre2_code;
 typedef int pcre2_match_data;
@@ -21,7 +21,7 @@ typedef int pcre2_general_context;
 #endif
 #ifndef PCRE2_MATCH_INVALID_UTF
 /* PCRE2_MATCH_* dummy also with !USE_LIBPCRE2, for test-pcre2-config.c */
-#define PCRE2_MATCH_INVALID_UTF 0
+# define PCRE2_MATCH_INVALID_UTF 0
 #endif
 #include "thread-utils.h"
 #include "userdiff.h"
@@ -39,10 +39,7 @@ enum grep_pat_token {
 	GREP_OR
 };
 
-enum grep_context {
-	GREP_CONTEXT_HEAD,
-	GREP_CONTEXT_BODY
-};
+enum grep_context { GREP_CONTEXT_HEAD, GREP_CONTEXT_BODY };
 
 enum grep_header_field {
 	GREP_HEADER_FIELD_MIN = 0,
@@ -149,9 +146,9 @@ struct grep_opt {
 	int all_match;
 	int no_body_match;
 	int body_hit;
-#define GREP_BINARY_DEFAULT	0
-#define GREP_BINARY_NOMATCH	1
-#define GREP_BINARY_TEXT	2
+#define GREP_BINARY_DEFAULT 0
+#define GREP_BINARY_NOMATCH 1
+#define GREP_BINARY_TEXT 2
 	int binary;
 	int allow_textconv;
 	int use_reflog_filter;
@@ -180,8 +177,9 @@ struct grep_opt {
 	void *output_priv;
 };
 
-#define GREP_OPT_INIT { \
-	.relative = 1, \
+#define GREP_OPT_INIT \
+ {                    \
+  .relative = 1, \
 	.pathname = 1, \
 	.max_depth = -1, \
 	.max_count = -1, \
@@ -199,17 +197,20 @@ struct grep_opt {
 	}, \
 	.only_matching = 0, \
 	.color = -1, \
-	.output = std_output, \
-}
+	.output = std_output,    \
+ }
 
 struct config_context;
 int grep_config(const char *var, const char *value,
 		const struct config_context *ctx, void *data);
 void grep_init(struct grep_opt *, struct repository *repo);
 
-void append_grep_pat(struct grep_opt *opt, const char *pat, size_t patlen, const char *origin, int no, enum grep_pat_token t);
-void append_grep_pattern(struct grep_opt *opt, const char *pat, const char *origin, int no, enum grep_pat_token t);
-void append_header_grep_pattern(struct grep_opt *, enum grep_header_field, const char *);
+void append_grep_pat(struct grep_opt *opt, const char *pat, size_t patlen,
+		     const char *origin, int no, enum grep_pat_token t);
+void append_grep_pattern(struct grep_opt *opt, const char *pat,
+			 const char *origin, int no, enum grep_pat_token t);
+void append_header_grep_pattern(struct grep_opt *, enum grep_header_field,
+				const char *);
 void compile_grep_patterns(struct grep_opt *opt);
 void free_grep_patterns(struct grep_opt *opt);
 int grep_buffer(struct grep_opt *opt, const char *buf, unsigned long size);
@@ -218,8 +219,7 @@ int grep_buffer(struct grep_opt *opt, const char *buf, unsigned long size);
  * (where appropriate). If filtering isn't desirable
  * GREP_HEADER_FIELD_MAX should be supplied.
  */
-int grep_next_match(struct grep_opt *opt,
-		    const char *bol, const char *eol,
+int grep_next_match(struct grep_opt *opt, const char *bol, const char *eol,
 		    enum grep_context ctx, regmatch_t *pmatch,
 		    enum grep_header_field field, int eflags);
 
@@ -250,7 +250,6 @@ void grep_source_clear_data(struct grep_source *gs);
 void grep_source_clear(struct grep_source *gs);
 void grep_source_load_driver(struct grep_source *gs,
 			     struct index_state *istate);
-
 
 int grep_source(struct grep_opt *opt, struct grep_source *gs);
 

@@ -42,7 +42,10 @@ struct bloom_filter_settings {
 };
 
 #define DEFAULT_BLOOM_MAX_CHANGES 512
-#define DEFAULT_BLOOM_FILTER_SETTINGS { 1, 7, 10, DEFAULT_BLOOM_MAX_CHANGES }
+#define DEFAULT_BLOOM_FILTER_SETTINGS \
+ {                                    \
+  1, 7, 10, DEFAULT_BLOOM_MAX_CHANGES \
+ }
 #define BITS_PER_WORD 8
 #define BLOOMDATA_CHUNK_HEADER_SIZE 3 * sizeof(uint32_t)
 
@@ -83,18 +86,16 @@ int load_bloom_filter_from_graph(struct commit_graph *g,
  * using the given seed.
  * Produces a uniformly distributed hash value.
  * Not considered to be cryptographically secure.
- * Implemented as described in https://en.wikipedia.org/wiki/MurmurHash#Algorithm
+ * Implemented as described in
+ * https://en.wikipedia.org/wiki/MurmurHash#Algorithm
  */
 uint32_t murmur3_seeded_v2(uint32_t seed, const char *data, size_t len);
 
-void fill_bloom_key(const char *data,
-		    size_t len,
-		    struct bloom_key *key,
+void fill_bloom_key(const char *data, size_t len, struct bloom_key *key,
 		    const struct bloom_filter_settings *settings);
 void clear_bloom_key(struct bloom_key *key);
 
-void add_key_to_filter(const struct bloom_key *key,
-		       struct bloom_filter *filter,
+void add_key_to_filter(const struct bloom_key *key, struct bloom_filter *filter,
 		       const struct bloom_filter_settings *settings);
 
 void init_bloom_filters(void);
@@ -102,17 +103,17 @@ void deinit_bloom_filters(void);
 
 enum bloom_filter_computed {
 	BLOOM_NOT_COMPUTED = (1 << 0),
-	BLOOM_COMPUTED     = (1 << 1),
-	BLOOM_TRUNC_LARGE  = (1 << 2),
-	BLOOM_TRUNC_EMPTY  = (1 << 3),
-	BLOOM_UPGRADED     = (1 << 4),
+	BLOOM_COMPUTED = (1 << 1),
+	BLOOM_TRUNC_LARGE = (1 << 2),
+	BLOOM_TRUNC_EMPTY = (1 << 3),
+	BLOOM_UPGRADED = (1 << 4),
 };
 
-struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
-						 struct commit *c,
-						 int compute_if_not_present,
-						 const struct bloom_filter_settings *settings,
-						 enum bloom_filter_computed *computed);
+struct bloom_filter *
+get_or_compute_bloom_filter(struct repository *r, struct commit *c,
+			    int compute_if_not_present,
+			    const struct bloom_filter_settings *settings,
+			    enum bloom_filter_computed *computed);
 
 /*
  * Find the Bloom filter associated with the given commit "c".

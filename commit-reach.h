@@ -9,30 +9,24 @@ struct ref_filter;
 struct object_id;
 struct object_array;
 
-int repo_get_merge_bases(struct repository *r,
-			 struct commit *rev1,
-			 struct commit *rev2,
-			 struct commit_list **result);
-int repo_get_merge_bases_many(struct repository *r,
-			      struct commit *one, int n,
+int repo_get_merge_bases(struct repository *r, struct commit *rev1,
+			 struct commit *rev2, struct commit_list **result);
+int repo_get_merge_bases_many(struct repository *r, struct commit *one, int n,
 			      struct commit **twos,
 			      struct commit_list **result);
 /* To be used only when object flags after this call no longer matter */
-int repo_get_merge_bases_many_dirty(struct repository *r,
-				    struct commit *one, int n,
-				    struct commit **twos,
+int repo_get_merge_bases_many_dirty(struct repository *r, struct commit *one,
+				    int n, struct commit **twos,
 				    struct commit_list **result);
 
-int get_octopus_merge_bases(struct commit_list *in, struct commit_list **result);
+int get_octopus_merge_bases(struct commit_list *in,
+			    struct commit_list **result);
 
-int repo_is_descendant_of(struct repository *r,
-			  struct commit *commit,
+int repo_is_descendant_of(struct repository *r, struct commit *commit,
 			  struct commit_list *with_commit);
-int repo_in_merge_bases(struct repository *r,
-			struct commit *commit,
+int repo_in_merge_bases(struct repository *r, struct commit *commit,
 			struct commit *reference);
-int repo_in_merge_bases_many(struct repository *r,
-			     struct commit *commit,
+int repo_in_merge_bases_many(struct repository *r, struct commit *commit,
 			     int nr_reference, struct commit **reference,
 			     int ignore_missing_commits);
 
@@ -60,11 +54,7 @@ int ref_newer(const struct object_id *new_oid, const struct object_id *old_oid);
  * Unknown has to be "0" here, because that's the default value for
  * contains_cache slab entries that have not yet been assigned.
  */
-enum contains_result {
-	CONTAINS_UNKNOWN = 0,
-	CONTAINS_NO,
-	CONTAINS_YES
-};
+enum contains_result { CONTAINS_UNKNOWN = 0, CONTAINS_NO, CONTAINS_YES };
 
 define_commit_slab(contains_cache, enum contains_result);
 
@@ -85,7 +75,6 @@ int can_all_from_reach_with_flag(struct object_array *from,
 				 timestamp_t min_generation);
 int can_all_from_reach(struct commit_list *from, struct commit_list *to,
 		       int commit_date_cutoff);
-
 
 /*
  * Return a list of commits containing the commits in the 'to' array
@@ -126,18 +115,16 @@ struct ahead_behind_count {
  * Given an array of commits and an array of ahead_behind_count pairs,
  * compute the ahead/behind counts for each pair.
  */
-void ahead_behind(struct repository *r,
-		  struct commit **commits, size_t commits_nr,
-		  struct ahead_behind_count *counts, size_t counts_nr);
+void ahead_behind(struct repository *r, struct commit **commits,
+		  size_t commits_nr, struct ahead_behind_count *counts,
+		  size_t counts_nr);
 
 /*
  * For all tip commits, add 'mark' to their flags if and only if they
  * are reachable from one of the commits in 'bases'.
  */
-void tips_reachable_from_bases(struct repository *r,
-			       struct commit_list *bases,
-			       struct commit **tips, size_t tips_nr,
-			       int mark);
+void tips_reachable_from_bases(struct repository *r, struct commit_list *bases,
+			       struct commit **tips, size_t tips_nr, int mark);
 
 /*
  * Given a 'tip' commit and a list potential 'bases', return the index 'i' that
@@ -151,9 +138,7 @@ void tips_reachable_from_bases(struct repository *r,
  * Returns -1 if no common point is found in first-parent histories, which is
  * rare, but possible with multiple root commits.
  */
-int get_branch_base_for_tip(struct repository *r,
-			    struct commit *tip,
-			    struct commit **bases,
-			    size_t bases_nr);
+int get_branch_base_for_tip(struct repository *r, struct commit *tip,
+			    struct commit **bases, size_t bases_nr);
 
 #endif

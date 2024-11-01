@@ -26,24 +26,25 @@ extern const signed char hexval_table[256];
 #define GIT_PATHSPEC_MAGIC 0x20
 #define GIT_CNTRL 0x40
 #define GIT_PUNCT 0x80
-#define sane_istest(x,mask) ((sane_ctype[(unsigned char)(x)] & (mask)) != 0)
+#define sane_istest(x, mask) ((sane_ctype[(unsigned char)(x)] & (mask)) != 0)
 #define isascii(x) (((x) & ~0x7f) == 0)
-#define isspace(x) sane_istest(x,GIT_SPACE)
-#define isdigit(x) sane_istest(x,GIT_DIGIT)
-#define isalpha(x) sane_istest(x,GIT_ALPHA)
-#define isalnum(x) sane_istest(x,GIT_ALPHA | GIT_DIGIT)
+#define isspace(x) sane_istest(x, GIT_SPACE)
+#define isdigit(x) sane_istest(x, GIT_DIGIT)
+#define isalpha(x) sane_istest(x, GIT_ALPHA)
+#define isalnum(x) sane_istest(x, GIT_ALPHA | GIT_DIGIT)
 #define isprint(x) ((x) >= 0x20 && (x) <= 0x7e)
 #define islower(x) sane_iscase(x, 1)
 #define isupper(x) sane_iscase(x, 0)
-#define is_glob_special(x) sane_istest(x,GIT_GLOB_SPECIAL)
-#define is_regex_special(x) sane_istest(x,GIT_GLOB_SPECIAL | GIT_REGEX_SPECIAL)
-#define iscntrl(x) (sane_istest(x,GIT_CNTRL))
-#define ispunct(x) sane_istest(x, GIT_PUNCT | GIT_REGEX_SPECIAL | \
-		GIT_GLOB_SPECIAL | GIT_PATHSPEC_MAGIC)
+#define is_glob_special(x) sane_istest(x, GIT_GLOB_SPECIAL)
+#define is_regex_special(x) sane_istest(x, GIT_GLOB_SPECIAL | GIT_REGEX_SPECIAL)
+#define iscntrl(x) (sane_istest(x, GIT_CNTRL))
+#define ispunct(x)                                                 \
+ sane_istest(x, GIT_PUNCT | GIT_REGEX_SPECIAL | GIT_GLOB_SPECIAL | \
+			GIT_PATHSPEC_MAGIC)
 #define isxdigit(x) (hexval_table[(unsigned char)(x)] != -1)
 #define tolower(x) sane_case((unsigned char)(x), 0x20)
 #define toupper(x) sane_case((unsigned char)(x), 0)
-#define is_pathspec_magic(x) sane_istest(x,GIT_PATHSPEC_MAGIC)
+#define is_pathspec_magic(x) sane_istest(x, GIT_PATHSPEC_MAGIC)
 
 static inline int sane_case(int x, int high)
 {

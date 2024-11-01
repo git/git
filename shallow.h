@@ -8,7 +8,8 @@
 
 struct oid_array;
 
-void set_alternate_shallow_file(struct repository *r, const char *path, int override);
+void set_alternate_shallow_file(struct repository *r, const char *path,
+				int override);
 int register_shallow(struct repository *r, const struct object_id *oid);
 int unregister_shallow(const struct object_id *oid);
 int is_repository_shallow(struct repository *r);
@@ -25,19 +26,21 @@ int is_repository_shallow(struct repository *r);
 struct shallow_lock {
 	struct lock_file lock;
 };
-#define SHALLOW_LOCK_INIT { \
-	.lock = LOCK_INIT, \
-}
+#define SHALLOW_LOCK_INIT \
+ {                        \
+  .lock = LOCK_INIT,      \
+ }
 
 /* commit $GIT_DIR/shallow and reset stat-validity checks */
 int commit_shallow_file(struct repository *r, struct shallow_lock *lk);
 /* rollback $GIT_DIR/shallow and reset stat-validity checks */
 void rollback_shallow_file(struct repository *r, struct shallow_lock *lk);
 
-struct commit_list *get_shallow_commits(struct object_array *heads,
-					int depth, int shallow_flag, int not_shallow_flag);
-struct commit_list *get_shallow_commits_by_rev_list(
-		int ac, const char **av, int shallow_flag, int not_shallow_flag);
+struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
+					int shallow_flag, int not_shallow_flag);
+struct commit_list *get_shallow_commits_by_rev_list(int ac, const char **av,
+						    int shallow_flag,
+						    int not_shallow_flag);
 int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
 			  const struct oid_array *extra);
 
@@ -75,8 +78,7 @@ struct shallow_info {
 void prepare_shallow_info(struct shallow_info *, struct oid_array *);
 void clear_shallow_info(struct shallow_info *);
 void remove_nonexistent_theirs_shallow(struct shallow_info *);
-void assign_shallow_commits_to_refs(struct shallow_info *info,
-				    uint32_t **used,
+void assign_shallow_commits_to_refs(struct shallow_info *info, uint32_t **used,
 				    int *ref_status);
 int delayed_reachability_test(struct shallow_info *si, int c);
 

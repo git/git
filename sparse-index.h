@@ -25,8 +25,8 @@ void clear_skip_worktree_from_present_files(struct index_state *istate);
  * expand that sparse directory to a full range of cache entries and
  * populate the index accordingly.
  */
-void expand_to_path(struct index_state *istate,
-		    const char *path, size_t pathlen, int icase);
+void expand_to_path(struct index_state *istate, const char *path,
+		    size_t pathlen, int icase);
 
 struct repository;
 int set_sparse_index_config(struct repository *repo, int enable);

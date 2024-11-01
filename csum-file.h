@@ -39,13 +39,14 @@ void hashfile_checkpoint(struct hashfile *, struct hashfile_checkpoint *);
 int hashfile_truncate(struct hashfile *, struct hashfile_checkpoint *);
 
 /* finalize_hashfile flags */
-#define CSUM_CLOSE		1
-#define CSUM_FSYNC		2
-#define CSUM_HASH_IN_STREAM	4
+#define CSUM_CLOSE 1
+#define CSUM_FSYNC 2
+#define CSUM_HASH_IN_STREAM 4
 
 struct hashfile *hashfd(int fd, const char *name);
 struct hashfile *hashfd_check(const char *name);
-struct hashfile *hashfd_throughput(int fd, const char *name, struct progress *tp);
+struct hashfile *hashfd_throughput(int fd, const char *name,
+				   struct progress *tp);
 
 /*
  * Free the hashfile without flushing its contents to disk. This only
@@ -56,7 +57,8 @@ void free_hashfile(struct hashfile *f);
 /*
  * Finalize the hashfile by flushing data to disk and free'ing it.
  */
-int finalize_hashfile(struct hashfile *, unsigned char *, enum fsync_component, unsigned int);
+int finalize_hashfile(struct hashfile *, unsigned char *, enum fsync_component,
+		      unsigned int);
 void discard_hashfile(struct hashfile *);
 void hashwrite(struct hashfile *, const void *, unsigned int);
 void hashflush(struct hashfile *f);

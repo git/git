@@ -33,8 +33,8 @@ struct userdiff_driver {
 	int textconv_want_cache;
 };
 enum userdiff_driver_type {
-	USERDIFF_DRIVER_TYPE_BUILTIN = 1<<0,
-	USERDIFF_DRIVER_TYPE_CUSTOM = 1<<1,
+	USERDIFF_DRIVER_TYPE_BUILTIN = 1 << 0,
+	USERDIFF_DRIVER_TYPE_CUSTOM = 1 << 1,
 };
 typedef int (*each_userdiff_driver_fn)(struct userdiff_driver *,
 				       enum userdiff_driver_type, void *);

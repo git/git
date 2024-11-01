@@ -14,15 +14,11 @@ struct ident_split {
 	const char *tz_end;
 };
 
-#define IDENT_STRICT	       1
-#define IDENT_NO_DATE	       2
-#define IDENT_NO_NAME	       4
+#define IDENT_STRICT 1
+#define IDENT_NO_DATE 2
+#define IDENT_NO_NAME 4
 
-enum want_ident {
-	WANT_BLANK_IDENT,
-	WANT_AUTHOR_IDENT,
-	WANT_COMMITTER_IDENT
-};
+enum want_ident { WANT_BLANK_IDENT, WANT_AUTHOR_IDENT, WANT_COMMITTER_IDENT };
 
 const char *ident_default_name(void);
 const char *ident_default_email(void);
@@ -39,9 +35,11 @@ int split_ident_line(struct ident_split *, const char *, int);
 
 /*
  * Given a commit or tag object buffer and the commit or tag headers, replaces
- * the idents in the headers with their canonical versions using the mailmap mechanism.
+ * the idents in the headers with their canonical versions using the mailmap
+ * mechanism.
  */
-void apply_mailmap_to_header(struct strbuf *, const char **, struct string_list *);
+void apply_mailmap_to_header(struct strbuf *, const char **,
+			     struct string_list *);
 
 /*
  * Compare split idents for equality or strict ordering. Note that we
@@ -55,8 +53,7 @@ int ident_cmp(const struct ident_split *, const struct ident_split *);
 const char *git_author_info(int);
 const char *git_committer_info(int);
 const char *fmt_ident(const char *name, const char *email,
-		      enum want_ident whose_ident,
-		      const char *date_str, int);
+		      enum want_ident whose_ident, const char *date_str, int);
 const char *fmt_name(enum want_ident);
 
 int committer_ident_sufficiently_given(void);

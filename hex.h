@@ -13,7 +13,8 @@
  * input, so it is safe to pass this function an arbitrary
  * null-terminated string.
  */
-int get_oid_hex_algop(const char *hex, struct object_id *oid, const struct git_hash_algo *algop);
+int get_oid_hex_algop(const char *hex, struct object_id *oid,
+		      const struct git_hash_algo *algop);
 
 /*
  * Convert a binary hash in "unsigned char []" or an object name in
@@ -28,10 +29,13 @@ int get_oid_hex_algop(const char *hex, struct object_id *oid, const struct git_h
  *   printf("%s -> %s", hash_to_hex(one), hash_to_hex(two));
  *   printf("%s -> %s", oid_to_hex(one), oid_to_hex(two));
  */
-char *hash_to_hex_algop_r(char *buffer, const unsigned char *hash, const struct git_hash_algo *);
+char *hash_to_hex_algop_r(char *buffer, const unsigned char *hash,
+			  const struct git_hash_algo *);
 char *oid_to_hex_r(char *out, const struct object_id *oid);
-char *hash_to_hex_algop(const unsigned char *hash, const struct git_hash_algo *);	/* static buffer result! */
-char *oid_to_hex(const struct object_id *oid);						/* same static buffer */
+char *hash_to_hex_algop(const unsigned char *hash,
+			const struct git_hash_algo *); /* static buffer result!
+							*/
+char *oid_to_hex(const struct object_id *oid); /* same static buffer */
 
 /*
  * Parse a 40-character hexadecimal object ID starting from hex, updating the
@@ -40,8 +44,8 @@ char *oid_to_hex(const struct object_id *oid);						/* same static buffer */
  * other invalid character.  end is only updated on success; otherwise, it is
  * unmodified.
  */
-int parse_oid_hex_algop(const char *hex, struct object_id *oid, const char **end,
-			const struct git_hash_algo *algo);
+int parse_oid_hex_algop(const char *hex, struct object_id *oid,
+			const char **end, const struct git_hash_algo *algo);
 
 /*
  * These functions work like get_oid_hex and parse_oid_hex, but they will parse

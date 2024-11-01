@@ -15,14 +15,12 @@ struct worktree;
 /*
  * Return a statically allocated path.
  */
-const char *mkpath(const char *fmt, ...)
-	__attribute__((format (printf, 1, 2)));
+const char *mkpath(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
 /*
  * Return a path.
  */
-char *mkpathdup(const char *fmt, ...)
-	__attribute__((format (printf, 1, 2)));
+char *mkpathdup(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 
 /*
  * The `strbuf_git_common_path` family of functions will construct a path into a
@@ -33,18 +31,15 @@ char *mkpathdup(const char *fmt, ...)
  * Constructs a path into the common git directory of repository `repo` and
  * append it in the provided buffer `sb`.
  */
-void strbuf_git_common_path(struct strbuf *sb,
-			    const struct repository *repo,
+void strbuf_git_common_path(struct strbuf *sb, const struct repository *repo,
 			    const char *fmt, ...)
-	__attribute__((format (printf, 3, 4)));
-void repo_common_pathv(const struct repository *repo,
-		       struct strbuf *buf,
-		       const char *fmt,
-		       va_list args);
+	__attribute__((format(printf, 3, 4)));
+void repo_common_pathv(const struct repository *repo, struct strbuf *buf,
+		       const char *fmt, va_list args);
 
 /*
- * The `repo_git_path` family of functions will construct a path into a repository's
- * git directory.
+ * The `repo_git_path` family of functions will construct a path into a
+ * repository's git directory.
  *
  * These functions will perform adjustments to the resultant path to account
  * for special paths which are either considered common among worktrees (e.g.
@@ -58,45 +53,40 @@ void repo_common_pathv(const struct repository *repo,
 /*
  * Return a path into the git directory of repository `repo`.
  */
-char *repo_git_path(const struct repository *repo,
-		    const char *fmt, ...)
-	__attribute__((format (printf, 2, 3)));
+char *repo_git_path(const struct repository *repo, const char *fmt, ...)
+	__attribute__((format(printf, 2, 3)));
 
 /*
  * Print a path into the git directory of repository `repo` into the provided
  * buffer.
  */
-void repo_git_pathv(const struct repository *repo,
-		    const struct worktree *wt, struct strbuf *buf,
-		    const char *fmt, va_list args);
+void repo_git_pathv(const struct repository *repo, const struct worktree *wt,
+		    struct strbuf *buf, const char *fmt, va_list args);
 
 /*
  * Construct a path into the git directory of repository `repo` and append it
  * to the provided buffer `sb`.
  */
-void strbuf_repo_git_path(struct strbuf *sb,
-			  const struct repository *repo,
+void strbuf_repo_git_path(struct strbuf *sb, const struct repository *repo,
 			  const char *fmt, ...)
-	__attribute__((format (printf, 3, 4)));
+	__attribute__((format(printf, 3, 4)));
 
 /*
  * Similar to repo_git_path() but can produce paths for a specified
  * worktree instead of current one. When no worktree is given, then the path is
  * computed relative to main worktree of the given repository.
  */
-const char *worktree_git_path(struct repository *r,
-			      const struct worktree *wt,
+const char *worktree_git_path(struct repository *r, const struct worktree *wt,
 			      const char *fmt, ...)
-	__attribute__((format (printf, 3, 4)));
+	__attribute__((format(printf, 3, 4)));
 
 /*
  * Return a path into the worktree of repository `repo`.
  *
  * If the repository doesn't have a worktree NULL is returned.
  */
-char *repo_worktree_path(const struct repository *repo,
-				const char *fmt, ...)
-	__attribute__((format (printf, 2, 3)));
+char *repo_worktree_path(const struct repository *repo, const char *fmt, ...)
+	__attribute__((format(printf, 2, 3)));
 
 /*
  * Construct a path into the worktree of repository `repo` and append it
@@ -104,17 +94,16 @@ char *repo_worktree_path(const struct repository *repo,
  *
  * If the repository doesn't have a worktree nothing will be appended to `sb`.
  */
-void strbuf_repo_worktree_path(struct strbuf *sb,
-				      const struct repository *repo,
-				      const char *fmt, ...)
-	__attribute__((format (printf, 3, 4)));
+void strbuf_repo_worktree_path(struct strbuf *sb, const struct repository *repo,
+			       const char *fmt, ...)
+	__attribute__((format(printf, 3, 4)));
 
 /*
  * Return a path into a submodule's git directory located at `path`.  `path`
  * must only reference a submodule of the main repository (the_repository).
  */
 char *git_pathdup_submodule(const char *path, const char *fmt, ...)
-	__attribute__((format (printf, 2, 3)));
+	__attribute__((format(printf, 2, 3)));
 
 /*
  * Construct a path into a submodule's git directory located at `path` and
@@ -122,8 +111,8 @@ char *git_pathdup_submodule(const char *path, const char *fmt, ...)
  * submodule of the main repository (the_repository).
  */
 int strbuf_git_path_submodule(struct strbuf *sb, const char *path,
-				     const char *fmt, ...)
-	__attribute__((format (printf, 3, 4)));
+			      const char *fmt, ...)
+	__attribute__((format(printf, 3, 4)));
 
 void report_linked_checkout_garbage(struct repository *r);
 
@@ -134,13 +123,13 @@ void report_linked_checkout_garbage(struct repository *r);
  *
  * or use one of the global ones below.
  */
-#define REPO_GIT_PATH_FUNC(var, filename) \
-	const char *git_path_##var(struct repository *r) \
-	{ \
-		if (!r->cached_paths.var) \
-			r->cached_paths.var = repo_git_path(r, filename); \
-		return r->cached_paths.var; \
-	}
+#define REPO_GIT_PATH_FUNC(var, filename)            \
+ const char *git_path_##var(struct repository *r)    \
+ {                                                   \
+  if (!r->cached_paths.var)                          \
+   r->cached_paths.var = repo_git_path(r, filename); \
+  return r->cached_paths.var;                        \
+ }
 
 const char *git_path_squash_msg(struct repository *r);
 const char *git_path_merge_msg(struct repository *r);
@@ -158,7 +147,8 @@ int adjust_shared_perm(const char *path);
 char *interpolate_path(const char *path, int real_home);
 const char *enter_repo(const char *path, int strict);
 const char *remove_leading_path(const char *in, const char *prefix);
-const char *relative_path(const char *in, const char *prefix, struct strbuf *sb);
+const char *relative_path(const char *in, const char *prefix,
+			  struct strbuf *sb);
 int normalize_path_copy_len(char *dst, const char *src, int *prefix_len);
 int normalize_path_copy(char *dst, const char *src);
 /**
@@ -190,7 +180,8 @@ int looks_like_command_line_option(const char *str);
 
 /**
  * Return a newly allocated string with the evaluation of
- * "$XDG_CONFIG_HOME/$subdir/$filename" if $XDG_CONFIG_HOME is non-empty, otherwise
+ * "$XDG_CONFIG_HOME/$subdir/$filename" if $XDG_CONFIG_HOME is non-empty,
+ * otherwise
  * "$HOME/.config/$subdir/$filename". Return NULL upon error.
  */
 char *xdg_config_home_for(const char *subdir, const char *filename);
@@ -224,16 +215,16 @@ void safe_create_dir(const char *dir, int share);
  */
 struct strbuf *get_pathname(void);
 
-# ifdef USE_THE_REPOSITORY_VARIABLE
-#  include "strbuf.h"
-#  include "repository.h"
+#ifdef USE_THE_REPOSITORY_VARIABLE
+# include "strbuf.h"
+# include "repository.h"
 
 /*
  * Return a statically allocated path into the main repository's
  * (the_repository) common git directory.
  */
-__attribute__((format (printf, 1, 2)))
-static inline const char *git_common_path(const char *fmt, ...)
+__attribute__((format(printf, 1, 2))) static inline const char *
+git_common_path(const char *fmt, ...)
 {
 	struct strbuf *pathname = get_pathname();
 	va_list args;
@@ -248,8 +239,8 @@ static inline const char *git_common_path(const char *fmt, ...)
  * and place it in the provided buffer `buf`, the contents of the buffer will
  * be overridden.
  */
-__attribute__((format (printf, 2, 3)))
-static inline char *git_path_buf(struct strbuf *buf, const char *fmt, ...)
+__attribute__((format(printf, 2, 3))) static inline char *
+git_path_buf(struct strbuf *buf, const char *fmt, ...)
 {
 	va_list args;
 	strbuf_reset(buf);
@@ -263,8 +254,8 @@ static inline char *git_path_buf(struct strbuf *buf, const char *fmt, ...)
  * Construct a path into the main repository's (the_repository) git directory
  * and append it to the provided buffer `sb`.
  */
-__attribute__((format (printf, 2, 3)))
-static inline void strbuf_git_path(struct strbuf *sb, const char *fmt, ...)
+__attribute__((format(printf, 2, 3))) static inline void
+strbuf_git_path(struct strbuf *sb, const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
@@ -276,8 +267,8 @@ static inline void strbuf_git_path(struct strbuf *sb, const char *fmt, ...)
  * Return a statically allocated path into the main repository's
  * (the_repository) git directory.
  */
-__attribute__((format (printf, 1, 2)))
-static inline const char *git_path(const char *fmt, ...)
+__attribute__((format(printf, 1, 2))) static inline const char *
+git_path(const char *fmt, ...)
 {
 	struct strbuf *pathname = get_pathname();
 	va_list args;
@@ -287,20 +278,20 @@ static inline const char *git_path(const char *fmt, ...)
 	return pathname->buf;
 }
 
-#define GIT_PATH_FUNC(func, filename) \
-	const char *func(void) \
-	{ \
-		static char *ret; \
-		if (!ret) \
-			ret = git_pathdup(filename); \
-		return ret; \
-	}
+# define GIT_PATH_FUNC(func, filename) \
+  const char *func(void)               \
+  {                                    \
+   static char *ret;                   \
+   if (!ret)                           \
+    ret = git_pathdup(filename);       \
+   return ret;                         \
+  }
 
 /*
  * Return a path into the main repository's (the_repository) git directory.
  */
-__attribute__((format (printf, 1, 2)))
-static inline char *git_pathdup(const char *fmt, ...)
+__attribute__((format(printf, 1, 2))) static inline char *
+git_pathdup(const char *fmt, ...)
 {
 	struct strbuf path = STRBUF_INIT;
 	va_list args;
@@ -310,6 +301,6 @@ static inline char *git_pathdup(const char *fmt, ...)
 	return strbuf_detach(&path, NULL);
 }
 
-# endif /* USE_THE_REPOSITORY_VARIABLE */
+#endif /* USE_THE_REPOSITORY_VARIABLE */
 
 #endif /* PATH_H */

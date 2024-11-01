@@ -14,11 +14,8 @@ int repo_oid_to_algop(struct repository *repo, const struct object_id *src,
  * Convert an object file from one hash algorithm to another algorithm.
  * Return -1 on failure, 0 on success.
  */
-int convert_object_file(struct strbuf *outbuf,
-			const struct git_hash_algo *from,
-			const struct git_hash_algo *to,
-			const void *buf, size_t len,
-			enum object_type type,
-			int gentle);
+int convert_object_file(struct strbuf *outbuf, const struct git_hash_algo *from,
+			const struct git_hash_algo *to, const void *buf,
+			size_t len, enum object_type type, int gentle);
 
 #endif /* OBJECT_CONVERT_H */

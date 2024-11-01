@@ -49,7 +49,9 @@ struct tree_desc {
  * `pathp` and `modep` arguments are set to the entry's pathname and mode
  * respectively.
  */
-static inline const struct object_id *tree_entry_extract(struct tree_desc *desc, const char **pathp, unsigned short *modep)
+static inline const struct object_id *tree_entry_extract(struct tree_desc *desc,
+							 const char **pathp,
+							 unsigned short *modep)
 {
 	*pathp = desc->entry.path;
 	*modep = desc->entry.mode;
@@ -105,20 +107,28 @@ int tree_entry_gently(struct tree_desc *, struct name_entry *);
  * object ID of a tree. Returns the `buffer` member if the latter
  * is a valid tree identifier and NULL otherwise.
  */
-void *fill_tree_descriptor(struct repository *r,
-			   struct tree_desc *desc,
+void *fill_tree_descriptor(struct repository *r, struct tree_desc *desc,
 			   const struct object_id *oid);
 
 struct traverse_info;
-typedef int (*traverse_callback_t)(int n, unsigned long mask, unsigned long dirmask, struct name_entry *entry, struct traverse_info *);
+typedef int (*traverse_callback_t)(int n, unsigned long mask,
+				   unsigned long dirmask,
+				   struct name_entry *entry,
+				   struct traverse_info *);
 
 /**
  * Traverse `n` number of trees in parallel. The `fn` callback member of
  * `traverse_info` is called once for each tree entry.
  */
-int traverse_trees(struct index_state *istate, int n, struct tree_desc *t, struct traverse_info *info);
+int traverse_trees(struct index_state *istate, int n, struct tree_desc *t,
+		   struct traverse_info *info);
 
-enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r, struct object_id *tree_oid, const char *name, struct object_id *result, struct strbuf *result_path, unsigned short *mode);
+enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
+						   struct object_id *tree_oid,
+						   const char *name,
+						   struct object_id *result,
+						   struct strbuf *result_path,
+						   unsigned short *mode);
 
 /**
  * A structure used to maintain the state of a traversal.
@@ -155,16 +165,18 @@ struct traverse_info {
 	 *
 	 * - `mask` has its nth bit set if something exists in the nth entry.
 	 *
-	 * - `dirmask` has its nth bit set if the nth tree's entry is a directory.
+	 * - `dirmask` has its nth bit set if the nth tree's entry is a
+	 * directory.
 	 *
-	 * - `entry` is an array of size `n` where the nth entry is from the nth tree.
+	 * - `entry` is an array of size `n` where the nth entry is from the nth
+	 * tree.
 	 *
 	 * - `info` maintains the state of the traversal.
 	 *
-	 * Returning a negative value will terminate the traversal. Otherwise the
-	 * return value is treated as an update mask. If the nth bit is set the nth tree
-	 * will be updated and if the bit is not set the nth tree entry will be the
-	 * same in the next callback invocation.
+	 * Returning a negative value will terminate the traversal. Otherwise
+	 * the return value is treated as an update mask. If the nth bit is set
+	 * the nth tree will be updated and if the bit is not set the nth tree
+	 * entry will be the same in the next callback invocation.
 	 */
 	traverse_callback_t fn;
 
@@ -180,7 +192,8 @@ struct traverse_info {
  * search. Returns 0 if the entry is found and -1 otherwise. The third
  * and fourth parameters are set to the entry's sha1 and mode respectively.
  */
-int get_tree_entry(struct repository *, const struct object_id *, const char *, struct object_id *, unsigned short *);
+int get_tree_entry(struct repository *, const struct object_id *, const char *,
+		   struct object_id *, unsigned short *);
 
 /**
  * Generate the full pathname of a tree entry based from the root of the
@@ -188,8 +201,9 @@ int get_tree_entry(struct repository *, const struct object_id *, const char *, 
  * tree named "bar" the pathname of an entry "baz" in the "bar"
  * tree would be "bar/baz".
  */
-char *make_traverse_path(char *path, size_t pathlen, const struct traverse_info *info,
-			 const char *name, size_t namelen);
+char *make_traverse_path(char *path, size_t pathlen,
+			 const struct traverse_info *info, const char *name,
+			 size_t namelen);
 
 /**
  * Convenience wrapper to `make_traverse_path` into a strbuf.
@@ -217,10 +231,12 @@ static inline size_t traverse_path_len(const struct traverse_info *info,
 
 /* in general, positive means "kind of interesting" */
 enum interesting {
-	all_entries_not_interesting = -1, /* no, and no subsequent entries will be either */
+	all_entries_not_interesting = -1, /* no, and no subsequent entries will
+					     be either */
 	entry_not_interesting = 0,
 	entry_interesting = 1,
-	all_entries_interesting = 2 /* yes, and all subsequent entries will be */
+	all_entries_interesting = 2 /* yes, and all subsequent entries will be
+				     */
 };
 
 enum interesting tree_entry_interesting(struct index_state *istate,

@@ -42,8 +42,8 @@ int replace_refs_enabled(struct repository *r);
  * problem in the value being updated by one thread right after another one read
  * it here (and it should be written to only once, anyway).
  */
-static inline const struct object_id *lookup_replace_object(struct repository *r,
-							    const struct object_id *oid)
+static inline const struct object_id *
+lookup_replace_object(struct repository *r, const struct object_id *oid)
 {
 	if (!replace_refs_enabled(r) ||
 	    (r->objects->replace_map_initialized &&

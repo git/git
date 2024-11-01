@@ -33,9 +33,10 @@ struct strvec {
 	size_t alloc;
 };
 
-#define STRVEC_INIT { \
-	.v = empty_strvec, \
-}
+#define STRVEC_INIT  \
+ {                   \
+  .v = empty_strvec, \
+ }
 
 /**
  * Initialize an array. This is no different than assigning from
@@ -53,8 +54,8 @@ void strvec_push_nodup(struct strvec *array, char *value);
  * Format a string and push it onto the end of the array. This is a
  * convenience wrapper combining `strbuf_addf` and `strvec_push`.
  */
-__attribute__((format (printf,2,3)))
-const char *strvec_pushf(struct strvec *, const char *fmt, ...);
+__attribute__((format(printf, 2, 3))) const char *
+strvec_pushf(struct strvec *, const char *fmt, ...);
 
 /**
  * Push a list of strings onto the end of the array. The arguments
@@ -71,7 +72,8 @@ void strvec_pushv(struct strvec *, const char **);
  * Replace the value at the given index with a new value. The index must be
  * valid. Returns a pointer to the inserted value.
  */
-const char *strvec_replace(struct strvec *array, size_t idx, const char *replacement);
+const char *strvec_replace(struct strvec *array, size_t idx,
+			   const char *replacement);
 
 /*
  * Remove the value at the given index. The remainder of the array will be

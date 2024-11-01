@@ -19,18 +19,20 @@ struct strmap_entry {
 
 int cmp_strmap_entry(const void *hashmap_cmp_fn_data,
 		     const struct hashmap_entry *entry1,
-		     const struct hashmap_entry *entry2,
-		     const void *keydata);
+		     const struct hashmap_entry *entry2, const void *keydata);
 
-#define STRMAP_INIT { \
-			.map = HASHMAP_INIT(cmp_strmap_entry, NULL),  \
-			.strdup_strings = 1,                          \
-		    }
-#define STRINTMAP_INIT { \
-			.map = STRMAP_INIT,   \
-			.default_value = 0,   \
-		       }
-#define STRSET_INIT { .map = STRMAP_INIT }
+#define STRMAP_INIT                                                 \
+ {                                                                  \
+  .map = HASHMAP_INIT(cmp_strmap_entry, NULL), .strdup_strings = 1, \
+ }
+#define STRINTMAP_INIT                    \
+ {                                        \
+  .map = STRMAP_INIT, .default_value = 0, \
+ }
+#define STRSET_INIT  \
+ {                   \
+  .map = STRMAP_INIT \
+ }
 
 /*
  * Initialize the members of the strmap.  Any keys added to the strmap will
@@ -42,8 +44,7 @@ void strmap_init(struct strmap *map);
  * Same as strmap_init, but for those who want to control the memory management
  * carefully instead of using the default of strdup_strings=1 and pool=NULL.
  */
-void strmap_init_with_options(struct strmap *map,
-			      struct mem_pool *pool,
+void strmap_init_with_options(struct strmap *map, struct mem_pool *pool,
 			      int strdup_strings);
 
 /*
@@ -108,9 +109,8 @@ static inline int strmap_empty(struct strmap *map)
 /*
  * iterate through @map using @iter, @var is a pointer to a type strmap_entry
  */
-#define strmap_for_each_entry(mystrmap, iter, var)	\
-	hashmap_for_each_entry(&(mystrmap)->map, iter, var, ent)
-
+#define strmap_for_each_entry(mystrmap, iter, var) \
+ hashmap_for_each_entry (&(mystrmap)->map, iter, var, ent)
 
 /*
  * strintmap:
@@ -130,8 +130,8 @@ struct strintmap {
 	int default_value;
 };
 
-#define strintmap_for_each_entry(mystrmap, iter, var)	\
-	strmap_for_each_entry(&(mystrmap)->map, iter, var)
+#define strintmap_for_each_entry(mystrmap, iter, var) \
+ strmap_for_each_entry (&(mystrmap)->map, iter, var)
 
 static inline void strintmap_init(struct strintmap *map, int default_value)
 {
@@ -217,8 +217,8 @@ struct strset {
 	struct strmap map;
 };
 
-#define strset_for_each_entry(mystrset, iter, var)	\
-	strmap_for_each_entry(&(mystrset)->map, iter, var)
+#define strset_for_each_entry(mystrset, iter, var) \
+ strmap_for_each_entry (&(mystrset)->map, iter, var)
 
 static inline void strset_init(struct strset *set)
 {

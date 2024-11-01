@@ -36,21 +36,19 @@ int base_name_compare(const char *name1, size_t len1, int mode1,
 		      const char *name2, size_t len2, int mode2);
 int df_name_compare(const char *name1, size_t len1, int mode1,
 		    const char *name2, size_t len2, int mode2);
-int name_compare(const char *name1, size_t len1,
-		 const char *name2, size_t len2);
+int name_compare(const char *name1, size_t len1, const char *name2,
+		 size_t len2);
 
 #define READ_TREE_RECURSIVE 1
-typedef int (*read_tree_fn_t)(const struct object_id *, struct strbuf *, const char *, unsigned int, void *);
+typedef int (*read_tree_fn_t)(const struct object_id *, struct strbuf *,
+			      const char *, unsigned int, void *);
 
-int read_tree_at(struct repository *r,
-		 struct tree *tree, struct strbuf *base,
-		 int depth,
-		 const struct pathspec *pathspec,
-		 read_tree_fn_t fn, void *context);
+int read_tree_at(struct repository *r, struct tree *tree, struct strbuf *base,
+		 int depth, const struct pathspec *pathspec, read_tree_fn_t fn,
+		 void *context);
 
-int read_tree(struct repository *r,
-	      struct tree *tree,
-	      const struct pathspec *pathspec,
-	      read_tree_fn_t fn, void *context);
+int read_tree(struct repository *r, struct tree *tree,
+	      const struct pathspec *pathspec, read_tree_fn_t fn,
+	      void *context);
 
 #endif /* TREE_H */

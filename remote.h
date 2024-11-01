@@ -71,7 +71,8 @@ struct remote {
 
 	/* An array of all of the url_nr URLs configured for the remote */
 	struct strvec url;
-	/* An array of all of the pushurl_nr push URLs configured for the remote */
+	/* An array of all of the pushurl_nr push URLs configured for the remote
+	 */
 	struct strvec pushurl;
 
 	struct refspec push;
@@ -145,11 +146,7 @@ struct ref {
 	struct object_id old_oid_expect; /* used by expect-old */
 	char *symref;
 	char *tracking_ref;
-	unsigned int
-		force:1,
-		forced_update:1,
-		expect_old_sha1:1,
-		exact_oid:1,
+	unsigned int force:1, forced_update:1, expect_old_sha1:1, exact_oid:1,
 		deletion:1,
 		/* Need to check if local reflog reaches the remote tip. */
 		check_reachable:1,
@@ -199,16 +196,17 @@ struct ref {
 	char name[FLEX_ARRAY]; /* more */
 };
 
-#define REF_NORMAL	(1u << 0)
-#define REF_BRANCHES	(1u << 1)
-#define REF_TAGS	(1u << 2)
+#define REF_NORMAL (1u << 0)
+#define REF_BRANCHES (1u << 1)
+#define REF_TAGS (1u << 2)
 
 struct ref *find_ref_by_name(const struct ref *list, const char *name);
 
 struct ref *alloc_ref(const char *name);
 struct ref *copy_ref(const struct ref *ref);
 struct ref *copy_ref_list(const struct ref *ref);
-int count_refspec_match(const char *, struct ref *refs, struct ref **matched_ref);
+int count_refspec_match(const char *, struct ref *refs,
+			struct ref **matched_ref);
 
 int check_ref_type(const struct ref *ref, int flags);
 
@@ -223,17 +221,16 @@ struct oid_array;
 struct packet_reader;
 struct strvec;
 struct string_list;
-struct ref **get_remote_heads(struct packet_reader *reader,
-			      struct ref **list, unsigned int flags,
-			      struct oid_array *extra_have,
+struct ref **get_remote_heads(struct packet_reader *reader, struct ref **list,
+			      unsigned int flags, struct oid_array *extra_have,
 			      struct oid_array *shallow_points);
 
 /* Used for protocol v2 in order to retrieve refs from a remote */
-struct ref **get_remote_refs(int fd_out, struct packet_reader *reader,
-			     struct ref **list, int for_push,
-			     struct transport_ls_refs_options *transport_options,
-			     const struct string_list *server_options,
-			     int stateless_rpc);
+struct ref **
+get_remote_refs(int fd_out, struct packet_reader *reader, struct ref **list,
+		int for_push,
+		struct transport_ls_refs_options *transport_options,
+		const struct string_list *server_options, int stateless_rpc);
 
 /* Used for protocol v2 in order to retrieve refs from a remote */
 struct bundle_list;
@@ -267,10 +264,10 @@ int query_refspecs(struct refspec *rs, struct refspec_item *query);
 char *apply_refspecs(struct refspec *rs, const char *name);
 
 int check_push_refs(struct ref *src, struct refspec *rs);
-int match_push_refs(struct ref *src, struct ref **dst,
-		    struct refspec *rs, int flags);
+int match_push_refs(struct ref *src, struct ref **dst, struct refspec *rs,
+		    int flags);
 void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
-	int force_update);
+			     int force_update);
 
 /*
  * Given a list of the remote refs and the specification of things to
@@ -285,8 +282,9 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
  * missing_ok is usually false, but when we are adding branch.$name.merge
  * it is Ok if the branch is not at the remote anymore.
  */
-int get_fetch_map(const struct ref *remote_refs, const struct refspec_item *refspec,
-		  struct ref ***tail, int missing_ok);
+int get_fetch_map(const struct ref *remote_refs,
+		  const struct refspec_item *refspec, struct ref ***tail,
+		  int missing_ok);
 
 struct ref *get_remote_ref(const struct ref *remote_refs, const char *name);
 
@@ -318,8 +316,8 @@ struct branch {
 
 	/**
 	 * An array of the struct refspecs used for the merge lines. That is,
-	 * merge[i]->dst is a local tracking ref which should be merged into this
-	 * branch by default.
+	 * merge[i]->dst is a local tracking ref which should be merged into
+	 * this branch by default.
 	 */
 	struct refspec_item **merge;
 
@@ -362,18 +360,18 @@ const char *branch_get_push(struct branch *branch, struct strbuf *err);
 
 /* Flags to match_refs. */
 enum match_refs_flags {
-	MATCH_REFS_NONE		= 0,
-	MATCH_REFS_ALL 		= (1 << 0),
-	MATCH_REFS_MIRROR	= (1 << 1),
-	MATCH_REFS_PRUNE	= (1 << 2),
-	MATCH_REFS_FOLLOW_TAGS	= (1 << 3)
+	MATCH_REFS_NONE = 0,
+	MATCH_REFS_ALL = (1 << 0),
+	MATCH_REFS_MIRROR = (1 << 1),
+	MATCH_REFS_PRUNE = (1 << 2),
+	MATCH_REFS_FOLLOW_TAGS = (1 << 3)
 };
 
 /* Flags for --ahead-behind option. */
 enum ahead_behind_flags {
 	AHEAD_BEHIND_UNSPECIFIED = -1,
-	AHEAD_BEHIND_QUICK       =  0,  /* just eq/neq reporting */
-	AHEAD_BEHIND_FULL        =  1,  /* traditional a/b reporting */
+	AHEAD_BEHIND_QUICK = 0, /* just eq/neq reporting */
+	AHEAD_BEHIND_FULL = 1, /* traditional a/b reporting */
 };
 
 /* Reporting of tracking info */
@@ -391,8 +389,7 @@ struct ref *get_local_heads(void);
  * list of all candidate refs. If no match is found (or 'head' is NULL),
  * returns NULL. All returns are newly allocated and should be freed.
  */
-struct ref *guess_remote_head(const struct ref *head,
-			      const struct ref *refs,
+struct ref *guess_remote_head(const struct ref *head, const struct ref *refs,
 			      int all);
 
 /* Return refs which no longer exist on remote */
@@ -408,7 +405,7 @@ struct push_cas_option {
 		struct object_id expect;
 		unsigned use_tracking:1;
 		char *refname;
-	} *entry;
+	} * entry;
 	int nr;
 	int alloc;
 };
@@ -439,8 +436,8 @@ void apply_push_cas(struct push_cas_option *, struct remote *, struct ref *);
  * remote_url      url              outcome          expectation
  * http://a.com/b  ../c             http://a.com/c   as is
  * http://a.com/b/ ../c             http://a.com/c   same as previous line, but
- *                                                   ignore trailing slash in url
- * http://a.com/b  ../../c          http://c         error out
+ *                                                   ignore trailing slash in
+ * url http://a.com/b  ../../c          http://c         error out
  * http://a.com/b  ../../../c       http:/c          error out
  * http://a.com/b  ../../../../c    http:c           error out
  * http://a.com/b  ../../../../../c    .:c           error out

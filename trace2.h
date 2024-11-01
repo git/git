@@ -116,7 +116,7 @@ void trace2_cmd_error_va_fl(const char *file, int line, const char *fmt,
 			    va_list ap);
 
 #define trace2_cmd_error_va(fmt, ap) \
-	trace2_cmd_error_va_fl(__FILE__, __LINE__, (fmt), (ap))
+ trace2_cmd_error_va_fl(__FILE__, __LINE__, (fmt), (ap))
 
 /*
  * Emit a 'pathname' event with the canonical pathname of the current process
@@ -134,7 +134,8 @@ void trace2_cmd_path_fl(const char *file, int line, const char *pathname);
  * This gives post-processors a way to determine what invoked the command and
  * learn more about usage patterns.
  */
-void trace2_cmd_ancestry_fl(const char *file, int line, const char **parent_names);
+void trace2_cmd_ancestry_fl(const char *file, int line,
+			    const char **parent_names);
 
 #define trace2_cmd_ancestry(v) trace2_cmd_ancestry_fl(__FILE__, __LINE__, (v))
 
@@ -165,7 +166,7 @@ void trace2_cmd_alias_fl(const char *file, int line, const char *alias,
 			 const char **argv);
 
 #define trace2_cmd_alias(alias, argv) \
-	trace2_cmd_alias_fl(__FILE__, __LINE__, (alias), (argv))
+ trace2_cmd_alias_fl(__FILE__, __LINE__, (alias), (argv))
 
 /*
  * Emit one or more 'def_param' events for "important" configuration
@@ -198,7 +199,8 @@ void trace2_cmd_list_config_fl(const char *file, int line);
  */
 void trace2_cmd_list_env_vars_fl(const char *file, int line);
 
-#define trace2_cmd_list_env_vars() trace2_cmd_list_env_vars_fl(__FILE__, __LINE__)
+#define trace2_cmd_list_env_vars() \
+ trace2_cmd_list_env_vars_fl(__FILE__, __LINE__)
 
 /*
  * Emit a "def_param" event for the given config key/value pair IF
@@ -211,7 +213,7 @@ void trace2_cmd_set_config_fl(const char *file, int line, const char *key,
 			      const char *value);
 
 #define trace2_cmd_set_config(k, v) \
-	trace2_cmd_set_config_fl(__FILE__, __LINE__, (k), (v))
+ trace2_cmd_set_config_fl(__FILE__, __LINE__, (k), (v))
 
 /**
  * Emits a "child_start" message containing the "child-id",
@@ -246,7 +248,7 @@ void trace2_child_exit_fl(const char *file, int line, struct child_process *cmd,
 			  int child_exit_code);
 
 #define trace2_child_exit(cmd, code) \
-	trace2_child_exit_fl(__FILE__, __LINE__, (cmd), (code))
+ trace2_child_exit_fl(__FILE__, __LINE__, (cmd), (code))
 
 /**
  * Emits a "child_ready" message containing the "child-id" and a flag
@@ -267,11 +269,10 @@ void trace2_child_exit_fl(const char *file, int line, struct child_process *cmd,
  *
  */
 void trace2_child_ready_fl(const char *file, int line,
-			   struct child_process *cmd,
-			   const char *ready);
+			   struct child_process *cmd, const char *ready);
 
 #define trace2_child_ready(cmd, ready) \
-	trace2_child_ready_fl(__FILE__, __LINE__, (cmd), (ready))
+ trace2_child_ready_fl(__FILE__, __LINE__, (cmd), (ready))
 
 /**
  * Emit an 'exec' event prior to calling one of exec(), execv(),
@@ -299,7 +300,7 @@ int trace2_exec_fl(const char *file, int line, const char *exe,
 void trace2_exec_result_fl(const char *file, int line, int exec_id, int code);
 
 #define trace2_exec_result(id, code) \
-	trace2_exec_result_fl(__FILE__, __LINE__, (id), (code))
+ trace2_exec_result_fl(__FILE__, __LINE__, (id), (code))
 
 /*
  * Emit a 'thread_start' event.  This must be called from inside the
@@ -314,7 +315,7 @@ void trace2_thread_start_fl(const char *file, int line,
 			    const char *thread_base_name);
 
 #define trace2_thread_start(thread_base_name) \
-	trace2_thread_start_fl(__FILE__, __LINE__, (thread_base_name))
+ trace2_thread_start_fl(__FILE__, __LINE__, (thread_base_name))
 
 /*
  * Emit a 'thread_exit' event.  This must be called from inside the
@@ -338,7 +339,7 @@ void trace2_def_param_fl(const char *file, int line, const char *param,
 			 const char *value, const struct key_value_info *kvi);
 
 #define trace2_def_param(param, value, kvi) \
-	trace2_def_param_fl(__FILE__, __LINE__, (param), (value), (kvi))
+ trace2_def_param_fl(__FILE__, __LINE__, (param), (value), (kvi))
 
 /*
  * Tell trace2 about a newly instantiated repo object and assign
@@ -376,29 +377,29 @@ void trace2_def_repo_fl(const char *file, int line, struct repository *repo);
  * recursive operations can be attributed to the correct repository.
  */
 void trace2_region_enter_fl(const char *file, int line, const char *category,
-			    const char *label, const struct repository *repo, ...);
+			    const char *label, const struct repository *repo,
+			    ...);
 
 #define trace2_region_enter(category, label, repo) \
-	trace2_region_enter_fl(__FILE__, __LINE__, (category), (label), (repo))
+ trace2_region_enter_fl(__FILE__, __LINE__, (category), (label), (repo))
 
 void trace2_region_enter_printf_va_fl(const char *file, int line,
 				      const char *category, const char *label,
 				      const struct repository *repo,
 				      const char *fmt, va_list ap);
 
-#define trace2_region_enter_printf_va(category, label, repo, fmt, ap)    \
-	trace2_region_enter_printf_va_fl(__FILE__, __LINE__, (category), \
-					 (label), (repo), (fmt), (ap))
+#define trace2_region_enter_printf_va(category, label, repo, fmt, ap)      \
+ trace2_region_enter_printf_va_fl(__FILE__, __LINE__, (category), (label), \
+				  (repo), (fmt), (ap))
 
-__attribute__((format (printf, 6, 7)))
-void trace2_region_enter_printf_fl(const char *file, int line,
-				   const char *category, const char *label,
-				   const struct repository *repo,
-				   const char *fmt, ...);
+__attribute__((format(printf, 6, 7))) void
+trace2_region_enter_printf_fl(const char *file, int line, const char *category,
+			      const char *label, const struct repository *repo,
+			      const char *fmt, ...);
 
-#define trace2_region_enter_printf(category, label, repo, ...)                 \
-	trace2_region_enter_printf_fl(__FILE__, __LINE__, (category), (label), \
-				      (repo), __VA_ARGS__)
+#define trace2_region_enter_printf(category, label, repo, ...)          \
+ trace2_region_enter_printf_fl(__FILE__, __LINE__, (category), (label), \
+			       (repo), __VA_ARGS__)
 
 /**
  * Emit a 'region_leave' event for <category>.<label> with optional
@@ -413,28 +414,29 @@ void trace2_region_enter_printf_fl(const char *file, int line,
  * but it makes the data stream easier to understand.
  */
 void trace2_region_leave_fl(const char *file, int line, const char *category,
-			    const char *label, const struct repository *repo, ...);
+			    const char *label, const struct repository *repo,
+			    ...);
 
 #define trace2_region_leave(category, label, repo) \
-	trace2_region_leave_fl(__FILE__, __LINE__, (category), (label), (repo))
+ trace2_region_leave_fl(__FILE__, __LINE__, (category), (label), (repo))
 
 void trace2_region_leave_printf_va_fl(const char *file, int line,
 				      const char *category, const char *label,
 				      const struct repository *repo,
 				      const char *fmt, va_list ap);
 
-#define trace2_region_leave_printf_va(category, label, repo, fmt, ap)    \
-	trace2_region_leave_printf_va_fl(__FILE__, __LINE__, (category), \
-					 (label), (repo), (fmt), (ap))
+#define trace2_region_leave_printf_va(category, label, repo, fmt, ap)      \
+ trace2_region_leave_printf_va_fl(__FILE__, __LINE__, (category), (label), \
+				  (repo), (fmt), (ap))
 
 void trace2_region_leave_printf_fl(const char *file, int line,
 				   const char *category, const char *label,
 				   const struct repository *repo,
 				   const char *fmt, ...);
 
-#define trace2_region_leave_printf(category, label, repo, ...)                 \
-	trace2_region_leave_printf_fl(__FILE__, __LINE__, (category), (label), \
-				      (repo), __VA_ARGS__)
+#define trace2_region_leave_printf(category, label, repo, ...)          \
+ trace2_region_leave_printf_fl(__FILE__, __LINE__, (category), (label), \
+			       (repo), __VA_ARGS__)
 
 /**
  * Emit a key-value pair 'data' event of the form <category>.<key> = <value>.
@@ -451,25 +453,22 @@ void trace2_data_string_fl(const char *file, int line, const char *category,
 			   const struct repository *repo, const char *key,
 			   const char *value);
 
-#define trace2_data_string(category, repo, key, value)                       \
-	trace2_data_string_fl(__FILE__, __LINE__, (category), (repo), (key), \
-			      (value))
+#define trace2_data_string(category, repo, key, value) \
+ trace2_data_string_fl(__FILE__, __LINE__, (category), (repo), (key), (value))
 
 void trace2_data_intmax_fl(const char *file, int line, const char *category,
 			   const struct repository *repo, const char *key,
 			   intmax_t value);
 
-#define trace2_data_intmax(category, repo, key, value)                       \
-	trace2_data_intmax_fl(__FILE__, __LINE__, (category), (repo), (key), \
-			      (value))
+#define trace2_data_intmax(category, repo, key, value) \
+ trace2_data_intmax_fl(__FILE__, __LINE__, (category), (repo), (key), (value))
 
 void trace2_data_json_fl(const char *file, int line, const char *category,
 			 const struct repository *repo, const char *key,
 			 const struct json_writer *jw);
 
-#define trace2_data_json(category, repo, key, value)                       \
-	trace2_data_json_fl(__FILE__, __LINE__, (category), (repo), (key), \
-			    (value))
+#define trace2_data_json(category, repo, key, value) \
+ trace2_data_json_fl(__FILE__, __LINE__, (category), (repo), (key), (value))
 
 /*
  * Emit a 'printf' event.
@@ -483,7 +482,7 @@ void trace2_printf_va_fl(const char *file, int line, const char *fmt,
 			 va_list ap);
 
 #define trace2_printf_va(fmt, ap) \
-	trace2_printf_va_fl(__FILE__, __LINE__, (fmt), (ap))
+ trace2_printf_va_fl(__FILE__, __LINE__, (fmt), (ap))
 
 void trace2_printf_fl(const char *file, int line, const char *fmt, ...);
 
@@ -509,7 +508,7 @@ enum trace2_timer_id {
 	 * for permanent analysis code.
 	 */
 	TRACE2_TIMER_ID_TEST1 = 0, /* emits summary event only */
-	TRACE2_TIMER_ID_TEST2,     /* emits summary and thread events */
+	TRACE2_TIMER_ID_TEST2, /* emits summary and thread events */
 
 	/* Add additional timer definitions before here. */
 	TRACE2_NUMBER_OF_TIMERS
@@ -551,7 +550,7 @@ enum trace2_counter_id {
 	 * for permanent analysis code.
 	 */
 	TRACE2_COUNTER_ID_TEST1 = 0, /* emits summary event only */
-	TRACE2_COUNTER_ID_TEST2,     /* emits summary and thread events */
+	TRACE2_COUNTER_ID_TEST2, /* emits summary and thread events */
 
 	TRACE2_COUNTER_ID_PACKED_REFS_JUMPS, /* counts number of jumps */
 	TRACE2_COUNTER_ID_REFTABLE_RESEEKS, /* counts number of re-seeks */

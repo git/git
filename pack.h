@@ -11,7 +11,7 @@ struct repository;
 /*
  * Packed object header
  */
-#define PACK_SIGNATURE 0x5041434b	/* "PACK" */
+#define PACK_SIGNATURE 0x5041434b /* "PACK" */
 #define PACK_VERSION 2
 #define pack_version_ok(v) ((v) == htonl(2) || (v) == htonl(3))
 struct pack_header {
@@ -37,7 +37,7 @@ struct pack_header {
  * byte word.  This would be true in the proposed future index
  * format as idx_signature would be greater than idx_version.
  */
-#define PACK_IDX_SIGNATURE 0xff744f63	/* "\377tOc" */
+#define PACK_IDX_SIGNATURE 0xff744f63 /* "\377tOc" */
 
 struct pack_idx_option {
 	unsigned flags;
@@ -79,25 +79,36 @@ struct pack_idx_entry {
 	off_t offset;
 };
 
-
 struct progress;
 /* Note, the data argument could be NULL if object type is blob */
-typedef int (*verify_fn)(const struct object_id *, enum object_type, unsigned long, void*, int*);
+typedef int (*verify_fn)(const struct object_id *, enum object_type,
+			 unsigned long, void *, int *);
 
-const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects, int nr_objects, const struct pack_idx_option *, const unsigned char *sha1);
-int check_pack_crc(struct packed_git *p, struct pack_window **w_curs, off_t offset, off_t len, unsigned int nr);
+const char *write_idx_file(const char *index_name,
+			   struct pack_idx_entry **objects, int nr_objects,
+			   const struct pack_idx_option *,
+			   const unsigned char *sha1);
+int check_pack_crc(struct packed_git *p, struct pack_window **w_curs,
+		   off_t offset, off_t len, unsigned int nr);
 int verify_pack_index(struct packed_git *);
-int verify_pack(struct repository *, struct packed_git *, verify_fn fn, struct progress *, uint32_t);
+int verify_pack(struct repository *, struct packed_git *, verify_fn fn,
+		struct progress *, uint32_t);
 off_t write_pack_header(struct hashfile *f, uint32_t);
-void fixup_pack_header_footer(int, unsigned char *, const char *, uint32_t, unsigned char *, off_t);
+void fixup_pack_header_footer(int, unsigned char *, const char *, uint32_t,
+			      unsigned char *, off_t);
 char *index_pack_lockfile(int fd, int *is_well_formed);
 
 struct ref;
 
-void write_promisor_file(const char *promisor_name, struct ref **sought, int nr_sought);
+void write_promisor_file(const char *promisor_name, struct ref **sought,
+			 int nr_sought);
 
-char *write_rev_file(const char *rev_name, struct pack_idx_entry **objects, uint32_t nr_objects, const unsigned char *hash, unsigned flags);
-char *write_rev_file_order(const char *rev_name, uint32_t *pack_order, uint32_t nr_objects, const unsigned char *hash, unsigned flags);
+char *write_rev_file(const char *rev_name, struct pack_idx_entry **objects,
+		     uint32_t nr_objects, const unsigned char *hash,
+		     unsigned flags);
+char *write_rev_file_order(const char *rev_name, uint32_t *pack_order,
+			   uint32_t nr_objects, const unsigned char *hash,
+			   unsigned flags);
 
 /*
  * The "hdr" output buffer should be at least this big, which will handle sizes
@@ -107,23 +118,19 @@ char *write_rev_file_order(const char *rev_name, uint32_t *pack_order, uint32_t 
 int encode_in_pack_object_header(unsigned char *hdr, int hdr_len,
 				 enum object_type, uintmax_t);
 
-#define PH_ERROR_EOF		(-1)
-#define PH_ERROR_PACK_SIGNATURE	(-2)
-#define PH_ERROR_PROTOCOL	(-3)
+#define PH_ERROR_EOF (-1)
+#define PH_ERROR_PACK_SIGNATURE (-2)
+#define PH_ERROR_PROTOCOL (-3)
 int read_pack_header(int fd, struct pack_header *);
 
 struct packing_data;
 
 struct hashfile *create_tmp_packfile(char **pack_tmp_name);
-void stage_tmp_packfiles(struct strbuf *name_buffer,
-			 const char *pack_tmp_name,
+void stage_tmp_packfiles(struct strbuf *name_buffer, const char *pack_tmp_name,
 			 struct pack_idx_entry **written_list,
-			 uint32_t nr_written,
-			 struct packing_data *to_pack,
+			 uint32_t nr_written, struct packing_data *to_pack,
 			 struct pack_idx_option *pack_idx_opts,
-			 unsigned char hash[],
-			 char **idx_tmp_name);
-void rename_tmp_packfile_idx(struct strbuf *basename,
-			     char **idx_tmp_name);
+			 unsigned char hash[], char **idx_tmp_name);
+void rename_tmp_packfile_idx(struct strbuf *basename, char **idx_tmp_name);
 
 #endif

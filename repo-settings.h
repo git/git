@@ -58,17 +58,18 @@ struct repo_settings {
 	int core_multi_pack_index;
 	int warn_ambiguous_refs; /* lazily loaded via accessor */
 };
-#define REPO_SETTINGS_INIT { \
-	.index_version = -1, \
-	.core_untracked_cache = UNTRACKED_CACHE_KEEP, \
-	.fetch_negotiation_algorithm = FETCH_NEGOTIATION_CONSECUTIVE, \
-	.warn_ambiguous_refs = -1, \
-}
+#define REPO_SETTINGS_INIT                                           \
+ {                                                                   \
+  .index_version = -1, .core_untracked_cache = UNTRACKED_CACHE_KEEP, \
+  .fetch_negotiation_algorithm = FETCH_NEGOTIATION_CONSECUTIVE,      \
+  .warn_ambiguous_refs = -1,                                         \
+ }
 
 void prepare_repo_settings(struct repository *r);
 
 /* Read the value for "core.logAllRefUpdates". */
-enum log_refs_config repo_settings_get_log_all_ref_updates(struct repository *repo);
+enum log_refs_config
+repo_settings_get_log_all_ref_updates(struct repository *repo);
 /* Read the value for "core.warnAmbiguousRefs". */
 int repo_settings_get_warn_ambiguous_refs(struct repository *repo);
 

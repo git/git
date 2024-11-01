@@ -92,8 +92,14 @@ struct string_list {
 	compare_strings_fn cmp; /* NULL uses strcmp() */
 };
 
-#define STRING_LIST_INIT_NODUP { 0 }
-#define STRING_LIST_INIT_DUP   { .strdup_strings = 1 }
+#define STRING_LIST_INIT_NODUP \
+ {                             \
+  0                            \
+ }
+#define STRING_LIST_INIT_DUP \
+ {                           \
+  .strdup_strings = 1        \
+ }
 
 /* General functions which work with both sorted and unsorted lists. */
 
@@ -132,7 +138,8 @@ void string_list_clear(struct string_list *list, int free_util);
 typedef void (*string_list_clear_func_t)(void *p, const char *str);
 
 /** Call a custom clear function on each util pointer */
-void string_list_clear_func(struct string_list *list, string_list_clear_func_t clearfunc);
+void string_list_clear_func(struct string_list *list,
+			    string_list_clear_func_t clearfunc);
 
 /*
  * Set the length of a string_list to `nr`, provided that (a) `list`
@@ -148,8 +155,8 @@ void string_list_setlen(struct string_list *list, size_t nr);
  * Apply `func` to each item. If `func` returns nonzero, the
  * iteration aborts and the return value is propagated.
  */
-int for_each_string_list(struct string_list *list,
-			 string_list_each_func_t func, void *cb_data);
+int for_each_string_list(struct string_list *list, string_list_each_func_t func,
+			 void *cb_data);
 
 /**
  * Iterate over each item, as a macro.
@@ -157,10 +164,8 @@ int for_each_string_list(struct string_list *list,
  * Be sure that 'list' is non-NULL. The macro cannot perform NULL
  * checks due to -Werror=address errors.
  */
-#define for_each_string_list_item(item,list)            \
-	for (item = (list)->items;                      \
-	     item && item < (list)->items + (list)->nr; \
-	     ++item)
+#define for_each_string_list_item(item, list) \
+ for (item = (list)->items; item && item < (list)->items + (list)->nr; ++item)
 
 /**
  * Remove any empty strings from the list.  If free_util is true, call
@@ -173,7 +178,8 @@ void string_list_remove_empty_items(struct string_list *list, int free_util);
 
 /** Determine if the string_list has a given string or not. */
 int string_list_has_string(const struct string_list *list, const char *string);
-int string_list_find_insert_index(const struct string_list *list, const char *string,
+int string_list_find_insert_index(const struct string_list *list,
+				  const char *string,
 				  int negative_existing_index);
 
 /**
@@ -187,7 +193,8 @@ int string_list_find_insert_index(const struct string_list *list, const char *st
  * list needs to grow, it is safe not to check the pointer. I.e. you may
  * write `string_list_insert(...)->util = ...;`.
  */
-struct string_list_item *string_list_insert(struct string_list *list, const char *string);
+struct string_list_item *string_list_insert(struct string_list *list,
+					    const char *string);
 
 /**
  * Remove the given string from the sorted list.  If the string
@@ -197,18 +204,19 @@ void string_list_remove(struct string_list *list, const char *string,
 			int free_util);
 
 /**
- * Check if the given string is part of a sorted list. If it is part of the list,
- * return the corresponding string_list_item, NULL otherwise.
+ * Check if the given string is part of a sorted list. If it is part of the
+ * list, return the corresponding string_list_item, NULL otherwise.
  */
-struct string_list_item *string_list_lookup(struct string_list *list, const char *string);
+struct string_list_item *string_list_lookup(struct string_list *list,
+					    const char *string);
 
 /*
  * Remove all but the first of consecutive entries with the same
  * string value.  If free_util is true, call free() on the util
  * members of any items that have to be deleted.
  */
-void string_list_remove_duplicates(struct string_list *sorted_list, int free_util);
-
+void string_list_remove_duplicates(struct string_list *sorted_list,
+				   int free_util);
 
 /* Use these functions only on unsorted lists: */
 
@@ -217,7 +225,8 @@ void string_list_remove_duplicates(struct string_list *sorted_list, int free_uti
  * string is copied; otherwise the new string_list_entry refers to the
  * input string.
  */
-struct string_list_item *string_list_append(struct string_list *list, const char *string);
+struct string_list_item *string_list_append(struct string_list *list,
+					    const char *string);
 
 /**
  * Like string_list_append(), except string is never copied.  When
@@ -225,7 +234,8 @@ struct string_list_item *string_list_append(struct string_list *list, const char
  * ownership of a malloc()ed string to list without making an extra
  * copy.
  */
-struct string_list_item *string_list_append_nodup(struct string_list *list, char *string);
+struct string_list_item *string_list_append_nodup(struct string_list *list,
+						  char *string);
 
 /**
  * Sort the list's entries by string value in order specified by list->cmp
@@ -237,7 +247,8 @@ void string_list_sort(struct string_list *list);
  * Like `string_list_has_string()` but for unsorted lists. Linear in
  * size of the list.
  */
-int unsorted_string_list_has_string(struct string_list *list, const char *string);
+int unsorted_string_list_has_string(struct string_list *list,
+				    const char *string);
 
 /**
  * Like `string_list_lookup()` but for unsorted lists. Linear in size
@@ -251,7 +262,8 @@ struct string_list_item *unsorted_string_list_lookup(struct string_list *list,
  * string_list is set. The third parameter controls if the `util`
  * pointer of the items should be freed or not.
  */
-void unsorted_string_list_delete_item(struct string_list *list, int i, int free_util);
+void unsorted_string_list_delete_item(struct string_list *list, int i,
+				      int free_util);
 
 /**
  * Split string into substrings on character `delim` and append the
@@ -269,8 +281,8 @@ void unsorted_string_list_delete_item(struct string_list *list, int i, int free_
  *   string_list_split(l, "", ':', -1) -> [""]
  *   string_list_split(l, ":", ':', -1) -> ["", ""]
  */
-int string_list_split(struct string_list *list, const char *string,
-		      int delim, int maxsplit);
+int string_list_split(struct string_list *list, const char *string, int delim,
+		      int maxsplit);
 
 /*
  * Like string_list_split(), except that string is split in-place: the

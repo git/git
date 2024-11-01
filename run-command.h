@@ -15,7 +15,6 @@
  * produces in the caller in order to process it.
  */
 
-
 /**
  * This describes the arguments, redirections, and environment of a
  * command to run in a sub-process.
@@ -42,7 +41,6 @@
  *		redirected.
  */
 struct child_process {
-
 	/**
 	 * The .args is a `struct strvec', use that API to manipulate
 	 * it, e.g. strvec_pushv() to add an existing "const char **"
@@ -144,10 +142,10 @@ struct child_process {
 	void (*clean_on_exit_handler)(struct child_process *process);
 };
 
-#define CHILD_PROCESS_INIT { \
-	.args = STRVEC_INIT, \
-	.env = STRVEC_INIT, \
-}
+#define CHILD_PROCESS_INIT                 \
+ {                                         \
+  .args = STRVEC_INIT, .env = STRVEC_INIT, \
+ }
 
 /**
  * The functions: start_command, finish_command, run_command do the following:
@@ -248,17 +246,15 @@ int run_auto_maintenance(int quiet);
  * invocation. But note that there is no need to set the in, out, or err
  * fields; pipe_command handles that automatically.
  */
-int pipe_command(struct child_process *cmd,
-		 const char *in, size_t in_len,
-		 struct strbuf *out, size_t out_hint,
-		 struct strbuf *err, size_t err_hint);
+int pipe_command(struct child_process *cmd, const char *in, size_t in_len,
+		 struct strbuf *out, size_t out_hint, struct strbuf *err,
+		 size_t err_hint);
 
 /**
  * Convenience wrapper around pipe_command for the common case
  * of capturing only stdout.
  */
-static inline int capture_command(struct child_process *cmd,
-				  struct strbuf *out,
+static inline int capture_command(struct child_process *cmd, struct strbuf *out,
 				  size_t hint)
 {
 	return pipe_command(cmd, NULL, 0, out, hint, NULL, 0);
@@ -296,7 +292,6 @@ static inline int capture_command(struct child_process *cmd,
  *
  */
 struct async {
-
 	/**
 	 * The function pointer in .proc has the following signature:
 	 *
@@ -349,8 +344,8 @@ struct async {
 	 *   The specified FD is closed by start_async(), even if it fails to
 	 *   run the function.
 	 */
-	int in;		/* caller writes here and closes it */
-	int out;	/* caller reads from here and closes it */
+	int in; /* caller writes here and closes it */
+	int out; /* caller reads from here and closes it */
 #ifdef NO_PTHREADS
 	pid_t pid;
 #else
@@ -397,10 +392,8 @@ void check_pipe(int err);
  * To send a signal to other child processes for abortion,
  * return the negative signal number.
  */
-typedef int (*get_next_task_fn)(struct child_process *cp,
-				struct strbuf *out,
-				void *pp_cb,
-				void **pp_task_cb);
+typedef int (*get_next_task_fn)(struct child_process *cp, struct strbuf *out,
+				void *pp_cb, void **pp_task_cb);
 
 /**
  * This callback is called whenever there are problems starting
@@ -416,8 +409,7 @@ typedef int (*get_next_task_fn)(struct child_process *cp,
  * To send a signal to other child processes for abortion, return
  * the negative signal number.
  */
-typedef int (*start_failure_fn)(struct strbuf *out,
-				void *pp_cb,
+typedef int (*start_failure_fn)(struct strbuf *out, void *pp_cb,
 				void *pp_task_cb);
 
 /**
@@ -433,17 +425,14 @@ typedef int (*start_failure_fn)(struct strbuf *out,
  * To send a signal to other child processes for abortion, return
  * the negative signal number.
  */
-typedef int (*task_finished_fn)(int result,
-				struct strbuf *out,
-				void *pp_cb,
+typedef int (*task_finished_fn)(int result, struct strbuf *out, void *pp_cb,
 				void *pp_task_cb);
 
 /**
  * Option used by run_processes_parallel(), { 0 }-initialized means no
  * options.
  */
-struct run_process_parallel_opts
-{
+struct run_process_parallel_opts {
 	/**
 	 * tr2_category & tr2_label: sets the trace2 category and label for
 	 * logging. These must either be unset, or both of them must be set.
@@ -572,8 +561,7 @@ typedef int(start_bg_wait_cb)(const struct child_process *cmd, void *cb_data);
  * any instance data that it might require.  This may be NULL.
  */
 enum start_bg_result start_bg_command(struct child_process *cmd,
-				      start_bg_wait_cb *wait_cb,
-				      void *cb_data,
+				      start_bg_wait_cb *wait_cb, void *cb_data,
 				      unsigned int timeout_sec);
 
 int sane_execvp(const char *file, char *const argv[]);

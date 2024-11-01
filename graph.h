@@ -14,8 +14,8 @@
  *   the '--graph' option is supplied.
  *
  * - Use the revision walking API to walk through a group of contiguous commits.
- *   The `get_revision()` function automatically calls `graph_update()` each time
- *   it is invoked.
+ *   The `get_revision()` function automatically calls `graph_update()` each
+ * time it is invoked.
  *
  * - For each commit, call `graph_next_line()` repeatedly, until
  *   `graph_is_commit_finished()` returns non-zero.  Each call to
@@ -23,8 +23,8 @@
  *   lines will not contain any newlines.  `graph_next_line()` returns 1 if the
  *   resulting line contains the current commit, or 0 if this is merely a line
  *   needed to adjust the graph before or after the current commit.  This return
- *   value can be used to determine where to print the commit summary information
- *   alongside the graph output.
+ *   value can be used to determine where to print the commit summary
+ * information alongside the graph output.
  *
  * Limitations
  * -----------
@@ -61,8 +61,8 @@
  * Sample output
  * -------------
  *
- * The following is an example of the output from the graph API.  This output does
- * not include any commit summary information--callers are responsible for
+ * The following is an example of the output from the graph API.  This output
+ * does not include any commit summary information--callers are responsible for
  * outputting that information, if desired.
  * ------------
  * *
@@ -156,17 +156,17 @@ void graph_clear(struct git_graph *graph);
  * Limitations:
  * -----------
  *
- * - `graph_update()` must be called with commits in topological order.  It should
- *   not be called on a commit if it has already been invoked with an ancestor of
- *   that commit, or the graph output will be incorrect.
+ * - `graph_update()` must be called with commits in topological order.  It
+ * should not be called on a commit if it has already been invoked with an
+ * ancestor of that commit, or the graph output will be incorrect.
  *
  * - `graph_update()` must be called on a contiguous group of commits.  If
- *   `graph_update()` is called on a particular commit, it should later be called
- *   on all parents of that commit.  Parents must not be skipped, or the graph
- *   output will appear incorrect.
+ *   `graph_update()` is called on a particular commit, it should later be
+ * called on all parents of that commit.  Parents must not be skipped, or the
+ * graph output will appear incorrect.
  *
- * - `graph_update()` may be used on a pruned set of commits only if the parent list
- *   has been rewritten so as to include only ancestors from the pruned set.
+ * - `graph_update()` may be used on a pruned set of commits only if the parent
+ * list has been rewritten so as to include only ancestors from the pruned set.
  */
 void graph_update(struct git_graph *graph, struct commit *commit);
 
@@ -200,7 +200,6 @@ int graph_is_commit_finished(struct git_graph const *graph);
  */
 int graph_next_line(struct git_graph *graph, struct strbuf *sb);
 
-
 /*
  * Return current width of the graph in on-screen characters.
  */
@@ -209,7 +208,6 @@ int graph_width(struct git_graph *graph);
 /*
  * graph_show_*: helper functions for printing to stdout
  */
-
 
 /*
  * If the graph is non-NULL, print the history graph to stdout,
@@ -258,8 +256,7 @@ int graph_show_remainder(struct git_graph *graph);
  * file specified by the graph diff options. This is necessary so that
  * graph_show_commit_msg can be called even with a NULL graph.
  */
-void graph_show_commit_msg(struct git_graph *graph,
-			   FILE *file,
+void graph_show_commit_msg(struct git_graph *graph, FILE *file,
 			   struct strbuf const *sb);
 
 #endif /* GRAPH_H */

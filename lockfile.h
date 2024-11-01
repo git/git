@@ -121,12 +121,14 @@ struct lock_file {
 	struct tempfile *tempfile;
 };
 
-#define LOCK_INIT { 0 }
+#define LOCK_INIT \
+ {                \
+  0               \
+ }
 
 /* String appended to a filename to derive the lockfile name: */
 #define LOCK_SUFFIX ".lock"
 #define LOCK_SUFFIX_LEN 5
-
 
 /*
  * Flags
@@ -168,13 +170,13 @@ struct lock_file {
  * timeout_ms is -1, retry indefinitely. The flags argument, error
  * handling, and mode are described above.
  */
-int hold_lock_file_for_update_timeout_mode(
-		struct lock_file *lk, const char *path,
-		int flags, long timeout_ms, int mode);
+int hold_lock_file_for_update_timeout_mode(struct lock_file *lk,
+					   const char *path, int flags,
+					   long timeout_ms, int mode);
 
-static inline int hold_lock_file_for_update_timeout(
-		struct lock_file *lk, const char *path,
-		int flags, long timeout_ms)
+static inline int hold_lock_file_for_update_timeout(struct lock_file *lk,
+						    const char *path, int flags,
+						    long timeout_ms)
 {
 	return hold_lock_file_for_update_timeout_mode(lk, path, flags,
 						      timeout_ms, 0666);
@@ -185,16 +187,15 @@ static inline int hold_lock_file_for_update_timeout(
  * file descriptor for writing to it, or -1 on error. The flags
  * argument and error handling are described above.
  */
-static inline int hold_lock_file_for_update(
-		struct lock_file *lk, const char *path,
-		int flags)
+static inline int hold_lock_file_for_update(struct lock_file *lk,
+					    const char *path, int flags)
 {
 	return hold_lock_file_for_update_timeout(lk, path, flags, 0);
 }
 
-static inline int hold_lock_file_for_update_mode(
-		struct lock_file *lk, const char *path,
-		int flags, int mode)
+static inline int hold_lock_file_for_update_mode(struct lock_file *lk,
+						 const char *path, int flags,
+						 int mode)
 {
 	return hold_lock_file_for_update_timeout_mode(lk, path, flags, 0, mode);
 }
@@ -212,8 +213,7 @@ static inline int is_lock_file_locked(struct lock_file *lk)
  * of `hold_lock_file_for_update()` to lock `path`. `err` should be the
  * `errno` set by the failing call.
  */
-void unable_to_lock_message(const char *path, int err,
-			    struct strbuf *buf);
+void unable_to_lock_message(const char *path, int err, struct strbuf *buf);
 
 /*
  * Emit an appropriate error message and `die()` following the failure

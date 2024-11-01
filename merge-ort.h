@@ -54,14 +54,14 @@ struct merge_result {
  *       pass the merge_bases in the order of oldest commit to the
  *       newest[1][2].
  *
- *       [1] https://lore.kernel.org/git/nycvar.QRO.7.76.6.1907252055500.21907@tvgsbejvaqbjf.bet/
+ *       [1]
+ * https://lore.kernel.org/git/nycvar.QRO.7.76.6.1907252055500.21907@tvgsbejvaqbjf.bet/
  *       [2] commit 8918b0c9c2 ("merge-recur: try to merge older merge bases
  *           first", 2006-08-09)
  */
 void merge_incore_recursive(struct merge_options *opt,
 			    const struct commit_list *merge_bases,
-			    struct commit *side1,
-			    struct commit *side2,
+			    struct commit *side1, struct commit *side2,
 			    struct merge_result *result);
 
 /*
@@ -69,14 +69,11 @@ void merge_incore_recursive(struct merge_options *opt,
  * working tree and index are untouched.
  */
 void merge_incore_nonrecursive(struct merge_options *opt,
-			       struct tree *merge_base,
-			       struct tree *side1,
-			       struct tree *side2,
-			       struct merge_result *result);
+			       struct tree *merge_base, struct tree *side1,
+			       struct tree *side2, struct merge_result *result);
 
 /* Update the working tree and index from head to result after incore merge */
-void merge_switch_to_result(struct merge_options *opt,
-			    struct tree *head,
+void merge_switch_to_result(struct merge_options *opt, struct tree *head,
 			    struct merge_result *result,
 			    int update_worktree_and_index,
 			    int display_update_msgs);
@@ -86,8 +83,7 @@ void merge_switch_to_result(struct merge_options *opt,
  * Automatically called by merge_switch_to_result() with stream == stdout,
  * so only call this when bypassing merge_switch_to_result().
  */
-void merge_display_update_messages(struct merge_options *opt,
-				   int detailed,
+void merge_display_update_messages(struct merge_options *opt, int detailed,
 				   struct merge_result *result);
 
 struct stage_info {
@@ -111,7 +107,6 @@ void merge_get_conflicted_files(struct merge_result *result,
 				struct string_list *conflicted_files);
 
 /* Do needed cleanup when not calling merge_switch_to_result() */
-void merge_finalize(struct merge_options *opt,
-		    struct merge_result *result);
+void merge_finalize(struct merge_options *opt, struct merge_result *result);
 
 #endif

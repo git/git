@@ -201,8 +201,7 @@ int repo_init(struct repository *r, const char *gitdir, const char *worktree);
 struct object_id;
 RESULT_MUST_BE_USED
 int repo_submodule_init(struct repository *subrepo,
-			struct repository *superproject,
-			const char *path,
+			struct repository *superproject, const char *path,
 			const struct object_id *treeish_name);
 void repo_clear(struct repository *repo);
 
@@ -215,8 +214,7 @@ void repo_clear(struct repository *repo);
  * populated then the number of entries will simply be returned.
  */
 int repo_read_index(struct repository *repo);
-int repo_hold_locked_index(struct repository *repo,
-			   struct lock_file *lf,
+int repo_hold_locked_index(struct repository *repo, struct lock_file *lf,
 			   int flags);
 
 int repo_read_index_unmerged(struct repository *);

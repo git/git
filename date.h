@@ -26,9 +26,10 @@ struct date_mode {
 	const char *strftime_fmt;
 };
 
-#define DATE_MODE_INIT { \
-	.type = DATE_NORMAL, \
-}
+#define DATE_MODE_INIT \
+ {                     \
+  .type = DATE_NORMAL, \
+ }
 
 /**
  * Convenience helper for passing a constant type, like:

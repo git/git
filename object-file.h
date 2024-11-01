@@ -16,10 +16,13 @@ extern int fetch_if_missing;
 
 #define HASH_WRITE_OBJECT 1
 #define HASH_FORMAT_CHECK 2
-#define HASH_RENORMALIZE  4
+#define HASH_RENORMALIZE 4
 #define HASH_SILENT 8
-int index_fd(struct index_state *istate, struct object_id *oid, int fd, struct stat *st, enum object_type type, const char *path, unsigned flags);
-int index_path(struct index_state *istate, struct object_id *oid, const char *path, struct stat *st, unsigned flags);
+int index_fd(struct index_state *istate, struct object_id *oid, int fd,
+	     struct stat *st, enum object_type type, const char *path,
+	     unsigned flags);
+int index_path(struct index_state *istate, struct object_id *oid,
+	       const char *path, struct stat *st, unsigned flags);
 
 /*
  * Create the directory containing the named path, using care to be
@@ -81,12 +84,10 @@ enum unpack_loose_header_result {
 	ULHR_BAD,
 	ULHR_TOO_LONG,
 };
-enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
-						    unsigned char *map,
-						    unsigned long mapsize,
-						    void *buffer,
-						    unsigned long bufsiz,
-						    struct strbuf *hdrbuf);
+enum unpack_loose_header_result
+unpack_loose_header(git_zstream *stream, unsigned char *map,
+		    unsigned long mapsize, void *buffer, unsigned long bufsiz,
+		    struct strbuf *hdrbuf);
 
 /**
  * parse_loose_header() parses the starting "<type> <len>\0" of an

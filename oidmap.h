@@ -22,7 +22,12 @@ struct oidmap {
 	struct hashmap map;
 };
 
-#define OIDMAP_INIT { { NULL } }
+#define OIDMAP_INIT \
+ {                  \
+  {                 \
+   NULL             \
+  }                 \
+ }
 
 /*
  * Initializes an oidmap structure.
@@ -46,8 +51,7 @@ void oidmap_free(struct oidmap *map, int free_entries);
 /*
  * Returns the oidmap entry for the specified oid, or NULL if not found.
  */
-void *oidmap_get(const struct oidmap *map,
-		 const struct object_id *key);
+void *oidmap_get(const struct oidmap *map, const struct object_id *key);
 
 /*
  * Adds or replaces an oidmap entry.
@@ -66,12 +70,12 @@ void *oidmap_put(struct oidmap *map, void *entry);
  */
 void *oidmap_remove(struct oidmap *map, const struct object_id *key);
 
-
 struct oidmap_iter {
 	struct hashmap_iter h_iter;
 };
 
-static inline void oidmap_iter_init(struct oidmap *map, struct oidmap_iter *iter)
+static inline void oidmap_iter_init(struct oidmap *map,
+				    struct oidmap_iter *iter)
 {
 	hashmap_iter_init(&map->map, &iter->h_iter);
 }

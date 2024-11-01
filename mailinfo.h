@@ -34,9 +34,7 @@ struct mailinfo {
 	unsigned int delsp:1;
 	unsigned int have_quoted_cr:1;
 	char *message_id;
-	enum  {
-		TE_DONTCARE, TE_QP, TE_BASE64
-	} transfer_encoding;
+	enum { TE_DONTCARE, TE_QP, TE_BASE64 } transfer_encoding;
 	int patch_lines;
 	int filter_stage; /* still reading log or are we copying patch? */
 	int header_stage; /* still checking in-body headers? */

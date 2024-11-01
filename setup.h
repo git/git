@@ -100,11 +100,11 @@ void set_git_work_tree(const char *tree);
 const char *setup_git_directory_gently(int *);
 const char *setup_git_directory(void);
 char *prefix_path(const char *prefix, int len, const char *path);
-char *prefix_path_gently(const char *prefix, int len, int *remaining, const char *path);
+char *prefix_path_gently(const char *prefix, int len, int *remaining,
+			 const char *path);
 
 int check_filename(const char *prefix, const char *name);
-void verify_filename(const char *prefix,
-		     const char *name,
+void verify_filename(const char *prefix, const char *name,
 		     int diagnose_misspelt_rev);
 void verify_non_filename(const char *prefix, const char *name);
 int path_inside_repo(const char *prefix, const char *path);
@@ -144,15 +144,13 @@ struct repository_format {
  * to a well-defined, default state before calling
  * `read_repository()`.
  */
-#define REPOSITORY_FORMAT_INIT \
-{ \
-	.version = -1, \
-	.is_bare = -1, \
-	.hash_algo = GIT_HASH_SHA1, \
-	.ref_storage_format = REF_STORAGE_FORMAT_FILES, \
-	.unknown_extensions = STRING_LIST_INIT_DUP, \
-	.v1_only_extensions = STRING_LIST_INIT_DUP, \
-}
+#define REPOSITORY_FORMAT_INIT                              \
+ {                                                          \
+  .version = -1, .is_bare = -1, .hash_algo = GIT_HASH_SHA1, \
+  .ref_storage_format = REF_STORAGE_FORMAT_FILES,           \
+  .unknown_extensions = STRING_LIST_INIT_DUP,               \
+  .v1_only_extensions = STRING_LIST_INIT_DUP,               \
+ }
 
 /*
  * Read the repository format characteristics from the config file "path" into
@@ -179,10 +177,10 @@ int verify_repository_format(const struct repository_format *format,
 			     struct strbuf *err);
 
 /*
- * Check the repository format version in the path found in repo_get_git_dir(the_repository),
- * and die if it is a version we don't understand. Generally one would
- * set_git_dir() before calling this, and use it only for "are we in a valid
- * repo?".
+ * Check the repository format version in the path found in
+ * repo_get_git_dir(the_repository), and die if it is a version we don't
+ * understand. Generally one would set_git_dir() before calling this, and use it
+ * only for "are we in a valid repo?".
  *
  * If successful and fmt is not NULL, fill fmt with data.
  */
@@ -190,8 +188,8 @@ void check_repository_format(struct repository_format *fmt);
 
 const char *get_template_dir(const char *option_template);
 
-#define INIT_DB_QUIET      (1 << 0)
-#define INIT_DB_EXIST_OK   (1 << 1)
+#define INIT_DB_QUIET (1 << 0)
+#define INIT_DB_EXIST_OK (1 << 1)
 #define INIT_DB_SKIP_REFDB (1 << 2)
 
 int init_db(const char *git_dir, const char *real_git_dir,
@@ -214,11 +212,11 @@ void create_reference_database(enum ref_storage_format ref_storage_format,
  * reasons.
  */
 enum sharedrepo {
-	PERM_UMASK          = 0,
-	OLD_PERM_GROUP      = 1,
-	OLD_PERM_EVERYBODY  = 2,
-	PERM_GROUP          = 0660,
-	PERM_EVERYBODY      = 0664
+	PERM_UMASK = 0,
+	OLD_PERM_GROUP = 1,
+	OLD_PERM_EVERYBODY = 2,
+	PERM_GROUP = 0660,
+	PERM_EVERYBODY = 0664
 };
 int git_config_perm(const char *var, const char *value);
 

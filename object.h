@@ -55,10 +55,13 @@ struct object_array {
 		char *name;
 		char *path;
 		unsigned mode;
-	} *objects;
+	} * objects;
 };
 
-#define OBJECT_ARRAY_INIT { 0 }
+#define OBJECT_ARRAY_INIT \
+ {                        \
+  0                       \
+ }
 
 void object_array_init(struct object_array *array);
 
@@ -86,7 +89,7 @@ void object_array_init(struct object_array *array);
  * builtin/unpack-objects.c:                                 2021
  * pack-bitmap.h:                                              2122
  */
-#define FLAG_BITS  28
+#define FLAG_BITS 28
 
 #define TYPE_BITS 3
 
@@ -109,7 +112,7 @@ enum object_type {
 };
 
 /* unknown mode (impossible combination S_IFIFO|S_IFCHR) */
-#define S_IFINVALID     0030000
+#define S_IFINVALID 0030000
 
 /*
  * A "directory link" is a link to another git directory.
@@ -117,19 +120,19 @@ enum object_type {
  * The value 0160000 is not normally a valid mode, and
  * also just happens to be S_IFDIR + S_IFLNK
  */
-#define S_IFGITLINK	0160000
-#define S_ISGITLINK(m)	(((m) & S_IFMT) == S_IFGITLINK)
+#define S_IFGITLINK 0160000
+#define S_ISGITLINK(m) (((m)&S_IFMT) == S_IFGITLINK)
 
 #define S_ISSPARSEDIR(m) ((m) == S_IFDIR)
 
 static inline enum object_type object_type(unsigned int mode)
 {
-	return S_ISDIR(mode) ? OBJ_TREE :
-		S_ISGITLINK(mode) ? OBJ_COMMIT :
-		OBJ_BLOB;
+	return S_ISDIR(mode)	 ? OBJ_TREE :
+	       S_ISGITLINK(mode) ? OBJ_COMMIT :
+				   OBJ_BLOB;
 }
 
-#define ce_permissions(mode) (((mode) & 0100) ? 0755 : 0644)
+#define ce_permissions(mode) (((mode)&0100) ? 0755 : 0644)
 static inline unsigned int create_ce_mode(unsigned int mode)
 {
 	if (S_ISLNK(mode))
@@ -156,7 +159,7 @@ static inline unsigned int canon_mode(unsigned int mode)
  * The object type is stored in 3 bits.
  */
 struct object {
-	unsigned parsed : 1;
+	unsigned parsed:1;
 	unsigned type : TYPE_BITS;
 	unsigned flags : FLAG_BITS;
 	struct object_id oid;
@@ -190,10 +193,10 @@ struct object *get_indexed_object(unsigned int);
  */
 struct object *lookup_object(struct repository *r, const struct object_id *oid);
 
-void *create_object(struct repository *r, const struct object_id *oid, void *obj);
+void *create_object(struct repository *r, const struct object_id *oid,
+		    void *obj);
 
 void *object_as_type(struct object *obj, enum object_type type, int quiet);
-
 
 static inline const char *parse_mode(const char *str, uint16_t *modep)
 {
@@ -231,13 +234,17 @@ struct object *parse_object_with_flags(struct repository *r,
  * "name" parameter is not NULL, it is included in the error message
  * (otherwise, the hex object ID is given).
  */
-struct object *parse_object_or_die(const struct object_id *oid, const char *name);
+struct object *parse_object_or_die(const struct object_id *oid,
+				   const char *name);
 
 /* Given the result of read_sha1_file(), returns the object after
  * parsing it.  eaten_p indicates if the object has a borrowed copy
  * of buffer and the caller should not free() it.
  */
-struct object *parse_object_buffer(struct repository *r, const struct object_id *oid, enum object_type type, unsigned long size, void *buffer, int *eaten_p);
+struct object *parse_object_buffer(struct repository *r,
+				   const struct object_id *oid,
+				   enum object_type type, unsigned long size,
+				   void *buffer, int *eaten_p);
 
 /*
  * Allocate and return an object struct, even if you do not know the type of
@@ -251,13 +258,15 @@ struct object *parse_object_buffer(struct repository *r, const struct object_id 
  * may allocate excess memory, since the returned object must be as large as
  * the maximum struct of any type.
  */
-struct object *lookup_unknown_object(struct repository *r, const struct object_id *oid);
+struct object *lookup_unknown_object(struct repository *r,
+				     const struct object_id *oid);
 
 /*
  * Dispatch to the appropriate lookup_blob(), lookup_commit(), etc, based on
  * "type".
  */
-struct object *lookup_object_by_type(struct repository *r, const struct object_id *oid,
+struct object *lookup_object_by_type(struct repository *r,
+				     const struct object_id *oid,
 				     enum object_type type);
 
 enum peel_status {
@@ -292,8 +301,8 @@ enum peel_status {
  * or is not valid, return PEEL_NON_TAG or PEEL_INVALID, respectively,
  * and leave oid unchanged.
  */
-enum peel_status peel_object(struct repository *r,
-			     const struct object_id *name, struct object_id *oid);
+enum peel_status peel_object(struct repository *r, const struct object_id *name,
+			     struct object_id *oid);
 
 struct object_list *object_list_insert(struct object *item,
 				       struct object_list **list_p);
@@ -303,8 +312,11 @@ int object_list_contains(struct object_list *list, struct object *obj);
 void object_list_free(struct object_list **list);
 
 /* Object array handling .. */
-void add_object_array(struct object *obj, const char *name, struct object_array *array);
-void add_object_array_with_path(struct object *obj, const char *name, struct object_array *array, unsigned mode, const char *path);
+void add_object_array(struct object *obj, const char *name,
+		      struct object_array *array);
+void add_object_array_with_path(struct object *obj, const char *name,
+				struct object_array *array, unsigned mode,
+				const char *path);
 
 /*
  * Returns NULL if the array is empty. Otherwise, returns the last object

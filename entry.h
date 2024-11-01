@@ -13,13 +13,12 @@ struct checkout {
 	const char *super_prefix;
 	struct delayed_checkout *delayed_checkout;
 	struct checkout_metadata meta;
-	unsigned force:1,
-		 quiet:1,
-		 not_new:1,
-		 clone:1,
-		 refresh_cache:1;
+	unsigned force:1, quiet:1, not_new:1, clone:1, refresh_cache:1;
 };
-#define CHECKOUT_INIT { .base_dir = "" }
+#define CHECKOUT_INIT \
+ {                    \
+  .base_dir = ""      \
+ }
 
 #define TEMPORARY_FILENAME_LENGTH 25
 /*
@@ -58,7 +57,8 @@ int finish_delayed_checkout(struct checkout *state, int show_progress);
 void unlink_entry(const struct cache_entry *ce, const char *super_prefix);
 
 void *read_blob_entry(const struct cache_entry *ce, size_t *size);
-int fstat_checkout_output(int fd, const struct checkout *state, struct stat *st);
+int fstat_checkout_output(int fd, const struct checkout *state,
+			  struct stat *st);
 void update_ce_after_write(const struct checkout *state, struct cache_entry *ce,
 			   struct stat *st);
 

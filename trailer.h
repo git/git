@@ -22,11 +22,7 @@ enum trailer_if_exists {
 	EXISTS_REPLACE,
 	EXISTS_DO_NOTHING
 };
-enum trailer_if_missing {
-	MISSING_DEFAULT,
-	MISSING_ADD,
-	MISSING_DO_NOTHING
-};
+enum trailer_if_missing { MISSING_DEFAULT, MISSING_ADD, MISSING_DO_NOTHING };
 
 int trailer_set_where(enum trailer_where *item, const char *value);
 int trailer_set_if_exists(enum trailer_if_exists *item, const char *value);
@@ -61,15 +57,17 @@ struct process_trailer_options {
 	void *filter_data;
 };
 
-#define PROCESS_TRAILER_OPTIONS_INIT {0}
+#define PROCESS_TRAILER_OPTIONS_INIT \
+ {                                   \
+  0                                  \
+ }
 
 void parse_trailers_from_config(struct list_head *config_head);
 
 void parse_trailers_from_command_line_args(struct list_head *arg_head,
 					   struct list_head *new_trailer_head);
 
-void process_trailers_lists(struct list_head *head,
-			    struct list_head *arg_head);
+void process_trailers_lists(struct list_head *head, struct list_head *arg_head);
 
 /*
  * Given some input string "str", return a pointer to an opaque trailer_info
@@ -132,8 +130,7 @@ void trailer_info_release(struct trailer_info *info);
 
 void trailer_config_init(void);
 void format_trailers(const struct process_trailer_options *,
-		     struct list_head *trailers,
-		     struct strbuf *out);
+		     struct list_head *trailers, struct strbuf *out);
 void free_trailers(struct list_head *);
 
 /*
@@ -141,8 +138,7 @@ void free_trailers(struct list_head *);
  * the strbuf "out". Reuses format_trailers() internally.
  */
 void format_trailers_from_commit(const struct process_trailer_options *,
-				 const char *msg,
-				 struct strbuf *out);
+				 const char *msg, struct strbuf *out);
 
 /*
  * An interface for iterating over the trailers found in a particular commit
@@ -200,6 +196,7 @@ void trailer_iterator_release(struct trailer_iterator *iter);
  * This calls run_command() and its return value is the same (i.e. 0 for
  * success, various non-zero for other errors). See run-command.h.
  */
-int amend_file_with_trailers(const char *path, const struct strvec *trailer_args);
+int amend_file_with_trailers(const char *path,
+			     const struct strvec *trailer_args);
 
 #endif /* TRAILER_H */

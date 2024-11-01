@@ -37,13 +37,15 @@ struct submodule_update_strategy {
 	enum submodule_update_type type;
 	const char *command;
 };
-#define SUBMODULE_UPDATE_STRATEGY_INIT { \
-	.type = SM_UPDATE_UNSPECIFIED, \
-}
+#define SUBMODULE_UPDATE_STRATEGY_INIT \
+ {                                     \
+  .type = SM_UPDATE_UNSPECIFIED,       \
+ }
 
 int parse_submodule_update_strategy(const char *value,
 				    struct submodule_update_strategy *dst);
-void submodule_update_strategy_release(struct submodule_update_strategy *strategy);
+void submodule_update_strategy_release(
+	struct submodule_update_strategy *strategy);
 
 int is_gitmodules_unmerged(struct index_state *istate);
 int is_writing_gitmodules_ok(void);
@@ -57,7 +59,8 @@ int git_default_submodule_config(const char *var, const char *value, void *cb);
 
 struct option;
 int option_parse_recurse_submodules_worktree_updater(const struct option *opt,
-						     const char *arg, int unset);
+						     const char *arg,
+						     int unset);
 int is_tree_submodule_active(struct repository *repo,
 			     const struct object_id *treeish_name,
 			     const char *path);
@@ -77,8 +80,8 @@ enum submodule_update_type parse_submodule_update_type(const char *value);
 const char *submodule_update_type_to_string(enum submodule_update_type type);
 void handle_ignore_submodules_arg(struct diff_options *, const char *);
 void show_submodule_diff_summary(struct diff_options *o, const char *path,
-			    struct object_id *one, struct object_id *two,
-			    unsigned dirty_submodule);
+				 struct object_id *one, struct object_id *two,
+				 unsigned dirty_submodule);
 void show_submodule_inline_diff(struct diff_options *o, const char *path,
 				struct object_id *one, struct object_id *two,
 				unsigned dirty_submodule);
@@ -90,18 +93,15 @@ int should_update_submodules(void);
  */
 const struct submodule *submodule_from_ce(const struct cache_entry *ce);
 void check_for_new_submodule_commits(struct object_id *oid);
-int fetch_submodules(struct repository *r,
-		     const struct strvec *options,
-		     const char *prefix,
-		     int command_line_option,
-		     int default_option,
-		     int quiet, int max_parallel_jobs);
+int fetch_submodules(struct repository *r, const struct strvec *options,
+		     const char *prefix, int command_line_option,
+		     int default_option, int quiet, int max_parallel_jobs);
 unsigned is_submodule_modified(const char *path, int ignore_untracked);
 int submodule_uses_gitfile(const char *path);
 
-#define SUBMODULE_REMOVAL_DIE_ON_ERROR (1<<0)
-#define SUBMODULE_REMOVAL_IGNORE_UNTRACKED (1<<1)
-#define SUBMODULE_REMOVAL_IGNORE_IGNORED_UNTRACKED (1<<2)
+#define SUBMODULE_REMOVAL_DIE_ON_ERROR (1 << 0)
+#define SUBMODULE_REMOVAL_IGNORE_UNTRACKED (1 << 1)
+#define SUBMODULE_REMOVAL_IGNORE_IGNORED_UNTRACKED (1 << 2)
 int bad_to_remove_submodule(const char *path, unsigned flags);
 
 /*
@@ -117,16 +117,13 @@ int register_all_submodule_odb_as_alternates(void);
  * Checks if there are submodule changes in a..b. If a is the null OID,
  * checks b and all its ancestors instead.
  */
-int submodule_touches_in_range(struct repository *r,
-			       struct object_id *a,
+int submodule_touches_in_range(struct repository *r, struct object_id *a,
 			       struct object_id *b);
-int find_unpushed_submodules(struct repository *r,
-			     struct oid_array *commits,
+int find_unpushed_submodules(struct repository *r, struct oid_array *commits,
 			     const char *remotes_name,
 			     struct string_list *needs_pushing);
 struct refspec;
-int push_unpushed_submodules(struct repository *r,
-			     struct oid_array *commits,
+int push_unpushed_submodules(struct repository *r, struct oid_array *commits,
 			     const struct remote *remote,
 			     const struct refspec *rs,
 			     const struct string_list *push_options,
@@ -155,8 +152,8 @@ int validate_submodule_git_dir(char *git_dir, const char *submodule_name);
  */
 int validate_submodule_path(const char *path);
 
-#define SUBMODULE_MOVE_HEAD_DRY_RUN (1<<0)
-#define SUBMODULE_MOVE_HEAD_FORCE   (1<<1)
+#define SUBMODULE_MOVE_HEAD_DRY_RUN (1 << 0)
+#define SUBMODULE_MOVE_HEAD_FORCE (1 << 1)
 int submodule_move_head(const char *path, const char *super_prefix,
 			const char *old_head, const char *new_head,
 			unsigned flags);

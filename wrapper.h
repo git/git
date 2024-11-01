@@ -10,9 +10,11 @@ char *xstrndup(const char *str, size_t len);
 void *xrealloc(void *ptr, size_t size);
 void *xcalloc(size_t nmemb, size_t size);
 void xsetenv(const char *name, const char *value, int overwrite);
-void *xmmap(void *start, size_t length, int prot, int flags, int fd, off_t offset);
+void *xmmap(void *start, size_t length, int prot, int flags, int fd,
+	    off_t offset);
 const char *mmap_os_err(void);
-void *xmmap_gently(void *start, size_t length, int prot, int flags, int fd, off_t offset);
+void *xmmap_gently(void *start, size_t length, int prot, int flags, int fd,
+		   off_t offset);
 int xopen(const char *path, int flags, ...);
 ssize_t xread(int fd, void *buf, size_t len);
 ssize_t xwrite(int fd, const void *buf, size_t len);
@@ -32,8 +34,8 @@ FILE *fopen_or_warn(const char *path, const char *mode);
  */
 int xstrncmpz(const char *s, const char *t, size_t len);
 
-__attribute__((format (printf, 3, 4)))
-int xsnprintf(char *dst, size_t max, const char *fmt, ...);
+__attribute__((format(printf, 3, 4))) int xsnprintf(char *dst, size_t max,
+						    const char *fmt, ...);
 
 int xgethostname(char *buf, size_t len);
 
@@ -63,16 +65,13 @@ void write_file_buf(const char *path, const char *buf, size_t len);
  *
  *   write_file(path, "counter: %d", ctr);
  */
-__attribute__((format (printf, 2, 3)))
-void write_file(const char *path, const char *fmt, ...);
+__attribute__((format(printf, 2, 3))) void write_file(const char *path,
+						      const char *fmt, ...);
 
 /* Return 1 if the file is empty or does not exists, 0 otherwise. */
 int is_empty_or_missing_file(const char *filename);
 
-enum fsync_action {
-	FSYNC_WRITEOUT_ONLY,
-	FSYNC_HARDWARE_FLUSH
-};
+enum fsync_action { FSYNC_WRITEOUT_ONLY, FSYNC_HARDWARE_FLUSH };
 
 /*
  * Issues an fsync against the specified file according to the specified mode.
@@ -93,12 +92,12 @@ int git_fsync(int fd, enum fsync_action action);
  * not exist.
  */
 int unlink_or_warn(const char *path);
- /*
-  * Tries to unlink file.  Returns 0 if unlink succeeded
-  * or the file already didn't exist.  Returns -1 and
-  * appends a message to err suitable for
-  * 'error("%s", err->buf)' on error.
-  */
+/*
+ * Tries to unlink file.  Returns 0 if unlink succeeded
+ * or the file already didn't exist.  Returns -1 and
+ * appends a message to err suitable for
+ * 'error("%s", err->buf)' on error.
+ */
 int unlink_or_msg(const char *file, struct strbuf *err);
 /*
  * Preserves errno, prints a message, but gives no warning for ENOENT.

@@ -56,7 +56,10 @@ struct oid_array {
 	int sorted;
 };
 
-#define OID_ARRAY_INIT { 0 }
+#define OID_ARRAY_INIT \
+ {                     \
+  0                    \
+ }
 
 /**
  * Add an item to the set. The object ID will be placed at the end of the array
@@ -78,25 +81,21 @@ int oid_array_lookup(struct oid_array *array, const struct object_id *oid);
  */
 void oid_array_clear(struct oid_array *array);
 
-typedef int (*for_each_oid_fn)(const struct object_id *oid,
-			       void *data);
+typedef int (*for_each_oid_fn)(const struct object_id *oid, void *data);
 /**
  * Iterate over each element of the list, executing the callback function for
  * each one. Does not sort the list, so any custom hash order is retained.
  * If the callback returns a non-zero value, the iteration ends immediately
  * and the callback's return is propagated; otherwise, 0 is returned.
  */
-int oid_array_for_each(struct oid_array *array,
-		       for_each_oid_fn fn,
-		       void *data);
+int oid_array_for_each(struct oid_array *array, for_each_oid_fn fn, void *data);
 
 /**
  * Iterate over each unique element of the list in sorted order, but otherwise
  * behave like `oid_array_for_each`. If the array is not sorted, this function
  * has the side effect of sorting it.
  */
-int oid_array_for_each_unique(struct oid_array *array,
-			      for_each_oid_fn fn,
+int oid_array_for_each_unique(struct oid_array *array, for_each_oid_fn fn,
 			      void *data);
 
 /**
@@ -104,8 +103,7 @@ int oid_array_for_each_unique(struct oid_array *array,
  * only the entries for which the function returns true. Preserve the order
  * of the entries that are retained.
  */
-void oid_array_filter(struct oid_array *array,
-		      for_each_oid_fn want,
+void oid_array_filter(struct oid_array *array, for_each_oid_fn want,
 		      void *cbdata);
 
 /**

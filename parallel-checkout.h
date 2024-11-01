@@ -40,8 +40,9 @@ size_t pc_queue_size(void);
  * entries is smaller than the specified threshold, the operation is performed
  * sequentially.
  */
-int run_parallel_checkout(struct checkout *state, int num_workers, int threshold,
-			  struct progress *progress, unsigned int *progress_cnt);
+int run_parallel_checkout(struct checkout *state, int num_workers,
+			  int threshold, struct progress *progress,
+			  unsigned int *progress_cnt);
 
 /****************************************************************
  * Interface with checkout--worker
@@ -64,7 +65,8 @@ enum pc_item_status {
 struct parallel_checkout_item {
 	/*
 	 * In main process ce points to a istate->cache[] entry. Thus, it's not
-	 * owned by us. In workers they own the memory, which *must be* released.
+	 * owned by us. In workers they own the memory, which *must be*
+	 * released.
 	 */
 	struct cache_entry *ce;
 	struct conv_attrs ca;

@@ -9,16 +9,16 @@ struct repository;
 
 #define DEFAULT_DELTA_CACHE_SIZE (256 * 1024 * 1024)
 
-#define OE_DFS_STATE_BITS	2
-#define OE_DEPTH_BITS		12
-#define OE_IN_PACK_BITS		10
-#define OE_Z_DELTA_BITS		20
+#define OE_DFS_STATE_BITS 2
+#define OE_DEPTH_BITS 12
+#define OE_IN_PACK_BITS 10
+#define OE_Z_DELTA_BITS 20
 /*
  * Note that oe_set_size() becomes expensive when the given size is
  * above this limit. Don't lower it too much.
  */
-#define OE_SIZE_BITS		31
-#define OE_DELTA_SIZE_BITS	23
+#define OE_SIZE_BITS 31
+#define OE_DELTA_SIZE_BITS 23
 
 /*
  * State flags for depth-first search used for analyzing delta cycles.
@@ -26,12 +26,7 @@ struct repository;
  * The depth is measured in delta-links to the base (so if A is a delta
  * against B, then A has a depth of 1, and B a depth of 0).
  */
-enum dfs_state {
-	DFS_NONE = 0,
-	DFS_ACTIVE,
-	DFS_DONE,
-	DFS_NUM_STATES
-};
+enum dfs_state { DFS_NONE = 0, DFS_ACTIVE, DFS_DONE, DFS_NUM_STATES };
 
 /*
  * The size of struct nearly determines pack-objects's memory
@@ -86,25 +81,26 @@ enum dfs_state {
  */
 struct object_entry {
 	struct pack_idx_entry idx;
-	void *delta_data;	/* cached delta (uncompressed) */
+	void *delta_data; /* cached delta (uncompressed) */
 	off_t in_pack_offset;
-	uint32_t hash;			/* name hint hash */
-	unsigned size_:OE_SIZE_BITS;
+	uint32_t hash; /* name hint hash */
+	unsigned size_ : OE_SIZE_BITS;
 	unsigned size_valid:1;
-	uint32_t delta_idx;	/* delta base object */
+	uint32_t delta_idx; /* delta base object */
 	uint32_t delta_child_idx; /* deltified objects who bases me */
 	uint32_t delta_sibling_idx; /* other deltified objects who
 				     * uses the same base as me
 				     */
-	unsigned delta_size_:OE_DELTA_SIZE_BITS; /* delta data size (uncompressed) */
+	unsigned delta_size_ : OE_DELTA_SIZE_BITS; /* delta data size
+						      (uncompressed) */
 	unsigned delta_size_valid:1;
 	unsigned char in_pack_header_size;
-	unsigned in_pack_idx:OE_IN_PACK_BITS;	/* already in pack */
-	unsigned z_delta_size:OE_Z_DELTA_BITS;
+	unsigned in_pack_idx : OE_IN_PACK_BITS; /* already in pack */
+	unsigned z_delta_size : OE_Z_DELTA_BITS;
 	unsigned type_valid:1;
 	unsigned no_try_delta:1;
-	unsigned type_:TYPE_BITS;
-	unsigned in_pack_type:TYPE_BITS; /* could be delta */
+	unsigned type_ : TYPE_BITS;
+	unsigned in_pack_type : TYPE_BITS; /* could be delta */
 
 	unsigned preferred_base:1; /*
 				    * we do not pack this, but is available
@@ -113,8 +109,8 @@ struct object_entry {
 				    */
 	unsigned tagged:1; /* near the very tip of refs */
 	unsigned filled:1; /* assigned write-order */
-	unsigned dfs_state:OE_DFS_STATE_BITS;
-	unsigned depth:OE_DEPTH_BITS;
+	unsigned dfs_state : OE_DFS_STATE_BITS;
+	unsigned depth : OE_DEPTH_BITS;
 	unsigned ext_base:1; /* delta_idx points outside packlist */
 };
 
@@ -212,8 +208,7 @@ static inline enum object_type oe_type(const struct object_entry *e)
 	return e->type_valid ? e->type_ : OBJ_BAD;
 }
 
-static inline void oe_set_type(struct object_entry *e,
-			       enum object_type type)
+static inline void oe_set_type(struct object_entry *e, enum object_type type)
 {
 	if (type >= OBJ_ANY)
 		BUG("OBJ_ANY cannot be set in pack-objects code");
@@ -247,8 +242,7 @@ static inline struct packed_git *oe_in_pack(const struct packing_data *pack,
 void oe_map_new_pack(struct packing_data *pack);
 
 static inline void oe_set_in_pack(struct packing_data *pack,
-				  struct object_entry *e,
-				  struct packed_git *p)
+				  struct object_entry *e, struct packed_git *p)
 {
 	if (pack->in_pack_by_idx) {
 		if (p->index) {
@@ -267,8 +261,7 @@ static inline void oe_set_in_pack(struct packing_data *pack,
 	pack->in_pack[e - pack->objects] = p;
 }
 
-void oe_set_delta_ext(struct packing_data *pack,
-		      struct object_entry *e,
+void oe_set_delta_ext(struct packing_data *pack, struct object_entry *e,
 		      const struct object_id *oid);
 
 static inline unsigned int oe_tree_depth(struct packing_data *pack,
@@ -280,8 +273,7 @@ static inline unsigned int oe_tree_depth(struct packing_data *pack,
 }
 
 static inline void oe_set_layer(struct packing_data *pack,
-				struct object_entry *e,
-				unsigned char layer)
+				struct object_entry *e, unsigned char layer)
 {
 	if (!pack->layer)
 		CALLOC_ARRAY(pack->layer, pack->nr_alloc);
@@ -297,8 +289,7 @@ static inline uint32_t oe_cruft_mtime(struct packing_data *pack,
 }
 
 static inline void oe_set_cruft_mtime(struct packing_data *pack,
-				      struct object_entry *e,
-				      uint32_t mtime)
+				      struct object_entry *e, uint32_t mtime)
 {
 	if (!pack->cruft_mtime)
 		CALLOC_ARRAY(pack->cruft_mtime, pack->nr_alloc);

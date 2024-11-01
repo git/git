@@ -15,10 +15,8 @@ struct unix_ss_socket {
  *
  * Returns 0 on success, -1 on error, -2 if socket is in use.
  */
-int unix_ss_create(const char *path,
-		   const struct unix_stream_listen_opts *opts,
-		   long timeout_ms,
-		   struct unix_ss_socket **server_socket);
+int unix_ss_create(const char *path, const struct unix_stream_listen_opts *opts,
+		   long timeout_ms, struct unix_ss_socket **server_socket);
 
 /*
  * Close and delete the socket.

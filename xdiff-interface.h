@@ -33,16 +33,14 @@
  * early return.
  */
 typedef int (*xdiff_emit_line_fn)(void *, char *, unsigned long);
-typedef void (*xdiff_emit_hunk_fn)(void *data,
-				   long old_begin, long old_nr,
+typedef void (*xdiff_emit_hunk_fn)(void *data, long old_begin, long old_nr,
 				   long new_begin, long new_nr,
 				   const char *func, long funclen);
 
-int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp, xdemitconf_t const *xecfg, xdemitcb_t *ecb);
-int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2,
-		  xdiff_emit_hunk_fn hunk_fn,
-		  xdiff_emit_line_fn line_fn,
-		  void *consume_callback_data,
+int xdi_diff(mmfile_t *mf1, mmfile_t *mf2, xpparam_t const *xpp,
+	     xdemitconf_t const *xecfg, xdemitcb_t *ecb);
+int xdi_diff_outf(mmfile_t *mf1, mmfile_t *mf2, xdiff_emit_hunk_fn hunk_fn,
+		  xdiff_emit_line_fn line_fn, void *consume_callback_data,
 		  xpparam_t const *xpp, xdemitconf_t const *xecfg);
 int read_mmfile(mmfile_t *ptr, const char *filename);
 void read_mmblob(mmfile_t *ptr, const struct object_id *oid);
@@ -62,8 +60,8 @@ extern int git_xmerge_style;
  * The `flags` given as XDF_WHITESPACE_FLAGS determine how white spaces
  * are treated for the comparison.
  */
-int xdiff_compare_lines(const char *l1, long s1,
-			const char *l2, long s2, long flags);
+int xdiff_compare_lines(const char *l1, long s1, const char *l2, long s2,
+			long flags);
 
 /*
  * Returns a hash of the string s of length len.

@@ -41,10 +41,10 @@ enum parse_opt_flags {
 };
 
 enum parse_opt_option_flags {
-	PARSE_OPT_OPTARG  = 1 << 0,
-	PARSE_OPT_NOARG   = 1 << 1,
-	PARSE_OPT_NONEG   = 1 << 2,
-	PARSE_OPT_HIDDEN  = 1 << 3,
+	PARSE_OPT_OPTARG = 1 << 0,
+	PARSE_OPT_NOARG = 1 << 1,
+	PARSE_OPT_NONEG = 1 << 2,
+	PARSE_OPT_HIDDEN = 1 << 3,
 	PARSE_OPT_LASTARG_DEFAULT = 1 << 4,
 	PARSE_OPT_NODASH = 1 << 5,
 	PARSE_OPT_LITERAL_ARGHELP = 1 << 6,
@@ -57,8 +57,8 @@ enum parse_opt_option_flags {
 enum parse_opt_result {
 	PARSE_OPT_COMPLETE = -3,
 	PARSE_OPT_HELP = -2,
-	PARSE_OPT_ERROR = -1,	/* must be the same as error() */
-	PARSE_OPT_DONE = 0,	/* fixed so that "return 0" works */
+	PARSE_OPT_ERROR = -1, /* must be the same as error() */
+	PARSE_OPT_DONE = 0, /* fixed so that "return 0" works */
 	PARSE_OPT_NON_OPTION,
 	PARSE_OPT_SUBCOMMAND,
 	PARSE_OPT_UNKNOWN
@@ -160,212 +160,141 @@ struct option {
 	parse_opt_subcommand_fn *subcommand_fn;
 };
 
-#define OPT_BIT_F(s, l, v, h, b, f) { \
-	.type = OPTION_BIT, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.help = (h), \
-	.flags = PARSE_OPT_NOARG|(f), \
-	.callback = NULL, \
-	.defval = (b), \
-}
-#define OPT_COUNTUP_F(s, l, v, h, f) { \
-	.type = OPTION_COUNTUP, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.help = (h), \
-	.flags = PARSE_OPT_NOARG|(f), \
-}
-#define OPT_SET_INT_F(s, l, v, h, i, f) { \
-	.type = OPTION_SET_INT, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.help = (h), \
-	.flags = PARSE_OPT_NOARG | (f), \
-	.defval = (i), \
-}
-#define OPT_BOOL_F(s, l, v, h, f)   OPT_SET_INT_F(s, l, v, h, 1, f)
-#define OPT_CALLBACK_F(s, l, v, a, h, f, cb) { \
-	.type = OPTION_CALLBACK, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.argh = (a), \
-	.help = (h), \
-	.flags = (f), \
-	.callback = (cb), \
-}
-#define OPT_STRING_F(s, l, v, a, h, f) { \
-	.type = OPTION_STRING, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.argh = (a), \
-	.help = (h), \
-	.flags = (f), \
-}
-#define OPT_INTEGER_F(s, l, v, h, f) { \
-	.type = OPTION_INTEGER, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.argh = N_("n"), \
-	.help = (h), \
-	.flags = (f), \
-}
+#define OPT_BIT_F(s, l, v, h, b, f)                                      \
+ {                                                                       \
+  .type = OPTION_BIT, .short_name = (s), .long_name = (l), .value = (v), \
+  .help = (h), .flags = PARSE_OPT_NOARG | (f), .callback = NULL,         \
+  .defval = (b),                                                         \
+ }
+#define OPT_COUNTUP_F(s, l, v, h, f)                                         \
+ {                                                                           \
+  .type = OPTION_COUNTUP, .short_name = (s), .long_name = (l), .value = (v), \
+  .help = (h), .flags = PARSE_OPT_NOARG | (f),                               \
+ }
+#define OPT_SET_INT_F(s, l, v, h, i, f)                                      \
+ {                                                                           \
+  .type = OPTION_SET_INT, .short_name = (s), .long_name = (l), .value = (v), \
+  .help = (h), .flags = PARSE_OPT_NOARG | (f), .defval = (i),                \
+ }
+#define OPT_BOOL_F(s, l, v, h, f) OPT_SET_INT_F(s, l, v, h, 1, f)
+#define OPT_CALLBACK_F(s, l, v, a, h, f, cb)                                  \
+ {                                                                            \
+  .type = OPTION_CALLBACK, .short_name = (s), .long_name = (l), .value = (v), \
+  .argh = (a), .help = (h), .flags = (f), .callback = (cb),                   \
+ }
+#define OPT_STRING_F(s, l, v, a, h, f)                                      \
+ {                                                                          \
+  .type = OPTION_STRING, .short_name = (s), .long_name = (l), .value = (v), \
+  .argh = (a), .help = (h), .flags = (f),                                   \
+ }
+#define OPT_INTEGER_F(s, l, v, h, f)                                         \
+ {                                                                           \
+  .type = OPTION_INTEGER, .short_name = (s), .long_name = (l), .value = (v), \
+  .argh = N_("n"), .help = (h), .flags = (f),                                \
+ }
 
-#define OPT_END() { \
-	.type = OPTION_END, \
-}
-#define OPT_GROUP(h) { \
-	.type = OPTION_GROUP, \
-	.help = (h), \
-}
-#define OPT_BIT(s, l, v, h, b)      OPT_BIT_F(s, l, v, h, b, 0)
-#define OPT_BITOP(s, l, v, h, set, clear) { \
-	.type = OPTION_BITOP, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.help = (h), \
-	.flags = PARSE_OPT_NOARG|PARSE_OPT_NONEG, \
-	.defval = (set), \
-	.extra = (clear), \
-}
-#define OPT_NEGBIT(s, l, v, h, b) { \
-	.type = OPTION_NEGBIT, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.help = (h), \
-	.flags = PARSE_OPT_NOARG, \
-	.defval = (b), \
-}
-#define OPT_COUNTUP(s, l, v, h)     OPT_COUNTUP_F(s, l, v, h, 0)
-#define OPT_SET_INT(s, l, v, h, i)  OPT_SET_INT_F(s, l, v, h, i, 0)
-#define OPT_BOOL(s, l, v, h)        OPT_BOOL_F(s, l, v, h, 0)
-#define OPT_HIDDEN_BOOL(s, l, v, h) { \
-	.type = OPTION_SET_INT, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.help = (h), \
-	.flags = PARSE_OPT_NOARG | PARSE_OPT_HIDDEN, \
-	.defval = 1, \
-}
-#define OPT_CMDMODE_F(s, l, v, h, i, f) { \
-	.type = OPTION_SET_INT, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.help = (h), \
-	.flags = PARSE_OPT_CMDMODE|PARSE_OPT_NOARG|PARSE_OPT_NONEG | (f), \
-	.defval = (i), \
-}
-#define OPT_CMDMODE(s, l, v, h, i)  OPT_CMDMODE_F(s, l, v, h, i, 0)
+#define OPT_END()     \
+ {                    \
+  .type = OPTION_END, \
+ }
+#define OPT_GROUP(h)                 \
+ {                                   \
+  .type = OPTION_GROUP, .help = (h), \
+ }
+#define OPT_BIT(s, l, v, h, b) OPT_BIT_F(s, l, v, h, b, 0)
+#define OPT_BITOP(s, l, v, h, set, clear)                                   \
+ {                                                                          \
+  .type = OPTION_BITOP, .short_name = (s), .long_name = (l), .value = (v),  \
+  .help = (h), .flags = PARSE_OPT_NOARG | PARSE_OPT_NONEG, .defval = (set), \
+  .extra = (clear),                                                         \
+ }
+#define OPT_NEGBIT(s, l, v, h, b)                                           \
+ {                                                                          \
+  .type = OPTION_NEGBIT, .short_name = (s), .long_name = (l), .value = (v), \
+  .help = (h), .flags = PARSE_OPT_NOARG, .defval = (b),                     \
+ }
+#define OPT_COUNTUP(s, l, v, h) OPT_COUNTUP_F(s, l, v, h, 0)
+#define OPT_SET_INT(s, l, v, h, i) OPT_SET_INT_F(s, l, v, h, i, 0)
+#define OPT_BOOL(s, l, v, h) OPT_BOOL_F(s, l, v, h, 0)
+#define OPT_HIDDEN_BOOL(s, l, v, h)                                          \
+ {                                                                           \
+  .type = OPTION_SET_INT, .short_name = (s), .long_name = (l), .value = (v), \
+  .help = (h), .flags = PARSE_OPT_NOARG | PARSE_OPT_HIDDEN, .defval = 1,     \
+ }
+#define OPT_CMDMODE_F(s, l, v, h, i, f)                                      \
+ {                                                                           \
+  .type = OPTION_SET_INT, .short_name = (s), .long_name = (l), .value = (v), \
+  .help = (h),                                                               \
+  .flags = PARSE_OPT_CMDMODE | PARSE_OPT_NOARG | PARSE_OPT_NONEG | (f),      \
+  .defval = (i),                                                             \
+ }
+#define OPT_CMDMODE(s, l, v, h, i) OPT_CMDMODE_F(s, l, v, h, i, 0)
 
-#define OPT_INTEGER(s, l, v, h)     OPT_INTEGER_F(s, l, v, h, 0)
-#define OPT_MAGNITUDE(s, l, v, h) { \
-	.type = OPTION_MAGNITUDE, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.argh = N_("n"), \
-	.help = (h), \
-	.flags = PARSE_OPT_NONEG, \
-}
-#define OPT_STRING(s, l, v, a, h)   OPT_STRING_F(s, l, v, a, h, 0)
-#define OPT_STRING_LIST(s, l, v, a, h) { \
-	.type = OPTION_CALLBACK, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.argh = (a), \
-	.help = (h), \
-	.callback = &parse_opt_string_list, \
-}
-#define OPT_STRVEC(s, l, v, a, h) { \
-	.type = OPTION_CALLBACK, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.argh = (a), \
-	.help = (h), \
-	.callback = &parse_opt_strvec, \
-}
-#define OPT_UYN(s, l, v, h) { \
-	.type = OPTION_CALLBACK, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.help = (h), \
-	.flags = PARSE_OPT_NOARG, \
-	.callback = &parse_opt_tertiary, \
-}
-#define OPT_EXPIRY_DATE(s, l, v, h) { \
-	.type = OPTION_CALLBACK, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.argh = N_("expiry-date"), \
-	.help = (h), \
-	.callback = parse_opt_expiry_date_cb, \
-}
+#define OPT_INTEGER(s, l, v, h) OPT_INTEGER_F(s, l, v, h, 0)
+#define OPT_MAGNITUDE(s, l, v, h)                                              \
+ {                                                                             \
+  .type = OPTION_MAGNITUDE, .short_name = (s), .long_name = (l), .value = (v), \
+  .argh = N_("n"), .help = (h), .flags = PARSE_OPT_NONEG,                      \
+ }
+#define OPT_STRING(s, l, v, a, h) OPT_STRING_F(s, l, v, a, h, 0)
+#define OPT_STRING_LIST(s, l, v, a, h)                                        \
+ {                                                                            \
+  .type = OPTION_CALLBACK, .short_name = (s), .long_name = (l), .value = (v), \
+  .argh = (a), .help = (h), .callback = &parse_opt_string_list,               \
+ }
+#define OPT_STRVEC(s, l, v, a, h)                                             \
+ {                                                                            \
+  .type = OPTION_CALLBACK, .short_name = (s), .long_name = (l), .value = (v), \
+  .argh = (a), .help = (h), .callback = &parse_opt_strvec,                    \
+ }
+#define OPT_UYN(s, l, v, h)                                                   \
+ {                                                                            \
+  .type = OPTION_CALLBACK, .short_name = (s), .long_name = (l), .value = (v), \
+  .help = (h), .flags = PARSE_OPT_NOARG, .callback = &parse_opt_tertiary,     \
+ }
+#define OPT_EXPIRY_DATE(s, l, v, h)                                           \
+ {                                                                            \
+  .type = OPTION_CALLBACK, .short_name = (s), .long_name = (l), .value = (v), \
+  .argh = N_("expiry-date"), .help = (h),                                     \
+  .callback = parse_opt_expiry_date_cb,                                       \
+ }
 #define OPT_CALLBACK(s, l, v, a, h, cb) OPT_CALLBACK_F(s, l, v, a, h, 0, cb)
-#define OPT_NUMBER_CALLBACK(v, h, cb) { \
-	.type = OPTION_NUMBER, \
-	.value = (v), \
-	.help = (h), \
-	.flags = PARSE_OPT_NOARG | PARSE_OPT_NONEG, \
-	.callback = (cb), \
-}
-#define OPT_FILENAME(s, l, v, h) { \
-	.type = OPTION_FILENAME, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.argh = N_("file"), \
-	.help = (h), \
-}
-#define OPT_COLOR_FLAG(s, l, v, h) { \
-	.type = OPTION_CALLBACK, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.argh = N_("when"), \
-	.help = (h), \
-	.flags = PARSE_OPT_OPTARG, \
-	.callback = parse_opt_color_flag_cb, \
-	.defval = (intptr_t)"always", \
-}
+#define OPT_NUMBER_CALLBACK(v, h, cb)                           \
+ {                                                              \
+  .type = OPTION_NUMBER, .value = (v), .help = (h),             \
+  .flags = PARSE_OPT_NOARG | PARSE_OPT_NONEG, .callback = (cb), \
+ }
+#define OPT_FILENAME(s, l, v, h)                                              \
+ {                                                                            \
+  .type = OPTION_FILENAME, .short_name = (s), .long_name = (l), .value = (v), \
+  .argh = N_("file"), .help = (h),                                            \
+ }
+#define OPT_COLOR_FLAG(s, l, v, h)                                            \
+ {                                                                            \
+  .type = OPTION_CALLBACK, .short_name = (s), .long_name = (l), .value = (v), \
+  .argh = N_("when"), .help = (h), .flags = PARSE_OPT_OPTARG,                 \
+  .callback = parse_opt_color_flag_cb, .defval = (intptr_t) "always",         \
+ }
 
-#define OPT_NOOP_NOARG(s, l) { \
-	.type = OPTION_CALLBACK, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.help = N_("no-op (backward compatibility)"), \
-	.flags = PARSE_OPT_HIDDEN | PARSE_OPT_NOARG, \
-	.callback = parse_opt_noop_cb, \
-}
+#define OPT_NOOP_NOARG(s, l)                                                  \
+ {                                                                            \
+  .type = OPTION_CALLBACK, .short_name = (s), .long_name = (l),               \
+  .help = N_("no-op (backward compatibility)"),                               \
+  .flags = PARSE_OPT_HIDDEN | PARSE_OPT_NOARG, .callback = parse_opt_noop_cb, \
+ }
 
-#define OPT_ALIAS(s, l, source_long_name) { \
-	.type = OPTION_ALIAS, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (char *)(source_long_name), \
-}
+#define OPT_ALIAS(s, l, source_long_name)                    \
+ {                                                           \
+  .type = OPTION_ALIAS, .short_name = (s), .long_name = (l), \
+  .value = (char *)(source_long_name),                       \
+ }
 
-#define OPT_SUBCOMMAND_F(l, v, fn, f) { \
-	.type = OPTION_SUBCOMMAND, \
-	.long_name = (l), \
-	.value = (v), \
-	.flags = (f), \
-	.subcommand_fn = (fn), \
-}
-#define OPT_SUBCOMMAND(l, v, fn)    OPT_SUBCOMMAND_F((l), (v), (fn), 0)
+#define OPT_SUBCOMMAND_F(l, v, fn, f)                                      \
+ {                                                                         \
+  .type = OPTION_SUBCOMMAND, .long_name = (l), .value = (v), .flags = (f), \
+  .subcommand_fn = (fn),                                                   \
+ }
+#define OPT_SUBCOMMAND(l, v, fn) OPT_SUBCOMMAND_F((l), (v), (fn), 0)
 
 /*
  * parse_options() will filter out the processed options and leave the
@@ -381,15 +310,13 @@ struct option {
  * processed.
  */
 int parse_options(int argc, const char **argv, const char *prefix,
-		  const struct option *options,
-		  const char * const usagestr[],
+		  const struct option *options, const char *const usagestr[],
 		  enum parse_opt_flags flags);
 
-NORETURN void usage_with_options(const char * const *usagestr,
+NORETURN void usage_with_options(const char *const *usagestr,
 				 const struct option *options);
 
-NORETURN void usage_msg_opt(const char *msg,
-			    const char * const *usagestr,
+NORETURN void usage_msg_opt(const char *msg, const char *const *usagestr,
 			    const struct option *options);
 
 /**
@@ -397,25 +324,21 @@ NORETURN void usage_msg_opt(const char *msg,
  * argument is a format string, and optional format arguments follow
  * after the 3rd option.
  */
-__attribute__((format (printf,1,4)))
-void NORETURN usage_msg_optf(const char *fmt,
-			     const char * const *usagestr,
-			     const struct option *options, ...);
+__attribute__((format(printf, 1, 4))) void NORETURN
+usage_msg_optf(const char *fmt, const char *const *usagestr,
+	       const struct option *options, ...);
 
-void die_for_incompatible_opt4(int opt1, const char *opt1_name,
-			       int opt2, const char *opt2_name,
-			       int opt3, const char *opt3_name,
-			       int opt4, const char *opt4_name);
-
+void die_for_incompatible_opt4(int opt1, const char *opt1_name, int opt2,
+			       const char *opt2_name, int opt3,
+			       const char *opt3_name, int opt4,
+			       const char *opt4_name);
 
 static inline void die_for_incompatible_opt3(int opt1, const char *opt1_name,
 					     int opt2, const char *opt2_name,
 					     int opt3, const char *opt3_name)
 {
-	die_for_incompatible_opt4(opt1, opt1_name,
-				  opt2, opt2_name,
-				  opt3, opt3_name,
-				  0, "");
+	die_for_incompatible_opt4(opt1, opt1_name, opt2, opt2_name, opt3,
+				  opt3_name, 0, "");
 }
 
 /*
@@ -423,25 +346,28 @@ static inline void die_for_incompatible_opt3(int opt1, const char *opt1_name,
  * NOARG respectively, and do not otherwise handle the "unset" and "arg"
  * parameters.
  */
-#define BUG_ON_OPT_NEG(unset) do { \
-	if ((unset)) \
-		BUG("option callback does not expect negation"); \
-} while (0)
-#define BUG_ON_OPT_ARG(arg) do { \
-	if ((arg)) \
-		BUG("option callback does not expect an argument"); \
-} while (0)
+#define BUG_ON_OPT_NEG(unset)                       \
+ do {                                               \
+  if ((unset))                                      \
+   BUG("option callback does not expect negation"); \
+ } while (0)
+#define BUG_ON_OPT_ARG(arg)                            \
+ do {                                                  \
+  if ((arg))                                           \
+   BUG("option callback does not expect an argument"); \
+ } while (0)
 
 /*
  * Similar to the assertions above, but checks that "arg" is always non-NULL.
  * This assertion also implies BUG_ON_OPT_NEG(), letting you declare both
  * assertions in a single line.
  */
-#define BUG_ON_OPT_NEG_NOARG(unset, arg) do { \
-	BUG_ON_OPT_NEG(unset); \
-	if(!(arg)) \
-		BUG("option callback expects an argument"); \
-} while(0)
+#define BUG_ON_OPT_NEG_NOARG(unset, arg)       \
+ do {                                          \
+  BUG_ON_OPT_NEG(unset);                       \
+  if (!(arg))                                  \
+   BUG("option callback expects an argument"); \
+ } while (0)
 
 /*----- incremental advanced APIs -----*/
 
@@ -464,19 +390,20 @@ struct parse_opt_ctx_t {
 	struct parse_opt_cmdmode_list *cmdmode_list;
 };
 
-void parse_options_start(struct parse_opt_ctx_t *ctx,
-			 int argc, const char **argv, const char *prefix,
+void parse_options_start(struct parse_opt_ctx_t *ctx, int argc,
+			 const char **argv, const char *prefix,
 			 const struct option *options,
 			 enum parse_opt_flags flags);
 
 enum parse_opt_result parse_options_step(struct parse_opt_ctx_t *ctx,
 					 const struct option *options,
-					 const char * const usagestr[]);
+					 const char *const usagestr[]);
 
 int parse_options_end(struct parse_opt_ctx_t *ctx);
 
 struct option *parse_options_dup(const struct option *a);
-struct option *parse_options_concat(const struct option *a, const struct option *b);
+struct option *parse_options_concat(const struct option *a,
+				    const struct option *b);
 
 /*----- some often used options -----*/
 int parse_opt_abbrev_cb(const struct option *, const char *, int);
@@ -498,95 +425,83 @@ int parse_opt_passthru_argv(const struct option *, const char *, int);
 /* value is enum branch_track* */
 int parse_opt_tracking_mode(const struct option *, const char *, int);
 
-#define OPT__VERBOSE(var, h)  OPT_COUNTUP('v', "verbose", (var), (h))
-#define OPT__QUIET(var, h)    OPT_COUNTUP('q', "quiet",   (var), (h))
-#define OPT__VERBOSITY(var) { \
-	.type = OPTION_CALLBACK, \
-	.short_name = 'v', \
-	.long_name = "verbose", \
-	.value = (var), \
-	.help = N_("be more verbose"), \
-	.flags = PARSE_OPT_NOARG, \
-	.callback = &parse_opt_verbosity_cb, \
-}, { \
-	.type = OPTION_CALLBACK, \
-	.short_name = 'q', \
-	.long_name = "quiet", \
-	.value = (var), \
-	.help = N_("be more quiet"), \
-	.flags = PARSE_OPT_NOARG, \
-	.callback = &parse_opt_verbosity_cb, \
-}
-#define OPT__DRY_RUN(var, h)  OPT_BOOL('n', "dry-run", (var), (h))
-#define OPT__FORCE(var, h, f) OPT_COUNTUP_F('f', "force",   (var), (h), (f))
-#define OPT__ABBREV(var) { \
-	.type = OPTION_CALLBACK, \
-	.long_name = "abbrev", \
-	.value = (var), \
-	.argh = N_("n"), \
-	.help = N_("use <n> digits to display object names"), \
-	.flags = PARSE_OPT_OPTARG, \
-	.callback = &parse_opt_abbrev_cb, \
-}
-#define OPT__SUPER_PREFIX(var) \
-	OPT_STRING_F(0, "super-prefix", (var), N_("prefix"), \
-		N_("prefixed path to initial superproject"), PARSE_OPT_HIDDEN)
+#define OPT__VERBOSE(var, h) OPT_COUNTUP('v', "verbose", (var), (h))
+#define OPT__QUIET(var, h) OPT_COUNTUP('q', "quiet", (var), (h))
+#define OPT__VERBOSITY(var)                                              \
+ {                                                                       \
+	 .type = OPTION_CALLBACK,                                        \
+	 .short_name = 'v',                                              \
+	 .long_name = "verbose",                                         \
+	 .value = (var),                                                 \
+	 .help = N_("be more verbose"),                                  \
+	 .flags = PARSE_OPT_NOARG,                                       \
+	 .callback = &parse_opt_verbosity_cb,                            \
+ },                                                                      \
+ {                                                                       \
+  .type = OPTION_CALLBACK, .short_name = 'q', .long_name = "quiet",      \
+  .value = (var), .help = N_("be more quiet"), .flags = PARSE_OPT_NOARG, \
+  .callback = &parse_opt_verbosity_cb,                                   \
+ }
+#define OPT__DRY_RUN(var, h) OPT_BOOL('n', "dry-run", (var), (h))
+#define OPT__FORCE(var, h, f) OPT_COUNTUP_F('f', "force", (var), (h), (f))
+#define OPT__ABBREV(var)                                                 \
+ {                                                                       \
+  .type = OPTION_CALLBACK, .long_name = "abbrev", .value = (var),        \
+  .argh = N_("n"), .help = N_("use <n> digits to display object names"), \
+  .flags = PARSE_OPT_OPTARG, .callback = &parse_opt_abbrev_cb,           \
+ }
+#define OPT__SUPER_PREFIX(var)                        \
+ OPT_STRING_F(0, "super-prefix", (var), N_("prefix"), \
+	      N_("prefixed path to initial superproject"), PARSE_OPT_HIDDEN)
 
-#define OPT__COLOR(var, h) \
-	OPT_COLOR_FLAG(0, "color", (var), (h))
-#define OPT_COLUMN(s, l, v, h) { \
-	.type = OPTION_CALLBACK, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.argh = N_("style"), \
-	.help = (h), \
-	.flags = PARSE_OPT_OPTARG, \
-	.callback = parseopt_column_callback, \
-}
-#define OPT_PASSTHRU(s, l, v, a, h, f) { \
-	.type = OPTION_CALLBACK, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.argh = (a), \
-	.help = (h), \
-	.flags = (f), \
-	.callback = parse_opt_passthru, \
-}
-#define OPT_PASSTHRU_ARGV(s, l, v, a, h, f) { \
-	.type = OPTION_CALLBACK, \
-	.short_name = (s), \
-	.long_name = (l), \
-	.value = (v), \
-	.argh = (a), \
-	.help = (h), \
-	.flags = (f), \
-	.callback = parse_opt_passthru_argv, \
-}
-#define _OPT_CONTAINS_OR_WITH(l, v, h, f) { \
-	.type = OPTION_CALLBACK, \
-	.long_name = (l), \
-	.value = (v), \
-	.argh = N_("commit"), \
-	.help = (h), \
-	.flags = PARSE_OPT_LASTARG_DEFAULT | (f), \
-	.callback = parse_opt_commits, \
-	.defval = (intptr_t) "HEAD", \
-}
-#define OPT_CONTAINS(v, h) _OPT_CONTAINS_OR_WITH("contains", v, h, PARSE_OPT_NONEG)
-#define OPT_NO_CONTAINS(v, h) _OPT_CONTAINS_OR_WITH("no-contains", v, h, PARSE_OPT_NONEG)
-#define OPT_WITH(v, h) _OPT_CONTAINS_OR_WITH("with", v, h, PARSE_OPT_HIDDEN | PARSE_OPT_NONEG)
-#define OPT_WITHOUT(v, h) _OPT_CONTAINS_OR_WITH("without", v, h, PARSE_OPT_HIDDEN | PARSE_OPT_NONEG)
-#define OPT_CLEANUP(v) OPT_STRING(0, "cleanup", v, N_("mode"), N_("how to strip spaces and #comments from message"))
-#define OPT_PATHSPEC_FROM_FILE(v) OPT_FILENAME(0, "pathspec-from-file", v, N_("read pathspec from file"))
-#define OPT_PATHSPEC_FILE_NUL(v)  OPT_BOOL(0, "pathspec-file-nul", v, N_("with --pathspec-from-file, pathspec elements are separated with NUL character"))
-#define OPT_AUTOSTASH(v) OPT_BOOL(0, "autostash", v, N_("automatically stash/stash pop before and after"))
+#define OPT__COLOR(var, h) OPT_COLOR_FLAG(0, "color", (var), (h))
+#define OPT_COLUMN(s, l, v, h)                                                \
+ {                                                                            \
+  .type = OPTION_CALLBACK, .short_name = (s), .long_name = (l), .value = (v), \
+  .argh = N_("style"), .help = (h), .flags = PARSE_OPT_OPTARG,                \
+  .callback = parseopt_column_callback,                                       \
+ }
+#define OPT_PASSTHRU(s, l, v, a, h, f)                                        \
+ {                                                                            \
+  .type = OPTION_CALLBACK, .short_name = (s), .long_name = (l), .value = (v), \
+  .argh = (a), .help = (h), .flags = (f), .callback = parse_opt_passthru,     \
+ }
+#define OPT_PASSTHRU_ARGV(s, l, v, a, h, f)                                    \
+ {                                                                             \
+  .type = OPTION_CALLBACK, .short_name = (s), .long_name = (l), .value = (v),  \
+  .argh = (a), .help = (h), .flags = (f), .callback = parse_opt_passthru_argv, \
+ }
+#define _OPT_CONTAINS_OR_WITH(l, v, h, f)                                      \
+ {                                                                             \
+  .type = OPTION_CALLBACK, .long_name = (l), .value = (v),                     \
+  .argh = N_("commit"), .help = (h), .flags = PARSE_OPT_LASTARG_DEFAULT | (f), \
+  .callback = parse_opt_commits, .defval = (intptr_t) "HEAD",                  \
+ }
+#define OPT_CONTAINS(v, h) \
+ _OPT_CONTAINS_OR_WITH("contains", v, h, PARSE_OPT_NONEG)
+#define OPT_NO_CONTAINS(v, h) \
+ _OPT_CONTAINS_OR_WITH("no-contains", v, h, PARSE_OPT_NONEG)
+#define OPT_WITH(v, h) \
+ _OPT_CONTAINS_OR_WITH("with", v, h, PARSE_OPT_HIDDEN | PARSE_OPT_NONEG)
+#define OPT_WITHOUT(v, h) \
+ _OPT_CONTAINS_OR_WITH("without", v, h, PARSE_OPT_HIDDEN | PARSE_OPT_NONEG)
+#define OPT_CLEANUP(v)                   \
+ OPT_STRING(0, "cleanup", v, N_("mode"), \
+	    N_("how to strip spaces and #comments from message"))
+#define OPT_PATHSPEC_FROM_FILE(v) \
+ OPT_FILENAME(0, "pathspec-from-file", v, N_("read pathspec from file"))
+#define OPT_PATHSPEC_FILE_NUL(v)    \
+ OPT_BOOL(                          \
+	 0, "pathspec-file-nul", v, \
+	 N_("with --pathspec-from-file, pathspec elements are separated with NUL character"))
+#define OPT_AUTOSTASH(v)     \
+ OPT_BOOL(0, "autostash", v, \
+	  N_("automatically stash/stash pop before and after"))
 
-#define OPT_IPVERSION(v) \
-	OPT_SET_INT_F('4', "ipv4", (v), N_("use IPv4 addresses only"), \
-		TRANSPORT_FAMILY_IPV4, PARSE_OPT_NONEG), \
-	OPT_SET_INT_F('6', "ipv6", (v), N_("use IPv6 addresses only"), \
-		TRANSPORT_FAMILY_IPV6, PARSE_OPT_NONEG)
+#define OPT_IPVERSION(v)                                                \
+ OPT_SET_INT_F('4', "ipv4", (v), N_("use IPv4 addresses only"),         \
+	       TRANSPORT_FAMILY_IPV4, PARSE_OPT_NONEG),                 \
+	 OPT_SET_INT_F('6', "ipv6", (v), N_("use IPv6 addresses only"), \
+		       TRANSPORT_FAMILY_IPV6, PARSE_OPT_NONEG)
 
 #endif

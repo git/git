@@ -4,8 +4,7 @@
 
 struct repository;
 
-struct run_hooks_opt
-{
+struct run_hooks_opt {
 	/* Environment vars to be set for each hook */
 	struct strvec env;
 
@@ -39,10 +38,10 @@ struct run_hooks_opt
 	const char *path_to_stdin;
 };
 
-#define RUN_HOOKS_OPT_INIT { \
-	.env = STRVEC_INIT, \
-	.args = STRVEC_INIT, \
-}
+#define RUN_HOOKS_OPT_INIT                 \
+ {                                         \
+  .env = STRVEC_INIT, .args = STRVEC_INIT, \
+ }
 
 struct hook_cb_data {
 	/* rc reflects the cumulative failure state */

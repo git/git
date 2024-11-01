@@ -32,13 +32,13 @@ struct stat_validity {
 	struct stat_data *sd;
 };
 
-#define MTIME_CHANGED	0x0001
-#define CTIME_CHANGED	0x0002
-#define OWNER_CHANGED	0x0004
-#define MODE_CHANGED    0x0008
-#define INODE_CHANGED   0x0010
-#define DATA_CHANGED    0x0020
-#define TYPE_CHANGED    0x0040
+#define MTIME_CHANGED 0x0001
+#define CTIME_CHANGED 0x0002
+#define OWNER_CHANGED 0x0004
+#define MODE_CHANGED 0x0008
+#define INODE_CHANGED 0x0010
+#define DATA_CHANGED 0x0020
+#define TYPE_CHANGED 0x0040
 
 /*
  * Record to sd the data from st that we use to check whether a file
@@ -81,17 +81,17 @@ int stat_validity_check(struct stat_validity *sv, const char *path);
 void stat_validity_update(struct stat_validity *sv, int fd);
 
 #if defined(DT_UNKNOWN) && !defined(NO_D_TYPE_IN_DIRENT)
-#define DTYPE(de)	((de)->d_type)
+# define DTYPE(de) ((de)->d_type)
 #else
-#undef DT_UNKNOWN
-#undef DT_DIR
-#undef DT_REG
-#undef DT_LNK
-#define DT_UNKNOWN	0
-#define DT_DIR		1
-#define DT_REG		2
-#define DT_LNK		3
-#define DTYPE(de)	DT_UNKNOWN
+# undef DT_UNKNOWN
+# undef DT_DIR
+# undef DT_REG
+# undef DT_LNK
+# define DT_UNKNOWN 0
+# define DT_DIR 1
+# define DT_REG 2
+# define DT_LNK 3
+# define DTYPE(de) DT_UNKNOWN
 #endif
 
 #endif

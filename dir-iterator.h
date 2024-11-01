@@ -58,7 +58,7 @@
  * - DIR_ITERATOR_SORTED: sort directory entries alphabetically.
  */
 #define DIR_ITERATOR_PEDANTIC (1 << 0)
-#define DIR_ITERATOR_SORTED   (1 << 1)
+#define DIR_ITERATOR_SORTED (1 << 1)
 
 struct dir_iterator {
 	/* The current path: */

@@ -3,9 +3,9 @@
 
 #ifdef HAVE_FSMONITOR_DAEMON_BACKEND
 
-#include "hashmap.h"
-#include "thread-utils.h"
-#include "fsmonitor-path-utils.h"
+# include "hashmap.h"
+# include "thread-utils.h"
+# include "fsmonitor-path-utils.h"
 
 struct fsmonitor_batch;
 struct fsmonitor_token_data;
@@ -58,7 +58,6 @@ struct fsmonitor_daemon_state {
 
 	struct ipc_server_data *ipc_server_data;
 	struct strbuf path_ipc;
-
 };
 
 /*
@@ -131,22 +130,22 @@ enum fsmonitor_path_type {
 /*
  * Classify a pathname relative to the root of the working directory.
  */
-enum fsmonitor_path_type fsmonitor_classify_path_workdir_relative(
-	const char *relative_path);
+enum fsmonitor_path_type
+fsmonitor_classify_path_workdir_relative(const char *relative_path);
 
 /*
  * Classify a pathname relative to a <gitdir> that is external to the
  * worktree directory.
  */
-enum fsmonitor_path_type fsmonitor_classify_path_gitdir_relative(
-	const char *relative_path);
+enum fsmonitor_path_type
+fsmonitor_classify_path_gitdir_relative(const char *relative_path);
 
 /*
  * Classify an absolute pathname received from a filesystem event.
  */
-enum fsmonitor_path_type fsmonitor_classify_path_absolute(
-	struct fsmonitor_daemon_state *state,
-	const char *path);
+enum fsmonitor_path_type
+fsmonitor_classify_path_absolute(struct fsmonitor_daemon_state *state,
+				 const char *path);
 
 /*
  * Prepend the this batch of path(s) onto the list of batches associated

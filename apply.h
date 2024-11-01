@@ -15,10 +15,7 @@ enum apply_ws_error_action {
 	correct_ws_error
 };
 
-enum apply_ws_ignore {
-	ignore_ws_none,
-	ignore_ws_change
-};
+enum apply_ws_ignore { ignore_ws_none, ignore_ws_change };
 
 enum apply_verbosity {
 	verbosity_silent = -1,
@@ -38,12 +35,14 @@ struct apply_state {
 	int check; /* preimage must match working tree, don't actually apply */
 	int check_index; /* preimage must match the indexed version */
 	int update_index; /* check_index && apply */
-	int ita_only;	  /* add intent-to-add entries to the index */
+	int ita_only; /* add intent-to-add entries to the index */
 
 	/* These control cosmetic aspect of the output */
 	int diffstat; /* just show a diffstat, and don't actually apply */
-	int numstat; /* just show a numeric diffstat, and don't actually apply */
-	int summary; /* just report creation, deletion, etc, and don't actually apply */
+	int numstat; /* just show a numeric diffstat, and don't actually apply
+		      */
+	int summary; /* just report creation, deletion, etc, and don't actually
+			apply */
 
 	/* These boolean parameters control how the apply is done */
 	int allow_overlap;
@@ -124,7 +123,7 @@ struct apply_state {
 struct patch {
 	char *new_name, *old_name, *def_name;
 	unsigned int old_mode, new_mode;
-	int is_new, is_delete;	/* -1 = unknown, 0 = false, 1 = true */
+	int is_new, is_delete; /* -1 = unknown, 0 = false, 1 = true */
 	int rejected;
 	unsigned ws_rule;
 	int lines_added, lines_deleted;
@@ -150,12 +149,10 @@ struct patch {
 	struct object_id threeway_stage[3];
 };
 
-int apply_parse_options(int argc, const char **argv,
-			struct apply_state *state,
+int apply_parse_options(int argc, const char **argv, struct apply_state *state,
 			int *force_apply, int *options,
-			const char * const *apply_usage);
-int init_apply_state(struct apply_state *state,
-		     struct repository *repo,
+			const char *const *apply_usage);
+int init_apply_state(struct apply_state *state, struct repository *repo,
 		     const char *prefix);
 void clear_apply_state(struct apply_state *state);
 int check_apply_state(struct apply_state *state, int force_apply);
@@ -166,12 +163,8 @@ int check_apply_state(struct apply_state *state, int force_apply);
  *
  * Returns -1 on failure, the length of the parsed header otherwise.
  */
-int parse_git_diff_header(struct strbuf *root,
-			  int *linenr,
-			  int p_value,
-			  const char *line,
-			  int len,
-			  unsigned int size,
+int parse_git_diff_header(struct strbuf *root, int *linenr, int p_value,
+			  const char *line, int len, unsigned int size,
 			  struct patch *patch);
 
 void release_patch(struct patch *patch);
@@ -180,11 +173,10 @@ void release_patch(struct patch *patch);
  * Some aspects of the apply behavior are controlled by the following
  * bits in the "options" parameter passed to apply_all_patches().
  */
-#define APPLY_OPT_INACCURATE_EOF	(1<<0) /* accept inaccurate eof */
-#define APPLY_OPT_RECOUNT		(1<<1) /* accept inaccurate line count */
+#define APPLY_OPT_INACCURATE_EOF (1 << 0) /* accept inaccurate eof */
+#define APPLY_OPT_RECOUNT (1 << 1) /* accept inaccurate line count */
 
-int apply_all_patches(struct apply_state *state,
-		      int argc, const char **argv,
+int apply_all_patches(struct apply_state *state, int argc, const char **argv,
 		      int options);
 
 #endif

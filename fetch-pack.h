@@ -73,12 +73,9 @@ struct fetch_pack_args {
  * On return, the names that were found on the remote will have been
  * marked as such.
  */
-struct ref *fetch_pack(struct fetch_pack_args *args,
-		       int fd[],
-		       const struct ref *ref,
-		       struct ref **sought,
-		       int nr_sought,
-		       struct oid_array *shallow,
+struct ref *fetch_pack(struct fetch_pack_args *args, int fd[],
+		       const struct ref *ref, struct ref **sought,
+		       int nr_sought, struct oid_array *shallow,
 		       struct string_list *pack_lockfiles,
 		       enum protocol_version version);
 
@@ -91,8 +88,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
  */
 void negotiate_using_fetch(const struct oid_array *negotiation_tips,
 			   const struct string_list *server_options,
-			   int stateless_rpc,
-			   int fd[],
+			   int stateless_rpc, int fd[],
 			   struct oidset *acked_commits);
 
 /*

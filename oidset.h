@@ -22,8 +22,12 @@ struct oidset {
 	kh_oid_set_t set;
 };
 
-#define OIDSET_INIT { { 0 } }
-
+#define OIDSET_INIT \
+ {                  \
+  {                 \
+   0                \
+  }                 \
+ }
 
 /**
  * Initialize the oidset structure `set`.

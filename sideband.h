@@ -22,12 +22,11 @@ enum sideband_type {
  * The "status" parameter is a pkt-line response as returned by
  * packet_read_with_status() (e.g., PACKET_READ_NORMAL).
  */
-int demultiplex_sideband(const char *me, int status,
-			 char *buf, int len,
-			 int die_on_error,
-			 struct strbuf *scratch,
+int demultiplex_sideband(const char *me, int status, char *buf, int len,
+			 int die_on_error, struct strbuf *scratch,
 			 enum sideband_type *sideband_type);
 
-void send_sideband(int fd, int band, const char *data, ssize_t sz, int packet_max);
+void send_sideband(int fd, int band, const char *data, ssize_t sz,
+		   int packet_max);
 
 #endif

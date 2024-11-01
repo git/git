@@ -23,8 +23,9 @@ struct transport_vtable {
 	 * the ref without a huge amount of effort, it should store it
 	 * in the ref's old_sha1 field; otherwise it should be all 0.
 	 **/
-	struct ref *(*get_refs_list)(struct transport *transport, int for_push,
-				     struct transport_ls_refs_options *transport_options);
+	struct ref *(*get_refs_list)(
+		struct transport *transport, int for_push,
+		struct transport_ls_refs_options *transport_options);
 
 	/**
 	 * Populates the remote side's bundle-uri under protocol v2,
@@ -41,7 +42,8 @@ struct transport_vtable {
 	 * get_refs_list(), it should set the old_sha1 fields in the
 	 * provided refs now.
 	 **/
-	int (*fetch_refs)(struct transport *transport, int refs_nr, struct ref **refs);
+	int (*fetch_refs)(struct transport *transport, int refs_nr,
+			  struct ref **refs);
 
 	/**
 	 * Push the objects and refs. Send the necessary objects, and
@@ -57,7 +59,8 @@ struct transport_vtable {
 	 * could be a different value from peer_ref->new_oid if the
 	 * process involved generating new commits.
 	 **/
-	int (*push_refs)(struct transport *transport, struct ref *refs, int flags);
+	int (*push_refs)(struct transport *transport, struct ref *refs,
+			 int flags);
 	int (*connect)(struct transport *connection, const char *name,
 		       const char *executable, int fd[2]);
 

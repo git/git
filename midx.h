@@ -30,7 +30,7 @@ struct bitmapped_pack;
 
 #define GIT_TEST_MULTI_PACK_INDEX "GIT_TEST_MULTI_PACK_INDEX"
 #define GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL \
-	"GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL"
+ "GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL"
 
 struct multi_pack_index {
 	struct multi_pack_index *next;
@@ -74,7 +74,7 @@ struct multi_pack_index {
 	char object_dir[FLEX_ARRAY];
 };
 
-#define MIDX_PROGRESS     (1 << 0)
+#define MIDX_PROGRESS (1 << 0)
 #define MIDX_WRITE_REV_INDEX (1 << 1)
 #define MIDX_WRITE_BITMAP (1 << 2)
 #define MIDX_WRITE_BITMAP_HASH_CACHE (1 << 3)
@@ -94,8 +94,10 @@ void get_midx_chain_filename(struct strbuf *buf, const char *object_dir);
 void get_split_midx_filename_ext(struct strbuf *buf, const char *object_dir,
 				 const unsigned char *hash, const char *ext);
 
-struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local);
-int prepare_midx_pack(struct repository *r, struct multi_pack_index *m, uint32_t pack_int_id);
+struct multi_pack_index *load_multi_pack_index(const char *object_dir,
+					       int local);
+int prepare_midx_pack(struct repository *r, struct multi_pack_index *m,
+		      uint32_t pack_int_id);
 struct packed_git *nth_midxed_pack(struct multi_pack_index *m,
 				   uint32_t pack_int_id);
 int nth_bitmapped_pack(struct repository *r, struct multi_pack_index *m,
@@ -108,31 +110,32 @@ int midx_has_oid(struct multi_pack_index *m, const struct object_id *oid);
 off_t nth_midxed_offset(struct multi_pack_index *m, uint32_t pos);
 uint32_t nth_midxed_pack_int_id(struct multi_pack_index *m, uint32_t pos);
 struct object_id *nth_midxed_object_oid(struct object_id *oid,
-					struct multi_pack_index *m,
-					uint32_t n);
-int fill_midx_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e, struct multi_pack_index *m);
+					struct multi_pack_index *m, uint32_t n);
+int fill_midx_entry(struct repository *r, const struct object_id *oid,
+		    struct pack_entry *e, struct multi_pack_index *m);
 int midx_contains_pack(struct multi_pack_index *m,
 		       const char *idx_or_pack_name);
 int midx_preferred_pack(struct multi_pack_index *m, uint32_t *pack_int_id);
-int prepare_multi_pack_index_one(struct repository *r, const char *object_dir, int local);
+int prepare_multi_pack_index_one(struct repository *r, const char *object_dir,
+				 int local);
 
 /*
  * Variant of write_midx_file which writes a MIDX containing only the packs
  * specified in packs_to_include.
  */
-int write_midx_file(const char *object_dir,
-		    const char *preferred_pack_name,
-		    const char *refs_snapshot,
-		    unsigned flags);
+int write_midx_file(const char *object_dir, const char *preferred_pack_name,
+		    const char *refs_snapshot, unsigned flags);
 int write_midx_file_only(const char *object_dir,
 			 struct string_list *packs_to_include,
 			 const char *preferred_pack_name,
-			 const char *refs_snapshot,
-			 unsigned flags);
+			 const char *refs_snapshot, unsigned flags);
 void clear_midx_file(struct repository *r);
-int verify_midx_file(struct repository *r, const char *object_dir, unsigned flags);
-int expire_midx_packs(struct repository *r, const char *object_dir, unsigned flags);
-int midx_repack(struct repository *r, const char *object_dir, size_t batch_size, unsigned flags);
+int verify_midx_file(struct repository *r, const char *object_dir,
+		     unsigned flags);
+int expire_midx_packs(struct repository *r, const char *object_dir,
+		      unsigned flags);
+int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
+		unsigned flags);
 
 void close_midx(struct multi_pack_index *m);
 

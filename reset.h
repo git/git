@@ -7,15 +7,15 @@
 #define GIT_REFLOG_ACTION_ENVIRONMENT "GIT_REFLOG_ACTION"
 
 /* Request a detached checkout */
-#define RESET_HEAD_DETACH (1<<0)
+#define RESET_HEAD_DETACH (1 << 0)
 /* Request a reset rather than a checkout */
-#define RESET_HEAD_HARD (1<<1)
+#define RESET_HEAD_HARD (1 << 1)
 /* Run the post-checkout hook */
-#define RESET_HEAD_RUN_POST_CHECKOUT_HOOK (1<<2)
+#define RESET_HEAD_RUN_POST_CHECKOUT_HOOK (1 << 2)
 /* Only update refs, do not touch the worktree */
-#define RESET_HEAD_REFS_ONLY (1<<3)
+#define RESET_HEAD_REFS_ONLY (1 << 3)
 /* Update ORIG_HEAD as well as HEAD */
-#define RESET_ORIG_HEAD (1<<4)
+#define RESET_ORIG_HEAD (1 << 4)
 
 struct reset_head_opts {
 	/*

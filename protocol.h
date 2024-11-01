@@ -50,6 +50,7 @@ enum protocol_version determine_protocol_version_server(void);
  * Used by a client to determine which protocol version the server is speaking
  * based on the server's initial response.
  */
-enum protocol_version determine_protocol_version_client(const char *server_response);
+enum protocol_version
+determine_protocol_version_client(const char *server_response);
 
 #endif /* PROTOCOL_H */

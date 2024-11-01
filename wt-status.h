@@ -37,17 +37,18 @@ enum show_ignored_type {
 
 /* from where does this commit originate */
 enum commit_whence {
-	FROM_COMMIT,     /* normal */
-	FROM_MERGE,      /* commit came from merge */
+	FROM_COMMIT, /* normal */
+	FROM_MERGE, /* commit came from merge */
 	FROM_CHERRY_PICK_SINGLE, /* commit came from cherry-pick */
-	FROM_CHERRY_PICK_MULTI, /* commit came from a sequence of cherry-picks */
+	FROM_CHERRY_PICK_MULTI, /* commit came from a sequence of cherry-picks
+				 */
 	FROM_REBASE_PICK /* commit came from a pick/reword/edit */
 };
 
 static inline int is_from_cherry_pick(enum commit_whence whence)
 {
 	return whence == FROM_CHERRY_PICK_SINGLE ||
-		whence == FROM_CHERRY_PICK_MULTI;
+	       whence == FROM_CHERRY_PICK_MULTI;
 }
 
 static inline int is_from_rebase(enum commit_whence whence)
@@ -64,8 +65,8 @@ struct wt_status_change_data {
 	int rename_status;
 	int rename_score;
 	char *rename_source;
-	unsigned dirty_submodule       : 2;
-	unsigned new_submodule_commits : 1;
+	unsigned dirty_submodule:2;
+	unsigned new_submodule_commits:1;
 };
 
 enum wt_status_format {
@@ -91,7 +92,8 @@ struct wt_status_state {
 	int bisect_in_progress;
 	int revert_in_progress;
 	int detached_at;
-	int sparse_checkout_percentage; /* SPARSE_CHECKOUT_DISABLED if not sparse */
+	int sparse_checkout_percentage; /* SPARSE_CHECKOUT_DISABLED if not
+					   sparse */
 	char *branch;
 	char *onto;
 	char *detached_from;
@@ -161,28 +163,24 @@ void wt_status_collect_free_buffers(struct wt_status *s);
  * Frees the buffers of the wt_status_state.
  */
 void wt_status_state_free_buffers(struct wt_status_state *s);
-void wt_status_get_state(struct repository *repo,
-			 struct wt_status_state *state,
+void wt_status_get_state(struct repository *repo, struct wt_status_state *state,
 			 int get_detached_from);
 int wt_status_check_rebase(const struct worktree *wt,
 			   struct wt_status_state *state);
 int wt_status_check_bisect(const struct worktree *wt,
 			   struct wt_status_state *state);
 
-__attribute__((format (printf, 3, 4)))
-void status_printf_ln(struct wt_status *s, const char *color, const char *fmt, ...);
-__attribute__((format (printf, 3, 4)))
-void status_printf(struct wt_status *s, const char *color, const char *fmt, ...);
+__attribute__((format(printf, 3, 4))) void
+status_printf_ln(struct wt_status *s, const char *color, const char *fmt, ...);
+__attribute__((format(printf, 3, 4))) void
+status_printf(struct wt_status *s, const char *color, const char *fmt, ...);
 
-/* The following functions expect that the caller took care of reading the index. */
-int has_unstaged_changes(struct repository *repo,
-			 int ignore_submodules);
-int has_uncommitted_changes(struct repository *repo,
-			    int ignore_submodules);
-int require_clean_work_tree(struct repository *repo,
-			    const char *action,
-			    const char *hint,
-			    int ignore_submodules,
+/* The following functions expect that the caller took care of reading the
+ * index. */
+int has_unstaged_changes(struct repository *repo, int ignore_submodules);
+int has_uncommitted_changes(struct repository *repo, int ignore_submodules);
+int require_clean_work_tree(struct repository *repo, const char *action,
+			    const char *hint, int ignore_submodules,
 			    int gently);
 
 #endif /* STATUS_H */

@@ -9,7 +9,6 @@ struct packet_reader;
 int upload_pack_v2(struct repository *r, struct packet_reader *request);
 
 struct strbuf;
-int upload_pack_advertise(struct repository *r,
-			  struct strbuf *value);
+int upload_pack_advertise(struct repository *r, struct strbuf *value);
 
 #endif /* UPLOAD_PACK_H */

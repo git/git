@@ -80,7 +80,7 @@
  * The array is NULL-terminated, which makes it easy to pass in the "env"
  * parameter of a run-command invocation, or to do a simple walk.
  */
-extern const char * const local_repo_env[];
+extern const char *const local_repo_env[];
 
 struct strvec;
 
@@ -125,7 +125,7 @@ const char *strip_namespace(const char *namespaced_ref);
  *
  * Please do not add new global config variables here.
  */
-# ifdef USE_THE_REPOSITORY_VARIABLE
+#ifdef USE_THE_REPOSITORY_VARIABLE
 void setup_git_env(const char *git_dir);
 
 /*
@@ -225,5 +225,5 @@ extern const char *comment_line_str;
 extern char *comment_line_str_to_free;
 extern int auto_comment_line_char;
 
-# endif /* USE_THE_REPOSITORY_VARIABLE */
+#endif /* USE_THE_REPOSITORY_VARIABLE */
 #endif /* ENVIRONMENT_H */

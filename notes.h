@@ -131,7 +131,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
  * zero.
  */
 int add_note(struct notes_tree *t, const struct object_id *object_oid,
-		const struct object_id *note_oid, combine_notes_fn combine_notes);
+	     const struct object_id *note_oid, combine_notes_fn combine_notes);
 
 /*
  * Remove the given note object from the given notes_tree structure
@@ -150,7 +150,7 @@ int remove_note(struct notes_tree *t, const unsigned char *object_sha1);
  * Return NULL if the given object has no notes.
  */
 const struct object_id *get_note(struct notes_tree *t,
-		const struct object_id *object_oid);
+				 const struct object_id *object_oid);
 
 /*
  * Copy a note from one object to another in the given notes_tree.
@@ -164,9 +164,9 @@ const struct object_id *get_note(struct notes_tree *t,
  * are not persistent until a subsequent call to write_notes_tree() returns
  * zero.
  */
-int copy_note(struct notes_tree *t,
-	      const struct object_id *from_obj, const struct object_id *to_obj,
-	      int force, combine_notes_fn combine_notes);
+int copy_note(struct notes_tree *t, const struct object_id *from_obj,
+	      const struct object_id *to_obj, int force,
+	      combine_notes_fn combine_notes);
 
 /*
  * Flags controlling behaviour of for_each_note()
@@ -212,10 +212,10 @@ int copy_note(struct notes_tree *t,
  * - free_notes()
  */
 typedef int each_note_fn(const struct object_id *object_oid,
-		const struct object_id *note_oid, char *note_path,
-		void *cb_data);
+			 const struct object_id *note_oid, char *note_path,
+			 void *cb_data);
 int for_each_note(struct notes_tree *t, int flags, each_note_fn fn,
-		void *cb_data);
+		  void *cb_data);
 
 /*
  * Write the given notes_tree structure to the object database
@@ -291,9 +291,10 @@ void release_display_notes(struct display_notes_opt *opt);
  * 'show_notes' is a pointer to a boolean which will be set to 1 if notes are
  * displayed, else 0. It must not be NULL.
  */
-void enable_default_display_notes(struct display_notes_opt *opt, int *show_notes);
+void enable_default_display_notes(struct display_notes_opt *opt,
+				  int *show_notes);
 void enable_ref_display_notes(struct display_notes_opt *opt, int *show_notes,
-		const char *ref);
+			      const char *ref);
 void disable_display_notes(struct display_notes_opt *opt, int *show_notes);
 
 /*
@@ -312,8 +313,8 @@ void load_display_notes(struct display_notes_opt *opt);
  *
  * You *must* call load_display_notes() before using this function.
  */
-void format_display_notes(const struct object_id *object_oid,
-			  struct strbuf *sb, const char *output_encoding, int raw);
+void format_display_notes(const struct object_id *object_oid, struct strbuf *sb,
+			  const char *output_encoding, int raw);
 
 /*
  * Load the notes tree from each ref listed in 'refs'.  The output is

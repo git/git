@@ -10,20 +10,20 @@
 #define GETTEXT_H
 
 #if defined(_) || defined(Q_)
-#error "namespace conflict: '_' or 'Q_' is pre-defined?"
+# error "namespace conflict: '_' or 'Q_' is pre-defined?"
 #endif
 
 #ifndef NO_GETTEXT
-#	include <libintl.h>
+# include <libintl.h>
 #else
-#	ifdef gettext
-#		undef gettext
-#	endif
-#	define gettext(s) (s)
-#	ifdef ngettext
-#		undef ngettext
-#	endif
-#	define ngettext(s, p, n) ((n == 1) ? (s) : (p))
+# ifdef gettext
+#  undef gettext
+# endif
+# define gettext(s) (s)
+# ifdef ngettext
+#  undef ngettext
+# endif
+# define ngettext(s, p, n) ((n == 1) ? (s) : (p))
 #endif
 
 #define FORMAT_PRESERVING(n) __attribute__((format_arg(n)))
@@ -33,7 +33,7 @@ extern int git_gettext_enabled;
 void git_setup_gettext(void);
 int gettext_width(const char *s);
 #else
-#define git_gettext_enabled (0)
+# define git_gettext_enabled (0)
 static inline void git_setup_gettext(void)
 {
 }
@@ -52,8 +52,8 @@ static inline FORMAT_PRESERVING(1) const char *_(const char *msgid)
 	return gettext(msgid);
 }
 
-static inline FORMAT_PRESERVING(1) FORMAT_PRESERVING(2)
-const char *Q_(const char *msgid, const char *plu, unsigned long n)
+static inline FORMAT_PRESERVING(1) FORMAT_PRESERVING(2) const
+	char *Q_(const char *msgid, const char *plu, unsigned long n)
 {
 	if (!git_gettext_enabled)
 		return n == 1 ? msgid : plu;

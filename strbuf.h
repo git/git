@@ -59,7 +59,7 @@ struct string_list;
  *    - 1` even if it's true in the current implementation. Alloc is somehow a
  *    "private" member that should not be messed with. Use `strbuf_avail()`
  *    instead.
-*/
+ */
 
 /**
  * Data Structures
@@ -78,7 +78,10 @@ struct strbuf {
 };
 
 extern char strbuf_slopbuf[];
-#define STRBUF_INIT  { .buf = strbuf_slopbuf }
+#define STRBUF_INIT     \
+ {                      \
+  .buf = strbuf_slopbuf \
+ }
 
 struct object_id;
 
@@ -131,7 +134,6 @@ static inline void strbuf_swap(struct strbuf *a, struct strbuf *b)
 	SWAP(*a, *b);
 }
 
-
 /**
  * Functions related to the size of the buffer
  * -------------------------------------------
@@ -175,8 +177,7 @@ static inline void strbuf_setlen(struct strbuf *sb, size_t len)
 /**
  * Empty the buffer by setting the size of it to zero.
  */
-#define strbuf_reset(sb)  strbuf_setlen(sb, 0)
-
+#define strbuf_reset(sb) strbuf_setlen(sb, 0)
 
 /**
  * Functions related to the contents of the buffer
@@ -214,7 +215,6 @@ void strbuf_tolower(struct strbuf *sb);
  * to match, or be greater than the second buffer.
  */
 int strbuf_cmp(const struct strbuf *first, const struct strbuf *second);
-
 
 /**
  * Adding data to the buffer
@@ -267,8 +267,8 @@ static inline void strbuf_insertstr(struct strbuf *sb, size_t pos,
 void strbuf_vinsertf(struct strbuf *sb, size_t pos, const char *fmt,
 		     va_list ap);
 
-__attribute__((format (printf, 3, 4)))
-void strbuf_insertf(struct strbuf *sb, size_t pos, const char *fmt, ...);
+__attribute__((format(printf, 3, 4))) void
+strbuf_insertf(struct strbuf *sb, size_t pos, const char *fmt, ...);
 
 /**
  * Remove given amount of data from a given position of the buffer.
@@ -279,17 +279,15 @@ void strbuf_remove(struct strbuf *sb, size_t pos, size_t len);
  * Remove the bytes between `pos..pos+len` and replace it with the given
  * data.
  */
-void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
-		   const void *data, size_t data_len);
+void strbuf_splice(struct strbuf *sb, size_t pos, size_t len, const void *data,
+		   size_t data_len);
 
 /**
  * Add a NUL-terminated string to the buffer. Each line will be prepended
  * by a comment character and a blank.
  */
-void strbuf_add_commented_lines(struct strbuf *out,
-				const char *buf, size_t size,
-				const char *comment_prefix);
-
+void strbuf_add_commented_lines(struct strbuf *out, const char *buf,
+				size_t size, const char *comment_prefix);
 
 /**
  * Add data of given length to the buffer.
@@ -324,8 +322,8 @@ void strbuf_addbuf(struct strbuf *sb, const struct strbuf *sb2);
  * Join the arguments into a buffer. `delim` is put between every
  * two arguments.
  */
-const char *strbuf_join_argv(struct strbuf *buf, int argc,
-			     const char **argv, char delim);
+const char *strbuf_join_argv(struct strbuf *buf, int argc, const char **argv,
+			     char delim);
 
 /**
  * Used with `strbuf_expand_step` to expand the literals %n and %x
@@ -381,18 +379,19 @@ void strbuf_humanise_rate(struct strbuf *buf, off_t bytes);
 /**
  * Add a formatted string to the buffer.
  */
-__attribute__((format (printf,2,3)))
-void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
+__attribute__((format(printf, 2, 3))) void strbuf_addf(struct strbuf *sb,
+						       const char *fmt, ...);
 
 /**
  * Add a formatted string prepended by a comment character and a
  * blank to the buffer.
  */
-__attribute__((format (printf, 3, 4)))
-void strbuf_commented_addf(struct strbuf *sb, const char *comment_prefix, const char *fmt, ...);
+__attribute__((format(printf, 3, 4))) void
+strbuf_commented_addf(struct strbuf *sb, const char *comment_prefix,
+		      const char *fmt, ...);
 
-__attribute__((format (printf,2,0)))
-void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
+__attribute__((format(printf, 2, 0))) void
+strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
 
 /**
  * Add the time specified by `tm`, as formatted by `strftime`.
@@ -402,9 +401,8 @@ void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
  * `suppress_tz_name`, when set, expands %Z internally to the empty
  * string rather than passing it to `strftime`.
  */
-void strbuf_addftime(struct strbuf *sb, const char *fmt,
-		    const struct tm *tm, int tz_offset,
-		    int suppress_tz_name);
+void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm,
+		     int tz_offset, int suppress_tz_name);
 
 /**
  * Read a given size of data from a FILE* pointer to the buffer.
@@ -489,7 +487,6 @@ int strbuf_getline_nul(struct strbuf *sb, FILE *fp);
  */
 int strbuf_getline(struct strbuf *sb, FILE *file);
 
-
 /**
  * Like `strbuf_getline`, but keeps the trailing terminator (if
  * any) in the buffer.
@@ -556,11 +553,11 @@ static inline int strbuf_strip_suffix(struct strbuf *sb, const char *suffix)
  * For lighter-weight alternatives, see string_list_split() and
  * string_list_split_in_place().
  */
-struct strbuf **strbuf_split_buf(const char *str, size_t len,
-				 int terminator, int max);
+struct strbuf **strbuf_split_buf(const char *str, size_t len, int terminator,
+				 int max);
 
-static inline struct strbuf **strbuf_split_str(const char *str,
-					       int terminator, int max)
+static inline struct strbuf **strbuf_split_str(const char *str, int terminator,
+					       int max)
 {
 	return strbuf_split_buf(str, strlen(str), terminator, max);
 }
@@ -587,8 +584,7 @@ static inline struct strbuf **strbuf_split(const struct strbuf *sb,
  *   'element1, element2, ..., elementN'
  * to str.  If only one element, just write "element1" to str.
  */
-void strbuf_add_separated_string_list(struct strbuf *str,
-				      const char *sep,
+void strbuf_add_separated_string_list(struct strbuf *str, const char *sep,
 				      struct string_list *slist);
 
 /**
@@ -608,17 +604,14 @@ void strbuf_list_free(struct strbuf **list);
  */
 void strbuf_strip_file_from_path(struct strbuf *sb);
 
-void strbuf_add_lines(struct strbuf *sb,
-		      const char *prefix,
-		      const char *buf,
+void strbuf_add_lines(struct strbuf *sb, const char *prefix, const char *buf,
 		      size_t size);
 
 /**
  * Append s to sb, with the characters '<', '>', '&' and '"' converted
  * into XML entities.
  */
-void strbuf_addstr_xml_quoted(struct strbuf *sb,
-			      const char *s);
+void strbuf_addstr_xml_quoted(struct strbuf *sb, const char *s);
 
 /**
  * "Complete" the contents of `sb` by ensuring that either it ends with the
@@ -648,8 +641,7 @@ static inline void strbuf_complete_line(struct strbuf *sb)
  * If "allowed" is non-zero, restrict the set of allowed expansions. See
  * repo_interpret_branch_name() for details.
  */
-void strbuf_branchname(struct strbuf *sb, const char *name,
-		       unsigned allowed);
+void strbuf_branchname(struct strbuf *sb, const char *name, unsigned allowed);
 
 /*
  * Like strbuf_branchname() above, but confirm that the result is
@@ -664,10 +656,9 @@ typedef int (*char_predicate)(char ch);
 void strbuf_addstr_urlencode(struct strbuf *sb, const char *name,
 			     char_predicate allow_unencoded_fn);
 
-__attribute__((format (printf,1,2)))
-int printf_ln(const char *fmt, ...);
-__attribute__((format (printf,2,3)))
-int fprintf_ln(FILE *fp, const char *fmt, ...);
+__attribute__((format(printf, 1, 2))) int printf_ln(const char *fmt, ...);
+__attribute__((format(printf, 2, 3))) int fprintf_ln(FILE *fp, const char *fmt,
+						     ...);
 
 char *xstrdup_tolower(const char *);
 char *xstrdup_toupper(const char *);
@@ -676,10 +667,9 @@ char *xstrdup_toupper(const char *);
  * Create a newly allocated string using printf format. You can do this easily
  * with a strbuf, but this provides a shortcut to save a few lines.
  */
-__attribute__((format (printf, 1, 0)))
-char *xstrvfmt(const char *fmt, va_list ap);
-__attribute__((format (printf, 1, 2)))
-char *xstrfmt(const char *fmt, ...);
+__attribute__((format(printf, 1, 0))) char *xstrvfmt(const char *fmt,
+						     va_list ap);
+__attribute__((format(printf, 1, 2))) char *xstrfmt(const char *fmt, ...);
 
 int starts_with(const char *str, const char *prefix);
 int istarts_with(const char *str, const char *prefix);

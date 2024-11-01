@@ -75,7 +75,8 @@ struct pseudo_merge_matches {
  * entry keys are the pseudo-merge group names, and the values are
  * pointers to the pseudo_merge_group structure itself.
  */
-void load_pseudo_merges_from_config(struct repository *r, struct string_list *list);
+void load_pseudo_merges_from_config(struct repository *r,
+				    struct string_list *list);
 
 /*
  * A pseudo-merge commit index (pseudo_merge_commit_idx) maps a
@@ -152,9 +153,7 @@ struct pseudo_merge {
 	 * respective bitmaps have been loaded and read from the
 	 * .bitmap file.
 	 */
-	unsigned satisfied : 1,
-		 loaded_commits : 1,
-		 loaded_bitmap : 1;
+	unsigned satisfied:1, loaded_commits:1, loaded_bitmap:1;
 };
 
 /*
@@ -187,8 +186,8 @@ struct pseudo_merge *use_pseudo_merge(const struct pseudo_merge_map *pm,
  * remaining unsatisfied pseudo-merges are cascaded (see below).
  */
 int apply_pseudo_merges_for_commit(const struct pseudo_merge_map *pm,
-				   struct bitmap *result,
-				   struct commit *commit, uint32_t commit_pos);
+				   struct bitmap *result, struct commit *commit,
+				   uint32_t commit_pos);
 
 /*
  * Applies pseudo-merge(s) which are satisfied according to the
@@ -205,8 +204,7 @@ int apply_pseudo_merges_for_commit(const struct pseudo_merge_map *pm,
  * closure over tips is not yet known.
  */
 int cascade_pseudo_merges(const struct pseudo_merge_map *pm,
-			  struct bitmap *result,
-			  struct bitmap *roots);
+			  struct bitmap *result, struct bitmap *roots);
 
 /*
  * Returns a pseudo-merge which contains the exact set of commits

@@ -44,8 +44,7 @@
 
 #include "strbuf.h"
 
-struct json_writer
-{
+struct json_writer {
 	/*
 	 * Buffer of the in-progress JSON currently being composed.
 	 */
@@ -64,10 +63,10 @@ struct json_writer
 	unsigned int pretty:1;
 };
 
-#define JSON_WRITER_INIT { \
-	.json = STRBUF_INIT, \
-	.open_stack = STRBUF_INIT, \
-}
+#define JSON_WRITER_INIT                          \
+ {                                                \
+  .json = STRBUF_INIT, .open_stack = STRBUF_INIT, \
+ }
 
 void jw_init(struct json_writer *jw);
 void jw_release(struct json_writer *jw);

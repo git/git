@@ -9,8 +9,7 @@
 void prepare_loose_object_bulk_checkin(void);
 void fsync_loose_object_bulk_checkin(int fd, const char *filename);
 
-int index_blob_bulk_checkin(struct object_id *oid,
-			    int fd, size_t size,
+int index_blob_bulk_checkin(struct object_id *oid, int fd, size_t size,
 			    const char *path, unsigned flags);
 
 /*

@@ -10,7 +10,8 @@ extern struct trace_key trace_fsmonitor;
  * Read the fsmonitor index extension and (if configured) restore the
  * CE_FSMONITOR_VALID state.
  */
-int read_fsmonitor_extension(struct index_state *istate, const void *data, unsigned long sz);
+int read_fsmonitor_extension(struct index_state *istate, const void *data,
+			     unsigned long sz);
 
 /*
  * Fill the fsmonitor_dirty ewah bits with their state from the index,

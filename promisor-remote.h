@@ -19,7 +19,8 @@ struct promisor_remote {
 
 void repo_promisor_remote_reinit(struct repository *r);
 void promisor_remote_clear(struct promisor_remote_config *config);
-struct promisor_remote *repo_promisor_remote_find(struct repository *r, const char *remote_name);
+struct promisor_remote *repo_promisor_remote_find(struct repository *r,
+						  const char *remote_name);
 int repo_has_promisor_remote(struct repository *r);
 
 /*
@@ -29,7 +30,6 @@ int repo_has_promisor_remote(struct repository *r);
  * If oid_nr is 0, this function returns immediately.
  */
 void promisor_remote_get_direct(struct repository *repo,
-				const struct object_id *oids,
-				int oid_nr);
+				const struct object_id *oids, int oid_nr);
 
 #endif /* PROMISOR_REMOTE_H */

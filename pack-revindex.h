@@ -30,7 +30,6 @@
  *     first.
  */
 
-
 #define RIDX_SIGNATURE 0x52494458 /* "RIDX" */
 #define RIDX_VERSION 1
 

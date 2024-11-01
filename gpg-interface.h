@@ -3,9 +3,9 @@
 
 struct strbuf;
 
-#define GPG_VERIFY_VERBOSE		1
-#define GPG_VERIFY_RAW			2
-#define GPG_VERIFY_OMIT_STATUS	4
+#define GPG_VERIFY_VERBOSE 1
+#define GPG_VERIFY_RAW 2
+#define GPG_VERIFY_OMIT_STATUS 4
 
 enum signature_trust_level {
 	TRUST_UNDEFINED,
@@ -52,7 +52,8 @@ void signature_check_clear(struct signature_check *sigc);
  * signature and the signed content in payload.  Return 1 if a signature was
  * found, and 0 otherwise.
  */
-int parse_signature(const char *buf, size_t size, struct strbuf *payload, struct strbuf *signature);
+int parse_signature(const char *buf, size_t size, struct strbuf *payload,
+		    struct strbuf *signature);
 
 /*
  * Look at GPG signed content (e.g. a signed tag object), whose
@@ -71,7 +72,6 @@ size_t parse_signed_buffer(const char *buf, size_t size);
 int sign_buffer(struct strbuf *buffer, struct strbuf *signature,
 		const char *signing_key);
 
-
 /*
  * Returns corresponding string in lowercase for a given member of
  * enum signature_trust_level. For example, `TRUST_ULTIMATE` will
@@ -87,9 +87,8 @@ char *get_signing_key(void);
  * Either a GPG KeyID or a SSH Key Fingerprint
  */
 char *get_signing_key_id(void);
-int check_signature(struct signature_check *sigc,
-		    const char *signature, size_t slen);
-void print_signature_buffer(const struct signature_check *sigc,
-			    unsigned flags);
+int check_signature(struct signature_check *sigc, const char *signature,
+		    size_t slen);
+void print_signature_buffer(const struct signature_check *sigc, unsigned flags);
 
 #endif

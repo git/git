@@ -18,11 +18,7 @@ extern const char *rebase_resolvemsg;
 
 #define APPEND_SIGNOFF_DEDUP (1u << 0)
 
-enum replay_action {
-	REPLAY_REVERT,
-	REPLAY_PICK,
-	REPLAY_INTERACTIVE_REBASE
-};
+enum replay_action { REPLAY_REVERT, REPLAY_PICK, REPLAY_INTERACTIVE_REBASE };
 
 enum commit_msg_cleanup_mode {
 	COMMIT_MSG_CLEANUP_SPACE,
@@ -32,7 +28,7 @@ enum commit_msg_cleanup_mode {
 };
 
 struct replay_ctx;
-struct replay_ctx* replay_ctx_new(void);
+struct replay_ctx *replay_ctx_new(void);
 
 struct replay_opts {
 	enum replay_action action;
@@ -64,7 +60,7 @@ struct replay_opts {
 	int explicit_cleanup;
 
 	/* Merge strategy */
-	char *default_strategy;  /* from config options */
+	char *default_strategy; /* from config options */
 	char *strategy;
 	struct strvec xopts;
 
@@ -81,12 +77,10 @@ struct replay_opts {
 	/* Private use */
 	struct replay_ctx *ctx;
 };
-#define REPLAY_OPTS_INIT {			\
-	.edit = -1,				\
-	.action = -1,				\
-	.xopts = STRVEC_INIT,			\
-	.ctx = replay_ctx_new(),		\
-}
+#define REPLAY_OPTS_INIT                                                   \
+ {                                                                         \
+  .edit = -1, .action = -1, .xopts = STRVEC_INIT, .ctx = replay_ctx_new(), \
+ }
 
 /*
  * Note that ordering matters in this enum. Not only must it match the mapping
@@ -132,9 +126,10 @@ struct todo_list {
 	int done_nr, total_nr;
 };
 
-#define TODO_LIST_INIT { \
-	.buf = STRBUF_INIT, \
-}
+#define TODO_LIST_INIT \
+ {                     \
+  .buf = STRBUF_INIT,  \
+ }
 
 int todo_list_parse_insn_buffer(struct repository *r, struct replay_opts *opts,
 				char *buf, struct todo_list *todo_list);
@@ -159,8 +154,7 @@ void todo_list_filter_update_refs(struct repository *r,
 
 /* Call this to setup defaults before parsing command line options */
 void sequencer_init_config(struct replay_opts *opts);
-int sequencer_pick_revisions(struct repository *repo,
-			     struct replay_opts *opts);
+int sequencer_pick_revisions(struct repository *repo, struct replay_opts *opts);
 int sequencer_continue(struct repository *repo, struct replay_opts *opts);
 int sequencer_rollback(struct repository *repo, struct replay_opts *opts);
 int sequencer_skip(struct repository *repo, struct replay_opts *opts);
@@ -189,12 +183,12 @@ int sequencer_remove_state(struct replay_opts *opts);
 int sequencer_make_script(struct repository *r, struct strbuf *out, int argc,
 			  const char **argv, unsigned flags);
 
-int complete_action(struct repository *r, struct replay_opts *opts, unsigned flags,
-		    const char *shortrevisions, const char *onto_name,
-		    struct commit *onto, const struct object_id *orig_head,
+int complete_action(struct repository *r, struct replay_opts *opts,
+		    unsigned flags, const char *shortrevisions,
+		    const char *onto_name, struct commit *onto,
+		    const struct object_id *orig_head,
 		    struct string_list *commands, unsigned autosquash,
-		    unsigned update_refs,
-		    struct todo_list *todo_list);
+		    unsigned update_refs, struct todo_list *todo_list);
 int todo_list_rearrange_squash(struct todo_list *todo_list);
 
 /*
@@ -205,13 +199,13 @@ int todo_list_rearrange_squash(struct todo_list *todo_list);
  */
 void append_signoff(struct strbuf *msgbuf, size_t ignore_footer, unsigned flag);
 
-void append_conflicts_hint(struct index_state *istate,
-		struct strbuf *msgbuf, enum commit_msg_cleanup_mode cleanup_mode);
+void append_conflicts_hint(struct index_state *istate, struct strbuf *msgbuf,
+			   enum commit_msg_cleanup_mode cleanup_mode);
 enum commit_msg_cleanup_mode get_cleanup_mode(const char *cleanup_arg,
-	int use_editor);
+					      int use_editor);
 
 void cleanup_message(struct strbuf *msgbuf,
-	enum commit_msg_cleanup_mode cleanup_mode, int verbose);
+		     enum commit_msg_cleanup_mode cleanup_mode, int verbose);
 
 int message_is_empty(const struct strbuf *sb,
 		     enum commit_msg_cleanup_mode cleanup_mode);
@@ -233,12 +227,10 @@ int apply_autostash(const char *path);
 int apply_autostash_oid(const char *stash_oid);
 int apply_autostash_ref(struct repository *r, const char *refname);
 
-#define SUMMARY_INITIAL_COMMIT   (1 << 0)
+#define SUMMARY_INITIAL_COMMIT (1 << 0)
 #define SUMMARY_SHOW_AUTHOR_DATE (1 << 1)
-void print_commit_summary(struct repository *repo,
-			  const char *prefix,
-			  const struct object_id *oid,
-			  unsigned int flags);
+void print_commit_summary(struct repository *repo, const char *prefix,
+			  const struct object_id *oid, unsigned int flags);
 
 #define READ_ONELINER_SKIP_IF_EMPTY (1 << 0)
 #define READ_ONELINER_WARN_MISSING (1 << 1)
@@ -252,16 +244,16 @@ void print_commit_summary(struct repository *repo,
  *
  * Returns 1 if the file was read, 0 if it could not be read or does not exist.
  */
-int read_oneliner(struct strbuf *buf,
-	const char *path, unsigned flags);
+int read_oneliner(struct strbuf *buf, const char *path, unsigned flags);
 int read_author_script(const char *path, char **name, char **email, char **date,
 		       int allow_missing);
 int write_basic_state(struct replay_opts *opts, const char *head_name,
 		      struct commit *onto, const struct object_id *orig_head);
 void sequencer_post_commit_cleanup(struct repository *r, int verbose);
-int sequencer_get_last_command(struct repository* r,
+int sequencer_get_last_command(struct repository *r,
 			       enum replay_action *action);
-int sequencer_determine_whence(struct repository *r, enum commit_whence *whence);
+int sequencer_determine_whence(struct repository *r,
+			       enum commit_whence *whence);
 
 /**
  * Append the set of ref-OID pairs that are currently stored for the 'git
@@ -269,6 +261,7 @@ int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
  *
  * Localized to a worktree's git dir.
  */
-int sequencer_get_update_refs_state(const char *wt_dir, struct string_list *refs);
+int sequencer_get_update_refs_state(const char *wt_dir,
+				    struct string_list *refs);
 
 #endif /* SEQUENCER_H */

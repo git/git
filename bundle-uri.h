@@ -50,7 +50,10 @@ struct remote_bundle_info {
 	uint64_t creationToken;
 };
 
-#define REMOTE_BUNDLE_INFO_INIT { 0 }
+#define REMOTE_BUNDLE_INFO_INIT \
+ {                              \
+  0                             \
+ }
 
 enum bundle_list_mode {
 	BUNDLE_MODE_NONE = 0,
@@ -100,11 +103,9 @@ struct bundle_list {
 void init_bundle_list(struct bundle_list *list);
 void clear_bundle_list(struct bundle_list *list);
 
-typedef int (*bundle_iterator)(struct remote_bundle_info *bundle,
-			       void *data);
+typedef int (*bundle_iterator)(struct remote_bundle_info *bundle, void *data);
 
-int for_all_bundles_in_list(struct bundle_list *list,
-			    bundle_iterator iter,
+int for_all_bundles_in_list(struct bundle_list *list, bundle_iterator iter,
 			    void *data);
 
 struct FILE;
@@ -115,8 +116,7 @@ void print_bundle_list(FILE *fp, struct bundle_list *list);
  * pairs are provided in config file format. This method is
  * exposed publicly for testing purposes.
  */
-int bundle_uri_parse_config_format(const char *uri,
-				   const char *filename,
+int bundle_uri_parse_config_format(const char *uri, const char *filename,
 				   struct bundle_list *list);
 
 /**
@@ -130,8 +130,7 @@ int bundle_uri_parse_config_format(const char *uri,
  * heuristic value. Such a value indicates that the list was designed for
  * incremental fetches.
  */
-int fetch_bundle_uri(struct repository *r, const char *uri,
-		     int *has_heuristic);
+int fetch_bundle_uri(struct repository *r, const char *uri, int *has_heuristic);
 
 /**
  * Given a bundle list that was already advertised (likely by the
@@ -144,8 +143,7 @@ int fetch_bundle_uri(struct repository *r, const char *uri,
  * Returns non-zero if there was an error trying to download the list
  * or any of its advertised bundles.
  */
-int fetch_bundle_list(struct repository *r,
-		      struct bundle_list *list);
+int fetch_bundle_list(struct repository *r, struct bundle_list *list);
 
 /**
  * API for serve.c.
@@ -162,7 +160,6 @@ int bundle_uri_command(struct repository *r, struct packet_reader *request);
  *
  * Returns 0 on success and non-zero on error.
  */
-int bundle_uri_parse_line(struct bundle_list *list,
-			  const char *line);
+int bundle_uri_parse_line(struct bundle_list *list, const char *line);
 
 #endif

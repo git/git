@@ -57,8 +57,7 @@ void init_notes_merge_options(struct repository *r,
  * that notes ref is interpreted as an empty notes tree, and the merge
  * trivially results in what the other ref points to.
  */
-int notes_merge(struct notes_merge_options *o,
-		struct notes_tree *local_tree,
+int notes_merge(struct notes_merge_options *o, struct notes_tree *local_tree,
 		struct object_id *result_oid);
 
 /*

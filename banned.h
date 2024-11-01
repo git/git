@@ -11,17 +11,17 @@
 #define BANNED(func) sorry_##func##_is_a_banned_function
 
 #undef strcpy
-#define strcpy(x,y) BANNED(strcpy)
+#define strcpy(x, y) BANNED(strcpy)
 #undef strcat
-#define strcat(x,y) BANNED(strcat)
+#define strcat(x, y) BANNED(strcat)
 #undef strncpy
-#define strncpy(x,y,n) BANNED(strncpy)
+#define strncpy(x, y, n) BANNED(strncpy)
 #undef strncat
-#define strncat(x,y,n) BANNED(strncat)
+#define strncat(x, y, n) BANNED(strncat)
 #undef strtok
-#define strtok(x,y) BANNED(strtok)
+#define strtok(x, y) BANNED(strtok)
 #undef strtok_r
-#define strtok_r(x,y,z) BANNED(strtok_r)
+#define strtok_r(x, y, z) BANNED(strtok_r)
 
 #undef sprintf
 #undef vsprintf

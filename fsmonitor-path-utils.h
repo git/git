@@ -3,8 +3,7 @@
 
 #include "strbuf.h"
 
-struct alias_info
-{
+struct alias_info {
 	struct strbuf alias;
 	struct strbuf points_to;
 };
@@ -54,7 +53,6 @@ int fsmonitor__get_alias(const char *path, struct alias_info *info);
  * The caller owns the storage that the returned string occupies and
  * is responsible for releasing it.
  */
-char *fsmonitor__resolve_alias(const char *path,
-	const struct alias_info *info);
+char *fsmonitor__resolve_alias(const char *path, const struct alias_info *info);
 
 #endif

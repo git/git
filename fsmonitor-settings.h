@@ -7,7 +7,7 @@ enum fsmonitor_mode {
 	FSMONITOR_MODE_INCOMPATIBLE = -1, /* see _reason */
 	FSMONITOR_MODE_DISABLED = 0,
 	FSMONITOR_MODE_HOOK = 1, /* core.fsmonitor=<hook_path> */
-	FSMONITOR_MODE_IPC = 2,  /* core.fsmonitor=<true> */
+	FSMONITOR_MODE_IPC = 2, /* core.fsmonitor=<true> */
 };
 
 /*

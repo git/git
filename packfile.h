@@ -27,9 +27,11 @@ struct pack_entry {
  * extension "ext". The result is written into the strbuf "buf", overwriting
  * any existing contents. A pointer to buf->buf is returned as a convenience.
  *
- * Example: odb_pack_name(out, sha1, "idx") => ".git/objects/pack/pack-1234..idx"
+ * Example: odb_pack_name(out, sha1, "idx") =>
+ * ".git/objects/pack/pack-1234..idx"
  */
-char *odb_pack_name(struct strbuf *buf, const unsigned char *sha1, const char *ext);
+char *odb_pack_name(struct strbuf *buf, const unsigned char *sha1,
+		    const char *ext);
 
 /*
  * Return the name of the (local) packfile with the specified sha1 in
@@ -53,14 +55,12 @@ const char *pack_basename(struct packed_git *p);
 
 struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path);
 
-typedef void each_file_in_pack_dir_fn(const char *full_path, size_t full_path_len,
+typedef void each_file_in_pack_dir_fn(const char *full_path,
+				      size_t full_path_len,
 				      const char *file_name, void *data);
-void for_each_file_in_pack_subdir(const char *objdir,
-				  const char *subdir,
-				  each_file_in_pack_dir_fn fn,
-				  void *data);
-void for_each_file_in_pack_dir(const char *objdir,
-			       each_file_in_pack_dir_fn fn,
+void for_each_file_in_pack_subdir(const char *objdir, const char *subdir,
+				  each_file_in_pack_dir_fn fn, void *data);
+void for_each_file_in_pack_dir(const char *objdir, each_file_in_pack_dir_fn fn,
 			       void *data);
 
 /* A hook to report invalid files in pack directory */
@@ -107,7 +107,8 @@ uint32_t get_pack_fanout(struct packed_git *p, uint32_t value);
 
 struct raw_object_store;
 
-unsigned char *use_pack(struct packed_git *, struct pack_window **, off_t, unsigned long *);
+unsigned char *use_pack(struct packed_git *, struct pack_window **, off_t,
+			unsigned long *);
 void close_pack_windows(struct packed_git *);
 void close_pack(struct packed_git *);
 void close_object_store(struct raw_object_store *o);
@@ -133,12 +134,13 @@ void unlink_pack_path(const char *pack_name, int force_delete);
 void check_pack_index_ptr(const struct packed_git *p, const void *ptr);
 
 /*
- * Perform binary search on a pack-index for a given oid. Packfile is expected to
- * have a valid pack-index.
+ * Perform binary search on a pack-index for a given oid. Packfile is expected
+ * to have a valid pack-index.
  *
  * See 'bsearch_hash' for more information.
  */
-int bsearch_pack(const struct object_id *oid, const struct packed_git *p, uint32_t *result);
+int bsearch_pack(const struct object_id *oid, const struct packed_git *p,
+		 uint32_t *result);
 
 /*
  * Write the oid of the nth object within the specified packfile into the first
@@ -160,10 +162,16 @@ off_t nth_packed_object_offset(const struct packed_git *, uint32_t n);
 off_t find_pack_entry_one(const unsigned char *sha1, struct packed_git *);
 
 int is_pack_valid(struct packed_git *);
-void *unpack_entry(struct repository *r, struct packed_git *, off_t, enum object_type *, unsigned long *);
-unsigned long unpack_object_header_buffer(const unsigned char *buf, unsigned long len, enum object_type *type, unsigned long *sizep);
-unsigned long get_size_from_delta(struct packed_git *, struct pack_window **, off_t);
-int unpack_object_header(struct packed_git *, struct pack_window **, off_t *, unsigned long *);
+void *unpack_entry(struct repository *r, struct packed_git *, off_t,
+		   enum object_type *, unsigned long *);
+unsigned long unpack_object_header_buffer(const unsigned char *buf,
+					  unsigned long len,
+					  enum object_type *type,
+					  unsigned long *sizep);
+unsigned long get_size_from_delta(struct packed_git *, struct pack_window **,
+				  off_t);
+int unpack_object_header(struct packed_git *, struct pack_window **, off_t *,
+			 unsigned long *);
 off_t get_delta_base(struct packed_git *p, struct pack_window **w_curs,
 		     off_t *curpos, enum object_type type,
 		     off_t delta_obj_offset);
@@ -173,12 +181,12 @@ void release_pack_memory(size_t);
 /* global flag to enable extra checks when accessing packed objects */
 extern int do_check_packed_object_crc;
 
-int packed_object_info(struct repository *r,
-		       struct packed_git *pack,
+int packed_object_info(struct repository *r, struct packed_git *pack,
 		       off_t offset, struct object_info *);
 
 void mark_bad_packed_object(struct packed_git *, const struct object_id *);
-const struct packed_git *has_packed_and_bad(struct repository *, const struct object_id *);
+const struct packed_git *has_packed_and_bad(struct repository *,
+					    const struct object_id *);
 
 #define ON_DISK_KEEP_PACKS 1
 #define IN_CORE_KEEP_PACKS 2
@@ -187,8 +195,10 @@ const struct packed_git *has_packed_and_bad(struct repository *, const struct ob
  * Iff a pack file in the given repository contains the object named by sha1,
  * return true and store its location to e.
  */
-int find_pack_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e);
-int find_kept_pack_entry(struct repository *r, const struct object_id *oid, unsigned flags, struct pack_entry *e);
+int find_pack_entry(struct repository *r, const struct object_id *oid,
+		    struct pack_entry *e);
+int find_kept_pack_entry(struct repository *r, const struct object_id *oid,
+			 unsigned flags, struct pack_entry *e);
 
 int has_object_pack(const struct object_id *oid);
 int has_object_kept_pack(const struct object_id *oid, unsigned flags);

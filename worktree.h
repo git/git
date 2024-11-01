@@ -10,9 +10,9 @@ struct worktree {
 	struct repository *repo;
 	char *path;
 	char *id;
-	char *head_ref;		/* NULL if HEAD is broken or detached */
-	char *lock_reason;	/* private - use worktree_lock_reason */
-	char *prune_reason;     /* private - use worktree_prune_reason */
+	char *head_ref; /* NULL if HEAD is broken or detached */
+	char *lock_reason; /* private - use worktree_lock_reason */
+	char *prune_reason; /* private - use worktree_prune_reason */
 	struct object_id head_oid;
 	int is_detached;
 	int is_bare;
@@ -55,16 +55,14 @@ const char *get_worktree_git_dir(const struct worktree *wt);
  *
  * Return the worktree identified by `arg`, or NULL if not found.
  */
-struct worktree *find_worktree(struct worktree **list,
-			       const char *prefix,
+struct worktree *find_worktree(struct worktree **list, const char *prefix,
 			       const char *arg);
 
 /*
  * Look up the worktree corresponding to `id`, or NULL of no such worktree
  * exists.
  */
-struct worktree *get_linked_worktree(const char *id,
-				     int skip_reading_head);
+struct worktree *get_linked_worktree(const char *id, int skip_reading_head);
 
 /*
  * Return the worktree corresponding to `path`, or NULL if no such worktree
@@ -99,9 +97,7 @@ const char *worktree_prune_reason(struct worktree *wt, timestamp_t expire);
  * `expire` defines a grace period to prune the worktree when its path
  * does not exist.
  */
-int should_prune_worktree(const char *id,
-			  struct strbuf *reason,
-			  char **wtpath,
+int should_prune_worktree(const char *id, struct strbuf *reason, char **wtpath,
 			  timestamp_t expire);
 
 #define WT_VALIDATE_WORKTREE_MISSING_OK (1 << 0)
@@ -110,18 +106,16 @@ int should_prune_worktree(const char *id,
  * Return zero if the worktree is in good condition. Error message is
  * returned if "errmsg" is not NULL.
  */
-int validate_worktree(const struct worktree *wt,
-		      struct strbuf *errmsg,
+int validate_worktree(const struct worktree *wt, struct strbuf *errmsg,
 		      unsigned flags);
 
 /*
  * Update worktrees/xxx/gitdir with the new path.
  */
-void update_worktree_location(struct worktree *wt,
-			      const char *path_);
+void update_worktree_location(struct worktree *wt, const char *path_);
 
-typedef void (* worktree_repair_fn)(int iserr, const char *path,
-				    const char *msg, void *cb_data);
+typedef void (*worktree_repair_fn)(int iserr, const char *path, const char *msg,
+				   void *cb_data);
 
 /*
  * Visit each registered linked worktree and repair corruptions. For each
@@ -139,7 +133,8 @@ void repair_worktrees_after_gitdir_move(const char *old_path);
 /*
  * Repair the linked worktree after the gitdir has been moved.
  */
-void repair_worktree_after_gitdir_move(struct worktree *wt, const char *old_path);
+void repair_worktree_after_gitdir_move(struct worktree *wt,
+				       const char *old_path);
 
 /*
  * Repair administrative files corresponding to the worktree at the given path.
@@ -175,8 +170,8 @@ const struct worktree *find_shared_symref(struct worktree **worktrees,
 /*
  * Returns true if a symref points to a ref in a worktree.
  */
-int is_shared_symref(const struct worktree *wt,
-		     const char *symref, const char *target);
+int is_shared_symref(const struct worktree *wt, const char *symref,
+		     const char *target);
 
 /*
  * Similar to head_ref() for all HEADs _except_ one from the current
@@ -190,8 +185,7 @@ int is_worktree_being_bisected(const struct worktree *wt, const char *target);
 /*
  * Return a refname suitable for access from the current ref store.
  */
-void strbuf_worktree_ref(const struct worktree *wt,
-			 struct strbuf *sb,
+void strbuf_worktree_ref(const struct worktree *wt, struct strbuf *sb,
 			 const char *refname);
 
 /**
