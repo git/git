@@ -14,7 +14,7 @@ $ git --version --build-options
 ** insert your machine's response here **
 ```
 
- - Which version of Windows are you running? Vista, 7, 8, 10? Is it 32-bit or 64-bit?
+ - Which version of Windows are you running? 8.1, 10, 11? Is it 32-bit or 64-bit?
 
 ```
 $ cmd.exe /c ver
