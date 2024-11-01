@@ -1,0 +1,54 @@
+Checks: " *,
+        -altera-id-dependent-backward-branch,
+        -altera-struct-pack-align,
+        -altera-unroll-loops,
+        -bugprone-branch-clone,
+        -bugprone-easily-swappable-parameters,
+        -bugprone-reserved-identifier,
+        -bugprone-macro-parentheses,
+        -cert-dcl58-cpp,
+        -cert-dcl37-c,
+        -cert-dcl51-cpp,
+        -clang-diagnostic-error,
+        -cppcoreguidelines-avoid-magic-numbers,readability-magic-numbers,
+        -cppcoreguidelines-init-variables,
+        -cppcoreguidelines-non-private-member-variables-in-classes,
+        -cppcoreguidelines-pro-type-member-init,
+        -fuchsia-default-arguments-declarations,
+        -fuchsia-overloaded-operator,
+        -fuchsia-trailing-return,
+        -google-readability-casting,
+        -google-readability-namespace-comments,
+        -google-readability-todo,
+        -google-runtime-int,
+        -hicpp-explicit-conversions,
+        -hicpp-member-init,
+        -hicpp-use-equals-default,
+        -llvm-header-guard,
+        -llvm-include-order,
+        -llvm-namespace-comment,
+        -llvmlibc-callee-namespace,
+        -llvmlibc-implementation-in-namespace,
+        -llvmlibc-restrict-system-libc-headers,
+        -misc-const-correctness,
+        -misc-non-private-member-variables-in-classes,
+        -misc-unused-parameters,
+        -modernize-use-equals-default,
+        -modernize-use-trailing-return-type,
+        -modernize-pass-by-value,
+        -readability-avoid-const-params-in-decls,
+        -readability-convert-member-functions-to-static,
+        -readability-implicit-bool-conversion,
+        -readability-redundant-string-init,
+        -readability-identifier-naming,
+"
+WarningsAsErrors: ''
+HeaderFilterRegex: ''
+FormatStyle:     none
+CheckOptions:
+  - key: performance-
+    value: warning
+  - key: modernize-
+    value: warning
+  - key: readability-
+    value: warning
