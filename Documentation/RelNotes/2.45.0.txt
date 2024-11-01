@@ -9,7 +9,7 @@ UI, Workflows & Features
    With "git init --ref-format=reftable", hopefully it would be a lot
    more efficient to manage a repository with many references.
 
- * "git checkout -p" and friends learned that that "@" is a synonym
+ * "git checkout -p" and friends learned that "@" is a synonym
    for "HEAD".
 
  * Variants of vimdiff learned to honor mergetool.<variant>.layout
