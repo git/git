@@ -1220,7 +1220,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	}
 	free(result);
 
-	for (lno = 0; lno < cnt; lno++) {
+	for (lno = 0; lno < cnt + 2; lno++) {
 		if (sline[lno].lost) {
 			struct lline *ll = sline[lno].lost;
 			while (ll) {
