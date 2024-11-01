@@ -65,7 +65,7 @@ Please move or remove them before you merge.
 Aborting
 EOF
 
-test_expect_success 'untracked files or local changes ovewritten by merge' '
+test_expect_success 'untracked files or local changes overwritten by merge' '
 	git add two &&
 	git add three &&
 	git add four &&

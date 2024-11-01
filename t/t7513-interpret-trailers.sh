@@ -857,7 +857,7 @@ test_expect_success 'using "--where after" with "--no-where"' '
 # the hardcoded default (in WHERE_END) assuming the absence of .gitconfig).
 # Here, the "start" setting of trailer.where is respected, so the new "Acked-by"
 # and "Bug" trailers are placed at the beginning, and not at the end which is
-# the harcoded default.
+# the hardcoded default.
 test_expect_success 'using "--where after" with "--no-where" defaults to configuration' '
 	test_config trailer.ack.key "Acked-by= " &&
 	test_config trailer.bug.key "Bug #" &&
@@ -881,7 +881,7 @@ test_expect_success 'using "--where after" with "--no-where" defaults to configu
 # immediately after it. For the next trailer (Bug #42), we default to using the
 # hardcoded WHERE_END because we don't have any "trailer.where" or
 # "trailer.bug.where" configured.
-test_expect_success 'using "--no-where" defaults to harcoded default if nothing configured' '
+test_expect_success 'using "--no-where" defaults to hardcoded default if nothing configured' '
 	test_config trailer.ack.key "Acked-by= " &&
 	test_config trailer.bug.key "Bug #" &&
 	test_config trailer.separators ":=#" &&
