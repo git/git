@@ -1567,6 +1567,13 @@ static int loose_object_info(struct repository *r,
 
 		if (!oi->contentp)
 			break;
+		if (oi->content_limit && *oi->typep == OBJ_BLOB &&
+				*oi->sizep > oi->content_limit) {
+			git_inflate_end(&stream);
+			oi->contentp = NULL;
+			goto cleanup;
+		}
+
 		*oi->contentp = unpack_loose_rest(&stream, hdr, *oi->sizep, oid);
 		if (*oi->contentp)
 			goto cleanup;
@@ -1655,6 +1662,11 @@ static int do_oid_object_info_extended(struct repository *r,
 			oidclr(oi->delta_base_oid, the_repository->hash_algo);
 		if (oi->type_name)
 			strbuf_addstr(oi->type_name, type_name(co->type));
+		/*
+		 * Currently `blame' is the only command which creates
+		 * OI_CACHED, and direct_cache is only used by `cat-file'.
+		 */
+		assert(!oi->direct_cache);
 		if (oi->contentp)
 			*oi->contentp = xmemdupz(co->buf, co->size);
 		oi->whence = OI_CACHED;

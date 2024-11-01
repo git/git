@@ -401,6 +401,16 @@ static inline int git_setitimer(int which UNUSED,
 #define setitimer(which,value,ovalue) git_setitimer(which,value,ovalue)
 #endif
 
+#ifdef HAVE_WRITEV
+#include <sys/uio.h>
+#define git_iovec iovec
+#else /* !HAVE_WRITEV */
+struct git_iovec {
+	void *iov_base;
+	size_t iov_len;
+};
+#endif /* !HAVE_WRITEV */
+
 #ifndef NO_LIBGEN_H
 #include <libgen.h>
 #else

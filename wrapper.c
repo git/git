@@ -262,6 +262,24 @@ ssize_t xwrite(int fd, const void *buf, size_t len)
 	}
 }
 
+#ifdef HAVE_WRITEV
+ssize_t xwritev(int fd, const struct iovec *iov, int iovcnt)
+{
+	while (1) {
+		ssize_t nr = writev(fd, iov, iovcnt);
+
+		if (nr < 0) {
+			if (errno == EINTR)
+				continue;
+			if (handle_nonblock(fd, POLLOUT, errno))
+				continue;
+		}
+
+		return nr;
+	}
+}
+#endif /* !HAVE_WRITEV */
+
 /*
  * xpread() is the same as pread(), but it automatically restarts pread()
  * operations with a recoverable error (EAGAIN and EINTR). xpread() DOES

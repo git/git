@@ -68,6 +68,7 @@ ifeq ($(uname_S),Linux)
 		BASIC_CFLAGS += -std=c99
         endif
 	LINK_FUZZ_PROGRAMS = YesPlease
+	HAVE_WRITEV = YesPlease
 endif
 ifeq ($(uname_S),GNU/kFreeBSD)
 	HAVE_ALLOCA_H = YesPlease
@@ -76,6 +77,7 @@ ifeq ($(uname_S),GNU/kFreeBSD)
 	DIR_HAS_BSD_GROUP_SEMANTICS = YesPlease
 	LIBC_CONTAINS_LIBINTL = YesPlease
 	FREAD_READS_DIRECTORIES = UnfortunatelyYes
+	HAVE_WRITEV = YesPlease
 endif
 ifeq ($(uname_S),UnixWare)
 	CC = cc
@@ -292,6 +294,7 @@ ifeq ($(uname_S),FreeBSD)
 	PAGER_ENV = LESS=FRX LV=-c MORE=FRX
 	FREAD_READS_DIRECTORIES = UnfortunatelyYes
 	FILENO_IS_A_MACRO = UnfortunatelyYes
+	HAVE_WRITEV = YesPlease
 endif
 ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
@@ -307,6 +310,7 @@ ifeq ($(uname_S),OpenBSD)
 	PROCFS_EXECUTABLE_PATH = /proc/curproc/file
 	FREAD_READS_DIRECTORIES = UnfortunatelyYes
 	FILENO_IS_A_MACRO = UnfortunatelyYes
+	HAVE_WRITEV = YesPlease
 endif
 ifeq ($(uname_S),MirBSD)
 	NO_STRCASESTR = YesPlease
@@ -329,6 +333,7 @@ ifeq ($(uname_S),NetBSD)
 	HAVE_BSD_KERN_PROC_SYSCTL = YesPlease
 	CSPRNG_METHOD = arc4random
 	PROCFS_EXECUTABLE_PATH = /proc/curproc/exe
+	HAVE_WRITEV = YesPlease
 endif
 ifeq ($(uname_S),AIX)
 	DEFAULT_PAGER = more
