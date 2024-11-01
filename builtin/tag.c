@@ -645,7 +645,7 @@ int cmd_tag(int argc,
 
 	object_ref = argc == 2 ? argv[1] : "HEAD";
 	if (argc > 2)
-		die(_("too many arguments"));
+		die(_("unexpected argument: '%s'"), argv[2]);
 
 	if (repo_get_oid(the_repository, object_ref, &object))
 		die(_("Failed to resolve '%s' as a valid ref."), object_ref);

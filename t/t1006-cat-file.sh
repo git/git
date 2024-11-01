@@ -68,16 +68,18 @@ do
 	done
 done
 
-test_too_many_arguments () {
+test_unexpected_arg () {
+	unexpected=$1
+	shift
 	test_expect_code 129 "$@" 2>err &&
-	grep -E "^fatal: too many arguments$" err
+	grep -E "^fatal: unexpected argument: '$unexpected'" err
 }
 
 for opt in $short_modes $cw_modes
 do
 	args="one two three"
 	test_expect_success "usage: too many arguments: $opt $args" '
-		test_too_many_arguments git cat-file $opt $args
+		test_unexpected_arg two git cat-file $opt $args
 	'
 
 	for opt2 in --buffer --follow-symlinks
