@@ -25,37 +25,16 @@ value is <old-oid>.  You can specify 40 "0" or an empty string
 as <old-oid> to make sure that the ref you are creating does
 not exist.
 
-It also allows a "ref" file to be a symbolic pointer to another
-ref file by starting with the four-byte header sequence of
-"ref:".
-
-More importantly, it allows the update of a ref file to follow
-these symbolic pointers, whether they are symlinks or these
-"regular file symbolic refs".  It follows *real* symlinks only
-if they start with "refs/": otherwise it will just try to read
-them and update them as a regular file (i.e. it will allow the
-filesystem to follow them, but will overwrite such a symlink to
-somewhere else with a regular filename).
+The final arguments are object names; this command without any options
+does not support updating a symbolic ref to point to another ref (see
+linkgit:git-symbolic-ref[1]).  But `git update-ref --stdin` does have
+the `symref-*` commands so that regular refs and symbolic refs can be
+committed in the same transaction.
 
 If --no-deref is given, <ref> itself is overwritten, rather than
 the result of following the symbolic pointers.
 
-In general, using
-
-	git update-ref HEAD "$head"
-
-should be a _lot_ safer than doing
-
-	echo "$head" > "$GIT_DIR/HEAD"
-
-both from a symlink following standpoint *and* an error checking
-standpoint.  The "refs/" rule for symlinks means that symlinks
-that point to "outside" the tree are safe: they'll be followed
-for reading but not for writing (so we'll never write through a
-ref symlink to some other tree, if you have copied a whole
-archive by creating a symlink tree).
-
-With `-d` flag, it deletes the named <ref> after verifying it
+With `-d`, it deletes the named <ref> after verifying that it
 still contains <old-oid>.
 
 With `--stdin`, update-ref reads instructions from standard input and
@@ -199,6 +178,21 @@ value supplied to the -m option.
 An update will fail (without changing <ref>) if the current user is
 unable to create a new log file, append to the existing log file
 or does not have committer information available.
+
+NOTES
+-----
+
+Symbolic refs were initially implemented using symbolic links.  This is
+now deprecated since not all filesystems support symbolic links.
+
+This command follows *real* symlinks only if they start with "refs/":
+otherwise it will just try to read them and update them as a regular
+file (i.e. it will allow the filesystem to follow them, but will
+overwrite such a symlink to somewhere else with a regular filename).
+
+SEE ALSO
+--------
+linkgit:git-symbolic-ref[1]
 
 GIT
 ---
