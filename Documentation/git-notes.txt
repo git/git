@@ -9,9 +9,9 @@ SYNOPSIS
 --------
 [verse]
 'git notes' [list [<object>]]
-'git notes' add [-f] [--allow-empty] [--[no-]separator | --separator=<paragraph-break>] [--[no-]stripspace] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
+'git notes' add [-f] [--allow-empty] [--[no-]separator | --separator=<paragraph-break>] [--[no-]stripspace] [-F <file> | -m <msg> | (-c | -C) <object>] [-e] [<object>]
 'git notes' copy [-f] ( --stdin | <from-object> [<to-object>] )
-'git notes' append [--allow-empty] [--[no-]separator | --separator=<paragraph-break>] [--[no-]stripspace] [-F <file> | -m <msg> | (-c | -C) <object>] [<object>]
+'git notes' append [--allow-empty] [--[no-]separator | --separator=<paragraph-break>] [--[no-]stripspace] [-F <file> | -m <msg> | (-c | -C) <object>] [-e] [<object>]
 'git notes' edit [--allow-empty] [<object>] [--[no-]stripspace]
 'git notes' show [<object>]
 'git notes' merge [-v | -q] [-s <strategy> ] <notes-ref>
@@ -67,7 +67,9 @@ add::
 	the existing notes will be opened in the editor (like the `edit`
 	subcommand). If you specify multiple `-m` and `-F`, a blank
 	line will be inserted between the messages. Use the `--separator`
-	option to insert other delimiters.
+	option to insert other delimiters. You can use `-e` to edit and
+	fine-tune the message(s) supplied from `-m` and `-F` options
+	interactively (using an editor) before adding the note.
 
 copy::
 	Copy the notes for the first object onto the second object (defaults to
@@ -93,6 +95,8 @@ append::
 	an existing note, a blank line is added before each new
 	message as an inter-paragraph separator.  The separator can
 	be customized with the `--separator` option.
+	Edit the notes to be appended given by `-m` and `-F` options with
+	`-e` interactively (using an editor) before appending the note.
 
 edit::
 	Edit the notes for a given object (defaults to HEAD).
