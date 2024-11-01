@@ -265,7 +265,7 @@ test_expect_success 'fetching from another promisor remote' '
 '
 
 test_expect_success 'fetching with --filter configures a promisor remote' '
-	git clone "file://$(pwd)/server" server3 &&
+	test_create_repo server3 &&
 	test_commit -C server3 baz &&
 	git -C server3 repack -a -d --write-bitmap-index &&
 	HASH3=$(git -C server3 rev-parse baz) &&
