@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Oct 2024, #12; Wed, 30)
-X-master-at: 23d289d273d861f0a6244480e89ff937f66efa77
-X-next-at: 8800431eeacca56afc106ed9e72ebe59bca077b0
+Subject: What's cooking in git.git (Nov 2024, #01; Fri, 1)
+X-master-at: 8f8d6eee531b3fa1a8ef14f169b0cb5035f7a772
+X-next-at: c08e6fccd86136592273e319042f44cc8eadbb2a
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Oct 2024, #12; Wed, 30)
+What's cooking in git.git (Nov 2024, #01; Fri, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,14 +17,19 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-This is the fifth integration round from the interim maintainer. A
-large number of topics are currently sitting in 'next' and will likely
-graduate to 'master' before the end of the week.
+This is the sixth and final integration round from the interim
+maintainer, since Junio appears to be back online after his
+well-deserved time off. The topics mentioned last time from 'next'
+have graduated to 'master', and 'next' is relatively thin as a result.
+As before, a large number of topics remain awaiting review.
 
-Regrettably, there continue to be lots of topics that are stuck
-waiting for more discussion and would benefit from review. Please have
-a look at any topics that you feel comfortable reviewing and please do
-so if you find the time.
+Junio and I will coordinate the reverse hand-off, moving broken out
+topic branches back into his tree, and so forth.
+
+(On a personal note, I appreciate everyone's patience in dealing with
+me as I navigated shuffling the patches around. I hope I was able to
+keep the project going reasonably smoothly in Junio's absence, and I'm
+grateful for the opportunity to have done so.)
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -61,83 +66,31 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* co/t6050-pipefix (2024-10-22) 1 commit
- (merged to 'next' on 2024-10-22 at d377ddbb64)
- + t6050: avoid pipes with upstream Git commands
+* ak/more-typofixes (2024-10-24) 1 commit
+ (merged to 'next' on 2024-10-25 at 63e3f967f3)
+ + t: fix typos
 
- Avoid losing exit status by having Git command being tested on the
- upstream side of a pipe.
+ More typofixes.
 
- source: <20241022012701.8959-1-chizobajames21@gmail.com>
-
-
-* kh/submitting-patches (2024-10-21) 1 commit
- (merged to 'next' on 2024-10-22 at 0882adfc45)
- + SubmittingPatches: tags -> trailers
-
- Docfix.
-
- source: <d3a1ba01104da8496d52308c07c5c274fd30b0c2.1729443395.git.code@khaugsbakk.name>
+ source: <20241024114721.14270-1-algonell@gmail.com>
 
 
-* ks/t4205-fixup (2024-10-21) 1 commit
- (merged to 'next' on 2024-10-22 at daa85d02c3)
- + t4205: fix typo in 'NUL termination with --stat'
-
- Testfix.
-
- source: <20241020191910.31096-1-five231003@gmail.com>
-
-
-* ps/ref-filter-sort (2024-10-21) 1 commit
- (merged to 'next' on 2024-10-22 at 6313df7028)
- + ref-filter: format iteratively with lexicographic refname sorting
-
- Teaches the ref-filter machinery to recognize and avoid cases where
- sorting would be redundant.
-
- source: <d23c3e3ee7fdb49fcd05b4f2e52dd2a1cfdc10f2.1729510342.git.ps@pks.im>
-
-
-* ps/reftable-strbuf (2024-10-17) 10 commits
- (merged to 'next' on 2024-10-22 at 469c11aca4)
- + reftable: handle trivial `reftable_buf` errors
- + reftable/stack: adapt `stack_filename()` to handle allocation failures
- + reftable/record: adapt `reftable_record_key()` to handle allocation failures
- + reftable/stack: adapt `format_name()` to handle allocation failures
- + t/unit-tests: check for `reftable_buf` allocation errors
- + reftable/blocksource: adapt interface name
- + reftable: convert from `strbuf` to `reftable_buf`
- + reftable/basics: provide new `reftable_buf` interface
- + reftable: stop using `strbuf_addf()`
- + reftable: stop using `strbuf_addbuf()`
- (this branch is used by ps/reftable-detach.)
-
- Implements a new reftable-specific strbuf replacement to reduce
- reftable's dependency on Git-specific data structures.
-
- source: <cover.1729140565.git.ps@pks.im>
-
-
-* sk/t7011-cleanup (2024-10-22) 1 commit
- (merged to 'next' on 2024-10-22 at 4273cb6260)
- + t7011: ensure no whitespace after redirect
+* ak/t1016-cleanup (2024-10-22) 1 commit
+ (merged to 'next' on 2024-10-22 at 1dd1717591)
+ + t1016: clean up style
 
  Test cleanup.
 
- source: <20241019163439.274656-1-kuforiji98@gmail.com>
+ source: <20241022110730.7655-1-algonell@gmail.com>
 
---------------------------------------------------
-[New Topics]
 
-* as/show-index-uninitialized-hash (2024-10-27) 1 commit
- - show-index: fix uninitialized hash function
+* jc/breaking-changes-early-adopter-option (2024-10-11) 1 commit
+ (merged to 'next' on 2024-10-18 at 899fb7e75f)
+ + BreakingChanges: early adopter option
 
- Regression fix for 'show-index' when run outside of a repository.
+ Describe the policy to introduce breaking changes.
 
- Expecting a reroll.
- cf. <26d1bd3c-4f90-4406-8a1f-2eb085c46bab@gmail.com>
- source: <20241026120950.72727-1-abhijeet.nkt@gmail.com>
+ source: <xmqq1q0mcnt8.fsf@gitster.g>
 
 
 * jk/dumb-http-finalize (2024-10-25) 11 commits
@@ -160,20 +113,217 @@ Release tarballs are available at:
  downloaded from the remote. This has been corrected by no longer
  relying on the *.idx file we got from the remote.
 
- Will merge to 'master'.
  source: <20241025064148.GA2110169@coredump.intra.peff.net>
+
+
+* kh/mv-breakage (2024-10-23) 1 commit
+ (merged to 'next' on 2024-10-25 at db92c3efa1)
+ + t7001: add failure test which triggers assertion
+
+ Demonstrate an assertion failure in 'git mv'.
+
+ source: <c4ada0b787736ecd5aee986b1b8a4f90ccb84e21.1729631436.git.code@khaugsbakk.name>
+
+
+* kh/update-ref (2024-10-21) 6 commits
+ (merged to 'next' on 2024-10-25 at 317cc41dd3)
+ + Documentation: mutually link update-ref and symbolic-ref
+ + Documentation/git-update-ref.txt: discuss symbolic refs
+ + Documentation/git-update-ref.txt: remove confusing paragraph
+ + Documentation/git-update-ref.txt: demote symlink to last section
+ + Documentation/git-update-ref.txt: remove safety paragraphs
+ + Documentation/git-update-ref.txt: drop “flag”
+
+ Documentation updates to 'git-update-ref(1)'.
+
+ source: <cover.1729543007.git.code@khaugsbakk.name>
+
+
+* ps/platform-compat-fixes (2024-10-28) 11 commits
+ (merged to 'next' on 2024-10-22 at 46b99d8301)
+ + t6006: fix prereq handling with `test_format ()`
+ + http: fix build error on FreeBSD
+ + builtin/credential-cache: fix missing parameter for stub function
+ + t7300: work around platform-specific behaviour with long paths on MinGW
+ + t5500, t5601: skip tests which exercise paths with '[::1]' on Cygwin
+ + t3404: work around platform-specific behaviour on macOS 10.15
+ + t1401: make invocation of tar(1) work with Win32-provided one
+ + t/lib-gpg: fix setup of GNUPGHOME in MinGW
+ + t/lib-gitweb: test against the build version of gitweb
+ + t/test-lib: wire up NO_ICONV prerequisite
+ + t/test-lib: fix quoting of TEST_RESULTS_SAN_FILE
+
+ Various platform compatibility fixes split out of the larger effort
+ to use Meson as the primary build tool.
+
+ source: <cover.1729060405.git.ps@pks.im>
+ source: <zod73s7j77gjj2f62clg3utxlxnclbyhjjz3yc74x7zyh35fzy@blwhzqefxyrs>
+
+
+* ps/upload-pack-doc (2024-10-21) 1 commit
+ (merged to 'next' on 2024-10-25 at ede395593c)
+ + doc: document how uploadpack.allowAnySHA1InWant impact other allow options
+
+ Documentation update to clarify that 'uploadpack.allowAnySHA1InWant'
+ implies both 'allowTipSHA1InWant' and 'allowReachableSHA1InWant'.
+
+ source: <pull.1814.v2.git.git.1729355997353.gitgitgadget@gmail.com>
+
+
+* rj/cygwin-exit (2024-10-18) 1 commit
+ (merged to 'next' on 2024-10-25 at a3acd18921)
+ + credential-cache: treat ECONNABORTED like ECONNRESET
+
+ Treat ECONNABORTED the same as ECONNRESET in 'git credential-cache' to
+ work around a possible Cygwin regression. This resolves a race condition
+ caused by changes in Cygwin's handling of socket closures, allowing the
+ client to exit cleanly when encountering ECONNABORTED.
+
+ source: <20241018052952.GE2408674@coredump.intra.peff.net>
+
+
+* rs/grep-lookahead (2024-10-22) 1 commit
+ (merged to 'next' on 2024-10-25 at 44fc090a5e)
+ + grep: disable lookahead on error
+
+ Fix 'git grep' regression on macOS by disabling lookahead when
+ encountering invalid UTF-8 byte sequences.
+
+ source: <7a51a68e-5f9d-4444-a568-9ca180bc4c6b@web.de>
+
+
+* sa/notes-edit (2024-10-21) 1 commit
+ (merged to 'next on 2024-10-25 at 29b26e5ca6)
+ + notes: teach the -e option to edit messages in editor
+
+ Teach 'git notes add' and 'git notes append' a new '-e' flag,
+ instructing them to open the note in $GIT_EDITOR before saving.
+
+ source: <pull.1817.v4.git.1729534340786.gitgitgadget@gmail.com>
+
+
+* sk/t9101-cleanup (2024-10-23) 1 commit
+ (merged to 'next' on 2024-10-25 at 43a35137b5)
+ + t9101: ensure no whitespace after redirect
+
+ Test cleanup.
+
+ source: <20241023121113.915310-1-kuforiji98@gmail.com>
+
+
+* ss/duplicate-typos (2024-10-21) 1 commit
+ (merged to 'next' on 2024-10-25 at a55ee8bc52)
+ + global: Fix duplicate word typos
+
+ Typofixes.
+
+ source: <6ce47185-690d-415e-95c9-06a3b828be29e@cs-ware.de>
+
+
+* ua/atoi (2024-10-24) 3 commits
+ (merged to 'next' on 2024-10-25 at ecd980f7eb)
+ + imap: replace atoi() with strtol_i() for UIDVALIDITY and UIDNEXT parsing
+ + merge: replace atoi() with strtol_i() for marker size validation
+ + daemon: replace atoi() with strtoul_ui() and strtol_i()
+
+ Replace various calls to atoi() with strtol_i() and strtoul_ui(), and
+ add improved error handling.
+
+ source: <pull.1810.v6.git.git.1729729499.gitgitgadget@gmail.com>
+
+
+* ua/t3404-cleanup (2024-10-14) 2 commits
+ (merged to 'next' on 2024-10-25 at 26b7b76329)
+ + t3404: replace test with test_line_count()
+ + t3404: avoid losing exit status with focus on `git show` and `git cat-file`
+
+ Test update.
+
+ source: <pull.1810.git.git.1728774574.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[New Topics]
+
+* bc/ancient-ci (2024-11-01) 3 commits
+ - Add additional CI jobs to avoid accidental breakage
+ - ci: remove clause for Ubuntu 16.04
+ - gitlab-ci: switch from Ubuntu 16.04 to 20.04
+
+ Drop support for ancient environments in various CI jobs.
+
+ Needs review.
+ source: <20241031234934.3451390-1-sandals@crustytoothpaste.net>
+
+
+* cw/worktree-extension (2024-11-01) 9 commits
+ - worktree: refactor `repair_worktree_after_gitdir_move()`
+ - worktree: add relative cli/config options to `repair` command
+ - worktree: add relative cli/config options to `move` command
+ - worktree: add relative cli/config options to `add` command
+ - worktree: add `write_worktree_linking_files()` function
+ - worktree: refactor infer_backlink return
+ - worktree: add `relativeWorktrees` extension
+ - setup: correctly reinitialize repository version
+ - Merge branch 'cw/config-extensions' into cw/worktree
+ (this branch uses cw/config-extensions.)
+
+ Introduce a new repository extension to prevent older Git versions
+ from mis-interpreting worktrees created with relative paths.
+
+ Needs review.
+ source: <20241031-wt_relative_options-v4-0-07a3dc0f02a3@pm.me>
+
+
+* ds/path-walk-1 (2024-10-31) 6 commits
+ - path-walk: mark trees and blobs as UNINTERESTING
+ - path-walk: visit tags and cached objects
+ - path-walk: allow consumer to specify object types
+ - t6601: add helper for testing path-walk API
+ - test-lib-functions: add test_cmp_sorted
+ - path-walk: introduce an object walk by path
+
+ Introduce a new API to visit objects in batches based on a common
+ path, or by type.
+
+ Under discussion.
+ source: <pull.1818.git.1730356023.gitgitgadget@gmail.com>
+ cf. <ZyUqr/wb5K4Og9j9@nand.local>
+
+
+* jk/left-right-bitmap (2024-11-01) 1 commit
+ (merged to 'next' on 2024-11-01 at f1d0c395f5)
+ + rev-list: skip bitmap traversal for --left-right
+
+ When called with '--left-right' and '--use-bitmap-index', 'rev-list'
+ will produce output without any left/right markers, which has been
+ corrected.
+
+ Will merge to 'master'?
+ source: <20241101121606.GA2327410@coredump.intra.peff.net>
+
+
+* kh/bundle-docs (2024-10-29) 3 commits
+ - Documentation/git-bundle.txt: discuss naïve backups
+ - Documentation/git-bundle.txt: mention --all in spec. refs
+ - Documentation/git-bundle.txt: mention full backup example
+
+ Documentation improvements to more prominently call out the use of
+ '--all' when creating bundles.
+
+ Will merge to 'next'?
+ source: <cover.1730234365.git.code@khaugsbakk.name>
 
 --------------------------------------------------
 [Cooking]
 
-* ak/more-typofixes (2024-10-24) 1 commit
- (merged to 'next' on 2024-10-25 at 63e3f967f3)
- + t: fix typos
+* as/show-index-uninitialized-hash (2024-10-27) 1 commit
+ - show-index: fix uninitialized hash function
 
- More typofixes.
+ Regression fix for 'show-index' when run outside of a repository.
 
- Will merge to 'master'.
- source: <20241024114721.14270-1-algonell@gmail.com>
+ Expecting a reroll.
+ cf. <26d1bd3c-4f90-4406-8a1f-2eb085c46bab@gmail.com>
+ source: <20241026120950.72727-1-abhijeet.nkt@gmail.com>
 
 
 * ps/mingw-rename (2024-10-27) 3 commits
@@ -206,26 +356,6 @@ Release tarballs are available at:
  source: <cover.1729677003.git.ps@pks.im>
 
 
-* sk/t9101-cleanup (2024-10-23) 1 commit
- (merged to 'next' on 2024-10-25 at 43a35137b5)
- + t9101: ensure no whitespace after redirect
-
- Test cleanup.
-
- Will merge to 'master'.
- source: <20241023121113.915310-1-kuforiji98@gmail.com>
-
-
-* ak/t1016-cleanup (2024-10-22) 1 commit
- (merged to 'next' on 2024-10-22 at 1dd1717591)
- + t1016: clean up style
-
- Test cleanup.
-
- Will merge to 'master'.
- source: <20241022110730.7655-1-algonell@gmail.com>
-
-
 * cw/config-extensions (2024-10-22) 1 commit
  (merged to 'next' on 2024-10-30 at 875fa0b619)
  + doc: consolidate extensions in git-config documentation
@@ -235,16 +365,6 @@ Release tarballs are available at:
 
  Will merge to 'master'?
  source: <20241021-cleanup-extension-docs-v1-1-ab02cece3132@pm.me>
-
-
-* kh/mv-breakage (2024-10-23) 1 commit
- (merged to 'next' on 2024-10-25 at db92c3efa1)
- + t7001: add failure test which triggers assertion
-
- Demonstrate an assertion failure in 'git mv'.
-
- Will merge to 'master'.
- source: <c4ada0b787736ecd5aee986b1b8a4f90ccb84e21.1729631436.git.code@khaugsbakk.name>
 
 
 * km/config-remote-by-name (2024-10-21) 1 commit
@@ -298,75 +418,6 @@ Release tarballs are available at:
  source: <cover.1729502823.git.ps@pks.im>
 
 
-* ps/upload-pack-doc (2024-10-21) 1 commit
- (merged to 'next' on 2024-10-25 at ede395593c)
- + doc: document how uploadpack.allowAnySHA1InWant impact other allow options
-
- Documentation update to clarify that 'uploadpack.allowAnySHA1InWant'
- implies both 'allowTipSHA1InWant' and 'allowReachableSHA1InWant'.
-
- Will merge to 'master'.
- source: <pull.1814.v2.git.git.1729355997353.gitgitgadget@gmail.com>
-
-
-* rj/cygwin-exit (2024-10-18) 1 commit
- (merged to 'next' on 2024-10-25 at a3acd18921)
- + credential-cache: treat ECONNABORTED like ECONNRESET
-
- Treat ECONNABORTED the same as ECONNRESET in 'git credential-cache' to
- work around a possible Cygwin regression. This resolves a race condition
- caused by changes in Cygwin's handling of socket closures, allowing the
- client to exit cleanly when encountering ECONNABORTED.
-
- Will merge to 'master'.
- source: <20241018052952.GE2408674@coredump.intra.peff.net>
-
-
-* rs/grep-lookahead (2024-10-22) 1 commit
- (merged to 'next' on 2024-10-25 at 44fc090a5e)
- + grep: disable lookahead on error
-
- Fix 'git grep' regression on macOS by disabling lookahead when
- encountering invalid UTF-8 byte sequences.
-
- Will merge to 'master'.
- source: <7a51a68e-5f9d-4444-a568-9ca180bc4c6b@web.de>
-
-
-* sa/notes-edit (2024-10-21) 1 commit
- (merged to 'next on 2024-10-25 at 29b26e5ca6)
- + notes: teach the -e option to edit messages in editor
-
- Teach 'git notes add' and 'git notes append' a new '-e' flag,
- instructing them to open the note in $GIT_EDITOR before saving.
-
- Will merge to 'master'.
- source: <pull.1817.v4.git.1729534340786.gitgitgadget@gmail.com>
-
-
-* ss/duplicate-typos (2024-10-21) 1 commit
- (merged to 'next' on 2024-10-25 at a55ee8bc52)
- + global: Fix duplicate word typos
-
- Typofixes.
-
- Will merge to 'master'.
- source: <6ce47185-690d-415e-95c9-06a3b828be29e@cs-ware.de>
-
-
-* ua/atoi (2024-10-24) 3 commits
- (merged to 'next' on 2024-10-25 at ecd980f7eb)
- + imap: replace atoi() with strtol_i() for UIDVALIDITY and UIDNEXT parsing
- + merge: replace atoi() with strtol_i() for marker size validation
- + daemon: replace atoi() with strtoul_ui() and strtol_i()
-
- Replace various calls to atoi() with strtol_i() and strtoul_ui(), and
- add improved error handling.
-
- Will merge to 'master'.
- source: <pull.1810.v6.git.git.1729729499.gitgitgadget@gmail.com>
-
-
 * y5/diff-pager (2024-10-21) 1 commit
  - diff: setup pager only before diff contents truly ready
 
@@ -389,21 +440,6 @@ Release tarballs are available at:
  source: <20241014204427.1712182-1-gitster@pobox.com>
 
 
-* kh/update-ref (2024-10-21) 6 commits
- (merged to 'next' on 2024-10-25 at 317cc41dd3)
- + Documentation: mutually link update-ref and symbolic-ref
- + Documentation/git-update-ref.txt: discuss symbolic refs
- + Documentation/git-update-ref.txt: remove confusing paragraph
- + Documentation/git-update-ref.txt: demote symlink to last section
- + Documentation/git-update-ref.txt: remove safety paragraphs
- + Documentation/git-update-ref.txt: drop “flag”
-
- Documentation updates to 'git-update-ref(1)'.
-
- Will merge to 'master'.
- source: <cover.1729543007.git.code@khaugsbakk.name>
-
-
 * am/git-blame-ignore-revs-by-default (2024-10-14) 2 commits
  - blame: introduce --override-ignore-revs to bypass ignore revisions list
  - blame: respect .git-blame-ignore-revs automatically
@@ -422,7 +458,7 @@ Release tarballs are available at:
 
  Updates the '.clang-format' to match project conventions.
 
- Will merge to 'master'?
+ Will merge to 'master'.
  source: <cover.1729241030.git.karthik.188@gmail.com>
 
 
@@ -433,28 +469,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <pull.1811.git.git.1728820722580.gitgitgadget@gmail.com>
-
-
-* ps/platform-compat-fixes (2024-10-28) 11 commits
- (merged to 'next' on 2024-10-22 at 46b99d8301)
- + t6006: fix prereq handling with `test_format ()`
- + http: fix build error on FreeBSD
- + builtin/credential-cache: fix missing parameter for stub function
- + t7300: work around platform-specific behaviour with long paths on MinGW
- + t5500, t5601: skip tests which exercise paths with '[::1]' on Cygwin
- + t3404: work around platform-specific behaviour on macOS 10.15
- + t1401: make invocation of tar(1) work with Win32-provided one
- + t/lib-gpg: fix setup of GNUPGHOME in MinGW
- + t/lib-gitweb: test against the build version of gitweb
- + t/test-lib: wire up NO_ICONV prerequisite
- + t/test-lib: fix quoting of TEST_RESULTS_SAN_FILE
-
- Various platform compatibility fixes split out of the larger effort
- to use Meson as the primary build tool.
-
- Will merge to 'master'.
- source: <cover.1729060405.git.ps@pks.im>
- source: <zod73s7j77gjj2f62clg3utxlxnclbyhjjz3yc74x7zyh35fzy@blwhzqefxyrs>
 
 
 * ps/upgrade-clar (2024-10-21) 5 commits
@@ -550,7 +564,7 @@ Release tarballs are available at:
  source: <20241023153736.257733-1-bence@ferdinandy.com>
 
 
-* ps/build (2024-10-24) 31 commits
+* ps/build (2024-10-24) 21 commits
  - meson: fix conflicts with in-flight topics
  - Introduce support for the Meson build system
  - Documentation: add comparison of build systems
@@ -572,51 +586,12 @@ Release tarballs are available at:
  - Makefile: use common template for GIT-BUILD-OPTIONS
  - Merge branch 'ps/platform-compat-fixes' into ps/build
  - Merge branch 'ps/upgrade-clar' into ps/build
- + http: fix build error on FreeBSD
- + builtin/credential-cache: fix missing parameter for stub function
- + t7300: work around platform-specific behaviour with long paths on MinGW
- + t5500, t5601: skip tests which exercise paths with '[::1]' on Cygwin
- + t3404: work around platform-specific behaviour on macOS 10.15
- + t1401: make invocation of tar(1) work with Win32-provided one
- + t/lib-gpg: fix setup of GNUPGHOME in MinGW
- + t/lib-gitweb: test against the build version of gitweb
- + t/test-lib: wire up NO_ICONV prerequisite
- + t/test-lib: fix quoting of TEST_RESULTS_SAN_FILE
  (this branch uses ps/upgrade-clar.)
 
  Build procedure update plus introduction of Mason based builds
 
  Under discussion.
  source: <cover.1729771605.git.ps@pks.im>
-
-
-* ds/path-walk (2024-10-08) 17 commits
- - pack-objects: thread the path-based compression
- - pack-objects: refactor path-walk delta phase
- - scalar: enable path-walk during push via config
- - pack-objects: enable --path-walk via config
- - repack: update usage to match docs
- - repack: add --path-walk option
- - pack-objects: introduce GIT_TEST_PACK_PATH_WALK
- - p5313: add performance tests for --path-walk
- - pack-objects: update usage to match docs
- - pack-objects: add --path-walk option
- - pack-objects: extract should_attempt_deltas()
- - path-walk: add prune_all_uninteresting option
- - revision: create mark_trees_uninteresting_dense()
- - path-walk: allow visiting tags
- - path-walk: allow consumer to specify object types
- - t6601: add helper for testing path-walk API
- - path-walk: introduce an object walk by path
-
- A new algorithm for object graph traversal to favor visiting the
- objects at the same tree path in succession (as opposed to visiting
- objects that are different between trees as we walk commit
- histories) is introduced to optimize object packing.
-
- Expecting a reroll.
- cf. <dd18a858-31bf-497d-bb19-d371102dfa2a@gmail.com>
- source: <pull.1813.git.1728396723.gitgitgadget@gmail.com>
 
 
 * hy/partial-repack-fix (2024-10-16) 3 commits
@@ -631,18 +606,7 @@ Release tarballs are available at:
  source: <20241014032546.68427-1-hanyang.tony@bytedance.com>
 
 
-* ua/t3404-cleanup (2024-10-14) 2 commits
- (merged to 'next' on 2024-10-25 at 26b7b76329)
- + t3404: replace test with test_line_count()
- + t3404: avoid losing exit status with focus on `git show` and `git cat-file`
-
- Test update.
-
- Will merge to 'master'.
- source: <pull.1810.git.git.1728774574.gitgitgadget@gmail.com>
-
-
-* ej/cat-file-remote-object-info (2024-10-29) 6 commits
+* ej/cat-file-remote-object-info (2024-10-31) 6 commits
  - cat-file: add remote-object-info to batch-command
  - cat-file: add declaration of variable i inside its for loop
  - transport: add client support for object-info
@@ -668,16 +632,6 @@ Release tarballs are available at:
  Appears to break CI.
  cf. https://github.com/ttaylorr/git/actions/runs/11523538245
  source: <20240802073143.56731-1-hanyang.tony@bytedance.com>
-
-
-* jc/breaking-changes-early-adopter-option (2024-10-11) 1 commit
- (merged to 'next' on 2024-10-18 at 899fb7e75f)
- + BreakingChanges: early adopter option
-
- Describe the policy to introduce breaking changes.
-
- Will merge to 'master'.
- source: <xmqq1q0mcnt8.fsf@gitster.g>
 
 
 * jc/strbuf-commented-something (2024-09-12) 2 commits
@@ -731,23 +685,23 @@ Release tarballs are available at:
 
 
 * tb/incremental-midx-part-2 (2024-10-04) 17 commits
- - fixup! pack-bitmap.c: open and store incremental bitmap layers
- - fixup! midx: implement writing incremental MIDX bitmaps
- - midx: implement writing incremental MIDX bitmaps
- - pack-bitmap.c: use `ewah_or_iterator` for type bitmap iterators
- - pack-bitmap.c: keep track of each layer's type bitmaps
- - ewah: implement `struct ewah_or_iterator`
- - pack-bitmap.c: apply pseudo-merge commits with incremental MIDXs
- - pack-bitmap.c: compute disk-usage with incremental MIDXs
- - pack-bitmap.c: teach `rev-list --test-bitmap` about incremental MIDXs
- - pack-bitmap.c: support bitmap pack-reuse with incremental MIDXs
- - pack-bitmap.c: teach `show_objects_for_type()` about incremental MIDXs
- - pack-bitmap.c: teach `bitmap_for_commit()` about incremental MIDXs
- - pack-bitmap.c: open and store incremental bitmap layers
- - pack-revindex: prepare for incremental MIDX bitmaps
- - Documentation: describe incremental MIDX bitmaps
- - Merge branch 'tb/pseudo-merge-bitmap-fixes' into tb/incremental-midx-part-2
- - Merge branch 'tb/incremental-midx-part-1' into tb/incremental-midx-part-2
+ . fixup! pack-bitmap.c: open and store incremental bitmap layers
+ . fixup! midx: implement writing incremental MIDX bitmaps
+ . midx: implement writing incremental MIDX bitmaps
+ . pack-bitmap.c: use `ewah_or_iterator` for type bitmap iterators
+ . pack-bitmap.c: keep track of each layer's type bitmaps
+ . ewah: implement `struct ewah_or_iterator`
+ . pack-bitmap.c: apply pseudo-merge commits with incremental MIDXs
+ . pack-bitmap.c: compute disk-usage with incremental MIDXs
+ . pack-bitmap.c: teach `rev-list --test-bitmap` about incremental MIDXs
+ . pack-bitmap.c: support bitmap pack-reuse with incremental MIDXs
+ . pack-bitmap.c: teach `show_objects_for_type()` about incremental MIDXs
+ . pack-bitmap.c: teach `bitmap_for_commit()` about incremental MIDXs
+ . pack-bitmap.c: open and store incremental bitmap layers
+ . pack-revindex: prepare for incremental MIDX bitmaps
+ . Documentation: describe incremental MIDX bitmaps
+ . Merge branch 'tb/pseudo-merge-bitmap-fixes' into tb/incremental-midx-part-2
+ . Merge branch 'tb/incremental-midx-part-1' into tb/incremental-midx-part-2
 
  Incremental updates of multi-pack index files.
 
@@ -797,3 +751,35 @@ Release tarballs are available at:
 
  Waiting for review responses.
  source: <20240823224630.1180772-1-e@80x24.org>
+
+
+* jt/commit-graph-missing (2024-11-01) 2 commits
+  . fetch-pack: warn if in commit graph but not obj db
+  . Revert "fetch-pack: add a deref_without_lazy_fetch_extended()"
+
+  A regression where commit objects missing from a commit-graph can
+  cause an infinite loop when doing a fetch in a partial clone has
+  been fixed.
+
+  Breaks CI.
+  source: <cover.1730409376.git.jonathantanmy@google.com>
+  cf. https://github.com/ttaylorr/git/actions/runs/11631453312/job/32392591229
+
+
+* kn/the-repository (2024-10-31) 10 commits
+ . midx: add repository to `multi_pack_index` struct
+ . config: make `packed_git_(limit|window_size)` non-global variables
+ . config: make `delta_base_cache_limit` a non-global variable
+ . packfile: pass down repository to `for_each_packed_object`
+ . packfile: pass down repository to `has_object[_kept]_pack`
+ . packfile: pass down repository to `odb_pack_name`
+ . packfile: pass `repository` to static function in the file
+ . packfile: use `repository` from `packed_git` directly
+ . packfile: add repository to struct `packed_git`
+
+ Various uses of 'the_repoository' in the packfile code have been
+ eliminated.
+
+ Breaks CI, and expecting another round.
+ source: <cover.1730366765.git.karthik.188@gmail.com>
+ cf. https://github.com/ttaylorr/git/actions/runs/11602969593/job/32309061019
