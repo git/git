@@ -1,3 +1,7 @@
+---
+name: Bug report
+about: Use this template to report bugs.
+---
  - [ ] I was not able to find an [open](https://github.com/git-for-windows/git/issues?q=is%3Aopen) or [closed](https://github.com/git-for-windows/git/issues?q=is%3Aclosed) issue matching what I'm seeing
 
 ### Setup
