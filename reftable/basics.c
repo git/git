@@ -271,14 +271,15 @@ int common_prefix_size(struct reftable_buf *a, struct reftable_buf *b)
 	return p;
 }
 
-int hash_size(uint32_t id)
+int hash_size(enum reftable_hash id)
 {
+	if (!id)
+		return REFTABLE_HASH_SIZE_SHA1;
 	switch (id) {
-	case 0:
-	case GIT_SHA1_FORMAT_ID:
-		return GIT_SHA1_RAWSZ;
-	case GIT_SHA256_FORMAT_ID:
-		return GIT_SHA256_RAWSZ;
+	case REFTABLE_HASH_SHA1:
+		return REFTABLE_HASH_SIZE_SHA1;
+	case REFTABLE_HASH_SHA256:
+		return REFTABLE_HASH_SIZE_SHA256;
 	}
 	abort();
 }
