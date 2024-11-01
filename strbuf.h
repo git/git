@@ -197,6 +197,9 @@ void strbuf_trim_trailing_dir_sep(struct strbuf *sb);
 /* Strip trailing LF or CR/LF */
 void strbuf_trim_trailing_newline(struct strbuf *sb);
 
+/* Strip trailing character c */
+void strbuf_trim_trailing_ch(struct strbuf *sb, int c);
+
 /**
  * Replace the contents of the strbuf with a reencoded form.  Returns -1
  * on error, 0 on success.
@@ -663,6 +666,13 @@ typedef int (*char_predicate)(char ch);
 
 void strbuf_addstr_urlencode(struct strbuf *sb, const char *name,
 			     char_predicate allow_unencoded_fn);
+
+/*
+ * Trim and replace each character with ascii code below 32 or above
+ * 127 (included) using a dot '.' character. Useful for sending
+ * capabilities.
+ */
+void strbuf_sanitize(struct strbuf *sb);
 
 __attribute__((format (printf,1,2)))
 int printf_ln(const char *fmt, ...);

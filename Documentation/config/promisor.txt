@@ -1,3 +1,30 @@
 promisor.quiet::
 	If set to "true" assume `--quiet` when fetching additional
 	objects for a partial clone.
+
+promisor.advertise::
+	If set to "true", a server will use the "promisor-remote"
+	capability, see linkgit:gitprotocol-v2[5], to advertise the
+	promisor remotes it is using, if it uses some. Default is
+	"false", which means the "promisor-remote" capability is not
+	advertised.
+
+promisor.acceptFromServer::
+	If set to "all", a client will accept all the promisor remotes
+	a server might advertise using the "promisor-remote"
+	capability. If set to "knownName" the client will accept
+	promisor remotes which are already configured on the client
+	and have the same name as those advertised by the client. This
+	is not very secure, but could be used in a corporate setup
+	where servers and clients are trusted to not switch name and
+	URLs. If set to "knownUrl", the client will accept promisor
+	remotes which have both the same name and the same URL
+	configured on the client as the name and URL advertised by the
+	server. This is more secure than "all" or "knownUrl", so it
+	should be used if possible instead of those options. Default
+	is "none", which means no promisor remote advertised by a
+	server will be accepted. By accepting a promisor remote, the
+	client agrees that the server might omit objects that are
+	lazily fetchable from this promisor remote from its responses
+	to "fetch" and "clone" requests from the client. See
+	linkgit:gitprotocol-v2[5].

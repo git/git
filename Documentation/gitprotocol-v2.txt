@@ -781,6 +781,60 @@ retrieving the header from a bundle at the indicated URI, and thus
 save themselves and the server(s) the request(s) needed to inspect the
 headers of that bundle or bundles.
 
+promisor-remote=<pr-infos>
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The server may advertise some promisor remotes it is using or knows
+about to a client which may want to use them as its promisor remotes,
+instead of this repository. In this case <pr-infos> should be of the
+form:
+
+	pr-infos = pr-info | pr-infos ";" pr-info
+
+	pr-info = "name=" pr-name | "name=" pr-name "," "url=" pr-url
+
+where `pr-name` is the urlencoded name of a promisor remote, and
+`pr-url` the urlencoded URL of that promisor remote.
+
+In this case, if the client decides to use one or more promisor
+remotes the server advertised, it can reply with
+"promisor-remote=<pr-names>" where <pr-names> should be of the form:
+
+	pr-names = pr-name | pr-names ";" pr-name
+
+where `pr-name` is the urlencoded name of a promisor remote the server
+advertised and the client accepts.
+
+Note that, everywhere in this document, `pr-name` MUST be a valid
+remote name, and the ';' and ',' characters MUST be encoded if they
+appear in `pr-name` or `pr-url`.
+
+If the server doesn't know any promisor remote that could be good for
+a client to use, or prefers a client not to use any promisor remote it
+uses or knows about, it shouldn't advertise the "promisor-remote"
+capability at all.
+
+In this case, or if the client doesn't want to use any promisor remote
+the server advertised, the client shouldn't advertise the
+"promisor-remote" capability at all in its reply.
+
+The "promisor.advertise" and "promisor.acceptFromServer" configuration
+options can be used on the server and client side respectively to
+control what they advertise or accept respectively. See the
+documentation of these configuration options for more information.
+
+Note that in the future it would be nice if the "promisor-remote"
+protocol capability could be used by the server, when responding to
+`git fetch` or `git clone`, to advertise better-connected remotes that
+the client can use as promisor remotes, instead of this repository, so
+that the client can lazily fetch objects from these other
+better-connected remotes. This would require the server to omit in its
+response the objects available on the better-connected remotes that
+the client has accepted. This hasn't been implemented yet though. So
+for now this "promisor-remote" capability is useful only when the
+server advertises some promisor remotes it already uses to borrow
+objects from.
+
 GIT
 ---
 Part of the linkgit:git[1] suite

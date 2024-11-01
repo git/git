@@ -134,6 +134,13 @@ void strbuf_trim_trailing_dir_sep(struct strbuf *sb)
 	sb->buf[sb->len] = '\0';
 }
 
+void strbuf_trim_trailing_ch(struct strbuf *sb, int c)
+{
+	while (sb->len > 0 && sb->buf[sb->len - 1] == c)
+		sb->len--;
+	sb->buf[sb->len] = '\0';
+}
+
 void strbuf_trim_trailing_newline(struct strbuf *sb)
 {
 	if (sb->len > 0 && sb->buf[sb->len - 1] == '\n') {
@@ -1081,4 +1088,13 @@ void strbuf_strip_file_from_path(struct strbuf *sb)
 {
 	char *path_sep = find_last_dir_sep(sb->buf);
 	strbuf_setlen(sb, path_sep ? path_sep - sb->buf + 1 : 0);
+}
+
+void strbuf_sanitize(struct strbuf *sb)
+{
+	strbuf_trim(sb);
+	for (size_t i = 0; i < sb->len; i++) {
+		if (sb->buf[i] <= 32 || sb->buf[i] >= 127)
+			sb->buf[i] = '.';
+	}
 }
