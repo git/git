@@ -11,6 +11,11 @@ UI, Workflows & Features
  * "git rebase --rebase-merges" now uses branch names as labels when
    able.
 
+ * Describe the policy to introduce breaking changes.
+
+ * Teach 'git notes add' and 'git notes append' a new '-e' flag,
+   instructing them to open the note in $GIT_EDITOR before saving.
+
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
 
@@ -43,6 +48,25 @@ Performance, Internal Implementation, Development Support etc.
 
  * The ref-filter machinery learns to recognize and avoid cases where
    sorting would be redundant.
+
+ * Various platform compatibility fixes split out of the larger effort
+   to use Meson as the primary build tool.
+
+ * Treat ECONNABORTED the same as ECONNRESET in 'git credential-cache'
+   to work around a possible Cygwin regression. This resolves a race
+   condition caused by changes in Cygwin's handling of socket
+   closures, allowing the client to exit cleanly when encountering
+   ECONNABORTED.
+
+ * Demonstrate an assertion failure in 'git mv'.
+
+ * Documentation update to clarify that 'uploadpack.allowAnySHA1InWant'
+   implies both 'allowTipSHA1InWant' and 'allowReachableSHA1InWant'.
+
+ * Replace various calls to atoi() with strtol_i() and strtoul_ui(),
+   and add improved error handling.
+
+ * Documentation updates to 'git-update-ref(1)'.
 
 Fixes since v2.47
 -----------------
@@ -80,6 +104,16 @@ Fixes since v2.47
    of a repository.
    (merge b33001645e wm/shortlog-hash later to maint).
 
+ * Fix 'git grep' regression on macOS by disabling lookahead when
+   encountering invalid UTF-8 byte sequences.
+   (merge ce025ae4f6 rs/grep-lookahead later to maint).
+
+ * The dumb-http code regressed when the result of re-indexing a pack
+   yielded an *.idx file that differs in content from the *.idx file
+   it downloaded from the remote. This has been corrected by no longer
+   relying on: the *.idx file we got from the remote.
+   (merge 863f2459a2 jk/dumb-http-finalize later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 66893a14d0 ps/leakfixes-part-8 later to maint).
    (merge 1164e270b5 jk/output-prefix-cleanup later to maint).
@@ -99,3 +133,8 @@ Fixes since v2.47
    (merge a73070fbd4 ks/t4205-fixup later to maint).
    (merge 9e362dd060 co/t6050-pipefix later to maint).
    (merge 91687cd13f sk/t7011-cleanup later to maint).
+   (merge 19c291e5b2 ua/t3404-cleanup later to maint).
+   (merge c32d4a8cfe ss/duplicate-typos later to maint).
+   (merge 09bf122507 sk/t9101-cleanup later to maint).
+   (merge c348191afe ak/t1016-cleanup later to maint).
+   (merge f56f9d6c0b ak/more-typofixes later to maint).
