@@ -13,6 +13,7 @@
 
 #include "packfile.h"
 #include "object-store-ll.h"
+#include "strbuf.h"
 
 #define BLKSIZE 512
 
@@ -591,6 +592,7 @@ static void load_all(void)
 int cmd_pack_redundant(int argc, const char **argv, const char *prefix UNUSED, struct repository *repo UNUSED) {
 	int i; int i_still_use_this = 0; struct pack_list *min = NULL, *red, *pl;
 	struct llist *ignore;
+	struct strbuf idx_name = STRBUF_INIT;
 	char buf[GIT_MAX_HEXSZ + 2]; /* hex hash + \n + \0 */
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
@@ -688,7 +690,7 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix UNUSED, s
 	pl = red = pack_list_difference(local_packs, min);
 	while (pl) {
 		printf("%s\n%s\n",
-		       sha1_pack_index_name(pl->pack->hash),
+		       odb_pack_name(&idx_name, pl->pack->hash, "idx"),
 		       pl->pack->pack_name);
 		pl = pl->next;
 	}
@@ -699,5 +701,6 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix UNUSED, s
 	pack_list_free(red);
 	pack_list_free(min);
 	llist_free(ignore);
+	strbuf_release(&idx_name);
 	return 0;
 }

@@ -1556,7 +1556,7 @@ static int want_object_in_pack_one(struct packed_git *p,
 	if (p == *found_pack)
 		offset = *found_offset;
 	else
-		offset = find_pack_entry_one(oid->hash, p);
+		offset = find_pack_entry_one(oid, p);
 
 	if (offset) {
 		if (!*found_pack) {
@@ -3984,7 +3984,7 @@ static int has_sha1_pack_kept_or_nonlocal(const struct object_id *oid)
 	while (p) {
 		if ((!p->pack_local || p->pack_keep ||
 				p->pack_keep_in_core) &&
-			find_pack_entry_one(oid->hash, p)) {
+			find_pack_entry_one(oid, p)) {
 			last_found = p;
 			return 1;
 		}
