@@ -53,22 +53,16 @@ static struct {
 	{ "sslv2", CURL_SSLVERSION_SSLv2 },
 	{ "sslv3", CURL_SSLVERSION_SSLv3 },
 	{ "tlsv1", CURL_SSLVERSION_TLSv1 },
-#ifdef GIT_CURL_HAVE_CURL_SSLVERSION_TLSv1_0
 	{ "tlsv1.0", CURL_SSLVERSION_TLSv1_0 },
 	{ "tlsv1.1", CURL_SSLVERSION_TLSv1_1 },
 	{ "tlsv1.2", CURL_SSLVERSION_TLSv1_2 },
-#endif
-#ifdef GIT_CURL_HAVE_CURL_SSLVERSION_TLSv1_3
 	{ "tlsv1.3", CURL_SSLVERSION_TLSv1_3 },
-#endif
 };
 static char *ssl_key;
 static char *ssl_key_type;
 static char *ssl_capath;
 static char *curl_no_proxy;
-#ifdef GIT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY
 static char *ssl_pinnedkey;
-#endif
 static char *ssl_cainfo;
 static long curl_low_speed_limit = -1;
 static long curl_low_speed_time = -1;
@@ -512,12 +506,7 @@ static int http_options(const char *var, const char *value,
 	}
 
 	if (!strcmp("http.pinnedpubkey", var)) {
-#ifdef GIT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY
 		return git_config_pathname(&ssl_pinnedkey, var, value);
-#else
-		warning(_("Public key pinning not supported with cURL < 7.39.0"));
-		return 0;
-#endif
 	}
 
 	if (!strcmp("http.extraheader", var)) {
@@ -701,7 +690,6 @@ static int has_cert_password(void)
 	return 1;
 }
 
-#ifdef GIT_CURL_HAVE_CURLOPT_PROXY_KEYPASSWD
 static int has_proxy_cert_password(void)
 {
 	if (http_proxy_ssl_cert == NULL || proxy_ssl_cert_password_required != 1)
@@ -715,36 +703,11 @@ static int has_proxy_cert_password(void)
 	}
 	return 1;
 }
-#endif
 
-#ifdef GITCURL_HAVE_CURLOPT_TCP_KEEPALIVE
 static void set_curl_keepalive(CURL *c)
 {
 	curl_easy_setopt(c, CURLOPT_TCP_KEEPALIVE, 1);
 }
-
-#else
-static int sockopt_callback(void *client, curl_socket_t fd, curlsocktype type)
-{
-	int ka = 1;
-	int rc;
-	socklen_t len = (socklen_t)sizeof(ka);
-
-	if (type != CURLSOCKTYPE_IPCXN)
-		return 0;
-
-	rc = setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&ka, len);
-	if (rc < 0)
-		warning_errno("unable to set SO_KEEPALIVE on socket");
-
-	return CURL_SOCKOPT_OK;
-}
-
-static void set_curl_keepalive(CURL *c)
-{
-	curl_easy_setopt(c, CURLOPT_SOCKOPTFUNCTION, sockopt_callback);
-}
-#endif
 
 /* Return 1 if redactions have been made, 0 otherwise. */
 static int redact_sensitive_header(struct strbuf *header, size_t offset)
@@ -1014,7 +977,6 @@ static long get_curl_allowed_protocols(int from_user, struct strbuf *list)
 	return bits;
 }
 
-#ifdef GIT_CURL_HAVE_CURL_HTTP_VERSION_2
 static int get_curl_http_version_opt(const char *version_string, long *opt)
 {
 	int i;
@@ -1037,8 +999,6 @@ static int get_curl_http_version_opt(const char *version_string, long *opt)
 	return -1; /* not found */
 }
 
-#endif
-
 static CURL *get_curl_handle(void)
 {
 	CURL *result = curl_easy_init();
@@ -1056,7 +1016,6 @@ static CURL *get_curl_handle(void)
 		curl_easy_setopt(result, CURLOPT_SSL_VERIFYHOST, 2);
 	}
 
-#ifdef GIT_CURL_HAVE_CURL_HTTP_VERSION_2
     if (curl_http_version) {
 		long opt;
 		if (!get_curl_http_version_opt(curl_http_version, &opt)) {
@@ -1064,7 +1023,6 @@ static CURL *get_curl_handle(void)
 			curl_easy_setopt(result, CURLOPT_HTTP_VERSION, opt);
 		}
     }
-#endif
 
 	curl_easy_setopt(result, CURLOPT_NETRC, CURL_NETRC_OPTIONAL);
 	curl_easy_setopt(result, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
@@ -1087,11 +1045,7 @@ static CURL *get_curl_handle(void)
 
 	if (http_ssl_backend && !strcmp("schannel", http_ssl_backend) &&
 	    !http_schannel_check_revoke) {
-#ifdef GIT_CURL_HAVE_CURLSSLOPT_NO_REVOKE
 		curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NO_REVOKE);
-#else
-		warning(_("CURLSSLOPT_NO_REVOKE not supported with cURL < 7.44.0"));
-#endif
 	}
 
 	if (http_proactive_auth != PROACTIVE_AUTH_NONE)
@@ -1131,23 +1085,17 @@ static CURL *get_curl_handle(void)
 		curl_easy_setopt(result, CURLOPT_SSLKEYTYPE, ssl_key_type);
 	if (ssl_capath)
 		curl_easy_setopt(result, CURLOPT_CAPATH, ssl_capath);
-#ifdef GIT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY
 	if (ssl_pinnedkey)
 		curl_easy_setopt(result, CURLOPT_PINNEDPUBLICKEY, ssl_pinnedkey);
-#endif
 	if (http_ssl_backend && !strcmp("schannel", http_ssl_backend) &&
 	    !http_schannel_use_ssl_cainfo) {
 		curl_easy_setopt(result, CURLOPT_CAINFO, NULL);
-#ifdef GIT_CURL_HAVE_CURLOPT_PROXY_CAINFO
 		curl_easy_setopt(result, CURLOPT_PROXY_CAINFO, NULL);
-#endif
 	} else if (ssl_cainfo != NULL || http_proxy_ssl_ca_info != NULL) {
 		if (ssl_cainfo)
 			curl_easy_setopt(result, CURLOPT_CAINFO, ssl_cainfo);
-#ifdef GIT_CURL_HAVE_CURLOPT_PROXY_CAINFO
 		if (http_proxy_ssl_ca_info)
 			curl_easy_setopt(result, CURLOPT_PROXY_CAINFO, http_proxy_ssl_ca_info);
-#endif
 	}
 
 	if (curl_low_speed_limit > 0 && curl_low_speed_time > 0) {
@@ -1243,7 +1191,6 @@ static CURL *get_curl_handle(void)
 		else if (starts_with(curl_http_proxy, "socks"))
 			curl_easy_setopt(result,
 				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS4);
-#ifdef GIT_CURL_HAVE_CURLOPT_PROXY_KEYPASSWD
 		else if (starts_with(curl_http_proxy, "https")) {
 			curl_easy_setopt(result, CURLOPT_PROXYTYPE, CURLPROXY_HTTPS);
 
@@ -1256,7 +1203,6 @@ static CURL *get_curl_handle(void)
 			if (has_proxy_cert_password())
 				curl_easy_setopt(result, CURLOPT_PROXY_KEYPASSWD, proxy_cert_auth.password);
 		}
-#endif
 		if (strstr(curl_http_proxy, "://"))
 			credential_from_url(&proxy_auth, curl_http_proxy);
 		else {
@@ -1330,7 +1276,6 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 	free(normalized_url);
 	string_list_clear(&config.vars, 1);
 
-#ifdef GIT_CURL_HAVE_CURLSSLSET_NO_BACKENDS
 	if (http_ssl_backend) {
 		const curl_ssl_backend **backends;
 		struct strbuf buf = STRBUF_INIT;
@@ -1355,7 +1300,6 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 			break; /* Okay! */
 		}
 	}
-#endif
 
 	if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK)
 		die("curl_global_init failed");
@@ -1852,10 +1796,8 @@ static int handle_curl_result(struct slot_results *results)
 		 */
 		credential_reject(&cert_auth);
 		return HTTP_NOAUTH;
-#ifdef GIT_CURL_HAVE_CURLE_SSL_PINNEDPUBKEYNOTMATCH
 	} else if (results->curl_result == CURLE_SSL_PINNEDPUBKEYNOTMATCH) {
 		return HTTP_NOMATCHPUBLICKEY;
-#endif
 	} else if (missing_target(results))
 		return HTTP_MISSING_TARGET;
 	else if (results->http_code == 401) {
