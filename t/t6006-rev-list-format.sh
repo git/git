@@ -13,21 +13,41 @@ TEST_PASSES_SANITIZE_LEAK=true
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_tick
-# Tested non-UTF-8 encoding
-test_encoding="ISO8859-1"
 
-# String "added" in German
-# (translated with Google Translate),
-# encoded in UTF-8, used as a commit log message below.
-added_utf8_part=$(printf "\303\274")
-added_utf8_part_iso88591=$(echo "$added_utf8_part" | iconv -f utf-8 -t $test_encoding)
-added=$(printf "added (hinzugef${added_utf8_part}gt) foo")
-added_iso88591=$(echo "$added" | iconv -f utf-8 -t $test_encoding)
-# same but "changed"
-changed_utf8_part=$(printf "\303\244")
-changed_utf8_part_iso88591=$(echo "$changed_utf8_part" | iconv -f utf-8 -t $test_encoding)
-changed=$(printf "changed (ge${changed_utf8_part}ndert) foo")
-changed_iso88591=$(echo "$changed" | iconv -f utf-8 -t $test_encoding)
+if test_have_prereq ICONV
+then
+	# Tested non-UTF-8 encoding
+	test_encoding="ISO8859-1"
+
+	# String "added" in German
+	# (translated with Google Translate),
+	# encoded in UTF-8, used as a commit log message below.
+	added_utf8_part=$(printf "\303\274")
+	added_utf8_part_iso88591=$(echo "$added_utf8_part" | iconv -f utf-8 -t $test_encoding)
+	added=$(printf "added (hinzugef${added_utf8_part}gt) foo")
+	added_iso88591=$(echo "$added" | iconv -f utf-8 -t $test_encoding)
+	# same but "changed"
+	changed_utf8_part=$(printf "\303\244")
+	changed_utf8_part_iso88591=$(echo "$changed_utf8_part" | iconv -f utf-8 -t $test_encoding)
+	changed=$(printf "changed (ge${changed_utf8_part}ndert) foo")
+	changed_iso88591=$(echo "$changed" | iconv -f utf-8 -t $test_encoding)
+else
+	# Tested non-UTF-8 encoding
+	test_encoding="UTF-8"
+
+	# String "added" in German
+	# (translated with Google Translate),
+	# encoded in UTF-8, used as a commit log message below.
+	added_utf8_part="u"
+	added_utf8_part_iso88591="u"
+	added=$(printf "added (hinzugef${added_utf8_part}gt) foo")
+	added_iso88591="$added"
+	# same but "changed"
+	changed_utf8_part="a"
+	changed_utf8_part_iso88591="a"
+	changed=$(printf "changed (ge${changed_utf8_part}ndert) foo")
+	changed_iso88591="$changed"
+fi
 
 # Count of char to truncate
 # Number is chosen so, that non-ACSII characters
@@ -55,7 +75,7 @@ test_expect_success 'setup' '
 	git config --unset i18n.commitEncoding
 '
 
-# usage: test_format [argument...] name format_string [failure] <expected_output
+# usage: test_format [argument...] name format_string [success|failure] [prereq] <expected_output
 test_format () {
 	local args=
 	while true
@@ -69,7 +89,7 @@ test_format () {
 		esac
 	done
 	cat >expect.$1
-	test_expect_${3:-success} "format $1" "
+	test_expect_${3:-success} $4 "format $1" "
 		git rev-list $args --pretty=format:'$2' main >output.$1 &&
 		test_cmp expect.$1 output.$1
 	"
@@ -198,7 +218,7 @@ Thu, 7 Apr 2005 15:13:13 -0700
 1112911993
 EOF
 
-test_format encoding %e <<EOF
+test_format encoding %e success ICONV <<EOF
 commit $head2
 $test_encoding
 commit $head1
@@ -374,7 +394,7 @@ test_expect_success 'setup complex body' '
 	head3_short=$(git rev-parse --short $head3)
 '
 
-test_format complex-encoding %e <<EOF
+test_format complex-encoding %e success ICONV <<EOF
 commit $head3
 $test_encoding
 commit $head2

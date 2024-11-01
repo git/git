@@ -13,21 +13,31 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
-commit_msg () {
-	# String "modify 2nd file (changed)" partly in German
-	# (translated with Google Translate),
-	# encoded in UTF-8, used as a commit log message below.
-	msg="modify 2nd file (ge\303\244ndert)\n"
-	if test -n "$1"
-	then
-		printf "$msg" | iconv -f utf-8 -t "$1"
-	else
-		printf "$msg"
-	fi
-}
+if test_have_prereq ICONV
+then
+	commit_msg () {
+		# String "modify 2nd file (changed)" partly in German
+		# (translated with Google Translate),
+		# encoded in UTF-8, used as a commit log message below.
+		msg="modify 2nd file (ge\303\244ndert)\n"
+		if test -n "$1"
+		then
+			printf "$msg" | iconv -f utf-8 -t "$1"
+		else
+			printf "$msg"
+		fi
+	}
 
-# Tested non-UTF-8 encoding
-test_encoding="ISO8859-1"
+	# Tested non-UTF-8 encoding
+	test_encoding="ISO8859-1"
+else
+	commit_msg () {
+		echo "modify 2nd file (geandert)"
+	}
+
+	# Tested non-UTF-8 encoding
+	test_encoding="UTF-8"
+fi
 
 test_expect_success 'creating initial files and commits' '
 	test_tick &&

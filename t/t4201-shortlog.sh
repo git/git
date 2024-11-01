@@ -105,7 +105,7 @@ test_expect_success 'output from user-defined format is re-wrapped' '
 	test_cmp expect log.predictable
 '
 
-test_expect_success !MINGW 'shortlog wrapping' '
+test_expect_success !MINGW,ICONV 'shortlog wrapping' '
 	cat >expect <<\EOF &&
 A U Thor (5):
       Test
@@ -126,13 +126,13 @@ EOF
 	test_cmp expect out
 '
 
-test_expect_success !MINGW 'shortlog from non-git directory' '
+test_expect_success !MINGW,ICONV 'shortlog from non-git directory' '
 	git log --no-expand-tabs HEAD >log &&
 	GIT_DIR=non-existing git shortlog -w <log >out &&
 	test_cmp expect out
 '
 
-test_expect_success !MINGW 'shortlog can read --format=raw output' '
+test_expect_success !MINGW,ICONV 'shortlog can read --format=raw output' '
 	git log --format=raw HEAD >log &&
 	GIT_DIR=non-existing git shortlog -w <log >out &&
 	test_cmp expect out
@@ -186,7 +186,7 @@ $DSCHO (2):
 
 EOF
 
-test_expect_success !MINGW 'shortlog encoding' '
+test_expect_success !MINGW,ICONV 'shortlog encoding' '
 	git reset --hard "$commit" &&
 	git config --unset i18n.commitencoding &&
 	echo 2 > a1 &&
