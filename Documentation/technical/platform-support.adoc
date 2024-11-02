@@ -33,6 +33,8 @@ meet the following minimum requirements:
 
 * Has active security support (taking security releases of dependencies, etc)
 
+* Supports Rust and the toolchain version specified in link:rust-support.adoc[].
+
 These requirements are a starting point, and not sufficient on their own for the
 Git community to be enthusiastic about supporting your platform. Maintainers of
 platforms which do meet these requirements can follow the steps below to make it

@@ -1,0 +1,142 @@
+Usage of Rust in Git
+====================
+
+Objective
+---------
+Introduce Rust into Git incrementally to improve security and maintainability.
+
+Background
+----------
+Git has historically been written primarily in C, with some portions in shell,
+Perl, or other languages.  At the time it was originally written, this was
+important for portability and was a logical choice for software development.
+
+:0: link:https://security.googleblog.com/2024/09/eliminating-memory-safety-vulnerabilities-Android.html
+:1: link:https://www.cisa.gov/resources-tools/resources/product-security-bad-practices
+
+However, as time has progressed, we've seen an increased concern with memory
+safety vulnerabilities and the development of newer languages, such as Rust,
+that substantially limit or eliminate this class of vulnerabilities.
+Development in a variety of projects has found that memory safety
+vulnerabilities constitute about 70% of vulnerabilities of software in
+languages that are not memory safe.  For instance, {0}[one survey of Android]
+found that memory safety vulnerabilities decreased from 76% to 24% over six
+years due to an increase in memory safe code.  Similarly, the U.S. government
+is {1}[proposing to classify development in memory unsafe languages as a
+Product Security Bad Practice"].
+
+These risks are even more substantial when we consider the fact that Git is a
+network-facing service.  Many organizations run Git servers internally or use a
+cloud-based forge, and the risk of accidental exposure or compromise of user
+data is substantial.  It's important to ensure that Git, whether it's used
+locally or remotely, is robustly secure.
+
+In addition, C is a difficult language to write well and concisely.  While it
+is of course possible to do anything with C, it lacks built-in support for
+niceties found in modern languages, such as hash tables, generics, typed
+errors, and automatic destruction, and most modern language offer shorter, more
+ergonomic syntax for expressing code.  This is valuable functionality that can
+allow Git to be developed more rapidly, more easily, by more developers of a
+variety of levels, and with more confidence in the correctness of the code.
+
+For these reasons, adding Rust to Git is a sensible and prudent move that will
+allow us to improve the quality of the code and potentially attract new developers.
+
+Goals
+-----
+1. Git continues to build, run, and pass tests on a wide variety of operating
+   systems and architectures.
+2. Transition from C to Rust is incremental; that is, code can be ported as it
+   is convenient and Git does not need to transition all at once.
+3. Git continues to support older operating systems in conformance with the
+   platform support policy.
+
+Non-Goals
+---------
+1. Support for every possible operating system and architecture.  Git already
+   has a platform support policy which defines what is supported and we already
+   exclude some operating systems for various reasons (e.g., lacking enough POSIX
+   tools to pass the test suite).
+2. Implementing C-only versions of Rust code or compiling a C-only Git.  This
+   would be difficult to maintain and would not offer the ergonomic benefits we
+   desire.
+
+Design
+------
+Git will adopt Rust incrementally.  This transition will start with the
+creation of a static library that can be linked into the existing Git binaries.
+At some point, we may wish to expose a dynamic library and compile the Git
+binaries themselves using Rust.  Using an incremental approach allows us to
+determine as we go along how to structure our code in the best way for the
+project and avoids the need to make hard, potentially disruptive, transitions
+caused by porting a binary wholesale from one language to another that might
+introduce bugs.
+
+Crates like libc or rustix define types like c_long, but in ways that are not
+safe across platforms.
+From https://docs.rs/rustix/latest/rustix/ffi/type.c_long.html:
+
+    This type will always be i32 or i64.  Most notably, many Linux-based
+    systems assume an i64, but Windows assumes i32.  The C standard technically
+    only requires that this type be a signed integer that is at least 32 bits
+    and at least the size of an int, although in practice, no system would
+    have a long that is neither an i32 nor i64.
+
+Also, note that other locations, such as
+https://docs.rs/libc/latest/libc/type.c_long.html, just hardcode c_long as i64
+even though C may mean i32 on some platforms.
+
+As such, using the c_long type would give us portability issues, and
+perpetuate some of the bugs git has faced across platforms.  Avoid using C's
+types (long, unsigned, char, etc.), and switch to unambiguous types (e.g. i32
+or i64) before trying to make C and Rust interoperate.
+
+Crates like libc and rustix may have also traditionally aided interoperability
+with older versions of Rust (e.g.  when worrying about stat[64] system calls),
+but the Rust standard library in newer versions of Rust handle these concerns
+in a platform agnostic way.  There may arise cases where we need to consider
+these crates, but for now we omit them.
+
+Tools like bindgen and cbindgen create C-styled unsafe Rust code rather than
+idiomatic Rust; where possible, we prefer to switch to idiomatic Rust.  Any
+standard C library functions that are needed can be manually wrapped on the
+Rust side.
+
+Rust upstream releases every six weeks and only supports the latest stable
+release.  While it is nice that upstream is active, we would like our software
+releases to have a lifespan exceeding six weeks.  To allow compiling our code
+on a variety of systems, we will support the version of Rust in Debian stable,
+plus, for a year after a new Debian stable is released, the version in Debian
+oldstable.
+
+This provides an approximately three-year lifespan of support for a Rust
+release and allows us to support a variety of operating systems and
+architectures, including those for which Rust upstream does not build binaries.
+Debian stable is the benchmark distribution used by many Rust projects when
+determining supported Rust versions, and it is an extremely portable and
+popular free software operating system that is available to the public at no
+charge, which makes it a sensible choice for us as well.
+
+We may change this policy if the Rust project issues long-term support releases
+or the Rust community and distributors agree on releases to target as if they
+were long-term support releases.
+
+This version support policy necessitates that we be very careful about the
+dependencies we include, since many Rust projects support only the latest
+stable version.  However, we typically have been careful about dependencies in
+the first place, so this should not be a major departure from existing policy,
+although it may be a change for some existing Rust developers.
+
+We will avoid including the `Cargo.lock` file in the repository and instead
+specify minimum dependency versions in the `Cargo.toml` file.  We want to allow
+people to use newer versions of dependencies if necessary to support newer
+platforms without needing to force upgrades of dependencies on all users, and
+it provides additional flexibility for distribution maintainers.
+
+We do not plan to support beta or nightly versions of the Rust compiler.  These
+versions may change rapidly and especially parts of the toolchain such as
+Clippy, the lint tool, can have false positives or add additional warnings with
+too great of a frequency to be supportable by the project.  However, we do plan
+to support alternate compilers, such as the rust_codegen_gcc backend and gccrs
+when they are stable and support our desired release versions.  This will
+provide greater support for more operating systems and architectures.
