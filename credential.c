@@ -69,6 +69,8 @@ static int credential_config_callback(const char *var, const char *value,
 		c->use_http_path = git_config_bool(var, value);
 	else if (!strcmp(key, "sanitizeprompt"))
 		c->sanitize_prompt = git_config_bool(var, value);
+	else if (!strcmp(key, "protectprotocol"))
+		c->protect_protocol = git_config_bool(var, value);
 
 	return 0;
 }
@@ -262,7 +264,8 @@ int credential_read(struct credential *c, FILE *fp)
 	return 0;
 }
 
-static void credential_write_item(FILE *fp, const char *key, const char *value,
+static void credential_write_item(const struct credential *c,
+				  FILE *fp, const char *key, const char *value,
 				  int required)
 {
 	if (!value && required)
@@ -271,19 +274,23 @@ static void credential_write_item(FILE *fp, const char *key, const char *value,
 		return;
 	if (strchr(value, '\n'))
 		die("credential value for %s contains newline", key);
+	if (c->protect_protocol && strchr(value, '\r'))
+		die("credential value for %s contains carriage return\n"
+		    "If this is intended, set `credential.protectProtocol=false`",
+		    key);
 	fprintf(fp, "%s=%s\n", key, value);
 }
 
 void credential_write(const struct credential *c, FILE *fp)
 {
-	credential_write_item(fp, "protocol", c->protocol, 1);
-	credential_write_item(fp, "host", c->host, 1);
-	credential_write_item(fp, "path", c->path, 0);
-	credential_write_item(fp, "username", c->username, 0);
-	credential_write_item(fp, "password", c->password, 0);
+	credential_write_item(c, fp, "protocol", c->protocol, 1);
+	credential_write_item(c, fp, "host", c->host, 1);
+	credential_write_item(c, fp, "path", c->path, 0);
+	credential_write_item(c, fp, "username", c->username, 0);
+	credential_write_item(c, fp, "password", c->password, 0);
 	if (c->password_expiry_utc != TIME_MAX) {
 		char *s = xstrfmt("%"PRItime, c->password_expiry_utc);
-		credential_write_item(fp, "password_expiry_utc", s, 0);
+		credential_write_item(c, fp, "password_expiry_utc", s, 0);
 		free(s);
 	}
 }

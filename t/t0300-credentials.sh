@@ -720,6 +720,22 @@ test_expect_success 'url parser rejects embedded newlines' '
 	test_cmp expect stderr
 '
 
+test_expect_success 'url parser rejects embedded carriage returns' '
+	test_config credential.helper "!true" &&
+	test_must_fail git credential fill 2>stderr <<-\EOF &&
+	url=https://example%0d.com/
+	EOF
+	cat >expect <<-\EOF &&
+	fatal: credential value for host contains carriage return
+	If this is intended, set `credential.protectProtocol=false`
+	EOF
+	test_cmp expect stderr &&
+	GIT_ASKPASS=true \
+	git -c credential.protectProtocol=false credential fill <<-\EOF
+	url=https://example%0d.com/
+	EOF
+'
+
 test_expect_success 'host-less URLs are parsed as empty host' '
 	check fill "verbatim foo bar" <<-\EOF
 	url=cert:///path/to/cert.pem

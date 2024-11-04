@@ -120,7 +120,8 @@ struct credential {
 		 quit:1,
 		 use_http_path:1,
 		 username_from_proto:1,
-		 sanitize_prompt:1;
+		 sanitize_prompt:1,
+		 protect_protocol:1;
 
 	char *username;
 	char *password;
@@ -134,6 +135,7 @@ struct credential {
 	.helpers = STRING_LIST_INIT_DUP, \
 	.password_expiry_utc = TIME_MAX, \
 	.sanitize_prompt = 1, \
+	.protect_protocol = 1, \
 }
 
 /* Initialize a credential structure, setting all fields to empty. */
