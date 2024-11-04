@@ -91,7 +91,7 @@ be in a separate packet, and the list must end with a flush packet.
 	Deepen or shorten the history of a shallow repository to
 	include all reachable commits after <date>.
 
---shallow-exclude=<revision>::
+--shallow-exclude=<ref>::
 	Deepen or shorten the history of a shallow repository to
 	exclude commits reachable from a specified remote branch or tag.
 	This option can be specified multiple times.
