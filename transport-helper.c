@@ -399,6 +399,8 @@ static int release_helper(struct transport *transport)
 	int res = 0;
 	struct helper_data *data = transport->data;
 	refspec_clear(&data->rs);
+	free(data->import_marks);
+	free(data->export_marks);
 	res = disconnect_helper(transport);
 	free(transport->data);
 	return res;
