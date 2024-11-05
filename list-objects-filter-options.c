@@ -252,16 +252,14 @@ void parse_list_objects_filter(
 	const char *arg)
 {
 	struct strbuf errbuf = STRBUF_INIT;
-	int parse_error;
 
 	if (!filter_options->filter_spec.buf)
 		BUG("filter_options not properly initialized");
 
 	if (!filter_options->choice) {
+		if (gently_parse_list_objects_filter(filter_options, arg, &errbuf))
+			die("%s", errbuf.buf);
 		strbuf_addstr(&filter_options->filter_spec, arg);
-
-		parse_error = gently_parse_list_objects_filter(
-			filter_options, arg, &errbuf);
 	} else {
 		struct list_objects_filter_options *sub;
 
@@ -271,18 +269,17 @@ void parse_list_objects_filter(
 		 */
 		transform_to_combine_type(filter_options);
 
-		strbuf_addch(&filter_options->filter_spec, '+');
-		filter_spec_append_urlencode(filter_options, arg);
 		ALLOC_GROW_BY(filter_options->sub, filter_options->sub_nr, 1,
 			      filter_options->sub_alloc);
 		sub = &filter_options->sub[filter_options->sub_nr - 1];
 
 		list_objects_filter_init(sub);
-		parse_error = gently_parse_list_objects_filter(sub, arg,
-							       &errbuf);
+		if (gently_parse_list_objects_filter(sub, arg, &errbuf))
+			die("%s", errbuf.buf);
+
+		strbuf_addch(&filter_options->filter_spec, '+');
+		filter_spec_append_urlencode(filter_options, arg);
 	}
-	if (parse_error)
-		die("%s", errbuf.buf);
 }
 
 int opt_parse_list_objects_filter(const struct option *opt,
