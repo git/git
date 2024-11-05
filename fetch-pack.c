@@ -122,16 +122,29 @@ static void for_each_cached_alternate(struct fetch_negotiator *negotiator,
 		cb(negotiator, cache.items[i]);
 }
 
+static void die_in_commit_graph_only(const struct object_id *oid)
+{
+	die(_("You are attempting to fetch %s, which is in the commit graph file but not in the object database.\n"
+	      "This is probably due to repo corruption.\n"
+	      "If you are attempting to repair this repo corruption by refetching the missing object, use 'git fetch --refetch' with the missing object."),
+	      oid_to_hex(oid));
+}
+
 static struct commit *deref_without_lazy_fetch(const struct object_id *oid,
-					       int mark_tags_complete)
+					       int mark_tags_complete_and_check_obj_db)
 {
 	enum object_type type;
 	struct object_info info = { .typep = &type };
 	struct commit *commit;
 
 	commit = lookup_commit_in_graph(the_repository, oid);
-	if (commit)
+	if (commit) {
+		if (mark_tags_complete_and_check_obj_db) {
+			if (!has_object(the_repository, oid, 0))
+				die_in_commit_graph_only(oid);
+		}
 		return commit;
+	}
 
 	while (1) {
 		if (oid_object_info_extended(the_repository, oid, &info,
@@ -143,7 +156,7 @@ static struct commit *deref_without_lazy_fetch(const struct object_id *oid,
 
 			if (!tag->tagged)
 				return NULL;
-			if (mark_tags_complete)
+			if (mark_tags_complete_and_check_obj_db)
 				tag->object.flags |= COMPLETE;
 			oid = &tag->tagged->oid;
 		} else {
