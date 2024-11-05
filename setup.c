@@ -741,6 +741,7 @@ static int check_repository_format_gently(const char *gitdir, struct repository_
 
 	if (verify_repository_format(candidate, &err) < 0) {
 		if (nongit_ok) {
+			the_repository->is_bare_cfg = 1;
 			warning("%s", err.buf);
 			strbuf_release(&err);
 			*nongit_ok = -1;
@@ -1017,6 +1018,7 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 		if (nongit_ok) {
 			*nongit_ok = 1;
 			free(gitfile);
+			the_repository->is_bare_cfg = 0;
 			return NULL;
 		}
 		die(_("not a git repository: '%s'"), gitdirenv);
@@ -1069,6 +1071,7 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 
 	/* set_git_work_tree() must have been called by now */
 	worktree = repo_get_work_tree(the_repository);
+	the_repository->is_bare_cfg = 0;
 
 	/* both repo_get_work_tree() and cwd are already normalized */
 	if (!strcmp(cwd->buf, worktree)) { /* cwd == worktree */
@@ -1125,6 +1128,9 @@ static const char *setup_discovered_git_dir(const char *gitdir,
 
 	/* #0, #1, #5, #8, #9, #12, #13 */
 	set_git_work_tree(".");
+
+	if (the_repository->is_bare_cfg < 0)
+		the_repository->is_bare_cfg = 0;
 	if (strcmp(gitdir, DEFAULT_GIT_DIR_ENVIRONMENT))
 		set_git_dir(gitdir, 0);
 	inside_git_dir = 0;
@@ -1767,6 +1773,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 			die(_("not a git repository (or any of the parent directories): %s"),
 			    DEFAULT_GIT_DIR_ENVIRONMENT);
 		*nongit_ok = 1;
+		the_repository->is_bare_cfg = 1;
 		break;
 	case GIT_DIR_HIT_MOUNT_POINT:
 		if (!nongit_ok)
