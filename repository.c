@@ -464,5 +464,7 @@ int repo_hold_locked_index(struct repository *repo,
 int repo_is_bare(struct repository *repo)
 {
 	/* if core.bare is not 'false', let's see if there is a work tree */
+	if (repo->is_bare_cfg < 0 )
+		BUG("is_bare_cfg unspecified");
 	return repo->is_bare_cfg && !repo_get_work_tree(repo);
 }
