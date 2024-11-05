@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2024, #02; Fri, 1)
+Subject: What's cooking in git.git (Nov 2024, #03; Mon, 4)
 X-master-at: 8f8d6eee531b3fa1a8ef14f169b0cb5035f7a772
 X-next-at: c08e6fccd86136592273e319042f44cc8eadbb2a
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2024, #02; Fri, 1)
+What's cooking in git.git (Nov 2024, #03; Mon, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,13 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-Thanks everybody, especially Taylor, for keeping things going while
-I was away.  Unfortunately, we seem to have acquired way too many
-topics that were posted and picked up without getting reviewed.  As
-we discussed a few months ago in <xmqqployf6z5.fsf@gitster.g>, I'll
-start discarding topics that have seen no activities for 3 or more
-weeks.  Interested parties can of course revive these topics.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -53,7 +46,75 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
+
+* ak/t1016-style (2024-11-03) 1 commit
+ - t1016: clean up style
+
+ Test modernization.
+
+ Will merge to 'next'.
+ source: <20241103135111.13508-1-algonell@gmail.com>
+
+
+* en/shallow-exclude-takes-a-ref-fix (2024-11-04) 2 commits
+ - doc: correct misleading descriptions for --shallow-exclude
+ - upload-pack: fix ambiguous error message
+
+ The "--shallow-exclude=<ref>" option to various history transfer
+ commands takes a ref, not an arbitrary revision.
+
+ Will merge to 'next'.
+ source: <pull.1822.git.1730746964.gitgitgadget@gmail.com>
+
+
+* kh/sequencer-comment-char (2024-10-23) 1 commit
+ - sequencer: comment checked-out branch properly
+
+ The sequencer failed to honor core.commentString in some places.
+
+ Expecting a reroll.
+ cf. <c05e603f-1fd4-4ad2-ba03-21269f464ed2@gmail.com>
+ source: <5267b9a9c8cc5cc66979117dc4c1e4d7329e2a03.1729704370.git.code@khaugsbakk.name>
+
+
+* ds/full-name-hash (2024-11-04) 7 commits
+ - test-tool: add helper for name-hash values
+ - pack-objects: disable --full-name-hash when shallow
+ - p5313: add size comparison test
+ - git-repack: update usage to match docs
+ - pack-objects: add GIT_TEST_FULL_NAME_HASH
+ - repack: add --full-name-hash option
+ - pack-objects: add --full-name-hash option
+
+ "git pack-objects" and its wrapper "git repack" learned an option
+ to use an alternative path-hash function to improve delta-base
+ selection to produce a packfile with deeper history than window
+ size.
+ 
+ Needs review.
+ source: <pull.1823.git.1730775907.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* jt/repack-local-promisor (2024-11-03) 5 commits
+ - fixup! index-pack: repack local links into promisor packs
+ - index-pack: repack local links into promisor packs
+ - t5300: move --window clamp test next to unclamped
+ - t0410: use from-scratch server
+ - t0410: make test description clearer
+
+ "git gc" discards any objects that are outside promisor packs that
+ are referred to by an object in a promisor pack, and we do not
+ refetch them from the promisor at runtime, resulting an unusable
+ repository.  Work it around by including these objects in the
+ referring promisor pack at the receiving end of the fetch.
+
+ Needs review.
+ Breaks CI (with a known fix).
+ source: <cover.1730491845.git.jonathantanmy@google.com>
+
 
 * ds/path-walk-1 (2024-10-31) 6 commits
  - path-walk: mark trees and blobs as UNINTERESTING
@@ -70,54 +131,6 @@ Release tarballs are available at:
  cf. <ZyUqr/wb5K4Og9j9@nand.local>
  source: <pull.1818.git.1730356023.gitgitgadget@gmail.com>
 
-
-* tb/cross-pack-delta-reuse (2024-10-11) 11 commits
- . pack-bitmap: enable reusing deltas with base objects in 'haves' bitmap
- . pack-bitmap.c: record whether the result was filtered
- . pack-bitmap: enable cross-pack delta reuse
- . t5332: enable OFS_DELTAs via test_pack_objects_reused
- . write_reused_pack_one(): translate bit positions directly
- . pack-bitmap: drop `from_midx` field from `bitmapped_pack`
- . pack-bitmap.c: extract `find_base_bitmap_pos()`
- . pack-bitmap.c: compare `base_offset` to `delta_obj_offset`
- . pack-bitmap.c: delay calling 'offset_to_pack_pos()'
- . pack-bitmap.c: avoid unnecessary `offset_to_pack_pos()`
- . pack-bitmap.c: do not pass `pack_pos` to `try_partial_reuse()`
-
- Allow pack-objects to reuse an existing delta in a packfile, when
- it ends up sending the base object from a different packfile.
-
- Needs review.
- source: <cover.1728505840.git.me@ttaylorr.com>
-
-
-* tb/incremental-midx-part-2 (2024-10-04) 17 commits
- . fixup! pack-bitmap.c: open and store incremental bitmap layers
- . fixup! midx: implement writing incremental MIDX bitmaps
- . midx: implement writing incremental MIDX bitmaps
- . pack-bitmap.c: use `ewah_or_iterator` for type bitmap iterators
- . pack-bitmap.c: keep track of each layer's type bitmaps
- . ewah: implement `struct ewah_or_iterator`
- . pack-bitmap.c: apply pseudo-merge commits with incremental MIDXs
- . pack-bitmap.c: compute disk-usage with incremental MIDXs
- . pack-bitmap.c: teach `rev-list --test-bitmap` about incremental MIDXs
- . pack-bitmap.c: support bitmap pack-reuse with incremental MIDXs
- . pack-bitmap.c: teach `show_objects_for_type()` about incremental MIDXs
- . pack-bitmap.c: teach `bitmap_for_commit()` about incremental MIDXs
- . pack-bitmap.c: open and store incremental bitmap layers
- . pack-revindex: prepare for incremental MIDX bitmaps
- . Documentation: describe incremental MIDX bitmaps
- . Merge branch 'tb/pseudo-merge-bitmap-fixes' into tb/incremental-midx-part-2
- . Merge branch 'tb/incremental-midx-part-1' into tb/incremental-midx-part-2
-
- Incremental updates of multi-pack index files.
-
- Needs review.
- source: <cover.1723760847.git.me@ttaylorr.com>
- source: <ZwBsbW5jsFw0mxKk@nand.local>
-
---------------------------------------------------
-[Cooking]
 
 * bc/ancient-ci (2024-11-01) 3 commits
  - Add additional CI jobs to avoid accidental breakage
@@ -173,14 +186,15 @@ Release tarballs are available at:
  source: <cover.1730234365.git.code@khaugsbakk.name>
 
 
-* as/show-index-uninitialized-hash (2024-10-27) 1 commit
+* as/show-index-uninitialized-hash (2024-11-04) 2 commits
+ - t5300: add test for 'show-index --object-format'
  - show-index: fix uninitialized hash function
 
  Regression fix for 'show-index' when run outside of a repository.
 
  Expecting a reroll.
- cf. <26d1bd3c-4f90-4406-8a1f-2eb085c46bab@gmail.com>
- source: <20241026120950.72727-1-abhijeet.nkt@gmail.com>
+ cf. <xmqq4j4mv5o6.fsf@gitster.g>
+ source: <20241104192958.64310-1-abhijeet.nkt@gmail.com>
 
 
 * ps/mingw-rename (2024-10-27) 3 commits
@@ -465,124 +479,119 @@ Release tarballs are available at:
  source: <cover.1729032373.git.steadmon@google.com>
 
 
-* jt/commit-graph-missing (2024-11-01) 2 commits
- . fetch-pack: warn if in commit graph but not obj db
- . Revert "fetch-pack: add a deref_without_lazy_fetch_extended()"
+* jt/commit-graph-missing (2024-11-04) 3 commits
+ - SQUASH???
+ - fetch-pack: warn if in commit graph but not obj db
+ - Revert "fetch-pack: add a deref_without_lazy_fetch_extended()"
 
  A regression where commit objects missing from a commit-graph can
  cause an infinite loop when doing a fetch in a partial clone has
  been fixed.
 
- Breaks CI.
- cf. https://github.com/ttaylorr/git/actions/runs/11631453312/job/32392591229
+ Waiting an ack for CI breakage fix and possibly a reroll.
  source: <cover.1730409376.git.jonathantanmy@google.com>
 
 
-* kn/the-repository (2024-10-31) 9 commits
- . midx: add repository to `multi_pack_index` struct
- . config: make `packed_git_(limit|window_size)` non-global variables
- . config: make `delta_base_cache_limit` a non-global variable
- . packfile: pass down repository to `for_each_packed_object`
- . packfile: pass down repository to `has_object[_kept]_pack`
- . packfile: pass down repository to `odb_pack_name`
- . packfile: pass `repository` to static function in the file
- . packfile: use `repository` from `packed_git` directly
- . packfile: add repository to struct `packed_git`
+* kn/the-repository (2024-11-04) 9 commits
+ - midx: add repository to `multi_pack_index` struct
+ - config: make `packed_git_(limit|window_size)` non-global variables
+ - config: make `delta_base_cache_limit` a non-global variable
+ - packfile: pass down repository to `for_each_packed_object`
+ - packfile: pass down repository to `has_object[_kept]_pack`
+ - packfile: pass down repository to `odb_pack_name`
+ - packfile: pass `repository` to static function in the file
+ - packfile: use `repository` from `packed_git` directly
+ - packfile: add repository to struct `packed_git`
 
- Various uses of 'the_repoository' in the packfile code have been
- eliminated.
+ Various implicit uses of 'the_repoository' in the packfile code
+ have been eliminated.
 
- Breaks CI, and expecting another round.
- cf. https://github.com/ttaylorr/git/actions/runs/11602969593/job/32309061019
- source: <cover.1730366765.git.karthik.188@gmail.com>
-
+ Needs review.
+ source: <cover.1730714298.git.karthik.188@gmail.com>
 
 --------------------------------------------------
-[Will Discard]
+[Discarded]
 
 * wf/diff-highlight-install (2024-10-14) 1 commit
- - diff-highlight: make install link into DESTDIR
+ . diff-highlight: make install link into DESTDIR
 
  Adds an 'install' recipe to diff-highlight's Makefile.
 
- Will discard.
+ Discarded.
  Have been in stalled state for too long without activity.
  cf. <Zw2YXD6XEiQVKj9j@nand.local>
  source: <pull.938.v3.git.git.1728764613835.gitgitgadget@gmail.com>
 
 
 * am/git-blame-ignore-revs-by-default (2024-10-14) 2 commits
- - blame: introduce --override-ignore-revs to bypass ignore revisions list
- - blame: respect .git-blame-ignore-revs automatically
+ . blame: introduce --override-ignore-revs to bypass ignore revisions list
+ . blame: respect .git-blame-ignore-revs automatically
 
  Teaches 'git blame' to treat '.git-blame-ignore-revs' as if it were
  passed as '--ignore-revs-file' by default.
 
- Will discard.
+ Discarded.
  Stalled for too long, with many questions unanswered.
  source: <pull.1809.v2.git.1728707867.gitgitgadget@gmail.com>
 
 
 * jc/optional-path (2024-10-14) 3 commits
- - parseopt: values of pathname type can be prefixed with :(optional)
- - config: values of pathname type can be prefixed with :(optional)
- - t7500: make each piece more independent
+ . parseopt: values of pathname type can be prefixed with :(optional)
+ . config: values of pathname type can be prefixed with :(optional)
+ . t7500: make each piece more independent
 
  Teach configuration values of type "pathname" a new ':(optional)'
  suffix.
 
- Will discard.
+ Discarded.
  In " Needs review." state for too long.
  source: <20241014204427.1712182-1-gitster@pobox.com>
 
 
 * jc/too-many-arguments (2024-08-06) 4 commits
- - miscellaneous: avoid "too many arguments"
- - notes: avoid "too many arguments"
- - cat-file: avoid "too many arguments"
- - refs: avoid "too many arguments"
+ . miscellaneous: avoid "too many arguments"
+ . notes: avoid "too many arguments"
+ . cat-file: avoid "too many arguments"
+ . refs: avoid "too many arguments"
 
  Error message clarification.
 
- Will discard.
+ Discarded.
  In "On hold." state for too long.
  source: <20240806003539.3292562-1-gitster@pobox.com>
 
 
 * jc/strbuf-commented-something (2024-09-12) 2 commits
- - strbuf: retire strbuf_commented_lines()
- - strbuf: retire strbuf_commented_addf()
+ . strbuf: retire strbuf_commented_lines()
+ . strbuf: retire strbuf_commented_addf()
 
  Update two functions whose callers always pass the same global
  variable to omit the redundant parameter and use the global in the
  callee themselves.
 
- Will discard.
+ Discarded.
  In "On hold." state for too long.
  source: <20240912205301.1809355-1-gitster@pobox.com>
 
 
 * ew/cat-file-optim (2024-08-25) 10 commits
- - cat-file: use writev(2) if available
- - cat-file: batch_write: use size_t for length
- - cat-file: batch-command uses content_limit
- - object_info: content_limit only applies to blobs
- - packfile: packed_object_info avoids packed_to_object_type
- - cat-file: use delta_base_cache entries directly
- - packfile: inline cache_or_unpack_entry
- - packfile: fix off-by-one in content_limit comparison
- - packfile: allow content-limit for cat-file
- - packfile: move sizep computation
+ . cat-file: use writev(2) if available
+ . cat-file: batch_write: use size_t for length
+ . cat-file: batch-command uses content_limit
+ . object_info: content_limit only applies to blobs
+ . packfile: packed_object_info avoids packed_to_object_type
+ . cat-file: use delta_base_cache entries directly
+ . packfile: inline cache_or_unpack_entry
+ . packfile: fix off-by-one in content_limit comparison
+ . packfile: allow content-limit for cat-file
+ . packfile: move sizep computation
 
  "git cat-file --batch" has been optimized.
 
- Will discard.
+ Discarded.
  In "Waiting for review responses" state for too long.
  source: <20240823224630.1180772-1-e@80x24.org>
 
-
---------------------------------------------------
-[Discarded]
 
 * hy/partial-repack-fix (2024-10-16) 3 commits
  . partial-clone: update doc
