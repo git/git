@@ -255,7 +255,7 @@ corresponding `--mirror` and `--no-tags` options instead.
 `--shallow-since=<date>`::
 	Create a shallow clone with a history after the specified time.
 
-`--shallow-exclude=<revision>`::
+`--shallow-exclude=<ref>`::
 	Create a shallow clone with a history, excluding commits
 	reachable from a specified remote branch or tag.  This option
 	can be specified multiple times.
