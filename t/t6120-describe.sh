@@ -19,12 +19,16 @@ TEST_PASSES_SANITIZE_LEAK=true
 
 check_describe () {
 	indir= &&
+	outcome=success &&
 	while test $# != 0
 	do
 		case "$1" in
 		-C)
 			indir="$2"
 			shift
+			;;
+		--expect-failure)
+			outcome=failure
 			;;
 		*)
 			break
@@ -36,7 +40,7 @@ check_describe () {
 	expect="$1"
 	shift
 	describe_opts="$@"
-	test_expect_success "describe $describe_opts" '
+	test_expect_${outcome} "describe $describe_opts" '
 		git ${indir:+ -C "$indir"} describe $describe_opts >raw &&
 		sed -e "s/-g[0-9a-f]*\$/-gHASH/" <raw >actual &&
 		echo "$expect" >expect &&
@@ -617,7 +621,7 @@ test_expect_success 'name-rev --annotate-stdin works with commitGraph' '
 
 #               B
 #               o
-#                \
+#  H             \
 #  o-----o---o----x
 #        A
 #
@@ -627,6 +631,7 @@ test_expect_success 'setup: describe commits with disjoint bases' '
 		cd disjoint1 &&
 
 		echo o >> file && git add file && git commit -m o &&
+		git tag H -a -m H &&
 		echo A >> file && git add file && git commit -m A &&
 		git tag A -a -m A &&
 		echo o >> file && git add file && git commit -m o &&
@@ -639,8 +644,9 @@ test_expect_success 'setup: describe commits with disjoint bases' '
 '
 
 check_describe -C disjoint1 "A-3-gHASH" HEAD
+check_describe -C disjoint1 --expect-failure "A-3-gHASH" --candidates=2 HEAD
 
-#           B
+#       H   B
 #   o---o---o------------.
 #                         \
 #                  o---o---x
@@ -658,6 +664,7 @@ test_expect_success 'setup: describe commits with disjoint bases 2' '
 		git checkout --orphan branch &&
 		echo o >> file2 && git add file2 && GIT_COMMITTER_DATE="2020-01-01 15:00" git commit -m o &&
 		echo o >> file2 && git add file2 && GIT_COMMITTER_DATE="2020-01-01 15:01" git commit -m o &&
+		git tag H -a -m H &&
 		echo B >> file2 && git add file2 && GIT_COMMITTER_DATE="2020-01-01 15:02" git commit -m B &&
 		git tag B -a -m B &&
 		git merge --no-ff --allow-unrelated-histories main -m x
@@ -665,6 +672,7 @@ test_expect_success 'setup: describe commits with disjoint bases 2' '
 '
 
 check_describe -C disjoint2 "B-3-gHASH" HEAD
+check_describe -C disjoint2 --expect-failure "B-3-gHASH" --candidates=2 HEAD
 
 test_expect_success 'setup misleading taggerdates' '
 	GIT_COMMITTER_DATE="2006-12-12 12:31" git tag -a -m "another tag" newer-tag-older-commit unique-file~1
