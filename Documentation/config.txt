@@ -511,6 +511,8 @@ include::config/sequencer.txt[]
 
 include::config/showbranch.txt[]
 
+include::config/sideband.txt[]
+
 include::config/sparse.txt[]
 
 include::config/splitindex.txt[]
