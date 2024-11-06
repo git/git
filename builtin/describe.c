@@ -667,6 +667,8 @@ int cmd_describe(int argc,
 			     NULL);
 	if (!hashmap_get_size(&names) && !always)
 		die(_("No names found, cannot describe anything."));
+	if (hashmap_get_size(&names) < max_candidates)
+		max_candidates = hashmap_get_size(&names);
 
 	if (argc == 0) {
 		if (broken) {
