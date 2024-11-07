@@ -514,6 +514,19 @@ test_expect_success 'match percent-encoded values in username' '
 	EOF
 '
 
+test_expect_success 'match percent-encoded values in hostname' '
+	test_config "credential.https://a%20b%20c/.helper" "$HELPER" &&
+	check fill <<-\EOF
+	url=https://a b c/
+	--
+	protocol=https
+	host=a b c
+	username=foo
+	password=bar
+	--
+	EOF
+'
+
 test_expect_success 'fetch with multiple path components' '
 	test_unconfig credential.helper &&
 	test_config credential.https://example.com/foo/repo.git.helper "verbatim foo bar" &&

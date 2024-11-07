@@ -164,7 +164,8 @@ static void credential_format(struct credential *c, struct strbuf *out)
 		strbuf_addch(out, '@');
 	}
 	if (c->host)
-		strbuf_addstr(out, c->host);
+		strbuf_add_percentencode(out, c->host,
+					 STRBUF_ENCODE_HOST_AND_PORT);
 	if (c->path) {
 		strbuf_addch(out, '/');
 		strbuf_add_percentencode(out, c->path, 0);
