@@ -16,6 +16,7 @@ UI, Workflows & Features
  * Teach 'git notes add' and 'git notes append' a new '-e' flag,
    instructing them to open the note in $GIT_EDITOR before saving.
 
+
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
 
@@ -68,6 +69,16 @@ Performance, Internal Implementation, Development Support etc.
 
  * Documentation updates to 'git-update-ref(1)'.
 
+ * Update the project's CodingGuidelines to discourage naming functions
+   with a "_1()" suffix.
+
+ * Updates the '.clang-format' to match project conventions.
+
+ * Centralize documentation for repository extensions into a single place.
+
+ * Buildfix and upgrade of Clar to a newer version.
+
+
 Fixes since v2.47
 -----------------
 
@@ -113,6 +124,10 @@ Fixes since v2.47
    it downloaded from the remote. This has been corrected by no longer
    relying on: the *.idx file we got from the remote.
    (merge 863f2459a2 jk/dumb-http-finalize later to maint).
+
+ * When called with '--left-right' and '--use-bitmap-index', 'rev-list'
+   will produce output without any left/right markers, which has been
+   corrected.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 66893a14d0 ps/leakfixes-part-8 later to maint).
