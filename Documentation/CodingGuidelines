@@ -621,6 +621,20 @@ For C programs:
     - `S_free()` releases a structure's contents and frees the
       structure.
 
+ - Function names should be clear and descriptive, accurately reflecting
+   their purpose or behavior. Arbitrary suffixes that do not add meaningful
+   context can lead to confusion, particularly for newcomers to the codebase.
+
+   Historically, the '_1' suffix has been used in situations where:
+
+   - A function handles one element among a group that requires similar
+     processing.
+   - A recursive function has been separated from its setup phase.
+
+   The '_1' suffix can be used as a concise way to indicate these specific
+   cases. However, it is recommended to find a more descriptive name wherever
+   possible to improve the readability and maintainability of the code.
+
 For Perl programs:
 
  - Most of the C guidelines above apply.
