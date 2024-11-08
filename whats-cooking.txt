@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2024, #03; Mon, 4)
-X-master-at: 8f8d6eee531b3fa1a8ef14f169b0cb5035f7a772
-X-next-at: c08e6fccd86136592273e319042f44cc8eadbb2a
+Subject: What's cooking in git.git (Nov 2024, #04; Fri, 8)
+X-master-at: facbe4f633e4ad31e641f64617bc88074c659959
+X-next-at: 60cca158198dd42396c273ab7a273339f8157e86
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2024, #03; Mon, 4)
+What's cooking in git.git (Nov 2024, #04; Fri, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,10 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+It has been a bit longer than usual since the last issue of the
+"What's cooking report".  We still have way too many topics that are
+not sufficiently reviewed.  Help is greatly appreciated.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -46,25 +50,172 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* cw/config-extensions (2024-10-22) 1 commit
+  (merged to 'next' on 2024-10-30 at 875fa0b619)
+ + doc: consolidate extensions in git-config documentation
+ (this branch is used by cw/worktree-extension.)
+
+ Centralize documentation for repository extensions into a single place.
+ source: <20241021-cleanup-extension-docs-v1-1-ab02cece3132@pm.me>
+
+
+* jk/left-right-bitmap (2024-11-01) 1 commit
+  (merged to 'next' on 2024-11-01 at f1d0c395f5)
+ + rev-list: skip bitmap traversal for --left-right
+
+ When called with '--left-right' and '--use-bitmap-index', 'rev-list'
+ will produce output without any left/right markers, which has been
+ corrected.
+ source: <20241101121606.GA2327410@coredump.intra.peff.net>
+
+
+* kn/arbitrary-suffixes (2024-10-24) 1 commit
+  (merged to 'next' on 2024-10-30 at 3eedf30c6c)
+ + CodingGuidelines: discourage arbitrary suffixes in function names
+
+ Update the project's CodingGuidelines to discourage naming functions
+ with a "_1()" suffix.
+ source: <20241024105357.2605168-1-karthik.188@gmail.com>
+
+
+* kn/ci-clang-format-tidy (2024-10-18) 2 commits
+  (merged to 'next' on 2024-10-30 at d063e828d5)
+ + clang-format: align consecutive macro definitions
+ + clang-format: re-adjust line break penalties
+
+ Updates the '.clang-format' to match project conventions.
+ source: <cover.1729241030.git.karthik.188@gmail.com>
+
+
+* ps/upgrade-clar (2024-10-21) 5 commits
+  (merged to 'next' on 2024-10-30 at b8b092bb78)
+ + cmake: set up proper dependencies for generated clar headers
+ + cmake: fix compilation of clar-based unit tests
+ + Makefile: extract script to generate clar declarations
+ + Makefile: adjust sed command for generating "clar-decls.h"
+ + t/unit-tests: update clar to 206accb
+ (this branch is used by ps/build.)
+
+ Buildfix and upgrade of Clar to a newer version.
+ source: <cover.1729506329.git.ps@pks.im>
+
+--------------------------------------------------
 [New Topics]
 
+* ps/reftable-iterator-reuse (2024-11-05) 9 commits
+ - refs/reftable: reuse iterators when reading refs
+ - reftable/merged: drain priority queue on reseek
+ - reftable/stack: add mechanism to notify callers on reload
+ - refs/reftable: refactor reflog expiry to use reftable backend
+ - refs/reftable: refactor reading symbolic refs to use reftable backend
+ - refs/reftable: read references via `struct reftable_backend`
+ - refs/reftable: handle reloading stacks in the reftable backend
+ - refs/reftable: encapsulate reftable stack
+ - Merge branch 'ps/reftable-detach' into HEAD
+ (this branch uses ps/reftable-detach.)
+
+ Optimize reading random references out of the reftable backend by
+ allowing reuse of iterator objects.
+
+ Needs review.
+ source: <cover.1730792627.git.ps@pks.im>
+
+
+* jc/move-is-bare-repository-cfg-variable-to-repo (2024-11-07) 3 commits
+ - repository: BUG when is_bare_cfg is not initialized
+ - setup: initialize is_bare_cfg
+ - git: remove is_bare_repository_cfg global variable
+
+ Code rewrite to turn the is_bare_repository_cfg global variable
+ into a member in the the_repo singleton repository object.
+
+ Waiting for response to reviews.
+ source: <pull.1826.git.git.1730926082.gitgitgadget@gmail.com>
+
+
+* jk/describe-perf (2024-11-07) 4 commits
+ - describe: stop traversing when we run out of names
+ - describe: stop digging for max_candidates+1
+ - t/perf: add tests for git-describe
+ - t6120: demonstrate weakness in disjoint-root handling
+
+ "git describe" optimization.
+
+ Expecting a reroll.
+ cf <20241106192650.GA912471@coredump.intra.peff.net>
+ source: <20241106192236.GC880133@coredump.intra.peff.net>
+
+
+* js/range-diff-diff-merges (2024-11-08) 1 commit
+ - range-diff: optionally include merge commits' diffs in the analysis
+
+ "git range-diff" learned to optionally show and compare merge
+ commits in the ranges being compared, with the --diff-merges
+ option.
+
+ Waiting for response to reviews.
+ source: <pull.1734.git.1731000007391.gitgitgadget@gmail.com>
+
+
+* ps/leakfixes-part-10 (2024-11-07) 27 commits
+ - t: remove TEST_PASSES_SANITIZE_LEAK annotations
+ - test-lib: unconditionally enable leak checking
+ - t: remove unneeded !SANITIZE_LEAK prerequisites
+ - t: mark some tests as leak free
+ - t5601: work around leak sanitizer issue
+ - git-compat-util: drop `UNLEAK()` annotation
+ - t/helper: fix leaking commit graph in "read-graph" subcommand
+ - builtin/branch: fix leaking sorting options
+ - builtin/init-db: fix leaking directory paths
+ - builtin/help: fix leaks in `check_git_cmd()`
+ - help: fix leaking return value from `help_unknown_cmd()`
+ - help: fix leaking `struct cmdnames`
+ - help: refactor to not use globals for reading config
+ - builtin/sparse-checkout: fix leaking sanitized patterns
+ - split-index: fix memory leak in `move_cache_to_base_index()`
+ - git: refactor builtin handling to use a `struct strvec`
+ - git: refactor alias handling to use a `struct strvec`
+ - strvec: introduce new `strvec_splice()` function
+ - line-log: fix leak when rewriting commit parents
+ - bisect: fix various cases where we leak commit list items
+ - bisect: fix leaking commit list items in `check_merge_base()`
+ - bisect: fix multiple leaks in `bisect_next_all()`
+ - bisect: fix leaking `current_bad_oid`
+ - bisect: fix leaking string in `handle_bad_merge_base()`
+ - bisect: fix leaking good/bad terms when reading multipe times
+ - builtin/blame: fix leaking blame entries with `--incremental`
+ - Merge branch 'ps/leakfixes-part-9' into ps/leakfixes-part-10
+ (this branch uses ps/leakfixes-part-9.)
+
+ Leakfixes.
+
+ Needs review.
+ source: <cover.1730901926.git.ps@pks.im>
+
+--------------------------------------------------
+[Cooking]
+
 * ak/t1016-style (2024-11-03) 1 commit
- - t1016: clean up style
+  (merged to 'next' on 2024-11-05 at ee100e90d3)
+ + t1016: clean up style
 
  Test modernization.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20241103135111.13508-1-algonell@gmail.com>
 
 
 * en/shallow-exclude-takes-a-ref-fix (2024-11-04) 2 commits
- - doc: correct misleading descriptions for --shallow-exclude
- - upload-pack: fix ambiguous error message
+  (merged to 'next' on 2024-11-05 at 8c5d52930b)
+ + doc: correct misleading descriptions for --shallow-exclude
+ + upload-pack: fix ambiguous error message
 
  The "--shallow-exclude=<ref>" option to various history transfer
  commands takes a ref, not an arbitrary revision.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1822.git.1730746964.gitgitgadget@gmail.com>
 
 
@@ -91,12 +242,10 @@ Release tarballs are available at:
  to use an alternative path-hash function to improve delta-base
  selection to produce a packfile with deeper history than window
  size.
- 
+
  Needs review.
  source: <pull.1823.git.1730775907.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * jt/repack-local-promisor (2024-11-03) 5 commits
  - fixup! index-pack: repack local links into promisor packs
@@ -111,7 +260,7 @@ Release tarballs are available at:
  repository.  Work it around by including these objects in the
  referring promisor pack at the receiving end of the fetch.
 
- Needs review.
+ Will merge to 'next' when the CI breakage fixup is addressed.
  Breaks CI (with a known fix).
  source: <cover.1730491845.git.jonathantanmy@google.com>
 
@@ -153,7 +302,6 @@ Release tarballs are available at:
  - worktree: add `relativeWorktrees` extension
  - setup: correctly reinitialize repository version
  - Merge branch 'cw/config-extensions' into cw/worktree
- (this branch uses cw/config-extensions.)
 
  Introduce a new repository extension to prevent older Git versions
  from mis-interpreting worktrees created with relative paths.
@@ -162,28 +310,17 @@ Release tarballs are available at:
  source: <20241031-wt_relative_options-v4-0-07a3dc0f02a3@pm.me>
 
 
-* jk/left-right-bitmap (2024-11-01) 1 commit
-  (merged to 'next' on 2024-11-01 at f1d0c395f5)
- + rev-list: skip bitmap traversal for --left-right
-
- When called with '--left-right' and '--use-bitmap-index', 'rev-list'
- will produce output without any left/right markers, which has been
- corrected.
-
- Will merge to 'master'.
- source: <20241101121606.GA2327410@coredump.intra.peff.net>
-
-
-* kh/bundle-docs (2024-10-29) 3 commits
+* kh/bundle-docs (2024-11-08) 4 commits
  - Documentation/git-bundle.txt: discuss naïve backups
  - Documentation/git-bundle.txt: mention --all in spec. refs
+ - Documentation/git-bundle.txt: remove old `--all` example
  - Documentation/git-bundle.txt: mention full backup example
 
  Documentation improvements to more prominently call out the use of
  '--all' when creating bundles.
 
- Expecting a reroll.
- source: <cover.1730234365.git.code@khaugsbakk.name>
+ Will merge to 'next'?
+ source: <cover.1730979849.git.code@khaugsbakk.name>
 
 
 * as/show-index-uninitialized-hash (2024-11-04) 2 commits
@@ -197,16 +334,18 @@ Release tarballs are available at:
  source: <20241104192958.64310-1-abhijeet.nkt@gmail.com>
 
 
-* ps/mingw-rename (2024-10-27) 3 commits
- - compat/mingw: support POSIX semantics for atomic renames
- - compat/mingw: allow deletion of most opened files
- - compat/mingw: share file handles created via `CreateFileW()`
+* ps/mingw-rename (2024-11-06) 3 commits
+  (merged to 'next' on 2024-11-06 at 6dd2fffec7)
+ + compat/mingw: support POSIX semantics for atomic renames
+ + compat/mingw: allow deletion of most opened files
+ + compat/mingw: share file handles created via `CreateFileW()`
 
  Teaches the MinGW compatibility layer to support POSIX semantics for
  atomic renames when other process(es) have a file opened at the
  destination path.
 
- Waiting for final ack before 'next'.
+ Will merge to 'master'.
+ cf. <1483501d-d798-46d6-93f5-f5edaf915e99@kdbg.org>
  source: <cover.1730042775.git.ps@pks.im>
 
 
@@ -219,23 +358,13 @@ Release tarballs are available at:
  - reftable: explicitly handle hash format IDs
  - reftable/system: move "dir.h" to its only user
  - Merge branch 'ps/reftable-strbuf' into ps/reftable-detach
+ (this branch is used by ps/reftable-iterator-reuse.)
 
  Isolates the reftable subsystem from the rest of Git's codebase by
  using fewer pieces of Git's infrastructure.
 
  Needs review.
  source: <cover.1729677003.git.ps@pks.im>
-
-
-* cw/config-extensions (2024-10-22) 1 commit
-  (merged to 'next' on 2024-10-30 at 875fa0b619)
- + doc: consolidate extensions in git-config documentation
- (this branch is used by cw/worktree-extension.)
-
- Centralize documentation for repository extensions into a single place.
-
- Will merge to 'master'.
- source: <20241021-cleanup-extension-docs-v1-1-ab02cece3132@pm.me>
 
 
 * km/config-remote-by-name (2024-10-21) 1 commit
@@ -248,45 +377,36 @@ Release tarballs are available at:
  source: <20241020173216.40852-2-ken@kmatsui.me>
 
 
-* kn/arbitrary-suffixes (2024-10-24) 1 commit
-  (merged to 'next' on 2024-10-30 at 3eedf30c6c)
- + CodingGuidelines: discourage arbitrary suffixes in function names
-
- Update the project's CodingGuidelines to discourage naming functions
- with a "_1()" suffix.
-
- Will merge to 'master'.
- source: <20241024105357.2605168-1-karthik.188@gmail.com>
-
-
-* ps/leakfixes-part-9 (2024-10-21) 22 commits
- - list-objects-filter-options: work around reported leak on error
- - builtin/merge: release outbut buffer after performing merge
- - dir: fix leak when parsing "status.showUntrackedFiles"
- - t/helper: fix leaking buffer in "dump-untracked-cache"
- - t/helper: stop re-initialization of `the_repository`
- - sparse-index: correctly free EWAH contents
- - dir: release untracked cache data
- - combine-diff: fix leaking lost lines
- - builtin/tag: fix leaking key ID on failure to sign
- - transport-helper: fix leaking import/export marks
- - builtin/commit: fix leaking cleanup config
- - trailer: fix leaking strbufs when formatting trailers
- - trailer: fix leaking trailer values
- - builtin/commit: fix leaking change data contents
- - upload-pack: fix leaking URI protocols
- - pretty: clear signature check
- - diff-lib: fix leaking diffopts in `do_diff_cache()`
- - revision: fix leaking bloom filters
- - builtin/grep: fix leak with `--max-count=0`
- - grep: fix leak in `grep_splice_or()`
- - t/helper: fix leaks in "reach" test tool
- - builtin/ls-remote: plug leaking server options
+* ps/leakfixes-part-9 (2024-11-04) 22 commits
+  (merged to 'next' on 2024-11-05 at 0260dbd8bd)
+ + list-objects-filter-options: work around reported leak on error
+ + builtin/merge: release output buffer after performing merge
+ + dir: fix leak when parsing "status.showUntrackedFiles"
+ + t/helper: fix leaking buffer in "dump-untracked-cache"
+ + t/helper: stop re-initialization of `the_repository`
+ + sparse-index: correctly free EWAH contents
+ + dir: release untracked cache data
+ + combine-diff: fix leaking lost lines
+ + builtin/tag: fix leaking key ID on failure to sign
+ + transport-helper: fix leaking import/export marks
+ + builtin/commit: fix leaking cleanup config
+ + trailer: fix leaking strbufs when formatting trailers
+ + trailer: fix leaking trailer values
+ + builtin/commit: fix leaking change data contents
+ + upload-pack: fix leaking URI protocols
+ + pretty: clear signature check
+ + diff-lib: fix leaking diffopts in `do_diff_cache()`
+ + revision: fix leaking bloom filters
+ + builtin/grep: fix leak with `--max-count=0`
+ + grep: fix leak in `grep_splice_or()`
+ + t/helper: fix leaks in "reach" test tool
+ + builtin/ls-remote: plug leaking server options
+ (this branch is used by ps/leakfixes-part-10.)
 
  More leakfixes.
 
- Needs review.
- source: <cover.1729502823.git.ps@pks.im>
+ Will merge to 'master'.
+ source: <cover.1730786195.git.ps@pks.im>
 
 
 * y5/diff-pager (2024-10-21) 1 commit
@@ -299,17 +419,6 @@ Release tarballs are available at:
  source: <pull.1817.git.git.1729370390416.gitgitgadget@gmail.com>
 
 
-* kn/ci-clang-format-tidy (2024-10-18) 2 commits
-  (merged to 'next' on 2024-10-30 at d063e828d5)
- + clang-format: align consecutive macro definitions
- + clang-format: re-adjust line break penalties
-
- Updates the '.clang-format' to match project conventions.
-
- Will merge to 'master'.
- source: <cover.1729241030.git.karthik.188@gmail.com>
-
-
 * la/trailer-info (2024-10-14) 1 commit
  - trailer: spread usage of "trailer_block" language
 
@@ -317,21 +426,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <pull.1811.git.git.1728820722580.gitgitgadget@gmail.com>
-
-
-* ps/upgrade-clar (2024-10-21) 5 commits
-  (merged to 'next' on 2024-10-30 at b8b092bb78)
- + cmake: set up proper dependencies for generated clar headers
- + cmake: fix compilation of clar-based unit tests
- + Makefile: extract script to generate clar declarations
- + Makefile: adjust sed command for generating "clar-decls.h"
- + t/unit-tests: update clar to 206accb
- (this branch is used by ps/build.)
-
- Buildfix and upgrade of Clar to a newer version.
-
- Will merge to 'master'.
- source: <cover.1729506329.git.ps@pks.im>
 
 
 * bc/drop-ancient-libcurl-and-perl (2024-10-23) 12 commits
@@ -405,7 +499,6 @@ Release tarballs are available at:
  - Makefile: use common template for GIT-BUILD-OPTIONS
  - Merge branch 'ps/platform-compat-fixes' into ps/build
  - Merge branch 'ps/upgrade-clar' into ps/build
- (this branch uses ps/upgrade-clar.)
 
  Build procedure update plus introduction of Mason based builds
 
@@ -479,20 +572,20 @@ Release tarballs are available at:
  source: <cover.1729032373.git.steadmon@google.com>
 
 
-* jt/commit-graph-missing (2024-11-04) 3 commits
- - SQUASH???
- - fetch-pack: warn if in commit graph but not obj db
- - Revert "fetch-pack: add a deref_without_lazy_fetch_extended()"
+* jt/commit-graph-missing (2024-11-05) 2 commits
+  (merged to 'next' on 2024-11-06 at b4dd083c2a)
+ + fetch-pack: die if in commit graph but not obj db
+ + Revert "fetch-pack: add a deref_without_lazy_fetch_extended()"
 
  A regression where commit objects missing from a commit-graph can
  cause an infinite loop when doing a fetch in a partial clone has
  been fixed.
 
- Waiting an ack for CI breakage fix and possibly a reroll.
- source: <cover.1730409376.git.jonathantanmy@google.com>
+ Will merge to 'master'.
+ source: <cover.1730833754.git.jonathantanmy@google.com>
 
 
-* kn/the-repository (2024-11-04) 9 commits
+* kn/the-repository (2024-11-08) 9 commits
  - midx: add repository to `multi_pack_index` struct
  - config: make `packed_git_(limit|window_size)` non-global variables
  - config: make `delta_base_cache_limit` a non-global variable
@@ -507,113 +600,4 @@ Release tarballs are available at:
  have been eliminated.
 
  Needs review.
- source: <cover.1730714298.git.karthik.188@gmail.com>
-
---------------------------------------------------
-[Discarded]
-
-* wf/diff-highlight-install (2024-10-14) 1 commit
- . diff-highlight: make install link into DESTDIR
-
- Adds an 'install' recipe to diff-highlight's Makefile.
-
- Discarded.
- Have been in stalled state for too long without activity.
- cf. <Zw2YXD6XEiQVKj9j@nand.local>
- source: <pull.938.v3.git.git.1728764613835.gitgitgadget@gmail.com>
-
-
-* am/git-blame-ignore-revs-by-default (2024-10-14) 2 commits
- . blame: introduce --override-ignore-revs to bypass ignore revisions list
- . blame: respect .git-blame-ignore-revs automatically
-
- Teaches 'git blame' to treat '.git-blame-ignore-revs' as if it were
- passed as '--ignore-revs-file' by default.
-
- Discarded.
- Stalled for too long, with many questions unanswered.
- source: <pull.1809.v2.git.1728707867.gitgitgadget@gmail.com>
-
-
-* jc/optional-path (2024-10-14) 3 commits
- . parseopt: values of pathname type can be prefixed with :(optional)
- . config: values of pathname type can be prefixed with :(optional)
- . t7500: make each piece more independent
-
- Teach configuration values of type "pathname" a new ':(optional)'
- suffix.
-
- Discarded.
- In " Needs review." state for too long.
- source: <20241014204427.1712182-1-gitster@pobox.com>
-
-
-* jc/too-many-arguments (2024-08-06) 4 commits
- . miscellaneous: avoid "too many arguments"
- . notes: avoid "too many arguments"
- . cat-file: avoid "too many arguments"
- . refs: avoid "too many arguments"
-
- Error message clarification.
-
- Discarded.
- In "On hold." state for too long.
- source: <20240806003539.3292562-1-gitster@pobox.com>
-
-
-* jc/strbuf-commented-something (2024-09-12) 2 commits
- . strbuf: retire strbuf_commented_lines()
- . strbuf: retire strbuf_commented_addf()
-
- Update two functions whose callers always pass the same global
- variable to omit the redundant parameter and use the global in the
- callee themselves.
-
- Discarded.
- In "On hold." state for too long.
- source: <20240912205301.1809355-1-gitster@pobox.com>
-
-
-* ew/cat-file-optim (2024-08-25) 10 commits
- . cat-file: use writev(2) if available
- . cat-file: batch_write: use size_t for length
- . cat-file: batch-command uses content_limit
- . object_info: content_limit only applies to blobs
- . packfile: packed_object_info avoids packed_to_object_type
- . cat-file: use delta_base_cache entries directly
- . packfile: inline cache_or_unpack_entry
- . packfile: fix off-by-one in content_limit comparison
- . packfile: allow content-limit for cat-file
- . packfile: move sizep computation
-
- "git cat-file --batch" has been optimized.
-
- Discarded.
- In "Waiting for review responses" state for too long.
- source: <20240823224630.1180772-1-e@80x24.org>
-
-
-* hy/partial-repack-fix (2024-10-16) 3 commits
- . partial-clone: update doc
- . t0410: adapt tests to repack changes
- . repack: pack everything into packfile
-
- "git repack" avoids losing local objects that are reachable from
- objects in a packfile fetched from a promisor remote.
-
- Retracted.
- cf. <CAG1j3zHXThL_JXP=9xqvg=wg0R1wZYnA-okfFxqmcUQ9w0M36g@mail.gmail.com>
- source: <20241014032546.68427-1-hanyang.tony@bytedance.com>
-
-
-* cw/fix-reachable-in-repo-with-promisor (2024-09-19) 2 commits
- . fetch-pack.c: do not declare local commits as "have" in partial repos
- . packfile: split promisor objects oidset into two
-
- "git gc" in a partial clone (i.e. lacking objects that can be
- lazily fetched from promisor remotes) collected more than objects
- that promisor-remote can give.
-
- Appears to break CI.
- cf. https://github.com/ttaylorr/git/actions/runs/11523538245
- source: <20240802073143.56731-1-hanyang.tony@bytedance.com>
+ source: <cover.1730976185.git.karthik.188@gmail.com>
