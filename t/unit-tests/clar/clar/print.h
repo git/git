@@ -21,7 +21,7 @@ static void clar_print_clap_error(int num, const struct clar_report *report, con
 {
 	printf("  %d) Failure:\n", num);
 
-	printf("%s::%s [%s:%"PRIuZ"]\n",
+	printf("%s::%s [%s:%"PRIuMAX"]\n",
 		report->suite,
 		report->test,
 		error->file,
@@ -136,7 +136,7 @@ static void clar_print_tap_ontest(const char *suite_name, const char *test_name,
 
 		printf("    at:\n");
 		printf("      file: '"); print_escaped(error->file); printf("'\n");
-		printf("      line: %" PRIuZ "\n", error->line_number);
+		printf("      line: %" PRIuMAX "\n", error->line_number);
 		printf("      function: '%s'\n", error->function);
 		printf("    ---\n");
 
@@ -202,10 +202,15 @@ static void clar_print_onsuite(const char *suite_name, int suite_index)
 	PRINT(onsuite, suite_name, suite_index);
 }
 
+static void clar_print_onabortv(const char *msg, va_list argp)
+{
+	PRINT(onabort, msg, argp);
+}
+
 static void clar_print_onabort(const char *msg, ...)
 {
 	va_list argp;
 	va_start(argp, msg);
-	PRINT(onabort, msg, argp);
+	clar_print_onabortv(msg, argp);
 	va_end(argp);
 }
