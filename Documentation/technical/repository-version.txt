@@ -65,44 +65,6 @@ Note that if no extensions are specified in the config file, then
 provides no benefit, and makes the repository incompatible with older
 implementations of git).
 
-This document will serve as the master list for extensions. Any
-implementation wishing to define a new extension should make a note of
-it here, in order to claim the name.
-
-The defined extensions are:
-
-==== `noop`
-
-This extension does not change git's behavior at all. It is useful only
-for testing format-1 compatibility.
-
-==== `preciousObjects`
-
-When the config key `extensions.preciousObjects` is set to `true`,
-objects in the repository MUST NOT be deleted (e.g., by `git-prune` or
-`git repack -d`).
-
-==== `partialClone`
-
-When the config key `extensions.partialClone` is set, it indicates
-that the repo was created with a partial clone (or later performed
-a partial fetch) and that the remote may have omitted sending
-certain unwanted objects.  Such a remote is called a "promisor remote"
-and it promises that all such omitted objects can be fetched from it
-in the future.
-
-The value of this key is the name of the promisor remote.
-
-==== `worktreeConfig`
-
-If set, by default "git config" reads from both "config" and
-"config.worktree" files from GIT_DIR in that order. In
-multiple working directory mode, "config" file is shared while
-"config.worktree" is per-working directory (i.e., it's in
-GIT_COMMON_DIR/worktrees/<id>/config.worktree)
-
-==== `refStorage`
-
-Specifies the file format for the ref database. The valid values are
-`files` (loose references with a packed-refs file) and `reftable` (see
-Documentation/technical/reftable.txt).
+The defined extensions are given in the `extensions.*` section of
+linkgit:git-config[1]. Any implementation wishing to define a new
+extension should make a note of it there, in order to claim the name.

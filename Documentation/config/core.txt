@@ -366,7 +366,7 @@ default in a bare repository.
 
 core.repositoryFormatVersion::
 	Internal variable identifying the repository format and layout
-	version.
+	version. See linkgit:gitrepository-layout[5].
 
 core.sharedRepository::
 	When 'group' (or 'true'), the repository is made shareable between
