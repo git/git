@@ -14,7 +14,7 @@ Language:	de (German)
 Repository:	https://github.com/ralfth/git
 Leader:		Ralf Thielow <ralf.thielow@gmail.com>
 Members:	Matthias Rüster <matthias.ruester@gmail.com>
-		Phillip Szelat <phillip.szelat@gmail.com>
+			Phillip Szelat <phillip.szelat@gmail.com>
 
 Language:	el (Greek)
 Repository:	https://github.com/vyruss/git-po-el
@@ -43,8 +43,8 @@ Members:	Alessandro Menti <alessandro.menti@alessandromenti.it>
 Language:	ko (Korean)
 Repository:	https://github.com/git-l10n-ko/git-l10n-ko/
 Members:	Gwan-gyeong Mun <elongbug@gmail.com>
-		Changwoo Ryu <cwryu@debian.org>
-		Sihyeon Jang <uneedsihyeon@gmail.com>
+			Changwoo Ryu <cwryu@debian.org>
+			Sihyeon Jang <uneedsihyeon@gmail.com>
 
 Language:	pl (Polish)
 Repository:	https://github.com/Arusekk/git-po
@@ -76,21 +76,21 @@ Language:	vi (Vietnamese)
 Repository:	https://github.com/Nekosha/git-po/
 Leader:		Vũ Tiến Hưng <newcomerminecraft@gmail.com>
 Members:	Trần Ngọc Quân <vnwildman AT gmail.com>
-		Nguyễn Thái Ngọc Duy <pclouds AT gmail.com>
+			Nguyễn Thái Ngọc Duy <pclouds AT gmail.com>
 
 Language:	zh_CN (Simplified Chinese)
 Repository:	https://github.com/dyrone/git/
 Leader:		Teng Long <dyroneteng AT gmail.com>
 Members:	Ray Chen <oldsharp AT gmail.com>
-		依云 <lilydjwg AT gmail.com>
-		Fangyi Zhou <me AT fangyi.io>
-		Jiang Xin <worldhello.net AT gmail.com>
+			依云 <lilydjwg AT gmail.com>
+			Fangyi Zhou <me AT fangyi.io>
+			Jiang Xin <worldhello.net AT gmail.com>
 
 
-Language:	zh_TW (Traditional Chinese)
-Repository:	https://github.com/l10n-tw/git-po
-Leader:		Yi-Jyun Pan <pan93412 AT gmail.com>
-Members:	Franklin Weng <franklin AT goodhorse.idv.tw>
+Language:		zh_TW (Traditional Chinese)
+Repository:		https://github.com/l10n-tw/git-po
+Leader:			Yi-Jyun Pan <pan93412 AT gmail.com>
+Members:		Franklin Weng <franklin AT goodhorse.idv.tw>
 
 
 
