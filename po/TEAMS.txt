@@ -76,15 +76,15 @@ Language:	vi (Vietnamese)
 Repository:	https://github.com/Nekosha/git-po/
 Leader:		Vũ Tiến Hưng <newcomerminecraft@gmail.com>
 Members:	Trần Ngọc Quân <vnwildman AT gmail.com>
-			Nguyễn Thái Ngọc Duy <pclouds AT gmail.com>
+		Nguyễn Thái Ngọc Duy <pclouds AT gmail.com>
 
 Language:	zh_CN (Simplified Chinese)
 Repository:	https://github.com/dyrone/git/
 Leader:		Teng Long <dyroneteng AT gmail.com>
 Members:	Ray Chen <oldsharp AT gmail.com>
-			依云 <lilydjwg AT gmail.com>
-			Fangyi Zhou <me AT fangyi.io>
-			Jiang Xin <worldhello.net AT gmail.com>
+		依云 <lilydjwg AT gmail.com>
+		Fangyi Zhou <me AT fangyi.io>
+		Jiang Xin <worldhello.net AT gmail.com>
 
 
 Language:	zh_TW (Traditional Chinese)
@@ -94,9 +94,9 @@ Members:	Franklin Weng <franklin AT goodhorse.idv.tw>
 
 
 
-Language:   fr_CA (French Quebec)
-Repo:       https://github.com/sirlupinwatson/gitme
-Leader:     There is only → OneTeam
-Members:    agent@ethack.me     🧙
-Group:      rsa4096@googlegroups.com
+Language:   	fr_CA (French Quebec)
+Repo:       	https://github.com/sirlupinwatson/gitme
+Leader:     	There is only → OneTeam
+Members:    	agent@ethack.me     🧙
+Group:      	rsa4096@googlegroups.com
 
