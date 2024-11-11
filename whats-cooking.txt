@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2024, #04; Fri, 8)
-X-master-at: facbe4f633e4ad31e641f64617bc88074c659959
-X-next-at: 60cca158198dd42396c273ab7a273339f8157e86
+Subject: What's cooking in git.git (Nov 2024, #05; Mon, 11)
+X-master-at: b31fb630c0fc6869a33ed717163e8a1210460d94
+X-next-at: c49de5d5d93ad88a5b8f1f2a66f44d11acfc90ac
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2024, #04; Fri, 8)
+What's cooking in git.git (Nov 2024, #05; Mon, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,9 +17,9 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-It has been a bit longer than usual since the last issue of the
-"What's cooking report".  We still have way too many topics that are
-not sufficiently reviewed.  Help is greatly appreciated.
+A few commits to update git-gui are in.  There are still too many
+topics that are left unreviewed, and the 'next' branch is not
+gaining topics as quickly as it usually would.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -50,61 +50,39 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* cw/config-extensions (2024-10-22) 1 commit
-  (merged to 'next' on 2024-10-30 at 875fa0b619)
- + doc: consolidate extensions in git-config documentation
- (this branch is used by cw/worktree-extension.)
-
- Centralize documentation for repository extensions into a single place.
- source: <20241021-cleanup-extension-docs-v1-1-ab02cece3132@pm.me>
-
-
-* jk/left-right-bitmap (2024-11-01) 1 commit
-  (merged to 'next' on 2024-11-01 at f1d0c395f5)
- + rev-list: skip bitmap traversal for --left-right
-
- When called with '--left-right' and '--use-bitmap-index', 'rev-list'
- will produce output without any left/right markers, which has been
- corrected.
- source: <20241101121606.GA2327410@coredump.intra.peff.net>
-
-
-* kn/arbitrary-suffixes (2024-10-24) 1 commit
-  (merged to 'next' on 2024-10-30 at 3eedf30c6c)
- + CodingGuidelines: discourage arbitrary suffixes in function names
-
- Update the project's CodingGuidelines to discourage naming functions
- with a "_1()" suffix.
- source: <20241024105357.2605168-1-karthik.188@gmail.com>
-
-
-* kn/ci-clang-format-tidy (2024-10-18) 2 commits
-  (merged to 'next' on 2024-10-30 at d063e828d5)
- + clang-format: align consecutive macro definitions
- + clang-format: re-adjust line break penalties
-
- Updates the '.clang-format' to match project conventions.
- source: <cover.1729241030.git.karthik.188@gmail.com>
-
-
-* ps/upgrade-clar (2024-10-21) 5 commits
-  (merged to 'next' on 2024-10-30 at b8b092bb78)
- + cmake: set up proper dependencies for generated clar headers
- + cmake: fix compilation of clar-based unit tests
- + Makefile: extract script to generate clar declarations
- + Makefile: adjust sed command for generating "clar-decls.h"
- + t/unit-tests: update clar to 206accb
- (this branch is used by ps/build.)
-
- Buildfix and upgrade of Clar to a newer version.
- source: <cover.1729506329.git.ps@pks.im>
-
---------------------------------------------------
 [New Topics]
 
-* ps/reftable-iterator-reuse (2024-11-05) 9 commits
+* ps/ref-backend-migration-optim (2024-11-08) 10 commits
+ - reftable/block: optimize allocations by using scratch buffer
+ - reftable/block: rename `block_writer::buf` variable
+ - reftable/writer: optimize allocations by using a scratch buffer
+ - refs: don't normalize log messages with `REF_SKIP_CREATE_REFLOG`
+ - refs: skip collision checks in initial transactions
+ - refs: use "initial" transaction semantics to migrate refs
+ - refs/files: support symbolic and root refs in initial transaction
+ - refs: introduce "initial" transaction flag
+ - refs/files: move logic to commit initial transaction
+ - refs: allow passing flags when setting up a transaction
+
+ Optimize migration procedure between two ref backends.
+
+ Needs review.
+ source: <20241108-pks-refs-optimize-migrations-v1-0-7fd37fa80e35@pks.im>
+
+
+* js/log-remerge-keep-ancestry (2024-11-11) 1 commit
+ - log: --remerge-diff needs to keep around commit parents
+
+ "git log -p --remerge-diff --reverse" was completely broken.
+
+ Comments?
+ cf. <CABPp-BHauuserYU8t5ybn+ghqRb-c85qwwjLWVe-e5EC8sVVxQ@mail.gmail.com>
+ source: <pull.1825.git.1731073435641.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* ps/reftable-iterator-reuse (2024-11-08) 9 commits
  - refs/reftable: reuse iterators when reading refs
  - reftable/merged: drain priority queue on reseek
  - reftable/stack: add mechanism to notify callers on reload
@@ -113,7 +91,7 @@ Release tarballs are available at:
  - refs/reftable: read references via `struct reftable_backend`
  - refs/reftable: handle reloading stacks in the reftable backend
  - refs/reftable: encapsulate reftable stack
- - Merge branch 'ps/reftable-detach' into HEAD
+ - Merge branch 'ps/reftable-detach' into ps/reftable-iterator-reuse
  (this branch uses ps/reftable-detach.)
 
  Optimize reading random references out of the reftable backend by
@@ -148,15 +126,16 @@ Release tarballs are available at:
  source: <20241106192236.GC880133@coredump.intra.peff.net>
 
 
-* js/range-diff-diff-merges (2024-11-08) 1 commit
+* js/range-diff-diff-merges (2024-11-11) 1 commit
  - range-diff: optionally include merge commits' diffs in the analysis
 
  "git range-diff" learned to optionally show and compare merge
  commits in the ranges being compared, with the --diff-merges
  option.
 
- Waiting for response to reviews.
- source: <pull.1734.git.1731000007391.gitgitgadget@gmail.com>
+ Almost there.
+ cf. <CABPp-BHNVEvYx4KwmiSQhPqidhPffb5hGBt=uT5NKqBPXC4j0w@mail.gmail.com>
+ source: <pull.1734.v2.git.1731073383564.gitgitgadget@gmail.com>
 
 
 * ps/leakfixes-part-10 (2024-11-07) 27 commits
@@ -194,8 +173,6 @@ Release tarballs are available at:
  Needs review.
  source: <cover.1730901926.git.ps@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * ak/t1016-style (2024-11-03) 1 commit
   (merged to 'next' on 2024-11-05 at ee100e90d3)
@@ -265,7 +242,7 @@ Release tarballs are available at:
  source: <cover.1730491845.git.jonathantanmy@google.com>
 
 
-* ds/path-walk-1 (2024-10-31) 6 commits
+* ds/path-walk-1 (2024-11-11) 6 commits
  - path-walk: mark trees and blobs as UNINTERESTING
  - path-walk: visit tags and cached objects
  - path-walk: allow consumer to specify object types
@@ -276,9 +253,8 @@ Release tarballs are available at:
  Introduce a new API to visit objects in batches based on a common
  path, or by type.
 
- Under discussion.
- cf. <ZyUqr/wb5K4Og9j9@nand.local>
- source: <pull.1818.git.1730356023.gitgitgadget@gmail.com>
+ Comments?
+ source: <pull.1818.v2.git.1731181272.gitgitgadget@gmail.com>
 
 
 * bc/ancient-ci (2024-11-01) 3 commits
@@ -323,15 +299,14 @@ Release tarballs are available at:
  source: <cover.1730979849.git.code@khaugsbakk.name>
 
 
-* as/show-index-uninitialized-hash (2024-11-04) 2 commits
+* as/show-index-uninitialized-hash (2024-11-11) 2 commits
  - t5300: add test for 'show-index --object-format'
  - show-index: fix uninitialized hash function
 
  Regression fix for 'show-index' when run outside of a repository.
 
- Expecting a reroll.
- cf. <xmqq4j4mv5o6.fsf@gitster.g>
- source: <20241104192958.64310-1-abhijeet.nkt@gmail.com>
+ Comments?
+ source: <20241109092739.14276-1-abhijeet.nkt@gmail.com>
 
 
 * ps/mingw-rename (2024-11-06) 3 commits
@@ -349,7 +324,7 @@ Release tarballs are available at:
  source: <cover.1730042775.git.ps@pks.im>
 
 
-* ps/reftable-detach (2024-10-23) 8 commits
+* ps/reftable-detach (2024-11-08) 8 commits
  - reftable/system: provide thin wrapper for lockfile subsystem
  - reftable/stack: drop only use of `get_locked_file_path()`
  - reftable/system: provide thin wrapper for tempfile subsystem
@@ -364,7 +339,7 @@ Release tarballs are available at:
  using fewer pieces of Git's infrastructure.
 
  Needs review.
- source: <cover.1729677003.git.ps@pks.im>
+ source: <cover.1731047193.git.ps@pks.im>
 
 
 * km/config-remote-by-name (2024-10-21) 1 commit
@@ -506,19 +481,19 @@ Release tarballs are available at:
  source: <cover.1729771605.git.ps@pks.im>
 
 
-* ej/cat-file-remote-object-info (2024-10-31) 6 commits
+* ej/cat-file-remote-object-info (2024-11-11) 6 commits
  - cat-file: add remote-object-info to batch-command
- - cat-file: add declaration of variable i inside its for loop
  - transport: add client support for object-info
  - serve: advertise object-info feature
  - fetch-pack: move fetch initialization
  - fetch-pack: refactor packet writing
+ - cat-file: add declaration of variable i inside its for loop
 
  "git cat-file --batch" and friends can optionally ask a remote
  server about objects it does not have.
 
  Needs review.
- source: <20241028203457.19715-1-eric.peijian@gmail.com>
+ source: <20241108162441.50736-1-eric.peijian@gmail.com>
 
 
 * cc/promisor-remote-capability (2024-09-10) 4 commits
@@ -538,14 +513,14 @@ Release tarballs are available at:
  source: <20240910163000.1985723-1-christian.couder@gmail.com>
 
 
-* sj/ref-contents-check (2024-10-21) 9 commits
+* sj/ref-contents-check (2024-11-11) 9 commits
  - ref: add symlink ref content check for files backend
  - ref: check whether the target of the symref is a ref
  - ref: add basic symref content check for files backend
  - ref: add more strict checks for regular refs
  - ref: port git-fsck(1) regular refs check for files backend
  - ref: support multiple worktrees check for refs
- - ref: initialize target name outside of check functions
+ - ref: initialize ref name outside of check functions
  - ref: check the full refname instead of basename
  - ref: initialize "fsck_ref_report" with zero
 
@@ -554,9 +529,8 @@ Release tarballs are available at:
  wouldn't have written itself (e.g., missing terminating end-of-line
  after the full object name).
 
- Needs review.
- cf. <ZxZ+xteOnm0im5vC@nand.local>
- source: <ZxZX5HDdq_R0C77b@ArchLinux>
+ Comments?
+ source: <ZzCiCGxL4Adnd_eq@ArchLinux>
 
 
 * js/libgit-rust (2024-10-16) 5 commits
