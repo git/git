@@ -808,7 +808,8 @@ test_expect_success 'ditto, but tabwidth=1 (must be irrelevant)' '
 test_expect_success 'check tab-in-indent and indent-with-non-tab conflict' '
 	git config core.whitespace "tab-in-indent,indent-with-non-tab" &&
 	echo "foo ();" >x &&
-	test_must_fail git diff --check
+	git diff --check 2>error &&
+	test_grep "warning: cannot enforce both tab-in-indent and indent-with-non-tab, disabling both" error
 '
 
 test_expect_success 'check tab-in-indent excluded from wildcard whitespace attribute' '
