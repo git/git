@@ -593,9 +593,12 @@ then
 	}
 else
 	_USE_GLIBC_TUNABLES=
+	_USE_GLIBC_PRELOAD=libc_malloc_debug.so.0
 	if _GLIBC_VERSION=$(getconf GNU_LIBC_VERSION 2>/dev/null) &&
 	   _GLIBC_VERSION=${_GLIBC_VERSION#"glibc "} &&
-	   expr 2.34 \<= "$_GLIBC_VERSION" >/dev/null
+	   expr 2.34 \<= "$_GLIBC_VERSION" >/dev/null &&
+	   stderr=$(LD_PRELOAD=$_USE_GLIBC_PRELOAD git version 2>&1 >/dev/null) &&
+	   test -z "$stderr"
 	then
 		_USE_GLIBC_TUNABLES=YesPlease
 	fi
@@ -607,7 +610,7 @@ else
 		if test -n "$_USE_GLIBC_TUNABLES"
 		then
 			g=
-			LD_PRELOAD="libc_malloc_debug.so.0"
+			LD_PRELOAD=$_USE_GLIBC_PRELOAD
 			for t in \
 				glibc.malloc.check=1 \
 				glibc.malloc.perturb=165
