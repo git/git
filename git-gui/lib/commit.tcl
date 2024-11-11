@@ -207,8 +207,17 @@ You must stage at least 1 file before you can commit.
 
 	# -- A message is required.
 	#
-	set msg [string trim [$ui_comm get 1.0 end]]
+	set msg [$ui_comm get 1.0 end]
+	# Strip trailing whitespace
 	regsub -all -line {[ \t\r]+$} $msg {} msg
+	# Strip comment lines
+	regsub -all {(^|\n)#[^\n]*} $msg {\1} msg
+	# Strip leading empty lines
+	regsub {^\n*} $msg {} msg
+	# Compress consecutive empty lines
+	regsub -all {\n{3,}} $msg "\n\n" msg
+	# Strip trailing empty line
+	regsub {\n\n$} $msg "\n" msg
 	if {$msg eq {}} {
 		error_popup [mc "Please supply a commit message.
 
