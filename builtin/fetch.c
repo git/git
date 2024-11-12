@@ -463,6 +463,7 @@ static void filter_prefetch_refspec(struct refspec *rs)
 				rs->raw[j - 1] = rs->raw[j];
 			}
 			rs->nr--;
+			rs->raw_nr--;
 			i--;
 			continue;
 		}

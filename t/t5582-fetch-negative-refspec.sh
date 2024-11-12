@@ -283,4 +283,8 @@ test_expect_success '--prefetch succeeds when refspec becomes empty' '
 	git -C one fetch --prefetch
 '
 
+test_expect_success '--prefetch succeeds with empty command line refspec' '
+	git -C one fetch --prefetch origin +refs/tags/extra
+'
+
 test_done
