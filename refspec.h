@@ -45,7 +45,6 @@ struct refspec {
 
 	char **raw;
 	int raw_alloc;
-	int raw_nr;
 
 	int fetch;
 };

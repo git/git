@@ -186,10 +186,12 @@ static void refspec_append_nodup(struct refspec *rs, char *refspec)
 	refspec_item_init_or_die(&item, refspec, rs->fetch);
 
 	ALLOC_GROW(rs->items, rs->nr + 1, rs->alloc);
-	rs->items[rs->nr++] = item;
+	rs->items[rs->nr] = item;
 
-	ALLOC_GROW(rs->raw, rs->raw_nr + 1, rs->raw_alloc);
-	rs->raw[rs->raw_nr++] = refspec;
+	ALLOC_GROW(rs->raw, rs->nr + 1, rs->raw_alloc);
+	rs->raw[rs->nr] = refspec;
+
+	rs->nr++;
 }
 
 void refspec_append(struct refspec *rs, const char *refspec)
@@ -217,18 +219,17 @@ void refspec_clear(struct refspec *rs)
 {
 	int i;
 
-	for (i = 0; i < rs->nr; i++)
+	for (i = 0; i < rs->nr; i++) {
 		refspec_item_clear(&rs->items[i]);
+		free(rs->raw[i]);
+	}
 
 	FREE_AND_NULL(rs->items);
 	rs->alloc = 0;
 	rs->nr = 0;
 
-	for (i = 0; i < rs->raw_nr; i++)
-		free(rs->raw[i]);
 	FREE_AND_NULL(rs->raw);
 	rs->raw_alloc = 0;
-	rs->raw_nr = 0;
 
 	rs->fetch = 0;
 }
