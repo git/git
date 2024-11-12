@@ -239,6 +239,7 @@ static enum {
 static uint16_t write_bitmap_options = BITMAP_OPT_HASH_CACHE;
 
 static int exclude_promisor_objects;
+static int exclude_promisor_objects_best_effort;
 
 static int use_delta_islands;
 
@@ -4312,6 +4313,18 @@ static int option_parse_cruft_expiration(const struct option *opt UNUSED,
 	return 0;
 }
 
+static int is_not_in_promisor_pack_obj(struct object *obj, void *data UNUSED)
+{
+	struct object_info info = OBJECT_INFO_INIT;
+	if (oid_object_info_extended(the_repository, &obj->oid, &info, 0))
+		BUG("should_include_obj should only be called on existing objects");
+	return info.whence != OI_PACKED || !info.u.packed.pack->pack_promisor;
+}
+
+static int is_not_in_promisor_pack(struct commit *commit, void *data) {
+	return is_not_in_promisor_pack_obj((struct object *) commit, data);
+}
+
 int cmd_pack_objects(int argc,
 		     const char **argv,
 		     const char *prefix,
@@ -4424,6 +4437,9 @@ int cmd_pack_objects(int argc,
 		  option_parse_missing_action),
 		OPT_BOOL(0, "exclude-promisor-objects", &exclude_promisor_objects,
 			 N_("do not pack objects in promisor packfiles")),
+		OPT_BOOL(0, "exclude-promisor-objects-best-effort",
+			 &exclude_promisor_objects_best_effort,
+			 N_("implies --missing=allow-any")),
 		OPT_BOOL(0, "delta-islands", &use_delta_islands,
 			 N_("respect islands during delta compression")),
 		OPT_STRING_LIST(0, "uri-protocol", &uri_protocols,
@@ -4504,10 +4520,18 @@ int cmd_pack_objects(int argc,
 		strvec_push(&rp, "--unpacked");
 	}
 
+	if (exclude_promisor_objects && exclude_promisor_objects_best_effort)
+		die(_("options '%s' and '%s' cannot be used together"),
+		    "--exclude-promisor-objects", "--exclude-promisor-objects-best-effort");
 	if (exclude_promisor_objects) {
 		use_internal_rev_list = 1;
 		fetch_if_missing = 0;
 		strvec_push(&rp, "--exclude-promisor-objects");
+	} else if (exclude_promisor_objects_best_effort) {
+		use_internal_rev_list = 1;
+		fetch_if_missing = 0;
+		option_parse_missing_action(NULL, "allow-any", 0);
+		/* revs configured below */
 	}
 	if (unpack_unreachable || keep_unreachable || pack_loose_unreachable)
 		use_internal_rev_list = 1;
@@ -4627,6 +4651,10 @@ int cmd_pack_objects(int argc,
 
 		repo_init_revisions(the_repository, &revs, NULL);
 		list_objects_filter_copy(&revs.filter, &filter_options);
+		if (exclude_promisor_objects_best_effort) {
+			revs.include_check = is_not_in_promisor_pack;
+			revs.include_check_obj = is_not_in_promisor_pack_obj;
+		}
 		get_object_list(&revs, rp.nr, rp.v);
 		release_revisions(&revs);
 	}
