@@ -129,6 +129,21 @@ Fixes since v2.47
    will produce output without any left/right markers, which has been
    corrected.
 
+ * More leakfixes.
+
+ * Test modernization.
+
+ * The "--shallow-exclude=<ref>" option to various history transfer
+   commands takes a ref, not an arbitrary revision.
+
+ * A regression where commit objects missing from a commit-graph can
+   cause an infinite loop when doing a fetch in a partial clone has
+   been fixed.
+
+ * The MinGW compatibility layer has been taught to support POSIX
+   semantics for atomic renames when other process(es) have a file
+   opened at the destination path.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 66893a14d0 ps/leakfixes-part-8 later to maint).
    (merge 1164e270b5 jk/output-prefix-cleanup later to maint).
