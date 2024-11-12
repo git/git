@@ -377,7 +377,7 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 	for (i = 0; i < states->remote->fetch.nr; i++)
 		if (get_fetch_map(remote_refs, &states->remote->fetch.items[i], &tail, 1))
 			die(_("Could not get fetch map for refspec %s"),
-				states->remote->fetch.raw[i]);
+				states->remote->fetch.items[i].raw);
 
 	for (ref = fetch_map; ref; ref = ref->next) {
 		if (omit_name_by_refspec(ref->name, &states->remote->fetch))
@@ -634,11 +634,11 @@ static int migrate_file(struct remote *remote)
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.push", remote->name);
 	for (i = 0; i < remote->push.nr; i++)
-		git_config_set_multivar(buf.buf, remote->push.raw[i], "^$", 0);
+		git_config_set_multivar(buf.buf, remote->push.items[i].raw, "^$", 0);
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.fetch", remote->name);
 	for (i = 0; i < remote->fetch.nr; i++)
-		git_config_set_multivar(buf.buf, remote->fetch.raw[i], "^$", 0);
+		git_config_set_multivar(buf.buf, remote->fetch.items[i].raw, "^$", 0);
 	if (remote->origin == REMOTE_REMOTES)
 		unlink_or_warn(git_path("remotes/%s", remote->name));
 	else if (remote->origin == REMOTE_BRANCHES)
@@ -768,7 +768,7 @@ static int mv(int argc, const char **argv, const char *prefix)
 			char *ptr;
 
 			strbuf_reset(&buf2);
-			strbuf_addstr(&buf2, oldremote->fetch.raw[i]);
+			strbuf_addstr(&buf2, oldremote->fetch.items[i].raw);
 			ptr = strstr(buf2.buf, old_remote_context.buf);
 			if (ptr) {
 				refspec_updated = 1;
