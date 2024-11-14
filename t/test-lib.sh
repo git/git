@@ -577,56 +577,6 @@ case $GIT_TEST_FSYNC in
 	;;
 esac
 
-# Add libc MALLOC and MALLOC_PERTURB test only if we are not executing
-# the test with valgrind and have not compiled with conflict SANITIZE
-# options.
-if test -n "$valgrind" ||
-   test -n "$SANITIZE_ADDRESS" ||
-   test -n "$SANITIZE_LEAK" ||
-   test -n "$TEST_NO_MALLOC_CHECK"
-then
-	setup_malloc_check () {
-		: nothing
-	}
-	teardown_malloc_check () {
-		: nothing
-	}
-else
-	_USE_GLIBC_TUNABLES=
-	_USE_GLIBC_PRELOAD=libc_malloc_debug.so.0
-	if _GLIBC_VERSION=$(getconf GNU_LIBC_VERSION 2>/dev/null) &&
-	   _GLIBC_VERSION=${_GLIBC_VERSION#"glibc "} &&
-	   expr 2.34 \<= "$_GLIBC_VERSION" >/dev/null &&
-	   stderr=$(LD_PRELOAD=$_USE_GLIBC_PRELOAD git version 2>&1 >/dev/null) &&
-	   test -z "$stderr"
-	then
-		_USE_GLIBC_TUNABLES=YesPlease
-	fi
-	setup_malloc_check () {
-		local g
-		local t
-		MALLOC_CHECK_=3	MALLOC_PERTURB_=165
-		export MALLOC_CHECK_ MALLOC_PERTURB_
-		if test -n "$_USE_GLIBC_TUNABLES"
-		then
-			g=
-			LD_PRELOAD=$_USE_GLIBC_PRELOAD
-			for t in \
-				glibc.malloc.check=1 \
-				glibc.malloc.perturb=165
-			do
-				g="${g#:}:$t"
-			done
-			GLIBC_TUNABLES=$g
-			export LD_PRELOAD GLIBC_TUNABLES
-		fi
-	}
-	teardown_malloc_check () {
-		unset MALLOC_CHECK_ MALLOC_PERTURB_
-		unset LD_PRELOAD GLIBC_TUNABLES
-	}
-fi
-
 # Protect ourselves from common misconfiguration to export
 # CDPATH into the environment
 unset CDPATH
@@ -1485,6 +1435,56 @@ GIT_CONFIG_NOSYSTEM=1
 GIT_ATTR_NOSYSTEM=1
 GIT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/.."
 export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR GIT_CONFIG_NOSYSTEM GIT_ATTR_NOSYSTEM GIT_CEILING_DIRECTORIES
+
+# Add libc MALLOC and MALLOC_PERTURB test only if we are not executing
+# the test with valgrind and have not compiled with conflict SANITIZE
+# options.
+if test -n "$valgrind" ||
+   test -n "$SANITIZE_ADDRESS" ||
+   test -n "$SANITIZE_LEAK" ||
+   test -n "$TEST_NO_MALLOC_CHECK"
+then
+	setup_malloc_check () {
+		: nothing
+	}
+	teardown_malloc_check () {
+		: nothing
+	}
+else
+	_USE_GLIBC_TUNABLES=
+	_USE_GLIBC_PRELOAD=libc_malloc_debug.so.0
+	if _GLIBC_VERSION=$(getconf GNU_LIBC_VERSION 2>/dev/null) &&
+	   _GLIBC_VERSION=${_GLIBC_VERSION#"glibc "} &&
+	   expr 2.34 \<= "$_GLIBC_VERSION" >/dev/null &&
+	   stderr=$(LD_PRELOAD=$_USE_GLIBC_PRELOAD git version 2>&1 >/dev/null) &&
+	   test -z "$stderr"
+	then
+		_USE_GLIBC_TUNABLES=YesPlease
+	fi
+	setup_malloc_check () {
+		local g
+		local t
+		MALLOC_CHECK_=3	MALLOC_PERTURB_=165
+		export MALLOC_CHECK_ MALLOC_PERTURB_
+		if test -n "$_USE_GLIBC_TUNABLES"
+		then
+			g=
+			LD_PRELOAD=$_USE_GLIBC_PRELOAD
+			for t in \
+				glibc.malloc.check=1 \
+				glibc.malloc.perturb=165
+			do
+				g="${g#:}:$t"
+			done
+			GLIBC_TUNABLES=$g
+			export LD_PRELOAD GLIBC_TUNABLES
+		fi
+	}
+	teardown_malloc_check () {
+		unset MALLOC_CHECK_ MALLOC_PERTURB_
+		unset LD_PRELOAD GLIBC_TUNABLES
+	}
+fi
 
 if test -z "$GIT_TEST_CMP"
 then
