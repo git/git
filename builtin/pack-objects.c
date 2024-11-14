@@ -1100,78 +1100,64 @@ static void write_reused_pack_one(struct packed_git *reuse_packfile,
 
 static size_t write_reused_pack_verbatim(struct bitmapped_pack *reuse_packfile,
 					 struct hashfile *out,
-					 off_t pack_start,
 					 struct pack_window **w_curs)
 {
-	size_t pos = reuse_packfile->bitmap_pos;
+	size_t pos = 0;
 	size_t end;
 
-	if (pos % BITS_IN_EWORD) {
-		size_t word_pos = (pos / BITS_IN_EWORD);
-		size_t offset = pos % BITS_IN_EWORD;
-		size_t last;
-		eword_t word = reuse_packfile_bitmap->words[word_pos];
-
-		if (offset + reuse_packfile->bitmap_nr < BITS_IN_EWORD)
-			last = offset + reuse_packfile->bitmap_nr;
-		else
-			last = BITS_IN_EWORD;
-
-		for (; offset < last; offset++) {
-			if (word >> offset == 0)
-				return word_pos;
-			if (!bitmap_get(reuse_packfile_bitmap,
-					word_pos * BITS_IN_EWORD + offset))
-				return word_pos;
-		}
-
-		pos += BITS_IN_EWORD - (pos % BITS_IN_EWORD);
+	if (reuse_packfile->bitmap_pos) {
+		/*
+		 * We can't reuse whole chunks verbatim out of
+		 * non-preferred packs since we can't guarantee that
+		 * all duplicate objects were resolved in favor of
+		 * that pack.
+		 *
+		 * Even if we have a whole eword_t worth of bits that
+		 * could be reused, there may be objects between the
+		 * objects corresponding to the first and last bit of
+		 * that word which were selected from a different
+		 * pack, causing us to send duplicate or unwanted
+		 * objects.
+		 *
+		 * Handle non-preferred packs from within
+		 * write_reused_pack(), which inspects and reuses
+		 * individual bits.
+		 */
+		return reuse_packfile->bitmap_pos / BITS_IN_EWORD;
 	}
 
 	/*
-	 * Now we're going to copy as many whole eword_t's as possible.
-	 * "end" is the index of the last whole eword_t we copy, but
-	 * there may be additional bits to process. Those are handled
-	 * individually by write_reused_pack().
+	 * Only read through the last word whose bits all correspond
+	 * to objects in the given packfile, since we must stop at a
+	 * word boundary.
 	 *
-	 * Begin by advancing to the first word boundary in range of the
-	 * bit positions occupied by objects in "reuse_packfile". Then
-	 * pick the last word boundary in the same range. If we have at
-	 * least one word's worth of bits to process, continue on.
+	 * If there is no whole word to read (i.e. the packfile
+	 * contains fewer than BITS_IN_EWORD objects), then we'll
+	 * inspect bits one-by-one in write_reused_pack().
 	 */
-	end = reuse_packfile->bitmap_pos + reuse_packfile->bitmap_nr;
-	if (end % BITS_IN_EWORD)
-		end -= end % BITS_IN_EWORD;
-	if (pos >= end)
-		return reuse_packfile->bitmap_pos / BITS_IN_EWORD;
+	end = reuse_packfile->bitmap_nr / BITS_IN_EWORD;
+	if (reuse_packfile_bitmap->word_alloc < end)
+		BUG("fewer words than expected in reuse_packfile_bitmap");
 
-	while (pos < end &&
-	       reuse_packfile_bitmap->words[pos / BITS_IN_EWORD] == (eword_t)~0)
-		pos += BITS_IN_EWORD;
+	while (pos < end && reuse_packfile_bitmap->words[pos] == (eword_t)~0)
+		pos++;
 
-	if (pos > end)
-		pos = end;
+	if (pos) {
+		off_t to_write;
 
-	if (reuse_packfile->bitmap_pos < pos) {
-		off_t pack_start_off = pack_pos_to_offset(reuse_packfile->p, 0);
-		off_t pack_end_off = pack_pos_to_offset(reuse_packfile->p,
-							pos - reuse_packfile->bitmap_pos);
-
-		written += pos - reuse_packfile->bitmap_pos;
+		written = (pos * BITS_IN_EWORD);
+		to_write = pack_pos_to_offset(reuse_packfile->p, written)
+			- sizeof(struct pack_header);
 
 		/* We're recording one chunk, not one object. */
-		record_reused_object(pack_start_off,
-				     pack_start_off - (hashfile_total(out) - pack_start));
+		record_reused_object(sizeof(struct pack_header), 0);
 		hashflush(out);
 		copy_pack_data(out, reuse_packfile->p, w_curs,
-			pack_start_off, pack_end_off - pack_start_off);
+			sizeof(struct pack_header), to_write);
 
 		display_progress(progress_state, written);
 	}
-	if (pos % BITS_IN_EWORD)
-		BUG("attempted to jump past a word boundary to %"PRIuMAX,
-		    (uintmax_t)pos);
-	return pos / BITS_IN_EWORD;
+	return pos;
 }
 
 static void write_reused_pack(struct bitmapped_pack *reuse_packfile,
@@ -1183,8 +1169,7 @@ static void write_reused_pack(struct bitmapped_pack *reuse_packfile,
 	struct pack_window *w_curs = NULL;
 
 	if (allow_ofs_delta)
-		i = write_reused_pack_verbatim(reuse_packfile, f, pack_start,
-					       &w_curs);
+		i = write_reused_pack_verbatim(reuse_packfile, f, &w_curs);
 
 	for (; i < reuse_packfile_bitmap->word_alloc; ++i) {
 		eword_t word = reuse_packfile_bitmap->words[i];

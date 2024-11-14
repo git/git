@@ -259,7 +259,7 @@ test_expect_success 'duplicate objects' '
 	)
 '
 
-test_expect_failure 'duplicate objects with verbatim reuse' '
+test_expect_success 'duplicate objects with verbatim reuse' '
 	git init duplicate-objects-verbatim &&
 	(
 		cd duplicate-objects-verbatim &&
