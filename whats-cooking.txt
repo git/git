@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2024, #05; Mon, 11)
-X-master-at: b31fb630c0fc6869a33ed717163e8a1210460d94
-X-next-at: c49de5d5d93ad88a5b8f1f2a66f44d11acfc90ac
+Subject: What's cooking in git.git (Nov 2024, #06; Thu, 14)
+X-master-at: 25b0f41288718625b18495de23cc066394c09a92
+X-next-at: bc8a4e45283384156c5b1b511874d1a3b06e3306
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2024, #05; Mon, 11)
+What's cooking in git.git (Nov 2024, #06; Thu, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -50,7 +50,187 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ak/t1016-style (2024-11-03) 1 commit
+  (merged to 'next' on 2024-11-05 at ee100e90d3)
+ + t1016: clean up style
+
+ Test modernization.
+ source: <20241103135111.13508-1-algonell@gmail.com>
+
+
+* en/shallow-exclude-takes-a-ref-fix (2024-11-04) 2 commits
+  (merged to 'next' on 2024-11-05 at 8c5d52930b)
+ + doc: correct misleading descriptions for --shallow-exclude
+ + upload-pack: fix ambiguous error message
+
+ The "--shallow-exclude=<ref>" option to various history transfer
+ commands takes a ref, not an arbitrary revision.
+ source: <pull.1822.git.1730746964.gitgitgadget@gmail.com>
+
+
+* jt/commit-graph-missing (2024-11-05) 2 commits
+  (merged to 'next' on 2024-11-06 at b4dd083c2a)
+ + fetch-pack: die if in commit graph but not obj db
+ + Revert "fetch-pack: add a deref_without_lazy_fetch_extended()"
+
+ A regression where commit objects missing from a commit-graph can
+ cause an infinite loop when doing a fetch in a partial clone has
+ been fixed.
+ source: <cover.1730833754.git.jonathantanmy@google.com>
+
+
+* ps/leakfixes-part-9 (2024-11-04) 22 commits
+  (merged to 'next' on 2024-11-05 at 0260dbd8bd)
+ + list-objects-filter-options: work around reported leak on error
+ + builtin/merge: release output buffer after performing merge
+ + dir: fix leak when parsing "status.showUntrackedFiles"
+ + t/helper: fix leaking buffer in "dump-untracked-cache"
+ + t/helper: stop re-initialization of `the_repository`
+ + sparse-index: correctly free EWAH contents
+ + dir: release untracked cache data
+ + combine-diff: fix leaking lost lines
+ + builtin/tag: fix leaking key ID on failure to sign
+ + transport-helper: fix leaking import/export marks
+ + builtin/commit: fix leaking cleanup config
+ + trailer: fix leaking strbufs when formatting trailers
+ + trailer: fix leaking trailer values
+ + builtin/commit: fix leaking change data contents
+ + upload-pack: fix leaking URI protocols
+ + pretty: clear signature check
+ + diff-lib: fix leaking diffopts in `do_diff_cache()`
+ + revision: fix leaking bloom filters
+ + builtin/grep: fix leak with `--max-count=0`
+ + grep: fix leak in `grep_splice_or()`
+ + t/helper: fix leaks in "reach" test tool
+ + builtin/ls-remote: plug leaking server options
+ (this branch is used by ps/leakfixes-part-10.)
+
+ More leakfixes.
+ source: <cover.1730786195.git.ps@pks.im>
+
+
+* ps/mingw-rename (2024-11-06) 3 commits
+  (merged to 'next' on 2024-11-06 at 6dd2fffec7)
+ + compat/mingw: support POSIX semantics for atomic renames
+ + compat/mingw: allow deletion of most opened files
+ + compat/mingw: share file handles created via `CreateFileW()`
+
+ The MinGW compatibility layer has been taught to support POSIX
+ semantics for atomic renames when other process(es) have a file
+ opened at the destination path.
+ cf. <1483501d-d798-46d6-93f5-f5edaf915e99@kdbg.org>
+ source: <cover.1730042775.git.ps@pks.im>
+
+--------------------------------------------------
 [New Topics]
+
+* ja/git-add-doc-markup (2024-11-12) 1 commit
+  (merged to 'next' on 2024-11-13 at 1af6d17105)
+ + doc: git-add.txt: convert to new style convention
+
+ Documentation mark-up updates.
+
+ Will merge to 'master'.
+ source: <pull.1826.git.1731348891108.gitgitgadget@gmail.com>
+
+
+* ja/git-diff-doc-markup (2024-11-12) 5 commits
+ - doc: git-diff: apply format changes to config part
+ - doc: git-diff: apply format changes to diff-generate-patch
+ - doc: git-diff: apply format changes to diff-format
+ - doc: git-diff: apply format changes to diff-options
+ - doc: git-diff: apply new documentation guidelines
+
+ Documentation mark-up updates.
+ source: <pull.1769.v2.git.1731343985.gitgitgadget@gmail.com>
+
+
+* jk/test-malloc-debug-check (2024-11-14) 2 commits
+ - test-lib: move malloc-debug setup after $PATH setup
+  (merged to 'next' on 2024-11-13 at 9aa0331ba1)
+ + test-lib: check malloc debug LD_PRELOAD before using
+
+ Avoid build/test breakage on a system without working malloc debug
+ support dynamic library.
+
+ Will merge to 'next'.
+ source: <20241111070134.GA675125@coredump.intra.peff.net>
+ source: <20241114012729.GA1148710@coredump.intra.peff.net>
+
+
+* ps/clar-build-improvement (2024-11-12) 4 commits
+ - Makefile: let clar header targets depend on their scripts
+ - cmake: use verbatim arguments when invoking clar commands
+ - cmake: use SH_EXE to execute clar scripts
+ - t/unit-tests: convert "clar-generate.awk" into a shell script
+
+ Fix for clar unit tests to support CMake build.
+
+ Will merge to 'next'?
+ source: <20241111-pks-clar-build-improvements-v2-0-d4794d8d1b30@pks.im>
+
+
+* jk/fetch-prefetch-double-free-fix (2024-11-12) 3 commits
+ - refspec: store raw refspecs inside refspec_item
+ - refspec: drop separate raw_nr count
+ - fetch: adjust refspec->raw_nr when filtering prefetch refspecs
+
+ Double-free fix.
+
+ Will merge to 'next'.
+ source: <20241112083204.GA2636868@coredump.intra.peff.net>
+
+
+* pb/mergetool-errors (2024-11-13) 5 commits
+ - git-difftool--helper.sh: exit upon initialize_merge_tool errors
+ - git-mergetool--lib.sh: add error message for unknown tool variant
+ - git-mergetool--lib.sh: add error message in 'setup_user_tool'
+ - git-mergetool--lib.sh: use TOOL_MODE when erroring about unknown tool
+ - completion: complete '--tool-help' in 'git mergetool'
+
+ End-user experience of "git mergetool" when the command errors out
+ has been improved.
+
+ Will merge to next'?
+ source: <pull.1827.git.1731459128.gitgitgadget@gmail.com>
+
+
+* ps/send-pack-unhide-error-in-atomic-push (2024-11-14) 2 commits
+ - transport: don't ignore git-receive-pack(1) exit code on atomic push
+ - t5504: modernize test by moving heredocs into test bodies
+
+ "git push --atomic --porcelain" used to ignore failures from the
+ other side, losing the error status from the child process, which
+ has been corrected.
+
+ Comments?
+ source: <20241113-pks-push-atomic-respect-exit-code-v1-0-7965f01e7f4e@pks.im>
+
+
+* sm/difftool (2024-11-13) 1 commit
+ - builtin/difftool: intialize some hashmap variables
+
+ Use of some uninitialized variables in "git difftool" has been
+ corrected.
+
+ Will merge to 'next'.
+ source: <20241112162320.818091-1-simon.marchi@polymtl.ca>
+
+
+* tb/multi-pack-reuse-dupfix (2024-11-14) 2 commits
+ - pack-objects: only perform verbatim reuse on the preferred pack
+ - t5332-multi-pack-reuse.sh: demonstrate duplicate packing failure
+
+ Object reuse code based on multi-pack-index sent an unwanted copy
+ of object.
+
+ Will merge to 'next'.
+ source: <cover.1731518931.git.me@ttaylorr.com>
+
+--------------------------------------------------
+[Cooking]
 
 * ps/ref-backend-migration-optim (2024-11-08) 10 commits
  - reftable/block: optimize allocations by using scratch buffer
@@ -70,17 +250,15 @@ Release tarballs are available at:
  source: <20241108-pks-refs-optimize-migrations-v1-0-7fd37fa80e35@pks.im>
 
 
-* js/log-remerge-keep-ancestry (2024-11-11) 1 commit
+* js/log-remerge-keep-ancestry (2024-11-12) 1 commit
  - log: --remerge-diff needs to keep around commit parents
 
  "git log -p --remerge-diff --reverse" was completely broken.
 
- Comments?
- cf. <CABPp-BHauuserYU8t5ybn+ghqRb-c85qwwjLWVe-e5EC8sVVxQ@mail.gmail.com>
- source: <pull.1825.git.1731073435641.gitgitgadget@gmail.com>
+ Expecting a hopefully small and final reroll.
+ cf. <xmqqa5e5berx.fsf@gitster.g>
+ source: <pull.1825.v2.git.1731350009491.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * ps/reftable-iterator-reuse (2024-11-08) 9 commits
  - refs/reftable: reuse iterators when reading refs
@@ -138,13 +316,14 @@ Release tarballs are available at:
  source: <pull.1734.v2.git.1731073383564.gitgitgadget@gmail.com>
 
 
-* ps/leakfixes-part-10 (2024-11-07) 27 commits
+* ps/leakfixes-part-10 (2024-11-13) 28 commits
  - t: remove TEST_PASSES_SANITIZE_LEAK annotations
  - test-lib: unconditionally enable leak checking
  - t: remove unneeded !SANITIZE_LEAK prerequisites
  - t: mark some tests as leak free
  - t5601: work around leak sanitizer issue
- - git-compat-util: drop `UNLEAK()` annotation
+ - git-compat-util: drop now-unused `UNLEAK()` macro
+ - global: drop `UNLEAK()` annotation
  - t/helper: fix leaking commit graph in "read-graph" subcommand
  - builtin/branch: fix leaking sorting options
  - builtin/init-db: fix leaking directory paths
@@ -166,44 +345,25 @@ Release tarballs are available at:
  - bisect: fix leaking good/bad terms when reading multipe times
  - builtin/blame: fix leaking blame entries with `--incremental`
  - Merge branch 'ps/leakfixes-part-9' into ps/leakfixes-part-10
- (this branch uses ps/leakfixes-part-9.)
 
  Leakfixes.
 
- Needs review.
- source: <cover.1730901926.git.ps@pks.im>
+ Will merge to 'next'?
+ source: <20241111-b4-pks-leak-fixes-pt10-v2-0-6154bf91f0b0@pks.im>
 
 
-* ak/t1016-style (2024-11-03) 1 commit
-  (merged to 'next' on 2024-11-05 at ee100e90d3)
- + t1016: clean up style
-
- Test modernization.
-
- Will merge to 'master'.
- source: <20241103135111.13508-1-algonell@gmail.com>
-
-
-* en/shallow-exclude-takes-a-ref-fix (2024-11-04) 2 commits
-  (merged to 'next' on 2024-11-05 at 8c5d52930b)
- + doc: correct misleading descriptions for --shallow-exclude
- + upload-pack: fix ambiguous error message
-
- The "--shallow-exclude=<ref>" option to various history transfer
- commands takes a ref, not an arbitrary revision.
-
- Will merge to 'master'.
- source: <pull.1822.git.1730746964.gitgitgadget@gmail.com>
-
-
-* kh/sequencer-comment-char (2024-10-23) 1 commit
+* kh/sequencer-comment-char (2024-11-13) 3 commits
+ - sequencer: comment commit messages properly
+ - sequencer: comment `--reference` subject line properly
  - sequencer: comment checked-out branch properly
 
  The sequencer failed to honor core.commentString in some places.
 
- Expecting a reroll.
- cf. <c05e603f-1fd4-4ad2-ba03-21269f464ed2@gmail.com>
- source: <5267b9a9c8cc5cc66979117dc4c1e4d7329e2a03.1729704370.git.code@khaugsbakk.name>
+ Expecting a reroll to improve tests.
+ cf. <5ed77fab-678d-4a06-bbd0-ea25462a7562@gmail.com>
+ cf. <4c623fcf-01dd-4056-80c1-b3c860ab7f87@gmail.com>
+ cf. <711b59d7-e649-4031-8924-a16fb632b4d4@gmail.com>
+ source: <cover.1731406513.git.code@khaugsbakk.name>
 
 
 * ds/full-name-hash (2024-11-04) 7 commits
@@ -224,12 +384,12 @@ Release tarballs are available at:
  source: <pull.1823.git.1730775907.gitgitgadget@gmail.com>
 
 
-* jt/repack-local-promisor (2024-11-03) 5 commits
- - fixup! index-pack: repack local links into promisor packs
- - index-pack: repack local links into promisor packs
- - t5300: move --window clamp test next to unclamped
- - t0410: use from-scratch server
- - t0410: make test description clearer
+* jt/repack-local-promisor (2024-11-12) 4 commits
+  (merged to 'next' on 2024-11-13 at 895d633576)
+ + index-pack: repack local links into promisor packs
+ + t5300: move --window clamp test next to unclamped
+ + t0410: use from-scratch server
+ + t0410: make test description clearer
 
  "git gc" discards any objects that are outside promisor packs that
  are referred to by an object in a promisor pack, and we do not
@@ -237,8 +397,7 @@ Release tarballs are available at:
  repository.  Work it around by including these objects in the
  referring promisor pack at the receiving end of the fetch.
 
- Will merge to 'next' when the CI breakage fixup is addressed.
- Breaks CI (with a known fix).
+ Will merge to 'master'.
  source: <cover.1730491845.git.jonathantanmy@google.com>
 
 
@@ -309,21 +468,6 @@ Release tarballs are available at:
  source: <20241109092739.14276-1-abhijeet.nkt@gmail.com>
 
 
-* ps/mingw-rename (2024-11-06) 3 commits
-  (merged to 'next' on 2024-11-06 at 6dd2fffec7)
- + compat/mingw: support POSIX semantics for atomic renames
- + compat/mingw: allow deletion of most opened files
- + compat/mingw: share file handles created via `CreateFileW()`
-
- Teaches the MinGW compatibility layer to support POSIX semantics for
- atomic renames when other process(es) have a file opened at the
- destination path.
-
- Will merge to 'master'.
- cf. <1483501d-d798-46d6-93f5-f5edaf915e99@kdbg.org>
- source: <cover.1730042775.git.ps@pks.im>
-
-
 * ps/reftable-detach (2024-11-08) 8 commits
  - reftable/system: provide thin wrapper for lockfile subsystem
  - reftable/stack: drop only use of `get_locked_file_path()`
@@ -352,38 +496,6 @@ Release tarballs are available at:
  source: <20241020173216.40852-2-ken@kmatsui.me>
 
 
-* ps/leakfixes-part-9 (2024-11-04) 22 commits
-  (merged to 'next' on 2024-11-05 at 0260dbd8bd)
- + list-objects-filter-options: work around reported leak on error
- + builtin/merge: release output buffer after performing merge
- + dir: fix leak when parsing "status.showUntrackedFiles"
- + t/helper: fix leaking buffer in "dump-untracked-cache"
- + t/helper: stop re-initialization of `the_repository`
- + sparse-index: correctly free EWAH contents
- + dir: release untracked cache data
- + combine-diff: fix leaking lost lines
- + builtin/tag: fix leaking key ID on failure to sign
- + transport-helper: fix leaking import/export marks
- + builtin/commit: fix leaking cleanup config
- + trailer: fix leaking strbufs when formatting trailers
- + trailer: fix leaking trailer values
- + builtin/commit: fix leaking change data contents
- + upload-pack: fix leaking URI protocols
- + pretty: clear signature check
- + diff-lib: fix leaking diffopts in `do_diff_cache()`
- + revision: fix leaking bloom filters
- + builtin/grep: fix leak with `--max-count=0`
- + grep: fix leak in `grep_splice_or()`
- + t/helper: fix leaks in "reach" test tool
- + builtin/ls-remote: plug leaking server options
- (this branch is used by ps/leakfixes-part-10.)
-
- More leakfixes.
-
- Will merge to 'master'.
- source: <cover.1730786195.git.ps@pks.im>
-
-
 * y5/diff-pager (2024-10-21) 1 commit
  - diff: setup pager only before diff contents truly ready
 
@@ -395,11 +507,12 @@ Release tarballs are available at:
 
 
 * la/trailer-info (2024-10-14) 1 commit
- - trailer: spread usage of "trailer_block" language
+  (merged to 'next' on 2024-11-13 at f038e226f6)
+ + trailer: spread usage of "trailer_block" language
 
- Refactoring.
+ Renaming a handful of variables and structure fields.
 
- Needs review.
+ Will merge to 'master'.
  source: <pull.1811.git.git.1728820722580.gitgitgadget@gmail.com>
 
 
@@ -452,7 +565,7 @@ Release tarballs are available at:
  source: <20241023153736.257733-1-bence@ferdinandy.com>
 
 
-* ps/build (2024-10-24) 21 commits
+* ps/build (2024-11-13) 19 commits
  - meson: fix conflicts with in-flight topics
  - Introduce support for the Meson build system
  - Documentation: add comparison of build systems
@@ -472,13 +585,11 @@ Release tarballs are available at:
  - Makefile: consistently use PERL_PATH
  - Makefile: consistently use @PLACEHOLDER@ to substitute
  - Makefile: use common template for GIT-BUILD-OPTIONS
- - Merge branch 'ps/platform-compat-fixes' into ps/build
- - Merge branch 'ps/upgrade-clar' into ps/build
 
  Build procedure update plus introduction of Mason based builds
 
  Under discussion.
- source: <cover.1729771605.git.ps@pks.im>
+ source: <20241112-pks-meson-v6-0-648b30996827@pks.im>
 
 
 * ej/cat-file-remote-object-info (2024-11-11) 6 commits
@@ -546,20 +657,7 @@ Release tarballs are available at:
  source: <cover.1729032373.git.steadmon@google.com>
 
 
-* jt/commit-graph-missing (2024-11-05) 2 commits
-  (merged to 'next' on 2024-11-06 at b4dd083c2a)
- + fetch-pack: die if in commit graph but not obj db
- + Revert "fetch-pack: add a deref_without_lazy_fetch_extended()"
-
- A regression where commit objects missing from a commit-graph can
- cause an infinite loop when doing a fetch in a partial clone has
- been fixed.
-
- Will merge to 'master'.
- source: <cover.1730833754.git.jonathantanmy@google.com>
-
-
-* kn/the-repository (2024-11-08) 9 commits
+* kn/the-repository (2024-11-12) 9 commits
  - midx: add repository to `multi_pack_index` struct
  - config: make `packed_git_(limit|window_size)` non-global variables
  - config: make `delta_base_cache_limit` a non-global variable
@@ -572,6 +670,4 @@ Release tarballs are available at:
 
  Various implicit uses of 'the_repoository' in the packfile code
  have been eliminated.
-
- Needs review.
- source: <cover.1730976185.git.karthik.188@gmail.com>
+ source: <cover.1731323350.git.karthik.188@gmail.com>
