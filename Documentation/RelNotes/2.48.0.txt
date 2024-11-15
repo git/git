@@ -109,21 +109,17 @@ Fixes since v2.47
    (merge 0c1a9987da db/submodule-fetch-with-remote-name-fix later to maint).
 
  * Fixes compile time warnings with 64-bit MSVC.
-   (merge 386d372031 sk/msvc-warnings later to maint).
 
  * Teaches 'shortlog' to explicitly use SHA-1 when operating outside
    of a repository.
-   (merge b33001645e wm/shortlog-hash later to maint).
 
  * Fix 'git grep' regression on macOS by disabling lookahead when
    encountering invalid UTF-8 byte sequences.
-   (merge ce025ae4f6 rs/grep-lookahead later to maint).
 
  * The dumb-http code regressed when the result of re-indexing a pack
    yielded an *.idx file that differs in content from the *.idx file
    it downloaded from the remote. This has been corrected by no longer
    relying on: the *.idx file we got from the remote.
-   (merge 863f2459a2 jk/dumb-http-finalize later to maint).
 
  * When called with '--left-right' and '--use-bitmap-index', 'rev-list'
    will produce output without any left/right markers, which has been
@@ -145,7 +141,6 @@ Fixes since v2.47
    opened at the destination path.
 
  * Other code cleanup, docfix, build fix, etc.
-   (merge 66893a14d0 ps/leakfixes-part-8 later to maint).
    (merge 1164e270b5 jk/output-prefix-cleanup later to maint).
    (merge f36b8cbaef jh/config-unset-doc-fix later to maint).
    (merge 4154ed4108 js/doc-platform-support-link-fix later to maint).
@@ -157,14 +152,4 @@ Fixes since v2.47
    (merge 6dab49b9fb tc/bundle-uri-leakfix later to maint).
    (merge f1ed39987b xx/protocol-v2-doc-markup-fix later to maint).
    (merge 41869f7447 ak/typofixes later to maint).
-   (merge f1eea0b620 ak/typofix later to maint).
    (merge dcd590a39d bf/t-readme-mention-reftable later to maint).
-   (merge 52acf6771b kh/submitting-patches later to maint).
-   (merge a73070fbd4 ks/t4205-fixup later to maint).
-   (merge 9e362dd060 co/t6050-pipefix later to maint).
-   (merge 91687cd13f sk/t7011-cleanup later to maint).
-   (merge 19c291e5b2 ua/t3404-cleanup later to maint).
-   (merge c32d4a8cfe ss/duplicate-typos later to maint).
-   (merge 09bf122507 sk/t9101-cleanup later to maint).
-   (merge c348191afe ak/t1016-cleanup later to maint).
-   (merge f56f9d6c0b ak/more-typofixes later to maint).
