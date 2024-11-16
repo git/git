@@ -131,7 +131,7 @@ SPECIFYING REFERENCES
 ---------------------
 
 Revisions must be accompanied by reference names to be packaged in a
-bundle.
+bundle.  Alternatively `--all` can be used to package all refs.
 
 More than one reference may be packaged, and more than one set of prerequisite objects can
 be specified.  The objects packaged are those not contained in the
