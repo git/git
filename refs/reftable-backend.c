@@ -15,6 +15,7 @@
 #include "../object.h"
 #include "../path.h"
 #include "../refs.h"
+#include "../reftable/reftable-basics.h"
 #include "../reftable/reftable-stack.h"
 #include "../reftable/reftable-record.h"
 #include "../reftable/reftable-error.h"
@@ -289,7 +290,16 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	refs->store_flags = store_flags;
 	refs->log_all_ref_updates = repo_settings_get_log_all_ref_updates(repo);
 
-	refs->write_options.hash_id = repo->hash_algo->format_id;
+	switch (repo->hash_algo->format_id) {
+	case GIT_SHA1_FORMAT_ID:
+		refs->write_options.hash_id = REFTABLE_HASH_SHA1;
+		break;
+	case GIT_SHA256_FORMAT_ID:
+		refs->write_options.hash_id = REFTABLE_HASH_SHA256;
+		break;
+	default:
+		BUG("unknown hash algorithm %d", repo->hash_algo->format_id);
+	}
 	refs->write_options.default_permissions = calc_shared_perm(0666 & ~mask);
 	refs->write_options.disable_auto_compact =
 		!git_env_bool("GIT_TEST_REFTABLE_AUTOCOMPACTION", 1);

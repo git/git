@@ -73,7 +73,7 @@ int reftable_new_stack(struct reftable_stack **dest, const char *dir,
 	if (_opts)
 		opts = *_opts;
 	if (opts.hash_id == 0)
-		opts.hash_id = GIT_SHA1_FORMAT_ID;
+		opts.hash_id = REFTABLE_HASH_SHA1;
 
 	*dest = NULL;
 
@@ -1603,7 +1603,7 @@ struct segment suggest_compaction_segment(uint64_t *sizes, size_t n,
 
 static uint64_t *stack_table_sizes_for_compaction(struct reftable_stack *st)
 {
-	int version = (st->opts.hash_id == GIT_SHA1_FORMAT_ID) ? 1 : 2;
+	int version = (st->opts.hash_id == REFTABLE_HASH_SHA1) ? 1 : 2;
 	int overhead = header_size(version) - 1;
 	uint64_t *sizes;
 
