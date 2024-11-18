@@ -325,14 +325,13 @@ static struct cached_object {
 } *cached_objects;
 static int cached_object_nr, cached_object_alloc;
 
-static struct cached_object empty_tree = {
-	/* no oid needed; we'll look it up manually based on the_hash_algo */
-	.type = OBJ_TREE,
-	.buf = "",
-};
-
 static struct cached_object *find_cached_object(const struct object_id *oid)
 {
+	static struct cached_object empty_tree = {
+		/* no oid needed; we'll look it up manually based on the_hash_algo */
+		.type = OBJ_TREE,
+		.buf = "",
+	};
 	int i;
 	struct cached_object *co = cached_objects;
 
