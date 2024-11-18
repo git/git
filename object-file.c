@@ -317,27 +317,28 @@ int hash_algo_by_length(int len)
  * to write them into the object store (e.g. a browse-only
  * application).
  */
-static struct cached_object {
+static struct cached_object_entry {
 	struct object_id oid;
-	enum object_type type;
-	const void *buf;
-	unsigned long size;
+	struct cached_object {
+		enum object_type type;
+		const void *buf;
+		unsigned long size;
+	} value;
 } *cached_objects;
 static int cached_object_nr, cached_object_alloc;
 
 static struct cached_object *find_cached_object(const struct object_id *oid)
 {
 	static struct cached_object empty_tree = {
-		/* no oid needed; we'll look it up manually based on the_hash_algo */
 		.type = OBJ_TREE,
 		.buf = "",
 	};
 	int i;
-	struct cached_object *co = cached_objects;
+	struct cached_object_entry *co = cached_objects;
 
 	for (i = 0; i < cached_object_nr; i++, co++) {
 		if (oideq(&co->oid, oid))
-			return co;
+			return &co->value;
 	}
 	if (oideq(oid, the_hash_algo->empty_tree))
 		return &empty_tree;
@@ -1850,7 +1851,7 @@ int oid_object_info(struct repository *r,
 int pretend_object_file(void *buf, unsigned long len, enum object_type type,
 			struct object_id *oid)
 {
-	struct cached_object *co;
+	struct cached_object_entry *co;
 	char *co_buf;
 
 	hash_object_file(the_hash_algo, buf, len, type, oid);
@@ -1859,11 +1860,11 @@ int pretend_object_file(void *buf, unsigned long len, enum object_type type,
 		return 0;
 	ALLOC_GROW(cached_objects, cached_object_nr + 1, cached_object_alloc);
 	co = &cached_objects[cached_object_nr++];
-	co->size = len;
-	co->type = type;
+	co->value.size = len;
+	co->value.type = type;
 	co_buf = xmalloc(len);
 	memcpy(co_buf, buf, len);
-	co->buf = co_buf;
+	co->value.buf = co_buf;
 	oidcpy(&co->oid, oid);
 	return 0;
 }
