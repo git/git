@@ -326,9 +326,7 @@ static struct cached_object {
 static int cached_object_nr, cached_object_alloc;
 
 static struct cached_object empty_tree = {
-	.oid = {
-		.hash = EMPTY_TREE_SHA1_BIN_LITERAL,
-	},
+	/* no oid needed; we'll look it up manually based on the_hash_algo */
 	.type = OBJ_TREE,
 	.buf = "",
 };
