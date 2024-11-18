@@ -16,7 +16,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable-record.h"
 #include "reftable-merged.h"
 #include "writer.h"
-#include "tempfile.h"
 
 static int stack_try_add(struct reftable_stack *st,
 			 int (*write_table)(struct reftable_writer *wr,
@@ -867,7 +866,7 @@ int reftable_addition_add(struct reftable_addition *add,
 	struct reftable_buf tab_file_name = REFTABLE_BUF_INIT;
 	struct reftable_buf next_name = REFTABLE_BUF_INIT;
 	struct reftable_writer *wr = NULL;
-	struct tempfile *tab_file = NULL;
+	struct reftable_tmpfile tab_file = REFTABLE_TMPFILE_INIT;
 	struct fd_writer writer = {
 		.opts = &add->stack->opts,
 	};
@@ -887,20 +886,18 @@ int reftable_addition_add(struct reftable_addition *add,
 	if (err < 0)
 		goto done;
 
-	tab_file = mks_tempfile(temp_tab_file_name.buf);
-	if (!tab_file) {
-		err = REFTABLE_IO_ERROR;
+	err = tmpfile_from_pattern(&tab_file, temp_tab_file_name.buf);
+	if (err < 0)
 		goto done;
-	}
 	if (add->stack->opts.default_permissions) {
-		if (chmod(get_tempfile_path(tab_file),
+		if (chmod(tab_file.path,
 			  add->stack->opts.default_permissions)) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
 		}
 	}
 
-	writer.fd = get_tempfile_fd(tab_file);
+	writer.fd = tab_file.fd;
 	err = reftable_writer_new(&wr, fd_writer_write, fd_writer_flush,
 				  &writer, &add->stack->opts);
 	if (err < 0)
@@ -918,11 +915,9 @@ int reftable_addition_add(struct reftable_addition *add,
 	if (err < 0)
 		goto done;
 
-	err = close_tempfile_gently(tab_file);
-	if (err < 0) {
-		err = REFTABLE_IO_ERROR;
+	err = tmpfile_close(&tab_file);
+	if (err < 0)
 		goto done;
-	}
 
 	if (wr->min_update_index < add->next_update_index) {
 		err = REFTABLE_API_ERROR;
@@ -945,11 +940,9 @@ int reftable_addition_add(struct reftable_addition *add,
 	  On windows, this relies on rand() picking a unique destination name.
 	  Maybe we should do retry loop as well?
 	 */
-	err = rename_tempfile(&tab_file, tab_file_name.buf);
-	if (err < 0) {
-		err = REFTABLE_IO_ERROR;
+	err = tmpfile_rename(&tab_file, tab_file_name.buf);
+	if (err < 0)
 		goto done;
-	}
 
 	REFTABLE_ALLOC_GROW(add->new_tables, add->new_tables_len + 1,
 			    add->new_tables_cap);
@@ -960,7 +953,7 @@ int reftable_addition_add(struct reftable_addition *add,
 	add->new_tables[add->new_tables_len++] = reftable_buf_detach(&next_name);
 
 done:
-	delete_tempfile(&tab_file);
+	tmpfile_delete(&tab_file);
 	reftable_buf_release(&temp_tab_file_name);
 	reftable_buf_release(&tab_file_name);
 	reftable_buf_release(&next_name);
@@ -980,7 +973,7 @@ uint64_t reftable_stack_next_update_index(struct reftable_stack *st)
 static int stack_compact_locked(struct reftable_stack *st,
 				size_t first, size_t last,
 				struct reftable_log_expiry_config *config,
-				struct tempfile **tab_file_out)
+				struct reftable_tmpfile *tab_file_out)
 {
 	struct reftable_buf next_name = REFTABLE_BUF_INIT;
 	struct reftable_buf tab_file_path = REFTABLE_BUF_INIT;
@@ -988,7 +981,7 @@ static int stack_compact_locked(struct reftable_stack *st,
 	struct fd_writer writer=  {
 		.opts = &st->opts,
 	};
-	struct tempfile *tab_file;
+	struct reftable_tmpfile tab_file = REFTABLE_TMPFILE_INIT;
 	int err = 0;
 
 	err = format_name(&next_name, reftable_reader_min_update_index(st->readers[first]),
@@ -1004,19 +997,17 @@ static int stack_compact_locked(struct reftable_stack *st,
 	if (err < 0)
 		goto done;
 
-	tab_file = mks_tempfile(tab_file_path.buf);
-	if (!tab_file) {
-		err = REFTABLE_IO_ERROR;
+	err = tmpfile_from_pattern(&tab_file, tab_file_path.buf);
+	if (err < 0)
 		goto done;
-	}
 
 	if (st->opts.default_permissions &&
-	    chmod(get_tempfile_path(tab_file), st->opts.default_permissions) < 0) {
+	    chmod(tab_file.path, st->opts.default_permissions) < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
 
-	writer.fd = get_tempfile_fd(tab_file);
+	writer.fd = tab_file.fd;
 	err = reftable_writer_new(&wr, fd_writer_write, fd_writer_flush,
 				  &writer, &st->opts);
 	if (err < 0)
@@ -1030,15 +1021,15 @@ static int stack_compact_locked(struct reftable_stack *st,
 	if (err < 0)
 		goto done;
 
-	err = close_tempfile_gently(tab_file);
+	err = tmpfile_close(&tab_file);
 	if (err < 0)
 		goto done;
 
 	*tab_file_out = tab_file;
-	tab_file = NULL;
+	tab_file = REFTABLE_TMPFILE_INIT;
 
 done:
-	delete_tempfile(&tab_file);
+	tmpfile_delete(&tab_file);
 	reftable_writer_free(wr);
 	reftable_buf_release(&next_name);
 	reftable_buf_release(&tab_file_path);
@@ -1171,7 +1162,7 @@ static int stack_compact_range(struct reftable_stack *st,
 	struct reftable_buf table_name = REFTABLE_BUF_INIT;
 	struct lock_file tables_list_lock = LOCK_INIT;
 	struct lock_file *table_locks = NULL;
-	struct tempfile *new_table = NULL;
+	struct reftable_tmpfile new_table = REFTABLE_TMPFILE_INIT;
 	int is_empty_table = 0, err = 0;
 	size_t first_to_replace, last_to_replace;
 	size_t i, nlocks = 0;
@@ -1439,11 +1430,9 @@ static int stack_compact_range(struct reftable_stack *st,
 		if (err < 0)
 			goto done;
 
-		err = rename_tempfile(&new_table, new_table_path.buf);
-		if (err < 0) {
-			err = REFTABLE_IO_ERROR;
+		err = tmpfile_rename(&new_table, new_table_path.buf);
+		if (err < 0)
 			goto done;
-		}
 	}
 
 	/*
@@ -1515,7 +1504,7 @@ done:
 		rollback_lock_file(&table_locks[i]);
 	reftable_free(table_locks);
 
-	delete_tempfile(&new_table);
+	tmpfile_delete(&new_table);
 	reftable_buf_release(&new_table_name);
 	reftable_buf_release(&new_table_path);
 	reftable_buf_release(&tables_list_buf);
