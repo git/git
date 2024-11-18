@@ -327,14 +327,14 @@ static struct cached_object_entry {
 } *cached_objects;
 static int cached_object_nr, cached_object_alloc;
 
-static struct cached_object *find_cached_object(const struct object_id *oid)
+static const struct cached_object *find_cached_object(const struct object_id *oid)
 {
-	static struct cached_object empty_tree = {
+	static const struct cached_object empty_tree = {
 		.type = OBJ_TREE,
 		.buf = "",
 	};
 	int i;
-	struct cached_object_entry *co = cached_objects;
+	const struct cached_object_entry *co = cached_objects;
 
 	for (i = 0; i < cached_object_nr; i++, co++) {
 		if (oideq(&co->oid, oid))
@@ -1629,7 +1629,7 @@ static int do_oid_object_info_extended(struct repository *r,
 				       struct object_info *oi, unsigned flags)
 {
 	static struct object_info blank_oi = OBJECT_INFO_INIT;
-	struct cached_object *co;
+	const struct cached_object *co;
 	struct pack_entry e;
 	int rtype;
 	const struct object_id *real = oid;
