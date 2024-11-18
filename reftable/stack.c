@@ -657,7 +657,7 @@ static int format_name(struct reftable_buf *dest, uint64_t min, uint64_t max)
 }
 
 struct reftable_addition {
-	struct lock_file tables_list_lock;
+	struct reftable_flock tables_list_lock;
 	struct reftable_stack *stack;
 
 	char **new_tables;
@@ -676,10 +676,8 @@ static int reftable_stack_init_addition(struct reftable_addition *add,
 
 	add->stack = st;
 
-	err = hold_lock_file_for_update_timeout(&add->tables_list_lock,
-						st->list_file,
-						LOCK_NO_DEREF,
-						st->opts.lock_timeout_ms);
+	err = flock_acquire(&add->tables_list_lock, st->list_file,
+			    st->opts.lock_timeout_ms);
 	if (err < 0) {
 		if (errno == EEXIST) {
 			err = REFTABLE_LOCK_ERROR;
@@ -689,7 +687,7 @@ static int reftable_stack_init_addition(struct reftable_addition *add,
 		goto done;
 	}
 	if (st->opts.default_permissions) {
-		if (chmod(get_lock_file_path(&add->tables_list_lock),
+		if (chmod(add->tables_list_lock.path,
 			  st->opts.default_permissions) < 0) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
@@ -733,7 +731,7 @@ static void reftable_addition_close(struct reftable_addition *add)
 	add->new_tables_len = 0;
 	add->new_tables_cap = 0;
 
-	rollback_lock_file(&add->tables_list_lock);
+	flock_release(&add->tables_list_lock);
 	reftable_buf_release(&nm);
 }
 
@@ -749,7 +747,6 @@ void reftable_addition_destroy(struct reftable_addition *add)
 int reftable_addition_commit(struct reftable_addition *add)
 {
 	struct reftable_buf table_list = REFTABLE_BUF_INIT;
-	int lock_file_fd = get_lock_file_fd(&add->tables_list_lock);
 	int err = 0;
 	size_t i;
 
@@ -767,20 +764,20 @@ int reftable_addition_commit(struct reftable_addition *add)
 			goto done;
 	}
 
-	err = write_in_full(lock_file_fd, table_list.buf, table_list.len);
+	err = write_in_full(add->tables_list_lock.fd, table_list.buf, table_list.len);
 	reftable_buf_release(&table_list);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
 
-	err = stack_fsync(&add->stack->opts, lock_file_fd);
+	err = stack_fsync(&add->stack->opts, add->tables_list_lock.fd);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
 
-	err = commit_lock_file(&add->tables_list_lock);
+	err = flock_commit(&add->tables_list_lock);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
@@ -1160,8 +1157,8 @@ static int stack_compact_range(struct reftable_stack *st,
 	struct reftable_buf new_table_name = REFTABLE_BUF_INIT;
 	struct reftable_buf new_table_path = REFTABLE_BUF_INIT;
 	struct reftable_buf table_name = REFTABLE_BUF_INIT;
-	struct lock_file tables_list_lock = LOCK_INIT;
-	struct lock_file *table_locks = NULL;
+	struct reftable_flock tables_list_lock = REFTABLE_FLOCK_INIT;
+	struct reftable_flock *table_locks = NULL;
 	struct reftable_tmpfile new_table = REFTABLE_TMPFILE_INIT;
 	int is_empty_table = 0, err = 0;
 	size_t first_to_replace, last_to_replace;
@@ -1179,10 +1176,7 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * Hold the lock so that we can read "tables.list" and lock all tables
 	 * which are part of the user-specified range.
 	 */
-	err = hold_lock_file_for_update_timeout(&tables_list_lock,
-						st->list_file,
-						LOCK_NO_DEREF,
-						st->opts.lock_timeout_ms);
+	err = flock_acquire(&tables_list_lock, st->list_file, st->opts.lock_timeout_ms);
 	if (err < 0) {
 		if (errno == EEXIST)
 			err = REFTABLE_LOCK_ERROR;
@@ -1205,19 +1199,20 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * older process is still busy compacting tables which are preexisting
 	 * from the point of view of the newer process.
 	 */
-	REFTABLE_CALLOC_ARRAY(table_locks, last - first + 1);
+	REFTABLE_ALLOC_ARRAY(table_locks, last - first + 1);
 	if (!table_locks) {
 		err = REFTABLE_OUT_OF_MEMORY_ERROR;
 		goto done;
 	}
+	for (i = 0; i < last - first + 1; i++)
+		table_locks[i] = REFTABLE_FLOCK_INIT;
 
 	for (i = last + 1; i > first; i--) {
 		err = stack_filename(&table_name, st, reader_name(st->readers[i - 1]));
 		if (err < 0)
 			goto done;
 
-		err = hold_lock_file_for_update(&table_locks[nlocks],
-						table_name.buf, LOCK_NO_DEREF);
+		err = flock_acquire(&table_locks[nlocks], table_name.buf, 0);
 		if (err < 0) {
 			/*
 			 * When the table is locked already we may do a
@@ -1253,7 +1248,7 @@ static int stack_compact_range(struct reftable_stack *st,
 		 * run into file descriptor exhaustion when we compress a lot
 		 * of tables.
 		 */
-		err = close_lock_file_gently(&table_locks[nlocks++]);
+		err = flock_close(&table_locks[nlocks++]);
 		if (err < 0) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
@@ -1265,7 +1260,7 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * "tables.list" lock while compacting the locked tables. This allows
 	 * concurrent updates to the stack to proceed.
 	 */
-	err = rollback_lock_file(&tables_list_lock);
+	err = flock_release(&tables_list_lock);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
@@ -1288,10 +1283,7 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * "tables.list". We'll then replace the compacted range of tables with
 	 * the new table.
 	 */
-	err = hold_lock_file_for_update_timeout(&tables_list_lock,
-						st->list_file,
-						LOCK_NO_DEREF,
-						st->opts.lock_timeout_ms);
+	err = flock_acquire(&tables_list_lock, st->list_file, st->opts.lock_timeout_ms);
 	if (err < 0) {
 		if (errno == EEXIST)
 			err = REFTABLE_LOCK_ERROR;
@@ -1301,7 +1293,7 @@ static int stack_compact_range(struct reftable_stack *st,
 	}
 
 	if (st->opts.default_permissions) {
-		if (chmod(get_lock_file_path(&tables_list_lock),
+		if (chmod(tables_list_lock.path,
 			  st->opts.default_permissions) < 0) {
 			err = REFTABLE_IO_ERROR;
 			goto done;
@@ -1456,7 +1448,7 @@ static int stack_compact_range(struct reftable_stack *st,
 			goto done;
 	}
 
-	err = write_in_full(get_lock_file_fd(&tables_list_lock),
+	err = write_in_full(tables_list_lock.fd,
 			    tables_list_buf.buf, tables_list_buf.len);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
@@ -1464,14 +1456,14 @@ static int stack_compact_range(struct reftable_stack *st,
 		goto done;
 	}
 
-	err = stack_fsync(&st->opts, get_lock_file_fd(&tables_list_lock));
+	err = stack_fsync(&st->opts, tables_list_lock.fd);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		unlink(new_table_path.buf);
 		goto done;
 	}
 
-	err = commit_lock_file(&tables_list_lock);
+	err = flock_commit(&tables_list_lock);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		unlink(new_table_path.buf);
@@ -1492,12 +1484,11 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * readers, so it is expected that unlinking tables may fail.
 	 */
 	for (i = 0; i < nlocks; i++) {
-		struct lock_file *table_lock = &table_locks[i];
-		const char *lock_path = get_lock_file_path(table_lock);
+		struct reftable_flock *table_lock = &table_locks[i];
 
 		reftable_buf_reset(&table_name);
-		err = reftable_buf_add(&table_name, lock_path,
-				       strlen(lock_path) - strlen(".lock"));
+		err = reftable_buf_add(&table_name, table_lock->path,
+				       strlen(table_lock->path) - strlen(".lock"));
 		if (err)
 			continue;
 
@@ -1505,9 +1496,9 @@ static int stack_compact_range(struct reftable_stack *st,
 	}
 
 done:
-	rollback_lock_file(&tables_list_lock);
+	flock_release(&tables_list_lock);
 	for (i = 0; table_locks && i < nlocks; i++)
-		rollback_lock_file(&table_locks[i]);
+		flock_release(&table_locks[i]);
 	reftable_free(table_locks);
 
 	tmpfile_delete(&new_table);

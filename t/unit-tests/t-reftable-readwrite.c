@@ -13,6 +13,7 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable/reader.h"
 #include "reftable/reftable-error.h"
 #include "reftable/reftable-writer.h"
+#include "strbuf.h"
 
 static const int update_index = 5;
 

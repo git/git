@@ -11,6 +11,7 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable/blocksource.h"
 #include "reftable/constants.h"
 #include "reftable/reftable-error.h"
+#include "strbuf.h"
 
 static void t_ref_block_read_write(void)
 {
