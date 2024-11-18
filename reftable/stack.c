@@ -8,7 +8,6 @@ https://developers.google.com/open-source/licenses/bsd
 
 #include "stack.h"
 
-#include "../write-or-die.h"
 #include "system.h"
 #include "constants.h"
 #include "merged.h"
@@ -43,17 +42,28 @@ static int stack_filename(struct reftable_buf *dest, struct reftable_stack *st,
 	return 0;
 }
 
-static ssize_t reftable_fd_write(void *arg, const void *data, size_t sz)
+static int stack_fsync(const struct reftable_write_options *opts, int fd)
 {
-	int *fdp = (int *)arg;
-	return write_in_full(*fdp, data, sz);
+	if (opts->fsync)
+		return opts->fsync(fd);
+	return fsync(fd);
 }
 
-static int reftable_fd_flush(void *arg)
-{
-	int *fdp = (int *)arg;
+struct fd_writer {
+	const struct reftable_write_options *opts;
+	int fd;
+};
 
-	return fsync_component(FSYNC_COMPONENT_REFERENCE, *fdp);
+static ssize_t fd_writer_write(void *arg, const void *data, size_t sz)
+{
+	struct fd_writer *writer = arg;
+	return write_in_full(writer->fd, data, sz);
+}
+
+static int fd_writer_flush(void *arg)
+{
+	struct fd_writer *writer = arg;
+	return stack_fsync(writer->opts, writer->fd);
 }
 
 int reftable_new_stack(struct reftable_stack **dest, const char *dir,
@@ -765,7 +775,7 @@ int reftable_addition_commit(struct reftable_addition *add)
 		goto done;
 	}
 
-	err = fsync_component(FSYNC_COMPONENT_REFERENCE, lock_file_fd);
+	err = stack_fsync(&add->stack->opts, lock_file_fd);
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
@@ -858,8 +868,10 @@ int reftable_addition_add(struct reftable_addition *add,
 	struct reftable_buf next_name = REFTABLE_BUF_INIT;
 	struct reftable_writer *wr = NULL;
 	struct tempfile *tab_file = NULL;
+	struct fd_writer writer = {
+		.opts = &add->stack->opts,
+	};
 	int err = 0;
-	int tab_fd;
 
 	reftable_buf_reset(&next_name);
 
@@ -887,10 +899,10 @@ int reftable_addition_add(struct reftable_addition *add,
 			goto done;
 		}
 	}
-	tab_fd = get_tempfile_fd(tab_file);
 
-	err = reftable_writer_new(&wr, reftable_fd_write, reftable_fd_flush,
-				  &tab_fd, &add->stack->opts);
+	writer.fd = get_tempfile_fd(tab_file);
+	err = reftable_writer_new(&wr, fd_writer_write, fd_writer_flush,
+				  &writer, &add->stack->opts);
 	if (err < 0)
 		goto done;
 
@@ -973,8 +985,11 @@ static int stack_compact_locked(struct reftable_stack *st,
 	struct reftable_buf next_name = REFTABLE_BUF_INIT;
 	struct reftable_buf tab_file_path = REFTABLE_BUF_INIT;
 	struct reftable_writer *wr = NULL;
+	struct fd_writer writer=  {
+		.opts = &st->opts,
+	};
 	struct tempfile *tab_file;
-	int tab_fd, err = 0;
+	int err = 0;
 
 	err = format_name(&next_name, reftable_reader_min_update_index(st->readers[first]),
 			  reftable_reader_max_update_index(st->readers[last]));
@@ -994,7 +1009,6 @@ static int stack_compact_locked(struct reftable_stack *st,
 		err = REFTABLE_IO_ERROR;
 		goto done;
 	}
-	tab_fd = get_tempfile_fd(tab_file);
 
 	if (st->opts.default_permissions &&
 	    chmod(get_tempfile_path(tab_file), st->opts.default_permissions) < 0) {
@@ -1002,8 +1016,9 @@ static int stack_compact_locked(struct reftable_stack *st,
 		goto done;
 	}
 
-	err = reftable_writer_new(&wr, reftable_fd_write, reftable_fd_flush,
-				  &tab_fd, &st->opts);
+	writer.fd = get_tempfile_fd(tab_file);
+	err = reftable_writer_new(&wr, fd_writer_write, fd_writer_flush,
+				  &writer, &st->opts);
 	if (err < 0)
 		goto done;
 
@@ -1460,7 +1475,7 @@ static int stack_compact_range(struct reftable_stack *st,
 		goto done;
 	}
 
-	err = fsync_component(FSYNC_COMPONENT_REFERENCE, get_lock_file_fd(&tables_list_lock));
+	err = stack_fsync(&st->opts, get_lock_file_fd(&tables_list_lock));
 	if (err < 0) {
 		err = REFTABLE_IO_ERROR;
 		unlink(new_table_path.buf);
