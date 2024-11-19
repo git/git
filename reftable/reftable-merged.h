@@ -34,7 +34,7 @@ struct reftable_reader;
  */
 int reftable_merged_table_new(struct reftable_merged_table **dest,
 			      struct reftable_reader **readers, size_t n,
-			      uint32_t hash_id);
+			      enum reftable_hash hash_id);
 
 /* Initialize a merged table iterator for reading refs. */
 int reftable_merged_table_init_ref_iterator(struct reftable_merged_table *mt,
@@ -56,6 +56,6 @@ reftable_merged_table_min_update_index(struct reftable_merged_table *mt);
 void reftable_merged_table_free(struct reftable_merged_table *m);
 
 /* return the hash ID of the merged table. */
-uint32_t reftable_merged_table_hash_id(struct reftable_merged_table *m);
+enum reftable_hash reftable_merged_table_hash_id(struct reftable_merged_table *m);
 
 #endif

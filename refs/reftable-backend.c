@@ -15,6 +15,7 @@
 #include "../object.h"
 #include "../path.h"
 #include "../refs.h"
+#include "../reftable/reftable-basics.h"
 #include "../reftable/reftable-stack.h"
 #include "../reftable/reftable-record.h"
 #include "../reftable/reftable-error.h"
@@ -23,6 +24,7 @@
 #include "../setup.h"
 #include "../strmap.h"
 #include "../trace2.h"
+#include "../write-or-die.h"
 #include "parse.h"
 #include "refs-internal.h"
 
@@ -272,6 +274,11 @@ static int reftable_be_config(const char *var, const char *value,
 	return 0;
 }
 
+static int reftable_be_fsync(int fd)
+{
+	return fsync_component(FSYNC_COMPONENT_REFERENCE, fd);
+}
+
 static struct ref_store *reftable_be_init(struct repository *repo,
 					  const char *gitdir,
 					  unsigned int store_flags)
@@ -289,11 +296,21 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	refs->store_flags = store_flags;
 	refs->log_all_ref_updates = repo_settings_get_log_all_ref_updates(repo);
 
-	refs->write_options.hash_id = repo->hash_algo->format_id;
+	switch (repo->hash_algo->format_id) {
+	case GIT_SHA1_FORMAT_ID:
+		refs->write_options.hash_id = REFTABLE_HASH_SHA1;
+		break;
+	case GIT_SHA256_FORMAT_ID:
+		refs->write_options.hash_id = REFTABLE_HASH_SHA256;
+		break;
+	default:
+		BUG("unknown hash algorithm %d", repo->hash_algo->format_id);
+	}
 	refs->write_options.default_permissions = calc_shared_perm(0666 & ~mask);
 	refs->write_options.disable_auto_compact =
 		!git_env_bool("GIT_TEST_REFTABLE_AUTOCOMPACTION", 1);
 	refs->write_options.lock_timeout_ms = 100;
+	refs->write_options.fsync = reftable_be_fsync;
 
 	git_config(reftable_be_config, &refs->write_options);
 

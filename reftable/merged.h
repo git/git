@@ -10,11 +10,12 @@ https://developers.google.com/open-source/licenses/bsd
 #define MERGED_H
 
 #include "system.h"
+#include "reftable-basics.h"
 
 struct reftable_merged_table {
 	struct reftable_reader **readers;
 	size_t readers_len;
-	uint32_t hash_id;
+	enum reftable_hash hash_id;
 
 	/* If unset, produce deletions. This is useful for compaction. For the
 	 * full stack, deletions should be produced. */
