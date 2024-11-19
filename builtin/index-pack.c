@@ -1970,6 +1970,8 @@ int cmd_index_pack(int argc,
 		usage(index_pack_usage);
 	if (fix_thin_pack && !from_stdin)
 		die(_("the option '%s' requires '%s'"), "--fix-thin", "--stdin");
+	if (promisor_msg && pack_name)
+		die(_("--promisor cannot be used with a pack name"));
 	if (from_stdin && !startup_info->have_repository)
 		die(_("--stdin requires a git repository"));
 	if (from_stdin && hash_algo)
