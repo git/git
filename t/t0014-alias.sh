@@ -2,6 +2,7 @@
 
 test_description='git command aliasing'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'nested aliases - internal execution' '

@@ -362,7 +362,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 	return (*argv) - orig_argv;
 }
 
-static int handle_alias(int *argcp, const char ***argv)
+static int handle_alias(struct strvec *args)
 {
 	int envchanged = 0, ret = 0, saved_errno = errno;
 	int count, option_count;
@@ -370,10 +370,10 @@ static int handle_alias(int *argcp, const char ***argv)
 	const char *alias_command;
 	char *alias_string;
 
-	alias_command = (*argv)[0];
+	alias_command = args->v[0];
 	alias_string = alias_lookup(alias_command);
 	if (alias_string) {
-		if (*argcp > 1 && !strcmp((*argv)[1], "-h"))
+		if (args->nr > 1 && !strcmp(args->v[1], "-h"))
 			fprintf_ln(stderr, _("'%s' is aliased to '%s'"),
 				   alias_command, alias_string);
 		if (alias_string[0] == '!') {
@@ -390,7 +390,7 @@ static int handle_alias(int *argcp, const char ***argv)
 			child.wait_after_clean = 1;
 			child.trace2_child_class = "shell_alias";
 			strvec_push(&child.args, alias_string + 1);
-			strvec_pushv(&child.args, (*argv) + 1);
+			strvec_pushv(&child.args, args->v + 1);
 
 			trace2_cmd_alias(alias_command, child.args.v);
 			trace2_cmd_name("_run_shell_alias_");
@@ -423,15 +423,13 @@ static int handle_alias(int *argcp, const char ***argv)
 		trace_argv_printf(new_argv,
 				  "trace: alias expansion: %s =>",
 				  alias_command);
-
-		REALLOC_ARRAY(new_argv, count + *argcp);
-		/* insert after command name */
-		COPY_ARRAY(new_argv + count, *argv + 1, *argcp);
-
 		trace2_cmd_alias(alias_command, new_argv);
 
-		*argv = new_argv;
-		*argcp += count - 1;
+		/* Replace the alias with the new arguments. */
+		strvec_splice(args, 0, 1, new_argv, count);
+
+		free(alias_string);
+		free(new_argv);
 
 		ret = 1;
 	}
@@ -800,10 +798,10 @@ static void execv_dashed_external(const char **argv)
 		exit(128);
 }
 
-static int run_argv(int *argcp, const char ***argv)
+static int run_argv(struct strvec *args)
 {
 	int done_alias = 0;
-	struct string_list cmd_list = STRING_LIST_INIT_NODUP;
+	struct string_list cmd_list = STRING_LIST_INIT_DUP;
 	struct string_list_item *seen;
 
 	while (1) {
@@ -817,8 +815,8 @@ static int run_argv(int *argcp, const char ***argv)
 		 * process.
 		 */
 		if (!done_alias)
-			handle_builtin(*argcp, *argv);
-		else if (get_builtin(**argv)) {
+			handle_builtin(args->nr, args->v);
+		else if (get_builtin(args->v[0])) {
 			struct child_process cmd = CHILD_PROCESS_INIT;
 			int i;
 
@@ -834,8 +832,8 @@ static int run_argv(int *argcp, const char ***argv)
 			commit_pager_choice();
 
 			strvec_push(&cmd.args, "git");
-			for (i = 0; i < *argcp; i++)
-				strvec_push(&cmd.args, (*argv)[i]);
+			for (i = 0; i < args->nr; i++)
+				strvec_push(&cmd.args, args->v[i]);
 
 			trace_argv_printf(cmd.args.v, "trace: exec:");
 
@@ -850,13 +848,13 @@ static int run_argv(int *argcp, const char ***argv)
 			i = run_command(&cmd);
 			if (i >= 0 || errno != ENOENT)
 				exit(i);
-			die("could not execute builtin %s", **argv);
+			die("could not execute builtin %s", args->v[0]);
 		}
 
 		/* .. then try the external ones */
-		execv_dashed_external(*argv);
+		execv_dashed_external(args->v);
 
-		seen = unsorted_string_list_lookup(&cmd_list, *argv[0]);
+		seen = unsorted_string_list_lookup(&cmd_list, args->v[0]);
 		if (seen) {
 			int i;
 			struct strbuf sb = STRBUF_INIT;
@@ -873,14 +871,14 @@ static int run_argv(int *argcp, const char ***argv)
 			      " not terminate:%s"), cmd_list.items[0].string, sb.buf);
 		}
 
-		string_list_append(&cmd_list, *argv[0]);
+		string_list_append(&cmd_list, args->v[0]);
 
 		/*
 		 * It could be an alias -- this works around the insanity
 		 * of overriding "git log" with "git show" by having
 		 * alias.log = show
 		 */
-		if (!handle_alias(argcp, argv))
+		if (!handle_alias(args))
 			break;
 		done_alias = 1;
 	}
@@ -892,6 +890,7 @@ static int run_argv(int *argcp, const char ***argv)
 
 int cmd_main(int argc, const char **argv)
 {
+	struct strvec args = STRVEC_INIT;
 	const char *cmd;
 	int done_help = 0;
 
@@ -951,25 +950,32 @@ int cmd_main(int argc, const char **argv)
 	 */
 	setup_path();
 
+	for (size_t i = 0; i < argc; i++)
+		strvec_push(&args, argv[i]);
+
 	while (1) {
-		int was_alias = run_argv(&argc, &argv);
+		int was_alias = run_argv(&args);
 		if (errno != ENOENT)
 			break;
 		if (was_alias) {
 			fprintf(stderr, _("expansion of alias '%s' failed; "
 					  "'%s' is not a git command\n"),
-				cmd, argv[0]);
+				cmd, args.v[0]);
+			strvec_clear(&args);
 			exit(1);
 		}
 		if (!done_help) {
-			cmd = argv[0] = help_unknown_cmd(cmd);
+			strvec_replace(&args, 0, help_unknown_cmd(cmd));
+			cmd = args.v[0];
 			done_help = 1;
-		} else
+		} else {
 			break;
+		}
 	}
 
 	fprintf(stderr, _("failed to run command '%s': %s\n"),
 		cmd, strerror(errno));
+	strvec_clear(&args);
 
 	return 1;
 }
