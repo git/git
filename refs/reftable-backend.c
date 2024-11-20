@@ -1490,13 +1490,6 @@ done:
 	return ret;
 }
 
-static int reftable_be_initial_transaction_commit(struct ref_store *ref_store UNUSED,
-						  struct ref_transaction *transaction,
-						  struct strbuf *err)
-{
-	return ref_transaction_commit(transaction, err);
-}
-
 static int reftable_be_pack_refs(struct ref_store *ref_store,
 				 struct pack_refs_opts *opts)
 {
@@ -2490,7 +2483,6 @@ struct ref_storage_be refs_be_reftable = {
 	.transaction_prepare = reftable_be_transaction_prepare,
 	.transaction_finish = reftable_be_transaction_finish,
 	.transaction_abort = reftable_be_transaction_abort,
-	.initial_transaction_commit = reftable_be_initial_transaction_commit,
 
 	.pack_refs = reftable_be_pack_refs,
 	.rename_ref = reftable_be_rename_ref,

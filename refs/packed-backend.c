@@ -1730,13 +1730,6 @@ cleanup:
 	return ret;
 }
 
-static int packed_initial_transaction_commit(struct ref_store *ref_store UNUSED,
-					    struct ref_transaction *transaction,
-					    struct strbuf *err)
-{
-	return ref_transaction_commit(transaction, err);
-}
-
 static int packed_pack_refs(struct ref_store *ref_store UNUSED,
 			    struct pack_refs_opts *pack_opts UNUSED)
 {
@@ -1769,7 +1762,6 @@ struct ref_storage_be refs_be_packed = {
 	.transaction_prepare = packed_transaction_prepare,
 	.transaction_finish = packed_transaction_finish,
 	.transaction_abort = packed_transaction_abort,
-	.initial_transaction_commit = packed_initial_transaction_commit,
 
 	.pack_refs = packed_pack_refs,
 	.rename_ref = NULL,
