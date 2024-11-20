@@ -2995,6 +2995,7 @@ static int files_transaction_finish_initial(struct files_ref_store *refs,
 	int ret = 0;
 	struct string_list affected_refnames = STRING_LIST_INIT_NODUP;
 	struct ref_transaction *packed_transaction = NULL;
+	struct ref_transaction *loose_transaction = NULL;
 
 	assert(err);
 
@@ -3040,6 +3041,7 @@ static int files_transaction_finish_initial(struct files_ref_store *refs,
 		if ((update->flags & REF_HAVE_OLD) &&
 		    !is_null_oid(&update->old_oid))
 			BUG("initial ref transaction with old_sha1 set");
+
 		if (refs_verify_refname_available(&refs->base, update->refname,
 						  &affected_refnames, NULL,
 						  err)) {
@@ -3048,26 +3050,48 @@ static int files_transaction_finish_initial(struct files_ref_store *refs,
 		}
 
 		/*
-		 * Add a reference creation for this reference to the
-		 * packed-refs transaction:
+		 * packed-refs don't support symbolic refs and root refs, so we
+		 * have to queue these references via the loose transaction.
 		 */
-		ref_transaction_add_update(packed_transaction, update->refname,
-					   update->flags & ~REF_HAVE_OLD,
-					   &update->new_oid, &update->old_oid,
-					   NULL, NULL, NULL);
+		if (update->new_target || is_root_ref(update->refname)) {
+			if (!loose_transaction) {
+				loose_transaction = ref_store_transaction_begin(&refs->base, 0, err);
+				if (!loose_transaction) {
+					ret = TRANSACTION_GENERIC_ERROR;
+					goto cleanup;
+				}
+			}
+
+			ref_transaction_add_update(loose_transaction, update->refname,
+						   update->flags & ~REF_HAVE_OLD,
+						   update->new_target ? NULL : &update->new_oid, NULL,
+						   update->new_target, NULL, NULL);
+		} else {
+			ref_transaction_add_update(packed_transaction, update->refname,
+						   update->flags & ~REF_HAVE_OLD,
+						   &update->new_oid, &update->old_oid,
+						   NULL, NULL, NULL);
+		}
 	}
 
-	if (packed_refs_lock(refs->packed_ref_store, 0, err)) {
+	if (packed_refs_lock(refs->packed_ref_store, 0, err) ||
+	    ref_transaction_commit(packed_transaction, err)) {
 		ret = TRANSACTION_GENERIC_ERROR;
 		goto cleanup;
 	}
+	packed_refs_unlock(refs->packed_ref_store);
 
-	if (ref_transaction_commit(packed_transaction, err)) {
-		ret = TRANSACTION_GENERIC_ERROR;
+	if (loose_transaction) {
+		if (ref_transaction_prepare(loose_transaction, err) ||
+		    ref_transaction_commit(loose_transaction, err)) {
+			ret = TRANSACTION_GENERIC_ERROR;
+			goto cleanup;
+		}
 	}
 
-	packed_refs_unlock(refs->packed_ref_store);
 cleanup:
+	if (loose_transaction)
+		ref_transaction_free(loose_transaction);
 	if (packed_transaction)
 		ref_transaction_free(packed_transaction);
 	transaction->state = REF_TRANSACTION_CLOSED;
