@@ -28,8 +28,8 @@ static struct oid_array skipped_revs;
 
 static struct object_id *current_bad_oid;
 
-static const char *term_bad;
-static const char *term_good;
+static char *term_bad;
+static char *term_good;
 
 /* Remember to update object flag allocation in object.h */
 #define COUNTED		(1u<<16)
@@ -985,7 +985,7 @@ static void show_commit(struct commit *commit)
  * We read them and store them to adapt the messages accordingly.
  * Default is bad/good.
  */
-void read_bisect_terms(const char **read_bad, const char **read_good)
+void read_bisect_terms(char **read_bad, char **read_good)
 {
 	struct strbuf str = STRBUF_INIT;
 	const char *filename = git_path_bisect_terms();
@@ -993,16 +993,20 @@ void read_bisect_terms(const char **read_bad, const char **read_good)
 
 	if (!fp) {
 		if (errno == ENOENT) {
-			*read_bad = "bad";
-			*read_good = "good";
+			free(*read_bad);
+			*read_bad = xstrdup("bad");
+			free(*read_good);
+			*read_good = xstrdup("good");
 			return;
 		} else {
 			die_errno(_("could not read file '%s'"), filename);
 		}
 	} else {
 		strbuf_getline_lf(&str, fp);
+		free(*read_bad);
 		*read_bad = strbuf_detach(&str, NULL);
 		strbuf_getline_lf(&str, fp);
+		free(*read_good);
 		*read_good = strbuf_detach(&str, NULL);
 	}
 	strbuf_release(&str);
