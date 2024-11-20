@@ -456,6 +456,7 @@ static int register_ref(const char *refname, const char *referent UNUSED, const 
 	strbuf_addstr(&good_prefix, "-");
 
 	if (!strcmp(refname, term_bad)) {
+		free(current_bad_oid);
 		current_bad_oid = xmalloc(sizeof(*current_bad_oid));
 		oidcpy(current_bad_oid, oid);
 	} else if (starts_with(refname, good_prefix.buf)) {
