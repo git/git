@@ -102,7 +102,7 @@ test_expect_success 'diff attribute' '
 	test_cmp expect actual
 '
 
-test_expect_success !SANITIZE_LEAK 'diff attribute should apply only to diff' '
+test_expect_success 'diff attribute should apply only to diff' '
 	git log -p -1 HEAD >out &&
 	grep "^diff --git a/file b/file" out
 
@@ -129,7 +129,7 @@ test_expect_success 'diff attribute' '
 	test_cmp expect actual
 '
 
-test_expect_success !SANITIZE_LEAK 'diff attribute should apply only to diff' '
+test_expect_success 'diff attribute should apply only to diff' '
 	git log -p -1 HEAD >out &&
 	grep "^diff --git a/file b/file" out
 
