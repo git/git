@@ -801,6 +801,8 @@ static enum bisect_error handle_bad_merge_base(void)
 				"between %s and [%s].\n"),
 				bad_hex, term_bad, term_good, bad_hex, good_hex);
 		}
+
+		free(good_hex);
 		return BISECT_MERGE_BASE_CHECK;
 	}
 
