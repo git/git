@@ -2,7 +2,6 @@
 
 test_description='basic tests of rev-list --disk-usage'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # we want a mix of reachable and unreachable, as well as

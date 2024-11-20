@@ -2,7 +2,6 @@
 
 test_description='test if rebase detects and aborts on incompatible options'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

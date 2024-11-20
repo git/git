@@ -3,7 +3,6 @@
 test_description='apply with fuzz and offset'
 
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 dotest () {

@@ -11,7 +11,6 @@ not bother testing that the non-C case fails to find it. That is how blame
 behaves now, but it is not a property we want to make sure is retained.
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # help avoid typing and reading long strings of similar lines

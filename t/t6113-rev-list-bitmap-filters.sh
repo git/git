@@ -2,7 +2,6 @@
 
 test_description='rev-list combining bitmaps and filters'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-bitmap.sh
 

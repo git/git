@@ -2,7 +2,6 @@
 
 test_description='progress display'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 show_cr () {

@@ -2,7 +2,6 @@
 
 test_description='test operations trying to overwrite refs at worktree HEAD'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

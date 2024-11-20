@@ -11,7 +11,6 @@ checks that git cherry only returns the second patch in the local branch
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 GIT_AUTHOR_EMAIL=bogus_email_address

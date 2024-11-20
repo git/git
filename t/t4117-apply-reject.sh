@@ -7,7 +7,6 @@ test_description='git apply with rejects
 
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

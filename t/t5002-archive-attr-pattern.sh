@@ -2,7 +2,6 @@
 
 test_description='git archive attribute pattern tests'
 
-TEST_PASSES_SANITIZE_LEAK=true
 TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 

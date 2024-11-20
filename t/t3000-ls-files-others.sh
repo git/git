@@ -16,7 +16,6 @@ filesystem.
     path4       - an empty directory
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup ' '

@@ -2,7 +2,6 @@
 
 test_description='git apply handling criss-cross rename patch.'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 create_file() {

@@ -2,7 +2,6 @@
 
 test_description='pull signature verification tests'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
 

@@ -7,7 +7,6 @@ test_description='git-pack-object with missing base
 
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Create A-B chain

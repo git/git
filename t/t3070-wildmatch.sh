@@ -2,7 +2,6 @@
 
 test_description='wildmatch tests'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 should_create_test_file() {

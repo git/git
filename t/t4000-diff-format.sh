@@ -10,7 +10,6 @@ same command line parser, so testing one should be sufficient; pick
 diff-files as a representative.
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh
 

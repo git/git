@@ -2,7 +2,6 @@
 
 test_description='git ls-files --format test'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 for flag in -s -o -k -t --resolve-undo --deduplicate --eol

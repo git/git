@@ -2,7 +2,6 @@
 
 test_description='diff with assume-unchanged entries'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # external diff has been tested in t4020-diff-external.sh

@@ -2,7 +2,6 @@
 
 test_description='test globbing (and noglob) of pathspec limiting'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'create commits with glob characters' '

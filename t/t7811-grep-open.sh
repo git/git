@@ -3,7 +3,6 @@
 test_description='git grep --open-files-in-pager
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-pager.sh
 unset PAGER GIT_PAGER

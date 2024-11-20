@@ -2,7 +2,6 @@
 
 test_description='help'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 configure_help () {

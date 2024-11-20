@@ -2,7 +2,6 @@
 
 test_description='hunk edit with "commit -p -m"'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup (initial)' '

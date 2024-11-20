@@ -10,7 +10,6 @@ while making sure to add submodules using `git submodule add` instead of
 `git add` as done in t7401.
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

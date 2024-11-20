@@ -8,7 +8,6 @@ test_description='test git-specific bash prompt functions'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-bash.sh
 
 . "$GIT_BUILD_DIR/contrib/completion/git-prompt.sh"

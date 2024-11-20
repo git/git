@@ -4,7 +4,6 @@ test_description='pseudo-merge bitmaps'
 
 GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_pseudo_merges () {

@@ -5,7 +5,6 @@
 
 test_description='mmap sliding window tests'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

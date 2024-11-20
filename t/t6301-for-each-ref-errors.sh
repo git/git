@@ -2,7 +2,6 @@
 
 test_description='for-each-ref errors for broken refs'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 ZEROS=$ZERO_OID

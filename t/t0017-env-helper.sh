@@ -2,7 +2,6 @@
 
 test_description='test test-tool env-helper'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 

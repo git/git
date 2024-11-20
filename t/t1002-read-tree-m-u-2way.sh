@@ -9,7 +9,6 @@ This is identical to t1001, but uses -u to update the work tree as well.
 
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-read-tree.sh
 

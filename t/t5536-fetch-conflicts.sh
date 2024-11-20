@@ -2,7 +2,6 @@
 
 test_description='fetch handles conflicting refspecs correctly'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 D=$(pwd)
