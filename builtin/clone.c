@@ -574,7 +574,7 @@ static void write_remote_refs(const struct ref *local_refs)
 	struct strbuf err = STRBUF_INIT;
 
 	t = ref_store_transaction_begin(get_main_ref_store(the_repository),
-					&err);
+					0, &err);
 	if (!t)
 		die("%s", err.buf);
 
