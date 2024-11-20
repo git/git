@@ -144,6 +144,8 @@ Also, if there are objects in the given pack that references non-promisor
 objects (in the repo), repacks those non-promisor objects into a promisor
 pack. This avoids a situation in which a repo has non-promisor objects that are
 accessible through promisor objects.
++
+Requires <pack-file> to not be specified.
 
 NOTES
 -----
