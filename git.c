@@ -961,7 +961,9 @@ int cmd_main(int argc, const char **argv)
 			exit(1);
 		}
 		if (!done_help) {
-			strvec_replace(&args, 0, help_unknown_cmd(cmd));
+			char *assumed = help_unknown_cmd(cmd);
+			strvec_replace(&args, 0, assumed);
+			free(assumed);
 			cmd = args.v[0];
 			done_help = 1;
 		} else {
