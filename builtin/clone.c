@@ -1586,7 +1586,6 @@ int cmd_clone(int argc,
 	free(dir);
 	free(path);
 	free(repo_to_free);
-	UNLEAK(repo);
 	junk_mode = JUNK_LEAVE_ALL;
 
 	transport_ls_refs_options_release(&transport_ls_refs_options);
