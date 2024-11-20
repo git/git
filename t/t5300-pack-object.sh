@@ -156,6 +156,11 @@ test_expect_success 'pack without delta' '
 	check_deltas stderr = 0
 '
 
+test_expect_success 'negative window clamps to 0' '
+	git pack-objects --progress --window=-1 neg-window <obj-list 2>stderr &&
+	check_deltas stderr = 0
+'
+
 test_expect_success 'pack-objects with bogus arguments' '
 	test_must_fail git pack-objects --window=0 test-1 blah blah <obj-list
 '
@@ -628,11 +633,6 @@ test_expect_success 'prefetch objects' '
 	GIT_TRACE_PACKET=$(pwd)/trace git -C client push origin "$TWO":refs/heads/two_branch &&
 	grep "fetch> done" trace >donelines &&
 	test_line_count = 1 donelines
-'
-
-test_expect_success 'negative window clamps to 0' '
-	git pack-objects --progress --window=-1 neg-window <obj-list 2>stderr &&
-	check_deltas stderr = 0
 '
 
 for hash in sha1 sha256
