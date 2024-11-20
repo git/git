@@ -723,6 +723,10 @@ const char *help_unknown_cmd(const char *cmd)
 				   (float)cfg.autocorrect/10.0, assumed);
 			sleep_millisec(cfg.autocorrect * 100);
 		}
+
+		cmdnames_release(&cfg.aliases);
+		cmdnames_release(&main_cmds);
+		cmdnames_release(&other_cmds);
 		return assumed;
 	}
 
