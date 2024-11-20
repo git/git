@@ -1011,4 +1011,12 @@ test_expect_success 'repacking loose objects is quiet' '
 	)
 '
 
+test_expect_success 'maintenance aborts with existing lock file' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	: >repo/.git/objects/schedule.lock &&
+	test_must_fail git -C repo maintenance start 2>err &&
+	test_grep "Another scheduled git-maintenance(1) process seems to be running" err
+'
+
 test_done
