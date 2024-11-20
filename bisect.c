@@ -851,8 +851,8 @@ static enum bisect_error check_merge_bases(int rev_nr, struct commit **rev, int 
 				      rev + 1, &result) < 0)
 		exit(128);
 
-	for (; result; result = result->next) {
-		const struct object_id *mb = &result->item->object.oid;
+	for (struct commit_list *l = result; l; l = l->next) {
+		const struct object_id *mb = &l->item->object.oid;
 		if (oideq(mb, current_bad_oid)) {
 			res = handle_bad_merge_base();
 			break;
