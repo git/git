@@ -39,6 +39,7 @@ struct block_writer {
 	uint32_t restart_cap;
 
 	struct reftable_buf last_key;
+	struct reftable_buf buf;
 	int entries;
 };
 

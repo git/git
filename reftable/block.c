@@ -110,24 +110,21 @@ int block_writer_add(struct block_writer *w, struct reftable_record *rec)
 		.buf = w->block + w->next,
 		.len = w->block_size - w->next,
 	};
-
 	struct string_view start = out;
-
 	int is_restart = 0;
-	struct reftable_buf key = REFTABLE_BUF_INIT;
 	int n = 0;
 	int err;
 
-	err = reftable_record_key(rec, &key);
+	err = reftable_record_key(rec, &w->buf);
 	if (err < 0)
 		goto done;
 
-	if (!key.len) {
+	if (!w->buf.len) {
 		err = REFTABLE_API_ERROR;
 		goto done;
 	}
 
-	n = reftable_encode_key(&is_restart, out, last, key,
+	n = reftable_encode_key(&is_restart, out, last, w->buf,
 				reftable_record_val_type(rec));
 	if (n < 0) {
 		err = -1;
@@ -143,9 +140,8 @@ int block_writer_add(struct block_writer *w, struct reftable_record *rec)
 	string_view_consume(&out, n);
 
 	err = block_writer_register_restart(w, start.len - out.len, is_restart,
-					    &key);
+					    &w->buf);
 done:
-	reftable_buf_release(&key);
 	return err;
 }
 
@@ -569,6 +565,7 @@ void block_writer_release(struct block_writer *bw)
 	REFTABLE_FREE_AND_NULL(bw->zstream);
 	REFTABLE_FREE_AND_NULL(bw->restarts);
 	REFTABLE_FREE_AND_NULL(bw->compressed);
+	reftable_buf_release(&bw->buf);
 	reftable_buf_release(&bw->last_key);
 	/* the block is not owned. */
 }
