@@ -88,6 +88,71 @@ void test_strvec__pushv(void)
 	strvec_clear(&vec);
 }
 
+void test_strvec__splice_with_same_size_replacement(void)
+{
+	struct strvec vec = STRVEC_INIT;
+	const char *replacement[] = { "1" };
+
+	strvec_pushl(&vec, "foo", "bar", "baz", NULL);
+	strvec_splice(&vec, 1, 1, replacement, ARRAY_SIZE(replacement));
+	check_strvec(&vec, "foo", "1", "baz", NULL);
+	strvec_clear(&vec);
+}
+
+void test_strvec__splice_with_smaller_replacement(void)
+{
+	struct strvec vec = STRVEC_INIT;
+	const char *replacement[] = { "1" };
+
+	strvec_pushl(&vec, "foo", "bar", "baz", NULL);
+	strvec_splice(&vec, 1, 2, replacement, ARRAY_SIZE(replacement));
+	check_strvec(&vec, "foo", "1", NULL);
+	strvec_clear(&vec);
+}
+
+void test_strvec__splice_with_bigger_replacement(void)
+{
+	struct strvec vec = STRVEC_INIT;
+	const char *replacement[] = { "1", "2", "3" };
+
+	strvec_pushl(&vec, "foo", "bar", "baz", NULL);
+	strvec_splice(&vec, 0, 2, replacement, ARRAY_SIZE(replacement));
+	check_strvec(&vec, "1", "2", "3", "baz", NULL);
+	strvec_clear(&vec);
+}
+
+void test_strvec__splice_with_empty_replacement(void)
+{
+	struct strvec vec = STRVEC_INIT;
+
+	strvec_pushl(&vec, "foo", "bar", "baz", NULL);
+	strvec_splice(&vec, 0, 2, NULL, 0);
+	check_strvec(&vec, "baz", NULL);
+	strvec_clear(&vec);
+}
+
+void test_strvec__splice_with_empty_original(void)
+{
+	struct strvec vec = STRVEC_INIT;
+	const char *replacement[] = { "1", "2" };
+
+	strvec_pushl(&vec, "foo", "bar", "baz", NULL);
+	strvec_splice(&vec, 1, 0, replacement, ARRAY_SIZE(replacement));
+	check_strvec(&vec, "foo", "1", "2", "bar", "baz", NULL);
+	strvec_clear(&vec);
+}
+
+void test_strvec__splice_at_tail(void)
+{
+	struct strvec vec = STRVEC_INIT;
+	const char *replacement[] = { "1", "2" };
+
+	strvec_pushl(&vec, "foo", "bar", NULL);
+	strvec_splice(&vec, 2, 0, replacement, ARRAY_SIZE(replacement));
+	check_strvec(&vec, "foo", "bar", "1", "2", NULL);
+	strvec_clear(&vec);
+}
+
 void test_strvec__replace_at_head(void)
 {
 	struct strvec vec = STRVEC_INIT;
