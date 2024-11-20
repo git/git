@@ -669,7 +669,7 @@ static void add_patterns_literal(int argc, const char **argv,
 	add_patterns_from_input(pl, argc, argv, use_stdin ? stdin : NULL);
 }
 
-static int modify_pattern_list(int argc, const char **argv, int use_stdin,
+static int modify_pattern_list(struct strvec *args, int use_stdin,
 			       enum modify_type m)
 {
 	int result;
@@ -679,13 +679,13 @@ static int modify_pattern_list(int argc, const char **argv, int use_stdin,
 	switch (m) {
 	case ADD:
 		if (core_sparse_checkout_cone)
-			add_patterns_cone_mode(argc, argv, pl, use_stdin);
+			add_patterns_cone_mode(args->nr, args->v, pl, use_stdin);
 		else
-			add_patterns_literal(argc, argv, pl, use_stdin);
+			add_patterns_literal(args->nr, args->v, pl, use_stdin);
 		break;
 
 	case REPLACE:
-		add_patterns_from_input(pl, argc, argv,
+		add_patterns_from_input(pl, args->nr, args->v,
 					use_stdin ? stdin : NULL);
 		break;
 	}
@@ -706,12 +706,12 @@ static int modify_pattern_list(int argc, const char **argv, int use_stdin,
 	return result;
 }
 
-static void sanitize_paths(int argc, const char **argv,
+static void sanitize_paths(struct strvec *args,
 			   const char *prefix, int skip_checks)
 {
 	int i;
 
-	if (!argc)
+	if (!args->nr)
 		return;
 
 	if (prefix && *prefix && core_sparse_checkout_cone) {
@@ -721,8 +721,11 @@ static void sanitize_paths(int argc, const char **argv,
 		 */
 		int prefix_len = strlen(prefix);
 
-		for (i = 0; i < argc; i++)
-			argv[i] = prefix_path(prefix, prefix_len, argv[i]);
+		for (i = 0; i < args->nr; i++) {
+			char *prefixed_path = prefix_path(prefix, prefix_len, args->v[i]);
+			strvec_replace(args, i, prefixed_path);
+			free(prefixed_path);
+		}
 	}
 
 	if (skip_checks)
@@ -732,20 +735,20 @@ static void sanitize_paths(int argc, const char **argv,
 		die(_("please run from the toplevel directory in non-cone mode"));
 
 	if (core_sparse_checkout_cone) {
-		for (i = 0; i < argc; i++) {
-			if (argv[i][0] == '/')
+		for (i = 0; i < args->nr; i++) {
+			if (args->v[i][0] == '/')
 				die(_("specify directories rather than patterns (no leading slash)"));
-			if (argv[i][0] == '!')
+			if (args->v[i][0] == '!')
 				die(_("specify directories rather than patterns.  If your directory starts with a '!', pass --skip-checks"));
-			if (strpbrk(argv[i], "*?[]"))
+			if (strpbrk(args->v[i], "*?[]"))
 				die(_("specify directories rather than patterns.  If your directory really has any of '*?[]\\' in it, pass --skip-checks"));
 		}
 	}
 
-	for (i = 0; i < argc; i++) {
+	for (i = 0; i < args->nr; i++) {
 		struct cache_entry *ce;
 		struct index_state *index = the_repository->index;
-		int pos = index_name_pos(index, argv[i], strlen(argv[i]));
+		int pos = index_name_pos(index, args->v[i], strlen(args->v[i]));
 
 		if (pos < 0)
 			continue;
@@ -754,9 +757,9 @@ static void sanitize_paths(int argc, const char **argv,
 			continue;
 
 		if (core_sparse_checkout_cone)
-			die(_("'%s' is not a directory; to treat it as a directory anyway, rerun with --skip-checks"), argv[i]);
+			die(_("'%s' is not a directory; to treat it as a directory anyway, rerun with --skip-checks"), args->v[i]);
 		else
-			warning(_("pass a leading slash before paths such as '%s' if you want a single file (see NON-CONE PROBLEMS in the git-sparse-checkout manual)."), argv[i]);
+			warning(_("pass a leading slash before paths such as '%s' if you want a single file (see NON-CONE PROBLEMS in the git-sparse-checkout manual)."), args->v[i]);
 	}
 }
 
@@ -780,6 +783,8 @@ static int sparse_checkout_add(int argc, const char **argv, const char *prefix)
 			 N_("read patterns from standard in")),
 		OPT_END(),
 	};
+	struct strvec patterns = STRVEC_INIT;
+	int ret;
 
 	setup_work_tree();
 	if (!core_apply_sparse_checkout)
@@ -791,9 +796,14 @@ static int sparse_checkout_add(int argc, const char **argv, const char *prefix)
 			     builtin_sparse_checkout_add_options,
 			     builtin_sparse_checkout_add_usage, 0);
 
-	sanitize_paths(argc, argv, prefix, add_opts.skip_checks);
+	for (int i = 0; i < argc; i++)
+		strvec_push(&patterns, argv[i]);
+	sanitize_paths(&patterns, prefix, add_opts.skip_checks);
 
-	return modify_pattern_list(argc, argv, add_opts.use_stdin, ADD);
+	ret = modify_pattern_list(&patterns, add_opts.use_stdin, ADD);
+
+	strvec_clear(&patterns);
+	return ret;
 }
 
 static char const * const builtin_sparse_checkout_set_usage[] = {
@@ -826,6 +836,8 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 			   PARSE_OPT_NONEG),
 		OPT_END(),
 	};
+	struct strvec patterns = STRVEC_INIT;
+	int ret;
 
 	setup_work_tree();
 	repo_read_index(the_repository);
@@ -846,13 +858,18 @@ static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
 	 * top-level directory (much as 'init' would do).
 	 */
 	if (!core_sparse_checkout_cone && !set_opts.use_stdin && argc == 0) {
-		argv = default_patterns;
-		argc = default_patterns_nr;
+		for (int i = 0; i < default_patterns_nr; i++)
+			strvec_push(&patterns, default_patterns[i]);
 	} else {
-		sanitize_paths(argc, argv, prefix, set_opts.skip_checks);
+		for (int i = 0; i < argc; i++)
+			strvec_push(&patterns, argv[i]);
+		sanitize_paths(&patterns, prefix, set_opts.skip_checks);
 	}
 
-	return modify_pattern_list(argc, argv, set_opts.use_stdin, REPLACE);
+	ret = modify_pattern_list(&patterns, set_opts.use_stdin, REPLACE);
+
+	strvec_clear(&patterns);
+	return ret;
 }
 
 static char const * const builtin_sparse_checkout_reapply_usage[] = {
