@@ -70,14 +70,14 @@ static int block_writer_register_restart(struct block_writer *w, int n,
 	return 0;
 }
 
-int block_writer_init(struct block_writer *bw, uint8_t typ, uint8_t *buf,
+int block_writer_init(struct block_writer *bw, uint8_t typ, uint8_t *block,
 		      uint32_t block_size, uint32_t header_off, int hash_size)
 {
-	bw->buf = buf;
+	bw->block = block;
 	bw->hash_size = hash_size;
 	bw->block_size = block_size;
 	bw->header_off = header_off;
-	bw->buf[header_off] = typ;
+	bw->block[header_off] = typ;
 	bw->next = header_off + 4;
 	bw->restart_interval = 16;
 	bw->entries = 0;
@@ -95,7 +95,7 @@ int block_writer_init(struct block_writer *bw, uint8_t typ, uint8_t *buf,
 
 uint8_t block_writer_type(struct block_writer *bw)
 {
-	return bw->buf[bw->header_off];
+	return bw->block[bw->header_off];
 }
 
 /* Adds the reftable_record to the block. Returns -1 if it does not fit, 0 on
@@ -107,7 +107,7 @@ int block_writer_add(struct block_writer *w, struct reftable_record *rec)
 	struct reftable_buf last =
 		w->entries % w->restart_interval == 0 ? empty : w->last_key;
 	struct string_view out = {
-		.buf = w->buf + w->next,
+		.buf = w->block + w->next,
 		.len = w->block_size - w->next,
 	};
 
@@ -153,13 +153,13 @@ int block_writer_finish(struct block_writer *w)
 {
 	int i;
 	for (i = 0; i < w->restart_len; i++) {
-		put_be24(w->buf + w->next, w->restarts[i]);
+		put_be24(w->block + w->next, w->restarts[i]);
 		w->next += 3;
 	}
 
-	put_be16(w->buf + w->next, w->restart_len);
+	put_be16(w->block + w->next, w->restart_len);
 	w->next += 2;
-	put_be24(w->buf + 1 + w->header_off, w->next);
+	put_be24(w->block + 1 + w->header_off, w->next);
 
 	/*
 	 * Log records are stored zlib-compressed. Note that the compression
@@ -188,7 +188,7 @@ int block_writer_finish(struct block_writer *w)
 
 		w->zstream->next_out = w->compressed;
 		w->zstream->avail_out = compressed_len;
-		w->zstream->next_in = w->buf + block_header_skip;
+		w->zstream->next_in = w->block + block_header_skip;
 		w->zstream->avail_in = src_len;
 
 		/*
@@ -206,7 +206,7 @@ int block_writer_finish(struct block_writer *w)
 		 * adjust the `next` pointer to point right after the
 		 * compressed data.
 		 */
-		memcpy(w->buf + block_header_skip, w->compressed,
+		memcpy(w->block + block_header_skip, w->compressed,
 		       w->zstream->total_out);
 		w->next = w->zstream->total_out + block_header_skip;
 	}
