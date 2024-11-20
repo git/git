@@ -23,6 +23,7 @@
 #include "../dir.h"
 #include "../chdir-notify.h"
 #include "../setup.h"
+#include "../worktree.h"
 #include "../wrapper.h"
 #include "../write-or-die.h"
 #include "../revision.h"
@@ -3539,6 +3540,7 @@ cleanup:
 static int files_fsck_refs_dir(struct ref_store *ref_store,
 			       struct fsck_options *o,
 			       const char *refs_check_dir,
+			       struct worktree *wt,
 			       files_fsck_refs_fn *fsck_refs_fn)
 {
 	struct strbuf refname = STRBUF_INIT;
@@ -3561,6 +3563,9 @@ static int files_fsck_refs_dir(struct ref_store *ref_store,
 		} else if (S_ISREG(iter->st.st_mode) ||
 			   S_ISLNK(iter->st.st_mode)) {
 			strbuf_reset(&refname);
+
+			if (!is_main_worktree(wt))
+				strbuf_addf(&refname, "worktrees/%s/", wt->id);
 			strbuf_addf(&refname, "%s/%s", refs_check_dir,
 				    iter->relative_path);
 
@@ -3590,7 +3595,8 @@ out:
 }
 
 static int files_fsck_refs(struct ref_store *ref_store,
-			   struct fsck_options *o)
+			   struct fsck_options *o,
+			   struct worktree *wt)
 {
 	files_fsck_refs_fn fsck_refs_fn[]= {
 		files_fsck_refs_name,
@@ -3599,17 +3605,18 @@ static int files_fsck_refs(struct ref_store *ref_store,
 
 	if (o->verbose)
 		fprintf_ln(stderr, _("Checking references consistency"));
-	return files_fsck_refs_dir(ref_store, o,  "refs", fsck_refs_fn);
+	return files_fsck_refs_dir(ref_store, o, "refs", wt, fsck_refs_fn);
 }
 
 static int files_fsck(struct ref_store *ref_store,
-		      struct fsck_options *o)
+		      struct fsck_options *o,
+		      struct worktree *wt)
 {
 	struct files_ref_store *refs =
 		files_downcast(ref_store, REF_STORE_READ, "fsck");
 
-	return files_fsck_refs(ref_store, o) |
-	       refs->packed_ref_store->be->fsck(refs->packed_ref_store, o);
+	return files_fsck_refs(ref_store, o, wt) |
+	       refs->packed_ref_store->be->fsck(refs->packed_ref_store, o, wt);
 }
 
 struct ref_storage_be refs_be_files = {
