@@ -1216,12 +1216,6 @@ parse_done:
 		output_option &= ~(OUTPUT_COLOR_LINE | OUTPUT_SHOW_AGE_WITH_COLOR);
 
 	output(&sb, output_option);
-	free((void *)sb.final_buf);
-	for (ent = sb.ent; ent; ) {
-		struct blame_entry *e = ent->next;
-		free(ent);
-		ent = e;
-	}
 
 	if (show_stats) {
 		printf("num read blob: %d\n", sb.num_read_blob);
@@ -1230,6 +1224,12 @@ parse_done:
 	}
 
 cleanup:
+	for (ent = sb.ent; ent; ) {
+		struct blame_entry *e = ent->next;
+		free(ent);
+		ent = e;
+	}
+
 	free(path);
 	cleanup_scoreboard(&sb);
 	release_revisions(&revs);

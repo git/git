@@ -116,7 +116,7 @@ struct blame_scoreboard {
 	 * Used by many functions to obtain contents of the nth line,
 	 * indexed with scoreboard.lineno[blame_entry.lno].
 	 */
-	const char *final_buf;
+	char *final_buf;
 	unsigned long final_buf_size;
 
 	/* linked list of blames */

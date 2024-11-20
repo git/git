@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='git blame encoding conversion'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 if ! test_have_prereq ICONV
