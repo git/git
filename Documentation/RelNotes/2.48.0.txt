@@ -78,6 +78,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * Buildfix and upgrade of Clar to a newer version.
 
+ * Documentation mark-up updates.
+
+ * Renaming a handful of variables and structure fields.
+
 
 Fixes since v2.47
 -----------------
@@ -88,25 +92,20 @@ Fixes since v2.47
 
  * Use after free and double freeing at the end in "git log -L... -p"
    had been identified and fixed.
-   (merge fc5589d6c1 ds/line-log-asan-fix later to maint).
 
  * On macOS, fsmonitor can fall into a race condition that results in
    a client waiting forever to be notified for an event that have
    already happened.  This problem has been corrected.
-   (merge 51907f8fee jk/fsmonitor-event-listener-race-fix later to maint).
 
  * "git maintenance start" crashed due to an uninitialized variable
    reference, which has been corrected.
-   (merge c95547a394 ps/maintenance-start-crash-fix later to maint).
 
  * Fail gracefully instead of crashing when attempting to write the
    contents of a corrupt in-core index as a tree object.
-   (merge ecb5c4318c ps/cache-tree-w-broken-index-entry later to maint).
 
  * A "git fetch" from the superproject going down to a submodule used
    a wrong remote when the default remote names are set differently
    between them.
-   (merge 0c1a9987da db/submodule-fetch-with-remote-name-fix later to maint).
 
  * Fixes compile time warnings with 64-bit MSVC.
 
@@ -139,6 +138,12 @@ Fixes since v2.47
  * The MinGW compatibility layer has been taught to support POSIX
    semantics for atomic renames when other process(es) have a file
    opened at the destination path.
+
+ * "git gc" discards any objects that are outside promisor packs that
+   are referred to by an object in a promisor pack, and we do not
+   refetch them from the promisor at runtime, resulting an unusable
+   repository.  Work it around by including these objects in the
+   referring promisor pack at the receiving end of the fetch.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 1164e270b5 jk/output-prefix-cleanup later to maint).
