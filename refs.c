@@ -1188,8 +1188,9 @@ struct ref_update *ref_transaction_add_update(
 		oidcpy(&update->new_oid, new_oid);
 	if ((flags & REF_HAVE_OLD) && old_oid)
 		oidcpy(&update->old_oid, old_oid);
+	if (!(flags & REF_SKIP_CREATE_REFLOG))
+		update->msg = normalize_reflog_message(msg);
 
-	update->msg = normalize_reflog_message(msg);
 	return update;
 }
 
