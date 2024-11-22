@@ -840,7 +840,7 @@ sub wildo_queue {
 		for ($in_section) {
 			return if (/^Graduated to/ || /^Discarded$/);
 		}
-		my $action = $topic->[6] || "Under discussion";
+		my $action = $topic->[6] || "Under discussion.";
 		if (!exists $what->{$action}) {
 			$what->{$action} = [];
 		}
