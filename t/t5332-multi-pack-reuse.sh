@@ -259,4 +259,26 @@ test_expect_success 'duplicate objects' '
 	)
 '
 
+test_expect_success 'duplicate objects with verbatim reuse' '
+	git init duplicate-objects-verbatim &&
+	(
+		cd duplicate-objects-verbatim &&
+
+		git config pack.allowPackReuse multi &&
+
+		test_commit_bulk 64 &&
+
+		# take the first object from the main pack...
+		git show-index <$(ls $packdir/pack-*.idx) >obj.raw &&
+		sort -nk1 <obj.raw | head -n1 | cut -d" " -f2 >in &&
+
+		# ...and create a separate pack containing just that object
+		p="$(git pack-objects $packdir/pack <in)" &&
+
+		git multi-pack-index write --bitmap --preferred-pack=pack-$p.idx &&
+
+		test_pack_objects_reused_all 192 2
+	)
+'
+
 test_done
