@@ -83,6 +83,17 @@ int refs_read_ref_full(struct ref_store *refs, const char *refname,
 
 int refs_read_ref(struct ref_store *refs, const char *refname, struct object_id *oid);
 
+#define NOT_A_SYMREF -2
+
+/*
+ * Read the symbolic ref named "refname" and write its immediate referent into
+ * the provided buffer. Referent is left empty if "refname" is not a symbolic
+ * ref. It does not resolve the symbolic reference recursively in case the
+ * target is also a symbolic ref.
+ *
+ * Returns 0 on success, -2 if the "refname" is not a symbolic ref,
+ * -1 otherwise.
+ */
 int refs_read_symbolic_ref(struct ref_store *ref_store, const char *refname,
 			   struct strbuf *referent);
 
