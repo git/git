@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2024, #07; Wed, 20)
-X-master-at: 4083a6f05206077a50af7658bedc17a94c54607d
-X-next-at: 19ba395cfbc44b678027f7759aa877c040ad48a2
+Subject: What's cooking in git.git (Nov 2024, #08; Fri, 22)
+X-master-at: 04eaff62f286226f501dd21f069e0e257aee11a6
+X-next-at: ff69ae122fde5d47c6ff367af9aef7587057b59f
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2024, #07; Wed, 20)
+What's cooking in git.git (Nov 2024, #08; Fri, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,42 +48,114 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ja/git-add-doc-markup (2024-11-12) 1 commit
-  (merged to 'next' on 2024-11-13 at 1af6d17105)
- + doc: git-add.txt: convert to new style convention
+* jk/fetch-prefetch-double-free-fix (2024-11-12) 3 commits
+  (merged to 'next' on 2024-11-15 at 178c112999)
+ + refspec: store raw refspecs inside refspec_item
+ + refspec: drop separate raw_nr count
+ + fetch: adjust refspec->raw_nr when filtering prefetch refspecs
 
- Documentation mark-up updates.
- 
- source: <pull.1826.git.1731348891108.gitgitgadget@gmail.com>
-
-
-* jt/repack-local-promisor (2024-11-12) 4 commits
-  (merged to 'next' on 2024-11-13 at 895d633576)
- + index-pack: repack local links into promisor packs
- + t5300: move --window clamp test next to unclamped
- + t0410: use from-scratch server
- + t0410: make test description clearer
- (this branch is used by jt/index-pack-allow-promisor-only-while-fetching.)
-
- "git gc" discards any objects that are outside promisor packs that
- are referred to by an object in a promisor pack, and we do not
- refetch them from the promisor at runtime, resulting an unusable
- repository.  Work it around by including these objects in the
- referring promisor pack at the receiving end of the fetch.
- 
- source: <cover.1730491845.git.jonathantanmy@google.com>
+ Double-free fix.
+ source: <20241112083204.GA2636868@coredump.intra.peff.net>
 
 
-* la/trailer-info (2024-10-14) 1 commit
-  (merged to 'next' on 2024-11-13 at f038e226f6)
- + trailer: spread usage of "trailer_block" language
+* jk/test-malloc-debug-check (2024-11-14) 2 commits
+  (merged to 'next' on 2024-11-15 at 4f8a448748)
+ + test-lib: move malloc-debug setup after $PATH setup
+  (merged to 'next' on 2024-11-13 at 9aa0331ba1)
+ + test-lib: check malloc debug LD_PRELOAD before using
 
- Renaming a handful of variables and structure fields.
- 
- source: <pull.1811.git.git.1728820722580.gitgitgadget@gmail.com>
+ Avoid build/test breakage on a system without working malloc debug
+ support dynamic library.
+ source: <20241111070134.GA675125@coredump.intra.peff.net>
+ source: <20241114012729.GA1148710@coredump.intra.peff.net>
+
+
+* sm/difftool (2024-11-13) 1 commit
+  (merged to 'next' on 2024-11-15 at a323438b13)
+ + builtin/difftool: intialize some hashmap variables
+
+ Use of some uninitialized variables in "git difftool" has been
+ corrected.
+ source: <20241112162320.818091-1-simon.marchi@polymtl.ca>
+
+
+* tb/multi-pack-reuse-dupfix (2024-11-15) 2 commits
+  (merged to 'next' on 2024-11-16 at 32792297e5)
+ + pack-objects: only perform verbatim reuse on the preferred pack
+ + t5332-multi-pack-reuse.sh: demonstrate duplicate packing failure
+
+ Object reuse code based on multi-pack-index sent an unwanted copy
+ of object.
+ source: <cover.1731591708.git.me@ttaylorr.com>
 
 --------------------------------------------------
 [New Topics]
+
+* kn/midx-wo-the-repository (2024-11-21) 11 commits
+ - midx: inline the `MIDX_MIN_SIZE` definition
+ - midx: pass down `hash_algo` to `get_split_midx_filename_ext`
+ - midx: pass down `hash_algo` to `get_midx_filename[_ext]`
+ - midx: pass `repository` to `load_multi_pack_index`
+ - midx: cleanup internal usage of `the_repository` and `the_hash_algo`
+ - midx-write: pass down repository to `write_midx_file[_only]`
+ - write-midx: add repository field to `write_midx_context`
+ - midx-write: use `revs->repo` inside `read_refs_snapshot`
+ - midx-write: pass down repository to static functions
+ - builtin: pass repository to sub commands
+ - Merge branch 'kn/the-repository' into kn/midx-wo-the-repository
+ (this branch uses kn/the-repository.)
+
+ Yet another "pass the repository through the callchain" topic.
+
+ Waiting for the base topic being rerolled.
+ source: <20241119-374-refactor-midx-c-and-midx-write-c-to-not-depend-on-global-state-v2-0-e2f607174efc@gmail.com>
+
+
+* tb/unsafe-hash-test (2024-11-21) 2 commits
+ - t/helper/test-tool: implement sha1-unsafe helper
+ - t/helper/test-sha1: prepare for an unsafe mode
+
+ Preliminary addition to the test tool to allow a plain SHA-1 hash
+ algorithm without collision protection.
+
+ Comments?
+ source: <cover.1730833506.git.me@ttaylorr.com>
+
+
+* jt/bundle-fsck (2024-11-22) 5 commits
+ - transport: propagate fsck configuration during bundle fetch
+ - fetch-pack: expose `fetch_pack_config_cb()`
+ - fetch-pack: introduce `fetch_pack_options`
+ - bundle: support fsck message configuration
+ - bundle: add bundle verification options type
+
+ "git bundle --unbundle" and "git clone" running on a bundle file
+ both learned to trigger fsck over the new objects with configurable
+ fck check levels.
+
+ Expecting a reroll.
+ source: <20241121204119.1440773-1-jltobler@gmail.com>
+
+
+* tb/boundary-traversal-fix (2024-11-22) 1 commit
+ - pack-bitmap.c: typofix in `find_boundary_objects()`
+
+ A trivial "correctness" fix that does not yet matter in practice.
+
+ Will merge to 'next'.
+ source: <cf49115db4e8dcd406a17c946659c2eef3ec6045.1732229420.git.me@ttaylorr.com>
+
+
+* tb/use-test-file-size-more (2024-11-22) 1 commit
+ - t/perf: use 'test_file_size' in more places
+
+ Use the right helper program to measure file size in performance tests.
+
+ Will merge to 'next'.
+ source: <50c1368630684f235548d2e9a68d4de3745b5fe6.1732220875.git.me@ttaylorr.com>
+
+--------------------------------------------------
+[Cooking]
 
 * bc/allow-upload-pack-from-other-people (2024-11-15) 1 commit
  - Allow cloning from repositories owned by another user
@@ -97,12 +169,13 @@ Release tarballs are available at:
 
 
 * kn/ref-transaction-hook-with-reflog (2024-11-15) 1 commit
- - refs: don't invoke reference-transaction hook for reflogs
+  (merged to 'next' on 2024-11-20 at 23399887d7)
+ + refs: don't invoke reference-transaction hook for reflogs
 
  The ref-transaction hook triggered for reflog updates, which has
  been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20241114-348-do-not-call-the-reference-transaction-hooks-for-reflogs-v1-1-ece7260ee3c1@gmail.com>
 
 
@@ -165,13 +238,13 @@ Release tarballs are available at:
 
 
 * ps/gc-stale-lock-warning (2024-11-20) 1 commit
- - builtin/gc: provide hint when maintenance hits a stale schedule lock
+  (merged to 'next' on 2024-11-20 at 1099c31715)
+ + builtin/gc: provide hint when maintenance hits a stale schedule lock
 
- Give a bit of advice/hint message when "git gc" stops finding a
- lock file left by another instance of "git gc" that still is
- potentially running.
+ Give a bit of advice/hint message when "git maintenance" stops finding a
+ lock file left by another instance that still is potentially running.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20241119-pks-maintenance-hint-with-stale-lock-v1-1-f9f9a98e12a0@pks.im>
 
 
@@ -197,8 +270,6 @@ Release tarballs are available at:
  Needs review.
  source: <cover.1732054032.git.me@ttaylorr.com>
 
---------------------------------------------------
-[Cooking]
 
 * ja/git-diff-doc-markup (2024-11-19) 5 commits
  - doc: git-diff: apply format changes to config part
@@ -213,20 +284,6 @@ Release tarballs are available at:
  source: <pull.1769.v4.git.1731967553.gitgitgadget@gmail.com>
 
 
-* jk/test-malloc-debug-check (2024-11-14) 2 commits
-  (merged to 'next' on 2024-11-15 at 4f8a448748)
- + test-lib: move malloc-debug setup after $PATH setup
-  (merged to 'next' on 2024-11-13 at 9aa0331ba1)
- + test-lib: check malloc debug LD_PRELOAD before using
-
- Avoid build/test breakage on a system without working malloc debug
- support dynamic library.
-
- Will merge to 'master'.
- source: <20241111070134.GA675125@coredump.intra.peff.net>
- source: <20241114012729.GA1148710@coredump.intra.peff.net>
-
-
 * ps/clar-build-improvement (2024-11-18) 4 commits
   (merged to 'next' on 2024-11-20 at d88840a15d)
  + Makefile: let clar header targets depend on their scripts
@@ -238,18 +295,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20241115-pks-clar-build-improvements-v3-0-29672bf65ec6@pks.im>
-
-
-* jk/fetch-prefetch-double-free-fix (2024-11-12) 3 commits
-  (merged to 'next' on 2024-11-15 at 178c112999)
- + refspec: store raw refspecs inside refspec_item
- + refspec: drop separate raw_nr count
- + fetch: adjust refspec->raw_nr when filtering prefetch refspecs
-
- Double-free fix.
-
- Will merge to 'master'.
- source: <20241112083204.GA2636868@coredump.intra.peff.net>
 
 
 * pb/mergetool-errors (2024-11-13) 5 commits
@@ -282,30 +327,7 @@ Release tarballs are available at:
  source: <cover.1731603991.git.zhiyou.jx@alibaba-inc.com>
 
 
-* sm/difftool (2024-11-13) 1 commit
-  (merged to 'next' on 2024-11-15 at a323438b13)
- + builtin/difftool: intialize some hashmap variables
-
- Use of some uninitialized variables in "git difftool" has been
- corrected.
-
- Will merge to 'master'.
- source: <20241112162320.818091-1-simon.marchi@polymtl.ca>
-
-
-* tb/multi-pack-reuse-dupfix (2024-11-15) 2 commits
-  (merged to 'next' on 2024-11-16 at 32792297e5)
- + pack-objects: only perform verbatim reuse on the preferred pack
- + t5332-multi-pack-reuse.sh: demonstrate duplicate packing failure
-
- Object reuse code based on multi-pack-index sent an unwanted copy
- of object.
-
- Will merge to 'master'.
- source: <cover.1731591708.git.me@ttaylorr.com>
-
-
-* ps/ref-backend-migration-optim (2024-11-08) 10 commits
+* ps/ref-backend-migration-optim (2024-11-21) 10 commits
  - reftable/block: optimize allocations by using scratch buffer
  - reftable/block: rename `block_writer::buf` variable
  - reftable/writer: optimize allocations by using a scratch buffer
@@ -319,8 +341,8 @@ Release tarballs are available at:
 
  Optimize migration procedure between two ref backends.
 
- Needs review.
- source: <20241108-pks-refs-optimize-migrations-v1-0-7fd37fa80e35@pks.im>
+ Will merge to 'next'.
+ source: <20241120-pks-refs-optimize-migrations-v2-0-a233374b7452@pks.im>
 
 
 * js/log-remerge-keep-ancestry (2024-11-12) 1 commit
@@ -348,7 +370,8 @@ Release tarballs are available at:
  Optimize reading random references out of the reftable backend by
  allowing reuse of iterator objects.
 
- Needs review.
+ Expecting a reroll.
+ cf. <ZzMaX8HCj3GO5JUJ@pks.im>
  source: <cover.1730792627.git.ps@pks.im>
 
 
@@ -388,7 +411,7 @@ Release tarballs are available at:
  source: <pull.1734.v2.git.1731073383564.gitgitgadget@gmail.com>
 
 
-* ps/leakfixes-part-10 (2024-11-13) 28 commits
+* ps/leakfixes-part-10 (2024-11-21) 28 commits
  - t: remove TEST_PASSES_SANITIZE_LEAK annotations
  - test-lib: unconditionally enable leak checking
  - t: remove unneeded !SANITIZE_LEAK prerequisites
@@ -420,8 +443,8 @@ Release tarballs are available at:
 
  Leakfixes.
 
- Will merge to 'next'?
- source: <20241111-b4-pks-leak-fixes-pt10-v2-0-6154bf91f0b0@pks.im>
+ Will merge to 'next'.
+ source: <20241120-b4-pks-leak-fixes-pt10-v3-0-d67f08f45c74@pks.im>
 
 
 * kh/sequencer-comment-char (2024-11-13) 3 commits
@@ -593,7 +616,7 @@ Release tarballs are available at:
  source: <cover.1728939687.git.steadmon@google.com>
 
 
-* bf/set-head-symref (2024-11-19) 9 commits
+* bf/set-head-symref (2024-11-22) 10 commits
  - fetch set_head: handle mirrored bare repositories
  - fetch: set remote/HEAD if it does not exist
  - refs: add create_only option to refs_update_symref_extended
@@ -602,45 +625,47 @@ Release tarballs are available at:
  - remote set-head: refactor for readability
  - refs: atomically record overwritten ref in update_symref
  - refs: standardize output of refs_read_symbolic_ref
+ - t/t5505-remote: test failure of set-head
  - t/t5505-remote: set default branch to main
 
  When "git fetch $remote" notices that refs/remotes/$remote/HEAD is
  missing and discovers what branch the other side points with its
  HEAD, refs/remotes/$remote/HEAD is updated to point to it.
 
- Looking good.
- source: <20241118151755.756265-1-bence@ferdinandy.com>
+ Getting there.
+ source: <20241121225757.3877852-1-bence@ferdinandy.com>
 
 
-* ps/build (2024-11-20) 23 commits
- . meson: fix conflicts with in-flight topics
- . Introduce support for the Meson build system
- . Documentation: add comparison of build systems
- . t: allow overriding build dir
- . t: better support for out-of-tree builds
- . Documentation: extract script to generate a list of mergetools
- . Documentation: teach "cmd-list.perl" about out-of-tree builds
- . Documentation: allow sourcing generated includes from separate dir
- . Makefile: simplify building of templates
- . Makefile: allow "bin-wrappers/" directory to exist
- . Makefile: refactor generators to be PWD-independent
- . Makefile: extract script to generate gitweb.js
- . Makefile: extract script to generate gitweb.cgi
- . Makefile: extract script to massage Shell scripts
- . Makefile: use "generate-perl.sh" to massage Perl library
- . Makefile: extract script to massage Perl scripts
- . Makefile: consistently use PERL_PATH
- . Makefile: generate doc versions via GIT-VERSION-GEN
- . Makefile: generate "git.rc" via GIT-VERSION-GEN
- . Makefile: propagate Git version via generated header
- . Makefile: refactor GIT-VERSION-GEN to be reusable
- . Makefile: consistently use @PLACEHOLDER@ to substitute
- . Makefile: use common template for GIT-BUILD-OPTIONS
+* ps/build (2024-11-22) 25 commits
+ - fixup! Makefile: propagate Git version via generated header
+ - fixup! Makefile: generate doc versions via GIT-VERSION-GEN
+ - meson: fix conflicts with in-flight topics
+ - Introduce support for the Meson build system
+ - Documentation: add comparison of build systems
+ - t: allow overriding build dir
+ - t: better support for out-of-tree builds
+ - Documentation: extract script to generate a list of mergetools
+ - Documentation: teach "cmd-list.perl" about out-of-tree builds
+ - Documentation: allow sourcing generated includes from separate dir
+ - Makefile: simplify building of templates
+ - Makefile: allow "bin-wrappers/" directory to exist
+ - Makefile: refactor generators to be PWD-independent
+ - Makefile: extract script to generate gitweb.js
+ - Makefile: extract script to generate gitweb.cgi
+ - Makefile: extract script to massage Shell scripts
+ - Makefile: use "generate-perl.sh" to massage Perl library
+ - Makefile: extract script to massage Perl scripts
+ - Makefile: consistently use PERL_PATH
+ - Makefile: generate doc versions via GIT-VERSION-GEN
+ - Makefile: generate "git.rc" via GIT-VERSION-GEN
+ - Makefile: propagate Git version via generated header
+ - Makefile: refactor GIT-VERSION-GEN to be reusable
+ - Makefile: consistently use @PLACEHOLDER@ to substitute
+ - Makefile: use common template for GIT-BUILD-OPTIONS
 
  Build procedure update plus introduction of Mason based builds
 
  Getting there.
- cf. <xmqq7c8y7aep.fsf@gitster.g>
  source: <20241119-pks-meson-v8-0-809bf7f042f3@pks.im>
 
 
@@ -676,7 +701,7 @@ Release tarballs are available at:
  source: <20240910163000.1985723-1-christian.couder@gmail.com>
 
 
-* sj/ref-contents-check (2024-11-15) 9 commits
+* sj/ref-contents-check (2024-11-21) 9 commits
  - ref: add symlink ref content check for files backend
  - ref: check whether the target of the symref is a ref
  - ref: add basic symref content check for files backend
@@ -692,8 +717,8 @@ Release tarballs are available at:
  wouldn't have written itself (e.g., missing terminating end-of-line
  after the full object name).
 
- Comments?
- source: <ZzYqoai8X_Wdtbmt@ArchLinux>
+ Will merge to 'next'.
+ source: <Zz3MON9_9DGD6nsy@ArchLinux>
 
 
 * js/libgit-rust (2024-10-16) 5 commits
@@ -719,7 +744,12 @@ Release tarballs are available at:
  - packfile: pass `repository` to static function in the file
  - packfile: use `repository` from `packed_git` directly
  - packfile: add repository to struct `packed_git`
+ (this branch is used by kn/midx-wo-the-repository.)
 
  Various implicit uses of 'the_repoository' in the packfile code
  have been eliminated.
+
+ Expecting a rework around delta_base_cache_limit.
+ cf. <Zz5o35FZPFyM5KyL@nand.local>
+ cf. <CAOLa=ZRVpq7=tRiCrJD-do+PKS-ek3m58bpUm9S7t1oKepiLNQ@mail.gmail.com>
  source: <cover.1731323350.git.karthik.188@gmail.com>
