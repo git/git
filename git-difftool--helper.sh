@@ -61,9 +61,7 @@ launch_merge_tool () {
 		export BASE
 		eval $GIT_DIFFTOOL_EXTCMD '"$LOCAL"' '"$REMOTE"'
 	else
-		initialize_merge_tool "$merge_tool"
-		# ignore the error from the above --- run_merge_tool
-		# will diagnose unusable tool by itself
+		initialize_merge_tool "$merge_tool" || exit 1
 		run_merge_tool "$merge_tool"
 	fi
 }
@@ -87,9 +85,7 @@ if test -n "$GIT_DIFFTOOL_DIRDIFF"
 then
 	LOCAL="$1"
 	REMOTE="$2"
-	initialize_merge_tool "$merge_tool"
-	# ignore the error from the above --- run_merge_tool
-	# will diagnose unusable tool by itself
+	initialize_merge_tool "$merge_tool" || exit 1
 	run_merge_tool "$merge_tool" false
 
 	status=$?
