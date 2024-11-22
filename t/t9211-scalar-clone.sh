@@ -31,7 +31,7 @@ test_expect_success 'set up repository to clone' '
 	)
 '
 
-cleanup_clone () {
+cleanup_clone() {
 	rm -rf "$1"
 }
 
@@ -127,7 +127,7 @@ test_expect_success '--single-branch clones HEAD only' '
 	(
 		cd $enlistment/src &&
 		git for-each-ref refs/remotes/origin >out &&
-		test_line_count = 1 out &&
+		test_line_count = 2 out &&
 		grep "refs/remotes/origin/base" out
 	) &&
 
@@ -141,7 +141,7 @@ test_expect_success '--no-single-branch clones all branches' '
 	(
 		cd $enlistment/src &&
 		git for-each-ref refs/remotes/origin >out &&
-		test_line_count = 2 out &&
+		test_line_count = 3 out &&
 		grep "refs/remotes/origin/base" out &&
 		grep "refs/remotes/origin/parallel" out
 	) &&
