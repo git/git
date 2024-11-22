@@ -474,7 +474,7 @@ get_merge_tool_path () {
 	merge_tool="$1"
 	if ! valid_tool "$merge_tool"
 	then
-		echo >&2 "Unknown merge tool $merge_tool"
+		echo >&2 "Unknown $TOOL_MODE tool $merge_tool"
 		exit 1
 	fi
 	if diff_mode
