@@ -1476,7 +1476,7 @@ static int set_head(int argc, const char **argv, const char *prefix)
 		goto cleanup;
 	}
 	was_detached = refs_update_symref_extended(refs, b_head.buf, b_remote_head.buf,
-			"remote set-head", &b_local_head);
+			"remote set-head", &b_local_head, 0);
 	if (was_detached == -1) {
 		result |= error(_("Could not set up %s"), b_head.buf);
 		goto cleanup;
