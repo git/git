@@ -523,6 +523,8 @@ include::config/sequencer.adoc[]
 
 include::config/showbranch.adoc[]
 
+include::config/sideband.adoc[]
+
 include::config/sparse.adoc[]
 
 include::config/splitindex.adoc[]
