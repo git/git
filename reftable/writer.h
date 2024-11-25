@@ -20,6 +20,7 @@ struct reftable_writer {
 	void *write_arg;
 	int pending_padding;
 	struct reftable_buf last_key;
+	struct reftable_buf buf;
 
 	/* offset of next block to write. */
 	uint64_t next;

@@ -1097,7 +1097,9 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 			 * at a later point.
 			 */
 			ret = refs_verify_refname_available(ref_store, u->refname,
-							    &affected_refnames, NULL, err);
+							    &affected_refnames, NULL,
+							    transaction->flags & REF_TRANSACTION_FLAG_INITIAL,
+							    err);
 			if (ret < 0)
 				goto done;
 
@@ -1490,13 +1492,6 @@ done:
 	return ret;
 }
 
-static int reftable_be_initial_transaction_commit(struct ref_store *ref_store UNUSED,
-						  struct ref_transaction *transaction,
-						  struct strbuf *err)
-{
-	return ref_transaction_commit(transaction, err);
-}
-
 static int reftable_be_pack_refs(struct ref_store *ref_store,
 				 struct pack_refs_opts *opts)
 {
@@ -1591,7 +1586,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	if (arg->delete_old)
 		string_list_insert(&skip, arg->oldname);
 	ret = refs_verify_refname_available(&arg->refs->base, arg->newname,
-					    NULL, &skip, &errbuf);
+					    NULL, &skip, 0, &errbuf);
 	if (ret < 0) {
 		error("%s", errbuf.buf);
 		goto done;
@@ -2490,7 +2485,6 @@ struct ref_storage_be refs_be_reftable = {
 	.transaction_prepare = reftable_be_transaction_prepare,
 	.transaction_finish = reftable_be_transaction_finish,
 	.transaction_abort = reftable_be_transaction_abort,
-	.initial_transaction_commit = reftable_be_initial_transaction_commit,
 
 	.pack_refs = reftable_be_pack_refs,
 	.rename_ref = reftable_be_rename_ref,
