@@ -654,7 +654,8 @@ typedef int read_symbolic_ref_fn(struct ref_store *ref_store, const char *refnam
 				 struct strbuf *referent);
 
 typedef int fsck_fn(struct ref_store *ref_store,
-		    struct fsck_options *o);
+		    struct fsck_options *o,
+		    struct worktree *wt);
 
 struct ref_storage_be {
 	const char *name;
@@ -715,7 +716,7 @@ struct ref_store {
 int parse_loose_ref_contents(const struct git_hash_algo *algop,
 			     const char *buf, struct object_id *oid,
 			     struct strbuf *referent, unsigned int *type,
-			     int *failure_errno);
+			     const char **trailing, int *failure_errno);
 
 /*
  * Fill in the generic part of refs and add it to our collection of
