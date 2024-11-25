@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Nov 2024, #08; Fri, 22)
-X-master-at: 04eaff62f286226f501dd21f069e0e257aee11a6
-X-next-at: ff69ae122fde5d47c6ff367af9aef7587057b59f
+Subject: What's cooking in git.git (Nov 2024, #09; Mon, 25)
+X-master-at: 6ea2d9d271a56afa0e77cd45796ea0592aa9c2d4
+X-next-at: dd8b44aac527cac716a395b3fa3356e4ab8b63dd
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Nov 2024, #08; Fri, 22)
+What's cooking in git.git (Nov 2024, #09; Mon, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,10 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+Git 2.47.1 has been tagged; its primary purpose is to synchronise
+the gitk subtree with that of J6t, the new maintainer of gitk.
+Thanks Johaness for volunteering.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -46,52 +50,20 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* jk/fetch-prefetch-double-free-fix (2024-11-12) 3 commits
-  (merged to 'next' on 2024-11-15 at 178c112999)
- + refspec: store raw refspecs inside refspec_item
- + refspec: drop separate raw_nr count
- + fetch: adjust refspec->raw_nr when filtering prefetch refspecs
-
- Double-free fix.
- source: <20241112083204.GA2636868@coredump.intra.peff.net>
-
-
-* jk/test-malloc-debug-check (2024-11-14) 2 commits
-  (merged to 'next' on 2024-11-15 at 4f8a448748)
- + test-lib: move malloc-debug setup after $PATH setup
-  (merged to 'next' on 2024-11-13 at 9aa0331ba1)
- + test-lib: check malloc debug LD_PRELOAD before using
-
- Avoid build/test breakage on a system without working malloc debug
- support dynamic library.
- source: <20241111070134.GA675125@coredump.intra.peff.net>
- source: <20241114012729.GA1148710@coredump.intra.peff.net>
-
-
-* sm/difftool (2024-11-13) 1 commit
-  (merged to 'next' on 2024-11-15 at a323438b13)
- + builtin/difftool: intialize some hashmap variables
-
- Use of some uninitialized variables in "git difftool" has been
- corrected.
- source: <20241112162320.818091-1-simon.marchi@polymtl.ca>
-
-
-* tb/multi-pack-reuse-dupfix (2024-11-15) 2 commits
-  (merged to 'next' on 2024-11-16 at 32792297e5)
- + pack-objects: only perform verbatim reuse on the preferred pack
- + t5332-multi-pack-reuse.sh: demonstrate duplicate packing failure
-
- Object reuse code based on multi-pack-index sent an unwanted copy
- of object.
- source: <cover.1731591708.git.me@ttaylorr.com>
-
---------------------------------------------------
 [New Topics]
 
-* kn/midx-wo-the-repository (2024-11-21) 11 commits
+* jc/doc-opt-tilde-expand (2024-11-25) 1 commit
+ - doc: option value may be separate for valid reasons
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <xmqqh67w6m4m.fsf@gitster.g>
+
+--------------------------------------------------
+[Cooking]
+
+* kn/midx-wo-the-repository (2024-11-25) 11 commits
  - midx: inline the `MIDX_MIN_SIZE` definition
  - midx: pass down `hash_algo` to `get_split_midx_filename_ext`
  - midx: pass down `hash_algo` to `get_midx_filename[_ext]`
@@ -107,7 +79,7 @@ Release tarballs are available at:
 
  Yet another "pass the repository through the callchain" topic.
 
- Waiting for the base topic being rerolled.
+ Expecting a reroll.
  source: <20241119-374-refactor-midx-c-and-midx-write-c-to-not-depend-on-global-state-v2-0-e2f607174efc@gmail.com>
 
 
@@ -138,24 +110,24 @@ Release tarballs are available at:
 
 
 * tb/boundary-traversal-fix (2024-11-22) 1 commit
- - pack-bitmap.c: typofix in `find_boundary_objects()`
+  (merged to 'next' on 2024-11-25 at f312b2f8eb)
+ + pack-bitmap.c: typofix in `find_boundary_objects()`
 
  A trivial "correctness" fix that does not yet matter in practice.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cf49115db4e8dcd406a17c946659c2eef3ec6045.1732229420.git.me@ttaylorr.com>
 
 
 * tb/use-test-file-size-more (2024-11-22) 1 commit
- - t/perf: use 'test_file_size' in more places
+  (merged to 'next' on 2024-11-25 at 2bdd016a16)
+ + t/perf: use 'test_file_size' in more places
 
  Use the right helper program to measure file size in performance tests.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <50c1368630684f235548d2e9a68d4de3745b5fe6.1732220875.git.me@ttaylorr.com>
 
---------------------------------------------------
-[Cooking]
 
 * bc/allow-upload-pack-from-other-people (2024-11-15) 1 commit
  - Allow cloning from repositories owned by another user
@@ -297,10 +269,10 @@ Release tarballs are available at:
  source: <20241115-pks-clar-build-improvements-v3-0-29672bf65ec6@pks.im>
 
 
-* pb/mergetool-errors (2024-11-13) 5 commits
+* pb/mergetool-errors (2024-11-25) 5 commits
  - git-difftool--helper.sh: exit upon initialize_merge_tool errors
  - git-mergetool--lib.sh: add error message for unknown tool variant
- - git-mergetool--lib.sh: add error message in 'setup_user_tool'
+ - git-mergetool--lib.sh: add error message if 'setup_user_tool' fails
  - git-mergetool--lib.sh: use TOOL_MODE when erroring about unknown tool
  - completion: complete '--tool-help' in 'git mergetool'
 
@@ -308,7 +280,7 @@ Release tarballs are available at:
  has been improved.
 
  Will merge to 'next'?
- source: <pull.1827.git.1731459128.gitgitgadget@gmail.com>
+ source: <pull.1827.v2.git.1732305022.gitgitgadget@gmail.com>
 
 
 * ps/send-pack-unhide-error-in-atomic-push (2024-11-15) 6 commits
@@ -328,20 +300,21 @@ Release tarballs are available at:
 
 
 * ps/ref-backend-migration-optim (2024-11-21) 10 commits
- - reftable/block: optimize allocations by using scratch buffer
- - reftable/block: rename `block_writer::buf` variable
- - reftable/writer: optimize allocations by using a scratch buffer
- - refs: don't normalize log messages with `REF_SKIP_CREATE_REFLOG`
- - refs: skip collision checks in initial transactions
- - refs: use "initial" transaction semantics to migrate refs
- - refs/files: support symbolic and root refs in initial transaction
- - refs: introduce "initial" transaction flag
- - refs/files: move logic to commit initial transaction
- - refs: allow passing flags when setting up a transaction
+  (merged to 'next' on 2024-11-25 at ee2e588790)
+ + reftable/block: optimize allocations by using scratch buffer
+ + reftable/block: rename `block_writer::buf` variable
+ + reftable/writer: optimize allocations by using a scratch buffer
+ + refs: don't normalize log messages with `REF_SKIP_CREATE_REFLOG`
+ + refs: skip collision checks in initial transactions
+ + refs: use "initial" transaction semantics to migrate refs
+ + refs/files: support symbolic and root refs in initial transaction
+ + refs: introduce "initial" transaction flag
+ + refs/files: move logic to commit initial transaction
+ + refs: allow passing flags when setting up a transaction
 
  Optimize migration procedure between two ref backends.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20241120-pks-refs-optimize-migrations-v2-0-a233374b7452@pks.im>
 
 
@@ -412,53 +385,51 @@ Release tarballs are available at:
 
 
 * ps/leakfixes-part-10 (2024-11-21) 28 commits
- - t: remove TEST_PASSES_SANITIZE_LEAK annotations
- - test-lib: unconditionally enable leak checking
- - t: remove unneeded !SANITIZE_LEAK prerequisites
- - t: mark some tests as leak free
- - t5601: work around leak sanitizer issue
- - git-compat-util: drop now-unused `UNLEAK()` macro
- - global: drop `UNLEAK()` annotation
- - t/helper: fix leaking commit graph in "read-graph" subcommand
- - builtin/branch: fix leaking sorting options
- - builtin/init-db: fix leaking directory paths
- - builtin/help: fix leaks in `check_git_cmd()`
- - help: fix leaking return value from `help_unknown_cmd()`
- - help: fix leaking `struct cmdnames`
- - help: refactor to not use globals for reading config
- - builtin/sparse-checkout: fix leaking sanitized patterns
- - split-index: fix memory leak in `move_cache_to_base_index()`
- - git: refactor builtin handling to use a `struct strvec`
- - git: refactor alias handling to use a `struct strvec`
- - strvec: introduce new `strvec_splice()` function
- - line-log: fix leak when rewriting commit parents
- - bisect: fix various cases where we leak commit list items
- - bisect: fix leaking commit list items in `check_merge_base()`
- - bisect: fix multiple leaks in `bisect_next_all()`
- - bisect: fix leaking `current_bad_oid`
- - bisect: fix leaking string in `handle_bad_merge_base()`
- - bisect: fix leaking good/bad terms when reading multipe times
- - builtin/blame: fix leaking blame entries with `--incremental`
- - Merge branch 'ps/leakfixes-part-9' into ps/leakfixes-part-10
+  (merged to 'next' on 2024-11-25 at 7284f186b8)
+ + t: remove TEST_PASSES_SANITIZE_LEAK annotations
+ + test-lib: unconditionally enable leak checking
+ + t: remove unneeded !SANITIZE_LEAK prerequisites
+ + t: mark some tests as leak free
+ + t5601: work around leak sanitizer issue
+ + git-compat-util: drop now-unused `UNLEAK()` macro
+ + global: drop `UNLEAK()` annotation
+ + t/helper: fix leaking commit graph in "read-graph" subcommand
+ + builtin/branch: fix leaking sorting options
+ + builtin/init-db: fix leaking directory paths
+ + builtin/help: fix leaks in `check_git_cmd()`
+ + help: fix leaking return value from `help_unknown_cmd()`
+ + help: fix leaking `struct cmdnames`
+ + help: refactor to not use globals for reading config
+ + builtin/sparse-checkout: fix leaking sanitized patterns
+ + split-index: fix memory leak in `move_cache_to_base_index()`
+ + git: refactor builtin handling to use a `struct strvec`
+ + git: refactor alias handling to use a `struct strvec`
+ + strvec: introduce new `strvec_splice()` function
+ + line-log: fix leak when rewriting commit parents
+ + bisect: fix various cases where we leak commit list items
+ + bisect: fix leaking commit list items in `check_merge_base()`
+ + bisect: fix multiple leaks in `bisect_next_all()`
+ + bisect: fix leaking `current_bad_oid`
+ + bisect: fix leaking string in `handle_bad_merge_base()`
+ + bisect: fix leaking good/bad terms when reading multipe times
+ + builtin/blame: fix leaking blame entries with `--incremental`
+ + Merge branch 'ps/leakfixes-part-9' into ps/leakfixes-part-10
 
  Leakfixes.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20241120-b4-pks-leak-fixes-pt10-v3-0-d67f08f45c74@pks.im>
 
 
-* kh/sequencer-comment-char (2024-11-13) 3 commits
+* kh/sequencer-comment-char (2024-11-25) 3 commits
  - sequencer: comment commit messages properly
  - sequencer: comment `--reference` subject line properly
  - sequencer: comment checked-out branch properly
 
  The sequencer failed to honor core.commentString in some places.
 
- Expecting a reroll to improve tests.
- cf. <5ed77fab-678d-4a06-bbd0-ea25462a7562@gmail.com>
- cf. <4c623fcf-01dd-4056-80c1-b3c860ab7f87@gmail.com>
- cf. <711b59d7-e649-4031-8924-a16fb632b4d4@gmail.com>
- source: <cover.1731406513.git.code@khaugsbakk.name>
+ Will merge to 'next'?
+ source: <cover.1732481200.git.code@khaugsbakk.name>
 
 
 * ds/full-name-hash (2024-11-04) 7 commits
@@ -519,7 +490,8 @@ Release tarballs are available at:
  Introduce a new repository extension to prevent older Git versions
  from mis-interpreting worktrees created with relative paths.
 
- Needs review.
+ Expecting a reroll.
+ cf. <D5SS3P7WQG4F.1I20Z59IDQMD1@pm.me>
  source: <20241031-wt_relative_options-v4-0-07a3dc0f02a3@pm.me>
 
 
@@ -616,7 +588,7 @@ Release tarballs are available at:
  source: <cover.1728939687.git.steadmon@google.com>
 
 
-* bf/set-head-symref (2024-11-22) 10 commits
+* bf/set-head-symref (2024-11-25) 10 commits
  - fetch set_head: handle mirrored bare repositories
  - fetch: set remote/HEAD if it does not exist
  - refs: add create_only option to refs_update_symref_extended
@@ -632,8 +604,8 @@ Release tarballs are available at:
  missing and discovers what branch the other side points with its
  HEAD, refs/remotes/$remote/HEAD is updated to point to it.
 
- Getting there.
- source: <20241121225757.3877852-1-bence@ferdinandy.com>
+ Will merge to 'next'?
+ source: <20241122123138.66960-1-bence@ferdinandy.com>
 
 
 * ps/build (2024-11-22) 25 commits
@@ -702,22 +674,23 @@ Release tarballs are available at:
 
 
 * sj/ref-contents-check (2024-11-21) 9 commits
- - ref: add symlink ref content check for files backend
- - ref: check whether the target of the symref is a ref
- - ref: add basic symref content check for files backend
- - ref: add more strict checks for regular refs
- - ref: port git-fsck(1) regular refs check for files backend
- - ref: support multiple worktrees check for refs
- - ref: initialize ref name outside of check functions
- - ref: check the full refname instead of basename
- - ref: initialize "fsck_ref_report" with zero
+  (merged to 'next' on 2024-11-25 at 53e29ae705)
+ + ref: add symlink ref content check for files backend
+ + ref: check whether the target of the symref is a ref
+ + ref: add basic symref content check for files backend
+ + ref: add more strict checks for regular refs
+ + ref: port git-fsck(1) regular refs check for files backend
+ + ref: support multiple worktrees check for refs
+ + ref: initialize ref name outside of check functions
+ + ref: check the full refname instead of basename
+ + ref: initialize "fsck_ref_report" with zero
 
  "git fsck" learned to issue warnings on "curiously formatted" ref
  contents that have always been taken valid but something Git
  wouldn't have written itself (e.g., missing terminating end-of-line
  after the full object name).
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <Zz3MON9_9DGD6nsy@ArchLinux>
 
 
@@ -734,7 +707,8 @@ Release tarballs are available at:
  source: <cover.1729032373.git.steadmon@google.com>
 
 
-* kn/the-repository (2024-11-12) 9 commits
+* kn/the-repository (2024-11-25) 10 commits
+ - packfile.c: remove unnecessary prepare_packed_git() call
  - midx: add repository to `multi_pack_index` struct
  - config: make `packed_git_(limit|window_size)` non-global variables
  - config: make `delta_base_cache_limit` a non-global variable
@@ -749,7 +723,5 @@ Release tarballs are available at:
  Various implicit uses of 'the_repoository' in the packfile code
  have been eliminated.
 
- Expecting a rework around delta_base_cache_limit.
- cf. <Zz5o35FZPFyM5KyL@nand.local>
- cf. <CAOLa=ZRVpq7=tRiCrJD-do+PKS-ek3m58bpUm9S7t1oKepiLNQ@mail.gmail.com>
- source: <cover.1731323350.git.karthik.188@gmail.com>
+ Will merge to 'next'?
+ source: <cover.1732269840.git.karthik.188@gmail.com>
