@@ -39,7 +39,7 @@ test_fetch_bitmaps () {
 		'
 
 		test_size "size   $title" '
-			wc -c <tmp.pack
+			test_file_size tmp.pack
 		'
 
 		test_perf "client $title (lookup=$1)" '

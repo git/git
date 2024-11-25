@@ -73,7 +73,7 @@ do
 		"
 
 		test_size "clone size for $nr_packs-pack scenario ($reuse-pack reuse)" '
-			wc -c <result
+			test_file_size result
 		'
 	done
 done
