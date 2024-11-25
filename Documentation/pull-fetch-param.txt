@@ -25,14 +25,15 @@ endif::git-pull[]
 +
 The format of a <refspec> parameter is an optional plus
 `+`, followed by the source <src>, followed
-by a colon `:`, followed by the destination ref <dst>.
+by a colon `:`, followed by the destination <dst>.
 The colon can be omitted when <dst> is empty.  <src> is
-typically a ref, but it can also be a fully spelled hex object
+typically a ref, or a glob pattern with a single `*` that is used
+to match a set of refs, but it can also be a fully spelled hex object
 name.
 +
 A <refspec> may contain a `*` in its <src> to indicate a simple pattern
 match. Such a refspec functions like a glob that matches any ref with the
-same prefix. A pattern <refspec> must have a `*` in both the <src> and
+pattern. A pattern <refspec> must have one and only one `*` in both the <src> and
 <dst>. It will map refs to the destination by replacing the `*` with the
 contents matched from the source.
 +
