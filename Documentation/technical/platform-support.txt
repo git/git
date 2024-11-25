@@ -49,7 +49,7 @@ will be fixed in a later release:
   notice problems before they are considered "done with review"; whereas
   watching `master` means the stable branch could break for your platform, but
   you have a decent chance of avoiding a tagged release breaking you. See "The
-  Policy" in link:../howto/maintain-git.txt["How to maintain Git"] for an
+  Policy" in link:../howto/maintain-git.html["How to maintain Git"] for an
   overview of which branches are used in the Git project, and how.
 
 * The bug report should include information about what platform you are using.
@@ -125,7 +125,7 @@ Compatible on `next`
 
 To avoid reactive debugging and fixing when changes hit a release or stable, you
 can aim to ensure `next` always works for your platform. (See "The Policy" in
-link:../howto/maintain-git.txt["How to maintain Git"] for an overview of how
+link:../howto/maintain-git.html["How to maintain Git"] for an overview of how
 `next` is used in the Git project.) To do that:
 
 * You should add a runner for your platform to the GitHub Actions or GitLab CI
