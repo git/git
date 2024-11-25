@@ -181,7 +181,7 @@ test_expect_success 'clone from password-protected repository' '
 	echo two >expect &&
 	set_askpass user@host pass@host &&
 	git clone --bare "$HTTPD_URL/auth/smart/repo.git" smart-auth &&
-	expect_askpass both user@host &&
+	expect_askpass both user%40host &&
 	git --git-dir=smart-auth log -1 --format=%s >actual &&
 	test_cmp expect actual
 '
@@ -199,7 +199,7 @@ test_expect_success 'clone from auth-only-for-objects repository' '
 	echo two >expect &&
 	set_askpass user@host pass@host &&
 	git clone --bare "$HTTPD_URL/auth-fetch/smart/repo.git" half-auth &&
-	expect_askpass both user@host &&
+	expect_askpass both user%40host &&
 	git --git-dir=half-auth log -1 --format=%s >actual &&
 	test_cmp expect actual
 '
@@ -224,14 +224,14 @@ test_expect_success 'redirects send auth to new location' '
 	set_askpass user@host pass@host &&
 	git -c credential.useHttpPath=true \
 	  clone $HTTPD_URL/smart-redir-auth/repo.git repo-redir-auth &&
-	expect_askpass both user@host auth/smart/repo.git
+	expect_askpass both user%40host auth/smart/repo.git
 '
 
 test_expect_success 'GIT_TRACE_CURL redacts auth details' '
 	rm -rf redact-auth trace &&
 	set_askpass user@host pass@host &&
 	GIT_TRACE_CURL="$(pwd)/trace" git clone --bare "$HTTPD_URL/auth/smart/repo.git" redact-auth &&
-	expect_askpass both user@host &&
+	expect_askpass both user%40host &&
 
 	# Ensure that there is no "Basic" followed by a base64 string, but that
 	# the auth details are redacted
@@ -243,7 +243,7 @@ test_expect_success 'GIT_CURL_VERBOSE redacts auth details' '
 	rm -rf redact-auth trace &&
 	set_askpass user@host pass@host &&
 	GIT_CURL_VERBOSE=1 git clone --bare "$HTTPD_URL/auth/smart/repo.git" redact-auth 2>trace &&
-	expect_askpass both user@host &&
+	expect_askpass both user%40host &&
 
 	# Ensure that there is no "Basic" followed by a base64 string, but that
 	# the auth details are redacted
@@ -256,7 +256,7 @@ test_expect_success 'GIT_TRACE_CURL does not redact auth details if GIT_TRACE_RE
 	set_askpass user@host pass@host &&
 	GIT_TRACE_REDACT=0 GIT_TRACE_CURL="$(pwd)/trace" \
 		git clone --bare "$HTTPD_URL/auth/smart/repo.git" redact-auth &&
-	expect_askpass both user@host &&
+	expect_askpass both user%40host &&
 
 	grep -i "Authorization: Basic [0-9a-zA-Z+/]" trace
 '
@@ -578,7 +578,7 @@ test_expect_success 'http auth remembers successful credentials' '
 	# the first request prompts the user...
 	set_askpass user@host pass@host &&
 	git ls-remote "$HTTPD_URL/auth/smart/repo.git" >/dev/null &&
-	expect_askpass both user@host &&
+	expect_askpass both user%40host &&
 
 	# ...and the second one uses the stored value rather than
 	# prompting the user.
@@ -609,7 +609,7 @@ test_expect_success 'http auth forgets bogus credentials' '
 	# us to prompt the user again.
 	set_askpass user@host pass@host &&
 	git ls-remote "$HTTPD_URL/auth/smart/repo.git" >/dev/null &&
-	expect_askpass both user@host
+	expect_askpass both user%40host
 '
 
 test_expect_success 'client falls back from v2 to v0 to match server' '
