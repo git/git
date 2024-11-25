@@ -211,9 +211,15 @@ linkgit:git-commit-tree[1], linkgit:git-write-tree[1],
 linkgit:git-update-ref[1], and linkgit:git-mktag[1].  Thus, it can be
 used as a part of a series of steps such as:
 
-       NEWTREE=$(git merge-tree --write-tree $BRANCH1 $BRANCH2)
-       test $? -eq 0 || die "There were conflicts..."
-       NEWCOMMIT=$(git commit-tree $NEWTREE -p $BRANCH1 -p $BRANCH2)
+       vi message.txt
+       BRANCH1=refs/heads/test
+       BRANCH2=main
+       NEWTREE=$(git merge-tree --write-tree $BRANCH1 $BRANCH2) || {
+           echo "There were conflicts..." 1>&2
+           exit 1
+       }
+       NEWCOMMIT=$(git commit-tree $NEWTREE -F message.txt \
+           -p $BRANCH1 -p $BRANCH2)
        git update-ref $BRANCH1 $NEWCOMMIT
 
 Note that when the exit status is non-zero, `NEWTREE` in this sequence
