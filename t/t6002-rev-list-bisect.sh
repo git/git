@@ -308,4 +308,9 @@ test_expect_success '--bisect-all --first-parent' '
 	test_cmp expect actual
 '
 
+test_expect_success '--bisect without any revisions' '
+	git rev-list --bisect HEAD..HEAD >out &&
+	test_must_be_empty out
+'
+
 test_done
