@@ -194,7 +194,7 @@ used to be named with four dotted decimal, named after the feature
 release they are updates to (e.g., "1.8.5.1" was the first maintenance
 release for "1.8.5" feature release).  These days, maintenance releases
 are named by incrementing the last digit of three-dotted decimal name
-(e.g., "2.43.2" was the second maintenance release for the "2.43" series).
+(e.g., "2.47.1" was the second maintenance release for the "2.47" series).
 
 New features almost never go to the "maint" branch.  It is merged into
 "master" primarily to propagate the description in the release notes
@@ -282,9 +282,9 @@ own authoritative repository and maintainers:
 
         https://github.com/j6t/git-gui
 
- - gitk-git/ comes from Paul Mackerras's gitk project:
+ - gitk-git/ comes from gitk project, maintained by Johannes Sixt:
 
-        git://ozlabs.org/~paulus/gitk
+        https://github.com/j6t/gitk
 
  - po/ comes from the localization coordinator, Jiang Xin:
 
