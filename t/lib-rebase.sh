@@ -187,7 +187,7 @@ set_reword_editor () {
 			exit 1
 		fi
 	fi &&
-	# There should be no uncommited changes
+	# There should be no uncommitted changes
 	git diff --exit-code HEAD &&
 	# The todo-list should be re-read after a reword
 	GIT_SEQUENCE_EDITOR="\"$PWD/reword-sequence-editor.sh\"" \

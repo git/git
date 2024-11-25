@@ -54,7 +54,7 @@ int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 		}
 	}
 
-	if_test ("names_length retuns size of a NULL-terminated string array") {
+	if_test ("names_length returns size of a NULL-terminated string array") {
 		const char *a[] = { "a", "b", NULL };
 		check_int(names_length(a), ==, 2);
 	}
