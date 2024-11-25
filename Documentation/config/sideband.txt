@@ -1,0 +1,16 @@
+sideband.allowControlCharacters::
+	By default, control characters that are delivered via the sideband
+	are masked, except ANSI color sequences. This prevents potentially
+	unwanted ANSI escape sequences from being sent to the terminal. Use
+	this config setting to override this behavior:
++
+--
+	color::
+		Allow ANSI color sequences, line feeds and horizontal tabs,
+		but mask all other control characters. This is the default.
+	false::
+		Mask all control characters other than line feeds and
+		horizontal tabs.
+	true::
+		Allow all control characters to be sent to the terminal.
+--
