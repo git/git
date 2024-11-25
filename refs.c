@@ -2325,7 +2325,7 @@ int refs_verify_refname_available(struct ref_store *refs,
 				  const char *refname,
 				  const struct string_list *extras,
 				  const struct string_list *skip,
-				  int initial_transaction,
+				  unsigned int initial_transaction,
 				  struct strbuf *err)
 {
 	const char *slash;
