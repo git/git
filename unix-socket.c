@@ -80,7 +80,7 @@ int unix_stream_connect(const char *path, int disallow_chdir)
 	struct unix_sockaddr_context ctx;
 
 	if (unix_sockaddr_init(&sa, path, &ctx, disallow_chdir) < 0)
-		return -1;
+		goto fail;
 	fd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (fd < 0)
 		goto fail;
