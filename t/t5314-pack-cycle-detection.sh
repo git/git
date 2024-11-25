@@ -50,7 +50,6 @@ will always find a delta for "file", because its lookup will always come
 immediately after the lookup for "dummy".
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Create a pack containing the tree $1 and blob $1:file, with

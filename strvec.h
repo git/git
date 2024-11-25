@@ -67,6 +67,15 @@ void strvec_pushl(struct strvec *, ...);
 /* Push a null-terminated array of strings onto the end of the array. */
 void strvec_pushv(struct strvec *, const char **);
 
+/*
+ * Replace `len` values starting at `idx` with the provided replacement
+ * strings. If `len` is zero this is effectively an insert at the given `idx`.
+ * If `replacement_len` is zero this is effectively a delete of `len` items
+ * starting at `idx`.
+ */
+void strvec_splice(struct strvec *array, size_t idx, size_t len,
+		   const char **replacement, size_t replacement_len);
+
 /**
  * Replace the value at the given index with a new value. The index must be
  * valid. Returns a pointer to the inserted value.

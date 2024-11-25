@@ -2,7 +2,6 @@
 
 test_description='blame output in various formats on a simple case'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

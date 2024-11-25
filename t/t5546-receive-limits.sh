@@ -2,7 +2,6 @@
 
 test_description='check receive input limits'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Let's run tests with different unpack limits: 1 and 10000

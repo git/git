@@ -6,7 +6,6 @@
 
 test_description='Test pretty formats'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Tested non-UTF-8 encoding

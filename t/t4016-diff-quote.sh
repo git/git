@@ -6,7 +6,6 @@
 test_description='Quoting paths in diff output.
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 P0='pathname'

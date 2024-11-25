@@ -5,7 +5,6 @@
 
 test_description='resilience to pack corruptions with redundant objects'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Note: the test objects are created with knowledge of their pack encoding

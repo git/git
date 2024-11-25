@@ -2,7 +2,6 @@
 
 test_description='git am with corrupt input'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 if ! test_have_prereq ICONV

@@ -17,7 +17,6 @@ This test script tries to verify the sanity of summary subcommand of git submodu
 # various reasons, one of them being that there are lots of commands taking place
 # outside of 'test_expect_success' block, which is no longer in good-style.
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 add_file () {

@@ -384,7 +384,6 @@ linux-musl)
 	;;
 linux-leaks|linux-reftable-leaks)
 	export SANITIZE=leak
-	export GIT_TEST_PASSING_SANITIZE_LEAK=true
 	;;
 linux-asan-ubsan)
 	export SANITIZE=address,undefined

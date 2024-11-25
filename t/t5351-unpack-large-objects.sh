@@ -5,7 +5,6 @@
 
 test_description='git unpack-objects with large objects'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 prepare_dest () {

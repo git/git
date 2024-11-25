@@ -2,7 +2,6 @@
 
 test_description='test downloading a file by URL'
 
-TEST_PASSES_SANITIZE_LEAK=true
 
 . ./test-lib.sh
 

@@ -2,7 +2,6 @@
 
 test_description='git cat-file'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_cmdmode_usage () {

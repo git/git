@@ -2,7 +2,6 @@
 
 test_description='test operations trying to overwrite refs at worktree HEAD'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -49,7 +48,7 @@ test_expect_success 'refuse to overwrite: checked out in worktree' '
 	done
 '
 
-test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in bisect' '
+test_expect_success 'refuse to overwrite: worktree in bisect' '
 	test_when_finished git -C wt-4 bisect reset &&
 
 	# Set up a bisect so HEAD no longer points to wt-4.
@@ -61,7 +60,7 @@ test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in bisect' '
 	grep "cannot force update the branch '\''wt-4'\'' used by worktree at.*wt-4" err
 '
 
-test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase (apply)' '
+test_expect_success 'refuse to overwrite: worktree in rebase (apply)' '
 	test_when_finished git -C wt-2 rebase --abort &&
 
 	# This will fail part-way through due to a conflict.
@@ -71,7 +70,7 @@ test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase (app
 	grep "cannot force update the branch '\''wt-2'\'' used by worktree at.*wt-2" err
 '
 
-test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase (merge)' '
+test_expect_success 'refuse to overwrite: worktree in rebase (merge)' '
 	test_when_finished git -C wt-2 rebase --abort &&
 
 	# This will fail part-way through due to a conflict.
@@ -81,7 +80,7 @@ test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase (mer
 	grep "cannot force update the branch '\''wt-2'\'' used by worktree at.*wt-2" err
 '
 
-test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase with --update-refs' '
+test_expect_success 'refuse to overwrite: worktree in rebase with --update-refs' '
 	test_when_finished git -C wt-3 rebase --abort &&
 
 	git branch -f can-be-updated wt-3 &&
@@ -95,7 +94,7 @@ test_expect_success !SANITIZE_LEAK 'refuse to overwrite: worktree in rebase with
 	done
 '
 
-test_expect_success !SANITIZE_LEAK 'refuse to fetch over ref: checked out' '
+test_expect_success 'refuse to fetch over ref: checked out' '
 	test_must_fail git fetch server +refs/heads/wt-3:refs/heads/wt-3 2>err &&
 	grep "refusing to fetch into branch '\''refs/heads/wt-3'\''" err &&
 
@@ -105,7 +104,7 @@ test_expect_success !SANITIZE_LEAK 'refuse to fetch over ref: checked out' '
 	grep "refusing to fetch into branch" err
 '
 
-test_expect_success !SANITIZE_LEAK 'refuse to fetch over ref: worktree in bisect' '
+test_expect_success 'refuse to fetch over ref: worktree in bisect' '
 	test_when_finished git -C wt-4 bisect reset &&
 
 	# Set up a bisect so HEAD no longer points to wt-4.
@@ -117,7 +116,7 @@ test_expect_success !SANITIZE_LEAK 'refuse to fetch over ref: worktree in bisect
 	grep "refusing to fetch into branch" err
 '
 
-test_expect_success !SANITIZE_LEAK 'refuse to fetch over ref: worktree in rebase' '
+test_expect_success 'refuse to fetch over ref: worktree in rebase' '
 	test_when_finished git -C wt-3 rebase --abort &&
 
 	# This will fail part-way through due to a conflict.
@@ -157,7 +156,7 @@ test_expect_success 'refuse to overwrite when in error states' '
 
 . "$TEST_DIRECTORY"/lib-rebase.sh
 
-test_expect_success !SANITIZE_LEAK 'refuse to overwrite during rebase with --update-refs' '
+test_expect_success 'refuse to overwrite during rebase with --update-refs' '
 	git commit --fixup HEAD~2 --allow-empty &&
 	(
 		set_cat_todo_editor &&

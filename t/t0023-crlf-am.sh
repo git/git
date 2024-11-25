@@ -2,7 +2,6 @@
 
 test_description='Test am with auto.crlf'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 cat >patchfile <<\EOF

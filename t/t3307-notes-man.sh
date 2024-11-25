@@ -4,7 +4,6 @@ test_description='Examples from the git-notes man page
 
 Make sure the manual is not full of lies.'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

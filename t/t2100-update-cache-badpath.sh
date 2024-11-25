@@ -22,7 +22,6 @@ and tries to git update-index --add the following:
 All of the attempts should fail.
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 mkdir path2 path3

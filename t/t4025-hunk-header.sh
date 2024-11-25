@@ -2,7 +2,6 @@
 
 test_description='diff hunk header truncation'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 N='日本語'

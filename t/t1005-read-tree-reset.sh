@@ -2,7 +2,6 @@
 
 test_description='read-tree -u --reset'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-read-tree.sh
 

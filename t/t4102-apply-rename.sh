@@ -7,7 +7,6 @@ test_description='git apply handling copy/rename patch.
 
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # setup

@@ -8,7 +8,6 @@ test_description='Gettext Shell fallbacks'
 GIT_INTERNAL_GETTEXT_TEST_FALLBACKS=YesPlease
 export GIT_INTERNAL_GETTEXT_TEST_FALLBACKS
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-gettext.sh
 
 test_expect_success "sanity: \$GIT_INTERNAL_GETTEXT_SH_SCHEME is set (to $GIT_INTERNAL_GETTEXT_SH_SCHEME)" '

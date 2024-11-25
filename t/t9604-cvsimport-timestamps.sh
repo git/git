@@ -2,7 +2,6 @@
 
 test_description='git cvsimport timestamps'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-cvs.sh
 
 test_lazy_prereq POSIX_TIMEZONE '

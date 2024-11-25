@@ -2,7 +2,6 @@
 
 test_description='test handling of --alternate-refs traversal'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Avoid test_commit because we want a specific and known set of refs:

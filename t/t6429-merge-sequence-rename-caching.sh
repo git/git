@@ -2,7 +2,6 @@
 
 test_description="remember regular & dir renames in sequence of merges"
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 #

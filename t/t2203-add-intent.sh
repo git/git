@@ -2,7 +2,6 @@
 
 test_description='Intent to add'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'intent to add' '

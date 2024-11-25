@@ -2,7 +2,6 @@
 
 test_description='rebase should reread the todo file if an exec modifies it'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-rebase.sh
 

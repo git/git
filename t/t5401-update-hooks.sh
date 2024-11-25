@@ -5,7 +5,6 @@
 
 test_description='Test the update hook infrastructure.'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

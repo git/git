@@ -2,7 +2,6 @@
 
 test_description='test unique sha1 abbreviation on "index from..to" line'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

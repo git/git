@@ -2,7 +2,6 @@
 
 test_description='test log with i18n features'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-gettext.sh
 
 if ! test_have_prereq ICONV

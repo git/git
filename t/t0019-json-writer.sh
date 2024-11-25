@@ -2,7 +2,6 @@
 
 test_description='test json-writer JSON generation'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'unit test of json-writer routines' '

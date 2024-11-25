@@ -4,7 +4,6 @@ test_description='git merge and other operations that rely on merge
 
 Testing the influence of the diff algorithm on the merge output.'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

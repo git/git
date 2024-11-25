@@ -2,7 +2,6 @@
 
 test_description='test trace2 facility (perf target)'
 
-TEST_PASSES_SANITIZE_LEAK=false
 . ./test-lib.sh
 
 # Turn off any inherited trace2 settings for this test.

@@ -2,7 +2,6 @@
 
 test_description='log/show --expand-tabs'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 HT="	"

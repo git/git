@@ -5,7 +5,6 @@
 
 test_description='tests to ensure compatibility between am and interactive backends'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/lib-rebase.sh

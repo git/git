@@ -13,7 +13,6 @@ Such as:
   - symlinked .gitmodules, etc
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-pack.sh
 

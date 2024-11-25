@@ -2,7 +2,6 @@
 
 test_description='test worktrees linked with relative paths'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'links worktrees with relative paths' '
