@@ -90,6 +90,15 @@ scripting Git:
    for long options.  An option that takes optional option-argument must be
    written in the 'stuck' form.
 
+ * Despite the above suggestion, when Arg is a path relative to the
+   home directory of a user, e.g. ~/directory/file or ~u/d/f, you
+   may want to use the separate form, e.g. `git foo --file ~/mine`,
+   not `git foo --file=~/mine`.  The shell will expand `~/` in the
+   former to your home directory, but most shells keep the tilde in
+   the latter.  Some of our commands know how to tilde-expand the
+   option value even when given in the stuck form, but not all of
+   them do.
+
  * When you give a revision parameter to a command, make sure the parameter is
    not ambiguous with a name of a file in the work tree.  E.g. do not write
    `git log -1 HEAD` but write `git log -1 HEAD --`; the former will not work
