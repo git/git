@@ -12,7 +12,8 @@
 #define REFS_VERIFY_USAGE \
 	N_("git refs verify [--strict] [--verbose]")
 
-static int cmd_refs_migrate(int argc, const char **argv, const char *prefix)
+static int cmd_refs_migrate(int argc, const char **argv, const char *prefix,
+			    struct repository *repo UNUSED)
 {
 	const char * const migrate_usage[] = {
 		REFS_MIGRATE_USAGE,
@@ -63,7 +64,8 @@ out:
 	return err;
 }
 
-static int cmd_refs_verify(int argc, const char **argv, const char *prefix)
+static int cmd_refs_verify(int argc, const char **argv, const char *prefix,
+			   struct repository *repo UNUSED)
 {
 	struct fsck_options fsck_refs_options = FSCK_REFS_OPTIONS_DEFAULT;
 	const char * const verify_usage[] = {
@@ -93,7 +95,7 @@ static int cmd_refs_verify(int argc, const char **argv, const char *prefix)
 int cmd_refs(int argc,
 	     const char **argv,
 	     const char *prefix,
-	     struct repository *repo UNUSED)
+	     struct repository *repo)
 {
 	const char * const refs_usage[] = {
 		REFS_MIGRATE_USAGE,
@@ -108,5 +110,5 @@ int cmd_refs(int argc,
 	};
 
 	argc = parse_options(argc, argv, prefix, opts, refs_usage, 0);
-	return fn(argc, argv, prefix);
+	return fn(argc, argv, prefix, repo);
 }

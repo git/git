@@ -399,7 +399,8 @@ cleanup:
 	free(displaypath);
 }
 
-static int module_foreach(int argc, const char **argv, const char *prefix)
+static int module_foreach(int argc, const char **argv, const char *prefix,
+			  struct repository *repo UNUSED)
 {
 	struct foreach_cb info = FOREACH_CB_INIT;
 	struct pathspec pathspec = { 0 };
@@ -544,7 +545,8 @@ static void init_submodule_cb(const struct cache_entry *list_item, void *cb_data
 		       info->flags);
 }
 
-static int module_init(int argc, const char **argv, const char *prefix)
+static int module_init(int argc, const char **argv, const char *prefix,
+		       struct repository *repo UNUSED)
 {
 	struct init_cb info = INIT_CB_INIT;
 	struct pathspec pathspec = { 0 };
@@ -738,7 +740,8 @@ static void status_submodule_cb(const struct cache_entry *list_item,
 			 info->prefix, info->super_prefix, info->flags);
 }
 
-static int module_status(int argc, const char **argv, const char *prefix)
+static int module_status(int argc, const char **argv, const char *prefix,
+			 struct repository *repo UNUSED)
 {
 	struct status_cb info = STATUS_CB_INIT;
 	struct pathspec pathspec = { 0 };
@@ -1163,7 +1166,8 @@ cleanup:
 	return ret;
 }
 
-static int module_summary(int argc, const char **argv, const char *prefix)
+static int module_summary(int argc, const char **argv, const char *prefix,
+			  struct repository *repo UNUSED)
 {
 	struct summary_cb info = SUMMARY_CB_INIT;
 	int cached = 0;
@@ -1339,7 +1343,8 @@ static void sync_submodule_cb(const struct cache_entry *list_item, void *cb_data
 		       info->flags);
 }
 
-static int module_sync(int argc, const char **argv, const char *prefix)
+static int module_sync(int argc, const char **argv, const char *prefix,
+		       struct repository *repo UNUSED)
 {
 	struct sync_cb info = SYNC_CB_INIT;
 	struct pathspec pathspec = { 0 };
@@ -1485,7 +1490,8 @@ static void deinit_submodule_cb(const struct cache_entry *list_item,
 	deinit_submodule(list_item->name, info->prefix, info->flags);
 }
 
-static int module_deinit(int argc, const char **argv, const char *prefix)
+static int module_deinit(int argc, const char **argv, const char *prefix,
+			 struct repository *repo UNUSED)
 {
 	struct deinit_cb info = DEINIT_CB_INIT;
 	struct pathspec pathspec = { 0 };
@@ -1842,7 +1848,8 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 	return 0;
 }
 
-static int module_clone(int argc, const char **argv, const char *prefix)
+static int module_clone(int argc, const char **argv, const char *prefix,
+			struct repository *repo UNUSED)
 {
 	int dissociate = 0, quiet = 0, progress = 0, require_init = 0;
 	struct module_clone_data clone_data = MODULE_CLONE_DATA_INIT;
@@ -2779,7 +2786,8 @@ cleanup:
 	return ret;
 }
 
-static int module_update(int argc, const char **argv, const char *prefix)
+static int module_update(int argc, const char **argv, const char *prefix,
+			 struct repository *repo UNUSED)
 {
 	struct pathspec pathspec = { 0 };
 	struct pathspec pathspec2 = { 0 };
@@ -2911,7 +2919,8 @@ cleanup:
 	return ret;
 }
 
-static int push_check(int argc, const char **argv, const char *prefix UNUSED)
+static int push_check(int argc, const char **argv, const char *prefix UNUSED,
+		      struct repository *repo UNUSED)
 {
 	struct remote *remote;
 	const char *superproject_head;
@@ -2991,7 +3000,8 @@ static int push_check(int argc, const char **argv, const char *prefix UNUSED)
 	return 0;
 }
 
-static int absorb_git_dirs(int argc, const char **argv, const char *prefix)
+static int absorb_git_dirs(int argc, const char **argv, const char *prefix,
+			   struct repository *repo UNUSED)
 {
 	int i;
 	struct pathspec pathspec = { 0 };
@@ -3024,7 +3034,8 @@ cleanup:
 	return ret;
 }
 
-static int module_set_url(int argc, const char **argv, const char *prefix)
+static int module_set_url(int argc, const char **argv, const char *prefix,
+			  struct repository *repo UNUSED)
 {
 	int quiet = 0, ret;
 	const char *newurl;
@@ -3063,7 +3074,8 @@ static int module_set_url(int argc, const char **argv, const char *prefix)
 	return !!ret;
 }
 
-static int module_set_branch(int argc, const char **argv, const char *prefix)
+static int module_set_branch(int argc, const char **argv, const char *prefix,
+			     struct repository *repo UNUSED)
 {
 	int opt_default = 0, ret;
 	const char *opt_branch = NULL;
@@ -3113,7 +3125,8 @@ static int module_set_branch(int argc, const char **argv, const char *prefix)
 	return !!ret;
 }
 
-static int module_create_branch(int argc, const char **argv, const char *prefix)
+static int module_create_branch(int argc, const char **argv, const char *prefix,
+				struct repository *repo UNUSED)
 {
 	enum branch_track track;
 	int quiet = 0, force = 0, reflog = 0, dry_run = 0;
@@ -3424,7 +3437,8 @@ static void die_on_repo_without_commits(const char *path)
 	strbuf_release(&sb);
 }
 
-static int module_add(int argc, const char **argv, const char *prefix)
+static int module_add(int argc, const char **argv, const char *prefix,
+		      struct repository *repo UNUSED)
 {
 	int force = 0, quiet = 0, progress = 0, dissociate = 0;
 	struct add_data add_data = ADD_DATA_INIT;
@@ -3557,7 +3571,7 @@ cleanup:
 int cmd_submodule__helper(int argc,
 			  const char **argv,
 			  const char *prefix,
-			  struct repository *repo UNUSED)
+			  struct repository *repo)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	const char *const usage[] = {
@@ -3583,5 +3597,5 @@ int cmd_submodule__helper(int argc,
 	};
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
 
-	return fn(argc, argv, prefix);
+	return fn(argc, argv, prefix, repo);
 }

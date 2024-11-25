@@ -62,7 +62,8 @@ static struct option *add_common_options(struct option *to)
 	return parse_options_concat(common_opts, to);
 }
 
-static int graph_verify(int argc, const char **argv, const char *prefix)
+static int graph_verify(int argc, const char **argv, const char *prefix,
+			struct repository *repo UNUSED)
 {
 	struct commit_graph *graph = NULL;
 	struct object_directory *odb = NULL;
@@ -214,7 +215,8 @@ static int git_commit_graph_write_config(const char *var, const char *value,
 	return 0;
 }
 
-static int graph_write(int argc, const char **argv, const char *prefix)
+static int graph_write(int argc, const char **argv, const char *prefix,
+		       struct repository *repo UNUSED)
 {
 	struct string_list pack_indexes = STRING_LIST_INIT_DUP;
 	struct strbuf buf = STRBUF_INIT;
@@ -333,7 +335,7 @@ cleanup:
 int cmd_commit_graph(int argc,
 		     const char **argv,
 		     const char *prefix,
-		     struct repository *repo UNUSED)
+		     struct repository *repo)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option builtin_commit_graph_options[] = {
@@ -352,5 +354,5 @@ int cmd_commit_graph(int argc,
 			     builtin_commit_graph_usage, 0);
 	FREE_AND_NULL(options);
 
-	return fn(argc, argv, prefix);
+	return fn(argc, argv, prefix, repo);
 }
