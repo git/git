@@ -527,8 +527,8 @@ a request.
 
 The provided options must not contain a NUL or LF character.
 
- object-format
-~~~~~~~~~~~~~~~
+object-format
+~~~~~~~~~~~~~
 
 The server can advertise the `object-format` capability with a value `X` (in the
 form `object-format=X`) to notify the client that the server is able to deal
