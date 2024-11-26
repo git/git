@@ -243,8 +243,7 @@ static void fill_reftable_log_record(struct reftable_log_record *log, const stru
 	log->value.update.tz_offset = sign * atoi(tz_begin);
 }
 
-static int read_ref_without_reload(struct reftable_ref_store *refs,
-				   struct reftable_stack *stack,
+static int read_ref_without_reload(struct reftable_stack *stack,
 				   const char *refname,
 				   struct object_id *oid,
 				   struct strbuf *referent,
@@ -262,8 +261,21 @@ static int read_ref_without_reload(struct reftable_ref_store *refs,
 		strbuf_addstr(referent, ref.value.symref);
 		*type |= REF_ISSYMREF;
 	} else if (reftable_ref_record_val1(&ref)) {
+		unsigned int hash_id;
+
+		switch (reftable_stack_hash_id(stack)) {
+		case REFTABLE_HASH_SHA1:
+			hash_id = GIT_HASH_SHA1;
+			break;
+		case REFTABLE_HASH_SHA256:
+			hash_id = GIT_HASH_SHA256;
+			break;
+		default:
+			BUG("unhandled hash ID %d", reftable_stack_hash_id(stack));
+		}
+
 		oidread(oid, reftable_ref_record_val1(&ref),
-			refs->base.repo->hash_algo);
+			&hash_algos[hash_id]);
 	} else {
 		/* We got a tombstone, which should not happen. */
 		BUG("unhandled reference value type %d", ref.value_type);
@@ -855,7 +867,7 @@ static int reftable_be_read_raw_ref(struct ref_store *ref_store,
 	if (ret)
 		return ret;
 
-	ret = read_ref_without_reload(refs, be->stack, refname, oid, referent, type);
+	ret = read_ref_without_reload(be->stack, refname, oid, referent, type);
 	if (ret < 0)
 		return ret;
 	if (ret > 0) {
@@ -1091,7 +1103,7 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 	if (ret)
 		goto done;
 
-	ret = read_ref_without_reload(refs, be->stack, "HEAD",
+	ret = read_ref_without_reload(be->stack, "HEAD",
 				      &head_oid, &head_referent, &head_type);
 	if (ret < 0)
 		goto done;
@@ -1167,7 +1179,7 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 			string_list_insert(&affected_refnames, new_update->refname);
 		}
 
-		ret = read_ref_without_reload(refs, be->stack, rewritten_ref,
+		ret = read_ref_without_reload(be->stack, rewritten_ref,
 					      &current_oid, &referent, &u->type);
 		if (ret < 0)
 			goto done;
@@ -1733,7 +1745,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 		memcpy(logs[logs_nr].value.update.old_hash, old_ref.value.val1, GIT_MAX_RAWSZ);
 		logs_nr++;
 
-		ret = read_ref_without_reload(arg->refs, arg->stack, "HEAD", &head_oid,
+		ret = read_ref_without_reload(arg->stack, "HEAD", &head_oid,
 					      &head_referent, &head_type);
 		if (ret < 0)
 			goto done;
