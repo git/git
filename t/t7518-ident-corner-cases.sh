@@ -2,7 +2,6 @@
 
 test_description='corner cases in ident strings'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # confirm that we do not segfault _and_ that we do not say "(null)", as

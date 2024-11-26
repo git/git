@@ -8,7 +8,6 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 GIT_TEST_SPLIT_INDEX=false
 export GIT_TEST_SPLIT_INDEX
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 list_files() {

@@ -2,7 +2,6 @@
 
 test_description='avoid rewriting packed-refs unnecessarily'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 if test_have_prereq !REFFILES

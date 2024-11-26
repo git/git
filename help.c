@@ -546,8 +546,10 @@ int is_in_cmdlist(struct cmdnames *c, const char *s)
 	return 0;
 }
 
-static int autocorrect;
-static struct cmdnames aliases;
+struct help_unknown_cmd_config {
+	int autocorrect;
+	struct cmdnames aliases;
+};
 
 #define AUTOCORRECT_PROMPT (-3)
 #define AUTOCORRECT_NEVER (-2)
@@ -555,28 +557,29 @@ static struct cmdnames aliases;
 
 static int git_unknown_cmd_config(const char *var, const char *value,
 				  const struct config_context *ctx,
-				  void *cb UNUSED)
+				  void *cb)
 {
+	struct help_unknown_cmd_config *cfg = cb;
 	const char *p;
 
 	if (!strcmp(var, "help.autocorrect")) {
 		if (!value)
 			return config_error_nonbool(var);
 		if (!strcmp(value, "never")) {
-			autocorrect = AUTOCORRECT_NEVER;
+			cfg->autocorrect = AUTOCORRECT_NEVER;
 		} else if (!strcmp(value, "immediate")) {
-			autocorrect = AUTOCORRECT_IMMEDIATELY;
+			cfg->autocorrect = AUTOCORRECT_IMMEDIATELY;
 		} else if (!strcmp(value, "prompt")) {
-			autocorrect = AUTOCORRECT_PROMPT;
+			cfg->autocorrect = AUTOCORRECT_PROMPT;
 		} else {
 			int v = git_config_int(var, value, ctx->kvi);
-			autocorrect = (v < 0)
+			cfg->autocorrect = (v < 0)
 				? AUTOCORRECT_IMMEDIATELY : v;
 		}
 	}
 	/* Also use aliases for command lookup */
 	if (skip_prefix(var, "alias.", &p))
-		add_cmdname(&aliases, p, strlen(p));
+		add_cmdname(&cfg->aliases, p, strlen(p));
 
 	return 0;
 }
@@ -609,32 +612,30 @@ static const char bad_interpreter_advice[] =
 	N_("'%s' appears to be a git command, but we were not\n"
 	"able to execute it. Maybe git-%s is broken?");
 
-const char *help_unknown_cmd(const char *cmd)
+char *help_unknown_cmd(const char *cmd)
 {
+	struct help_unknown_cmd_config cfg = { 0 };
 	int i, n, best_similarity = 0;
-	struct cmdnames main_cmds, other_cmds;
+	struct cmdnames main_cmds = { 0 };
+	struct cmdnames other_cmds = { 0 };
 	struct cmdname_help *common_cmds;
 
-	memset(&main_cmds, 0, sizeof(main_cmds));
-	memset(&other_cmds, 0, sizeof(other_cmds));
-	memset(&aliases, 0, sizeof(aliases));
-
-	read_early_config(the_repository, git_unknown_cmd_config, NULL);
+	read_early_config(the_repository, git_unknown_cmd_config, &cfg);
 
 	/*
 	 * Disable autocorrection prompt in a non-interactive session
 	 */
-	if ((autocorrect == AUTOCORRECT_PROMPT) && (!isatty(0) || !isatty(2)))
-		autocorrect = AUTOCORRECT_NEVER;
+	if ((cfg.autocorrect == AUTOCORRECT_PROMPT) && (!isatty(0) || !isatty(2)))
+		cfg.autocorrect = AUTOCORRECT_NEVER;
 
-	if (autocorrect == AUTOCORRECT_NEVER) {
+	if (cfg.autocorrect == AUTOCORRECT_NEVER) {
 		fprintf_ln(stderr, _("git: '%s' is not a git command. See 'git --help'."), cmd);
 		exit(1);
 	}
 
 	load_command_list("git-", &main_cmds, &other_cmds);
 
-	add_cmd_list(&main_cmds, &aliases);
+	add_cmd_list(&main_cmds, &cfg.aliases);
 	add_cmd_list(&main_cmds, &other_cmds);
 	QSORT(main_cmds.names, main_cmds.cnt, cmdname_compare);
 	uniq(&main_cmds);
@@ -693,20 +694,19 @@ const char *help_unknown_cmd(const char *cmd)
 		     n++)
 			; /* still counting */
 	}
-	if (autocorrect && n == 1 && SIMILAR_ENOUGH(best_similarity)) {
-		const char *assumed = main_cmds.names[0]->name;
-		main_cmds.names[0] = NULL;
-		cmdnames_release(&main_cmds);
+	if (cfg.autocorrect && n == 1 && SIMILAR_ENOUGH(best_similarity)) {
+		char *assumed = xstrdup(main_cmds.names[0]->name);
+
 		fprintf_ln(stderr,
 			   _("WARNING: You called a Git command named '%s', "
 			     "which does not exist."),
 			   cmd);
-		if (autocorrect == AUTOCORRECT_IMMEDIATELY)
+		if (cfg.autocorrect == AUTOCORRECT_IMMEDIATELY)
 			fprintf_ln(stderr,
 				   _("Continuing under the assumption that "
 				     "you meant '%s'."),
 				   assumed);
-		else if (autocorrect == AUTOCORRECT_PROMPT) {
+		else if (cfg.autocorrect == AUTOCORRECT_PROMPT) {
 			char *answer;
 			struct strbuf msg = STRBUF_INIT;
 			strbuf_addf(&msg, _("Run '%s' instead [y/N]? "), assumed);
@@ -719,9 +719,13 @@ const char *help_unknown_cmd(const char *cmd)
 			fprintf_ln(stderr,
 				   _("Continuing in %0.1f seconds, "
 				     "assuming that you meant '%s'."),
-				   (float)autocorrect/10.0, assumed);
-			sleep_millisec(autocorrect * 100);
+				   (float)cfg.autocorrect/10.0, assumed);
+			sleep_millisec(cfg.autocorrect * 100);
 		}
+
+		cmdnames_release(&cfg.aliases);
+		cmdnames_release(&main_cmds);
+		cmdnames_release(&other_cmds);
 		return assumed;
 	}
 

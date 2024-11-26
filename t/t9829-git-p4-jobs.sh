@@ -2,7 +2,6 @@
 
 test_description='git p4 retrieve job info'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-git-p4.sh
 
 test_expect_success 'start p4d' '

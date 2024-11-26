@@ -2,7 +2,6 @@
 
 test_description='submodule --cached, --quiet etc. output'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-t3100.sh
 

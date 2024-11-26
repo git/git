@@ -5,7 +5,6 @@
 
 test_description='Test how well compatObjectFormat works'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 

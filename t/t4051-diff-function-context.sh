@@ -2,7 +2,6 @@
 
 test_description='diff function context'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 dir="$TEST_DIRECTORY/t4051"

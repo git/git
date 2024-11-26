@@ -2,7 +2,6 @@
 
 test_description='diff hunk fusing'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 f() {

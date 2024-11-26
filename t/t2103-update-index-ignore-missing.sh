@@ -2,7 +2,6 @@
 
 test_description='update-index with options'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success basics '

@@ -3,7 +3,6 @@
 test_description="Test bundle-uri bundle_uri_parse_line()"
 
 TEST_NO_CREATE_REPO=1
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'bundle_uri_parse_line() just URIs' '

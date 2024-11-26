@@ -11,7 +11,6 @@ export GIT_TEST_DEFAULT_REF_FORMAT
 GIT_TEST_SPLIT_INDEX=0
 export GIT_TEST_SPLIT_INDEX
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 if ! test_have_prereq JGIT

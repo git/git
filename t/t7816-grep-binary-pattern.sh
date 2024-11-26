@@ -2,7 +2,6 @@
 
 test_description='git grep with a binary pattern files'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-gettext.sh
 
 nul_match_internal () {

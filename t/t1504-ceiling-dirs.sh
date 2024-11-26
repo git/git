@@ -2,7 +2,6 @@
 
 test_description='test GIT_CEILING_DIRECTORIES'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_prefix() {

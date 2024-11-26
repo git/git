@@ -7,7 +7,6 @@ test_description='Same rename detection as t4003 but testing diff-raw -z.
 
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh ;# test-lib chdir's into trash
 

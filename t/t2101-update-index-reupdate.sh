@@ -6,7 +6,6 @@
 test_description='git update-index --again test.
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'update-index --add' '

@@ -4,7 +4,6 @@ test_description='git merge
 
 Testing octopus merge when reducing parents to independent branches.'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # 0 - 1

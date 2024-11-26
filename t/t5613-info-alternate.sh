@@ -5,7 +5,6 @@
 
 test_description='test transitive info/alternate entries'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'preparing first repository' '

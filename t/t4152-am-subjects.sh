@@ -2,7 +2,6 @@
 
 test_description='test subject preservation with format-patch | am'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 make_patches() {

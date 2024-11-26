@@ -8,7 +8,6 @@ test_description='git apply should not get confused with rename/copy.
 '
 
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # setup

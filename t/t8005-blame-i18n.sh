@@ -1,6 +1,7 @@
 #!/bin/sh
 
 test_description='git blame encoding conversion'
+
 . ./test-lib.sh
 
 if ! test_have_prereq ICONV

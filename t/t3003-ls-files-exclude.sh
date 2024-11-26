@@ -2,7 +2,6 @@
 
 test_description='ls-files --exclude does not affect index files'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'create repo with file' '

@@ -2,7 +2,6 @@
 
 test_description='test skipping fetch negotiator'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'fetch.negotiationalgorithm config' '

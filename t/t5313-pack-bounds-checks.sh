@@ -2,7 +2,6 @@
 
 test_description='bounds-checking of access to mmapped on-disk file formats'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 clear_base () {

@@ -8,7 +8,6 @@ test_description='git apply with new style GNU diff with empty context
 '
 
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

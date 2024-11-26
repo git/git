@@ -4,7 +4,6 @@ test_description='git status --porcelain=v2
 
 This test exercises porcelain V2 output for git status.'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 

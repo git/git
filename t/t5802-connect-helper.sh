@@ -2,7 +2,6 @@
 
 test_description='ext::cmd remote "connect" helper'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

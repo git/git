@@ -5,7 +5,6 @@
 
 test_description="The Git C functions aren't broken by setlocale(3)"
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-gettext.sh
 
 test_expect_success 'git show a ISO-8859-1 commit under C locale' '

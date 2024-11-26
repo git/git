@@ -368,27 +368,6 @@ excluded as so much relies on it, but this might change in the future.
 GIT_TEST_SPLIT_INDEX=<boolean> forces split-index mode on the whole
 test suite. Accept any boolean values that are accepted by git-config.
 
-GIT_TEST_PASSING_SANITIZE_LEAK=true skips those tests that haven't
-declared themselves as leak-free by setting
-"TEST_PASSES_SANITIZE_LEAK=true" before sourcing "test-lib.sh". This
-test mode is used by the "linux-leaks" CI target.
-
-GIT_TEST_PASSING_SANITIZE_LEAK=check checks that our
-"TEST_PASSES_SANITIZE_LEAK=true" markings are current. Rather than
-skipping those tests that haven't set "TEST_PASSES_SANITIZE_LEAK=true"
-before sourcing "test-lib.sh" this mode runs them with
-"--invert-exit-code". This is used to check that there's a one-to-one
-mapping between "TEST_PASSES_SANITIZE_LEAK=true" and those tests that
-pass under "SANITIZE=leak". This is especially useful when testing a
-series that fixes various memory leaks with "git rebase -x".
-
-GIT_TEST_PASSING_SANITIZE_LEAK=check when combined with "--immediate"
-will run to completion faster, and result in the same failing
-tests.
-
-GIT_TEST_PASSING_SANITIZE_LEAK=check-failing behaves the same as "check",
-but skips all tests which are already marked as leak-free.
-
 GIT_TEST_PROTOCOL_VERSION=<n>, when set, makes 'protocol.version'
 default to n.
 

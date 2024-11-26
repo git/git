@@ -2,7 +2,6 @@
 
 test_description='rebase topology tests with merges'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-rebase.sh
 

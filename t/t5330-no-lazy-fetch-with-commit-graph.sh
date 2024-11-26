@@ -2,7 +2,6 @@
 
 test_description='test for no lazy fetch with the commit-graph'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup: prepare a repository with a commit' '
