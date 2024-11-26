@@ -23,8 +23,9 @@ the "offline" transfer of Git objects without an active "server"
 sitting on the other side of the network connection.
 
 They can be used to create both incremental and full backups of a
-repository, and to relay the state of the references in one repository
-to another.
+repository (see the "full backup" example in "EXAMPLES"), and to relay
+the state of the references in one repository to another (see the second
+example).
 
 Git commands that fetch or otherwise "read" via protocols such as
 `ssh://` and `https://` can also operate on bundle files. It is
@@ -33,8 +34,6 @@ linkgit:git-fetch[1] to fetch from one, and to list the references
 contained within it with linkgit:git-ls-remote[1]. There's no
 corresponding "write" support, i.e.a 'git push' into a bundle is not
 supported.
-
-See the "EXAMPLES" section below for examples of how to use bundles.
 
 BUNDLE FORMAT
 -------------
@@ -132,7 +131,7 @@ SPECIFYING REFERENCES
 ---------------------
 
 Revisions must be accompanied by reference names to be packaged in a
-bundle.
+bundle.  Alternatively `--all` can be used to package all refs.
 
 More than one reference may be packaged, and more than one set of prerequisite objects can
 be specified.  The objects packaged are those not contained in the
@@ -203,8 +202,6 @@ It is okay to err on the side of caution, causing the bundle file
 to contain objects already in the destination, as these are ignored
 when unpacking at the destination.
 
-If you want to match `git clone --mirror`, which would include your
-refs such as `refs/remotes/*`, use `--all`.
 If you want to provide the same set of refs that a clone directly
 from the source repository would get, use `--branches --tags` for
 the `<git-rev-list-args>`.
@@ -216,8 +213,34 @@ bundle.
 EXAMPLES
 --------
 
-Assume you want to transfer the history from a repository R1 on machine A
-to another repository R2 on machine B.
+We'll discuss two cases:
+
+1. Taking a full backup of a repository
+2. Transferring the history of a repository to another machine when the
+   two machines have no direct connection
+
+First let's consider a full backup of the repository.  The following
+command will take a full backup of the repository in the sense that all
+refs are included in the bundle:
+
+----------------
+$ git bundle create backup.bundle --all
+----------------
+
+But note again that this is only for the refs, i.e. you will only
+include refs and commits reachable from those refs.  You will not
+include other local state, such as the contents of the index, working
+tree, the stash, per-repository configuration, hooks, etc.
+
+You can later recover that repository by using for example
+linkgit:git-clone[1]:
+
+----------------
+$ git clone backup.bundle <new directory>
+----------------
+
+For the next example, assume you want to transfer the history from a
+repository R1 on machine A to another repository R2 on machine B.
 For whatever reason, direct connection between A and B is not allowed,
 but we can move data from A to B via some mechanism (CD, email, etc.).
 We want to update R2 with development made on the branch master in R1.
@@ -320,6 +343,24 @@ You can also see what references it offers:
 ----------------
 $ git ls-remote mybundle
 ----------------
+
+DISCUSSION
+----------
+
+A naive way to make a full backup of a repository is to use something to
+the effect of `cp -r <repo> <destination>`.  This is discouraged since
+the repository could be written to during the copy operation.  In turn
+some files at `<destination>` could be corrupted.
+
+This is why it is recommended to use Git tooling for making repository
+backups, either with this command or with e.g. linkgit:git-clone[1].
+But keep in mind that these tools will not help you backup state other
+than refs and commits.  In other words they will not help you backup
+contents of the index, working tree, the stash, per-repository
+configuration, hooks, etc.
+
+See also linkgit:gitfaq[7], section "TRANSFERS" for a discussion of the
+problems associated with file syncing across systems.
 
 FILE FORMAT
 -----------
