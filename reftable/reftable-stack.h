@@ -149,4 +149,7 @@ struct reftable_compaction_stats {
 struct reftable_compaction_stats *
 reftable_stack_compaction_stats(struct reftable_stack *st);
 
+/* Return the hash of the stack. */
+enum reftable_hash reftable_stack_hash_id(struct reftable_stack *st);
+
 #endif

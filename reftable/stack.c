@@ -1791,3 +1791,8 @@ done:
 	reftable_addition_destroy(add);
 	return err;
 }
+
+enum reftable_hash reftable_stack_hash_id(struct reftable_stack *st)
+{
+	return reftable_merged_table_hash_id(st->merged);
+}
