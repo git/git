@@ -119,7 +119,7 @@ Issues of note:
 	- A POSIX-compliant shell is required to run some scripts needed
 	  for everyday use (e.g. "bisect", "request-pull").
 
-	- "Perl" version 5.8.1 or later is needed to use some of the
+	- "Perl" version 5.26.0 or later is needed to use some of the
 	  features (e.g. sending patches using "git send-email",
 	  interacting with svn repositories with "git svn").  If you can
 	  live without these, use NO_PERL.  Note that recent releases of
@@ -129,17 +129,12 @@ Issues of note:
 	  itself, e.g. Digest::MD5, File::Spec, File::Temp, Net::Domain,
 	  Net::SMTP, and Time::HiRes.
 
-	- git-imap-send needs the OpenSSL library to talk IMAP over SSL if
-	  you are using libcurl older than 7.34.0.  Otherwise you can use
-	  NO_OPENSSL without losing git-imap-send.
-
 	- "libcurl" library is used for fetching and pushing
 	  repositories over http:// or https://, as well as by
-	  git-imap-send if the curl version is >= 7.34.0. If you do
-	  not need that functionality, use NO_CURL to build without
-	  it.
+	  git-imap-send. If you do not need that functionality,
+	  use NO_CURL to build without it.
 
-	  Git requires version "7.21.3" or later of "libcurl" to build
+	  Git requires version "7.61.0" or later of "libcurl" to build
 	  without NO_CURL. This version requirement may be bumped in
 	  the future.
 
