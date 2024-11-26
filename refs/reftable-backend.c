@@ -51,6 +51,50 @@ static void reftable_backend_release(struct reftable_backend *be)
 	be->stack = NULL;
 }
 
+static int reftable_backend_read_ref(struct reftable_backend *be,
+				     const char *refname,
+				     struct object_id *oid,
+				     struct strbuf *referent,
+				     unsigned int *type)
+{
+	struct reftable_ref_record ref = {0};
+	int ret;
+
+	ret = reftable_stack_read_ref(be->stack, refname, &ref);
+	if (ret)
+		goto done;
+
+	if (ref.value_type == REFTABLE_REF_SYMREF) {
+		strbuf_reset(referent);
+		strbuf_addstr(referent, ref.value.symref);
+		*type |= REF_ISSYMREF;
+	} else if (reftable_ref_record_val1(&ref)) {
+		unsigned int hash_id;
+
+		switch (reftable_stack_hash_id(be->stack)) {
+		case REFTABLE_HASH_SHA1:
+			hash_id = GIT_HASH_SHA1;
+			break;
+		case REFTABLE_HASH_SHA256:
+			hash_id = GIT_HASH_SHA256;
+			break;
+		default:
+			BUG("unhandled hash ID %d", reftable_stack_hash_id(be->stack));
+		}
+
+		oidread(oid, reftable_ref_record_val1(&ref),
+			&hash_algos[hash_id]);
+	} else {
+		/* We got a tombstone, which should not happen. */
+		BUG("unhandled reference value type %d", ref.value_type);
+	}
+
+done:
+	assert(ret != REFTABLE_API_ERROR);
+	reftable_ref_record_release(&ref);
+	return ret;
+}
+
 struct reftable_ref_store {
 	struct ref_store base;
 
@@ -241,50 +285,6 @@ static void fill_reftable_log_record(struct reftable_log_record *log, const stru
 	}
 
 	log->value.update.tz_offset = sign * atoi(tz_begin);
-}
-
-static int read_ref_without_reload(struct reftable_stack *stack,
-				   const char *refname,
-				   struct object_id *oid,
-				   struct strbuf *referent,
-				   unsigned int *type)
-{
-	struct reftable_ref_record ref = {0};
-	int ret;
-
-	ret = reftable_stack_read_ref(stack, refname, &ref);
-	if (ret)
-		goto done;
-
-	if (ref.value_type == REFTABLE_REF_SYMREF) {
-		strbuf_reset(referent);
-		strbuf_addstr(referent, ref.value.symref);
-		*type |= REF_ISSYMREF;
-	} else if (reftable_ref_record_val1(&ref)) {
-		unsigned int hash_id;
-
-		switch (reftable_stack_hash_id(stack)) {
-		case REFTABLE_HASH_SHA1:
-			hash_id = GIT_HASH_SHA1;
-			break;
-		case REFTABLE_HASH_SHA256:
-			hash_id = GIT_HASH_SHA256;
-			break;
-		default:
-			BUG("unhandled hash ID %d", reftable_stack_hash_id(stack));
-		}
-
-		oidread(oid, reftable_ref_record_val1(&ref),
-			&hash_algos[hash_id]);
-	} else {
-		/* We got a tombstone, which should not happen. */
-		BUG("unhandled reference value type %d", ref.value_type);
-	}
-
-done:
-	assert(ret != REFTABLE_API_ERROR);
-	reftable_ref_record_release(&ref);
-	return ret;
 }
 
 static int reftable_be_config(const char *var, const char *value,
@@ -867,7 +867,7 @@ static int reftable_be_read_raw_ref(struct ref_store *ref_store,
 	if (ret)
 		return ret;
 
-	ret = read_ref_without_reload(be->stack, refname, oid, referent, type);
+	ret = reftable_backend_read_ref(be, refname, oid, referent, type);
 	if (ret < 0)
 		return ret;
 	if (ret > 0) {
@@ -1103,8 +1103,8 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 	if (ret)
 		goto done;
 
-	ret = read_ref_without_reload(be->stack, "HEAD",
-				      &head_oid, &head_referent, &head_type);
+	ret = reftable_backend_read_ref(be, "HEAD", &head_oid,
+					&head_referent, &head_type);
 	if (ret < 0)
 		goto done;
 	ret = 0;
@@ -1179,8 +1179,8 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 			string_list_insert(&affected_refnames, new_update->refname);
 		}
 
-		ret = read_ref_without_reload(be->stack, rewritten_ref,
-					      &current_oid, &referent, &u->type);
+		ret = reftable_backend_read_ref(be, rewritten_ref,
+						&current_oid, &referent, &u->type);
 		if (ret < 0)
 			goto done;
 		if (ret > 0 && !ref_update_expects_existing_old_ref(u)) {
@@ -1638,7 +1638,7 @@ struct write_create_symref_arg {
 
 struct write_copy_arg {
 	struct reftable_ref_store *refs;
-	struct reftable_stack *stack;
+	struct reftable_backend *be;
 	const char *oldname;
 	const char *newname;
 	const char *logmsg;
@@ -1663,7 +1663,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	if (split_ident_line(&committer_ident, committer_info, strlen(committer_info)))
 		BUG("failed splitting committer info");
 
-	if (reftable_stack_read_ref(arg->stack, arg->oldname, &old_ref)) {
+	if (reftable_stack_read_ref(arg->be->stack, arg->oldname, &old_ref)) {
 		ret = error(_("refname %s not found"), arg->oldname);
 		goto done;
 	}
@@ -1702,7 +1702,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	 * the old branch and the creation of the new branch, and we cannot do
 	 * two changes to a reflog in a single update.
 	 */
-	deletion_ts = creation_ts = reftable_stack_next_update_index(arg->stack);
+	deletion_ts = creation_ts = reftable_stack_next_update_index(arg->be->stack);
 	if (arg->delete_old)
 		creation_ts++;
 	reftable_writer_set_limits(writer, deletion_ts, creation_ts);
@@ -1745,8 +1745,8 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 		memcpy(logs[logs_nr].value.update.old_hash, old_ref.value.val1, GIT_MAX_RAWSZ);
 		logs_nr++;
 
-		ret = read_ref_without_reload(arg->stack, "HEAD", &head_oid,
-					      &head_referent, &head_type);
+		ret = reftable_backend_read_ref(arg->be, "HEAD", &head_oid,
+						&head_referent, &head_type);
 		if (ret < 0)
 			goto done;
 		append_head_reflog = (head_type & REF_ISSYMREF) && !strcmp(head_referent.buf, arg->oldname);
@@ -1789,7 +1789,7 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	 * copy over all log entries from the old reflog. Last but not least,
 	 * when renaming we also have to delete all the old reflog entries.
 	 */
-	ret = reftable_stack_init_log_iterator(arg->stack, &it);
+	ret = reftable_stack_init_log_iterator(arg->be->stack, &it);
 	if (ret < 0)
 		goto done;
 
@@ -1862,7 +1862,6 @@ static int reftable_be_rename_ref(struct ref_store *ref_store,
 {
 	struct reftable_ref_store *refs =
 		reftable_be_downcast(ref_store, REF_STORE_WRITE, "rename_ref");
-	struct reftable_backend *be;
 	struct write_copy_arg arg = {
 		.refs = refs,
 		.oldname = oldrefname,
@@ -1876,11 +1875,10 @@ static int reftable_be_rename_ref(struct ref_store *ref_store,
 	if (ret < 0)
 		goto done;
 
-	ret = backend_for(&be, refs, newrefname, &newrefname, 1);
+	ret = backend_for(&arg.be, refs, newrefname, &newrefname, 1);
 	if (ret)
 		goto done;
-	arg.stack = be->stack;
-	ret = reftable_stack_add(be->stack, &write_copy_table, &arg);
+	ret = reftable_stack_add(arg.be->stack, &write_copy_table, &arg);
 
 done:
 	assert(ret != REFTABLE_API_ERROR);
@@ -1894,7 +1892,6 @@ static int reftable_be_copy_ref(struct ref_store *ref_store,
 {
 	struct reftable_ref_store *refs =
 		reftable_be_downcast(ref_store, REF_STORE_WRITE, "copy_ref");
-	struct reftable_backend *be;
 	struct write_copy_arg arg = {
 		.refs = refs,
 		.oldname = oldrefname,
@@ -1907,11 +1904,10 @@ static int reftable_be_copy_ref(struct ref_store *ref_store,
 	if (ret < 0)
 		goto done;
 
-	ret = backend_for(&be, refs, newrefname, &newrefname, 1);
+	ret = backend_for(&arg.be, refs, newrefname, &newrefname, 1);
 	if (ret)
 		goto done;
-	arg.stack = be->stack;
-	ret = reftable_stack_add(be->stack, &write_copy_table, &arg);
+	ret = reftable_stack_add(arg.be->stack, &write_copy_table, &arg);
 
 done:
 	assert(ret != REFTABLE_API_ERROR);
