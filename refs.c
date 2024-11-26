@@ -2185,6 +2185,9 @@ static int run_transaction_hook(struct ref_transaction *transaction,
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
 
+		if (update->flags & REF_LOG_ONLY)
+			continue;
+
 		strbuf_reset(&buf);
 
 		if (!(update->flags & REF_HAVE_OLD))
