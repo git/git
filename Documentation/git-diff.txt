@@ -8,13 +8,13 @@ git-diff - Show changes between commits, commit and working tree, etc
 
 SYNOPSIS
 --------
-[verse]
-'git diff' [<options>] [<commit>] [--] [<path>...]
-'git diff' [<options>] --cached [--merge-base] [<commit>] [--] [<path>...]
-'git diff' [<options>] [--merge-base] <commit> [<commit>...] <commit> [--] [<path>...]
-'git diff' [<options>] <commit>...<commit> [--] [<path>...]
-'git diff' [<options>] <blob> <blob>
-'git diff' [<options>] --no-index [--] <path> <path>
+[synopsis]
+git diff [<options>] [<commit>] [--] [<path>...]
+git diff [<options>] --cached [--merge-base] [<commit>] [--] [<path>...]
+git diff [<options>] [--merge-base] <commit> [<commit>...] <commit> [--] [<path>...]
+git diff [<options>] <commit>...<commit> [--] [<path>...]
+git diff [<options>] <blob> <blob>
+git diff [<options>] --no-index [--] <path> <path>
 
 DESCRIPTION
 -----------
@@ -23,7 +23,7 @@ between the index and a tree, changes between two trees, changes resulting
 from a merge, changes between two blob objects, or changes between two
 files on disk.
 
-'git diff' [<options>] [--] [<path>...]::
+`git diff [<options>] [--] [<path>...]`::
 
 	This form is to view the changes you made relative to
 	the index (staging area for the next commit).  In other
@@ -31,7 +31,7 @@ files on disk.
 	further add to the index but you still haven't.  You can
 	stage these changes by using linkgit:git-add[1].
 
-'git diff' [<options>] --no-index [--] <path> <path>::
+`git diff [<options>] --no-index [--] <path> <path>`::
 
 	This form is to compare the given two paths on the
 	filesystem.  You can omit the `--no-index` option when
@@ -40,82 +40,82 @@ files on disk.
 	or when running the command outside a working tree
 	controlled by Git. This form implies `--exit-code`.
 
-'git diff' [<options>] --cached [--merge-base] [<commit>] [--] [<path>...]::
+`git diff [<options>] --cached [--merge-base] [<commit>] [--] [<path>...]`::
 
 	This form is to view the changes you staged for the next
-	commit relative to the named <commit>.  Typically you
+	commit relative to the named _<commit>_.  Typically you
 	would want comparison with the latest commit, so if you
-	do not give <commit>, it defaults to HEAD.
-	If HEAD does not exist (e.g. unborn branches) and
-	<commit> is not given, it shows all staged changes.
-	--staged is a synonym of --cached.
+	do not give _<commit>_, it defaults to `HEAD`.
+	If `HEAD` does not exist (e.g. unborn branches) and
+	_<commit>_ is not given, it shows all staged changes.
+	`--staged` is a synonym of `--cached`.
 +
-If --merge-base is given, instead of using <commit>, use the merge base
-of <commit> and HEAD.  `git diff --cached --merge-base A` is equivalent to
+If `--merge-base` is given, instead of using _<commit>_, use the merge base
+of _<commit>_ and `HEAD`.  `git diff --cached --merge-base A` is equivalent to
 `git diff --cached $(git merge-base A HEAD)`.
 
-'git diff' [<options>] [--merge-base] <commit> [--] [<path>...]::
+`git diff [<options>] [--merge-base] <commit> [--] [<path>...]`::
 
 	This form is to view the changes you have in your
-	working tree relative to the named <commit>.  You can
-	use HEAD to compare it with the latest commit, or a
+	working tree relative to the named _<commit>_.  You can
+	use `HEAD` to compare it with the latest commit, or a
 	branch name to compare with the tip of a different
 	branch.
 +
-If --merge-base is given, instead of using <commit>, use the merge base
-of <commit> and HEAD.  `git diff --merge-base A` is equivalent to
+If `--merge-base` is given, instead of using _<commit>_, use the merge base
+of _<commit>_ and `HEAD`.  `git diff --merge-base A` is equivalent to
 `git diff $(git merge-base A HEAD)`.
 
-'git diff' [<options>] [--merge-base] <commit> <commit> [--] [<path>...]::
+`git diff [<options>] [--merge-base] <commit> <commit> [--] [<path>...]`::
 
 	This is to view the changes between two arbitrary
-	<commit>.
+	_<commit>_.
 +
-If --merge-base is given, use the merge base of the two commits for the
+If `--merge-base` is given, use the merge base of the two commits for the
 "before" side.  `git diff --merge-base A B` is equivalent to
 `git diff $(git merge-base A B) B`.
 
-'git diff' [<options>] <commit> <commit>... <commit> [--] [<path>...]::
+`git diff [<options>] <commit> <commit>...<commit> [--] [<path>...]`::
 
 	This form is to view the results of a merge commit.  The first
-	listed <commit> must be the merge itself; the remaining two or
+	listed _<commit>_ must be the merge itself; the remaining two or
 	more commits should be its parents.  Convenient ways to produce
-	the desired set of revisions are to use the suffixes `^@` and
-	`^!`.  If A is a merge commit, then `git diff A A^@`,
+	the desired set of revisions are to use the suffixes `@` and
+	`^!`.  If `A` is a merge commit, then `git diff A A^@`,
 	`git diff A^!` and `git show A` all give the same combined diff.
 
-'git diff' [<options>] <commit>..<commit> [--] [<path>...]::
+`git diff [<options>] <commit>..<commit> [--] [<path>...]`::
 
 	This is synonymous to the earlier form (without the `..`) for
-	viewing the changes between two arbitrary <commit>.  If <commit> on
+	viewing the changes between two arbitrary _<commit>_.  If _<commit>_ on
 	one side is omitted, it will have the same effect as
-	using HEAD instead.
+	using `HEAD` instead.
 
-'git diff' [<options>] <commit>\...<commit> [--] [<path>...]::
+`git diff [<options>] <commit>...<commit> [--] [<path>...]`::
 
 	This form is to view the changes on the branch containing
-	and up to the second <commit>, starting at a common ancestor
-	of both <commit>.  `git diff A...B` is equivalent to
+	and up to the second _<commit>_, starting at a common ancestor
+	of both _<commit>_.  `git diff A...B` is equivalent to
 	`git diff $(git merge-base A B) B`.  You can omit any one
-	of <commit>, which has the same effect as using HEAD instead.
+	of _<commit>_, which has the same effect as using `HEAD` instead.
 
 Just in case you are doing something exotic, it should be
-noted that all of the <commit> in the above description, except
+noted that all of the _<commit>_ in the above description, except
 in the `--merge-base` case and in the last two forms that use `..`
-notations, can be any <tree>. A tree of interest is the one pointed to
-by the ref named `AUTO_MERGE`, which is written by the 'ort' merge
+notations, can be any _<tree>_. A tree of interest is the one pointed to
+by the ref named `AUTO_MERGE`, which is written by the `ort` merge
 strategy upon hitting merge conflicts (see linkgit:git-merge[1]).
 Comparing the working tree with `AUTO_MERGE` shows changes you've made
 so far to resolve textual conflicts (see the examples below).
 
-For a more complete list of ways to spell <commit>, see
+For a more complete list of ways to spell _<commit>_, see
 "SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
-However, "diff" is about comparing two _endpoints_, not ranges,
-and the range notations (`<commit>..<commit>` and
-`<commit>...<commit>`) do not mean a range as defined in the
+However, `diff` is about comparing two _endpoints_, not ranges,
+and the range notations (`<commit>..<commit>` and `<commit>...<commit>`)
+do not mean a range as defined in the
 "SPECIFYING RANGES" section in linkgit:gitrevisions[7].
 
-'git diff' [<options>] <blob> <blob>::
+`git diff [<options>] <blob> <blob>`::
 
 	This form is to view the differences between the raw
 	contents of two blob objects.
@@ -125,22 +125,31 @@ OPTIONS
 :git-diff: 1
 include::diff-options.txt[]
 
--1 --base::
--2 --ours::
--3 --theirs::
-	Compare the working tree with the "base" version (stage #1),
-	"our branch" (stage #2) or "their branch" (stage #3).  The
-	index contains these stages only for unmerged entries i.e.
-	while resolving conflicts.  See linkgit:git-read-tree[1]
-	section "3-Way Merge" for detailed information.
+`-1`::
+`--base`::
+`-2`::
+`--ours`::
+`-3`::
+`--theirs`::
+	Compare the working tree with
++
+--
+ * the "base" version (stage #1) when using `-1` or `--base`,
+ * "our branch" (stage #2) when using `-2` or `--ours`, or
+ * "their branch" (stage #3) when using `-3` or `--theirs`.
+--
++
+The index contains these stages only for unmerged entries i.e.
+while resolving conflicts.  See linkgit:git-read-tree[1]
+section "3-Way Merge" for detailed information.
 
--0::
+`-0`::
 	Omit diff output for unmerged entries and just show
 	"Unmerged".  Can be used only when comparing the working tree
 	with the index.
 
-<path>...::
-	The <paths> parameters, when given, are used to limit
+`<path>...`::
+	The _<path>_ parameters, when given, are used to limit
 	the diff to the named paths (you can give directory
 	names and get diff for all files under them).
 
@@ -225,11 +234,12 @@ CONFIGURATION
 
 include::includes/cmd-config-section-all.txt[]
 
+:git-diff: 1
 include::config/diff.txt[]
 
 SEE ALSO
 --------
-diff(1),
+`diff`(1),
 linkgit:git-difftool[1],
 linkgit:git-log[1],
 linkgit:gitdiffcore[7],
