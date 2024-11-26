@@ -36,19 +36,30 @@
 
 struct reftable_backend {
 	struct reftable_stack *stack;
+	struct reftable_iterator it;
 };
+
+static void reftable_backend_on_reload(void *payload)
+{
+	struct reftable_backend *be = payload;
+	reftable_iterator_destroy(&be->it);
+}
 
 static int reftable_backend_init(struct reftable_backend *be,
 				 const char *path,
-				 const struct reftable_write_options *opts)
+				 const struct reftable_write_options *_opts)
 {
-	return reftable_new_stack(&be->stack, path, opts);
+	struct reftable_write_options opts = *_opts;
+	opts.on_reload = reftable_backend_on_reload;
+	opts.on_reload_payload = be;
+	return reftable_new_stack(&be->stack, path, &opts);
 }
 
 static void reftable_backend_release(struct reftable_backend *be)
 {
 	reftable_stack_destroy(be->stack);
 	be->stack = NULL;
+	reftable_iterator_destroy(&be->it);
 }
 
 static int reftable_backend_read_ref(struct reftable_backend *be,
@@ -60,9 +71,24 @@ static int reftable_backend_read_ref(struct reftable_backend *be,
 	struct reftable_ref_record ref = {0};
 	int ret;
 
-	ret = reftable_stack_read_ref(be->stack, refname, &ref);
+	if (!be->it.ops) {
+		ret = reftable_stack_init_ref_iterator(be->stack, &be->it);
+		if (ret)
+			goto done;
+	}
+
+	ret = reftable_iterator_seek_ref(&be->it, refname);
 	if (ret)
 		goto done;
+
+	ret = reftable_iterator_next_ref(&be->it, &ref);
+	if (ret)
+		goto done;
+
+	if (strcmp(ref.refname, refname)) {
+		ret = 1;
+		goto done;
+	}
 
 	if (ref.value_type == REFTABLE_REF_SYMREF) {
 		strbuf_reset(referent);
