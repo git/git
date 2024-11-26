@@ -20,7 +20,8 @@ struct reftable_writer {
 	void *write_arg;
 	int pending_padding;
 	struct reftable_buf last_key;
-	struct reftable_buf buf;
+	/* Scratch buffer used to avoid allocations. */
+	struct reftable_buf scratch;
 
 	/* offset of next block to write. */
 	uint64_t next;
