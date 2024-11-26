@@ -3,6 +3,8 @@
 
 #include "gettext.h"
 
+struct repository;
+
 /**
  * Refer to Documentation/technical/api-parse-options.txt for the API doc.
  */
@@ -73,7 +75,7 @@ typedef enum parse_opt_result parse_opt_ll_cb(struct parse_opt_ctx_t *ctx,
 					      const char *arg, int unset);
 
 typedef int parse_opt_subcommand_fn(int argc, const char **argv,
-				    const char *prefix);
+				    const char *prefix, struct repository *repo);
 
 /*
  * `type`::

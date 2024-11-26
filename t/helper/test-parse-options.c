@@ -282,14 +282,16 @@ int cmd__parse_options_flags(int argc, const char **argv)
 	return parse_options_flags__cmd(argc, argv, test_flags);
 }
 
-static int subcmd_one(int argc, const char **argv, const char *prefix UNUSED)
+static int subcmd_one(int argc, const char **argv, const char *prefix UNUSED,
+		      struct repository *repo UNUSED)
 {
 	printf("fn: subcmd_one\n");
 	print_args(argc, argv);
 	return 0;
 }
 
-static int subcmd_two(int argc, const char **argv, const char *prefix UNUSED)
+static int subcmd_two(int argc, const char **argv, const char *prefix UNUSED,
+		      struct repository *repo UNUSED)
 {
 	printf("fn: subcmd_two\n");
 	print_args(argc, argv);
@@ -319,7 +321,7 @@ static int parse_subcommand__cmd(int argc, const char **argv,
 
 	printf("opt: %d\n", opt);
 
-	return fn(argc, argv, NULL);
+	return fn(argc, argv, NULL, NULL);
 }
 
 int cmd__parse_subcommand(int argc, const char **argv)
