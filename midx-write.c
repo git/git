@@ -1,5 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "config.h"
@@ -1505,24 +1503,22 @@ cleanup:
 	return result;
 }
 
-int write_midx_file(const char *object_dir,
+int write_midx_file(struct repository *r, const char *object_dir,
 		    const char *preferred_pack_name,
-		    const char *refs_snapshot,
-		    unsigned flags)
+		    const char *refs_snapshot, unsigned flags)
 {
-	return write_midx_internal(the_repository, object_dir, NULL, NULL,
-				   preferred_pack_name, refs_snapshot, flags);
+	return write_midx_internal(r, object_dir, NULL, NULL,
+				   preferred_pack_name, refs_snapshot,
+				   flags);
 }
 
-int write_midx_file_only(const char *object_dir,
+int write_midx_file_only(struct repository *r, const char *object_dir,
 			 struct string_list *packs_to_include,
 			 const char *preferred_pack_name,
-			 const char *refs_snapshot,
-			 unsigned flags)
+			 const char *refs_snapshot, unsigned flags)
 {
-	return write_midx_internal(the_repository, object_dir, packs_to_include,
-				   NULL, preferred_pack_name, refs_snapshot,
-				   flags);
+	return write_midx_internal(r, object_dir, packs_to_include, NULL,
+				   preferred_pack_name, refs_snapshot, flags);
 }
 
 int expire_midx_packs(struct repository *r, const char *object_dir, unsigned flags)
