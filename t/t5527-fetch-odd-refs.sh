@@ -52,7 +52,8 @@ test_expect_success LONG_REF 'fetch handles extremely long refname' '
 	long
 	main
 	EOF
-	git for-each-ref --format="%(subject)" refs/remotes/long >actual &&
+	git for-each-ref --format="%(subject)" refs/remotes/long \
+		--exclude=refs/remotes/long/HEAD >actual &&
 	test_cmp expect actual
 '
 
