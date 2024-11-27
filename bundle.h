@@ -39,6 +39,10 @@ enum verify_bundle_flags {
 int verify_bundle(struct repository *r, struct bundle_header *header,
 		  enum verify_bundle_flags flags);
 
+struct unbundle_opts {
+	enum verify_bundle_flags flags;
+};
+
 /**
  * Unbundle after reading the header with read_bundle_header().
  *
@@ -49,12 +53,12 @@ int verify_bundle(struct repository *r, struct bundle_header *header,
  * (e.g. "-v" for verbose/progress), NULL otherwise. The provided
  * "extra_index_pack_args" (if any) will be strvec_clear()'d for you.
  *
- * Before unbundling, this method will call verify_bundle() with the
- * given 'flags'.
+ * Before unbundling, this method will call verify_bundle() with 'flags'
+ * provided in 'opts'.
  */
 int unbundle(struct repository *r, struct bundle_header *header,
 	     int bundle_fd, struct strvec *extra_index_pack_args,
-	     enum verify_bundle_flags flags);
+	     struct unbundle_opts *opts);
 int list_bundle_refs(struct bundle_header *header,
 		int argc, const char **argv);
 

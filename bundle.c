@@ -628,9 +628,13 @@ out:
 
 int unbundle(struct repository *r, struct bundle_header *header,
 	     int bundle_fd, struct strvec *extra_index_pack_args,
-	     enum verify_bundle_flags flags)
+	     struct unbundle_opts *opts)
 {
 	struct child_process ip = CHILD_PROCESS_INIT;
+	enum verify_bundle_flags flags = 0;
+
+	if (opts)
+		flags = opts->flags;
 
 	if (verify_bundle(r, header, flags))
 		return -1;
