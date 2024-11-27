@@ -41,6 +41,13 @@ int verify_bundle(struct repository *r, struct bundle_header *header,
 
 struct unbundle_opts {
 	enum verify_bundle_flags flags;
+	/*
+	 * fsck_msg_types may optionally contain fsck message severity
+	 * configuration. If present, this configuration gets directly appended
+	 * to a '--fsck-objects' option and therefore must be prefixed with '='.
+	 * (E.g. "=missingEmail=ignore,gitmodulesUrl=ignore")
+	 */
+	const char *fsck_msg_types;
 };
 
 /**

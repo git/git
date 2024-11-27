@@ -631,12 +631,12 @@ int unbundle(struct repository *r, struct bundle_header *header,
 	     struct unbundle_opts *opts)
 {
 	struct child_process ip = CHILD_PROCESS_INIT;
-	enum verify_bundle_flags flags = 0;
+	struct unbundle_opts opts_fallback = { 0 };
 
-	if (opts)
-		flags = opts->flags;
+	if (!opts)
+		opts = &opts_fallback;
 
-	if (verify_bundle(r, header, flags))
+	if (verify_bundle(r, header, opts->flags))
 		return -1;
 
 	strvec_pushl(&ip.args, "index-pack", "--fix-thin", "--stdin", NULL);
@@ -645,8 +645,9 @@ int unbundle(struct repository *r, struct bundle_header *header,
 	if (header->filter.choice)
 		strvec_push(&ip.args, "--promisor=from-bundle");
 
-	if (flags & VERIFY_BUNDLE_FSCK)
-		strvec_push(&ip.args, "--fsck-objects");
+	if (opts->flags & VERIFY_BUNDLE_FSCK)
+		strvec_pushf(&ip.args, "--fsck-objects%s",
+			     opts->fsck_msg_types ? opts->fsck_msg_types : "");
 
 	if (extra_index_pack_args)
 		strvec_pushv(&ip.args, extra_index_pack_args->v);
