@@ -82,6 +82,9 @@ static char *http_proxy_ssl_ca_info;
 static struct credential proxy_cert_auth = CREDENTIAL_INIT;
 static int proxy_ssl_cert_password_required;
 
+#if defined(GIT_CURL_HAVE_CURLOPT_UNIX_SOCKET_PATH) && !defined(NO_UNIX_SOCKETS)
+static const char *curl_unix_socket_path;
+#endif
 static struct {
 	const char *name;
 	long curlauth_param;
@@ -473,6 +476,20 @@ static int http_options(const char *var, const char *value,
 	if (!strcmp("http.proxysslcertpasswordprotected", var)) {
 		proxy_ssl_cert_password_required = git_config_bool(var, value);
 		return 0;
+	}
+
+	if (!strcmp("http.unixsocket", var)) {
+#ifdef GIT_CURL_HAVE_CURLOPT_UNIX_SOCKET_PATH
+#ifndef NO_UNIX_SOCKETS
+		return git_config_string(&curl_unix_socket_path, var, value);
+#else
+		warning(_("Unix socket support unavailable in this build of Git"));
+		return 0;
+#endif
+#else
+		warning(_("Unix socket support is not supported with cURL < 7.40.0"));
+		return 0;
+#endif
 	}
 
 	if (!strcmp("http.cookiefile", var))
@@ -1295,6 +1312,12 @@ static CURL *get_curl_handle(void)
 		curl_easy_setopt(result, CURLOPT_NOPROXY, curl_no_proxy);
 	}
 	init_curl_proxy_auth(result);
+
+#if defined(GIT_CURL_HAVE_CURLOPT_UNIX_SOCKET_PATH) && !defined(NO_UNIX_SOCKETS)
+	if (curl_unix_socket_path) {
+		curl_easy_setopt(result, CURLOPT_UNIX_SOCKET_PATH, curl_unix_socket_path);
+	}
+#endif
 
 	set_curl_keepalive(result);
 
