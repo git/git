@@ -7,6 +7,7 @@ struct object_id;
 struct pack_entry;
 struct repository;
 struct bitmapped_pack;
+struct git_hash_algo;
 
 #define MIDX_SIGNATURE 0x4d494458 /* "MIDX" */
 #define MIDX_VERSION 1
@@ -89,12 +90,15 @@ struct multi_pack_index {
 #define MIDX_EXT_MIDX "midx"
 
 const unsigned char *get_midx_checksum(struct multi_pack_index *m);
-void get_midx_filename(struct strbuf *out, const char *object_dir);
-void get_midx_filename_ext(struct strbuf *out, const char *object_dir,
+void get_midx_filename(const struct git_hash_algo *hash_algo,
+		       struct strbuf *out, const char *object_dir);
+void get_midx_filename_ext(const struct git_hash_algo *hash_algo,
+			   struct strbuf *out, const char *object_dir,
 			   const unsigned char *hash, const char *ext);
 void get_midx_chain_dirname(struct strbuf *buf, const char *object_dir);
 void get_midx_chain_filename(struct strbuf *buf, const char *object_dir);
-void get_split_midx_filename_ext(struct strbuf *buf, const char *object_dir,
+void get_split_midx_filename_ext(const struct git_hash_algo *hash_algo,
+				 struct strbuf *buf, const char *object_dir,
 				 const unsigned char *hash, const char *ext);
 
 struct multi_pack_index *load_multi_pack_index(struct repository *r,
