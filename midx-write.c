@@ -760,7 +760,7 @@ static int read_refs_snapshot(const char *refs_snapshot,
 			hex = &buf.buf[1];
 		}
 
-		if (parse_oid_hex(hex, &oid, &end) < 0)
+		if (parse_oid_hex_algop(hex, &oid, &end, revs->repo->hash_algo) < 0)
 			die(_("could not parse line: %s"), buf.buf);
 		if (*end)
 			die(_("malformed line: %s"), buf.buf);
@@ -776,6 +776,7 @@ static int read_refs_snapshot(const char *refs_snapshot,
 	strbuf_release(&buf);
 	return 0;
 }
+
 static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr_p,
 						    const char *refs_snapshot,
 						    struct write_midx_context *ctx)
