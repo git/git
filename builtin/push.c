@@ -19,6 +19,7 @@
 #include "send-pack.h"
 #include "trace2.h"
 #include "color.h"
+#include "safety-protocol.h"
 
 static const char * const push_usage[] = {
 	N_("git push [<options>] [<repository> [<refspec>...]]"),
@@ -59,6 +60,7 @@ static int verbosity;
 static int progress = -1;
 static int recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 static enum transport_family family;
+static int force;
 
 static struct push_cas_option cas;
 
@@ -481,6 +483,36 @@ static void set_push_cert_flags(int *flags, int v)
 	}
 }
 
+static struct safety_state push_safety_state;
+
+static int check_push_safety(const char *refname, const struct object_id *old_oid,
+                         const struct object_id *new_oid, int is_forced)
+{
+    if (!is_forced)
+        return 0;
+        
+    safety_state_init(&push_safety_state, SAFETY_OP_PUSH_FORCE, "force push", the_repository);
+    
+    /* Set force level based on command flags */
+    push_safety_state.force_level = force == 1 ? SAFETY_FORCE_SINGLE :
+                                  force == 2 ? SAFETY_FORCE_DOUBLE : SAFETY_FORCE_NONE;
+    
+    /* Check if we're force pushing */
+    if (!safety_check_path(&push_safety_state, refname)) {
+        safety_clear(&push_safety_state);
+        return 0;
+    }
+    
+    /* Get confirmation */
+    if (!safety_confirm_operation(&push_safety_state, 
+        "force push changes")) {
+        safety_clear(&push_safety_state);
+        return -1;
+    }
+    
+    safety_clear(&push_safety_state);
+    return 0;
+}
 
 static int git_push_config(const char *k, const char *v,
 			   const struct config_context *ctx, void *cb)
@@ -658,6 +690,9 @@ int cmd_push(int argc,
 	for_each_string_list_item(item, push_options)
 		if (strchr(item->string, '\n'))
 			die(_("push options must not have new line characters"));
+
+	if (force && check_push_safety(NULL, NULL, NULL, 1) < 0)
+		return -1;
 
 	rc = do_push(flags, push_options, remote);
 	string_list_clear(&push_options_cmdline, 0);

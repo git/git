@@ -33,6 +33,7 @@
 #include "reset.h"
 #include "trace2.h"
 #include "hook.h"
+#include "safety-protocol.h"
 
 static char const * const builtin_rebase_usage[] = {
 	N_("git rebase [-i] [options] [--exec <cmd>] "
@@ -1081,6 +1082,32 @@ static int check_exec_cmd(const char *cmd)
 	return 0;
 }
 
+static struct safety_state rebase_safety_state;
+
+static int check_rebase_safety(const char *branch_name, struct commit *upstream)
+{
+    safety_init(&rebase_safety_state, SAFETY_OP_REBASE);
+    
+    /* Set force level based on command flags */
+    rebase_safety_state.force_level = force ? SAFETY_FORCE_SINGLE : SAFETY_FORCE_NONE;
+    
+    /* Check if we're rebasing published history */
+    if (!safety_check_path(&rebase_safety_state, branch_name)) {
+        safety_clear(&rebase_safety_state);
+        return 0;
+    }
+    
+    /* Get confirmation */
+    if (!safety_confirm_operation(&rebase_safety_state, 
+        "rebase commits")) {
+        safety_clear(&rebase_safety_state);
+        return -1;
+    }
+    
+    safety_clear(&rebase_safety_state);
+    return 0;
+}
+
 int cmd_rebase(int argc,
 	       const char **argv,
 	       const char *prefix,
@@ -1129,7 +1156,7 @@ int cmd_rebase(int argc,
 			 N_("make committer date match author date")),
 		OPT_BOOL(0, "reset-author-date", &options.ignore_date,
 			 N_("ignore author date and use current date")),
-		OPT_HIDDEN_BOOL(0, "ignore-date", &options.ignore_date,
+		OPT_BOOL(0, "ignore-date", &options.ignore_date,
 				N_("synonym of --reset-author-date")),
 		OPT_PASSTHRU_ARGV('C', NULL, &options.git_am_opts, N_("n"),
 				  N_("passed to 'git apply'"), 0),
@@ -1529,7 +1556,7 @@ int cmd_rebase(int argc,
 		/* all am options except -q are compatible only with --apply */
 		for (i = options.git_am_opts.nr - 1; i >= 0; i--)
 			if (strcmp(options.git_am_opts.v[i], "-q"))
-				break;
+		break;
 
 		if (i >= 0 || options.type == REBASE_APPLY) {
 			if (is_merge(&options))
@@ -1719,7 +1746,8 @@ int cmd_rebase(int argc,
 				die(_("'%s': need exactly one merge base"),
 				    options.onto_name);
 		}
-		options.onto = lookup_commit_or_die(&branch_base,
+		options.onto =
+			lookup_commit_or_die(&branch_base,
 						    options.onto_name);
 	} else {
 		options.onto =
@@ -1872,6 +1900,9 @@ int cmd_rebase(int argc,
 	options.revisions = revisions.buf;
 
 run_rebase:
+	if (check_rebase_safety(branch_name, options.upstream) < 0)
+		return -1;
+
 	ret = run_specific_rebase(&options);
 
 cleanup:

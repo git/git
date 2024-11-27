@@ -39,6 +39,7 @@
 #include "commit-graph.h"
 #include "pretty.h"
 #include "trailer.h"
+#include "safety-protocol.h"
 
 static const char * const builtin_commit_usage[] = {
 	N_("git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
@@ -106,7 +107,7 @@ static enum {
 	COMMIT_NORMAL,
 	COMMIT_PARTIAL
 } commit_style;
-
+static int force = 0;
 static const char *force_author;
 static char *logfile;
 static char *template_file;
@@ -436,8 +437,7 @@ static const char *prepare_index(const char **argv, const char *prefix,
 	 */
 	if (all || (also && pathspec.nr)) {
 		char *ps_matched = xcalloc(pathspec.nr, 1);
-		repo_hold_locked_index(the_repository, &index_lock,
-				       LOCK_DIE_ON_ERROR);
+		repo_hold_locked_index(the_repository, &index_lock, LOCK_DIE_ON_ERROR);
 		add_files_to_cache(the_repository, also ? prefix : NULL,
 				   &pathspec, ps_matched, 0, 0);
 		if (!all && report_path_error(ps_matched, &pathspec))
@@ -1537,17 +1537,9 @@ struct repository *repo UNUSED)
 			    STATUS_FORMAT_LONG),
 		OPT_BOOL('z', "null", &s.null_termination,
 			 N_("terminate entries with NUL")),
-		{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg,
-		  N_("mode"),
-		  N_("show untracked files, optional modes: all, normal, no. (Default: all)"),
-		  PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
-		{ OPTION_STRING, 0, "ignored", &ignored_arg,
-		  N_("mode"),
-		  N_("show ignored files, optional modes: traditional, matching, no. (Default: traditional)"),
-		  PARSE_OPT_OPTARG, NULL, (intptr_t)"traditional" },
-		{ OPTION_STRING, 0, "ignore-submodules", &ignore_submodule_arg, N_("when"),
-		  N_("ignore changes to submodules, optional when: all, dirty, untracked. (Default: all)"),
-		  PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
+		{ OPTION_STRING, 'u', "untracked-files", &untracked_files_arg, N_("mode"), N_("show untracked files, optional modes: all, normal, no. (Default: all)"), PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
+		{ OPTION_STRING, 0, "ignored", &ignored_arg, N_("mode"), N_("show ignored files, optional modes: traditional, matching, no. (Default: traditional)"), PARSE_OPT_OPTARG, NULL, (intptr_t)"traditional" },
+		{ OPTION_STRING, 0, "ignore-submodules", &ignore_submodule_arg, N_("when"), N_("ignore changes to submodules, optional when: all, dirty, untracked. (Default: all)"), PARSE_OPT_OPTARG, NULL, (intptr_t)"all" },
 		OPT_COLUMN(0, "column", &s.colopts, N_("list untracked files in columns")),
 		OPT_BOOL(0, "no-renames", &no_renames, N_("do not detect renames")),
 		OPT_CALLBACK_F('M', "find-renames", &rename_score_arg,
@@ -1652,6 +1644,34 @@ static int git_commit_config(const char *k, const char *v,
 	return git_status_config(k, v, ctx, s);
 }
 
+static struct safety_state commit_safety_state;
+
+static int check_amend_safety(int force)
+{
+    safety_state_init(&commit_safety_state, SAFETY_OP_AMEND, "amend last commit", the_repository);
+    
+    /* Set force level based on command flags */
+    commit_safety_state.force_level = force ? SAFETY_FORCE_SINGLE : SAFETY_FORCE_NONE;
+    
+    /* Set protection flags - we want to protect history and uncommitted changes */
+    commit_safety_state.protection_flags = SAFETY_PROTECT_HISTORY | SAFETY_PROTECT_UNCOMMITTED;
+    
+    /* Check if we're amending published history */
+    if (!safety_check_path(&commit_safety_state, "HEAD")) {
+        safety_clear(&commit_safety_state);
+        return 0;
+    }
+    
+    /* Get confirmation */
+    if (!safety_confirm_operation(&commit_safety_state, "amend last commit")) {
+        safety_clear(&commit_safety_state);
+        return -1;
+    }
+    
+    safety_clear(&commit_safety_state);
+    return 0;
+}
+
 int cmd_commit(int argc,
 	       const char **argv,
 	       const char *prefix,
@@ -1695,8 +1715,8 @@ int cmd_commit(int argc,
 		OPT_BOOL('o', "only", &only, N_("commit only specified files")),
 		OPT_BOOL('n', "no-verify", &no_verify, N_("bypass pre-commit and commit-msg hooks")),
 		OPT_BOOL(0, "dry-run", &dry_run, N_("show what would be committed")),
-		OPT_SET_INT(0, "short", &status_format, N_("show status concisely"),
-			    STATUS_FORMAT_SHORT),
+		OPT_SET_INT(0, "short", &status_format,
+			    N_("show status concisely"), STATUS_FORMAT_SHORT),
 		OPT_BOOL(0, "branch", &s.show_branch, N_("show branch information")),
 		OPT_BOOL(0, "ahead-behind", &s.ahead_behind_flags,
 			 N_("compute full ahead/behind values")),
@@ -1718,7 +1738,7 @@ int cmd_commit(int argc,
 				N_("ok to record an empty change")),
 		OPT_HIDDEN_BOOL(0, "allow-empty-message", &allow_empty_message,
 				N_("ok to record a change with an empty message")),
-
+		OPT_BOOL('f', "force", &force, N_("force amend even if risky")), /* Add force option */
 		OPT_END()
 	};
 
@@ -1732,6 +1752,7 @@ int cmd_commit(int argc,
 	struct commit_extra_header *extra = NULL;
 	struct strbuf err = STRBUF_INIT;
 	int ret = 0;
+
 
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage_with_options(builtin_commit_usage, builtin_commit_options);
@@ -1776,6 +1797,10 @@ int cmd_commit(int argc,
 		rollback_index_files();
 		goto cleanup;
 	}
+
+	/* Add safety check for amend */
+	if (amend && check_amend_safety(force) < 0)
+		return -1;
 
 	/* Determine parents */
 	reflog_msg = getenv("GIT_REFLOG_ACTION");

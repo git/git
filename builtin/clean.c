@@ -22,6 +22,7 @@
 #include "pathspec.h"
 #include "help.h"
 #include "prompt.h"
+#include "safety-protocol.h"
 
 static int require_force = -1; /* unset */
 static int interactive;
@@ -917,7 +918,7 @@ static void correct_untracked_entries(struct dir_struct *dir)
 int cmd_clean(int argc,
 	      const char **argv,
 	      const char *prefix,
-	      struct repository *repo UNUSED)
+	      struct repository *repo)
 {
 	int i, res;
 	int dry_run = 0, remove_directories = 0, quiet = 0, ignored = 0;
@@ -946,11 +947,25 @@ int cmd_clean(int argc,
 		OPT_END()
 	};
 
+	struct safety_state safety_state;
+	const char *op_desc = "clean";
+	
 	git_config(git_clean_config, NULL);
-
+	
 	argc = parse_options(argc, argv, prefix, options, builtin_clean_usage,
 			     0);
-
+	
+	/* Initialize safety state */
+	safety_state_init(&safety_state, SAFETY_OP_CLEAN, op_desc, repo);
+	
+	/* Set force level based on command flags */
+	if (force > 1)
+		safety_set_force_level(&safety_state, SAFETY_FORCE_DOUBLE);
+	else if (force)
+		safety_set_force_level(&safety_state, SAFETY_FORCE_SINGLE);
+	else
+		safety_set_force_level(&safety_state, SAFETY_FORCE_NONE);
+	
 	if (require_force != 0 && !force && !interactive && !dry_run)
 		die(_("clean.requireForce is true and -f not given: refusing to clean"));
 
@@ -1050,6 +1065,7 @@ int cmd_clean(int argc,
 
 	for_each_string_list_item(item, &del_list) {
 		struct stat st;
+		int is_protected;
 
 		strbuf_reset(&abs_path);
 		if (prefix)
@@ -1064,6 +1080,16 @@ int cmd_clean(int argc,
 		 */
 		if (lstat(abs_path.buf, &st))
 			continue;
+
+		/* Check if path should be protected */
+		is_protected = safety_check_path(&safety_state, abs_path.buf);
+		if (is_protected && safety_state.force_level < SAFETY_FORCE_DOUBLE) {
+			if (!quiet) {
+				qname = quote_path(item->string, NULL, &buf, 0);
+				printf(_("Skipping protected path '%s'\n"), qname);
+			}
+			continue;
+		}
 
 		if (S_ISDIR(st.st_mode)) {
 			if (remove_dirs(&abs_path, prefix, rm_flags, dry_run, quiet, &gone))
@@ -1087,6 +1113,17 @@ int cmd_clean(int argc,
 		}
 	}
 
+	/* Get confirmation if needed */
+	if (!dry_run && !interactive && safety_state.risk_level > RISK_LOW) {
+		if (!safety_confirm_operation(&safety_state, op_desc)) {
+			printf(_("Operation aborted\n"));
+			errors++;
+			goto cleanup;
+		}
+	}
+
+cleanup:
+	safety_clear(&safety_state);
 	strbuf_release(&abs_path);
 	strbuf_release(&buf);
 	string_list_clear(&del_list, 0);

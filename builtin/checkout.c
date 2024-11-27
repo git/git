@@ -39,7 +39,7 @@
 #include "entry.h"
 #include "parallel-checkout.h"
 #include "add-interactive.h"
-
+#include "safety-protocol.h"
 static const char * const checkout_usage[] = {
 	N_("git checkout [<options>] <branch>"),
 	N_("git checkout [<options>] [<branch>] -- <file>..."),
@@ -57,6 +57,7 @@ static const char * const restore_usage[] = {
 };
 
 struct checkout_opts {
+	struct safety_state safety;
 	int patch_mode;
 	int quiet;
 	int merge;
@@ -101,7 +102,15 @@ struct checkout_opts {
 	struct tree *source_tree;
 };
 
-#define CHECKOUT_OPTS_INIT { .conflict_style = -1, .merge = -1 }
+#define CHECKOUT_OPTS_INIT { \
+    .safety = { 0 }, \
+    .patch_mode = 0, \
+    .quiet = 0, \
+    .merge = -1, \
+    .force = 0, \
+    .force_detach = 0, \
+    .conflict_style = -1, \
+}
 
 struct branch_info {
 	char *name; /* The short name used */
@@ -115,7 +124,55 @@ struct branch_info {
 	 */
 	char *checkout;
 };
-
+int safety_checkout_operation(const struct checkout_opts *opts, 
+                           enum safety_op_type op_type, 
+                           const char *operation_description)
+{
+    // Initialize safety state
+    safety_state_init(&((struct checkout_opts *)opts)->safety, op_type, operation_description, the_repository);
+    
+    // Skip if force flag is set
+    if (opts->force)
+        return 0;
+    
+    // Update protection flags based on operation type
+    switch (op_type) {
+        case SAFETY_OP_CHECKOUT:
+            ((struct checkout_opts *)opts)->safety.protection_flags = 
+                SAFETY_PROTECT_MODIFIED | 
+                SAFETY_PROTECT_UNTRACKED | 
+                SAFETY_PROTECT_IMPORTANT;
+            break;
+        case SAFETY_OP_RESET:
+            ((struct checkout_opts *)opts)->safety.protection_flags = 
+                SAFETY_PROTECT_MODIFIED | 
+                SAFETY_PROTECT_DEFAULT |
+                SAFETY_PROTECT_HISTORY;
+            break;
+        // Add more cases for other operation types
+        default:
+            break;
+    }
+   
+    // Check safety state and warn about potential risks
+    struct safety_state *safety = &((struct checkout_opts *)opts)->safety;
+    if (safety_check_operation(safety)) {
+        if (safety->has_modified)
+            warning(_("You have modified files that would be affected"));
+        if (safety->has_untracked)
+            warning(_("You have untracked files that could be modified"));
+        if (safety->protection_flags & SAFETY_PROTECT_DEFAULT)
+            warning(_("This operation affects the default branch"));
+        
+        // For high-risk operations, require confirmation
+        if (safety->risk_level >= RISK_HIGH) {
+            if (!safety_confirm_operation(safety, operation_description)) {
+                return -1;  // Abort if user doesn't confirm
+            }
+        }
+    }
+    return 0;
+}
 static void branch_info_release(struct branch_info *info)
 {
 	free(info->name);
@@ -383,6 +440,10 @@ static void mark_ce_for_checkout_no_overlay(struct cache_entry *ce,
 static int checkout_worktree(const struct checkout_opts *opts,
 			     const struct branch_info *info)
 {
+	 // Add safety check before checking out worktree
+    if (safety_checkout_operation(opts, SAFETY_OP_CHECKOUT, _("proceed with worktree checkout"))) {
+        return -1;  // Abort if safety check fails
+    }
 	struct checkout state = CHECKOUT_INIT;
 	int nr_checkouts = 0, nr_unmerged = 0;
 	int errs = 0;
@@ -460,6 +521,10 @@ static int checkout_worktree(const struct checkout_opts *opts,
 static int checkout_paths(const struct checkout_opts *opts,
 			  const struct branch_info *new_branch_info)
 {
+	 // Add safety check before performing checkout
+    if (safety_checkout_operation(opts, SAFETY_OP_CHECKOUT, _("proceed with checkout paths"))) {
+        return -1;  // Abort if safety check fails
+    }
 	int pos;
 	static char *ps_matched;
 	struct object_id rev;
@@ -710,6 +775,7 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 	init_checkout_metadata(&opts.meta, info->refname,
 			       info->commit ? &info->commit->object.oid : null_oid(),
 			       NULL);
+
 	if (parse_tree(tree) < 0)
 		return 128;
 	init_tree_desc(&tree_desc, &tree->object.oid, tree->buffer, tree->size);
@@ -1159,6 +1225,10 @@ static void orphaned_commit_warning(struct commit *old_commit, struct commit *ne
 static int switch_branches(const struct checkout_opts *opts,
 			   struct branch_info *new_branch_info)
 {
+	// Add safety check before switching branches
+    if (safety_checkout_operation(opts, SAFETY_OP_CHECKOUT, _("proceed with branch switch"))) {
+        return -1;  // Abort if safety check fails
+    }
 	int ret = 0;
 	struct branch_info old_branch_info = { 0 };
 	struct object_id rev;
@@ -1233,7 +1303,7 @@ static int git_checkout_config(const char *var, const char *value,
 	}
 	if (!strcmp(var, "checkout.guess")) {
 		opts->dwim_new_local_branch = git_config_bool(var, value);
-		return 0;
+	return 0;
 	}
 
 	if (starts_with(var, "submodule."))
@@ -1368,7 +1438,6 @@ static int parse_branchname_arg(int argc, const char **argv,
 	 */
 	if (!argc)
 		return 0;
-
 	if (!opts->accept_pathspec) {
 		if (argc > 1)
 			die(_("only one reference expected"));
@@ -1576,6 +1645,12 @@ static void die_if_switching_to_a_branch_in_use(struct checkout_opts *opts,
 static int checkout_branch(struct checkout_opts *opts,
 			   struct branch_info *new_branch_info)
 {
+	// Add safety check before checking out branch
+    if (safety_checkout_operation(opts, 
+                                  SAFETY_OP_CHECKOUT, 
+                                  _("proceed with branch checkout")) < 0) {
+        return -1;  // Abort if safety check fails
+    }
 	int noop_switch = (!new_branch_info->name &&
 			   !opts->new_branch &&
 			   !opts->force_detach);
@@ -1963,6 +2038,7 @@ int cmd_checkout(int argc,
 		 struct repository *repo UNUSED)
 {
 	struct checkout_opts opts = CHECKOUT_OPTS_INIT;
+	safety_state_init(&opts.safety, SAFETY_OP_CHECKOUT, _("proceed with checkout"), the_repository);
 	struct option *options;
 	struct option checkout_options[] = {
 		OPT_STRING('b', NULL, &opts.new_branch, N_("branch"),
@@ -2013,6 +2089,7 @@ int cmd_switch(int argc,
 	       struct repository *repo UNUSED)
 {
 	struct checkout_opts opts = CHECKOUT_OPTS_INIT;
+	safety_state_init(&opts.safety, SAFETY_OP_CHECKOUT, _("proceed with checkout"), the_repository);
 	struct option *options = NULL;
 	struct option switch_options[] = {
 		OPT_STRING('c', "create", &opts.new_branch, N_("branch"),
@@ -2051,7 +2128,9 @@ int cmd_restore(int argc,
 		const char *prefix,
 		struct repository *repo UNUSED)
 {
+	
 	struct checkout_opts opts = CHECKOUT_OPTS_INIT;
+	safety_state_init(&opts.safety, SAFETY_OP_CHECKOUT, _("proceed with checkout"), the_repository);
 	struct option *options;
 	struct option restore_options[] = {
 		OPT_STRING('s', "source", &opts.from_treeish, "<tree-ish>",
