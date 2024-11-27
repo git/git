@@ -110,6 +110,8 @@ struct write_midx_context {
 	uint32_t num_multi_pack_indexes_before;
 
 	struct string_list *to_include;
+
+	struct repository *repo;
 };
 
 static int should_include_pack(const struct write_midx_context *ctx,
@@ -154,7 +156,7 @@ static void add_pack_to_midx(const char *full_path, size_t full_path_len,
 			return;
 
 		ALLOC_GROW(ctx->info, ctx->nr + 1, ctx->alloc);
-		p = add_packed_git(the_repository, full_path, full_path_len, 0);
+		p = add_packed_git(ctx->repo, full_path, full_path_len, 0);
 		if (!p) {
 			warning(_("failed to add packfile '%s'"),
 				full_path);
@@ -480,7 +482,7 @@ static int write_midx_oid_lookup(struct hashfile *f,
 				 void *data)
 {
 	struct write_midx_context *ctx = data;
-	unsigned char hash_len = the_hash_algo->rawsz;
+	unsigned char hash_len = ctx->repo->hash_algo->rawsz;
 	struct pack_midx_entry *list = ctx->entries;
 	uint32_t i;
 
@@ -605,7 +607,7 @@ static uint32_t *midx_pack_order(struct write_midx_context *ctx)
 	uint32_t *pack_order, base_objects = 0;
 	uint32_t i;
 
-	trace2_region_enter("midx", "midx_pack_order", the_repository);
+	trace2_region_enter("midx", "midx_pack_order", ctx->repo);
 
 	if (ctx->incremental && ctx->base_midx)
 		base_objects = ctx->base_midx->num_objects +
@@ -640,7 +642,7 @@ static uint32_t *midx_pack_order(struct write_midx_context *ctx)
 	}
 	free(data);
 
-	trace2_region_leave("midx", "midx_pack_order", the_repository);
+	trace2_region_leave("midx", "midx_pack_order", ctx->repo);
 
 	return pack_order;
 }
@@ -651,9 +653,10 @@ static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
 	struct strbuf buf = STRBUF_INIT;
 	char *tmp_file;
 
-	trace2_region_enter("midx", "write_midx_reverse_index", the_repository);
+	trace2_region_enter("midx", "write_midx_reverse_index", ctx->repo);
 
-	strbuf_addf(&buf, "%s-%s.rev", midx_name, hash_to_hex(midx_hash));
+	strbuf_addf(&buf, "%s-%s.rev", midx_name, hash_to_hex_algop(midx_hash,
+								    ctx->repo->hash_algo));
 
 	tmp_file = write_rev_file_order(NULL, ctx->pack_order, ctx->entries_nr,
 					midx_hash, WRITE_REV);
@@ -664,7 +667,7 @@ static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
 	strbuf_release(&buf);
 	free(tmp_file);
 
-	trace2_region_leave("midx", "write_midx_reverse_index", the_repository);
+	trace2_region_leave("midx", "write_midx_reverse_index", ctx->repo);
 }
 
 static void prepare_midx_packing_data(struct packing_data *pdata,
@@ -672,10 +675,10 @@ static void prepare_midx_packing_data(struct packing_data *pdata,
 {
 	uint32_t i;
 
-	trace2_region_enter("midx", "prepare_midx_packing_data", the_repository);
+	trace2_region_enter("midx", "prepare_midx_packing_data", ctx->repo);
 
 	memset(pdata, 0, sizeof(struct packing_data));
-	prepare_packing_data(the_repository, pdata);
+	prepare_packing_data(ctx->repo, pdata);
 
 	for (i = 0; i < ctx->entries_nr; i++) {
 		uint32_t pos = ctx->pack_order[i];
@@ -686,7 +689,7 @@ static void prepare_midx_packing_data(struct packing_data *pdata,
 			       ctx->info[ctx->pack_perm[from->pack_int_id]].p);
 	}
 
-	trace2_region_leave("midx", "prepare_midx_packing_data", the_repository);
+	trace2_region_leave("midx", "prepare_midx_packing_data", ctx->repo);
 }
 
 static int add_ref_to_pending(const char *refname, const char *referent UNUSED,
@@ -784,17 +787,16 @@ static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr
 	struct rev_info revs;
 	struct bitmap_commit_cb cb = {0};
 
-	trace2_region_enter("midx", "find_commits_for_midx_bitmap",
-			    the_repository);
+	trace2_region_enter("midx", "find_commits_for_midx_bitmap", ctx->repo);
 
 	cb.ctx = ctx;
 
-	repo_init_revisions(the_repository, &revs, NULL);
+	repo_init_revisions(ctx->repo, &revs, NULL);
 	if (refs_snapshot) {
 		read_refs_snapshot(refs_snapshot, &revs);
 	} else {
 		setup_revisions(0, NULL, &revs, NULL);
-		refs_for_each_ref(get_main_ref_store(the_repository),
+		refs_for_each_ref(get_main_ref_store(ctx->repo),
 				  add_ref_to_pending, &revs);
 	}
 
@@ -822,8 +824,7 @@ static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr
 
 	release_revisions(&revs);
 
-	trace2_region_leave("midx", "find_commits_for_midx_bitmap",
-			    the_repository);
+	trace2_region_leave("midx", "find_commits_for_midx_bitmap", ctx->repo);
 
 	return cb.commits;
 }
@@ -945,7 +946,7 @@ static int fill_packs_from_midx(struct write_midx_context *ctx,
 			 */
 			if (flags & MIDX_WRITE_REV_INDEX ||
 			    preferred_pack_name) {
-				if (prepare_midx_pack(the_repository, m,
+				if (prepare_midx_pack(ctx->repo, m,
 						      m->num_packs_in_base + i)) {
 					error(_("could not load pack"));
 					return 1;
@@ -1073,6 +1074,7 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 
 	trace2_region_enter("midx", "write_midx_internal", r);
 
+	ctx.repo = r;
 
 	ctx.incremental = !!(flags & MIDX_WRITE_INCREMENTAL);
 	if (ctx.incremental && (flags & MIDX_WRITE_BITMAP))
@@ -1469,7 +1471,7 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 	}
 
 	if (ctx.m || ctx.base_midx)
-		close_object_store(the_repository->objects);
+		close_object_store(ctx.repo->objects);
 
 	if (commit_lock_file(&lk) < 0)
 		die_errno(_("could not write multi-pack-index"));
