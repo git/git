@@ -97,7 +97,9 @@ void get_midx_chain_filename(struct strbuf *buf, const char *object_dir);
 void get_split_midx_filename_ext(struct strbuf *buf, const char *object_dir,
 				 const unsigned char *hash, const char *ext);
 
-struct multi_pack_index *load_multi_pack_index(const char *object_dir, int local);
+struct multi_pack_index *load_multi_pack_index(struct repository *r,
+					       const char *object_dir,
+					       int local);
 int prepare_midx_pack(struct repository *r, struct multi_pack_index *m, uint32_t pack_int_id);
 struct packed_git *nth_midxed_pack(struct multi_pack_index *m,
 				   uint32_t pack_int_id);

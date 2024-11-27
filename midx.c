@@ -372,7 +372,8 @@ static struct multi_pack_index *load_multi_pack_index_chain(struct repository *r
 	return m;
 }
 
-struct multi_pack_index *load_multi_pack_index(const char *object_dir,
+struct multi_pack_index *load_multi_pack_index(struct repository *r,
+					       const char *object_dir,
 					       int local)
 {
 	struct strbuf midx_name = STRBUF_INIT;
@@ -380,10 +381,10 @@ struct multi_pack_index *load_multi_pack_index(const char *object_dir,
 
 	get_midx_filename(&midx_name, object_dir);
 
-	m = load_multi_pack_index_one(the_repository, object_dir,
+	m = load_multi_pack_index_one(r, object_dir,
 				      midx_name.buf, local);
 	if (!m)
-		m = load_multi_pack_index_chain(the_repository, object_dir, local);
+		m = load_multi_pack_index_chain(r, object_dir, local);
 
 	strbuf_release(&midx_name);
 
@@ -727,7 +728,7 @@ int prepare_multi_pack_index_one(struct repository *r, const char *object_dir, i
 		if (!strcmp(object_dir, m_search->object_dir))
 			return 1;
 
-	m = load_multi_pack_index(object_dir, local);
+	m = load_multi_pack_index(r, object_dir, local);
 
 	if (m) {
 		struct multi_pack_index *mp = r->objects->multi_pack_index;
@@ -881,7 +882,7 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 	struct pair_pos_vs_id *pairs = NULL;
 	uint32_t i;
 	struct progress *progress = NULL;
-	struct multi_pack_index *m = load_multi_pack_index(object_dir, 1);
+	struct multi_pack_index *m = load_multi_pack_index(r, object_dir, 1);
 	struct multi_pack_index *curr;
 	verify_midx_error = 0;
 
