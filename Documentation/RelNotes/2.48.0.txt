@@ -16,6 +16,9 @@ UI, Workflows & Features
  * Teach 'git notes add' and 'git notes append' a new '-e' flag,
    instructing them to open the note in $GIT_EDITOR before saving.
 
+ * Documentation for "git bundle" saw improvements to more prominently
+   call out the use of '--all' when creating bundles.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -82,6 +85,15 @@ Performance, Internal Implementation, Development Support etc.
 
  * Renaming a handful of variables and structure fields.
 
+ * Fix for clar unit tests to support CMake build.
+
+ * C23 compatibility updates.
+
+ * GCC 15 compatibility updates.
+
+ * We now ensure "index-pack" is used with the "--promisor" option
+   only during a "git fetch".
+
 
 Fixes since v2.47
 -----------------
@@ -145,6 +157,28 @@ Fixes since v2.47
    repository.  Work it around by including these objects in the
    referring promisor pack at the receiving end of the fetch.
 
+ * Avoid build/test breakage on a system without working malloc debug
+   support dynamic library.
+   (merge 72ad6dc368 jk/test-malloc-debug-check later to maint).
+
+ * Double-free fix.
+   (merge fe17a25905 jk/fetch-prefetch-double-free-fix later to maint).
+
+ * Use of some uninitialized variables in "git difftool" has been
+   corrected.
+
+ * Object reuse code based on multi-pack-index sent an unwanted copy
+   of object.
+   (merge e199290592 tb/multi-pack-reuse-dupfix later to maint).
+
+ * "git fast-import" can be tricked into a replace ref that maps an
+   object to itself, which is a useless thing to do.
+   (merge 5e904f1a4a en/fast-import-avoid-self-replace later to maint).
+
+ * The ref-transaction hook triggered for reflog updates, which has
+   been corrected.
+   (merge b886db48c6 kn/ref-transaction-hook-with-reflog later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 1164e270b5 jk/output-prefix-cleanup later to maint).
    (merge f36b8cbaef jh/config-unset-doc-fix later to maint).
@@ -158,3 +192,4 @@ Fixes since v2.47
    (merge f1ed39987b xx/protocol-v2-doc-markup-fix later to maint).
    (merge 41869f7447 ak/typofixes later to maint).
    (merge dcd590a39d bf/t-readme-mention-reftable later to maint).
+   (merge 68e3c69efa kh/trailer-in-glossary later to maint).
