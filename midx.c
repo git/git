@@ -1,5 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "config.h"
 #include "dir.h"
@@ -94,8 +92,6 @@ static int midx_read_object_offsets(const unsigned char *chunk_start,
 	return 0;
 }
 
-#define MIDX_MIN_SIZE (MIDX_HEADER_SIZE + the_hash_algo->rawsz)
-
 static struct multi_pack_index *load_multi_pack_index_one(struct repository *r,
 							  const char *object_dir,
 							  const char *midx_name,
@@ -122,7 +118,7 @@ static struct multi_pack_index *load_multi_pack_index_one(struct repository *r,
 
 	midx_size = xsize_t(st.st_size);
 
-	if (midx_size < MIDX_MIN_SIZE) {
+	if (midx_size < (MIDX_HEADER_SIZE + r->hash_algo->rawsz)) {
 		error(_("multi-pack-index file %s is too small"), midx_name);
 		goto cleanup_fail;
 	}
