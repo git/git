@@ -504,8 +504,7 @@ static int check_push_safety(const char *refname, const struct object_id *old_oi
     }
     
     /* Get confirmation */
-    if (!safety_confirm_operation(&push_safety_state, 
-        "force push changes")) {
+    if (!safety_confirm_operation(&push_safety_state)) {
         safety_clear(&push_safety_state);
         return -1;
     }

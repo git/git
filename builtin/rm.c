@@ -15,13 +15,13 @@
 #include "object-name.h"
 #include "parse-options.h"
 #include "read-cache.h"
-
 #include "string-list.h"
 #include "setup.h"
 #include "sparse-index.h"
 #include "submodule.h"
 #include "pathspec.h"
-#include "../safety-protocol.h"
+#include "prompt.h"  /* For ask() */
+#include "safety-protocol.h"
 
 static const char * const builtin_rm_usage[] = {
 	N_("git rm [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]\n"
@@ -247,111 +247,36 @@ static int show_only = 0, force = 0, index_only = 0, recursive = 0, quiet = 0;
 static int ignore_unmatch = 0, pathspec_file_nul;
 static int include_sparse;
 static char *pathspec_from_file;
-static int double_force = 0;
 
-struct rm_safety {
-	unsigned int has_nested_git:1;
-	unsigned int has_build_artifacts:1;
-	unsigned int has_untracked_deps:1;
-	unsigned int has_important_files:1;
-	unsigned long total_size;
-	int file_count;
-	struct string_list critical_paths;
-};
-
-static struct rm_safety safety = {0};
-
-static const char *critical_patterns[] = {
-	/* Build artifacts and dependencies */
-	"node_modules/", "vendor/", "build/", "dist/",
-	"target/", "bin/", "obj/",
-	/* Config and env files */
-	".env", "config/", "settings/",
-	/* IDE files */
-	".idea/", ".vscode/",
-	/* Lock files */
-	"package-lock.json", "yarn.lock", "Gemfile.lock",
-	/* Important project files */
-	"README", "LICENSE", "CONTRIBUTING",
-	NULL
-};
-
-static void check_path_safety(const char *path, struct rm_safety *safety)
-{
-	struct stat st;
-	const char **pattern;
-
-	if (is_nonbare_repository_dir(path))
-		safety->has_nested_git = 1;
-
-	/* Check if path matches any critical patterns */
-	for (pattern = critical_patterns; *pattern; pattern++) {
-		if (strstr(path, *pattern)) {
-			safety->has_build_artifacts = 1;
-			break;
-		}
-	}
-
-	/* Gather size information */
-	if (lstat(path, &st) == 0) {
-		safety->total_size += st.st_size;
-		safety->file_count++;
-	}
-}
-
-static void print_rm_warning(struct rm_safety *safety, int force_level)
-{
-	struct strbuf msg = STRBUF_INIT;
-	int is_dangerous = 0;
-
-	strbuf_addstr(&msg, _("WARNING: You are about to remove files:\n"));
-
-	if (safety->has_nested_git) {
-		strbuf_addstr(&msg, _("  ! DANGER: Will remove files from nested Git repositories!\n"));
-		is_dangerous = 1;
-	}
-
-	if (safety->has_build_artifacts) {
-		strbuf_addstr(&msg, _("  ! Will remove build artifacts or dependencies\n"));
-		is_dangerous = 1;
-	}
-
-	if (safety->has_important_files) {
-		strbuf_addstr(&msg, _("  ! Will remove important project files (README, LICENSE, etc)\n"));
-		is_dangerous = 1;
-	}
-
-	strbuf_addf(&msg, _("  * Total: %d files, %lu bytes will be removed\n"), 
-		    safety->file_count, safety->total_size);
-
-	if (is_dangerous && force_level < 2) {
-		strbuf_addstr(&msg, _("\nThis operation requires -ff (double force) due to dangerous content\n"));
-		die("%s", msg.buf);
-	}
-
-	fprintf(stderr, "%s\n", msg.buf);
-	strbuf_release(&msg);
-
-	if (is_dangerous) {
-		if (!isatty(0)) {
-			die(_("Refusing to remove dangerous content in non-interactive mode.\nUse -ff to override or run in terminal"));
-		}
-		if (!ask(_("Are you ABSOLUTELY sure you want to proceed? Type 'yes' to confirm: "), 0)) {
-			die(_("Operation aborted by user"));
-		}
-	}
-}
-
+/* Safety state for rm command */
 static struct safety_state rm_safety_state;
+
+static void check_path_safety(const char *path)
+{
+    struct strbuf sb = STRBUF_INIT;
+
+    strbuf_addstr(&sb, path);
+    if (is_nonbare_repository_dir(&sb)) {
+        warning(_("'%s' is a git repository"), path);
+    }
+    strbuf_release(&sb);
+}
+
+static int git_rm_config(const char *var, const char *value,
+                        const struct config_context *ctx, void *cb)
+{
+    return git_default_config(var, value, ctx, cb);
+}
 
 static struct option builtin_rm_options[] = {
 	OPT__DRY_RUN(&show_only, N_("dry run")),
 	OPT__QUIET(&quiet, N_("do not list removed files")),
 	OPT_BOOL('f', "force", &force, N_("override the up-to-date check")),
-	OPT_BOOL('F', "force-force", &double_force, N_("override all safety checks")),
-	OPT_BOOL('r', NULL, &recursive, N_("allow recursive removal")),
-	OPT_BOOL( 0 , "cached", &index_only, N_("only remove from the index")),
-	OPT_BOOL( 0 , "ignore-unmatch", &ignore_unmatch, N_("exit with a zero status even if nothing matched")),
+	OPT_BOOL('r', "recursive", &recursive, N_("allow recursive removal")),
+	OPT_BOOL(0, "cached", &index_only, N_("only remove from the index")),
+	OPT_BOOL(0, "ignore-unmatch", &ignore_unmatch, N_("exit with a zero status even if nothing matched")),
+	OPT_BOOL(0, "sparse", &include_sparse,
+             N_("allow updating entries outside of the sparse-checkout cone")),
 	OPT_PATHSPEC_FROM_FILE(&pathspec_from_file),
 	OPT_PATHSPEC_FILE_NUL(&pathspec_file_nul),
 	OPT_END(),
@@ -359,80 +284,64 @@ static struct option builtin_rm_options[] = {
 
 int cmd_rm(int argc, const char **argv, const char *prefix, struct repository *repo UNUSED)
 {
-	int i, newfd;
+	int i;
 	struct pathspec pathspec;
+	struct dir_struct dir = DIR_INIT;
+	struct lock_file lock_file = LOCK_INIT;
 	char *seen;
-	int force_level = 0;
-	int has_safety_concerns = 0;
 	int ret = 0;
-
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage_with_options(builtin_rm_usage, builtin_rm_options);
 
 	git_config(git_rm_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, builtin_rm_options,
 			    builtin_rm_usage, 0);
 
+	/* Initialize safety state for rm operation */
+	safety_state_init(&rm_safety_state, SAFETY_OP_RM,
+                     "remove operation", the_repository);
+
+	if (force)
+        rm_safety_state.force_level = SAFETY_FORCE_SINGLE;
+
 	if (pathspec_from_file) {
-		if (argc) {
-			error(_("'%s' and <pathspec>... are mutually exclusive"), "--pathspec-from-file");
-			usage_with_options(builtin_rm_usage, builtin_rm_options);
-		}
+		if (pathspec.nr)
+			die(_("'%s' and pathspec arguments cannot be used together"),
+                "--pathspec-from-file");
 
 		parse_pathspec_file(&pathspec, 0,
-				   PATHSPEC_PREFER_FULL,
-				   prefix, pathspec_from_file, pathspec_file_nul);
+                          PATHSPEC_PREFER_FULL,
+                          prefix, pathspec_from_file, pathspec_file_nul);
 	} else {
 		parse_pathspec(&pathspec, 0,
-			      PATHSPEC_PREFER_FULL,
-			      prefix, argv);
+                      PATHSPEC_PREFER_FULL,
+                      prefix, argv);
 	}
 
-	if (!pathspec.nr && !ignore_unmatch)
-		usage_with_options(builtin_rm_usage, builtin_rm_options);
-
-	if (!index_only)
-		setup_work_tree();
-
-	if (!index_only && !force) {
-		struct dir_struct dir = DIR_INIT;
-		if (repo_read_index(the_repository) < 0)
-			die(_("index file corrupt"));
+	if (include_sparse)
 		dir.flags |= DIR_SHOW_IGNORED;
-		if (file_exists(".git/info/exclude"))
-			dir.exclude_per_dir = ".gitignore";
-		fill_directory(&dir, &pathspec);
-		refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, &pathspec, NULL, NULL);
-		for (i = 0; i < dir.nr; i++) {
-			struct dir_entry *ent = dir.entries[i];
-			check_path_safety(ent->name, &safety);
-		}
-		print_rm_warning(&safety, force_level);
-	}
 
-	prepare_repo_settings(the_repository);
-	the_repository->settings.command_requires_full_index = 0;
-	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
+	if (!pathspec.nr && !pathspec_from_file)
+		die(_("No pathspec was given. Which files should I remove?"));
+
+	if (!show_only)
+		repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
 
 	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
 
-	refresh_index(the_repository->index, REFRESH_QUIET|REFRESH_UNMERGED, &pathspec, NULL, NULL);
+	dir.flags |= DIR_SHOW_IGNORED;
+    
+	/* Refresh index to ensure we have latest state */
+	refresh_index(the_repository->index, REFRESH_QUIET|REFRESH_UNMERGED, 
+                 &pathspec, NULL, NULL);
+
+	/* Fill directory and validate paths */
+	fill_directory(&dir, the_repository->index, &pathspec);
 
 	seen = xcalloc(pathspec.nr, 1);
 
 	if (pathspec_needs_expanded_index(the_repository->index, &pathspec))
 		ensure_full_index(the_repository->index);
-
-	/* Initialize safety state */
-	safety_init(&rm_safety_state, SAFETY_OP_RM);
-
-	/* Set force level based on flags */
-	if (double_force)
-		rm_safety_state.force_level = SAFETY_FORCE_DOUBLE;
-	else if (force)
-		rm_safety_state.force_level = SAFETY_FORCE_SINGLE;
 
 	for (i = 0; i < the_repository->index->cache_nr; i++) {
 		const struct cache_entry *ce = the_repository->index->cache[i];
@@ -475,7 +384,7 @@ int cmd_rm(int argc, const char **argv, const char *prefix, struct repository *r
 
 			/* Check each path for safety concerns */
 			if (safety_check_path(&rm_safety_state, pathspec.items[i].match)) {
-				has_safety_concerns = 1;
+				check_path_safety(pathspec.items[i].original);
 			}
 		}
 
@@ -566,15 +475,9 @@ int cmd_rm(int argc, const char **argv, const char *prefix, struct repository *r
 			stage_updated_gitmodules(the_repository->index);
 	}
 
-	if (has_safety_concerns) {
-		const char *op_desc = recursive ? 
-			"recursively remove files" : 
-			"remove files";
-			
-		if (!safety_confirm_operation(&rm_safety_state, op_desc)) {
-			ret = 1;
-			goto cleanup;
-		}
+	if (safety_confirm_operation(&rm_safety_state)) {
+		ret = 1;
+		goto cleanup;
 	}
 
 	if (write_locked_index(the_repository->index, &lock_file,

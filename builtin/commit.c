@@ -1663,7 +1663,7 @@ static int check_amend_safety(int force)
     }
     
     /* Get confirmation */
-    if (!safety_confirm_operation(&commit_safety_state, "amend last commit")) {
+    if (!safety_confirm_operation(&commit_safety_state)) {
         safety_clear(&commit_safety_state);
         return -1;
     }

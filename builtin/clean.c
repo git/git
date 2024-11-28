@@ -1115,7 +1115,7 @@ int cmd_clean(int argc,
 
 	/* Get confirmation if needed */
 	if (!dry_run && !interactive && safety_state.risk_level > RISK_LOW) {
-		if (!safety_confirm_operation(&safety_state, op_desc)) {
+		if (!safety_confirm_operation(&safety_state)) {
 			printf(_("Operation aborted\n"));
 			errors++;
 			goto cleanup;

@@ -166,7 +166,7 @@ int safety_checkout_operation(const struct checkout_opts *opts,
         
         // For high-risk operations, require confirmation
         if (safety->risk_level >= RISK_HIGH) {
-            if (!safety_confirm_operation(safety, operation_description)) {
+            if (!safety_confirm_operation(safety)) {
                 return -1;  // Abort if user doesn't confirm
             }
         }

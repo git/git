@@ -36,7 +36,8 @@
 #include "trace2.h"
 #include "dir.h"
 #include "add-interactive.h"
-#include "../safety-protocol.h"
+#include "safety-protocol.h"
+#include "wt-status.h"  /* For has_unstaged_changes and has_uncommitted_changes */
 
 #define REFRESH_INDEX_DELAY_WARNING_IN_MS (2 * 1000)
 
@@ -58,98 +59,7 @@ static inline int is_merge(void)
 	return !access(git_path_merge_head(the_repository), F_OK);
 }
 
-struct reset_safety {
-	unsigned int has_nested_git:1;
-	unsigned int has_ignored_files:1;
-	unsigned int has_build_artifacts:1;
-	unsigned int has_untracked_deps:1;
-	unsigned long total_size;
-	int file_count;
-	struct string_list critical_paths;
-};
-
-static struct reset_safety safety = {0};
-
-static const char *critical_patterns[] = {
-	/* Build artifacts and dependencies */
-	"node_modules/", "vendor/", "build/", "dist/",
-	"target/", "bin/", "obj/",
-	/* Config and env files */
-	".env", "config/", "settings/",
-	/* IDE files */
-	".idea/", ".vscode/",
-	/* Lock files */
-	"package-lock.json", "yarn.lock", "Gemfile.lock",
-	NULL
-};
-
-static void check_path_safety(const char *path, struct reset_safety *safety)
-{
-	struct stat st;
-	const char **pattern;
-
-	if (is_nonbare_repository_dir(path))
-		safety->has_nested_git = 1;
-
-	/* Check if path matches any critical patterns */
-	for (pattern = critical_patterns; *pattern; pattern++) {
-		if (strstr(path, *pattern)) {
-			safety->has_build_artifacts = 1;
-			break;
-		}
-	}
-
-	/* Gather size information */
-	if (lstat(path, &st) == 0) {
-		safety->total_size += st.st_size;
-		safety->file_count++;
-	}
-}
-
-static void print_reset_warning(struct reset_safety *safety, int force_level)
-{
-	struct strbuf msg = STRBUF_INIT;
-	int is_dangerous = 0;
-
-	strbuf_addstr(&msg, _("WARNING: You are about to perform a destructive reset operation:\n"));
-
-	if (safety->has_nested_git) {
-		strbuf_addstr(&msg, _("  ! DANGER: Will affect nested Git repositories!\n"));
-		is_dangerous = 1;
-	}
-
-	if (safety->has_build_artifacts) {
-		strbuf_addstr(&msg, _("  ! Will affect build artifacts and dependencies\n"));
-		is_dangerous = 1;
-	}
-
-	if (safety->has_untracked_deps) {
-		strbuf_addstr(&msg, _("  ! Will affect package dependencies\n"));
-		is_dangerous = 1;
-	}
-
-	strbuf_addf(&msg, _("  * Total: %d files, %lu bytes will be affected\n"), 
-		    safety->file_count, safety->total_size);
-
-	if (is_dangerous && force_level < 2) {
-		strbuf_addstr(&msg, _("\nThis operation requires -ff (double force) due to dangerous content\n"));
-		die("%s", msg.buf);
-	}
-
-	fprintf(stderr, "%s\n", msg.buf);
-	strbuf_release(&msg);
-
-	if (is_dangerous) {
-		if (!isatty(0)) {
-			die(_("Refusing to reset dangerous content in non-interactive mode.\nUse -ff to override or run in terminal"));
-		}
-		if (!ask(_("Are you ABSOLUTELY sure you want to proceed? Type 'yes' to confirm: "), 0)) {
-			die(_("Operation aborted by user"));
-		}
-	}
-}
-
-static int reset_index(const char *ref, const struct object_id *oid, int reset_type, int quiet, int force_level)
+static int reset_index(const char *ref, const struct object_id *oid, int reset_type, int quiet)
 {
 	int i, nr = 0;
 	struct tree_desc desc[2];
@@ -166,7 +76,6 @@ static int reset_index(const char *ref, const struct object_id *oid, int reset_t
 	init_checkout_metadata(&opts.meta, ref, oid, NULL);
 	if (!quiet)
 		opts.verbose_update = 1;
-
 	switch (reset_type) {
 	case KEEP:
 	case MERGE:
@@ -175,11 +84,7 @@ static int reset_index(const char *ref, const struct object_id *oid, int reset_t
 		break;
 	case HARD:
 		opts.update = 1;
-		if (force_level >= 2) {
-			opts.reset = UNPACK_RESET_OVERWRITE_UNTRACKED;
-		} else {
-			opts.reset = UNPACK_RESET_PROTECT_UNTRACKED;
-		}
+		opts.reset = UNPACK_RESET_OVERWRITE_UNTRACKED;
 		opts.skip_cache_tree_update = 1;
 		break;
 	case MIXED:
@@ -219,26 +124,6 @@ static int reset_index(const char *ref, const struct object_id *oid, int reset_t
 			goto out;
 		}
 		prime_cache_tree(the_repository, the_repository->index, tree);
-	}
-
-	if (reset_type == HARD) {
-		struct diff_options diff_opts;
-		struct pathspec pathspec;
-		memset(&pathspec, 0, sizeof(pathspec));
-		diff_setup(&diff_opts);
-		diff_opts.flags.recursive = 1;
-		diff_opts.output_format = DIFF_FORMAT_NO_OUTPUT;
-		diff_setup_done(&diff_opts);
-		run_diff_files(&diff_opts, 0);
-		diffcore_std(&diff_opts);
-
-		/* Check safety of each path that would be affected */
-		for (i = 0; i < diff_queued_diff.nr; i++) {
-			struct diff_filepair *p = diff_queued_diff.queue[i];
-			check_path_safety(p->one->path, &safety);
-		}
-
-		print_reset_warning(&safety, force_level);
 	}
 
 	ret = 0;
@@ -450,55 +335,112 @@ static int git_reset_config(const char *var, const char *value,
 
 static struct safety_state reset_safety_state;
 
-int cmd_reset(int argc, const char **argv, const char *prefix)
+/*
+ * Check if the reset operation is safe to proceed
+ * Returns 0 if safe, non-zero if unsafe
+ */
+static int check_reset_safety(enum reset_type reset_type, const char *rev)
 {
-    int reset_type = NONE, update_ref_status = 0, quiet = 0;
-    int no_refresh = 0;
-    int patch_mode = 0, pathspec_file_nul = 0, unborn;
-    const char *rev;
-    char *pathspec_from_file = NULL;
-    struct object_id oid;
+    int ret = 0;
+    struct strbuf desc = STRBUF_INIT;
+
+    /* Initialize safety state for reset operation */
+    safety_state_init(&reset_safety_state, SAFETY_OP_RESET,
+                     "reset operation", the_repository);
+
+    /* Build operation description */
+    strbuf_addstr(&desc, "Reset ");
+    if (rev)
+        strbuf_addf(&desc, "to '%s' ", rev);
+
+    switch (reset_type) {
+    case HARD:
+        strbuf_addstr(&desc, "(hard reset)");
+        break;
+    case MIXED:
+        strbuf_addstr(&desc, "(mixed reset)");
+        break;
+    case SOFT:
+        strbuf_addstr(&desc, "(soft reset)");
+        break;
+    case MERGE:
+        strbuf_addstr(&desc, "(merge reset)");
+        break;
+    case KEEP:
+        strbuf_addstr(&desc, "(keep reset)");
+        break;
+    default:
+        break;
+    }
+
+    /* Check for protected paths */
+    ret = safety_check_path(&reset_safety_state, ".");
+    if (ret)
+        goto cleanup;
+
+    /* Additional safety checks for hard reset */
+    if (reset_type == HARD) {
+        /* Check for uncommitted changes */
+        if (has_unstaged_changes(the_repository, 1) ||
+            has_uncommitted_changes(the_repository, 1)) {
+            warning(_("you have unstaged/uncommitted changes"));
+            ret = -1;
+            goto cleanup;
+        }
+    }
+
+cleanup:
+    strbuf_release(&desc);
+    return ret;
+}
+
+int cmd_reset(int argc,
+	      const char **argv,
+	      const char *prefix,
+	      struct repository *repo UNUSED)
+{
     struct pathspec pathspec;
-    int intent_to_add = 0;
+    int reset_type = NONE;
+    int patch_mode = 0;
+    int quiet = 0;
     int force = 0;
-    int double_force = 0;
-    int has_safety_concerns = 0;
-    
-    /* Initialize safety state */
-    safety_init(&reset_safety_state, SAFETY_OP_RESET);
-    
+    int no_refresh = 0;
+    int intent_to_add = 0;
+    int pathspec_file_nul = 0;
+    char *pathspec_from_file = NULL;
+    int update_ref_status = 0;
+    const char *rev;
+    struct object_id oid;
     struct option builtin_reset_options[] = {
-        OPT__QUIET(&quiet, N_("be quiet, only report errors")),
-        OPT_SET_INT('p', "patch", &reset_type,
-            N_("select hunks interactively"), RESET_HEAD),
-        OPT_SET_INT(0, "patch-with-stat", &reset_type,
-            N_("select hunks interactively"), RESET_HEAD),
-        OPT_SET_INT_F(0, "soft", &reset_type,
-            N_("reset only HEAD"), RESET_SOFT,
-            PARSE_OPT_NONEG),
-        OPT_SET_INT_F(0, "mixed", &reset_type,
-            N_("reset HEAD and index"), RESET_MIXED,
-            PARSE_OPT_NONEG),
-        OPT_SET_INT_F(0, "hard", &reset_type,
-            N_("reset HEAD, index and working tree"), RESET_HARD,
-            PARSE_OPT_NONEG),
-        OPT_SET_INT_F(0, "merge", &reset_type,
-            N_("reset HEAD, index and working tree"), RESET_MERGE,
-            PARSE_OPT_NONEG),
-        OPT_SET_INT_F(0, "keep", &reset_type,
-            N_("reset HEAD but keep local changes"), RESET_KEEP,
-            PARSE_OPT_NONEG),
-        OPT_BOOL('f', "force", &force, N_("force reset")),
-        OPT_BOOL('F', "force-force", &double_force, N_("override all safety checks")),
+        OPT_SET_INT('p', "patch", &patch_mode,
+            N_("select hunks interactively"), 1),
+        OPT_SET_INT(0, "mixed", &reset_type,
+            N_("reset HEAD and index"), MIXED),
+        OPT_SET_INT(0, "soft", &reset_type,
+            N_("reset only HEAD"), SOFT),
+        OPT_SET_INT(0, "hard", &reset_type,
+            N_("reset HEAD, index and working tree"), HARD),
+        OPT_SET_INT(0, "merge", &reset_type,
+            N_("reset HEAD, index and working tree"), MERGE),
+        OPT_SET_INT(0, "keep", &reset_type,
+            N_("reset HEAD but keep local changes"), KEEP),
+        OPT_BOOL('q', "quiet", &quiet,
+            N_("be quiet, only report errors")),
+        OPT_BOOL('f', "force", &force,
+            N_("force reset even if there are safety concerns")),
+        OPT_BOOL(0, "no-refresh", &no_refresh,
+            N_("skip refreshing the index after reset")),
+        OPT_BOOL('N', "intent-to-add", &intent_to_add,
+            N_("record only the fact that removed paths will be added later")),
         OPT_PATHSPEC_FROM_FILE(&pathspec_from_file),
         OPT_PATHSPEC_FILE_NUL(&pathspec_file_nul),
         OPT_END()
     };
-    
+
     git_config(git_reset_config, NULL);
 
     argc = parse_options(argc, argv, prefix, builtin_reset_options, git_reset_usage,
-						PARSE_OPT_KEEP_DASHDASH);
+                         PARSE_OPT_KEEP_DASHDASH);
     parse_args(&pathspec, argv, prefix, patch_mode, &rev);
 
     if (pathspec_from_file) {
@@ -515,8 +457,8 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
         die(_("the option '%s' requires '%s'"), "--pathspec-file-nul", "--pathspec-from-file");
     }
 
-    unborn = !strcmp(rev, "HEAD") && repo_get_oid(the_repository, "HEAD",
-                                                  &oid);
+    int unborn = !strcmp(rev, "HEAD") && repo_get_oid(the_repository, "HEAD",
+                                                      &oid);
     if (unborn) {
         /* reset on unborn branch: treat as reset to empty tree */
         oidcpy(&oid, the_hash_algo->empty_tree);
@@ -547,44 +489,14 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
         goto cleanup;
     }
 
-    /* Set force level based on flags */
-    if (double_force)
-        reset_safety_state.force_level = SAFETY_FORCE_DOUBLE;
-    else if (force)
-        reset_safety_state.force_level = SAFETY_FORCE_SINGLE;
-        
-    /* For hard reset, check working directory for safety concerns */
-    if (reset_type == RESET_HARD || reset_type == RESET_MERGE) {
-        struct dir_struct dir = DIR_INIT;
-        struct pathspec pathspec = { 0 };
-        
-        dir.flags |= DIR_SHOW_IGNORED;
-        setup_standard_excludes(&dir);
-        
-        fill_directory(&dir, &pathspec);
-        
-        /* Check each path for safety concerns */
-        for (int i = 0; i < dir.nr; i++) {
-            const char *path = dir.entries[i]->name;
-            if (safety_check_path(&reset_safety_state, path)) {
-                has_safety_concerns = 1;
-            }
+    if (check_reset_safety(reset_type, rev)) {
+        if (!force) {
+            die(_("reset aborted due to safety concerns (use -f to force)"));
+            return -1;
         }
-        
-        clear_directory(&dir);
-        
-        /* Get confirmation if needed */
-        if (has_safety_concerns) {
-            const char *op_desc = "perform a hard reset";
-            if (!safety_confirm_operation(&reset_safety_state, op_desc)) {
-                return 1;
-            }
-        }
+        warning(_("proceeding with reset despite safety concerns"));
     }
-    
-    /* git reset tree [--] paths... can be used to
-     * load chosen paths from the tree into the index without
-     * affecting the working tree nor HEAD. */
+
     if (pathspec.nr) {
         if (reset_type == MIXED)
             warning(_("--mixed with paths is deprecated; use 'git reset -- <paths>' instead."));
@@ -603,12 +515,14 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
     if (reset_type != SOFT && (reset_type != MIXED || repo_get_work_tree(the_repository)))
         setup_work_tree();
 
-    if (reset_type == MIXED && is_bare_repository())
+    if (reset_type == MIXED && is_bare_repository()) {
         die(_("%s reset is not allowed in a bare repository"),
             _(reset_type_names[reset_type]));
+    }
 
-    if (intent_to_add && reset_type != MIXED)
+    if (intent_to_add && reset_type != MIXED) {
         die(_("the option '%s' requires '%s'"), "-N", "--mixed");
+    }
 
     prepare_repo_settings(the_repository);
     the_repository->settings.command_requires_full_index = 0;
@@ -655,9 +569,9 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
             if (ref && !starts_with(ref, "refs/"))
                 FREE_AND_NULL(ref);
 
-            err = reset_index(ref, &oid, reset_type, quiet, reset_safety_state.force_level);
+            err = reset_index(ref, &oid, reset_type, quiet);
             if (reset_type == KEEP && !err)
-                err = reset_index(ref, &oid, MIXED, quiet, reset_safety_state.force_level);
+                err = reset_index(ref, &oid, MIXED, quiet);
             if (err)
                 die(_("Could not reset index file to revision '%s'."), rev);
             free(ref);
@@ -681,8 +595,8 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
     discard_index(the_repository->index);
 
 cleanup:
+    safety_clear(&reset_safety_state);
     clear_pathspec(&pathspec);
     free(pathspec_from_file);
-    safety_clear(&reset_safety_state);
     return update_ref_status;
 }
