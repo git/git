@@ -126,6 +126,21 @@ test_expect_success 'fixup -C with conflicts gives correct message' '
 	test_cmp expected-author actual-author
 '
 
+test_expect_success 'conflicting fixup -C after fixup with custom comment string' '
+	test_config core.commentString COMMENT &&
+	test_when_finished "test_might_fail git rebase --abort" &&
+	git checkout --detach A3 &&
+	test_must_fail env FAKE_LINES="1 fixup 2 fixup_-C 4" git rebase -i A &&
+	echo resolved >A &&
+	git add A &&
+	FAKE_COMMIT_AMEND=edited git rebase --continue &&
+	test_commit_message HEAD <<-\EOF
+	A3
+
+	edited
+	EOF
+'
+
 test_expect_success 'skipping fixup -C after fixup gives correct message' '
 	test_when_finished "test_might_fail git rebase --abort" &&
 	git checkout --detach A3 &&
