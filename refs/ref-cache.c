@@ -68,8 +68,9 @@ static void free_ref_entry(struct ref_entry *entry)
 		 * trigger the reading of loose refs.
 		 */
 		clear_ref_dir(&entry->u.subdir);
+	} else {
+		free(entry->u.value.referent);
 	}
-	free(entry->u.value.referent);
 	free(entry);
 }
 
