@@ -23,6 +23,8 @@
 #endif
 #endif
 
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "git-compat-util.h"
 #include "fsmonitor-ll.h"
 #include "fsm-listen.h"

@@ -3,6 +3,9 @@
  *
  * Copyright (C) 2006 Linus Torvalds
  */
+
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "builtin.h"
 #include "advice.h"
 #include "config.h"

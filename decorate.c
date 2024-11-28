@@ -2,6 +2,9 @@
  * decorate.c - decorate a git object with some arbitrary
  * data.
  */
+
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "git-compat-util.h"
 #include "object.h"
 #include "decorate.h"

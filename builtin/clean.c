@@ -5,7 +5,10 @@
  *
  * Based on git-clean.sh by Pavel Roskin
  */
+
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "builtin.h"
 #include "abspath.h"
 #include "config.h"
