@@ -59,6 +59,13 @@ struct remote_state {
 void remote_state_clear(struct remote_state *remote_state);
 struct remote_state *remote_state_new(void);
 
+	enum follow_remote_head_settings {
+		FOLLOW_REMOTE_NEVER = -1,
+		FOLLOW_REMOTE_CREATE = 0,
+		FOLLOW_REMOTE_WARN = 1,
+		FOLLOW_REMOTE_ALWAYS = 2,
+	};
+
 struct remote {
 	struct hashmap_entry ent;
 
@@ -107,6 +114,8 @@ struct remote {
 	char *http_proxy_authmethod;
 
 	struct string_list server_options;
+
+	enum follow_remote_head_settings follow_remote_head;
 };
 
 /**
