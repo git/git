@@ -1,5 +1,4 @@
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "test-tool.h"
 #include "bloom.h"
@@ -12,30 +11,25 @@ static struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
 
 static void add_string_to_filter(const char *data, struct bloom_filter *filter) {
 		struct bloom_key key;
-		int i;
 
 		fill_bloom_key(data, strlen(data), &key, &settings);
 		printf("Hashes:");
-		for (i = 0; i < settings.num_hashes; i++){
+		for (size_t i = 0; i < settings.num_hashes; i++)
 			printf("0x%08x|", key.hashes[i]);
-		}
 		printf("\n");
 		add_key_to_filter(&key, filter, &settings);
 		clear_bloom_key(&key);
 }
 
 static void print_bloom_filter(struct bloom_filter *filter) {
-	int i;
-
 	if (!filter) {
 		printf("No filter.\n");
 		return;
 	}
 	printf("Filter_Length:%d\n", (int)filter->len);
 	printf("Filter_Data:");
-	for (i = 0; i < filter->len; i++) {
+	for (size_t i = 0; i < filter->len; i++)
 		printf("%02x|", filter->data[i]);
-	}
 	printf("\n");
 }
 

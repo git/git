@@ -1,5 +1,3 @@
-#define DISABLE_SIGN_COMPARE_WARNINGS
-
 #include "git-compat-util.h"
 #include "test-tool.h"
 #include "test-tool-utils.h"
@@ -103,7 +101,6 @@ static NORETURN void die_usage(void)
 
 int cmd_main(int argc, const char **argv)
 {
-	int i;
 	const char *working_directory = NULL;
 	struct option options[] = {
 		OPT_STRING('C', NULL, &working_directory, "directory",
@@ -122,7 +119,7 @@ int cmd_main(int argc, const char **argv)
 	if (working_directory && chdir(working_directory) < 0)
 		die("Could not cd to '%s'", working_directory);
 
-	for (i = 0; i < ARRAY_SIZE(cmds); i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(cmds); i++) {
 		if (!strcmp(cmds[i].name, argv[1])) {
 			argv++;
 			argc--;

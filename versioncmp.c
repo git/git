@@ -1,5 +1,4 @@
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "config.h"
@@ -78,11 +77,10 @@ static int swap_prereleases(const char *s1,
 			    int off,
 			    int *diff)
 {
-	int i;
 	struct suffix_match match1 = { -1, off, -1 };
 	struct suffix_match match2 = { -1, off, -1 };
 
-	for (i = 0; i < prereleases->nr; i++) {
+	for (size_t i = 0; i < prereleases->nr; i++) {
 		const char *suffix = prereleases->items[i].string;
 		int start, suffix_len = strlen(suffix);
 		if (suffix_len < off)
