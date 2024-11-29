@@ -573,12 +573,13 @@ int other_head_refs(each_ref_fn fn, void *cb_data)
  * pointing at <repo>/worktrees/<id>.
  */
 static void repair_gitfile(struct worktree *wt,
-			   worktree_repair_fn fn, void *cb_data)
+			   worktree_repair_fn fn, void *cb_data,
+			   int use_relative_paths)
 {
 	struct strbuf dotgit = STRBUF_INIT;
+	struct strbuf gitdir = STRBUF_INIT;
 	struct strbuf repo = STRBUF_INIT;
 	struct strbuf backlink = STRBUF_INIT;
-	struct strbuf tmp = STRBUF_INIT;
 	char *dotgit_contents = NULL;
 	const char *repair = NULL;
 	int err;
@@ -594,6 +595,7 @@ static void repair_gitfile(struct worktree *wt,
 
 	strbuf_realpath(&repo, git_common_path("worktrees/%s", wt->id), 1);
 	strbuf_addf(&dotgit, "%s/.git", wt->path);
+	strbuf_addf(&gitdir, "%s/gitdir", repo.buf);
 	dotgit_contents = xstrdup_or_null(read_gitfile_gently(dotgit.buf, &err));
 
 	if (dotgit_contents) {
@@ -611,18 +613,20 @@ static void repair_gitfile(struct worktree *wt,
 		repair = _(".git file broken");
 	else if (fspathcmp(backlink.buf, repo.buf))
 		repair = _(".git file incorrect");
+	else if (use_relative_paths == is_absolute_path(dotgit_contents))
+		repair = _(".git file absolute/relative path mismatch");
 
 	if (repair) {
 		fn(0, wt->path, repair, cb_data);
-		write_file(dotgit.buf, "gitdir: %s", relative_path(repo.buf, wt->path, &tmp));
+		write_worktree_linking_files(dotgit, gitdir, use_relative_paths);
 	}
 
 done:
 	free(dotgit_contents);
 	strbuf_release(&repo);
 	strbuf_release(&dotgit);
+	strbuf_release(&gitdir);
 	strbuf_release(&backlink);
-	strbuf_release(&tmp);
 }
 
 static void repair_noop(int iserr UNUSED,
@@ -633,7 +637,7 @@ static void repair_noop(int iserr UNUSED,
 	/* nothing */
 }
 
-void repair_worktrees(worktree_repair_fn fn, void *cb_data)
+void repair_worktrees(worktree_repair_fn fn, void *cb_data, int use_relative_paths)
 {
 	struct worktree **worktrees = get_worktrees_internal(1);
 	struct worktree **wt = worktrees + 1; /* +1 skips main worktree */
@@ -641,7 +645,7 @@ void repair_worktrees(worktree_repair_fn fn, void *cb_data)
 	if (!fn)
 		fn = repair_noop;
 	for (; *wt; wt++)
-		repair_gitfile(*wt, fn, cb_data);
+		repair_gitfile(*wt, fn, cb_data, use_relative_paths);
 	free_worktrees(worktrees);
 }
 
@@ -757,16 +761,14 @@ error:
  * the worktree's path.
  */
 void repair_worktree_at_path(const char *path,
-			     worktree_repair_fn fn, void *cb_data)
+			     worktree_repair_fn fn, void *cb_data,
+			     int use_relative_paths)
 {
 	struct strbuf dotgit = STRBUF_INIT;
-	struct strbuf realdotgit = STRBUF_INIT;
 	struct strbuf backlink = STRBUF_INIT;
 	struct strbuf inferred_backlink = STRBUF_INIT;
 	struct strbuf gitdir = STRBUF_INIT;
 	struct strbuf olddotgit = STRBUF_INIT;
-	struct strbuf realolddotgit = STRBUF_INIT;
-	struct strbuf tmp = STRBUF_INIT;
 	char *dotgit_contents = NULL;
 	const char *repair = NULL;
 	int err;
@@ -778,25 +780,25 @@ void repair_worktree_at_path(const char *path,
 		goto done;
 
 	strbuf_addf(&dotgit, "%s/.git", path);
-	if (!strbuf_realpath(&realdotgit, dotgit.buf, 0)) {
+	if (!strbuf_realpath(&dotgit, dotgit.buf, 0)) {
 		fn(1, path, _("not a valid path"), cb_data);
 		goto done;
 	}
 
-	infer_backlink(realdotgit.buf, &inferred_backlink);
+	infer_backlink(dotgit.buf, &inferred_backlink);
 	strbuf_realpath_forgiving(&inferred_backlink, inferred_backlink.buf, 0);
-	dotgit_contents = xstrdup_or_null(read_gitfile_gently(realdotgit.buf, &err));
+	dotgit_contents = xstrdup_or_null(read_gitfile_gently(dotgit.buf, &err));
 	if (dotgit_contents) {
 		if (is_absolute_path(dotgit_contents)) {
 			strbuf_addstr(&backlink, dotgit_contents);
 		} else {
-			strbuf_addbuf(&backlink, &realdotgit);
+			strbuf_addbuf(&backlink, &dotgit);
 			strbuf_strip_suffix(&backlink, ".git");
 			strbuf_addstr(&backlink, dotgit_contents);
 			strbuf_realpath_forgiving(&backlink, backlink.buf, 0);
 		}
 	} else if (err == READ_GITFILE_ERR_NOT_A_FILE) {
-		fn(1, realdotgit.buf, _("unable to locate repository; .git is not a file"), cb_data);
+		fn(1, dotgit.buf, _("unable to locate repository; .git is not a file"), cb_data);
 		goto done;
 	} else if (err == READ_GITFILE_ERR_NOT_A_REPO) {
 		if (inferred_backlink.len) {
@@ -809,11 +811,11 @@ void repair_worktree_at_path(const char *path,
 			 */
 			strbuf_swap(&backlink, &inferred_backlink);
 		} else {
-			fn(1, realdotgit.buf, _("unable to locate repository; .git file does not reference a repository"), cb_data);
+			fn(1, dotgit.buf, _("unable to locate repository; .git file does not reference a repository"), cb_data);
 			goto done;
 		}
 	} else {
-		fn(1, realdotgit.buf, _("unable to locate repository; .git file broken"), cb_data);
+		fn(1, dotgit.buf, _("unable to locate repository; .git file broken"), cb_data);
 		goto done;
 	}
 
@@ -835,39 +837,35 @@ void repair_worktree_at_path(const char *path,
 	 * in the "copy" repository. In this case, point the "copy" worktree's
 	 * .git file at the "copy" repository.
 	 */
-	if (inferred_backlink.len && fspathcmp(backlink.buf, inferred_backlink.buf)) {
+	if (inferred_backlink.len && fspathcmp(backlink.buf, inferred_backlink.buf))
 		strbuf_swap(&backlink, &inferred_backlink);
-	}
 
 	strbuf_addf(&gitdir, "%s/gitdir", backlink.buf);
 	if (strbuf_read_file(&olddotgit, gitdir.buf, 0) < 0)
 		repair = _("gitdir unreadable");
+	else if (use_relative_paths == is_absolute_path(olddotgit.buf))
+		repair = _("gitdir absolute/relative path mismatch");
 	else {
 		strbuf_rtrim(&olddotgit);
-		if (is_absolute_path(olddotgit.buf)) {
-			strbuf_addbuf(&realolddotgit, &olddotgit);
-		} else {
-			strbuf_addf(&realolddotgit, "%s/%s", backlink.buf, olddotgit.buf);
-			strbuf_realpath_forgiving(&realolddotgit, realolddotgit.buf, 0);
+		if (!is_absolute_path(olddotgit.buf)) {
+			strbuf_insertf(&olddotgit, 0, "%s/", backlink.buf);
+			strbuf_realpath_forgiving(&olddotgit, olddotgit.buf, 0);
 		}
-		if (fspathcmp(realolddotgit.buf, realdotgit.buf))
+		if (fspathcmp(olddotgit.buf, dotgit.buf))
 			repair = _("gitdir incorrect");
 	}
 
 	if (repair) {
 		fn(0, gitdir.buf, repair, cb_data);
-		write_file(gitdir.buf, "%s", relative_path(realdotgit.buf, backlink.buf, &tmp));
+		write_worktree_linking_files(dotgit, gitdir, use_relative_paths);
 	}
 done:
 	free(dotgit_contents);
 	strbuf_release(&olddotgit);
-	strbuf_release(&realolddotgit);
 	strbuf_release(&backlink);
 	strbuf_release(&inferred_backlink);
 	strbuf_release(&gitdir);
-	strbuf_release(&realdotgit);
 	strbuf_release(&dotgit);
-	strbuf_release(&tmp);
 }
 
 int should_prune_worktree(const char *id, struct strbuf *reason, char **wtpath, timestamp_t expire)

@@ -129,7 +129,7 @@ typedef void (* worktree_repair_fn)(int iserr, const char *path,
  * function, if non-NULL, is called with the path of the worktree and a
  * description of the repair or error, along with the callback user-data.
  */
-void repair_worktrees(worktree_repair_fn, void *cb_data);
+void repair_worktrees(worktree_repair_fn, void *cb_data, int use_relative_paths);
 
 /*
  * Repair the linked worktrees after the gitdir has been moved.
@@ -151,7 +151,8 @@ void repair_worktree_after_gitdir_move(struct worktree *wt, const char *old_path
  * worktree and a description of the repair or error, along with the callback
  * user-data.
  */
-void repair_worktree_at_path(const char *, worktree_repair_fn, void *cb_data);
+void repair_worktree_at_path(const char *, worktree_repair_fn,
+			     void *cb_data, int use_relative_paths);
 
 /*
  * Free up the memory for a worktree.

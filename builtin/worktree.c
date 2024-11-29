@@ -1385,6 +1385,8 @@ static int repair(int ac, const char **av, const char *prefix)
 	const char **p;
 	const char *self[] = { ".", NULL };
 	struct option options[] = {
+		OPT_BOOL(0, "relative-paths", &use_relative_paths,
+			 N_("use relative paths for worktrees")),
 		OPT_END()
 	};
 	int rc = 0;
@@ -1392,8 +1394,8 @@ static int repair(int ac, const char **av, const char *prefix)
 	ac = parse_options(ac, av, prefix, options, git_worktree_repair_usage, 0);
 	p = ac > 0 ? av : self;
 	for (; *p; p++)
-		repair_worktree_at_path(*p, report_repair, &rc);
-	repair_worktrees(report_repair, &rc);
+		repair_worktree_at_path(*p, report_repair, &rc, use_relative_paths);
+	repair_worktrees(report_repair, &rc, use_relative_paths);
 	return rc;
 }
 
