@@ -180,9 +180,9 @@ handle_failed_tests () {
 }
 
 create_failed_test_artifacts () {
-	mkdir -p t/failed-test-artifacts
+	mkdir -p "${TEST_OUTPUT_DIRECTORY:-t}"/failed-test-artifacts
 
-	for test_exit in t/test-results/*.exit
+	for test_exit in "${TEST_OUTPUT_DIRECTORY:-t}"/test-results/*.exit
 	do
 		test 0 != "$(cat "$test_exit")" || continue
 
@@ -191,11 +191,11 @@ create_failed_test_artifacts () {
 		printf "\\e[33m\\e[1m=== Failed test: ${test_name} ===\\e[m\\n"
 		echo "The full logs are in the 'print test failures' step below."
 		echo "See also the 'failed-tests-*' artifacts attached to this run."
-		cat "t/test-results/$test_name.markup"
+		cat "${TEST_OUTPUT_DIRECTORY:-t}/test-results/$test_name.markup"
 
-		trash_dir="t/trash directory.$test_name"
-		cp "t/test-results/$test_name.out" t/failed-test-artifacts/
-		tar czf t/failed-test-artifacts/"$test_name".trash.tar.gz "$trash_dir"
+		trash_dir="${TEST_OUTPUT_DIRECTORY:-t}/trash directory.$test_name"
+		cp "${TEST_OUTPUT_DIRECTORY:-t}/test-results/$test_name.out" "${TEST_OUTPUT_DIRECTORY:-t}"/failed-test-artifacts/
+		tar czf "${TEST_OUTPUT_DIRECTORY:-t}/failed-test-artifacts/$test_name.trash.tar.gz" "$trash_dir"
 	done
 }
 
