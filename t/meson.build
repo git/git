@@ -1092,6 +1092,32 @@ integration_tests = [
   't9903-bash-prompt.sh',
 ]
 
+# Sanity check that we are not missing any tests present in 't/'. This check
+# only runs once at configure time and is thus best-effort, only. It is
+# sufficient to catch missing test suites in our CI though.
+actual_tests = run_command(shell, '-c', 'ls t[0-9][0-9][0-9][0-9]-*.sh', check: true).stdout().strip().split('\n')
+if integration_tests != actual_tests
+  missing_tests = [ ]
+  foreach actual_test : actual_tests
+    if actual_test not in integration_tests
+      missing_tests += actual_test
+    endif
+  endforeach
+  if missing_tests.length() > 0
+    error('Missing tests:\n\n - ' + '\n - '.join(missing_tests))
+  endif
+
+  superfluous_tests = [ ]
+  foreach integration_test : integration_tests
+    if integration_test not in actual_tests
+      superfluous_tests += integration_test
+    endif
+  endforeach
+  if superfluous_tests.length() > 0
+    error('Superfluous tests:\n\n - ' + '\n - '.join(superfluous_tests))
+  endif
+endif
+
 # GIT_BUILD_DIR needs to be Unix-style without drive prefixes as it get added
 # to the PATH variable. And given that drive prefixes contain a colon we'd
 # otherwise end up with a broken PATH if we didn't convert it.
