@@ -56,7 +56,6 @@ group () {
 }
 
 begin_group "CI setup"
-trap "end_group 'CI setup'" EXIT
 
 # Set 'exit on error' for all CI scripts to let the caller know that
 # something went wrong.
@@ -395,4 +394,5 @@ esac
 MAKEFLAGS="$MAKEFLAGS CC=${CC:-cc}"
 
 end_group "CI setup"
+
 set -x
