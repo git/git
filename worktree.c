@@ -111,9 +111,9 @@ struct worktree *get_linked_worktree(const char *id,
 	strbuf_strip_suffix(&worktree_path, "/.git");
 
 	if (!is_absolute_path(worktree_path.buf)) {
-	    strbuf_strip_suffix(&path, "gitdir");
-	    strbuf_addbuf(&path, &worktree_path);
-	    strbuf_realpath_forgiving(&worktree_path, path.buf, 0);
+		strbuf_strip_suffix(&path, "gitdir");
+		strbuf_addbuf(&path, &worktree_path);
+		strbuf_realpath_forgiving(&worktree_path, path.buf, 0);
 	}
 
 	CALLOC_ARRAY(worktree, 1);
@@ -725,8 +725,10 @@ static int is_main_worktree_path(const char *path)
  * won't know which <repo>/worktrees/<id>/gitdir to repair. However, we may
  * be able to infer the gitdir by manually reading /path/to/worktree/.git,
  * extracting the <id>, and checking if <repo>/worktrees/<id> exists.
+ *
+ * Returns -1 on failure and strbuf.len on success.
  */
-static int infer_backlink(const char *gitfile, struct strbuf *inferred)
+static ssize_t infer_backlink(const char *gitfile, struct strbuf *inferred)
 {
 	struct strbuf actual = STRBUF_INIT;
 	const char *id;
@@ -747,12 +749,11 @@ static int infer_backlink(const char *gitfile, struct strbuf *inferred)
 		goto error;
 
 	strbuf_release(&actual);
-	return 1;
-
+	return inferred->len;
 error:
 	strbuf_release(&actual);
 	strbuf_reset(inferred); /* clear invalid path */
-	return 0;
+	return -1;
 }
 
 /*
