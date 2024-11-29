@@ -59,7 +59,7 @@ CHAINLINTSUPPRESS = GIT_TEST_EXT_CHAIN_LINT=0 && export GIT_TEST_EXT_CHAIN_LINT 
 
 all:: $(DEFAULT_TEST_TARGET)
 
-test: pre-clean check-chainlint $(TEST_LINT)
+test: pre-clean check-chainlint check-meson $(TEST_LINT)
 	$(CHAINLINTSUPPRESS) $(MAKE) aggregate-results-and-cleanup
 
 failed:
@@ -113,6 +113,22 @@ check-chainlint:
 	'$(PERL_PATH_SQ)' chainlint-cat.pl '$(CHAINLINTTMP_SQ)' $(CHAINLINTTESTS) && \
 	{ $(CHAINLINT) --emit-all '$(CHAINLINTTMP_SQ)'/tests >'$(CHAINLINTTMP_SQ)'/actual || true; } && \
 	diff -u '$(CHAINLINTTMP_SQ)'/expect '$(CHAINLINTTMP_SQ)'/actual
+
+check-meson:
+	@# awk acts up when trying to match single quotes, so we use \047 instead.
+	@printf "%s\n" \
+		"integration_tests t[0-9][0-9][0-9][0-9]-*.sh" \
+		"unit_test_programs unit-tests/t-*.c" \
+		"clar_test_suites unit-tests/u-*.c" | \
+	while read -r variable pattern; do \
+		meson_tests=$$(awk "/^$$variable = \[\$$/ {flag=1 ; next } /^]$$/ { flag=0 } flag { gsub(/^  \047/, \"\"); gsub(/\047,\$$/, \"\"); print }" meson.build) && \
+		actual_tests=$$(ls $$pattern) && \
+		if test "$$meson_tests" != "$$actual_tests"; then \
+			echo "Meson tests differ from actual tests:"; \
+			diff -u <(echo "$$meson_tests") <(echo "$$actual_tests"); \
+			exit 1; \
+		fi; \
+	done
 
 test-lint: test-lint-duplicates test-lint-executable test-lint-shell-syntax \
 	test-lint-filenames
