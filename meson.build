@@ -1819,10 +1819,20 @@ if python.found()
   ]
 
   foreach script : scripts_python
-    fs.copyfile(script, fs.stem(script),
+    generated_python = custom_target(
+      input: script,
+      output: fs.stem(script),
+      command: [
+        shell,
+        meson.project_source_root() / 'generate-python.sh',
+        meson.project_build_root() / 'GIT-BUILD-OPTIONS',
+        '@INPUT@',
+        '@OUTPUT@',
+      ],
       install: true,
       install_dir: get_option('libexecdir') / 'git-core',
     )
+    test_dependencies += generated_python
   endforeach
 endif
 
