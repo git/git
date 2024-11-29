@@ -1190,6 +1190,8 @@ static int move_worktree(int ac, const char **av, const char *prefix)
 		OPT__FORCE(&force,
 			 N_("force move even if worktree is dirty or locked"),
 			 PARSE_OPT_NOCOMPLETE),
+		OPT_BOOL(0, "relative-paths", &use_relative_paths,
+			 N_("use relative paths for worktrees")),
 		OPT_END()
 	};
 	struct worktree **worktrees, *wt;
@@ -1242,7 +1244,7 @@ static int move_worktree(int ac, const char **av, const char *prefix)
 	if (rename(wt->path, dst.buf) == -1)
 		die_errno(_("failed to move '%s' to '%s'"), wt->path, dst.buf);
 
-	update_worktree_location(wt, dst.buf);
+	update_worktree_location(wt, dst.buf, use_relative_paths);
 
 	strbuf_release(&dst);
 	free_worktrees(worktrees);

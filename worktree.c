@@ -376,32 +376,28 @@ done:
 	return ret;
 }
 
-void update_worktree_location(struct worktree *wt, const char *path_)
+void update_worktree_location(struct worktree *wt, const char *path_,
+			      int use_relative_paths)
 {
 	struct strbuf path = STRBUF_INIT;
-	struct strbuf repo = STRBUF_INIT;
-	struct strbuf file = STRBUF_INIT;
-	struct strbuf tmp = STRBUF_INIT;
+	struct strbuf dotgit = STRBUF_INIT;
+	struct strbuf gitdir = STRBUF_INIT;
 
 	if (is_main_worktree(wt))
 		BUG("can't relocate main worktree");
 
-	strbuf_realpath(&repo, git_common_path("worktrees/%s", wt->id), 1);
+	strbuf_realpath(&gitdir, git_common_path("worktrees/%s/gitdir", wt->id), 1);
 	strbuf_realpath(&path, path_, 1);
+	strbuf_addf(&dotgit, "%s/.git", path.buf);
 	if (fspathcmp(wt->path, path.buf)) {
-		strbuf_addf(&file, "%s/gitdir", repo.buf);
-		write_file(file.buf, "%s/.git", relative_path(path.buf, repo.buf, &tmp));
-		strbuf_reset(&file);
-		strbuf_addf(&file, "%s/.git", path.buf);
-		write_file(file.buf, "gitdir: %s", relative_path(repo.buf, path.buf, &tmp));
+		write_worktree_linking_files(dotgit, gitdir, use_relative_paths);
 
 		free(wt->path);
 		wt->path = strbuf_detach(&path, NULL);
 	}
 	strbuf_release(&path);
-	strbuf_release(&repo);
-	strbuf_release(&file);
-	strbuf_release(&tmp);
+	strbuf_release(&dotgit);
+	strbuf_release(&gitdir);
 }
 
 int is_worktree_being_rebased(const struct worktree *wt,

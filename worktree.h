@@ -117,8 +117,8 @@ int validate_worktree(const struct worktree *wt,
 /*
  * Update worktrees/xxx/gitdir with the new path.
  */
-void update_worktree_location(struct worktree *wt,
-			      const char *path_);
+void update_worktree_location(struct worktree *wt, const char *path_,
+			      int use_relative_paths);
 
 typedef void (* worktree_repair_fn)(int iserr, const char *path,
 				    const char *msg, void *cb_data);
