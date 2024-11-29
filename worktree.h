@@ -215,4 +215,17 @@ void strbuf_worktree_ref(const struct worktree *wt,
  */
 int init_worktree_config(struct repository *r);
 
+/**
+ * Write the .git file and gitdir file that links the worktree to the repository.
+ *
+ * The `dotgit` parameter is the path to the worktree's .git file, and `gitdir`
+ * is the path to the repository's `gitdir` file.
+ *
+ * Example
+ *  dotgit: "/path/to/foo/.git"
+ *  gitdir: "/path/to/repo/worktrees/foo/gitdir"
+ */
+void write_worktree_linking_files(struct strbuf dotgit, struct strbuf gitdir,
+				  int use_relative_paths);
+
 #endif

@@ -1032,3 +1032,38 @@ cleanup:
 	free(main_worktree_file);
 	return res;
 }
+
+void write_worktree_linking_files(struct strbuf dotgit, struct strbuf gitdir,
+				  int use_relative_paths)
+{
+	struct strbuf path = STRBUF_INIT;
+	struct strbuf repo = STRBUF_INIT;
+	struct strbuf tmp = STRBUF_INIT;
+
+	strbuf_addbuf(&path, &dotgit);
+	strbuf_strip_suffix(&path, "/.git");
+	strbuf_realpath(&path, path.buf, 1);
+	strbuf_addbuf(&repo, &gitdir);
+	strbuf_strip_suffix(&repo, "/gitdir");
+	strbuf_realpath(&repo, repo.buf, 1);
+
+	if (use_relative_paths && !the_repository->repository_format_relative_worktrees) {
+		if (upgrade_repository_format(1) < 0)
+			die(_("unable to upgrade repository format to support relative worktrees"));
+		if (git_config_set_gently("extensions.relativeWorktrees", "true"))
+			die(_("unable to set extensions.relativeWorktrees setting"));
+		the_repository->repository_format_relative_worktrees = 1;
+	}
+
+	if (use_relative_paths) {
+		write_file(gitdir.buf, "%s/.git", relative_path(path.buf, repo.buf, &tmp));
+		write_file(dotgit.buf, "gitdir: %s", relative_path(repo.buf, path.buf, &tmp));
+	} else {
+		write_file(gitdir.buf, "%s/.git", path.buf);
+		write_file(dotgit.buf, "gitdir: %s", repo.buf);
+	}
+
+	strbuf_release(&path);
+	strbuf_release(&repo);
+	strbuf_release(&tmp);
+}
