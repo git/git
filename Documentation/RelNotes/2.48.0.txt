@@ -16,6 +16,9 @@ UI, Workflows & Features
  * Teach 'git notes add' and 'git notes append' a new '-e' flag,
    instructing them to open the note in $GIT_EDITOR before saving.
 
+ * Documentation for "git bundle" saw improvements to more prominently
+   call out the use of '--all' when creating bundles.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -78,6 +81,19 @@ Performance, Internal Implementation, Development Support etc.
 
  * Buildfix and upgrade of Clar to a newer version.
 
+ * Documentation mark-up updates.
+
+ * Renaming a handful of variables and structure fields.
+
+ * Fix for clar unit tests to support CMake build.
+
+ * C23 compatibility updates.
+
+ * GCC 15 compatibility updates.
+
+ * We now ensure "index-pack" is used with the "--promisor" option
+   only during a "git fetch".
+
 
 Fixes since v2.47
 -----------------
@@ -88,49 +104,82 @@ Fixes since v2.47
 
  * Use after free and double freeing at the end in "git log -L... -p"
    had been identified and fixed.
-   (merge fc5589d6c1 ds/line-log-asan-fix later to maint).
 
  * On macOS, fsmonitor can fall into a race condition that results in
    a client waiting forever to be notified for an event that have
    already happened.  This problem has been corrected.
-   (merge 51907f8fee jk/fsmonitor-event-listener-race-fix later to maint).
 
  * "git maintenance start" crashed due to an uninitialized variable
    reference, which has been corrected.
-   (merge c95547a394 ps/maintenance-start-crash-fix later to maint).
 
  * Fail gracefully instead of crashing when attempting to write the
    contents of a corrupt in-core index as a tree object.
-   (merge ecb5c4318c ps/cache-tree-w-broken-index-entry later to maint).
 
  * A "git fetch" from the superproject going down to a submodule used
    a wrong remote when the default remote names are set differently
    between them.
-   (merge 0c1a9987da db/submodule-fetch-with-remote-name-fix later to maint).
 
  * Fixes compile time warnings with 64-bit MSVC.
-   (merge 386d372031 sk/msvc-warnings later to maint).
 
  * Teaches 'shortlog' to explicitly use SHA-1 when operating outside
    of a repository.
-   (merge b33001645e wm/shortlog-hash later to maint).
 
  * Fix 'git grep' regression on macOS by disabling lookahead when
    encountering invalid UTF-8 byte sequences.
-   (merge ce025ae4f6 rs/grep-lookahead later to maint).
 
  * The dumb-http code regressed when the result of re-indexing a pack
    yielded an *.idx file that differs in content from the *.idx file
    it downloaded from the remote. This has been corrected by no longer
    relying on: the *.idx file we got from the remote.
-   (merge 863f2459a2 jk/dumb-http-finalize later to maint).
 
  * When called with '--left-right' and '--use-bitmap-index', 'rev-list'
    will produce output without any left/right markers, which has been
    corrected.
 
+ * More leakfixes.
+
+ * Test modernization.
+
+ * The "--shallow-exclude=<ref>" option to various history transfer
+   commands takes a ref, not an arbitrary revision.
+
+ * A regression where commit objects missing from a commit-graph can
+   cause an infinite loop when doing a fetch in a partial clone has
+   been fixed.
+
+ * The MinGW compatibility layer has been taught to support POSIX
+   semantics for atomic renames when other process(es) have a file
+   opened at the destination path.
+
+ * "git gc" discards any objects that are outside promisor packs that
+   are referred to by an object in a promisor pack, and we do not
+   refetch them from the promisor at runtime, resulting an unusable
+   repository.  Work it around by including these objects in the
+   referring promisor pack at the receiving end of the fetch.
+
+ * Avoid build/test breakage on a system without working malloc debug
+   support dynamic library.
+   (merge 72ad6dc368 jk/test-malloc-debug-check later to maint).
+
+ * Double-free fix.
+   (merge fe17a25905 jk/fetch-prefetch-double-free-fix later to maint).
+
+ * Use of some uninitialized variables in "git difftool" has been
+   corrected.
+
+ * Object reuse code based on multi-pack-index sent an unwanted copy
+   of object.
+   (merge e199290592 tb/multi-pack-reuse-dupfix later to maint).
+
+ * "git fast-import" can be tricked into a replace ref that maps an
+   object to itself, which is a useless thing to do.
+   (merge 5e904f1a4a en/fast-import-avoid-self-replace later to maint).
+
+ * The ref-transaction hook triggered for reflog updates, which has
+   been corrected.
+   (merge b886db48c6 kn/ref-transaction-hook-with-reflog later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
-   (merge 66893a14d0 ps/leakfixes-part-8 later to maint).
    (merge 1164e270b5 jk/output-prefix-cleanup later to maint).
    (merge f36b8cbaef jh/config-unset-doc-fix later to maint).
    (merge 4154ed4108 js/doc-platform-support-link-fix later to maint).
@@ -142,14 +191,5 @@ Fixes since v2.47
    (merge 6dab49b9fb tc/bundle-uri-leakfix later to maint).
    (merge f1ed39987b xx/protocol-v2-doc-markup-fix later to maint).
    (merge 41869f7447 ak/typofixes later to maint).
-   (merge f1eea0b620 ak/typofix later to maint).
    (merge dcd590a39d bf/t-readme-mention-reftable later to maint).
-   (merge 52acf6771b kh/submitting-patches later to maint).
-   (merge a73070fbd4 ks/t4205-fixup later to maint).
-   (merge 9e362dd060 co/t6050-pipefix later to maint).
-   (merge 91687cd13f sk/t7011-cleanup later to maint).
-   (merge 19c291e5b2 ua/t3404-cleanup later to maint).
-   (merge c32d4a8cfe ss/duplicate-typos later to maint).
-   (merge 09bf122507 sk/t9101-cleanup later to maint).
-   (merge c348191afe ak/t1016-cleanup later to maint).
-   (merge f56f9d6c0b ak/more-typofixes later to maint).
+   (merge 68e3c69efa kh/trailer-in-glossary later to maint).

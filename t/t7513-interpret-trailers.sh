@@ -5,6 +5,7 @@
 
 test_description='git interpret-trailers'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # When we want one trailing space at the end of each line, let's use sed

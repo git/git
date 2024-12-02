@@ -696,6 +696,11 @@ the `refs/tags/` hierarchy is used to represent local tags..
 	that each contain very well defined concepts or small incremental yet
 	related changes.
 
+[[def_trailer]]trailer::
+	Key-value metadata.  Trailers are optionally found at the end of
+	a commit message.  Might be called "footers" or "tags" in other
+	communities.  See linkgit:git-interpret-trailers[1].
+
 [[def_tree]]tree::
 	Either a <<def_working_tree,working tree>>, or a <<def_tree_object,tree
 	object>> together with the dependent <<def_blob_object,blob>> and tree objects

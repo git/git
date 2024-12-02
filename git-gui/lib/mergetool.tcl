@@ -272,8 +272,25 @@ proc merge_resolve_tool2 {} {
 		}
 	}
 	default {
-		error_popup [mc "Unsupported merge tool '%s'" $tool]
-		return
+		set tool_cmd [get_config mergetool.$tool.cmd]
+		if {$tool_cmd ne {}} {
+			if {([string first {[} $tool_cmd] != -1) || ([string first {]} $tool_cmd] != -1)} {
+				error_popup [mc "Unable to process square brackets in \"mergetool.%s.cmd\" configuration option.
+
+Please remove the square brackets." $tool]
+				return
+			} else {
+				set cmdline {}
+				foreach command_part $tool_cmd {
+					lappend cmdline [subst -nobackslashes -nocommands $command_part]
+				}
+			}
+		} else {
+			error_popup [mc "Unsupported merge tool '%s'.
+
+To use this tool, configure \"mergetool.%s.cmd\" as shown in the git-config manual page." $tool $tool]
+			return
+		}
 	}
 	}
 

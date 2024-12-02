@@ -156,6 +156,11 @@ test_expect_success 'pack without delta' '
 	check_deltas stderr = 0
 '
 
+test_expect_success 'negative window clamps to 0' '
+	git pack-objects --progress --window=-1 neg-window <obj-list 2>stderr &&
+	check_deltas stderr = 0
+'
+
 test_expect_success 'pack-objects with bogus arguments' '
 	test_must_fail git pack-objects --window=0 test-1 blah blah <obj-list
 '
@@ -327,10 +332,8 @@ test_expect_success 'build pack index for an existing pack' '
 	git index-pack -o tmp.idx test-3.pack &&
 	cmp tmp.idx test-1-${packname_1}.idx &&
 
-	git index-pack --promisor=message test-3.pack &&
+	git index-pack test-3.pack &&
 	cmp test-3.idx test-1-${packname_1}.idx &&
-	echo message >expect &&
-	test_cmp expect test-3.promisor &&
 
 	cat test-2-${packname_2}.pack >test-3.pack &&
 	git index-pack -o tmp.idx test-2-${packname_2}.pack &&
@@ -628,11 +631,6 @@ test_expect_success 'prefetch objects' '
 	GIT_TRACE_PACKET=$(pwd)/trace git -C client push origin "$TWO":refs/heads/two_branch &&
 	grep "fetch> done" trace >donelines &&
 	test_line_count = 1 donelines
-'
-
-test_expect_success 'negative window clamps to 0' '
-	git pack-objects --progress --window=-1 neg-window <obj-list 2>stderr &&
-	check_deltas stderr = 0
 '
 
 for hash in sha1 sha256

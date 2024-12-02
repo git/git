@@ -166,6 +166,7 @@ int cmd_ls_remote(int argc,
 		status = 0; /* we found something */
 	}
 
+	string_list_clear(&server_options, 0);
 	ref_sorting_release(sorting);
 	ref_array_clear(&ref_array);
 	if (transport_disconnect(transport))

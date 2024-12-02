@@ -926,6 +926,13 @@ test_expect_success 'fetch exclude tag one' '
 	test_cmp expected actual
 '
 
+test_expect_success 'fetch exclude tag one as revision' '
+	test_when_finished rm -f rev err &&
+	git -C shallow-exclude rev-parse one >rev &&
+	test_must_fail git -C shallow12 fetch --shallow-exclude $(cat rev) origin 2>err &&
+	grep "deepen-not is not a ref:" err
+'
+
 test_expect_success 'fetching deepen' '
 	test_create_repo shallow-deepen &&
 	(
