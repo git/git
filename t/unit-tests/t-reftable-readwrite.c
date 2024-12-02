@@ -13,6 +13,7 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable/reader.h"
 #include "reftable/reftable-error.h"
 #include "reftable/reftable-writer.h"
+#include "strbuf.h"
 
 static const int update_index = 5;
 
@@ -41,7 +42,7 @@ static void t_buffer(void)
 }
 
 static void write_table(char ***names, struct reftable_buf *buf, int N,
-			int block_size, uint32_t hash_id)
+			int block_size, enum reftable_hash hash_id)
 {
 	struct reftable_write_options opts = {
 		.block_size = block_size,
@@ -62,7 +63,7 @@ static void write_table(char ***names, struct reftable_buf *buf, int N,
 		refs[i].refname = (*names)[i] = xstrfmt("refs/heads/branch%02d", i);
 		refs[i].update_index = update_index;
 		refs[i].value_type = REFTABLE_REF_VAL1;
-		t_reftable_set_hash(refs[i].value.val1, i, GIT_SHA1_FORMAT_ID);
+		t_reftable_set_hash(refs[i].value.val1, i, REFTABLE_HASH_SHA1);
 	}
 
 	for (i = 0; i < N; i++) {
@@ -70,7 +71,7 @@ static void write_table(char ***names, struct reftable_buf *buf, int N,
 		logs[i].update_index = update_index;
 		logs[i].value_type = REFTABLE_LOG_UPDATE;
 		t_reftable_set_hash(logs[i].value.update.new_hash, i,
-				    GIT_SHA1_FORMAT_ID);
+				    REFTABLE_HASH_SHA1);
 		logs[i].value.update.message = (char *) "message";
 	}
 
@@ -104,7 +105,7 @@ static void t_log_buffer_size(void)
 	/* This tests buffer extension for log compression. Must use a random
 	   hash, to ensure that the compressed part is larger than the original.
 	*/
-	for (i = 0; i < GIT_SHA1_RAWSZ; i++) {
+	for (i = 0; i < REFTABLE_HASH_SIZE_SHA1; i++) {
 		log.value.update.old_hash[i] = (uint8_t)(git_rand() % 256);
 		log.value.update.new_hash[i] = (uint8_t)(git_rand() % 256);
 	}
@@ -191,9 +192,9 @@ static void t_log_write_read(void)
 		log.update_index = i;
 		log.value_type = REFTABLE_LOG_UPDATE;
 		t_reftable_set_hash(log.value.update.old_hash, i,
-				    GIT_SHA1_FORMAT_ID);
+				    REFTABLE_HASH_SHA1);
 		t_reftable_set_hash(log.value.update.new_hash, i + 1,
-				    GIT_SHA1_FORMAT_ID);
+				    REFTABLE_HASH_SHA1);
 
 		err = reftable_writer_add_log(w, &log);
 		check(!err);
@@ -326,7 +327,7 @@ static void t_table_read_write_sequential(void)
 	int err = 0;
 	int j = 0;
 
-	write_table(&names, &buf, N, 256, GIT_SHA1_FORMAT_ID);
+	write_table(&names, &buf, N, 256, REFTABLE_HASH_SHA1);
 
 	block_source_from_buf(&source, &buf);
 
@@ -361,7 +362,7 @@ static void t_table_write_small_table(void)
 	char **names;
 	struct reftable_buf buf = REFTABLE_BUF_INIT;
 	int N = 1;
-	write_table(&names, &buf, N, 4096, GIT_SHA1_FORMAT_ID);
+	write_table(&names, &buf, N, 4096, REFTABLE_HASH_SHA1);
 	check_int(buf.len, <, 200);
 	reftable_buf_release(&buf);
 	free_names(names);
@@ -378,7 +379,7 @@ static void t_table_read_api(void)
 	struct reftable_log_record log = { 0 };
 	struct reftable_iterator it = { 0 };
 
-	write_table(&names, &buf, N, 256, GIT_SHA1_FORMAT_ID);
+	write_table(&names, &buf, N, 256, REFTABLE_HASH_SHA1);
 
 	block_source_from_buf(&source, &buf);
 
@@ -400,7 +401,7 @@ static void t_table_read_api(void)
 	reftable_buf_release(&buf);
 }
 
-static void t_table_read_write_seek(int index, int hash_id)
+static void t_table_read_write_seek(int index, enum reftable_hash hash_id)
 {
 	char **names;
 	struct reftable_buf buf = REFTABLE_BUF_INIT;
@@ -467,24 +468,24 @@ static void t_table_read_write_seek(int index, int hash_id)
 
 static void t_table_read_write_seek_linear(void)
 {
-	t_table_read_write_seek(0, GIT_SHA1_FORMAT_ID);
+	t_table_read_write_seek(0, REFTABLE_HASH_SHA1);
 }
 
 static void t_table_read_write_seek_linear_sha256(void)
 {
-	t_table_read_write_seek(0, GIT_SHA256_FORMAT_ID);
+	t_table_read_write_seek(0, REFTABLE_HASH_SHA256);
 }
 
 static void t_table_read_write_seek_index(void)
 {
-	t_table_read_write_seek(1, GIT_SHA1_FORMAT_ID);
+	t_table_read_write_seek(1, REFTABLE_HASH_SHA1);
 }
 
 static void t_table_refs_for(int indexed)
 {
 	char **want_names;
 	int want_names_len = 0;
-	uint8_t want_hash[GIT_SHA1_RAWSZ];
+	uint8_t want_hash[REFTABLE_HASH_SIZE_SHA1];
 
 	struct reftable_write_options opts = {
 		.block_size = 256,
@@ -500,10 +501,10 @@ static void t_table_refs_for(int indexed)
 	want_names = reftable_calloc(N + 1, sizeof(*want_names));
 	check(want_names != NULL);
 
-	t_reftable_set_hash(want_hash, 4, GIT_SHA1_FORMAT_ID);
+	t_reftable_set_hash(want_hash, 4, REFTABLE_HASH_SHA1);
 
 	for (i = 0; i < N; i++) {
-		uint8_t hash[GIT_SHA1_RAWSZ];
+		uint8_t hash[REFTABLE_HASH_SIZE_SHA1];
 		char fill[51] = { 0 };
 		char name[100];
 		struct reftable_ref_record ref = { 0 };
@@ -517,9 +518,9 @@ static void t_table_refs_for(int indexed)
 
 		ref.value_type = REFTABLE_REF_VAL2;
 		t_reftable_set_hash(ref.value.val2.value, i / 4,
-				    GIT_SHA1_FORMAT_ID);
+				    REFTABLE_HASH_SHA1);
 		t_reftable_set_hash(ref.value.val2.target_value, 3 + i / 4,
-				    GIT_SHA1_FORMAT_ID);
+				    REFTABLE_HASH_SHA1);
 
 		/* 80 bytes / entry, so 3 entries per block. Yields 17
 		 */
@@ -527,8 +528,8 @@ static void t_table_refs_for(int indexed)
 		n = reftable_writer_add_ref(w, &ref);
 		check_int(n, ==, 0);
 
-		if (!memcmp(ref.value.val2.value, want_hash, GIT_SHA1_RAWSZ) ||
-		    !memcmp(ref.value.val2.target_value, want_hash, GIT_SHA1_RAWSZ))
+		if (!memcmp(ref.value.val2.value, want_hash, REFTABLE_HASH_SIZE_SHA1) ||
+		    !memcmp(ref.value.val2.target_value, want_hash, REFTABLE_HASH_SIZE_SHA1))
 			want_names[want_names_len++] = xstrdup(name);
 	}
 

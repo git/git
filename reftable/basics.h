@@ -148,6 +148,14 @@ char *reftable_strdup(const char *str);
 /* Find the longest shared prefix size of `a` and `b` */
 int common_prefix_size(struct reftable_buf *a, struct reftable_buf *b);
 
-int hash_size(uint32_t id);
+int hash_size(enum reftable_hash id);
+
+/*
+ * Format IDs that identify the hash function used by a reftable. Note that
+ * these constants end up on disk and thus mustn't change. The format IDs are
+ * "sha1" and "s256" in big endian, respectively.
+ */
+#define REFTABLE_FORMAT_ID_SHA1   ((uint32_t) 0x73686131)
+#define REFTABLE_FORMAT_ID_SHA256 ((uint32_t) 0x73323536)
 
 #endif
