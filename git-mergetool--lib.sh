@@ -159,7 +159,7 @@ check_unchanged () {
 }
 
 valid_tool () {
-	setup_tool "$1" && return 0
+	setup_tool "$1" 2>/dev/null && return 0
 	cmd=$(get_merge_tool_cmd "$1")
 	test -n "$cmd"
 }
@@ -250,7 +250,12 @@ setup_tool () {
 		. "$MERGE_TOOLS_DIR/${tool%[0-9]}"
 	else
 		setup_user_tool
-		return $?
+		rc=$?
+		if test $rc -ne 0
+		then
+			echo >&2 "error: ${TOOL_MODE}tool.$tool.cmd not set for tool '$tool'"
+		fi
+		return $rc
 	fi
 
 	# Now let the user override the default command for the tool.  If
@@ -259,6 +264,7 @@ setup_tool () {
 
 	if ! list_tool_variants | grep -q "^$tool$"
 	then
+		echo "error: unknown tool variant '$tool'" >&2
 		return 1
 	fi
 
@@ -474,7 +480,7 @@ get_merge_tool_path () {
 	merge_tool="$1"
 	if ! valid_tool "$merge_tool"
 	then
-		echo >&2 "Unknown merge tool $merge_tool"
+		echo >&2 "Unknown $TOOL_MODE tool $merge_tool"
 		exit 1
 	fi
 	if diff_mode
