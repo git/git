@@ -35,7 +35,7 @@ test:linux:
   parallel:
     matrix:
       - jobname: linux-old
-        image: ubuntu:16.04
+        image: ubuntu:20.04
         CC: gcc
       - jobname: linux-sha256
         image: ubuntu:latest

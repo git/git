@@ -342,12 +342,21 @@ jobs:
         - jobname: linux-musl
           image: alpine
           distro: alpine-latest
+        # Supported until 2025-04-02.
         - jobname: linux32
           image: i386/ubuntu:focal
           distro: ubuntu32-20.04
         - jobname: pedantic
           image: fedora
           distro: fedora-latest
+        # A RHEL 8 compatible distro.  Supported until 2029-05-31.
+        - jobname: almalinux-8
+          image: almalinux:8
+          distro: almalinux-8
+        # Supported until 2026-08-31.
+        - jobname: debian-11
+          image: debian:11
+          distro: debian-11
     env:
       jobname: ${{matrix.vector.jobname}}
       distro: ${{matrix.vector.distro}}
