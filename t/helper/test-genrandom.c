@@ -4,8 +4,6 @@
  * Copyright (C) 2007 by Nicolas Pitre, licensed under the GPL version 2.
  */
 
-#define DISABLE_SIGN_COMPARE_WARNINGS
-
 #include "test-tool.h"
 #include "git-compat-util.h"
 
@@ -24,7 +22,7 @@ int cmd__genrandom(int argc, const char **argv)
 		next = next * 11 + *c;
 	} while (*c++);
 
-	count = (argc == 3) ? strtoul(argv[2], NULL, 0) : -1L;
+	count = (argc == 3) ? strtoul(argv[2], NULL, 0) : ULONG_MAX;
 
 	while (count--) {
 		next = next * 1103515245 + 12345;
