@@ -521,7 +521,7 @@ test_expect_success 'B: fail on invalid committer (5)' '
 	test_must_fail git fast-import <input
 '
 
-test_expect_success 'B: fail on invalid file path' '
+test_expect_success 'B: fail on invalid file path of ..' '
 	cat >input <<-INPUT_END &&
 	blob
 	mark :1
@@ -535,6 +535,86 @@ test_expect_success 'B: fail on invalid file path' '
 	Commit Message
 	COMMIT
 	M 100644 :1 ../invalid-path
+	INPUT_END
+
+	test_when_finished "git update-ref -d refs/heads/badpath" &&
+	test_must_fail git fast-import <input
+'
+
+test_expect_success 'B: fail on invalid file path of .' '
+	cat >input <<-INPUT_END &&
+	blob
+	mark :1
+	data <<EOF
+	File contents
+	EOF
+
+	commit refs/heads/badpath
+	committer Name <email> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	Commit Message
+	COMMIT
+	M 100644 :1 ./invalid-path
+	INPUT_END
+
+	test_when_finished "git update-ref -d refs/heads/badpath" &&
+	test_must_fail git fast-import <input
+'
+
+test_expect_success WINDOWS 'B: fail on invalid file path of C:' '
+	cat >input <<-INPUT_END &&
+	blob
+	mark :1
+	data <<EOF
+	File contents
+	EOF
+
+	commit refs/heads/badpath
+	committer Name <email> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	Commit Message
+	COMMIT
+	M 100644 :1 C:/invalid-path
+	INPUT_END
+
+	test_when_finished "git update-ref -d refs/heads/badpath" &&
+	test_must_fail git fast-import <input
+'
+
+test_expect_success 'B: fail on invalid file path of .git' '
+	cat >input <<-INPUT_END &&
+	blob
+	mark :1
+	data <<EOF
+	File contents
+	EOF
+
+	commit refs/heads/badpath
+	committer Name <email> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	Commit Message
+	COMMIT
+	M 100644 :1 .git/invalid-path
+	INPUT_END
+
+	test_when_finished "git update-ref -d refs/heads/badpath" &&
+	test_must_fail git fast-import <input
+'
+
+test_expect_success 'B: fail on invalid file path of .gitmodules' '
+	cat >input <<-INPUT_END &&
+	blob
+	mark :1
+	data <<EOF
+	File contents
+	EOF
+
+	commit refs/heads/badpath
+	committer Name <email> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	Commit Message
+	COMMIT
+	M 120000 :1 .gitmodules
 	INPUT_END
 
 	test_when_finished "git update-ref -d refs/heads/badpath" &&
@@ -965,7 +1045,7 @@ test_expect_success 'L: verify internal tree sorting' '
 	:100644 100644 M	ba
 	EXPECT_END
 
-	git fast-import <input &&
+	git -c core.protectNTFS=false fast-import <input &&
 	GIT_PRINT_SHA1_ELLIPSIS="yes" git diff-tree --abbrev --raw L^ L >output &&
 	cut -d" " -f1,2,5 output >actual &&
 	test_cmp expect actual
@@ -3116,7 +3196,7 @@ test_path_eol_success () {
 	test_expect_success "S: paths at EOL with $test must work" '
 		test_when_finished "git branch -D S-path-eol" &&
 
-		git fast-import --export-marks=marks.out <<-EOF >out 2>err &&
+		git -c core.protectNTFS=false fast-import --export-marks=marks.out <<-EOF >out 2>err &&
 		blob
 		mark :401
 		data <<BLOB
@@ -3225,7 +3305,7 @@ test_path_space_success () {
 	test_expect_success "S: paths before space with $test must work" '
 		test_when_finished "git branch -D S-path-space" &&
 
-		git fast-import --export-marks=marks.out <<-EOF 2>err &&
+		git -c core.protectNTFS=false fast-import --export-marks=marks.out <<-EOF 2>err &&
 		blob
 		mark :401
 		data <<BLOB
