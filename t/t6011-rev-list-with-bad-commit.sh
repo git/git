@@ -2,7 +2,6 @@
 
 test_description='git rev-list should notice bad commits'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Note:

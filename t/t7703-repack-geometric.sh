@@ -2,7 +2,6 @@
 
 test_description='git repack --geometric works correctly'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 GIT_TEST_MULTI_PACK_INDEX=0

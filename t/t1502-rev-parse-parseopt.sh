@@ -2,7 +2,6 @@
 
 test_description='test git rev-parse --parseopt'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 check_invalid_long_option () {

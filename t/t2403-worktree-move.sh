@@ -2,7 +2,6 @@
 
 test_description='test git worktree move, remove, lock and unlock'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

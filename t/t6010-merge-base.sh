@@ -6,7 +6,6 @@
 test_description='Merge base and parent list computation.
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 M=1130000000

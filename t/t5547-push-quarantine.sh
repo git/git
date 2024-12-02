@@ -2,7 +2,6 @@
 
 test_description='check quarantine of objects during push'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'create picky dest repo' '

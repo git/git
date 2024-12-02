@@ -5,7 +5,6 @@
 
 test_description='Test git update-ref and basic ref logging'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 Z=$ZERO_OID

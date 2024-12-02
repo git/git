@@ -97,7 +97,6 @@ int cmd__read_graph(int argc, const char **argv)
 	}
 
 done:
-	UNLEAK(graph);
-
+	free_commit_graph(graph);
 	return ret;
 }

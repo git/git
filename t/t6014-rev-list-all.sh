@@ -2,7 +2,6 @@
 
 test_description='--all includes detached HEADs'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 

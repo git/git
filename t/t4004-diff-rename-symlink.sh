@@ -10,7 +10,6 @@ copy of symbolic links, but should not produce rename/copy followed
 by an edit for them.
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh
 

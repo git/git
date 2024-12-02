@@ -2,7 +2,6 @@
 
 test_description='session ID in capabilities'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 REPO="$(pwd)/repo"

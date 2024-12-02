@@ -5,7 +5,6 @@
 
 test_description='git clean basic tests'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 git config clean.requireForce no

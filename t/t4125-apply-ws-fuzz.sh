@@ -2,7 +2,6 @@
 
 test_description='applying patch that has broken whitespaces in context'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

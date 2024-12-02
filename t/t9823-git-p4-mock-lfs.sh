@@ -2,7 +2,6 @@
 
 test_description='Clone repositories and store files in Mock LFS'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-git-p4.sh
 
 test_file_is_not_in_mock_lfs () {

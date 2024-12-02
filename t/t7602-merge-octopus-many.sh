@@ -4,7 +4,6 @@ test_description='git merge
 
 Testing octopus merge with more than 25 refs.'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

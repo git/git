@@ -2,7 +2,6 @@
 
 test_description='Test git config in different settings (with --default)'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'uses --default when entry missing' '

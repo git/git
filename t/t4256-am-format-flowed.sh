@@ -2,7 +2,6 @@
 
 test_description='test format=flowed support of git am'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

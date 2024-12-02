@@ -2,7 +2,6 @@
 
 test_description='git log --graph of skewed merges'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-log-graph.sh
 

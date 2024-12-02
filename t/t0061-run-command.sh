@@ -5,7 +5,6 @@
 
 test_description='Test run command'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 cat >hello-script <<-EOF

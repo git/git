@@ -7,7 +7,6 @@
 
 test_description='Compatibility with $XDG_CONFIG_HOME/git/ files'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'read config: xdg file exists and ~/.gitconfig doesn'\''t' '

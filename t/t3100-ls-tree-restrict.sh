@@ -17,7 +17,6 @@ The new path restriction code should do the right thing for path2 and
 path2/baz.  Also path0/ should snow nothing.
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success \

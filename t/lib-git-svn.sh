@@ -1,7 +1,3 @@
-if test -z "$TEST_FAILS_SANITIZE_LEAK"
-then
-	TEST_PASSES_SANITIZE_LEAK=true
-fi
 . ./test-lib.sh
 
 if test -n "$NO_SVN_TESTS"

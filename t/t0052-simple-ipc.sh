@@ -2,7 +2,6 @@
 
 test_description='simple command server'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test-tool simple-ipc SUPPORTS_SIMPLE_IPC || {

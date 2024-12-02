@@ -2,7 +2,6 @@
 
 test_description='git p4 tests for excluded paths during clone and sync'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-git-p4.sh
 
 test_expect_success 'start p4d' '

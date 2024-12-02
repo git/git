@@ -2,7 +2,6 @@
 
 test_description='check that certain rev-parse options work outside repo'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'set up non-repo directory' '

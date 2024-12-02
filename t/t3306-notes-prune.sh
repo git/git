@@ -2,7 +2,6 @@
 
 test_description='Test git notes prune'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup: create a few commits with notes' '

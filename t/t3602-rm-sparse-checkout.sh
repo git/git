@@ -2,7 +2,6 @@
 
 test_description='git rm in sparse checked out working trees'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' "

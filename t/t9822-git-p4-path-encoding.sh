@@ -2,7 +2,6 @@
 
 test_description='Clone repositories with non ASCII paths'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-git-p4.sh
 
 UTF8_ESCAPED="a-\303\244_o-\303\266_u-\303\274.txt"

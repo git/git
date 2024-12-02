@@ -2,7 +2,6 @@
 
 test_description='basic credential helper tests'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-credential.sh
 

@@ -2,7 +2,6 @@
 
 test_description='check random commands outside repo'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'set up a non-repo directory and test file' '

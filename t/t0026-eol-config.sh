@@ -2,7 +2,6 @@
 
 test_description='CRLF conversion'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 has_cr() {

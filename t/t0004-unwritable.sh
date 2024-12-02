@@ -2,7 +2,6 @@
 
 test_description='detect unwritable repository and fail correctly'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

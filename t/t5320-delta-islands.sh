@@ -2,7 +2,6 @@
 
 test_description='exercise delta islands'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # returns true iff $1 is a delta based on $2

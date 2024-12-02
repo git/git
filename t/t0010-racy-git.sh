@@ -2,7 +2,6 @@
 
 test_description='racy GIT'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # This test can give false success if your machine is sufficiently
