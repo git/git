@@ -1,30 +1,30 @@
-(
-	echo wobba \
-	       gorgo snoot \
-	       wafta snurb <<-EOF &&
-	quoth the raven,
-	nevermore...
-	EOF
-
-	cat <<EOF >bip ?!AMP?!
-	fish fly high
-EOF
-
-	echo <<-\EOF >bop
-	gomez
-	morticia
-	wednesday
-	pugsly
-	EOF
-) &&
-(
-	cat <<-\ARBITRARY >bup &&
-	glink
-	FIZZ
-	ARBITRARY
-	cat <<-"ARBITRARY3" >bup3 &&
-	glink
-	FIZZ
-	ARBITRARY3
-	meep
-)
+2 (
+3 	echo wobba \
+4 	       gorgo snoot \
+5 	       wafta snurb <<-EOF &&
+6 	quoth the raven,
+7 	nevermore...
+8 	EOF
+9 
+10 	cat <<EOF >bip ?!LINT: missing '&&'?!
+11 	fish fly high
+12 EOF
+13 
+14 	echo <<-\EOF >bop
+15 	gomez
+16 	morticia
+17 	wednesday
+18 	pugsly
+19 	EOF
+20 ) &&
+21 (
+22 	cat <<-\ARBITRARY >bup &&
+23 	glink
+24 	FIZZ
+25 	ARBITRARY
+26 	cat <<-"ARBITRARY3" >bup3 &&
+27 	glink
+28 	FIZZ
+29 	ARBITRARY3
+30 	meep
+31 )

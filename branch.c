@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "advice.h"
 #include "config.h"
@@ -377,7 +379,7 @@ int validate_branchname(const char *name, struct strbuf *ref)
 		exit(code);
 	}
 
-	return ref_exists(ref->buf);
+	return refs_ref_exists(get_main_ref_store(the_repository), ref->buf);
 }
 
 static int initialized_checked_out_branches;
@@ -599,6 +601,7 @@ void create_branch(struct repository *r,
 	int forcing = 0;
 	struct ref_transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
+	int flags = 0;
 	char *msg;
 
 	if (track == BRANCH_TRACK_OVERRIDE)
@@ -617,17 +620,18 @@ void create_branch(struct repository *r,
 		goto cleanup;
 
 	if (reflog)
-		log_all_ref_updates = LOG_REFS_NORMAL;
+		flags |= REF_FORCE_CREATE_REFLOG;
 
 	if (forcing)
 		msg = xstrfmt("branch: Reset to %s", start_name);
 	else
 		msg = xstrfmt("branch: Created from %s", start_name);
-	transaction = ref_transaction_begin(&err);
+	transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+						  &err);
 	if (!transaction ||
 		ref_transaction_update(transaction, ref.buf,
 					&oid, forcing ? NULL : null_oid(),
-					0, msg, &err) ||
+					NULL, NULL, flags, msg, &err) ||
 		ref_transaction_commit(transaction, &err))
 		die("%s", err.buf);
 	ref_transaction_free(transaction);
@@ -734,11 +738,12 @@ static int submodule_create_branch(struct repository *r,
 
 	strbuf_release(&child_err);
 	strbuf_release(&out_buf);
+	free(out_prefix);
 	return ret;
 }
 
 void create_branches_recursively(struct repository *r, const char *name,
-				 const char *start_commitish,
+				 const char *start_committish,
 				 const char *tracking_name, int force,
 				 int reflog, int quiet, enum branch_track track,
 				 int dry_run)
@@ -748,8 +753,8 @@ void create_branches_recursively(struct repository *r, const char *name,
 	struct object_id super_oid;
 	struct submodule_entry_list submodule_entry_list;
 
-	/* Perform dwim on start_commitish to get super_oid and branch_point. */
-	dwim_branch_start(r, start_commitish, BRANCH_TRACK_NEVER,
+	/* Perform dwim on start_committish to get super_oid and branch_point. */
+	dwim_branch_start(r, start_committish, BRANCH_TRACK_NEVER,
 			  &branch_point, &super_oid);
 
 	/*
@@ -772,7 +777,7 @@ void create_branches_recursively(struct repository *r, const char *name,
 				submodule_entry_list.entries[i].submodule->name);
 			if (advice_enabled(ADVICE_SUBMODULES_NOT_UPDATED))
 				advise(_("You may try updating the submodules using 'git checkout --no-recurse-submodules %s && git submodule update --init'"),
-				       start_commitish);
+				       start_committish);
 			exit(code);
 		}
 
@@ -787,10 +792,10 @@ void create_branches_recursively(struct repository *r, const char *name,
 			    name);
 	}
 
-	create_branch(r, name, start_commitish, force, 0, reflog, quiet,
+	create_branch(r, name, start_committish, force, 0, reflog, quiet,
 		      BRANCH_TRACK_NEVER, dry_run);
 	if (dry_run)
-		return;
+		goto out;
 	/*
 	 * NEEDSWORK If tracking was set up in the superproject but not the
 	 * submodule, users might expect "git branch --recurse-submodules" to
@@ -811,8 +816,11 @@ void create_branches_recursively(struct repository *r, const char *name,
 			die(_("submodule '%s': cannot create branch '%s'"),
 			    submodule_entry_list.entries[i].submodule->name,
 			    name);
-		repo_clear(submodule_entry_list.entries[i].repo);
 	}
+
+out:
+	submodule_entry_list_release(&submodule_entry_list);
+	free(branch_point);
 }
 
 void remove_merge_branch_state(struct repository *r)

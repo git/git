@@ -5,6 +5,7 @@ test_description='git log'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
 . "$TEST_DIRECTORY/lib-terminal.sh"
@@ -1237,6 +1238,30 @@ test_expect_success 'log.abbrevCommit configuration' '
 	test_cmp expect.whatchanged.full actual
 '
 
+test_expect_success '--abbrev-commit with core.abbrev=false' '
+	git log --no-abbrev >expect &&
+	git -c core.abbrev=false log --abbrev-commit >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--abbrev-commit with --no-abbrev' '
+	git log --no-abbrev >expect &&
+	git log --abbrev-commit --no-abbrev >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--abbrev-commit with core.abbrev=9000' '
+	git log --no-abbrev >expect &&
+	git -c core.abbrev=9000 log --abbrev-commit >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success '--abbrev-commit with --abbrev=9000' '
+	git log --no-abbrev >expect &&
+	git log --abbrev-commit --abbrev=9000 >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'show added path under "--follow -M"' '
 	# This tests for a regression introduced in v1.7.2-rc0~103^2~2
 	test_create_repo regression &&
@@ -2022,7 +2047,7 @@ test_expect_success GPGSM 'log --graph --show-signature x509' '
 test_expect_success GPGSSH 'log --graph --show-signature ssh' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	git log --graph --show-signature -n1 signed-ssh >actual &&
-	grep "${GOOD_SIGNATURE_TRUSTED}" actual
+	grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual
 '
 
 test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'log shows failure on expired signature key' '

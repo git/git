@@ -1,7 +1,7 @@
-if bob &&
-   marcia ||
-   kevin
-then
-	echo "nomads" ?!AMP?!
-	echo "for sure"
-fi
+2 if bob &&
+3    marcia ||
+4    kevin
+5 then
+6 	echo "nomads" ?!LINT: missing '&&'?!
+7 	echo "for sure"
+8 fi

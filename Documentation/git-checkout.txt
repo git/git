@@ -290,10 +290,10 @@ Note that this option uses the no overlay mode by default (see also
 `--overlay`), and currently doesn't support overlay mode.
 
 --ignore-other-worktrees::
-	`git checkout` refuses when the wanted ref is already checked
-	out by another worktree. This option makes it check the ref
-	out anyway. In other words, the ref can be held by more than one
-	worktree.
+	`git checkout` refuses when the wanted branch is already checked
+	out or otherwise in use by another worktree. This option makes
+	it check the branch out anyway. In other words, the branch can
+	be in use by more than one worktree.
 
 --overwrite-ignore::
 --no-overwrite-ignore::

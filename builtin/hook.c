@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
@@ -58,7 +59,7 @@ static int run(int argc, const char **argv, const char *prefix)
 	hook_name = argv[0];
 	if (!ignore_missing)
 		opt.error_if_missing = 1;
-	ret = run_hooks_opt(hook_name, &opt);
+	ret = run_hooks_opt(the_repository, hook_name, &opt);
 	if (ret < 0) /* error() return */
 		ret = 1;
 	return ret;
@@ -66,7 +67,10 @@ usage:
 	usage_with_options(builtin_hook_run_usage, run_options);
 }
 
-int cmd_hook(int argc, const char **argv, const char *prefix)
+int cmd_hook(int argc,
+	     const char **argv,
+	     const char *prefix,
+	     struct repository *repo UNUSED)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option builtin_hook_options[] = {

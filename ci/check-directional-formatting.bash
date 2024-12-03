@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # This script verifies that the non-binary files tracked in the Git index do
 # not contain any Unicode directional formatting: such formatting could be used

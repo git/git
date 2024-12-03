@@ -11,7 +11,7 @@
  */
 
 /*
- * Arbitry limit for thread names for column alignment.
+ * Arbitrary limit for thread names for column alignment.
  */
 #define TR2_MAX_THREAD_NAME (24)
 

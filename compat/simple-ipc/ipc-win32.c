@@ -371,6 +371,9 @@ struct ipc_server_data {
 	HANDLE hEventStopRequested;
 	struct ipc_server_thread_data *thread_list;
 	int is_stopped;
+
+	pthread_mutex_t startup_barrier;
+	int started;
 };
 
 enum connect_result {
@@ -526,6 +529,16 @@ static int use_connection(struct ipc_server_thread_data *server_thread_data)
 	return ret;
 }
 
+static void wait_for_startup_barrier(struct ipc_server_data *server_data)
+{
+	/*
+	 * Temporarily hold the startup_barrier mutex before starting,
+	 * which lets us know that it's OK to start serving requests.
+	 */
+	pthread_mutex_lock(&server_data->startup_barrier);
+	pthread_mutex_unlock(&server_data->startup_barrier);
+}
+
 /*
  * Thread proc for an IPC server worker thread.  It handles a series of
  * connections from clients.  It cleans and reuses the hPipe between each
@@ -549,6 +562,8 @@ static void *server_thread_proc(void *_server_thread_data)
 
 	memset(&oConnect, 0, sizeof(oConnect));
 	oConnect.hEvent = hEventConnected;
+
+	wait_for_startup_barrier(server_thread_data->server_data);
 
 	for (;;) {
 		cr = wait_for_connection(server_thread_data, &oConnect);
@@ -752,10 +767,10 @@ static HANDLE create_new_pipe(wchar_t *wpath, int is_first)
 	return hPipe;
 }
 
-int ipc_server_run_async(struct ipc_server_data **returned_server_data,
-			 const char *path, const struct ipc_server_opts *opts,
-			 ipc_server_application_cb *application_cb,
-			 void *application_data)
+int ipc_server_init_async(struct ipc_server_data **returned_server_data,
+			  const char *path, const struct ipc_server_opts *opts,
+			  ipc_server_application_cb *application_cb,
+			  void *application_data)
 {
 	struct ipc_server_data *server_data;
 	wchar_t wpath[MAX_PATH];
@@ -786,6 +801,13 @@ int ipc_server_run_async(struct ipc_server_data **returned_server_data,
 	strbuf_init(&server_data->buf_path, 0);
 	strbuf_addstr(&server_data->buf_path, path);
 	wcscpy(server_data->wpath, wpath);
+
+	/*
+	 * Hold the startup_barrier lock so that no threads will progress
+	 * until ipc_server_start_async() is called.
+	 */
+	pthread_mutex_init(&server_data->startup_barrier, NULL);
+	pthread_mutex_lock(&server_data->startup_barrier);
 
 	if (nr_threads < 1)
 		nr_threads = 1;
@@ -837,6 +859,15 @@ int ipc_server_run_async(struct ipc_server_data **returned_server_data,
 	return 0;
 }
 
+void ipc_server_start_async(struct ipc_server_data *server_data)
+{
+	if (!server_data || server_data->started)
+		return;
+
+	server_data->started = 1;
+	pthread_mutex_unlock(&server_data->startup_barrier);
+}
+
 int ipc_server_stop_async(struct ipc_server_data *server_data)
 {
 	if (!server_data)
@@ -850,6 +881,13 @@ int ipc_server_stop_async(struct ipc_server_data *server_data)
 	 * We DO NOT attempt to force them to drop an active connection.
 	 */
 	SetEvent(server_data->hEventStopRequested);
+
+	/*
+	 * If we haven't yet told the threads they are allowed to run,
+	 * do so now, so they can receive the shutdown event.
+	 */
+	ipc_server_start_async(server_data);
+
 	return 0;
 }
 
@@ -899,6 +937,8 @@ void ipc_server_free(struct ipc_server_data *server_data)
 		server_data->thread_list = std->next_thread;
 		free(std);
 	}
+
+	pthread_mutex_destroy(&server_data->startup_barrier);
 
 	free(server_data);
 }

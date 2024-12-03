@@ -48,12 +48,14 @@ void oidset_clear(struct oidset *set)
 	oidset_init(set, 0);
 }
 
-void oidset_parse_file(struct oidset *set, const char *path)
+void oidset_parse_file(struct oidset *set, const char *path,
+		       const struct git_hash_algo *algop)
 {
-	oidset_parse_file_carefully(set, path, NULL, NULL);
+	oidset_parse_file_carefully(set, path, algop, NULL, NULL);
 }
 
 void oidset_parse_file_carefully(struct oidset *set, const char *path,
+				 const struct git_hash_algo *algop,
 				 oidset_parse_tweak_fn fn, void *cbdata)
 {
 	FILE *fp;
@@ -79,7 +81,7 @@ void oidset_parse_file_carefully(struct oidset *set, const char *path,
 		if (!sb.len)
 			continue;
 
-		if (parse_oid_hex(sb.buf, &oid, &p) || *p != '\0')
+		if (parse_oid_hex_algop(sb.buf, &oid, &p, algop) || *p != '\0')
 			die("invalid object name: %s", sb.buf);
 		if (fn && fn(&oid, cbdata))
 			continue;

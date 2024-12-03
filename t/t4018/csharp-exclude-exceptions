@@ -1,0 +1,29 @@
+using System;
+
+class Example
+{
+    string Method(int RIGHT)
+    {
+        try
+        {
+            throw new Exception("fail");
+        }
+        catch (Exception)
+        {
+        }
+        finally
+        {
+        }
+        try { } catch (Exception) {}
+        try
+        {
+            throw GetException(
+            );
+        }
+        catch (Exception) { }
+
+        return "ChangeMe";
+    }
+
+    Exception GetException() => new Exception("fail");
+}

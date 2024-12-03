@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "editor.h"
@@ -58,7 +59,7 @@ static void get_populated_hooks(struct strbuf *hook_info, int nongit)
 	for (p = hook_name_list; *p; p++) {
 		const char *hook = *p;
 
-		if (hook_exists(hook))
+		if (hook_exists(the_repository, hook))
 			strbuf_addf(hook_info, "%s\n", hook);
 	}
 }
@@ -98,7 +99,10 @@ static void get_header(struct strbuf *buf, const char *title)
 	strbuf_addf(buf, "\n\n[%s]\n", title);
 }
 
-int cmd_bugreport(int argc, const char **argv, const char *prefix)
+int cmd_bugreport(int argc,
+		  const char **argv,
+		  const char *prefix,
+		  struct repository *repo UNUSED)
 {
 	struct strbuf buffer = STRBUF_INIT;
 	struct strbuf report_path = STRBUF_INIT;
@@ -107,7 +111,7 @@ int cmd_bugreport(int argc, const char **argv, const char *prefix)
 	struct tm tm;
 	enum diagnose_mode diagnose = DIAGNOSE_NONE;
 	char *option_output = NULL;
-	char *option_suffix = "%Y-%m-%d-%H%M";
+	const char *option_suffix = "%Y-%m-%d-%H%M";
 	const char *user_relative_path = NULL;
 	char *prefixed_filename;
 	size_t output_path_len;

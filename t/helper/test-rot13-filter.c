@@ -9,7 +9,7 @@
  * ("clean", "smudge", etc).
  *
  * When --always-delay is given all pathnames with the "can-delay" flag
- * that don't appear on the list bellow are delayed with a count of 1
+ * that don't appear on the list below are delayed with a count of 1
  * (see more below).
  *
  * This implementation supports special test cases:
@@ -136,7 +136,7 @@ static void free_delay_entries(void)
 	strmap_clear(&delay, 0);
 }
 
-static void add_delay_entry(char *pathname, int count, int requested)
+static void add_delay_entry(const char *pathname, int count, int requested)
 {
 	struct delay_entry *entry = xcalloc(1, sizeof(*entry));
 	entry->count = count;
@@ -189,7 +189,8 @@ static void reply_list_available_blobs_cmd(void)
 static void command_loop(void)
 {
 	for (;;) {
-		char *buf, *output;
+		char *buf;
+		const char *output;
 		char *pathname;
 		struct delay_entry *entry;
 		struct strbuf input = STRBUF_INIT;

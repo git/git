@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "test-tool.h"
 #include "hex.h"
 #include "refs.h"
@@ -82,7 +84,7 @@ static const char **get_store(const char **argv, struct ref_store **refs)
 		add_to_alternates_memory(sb.buf);
 		strbuf_release(&sb);
 
-		*refs = get_submodule_ref_store(gitdir);
+		*refs = repo_get_submodule_ref_store(the_repository, gitdir);
 	} else if (skip_prefix(argv[0], "worktree:", &gitdir)) {
 		struct worktree **p, **worktrees = get_worktrees();
 
@@ -112,32 +114,13 @@ static const char **get_store(const char **argv, struct ref_store **refs)
 	return argv + 1;
 }
 
-static struct flag_definition pack_flags[] = { FLAG_DEF(PACK_REFS_PRUNE),
-					       FLAG_DEF(PACK_REFS_ALL),
-					       { NULL, 0 } };
-
-static int cmd_pack_refs(struct ref_store *refs, const char **argv)
-{
-	unsigned int flags = arg_flags(*argv++, "flags", pack_flags);
-	static struct ref_exclusions exclusions = REF_EXCLUSIONS_INIT;
-	static struct string_list included_refs = STRING_LIST_INIT_NODUP;
-	struct pack_refs_opts pack_opts = { .flags = flags,
-					    .exclusions = &exclusions,
-					    .includes = &included_refs };
-
-	if (pack_opts.flags & PACK_REFS_ALL)
-		string_list_append(pack_opts.includes, "*");
-
-	return refs_pack_refs(refs, &pack_opts);
-}
-
 static int cmd_create_symref(struct ref_store *refs, const char **argv)
 {
 	const char *refname = notnull(*argv++, "refname");
 	const char *target = notnull(*argv++, "target");
 	const char *logmsg = *argv++;
 
-	return refs_create_symref(refs, refname, target, logmsg);
+	return refs_update_symref(refs, refname, target, logmsg);
 }
 
 static struct flag_definition transaction_flags[] = {
@@ -145,6 +128,7 @@ static struct flag_definition transaction_flags[] = {
 	FLAG_DEF(REF_FORCE_CREATE_REFLOG),
 	FLAG_DEF(REF_SKIP_OID_VERIFICATION),
 	FLAG_DEF(REF_SKIP_REFNAME_VERIFICATION),
+	FLAG_DEF(REF_SKIP_CREATE_REFLOG),
 	{ NULL, 0 }
 };
 
@@ -172,7 +156,7 @@ static int cmd_rename_ref(struct ref_store *refs, const char **argv)
 	return refs_rename_ref(refs, oldref, newref, logmsg);
 }
 
-static int each_ref(const char *refname, const struct object_id *oid,
+static int each_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
 		    int flags, void *cb_data UNUSED)
 {
 	printf("%s %s 0x%x\n", oid_to_hex(oid), refname, flags);
@@ -326,7 +310,6 @@ struct command {
 };
 
 static struct command commands[] = {
-	{ "pack-refs", cmd_pack_refs },
 	{ "create-symref", cmd_create_symref },
 	{ "delete-refs", cmd_delete_refs },
 	{ "rename-ref", cmd_rename_ref },

@@ -5,6 +5,7 @@ test_description="test smart fetching over http via http-backend ($HTTP_PROTO)"
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
 test "$HTTP_PROTO" = "HTTP/2" && enable_http2
@@ -184,6 +185,28 @@ test_expect_success 'clone from password-protected repository' '
 	expect_askpass both user@host &&
 	git --git-dir=smart-auth log -1 --format=%s >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'credential.interactive=false skips askpass' '
+	set_askpass bogus nonsense &&
+	(
+		GIT_TRACE2_EVENT="$(pwd)/interactive-true" &&
+		export GIT_TRACE2_EVENT &&
+		test_must_fail git clone --bare "$HTTPD_URL/auth/smart/repo.git" interactive-true-dir &&
+		test_region credential interactive interactive-true &&
+
+		GIT_TRACE2_EVENT="$(pwd)/interactive-false" &&
+		export GIT_TRACE2_EVENT &&
+		test_must_fail git -c credential.interactive=false \
+			clone --bare "$HTTPD_URL/auth/smart/repo.git" interactive-false-dir &&
+		test_region ! credential interactive interactive-false &&
+
+		GIT_TRACE2_EVENT="$(pwd)/interactive-never" &&
+		export GIT_TRACE2_EVENT &&
+		test_must_fail git -c credential.interactive=never \
+			clone --bare "$HTTPD_URL/auth/smart/repo.git" interactive-never-dir &&
+		test_region ! credential interactive interactive-never
+	)
 '
 
 test_expect_success 'clone from auth-only-for-push repository' '
@@ -643,7 +666,6 @@ test_expect_success 'clone empty SHA-256 repository with protocol v0' '
 test_expect_success 'passing hostname resolution information works' '
 	BOGUS_HOST=gitbogusexamplehost.invalid &&
 	BOGUS_HTTPD_URL=$HTTPD_PROTO://$BOGUS_HOST:$LIB_HTTPD_PORT &&
-	test_must_fail git ls-remote "$BOGUS_HTTPD_URL/smart/repo.git" >/dev/null &&
 	git -c "http.curloptResolve=$BOGUS_HOST:$LIB_HTTPD_PORT:127.0.0.1" ls-remote "$BOGUS_HTTPD_URL/smart/repo.git" >/dev/null
 '
 

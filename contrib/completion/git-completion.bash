@@ -31,14 +31,28 @@
 # Note that "git" is optional --- '!f() { : commit; ...}; f' would complete
 # just like the 'git commit' command.
 #
-# If you have a command that is not part of git, but you would still
-# like completion, you can use __git_complete:
+# To add completion for git subcommands that are implemented in external
+# scripts, define a function of the form '_git_${subcommand}' while replacing
+# all dashes with underscores, and the main git completion will make use of it.
+# For example, to add completion for 'git do-stuff' (which could e.g. live
+# in /usr/bin/git-do-stuff), name the completion function '_git_do_stuff'.
+# See _git_show, _git_bisect etc. below for more examples.
+#
+# If you have a shell command that is not part of git (and is not called as a
+# git subcommand), but you would still like git-style completion for it, use
+# __git_complete. For example, to use the same completion as for 'git log' also
+# for the 'gl' command:
 #
 #   __git_complete gl git_log
 #
-# Or if it's a main command (i.e. git or gitk):
+# Or if the 'gk' command should be completed the same as 'gitk':
 #
 #   __git_complete gk gitk
+#
+# The second parameter of __git_complete gives the completion function; it is
+# resolved as a function named "$2", or "__$2_main", or "_$2" in that order.
+# In the examples above, the actual functions used for completion will be
+# _git_log and __gitk_main.
 #
 # Compatible with bash 3.2.57.
 #
@@ -2975,22 +2989,42 @@ __git_complete_config_variable_name_and_value ()
 
 _git_config ()
 {
-	case "$prev" in
-	--get|--get-all|--unset|--unset-all)
-		__gitcomp_nl "$(__git_config_get_set_variables)"
+	local subcommands subcommand
+
+	__git_resolve_builtins "config"
+
+	subcommands="$___git_resolved_builtins"
+	subcommand="$(__git_find_subcommand "$subcommands")"
+
+	if [ -z "$subcommand" ]
+	then
+		__gitcomp "$subcommands"
 		return
-		;;
-	*.*)
-		__git_complete_config_variable_value
+	fi
+
+	case "$cur" in
+	--*)
+		__gitcomp_builtin "config_$subcommand"
 		return
 		;;
 	esac
-	case "$cur" in
-	--*)
-		__gitcomp_builtin config
+
+	case "$subcommand" in
+	get)
+		__gitcomp_nl "$(__git_config_get_set_variables)"
 		;;
-	*)
-		__git_complete_config_variable_name
+	set)
+		case "$prev" in
+		*.*)
+			__git_complete_config_variable_value
+			;;
+		*)
+			__git_complete_config_variable_name
+			;;
+		esac
+		;;
+	unset)
+		__gitcomp_nl "$(__git_config_get_set_variables)"
 		;;
 	esac
 }
@@ -3262,7 +3296,7 @@ __gitcomp_directories ()
 		#       i.e. which are *already* part of their
 		#       sparse-checkout.  Thus, normal file and directory
 		#       completion is always useless for "git
-		#       sparse-checkout add" and is also probelmatic for
+		#       sparse-checkout add" and is also problematic for
 		#       "git sparse-checkout set" unless using it to
 		#       strictly narrow the checkout.
 		COMPREPLY=( "" )
@@ -3581,6 +3615,17 @@ _git_svn ()
 	fi
 }
 
+_git_symbolic_ref () {
+	case "$cur" in
+	--*)
+		__gitcomp_builtin symbolic-ref
+		return
+		;;
+	esac
+
+	__git_complete_refs
+}
+
 _git_tag ()
 {
 	local i c="$__git_cmd_idx" f=0
@@ -3653,7 +3698,7 @@ _git_worktree ()
 		# Here we are not completing an --option, it's either the
 		# path or a ref.
 		case "$prev" in
-		-b|-B)	# Complete refs for branch to be created/reseted.
+		-b|-B)	# Complete refs for branch to be created/reset.
 			__git_complete_refs
 			;;
 		-*)	# The previous word is an -o|--option without an

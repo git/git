@@ -1,19 +1,19 @@
-(
-	case "$x" in
-	x) foo ;;
-	*) bar ;;
-	esac &&
-	foobar
-) &&
-(
-	case "$x" in
-	x) foo ;;
-	*) bar ;;
-	esac ?!AMP?!
-	foobar
-) &&
-(
-	case "$x" in 1) true;; esac &&
-	case "$y" in 2) false;; esac ?!AMP?!
-	foobar
-)
+2 (
+3 	case "$x" in
+4 	x) foo ;;
+5 	*) bar ;;
+6 	esac &&
+7 	foobar
+8 ) &&
+9 (
+10 	case "$x" in
+11 	x) foo ;;
+12 	*) bar ;;
+13 	esac ?!LINT: missing '&&'?!
+14 	foobar
+15 ) &&
+16 (
+17 	case "$x" in 1) true;; esac &&
+18 	case "$y" in 2) false;; esac ?!LINT: missing '&&'?!
+19 	foobar
+20 )

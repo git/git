@@ -72,7 +72,6 @@ gen_cmd_aux () {
 	nested=0
 	nested_min=100
 
-
 	# Step 1:
 	#
 	# Increase/decrease "start"/"end" indices respectively to get rid of
@@ -87,7 +86,7 @@ gen_cmd_aux () {
 	IFS=#
 	for c in $(echo "$LAYOUT" | sed 's:.:&#:g')
 	do
-		if test "$c" = " "
+		if test -z "$c" || test "$c" = " "
 		then
 			continue
 		fi
@@ -326,7 +325,7 @@ gen_cmd () {
 		fi
 
 		# If this is a single window diff with all the buffers
-		if ! echo "$tab" | grep ",\|/" >/dev/null
+		if ! echo "$tab" | grep -E ",|/" >/dev/null
 		then
 			CMD="$CMD | silent execute 'bufdo diffthis'"
 		fi
@@ -412,7 +411,7 @@ merge_cmd () {
 			-f "$FINAL_CMD" '"$LOCAL"' '"$BASE"' '"$REMOTE"' '"$MERGED"'
 	else
 		# If there is no BASE (example: a merge conflict in a new file
-		# with the same name created in both braches which didn't exist
+		# with the same name created in both branches which didn't exist
 		# before), close all BASE windows using vim's "quit" command
 
 		FINAL_CMD=$(echo "$FINAL_CMD" | \

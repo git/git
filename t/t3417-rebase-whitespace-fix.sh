@@ -5,6 +5,7 @@ test_description='git rebase --whitespace=fix
 This test runs git rebase --whitespace=fix and make sure that it works.
 '
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # prepare initial revision of "file" with a blank line at the end

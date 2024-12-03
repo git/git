@@ -73,6 +73,10 @@ default.
 symbolic ref were printed correctly, with status 1 if the requested
 name is not a symbolic ref, or 128 if another error occurs.
 
+SEE ALSO
+--------
+linkgit:git-update-ref[1]
+
 GIT
 ---
 Part of the linkgit:git[1] suite

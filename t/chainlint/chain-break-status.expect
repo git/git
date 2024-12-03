@@ -1,9 +1,9 @@
-OUT=$( ((large_git; echo $? 1>&3) | :) 3>&1 ) &&
-test_match_signal 13 "$OUT" &&
-
-{ test-tool sigchain >actual; ret=$?; } &&
-{
-	test_match_signal 15 "$ret" ||
-	test "$ret" = 3
-} &&
-test_cmp expect actual
+2 OUT=$( ((large_git; echo $? 1>&3) | :) 3>&1 ) &&
+3 test_match_signal 13 "$OUT" &&
+4 
+5 { test-tool sigchain >actual; ret=$?; } &&
+6 {
+7 	test_match_signal 15 "$ret" ||
+8 	test "$ret" = 3
+9 } &&
+10 test_cmp expect actual

@@ -34,6 +34,7 @@ struct ref_dir *get_ref_dir(struct ref_entry *entry)
 }
 
 struct ref_entry *create_ref_entry(const char *refname,
+				   const char *referent,
 				   const struct object_id *oid, int flag)
 {
 	struct ref_entry *ref;
@@ -41,6 +42,8 @@ struct ref_entry *create_ref_entry(const char *refname,
 	FLEX_ALLOC_STR(ref, name, refname);
 	oidcpy(&ref->u.value.oid, oid);
 	ref->flag = flag;
+	ref->u.value.referent = xstrdup_or_null(referent);
+
 	return ref;
 }
 
@@ -66,11 +69,14 @@ static void free_ref_entry(struct ref_entry *entry)
 		 */
 		clear_ref_dir(&entry->u.subdir);
 	}
+	free(entry->u.value.referent);
 	free(entry);
 }
 
 void free_ref_cache(struct ref_cache *cache)
 {
+	if (!cache)
+		return;
 	free_ref_entry(cache->root);
 	free(cache);
 }
@@ -429,6 +435,7 @@ static int cache_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			level->index = -1;
 		} else {
 			iter->base.refname = entry->name;
+			iter->base.referent = entry->u.value.referent;
 			iter->base.oid = &entry->u.value.oid;
 			iter->base.flags = entry->flag;
 			return ITER_OK;
@@ -441,10 +448,7 @@ static int cache_ref_iterator_peel(struct ref_iterator *ref_iterator,
 {
 	struct cache_ref_iterator *iter =
 		(struct cache_ref_iterator *)ref_iterator;
-
-	if (iter->repo != the_repository)
-		BUG("peeling for non-the_repository is not supported");
-	return peel_object(ref_iterator->oid, peeled) ? -1 : 0;
+	return peel_object(iter->repo, ref_iterator->oid, peeled) ? -1 : 0;
 }
 
 static int cache_ref_iterator_abort(struct ref_iterator *ref_iterator)

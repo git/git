@@ -2,10 +2,10 @@
 
 test_description='partial clone'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 
-# missing promisor objects cause repacks which write bitmaps to fail
-GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=0
 # When enabled, some commands will write commit-graphs. This causes fsck
 # to fail when delete_object() is called because fsck will attempt to
 # verify the out-of-sync commit graph.
@@ -241,7 +241,7 @@ test_expect_success 'fetching of missing objects works with ref-in-want enabled'
 	grep "fetch< fetch=.*ref-in-want" trace
 '
 
-test_expect_success 'fetching of missing objects from another promisor remote' '
+test_expect_success 'fetching from another promisor remote' '
 	git clone "file://$(pwd)/server" server2 &&
 	test_commit -C server2 bar &&
 	git -C server2 repack -a -d --write-bitmap-index &&
@@ -264,8 +264,8 @@ test_expect_success 'fetching of missing objects from another promisor remote' '
 	grep "$HASH2" out
 '
 
-test_expect_success 'fetching of missing objects configures a promisor remote' '
-	git clone "file://$(pwd)/server" server3 &&
+test_expect_success 'fetching with --filter configures a promisor remote' '
+	test_create_repo server3 &&
 	test_commit -C server3 baz &&
 	git -C server3 repack -a -d --write-bitmap-index &&
 	HASH3=$(git -C server3 rev-parse baz) &&
@@ -687,6 +687,67 @@ test_expect_success 'lazy-fetch when accessing object not in the_repository' '
 	# Sanity check that the file is now present
 	git -C partial.git rev-list --objects --missing=print HEAD >out &&
 	! grep "[?]$FILE_HASH" out
+'
+
+test_expect_success 'push should not fetch new commit objects' '
+	rm -rf server client &&
+	test_create_repo server &&
+	test_config -C server uploadpack.allowfilter 1 &&
+	test_config -C server uploadpack.allowanysha1inwant 1 &&
+	test_commit -C server server1 &&
+
+	git clone --filter=blob:none "file://$(pwd)/server" client &&
+	test_commit -C client client1 &&
+
+	test_commit -C server server2 &&
+	COMMIT=$(git -C server rev-parse server2) &&
+
+	test_must_fail git -C client push 2>err &&
+	grep "fetch first" err &&
+	git -C client rev-list --objects --missing=print "$COMMIT" >objects &&
+	grep "^[?]$COMMIT" objects
+'
+
+test_expect_success 'setup for promisor.quiet tests' '
+	rm -rf server &&
+	test_create_repo server &&
+	test_commit -C server foo &&
+	git -C server rm foo.t &&
+	git -C server commit -m remove &&
+	git -C server config uploadpack.allowanysha1inwant 1 &&
+	git -C server config uploadpack.allowfilter 1
+'
+
+test_expect_success TTY 'promisor.quiet=false shows progress messages' '
+	rm -rf repo &&
+	git clone --filter=blob:none "file://$(pwd)/server" repo &&
+	git -C repo config promisor.quiet "false" &&
+
+	test_terminal git -C repo cat-file -p foo:foo.t 2>err &&
+
+	# Ensure that progress messages are written
+	grep "Receiving objects" err
+'
+
+test_expect_success TTY 'promisor.quiet=true does not show progress messages' '
+	rm -rf repo &&
+	git clone --filter=blob:none "file://$(pwd)/server" repo &&
+	git -C repo config promisor.quiet "true" &&
+
+	test_terminal git -C repo cat-file -p foo:foo.t 2>err &&
+
+	# Ensure that no progress messages are written
+	! grep "Receiving objects" err
+'
+
+test_expect_success TTY 'promisor.quiet=unconfigured shows progress messages' '
+	rm -rf repo &&
+	git clone --filter=blob:none "file://$(pwd)/server" repo &&
+
+	test_terminal git -C repo cat-file -p foo:foo.t 2>err &&
+
+	# Ensure that progress messages are written
+	grep "Receiving objects" err
 '
 
 . "$TEST_DIRECTORY"/lib-httpd.sh

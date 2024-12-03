@@ -65,7 +65,7 @@ test_expect_success 'autocorrect can be declined altogether' '
 test_expect_success 'autocorrect works in work tree created from bare repo' '
 	git clone --bare . bare.git &&
 	git -C bare.git worktree add ../worktree &&
-	git -C worktree -c help.autocorrect=immediate stauts
+	git -C worktree -c help.autocorrect=immediate status
 '
 
 test_done

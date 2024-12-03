@@ -398,13 +398,19 @@ test_expect_success 'bad attr source defaults to reading .gitattributes file' '
 	)
 '
 
-test_expect_success 'bare repo defaults to reading .gitattributes from HEAD' '
+test_expect_success 'bare repo no longer defaults to reading .gitattributes from HEAD' '
 	test_when_finished rm -rf test bare_with_gitattribute &&
 	git init test &&
 	test_commit -C test gitattributes .gitattributes "f/path test=val" &&
 	git clone --bare test bare_with_gitattribute &&
-	echo "f/path: test: val" >expect &&
+
+	echo "f/path: test: unspecified" >expect &&
 	git -C bare_with_gitattribute check-attr test -- f/path >actual &&
+	test_cmp expect actual &&
+
+	echo "f/path: test: val" >expect &&
+	git -C bare_with_gitattribute -c attr.tree=HEAD \
+		check-attr test -- f/path >actual &&
 	test_cmp expect actual
 '
 
@@ -425,6 +431,21 @@ test_expect_success 'precedence of --attr-source, GIT_ATTR_SOURCE, then attr.tre
 		GIT_ATTR_SOURCE=attr-source git -c attr.tree=attr-tree \
 		check-attr test -- f/path >actual &&
 		test_cmp expect actual
+	)
+'
+
+test_expect_success 'diff without repository with attr source' '
+	mkdir -p "$TRASH_DIRECTORY/outside/nongit" &&
+	(
+		cd "$TRASH_DIRECTORY/outside/nongit" &&
+		GIT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/outside" &&
+		export GIT_CEILING_DIRECTORIES &&
+		touch file &&
+		cat >expect <<-EOF &&
+		fatal: cannot use --attr-source or GIT_ATTR_SOURCE without repo
+		EOF
+		test_must_fail env GIT_ATTR_SOURCE=HEAD git grep --no-index foo file 2>err &&
+		test_cmp expect err
 	)
 '
 
@@ -568,6 +589,16 @@ test_expect_success EXPENSIVE 'large attributes file ignored in index' '
 	blob=$(dd if=/dev/zero bs=1048576 count=101 2>/dev/null | git hash-object -w --stdin) &&
 	git update-index --add --cacheinfo 100644,$blob,.gitattributes &&
 	git check-attr --cached --all path >/dev/null 2>err &&
+	echo "warning: ignoring overly large gitattributes blob ${SQ}.gitattributes${SQ}" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success EXPENSIVE 'large attributes blob ignored' '
+	test_when_finished "git update-index --remove .gitattributes" &&
+	blob=$(dd if=/dev/zero bs=1048576 count=101 2>/dev/null | git hash-object -w --stdin) &&
+	git update-index --add --cacheinfo 100644,$blob,.gitattributes &&
+	tree="$(git write-tree)" &&
+	git check-attr --cached --all --source="$tree" path >/dev/null 2>err &&
 	echo "warning: ignoring overly large gitattributes blob ${SQ}.gitattributes${SQ}" >expect &&
 	test_cmp expect err
 '

@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "cache-tree.h"
 #include "gettext.h"
@@ -47,11 +49,13 @@ static int update_refs(const struct reset_head_opts *opts,
 				strbuf_addstr(&msg, "updating ORIG_HEAD");
 				reflog_orig_head = msg.buf;
 			}
-			update_ref(reflog_orig_head, "ORIG_HEAD",
-				   orig_head ? orig_head : head,
-				   old_orig, 0, UPDATE_REFS_MSG_ON_ERR);
+			refs_update_ref(get_main_ref_store(the_repository),
+					reflog_orig_head, "ORIG_HEAD",
+					orig_head ? orig_head : head,
+					old_orig, 0, UPDATE_REFS_MSG_ON_ERR);
 		} else if (old_orig)
-			delete_ref(NULL, "ORIG_HEAD", old_orig, 0);
+			refs_delete_ref(get_main_ref_store(the_repository),
+					NULL, "ORIG_HEAD", old_orig, 0);
 	}
 
 	if (!reflog_head) {
@@ -60,19 +64,22 @@ static int update_refs(const struct reset_head_opts *opts,
 		reflog_head = msg.buf;
 	}
 	if (!switch_to_branch)
-		ret = update_ref(reflog_head, "HEAD", oid, head,
-				 detach_head ? REF_NO_DEREF : 0,
-				 UPDATE_REFS_MSG_ON_ERR);
+		ret = refs_update_ref(get_main_ref_store(the_repository),
+				      reflog_head, "HEAD", oid, head,
+				      detach_head ? REF_NO_DEREF : 0,
+				      UPDATE_REFS_MSG_ON_ERR);
 	else {
-		ret = update_ref(reflog_branch ? reflog_branch : reflog_head,
-				 switch_to_branch, oid, NULL, 0,
-				 UPDATE_REFS_MSG_ON_ERR);
+		ret = refs_update_ref(get_main_ref_store(the_repository),
+				      reflog_branch ? reflog_branch : reflog_head,
+				      switch_to_branch, oid, NULL, 0,
+				      UPDATE_REFS_MSG_ON_ERR);
 		if (!ret)
-			ret = create_symref("HEAD", switch_to_branch,
-					    reflog_head);
+			ret = refs_update_symref(get_main_ref_store(the_repository),
+						 "HEAD", switch_to_branch,
+						 reflog_head);
 	}
 	if (!ret && run_hook)
-		run_hooks_l("post-checkout",
+		run_hooks_l(the_repository, "post-checkout",
 			    oid_to_hex(head ? head : null_oid()),
 			    oid_to_hex(oid), "1", NULL);
 	strbuf_release(&msg);

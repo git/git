@@ -30,7 +30,7 @@ struct reftable_reader_offsets {
 
 /* The state for reading a reftable file. */
 struct reftable_reader {
-	/* for convience, associate a name with the instance. */
+	/* for convenience, associate a name with the instance. */
 	char *name;
 	struct reftable_block_source source;
 
@@ -50,12 +50,15 @@ struct reftable_reader {
 	struct reftable_reader_offsets ref_offsets;
 	struct reftable_reader_offsets obj_offsets;
 	struct reftable_reader_offsets log_offsets;
+
+	uint64_t refcount;
 };
 
-int init_reader(struct reftable_reader *r, struct reftable_block_source *source,
-		const char *name);
-void reader_close(struct reftable_reader *r);
 const char *reader_name(struct reftable_reader *r);
+
+int reader_init_iter(struct reftable_reader *r,
+		     struct reftable_iterator *it,
+		     uint8_t typ);
 
 /* initialize a block reader to read from `r` */
 int reader_init_block_reader(struct reftable_reader *r, struct block_reader *br,

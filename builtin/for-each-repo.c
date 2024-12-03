@@ -1,9 +1,9 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "path.h"
-#include "repository.h"
 #include "run-command.h"
 #include "string-list.h"
 
@@ -29,9 +29,13 @@ static int run_command_on_repo(const char *path, int argc, const char ** argv)
 	return run_command(&child);
 }
 
-int cmd_for_each_repo(int argc, const char **argv, const char *prefix)
+int cmd_for_each_repo(int argc,
+		      const char **argv,
+		      const char *prefix,
+		      struct repository *repo UNUSED)
 {
 	static const char *config_key = NULL;
+	int keep_going = 0;
 	int i, result = 0;
 	const struct string_list *values;
 	int err;
@@ -39,6 +43,8 @@ int cmd_for_each_repo(int argc, const char **argv, const char *prefix)
 	const struct option options[] = {
 		OPT_STRING(0, "config", &config_key, N_("config"),
 			   N_("config key storing a list of repository paths")),
+		OPT_BOOL(0, "keep-going", &keep_going,
+			 N_("keep going even if command fails in a repository")),
 		OPT_END()
 	};
 
@@ -55,8 +61,14 @@ int cmd_for_each_repo(int argc, const char **argv, const char *prefix)
 	else if (err)
 		return 0;
 
-	for (i = 0; !result && i < values->nr; i++)
-		result = run_command_on_repo(values->items[i].string, argc, argv);
+	for (i = 0; i < values->nr; i++) {
+		int ret = run_command_on_repo(values->items[i].string, argc, argv);
+		if (ret) {
+			if (!keep_going)
+					return ret;
+			result = 1;
+		}
+	}
 
 	return result;
 }

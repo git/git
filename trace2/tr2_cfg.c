@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "config.h"
 #include "strbuf.h"
@@ -124,7 +126,7 @@ void tr2_cfg_list_config_fl(const char *file, int line)
 	struct tr2_cfg_data data = { file, line };
 
 	if (tr2_cfg_load_patterns() > 0)
-		read_early_config(tr2_cfg_cb, &data);
+		read_early_config(the_repository, tr2_cfg_cb, &data);
 }
 
 void tr2_list_env_vars_fl(const char *file, int line)

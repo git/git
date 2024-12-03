@@ -1,9 +1,9 @@
-(foo && bar) &&
-(foo && bar) |
-(foo && bar) >baz &&
-
-(foo; ?!AMP?! bar) &&
-(foo; ?!AMP?! bar) |
-(foo; ?!AMP?! bar) >baz &&
-
-(foo "bar; baz")
+2 (foo && bar) &&
+3 (foo && bar) |
+4 (foo && bar) >baz &&
+5 
+6 (foo; ?!LINT: missing '&&'?! bar) &&
+7 (foo; ?!LINT: missing '&&'?! bar) |
+8 (foo; ?!LINT: missing '&&'?! bar) >baz &&
+9 
+10 (foo "bar; baz")

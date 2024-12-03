@@ -17,6 +17,8 @@
    License along with the GNU C Library; if not, see
    <http://www.gnu.org/licenses/>.  */
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 #if defined __TANDEM
  /* This is currently duplicated from git-compat-utils.h */
 # ifdef NO_INTPTR_T
@@ -848,7 +850,7 @@ init_dfa (re_dfa_t *dfa, size_t pat_len)
 {
   unsigned int table_size;
 #ifndef _LIBC
-  char *codeset_name;
+  const char *codeset_name;
 #endif
 
   memset (dfa, '\0', sizeof (re_dfa_t));
@@ -868,7 +870,7 @@ init_dfa (re_dfa_t *dfa, size_t pat_len)
     if (table_size > pat_len)
       break;
 
-  dfa->state_table = calloc (sizeof (struct re_state_table_entry), table_size);
+  dfa->state_table = calloc (table_size, sizeof (struct re_state_table_entry));
   dfa->state_hash_mask = table_size - 1;
 
   dfa->mb_cur_max = MB_CUR_MAX;
@@ -936,7 +938,7 @@ init_dfa (re_dfa_t *dfa, size_t pat_len)
 	{
 	  int i, j, ch;
 
-	  dfa->sb_char = (re_bitset_ptr_t) calloc (sizeof (bitset_t), 1);
+	  dfa->sb_char = (re_bitset_ptr_t) calloc (1, sizeof (bitset_t));
 	  if (BE (dfa->sb_char == NULL, 0))
 	    return REG_ESPACE;
 
@@ -3079,9 +3081,9 @@ parse_bracket_exp (re_string_t *regexp, re_dfa_t *dfa, re_token_t *token,
 						   _NL_COLLATE_SYMB_EXTRAMB);
     }
 #endif
-  sbcset = (re_bitset_ptr_t) calloc (sizeof (bitset_t), 1);
+  sbcset = (re_bitset_ptr_t) calloc (1, sizeof (bitset_t));
 #ifdef RE_ENABLE_I18N
-  mbcset = (re_charset_t *) calloc (sizeof (re_charset_t), 1);
+  mbcset = (re_charset_t *) calloc (1, sizeof (re_charset_t));
 #endif /* RE_ENABLE_I18N */
 #ifdef RE_ENABLE_I18N
   if (BE (sbcset == NULL || mbcset == NULL, 0))
@@ -3626,9 +3628,9 @@ build_charclass_op (re_dfa_t *dfa, RE_TRANSLATE_TYPE trans,
   re_token_t br_token;
   bin_tree_t *tree;
 
-  sbcset = (re_bitset_ptr_t) calloc (sizeof (bitset_t), 1);
+  sbcset = (re_bitset_ptr_t) calloc (1, sizeof (bitset_t));
 #ifdef RE_ENABLE_I18N
-  mbcset = (re_charset_t *) calloc (sizeof (re_charset_t), 1);
+  mbcset = (re_charset_t *) calloc (1, sizeof (re_charset_t));
 #endif /* RE_ENABLE_I18N */
 
 #ifdef RE_ENABLE_I18N

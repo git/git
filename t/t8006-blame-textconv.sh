@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='git blame textconv support'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 find_blame() {

@@ -1,3 +1,4 @@
+test_expect_success 'multi-line-nested-command-substitution' '
 (
 	foo &&
 	x=$(
@@ -16,3 +17,4 @@ sort &&
 		fip) &&
 	echo fail
 )
+'

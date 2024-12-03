@@ -2,6 +2,7 @@
 
 test_description='git-status ignored files'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 cat >expected <<\EOF

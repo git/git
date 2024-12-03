@@ -1,0 +1,9 @@
+test_expect_success 'here-doc-body-pathological' - <<\EOF
+	echo "outer here-doc does not allow indented end-tag"
+	cat >file <<-\EOF &&
+	but this inner here-doc
+	does allow indented EOF
+	EOF
+	echo "missing chain after"
+	echo "but this line is OK because it's the end"
+EOF

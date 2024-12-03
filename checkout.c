@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "object-name.h"
 #include "remote.h"
@@ -45,8 +47,8 @@ static int check_tracking_name(struct remote *remote, void *cb_data)
 	return 0;
 }
 
-const char *unique_tracking_name(const char *name, struct object_id *oid,
-				 int *dwim_remotes_matched)
+char *unique_tracking_name(const char *name, struct object_id *oid,
+			   int *dwim_remotes_matched)
 {
 	struct tracking_name_data cb_data = TRACKING_NAME_DATA_INIT;
 	const char *default_remote = NULL;

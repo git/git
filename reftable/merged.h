@@ -12,8 +12,8 @@ https://developers.google.com/open-source/licenses/bsd
 #include "system.h"
 
 struct reftable_merged_table {
-	struct reftable_table *stack;
-	size_t stack_len;
+	struct reftable_reader **readers;
+	size_t readers_len;
 	uint32_t hash_id;
 
 	/* If unset, produce deletions. This is useful for compaction. For the
@@ -24,6 +24,10 @@ struct reftable_merged_table {
 	uint64_t max;
 };
 
-void merged_table_release(struct reftable_merged_table *mt);
+struct reftable_iterator;
+
+int merged_table_init_iter(struct reftable_merged_table *mt,
+			   struct reftable_iterator *it,
+			   uint8_t typ);
 
 #endif

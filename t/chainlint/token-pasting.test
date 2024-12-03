@@ -1,3 +1,4 @@
+test_expect_success 'token-pasting' '
 # LINT: single token; composite of multiple strings
 git config filter.rot13.smudge ./rot13.sh &&
 git config filter.rot13.clean ./rot13.sh &&
@@ -30,3 +31,4 @@ downstream_url_for_sed=$(
 # LINT: exit/enter string context; "&" inside string not command terminator
 	sed -e '\''s/\\/\\\\/g'\'' -e '\''s/[[/.*^$]/\\&/g'\''
 )
+'

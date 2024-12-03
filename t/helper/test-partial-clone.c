@@ -21,11 +21,13 @@ static void object_info(const char *gitdir, const char *oid_hex)
 
 	if (repo_init(&r, gitdir, NULL))
 		die("could not init repo");
-	if (parse_oid_hex(oid_hex, &oid, &p))
+	if (parse_oid_hex_algop(oid_hex, &oid, &p, r.hash_algo))
 		die("could not parse oid");
 	if (oid_object_info_extended(&r, &oid, &oi, 0))
 		die("could not obtain object info");
 	printf("%d\n", (int) size);
+
+	repo_clear(&r);
 }
 
 int cmd__partial_clone(int argc, const char **argv)

@@ -1,5 +1,5 @@
 #include "test-tool.h"
-#include "hash-ll.h"
+#include "hash.h"
 
 int cmd__sha1(int ac, const char **av)
 {

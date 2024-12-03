@@ -66,4 +66,28 @@ test_expect_success 'apply --index create' '
 	git diff --exit-code
 '
 
+test_expect_success !MINGW 'apply with no-contents and a funny pathname' '
+	test_when_finished "rm -fr \"funny \"; git reset --hard" &&
+
+	mkdir "funny " &&
+	>"funny /empty" &&
+	git add "funny /empty" &&
+	git diff HEAD -- "funny /" >sample.patch &&
+	git diff -R HEAD -- "funny /" >elpmas.patch &&
+
+	git reset --hard &&
+
+	git apply --stat --check --apply sample.patch &&
+	test_must_be_empty "funny /empty" &&
+
+	git apply --stat --check --apply elpmas.patch &&
+	test_path_is_missing "funny /empty" &&
+
+	git apply -R --stat --check --apply elpmas.patch &&
+	test_must_be_empty "funny /empty" &&
+
+	git apply -R --stat --check --apply sample.patch &&
+	test_path_is_missing "funny /empty"
+'
+
 test_done

@@ -1,3 +1,4 @@
+test_expect_success 'here-doc' '
 # LINT: stitch together incomplete \-ending lines
 # LINT: swallow here-doc to avoid false positives in content
 boodle wobba \
@@ -28,3 +29,4 @@ morticia
 wednesday
 pugsly
 EOF
+'

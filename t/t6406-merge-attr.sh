@@ -118,6 +118,14 @@ test_expect_success 'retry the merge with longer context' '
 	grep "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" actual
 '
 
+test_expect_success 'invalid conflict-marker-size 3a' '
+	cp .gitattributes .gitattributes.bak &&
+	echo "text conflict-marker-size=3a" >>.gitattributes &&
+	test_when_finished "mv .gitattributes.bak .gitattributes" &&
+	git checkout -m text 2>err &&
+	test_grep "warning: invalid marker-size ${SQ}3a${SQ}, expecting an integer" err
+'
+
 test_expect_success 'custom merge backend' '
 
 	echo "* merge=union" >.gitattributes &&
@@ -185,7 +193,7 @@ test_expect_success !WINDOWS 'custom merge driver that is killed with a signal' 
 
 	>./please-abort &&
 	echo "* merge=custom" >.gitattributes &&
-	test_must_fail git merge main 2>err &&
+	test_expect_code 2 git merge main 2>err &&
 	grep "^error: failed to execute internal merge" err &&
 	git ls-files -u >output &&
 	git diff --name-only HEAD >>output &&
@@ -259,6 +267,46 @@ test_expect_success 'binary files with union attribute' '
 		test_must_fail git merge bin-main 2>output
 	fi &&
 	grep -i "warning.*cannot merge.*HEAD vs. bin-main" output
+'
+
+test_expect_success !WINDOWS 'custom merge driver that is killed with a signal on recursive merge' '
+	test_when_finished "rm -f output please-abort" &&
+	test_when_finished "git checkout side" &&
+
+	git reset --hard anchor &&
+
+	git checkout -b base-a main^ &&
+	echo base-a >text &&
+	git commit -m base-a text &&
+
+	git checkout -b base-b main^ &&
+	echo base-b >text &&
+	git commit -m base-b text &&
+
+	git checkout -b recursive-a base-a &&
+	test_must_fail git merge base-b &&
+	echo recursive-a >text &&
+	git add text &&
+	git commit -m recursive-a &&
+
+	git checkout -b recursive-b base-b &&
+	test_must_fail git merge base-a &&
+	echo recursive-b >text &&
+	git add text &&
+	git commit -m recursive-b &&
+
+	git config --replace-all \
+	merge.custom.driver "./custom-merge %O %A %B 0 %P %S %X %Y" &&
+	git config --replace-all \
+	merge.custom.name "custom merge driver for testing" &&
+
+	>./please-abort &&
+	echo "* merge=custom" >.gitattributes &&
+	test_expect_code 2 git merge recursive-a 2>err &&
+	grep "error: failed to execute internal merge" err &&
+	git ls-files -u >output &&
+	git diff --name-only HEAD >>output &&
+	test_must_be_empty output
 '
 
 test_done

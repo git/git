@@ -272,6 +272,7 @@ _git ()
 {
 	local _ret=1
 	local cur cword prev
+	local __git_repo_path
 
 	cur=${words[CURRENT]}
 	prev=${words[CURRENT-1]}

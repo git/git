@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        platform:
+          - os: ubuntu-latest
+            generator: Unix Makefiles
+          - os: macos-latest
+            generator: Unix Makefiles
+          - os: windows-latest
+            generator: Visual Studio 17 2022
+          - os: windows-latest
+            generator: MSYS Makefiles
+          - os: windows-latest
+            generator: MinGW Makefiles
+
+    runs-on: ${{ matrix.platform.os }}
+
+    steps:
+    - name: Check out
+      uses: actions/checkout@v2
+    - name: Build
+      run: |
+        mkdir build
+        cd build
+        cmake .. -G "${{matrix.platform.generator}}"
+        cmake --build .

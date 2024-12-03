@@ -6,6 +6,7 @@ GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 TEST_CREATE_REPO_NO_TEMPLATE=1
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/lib-rebase.sh
@@ -427,7 +428,7 @@ test_expect_success '"add" worktree with orphan branch, lock, and reason' '
 # Note: Quoted arguments containing spaces are not supported.
 test_wt_add_orphan_hint () {
 	local context="$1" &&
-	local use_branch=$2 &&
+	local use_branch="$2" &&
 	shift 2 &&
 	local opts="$*" &&
 	test_expect_success "'worktree add' show orphan hint in bad/orphan HEAD w/ $context" '

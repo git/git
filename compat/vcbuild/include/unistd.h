@@ -14,7 +14,11 @@ typedef _mode_t	mode_t;
 
 #ifndef _SSIZE_T_
 #define _SSIZE_T_
+#ifdef _WIN64
+typedef __int64 _ssize_t;
+#else
 typedef long _ssize_t;
+#endif /* _WIN64 */
 
 #ifndef	_OFF_T_
 #define	_OFF_T_

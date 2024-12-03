@@ -25,6 +25,7 @@ test_description='git rerere
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '
@@ -669,6 +670,69 @@ test_expect_success 'test simple stage 1 handling' '
 		git checkout A^0 &&
 		test_must_fail git merge B^0
 	)
+'
+
+test_expect_success 'rerere does not crash with missing preimage' '
+	git config rerere.enabled true &&
+
+	echo bar >test &&
+	git add test &&
+	git commit -m "one" &&
+	git branch rerere_no_crash &&
+
+	echo foo >>test &&
+	git add test &&
+	git commit -m "two" &&
+
+	git checkout rerere_no_crash &&
+	echo "bar" >>test &&
+	git add test &&
+	git commit -m "three" &&
+
+	test_must_fail git rebase main &&
+	rm .git/rr-cache/*/preimage &&
+	git rebase --abort
+'
+
+test_expect_success 'rerere does not crash with unmatched conflict marker' '
+	git config rerere.enabled true &&
+
+	echo bar >test &&
+	git add test &&
+	git commit -m "one" &&
+	git branch rerere_no_preimage &&
+
+	cat >test <<-EOF &&
+	test
+	bar
+	foobar
+	EOF
+	git add test &&
+	git commit -m "two" &&
+
+	git checkout rerere_no_preimage &&
+	echo "bar" >>test &&
+	git add test &&
+	git commit -m "three" &&
+
+	cat >test <<-EOF &&
+	foobar
+	bar
+	bar
+	EOF
+	git add test &&
+	git commit -m "four" &&
+
+	test_must_fail git rebase main &&
+	cat >test <<-EOF &&
+	test
+	bar
+	<<<<<<< HEAD
+	foobar
+	bar
+	EOF
+	git add test &&
+	test_must_fail git rebase --continue
 '
 
 test_done

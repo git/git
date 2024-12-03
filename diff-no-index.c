@@ -362,7 +362,7 @@ int diff_no_index(struct rev_info *revs,
 	 * The return code for --no-index imitates diff(1):
 	 * 0 = no changes, 1 = changes, else error
 	 */
-	ret = diff_result_code(&revs->diffopt);
+	ret = diff_result_code(revs);
 
 out:
 	for (i = 0; i < ARRAY_SIZE(to_free); i++)

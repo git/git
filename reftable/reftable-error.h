@@ -25,7 +25,7 @@ enum reftable_error {
 	 */
 	REFTABLE_NOT_EXIST_ERROR = -4,
 
-	/* Trying to write out-of-date data. */
+	/* Trying to access locked data. */
 	REFTABLE_LOCK_ERROR = -5,
 
 	/* Misuse of the API:
@@ -48,15 +48,18 @@ enum reftable_error {
 	/* Wrote a table without blocks. */
 	REFTABLE_EMPTY_TABLE_ERROR = -8,
 
-	/* Dir/file conflict. */
-	REFTABLE_NAME_CONFLICT = -9,
-
 	/* Invalid ref name. */
 	REFTABLE_REFNAME_ERROR = -10,
 
 	/* Entry does not fit. This can happen when writing outsize reflog
 	   messages. */
 	REFTABLE_ENTRY_TOO_BIG_ERROR = -11,
+
+	/* Trying to write out-of-date data. */
+	REFTABLE_OUTDATED_ERROR = -12,
+
+	/* An allocation has failed due to an out-of-memory situation. */
+	REFTABLE_OUT_OF_MEMORY_ERROR = -13,
 };
 
 /* convert the numeric error code to a string. The string should not be

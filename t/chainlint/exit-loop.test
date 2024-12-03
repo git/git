@@ -1,3 +1,4 @@
+test_expect_success 'exit-loop' '
 (
 	for i in a b c
 	do
@@ -25,3 +26,4 @@
 		i=$(($i + 1))
 	done
 )
+'

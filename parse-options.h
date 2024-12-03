@@ -355,7 +355,7 @@ struct option {
 	.type = OPTION_ALIAS, \
 	.short_name = (s), \
 	.long_name = (l), \
-	.value = (source_long_name), \
+	.value = (char *)(source_long_name), \
 }
 
 #define OPT_SUBCOMMAND_F(l, v, fn, f) { \

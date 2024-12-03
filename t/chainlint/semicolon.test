@@ -1,3 +1,4 @@
+test_expect_success 'semicolon' '
 (
 # LINT: missing internal "&&" and ending "&&"
 	cat foo ; echo bar
@@ -23,3 +24,4 @@
 # LINT: semicolon unnecessary but legitimate
 		echo;
 	done)
+'

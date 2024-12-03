@@ -4,6 +4,7 @@
 #
 test_description='Test git push porcelain output'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Create commits in <repo> and assign each commit's oid to shell variables

@@ -1,3 +1,4 @@
+test_expect_success 'dqstring-no-interpolate' '
 # LINT: regex dollar-sign eol anchor in double-quoted string not special
 grep "^ ! \[rejected\][ ]*$BRANCH -> $BRANCH (non-fast-forward)$" out &&
 
@@ -13,3 +14,4 @@ grep "^\\.git\$" output.txt &&
 	cut -d ' ' -f 2 <output | sort >actual &&
 	test_cmp expect actual
 "'
+'

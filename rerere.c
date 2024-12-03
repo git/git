@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "config.h"
@@ -219,6 +221,11 @@ static void read_rr(struct repository *r, struct string_list *rr)
 		buf.buf[hexsz] = '\0';
 		id = new_rerere_id_hex(buf.buf);
 		id->variant = variant;
+		/*
+		 * make sure id->collection->status has enough space
+		 * for the variant we are interested in
+		 */
+		fit_variant(id->collection, variant);
 		string_list_insert(rr, path)->util = id;
 	}
 	strbuf_release(&buf);
@@ -844,6 +851,8 @@ static int do_plain_rerere(struct repository *r,
 	if (update.nr)
 		update_paths(r, &update);
 
+	string_list_clear(&conflict, 0);
+	string_list_clear(&update, 0);
 	return write_rr(rr, fd);
 }
 
@@ -907,6 +916,7 @@ int repo_rerere(struct repository *r, int flags)
 		return 0;
 	status = do_plain_rerere(r, &merge_rr, fd);
 	free_rerere_dirs();
+	string_list_clear(&merge_rr, 1);
 	return status;
 }
 
@@ -1097,7 +1107,7 @@ fail_exit:
 
 int rerere_forget(struct repository *r, struct pathspec *pathspec)
 {
-	int i, fd;
+	int i, fd, ret;
 	struct string_list conflict = STRING_LIST_INIT_DUP;
 	struct string_list merge_rr = STRING_LIST_INIT_DUP;
 
@@ -1122,7 +1132,12 @@ int rerere_forget(struct repository *r, struct pathspec *pathspec)
 			continue;
 		rerere_forget_one_path(r->index, it->string, &merge_rr);
 	}
-	return write_rr(&merge_rr, fd);
+
+	ret = write_rr(&merge_rr, fd);
+
+	string_list_clear(&conflict, 0);
+	string_list_clear(&merge_rr, 1);
+	return ret;
 }
 
 /*
@@ -1193,8 +1208,10 @@ void rerere_gc(struct repository *r, struct string_list *rr)
 	if (setup_rerere(r, rr, 0) < 0)
 		return;
 
-	git_config_get_expiry_in_days("gc.rerereresolved", &cutoff_resolve, now);
-	git_config_get_expiry_in_days("gc.rerereunresolved", &cutoff_noresolve, now);
+	repo_config_get_expiry_in_days(the_repository, "gc.rerereresolved",
+				       &cutoff_resolve, now);
+	repo_config_get_expiry_in_days(the_repository, "gc.rerereunresolved",
+				       &cutoff_noresolve, now);
 	git_config(git_default_config, NULL);
 	dir = opendir(git_path("rr-cache"));
 	if (!dir)

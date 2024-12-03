@@ -174,7 +174,7 @@ static void make_arr4(int pretty)
 	jw_end(&arr4);
 }
 
-static char *expect_nest1 =
+static const char *expect_nest1 =
 	"{\"obj1\":{\"a\":\"abc\",\"b\":42,\"c\":true},\"arr1\":[\"abc\",42,true]}";
 
 static struct json_writer nest1 = JSON_WRITER_INIT;
@@ -195,10 +195,10 @@ static void make_nest1(int pretty)
 	jw_release(&arr1);
 }
 
-static char *expect_inline1 =
+static const char *expect_inline1 =
 	"{\"obj1\":{\"a\":\"abc\",\"b\":42,\"c\":true},\"arr1\":[\"abc\",42,true]}";
 
-static char *pretty_inline1 =
+static const char *pretty_inline1 =
 	("{\n"
 	 "  \"obj1\": {\n"
 	 "    \"a\": \"abc\",\n"
@@ -236,10 +236,10 @@ static void make_inline1(int pretty)
 	jw_end(&inline1);
 }
 
-static char *expect_inline2 =
+static const char *expect_inline2 =
 	"[[1,2],[3,4],{\"a\":\"abc\"}]";
 
-static char *pretty_inline2 =
+static const char *pretty_inline2 =
 	("[\n"
 	 "  [\n"
 	 "    1,\n"
@@ -415,6 +415,7 @@ static void get_i(struct line *line, intmax_t *s_in)
 
 	get_s(line, &s);
 
+	errno = 0;
 	*s_in = strtol(s, &endptr, 10);
 	if (*endptr || errno == ERANGE)
 		die("line[%d]: invalid integer value", line->nr);
@@ -427,6 +428,7 @@ static void get_d(struct line *line, double *s_in)
 
 	get_s(line, &s);
 
+	errno = 0;
 	*s_in = strtod(s, &endptr);
 	if (*endptr || errno == ERANGE)
 		die("line[%d]: invalid float value", line->nr);

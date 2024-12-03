@@ -2,6 +2,7 @@
 
 test_description='remote messages are colorized on the client'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

@@ -185,6 +185,58 @@ Then, you can adjust your push URL to use `git@example_author` or
 `git@example_committer` instead of `git@example.org` (e.g., `git remote set-url
 git@example_author:org1/project1.git`).
 
+Transfers
+---------
+
+[[sync-working-tree]]
+How do I sync a working tree across systems?::
+	First, decide whether you want to do this at all.  Git works best when you
+	push or pull your work using the typical `git push` and `git fetch` commands
+	and isn't designed to share a working tree across systems.  This is
+	potentially risky and in some cases can cause repository corruption or data
+	loss.
++
+Usually, doing so will cause `git status` to need to re-read every file in the
+working tree.  Additionally, Git's security model does not permit sharing a
+working tree across untrusted users, so it is only safe to sync a working tree
+if it will only be used by a single user across all machines.
++
+It is important not to use a cloud syncing service to sync any portion of a Git
+repository, since this can cause corruption, such as missing objects, changed
+or added files, broken refs, and a wide variety of other problems.  These
+services tend to sync file by file on a continuous basis and don't understand
+the structure of a Git repository.  This is especially bad if they sync the
+repository in the middle of it being updated, since that is very likely to
+cause incomplete or partial updates and therefore data loss.
++
+An example of the kind of corruption that can occur is conflicts over the state
+of refs, such that both sides end up with different commits on a branch that
+the other doesn't have.  This can result in important objects becoming
+unreferenced and possibly pruned by `git gc`, causing data loss.
++
+Therefore, it's better to push your work to either the other system or a central
+server using the normal push and pull mechanism.  However, this doesn't always
+preserve important data, like stashes, so some people prefer to share a working
+tree across systems.
++
+If you do this, the recommended approach is to use `rsync -a --delete-after`
+(ideally with an encrypted connection such as with `ssh`) on the root of
+repository.  You should ensure several things when you do this:
++
+* If you have additional worktrees or a separate Git directory, they must be
+  synced at the same time as the main working tree and repository.
+* You are comfortable with the destination directory being an exact copy of the
+  source directory, _deleting any data that is already there_.
+* The repository (including all worktrees and the Git directory) is in a
+  quiescent state for the duration of the transfer (that is, no operations of
+  any sort are taking place on it, including background operations like `git
+  gc` and operations invoked by your editor).
++
+Be aware that even with these recommendations, syncing in this way has some risk
+since it bypasses Git's normal integrity checking for repositories, so having
+backups is advised.  You may also wish to do a `git fsck` to verify the
+integrity of your data on the destination system after syncing.
+
 Common Issues
 -------------
 
@@ -240,6 +292,42 @@ How do I know if I want to do a fetch or a pull?::
 	You can then at your leisure inspect, merge, rebase on top of, or
 	ignore the upstream changes.  A pull consists of a fetch followed
 	immediately by either a merge or rebase.  See linkgit:git-pull[1].
+
+[[proxy]]
+Can I use a proxy with Git?::
+	Yes, Git supports the use of proxies.  Git honors the standard `http_proxy`,
+	`https_proxy`, and `no_proxy` environment variables commonly used on Unix, and
+	it also can be configured with `http.proxy` and similar options for HTTPS (see
+	linkgit:git-config[1]).  The `http.proxy` and related options can be
+	customized on a per-URL pattern basis.  In addition, Git can in theory
+	function normally with transparent proxies that exist on the network.
++
+For SSH, Git can support a proxy using OpenSSH's `ProxyCommand`. Commonly used
+tools include `netcat` and `socat`.  However, they must be configured not to
+exit when seeing EOF on standard input, which usually means that `netcat` will
+require `-q` and `socat` will require a timeout with something like `-t 10`.
+This is required because the way the Git SSH server knows that no more requests
+will be made is an EOF on standard input, but when that happens, the server may
+not have yet processed the final request, so dropping the connection at that
+point would interrupt that request.
++
+An example configuration entry in `~/.ssh/config` with an HTTP proxy might look
+like this:
++
+----
+Host git.example.org
+    User git
+    ProxyCommand socat -t 10 - PROXY:proxy.example.org:%h:%p,proxyport=8080
+----
++
+Note that in all cases, for Git to work properly, the proxy must be completely
+transparent.  The proxy cannot modify, tamper with, or buffer the connection in
+any way, or Git will almost certainly fail to work.  Note that many proxies,
+including many TLS middleboxes, Windows antivirus and firewall programs other
+than Windows Defender and Windows Firewall, and filtering proxies fail to meet
+this standard, and as a result end up breaking Git.  Because of the many
+reports of problems and their poor security history, we recommend against the
+use of these classes of software and devices.
 
 Merging and Rebasing
 --------------------
@@ -357,8 +445,9 @@ I'm on Windows and git diff shows my files as having a `^M` at the end.::
 +
 You can store the files in the repository with Unix line endings and convert
 them automatically to your platform's line endings.  To do that, set the
-configuration option `core.eol` to `native` and see the following entry for
-information about how to configure files as text or binary.
+configuration option `core.eol` to `native` and see
+<<recommended-storage-settings,the question on recommended storage settings>>
+for information about how to configure files as text or binary.
 +
 You can also control this behavior with the `core.whitespace` setting if you
 don't wish to remove the carriage returns from your line endings.
@@ -420,14 +509,26 @@ references, URLs, and hashes stored in the repository.
 +
 We also recommend setting a linkgit:gitattributes[5] file to explicitly mark
 which files are text and which are binary.  If you want Git to guess, you can
-set the attribute `text=auto`.  For example, the following might be appropriate
-in some projects:
+set the attribute `text=auto`.
++
+With text files, Git will generally ensure that LF endings are used in the
+repository.  The `core.autocrlf` and `core.eol` configuration variables specify
+what line-ending convention is followed when any text file is checked out.  You
+can also use the `eol` attribute (e.g., `eol=crlf`) to override which files get
+what line-ending treatment.
++
+For example, generally shell files must have LF endings and batch files must
+have CRLF endings, so the following might be appropriate in some projects:
 +
 ----
 # By default, guess.
 *	text=auto
 # Mark all C files as text.
 *.c	text
+# Ensure all shell files have LF endings and all batch files have CRLF
+# endings in the working tree and both have LF in the repo.
+*.sh text eol=lf
+*.bat text eol=crlf
 # Mark all JPEG files as binary.
 *.jpg	binary
 ----

@@ -4,6 +4,7 @@ test_description='signed tag tests'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
 
@@ -116,7 +117,7 @@ test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'verify-tag succeeds with tag date 
 	! grep "${GPGSSH_BAD_SIGNATURE}" actual
 '
 
-test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'verify-tag failes with tag date outside of key validity' '
+test_expect_success GPGSSH,GPGSSH_VERIFYTIME 'verify-tag fails with tag date outside of key validity' '
 	test_config gpg.ssh.allowedSignersFile "${GPGSSH_ALLOWED_SIGNERS}" &&
 	test_must_fail git verify-tag timeboxedinvalid-signed 2>actual &&
 	! grep "${GPGSSH_GOOD_SIGNATURE_TRUSTED}" actual

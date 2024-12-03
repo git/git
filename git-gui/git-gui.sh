@@ -2301,7 +2301,7 @@ proc do_quit {{rc {1}}} {
 		#
 		set save [gitdir GITGUI_MSG]
 		if {$GITGUI_BCK_exists && ![$ui_comm edit modified]} {
-			file rename -force [gitdir GITGUI_BCK] $save
+			catch { file rename -force [gitdir GITGUI_BCK] $save }
 			set GITGUI_BCK_exists 0
 		} elseif {[$ui_comm edit modified]} {
 			set msg [string trim [$ui_comm get 0.0 end]]

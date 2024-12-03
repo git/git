@@ -15,7 +15,7 @@ TEST_PASSES_SANITIZE_LEAK=true
 # 1) blob_2 is a delta with blob_1 for base and blob_3 is a delta with blob2
 #    for base, such that blob_3 delta depth is 2;
 #
-# 2) the bulk of object data is uncompressible so the text part remains
+# 2) the bulk of object data is incompressible so the text part remains
 #    visible;
 #
 # 3) object header is always 2 bytes.
@@ -44,9 +44,14 @@ create_new_pack() {
 }
 
 do_repack() {
+    for f in $pack.*
+    do
+	    mv $f "$(echo $f | sed -e 's/pack-/pack-corrupt-/')" || return 1
+    done &&
     pack=$(printf "$blob_1\n$blob_2\n$blob_3\n" |
           git pack-objects $@ .git/objects/pack/pack) &&
-    pack=".git/objects/pack/pack-${pack}"
+    pack=".git/objects/pack/pack-${pack}" &&
+    rm -f .git/objects/pack/pack-corrupt-*
 }
 
 do_corrupt_object() {

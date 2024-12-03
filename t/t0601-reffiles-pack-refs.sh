@@ -9,17 +9,14 @@ test_description='git pack-refs should not change the branch semantic
 This test runs git pack-refs and git show-ref and checks that the branch
 semantic is still the same.
 '
+
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+GIT_TEST_DEFAULT_REF_FORMAT=files
+export GIT_TEST_DEFAULT_REF_FORMAT
 
 TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
-
-if ! test_have_prereq REFFILES
-then
-	skip_all='skipping reffiles specific tests'
-	test_done
-fi
 
 test_expect_success 'enable reflogs' '
 	git config core.logallrefupdates true
@@ -32,11 +29,16 @@ test_expect_success 'prepare a trivial repository' '
 	HEAD=$(git rev-parse --verify HEAD)
 '
 
-test_expect_success 'pack_refs(PACK_REFS_ALL | PACK_REFS_PRUNE)' '
-	N=`find .git/refs -type f | wc -l` &&
+test_expect_success 'pack-refs --prune --all' '
+	test_path_is_missing .git/packed-refs &&
+	git pack-refs --no-prune --all &&
+	test_path_is_file .git/packed-refs &&
+	N=$(find .git/refs -type f | wc -l) &&
 	test "$N" != 0 &&
-	test-tool ref-store main pack-refs PACK_REFS_PRUNE,PACK_REFS_ALL &&
-	N=`find .git/refs -type f` &&
+
+	git pack-refs --prune --all &&
+	test_path_is_file .git/packed-refs &&
+	N=$(find .git/refs -type f) &&
 	test -z "$N"
 '
 
@@ -357,5 +359,91 @@ test_expect_success 'pack-refs does not drop broken refs during deletion' '
 	git rev-parse refs/heads/main >actual &&
 	test_cmp expect actual
 '
+
+for command in "git pack-refs --all --auto" "git maintenance run --task=pack-refs --auto"
+do
+	test_expect_success "$command does not repack below 16 refs without packed-refs" '
+		test_when_finished "rm -rf repo" &&
+		git init repo &&
+		(
+			cd repo &&
+			git config set maintenance.auto false &&
+			git commit --allow-empty --message "initial" &&
+
+			# Create 14 additional references, which brings us to
+			# 15 together with the default branch.
+			printf "create refs/heads/loose-%d HEAD\n" $(test_seq 14) >stdin &&
+			git update-ref --stdin <stdin &&
+			test_path_is_missing .git/packed-refs &&
+			git pack-refs --auto --all &&
+			test_path_is_missing .git/packed-refs &&
+
+			# Create the 16th reference, which should cause us to repack.
+			git update-ref refs/heads/loose-15 HEAD &&
+			git pack-refs --auto --all &&
+			test_path_is_file .git/packed-refs
+		)
+	'
+
+	test_expect_success "$command does not repack below 16 refs with small packed-refs" '
+		test_when_finished "rm -rf repo" &&
+		git init repo &&
+		(
+			cd repo &&
+			git config set maintenance.auto false &&
+			git commit --allow-empty --message "initial" &&
+
+			git pack-refs --all &&
+			test_line_count = 2 .git/packed-refs &&
+
+			# Create 15 loose references.
+			printf "create refs/heads/loose-%d HEAD\n" $(test_seq 15) >stdin &&
+			git update-ref --stdin <stdin &&
+			git pack-refs --auto --all &&
+			test_line_count = 2 .git/packed-refs &&
+
+			# Create the 16th loose reference, which should cause us to repack.
+			git update-ref refs/heads/loose-17 HEAD &&
+			git pack-refs --auto --all &&
+			test_line_count = 18 .git/packed-refs
+		)
+	'
+
+	test_expect_success "$command scales with size of packed-refs" '
+		test_when_finished "rm -rf repo" &&
+		git init repo &&
+		(
+			cd repo &&
+			git config set maintenance.auto false &&
+			git commit --allow-empty --message "initial" &&
+
+			# Create 99 packed refs. This should cause the heuristic
+			# to require more than the minimum amount of loose refs.
+			test_seq 99 |
+			while read i
+			do
+				printf "create refs/heads/packed-%d HEAD\n" $i || return 1
+			done >stdin &&
+			git update-ref --stdin <stdin &&
+			git pack-refs --all &&
+			test_line_count = 101 .git/packed-refs &&
+
+			# Create 24 loose refs, which should not yet cause us to repack.
+			printf "create refs/heads/loose-%d HEAD\n" $(test_seq 24) >stdin &&
+			git update-ref --stdin <stdin &&
+			git pack-refs --auto --all &&
+			test_line_count = 101 .git/packed-refs &&
+
+			# Create another handful of refs to cross the border.
+			# Note that we explicitly do not check for strict
+			# boundaries here, as this also depends on the size of
+			# the object hash.
+			printf "create refs/heads/addn-%d HEAD\n" $(test_seq 10) >stdin &&
+			git update-ref --stdin <stdin &&
+			git pack-refs --auto --all &&
+			test_line_count = 135 .git/packed-refs
+		)
+	'
+done
 
 test_done

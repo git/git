@@ -1,3 +1,4 @@
+test_expect_success 'for-loop' '
 (
 # LINT: "for", "do", "done" do not need "&&"
 	for i in a b c
@@ -17,3 +18,4 @@
 		cat $i
 	done
 )
+'

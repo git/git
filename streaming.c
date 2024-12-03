@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2011, Google Inc.
  */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "convert.h"
 #include "environment.h"

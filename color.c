@@ -64,12 +64,16 @@ static int match_word(const char *word, int len, const char *match)
 	return !strncasecmp(word, match, len) && !match[len];
 }
 
-static int get_hex_color(const char *in, unsigned char *out)
+static int get_hex_color(const char **inp, int width, unsigned char *out)
 {
+	const char *in = *inp;
 	unsigned int val;
-	val = (hexval(in[0]) << 4) | hexval(in[1]);
+
+	assert(width == 1 || width == 2);
+	val = (hexval(in[0]) << 4) | hexval(in[width - 1]);
 	if (val & ~0xff)
 		return -1;
+	*inp += width;
 	*out = val;
 	return 0;
 }
@@ -135,11 +139,14 @@ static int parse_color(struct color *out, const char *name, int len)
 		return 0;
 	}
 
-	/* Try a 24-bit RGB value */
-	if (len == 7 && name[0] == '#') {
-		if (!get_hex_color(name + 1, &out->red) &&
-		    !get_hex_color(name + 3, &out->green) &&
-		    !get_hex_color(name + 5, &out->blue)) {
+	/* Try a 24- or 12-bit RGB value prefixed with '#' */
+	if ((len == 7 || len == 4) && name[0] == '#') {
+		int width_per_color = (len == 7) ? 2 : 1;
+		const char *color = name + 1;
+
+		if (!get_hex_color(&color, width_per_color, &out->red) &&
+		    !get_hex_color(&color, width_per_color, &out->green) &&
+		    !get_hex_color(&color, width_per_color, &out->blue)) {
 			out->type = COLOR_RGB;
 			return 0;
 		}

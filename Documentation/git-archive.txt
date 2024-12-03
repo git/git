@@ -53,7 +53,7 @@ OPTIONS
 --prefix=<prefix>/::
 	Prepend <prefix>/ to paths in the archive.  Can be repeated; its
 	rightmost value is used for all tracked files.  See below which
-	value gets used by `--add-file` and `--add-virtual-file`.
+	value gets used by `--add-file`.
 
 -o <file>::
 --output=<file>::
@@ -67,9 +67,7 @@ OPTIONS
 
 --add-virtual-file=<path>:<content>::
 	Add the specified contents to the archive.  Can be repeated to add
-	multiple files.  The path of the file in the archive is built
-	by concatenating the value of the last `--prefix` option (if any)
-	before this `--add-virtual-file` and `<path>`.
+	multiple files.
 +
 The `<path>` argument can start and end with a literal double-quote
 character; the contained file name is interpreted as a C-style string,
@@ -81,6 +79,10 @@ if the path begins or ends with a double-quote character.
 The file mode is limited to a regular file, and the option may be
 subject to platform-dependent command-line limits. For non-trivial
 cases, write an untracked file and use `--add-file` instead.
++
+Note that unlike `--add-file` the path created in the archive is not
+affected by the `--prefix` option, as a full `<path>` can be given as
+the value of the option.
 
 --worktree-attributes::
 	Look for attributes in .gitattributes files in the working tree

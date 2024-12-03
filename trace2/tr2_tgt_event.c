@@ -24,7 +24,7 @@ static struct tr2_dst tr2dst_event = {
  * a new field to an existing event, do not require an increment to the EVENT
  * format version.
  */
-#define TR2_EVENT_VERSION "3"
+#define TR2_EVENT_VERSION "4"
 
 /*
  * Region nesting limit for messages written to the event target.
@@ -622,6 +622,24 @@ static void fn_data_json_fl(const char *file, int line,
 	}
 }
 
+static void fn_printf_va_fl(const char *file, int line,
+			    uint64_t us_elapsed_absolute,
+			    const char *fmt, va_list ap)
+{
+	const char *event_name = "printf";
+	struct json_writer jw = JSON_WRITER_INIT;
+	double t_abs = (double)us_elapsed_absolute / 1000000.0;
+
+	jw_object_begin(&jw, 0);
+	event_fmt_prepare(event_name, file, line, NULL, &jw);
+	jw_object_double(&jw, "t_abs", 6, t_abs);
+	maybe_add_string_va(&jw, "msg", fmt, ap);
+	jw_end(&jw);
+
+	tr2_dst_write_line(&tr2dst_event, &jw.json);
+	jw_release(&jw);
+}
+
 static void fn_timer(const struct tr2_timer_metadata *meta,
 		     const struct tr2_timer *timer,
 		     int is_final_data)
@@ -694,7 +712,7 @@ struct tr2_tgt tr2_tgt_event = {
 	.pfn_region_leave_printf_va_fl = fn_region_leave_printf_va_fl,
 	.pfn_data_fl = fn_data_fl,
 	.pfn_data_json_fl = fn_data_json_fl,
-	.pfn_printf_va_fl = NULL,
+	.pfn_printf_va_fl = fn_printf_va_fl,
 	.pfn_timer = fn_timer,
 	.pfn_counter = fn_counter,
 };

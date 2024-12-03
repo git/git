@@ -765,7 +765,7 @@ done
 # by the FSMonitor response to skip those recursive calls.  That is,
 # even if FSMonitor says that the mtime of the submodule directory
 # hasn't changed and it could be implicitly marked valid, we must
-# not take that shortcut.  We need to force the recusion into the
+# not take that shortcut.  We need to force the recursion into the
 # submodule so that we get a summary of the status *within* the
 # submodule.
 
@@ -905,6 +905,57 @@ test_expect_success "submodule absorbgitdirs implicitly starts daemon" '
 	# Confirm that the trace2 log contains a record of the
 	# daemon starting.
 	test_subcommand git fsmonitor--daemon start <super-sub.trace
+'
+
+start_git_in_background () {
+	git "$@" &
+	git_pid=$!
+	git_pgid=$(ps -o pgid= -p $git_pid)
+	nr_tries_left=10
+	while true
+	do
+		if test $nr_tries_left -eq 0
+		then
+			kill -- -$git_pgid
+			exit 1
+		fi
+		sleep 1
+		nr_tries_left=$(($nr_tries_left - 1))
+	done >/dev/null 2>&1 &
+	watchdog_pid=$!
+	wait $git_pid
+}
+
+stop_git () {
+	while kill -0 -- -$git_pgid
+	do
+		kill -- -$git_pgid
+		sleep 1
+	done
+}
+
+stop_watchdog () {
+	while kill -0 $watchdog_pid
+	do
+		kill $watchdog_pid
+		sleep 1
+	done
+}
+
+test_expect_success !MINGW "submodule implicitly starts daemon by pull" '
+	test_atexit "stop_watchdog" &&
+	test_when_finished "stop_git; rm -rf cloned super sub" &&
+
+	create_super super &&
+	create_sub sub &&
+
+	git -C super submodule add ../sub ./dir_1/dir_2/sub &&
+	git -C super commit -m "add sub" &&
+	git clone --recurse-submodules super cloned &&
+
+	git -C cloned/dir_1/dir_2/sub config core.fsmonitor true &&
+	set -m &&
+	start_git_in_background -C cloned pull --recurse-submodules
 '
 
 # On a case-insensitive file system, confirm that the daemon

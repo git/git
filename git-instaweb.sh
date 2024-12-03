@@ -612,7 +612,7 @@ python_conf() {
 	ln -sf "$root/static" "$fqgitdir/gitweb/$httpd_only/"
 
 	# generate a standalone 'python http.server' script in $fqgitdir/gitweb
-	# This asumes that python is in user's $PATH
+	# This assumes that python is in user's $PATH
 	# This script is Python 2 and 3 compatible
 	cat > "$fqgitdir/gitweb/gitweb.py" <<EOF
 #!/usr/bin/env python

@@ -366,7 +366,7 @@ default in a bare repository.
 
 core.repositoryFormatVersion::
 	Internal variable identifying the repository format and layout
-	version.
+	version. See linkgit:gitrepository-layout[5].
 
 core.sharedRepository::
 	When 'group' (or 'true'), the repository is made shareable between
@@ -520,13 +520,28 @@ core.editor::
 	`GIT_EDITOR` is not set.  See linkgit:git-var[1].
 
 core.commentChar::
+core.commentString::
 	Commands such as `commit` and `tag` that let you edit
-	messages consider a line that begins with this ASCII character
+	messages consider a line that begins with this character
 	commented, and removes them after the editor returns
 	(default '#').
 +
 If set to "auto", `git-commit` would select a character that is not
 the beginning character of any line in existing commit messages.
++
+Note that these two variables are aliases of each other, and in modern
+versions of Git you are free to use a string (e.g., `//` or `⁑⁕⁑`) with
+`commentChar`. Versions of Git prior to v2.45.0 will ignore
+`commentString` but will reject a value of `commentChar` that consists
+of more than a single ASCII byte. If you plan to use your config with
+older and newer versions of Git, you may want to specify both:
++
+    [core]
+    # single character for older versions
+    commentChar = "#"
+    # string for newer versions (which will override commentChar
+    # because it comes later in the file)
+    commentString = "//"
 
 core.filesRefLockTimeout::
 	The length of time, in milliseconds, to retry when trying to
@@ -688,7 +703,7 @@ core.createObject::
 	will not overwrite existing objects.
 +
 On some file system/operating system combinations, this is unreliable.
-Set this config setting to 'rename' there; However, This will remove the
+Set this config setting to 'rename' there; however, this will remove the
 check that makes sure that existing object files will not get overwritten.
 
 core.notesRef::
@@ -741,4 +756,5 @@ core.maxTreeDepth::
 	The maximum depth Git is willing to recurse while traversing a
 	tree (e.g., "a/b/cde/f" has a depth of 4). This is a fail-safe
 	to allow Git to abort cleanly, and should not generally need to
-	be adjusted. The default is 4096.
+	be adjusted. When Git is compiled with MSVC, the default is 512.
+	Otherwise, the default is 2048.

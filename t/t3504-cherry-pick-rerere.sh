@@ -5,6 +5,7 @@ test_description='cherry-pick should rerere for conflicts'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '
@@ -42,7 +43,7 @@ test_expect_success 'cherry-pick conflict with --rerere-autoupdate' '
 	git reset --hard bar-dev
 '
 
-test_expect_success 'cherry-pick conflict repsects rerere.autoUpdate' '
+test_expect_success 'cherry-pick conflict respects rerere.autoUpdate' '
 	test_config rerere.autoUpdate true &&
 	test_must_fail git cherry-pick foo..bar-main &&
 	test_cmp foo-expect foo &&

@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "gettext.h"
 #include "hex.h"
@@ -18,8 +19,7 @@ static int option_strict = 1;
 static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
 
 static int mktag_fsck_error_func(struct fsck_options *o UNUSED,
-				 const struct object_id *oid UNUSED,
-				 enum object_type object_type UNUSED,
+				 void *fsck_report UNUSED,
 				 enum fsck_msg_type msg_type,
 				 enum fsck_msg_id msg_id UNUSED,
 				 const char *message)
@@ -72,7 +72,10 @@ static int verify_object_in_tag(struct object_id *tagged_oid, int *tagged_type)
 	return ret;
 }
 
-int cmd_mktag(int argc, const char **argv, const char *prefix)
+int cmd_mktag(int argc,
+	      const char **argv,
+	      const char *prefix,
+	      struct repository *repo UNUSED)
 {
 	static struct option builtin_mktag_options[] = {
 		OPT_BOOL(0, "strict", &option_strict,

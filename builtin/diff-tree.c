@@ -1,4 +1,4 @@
-#define USE_THE_INDEX_VARIABLE
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "diff.h"
@@ -7,8 +7,8 @@
 #include "hex.h"
 #include "log-tree.h"
 #include "read-cache-ll.h"
-#include "repository.h"
 #include "revision.h"
+#include "tmp-objdir.h"
 #include "tree.h"
 
 static struct rev_info log_tree_opt;
@@ -108,7 +108,10 @@ static void diff_tree_tweak_rev(struct rev_info *rev)
 	}
 }
 
-int cmd_diff_tree(int argc, const char **argv, const char *prefix)
+int cmd_diff_tree(int argc,
+		  const char **argv,
+		  const char *prefix,
+		  struct repository *repo UNUSED)
 {
 	char line[1000];
 	struct object *tree1, *tree2;
@@ -206,7 +209,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		opt->diffopt.rotate_to_strict = 0;
 		opt->diffopt.no_free = 1;
 		if (opt->diffopt.detect_rename) {
-			if (!the_index.cache)
+			if (the_repository->index->cache)
 				repo_read_index(the_repository);
 			opt->diffopt.setup |= DIFF_SETUP_USE_SIZE_CACHE;
 		}
@@ -231,5 +234,5 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		diff_free(&opt->diffopt);
 	}
 
-	return diff_result_code(&opt->diffopt);
+	return diff_result_code(opt);
 }

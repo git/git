@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "environment.h"
 #include "gettext.h"
@@ -448,8 +450,10 @@ static void output_pair_header(struct diff_options *diffopt,
 }
 
 static struct userdiff_driver section_headers = {
-	.funcname = { "^ ## (.*) ##$\n"
-		      "^.?@@ (.*)$", REG_EXTENDED }
+	.funcname = {
+		.pattern = "^ ## (.*) ##$\n^.?@@ (.*)$",
+		.cflags = REG_EXTENDED,
+	},
 };
 
 static struct diff_filespec *get_filespec(const char *name, const char *p)
@@ -476,7 +480,7 @@ static void patch_diff(const char *a, const char *b,
 	diff_flush(diffopt);
 }
 
-static struct strbuf *output_prefix_cb(struct diff_options *opt UNUSED, void *data)
+static const char *output_prefix_cb(struct diff_options *opt UNUSED, void *data)
 {
 	return data;
 }
@@ -504,7 +508,7 @@ static void output(struct string_list *a, struct string_list *b,
 	opts.flags.suppress_hunk_header_line_count = 1;
 	opts.output_prefix = output_prefix_cb;
 	strbuf_addstr(&indent, "    ");
-	opts.output_prefix_data = &indent;
+	opts.output_prefix_data = indent.buf;
 	diff_setup_done(&opts);
 
 	/*

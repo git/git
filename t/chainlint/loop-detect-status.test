@@ -1,3 +1,4 @@
+test_expect_success 'loop-detect-status' '
 # LINT: "$?" handled explicitly within loop body
 (while test $i -le $blobcount
  do
@@ -17,3 +18,4 @@
  cat commit) |
 git fast-import --big-file-threshold=2 &&
 test ! -f exit-status
+'

@@ -1,3 +1,4 @@
+test_expect_success 'double-here-doc' '
 run_sub_test_lib_test_err run-inv-range-start \
 	"--run invalid range start" \
 	--run="a-5" <<-\EOF &&
@@ -10,3 +11,4 @@ check_sub_test_lib_test_err run-inv-range-start \
 EOF_OUT
 > error: --run: invalid non-numeric in range start: ${SQ}a-5${SQ}
 EOF_ERR
+'

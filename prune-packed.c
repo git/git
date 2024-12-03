@@ -1,10 +1,12 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
-#include "environment.h"
 #include "gettext.h"
 #include "object-store-ll.h"
 #include "packfile.h"
 #include "progress.h"
 #include "prune-packed.h"
+#include "repository.h"
 
 static struct progress *progress;
 
@@ -37,7 +39,7 @@ void prune_packed_objects(int opts)
 	if (opts & PRUNE_PACKED_VERBOSE)
 		progress = start_delayed_progress(_("Removing duplicate objects"), 256);
 
-	for_each_loose_file_in_objdir(get_object_directory(),
+	for_each_loose_file_in_objdir(repo_get_object_directory(the_repository),
 				      prune_object, NULL, prune_subdir, &opts);
 
 	/* Ensure we show 100% before finishing progress */

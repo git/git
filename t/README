@@ -32,6 +32,13 @@ the tests.
     ok 2 - plain with GIT_WORK_TREE
     ok 3 - plain bare
 
+t/Makefile defines a target for each test file, such that you can also use
+shell pattern matching to run a subset of the tests:
+
+    make *checkout*
+
+will run all tests with 'checkout' in their filename.
+
 Since the tests all output TAP (see https://testanything.org) they can
 be run with any TAP harness. Here's an example of parallel testing
 powered by a recent version of prove(1):
@@ -375,33 +382,12 @@ mapping between "TEST_PASSES_SANITIZE_LEAK=true" and those tests that
 pass under "SANITIZE=leak". This is especially useful when testing a
 series that fixes various memory leaks with "git rebase -x".
 
-GIT_TEST_SANITIZE_LEAK_LOG=true will log memory leaks to
-"test-results/$TEST_NAME.leak/trace.*" files. The logs include a
-"dedup_token" (see +"ASAN_OPTIONS=help=1 ./git") and other options to
-make logs +machine-readable.
-
-With GIT_TEST_SANITIZE_LEAK_LOG=true we'll look at the leak logs
-before exiting and exit on failure if the logs showed that we had a
-memory leak, even if the test itself would have otherwise passed. This
-allows us to catch e.g. missing &&-chaining. This is especially useful
-when combined with "GIT_TEST_PASSING_SANITIZE_LEAK", see below.
-
 GIT_TEST_PASSING_SANITIZE_LEAK=check when combined with "--immediate"
 will run to completion faster, and result in the same failing
-tests. The only practical reason to run
-GIT_TEST_PASSING_SANITIZE_LEAK=check without "--immediate" is to
-combine it with "GIT_TEST_SANITIZE_LEAK_LOG=true". If we stop at the
-first failing test case our leak logs won't show subsequent leaks we
-might have run into.
+tests.
 
-GIT_TEST_PASSING_SANITIZE_LEAK=(true|check) will not catch all memory
-leaks unless combined with GIT_TEST_SANITIZE_LEAK_LOG=true. Some tests
-run "git" (or "test-tool" etc.) without properly checking the exit
-code, or git will invoke itself and fail to ferry the abort() exit
-code to the original caller. When the two modes are combined we'll
-look at the "test-results/$TEST_NAME.leak/trace.*" files at the end of
-the test run to see if had memory leaks which the test itself didn't
-catch.
+GIT_TEST_PASSING_SANITIZE_LEAK=check-failing behaves the same as "check",
+but skips all tests which are already marked as leak-free.
 
 GIT_TEST_PROTOCOL_VERSION=<n>, when set, makes 'protocol.version'
 default to n.
@@ -462,9 +448,9 @@ GIT_TEST_MULTI_PACK_INDEX=<boolean>, when true, forces the multi-pack-
 index to be written after every 'git repack' command, and overrides the
 'core.multiPackIndex' setting to true.
 
-GIT_TEST_MULTI_PACK_INDEX_WRITE_BITMAP=<boolean>, when true, sets the
-'--bitmap' option on all invocations of 'git multi-pack-index write',
-and ignores pack-objects' '--write-bitmap-index'.
+GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL=<boolean>, when true, sets
+the '--incremental' option on all invocations of 'git multi-pack-index
+write'.
 
 GIT_TEST_SIDEBAND_ALL=<boolean>, when true, overrides the
 'uploadpack.allowSidebandAll' setting to true, and when false, forces
@@ -479,8 +465,9 @@ GIT_TEST_DEFAULT_HASH=<hash-algo> specifies which hash algorithm to
 use in the test scripts. Recognized values for <hash-algo> are "sha1"
 and "sha256".
 
-GIT_TEST_DEFAULT_REF_FORMAT=<format> specifies which ref storage format
-to use in the test scripts. Recognized values for <format> are "files".
+GIT_TEST_DEFAULT_REF_FORMAT=<format> specifies which ref storage format to use
+in the test scripts. Recognized values for <format> are "files" and
+"reftable".
 
 GIT_TEST_NO_WRITE_REV_INDEX=<boolean>, when true disables the
 'pack.writeReverseIndex' setting.
@@ -724,6 +711,26 @@ The "do's:"
    Note that we still &&-chain the loop to propagate failures from
    earlier commands.
 
+ - Repeat tests with slightly different arguments in a loop.
+
+   In some cases it may make sense to re-run the same set of tests with
+   different options or commands to ensure that the command behaves
+   despite the different parameters. This can be achieved by looping
+   around a specific parameter:
+
+	for arg in '' "--foo"
+	do
+		test_expect_success "test command ${arg:-without arguments}" '
+			command $arg
+		'
+	done
+
+   Note that while the test title uses double quotes ("), the test body
+   should continue to use single quotes (') to avoid breakage in case the
+   values contain e.g. quoting characters. The loop variable will be
+   accessible regardless of the single quotes as the test body is passed
+   to `eval`.
+
 
 And here are the "don'ts:"
 
@@ -878,6 +885,14 @@ see test-lib-functions.sh for the full list and their options.
 	test_expect_success \
 	    'git-write-tree should be able to write an empty tree.' \
 	    'tree=$(git-write-tree)'
+
+   If <script> is `-` (a single dash), then the script to run is read
+   from stdin. This lets you more easily use single quotes within the
+   script by using a here-doc. For example:
+
+	test_expect_success 'output contains expected string' - <<\EOT
+		grep "this string has 'quotes' in it" output
+	EOT
 
    If you supply three parameters the first will be taken to be a
    prerequisite; see the test_set_prereq and test_have_prereq

@@ -20,8 +20,8 @@ static struct reg_flag reg_flags[] = {
 
 static int test_regex_bug(void)
 {
-	char *pat = "[^={} \t]+";
-	char *str = "={}\nfred";
+	const char *pat = "[^={} \t]+";
+	const char *str = "={}\nfred";
 	regex_t r;
 	regmatch_t m[1];
 

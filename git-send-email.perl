@@ -31,6 +31,7 @@ sub usage {
 git send-email [<options>] <file|directory>
 git send-email [<options>] <format-patch options>
 git send-email --dump-aliases
+git send-email --translate-aliases
 
   Composing:
     --from                  <str>  * Email From:
@@ -46,6 +47,8 @@ git send-email --dump-aliases
     --compose-encoding      <str>  * Encoding to assume for introduction.
     --8bit-encoding         <str>  * Encoding to assume 8bit mails if undeclared
     --transfer-encoding     <str>  * Transfer encoding to use (quoted-printable, 8bit, base64)
+    --[no-]mailmap                 * Use mailmap file to map all email addresses to canonical
+                                     real names and email addresses.
 
   Sending:
     --envelope-sender       <str>  * Email envelope sender.
@@ -99,6 +102,10 @@ git send-email --dump-aliases
 
   Information:
     --dump-aliases                 * Dump configured aliases and exit.
+    --translate-aliases            * Translate aliases read from standard
+                                     input according to the configured email
+                                     alias file(s), outputting the result to
+                                     standard output.
 
 EOT
 	exit(1);
@@ -212,6 +219,7 @@ my $format_patch;
 my $compose_filename;
 my $force = 0;
 my $dump_aliases = 0;
+my $translate_aliases = 0;
 
 # Variables to prevent short format-patch options from being captured
 # as abbreviated send-email options
@@ -272,12 +280,14 @@ my (@suppress_cc);
 my ($auto_8bit_encoding);
 my ($compose_encoding);
 my ($sendmail_cmd);
+my ($mailmap_file, $mailmap_blob);
 # Variables with corresponding config settings & hardcoded defaults
 my ($debug_net_smtp) = 0;		# Net::SMTP, see send_message()
 my $thread = 1;
 my $chain_reply_to = 0;
 my $use_xmailer = 1;
 my $validate = 1;
+my $mailmap = 0;
 my $target_xfer_encoding = 'auto';
 my $forbid_sendmail_variables = 1;
 
@@ -294,6 +304,7 @@ my %config_bool_settings = (
     "annotate" => \$annotate,
     "xmailer" => \$use_xmailer,
     "forbidsendmailvariables" => \$forbid_sendmail_variables,
+    "mailmap" => \$mailmap,
 );
 
 my %config_settings = (
@@ -327,6 +338,8 @@ my %config_settings = (
 my %config_path_settings = (
     "aliasesfile" => \@alias_files,
     "smtpsslcertpath" => \$smtp_ssl_cert_path,
+    "mailmap.file" => \$mailmap_file,
+    "mailmap.blob" => \$mailmap_blob,
 );
 
 # Handle Uncouth Termination
@@ -476,11 +489,14 @@ my $git_completion_helper;
 my %dump_aliases_options = (
 	"h" => \$help,
 	"dump-aliases" => \$dump_aliases,
+	"translate-aliases" => \$translate_aliases,
 );
 $rc = GetOptions(%dump_aliases_options);
 usage() unless $rc;
 die __("--dump-aliases incompatible with other options\n")
-    if !$help and $dump_aliases and @ARGV;
+    if !$help and ($dump_aliases or $translate_aliases) and @ARGV;
+die __("--dump-aliases and --translate-aliases are mutually exclusive\n")
+    if !$help and $dump_aliases and $translate_aliases;
 my %options = (
 		    "sender|from=s" => \$sender,
 		    "in-reply-to=s" => \$initial_in_reply_to,
@@ -524,6 +540,8 @@ my %options = (
 		    "thread!" => \$thread,
 		    "validate!" => \$validate,
 		    "transfer-encoding=s" => \$target_xfer_encoding,
+		    "mailmap!" => \$mailmap,
+		    "use-mailmap!" => \$mailmap,
 		    "format-patch!" => \$format_patch,
 		    "8bit-encoding=s" => \$auto_8bit_encoding,
 		    "compose-encoding=s" => \$compose_encoding,
@@ -722,6 +740,16 @@ if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 if ($dump_aliases) {
     print "$_\n" for (sort keys %aliases);
     exit(0);
+}
+
+if ($translate_aliases) {
+	while (<STDIN>) {
+		my @addr_list = parse_address_line($_);
+		@addr_list = expand_aliases(@addr_list);
+		@addr_list = sanitize_address_list(@addr_list);
+		print "$_\n" for @addr_list;
+	}
+	exit(0);
 }
 
 # is_format_patch_arg($f) returns 0 if $f names a patch, or 1 if
@@ -1085,6 +1113,16 @@ if ($compose && $compose > 0) {
 our ($message_id, %mail, $subject, $in_reply_to, $references, $message,
 	$needs_confirm, $message_num, $ask_default);
 
+sub mailmap_address_list {
+	return @_ unless @_ and $mailmap;
+	my @options = ();
+	push(@options, "--mailmap-file=$mailmap_file") if $mailmap_file;
+	push(@options, "--mailmap-blob=$mailmap_blob") if $mailmap_blob;
+	my @addr_list = Git::command('check-mailmap', @options, @_);
+	s/^<(.*)>$/$1/ for @addr_list;
+	return @addr_list;
+}
+
 sub extract_valid_address {
 	my $address = shift;
 	my $local_part_regexp = qr/[^<>"\s@]+/;
@@ -1294,6 +1332,7 @@ sub process_address_list {
 	@addr_list = expand_aliases(@addr_list);
 	@addr_list = sanitize_address_list(@addr_list);
 	@addr_list = validate_address_list(@addr_list);
+	@addr_list = mailmap_address_list(@addr_list);
 	return @addr_list;
 }
 
@@ -1664,9 +1703,11 @@ EOF
 		$smtp->code =~ /250|200/ or die sprintf(__("Failed to send %s\n"), $subject).$smtp->message;
 	}
 	if ($quiet) {
-		printf($dry_run ? __("Dry-Sent %s\n") : __("Sent %s\n"), $subject);
+		printf($dry_run ? __("Dry-Sent %s") : __("Sent %s"), $subject);
+		print "\n";
 	} else {
-		print($dry_run ? __("Dry-OK. Log says:\n") : __("OK. Log says:\n"));
+		print($dry_run ? __("Dry-OK. Log says:") : __("OK. Log says:"));
+		print "\n";
 		if (!defined $sendmail_cmd && !file_name_is_absolute($smtp_server)) {
 			print "Server: $smtp_server\n";
 			print "MAIL FROM:<$raw_from>\n";
@@ -1686,10 +1727,11 @@ EOF
 		print $header, "\n";
 		if ($smtp) {
 			print __("Result: "), $smtp->code, ' ',
-				($smtp->message =~ /\n([^\n]+\n)$/s), "\n";
+				($smtp->message =~ /\n([^\n]+\n)$/s);
 		} else {
-			print __("Result: OK\n");
+			print __("Result: OK");
 		}
+		print "\n";
 	}
 
 	return 1;
@@ -1844,9 +1886,9 @@ sub pre_process_file {
 					$what, $_) unless $quiet;
 				next;
 			}
-			push @cc, $c;
+			push @cc, $sc;
 			printf(__("(body) Adding cc: %s from line '%s'\n"),
-				$c, $_) unless $quiet;
+				$sc, $_) unless $quiet;
 		}
 	}
 	close $fh;

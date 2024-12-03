@@ -148,8 +148,8 @@ Detailed Design
 Repository format extension
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 A SHA-256 repository uses repository format version `1` (see
-Documentation/technical/repository-version.txt) with extensions
-`objectFormat` and `compatObjectFormat`:
+linkgit:gitrepository-layout[5]) with `extensions.objectFormat` and
+`extensions.compatObjectFormat` (see linkgit:git-config[1]) set to:
 
 	[core]
 		repositoryFormatVersion = 1

@@ -1,7 +1,7 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "gettext.h"
 #include "hex.h"
-#include "repository.h"
 #include "config.h"
 #include "commit.h"
 #include "tree.h"
@@ -89,13 +89,16 @@ static int objerror(struct object *obj, const char *err)
 	return -1;
 }
 
-static int fsck_error_func(struct fsck_options *o UNUSED,
-			   const struct object_id *oid,
-			   enum object_type object_type,
-			   enum fsck_msg_type msg_type,
-			   enum fsck_msg_id msg_id UNUSED,
-			   const char *message)
+static int fsck_objects_error_func(struct fsck_options *o UNUSED,
+				   void *fsck_report,
+				   enum fsck_msg_type msg_type,
+				   enum fsck_msg_id msg_id UNUSED,
+				   const char *message)
 {
+	struct fsck_object_report *report = fsck_report;
+	const struct object_id *oid = report->oid;
+	enum object_type object_type = report->object_type;
+
 	switch (msg_type) {
 	case FSCK_WARN:
 		/* TRANSLATORS: e.g. warning in tree 01bfda: <more explanation> */
@@ -514,12 +517,14 @@ static int fsck_handle_reflog(const char *logname, void *cb_data)
 	struct strbuf refname = STRBUF_INIT;
 
 	strbuf_worktree_ref(cb_data, &refname, logname);
-	for_each_reflog_ent(refname.buf, fsck_handle_reflog_ent, refname.buf);
+	refs_for_each_reflog_ent(get_main_ref_store(the_repository),
+				 refname.buf, fsck_handle_reflog_ent,
+				 refname.buf);
 	strbuf_release(&refname);
 	return 0;
 }
 
-static int fsck_handle_ref(const char *refname, const struct object_id *oid,
+static int fsck_handle_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
 			   int flag UNUSED, void *cb_data UNUSED)
 {
 	struct object *obj;
@@ -563,7 +568,8 @@ static void get_default_heads(void)
 	const char *head_points_at;
 	struct object_id head_oid;
 
-	for_each_rawref(fsck_handle_ref, NULL);
+	refs_for_each_rawref(get_main_ref_store(the_repository),
+			     fsck_handle_ref, NULL);
 
 	worktrees = get_worktrees();
 	for (p = worktrees; *p; p++) {
@@ -573,7 +579,7 @@ static void get_default_heads(void)
 		strbuf_worktree_ref(wt, &ref, "HEAD");
 		fsck_head_link(ref.buf, &head_points_at, &head_oid);
 		if (head_points_at && !is_null_oid(&head_oid))
-			fsck_handle_ref(ref.buf, &head_oid, 0, NULL);
+			fsck_handle_ref(ref.buf, NULL, &head_oid, 0, NULL);
 		strbuf_release(&ref);
 
 		if (include_reflogs)
@@ -712,7 +718,9 @@ static int fsck_head_link(const char *head_ref_name,
 	if (verbose)
 		fprintf_ln(stderr, _("Checking %s link"), head_ref_name);
 
-	*head_points_at = resolve_ref_unsafe(head_ref_name, 0, head_oid, NULL);
+	*head_points_at = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+						  head_ref_name, 0, head_oid,
+						  NULL);
 	if (!*head_points_at) {
 		errors_found |= ERROR_REFS;
 		return error(_("invalid %s"), head_ref_name);
@@ -917,7 +925,10 @@ static struct option fsck_opts[] = {
 	OPT_END(),
 };
 
-int cmd_fsck(int argc, const char **argv, const char *prefix)
+int cmd_fsck(int argc,
+	     const char **argv,
+	     const char *prefix,
+	     struct repository *repo UNUSED)
 {
 	int i;
 	struct object_directory *odb;
@@ -933,7 +944,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 
 	fsck_walk_options.walk = mark_object;
 	fsck_obj_options.walk = mark_used;
-	fsck_obj_options.error_func = fsck_error_func;
+	fsck_obj_options.error_func = fsck_objects_error_func;
 	if (check_strict)
 		fsck_obj_options.strict = 1;
 
@@ -1045,7 +1056,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 			 * and may get overwritten by other calls
 			 * while we're examining the index.
 			 */
-			path = xstrdup(worktree_git_path(wt, "index"));
+			path = xstrdup(worktree_git_path(the_repository, wt, "index"));
 			read_index_from(&istate, path, get_worktree_git_dir(wt));
 			fsck_index(&istate, path, wt->is_current);
 			discard_index(&istate);

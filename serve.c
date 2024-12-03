@@ -1,7 +1,9 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "repository.h"
 #include "config.h"
-#include "hash-ll.h"
+#include "hash.h"
 #include "pkt-line.h"
 #include "version.h"
 #include "ls-refs.h"
@@ -321,7 +323,7 @@ static int process_request(void)
 		die("no command requested");
 
 	if (client_hash_algo != hash_algo_by_ptr(the_repository->hash_algo))
-		die("mismatched object format: server %s; client %s\n",
+		die("mismatched object format: server %s; client %s",
 		    the_repository->hash_algo->name,
 		    hash_algos[client_hash_algo].name);
 

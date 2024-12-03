@@ -8,6 +8,7 @@ test_description='Test remote-helper import and export commands'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 
@@ -36,6 +37,29 @@ test_expect_success 'setup repository' '
 test_expect_success 'cloning from local repo' '
 	git clone "testgit::${PWD}/server" local &&
 	test_cmp server/file local/file
+'
+
+test_expect_success 'clone with remote.*.vcs config' '
+	GIT_TRACE=$PWD/vcs-clone.trace \
+	git clone --no-local -c remote.origin.vcs=testgit "$PWD/server" vcs-clone &&
+	test_grep remote-testgit vcs-clone.trace
+'
+
+test_expect_success 'fetch with configured remote.*.vcs' '
+	git init vcs-fetch &&
+	git -C vcs-fetch config remote.origin.vcs testgit &&
+	git -C vcs-fetch config remote.origin.url "$PWD/server" &&
+	GIT_TRACE=$PWD/vcs-fetch.trace \
+	git -C vcs-fetch fetch origin &&
+	test_grep remote-testgit vcs-fetch.trace
+'
+
+test_expect_success 'vcs remote with no url' '
+	NOURL_UPSTREAM=$PWD/server &&
+	export NOURL_UPSTREAM &&
+	git init vcs-nourl &&
+	git -C vcs-nourl config remote.origin.vcs nourl &&
+	git -C vcs-nourl fetch origin
 '
 
 test_expect_success 'create new commit on remote' '
@@ -319,6 +343,17 @@ test_expect_success 'fetch tag' '
 	 git fetch
 	) &&
 	compare_refs local v1.0 server v1.0
+'
+
+test_expect_success 'totally broken helper reports failure message' '
+	write_script git-remote-broken <<-\EOF &&
+	read cap_cmd
+	exit 1
+	EOF
+	test_must_fail \
+		env PATH="$PWD:$PATH" \
+		git clone broken://example.com/foo.git 2>stderr &&
+	grep aborted stderr
 '
 
 test_done

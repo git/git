@@ -2,6 +2,7 @@
 
 test_description='git p4 filetype tests'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-git-p4.sh
 
 test_expect_success 'start p4d' '
@@ -300,10 +301,22 @@ test_expect_success SYMLINKS 'empty symlink target' '
 		#     text
 		#     @@
 		#
+		# Note that newer Perforce versions started to store files
+		# compressed in directories. The case statement handles both
+		# old and new layout.
 		cd "$db/depot" &&
-		sed "/@target1/{; s/target1/@/; n; d; }" \
-		    empty-symlink,v >empty-symlink,v.tmp &&
-		mv empty-symlink,v.tmp empty-symlink,v
+		case "$(echo empty-symlink*)" in
+		empty-symlink,v)
+			sed "/@target1/{; s/target1/@/; n; d; }" \
+			    empty-symlink,v >empty-symlink,v.tmp &&
+			mv empty-symlink,v.tmp empty-symlink,v;;
+		empty-symlink,d)
+			path="empty-symlink,d/$(ls empty-symlink,d/ | tail -n1)" &&
+			rm "$path" &&
+			gzip </dev/null >"$path";;
+		*)
+			BUG "unhandled p4d layout";;
+		esac
 	) &&
 	(
 		# Make sure symlink really is empty.  Asking

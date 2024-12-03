@@ -195,7 +195,7 @@ test_expect_success 'dotdot is not an empty set' '
 '
 
 test_expect_success 'dotdot does not peel endpoints' '
-	git tag -a -m "annote" annotated HEAD &&
+	git tag -a -m "annotate" annotated HEAD &&
 	A=$(git rev-parse annotated) &&
 	H=$(git rev-parse annotated^0) &&
 	{

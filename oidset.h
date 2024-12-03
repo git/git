@@ -80,7 +80,8 @@ void oidset_clear(struct oidset *set);
  * are allowed.  Leading whitespace and empty or white-space only lines are
  * ignored.
  */
-void oidset_parse_file(struct oidset *set, const char *path);
+void oidset_parse_file(struct oidset *set, const char *path,
+		       const struct git_hash_algo *algop);
 
 /*
  * Similar to the above, but with a callback which can (1) return non-zero to
@@ -89,6 +90,7 @@ void oidset_parse_file(struct oidset *set, const char *path);
  */
 typedef int (*oidset_parse_tweak_fn)(struct object_id *, void *);
 void oidset_parse_file_carefully(struct oidset *set, const char *path,
+				 const struct git_hash_algo *algop,
 				 oidset_parse_tweak_fn fn, void *cbdata);
 
 struct oidset_iter {

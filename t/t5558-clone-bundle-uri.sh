@@ -3,6 +3,7 @@
 test_description='test fetching bundles with --bundle-uri'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-bundle.sh
 
 test_expect_success 'fail to clone from non-existent file' '
 	test_when_finished rm -rf test &&
@@ -19,10 +20,39 @@ test_expect_success 'fail to clone from non-bundle file' '
 
 test_expect_success 'create bundle' '
 	git init clone-from &&
-	git -C clone-from checkout -b topic &&
-	test_commit -C clone-from A &&
-	test_commit -C clone-from B &&
-	git -C clone-from bundle create B.bundle topic
+	(
+		cd clone-from &&
+		git checkout -b topic &&
+
+		test_commit A &&
+		git bundle create A.bundle topic &&
+
+		test_commit B &&
+		git bundle create B.bundle topic &&
+
+		# Create a bundle with reference pointing to non-existent object.
+		commit_a=$(git rev-parse A) &&
+		commit_b=$(git rev-parse B) &&
+		sed -e "/^$/q" -e "s/$commit_a /$commit_b /" \
+			<A.bundle >bad-header.bundle &&
+		convert_bundle_to_pack \
+			<A.bundle >>bad-header.bundle &&
+
+		tree_b=$(git rev-parse B^{tree}) &&
+		cat >data <<-EOF &&
+		tree $tree_b
+		parent $commit_b
+		author A U Thor
+		committer A U Thor
+
+		commit: this is a commit with bad emails
+
+		EOF
+		bad_commit=$(git hash-object --literally -t commit -w --stdin <data) &&
+		git branch bad $bad_commit &&
+		git bundle create bad-object.bundle bad &&
+		git update-ref -d refs/heads/bad
+	)
 '
 
 test_expect_success 'clone with path bundle' '
@@ -31,6 +61,33 @@ test_expect_success 'clone with path bundle' '
 	git -C clone-path rev-parse refs/bundles/topic >actual &&
 	git -C clone-from rev-parse topic >expect &&
 	test_cmp expect actual
+'
+
+test_expect_success 'clone with bundle that has bad header' '
+	# Write bundle ref fails, but clone can still proceed.
+	git clone --bundle-uri="clone-from/bad-header.bundle" \
+		clone-from clone-bad-header 2>err &&
+	commit_b=$(git -C clone-from rev-parse B) &&
+	test_grep "trying to write ref '\''refs/bundles/topic'\'' with nonexistent object $commit_b" err &&
+	git -C clone-bad-header for-each-ref --format="%(refname)" >refs &&
+	test_grep ! "refs/bundles/" refs
+'
+
+test_expect_success 'clone with bundle that has bad object' '
+	# Unbundle succeeds if no fsckObjects configured.
+	git clone --bundle-uri="clone-from/bad-object.bundle" \
+		clone-from clone-bad-object-no-fsck &&
+	git -C clone-bad-object-no-fsck for-each-ref --format="%(refname)" >refs &&
+	grep "refs/bundles/" refs >actual &&
+	test_write_lines refs/bundles/bad >expect &&
+	test_cmp expect actual &&
+
+	# Unbundle fails with fsckObjects set true, but clone can still proceed.
+	git -c fetch.fsckObjects=true clone --bundle-uri="clone-from/bad-object.bundle" \
+		clone-from clone-bad-object-fsck 2>err &&
+	test_grep "missingEmail" err &&
+	git -C clone-bad-object-fsck for-each-ref --format="%(refname)" >refs &&
+	test_grep ! "refs/bundles/" refs
 '
 
 test_expect_success 'clone with path bundle and non-default hash' '
@@ -257,6 +314,128 @@ test_expect_success 'clone bundle list (file, any mode, all failures)' '
 
 	git -C clone-any-fail for-each-ref --format="%(refname)" >refs &&
 	! grep "refs/bundles/" refs
+'
+
+test_expect_success 'negotiation: bundle with part of wanted commits' '
+	test_when_finished "rm -f trace*.txt" &&
+	GIT_TRACE_PACKET="$(pwd)/trace-packet.txt" \
+	git clone --no-local --bundle-uri="clone-from/A.bundle" \
+		clone-from nego-bundle-part &&
+	git -C nego-bundle-part for-each-ref --format="%(refname)" >refs &&
+	grep "refs/bundles/" refs >actual &&
+	test_write_lines refs/bundles/topic >expect &&
+	test_cmp expect actual &&
+	# Ensure that refs/bundles/topic are sent as "have".
+	tip=$(git -C clone-from rev-parse A) &&
+	test_grep "clone> have $tip" trace-packet.txt
+'
+
+test_expect_success 'negotiation: bundle with all wanted commits' '
+	test_when_finished "rm -f trace*.txt" &&
+	GIT_TRACE_PACKET="$(pwd)/trace-packet.txt" \
+	git clone --no-local --single-branch --branch=topic --no-tags \
+		--bundle-uri="clone-from/B.bundle" \
+		clone-from nego-bundle-all &&
+	git -C nego-bundle-all for-each-ref --format="%(refname)" >refs &&
+	grep "refs/bundles/" refs >actual &&
+	test_write_lines refs/bundles/topic >expect &&
+	test_cmp expect actual &&
+	# We already have all needed commits so no "want" needed.
+	test_grep ! "clone> want " trace-packet.txt
+'
+
+test_expect_success 'negotiation: bundle list (no heuristic)' '
+	test_when_finished "rm -f trace*.txt" &&
+	cat >bundle-list <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+
+	[bundle "bundle-1"]
+		uri = file://$(pwd)/clone-from/bundle-1.bundle
+
+	[bundle "bundle-2"]
+		uri = file://$(pwd)/clone-from/bundle-2.bundle
+	EOF
+
+	GIT_TRACE_PACKET="$(pwd)/trace-packet.txt" \
+	git clone --no-local --bundle-uri="file://$(pwd)/bundle-list" \
+		clone-from nego-bundle-list-no-heuristic &&
+
+	git -C nego-bundle-list-no-heuristic for-each-ref --format="%(refname)" >refs &&
+	grep "refs/bundles/" refs >actual &&
+	cat >expect <<-\EOF &&
+	refs/bundles/base
+	refs/bundles/left
+	EOF
+	test_cmp expect actual &&
+	tip=$(git -C nego-bundle-list-no-heuristic rev-parse refs/bundles/left) &&
+	test_grep "clone> have $tip" trace-packet.txt
+'
+
+test_expect_success 'negotiation: bundle list (creationToken)' '
+	test_when_finished "rm -f trace*.txt" &&
+	cat >bundle-list <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+		heuristic = creationToken
+
+	[bundle "bundle-1"]
+		uri = file://$(pwd)/clone-from/bundle-1.bundle
+		creationToken = 1
+
+	[bundle "bundle-2"]
+		uri = file://$(pwd)/clone-from/bundle-2.bundle
+		creationToken = 2
+	EOF
+
+	GIT_TRACE_PACKET="$(pwd)/trace-packet.txt" \
+	git clone --no-local --bundle-uri="file://$(pwd)/bundle-list" \
+		clone-from nego-bundle-list-heuristic &&
+
+	git -C nego-bundle-list-heuristic for-each-ref --format="%(refname)" >refs &&
+	grep "refs/bundles/" refs >actual &&
+	cat >expect <<-\EOF &&
+	refs/bundles/base
+	refs/bundles/left
+	EOF
+	test_cmp expect actual &&
+	tip=$(git -C nego-bundle-list-heuristic rev-parse refs/bundles/left) &&
+	test_grep "clone> have $tip" trace-packet.txt
+'
+
+test_expect_success 'negotiation: bundle list with all wanted commits' '
+	test_when_finished "rm -f trace*.txt" &&
+	cat >bundle-list <<-EOF &&
+	[bundle]
+		version = 1
+		mode = all
+		heuristic = creationToken
+
+	[bundle "bundle-1"]
+		uri = file://$(pwd)/clone-from/bundle-1.bundle
+		creationToken = 1
+
+	[bundle "bundle-2"]
+		uri = file://$(pwd)/clone-from/bundle-2.bundle
+		creationToken = 2
+	EOF
+
+	GIT_TRACE_PACKET="$(pwd)/trace-packet.txt" \
+	git clone --no-local --single-branch --branch=left --no-tags \
+		--bundle-uri="file://$(pwd)/bundle-list" \
+		clone-from nego-bundle-list-all &&
+
+	git -C nego-bundle-list-all for-each-ref --format="%(refname)" >refs &&
+	grep "refs/bundles/" refs >actual &&
+	cat >expect <<-\EOF &&
+	refs/bundles/base
+	refs/bundles/left
+	EOF
+	test_cmp expect actual &&
+	# We already have all needed commits so no "want" needed.
+	test_grep ! "clone> want " trace-packet.txt
 '
 
 #########################################################################
@@ -766,7 +945,7 @@ test_expect_success 'creationToken heuristic with failed downloads (clone)' '
 		--bundle-uri="$HTTPD_URL/bundle-list" \
 		"$HTTPD_URL/smart/fetch.git" download-3 &&
 
-	# As long as we have continguous successful downloads,
+	# As long as we have contiguous successful downloads,
 	# we _do_ set these configs.
 	test_cmp_config -C download-3 "$HTTPD_URL/bundle-list" fetch.bundleuri &&
 	test_cmp_config -C download-3 3 fetch.bundlecreationtoken &&
@@ -1010,7 +1189,7 @@ test_expect_success 'creationToken heuristic with failed downloads (fetch)' '
 	GIT_TRACE2_EVENT="$(pwd)/trace-fetch-3.txt" \
 		git -C fetch-3 fetch origin &&
 
-	# As long as we have continguous successful downloads,
+	# As long as we have contiguous successful downloads,
 	# we _do_ set the maximum creation token.
 	test_cmp_config -C fetch-3 6 fetch.bundlecreationtoken &&
 

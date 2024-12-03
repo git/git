@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "git-curl-compat.h"
 #include "hex.h"
@@ -17,6 +19,7 @@
 #include "string-list.h"
 #include "object-file.h"
 #include "object-store-ll.h"
+#include "tempfile.h"
 
 static struct trace_key trace_curl = TRACE_KEY_INIT(CURL);
 static int trace_curl_data = 1;
@@ -38,11 +41,11 @@ char curl_errorstr[CURL_ERROR_SIZE];
 
 static int curl_ssl_verify = -1;
 static int curl_ssl_try;
-static const char *curl_http_version = NULL;
-static const char *ssl_cert;
-static const char *ssl_cert_type;
-static const char *ssl_cipherlist;
-static const char *ssl_version;
+static char *curl_http_version;
+static char *ssl_cert;
+static char *ssl_cert_type;
+static char *ssl_cipherlist;
+static char *ssl_version;
 static struct {
 	const char *name;
 	long ssl_version;
@@ -59,23 +62,23 @@ static struct {
 	{ "tlsv1.3", CURL_SSLVERSION_TLSv1_3 },
 #endif
 };
-static const char *ssl_key;
-static const char *ssl_key_type;
-static const char *ssl_capath;
-static const char *curl_no_proxy;
+static char *ssl_key;
+static char *ssl_key_type;
+static char *ssl_capath;
+static char *curl_no_proxy;
 #ifdef GIT_CURL_HAVE_CURLOPT_PINNEDPUBLICKEY
-static const char *ssl_pinnedkey;
+static char *ssl_pinnedkey;
 #endif
-static const char *ssl_cainfo;
+static char *ssl_cainfo;
 static long curl_low_speed_limit = -1;
 static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv;
-static const char *curl_http_proxy;
-static const char *http_proxy_authmethod;
+static char *curl_http_proxy;
+static char *http_proxy_authmethod;
 
-static const char *http_proxy_ssl_cert;
-static const char *http_proxy_ssl_key;
-static const char *http_proxy_ssl_ca_info;
+static char *http_proxy_ssl_cert;
+static char *http_proxy_ssl_key;
+static char *http_proxy_ssl_ca_info;
 static struct credential proxy_cert_auth = CREDENTIAL_INIT;
 static int proxy_ssl_cert_password_required;
 
@@ -95,7 +98,7 @@ static struct {
 	 */
 };
 #ifdef CURLGSSAPI_DELEGATION_FLAG
-static const char *curl_deleg;
+static char *curl_deleg;
 static struct {
 	const char *name;
 	long curl_deleg_param;
@@ -106,13 +109,20 @@ static struct {
 };
 #endif
 
+enum proactive_auth {
+	PROACTIVE_AUTH_NONE = 0,
+	PROACTIVE_AUTH_IF_CREDENTIALS,
+	PROACTIVE_AUTH_AUTO,
+	PROACTIVE_AUTH_BASIC,
+};
+
 static struct credential proxy_auth = CREDENTIAL_INIT;
 static const char *curl_proxyuserpwd;
-static const char *curl_cookie_file;
+static char *curl_cookie_file;
 static int curl_save_cookies;
 struct credential http_auth = CREDENTIAL_INIT;
-static int http_proactive_auth;
-static const char *user_agent;
+static enum proactive_auth http_proactive_auth;
+static char *user_agent;
 static int curl_empty_auth = -1;
 
 enum http_follow_config http_follow_config = HTTP_FOLLOW_INITIAL;
@@ -128,7 +138,6 @@ static unsigned long empty_auth_useless =
 	| CURLAUTH_DIGEST;
 
 static struct curl_slist *pragma_header;
-static struct curl_slist *no_pragma_header;
 static struct string_list extra_http_headers = STRING_LIST_INIT_DUP;
 
 static struct curl_slist *host_resolutions;
@@ -146,6 +155,12 @@ static int http_schannel_check_revoke = 1;
  * by default.
  */
 static int http_schannel_use_ssl_cainfo;
+
+static int always_auth_proactively(void)
+{
+	return http_proactive_auth != PROACTIVE_AUTH_NONE &&
+	       http_proactive_auth != PROACTIVE_AUTH_IF_CREDENTIALS;
+}
 
 size_t fread_buffer(char *ptr, size_t eltsize, size_t nmemb, void *buffer_)
 {
@@ -297,6 +312,11 @@ size_t fwrite_null(char *ptr UNUSED, size_t eltsize UNUSED, size_t nmemb,
 		   void *data UNUSED)
 {
 	return nmemb;
+}
+
+static struct curl_slist *object_request_headers(void)
+{
+	return curl_slist_append(http_copy_default_headers(), "Pragma:");
 }
 
 static void closedown_active_slot(struct active_request_slot *slot)
@@ -533,6 +553,20 @@ static int http_options(const char *var, const char *value,
 		return 0;
 	}
 
+	if (!strcmp("http.proactiveauth", var)) {
+		if (!value)
+			return config_error_nonbool(var);
+		if (!strcmp(value, "auto"))
+			http_proactive_auth = PROACTIVE_AUTH_AUTO;
+		else if (!strcmp(value, "basic"))
+			http_proactive_auth = PROACTIVE_AUTH_BASIC;
+		else if (!strcmp(value, "none"))
+			http_proactive_auth = PROACTIVE_AUTH_NONE;
+		else
+			warning(_("Unknown value for http.proactiveauth"));
+		return 0;
+	}
+
 	/* Fall back on the default ones */
 	return git_default_config(var, value, ctx, data);
 }
@@ -557,42 +591,78 @@ static int curl_empty_auth_enabled(void)
 	return 0;
 }
 
+struct curl_slist *http_append_auth_header(const struct credential *c,
+					   struct curl_slist *headers)
+{
+	if (c->authtype && c->credential) {
+		struct strbuf auth = STRBUF_INIT;
+		strbuf_addf(&auth, "Authorization: %s %s",
+			    c->authtype, c->credential);
+		headers = curl_slist_append(headers, auth.buf);
+		strbuf_release(&auth);
+	}
+	return headers;
+}
+
 static void init_curl_http_auth(CURL *result)
 {
-	if (!http_auth.username || !*http_auth.username) {
-		if (curl_empty_auth_enabled())
+	if ((!http_auth.username || !*http_auth.username) &&
+	    (!http_auth.credential || !*http_auth.credential)) {
+		int empty_auth = curl_empty_auth_enabled();
+		if ((empty_auth != -1 && !always_auth_proactively()) || empty_auth == 1) {
 			curl_easy_setopt(result, CURLOPT_USERPWD, ":");
-		return;
+			return;
+		} else if (!always_auth_proactively()) {
+			return;
+		} else if (http_proactive_auth == PROACTIVE_AUTH_BASIC) {
+			strvec_push(&http_auth.wwwauth_headers, "Basic");
+		}
 	}
 
-	credential_fill(&http_auth);
+	credential_fill(&http_auth, 1);
 
-	curl_easy_setopt(result, CURLOPT_USERNAME, http_auth.username);
-	curl_easy_setopt(result, CURLOPT_PASSWORD, http_auth.password);
+	if (http_auth.password) {
+		if (always_auth_proactively()) {
+			/*
+			 * We got a credential without an authtype and we don't
+			 * know what's available.  Since our only two options at
+			 * the moment are auto (which defaults to basic) and
+			 * basic, use basic for now.
+			 */
+			curl_easy_setopt(result, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+		}
+		curl_easy_setopt(result, CURLOPT_USERNAME, http_auth.username);
+		curl_easy_setopt(result, CURLOPT_PASSWORD, http_auth.password);
+	}
 }
 
 /* *var must be free-able */
-static void var_override(const char **var, char *value)
+static void var_override(char **var, char *value)
 {
 	if (value) {
-		free((void *)*var);
+		free(*var);
 		*var = xstrdup(value);
 	}
 }
 
 static void set_proxyauth_name_password(CURL *result)
 {
+	if (proxy_auth.password) {
 		curl_easy_setopt(result, CURLOPT_PROXYUSERNAME,
 			proxy_auth.username);
 		curl_easy_setopt(result, CURLOPT_PROXYPASSWORD,
 			proxy_auth.password);
+	} else if (proxy_auth.authtype && proxy_auth.credential) {
+		curl_easy_setopt(result, CURLOPT_PROXYHEADER,
+				 http_append_auth_header(&proxy_auth, NULL));
+	}
 }
 
 static void init_curl_proxy_auth(CURL *result)
 {
 	if (proxy_auth.username) {
-		if (!proxy_auth.password)
-			credential_fill(&proxy_auth);
+		if (!proxy_auth.password && !proxy_auth.credential)
+			credential_fill(&proxy_auth, 1);
 		set_proxyauth_name_password(result);
 	}
 
@@ -626,7 +696,7 @@ static int has_cert_password(void)
 		cert_auth.host = xstrdup("");
 		cert_auth.username = xstrdup("");
 		cert_auth.path = xstrdup(ssl_cert);
-		credential_fill(&cert_auth);
+		credential_fill(&cert_auth, 0);
 	}
 	return 1;
 }
@@ -641,7 +711,7 @@ static int has_proxy_cert_password(void)
 		proxy_cert_auth.host = xstrdup("");
 		proxy_cert_auth.username = xstrdup("");
 		proxy_cert_auth.path = xstrdup(http_proxy_ssl_cert);
-		credential_fill(&proxy_cert_auth);
+		credential_fill(&proxy_cert_auth, 0);
 	}
 	return 1;
 }
@@ -731,6 +801,7 @@ static int redact_sensitive_header(struct strbuf *header, size_t offset)
 
 		strbuf_setlen(header, sensitive_header - header->buf);
 		strbuf_addbuf(header, &redacted_header);
+		strbuf_release(&redacted_header);
 		ret = 1;
 	}
 	return ret;
@@ -1023,7 +1094,7 @@ static CURL *get_curl_handle(void)
 #endif
 	}
 
-	if (http_proactive_auth)
+	if (http_proactive_auth != PROACTIVE_AUTH_NONE)
 		init_curl_http_auth(result);
 
 	if (getenv("GIT_SSL_VERSION"))
@@ -1158,6 +1229,8 @@ static CURL *get_curl_handle(void)
 		 */
 		curl_easy_setopt(result, CURLOPT_PROXY, "");
 	} else if (curl_http_proxy) {
+		struct strbuf proxy = STRBUF_INIT;
+
 		if (starts_with(curl_http_proxy, "socks5h"))
 			curl_easy_setopt(result,
 				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
@@ -1196,7 +1269,27 @@ static CURL *get_curl_handle(void)
 		if (!proxy_auth.host)
 			die("Invalid proxy URL '%s'", curl_http_proxy);
 
-		curl_easy_setopt(result, CURLOPT_PROXY, proxy_auth.host);
+		strbuf_addstr(&proxy, proxy_auth.host);
+		if (proxy_auth.path) {
+			curl_version_info_data *ver = curl_version_info(CURLVERSION_NOW);
+
+			if (ver->version_num < 0x075400)
+				die("libcurl 7.84 or later is required to support paths in proxy URLs");
+
+			if (!starts_with(proxy_auth.protocol, "socks"))
+				die("Invalid proxy URL '%s': only SOCKS proxies support paths",
+				    curl_http_proxy);
+
+			if (strcasecmp(proxy_auth.host, "localhost"))
+				die("Invalid proxy URL '%s': host must be localhost if a path is present",
+				    curl_http_proxy);
+
+			strbuf_addch(&proxy, '/');
+			strbuf_add_percentencode(&proxy, proxy_auth.path, 0);
+		}
+		curl_easy_setopt(result, CURLOPT_PROXY, proxy.buf);
+		strbuf_release(&proxy);
+
 		var_override(&curl_no_proxy, getenv("NO_PROXY"));
 		var_override(&curl_no_proxy, getenv("no_proxy"));
 		curl_easy_setopt(result, CURLOPT_NOPROXY, curl_no_proxy);
@@ -1208,11 +1301,13 @@ static CURL *get_curl_handle(void)
 	return result;
 }
 
-static void set_from_env(const char **var, const char *envname)
+static void set_from_env(char **var, const char *envname)
 {
 	const char *val = getenv(envname);
-	if (val)
-		*var = val;
+	if (val) {
+		FREE_AND_NULL(*var);
+		*var = xstrdup(val);
+	}
 }
 
 void http_init(struct remote *remote, const char *url, int proactive_auth)
@@ -1265,7 +1360,8 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 	if (curl_global_init(CURL_GLOBAL_ALL) != CURLE_OK)
 		die("curl_global_init failed");
 
-	http_proactive_auth = proactive_auth;
+	if (proactive_auth && http_proactive_auth == PROACTIVE_AUTH_NONE)
+		http_proactive_auth = PROACTIVE_AUTH_IF_CREDENTIALS;
 
 	if (remote && remote->http_proxy)
 		curl_http_proxy = xstrdup(remote->http_proxy);
@@ -1275,8 +1371,6 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 
 	pragma_header = curl_slist_append(http_copy_default_headers(),
 		"Pragma: no-cache");
-	no_pragma_header = curl_slist_append(http_copy_default_headers(),
-		"Pragma:");
 
 	{
 		char *http_max_requests = getenv("GIT_HTTP_MAX_REQUESTS");
@@ -1360,9 +1454,6 @@ void http_cleanup(void)
 	curl_slist_free_all(pragma_header);
 	pragma_header = NULL;
 
-	curl_slist_free_all(no_pragma_header);
-	no_pragma_header = NULL;
-
 	curl_slist_free_all(host_resolutions);
 	host_resolutions = NULL;
 
@@ -1442,7 +1533,16 @@ struct active_request_slot *get_active_slot(void)
 	slot->finished = NULL;
 	slot->callback_data = NULL;
 	slot->callback_func = NULL;
+
+	if (curl_cookie_file && !strcmp(curl_cookie_file, "-")) {
+		warning(_("refusing to read cookies from http.cookiefile '-'"));
+		FREE_AND_NULL(curl_cookie_file);
+	}
 	curl_easy_setopt(slot->curl, CURLOPT_COOKIEFILE, curl_cookie_file);
+	if (curl_save_cookies && (!curl_cookie_file || !curl_cookie_file[0])) {
+		curl_save_cookies = 0;
+		warning(_("ignoring http.savecookies for empty http.cookiefile"));
+	}
 	if (curl_save_cookies)
 		curl_easy_setopt(slot->curl, CURLOPT_COOKIEJAR, curl_cookie_file);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, pragma_header);
@@ -1452,6 +1552,7 @@ struct active_request_slot *get_active_slot(void)
 	curl_easy_setopt(slot->curl, CURLOPT_READFUNCTION, NULL);
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, NULL);
 	curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDS, NULL);
+	curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDSIZE, -1L);
 	curl_easy_setopt(slot->curl, CURLOPT_UPLOAD, 0);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
 	curl_easy_setopt(slot->curl, CURLOPT_FAILONERROR, 1);
@@ -1469,7 +1570,7 @@ struct active_request_slot *get_active_slot(void)
 
 	curl_easy_setopt(slot->curl, CURLOPT_IPRESOLVE, git_curl_ipresolve);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPAUTH, http_auth_methods);
-	if (http_auth.password || curl_empty_auth_enabled())
+	if (http_auth.password || http_auth.credential || curl_empty_auth_enabled())
 		init_curl_http_auth(slot->curl);
 
 	return slot;
@@ -1608,7 +1709,7 @@ void run_active_slot(struct active_request_slot *slot)
 	 * The value of slot->finished we set before the loop was used
 	 * to set our "finished" variable when our request completed.
 	 *
-	 * 1. The slot may not have been reused for another requst
+	 * 1. The slot may not have been reused for another request
 	 *    yet, in which case it still has &finished.
 	 *
 	 * 2. The slot may already be in-use to serve another request,
@@ -1758,8 +1859,15 @@ static int handle_curl_result(struct slot_results *results)
 	} else if (missing_target(results))
 		return HTTP_MISSING_TARGET;
 	else if (results->http_code == 401) {
-		if (http_auth.username && http_auth.password) {
+		if ((http_auth.username && http_auth.password) ||\
+		    (http_auth.authtype && http_auth.credential)) {
+			if (http_auth.multistage) {
+				credential_clear_secrets(&http_auth);
+				return HTTP_REAUTH;
+			}
 			credential_reject(&http_auth);
+			if (always_auth_proactively())
+				http_proactive_auth = PROACTIVE_AUTH_NONE;
 			return HTTP_NOAUTH;
 		} else {
 			http_auth_methods &= ~CURLAUTH_GSSNEGOTIATE;
@@ -1946,7 +2054,7 @@ static void write_accept_language(struct strbuf *buf)
 
 		/* add '*' */
 		REALLOC_ARRAY(language_tags, num_langs + 1);
-		language_tags[num_langs++] = "*"; /* it's OK; this won't be freed */
+		language_tags[num_langs++] = xstrdup("*");
 
 		/* compute decimal_places */
 		for (max_q = 1, decimal_places = 0;
@@ -1976,8 +2084,7 @@ static void write_accept_language(struct strbuf *buf)
 		}
 	}
 
-	/* free language tags -- last one is a static '*' */
-	for (i = 0; i < num_langs - 1; i++)
+	for (i = 0; i < num_langs; i++)
 		free(language_tags[i]);
 	free(language_tags);
 }
@@ -2066,10 +2173,14 @@ static int http_request(const char *url,
 	/* Add additional headers here */
 	if (options && options->extra_headers) {
 		const struct string_list_item *item;
-		for_each_string_list_item(item, options->extra_headers) {
-			headers = curl_slist_append(headers, item->string);
+		if (options && options->extra_headers) {
+			for_each_string_list_item(item, options->extra_headers) {
+				headers = curl_slist_append(headers, item->string);
+			}
 		}
 	}
+
+	headers = http_append_auth_header(&http_auth, headers);
 
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, headers);
@@ -2152,7 +2263,13 @@ static int http_request_reauth(const char *url,
 			       void *result, int target,
 			       struct http_get_options *options)
 {
-	int ret = http_request(url, result, target, options);
+	int i = 3;
+	int ret;
+
+	if (always_auth_proactively())
+		credential_fill(&http_auth, 1);
+
+	ret = http_request(url, result, target, options);
 
 	if (ret != HTTP_OK && ret != HTTP_REAUTH)
 		return ret;
@@ -2165,35 +2282,37 @@ static int http_request_reauth(const char *url,
 		}
 	}
 
-	if (ret != HTTP_REAUTH)
-		return ret;
+	while (ret == HTTP_REAUTH && --i) {
+		/*
+		 * The previous request may have put cruft into our output stream; we
+		 * should clear it out before making our next request.
+		 */
+		switch (target) {
+		case HTTP_REQUEST_STRBUF:
+			strbuf_reset(result);
+			break;
+		case HTTP_REQUEST_FILE: {
+			FILE *f = result;
+			if (fflush(f)) {
+				error_errno("unable to flush a file");
+				return HTTP_START_FAILED;
+			}
+			rewind(f);
+			if (ftruncate(fileno(f), 0) < 0) {
+				error_errno("unable to truncate a file");
+				return HTTP_START_FAILED;
+			}
+			break;
+		}
+		default:
+			BUG("Unknown http_request target");
+		}
 
-	/*
-	 * The previous request may have put cruft into our output stream; we
-	 * should clear it out before making our next request.
-	 */
-	switch (target) {
-	case HTTP_REQUEST_STRBUF:
-		strbuf_reset(result);
-		break;
-	case HTTP_REQUEST_FILE:
-		if (fflush(result)) {
-			error_errno("unable to flush a file");
-			return HTTP_START_FAILED;
-		}
-		rewind(result);
-		if (ftruncate(fileno(result), 0) < 0) {
-			error_errno("unable to truncate a file");
-			return HTTP_START_FAILED;
-		}
-		break;
-	default:
-		BUG("Unknown http_request target");
+		credential_fill(&http_auth, 1);
+
+		ret = http_request(url, result, target, options);
 	}
-
-	credential_fill(&http_auth);
-
-	return http_request(url, result, target, options);
+	return ret;
 }
 
 int http_get_strbuf(const char *url,
@@ -2272,8 +2391,24 @@ static char *fetch_pack_index(unsigned char *hash, const char *base_url)
 	strbuf_addf(&buf, "objects/pack/pack-%s.idx", hash_to_hex(hash));
 	url = strbuf_detach(&buf, NULL);
 
-	strbuf_addf(&buf, "%s.temp", sha1_pack_index_name(hash));
-	tmp = strbuf_detach(&buf, NULL);
+	/*
+	 * Don't put this into packs/, since it's just temporary and we don't
+	 * want to confuse it with our local .idx files.  We'll generate our
+	 * own index if we choose to download the matching packfile.
+	 *
+	 * It's tempting to use xmks_tempfile() here, but it's important that
+	 * the file not exist, otherwise http_get_file() complains. So we
+	 * create a filename that should be unique, and then just register it
+	 * as a tempfile so that it will get cleaned up on exit.
+	 *
+	 * In theory we could hold on to the tempfile and delete these as soon
+	 * as we download the matching pack, but it would take a bit of
+	 * refactoring. Leaving them until the process ends is probably OK.
+	 */
+	tmp = xstrfmt("%s/tmp_pack_%s.idx",
+		      repo_get_object_directory(the_repository),
+		      hash_to_hex(hash));
+	register_tempfile(tmp);
 
 	if (http_get_file(url, tmp, NULL) != HTTP_OK) {
 		error("Unable to get pack index %s", url);
@@ -2287,15 +2422,17 @@ static char *fetch_pack_index(unsigned char *hash, const char *base_url)
 static int fetch_and_setup_pack_index(struct packed_git **packs_head,
 	unsigned char *sha1, const char *base_url)
 {
-	struct packed_git *new_pack;
+	struct packed_git *new_pack, *p;
 	char *tmp_idx = NULL;
 	int ret;
 
-	if (has_pack_index(sha1)) {
-		new_pack = parse_pack_index(sha1, sha1_pack_index_name(sha1));
-		if (!new_pack)
-			return -1; /* parse_pack_index() already issued error message */
-		goto add_pack;
+	/*
+	 * If we already have the pack locally, no need to fetch its index or
+	 * even add it to list; we already have all of its objects.
+	 */
+	for (p = get_all_packs(the_repository); p; p = p->next) {
+		if (hasheq(p->hash, sha1, the_repository->hash_algo))
+			return 0;
 	}
 
 	tmp_idx = fetch_pack_index(sha1, base_url);
@@ -2311,15 +2448,12 @@ static int fetch_and_setup_pack_index(struct packed_git **packs_head,
 	}
 
 	ret = verify_pack_index(new_pack);
-	if (!ret) {
+	if (!ret)
 		close_pack_index(new_pack);
-		ret = finalize_object_file(tmp_idx, sha1_pack_index_name(sha1));
-	}
 	free(tmp_idx);
 	if (ret)
 		return -1;
 
-add_pack:
 	new_pack->next = *packs_head;
 	*packs_head = new_pack;
 	return 0;
@@ -2359,6 +2493,7 @@ int http_get_info_packs(const char *base_url, struct packed_git **packs_head)
 
 cleanup:
 	free(url);
+	strbuf_release(&buf);
 	return ret;
 }
 
@@ -2370,6 +2505,7 @@ void release_http_pack_request(struct http_pack_request *preq)
 	}
 	preq->slot = NULL;
 	strbuf_release(&preq->tmpfile);
+	curl_slist_free_all(preq->headers);
 	free(preq->url);
 	free(preq);
 }
@@ -2445,7 +2581,8 @@ struct http_pack_request *new_direct_http_pack_request(
 
 	preq->url = url;
 
-	strbuf_addf(&preq->tmpfile, "%s.temp", sha1_pack_name(packed_git_hash));
+	odb_pack_name(&preq->tmpfile, packed_git_hash, "pack");
+	strbuf_addstr(&preq->tmpfile, ".temp");
 	preq->packfile = fopen(preq->tmpfile.buf, "a");
 	if (!preq->packfile) {
 		error("Unable to open local file %s for pack",
@@ -2454,11 +2591,11 @@ struct http_pack_request *new_direct_http_pack_request(
 	}
 
 	preq->slot = get_active_slot();
+	preq->headers = object_request_headers();
 	curl_easy_setopt(preq->slot->curl, CURLOPT_WRITEDATA, preq->packfile);
 	curl_easy_setopt(preq->slot->curl, CURLOPT_WRITEFUNCTION, fwrite);
 	curl_easy_setopt(preq->slot->curl, CURLOPT_URL, preq->url);
-	curl_easy_setopt(preq->slot->curl, CURLOPT_HTTPHEADER,
-		no_pragma_header);
+	curl_easy_setopt(preq->slot->curl, CURLOPT_HTTPHEADER, preq->headers);
 
 	/*
 	 * If there is data present from a previous transfer attempt,
@@ -2609,6 +2746,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	 * file; also rewind to the beginning of the local file.
 	 */
 	if (prev_read == -1) {
+		git_inflate_end(&freq->stream);
 		memset(&freq->stream, 0, sizeof(freq->stream));
 		git_inflate_init(&freq->stream);
 		the_hash_algo->init_fn(&freq->c);
@@ -2624,13 +2762,14 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	}
 
 	freq->slot = get_active_slot();
+	freq->headers = object_request_headers();
 
 	curl_easy_setopt(freq->slot->curl, CURLOPT_WRITEDATA, freq);
 	curl_easy_setopt(freq->slot->curl, CURLOPT_FAILONERROR, 0);
 	curl_easy_setopt(freq->slot->curl, CURLOPT_WRITEFUNCTION, fwrite_sha1_file);
 	curl_easy_setopt(freq->slot->curl, CURLOPT_ERRORBUFFER, freq->errorstr);
 	curl_easy_setopt(freq->slot->curl, CURLOPT_URL, freq->url);
-	curl_easy_setopt(freq->slot->curl, CURLOPT_HTTPHEADER, no_pragma_header);
+	curl_easy_setopt(freq->slot->curl, CURLOPT_HTTPHEADER, freq->headers);
 
 	/*
 	 * If we have successfully processed data from a previous fetch
@@ -2681,7 +2820,6 @@ int finish_http_object_request(struct http_object_request *freq)
 		return -1;
 	}
 
-	git_inflate_end(&freq->stream);
 	the_hash_algo->final_oid_fn(&freq->real_oid, &freq->c);
 	if (freq->zret != Z_STREAM_END) {
 		unlink_or_warn(freq->tmpfile.buf);
@@ -2698,15 +2836,17 @@ int finish_http_object_request(struct http_object_request *freq)
 	return freq->rename;
 }
 
-void abort_http_object_request(struct http_object_request *freq)
+void abort_http_object_request(struct http_object_request **freq_p)
 {
+	struct http_object_request *freq = *freq_p;
 	unlink_or_warn(freq->tmpfile.buf);
 
-	release_http_object_request(freq);
+	release_http_object_request(freq_p);
 }
 
-void release_http_object_request(struct http_object_request *freq)
+void release_http_object_request(struct http_object_request **freq_p)
 {
+	struct http_object_request *freq = *freq_p;
 	if (freq->localfile != -1) {
 		close(freq->localfile);
 		freq->localfile = -1;
@@ -2718,5 +2858,10 @@ void release_http_object_request(struct http_object_request *freq)
 		release_active_slot(freq->slot);
 		freq->slot = NULL;
 	}
+	curl_slist_free_all(freq->headers);
 	strbuf_release(&freq->tmpfile);
+	git_inflate_end(&freq->stream);
+
+	free(freq);
+	*freq_p = NULL;
 }

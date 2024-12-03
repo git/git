@@ -29,5 +29,9 @@ static inline int win32_has_dir_sep(const char *path)
 #define has_dir_sep(path) win32_has_dir_sep(path)
 int win32_offset_1st_component(const char *path);
 #define offset_1st_component win32_offset_1st_component
+int win32_fspathcmp(const char *a, const char *b);
+#define fspathcmp win32_fspathcmp
+int win32_fspathncmp(const char *a, const char *b, size_t count);
+#define fspathncmp win32_fspathncmp
 
 #endif

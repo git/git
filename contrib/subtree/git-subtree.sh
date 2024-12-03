@@ -946,7 +946,7 @@ cmd_split () {
 		rev=$(git rev-parse -q --verify "$1^{commit}") ||
 			die "fatal: '$1' does not refer to a commit"
 	else
-		die "fatal: you must provide exactly one revision, and optionnally a repository.  Got: '$*'"
+		die "fatal: you must provide exactly one revision, and optionally a repository.  Got: '$*'"
 	fi
 	repository=""
 	if test "$#" = 2

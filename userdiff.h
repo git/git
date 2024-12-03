@@ -8,18 +8,27 @@ struct repository;
 
 struct userdiff_funcname {
 	const char *pattern;
+	char *pattern_owned;
 	int cflags;
+};
+
+struct external_diff {
+	char *cmd;
+	unsigned trust_exit_code:1;
 };
 
 struct userdiff_driver {
 	const char *name;
-	const char *external;
+	struct external_diff external;
 	const char *algorithm;
+	char *algorithm_owned;
 	int binary;
 	struct userdiff_funcname funcname;
 	const char *word_regex;
+	char *word_regex_owned;
 	const char *word_regex_multi_byte;
 	const char *textconv;
+	char *textconv_owned;
 	struct notes_cache *textconv_cache;
 	int textconv_want_cache;
 };

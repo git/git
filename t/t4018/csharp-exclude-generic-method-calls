@@ -1,0 +1,12 @@
+class Example
+{
+    string Method(int RIGHT)
+    {
+        GenericMethodCall<int, int>(
+            );
+
+        return "ChangeMe";
+    }
+
+    string GenericMethodCall<T, T2>() => "test";
+}

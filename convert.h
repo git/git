@@ -4,7 +4,7 @@
 #ifndef CONVERT_H
 #define CONVERT_H
 
-#include "hash-ll.h"
+#include "hash.h"
 #include "string-list.h"
 
 struct index_state;
@@ -92,7 +92,7 @@ void convert_attrs(struct index_state *istate,
 		   struct conv_attrs *ca, const char *path);
 
 extern enum eol core_eol;
-extern const char *check_roundtrip_encoding;
+extern char *check_roundtrip_encoding;
 const char *get_cached_convert_stats_ascii(struct index_state *istate,
 					   const char *path);
 const char *get_wt_convert_stats_ascii(const char *path);

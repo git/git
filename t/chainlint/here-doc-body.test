@@ -1,0 +1,9 @@
+test_expect_success 'here-doc-body' - <<\EOT
+	echo "missing chain before"
+	cat >file <<-\EOF &&
+	inside inner here-doc
+	these are not shell commands
+	EOF
+	echo "missing chain after"
+	echo "but this line is OK because it's the end"
+EOT

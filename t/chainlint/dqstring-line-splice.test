@@ -1,3 +1,4 @@
+test_expect_success 'dqstring-line-splice' '
 # LINT: line-splice within DQ-string
 '"
 echo 'fatal: reword option of --fixup is mutually exclusive with'\
@@ -5,3 +6,4 @@ echo 'fatal: reword option of --fixup is mutually exclusive with'\
 test_must_fail git commit --fixup=reword:HEAD~ $1 2>actual &&
 test_cmp expect actual
 "'
+'

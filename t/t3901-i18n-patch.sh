@@ -8,7 +8,14 @@ test_description='i18n settings and format-patch | am pipe'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
+
+if ! test_have_prereq ICONV
+then
+	skip_all='skipping patch i18n tests; iconv not available'
+	test_done
+fi
 
 check_encoding () {
 	# Make sure characters are not corrupted

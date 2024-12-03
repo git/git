@@ -83,3 +83,10 @@ You can then use test_expect_success as usual, with a few differences:
      should create one with the appropriate version of git.
 
 At the end of the script, call test_done as usual.
+
+Some older versions may need a few build knobs tweaked (e.g., ancient
+versions of Git no longer build with modern OpenSSL). Your script can
+set MAKE_OPTS_A and MAKE_OPTS_B, which will be passed alongside
+GIT_INTEROP_MAKE_OPTS. Users can override them per-script by setting
+GIT_INTEROP_MAKE_OPTS_{A,B} in the environment, just like they can set
+GIT_TEST_VERSION_{A,B}.

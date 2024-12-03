@@ -9,6 +9,7 @@ test_description='git grep various.
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_invalid_grep_expression() {
@@ -31,6 +32,7 @@ int main(int argc, const char **argv)
 	return 0;
 	/* char ?? */
 }
+
 EOF
 
 test_expect_success setup '
@@ -86,6 +88,7 @@ test_expect_success setup '
 	# Still a no-op.
 	function dummy() {}
 	EOF
+	printf "\200\nASCII\n" >invalid-utf8 &&
 	if test_have_prereq FUNNYNAMES
 	then
 		echo unusual >"\"unusual\" pathname" &&
@@ -530,6 +533,14 @@ do
 	test_expect_success "grep --count -h $L" '
 		echo 3 >expected &&
 		git grep --count -h -e b $H -- ab >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep $L searches past invalid lines on UTF-8 locale" '
+		LC_ALL=en_US.UTF-8 git grep A. invalid-utf8 >actual &&
+		cat >expected <<-EOF &&
+		invalid-utf8:ASCII
+		EOF
 		test_cmp expected actual
 	'
 

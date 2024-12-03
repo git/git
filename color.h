@@ -112,7 +112,8 @@ int want_color_fd(int fd, int var);
  * Translate a Git color from 'value' into a string that the terminal can
  * interpret and store it into 'dst'. The Git color values are of the form
  * "foreground [background] [attr]" where fore- and background can be a color
- * name ("red"), a RGB code (#0xFF0000) or a 256-color-mode from the terminal.
+ * name ("red"), a RGB code (#FF0000 or #F00) or a 256-color-mode from the
+ * terminal.
  */
 int color_parse(const char *value, char *dst);
 int color_parse_mem(const char *value, int len, char *dst);

@@ -12,6 +12,7 @@ subcommands of git submodule.
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup - enable local submodules' '
@@ -212,8 +213,7 @@ test_expect_success 'submodule add to .gitignored path fails' '
 		The following paths are ignored by one of your .gitignore files:
 		submod
 		hint: Use -f if you really want to add them.
-		hint: Turn this message off by running
-		hint: "git config advice.addIgnoredFile false"
+		hint: Disable this message with "git config advice.addIgnoredFile false"
 		EOF
 		# Does not use test_commit due to the ignore
 		echo "*" > .gitignore &&
@@ -1450,6 +1450,37 @@ test_expect_success 'recursive clone respects -q' '
 	test_when_finished "rm -rf multisuper_clone" &&
 	git clone -q --recurse-submodules multisuper multisuper_clone >actual &&
 	test_must_be_empty actual
+'
+
+test_expect_success '`submodule init` and `init.templateDir`' '
+	mkdir -p tmpl/hooks &&
+	write_script tmpl/hooks/post-checkout <<-EOF &&
+	echo HOOK-RUN >&2
+	echo I was here >hook.run
+	exit 1
+	EOF
+
+	test_config init.templateDir "$(pwd)/tmpl" &&
+	test_when_finished \
+		"git config --global --unset init.templateDir || true" &&
+	(
+		sane_unset GIT_TEMPLATE_DIR &&
+		NO_SET_GIT_TEMPLATE_DIR=t &&
+		export NO_SET_GIT_TEMPLATE_DIR &&
+
+		git config --global init.templateDir "$(pwd)/tmpl" &&
+		test_must_fail git submodule \
+			add "$submodurl" sub-global 2>err &&
+		git config --global --unset init.templateDir &&
+		test_grep HOOK-RUN err &&
+		test_path_is_file sub-global/hook.run &&
+
+		git config init.templateDir "$(pwd)/tmpl" &&
+		git submodule add "$submodurl" sub-local 2>err &&
+		git config --unset init.templateDir &&
+		test_grep ! HOOK-RUN err &&
+		test_path_is_missing sub-local/hook.run
+	)
 '
 
 test_done

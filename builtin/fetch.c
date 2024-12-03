@@ -1,13 +1,13 @@
 /*
  * "git fetch"
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "advice.h"
 #include "config.h"
 #include "gettext.h"
 #include "environment.h"
 #include "hex.h"
-#include "repository.h"
 #include "refs.h"
 #include "refspec.h"
 #include "object-name.h"
@@ -138,6 +138,7 @@ static int git_fetch_config(const char *k, const char *v,
 		int r = git_config_bool(k, v) ?
 			RECURSE_SUBMODULES_ON : RECURSE_SUBMODULES_OFF;
 		fetch_config->recurse_submodules = r;
+		return 0;
 	}
 
 	if (!strcmp(k, "submodule.fetchjobs")) {
@@ -285,7 +286,7 @@ static struct refname_hash_entry *refname_hash_add(struct hashmap *map,
 	return ent;
 }
 
-static int add_one_refname(const char *refname,
+static int add_one_refname(const char *refname, const char *referent UNUSED,
 			   const struct object_id *oid,
 			   int flag UNUSED, void *cbdata)
 {
@@ -339,7 +340,8 @@ static void find_non_local_tags(const struct ref *refs,
 	refname_hash_init(&remote_refs);
 	create_fetch_oidset(head, &fetch_oids);
 
-	for_each_ref(add_one_refname, &existing_refs);
+	refs_for_each_ref(get_main_ref_store(the_repository), add_one_refname,
+			  &existing_refs);
 
 	/*
 	 * If we already have a transaction, then we need to filter out all
@@ -452,13 +454,10 @@ static void filter_prefetch_refspec(struct refspec *rs)
 				 ref_namespace[NAMESPACE_TAGS].ref))) {
 			int j;
 
-			free(rs->items[i].src);
-			free(rs->items[i].dst);
+			refspec_item_clear(&rs->items[i]);
 
-			for (j = i + 1; j < rs->nr; j++) {
+			for (j = i + 1; j < rs->nr; j++)
 				rs->items[j - 1] = rs->items[j];
-				rs->raw[j - 1] = rs->raw[j];
-			}
 			rs->nr--;
 			i--;
 			continue;
@@ -580,11 +579,16 @@ static struct ref *get_ref_map(struct remote *remote,
 		}
 	}
 
-	if (tags == TAGS_SET)
+	if (tags == TAGS_SET) {
+		struct refspec_item tag_refspec;
+
 		/* also fetch all tags */
-		get_fetch_map(remote_refs, tag_refspec, &tail, 0);
-	else if (tags == TAGS_DEFAULT && *autotags)
+		refspec_item_init(&tag_refspec, TAG_REFSPEC, 0);
+		get_fetch_map(remote_refs, &tag_refspec, &tail, 0);
+		refspec_item_clear(&tag_refspec);
+	} else if (tags == TAGS_DEFAULT && *autotags) {
 		find_non_local_tags(remote_refs, NULL, &ref_map, &tail);
+	}
 
 	/* Now append any refs to be updated opportunistically: */
 	*tail = orefs;
@@ -613,7 +617,9 @@ static struct ref *get_ref_map(struct remote *remote,
 
 			if (!existing_refs_populated) {
 				refname_hash_init(&existing_refs);
-				for_each_ref(add_one_refname, &existing_refs);
+				refs_for_each_ref(get_main_ref_store(the_repository),
+						  add_one_refname,
+						  &existing_refs);
 				existing_refs_populated = 1;
 			}
 
@@ -658,7 +664,8 @@ static int s_update_ref(const char *action,
 	 * lifecycle.
 	 */
 	if (!transaction) {
-		transaction = our_transaction = ref_transaction_begin(&err);
+		transaction = our_transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+									    &err);
 		if (!transaction) {
 			ret = STORE_REF_ERROR_OTHER;
 			goto out;
@@ -667,7 +674,7 @@ static int s_update_ref(const char *action,
 
 	ret = ref_transaction_update(transaction, ref->name, &ref->new_oid,
 				     check_old ? &ref->old_oid : NULL,
-				     0, msg, &err);
+				     NULL, NULL, 0, msg, &err);
 	if (ret) {
 		ret = STORE_REF_ERROR_OTHER;
 		goto out;
@@ -1151,7 +1158,7 @@ static int store_updated_refs(struct display_state *display_state,
 		opt.exclude_hidden_refs_section = "fetch";
 		rm = ref_map;
 		if (check_connected(iterate_ref_map, &rm, &opt)) {
-			rc = error(_("%s did not send all necessary objects\n"),
+			rc = error(_("%s did not send all necessary objects"),
 				   display_state->url);
 			goto abort;
 		}
@@ -1381,8 +1388,8 @@ static int prune_refs(struct display_state *display_state,
 	if (!dry_run) {
 		if (transaction) {
 			for (ref = stale_refs; ref; ref = ref->next) {
-				result = ref_transaction_delete(transaction, ref->name, NULL, 0,
-								"fetch: prune", &err);
+				result = ref_transaction_delete(transaction, ref->name, NULL,
+								NULL, 0, "fetch: prune", &err);
 				if (result)
 					goto cleanup;
 			}
@@ -1392,7 +1399,9 @@ static int prune_refs(struct display_state *display_state,
 			for (ref = stale_refs; ref; ref = ref->next)
 				string_list_append(&refnames, ref->name);
 
-			result = delete_refs("fetch: prune", &refnames, 0);
+			result = refs_delete_refs(get_main_ref_store(the_repository),
+						  "fetch: prune", &refnames,
+						  0);
 			string_list_clear(&refnames, 0);
 		}
 	}
@@ -1405,7 +1414,8 @@ static int prune_refs(struct display_state *display_state,
 					   _("(none)"), ref->name,
 					   &ref->new_oid, &ref->old_oid,
 					   summary_width);
-			warn_dangling_symref(stderr, dangling_msg, ref->name);
+			refs_warn_dangling_symref(get_main_ref_store(the_repository),
+						  stderr, dangling_msg, ref->name);
 		}
 	}
 
@@ -1445,12 +1455,13 @@ static void set_option(struct transport *transport, const char *name, const char
 		die(_("option \"%s\" value \"%s\" is not valid for %s"),
 		    name, value, transport->url);
 	if (r > 0)
-		warning(_("option \"%s\" is ignored for %s\n"),
+		warning(_("option \"%s\" is ignored for %s"),
 			name, transport->url);
 }
 
 
 static int add_oid(const char *refname UNUSED,
+		   const char *referent UNUSED,
 		   const struct object_id *oid,
 		   int flags UNUSED, void *cb_data)
 {
@@ -1478,7 +1489,8 @@ static void add_negotiation_tips(struct git_transport_options *smart_options)
 			continue;
 		}
 		old_nr = oids->nr;
-		for_each_glob_ref(add_oid, s, oids);
+		refs_for_each_glob_ref(get_main_ref_store(the_repository),
+				       add_oid, s, oids);
 		if (old_nr == oids->nr)
 			warning("ignoring --negotiation-tip=%s because it does not match any refs",
 				s);
@@ -1654,7 +1666,8 @@ static int do_fetch(struct transport *transport,
 			   config->display_format);
 
 	if (atomic_fetch) {
-		transaction = ref_transaction_begin(&err);
+		transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+							  &err);
 		if (!transaction) {
 			retcode = -1;
 			goto cleanup;
@@ -1715,11 +1728,8 @@ static int do_fetch(struct transport *transport,
 			goto cleanup;
 
 		retcode = ref_transaction_commit(transaction, &err);
-		if (retcode) {
-			ref_transaction_free(transaction);
-			transaction = NULL;
+		if (retcode)
 			goto cleanup;
-		}
 	}
 
 	commit_fetch_head(&fetch_head);
@@ -1787,8 +1797,11 @@ cleanup:
 		if (transaction && ref_transaction_abort(transaction, &err) &&
 		    err.len)
 			error("%s", err.buf);
+		transaction = NULL;
 	}
 
+	if (transaction)
+		ref_transaction_free(transaction);
 	display_state_release(&display_state);
 	close_fetch_head(&fetch_head);
 	strbuf_release(&err);
@@ -1964,6 +1977,8 @@ static int fetch_multiple(struct string_list *list, int max_children,
 	strvec_pushl(&argv, "-c", "fetch.bundleURI=",
 		     "fetch", "--append", "--no-auto-gc",
 		     "--no-write-commit-graph", NULL);
+	for (i = 0; i < server_options.nr; i++)
+		strvec_pushf(&argv, "--server-option=%s", server_options.items[i].string);
 	add_options_to_argv(&argv, config);
 
 	if (max_children != 1 && list->nr != 1) {
@@ -2122,7 +2137,10 @@ static int fetch_one(struct remote *remote, int argc, const char **argv,
 	return exit_code;
 }
 
-int cmd_fetch(int argc, const char **argv, const char *prefix)
+int cmd_fetch(int argc,
+	      const char **argv,
+	      const char *prefix,
+	      struct repository *repo UNUSED)
 {
 	struct fetch_config config = {
 		.display_format = DISPLAY_FORMAT_FULL,
@@ -2194,8 +2212,8 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			   N_("deepen history of shallow clone")),
 		OPT_STRING(0, "shallow-since", &deepen_since, N_("time"),
 			   N_("deepen history of shallow repository based on time")),
-		OPT_STRING_LIST(0, "shallow-exclude", &deepen_not, N_("revision"),
-				N_("deepen history of shallow clone, excluding rev")),
+		OPT_STRING_LIST(0, "shallow-exclude", &deepen_not, N_("ref"),
+				N_("deepen history of shallow clone, excluding ref")),
 		OPT_INTEGER(0, "deepen", &deepen_relative,
 			    N_("deepen history of shallow clone")),
 		OPT_SET_INT_F(0, "unshallow", &unshallow,
@@ -2392,6 +2410,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		struct oidset_iter iter;
 		const struct object_id *oid;
 
+		trace2_region_enter("fetch", "negotiate-only", the_repository);
 		if (!remote)
 			die(_("must supply remote when using --negotiate-only"));
 		gtransport = prepare_transport(remote, 1);
@@ -2400,6 +2419,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		} else {
 			warning(_("protocol does not support --negotiate-only, exiting"));
 			result = 1;
+			trace2_region_leave("fetch", "negotiate-only", the_repository);
 			goto cleanup;
 		}
 		if (server_options.nr)
@@ -2410,11 +2430,17 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		while ((oid = oidset_iter_next(&iter)))
 			printf("%s\n", oid_to_hex(oid));
 		oidset_clear(&acked_commits);
+		trace2_region_leave("fetch", "negotiate-only", the_repository);
 	} else if (remote) {
-		if (filter_options.choice || repo_has_promisor_remote(the_repository))
+		if (filter_options.choice || repo_has_promisor_remote(the_repository)) {
+			trace2_region_enter("fetch", "setup-partial", the_repository);
 			fetch_one_setup_partial(remote);
+			trace2_region_leave("fetch", "setup-partial", the_repository);
+		}
+		trace2_region_enter("fetch", "fetch-one", the_repository);
 		result = fetch_one(remote, argc, argv, prune_tags_ok, stdin_refspecs,
 				   &config);
+		trace2_region_leave("fetch", "fetch-one", the_repository);
 	} else {
 		int max_children = max_jobs;
 
@@ -2434,7 +2460,9 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			max_children = config.parallel;
 
 		/* TODO should this also die if we have a previous partial-clone? */
+		trace2_region_enter("fetch", "fetch-multiple", the_repository);
 		result = fetch_multiple(&list, max_children, &config);
+		trace2_region_leave("fetch", "fetch-multiple", the_repository);
 	}
 
 	/*
@@ -2456,6 +2484,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 			max_children = config.parallel;
 
 		add_options_to_argv(&options, &config);
+		trace2_region_enter_printf("fetch", "recurse-submodule", the_repository, "%s", submodule_prefix);
 		result = fetch_submodules(the_repository,
 					  &options,
 					  submodule_prefix,
@@ -2463,6 +2492,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 					  recurse_submodules_default,
 					  verbosity < 0,
 					  max_children);
+		trace2_region_leave_printf("fetch", "recurse-submodule", the_repository, "%s", submodule_prefix);
 		strvec_clear(&options);
 	}
 
@@ -2486,9 +2516,11 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 		if (progress)
 			commit_graph_flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 
+		trace2_region_enter("fetch", "write-commit-graph", the_repository);
 		write_commit_graph_reachable(the_repository->objects->odb,
 					     commit_graph_flags,
 					     NULL);
+		trace2_region_leave("fetch", "write-commit-graph", the_repository);
 	}
 
 	if (enable_auto_gc) {

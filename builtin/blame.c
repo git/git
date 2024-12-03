@@ -4,15 +4,14 @@
  * Copyright (c) 2006, 2014 by its authors
  * See COPYING for licensing conditions
  */
-
-#include "git-compat-util.h"
+#define USE_THE_REPOSITORY_VARIABLE
+#include "builtin.h"
 #include "config.h"
 #include "color.h"
 #include "builtin.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
-#include "repository.h"
 #include "commit.h"
 #include "diff.h"
 #include "revision.h"
@@ -67,7 +66,7 @@ static int no_whole_file_rename;
 static int show_progress;
 static char repeated_meta_color[COLOR_MAXLEN];
 static int coloring_mode;
-static struct string_list ignore_revs_file_list = STRING_LIST_INIT_NODUP;
+static struct string_list ignore_revs_file_list = STRING_LIST_INIT_DUP;
 static int mark_unblamable_lines;
 static int mark_ignored_lines;
 
@@ -134,7 +133,7 @@ static void get_ac_line(const char *inbuf, const char *what,
 {
 	struct ident_split ident;
 	size_t len, maillen, namelen;
-	char *tmp, *endp;
+	const char *tmp, *endp;
 	const char *namebuf, *mailbuf;
 
 	tmp = strstr(inbuf, what);
@@ -316,7 +315,7 @@ static const char *format_time(timestamp_t time, const char *tz_str,
 		size_t time_width;
 		int tz;
 		tz = atoi(tz_str);
-		time_str = show_date(time, tz, &blame_date_mode);
+		time_str = show_date(time, tz, blame_date_mode);
 		strbuf_addstr(&time_buf, time_str);
 		/*
 		 * Add space paddings to time_buf to display a fixed width
@@ -687,7 +686,7 @@ static unsigned parse_score(const char *arg)
 	return score;
 }
 
-static const char *add_prefix(const char *prefix, const char *path)
+static char *add_prefix(const char *prefix, const char *path)
 {
 	return prefix_path(prefix, prefix ? strlen(prefix) : 0, path);
 }
@@ -718,13 +717,14 @@ static int git_blame_config(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp(var, "blame.ignorerevsfile")) {
-		const char *str;
+		char *str;
 		int ret;
 
 		ret = git_config_pathname(&str, var, value);
 		if (ret)
 			return ret;
 		string_list_insert(&ignore_revs_file_list, str);
+		free(str);
 		return 0;
 	}
 	if (!strcmp(var, "blame.markunblamablelines")) {
@@ -852,6 +852,7 @@ static void build_ignorelist(struct blame_scoreboard *sb,
 			oidset_clear(&sb->ignore_list);
 		else
 			oidset_parse_file_carefully(&sb->ignore_list, i->string,
+						    the_repository->hash_algo,
 						    peel_to_commit_oid, sb);
 	}
 	for_each_string_list_item(i, ignore_rev_list) {
@@ -862,10 +863,13 @@ static void build_ignorelist(struct blame_scoreboard *sb,
 	}
 }
 
-int cmd_blame(int argc, const char **argv, const char *prefix)
+int cmd_blame(int argc,
+	      const char **argv,
+	      const char *prefix,
+	      struct repository *repo UNUSED)
 {
 	struct rev_info revs;
-	const char *path;
+	char *path = NULL;
 	struct blame_scoreboard sb;
 	struct blame_origin *o;
 	struct blame_entry *ent = NULL;
@@ -915,7 +919,6 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	struct range_set ranges;
 	unsigned int range_i;
 	long anchor;
-	const int hexsz = the_hash_algo->hexsz;
 	long num_lines = 0;
 	const char *str_usage = cmd_is_annotate ? annotate_usage : blame_usage;
 	const char **opt_usage = cmd_is_annotate ? annotate_opt_usage : blame_opt_usage;
@@ -973,11 +976,11 @@ parse_done:
 	} else if (show_progress < 0)
 		show_progress = isatty(2);
 
-	if (0 < abbrev && abbrev < hexsz)
+	if (0 < abbrev && abbrev < (int)the_hash_algo->hexsz)
 		/* one more abbrev length is needed for the boundary commit */
 		abbrev++;
 	else if (!abbrev)
-		abbrev = hexsz;
+		abbrev = the_hash_algo->hexsz;
 
 	if (revs_file && read_ancestry(revs_file))
 		die_errno("reading graft file '%s' failed", revs_file);
@@ -1029,7 +1032,7 @@ parse_done:
 		blame_date_width = sizeof("Thu Oct 19 16:00:04 2006 -0700");
 		break;
 	case DATE_STRFTIME:
-		blame_date_width = strlen(show_date(0, 0, &blame_date_mode)) + 1; /* add the null */
+		blame_date_width = strlen(show_date(0, 0, blame_date_mode)) + 1; /* add the null */
 		break;
 	}
 	blame_date_width -= 1; /* strip the null */
@@ -1080,7 +1083,7 @@ parse_done:
 			path = add_prefix(prefix, argv[1]);
 			argv[1] = argv[2];
 		} else {	/* (2a) */
-			if (argc == 2 && is_a_rev(argv[1]) && !get_git_work_tree())
+			if (argc == 2 && is_a_rev(argv[1]) && !repo_get_work_tree(the_repository))
 				die("missing <path> to blame");
 			path = add_prefix(prefix, argv[argc - 1]);
 		}
@@ -1093,8 +1096,8 @@ parse_done:
 		struct commit *head_commit;
 		struct object_id head_oid;
 
-		if (!resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
-					&head_oid, NULL) ||
+		if (!refs_resolve_ref_unsafe(get_main_ref_store(the_repository), "HEAD", RESOLVE_REF_READING,
+					     &head_oid, NULL) ||
 		    !(head_commit = lookup_commit_reference_gently(revs.repo,
 							     &head_oid, 1)))
 			die("no such ref: HEAD");
@@ -1227,6 +1230,7 @@ parse_done:
 	}
 
 cleanup:
+	free(path);
 	cleanup_scoreboard(&sb);
 	release_revisions(&revs);
 	return 0;

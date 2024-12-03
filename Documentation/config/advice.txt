@@ -2,7 +2,13 @@ advice.*::
 	These variables control various optional help messages designed to
 	aid new users.  When left unconfigured, Git will give the message
 	alongside instructions on how to squelch it.  You can tell Git
-	that you do not need the help message by setting these to `false`:
+	that you have understood the issue and no longer need a specific
+	help message by setting the corresponding variable to `false`.
++
+As they are intended to help human users, these messages are output to
+the standard error. When tools that run Git as a subprocess find them
+disruptive, they can set `GIT_ADVICE=0` in the environment to squelch
+all advice messages.
 +
 --
 	addEmbeddedRepo::
@@ -56,6 +62,8 @@ advice.*::
 		Shown when the user's information is guessed from the
 		system username and domain name, to tell the user how to
 		set their identity configuration.
+	mergeConflict::
+		Shown when various commands stop because of conflicts.
 	nestedTag::
 		Shown when a user attempts to recursively tag a tag object.
 	pushAlreadyExists::
@@ -94,6 +102,8 @@ advice.*::
 		`pushNonFFCurrent`, `pushNonFFMatching`, `pushAlreadyExists`,
 		`pushFetchFirst`, `pushNeedsForce`, and `pushRefNeedsUpdate`
 		simultaneously.
+	rebaseTodoError::
+		Shown when there is an error after editing the rebase todo list.
 	refSyntax::
 		Shown when the user provides an illegal ref name, to
 		tell the user about the ref syntax documentation.
@@ -112,6 +122,10 @@ advice.*::
 	skippedCherryPicks::
 		Shown when linkgit:git-rebase[1] skips a commit that has already
 		been cherry-picked onto the upstream branch.
+	sparseIndexExpanded::
+		Shown when a sparse index is expanded to a full index, which is likely
+		due to an unexpected set of files existing outside of the
+		sparse-checkout.
 	statusAheadBehind::
 		Shown when linkgit:git-status[1] computes the ahead/behind
 		counts for a local ref compared to its remote tracking ref,

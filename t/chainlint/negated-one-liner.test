@@ -1,3 +1,4 @@
+test_expect_success 'negated-one-liner' '
 # LINT: top-level one-liner subshell
 ! (foo && bar) &&
 ! (foo && bar) >baz &&
@@ -5,3 +6,4 @@
 # LINT: top-level one-liner subshell missing internal "&&"
 ! (foo; bar) &&
 ! (foo; bar) >baz
+'

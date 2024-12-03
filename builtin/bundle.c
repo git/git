@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "gettext.h"
@@ -5,7 +6,6 @@
 #include "strvec.h"
 #include "parse-options.h"
 #include "pkt-line.h"
-#include "repository.h"
 #include "bundle.h"
 
 /*
@@ -140,6 +140,11 @@ static int cmd_bundle_verify(int argc, const char **argv, const char *prefix) {
 			builtin_bundle_verify_usage, options, &bundle_file);
 	/* bundle internals use argv[1] as further parameters */
 
+	if (!startup_info->have_repository) {
+		ret = error(_("need a repository to verify a bundle"));
+		goto cleanup;
+	}
+
 	if ((bundle_fd = open_bundle(bundle_file, &header, &name)) < 0) {
 		ret = 1;
 		goto cleanup;
@@ -202,12 +207,13 @@ static int cmd_bundle_unbundle(int argc, const char **argv, const char *prefix) 
 			builtin_bundle_unbundle_usage, options, &bundle_file);
 	/* bundle internals use argv[1] as further parameters */
 
+	if (!startup_info->have_repository)
+		die(_("Need a repository to unbundle."));
+
 	if ((bundle_fd = open_bundle(bundle_file, &header, NULL)) < 0) {
 		ret = 1;
 		goto cleanup;
 	}
-	if (!startup_info->have_repository)
-		die(_("Need a repository to unbundle."));
 	if (progress)
 		strvec_pushl(&extra_index_pack_args, "-v", "--progress-title",
 			     _("Unbundling objects"), NULL);
@@ -215,12 +221,17 @@ static int cmd_bundle_unbundle(int argc, const char **argv, const char *prefix) 
 			 &extra_index_pack_args, 0) ||
 		list_bundle_refs(&header, argc, argv);
 	bundle_header_release(&header);
+
 cleanup:
+	strvec_clear(&extra_index_pack_args);
 	free(bundle_file);
 	return ret;
 }
 
-int cmd_bundle(int argc, const char **argv, const char *prefix)
+int cmd_bundle(int argc,
+	       const char **argv,
+	       const char *prefix,
+	       struct repository *repo UNUSED)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option options[] = {

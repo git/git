@@ -5,8 +5,8 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
-#include "repository.h"
 #include "config.h"
 #include "convert.h"
 #include "quote.h"
@@ -266,7 +266,6 @@ static void show_ce_fmt(struct repository *repo, const struct cache_entry *ce,
 	struct strbuf sb = STRBUF_INIT;
 
 	while (strbuf_expand_step(&sb, &format)) {
-		const char *end;
 		size_t len;
 		struct stat st;
 
@@ -274,12 +273,6 @@ static void show_ce_fmt(struct repository *repo, const struct cache_entry *ce,
 			strbuf_addch(&sb, '%');
 		else if ((len = strbuf_expand_literal(&sb, format)))
 			format += len;
-		else if (*format != '(')
-			die(_("bad ls-files format: element '%s' "
-			      "does not start with '('"), format);
-		else if (!(end = strchr(format + 1, ')')))
-			die(_("bad ls-files format: element '%s' "
-			      "does not end in ')'"), format);
 		else if (skip_prefix(format, "(objectmode)", &format))
 			strbuf_addf(&sb, "%06o", ce->ce_mode);
 		else if (skip_prefix(format, "(objectname)", &format))
@@ -308,8 +301,7 @@ static void show_ce_fmt(struct repository *repo, const struct cache_entry *ce,
 		else if (skip_prefix(format, "(path)", &format))
 			write_name_to_buf(&sb, fullname);
 		else
-			die(_("bad ls-files format: %%%.*s"),
-			    (int)(end - format + 1), format);
+			strbuf_expand_bad_format(format, "ls-files");
 	}
 	strbuf_addch(&sb, line_terminator);
 	fwrite(sb.buf, sb.len, 1, stdout);
@@ -515,7 +507,7 @@ static int get_common_prefix_len(const char *common_prefix)
 	common_prefix_len = strlen(common_prefix);
 
 	/*
-	 * If the prefix has a trailing slash, strip it so that submodules wont
+	 * If the prefix has a trailing slash, strip it so that submodules won't
 	 * be pruned from the index.
 	 */
 	if (common_prefix[common_prefix_len - 1] == '/')
@@ -569,7 +561,10 @@ static int option_parse_exclude_standard(const struct option *opt,
 	return 0;
 }
 
-int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
+int cmd_ls_files(int argc,
+		 const char **argv,
+		 const char *cmd_prefix,
+		 struct repository *repo UNUSED)
 {
 	int require_work_tree = 0, show_tag = 0, i;
 	char *max_prefix;

@@ -62,13 +62,13 @@ int cmd__progress(int argc, const char **argv)
 			else if (*end == ' ')
 				title = string_list_insert(&titles, end + 1)->string;
 			else
-				die("invalid input: '%s'\n", line.buf);
+				die("invalid input: '%s'", line.buf);
 
 			progress = start_progress(title, total);
 		} else if (skip_prefix(line.buf, "progress ", (const char **) &end)) {
 			uint64_t item_count = strtoull(end, &end, 10);
 			if (*end != '\0')
-				die("invalid input: '%s'\n", line.buf);
+				die("invalid input: '%s'", line.buf);
 			display_progress(progress, item_count);
 		} else if (skip_prefix(line.buf, "throughput ",
 				       (const char **) &end)) {
@@ -76,10 +76,10 @@ int cmd__progress(int argc, const char **argv)
 
 			byte_count = strtoull(end, &end, 10);
 			if (*end != ' ')
-				die("invalid input: '%s'\n", line.buf);
+				die("invalid input: '%s'", line.buf);
 			test_ms = strtoull(end + 1, &end, 10);
 			if (*end != '\0')
-				die("invalid input: '%s'\n", line.buf);
+				die("invalid input: '%s'", line.buf);
 			progress_test_ns = test_ms * 1000 * 1000;
 			display_throughput(progress, byte_count);
 		} else if (!strcmp(line.buf, "update")) {
@@ -87,7 +87,7 @@ int cmd__progress(int argc, const char **argv)
 		} else if (!strcmp(line.buf, "stop")) {
 			stop_progress(&progress);
 		} else {
-			die("invalid input: '%s'\n", line.buf);
+			die("invalid input: '%s'", line.buf);
 		}
 	}
 	strbuf_release(&line);

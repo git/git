@@ -44,4 +44,15 @@ test_expect_success 'run-command formats empty args properly' '
     test_cmp expect actual
 '
 
+test_expect_success 'tracing a shell alias with arguments shows trace of prepared command' '
+	cat >expect <<-EOF &&
+	trace: start_command: SHELL -c ${SQ}echo \$* "\$@"${SQ} ${SQ}echo \$*${SQ} arg
+	EOF
+	git config alias.echo "!echo \$*" &&
+	env GIT_TRACE=1 git echo arg 2>output &&
+	# redact platform differences
+	sed -n -e "s/^\(trace: start_command:\) .* -c /\1 SHELL -c /p" output >actual &&
+	test_cmp expect actual
+'
+
 test_done

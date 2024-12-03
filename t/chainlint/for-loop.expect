@@ -1,14 +1,14 @@
-(
-	for i in a b c
-	do
-		echo $i ?!AMP?!
-		cat <<-\EOF ?!LOOP?!
-		bar
-		EOF
-	done ?!AMP?!
-
-	for i in a b c; do
-		echo $i &&
-		cat $i ?!LOOP?!
-	done
-)
+2 (
+3 	for i in a b c
+4 	do
+5 		echo $i ?!LINT: missing '&&'?!
+6 		cat <<-\EOF ?!LINT: missing '|| exit 1'?!
+7 		bar
+8 		EOF
+9 	done ?!LINT: missing '&&'?!
+10 
+11 	for i in a b c; do
+12 		echo $i &&
+13 		cat $i ?!LINT: missing '|| exit 1'?!
+14 	done
+15 )

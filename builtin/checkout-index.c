@@ -4,13 +4,12 @@
  * Copyright (C) 2005 Linus Torvalds
  *
  */
-#define USE_THE_INDEX_VARIABLE
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
 #include "lockfile.h"
 #include "quote.h"
-#include "repository.h"
 #include "cache-tree.h"
 #include "parse-options.h"
 #include "entry.h"
@@ -69,7 +68,7 @@ static void write_tempfile_record(const char *name, const char *prefix)
 static int checkout_file(const char *name, const char *prefix)
 {
 	int namelen = strlen(name);
-	int pos = index_name_pos(&the_index, name, namelen);
+	int pos = index_name_pos(the_repository->index, name, namelen);
 	int has_same_name = 0;
 	int is_file = 0;
 	int is_skipped = 1;
@@ -79,8 +78,8 @@ static int checkout_file(const char *name, const char *prefix)
 	if (pos < 0)
 		pos = -pos - 1;
 
-	while (pos < the_index.cache_nr) {
-		struct cache_entry *ce = the_index.cache[pos];
+	while (pos <the_repository->index->cache_nr) {
+		struct cache_entry *ce =the_repository->index->cache[pos];
 		if (ce_namelen(ce) != namelen ||
 		    memcmp(ce->name, name, namelen))
 			break;
@@ -140,8 +139,8 @@ static int checkout_all(const char *prefix, int prefix_length)
 	int i, errs = 0;
 	struct cache_entry *last_ce = NULL;
 
-	for (i = 0; i < the_index.cache_nr ; i++) {
-		struct cache_entry *ce = the_index.cache[i];
+	for (i = 0; i < the_repository->index->cache_nr ; i++) {
+		struct cache_entry *ce = the_repository->index->cache[i];
 
 		if (S_ISSPARSEDIR(ce->ce_mode)) {
 			if (!ce_skip_worktree(ce))
@@ -154,8 +153,8 @@ static int checkout_all(const char *prefix, int prefix_length)
 			 * first entry inside the expanded sparse directory).
 			 */
 			if (ignore_skip_worktree) {
-				ensure_full_index(&the_index);
-				ce = the_index.cache[i];
+				ensure_full_index(the_repository->index);
+				ce = the_repository->index->cache[i];
 			}
 		}
 
@@ -208,7 +207,10 @@ static int option_parse_stage(const struct option *opt,
 	return 0;
 }
 
-int cmd_checkout_index(int argc, const char **argv, const char *prefix)
+int cmd_checkout_index(int argc,
+		       const char **argv,
+		       const char *prefix,
+		       struct repository *repo UNUSED)
 {
 	int i;
 	struct lock_file lock_file = LOCK_INIT;
@@ -260,7 +262,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, builtin_checkout_index_options,
 			builtin_checkout_index_usage, 0);
-	state.istate = &the_index;
+	state.istate = the_repository->index;
 	state.force = force;
 	state.quiet = quiet;
 	state.not_new = not_new;
@@ -280,7 +282,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	 */
 	if (index_opt && !state.base_dir_len && !to_tempfile) {
 		state.refresh_cache = 1;
-		state.istate = &the_index;
+		state.istate = the_repository->index;
 		repo_hold_locked_index(the_repository, &lock_file,
 				       LOCK_DIE_ON_ERROR);
 	}
@@ -339,7 +341,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		return 1;
 
 	if (is_lock_file_locked(&lock_file) &&
-	    write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
+	    write_locked_index(the_repository->index, &lock_file, COMMIT_LOCK))
 		die("Unable to write new index file");
 	return 0;
 }

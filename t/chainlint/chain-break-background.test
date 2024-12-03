@@ -1,3 +1,4 @@
+test_expect_success 'chain-break-background' '
 JGIT_DAEMON_PID= &&
 git init --bare empty.git &&
 >empty.git/git-daemon-export-ok &&
@@ -8,3 +9,4 @@ mkfifo jgit_daemon_output &&
 	JGIT_DAEMON_PID=$!
 } &&
 test_expect_code 2 git ls-remote --exit-code git://localhost:$JGIT_DAEMON_PORT/empty.git
+'

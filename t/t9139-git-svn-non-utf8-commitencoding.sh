@@ -4,7 +4,6 @@
 
 test_description='git svn refuses to dcommit non-UTF8 messages'
 
-TEST_FAILS_SANITIZE_LEAK=true
 . ./lib-git-svn.sh
 
 # ISO-2022-JP can pass for valid UTF-8, so skipping that in this test

@@ -79,6 +79,8 @@ Consider enabling untracked cache and split index if supported (see
 `git update-index --untracked-cache` and `git update-index
 --split-index`), Otherwise you can use `no` to have `git status`
 return more quickly without showing untracked files.
+All usual spellings for Boolean value `true` are taken as `normal`
+and `false` as `no`.
 
 The default can be changed using the status.showUntrackedFiles
 configuration variable documented in linkgit:git-config[1].

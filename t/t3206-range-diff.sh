@@ -5,6 +5,7 @@ test_description='range-diff tests'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Note that because of the range-diff's heuristics, test_commit does more
@@ -533,9 +534,9 @@ test_expect_success 'dual-coloring' '
 for prev in topic main..topic
 do
 	test_expect_success "format-patch --range-diff=$prev" '
+		test_when_finished "rm -f 000?-*" &&
 		git format-patch --cover-letter --range-diff=$prev \
 			main..unmodified >actual &&
-		test_when_finished "rm 000?-*" &&
 		test_line_count = 5 actual &&
 		test_grep "^Range-diff:$" 0000-* &&
 		grep "= 1: .* s/5/A" 0000-* &&
@@ -545,33 +546,47 @@ do
 	'
 done
 
+test_expect_success "--range-diff implies --cover-letter for multi-patch series" '
+	test_when_finished "rm -f v2-000?-*" &&
+	git format-patch -v2 --range-diff=topic main..unmodified &&
+	test_grep "^Range-diff against v1:$" v2-0000-cover-letter.patch
+'
+
+test_expect_success "explicit --no-cover-letter defeats implied --cover-letter" '
+	test_when_finished "rm -f v2-000?-*" &&
+	test_must_fail git format-patch --no-cover-letter \
+		-v2 --range-diff=topic main..unmodified &&
+	test_must_fail git -c format.coverLetter=no format-patch \
+		-v2 --range-diff=topic main..unmodified
+'
+
 test_expect_success 'format-patch --range-diff as commentary' '
+	test_when_finished "rm -f 0001-*" &&
 	git format-patch --range-diff=HEAD~1 HEAD~1 >actual &&
-	test_when_finished "rm 0001-*" &&
 	test_line_count = 1 actual &&
 	test_grep "^Range-diff:$" 0001-* &&
 	grep "> 1: .* new message" 0001-*
 '
 
 test_expect_success 'format-patch --range-diff reroll-count with a non-integer' '
+	test_when_finished "rm -f v2.9-0001-*" &&
 	git format-patch --range-diff=HEAD~1 -v2.9 HEAD~1 >actual &&
-	test_when_finished "rm v2.9-0001-*" &&
 	test_line_count = 1 actual &&
 	test_grep "^Range-diff:$" v2.9-0001-* &&
 	grep "> 1: .* new message" v2.9-0001-*
 '
 
 test_expect_success 'format-patch --range-diff reroll-count with a integer' '
+	test_when_finished "rm -f v2-0001-*" &&
 	git format-patch --range-diff=HEAD~1 -v2 HEAD~1 >actual &&
-	test_when_finished "rm v2-0001-*" &&
 	test_line_count = 1 actual &&
 	test_grep "^Range-diff ..* v1:$" v2-0001-* &&
 	grep "> 1: .* new message" v2-0001-*
 '
 
 test_expect_success 'format-patch --range-diff with v0' '
+	test_when_finished "rm -f v0-0001-*" &&
 	git format-patch --range-diff=HEAD~1 -v0 HEAD~1 >actual &&
-	test_when_finished "rm v0-0001-*" &&
 	test_line_count = 1 actual &&
 	test_grep "^Range-diff:$" v0-0001-* &&
 	grep "> 1: .* new message" v0-0001-*
@@ -592,9 +607,9 @@ test_expect_success 'basic with modified format.pretty without "commit "' '
 '
 
 test_expect_success 'range-diff compares notes by default' '
+	test_when_finished "git notes remove topic unmodified || :" &&
 	git notes add -m "topic note" topic &&
 	git notes add -m "unmodified note" unmodified &&
-	test_when_finished git notes remove topic unmodified &&
 	git range-diff --no-color main..topic main..unmodified \
 		>actual &&
 	sed s/Z/\ /g >expect <<-EOF &&
@@ -616,9 +631,9 @@ test_expect_success 'range-diff compares notes by default' '
 '
 
 test_expect_success 'range-diff with --no-notes' '
+	test_when_finished "git notes remove topic unmodified || :" &&
 	git notes add -m "topic note" topic &&
 	git notes add -m "unmodified note" unmodified &&
-	test_when_finished git notes remove topic unmodified &&
 	git range-diff --no-color --no-notes main..topic main..unmodified \
 		>actual &&
 	cat >expect <<-EOF &&
@@ -631,12 +646,12 @@ test_expect_success 'range-diff with --no-notes' '
 '
 
 test_expect_success 'range-diff with multiple --notes' '
+	test_when_finished "git notes --ref=note1 remove topic unmodified || :" &&
 	git notes --ref=note1 add -m "topic note1" topic &&
 	git notes --ref=note1 add -m "unmodified note1" unmodified &&
-	test_when_finished git notes --ref=note1 remove topic unmodified &&
+	test_when_finished "git notes --ref=note2 remove topic unmodified || :" &&
 	git notes --ref=note2 add -m "topic note2" topic &&
 	git notes --ref=note2 add -m "unmodified note2" unmodified &&
-	test_when_finished git notes --ref=note2 remove topic unmodified &&
 	git range-diff --no-color --notes=note1 --notes=note2 main..topic main..unmodified \
 		>actual &&
 	sed s/Z/\ /g >expect <<-EOF &&
@@ -664,12 +679,12 @@ test_expect_success 'range-diff with multiple --notes' '
 
 # `range-diff` should act like `log` with regards to notes
 test_expect_success 'range-diff with --notes=custom does not show default notes' '
+	test_when_finished "git notes remove topic unmodified || :" &&
 	git notes add -m "topic note" topic &&
 	git notes add -m "unmodified note" unmodified &&
+	test_when_finished "git notes --ref=custom remove topic unmodified || :" &&
 	git notes --ref=custom add -m "topic note" topic &&
 	git notes --ref=custom add -m "unmodified note" unmodified &&
-	test_when_finished git notes remove topic unmodified &&
-	test_when_finished git notes --ref=custom remove topic unmodified &&
 	git range-diff --notes=custom main..topic main..unmodified \
 		>actual &&
 	! grep "## Notes ##" actual &&
@@ -677,12 +692,12 @@ test_expect_success 'range-diff with --notes=custom does not show default notes'
 '
 
 test_expect_success 'format-patch --range-diff does not compare notes by default' '
+	test_when_finished "git notes remove topic unmodified || :" &&
 	git notes add -m "topic note" topic &&
 	git notes add -m "unmodified note" unmodified &&
-	test_when_finished git notes remove topic unmodified &&
+	test_when_finished "rm -f 000?-*" &&
 	git format-patch --cover-letter --range-diff=$prev \
 		main..unmodified >actual &&
-	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
 	test_grep "^Range-diff:$" 0000-* &&
 	grep "= 1: .* s/5/A" 0000-* &&
@@ -694,26 +709,26 @@ test_expect_success 'format-patch --range-diff does not compare notes by default
 '
 
 test_expect_success 'format-patch --notes=custom --range-diff only compares custom notes' '
+	test_when_finished "git notes remove topic unmodified || :" &&
 	git notes add -m "topic note" topic &&
-	git notes --ref=custom add -m "topic note (custom)" topic &&
 	git notes add -m "unmodified note" unmodified &&
+	test_when_finished "git notes --ref=custom remove topic unmodified || :" &&
+	git notes --ref=custom add -m "topic note (custom)" topic &&
 	git notes --ref=custom add -m "unmodified note (custom)" unmodified &&
-	test_when_finished git notes remove topic unmodified &&
-	test_when_finished git notes --ref=custom remove topic unmodified &&
+	test_when_finished "rm -f 000?-*" &&
 	git format-patch --notes=custom --cover-letter --range-diff=$prev \
 		main..unmodified >actual &&
-	test_when_finished "rm 000?-*" &&
 	grep "## Notes (custom) ##" 0000-* &&
 	! grep "## Notes ##" 0000-*
 '
 
 test_expect_success 'format-patch --range-diff with --no-notes' '
+	test_when_finished "git notes remove topic unmodified || :" &&
 	git notes add -m "topic note" topic &&
 	git notes add -m "unmodified note" unmodified &&
-	test_when_finished git notes remove topic unmodified &&
+	test_when_finished "rm -f 000?-*" &&
 	git format-patch --no-notes --cover-letter --range-diff=$prev \
 		main..unmodified >actual &&
-	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
 	test_grep "^Range-diff:$" 0000-* &&
 	grep "= 1: .* s/5/A" 0000-* &&
@@ -725,12 +740,12 @@ test_expect_success 'format-patch --range-diff with --no-notes' '
 '
 
 test_expect_success 'format-patch --range-diff with --notes' '
+	test_when_finished "git notes remove topic unmodified || :" &&
 	git notes add -m "topic note" topic &&
 	git notes add -m "unmodified note" unmodified &&
-	test_when_finished git notes remove topic unmodified &&
+	test_when_finished "rm -f 000?-*" &&
 	git format-patch --notes --cover-letter --range-diff=$prev \
 		main..unmodified >actual &&
-	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
 	test_grep "^Range-diff:$" 0000-* &&
 	grep "= 1: .* s/5/A" 0000-* &&
@@ -753,13 +768,13 @@ test_expect_success 'format-patch --range-diff with --notes' '
 '
 
 test_expect_success 'format-patch --range-diff with format.notes config' '
+	test_when_finished "git notes remove topic unmodified || :" &&
 	git notes add -m "topic note" topic &&
 	git notes add -m "unmodified note" unmodified &&
-	test_when_finished git notes remove topic unmodified &&
 	test_config format.notes true &&
+	test_when_finished "rm -f 000?-*" &&
 	git format-patch --cover-letter --range-diff=$prev \
 		main..unmodified >actual &&
-	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
 	test_grep "^Range-diff:$" 0000-* &&
 	grep "= 1: .* s/5/A" 0000-* &&
@@ -782,15 +797,15 @@ test_expect_success 'format-patch --range-diff with format.notes config' '
 '
 
 test_expect_success 'format-patch --range-diff with multiple notes' '
+	test_when_finished "git notes --ref=note1 remove topic unmodified || :" &&
 	git notes --ref=note1 add -m "topic note1" topic &&
 	git notes --ref=note1 add -m "unmodified note1" unmodified &&
-	test_when_finished git notes --ref=note1 remove topic unmodified &&
+	test_when_finished "git notes --ref=note2 remove topic unmodified || :" &&
 	git notes --ref=note2 add -m "topic note2" topic &&
 	git notes --ref=note2 add -m "unmodified note2" unmodified &&
-	test_when_finished git notes --ref=note2 remove topic unmodified &&
+	test_when_finished "rm -f 000?-*" &&
 	git format-patch --notes=note1 --notes=note2 --cover-letter --range-diff=$prev \
 		main..unmodified >actual &&
-	test_when_finished "rm 000?-*" &&
 	test_line_count = 5 actual &&
 	test_grep "^Range-diff:$" 0000-* &&
 	grep "= 1: .* s/5/A" 0000-* &&

@@ -142,6 +142,7 @@ struct rev_info {
 	/* Basic information */
 	const char *prefix;
 	const char *def;
+	char *ps_matched; /* optionally record matches of prune_data */
 	struct pathspec prune_data;
 
 	/*
@@ -548,7 +549,7 @@ int rewrite_parents(struct rev_info *revs,
  * The log machinery saves the original parent list so that
  * get_saved_parents() can later tell what the real parents of the
  * commits are, when commit->parents has been modified by history
- * simpification.
+ * simplification.
  *
  * get_saved_parents() will transparently return commit->parents if
  * history simplification is off.

@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "advice.h"
 #include "commit.h"
@@ -240,7 +242,7 @@ static void diff_tree_local(struct notes_merge_options *o,
 			 *     (will be overwritten by following addition)
 			 */
 			if (oideq(&mp->local, &uninitialized))
-				oidclr(&mp->local);
+				oidclr(&mp->local, the_repository->hash_algo);
 		} else if (is_null_oid(&p->one->oid)) { /* addition */
 			/*
 			 * Either this is a true addition (1), or it is part
@@ -556,13 +558,13 @@ int notes_merge(struct notes_merge_options *o,
 
 	assert(o->local_ref && o->remote_ref);
 	assert(!strcmp(o->local_ref, local_tree->ref));
-	oidclr(result_oid);
+	oidclr(result_oid, the_repository->hash_algo);
 
 	trace_printf("notes_merge(o->local_ref = %s, o->remote_ref = %s)\n",
 	       o->local_ref, o->remote_ref);
 
 	/* Dereference o->local_ref into local_sha1 */
-	if (read_ref_full(o->local_ref, 0, &local_oid, NULL))
+	if (refs_read_ref_full(get_main_ref_store(the_repository), o->local_ref, 0, &local_oid, NULL))
 		die("Failed to resolve local notes ref '%s'", o->local_ref);
 	else if (!check_refname_format(o->local_ref, 0) &&
 		is_null_oid(&local_oid))
@@ -579,7 +581,7 @@ int notes_merge(struct notes_merge_options *o,
 		 * unborn ref, perform the merge using an empty notes tree.
 		 */
 		if (!check_refname_format(o->remote_ref, 0)) {
-			oidclr(&remote_oid);
+			oidclr(&remote_oid, the_repository->hash_algo);
 			remote = NULL;
 		} else {
 			die("Failed to resolve remote notes ref '%s'",
@@ -661,6 +663,7 @@ int notes_merge(struct notes_merge_options *o,
 		commit_list_insert(local, &parents);
 		create_notes_commit(o->repo, local_tree, parents, o->commit_msg.buf,
 				    o->commit_msg.len, result_oid);
+		free_commit_list(parents);
 	}
 
 found_result:

@@ -1,13 +1,12 @@
-add.ignoreErrors::
-add.ignore-errors (deprecated)::
-	Tells 'git add' to continue adding files when some files cannot be
-	added due to indexing errors. Equivalent to the `--ignore-errors`
-	option of linkgit:git-add[1].  `add.ignore-errors` is deprecated,
-	as it does not follow the usual naming convention for configuration
-	variables.
-
-add.interactive.useBuiltin::
-	Unused configuration variable. Used in Git versions v2.25.0 to
-	v2.36.0 to enable the built-in version of linkgit:git-add[1]'s
-	interactive mode, which then became the default in Git
-	versions v2.37.0 to v2.39.0.
+`add.ignoreErrors`::
+`add.ignore-errors` (deprecated)::
+	Tells `git add` to continue adding files when some files cannot be
+	added due to indexing errors.
+ifdef::git-add[]
+	Equivalent to the `--ignore-errors` option.
+endif::git-add[]
+ifndef::git-add[]
+	Equivalent to the `--ignore-errors` option of linkgit:git-add[1].
+endif::git-add[]
+	`add.ignore-errors` is deprecated, as it does not follow the usual
+	naming convention for configuration variables.

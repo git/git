@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "advice.h"
@@ -104,16 +106,15 @@ static int launch_specified_editor(const char *editor, const char *path,
 		sigchain_pop(SIGQUIT);
 		if (sig == SIGINT || sig == SIGQUIT)
 			raise(sig);
-		if (ret)
-			return error("There was a problem with the editor '%s'.",
-					editor);
-
 		if (print_waiting_for_editor && !is_terminal_dumb())
 			/*
 			 * Erase the entire line to avoid wasting the
 			 * vertical space.
 			 */
 			term_clear_line();
+		if (ret)
+			return error("there was a problem with the editor '%s'",
+					editor);
 	}
 
 	if (!buffer)
@@ -134,14 +135,17 @@ int launch_sequence_editor(const char *path, struct strbuf *buffer,
 	return launch_specified_editor(git_sequence_editor(), path, buffer, env);
 }
 
-int strbuf_edit_interactively(struct strbuf *buffer, const char *path,
+int strbuf_edit_interactively(struct repository *r,
+			      struct strbuf *buffer, const char *path,
 			      const char *const *env)
 {
-	char *path2 = NULL;
+	struct strbuf sb = STRBUF_INIT;
 	int fd, res = 0;
 
-	if (!is_absolute_path(path))
-		path = path2 = xstrdup(git_path("%s", path));
+	if (!is_absolute_path(path)) {
+		strbuf_repo_git_path(&sb, r, "%s", path);
+		path = sb.buf;
+	}
 
 	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 	if (fd < 0)
@@ -158,6 +162,6 @@ int strbuf_edit_interactively(struct strbuf *buffer, const char *path,
 		unlink(path);
 	}
 
-	free(path2);
+	strbuf_release(&sb);
 	return res;
 }

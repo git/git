@@ -1,7 +1,7 @@
 #ifndef APPLY_H
 #define APPLY_H
 
-#include "hash-ll.h"
+#include "hash.h"
 #include "lockfile.h"
 #include "string-list.h"
 #include "strmap.h"
@@ -59,7 +59,8 @@ struct apply_state {
 	struct repository *repo;
 	const char *index_file;
 	enum apply_verbosity apply_verbosity;
-	const char *fake_ancestor;
+	int merge_variant;
+	char *fake_ancestor;
 	const char *patch_input_file;
 	int line_termination;
 	struct strbuf root;

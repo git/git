@@ -1,10 +1,10 @@
-(
-	foo |
-	bar |
-	baz &&
-
-	fish |
-	cow ?!AMP?!
-
-	sunder
-)
+2 (
+3 	foo |
+4 	bar |
+5 	baz &&
+6 
+7 	fish |
+8 	cow ?!LINT: missing '&&'?!
+9 
+10 	sunder
+11 )

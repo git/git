@@ -1,4 +1,4 @@
-(
-	p4 print -1 //depot/fiddle#42 >file &&
-	foobar
-)
+2 (
+3 	p4 print -1 //depot/fiddle#42 >file &&
+4 	foobar
+5 )

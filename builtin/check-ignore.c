@@ -1,4 +1,4 @@
-#define USE_THE_INDEX_VARIABLE
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "dir.h"
@@ -6,7 +6,6 @@
 #include "quote.h"
 #include "pathspec.h"
 #include "parse-options.h"
-#include "repository.h"
 #include "submodule.h"
 #include "write-or-die.h"
 
@@ -36,8 +35,8 @@ static const struct option check_ignore_options[] = {
 
 static void output_pattern(const char *path, struct path_pattern *pattern)
 {
-	char *bang  = (pattern && pattern->flags & PATTERN_FLAG_NEGATIVE)  ? "!" : "";
-	char *slash = (pattern && pattern->flags & PATTERN_FLAG_MUSTBEDIR) ? "/" : "";
+	const char *bang  = (pattern && pattern->flags & PATTERN_FLAG_NEGATIVE)  ? "!" : "";
+	const char *slash = (pattern && pattern->flags & PATTERN_FLAG_MUSTBEDIR) ? "/" : "";
 	if (!nul_term_line) {
 		if (!verbose) {
 			write_name_quoted(path, stdout, '\n');
@@ -95,21 +94,21 @@ static int check_ignore(struct dir_struct *dir,
 		       PATHSPEC_KEEP_ORDER,
 		       prefix, argv);
 
-	die_path_inside_submodule(&the_index, &pathspec);
+	die_path_inside_submodule(the_repository->index, &pathspec);
 
 	/*
 	 * look for pathspecs matching entries in the index, since these
 	 * should not be ignored, in order to be consistent with
 	 * 'git status', 'git add' etc.
 	 */
-	seen = find_pathspecs_matching_against_index(&pathspec, &the_index,
+	seen = find_pathspecs_matching_against_index(&pathspec, the_repository->index,
 						     PS_HEED_SKIP_WORKTREE);
 	for (i = 0; i < pathspec.nr; i++) {
 		full_path = pathspec.items[i].match;
 		pattern = NULL;
 		if (!seen[i]) {
 			int dtype = DT_UNKNOWN;
-			pattern = last_matching_pattern(dir, &the_index,
+			pattern = last_matching_pattern(dir, the_repository->index,
 							full_path, &dtype);
 			if (!verbose && pattern &&
 			    pattern->flags & PATTERN_FLAG_NEGATIVE)
@@ -152,7 +151,10 @@ static int check_ignore_stdin_paths(struct dir_struct *dir, const char *prefix)
 	return num_ignored;
 }
 
-int cmd_check_ignore(int argc, const char **argv, const char *prefix)
+int cmd_check_ignore(int argc,
+		     const char **argv,
+		     const char *prefix,
+		     struct repository *repo UNUSED)
 {
 	int num_ignored;
 	struct dir_struct dir = DIR_INIT;

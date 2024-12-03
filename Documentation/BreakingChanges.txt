@@ -1,0 +1,174 @@
+= Upcoming breaking changes
+
+The Git project aims to ensure backwards compatibility to the best extent
+possible. Minor releases will not break backwards compatibility unless there is
+a very strong reason to do so, like for example a security vulnerability.
+
+Regardless of that, due to the age of the Git project, it is only natural to
+accumulate a backlog of backwards-incompatible changes that will eventually be
+required to keep the project aligned with a changing world. These changes fall
+into several categories:
+
+* Changes to long established defaults.
+* Concepts that have been replaced with a superior design.
+* Concepts, commands, configuration or options that have been lacking in major
+  ways and that cannot be fixed and which will thus be removed without any
+  replacement.
+
+Explicitly not included in this list are fixes to minor bugs that may cause a
+change in user-visible behavior.
+
+The Git project irregularly releases breaking versions that deliberately break
+backwards compatibility with older versions. This is done to ensure that Git
+remains relevant, safe and maintainable going forward. The release cadence of
+breaking versions is typically measured in multiple years. We had the following
+major breaking releases in the past:
+
+* Git 1.6.0, released in August 2008.
+* Git 2.0, released in May 2014.
+
+We use <major>.<minor> release numbers these days, starting from Git 2.0. For
+future releases, our plan is to increment <major> in the release number when we
+make the next breaking release. Before Git 2.0, the release numbers were
+1.<major>.<minor> with the intention to increment <major> for "usual" breaking
+releases, reserving the jump to Git 2.0 for really large backward-compatibility
+breaking changes.
+
+The intent of this document is to track upcoming deprecations for future
+breaking releases. Furthermore, this document also tracks what will _not_ be
+deprecated. This is done such that the outcome of discussions document both
+when the discussion favors deprecation, but also when it rejects a deprecation.
+
+Items should have a clear summary of the reasons why we do or do not want to
+make the described change that can be easily understood without having to read
+the mailing list discussions. If there are alternatives to the changed feature,
+those alternatives should be pointed out to our users.
+
+All items should be accompanied by references to relevant mailing list threads
+where the deprecation was discussed. These references use message-IDs, which
+can visited via
+
+  https://lore.kernel.org/git/$message_id/
+
+to see the message and its surrounding discussion. Such a reference is there to
+make it easier for you to find how the project reached consensus on the
+described item back then.
+
+This is a living document as the environment surrounding the project changes
+over time. If circumstances change, an earlier decision to deprecate or change
+something may need to be revisited from time to time. So do not take items on
+this list to mean "it is settled, do not waste our time bringing it up again".
+
+== Procedure
+
+Discussing the desire to make breaking changes, declaring that breaking
+changes are made at a certain version boundary, and recording these
+decisions in this document, are necessary but not sufficient.
+Because such changes are expected to be numerous, and the design and
+implementation of them are expected to span over time, they have to
+be deployable trivially at such a version boundary.
+
+The breaking changes MUST be guarded with the a compile-time switch,
+WITH_BREAKING_CHANGES, to help this process.  When built with it,
+the resulting Git binary together with its documentation would
+behave as if these breaking changes slated for the next big version
+boundary are already in effect.  We may also want to have a CI job
+or two to exercise the work-in-progress version of Git with these
+breaking changes.
+
+
+== Git 3.0
+
+The following subsections document upcoming breaking changes for Git 3.0. There
+is no planned release date for this breaking version yet.  The early
+adopter configuration used for changes for this release is `feature.git3`.
+
+Proposed changes and removals only include items which are "ready" to be done.
+In other words, this is not supposed to be a wishlist of features that should
+be changed to or replaced in case the alternative was implemented already.
+
+=== Changes
+
+* The default hash function for new repositories will be changed from "sha1"
+  to "sha256". SHA-1 has been deprecated by NIST in 2011 and is nowadays
+  recommended against in FIPS 140-2 and similar certifications. Furthermore,
+  there are practical attacks on SHA-1 that weaken its cryptographic properties:
++
+  ** The SHAppening (2015). The first demonstration of a practical attack
+     against SHA-1 with 2^57 operations.
+  ** SHAttered (2017). Generation of two valid PDF files with 2^63 operations.
+  ** Birthday-Near-Collision (2019). This attack allows for chosen prefix
+     attacks with 2^68 operations.
+  ** Shambles (2020). This attack allows for chosen prefix attacks with 2^63
+     operations.
++
+While we have protections in place against known attacks, it is expected
+that more attacks against SHA-1 will be found by future research. Paired
+with the ever-growing capability of hardware, it is only a matter of time
+before SHA-1 will be considered broken completely. We want to be prepared
+and will thus change the default hash algorithm to "sha256" for newly
+initialized repositories.
++
+An important requirement for this change is that the ecosystem is ready to
+support the "sha256" object format. This includes popular Git libraries,
+applications and forges.
++
+There is no plan to deprecate the "sha1" object format at this point in time.
++
+Cf. <2f5de416-04ba-c23d-1e0b-83bb655829a7@zombino.com>,
+<20170223155046.e7nxivfwqqoprsqj@LykOS.localdomain>,
+<CA+EOSBncr=4a4d8n9xS4FNehyebpmX8JiUwCsXD47EQDE+DiUQ@mail.gmail.com>.
+
+=== Removals
+
+* Support for grafting commits has long been superseded by git-replace(1).
+  Grafts are inferior to replacement refs:
++
+  ** Grafts are a local-only mechanism and cannot be shared across
+     repositories.
+  ** Grafts can lead to hard-to-diagnose problems when transferring objects
+     between repositories.
++
+The grafting mechanism has been marked as outdated since e650d0643b (docs: mark
+info/grafts as outdated, 2014-03-05) and will be removed.
++
+Cf. <20140304174806.GA11561@sigill.intra.peff.net>.
+
+* The git-pack-redundant(1) command can be used to remove redundant pack files.
+  The subcommand is unusably slow and the reason why nobody reports it as a
+  performance bug is suspected to be the absence of users. We have nominated
+  the command for removal and have started to emit a user-visible warning in
+  c3b58472be (pack-redundant: gauge the usage before proposing its removal,
+  2020-08-25) whenever the command is executed.
++
+So far there was a single complaint about somebody still using the command, but
+that complaint did not cause us to reverse course. On the contrary, we have
+doubled down on the deprecation and starting with 4406522b76 (pack-redundant:
+escalate deprecation warning to an error, 2023-03-23), the command dies unless
+the user passes the `--i-still-use-this` option.
++
+There have not been any subsequent complaints, so this command will finally be
+removed.
++
+Cf. <xmqq1rjuz6n3.fsf_-_@gitster.c.googlers.com>,
+    <CAKvOHKAFXQwt4D8yUCCkf_TQL79mYaJ=KAKhtpDNTvHJFuX1NA@mail.gmail.com>,
+    <20230323204047.GA9290@coredump.intra.peff.net>,
+
+== Superseded features that will not be deprecated
+
+Some features have gained newer replacements that aim to improve the design in
+certain ways. The fact that there is a replacement does not automatically mean
+that the old way of doing things will eventually be removed. This section tracks
+those features with newer alternatives.
+
+* The features git-checkout(1) offers are covered by the pair of commands
+  git-restore(1) and git-switch(1). Because the use of git-checkout(1) is still
+  widespread, and it is not expected that this will change anytime soon, all
+  three commands will stay.
++
+This decision may get revisited in case we ever figure out that there are
+almost no users of any of the commands anymore.
++
+Cf. <xmqqttjazwwa.fsf@gitster.g>,
+<xmqqleeubork.fsf@gitster.g>,
+<112b6568912a6de6672bf5592c3a718e@manjaro.org>.

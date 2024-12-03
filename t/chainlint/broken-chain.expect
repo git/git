@@ -1,6 +1,6 @@
-(
-	foo &&
-	bar ?!AMP?!
-	baz &&
-	wop
-)
+2 (
+3 	foo &&
+4 	bar ?!LINT: missing '&&'?!
+5 	baz &&
+6 	wop
+7 )

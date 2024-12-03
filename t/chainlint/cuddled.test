@@ -1,3 +1,4 @@
+test_expect_success 'cuddled' '
 # LINT: first subshell statement cuddled with opening "("
 (cd foo &&
 	bar
@@ -20,3 +21,4 @@
 # LINT: same with missing "&&"
 (cd foo
 	bar)
+'

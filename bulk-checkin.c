@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2011, Google Inc.
  */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "bulk-checkin.h"
 #include "environment.h"
@@ -58,6 +61,7 @@ static void flush_bulk_checkin_packfile(struct bulk_checkin_packfile *state)
 
 	if (state->nr_written == 0) {
 		close(state->f->fd);
+		free_hashfile(state->f);
 		unlink(state->pack_tmp_name);
 		goto clear_exit;
 	} else if (state->nr_written == 1) {
@@ -71,7 +75,7 @@ static void flush_bulk_checkin_packfile(struct bulk_checkin_packfile *state)
 		close(fd);
 	}
 
-	strbuf_addf(&packname, "%s/pack/pack-%s.", get_object_directory(),
+	strbuf_addf(&packname, "%s/pack/pack-%s.", repo_get_object_directory(the_repository),
 		    hash_to_hex(hash));
 	finish_tmp_packfile(&packname, state->pack_tmp_name,
 			    state->written, state->nr_written,
@@ -80,6 +84,7 @@ static void flush_bulk_checkin_packfile(struct bulk_checkin_packfile *state)
 		free(state->written[i]);
 
 clear_exit:
+	free(state->pack_tmp_name);
 	free(state->written);
 	memset(state, 0, sizeof(*state));
 
@@ -108,7 +113,7 @@ static void flush_batch_fsync(void)
 	 * to ensure that the data in each new object file is durable before
 	 * the final name is visible.
 	 */
-	strbuf_addf(&temp_path, "%s/bulk_fsync_XXXXXX", get_object_directory());
+	strbuf_addf(&temp_path, "%s/bulk_fsync_XXXXXX", repo_get_object_directory(the_repository));
 	temp = xmks_tempfile(temp_path.buf);
 	fsync_or_die(get_tempfile_fd(temp), get_tempfile_path(temp));
 	delete_tempfile(&temp);

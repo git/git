@@ -527,7 +527,7 @@ test_expect_success 'reading split index at alternate location' '
 
 	# ... and, for backwards compatibility, in the current GIT_DIR
 	# as well.
-	mv -v ./reading-alternate-location/.git/sharedindex.* .git &&
+	mv ./reading-alternate-location/.git/sharedindex.* .git &&
 	GIT_INDEX_FILE=./reading-alternate-location/.git/index \
 	git ls-files --cached >actual &&
 	test_cmp expect actual

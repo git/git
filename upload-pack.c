@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "config.h"
 #include "environment.h"
@@ -94,7 +96,7 @@ struct upload_pack_data {
 
 	struct packet_writer writer;
 
-	const char *pack_objects_hook;
+	char *pack_objects_hook;
 
 	unsigned stateless_rpc : 1;				/* v0 only */
 	unsigned no_done : 1;					/* v0 only */
@@ -164,6 +166,7 @@ static void upload_pack_data_clear(struct upload_pack_data *data)
 	object_array_clear(&data->extra_edge_obj);
 	list_objects_filter_release(&data->filter_options);
 	string_list_clear(&data->allowed_filters, 0);
+	string_list_clear(&data->uri_protocols, 0);
 
 	free((char *)data->pack_objects_hook);
 }
@@ -618,7 +621,8 @@ static void for_each_namespaced_ref_1(each_ref_fn fn,
 	if (allow_hidden_refs(data->allow_uor))
 		excludes = hidden_refs_to_excludes(&data->hidden_refs);
 
-	for_each_namespaced_ref(excludes, fn, data);
+	refs_for_each_namespaced_ref(get_main_ref_store(the_repository),
+				     excludes, fn, data);
 }
 
 
@@ -706,10 +710,13 @@ static int get_reachable_list(struct upload_pack_data *data,
 	struct object *o;
 	char namebuf[GIT_MAX_HEXSZ + 2]; /* ^ + hash + LF */
 	const unsigned hexsz = the_hash_algo->hexsz;
+	int ret;
 
 	if (do_reachable_revlist(&cmd, &data->shallows, reachable,
-				 data->allow_uor) < 0)
-		return -1;
+				 data->allow_uor) < 0) {
+		ret = -1;
+		goto out;
+	}
 
 	while ((i = read_in_full(cmd.out, namebuf, hexsz + 1)) == hexsz + 1) {
 		struct object_id oid;
@@ -733,10 +740,16 @@ static int get_reachable_list(struct upload_pack_data *data,
 	}
 	close(cmd.out);
 
-	if (finish_command(&cmd))
-		return -1;
+	if (finish_command(&cmd)) {
+		ret = -1;
+		goto out;
+	}
 
-	return 0;
+	ret = 0;
+
+out:
+	child_process_clear(&cmd);
+	return ret;
 }
 
 static int has_unreachable(struct object_array *src, enum allow_uor allow_uor)
@@ -746,7 +759,7 @@ static int has_unreachable(struct object_array *src, enum allow_uor allow_uor)
 	int i;
 
 	if (do_reachable_revlist(&cmd, src, NULL, allow_uor) < 0)
-		return 1;
+		goto error;
 
 	/*
 	 * The commits out of the rev-list are not ancestors of
@@ -772,6 +785,7 @@ static int has_unreachable(struct object_array *src, enum allow_uor allow_uor)
 error:
 	if (cmd.out >= 0)
 		close(cmd.out);
+	child_process_clear(&cmd);
 	return 1;
 }
 
@@ -854,7 +868,7 @@ static void send_unshallow(struct upload_pack_data *data)
 	}
 }
 
-static int check_ref(const char *refname_full, const struct object_id *oid,
+static int check_ref(const char *refname_full, const char *referent UNUSED, const struct object_id *oid,
 		     int flag, void *cb_data);
 static void deepen(struct upload_pack_data *data, int depth)
 {
@@ -873,7 +887,8 @@ static void deepen(struct upload_pack_data *data, int depth)
 		 * Checking for reachable shallows requires that our refs be
 		 * marked with OUR_REF.
 		 */
-		head_ref_namespaced(check_ref, data);
+		refs_head_ref_namespaced(get_main_ref_store(the_repository),
+					 check_ref, data);
 		for_each_namespaced_ref_1(check_ref, data);
 
 		get_reachable_list(data, &reachable_shallows);
@@ -1011,10 +1026,14 @@ static int process_deepen_not(const char *line, struct oidset *deepen_not, int *
 {
 	const char *arg;
 	if (skip_prefix(line, "deepen-not ", &arg)) {
+		int cnt;
 		char *ref = NULL;
 		struct object_id oid;
-		if (expand_ref(the_repository, arg, strlen(arg), &oid, &ref) != 1)
+		cnt = expand_ref(the_repository, arg, strlen(arg), &oid, &ref);
+		if (cnt > 1)
 			die("git upload-pack: ambiguous deepen-not: %s", line);
+		if (cnt < 1)
+			die("git upload-pack: deepen-not is not a ref: %s", line);
 		oidset_insert(deepen_not, &oid);
 		free(ref);
 		*deepen_rev_list = 1;
@@ -1204,7 +1223,7 @@ static int mark_our_ref(const char *refname, const char *refname_full,
 	return 0;
 }
 
-static int check_ref(const char *refname_full, const struct object_id *oid,
+static int check_ref(const char *refname_full, const char *referent UNUSED,const struct object_id *oid,
 		     int flag UNUSED, void *cb_data)
 {
 	const char *refname = strip_namespace(refname_full);
@@ -1267,19 +1286,19 @@ static void write_v0_ref(struct upload_pack_data *data,
 		packet_fwrite_fmt(stdout, "%s %s\n", oid_to_hex(oid), refname_nons);
 	}
 	capabilities = NULL;
-	if (!peel_iterated_oid(oid, &peeled))
+	if (!peel_iterated_oid(the_repository, oid, &peeled))
 		packet_fwrite_fmt(stdout, "%s %s^{}\n", oid_to_hex(&peeled), refname_nons);
 	return;
 }
 
-static int send_ref(const char *refname, const struct object_id *oid,
+static int send_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
 		    int flag UNUSED, void *cb_data)
 {
 	write_v0_ref(cb_data, refname, strip_namespace(refname), oid);
 	return 0;
 }
 
-static int find_symref(const char *refname,
+static int find_symref(const char *refname, const char *referent UNUSED,
 		       const struct object_id *oid UNUSED,
 		       int flag, void *cb_data)
 {
@@ -1288,7 +1307,8 @@ static int find_symref(const char *refname,
 
 	if ((flag & REF_ISSYMREF) == 0)
 		return 0;
-	symref_target = resolve_ref_unsafe(refname, 0, NULL, &flag);
+	symref_target = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+						refname, 0, NULL, &flag);
 	if (!symref_target || (flag & REF_ISSYMREF) == 0)
 		die("'%s' is a symref but it is not?", refname);
 	item = string_list_append(cb_data, strip_namespace(refname));
@@ -1413,13 +1433,15 @@ void upload_pack(const int advertise_refs, const int stateless_rpc,
 	if (data.timeout)
 		data.daemon_mode = 1;
 
-	head_ref_namespaced(find_symref, &data.symref);
+	refs_head_ref_namespaced(get_main_ref_store(the_repository),
+				 find_symref, &data.symref);
 
 	if (advertise_refs || !data.stateless_rpc) {
 		reset_timeout(data.timeout);
 		if (advertise_refs)
 			data.no_done = 1;
-		head_ref_namespaced(send_ref, &data);
+		refs_head_ref_namespaced(get_main_ref_store(the_repository),
+					 send_ref, &data);
 		for_each_namespaced_ref_1(send_ref, &data);
 		if (!data.sent_capabilities) {
 			const char *refname = "capabilities^{}";
@@ -1433,7 +1455,8 @@ void upload_pack(const int advertise_refs, const int stateless_rpc,
 		advertise_shallow_grafts(1);
 		packet_flush(1);
 	} else {
-		head_ref_namespaced(check_ref, &data);
+		refs_head_ref_namespaced(get_main_ref_store(the_repository),
+					 check_ref, &data);
 		for_each_namespaced_ref_1(check_ref, &data);
 	}
 
@@ -1511,7 +1534,7 @@ static int parse_want_ref(struct packet_writer *writer, const char *line,
 
 		strbuf_addf(&refname, "%s%s", get_git_namespace(), refname_nons);
 		if (ref_is_hidden(refname_nons, refname.buf, hidden_refs) ||
-		    read_ref(refname.buf, &oid)) {
+		    refs_read_ref(get_main_ref_store(the_repository), refname.buf, &oid)) {
 			packet_writer_error(writer, "unknown ref %s", refname_nons);
 			die("unknown ref %s", refname_nons);
 		}
@@ -1794,7 +1817,7 @@ int upload_pack_v2(struct repository *r, struct packet_reader *request)
 			} else {
 				/*
 				 * Request had 'want's but no 'have's so we can
-				 * immedietly go to construct and send a pack.
+				 * immediately go to construct and send a pack.
 				 */
 				state = FETCH_SEND_PACK;
 			}

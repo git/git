@@ -122,17 +122,17 @@ struct utsname {
  * trivial stubs
  */
 
-static inline int readlink(const char *path, char *buf, size_t bufsiz)
+static inline int readlink(const char *path UNUSED, char *buf UNUSED, size_t bufsiz UNUSED)
 { errno = ENOSYS; return -1; }
-static inline int symlink(const char *oldpath, const char *newpath)
+static inline int symlink(const char *oldpath UNUSED, const char *newpath UNUSED)
 { errno = ENOSYS; return -1; }
-static inline int fchmod(int fildes, mode_t mode)
+static inline int fchmod(int fildes UNUSED, mode_t mode UNUSED)
 { errno = ENOSYS; return -1; }
 #ifndef __MINGW64_VERSION_MAJOR
 static inline pid_t fork(void)
 { errno = ENOSYS; return -1; }
 #endif
-static inline unsigned int alarm(unsigned int seconds)
+static inline unsigned int alarm(unsigned int seconds UNUSED)
 { return 0; }
 static inline int fsync(int fd)
 { return _commit(fd); }
@@ -140,9 +140,9 @@ static inline void sync(void)
 {}
 static inline uid_t getuid(void)
 { return 1; }
-static inline struct passwd *getpwnam(const char *name)
+static inline struct passwd *getpwnam(const char *name UNUSED)
 { return NULL; }
-static inline int fcntl(int fd, int cmd, ...)
+static inline int fcntl(int fd UNUSED, int cmd, ...)
 {
 	if (cmd == F_GETFD || cmd == F_SETFD)
 		return 0;
@@ -151,17 +151,17 @@ static inline int fcntl(int fd, int cmd, ...)
 }
 
 #define sigemptyset(x) (void)0
-static inline int sigaddset(sigset_t *set, int signum)
+static inline int sigaddset(sigset_t *set UNUSED, int signum UNUSED)
 { return 0; }
 #define SIG_BLOCK 0
 #define SIG_UNBLOCK 0
-static inline int sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
+static inline int sigprocmask(int how UNUSED, const sigset_t *set UNUSED, sigset_t *oldset UNUSED)
 { return 0; }
 static inline pid_t getppid(void)
 { return 1; }
 static inline pid_t getpgid(pid_t pid)
 { return pid == 0 ? getpid() : pid; }
-static inline pid_t tcgetpgrp(int fd)
+static inline pid_t tcgetpgrp(int fd UNUSED)
 { return getpid(); }
 
 /*
@@ -631,3 +631,9 @@ void open_in_gdb(void);
  * Used by Pthread API implementation for Windows
  */
 int err_win_to_posix(DWORD winerr);
+
+#ifndef NO_UNIX_SOCKETS
+int mingw_have_unix_sockets(void);
+#undef have_unix_sockets
+#define have_unix_sockets mingw_have_unix_sockets
+#endif

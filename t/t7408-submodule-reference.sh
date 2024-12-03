@@ -4,6 +4,8 @@
 #
 
 test_description='test clone --reference'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 base_dir=$(pwd)

@@ -101,6 +101,16 @@ test_expect_success 'verbose diff is stripped out with set core.commentChar' '
 	test_grep "Aborting commit due to empty commit message." err
 '
 
+test_expect_success 'verbose diff is stripped with multi-byte comment char' '
+	(
+		GIT_EDITOR=cat &&
+		export GIT_EDITOR &&
+		test_must_fail git -c core.commentchar="foo>" commit -a -v >out 2>err
+	) &&
+	grep "^foo> " out &&
+	test_grep "Aborting commit due to empty commit message." err
+'
+
 test_expect_success 'status does not verbose without --verbose' '
 	git status >actual &&
 	! grep "^diff --git" actual

@@ -431,9 +431,9 @@ static int recv_rdcw_watch(struct one_watch *watch)
 	 * but I observed ERROR_ACCESS_DENIED (0x05) errors during
 	 * testing.
 	 *
-	 * Note that we only get notificaiton events for events
+	 * Note that we only get notification events for events
 	 * *within* the directory, not *on* the directory itself.
-	 * (These might be properies of the parent directory, for
+	 * (These might be properties of the parent directory, for
 	 * example).
 	 *
 	 * NEEDSWORK: We might try to check for the deleted directory
@@ -740,6 +740,12 @@ void fsm_listen__loop(struct fsmonitor_daemon_state *state)
 	if (data->watch_gitdir &&
 	    start_rdcw_watch(data->watch_gitdir) == -1)
 		goto force_error_stop;
+
+	/*
+	 * Now that we've established the rdcw watches, we can start
+	 * serving clients.
+	 */
+	ipc_server_start_async(state->ipc_server_data);
 
 	for (;;) {
 		dwWait = WaitForMultipleObjects(data->nr_listener_handles,

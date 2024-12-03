@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='basic rebase topology tests'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-rebase.sh
 

@@ -1,8 +1,8 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
-#include "repository.h"
 #include "config.h"
 #include "commit.h"
 #include "tag.h"
@@ -65,7 +65,7 @@ static void set_commit_cutoff(struct commit *commit)
 static void adjust_cutoff_timestamp_for_slop(void)
 {
 	if (cutoff) {
-		/* check for undeflow */
+		/* check for underflow */
 		if (cutoff > TIME_MIN + CUTOFF_DATE_SLOP)
 			cutoff = cutoff - CUTOFF_DATE_SLOP;
 		else
@@ -296,7 +296,8 @@ static void add_to_tip_table(const struct object_id *oid, const char *refname,
 	char *short_refname = NULL;
 
 	if (shorten_unambiguous)
-		short_refname = shorten_unambiguous_ref(refname, 0);
+		short_refname = refs_shorten_unambiguous_ref(get_main_ref_store(the_repository),
+							     refname, 0);
 	else if (skip_prefix(refname, "refs/heads/", &refname))
 		; /* refname already advanced */
 	else
@@ -336,7 +337,7 @@ static int cmp_by_tag_and_age(const void *a_, const void *b_)
 	return a->taggerdate != b->taggerdate;
 }
 
-static int name_ref(const char *path, const struct object_id *oid,
+static int name_ref(const char *path, const char *referent UNUSED, const struct object_id *oid,
 		    int flags UNUSED, void *cb_data)
 {
 	struct object *o = parse_object(the_repository, oid);
@@ -557,7 +558,10 @@ static void name_rev_line(char *p, struct name_ref_data *data)
 	strbuf_release(&buf);
 }
 
-int cmd_name_rev(int argc, const char **argv, const char *prefix)
+int cmd_name_rev(int argc,
+		 const char **argv,
+		 const char *prefix,
+		 struct repository *repo UNUSED)
 {
 	struct mem_pool string_pool;
 	struct object_array revs = OBJECT_ARRAY_INIT;
@@ -647,7 +651,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 
 	adjust_cutoff_timestamp_for_slop();
 
-	for_each_ref(name_ref, &data);
+	refs_for_each_ref(get_main_ref_store(the_repository), name_ref, &data);
 	name_tips(&string_pool);
 
 	if (annotate_stdin) {
@@ -676,7 +680,9 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 				  always, allow_undefined, data.name_only);
 	}
 
-	UNLEAK(string_pool);
-	UNLEAK(revs);
+	string_list_clear(&data.ref_filters, 0);
+	string_list_clear(&data.exclude_filters, 0);
+	mem_pool_discard(&string_pool, 0);
+	object_array_clear(&revs);
 	return 0;
 }

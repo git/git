@@ -1,0 +1,23 @@
+Git 2.46.2 Release Notes
+========================
+
+This release is primarily to merge changes to unbreak the 32-bit
+GitHub actions jobs we use for CI testing, so that we can release
+real fixes for the 2.46.x track after they pass CI.
+
+It also reverts the "git patch-id" change that went into 2.46.1,
+as it seems to have got a regression reported (I haven't verified,
+but it is better to keep a known breakage than adding an unintended
+regression).
+
+Other than that, a handful of minor bugfixes are included.
+
+ * In a few corner cases "git diff --exit-code" failed to report
+   "changes" (e.g., renamed without any content change), which has
+   been corrected.
+
+ * Cygwin does have /dev/tty support that is needed by things like
+   single-key input mode.
+
+ * The interpret-trailers command failed to recognise the end of the
+   message when the commit log ends in an incomplete line.

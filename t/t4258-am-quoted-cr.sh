@@ -2,6 +2,7 @@
 
 test_description='test am --quoted-cr=<action>'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 DATA="$TEST_DIRECTORY/t4258"

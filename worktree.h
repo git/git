@@ -6,6 +6,8 @@
 struct strbuf;
 
 struct worktree {
+	/* The repository this worktree belongs to. */
+	struct repository *repo;
 	char *path;
 	char *id;
 	char *head_ref;		/* NULL if HEAD is broken or detached */
@@ -130,6 +132,16 @@ typedef void (* worktree_repair_fn)(int iserr, const char *path,
 void repair_worktrees(worktree_repair_fn, void *cb_data);
 
 /*
+ * Repair the linked worktrees after the gitdir has been moved.
+ */
+void repair_worktrees_after_gitdir_move(const char *old_path);
+
+/*
+ * Repair the linked worktree after the gitdir has been moved.
+ */
+void repair_worktree_after_gitdir_move(struct worktree *wt, const char *old_path);
+
+/*
  * Repair administrative files corresponding to the worktree at the given path.
  * The worktree's .git file pointing at the repository must be intact for the
  * repair to succeed. Useful for re-associating an orphaned worktree with the
@@ -174,14 +186,6 @@ int other_head_refs(each_ref_fn fn, void *cb_data);
 
 int is_worktree_being_rebased(const struct worktree *wt, const char *target);
 int is_worktree_being_bisected(const struct worktree *wt, const char *target);
-
-/*
- * Similar to git_path() but can produce paths for a specified
- * worktree instead of current one
- */
-const char *worktree_git_path(const struct worktree *wt,
-			      const char *fmt, ...)
-	__attribute__((format (printf, 2, 3)));
 
 /*
  * Return a refname suitable for access from the current ref store.

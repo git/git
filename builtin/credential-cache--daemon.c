@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "gettext.h"
@@ -115,7 +116,9 @@ static int read_request(FILE *fh, struct credential *c,
 		return error("client sent bogus timeout line: %s", item.buf);
 	*timeout = atoi(p);
 
-	if (credential_read(c, fh) < 0)
+	credential_set_all_capabilities(c, CREDENTIAL_OP_INITIAL);
+
+	if (credential_read(c, fh, CREDENTIAL_OP_HELPER) < 0)
 		return -1;
 	return 0;
 }
@@ -131,8 +134,18 @@ static void serve_one_client(FILE *in, FILE *out)
 	else if (!strcmp(action.buf, "get")) {
 		struct credential_cache_entry *e = lookup_credential(&c);
 		if (e) {
-			fprintf(out, "username=%s\n", e->item.username);
-			fprintf(out, "password=%s\n", e->item.password);
+			e->item.capa_authtype.request_initial = 1;
+			e->item.capa_authtype.request_helper = 1;
+
+			fprintf(out, "capability[]=authtype\n");
+			if (e->item.username)
+				fprintf(out, "username=%s\n", e->item.username);
+			if (e->item.password)
+				fprintf(out, "password=%s\n", e->item.password);
+			if (credential_has_capability(&c.capa_authtype, CREDENTIAL_OP_HELPER) && e->item.authtype)
+				fprintf(out, "authtype=%s\n", e->item.authtype);
+			if (credential_has_capability(&c.capa_authtype, CREDENTIAL_OP_HELPER) && e->item.credential)
+				fprintf(out, "credential=%s\n", e->item.credential);
 			if (e->item.password_expiry_utc != TIME_MAX)
 				fprintf(out, "password_expiry_utc=%"PRItime"\n",
 					e->item.password_expiry_utc);
@@ -157,8 +170,10 @@ static void serve_one_client(FILE *in, FILE *out)
 	else if (!strcmp(action.buf, "store")) {
 		if (timeout < 0)
 			warning("cache client didn't specify a timeout");
-		else if (!c.username || !c.password)
+		else if ((!c.username || !c.password) && (!c.authtype && !c.credential))
 			warning("cache client gave us a partial credential");
+		else if (c.ephemeral)
+			warning("not storing ephemeral credential");
 		else {
 			remove_credential(&c, 0);
 			cache_credential(&c, timeout);
@@ -273,7 +288,10 @@ static void init_socket_directory(const char *path)
 	free(path_copy);
 }
 
-int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
+int cmd_credential_cache_daemon(int argc,
+				const char **argv,
+				const char *prefix,
+				struct repository *repo UNUSED)
 {
 	struct tempfile *socket_file;
 	const char *socket_path;
@@ -294,6 +312,8 @@ int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
 	socket_path = argv[0];
 
+	if (!have_unix_sockets())
+		die(_("credential-cache--daemon unavailable; no unix socket support"));
 	if (!socket_path)
 		usage_with_options(usage, options);
 
@@ -314,7 +334,10 @@ int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
 
 #else
 
-int cmd_credential_cache_daemon(int argc, const char **argv, const char *prefix)
+int cmd_credential_cache_daemon(int argc,
+const char **argv,
+const char *prefix,
+struct repository *repo UNUSED)
 {
 	const char * const usage[] = {
 		"git credential-cache--daemon [--debug] <socket-path>",

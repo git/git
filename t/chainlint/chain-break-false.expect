@@ -1,9 +1,9 @@
-if condition not satisified
-then
-	echo it did not work...
-	echo failed!
-	false
-else
-	echo it went okay ?!AMP?!
-	congratulate user
-fi
+2 if condition not satisified
+3 then
+4 	echo it did not work...
+5 	echo failed!
+6 	false
+7 else
+8 	echo it went okay ?!LINT: missing '&&'?!
+9 	congratulate user
+10 fi

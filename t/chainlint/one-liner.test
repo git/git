@@ -1,3 +1,4 @@
+test_expect_success 'one-liner' '
 # LINT: top-level one-liner subshell
 (foo && bar) &&
 (foo && bar) |
@@ -10,3 +11,4 @@
 
 # LINT: ";" in string not misinterpreted as broken &&-chain
 (foo "bar; baz")
+'

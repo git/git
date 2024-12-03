@@ -42,12 +42,12 @@ void oidtree_insert(struct oidtree *ot, const struct object_id *oid)
 	 * Clear the padding and copy the result in separate steps to
 	 * respect the 4-byte alignment needed by struct object_id.
 	 */
-	oidcpy_with_padding(&k, oid);
+	oidcpy(&k, oid);
 	memcpy(on->k, &k, sizeof(k));
 
 	/*
 	 * n.b. Current callers won't get us duplicates, here.  If a
-	 * future caller causes duplicates, there'll be a a small leak
+	 * future caller causes duplicates, there'll be a small leak
 	 * that won't be freed until oidtree_clear.  Currently it's not
 	 * worth maintaining a free list
 	 */
@@ -60,7 +60,7 @@ int oidtree_contains(struct oidtree *ot, const struct object_id *oid)
 	struct object_id k;
 	size_t klen = sizeof(k);
 
-	oidcpy_with_padding(&k, oid);
+	oidcpy(&k, oid);
 
 	if (oid->algo == GIT_HASH_UNKNOWN)
 		klen -= sizeof(oid->algo);

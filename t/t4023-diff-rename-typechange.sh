@@ -2,6 +2,7 @@
 
 test_description='typechange rename detection'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh
 

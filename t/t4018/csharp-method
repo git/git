@@ -1,0 +1,10 @@
+class Example
+{
+    string Method(int RIGHT)
+    {
+        // Filler
+        // Filler
+
+        return "ChangeMe";
+    }
+}

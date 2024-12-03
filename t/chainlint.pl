@@ -9,9 +9,9 @@
 # Input arguments are pathnames of shell scripts containing test definitions,
 # or globs referencing a collection of scripts. For each problem discovered,
 # the pathname of the script containing the test is printed along with the test
-# name and the test body with a `?!FOO?!` annotation at the location of each
-# detected problem, where "FOO" is a tag such as "AMP" which indicates a broken
-# &&-chain. Returns zero if no problems are discovered, otherwise non-zero.
+# name and the test body with a `?!LINT: ...?!` annotation at the location of
+# each detected problem, where "..." is an explanation of the problem. Returns
+# zero if no problems are discovered, otherwise non-zero.
 
 use warnings;
 use strict;
@@ -174,10 +174,14 @@ sub swallow_heredocs {
 		$$b =~ /(?:\G|\n)$indent\Q$$tag[0]\E(?:\n|\z)/gc;
 		if (pos($$b) > $start) {
 			my $body = substr($$b, $start, pos($$b) - $start);
+			$self->{parser}->{heredocs}->{$$tag[0]} = {
+				content => substr($body, 0, length($body) - length($&)),
+				start_line => $self->{lineno},
+		        };
 			$self->{lineno} += () = $body =~ /\n/sg;
 			next;
 		}
-		push(@{$self->{parser}->{problems}}, ['UNCLOSED-HEREDOC', $tag]);
+		push(@{$self->{parser}->{problems}}, ['HEREDOC', $tag]);
 		$$b =~ /(?:\G|\n).*\z/gc; # consume rest of input
 		my $body = substr($$b, $start, pos($$b) - $start);
 		$self->{lineno} += () = $body =~ /\n/sg;
@@ -232,7 +236,9 @@ sub new {
 	my $self = bless {
 		buff => [],
 		stop => [],
-		output => []
+		output => [],
+		heredocs => {},
+		insubshell => 0,
 	} => $class;
 	$self->{lexer} = Lexer->new($self, $s);
 	return $self;
@@ -291,8 +297,11 @@ sub parse_group {
 
 sub parse_subshell {
 	my $self = shift @_;
-	return ($self->parse(qr/^\)$/),
-		$self->expect(')'));
+	$self->{insubshell}++;
+	my @tokens = ($self->parse(qr/^\)$/),
+		      $self->expect(')'));
+	$self->{insubshell}--;
+	return @tokens;
 }
 
 sub parse_case_pattern {
@@ -523,7 +532,7 @@ sub parse_loop_body {
 	return @tokens if ends_with(\@tokens, [qr/^\|\|$/, "\n", qr/^echo$/, qr/^.+$/]);
 	# flag missing "return/exit" handling explicit failure in loop body
 	my $n = find_non_nl(\@tokens);
-	push(@{$self->{problems}}, ['LOOP', $tokens[$n]]);
+	push(@{$self->{problems}}, [$self->{insubshell} ? 'LOOPEXIT' : 'LOOPRETURN', $tokens[$n]]);
 	return @tokens;
 }
 
@@ -582,6 +591,7 @@ sub new {
 	my $class = shift @_;
 	my $self = $class->SUPER::new(@_);
 	$self->{ntests} = 0;
+	$self->{nerrs} = 0;
 	return $self;
 }
 
@@ -614,30 +624,50 @@ sub unwrap {
 	return $s
 }
 
+sub format_problem {
+	local $_ = shift;
+	/^AMP$/ && return "missing '&&'";
+	/^LOOPRETURN$/ && return "missing '|| return 1'";
+	/^LOOPEXIT$/ && return "missing '|| exit 1'";
+	/^HEREDOC$/ && return 'unclosed heredoc';
+	die("unrecognized problem type '$_'\n");
+}
+
 sub check_test {
 	my $self = shift @_;
-	my ($title, $body) = map(unwrap, @_);
+	my $title = unwrap(shift @_);
+	my $body = shift @_;
+	my $lineno = $body->[3];
+	$body = unwrap($body);
+	if ($body eq '-') {
+		my $herebody = shift @_;
+		$body = $herebody->{content};
+		$lineno = $herebody->{start_line};
+	}
 	$self->{ntests}++;
 	my $parser = TestParser->new(\$body);
 	my @tokens = $parser->parse();
 	my $problems = $parser->{problems};
+	$self->{nerrs} += @$problems;
 	return unless $emit_all || @$problems;
 	my $c = main::fd_colors(1);
-	my $lineno = $_[1]->[3];
+	my ($erropen, $errclose) = -t 1 ? ("$c->{rev}$c->{red}", $c->{reset}) : ('?!', '?!');
 	my $start = 0;
 	my $checked = '';
 	for (sort {$a->[1]->[2] <=> $b->[1]->[2]} @$problems) {
 		my ($label, $token) = @$_;
 		my $pos = $token->[2];
-		$checked .= substr($body, $start, $pos - $start) . " ?!$label?! ";
+		my $err = format_problem($label);
+		$checked .= substr($body, $start, $pos - $start);
+		$checked .= ' ' unless $checked =~ /\s$/;
+		$checked .= "${erropen}LINT: $err$errclose";
+		$checked .= ' ' unless $pos >= length($body) ||
+		    substr($body, $pos, 1) =~ /^\s/;
 		$start = $pos;
 	}
 	$checked .= substr($body, $start);
 	$checked =~ s/^/$lineno++ . ' '/mge;
 	$checked =~ s/^\d+ \n//;
-	$checked =~ s/(\s) \?!/$1?!/mg;
-	$checked =~ s/\?! (\s)/?!$1/mg;
-	$checked =~ s/(\?![^?]+\?!)/$c->{rev}$c->{red}$1$c->{reset}/mg;
 	$checked =~ s/^\d+/$c->{dim}$&$c->{reset}/mg;
 	$checked .= "\n" unless $checked =~ /\n$/;
 	push(@{$self->{output}}, "$c->{blue}# chainlint: $title$c->{reset}\n$checked");
@@ -649,8 +679,13 @@ sub parse_cmd {
 	return @tokens unless @tokens && $tokens[0]->[0] =~ /^test_expect_(?:success|failure)$/;
 	my $n = $#tokens;
 	$n-- while $n >= 0 && $tokens[$n]->[0] =~ /^(?:[;&\n|]|&&|\|\|)$/;
-	$self->check_test($tokens[1], $tokens[2]) if $n == 2; # title body
-	$self->check_test($tokens[2], $tokens[3]) if $n > 2;  # prereq title body
+	my $herebody;
+	if ($n >= 2 && $tokens[$n-1]->[0] eq '-' && $tokens[$n]->[0] =~ /^<<-?(.+)$/) {
+		$herebody = $self->{heredocs}->{$1};
+		$n--;
+	}
+	$self->check_test($tokens[1], $tokens[2], $herebody) if $n == 2; # title body
+	$self->check_test($tokens[2], $tokens[3], $herebody) if $n > 2;  # prereq title body
 	return @tokens;
 }
 
@@ -716,11 +751,25 @@ sub fd_colors {
 
 sub ncores {
 	# Windows
-	return $ENV{NUMBER_OF_PROCESSORS} if exists($ENV{NUMBER_OF_PROCESSORS});
+	if (exists($ENV{NUMBER_OF_PROCESSORS})) {
+		my $ncpu = $ENV{NUMBER_OF_PROCESSORS};
+		return $ncpu > 0 ? $ncpu : 1;
+	}
 	# Linux / MSYS2 / Cygwin / WSL
-	do { local @ARGV='/proc/cpuinfo'; return scalar(grep(/^processor[\s\d]*:/, <>)); } if -r '/proc/cpuinfo';
+	if (open my $fh, '<', '/proc/cpuinfo') {
+		my $cpuinfo = do { local $/; <$fh> };
+		close($fh);
+		if ($cpuinfo =~ /^n?cpus active\s*:\s*(\d+)/m) {
+			return $1 if $1 > 0;
+		}
+		my @matches = ($cpuinfo =~ /^(processor|CPU)[\s\d]*:/mg);
+		return @matches ? scalar(@matches) : 1;
+	}
 	# macOS & BSD
-	return qx/sysctl -n hw.ncpu/ if $^O =~ /(?:^darwin$|bsd)/;
+	if ($^O =~ /(?:^darwin$|bsd)/) {
+		my $ncpu = qx/sysctl -n hw.ncpu/;
+		return $ncpu > 0 ? $ncpu : 1;
+	}
 	return 1;
 }
 
@@ -748,7 +797,7 @@ sub check_script {
 	while (my $path = $next_script->()) {
 		$nscripts++;
 		my $fh;
-		unless (open($fh, "<", $path)) {
+		unless (open($fh, "<:unix:crlf", $path)) {
 			$emit->("?!ERR?! $path: $!\n");
 			next;
 		}
@@ -760,9 +809,9 @@ sub check_script {
 			my $c = fd_colors(1);
 			my $s = join('', @{$parser->{output}});
 			$emit->("$c->{bold}$c->{blue}# chainlint: $path$c->{reset}\n" . $s);
-			$nerrs += () = $s =~ /\?![^?]+\?!/g;
 		}
 		$ntests += $parser->{ntests};
+		$nerrs += $parser->{nerrs};
 	}
 	return [$id, $nscripts, $ntests, $nerrs];
 }
@@ -792,8 +841,10 @@ unless (@scripts) {
 	show_stats($start_time, \@stats) if $show_stats;
 	exit;
 }
+$jobs = @scripts if @scripts < $jobs;
 
-unless ($Config{useithreads} && eval {
+unless ($jobs > 1 &&
+	$Config{useithreads} && eval {
 	require threads; threads->import();
 	require Thread::Queue; Thread::Queue->import();
 	1;

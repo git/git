@@ -1,5 +1,7 @@
+test_expect_success 'here-doc-close-subshell' '
 (
 # LINT: line contains here-doc and closes nested subshell
 	cat <<-\INPUT)
 	fizz
 	INPUT
+'

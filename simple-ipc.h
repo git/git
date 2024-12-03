@@ -179,11 +179,20 @@ struct ipc_server_opts
  * When a client IPC message is received, the `application_cb` will be
  * called (possibly on a random thread) to handle the message and
  * optionally compose a reply message.
+ *
+ * This initializes all threads but no actual work will be done until
+ * ipc_server_start_async() is called.
  */
-int ipc_server_run_async(struct ipc_server_data **returned_server_data,
-			 const char *path, const struct ipc_server_opts *opts,
-			 ipc_server_application_cb *application_cb,
-			 void *application_data);
+int ipc_server_init_async(struct ipc_server_data **returned_server_data,
+			  const char *path, const struct ipc_server_opts *opts,
+			  ipc_server_application_cb *application_cb,
+			  void *application_data);
+
+/*
+ * Let an async server start running. This needs to be called only once
+ * after initialization.
+ */
+void ipc_server_start_async(struct ipc_server_data *server_data);
 
 /*
  * Gently signal the IPC server pool to shutdown.  No new client

@@ -684,7 +684,7 @@ test_expect_success 'subtest: tests respect lazy prerequisites' '
 	write_and_run_sub_test_lib_test lazy-prereqs <<-\EOF &&
 
 	test_lazy_prereq LAZY_TRUE true
-	test_expect_success LAZY_TRUE "lazy prereq is satisifed" "true"
+	test_expect_success LAZY_TRUE "lazy prereq is satisfied" "true"
 	test_expect_success !LAZY_TRUE "negative lazy prereq" "false"
 
 	test_lazy_prereq LAZY_FALSE false
@@ -695,7 +695,7 @@ test_expect_success 'subtest: tests respect lazy prerequisites' '
 	EOF
 
 	check_sub_test_lib_test lazy-prereqs <<-\EOF
-	ok 1 - lazy prereq is satisifed
+	ok 1 - lazy prereq is satisfied
 	ok 2 # skip negative lazy prereq (missing !LAZY_TRUE)
 	ok 3 # skip lazy prereq not satisfied (missing LAZY_FALSE)
 	ok 4 - negative false prereq
@@ -1199,6 +1199,34 @@ test_expect_success 'very long name in the index handled sanely' '
 	git ls-files "a*" >tmp &&
 	len=$(wc -c <tmp) &&
 	test $len = 4098
+'
+
+# D/F conflict checking uses an optimization when adding to the end.
+# make sure it does not get confused by `a-` sorting _between_
+# `a` and `a/`.
+test_expect_success 'more update-index D/F conflicts' '
+	# empty the index to make sure our entry is last
+	git read-tree --empty &&
+	cacheinfo=100644,$(test_oid empty_blob) &&
+	git update-index --add --cacheinfo $cacheinfo,path5/a &&
+
+	test_must_fail git update-index --add --cacheinfo $cacheinfo,path5/a/file &&
+	test_must_fail git update-index --add --cacheinfo $cacheinfo,path5/a/b/file &&
+	test_must_fail git update-index --add --cacheinfo $cacheinfo,path5/a/b/c/file &&
+
+	# "a-" sorts between "a" and "a/"
+	git update-index --add --cacheinfo $cacheinfo,path5/a- &&
+
+	test_must_fail git update-index --add --cacheinfo $cacheinfo,path5/a/file &&
+	test_must_fail git update-index --add --cacheinfo $cacheinfo,path5/a/b/file &&
+	test_must_fail git update-index --add --cacheinfo $cacheinfo,path5/a/b/c/file &&
+
+	cat >expected <<-\EOF &&
+	path5/a
+	path5/a-
+	EOF
+	git ls-files >actual &&
+	test_cmp expected actual
 '
 
 test_expect_success 'test_must_fail on a failing git command' '

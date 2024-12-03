@@ -9,7 +9,8 @@ git-apply - Apply a patch to files and/or to the index
 SYNOPSIS
 --------
 [verse]
-'git apply' [--stat] [--numstat] [--summary] [--check] [--index | --intent-to-add] [--3way]
+'git apply' [--stat] [--numstat] [--summary] [--check]
+	  [--index | --intent-to-add] [--3way] [--ours | --theirs | --union]
 	  [--apply] [--no-add] [--build-fake-ancestor=<file>] [-R | --reverse]
 	  [--allow-binary-replacement | --binary] [--reject] [-z]
 	  [-p<n>] [-C<n>] [--inaccurate-eof] [--recount] [--cached]
@@ -91,6 +92,12 @@ OPTIONS
 	`--cached` option is used, and is incompatible with the `--reject` option.
 	When used with the `--cached` option, any conflicts are left at higher stages
 	in the cache.
+
+--ours::
+--theirs::
+--union::
+	Instead of leaving conflicts in the file, resolve conflicts favouring
+	our (or their or both) side of the lines. Requires --3way.
 
 --build-fake-ancestor=<file>::
 	Newer 'git diff' output has embedded 'index information'

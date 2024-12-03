@@ -1,3 +1,4 @@
+test_expect_success 'chain-break-return-exit' '
 case "$(git ls-files)" in
 one) echo pass one ;;
 # LINT: broken &&-chain okay if explicit "return 1" signals failuire
@@ -21,3 +22,4 @@ for i in 1 2 3 4 ; do
 	git checkout main -b $i || return $?
 	test_commit $i $i $i tag$i || return $?
 done
+'

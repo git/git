@@ -80,13 +80,13 @@ int sign_buffer(struct strbuf *buffer, struct strbuf *signature,
 const char *gpg_trust_level_to_str(enum signature_trust_level level);
 
 void set_signing_key(const char *);
-const char *get_signing_key(void);
+char *get_signing_key(void);
 
 /*
  * Returns a textual unique representation of the signing key in use
  * Either a GPG KeyID or a SSH Key Fingerprint
  */
-const char *get_signing_key_id(void);
+char *get_signing_key_id(void);
 int check_signature(struct signature_check *sigc,
 		    const char *signature, size_t slen);
 void print_signature_buffer(const struct signature_check *sigc,

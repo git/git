@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='send-pack --stdin tests'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 create_ref () {

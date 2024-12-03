@@ -9,7 +9,7 @@ git-ls-remote - List references in a remote repository
 SYNOPSIS
 --------
 [verse]
-'git ls-remote' [--heads] [--tags] [--refs] [--upload-pack=<exec>]
+'git ls-remote' [--branches] [--tags] [--refs] [--upload-pack=<exec>]
 	      [-q | --quiet] [--exit-code] [--get-url] [--sort=<key>]
 	      [--symref] [<repository> [<patterns>...]]
 
@@ -21,14 +21,16 @@ commit IDs.
 
 OPTIONS
 -------
--h::
---heads::
+-b::
+--branches::
 -t::
 --tags::
-	Limit to only refs/heads and refs/tags, respectively.
+	Limit to only local branches and local tags, respectively.
 	These options are _not_ mutually exclusive; when given
 	both, references stored in refs/heads and refs/tags are
-	displayed.  Note that `git ls-remote -h` used without
+	displayed.  Note that `--heads` and `-h` are deprecated
+	synonyms for `--branches` and `-b` and may be removed in
+	the future.  Also note that `git ls-remote -h` used without
 	anything else on the command line gives help, consistent
 	with other git subcommands.
 
@@ -79,6 +81,9 @@ OPTIONS
 	character.
 	When multiple `--server-option=<option>` are given, they are all
 	sent to the other side in the order listed on the command line.
+	When no `--server-option=<option>` is given from the command line,
+	the values of configuration variable `remote.<name>.serverOption`
+	are used instead.
 
 <repository>::
 	The "remote" repository to query.  This parameter can be

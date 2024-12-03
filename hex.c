@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "hash.h"
 #include "hex.h"
@@ -25,8 +27,12 @@ int get_oid_hex_algop(const char *hex, struct object_id *oid,
 		      const struct git_hash_algo *algop)
 {
 	int ret = get_hash_hex_algop(hex, oid->hash, algop);
-	if (!ret)
+	if (!ret) {
 		oid_set_algo(oid, algop);
+		if (algop->rawsz != GIT_MAX_RAWSZ)
+			memset(oid->hash + algop->rawsz, 0,
+			       GIT_MAX_RAWSZ - algop->rawsz);
+	}
 	return ret;
 }
 

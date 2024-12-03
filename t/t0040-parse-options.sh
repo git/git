@@ -176,6 +176,23 @@ test_expect_success 'long options' '
 	test_cmp expect output
 '
 
+test_expect_success 'abbreviate to something longer than SHA1 length' '
+	cat >expect <<-EOF &&
+	boolean: 0
+	integer: 0
+	magnitude: 0
+	timestamp: 0
+	string: (not set)
+	abbrev: 100
+	verbose: -1
+	quiet: 0
+	dry run: no
+	file: (not set)
+	EOF
+	test-tool parse-options --abbrev=100 >output &&
+	test_cmp expect output
+'
+
 test_expect_success 'missing required value' '
 	cat >expect <<-\EOF &&
 	error: switch `s'\'' requires a value

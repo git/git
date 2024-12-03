@@ -22,6 +22,8 @@ struct object_context {
 	char *path;
 };
 
+void object_context_release(struct object_context *ctx);
+
 /*
  * Return an abbreviated sha1 unique within this repository's object database.
  * The result will be at least `len` characters long, and will be NUL
@@ -67,7 +69,8 @@ enum get_oid_result get_oid_with_context(struct repository *repo, const char *st
 
 
 typedef int each_abbrev_fn(const struct object_id *oid, void *);
-int repo_for_each_abbrev(struct repository *r, const char *prefix, each_abbrev_fn, void *);
+int repo_for_each_abbrev(struct repository *r, const char *prefix,
+			 const struct git_hash_algo *algo, each_abbrev_fn, void *);
 
 int set_disambiguate_hint_config(const char *var, const char *value);
 

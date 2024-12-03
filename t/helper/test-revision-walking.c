@@ -8,6 +8,8 @@
  * published by the Free Software Foundation.
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "test-tool.h"
 #include "commit.h"
 #include "diff.h"

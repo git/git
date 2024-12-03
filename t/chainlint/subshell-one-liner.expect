@@ -1,19 +1,19 @@
-(
-	(foo && bar) &&
-	(foo && bar) |
-	(foo && bar) >baz &&
-
-	(foo; ?!AMP?! bar) &&
-	(foo; ?!AMP?! bar) |
-	(foo; ?!AMP?! bar) >baz &&
-
-	(foo || exit 1) &&
-	(foo || exit 1) |
-	(foo || exit 1) >baz &&
-
-	(foo && bar) ?!AMP?!
-
-	(foo && bar; ?!AMP?! baz) ?!AMP?!
-
-	foobar
-)
+2 (
+3 	(foo && bar) &&
+4 	(foo && bar) |
+5 	(foo && bar) >baz &&
+6 
+7 	(foo; ?!LINT: missing '&&'?! bar) &&
+8 	(foo; ?!LINT: missing '&&'?! bar) |
+9 	(foo; ?!LINT: missing '&&'?! bar) >baz &&
+10 
+11 	(foo || exit 1) &&
+12 	(foo || exit 1) |
+13 	(foo || exit 1) >baz &&
+14 
+15 	(foo && bar) ?!LINT: missing '&&'?!
+16 
+17 	(foo && bar; ?!LINT: missing '&&'?! baz) ?!LINT: missing '&&'?!
+18 
+19 	foobar
+20 )

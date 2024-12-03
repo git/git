@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "commit.h"
 #include "diff.h"
@@ -147,7 +148,10 @@ static void remove_temporary_files(const char *path)
 	closedir(dir);
 }
 
-int cmd_prune(int argc, const char **argv, const char *prefix)
+int cmd_prune(int argc,
+	      const char **argv,
+	      const char *prefix,
+	      struct repository *repo UNUSED)
 {
 	struct rev_info revs;
 	int exclude_promisor_objects = 0;
@@ -193,12 +197,12 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 		revs.exclude_promisor_objects = 1;
 	}
 
-	for_each_loose_file_in_objdir(get_object_directory(), prune_object,
-				      prune_cruft, prune_subdir, &revs);
+	for_each_loose_file_in_objdir(repo_get_object_directory(the_repository),
+				      prune_object, prune_cruft, prune_subdir, &revs);
 
 	prune_packed_objects(show_only ? PRUNE_PACKED_DRY_RUN : 0);
-	remove_temporary_files(get_object_directory());
-	s = mkpathdup("%s/pack", get_object_directory());
+	remove_temporary_files(repo_get_object_directory(the_repository));
+	s = mkpathdup("%s/pack", repo_get_object_directory(the_repository));
 	remove_temporary_files(s);
 	free(s);
 

@@ -10,6 +10,8 @@
 #   that the diff output isn't wildly unreasonable.
 
 test_description='test tree diff when trees have duplicate entries'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # make_tree_entry <mode> <mode> <sha1>
@@ -132,22 +134,23 @@ test_expect_success 'create a few commits' '
 	rm commit_id up final
 '
 
-test_expect_failure 'git read-tree does not segfault' '
-	test_when_finished rm .git/index.lock &&
-	test_might_fail git read-tree --reset base
+test_expect_success 'git read-tree does not segfault' '
+	test_must_fail git read-tree --reset base 2>err &&
+	test_grep "error: corrupted cache-tree has entries not present in index" err
 '
 
-test_expect_failure 'reset --hard does not segfault' '
-	test_when_finished rm .git/index.lock &&
+test_expect_success 'reset --hard does not segfault' '
 	git checkout base &&
-	test_might_fail git reset --hard
+	test_must_fail git reset --hard 2>err &&
+	test_grep "error: corrupted cache-tree has entries not present in index" err
 '
 
-test_expect_failure 'git diff HEAD does not segfault' '
+test_expect_success 'git diff HEAD does not segfault' '
 	git checkout base &&
 	GIT_TEST_CHECK_CACHE_TREE=false &&
 	git reset --hard &&
-	test_might_fail git diff HEAD
+	test_must_fail git diff HEAD 2>err &&
+	test_grep "error: corrupted cache-tree has entries not present in index" err
 '
 
 test_expect_failure 'can switch to another branch when status is empty' '

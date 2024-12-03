@@ -1,9 +1,9 @@
-echo nobody home && {
-	test the doohicky ?!AMP?!
-	right now
-} &&
-
-GIT_EXTERNAL_DIFF=echo git diff | {
-	read path oldfile oldhex oldmode newfile newhex newmode &&
-	test "z$oh" = "z$oldhex"
-}
+2 echo nobody home && {
+3 	test the doohicky ?!LINT: missing '&&'?!
+4 	right now
+5 } &&
+6 
+7 GIT_EXTERNAL_DIFF=echo git diff | {
+8 	read path oldfile oldhex oldmode newfile newhex newmode &&
+9 	test "z$oh" = "z$oldhex"
+10 }

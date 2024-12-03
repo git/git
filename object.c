@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "gettext.h"
 #include "hex.h"
@@ -13,6 +15,7 @@
 #include "alloc.h"
 #include "packfile.h"
 #include "commit-graph.h"
+#include "loose.h"
 
 unsigned int get_max_object_index(void)
 {
@@ -204,6 +207,29 @@ struct object *lookup_object_by_type(struct repository *r,
 	default:
 		BUG("unknown object type %d", type);
 	}
+}
+
+enum peel_status peel_object(struct repository *r,
+			     const struct object_id *name,
+			     struct object_id *oid)
+{
+	struct object *o = lookup_unknown_object(r, name);
+
+	if (o->type == OBJ_NONE) {
+		int type = oid_object_info(r, name, NULL);
+		if (type < 0 || !object_as_type(o, type, 0))
+			return PEEL_INVALID;
+	}
+
+	if (o->type != OBJ_TAG)
+		return PEEL_NON_TAG;
+
+	o = deref_tag_noverify(r, o);
+	if (!o)
+		return PEEL_INVALID;
+
+	oidcpy(oid, &o->oid);
+	return PEEL_PEELED;
 }
 
 struct object *parse_object_buffer(struct repository *r, const struct object_id *oid, enum object_type type, unsigned long size, void *buffer, int *eaten_p)
@@ -519,11 +545,12 @@ void repo_clear_commit_marks(struct repository *r, unsigned int flags)
 	}
 }
 
-struct parsed_object_pool *parsed_object_pool_new(void)
+struct parsed_object_pool *parsed_object_pool_new(struct repository *repo)
 {
 	struct parsed_object_pool *o = xmalloc(sizeof(*o));
 	memset(o, 0, sizeof(*o));
 
+	o->repo = repo;
 	o->blob_state = allocate_alloc_state();
 	o->tree_state = allocate_alloc_state();
 	o->commit_state = allocate_alloc_state();
@@ -553,6 +580,7 @@ void free_object_directory(struct object_directory *odb)
 {
 	free(odb->path);
 	odb_clear_loose_cache(odb);
+	loose_object_map_clear(&odb->loose_map);
 	free(odb);
 }
 
@@ -587,9 +615,28 @@ void raw_object_store_clear(struct raw_object_store *o)
 
 	INIT_LIST_HEAD(&o->packed_git_mru);
 	close_object_store(o);
+
+	/*
+	 * `close_object_store()` only closes the packfiles, but doesn't free
+	 * them. We thus have to do this manually.
+	 */
+	for (struct packed_git *p = o->packed_git, *next; p; p = next) {
+		next = p->next;
+		free(p);
+	}
 	o->packed_git = NULL;
 
 	hashmap_clear(&o->pack_map);
+}
+
+void parsed_object_pool_reset_commit_grafts(struct parsed_object_pool *o)
+{
+	for (int i = 0; i < o->grafts_nr; i++) {
+		unparse_commit(o->repo, &o->grafts[i]->oid);
+		free(o->grafts[i]);
+	}
+	o->grafts_nr = 0;
+	o->commit_graft_prepared = 0;
 }
 
 void parsed_object_pool_clear(struct parsed_object_pool *o)
@@ -623,6 +670,7 @@ void parsed_object_pool_clear(struct parsed_object_pool *o)
 	free_commit_buffer_slab(o->buffer_slab);
 	o->buffer_slab = NULL;
 
+	parsed_object_pool_reset_commit_grafts(o);
 	clear_alloc_state(o->blob_state);
 	clear_alloc_state(o->tree_state);
 	clear_alloc_state(o->commit_state);

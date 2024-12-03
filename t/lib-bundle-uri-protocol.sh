@@ -18,7 +18,7 @@ git)
 	start_git_daemon --export-all --enable=receive-pack
 	BUNDLE_URI_PARENT="$GIT_DAEMON_DOCUMENT_ROOT_PATH/parent"
 	BUNDLE_URI_REPO_URI="$GIT_DAEMON_URL/parent"
-	BUNDLE_URI_BUNDLE_URI="https://example.com/fake.bdl"
+	BUNDLE_URI_BUNDLE_URI="$BUNDLE_URI_REPO_URI/fake.bdl"
 	test_set_prereq BUNDLE_URI_GIT
 	;;
 http)
@@ -26,7 +26,7 @@ http)
 	start_httpd
 	BUNDLE_URI_PARENT="$HTTPD_DOCUMENT_ROOT_PATH/http_parent"
 	BUNDLE_URI_REPO_URI="$HTTPD_URL/smart/http_parent"
-	BUNDLE_URI_BUNDLE_URI="https://example.com/fake.bdl"
+	BUNDLE_URI_BUNDLE_URI="$BUNDLE_URI_REPO_URL/fake.bdl"
 	test_set_prereq BUNDLE_URI_HTTP
 	;;
 *)

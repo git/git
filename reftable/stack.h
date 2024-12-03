@@ -19,9 +19,8 @@ struct reftable_stack {
 	int list_fd;
 
 	char *reftable_dir;
-	int disable_auto_compact;
 
-	struct reftable_write_options config;
+	struct reftable_write_options opts;
 
 	struct reftable_reader **readers;
 	size_t readers_len;
@@ -33,12 +32,10 @@ int read_lines(const char *filename, char ***lines);
 
 struct segment {
 	size_t start, end;
-	int log;
 	uint64_t bytes;
 };
 
-int fastlog2(uint64_t sz);
-struct segment *sizes_to_segments(size_t *seglen, uint64_t *sizes, size_t n);
-struct segment suggest_compaction_segment(uint64_t *sizes, size_t n);
+struct segment suggest_compaction_segment(uint64_t *sizes, size_t n,
+					  uint8_t factor);
 
 #endif

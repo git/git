@@ -204,7 +204,7 @@ while (<>) {
     }
 
     # A series of potentially nested and threaded region and data events
-    # is fundamentally incompatibile with the type of summary record we
+    # is fundamentally incompatible with the type of summary record we
     # are building in this script.  Since they are intended for
     # perf-trace-like analysis rather than a result summary, we ignore
     # most of them here.

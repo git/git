@@ -1,18 +1,18 @@
-test_done () {
-	case "$test_failure" in
-	0)
-		test_at_end_hook_
-
-		exit 0 ;;
-
-	*)
-		if test $test_external_has_tap -eq 0
-		then
-			say_color error "# failed $test_failure among $msg"
-			say "1..$test_count"
-		fi
-
-		exit 1 ;;
-
-	esac
-}
+2 test_done () {
+3 	case "$test_failure" in
+4 	0)
+5 		test_at_end_hook_
+6 
+7 		exit 0 ;;
+8 
+9 	*)
+10 		if test $test_external_has_tap -eq 0
+11 		then
+12 			say_color error "# failed $test_failure among $msg"
+13 			say "1..$test_count"
+14 		fi
+15 
+16 		exit 1 ;;
+17 
+18 	esac
+19 }

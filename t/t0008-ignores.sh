@@ -945,4 +945,12 @@ test_expect_success SYMLINKS 'symlinks not respected in-tree' '
 	test_grep "unable to access.*gitignore" err
 '
 
+test_expect_success EXPENSIVE 'large exclude file ignored in tree' '
+	test_when_finished "rm .gitignore" &&
+	dd if=/dev/zero of=.gitignore bs=101M count=1 &&
+	git ls-files -o --exclude-standard 2>err &&
+	echo "warning: ignoring excessively large pattern file: .gitignore" >expect &&
+	test_cmp expect err
+'
+
 test_done

@@ -44,13 +44,13 @@ open_editor() {
 mode_diff() {
 	git diff --no-prefix --relative "$@" |
 	perl -ne '
-	if (m{^\+\+\+ (.*)}) { $file = $1; next }
+	if (m{^\+\+\+ (.*)}) { $file = $1 eq "/dev/null" ? undef : $1; next }
 	defined($file) or next;
 	if (m/^@@ .*?\+(\d+)/) { $line = $1; next }
 	defined($line) or next;
 	if (/^ /) { $line++; next }
 	if (/^[-+]\s*(.*)/) {
-		print "$file:$line: $1\n";
+		print "$file:$line:1: $1\n";
 		$line = undef;
 	}
 	'

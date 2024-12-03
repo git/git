@@ -19,6 +19,12 @@
 `badParentSha1`::
 	(ERROR) A commit object has a bad parent sha1.
 
+`badRefFiletype`::
+	(ERROR) A ref has a bad file type.
+
+`badRefName`::
+	(ERROR) A ref has an invalid format.
+
 `badTagName`::
 	(INFO) A tag has an invalid format.
 

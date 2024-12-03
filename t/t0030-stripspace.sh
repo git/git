@@ -401,6 +401,21 @@ test_expect_success 'strip comments with changed comment char' '
 	test -z "$(echo "; comment" | git -c core.commentchar=";" stripspace -s)"
 '
 
+test_expect_success 'strip comments with changed comment string' '
+	test ! -z "$(echo "// comment" | git -c core.commentchar=// stripspace)" &&
+	test -z "$(echo "// comment" | git -c core.commentchar="//" stripspace -s)"
+'
+
+test_expect_success 'newline as commentchar is forbidden' '
+	test_must_fail git -c core.commentChar="$LF" stripspace -s 2>err &&
+	grep "core.commentchar cannot contain newline" err
+'
+
+test_expect_success 'empty commentchar is forbidden' '
+	test_must_fail git -c core.commentchar= stripspace -s 2>err &&
+	grep "core.commentchar must have at least one character" err
+'
+
 test_expect_success '-c with single line' '
 	printf "# foo\n" >expect &&
 	printf "foo" | git stripspace -c >actual &&

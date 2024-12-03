@@ -1,0 +1,79 @@
+Git v2.39.4 Release Notes
+=========================
+
+This addresses the security issues CVE-2024-32002, CVE-2024-32004,
+CVE-2024-32020 and CVE-2024-32021.
+
+This release also backports fixes necessary to let the CI builds pass
+successfully.
+
+Fixes since v2.39.3
+-------------------
+
+ * CVE-2024-32002:
+
+   Recursive clones on case-insensitive filesystems that support symbolic
+   links are susceptible to case confusion that can be exploited to
+   execute just-cloned code during the clone operation.
+
+ * CVE-2024-32004:
+
+   Repositories can be configured to execute arbitrary code during local
+   clones. To address this, the ownership checks introduced in v2.30.3
+   are now extended to cover cloning local repositories.
+
+ * CVE-2024-32020:
+
+   Local clones may end up hardlinking files into the target repository's
+   object database when source and target repository reside on the same
+   disk. If the source repository is owned by a different user, then
+   those hardlinked files may be rewritten at any point in time by the
+   untrusted user.
+
+ * CVE-2024-32021:
+
+   When cloning a local source repository that contains symlinks via the
+   filesystem, Git may create hardlinks to arbitrary user-readable files
+   on the same filesystem as the target repository in the objects/
+   directory.
+
+ * CVE-2024-32465:
+
+   It is supposed to be safe to clone untrusted repositories, even those
+   unpacked from zip archives or tarballs originating from untrusted
+   sources, but Git can be tricked to run arbitrary code as part of the
+   clone.
+
+ * Defense-in-depth: submodule: require the submodule path to contain
+   directories only.
+
+ * Defense-in-depth: clone: when symbolic links collide with directories, keep
+   the latter.
+
+ * Defense-in-depth: clone: prevent hooks from running during a clone.
+
+ * Defense-in-depth: core.hooksPath: add some protection while cloning.
+
+ * Defense-in-depth: fsck: warn about symlink pointing inside a gitdir.
+
+ * Various fix-ups on HTTP tests.
+
+ * Test update.
+
+ * HTTP Header redaction code has been adjusted for a newer version of
+   cURL library that shows its traces differently from earlier
+   versions.
+
+ * Fix was added to work around a regression in libcURL 8.7.0 (which has
+   already been fixed in their tip of the tree).
+
+ * Replace macos-12 used at GitHub CI with macos-13.
+
+ * ci(linux-asan/linux-ubsan): let's save some time
+
+ * Tests with LSan from time to time seem to emit harmless message that makes
+   our tests unnecessarily flakey; we work it around by filtering the
+   uninteresting output.
+
+ * Update GitHub Actions jobs to avoid warnings against using deprecated
+   version of Node.js.

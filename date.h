@@ -22,8 +22,8 @@ enum date_mode_type {
 
 struct date_mode {
 	enum date_mode_type type;
-	const char *strftime_fmt;
 	int local;
+	const char *strftime_fmt;
 };
 
 #define DATE_MODE_INIT { \
@@ -36,14 +36,14 @@ struct date_mode {
  *   show_date(t, tz, DATE_MODE(NORMAL));
  */
 #define DATE_MODE(t) date_mode_from_type(DATE_##t)
-struct date_mode *date_mode_from_type(enum date_mode_type type);
+struct date_mode date_mode_from_type(enum date_mode_type type);
 
 /**
  * Format <'time', 'timezone'> into static memory according to 'mode'
  * and return it. The mode is an initialized "struct date_mode"
  * (usually from the DATE_MODE() macro).
  */
-const char *show_date(timestamp_t time, int timezone, const struct date_mode *mode);
+const char *show_date(timestamp_t time, int timezone, struct date_mode mode);
 
 /**
  * Parse a date format for later use with show_date().

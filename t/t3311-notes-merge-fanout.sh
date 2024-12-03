@@ -5,6 +5,7 @@
 
 test_description='Test notes merging at various fanout levels'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 verify_notes () {

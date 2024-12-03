@@ -1,7 +1,7 @@
 #ifndef XDIFF_INTERFACE_H
 #define XDIFF_INTERFACE_H
 
-#include "hash-ll.h"
+#include "hash.h"
 #include "xdiff/xdiff.h"
 
 /*
@@ -51,6 +51,7 @@ int buffer_is_binary(const char *ptr, unsigned long size);
 void xdiff_set_find_func(xdemitconf_t *xecfg, const char *line, int cflags);
 void xdiff_clear_find_func(xdemitconf_t *xecfg);
 struct config_context;
+int parse_conflict_style_name(const char *value);
 int git_xmerge_config(const char *var, const char *value,
 		      const struct config_context *ctx, void *cb);
 extern int git_xmerge_style;

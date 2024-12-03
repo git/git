@@ -139,7 +139,7 @@ static void write_console(unsigned char *str, size_t len)
 	/* convert utf-8 to utf-16 */
 	int wlen = xutftowcsn(wbuf, (char*) str, ARRAY_SIZE(wbuf), len);
 	if (wlen < 0) {
-		wchar_t *err = L"[invalid]";
+		const wchar_t *err = L"[invalid]";
 		WriteConsoleW(console, err, wcslen(err), &dummy, NULL);
 		return;
 	}
@@ -340,7 +340,7 @@ enum {
 	TEXT = 0, ESCAPE = 033, BRACKET = '['
 };
 
-static DWORD WINAPI console_thread(LPVOID unused)
+static DWORD WINAPI console_thread(LPVOID data UNUSED)
 {
 	unsigned char buffer[BUFFER_SIZE];
 	DWORD bytes;

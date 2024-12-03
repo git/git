@@ -2,6 +2,7 @@
 
 test_description='Test handling of overwriting untracked files'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_setup_reset () {

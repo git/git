@@ -207,6 +207,7 @@ int cmd__parse_options(int argc, const char **argv)
 	expect.strdup_strings = 1;
 	string_list_clear(&expect, 0);
 	string_list_clear(&list, 0);
+	free(file);
 
 	return ret;
 }

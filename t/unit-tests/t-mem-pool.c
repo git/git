@@ -20,7 +20,7 @@ static void t_calloc_100(struct mem_pool *pool)
 	check(pool->mp_block->end != NULL);
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd_main(int argc UNUSED, const char **argv UNUSED)
 {
 	TEST(setup_static(t_calloc_100, 1024 * 1024),
 	     "mem_pool_calloc returns 100 zeroed bytes with big block");

@@ -15,6 +15,23 @@
 		      TEST_LOCATION(),  __VA_ARGS__)
 
 /*
+ * Run a test unless test_skip_all() has been called.  Acts like a
+ * conditional; the test body is expected as a statement or block after
+ * the closing parenthesis.  The description for each test should be
+ * unique.  E.g.:
+ *
+ *  if_test ("something else %d %d", arg1, arg2) {
+ *          prepare();
+ *          test_something_else(arg1, arg2);
+ *          cleanup();
+ *  }
+ */
+#define if_test(...)							\
+	if (test__run_begin() ?						\
+	    (test__run_end(0, TEST_LOCATION(),  __VA_ARGS__), 0) :	\
+	    (test__run_describe(TEST_LOCATION(),  __VA_ARGS__), 1))
+
+/*
  * Print a test plan, should be called before any tests. If the number
  * of tests is not known in advance test_done() will automatically
  * print a plan at the end of the test program.
@@ -74,6 +91,19 @@ int test_assert(const char *location, const char *check, int ok);
 #define check(x)				\
 	check_bool_loc(TEST_LOCATION(), #x, x)
 int check_bool_loc(const char *loc, const char *check, int ok);
+
+/*
+ * Compare the equality of two pointers of same type. Prints a message
+ * with the two values if the equality fails. NB this is not thread
+ * safe.
+ */
+#define check_pointer_eq(a, b)						\
+	(test__tmp[0].p = (a), test__tmp[1].p = (b),			\
+	 check_pointer_eq_loc(TEST_LOCATION(), #a" == "#b,		\
+			      test__tmp[0].p == test__tmp[1].p,		\
+			      test__tmp[0].p, test__tmp[1].p))
+int check_pointer_eq_loc(const char *loc, const char *check, int ok,
+			 const void *a, const void *b);
 
 /*
  * Compare two integers. Prints a message with the two values if the
@@ -136,9 +166,13 @@ union test__tmp {
 	intmax_t i;
 	uintmax_t u;
 	char c;
+	const void *p;
 };
 
 extern union test__tmp test__tmp[2];
+
+__attribute__((format (printf, 2, 3)))
+void test__run_describe(const char *, const char *, ...);
 
 int test__run_begin(void);
 __attribute__((format (printf, 3, 4)))

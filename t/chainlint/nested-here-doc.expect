@@ -1,30 +1,30 @@
-cat <<ARBITRARY >foop &&
-naddle
-fub <<EOF
-	nozzle
-	noodle
-EOF
-formp
-ARBITRARY
-
-(
-	cat <<-\INPUT_END &&
-	fish are mice
-	but geese go slow
-	data <<EOF
-		perl is lerp
-		and nothing else
-	EOF
-	toink
-	INPUT_END
-
-	cat <<-\EOT ?!AMP?!
-	text goes here
-	data <<EOF
-		data goes here
-	EOF
-	more test here
-	EOT
-
-	foobar
-)
+2 cat <<ARBITRARY >foop &&
+3 naddle
+4 fub <<EOF
+5 	nozzle
+6 	noodle
+7 EOF
+8 formp
+9 ARBITRARY
+10 
+11 (
+12 	cat <<-\INPUT_END &&
+13 	fish are mice
+14 	but geese go slow
+15 	data <<EOF
+16 		perl is lerp
+17 		and nothing else
+18 	EOF
+19 	toink
+20 	INPUT_END
+21 
+22 	cat <<-\EOT ?!LINT: missing '&&'?!
+23 	text goes here
+24 	data <<EOF
+25 		data goes here
+26 	EOF
+27 	more test here
+28 	EOT
+29 
+30 	foobar
+31 )

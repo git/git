@@ -1,11 +1,11 @@
-cat >expect <<- EOF &&
-header: 43475048 1 $(test_oid oid_version) $NUM_CHUNKS 0
-num_commits: $1
-chunks: oid_fanout oid_lookup commit_metadata generation_data bloom_indexes bloom_data
-EOF
-
-cat >expect << -EOF ?!AMP?!
-this is not indented
--EOF
-
-cleanup
+2 cat >expect <<- EOF &&
+3 header: 43475048 1 $(test_oid oid_version) $NUM_CHUNKS 0
+4 num_commits: $1
+5 chunks: oid_fanout oid_lookup commit_metadata generation_data bloom_indexes bloom_data
+6 EOF
+7 
+8 cat >expect << -EOF ?!LINT: missing '&&'?!
+9 this is not indented
+10 -EOF
+11 
+12 cleanup

@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "config.h"
 #include "builtin.h"
@@ -14,6 +16,11 @@
 #include "parse-options.h"
 #include "prompt.h"
 #include "fsmonitor-ipc.h"
+#include "repository.h"
+
+#ifndef NO_CURL
+#include "git-curl-compat.h" /* For LIBCURL_VERSION only */
+#endif
 
 struct category_description {
 	uint32_t category;
@@ -157,7 +164,7 @@ void add_cmdname(struct cmdnames *cmds, const char *name, int len)
 	cmds->names[cmds->cnt++] = ent;
 }
 
-static void clean_cmdnames(struct cmdnames *cmds)
+void cmdnames_release(struct cmdnames *cmds)
 {
 	int i;
 	for (i = 0; i < cmds->cnt; ++i)
@@ -359,8 +366,8 @@ void list_all_main_cmds(struct string_list *list)
 	for (i = 0; i < main_cmds.cnt; i++)
 		string_list_append(list, main_cmds.names[i]->name);
 
-	clean_cmdnames(&main_cmds);
-	clean_cmdnames(&other_cmds);
+	cmdnames_release(&main_cmds);
+	cmdnames_release(&other_cmds);
 }
 
 void list_all_other_cmds(struct string_list *list)
@@ -375,8 +382,8 @@ void list_all_other_cmds(struct string_list *list)
 	for (i = 0; i < other_cmds.cnt; i++)
 		string_list_append(list, other_cmds.names[i]->name);
 
-	clean_cmdnames(&main_cmds);
-	clean_cmdnames(&other_cmds);
+	cmdnames_release(&main_cmds);
+	cmdnames_release(&other_cmds);
 }
 
 void list_cmds_by_category(struct string_list *list,
@@ -612,7 +619,7 @@ const char *help_unknown_cmd(const char *cmd)
 	memset(&other_cmds, 0, sizeof(other_cmds));
 	memset(&aliases, 0, sizeof(aliases));
 
-	read_early_config(git_unknown_cmd_config, NULL);
+	read_early_config(the_repository, git_unknown_cmd_config, NULL);
 
 	/*
 	 * Disable autocorrection prompt in a non-interactive session
@@ -689,7 +696,7 @@ const char *help_unknown_cmd(const char *cmd)
 	if (autocorrect && n == 1 && SIMILAR_ENOUGH(best_similarity)) {
 		const char *assumed = main_cmds.names[0]->name;
 		main_cmds.names[0] = NULL;
-		clean_cmdnames(&main_cmds);
+		cmdnames_release(&main_cmds);
 		fprintf_ln(stderr,
 			   _("WARNING: You called a Git command named '%s', "
 			     "which does not exist."),
@@ -757,10 +764,19 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 
 		if (fsmonitor_ipc__is_supported())
 			strbuf_addstr(buf, "feature: fsmonitor--daemon\n");
+#if defined LIBCURL_VERSION
+		strbuf_addf(buf, "libcurl: %s\n", LIBCURL_VERSION);
+#endif
+#if defined OPENSSL_VERSION_TEXT
+		strbuf_addf(buf, "OpenSSL: %s\n", OPENSSL_VERSION_TEXT);
+#endif
+#if defined ZLIB_VERSION
+		strbuf_addf(buf, "zlib: %s\n", ZLIB_VERSION);
+#endif
 	}
 }
 
-int cmd_version(int argc, const char **argv, const char *prefix)
+int cmd_version(int argc, const char **argv, const char *prefix, struct repository *repository UNUSED)
 {
 	struct strbuf buf = STRBUF_INIT;
 	int build_options = 0;
@@ -789,7 +805,7 @@ struct similar_ref_cb {
 	struct string_list *similar_refs;
 };
 
-static int append_similar_ref(const char *refname,
+static int append_similar_ref(const char *refname, const char *referent UNUSED,
 			      const struct object_id *oid UNUSED,
 			      int flags UNUSED, void *cb_data)
 {
@@ -800,7 +816,7 @@ static int append_similar_ref(const char *refname,
 	if (starts_with(refname, "refs/remotes/") &&
 	    !strcmp(branch, cb->base_ref))
 		string_list_append_nodup(cb->similar_refs,
-					 shorten_unambiguous_ref(refname, 1));
+					 refs_shorten_unambiguous_ref(get_main_ref_store(the_repository), refname, 1));
 	return 0;
 }
 
@@ -811,7 +827,8 @@ static struct string_list guess_refs(const char *ref)
 
 	ref_cb.base_ref = ref;
 	ref_cb.similar_refs = &similar_refs;
-	for_each_ref(append_similar_ref, &ref_cb);
+	refs_for_each_ref(get_main_ref_store(the_repository),
+			  append_similar_ref, &ref_cb);
 	return similar_refs;
 }
 

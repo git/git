@@ -1,4 +1,5 @@
-#define USE_THE_INDEX_VARIABLE
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "test-tool.h"
 #include "dir.h"
 #include "hex.h"
@@ -56,7 +57,7 @@ int cmd__dump_untracked_cache(int ac UNUSED, const char **av UNUSED)
 	setup_git_directory();
 	if (repo_read_index(the_repository) < 0)
 		die("unable to read index file");
-	uc = the_index.untracked;
+	uc = the_repository->index->untracked;
 	if (!uc) {
 		printf("no untracked cache\n");
 		return 0;
@@ -67,5 +68,7 @@ int cmd__dump_untracked_cache(int ac UNUSED, const char **av UNUSED)
 	printf("flags %08x\n", uc->dir_flags);
 	if (uc->root)
 		dump(uc->root, &base);
+
+	strbuf_release(&base);
 	return 0;
 }

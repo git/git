@@ -5,8 +5,13 @@ http.proxy::
 	proxy string with a user name but no password, in which case git will
 	attempt to acquire one in the same way it does for other credentials. See
 	linkgit:gitcredentials[7] for more information. The syntax thus is
-	'[protocol://][user[:password]@]proxyhost[:port]'. This can be overridden
-	on a per-remote basis; see remote.<name>.proxy
+	'[protocol://][user[:password]@]proxyhost[:port][/path]'. This can be
+	overridden on a per-remote basis; see remote.<name>.proxy
++
+Any proxy, however configured, must be completely transparent and must not
+modify, transform, or buffer the request or response in any way.  Proxies which
+are not completely transparent are known to cause various forms of breakage
+with Git.
 
 http.proxyAuthMethod::
 	Set the method with which to authenticate against the HTTP proxy. This
@@ -56,6 +61,26 @@ http.emptyAuth::
 	a username in the URL, as libcurl normally requires a username for
 	authentication.
 
+http.proactiveAuth::
+	Attempt authentication without first making an unauthenticated attempt and
+	receiving a 401 response. This can be used to ensure that all requests are
+	authenticated. If `http.emptyAuth` is set to true, this value has no effect.
++
+If the credential helper used specifies an authentication scheme (i.e., via the
+`authtype` field), that value will be used; if a username and password is
+provided without a scheme, then Basic authentication is used.  The value of the
+option determines the scheme requested from the helper. Possible values are:
++
+--
+* `basic` - Request Basic authentication from the helper.
+* `auto` - Allow the helper to pick an appropriate scheme.
+* `none` - Disable proactive authentication.
+--
++
+Note that TLS should always be used with this configuration, since otherwise it
+is easy to accidentally expose plaintext credentials if Basic authentication
+is selected.
+
 http.delegation::
 	Control GSSAPI credential delegation. The delegation is disabled
 	by default in libcurl since version 7.21.7. Set parameter to tell
@@ -82,12 +107,16 @@ http.cookieFile::
 	in the Git http session, if they match the server. The file format
 	of the file to read cookies from should be plain HTTP headers or
 	the Netscape/Mozilla cookie file format (see `curl(1)`).
+	Set it to an empty string, to accept only new cookies from
+	the server and send them back in successive requests within same
+	connection.
 	NOTE that the file specified with http.cookieFile is used only as
 	input unless http.saveCookies is set.
 
 http.saveCookies::
 	If set, store cookies received during requests to the file specified by
-	http.cookieFile. Has no effect if http.cookieFile is unset.
+	http.cookieFile. Has no effect if http.cookieFile is unset, or set to
+	an empty string.
 
 http.version::
 	Use the specified HTTP protocol version when communicating with a server.

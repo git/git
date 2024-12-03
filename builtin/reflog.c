@@ -1,7 +1,7 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
-#include "repository.h"
 #include "revision.h"
 #include "reachable.h"
 #include "wildmatch.h"
@@ -244,7 +244,7 @@ static int cmd_reflog_show(int argc, const char **argv, const char *prefix)
 		      PARSE_OPT_KEEP_DASHDASH | PARSE_OPT_KEEP_ARGV0 |
 		      PARSE_OPT_KEEP_UNKNOWN_OPT);
 
-	return cmd_log_reflog(argc, argv, prefix);
+	return cmd_log_reflog(argc, argv, prefix, the_repository);
 }
 
 static int show_reflog(const char *refname, void *cb_data UNUSED)
@@ -364,11 +364,12 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 			};
 
 			set_reflog_expiry_param(&cb.cmd,  item->string);
-			status |= reflog_expire(item->string, flags,
-						reflog_expiry_prepare,
-						should_prune_fn,
-						reflog_expiry_cleanup,
-						&cb);
+			status |= refs_reflog_expire(get_main_ref_store(the_repository),
+						     item->string, flags,
+						     reflog_expiry_prepare,
+						     should_prune_fn,
+						     reflog_expiry_cleanup,
+						     &cb);
 		}
 		string_list_clear(&collected.reflogs, 0);
 	}
@@ -377,16 +378,17 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		char *ref;
 		struct expire_reflog_policy_cb cb = { .cmd = cmd };
 
-		if (!dwim_log(argv[i], strlen(argv[i]), NULL, &ref)) {
+		if (!repo_dwim_log(the_repository, argv[i], strlen(argv[i]), NULL, &ref)) {
 			status |= error(_("%s points nowhere!"), argv[i]);
 			continue;
 		}
 		set_reflog_expiry_param(&cb.cmd, ref);
-		status |= reflog_expire(ref, flags,
-					reflog_expiry_prepare,
-					should_prune_fn,
-					reflog_expiry_cleanup,
-					&cb);
+		status |= refs_reflog_expire(get_main_ref_store(the_repository),
+					     ref, flags,
+					     reflog_expiry_prepare,
+					     should_prune_fn,
+					     reflog_expiry_cleanup,
+					     &cb);
 		free(ref);
 	}
 	return status;
@@ -437,14 +439,18 @@ static int cmd_reflog_exists(int argc, const char **argv, const char *prefix)
 	refname = argv[0];
 	if (check_refname_format(refname, REFNAME_ALLOW_ONELEVEL))
 		die(_("invalid ref format: %s"), refname);
-	return !reflog_exists(refname);
+	return !refs_reflog_exists(get_main_ref_store(the_repository),
+				   refname);
 }
 
 /*
  * main "reflog"
  */
 
-int cmd_reflog(int argc, const char **argv, const char *prefix)
+int cmd_reflog(int argc,
+	       const char **argv,
+	       const char *prefix,
+	       struct repository *repository)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option options[] = {
@@ -463,5 +469,5 @@ int cmd_reflog(int argc, const char **argv, const char *prefix)
 	if (fn)
 		return fn(argc - 1, argv + 1, prefix);
 	else
-		return cmd_log_reflog(argc, argv, prefix);
+		return cmd_log_reflog(argc, argv, prefix, repository);
 }

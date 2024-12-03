@@ -1,6 +1,9 @@
 /*
  * Helper functions for tree diff generation
  */
+
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "diff.h"
 #include "diffcore.h"
@@ -8,6 +11,7 @@
 #include "tree.h"
 #include "tree-walk.h"
 #include "environment.h"
+#include "repository.h"
 
 /*
  * Some mode bits are also used internally for computations.

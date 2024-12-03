@@ -50,6 +50,7 @@ char *mem_pool_strndup(struct mem_pool *pool, const char *str, size_t len);
 /*
  * Allocate memory from the memory pool and format a string into it.
  */
+__attribute__((format (printf, 2, 3)))
 char *mem_pool_strfmt(struct mem_pool *pool, const char *fmt, ...);
 
 /*

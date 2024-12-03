@@ -385,7 +385,7 @@ test_commit () {
 		shift
 	done &&
 	indir=${indir:+"$indir"/} &&
-	local file=${2:-"$1.t"} &&
+	local file="${2:-"$1.t"}" &&
 	if test -n "$append"
 	then
 		$echo "${3-$1}" >>"$indir$file"
@@ -458,6 +458,7 @@ test_commit_bulk () {
 	indir=.
 	ref=HEAD
 	n=1
+	notick=
 	message='commit %s'
 	filename='%s.t'
 	contents='content %s'
@@ -488,6 +489,9 @@ test_commit_bulk () {
 			filename="${1#--*=}-%s.t"
 			contents="${1#--*=} %s"
 			;;
+		--notick)
+			notick=yes
+			;;
 		-*)
 			BUG "invalid test_commit_bulk option: $1"
 			;;
@@ -507,7 +511,10 @@ test_commit_bulk () {
 
 	while test "$total" -gt 0
 	do
-		test_tick &&
+		if test -z "$notick"
+		then
+			test_tick
+		fi &&
 		echo "commit $ref"
 		printf 'author %s <%s> %s\n' \
 			"$GIT_AUTHOR_NAME" \
@@ -865,6 +872,24 @@ test_verify_prereq () {
 	BUG "'$test_prereq' does not look like a prereq"
 }
 
+# assign the variable named by "$1" with the contents of "$2";
+# if "$2" is "-", then read stdin into "$1" instead
+test_body_or_stdin () {
+	if test "$2" != "-"
+	then
+		eval "$1=\$2"
+		return
+	fi
+
+	# start with a newline, to match hanging newline from open-quote style
+	eval "$1=\$LF"
+	local test_line
+	while IFS= read -r test_line
+	do
+		eval "$1=\${$1}\${test_line}\${LF}"
+	done
+}
+
 test_expect_failure () {
 	test_start_ "$@"
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
@@ -874,9 +899,11 @@ test_expect_failure () {
 	export test_prereq
 	if ! test_skip "$@"
 	then
+		local test_body
+		test_body_or_stdin test_body "$2"
 		test -n "$test_skip_test_preamble" ||
-		say >&3 "checking known breakage of $TEST_NUMBER.$test_count '$1': $2"
-		if test_run_ "$2" expecting_failure
+		say >&3 "checking known breakage of $TEST_NUMBER.$test_count '$1': $test_body"
+		if test_run_ "$test_body" expecting_failure
 		then
 			test_known_broken_ok_ "$1"
 		else
@@ -895,13 +922,16 @@ test_expect_success () {
 	export test_prereq
 	if ! test_skip "$@"
 	then
+		local test_body
+		test_body_or_stdin test_body "$2"
 		test -n "$test_skip_test_preamble" ||
-		say >&3 "expecting success of $TEST_NUMBER.$test_count '$1': $2"
-		if test_run_ "$2"
+		say >&3 "expecting success of $TEST_NUMBER.$test_count '$1': $test_body"
+		if test_run_ "$test_body" &&
+		   check_test_results_san_file_empty_
 		then
 			test_ok_ "$1"
 		else
-			test_failure_ "$@"
+			test_failure_ "$1" "$test_body"
 		fi
 	fi
 	test_finish_
@@ -1094,6 +1124,11 @@ test_must_fail_acceptable () {
 				;;
 			esac
 		done
+	fi
+
+	if test "$1" = "nongit"
+	then
+		shift
 	fi
 
 	case "$1" in
@@ -1655,7 +1690,16 @@ test_set_hash () {
 
 # Detect the hash algorithm in use.
 test_detect_hash () {
-	test_hash_algo="${GIT_TEST_DEFAULT_HASH:-sha1}"
+	case "$GIT_TEST_DEFAULT_HASH" in
+	"sha256")
+	    test_hash_algo=sha256
+	    test_compat_hash_algo=sha1
+	    ;;
+	*)
+	    test_hash_algo=sha1
+	    test_compat_hash_algo=sha256
+	    ;;
+	esac
 }
 
 # Detect the hash algorithm in use.
@@ -1712,6 +1756,12 @@ test_oid () {
 	local algo="${test_hash_algo}" &&
 
 	case "$1" in
+	--hash=storage)
+		algo="$test_hash_algo" &&
+		shift;;
+	--hash=compat)
+		algo="$test_compat_hash_algo" &&
+		shift;;
 	--hash=*)
 		algo="${1#--hash=}" &&
 		shift;;
@@ -1733,7 +1783,7 @@ test_oid () {
 # Insert a slash into an object ID so it can be used to reference a location
 # under ".git/objects".  For example, "deadbeef..." becomes "de/adbeef..".
 test_oid_to_path () {
-	local basename=${1#??}
+	local basename="${1#??}"
 	echo "${1%$basename}/$basename"
 }
 
@@ -1750,7 +1800,7 @@ test_parse_ls_tree_oids () {
 # Choose a port number based on the test script's number and store it in
 # the given variable name, unless that variable already contains a number.
 test_set_port () {
-	local var=$1 port
+	local var="$1" port
 
 	if test $# -ne 1 || test -z "$var"
 	then
@@ -1825,7 +1875,7 @@ test_subcommand () {
 		shift
 	fi
 
-	local expr=$(printf '"%s",' "$@")
+	local expr="$(printf '"%s",' "$@")"
 	expr="${expr%,}"
 
 	if test -n "$negate"
@@ -1915,7 +1965,7 @@ test_readlink () {
 # An optional increment to the magic timestamp may be specified as second
 # argument.
 test_set_magic_mtime () {
-	local inc=${2:-0} &&
+	local inc="${2:-0}" &&
 	local mtime=$((1234567890 + $inc)) &&
 	test-tool chmtime =$mtime "$1" &&
 	test_is_magic_mtime "$1" $inc
@@ -1928,7 +1978,7 @@ test_set_magic_mtime () {
 # argument.  Usually, this should be the same increment which was used for
 # the associated test_set_magic_mtime.
 test_is_magic_mtime () {
-	local inc=${2:-0} &&
+	local inc="${2:-0}" &&
 	local mtime=$((1234567890 + $inc)) &&
 	echo $mtime >.git/test-mtime-expect &&
 	test-tool chmtime --get "$1" >.git/test-mtime-actual &&

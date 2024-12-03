@@ -78,26 +78,26 @@ void create_branch(struct repository *r,
  * those of create_branch() except for start_name, which is represented
  * by two different parameters:
  *
- * - start_commitish is the commit-ish, in repository r, that determines
+ * - start_committish is the commit-ish, in repository r, that determines
  *   which commits the branches will point to. The superproject branch
- *   will point to the commit of start_commitish and the submodule
- *   branches will point to the gitlink commit oids in start_commitish's
+ *   will point to the commit of start_committish and the submodule
+ *   branches will point to the gitlink commit oids in start_committish's
  *   tree.
  *
  * - tracking_name is the name of the ref, in repository r, that will be
  *   used to set up tracking information. This value is propagated to
  *   all submodules, which will evaluate the ref using their own ref
- *   stores. If NULL, this defaults to start_commitish.
+ *   stores. If NULL, this defaults to start_committish.
  *
- * When this function is called on the superproject, start_commitish
+ * When this function is called on the superproject, start_committish
  * can be any user-provided ref and tracking_name can be NULL (similar
  * to create_branches()). But when recursing through submodules,
- * start_commitish is the plain gitlink commit oid. Since the oid cannot
+ * start_committish is the plain gitlink commit oid. Since the oid cannot
  * be used for tracking information, tracking_name is propagated and
  * used for tracking instead.
  */
 void create_branches_recursively(struct repository *r, const char *name,
-				 const char *start_commitish,
+				 const char *start_committish,
 				 const char *tracking_name, int force,
 				 int reflog, int quiet, enum branch_track track,
 				 int dry_run);

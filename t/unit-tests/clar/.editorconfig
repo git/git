@@ -1,0 +1,13 @@
+root = true
+
+[*]
+charset = utf-8
+insert_final_newline = true
+
+[*.{c,h}]
+indent_style = tab
+tab_width = 8
+
+[CMakeLists.txt]
+indent_style = tab
+tab_width = 8

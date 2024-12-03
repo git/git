@@ -25,6 +25,7 @@ test_description="recursive merge with directory renames"
 #                     underscore notation is to differentiate different
 #                     files that might be renamed into each other's paths.)
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-merge.sh
 

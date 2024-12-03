@@ -1,0 +1,10 @@
+class Example
+{
+    public bool RIGHT {
+        get { return true; }
+        set
+        {
+            // ChangeMe
+        }
+    }
+}

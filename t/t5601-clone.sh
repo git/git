@@ -46,6 +46,13 @@ test_expect_success 'output from clone' '
 	test $(grep Clon output | wc -l) = 1
 '
 
+test_expect_success 'output from clone with core.abbrev does not crash' '
+	rm -fr dst &&
+	echo "Cloning into ${SQ}dst${SQ}..." >expect &&
+	git -c core.abbrev=12 clone -n "file://$(pwd)/src" dst >actual 2>&1 &&
+	test_cmp expect actual
+'
+
 test_expect_success 'clone does not keep pack' '
 
 	rm -fr dst &&
@@ -523,10 +530,17 @@ do
 	'
 done
 
+# Parsing of paths that look like IPv6 addresses is broken on Cygwin.
+expectation_for_ipv6_tests=success
+if test_have_prereq CYGWIN
+then
+	expectation_for_ipv6_tests=failure
+fi
+
 #ipv6
 for repo in rep rep/home/project 123
 do
-	test_expect_success "clone [::1]:$repo" '
+	test_expect_$expectation_for_ipv6_tests "clone [::1]:$repo" '
 		test_clone_url [::1]:$repo ::1 "$repo"
 	'
 done
@@ -535,7 +549,7 @@ test_expect_success "clone host:/~repo" '
 	test_clone_url host:/~repo host "~repo"
 '
 
-test_expect_success "clone [::1]:/~repo" '
+test_expect_$expectation_for_ipv6_tests "clone [::1]:/~repo" '
 	test_clone_url [::1]:/~repo ::1 "~repo"
 '
 
@@ -648,6 +662,21 @@ test_expect_success CASE_INSENSITIVE_FS 'colliding file detection' '
 	grep X icasefs/warning &&
 	grep x icasefs/warning &&
 	test_grep "the following paths have collided" icasefs/warning
+'
+
+test_expect_success CASE_INSENSITIVE_FS,SYMLINKS \
+		'colliding symlink/directory keeps directory' '
+	git init icasefs-colliding-symlink &&
+	(
+		cd icasefs-colliding-symlink &&
+		a=$(printf a | git hash-object -w --stdin) &&
+		printf "100644 %s 0\tA/dir/b\n120000 %s 0\ta\n" $a $a >idx &&
+		git update-index --index-info <idx &&
+		test_tick &&
+		git commit -m initial
+	) &&
+	git clone icasefs-colliding-symlink icasefs-colliding-symlink-clone &&
+	test_file_not_empty icasefs-colliding-symlink-clone/A/dir/b
 '
 
 test_expect_success 'clone with GIT_DEFAULT_HASH' '
@@ -775,6 +804,18 @@ test_expect_success 'batch missing blob request does not inadvertently try to fe
 
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
+
+test_expect_success 'clone with includeIf' '
+	test_when_finished "rm -rf repo \"$HTTPD_DOCUMENT_ROOT_PATH/repo.git\"" &&
+	git clone --bare --no-local src "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+
+	test_when_finished "rm \"$HOME\"/.gitconfig" &&
+	cat >"$HOME"/.gitconfig <<-EOF &&
+	[includeIf "onbranch:something"]
+		path = /does/not/exist.inc
+	EOF
+	git clone $HTTPD_URL/smart/repo.git repo
+'
 
 test_expect_success 'partial clone using HTTP' '
 	partial_clone "$HTTPD_DOCUMENT_ROOT_PATH/server" "$HTTPD_URL/smart/server"

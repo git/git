@@ -1,3 +1,4 @@
+test_expect_success 'here-doc-indent-operator' '
 # LINT: whitespace between operator "<<-" and tag legal
 cat >expect <<- EOF &&
 header: 43475048 1 $(test_oid oid_version) $NUM_CHUNKS 0
@@ -11,3 +12,4 @@ this is not indented
 -EOF
 
 cleanup
+'

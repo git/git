@@ -1,4 +1,4 @@
-command_which_is_run &&
-cat >expect <<-\EOF ?!UNCLOSED-HEREDOC?! &&
-we forget to end the here-doc
-command_which_is_gobbled
+2 command_which_is_run &&
+3 cat >expect <<-\EOF ?!LINT: unclosed heredoc?! &&
+4 we forget to end the here-doc
+5 command_which_is_gobbled

@@ -2,6 +2,7 @@
 
 test_description='test for-each-refs usage of ref-filter APIs'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 
@@ -13,7 +14,7 @@ test_expect_success 'setup some history and refs' '
 	git checkout -b side &&
 	test_commit four &&
 	git tag -m "An annotated tag" annotated-tag &&
-	git tag -m "Annonated doubly" doubly-annotated-tag annotated-tag &&
+	git tag -m "Annotated doubly" doubly-annotated-tag annotated-tag &&
 
 	# Note that these "signed" tags might not actually be signed.
 	# Tests which care about the distinction should be marked
@@ -52,6 +53,23 @@ test_expect_success '--include-root-refs pattern prints pseudorefs' '
 	test_cmp expect actual
 '
 
+test_expect_success '--include-root-refs pattern does not print special refs' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit initial &&
+		git rev-parse HEAD >.git/MERGE_HEAD &&
+		git for-each-ref --format="%(refname)" --include-root-refs >actual &&
+		cat >expect <<-EOF &&
+		HEAD
+		$(git symbolic-ref HEAD)
+		refs/tags/initial
+		EOF
+		test_cmp expect actual
+	)
+'
+
 test_expect_success '--include-root-refs with other patterns' '
 	cat >expect <<-\EOF &&
 	HEAD
@@ -60,6 +78,23 @@ test_expect_success '--include-root-refs with other patterns' '
 	git update-ref ORIG_HEAD main &&
 	git for-each-ref --format="%(refname)" --include-root-refs "*HEAD" >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '--include-root-refs omits dangling symrefs' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit initial &&
+		git symbolic-ref DANGLING_HEAD refs/heads/missing &&
+		cat >expect <<-EOF &&
+		HEAD
+		$(git symbolic-ref HEAD)
+		refs/tags/initial
+		EOF
+		git for-each-ref --format="%(refname)" --include-root-refs >actual &&
+		test_cmp expect actual
+	)
 '
 
 test_expect_success 'filtering with --points-at' '
@@ -308,7 +343,7 @@ test_expect_success 'check `%(contents:lines=1)`' '
 	side |four
 	odd/spot |three
 	annotated-tag |An annotated tag
-	doubly-annotated-tag |Annonated doubly
+	doubly-annotated-tag |Annotated doubly
 	doubly-signed-tag |Signed doubly
 	four |four
 	one |one
@@ -344,7 +379,7 @@ test_expect_success 'check `%(contents:lines=99999)`' '
 	side |four
 	odd/spot |three
 	annotated-tag |An annotated tag
-	doubly-annotated-tag |Annonated doubly
+	doubly-annotated-tag |Annotated doubly
 	doubly-signed-tag |Signed doubly
 	four |four
 	one |one

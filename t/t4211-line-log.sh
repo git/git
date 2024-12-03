@@ -337,4 +337,32 @@ test_expect_success 'zero-width regex .* matches any function name' '
 	test_cmp expect actual
 '
 
+test_expect_success 'show line-log with graph' '
+	qz_to_tab_space >expect <<-EOF &&
+	* $head_oid Modify func2() in file.c
+	|Z
+	| diff --git a/file.c b/file.c
+	| --- a/file.c
+	| +++ b/file.c
+	| @@ -6,4 +6,4 @@
+	|  int func2()
+	|  {
+	| -    return F2;
+	| +    return F2 + 2;
+	|  }
+	* $root_oid Add func1() and func2() in file.c
+	ZZ
+	  diff --git a/file.c b/file.c
+	  --- /dev/null
+	  +++ b/file.c
+	  @@ -0,0 +6,4 @@
+	  +int func2()
+	  +{
+	  +    return F2;
+	  +}
+	EOF
+	git log --graph --oneline -L:func2:file.c >actual &&
+	test_cmp expect actual
+'
+
 test_done

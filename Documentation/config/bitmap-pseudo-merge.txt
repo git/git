@@ -1,0 +1,91 @@
+NOTE: The configuration options in `bitmapPseudoMerge.*` are considered
+EXPERIMENTAL and may be subject to change or be removed entirely in the
+future. For more information about the pseudo-merge bitmap feature, see
+the "Pseudo-merge bitmaps" section of linkgit:gitpacking[7].
+
+bitmapPseudoMerge.<name>.pattern::
+	Regular expression used to match reference names. Commits
+	pointed to by references matching this pattern (and meeting
+	the below criteria, like `bitmapPseudoMerge.<name>.sampleRate`
+	and `bitmapPseudoMerge.<name>.threshold`) will be considered
+	for inclusion in a pseudo-merge bitmap.
++
+Commits are grouped into pseudo-merge groups based on whether or not
+any reference(s) that point at a given commit match the pattern, which
+is an extended regular expression.
++
+Within a pseudo-merge group, commits may be further grouped into
+sub-groups based on the capture groups in the pattern. These
+sub-groupings are formed from the regular expressions by concatenating
+any capture groups from the regular expression, with a '-' dash in
+between.
++
+For example, if the pattern is `refs/tags/`, then all tags (provided
+they meet the below criteria) will be considered candidates for the
+same pseudo-merge group. However, if the pattern is instead
+`refs/remotes/([0-9])+/tags/`, then tags from different remotes will
+be grouped into separate pseudo-merge groups, based on the remote
+number.
+
+bitmapPseudoMerge.<name>.decay::
+	Determines the rate at which consecutive pseudo-merge bitmap
+	groups decrease in size. Must be non-negative. This parameter
+	can be thought of as `k` in the function `f(n) = C * n^-k`,
+	where `f(n)` is the size of the `n`th group.
++
+Setting the decay rate equal to `0` will cause all groups to be the
+same size. Setting the decay rate equal to `1` will cause the `n`th
+group to be `1/n` the size of the initial group.  Higher values of the
+decay rate cause consecutive groups to shrink at an increasing rate.
+The default is `1`.
++
+If all groups are the same size, it is possible that groups containing
+newer commits will be able to be used less often than earlier groups,
+since it is more likely that the references pointing at newer commits
+will be updated more often than a reference pointing at an old commit.
+
+bitmapPseudoMerge.<name>.sampleRate::
+	Determines the proportion of non-bitmapped commits (among
+	reference tips) which are selected for inclusion in an
+	unstable pseudo-merge bitmap. Must be between `0` and `1`
+	(inclusive). The default is `1`.
+
+bitmapPseudoMerge.<name>.threshold::
+	Determines the minimum age of non-bitmapped commits (among
+	reference tips, as above) which are candidates for inclusion
+	in an unstable pseudo-merge bitmap. The default is
+	`1.week.ago`.
+
+bitmapPseudoMerge.<name>.maxMerges::
+	Determines the maximum number of pseudo-merge commits among
+	which commits may be distributed.
++
+For pseudo-merge groups whose pattern does not contain any capture
+groups, this setting is applied for all commits matching the regular
+expression. For patterns that have one or more capture groups, this
+setting is applied for each distinct capture group.
++
+For example, if your capture group is `refs/tags/`, then this setting
+will distribute all tags into a maximum of `maxMerges` pseudo-merge
+commits. However, if your capture group is, say,
+`refs/remotes/([0-9]+)/tags/`, then this setting will be applied to
+each remote's set of tags individually.
++
+Must be non-negative. The default value is 64.
+
+bitmapPseudoMerge.<name>.stableThreshold::
+	Determines the minimum age of commits (among reference tips,
+	as above, however stable commits are still considered
+	candidates even when they have been covered by a bitmap) which
+	are candidates for a stable a pseudo-merge bitmap. The default
+	is `1.month.ago`.
++
+Setting this threshold to a smaller value (e.g., 1.week.ago) will cause
+more stable groups to be generated (which impose a one-time generation
+cost) but those groups will likely become stale over time. Using a
+larger value incurs the opposite penalty (fewer stable groups which are
+more useful).
+
+bitmapPseudoMerge.<name>.stableSize::
+	Determines the size (in number of commits) of a stable
+	psuedo-merge bitmap. The default is `512`.

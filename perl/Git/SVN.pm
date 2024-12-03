@@ -763,7 +763,7 @@ sub prop_walk {
 		# this needs to be updated.
 		++$interesting_props if /^svn:(?:ignore|keywords|executable
 		                                 |eol-style|mime-type
-						 |externals|needs-lock)$/x;
+						 |externals|needs-lock|global-ignores)$/x;
 	}
 	&$sub($self, $p, $props) if $interesting_props;
 

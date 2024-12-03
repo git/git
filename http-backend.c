@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "config.h"
 #include "environment.h"
@@ -510,7 +512,7 @@ static void run_service(const char **argv, int buffer_input)
 		exit(1);
 }
 
-static int show_text_ref(const char *name, const struct object_id *oid,
+static int show_text_ref(const char *name, const char *referent UNUSED, const struct object_id *oid,
 			 int flag UNUSED, void *cb_data)
 {
 	const char *name_nons = strip_namespace(name);
@@ -559,21 +561,23 @@ static void get_info_refs(struct strbuf *hdr, char *arg UNUSED)
 
 	} else {
 		select_getanyfile(hdr);
-		for_each_namespaced_ref(NULL, show_text_ref, &buf);
+		refs_for_each_namespaced_ref(get_main_ref_store(the_repository),
+					     NULL, show_text_ref, &buf);
 		send_strbuf(hdr, "text/plain", &buf);
 	}
 	strbuf_release(&buf);
 }
 
-static int show_head_ref(const char *refname, const struct object_id *oid,
+static int show_head_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
 			 int flag, void *cb_data)
 {
 	struct strbuf *buf = cb_data;
 
 	if (flag & REF_ISSYMREF) {
-		const char *target = resolve_ref_unsafe(refname,
-							RESOLVE_REF_READING,
-							NULL, NULL);
+		const char *target = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+							     refname,
+							     RESOLVE_REF_READING,
+							     NULL, NULL);
 
 		if (target)
 			strbuf_addf(buf, "ref: %s\n", strip_namespace(target));
@@ -589,14 +593,15 @@ static void get_head(struct strbuf *hdr, char *arg UNUSED)
 	struct strbuf buf = STRBUF_INIT;
 
 	select_getanyfile(hdr);
-	head_ref_namespaced(show_head_ref, &buf);
+	refs_head_ref_namespaced(get_main_ref_store(the_repository),
+				 show_head_ref, &buf);
 	send_strbuf(hdr, "text/plain", &buf);
 	strbuf_release(&buf);
 }
 
 static void get_info_packs(struct strbuf *hdr, char *arg UNUSED)
 {
-	size_t objdirlen = strlen(get_object_directory());
+	size_t objdirlen = strlen(repo_get_object_directory(the_repository));
 	struct strbuf buf = STRBUF_INIT;
 	struct packed_git *p;
 	size_t cnt = 0;
@@ -750,7 +755,7 @@ static int bad_request(struct strbuf *hdr, const struct service_cmd *c)
 
 int cmd_main(int argc UNUSED, const char **argv UNUSED)
 {
-	char *method = getenv("REQUEST_METHOD");
+	const char *method = getenv("REQUEST_METHOD");
 	const char *proto_header;
 	char *dir;
 	struct service_cmd *cmd = NULL;

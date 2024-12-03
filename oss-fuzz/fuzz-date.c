@@ -11,7 +11,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 	int16_t tz;
 	timestamp_t ts;
 	enum date_mode_type dmtype;
-	struct date_mode *dm;
+	struct date_mode dm;
 
 	if (size <= 4)
 		/*
@@ -40,10 +40,10 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 	free(str);
 
 	dm = date_mode_from_type(dmtype);
-	dm->local = local;
+	dm.local = local;
 	show_date(ts, (int)tz, dm);
 
-	date_mode_release(dm);
+	date_mode_release(&dm);
 
 	return 0;
 }

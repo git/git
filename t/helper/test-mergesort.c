@@ -122,7 +122,7 @@ static const struct dist *get_dist_by_name(const char *name)
 	return NULL;
 }
 
-static void mode_copy(int *arr, int n)
+static void mode_copy(int *arr UNUSED, int n UNUSED)
 {
 	/* nothing */
 }

@@ -2,6 +2,7 @@
 
 test_description='git status ignored modes'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup initial commit and ignore file' '

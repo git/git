@@ -25,6 +25,7 @@ commit id embedding:
 '
 
 TEST_CREATE_REPO_NO_TEMPLATE=1
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 SUBSTFORMAT=%H%n
@@ -136,6 +137,8 @@ test_expect_success 'end-of-options is correctly eaten' '
 
 test_expect_success 'populate workdir' '
 	mkdir a &&
+	echo "a files_named_a" >.gitattributes &&
+	git add .gitattributes &&
 	echo simple textfile >a/a &&
 	ten=0123456789 &&
 	hundred="$ten$ten$ten$ten$ten$ten$ten$ten$ten$ten" &&
@@ -445,6 +448,16 @@ test_expect_success 'allow pathspecs that resolve to the current directory' '
 	git -C a/bin archive -v HEAD ../bin >/dev/null 2>actual &&
 	cat >expect <<-\EOF &&
 	sh
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'attr pathspec in bare repo' '
+	test_expect_code 0 git --git-dir=bare.git archive -v HEAD \
+		":(attr:files_named_a)" >/dev/null 2>actual &&
+	cat >expect <<-\EOF &&
+	a/
+	a/a
 	EOF
 	test_cmp expect actual
 '

@@ -1,11 +1,11 @@
-(
-	case "$x" in
-	# found foo
-	x) foo ;;
-	# found other
-	*)
-		# treat it as bar
-		bar
-		;;
-	esac
-)
+2 (
+3 	case "$x" in
+4 	# found foo
+5 	x) foo ;;
+6 	# found other
+7 	*)
+8 		# treat it as bar
+9 		bar
+10 		;;
+11 	esac
+12 )

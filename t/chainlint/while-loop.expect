@@ -1,14 +1,14 @@
-(
-	while true
-	do
-		echo foo ?!AMP?!
-		cat <<-\EOF ?!LOOP?!
-		bar
-		EOF
-	done ?!AMP?!
-
-	while true; do
-		echo foo &&
-		cat bar ?!LOOP?!
-	done
-)
+2 (
+3 	while true
+4 	do
+5 		echo foo ?!LINT: missing '&&'?!
+6 		cat <<-\EOF ?!LINT: missing '|| exit 1'?!
+7 		bar
+8 		EOF
+9 	done ?!LINT: missing '&&'?!
+10 
+11 	while true; do
+12 		echo foo &&
+13 		cat bar ?!LINT: missing '|| exit 1'?!
+14 	done
+15 )

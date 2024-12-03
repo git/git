@@ -1,7 +1,7 @@
-command_which_is_run &&
-cat >expect <<\EOF ?!UNCLOSED-HEREDOC?! &&
-	we try to end the here-doc below,
-	but the indentation throws us off
-	since the operator is not "<<-".
-	EOF
-command_which_is_gobbled
+2 command_which_is_run &&
+3 cat >expect <<\EOF ?!LINT: unclosed heredoc?! &&
+4 	we try to end the here-doc below,
+5 	but the indentation throws us off
+6 	since the operator is not "<<-".
+7 	EOF
+8 command_which_is_gobbled

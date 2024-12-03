@@ -1,7 +1,15 @@
 #!/bin/sh
 
 test_description='test log with i18n features'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-gettext.sh
+
+if ! test_have_prereq ICONV
+then
+	skip_all='skipping log i18n tests; iconv not available'
+	test_done
+fi
 
 # two forms of é
 utf8_e=$(printf '\303\251')
@@ -64,7 +72,7 @@ test_expect_success 'log --grep does not find non-reencoded values (latin1)' '
 '
 
 triggers_undefined_behaviour () {
-	local engine=$1
+	local engine="$1"
 
 	case $engine in
 	fixed)
@@ -85,7 +93,7 @@ triggers_undefined_behaviour () {
 }
 
 mismatched_git_log () {
-	local pattern=$1
+	local pattern="$1"
 
 	LC_ALL=$is_IS_locale git log --encoding=ISO-8859-1 --format=%s \
 		--grep=$pattern

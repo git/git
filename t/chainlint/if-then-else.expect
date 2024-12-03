@@ -1,22 +1,22 @@
-(
-	if test -n ""
-	then
-		echo very ?!AMP?!
-		echo empty
-	elif test -z ""
-	then
-		echo foo
-	else
-		echo foo &&
-		cat <<-\EOF
-		bar
-		EOF
-	fi ?!AMP?!
-	echo poodle
-) &&
-(
-	if test -n ""; then
-		echo very &&
-		echo empty
-	fi
-)
+2 (
+3 	if test -n ""
+4 	then
+5 		echo very ?!LINT: missing '&&'?!
+6 		echo empty
+7 	elif test -z ""
+8 	then
+9 		echo foo
+10 	else
+11 		echo foo &&
+12 		cat <<-\EOF
+13 		bar
+14 		EOF
+15 	fi ?!LINT: missing '&&'?!
+16 	echo poodle
+17 ) &&
+18 (
+19 	if test -n ""; then
+20 		echo very &&
+21 		echo empty
+22 	fi
+23 )

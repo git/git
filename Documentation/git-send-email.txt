@@ -12,6 +12,7 @@ SYNOPSIS
 'git send-email' [<options>] (<file>|<directory>)...
 'git send-email' [<options>] <format-patch-options>
 'git send-email' --dump-aliases
+'git send-email' --translate-aliases
 
 
 DESCRIPTION
@@ -413,6 +414,12 @@ exists when 'git send-email' is asked to add it (especially note that
 Failure to do so may not produce the expected result in the
 recipient's MUA.
 
+--[no-]mailmap::
+	Use the mailmap file (see linkgit:gitmailmap[5]) to map all
+	addresses to their canonical real name and email address. Additional
+	mailmap data specific to git-send-email may be provided using the
+	`sendemail.mailmap.file` or `sendemail.mailmap.blob` configuration
+	values. Defaults to `sendemail.mailmap`.
 
 Administering
 ~~~~~~~~~~~~~
@@ -475,6 +482,12 @@ Information
 	that this only includes the alias name and not its expanded email addresses.
 	See 'sendemail.aliasesFile' for more information about aliases.
 
+--translate-aliases::
+	Instead of the normal operation, read from standard input and
+	interpret each line as an email alias. Translate it according to the
+	configured alias file(s). Output each translated name and email
+	address to standard output, one per line. See 'sendemail.aliasFile'
+	for more information about aliases.
 
 CONFIGURATION
 -------------

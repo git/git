@@ -1,3 +1,4 @@
+test_expect_success 't7900-subtree' '
 (
 	chks="sub1
 sub2
@@ -20,3 +21,4 @@ TXT
 	check_equal "$subfiles" "$chkms
 $chks"
 )
+'

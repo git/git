@@ -1,26 +1,26 @@
-(
-	foo
-) &&
-(
-	bar
-) >out &&
-(
-	baz
-) 2>err &&
-(
-	boo
-) <input &&
-(
-	bip
-) | wuzzle &&
-(
-	bop
-) | fazz \
-	fozz &&
-(
-	bup
-) |
-fuzzle &&
-(
-	yop
-)
+2 (
+3 	foo
+4 ) &&
+5 (
+6 	bar
+7 ) >out &&
+8 (
+9 	baz
+10 ) 2>err &&
+11 (
+12 	boo
+13 ) <input &&
+14 (
+15 	bip
+16 ) | wuzzle &&
+17 (
+18 	bop
+19 ) | fazz \
+20 	fozz &&
+21 (
+22 	bup
+23 ) |
+24 fuzzle &&
+25 (
+26 	yop
+27 )

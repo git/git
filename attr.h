@@ -190,6 +190,8 @@ struct attr_check {
 };
 
 struct attr_check *attr_check_alloc(void);
+
+LAST_ARG_MUST_BE_NULL
 struct attr_check *attr_check_initl(const char *, ...);
 struct attr_check *attr_check_dup(const struct attr_check *check);
 
@@ -236,6 +238,6 @@ const char *git_attr_global_file(void);
 /* Return whether the system gitattributes file is enabled and should be used. */
 int git_attr_system_is_enabled(void);
 
-extern const char *git_attr_tree;
+extern char *git_attr_tree;
 
 #endif /* ATTR_H */

@@ -14,6 +14,7 @@ Testing a custom strategy.
 * (tag: c0) c0
 "
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'set up custom strategy' '

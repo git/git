@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <wchar.h>
 
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+
 /*
  * If `dir` contains the path to a Git exec directory, extend `PATH` to
  * include the corresponding `bin/` directory (which is where all those

@@ -1,0 +1,20 @@
+class Example
+{
+    string Method(int RIGHT)
+    {
+        MethodCall();
+        MethodCall(1, 2);
+        MethodCall(
+            1, 2);
+        MethodCall(
+            1, 2,
+            3);
+        MethodCall(
+            1, MethodCall(),
+            2);
+
+        return "ChangeMe";
+    }
+
+    int MethodCall(int a = 0, int b = 0, int c = 0) => 42;
+}

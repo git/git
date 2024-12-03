@@ -5,6 +5,7 @@ test_description='git partial clone'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # create a normal "src" repo where we can later create new commits.
@@ -229,7 +230,7 @@ test_expect_success 'fetch --refetch triggers repacking' '
 
 	GIT_TRACE2_EVENT="$PWD/trace1.event" \
 	git -C pc1 fetch --refetch origin &&
-	test_subcommand git maintenance run --auto --no-quiet <trace1.event &&
+	test_subcommand git maintenance run --auto --no-quiet --detach <trace1.event &&
 	grep \"param\":\"gc.autopacklimit\",\"value\":\"1\" trace1.event &&
 	grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"-1\" trace1.event &&
 
@@ -238,7 +239,7 @@ test_expect_success 'fetch --refetch triggers repacking' '
 		-c gc.autoPackLimit=0 \
 		-c maintenance.incremental-repack.auto=1234 \
 		-C pc1 fetch --refetch origin &&
-	test_subcommand git maintenance run --auto --no-quiet <trace2.event &&
+	test_subcommand git maintenance run --auto --no-quiet --detach <trace2.event &&
 	grep \"param\":\"gc.autopacklimit\",\"value\":\"0\" trace2.event &&
 	grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"-1\" trace2.event &&
 
@@ -247,7 +248,7 @@ test_expect_success 'fetch --refetch triggers repacking' '
 		-c gc.autoPackLimit=1234 \
 		-c maintenance.incremental-repack.auto=0 \
 		-C pc1 fetch --refetch origin &&
-	test_subcommand git maintenance run --auto --no-quiet <trace3.event &&
+	test_subcommand git maintenance run --auto --no-quiet --detach <trace3.event &&
 	grep \"param\":\"gc.autopacklimit\",\"value\":\"1\" trace3.event &&
 	grep \"param\":\"maintenance.incremental-repack.auto\",\"value\":\"0\" trace3.event
 '
@@ -692,6 +693,36 @@ test_expect_success 'lazy-fetch in submodule succeeds' '
 	# Trigger lazy-fetch from the superproject
 	git -C client restore --recurse-submodules --source=HEAD^ :/
 '
+
+test_expect_success 'after fetching descendants of non-promisor commits, gc works' '
+	# Setup
+	git init full &&
+	git -C full config uploadpack.allowfilter 1 &&
+	git -C full config uploadpack.allowanysha1inwant 1 &&
+	touch full/foo &&
+	git -C full add foo &&
+	git -C full commit -m "commit 1" &&
+	git -C full checkout --detach &&
+
+	# Partial clone and push commit to remote
+	git clone "file://$(pwd)/full" --filter=blob:none partial &&
+	echo "hello" > partial/foo &&
+	git -C partial commit -a -m "commit 2" &&
+	git -C partial push &&
+
+	# gc in partial repo
+	git -C partial gc --prune=now &&
+
+	# Create another commit in normal repo
+	git -C full checkout main &&
+	echo " world" >> full/foo &&
+	git -C full commit -a -m "commit 3" &&
+
+	# Pull from remote in partial repo, and run gc again
+	git -C partial pull &&
+	git -C partial gc --prune=now
+'
+
 
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd

@@ -58,4 +58,13 @@ test_expect_success 'unknown key in author-script' '
 	check_resolve_fails
 '
 
+test_expect_success POSIXPERM,SANITY 'unwritable rebased-patches does not leak' '
+	>.git/rebased-patches &&
+	chmod a-w .git/rebased-patches &&
+
+	git checkout -b side HEAD^ &&
+	test_commit unrelated &&
+	test_must_fail git rebase --apply --onto tmp HEAD^
+'
+
 test_done

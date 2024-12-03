@@ -32,6 +32,9 @@ AlignConsecutiveAssignments: false
 # double b = 3.14;
 AlignConsecutiveDeclarations: false
 
+# Align consecutive macro definitions.
+AlignConsecutiveMacros: true
+
 # Align escaped newlines as far left as possible
 # #define A   \
 #   int aaaa; \
@@ -72,6 +75,10 @@ AlwaysBreakAfterReturnType: None
 BinPackArguments: true
 BinPackParameters: true
 
+# Add no space around the bit field
+# unsigned bf:2;
+BitFieldColonSpacing: None
+
 # Attach braces to surrounding context except break before braces on function
 # definitions.
 # void foo()
@@ -96,6 +103,14 @@ BreakStringLiterals: false
 # Switch statement body is always indented one level more than case labels.
 IndentCaseLabels: false
 
+# Indents directives before the hash. Each level uses a single space for
+# indentation.
+# #if FOO
+# # include <foo>
+# #endif
+IndentPPDirectives: AfterHash
+PPIndentWidth: 1
+
 # Don't indent a function definition or declaration if it is wrapped after the
 # type
 IndentWrappedFunctionNames: false
@@ -108,10 +123,17 @@ PointerAlignment: Right
 # x = (int32)y;    not    x = (int32) y;
 SpaceAfterCStyleCast: false
 
+# No space is inserted after the logical not operator
+SpaceAfterLogicalNot: false
+
 # Insert spaces before and after assignment operators
 # int a = 5;    not    int a=5;
 # a += 42;             a+=42;
 SpaceBeforeAssignmentOperators: true
+
+# Spaces will be removed before case colon.
+# case 1: break;    not     case 1 : break;
+SpaceBeforeCaseColon: false
 
 # Put a space before opening parentheses only after control statement keywords.
 # void f() {
@@ -123,6 +145,14 @@ SpaceBeforeParens: ControlStatements
 
 # Don't insert spaces inside empty '()'
 SpaceInEmptyParentheses: false
+
+# No space before first '[' in arrays
+# int a[5][5];     not      int a [5][5];
+SpaceBeforeSquareBrackets: false
+
+# No space will be inserted into {}
+# while (true) {}    not    while (true) { }
+SpaceInEmptyBlock: false
 
 # The number of spaces before trailing line comments (// - comments).
 # This does not affect trailing block comments (/* - comments).
@@ -149,20 +179,30 @@ Cpp11BracedListStyle: false
 
 # A list of macros that should be interpreted as foreach loops instead of as
 # function calls. Taken from:
-#   git grep -h '^#define [^[:space:]]*for_each[^[:space:]]*(' \
-#   | sed "s,^#define \([^[:space:]]*for_each[^[:space:]]*\)(.*$,  - '\1'," \
-#   | sort | uniq
+#   git grep -h '^#define [^[:space:]]*for_\?each[^[:space:]]*(' |
+#   sed "s/^#define /  - '/; s/(.*$/'/" | sort | uniq
 ForEachMacros:
-  - 'for_each_abbrev'
   - 'for_each_builtin'
   - 'for_each_string_list_item'
   - 'for_each_ut'
   - 'for_each_wanted_builtin'
+  - 'hashmap_for_each_entry'
+  - 'hashmap_for_each_entry_from'
+  - 'kh_foreach'
+  - 'kh_foreach_value'
   - 'list_for_each'
   - 'list_for_each_dir'
   - 'list_for_each_prev'
   - 'list_for_each_prev_safe'
   - 'list_for_each_safe'
+  - 'strintmap_for_each_entry'
+  - 'strmap_for_each_entry'
+  - 'strset_for_each_entry'
+
+# A list of macros that should be interpreted as conditionals instead of as
+# function calls.
+IfMacros:
+  - 'if_test'
 
 # The maximum number of consecutive empty lines to keep.
 MaxEmptyLinesToKeep: 1
@@ -172,13 +212,14 @@ KeepEmptyLinesAtTheStartOfBlocks: false
 
 # Penalties
 # This decides what order things should be done if a line is too long
-PenaltyBreakAssignment: 10
-PenaltyBreakBeforeFirstCallParameter: 30
-PenaltyBreakComment: 10
+PenaltyBreakAssignment: 5
+PenaltyBreakBeforeFirstCallParameter: 5
+PenaltyBreakComment: 5
 PenaltyBreakFirstLessLess: 0
-PenaltyBreakString: 10
-PenaltyExcessCharacter: 100
-PenaltyReturnTypeOnItsOwnLine: 60
+PenaltyBreakOpenParenthesis: 300
+PenaltyBreakString: 5
+PenaltyExcessCharacter: 10
+PenaltyReturnTypeOnItsOwnLine: 300
 
 # Don't sort #include's
 SortIncludes: false

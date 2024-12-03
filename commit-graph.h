@@ -122,6 +122,8 @@ struct commit_graph *load_commit_graph_chain_fd_st(struct repository *r,
 struct commit_graph *read_commit_graph_one(struct repository *r,
 					   struct object_directory *odb);
 
+struct repo_settings;
+
 /*
  * Callers should initialize the repo_settings with prepare_repo_settings()
  * prior to calling parse_commit_graph().

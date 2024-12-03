@@ -1,12 +1,13 @@
 #ifndef OBJECT_H
 #define OBJECT_H
 
-#include "hash-ll.h"
+#include "hash.h"
 
 struct buffer_slab;
 struct repository;
 
 struct parsed_object_pool {
+	struct repository *repo;
 	struct object **obj_hash;
 	int nr_objs, obj_hash_size;
 
@@ -31,8 +32,9 @@ struct parsed_object_pool {
 	struct buffer_slab *buffer_slab;
 };
 
-struct parsed_object_pool *parsed_object_pool_new(void);
+struct parsed_object_pool *parsed_object_pool_new(struct repository *repo);
 void parsed_object_pool_clear(struct parsed_object_pool *o);
+void parsed_object_pool_reset_commit_grafts(struct parsed_object_pool *o);
 
 struct object_list {
 	struct object *item;
@@ -62,7 +64,7 @@ void object_array_init(struct object_array *array);
 
 /*
  * object flag allocation:
- * revision.h:               0---------10         15             23------27
+ * revision.h:               0---------10         15               23------27
  * fetch-pack.c:             01    67
  * negotiator/default.c:       2--5
  * walker.c:                 0-2
@@ -75,12 +77,14 @@ void object_array_init(struct object_array *array);
  * commit-reach.c:                                  16-----19
  * sha1-name.c:                                              20
  * list-objects-filter.c:                                      21
+ * bloom.c:                                                    2122
  * builtin/fsck.c:           0--3
  * builtin/gc.c:             0
  * builtin/index-pack.c:                                     2021
  * reflog.c:                           10--12
  * builtin/show-branch.c:    0-------------------------------------------26
  * builtin/unpack-objects.c:                                 2021
+ * pack-bitmap.h:                                              2122
  */
 #define FLAG_BITS  28
 
@@ -190,6 +194,24 @@ void *create_object(struct repository *r, const struct object_id *oid, void *obj
 
 void *object_as_type(struct object *obj, enum object_type type, int quiet);
 
+
+static inline const char *parse_mode(const char *str, uint16_t *modep)
+{
+	unsigned char c;
+	unsigned int mode = 0;
+
+	if (*str == ' ')
+		return NULL;
+
+	while ((c = *str++) != ' ') {
+		if (c < '0' || c > '7')
+			return NULL;
+		mode = (mode << 3) + (c - '0');
+	}
+	*modep = mode;
+	return str;
+}
+
 /*
  * Returns the object, having parsed it to find out what it is.
  *
@@ -237,6 +259,41 @@ struct object *lookup_unknown_object(struct repository *r, const struct object_i
  */
 struct object *lookup_object_by_type(struct repository *r, const struct object_id *oid,
 				     enum object_type type);
+
+enum peel_status {
+	/* object was peeled successfully: */
+	PEEL_PEELED = 0,
+
+	/*
+	 * object cannot be peeled because the named object (or an
+	 * object referred to by a tag in the peel chain), does not
+	 * exist.
+	 */
+	PEEL_INVALID = -1,
+
+	/* object cannot be peeled because it is not a tag: */
+	PEEL_NON_TAG = -2,
+
+	/* ref_entry contains no peeled value because it is a symref: */
+	PEEL_IS_SYMREF = -3,
+
+	/*
+	 * ref_entry cannot be peeled because it is broken (i.e., the
+	 * symbolic reference cannot even be resolved to an object
+	 * name):
+	 */
+	PEEL_BROKEN = -4
+};
+
+/*
+ * Peel the named object; i.e., if the object is a tag, resolve the
+ * tag recursively until a non-tag is found.  If successful, store the
+ * result to oid and return PEEL_PEELED.  If the object is not a tag
+ * or is not valid, return PEEL_NON_TAG or PEEL_INVALID, respectively,
+ * and leave oid unchanged.
+ */
+enum peel_status peel_object(struct repository *r,
+			     const struct object_id *name, struct object_id *oid);
 
 struct object_list *object_list_insert(struct object *item,
 				       struct object_list **list_p);

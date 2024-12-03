@@ -1,3 +1,4 @@
+test_expect_success 'blank-line' '
 (
 
 	nothing &&
@@ -8,3 +9,4 @@
 
 
 )
+'

@@ -2,6 +2,7 @@
 #include "advice.h"
 #include "config.h"
 #include "color.h"
+#include "environment.h"
 #include "gettext.h"
 #include "help.h"
 #include "string-list.h"
@@ -57,6 +58,7 @@ static struct {
 	[ADVICE_GRAFT_FILE_DEPRECATED]			= { "graftFileDeprecated" },
 	[ADVICE_IGNORED_HOOK]				= { "ignoredHook" },
 	[ADVICE_IMPLICIT_IDENTITY]			= { "implicitIdentity" },
+	[ADVICE_MERGE_CONFLICT]				= { "mergeConflict" },
 	[ADVICE_NESTED_TAG]				= { "nestedTag" },
 	[ADVICE_OBJECT_NAME_WARNING]			= { "objectNameWarning" },
 	[ADVICE_PUSH_ALREADY_EXISTS]			= { "pushAlreadyExists" },
@@ -68,6 +70,7 @@ static struct {
 	[ADVICE_PUSH_UNQUALIFIED_REF_NAME]		= { "pushUnqualifiedRefName" },
 	[ADVICE_PUSH_UPDATE_REJECTED]			= { "pushUpdateRejected" },
 	[ADVICE_PUSH_UPDATE_REJECTED_ALIAS]		= { "pushNonFastForward" }, /* backwards compatibility */
+	[ADVICE_REBASE_TODO_ERROR]			= { "rebaseTodoError" },
 	[ADVICE_REF_SYNTAX]				= { "refSyntax" },
 	[ADVICE_RESET_NO_REFRESH_WARNING]		= { "resetNoRefresh" },
 	[ADVICE_RESOLVE_CONFLICT]			= { "resolveConflict" },
@@ -75,6 +78,7 @@ static struct {
 	[ADVICE_SEQUENCER_IN_USE]			= { "sequencerInUse" },
 	[ADVICE_SET_UPSTREAM_FAILURE]			= { "setUpstreamFailure" },
 	[ADVICE_SKIPPED_CHERRY_PICKS]			= { "skippedCherryPicks" },
+	[ADVICE_SPARSE_INDEX_EXPANDED]			= { "sparseIndexExpanded" },
 	[ADVICE_STATUS_AHEAD_BEHIND_WARNING]		= { "statusAheadBehindWarning" },
 	[ADVICE_STATUS_HINTS]				= { "statusHints" },
 	[ADVICE_STATUS_U_OPTION]			= { "statusUoption" },
@@ -104,8 +108,9 @@ static void vadvise(const char *advice, int display_instructions,
 
 	for (cp = buf.buf; *cp; cp = np) {
 		np = strchrnul(cp, '\n');
-		fprintf(stderr,	_("%shint: %.*s%s\n"),
+		fprintf(stderr,	_("%shint:%s%.*s%s\n"),
 			advise_get_color(ADVICE_COLOR_HINT),
+			(np == cp) ? "" : " ",
 			(int)(np - cp), cp,
 			advise_get_color(ADVICE_COLOR_RESET));
 		if (*np)
@@ -125,6 +130,12 @@ void advise(const char *advice, ...)
 int advice_enabled(enum advice_type type)
 {
 	int enabled = advice_setting[type].level != ADVICE_LEVEL_DISABLED;
+	static int globally_enabled = -1;
+
+	if (globally_enabled < 0)
+		globally_enabled = git_env_bool(GIT_ADVICE_ENVIRONMENT, 1);
+	if (!globally_enabled)
+		return 0;
 
 	if (type == ADVICE_PUSH_UPDATE_REJECTED)
 		return enabled &&

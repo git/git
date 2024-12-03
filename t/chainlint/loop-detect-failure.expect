@@ -1,15 +1,15 @@
-git init r1 &&
-for n in 1 2 3 4 5
-do
-	echo "This is file: $n" > r1/file.$n &&
-	git -C r1 add file.$n &&
-	git -C r1 commit -m "$n" || return 1
-done &&
-
-git init r2 &&
-for n in 1000 10000
-do
-	printf "%"$n"s" X > r2/large.$n &&
-	git -C r2 add large.$n &&
-	git -C r2 commit -m "$n" ?!LOOP?!
-done
+2 git init r1 &&
+3 for n in 1 2 3 4 5
+4 do
+5 	echo "This is file: $n" > r1/file.$n &&
+6 	git -C r1 add file.$n &&
+7 	git -C r1 commit -m "$n" || return 1
+8 done &&
+9 
+10 git init r2 &&
+11 for n in 1000 10000
+12 do
+13 	printf "%"$n"s" X > r2/large.$n &&
+14 	git -C r2 add large.$n &&
+15 	git -C r2 commit -m "$n" ?!LINT: missing '|| return 1'?!
+16 done

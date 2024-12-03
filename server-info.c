@@ -1,6 +1,7 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "dir.h"
-#include "environment.h"
 #include "hex.h"
 #include "repository.h"
 #include "refs.h"
@@ -13,6 +14,7 @@
 #include "object-store-ll.h"
 #include "server-info.h"
 #include "strbuf.h"
+#include "tempfile.h"
 
 struct update_info_ctx {
 	FILE *cur_fp;
@@ -75,9 +77,8 @@ static int update_info_file(char *path,
 			int force)
 {
 	char *tmp = mkpathdup("%s_XXXXXX", path);
+	struct tempfile *f = NULL;
 	int ret = -1;
-	int fd = -1;
-	FILE *to_close;
 	struct update_info_ctx uic = {
 		.cur_fp = NULL,
 		.old_fp = NULL,
@@ -86,13 +87,12 @@ static int update_info_file(char *path,
 	};
 
 	safe_create_leading_directories(path);
-	fd = git_mkstemp_mode(tmp, 0666);
-	if (fd < 0)
+	f = mks_tempfile_m(tmp, 0666);
+	if (!f)
 		goto out;
-	to_close = uic.cur_fp = fdopen(fd, "w");
+	uic.cur_fp = fdopen_tempfile(f, "w");
 	if (!uic.cur_fp)
 		goto out;
-	fd = -1;
 
 	/* no problem on ENOENT and old_fp == NULL, it's stale, now */
 	if (!force)
@@ -121,27 +121,22 @@ static int update_info_file(char *path,
 	}
 
 	uic.cur_fp = NULL;
-	if (fclose(to_close))
-		goto out;
 
 	if (uic_is_stale(&uic)) {
-		if (adjust_shared_perm(tmp) < 0)
+		if (adjust_shared_perm(get_tempfile_path(f)) < 0)
 			goto out;
-		if (rename(tmp, path) < 0)
+		if (rename_tempfile(&f, path) < 0)
 			goto out;
 	} else {
-		unlink(tmp);
+		delete_tempfile(&f);
 	}
 	ret = 0;
 
 out:
 	if (ret) {
 		error_errno("unable to update %s", path);
-		if (uic.cur_fp)
-			fclose(uic.cur_fp);
-		else if (fd >= 0)
-			close(fd);
-		unlink(tmp);
+		if (f)
+			delete_tempfile(&f);
 	}
 	free(tmp);
 	if (uic.old_fp)
@@ -151,7 +146,7 @@ out:
 	return ret;
 }
 
-static int add_info_ref(const char *path, const struct object_id *oid,
+static int add_info_ref(const char *path, const char *referent UNUSED, const struct object_id *oid,
 			int flag UNUSED,
 			void *cb_data)
 {
@@ -175,7 +170,8 @@ static int add_info_ref(const char *path, const struct object_id *oid,
 
 static int generate_info_refs(struct update_info_ctx *uic)
 {
-	return for_each_ref(add_info_ref, uic);
+	return refs_for_each_ref(get_main_ref_store(the_repository),
+				 add_info_ref, uic);
 }
 
 static int update_info_refs(int force)
@@ -345,7 +341,8 @@ static int write_pack_info_file(struct update_info_ctx *uic)
 
 static int update_info_packs(int force)
 {
-	char *infofile = mkpathdup("%s/info/packs", get_object_directory());
+	char *infofile = mkpathdup("%s/info/packs",
+				   repo_get_object_directory(the_repository));
 	int ret;
 
 	init_pack_info(infofile, force);

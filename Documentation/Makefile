@@ -51,6 +51,7 @@ MAN7_TXT += gitdiffcore.txt
 MAN7_TXT += giteveryday.txt
 MAN7_TXT += gitfaq.txt
 MAN7_TXT += gitglossary.txt
+MAN7_TXT += gitpacking.txt
 MAN7_TXT += gitnamespaces.txt
 MAN7_TXT += gitremote-helpers.txt
 MAN7_TXT += gitrevisions.txt
@@ -103,6 +104,7 @@ SP_ARTICLES += howto/coordinate-embargoed-releases
 API_DOCS = $(patsubst %.txt,%,$(filter-out technical/api-index-skel.txt technical/api-index.txt, $(wildcard technical/api-*.txt)))
 SP_ARTICLES += $(API_DOCS)
 
+TECH_DOCS += DecisionMaking
 TECH_DOCS += ReviewingGuidelines
 TECH_DOCS += MyFirstContribution
 TECH_DOCS += MyFirstObjectWalk
@@ -116,6 +118,7 @@ TECH_DOCS += technical/multi-pack-index
 TECH_DOCS += technical/pack-heuristics
 TECH_DOCS += technical/parallel-checkout
 TECH_DOCS += technical/partial-clone
+TECH_DOCS += technical/platform-support
 TECH_DOCS += technical/racy-git
 TECH_DOCS += technical/reftable
 TECH_DOCS += technical/scalar
@@ -202,11 +205,14 @@ ASCIIDOC_DOCBOOK = docbook5
 ASCIIDOC_EXTRA += -acompat-mode -atabsize=8
 ASCIIDOC_EXTRA += -I. -rasciidoctor-extensions
 ASCIIDOC_EXTRA += -alitdd='&\#x2d;&\#x2d;'
+ASCIIDOC_EXTRA += -adocinfo=shared
 ASCIIDOC_DEPS = asciidoctor-extensions.rb GIT-ASCIIDOCFLAGS
 DBLATEX_COMMON =
 XMLTO_EXTRA += --skip-validation
 XMLTO_EXTRA += -x manpage.xsl
 endif
+
+ASCIIDOC_DEPS += docinfo.html
 
 SHELL_PATH ?= $(SHELL)
 # Shell quote;
@@ -335,6 +341,9 @@ clean:
 	$(RM) SubmittingPatches.txt
 	$(RM) $(cmds_txt) $(mergetools_txt) *.made
 	$(RM) GIT-ASCIIDOCFLAGS
+
+docinfo.html: docinfo-html.in
+	$(QUIET_GEN)$(RM) $@ && cat $< >$@
 
 $(MAN_HTML): %.html : %.txt $(ASCIIDOC_DEPS)
 	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) -d manpage -o $@ $<
@@ -484,12 +493,16 @@ $(LINT_DOCS_FSCK_MSGIDS): ../fsck.h fsck-msgids.txt
 
 lint-docs-fsck-msgids: $(LINT_DOCS_FSCK_MSGIDS)
 
+lint-docs-manpages:
+	$(QUIET_GEN)./lint-manpages.sh
+
 ## Lint: list of targets above
 .PHONY: lint-docs
 lint-docs: lint-docs-fsck-msgids
 lint-docs: lint-docs-gitlink
 lint-docs: lint-docs-man-end-blurb
 lint-docs: lint-docs-man-section-order
+lint-docs: lint-docs-manpages
 
 ifeq ($(wildcard po/Makefile),po/Makefile)
 doc-l10n install-l10n::

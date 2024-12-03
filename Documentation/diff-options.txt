@@ -329,12 +329,13 @@ explained for the configuration variable `core.quotePath` (see
 linkgit:git-config[1]).
 
 --name-only::
-	Show only names of changed files. The file names are often encoded in UTF-8.
+	Show only the name of each changed file in the post-image tree.
+	The file names are often encoded in UTF-8.
 	For more information see the discussion about encoding in the linkgit:git-log[1]
 	manual page.
 
 --name-status::
-	Show only names and status of changed files. See the description
+	Show only the name(s) and status of each changed file. See the description
 	of the `--diff-filter` option on what the status letters mean.
 	Just like `--name-only` the file names are often encoded in UTF-8.
 
@@ -819,6 +820,11 @@ ifndef::git-log[]
 
 --quiet::
 	Disable all output of the program. Implies `--exit-code`.
+	Disables execution of external diff helpers whose exit code
+	is not trusted, i.e. their respective configuration option
+	`diff.trustExitCode` or `diff.<driver>.trustExitCode` or
+	environment variable `GIT_EXTERNAL_DIFF_TRUST_EXIT_CODE` is
+	false.
 endif::git-log[]
 endif::git-format-patch[]
 
@@ -865,8 +871,9 @@ endif::git-format-patch[]
 
 --default-prefix::
 	Use the default source and destination prefixes ("a/" and "b/").
-	This is usually the default already, but may be used to override
-	config such as `diff.noprefix`.
+	This overrides configuration variables such as `diff.noprefix`,
+	`diff.srcPrefix`, `diff.dstPrefix`, and `diff.mnemonicPrefix`
+	(see `git-config`(1)).
 
 --line-prefix=<prefix>::
 	Prepend an additional prefix to every line of output.

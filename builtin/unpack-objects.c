@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "bulk-checkin.h"
 #include "config.h"
@@ -439,7 +440,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	struct object_id base_oid;
 
 	if (type == OBJ_REF_DELTA) {
-		oidread(&base_oid, fill(the_hash_algo->rawsz));
+		oidread(&base_oid, fill(the_hash_algo->rawsz), the_repository->hash_algo);
 		use(the_hash_algo->rawsz);
 		delta_data = get_data(delta_size);
 		if (!delta_data)
@@ -451,7 +452,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			return; /* we are done */
 		else {
 			/* cannot resolve yet --- queue it */
-			oidclr(&obj_list[nr].oid);
+			oidclr(&obj_list[nr].oid, the_repository->hash_algo);
 			add_delta_to_list(nr, &base_oid, 0, delta_data, delta_size);
 			return;
 		}
@@ -500,7 +501,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			 * The delta base object is itself a delta that
 			 * has not been resolved yet.
 			 */
-			oidclr(&obj_list[nr].oid);
+			oidclr(&obj_list[nr].oid, the_repository->hash_algo);
 			add_delta_to_list(nr, null_oid(), base_offset,
 					  delta_data, delta_size);
 			return;
@@ -601,7 +602,10 @@ static void unpack_all(void)
 		die("unresolved deltas left after unpacking");
 }
 
-int cmd_unpack_objects(int argc, const char **argv, const char *prefix UNUSED)
+int cmd_unpack_objects(int argc,
+		       const char **argv,
+		       const char *prefix UNUSED,
+		       struct repository *repo UNUSED)
 {
 	int i;
 	struct object_id oid;
@@ -674,7 +678,8 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix UNUSED)
 		if (fsck_finish(&fsck_options))
 			die(_("fsck error in pack objects"));
 	}
-	if (!hasheq(fill(the_hash_algo->rawsz), oid.hash))
+	if (!hasheq(fill(the_hash_algo->rawsz), oid.hash,
+		    the_repository->hash_algo))
 		die("final sha1 did not match");
 	use(the_hash_algo->rawsz);
 

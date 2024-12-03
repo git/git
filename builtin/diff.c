@@ -3,7 +3,7 @@
  *
  * Copyright (c) 2006 Junio C Hamano
  */
-#define USE_THE_INDEX_VARIABLE
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "ewah/ewok.h"
@@ -239,9 +239,9 @@ static void refresh_index_quietly(void)
 	fd = repo_hold_locked_index(the_repository, &lock_file, 0);
 	if (fd < 0)
 		return;
-	discard_index(&the_index);
+	discard_index(the_repository->index);
 	repo_read_index(the_repository);
-	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, NULL, NULL,
+	refresh_index(the_repository->index, REFRESH_QUIET|REFRESH_UNMERGED, NULL, NULL,
 		      NULL);
 	repo_update_index_if_able(the_repository, &lock_file);
 }
@@ -388,7 +388,15 @@ static void symdiff_prepare(struct rev_info *rev, struct symdiff *sym)
 	sym->skip = map;
 }
 
-int cmd_diff(int argc, const char **argv, const char *prefix)
+static void symdiff_release(struct symdiff *sdiff)
+{
+	bitmap_free(sdiff->skip);
+}
+
+int cmd_diff(int argc,
+	     const char **argv,
+	     const char *prefix,
+	     struct repository *repo UNUSED)
 {
 	int i;
 	struct rev_info rev;
@@ -464,6 +472,15 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 				!path_inside_repo(prefix, argv[i + 1]))))
 			no_index = DIFF_NO_INDEX_IMPLICIT;
 	}
+
+	/*
+	 * When operating outside of a Git repository we need to have a hash
+	 * algorithm at hand so that we can generate the blob hashes. We
+	 * default to SHA1 here, but may eventually want to change this to be
+	 * configurable via a command line option.
+	 */
+	if (nongit)
+		repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
 
 	init_diff_ui_defaults();
 	git_config(git_diff_ui_config, NULL);
@@ -605,11 +622,12 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		builtin_diff_combined(&rev, argc, argv,
 				      ent.objects, ent.nr,
 				      first_non_parent);
-	result = diff_result_code(&rev.diffopt);
+	result = diff_result_code(&rev);
 	if (1 < rev.diffopt.skip_stat_unmatch)
 		refresh_index_quietly();
 	release_revisions(&rev);
 	object_array_clear(&ent);
+	symdiff_release(&sdiff);
 	UNLEAK(blob);
 	return result;
 }

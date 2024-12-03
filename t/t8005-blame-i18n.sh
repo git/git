@@ -3,6 +3,12 @@
 test_description='git blame encoding conversion'
 . ./test-lib.sh
 
+if ! test_have_prereq ICONV
+then
+	skip_all='skipping blame i18n tests; iconv not available'
+	test_done
+fi
+
 . "$TEST_DIRECTORY"/t8005/utf8.txt
 . "$TEST_DIRECTORY"/t8005/euc-japan.txt
 . "$TEST_DIRECTORY"/t8005/sjis.txt

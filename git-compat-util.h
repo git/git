@@ -195,6 +195,19 @@ struct strbuf;
 #define _NETBSD_SOURCE 1
 #define _SGI_SOURCE 1
 
+/*
+ * UNUSED marks a function parameter that is always unused.  It also
+ * can be used to annotate a function, a variable, or a type that is
+ * always unused.
+ *
+ * A callback interface may dictate that a function accepts a
+ * parameter at that position, but the implementation of the function
+ * may not need to use the parameter.  In such a case, mark the parameter
+ * with UNUSED.
+ *
+ * When a parameter may be used or unused, depending on conditional
+ * compilation, consider using MAYBE_UNUSED instead.
+ */
 #if GIT_GNUC_PREREQ(4, 5)
 #define UNUSED __attribute__((unused)) \
 	__attribute__((deprecated ("parameter declared as UNUSED")))
@@ -216,6 +229,18 @@ struct strbuf;
 #endif
 #include <windows.h>
 #define GIT_WINDOWS_NATIVE
+#endif
+
+#if defined(NO_UNIX_SOCKETS) || !defined(GIT_WINDOWS_NATIVE)
+static inline int _have_unix_sockets(void)
+{
+#if defined(NO_UNIX_SOCKETS)
+	return 0;
+#else
+	return 1;
+#endif
+}
+#define have_unix_sockets _have_unix_sockets
 #endif
 
 #include <unistd.h>
@@ -391,6 +416,7 @@ char *gitdirname(char *);
 
 #ifndef NO_OPENSSL
 #ifdef __APPLE__
+#undef __AVAILABILITY_MACROS_USES_AVAILABILITY
 #define __AVAILABILITY_MACROS_USES_AVAILABILITY 0
 #include <AvailabilityMacros.h>
 #undef DEPRECATED_ATTRIBUTE
@@ -491,6 +517,14 @@ static inline int git_offset_1st_component(const char *path)
 	return is_dir_sep(path[0]);
 }
 #define offset_1st_component git_offset_1st_component
+#endif
+
+#ifndef fspathcmp
+#define fspathcmp git_fspathcmp
+#endif
+
+#ifndef fspathncmp
+#define fspathncmp git_fspathncmp
 #endif
 
 #ifndef is_valid_path
@@ -628,6 +662,17 @@ static inline int git_has_dir_sep(const char *path)
 #define RESULT_MUST_BE_USED
 #endif
 
+/*
+ * MAYBE_UNUSED marks a function parameter that may be unused, but
+ * whose use is not an error.  It also can be used to annotate a
+ * function, a variable, or a type that may be unused.
+ *
+ * Depending on a configuration, all uses of such a thing may become
+ * #ifdef'ed away.  Marking it with UNUSED would give a warning in a
+ * compilation where it is indeed used, and not marking it at all
+ * would give a warning in a compilation where it is unused.  In such
+ * a case, MAYBE_UNUSED is the appropriate annotation to use.
+ */
 #define MAYBE_UNUSED __attribute__((__unused__))
 
 #include "compat/bswap.h"

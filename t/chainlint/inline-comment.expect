@@ -1,8 +1,8 @@
-(
-	foobar && # comment 1
-	barfoo ?!AMP?! # wrong position for &&
-	flibble "not a # comment"
-) &&
-
-(cd foo &&
-	flibble "not a # comment")
+2 (
+3 	foobar && # comment 1
+4 	barfoo ?!LINT: missing '&&'?! # wrong position for &&
+5 	flibble "not a # comment"
+6 ) &&
+7 
+8 (cd foo &&
+9 	flibble "not a # comment")

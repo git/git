@@ -10,6 +10,7 @@ properly (without access to the index or attribute stack).
 '
 
 TEST_NO_CREATE_REPO=1
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-parallel-checkout.sh"
 . "$TEST_DIRECTORY/lib-encoding.sh"
@@ -33,7 +34,7 @@ test_expect_success 'parallel-checkout with ident' '
 	)
 '
 
-test_expect_success 'parallel-checkout with re-encoding' '
+test_expect_success ICONV 'parallel-checkout with re-encoding' '
 	set_checkout_config 2 0 &&
 	git init encoding &&
 	(
@@ -90,7 +91,7 @@ test_expect_success 'parallel-checkout with eol conversions' '
 
 # Entries that require an external filter are not eligible for parallel
 # checkout. Check that both the parallel-eligible and non-eligible entries are
-# properly writen in a single checkout operation.
+# properly written in a single checkout operation.
 #
 test_expect_success 'parallel-checkout and external filter' '
 	set_checkout_config 2 0 &&

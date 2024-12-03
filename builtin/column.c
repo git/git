@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
@@ -18,7 +19,10 @@ static int column_config(const char *var, const char *value,
 	return git_column_config(var, value, cb, &colopts);
 }
 
-int cmd_column(int argc, const char **argv, const char *prefix)
+int cmd_column(int argc,
+	       const char **argv,
+	       const char *prefix,
+	       struct repository *repo UNUSED)
 {
 	struct string_list list = STRING_LIST_INIT_DUP;
 	struct strbuf sb = STRBUF_INIT;

@@ -29,7 +29,7 @@ struct reftable_stack;
  *  stored in 'dir'. Typically, this should be .git/reftables.
  */
 int reftable_new_stack(struct reftable_stack **dest, const char *dir,
-		       struct reftable_write_options config);
+		       const struct reftable_write_options *opts);
 
 /* returns the update_index at which a next table should be written. */
 uint64_t reftable_stack_next_update_index(struct reftable_stack *st);
@@ -37,12 +37,21 @@ uint64_t reftable_stack_next_update_index(struct reftable_stack *st);
 /* holds a transaction to add tables at the top of a stack. */
 struct reftable_addition;
 
+enum {
+	/*
+	 * Reload the stack when the stack is out-of-date after locking it.
+	 */
+	REFTABLE_STACK_NEW_ADDITION_RELOAD = (1 << 0),
+};
+
 /*
  * returns a new transaction to add reftables to the given stack. As a side
- * effect, the ref database is locked.
+ * effect, the ref database is locked. Accepts REFTABLE_STACK_NEW_ADDITION_*
+ * flags.
  */
 int reftable_stack_new_addition(struct reftable_addition **dest,
-				struct reftable_stack *st);
+				struct reftable_stack *st,
+				unsigned int flags);
 
 /* Adds a reftable to transaction. */
 int reftable_addition_add(struct reftable_addition *add,
@@ -65,6 +74,24 @@ int reftable_stack_add(struct reftable_stack *st,
 		       int (*write_table)(struct reftable_writer *wr,
 					  void *write_arg),
 		       void *write_arg);
+
+struct reftable_iterator;
+
+/*
+ * Initialize an iterator for the merged tables contained in the stack that can
+ * be used to iterate through refs. The iterator is valid until the next reload
+ * or write.
+ */
+int reftable_stack_init_ref_iterator(struct reftable_stack *st,
+				     struct reftable_iterator *it);
+
+/*
+ * Initialize an iterator for the merged tables contained in the stack that can
+ * be used to iterate through logs. The iterator is valid until the next reload
+ * or write.
+ */
+int reftable_stack_init_log_iterator(struct reftable_stack *st,
+				     struct reftable_iterator *it);
 
 /* returns the merged_table for seeking. This table is valid until the
  * next write or reload, and should not be closed or deleted.
@@ -121,8 +148,5 @@ struct reftable_compaction_stats {
 /* return statistics for compaction up till now. */
 struct reftable_compaction_stats *
 reftable_stack_compaction_stats(struct reftable_stack *st);
-
-/* print the entire stack represented by the directory */
-int reftable_stack_print_directory(const char *stackdir, uint32_t hash_id);
 
 #endif

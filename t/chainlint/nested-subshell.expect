@@ -1,13 +1,13 @@
-(
-	cd foo &&
-	(
-		echo a &&
-		echo b
-	) >file &&
-
-	cd foo &&
-	(
-		echo a ?!AMP?!
-		echo b
-	) >file
-)
+2 (
+3 	cd foo &&
+4 	(
+5 		echo a &&
+6 		echo b
+7 	) >file &&
+8 
+9 	cd foo &&
+10 	(
+11 		echo a ?!LINT: missing '&&'?!
+12 		echo b
+13 	) >file
+14 )

@@ -1,3 +1,4 @@
+test_expect_success 'block-comment' '
 (
 	{
 		# show a
@@ -6,3 +7,4 @@
 		echo b
 	}
 )
+'

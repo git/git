@@ -4,6 +4,7 @@ test_description='"git fetch/pull --set-upstream" basic tests.'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 check_config () {
@@ -73,10 +74,10 @@ test_expect_success 'fetch --set-upstream main:other does not set the branch oth
 	check_config_missing other2
 '
 
-test_expect_success 'fetch --set-upstream http://nosuchdomain.example.com fails with invalid url' '
+test_expect_success 'fetch --set-upstream ./does-not-exist fails with invalid url' '
 	# main explicitly not cleared, we check that it is not touched from previous value
 	clear_config other other2 &&
-	test_must_fail git fetch --set-upstream http://nosuchdomain.example.com &&
+	test_must_fail git fetch --set-upstream ./does-not-exist &&
 	check_config main upstream refs/heads/other &&
 	check_config_missing other &&
 	check_config_missing other2
@@ -143,10 +144,10 @@ test_expect_success 'pull --set-upstream upstream tag does not set the tag' '
 	check_config_missing three
 '
 
-test_expect_success 'pull --set-upstream http://nosuchdomain.example.com fails with invalid url' '
+test_expect_success 'pull --set-upstream ./does-not-exist fails with invalid url' '
 	# main explicitly not cleared, we check that it is not touched from previous value
 	clear_config other other2 three &&
-	test_must_fail git pull --set-upstream http://nosuchdomain.example.com &&
+	test_must_fail git pull --set-upstream ./does-not-exist &&
 	check_config main upstream refs/heads/other &&
 	check_config_missing other &&
 	check_config_missing other2 &&

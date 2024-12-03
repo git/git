@@ -138,6 +138,49 @@ void bitmap_or(struct bitmap *self, const struct bitmap *other)
 		self->words[i] |= other->words[i];
 }
 
+int ewah_bitmap_is_subset(struct ewah_bitmap *self, struct bitmap *other)
+{
+	struct ewah_iterator it;
+	eword_t word;
+	size_t i;
+
+	ewah_iterator_init(&it, self);
+
+	for (i = 0; i < other->word_alloc; i++) {
+		if (!ewah_iterator_next(&word, &it)) {
+			/*
+			 * If we reached the end of `self`, and haven't
+			 * rejected `self` as a possible subset of
+			 * `other` yet, then we are done and `self` is
+			 * indeed a subset of `other`.
+			 */
+			return 1;
+		}
+		if (word & ~other->words[i]) {
+			/*
+			 * Otherwise, compare the next two pairs of
+			 * words. If the word from `self` has bit(s) not
+			 * in the word from `other`, `self` is not a
+			 * subset of `other`.
+			 */
+			return 0;
+		}
+	}
+
+	/*
+	 * If we got to this point, there may be zero or more words
+	 * remaining in `self`, with no remaining words left in `other`.
+	 * If there are any bits set in the remaining word(s) in `self`,
+	 * then `self` is not a subset of `other`.
+	 */
+	while (ewah_iterator_next(&word, &it))
+		if (word)
+			return 0;
+
+	/* `self` is definitely a subset of `other` */
+	return 1;
+}
+
 void bitmap_or_ewah(struct bitmap *self, struct ewah_bitmap *other)
 {
 	size_t original_size = self->word_alloc;
@@ -165,6 +208,20 @@ size_t bitmap_popcount(struct bitmap *self)
 
 	for (i = 0; i < self->word_alloc; ++i)
 		count += ewah_bit_popcount64(self->words[i]);
+
+	return count;
+}
+
+size_t ewah_bitmap_popcount(struct ewah_bitmap *self)
+{
+	struct ewah_iterator it;
+	eword_t word;
+	size_t count = 0;
+
+	ewah_iterator_init(&it, self);
+
+	while (ewah_iterator_next(&word, &it))
+		count += ewah_bit_popcount64(word);
 
 	return count;
 }
@@ -200,6 +257,25 @@ int bitmap_equals(struct bitmap *self, struct bitmap *other)
 		if (big->words[i] != 0)
 			return 0;
 	}
+
+	return 1;
+}
+
+int bitmap_equals_ewah(struct bitmap *self, struct ewah_bitmap *other)
+{
+	struct ewah_iterator it;
+	eword_t word;
+	size_t i = 0;
+
+	ewah_iterator_init(&it, other);
+
+	while (ewah_iterator_next(&word, &it))
+		if (word != (i < self->word_alloc ? self->words[i++] : 0))
+			return 0;
+
+	for (; i < self->word_alloc; i++)
+		if (self->words[i])
+			return 0;
 
 	return 1;
 }

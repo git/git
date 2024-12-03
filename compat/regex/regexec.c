@@ -292,7 +292,7 @@ compat_symbol (libc, __compat_regexec, regexec, GLIBC_2_0);
    concerned.
 
    If REGS is not NULL, and BUFP->no_sub is not set, the offsets of the match
-   and all groups is stroed in REGS.  (For the "_2" variants, the offsets are
+   and all groups are stored in REGS.  (For the "_2" variants, the offsets are
    computed relative to the concatenation, not relative to the individual
    strings.)
 
@@ -2796,8 +2796,8 @@ get_subexp (re_match_context_t *mctx, int bkref_node, int bkref_str_idx)
 	    continue; /* No.  */
 	  if (sub_top->path == NULL)
 	    {
-	      sub_top->path = calloc (sizeof (state_array_t),
-				      sl_str - sub_top->str_idx + 1);
+	      sub_top->path = calloc (sl_str - sub_top->str_idx + 1,
+				      sizeof (state_array_t));
 	      if (sub_top->path == NULL)
 		return REG_ESPACE;
 	    }
@@ -3361,7 +3361,7 @@ build_trtable (const re_dfa_t *dfa, re_dfastate_t *state)
       if (ndests == 0)
 	{
 	  state->trtable = (re_dfastate_t **)
-	    calloc (sizeof (re_dfastate_t *), SBC_MAX);
+	    calloc (SBC_MAX, sizeof (re_dfastate_t *));
 	  return 1;
 	}
       return 0;
@@ -3457,7 +3457,7 @@ out_free:
 	 discern by looking at the character code: allocate a
 	 256-entry transition table.  */
       trtable = state->trtable =
-	(re_dfastate_t **) calloc (sizeof (re_dfastate_t *), SBC_MAX);
+	(re_dfastate_t **) calloc (SBC_MAX, sizeof (re_dfastate_t *));
       if (BE (trtable == NULL, 0))
 	goto out_free;
 
@@ -3488,7 +3488,7 @@ out_free:
 	 transition tables, one starting at trtable[0] and one
 	 starting at trtable[SBC_MAX].  */
       trtable = state->word_trtable =
-	(re_dfastate_t **) calloc (sizeof (re_dfastate_t *), 2 * SBC_MAX);
+	(re_dfastate_t **) calloc (2 * SBC_MAX, sizeof (re_dfastate_t *));
       if (BE (trtable == NULL, 0))
 	goto out_free;
 

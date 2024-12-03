@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "config.h"
 #include "environment.h"
@@ -38,8 +40,8 @@ static int check_ref(const char *name, unsigned int flags)
 							 REFNAME_ALLOW_ONELEVEL))
 		return 0;
 
-	/* REF_HEADS means that we want regular branch heads */
-	if ((flags & REF_HEADS) && starts_with(name, "heads/"))
+	/* REF_BRANCHES means that we want regular branch heads */
+	if ((flags & REF_BRANCHES) && starts_with(name, "heads/"))
 		return 1;
 
 	/* REF_TAGS means that we want tags */
@@ -1483,6 +1485,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 
 				free(hostandport);
 				free(path);
+				child_process_clear(conn);
 				free(conn);
 				strbuf_release(&cmd);
 				return NULL;

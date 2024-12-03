@@ -5,10 +5,19 @@ remote.pushDefault::
 
 remote.<name>.url::
 	The URL of a remote repository.  See linkgit:git-fetch[1] or
-	linkgit:git-push[1].
+	linkgit:git-push[1]. A configured remote can have multiple URLs;
+	in this case the first is used for fetching, and all are used
+	for pushing (assuming no `remote.<name>.pushurl` is defined).
+	Setting this key to the empty string clears the list of urls,
+	allowing you to override earlier config.
 
 remote.<name>.pushurl::
 	The push URL of a remote repository.  See linkgit:git-push[1].
+	If a `pushurl` option is present in a configured remote, it
+	is used for pushing instead of `remote.<name>.url`. A configured
+	remote can have multiple push URLs; in this case a push goes to
+	all of them. Setting this key to the empty string clears the
+	list of urls, allowing you to override earlier config.
 
 remote.<name>.proxy::
 	For remotes that require curl (http, https and ftp), the URL to
@@ -33,14 +42,15 @@ remote.<name>.mirror::
 	as if the `--mirror` option was given on the command line.
 
 remote.<name>.skipDefaultUpdate::
-	If true, this remote will be skipped by default when updating
-	using linkgit:git-fetch[1] or the `update` subcommand of
-	linkgit:git-remote[1].
+	A deprecated synonym to `remote.<name>.skipFetchAll` (if
+	both are set in the configuration files with different
+	values, the value of the last occurrence will be used).
 
 remote.<name>.skipFetchAll::
-	If true, this remote will be skipped by default when updating
-	using linkgit:git-fetch[1] or the `update` subcommand of
-	linkgit:git-remote[1].
+	If true, this remote will be skipped when updating
+	using linkgit:git-fetch[1], the `update` subcommand of
+	linkgit:git-remote[1], and ignored by the prefetch task
+	of `git maintenance`.
 
 remote.<name>.receivepack::
 	The default program to execute on the remote side when pushing.  See
@@ -86,3 +96,13 @@ remote.<name>.partialclonefilter::
 	Changing or clearing this value will only affect fetches for new commits.
 	To fetch associated objects for commits already present in the local object
 	database, use the `--refetch` option of linkgit:git-fetch[1].
+
+remote.<name>.serverOption::
+	The default set of server options used when fetching from this remote.
+	These server options can be overridden by the `--server-option=` command
+	line arguments.
++
+This is a multi-valued variable, and an empty value can be used in a higher
+priority configuration file (e.g. `.git/config` in a repository) to clear
+the values inherited from a lower priority configuration files (e.g.
+`$HOME/.gitconfig`).

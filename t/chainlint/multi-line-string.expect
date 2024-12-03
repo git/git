@@ -1,14 +1,14 @@
-(
-	x="line 1
-		line 2
-		line 3" &&
-	y="line 1
-		line2" ?!AMP?!
-	foobar
-) &&
-(
-	echo "xyz" "abc
-		def
-		ghi" &&
-	barfoo
-)
+2 (
+3 	x="line 1
+4 		line 2
+5 		line 3" &&
+6 	y="line 1
+7 		line2" ?!LINT: missing '&&'?!
+8 	foobar
+9 ) &&
+10 (
+11 	echo "xyz" "abc
+12 		def
+13 		ghi" &&
+14 	barfoo
+15 )

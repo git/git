@@ -26,10 +26,12 @@ then
 	t_refspec=""
 fi
 
-GIT_DIR="$url/.git"
+unset $(git rev-parse --local-env-vars)
+GIT_DIR=$(git -C "$url" rev-parse --absolute-git-dir)
 export GIT_DIR
 
 force=
+object_format=
 
 mkdir -p "$dir"
 
@@ -61,7 +63,8 @@ do
 		echo
 		;;
 	list)
-		echo ":object-format $(git rev-parse --show-object-format=storage)"
+		test -n "$object_format" &&
+			echo ":object-format $(git rev-parse --show-object-format=storage)"
 		git for-each-ref --format='? %(refname)' 'refs/heads/' 'refs/tags/'
 		head=$(git symbolic-ref HEAD)
 		echo "@$head HEAD"

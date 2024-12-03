@@ -54,7 +54,7 @@ import time
 import zipfile
 import zlib
 
-# On python2.7 where raw_input() and input() are both availble,
+# On python2.7 where raw_input() and input() are both available,
 # we want raw_input's semantics, but aliased to input for python3
 # compatibility
 # support basestring in python3
@@ -1804,7 +1804,7 @@ class P4Submit(Command, P4UserMap):
     status from the script will abort the process.
 
     The purpose of the hook is to edit the message file in place, and it is not
-    supressed by the `--no-verify` option. This hook is called even if
+    suppressed by the `--no-verify` option. This hook is called even if
     `--prepare-p4-only` is set.
 
     The `p4-changelist` hook is executed after the changelist message has been
@@ -3253,17 +3253,19 @@ class P4Sync(Command, P4UserMap):
             if self.stream_have_file_info:
                 if "depotFile" in self.stream_file:
                     f = self.stream_file["depotFile"]
-            # force a failure in fast-import, else an empty
-            # commit will be made
-            self.gitStream.write("\n")
-            self.gitStream.write("die-now\n")
-            self.gitStream.close()
-            # ignore errors, but make sure it exits first
-            self.importProcess.wait()
-            if f:
-                die("Error from p4 print for %s: %s" % (f, err))
-            else:
-                die("Error from p4 print: %s" % err)
+            try:
+                # force a failure in fast-import, else an empty
+                # commit will be made
+                self.gitStream.write("\n")
+                self.gitStream.write("die-now\n")
+                self.gitStream.close()
+                # ignore errors, but make sure it exits first
+                self.importProcess.wait()
+            finally:
+                if f:
+                    die("Error from p4 print for %s: %s" % (f, err))
+                else:
+                    die("Error from p4 print: %s" % err)
 
         if 'depotFile' in marshalled and self.stream_have_file_info:
             # start of a new file - output the old one first

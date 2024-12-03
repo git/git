@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
@@ -170,7 +171,10 @@ static void lookup_credential(const struct string_list *fns, struct credential *
 			return; /* Found credential */
 }
 
-int cmd_credential_store(int argc, const char **argv, const char *prefix)
+int cmd_credential_store(int argc,
+			 const char **argv,
+			 const char *prefix,
+			 struct repository *repo UNUSED)
 {
 	const char * const usage[] = {
 		"git credential-store [<options>] <action>",
@@ -205,7 +209,7 @@ int cmd_credential_store(int argc, const char **argv, const char *prefix)
 	if (!fns.nr)
 		die("unable to set up default path; use --file");
 
-	if (credential_read(&c, stdin) < 0)
+	if (credential_read(&c, stdin, CREDENTIAL_OP_HELPER) < 0)
 		die("unable to read credential");
 
 	if (!strcmp(op, "get"))
@@ -218,5 +222,6 @@ int cmd_credential_store(int argc, const char **argv, const char *prefix)
 		; /* Ignore unknown operation. */
 
 	string_list_clear(&fns, 0);
+	credential_clear(&c);
 	return 0;
 }

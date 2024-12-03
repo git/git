@@ -12,11 +12,10 @@ https://developers.google.com/open-source/licenses/bsd
 #include "system.h"
 
 struct reftable_block_source;
+struct reftable_buf;
 
 /* Create an in-memory block source for reading reftables */
-void block_source_from_strbuf(struct reftable_block_source *bs,
-			      struct strbuf *buf);
-
-struct reftable_block_source malloc_block_source(void);
+void block_source_from_buf(struct reftable_block_source *bs,
+			   struct reftable_buf *buf);
 
 #endif

@@ -32,29 +32,28 @@ struct pack_entry {
 char *odb_pack_name(struct strbuf *buf, const unsigned char *sha1, const char *ext);
 
 /*
- * Return the name of the (local) packfile with the specified sha1 in
- * its name.  The return value is a pointer to memory that is
- * overwritten each time this function is called.
- */
-char *sha1_pack_name(const unsigned char *sha1);
-
-/*
- * Return the name of the (local) pack index file with the specified
- * sha1 in its name.  The return value is a pointer to memory that is
- * overwritten each time this function is called.
- */
-char *sha1_pack_index_name(const unsigned char *sha1);
-
-/*
  * Return the basename of the packfile, omitting any containing directory
  * (e.g., "pack-1234abcd[...].pack").
  */
 const char *pack_basename(struct packed_git *p);
 
+/*
+ * Parse the pack idx file found at idx_path and create a packed_git struct
+ * which can be used with find_pack_entry_one().
+ *
+ * You probably don't want to use this function! It skips most of the normal
+ * sanity checks (including whether we even have the matching .pack file),
+ * and does not add the resulting packed_git struct to the internal list of
+ * packs. You probably want add_packed_git() instead.
+ */
 struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path);
 
 typedef void each_file_in_pack_dir_fn(const char *full_path, size_t full_path_len,
 				      const char *file_name, void *data);
+void for_each_file_in_pack_subdir(const char *objdir,
+				  const char *subdir,
+				  each_file_in_pack_dir_fn fn,
+				  void *data);
 void for_each_file_in_pack_dir(const char *objdir,
 			       each_file_in_pack_dir_fn fn,
 			       void *data);
@@ -80,8 +79,13 @@ struct packed_git *get_all_packs(struct repository *r);
  */
 unsigned long repo_approximate_object_count(struct repository *r);
 
-struct packed_git *find_sha1_pack(const unsigned char *sha1,
-				  struct packed_git *packs);
+/*
+ * Find the pack within the "packs" list whose index contains the object "oid".
+ * For general object lookups, you probably don't want this; use
+ * find_pack_entry() instead.
+ */
+struct packed_git *find_oid_pack(const struct object_id *oid,
+				 struct packed_git *packs);
 
 void pack_report(void);
 
@@ -100,6 +104,8 @@ void close_pack_index(struct packed_git *);
 int close_pack_fd(struct packed_git *p);
 
 uint32_t get_pack_fanout(struct packed_git *p, uint32_t value);
+
+struct raw_object_store;
 
 unsigned char *use_pack(struct packed_git *, struct pack_window **, off_t, unsigned long *);
 void close_pack_windows(struct packed_git *);
@@ -148,10 +154,10 @@ int nth_packed_object_id(struct object_id *, struct packed_git *, uint32_t n);
 off_t nth_packed_object_offset(const struct packed_git *, uint32_t n);
 
 /*
- * If the object named sha1 is present in the specified packfile,
+ * If the object named by oid is present in the specified packfile,
  * return its offset within the packfile; otherwise, return 0.
  */
-off_t find_pack_entry_one(const unsigned char *sha1, struct packed_git *);
+off_t find_pack_entry_one(const struct object_id *oid, struct packed_git *);
 
 int is_pack_valid(struct packed_git *);
 void *unpack_entry(struct repository *r, struct packed_git *, off_t, enum object_type *, unsigned long *);
@@ -187,8 +193,6 @@ int find_kept_pack_entry(struct repository *r, const struct object_id *oid, unsi
 int has_object_pack(const struct object_id *oid);
 int has_object_kept_pack(const struct object_id *oid, unsigned flags);
 
-int has_pack_index(const unsigned char *sha1);
-
 /*
  * Return 1 if an object in a promisor packfile is or refers to the given
  * object, 0 otherwise.
@@ -203,7 +207,7 @@ int is_promisor_object(const struct object_id *oid);
  *
  * This function should not be used directly. It is exposed here only so that we
  * have a convenient entry-point for fuzz testing. For real uses, you should
- * probably use open_pack_index() or parse_pack_index() instead.
+ * probably use open_pack_index() instead.
  */
 int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
 	     size_t idx_size, struct packed_git *p);

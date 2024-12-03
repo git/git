@@ -26,30 +26,23 @@ https://developers.google.com/open-source/licenses/bsd
 /* A merged table is implements seeking/iterating over a stack of tables. */
 struct reftable_merged_table;
 
-/* A generic reftable; see below. */
-struct reftable_table;
+struct reftable_reader;
 
-/* reftable_new_merged_table creates a new merged table. It takes ownership of
-   the stack array.
-*/
-int reftable_new_merged_table(struct reftable_merged_table **dest,
-			      struct reftable_table *stack, size_t n,
+/*
+ * reftable_merged_table_new creates a new merged table. The readers must be
+ * kept alive as long as the merged table is still in use.
+ */
+int reftable_merged_table_new(struct reftable_merged_table **dest,
+			      struct reftable_reader **readers, size_t n,
 			      uint32_t hash_id);
 
-/* returns an iterator positioned just before 'name' */
-int reftable_merged_table_seek_ref(struct reftable_merged_table *mt,
-				   struct reftable_iterator *it,
-				   const char *name);
+/* Initialize a merged table iterator for reading refs. */
+int reftable_merged_table_init_ref_iterator(struct reftable_merged_table *mt,
+					    struct reftable_iterator *it);
 
-/* returns an iterator for log entry, at given update_index */
-int reftable_merged_table_seek_log_at(struct reftable_merged_table *mt,
-				      struct reftable_iterator *it,
-				      const char *name, uint64_t update_index);
-
-/* like reftable_merged_table_seek_log_at but look for the newest entry. */
-int reftable_merged_table_seek_log(struct reftable_merged_table *mt,
-				   struct reftable_iterator *it,
-				   const char *name);
+/* Initialize a merged table iterator for reading logs. */
+int reftable_merged_table_init_log_iterator(struct reftable_merged_table *mt,
+					    struct reftable_iterator *it);
 
 /* returns the max update_index covered by this merged table. */
 uint64_t
@@ -64,9 +57,5 @@ void reftable_merged_table_free(struct reftable_merged_table *m);
 
 /* return the hash ID of the merged table. */
 uint32_t reftable_merged_table_hash_id(struct reftable_merged_table *m);
-
-/* create a generic table from reftable_merged_table */
-void reftable_table_from_merged_table(struct reftable_table *tab,
-				      struct reftable_merged_table *table);
 
 #endif

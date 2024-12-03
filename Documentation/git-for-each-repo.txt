@@ -42,6 +42,15 @@ These config values are loaded from system, global, and local Git config,
 as available. If `git for-each-repo` is run in a directory that is not a
 Git repository, then only the system and global config is used.
 
+--keep-going::
+	Continue with the remaining repositories if the command failed
+	on a repository. The exit code will still indicate that the
+	overall operation was not successful.
++
+Note that the exact exit code of the failing command is not passed
+through as the exit code of the `for-each-repo` command: If the command
+failed in any of the specified repositories, the overall exit code will
+be 1.
 
 SUBPROCESS BEHAVIOR
 -------------------

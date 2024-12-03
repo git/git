@@ -303,7 +303,7 @@ and some sanity checks on the numeric values may also be performed.
 	with e.g. bogus timezone values.
 
 `rfc2822`::
-	This is the standard email format as described by RFC 2822.
+	This is the standard date format as described by RFC 2822.
 +
 An example value is ``Tue Feb 6 11:22:18 2007 -0500''.  The Git
 parser is accurate, but a little on the lenient side.  It is the
@@ -630,18 +630,28 @@ in octal.  Git only supports the following modes:
 In both formats `<path>` is the complete path of the file to be added
 (if not already existing) or modified (if already existing).
 
-A `<path>` string must use UNIX-style directory separators (forward
-slash `/`), may contain any byte other than `LF`, and must not
-start with double quote (`"`).
+A `<path>` can be written as unquoted bytes or a C-style quoted string.
 
-A path can use C-style string quoting; this is accepted in all cases
-and mandatory if the filename starts with double quote or contains
-`LF`. In C-style quoting, the complete name should be surrounded with
-double quotes, and any `LF`, backslash, or double quote characters
-must be escaped by preceding them with a backslash (e.g.,
-`"path/with\n, \\ and \" in it"`).
+When a `<path>` does not start with a double quote (`"`), it is an
+unquoted string and is parsed as literal bytes without any escape
+sequences. However, if the filename contains `LF` or starts with double
+quote, it cannot be represented as an unquoted string and must be
+quoted. Additionally, the source `<path>` in `filecopy` or `filerename`
+must be quoted if it contains SP.
 
-The value of `<path>` must be in canonical form. That is it must not:
+When a `<path>` starts with a double quote (`"`), it is a C-style quoted
+string, where the complete filename is enclosed in a pair of double
+quotes and escape sequences are used. Certain characters must be escaped
+by preceding them with a backslash: `LF` is written as `\n`, backslash
+as `\\`, and double quote as `\"`. Some characters may optionally be
+written with escape sequences: `\a` for bell, `\b` for backspace, `\f`
+for form feed, `\n` for line feed, `\r` for carriage return, `\t` for
+horizontal tab, and `\v` for vertical tab. Any byte can be written with
+3-digit octal codes (e.g., `\033`). All filenames can be represented as
+quoted strings.
+
+A `<path>` must use UNIX-style directory separators (forward slash `/`)
+and its value must be in canonical form. That is it must not:
 
 * contain an empty directory component (e.g. `foo//bar` is invalid),
 * end with a directory separator (e.g. `foo/` is invalid),
@@ -651,6 +661,7 @@ The value of `<path>` must be in canonical form. That is it must not:
 
 The root of the tree can be represented by an empty string as `<path>`.
 
+`<path>` cannot contain NUL, either literally or escaped as `\000`.
 It is recommended that `<path>` always be encoded using UTF-8.
 
 `filedelete`

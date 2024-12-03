@@ -26,6 +26,7 @@ test_description="limiting blob downloads when merging with partial clones"
 #                     underscore notation is to differentiate different
 #                     files that might be renamed into each other's paths.)
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-merge.sh
 
@@ -230,8 +231,9 @@ test_expect_merge_algorithm failure success 'Objects downloaded for single relev
 		grep fetch_count trace.output | cut -d "|" -f 9 | tr -d " ." >actual &&
 		test_cmp expect actual &&
 
-		# Check the number of fetch commands exec-ed
-		grep d0.*fetch.negotiationAlgorithm trace.output >fetches &&
+		# Check the number of fetch commands exec-ed by filtering trace to
+		# child_start events by the top-level program (2nd field == d0)
+		grep " d0 .* child_start .*fetch.negotiationAlgorithm" trace.output >fetches &&
 		test_line_count = 2 fetches &&
 
 		git rev-list --objects --all --missing=print |
@@ -318,8 +320,9 @@ test_expect_merge_algorithm failure success 'Objects downloaded when a directory
 		grep fetch_count trace.output | cut -d "|" -f 9 | tr -d " ." >actual &&
 		test_cmp expect actual &&
 
-		# Check the number of fetch commands exec-ed
-		grep d0.*fetch.negotiationAlgorithm trace.output >fetches &&
+		# Check the number of fetch commands exec-ed by filtering trace to
+		# child_start events by the top-level program (2nd field == d0)
+		grep " d0 .* child_start .*fetch.negotiationAlgorithm" trace.output >fetches &&
 		test_line_count = 1 fetches &&
 
 		git rev-list --objects --all --missing=print |
@@ -422,8 +425,9 @@ test_expect_merge_algorithm failure success 'Objects downloaded with lots of ren
 		grep fetch_count trace.output | cut -d "|" -f 9 | tr -d " ." >actual &&
 		test_cmp expect actual &&
 
-		# Check the number of fetch commands exec-ed
-		grep d0.*fetch.negotiationAlgorithm trace.output >fetches &&
+		# Check the number of fetch commands exec-ed by filtering trace to
+		# child_start events by the top-level program (2nd field == d0)
+		grep " d0 .* child_start .*fetch.negotiationAlgorithm" trace.output >fetches &&
 		test_line_count = 4 fetches &&
 
 		git rev-list --objects --all --missing=print |

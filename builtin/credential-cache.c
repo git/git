@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "credential.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "path.h"
@@ -29,7 +30,7 @@ static int connection_fatally_broken(int error)
 
 static int connection_closed(int error)
 {
-	return (error == ECONNRESET);
+	return error == ECONNRESET || error == ECONNABORTED;
 }
 
 static int connection_fatally_broken(int error)
@@ -87,6 +88,8 @@ static void spawn_daemon(const char *socket)
 		die_errno("unable to read result code from cache daemon");
 	if (r != 3 || memcmp(buf, "ok\n", 3))
 		die("cache daemon did not start: %.*s", r, buf);
+
+	child_process_clear(&daemon);
 	close(daemon.out);
 }
 
@@ -127,9 +130,20 @@ static char *get_socket_path(void)
 	return socket;
 }
 
-int cmd_credential_cache(int argc, const char **argv, const char *prefix)
+static void announce_capabilities(void)
 {
-	char *socket_path = NULL;
+	struct credential c = CREDENTIAL_INIT;
+	c.capa_authtype.request_initial = 1;
+	credential_announce_capabilities(&c, stdout);
+}
+
+int cmd_credential_cache(int argc,
+			 const char **argv,
+			 const char *prefix,
+			 struct repository *repo UNUSED)
+{
+	const char *socket_path_arg = NULL;
+	char *socket_path;
 	int timeout = 900;
 	const char *op;
 	const char * const usage[] = {
@@ -139,7 +153,7 @@ int cmd_credential_cache(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT_INTEGER(0, "timeout", &timeout,
 			    "number of seconds to cache credentials"),
-		OPT_STRING(0, "socket", &socket_path, "path",
+		OPT_STRING(0, "socket", &socket_path_arg, "path",
 			   "path of cache-daemon socket"),
 		OPT_END()
 	};
@@ -149,6 +163,10 @@ int cmd_credential_cache(int argc, const char **argv, const char *prefix)
 		usage_with_options(usage, options);
 	op = argv[0];
 
+	if (!have_unix_sockets())
+		die(_("credential-cache unavailable; no unix socket support"));
+
+	socket_path = xstrdup_or_null(socket_path_arg);
 	if (!socket_path)
 		socket_path = get_socket_path();
 	if (!socket_path)
@@ -160,15 +178,19 @@ int cmd_credential_cache(int argc, const char **argv, const char *prefix)
 		do_cache(socket_path, op, timeout, FLAG_RELAY);
 	else if (!strcmp(op, "store"))
 		do_cache(socket_path, op, timeout, FLAG_RELAY|FLAG_SPAWN);
+	else if (!strcmp(op, "capability"))
+		announce_capabilities();
 	else
 		; /* ignore unknown operation */
 
+	free(socket_path);
 	return 0;
 }
 
 #else
 
-int cmd_credential_cache(int argc, const char **argv, const char *prefix)
+int cmd_credential_cache(int argc, const char **argv, const char *prefix,
+			 struct repository *repo UNUSED)
 {
 	const char * const usage[] = {
 		"git credential-cache [options] <action>",

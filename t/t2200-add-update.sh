@@ -65,6 +65,16 @@ test_expect_success 'update did not touch untracked files' '
 	test_must_be_empty out
 '
 
+test_expect_success 'error out when passing untracked path' '
+	git reset --hard &&
+	echo content >>baz &&
+	echo content >>top &&
+	test_must_fail git add -u baz top 2>err &&
+	test_grep -e "error: pathspec .baz. did not match any file(s) known to git" err &&
+	git diff --cached --name-only >actual &&
+	test_must_be_empty actual
+'
+
 test_expect_success 'cache tree has not been corrupted' '
 
 	git ls-files -s |

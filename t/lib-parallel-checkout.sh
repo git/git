@@ -20,7 +20,7 @@ test_checkout_workers () {
 		BUG "too few arguments to test_checkout_workers"
 	fi &&
 
-	local expected_workers=$1 &&
+	local expected_workers="$1" &&
 	shift &&
 
 	local trace_file=trace-test-checkout-workers &&

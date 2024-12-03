@@ -6,6 +6,8 @@ TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-bitmap.sh
 
+GIT_TEST_MULTI_PACK_INDEX=0
+GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL=0
 objdir=.git/objects
 packdir=$objdir/pack
 
@@ -29,20 +31,24 @@ test_pack_objects_reused_all () {
 	: >trace2.txt &&
 	GIT_TRACE2_EVENT="$PWD/trace2.txt" \
 		git pack-objects --stdout --revs --all --delta-base-offset \
-		>/dev/null &&
+		>got.pack &&
 
 	test_pack_reused "$1" <trace2.txt &&
-	test_packs_reused "$2" <trace2.txt
+	test_packs_reused "$2" <trace2.txt &&
+
+	git index-pack --strict -o got.idx got.pack
 }
 
 # test_pack_objects_reused <pack-reused> <packs-reused>
 test_pack_objects_reused () {
 	: >trace2.txt &&
 	GIT_TRACE2_EVENT="$PWD/trace2.txt" \
-		git pack-objects --stdout --revs >/dev/null &&
+		git pack-objects --stdout --revs >got.pack &&
 
 	test_pack_reused "$1" <trace2.txt &&
-	test_packs_reused "$2" <trace2.txt
+	test_packs_reused "$2" <trace2.txt &&
+
+	git index-pack --strict -o got.idx got.pack
 }
 
 test_expect_success 'preferred pack is reused for single-pack reuse' '
@@ -202,6 +208,77 @@ test_expect_success 'omit delta from uninteresting base (cross pack)' '
 	objects_nr="$(git rev-list --count --all --objects)" &&
 
 	test_pack_objects_reused_all $(($objects_nr - 1)) $packs_nr
+'
+
+test_expect_success 'non-omitted delta in MIDX preferred pack' '
+	test_config pack.allowPackReuse single &&
+
+	cat >p1.objects <<-EOF &&
+	$(git rev-parse $base)
+	^$(git rev-parse $delta^)
+	EOF
+	cat >p2.objects <<-EOF &&
+	$(git rev-parse F)
+	EOF
+
+	p1="$(git pack-objects --revs $packdir/pack <p1.objects)" &&
+	p2="$(git pack-objects --revs $packdir/pack <p2.objects)" &&
+
+	cat >in <<-EOF &&
+	pack-$p1.idx
+	pack-$p2.idx
+	EOF
+	git multi-pack-index write --bitmap --stdin-packs \
+		--preferred-pack=pack-$p1.pack <in &&
+
+	git show-index <$packdir/pack-$p1.idx >expect &&
+
+	test_pack_objects_reused_all $(wc -l <expect) 1
+'
+
+test_expect_success 'duplicate objects' '
+	git init duplicate-objects &&
+	(
+		cd duplicate-objects &&
+
+		git config pack.allowPackReuse multi &&
+
+		test_commit base &&
+
+		git repack -a &&
+
+		git rev-parse HEAD^{tree} >in &&
+		p="$(git pack-objects $packdir/pack <in)" &&
+
+		git multi-pack-index write --bitmap --preferred-pack=pack-$p.idx &&
+
+		objects_nr="$(git rev-list --count --all --objects)" &&
+		packs_nr="$(find $packdir -type f -name "pack-*.pack" | wc -l)" &&
+
+		test_pack_objects_reused_all $objects_nr $packs_nr
+	)
+'
+
+test_expect_success 'duplicate objects with verbatim reuse' '
+	git init duplicate-objects-verbatim &&
+	(
+		cd duplicate-objects-verbatim &&
+
+		git config pack.allowPackReuse multi &&
+
+		test_commit_bulk 64 &&
+
+		# take the first object from the main pack...
+		git show-index <$(ls $packdir/pack-*.idx) >obj.raw &&
+		sort -nk1 <obj.raw | head -n1 | cut -d" " -f2 >in &&
+
+		# ...and create a separate pack containing just that object
+		p="$(git pack-objects $packdir/pack <in)" &&
+
+		git multi-pack-index write --bitmap --preferred-pack=pack-$p.idx &&
+
+		test_pack_objects_reused_all 192 2
+	)
 '
 
 test_done

@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "config.h"
 #include "commit.h"
@@ -9,10 +11,11 @@
 
 void create_notes_commit(struct repository *r,
 			 struct notes_tree *t,
-			 struct commit_list *parents,
+			 const struct commit_list *parents,
 			 const char *msg, size_t msg_len,
 			 struct object_id *result_oid)
 {
+	struct commit_list *parents_to_free = NULL;
 	struct object_id tree_oid;
 
 	assert(t->initialized);
@@ -23,11 +26,12 @@ void create_notes_commit(struct repository *r,
 	if (!parents) {
 		/* Deduce parent commit from t->ref */
 		struct object_id parent_oid;
-		if (!read_ref(t->ref, &parent_oid)) {
+		if (!refs_read_ref(get_main_ref_store(the_repository), t->ref, &parent_oid)) {
 			struct commit *parent = lookup_commit(r, &parent_oid);
 			if (repo_parse_commit(r, parent))
 				die("Failed to find/parse commit %s", t->ref);
-			commit_list_insert(parent, &parents);
+			commit_list_insert(parent, &parents_to_free);
+			parents = parents_to_free;
 		}
 		/* else: t->ref points to nothing, assume root/orphan commit */
 	}
@@ -35,6 +39,8 @@ void create_notes_commit(struct repository *r,
 	if (commit_tree(msg, msg_len, &tree_oid, parents, result_oid, NULL,
 			NULL))
 		die("Failed to commit notes tree to database");
+
+	free_commit_list(parents_to_free);
 }
 
 void commit_notes(struct repository *r, struct notes_tree *t, const char *msg)
@@ -55,8 +61,9 @@ void commit_notes(struct repository *r, struct notes_tree *t, const char *msg)
 
 	create_notes_commit(r, t, NULL, buf.buf, buf.len, &commit_oid);
 	strbuf_insertstr(&buf, 0, "notes: ");
-	update_ref(buf.buf, t->update_ref, &commit_oid, NULL, 0,
-		   UPDATE_REFS_DIE_ON_ERR);
+	refs_update_ref(get_main_ref_store(the_repository), buf.buf,
+			t->update_ref, &commit_oid, NULL, 0,
+			UPDATE_REFS_DIE_ON_ERR);
 
 	strbuf_release(&buf);
 }
@@ -186,6 +193,7 @@ void finish_copy_notes_for_rewrite(struct repository *r,
 	for (i = 0; c->trees[i]; i++) {
 		commit_notes(r, c->trees[i], msg);
 		free_notes(c->trees[i]);
+		free(c->trees[i]);
 	}
 	free(c->trees);
 	free(c);

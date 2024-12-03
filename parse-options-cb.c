@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "parse-options.h"
 #include "branch.h"
@@ -7,6 +9,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "object-name.h"
+#include "setup.h"
 #include "string-list.h"
 #include "strvec.h"
 #include "oid-array.h"
@@ -29,8 +32,6 @@ int parse_opt_abbrev_cb(const struct option *opt, const char *arg, int unset)
 				     opt->long_name);
 		if (v && v < MINIMUM_ABBREV)
 			v = MINIMUM_ABBREV;
-		else if (v > the_hash_algo->hexsz)
-			v = the_hash_algo->hexsz;
 	}
 	*(int *)(opt->value) = v;
 	return 0;

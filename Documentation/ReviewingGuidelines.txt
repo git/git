@@ -72,12 +72,29 @@ guidance, and concrete tips for interacting with patches on the mailing list.
   could fix it. This not only helps the author to understand and fix the issue,
   it also deepens and improves your understanding of the topic.
 
-- Reviews do not need to exclusively point out problems. Feel free to "think out
+- Reviews do not need to exclusively point out problems.  Positive
+  reviews indicate that it is not only the original author of the
+  patches who care about the issue the patches address, and are
+  highly encouraged.
+
+- Do not hesitate to give positive reviews on a series from your
+  work colleague.  If your positive review is written well, it will
+  not make you look as if you two are representing corporate
+  interest on a series that is otherwise uninteresting to other
+  community members and shoving it down their throat.
+
+- Write a positive review in such a way that others can understand
+  why you support the goal, the approach, and the implementation the
+  patches took.  Make sure to demonstrate that you did thoroughly read
+  the series and understood problem area well enough to be able to
+  say that the patches are written well.  Feel free to "think out
   loud" in your review: describe how you read & understood a complex section of
   a patch, ask a question about something that confused you, point out something
-  you found exceptionally well-written, etc. In particular, uplifting feedback
-  goes a long way towards encouraging contributors to participate more actively
-  in the Git community.
+  you found exceptionally well-written, etc.
+
+- In particular, uplifting feedback goes a long way towards
+  encouraging contributors to participate more actively in the Git
+  community.
 
 ==== Performing your review
 - Provide your review comments per-patch in a plaintext "Reply-All" email to the

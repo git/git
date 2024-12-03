@@ -113,13 +113,15 @@ jobs:
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     steps:
     - uses: actions/checkout@v4
-    - uses: git-for-windows/setup-git-for-windows-sdk@v1
+    - name: setup SDK
+      shell: powershell
+      run: ci/install-sdk.ps1
     - name: build
-      shell: bash
+      shell: powershell
       env:
         HOME: ${{runner.workspace}}
         NO_PERL: 1
-      run: . /etc/profile && ci/make-test-artifacts.sh artifacts
+      run: git-sdk/usr/bin/bash.exe -l -c 'ci/make-test-artifacts.sh artifacts'
     - name: zip up tracked files
       run: git archive -o artifacts/tracked.tar.gz HEAD
     - name: upload tracked files and build artifacts
@@ -147,10 +149,12 @@ jobs:
     - name: extract tracked files and build artifacts
       shell: bash
       run: tar xf artifacts.tar.gz && tar xf tracked.tar.gz
-    - uses: git-for-windows/setup-git-for-windows-sdk@v1
+    - name: setup SDK
+      shell: powershell
+      run: ci/install-sdk.ps1
     - name: test
-      shell: bash
-      run: . /etc/profile && ci/run-test-slice.sh ${{matrix.nr}} 10
+      shell: powershell
+      run: git-sdk/usr/bin/bash.exe -l -c 'ci/run-test-slice.sh ${{matrix.nr}} 10'
     - name: print test failures
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
       shell: bash
@@ -181,16 +185,12 @@ jobs:
         repository: 'microsoft/vcpkg'
         path: 'compat/vcbuild/vcpkg'
     - name: download vcpkg artifacts
-      shell: powershell
-      run: |
-        $urlbase = "https://dev.azure.com/git/git/_apis/build/builds"
-        $id = ((Invoke-WebRequest -UseBasicParsing "${urlbase}?definitions=9&statusFilter=completed&resultFilter=succeeded&`$top=1").content | ConvertFrom-JSON).value[0].id
-        $downloadUrl = ((Invoke-WebRequest -UseBasicParsing "${urlbase}/$id/artifacts").content | ConvertFrom-JSON).value[0].resource.downloadUrl
-        (New-Object Net.WebClient).DownloadFile($downloadUrl, "compat.zip")
-        Expand-Archive compat.zip -DestinationPath . -Force
-        Remove-Item compat.zip
+      uses: git-for-windows/get-azure-pipelines-artifact@v0
+      with:
+        repository: git/git
+        definitionId: 9
     - name: add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1
+      uses: microsoft/setup-msbuild@v2
     - name: copy dlls to root
       shell: cmd
       run: compat\vcbuild\vcpkg_copy_dlls.bat release
@@ -284,8 +284,7 @@ jobs:
             cc: clang
             pool: macos-13
           - jobname: osx-gcc
-            cc: gcc
-            cc_package: gcc-13
+            cc: gcc-13
             pool: macos-13
           - jobname: linux-gcc-default
             cc: gcc
@@ -303,7 +302,7 @@ jobs:
       CC: ${{matrix.vector.cc}}
       CC_PACKAGE: ${{matrix.vector.cc_package}}
       jobname: ${{matrix.vector.jobname}}
-      runs_on_pool: ${{matrix.vector.pool}}
+      distro: ${{matrix.vector.pool}}
     runs-on: ${{matrix.vector.pool}}
     steps:
     - uses: actions/checkout@v4
@@ -342,33 +341,31 @@ jobs:
         vector:
         - jobname: linux-musl
           image: alpine
+          distro: alpine-latest
         - jobname: linux32
-          image: daald/ubuntu32:xenial
+          image: i386/ubuntu:focal
+          distro: ubuntu32-20.04
         - jobname: pedantic
           image: fedora
+          distro: fedora-latest
     env:
       jobname: ${{matrix.vector.jobname}}
+      distro: ${{matrix.vector.distro}}
     runs-on: ubuntu-latest
     container: ${{matrix.vector.image}}
     steps:
-    - uses: actions/checkout@v4
-      if: matrix.vector.jobname != 'linux32'
-    - uses: actions/checkout@v1 # cannot be upgraded because Node.js Actions aren't supported in this container
+    - name: prepare libc6 for actions
       if: matrix.vector.jobname == 'linux32'
-    - run: ci/install-docker-dependencies.sh
+      run: apt -q update && apt -q -y install libc6-amd64 lib64stdc++6
+    - uses: actions/checkout@v4
+    - run: ci/install-dependencies.sh
     - run: ci/run-build-and-tests.sh
     - name: print test failures
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
       run: ci/print-test-failures.sh
     - name: Upload failed tests' directories
-      if: failure() && env.FAILED_TEST_ARTIFACTS != '' && matrix.vector.jobname != 'linux32'
+      if: failure() && env.FAILED_TEST_ARTIFACTS != ''
       uses: actions/upload-artifact@v4
-      with:
-        name: failed-tests-${{matrix.vector.jobname}}
-        path: ${{env.FAILED_TEST_ARTIFACTS}}
-    - name: Upload failed tests' directories
-      if: failure() && env.FAILED_TEST_ARTIFACTS != '' && matrix.vector.jobname == 'linux32'
-      uses: actions/upload-artifact@v1 # cannot be upgraded because Node.js Actions aren't supported in this container
       with:
         name: failed-tests-${{matrix.vector.jobname}}
         path: ${{env.FAILED_TEST_ARTIFACTS}}

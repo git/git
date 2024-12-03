@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "gettext.h"
 #include "hash.h"
@@ -6,19 +8,6 @@
 #include "refs.h"
 #include "refspec.h"
 #include "strbuf.h"
-
-static struct refspec_item s_tag_refspec = {
-	.force = 0,
-	.pattern = 1,
-	.matching = 0,
-	.exact_sha1 = 0,
-	.negative = 0,
-	.src = "refs/tags/*",
-	.dst = "refs/tags/*",
-};
-
-/* See TAG_REFSPEC for the string version */
-const struct refspec_item *tag_refspec = &s_tag_refspec;
 
 /*
  * Parses the provided refspec 'refspec' and populates the refspec_item 'item'.
@@ -164,6 +153,7 @@ static int parse_refspec(struct refspec_item *item, const char *refspec, int fet
 int refspec_item_init(struct refspec_item *item, const char *refspec, int fetch)
 {
 	memset(item, 0, sizeof(*item));
+	item->raw = xstrdup(refspec);
 	return parse_refspec(item, refspec, fetch);
 }
 
@@ -178,6 +168,7 @@ void refspec_item_clear(struct refspec_item *item)
 {
 	FREE_AND_NULL(item->src);
 	FREE_AND_NULL(item->dst);
+	FREE_AND_NULL(item->raw);
 	item->force = 0;
 	item->pattern = 0;
 	item->matching = 0;
@@ -190,31 +181,29 @@ void refspec_init(struct refspec *rs, int fetch)
 	rs->fetch = fetch;
 }
 
-static void refspec_append_nodup(struct refspec *rs, char *refspec)
+void refspec_append(struct refspec *rs, const char *refspec)
 {
 	struct refspec_item item;
 
 	refspec_item_init_or_die(&item, refspec, rs->fetch);
 
 	ALLOC_GROW(rs->items, rs->nr + 1, rs->alloc);
-	rs->items[rs->nr++] = item;
+	rs->items[rs->nr] = item;
 
-	ALLOC_GROW(rs->raw, rs->raw_nr + 1, rs->raw_alloc);
-	rs->raw[rs->raw_nr++] = refspec;
-}
-
-void refspec_append(struct refspec *rs, const char *refspec)
-{
-	refspec_append_nodup(rs, xstrdup(refspec));
+	rs->nr++;
 }
 
 void refspec_appendf(struct refspec *rs, const char *fmt, ...)
 {
 	va_list ap;
+	char *buf;
 
 	va_start(ap, fmt);
-	refspec_append_nodup(rs, xstrvfmt(fmt, ap));
+	buf = xstrvfmt(fmt, ap);
 	va_end(ap);
+
+	refspec_append(rs, buf);
+	free(buf);
 }
 
 void refspec_appendn(struct refspec *rs, const char **refspecs, int nr)
@@ -234,12 +223,6 @@ void refspec_clear(struct refspec *rs)
 	FREE_AND_NULL(rs->items);
 	rs->alloc = 0;
 	rs->nr = 0;
-
-	for (i = 0; i < rs->raw_nr; i++)
-		free((char *)rs->raw[i]);
-	FREE_AND_NULL(rs->raw);
-	rs->raw_alloc = 0;
-	rs->raw_nr = 0;
 
 	rs->fetch = 0;
 }

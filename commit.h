@@ -81,6 +81,8 @@ struct commit *lookup_commit_reference_gently(struct repository *r,
 					      const struct object_id *oid,
 					      int quiet);
 struct commit *lookup_commit_reference_by_name(const char *name);
+struct commit *lookup_commit_reference_by_name_gently(const char *name,
+						      int quiet);
 
 /*
  * Look up object named by "oid", dereference tag as necessary,
@@ -107,6 +109,8 @@ static inline int repo_parse_commit_no_graph(struct repository *r,
 }
 
 void parse_commit_or_die(struct commit *item);
+
+void unparse_commit(struct repository *r, const struct object_id *oid);
 
 struct buffer_slab;
 struct buffer_slab *allocate_commit_buffer_slab(void);
@@ -181,7 +185,7 @@ struct commit_list *commit_list_insert_by_date(struct commit *item,
 void commit_list_sort_by_date(struct commit_list **list);
 
 /* Shallow copy of the input list */
-struct commit_list *copy_commit_list(struct commit_list *list);
+struct commit_list *copy_commit_list(const struct commit_list *list);
 
 /* Modify list in-place to reverse it, returning new head; list will be tail */
 struct commit_list *reverse_commit_list(struct commit_list *list);
@@ -240,7 +244,6 @@ int commit_graft_pos(struct repository *r, const struct object_id *oid);
 int register_commit_graft(struct repository *r, struct commit_graft *, int);
 void prepare_commit_graft(struct repository *r);
 struct commit_graft *lookup_commit_graft(struct repository *r, const struct object_id *oid);
-void reset_commit_grafts(struct repository *r);
 
 struct commit *get_fork_point(const char *refname, struct commit *commit);
 
@@ -251,7 +254,10 @@ struct oid_array;
 struct ref;
 int for_each_commit_graft(each_commit_graft_fn, void *);
 
-int interactive_add(const char **argv, const char *prefix, int patch);
+int interactive_add(struct repository *repo,
+		    const char **argv,
+		    const char *prefix,
+		    int patch);
 
 struct commit_extra_header {
 	struct commit_extra_header *next;
@@ -260,19 +266,19 @@ struct commit_extra_header {
 	size_t len;
 };
 
-void append_merge_tag_headers(struct commit_list *parents,
+void append_merge_tag_headers(const struct commit_list *parents,
 			      struct commit_extra_header ***tail);
 
 int commit_tree(const char *msg, size_t msg_len,
 		const struct object_id *tree,
-		struct commit_list *parents, struct object_id *ret,
+		const struct commit_list *parents, struct object_id *ret,
 		const char *author, const char *sign_commit);
 
 int commit_tree_extended(const char *msg, size_t msg_len,
 			 const struct object_id *tree,
-			 struct commit_list *parents, struct object_id *ret,
+			 const struct commit_list *parents, struct object_id *ret,
 			 const char *author, const char *committer,
-			 const char *sign_commit, struct commit_extra_header *);
+			 const char *sign_commit, const struct commit_extra_header *);
 
 struct commit_extra_header *read_commit_extra_headers(struct commit *, const char **);
 
@@ -280,17 +286,12 @@ void free_commit_extra_headers(struct commit_extra_header *extra);
 
 /*
  * Search the commit object contents given by "msg" for the header "key".
- * Reads up to "len" bytes of "msg".
  * Returns a pointer to the start of the header contents, or NULL. The length
  * of the header, up to the first newline, is returned via out_len.
  *
  * Note that some headers (like mergetag) may be multi-line. It is the caller's
  * responsibility to parse further in this case!
  */
-const char *find_header_mem(const char *msg, size_t len,
-			const char *key,
-			size_t *out_len);
-
 const char *find_commit_header(const char *msg, const char *key,
 			       size_t *out_len);
 
@@ -306,7 +307,7 @@ struct merge_remote_desc {
 	struct object *obj; /* the named object, could be a tag */
 	char name[FLEX_ARRAY];
 };
-struct merge_remote_desc *merge_remote_util(struct commit *);
+struct merge_remote_desc *merge_remote_util(const struct commit *);
 void set_merge_remote_desc(struct commit *commit,
 			   const char *name, struct object *obj);
 
@@ -370,5 +371,6 @@ int parse_buffer_signed_by_header(const char *buffer,
 				  struct strbuf *payload,
 				  struct strbuf *signature,
 				  const struct git_hash_algo *algop);
+int add_header_signature(struct strbuf *buf, struct strbuf *sig, const struct git_hash_algo *algo);
 
 #endif /* COMMIT_H */

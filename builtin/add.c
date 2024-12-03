@@ -3,7 +3,6 @@
  *
  * Copyright (C) 2006 Linus Torvalds
  */
-#define USE_THE_INDEX_VARIABLE
 #include "builtin.h"
 #include "advice.h"
 #include "config.h"
@@ -18,7 +17,6 @@
 #include "preload-index.h"
 #include "diff.h"
 #include "read-cache.h"
-#include "repository.h"
 #include "revision.h"
 #include "bulk-checkin.h"
 #include "strvec.h"
@@ -36,24 +34,27 @@ static int pathspec_file_nul;
 static int include_sparse;
 static const char *pathspec_from_file;
 
-static int chmod_pathspec(struct pathspec *pathspec, char flip, int show_only)
+static int chmod_pathspec(struct repository *repo,
+			  struct pathspec *pathspec,
+			  char flip,
+			  int show_only)
 {
 	int i, ret = 0;
 
-	for (i = 0; i < the_index.cache_nr; i++) {
-		struct cache_entry *ce = the_index.cache[i];
+	for (i = 0; i < repo->index->cache_nr; i++) {
+		struct cache_entry *ce = repo->index->cache[i];
 		int err;
 
 		if (!include_sparse &&
 		    (ce_skip_worktree(ce) ||
-		     !path_in_sparse_checkout(ce->name, &the_index)))
+		     !path_in_sparse_checkout(ce->name, repo->index)))
 			continue;
 
-		if (pathspec && !ce_path_match(&the_index, ce, pathspec, NULL))
+		if (pathspec && !ce_path_match(repo->index, ce, pathspec, NULL))
 			continue;
 
 		if (!show_only)
-			err = chmod_index_entry(&the_index, ce, flip);
+			err = chmod_index_entry(repo->index, ce, flip);
 		else
 			err = S_ISREG(ce->ce_mode) ? 0 : -1;
 
@@ -64,31 +65,36 @@ static int chmod_pathspec(struct pathspec *pathspec, char flip, int show_only)
 	return ret;
 }
 
-static int renormalize_tracked_files(const struct pathspec *pathspec, int flags)
+static int renormalize_tracked_files(struct repository *repo,
+				     const struct pathspec *pathspec,
+				     int flags)
 {
 	int i, retval = 0;
 
-	for (i = 0; i < the_index.cache_nr; i++) {
-		struct cache_entry *ce = the_index.cache[i];
+	for (i = 0; i < repo->index->cache_nr; i++) {
+		struct cache_entry *ce = repo->index->cache[i];
 
 		if (!include_sparse &&
 		    (ce_skip_worktree(ce) ||
-		     !path_in_sparse_checkout(ce->name, &the_index)))
+		     !path_in_sparse_checkout(ce->name, repo->index)))
 			continue;
 		if (ce_stage(ce))
 			continue; /* do not touch unmerged paths */
 		if (!S_ISREG(ce->ce_mode) && !S_ISLNK(ce->ce_mode))
 			continue; /* do not touch non blobs */
-		if (pathspec && !ce_path_match(&the_index, ce, pathspec, NULL))
+		if (pathspec && !ce_path_match(repo->index, ce, pathspec, NULL))
 			continue;
-		retval |= add_file_to_index(&the_index, ce->name,
+		retval |= add_file_to_index(repo->index, ce->name,
 					    flags | ADD_CACHE_RENORMALIZE);
 	}
 
 	return retval;
 }
 
-static char *prune_directory(struct dir_struct *dir, struct pathspec *pathspec, int prefix)
+static char *prune_directory(struct repository *repo,
+			     struct dir_struct *dir,
+			     struct pathspec *pathspec,
+			     int prefix)
 {
 	char *seen;
 	int i;
@@ -100,16 +106,16 @@ static char *prune_directory(struct dir_struct *dir, struct pathspec *pathspec, 
 	i = dir->nr;
 	while (--i >= 0) {
 		struct dir_entry *entry = *src++;
-		if (dir_path_match(&the_index, entry, pathspec, prefix, seen))
+		if (dir_path_match(repo->index, entry, pathspec, prefix, seen))
 			*dst++ = entry;
 	}
 	dir->nr = dst - dir->entries;
-	add_pathspec_matches_against_index(pathspec, &the_index, seen,
+	add_pathspec_matches_against_index(pathspec, repo->index, seen,
 					   PS_IGNORE_SKIP_WORKTREE);
 	return seen;
 }
 
-static int refresh(int verbose, const struct pathspec *pathspec)
+static int refresh(struct repository *repo, int verbose, const struct pathspec *pathspec)
 {
 	char *seen;
 	int i, ret = 0;
@@ -119,14 +125,14 @@ static int refresh(int verbose, const struct pathspec *pathspec)
 		    (verbose ? REFRESH_IN_PORCELAIN : REFRESH_QUIET);
 
 	seen = xcalloc(pathspec->nr, 1);
-	refresh_index(&the_index, flags, pathspec, seen,
+	refresh_index(repo->index, flags, pathspec, seen,
 		      _("Unstaged changes after refreshing the index:"));
 	for (i = 0; i < pathspec->nr; i++) {
 		if (!seen[i]) {
 			const char *path = pathspec->items[i].original;
 
 			if (matches_skip_worktree(pathspec, i, &skip_worktree_seen) ||
-			    !path_in_sparse_checkout(path, &the_index)) {
+			    !path_in_sparse_checkout(path, repo->index)) {
 				string_list_append(&only_match_skip_worktree,
 						   pathspec->items[i].original);
 			} else {
@@ -147,14 +153,13 @@ static int refresh(int verbose, const struct pathspec *pathspec)
 	return ret;
 }
 
-int interactive_add(const char **argv, const char *prefix, int patch)
+int interactive_add(struct repository *repo,
+		    const char **argv,
+		    const char *prefix,
+		    int patch)
 {
 	struct pathspec pathspec;
-	int unused;
-
-	if (!git_config_get_bool("add.interactive.usebuiltin", &unused))
-		warning(_("the add.interactive.useBuiltin setting has been removed!\n"
-			  "See its entry in 'git help config' for details."));
+	int ret;
 
 	parse_pathspec(&pathspec, 0,
 		       PATHSPEC_PREFER_FULL |
@@ -163,25 +168,31 @@ int interactive_add(const char **argv, const char *prefix, int patch)
 		       prefix, argv);
 
 	if (patch)
-		return !!run_add_p(the_repository, ADD_P_ADD, NULL, &pathspec);
+		ret = !!run_add_p(repo, ADD_P_ADD, NULL, &pathspec);
 	else
-		return !!run_add_i(the_repository, &pathspec);
+		ret = !!run_add_i(repo, &pathspec);
+
+	clear_pathspec(&pathspec);
+	return ret;
 }
 
-static int edit_patch(int argc, const char **argv, const char *prefix)
+static int edit_patch(struct repository *repo,
+		      int argc,
+		      const char **argv,
+		      const char *prefix)
 {
-	char *file = git_pathdup("ADD_EDIT.patch");
+	char *file = repo_git_path(repo, "ADD_EDIT.patch");
 	struct child_process child = CHILD_PROCESS_INIT;
 	struct rev_info rev;
 	int out;
 	struct stat st;
 
-	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
+	repo_config(repo, git_diff_basic_config, NULL);
 
-	if (repo_read_index(the_repository) < 0)
+	if (repo_read_index(repo) < 0)
 		die(_("could not read the index"));
 
-	repo_init_revisions(the_repository, &rev, prefix);
+	repo_init_revisions(repo, &rev, prefix);
 	rev.diffopt.context = 7;
 
 	argc = setup_revisions(argc, argv, &rev, NULL);
@@ -310,16 +321,16 @@ static void check_embedded_repo(const char *path)
 	strbuf_strip_suffix(&name, "/");
 
 	warning(_("adding embedded git repository: %s"), name.buf);
-	if (!adviced_on_embedded_repo &&
-	    advice_enabled(ADVICE_ADD_EMBEDDED_REPO)) {
-		advise(embedded_advice, name.buf, name.buf);
+	if (!adviced_on_embedded_repo) {
+		advise_if_enabled(ADVICE_ADD_EMBEDDED_REPO,
+				  embedded_advice, name.buf, name.buf);
 		adviced_on_embedded_repo = 1;
 	}
 
 	strbuf_release(&name);
 }
 
-static int add_files(struct dir_struct *dir, int flags)
+static int add_files(struct repository *repo, struct dir_struct *dir, int flags)
 {
 	int i, exit_status = 0;
 	struct string_list matched_sparse_paths = STRING_LIST_INIT_NODUP;
@@ -328,21 +339,19 @@ static int add_files(struct dir_struct *dir, int flags)
 		fprintf(stderr, _(ignore_error));
 		for (i = 0; i < dir->ignored_nr; i++)
 			fprintf(stderr, "%s\n", dir->ignored[i]->name);
-		if (advice_enabled(ADVICE_ADD_IGNORED_FILE))
-			advise(_("Use -f if you really want to add them.\n"
-				"Turn this message off by running\n"
-				"\"git config advice.addIgnoredFile false\""));
+		advise_if_enabled(ADVICE_ADD_IGNORED_FILE,
+				  _("Use -f if you really want to add them."));
 		exit_status = 1;
 	}
 
 	for (i = 0; i < dir->nr; i++) {
 		if (!include_sparse &&
-		    !path_in_sparse_checkout(dir->entries[i]->name, &the_index)) {
+		    !path_in_sparse_checkout(dir->entries[i]->name, repo->index)) {
 			string_list_append(&matched_sparse_paths,
 					   dir->entries[i]->name);
 			continue;
 		}
-		if (add_file_to_index(&the_index, dir->entries[i]->name, flags)) {
+		if (add_file_to_index(repo->index, dir->entries[i]->name, flags)) {
 			if (!ignore_add_errors)
 				die(_("adding files failed"));
 			exit_status = 1;
@@ -361,7 +370,10 @@ static int add_files(struct dir_struct *dir, int flags)
 	return exit_status;
 }
 
-int cmd_add(int argc, const char **argv, const char *prefix)
+int cmd_add(int argc,
+	    const char **argv,
+	    const char *prefix,
+	    struct repository *repo)
 {
 	int exit_status = 0;
 	struct pathspec pathspec;
@@ -370,9 +382,11 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	int add_new_files;
 	int require_pathspec;
 	char *seen = NULL;
+	char *ps_matched = NULL;
 	struct lock_file lock_file = LOCK_INIT;
 
-	git_config(add_config, NULL);
+	if (repo)
+		repo_config(repo, add_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, builtin_add_options,
 			  builtin_add_usage, PARSE_OPT_KEEP_ARGV0);
@@ -383,13 +397,13 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			die(_("options '%s' and '%s' cannot be used together"), "--dry-run", "--interactive/--patch");
 		if (pathspec_from_file)
 			die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--interactive/--patch");
-		exit(interactive_add(argv + 1, prefix, patch_interactive));
+		exit(interactive_add(repo, argv + 1, prefix, patch_interactive));
 	}
 
 	if (edit_interactive) {
 		if (pathspec_from_file)
 			die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--edit");
-		return(edit_patch(argc, argv, prefix));
+		return(edit_patch(repo, argc, argv, prefix));
 	}
 	argc--;
 	argv++;
@@ -412,10 +426,10 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	add_new_files = !take_worktree_changes && !refresh_only && !add_renormalize;
 	require_pathspec = !(take_worktree_changes || (0 < addremove_explicit));
 
-	prepare_repo_settings(the_repository);
-	the_repository->settings.command_requires_full_index = 0;
+	prepare_repo_settings(repo);
+	repo->settings.command_requires_full_index = 0;
 
-	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
+	repo_hold_locked_index(repo, &lock_file, LOCK_DIE_ON_ERROR);
 
 	/*
 	 * Check the "pathspec '%s' did not match any files" block
@@ -440,10 +454,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	if (require_pathspec && pathspec.nr == 0) {
 		fprintf(stderr, _("Nothing specified, nothing added.\n"));
-		if (advice_enabled(ADVICE_ADD_EMPTY_PATHSPEC))
-			advise( _("Maybe you wanted to say 'git add .'?\n"
-				"Turn this message off by running\n"
-				"\"git config advice.addEmptyPathspec false\""));
+		advise_if_enabled(ADVICE_ADD_EMPTY_PATHSPEC,
+				  _("Maybe you wanted to say 'git add .'?"));
 		return 0;
 	}
 
@@ -458,11 +470,11 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		 (!(addremove || take_worktree_changes)
 		  ? ADD_CACHE_IGNORE_REMOVAL : 0));
 
-	if (repo_read_index_preload(the_repository, &pathspec, 0) < 0)
+	if (repo_read_index_preload(repo, &pathspec, 0) < 0)
 		die(_("index file corrupt"));
 
-	die_in_unpopulated_submodule(&the_index, prefix);
-	die_path_inside_submodule(&the_index, &pathspec);
+	die_in_unpopulated_submodule(repo->index, prefix);
+	die_path_inside_submodule(repo->index, &pathspec);
 
 	if (add_new_files) {
 		int baselen;
@@ -474,13 +486,13 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 		}
 
 		/* This picks up the paths that are not tracked */
-		baselen = fill_directory(&dir, &the_index, &pathspec);
+		baselen = fill_directory(&dir, repo->index, &pathspec);
 		if (pathspec.nr)
-			seen = prune_directory(&dir, &pathspec, baselen);
+			seen = prune_directory(repo, &dir, &pathspec, baselen);
 	}
 
 	if (refresh_only) {
-		exit_status |= refresh(verbose, &pathspec);
+		exit_status |= refresh(repo, verbose, &pathspec);
 		goto finish;
 	}
 
@@ -491,7 +503,7 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 		if (!seen)
 			seen = find_pathspecs_matching_against_index(&pathspec,
-					&the_index, PS_IGNORE_SKIP_WORKTREE);
+					repo->index, PS_IGNORE_SKIP_WORKTREE);
 
 		/*
 		 * file_exists() assumes exact match
@@ -527,8 +539,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			    !file_exists(path)) {
 				if (ignore_missing) {
 					int dtype = DT_UNKNOWN;
-					if (is_excluded(&dir, &the_index, path, &dtype))
-						dir_add_ignored(&dir, &the_index,
+					if (is_excluded(&dir, repo->index, path, &dtype))
+						dir_add_ignored(&dir, repo->index,
 								path, pathspec.items[i].len);
 				} else
 					die(_("pathspec '%s' did not match any files"),
@@ -549,25 +561,31 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	begin_odb_transaction();
 
+	ps_matched = xcalloc(pathspec.nr, 1);
 	if (add_renormalize)
-		exit_status |= renormalize_tracked_files(&pathspec, flags);
+		exit_status |= renormalize_tracked_files(repo, &pathspec, flags);
 	else
-		exit_status |= add_files_to_cache(the_repository, prefix,
-						  &pathspec, include_sparse,
-						  flags);
+		exit_status |= add_files_to_cache(repo, prefix,
+						  &pathspec, ps_matched,
+						  include_sparse, flags);
+
+	if (take_worktree_changes && !add_renormalize && !ignore_add_errors &&
+	    report_path_error(ps_matched, &pathspec))
+		exit(128);
 
 	if (add_new_files)
-		exit_status |= add_files(&dir, flags);
+		exit_status |= add_files(repo, &dir, flags);
 
 	if (chmod_arg && pathspec.nr)
-		exit_status |= chmod_pathspec(&pathspec, chmod_arg[0], show_only);
+		exit_status |= chmod_pathspec(repo, &pathspec, chmod_arg[0], show_only);
 	end_odb_transaction();
 
 finish:
-	if (write_locked_index(&the_index, &lock_file,
+	if (write_locked_index(repo->index, &lock_file,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("unable to write new index file"));
 
+	free(ps_matched);
 	dir_clear(&dir);
 	clear_pathspec(&pathspec);
 	return exit_status;

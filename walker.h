@@ -6,8 +6,8 @@
 struct walker {
 	void *data;
 	int (*fetch_ref)(struct walker *, struct ref *ref);
-	void (*prefetch)(struct walker *, unsigned char *sha1);
-	int (*fetch)(struct walker *, unsigned char *sha1);
+	void (*prefetch)(struct walker *, const struct object_id *oid);
+	int (*fetch)(struct walker *, const struct object_id *oid);
 	void (*cleanup)(struct walker *);
 	int get_verbosely;
 	int get_progress;

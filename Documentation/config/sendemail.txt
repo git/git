@@ -30,6 +30,21 @@ sendemail.confirm::
 	in the linkgit:git-send-email[1] documentation for the meaning of these
 	values.
 
+sendemail.mailmap::
+	If true, makes linkgit:git-send-email[1] assume `--mailmap`,
+	otherwise assume `--no-mailmap`. False by default.
+
+sendemail.mailmap.file::
+	The location of a linkgit:git-send-email[1] specific augmenting
+	mailmap file. The default mailmap and `mailmap.file` are loaded
+	first. Thus, entries in this file take precedence over entries in
+	the default mailmap locations. See linkgit:gitmailmap[5].
+
+sendemail.mailmap.blob::
+	Like `sendemail.mailmap.file`, but consider the value as a reference
+	to a blob in the repository. Entries in `sendemail.mailmap.file`
+	take precedence over entries here. See linkgit:gitmailmap[5].
+
 sendemail.aliasesFile::
 	To avoid typing long email addresses, point this to one or more
 	email aliases files.  You must also supply `sendemail.aliasFileType`.

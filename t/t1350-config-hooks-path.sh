@@ -2,6 +2,7 @@
 
 test_description='Test the core.hooksPath configuration variable'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'set up a pre-commit hook in core.hooksPath' '
@@ -39,6 +40,13 @@ test_expect_success 'git rev-parse --git-path hooks' '
 	git config core.hooksPath .git/custom-hooks &&
 	git rev-parse --git-path hooks/abc >actual &&
 	test .git/custom-hooks/abc = "$(cat actual)"
+'
+
+test_expect_success 'core.hooksPath=/dev/null' '
+	git clone -c core.hooksPath=/dev/null . no-templates &&
+	value="$(git -C no-templates config --local core.hooksPath)" &&
+	# The Bash used by Git for Windows rewrites `/dev/null` to `nul`
+	{ test /dev/null = "$value" || test nul = "$value"; }
 '
 
 test_done

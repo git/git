@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "config.h"
@@ -11,6 +13,8 @@
 #include "strbuf.h"
 #include "urlmatch.h"
 #include "git-compat-util.h"
+#include "trace2.h"
+#include "repository.h"
 
 void credential_init(struct credential *c)
 {
@@ -20,16 +24,66 @@ void credential_init(struct credential *c)
 
 void credential_clear(struct credential *c)
 {
+	credential_clear_secrets(c);
 	free(c->protocol);
 	free(c->host);
 	free(c->path);
 	free(c->username);
-	free(c->password);
 	free(c->oauth_refresh_token);
+	free(c->authtype);
 	string_list_clear(&c->helpers, 0);
 	strvec_clear(&c->wwwauth_headers);
+	strvec_clear(&c->state_headers);
+	strvec_clear(&c->state_headers_to_send);
 
 	credential_init(c);
+}
+
+void credential_next_state(struct credential *c)
+{
+	strvec_clear(&c->state_headers_to_send);
+	SWAP(c->state_headers, c->state_headers_to_send);
+}
+
+void credential_clear_secrets(struct credential *c)
+{
+	FREE_AND_NULL(c->password);
+	FREE_AND_NULL(c->credential);
+}
+
+static void credential_set_capability(struct credential_capability *capa,
+				      enum credential_op_type op_type)
+{
+	switch (op_type) {
+	case CREDENTIAL_OP_INITIAL:
+		capa->request_initial = 1;
+		break;
+	case CREDENTIAL_OP_HELPER:
+		capa->request_helper = 1;
+		break;
+	case CREDENTIAL_OP_RESPONSE:
+		capa->response = 1;
+		break;
+	}
+}
+
+
+void credential_set_all_capabilities(struct credential *c,
+				     enum credential_op_type op_type)
+{
+	credential_set_capability(&c->capa_authtype, op_type);
+	credential_set_capability(&c->capa_state, op_type);
+}
+
+static void announce_one(struct credential_capability *cc, const char *name, FILE *fp) {
+	if (cc->request_initial)
+		fprintf(fp, "capability %s\n", name);
+}
+
+void credential_announce_capabilities(struct credential *c, FILE *fp) {
+	fprintf(fp, "version 0\n");
+	announce_one(&c->capa_authtype, "authtype", fp);
+	announce_one(&c->capa_state, "state", fp);
 }
 
 int credential_match(const struct credential *want,
@@ -40,7 +94,8 @@ int credential_match(const struct credential *want,
 	       CHECK(host) &&
 	       CHECK(path) &&
 	       CHECK(username) &&
-	       (!match_password || CHECK(password));
+	       (!match_password || CHECK(password)) &&
+	       (!match_password || CHECK(credential));
 #undef CHECK
 }
 
@@ -198,17 +253,58 @@ static char *credential_ask_one(const char *what, struct credential *c,
 	return xstrdup(r);
 }
 
-static void credential_getpass(struct credential *c)
+static int credential_getpass(struct credential *c)
 {
+	int interactive;
+	char *value;
+	if (!git_config_get_maybe_bool("credential.interactive", &interactive) &&
+	    !interactive) {
+		trace2_data_intmax("credential", the_repository,
+				   "interactive/skipped", 1);
+		return -1;
+	}
+	if (!git_config_get_string("credential.interactive", &value)) {
+		int same = !strcmp(value, "never");
+		free(value);
+		if (same) {
+			trace2_data_intmax("credential", the_repository,
+					   "interactive/skipped", 1);
+			return -1;
+		}
+	}
+
+	trace2_region_enter("credential", "interactive", the_repository);
 	if (!c->username)
 		c->username = credential_ask_one("Username", c,
 						 PROMPT_ASKPASS|PROMPT_ECHO);
 	if (!c->password)
 		c->password = credential_ask_one("Password", c,
 						 PROMPT_ASKPASS);
+	trace2_region_leave("credential", "interactive", the_repository);
+
+	return 0;
 }
 
-int credential_read(struct credential *c, FILE *fp)
+int credential_has_capability(const struct credential_capability *capa,
+			      enum credential_op_type op_type)
+{
+	/*
+	 * We're checking here if each previous step indicated that we had the
+	 * capability.  If it did, then we want to pass it along; conversely, if
+	 * it did not, we don't want to report that to our caller.
+	 */
+	switch (op_type) {
+	case CREDENTIAL_OP_HELPER:
+		return capa->request_initial;
+	case CREDENTIAL_OP_RESPONSE:
+		return capa->request_initial && capa->request_helper;
+	default:
+		return 0;
+	}
+}
+
+int credential_read(struct credential *c, FILE *fp,
+		    enum credential_op_type op_type)
 {
 	struct strbuf line = STRBUF_INIT;
 
@@ -233,6 +329,9 @@ int credential_read(struct credential *c, FILE *fp)
 		} else if (!strcmp(key, "password")) {
 			free(c->password);
 			c->password = xstrdup(value);
+		} else if (!strcmp(key, "credential")) {
+			free(c->credential);
+			c->credential = xstrdup(value);
 		} else if (!strcmp(key, "protocol")) {
 			free(c->protocol);
 			c->protocol = xstrdup(value);
@@ -242,8 +341,19 @@ int credential_read(struct credential *c, FILE *fp)
 		} else if (!strcmp(key, "path")) {
 			free(c->path);
 			c->path = xstrdup(value);
+		} else if (!strcmp(key, "ephemeral")) {
+			c->ephemeral = !!git_config_bool("ephemeral", value);
 		} else if (!strcmp(key, "wwwauth[]")) {
 			strvec_push(&c->wwwauth_headers, value);
+		} else if (!strcmp(key, "state[]")) {
+			strvec_push(&c->state_headers, value);
+		} else if (!strcmp(key, "capability[]")) {
+			if (!strcmp(value, "authtype"))
+				credential_set_capability(&c->capa_authtype, op_type);
+			else if (!strcmp(value, "state"))
+				credential_set_capability(&c->capa_state, op_type);
+		} else if (!strcmp(key, "continue")) {
+			c->multistage = !!git_config_bool("continue", value);
 		} else if (!strcmp(key, "password_expiry_utc")) {
 			errno = 0;
 			c->password_expiry_utc = parse_timestamp(value, NULL, 10);
@@ -252,6 +362,9 @@ int credential_read(struct credential *c, FILE *fp)
 		} else if (!strcmp(key, "oauth_refresh_token")) {
 			free(c->oauth_refresh_token);
 			c->oauth_refresh_token = xstrdup(value);
+		} else if (!strcmp(key, "authtype")) {
+			free(c->authtype);
+			c->authtype = xstrdup(value);
 		} else if (!strcmp(key, "url")) {
 			credential_from_url(c, value);
 		} else if (!strcmp(key, "quit")) {
@@ -280,8 +393,20 @@ static void credential_write_item(FILE *fp, const char *key, const char *value,
 	fprintf(fp, "%s=%s\n", key, value);
 }
 
-void credential_write(const struct credential *c, FILE *fp)
+void credential_write(const struct credential *c, FILE *fp,
+		      enum credential_op_type op_type)
 {
+	if (credential_has_capability(&c->capa_authtype, op_type))
+		credential_write_item(fp, "capability[]", "authtype", 0);
+	if (credential_has_capability(&c->capa_state, op_type))
+		credential_write_item(fp, "capability[]", "state", 0);
+
+	if (credential_has_capability(&c->capa_authtype, op_type)) {
+		credential_write_item(fp, "authtype", c->authtype, 0);
+		credential_write_item(fp, "credential", c->credential, 0);
+		if (c->ephemeral)
+			credential_write_item(fp, "ephemeral", "1", 0);
+	}
 	credential_write_item(fp, "protocol", c->protocol, 1);
 	credential_write_item(fp, "host", c->host, 1);
 	credential_write_item(fp, "path", c->path, 0);
@@ -295,6 +420,12 @@ void credential_write(const struct credential *c, FILE *fp)
 	}
 	for (size_t i = 0; i < c->wwwauth_headers.nr; i++)
 		credential_write_item(fp, "wwwauth[]", c->wwwauth_headers.v[i], 0);
+	if (credential_has_capability(&c->capa_state, op_type)) {
+		if (c->multistage)
+			credential_write_item(fp, "continue", "1", 0);
+		for (size_t i = 0; i < c->state_headers_to_send.nr; i++)
+			credential_write_item(fp, "state[]", c->state_headers_to_send.v[i], 0);
+	}
 }
 
 static int run_credential_helper(struct credential *c,
@@ -317,14 +448,14 @@ static int run_credential_helper(struct credential *c,
 
 	fp = xfdopen(helper.in, "w");
 	sigchain_push(SIGPIPE, SIG_IGN);
-	credential_write(c, fp);
+	credential_write(c, fp, want_output ? CREDENTIAL_OP_HELPER : CREDENTIAL_OP_RESPONSE);
 	fclose(fp);
 	sigchain_pop(SIGPIPE);
 
 	if (want_output) {
 		int r;
 		fp = xfdopen(helper.out, "r");
-		r = credential_read(c, fp);
+		r = credential_read(c, fp, CREDENTIAL_OP_HELPER);
 		fclose(fp);
 		if (r < 0) {
 			finish_command(&helper);
@@ -357,32 +488,45 @@ static int credential_do(struct credential *c, const char *helper,
 	return r;
 }
 
-void credential_fill(struct credential *c)
+void credential_fill(struct credential *c, int all_capabilities)
 {
 	int i;
 
-	if (c->username && c->password)
+	if ((c->username && c->password) || c->credential)
 		return;
 
+	credential_next_state(c);
+	c->multistage = 0;
+
 	credential_apply_config(c);
+	if (all_capabilities)
+		credential_set_all_capabilities(c, CREDENTIAL_OP_INITIAL);
 
 	for (i = 0; i < c->helpers.nr; i++) {
 		credential_do(c, c->helpers.items[i].string, "get");
+
 		if (c->password_expiry_utc < time(NULL)) {
-			/* Discard expired password */
-			FREE_AND_NULL(c->password);
+			/*
+			 * Don't use credential_clear() here: callers such as
+			 * cmd_credential() expect to still be able to call
+			 * credential_write() on a struct credential whose
+			 * secrets have expired.
+			 */
+			credential_clear_secrets(c);
 			/* Reset expiry to maintain consistency */
 			c->password_expiry_utc = TIME_MAX;
 		}
-		if (c->username && c->password)
+		if ((c->username && c->password) || c->credential) {
+			strvec_clear(&c->wwwauth_headers);
 			return;
+		}
 		if (c->quit)
 			die("credential helper '%s' told us to quit",
 			    c->helpers.items[i].string);
 	}
 
-	credential_getpass(c);
-	if (!c->username && !c->password)
+	if (credential_getpass(c) ||
+	    (!c->username && !c->password && !c->credential))
 		die("unable to get password from user");
 }
 
@@ -392,8 +536,10 @@ void credential_approve(struct credential *c)
 
 	if (c->approved)
 		return;
-	if (!c->username || !c->password || c->password_expiry_utc < time(NULL))
+	if (((!c->username || !c->password) && !c->credential) || c->password_expiry_utc < time(NULL))
 		return;
+
+	credential_next_state(c);
 
 	credential_apply_config(c);
 
@@ -406,13 +552,15 @@ void credential_reject(struct credential *c)
 {
 	int i;
 
+	credential_next_state(c);
+
 	credential_apply_config(c);
 
 	for (i = 0; i < c->helpers.nr; i++)
 		credential_do(c, c->helpers.items[i].string, "erase");
 
+	credential_clear_secrets(c);
 	FREE_AND_NULL(c->username);
-	FREE_AND_NULL(c->password);
 	FREE_AND_NULL(c->oauth_refresh_token);
 	c->password_expiry_utc = TIME_MAX;
 	c->approved = 0;

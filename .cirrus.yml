@@ -9,7 +9,7 @@ freebsd_task:
     DEFAULT_TEST_TARGET: prove
     DEVELOPER: 1
   freebsd_instance:
-    image_family: freebsd-13-2
+    image_family: freebsd-13-4
     memory: 2G
   install_script:
     pkg install -y gettext gmake perl5

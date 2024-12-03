@@ -1,6 +1,11 @@
 default:
   timeout: 2h
 
+stages:
+  - build
+  - test
+  - analyze
+
 workflow:
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
@@ -9,8 +14,14 @@ workflow:
 
 test:linux:
   image: $image
+  stage: test
+  needs: [ ]
+  tags:
+    - saas-linux-medium-amd64
+  variables:
+    CUSTOM_PATH: "/custom"
   before_script:
-    - ./ci/install-docker-dependencies.sh
+    - ./ci/install-dependencies.sh
   script:
     - useradd builder --create-home
     - chown -R builder "${CI_PROJECT_DIR}"
@@ -23,6 +34,9 @@ test:linux:
       fi
   parallel:
     matrix:
+      - jobname: linux-old
+        image: ubuntu:16.04
+        CC: gcc
       - jobname: linux-sha256
         image: ubuntu:latest
         CC: clang
@@ -60,6 +74,8 @@ test:linux:
 
 test:osx:
   image: $image
+  stage: test
+  needs: [ ]
   tags:
     - saas-macos-medium-m1
   variables:
@@ -93,12 +109,104 @@ test:osx:
       - t/failed-test-artifacts
     when: on_failure
 
+build:mingw64:
+  stage: build
+  tags:
+    - saas-windows-medium-amd64
+  variables:
+    NO_PERL: 1
+  before_script:
+    - ./ci/install-sdk.ps1 -directory "git-sdk"
+  script:
+    - git-sdk/usr/bin/bash.exe -l -c 'ci/make-test-artifacts.sh artifacts'
+  artifacts:
+    paths:
+      - artifacts
+      - git-sdk
+
+test:mingw64:
+  stage: test
+  tags:
+    - saas-windows-medium-amd64
+  needs:
+    - job: "build:mingw64"
+      artifacts: true
+  before_script:
+    - git-sdk/usr/bin/bash.exe -l -c 'tar xf artifacts/artifacts.tar.gz'
+    - New-Item -Path .git/info -ItemType Directory
+    - New-Item .git/info/exclude -ItemType File -Value "/git-sdk"
+  script:
+    - git-sdk/usr/bin/bash.exe -l -c "ci/run-test-slice.sh $CI_NODE_INDEX $CI_NODE_TOTAL"
+  after_script:
+    - git-sdk/usr/bin/bash.exe -l -c 'ci/print-test-failures.sh'
+  parallel: 10
+
+test:fuzz-smoke-tests:
+  image: ubuntu:latest
+  stage: test
+  needs: [ ]
+  variables:
+    CC: clang
+  before_script:
+    - ./ci/install-dependencies.sh
+  script:
+    - ./ci/run-build-and-minimal-fuzzers.sh
+
 static-analysis:
   image: ubuntu:22.04
+  stage: analyze
+  needs: [ ]
   variables:
     jobname: StaticAnalysis
   before_script:
-    - ./ci/install-docker-dependencies.sh
+    - ./ci/install-dependencies.sh
   script:
     - ./ci/run-static-analysis.sh
     - ./ci/check-directional-formatting.bash
+
+check-whitespace:
+  image: ubuntu:latest
+  stage: analyze
+  needs: [ ]
+  before_script:
+    - ./ci/install-dependencies.sh
+  # Since $CI_MERGE_REQUEST_TARGET_BRANCH_SHA is only defined for merged
+  # pipelines, we fallback to $CI_MERGE_REQUEST_DIFF_BASE_SHA, which should
+  # be defined in all pipelines.
+  script:
+    - |
+      R=${CI_MERGE_REQUEST_TARGET_BRANCH_SHA-${CI_MERGE_REQUEST_DIFF_BASE_SHA:?}} || exit
+      ./ci/check-whitespace.sh "$R"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+
+check-style:
+  image: ubuntu:latest
+  stage: analyze
+  needs: [ ]
+  allow_failure: true
+  variables:
+    CC: clang
+    jobname: ClangFormat
+  before_script:
+    - ./ci/install-dependencies.sh
+  # Since $CI_MERGE_REQUEST_TARGET_BRANCH_SHA is only defined for merged
+  # pipelines, we fallback to $CI_MERGE_REQUEST_DIFF_BASE_SHA, which should
+  # be defined in all pipelines.
+  script:
+    - |
+      R=${CI_MERGE_REQUEST_TARGET_BRANCH_SHA-${CI_MERGE_REQUEST_DIFF_BASE_SHA:?}} || exit
+      ./ci/run-style-check.sh "$R"
+  rules:
+    - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
+
+documentation:
+  image: ubuntu:latest
+  stage: analyze
+  needs: [ ]
+  variables:
+    jobname: Documentation
+  before_script:
+    - ./ci/install-dependencies.sh
+  script:
+    - ./ci/test-documentation.sh

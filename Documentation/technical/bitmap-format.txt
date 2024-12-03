@@ -255,3 +255,144 @@ triplet is -
 	xor_row (4 byte integer, network byte order): ::
 	The position of the triplet whose bitmap is used to compress
 	this one, or `0xffffffff` if no such bitmap exists.
+
+Pseudo-merge bitmaps
+--------------------
+
+If the `BITMAP_OPT_PSEUDO_MERGES` flag is set, a variable number of
+bytes (preceding the name-hash cache, commit lookup table, and trailing
+checksum) of the `.bitmap` file is used to store pseudo-merge bitmaps.
+
+For more information on what pseudo-merges are, why they are useful, and
+how to configure them, see the information in linkgit:gitpacking[7].
+
+=== File format
+
+If enabled, pseudo-merge bitmaps are stored in an optional section at
+the end of a `.bitmap` file. The format is as follows:
+
+....
++-------------------------------------------+
+|               .bitmap File                |
++-------------------------------------------+
+|                                           |
+|  Pseudo-merge bitmaps (Variable Length)   |
+|  +---------------------------+            |
+|  | commits_bitmap (EWAH)     |            |
+|  +---------------------------+            |
+|  | merge_bitmap (EWAH)       |            |
+|  +---------------------------+            |
+|                                           |
++-------------------------------------------+
+|                                           |
+|  Lookup Table                             |
+|  +---------------------------+            |
+|  | commit_pos (4 bytes)      |            |
+|  +---------------------------+            |
+|  | offset (8 bytes)          |            |
+|  +------------+--------------+            |
+|                                           |
+|  Offset Cases:                            |
+|  -------------                            |
+|                                           |
+|  1. MSB Unset: single pseudo-merge bitmap |
+|     + offset to pseudo-merge bitmap       |
+|                                           |
+|  2. MSB Set: multiple pseudo-merges       |
+|     + offset to extended lookup table     |
+|                                           |
++-------------------------------------------+
+|                                           |
+|  Extended Lookup Table (Optional)         |
+|  +----+----------+----------+----------+  |
+|  | N  | Offset 1 |   ....   | Offset N |  |
+|  +----+----------+----------+----------+  |
+|  |    |  8 bytes |   ....   |  8 bytes |  |
+|  +----+----------+----------+----------+  |
+|                                           |
++-------------------------------------------+
+|                                           |
+|  Pseudo-merge position table              |
+|  +----+----------+----------+----------+  |
+|  | N  | Offset 1 |   ....   | Offset N |  |
+|  +----+----------+----------+----------+  |
+|  |    |  8 bytes |   ....   |  8 bytes |  |
+|  +----+----------+----------+----------+  |
+|                                           |
++-------------------------------------------+
+|                                           |
+|  Pseudo-merge Metadata                    |
+|  +-----------------------------------+    |
+|  | # pseudo-merges (4 bytes)         |    |
+|  +-----------------------------------+    |
+|  | # commits (4 bytes)               |    |
+|  +-----------------------------------+    |
+|  | Lookup offset (8 bytes)           |    |
+|  +-----------------------------------+    |
+|  | Extension size (8 bytes)          |    |
+|  +-----------------------------------+    |
+|                                           |
++-------------------------------------------+
+....
+
+* One or more pseudo-merge bitmaps, each containing:
+
+  ** `commits_bitmap`, an EWAH-compressed bitmap describing the set of
+     commits included in the this psuedo-merge.
+
+  ** `merge_bitmap`, an EWAH-compressed bitmap describing the union of
+     the set of objects reachable from all commits listed in the
+     `commits_bitmap`.
+
+* A lookup table, mapping pseudo-merged commits to the pseudo-merges
+  they belong to. Entries appear in increasing order of each commit's
+  bit position. Each entry is 12 bytes wide, and is comprised of the
+  following:
+
+  ** `commit_pos`, a 4-byte unsigned value (in network byte-order)
+     containing the bit position for this commit.
+
+  ** `offset`, an 8-byte unsigned value (also in network byte-order)
+  containing either one of two possible offsets, depending on whether or
+  not the most-significant bit is set.
+
+    *** If unset (i.e. `offset & ((uint64_t)1<<63) == 0`), the offset
+	(relative to the beginning of the `.bitmap` file) at which the
+	pseudo-merge bitmap for this commit can be read. This indicates
+	only a single pseudo-merge bitmap contains this commit.
+
+    *** If set (i.e. `offset & ((uint64_t)1<<63) != 0`), the offset
+	(again relative to the beginning of the `.bitmap` file) at which
+	the extended offset table can be located describing the set of
+	pseudo-merge bitmaps which contain this commit. This indicates
+	that multiple pseudo-merge bitmaps contain this commit.
+
+* An (optional) extended lookup table (written if and only if there is
+  at least one commit which appears in more than one pseudo-merge).
+  There are as many entries as commits which appear in multiple
+  pseudo-merges. Each entry contains the following:
+
+  ** `N`, a 4-byte unsigned value equal to the number of pseudo-merges
+     which contain a given commit.
+
+  ** An array of `N` 8-byte unsigned values, each of which is
+     interpreted as an offset (relative to the beginning of the
+     `.bitmap` file) at which a pseudo-merge bitmap for this commit can
+     be read. These values occur in no particular order.
+
+* Positions for all pseudo-merges, each stored as an 8-byte unsigned
+  value (in network byte-order) containing the offset (relative to the
+  beginning of the `.bitmap` file) of each consecutive pseudo-merge.
+
+* A 4-byte unsigned value (in network byte-order) equal to the number of
+  pseudo-merges.
+
+* A 4-byte unsigned value (in network byte-order) equal to the number of
+  unique commits which appear in any pseudo-merge.
+
+* An 8-byte unsigned value (in network byte-order) equal to the number
+  of bytes between the start of the pseudo-merge section and the
+  beginning of the lookup table.
+
+* An 8-byte unsigned value (in network byte-order) equal to the number
+  of bytes in the pseudo-merge section (including this field).

@@ -288,7 +288,7 @@ void strbuf_splice(struct strbuf *sb, size_t pos, size_t len,
  */
 void strbuf_add_commented_lines(struct strbuf *out,
 				const char *buf, size_t size,
-				char comment_line_char);
+				const char *comment_prefix);
 
 
 /**
@@ -309,6 +309,11 @@ static inline void strbuf_addstr(struct strbuf *sb, const char *s)
 {
 	strbuf_add(sb, s, strlen(s));
 }
+
+/**
+ * Add a NUL-terminated string the specified number of times to the buffer.
+ */
+void strbuf_addstrings(struct strbuf *sb, const char *s, size_t n);
 
 /**
  * Copy the contents of another buffer at the end of the current one.
@@ -336,6 +341,11 @@ size_t strbuf_expand_literal(struct strbuf *sb, const char *placeholder);
  * percent sign to `sb`, or the whole string if there is none.
  */
 int strbuf_expand_step(struct strbuf *sb, const char **formatp);
+
+/**
+ * Used with `strbuf_expand_step` to report unknown placeholders.
+ */
+void strbuf_expand_bad_format(const char *format, const char *command);
 
 /**
  * Append the contents of one strbuf to another, quoting any
@@ -379,7 +389,7 @@ void strbuf_addf(struct strbuf *sb, const char *fmt, ...);
  * blank to the buffer.
  */
 __attribute__((format (printf, 3, 4)))
-void strbuf_commented_addf(struct strbuf *sb, char comment_line_char, const char *fmt, ...);
+void strbuf_commented_addf(struct strbuf *sb, const char *comment_prefix, const char *fmt, ...);
 
 __attribute__((format (printf,2,0)))
 void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
@@ -513,11 +523,11 @@ int strbuf_getcwd(struct strbuf *sb);
 int strbuf_normalize_path(struct strbuf *sb);
 
 /**
- * Strip whitespace from a buffer. If comment_line_char is non-NUL,
+ * Strip whitespace from a buffer. If comment_prefix is non-NULL,
  * then lines beginning with that character are considered comments,
  * thus removed.
  */
-void strbuf_stripspace(struct strbuf *buf, char comment_line_char);
+void strbuf_stripspace(struct strbuf *buf, const char *comment_prefix);
 
 static inline int strbuf_strip_suffix(struct strbuf *sb, const char *suffix)
 {
@@ -673,6 +683,7 @@ char *xstrfmt(const char *fmt, ...);
 
 int starts_with(const char *str, const char *prefix);
 int istarts_with(const char *str, const char *prefix);
+int starts_with_mem(const char *str, size_t len, const char *prefix);
 
 /*
  * If the string "str" is the same as the string in "prefix", then the "arg"

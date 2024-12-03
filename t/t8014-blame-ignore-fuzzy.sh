@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='git blame ignore fuzzy heuristic'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 pick_author='s/^[0-9a-f^]* *(\([^ ]*\) .*/\1/'

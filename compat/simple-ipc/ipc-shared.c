@@ -16,11 +16,12 @@ int ipc_server_run(const char *path, const struct ipc_server_opts *opts,
 	struct ipc_server_data *server_data = NULL;
 	int ret;
 
-	ret = ipc_server_run_async(&server_data, path, opts,
-				   application_cb, application_data);
+	ret = ipc_server_init_async(&server_data, path, opts,
+				    application_cb, application_data);
 	if (ret)
 		return ret;
 
+	ipc_server_start_async(server_data);
 	ret = ipc_server_await(server_data);
 
 	ipc_server_free(server_data);

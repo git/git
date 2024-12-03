@@ -121,13 +121,13 @@ test_expect_success 'show-ref -d' '
 
 '
 
-test_expect_success 'show-ref --heads, --tags, --head, pattern' '
+test_expect_success 'show-ref --branches, --tags, --head, pattern' '
 	for branch in B main side
 	do
 		echo $(git rev-parse refs/heads/$branch) refs/heads/$branch || return 1
-	done >expect.heads &&
-	git show-ref --heads >actual &&
-	test_cmp expect.heads actual &&
+	done >expect.branches &&
+	git show-ref --branches >actual &&
+	test_cmp expect.branches actual &&
 
 	for tag in A B C
 	do
@@ -136,15 +136,15 @@ test_expect_success 'show-ref --heads, --tags, --head, pattern' '
 	git show-ref --tags >actual &&
 	test_cmp expect.tags actual &&
 
-	cat expect.heads expect.tags >expect &&
-	git show-ref --heads --tags >actual &&
+	cat expect.branches expect.tags >expect &&
+	git show-ref --branches --tags >actual &&
 	test_cmp expect actual &&
 
 	{
 		echo $(git rev-parse HEAD) HEAD &&
-		cat expect.heads expect.tags
+		cat expect.branches expect.tags
 	} >expect &&
-	git show-ref --heads --tags --head >actual &&
+	git show-ref --branches --tags --head >actual &&
 	test_cmp expect actual &&
 
 	{
@@ -163,6 +163,14 @@ test_expect_success 'show-ref --heads, --tags, --head, pattern' '
 	} >expect &&
 	git show-ref --head -d B >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'show-ref --heads is deprecated and hidden' '
+	test_expect_code 129 git show-ref -h >short-help &&
+	test_grep ! -e --heads short-help &&
+	git show-ref --heads >actual 2>warning &&
+	test_grep ! deprecated warning &&
+	test_cmp expect.branches actual
 '
 
 test_expect_success 'show-ref --verify HEAD' '

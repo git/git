@@ -4,6 +4,8 @@
  * Copyright (c) 2007 Junio C Hamano
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "config.h"
 #include "convert.h"
@@ -13,6 +15,7 @@
 #include "merge-ll.h"
 #include "quote.h"
 #include "strbuf.h"
+#include "gettext.h"
 
 struct ll_merge_driver;
 
@@ -29,7 +32,7 @@ struct ll_merge_driver {
 	const char *name;
 	const char *description;
 	ll_merge_fn fn;
-	const char *recursive;
+	char *recursive;
 	struct ll_merge_driver *next;
 	char *cmdline;
 };
@@ -128,7 +131,9 @@ static enum ll_merge_result ll_xdl_merge(const struct ll_merge_driver *drv_unuse
 	xmp.level = XDL_MERGE_ZEALOUS;
 	xmp.favor = opts->variant;
 	xmp.xpp.flags = opts->xdl_opts;
-	if (git_xmerge_style >= 0)
+	if (opts->conflict_style >= 0)
+		xmp.style = opts->conflict_style;
+	else if (git_xmerge_style >= 0)
 		xmp.style = git_xmerge_style;
 	if (marker_size > 0)
 		xmp.marker_size = marker_size;
@@ -266,7 +271,7 @@ static enum ll_merge_result ll_ext_merge(const struct ll_merge_driver *fn,
  * merge.default and merge.driver configuration items
  */
 static struct ll_merge_driver *ll_user_merge, **ll_user_merge_tail;
-static const char *default_ll_merge;
+static char *default_ll_merge;
 
 static int read_merge_config(const char *var, const char *value,
 			     const struct config_context *ctx UNUSED,
@@ -302,8 +307,13 @@ static int read_merge_config(const char *var, const char *value,
 		ll_user_merge_tail = &(fn->next);
 	}
 
-	if (!strcmp("name", key))
-		return git_config_string(&fn->description, var, value);
+	if (!strcmp("name", key)) {
+		/*
+		 * The description is leaking, but that's okay as we want to
+		 * keep around the merge drivers anyway.
+		 */
+		return git_config_string((char **) &fn->description, var, value);
+	}
 
 	if (!strcmp("driver", key)) {
 		if (!value)
@@ -325,7 +335,7 @@ static int read_merge_config(const char *var, const char *value,
 		 *    %X - the revision for our version
 		 *    %Y - the revision for their version
 		 *
-		 * If the file is not named indentically in all versions, then each
+		 * If the file is not named identically in all versions, then each
 		 * revision is joined with the corresponding path, separated by a colon.
 		 * The external merge driver should write the results in the
 		 * file named by %A, and signal that it has done with zero exit
@@ -401,7 +411,7 @@ enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
 	     const struct ll_merge_options *opts)
 {
 	struct attr_check *check = load_merge_attributes();
-	static const struct ll_merge_options default_opts;
+	static const struct ll_merge_options default_opts = LL_MERGE_OPTIONS_INIT;
 	const char *ll_driver_name = NULL;
 	int marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
 	const struct ll_merge_driver *driver;
@@ -418,7 +428,10 @@ enum ll_merge_result ll_merge(mmbuffer_t *result_buf,
 	git_check_attr(istate, path, check);
 	ll_driver_name = check->items[0].value;
 	if (check->items[1].value) {
-		marker_size = atoi(check->items[1].value);
+		if (strtol_i(check->items[1].value, 10, &marker_size)) {
+			marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
+			warning(_("invalid marker-size '%s', expecting an integer"), check->items[1].value);
+		}
 		if (marker_size <= 0)
 			marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
 	}
@@ -445,7 +458,10 @@ int ll_merge_marker_size(struct index_state *istate, const char *path)
 		check = attr_check_initl("conflict-marker-size", NULL);
 	git_check_attr(istate, path, check);
 	if (check->items[0].value) {
-		marker_size = atoi(check->items[0].value);
+		if (strtol_i(check->items[0].value, 10, &marker_size)) {
+			marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
+			warning(_("invalid marker-size '%s', expecting an integer"), check->items[0].value);
+		}
 		if (marker_size <= 0)
 			marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
 	}

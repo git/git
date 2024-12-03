@@ -4,7 +4,7 @@
 #include "trace2/tr2_ctr.h"
 
 /*
- * A global counter block to aggregrate values from the partial sums
+ * A global counter block to aggregate values from the partial sums
  * from each thread.
  */
 static struct tr2_counter_block final_counter_block; /* access under tr2tls_mutex */
@@ -29,6 +29,11 @@ static struct tr2_counter_metadata tr2_counter_metadata[TRACE2_NUMBER_OF_COUNTER
 	[TRACE2_COUNTER_ID_PACKED_REFS_JUMPS] = {
 		.category = "packed-refs",
 		.name = "jumps_made",
+		.want_per_thread_events = 0,
+	},
+	[TRACE2_COUNTER_ID_REFTABLE_RESEEKS] = {
+		.category = "reftable",
+		.name = "reseeks_made",
 		.want_per_thread_events = 0,
 	},
 	[TRACE2_COUNTER_ID_FSYNC_WRITEOUT_ONLY] = {

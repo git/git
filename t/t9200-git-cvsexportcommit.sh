@@ -4,6 +4,7 @@
 #
 test_description='Test export of commits to CVS'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 if ! test_have_prereq PERL; then

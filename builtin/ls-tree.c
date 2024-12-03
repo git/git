@@ -3,7 +3,9 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
+
 #include "config.h"
 #include "gettext.h"
 #include "hex.h"
@@ -100,19 +102,12 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 		return 0;
 
 	while (strbuf_expand_step(&sb, &format)) {
-		const char *end;
 		size_t len;
 
 		if (skip_prefix(format, "%", &format))
 			strbuf_addch(&sb, '%');
 		else if ((len = strbuf_expand_literal(&sb, format)))
 			format += len;
-		else if (*format != '(')
-			die(_("bad ls-tree format: element '%s' "
-			      "does not start with '('"), format);
-		else if (!(end = strchr(format + 1, ')')))
-			die(_("bad ls-tree format: element '%s' "
-			      "does not end in ')'"), format);
 		else if (skip_prefix(format, "(objectmode)", &format))
 			strbuf_addf(&sb, "%06o", mode);
 		else if (skip_prefix(format, "(objecttype)", &format))
@@ -135,8 +130,7 @@ static int show_tree_fmt(const struct object_id *oid, struct strbuf *base,
 			strbuf_setlen(base, baselen);
 			strbuf_release(&sbuf);
 		} else
-			die(_("bad ls-tree format: %%%.*s"),
-			    (int)(end - format + 1), format);
+			strbuf_expand_bad_format(format, "ls-tree");
 	}
 	strbuf_addch(&sb, options->null_termination ? '\0' : '\n');
 	fwrite(sb.buf, sb.len, 1, stdout);
@@ -337,7 +331,10 @@ static struct ls_tree_cmdmode_to_fmt ls_tree_cmdmode_format[] = {
 	},
 };
 
-int cmd_ls_tree(int argc, const char **argv, const char *prefix)
+int cmd_ls_tree(int argc,
+		const char **argv,
+		const char *prefix,
+		struct repository *repo UNUSED)
 {
 	struct object_id oid;
 	struct tree *tree;
@@ -375,6 +372,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 	struct ls_tree_cmdmode_to_fmt *m2f = ls_tree_cmdmode_format;
+	struct object_context obj_context = {0};
 	int ret;
 
 	git_config(git_default_config, NULL);
@@ -406,7 +404,9 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 			ls_tree_usage, ls_tree_options);
 	if (argc < 1)
 		usage_with_options(ls_tree_usage, ls_tree_options);
-	if (repo_get_oid(the_repository, argv[0], &oid))
+	if (get_oid_with_context(the_repository, argv[0],
+				 GET_OID_HASH_ANY, &oid,
+				 &obj_context))
 		die("Not a valid object name %s", argv[0]);
 
 	/*
@@ -446,5 +446,6 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 
 	ret = !!read_tree(the_repository, tree, &options.pathspec, fn, &options);
 	clear_pathspec(&options.pathspec);
+	object_context_release(&obj_context);
 	return ret;
 }

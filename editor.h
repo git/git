@@ -1,6 +1,7 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
+struct repository;
 struct strbuf;
 
 const char *git_editor(void);
@@ -28,7 +29,7 @@ int launch_sequence_editor(const char *path, struct strbuf *buffer,
  *
  * If `path` is relative, it refers to a file in the `.git` directory.
  */
-int strbuf_edit_interactively(struct strbuf *buffer, const char *path,
-			      const char *const *env);
+int strbuf_edit_interactively(struct repository *r, struct strbuf *buffer,
+			      const char *path, const char *const *env);
 
 #endif

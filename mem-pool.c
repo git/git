@@ -4,6 +4,7 @@
 
 #include "git-compat-util.h"
 #include "mem-pool.h"
+#include "gettext.h"
 
 #define BLOCK_GROWTH_SIZE (1024 * 1024 - sizeof(struct mp_block))
 
@@ -115,21 +116,23 @@ static char *mem_pool_strvfmt(struct mem_pool *pool, const char *fmt,
 	size_t available = block ? block->end - block->next_free : 0;
 	va_list cp;
 	int len, len2;
+	size_t size;
 	char *ret;
 
 	va_copy(cp, ap);
 	len = vsnprintf(next_free, available, fmt, cp);
 	va_end(cp);
 	if (len < 0)
-		BUG("your vsnprintf is broken (returned %d)", len);
+		die(_("unable to format message: %s"), fmt);
 
-	ret = mem_pool_alloc(pool, len + 1);  /* 1 for NUL */
+	size = st_add(len, 1); /* 1 for NUL */
+	ret = mem_pool_alloc(pool, size);
 
 	/* Shortcut; relies on mem_pool_alloc() not touching buffer contents. */
 	if (ret == next_free)
 		return ret;
 
-	len2 = vsnprintf(ret, len + 1, fmt, ap);
+	len2 = vsnprintf(ret, size, fmt, ap);
 	if (len2 != len)
 		BUG("your vsnprintf is broken (returns inconsistent lengths)");
 	return ret;

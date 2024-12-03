@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "commit.h"
 #include "editor.h"
@@ -71,14 +73,14 @@ void append_todo_help(int command_count,
 
 	if (!edit_todo) {
 		strbuf_addch(buf, '\n');
-		strbuf_commented_addf(buf, comment_line_char,
+		strbuf_commented_addf(buf, comment_line_str,
 				      Q_("Rebase %s onto %s (%d command)",
 					 "Rebase %s onto %s (%d commands)",
 					 command_count),
 				      shortrevisions, shortonto, command_count);
 	}
 
-	strbuf_add_commented_lines(buf, msg, strlen(msg), comment_line_char);
+	strbuf_add_commented_lines(buf, msg, strlen(msg), comment_line_str);
 
 	if (get_missing_commit_check_level() == MISSING_COMMIT_CHECK_ERROR)
 		msg = _("\nDo not remove any line. Use 'drop' "
@@ -87,7 +89,7 @@ void append_todo_help(int command_count,
 		msg = _("\nIf you remove a line here "
 			 "THAT COMMIT WILL BE LOST.\n");
 
-	strbuf_add_commented_lines(buf, msg, strlen(msg), comment_line_char);
+	strbuf_add_commented_lines(buf, msg, strlen(msg), comment_line_str);
 
 	if (edit_todo)
 		msg = _("\nYou are editing the todo file "
@@ -98,12 +100,13 @@ void append_todo_help(int command_count,
 		msg = _("\nHowever, if you remove everything, "
 			"the rebase will be aborted.\n\n");
 
-	strbuf_add_commented_lines(buf, msg, strlen(msg), comment_line_char);
+	strbuf_add_commented_lines(buf, msg, strlen(msg), comment_line_str);
 }
 
-int edit_todo_list(struct repository *r, struct todo_list *todo_list,
-		   struct todo_list *new_todo, const char *shortrevisions,
-		   const char *shortonto, unsigned flags)
+int edit_todo_list(struct repository *r, struct replay_opts *opts,
+		   struct todo_list *todo_list, struct todo_list *new_todo,
+		   const char *shortrevisions, const char *shortonto,
+		   unsigned flags)
 {
 	const char *todo_file = rebase_path_todo(),
 		*todo_backup = rebase_path_todo_backup();
@@ -114,7 +117,9 @@ int edit_todo_list(struct repository *r, struct todo_list *todo_list,
 	 * it.  If there is an error, we do not return, because the user
 	 * might want to fix it in the first place. */
 	if (!initial)
-		incorrect = todo_list_parse_insn_buffer(r, todo_list->buf.buf, todo_list) |
+		incorrect = todo_list_parse_insn_buffer(r, opts,
+							todo_list->buf.buf,
+							todo_list) |
 			file_exists(rebase_path_dropped());
 
 	if (todo_list_write_to_file(r, todo_list, todo_file, shortrevisions, shortonto,
@@ -130,17 +135,17 @@ int edit_todo_list(struct repository *r, struct todo_list *todo_list,
 	if (launch_sequence_editor(todo_file, &new_todo->buf, NULL))
 		return -2;
 
-	strbuf_stripspace(&new_todo->buf, comment_line_char);
+	strbuf_stripspace(&new_todo->buf, comment_line_str);
 	if (initial && new_todo->buf.len == 0)
 		return -3;
 
-	if (todo_list_parse_insn_buffer(r, new_todo->buf.buf, new_todo)) {
+	if (todo_list_parse_insn_buffer(r, opts, new_todo->buf.buf, new_todo)) {
 		fprintf(stderr, _(edit_todo_list_advice));
 		return -4;
 	}
 
 	if (incorrect) {
-		if (todo_list_check_against_backup(r, new_todo)) {
+		if (todo_list_check_against_backup(r, opts, new_todo)) {
 			write_file(rebase_path_dropped(), "%s", "");
 			return -4;
 		}
@@ -228,13 +233,15 @@ leave_check:
 	return res;
 }
 
-int todo_list_check_against_backup(struct repository *r, struct todo_list *todo_list)
+int todo_list_check_against_backup(struct repository *r,
+				   struct replay_opts *opts,
+				   struct todo_list *todo_list)
 {
 	struct todo_list backup = TODO_LIST_INIT;
 	int res = 0;
 
 	if (strbuf_read_file(&backup.buf, rebase_path_todo_backup(), 0) > 0) {
-		todo_list_parse_insn_buffer(r, backup.buf.buf, &backup);
+		todo_list_parse_insn_buffer(r, opts, backup.buf.buf, &backup);
 		res = todo_list_check(&backup, todo_list);
 	}
 

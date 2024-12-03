@@ -1,12 +1,12 @@
-(
-	for i in a b c
-	do
-		if false
-		then
-			echo "err"
-			exit 1
-		fi ?!AMP?!
-		foo
-	done ?!AMP?!
-	bar
-)
+2 (
+3 	for i in a b c
+4 	do
+5 		if false
+6 		then
+7 			echo "err"
+8 			exit 1
+9 		fi ?!LINT: missing '&&'?!
+10 		foo
+11 	done ?!LINT: missing '&&'?!
+12 	bar
+13 )

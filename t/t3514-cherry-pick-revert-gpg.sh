@@ -5,6 +5,7 @@
 
 test_description='test {cherry-pick,revert} --[no-]gpg-sign'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-gpg.sh"
 

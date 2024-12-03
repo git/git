@@ -187,7 +187,7 @@ sub repository {
 		try {
 		  # Note that "--is-bare-repository" must come first, as
 		  # --git-dir output could contain newlines.
-		  $out = $search->command([qw(rev-parse --is-bare-repository --git-dir)],
+		  $out = $search->command([qw(rev-parse --is-bare-repository --absolute-git-dir)],
 			                  STDERR => 0);
 		} catch Git::Error::Command with {
 			throw Error::Simple("fatal: not a git repository: $opts{Directory}");
@@ -196,12 +196,12 @@ sub repository {
 		chomp $out;
 		my ($bare, $dir) = split /\n/, $out, 2;
 
-		require Cwd;
-		if ($bare ne 'true') {
-			require File::Spec;
-			File::Spec->file_name_is_absolute($dir) or $dir = $opts{Directory} . '/' . $dir;
-			$opts{Repository} = Cwd::abs_path($dir);
+		# We know this is an absolute path, because we used
+		# --absolute-git-dir above.
+		$opts{Repository} = $dir;
 
+		if ($bare ne 'true') {
+			require Cwd;
 			# If --git-dir went ok, this shouldn't die either.
 			my $prefix = $search->command_oneline('rev-parse', '--show-prefix');
 			$dir = Cwd::abs_path($opts{Directory}) . '/';
@@ -214,8 +214,6 @@ sub repository {
 			$opts{WorkingCopy} = $dir;
 			$opts{WorkingSubdir} = $prefix;
 
-		} else {
-			$opts{Repository} = Cwd::abs_path($dir);
 		}
 
 		delete $opts{Directory};
@@ -418,7 +416,7 @@ argument is required if you want to see the command name in the error message,
 and it is the fourth value returned by C<command_bidi_pipe()>.  The call idiom
 is:
 
-	my ($pid, $in, $out, $ctx) = $r->command_bidi_pipe('cat-file --batch-check');
+	my ($pid, $in, $out, $ctx) = $r->command_bidi_pipe(qw(cat-file --batch-check));
 	print $out "000000000\n";
 	while (<$in>) { ... }
 	$r->command_close_bidi_pipe($pid, $in, $out, $ctx);
@@ -431,7 +429,7 @@ C<PIPE_IN> and C<PIPE_OUT> may be C<undef> if they have been closed prior to
 calling this function.  This may be useful in a query-response type of
 commands where caller first writes a query and later reads response, eg:
 
-	my ($pid, $in, $out, $ctx) = $r->command_bidi_pipe('cat-file --batch-check');
+	my ($pid, $in, $out, $ctx) = $r->command_bidi_pipe(qw(cat-file --batch-check));
 	print $out "000000000\n";
 	close $out;
 	while (<$in>) { ... }

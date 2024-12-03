@@ -18,7 +18,7 @@ elif test true = "$GITLAB_CI"
 then
 	begin_group () {
 		need_to_end_group=t
-		printf "\e[0Ksection_start:$(date +%s):$(echo "$1" | tr ' ' _)\r\e[0K$1\n"
+		printf "\e[0Ksection_start:$(date +%s):$(echo "$1" | tr ' ' _)[collapsed=true]\r\e[0K$1\n"
 		trap "end_group '$1'" EXIT
 		set -x
 	}
@@ -62,7 +62,7 @@ trap "end_group 'CI setup'" EXIT
 # something went wrong.
 #
 # We already enabled tracing executed commands earlier. This helps by showing
-# how # environment variables are set and and dependencies are installed.
+# how # environment variables are set and dependencies are installed.
 set -e
 
 skip_branch_tip_with_tag () {
@@ -250,8 +250,13 @@ then
 	CI_TYPE=gitlab-ci
 	CI_BRANCH="$CI_COMMIT_REF_NAME"
 	CI_COMMIT="$CI_COMMIT_SHA"
-	case "$CI_JOB_IMAGE" in
-	macos-*)
+
+	case "$OS,$CI_JOB_IMAGE" in
+	Windows_NT,*)
+		CI_OS_NAME=windows
+		JOBS=$NUMBER_OF_PROCESSORS
+		;;
+	*,macos-*)
 		# GitLab CI has Python installed via multiple package managers,
 		# most notably via asdf and Homebrew. Ensure that our builds
 		# pick up the Homebrew one by prepending it to our PATH as the
@@ -259,9 +264,12 @@ then
 		export PATH="$(brew --prefix)/bin:$PATH"
 
 		CI_OS_NAME=osx
+		JOBS=$(nproc)
 		;;
-	alpine:*|fedora:*|ubuntu:*)
-		CI_OS_NAME=linux;;
+	*,alpine:*|*,fedora:*|*,ubuntu:*)
+		CI_OS_NAME=linux
+		JOBS=$(nproc)
+		;;
 	*)
 		echo "Could not identify OS image" >&2
 		env >&2
@@ -272,6 +280,7 @@ then
 	CI_JOB_ID="$CI_JOB_ID"
 	CC="${CC_PACKAGE:-${CC:-gcc}}"
 	DONT_SKIP_TAGS=t
+
 	handle_failed_tests () {
 		create_failed_test_artifacts
 		return 1
@@ -279,8 +288,7 @@ then
 
 	cache_dir="$HOME/none"
 
-	runs_on_pool=$(echo "$CI_JOB_IMAGE" | tr : -)
-	JOBS=$(nproc)
+	distro=$(echo "$CI_JOB_IMAGE" | tr : -)
 else
 	echo "Could not identify CI type" >&2
 	env >&2
@@ -318,21 +326,32 @@ export DEFAULT_TEST_TARGET=prove
 export GIT_TEST_CLONE_2GB=true
 export SKIP_DASHED_BUILT_INS=YesPlease
 
-case "$runs_on_pool" in
+case "$distro" in
 ubuntu-*)
 	if test "$jobname" = "linux-gcc-default"
 	then
 		break
 	fi
 
-	PYTHON_PACKAGE=python2
-	if test "$jobname" = linux-gcc
+	# Python 2 is end of life, and Ubuntu 23.04 and newer don't actually
+	# have it anymore. We thus only test with Python 2 on older LTS
+	# releases.
+	if test "$distro" = "ubuntu-20.04"
 	then
+		PYTHON_PACKAGE=python2
+	else
 		PYTHON_PACKAGE=python3
 	fi
 	MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=/usr/bin/$PYTHON_PACKAGE"
 
-	export GIT_TEST_HTTPD=true
+	case "$distro" in
+	ubuntu-16.04)
+		# Apache is too old for HTTP/2.
+		;;
+	*)
+		export GIT_TEST_HTTPD=true
+		;;
+	esac
 
 	# The Linux build installs the defined dependency versions below.
 	# The OS X build installs much more recent versions, whichever
@@ -340,10 +359,6 @@ ubuntu-*)
 	# image.
 	# Keep that in mind when you encounter a broken OS X build!
 	export LINUX_GIT_LFS_VERSION="1.5.2"
-
-	P4_PATH="$HOME/custom/p4"
-	GIT_LFS_PATH="$HOME/custom/git-lfs"
-	export PATH="$GIT_LFS_PATH:$P4_PATH:$PATH"
 	;;
 macos-*)
 	MAKEFLAGS="$MAKEFLAGS PYTHON_PATH=$(which python3)"
@@ -351,11 +366,11 @@ macos-*)
 	then
 		MAKEFLAGS="$MAKEFLAGS APPLE_COMMON_CRYPTO_SHA1=Yes"
 	fi
-
-	P4_PATH="$HOME/custom/p4"
-	export PATH="$P4_PATH:$PATH"
 	;;
 esac
+
+CUSTOM_PATH="${CUSTOM_PATH:-$HOME/path}"
+export PATH="$CUSTOM_PATH:$PATH"
 
 case "$jobname" in
 linux32)
@@ -370,7 +385,6 @@ linux-musl)
 linux-leaks|linux-reftable-leaks)
 	export SANITIZE=leak
 	export GIT_TEST_PASSING_SANITIZE_LEAK=true
-	export GIT_TEST_SANITIZE_LEAK_LOG=true
 	;;
 linux-asan-ubsan)
 	export SANITIZE=address,undefined

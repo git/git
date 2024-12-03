@@ -1,3 +1,4 @@
+test_expect_success 'nested-subshell-comment' '
 (
 	foo &&
 	(
@@ -11,3 +12,4 @@
 	)
 	fuzzy
 )
+'

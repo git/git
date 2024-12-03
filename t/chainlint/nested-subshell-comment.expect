@@ -1,11 +1,11 @@
-(
-	foo &&
-	(
-		bar &&
-		# bottles wobble while fiddles gobble
-		# minor numbers of cows (or do they?)
-		baz &&
-		snaff
-	) ?!AMP?!
-	fuzzy
-)
+2 (
+3 	foo &&
+4 	(
+5 		bar &&
+6 		# bottles wobble while fiddles gobble
+7 		# minor numbers of cows (or do they?)
+8 		baz &&
+9 		snaff
+10 	) ?!LINT: missing '&&'?!
+11 	fuzzy
+12 )

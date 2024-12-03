@@ -9,6 +9,8 @@
  */
 
 #define GIT_TEST_PROGRESS_ONLY
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "pager.h"
 #include "progress.h"

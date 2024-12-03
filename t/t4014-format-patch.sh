@@ -8,6 +8,7 @@ test_description='various format-patch tests'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
@@ -820,8 +821,8 @@ test_expect_success 'format-patch --notes --signoff' '
 '
 
 test_expect_success 'format-patch notes output control' '
+	test_when_finished "git notes remove HEAD || :" &&
 	git notes add -m "notes config message" HEAD &&
-	test_when_finished git notes remove HEAD &&
 
 	git format-patch -1 --stdout >out &&
 	! grep "notes config message" out &&
@@ -848,10 +849,10 @@ test_expect_success 'format-patch notes output control' '
 '
 
 test_expect_success 'format-patch with multiple notes refs' '
+	test_when_finished "git notes --ref note1 remove HEAD;
+			    git notes --ref note2 remove HEAD || :" &&
 	git notes --ref note1 add -m "this is note 1" HEAD &&
-	test_when_finished git notes --ref note1 remove HEAD &&
 	git notes --ref note2 add -m "this is note 2" HEAD &&
-	test_when_finished git notes --ref note2 remove HEAD &&
 
 	git format-patch -1 --stdout >out &&
 	! grep "this is note 1" out &&
@@ -892,10 +893,10 @@ test_expect_success 'format-patch with multiple notes refs' '
 test_expect_success 'format-patch with multiple notes refs in config' '
 	test_when_finished "test_unconfig format.notes" &&
 
+	test_when_finished "git notes --ref note1 remove HEAD;
+			    git notes --ref note2 remove HEAD || :" &&
 	git notes --ref note1 add -m "this is note 1" HEAD &&
-	test_when_finished git notes --ref note1 remove HEAD &&
 	git notes --ref note2 add -m "this is note 2" HEAD &&
-	test_when_finished git notes --ref note2 remove HEAD &&
 
 	git config format.notes note1 &&
 	git format-patch -1 --stdout >out &&
@@ -1368,11 +1369,37 @@ test_expect_success 'empty subject prefix does not have extra space' '
 	test_cmp expect actual
 '
 
-test_expect_success '--rfc' '
+test_expect_success '--rfc and --no-rfc' '
 	cat >expect <<-\EOF &&
 	Subject: [RFC PATCH 1/1] header with . in it
 	EOF
 	git format-patch -n -1 --stdout --rfc >patch &&
+	grep "^Subject:" patch >actual &&
+	test_cmp expect actual &&
+	git format-patch -n -1 --stdout --rfc --no-rfc >patch &&
+	sed -e "s/RFC //" expect >expect-raw &&
+	grep "^Subject:" patch >actual &&
+	test_cmp expect-raw actual
+'
+
+test_expect_success '--rfc=WIP and --rfc=' '
+	cat >expect <<-\EOF &&
+	Subject: [WIP PATCH 1/1] header with . in it
+	EOF
+	git format-patch -n -1 --stdout --rfc=WIP >patch &&
+	grep "^Subject:" patch >actual &&
+	test_cmp expect actual &&
+	git format-patch -n -1 --stdout --rfc --rfc= >patch &&
+	sed -e "s/WIP //" expect >expect-raw &&
+	grep "^Subject:" patch >actual &&
+	test_cmp expect-raw actual
+'
+
+test_expect_success '--rfc=-(WIP) appends' '
+	cat >expect <<-\EOF &&
+	Subject: [PATCH (WIP) 1/1] header with . in it
+	EOF
+	git format-patch -n -1 --stdout --rfc="-(WIP)" >patch &&
 	grep "^Subject:" patch >actual &&
 	test_cmp expect actual
 '
@@ -1395,6 +1422,27 @@ test_expect_success '--rfc is argument order independent' '
 		--subject-prefix="PATCH foobar" >patch &&
 	grep "^Subject:" patch >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '--subject-prefix="<non-empty>" and -k cannot be used together' '
+	echo "fatal: options '\''--subject-prefix/--rfc'\'' and '\''-k'\'' cannot be used together" >expect.err &&
+	test_must_fail git format-patch -1 --stdout --subject-prefix="MYPREFIX" -k >actual.out 2>actual.err &&
+	test_must_be_empty actual.out &&
+	test_cmp expect.err actual.err
+'
+
+test_expect_success '--subject-prefix="" and -k cannot be used together' '
+	echo "fatal: options '\''--subject-prefix/--rfc'\'' and '\''-k'\'' cannot be used together" >expect.err &&
+	test_must_fail git format-patch -1 --stdout --subject-prefix="" -k >actual.out 2>actual.err &&
+	test_must_be_empty actual.out &&
+	test_cmp expect.err actual.err
+'
+
+test_expect_success '--rfc and -k cannot be used together' '
+	echo "fatal: options '\''--subject-prefix/--rfc'\'' and '\''-k'\'' cannot be used together" >expect.err &&
+	test_must_fail git format-patch -1 --stdout --rfc -k >actual.out 2>actual.err &&
+	test_must_be_empty actual.out &&
+	test_cmp expect.err actual.err
 '
 
 test_expect_success '--from=ident notices bogus ident' '
@@ -2435,14 +2483,53 @@ test_expect_success 'interdiff: reroll-count with a integer' '
 '
 
 test_expect_success 'interdiff: solo-patch' '
-	cat >expect <<-\EOF &&
-	  +fleep
-
-	EOF
 	git format-patch --interdiff=boop~2 -1 boop &&
-	test_grep "^Interdiff:$" 0001-fleep.patch &&
-	sed "1,/^  @@ /d; /^$/q" 0001-fleep.patch >actual &&
+
+	# remove up to the last "patch" output line,
+	# and remove everything below the signature mark.
+	sed -e "1,/^+fleep\$/d" -e "/^-- /,\$d" 0001-fleep.patch >actual &&
+
+	# fabricate Interdiff output.
+	git diff boop~2 boop >inter &&
+	{
+		echo &&
+		echo "Interdiff:" &&
+		sed -e "s/^/  /" inter
+	} >expect &&
 	test_cmp expect actual
+'
+
+test_expect_success 'range-diff: solo-patch' '
+	git format-patch --creation-factor=999 \
+		--range-diff=boop~2..boop~1 -1 boop &&
+
+	# remove up to the last "patch" output line,
+	# and remove everything below the signature mark.
+	sed -e "1,/^+fleep\$/d" -e "/^-- /,\$d" 0001-fleep.patch >actual &&
+
+	# fabricate range-diff output.
+	{
+		echo &&
+		echo "Range-diff:" &&
+		git range-diff --creation-factor=999 \
+			boop~2..boop~1 boop~1..boop
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'interdiff: multi-patch, implicit --cover-letter' '
+	test_when_finished "rm -f v23-0*.patch" &&
+	git format-patch --interdiff=boop~2 -2 -v23 &&
+	test_grep "^Interdiff against v22:$" v23-0000-cover-letter.patch &&
+	test_cmp expect actual
+'
+
+test_expect_success 'interdiff: explicit --no-cover-letter defeats implied --cover-letter' '
+	test_when_finished "rm -f v23-0*.patch" &&
+	test_must_fail git format-patch --no-cover-letter \
+		--interdiff=boop~2 -2 -v23 &&
+	test_must_fail git -c format.coverLetter=no format-patch \
+		--interdiff=boop~2 -2 -v23
 '
 
 test_expect_success 'format-patch does not respect diff.noprefix' '

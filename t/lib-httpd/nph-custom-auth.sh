@@ -19,21 +19,30 @@ CHALLENGE_FILE=custom-auth.challenge
 #
 
 if test -n "$HTTP_AUTHORIZATION" && \
-	grep -Fqsx "${HTTP_AUTHORIZATION}" "$VALID_CREDS_FILE"
+	grep -Fqs "creds=${HTTP_AUTHORIZATION}" "$VALID_CREDS_FILE"
 then
+	idno=$(grep -F "creds=${HTTP_AUTHORIZATION}" "$VALID_CREDS_FILE" | sed -e 's/^id=\([a-z0-9-][a-z0-9-]*\) .*$/\1/')
+	status=$(sed -ne "s/^id=$idno.*status=\\([0-9][0-9][0-9]\\).*\$/\\1/p" "$CHALLENGE_FILE" | head -n1)
 	# Note that although git-http-backend returns a status line, it
 	# does so using a CGI 'Status' header. Because this script is an
 	# No Parsed Headers (NPH) script, we must return a real HTTP
 	# status line.
 	# This is only a test script, so we don't bother to check for
 	# the actual status from git-http-backend and always return 200.
-	echo 'HTTP/1.1 200 OK'
-	exec "$GIT_EXEC_PATH"/git-http-backend
+	echo "HTTP/1.1 $status Nonspecific Reason Phrase"
+	if test "$status" -eq 200
+	then
+		exec "$GIT_EXEC_PATH"/git-http-backend
+	else
+		sed -ne "s/^id=$idno.*response=//p" "$CHALLENGE_FILE"
+		echo
+		exit
+	fi
 fi
 
 echo 'HTTP/1.1 401 Authorization Required'
 if test -f "$CHALLENGE_FILE"
 then
-	cat "$CHALLENGE_FILE"
+	sed -ne 's/^id=default.*response=//p' "$CHALLENGE_FILE"
 fi
 echo

@@ -1,0 +1,11 @@
+class Example<T1, T2>
+{
+    Example<int, string> Method<TA, TB>(TA RIGHT, TB b)
+    {
+        // Filler
+        // Filler
+        
+        // ChangeMe
+        return null;
+    }
+}

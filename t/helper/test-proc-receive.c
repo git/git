@@ -3,8 +3,8 @@
 #include "hex.h"
 #include "parse-options.h"
 #include "pkt-line.h"
-#include "setup.h"
 #include "sigchain.h"
+#include "string-list.h"
 
 static const char *proc_receive_usage[] = {
 	"test-tool proc-receive [<options>]",
@@ -92,9 +92,9 @@ static void proc_receive_read_commands(struct packet_reader *reader,
 		if (die_read_commands)
 			die("die with the --die-read-commands option");
 
-		if (parse_oid_hex(reader->line, &old_oid, &p) ||
+		if (parse_oid_hex_any(reader->line, &old_oid, &p) == GIT_HASH_UNKNOWN ||
 		    *p++ != ' ' ||
-		    parse_oid_hex(p, &new_oid, &p) ||
+		    parse_oid_hex_any(p, &new_oid, &p) == GIT_HASH_UNKNOWN ||
 		    *p++ != ' ')
 			die("protocol error: expected 'old new ref', got '%s'",
 			    reader->line);
@@ -128,7 +128,6 @@ static void proc_receive_read_push_options(struct packet_reader *reader,
 
 int cmd__proc_receive(int argc, const char **argv)
 {
-	int nongit_ok = 0;
 	struct packet_reader reader;
 	struct command *commands = NULL;
 	struct string_list push_options = STRING_LIST_INIT_DUP;
@@ -153,8 +152,6 @@ int cmd__proc_receive(int argc, const char **argv)
 			    "use this protocol version number"),
 		OPT_END()
 	};
-
-	setup_git_directory_gently(&nongit_ok);
 
 	argc = parse_options(argc, argv, "test-tools", options, proc_receive_usage, 0);
 	if (argc > 0)
@@ -198,6 +195,13 @@ int cmd__proc_receive(int argc, const char **argv)
 			packet_write_fmt(1, "%s\n", item->string);
 	packet_flush(1);
 	sigchain_pop(SIGPIPE);
+
+	while (commands) {
+		struct command *next = commands->next;
+		free(commands);
+		commands = next;
+	}
+	string_list_clear(&push_options, 0);
 
 	return 0;
 }

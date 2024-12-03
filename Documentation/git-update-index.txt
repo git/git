@@ -25,6 +25,7 @@ SYNOPSIS
 	     [--really-refresh] [--unresolve] [--again | -g]
 	     [--info-only] [--index-info]
 	     [-z] [--stdin] [--index-version <n>]
+	     [--show-index-version]
 	     [--verbose]
 	     [--] [<file>...]
 

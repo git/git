@@ -1,7 +1,7 @@
 #ifndef CHUNK_FORMAT_H
 #define CHUNK_FORMAT_H
 
-#include "hash-ll.h"
+#include "hash.h"
 
 struct hashfile;
 struct chunkfile;

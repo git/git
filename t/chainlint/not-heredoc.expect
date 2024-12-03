@@ -1,14 +1,14 @@
-echo "<<<<<<< ours" &&
-echo ourside &&
-echo "=======" &&
-echo theirside &&
-echo ">>>>>>> theirs" &&
-
-(
-	echo "<<<<<<< ours" &&
-	echo ourside &&
-	echo "=======" &&
-	echo theirside &&
-	echo ">>>>>>> theirs" ?!AMP?!
-	poodle
-) >merged
+2 echo "<<<<<<< ours" &&
+3 echo ourside &&
+4 echo "=======" &&
+5 echo theirside &&
+6 echo ">>>>>>> theirs" &&
+7 
+8 (
+9 	echo "<<<<<<< ours" &&
+10 	echo ourside &&
+11 	echo "=======" &&
+12 	echo theirside &&
+13 	echo ">>>>>>> theirs" ?!LINT: missing '&&'?!
+14 	poodle
+15 ) >merged

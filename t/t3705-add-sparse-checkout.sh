@@ -2,6 +2,7 @@
 
 test_description='git add in sparse checked out working trees'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 SPARSE_ENTRY_BLOB=""

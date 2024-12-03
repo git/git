@@ -1,13 +1,15 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "config.h"
-#include "environment.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "midx.h"
 #include "strbuf.h"
 #include "trace2.h"
 #include "object-store-ll.h"
+#include "replace-object.h"
+#include "repository.h"
 
 #define BUILTIN_MIDX_WRITE_USAGE \
 	N_("git multi-pack-index [<options>] write [--preferred-pack=<pack>]" \
@@ -49,7 +51,7 @@ static char const * const builtin_multi_pack_index_usage[] = {
 static struct opts_multi_pack_index {
 	char *object_dir;
 	const char *preferred_pack;
-	const char *refs_snapshot;
+	char *refs_snapshot;
 	unsigned long batch_size;
 	unsigned flags;
 	int stdin_packs;
@@ -62,7 +64,7 @@ static int parse_object_dir(const struct option *opt, const char *arg,
 	char **value = opt->value;
 	free(*value);
 	if (unset)
-		*value = xstrdup(get_object_directory());
+		*value = xstrdup(repo_get_object_directory(the_repository));
 	else
 		*value = real_pathdup(arg, 1);
 	return 0;
@@ -128,12 +130,15 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 			MIDX_WRITE_BITMAP | MIDX_WRITE_REV_INDEX),
 		OPT_BIT(0, "progress", &opts.flags,
 			N_("force progress reporting"), MIDX_PROGRESS),
+		OPT_BIT(0, "incremental", &opts.flags,
+			N_("write a new incremental MIDX"), MIDX_WRITE_INCREMENTAL),
 		OPT_BOOL(0, "stdin-packs", &opts.stdin_packs,
 			 N_("write multi-pack index containing only given indexes")),
 		OPT_FILENAME(0, "refs-snapshot", &opts.refs_snapshot,
 			     N_("refs snapshot for selecting bitmap commits")),
 		OPT_END(),
 	};
+	int ret;
 
 	opts.flags |= MIDX_WRITE_BITMAP_HASH_CACHE;
 
@@ -156,7 +161,6 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 
 	if (opts.stdin_packs) {
 		struct string_list packs = STRING_LIST_INIT_DUP;
-		int ret;
 
 		read_packs_from_stdin(&packs);
 
@@ -165,12 +169,17 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 					   opts.refs_snapshot, opts.flags);
 
 		string_list_clear(&packs, 0);
+		free(opts.refs_snapshot);
 
 		return ret;
 
 	}
-	return write_midx_file(opts.object_dir, opts.preferred_pack,
-			       opts.refs_snapshot, opts.flags);
+
+	ret = write_midx_file(opts.object_dir, opts.preferred_pack,
+			      opts.refs_snapshot, opts.flags);
+
+	free(opts.refs_snapshot);
+	return ret;
 }
 
 static int cmd_multi_pack_index_verify(int argc, const char **argv,
@@ -259,8 +268,10 @@ static int cmd_multi_pack_index_repack(int argc, const char **argv,
 			   (size_t)opts.batch_size, opts.flags);
 }
 
-int cmd_multi_pack_index(int argc, const char **argv,
-			 const char *prefix)
+int cmd_multi_pack_index(int argc,
+			 const char **argv,
+			 const char *prefix,
+			 struct repository *repo UNUSED)
 {
 	int res;
 	parse_opt_subcommand_fn *fn = NULL;
@@ -272,6 +283,8 @@ int cmd_multi_pack_index(int argc, const char **argv,
 		OPT_END(),
 	};
 	struct option *options = parse_options_concat(builtin_multi_pack_index_options, common_opts);
+
+	disable_replace_refs();
 
 	git_config(git_default_config, NULL);
 

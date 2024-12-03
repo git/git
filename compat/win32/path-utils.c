@@ -1,4 +1,7 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "../../git-compat-util.h"
+#include "../../environment.h"
 
 int win32_has_dos_drive_prefix(const char *path)
 {
@@ -49,4 +52,40 @@ int win32_offset_1st_component(const char *path)
 	}
 
 	return pos + is_dir_sep(*pos) - path;
+}
+
+int win32_fspathncmp(const char *a, const char *b, size_t count)
+{
+	int diff;
+
+	for (;;) {
+		if (!count--)
+			return 0;
+		if (!*a)
+			return *b ? -1 : 0;
+		if (!*b)
+			return +1;
+
+		if (is_dir_sep(*a)) {
+			if (!is_dir_sep(*b))
+				return -1;
+			a++;
+			b++;
+			continue;
+		} else if (is_dir_sep(*b))
+			return +1;
+
+		diff = ignore_case ?
+			(unsigned char)tolower(*a) - (int)(unsigned char)tolower(*b) :
+			(unsigned char)*a - (int)(unsigned char)*b;
+		if (diff)
+			return diff;
+		a++;
+		b++;
+	}
+}
+
+int win32_fspathcmp(const char *a, const char *b)
+{
+	return win32_fspathncmp(a, b, (size_t)-1);
 }

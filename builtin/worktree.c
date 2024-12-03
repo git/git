@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "advice.h"
@@ -17,7 +18,6 @@
 #include "read-cache-ll.h"
 #include "refs.h"
 #include "remote.h"
-#include "repository.h"
 #include "run-command.h"
 #include "hook.h"
 #include "sigchain.h"
@@ -219,7 +219,7 @@ static void prune_worktrees(void)
 	}
 	closedir(dir);
 
-	strbuf_add_absolute_path(&main_path, get_git_common_dir());
+	strbuf_add_absolute_path(&main_path, repo_get_common_dir(the_repository));
 	/* massage main worktree absolute path to match 'gitdir' content */
 	strbuf_strip_suffix(&main_path, "/.");
 	string_list_append_nodup(&kept, strbuf_detach(&main_path, NULL));
@@ -365,12 +365,12 @@ static void copy_filtered_worktree_config(const char *worktree_git_dir)
 		if (!git_configset_get_bool(&cs, "core.bare", &bare) &&
 			bare &&
 			git_config_set_multivar_in_file_gently(
-				to_file, "core.bare", NULL, "true", 0))
+				to_file, "core.bare", NULL, "true", NULL, 0))
 			error(_("failed to unset '%s' in '%s'"),
 				"core.bare", to_file);
 		if (!git_configset_get(&cs, "core.worktree") &&
 			git_config_set_in_file_gently(to_file,
-							"core.worktree", NULL))
+							"core.worktree", NULL, NULL))
 			error(_("failed to unset '%s' in '%s'"),
 				"core.worktree", to_file);
 
@@ -414,7 +414,8 @@ static int add_worktree(const char *path, const char *refname,
 			const struct add_opts *opts)
 {
 	struct strbuf sb_git = STRBUF_INIT, sb_repo = STRBUF_INIT;
-	struct strbuf sb = STRBUF_INIT, realpath = STRBUF_INIT;
+	struct strbuf sb = STRBUF_INIT, sb_tmp = STRBUF_INIT;
+	struct strbuf sb_path_realpath = STRBUF_INIT, sb_repo_realpath = STRBUF_INIT;
 	const char *name;
 	struct strvec child_env = STRVEC_INIT;
 	unsigned int counter = 0;
@@ -433,7 +434,7 @@ static int add_worktree(const char *path, const char *refname,
 
 	/* is 'refname' a branch or commit? */
 	if (!opts->detach && !strbuf_check_branch_ref(&symref, refname) &&
-	    ref_exists(symref.buf)) {
+	    refs_ref_exists(get_main_ref_store(the_repository), symref.buf)) {
 		is_branch = 1;
 		if (!opts->force)
 			die_if_checked_out(symref.buf, 0);
@@ -490,11 +491,10 @@ static int add_worktree(const char *path, const char *refname,
 
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/gitdir", sb_repo.buf);
-	strbuf_realpath(&realpath, sb_git.buf, 1);
-	write_file(sb.buf, "%s", realpath.buf);
-	strbuf_realpath(&realpath, get_git_common_dir(), 1);
-	write_file(sb_git.buf, "gitdir: %s/worktrees/%s",
-		   realpath.buf, name);
+	strbuf_realpath(&sb_path_realpath, path, 1);
+	strbuf_realpath(&sb_repo_realpath, sb_repo.buf, 1);
+	write_file(sb.buf, "%s/.git", relative_path(sb_path_realpath.buf, sb_repo_realpath.buf, &sb_tmp));
+	write_file(sb_git.buf, "gitdir: %s", relative_path(sb_repo_realpath.buf, sb_path_realpath.buf, &sb_tmp));
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/commondir", sb_repo.buf);
 	write_file(sb.buf, "../..");
@@ -509,7 +509,7 @@ static int add_worktree(const char *path, const char *refname,
 	}
 	wt_refs = get_worktree_ref_store(wt);
 
-	ret = refs_init_db(wt_refs, REFS_INIT_DB_IS_WORKTREE, &sb);
+	ret = ref_store_create_on_disk(wt_refs, REF_STORE_CREATE_ON_DISK_IS_WORKTREE, &sb);
 	if (ret)
 		goto done;
 
@@ -517,7 +517,7 @@ static int add_worktree(const char *path, const char *refname,
 		ret = refs_update_ref(wt_refs, NULL, "HEAD", &commit->object.oid,
 				      NULL, 0, UPDATE_REFS_MSG_ON_ERR);
 	else
-		ret = refs_create_symref(wt_refs, "HEAD", symref.buf, NULL);
+		ret = refs_update_symref(wt_refs, "HEAD", symref.buf, NULL);
 	if (ret)
 		goto done;
 
@@ -573,16 +573,18 @@ done:
 			     NULL);
 		opt.dir = path;
 
-		ret = run_hooks_opt("post-checkout", &opt);
+		ret = run_hooks_opt(the_repository, "post-checkout", &opt);
 	}
 
 	strvec_clear(&child_env);
 	strbuf_release(&sb);
+	strbuf_release(&sb_tmp);
 	strbuf_release(&symref);
 	strbuf_release(&sb_repo);
+	strbuf_release(&sb_repo_realpath);
 	strbuf_release(&sb_git);
+	strbuf_release(&sb_path_realpath);
 	strbuf_release(&sb_name);
-	strbuf_release(&realpath);
 	free_worktree(wt);
 	return ret;
 }
@@ -605,7 +607,7 @@ static void print_preparing_worktree_line(int detach,
 	} else {
 		struct strbuf s = STRBUF_INIT;
 		if (!detach && !strbuf_check_branch_ref(&s, branch) &&
-		    ref_exists(s.buf))
+		    refs_ref_exists(get_main_ref_store(the_repository), s.buf))
 			fprintf_ln(stderr, _("Preparing worktree (checking out '%s')"),
 				  branch);
 		else {
@@ -626,6 +628,7 @@ static void print_preparing_worktree_line(int detach,
  * Returns 0 on failure and non-zero on success.
  */
 static int first_valid_ref(const char *refname UNUSED,
+			   const char *referent UNUSED,
 			   const struct object_id *oid UNUSED,
 			   int flags UNUSED,
 			   void *cb_data UNUSED)
@@ -647,9 +650,9 @@ static int first_valid_ref(const char *refname UNUSED,
  */
 static int can_use_local_refs(const struct add_opts *opts)
 {
-	if (head_ref(first_valid_ref, NULL)) {
+	if (refs_head_ref(get_main_ref_store(the_repository), first_valid_ref, NULL)) {
 		return 1;
-	} else if (for_each_branch_ref(first_valid_ref, NULL)) {
+	} else if (refs_for_each_branch_ref(get_main_ref_store(the_repository), first_valid_ref, NULL)) {
 		if (!opts->quiet) {
 			struct strbuf path = STRBUF_INIT;
 			struct strbuf contents = STRBUF_INIT;
@@ -657,7 +660,7 @@ static int can_use_local_refs(const struct add_opts *opts)
 			strbuf_add_real_path(&path, get_worktree_git_dir(NULL));
 			strbuf_addstr(&path, "/HEAD");
 			strbuf_read_file(&contents, path.buf, 64);
-			strbuf_stripspace(&contents, 0);
+			strbuf_stripspace(&contents, NULL);
 			strbuf_strip_suffix(&contents, "\n");
 
 			warning(_("HEAD points to an invalid (or orphaned) reference.\n"
@@ -689,7 +692,7 @@ static int can_use_remote_refs(const struct add_opts *opts)
 {
 	if (!guess_remote) {
 		return 0;
-	} else if (for_each_remote_ref(first_valid_ref, NULL)) {
+	} else if (refs_for_each_remote_ref(get_main_ref_store(the_repository), first_valid_ref, NULL)) {
 		return 1;
 	} else if (!opts->force && remote_get(NULL)) {
 		die(_("No local or remote refs exist despite at least one remote\n"
@@ -736,18 +739,17 @@ static int dwim_orphan(const struct add_opts *opts, int opt_track, int remote)
 	return 1;
 }
 
-static const char *dwim_branch(const char *path, const char **new_branch)
+static char *dwim_branch(const char *path, char **new_branch)
 {
 	int n;
 	int branch_exists;
 	const char *s = worktree_basename(path, &n);
-	const char *branchname = xstrndup(s, n);
+	char *branchname = xstrndup(s, n);
 	struct strbuf ref = STRBUF_INIT;
 
-	UNLEAK(branchname);
-
 	branch_exists = !strbuf_check_branch_ref(&ref, branchname) &&
-			ref_exists(ref.buf);
+			refs_ref_exists(get_main_ref_store(the_repository),
+					ref.buf);
 	strbuf_release(&ref);
 	if (branch_exists)
 		return branchname;
@@ -755,8 +757,7 @@ static const char *dwim_branch(const char *path, const char **new_branch)
 	*new_branch = branchname;
 	if (guess_remote) {
 		struct object_id oid;
-		const char *remote =
-			unique_tracking_name(*new_branch, &oid, NULL);
+		char *remote = unique_tracking_name(*new_branch, &oid, NULL);
 		return remote;
 	}
 	return NULL;
@@ -768,8 +769,10 @@ static int add(int ac, const char **av, const char *prefix)
 	const char *new_branch_force = NULL;
 	char *path;
 	const char *branch;
+	char *branch_to_free = NULL;
+	char *new_branch_to_free = NULL;
 	const char *new_branch = NULL;
-	const char *opt_track = NULL;
+	char *opt_track = NULL;
 	const char *lock_reason = NULL;
 	int keep_locked = 0;
 	int used_new_branch_options;
@@ -838,7 +841,7 @@ static int add(int ac, const char **av, const char *prefix)
 
 		if (!opts.force &&
 		    !strbuf_check_branch_ref(&symref, new_branch) &&
-		    ref_exists(symref.buf))
+		    refs_ref_exists(get_main_ref_store(the_repository), symref.buf))
 			die_if_checked_out(symref.buf, 0);
 		strbuf_release(&symref);
 	}
@@ -846,7 +849,7 @@ static int add(int ac, const char **av, const char *prefix)
 	if (opts.orphan && !new_branch) {
 		int n;
 		const char *s = worktree_basename(path, &n);
-		new_branch = xstrndup(s, n);
+		new_branch = new_branch_to_free = xstrndup(s, n);
 	} else if (opts.orphan) {
 		; /* no-op */
 	} else if (opts.detach) {
@@ -858,23 +861,24 @@ static int add(int ac, const char **av, const char *prefix)
 		opts.orphan = dwim_orphan(&opts, !!opt_track, 0);
 	} else if (ac < 2) {
 		/* DWIM: Guess branch name from path. */
-		const char *s = dwim_branch(path, &new_branch);
+		char *s = dwim_branch(path, &new_branch_to_free);
 		if (s)
-			branch = s;
+			branch = branch_to_free = s;
+		new_branch = new_branch_to_free;
 
 		/* DWIM: Infer --orphan when repo has no refs. */
 		opts.orphan = (!s) && dwim_orphan(&opts, !!opt_track, 1);
 	} else if (ac == 2) {
 		struct object_id oid;
 		struct commit *commit;
-		const char *remote;
+		char *remote;
 
 		commit = lookup_commit_reference_by_name(branch);
 		if (!commit) {
 			remote = unique_tracking_name(branch, &oid, NULL);
 			if (remote) {
 				new_branch = branch;
-				branch = remote;
+				branch = new_branch_to_free = remote;
 			}
 		}
 
@@ -922,6 +926,9 @@ static int add(int ac, const char **av, const char *prefix)
 
 	ret = add_worktree(path, branch, &opts);
 	free(path);
+	free(opt_track);
+	free(branch_to_free);
+	free(new_branch_to_free);
 	return ret;
 }
 
@@ -974,7 +981,9 @@ static void show_worktree(struct worktree *wt, int path_maxlen, int abbrev_len)
 		if (wt->is_detached)
 			strbuf_addstr(&sb, "(detached HEAD)");
 		else if (wt->head_ref) {
-			char *ref = shorten_unambiguous_ref(wt->head_ref, 0);
+			char *ref = refs_shorten_unambiguous_ref(get_main_ref_store(the_repository),
+								 wt->head_ref,
+								 0);
 			strbuf_addf(&sb, "[%s]", ref);
 			free(ref);
 		} else
@@ -1141,14 +1150,14 @@ static void validate_no_submodules(const struct worktree *wt)
 	struct strbuf path = STRBUF_INIT;
 	int i, found_submodules = 0;
 
-	if (is_directory(worktree_git_path(wt, "modules"))) {
+	if (is_directory(worktree_git_path(the_repository, wt, "modules"))) {
 		/*
 		 * There could be false positives, e.g. the "modules"
 		 * directory exists but is empty. But it's a rare case and
 		 * this simpler check is probably good enough for now.
 		 */
 		found_submodules = 1;
-	} else if (read_index_from(&istate, worktree_git_path(wt, "index"),
+	} else if (read_index_from(&istate, worktree_git_path(the_repository, wt, "index"),
 				   get_worktree_git_dir(wt)) > 0) {
 		for (i = 0; i < istate.cache_nr; i++) {
 			struct cache_entry *ce = istate.cache[i];
@@ -1385,7 +1394,10 @@ static int repair(int ac, const char **av, const char *prefix)
 	return rc;
 }
 
-int cmd_worktree(int ac, const char **av, const char *prefix)
+int cmd_worktree(int ac,
+		 const char **av,
+		 const char *prefix,
+		 struct repository *repo UNUSED)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option options[] = {

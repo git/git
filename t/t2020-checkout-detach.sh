@@ -176,7 +176,10 @@ test_expect_success 'tracking count is accurate after orphan check' '
 	git config branch.child.merge refs/heads/main &&
 	git checkout child^ &&
 	git checkout child >stdout &&
-	test_cmp expect stdout
+	test_cmp expect stdout &&
+
+	git checkout --detach child >stdout &&
+	test_grep ! "can be fast-forwarded\." stdout
 '
 
 test_expect_success 'no advice given for explicit detached head state' '

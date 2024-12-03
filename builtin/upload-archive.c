@@ -1,12 +1,12 @@
 /*
  * Copyright (c) 2006 Franck Bui-Huu
  */
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "archive.h"
 #include "path.h"
 #include "pkt-line.h"
 #include "sideband.h"
-#include "repository.h"
 #include "run-command.h"
 #include "strvec.h"
 
@@ -18,10 +18,14 @@ static const char deadchild[] =
 
 #define MAX_ARGS (64)
 
-int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
+int cmd_upload_archive_writer(int argc,
+			      const char **argv,
+			      const char *prefix,
+			      struct repository *repo UNUSED)
 {
 	struct strvec sent_argv = STRVEC_INIT;
 	const char *arg_cmd = "argument ";
+	int ret;
 
 	if (argc != 2 || !strcmp(argv[1], "-h"))
 		usage(upload_archive_usage);
@@ -46,8 +50,11 @@ int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
 	}
 
 	/* parse all options sent by the client */
-	return write_archive(sent_argv.nr, sent_argv.v, prefix,
-			     the_repository, NULL, 1);
+	ret = write_archive(sent_argv.nr, sent_argv.v, prefix,
+			    the_repository, NULL, 1);
+
+	strvec_clear(&sent_argv);
+	return ret;
 }
 
 __attribute__((format (printf, 1, 2)))
@@ -76,7 +83,10 @@ static ssize_t process_input(int child_fd, int band)
 	return sz;
 }
 
-int cmd_upload_archive(int argc, const char **argv, const char *prefix)
+int cmd_upload_archive(int argc,
+const char **argv,
+const char *prefix,
+struct repository *repo UNUSED)
 {
 	struct child_process writer = CHILD_PROCESS_INIT;
 

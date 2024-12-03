@@ -11,6 +11,7 @@ among other things.
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 GIT_AUTHOR_NAME=author@name
@@ -144,7 +145,9 @@ test_expect_success 'Show verbose error when HEAD could not be detached' '
 	test_when_finished "rm -f B" &&
 	test_must_fail git rebase topic 2>output.err >output.out &&
 	test_grep "The following untracked working tree files would be overwritten by checkout:" output.err &&
-	test_grep B output.err
+	test_grep B output.err &&
+	test_must_fail git rebase --quit 2>err &&
+	test_grep "no rebase in progress" err
 '
 
 test_expect_success 'fail when upstream arg is missing and not on branch' '
@@ -231,6 +234,12 @@ test_expect_success 'rebase --apply -q is quiet' '
 test_expect_success 'rebase --merge -q is quiet' '
 	git checkout -B quiet topic &&
 	git rebase --merge -q main >output.out 2>&1 &&
+	test_must_be_empty output.out
+'
+
+test_expect_success 'rebase --exec -q is quiet' '
+	git checkout -B quiet topic &&
+	git rebase --exec true -q main >output.out 2>&1 &&
 	test_must_be_empty output.out
 '
 
@@ -421,7 +430,9 @@ test_expect_success 'refuse to switch to branch checked out elsewhere' '
 	git checkout main &&
 	git worktree add wt &&
 	test_must_fail git -C wt rebase main main 2>err &&
-	test_grep "already used by worktree at" err
+	test_grep "already used by worktree at" err &&
+	test_must_fail git -C wt rebase --quit 2>err &&
+	test_grep "no rebase in progress" err
 '
 
 test_expect_success 'rebase when inside worktree subdirectory' '

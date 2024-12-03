@@ -47,7 +47,7 @@ last_commit_subject () {
 # pre-2.32.0 versions of 'git subtree' would write the hash of the tag
 # (sub1 below), instead of the commit (sub1^{commit}) in the
 # "git-subtree-split" trailer.
-# We immitate this behaviour below using a replace ref.
+# We imitate this behaviour below using a replace ref.
 # This function creates 3 repositories:
 # - $1
 # - $1-sub (added as subtree "sub" in $1)

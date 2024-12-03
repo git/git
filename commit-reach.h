@@ -139,4 +139,21 @@ void tips_reachable_from_bases(struct repository *r,
 			       struct commit **tips, size_t tips_nr,
 			       int mark);
 
+/*
+ * Given a 'tip' commit and a list potential 'bases', return the index 'i' that
+ * minimizes the number of commits in the first-parent history of 'tip' and not
+ * in the first-parent history of 'bases[i]'.
+ *
+ * Among a list of long-lived branches that are updated only by merges (with the
+ * first parent being the previous position of the branch), this would inform
+ * which branch was used to create the tip reference.
+ *
+ * Returns -1 if no common point is found in first-parent histories, which is
+ * rare, but possible with multiple root commits.
+ */
+int get_branch_base_for_tip(struct repository *r,
+			    struct commit *tip,
+			    struct commit **bases,
+			    size_t bases_nr);
+
 #endif

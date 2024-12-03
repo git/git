@@ -1,3 +1,4 @@
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "commit.h"
@@ -219,6 +220,7 @@ static void show_commit(struct commit *commit, void *data)
 		ctx.fmt = revs->commit_format;
 		ctx.output_encoding = get_log_output_encoding();
 		ctx.color = revs->diffopt.use_color;
+		ctx.rev = revs;
 		pretty_print_commit(&ctx, commit, &buf);
 		if (buf.len) {
 			if (revs->commit_format != CMIT_FMT_ONELINE)
@@ -483,6 +485,13 @@ static int try_bitmap_traversal(struct rev_info *revs,
 	if (revs->max_count >= 0)
 		return -1;
 
+	/*
+	 * We can't know which commits were left/right in a single traversal,
+	 * and we don't yet know how to traverse them separately.
+	 */
+	if (revs->left_right)
+		return -1;
+
 	bitmap_git = prepare_bitmap_walk(revs, filter_provided_objects);
 	if (!bitmap_git)
 		return -1;
@@ -507,10 +516,15 @@ static int try_bitmap_disk_usage(struct rev_info *revs,
 
 	size_from_bitmap = get_disk_usage_from_bitmap(bitmap_git, revs);
 	print_disk_usage(size_from_bitmap);
+
+	free_bitmap_index(bitmap_git);
 	return 0;
 }
 
-int cmd_rev_list(int argc, const char **argv, const char *prefix)
+int cmd_rev_list(int argc,
+		 const char **argv,
+		 const char *prefix,
+		 struct repository *repo UNUSED)
 {
 	struct rev_info revs;
 	struct rev_list_info info;

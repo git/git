@@ -2,6 +2,7 @@
 
 test_description='test the `scalar` command'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 GIT_TEST_MAINT_SCHEDULER="crontab:test-tool crontab cron.txt,launchctl:true,schtasks:true"
@@ -169,6 +170,24 @@ test_expect_success 'scalar clone' '
 	)
 '
 
+test_expect_success 'scalar clone --no-... opts' '
+	# Note: redirect stderr always to avoid having a verbose test
+	# run result in a difference in the --[no-]progress option.
+	GIT_TRACE2_EVENT="$(pwd)/no-opt-trace" scalar clone \
+		--no-tags --no-src \
+		"file://$(pwd)" no-opts --single-branch 2>/dev/null &&
+
+	test_subcommand git fetch --quiet --no-progress \
+			origin --no-tags <no-opt-trace &&
+	(
+		cd no-opts &&
+
+		test_cmp_config --no-tags remote.origin.tagopt &&
+		git for-each-ref --format="%(refname)" refs/tags/ >tags &&
+		test_line_count = 0 tags
+	)
+'
+
 test_expect_success 'scalar reconfigure' '
 	git init one/src &&
 	scalar register one &&
@@ -176,8 +195,49 @@ test_expect_success 'scalar reconfigure' '
 	scalar reconfigure one &&
 	test true = "$(git -C one/src config core.preloadIndex)" &&
 	git -C one/src config core.preloadIndex false &&
-	scalar reconfigure -a &&
-	test true = "$(git -C one/src config core.preloadIndex)"
+	rm one/src/cron.txt &&
+	GIT_TRACE2_EVENT="$(pwd)/reconfigure" scalar reconfigure -a &&
+	test_path_is_file one/src/cron.txt &&
+	test true = "$(git -C one/src config core.preloadIndex)" &&
+	test_subcommand git maintenance start <reconfigure
+'
+
+test_expect_success 'scalar reconfigure --all with includeIf.onbranch' '
+	repos="two three four" &&
+	for num in $repos
+	do
+		git init $num/src &&
+		scalar register $num/src &&
+		git -C $num/src config includeif."onbranch:foo".path something &&
+		git -C $num/src config core.preloadIndex false || return 1
+	done &&
+
+	scalar reconfigure --all &&
+
+	for num in $repos
+	do
+		test true = "$(git -C $num/src config core.preloadIndex)" || return 1
+	done
+'
+
+ test_expect_success 'scalar reconfigure --all with detached HEADs' '
+	repos="two three four" &&
+	for num in $repos
+	do
+		rm -rf $num/src &&
+		git init $num/src &&
+		scalar register $num/src &&
+		git -C $num/src config core.preloadIndex false &&
+		test_commit -C $num/src initial &&
+		git -C $num/src switch --detach HEAD || return 1
+	done &&
+
+	scalar reconfigure --all &&
+
+	for num in $repos
+	do
+		test true = "$(git -C $num/src config core.preloadIndex)" || return 1
+	done
 '
 
 test_expect_success '`reconfigure -a` removes stale config entries' '

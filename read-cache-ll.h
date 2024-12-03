@@ -1,7 +1,7 @@
 #ifndef READ_CACHE_LL_H
 #define READ_CACHE_LL_H
 
-#include "hash-ll.h"
+#include "hash.h"
 #include "hashmap.h"
 #include "statinfo.h"
 
@@ -151,7 +151,7 @@ enum sparse_index_mode {
 
 	/*
 	 * The index has already been collapsed to sparse directories
-	 * whereever possible.
+	 * wherever possible.
 	 */
 	INDEX_COLLAPSED,
 
@@ -196,7 +196,7 @@ struct index_state {
  *
  * If the variable won't be used again, use release_index() to free()
  * its resources. If it needs to be used again use discard_index(),
- * which does the same thing, but will use use index_state_init() at
+ * which does the same thing, but will use index_state_init() at
  * the end. The discard_index() will use its own "istate->repo" as the
  * "r" argument to index_state_init() in that case.
  */
@@ -480,8 +480,8 @@ extern int verify_ce_order;
 int cmp_cache_name_compare(const void *a_, const void *b_);
 
 int add_files_to_cache(struct repository *repo, const char *prefix,
-		       const struct pathspec *pathspec, int include_sparse,
-		       int flags);
+		       const struct pathspec *pathspec, char *ps_matched,
+		       int include_sparse, int flags);
 
 void overlay_tree_on_index(struct index_state *istate,
 			   const char *tree_name, const char *prefix);

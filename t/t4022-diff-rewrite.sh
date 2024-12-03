@@ -2,6 +2,7 @@
 
 test_description='rewrite diff'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff-data.sh
 

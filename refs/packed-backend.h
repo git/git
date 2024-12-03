@@ -13,9 +13,9 @@ struct ref_transaction;
  * even among packed refs.
  */
 
-struct ref_store *packed_ref_store_create(struct repository *repo,
-					  const char *gitdir,
-					  unsigned int store_flags);
+struct ref_store *packed_ref_store_init(struct repository *repo,
+					const char *gitdir,
+					unsigned int store_flags);
 
 /*
  * Lock the packed-refs file for writing. Flags is passed to
@@ -26,6 +26,13 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 
 void packed_refs_unlock(struct ref_store *ref_store);
 int packed_refs_is_locked(struct ref_store *ref_store);
+
+/*
+ * Obtain the size of the `packed-refs` file. Reports `0` as size in case there
+ * is no packed-refs file. Returns 0 on success, negative otherwise.
+ */
+int packed_refs_size(struct ref_store *ref_store,
+		     size_t *out);
 
 /*
  * Return true if `transaction` really needs to be carried out against

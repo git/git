@@ -15,10 +15,10 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-For each ``Name $$<user@host>$$'' or ``$$<user@host>$$'' from the command-line
-or standard input (when using `--stdin`), look up the person's canonical name
-and email address (see "Mapping Authors" below). If found, print them;
-otherwise print the input as-is.
+For each ``Name $$<user@host>$$'', ``$$<user@host>$$'', or ``$$user@host$$''
+from the command-line or standard input (when using `--stdin`), look up the
+person's canonical name and email address (see "Mapping Authors" below). If
+found, print them; otherwise print the input as-is.
 
 
 OPTIONS
@@ -27,6 +27,16 @@ OPTIONS
 	Read contacts, one per line, from the standard input after exhausting
 	contacts provided on the command-line.
 
+--mailmap-file=<file>::
+	In addition to any configured mailmap files, read the specified
+	mailmap file. Entries in this file take precedence over entries in
+	either the default mailmap file or any configured mailmap file.
+
+--mailmap-blob=<blob>::
+	Like `--mailmap-file`, but consider the value as a reference to a
+	blob in the repository. If both `--mailmap-file` and
+	`--mailmap-blob` are specified, entries in `--mailmap-file` will
+	take precedence.
 
 OUTPUT
 ------

@@ -322,7 +322,6 @@ TEST_RESULTS_SAN_FILE_PFX=trace
 TEST_RESULTS_SAN_DIR_SFX=leak
 TEST_RESULTS_SAN_FILE=
 TEST_RESULTS_SAN_DIR="$TEST_RESULTS_DIR/$TEST_NAME.$TEST_RESULTS_SAN_DIR_SFX"
-TEST_RESULTS_SAN_DIR_NR_LEAKS_STARTUP=
 TRASH_DIRECTORY="trash directory.$TEST_NAME$TEST_STRESS_JOB_SFX"
 test -n "$root" && TRASH_DIRECTORY="$root/$TRASH_DIRECTORY"
 case "$TRASH_DIRECTORY" in
@@ -578,53 +577,6 @@ case $GIT_TEST_FSYNC in
 	;;
 esac
 
-# Add libc MALLOC and MALLOC_PERTURB test only if we are not executing
-# the test with valgrind and have not compiled with conflict SANITIZE
-# options.
-if test -n "$valgrind" ||
-   test -n "$SANITIZE_ADDRESS" ||
-   test -n "$SANITIZE_LEAK" ||
-   test -n "$TEST_NO_MALLOC_CHECK"
-then
-	setup_malloc_check () {
-		: nothing
-	}
-	teardown_malloc_check () {
-		: nothing
-	}
-else
-	_USE_GLIBC_TUNABLES=
-	if _GLIBC_VERSION=$(getconf GNU_LIBC_VERSION 2>/dev/null) &&
-	   _GLIBC_VERSION=${_GLIBC_VERSION#"glibc "} &&
-	   expr 2.34 \<= "$_GLIBC_VERSION" >/dev/null
-	then
-		_USE_GLIBC_TUNABLES=YesPlease
-	fi
-	setup_malloc_check () {
-		local g
-		local t
-		MALLOC_CHECK_=3	MALLOC_PERTURB_=165
-		export MALLOC_CHECK_ MALLOC_PERTURB_
-		if test -n "$_USE_GLIBC_TUNABLES"
-		then
-			g=
-			LD_PRELOAD="libc_malloc_debug.so.0"
-			for t in \
-				glibc.malloc.check=1 \
-				glibc.malloc.perturb=165
-			do
-				g="${g#:}:$t"
-			done
-			GLIBC_TUNABLES=$g
-			export LD_PRELOAD GLIBC_TUNABLES
-		fi
-	}
-	teardown_malloc_check () {
-		unset MALLOC_CHECK_ MALLOC_PERTURB_
-		unset LD_PRELOAD GLIBC_TUNABLES
-	}
-fi
-
 # Protect ourselves from common misconfiguration to export
 # CDPATH into the environment
 unset CDPATH
@@ -848,6 +800,7 @@ test_failure_ () {
 			GIT_EXIT_OK=t
 			exit 0
 		fi
+		check_test_results_san_file_ "$test_failure"
 		_error_exit
 	fi
 	finalize_test_case_output failure "$failure_label" "$@"
@@ -1215,41 +1168,15 @@ test_atexit_handler () {
 	teardown_malloc_check
 }
 
-sanitize_leak_log_message_ () {
-	local new="$1" &&
-	local old="$2" &&
-	local file="$3" &&
-
-	printf "With SANITIZE=leak at exit we have %d leak logs, but started with %d
-
-This means that we have a blindspot where git is leaking but we're
-losing the exit code somewhere, or not propagating it appropriately
-upwards!
-
-See the logs at \"%s.*\";
-those logs are reproduced below." \
-	       "$new" "$old" "$file"
+check_test_results_san_file_empty_ () {
+	test -z "$TEST_RESULTS_SAN_FILE" ||
+	test "$(nr_san_dir_leaks_)" = 0
 }
 
 check_test_results_san_file_ () {
-	if test -z "$TEST_RESULTS_SAN_FILE"
+	if check_test_results_san_file_empty_
 	then
 		return
-	fi &&
-	local old="$TEST_RESULTS_SAN_DIR_NR_LEAKS_STARTUP" &&
-	local new="$(nr_san_dir_leaks_)" &&
-
-	if test $new -le $old
-	then
-		return
-	fi &&
-	local out="$(sanitize_leak_log_message_ "$new" "$old" "$TEST_RESULTS_SAN_FILE")" &&
-	say_color error "$out" &&
-	if test "$old" != 0
-	then
-		echo &&
-		say_color error "The logs include output from past runs to avoid" &&
-		say_color error "that remove 'test-results' between runs."
 	fi &&
 	say_color error "$(cat "$TEST_RESULTS_SAN_FILE".*)" &&
 
@@ -1269,9 +1196,12 @@ check_test_results_san_file_ () {
 	then
 		say "As TEST_PASSES_SANITIZE_LEAK=true isn't set the above leak is 'ok' with GIT_TEST_PASSING_SANITIZE_LEAK=check" &&
 		invert_exit_code=t
-	else
-		say "With GIT_TEST_SANITIZE_LEAK_LOG=true our logs revealed a memory leak, exit non-zero!" &&
+	elif test "$test_failure" = 0
+	then
+		say "Our logs revealed a memory leak, exit non-zero!" &&
 		invert_exit_code=t
+	else
+		say "Our logs revealed a memory leak..."
 	fi
 }
 
@@ -1506,6 +1436,56 @@ GIT_ATTR_NOSYSTEM=1
 GIT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/.."
 export PATH GIT_EXEC_PATH GIT_TEMPLATE_DIR GIT_CONFIG_NOSYSTEM GIT_ATTR_NOSYSTEM GIT_CEILING_DIRECTORIES
 
+# Add libc MALLOC and MALLOC_PERTURB test only if we are not executing
+# the test with valgrind and have not compiled with conflict SANITIZE
+# options.
+if test -n "$valgrind" ||
+   test -n "$SANITIZE_ADDRESS" ||
+   test -n "$SANITIZE_LEAK" ||
+   test -n "$TEST_NO_MALLOC_CHECK"
+then
+	setup_malloc_check () {
+		: nothing
+	}
+	teardown_malloc_check () {
+		: nothing
+	}
+else
+	_USE_GLIBC_TUNABLES=
+	_USE_GLIBC_PRELOAD=libc_malloc_debug.so.0
+	if _GLIBC_VERSION=$(getconf GNU_LIBC_VERSION 2>/dev/null) &&
+	   _GLIBC_VERSION=${_GLIBC_VERSION#"glibc "} &&
+	   expr 2.34 \<= "$_GLIBC_VERSION" >/dev/null &&
+	   stderr=$(LD_PRELOAD=$_USE_GLIBC_PRELOAD git version 2>&1 >/dev/null) &&
+	   test -z "$stderr"
+	then
+		_USE_GLIBC_TUNABLES=YesPlease
+	fi
+	setup_malloc_check () {
+		local g
+		local t
+		MALLOC_CHECK_=3	MALLOC_PERTURB_=165
+		export MALLOC_CHECK_ MALLOC_PERTURB_
+		if test -n "$_USE_GLIBC_TUNABLES"
+		then
+			g=
+			LD_PRELOAD=$_USE_GLIBC_PRELOAD
+			for t in \
+				glibc.malloc.check=1 \
+				glibc.malloc.perturb=165
+			do
+				g="${g#:}:$t"
+			done
+			GLIBC_TUNABLES=$g
+			export LD_PRELOAD GLIBC_TUNABLES
+		fi
+	}
+	teardown_malloc_check () {
+		unset MALLOC_CHECK_ MALLOC_PERTURB_
+		unset LD_PRELOAD GLIBC_TUNABLES
+	}
+fi
+
 if test -z "$GIT_TEST_CMP"
 then
 	if test -n "$GIT_TEST_CMP_USE_COPIED_CONTEXT"
@@ -1555,8 +1535,16 @@ then
 		passes_sanitize_leak=t
 	fi
 
-	if test "$GIT_TEST_PASSING_SANITIZE_LEAK" = "check"
+	if test "$GIT_TEST_PASSING_SANITIZE_LEAK" = "check" ||
+	   test "$GIT_TEST_PASSING_SANITIZE_LEAK" = "check-failing"
 	then
+		if test "$GIT_TEST_PASSING_SANITIZE_LEAK" = "check-failing" &&
+		   test -n "$passes_sanitize_leak"
+		then
+			skip_all="skipping leak-free $this_test under GIT_TEST_PASSING_SANITIZE_LEAK=check-failing"
+			test_done
+		fi
+
 		sanitize_leak_check=t
 		if test -n "$invert_exit_code"
 		then
@@ -1575,40 +1563,33 @@ then
 		test_done
 	fi
 
-	if test_bool_env GIT_TEST_SANITIZE_LEAK_LOG false
+	rm -rf "$TEST_RESULTS_SAN_DIR"
+	if ! mkdir -p "$TEST_RESULTS_SAN_DIR"
 	then
-		if ! mkdir -p "$TEST_RESULTS_SAN_DIR"
-		then
-			BAIL_OUT "cannot create $TEST_RESULTS_SAN_DIR"
-		fi &&
-		TEST_RESULTS_SAN_FILE="$TEST_RESULTS_SAN_DIR/$TEST_RESULTS_SAN_FILE_PFX"
+		BAIL_OUT "cannot create $TEST_RESULTS_SAN_DIR"
+	fi &&
+	TEST_RESULTS_SAN_FILE="$TEST_RESULTS_SAN_DIR/$TEST_RESULTS_SAN_FILE_PFX"
 
-		# In case "test-results" is left over from a previous
-		# run: Only report if new leaks show up.
-		TEST_RESULTS_SAN_DIR_NR_LEAKS_STARTUP=$(nr_san_dir_leaks_)
+	# Don't litter *.leak dirs if there was nothing to report
+	test_atexit "rmdir \"$TEST_RESULTS_SAN_DIR\" 2>/dev/null || :"
 
-		# Don't litter *.leak dirs if there was nothing to report
-		test_atexit "rmdir \"$TEST_RESULTS_SAN_DIR\" 2>/dev/null || :"
+	prepend_var LSAN_OPTIONS : dedup_token_length=9999
+	prepend_var LSAN_OPTIONS : log_exe_name=1
+	prepend_var LSAN_OPTIONS : log_path="'$TEST_RESULTS_SAN_FILE'"
+	export LSAN_OPTIONS
 
-		prepend_var LSAN_OPTIONS : dedup_token_length=9999
-		prepend_var LSAN_OPTIONS : log_exe_name=1
-		prepend_var LSAN_OPTIONS : log_path=\"$TEST_RESULTS_SAN_FILE\"
-		export LSAN_OPTIONS
-	fi
 elif test "$GIT_TEST_PASSING_SANITIZE_LEAK" = "check" ||
+     test "$GIT_TEST_PASSING_SANITIZE_LEAK" = "check-failing" ||
      test_bool_env GIT_TEST_PASSING_SANITIZE_LEAK false
 then
 	BAIL_OUT_ENV_NEEDS_SANITIZE_LEAK "GIT_TEST_PASSING_SANITIZE_LEAK=true"
-elif test_bool_env GIT_TEST_SANITIZE_LEAK_LOG false
-then
-	BAIL_OUT_ENV_NEEDS_SANITIZE_LEAK "GIT_TEST_SANITIZE_LEAK_LOG=true"
 fi
 
 if test "${GIT_TEST_CHAIN_LINT:-1}" != 0 &&
    test "${GIT_TEST_EXT_CHAIN_LINT:-1}" != 0
 then
 	"$PERL_PATH" "$TEST_DIRECTORY/chainlint.pl" "$0" ||
-		BUG "lint error (see '?!...!? annotations above)"
+		BUG "lint error (see 'LINT' annotations above)"
 fi
 
 # Last-minute variable setup
@@ -1765,6 +1746,7 @@ esac
 
 ( COLUMNS=1 && test $COLUMNS = 1 ) && test_set_prereq COLUMNS_CAN_BE_1
 test -z "$NO_CURL" && test_set_prereq LIBCURL
+test -z "$NO_ICONV" && test_set_prereq ICONV
 test -z "$NO_PERL" && test_set_prereq PERL
 test -z "$NO_PTHREADS" && test_set_prereq PTHREADS
 test -z "$NO_PYTHON" && test_set_prereq PYTHON
@@ -1962,6 +1944,7 @@ test_lazy_prereq DEFAULT_REPO_FORMAT '
 # Tests that verify the scheduler integration must set this locally
 # to avoid errors.
 GIT_TEST_MAINT_SCHEDULER="none:exit 1"
+export GIT_TEST_MAINT_SCHEDULER
 
 # Does this platform support `git fsmonitor--daemon`
 #

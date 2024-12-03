@@ -1,3 +1,4 @@
+test_expect_success 'loop-upstream-pipe' '
 (
 	git rev-list --objects --no-object-names base..loose |
 	while read oid
@@ -9,3 +10,4 @@
 	done |
 	sort -k1
 ) >expect &&
+'

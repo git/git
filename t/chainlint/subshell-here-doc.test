@@ -1,3 +1,4 @@
+test_expect_success 'subshell-here-doc' '
 (
 # LINT: stitch together incomplete \-ending lines
 # LINT: swallow here-doc to avoid false positives in content
@@ -33,3 +34,4 @@ EOF
 	ARBITRARY3
 	meep
 )
+'

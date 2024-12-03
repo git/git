@@ -1,4 +1,4 @@
-#define USE_THE_INDEX_VARIABLE
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "attr.h"
@@ -6,7 +6,6 @@
 #include "gettext.h"
 #include "object-name.h"
 #include "quote.h"
-#include "repository.h"
 #include "setup.h"
 #include "parse-options.h"
 #include "write-or-die.h"
@@ -71,9 +70,9 @@ static void check_attr(const char *prefix, struct attr_check *check,
 		prefix_path(prefix, prefix ? strlen(prefix) : 0, file);
 
 	if (collect_all) {
-		git_all_attrs(&the_index, full_path, check);
+		git_all_attrs(the_repository->index, full_path, check);
 	} else {
-		git_check_attr(&the_index, full_path, check);
+		git_check_attr(the_repository->index, full_path, check);
 	}
 	output_attr(check, file);
 
@@ -108,7 +107,10 @@ static NORETURN void error_with_usage(const char *msg)
 	usage_with_options(check_attr_usage, check_attr_options);
 }
 
-int cmd_check_attr(int argc, const char **argv, const char *prefix)
+int cmd_check_attr(int argc,
+		   const char **argv,
+		   const char *prefix,
+		   struct repository *repo UNUSED)
 {
 	struct attr_check *check;
 	struct object_id initialized_oid;

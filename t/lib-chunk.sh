@@ -13,5 +13,6 @@ corrupt_chunk_file () {
 	fn=$1; shift
 	perl "$TEST_DIRECTORY"/lib-chunk/corrupt-chunk-file.pl \
 		"$@" <"$fn" >"$fn.tmp" &&
-	mv "$fn.tmp" "$fn"
+	# some vintages of macOS 'mv' fails to overwrite a read-only file.
+	mv -f "$fn.tmp" "$fn"
 }

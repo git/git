@@ -1,6 +1,7 @@
 --[no-]all::
-	Fetch all remotes. This overrides the configuration variable
-	`fetch.all`.
+	Fetch all remotes, except for the ones that has the
+	`remote.<name>.skipFetchAll` configuration variable set.
+	This overrides the configuration variable fetch.all`.
 
 -a::
 --append::
@@ -28,7 +29,7 @@
 	Deepen or shorten the history of a shallow repository to
 	include all reachable commits after <date>.
 
---shallow-exclude=<revision>::
+--shallow-exclude=<ref>::
 	Deepen or shorten the history of a shallow repository to
 	exclude commits reachable from a specified remote branch or tag.
 	This option can be specified multiple times.
@@ -304,6 +305,9 @@ endif::git-pull[]
 	unknown ones, is server-specific.
 	When multiple `--server-option=<option>` are given, they are all
 	sent to the other side in the order listed on the command line.
+	When no `--server-option=<option>` is given from the command line,
+	the values of configuration variable `remote.<name>.serverOption`
+	are used instead.
 
 --show-forced-updates::
 	By default, git checks if a branch is force-updated during

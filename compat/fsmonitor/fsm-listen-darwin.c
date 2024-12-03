@@ -516,6 +516,12 @@ void fsm_listen__loop(struct fsmonitor_daemon_state *state)
 	}
 	data->stream_started = 1;
 
+	/*
+	 * Our fs event listener is now running, so it's safe to start
+	 * serving client requests.
+	 */
+	ipc_server_start_async(state->ipc_server_data);
+
 	pthread_mutex_lock(&data->dq_lock);
 	pthread_cond_wait(&data->dq_finished, &data->dq_lock);
 	pthread_mutex_unlock(&data->dq_lock);

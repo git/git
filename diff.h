@@ -4,7 +4,7 @@
 #ifndef DIFF_H
 #define DIFF_H
 
-#include "hash-ll.h"
+#include "hash.h"
 #include "pathspec.h"
 #include "strbuf.h"
 
@@ -94,7 +94,7 @@ typedef void (*add_remove_fn_t)(struct diff_options *options,
 typedef void (*diff_format_fn_t)(struct diff_queue_struct *q,
 		struct diff_options *options, void *data);
 
-typedef struct strbuf *(*diff_prefix_fn_t)(struct diff_options *opt, void *data);
+typedef const char *(*diff_prefix_fn_t)(struct diff_options *opt, void *data);
 
 #define DIFF_FORMAT_RAW		0x0001
 #define DIFF_FORMAT_DIFFSTAT	0x0002
@@ -235,7 +235,7 @@ enum diff_submodule_format {
  * diffcore library with.
  */
 struct diff_options {
-	const char *orderfile;
+	char *orderfile;
 
 	/*
 	 * "--rotate-to=<file>" would start showing at <file> and when
@@ -274,7 +274,6 @@ struct diff_options {
 	const char *single_follow;
 	const char *a_prefix, *b_prefix;
 	const char *line_prefix;
-	size_t line_prefix_length;
 
 	/**
 	 * collection of boolean options that affects the operation, but some do
@@ -648,7 +647,7 @@ int do_diff_cache(const struct object_id *, struct diff_options *);
 int diff_flush_patch_id(struct diff_options *, struct object_id *, int);
 void flush_one_hunk(struct object_id *result, git_hash_ctx *ctx);
 
-int diff_result_code(struct diff_options *);
+int diff_result_code(struct rev_info *);
 
 int diff_no_index(struct rev_info *,
 		  int implicit_no_index, int, const char **);

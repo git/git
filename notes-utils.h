@@ -20,7 +20,7 @@ struct repository;
  */
 void create_notes_commit(struct repository *r,
 			 struct notes_tree *t,
-			 struct commit_list *parents,
+			 const struct commit_list *parents,
 			 const char *msg, size_t msg_len,
 			 struct object_id *result_oid);
 

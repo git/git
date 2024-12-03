@@ -44,7 +44,8 @@ string `*`. This will allow all repositories to be treated as if their
 directory was listed in the `safe.directory` list. If `safe.directory=*`
 is set in system config and you want to re-enable this protection, then
 initialize your list with an empty value before listing the repositories
-that you deem safe.
+that you deem safe.  Giving a directory with `/*` appended to it will
+allow access to all repositories under the named directory.
 +
 As explained, Git only allows you to access repositories owned by
 yourself, i.e. the user who is running Git, by default.  When Git

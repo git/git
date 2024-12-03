@@ -275,12 +275,12 @@ This hook executes once for the receive operation. It takes no
 arguments, but for each ref to be updated it receives on standard
 input a line of the format:
 
-  <old-value> SP <new-value> SP <ref-name> LF
+  <old-oid> SP <new-oid> SP <ref-name> LF
 
-where `<old-value>` is the old object name stored in the ref,
-`<new-value>` is the new object name to be stored in the ref and
+where `<old-oid>` is the old object name stored in the ref,
+`<new-oid>` is the new object name to be stored in the ref and
 `<ref-name>` is the full name of the ref.
-When creating a new ref, `<old-value>` is the all-zeroes object name.
+When creating a new ref, `<old-oid>` is the all-zeroes object name.
 
 If the hook exits with non-zero status, none of the refs will be
 updated. If the hook exits with zero, updating of individual refs can
@@ -415,13 +415,13 @@ post-receive
 
 This hook is invoked by linkgit:git-receive-pack[1] when it reacts to
 `git push` and updates reference(s) in its repository.
-It executes on the remote repository once after all the refs have
-been updated.
+The hook executes on the remote repository once after all the proposed
+ref updates are processed and if at least one ref is updated as the
+result.
 
-This hook executes once for the receive operation.  It takes no
-arguments, but gets the same information as the
-<<pre-receive,'pre-receive'>>
-hook does on its standard input.
+The hook takes no arguments.  It receives one line on standard input for
+each ref that is successfully updated following the same format as the
+<<pre-receive,'pre-receive'>> hook.
 
 This hook does not affect the outcome of `git receive-pack`, as it
 is called after the real work is done.
@@ -447,6 +447,9 @@ If it is negotiated to not use the push options phase, the
 environment variables will not be set. If the client selects
 to use push options, but doesn't transmit any, the count variable
 will be set to zero, `GIT_PUSH_OPTION_COUNT=0`.
+
+See the "post-receive" section in linkgit:git-receive-pack[1] for
+additional details.
 
 [[post-update]]
 post-update
@@ -486,7 +489,7 @@ reference-transaction
 This hook is invoked by any Git command that performs reference
 updates. It executes whenever a reference transaction is prepared,
 committed or aborted and may thus get called multiple times. The hook
-does not cover symbolic references (but that may change in the future).
+also supports symbolic reference updates.
 
 The hook takes exactly one argument, which is the current state the
 given reference transaction is in:
@@ -512,6 +515,10 @@ the reference regardless of its current value or when the reference is
 to be created anew, `<old-value>` is the all-zeroes object name. To
 distinguish these cases, you can inspect the current value of
 `<ref-name>` via `git rev-parse`.
+
+For symbolic reference updates the `<old_value>` and `<new-value>`
+fields could denote references instead of objects. A reference will be
+denoted with a 'ref:' prefix, like `ref:<ref-target>`.
 
 The exit status of the hook is ignored for any state except for the
 "prepared" state. In the "prepared" state, a non-zero exit status will

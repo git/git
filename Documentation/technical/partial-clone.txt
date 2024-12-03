@@ -102,7 +102,7 @@ or commits that reference missing trees.
 - On the client a repository extension is added to the local config to
   prevent older versions of git from failing mid-operation because of
   missing objects that they cannot handle.
-  See "extensions.partialClone" in Documentation/technical/repository-version.txt"
+  See `extensions.partialClone` in linkgit:git-config[1].
 
 
 Handling Missing Objects

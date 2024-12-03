@@ -23,6 +23,7 @@ Test switching across them.
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_tick
@@ -497,6 +498,19 @@ test_expect_success 'checkout unmerged stage' '
 	test ztheirside = "z$(cat file)"
 '
 
+test_expect_success 'checkout --ours is incompatible with switching' '
+	test_must_fail git checkout --ours 2>error &&
+	test_grep "needs the paths to check out" error &&
+
+	test_must_fail git checkout --ours HEAD 2>error &&
+	test_grep "cannot be used with switching" error &&
+
+	test_must_fail git checkout --ours main 2>error &&
+	test_grep "cannot be used with switching" error &&
+
+	git checkout --ours file
+'
+
 test_expect_success 'checkout path with --merge from tree-ish is a no-no' '
 	setup_conflicting_index &&
 	test_must_fail git checkout -m HEAD -- file
@@ -629,6 +643,72 @@ test_expect_success 'checkout --conflict=diff3' '
 	test_cmp expect fild &&
 	test_cmp expect filf &&
 	test_cmp merged file
+'
+
+test_expect_success 'checkout --conflict=diff3 --no-conflict does not merge' '
+	setup_conflicting_index &&
+	echo "none of the above" >expect &&
+	cat expect >fild &&
+	cat expect >file &&
+	test_must_fail git checkout --conflict=diff3 --no-conflict -- fild file 2>err &&
+	test_cmp expect file &&
+	test_cmp expect fild &&
+	echo "error: path ${SQ}file${SQ} is unmerged" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success 'checkout --conflict=diff3 --no-merge does not merge' '
+	setup_conflicting_index &&
+	echo "none of the above" >expect &&
+	cat expect >fild &&
+	cat expect >file &&
+	test_must_fail git checkout --conflict=diff3 --no-merge -- fild file 2>err &&
+	test_cmp expect file &&
+	test_cmp expect fild &&
+	echo "error: path ${SQ}file${SQ} is unmerged" >expect &&
+	test_cmp expect err
+'
+
+test_expect_success 'checkout --no-merge --conflict=diff3 does merge' '
+	setup_conflicting_index &&
+	echo "none of the above" >fild &&
+	echo "none of the above" >file &&
+	git checkout --no-merge --conflict=diff3 -- fild file &&
+	echo "ourside" >expect &&
+	test_cmp expect fild &&
+	cat >expect <<-\EOF &&
+	<<<<<<< ours
+	ourside
+	||||||| base
+	original
+	=======
+	theirside
+	>>>>>>> theirs
+	EOF
+	test_cmp expect file
+'
+
+test_expect_success 'checkout --merge --conflict=diff3 --no-conflict does merge' '
+	setup_conflicting_index &&
+	echo "none of the above" >fild &&
+	echo "none of the above" >file &&
+	git checkout --merge --conflict=diff3 --no-conflict -- fild file &&
+	echo "ourside" >expect &&
+	test_cmp expect fild &&
+	cat >expect <<-\EOF &&
+	<<<<<<< ours
+	ourside
+	=======
+	theirside
+	>>>>>>> theirs
+	EOF
+	test_cmp expect file
+'
+
+test_expect_success 'checkout with invalid conflict style' '
+	test_must_fail git checkout --conflict=bad 2>actual -- file &&
+	echo "error: unknown conflict style ${SQ}bad${SQ}" >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'failing checkout -b should not break working tree' '

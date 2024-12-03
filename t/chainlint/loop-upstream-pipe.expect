@@ -1,10 +1,10 @@
-(
-	git rev-list --objects --no-object-names base..loose |
-	while read oid
-	do
-		path="$objdir/$(test_oid_to_path "$oid")" &&
-		printf "%s %d\n" "$oid" "$(test-tool chmtime --get "$path")" ||
-		echo "object list generation failed for $oid"
-	done |
-	sort -k1
-) >expect &&
+2 (
+3 	git rev-list --objects --no-object-names base..loose |
+4 	while read oid
+5 	do
+6 		path="$objdir/$(test_oid_to_path "$oid")" &&
+7 		printf "%s %d\n" "$oid" "$(test-tool chmtime --get "$path")" ||
+8 		echo "object list generation failed for $oid"
+9 	done |
+10 	sort -k1
+11 ) >expect &&

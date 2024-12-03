@@ -2,6 +2,7 @@
 
 test_description='remerge-diff handling'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # This test is ort-specific
@@ -108,6 +109,41 @@ test_expect_success 'can filter out additional headers with pickaxe' '
 
 	git show --remerge-diff -S"not present" --all >actual &&
 	test_must_be_empty actual
+'
+
+test_expect_success 'remerge-diff also works for git-diff-tree' '
+	# With a clean merge
+	git diff-tree -r -p --remerge-diff --no-commit-id bc_resolution >actual &&
+	test_must_be_empty actual &&
+
+	# With both a resolved conflict and an unrelated change
+	cat <<-EOF >tmp &&
+	diff --git a/numbers b/numbers
+	remerge CONFLICT (content): Merge conflict in numbers
+	index a1fb731..6875544 100644
+	--- a/numbers
+	+++ b/numbers
+	@@ -1,13 +1,9 @@
+	 1
+	 2
+	-<<<<<<< b0ed5cb (change_a)
+	-three
+	-=======
+	-tres
+	->>>>>>> 6cd3f82 (change_b)
+	+drei
+	 4
+	 5
+	 6
+	 7
+	-eight
+	+acht
+	 9
+	EOF
+	sed -e "s/[0-9a-f]\{7,\}/HASH/g" tmp >expect &&
+	git diff-tree -r -p --remerge-diff --no-commit-id ab_resolution >tmp &&
+	sed -e "s/[0-9a-f]\{7,\}/HASH/g" tmp >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'setup non-content conflicts' '

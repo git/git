@@ -1,7 +1,7 @@
 ccc #!/bin/sh
 
 GVF=GIT-VERSION-FILE
-DEF_VER=v2.44.GIT
+DEF_VER=v2.47.GIT
 
 LF='
 '

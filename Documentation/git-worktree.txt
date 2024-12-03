@@ -157,7 +157,7 @@ will reestablish the connection. If multiple linked worktrees are moved,
 running `repair` from any worktree with each tree's new `<path>` as an
 argument, will reestablish the connection to all the specified paths.
 +
-If both the main worktree and linked worktrees have been moved manually,
+If both the main worktree and linked worktrees have been moved or copied manually,
 then running `repair` in the main worktree and specifying the new `<path>`
 of each linked worktree will reestablish all connections in both
 directions.

@@ -1,6 +1,8 @@
 #!/bin/sh
 
 test_description='log --grep/--author/--regexp-ignore-case/-S/-G'
+
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_log () {

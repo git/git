@@ -9,13 +9,12 @@
  *
  * Copyright (c) 2006 Shawn O. Pearce
  */
-
+#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "abspath.h"
 #include "date.h"
 #include "environment.h"
 #include "hex.h"
-#include "repository.h"
 #include "config.h"
 #include "tempfile.h"
 #include "lockfile.h"
@@ -49,23 +48,7 @@ static const char * const builtin_gc_usage[] = {
 	NULL
 };
 
-static int pack_refs = 1;
-static int prune_reflogs = 1;
-static int cruft_packs = 1;
-static unsigned long max_cruft_size;
-static int aggressive_depth = 50;
-static int aggressive_window = 250;
-static int gc_auto_threshold = 6700;
-static int gc_auto_pack_limit = 50;
-static int detach_auto = 1;
 static timestamp_t gc_log_expire_time;
-static const char *gc_log_expire = "1.day.ago";
-static const char *prune_expire = "2.weeks.ago";
-static const char *prune_worktrees_expire = "3.months.ago";
-static char *repack_filter;
-static char *repack_filter_to;
-static unsigned long big_pack_threshold;
-static unsigned long max_delta_cache_size = DEFAULT_DELTA_CACHE_SIZE;
 
 static struct strvec reflog = STRVEC_INIT;
 static struct strvec repack = STRVEC_INIT;
@@ -125,13 +108,6 @@ static void process_log_file_at_exit(void)
 	process_log_file();
 }
 
-static void process_log_file_on_signal(int signo)
-{
-	process_log_file();
-	sigchain_pop(signo);
-	raise(signo);
-}
-
 static int gc_config_is_timestamp_never(const char *var)
 {
 	const char *value;
@@ -145,52 +121,158 @@ static int gc_config_is_timestamp_never(const char *var)
 	return 0;
 }
 
-static void gc_config(void)
+struct gc_config {
+	int pack_refs;
+	int prune_reflogs;
+	int cruft_packs;
+	unsigned long max_cruft_size;
+	int aggressive_depth;
+	int aggressive_window;
+	int gc_auto_threshold;
+	int gc_auto_pack_limit;
+	int detach_auto;
+	char *gc_log_expire;
+	char *prune_expire;
+	char *prune_worktrees_expire;
+	char *repack_filter;
+	char *repack_filter_to;
+	unsigned long big_pack_threshold;
+	unsigned long max_delta_cache_size;
+};
+
+#define GC_CONFIG_INIT { \
+	.pack_refs = 1, \
+	.prune_reflogs = 1, \
+	.cruft_packs = 1, \
+	.aggressive_depth = 50, \
+	.aggressive_window = 250, \
+	.gc_auto_threshold = 6700, \
+	.gc_auto_pack_limit = 50, \
+	.detach_auto = 1, \
+	.gc_log_expire = xstrdup("1.day.ago"), \
+	.prune_expire = xstrdup("2.weeks.ago"), \
+	.prune_worktrees_expire = xstrdup("3.months.ago"), \
+	.max_delta_cache_size = DEFAULT_DELTA_CACHE_SIZE, \
+}
+
+static void gc_config_release(struct gc_config *cfg)
+{
+	free(cfg->gc_log_expire);
+	free(cfg->prune_expire);
+	free(cfg->prune_worktrees_expire);
+	free(cfg->repack_filter);
+	free(cfg->repack_filter_to);
+}
+
+static void gc_config(struct gc_config *cfg)
 {
 	const char *value;
+	char *owned = NULL;
 
 	if (!git_config_get_value("gc.packrefs", &value)) {
 		if (value && !strcmp(value, "notbare"))
-			pack_refs = -1;
+			cfg->pack_refs = -1;
 		else
-			pack_refs = git_config_bool("gc.packrefs", value);
+			cfg->pack_refs = git_config_bool("gc.packrefs", value);
 	}
 
 	if (gc_config_is_timestamp_never("gc.reflogexpire") &&
 	    gc_config_is_timestamp_never("gc.reflogexpireunreachable"))
-		prune_reflogs = 0;
+		cfg->prune_reflogs = 0;
 
-	git_config_get_int("gc.aggressivewindow", &aggressive_window);
-	git_config_get_int("gc.aggressivedepth", &aggressive_depth);
-	git_config_get_int("gc.auto", &gc_auto_threshold);
-	git_config_get_int("gc.autopacklimit", &gc_auto_pack_limit);
-	git_config_get_bool("gc.autodetach", &detach_auto);
-	git_config_get_bool("gc.cruftpacks", &cruft_packs);
-	git_config_get_ulong("gc.maxcruftsize", &max_cruft_size);
-	git_config_get_expiry("gc.pruneexpire", &prune_expire);
-	git_config_get_expiry("gc.worktreepruneexpire", &prune_worktrees_expire);
-	git_config_get_expiry("gc.logexpiry", &gc_log_expire);
+	git_config_get_int("gc.aggressivewindow", &cfg->aggressive_window);
+	git_config_get_int("gc.aggressivedepth", &cfg->aggressive_depth);
+	git_config_get_int("gc.auto", &cfg->gc_auto_threshold);
+	git_config_get_int("gc.autopacklimit", &cfg->gc_auto_pack_limit);
+	git_config_get_bool("gc.autodetach", &cfg->detach_auto);
+	git_config_get_bool("gc.cruftpacks", &cfg->cruft_packs);
+	git_config_get_ulong("gc.maxcruftsize", &cfg->max_cruft_size);
 
-	git_config_get_ulong("gc.bigpackthreshold", &big_pack_threshold);
-	git_config_get_ulong("pack.deltacachesize", &max_delta_cache_size);
+	if (!repo_config_get_expiry(the_repository, "gc.pruneexpire", &owned)) {
+		free(cfg->prune_expire);
+		cfg->prune_expire = owned;
+	}
 
-	git_config_get_string("gc.repackfilter", &repack_filter);
-	git_config_get_string("gc.repackfilterto", &repack_filter_to);
+	if (!repo_config_get_expiry(the_repository, "gc.worktreepruneexpire", &owned)) {
+		free(cfg->prune_worktrees_expire);
+		cfg->prune_worktrees_expire = owned;
+	}
+
+	if (!repo_config_get_expiry(the_repository, "gc.logexpiry", &owned)) {
+		free(cfg->gc_log_expire);
+		cfg->gc_log_expire = owned;
+	}
+
+	git_config_get_ulong("gc.bigpackthreshold", &cfg->big_pack_threshold);
+	git_config_get_ulong("pack.deltacachesize", &cfg->max_delta_cache_size);
+
+	if (!git_config_get_string("gc.repackfilter", &owned)) {
+		free(cfg->repack_filter);
+		cfg->repack_filter = owned;
+	}
+
+	if (!git_config_get_string("gc.repackfilterto", &owned)) {
+		free(cfg->repack_filter_to);
+		cfg->repack_filter_to = owned;
+	}
 
 	git_config(git_default_config, NULL);
 }
 
-struct maintenance_run_opts;
-static int maintenance_task_pack_refs(MAYBE_UNUSED struct maintenance_run_opts *opts)
+enum schedule_priority {
+	SCHEDULE_NONE = 0,
+	SCHEDULE_WEEKLY = 1,
+	SCHEDULE_DAILY = 2,
+	SCHEDULE_HOURLY = 3,
+};
+
+static enum schedule_priority parse_schedule(const char *value)
+{
+	if (!value)
+		return SCHEDULE_NONE;
+	if (!strcasecmp(value, "hourly"))
+		return SCHEDULE_HOURLY;
+	if (!strcasecmp(value, "daily"))
+		return SCHEDULE_DAILY;
+	if (!strcasecmp(value, "weekly"))
+		return SCHEDULE_WEEKLY;
+	return SCHEDULE_NONE;
+}
+
+struct maintenance_run_opts {
+	int auto_flag;
+	int detach;
+	int quiet;
+	enum schedule_priority schedule;
+};
+#define MAINTENANCE_RUN_OPTS_INIT { \
+	.detach = -1, \
+}
+
+static int pack_refs_condition(UNUSED struct gc_config *cfg)
+{
+	/*
+	 * The auto-repacking logic for refs is handled by the ref backends and
+	 * exposed via `git pack-refs --auto`. We thus always return truish
+	 * here and let the backend decide for us.
+	 */
+	return 1;
+}
+
+static int maintenance_task_pack_refs(struct maintenance_run_opts *opts,
+				      UNUSED struct gc_config *cfg)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
 
 	cmd.git_cmd = 1;
 	strvec_pushl(&cmd.args, "pack-refs", "--all", "--prune", NULL);
+	if (opts->auto_flag)
+		strvec_push(&cmd.args, "--auto");
+
 	return run_command(&cmd);
 }
 
-static int too_many_loose_objects(void)
+static int too_many_loose_objects(struct gc_config *cfg)
 {
 	/*
 	 * Quickly check if a "gc" is needed, by estimating how
@@ -209,7 +291,7 @@ static int too_many_loose_objects(void)
 	if (!dir)
 		return 0;
 
-	auto_threshold = DIV_ROUND_UP(gc_auto_threshold, 256);
+	auto_threshold = DIV_ROUND_UP(cfg->gc_auto_threshold, 256);
 	while ((ent = readdir(dir)) != NULL) {
 		if (strspn(ent->d_name, "0123456789abcdef") != hexsz_loose ||
 		    ent->d_name[hexsz_loose] != '\0')
@@ -245,12 +327,12 @@ static struct packed_git *find_base_packs(struct string_list *packs,
 	return base;
 }
 
-static int too_many_packs(void)
+static int too_many_packs(struct gc_config *cfg)
 {
 	struct packed_git *p;
 	int cnt;
 
-	if (gc_auto_pack_limit <= 0)
+	if (cfg->gc_auto_pack_limit <= 0)
 		return 0;
 
 	for (cnt = 0, p = get_all_packs(the_repository); p; p = p->next) {
@@ -264,7 +346,7 @@ static int too_many_packs(void)
 		 */
 		cnt++;
 	}
-	return gc_auto_pack_limit < cnt;
+	return cfg->gc_auto_pack_limit < cnt;
 }
 
 static uint64_t total_ram(void)
@@ -298,7 +380,8 @@ static uint64_t total_ram(void)
 	return 0;
 }
 
-static uint64_t estimate_repack_memory(struct packed_git *pack)
+static uint64_t estimate_repack_memory(struct gc_config *cfg,
+				       struct packed_git *pack)
 {
 	unsigned long nr_objects = repo_approximate_object_count(the_repository);
 	size_t os_cache, heap;
@@ -335,7 +418,7 @@ static uint64_t estimate_repack_memory(struct packed_git *pack)
 	 */
 	heap += delta_base_cache_limit;
 	/* and of course pack-objects has its own delta cache */
-	heap += max_delta_cache_size;
+	heap += cfg->max_delta_cache_size;
 
 	return os_cache + heap;
 }
@@ -346,30 +429,31 @@ static int keep_one_pack(struct string_list_item *item, void *data UNUSED)
 	return 0;
 }
 
-static void add_repack_all_option(struct string_list *keep_pack)
+static void add_repack_all_option(struct gc_config *cfg,
+				  struct string_list *keep_pack)
 {
-	if (prune_expire && !strcmp(prune_expire, "now"))
+	if (cfg->prune_expire && !strcmp(cfg->prune_expire, "now"))
 		strvec_push(&repack, "-a");
-	else if (cruft_packs) {
+	else if (cfg->cruft_packs) {
 		strvec_push(&repack, "--cruft");
-		if (prune_expire)
-			strvec_pushf(&repack, "--cruft-expiration=%s", prune_expire);
-		if (max_cruft_size)
+		if (cfg->prune_expire)
+			strvec_pushf(&repack, "--cruft-expiration=%s", cfg->prune_expire);
+		if (cfg->max_cruft_size)
 			strvec_pushf(&repack, "--max-cruft-size=%lu",
-				     max_cruft_size);
+				     cfg->max_cruft_size);
 	} else {
 		strvec_push(&repack, "-A");
-		if (prune_expire)
-			strvec_pushf(&repack, "--unpack-unreachable=%s", prune_expire);
+		if (cfg->prune_expire)
+			strvec_pushf(&repack, "--unpack-unreachable=%s", cfg->prune_expire);
 	}
 
 	if (keep_pack)
 		for_each_string_list(keep_pack, keep_one_pack, NULL);
 
-	if (repack_filter && *repack_filter)
-		strvec_pushf(&repack, "--filter=%s", repack_filter);
-	if (repack_filter_to && *repack_filter_to)
-		strvec_pushf(&repack, "--filter-to=%s", repack_filter_to);
+	if (cfg->repack_filter && *cfg->repack_filter)
+		strvec_pushf(&repack, "--filter=%s", cfg->repack_filter);
+	if (cfg->repack_filter_to && *cfg->repack_filter_to)
+		strvec_pushf(&repack, "--filter-to=%s", cfg->repack_filter_to);
 }
 
 static void add_repack_incremental_option(void)
@@ -377,13 +461,13 @@ static void add_repack_incremental_option(void)
 	strvec_push(&repack, "--no-write-bitmap-index");
 }
 
-static int need_to_gc(void)
+static int need_to_gc(struct gc_config *cfg)
 {
 	/*
 	 * Setting gc.auto to 0 or negative can disable the
 	 * automatic gc.
 	 */
-	if (gc_auto_threshold <= 0)
+	if (cfg->gc_auto_threshold <= 0)
 		return 0;
 
 	/*
@@ -392,13 +476,13 @@ static int need_to_gc(void)
 	 * we run "repack -A -d -l".  Otherwise we tell the caller
 	 * there is no need.
 	 */
-	if (too_many_packs()) {
+	if (too_many_packs(cfg)) {
 		struct string_list keep_pack = STRING_LIST_INIT_NODUP;
 
-		if (big_pack_threshold) {
-			find_base_packs(&keep_pack, big_pack_threshold);
-			if (keep_pack.nr >= gc_auto_pack_limit) {
-				big_pack_threshold = 0;
+		if (cfg->big_pack_threshold) {
+			find_base_packs(&keep_pack, cfg->big_pack_threshold);
+			if (keep_pack.nr >= cfg->gc_auto_pack_limit) {
+				cfg->big_pack_threshold = 0;
 				string_list_clear(&keep_pack, 0);
 				find_base_packs(&keep_pack, 0);
 			}
@@ -407,7 +491,7 @@ static int need_to_gc(void)
 			uint64_t mem_have, mem_want;
 
 			mem_have = total_ram();
-			mem_want = estimate_repack_memory(p);
+			mem_want = estimate_repack_memory(cfg, p);
 
 			/*
 			 * Only allow 1/2 of memory for pack-objects, leave
@@ -418,14 +502,14 @@ static int need_to_gc(void)
 				string_list_clear(&keep_pack, 0);
 		}
 
-		add_repack_all_option(&keep_pack);
+		add_repack_all_option(cfg, &keep_pack);
 		string_list_clear(&keep_pack, 0);
-	} else if (too_many_loose_objects())
+	} else if (too_many_loose_objects(cfg))
 		add_repack_incremental_option();
 	else
 		return 0;
 
-	if (run_hooks("pre-auto-gc"))
+	if (run_hooks(the_repository, "pre-auto-gc"))
 		return 0;
 	return 1;
 }
@@ -547,7 +631,8 @@ done:
 	return ret;
 }
 
-static void gc_before_repack(void)
+static void gc_before_repack(struct maintenance_run_opts *opts,
+			     struct gc_config *cfg)
 {
 	/*
 	 * We may be called twice, as both the pre- and
@@ -558,10 +643,10 @@ static void gc_before_repack(void)
 	if (done++)
 		return;
 
-	if (pack_refs && maintenance_task_pack_refs(NULL))
+	if (cfg->pack_refs && maintenance_task_pack_refs(opts, cfg))
 		die(FAILED_RUN, "pack-refs");
 
-	if (prune_reflogs) {
+	if (cfg->prune_reflogs) {
 		struct child_process cmd = CHILD_PROCESS_INIT;
 
 		cmd.git_cmd = 1;
@@ -571,10 +656,12 @@ static void gc_before_repack(void)
 	}
 }
 
-int cmd_gc(int argc, const char **argv, const char *prefix)
+int cmd_gc(int argc,
+const char **argv,
+const char *prefix,
+struct repository *repo UNUSED)
 {
 	int aggressive = 0;
-	int auto_gc = 0;
 	int quiet = 0;
 	int force = 0;
 	const char *name;
@@ -583,18 +670,25 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	int keep_largest_pack = -1;
 	timestamp_t dummy;
 	struct child_process rerere_cmd = CHILD_PROCESS_INIT;
+	struct maintenance_run_opts opts = MAINTENANCE_RUN_OPTS_INIT;
+	struct gc_config cfg = GC_CONFIG_INIT;
+	const char *prune_expire_sentinel = "sentinel";
+	const char *prune_expire_arg = prune_expire_sentinel;
+	int ret;
 
 	struct option builtin_gc_options[] = {
 		OPT__QUIET(&quiet, N_("suppress progress reporting")),
-		{ OPTION_STRING, 0, "prune", &prune_expire, N_("date"),
+		{ OPTION_STRING, 0, "prune", &prune_expire_arg, N_("date"),
 			N_("prune unreferenced objects"),
-			PARSE_OPT_OPTARG, NULL, (intptr_t)prune_expire },
-		OPT_BOOL(0, "cruft", &cruft_packs, N_("pack unreferenced objects separately")),
-		OPT_MAGNITUDE(0, "max-cruft-size", &max_cruft_size,
+			PARSE_OPT_OPTARG, NULL, (intptr_t)prune_expire_arg },
+		OPT_BOOL(0, "cruft", &cfg.cruft_packs, N_("pack unreferenced objects separately")),
+		OPT_MAGNITUDE(0, "max-cruft-size", &cfg.max_cruft_size,
 			      N_("with --cruft, limit the size of new cruft packs")),
 		OPT_BOOL(0, "aggressive", &aggressive, N_("be more thorough (increased runtime)")),
-		OPT_BOOL_F(0, "auto", &auto_gc, N_("enable auto-gc mode"),
+		OPT_BOOL_F(0, "auto", &opts.auto_flag, N_("enable auto-gc mode"),
 			   PARSE_OPT_NOCOMPLETE),
+		OPT_BOOL(0, "detach", &opts.detach,
+			 N_("perform garbage collection in the background")),
 		OPT_BOOL_F(0, "force", &force,
 			   N_("force running gc even if there may be another gc running"),
 			   PARSE_OPT_NOCOMPLETE),
@@ -612,65 +706,54 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	strvec_pushl(&prune_worktrees, "worktree", "prune", "--expire", NULL);
 	strvec_pushl(&rerere, "rerere", "gc", NULL);
 
-	/* default expiry time, overwritten in gc_config */
-	gc_config();
-	if (parse_expiry_date(gc_log_expire, &gc_log_expire_time))
-		die(_("failed to parse gc.logExpiry value %s"), gc_log_expire);
+	gc_config(&cfg);
 
-	if (pack_refs < 0)
-		pack_refs = !is_bare_repository();
+	if (parse_expiry_date(cfg.gc_log_expire, &gc_log_expire_time))
+		die(_("failed to parse gc.logExpiry value %s"), cfg.gc_log_expire);
+
+	if (cfg.pack_refs < 0)
+		cfg.pack_refs = !is_bare_repository();
 
 	argc = parse_options(argc, argv, prefix, builtin_gc_options,
 			     builtin_gc_usage, 0);
 	if (argc > 0)
 		usage_with_options(builtin_gc_usage, builtin_gc_options);
 
-	if (prune_expire && parse_expiry_date(prune_expire, &dummy))
-		die(_("failed to parse prune expiry value %s"), prune_expire);
+	if (prune_expire_arg != prune_expire_sentinel) {
+		free(cfg.prune_expire);
+		cfg.prune_expire = xstrdup_or_null(prune_expire_arg);
+	}
+	if (cfg.prune_expire && parse_expiry_date(cfg.prune_expire, &dummy))
+		die(_("failed to parse prune expiry value %s"), cfg.prune_expire);
 
 	if (aggressive) {
 		strvec_push(&repack, "-f");
-		if (aggressive_depth > 0)
-			strvec_pushf(&repack, "--depth=%d", aggressive_depth);
-		if (aggressive_window > 0)
-			strvec_pushf(&repack, "--window=%d", aggressive_window);
+		if (cfg.aggressive_depth > 0)
+			strvec_pushf(&repack, "--depth=%d", cfg.aggressive_depth);
+		if (cfg.aggressive_window > 0)
+			strvec_pushf(&repack, "--window=%d", cfg.aggressive_window);
 	}
 	if (quiet)
 		strvec_push(&repack, "-q");
 
-	if (auto_gc) {
+	if (opts.auto_flag) {
+		if (cfg.detach_auto && opts.detach < 0)
+			opts.detach = 1;
+
 		/*
 		 * Auto-gc should be least intrusive as possible.
 		 */
-		if (!need_to_gc())
-			return 0;
+		if (!need_to_gc(&cfg)) {
+			ret = 0;
+			goto out;
+		}
+
 		if (!quiet) {
-			if (detach_auto)
+			if (opts.detach > 0)
 				fprintf(stderr, _("Auto packing the repository in background for optimum performance.\n"));
 			else
 				fprintf(stderr, _("Auto packing the repository for optimum performance.\n"));
 			fprintf(stderr, _("See \"git help gc\" for manual housekeeping.\n"));
-		}
-		if (detach_auto) {
-			int ret = report_last_gc_error();
-
-			if (ret == 1)
-				/* Last gc --auto failed. Skip this one. */
-				return 0;
-			else if (ret)
-				/* an I/O error occurred, already reported */
-				return ret;
-
-			if (lock_repo_for_gc(force, &pid))
-				return 0;
-			gc_before_repack(); /* dies on failure */
-			delete_tempfile(&pidfile);
-
-			/*
-			 * failure to daemonize is ok, we'll continue
-			 * in foreground
-			 */
-			daemonized = !daemonize();
 		}
 	} else {
 		struct string_list keep_pack = STRING_LIST_INIT_NODUP;
@@ -678,18 +761,48 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		if (keep_largest_pack != -1) {
 			if (keep_largest_pack)
 				find_base_packs(&keep_pack, 0);
-		} else if (big_pack_threshold) {
-			find_base_packs(&keep_pack, big_pack_threshold);
+		} else if (cfg.big_pack_threshold) {
+			find_base_packs(&keep_pack, cfg.big_pack_threshold);
 		}
 
-		add_repack_all_option(&keep_pack);
+		add_repack_all_option(&cfg, &keep_pack);
 		string_list_clear(&keep_pack, 0);
+	}
+
+	if (opts.detach > 0) {
+		ret = report_last_gc_error();
+		if (ret == 1) {
+			/* Last gc --auto failed. Skip this one. */
+			ret = 0;
+			goto out;
+
+		} else if (ret) {
+			/* an I/O error occurred, already reported */
+			goto out;
+		}
+
+		if (lock_repo_for_gc(force, &pid)) {
+			ret = 0;
+			goto out;
+		}
+
+		gc_before_repack(&opts, &cfg); /* dies on failure */
+		delete_tempfile(&pidfile);
+
+		/*
+		 * failure to daemonize is ok, we'll continue
+		 * in foreground
+		 */
+		daemonized = !daemonize();
 	}
 
 	name = lock_repo_for_gc(force, &pid);
 	if (name) {
-		if (auto_gc)
-			return 0; /* be quiet on --auto */
+		if (opts.auto_flag) {
+			ret = 0;
+			goto out; /* be quiet on --auto */
+		}
+
 		die(_("gc is already running on machine '%s' pid %"PRIuMAX" (use --force if not)"),
 		    name, (uintmax_t)pid);
 	}
@@ -699,11 +812,10 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 					  git_path("gc.log"),
 					  LOCK_DIE_ON_ERROR);
 		dup2(get_lock_file_fd(&log_lock), 2);
-		sigchain_push_common(process_log_file_on_signal);
 		atexit(process_log_file_at_exit);
 	}
 
-	gc_before_repack();
+	gc_before_repack(&opts, &cfg);
 
 	if (!repository_format_precious_objects) {
 		struct child_process repack_cmd = CHILD_PROCESS_INIT;
@@ -714,11 +826,11 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		if (run_command(&repack_cmd))
 			die(FAILED_RUN, repack.v[0]);
 
-		if (prune_expire) {
+		if (cfg.prune_expire) {
 			struct child_process prune_cmd = CHILD_PROCESS_INIT;
 
 			/* run `git prune` even if using cruft packs */
-			strvec_push(&prune, prune_expire);
+			strvec_push(&prune, cfg.prune_expire);
 			if (quiet)
 				strvec_push(&prune, "--no-progress");
 			if (repo_has_promisor_remote(the_repository))
@@ -731,10 +843,10 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		}
 	}
 
-	if (prune_worktrees_expire) {
+	if (cfg.prune_worktrees_expire) {
 		struct child_process prune_worktrees_cmd = CHILD_PROCESS_INIT;
 
-		strvec_push(&prune_worktrees, prune_worktrees_expire);
+		strvec_push(&prune_worktrees, cfg.prune_worktrees_expire);
 		prune_worktrees_cmd.git_cmd = 1;
 		strvec_pushv(&prune_worktrees_cmd.args, prune_worktrees.v);
 		if (run_command(&prune_worktrees_cmd))
@@ -758,13 +870,15 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 					     !quiet && !daemonized ? COMMIT_GRAPH_WRITE_PROGRESS : 0,
 					     NULL);
 
-	if (auto_gc && too_many_loose_objects())
+	if (opts.auto_flag && too_many_loose_objects(&cfg))
 		warning(_("There are too many unreachable loose objects; "
 			"run 'git prune' to remove them."));
 
 	if (!daemonized)
 		unlink(git_path("gc.log"));
 
+out:
+	gc_config_release(&cfg);
 	return 0;
 }
 
@@ -772,26 +886,6 @@ static const char *const builtin_maintenance_run_usage[] = {
 	N_("git maintenance run [--auto] [--[no-]quiet] [--task=<task>] [--schedule]"),
 	NULL
 };
-
-enum schedule_priority {
-	SCHEDULE_NONE = 0,
-	SCHEDULE_WEEKLY = 1,
-	SCHEDULE_DAILY = 2,
-	SCHEDULE_HOURLY = 3,
-};
-
-static enum schedule_priority parse_schedule(const char *value)
-{
-	if (!value)
-		return SCHEDULE_NONE;
-	if (!strcasecmp(value, "hourly"))
-		return SCHEDULE_HOURLY;
-	if (!strcasecmp(value, "daily"))
-		return SCHEDULE_DAILY;
-	if (!strcasecmp(value, "weekly"))
-		return SCHEDULE_WEEKLY;
-	return SCHEDULE_NONE;
-}
 
 static int maintenance_opt_schedule(const struct option *opt, const char *arg,
 				    int unset)
@@ -809,12 +903,6 @@ static int maintenance_opt_schedule(const struct option *opt, const char *arg,
 	return 0;
 }
 
-struct maintenance_run_opts {
-	int auto_flag;
-	int quiet;
-	enum schedule_priority schedule;
-};
-
 /* Remember to update object flag allocation in object.h */
 #define SEEN		(1u<<0)
 
@@ -824,6 +912,7 @@ struct cg_auto_data {
 };
 
 static int dfs_on_ref(const char *refname UNUSED,
+		      const char *referent UNUSED,
 		      const struct object_id *oid,
 		      int flags UNUSED,
 		      void *cb_data)
@@ -834,7 +923,7 @@ static int dfs_on_ref(const char *refname UNUSED,
 	struct commit_list *stack = NULL;
 	struct commit *commit;
 
-	if (!peel_iterated_oid(oid, &peeled))
+	if (!peel_iterated_oid(the_repository, oid, &peeled))
 		oid = &peeled;
 	if (oid_object_info(the_repository, oid, NULL) != OBJ_COMMIT)
 		return 0;
@@ -880,7 +969,7 @@ static int dfs_on_ref(const char *refname UNUSED,
 	return result;
 }
 
-static int should_write_commit_graph(void)
+static int should_write_commit_graph(struct gc_config *cfg UNUSED)
 {
 	int result;
 	struct cg_auto_data data;
@@ -895,7 +984,8 @@ static int should_write_commit_graph(void)
 	if (data.limit < 0)
 		return 1;
 
-	result = for_each_ref(dfs_on_ref, &data);
+	result = refs_for_each_ref(get_main_ref_store(the_repository),
+				   dfs_on_ref, &data);
 
 	repo_clear_commit_marks(the_repository, SEEN);
 
@@ -916,7 +1006,8 @@ static int run_write_commit_graph(struct maintenance_run_opts *opts)
 	return !!run_command(&child);
 }
 
-static int maintenance_task_commit_graph(struct maintenance_run_opts *opts)
+static int maintenance_task_commit_graph(struct maintenance_run_opts *opts,
+					 struct gc_config *cfg UNUSED)
 {
 	prepare_repo_settings(the_repository);
 	if (!the_repository->settings.core_commit_graph)
@@ -950,7 +1041,8 @@ static int fetch_remote(struct remote *remote, void *cbdata)
 	return !!run_command(&child);
 }
 
-static int maintenance_task_prefetch(struct maintenance_run_opts *opts)
+static int maintenance_task_prefetch(struct maintenance_run_opts *opts,
+				     struct gc_config *cfg UNUSED)
 {
 	if (for_each_remote(fetch_remote, opts)) {
 		error(_("failed to prefetch remotes"));
@@ -960,7 +1052,8 @@ static int maintenance_task_prefetch(struct maintenance_run_opts *opts)
 	return 0;
 }
 
-static int maintenance_task_gc(struct maintenance_run_opts *opts)
+static int maintenance_task_gc(struct maintenance_run_opts *opts,
+			       struct gc_config *cfg UNUSED)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 
@@ -973,6 +1066,7 @@ static int maintenance_task_gc(struct maintenance_run_opts *opts)
 		strvec_push(&child.args, "--quiet");
 	else
 		strvec_push(&child.args, "--no-quiet");
+	strvec_push(&child.args, "--no-detach");
 
 	return run_command(&child);
 }
@@ -1008,7 +1102,7 @@ static int loose_object_count(const struct object_id *oid UNUSED,
 	return 0;
 }
 
-static int loose_object_auto_condition(void)
+static int loose_object_auto_condition(struct gc_config *cfg UNUSED)
 {
 	int count = 0;
 
@@ -1068,6 +1162,12 @@ static int pack_loose(struct maintenance_run_opts *opts)
 
 	pack_proc.in = -1;
 
+	/*
+	 * git-pack-objects(1) ends up writing the pack hash to stdout, which
+	 * we do not care for.
+	 */
+	pack_proc.out = -1;
+
 	if (start_command(&pack_proc)) {
 		error(_("failed to start 'git pack-objects' process"));
 		return 1;
@@ -1093,12 +1193,13 @@ static int pack_loose(struct maintenance_run_opts *opts)
 	return result;
 }
 
-static int maintenance_task_loose_objects(struct maintenance_run_opts *opts)
+static int maintenance_task_loose_objects(struct maintenance_run_opts *opts,
+					  struct gc_config *cfg UNUSED)
 {
 	return prune_packed(opts) || pack_loose(opts);
 }
 
-static int incremental_repack_auto_condition(void)
+static int incremental_repack_auto_condition(struct gc_config *cfg UNUSED)
 {
 	struct packed_git *p;
 	int incremental_repack_auto_limit = 10;
@@ -1217,7 +1318,8 @@ static int multi_pack_index_repack(struct maintenance_run_opts *opts)
 	return 0;
 }
 
-static int maintenance_task_incremental_repack(struct maintenance_run_opts *opts)
+static int maintenance_task_incremental_repack(struct maintenance_run_opts *opts,
+					       struct gc_config *cfg UNUSED)
 {
 	prepare_repo_settings(the_repository);
 	if (!the_repository->settings.core_multi_pack_index) {
@@ -1234,14 +1336,15 @@ static int maintenance_task_incremental_repack(struct maintenance_run_opts *opts
 	return 0;
 }
 
-typedef int maintenance_task_fn(struct maintenance_run_opts *opts);
+typedef int maintenance_task_fn(struct maintenance_run_opts *opts,
+				struct gc_config *cfg);
 
 /*
  * An auto condition function returns 1 if the task should run
  * and 0 if the task should NOT run. See needs_to_gc() for an
  * example.
  */
-typedef int maintenance_auto_fn(void);
+typedef int maintenance_auto_fn(struct gc_config *cfg);
 
 struct maintenance_task {
 	const char *name;
@@ -1296,7 +1399,7 @@ static struct maintenance_task tasks[] = {
 	[TASK_PACK_REFS] = {
 		"pack-refs",
 		maintenance_task_pack_refs,
-		NULL,
+		pack_refs_condition,
 	},
 };
 
@@ -1308,7 +1411,8 @@ static int compare_tasks_by_selection(const void *a_, const void *b_)
 	return b->selected_order - a->selected_order;
 }
 
-static int maintenance_run_tasks(struct maintenance_run_opts *opts)
+static int maintenance_run_tasks(struct maintenance_run_opts *opts,
+				 struct gc_config *cfg)
 {
 	int i, found_selected = 0;
 	int result = 0;
@@ -1332,6 +1436,13 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts)
 	}
 	free(lock_path);
 
+	/* Failure to daemonize is ok, we'll continue in foreground. */
+	if (opts->detach > 0) {
+		trace2_region_enter("maintenance", "detach", the_repository);
+		daemonize();
+		trace2_region_leave("maintenance", "detach", the_repository);
+	}
+
 	for (i = 0; !found_selected && i < TASK__COUNT; i++)
 		found_selected = tasks[i].selected_order >= 0;
 
@@ -1347,14 +1458,14 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts)
 
 		if (opts->auto_flag &&
 		    (!tasks[i].auto_condition ||
-		     !tasks[i].auto_condition()))
+		     !tasks[i].auto_condition(cfg)))
 			continue;
 
 		if (opts->schedule && tasks[i].schedule < opts->schedule)
 			continue;
 
 		trace2_region_enter("maintenance", tasks[i].name, r);
-		if (tasks[i].fn(opts)) {
+		if (tasks[i].fn(opts, cfg)) {
 			error(_("task '%s' failed"), tasks[i].name);
 			result = 1;
 		}
@@ -1367,9 +1478,9 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts)
 
 static void initialize_maintenance_strategy(void)
 {
-	char *config_str;
+	const char *config_str;
 
-	if (git_config_get_string("maintenance.strategy", &config_str))
+	if (git_config_get_string_tmp("maintenance.strategy", &config_str))
 		return;
 
 	if (!strcasecmp(config_str, "incremental")) {
@@ -1391,7 +1502,6 @@ static void initialize_task_config(int schedule)
 {
 	int i;
 	struct strbuf config_name = STRBUF_INIT;
-	gc_config();
 
 	if (schedule)
 		initialize_maintenance_strategy();
@@ -1454,10 +1564,13 @@ static int task_option_parse(const struct option *opt UNUSED,
 static int maintenance_run(int argc, const char **argv, const char *prefix)
 {
 	int i;
-	struct maintenance_run_opts opts;
+	struct maintenance_run_opts opts = MAINTENANCE_RUN_OPTS_INIT;
+	struct gc_config cfg = GC_CONFIG_INIT;
 	struct option builtin_maintenance_run_options[] = {
 		OPT_BOOL(0, "auto", &opts.auto_flag,
 			 N_("run tasks based on the state of the repository")),
+		OPT_BOOL(0, "detach", &opts.detach,
+			 N_("perform maintenance in the background")),
 		OPT_CALLBACK(0, "schedule", &opts.schedule, N_("frequency"),
 			     N_("run tasks based on frequency"),
 			     maintenance_opt_schedule),
@@ -1468,7 +1581,7 @@ static int maintenance_run(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_NONEG, task_option_parse),
 		OPT_END()
 	};
-	memset(&opts, 0, sizeof(opts));
+	int ret;
 
 	opts.quiet = !isatty(2);
 
@@ -1483,12 +1596,16 @@ static int maintenance_run(int argc, const char **argv, const char *prefix)
 	if (opts.auto_flag && opts.schedule)
 		die(_("use at most one of --auto and --schedule=<frequency>"));
 
+	gc_config(&cfg);
 	initialize_task_config(opts.schedule);
 
 	if (argc != 0)
 		usage_with_options(builtin_maintenance_run_usage,
 				   builtin_maintenance_run_options);
-	return maintenance_run_tasks(&opts);
+
+	ret = maintenance_run_tasks(&opts, &cfg);
+	gc_config_release(&cfg);
+	return ret;
 }
 
 static char *get_maintpath(void)
@@ -1553,7 +1670,7 @@ static int maintenance_register(int argc, const char **argv, const char *prefix)
 			die(_("$HOME not set"));
 		rc = git_config_set_multivar_in_file_gently(
 			config_file, "maintenance.repo", maintpath,
-			CONFIG_REGEX_NONE, 0);
+			CONFIG_REGEX_NONE, NULL, 0);
 		free(global_config_file);
 
 		if (rc)
@@ -1620,7 +1737,7 @@ static int maintenance_unregister(int argc, const char **argv, const char *prefi
 		if (!config_file)
 			die(_("$HOME not set"));
 		rc = git_config_set_multivar_in_file_gently(
-			config_file, key, NULL, maintpath,
+			config_file, key, NULL, maintpath, NULL,
 			CONFIG_FLAGS_MULTI_REPLACE | CONFIG_FLAGS_FIXED_VALUE);
 		free(global_config_file);
 
@@ -1651,6 +1768,42 @@ static const char *get_frequency(enum schedule_priority schedule)
 	}
 }
 
+static const char *extraconfig[] = {
+	"credential.interactive=false",
+	"core.askPass=true", /* 'true' returns success, but no output. */
+	NULL
+};
+
+static const char *get_extra_config_parameters(void) {
+	static const char *result = NULL;
+	struct strbuf builder = STRBUF_INIT;
+
+	if (result)
+		return result;
+
+	for (const char **s = extraconfig; s && *s; s++)
+		strbuf_addf(&builder, "-c %s ", *s);
+
+	result = strbuf_detach(&builder, NULL);
+	return result;
+}
+
+static const char *get_extra_launchctl_strings(void) {
+	static const char *result = NULL;
+	struct strbuf builder = STRBUF_INIT;
+
+	if (result)
+		return result;
+
+	for (const char **s = extraconfig; s && *s; s++) {
+		strbuf_addstr(&builder, "<string>-c</string>\n");
+		strbuf_addf(&builder, "<string>%s</string>\n", *s);
+	}
+
+	result = strbuf_detach(&builder, NULL);
+	return result;
+}
+
 /*
  * get_schedule_cmd` reads the GIT_TEST_MAINT_SCHEDULER environment variable
  * to mock the schedulers that `git maintenance start` rely on.
@@ -1665,39 +1818,43 @@ static const char *get_frequency(enum schedule_priority schedule)
  * * If $GIT_TEST_MAINT_SCHEDULER is set, return true.
  *   In this case, the *cmd value is read as input.
  *
- *   * if the input value *cmd is the key of one of the comma-separated list
- *     item, then *is_available is set to true and *cmd is modified and becomes
+ *   * if the input value cmd is the key of one of the comma-separated list
+ *     item, then *is_available is set to true and *out is set to
  *     the mock command.
  *
  *   * if the input value *cmd isn’t the key of any of the comma-separated list
- *     item, then *is_available is set to false.
+ *     item, then *is_available is set to false and *out is set to the original
+ *     command.
  *
  * Ex.:
  *   GIT_TEST_MAINT_SCHEDULER not set
  *     +-------+-------------------------------------------------+
  *     | Input |                     Output                      |
- *     | *cmd  | return code |       *cmd        | *is_available |
+ *     | *cmd  | return code |       *out        | *is_available |
  *     +-------+-------------+-------------------+---------------+
- *     | "foo" |    false    | "foo" (unchanged) |  (unchanged)  |
+ *     | "foo" |    false    | "foo" (allocated) |  (unchanged)  |
  *     +-------+-------------+-------------------+---------------+
  *
  *   GIT_TEST_MAINT_SCHEDULER set to “foo:./mock_foo.sh,bar:./mock_bar.sh”
  *     +-------+-------------------------------------------------+
  *     | Input |                     Output                      |
- *     | *cmd  | return code |       *cmd        | *is_available |
+ *     | *cmd  | return code |       *out        | *is_available |
  *     +-------+-------------+-------------------+---------------+
  *     | "foo" |    true     |  "./mock.foo.sh"  |     true      |
- *     | "qux" |    true     | "qux" (unchanged) |     false     |
+ *     | "qux" |    true     | "qux" (allocated) |     false     |
  *     +-------+-------------+-------------------+---------------+
  */
-static int get_schedule_cmd(const char **cmd, int *is_available)
+static int get_schedule_cmd(const char *cmd, int *is_available, char **out)
 {
 	char *testing = xstrdup_or_null(getenv("GIT_TEST_MAINT_SCHEDULER"));
 	struct string_list_item *item;
 	struct string_list list = STRING_LIST_INIT_NODUP;
 
-	if (!testing)
+	if (!testing) {
+		if (out)
+			*out = xstrdup(cmd);
 		return 0;
+	}
 
 	if (is_available)
 		*is_available = 0;
@@ -1709,16 +1866,22 @@ static int get_schedule_cmd(const char **cmd, int *is_available)
 		if (string_list_split_in_place(&pair, item->string, ":", 2) != 2)
 			continue;
 
-		if (!strcmp(*cmd, pair.items[0].string)) {
-			*cmd = pair.items[1].string;
+		if (!strcmp(cmd, pair.items[0].string)) {
+			if (out)
+				*out = xstrdup(pair.items[1].string);
 			if (is_available)
 				*is_available = 1;
-			string_list_clear(&list, 0);
-			UNLEAK(testing);
-			return 1;
+			string_list_clear(&pair, 0);
+			goto out;
 		}
+
+		string_list_clear(&pair, 0);
 	}
 
+	if (out)
+		*out = xstrdup(cmd);
+
+out:
 	string_list_clear(&list, 0);
 	free(testing);
 	return 1;
@@ -1735,9 +1898,8 @@ static int get_random_minute(void)
 
 static int is_launchctl_available(void)
 {
-	const char *cmd = "launchctl";
 	int is_available;
-	if (get_schedule_cmd(&cmd, &is_available))
+	if (get_schedule_cmd("launchctl", &is_available, NULL))
 		return is_available;
 
 #ifdef __APPLE__
@@ -1775,12 +1937,12 @@ static char *launchctl_get_uid(void)
 
 static int launchctl_boot_plist(int enable, const char *filename)
 {
-	const char *cmd = "launchctl";
+	char *cmd;
 	int result;
 	struct child_process child = CHILD_PROCESS_INIT;
 	char *uid = launchctl_get_uid();
 
-	get_schedule_cmd(&cmd, NULL);
+	get_schedule_cmd("launchctl", NULL, &cmd);
 	strvec_split(&child.args, cmd);
 	strvec_pushl(&child.args, enable ? "bootstrap" : "bootout", uid,
 		     filename, NULL);
@@ -1793,6 +1955,7 @@ static int launchctl_boot_plist(int enable, const char *filename)
 
 	result = finish_command(&child);
 
+	free(cmd);
 	free(uid);
 	return result;
 }
@@ -1844,10 +2007,10 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 	static unsigned long lock_file_timeout_ms = ULONG_MAX;
 	struct strbuf plist = STRBUF_INIT, plist2 = STRBUF_INIT;
 	struct stat st;
-	const char *cmd = "launchctl";
+	char *cmd;
 	int minute = get_random_minute();
 
-	get_schedule_cmd(&cmd, NULL);
+	get_schedule_cmd("launchctl", NULL, &cmd);
 	preamble = "<?xml version=\"1.0\"?>\n"
 		   "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">\n"
 		   "<plist version=\"1.0\">"
@@ -1857,7 +2020,9 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 		   "<array>\n"
 		   "<string>%s/git</string>\n"
 		   "<string>--exec-path=%s</string>\n"
+		   "%s" /* For extra config parameters. */
 		   "<string>for-each-repo</string>\n"
+		   "<string>--keep-going</string>\n"
 		   "<string>--config=maintenance.repo</string>\n"
 		   "<string>maintenance</string>\n"
 		   "<string>run</string>\n"
@@ -1865,7 +2030,8 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 		   "</array>\n"
 		   "<key>StartCalendarInterval</key>\n"
 		   "<array>\n";
-	strbuf_addf(&plist, preamble, name, exec_path, exec_path, frequency);
+	strbuf_addf(&plist, preamble, name, exec_path, exec_path,
+		    get_extra_launchctl_strings(), frequency);
 
 	switch (schedule) {
 	case SCHEDULE_HOURLY:
@@ -1936,6 +2102,7 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 
 	free(filename);
 	free(name);
+	free(cmd);
 	strbuf_release(&plist);
 	strbuf_release(&plist2);
 	return 0;
@@ -1960,9 +2127,8 @@ static int launchctl_update_schedule(int run_maintenance, int fd UNUSED)
 
 static int is_schtasks_available(void)
 {
-	const char *cmd = "schtasks";
 	int is_available;
-	if (get_schedule_cmd(&cmd, &is_available))
+	if (get_schedule_cmd("schtasks", &is_available, NULL))
 		return is_available;
 
 #ifdef GIT_WINDOWS_NATIVE
@@ -1981,15 +2147,16 @@ static char *schtasks_task_name(const char *frequency)
 
 static int schtasks_remove_task(enum schedule_priority schedule)
 {
-	const char *cmd = "schtasks";
+	char *cmd;
 	struct child_process child = CHILD_PROCESS_INIT;
 	const char *frequency = get_frequency(schedule);
 	char *name = schtasks_task_name(frequency);
 
-	get_schedule_cmd(&cmd, NULL);
+	get_schedule_cmd("schtasks", NULL, &cmd);
 	strvec_split(&child.args, cmd);
 	strvec_pushl(&child.args, "/delete", "/tn", name, "/f", NULL);
 	free(name);
+	free(cmd);
 
 	return run_command(&child);
 }
@@ -2003,7 +2170,7 @@ static int schtasks_remove_tasks(void)
 
 static int schtasks_schedule_task(const char *exec_path, enum schedule_priority schedule)
 {
-	const char *cmd = "schtasks";
+	char *cmd;
 	int result;
 	struct child_process child = CHILD_PROCESS_INIT;
 	const char *xml;
@@ -2013,10 +2180,10 @@ static int schtasks_schedule_task(const char *exec_path, enum schedule_priority 
 	struct strbuf tfilename = STRBUF_INIT;
 	int minute = get_random_minute();
 
-	get_schedule_cmd(&cmd, NULL);
+	get_schedule_cmd("schtasks", NULL, &cmd);
 
 	strbuf_addf(&tfilename, "%s/schedule_%s_XXXXXX",
-		    get_git_common_dir(), frequency);
+		    repo_get_common_dir(the_repository), frequency);
 	tfile = xmks_tempfile(tfilename.buf);
 	strbuf_release(&tfilename);
 
@@ -2100,11 +2267,12 @@ static int schtasks_schedule_task(const char *exec_path, enum schedule_priority 
 	      "<Actions Context=\"Author\">\n"
 	      "<Exec>\n"
 	      "<Command>\"%s\\headless-git.exe\"</Command>\n"
-	      "<Arguments>--exec-path=\"%s\" for-each-repo --config=maintenance.repo maintenance run --schedule=%s</Arguments>\n"
+	      "<Arguments>--exec-path=\"%s\" %s for-each-repo --keep-going --config=maintenance.repo maintenance run --schedule=%s</Arguments>\n"
 	      "</Exec>\n"
 	      "</Actions>\n"
 	      "</Task>\n";
-	fprintf(tfile->fp, xml, exec_path, exec_path, frequency);
+	fprintf(tfile->fp, xml, exec_path, exec_path,
+		get_extra_config_parameters(), frequency);
 	strvec_split(&child.args, cmd);
 	strvec_pushl(&child.args, "/create", "/tn", name, "/f", "/xml",
 				  get_tempfile_path(tfile), NULL);
@@ -2119,6 +2287,7 @@ static int schtasks_schedule_task(const char *exec_path, enum schedule_priority 
 
 	delete_tempfile(&tfile);
 	free(name);
+	free(cmd);
 	return result;
 }
 
@@ -2160,21 +2329,28 @@ static int check_crontab_process(const char *cmd)
 
 static int is_crontab_available(void)
 {
-	const char *cmd = "crontab";
+	char *cmd;
 	int is_available;
+	int ret;
 
-	if (get_schedule_cmd(&cmd, &is_available))
-		return is_available;
+	if (get_schedule_cmd("crontab", &is_available, &cmd)) {
+		ret = is_available;
+		goto out;
+	}
 
 #ifdef __APPLE__
 	/*
 	 * macOS has cron, but it requires special permissions and will
 	 * create a UI alert when attempting to run this command.
 	 */
-	return 0;
+	ret = 0;
 #else
-	return check_crontab_process(cmd);
+	ret = check_crontab_process(cmd);
 #endif
+
+out:
+	free(cmd);
+	return ret;
 }
 
 #define BEGIN_LINE "# BEGIN GIT MAINTENANCE SCHEDULE"
@@ -2182,7 +2358,7 @@ static int is_crontab_available(void)
 
 static int crontab_update_schedule(int run_maintenance, int fd)
 {
-	const char *cmd = "crontab";
+	char *cmd;
 	int result = 0;
 	int in_old_region = 0;
 	struct child_process crontab_list = CHILD_PROCESS_INIT;
@@ -2192,15 +2368,17 @@ static int crontab_update_schedule(int run_maintenance, int fd)
 	struct tempfile *tmpedit = NULL;
 	int minute = get_random_minute();
 
-	get_schedule_cmd(&cmd, NULL);
+	get_schedule_cmd("crontab", NULL, &cmd);
 	strvec_split(&crontab_list.args, cmd);
 	strvec_push(&crontab_list.args, "-l");
 	crontab_list.in = -1;
 	crontab_list.out = dup(fd);
 	crontab_list.git_cmd = 0;
 
-	if (start_command(&crontab_list))
-		return error(_("failed to run 'crontab -l'; your system might not support 'cron'"));
+	if (start_command(&crontab_list)) {
+		result = error(_("failed to run 'crontab -l'; your system might not support 'cron'"));
+		goto out;
+	}
 
 	/* Ignore exit code, as an empty crontab will return error. */
 	finish_command(&crontab_list);
@@ -2245,8 +2423,8 @@ static int crontab_update_schedule(int run_maintenance, int fd)
 			"# replaced in the future by a Git command.\n\n");
 
 		strbuf_addf(&line_format,
-			    "%%d %%s * * %%s \"%s/git\" --exec-path=\"%s\" for-each-repo --config=maintenance.repo maintenance run --schedule=%%s\n",
-			    exec_path, exec_path);
+			    "%%d %%s * * %%s \"%s/git\" --exec-path=\"%s\" %s for-each-repo --keep-going --config=maintenance.repo maintenance run --schedule=%%s\n",
+			    exec_path, exec_path, get_extra_config_parameters());
 		fprintf(cron_in, line_format.buf, minute, "1-23", "*", "hourly");
 		fprintf(cron_in, line_format.buf, minute, "0", "1-6", "daily");
 		fprintf(cron_in, line_format.buf, minute, "0", "0", "weekly");
@@ -2270,8 +2448,10 @@ static int crontab_update_schedule(int run_maintenance, int fd)
 		result = error(_("'crontab' died"));
 	else
 		fclose(cron_list);
+
 out:
 	delete_tempfile(&tmpedit);
+	free(cmd);
 	return result;
 }
 
@@ -2294,10 +2474,9 @@ static int real_is_systemd_timer_available(void)
 
 static int is_systemd_timer_available(void)
 {
-	const char *cmd = "systemctl";
 	int is_available;
 
-	if (get_schedule_cmd(&cmd, &is_available))
+	if (get_schedule_cmd("systemctl", &is_available, NULL))
 		return is_available;
 
 	return real_is_systemd_timer_available();
@@ -2446,7 +2625,7 @@ static int systemd_timer_write_service_template(const char *exec_path)
 	       "\n"
 	       "[Service]\n"
 	       "Type=oneshot\n"
-	       "ExecStart=\"%s/git\" --exec-path=\"%s\" for-each-repo --config=maintenance.repo maintenance run --schedule=%%i\n"
+	       "ExecStart=\"%s/git\" --exec-path=\"%s\" %s for-each-repo --keep-going --config=maintenance.repo maintenance run --schedule=%%i\n"
 	       "LockPersonality=yes\n"
 	       "MemoryDenyWriteExecute=yes\n"
 	       "NoNewPrivileges=yes\n"
@@ -2456,7 +2635,7 @@ static int systemd_timer_write_service_template(const char *exec_path)
 	       "RestrictSUIDSGID=yes\n"
 	       "SystemCallArchitectures=native\n"
 	       "SystemCallFilter=@system-service\n";
-	if (fprintf(file, unit, exec_path, exec_path) < 0) {
+	if (fprintf(file, unit, exec_path, exec_path, get_extra_config_parameters()) < 0) {
 		error(_("failed to write to '%s'"), filename);
 		fclose(file);
 		goto error;
@@ -2478,9 +2657,10 @@ static int systemd_timer_enable_unit(int enable,
 				     enum schedule_priority schedule,
 				     int minute)
 {
-	const char *cmd = "systemctl";
+	char *cmd = NULL;
 	struct child_process child = CHILD_PROCESS_INIT;
 	const char *frequency = get_frequency(schedule);
+	int ret;
 
 	/*
 	 * Disabling the systemd unit while it is already disabled makes
@@ -2491,20 +2671,25 @@ static int systemd_timer_enable_unit(int enable,
 	 * On the other hand, enabling a systemd unit which is already enabled
 	 * produces no error.
 	 */
-	if (!enable)
+	if (!enable) {
 		child.no_stderr = 1;
-	else if (systemd_timer_write_timer_file(schedule, minute))
-		return -1;
+	} else if (systemd_timer_write_timer_file(schedule, minute)) {
+		ret = -1;
+		goto out;
+	}
 
-	get_schedule_cmd(&cmd, NULL);
+	get_schedule_cmd("systemctl", NULL, &cmd);
 	strvec_split(&child.args, cmd);
 	strvec_pushl(&child.args, "--user", enable ? "enable" : "disable",
 		     "--now", NULL);
 	strvec_pushf(&child.args, SYSTEMD_UNIT_FORMAT, frequency, "timer");
 
-	if (start_command(&child))
-		return error(_("failed to start systemctl"));
-	if (finish_command(&child))
+	if (start_command(&child)) {
+		ret = error(_("failed to start systemctl"));
+		goto out;
+	}
+
+	if (finish_command(&child)) {
 		/*
 		 * Disabling an already disabled systemd unit makes
 		 * systemctl fail.
@@ -2512,9 +2697,17 @@ static int systemd_timer_enable_unit(int enable,
 		 *
 		 * Enabling an enabled systemd unit doesn't fail.
 		 */
-		if (enable)
-			return error(_("failed to run systemctl"));
-	return 0;
+		if (enable) {
+			ret = error(_("failed to run systemctl"));
+			goto out;
+		}
+	}
+
+	ret = 0;
+
+out:
+	free(cmd);
+	return ret;
 }
 
 /*
@@ -2774,7 +2967,10 @@ static const char * const builtin_maintenance_usage[] = {
 	NULL,
 };
 
-int cmd_maintenance(int argc, const char **argv, const char *prefix)
+int cmd_maintenance(int argc,
+		    const char **argv,
+		    const char *prefix,
+		    struct repository *repo UNUSED)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option builtin_maintenance_options[] = {

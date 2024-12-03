@@ -107,6 +107,9 @@ with the prefetch task, the objects necessary to complete a later real fetch
 would already be obtained, making the real fetch faster.  In the ideal case,
 it will just become an update to a bunch of remote-tracking branches without
 any object transfer.
++
+The `remote.<name>.skipFetchAll` configuration can be used to
+exclude a particular remote from getting prefetched.
 
 gc::
 	Clean up unnecessary files and optimize the local repository. "GC"
@@ -217,7 +220,9 @@ on an hourly basis. Each run executes the "hourly" tasks. At midnight,
 that process also executes the "daily" tasks. At midnight on the first day
 of the week, that process also executes the "weekly" tasks. A single
 process iterates over each registered repository, performing the scheduled
-tasks for that frequency. Depending on the number of registered
+tasks for that frequency. The processes are scheduled to a random minute of
+the hour per client to spread out the load that multiple clients might
+generate (e.g. from prefetching). Depending on the number of registered
 repositories and their sizes, this process may take longer than an hour.
 In this case, multiple `git maintenance run` commands may run on the same
 repository at the same time, colliding on the object database lock. This

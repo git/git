@@ -40,7 +40,8 @@ use, it'll affect how the auto pack limit works.
 
 gc.autoDetach::
 	Make `git gc --auto` return immediately and run in the background
-	if the system supports it. Default is true.
+	if the system supports it. Default is true. This config variable acts
+	as a fallback in case `maintenance.autoDetach` is not set.
 
 gc.bigPackThreshold::
 	If non-zero, all non-cruft packs larger than this limit are kept
@@ -162,7 +163,7 @@ gc.repackFilterTo::
 	containing the filtered out objects. **WARNING:** The
 	specified location should be accessible, using for example the
 	Git alternates mechanism, otherwise the repo could be
-	considered corrupt by Git as it migh not be able to access the
+	considered corrupt by Git as it might not be able to access the
 	objects in that packfile. See the `--filter-to=<dir>` option
 	of linkgit:git-repack[1] and the `objects/info/alternates`
 	section of linkgit:gitrepository-layout[5].

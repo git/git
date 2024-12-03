@@ -4,6 +4,7 @@
 #include "refs.h"
 #include "iterator.h"
 
+struct fsck_options;
 struct ref_transaction;
 
 /*
@@ -69,40 +70,6 @@ int ref_resolves_to_object(const char *refname,
 			   const struct object_id *oid,
 			   unsigned int flags);
 
-enum peel_status {
-	/* object was peeled successfully: */
-	PEEL_PEELED = 0,
-
-	/*
-	 * object cannot be peeled because the named object (or an
-	 * object referred to by a tag in the peel chain), does not
-	 * exist.
-	 */
-	PEEL_INVALID = -1,
-
-	/* object cannot be peeled because it is not a tag: */
-	PEEL_NON_TAG = -2,
-
-	/* ref_entry contains no peeled value because it is a symref: */
-	PEEL_IS_SYMREF = -3,
-
-	/*
-	 * ref_entry cannot be peeled because it is broken (i.e., the
-	 * symbolic reference cannot even be resolved to an object
-	 * name):
-	 */
-	PEEL_BROKEN = -4
-};
-
-/*
- * Peel the named object; i.e., if the object is a tag, resolve the
- * tag recursively until a non-tag is found.  If successful, store the
- * result to oid and return PEEL_PEELED.  If the object is not a tag
- * or is not valid, return PEEL_NON_TAG or PEEL_INVALID, respectively,
- * and leave oid unchanged.
- */
-enum peel_status peel_object(const struct object_id *name, struct object_id *oid);
-
 /**
  * Information needed for a single ref update. Set new_oid to the new
  * value or to null_oid to delete the ref. To check the old value
@@ -123,6 +90,19 @@ struct ref_update {
 	 * `old_oid` is `null_oid`).
 	 */
 	struct object_id old_oid;
+
+	/*
+	 * If set, point the reference to this value. This can also be
+	 * used to convert regular references to become symbolic refs.
+	 * Cannot be set together with `new_oid`.
+	 */
+	const char *new_target;
+
+	/*
+	 * If set, check that the reference previously pointed to this
+	 * value. Cannot be set together with `old_oid`.
+	 */
+	const char *old_target;
 
 	/*
 	 * One or more of REF_NO_DEREF, REF_FORCE_CREATE_REFLOG,
@@ -173,6 +153,7 @@ struct ref_update *ref_transaction_add_update(
 		const char *refname, unsigned int flags,
 		const struct object_id *new_oid,
 		const struct object_id *old_oid,
+		const char *new_target, const char *old_target,
 		const char *msg);
 
 /*
@@ -319,6 +300,7 @@ enum do_for_each_ref_flags {
 struct ref_iterator {
 	struct ref_iterator_vtable *vtable;
 	const char *refname;
+	const char *referent;
 	const struct object_id *oid;
 	unsigned int flags;
 };
@@ -503,9 +485,8 @@ extern struct ref_iterator *current_ref_iter;
  * adapter between the callback style of reference iteration and the
  * iterator style.
  */
-int do_for_each_repo_ref_iterator(struct repository *r,
-				  struct ref_iterator *iter,
-				  each_repo_ref_fn fn, void *cb_data);
+int do_for_each_ref_iterator(struct ref_iterator *iter,
+			     each_ref_fn fn, void *cb_data);
 
 struct ref_store;
 
@@ -529,10 +510,20 @@ struct ref_store;
 typedef struct ref_store *ref_store_init_fn(struct repository *repo,
 					    const char *gitdir,
 					    unsigned int flags);
+/*
+ * Release all memory and resources associated with the ref store.
+ */
+typedef void ref_store_release_fn(struct ref_store *refs);
 
-typedef int ref_init_db_fn(struct ref_store *refs,
-			   int flags,
-			   struct strbuf *err);
+typedef int ref_store_create_on_disk_fn(struct ref_store *refs,
+					int flags,
+					struct strbuf *err);
+
+/*
+ * Remove the reference store from disk.
+ */
+typedef int ref_store_remove_on_disk_fn(struct ref_store *refs,
+					struct strbuf *err);
 
 typedef int ref_transaction_prepare_fn(struct ref_store *refs,
 				       struct ref_transaction *transaction,
@@ -552,10 +543,6 @@ typedef int ref_transaction_commit_fn(struct ref_store *refs,
 
 typedef int pack_refs_fn(struct ref_store *ref_store,
 			 struct pack_refs_opts *opts);
-typedef int create_symref_fn(struct ref_store *ref_store,
-			     const char *ref_target,
-			     const char *refs_heads_master,
-			     const char *logmsg);
 typedef int rename_ref_fn(struct ref_store *ref_store,
 			  const char *oldref, const char *newref,
 			  const char *logmsg);
@@ -665,10 +652,15 @@ typedef int read_raw_ref_fn(struct ref_store *ref_store, const char *refname,
 typedef int read_symbolic_ref_fn(struct ref_store *ref_store, const char *refname,
 				 struct strbuf *referent);
 
+typedef int fsck_fn(struct ref_store *ref_store,
+		    struct fsck_options *o);
+
 struct ref_storage_be {
 	const char *name;
 	ref_store_init_fn *init;
-	ref_init_db_fn *init_db;
+	ref_store_release_fn *release;
+	ref_store_create_on_disk_fn *create_on_disk;
+	ref_store_remove_on_disk_fn *remove_on_disk;
 
 	ref_transaction_prepare_fn *transaction_prepare;
 	ref_transaction_finish_fn *transaction_finish;
@@ -676,7 +668,6 @@ struct ref_storage_be {
 	ref_transaction_commit_fn *initial_transaction_commit;
 
 	pack_refs_fn *pack_refs;
-	create_symref_fn *create_symref;
 	rename_ref_fn *rename_ref;
 	copy_ref_fn *copy_ref;
 
@@ -691,6 +682,8 @@ struct ref_storage_be {
 	create_reflog_fn *create_reflog;
 	delete_reflog_fn *delete_reflog;
 	reflog_expire_fn *reflog_expire;
+
+	fsck_fn *fsck;
 };
 
 extern struct ref_storage_be refs_be_files;
@@ -700,7 +693,7 @@ extern struct ref_storage_be refs_be_packed;
 /*
  * A representation of the reference store for the main repository or
  * a submodule. The ref_store instances for submodules are kept in a
- * hash map; see get_submodule_ref_store() for more info.
+ * hash map; see repo_get_submodule_ref_store() for more info.
  */
 struct ref_store {
 	/* The backend describing this ref_store's storage scheme: */
@@ -719,7 +712,8 @@ struct ref_store {
  * Parse contents of a loose ref file. *failure_errno maybe be set to EINVAL for
  * invalid contents.
  */
-int parse_loose_ref_contents(const char *buf, struct object_id *oid,
+int parse_loose_ref_contents(const struct git_hash_algo *algop,
+			     const char *buf, struct object_id *oid,
 			     struct strbuf *referent, unsigned int *type,
 			     int *failure_errno);
 
@@ -734,5 +728,32 @@ void base_ref_store_init(struct ref_store *refs, struct repository *repo,
  * Support GIT_TRACE_REFS by optionally wrapping the given ref_store instance.
  */
 struct ref_store *maybe_debug_wrap_ref_store(const char *gitdir, struct ref_store *store);
+
+/*
+ * Return the refname under which update was originally requested.
+ */
+const char *ref_update_original_update_refname(struct ref_update *update);
+
+/*
+ * Helper function to check if the new value is null, this
+ * takes into consideration that the update could be a regular
+ * ref or a symbolic ref.
+ */
+int ref_update_has_null_new_value(struct ref_update *update);
+
+/*
+ * Check whether the old_target values stored in update are consistent
+ * with the referent, which is the symbolic reference's current value.
+ * If everything is OK, return 0; otherwise, write an error message to
+ * err and return -1.
+ */
+int ref_update_check_old_target(const char *referent, struct ref_update *update,
+				struct strbuf *err);
+
+/*
+ * Check if the ref must exist, this means that the old_oid or
+ * old_target is non NULL.
+ */
+int ref_update_expects_existing_old_ref(struct ref_update *update);
 
 #endif /* REFS_REFS_INTERNAL_H */

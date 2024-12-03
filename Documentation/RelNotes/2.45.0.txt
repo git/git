@@ -9,7 +9,7 @@ UI, Workflows & Features
    With "git init --ref-format=reftable", hopefully it would be a lot
    more efficient to manage a repository with many references.
 
- * "git checkout -p" and friends learned that that "@" is a synonym
+ * "git checkout -p" and friends learned that "@" is a synonym
    for "HEAD".
 
  * Variants of vimdiff learned to honor mergetool.<variant>.layout
@@ -45,6 +45,62 @@ UI, Workflows & Features
  * The output format for dates "iso-strict" has been tweaked to show
    a time in the Zulu timezone with "Z" suffix, instead of "+00:00".
 
+ * "git diff" and friends learned two extra configuration variables,
+   diff.srcPrefix and diff.dstPrefix.
+
+ * The status.showUntrackedFiles configuration variable had a name
+   that tempts users to set a Boolean value expressed in our usual
+   "false", "off", and "0", but it only took "no".  This has been
+   corrected so "true" and its synonyms are taken as "normal", while
+   "false" and its synonyms are taken as "no".
+
+ * Remove an ancient and not well maintained Hg-to-git migration
+   script from contrib/.
+
+ * Hints that suggest what to do after resolving conflicts can now be
+   squelched by disabling advice.mergeConflict.
+
+ * Allow git-cherry-pick(1) to automatically drop redundant commits via
+   a new `--empty` option, similar to the `--empty` options for
+   git-rebase(1) and git-am(1). Includes a soft deprecation of
+   `--keep-redundant-commits` as well as some related docs changes and
+   sequencer code cleanup.
+
+ * "git config" learned "--comment=<message>" option to leave a
+   comment immediately after the "variable = value" on the same line
+   in the configuration file.
+
+ * core.commentChar used to be limited to a single byte, but has been
+   updated to allow an arbitrary multi-byte sequence.
+
+ * "git add -p" and other "interactive hunk selection" UI has learned to
+   skip showing the hunk immediately after it has already been shown, and
+   an additional action to explicitly ask to reshow the current hunk.
+
+ * "git pack-refs" learned the "--auto" option, which defers the decision of
+   whether and how to pack to the ref backend. This is used by the reftable
+   backend to avoid repacking of an already-optimal ref database. The new mode
+   is triggered from "git gc --auto".
+
+ * "git add -u <pathspec>" and "git commit [-i] <pathspec>" did not
+   diagnose a pathspec element that did not match any files in certain
+   situations, unlike "git add <pathspec>" did.
+
+ * The userdiff patterns for C# has been updated.
+
+ * Git writes a "waiting for your editor" message on an incomplete
+   line after launching an editor, and then append another error
+   message on the same line if the editor errors out.  It now clears
+   the "waiting for..." line before giving the error message.
+
+ * The filename used for rejected hunks "git apply --reject" creates
+   was limited to PATH_MAX, which has been lifted.
+
+ * When "git bisect" reports the commit it determined to be the
+   culprit, we used to show it in a format that does not honor common
+   UI tweaks, like log.date and log.decorate.  The code has been
+   taught to use "git show" to follow more customizations.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -59,7 +115,7 @@ Performance, Internal Implementation, Development Support etc.
 
  * The way placeholders are to be marked-up in documentation have been
    specified; use "_<placeholder>_" to typeset the word inside a pair
-   of <angle-brakets> emphasized.
+   of <angle-brackets> emphasized.
 
  * "git --no-lazy-fetch cmd" allows to run "cmd" while disabling lazy
    fetching of objects from the promisor remote, which may be handy
@@ -68,9 +124,6 @@ Performance, Internal Implementation, Development Support etc.
  * The implementation in "git clean" that makes "-n" and "-i" ignore
    clean.requireForce has been simplified, together with the
    documentation.
-
- * The code to iterate over refs with the reftable backend has seen
-   some optimization.
 
  * Uses of xwrite() helper have been audited and updated for better
    error checking and simpler code.
@@ -92,6 +145,70 @@ Performance, Internal Implementation, Development Support etc.
 
  * The code to iterate over reflogs in the reftable has been optimized
    to reduce memory allocation and deallocation.
+
+ * Work to support a repository that work with both SHA-1 and SHA-256
+   hash algorithms has started.
+
+ * A new fuzz target that exercises config parsing code has been
+   added.
+
+ * Fix the way recently added tests interpolate variables defined
+   outside them, and document the best practice to help future
+   developers.
+
+ * Introduce an experimental protocol for contributors to propose the
+   topic description to be used in the "What's cooking" report, the
+   merge commit message for the topic, and in the release notes and
+   document it in the SubmittingPatches document.
+
+ * The t/README file now gives a hint on running individual tests in
+   the "t/" directory with "make t<num>-*.sh t<num>-*.sh".
+   (merge 8d383806fc pb/test-scripts-are-build-targets later to maint).
+
+ * The "hint:" messages given by the advice mechanism, when given a
+   message with a blank line, left a line with trailing whitespace,
+   which has been cleansed.
+
+ * Documentation rules has been explicitly described how to mark-up
+   literal parts and a few manual pages have been updated as examples.
+
+ * The .editorconfig file has been taught that a Makefile uses HT
+   indentation.
+
+ * t-prio-queue test has been cleaned up by using C99 compound
+   literals; this is meant to also serve as a weather-balloon to smoke
+   out folks with compilers who have trouble compiling code that uses
+   the feature.
+
+ * Windows binary used to decide the use of unix-domain socket at
+   build time, but it learned to make the decision at runtime instead.
+
+ * The "shared repository" test in the t0610 reftable test failed
+   under restrictive umask setting (e.g. 007), which has been
+   corrected.
+
+ * Document and apply workaround for a buggy version of dash that
+   mishandles "local var=val" construct.
+
+ * The codepaths that reach date_mode_from_type() have been updated to
+   pass "struct date_mode" by value to make them thread safe.
+
+ * The strategy to compact multiple tables of reftables after many
+   operations accumulate many entries has been improved to avoid
+   accumulating too many tables uncollected.
+
+ * The code to iterate over reftable blocks has seen some optimization
+   to reduce memory allocation and deallocation.
+
+ * The way "git fast-import" handles paths described in its input has
+   been tightened up and more clearly documented.
+
+ * The cvsimport tests required that the platform understands
+   traditional timezone notations like CST6CDT, which has been
+   updated to work on those systems as long as they understand
+   POSIX notation with explicit tz transition dates.
+
+ * The code to format trailers have been cleaned up.
 
 
 Fixes since v2.44
@@ -139,7 +256,7 @@ Fixes since v2.44
    (merge 5edd126720 jk/reflog-special-cases-fix later to maint).
 
  * An error message from "git upload-pack", which responds to "git
-   fetch" requests, had a trialing NUL in it, which has been
+   fetch" requests, had a trailing NUL in it, which has been
    corrected.
    (merge 3f4c7a0805 sg/upload-pack-error-message-fix later to maint).
 
@@ -156,7 +273,7 @@ Fixes since v2.44
    This has been corrected.
    (merge 199f44cb2e ps/remote-helper-repo-initialization-fix later to maint).
 
- * Various parts of upload-pack has been updated to bound the resource
+ * Various parts of upload-pack have been updated to bound the resource
    consumption relative to the size of the repository to protect from
    abusive clients.
    (merge 6cd05e768b jk/upload-pack-bounded-resources later to maint).
@@ -203,11 +320,11 @@ Fixes since v2.44
    variable that is no longer used.
    (merge 72a8d3f027 pw/rebase-i-ignore-cherry-pick-help-environment later to maint).
 
- * The code to find the effective end of log message can fall into an
+ * The code to find the effective end of log messages can fall into an
    endless loop, which has been corrected.
    (merge 2541cba2d6 fs/find-end-of-log-message-fix later to maint).
 
- * Mark-ups used in the documentation has been improved for
+ * Mark-up used in the documentation has been improved for
    consistency.
    (merge 45d5ed3e50 ja/doc-markup-fixes later to maint).
 
@@ -225,6 +342,104 @@ Fixes since v2.44
    "--pretty" option of commands in the "git log" family has been
    updated.
    (merge bff85a338c bl/doc-key-val-sep-fix later to maint).
+
+ * "git checkout --conflict=bad" reported a bad conflictStyle as if it
+   were given to a configuration variable; it has been corrected to
+   report that the command line option is bad.
+   (merge 5a99c1ac1a pw/checkout-conflict-errorfix later to maint).
+
+ * Code clean-up in the "git log" machinery that implements custom log
+   message formatting.
+   (merge 1c10b8e5b0 jk/pretty-subject-cleanup later to maint).
+
+ * "git config" corrupted literal HT characters written in the
+   configuration file as part of a value, which has been corrected.
+   (merge e6895c3f97 ds/config-internal-whitespace-fix later to maint).
+
+ * A unit test for reftable code tried to enumerate all files in a
+   directory after reftable operations and expected to see nothing but
+   the files it wanted to leave there, but was fooled by .nfs* cruft
+   files left, which has been corrected.
+   (merge 0068aa7946 ps/reftable-unit-test-nfs-workaround later to maint).
+
+ * The implementation and documentation of "object-format" option
+   exchange between the Git itself and its remote helpers did not
+   quite match, which has been corrected.
+
+ * The "--pretty=<shortHand>" option of the commands in the "git log"
+   family, defined as "[pretty] shortHand = <expansion>" should have
+   been looked up case insensitively, but was not, which has been
+   corrected.
+   (merge f999d5188b bl/pretty-shorthand-config-fix later to maint).
+
+ * "git apply" failed to extract the filename the patch applied to,
+   when the change was about an empty file created in or deleted from
+   a directory whose name ends with a SP, which has been corrected.
+   (merge 776ffd1a30 jc/apply-parse-diff-git-header-names-fix later to maint).
+
+ * Update a more recent tutorial doc.
+   (merge 95ab557b4b dg/myfirstobjectwalk-updates later to maint).
+
+ * The test script had an incomplete and ineffective attempt to avoid
+   clobbering the testing user's real crontab (and its equivalents),
+   which has been completed.
+   (merge 73cb87773b es/test-cron-safety later to maint).
+
+ * Use advice_if_enabled() API to rewrite a simple pattern to
+   call advise() after checking advice_enabled().
+   (merge 6412d01527 rj/use-adv-if-enabled later to maint).
+
+ * Another "set -u" fix for the bash prompt (in contrib/) script.
+   (merge d7805bc743 vs/complete-with-set-u-fix later to maint).
+
+ * "git checkout/switch --detach foo", after switching to the detached
+   HEAD state, gave the tracking information for the 'foo' branch,
+   which was pointless.
+
+ * "git apply" has been updated to lift the hardcoded pathname length
+   limit, which in turn allowed a mksnpath() function that is no
+   longer used.
+   (merge 708f7e0590 rs/apply-lift-path-length-limit later to maint).
+
+ * A file descriptor leak in an error codepath, used when "git apply
+   --reject" fails to create the *.rej file, has been corrected.
+   (merge 2b1f456adf rs/apply-reject-fd-leakfix later to maint).
+
+ * A config parser callback function fell through instead of returning
+   after recognising and processing a variable, wasting cycles, which
+   has been corrected.
+   (merge a816ccd642 ds/fetch-config-parse-microfix later to maint).
+
+ * Fix was added to work around a regression in libcURL 8.7.0 (which has
+   already been fixed in their tip of the tree).
+   (merge 92a209bf24 jk/libcurl-8.7-regression-workaround later to maint).
+
+ * The variable that holds the value read from the core.excludefile
+   configuration variable used to leak, which has been corrected.
+   (merge 0e0fefb29f jc/unleak-core-excludesfile later to maint).
+
+ * vreportf(), which is used by error() and friends, has been taught
+   to give the error message printf-format string when its vsnprintf()
+   call fails, instead of showing nothing useful to identify the
+   nature of the error.
+   (merge c63adab961 rs/usage-fallback-to-show-message-format later to maint).
+
+ * Adjust to an upcoming changes to GNU make that breaks our Makefiles.
+   (merge 227b8fd902 tb/make-indent-conditional-with-non-spaces later to maint).
+
+ * Git 2.44 introduced a regression that makes the updated code to
+   barf in repositories with multi-pack index written by older
+   versions of Git, which has been corrected.
+
+ * When .git/rr-cache/ rerere database gets corrupted or rerere is fed to
+   work on a file with conflicted hunks resolved incompletely, the rerere
+   machinery got confused and segfaulted, which has been corrected.
+   (merge 167395bb47 mr/rerere-crash-fix later to maint).
+
+ * The "receive-pack" program (which responds to "git push") was not
+   converted to run "git maintenance --auto" when other codepaths that
+   used to run "git gc --auto" were updated, which has been corrected.
+   (merge 7bf3057d9c ps/run-auto-maintenance-in-receive-pack later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge f0e578c69c rs/use-xstrncmpz later to maint).
@@ -248,3 +463,14 @@ Fixes since v2.44
    (merge ad538c61da jc/index-pack-fsck-levels later to maint).
    (merge 67471bc704 ja/doc-formatting-fix later to maint).
    (merge 86f9ce7dd6 bl/doc-config-fixes later to maint).
+   (merge 0d527842b7 az/grep-group-error-message-update later to maint).
+   (merge 7c43bdf07b rs/strbuf-expand-bad-format later to maint).
+   (merge 8b68b48d5c ds/typofix-core-config-doc later to maint).
+   (merge 39bb692152 rs/imap-send-use-xsnprintf later to maint).
+   (merge 8d320cec60 jc/t2104-style-fixes later to maint).
+   (merge b4454d5a7b pw/t3428-cleanup later to maint).
+   (merge 84a7c33a4b pf/commitish-committish later to maint).
+   (merge 8882ee9d68 la/mailmap-entry later to maint).
+   (merge 44bdba2fa6 rs/no-openssl-compilation-fix-on-macos later to maint).
+   (merge f412d72c19 yb/replay-doc-linkfix later to maint).
+   (merge 5da40be8d7 xx/rfc2822-date-format-in-doc later to maint).

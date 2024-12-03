@@ -2,7 +2,8 @@
 #include "strbuf.h"
 
 /* wrapper that supplies tests with an empty, initialized strbuf */
-static void setup(void (*f)(struct strbuf*, void*), void *data)
+static void setup(void (*f)(struct strbuf*, const void*),
+		  const void *data)
 {
 	struct strbuf buf = STRBUF_INIT;
 
@@ -13,7 +14,8 @@ static void setup(void (*f)(struct strbuf*, void*), void *data)
 }
 
 /* wrapper that supplies tests with a populated, initialized strbuf */
-static void setup_populated(void (*f)(struct strbuf*, void*), char *init_str, void *data)
+static void setup_populated(void (*f)(struct strbuf*, const void*),
+			    const char *init_str, const void *data)
 {
 	struct strbuf buf = STRBUF_INIT;
 
@@ -64,7 +66,7 @@ static void t_dynamic_init(void)
 	strbuf_release(&buf);
 }
 
-static void t_addch(struct strbuf *buf, void *data)
+static void t_addch(struct strbuf *buf, const void *data)
 {
 	const char *p_ch = data;
 	const char ch = *p_ch;
@@ -83,7 +85,7 @@ static void t_addch(struct strbuf *buf, void *data)
 	check_char(buf->buf[buf->len], ==, '\0');
 }
 
-static void t_addstr(struct strbuf *buf, void *data)
+static void t_addstr(struct strbuf *buf, const void *data)
 {
 	const char *text = data;
 	size_t len = strlen(text);
@@ -103,7 +105,7 @@ static void t_addstr(struct strbuf *buf, void *data)
 	check_str(buf->buf + orig_len, text);
 }
 
-int cmd_main(int argc, const char **argv)
+int cmd_main(int argc UNUSED, const char **argv UNUSED)
 {
 	if (!TEST(t_static_init(), "static initialization works"))
 		test_skip_all("STRBUF_INIT is broken");
