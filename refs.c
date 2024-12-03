@@ -697,7 +697,7 @@ static char *substitute_branch_name(struct repository *r,
 	return NULL;
 }
 
-void strbuf_branchname(struct strbuf *sb, const char *name, unsigned allowed)
+void copy_branchname(struct strbuf *sb, const char *name, unsigned allowed)
 {
 	int len = strlen(name);
 	struct interpret_branch_name_options options = {
@@ -711,10 +711,10 @@ void strbuf_branchname(struct strbuf *sb, const char *name, unsigned allowed)
 	strbuf_add(sb, name + used, len - used);
 }
 
-int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
+int check_branch_ref(struct strbuf *sb, const char *name)
 {
 	if (startup_info->have_repository)
-		strbuf_branchname(sb, name, INTERPRET_BRANCH_LOCAL);
+		copy_branchname(sb, name, INTERPRET_BRANCH_LOCAL);
 	else
 		strbuf_addstr(sb, name);
 
@@ -733,7 +733,7 @@ int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
 	return check_refname_format(sb->buf, 0);
 }
 
-int strbuf_check_tag_ref(struct strbuf *sb, const char *name)
+int check_tag_ref(struct strbuf *sb, const char *name)
 {
 	if (name[0] == '-')
 		return -1;

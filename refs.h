@@ -191,23 +191,23 @@ char *repo_default_branch_name(struct repository *r, int quiet);
  * If "allowed" is non-zero, restrict the set of allowed expansions. See
  * repo_interpret_branch_name() for details.
  */
-void strbuf_branchname(struct strbuf *sb, const char *name,
+void copy_branchname(struct strbuf *sb, const char *name,
 		       unsigned allowed);
 
 /*
- * Like strbuf_branchname() above, but confirm that the result is
+ * Like copy_branchname() above, but confirm that the result is
  * syntactically valid to be used as a local branch name in refs/heads/.
  *
  * The return value is "0" if the result is valid, and "-1" otherwise.
  */
-int strbuf_check_branch_ref(struct strbuf *sb, const char *name);
+int check_branch_ref(struct strbuf *sb, const char *name);
 
 /*
  * Similar for a tag name in refs/tags/.
  *
  * The return value is "0" if the result is valid, and "-1" otherwise.
  */
-int strbuf_check_tag_ref(struct strbuf *sb, const char *name);
+int check_tag_ref(struct strbuf *sb, const char *name);
 
 /*
  * A ref_transaction represents a collection of reference updates that

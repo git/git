@@ -2094,7 +2094,7 @@ sub format_log_line_html {
         (
             # The output of "git describe", e.g. v2.10.0-297-gf6727b0
             # or hadoop-20160921-113441-20-g094fb7d
-            (?<!-) # see strbuf_check_tag_ref(). Tags can't start with -
+            (?<!-) # see check_tag_ref(). Tags can't start with -
             [A-Za-z0-9.-]+
             (?!\.) # refs can't end with ".", see check_refname_format()
             -g$regex
