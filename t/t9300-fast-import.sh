@@ -553,9 +553,16 @@ test_expect_success 'B: fail on invalid file path of .' '
 	commit refs/heads/badpath
 	committer Name <email> $GIT_COMMITTER_DATE
 	data <<COMMIT
-	Commit Message
+	Good path
 	COMMIT
-	M 100644 :1 ./invalid-path
+	M 100644 :1 ok-path
+
+	commit refs/heads/badpath
+	committer Name <email> $GIT_COMMITTER_DATE
+	data <<COMMIT
+	Bad path
+	COMMIT
+	R ok-path ./invalid-path
 	INPUT_END
 
 	test_when_finished "git update-ref -d refs/heads/badpath" &&
