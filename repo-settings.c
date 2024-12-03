@@ -128,6 +128,19 @@ void prepare_repo_settings(struct repository *r)
 
 	if (!repo_config_get_ulong(r, "core.deltabasecachelimit", &ulongval))
 		r->settings.delta_base_cache_limit = ulongval;
+
+	if (!repo_config_get_ulong(r, "core.packedgitwindowsize", &ulongval)) {
+		int pgsz_x2 = getpagesize() * 2;
+
+		/* This value must be multiple of (pagesize * 2) */
+		ulongval /= pgsz_x2;
+		if (ulongval < 1)
+			ulongval = 1;
+		r->settings.packed_git_window_size = ulongval * pgsz_x2;
+	}
+
+	if (!repo_config_get_ulong(r, "core.packedgitlimit", &ulongval))
+		r->settings.packed_git_limit = ulongval;
 }
 
 enum log_refs_config repo_settings_get_log_all_ref_updates(struct repository *repo)
