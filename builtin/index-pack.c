@@ -865,6 +865,7 @@ static void do_record_outgoing_links(struct object *obj)
 		struct commit *commit = (struct commit *) obj;
 		struct commit_list *parents = commit->parents;
 
+		record_outgoing_link(get_commit_tree_oid(commit));
 		for (; parents; parents = parents->next)
 			record_outgoing_link(&parents->item->object.oid);
 	} else if (obj->type == OBJ_TAG) {
