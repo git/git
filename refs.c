@@ -735,7 +735,7 @@ int check_branch_ref(struct strbuf *sb, const char *name)
 
 int check_tag_ref(struct strbuf *sb, const char *name)
 {
-	if (name[0] == '-')
+	if (name[0] == '-' || !strcmp(name, "HEAD"))
 		return -1;
 
 	strbuf_reset(sb);

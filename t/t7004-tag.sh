@@ -91,6 +91,18 @@ test_expect_success 'creating a tag using default HEAD should succeed' '
 	test_must_fail git reflog exists refs/tags/mytag
 '
 
+test_expect_success 'HEAD is forbidden as a tagname' '
+	test_when_finished "git update-ref --no-deref -d refs/tags/HEAD || :" &&
+	test_must_fail git tag HEAD &&
+	test_must_fail git tag -a -m "useless" HEAD
+'
+
+test_expect_success '"git tag" can remove a tag named HEAD' '
+	test_when_finished "git update-ref --no-deref -d refs/tags/HEAD || :" &&
+	git update-ref refs/tags/HEAD HEAD &&
+	git tag -d HEAD
+'
+
 test_expect_success 'creating a tag with --create-reflog should create reflog' '
 	git log -1 \
 		--format="format:tag: tagging %h (%s, %cd)%n" \
