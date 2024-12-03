@@ -71,6 +71,9 @@ struct multi_pack_index {
 
 	const char **pack_names;
 	struct packed_git **packs;
+
+	struct repository *repo;
+
 	char object_dir[FLEX_ARRAY];
 };
 
