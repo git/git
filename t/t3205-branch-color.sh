@@ -1,7 +1,6 @@
 #!/bin/sh
 
 test_description='basic branch output coloring'
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'set up some sample branches' '

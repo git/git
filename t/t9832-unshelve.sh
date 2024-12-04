@@ -6,7 +6,6 @@ last_shelved_change () {
 
 test_description='git p4 unshelve'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-git-p4.sh
 
 test_expect_success 'start p4d' '

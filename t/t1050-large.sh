@@ -3,7 +3,6 @@
 
 test_description='adding and checking out large blobs'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'core.bigFileThreshold must be non-negative' '

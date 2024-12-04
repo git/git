@@ -2,7 +2,6 @@
 
 test_description='interaction with P4 case-folding'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-git-p4.sh
 
 if test_have_prereq CASE_INSENSITIVE_FS

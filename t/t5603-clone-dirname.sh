@@ -2,7 +2,6 @@
 
 test_description='check output directory names used by git-clone'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # we use a fake ssh wrapper that ignores the arguments

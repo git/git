@@ -2,7 +2,6 @@
 
 test_description='tagopt variable affects "git fetch" and is overridden by commandline.'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 setup_clone () {

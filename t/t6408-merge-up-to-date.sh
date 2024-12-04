@@ -2,7 +2,6 @@
 
 test_description='merge fast-forward and up to date'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

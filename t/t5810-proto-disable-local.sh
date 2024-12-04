@@ -2,7 +2,6 @@
 
 test_description='test disabling of local paths in clone/fetch'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-proto-disable.sh"
 

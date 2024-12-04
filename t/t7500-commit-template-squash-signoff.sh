@@ -7,7 +7,6 @@ test_description='git commit
 
 Tests for template, signoff, squash and -F functions.'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/lib-rebase.sh

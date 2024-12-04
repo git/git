@@ -5,7 +5,6 @@
 
 test_description='Test git stash --include-untracked'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'stash save --include-untracked some dirty working directory' '

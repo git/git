@@ -2,7 +2,6 @@
 
 test_description='filter-branch removal of trees with null sha1'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup: base commits' '

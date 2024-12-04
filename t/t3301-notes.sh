@@ -5,7 +5,6 @@
 
 test_description='Test commit notes'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 write_script fake_editor <<\EOF

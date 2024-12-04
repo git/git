@@ -2,7 +2,6 @@
 
 test_description='merge-recursive backend test'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 #         A      <- create some files

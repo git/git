@@ -34,7 +34,6 @@ relationship between packs and objects is as follows:
     Px2 |         s s s                           x x x
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 main_repo=main.git

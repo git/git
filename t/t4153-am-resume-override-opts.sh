@@ -2,7 +2,6 @@
 
 test_description='git-am command-line options override saved options'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 format_patch () {

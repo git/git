@@ -2,7 +2,6 @@
 
 test_description='check that read-tree rejects confusing paths'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'create base tree' '

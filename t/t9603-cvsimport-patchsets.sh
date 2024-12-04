@@ -13,7 +13,6 @@
 
 test_description='git cvsimport testing for correct patchset estimation'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-cvs.sh
 
 setup_cvs_test_repository t9603

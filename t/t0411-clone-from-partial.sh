@@ -2,7 +2,6 @@
 
 test_description='check that local clone does not fetch from promisor remotes'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'create evil repo' '

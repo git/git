@@ -5,7 +5,6 @@
 
 test_description='Perl gettext interface (Git::I18N)'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-gettext.sh
 . "$TEST_DIRECTORY"/lib-perl.sh
 skip_all_if_no_Test_More

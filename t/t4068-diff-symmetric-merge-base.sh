@@ -5,7 +5,6 @@ test_description='behavior of diff with symmetric-diff setups and --merge-base'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # build these situations:

@@ -4,7 +4,6 @@
 #
 test_description='diff honors config option, diff.suppressBlankEmpty'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 cat <<\EOF >expected ||

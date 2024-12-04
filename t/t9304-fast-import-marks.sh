@@ -2,7 +2,6 @@
 
 test_description='test exotic situations with marks'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup dump of basic history' '

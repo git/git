@@ -2,7 +2,6 @@
 
 test_description='git bugreport'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'create a report' '

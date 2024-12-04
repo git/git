@@ -2,7 +2,6 @@
 
 test_description='pulling from symlinked subdir'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # The scenario we are building:

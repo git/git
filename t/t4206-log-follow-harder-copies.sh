@@ -7,7 +7,6 @@ test_description='Test --follow should always find copies hard in git log.
 
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh
 

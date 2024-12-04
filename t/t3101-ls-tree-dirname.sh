@@ -20,7 +20,6 @@ Test the handling of multiple directories which have matching file
 entries.  Also test odd filename and missing entries handling.
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

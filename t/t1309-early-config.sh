@@ -2,7 +2,6 @@
 
 test_description='Test read_early_config()'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'read early config' '

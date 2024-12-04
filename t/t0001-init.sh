@@ -2,7 +2,6 @@
 
 test_description='git init'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 check_config () {

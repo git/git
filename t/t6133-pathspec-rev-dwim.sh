@@ -2,7 +2,6 @@
 
 test_description='test dwim of revs versus pathspecs in revision parser'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

@@ -2,7 +2,6 @@
 
 test_description='signals work as we expect'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 cat >expect <<EOF

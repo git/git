@@ -6,7 +6,6 @@
 test_description='git apply trying to add an ending line.
 
 '
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # setup

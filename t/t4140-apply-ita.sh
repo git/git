@@ -2,7 +2,6 @@
 
 test_description='git apply of i-t-a file'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

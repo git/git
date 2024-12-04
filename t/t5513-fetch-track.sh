@@ -2,7 +2,6 @@
 
 test_description='fetch follows remote-tracking branches correctly'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success setup '

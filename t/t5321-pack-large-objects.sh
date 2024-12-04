@@ -7,7 +7,6 @@ test_description='git pack-object with "large" deltas
 
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-pack.sh
 

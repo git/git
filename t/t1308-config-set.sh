@@ -2,7 +2,6 @@
 
 test_description='Test git config-set API in different settings'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # 'check_config get_* section.key value' verifies that the entry for

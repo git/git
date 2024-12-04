@@ -8,7 +8,6 @@ test_description='git update-index on filesystem w/o symlinks test.
 This tests that git update-index keeps the symbolic link property
 even if a plain file is in the working tree if core.symlinks is false.'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success \

@@ -2,7 +2,6 @@
 
 test_description='git maintenance builtin'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 GIT_TEST_COMMIT_GRAPH=0

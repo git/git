@@ -9,7 +9,6 @@ This test tries to verify that add_submodule_odb works when the submodule was
 initialized previously but the checkout has since been removed.
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 

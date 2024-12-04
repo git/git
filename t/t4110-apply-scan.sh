@@ -8,7 +8,6 @@ test_description='git apply test for patches which require scanning forwards and
 
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'git apply scan' '

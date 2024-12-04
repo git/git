@@ -2,7 +2,6 @@
 
 test_description='am --interactive tests'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'set up patches to apply' '

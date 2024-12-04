@@ -2,7 +2,6 @@
 
 test_description='Test various callers of read_index_unmerged'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup modify/delete + directory/file conflict' '

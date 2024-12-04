@@ -2,7 +2,6 @@
 
 test_description='test local clone with ambiguous transport'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY/lib-httpd.sh"
 

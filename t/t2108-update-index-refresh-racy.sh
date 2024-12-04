@@ -2,7 +2,6 @@
 
 test_description='update-index refresh tests related to racy timestamps'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 reset_files () {
