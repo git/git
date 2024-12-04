@@ -811,6 +811,15 @@ if intl.found()
   libgit_dependencies += intl
   build_options_config.set('NO_GETTEXT', '')
   build_options_config.set('USE_GETTEXT_SCHEME', '')
+
+  # POSIX nowadays requires `nl_langinfo()`, but some systems still don't have
+  # the function available. On such systems we instead fall back to libcharset.
+  # On native Windows systems we use our own emulation.
+  if host_machine.system() != 'windows' and not compiler.has_function('nl_langinfo')
+    libcharset = compiler.find_library('charset', required: true)
+    libgit_dependencies += libcharset
+    libgit_c_args += '-DHAVE_LIBCHARSET_H'
+  endif
 else
   libgit_c_args += '-DNO_GETTEXT'
   build_options_config.set('NO_GETTEXT', '1')
@@ -936,22 +945,6 @@ endif
 
 if not compiler.has_header('inttypes.h')
   libgit_c_args += '-DNO_INTTYPES_H'
-endif
-
-if compiler.has_header('libcharset.h')
-  libcharset = compiler.find_library('charset')
-
-  if compiler.has_function('locale_charset',
-    prefix: '#include <libcharset.h>',
-    dependencies: iconv,
-  )
-    libgit_c_args += '-DHAVE_LIBCHARSET_H'
-  elif compiler.has_function('locale_charset',
-    prefix: '#include <libcharset.h>',
-    dependencies: libcharset,
-  )
-    libgit_c_args += '-DHAVE_LIBCHARSET_H'
-  endif
 endif
 
 if compiler.has_header('alloca.h')
