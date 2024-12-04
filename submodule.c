@@ -1174,8 +1174,8 @@ static int push_submodule(const char *path,
 		if (remote->origin != REMOTE_UNCONFIGURED) {
 			int i;
 			strvec_push(&cp.args, remote->name);
-			for (i = 0; i < rs->raw_nr; i++)
-				strvec_push(&cp.args, rs->raw[i]);
+			for (i = 0; i < rs->nr; i++)
+				strvec_push(&cp.args, rs->items[i].raw);
 		}
 
 		prepare_submodule_repo_env(&cp.env);
@@ -1209,8 +1209,8 @@ static void submodule_push_check(const char *path, const char *head,
 	strvec_push(&cp.args, head);
 	strvec_push(&cp.args, remote->name);
 
-	for (i = 0; i < rs->raw_nr; i++)
-		strvec_push(&cp.args, rs->raw[i]);
+	for (i = 0; i < rs->nr; i++)
+		strvec_push(&cp.args, rs->items[i].raw);
 
 	prepare_submodule_repo_env(&cp.env);
 	cp.git_cmd = 1;

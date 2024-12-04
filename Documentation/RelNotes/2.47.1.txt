@@ -24,3 +24,8 @@ Fixes since Git 2.47
  * A "git fetch" from the superproject going down to a submodule used
    a wrong remote when the default remote names are set differently
    between them.
+
+ * The "gitk" project tree has been synchronized again with its new
+   maintainer, Johannes Sixt.
+
+Also contains minor documentation updates and code clean-ups.

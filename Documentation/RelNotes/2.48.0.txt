@@ -145,6 +145,20 @@ Fixes since v2.47
    repository.  Work it around by including these objects in the
    referring promisor pack at the receiving end of the fetch.
 
+ * Avoid build/test breakage on a system without working malloc debug
+   support dynamic library.
+   (merge 72ad6dc368 jk/test-malloc-debug-check later to maint).
+
+ * Double-free fix.
+   (merge fe17a25905 jk/fetch-prefetch-double-free-fix later to maint).
+
+ * Use of some uninitialized variables in "git difftool" has been
+   corrected.
+
+ * Object reuse code based on multi-pack-index sent an unwanted copy
+   of object.
+   (merge e199290592 tb/multi-pack-reuse-dupfix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 1164e270b5 jk/output-prefix-cleanup later to maint).
    (merge f36b8cbaef jh/config-unset-doc-fix later to maint).
