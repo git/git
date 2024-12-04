@@ -1561,7 +1561,8 @@ static int task_option_parse(const struct option *opt UNUSED,
 	return 0;
 }
 
-static int maintenance_run(int argc, const char **argv, const char *prefix)
+static int maintenance_run(int argc, const char **argv, const char *prefix,
+			   struct repository *repo UNUSED)
 {
 	int i;
 	struct maintenance_run_opts opts = MAINTENANCE_RUN_OPTS_INIT;
@@ -1623,7 +1624,8 @@ static char const * const builtin_maintenance_register_usage[] = {
 	NULL
 };
 
-static int maintenance_register(int argc, const char **argv, const char *prefix)
+static int maintenance_register(int argc, const char **argv, const char *prefix,
+				struct repository *repo UNUSED)
 {
 	char *config_file = NULL;
 	struct option options[] = {
@@ -1687,7 +1689,8 @@ static char const * const builtin_maintenance_unregister_usage[] = {
 	NULL
 };
 
-static int maintenance_unregister(int argc, const char **argv, const char *prefix)
+static int maintenance_unregister(int argc, const char **argv, const char *prefix,
+				  struct repository *repo UNUSED)
 {
 	int force = 0;
 	char *config_file = NULL;
@@ -2926,7 +2929,8 @@ static const char *const builtin_maintenance_start_usage[] = {
 	NULL
 };
 
-static int maintenance_start(int argc, const char **argv, const char *prefix)
+static int maintenance_start(int argc, const char **argv, const char *prefix,
+			     struct repository *repo)
 {
 	struct maintenance_start_opts opts = { 0 };
 	struct option options[] = {
@@ -2949,7 +2953,7 @@ static int maintenance_start(int argc, const char **argv, const char *prefix)
 	if (update_background_schedule(&opts, 1))
 		die(_("failed to set up maintenance schedule"));
 
-	if (maintenance_register(ARRAY_SIZE(register_args)-1, register_args, NULL))
+	if (maintenance_register(ARRAY_SIZE(register_args)-1, register_args, NULL, repo))
 		warning(_("failed to add repo to global config"));
 	return 0;
 }
@@ -2959,7 +2963,8 @@ static const char *const builtin_maintenance_stop_usage[] = {
 	NULL
 };
 
-static int maintenance_stop(int argc, const char **argv, const char *prefix)
+static int maintenance_stop(int argc, const char **argv, const char *prefix,
+			    struct repository *repo UNUSED)
 {
 	struct option options[] = {
 		OPT_END()
@@ -2979,7 +2984,7 @@ static const char * const builtin_maintenance_usage[] = {
 int cmd_maintenance(int argc,
 		    const char **argv,
 		    const char *prefix,
-		    struct repository *repo UNUSED)
+		    struct repository *repo)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option builtin_maintenance_options[] = {
@@ -2993,5 +2998,5 @@ int cmd_maintenance(int argc,
 
 	argc = parse_options(argc, argv, prefix, builtin_maintenance_options,
 			     builtin_maintenance_usage, 0);
-	return fn(argc, argv, prefix);
+	return fn(argc, argv, prefix, repo);
 }

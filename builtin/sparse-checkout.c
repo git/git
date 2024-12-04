@@ -48,7 +48,8 @@ static char const * const builtin_sparse_checkout_list_usage[] = {
 	NULL
 };
 
-static int sparse_checkout_list(int argc, const char **argv, const char *prefix)
+static int sparse_checkout_list(int argc, const char **argv, const char *prefix,
+				struct repository *repo UNUSED)
 {
 	static struct option builtin_sparse_checkout_list_options[] = {
 		OPT_END(),
@@ -443,7 +444,8 @@ static struct sparse_checkout_init_opts {
 	int sparse_index;
 } init_opts;
 
-static int sparse_checkout_init(int argc, const char **argv, const char *prefix)
+static int sparse_checkout_init(int argc, const char **argv, const char *prefix,
+				struct repository *repo UNUSED)
 {
 	struct pattern_list pl;
 	char *sparse_filename;
@@ -773,7 +775,8 @@ static struct sparse_checkout_add_opts {
 	int use_stdin;
 } add_opts;
 
-static int sparse_checkout_add(int argc, const char **argv, const char *prefix)
+static int sparse_checkout_add(int argc, const char **argv, const char *prefix,
+			       struct repository *repo UNUSED)
 {
 	static struct option builtin_sparse_checkout_add_options[] = {
 		OPT_BOOL_F(0, "skip-checks", &add_opts.skip_checks,
@@ -818,7 +821,8 @@ static struct sparse_checkout_set_opts {
 	int use_stdin;
 } set_opts;
 
-static int sparse_checkout_set(int argc, const char **argv, const char *prefix)
+static int sparse_checkout_set(int argc, const char **argv, const char *prefix,
+			       struct repository *repo UNUSED)
 {
 	int default_patterns_nr = 2;
 	const char *default_patterns[] = {"/*", "!/*/", NULL};
@@ -883,7 +887,8 @@ static struct sparse_checkout_reapply_opts {
 } reapply_opts;
 
 static int sparse_checkout_reapply(int argc, const char **argv,
-				   const char *prefix)
+				   const char *prefix,
+				   struct repository *repo UNUSED)
 {
 	static struct option builtin_sparse_checkout_reapply_options[] = {
 		OPT_BOOL(0, "cone", &reapply_opts.cone_mode,
@@ -918,7 +923,8 @@ static char const * const builtin_sparse_checkout_disable_usage[] = {
 };
 
 static int sparse_checkout_disable(int argc, const char **argv,
-				   const char *prefix)
+				   const char *prefix,
+				   struct repository *repo UNUSED)
 {
 	static struct option builtin_sparse_checkout_disable_options[] = {
 		OPT_END(),
@@ -1006,7 +1012,8 @@ static int check_rules(struct pattern_list *pl, int null_terminated) {
 	return 0;
 }
 
-static int sparse_checkout_check_rules(int argc, const char **argv, const char *prefix)
+static int sparse_checkout_check_rules(int argc, const char **argv, const char *prefix,
+				       struct repository *repo UNUSED)
 {
 	static struct option builtin_sparse_checkout_check_rules_options[] = {
 		OPT_BOOL('z', NULL, &check_rules_opts.null_termination,
@@ -1054,7 +1061,7 @@ static int sparse_checkout_check_rules(int argc, const char **argv, const char *
 int cmd_sparse_checkout(int argc,
 			const char **argv,
 			const char *prefix,
-			struct repository *repo UNUSED)
+			struct repository *repo)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option builtin_sparse_checkout_options[] = {
@@ -1077,5 +1084,5 @@ int cmd_sparse_checkout(int argc,
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;
 
-	return fn(argc, argv, prefix);
+	return fn(argc, argv, prefix, repo);
 }

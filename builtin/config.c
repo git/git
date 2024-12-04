@@ -826,7 +826,8 @@ static void display_options_init(struct config_display_options *opts)
 	}
 }
 
-static int cmd_config_list(int argc, const char **argv, const char *prefix)
+static int cmd_config_list(int argc, const char **argv, const char *prefix,
+			   struct repository *repo UNUSED)
 {
 	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
 	struct config_display_options display_opts = CONFIG_DISPLAY_OPTIONS_INIT;
@@ -861,7 +862,8 @@ static int cmd_config_list(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
-static int cmd_config_get(int argc, const char **argv, const char *prefix)
+static int cmd_config_get(int argc, const char **argv, const char *prefix,
+			  struct repository *repo UNUSED)
 {
 	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
 	struct config_display_options display_opts = CONFIG_DISPLAY_OPTIONS_INIT;
@@ -915,7 +917,8 @@ static int cmd_config_get(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
-static int cmd_config_set(int argc, const char **argv, const char *prefix)
+static int cmd_config_set(int argc, const char **argv, const char *prefix,
+			  struct repository *repo UNUSED)
 {
 	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
 	const char *value_pattern = NULL, *comment_arg = NULL;
@@ -973,7 +976,8 @@ static int cmd_config_set(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
-static int cmd_config_unset(int argc, const char **argv, const char *prefix)
+static int cmd_config_unset(int argc, const char **argv, const char *prefix,
+			    struct repository *repo UNUSED)
 {
 	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
 	const char *value_pattern = NULL;
@@ -1010,7 +1014,8 @@ static int cmd_config_unset(int argc, const char **argv, const char *prefix)
 	return ret;
 }
 
-static int cmd_config_rename_section(int argc, const char **argv, const char *prefix)
+static int cmd_config_rename_section(int argc, const char **argv, const char *prefix,
+				     struct repository *repo UNUSED)
 {
 	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
 	struct option opts[] = {
@@ -1039,7 +1044,8 @@ out:
 	return ret;
 }
 
-static int cmd_config_remove_section(int argc, const char **argv, const char *prefix)
+static int cmd_config_remove_section(int argc, const char **argv, const char *prefix,
+				     struct repository *repo UNUSED)
 {
 	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
 	struct option opts[] = {
@@ -1099,7 +1105,8 @@ static int show_editor(struct config_location_options *opts)
 	return 0;
 }
 
-static int cmd_config_edit(int argc, const char **argv, const char *prefix)
+static int cmd_config_edit(int argc, const char **argv, const char *prefix,
+			   struct repository *repo UNUSED)
 {
 	struct config_location_options location_opts = CONFIG_LOCATION_OPTIONS_INIT;
 	struct option opts[] = {
@@ -1395,7 +1402,7 @@ out:
 int cmd_config(int argc,
 	       const char **argv,
 	       const char *prefix,
-	       struct repository *repo UNUSED)
+	       struct repository *repo)
 {
 	parse_opt_subcommand_fn *subcommand = NULL;
 	struct option subcommand_opts[] = {
@@ -1422,7 +1429,7 @@ int cmd_config(int argc,
 	if (subcommand) {
 		argc = parse_options(argc, argv, prefix, subcommand_opts, builtin_config_usage,
 		       PARSE_OPT_SUBCOMMAND_OPTIONAL|PARSE_OPT_KEEP_UNKNOWN_OPT);
-		return subcommand(argc, argv, prefix);
+		return subcommand(argc, argv, prefix, repo);
 	}
 
 	return cmd_config_actions(argc, argv, prefix);
