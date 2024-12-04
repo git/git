@@ -1270,7 +1270,7 @@ static struct bitmap *find_boundary_objects(struct bitmap_index *bitmap_git,
 
 	tmp_blobs = revs->blob_objects;
 	tmp_trees = revs->tree_objects;
-	tmp_tags = revs->blob_objects;
+	tmp_tags = revs->tag_objects;
 	revs->blob_objects = 0;
 	revs->tree_objects = 0;
 	revs->tag_objects = 0;
