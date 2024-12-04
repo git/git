@@ -1011,4 +1011,17 @@ test_expect_success 'repacking loose objects is quiet' '
 	)
 '
 
+test_expect_success 'maintenance aborts with existing lock file' '
+	test_when_finished "rm -rf repo script" &&
+	mkdir script &&
+	write_script script/systemctl <<-\EOF &&
+	true
+	EOF
+
+	git init repo &&
+	: >repo/.git/objects/schedule.lock &&
+	test_must_fail env PATH="$PWD/script:$PATH" git -C repo maintenance start --scheduler=systemd 2>err &&
+	test_grep "Another scheduled git-maintenance(1) process seems to be running" err
+'
+
 test_done
