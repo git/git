@@ -442,8 +442,6 @@ void find_bisection(struct commit_list **commit_list, int *reaches,
 			best->next = NULL;
 		}
 		*reaches = weight(best);
-	} else {
-		free_commit_list(*commit_list);
 	}
 	*commit_list = best;
 
