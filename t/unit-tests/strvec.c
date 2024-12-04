@@ -88,6 +88,16 @@ void test_strvec__pushv(void)
 	strvec_clear(&vec);
 }
 
+void test_strvec__splice_just_initialized_strvec(void)
+{
+	struct strvec vec = STRVEC_INIT;
+	const char *replacement[] = { "foo" };
+
+	strvec_splice(&vec, 0, 0, replacement, ARRAY_SIZE(replacement));
+	check_strvec(&vec, "foo", NULL);
+	strvec_clear(&vec);
+}
+
 void test_strvec__splice_with_same_size_replacement(void)
 {
 	struct strvec vec = STRVEC_INIT;
