@@ -1705,9 +1705,15 @@ foreach symlink : [
   'git-upload-pack',
   'scalar',
 ]
+  if meson.version().version_compare('>=1.3.0')
+    pointing_to = fs.relative_to(get_option('libexecdir') / 'git-core' / symlink, get_option('bindir'))
+  else
+    pointing_to = '../libexec/git-core' / symlink
+  endif
+
   install_symlink(symlink,
     install_dir: get_option('bindir'),
-    pointing_to: fs.relative_to(get_option('libexecdir') / 'git-core' / symlink, get_option('bindir')),
+    pointing_to: pointing_to,
   )
 endforeach
 
@@ -1802,9 +1808,15 @@ if perl_features_enabled
     if script == 'git-cvsserver.perl'
       bin_wrappers += generated_script
 
+      if meson.version().version_compare('>=1.3.0')
+        pointing_to = fs.relative_to(get_option('libexecdir') / 'git-core' / fs.stem(script), get_option('bindir'))
+      else
+        pointing_to = '../libexec/git-core' / fs.stem(script)
+      endif
+
       install_symlink(fs.stem(script),
         install_dir: get_option('bindir'),
-        pointing_to: fs.relative_to(get_option('libexecdir') / 'git-core' / fs.stem(script), get_option('bindir')),
+        pointing_to: pointing_to,
       )
     endif
   endforeach
