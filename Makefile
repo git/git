@@ -3213,7 +3213,7 @@ $(test_bindir_programs): bin-wrappers/%: bin-wrappers/wrap-for-bin.sh
 	     -e 's|@GITPERLLIB@|$(shell pwd)/perl/build/lib|' \
 	     -e 's|@MERGE_TOOLS_DIR@|$(shell pwd)/mergetools|' \
 	     -e 's|@TEMPLATE_DIR@|$(shell pwd)/templates/blt|' \
-	     -e 's|@PROG@|$(patsubst test-%,t/helper/test-%,$(@F))$(if $(filter-out $(BINDIR_PROGRAMS_NO_X),$(@F)),$(X),)|' < $< > $@ && \
+	     -e 's|@PROG@|$(shell pwd)/$(patsubst test-%,t/helper/test-%,$(@F))$(if $(filter-out $(BINDIR_PROGRAMS_NO_X),$(@F)),$(X),)|' < $< > $@ && \
 	chmod +x $@
 
 # GNU make supports exporting all variables by "export" without parameters.

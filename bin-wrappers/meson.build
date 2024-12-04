@@ -18,7 +18,7 @@ endforeach
 foreach executable : bin_wrappers
   executable_config = configuration_data()
   executable_config.merge_from(bin_wrappers_config)
-  executable_config.set('PROG', fs.relative_to(executable.full_path(), meson.project_build_root()))
+  executable_config.set('PROG', executable.full_path())
 
   configure_file(
     input: 'wrap-for-bin.sh',
