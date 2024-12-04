@@ -918,7 +918,7 @@ int refs_delete_ref(struct ref_store *refs, const char *msg,
 	struct ref_transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
 
-	transaction = ref_store_transaction_begin(refs, &err);
+	transaction = ref_store_transaction_begin(refs, 0, &err);
 	if (!transaction ||
 	    ref_transaction_delete(transaction, refname, old_oid,
 				   NULL, flags, msg, &err) ||
@@ -1116,6 +1116,7 @@ int read_ref_at(struct ref_store *refs, const char *refname,
 }
 
 struct ref_transaction *ref_store_transaction_begin(struct ref_store *refs,
+						    unsigned int flags,
 						    struct strbuf *err)
 {
 	struct ref_transaction *tr;
@@ -1123,6 +1124,7 @@ struct ref_transaction *ref_store_transaction_begin(struct ref_store *refs,
 
 	CALLOC_ARRAY(tr, 1);
 	tr->ref_store = refs;
+	tr->flags = flags;
 	return tr;
 }
 
@@ -1186,8 +1188,9 @@ struct ref_update *ref_transaction_add_update(
 		oidcpy(&update->new_oid, new_oid);
 	if ((flags & REF_HAVE_OLD) && old_oid)
 		oidcpy(&update->old_oid, old_oid);
+	if (!(flags & REF_SKIP_CREATE_REFLOG))
+		update->msg = normalize_reflog_message(msg);
 
-	update->msg = normalize_reflog_message(msg);
 	return update;
 }
 
@@ -1309,7 +1312,7 @@ int refs_update_ref(struct ref_store *refs, const char *msg,
 	struct strbuf err = STRBUF_INIT;
 	int ret = 0;
 
-	t = ref_store_transaction_begin(refs, &err);
+	t = ref_store_transaction_begin(refs, 0, &err);
 	if (!t ||
 	    ref_transaction_update(t, refname, new_oid, old_oid, NULL, NULL,
 				   flags, msg, &err) ||
@@ -2120,7 +2123,7 @@ int refs_update_symref(struct ref_store *refs, const char *ref,
 	struct strbuf err = STRBUF_INIT;
 	int ret = 0;
 
-	transaction = ref_store_transaction_begin(refs, &err);
+	transaction = ref_store_transaction_begin(refs, 0, &err);
 	if (!transaction ||
 	    ref_transaction_update(transaction, ref, NULL, NULL,
 				   target, NULL, REF_NO_DEREF,
@@ -2316,7 +2319,7 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 	}
 
 	ret = refs->be->transaction_finish(refs, transaction, err);
-	if (!ret)
+	if (!ret && !(transaction->flags & REF_TRANSACTION_FLAG_INITIAL))
 		run_transaction_hook(transaction, "committed");
 	return ret;
 }
@@ -2325,6 +2328,7 @@ int refs_verify_refname_available(struct ref_store *refs,
 				  const char *refname,
 				  const struct string_list *extras,
 				  const struct string_list *skip,
+				  unsigned int initial_transaction,
 				  struct strbuf *err)
 {
 	const char *slash;
@@ -2333,8 +2337,6 @@ int refs_verify_refname_available(struct ref_store *refs,
 	struct strbuf referent = STRBUF_INIT;
 	struct object_id oid;
 	unsigned int type;
-	struct ref_iterator *iter;
-	int ok;
 	int ret = -1;
 
 	/*
@@ -2364,7 +2366,8 @@ int refs_verify_refname_available(struct ref_store *refs,
 		if (skip && string_list_has_string(skip, dirname.buf))
 			continue;
 
-		if (!refs_read_raw_ref(refs, dirname.buf, &oid, &referent,
+		if (!initial_transaction &&
+		    !refs_read_raw_ref(refs, dirname.buf, &oid, &referent,
 				       &type, &ignore_errno)) {
 			strbuf_addf(err, _("'%s' exists; cannot create '%s'"),
 				    dirname.buf, refname);
@@ -2389,21 +2392,26 @@ int refs_verify_refname_available(struct ref_store *refs,
 	strbuf_addstr(&dirname, refname + dirname.len);
 	strbuf_addch(&dirname, '/');
 
-	iter = refs_ref_iterator_begin(refs, dirname.buf, NULL, 0,
-				       DO_FOR_EACH_INCLUDE_BROKEN);
-	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
-		if (skip &&
-		    string_list_has_string(skip, iter->refname))
-			continue;
+	if (!initial_transaction) {
+		struct ref_iterator *iter;
+		int ok;
 
-		strbuf_addf(err, _("'%s' exists; cannot create '%s'"),
-			    iter->refname, refname);
-		ref_iterator_abort(iter);
-		goto cleanup;
+		iter = refs_ref_iterator_begin(refs, dirname.buf, NULL, 0,
+					       DO_FOR_EACH_INCLUDE_BROKEN);
+		while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
+			if (skip &&
+			    string_list_has_string(skip, iter->refname))
+				continue;
+
+			strbuf_addf(err, _("'%s' exists; cannot create '%s'"),
+				    iter->refname, refname);
+			ref_iterator_abort(iter);
+			goto cleanup;
+		}
+
+		if (ok != ITER_DONE)
+			BUG("error while iterating over references");
 	}
-
-	if (ok != ITER_DONE)
-		BUG("error while iterating over references");
 
 	extra_refname = find_descendant_ref(dirname.buf, extras, skip);
 	if (extra_refname)
@@ -2487,14 +2495,6 @@ int refs_reflog_expire(struct ref_store *refs,
 				       cleanup_fn, policy_cb_data);
 }
 
-int initial_ref_transaction_commit(struct ref_transaction *transaction,
-				   struct strbuf *err)
-{
-	struct ref_store *refs = transaction->ref_store;
-
-	return refs->be->initial_transaction_commit(refs, transaction, err);
-}
-
 void ref_transaction_for_each_queued_update(struct ref_transaction *transaction,
 					    ref_transaction_for_each_queued_update_fn cb,
 					    void *cb_data)
@@ -2530,7 +2530,7 @@ int refs_delete_refs(struct ref_store *refs, const char *logmsg,
 	 * individual updates can't fail, so we can pack all of the
 	 * updates into a single transaction.
 	 */
-	transaction = ref_store_transaction_begin(refs, &err);
+	transaction = ref_store_transaction_begin(refs, 0, &err);
 	if (!transaction) {
 		ret = error("%s", err.buf);
 		goto out;
@@ -2836,7 +2836,8 @@ int repo_migrate_ref_storage_format(struct repository *repo,
 	if (ret < 0)
 		goto done;
 
-	transaction = ref_store_transaction_begin(new_refs, errbuf);
+	transaction = ref_store_transaction_begin(new_refs, REF_TRANSACTION_FLAG_INITIAL,
+						  errbuf);
 	if (!transaction)
 		goto done;
 
@@ -2861,13 +2862,6 @@ int repo_migrate_ref_storage_format(struct repository *repo,
 	if (ret < 0)
 		goto done;
 
-	/*
-	 * TODO: we might want to migrate to `initial_ref_transaction_commit()`
-	 * here, which is more efficient for the files backend because it would
-	 * write new refs into the packed-refs file directly. At this point,
-	 * the files backend doesn't handle pseudo-refs and symrefs correctly
-	 * though, so this requires some more work.
-	 */
 	ret = ref_transaction_commit(transaction, errbuf);
 	if (ret < 0)
 		goto done;

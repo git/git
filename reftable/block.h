@@ -22,7 +22,7 @@ struct block_writer {
 	unsigned char *compressed;
 	size_t compressed_cap;
 
-	uint8_t *buf;
+	uint8_t *block;
 	uint32_t block_size;
 
 	/* Offset of the global header. Nonzero in the first block only. */
@@ -39,13 +39,15 @@ struct block_writer {
 	uint32_t restart_cap;
 
 	struct reftable_buf last_key;
+	/* Scratch buffer used to avoid allocations. */
+	struct reftable_buf scratch;
 	int entries;
 };
 
 /*
- * initializes the blockwriter to write `typ` entries, using `buf` as temporary
- * storage. `buf` is not owned by the block_writer. */
-int block_writer_init(struct block_writer *bw, uint8_t typ, uint8_t *buf,
+ * initializes the blockwriter to write `typ` entries, using `block` as temporary
+ * storage. `block` is not owned by the block_writer. */
+int block_writer_init(struct block_writer *bw, uint8_t typ, uint8_t *block,
 		      uint32_t block_size, uint32_t header_off, int hash_size);
 
 /* returns the block type (eg. 'r' for ref records. */

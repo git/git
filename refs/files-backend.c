@@ -706,7 +706,7 @@ retry:
 		 * reason to expect this error to be transitory.
 		 */
 		if (refs_verify_refname_available(&refs->base, refname,
-						  extras, NULL, err)) {
+						  extras, NULL, 0, err)) {
 			if (mustexist) {
 				/*
 				 * To the user the relevant error is
@@ -813,7 +813,7 @@ retry:
 							  REMOVE_DIR_EMPTY_ONLY)) {
 				if (refs_verify_refname_available(
 						    &refs->base, refname,
-						    extras, NULL, err)) {
+						    extras, NULL, 0, err)) {
 					/*
 					 * The error message set by
 					 * verify_refname_available() is OK.
@@ -850,7 +850,7 @@ retry:
 		 */
 		if (refs_verify_refname_available(
 				    refs->packed_ref_store, refname,
-				    extras, NULL, err)) {
+				    extras, NULL, 0, err)) {
 			ret = TRANSACTION_NAME_CONFLICT;
 			goto error_return;
 		}
@@ -1159,7 +1159,7 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 	 */
 	if (is_null_oid(&lock->old_oid) &&
 	    refs_verify_refname_available(refs->packed_ref_store, refname,
-					  NULL, NULL, err))
+					  NULL, NULL, 0, err))
 		goto error_return;
 
 	lock->ref_name = xstrdup(refname);
@@ -1252,7 +1252,7 @@ static void prune_ref(struct files_ref_store *refs, struct ref_to_prune *r)
 	if (check_refname_format(r->name, 0))
 		return;
 
-	transaction = ref_store_transaction_begin(&refs->base, &err);
+	transaction = ref_store_transaction_begin(&refs->base, 0, &err);
 	if (!transaction)
 		goto cleanup;
 	ref_transaction_add_update(
@@ -1396,7 +1396,8 @@ static int files_pack_refs(struct ref_store *ref_store,
 	if (!should_pack_refs(refs, opts))
 		return 0;
 
-	transaction = ref_store_transaction_begin(refs->packed_ref_store, &err);
+	transaction = ref_store_transaction_begin(refs->packed_ref_store,
+						  0, &err);
 	if (!transaction)
 		return -1;
 
@@ -1537,7 +1538,7 @@ static int refs_rename_ref_available(struct ref_store *refs,
 
 	string_list_insert(&skip, old_refname);
 	ok = !refs_verify_refname_available(refs, new_refname,
-					    NULL, &skip, &err);
+					    NULL, &skip, 0, &err);
 	if (!ok)
 		error("%s", err.buf);
 
@@ -2780,6 +2781,8 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 
 	assert(err);
 
+	if (transaction->flags & REF_TRANSACTION_FLAG_INITIAL)
+		goto cleanup;
 	if (!transaction->nr)
 		goto cleanup;
 
@@ -2867,7 +2870,8 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 			 */
 			if (!packed_transaction) {
 				packed_transaction = ref_store_transaction_begin(
-						refs->packed_ref_store, err);
+						refs->packed_ref_store,
+						transaction->flags, err);
 				if (!packed_transaction) {
 					ret = TRANSACTION_GENERIC_ERROR;
 					goto cleanup;
@@ -2973,6 +2977,127 @@ static int parse_and_write_reflog(struct files_ref_store *refs,
 	return 0;
 }
 
+static int ref_present(const char *refname, const char *referent UNUSED,
+		       const struct object_id *oid UNUSED,
+		       int flags UNUSED,
+		       void *cb_data)
+{
+	struct string_list *affected_refnames = cb_data;
+
+	return string_list_has_string(affected_refnames, refname);
+}
+
+static int files_transaction_finish_initial(struct files_ref_store *refs,
+					    struct ref_transaction *transaction,
+					    struct strbuf *err)
+{
+	size_t i;
+	int ret = 0;
+	struct string_list affected_refnames = STRING_LIST_INIT_NODUP;
+	struct ref_transaction *packed_transaction = NULL;
+	struct ref_transaction *loose_transaction = NULL;
+
+	assert(err);
+
+	if (transaction->state != REF_TRANSACTION_PREPARED)
+		BUG("commit called for transaction that is not prepared");
+
+	/* Fail if a refname appears more than once in the transaction: */
+	for (i = 0; i < transaction->nr; i++)
+		string_list_append(&affected_refnames,
+				   transaction->updates[i]->refname);
+	string_list_sort(&affected_refnames);
+	if (ref_update_reject_duplicates(&affected_refnames, err)) {
+		ret = TRANSACTION_GENERIC_ERROR;
+		goto cleanup;
+	}
+
+	/*
+	 * It's really undefined to call this function in an active
+	 * repository or when there are existing references: we are
+	 * only locking and changing packed-refs, so (1) any
+	 * simultaneous processes might try to change a reference at
+	 * the same time we do, and (2) any existing loose versions of
+	 * the references that we are setting would have precedence
+	 * over our values. But some remote helpers create the remote
+	 * "HEAD" and "master" branches before calling this function,
+	 * so here we really only check that none of the references
+	 * that we are creating already exists.
+	 */
+	if (refs_for_each_rawref(&refs->base, ref_present,
+				 &affected_refnames))
+		BUG("initial ref transaction called with existing refs");
+
+	packed_transaction = ref_store_transaction_begin(refs->packed_ref_store,
+							 transaction->flags, err);
+	if (!packed_transaction) {
+		ret = TRANSACTION_GENERIC_ERROR;
+		goto cleanup;
+	}
+
+	for (i = 0; i < transaction->nr; i++) {
+		struct ref_update *update = transaction->updates[i];
+
+		if ((update->flags & REF_HAVE_OLD) &&
+		    !is_null_oid(&update->old_oid))
+			BUG("initial ref transaction with old_sha1 set");
+
+		if (refs_verify_refname_available(&refs->base, update->refname,
+						  &affected_refnames, NULL, 1, err)) {
+			ret = TRANSACTION_NAME_CONFLICT;
+			goto cleanup;
+		}
+
+		/*
+		 * packed-refs don't support symbolic refs and root refs, so we
+		 * have to queue these references via the loose transaction.
+		 */
+		if (update->new_target || is_root_ref(update->refname)) {
+			if (!loose_transaction) {
+				loose_transaction = ref_store_transaction_begin(&refs->base, 0, err);
+				if (!loose_transaction) {
+					ret = TRANSACTION_GENERIC_ERROR;
+					goto cleanup;
+				}
+			}
+
+			ref_transaction_add_update(loose_transaction, update->refname,
+						   update->flags & ~REF_HAVE_OLD,
+						   update->new_target ? NULL : &update->new_oid, NULL,
+						   update->new_target, NULL, NULL);
+		} else {
+			ref_transaction_add_update(packed_transaction, update->refname,
+						   update->flags & ~REF_HAVE_OLD,
+						   &update->new_oid, &update->old_oid,
+						   NULL, NULL, NULL);
+		}
+	}
+
+	if (packed_refs_lock(refs->packed_ref_store, 0, err) ||
+	    ref_transaction_commit(packed_transaction, err)) {
+		ret = TRANSACTION_GENERIC_ERROR;
+		goto cleanup;
+	}
+	packed_refs_unlock(refs->packed_ref_store);
+
+	if (loose_transaction) {
+		if (ref_transaction_prepare(loose_transaction, err) ||
+		    ref_transaction_commit(loose_transaction, err)) {
+			ret = TRANSACTION_GENERIC_ERROR;
+			goto cleanup;
+		}
+	}
+
+cleanup:
+	if (loose_transaction)
+		ref_transaction_free(loose_transaction);
+	if (packed_transaction)
+		ref_transaction_free(packed_transaction);
+	transaction->state = REF_TRANSACTION_CLOSED;
+	string_list_clear(&affected_refnames, 0);
+	return ret;
+}
+
 static int files_transaction_finish(struct ref_store *ref_store,
 				    struct ref_transaction *transaction,
 				    struct strbuf *err)
@@ -2988,6 +3113,8 @@ static int files_transaction_finish(struct ref_store *ref_store,
 
 	assert(err);
 
+	if (transaction->flags & REF_TRANSACTION_FLAG_INITIAL)
+		return files_transaction_finish_initial(refs, transaction, err);
 	if (!transaction->nr) {
 		transaction->state = REF_TRANSACTION_CLOSED;
 		return 0;
@@ -3119,106 +3246,6 @@ static int files_transaction_abort(struct ref_store *ref_store,
 
 	files_transaction_cleanup(refs, transaction);
 	return 0;
-}
-
-static int ref_present(const char *refname, const char *referent UNUSED,
-		       const struct object_id *oid UNUSED,
-		       int flags UNUSED,
-		       void *cb_data)
-{
-	struct string_list *affected_refnames = cb_data;
-
-	return string_list_has_string(affected_refnames, refname);
-}
-
-static int files_initial_transaction_commit(struct ref_store *ref_store,
-					    struct ref_transaction *transaction,
-					    struct strbuf *err)
-{
-	struct files_ref_store *refs =
-		files_downcast(ref_store, REF_STORE_WRITE,
-			       "initial_ref_transaction_commit");
-	size_t i;
-	int ret = 0;
-	struct string_list affected_refnames = STRING_LIST_INIT_NODUP;
-	struct ref_transaction *packed_transaction = NULL;
-
-	assert(err);
-
-	if (transaction->state != REF_TRANSACTION_OPEN)
-		BUG("commit called for transaction that is not open");
-
-	/* Fail if a refname appears more than once in the transaction: */
-	for (i = 0; i < transaction->nr; i++)
-		string_list_append(&affected_refnames,
-				   transaction->updates[i]->refname);
-	string_list_sort(&affected_refnames);
-	if (ref_update_reject_duplicates(&affected_refnames, err)) {
-		ret = TRANSACTION_GENERIC_ERROR;
-		goto cleanup;
-	}
-
-	/*
-	 * It's really undefined to call this function in an active
-	 * repository or when there are existing references: we are
-	 * only locking and changing packed-refs, so (1) any
-	 * simultaneous processes might try to change a reference at
-	 * the same time we do, and (2) any existing loose versions of
-	 * the references that we are setting would have precedence
-	 * over our values. But some remote helpers create the remote
-	 * "HEAD" and "master" branches before calling this function,
-	 * so here we really only check that none of the references
-	 * that we are creating already exists.
-	 */
-	if (refs_for_each_rawref(&refs->base, ref_present,
-				 &affected_refnames))
-		BUG("initial ref transaction called with existing refs");
-
-	packed_transaction = ref_store_transaction_begin(refs->packed_ref_store, err);
-	if (!packed_transaction) {
-		ret = TRANSACTION_GENERIC_ERROR;
-		goto cleanup;
-	}
-
-	for (i = 0; i < transaction->nr; i++) {
-		struct ref_update *update = transaction->updates[i];
-
-		if ((update->flags & REF_HAVE_OLD) &&
-		    !is_null_oid(&update->old_oid))
-			BUG("initial ref transaction with old_sha1 set");
-		if (refs_verify_refname_available(&refs->base, update->refname,
-						  &affected_refnames, NULL,
-						  err)) {
-			ret = TRANSACTION_NAME_CONFLICT;
-			goto cleanup;
-		}
-
-		/*
-		 * Add a reference creation for this reference to the
-		 * packed-refs transaction:
-		 */
-		ref_transaction_add_update(packed_transaction, update->refname,
-					   update->flags & ~REF_HAVE_OLD,
-					   &update->new_oid, &update->old_oid,
-					   NULL, NULL, NULL);
-	}
-
-	if (packed_refs_lock(refs->packed_ref_store, 0, err)) {
-		ret = TRANSACTION_GENERIC_ERROR;
-		goto cleanup;
-	}
-
-	if (initial_ref_transaction_commit(packed_transaction, err)) {
-		ret = TRANSACTION_GENERIC_ERROR;
-	}
-
-	packed_refs_unlock(refs->packed_ref_store);
-cleanup:
-	if (packed_transaction)
-		ref_transaction_free(packed_transaction);
-	transaction->state = REF_TRANSACTION_CLOSED;
-	string_list_clear(&affected_refnames, 0);
-	return ret;
 }
 
 struct expire_reflog_cb {
@@ -3614,7 +3641,6 @@ struct ref_storage_be refs_be_files = {
 	.transaction_prepare = files_transaction_prepare,
 	.transaction_finish = files_transaction_finish,
 	.transaction_abort = files_transaction_abort,
-	.initial_transaction_commit = files_initial_transaction_commit,
 
 	.pack_refs = files_pack_refs,
 	.rename_ref = files_rename_ref,

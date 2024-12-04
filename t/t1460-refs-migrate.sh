@@ -236,7 +236,7 @@ test_expect_success 'migrating from reftable format deletes backend files' '
 	test_path_is_missing repo/.git/reftable &&
 	echo "ref: refs/heads/main" >expect &&
 	test_cmp expect repo/.git/HEAD &&
-	test_path_is_file repo/.git/refs/heads/main
+	test_path_is_file repo/.git/packed-refs
 '
 
 test_done

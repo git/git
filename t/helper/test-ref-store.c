@@ -199,7 +199,7 @@ static int cmd_verify_ref(struct ref_store *refs, const char **argv)
 	struct strbuf err = STRBUF_INIT;
 	int ret;
 
-	ret = refs_verify_refname_available(refs, refname, NULL, NULL, &err);
+	ret = refs_verify_refname_available(refs, refname, NULL, NULL, 0, &err);
 	if (err.len)
 		puts(err.buf);
 	return ret;

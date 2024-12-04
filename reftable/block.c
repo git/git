@@ -70,14 +70,14 @@ static int block_writer_register_restart(struct block_writer *w, int n,
 	return 0;
 }
 
-int block_writer_init(struct block_writer *bw, uint8_t typ, uint8_t *buf,
+int block_writer_init(struct block_writer *bw, uint8_t typ, uint8_t *block,
 		      uint32_t block_size, uint32_t header_off, int hash_size)
 {
-	bw->buf = buf;
+	bw->block = block;
 	bw->hash_size = hash_size;
 	bw->block_size = block_size;
 	bw->header_off = header_off;
-	bw->buf[header_off] = typ;
+	bw->block[header_off] = typ;
 	bw->next = header_off + 4;
 	bw->restart_interval = 16;
 	bw->entries = 0;
@@ -95,7 +95,7 @@ int block_writer_init(struct block_writer *bw, uint8_t typ, uint8_t *buf,
 
 uint8_t block_writer_type(struct block_writer *bw)
 {
-	return bw->buf[bw->header_off];
+	return bw->block[bw->header_off];
 }
 
 /* Adds the reftable_record to the block. Returns -1 if it does not fit, 0 on
@@ -107,27 +107,24 @@ int block_writer_add(struct block_writer *w, struct reftable_record *rec)
 	struct reftable_buf last =
 		w->entries % w->restart_interval == 0 ? empty : w->last_key;
 	struct string_view out = {
-		.buf = w->buf + w->next,
+		.buf = w->block + w->next,
 		.len = w->block_size - w->next,
 	};
-
 	struct string_view start = out;
-
 	int is_restart = 0;
-	struct reftable_buf key = REFTABLE_BUF_INIT;
 	int n = 0;
 	int err;
 
-	err = reftable_record_key(rec, &key);
+	err = reftable_record_key(rec, &w->scratch);
 	if (err < 0)
 		goto done;
 
-	if (!key.len) {
+	if (!w->scratch.len) {
 		err = REFTABLE_API_ERROR;
 		goto done;
 	}
 
-	n = reftable_encode_key(&is_restart, out, last, key,
+	n = reftable_encode_key(&is_restart, out, last, w->scratch,
 				reftable_record_val_type(rec));
 	if (n < 0) {
 		err = -1;
@@ -143,9 +140,8 @@ int block_writer_add(struct block_writer *w, struct reftable_record *rec)
 	string_view_consume(&out, n);
 
 	err = block_writer_register_restart(w, start.len - out.len, is_restart,
-					    &key);
+					    &w->scratch);
 done:
-	reftable_buf_release(&key);
 	return err;
 }
 
@@ -153,13 +149,13 @@ int block_writer_finish(struct block_writer *w)
 {
 	int i;
 	for (i = 0; i < w->restart_len; i++) {
-		put_be24(w->buf + w->next, w->restarts[i]);
+		put_be24(w->block + w->next, w->restarts[i]);
 		w->next += 3;
 	}
 
-	put_be16(w->buf + w->next, w->restart_len);
+	put_be16(w->block + w->next, w->restart_len);
 	w->next += 2;
-	put_be24(w->buf + 1 + w->header_off, w->next);
+	put_be24(w->block + 1 + w->header_off, w->next);
 
 	/*
 	 * Log records are stored zlib-compressed. Note that the compression
@@ -188,7 +184,7 @@ int block_writer_finish(struct block_writer *w)
 
 		w->zstream->next_out = w->compressed;
 		w->zstream->avail_out = compressed_len;
-		w->zstream->next_in = w->buf + block_header_skip;
+		w->zstream->next_in = w->block + block_header_skip;
 		w->zstream->avail_in = src_len;
 
 		/*
@@ -206,7 +202,7 @@ int block_writer_finish(struct block_writer *w)
 		 * adjust the `next` pointer to point right after the
 		 * compressed data.
 		 */
-		memcpy(w->buf + block_header_skip, w->compressed,
+		memcpy(w->block + block_header_skip, w->compressed,
 		       w->zstream->total_out);
 		w->next = w->zstream->total_out + block_header_skip;
 	}
@@ -569,6 +565,7 @@ void block_writer_release(struct block_writer *bw)
 	REFTABLE_FREE_AND_NULL(bw->zstream);
 	REFTABLE_FREE_AND_NULL(bw->restarts);
 	REFTABLE_FREE_AND_NULL(bw->compressed);
+	reftable_buf_release(&bw->scratch);
 	reftable_buf_release(&bw->last_key);
 	/* the block is not owned. */
 }

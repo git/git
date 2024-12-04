@@ -101,13 +101,16 @@ int refs_read_symbolic_ref(struct ref_store *ref_store, const char *refname,
  * both "foo" and with "foo/bar/baz" but not with "foo/bar" or
  * "foo/barbados".
  *
+ * If `initial_transaction` is truish, then all collision checks with
+ * preexisting refs are skipped.
+ *
  * extras and skip must be sorted.
  */
-
 int refs_verify_refname_available(struct ref_store *refs,
 				  const char *refname,
 				  const struct string_list *extras,
 				  const struct string_list *skip,
+				  unsigned int initial_transaction,
 				  struct strbuf *err);
 
 int refs_ref_exists(struct ref_store *refs, const char *refname);
@@ -214,11 +217,9 @@ char *repo_default_branch_name(struct repository *r, int quiet);
  *
  *   Or
  *
- *   - Call `initial_ref_transaction_commit()` if the ref database is
- *     known to be empty and have no other writers (e.g. during
- *     clone). This is likely to be much faster than
- *     `ref_transaction_commit()`. `ref_transaction_prepare()` should
- *     *not* be called before `initial_ref_transaction_commit()`.
+ *   - Call `ref_transaction_begin()` with REF_TRANSACTION_FLAG_INITIAL if the
+ *     ref database is known to be empty and have no other writers (e.g. during
+ *     clone). This is likely to be much faster than without the flag.
  *
  * - Then finally, call `ref_transaction_free()` to free the
  *   `ref_transaction` data structure.
@@ -234,7 +235,7 @@ char *repo_default_branch_name(struct repository *r, int quiet);
  *         struct strbuf err = STRBUF_INIT;
  *         int ret = 0;
  *
- *         transaction = ref_store_transaction_begin(refs, &err);
+ *         transaction = ref_store_transaction_begin(refs, 0, &err);
  *         if (!transaction ||
  *             ref_transaction_update(...) ||
  *             ref_transaction_create(...) ||
@@ -579,11 +580,27 @@ enum action_on_err {
 	UPDATE_REFS_QUIET_ON_ERR
 };
 
+enum ref_transaction_flag {
+	/*
+	 * The ref transaction is part of the initial creation of the ref store
+	 * and can thus assume that the ref store is completely empty. This
+	 * allows the backend to perform the transaction more efficiently by
+	 * skipping certain checks.
+	 *
+	 * It is a bug to set this flag when there might be other processes
+	 * accessing the repository or if there are existing references that
+	 * might conflict with the ones being created. All old_oid values must
+	 * either be absent or null_oid.
+	 */
+	REF_TRANSACTION_FLAG_INITIAL = (1 << 0),
+};
+
 /*
  * Begin a reference transaction.  The reference transaction must
  * be freed by calling ref_transaction_free().
  */
 struct ref_transaction *ref_store_transaction_begin(struct ref_store *refs,
+						    unsigned int flags,
 						    struct strbuf *err);
 
 /*
@@ -796,20 +813,6 @@ int ref_transaction_commit(struct ref_transaction *transaction,
  */
 int ref_transaction_abort(struct ref_transaction *transaction,
 			  struct strbuf *err);
-
-/*
- * Like ref_transaction_commit(), but optimized for creating
- * references when originally initializing a repository (e.g., by "git
- * clone"). It writes the new references directly to packed-refs
- * without locking the individual references.
- *
- * It is a bug to call this function when there might be other
- * processes accessing the repository or if there are existing
- * references that might conflict with the ones being created. All
- * old_oid values must either be absent or null_oid.
- */
-int initial_ref_transaction_commit(struct ref_transaction *transaction,
-				   struct strbuf *err);
 
 /*
  * Execute the given callback function for each of the reference updates which

@@ -612,7 +612,7 @@ static void update_refs_stdin(void)
 	int i, j;
 
 	transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
-						  &err);
+						  0, &err);
 	if (!transaction)
 		die("%s", err.buf);
 
@@ -680,7 +680,7 @@ static void update_refs_stdin(void)
 			 */
 			state = cmd->state;
 			transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
-								  &err);
+								  0, &err);
 			if (!transaction)
 				die("%s", err.buf);
 
