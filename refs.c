@@ -318,9 +318,10 @@ int check_refname_format(const char *refname, int flags)
 	return check_or_sanitize_refname(refname, flags, NULL);
 }
 
-int refs_fsck(struct ref_store *refs, struct fsck_options *o)
+int refs_fsck(struct ref_store *refs, struct fsck_options *o,
+	      struct worktree *wt)
 {
-	return refs->be->fsck(refs, o);
+	return refs->be->fsck(refs, o, wt);
 }
 
 void sanitize_refname_component(const char *refname, struct strbuf *out)
@@ -1791,7 +1792,7 @@ static int refs_read_special_head(struct ref_store *ref_store,
 	}
 
 	result = parse_loose_ref_contents(ref_store->repo->hash_algo, content.buf,
-					  oid, referent, type, failure_errno);
+					  oid, referent, type, NULL, failure_errno);
 
 done:
 	strbuf_release(&full_path);
