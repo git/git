@@ -712,7 +712,6 @@ else
   build_options_config.set('SANITIZE_ADDRESS', '')
 endif
 if get_option('b_sanitize').contains('leak')
-  libgit_c_args += '-DSUPPRESS_ANNOTATED_LEAKS'
   build_options_config.set('SANITIZE_LEAK', 'YesCompiledWithIt')
 else
   build_options_config.set('SANITIZE_LEAK', '')
