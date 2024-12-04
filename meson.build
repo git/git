@@ -169,10 +169,7 @@
 # with the `--wrap-mode nofallback` option.
 
 project('git', 'c',
-  meson_version: '>=1.3.0',
-  # MSVC does not support GNU99, and C99 does not define __STDC_VERSION__
-  # on MSVC. So we instead fall back to C11 there.
-  default_options: ['c_std=gnu99,c11'],
+  meson_version: '>=0.61.0',
   version: 'v2.47.GIT',
 )
 
