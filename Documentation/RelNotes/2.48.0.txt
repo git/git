@@ -19,12 +19,13 @@ UI, Workflows & Features
  * Documentation for "git bundle" saw improvements to more prominently
    call out the use of '--all' when creating bundles.
 
+ * Drop support for older libcURL and Perl.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
 
  * Document "amlog" notes.
-   (merge ddfb5bcfc6 tb/notes-amlog-doc later to maint).
 
  * The way AsciiDoc is used for SYNOPSIS part of the manual pages has
    been revamped.  The sources, at least for the simple cases, got
@@ -94,13 +95,24 @@ Performance, Internal Implementation, Development Support etc.
  * We now ensure "index-pack" is used with the "--promisor" option
    only during a "git fetch".
 
+ * The migration procedure between two ref backends has been optimized.
+
+ * "git fsck" learned to issue warnings on "curiously formatted" ref
+   contents that have always been taken valid but something Git
+   wouldn't have written itself (e.g., missing terminating end-of-line
+   after the full object name).
+
+ * Work around Coverity warning that would not trigger in practice.
+
+ * Built-in Git subcommands are supplied the repository object to work
+   with; they learned to do the same when they invoke sub-subcommands.
+
 
 Fixes since v2.47
 -----------------
 
  * Doc update to clarify how periodical maintenance are scheduled,
    spread across time to avoid thundering hurds.
-   (merge 3d6ab4177d sk/doc-maintenance-schedule later to maint).
 
  * Use after free and double freeing at the end in "git log -L... -p"
    had been identified and fixed.
@@ -179,17 +191,15 @@ Fixes since v2.47
    been corrected.
    (merge b886db48c6 kn/ref-transaction-hook-with-reflog later to maint).
 
+ * Give a bit of advice/hint message when "git maintenance" stops finding a
+   lock file left by another instance that still is potentially running.
+   (merge ba874d1dac ps/gc-stale-lock-warning later to maint).
+
+ * Use the right helper program to measure file size in performance tests.
+   (merge 3f97f1bce6 tb/use-test-file-size-more later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
-   (merge 1164e270b5 jk/output-prefix-cleanup later to maint).
-   (merge f36b8cbaef jh/config-unset-doc-fix later to maint).
-   (merge 4154ed4108 js/doc-platform-support-link-fix later to maint).
    (merge 77af53f56f aa/t7300-modernize later to maint).
-   (merge 8ead1bba3e jc/doc-refspec-syntax later to maint).
-   (merge 432f666aa6 kn/loose-object-layer-wo-global-hash later to maint).
-   (merge c4b8fb6ef2 kh/merge-tree-doc later to maint).
-   (merge b8139c8f4e kh/checkout-ignore-other-docfix later to maint).
-   (merge 6dab49b9fb tc/bundle-uri-leakfix later to maint).
-   (merge f1ed39987b xx/protocol-v2-doc-markup-fix later to maint).
-   (merge 41869f7447 ak/typofixes later to maint).
    (merge dcd590a39d bf/t-readme-mention-reftable later to maint).
    (merge 68e3c69efa kh/trailer-in-glossary later to maint).
+   (merge 91f88f76e6 tb/boundary-traversal-fix later to maint).
