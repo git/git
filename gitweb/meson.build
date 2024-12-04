@@ -72,8 +72,18 @@ foreach asset : [
   'static/git-logo.png',
   'static/gitweb.css',
 ]
-  fs.copyfile(asset,
-    install: true,
-    install_dir: get_option('datadir') / 'gitweb' / fs.parent(asset),
-  )
+  if meson.version().version_compare('>=1.3.0')
+    fs.copyfile(asset,
+      install: true,
+      install_dir: get_option('datadir') / 'gitweb' / fs.parent(asset),
+    )
+  else
+    configure_file(
+      input: asset,
+      output: fs.stem(asset),
+      copy: true,
+      install: true,
+      install_dir: get_option('datadir') / 'gitweb' / fs.parent(asset),
+    )
+  endif
 endforeach

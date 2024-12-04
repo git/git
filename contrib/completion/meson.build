@@ -4,5 +4,13 @@ foreach script : [
   'git-completion.zsh',
   'git-prompt.sh'
 ]
-  test_dependencies += fs.copyfile(script)
+  if meson.version().version_compare('>=1.3.0')
+    test_dependencies += fs.copyfile(script)
+  else
+    configure_file(
+      input: script,
+      output: script,
+      copy: true,
+    )
+  endif
 endforeach
