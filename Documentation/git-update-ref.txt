@@ -93,11 +93,11 @@ update::
 	ref does not exist before the update.
 
 create::
-	Create <ref> with <new-oid> after verifying it does not
+	Create <ref> with <new-oid> after verifying that it does not
 	exist.  The given <new-oid> may not be zero.
 
 delete::
-	Delete <ref> after verifying it exists with <old-oid>, if
+	Delete <ref> after verifying that it exists with <old-oid>, if
 	given.  If given, <old-oid> may not be zero.
 
 symref-update::
@@ -110,11 +110,11 @@ verify::
 	<old-oid> is zero or missing, the ref must not exist.
 
 symref-create:
-	Create symbolic ref <ref> with <new-target> after verifying
+	Create symbolic ref <ref> with <new-target> after verifying that
 	it does not exist.
 
 symref-delete::
-	Delete <ref> after verifying it exists with <old-target>, if given.
+	Delete <ref> after verifying that it exists with <old-target>, if given.
 
 symref-verify::
 	Verify symbolic <ref> against <old-target> but do not change it.
