@@ -1,4 +1,4 @@
-use 5.008001;
+require v5.26;
 use strict;
 use warnings;
 
