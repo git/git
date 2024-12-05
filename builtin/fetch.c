@@ -1584,10 +1584,12 @@ static void set_head_advice_msg(const char *remote, const char *head_name)
 	const char message_advice_set_head[] =
 	N_("Run 'git remote set-head %s %s' to follow the change, or set\n"
 	   "'remote.%s.followRemoteHEAD' configuration option to a different value\n"
-	   "if you do not want to see this message.");
+	   "if you do not want to see this message. Specifically running\n"
+	   "'git config set remote.%s.followRemoteHEAD %s' will disable the warning\n"
+	   "until the remote changes HEAD to something else.");
 
 	advise_if_enabled(ADVICE_FETCH_SET_HEAD_WARN, _(message_advice_set_head),
-			remote, head_name, remote);
+			remote, head_name, remote, remote, head_name);
 }
 
 static void report_set_head(const char *remote, const char *head_name,
@@ -1612,7 +1614,8 @@ static void report_set_head(const char *remote, const char *head_name,
 	strbuf_release(&buf_prefix);
 }
 
-static int set_head(const struct ref *remote_refs, int follow_remote_head)
+static int set_head(const struct ref *remote_refs, int follow_remote_head,
+		const char *no_warn_branch)
 {
 	int result = 0, create_only, is_bare, was_detached;
 	struct strbuf b_head = STRBUF_INIT, b_remote_head = STRBUF_INIT,
@@ -1669,7 +1672,9 @@ static int set_head(const struct ref *remote_refs, int follow_remote_head)
 		result = 1;
 		goto cleanup;
 	}
-	if (follow_remote_head == FOLLOW_REMOTE_WARN && verbosity >= 0)
+	if (verbosity >= 0 &&
+		follow_remote_head == FOLLOW_REMOTE_WARN &&
+		(!no_warn_branch || strcmp(no_warn_branch, head_name)))
 		report_set_head(remote, head_name, &b_local_head, was_detached);
 
 cleanup:
@@ -1898,7 +1903,8 @@ static int do_fetch(struct transport *transport,
 				  "you need to specify exactly one branch with the --set-upstream option"));
 		}
 	}
-	if (set_head(remote_refs, transport->remote->follow_remote_head))
+	if (set_head(remote_refs, transport->remote->follow_remote_head,
+		transport->remote->no_warn_branch))
 		;
 		/*
 		 * Way too many cases where this can go wrong
