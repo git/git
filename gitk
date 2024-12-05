@@ -2089,7 +2089,7 @@ proc makewindow {} {
     global diffcontextstring diffcontext
     global ignorespace
     global maincursor textcursor curtextcursor
-    global rowctxmenu fakerowmenu mergemax wrapcomment
+    global rowctxmenu fakerowmenu mergemax wrapcomment wrapdefault
     global highlight_files gdttype
     global searchstring sstring
     global bgcolor fgcolor bglist fglist diffcolors diffbgcolors selectbgcolor
@@ -2431,7 +2431,7 @@ proc makewindow {} {
     set ctext .bleft.bottom.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
         -state disabled -undo 0 -font textfont \
-        -yscrollcommand scrolltext -wrap none \
+        -yscrollcommand scrolltext -wrap $wrapdefault \
         -xscrollcommand ".bleft.bottom.sbhorizontal set"
     if {$have_tk85} {
         $ctext conf -tabstyle wordprocessor
@@ -11576,7 +11576,7 @@ proc create_prefs_page {w} {
 
 proc prefspage_general {notebook} {
     global NS maxwidth maxgraphpct showneartags showlocalchanges
-    global tabstop limitdiffs autoselect autosellen extdifftool perfile_attrs
+    global tabstop wrapcomment wrapdefault limitdiffs autoselect autosellen extdifftool perfile_attrs
     global hideremotes want_ttk have_ttk maxrefs web_browser
 
     set page [create_prefs_page $notebook.general]
@@ -11607,6 +11607,17 @@ proc prefspage_general {notebook} {
     ${NS}::label $page.tabstopl -text [mc "Tab spacing"]
     spinbox $page.tabstop -from 1 -to 20 -width 4 -textvariable tabstop
     grid x $page.tabstopl $page.tabstop -sticky w
+
+    ${NS}::label $page.wrapcommentl -text [mc "Wrap comment text"]
+    ${NS}::combobox $page.wrapcomment -values {none char word} -state readonly \
+        -textvariable wrapcomment
+    grid x $page.wrapcommentl $page.wrapcomment -sticky w
+
+    ${NS}::label $page.wrapdefaultl -text [mc "Wrap other text"]
+    ${NS}::combobox $page.wrapdefault -values {none char word} -state readonly \
+        -textvariable wrapdefault
+    grid x $page.wrapdefaultl $page.wrapdefault -sticky w
+
     ${NS}::checkbutton $page.ntag -text [mc "Display nearby tags/heads"] \
         -variable showneartags
     grid x $page.ntag -sticky w
@@ -11725,7 +11736,7 @@ proc doprefs {} {
     global oldprefs prefstop showneartags showlocalchanges
     global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
     global tabstop limitdiffs autoselect autosellen extdifftool perfile_attrs
-    global hideremotes want_ttk have_ttk
+    global hideremotes want_ttk have_ttk wrapcomment wrapdefault
 
     set top .gitkprefs
     set prefstop $top
@@ -11734,7 +11745,7 @@ proc doprefs {} {
         return
     }
     foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-                   limitdiffs tabstop perfile_attrs hideremotes want_ttk} {
+                   limitdiffs tabstop perfile_attrs hideremotes want_ttk wrapcomment wrapdefault} {
         set oldprefs($v) [set $v]
     }
     ttk_toplevel $top
@@ -11860,7 +11871,7 @@ proc prefscan {} {
     global oldprefs prefstop
 
     foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-                   limitdiffs tabstop perfile_attrs hideremotes want_ttk} {
+                   limitdiffs tabstop perfile_attrs hideremotes want_ttk wrapcomment wrapdefault} {
         global $v
         set $v $oldprefs($v)
     }
@@ -11874,7 +11885,8 @@ proc prefsok {} {
     global oldprefs prefstop showneartags showlocalchanges
     global fontpref mainfont textfont uifont
     global limitdiffs treediffs perfile_attrs
-    global hideremotes
+    global hideremotes wrapcomment wrapdefault
+    global ctext
 
     catch {destroy $prefstop}
     unset prefstop
@@ -11922,6 +11934,12 @@ proc prefsok {} {
     }
     if {$hideremotes != $oldprefs(hideremotes)} {
         rereadrefs
+    }
+    if {$wrapcomment != $oldprefs(wrapcomment)} {
+        $ctext tag conf comment -wrap $wrapcomment
+    }
+    if {$wrapdefault != $oldprefs(wrapdefault)} {
+        $ctext configure -wrap $wrapdefault
     }
 }
 
@@ -12392,6 +12410,7 @@ set downarrowlen 5
 set mingaplen 100
 set cmitmode "patch"
 set wrapcomment "none"
+set wrapdefault "none"
 set showneartags 1
 set hideremotes 0
 set maxrefs 20
@@ -12497,7 +12516,7 @@ config_check_tmp_exists 50
 
 set config_variables {
     mainfont textfont uifont tabstop findmergefiles maxgraphpct maxwidth
-    cmitmode wrapcomment autoselect autosellen showneartags maxrefs visiblerefs
+    cmitmode wrapcomment wrapdefault autoselect autosellen showneartags maxrefs visiblerefs
     hideremotes showlocalchanges datetimeformat limitdiffs uicolor want_ttk
     bgcolor fgcolor uifgcolor uifgdisabledcolor colors diffcolors mergecolors
     markbgcolor diffcontext selectbgcolor foundbgcolor currentsearchhitbgcolor
