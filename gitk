@@ -11581,7 +11581,7 @@ proc prefspage_general {notebook} {
 
     set page [create_prefs_page $notebook.general]
 
-    ${NS}::label $page.ldisp -text [mc "Commit list display options"]
+    ${NS}::label $page.ldisp -text [mc "Commit list display options"] -font mainfontbold
     grid $page.ldisp - -sticky w -pady 10
     ${NS}::label $page.spacer -text " "
     ${NS}::label $page.maxwidthl -text [mc "Maximum graph width (lines)"]
@@ -11602,7 +11602,7 @@ proc prefspage_general {notebook} {
         -variable hideremotes
     grid x $page.hideremotes -sticky w
 
-    ${NS}::label $page.ddisp -text [mc "Diff display options"]
+    ${NS}::label $page.ddisp -text [mc "Diff display options"] -font mainfontbold
     grid $page.ddisp - -sticky w -pady 10
     ${NS}::label $page.tabstopl -text [mc "Tab spacing"]
     spinbox $page.tabstop -from 1 -to 20 -width 4 -textvariable tabstop
@@ -11635,7 +11635,7 @@ proc prefspage_general {notebook} {
     pack configure $page.webbrowserf.l -padx 10
     grid x $page.webbrowserf $page.webbrowser -sticky ew
 
-    ${NS}::label $page.lgen -text [mc "General options"]
+    ${NS}::label $page.lgen -text [mc "General options"] -font mainfontbold
     grid $page.lgen - -sticky w -pady 10
     ${NS}::checkbutton $page.want_ttk -variable want_ttk \
         -text [mc "Use themed widgets"]
@@ -11654,7 +11654,7 @@ proc prefspage_colors {notebook} {
 
     set page [create_prefs_page $notebook.colors]
 
-    ${NS}::label $page.cdisp -text [mc "Colors: press to choose"]
+    ${NS}::label $page.cdisp -text [mc "Colors: press to choose"] -font mainfontbold
     grid $page.cdisp - -sticky w -pady 10
     label $page.ui -padx 40 -relief sunk -background $uicolor
     ${NS}::button $page.uibut -text [mc "Interface"] \
@@ -11712,7 +11712,7 @@ proc prefspage_colors {notebook} {
 proc prefspage_fonts {notebook} {
     global NS
     set page [create_prefs_page $notebook.fonts]
-    ${NS}::label $page.cfont -text [mc "Fonts: press to choose"]
+    ${NS}::label $page.cfont -text [mc "Fonts: press to choose"] -font mainfontbold
     grid $page.cfont - -sticky w -pady 10
     mkfontdisp mainfont $page [mc "Main font"]
     mkfontdisp textfont $page [mc "Diff display font"]
