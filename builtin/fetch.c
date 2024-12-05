@@ -1579,6 +1579,17 @@ static const char *strip_refshead(const char *name){
 	return name;
 }
 
+static void set_head_advice_msg(const char *remote, const char *head_name)
+{
+	const char message_advice_set_head[] =
+	N_("Run 'git remote set-head %s %s' to follow the change, or set\n"
+	   "'remote.%s.followRemoteHEAD' configuration option to a different value\n"
+	   "if you do not want to see this message.");
+
+	advise_if_enabled(ADVICE_FETCH_SET_HEAD_WARN, _(message_advice_set_head),
+			remote, head_name, remote);
+}
+
 static void report_set_head(const char *remote, const char *head_name,
 			struct strbuf *buf_prev, int updateres) {
 	struct strbuf buf_prefix = STRBUF_INIT;
@@ -1590,15 +1601,13 @@ static void report_set_head(const char *remote, const char *head_name,
 	if (prev_head && strcmp(prev_head, head_name)) {
 		printf("'HEAD' at '%s' is '%s', but we have '%s' locally.\n",
 			remote, head_name, prev_head);
-		printf("Run 'git remote set-head %s %s' to follow the change.\n",
-			remote, head_name);
+		set_head_advice_msg(remote, head_name);
 	}
 	else if (updateres && buf_prev->len) {
 		printf("'HEAD' at '%s' is '%s', "
 			"but we have a detached HEAD pointing to '%s' locally.\n",
 			remote, head_name, buf_prev->buf);
-		printf("Run 'git remote set-head %s %s' to follow the change.\n",
-			remote, head_name);
+		set_head_advice_msg(remote, head_name);
 	}
 	strbuf_release(&buf_prefix);
 }

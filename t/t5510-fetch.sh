@@ -124,7 +124,6 @@ test_expect_success "fetch test followRemoteHEAD warn no change" '
 		git fetch >output &&
 		echo "${SQ}HEAD${SQ} at ${SQ}origin${SQ} is ${SQ}main${SQ}," \
 			"but we have ${SQ}other${SQ} locally." >expect &&
-		echo "Run ${SQ}git remote set-head origin main${SQ} to follow the change." >>expect &&
 		test_cmp expect output &&
 		head=$(git rev-parse refs/remotes/origin/HEAD) &&
 		branch=$(git rev-parse refs/remotes/origin/other) &&
@@ -161,7 +160,6 @@ test_expect_success "fetch test followRemoteHEAD warn detached" '
 		echo "${SQ}HEAD${SQ} at ${SQ}origin${SQ} is ${SQ}main${SQ}," \
 			"but we have a detached HEAD pointing to" \
 			"${SQ}${HEAD}${SQ} locally." >expect &&
-		echo "Run ${SQ}git remote set-head origin main${SQ} to follow the change." >>expect &&
 		test_cmp expect output
 	)
 '
