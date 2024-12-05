@@ -2422,9 +2422,12 @@ endif
 FUZZ_OBJS += oss-fuzz/dummy-cmd-main.o
 FUZZ_OBJS += oss-fuzz/fuzz-commit-graph.o
 FUZZ_OBJS += oss-fuzz/fuzz-config.o
+FUZZ_OBJS += oss-fuzz/fuzz-credential-from-url-gently.o
 FUZZ_OBJS += oss-fuzz/fuzz-date.o
 FUZZ_OBJS += oss-fuzz/fuzz-pack-headers.o
 FUZZ_OBJS += oss-fuzz/fuzz-pack-idx.o
+FUZZ_OBJS += oss-fuzz/fuzz-parse-attr-line.o
+FUZZ_OBJS += oss-fuzz/fuzz-url-decode-mem.o
 .PHONY: fuzz-objs
 fuzz-objs: $(FUZZ_OBJS)
 
