@@ -218,7 +218,7 @@ endif::git-diff[]
 	Set this option to `true` to make the diff driver cache the text
 	conversion outputs.  See linkgit:gitattributes[5] for details.
 
-include::../mergetools-diff.txt[]
+include::{build_dir}/mergetools-diff.txt[]
 
 `diff.indentHeuristic`::
 	Set this option to `false` to disable the default heuristics
