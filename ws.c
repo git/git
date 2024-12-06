@@ -6,6 +6,7 @@
 #include "git-compat-util.h"
 #include "attr.h"
 #include "strbuf.h"
+#include "gettext.h"
 #include "ws.h"
 
 unsigned whitespace_rule_cfg = WS_DEFAULT_RULE;
@@ -70,8 +71,11 @@ unsigned parse_whitespace_rule(const char *string)
 		string = ep;
 	}
 
-	if (rule & WS_TAB_IN_INDENT && rule & WS_INDENT_WITH_NON_TAB)
-		die("cannot enforce both tab-in-indent and indent-with-non-tab");
+	if (rule & WS_TAB_IN_INDENT && rule & WS_INDENT_WITH_NON_TAB) {
+		warning(_("cannot enforce both tab-in-indent and indent-with-non-tab, disabling both"));
+		rule &= ~WS_TAB_IN_INDENT;
+		rule &= ~WS_INDENT_WITH_NON_TAB;
+	}
 	return rule;
 }
 
