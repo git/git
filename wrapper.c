@@ -1,6 +1,9 @@
 /*
  * Various trivial helper wrappers around standard functions
  */
+
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "parse.h"
