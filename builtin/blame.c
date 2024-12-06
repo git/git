@@ -4,7 +4,10 @@
  * Copyright (c) 2006, 2014 by its authors
  * See COPYING for licensing conditions
  */
+
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "builtin.h"
 #include "config.h"
 #include "color.h"

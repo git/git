@@ -1,3 +1,5 @@
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "test-tool.h"
 #include "parse-options.h"
 #include "strbuf.h"

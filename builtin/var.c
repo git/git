@@ -3,7 +3,10 @@
  *
  * Copyright (C) Eric Biederman, 2005
  */
+
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "builtin.h"
 
 #include "attr.h"

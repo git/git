@@ -4,6 +4,8 @@
  * Copyright (C) 2007 by Nicolas Pitre, licensed under the GPL version 2.
  */
 
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "test-tool.h"
 #include "git-compat-util.h"
 
