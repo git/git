@@ -1266,7 +1266,7 @@ int cmd_repack(int argc,
 
 	if (write_bitmaps < 0) {
 		if (!write_midx &&
-		    (!(pack_everything & ALL_INTO_ONE) || !is_bare_repository()))
+		    (!(pack_everything & ALL_INTO_ONE) || !repo_is_bare(the_repository)))
 			write_bitmaps = 0;
 	}
 	if (pack_kept_objects < 0)

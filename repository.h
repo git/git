@@ -153,6 +153,14 @@ struct repository {
 
 	/* Indicate if a repository has a different 'commondir' from 'gitdir' */
 	unsigned different_commondir:1;
+
+	/*
+	 * Indicates if the repository is set to be treated as a bare repository,
+	 * through a command line argument, configuration, or environment
+	 * variable.
+	 * -1 means unspecified, 0 indicates non-bare, and 1 indicates bare.
+	 */
+	int is_bare_cfg;
 };
 
 #ifdef USE_THE_REPOSITORY_VARIABLE
@@ -188,7 +196,7 @@ void repo_set_ref_storage_format(struct repository *repo,
 				 enum ref_storage_format format);
 void initialize_repository(struct repository *repo);
 RESULT_MUST_BE_USED
-int repo_init(struct repository *r, const char *gitdir, const char *worktree);
+int repo_init(struct repository *r, const char *gitdir, const char *worktree, int is_bare);
 
 /*
  * Initialize the repository 'subrepo' as the submodule at the given path. If
@@ -231,5 +239,7 @@ void repo_update_index_if_able(struct repository *, struct lock_file *);
  * 0 if no upgrade is necessary, and -1 when upgrade is not possible.
  */
 int upgrade_repository_format(int target_version);
+
+int repo_is_bare(struct repository *repo);
 
 #endif /* REPOSITORY_H */

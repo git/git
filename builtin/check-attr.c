@@ -116,7 +116,7 @@ int cmd_check_attr(int argc,
 	struct object_id initialized_oid;
 	int cnt, i, doubledash, filei;
 
-	if (!is_bare_repository())
+	if (!repo_is_bare(the_repository))
 		setup_work_tree();
 
 	git_config(git_default_config, NULL);
