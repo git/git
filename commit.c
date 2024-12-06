@@ -1,5 +1,4 @@
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "tag.h"
@@ -1766,7 +1765,6 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 			{ &compat_sig, r->compat_hash_algo },
 			{ &sig, r->hash_algo },
 		};
-		int i;
 
 		/*
 		 * We write algorithms in the order they were implemented in
@@ -1780,7 +1778,7 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 		 * We traverse each algorithm in order, and apply the signature
 		 * to each buffer.
 		 */
-		for (i = 0; i < ARRAY_SIZE(bufs); i++) {
+		for (size_t i = 0; i < ARRAY_SIZE(bufs); i++) {
 			if (!bufs[i].algo)
 				continue;
 			add_header_signature(&buffer, bufs[i].sig, bufs[i].algo);

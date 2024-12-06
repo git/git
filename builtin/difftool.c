@@ -13,7 +13,6 @@
  */
 
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "builtin.h"
 
@@ -367,7 +366,8 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 	char *lbase_dir = NULL, *rbase_dir = NULL;
 	size_t ldir_len, rdir_len, wtdir_len;
 	const char *workdir, *tmp;
-	int ret = 0, i;
+	int ret = 0;
+	size_t i;
 	FILE *fp = NULL;
 	struct hashmap working_tree_dups = HASHMAP_INIT(working_tree_entry_cmp,
 							NULL);

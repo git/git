@@ -4,8 +4,6 @@
  * Copyright (C) 2006 Linus Torvalds
  */
 
-#define DISABLE_SIGN_COMPARE_WARNINGS
-
 #include "builtin.h"
 #include "advice.h"
 #include "config.h"
@@ -42,9 +40,9 @@ static int chmod_pathspec(struct repository *repo,
 			  char flip,
 			  int show_only)
 {
-	int i, ret = 0;
+	int ret = 0;
 
-	for (i = 0; i < repo->index->cache_nr; i++) {
+	for (size_t i = 0; i < repo->index->cache_nr; i++) {
 		struct cache_entry *ce = repo->index->cache[i];
 		int err;
 
@@ -72,9 +70,9 @@ static int renormalize_tracked_files(struct repository *repo,
 				     const struct pathspec *pathspec,
 				     int flags)
 {
-	int i, retval = 0;
+	int retval = 0;
 
-	for (i = 0; i < repo->index->cache_nr; i++) {
+	for (size_t i = 0; i < repo->index->cache_nr; i++) {
 		struct cache_entry *ce = repo->index->cache[i];
 
 		if (!include_sparse &&

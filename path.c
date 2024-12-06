@@ -3,7 +3,6 @@
  */
 
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "abspath.h"
@@ -1141,12 +1140,12 @@ int strbuf_normalize_path(struct strbuf *src)
  */
 int longest_ancestor_length(const char *path, struct string_list *prefixes)
 {
-	int i, max_len = -1;
+	int max_len = -1;
 
 	if (!strcmp(path, "/"))
 		return -1;
 
-	for (i = 0; i < prefixes->nr; i++) {
+	for (size_t i = 0; i < prefixes->nr; i++) {
 		const char *ceil = prefixes->items[i].string;
 		int len = strlen(ceil);
 
