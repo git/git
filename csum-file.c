@@ -9,7 +9,6 @@
  */
 
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "progress.h"
@@ -24,7 +23,7 @@ static void verify_buffer_or_die(struct hashfile *f,
 
 	if (ret < 0)
 		die_errno("%s: sha1 file read error", f->name);
-	if (ret != count)
+	if ((size_t)ret != count)
 		die("%s: sha1 file truncated", f->name);
 	if (memcmp(buf, f->check_buffer, count))
 		die("sha1 file '%s' validation error", f->name);
