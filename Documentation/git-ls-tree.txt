@@ -19,7 +19,7 @@ Lists the contents of a given tree object, like what "/bin/ls -a" does
 in the current working directory.  Note that:
 
  - the behaviour is slightly different from that of "/bin/ls" in that the
-   '<path>' denotes just a list of patterns to match, e.g. so specifying
+   '<path>' denotes just a list of files to match, e.g. so specifying
    directory name (without `-r`) will behave differently, and order of the
    arguments does not matter.
 
@@ -94,8 +94,8 @@ OPTIONS
 	and `--object-only`.
 
 [<path>...]::
-	When paths are given, show them (note that this isn't really raw
-	pathnames, but rather a list of patterns to match).  Otherwise
+	When paths are given, show them (note that this is really raw
+	pathnames, not a list of patterns to match).  Otherwise
 	implicitly uses the root level of the tree as the sole path argument.
 
 
