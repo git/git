@@ -899,10 +899,17 @@ foreach(script ${git_perl_scripts} ${perl_modules})
 endforeach()
 add_custom_target(perl-gen ALL DEPENDS ${perl_gen})
 
-#python script
-file(STRINGS ${CMAKE_SOURCE_DIR}/git-p4.py content NEWLINE_CONSUME)
-string(REPLACE "#!/usr/bin/env python" "#!/usr/bin/python" content "${content}")
-file(WRITE ${CMAKE_BINARY_DIR}/git-p4 ${content})
+# Python script
+add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/git-p4"
+	COMMAND "${SH_EXE}" "${CMAKE_SOURCE_DIR}/generate-python.sh"
+		"${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS"
+		"${CMAKE_SOURCE_DIR}/git-p4.py"
+		"${CMAKE_BINARY_DIR}/git-p4"
+	DEPENDS "${CMAKE_SOURCE_DIR}/generate-python.sh"
+		"${CMAKE_SOURCE_DIR}/git-p4.py"
+		"${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS"
+	VERBATIM)
+add_custom_target(python-gen ALL DEPENDS "${CMAKE_BINARY_DIR}/git-p4")
 
 #templates
 file(GLOB templates "${CMAKE_SOURCE_DIR}/templates/*")
