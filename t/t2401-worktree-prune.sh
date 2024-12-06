@@ -119,11 +119,12 @@ test_expect_success 'prune duplicate (main/linked)' '
 	! test -d .git/worktrees/wt
 '
 
-test_expect_success 'not prune proper worktrees when run inside linked worktree' '
+test_expect_success 'not prune proper worktrees inside linked worktree with relative paths' '
 	test_when_finished rm -rf repo wt_ext &&
 	git init repo &&
 	(
 	    cd repo &&
+	    git config worktree.useRelativePaths true &&
 	    echo content >file &&
 	    git add file &&
 	    git commit -m msg &&

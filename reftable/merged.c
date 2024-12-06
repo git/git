@@ -181,7 +181,7 @@ static void iterator_from_merged_iter(struct reftable_iterator *it,
 
 int reftable_merged_table_new(struct reftable_merged_table **dest,
 			      struct reftable_reader **readers, size_t n,
-			      uint32_t hash_id)
+			      enum reftable_hash hash_id)
 {
 	struct reftable_merged_table *m = NULL;
 	uint64_t last_max = 0;
@@ -293,7 +293,7 @@ int reftable_merged_table_init_log_iterator(struct reftable_merged_table *mt,
 	return merged_table_init_iter(mt, it, BLOCK_TYPE_LOG);
 }
 
-uint32_t reftable_merged_table_hash_id(struct reftable_merged_table *mt)
+enum reftable_hash reftable_merged_table_hash_id(struct reftable_merged_table *mt)
 {
 	return mt->hash_id;
 }

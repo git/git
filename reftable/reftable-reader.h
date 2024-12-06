@@ -54,7 +54,7 @@ int reftable_reader_init_log_iterator(struct reftable_reader *r,
 				      struct reftable_iterator *it);
 
 /* returns the hash ID used in this table. */
-uint32_t reftable_reader_hash_id(struct reftable_reader *r);
+enum reftable_hash reftable_reader_hash_id(struct reftable_reader *r);
 
 /* return an iterator for the refs pointing to `oid`. */
 int reftable_reader_refs_for(struct reftable_reader *r,

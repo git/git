@@ -8,10 +8,13 @@ https://developers.google.com/open-source/licenses/bsd
 
 #include "test-lib.h"
 #include "lib-reftable.h"
+#include "dir.h"
 #include "reftable/merged.h"
 #include "reftable/reader.h"
 #include "reftable/reftable-error.h"
 #include "reftable/stack.h"
+#include "strbuf.h"
+#include "tempfile.h"
 #include <dirent.h>
 
 static void clear_dir(const char *dirname)
@@ -120,7 +123,7 @@ static void write_n_ref_tables(struct reftable_stack *st,
 
 		snprintf(buf, sizeof(buf), "refs/heads/branch-%04"PRIuMAX, (uintmax_t)i);
 		ref.refname = buf;
-		t_reftable_set_hash(ref.value.val1, i, GIT_SHA1_FORMAT_ID);
+		t_reftable_set_hash(ref.value.val1, i, REFTABLE_HASH_SHA1);
 
 		err = reftable_stack_add(st, &write_test_ref, &ref);
 		check(!err);
@@ -168,7 +171,7 @@ static void t_reftable_stack_add_one(void)
 
 	err = reftable_stack_read_ref(st, ref.refname, &dest);
 	check(!err);
-	check(reftable_ref_record_equal(&ref, &dest, GIT_SHA1_RAWSZ));
+	check(reftable_ref_record_equal(&ref, &dest, REFTABLE_HASH_SIZE_SHA1));
 	check_int(st->readers_len, >, 0);
 
 #ifndef GIT_WINDOWS_NATIVE
@@ -279,7 +282,7 @@ static void t_reftable_stack_transaction_api(void)
 	err = reftable_stack_read_ref(st, ref.refname, &dest);
 	check(!err);
 	check_int(REFTABLE_REF_SYMREF, ==, dest.value_type);
-	check(reftable_ref_record_equal(&ref, &dest, GIT_SHA1_RAWSZ));
+	check(reftable_ref_record_equal(&ref, &dest, REFTABLE_HASH_SIZE_SHA1));
 
 	reftable_ref_record_release(&dest);
 	reftable_stack_destroy(st);
@@ -339,7 +342,7 @@ static void t_reftable_stack_transaction_with_reload(void)
 	for (size_t i = 0; i < ARRAY_SIZE(refs); i++) {
 		err = reftable_stack_read_ref(st2, refs[i].refname, &ref);
 		check(!err);
-		check(reftable_ref_record_equal(&refs[i], &ref, GIT_SHA1_RAWSZ));
+		check(reftable_ref_record_equal(&refs[i], &ref, REFTABLE_HASH_SIZE_SHA1));
 	}
 
 	reftable_ref_record_release(&ref);
@@ -529,13 +532,13 @@ static void t_reftable_stack_add(void)
 		refs[i].refname = xstrdup(buf);
 		refs[i].update_index = i + 1;
 		refs[i].value_type = REFTABLE_REF_VAL1;
-		t_reftable_set_hash(refs[i].value.val1, i, GIT_SHA1_FORMAT_ID);
+		t_reftable_set_hash(refs[i].value.val1, i, REFTABLE_HASH_SHA1);
 
 		logs[i].refname = xstrdup(buf);
 		logs[i].update_index = N + i + 1;
 		logs[i].value_type = REFTABLE_LOG_UPDATE;
 		logs[i].value.update.email = xstrdup("identity@invalid");
-		t_reftable_set_hash(logs[i].value.update.new_hash, i, GIT_SHA1_FORMAT_ID);
+		t_reftable_set_hash(logs[i].value.update.new_hash, i, REFTABLE_HASH_SHA1);
 	}
 
 	for (i = 0; i < N; i++) {
@@ -561,7 +564,7 @@ static void t_reftable_stack_add(void)
 		int err = reftable_stack_read_ref(st, refs[i].refname, &dest);
 		check(!err);
 		check(reftable_ref_record_equal(&dest, refs + i,
-						 GIT_SHA1_RAWSZ));
+						 REFTABLE_HASH_SIZE_SHA1));
 		reftable_ref_record_release(&dest);
 	}
 
@@ -570,7 +573,7 @@ static void t_reftable_stack_add(void)
 		int err = reftable_stack_read_log(st, refs[i].refname, &dest);
 		check(!err);
 		check(reftable_log_record_equal(&dest, logs + i,
-						 GIT_SHA1_RAWSZ));
+						 REFTABLE_HASH_SIZE_SHA1));
 		reftable_log_record_release(&dest);
 	}
 
@@ -621,14 +624,14 @@ static void t_reftable_stack_iterator(void)
 		refs[i].refname = xstrfmt("branch%02"PRIuMAX, (uintmax_t)i);
 		refs[i].update_index = i + 1;
 		refs[i].value_type = REFTABLE_REF_VAL1;
-		t_reftable_set_hash(refs[i].value.val1, i, GIT_SHA1_FORMAT_ID);
+		t_reftable_set_hash(refs[i].value.val1, i, REFTABLE_HASH_SHA1);
 
 		logs[i].refname = xstrfmt("branch%02"PRIuMAX, (uintmax_t)i);
 		logs[i].update_index = i + 1;
 		logs[i].value_type = REFTABLE_LOG_UPDATE;
 		logs[i].value.update.email = xstrdup("johndoe@invalid");
 		logs[i].value.update.message = xstrdup("commit\n");
-		t_reftable_set_hash(logs[i].value.update.new_hash, i, GIT_SHA1_FORMAT_ID);
+		t_reftable_set_hash(logs[i].value.update.new_hash, i, REFTABLE_HASH_SHA1);
 	}
 
 	for (i = 0; i < N; i++) {
@@ -655,7 +658,7 @@ static void t_reftable_stack_iterator(void)
 		if (err > 0)
 			break;
 		check(!err);
-		check(reftable_ref_record_equal(&ref, &refs[i], GIT_SHA1_RAWSZ));
+		check(reftable_ref_record_equal(&ref, &refs[i], REFTABLE_HASH_SIZE_SHA1));
 		reftable_ref_record_release(&ref);
 	}
 	check_int(i, ==, N);
@@ -673,7 +676,7 @@ static void t_reftable_stack_iterator(void)
 		if (err > 0)
 			break;
 		check(!err);
-		check(reftable_log_record_equal(&log, &logs[i], GIT_SHA1_RAWSZ));
+		check(reftable_log_record_equal(&log, &logs[i], REFTABLE_HASH_SIZE_SHA1));
 		reftable_log_record_release(&log);
 	}
 	check_int(i, ==, N);
@@ -766,7 +769,7 @@ static void t_reftable_stack_tombstone(void)
 		if (i % 2 == 0) {
 			refs[i].value_type = REFTABLE_REF_VAL1;
 			t_reftable_set_hash(refs[i].value.val1, i,
-					    GIT_SHA1_FORMAT_ID);
+					    REFTABLE_HASH_SHA1);
 		}
 
 		logs[i].refname = xstrdup(buf);
@@ -775,7 +778,7 @@ static void t_reftable_stack_tombstone(void)
 		if (i % 2 == 0) {
 			logs[i].value_type = REFTABLE_LOG_UPDATE;
 			t_reftable_set_hash(logs[i].value.update.new_hash, i,
-					    GIT_SHA1_FORMAT_ID);
+					    REFTABLE_HASH_SHA1);
 			logs[i].value.update.email =
 				xstrdup("identity@invalid");
 		}
@@ -835,7 +838,7 @@ static void t_reftable_stack_hash_id(void)
 		.value.symref = (char *) "target",
 		.update_index = 1,
 	};
-	struct reftable_write_options opts32 = { .hash_id = GIT_SHA256_FORMAT_ID };
+	struct reftable_write_options opts32 = { .hash_id = REFTABLE_HASH_SHA256 };
 	struct reftable_stack *st32 = NULL;
 	struct reftable_write_options opts_default = { 0 };
 	struct reftable_stack *st_default = NULL;
@@ -858,7 +861,7 @@ static void t_reftable_stack_hash_id(void)
 	err = reftable_stack_read_ref(st_default, "master", &dest);
 	check(!err);
 
-	check(reftable_ref_record_equal(&ref, &dest, GIT_SHA1_RAWSZ));
+	check(reftable_ref_record_equal(&ref, &dest, REFTABLE_HASH_SIZE_SHA1));
 	reftable_ref_record_release(&dest);
 	reftable_stack_destroy(st);
 	reftable_stack_destroy(st_default);
@@ -908,7 +911,7 @@ static void t_reflog_expire(void)
 		logs[i].value.update.time = i;
 		logs[i].value.update.email = xstrdup("identity@invalid");
 		t_reftable_set_hash(logs[i].value.update.new_hash, i,
-				    GIT_SHA1_FORMAT_ID);
+				    REFTABLE_HASH_SHA1);
 	}
 
 	for (i = 1; i <= N; i++) {
