@@ -293,6 +293,8 @@ test_expect_success 'ls-remote with filtered symref (refname)' '
 	cat >expect <<-EOF &&
 	ref: refs/heads/main	HEAD
 	$rev	HEAD
+	ref: refs/remotes/origin/main	refs/remotes/origin/HEAD
+	$rev	refs/remotes/origin/HEAD
 	EOF
 	git ls-remote --symref . HEAD >actual &&
 	test_cmp expect actual
