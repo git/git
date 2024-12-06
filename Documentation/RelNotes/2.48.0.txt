@@ -198,6 +198,12 @@ Fixes since v2.47
  * Use the right helper program to measure file size in performance tests.
    (merge 3f97f1bce6 tb/use-test-file-size-more later to maint).
 
+ * A double-free that may not trigger in practice by luck has been
+   corrected in the reference resolution code.
+   (merge b6318cf23a sj/refs-symref-referent-fix later to maint).
+
+ * The sequencer failed to honor core.commentString in some places.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 77af53f56f aa/t7300-modernize later to maint).
    (merge dcd590a39d bf/t-readme-mention-reftable later to maint).
