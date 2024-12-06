@@ -1643,6 +1643,21 @@ cleanup:
 	return result;
 }
 
+static int uses_remote_tracking(struct transport *transport, struct refspec *rs)
+{
+	if (!remote_is_configured(transport->remote, 0))
+		return 0;
+
+	if (!rs->nr)
+		rs = &transport->remote->fetch;
+
+	for (int i = 0; i < rs->nr; i++)
+		if (rs->items[i].dst)
+			return 1;
+
+	return 0;
+}
+
 static int do_fetch(struct transport *transport,
 		    struct refspec *rs,
 		    const struct fetch_config *config)
@@ -1712,7 +1727,10 @@ static int do_fetch(struct transport *transport,
 				    "refs/tags/");
 	}
 
-	strvec_push(&transport_ls_refs_options.ref_prefixes, "HEAD");
+	if (uses_remote_tracking(transport, rs)) {
+		must_list_refs = 1;
+		strvec_push(&transport_ls_refs_options.ref_prefixes, "HEAD");
+	}
 
 	if (must_list_refs) {
 		trace2_region_enter("fetch", "remote_refs", the_repository);
