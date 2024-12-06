@@ -2,8 +2,9 @@
 #include "test-lib.h"
 #include "reftable/constants.h"
 #include "reftable/writer.h"
+#include "strbuf.h"
 
-void t_reftable_set_hash(uint8_t *p, int i, uint32_t id)
+void t_reftable_set_hash(uint8_t *p, int i, enum reftable_hash id)
 {
 	memset(p, (uint8_t)i, hash_size(id));
 }
@@ -82,7 +83,7 @@ void t_reftable_write_to_buf(struct reftable_buf *buf,
 		size_t off = i * (opts.block_size ? opts.block_size
 						  : DEFAULT_BLOCK_SIZE);
 		if (!off)
-			off = header_size(opts.hash_id == GIT_SHA256_FORMAT_ID ? 2 : 1);
+			off = header_size(opts.hash_id == REFTABLE_HASH_SHA256 ? 2 : 1);
 		check_char(buf->buf[off], ==, 'r');
 	}
 

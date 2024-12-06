@@ -11,6 +11,7 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable/blocksource.h"
 #include "reftable/constants.h"
 #include "reftable/reftable-error.h"
+#include "strbuf.h"
 
 static void t_ref_block_read_write(void)
 {
@@ -36,7 +37,7 @@ static void t_ref_block_read_write(void)
 	block.len = block_size;
 	block_source_from_buf(&block.source ,&buf);
 	ret = block_writer_init(&bw, BLOCK_TYPE_REF, block.data, block_size,
-				header_off, hash_size(GIT_SHA1_FORMAT_ID));
+				header_off, hash_size(REFTABLE_HASH_SHA1));
 	check(!ret);
 
 	rec.u.ref.refname = (char *) "";
@@ -47,7 +48,7 @@ static void t_ref_block_read_write(void)
 	for (i = 0; i < N; i++) {
 		rec.u.ref.refname = xstrfmt("branch%02"PRIuMAX, (uintmax_t)i);
 		rec.u.ref.value_type = REFTABLE_REF_VAL1;
-		memset(rec.u.ref.value.val1, i, GIT_SHA1_RAWSZ);
+		memset(rec.u.ref.value.val1, i, REFTABLE_HASH_SIZE_SHA1);
 
 		recs[i] = rec;
 		ret = block_writer_add(&bw, &rec);
@@ -61,7 +62,7 @@ static void t_ref_block_read_write(void)
 
 	block_writer_release(&bw);
 
-	block_reader_init(&br, &block, header_off, block_size, GIT_SHA1_RAWSZ);
+	block_reader_init(&br, &block, header_off, block_size, REFTABLE_HASH_SIZE_SHA1);
 
 	block_iter_seek_start(&it, &br);
 
@@ -72,7 +73,7 @@ static void t_ref_block_read_write(void)
 			check_int(i, ==, N);
 			break;
 		}
-		check(reftable_record_equal(&recs[i], &rec, GIT_SHA1_RAWSZ));
+		check(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1));
 	}
 
 	for (i = 0; i < N; i++) {
@@ -85,7 +86,7 @@ static void t_ref_block_read_write(void)
 		ret = block_iter_next(&it, &rec);
 		check_int(ret, ==, 0);
 
-		check(reftable_record_equal(&recs[i], &rec, GIT_SHA1_RAWSZ));
+		check(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1));
 
 		want.len--;
 		ret = block_iter_seek_key(&it, &br, &want);
@@ -93,7 +94,7 @@ static void t_ref_block_read_write(void)
 
 		ret = block_iter_next(&it, &rec);
 		check_int(ret, ==, 0);
-		check(reftable_record_equal(&recs[10 * (i / 10)], &rec, GIT_SHA1_RAWSZ));
+		check(reftable_record_equal(&recs[10 * (i / 10)], &rec, REFTABLE_HASH_SIZE_SHA1));
 	}
 
 	block_reader_release(&br);
@@ -130,7 +131,7 @@ static void t_log_block_read_write(void)
 	block.len = block_size;
 	block_source_from_buf(&block.source ,&buf);
 	ret = block_writer_init(&bw, BLOCK_TYPE_LOG, block.data, block_size,
-				header_off, hash_size(GIT_SHA1_FORMAT_ID));
+				header_off, hash_size(REFTABLE_HASH_SHA1));
 	check(!ret);
 
 	for (i = 0; i < N; i++) {
@@ -150,7 +151,7 @@ static void t_log_block_read_write(void)
 
 	block_writer_release(&bw);
 
-	block_reader_init(&br, &block, header_off, block_size, GIT_SHA1_RAWSZ);
+	block_reader_init(&br, &block, header_off, block_size, REFTABLE_HASH_SIZE_SHA1);
 
 	block_iter_seek_start(&it, &br);
 
@@ -161,7 +162,7 @@ static void t_log_block_read_write(void)
 			check_int(i, ==, N);
 			break;
 		}
-		check(reftable_record_equal(&recs[i], &rec, GIT_SHA1_RAWSZ));
+		check(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1));
 	}
 
 	for (i = 0; i < N; i++) {
@@ -175,7 +176,7 @@ static void t_log_block_read_write(void)
 		ret = block_iter_next(&it, &rec);
 		check_int(ret, ==, 0);
 
-		check(reftable_record_equal(&recs[i], &rec, GIT_SHA1_RAWSZ));
+		check(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1));
 
 		want.len--;
 		ret = block_iter_seek_key(&it, &br, &want);
@@ -183,7 +184,7 @@ static void t_log_block_read_write(void)
 
 		ret = block_iter_next(&it, &rec);
 		check_int(ret, ==, 0);
-		check(reftable_record_equal(&recs[10 * (i / 10)], &rec, GIT_SHA1_RAWSZ));
+		check(reftable_record_equal(&recs[10 * (i / 10)], &rec, REFTABLE_HASH_SIZE_SHA1));
 	}
 
 	block_reader_release(&br);
@@ -220,7 +221,7 @@ static void t_obj_block_read_write(void)
 	block.len = block_size;
 	block_source_from_buf(&block.source, &buf);
 	ret = block_writer_init(&bw, BLOCK_TYPE_OBJ, block.data, block_size,
-				header_off, hash_size(GIT_SHA1_FORMAT_ID));
+				header_off, hash_size(REFTABLE_HASH_SHA1));
 	check(!ret);
 
 	for (i = 0; i < N; i++) {
@@ -242,7 +243,7 @@ static void t_obj_block_read_write(void)
 
 	block_writer_release(&bw);
 
-	block_reader_init(&br, &block, header_off, block_size, GIT_SHA1_RAWSZ);
+	block_reader_init(&br, &block, header_off, block_size, REFTABLE_HASH_SIZE_SHA1);
 
 	block_iter_seek_start(&it, &br);
 
@@ -253,7 +254,7 @@ static void t_obj_block_read_write(void)
 			check_int(i, ==, N);
 			break;
 		}
-		check(reftable_record_equal(&recs[i], &rec, GIT_SHA1_RAWSZ));
+		check(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1));
 	}
 
 	for (i = 0; i < N; i++) {
@@ -266,7 +267,7 @@ static void t_obj_block_read_write(void)
 		ret = block_iter_next(&it, &rec);
 		check_int(ret, ==, 0);
 
-		check(reftable_record_equal(&recs[i], &rec, GIT_SHA1_RAWSZ));
+		check(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1));
 	}
 
 	block_reader_release(&br);
@@ -304,7 +305,7 @@ static void t_index_block_read_write(void)
 	block.len = block_size;
 	block_source_from_buf(&block.source, &buf);
 	ret = block_writer_init(&bw, BLOCK_TYPE_INDEX, block.data, block_size,
-				header_off, hash_size(GIT_SHA1_FORMAT_ID));
+				header_off, hash_size(REFTABLE_HASH_SHA1));
 	check(!ret);
 
 	for (i = 0; i < N; i++) {
@@ -326,7 +327,7 @@ static void t_index_block_read_write(void)
 
 	block_writer_release(&bw);
 
-	block_reader_init(&br, &block, header_off, block_size, GIT_SHA1_RAWSZ);
+	block_reader_init(&br, &block, header_off, block_size, REFTABLE_HASH_SIZE_SHA1);
 
 	block_iter_seek_start(&it, &br);
 
@@ -337,7 +338,7 @@ static void t_index_block_read_write(void)
 			check_int(i, ==, N);
 			break;
 		}
-		check(reftable_record_equal(&recs[i], &rec, GIT_SHA1_RAWSZ));
+		check(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1));
 	}
 
 	for (i = 0; i < N; i++) {
@@ -350,7 +351,7 @@ static void t_index_block_read_write(void)
 		ret = block_iter_next(&it, &rec);
 		check_int(ret, ==, 0);
 
-		check(reftable_record_equal(&recs[i], &rec, GIT_SHA1_RAWSZ));
+		check(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1));
 
 		want.len--;
 		ret = block_iter_seek_key(&it, &br, &want);
@@ -358,7 +359,7 @@ static void t_index_block_read_write(void)
 
 		ret = block_iter_next(&it, &rec);
 		check_int(ret, ==, 0);
-		check(reftable_record_equal(&recs[10 * (i / 10)], &rec, GIT_SHA1_RAWSZ));
+		check(reftable_record_equal(&recs[10 * (i / 10)], &rec, REFTABLE_HASH_SIZE_SHA1));
 	}
 
 	block_reader_release(&br);
