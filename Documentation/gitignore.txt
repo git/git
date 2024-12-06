@@ -100,7 +100,7 @@ PATTERN FORMAT
    will only match directories, otherwise the pattern can match both
    files and directories.
 
- - For example, a pattern `doc/frotz/` matches `doc/frotz` directory,
+ - For example, a pattern `/doc/frotz/` matches `doc/frotz` directory,
    but not `a/doc/frotz` directory; however `frotz/` matches `frotz`
    and `a/frotz` that is a directory (all paths are relative from
    the `.gitignore` file).
