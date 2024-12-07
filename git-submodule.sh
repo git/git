@@ -77,6 +77,9 @@ cmd_add()
 			branch=$2
 			shift
 			;;
+		-b*)
+			branch="${1#-b}"
+			;;
 		--branch=*)
 			branch="${1#--branch=}"
 			;;
@@ -352,6 +355,9 @@ cmd_update()
 			jobs="--jobs=$2"
 			shift
 			;;
+		-j*)
+			jobs="--jobs=${1#-j}"
+			;;
 		--jobs=*)
 			jobs=$1
 			;;
@@ -430,6 +436,9 @@ cmd_set_branch() {
 			case "$2" in '') usage ;; esac
 			branch=$2
 			shift
+			;;
+		-b*)
+			branch="${1#-b}"
 			;;
 		--branch=*)
 			branch="${1#--branch=}"
@@ -518,6 +527,10 @@ cmd_summary() {
 			summary_limit="$2"
 			isnumber "$summary_limit" || usage
 			shift
+			;;
+		-n*)
+			summary_limit="${1#-n}"
+			isnumber "$summary_limit" || usage
 			;;
 		--summary-limit=*)
 			summary_limit="${1#--summary-limit=}"
