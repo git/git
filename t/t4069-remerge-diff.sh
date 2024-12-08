@@ -352,4 +352,11 @@ test_expect_success 'remerge-diff turns off history simplification' '
 	test_cmp expect actual
 '
 
+test_expect_success 'remerge-diff with --reverse' '
+	git log -1 --remerge-diff --oneline ab_resolution^ >expect &&
+	git log -1 --remerge-diff --oneline ab_resolution >>expect &&
+	git log -2 --remerge-diff --oneline ab_resolution --reverse >actual &&
+	test_cmp expect actual
+'
+
 test_done
