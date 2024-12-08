@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2024, #02; Thu, 5)
-X-master-at: 23692e08c638df0de3344357658fb7e6fd20d931
-X-next-at: a4f8a869558d59677e8d9798666a23391f0b4ca8
+Subject: What's cooking in git.git (Dec 2024, #03; Sun, 8)
+X-master-at: e66fd72e972df760a53c3d6da023c17adfc426d6
+X-next-at: c27f4b7a9fc45cdb75b4a22d3d3e0e7ac90f80b2
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2024, #02; Thu, 5)
+What's cooking in git.git (Dec 2024, #03; Sun, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,164 +46,114 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* bc/drop-ancient-libcurl-and-perl (2024-10-23) 12 commits
-  (merged to 'next' on 2024-11-27 at aa7866a3ab)
- + gitweb: make use of s///r
- + Require Perl 5.26.0
- + INSTALL: document requirement for libcurl 7.61.0
- + git-curl-compat: remove check for curl 7.56.0
- + git-curl-compat: remove check for curl 7.53.0
- + git-curl-compat: remove check for curl 7.52.0
- + git-curl-compat: remove check for curl 7.44.0
- + git-curl-compat: remove check for curl 7.43.0
- + git-curl-compat: remove check for curl 7.39.0
- + git-curl-compat: remove check for curl 7.34.0
- + git-curl-compat: remove check for curl 7.25.0
- + git-curl-compat: remove check for curl 7.21.5
+* bf/explicit-config-set-in-advice-messages (2024-12-06) 1 commit
+ - advice: suggest using subcommand "git config set"
 
- Drop support for older libcURL and Perl.
- source: <20241023004600.1645313-1-sandals@crustytoothpaste.net>
+ The advice messages now tell the newer 'git config set' command to
+ set the advice.token configuration variable to squelch a message.
+
+ Will merge to 'next'.
+ source: <20241205122225.1184215-1-bence@ferdinandy.com>
 
 
-* ja/git-diff-doc-markup (2024-11-19) 5 commits
-  (merged to 'next' on 2024-11-27 at b33b5ae49b)
- + doc: git-diff: apply format changes to config part
- + doc: git-diff: apply format changes to diff-generate-patch
- + doc: git-diff: apply format changes to diff-format
- + doc: git-diff: apply format changes to diff-options
- + doc: git-diff: apply new documentation guidelines
+* cc/lop-remote (2024-12-07) 5 commits
+ - doc: add technical design doc for large object promisors
+ - promisor-remote: check advertised name or URL
+ - Add 'promisor-remote' capability to protocol v2
+ - strbuf: refactor strbuf_trim_trailing_ch()
+ - version: refactor strbuf_sanitize()
 
- Documentation mark-up updates.
- source: <pull.1769.v4.git.1731967553.gitgitgadget@gmail.com>
+ source: <20241206124248.160494-1-christian.couder@gmail.com>
 
 
-* kn/pass-repo-to-builtin-sub-sub-commands (2024-11-26) 1 commit
-  (merged to 'next' on 2024-11-27 at 668c0913f5)
- + builtin: pass repository to sub commands
- (this branch is used by kn/midx-wo-the-repository.)
+* ds/backfill (2024-12-07) 6 commits
+ - backfill: assume --sparse when sparse-checkout is enabled
+ - backfill: add --sparse option
+ - backfill: add --batch-size=<n> option
+ - backfill: basic functionality and tests
+ - backfill: add builtin boilerplate
+ - Merge branch 'ds/path-walk-1' into ds/backfill
+ (this branch uses ds/path-walk-1.)
 
- Built-in Git subcommands are supplied the repository object to work
- with; they learned to do the same when they invoke sub-subcommands.
- source: <20241125-374-add-repository-to-subsubcommands-v1-1-637a5e22ba48@gmail.com>
-
-
-* ps/bisect-double-free-fix (2024-11-26) 2 commits
-  (merged to 'next' on 2024-11-27 at e163bce018)
- + bisect: address Coverity warning about potential double free
- + Merge branch 'ps/leakfixes-part-10' into ps/bisect-double-free-fix
- (this branch uses ps/leakfixes-part-10.)
-
- Work around Coverity warning that would not trigger in practice.
- source: <20241125-pks-leak-fixes-address-double-free-v1-1-d33fd8ebf55b@pks.im>
+ source: <pull.1820.git.1733515638.gitgitgadget@gmail.com>
 
 
-* ps/gc-stale-lock-warning (2024-11-25) 2 commits
-  (merged to 'next' on 2024-11-26 at ed3858b2ea)
- + t7900: fix host-dependent behaviour when testing git-maintenance(1)
-  (merged to 'next' on 2024-11-20 at 1099c31715)
- + builtin/gc: provide hint when maintenance hits a stale schedule lock
+* kn/reftable-writer-log-write-verify (2024-12-07) 1 commit
+ - reftable/writer: ensure valid range for log's update_index
 
- Give a bit of advice/hint message when "git maintenance" stops finding a
- lock file left by another instance that still is potentially running.
- source: <20241119-pks-maintenance-hint-with-stale-lock-v1-1-f9f9a98e12a0@pks.im>
- source: <eb504a75147d8609be66e131d239a69d192d693d.1732511129.git.ps@pks.im>
+ source: <20241206-424-reftable-writer-add-check-for-limits-v2-1-82ca350b10be@gmail.com>
 
 
-* ps/leakfixes-part-10 (2024-11-21) 28 commits
-  (merged to 'next' on 2024-11-25 at 7284f186b8)
- + t: remove TEST_PASSES_SANITIZE_LEAK annotations
- + test-lib: unconditionally enable leak checking
- + t: remove unneeded !SANITIZE_LEAK prerequisites
- + t: mark some tests as leak free
- + t5601: work around leak sanitizer issue
- + git-compat-util: drop now-unused `UNLEAK()` macro
- + global: drop `UNLEAK()` annotation
- + t/helper: fix leaking commit graph in "read-graph" subcommand
- + builtin/branch: fix leaking sorting options
- + builtin/init-db: fix leaking directory paths
- + builtin/help: fix leaks in `check_git_cmd()`
- + help: fix leaking return value from `help_unknown_cmd()`
- + help: fix leaking `struct cmdnames`
- + help: refactor to not use globals for reading config
- + builtin/sparse-checkout: fix leaking sanitized patterns
- + split-index: fix memory leak in `move_cache_to_base_index()`
- + git: refactor builtin handling to use a `struct strvec`
- + git: refactor alias handling to use a `struct strvec`
- + strvec: introduce new `strvec_splice()` function
- + line-log: fix leak when rewriting commit parents
- + bisect: fix various cases where we leak commit list items
- + bisect: fix leaking commit list items in `check_merge_base()`
- + bisect: fix multiple leaks in `bisect_next_all()`
- + bisect: fix leaking `current_bad_oid`
- + bisect: fix leaking string in `handle_bad_merge_base()`
- + bisect: fix leaking good/bad terms when reading multipe times
- + builtin/blame: fix leaking blame entries with `--incremental`
- + Merge branch 'ps/leakfixes-part-9' into ps/leakfixes-part-10
- (this branch is used by ps/bisect-double-free-fix and rj/strvec-splice-fix.)
+* ps/ci-gitlab-update (2024-12-07) 4 commits
+ - ci/lib: fix "CI setup" sections with GitLab CI
+ - ci/lib: use echo instead of printf to set up sections
+ - ci/lib: remove duplicate trap to end "CI setup" group
+ - gitlab-ci: update macOS images to Sonoma
 
- Leakfixes.
- source: <20241120-b4-pks-leak-fixes-pt10-v3-0-d67f08f45c74@pks.im>
+ source: <20241206-pks-ci-section-fixes-v1-0-7ab1b69e3648@pks.im>
 
 
-* ps/ref-backend-migration-optim (2024-11-26) 12 commits
-  (merged to 'next' on 2024-11-26 at 7bb66a1faf)
- + reftable: rename scratch buffer
- + refs: adapt `initial_transaction` flag to be unsigned
-  (merged to 'next' on 2024-11-25 at ee2e588790)
- + reftable/block: optimize allocations by using scratch buffer
- + reftable/block: rename `block_writer::buf` variable
- + reftable/writer: optimize allocations by using a scratch buffer
- + refs: don't normalize log messages with `REF_SKIP_CREATE_REFLOG`
- + refs: skip collision checks in initial transactions
- + refs: use "initial" transaction semantics to migrate refs
- + refs/files: support symbolic and root refs in initial transaction
- + refs: introduce "initial" transaction flag
- + refs/files: move logic to commit initial transaction
- + refs: allow passing flags when setting up a transaction
+* ps/commit-with-message-syntax-fix (2024-12-08) 1 commit
+ - object-name: fix reversed ordering with ":/<text>" revisions
 
- The migration procedure between two ref backends has been optimized.
- source: <20241120-pks-refs-optimize-migrations-v2-0-a233374b7452@pks.im>
- source: <20241125-pks-refs-migration-optimization-followup-v1-0-0e1b4a2af384@pks.im>
+ The syntax ":/<text>" to name the latest commit with the matching
+ text was broken with a recent change, which has been corrected.
+
+ Will merge to 'next'.
+ source: <20241206-pks-rev-parse-fix-reversed-list-v3-1-d934c17db168@pks.im>
 
 
-* sj/ref-contents-check (2024-11-21) 9 commits
-  (merged to 'next' on 2024-11-25 at 53e29ae705)
- + ref: add symlink ref content check for files backend
- + ref: check whether the target of the symref is a ref
- + ref: add basic symref content check for files backend
- + ref: add more strict checks for regular refs
- + ref: port git-fsck(1) regular refs check for files backend
- + ref: support multiple worktrees check for refs
- + ref: initialize ref name outside of check functions
- + ref: check the full refname instead of basename
- + ref: initialize "fsck_ref_report" with zero
+* jc/set-head-symref-fix (2024-12-07) 2 commits
+ - fetch: do not ask for HEAD unnecessarily
+ - Merge branch 'bf/set-head-symref' into js/set-head-symref-fix
+ (this branch uses bf/set-head-symref.)
 
- "git fsck" learned to issue warnings on "curiously formatted" ref
- contents that have always been taken valid but something Git
- wouldn't have written itself (e.g., missing terminating end-of-line
- after the full object name).
- source: <Zz3MON9_9DGD6nsy@ArchLinux>
+ "git fetch" from a configured remote learned to update a missing
+ remote-tracking HEAD but it asked the remote about their HEAD even
+ when it did not need to, which has been corrected.  Incidentally,
+ this also corrects "git fetch --tags $URL" which was broken by the
+ new feature in an unspecified way.
+
+ Will merge to 'next'.
+ source: <xmqqcyi5xmhr.fsf@gitster.g>
 
 
-* tb/boundary-traversal-fix (2024-11-22) 1 commit
-  (merged to 'next' on 2024-11-25 at f312b2f8eb)
- + pack-bitmap.c: typofix in `find_boundary_objects()`
+* re/submodule-parse-opt (2024-12-08) 3 commits
+ - git-submodule.sh: improve parsing of short options
+ - git-submodule.sh: improve parsing of some long options
+ - git-submodule.sh: make some variables boolean
 
- A trivial "correctness" fix that does not yet matter in practice.
- source: <cf49115db4e8dcd406a17c946659c2eef3ec6045.1732229420.git.me@ttaylorr.com>
+ "git submodule" learned various ways to spell the same option,
+ e.g. "--branch=B" can be spelled "--branch B" or "-bB".
 
-
-* tb/use-test-file-size-more (2024-11-22) 1 commit
-  (merged to 'next' on 2024-11-25 at 2bdd016a16)
- + t/perf: use 'test_file_size' in more places
-
- Use the right helper program to measure file size in performance tests.
- source: <50c1368630684f235548d2e9a68d4de3745b5fe6.1732220875.git.me@ttaylorr.com>
+ Will merge to 'next'?
+ source: <20241207135201.2536-1-royeldar0@gmail.com>
 
 --------------------------------------------------
-[New Topics]
+[Graduated to 'master']
+
+* kh/sequencer-comment-char (2024-11-26) 3 commits
+  (merged to 'next' on 2024-11-28 at 84693f6bb7)
+ + sequencer: comment commit messages properly
+ + sequencer: comment `--reference` subject line properly
+ + sequencer: comment checked-out branch properly
+
+ The sequencer failed to honor core.commentString in some places.
+ source: <cover.1732565412.git.code@khaugsbakk.name>
+
+
+* sj/refs-symref-referent-fix (2024-11-27) 1 commit
+  (merged to 'next' on 2024-11-28 at 65eba16b56)
+ + ref-cache: fix invalid free operation in `free_ref_entry`
+
+ A double-free that may not trigger in practice by luck has been
+ corrected in the reference resolution code.
+ source: <Z0Xd-cYPNNrxwuAB@ArchLinux>
+
+--------------------------------------------------
+[Cooking]
 
 * jt/fix-fattening-promisor-fetch (2024-12-04) 4 commits
  - index-pack: work around false positive use of uninitialized variable
@@ -219,16 +169,15 @@ Release tarballs are available at:
 
 
 * kk/doc-ancestry-path (2024-12-04) 1 commit
- - doc: mention rev-list --ancestry-path restrictions
+  (merged to 'next' on 2024-12-05 at 36d6c51c96)
+ + doc: mention rev-list --ancestry-path restrictions
 
  The --ancestry-path option is designed to be given a commit that is
  on the path, which was not documented, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <CADYQcGrD5KtM1sZQbccAtDaLmUXD8Gxv_nUWmapjfZm=TMq=Jw@mail.gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * kh/doc-bundle-typofix (2024-12-02) 1 commit
   (merged to 'next' on 2024-12-04 at 5da441ce36)
@@ -250,8 +199,7 @@ Release tarballs are available at:
  source: <6cc7a9d60216c966bcf77675aa22a39cfa8993e2.1732906187.git.code@khaugsbakk.name>
 
 
-* ps/build-sign-compare (2024-12-04) 15 commits
- - sign-compare: 32-bit support
+* ps/build-sign-compare (2024-12-06) 16 commits
  - t/helper: don't depend on implicit wraparound
  - scalar: address -Wsign-compare warnings
  - builtin/patch-id: fix type of `get_one_patchid()`
@@ -260,6 +208,8 @@ Release tarballs are available at:
  - daemon: fix type of `max_connections`
  - daemon: fix loops that have mismatching integer types
  - global: trivial conversions to fix `-Wsign-compare` warnings
+ - pkt-line: fix -Wsign-compare warning on 32 bit platform
+ - csum-file: fix -Wsign-compare warning on 32-bit platform
  - diff.h: fix index used to loop through unsigned integer
  - config.mak.dev: drop `-Wno-sign-compare`
  - global: mark code units that generate warnings with `-Wsign-compare`
@@ -268,15 +218,19 @@ Release tarballs are available at:
  - git-compat-util: introduce macros to disable "-Wsign-compare" warnings
 
  Start working to make the codebase buildable with -Wsign-compare.
- source: <20241202-pks-sign-compare-v2-0-e7f0ad92a749@pks.im>
+
+ Will merge to 'next'?
+ source: <20241206-pks-sign-compare-v4-0-0344c6dfb219@pks.im>
 
 
-* rj/strvec-splice-fix (2024-12-04) 2 commits
+* rj/strvec-splice-fix (2024-12-05) 2 commits
  - strvec: `strvec_splice()` to a statically initialized vector
  - Merge branch 'ps/leakfixes-part-10' into rj/strvec-splice-fix
 
  Correct strvec_splice() that misbehaved when the strvec is empty.
- source: <5bea9f20-eb0d-409d-8f37-f20697d6ce14@gmail.com>
+
+ Will merge to 'next'?
+ source: <3c7b3c26-7501-4797-8afa-c7f7e9c46558@gmail.com>
 
 
 * jc/forbid-head-as-tagname (2024-12-03) 4 commits
@@ -289,12 +243,13 @@ Release tarballs are available at:
  as such a tag will be confusing in the context of UI provided by
  the Git Porcelain commands.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20241203023240.3852850-1-gitster@pobox.com>
 
 
 * en/fast-import-verify-path (2024-12-04) 3 commits
- - t9300: test verification of renamed paths
+  (merged to 'next' on 2024-12-05 at bbdd9b9659)
+ + t9300: test verification of renamed paths
   (merged to 'next' on 2024-12-02 at 2932fa51e4)
  + fast-import: disallow more path components
   (merged to 'next' on 2024-11-27 at 8b145bb543)
@@ -303,24 +258,13 @@ Release tarballs are available at:
  "git fast-import" learned to reject paths with ".."  and "." as
  their components to avoid creating invalid tree objects.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
  source: <pull.1831.v2.git.1732561248717.gitgitgadget@gmail.com>
  source: <pull.1832.git.1732740464398.gitgitgadget@gmail.com>
  source: <20241203210652.GA1413195@coredump.intra.peff.net>
 
 
-* sj/refs-symref-referent-fix (2024-11-27) 1 commit
-  (merged to 'next' on 2024-11-28 at 65eba16b56)
- + ref-cache: fix invalid free operation in `free_ref_entry`
-
- A double-free that may not trigger in practice by luck has been
- corrected in the reference resolution code.
-
- Will merge to 'master'.
- source: <Z0Xd-cYPNNrxwuAB@ArchLinux>
-
-
-* bf/fetch-set-head-config (2024-12-04) 5 commits
+* bf/fetch-set-head-config (2024-12-06) 5 commits
  - remote set-head: set followRemoteHEAD to "warn" if "always"
  - fetch set_head: add warn-if-not-$branch option
  - fetch set_head: move warn advice into advise_if_enabled
@@ -332,9 +276,10 @@ Release tarballs are available at:
  "git fetch" honors "remote.<remote>.followRemoteHEAD" settings to
  tweak the remote-tracking HEAD in "refs/remotes/<remote>/HEAD".
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20241128230806.2058962-1-bence@ferdinandy.com>
  source: <20241204104003.514905-1-bence@ferdinandy.com>
+ source: <20241128111946.366584-1-bence@ferdinandy.com>
 
 
 * jc/doc-error-message-guidelines (2024-11-29) 1 commit
@@ -359,21 +304,22 @@ Release tarballs are available at:
 
 
 * kn/midx-wo-the-repository (2024-12-04) 10 commits
- - midx: inline the `MIDX_MIN_SIZE` definition
- - midx: pass down `hash_algo` to functions using global variables
- - midx: pass `repository` to `load_multi_pack_index`
- - midx: cleanup internal usage of `the_repository` and `the_hash_algo`
- - midx-write: pass down repository to `write_midx_file[_only]`
- - write-midx: add repository field to `write_midx_context`
- - midx-write: use `revs->repo` inside `read_refs_snapshot`
- - midx-write: pass down repository to static functions
- - Merge branch 'kn/pass-repo-to-builtin-sub-sub-commands' into kn/midx-wo-the-repository
- - Merge branch 'kn/the-repository' into kn/midx-wo-the-repository
+  (merged to 'next' on 2024-12-05 at e48a185ed0)
+ + midx: inline the `MIDX_MIN_SIZE` definition
+ + midx: pass down `hash_algo` to functions using global variables
+ + midx: pass `repository` to `load_multi_pack_index`
+ + midx: cleanup internal usage of `the_repository` and `the_hash_algo`
+ + midx-write: pass down repository to `write_midx_file[_only]`
+ + write-midx: add repository field to `write_midx_context`
+ + midx-write: use `revs->repo` inside `read_refs_snapshot`
+ + midx-write: pass down repository to static functions
+ + Merge branch 'kn/pass-repo-to-builtin-sub-sub-commands' into kn/midx-wo-the-repository
+ + Merge branch 'kn/the-repository' into kn/midx-wo-the-repository
  (this branch uses kn/the-repository.)
 
  Yet another "pass the repository through the callchain" topic.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20241127-374-refactor-midx-c-and-midx-write-c-to-not-depend-on-global-state-v3-0-c5a99f85009b@gmail.com>
 
 
@@ -513,7 +459,8 @@ Release tarballs are available at:
  source: <pull.1826.git.git.1730926082.gitgitgadget@gmail.com>
 
 
-* jk/describe-perf (2024-11-07) 4 commits
+* jk/describe-perf (2024-12-06) 5 commits
+ - describe: split "found all tags" and max_candidates logic
   (merged to 'next' on 2024-12-02 at 0f34109a85)
  + describe: stop traversing when we run out of names
  + describe: stop digging for max_candidates+1
@@ -522,8 +469,9 @@ Release tarballs are available at:
 
  "git describe" optimization.
 
- Will merge to 'master'.
+ Will merge to 'next'.
  source: <20241106192236.GC880133@coredump.intra.peff.net>
+ source: <20241206054218.GA3203047@coredump.intra.peff.net>
 
 
 * js/range-diff-diff-merges (2024-11-11) 1 commit
@@ -536,18 +484,6 @@ Release tarballs are available at:
  Expecting a (hopefully final and) small reroll.
  cf. <eb502feb-1563-b1b5-5345-784673c89c79@gmx.de>
  source: <pull.1734.v2.git.1731073383564.gitgitgadget@gmail.com>
-
-
-* kh/sequencer-comment-char (2024-11-26) 3 commits
-  (merged to 'next' on 2024-11-28 at 84693f6bb7)
- + sequencer: comment commit messages properly
- + sequencer: comment `--reference` subject line properly
- + sequencer: comment checked-out branch properly
-
- The sequencer failed to honor core.commentString in some places.
-
- Will merge to 'master'.
- source: <cover.1732565412.git.code@khaugsbakk.name>
 
 
 * ds/name-hash-tweaks (2024-12-03) 8 commits
@@ -567,20 +503,21 @@ Release tarballs are available at:
  source: <pull.1823.v2.git.1733181682.gitgitgadget@gmail.com>
 
 
-* ds/path-walk-1 (2024-11-11) 6 commits
+* ds/path-walk-1 (2024-12-07) 7 commits
+ - path-walk: reorder object visits
  - path-walk: mark trees and blobs as UNINTERESTING
  - path-walk: visit tags and cached objects
  - path-walk: allow consumer to specify object types
  - t6601: add helper for testing path-walk API
  - test-lib-functions: add test_cmp_sorted
  - path-walk: introduce an object walk by path
+ (this branch is used by ds/backfill.)
 
  Introduce a new API to visit objects in batches based on a common
  path, or by type.
 
- Comments?
- cf. <Z0V8D4r5YbxjNvPs@pks.im>
- source: <pull.1818.v2.git.1731181272.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1818.v3.git.1733514358.gitgitgadget@gmail.com>
 
 
 * bc/ancient-ci (2024-11-01) 3 commits
@@ -596,19 +533,20 @@ Release tarballs are available at:
 
 
 * cw/worktree-extension (2024-12-02) 8 commits
- - worktree: refactor `repair_worktree_after_gitdir_move()`
- - worktree: add relative cli/config options to `repair` command
- - worktree: add relative cli/config options to `move` command
- - worktree: add relative cli/config options to `add` command
- - worktree: add `write_worktree_linking_files()` function
- - worktree: refactor infer_backlink return
- - worktree: add `relativeWorktrees` extension
- - setup: correctly reinitialize repository version
+  (merged to 'next' on 2024-12-05 at 7bd98d132c)
+ + worktree: refactor `repair_worktree_after_gitdir_move()`
+ + worktree: add relative cli/config options to `repair` command
+ + worktree: add relative cli/config options to `move` command
+ + worktree: add relative cli/config options to `add` command
+ + worktree: add `write_worktree_linking_files()` function
+ + worktree: refactor infer_backlink return
+ + worktree: add `relativeWorktrees` extension
+ + setup: correctly reinitialize repository version
 
  Introduce a new repository extension to prevent older Git versions
  from mis-interpreting worktrees created with relative paths.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <103c7a4d-a74b-4381-a9c7-33a89d5db192@gmail.com>
  source: <20241129-wt_relative_options-v6-0-44e4e0bec8c3@pm.me>
 
@@ -663,13 +601,14 @@ Release tarballs are available at:
 
 
 * es/oss-fuzz (2024-10-16) 3 commits
- - fuzz: port fuzz-url-decode-mem from OSS-Fuzz
- - fuzz: port fuzz-parse-attr-line from OSS-Fuzz
- - fuzz: port fuzz-credential-from-url-gently from OSS-Fuzz
+  (merged to 'next' on 2024-12-05 at 1f973aece2)
+ + fuzz: port fuzz-url-decode-mem from OSS-Fuzz
+ + fuzz: port fuzz-parse-attr-line from OSS-Fuzz
+ + fuzz: port fuzz-credential-from-url-gently from OSS-Fuzz
 
  Backport oss-fuzz tests for us to our codebase.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1728939687.git.steadmon@google.com>
 
 
@@ -685,17 +624,17 @@ Release tarballs are available at:
  + refs: standardize output of refs_read_symbolic_ref
  + t/t5505-remote: test failure of set-head
  + t/t5505-remote: set default branch to main
- (this branch is used by bf/fetch-set-head-config.)
+ (this branch is used by bf/fetch-set-head-config and jc/set-head-symref-fix)
 
  When "git fetch $remote" notices that refs/remotes/$remote/HEAD is
  missing and discovers what branch the other side points with its
  HEAD, refs/remotes/$remote/HEAD is updated to point to it.
 
- Will merge to 'master'.
+ Needs to wait until set-head-symref-fix topic solidifies.
  source: <20241122123138.66960-1-bence@ferdinandy.com>
 
 
-* ps/build (2024-12-02) 24 commits
+* ps/build (2024-12-08) 25 commits
  - meson: fix conflicts with in-flight topics
  - Introduce support for the Meson build system
  - Documentation: add comparison of build systems
@@ -705,10 +644,12 @@ Release tarballs are available at:
  - Documentation: teach "cmd-list.perl" about out-of-tree builds
  - Documentation: allow sourcing generated includes from separate dir
  - Makefile: simplify building of templates
+ - Makefile: write absolute program path into bin-wrappers
  - Makefile: allow "bin-wrappers/" directory to exist
  - Makefile: refactor generators to be PWD-independent
  - Makefile: extract script to generate gitweb.js
  - Makefile: extract script to generate gitweb.cgi
+ - Makefile: extract script to massage Python scripts
  - Makefile: extract script to massage Shell scripts
  - Makefile: use "generate-perl.sh" to massage Perl library
  - Makefile: extract script to massage Perl scripts
@@ -719,12 +660,11 @@ Release tarballs are available at:
  - Makefile: refactor GIT-VERSION-GEN to be reusable
  - Makefile: consistently use @PLACEHOLDER@ to substitute
  - Makefile: use common template for GIT-BUILD-OPTIONS
- - Merge branch 'ps/clar-build-improvement' into ps/build
 
  Build procedure update plus introduction of Mason based builds
 
- Will merge to 'next'?
- source: <20241128-pks-meson-v10-0-79a3fb0cb3a6@pks.im>
+ Will merge to 'next' (except for the tip one).
+ source: <20241206-pks-meson-v11-0-525ed4792b88@pks.im>
 
 
 * ej/cat-file-remote-object-info (2024-11-25) 6 commits
@@ -757,20 +697,20 @@ Release tarballs are available at:
 
 
 * kn/the-repository (2024-12-04) 10 commits
- - packfile.c: remove unnecessary prepare_packed_git() call
- - midx: add repository to `multi_pack_index` struct
- - config: make `packed_git_(limit|window_size)` non-global variables
- - config: make `delta_base_cache_limit` a non-global variable
- - packfile: pass down repository to `for_each_packed_object`
- - packfile: pass down repository to `has_object[_kept]_pack`
- - packfile: pass down repository to `odb_pack_name`
- - packfile: pass `repository` to static function in the file
- - packfile: use `repository` from `packed_git` directly
- - packfile: add repository to struct `packed_git`
+ + packfile.c: remove unnecessary prepare_packed_git() call
+ + midx: add repository to `multi_pack_index` struct
+ + config: make `packed_git_(limit|window_size)` non-global variables
+ + config: make `delta_base_cache_limit` a non-global variable
+ + packfile: pass down repository to `for_each_packed_object`
+ + packfile: pass down repository to `has_object[_kept]_pack`
+ + packfile: pass down repository to `odb_pack_name`
+ + packfile: pass `repository` to static function in the file
+ + packfile: use `repository` from `packed_git` directly
+ + packfile: add repository to struct `packed_git`
  (this branch is used by kn/midx-wo-the-repository.)
 
  Various implicit uses of 'the_repoository' in the packfile code
  have been eliminated.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1733236936.git.karthik.188@gmail.com>
