@@ -42,7 +42,7 @@ merged_table_from_records(struct reftable_ref_record **refs,
 		check(!err);
 	}
 
-	err = reftable_merged_table_new(&mt, *readers, n, GIT_SHA1_FORMAT_ID);
+	err = reftable_merged_table_new(&mt, *readers, n, REFTABLE_HASH_SHA1);
 	check(!err);
 	return mt;
 }
@@ -91,7 +91,7 @@ static void t_merged_single_record(void)
 
 	err = reftable_iterator_next_ref(&it, &ref);
 	check(!err);
-	check(reftable_ref_record_equal(&r2[0], &ref, GIT_SHA1_RAWSZ));
+	check(reftable_ref_record_equal(&r2[0], &ref, REFTABLE_HASH_SIZE_SHA1));
 	reftable_ref_record_release(&ref);
 	reftable_iterator_destroy(&it);
 	readers_destroy(readers, 3);
@@ -168,7 +168,7 @@ static void t_merged_refs(void)
 	check(!err);
 	err = reftable_iterator_seek_ref(&it, "a");
 	check(!err);
-	check_int(reftable_merged_table_hash_id(mt), ==, GIT_SHA1_FORMAT_ID);
+	check_int(reftable_merged_table_hash_id(mt), ==, REFTABLE_HASH_SHA1);
 	check_int(reftable_merged_table_min_update_index(mt), ==, 1);
 	check_int(reftable_merged_table_max_update_index(mt), ==, 3);
 
@@ -186,7 +186,7 @@ static void t_merged_refs(void)
 	check_int(ARRAY_SIZE(want), ==, len);
 	for (i = 0; i < len; i++)
 		check(reftable_ref_record_equal(want[i], &out[i],
-						 GIT_SHA1_RAWSZ));
+						 REFTABLE_HASH_SIZE_SHA1));
 	for (i = 0; i < len; i++)
 		reftable_ref_record_release(&out[i]);
 	reftable_free(out);
@@ -252,12 +252,12 @@ static void t_merged_seek_multiple_times(void)
 
 		err = reftable_iterator_next_ref(&it, &rec);
 		check(!err);
-		err = reftable_ref_record_equal(&rec, &r1[1], GIT_SHA1_RAWSZ);
+		err = reftable_ref_record_equal(&rec, &r1[1], REFTABLE_HASH_SIZE_SHA1);
 		check(err == 1);
 
 		err = reftable_iterator_next_ref(&it, &rec);
 		check(!err);
-		err = reftable_ref_record_equal(&rec, &r2[1], GIT_SHA1_RAWSZ);
+		err = reftable_ref_record_equal(&rec, &r2[1], REFTABLE_HASH_SIZE_SHA1);
 		check(err == 1);
 
 		err = reftable_iterator_next_ref(&it, &rec);
@@ -300,7 +300,7 @@ merged_table_from_log_records(struct reftable_log_record **logs,
 		check(!err);
 	}
 
-	err = reftable_merged_table_new(&mt, *readers, n, GIT_SHA1_FORMAT_ID);
+	err = reftable_merged_table_new(&mt, *readers, n, REFTABLE_HASH_SHA1);
 	check(!err);
 	return mt;
 }
@@ -377,7 +377,7 @@ static void t_merged_logs(void)
 	check(!err);
 	err = reftable_iterator_seek_log(&it, "a");
 	check(!err);
-	check_int(reftable_merged_table_hash_id(mt), ==, GIT_SHA1_FORMAT_ID);
+	check_int(reftable_merged_table_hash_id(mt), ==, REFTABLE_HASH_SHA1);
 	check_int(reftable_merged_table_min_update_index(mt), ==, 1);
 	check_int(reftable_merged_table_max_update_index(mt), ==, 3);
 
@@ -395,7 +395,7 @@ static void t_merged_logs(void)
 	check_int(ARRAY_SIZE(want), ==, len);
 	for (i = 0; i < len; i++)
 		check(reftable_log_record_equal(want[i], &out[i],
-						 GIT_SHA1_RAWSZ));
+						 REFTABLE_HASH_SIZE_SHA1));
 
 	err = merged_table_init_iter(mt, &it, BLOCK_TYPE_LOG);
 	check(!err);
@@ -404,7 +404,7 @@ static void t_merged_logs(void)
 	reftable_log_record_release(&out[0]);
 	err = reftable_iterator_next_log(&it, &out[0]);
 	check(!err);
-	check(reftable_log_record_equal(&out[0], &r3[0], GIT_SHA1_RAWSZ));
+	check(reftable_log_record_equal(&out[0], &r3[0], REFTABLE_HASH_SIZE_SHA1));
 	reftable_iterator_destroy(&it);
 
 	for (i = 0; i < len; i++)
@@ -448,11 +448,11 @@ static void t_default_write_opts(void)
 	check(!err);
 
 	hash_id = reftable_reader_hash_id(rd);
-	check_int(hash_id, ==, GIT_SHA1_FORMAT_ID);
+	check_int(hash_id, ==, REFTABLE_HASH_SHA1);
 
-	err = reftable_merged_table_new(&merged, &rd, 1, GIT_SHA256_FORMAT_ID);
+	err = reftable_merged_table_new(&merged, &rd, 1, REFTABLE_HASH_SHA256);
 	check_int(err, ==, REFTABLE_FORMAT_ERROR);
-	err = reftable_merged_table_new(&merged, &rd, 1, GIT_SHA1_FORMAT_ID);
+	err = reftable_merged_table_new(&merged, &rd, 1, REFTABLE_HASH_SHA1);
 	check(!err);
 
 	reftable_reader_decref(rd);

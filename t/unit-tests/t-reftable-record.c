@@ -7,6 +7,7 @@
 */
 
 #include "test-lib.h"
+#include "reftable/basics.h"
 #include "reftable/constants.h"
 #include "reftable/record.h"
 
@@ -17,10 +18,10 @@ static void t_copy(struct reftable_record *rec)
 
 	typ = reftable_record_type(rec);
 	reftable_record_init(&copy, typ);
-	reftable_record_copy_from(&copy, rec, GIT_SHA1_RAWSZ);
+	reftable_record_copy_from(&copy, rec, REFTABLE_HASH_SIZE_SHA1);
 	/* do it twice to catch memory leaks */
-	reftable_record_copy_from(&copy, rec, GIT_SHA1_RAWSZ);
-	check(reftable_record_equal(rec, &copy, GIT_SHA1_RAWSZ));
+	reftable_record_copy_from(&copy, rec, REFTABLE_HASH_SIZE_SHA1);
+	check(reftable_record_equal(rec, &copy, REFTABLE_HASH_SIZE_SHA1));
 
 	reftable_record_release(&copy);
 }
@@ -59,7 +60,7 @@ static void t_varint_roundtrip(void)
 
 static void set_hash(uint8_t *h, int j)
 {
-	for (int i = 0; i < hash_size(GIT_SHA1_FORMAT_ID); i++)
+	for (int i = 0; i < hash_size(REFTABLE_HASH_SHA1); i++)
 		h[i] = (j >> i) & 0xff;
 }
 
@@ -84,14 +85,14 @@ static void t_reftable_ref_record_comparison(void)
 		},
 	};
 
-	check(!reftable_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
+	check(!reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1));
 	check(!reftable_record_cmp(&in[0], &in[1]));
 
-	check(!reftable_record_equal(&in[1], &in[2], GIT_SHA1_RAWSZ));
+	check(!reftable_record_equal(&in[1], &in[2], REFTABLE_HASH_SIZE_SHA1));
 	check_int(reftable_record_cmp(&in[1], &in[2]), >, 0);
 
 	in[1].u.ref.value_type = in[0].u.ref.value_type;
-	check(reftable_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
+	check(reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1));
 	check(!reftable_record_cmp(&in[0], &in[1]));
 }
 
@@ -155,15 +156,15 @@ static void t_reftable_ref_record_roundtrip(void)
 		check_int(reftable_record_is_deletion(&in), ==, i == REFTABLE_REF_DELETION);
 
 		reftable_record_key(&in, &key);
-		n = reftable_record_encode(&in, dest, GIT_SHA1_RAWSZ);
+		n = reftable_record_encode(&in, dest, REFTABLE_HASH_SIZE_SHA1);
 		check_int(n, >, 0);
 
 		/* decode into a non-zero reftable_record to test for leaks. */
-		m = reftable_record_decode(&out, key, i, dest, GIT_SHA1_RAWSZ, &scratch);
+		m = reftable_record_decode(&out, key, i, dest, REFTABLE_HASH_SIZE_SHA1, &scratch);
 		check_int(n, ==, m);
 
 		check(reftable_ref_record_equal(&in.u.ref, &out.u.ref,
-						 GIT_SHA1_RAWSZ));
+						 REFTABLE_HASH_SIZE_SHA1));
 		reftable_record_release(&in);
 
 		reftable_buf_release(&key);
@@ -193,15 +194,15 @@ static void t_reftable_log_record_comparison(void)
 		},
 	};
 
-	check(!reftable_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
-	check(!reftable_record_equal(&in[1], &in[2], GIT_SHA1_RAWSZ));
+	check(!reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1));
+	check(!reftable_record_equal(&in[1], &in[2], REFTABLE_HASH_SIZE_SHA1));
 	check_int(reftable_record_cmp(&in[1], &in[2]), >, 0);
 	/* comparison should be reversed for equal keys, because
 	 * comparison is now performed on the basis of update indices */
 	check_int(reftable_record_cmp(&in[0], &in[1]), <, 0);
 
 	in[1].u.log.update_index = in[0].u.log.update_index;
-	check(reftable_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
+	check(reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1));
 	check(!reftable_record_cmp(&in[0], &in[1]));
 }
 
@@ -303,15 +304,15 @@ static void t_reftable_log_record_roundtrip(void)
 
 		reftable_record_key(&rec, &key);
 
-		n = reftable_record_encode(&rec, dest, GIT_SHA1_RAWSZ);
+		n = reftable_record_encode(&rec, dest, REFTABLE_HASH_SIZE_SHA1);
 		check_int(n, >=, 0);
 		valtype = reftable_record_val_type(&rec);
 		m = reftable_record_decode(&out, key, valtype, dest,
-					   GIT_SHA1_RAWSZ, &scratch);
+					   REFTABLE_HASH_SIZE_SHA1, &scratch);
 		check_int(n, ==, m);
 
 		check(reftable_log_record_equal(&in[i], &out.u.log,
-						 GIT_SHA1_RAWSZ));
+						 REFTABLE_HASH_SIZE_SHA1));
 		reftable_log_record_release(&in[i]);
 		reftable_buf_release(&key);
 		reftable_record_release(&out);
@@ -380,20 +381,20 @@ static void t_reftable_obj_record_comparison(void)
 		},
 	};
 
-	check(!reftable_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
+	check(!reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1));
 	check(!reftable_record_cmp(&in[0], &in[1]));
 
-	check(!reftable_record_equal(&in[1], &in[2], GIT_SHA1_RAWSZ));
+	check(!reftable_record_equal(&in[1], &in[2], REFTABLE_HASH_SIZE_SHA1));
 	check_int(reftable_record_cmp(&in[1], &in[2]), >, 0);
 
 	in[1].u.obj.offset_len = in[0].u.obj.offset_len;
-	check(reftable_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
+	check(reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1));
 	check(!reftable_record_cmp(&in[0], &in[1]));
 }
 
 static void t_reftable_obj_record_roundtrip(void)
 {
-	uint8_t testHash1[GIT_SHA1_RAWSZ] = { 1, 2, 3, 4, 0 };
+	uint8_t testHash1[REFTABLE_HASH_SIZE_SHA1] = { 1, 2, 3, 4, 0 };
 	uint64_t till9[] = { 1, 2, 3, 4, 500, 600, 700, 800, 9000 };
 	struct reftable_obj_record recs[3] = {
 		{
@@ -435,14 +436,14 @@ static void t_reftable_obj_record_roundtrip(void)
 		check(!reftable_record_is_deletion(&in));
 		t_copy(&in);
 		reftable_record_key(&in, &key);
-		n = reftable_record_encode(&in, dest, GIT_SHA1_RAWSZ);
+		n = reftable_record_encode(&in, dest, REFTABLE_HASH_SIZE_SHA1);
 		check_int(n, >, 0);
 		extra = reftable_record_val_type(&in);
 		m = reftable_record_decode(&out, key, extra, dest,
-					   GIT_SHA1_RAWSZ, &scratch);
+					   REFTABLE_HASH_SIZE_SHA1, &scratch);
 		check_int(n, ==, m);
 
-		check(reftable_record_equal(&in, &out, GIT_SHA1_RAWSZ));
+		check(reftable_record_equal(&in, &out, REFTABLE_HASH_SIZE_SHA1));
 		reftable_buf_release(&key);
 		reftable_record_release(&out);
 	}
@@ -473,14 +474,14 @@ static void t_reftable_index_record_comparison(void)
 	check(!reftable_buf_addstr(&in[1].u.idx.last_key, "refs/heads/master"));
 	check(!reftable_buf_addstr(&in[2].u.idx.last_key, "refs/heads/branch"));
 
-	check(!reftable_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
+	check(!reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1));
 	check(!reftable_record_cmp(&in[0], &in[1]));
 
-	check(!reftable_record_equal(&in[1], &in[2], GIT_SHA1_RAWSZ));
+	check(!reftable_record_equal(&in[1], &in[2], REFTABLE_HASH_SIZE_SHA1));
 	check_int(reftable_record_cmp(&in[1], &in[2]), >, 0);
 
 	in[1].u.idx.offset = in[0].u.idx.offset;
-	check(reftable_record_equal(&in[0], &in[1], GIT_SHA1_RAWSZ));
+	check(reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1));
 	check(!reftable_record_cmp(&in[0], &in[1]));
 
 	for (size_t i = 0; i < ARRAY_SIZE(in); i++)
@@ -516,15 +517,15 @@ static void t_reftable_index_record_roundtrip(void)
 
 	check(!reftable_record_is_deletion(&in));
 	check(!reftable_buf_cmp(&key, &in.u.idx.last_key));
-	n = reftable_record_encode(&in, dest, GIT_SHA1_RAWSZ);
+	n = reftable_record_encode(&in, dest, REFTABLE_HASH_SIZE_SHA1);
 	check_int(n, >, 0);
 
 	extra = reftable_record_val_type(&in);
-	m = reftable_record_decode(&out, key, extra, dest, GIT_SHA1_RAWSZ,
+	m = reftable_record_decode(&out, key, extra, dest, REFTABLE_HASH_SIZE_SHA1,
 				   &scratch);
 	check_int(m, ==, n);
 
-	check(reftable_record_equal(&in, &out, GIT_SHA1_RAWSZ));
+	check(reftable_record_equal(&in, &out, REFTABLE_HASH_SIZE_SHA1));
 
 	reftable_record_release(&out);
 	reftable_buf_release(&key);

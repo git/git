@@ -33,7 +33,7 @@ struct reftable_write_options {
 	/* 4-byte identifier ("sha1", "s256") of the hash.
 	 * Defaults to SHA1 if unset
 	 */
-	uint32_t hash_id;
+	enum reftable_hash hash_id;
 
 	/* Default mode for creating files. If unset, use 0666 (+umask) */
 	unsigned int default_permissions;
@@ -62,6 +62,12 @@ struct reftable_write_options {
 	 * negative value will cause us to block indefinitely.
 	 */
 	long lock_timeout_ms;
+
+	/*
+	 * Optional callback used to fsync files to disk. Falls back to using
+	 * fsync(3P) when unset.
+	 */
+	int (*fsync)(int fd);
 };
 
 /* reftable_block_stats holds statistics for a single block type */

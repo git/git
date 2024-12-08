@@ -79,7 +79,7 @@ static void options_set_defaults(struct reftable_write_options *opts)
 	}
 
 	if (opts->hash_id == 0) {
-		opts->hash_id = GIT_SHA1_FORMAT_ID;
+		opts->hash_id = REFTABLE_HASH_SHA1;
 	}
 	if (opts->block_size == 0) {
 		opts->block_size = DEFAULT_BLOCK_SIZE;
@@ -88,7 +88,7 @@ static void options_set_defaults(struct reftable_write_options *opts)
 
 static int writer_version(struct reftable_writer *w)
 {
-	return (w->opts.hash_id == 0 || w->opts.hash_id == GIT_SHA1_FORMAT_ID) ?
+	return (w->opts.hash_id == 0 || w->opts.hash_id == REFTABLE_HASH_SHA1) ?
 			     1 :
 			     2;
 }
@@ -103,8 +103,22 @@ static int writer_write_header(struct reftable_writer *w, uint8_t *dest)
 	put_be64(dest + 8, w->min_update_index);
 	put_be64(dest + 16, w->max_update_index);
 	if (writer_version(w) == 2) {
-		put_be32(dest + 24, w->opts.hash_id);
+		uint32_t hash_id;
+
+		switch (w->opts.hash_id) {
+		case REFTABLE_HASH_SHA1:
+			hash_id = REFTABLE_FORMAT_ID_SHA1;
+			break;
+		case REFTABLE_HASH_SHA256:
+			hash_id = REFTABLE_FORMAT_ID_SHA256;
+			break;
+		default:
+			return -1;
+		}
+
+		put_be32(dest + 24, hash_id);
 	}
+
 	return header_size(writer_version(w));
 }
 
