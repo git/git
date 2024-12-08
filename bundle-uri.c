@@ -367,6 +367,10 @@ static int unbundle_from_file(struct repository *r, const char *file)
 	struct string_list_item *refname;
 	struct strbuf bundle_ref = STRBUF_INIT;
 	size_t bundle_prefix_len;
+	struct unbundle_opts opts = {
+		.flags = VERIFY_BUNDLE_QUIET |
+			 (fetch_pack_fsck_objects() ? VERIFY_BUNDLE_FSCK : 0),
+	};
 
 	bundle_fd = read_bundle_header(file, &header);
 	if (bundle_fd < 0) {
@@ -379,8 +383,7 @@ static int unbundle_from_file(struct repository *r, const char *file)
 	 * a reachable ref pointing to the new tips, which will reach
 	 * the prerequisite commits.
 	 */
-	result = unbundle(r, &header, bundle_fd, NULL,
-			  VERIFY_BUNDLE_QUIET | (fetch_pack_fsck_objects() ? VERIFY_BUNDLE_FSCK : 0));
+	result = unbundle(r, &header, bundle_fd, NULL, &opts);
 	if (result) {
 		result = 1;
 		goto cleanup;

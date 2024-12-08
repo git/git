@@ -39,6 +39,17 @@ enum verify_bundle_flags {
 int verify_bundle(struct repository *r, struct bundle_header *header,
 		  enum verify_bundle_flags flags);
 
+struct unbundle_opts {
+	enum verify_bundle_flags flags;
+	/*
+	 * fsck_msg_types may optionally contain fsck message severity
+	 * configuration. If present, this configuration gets directly appended
+	 * to a '--fsck-objects' option and therefore must be prefixed with '='.
+	 * (E.g. "=missingEmail=ignore,gitmodulesUrl=ignore")
+	 */
+	const char *fsck_msg_types;
+};
+
 /**
  * Unbundle after reading the header with read_bundle_header().
  *
@@ -49,12 +60,12 @@ int verify_bundle(struct repository *r, struct bundle_header *header,
  * (e.g. "-v" for verbose/progress), NULL otherwise. The provided
  * "extra_index_pack_args" (if any) will be strvec_clear()'d for you.
  *
- * Before unbundling, this method will call verify_bundle() with the
- * given 'flags'.
+ * Before unbundling, this method will call verify_bundle() with 'flags'
+ * provided in 'opts'.
  */
 int unbundle(struct repository *r, struct bundle_header *header,
 	     int bundle_fd, struct strvec *extra_index_pack_args,
-	     enum verify_bundle_flags flags);
+	     struct unbundle_opts *opts);
 int list_bundle_refs(struct bundle_header *header,
 		int argc, const char **argv);
 

@@ -170,6 +170,13 @@ test_expect_success 'clone bundle with different fsckObjects configurations' '
 
 	test_must_fail git -c transfer.fsckObjects=true \
 		clone bundle-fsck/bad.bundle bundle-transfer-fsck 2>err &&
+	test_grep "missingEmail" err &&
+
+	git -c fetch.fsckObjects=true -c fetch.fsck.missingEmail=ignore \
+		clone bundle-fsck/bad.bundle bundle-fsck-ignore &&
+
+	test_must_fail git -c fetch.fsckObjects=true -c fetch.fsck.missingEmail=error \
+		clone bundle-fsck/bad.bundle bundle-fsck-error 2>err &&
 	test_grep "missingEmail" err
 '
 

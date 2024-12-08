@@ -106,4 +106,15 @@ int report_unmatched_refs(struct ref **sought, int nr_sought);
  */
 int fetch_pack_fsck_objects(void);
 
+/*
+ * Check if the provided config variable pertains to fetch fsck and if so append
+ * the configuration to the provided strbuf.
+ *
+ * When a fetch fsck config option is successfully processed the function
+ * returns 0. If the provided config option is unrelated to fetch fsck, 1 is
+ * returned. Errors return -1.
+ */
+int fetch_pack_fsck_config(const char *var, const char *value,
+			   struct strbuf *msg_types);
+
 #endif
