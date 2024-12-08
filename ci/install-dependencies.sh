@@ -29,37 +29,38 @@ alpine-*)
 		apache2 apache2-http2 apache2-proxy apache2-ssl apache2-webdav apr-util-dbd_sqlite3 \
 		bash cvs gnupg perl-cgi perl-dbd-sqlite perl-io-tty >/dev/null
 	;;
-fedora-*)
+fedora-*|almalinux-*)
 	dnf -yq update >/dev/null &&
 	dnf -yq install make gcc findutils diffutils perl python3 gettext zlib-devel expat-devel openssl-devel curl-devel pcre2-devel >/dev/null
 	;;
-ubuntu-*|ubuntu32-*)
+ubuntu-*|ubuntu32-*|debian-*)
 	# Required so that apt doesn't wait for user input on certain packages.
 	export DEBIAN_FRONTEND=noninteractive
 
 	case "$distro" in
 	ubuntu-*)
 		SVN='libsvn-perl subversion'
+		LANGUAGES='language-pack-is'
+		;;
+	ubuntu32-*)
+		SVN=
+		LANGUAGES='language-pack-is'
 		;;
 	*)
-		SVN=
+		SVN='libsvn-perl subversion'
+		LANGUAGES='locales-all'
 		;;
 	esac
 
 	sudo apt-get -q update
 	sudo apt-get -q -y install \
-		language-pack-is apache2 cvs cvsps git gnupg $SVN \
+		$LANGUAGES apache2 cvs cvsps git gnupg $SVN \
 		make libssl-dev libcurl4-openssl-dev libexpat-dev wget sudo default-jre \
 		tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl \
 		libemail-valid-perl libio-pty-perl libio-socket-ssl-perl libnet-smtp-ssl-perl libdbd-sqlite3-perl libcgi-pm-perl \
 		${CC_PACKAGE:-${CC:-gcc}} $PYTHON_PACKAGE
 
 	case "$distro" in
-	ubuntu-16.04)
-		# Does not support JGit, but we also don't really care about
-		# the others. We rather care whether Git still compiles and
-		# runs fine overall.
-		;;
 	ubuntu-*)
 		mkdir --parents "$CUSTOM_PATH"
 
