@@ -58,6 +58,8 @@ struct pack_idx_option {
 	 */
 	int anomaly_alloc, anomaly_nr;
 	uint32_t *anomaly;
+
+	size_t delta_base_cache_limit;
 };
 
 void reset_pack_idx_option(struct pack_idx_option *);
