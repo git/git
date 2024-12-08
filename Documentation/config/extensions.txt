@@ -63,6 +63,12 @@ Note that this setting should only be set by linkgit:git-init[1] or
 linkgit:git-clone[1]. Trying to change it after initialization will not
 work and will produce hard-to-diagnose issues.
 
+relativeWorktrees::
+	If enabled, indicates at least one worktree has been linked with
+	relative paths. Automatically set if a worktree has been created or
+	repaired with either the `--relative-paths` option or with the
+	`worktree.useRelativePaths` config set to `true`.
+
 worktreeConfig::
 	If enabled, then worktrees will load config settings from the
 	`$GIT_DIR/config.worktree` file in addition to the

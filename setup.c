@@ -683,6 +683,9 @@ static enum extension_result handle_extension(const char *var,
 				     "extensions.refstorage", value);
 		data->ref_storage_format = format;
 		return EXTENSION_OK;
+	} else if (!strcmp(ext, "relativeworktrees")) {
+		data->relative_worktrees = git_config_bool(var, value);
+		return EXTENSION_OK;
 	}
 	return EXTENSION_UNKNOWN;
 }
@@ -1854,6 +1857,8 @@ const char *setup_git_directory_gently(int *nongit_ok)
 						    repo_fmt.ref_storage_format);
 			the_repository->repository_format_worktree_config =
 				repo_fmt.worktree_config;
+			the_repository->repository_format_relative_worktrees =
+				repo_fmt.relative_worktrees;
 			/* take ownership of repo_fmt.partial_clone */
 			the_repository->repository_format_partial_clone =
 				repo_fmt.partial_clone;
@@ -1950,6 +1955,8 @@ void check_repository_format(struct repository_format *fmt)
 				    fmt->ref_storage_format);
 	the_repository->repository_format_worktree_config =
 		fmt->worktree_config;
+	the_repository->repository_format_relative_worktrees =
+		fmt->relative_worktrees;
 	the_repository->repository_format_partial_clone =
 		xstrdup_or_null(fmt->partial_clone);
 	clear_repository_format(&repo_fmt);
@@ -2204,8 +2211,8 @@ void initialize_repository_version(int hash_algo,
 				   enum ref_storage_format ref_storage_format,
 				   int reinit)
 {
-	char repo_version_string[10];
-	int repo_version = GIT_REPO_VERSION;
+	struct strbuf repo_version = STRBUF_INIT;
+	int target_version = GIT_REPO_VERSION;
 
 	/*
 	 * Note that we initialize the repository version to 1 when the ref
@@ -2216,12 +2223,7 @@ void initialize_repository_version(int hash_algo,
 	 */
 	if (hash_algo != GIT_HASH_SHA1 ||
 	    ref_storage_format != REF_STORAGE_FORMAT_FILES)
-		repo_version = GIT_REPO_VERSION_READ;
-
-	/* This forces creation of new config file */
-	xsnprintf(repo_version_string, sizeof(repo_version_string),
-		  "%d", repo_version);
-	git_config_set("core.repositoryformatversion", repo_version_string);
+		target_version = GIT_REPO_VERSION_READ;
 
 	if (hash_algo != GIT_HASH_SHA1 && hash_algo != GIT_HASH_UNKNOWN)
 		git_config_set("extensions.objectformat",
@@ -2234,6 +2236,25 @@ void initialize_repository_version(int hash_algo,
 			       ref_storage_format_to_name(ref_storage_format));
 	else if (reinit)
 		git_config_set_gently("extensions.refstorage", NULL);
+
+	if (reinit) {
+		struct strbuf config = STRBUF_INIT;
+		struct repository_format repo_fmt = REPOSITORY_FORMAT_INIT;
+
+		strbuf_git_common_path(&config, the_repository, "config");
+		read_repository_format(&repo_fmt, config.buf);
+
+		if (repo_fmt.v1_only_extensions.nr)
+			target_version = GIT_REPO_VERSION_READ;
+
+		strbuf_release(&config);
+		clear_repository_format(&repo_fmt);
+	}
+
+	strbuf_addf(&repo_version, "%d", target_version);
+	git_config_set("core.repositoryformatversion", repo_version.buf);
+
+	strbuf_release(&repo_version);
 }
 
 static int is_reinit(void)
@@ -2333,7 +2354,7 @@ static int create_default_files(const char *template_path,
 		adjust_shared_perm(repo_get_git_dir(the_repository));
 	}
 
-	initialize_repository_version(fmt->hash_algo, fmt->ref_storage_format, 0);
+	initialize_repository_version(fmt->hash_algo, fmt->ref_storage_format, reinit);
 
 	/* Check filemode trustability */
 	path = git_path_buf(&buf, "config");

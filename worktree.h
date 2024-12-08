@@ -117,8 +117,8 @@ int validate_worktree(const struct worktree *wt,
 /*
  * Update worktrees/xxx/gitdir with the new path.
  */
-void update_worktree_location(struct worktree *wt,
-			      const char *path_);
+void update_worktree_location(struct worktree *wt, const char *path_,
+			      int use_relative_paths);
 
 typedef void (* worktree_repair_fn)(int iserr, const char *path,
 				    const char *msg, void *cb_data);
@@ -129,7 +129,7 @@ typedef void (* worktree_repair_fn)(int iserr, const char *path,
  * function, if non-NULL, is called with the path of the worktree and a
  * description of the repair or error, along with the callback user-data.
  */
-void repair_worktrees(worktree_repair_fn, void *cb_data);
+void repair_worktrees(worktree_repair_fn, void *cb_data, int use_relative_paths);
 
 /*
  * Repair the linked worktrees after the gitdir has been moved.
@@ -151,7 +151,8 @@ void repair_worktree_after_gitdir_move(struct worktree *wt, const char *old_path
  * worktree and a description of the repair or error, along with the callback
  * user-data.
  */
-void repair_worktree_at_path(const char *, worktree_repair_fn, void *cb_data);
+void repair_worktree_at_path(const char *, worktree_repair_fn,
+			     void *cb_data, int use_relative_paths);
 
 /*
  * Free up the memory for a worktree.
@@ -214,5 +215,18 @@ void strbuf_worktree_ref(const struct worktree *wt,
  * if any of these steps fail.
  */
 int init_worktree_config(struct repository *r);
+
+/**
+ * Write the .git file and gitdir file that links the worktree to the repository.
+ *
+ * The `dotgit` parameter is the path to the worktree's .git file, and `gitdir`
+ * is the path to the repository's `gitdir` file.
+ *
+ * Example
+ *  dotgit: "/path/to/foo/.git"
+ *  gitdir: "/path/to/repo/worktrees/foo/gitdir"
+ */
+void write_worktree_linking_files(struct strbuf dotgit, struct strbuf gitdir,
+				  int use_relative_paths);
 
 #endif
