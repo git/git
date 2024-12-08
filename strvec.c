@@ -61,16 +61,19 @@ void strvec_splice(struct strvec *array, size_t idx, size_t len,
 {
 	if (idx + len > array->nr)
 		BUG("range outside of array boundary");
-	if (replacement_len > len)
+	if (replacement_len > len) {
+		if (array->v == empty_strvec)
+			array->v = NULL;
 		ALLOC_GROW(array->v, array->nr + (replacement_len - len) + 1,
 			   array->alloc);
+		array->v[array->nr + (replacement_len - len) + 1] = NULL;
+	}
 	for (size_t i = 0; i < len; i++)
 		free((char *)array->v[idx + i]);
-	if (replacement_len != len) {
+	if ((replacement_len != len) && array->nr)
 		memmove(array->v + idx + replacement_len, array->v + idx + len,
 			(array->nr - idx - len + 1) * sizeof(char *));
-		array->nr += (replacement_len - len);
-	}
+	array->nr += replacement_len - len;
 	for (size_t i = 0; i < replacement_len; i++)
 		array->v[idx + i] = xstrdup(replacement[i]);
 }
