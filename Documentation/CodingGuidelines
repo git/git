@@ -703,16 +703,30 @@ Program Output
 
 Error Messages
 
- - Do not end error messages with a full stop.
+ - Do not end a single-sentence error message with a full stop.
 
  - Do not capitalize the first word, only because it is the first word
-   in the message ("unable to open %s", not "Unable to open %s").  But
+   in the message ("unable to open '%s'", not "Unable to open '%s'").  But
    "SHA-3 not supported" is fine, because the reason the first word is
    capitalized is not because it is at the beginning of the sentence,
    but because the word would be spelled in capital letters even when
    it appeared in the middle of the sentence.
 
- - Say what the error is first ("cannot open %s", not "%s: cannot open")
+ - Say what the error is first ("cannot open '%s'", not "%s: cannot open").
+
+ - Enclose the subject of an error inside a pair of single quotes,
+   e.g. `die(_("unable to open '%s'"), path)`.
+
+ - Unless there is a compelling reason not to, error messages from
+   porcelain commands should be marked for translation, e.g.
+   `die(_("bad revision %s"), revision)`.
+
+ - Error messages from the plumbing commands are sometimes meant for
+   machine consumption and should not be marked for translation,
+   e.g., `die("bad revision %s", revision)`.
+
+ - BUG("message") are for communicating the specific error to developers,
+   thus should not be translated.
 
 
 Externally Visible Names
