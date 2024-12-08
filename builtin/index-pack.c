@@ -1811,7 +1811,7 @@ static void repack_local_links(void)
 	struct strbuf line = STRBUF_INIT;
 	struct oidset_iter iter;
 	struct object_id *oid;
-	char *base_name;
+	char *base_name = NULL;
 
 	if (!oidset_size(&outgoing_links))
 		return;
