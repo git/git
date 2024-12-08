@@ -130,8 +130,7 @@ void strvec_split(struct strvec *array, const char *to_split)
 void strvec_clear(struct strvec *array)
 {
 	if (array->v != empty_strvec) {
-		int i;
-		for (i = 0; i < array->nr; i++)
+		for (size_t i = 0; i < array->nr; i++)
 			free((char *)array->v[i]);
 		free(array->v);
 	}
