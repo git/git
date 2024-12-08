@@ -159,3 +159,19 @@ perf:
 
 .PHONY: pre-clean $(T) aggregate-results clean valgrind perf \
 	check-chainlint clean-chainlint test-chainlint $(UNIT_TESTS)
+
+.PHONY: libgitrs-sys-test
+libgitrs-sys-test:
+	$(QUIET)(\
+		cd ../contrib/libgit-rs/libgit-sys && \
+		cargo test \
+	)
+.PHONY: libgitrs-test
+libgitrs-test:
+	$(QUIET)(\
+		cd ../contrib/libgit-rs && \
+		cargo test \
+	)
+ifdef INCLUDE_LIBGIT_RS
+all:: libgitrs-sys-test libgitrs-test
+endif
