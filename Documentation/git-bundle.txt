@@ -32,7 +32,7 @@ Git commands that fetch or otherwise "read" via protocols such as
 possible linkgit:git-clone[1] a new repository from a bundle, to use
 linkgit:git-fetch[1] to fetch from one, and to list the references
 contained within it with linkgit:git-ls-remote[1]. There's no
-corresponding "write" support, i.e.a 'git push' into a bundle is not
+corresponding "write" support, i.e. a 'git push' into a bundle is not
 supported.
 
 BUNDLE FORMAT
