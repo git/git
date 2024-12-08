@@ -156,7 +156,22 @@ int calc_shared_perm(int mode);
 int adjust_shared_perm(const char *path);
 
 char *interpolate_path(const char *path, int real_home);
-const char *enter_repo(const char *path, int strict);
+
+/* The bits are as follows:
+ *
+ * - ENTER_REPO_STRICT: callers that require exact paths (as opposed
+ *   to allowing known suffixes like ".git", ".git/.git" to be
+ *   omitted) can set this bit.
+ *
+ * - ENTER_REPO_ANY_OWNER_OK: callers that are willing to run without
+ *   ownership check can set this bit.
+ */
+enum {
+	ENTER_REPO_STRICT = (1<<0),
+	ENTER_REPO_ANY_OWNER_OK = (1<<1),
+};
+
+const char *enter_repo(const char *path, unsigned flags);
 const char *remove_leading_path(const char *in, const char *prefix);
 const char *relative_path(const char *in, const char *prefix, struct strbuf *sb);
 int normalize_path_copy_len(char *dst, const char *src, int *prefix_len);

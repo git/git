@@ -39,6 +39,7 @@ int cmd_upload_pack(int argc,
 			    N_("interrupt transfer after <n> seconds of inactivity")),
 		OPT_END()
 	};
+	unsigned enter_repo_flags = ENTER_REPO_ANY_OWNER_OK;
 
 	packet_trace_identity("upload-pack");
 	disable_replace_refs();
@@ -54,7 +55,9 @@ int cmd_upload_pack(int argc,
 
 	dir = argv[0];
 
-	if (!enter_repo(dir, strict))
+	if (strict)
+		enter_repo_flags |= ENTER_REPO_STRICT;
+	if (!enter_repo(dir, enter_repo_flags))
 		die("'%s' does not appear to be a git repository", dir);
 
 	switch (determine_protocol_version_server()) {
