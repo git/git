@@ -74,6 +74,30 @@ test_expect_success "fetch test for-merge" '
 	cut -f -2 .git/FETCH_HEAD >actual &&
 	test_cmp expected actual'
 
+test_expect_success "fetch test remote HEAD" '
+	cd "$D" &&
+	cd two &&
+	git fetch &&
+	git rev-parse --verify refs/remotes/origin/HEAD &&
+	git rev-parse --verify refs/remotes/origin/main &&
+	head=$(git rev-parse refs/remotes/origin/HEAD) &&
+	branch=$(git rev-parse refs/remotes/origin/main) &&
+	test "z$head" = "z$branch"'
+
+test_expect_success "fetch test remote HEAD change" '
+	cd "$D" &&
+	cd two &&
+	git switch -c other &&
+	git push -u origin other &&
+	git rev-parse --verify refs/remotes/origin/HEAD &&
+	git rev-parse --verify refs/remotes/origin/main &&
+	git rev-parse --verify refs/remotes/origin/other &&
+	git remote set-head origin other &&
+	git fetch &&
+	head=$(git rev-parse refs/remotes/origin/HEAD) &&
+	branch=$(git rev-parse refs/remotes/origin/other) &&
+	test "z$head" = "z$branch"'
+
 test_expect_success 'fetch --prune on its own works as expected' '
 	cd "$D" &&
 	git clone . prune &&
