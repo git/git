@@ -116,6 +116,7 @@ struct remote {
 	struct string_list server_options;
 
 	enum follow_remote_head_settings follow_remote_head;
+	const char *no_warn_branch;
 };
 
 /**

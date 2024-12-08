@@ -515,14 +515,23 @@ static int handle_config(const char *key, const char *value,
 		return parse_transport_option(key, value,
 					      &remote->server_options);
 	} else if (!strcmp(subkey, "followremotehead")) {
+		const char *no_warn_branch;
 		if (!strcmp(value, "never"))
 			remote->follow_remote_head = FOLLOW_REMOTE_NEVER;
 		else if (!strcmp(value, "create"))
 			remote->follow_remote_head = FOLLOW_REMOTE_CREATE;
-		else if (!strcmp(value, "warn"))
+		else if (!strcmp(value, "warn")) {
 			remote->follow_remote_head = FOLLOW_REMOTE_WARN;
-		else if (!strcmp(value, "always"))
+			remote->no_warn_branch = NULL;
+		} else if (skip_prefix(value, "warn-if-not-", &no_warn_branch)) {
+			remote->follow_remote_head = FOLLOW_REMOTE_WARN;
+			remote->no_warn_branch = no_warn_branch;
+		} else if (!strcmp(value, "always")) {
 			remote->follow_remote_head = FOLLOW_REMOTE_ALWAYS;
+		} else {
+			warning(_("unrecognized followRemoteHEAD value '%s' ignored"),
+				value);
+		}
 	}
 	return 0;
 }
