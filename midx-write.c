@@ -1,5 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "config.h"
@@ -35,13 +33,13 @@ extern void clear_incremental_midx_files_ext(const char *object_dir,
 extern int cmp_idx_or_pack_name(const char *idx_or_pack_name,
 				const char *idx_name);
 
-static size_t write_midx_header(struct hashfile *f,
-				unsigned char num_chunks,
+static size_t write_midx_header(const struct git_hash_algo *hash_algo,
+				struct hashfile *f, unsigned char num_chunks,
 				uint32_t num_packs)
 {
 	hashwrite_be32(f, MIDX_SIGNATURE);
 	hashwrite_u8(f, MIDX_VERSION);
-	hashwrite_u8(f, oid_version(the_hash_algo));
+	hashwrite_u8(f, oid_version(hash_algo));
 	hashwrite_u8(f, num_chunks);
 	hashwrite_u8(f, 0); /* unused */
 	hashwrite_be32(f, num_packs);
@@ -110,6 +108,8 @@ struct write_midx_context {
 	uint32_t num_multi_pack_indexes_before;
 
 	struct string_list *to_include;
+
+	struct repository *repo;
 };
 
 static int should_include_pack(const struct write_midx_context *ctx,
@@ -154,7 +154,7 @@ static void add_pack_to_midx(const char *full_path, size_t full_path_len,
 			return;
 
 		ALLOC_GROW(ctx->info, ctx->nr + 1, ctx->alloc);
-		p = add_packed_git(the_repository, full_path, full_path_len, 0);
+		p = add_packed_git(ctx->repo, full_path, full_path_len, 0);
 		if (!p) {
 			warning(_("failed to add packfile '%s'"),
 				full_path);
@@ -480,7 +480,7 @@ static int write_midx_oid_lookup(struct hashfile *f,
 				 void *data)
 {
 	struct write_midx_context *ctx = data;
-	unsigned char hash_len = the_hash_algo->rawsz;
+	unsigned char hash_len = ctx->repo->hash_algo->rawsz;
 	struct pack_midx_entry *list = ctx->entries;
 	uint32_t i;
 
@@ -605,7 +605,7 @@ static uint32_t *midx_pack_order(struct write_midx_context *ctx)
 	uint32_t *pack_order, base_objects = 0;
 	uint32_t i;
 
-	trace2_region_enter("midx", "midx_pack_order", the_repository);
+	trace2_region_enter("midx", "midx_pack_order", ctx->repo);
 
 	if (ctx->incremental && ctx->base_midx)
 		base_objects = ctx->base_midx->num_objects +
@@ -640,7 +640,7 @@ static uint32_t *midx_pack_order(struct write_midx_context *ctx)
 	}
 	free(data);
 
-	trace2_region_leave("midx", "midx_pack_order", the_repository);
+	trace2_region_leave("midx", "midx_pack_order", ctx->repo);
 
 	return pack_order;
 }
@@ -651,9 +651,10 @@ static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
 	struct strbuf buf = STRBUF_INIT;
 	char *tmp_file;
 
-	trace2_region_enter("midx", "write_midx_reverse_index", the_repository);
+	trace2_region_enter("midx", "write_midx_reverse_index", ctx->repo);
 
-	strbuf_addf(&buf, "%s-%s.rev", midx_name, hash_to_hex(midx_hash));
+	strbuf_addf(&buf, "%s-%s.rev", midx_name, hash_to_hex_algop(midx_hash,
+								    ctx->repo->hash_algo));
 
 	tmp_file = write_rev_file_order(NULL, ctx->pack_order, ctx->entries_nr,
 					midx_hash, WRITE_REV);
@@ -664,7 +665,7 @@ static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
 	strbuf_release(&buf);
 	free(tmp_file);
 
-	trace2_region_leave("midx", "write_midx_reverse_index", the_repository);
+	trace2_region_leave("midx", "write_midx_reverse_index", ctx->repo);
 }
 
 static void prepare_midx_packing_data(struct packing_data *pdata,
@@ -672,10 +673,10 @@ static void prepare_midx_packing_data(struct packing_data *pdata,
 {
 	uint32_t i;
 
-	trace2_region_enter("midx", "prepare_midx_packing_data", the_repository);
+	trace2_region_enter("midx", "prepare_midx_packing_data", ctx->repo);
 
 	memset(pdata, 0, sizeof(struct packing_data));
-	prepare_packing_data(the_repository, pdata);
+	prepare_packing_data(ctx->repo, pdata);
 
 	for (i = 0; i < ctx->entries_nr; i++) {
 		uint32_t pos = ctx->pack_order[i];
@@ -686,7 +687,7 @@ static void prepare_midx_packing_data(struct packing_data *pdata,
 			       ctx->info[ctx->pack_perm[from->pack_int_id]].p);
 	}
 
-	trace2_region_leave("midx", "prepare_midx_packing_data", the_repository);
+	trace2_region_leave("midx", "prepare_midx_packing_data", ctx->repo);
 }
 
 static int add_ref_to_pending(const char *refname, const char *referent UNUSED,
@@ -702,7 +703,7 @@ static int add_ref_to_pending(const char *refname, const char *referent UNUSED,
 		return 0;
 	}
 
-	if (!peel_iterated_oid(the_repository, oid, &peeled))
+	if (!peel_iterated_oid(revs->repo, oid, &peeled))
 		oid = &peeled;
 
 	object = parse_object_or_die(oid, refname);
@@ -760,7 +761,7 @@ static int read_refs_snapshot(const char *refs_snapshot,
 			hex = &buf.buf[1];
 		}
 
-		if (parse_oid_hex(hex, &oid, &end) < 0)
+		if (parse_oid_hex_algop(hex, &oid, &end, revs->repo->hash_algo) < 0)
 			die(_("could not parse line: %s"), buf.buf);
 		if (*end)
 			die(_("malformed line: %s"), buf.buf);
@@ -776,6 +777,7 @@ static int read_refs_snapshot(const char *refs_snapshot,
 	strbuf_release(&buf);
 	return 0;
 }
+
 static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr_p,
 						    const char *refs_snapshot,
 						    struct write_midx_context *ctx)
@@ -783,17 +785,16 @@ static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr
 	struct rev_info revs;
 	struct bitmap_commit_cb cb = {0};
 
-	trace2_region_enter("midx", "find_commits_for_midx_bitmap",
-			    the_repository);
+	trace2_region_enter("midx", "find_commits_for_midx_bitmap", ctx->repo);
 
 	cb.ctx = ctx;
 
-	repo_init_revisions(the_repository, &revs, NULL);
+	repo_init_revisions(ctx->repo, &revs, NULL);
 	if (refs_snapshot) {
 		read_refs_snapshot(refs_snapshot, &revs);
 	} else {
 		setup_revisions(0, NULL, &revs, NULL);
-		refs_for_each_ref(get_main_ref_store(the_repository),
+		refs_for_each_ref(get_main_ref_store(ctx->repo),
 				  add_ref_to_pending, &revs);
 	}
 
@@ -821,13 +822,12 @@ static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr
 
 	release_revisions(&revs);
 
-	trace2_region_leave("midx", "find_commits_for_midx_bitmap",
-			    the_repository);
+	trace2_region_leave("midx", "find_commits_for_midx_bitmap", ctx->repo);
 
 	return cb.commits;
 }
 
-static int write_midx_bitmap(const char *midx_name,
+static int write_midx_bitmap(struct repository *r, const char *midx_name,
 			     const unsigned char *midx_hash,
 			     struct packing_data *pdata,
 			     struct commit **commits,
@@ -840,9 +840,9 @@ static int write_midx_bitmap(const char *midx_name,
 	struct bitmap_writer writer;
 	struct pack_idx_entry **index;
 	char *bitmap_name = xstrfmt("%s-%s.bitmap", midx_name,
-					hash_to_hex(midx_hash));
+				    hash_to_hex_algop(midx_hash, r->hash_algo));
 
-	trace2_region_enter("midx", "write_midx_bitmap", the_repository);
+	trace2_region_enter("midx", "write_midx_bitmap", r);
 
 	if (flags & MIDX_WRITE_BITMAP_HASH_CACHE)
 		options |= BITMAP_OPT_HASH_CACHE;
@@ -859,7 +859,7 @@ static int write_midx_bitmap(const char *midx_name,
 	for (i = 0; i < pdata->nr_objects; i++)
 		index[i] = &pdata->objects[i].idx;
 
-	bitmap_writer_init(&writer, the_repository, pdata);
+	bitmap_writer_init(&writer, r, pdata);
 	bitmap_writer_show_progress(&writer, flags & MIDX_PROGRESS);
 	bitmap_writer_build_type_index(&writer, index);
 
@@ -892,7 +892,7 @@ cleanup:
 	free(bitmap_name);
 	bitmap_writer_free(&writer);
 
-	trace2_region_leave("midx", "write_midx_bitmap", the_repository);
+	trace2_region_leave("midx", "write_midx_bitmap", r);
 
 	return ret;
 }
@@ -944,7 +944,7 @@ static int fill_packs_from_midx(struct write_midx_context *ctx,
 			 */
 			if (flags & MIDX_WRITE_REV_INDEX ||
 			    preferred_pack_name) {
-				if (prepare_midx_pack(the_repository, m,
+				if (prepare_midx_pack(ctx->repo, m,
 						      m->num_packs_in_base + i)) {
 					error(_("could not load pack"));
 					return 1;
@@ -991,9 +991,10 @@ static int link_midx_to_chain(struct multi_pack_index *m)
 	for (i = 0; i < ARRAY_SIZE(midx_exts); i++) {
 		const unsigned char *hash = get_midx_checksum(m);
 
-		get_midx_filename_ext(&from, m->object_dir, hash,
-				      midx_exts[i].non_split);
-		get_split_midx_filename_ext(&to, m->object_dir, hash,
+		get_midx_filename_ext(m->repo->hash_algo, &from, m->object_dir,
+				      hash, midx_exts[i].non_split);
+		get_split_midx_filename_ext(m->repo->hash_algo, &to,
+					    m->object_dir, hash,
 					    midx_exts[i].split);
 
 		if (link(from.buf, to.buf) < 0 && errno != ENOENT) {
@@ -1012,9 +1013,8 @@ done:
 	return ret;
 }
 
-static void clear_midx_files(const char *object_dir,
-			     const char **hashes,
-			     uint32_t hashes_nr,
+static void clear_midx_files(struct repository *r, const char *object_dir,
+			     const char **hashes, uint32_t hashes_nr,
 			     unsigned incremental)
 {
 	/*
@@ -1039,7 +1039,7 @@ static void clear_midx_files(const char *object_dir,
 	}
 
 	if (incremental)
-		get_midx_filename(&buf, object_dir);
+		get_midx_filename(r->hash_algo, &buf, object_dir);
 	else
 		get_midx_chain_filename(&buf, object_dir);
 
@@ -1049,7 +1049,7 @@ static void clear_midx_files(const char *object_dir,
 	strbuf_release(&buf);
 }
 
-static int write_midx_internal(const char *object_dir,
+static int write_midx_internal(struct repository *r, const char *object_dir,
 			       struct string_list *packs_to_include,
 			       struct string_list *packs_to_drop,
 			       const char *preferred_pack_name,
@@ -1070,7 +1070,9 @@ static int write_midx_internal(const char *object_dir,
 	const char **keep_hashes = NULL;
 	struct chunkfile *cf;
 
-	trace2_region_enter("midx", "write_midx_internal", the_repository);
+	trace2_region_enter("midx", "write_midx_internal", r);
+
+	ctx.repo = r;
 
 	ctx.incremental = !!(flags & MIDX_WRITE_INCREMENTAL);
 	if (ctx.incremental && (flags & MIDX_WRITE_BITMAP))
@@ -1081,14 +1083,13 @@ static int write_midx_internal(const char *object_dir,
 			    "%s/pack/multi-pack-index.d/tmp_midx_XXXXXX",
 			    object_dir);
 	else
-		get_midx_filename(&midx_name, object_dir);
+		get_midx_filename(r->hash_algo, &midx_name, object_dir);
 	if (safe_create_leading_directories(midx_name.buf))
 		die_errno(_("unable to create leading directories of %s"),
 			  midx_name.buf);
 
 	if (!packs_to_include || ctx.incremental) {
-		struct multi_pack_index *m = lookup_multi_pack_index(the_repository,
-								     object_dir);
+		struct multi_pack_index *m = lookup_multi_pack_index(r, object_dir);
 		if (m && !midx_checksum_valid(m)) {
 			warning(_("ignoring existing multi-pack-index; checksum mismatch"));
 			m = NULL;
@@ -1351,7 +1352,7 @@ static int write_midx_internal(const char *object_dir,
 	add_chunk(cf, MIDX_CHUNKID_OIDFANOUT, MIDX_CHUNK_FANOUT_SIZE,
 		  write_midx_oid_fanout);
 	add_chunk(cf, MIDX_CHUNKID_OIDLOOKUP,
-		  st_mult(ctx.entries_nr, the_hash_algo->rawsz),
+		  st_mult(ctx.entries_nr, r->hash_algo->rawsz),
 		  write_midx_oid_lookup);
 	add_chunk(cf, MIDX_CHUNKID_OBJECTOFFSETS,
 		  st_mult(ctx.entries_nr, MIDX_CHUNK_OFFSET_WIDTH),
@@ -1373,7 +1374,8 @@ static int write_midx_internal(const char *object_dir,
 			  write_midx_bitmapped_packs);
 	}
 
-	write_midx_header(f, get_num_chunks(cf), ctx.nr - dropped_packs);
+	write_midx_header(r->hash_algo, f, get_num_chunks(cf),
+			  ctx.nr - dropped_packs);
 	write_chunkfile(cf, &ctx);
 
 	finalize_hashfile(f, midx_hash, FSYNC_COMPONENT_PACK_METADATA,
@@ -1405,7 +1407,7 @@ static int write_midx_internal(const char *object_dir,
 		FREE_AND_NULL(ctx.entries);
 		ctx.entries_nr = 0;
 
-		if (write_midx_bitmap(midx_name.buf, midx_hash, &pdata,
+		if (write_midx_bitmap(r, midx_name.buf, midx_hash, &pdata,
 				      commits, commits_nr, ctx.pack_order,
 				      flags) < 0) {
 			error(_("could not write multi-pack bitmap"));
@@ -1438,8 +1440,8 @@ static int write_midx_internal(const char *object_dir,
 		if (link_midx_to_chain(ctx.base_midx) < 0)
 			return -1;
 
-		get_split_midx_filename_ext(&final_midx_name, object_dir,
-					    midx_hash, MIDX_EXT_MIDX);
+		get_split_midx_filename_ext(r->hash_algo, &final_midx_name,
+					    object_dir, midx_hash, MIDX_EXT_MIDX);
 
 		if (rename_tempfile(&incr, final_midx_name.buf) < 0) {
 			error_errno(_("unable to rename new multi-pack-index layer"));
@@ -1449,12 +1451,13 @@ static int write_midx_internal(const char *object_dir,
 		strbuf_release(&final_midx_name);
 
 		keep_hashes[ctx.num_multi_pack_indexes_before] =
-			xstrdup(hash_to_hex(midx_hash));
+			xstrdup(hash_to_hex_algop(midx_hash, r->hash_algo));
 
 		for (i = 0; i < ctx.num_multi_pack_indexes_before; i++) {
 			uint32_t j = ctx.num_multi_pack_indexes_before - i - 1;
 
-			keep_hashes[j] = xstrdup(hash_to_hex(get_midx_checksum(m)));
+			keep_hashes[j] = xstrdup(hash_to_hex_algop(get_midx_checksum(m),
+								   r->hash_algo));
 			m = m->base_midx;
 		}
 
@@ -1462,16 +1465,16 @@ static int write_midx_internal(const char *object_dir,
 			fprintf(get_lock_file_fp(&lk), "%s\n", keep_hashes[i]);
 	} else {
 		keep_hashes[ctx.num_multi_pack_indexes_before] =
-			xstrdup(hash_to_hex(midx_hash));
+			xstrdup(hash_to_hex_algop(midx_hash, r->hash_algo));
 	}
 
 	if (ctx.m || ctx.base_midx)
-		close_object_store(the_repository->objects);
+		close_object_store(ctx.repo->objects);
 
 	if (commit_lock_file(&lk) < 0)
 		die_errno(_("could not write multi-pack-index"));
 
-	clear_midx_files(object_dir, keep_hashes,
+	clear_midx_files(r, object_dir, keep_hashes,
 			 ctx.num_multi_pack_indexes_before + 1,
 			 ctx.incremental);
 
@@ -1495,27 +1498,26 @@ cleanup:
 	}
 	strbuf_release(&midx_name);
 
-	trace2_region_leave("midx", "write_midx_internal", the_repository);
+	trace2_region_leave("midx", "write_midx_internal", r);
 
 	return result;
 }
 
-int write_midx_file(const char *object_dir,
+int write_midx_file(struct repository *r, const char *object_dir,
 		    const char *preferred_pack_name,
-		    const char *refs_snapshot,
-		    unsigned flags)
+		    const char *refs_snapshot, unsigned flags)
 {
-	return write_midx_internal(object_dir, NULL, NULL, preferred_pack_name,
-				   refs_snapshot, flags);
+	return write_midx_internal(r, object_dir, NULL, NULL,
+				   preferred_pack_name, refs_snapshot,
+				   flags);
 }
 
-int write_midx_file_only(const char *object_dir,
+int write_midx_file_only(struct repository *r, const char *object_dir,
 			 struct string_list *packs_to_include,
 			 const char *preferred_pack_name,
-			 const char *refs_snapshot,
-			 unsigned flags)
+			 const char *refs_snapshot, unsigned flags)
 {
-	return write_midx_internal(object_dir, packs_to_include, NULL,
+	return write_midx_internal(r, object_dir, packs_to_include, NULL,
 				   preferred_pack_name, refs_snapshot, flags);
 }
 
@@ -1572,7 +1574,8 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 	free(count);
 
 	if (packs_to_drop.nr)
-		result = write_midx_internal(object_dir, NULL, &packs_to_drop, NULL, NULL, flags);
+		result = write_midx_internal(r, object_dir, NULL,
+					     &packs_to_drop, NULL, NULL, flags);
 
 	string_list_clear(&packs_to_drop, 0);
 
@@ -1769,7 +1772,8 @@ int midx_repack(struct repository *r, const char *object_dir, size_t batch_size,
 		goto cleanup;
 	}
 
-	result = write_midx_internal(object_dir, NULL, NULL, NULL, NULL, flags);
+	result = write_midx_internal(r, object_dir, NULL, NULL, NULL, NULL,
+				     flags);
 
 cleanup:
 	free(include_pack);
