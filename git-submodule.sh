@@ -77,8 +77,14 @@ cmd_add()
 			branch=$2
 			shift
 			;;
+		-b*)
+			branch="${1#-b}"
+			;;
+		--branch=*)
+			branch="${1#--branch=}"
+			;;
 		-f | --force)
-			force=$1
+			force=1
 			;;
 		-q|--quiet)
 			quiet=1
@@ -109,6 +115,9 @@ cmd_add()
 			case "$2" in '') usage ;; esac
 			custom_name=$2
 			shift
+			;;
+		--name=*)
+			custom_name="${1#--name=}"
 			;;
 		--depth)
 			case "$2" in '') usage ;; esac
@@ -231,7 +240,7 @@ cmd_deinit()
 	do
 		case "$1" in
 		-f|--force)
-			force=$1
+			force=1
 			;;
 		-q|--quiet)
 			quiet=1
@@ -294,7 +303,7 @@ cmd_update()
 			nofetch=1
 			;;
 		-f|--force)
-			force=$1
+			force=1
 			;;
 		-r|--rebase)
 			rebase=1
@@ -345,6 +354,9 @@ cmd_update()
 			case "$2" in '') usage ;; esac
 			jobs="--jobs=$2"
 			shift
+			;;
+		-j*)
+			jobs="--jobs=${1#-j}"
 			;;
 		--jobs=*)
 			jobs=$1
@@ -425,6 +437,12 @@ cmd_set_branch() {
 			branch=$2
 			shift
 			;;
+		-b*)
+			branch="${1#-b}"
+			;;
+		--branch=*)
+			branch="${1#--branch=}"
+			;;
 		--)
 			shift
 			break
@@ -500,15 +518,19 @@ cmd_summary() {
 			cached=1
 			;;
 		--files)
-			files="$1"
+			files=1
 			;;
 		--for-status)
-			for_status="$1"
+			for_status=1
 			;;
 		-n|--summary-limit)
 			summary_limit="$2"
 			isnumber "$summary_limit" || usage
 			shift
+			;;
+		-n*)
+			summary_limit="${1#-n}"
+			isnumber "$summary_limit" || usage
 			;;
 		--summary-limit=*)
 			summary_limit="${1#--summary-limit=}"
