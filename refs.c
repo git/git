@@ -1160,13 +1160,15 @@ void ref_transaction_free(struct ref_transaction *transaction)
 	free(transaction);
 }
 
-struct ref_update *ref_transaction_add_update(
-		struct ref_transaction *transaction,
-		const char *refname, unsigned int flags,
-		const struct object_id *new_oid,
-		const struct object_id *old_oid,
-		const char *new_target, const char *old_target,
-		const char *msg)
+struct ref_update *ref_transaction_add_update(struct ref_transaction *transaction,
+					      const char *refname,
+					      unsigned int flags,
+					      const struct object_id *new_oid,
+					      const struct object_id *old_oid,
+					      const char *new_target,
+					      const char *old_target,
+					      const char *committer_info,
+					      const char *msg)
 {
 	struct ref_update *update;
 
@@ -1190,8 +1192,15 @@ struct ref_update *ref_transaction_add_update(
 		oidcpy(&update->new_oid, new_oid);
 	if ((flags & REF_HAVE_OLD) && old_oid)
 		oidcpy(&update->old_oid, old_oid);
-	if (!(flags & REF_SKIP_CREATE_REFLOG))
+	if (!(flags & REF_SKIP_CREATE_REFLOG)) {
+		if (committer_info) {
+			struct strbuf sb = STRBUF_INIT;
+			strbuf_addstr(&sb, committer_info);
+			update->committer_info = strbuf_detach(&sb, NULL);
+		}
+
 		update->msg = normalize_reflog_message(msg);
+	}
 
 	return update;
 }
@@ -1199,20 +1208,29 @@ struct ref_update *ref_transaction_add_update(
 static int transaction_refname_verification(const char *refname,
 					    const struct object_id *new_oid,
 					    unsigned int flags,
+					    unsigned int reflog,
 					    struct strbuf *err)
 {
 	if (flags & REF_SKIP_REFNAME_VERIFICATION)
 		return 0;
 
 	if (is_pseudo_ref(refname)) {
-		strbuf_addf(err, _("refusing to update pseudoref '%s'"),
-			    refname);
+		if (reflog)
+			strbuf_addf(err, _("refusing to update reflog for pseudoref '%s'"),
+				    refname);
+		else
+			strbuf_addf(err, _("refusing to update pseudoref '%s'"),
+				    refname);
 		return -1;
 	} else if ((new_oid && !is_null_oid(new_oid)) ?
 		 check_refname_format(refname, REFNAME_ALLOW_ONELEVEL) :
 		 !refname_is_safe(refname)) {
-		strbuf_addf(err, _("refusing to update ref with bad name '%s'"),
-			    refname);
+		if (reflog)
+			strbuf_addf(err, _("refusing to update reflog with bad name '%s'"),
+				    refname);
+		else
+			strbuf_addf(err, _("refusing to update ref with bad name '%s'"),
+				    refname);
 		return -1;
 	}
 
@@ -1238,7 +1256,7 @@ int ref_transaction_update(struct ref_transaction *transaction,
 		return -1;
 	}
 
-	ret = transaction_refname_verification(refname, new_oid, flags, err);
+	ret = transaction_refname_verification(refname, new_oid, flags, 0, err);
 	if (ret)
 		return ret;
 
@@ -1255,18 +1273,47 @@ int ref_transaction_update(struct ref_transaction *transaction,
 	flags |= (new_oid ? REF_HAVE_NEW : 0) | (old_oid ? REF_HAVE_OLD : 0);
 	flags |= (new_target ? REF_HAVE_NEW : 0) | (old_target ? REF_HAVE_OLD : 0);
 
-	ref_transaction_add_update(transaction, refname, flags,
-				   new_oid, old_oid, new_target,
-				   old_target, msg);
+	ref_transaction_add_update(transaction, refname, flags, new_oid,
+				   old_oid, new_target, old_target, NULL, msg);
+	return 0;
+}
+
+int ref_transaction_update_reflog(struct ref_transaction *transaction,
+				  const char *refname,
+				  const struct object_id *new_oid,
+				  const struct object_id *old_oid,
+				  const char *committer_info, unsigned int flags,
+				  const char *msg, unsigned int index,
+				  struct strbuf *err)
+{
+	struct ref_update *update;
+	int ret;
+
+	assert(err);
+
+	ret = transaction_refname_verification(refname, new_oid, flags, 1, err);
+	if (ret)
+		return ret;
+
+	flags |= REF_LOG_ONLY | REF_NO_DEREF;
+
+	update = ref_transaction_add_update(transaction, refname, flags,
+					    new_oid, old_oid, NULL, NULL,
+					    committer_info, msg);
+	/*
+	 * While we do set the old_oid value, we unset the flag to skip
+	 * old_oid verification which only makes sense for refs.
+	 */
+	update->flags &= ~REF_HAVE_OLD;
+	update->index = index;
+
 	return 0;
 }
 
 int ref_transaction_create(struct ref_transaction *transaction,
-			   const char *refname,
-			   const struct object_id *new_oid,
-			   const char *new_target,
-			   unsigned int flags, const char *msg,
-			   struct strbuf *err)
+			   const char *refname, const struct object_id *new_oid,
+			   const char *new_target, unsigned int flags,
+			   const char *msg, struct strbuf *err)
 {
 	if (new_oid && new_target)
 		BUG("create called with both new_oid and new_target set");
