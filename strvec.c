@@ -66,7 +66,7 @@ void strvec_splice(struct strvec *array, size_t idx, size_t len,
 			array->v = NULL;
 		ALLOC_GROW(array->v, array->nr + (replacement_len - len) + 1,
 			   array->alloc);
-		array->v[array->nr + (replacement_len - len) + 1] = NULL;
+		array->v[array->nr + (replacement_len - len)] = NULL;
 	}
 	for (size_t i = 0; i < len; i++)
 		free((char *)array->v[idx + i]);
