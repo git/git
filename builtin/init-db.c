@@ -91,7 +91,7 @@ int cmd_init_db(int argc,
 	const struct option init_db_options[] = {
 		OPT_STRING(0, "template", &template_dir, N_("template-directory"),
 				N_("directory from which templates will be used")),
-		OPT_SET_INT(0, "bare", &is_bare_repository_cfg,
+		OPT_SET_INT(0, "bare", &the_repository->is_bare_cfg,
 				N_("create a bare repository"), 1),
 		{ OPTION_CALLBACK, 0, "shared", &init_shared_repository,
 			N_("permissions"),
@@ -112,7 +112,7 @@ int cmd_init_db(int argc,
 
 	argc = parse_options(argc, argv, prefix, init_db_options, init_db_usage, 0);
 
-	if (real_git_dir && is_bare_repository_cfg == 1)
+	if (real_git_dir && the_repository->is_bare_cfg == 1)
 		die(_("options '%s' and '%s' cannot be used together"), "--separate-git-dir", "--bare");
 
 	if (real_git_dir && !is_absolute_path(real_git_dir))
@@ -156,7 +156,7 @@ int cmd_init_db(int argc,
 	} else if (0 < argc) {
 		usage(init_db_usage[0]);
 	}
-	if (is_bare_repository_cfg == 1) {
+	if (the_repository->is_bare_cfg == 1) {
 		char *cwd = xgetcwd();
 		setenv(GIT_DIR_ENVIRONMENT, cwd, argc > 0);
 		free(cwd);
@@ -183,7 +183,7 @@ int cmd_init_db(int argc,
 	 */
 	git_dir = xstrdup_or_null(getenv(GIT_DIR_ENVIRONMENT));
 	work_tree = xstrdup_or_null(getenv(GIT_WORK_TREE_ENVIRONMENT));
-	if ((!git_dir || is_bare_repository_cfg == 1) && work_tree)
+	if ((!git_dir || the_repository->is_bare_cfg == 1) && work_tree)
 		die(_("%s (or --work-tree=<directory>) not allowed without "
 			  "specifying %s (or --git-dir=<directory>)"),
 		    GIT_WORK_TREE_ENVIRONMENT,
@@ -220,10 +220,10 @@ int cmd_init_db(int argc,
 		strbuf_release(&sb);
 	}
 
-	if (is_bare_repository_cfg < 0)
-		is_bare_repository_cfg = guess_repository_type(git_dir);
+	if (the_repository->is_bare_cfg < 0)
+		the_repository->is_bare_cfg = guess_repository_type(git_dir);
 
-	if (!is_bare_repository_cfg) {
+	if (!the_repository->is_bare_cfg) {
 		const char *git_dir_parent = strrchr(git_dir, '/');
 		if (git_dir_parent) {
 			char *rel = xstrndup(git_dir, git_dir_parent - git_dir);
