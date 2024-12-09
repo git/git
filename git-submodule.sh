@@ -78,7 +78,7 @@ cmd_add()
 			shift
 			;;
 		-f | --force)
-			force=$1
+			force=1
 			;;
 		-q|--quiet)
 			quiet=1
@@ -231,7 +231,7 @@ cmd_deinit()
 	do
 		case "$1" in
 		-f|--force)
-			force=$1
+			force=1
 			;;
 		-q|--quiet)
 			quiet=1
@@ -294,7 +294,7 @@ cmd_update()
 			nofetch=1
 			;;
 		-f|--force)
-			force=$1
+			force=1
 			;;
 		-r|--rebase)
 			rebase=1
@@ -500,10 +500,10 @@ cmd_summary() {
 			cached=1
 			;;
 		--files)
-			files="$1"
+			files=1
 			;;
 		--for-status)
-			for_status="$1"
+			for_status=1
 			;;
 		-n|--summary-limit)
 			summary_limit="$2"
