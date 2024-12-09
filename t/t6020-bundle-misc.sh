@@ -505,6 +505,40 @@ test_expect_success 'unfiltered bundle with --objects' '
 	test_cmp expect actual
 '
 
+test_expect_success 'bottomless bundle upto tag' '
+	git bundle create v2.bdl \
+		v2 &&
+
+	git bundle verify v2.bdl |
+		make_user_friendly_and_stable_output >actual &&
+
+	format_and_save_expect <<-EOF &&
+	The bundle contains this ref:
+	<TAG-2> refs/tags/v2
+	The bundle records a complete history.
+	$HASH_MESSAGE
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'bundle between two tags' '
+	git bundle create v1-v2.bdl \
+		v1..v2 &&
+
+	git bundle verify v1-v2.bdl |
+		make_user_friendly_and_stable_output >actual &&
+
+	format_and_save_expect <<-EOF &&
+	The bundle contains this ref:
+	<TAG-2> refs/tags/v2
+	The bundle requires these 2 refs:
+	<COMMIT-E> Z
+	<COMMIT-B> Z
+	$HASH_MESSAGE
+	EOF
+	test_cmp expect actual
+'
+
 for filter in "blob:none" "tree:0" "tree:1" "blob:limit=100"
 do
 	test_expect_success "filtered bundle: $filter" '
