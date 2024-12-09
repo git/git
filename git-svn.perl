@@ -9,7 +9,7 @@ use vars qw/	$AUTHOR $VERSION
 		$_revision $_repository
 		$_q $_authors $_authors_prog %users/;
 $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
-$VERSION = '@@GIT_VERSION@@';
+$VERSION = '@GIT_VERSION@';
 
 use Carp qw/croak/;
 use File::Basename qw/dirname basename/;
