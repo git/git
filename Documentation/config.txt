@@ -161,14 +161,17 @@ all branches that begin with `foo/`. This is useful if your branches are
 organized hierarchically and you would like to apply a configuration to
 all the branches in that hierarchy.
 
-`hasconfig:remote.*.url:`::
+`hasconfig:remote.(<name>|*).url:`::
 	The data that follows this keyword is taken to
 	be a pattern with standard globbing wildcards and two
 	additional ones, `**/` and `/**`, that can match multiple
 	components. The first time this keyword is seen, the rest of
 	the config files will be scanned for remote URLs (without
 	applying any values). If there exists at least one remote URL
-	that matches this pattern, the include condition is met.
+	that matches this pattern, the include condition is met. `<name>`
+	is the name of the remote, and `*` matches any remote name. Note
+	that `<name>` is not globbed, so it must be an exact match (e.g.,
+	`dev-*` will not match `dev-foo`).
 +
 Files included by this option (directly or indirectly) are not allowed
 to contain remote URLs.
@@ -260,6 +263,12 @@ Example
 ; that such a URL may be provided later in a file or in a
 ; file read after this file is read, as seen in this example)
 [includeIf "hasconfig:remote.*.url:https://example.com/**"]
+	path = foo.inc
+[remote "origin"]
+	url = https://example.com/git
+
+; include only if the given remote with the given URL exist.
+[includeIf "hasconfig:remote.origin.url:https://example.com/**"]
 	path = foo.inc
 [remote "origin"]
 	url = https://example.com/git
