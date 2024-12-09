@@ -2,7 +2,6 @@
 
 test_description='git reset in a bare repository'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup non-bare' '

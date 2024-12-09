@@ -75,10 +75,12 @@ int cmd_init_db(int argc,
 		const char *prefix,
 		struct repository *repo UNUSED)
 {
-	const char *git_dir;
+	char *git_dir;
 	const char *real_git_dir = NULL;
-	const char *work_tree;
+	char *real_git_dir_to_free = NULL;
+	char *work_tree = NULL;
 	const char *template_dir = NULL;
+	char *template_dir_to_free = NULL;
 	unsigned int flags = 0;
 	const char *object_format = NULL;
 	const char *ref_format = NULL;
@@ -106,6 +108,7 @@ int cmd_init_db(int argc,
 			   N_("specify the reference format to use")),
 		OPT_END()
 	};
+	int ret;
 
 	argc = parse_options(argc, argv, prefix, init_db_options, init_db_usage, 0);
 
@@ -113,12 +116,10 @@ int cmd_init_db(int argc,
 		die(_("options '%s' and '%s' cannot be used together"), "--separate-git-dir", "--bare");
 
 	if (real_git_dir && !is_absolute_path(real_git_dir))
-		real_git_dir = real_pathdup(real_git_dir, 1);
+		real_git_dir = real_git_dir_to_free = real_pathdup(real_git_dir, 1);
 
-	if (template_dir && *template_dir && !is_absolute_path(template_dir)) {
-		template_dir = absolute_pathdup(template_dir);
-		UNLEAK(template_dir);
-	}
+	if (template_dir && *template_dir && !is_absolute_path(template_dir))
+		template_dir = template_dir_to_free = absolute_pathdup(template_dir);
 
 	if (argc == 1) {
 		int mkdir_tried = 0;
@@ -192,7 +193,7 @@ int cmd_init_db(int argc,
 	 * Set up the default .git directory contents
 	 */
 	if (!git_dir)
-		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
+		git_dir = xstrdup(DEFAULT_GIT_DIR_ENVIRONMENT);
 
 	/*
 	 * When --separate-git-dir is used inside a linked worktree, take
@@ -213,6 +214,7 @@ int cmd_init_db(int argc,
 			if (chdir(mainwt.buf) < 0)
 				die_errno(_("cannot chdir to %s"), mainwt.buf);
 			strbuf_release(&mainwt);
+			free(git_dir);
 			git_dir = strbuf_detach(&sb, NULL);
 		}
 		strbuf_release(&sb);
@@ -245,12 +247,14 @@ int cmd_init_db(int argc,
 			set_git_work_tree(work_tree);
 	}
 
-	UNLEAK(real_git_dir);
-	UNLEAK(git_dir);
-	UNLEAK(work_tree);
-
 	flags |= INIT_DB_EXIST_OK;
-	return init_db(git_dir, real_git_dir, template_dir, hash_algo,
-		       ref_storage_format, initial_branch,
-		       init_shared_repository, flags);
+	ret = init_db(git_dir, real_git_dir, template_dir, hash_algo,
+		      ref_storage_format, initial_branch,
+		      init_shared_repository, flags);
+
+	free(template_dir_to_free);
+	free(real_git_dir_to_free);
+	free(work_tree);
+	free(git_dir);
+	return ret;
 }

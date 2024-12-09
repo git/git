@@ -5,7 +5,6 @@
 
 test_description='quoted output'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 FN='濱野'

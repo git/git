@@ -3,7 +3,6 @@
 test_description='apply same filename'
 
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 modify () {

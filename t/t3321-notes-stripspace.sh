@@ -5,7 +5,6 @@
 
 test_description='Test commit notes with stripspace behavior'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 MULTI_LF="$LF$LF$LF"

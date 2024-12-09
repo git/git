@@ -2,7 +2,6 @@
 
 test_description='git ls-files --deduplicate test'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

@@ -2,7 +2,6 @@
 
 test_description='git p4 handling of UTF-16 files without BOM'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-git-p4.sh
 
 UTF16="\227\000\227\000"

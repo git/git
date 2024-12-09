@@ -5,7 +5,6 @@
 
 test_description='git reset should cull empty subdirs'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff-data.sh
 

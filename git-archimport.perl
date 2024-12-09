@@ -54,7 +54,7 @@ and can contain multiple, unrelated branches.
 
 =cut
 
-use 5.008001;
+require v5.26;
 use strict;
 use warnings;
 use Getopt::Std;

@@ -2,7 +2,6 @@
 
 test_description='reflog walk shows repeated commits again'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup commits' '

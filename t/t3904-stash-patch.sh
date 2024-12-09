@@ -2,7 +2,6 @@
 
 test_description='stash -p'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-patch-mode.sh
 
 test_expect_success 'setup' '

@@ -2,7 +2,6 @@
 
 test_description='Return value of diffs'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

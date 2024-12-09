@@ -21,7 +21,6 @@ test_description='git conflicts when checking files out test.'
 # path1 is occupied by a non-directory.  With "-f" flag, it should remove
 # the conflicting paths and succeed.
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 show_files() {

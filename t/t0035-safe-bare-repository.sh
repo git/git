@@ -2,7 +2,6 @@
 
 test_description='verify safe.bareRepository checks'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 pwd="$(pwd)"

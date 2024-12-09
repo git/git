@@ -4,7 +4,6 @@
 #
 test_description='Tests git rev-list --bisect functionality'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-t6000.sh # t6xxx specific functions
 
@@ -307,6 +306,11 @@ test_expect_success '--bisect-all --first-parent' '
 	sort -k4,4r -k1,1 expect.unsorted >expect &&
 	git rev-list --bisect-all --first-parent E ^F >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '--bisect without any revisions' '
+	git rev-list --bisect HEAD..HEAD >out &&
+	test_must_be_empty out
 '
 
 test_done

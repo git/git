@@ -2,7 +2,6 @@
 
 test_description='basic sanity checks for git var'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 sane_unset_all_editors () {

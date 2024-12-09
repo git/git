@@ -2,7 +2,6 @@
 
 test_description='support for reading config from a blob'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'create config blob' '

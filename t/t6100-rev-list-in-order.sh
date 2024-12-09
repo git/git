@@ -2,7 +2,6 @@
 
 test_description='rev-list testing in-commit-order'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup a commit history with trees, blobs' '

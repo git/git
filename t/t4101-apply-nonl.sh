@@ -7,7 +7,6 @@ test_description='git apply should handle files with incomplete lines.
 
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # setup

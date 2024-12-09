@@ -75,7 +75,7 @@ enum bisect_error bisect_next_all(struct repository *r, const char *prefix);
 
 int estimate_bisect_steps(int all);
 
-void read_bisect_terms(const char **bad, const char **good);
+void read_bisect_terms(char **bad, char **good);
 
 int bisect_clean_state(void);
 

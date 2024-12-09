@@ -2,7 +2,6 @@
 
 test_description='Test git check-ref-format'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 valid_ref() {

@@ -627,7 +627,7 @@ void create_branch(struct repository *r,
 	else
 		msg = xstrfmt("branch: Created from %s", start_name);
 	transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
-						  &err);
+						  0, &err);
 	if (!transaction ||
 		ref_transaction_update(transaction, ref.buf,
 					&oid, forcing ? NULL : null_oid(),

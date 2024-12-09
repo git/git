@@ -6,7 +6,6 @@ This test checks that the import process handles inconsistent text
 encoding in p4 metadata (author names, commit messages, etc) without
 failing, and produces maximally sane output in git.'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-git-p4.sh
 
 python_target_version='3'

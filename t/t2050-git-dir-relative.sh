@@ -12,7 +12,6 @@ into the subdir while keeping the worktree location,
 and tries commits from the top and the subdir, checking
 that the commit-hook still gets called.'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 COMMIT_FILE="$(pwd)/output"

@@ -35,7 +35,6 @@ test_description='git cvsimport handling of vendor branches'
 GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-cvs.sh
 
 setup_cvs_test_repository t9601

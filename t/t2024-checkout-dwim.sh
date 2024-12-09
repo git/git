@@ -4,7 +4,6 @@ test_description='checkout <branch>
 
 Ensures that checkout on an unborn branch does what the user expects'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Is the current branch "refs/heads/$1"?

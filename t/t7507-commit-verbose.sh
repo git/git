@@ -2,7 +2,6 @@
 
 test_description='verbose commit template'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 write_script "check-for-diff" <<\EOF &&

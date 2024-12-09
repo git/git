@@ -2,7 +2,6 @@
 
 test_description='submodules handle mixed ref storage formats'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_ref_format () {

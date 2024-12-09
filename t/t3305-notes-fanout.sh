@@ -2,7 +2,6 @@
 
 test_description='Test that adding/removing many notes triggers automatic fanout restructuring'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 path_has_fanout() {

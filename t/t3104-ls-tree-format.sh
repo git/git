@@ -2,7 +2,6 @@
 
 test_description='ls-tree --format'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-t3100.sh
 

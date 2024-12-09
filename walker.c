@@ -290,7 +290,7 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 
 	if (write_ref) {
 		transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
-							  &err);
+							  0, &err);
 		if (!transaction) {
 			error("%s", err.buf);
 			goto done;

@@ -2,7 +2,6 @@
 
 test_description='upload-pack ref-in-want'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 get_actual_refs () {

@@ -665,7 +665,7 @@ static int s_update_ref(const char *action,
 	 */
 	if (!transaction) {
 		transaction = our_transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
-									    &err);
+									    0, &err);
 		if (!transaction) {
 			ret = STORE_REF_ERROR_OTHER;
 			goto out;
@@ -1667,7 +1667,7 @@ static int do_fetch(struct transport *transport,
 
 	if (atomic_fetch) {
 		transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
-							  &err);
+							  0, &err);
 		if (!transaction) {
 			retcode = -1;
 			goto cleanup;

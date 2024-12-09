@@ -5,7 +5,6 @@
 
 test_description='Tests to check that "reset" options follow a known table'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 

@@ -5,7 +5,6 @@
 
 test_description='test worktree writing operations when skip-worktree is used'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

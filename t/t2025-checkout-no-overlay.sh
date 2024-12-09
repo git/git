@@ -2,7 +2,6 @@
 
 test_description='checkout --no-overlay <tree-ish> -- <pathspec>'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup' '

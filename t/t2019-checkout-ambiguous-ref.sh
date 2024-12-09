@@ -2,7 +2,6 @@
 
 test_description='checkout handling of ambiguous (branch/tag) refs'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup ambiguous refs' '

@@ -6,7 +6,6 @@ This test creates files and directories with the same name in perforce and
 checks that git-p4 recovers from the error at the same time as the perforce
 repository.'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./lib-git-p4.sh
 
 test_expect_success 'start p4d' '

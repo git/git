@@ -5,7 +5,6 @@ test_description='assert (unbuilt) Documentation/*.txt and -h output
 Run this with --debug to see a summary of where we still fail to make
 the two versions consistent with one another.'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup: list of builtins' '

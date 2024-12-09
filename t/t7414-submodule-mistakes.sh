@@ -2,7 +2,6 @@
 
 test_description='handling of common mistakes people may make with submodules'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'create embedded repository' '

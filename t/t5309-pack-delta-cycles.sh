@@ -2,7 +2,6 @@
 
 test_description='test index-pack handling of delta cycles in packfiles'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-pack.sh
 

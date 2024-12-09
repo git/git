@@ -2,7 +2,6 @@
 
 test_description='core.whitespace rules and git apply'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 prepare_test_file () {

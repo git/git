@@ -2,7 +2,6 @@
 
 test_description="merges with unrelated index changes"
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Testcase for some simple merges

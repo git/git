@@ -5,7 +5,6 @@
 
 test_description='skip-worktree bit test'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 sane_unset GIT_TEST_SPLIT_INDEX

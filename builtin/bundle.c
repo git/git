@@ -67,7 +67,8 @@ static int parse_options_cmd_bundle(int argc,
 	return argc;
 }
 
-static int cmd_bundle_create(int argc, const char **argv, const char *prefix) {
+static int cmd_bundle_create(int argc, const char **argv, const char *prefix,
+			     struct repository *repo UNUSED) {
 	struct strvec pack_opts = STRVEC_INIT;
 	int version = -1;
 	int ret;
@@ -123,7 +124,8 @@ static int open_bundle(const char *path, struct bundle_header *header,
 	return read_bundle_header(path, header);
 }
 
-static int cmd_bundle_verify(int argc, const char **argv, const char *prefix) {
+static int cmd_bundle_verify(int argc, const char **argv, const char *prefix,
+			     struct repository *repo UNUSED) {
 	struct bundle_header header = BUNDLE_HEADER_INIT;
 	int bundle_fd = -1;
 	int quiet = 0;
@@ -164,7 +166,8 @@ cleanup:
 	return ret;
 }
 
-static int cmd_bundle_list_heads(int argc, const char **argv, const char *prefix) {
+static int cmd_bundle_list_heads(int argc, const char **argv, const char *prefix,
+				 struct repository *repo UNUSED) {
 	struct bundle_header header = BUNDLE_HEADER_INIT;
 	int bundle_fd = -1;
 	int ret;
@@ -189,7 +192,8 @@ cleanup:
 	return ret;
 }
 
-static int cmd_bundle_unbundle(int argc, const char **argv, const char *prefix) {
+static int cmd_bundle_unbundle(int argc, const char **argv, const char *prefix,
+			       struct repository *repo UNUSED) {
 	struct bundle_header header = BUNDLE_HEADER_INIT;
 	int bundle_fd = -1;
 	int ret;
@@ -231,7 +235,7 @@ cleanup:
 int cmd_bundle(int argc,
 	       const char **argv,
 	       const char *prefix,
-	       struct repository *repo UNUSED)
+	       struct repository *repo)
 {
 	parse_opt_subcommand_fn *fn = NULL;
 	struct option options[] = {
@@ -247,5 +251,5 @@ int cmd_bundle(int argc,
 
 	packet_trace_identity("bundle");
 
-	return !!fn(argc, argv, prefix);
+	return !!fn(argc, argv, prefix, repo);
 }

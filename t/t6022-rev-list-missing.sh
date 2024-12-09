@@ -2,7 +2,6 @@
 
 test_description='handling of missing objects in rev-list'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # We setup the repository with two commits, this way HEAD is always

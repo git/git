@@ -19,11 +19,17 @@
 `badParentSha1`::
 	(ERROR) A commit object has a bad parent sha1.
 
+`badRefContent`::
+	(ERROR) A ref has bad content.
+
 `badRefFiletype`::
 	(ERROR) A ref has a bad file type.
 
 `badRefName`::
 	(ERROR) A ref has an invalid format.
+
+`badReferentName`::
+	(ERROR) The referent name of a symref is invalid.
 
 `badTagName`::
 	(INFO) A tag has an invalid format.
@@ -169,6 +175,35 @@
 
 `nullSha1`::
 	(WARN) Tree contains entries pointing to a null sha1.
+
+`refMissingNewline`::
+	(INFO) A loose ref that does not end with newline(LF). As
+	valid implementations of Git never created such a loose ref
+	file, it may become an error in the future. Report to the
+	git@vger.kernel.org mailing list if you see this error, as
+	we need to know what tools created such a file.
+
+`symlinkRef`::
+	(INFO) A symbolic link is used as a symref. Report to the
+	git@vger.kernel.org mailing list if you see this error, as we
+	are assessing the feasibility of dropping the support to drop
+	creating symbolic links as symrefs.
+
+`symrefTargetIsNotARef`::
+	(INFO) The target of a symbolic reference points neither to
+	a root reference nor to a reference starting with "refs/".
+	Although we allow create a symref pointing to the referent which
+	is outside the "ref" by using `git symbolic-ref`, we may tighten
+	the rule in the future. Report to the git@vger.kernel.org
+	mailing list if you see this error, as we need to know what tools
+	created such a file.
+
+`trailingRefContent`::
+	(INFO) A loose ref has trailing content. As valid implementations
+	of Git never created such a loose ref file, it may become an
+	error in the future. Report to the git@vger.kernel.org mailing
+	list if you see this error, as we need to know what tools
+	created such a file.
 
 `treeNotSorted`::
 	(ERROR) A tree is not properly sorted.

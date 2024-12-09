@@ -2,7 +2,6 @@
 
 test_description='git apply with too-large patch'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success EXPENSIVE 'git apply rejects patches that are too large' '

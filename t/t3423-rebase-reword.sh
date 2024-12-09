@@ -2,7 +2,6 @@
 
 test_description='git rebase interactive with rewording'
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 . "$TEST_DIRECTORY"/lib-rebase.sh

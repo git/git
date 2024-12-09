@@ -6,7 +6,6 @@ This test verifies the recurse-submodules feature correctly lists files from
 submodules.
 '
 
-TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 test_expect_success 'setup directory structure and submodules' '
