@@ -208,6 +208,60 @@ static inline uint32_t pack_name_hash(const char *name)
 	return hash;
 }
 
+static inline uint32_t pack_name_hash_v2(const char *name)
+{
+	uint32_t hash = 0, base = 0, c;
+
+	if (!name)
+		return 0;
+
+	while ((c = *name++)) {
+		if (isspace(c))
+			continue;
+		if (c == '/') {
+			base = (base >> 6) ^ hash;
+			hash = 0;
+		} else {
+			/*
+			 * 'c' is only a single byte. Reverse it and move
+			 * it to the top of the hash, moving the rest to
+			 * less-significant bits.
+			 */
+			c = (c & 0xF0) >> 4 | (c & 0x0F) << 4;
+			c = (c & 0xCC) >> 2 | (c & 0x33) << 2;
+			c = (c & 0xAA) >> 1 | (c & 0x55) << 1;
+			hash = (hash >> 2) + (c << 24);
+		}
+	}
+	return (base >> 6) ^ hash;
+}
+
+static inline uint32_t pack_name_hash_v3(const char *name)
+{
+	/*
+	 * This 'bigp' value is a large prime, at least 25% of the max
+	 * value of an uint32_t. Multiplying by this value (modulo 2^32)
+	 * causes the 32 bits to change pseudo-randomly.
+	 */
+	const uint32_t bigp = 1234572167U;
+	uint32_t c, hash = bigp;
+
+	if (!name)
+		return 0;
+
+	/*
+	 * Do the simplest thing that will resemble pseudo-randomness: add
+	 * random multiples of a large prime number with a binary shift.
+	 * The goal is not to be cryptographic, but to be generally
+	 * uniformly distributed.
+	 */
+	while ((c = *name++) != 0) {
+		hash += c * bigp;
+		hash = (hash >> 5) | (hash << 27);
+	}
+	return hash;
+}
+
 static inline enum object_type oe_type(const struct object_entry *e)
 {
 	return e->type_valid ? e->type_ : OBJ_BAD;
