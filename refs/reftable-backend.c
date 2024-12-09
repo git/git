@@ -990,8 +990,9 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 		if (ret)
 			goto done;
 
-		string_list_append(&affected_refnames,
-				   transaction->updates[i]->refname);
+		if (!(transaction->updates[i]->flags & REF_LOG_ONLY))
+			string_list_append(&affected_refnames,
+					   transaction->updates[i]->refname);
 	}
 
 	/*
@@ -1302,6 +1303,7 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 	struct ident_split committer_ident = {0};
 	size_t logs_nr = 0, logs_alloc = 0, i;
 	const char *committer_info;
+	struct strintmap logs_ts;
 	int ret = 0;
 
 	committer_info = git_committer_info(0);
@@ -1309,6 +1311,8 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 		BUG("failed splitting committer info");
 
 	QSORT(arg->updates, arg->updates_nr, transaction_update_cmp);
+
+	strintmap_init(&logs_ts, ts);
 
 	reftable_writer_set_limits(writer, ts, ts);
 
@@ -1391,6 +1395,7 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 
 			if (create_reflog) {
 				struct ident_split c;
+				uint64_t update_index;
 
 				ALLOC_GROW(logs, logs_nr + 1, logs_alloc);
 				log = &logs[logs_nr++];
@@ -1405,7 +1410,11 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 				}
 
 				fill_reftable_log_record(log, &c);
-				log->update_index = ts;
+
+				update_index = strintmap_get(&logs_ts, u->refname);
+				log->update_index = update_index;
+				strintmap_set(&logs_ts, u->refname, update_index+1);
+
 				log->refname = xstrdup(u->refname);
 				memcpy(log->value.update.new_hash,
 				       u->new_oid.hash, GIT_MAX_RAWSZ);
@@ -1476,6 +1485,7 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 
 done:
 	assert(ret != REFTABLE_API_ERROR);
+	strintmap_clear(&logs_ts);
 	for (i = 0; i < logs_nr; i++)
 		reftable_log_record_release(&logs[i]);
 	free(logs);
