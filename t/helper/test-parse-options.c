@@ -174,7 +174,6 @@ int cmd__parse_options(int argc, const char **argv)
 		OPT_ALIAS('Z', "alias-target", "alias-source"),
 		OPT_END(),
 	};
-	int i;
 	int ret = 0;
 
 	trace2_cmd_name("_parse_");
@@ -198,10 +197,10 @@ int cmd__parse_options(int argc, const char **argv)
 	show(&expect, &ret, "dry run: %s", dry_run ? "yes" : "no");
 	show(&expect, &ret, "file: %s", file ? file : "(not set)");
 
-	for (i = 0; i < list.nr; i++)
+	for (size_t i = 0; i < list.nr; i++)
 		show(&expect, &ret, "list: %s", list.items[i].string);
 
-	for (i = 0; i < argc; i++)
+	for (int i = 0; i < argc; i++)
 		show(&expect, &ret, "arg %02d: %s", i, argv[i]);
 
 	expect.strdup_strings = 1;

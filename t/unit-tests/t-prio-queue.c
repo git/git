@@ -25,7 +25,7 @@ static void test_prio_queue(int *input, size_t input_size,
 	struct prio_queue pq = { intcmp };
 	int j = 0;
 
-	for (int i = 0; i < input_size; i++) {
+	for (size_t i = 0; i < input_size; i++) {
 		void *peek, *get;
 		switch(input[i]) {
 		case GET:

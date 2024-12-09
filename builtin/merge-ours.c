@@ -7,7 +7,9 @@
  *
  * Pretend we resolved the heads, but declare our tree trumps everybody else.
  */
+
 #define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "builtin.h"
 #include "diff.h"

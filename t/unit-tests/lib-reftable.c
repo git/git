@@ -1,3 +1,5 @@
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "lib-reftable.h"
 #include "test-lib.h"
 #include "reftable/constants.h"
