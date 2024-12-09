@@ -97,7 +97,7 @@ method exec {cmd {after {}}} {
 		lappend cmd 2>@1
 		set fd_f [_open_stdout_stderr $cmd]
 	}
-	fconfigure $fd_f -blocking 0 -translation binary
+	fconfigure $fd_f -blocking 0 -translation binary -encoding [encoding system]
 	fileevent $fd_f readable [cb _read $fd_f $after]
 }
 
