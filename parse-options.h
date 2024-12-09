@@ -353,6 +353,18 @@ struct option {
 	.callback = parse_opt_noop_cb, \
 }
 
+static char *parse_options_noop_ignored_value MAYBE_UNUSED;
+#define OPT_NOOP_ARG(s, l) { \
+	.type = OPTION_CALLBACK, \
+	.short_name = (s), \
+	.long_name = (l), \
+	.value = &parse_options_noop_ignored_value, \
+	.argh = "ignored", \
+	.help = N_("no-op (backward compatibility)"), \
+	.flags = PARSE_OPT_HIDDEN, \
+	.callback = parse_opt_noop_cb, \
+}
+
 #define OPT_ALIAS(s, l, source_long_name) { \
 	.type = OPTION_ALIAS, \
 	.short_name = (s), \
