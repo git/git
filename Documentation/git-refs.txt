@@ -57,8 +57,6 @@ KNOWN LIMITATIONS
 
 The ref format migration has several known limitations in its current form:
 
-* It is not possible to migrate repositories that have reflogs.
-
 * It is not possible to migrate repositories that have worktrees.
 
 * There is no way to block concurrent writes to the repository during an
