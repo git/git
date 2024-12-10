@@ -898,4 +898,12 @@ test_expect_success 'mergetool with guiDefault' '
 	git commit -m "branch1 resolved with mergetool"
 '
 
+test_expect_success 'mergetool with non-existent tool' '
+	test_when_finished "git reset --hard" &&
+	git checkout -b test$test_count branch1 &&
+	test_must_fail git merge main &&
+	yes "" | test_must_fail git mergetool --tool=absent >out 2>&1 &&
+	test_grep "mergetool.absent.cmd not set for tool" out
+'
+
 test_done
