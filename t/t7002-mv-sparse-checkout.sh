@@ -32,7 +32,7 @@ test_expect_success 'setup' "
 	hint: If you intend to update such entries, try one of the following:
 	hint: * Use the --sparse option.
 	hint: * Disable or modify the sparsity rules.
-	hint: Disable this message with \"git config advice.updateSparsePath false\"
+	hint: Disable this message with \"git config set advice.updateSparsePath false\"
 	EOF
 
 	cat >dirty_error_header <<-EOF &&
@@ -45,7 +45,7 @@ test_expect_success 'setup' "
 	hint: To correct the sparsity of these paths, do the following:
 	hint: * Use \"git add --sparse <paths>\" to update the index
 	hint: * Use \"git sparse-checkout reapply\" to apply the sparsity rules
-	hint: Disable this message with \"git config advice.updateSparsePath false\"
+	hint: Disable this message with \"git config set advice.updateSparsePath false\"
 	EOF
 "
 
