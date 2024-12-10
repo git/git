@@ -31,7 +31,6 @@ static struct diagnose_option diagnose_options[] = {
 
 int option_parse_diagnose(const struct option *opt, const char *arg, int unset)
 {
-	int i;
 	enum diagnose_mode *diagnose = opt->value;
 
 	if (!arg) {
@@ -39,7 +38,7 @@ int option_parse_diagnose(const struct option *opt, const char *arg, int unset)
 		return 0;
 	}
 
-	for (i = 0; i < ARRAY_SIZE(diagnose_options); i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(diagnose_options); i++) {
 		if (!strcmp(arg, diagnose_options[i].option_name)) {
 			*diagnose = diagnose_options[i].mode;
 			return 0;
@@ -186,7 +185,7 @@ int create_diagnostics_archive(struct strbuf *zip_path, enum diagnose_mode mode)
 	char **argv_copy = NULL;
 	int stdout_fd = -1, archiver_fd = -1;
 	struct strbuf buf = STRBUF_INIT;
-	int res, i;
+	int res;
 	struct archive_dir archive_dirs[] = {
 		{ ".git", 0 },
 		{ ".git/hooks", 0 },
@@ -239,7 +238,7 @@ int create_diagnostics_archive(struct strbuf *zip_path, enum diagnose_mode mode)
 
 	/* Only include this if explicitly requested */
 	if (mode == DIAGNOSE_ALL) {
-		for (i = 0; i < ARRAY_SIZE(archive_dirs); i++) {
+		for (size_t i = 0; i < ARRAY_SIZE(archive_dirs); i++) {
 			if (add_directory_to_archiver(&archiver_args,
 						      archive_dirs[i].path,
 						      archive_dirs[i].recursive)) {

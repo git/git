@@ -6,6 +6,8 @@ license that can be found in the LICENSE file or at
 https://developers.google.com/open-source/licenses/bsd
 */
 
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "test-lib.h"
 #include "lib-reftable.h"
 #include "reftable/basics.h"

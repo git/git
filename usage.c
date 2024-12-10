@@ -3,6 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+
 #include "git-compat-util.h"
 #include "gettext.h"
 #include "trace2.h"
@@ -189,7 +190,7 @@ void NORETURN die(const char *err, ...)
 static const char *fmt_with_err(char *buf, int n, const char *fmt)
 {
 	char str_error[256], *err;
-	int i, j;
+	size_t i, j;
 
 	err = strerror(errno);
 	for (i = j = 0; err[i] && j < sizeof(str_error) - 1; ) {

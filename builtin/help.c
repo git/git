@@ -1,8 +1,9 @@
-
 /*
  * Builtin help command
  */
+
 #define USE_THE_REPOSITORY_VARIABLE
+
 #include "builtin.h"
 #include "config.h"
 #include "exec-cmd.h"
@@ -129,7 +130,6 @@ static void list_config_help(enum show_config_type type)
 	struct string_list keys = STRING_LIST_INIT_DUP;
 	struct string_list keys_uniq = STRING_LIST_INIT_DUP;
 	struct string_list_item *item;
-	int i;
 
 	for (p = config_name_list; *p; p++) {
 		const char *var = *p;
@@ -156,7 +156,7 @@ static void list_config_help(enum show_config_type type)
 			    e->prefix, e->placeholder);
 
 	string_list_sort(&keys);
-	for (i = 0; i < keys.nr; i++) {
+	for (size_t i = 0; i < keys.nr; i++) {
 		const char *var = keys.items[i].string;
 		const char *wildcard, *tag, *cut;
 		const char *dot = NULL;

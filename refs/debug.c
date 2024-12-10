@@ -83,9 +83,8 @@ static void print_update(int i, const char *refname,
 
 static void print_transaction(struct ref_transaction *transaction)
 {
-	int i;
 	trace_printf_key(&trace_refs, "transaction {\n");
-	for (i = 0; i < transaction->nr; i++) {
+	for (size_t i = 0; i < transaction->nr; i++) {
 		struct ref_update *u = transaction->updates[i];
 		print_update(i, u->refname, &u->old_oid, &u->new_oid, u->flags,
 			     u->type, u->msg);
