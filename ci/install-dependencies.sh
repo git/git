@@ -58,6 +58,7 @@ ubuntu-*|ubuntu32-*|debian-*)
 		make libssl-dev libcurl4-openssl-dev libexpat-dev wget sudo default-jre \
 		tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl \
 		libemail-valid-perl libio-pty-perl libio-socket-ssl-perl libnet-smtp-ssl-perl libdbd-sqlite3-perl libcgi-pm-perl \
+		libpcre2-dev meson ninja-build pkg-config \
 		${CC_PACKAGE:-${CC:-gcc}} $PYTHON_PACKAGE
 
 	case "$distro" in
@@ -89,6 +90,12 @@ macos-*)
 	tar -xf helix-core-server.tgz -C "$CUSTOM_PATH" p4 p4d &&
 	sudo xattr -d com.apple.quarantine "$CUSTOM_PATH/p4" "$CUSTOM_PATH/p4d" 2>/dev/null || true
 	rm helix-core-server.tgz
+
+	case "$jobname" in
+	osx-meson)
+		brew install meson ninja pcre2
+		;;
+	esac
 
 	if test -n "$CC_PACKAGE"
 	then

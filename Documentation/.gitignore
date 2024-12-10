@@ -15,3 +15,5 @@ tmp-doc-diff/
 GIT-ASCIIDOCFLAGS
 /.build/
 /GIT-EXCLUDED-PROGRAMS
+/asciidoc.conf
+/asciidoctor-extensions.rb
