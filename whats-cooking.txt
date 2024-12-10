@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2024, #03; Sun, 8)
-X-master-at: e66fd72e972df760a53c3d6da023c17adfc426d6
+Subject: What's cooking in git.git (Dec 2024, #04; Tue, 10)
+X-master-at: caacdb5dfd60540ecec30ec479f147f3c8167e11
 X-next-at: c27f4b7a9fc45cdb75b4a22d3d3e0e7ac90f80b2
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2024, #03; Sun, 8)
+What's cooking in git.git (Dec 2024, #04; Tue, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,7 +46,128 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* bc/allow-upload-pack-from-other-people (2024-11-15) 1 commit
+  (merged to 'next' on 2024-12-02 at bf711f018c)
+ + Allow cloning from repositories owned by another user
+
+ Loosen overly strict ownership check introduced in the recent past,
+ to keep the promise "cloning a suspicious repository is a safe
+ first step to inspect it".
+ cf. <xmqqed2yzc5z.fsf@gitster.g>
+ source: <20241115005404.3747302-2-sandals@crustytoothpaste.net>
+
+
+* bc/ancient-ci (2024-11-01) 3 commits
+  (merged to 'next' on 2024-12-02 at f6128744ce)
+ + Add additional CI jobs to avoid accidental breakage
+ + ci: remove clause for Ubuntu 16.04
+ + gitlab-ci: switch from Ubuntu 16.04 to 20.04
+
+ Drop support for ancient environments in various CI jobs.
+ source: <20241031234934.3451390-1-sandals@crustytoothpaste.net>
+
+
+* jc/doc-opt-tilde-expand (2024-11-25) 1 commit
+  (merged to 'next' on 2024-12-02 at e345717b87)
+ + doc: option value may be separate for valid reasons
+
+ Describe a case where an option value needs to be spelled as a
+ separate argument, i.e. "--opt val", not "--opt=val".
+ source: <xmqqh67w6m4m.fsf@gitster.g>
+
+
+* pb/mergetool-errors (2024-11-25) 5 commits
+  (merged to 'next' on 2024-12-02 at b439b146c2)
+ + git-difftool--helper.sh: exit upon initialize_merge_tool errors
+ + git-mergetool--lib.sh: add error message for unknown tool variant
+ + git-mergetool--lib.sh: add error message if 'setup_user_tool' fails
+ + git-mergetool--lib.sh: use TOOL_MODE when erroring about unknown tool
+ + completion: complete '--tool-help' in 'git mergetool'
+
+ End-user experience of "git mergetool" when the command errors out
+ has been improved.
+ source: <pull.1827.v2.git.1732305022.gitgitgadget@gmail.com>
+
+
+* ps/reftable-detach (2024-11-19) 8 commits
+  (merged to 'next' on 2024-12-02 at e105e787b6)
+ + reftable/system: provide thin wrapper for lockfile subsystem
+ + reftable/stack: drop only use of `get_locked_file_path()`
+ + reftable/system: provide thin wrapper for tempfile subsystem
+ + reftable/stack: stop using `fsync_component()` directly
+ + reftable/system: stop depending on "hash.h"
+ + reftable: explicitly handle hash format IDs
+ + reftable/system: move "dir.h" to its only user
+ + Merge branch 'ps/reftable-strbuf' into ps/reftable-detach
+ (this branch is used by ps/reftable-iterator-reuse.)
+
+ Isolates the reftable subsystem from the rest of Git's codebase by
+ using fewer pieces of Git's infrastructure.
+ source: <cover.1731943954.git.ps@pks.im>
+
+
+* ps/reftable-iterator-reuse (2024-11-26) 11 commits
+  (merged to 'next' on 2024-12-02 at 3c1d2e2a6a)
+ + refs/reftable: reuse iterators when reading refs
+ + reftable/merged: drain priority queue on reseek
+ + reftable/stack: add mechanism to notify callers on reload
+ + refs/reftable: refactor reflog expiry to use reftable backend
+ + refs/reftable: refactor reading symbolic refs to use reftable backend
+ + refs/reftable: read references via `struct reftable_backend`
+ + refs/reftable: figure out hash via `reftable_stack`
+ + reftable/stack: add accessor for the hash ID
+ + refs/reftable: handle reloading stacks in the reftable backend
+ + refs/reftable: encapsulate reftable stack
+ + Merge branch 'ps/reftable-detach' into ps/reftable-iterator-reuse
+ (this branch uses ps/reftable-detach.)
+
+ Optimize reading random references out of the reftable backend by
+ allowing reuse of iterator objects.
+ source: <20241126-pks-reftable-backend-reuse-iter-v4-0-b17fd27df126@pks.im>
+
+--------------------------------------------------
 [New Topics]
+
+* kn/reflog-migration (2024-12-10) 7 commits
+ - refs: add support for migrating reflogs
+ - refs: allow multiple reflog entries for the same refname
+ - refs: introduce the `ref_transaction_update_reflog` function
+ - refs: extract out refname verification in transactions
+ - refs/files: add count field to ref_lock
+ - refs: add `index` field to `struct ref_udpate`
+ - refs: include committer info in `ref_update` struct
+
+ "git refs migrate" learned to also migrate the reflog data across
+ backends.
+
+ Needs review.
+ source: <20241209-320-git-refs-migrate-reflogs-v1-0-d4bc37ee860f@gmail.com>
+
+
+* mh/doc-windows-home-env (2024-12-10) 1 commit
+ - Document HOME environment variable
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <pull.1834.git.1733771894867.gitgitgadget@gmail.com>
+
+
+* tc/bundle-with-tag-remove-workaround (2024-12-10) 1 commit
+ - bundle: remove unneeded code
+
+ "git bundle create" with an annotated tag on the positive end of
+ the revision range had a workaround code for older limitation in
+ the revision walker, which has become unnecessary.
+
+ Expecting a reroll.
+ cf. <CAOLa=ZQpBf-ZE8BmXRUXJ247p44Enj0vrJv2KHVDXtGzY6SU8w@mail.gmail.com>
+ source: <20241209-fix-bundle-create-race-v1-1-e6513bdcbf8a@iotcl.com>
+
+--------------------------------------------------
+[Cooking]
 
 * bf/explicit-config-set-in-advice-messages (2024-12-06) 1 commit
  - advice: suggest using subcommand "git config set"
@@ -59,16 +180,19 @@ Release tarballs are available at:
 
 
 * cc/lop-remote (2024-12-07) 5 commits
- - doc: add technical design doc for large object promisors
- - promisor-remote: check advertised name or URL
- - Add 'promisor-remote' capability to protocol v2
- - strbuf: refactor strbuf_trim_trailing_ch()
- - version: refactor strbuf_sanitize()
+ . doc: add technical design doc for large object promisors
+ . promisor-remote: check advertised name or URL
+ . Add 'promisor-remote' capability to protocol v2
+ . strbuf: refactor strbuf_trim_trailing_ch()
+ . version: refactor strbuf_sanitize()
 
+ Expecting a reroll.
+ cf. <CAP8UFD3bdEo1_bg+aX52xSGxmg9KfNrpiX+2LwUM-yDqjvfZbQ@mail.gmail.com>
  source: <20241206124248.160494-1-christian.couder@gmail.com>
 
 
-* ds/backfill (2024-12-07) 6 commits
+* ds/backfill (2024-12-09) 7 commits
+ - SQUASH??? leakfix
  - backfill: assume --sparse when sparse-checkout is enabled
  - backfill: add --sparse option
  - backfill: add --batch-size=<n> option
@@ -120,7 +244,12 @@ Release tarballs are available at:
  source: <xmqqcyi5xmhr.fsf@gitster.g>
 
 
-* re/submodule-parse-opt (2024-12-08) 3 commits
+* re/submodule-parse-opt (2024-12-10) 8 commits
+ - git-submodule.sh: rename some variables
+ - git-submodule.sh: improve variables readability
+ - git-submodule.sh: add some comments
+ - git-submodule.sh: get rid of unused variable
+ - git-submodule.sh: get rid of isnumber
  - git-submodule.sh: improve parsing of short options
  - git-submodule.sh: improve parsing of some long options
  - git-submodule.sh: make some variables boolean
@@ -129,34 +258,10 @@ Release tarballs are available at:
  e.g. "--branch=B" can be spelled "--branch B" or "-bB".
 
  Will merge to 'next'?
- source: <20241207135201.2536-1-royeldar0@gmail.com>
-
---------------------------------------------------
-[Graduated to 'master']
-
-* kh/sequencer-comment-char (2024-11-26) 3 commits
-  (merged to 'next' on 2024-11-28 at 84693f6bb7)
- + sequencer: comment commit messages properly
- + sequencer: comment `--reference` subject line properly
- + sequencer: comment checked-out branch properly
-
- The sequencer failed to honor core.commentString in some places.
- source: <cover.1732565412.git.code@khaugsbakk.name>
+ source: <20241209165009.40653-1-royeldar0@gmail.com>
 
 
-* sj/refs-symref-referent-fix (2024-11-27) 1 commit
-  (merged to 'next' on 2024-11-28 at 65eba16b56)
- + ref-cache: fix invalid free operation in `free_ref_entry`
-
- A double-free that may not trigger in practice by luck has been
- corrected in the reference resolution code.
- source: <Z0Xd-cYPNNrxwuAB@ArchLinux>
-
---------------------------------------------------
-[Cooking]
-
-* jt/fix-fattening-promisor-fetch (2024-12-04) 4 commits
- - index-pack: work around false positive use of uninitialized variable
+* jt/fix-fattening-promisor-fetch (2024-12-10) 3 commits
  - index-pack --promisor: also check commits' trees
  - index-pack --promisor: don't check blobs
  - index-pack --promisor: dedup before checking links
@@ -164,7 +269,7 @@ Release tarballs are available at:
  Fix performance regression of a recent "fatten promisor pack with
  local objects" protection against an unwanted gc.
 
- Need to squash the fix-up at the tip.
+ Will merge to 'next'.
  source: <cover.1733262661.git.jonathantanmy@google.com>
 
 
@@ -223,13 +328,13 @@ Release tarballs are available at:
  source: <20241206-pks-sign-compare-v4-0-0344c6dfb219@pks.im>
 
 
-* rj/strvec-splice-fix (2024-12-05) 2 commits
+* rj/strvec-splice-fix (2024-12-10) 2 commits
  - strvec: `strvec_splice()` to a statically initialized vector
  - Merge branch 'ps/leakfixes-part-10' into rj/strvec-splice-fix
 
  Correct strvec_splice() that misbehaved when the strvec is empty.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <3c7b3c26-7501-4797-8afa-c7f7e9c46558@gmail.com>
 
 
@@ -292,17 +397,6 @@ Release tarballs are available at:
  source: <xmqqa5dkqjmr.fsf_-_@gitster.g>
 
 
-* jc/doc-opt-tilde-expand (2024-11-25) 1 commit
-  (merged to 'next' on 2024-12-02 at e345717b87)
- + doc: option value may be separate for valid reasons
-
- Describe a case where an option value needs to be spelled as a
- separate argument, i.e. "--opt val", not "--opt=val".
-
- Will merge to 'master'.
- source: <xmqqh67w6m4m.fsf@gitster.g>
-
-
 * kn/midx-wo-the-repository (2024-12-04) 10 commits
   (merged to 'next' on 2024-12-05 at e48a185ed0)
  + midx: inline the `MIDX_MIN_SIZE` definition
@@ -351,19 +445,6 @@ Release tarballs are available at:
  source: <20241127233312.27710-1-jltobler@gmail.com>
 
 
-* bc/allow-upload-pack-from-other-people (2024-11-15) 1 commit
-  (merged to 'next' on 2024-12-02 at bf711f018c)
- + Allow cloning from repositories owned by another user
-
- Loosen overly strict ownership check introduced in the recent past,
- to keep the promise "cloning a suspicious repository is a safe
- first step to inspect it".
-
- Will merge to 'master'.
- cf. <xmqqed2yzc5z.fsf@gitster.g>
- source: <20241115005404.3747302-2-sandals@crustytoothpaste.net>
-
-
 * tb/incremental-midx-part-2 (2024-11-20) 15 commits
  - midx: implement writing incremental MIDX bitmaps
  - pack-bitmap.c: use `ewah_or_iterator` for type bitmap iterators
@@ -387,21 +468,6 @@ Release tarballs are available at:
  source: <cover.1732054032.git.me@ttaylorr.com>
 
 
-* pb/mergetool-errors (2024-11-25) 5 commits
-  (merged to 'next' on 2024-12-02 at b439b146c2)
- + git-difftool--helper.sh: exit upon initialize_merge_tool errors
- + git-mergetool--lib.sh: add error message for unknown tool variant
- + git-mergetool--lib.sh: add error message if 'setup_user_tool' fails
- + git-mergetool--lib.sh: use TOOL_MODE when erroring about unknown tool
- + completion: complete '--tool-help' in 'git mergetool'
-
- End-user experience of "git mergetool" when the command errors out
- has been improved.
-
- Will merge to 'master'.
- source: <pull.1827.v2.git.1732305022.gitgitgadget@gmail.com>
-
-
 * ps/send-pack-unhide-error-in-atomic-push (2024-11-14) 2 commits
  - transport: don't ignore git-receive-pack(1) exit code on atomic push
  - t5504: modernize test by moving heredocs into test bodies
@@ -422,28 +488,6 @@ Release tarballs are available at:
  Expecting a hopefully small and final reroll.
  cf. <xmqqa5e5berx.fsf@gitster.g>
  source: <pull.1825.v2.git.1731350009491.gitgitgadget@gmail.com>
-
-
-* ps/reftable-iterator-reuse (2024-11-26) 11 commits
-  (merged to 'next' on 2024-12-02 at 3c1d2e2a6a)
- + refs/reftable: reuse iterators when reading refs
- + reftable/merged: drain priority queue on reseek
- + reftable/stack: add mechanism to notify callers on reload
- + refs/reftable: refactor reflog expiry to use reftable backend
- + refs/reftable: refactor reading symbolic refs to use reftable backend
- + refs/reftable: read references via `struct reftable_backend`
- + refs/reftable: figure out hash via `reftable_stack`
- + reftable/stack: add accessor for the hash ID
- + refs/reftable: handle reloading stacks in the reftable backend
- + refs/reftable: encapsulate reftable stack
- + Merge branch 'ps/reftable-detach' into ps/reftable-iterator-reuse
- (this branch uses ps/reftable-detach.)
-
- Optimize reading random references out of the reftable backend by
- allowing reuse of iterator objects.
-
- Will merge to 'master'.
- source: <20241126-pks-reftable-backend-reuse-iter-v4-0-b17fd27df126@pks.im>
 
 
 * jc/move-is-bare-repository-cfg-variable-to-repo (2024-11-07) 3 commits
@@ -520,18 +564,6 @@ Release tarballs are available at:
  source: <pull.1818.v3.git.1733514358.gitgitgadget@gmail.com>
 
 
-* bc/ancient-ci (2024-11-01) 3 commits
-  (merged to 'next' on 2024-12-02 at f6128744ce)
- + Add additional CI jobs to avoid accidental breakage
- + ci: remove clause for Ubuntu 16.04
- + gitlab-ci: switch from Ubuntu 16.04 to 20.04
-
- Drop support for ancient environments in various CI jobs.
-
- Will merge to 'master'.
- source: <20241031234934.3451390-1-sandals@crustytoothpaste.net>
-
-
 * cw/worktree-extension (2024-12-02) 8 commits
   (merged to 'next' on 2024-12-05 at 7bd98d132c)
  + worktree: refactor `repair_worktree_after_gitdir_move()`
@@ -559,25 +591,6 @@ Release tarballs are available at:
 
  Comments?
  source: <20241109092739.14276-1-abhijeet.nkt@gmail.com>
-
-
-* ps/reftable-detach (2024-11-19) 8 commits
-  (merged to 'next' on 2024-12-02 at e105e787b6)
- + reftable/system: provide thin wrapper for lockfile subsystem
- + reftable/stack: drop only use of `get_locked_file_path()`
- + reftable/system: provide thin wrapper for tempfile subsystem
- + reftable/stack: stop using `fsync_component()` directly
- + reftable/system: stop depending on "hash.h"
- + reftable: explicitly handle hash format IDs
- + reftable/system: move "dir.h" to its only user
- + Merge branch 'ps/reftable-strbuf' into ps/reftable-detach
- (this branch is used by ps/reftable-iterator-reuse.)
-
- Isolates the reftable subsystem from the rest of Git's codebase by
- using fewer pieces of Git's infrastructure.
-
- Will merge to 'master'.
- source: <cover.1731943954.git.ps@pks.im>
 
 
 * km/config-remote-by-name (2024-10-21) 1 commit
@@ -624,7 +637,7 @@ Release tarballs are available at:
  + refs: standardize output of refs_read_symbolic_ref
  + t/t5505-remote: test failure of set-head
  + t/t5505-remote: set default branch to main
- (this branch is used by bf/fetch-set-head-config and jc/set-head-symref-fix)
+ (this branch is used by bf/fetch-set-head-config and jc/set-head-symref-fix.)
 
  When "git fetch $remote" notices that refs/remotes/$remote/HEAD is
  missing and discovers what branch the other side points with its
@@ -714,3 +727,14 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <cover.1733236936.git.karthik.188@gmail.com>
+
+--------------------------------------------------
+[Discarded]
+
+* js/set-head-symref-fix (2024-12-06) 2 commits
+ . Fix `git fetch --tags` in repo with no configured remote
+ - Merge branch 'bf/set-head-symref' into js/set-head-symref-fix
+ (this branch uses bf/set-head-symref.)
+
+ Superseded by jc/set-head-symref-fix
+ source: <b41ae080654a3603af09801018df539f656cf9d8.1733430345.git.steadmon@google.com>
