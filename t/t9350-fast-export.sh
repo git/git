@@ -631,7 +631,7 @@ test_expect_success 'fast-export quotes pathnames' '
 	 git rev-list HEAD >expect &&
 	 git init result &&
 	 cd result &&
-	 git fast-import <../export.out &&
+	 git -c core.protectNTFS=false fast-import <../export.out &&
 	 git rev-list HEAD >actual &&
 	 test_cmp ../expect actual
 	)
