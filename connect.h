@@ -1,6 +1,7 @@
 #ifndef CONNECT_H
 #define CONNECT_H
 
+#include "string-list.h"
 #include "protocol.h"
 
 #define CONNECT_VERBOSE       (1u << 0)
@@ -29,5 +30,12 @@ int server_supports_feature(const char *c, const char *feature,
 void check_stateless_delimiter(int stateless_rpc,
 			       struct packet_reader *reader,
 			       const char *error);
+
+/**
+ * write_command_and_capabilities writes a command along with the requested
+ * server capabilities/features into a request buffer.
+ */
+void write_command_and_capabilities(struct strbuf *req_buf, const char *command,
+				    const struct string_list *server_options);
 
 #endif
