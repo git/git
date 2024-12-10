@@ -367,7 +367,8 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 
 		seen_commits++;
 
-		if (match_cnt == max_candidates) {
+		if (match_cnt == max_candidates ||
+		    match_cnt == hashmap_get_size(&names)) {
 			gave_up_on = c;
 			break;
 		}
@@ -667,8 +668,6 @@ int cmd_describe(int argc,
 			     NULL);
 	if (!hashmap_get_size(&names) && !always)
 		die(_("No names found, cannot describe anything."));
-	if (hashmap_get_size(&names) < max_candidates)
-		max_candidates = hashmap_get_size(&names);
 
 	if (argc == 0) {
 		if (broken) {
