@@ -1438,6 +1438,7 @@ static int set_head(int argc, const char **argv, const char *prefix,
 		b_local_head = STRBUF_INIT;
 	char *head_name = NULL;
 	struct ref_store *refs = get_main_ref_store(the_repository);
+	struct remote *remote;
 
 	struct option options[] = {
 		OPT_BOOL('a', "auto", &opt_a,
@@ -1448,8 +1449,10 @@ static int set_head(int argc, const char **argv, const char *prefix,
 	};
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_remote_sethead_usage, 0);
-	if (argc)
+	if (argc) {
 		strbuf_addf(&b_head, "refs/remotes/%s/HEAD", argv[0]);
+		remote = remote_get(argv[0]);
+	}
 
 	if (!opt_a && !opt_d && argc == 2) {
 		head_name = xstrdup(argv[1]);
@@ -1488,6 +1491,13 @@ static int set_head(int argc, const char **argv, const char *prefix,
 	}
 	if (opt_a)
 		report_set_head_auto(argv[0], head_name, &b_local_head, was_detached);
+	if (remote->follow_remote_head == FOLLOW_REMOTE_ALWAYS) {
+		struct strbuf config_name = STRBUF_INIT;
+		strbuf_addf(&config_name,
+			"remote.%s.followremotehead", remote->name);
+		git_config_set(config_name.buf, "warn");
+		strbuf_release(&config_name);
+	}
 
 cleanup:
 	free(head_name);
