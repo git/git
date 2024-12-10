@@ -63,6 +63,9 @@ symbolic link, the clone will fail. This is a security measure to
 prevent the unintentional copying of files by dereferencing the symbolic
 links.
 +
+This option does not work with repositories owned by other users for security
+reasons, and `--no-local` must be specified for the clone to succeed.
++
 *NOTE*: this operation can race with concurrent modification to the
 source repository, similar to running `cp -r <src> <dst>` while modifying
 _<src>_.
@@ -382,6 +385,12 @@ $ cd my-linux
 +
 ------------
 $ git clone --bare -l /home/proj/.git /pub/scm/proj.git
+------------
+
+* Clone a local repository from a different user:
++
+------------
+$ git clone --no-local /home/otheruser/proj.git /pub/scm/proj.git
 ------------
 
 CONFIGURATION

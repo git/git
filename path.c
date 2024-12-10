@@ -684,7 +684,7 @@ return_null:
  * links.  User relative paths are also returned as they are given,
  * except DWIM suffixing.
  */
-const char *enter_repo(const char *path, int strict)
+const char *enter_repo(const char *path, unsigned flags)
 {
 	static struct strbuf validated_path = STRBUF_INIT;
 	static struct strbuf used_path = STRBUF_INIT;
@@ -692,7 +692,7 @@ const char *enter_repo(const char *path, int strict)
 	if (!path)
 		return NULL;
 
-	if (!strict) {
+	if (!(flags & ENTER_REPO_STRICT)) {
 		static const char *suffix[] = {
 			"/.git", "", ".git/.git", ".git", NULL,
 		};
@@ -736,7 +736,8 @@ const char *enter_repo(const char *path, int strict)
 		if (!suffix[i])
 			return NULL;
 		gitfile = read_gitfile(used_path.buf);
-		die_upon_dubious_ownership(gitfile, NULL, used_path.buf);
+		if (!(flags & ENTER_REPO_ANY_OWNER_OK))
+			die_upon_dubious_ownership(gitfile, NULL, used_path.buf);
 		if (gitfile) {
 			strbuf_reset(&used_path);
 			strbuf_addstr(&used_path, gitfile);
@@ -747,7 +748,8 @@ const char *enter_repo(const char *path, int strict)
 	}
 	else {
 		const char *gitfile = read_gitfile(path);
-		die_upon_dubious_ownership(gitfile, NULL, path);
+		if (!(flags & ENTER_REPO_ANY_OWNER_OK))
+			die_upon_dubious_ownership(gitfile, NULL, path);
 		if (gitfile)
 			path = gitfile;
 		if (chdir(path))
