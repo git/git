@@ -548,6 +548,10 @@ out:
 		close(fd);
 	free_names(names);
 	free_names(names_after);
+
+	if (st->opts.on_reload)
+		st->opts.on_reload(st->opts.on_reload_payload);
+
 	return err;
 }
 
@@ -1790,4 +1794,9 @@ int reftable_stack_clean(struct reftable_stack *st)
 done:
 	reftable_addition_destroy(add);
 	return err;
+}
+
+enum reftable_hash reftable_stack_hash_id(struct reftable_stack *st)
+{
+	return reftable_merged_table_hash_id(st->merged);
 }
