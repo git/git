@@ -1597,7 +1597,7 @@ static int add_possible_reference_from_superproject(
 		struct strbuf err = STRBUF_INIT;
 		strbuf_add(&sb, odb->path, len);
 
-		if (repo_init(&alternate, sb.buf, NULL) < 0)
+		if (repo_init(&alternate, sb.buf, NULL, the_repository->is_bare_cfg) < 0)
 			die(_("could not get a repository handle for gitdir '%s'"),
 			    sb.buf);
 

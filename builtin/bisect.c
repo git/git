@@ -705,7 +705,7 @@ static enum bisect_error bisect_start(struct bisect_terms *terms, int argc,
 	struct object_id oid;
 	const char *head;
 
-	if (is_bare_repository())
+	if (repo_is_bare(the_repository))
 		no_checkout = 1;
 
 	/*

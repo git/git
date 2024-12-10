@@ -4016,7 +4016,7 @@ static void connect_wt_gitdir_in_nested(const char *sub_worktree,
 	const struct submodule *sub;
 
 	/* If the submodule has no working tree, we can ignore it. */
-	if (repo_init(&subrepo, sub_gitdir, sub_worktree))
+	if (repo_init(&subrepo, sub_gitdir, sub_worktree, the_repository->is_bare_cfg))
 		return;
 
 	if (repo_read_index(&subrepo) < 0)

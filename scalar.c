@@ -722,7 +722,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 
 		git_config_clear();
 
-		if (repo_init(&r, gitdir.buf, commondir.buf))
+		if (repo_init(&r, gitdir.buf, commondir.buf, the_repository->is_bare_cfg))
 			goto loop_end;
 
 		old_repo = the_repository;

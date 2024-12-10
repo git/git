@@ -85,8 +85,8 @@ static struct worktree *get_main_worktree(int skip_reading_head)
 	 * This means that worktree->is_bare may be set to 0 even if the main
 	 * worktree is configured to be bare.
 	 */
-	worktree->is_bare = (is_bare_repository_cfg == 1) ||
-		is_bare_repository();
+
+	worktree->is_bare = the_repository->is_bare_cfg == 1;
 	worktree->is_current = is_current_worktree(worktree);
 	if (!skip_reading_head)
 		add_head_info(worktree);
