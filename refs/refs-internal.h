@@ -113,6 +113,14 @@ struct ref_update {
 	void *backend_data;
 	unsigned int type;
 	char *msg;
+	char *committer_info;
+
+	/*
+	 * The index overrides the default sort algorithm. This is needed
+	 * when migrating reflogs and we want to ensure we carry over the
+	 * same order.
+	 */
+	unsigned int index;
 
 	/*
 	 * If this ref_update was split off of a symref update via
@@ -148,13 +156,15 @@ int ref_update_reject_duplicates(struct string_list *refnames,
  * dereferenced if the REF_HAVE_NEW and REF_HAVE_OLD bits,
  * respectively, are set in flags.
  */
-struct ref_update *ref_transaction_add_update(
-		struct ref_transaction *transaction,
-		const char *refname, unsigned int flags,
-		const struct object_id *new_oid,
-		const struct object_id *old_oid,
-		const char *new_target, const char *old_target,
-		const char *msg);
+struct ref_update *ref_transaction_add_update(struct ref_transaction *transaction,
+					      const char *refname,
+					      unsigned int flags,
+					      const struct object_id *new_oid,
+					      const struct object_id *old_oid,
+					      const char *new_target,
+					      const char *old_target,
+					      const char *committer_info,
+					      const char *msg);
 
 /*
  * Transaction states.

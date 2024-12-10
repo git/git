@@ -31,6 +31,7 @@
 #include "date.h"
 #include "commit.h"
 #include "wildmatch.h"
+#include "ident.h"
 
 /*
  * List of all available backends
@@ -1199,6 +1200,7 @@ void ref_transaction_free(struct ref_transaction *transaction)
 
 	for (i = 0; i < transaction->nr; i++) {
 		free(transaction->updates[i]->msg);
+		free(transaction->updates[i]->committer_info);
 		free((char *)transaction->updates[i]->new_target);
 		free((char *)transaction->updates[i]->old_target);
 		free(transaction->updates[i]);
@@ -1207,13 +1209,15 @@ void ref_transaction_free(struct ref_transaction *transaction)
 	free(transaction);
 }
 
-struct ref_update *ref_transaction_add_update(
-		struct ref_transaction *transaction,
-		const char *refname, unsigned int flags,
-		const struct object_id *new_oid,
-		const struct object_id *old_oid,
-		const char *new_target, const char *old_target,
-		const char *msg)
+struct ref_update *ref_transaction_add_update(struct ref_transaction *transaction,
+					      const char *refname,
+					      unsigned int flags,
+					      const struct object_id *new_oid,
+					      const struct object_id *old_oid,
+					      const char *new_target,
+					      const char *old_target,
+					      const char *committer_info,
+					      const char *msg)
 {
 	struct ref_update *update;
 
@@ -1237,10 +1241,49 @@ struct ref_update *ref_transaction_add_update(
 		oidcpy(&update->new_oid, new_oid);
 	if ((flags & REF_HAVE_OLD) && old_oid)
 		oidcpy(&update->old_oid, old_oid);
-	if (!(flags & REF_SKIP_CREATE_REFLOG))
+	if (!(flags & REF_SKIP_CREATE_REFLOG)) {
+		if (committer_info) {
+			struct strbuf sb = STRBUF_INIT;
+			strbuf_addstr(&sb, committer_info);
+			update->committer_info = strbuf_detach(&sb, NULL);
+		}
+
 		update->msg = normalize_reflog_message(msg);
+	}
 
 	return update;
+}
+
+static int transaction_refname_verification(const char *refname,
+					    const struct object_id *new_oid,
+					    unsigned int flags,
+					    unsigned int reflog,
+					    struct strbuf *err)
+{
+	if (flags & REF_SKIP_REFNAME_VERIFICATION)
+		return 0;
+
+	if (is_pseudo_ref(refname)) {
+		if (reflog)
+			strbuf_addf(err, _("refusing to update reflog for pseudoref '%s'"),
+				    refname);
+		else
+			strbuf_addf(err, _("refusing to update pseudoref '%s'"),
+				    refname);
+		return -1;
+	} else if ((new_oid && !is_null_oid(new_oid)) ?
+		 check_refname_format(refname, REFNAME_ALLOW_ONELEVEL) :
+		 !refname_is_safe(refname)) {
+		if (reflog)
+			strbuf_addf(err, _("refusing to update reflog with bad name '%s'"),
+				    refname);
+		else
+			strbuf_addf(err, _("refusing to update ref with bad name '%s'"),
+				    refname);
+		return -1;
+	}
+
+	return 0;
 }
 
 int ref_transaction_update(struct ref_transaction *transaction,
@@ -1252,6 +1295,8 @@ int ref_transaction_update(struct ref_transaction *transaction,
 			   unsigned int flags, const char *msg,
 			   struct strbuf *err)
 {
+	int ret;
+
 	assert(err);
 
 	if ((flags & REF_FORCE_CREATE_REFLOG) &&
@@ -1260,21 +1305,9 @@ int ref_transaction_update(struct ref_transaction *transaction,
 		return -1;
 	}
 
-	if (!(flags & REF_SKIP_REFNAME_VERIFICATION) &&
-	    ((new_oid && !is_null_oid(new_oid)) ?
-		     check_refname_format(refname, REFNAME_ALLOW_ONELEVEL) :
-			   !refname_is_safe(refname))) {
-		strbuf_addf(err, _("refusing to update ref with bad name '%s'"),
-			    refname);
-		return -1;
-	}
-
-	if (!(flags & REF_SKIP_REFNAME_VERIFICATION) &&
-	    is_pseudo_ref(refname)) {
-		strbuf_addf(err, _("refusing to update pseudoref '%s'"),
-			    refname);
-		return -1;
-	}
+	ret = transaction_refname_verification(refname, new_oid, flags, 0, err);
+	if (ret)
+		return ret;
 
 	if (flags & ~REF_TRANSACTION_UPDATE_ALLOWED_FLAGS)
 		BUG("illegal flags 0x%x passed to ref_transaction_update()", flags);
@@ -1289,18 +1322,47 @@ int ref_transaction_update(struct ref_transaction *transaction,
 	flags |= (new_oid ? REF_HAVE_NEW : 0) | (old_oid ? REF_HAVE_OLD : 0);
 	flags |= (new_target ? REF_HAVE_NEW : 0) | (old_target ? REF_HAVE_OLD : 0);
 
-	ref_transaction_add_update(transaction, refname, flags,
-				   new_oid, old_oid, new_target,
-				   old_target, msg);
+	ref_transaction_add_update(transaction, refname, flags, new_oid,
+				   old_oid, new_target, old_target, NULL, msg);
+	return 0;
+}
+
+int ref_transaction_update_reflog(struct ref_transaction *transaction,
+				  const char *refname,
+				  const struct object_id *new_oid,
+				  const struct object_id *old_oid,
+				  const char *committer_info, unsigned int flags,
+				  const char *msg, unsigned int index,
+				  struct strbuf *err)
+{
+	struct ref_update *update;
+	int ret;
+
+	assert(err);
+
+	ret = transaction_refname_verification(refname, new_oid, flags, 1, err);
+	if (ret)
+		return ret;
+
+	flags |= REF_LOG_ONLY | REF_NO_DEREF;
+
+	update = ref_transaction_add_update(transaction, refname, flags,
+					    new_oid, old_oid, NULL, NULL,
+					    committer_info, msg);
+	/*
+	 * While we do set the old_oid value, we unset the flag to skip
+	 * old_oid verification which only makes sense for refs.
+	 */
+	update->flags &= ~REF_HAVE_OLD;
+	update->index = index;
+
 	return 0;
 }
 
 int ref_transaction_create(struct ref_transaction *transaction,
-			   const char *refname,
-			   const struct object_id *new_oid,
-			   const char *new_target,
-			   unsigned int flags, const char *msg,
-			   struct strbuf *err)
+			   const char *refname, const struct object_id *new_oid,
+			   const char *new_target, unsigned int flags,
+			   const char *msg, struct strbuf *err)
 {
 	if (new_oid && new_target)
 		BUG("create called with both new_oid and new_target set");
@@ -2708,6 +2770,7 @@ int ref_update_check_old_target(const char *referent, struct ref_update *update,
 }
 
 struct migration_data {
+	unsigned int index;
 	struct ref_store *old_refs;
 	struct ref_transaction *transaction;
 	struct strbuf *errbuf;
@@ -2741,6 +2804,53 @@ static int migrate_one_ref(const char *refname, const char *referent UNUSED, con
 done:
 	strbuf_release(&symref_target);
 	return ret;
+}
+
+struct reflog_migration_data {
+	unsigned int *index;
+	const char *refname;
+	struct ref_store *old_refs;
+	struct ref_transaction *transaction;
+	struct strbuf *errbuf;
+};
+
+static int migrate_one_reflog_entry(struct object_id *old_oid,
+				    struct object_id *new_oid,
+				    const char *committer,
+				    timestamp_t timestamp, int tz,
+				    const char *msg, void *cb_data)
+{
+	struct reflog_migration_data *data = cb_data;
+	struct strbuf sb = STRBUF_INIT;
+	const char *date;
+	int ret;
+
+	date = show_date(timestamp, tz, DATE_MODE(NORMAL));
+	/* committer contains name and email */
+	strbuf_addstr(&sb, fmt_ident("", committer, WANT_BLANK_IDENT, date, 0));
+
+	ret = ref_transaction_update_reflog(data->transaction, data->refname,
+					    new_oid, old_oid, sb.buf,
+					    REF_HAVE_NEW | REF_HAVE_OLD, msg,
+					    (*data->index)++, data->errbuf);
+	strbuf_release(&sb);
+
+	return ret;
+}
+
+static int migrate_one_reflog(const char *refname, void *cb_data)
+{
+	struct migration_data *migration_data = cb_data;
+	struct reflog_migration_data data;
+
+	data.refname = refname;
+	data.old_refs = migration_data->old_refs;
+	data.transaction = migration_data->transaction;
+	data.errbuf = migration_data->errbuf;
+	data.index = &migration_data->index;
+
+	return refs_for_each_reflog_ent(migration_data->old_refs, refname,
+					migrate_one_reflog_entry, &data);
 }
 
 static int move_files(const char *from_path, const char *to_path, struct strbuf *errbuf)
@@ -2809,13 +2919,6 @@ done:
 	return ret;
 }
 
-static int count_reflogs(const char *reflog UNUSED, void *payload)
-{
-	size_t *reflog_count = payload;
-	(*reflog_count)++;
-	return 0;
-}
-
 static int has_worktrees(void)
 {
 	struct worktree **worktrees = get_worktrees();
@@ -2841,7 +2944,6 @@ int repo_migrate_ref_storage_format(struct repository *repo,
 	struct ref_transaction *transaction = NULL;
 	struct strbuf new_gitdir = STRBUF_INIT;
 	struct migration_data data;
-	size_t reflog_count = 0;
 	int did_migrate_refs = 0;
 	int ret;
 
@@ -2852,21 +2954,6 @@ int repo_migrate_ref_storage_format(struct repository *repo,
 	}
 
 	old_refs = get_main_ref_store(repo);
-
-	/*
-	 * We do not have any interfaces that would allow us to write many
-	 * reflog entries. Once we have them we can remove this restriction.
-	 */
-	if (refs_for_each_reflog(old_refs, count_reflogs, &reflog_count) < 0) {
-		strbuf_addstr(errbuf, "cannot count reflogs");
-		ret = -1;
-		goto done;
-	}
-	if (reflog_count) {
-		strbuf_addstr(errbuf, "migrating reflogs is not supported yet");
-		ret = -1;
-		goto done;
-	}
 
 	/*
 	 * Worktrees complicate the migration because every worktree has a
@@ -2889,8 +2976,8 @@ int repo_migrate_ref_storage_format(struct repository *repo,
 	 *   1. Set up a new temporary directory and initialize it with the new
 	 *      format. This is where all refs will be migrated into.
 	 *
-	 *   2. Enumerate all refs and write them into the new ref storage.
-	 *      This operation is safe as we do not yet modify the main
+	 *   2. Enumerate all refs and reflogs and write them into the new ref
+	 *      storage. This operation is safe as we do not yet modify the main
 	 *      repository.
 	 *
 	 *   3. If we're in dry-run mode then we are done and can hand over the
@@ -2942,6 +3029,11 @@ int repo_migrate_ref_storage_format(struct repository *repo,
 	ret = do_for_each_ref(old_refs, "", NULL, migrate_one_ref, 0,
 			      DO_FOR_EACH_INCLUDE_ROOT_REFS | DO_FOR_EACH_INCLUDE_BROKEN,
 			      &data);
+	if (ret < 0)
+		goto done;
+
+	data.index = 1;
+	ret = refs_for_each_reflog(old_refs, migrate_one_reflog, &data);
 	if (ret < 0)
 		goto done;
 

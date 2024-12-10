@@ -772,6 +772,18 @@ int ref_transaction_update(struct ref_transaction *transaction,
 			   struct strbuf *err);
 
 /*
+ * Similar to `ref_transaction_update`, but this function is only for adding
+ * a reflog updates. Supports providing custom committer information.
+ */
+int ref_transaction_update_reflog(struct ref_transaction *transaction,
+				  const char *refname,
+				  const struct object_id *new_oid,
+				  const struct object_id *old_oid,
+				  const char *committer_info, unsigned int flags,
+				  const char *msg, unsigned int index,
+				  struct strbuf *err);
+
+/*
  * Add a reference creation to transaction. new_oid is the value that
  * the reference should have after the update; it must not be
  * null_oid. It is verified that the reference does not exist
