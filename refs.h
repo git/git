@@ -195,6 +195,35 @@ int repo_dwim_log(struct repository *r, const char *str, int len, struct object_
 char *repo_default_branch_name(struct repository *r, int quiet);
 
 /*
+ * Copy "name" to "sb", expanding any special @-marks as handled by
+ * repo_interpret_branch_name(). The result is a non-qualified branch name
+ * (so "foo" or "origin/master" instead of "refs/heads/foo" or
+ * "refs/remotes/origin/master").
+ *
+ * Note that the resulting name may not be a syntactically valid refname.
+ *
+ * If "allowed" is non-zero, restrict the set of allowed expansions. See
+ * repo_interpret_branch_name() for details.
+ */
+void copy_branchname(struct strbuf *sb, const char *name,
+		       unsigned allowed);
+
+/*
+ * Like copy_branchname() above, but confirm that the result is
+ * syntactically valid to be used as a local branch name in refs/heads/.
+ *
+ * The return value is "0" if the result is valid, and "-1" otherwise.
+ */
+int check_branch_ref(struct strbuf *sb, const char *name);
+
+/*
+ * Similar for a tag name in refs/tags/.
+ *
+ * The return value is "0" if the result is valid, and "-1" otherwise.
+ */
+int check_tag_ref(struct strbuf *sb, const char *name);
+
+/*
  * A ref_transaction represents a collection of reference updates that
  * should succeed or fail together.
  *

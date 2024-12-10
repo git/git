@@ -130,7 +130,7 @@ test_expect_success 'cloning with multiple references drops duplicates' '
 
 test_expect_success 'clone with reference from a tagged repository' '
 	(
-		cd A && git tag -a -m tagged HEAD
+		cd A && git tag -a -m tagged foo
 	) &&
 	git clone --reference=A A I
 '
@@ -155,10 +155,10 @@ test_expect_success 'fetch with incomplete alternates' '
 		git remote add J "file://$base_dir/J" &&
 		GIT_TRACE_PACKET=$U.K git fetch J
 	) &&
-	main_object=$(cd A && git for-each-ref --format="%(objectname)" refs/heads/main) &&
+	main_object=$(git -C A rev-parse --verify refs/heads/main) &&
 	test -s "$U.K" &&
 	! grep " want $main_object" "$U.K" &&
-	tag_object=$(cd A && git for-each-ref --format="%(objectname)" refs/tags/HEAD) &&
+	tag_object=$(git -C A rev-parse --verify refs/tags/foo) &&
 	! grep " want $tag_object" "$U.K"
 '
 
