@@ -276,7 +276,7 @@ static int read_graft_file(struct repository *r, const char *graft_file)
 			 "to convert the grafts into replace refs.\n"
 			 "\n"
 			 "Turn this message off by running\n"
-			 "\"git config advice.graftFileDeprecated false\""));
+			 "\"git config set advice.graftFileDeprecated false\""));
 	while (!strbuf_getwholeline(&buf, fp, '\n')) {
 		/* The format is just "Commit Parent1 Parent2 ...\n" */
 		struct commit_graft *graft = read_graft_line(&buf);

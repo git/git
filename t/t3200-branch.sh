@@ -1696,7 +1696,7 @@ test_expect_success 'errors if given a bad branch name' '
 	cat <<-\EOF >expect &&
 	fatal: '\''foo..bar'\'' is not a valid branch name
 	hint: See `man git check-ref-format`
-	hint: Disable this message with "git config advice.refSyntax false"
+	hint: Disable this message with "git config set advice.refSyntax false"
 	EOF
 	test_must_fail git branch foo..bar >actual 2>&1 &&
 	test_cmp expect actual
