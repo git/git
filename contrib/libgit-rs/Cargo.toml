@@ -1,0 +1,15 @@
+[package]
+name = "libgit"
+version = "0.1.0"
+edition = "2021"
+build = "build.rs"
+rust-version = "1.63"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+libgit-sys = { version = "0.1.0", path = "libgit-sys" }
+
+[build-dependencies]
+autocfg = "1.4.0"
