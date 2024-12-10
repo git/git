@@ -1655,7 +1655,7 @@ static int set_head(const struct ref *remote_refs, int follow_remote_head,
 
 	if (!head_name)
 		goto cleanup;
-	is_bare = is_bare_repository();
+	is_bare = repo_is_bare(the_repository);
 	create_only = follow_remote_head == FOLLOW_REMOTE_ALWAYS ? 0 : !is_bare;
 	if (is_bare) {
 		strbuf_addstr(&b_head, "HEAD");
