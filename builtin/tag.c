@@ -447,17 +447,6 @@ static int parse_msg_arg(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
-static int strbuf_check_tag_ref(struct strbuf *sb, const char *name)
-{
-	if (name[0] == '-')
-		return -1;
-
-	strbuf_reset(sb);
-	strbuf_addf(sb, "refs/tags/%s", name);
-
-	return check_refname_format(sb->buf, 0);
-}
-
 int cmd_tag(int argc,
 	    const char **argv,
 	    const char *prefix,
@@ -650,7 +639,7 @@ int cmd_tag(int argc,
 	if (repo_get_oid(the_repository, object_ref, &object))
 		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
 
-	if (strbuf_check_tag_ref(&ref, tag))
+	if (check_tag_ref(&ref, tag))
 		die(_("'%s' is not a valid tag name."), tag);
 
 	if (refs_read_ref(get_main_ref_store(the_repository), ref.buf, &prev))
