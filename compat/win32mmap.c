@@ -1,3 +1,5 @@
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "../git-compat-util.h"
 
 void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t offset)

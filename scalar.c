@@ -379,7 +379,7 @@ static int delete_enlistment(struct strbuf *enlistment)
 	offset = offset_1st_component(enlistment->buf);
 	path_sep = find_last_dir_sep(enlistment->buf + offset);
 	strbuf_add(&parent, enlistment->buf,
-		   path_sep ? path_sep - enlistment->buf : offset);
+		   path_sep ? (size_t) (path_sep - enlistment->buf) : offset);
 	if (chdir(parent.buf) < 0) {
 		int res = error_errno(_("could not switch to '%s'"), parent.buf);
 		strbuf_release(&parent);
@@ -654,7 +654,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 		NULL
 	};
 	struct string_list scalar_repos = STRING_LIST_INIT_DUP;
-	int i, res = 0;
+	int res = 0;
 	struct strbuf commondir = STRBUF_INIT, gitdir = STRBUF_INIT;
 
 	argc = parse_options(argc, argv, NULL, options,
@@ -672,7 +672,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 
 	git_config(get_scalar_repos, &scalar_repos);
 
-	for (i = 0; i < scalar_repos.nr; i++) {
+	for (size_t i = 0; i < scalar_repos.nr; i++) {
 		int succeeded = 0;
 		struct repository *old_repo, r = { NULL };
 		const char *dir = scalar_repos.items[i].string;
