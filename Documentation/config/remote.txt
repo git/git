@@ -106,10 +106,12 @@ remote.<name>.followRemoteHEAD::
 	How linkgit:git-fetch[1] should handle updates to `remotes/<name>/HEAD`.
 	The default value is "create", which will create `remotes/<name>/HEAD`
 	if it exists on the remote, but not locally, but will not touch an
-	already existing local reference.  Setting to "warn" will print
+	already existing local reference. Setting to "warn" will print
 	a message if the remote has a different value, than the local one and
-	in case there is no local reference, it behaves like "create". Setting
-	to "always" will silently update it to the value on the remote.
+	in case there is no local reference, it behaves like "create".
+	A variant on "warn" is "warn-if-not-$branch", which behaves like
+	"warn", but if `HEAD` on the remote is `$branch` it will be silent.
+	Setting to "always" will silently update it to the value on the remote.
 	Finally, setting it to "never" will never change or create the local
 	reference.
 +
