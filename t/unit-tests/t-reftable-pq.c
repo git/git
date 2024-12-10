@@ -9,6 +9,7 @@ https://developers.google.com/open-source/licenses/bsd
 #include "test-lib.h"
 #include "reftable/constants.h"
 #include "reftable/pq.h"
+#include "strbuf.h"
 
 static void merged_iter_pqueue_check(const struct merged_iter_pqueue *pq)
 {
@@ -132,7 +133,7 @@ static void t_merged_iter_pqueue_top(void)
 
 		merged_iter_pqueue_check(&pq);
 		check(pq_entry_equal(&top, &e));
-		check(reftable_record_equal(top.rec, &recs[i], GIT_SHA1_RAWSZ));
+		check(reftable_record_equal(top.rec, &recs[i], REFTABLE_HASH_SIZE_SHA1));
 		for (size_t j = 0; i < pq.len; j++) {
 			check(pq_less(&top, &pq.heap[j]));
 			check_int(top.index, >, j);
