@@ -246,4 +246,29 @@ test_expect_success 'not remove a repo with initialized submodule' '
 	)
 '
 
+test_expect_success 'move worktree with absolute path to relative path' '
+	test_config worktree.useRelativePaths false &&
+	git worktree add ./absolute &&
+	git worktree move --relative-paths absolute relative &&
+	echo "gitdir: ../.git/worktrees/absolute" >expect &&
+	test_cmp expect relative/.git &&
+	echo "../../../relative/.git" >expect &&
+	test_cmp expect .git/worktrees/absolute/gitdir &&
+	test_config worktree.useRelativePaths true &&
+	git worktree move relative relative2 &&
+	echo "gitdir: ../.git/worktrees/absolute" >expect &&
+	test_cmp expect relative2/.git &&
+	echo "../../../relative2/.git" >expect &&
+	test_cmp expect .git/worktrees/absolute/gitdir
+'
+
+test_expect_success 'move worktree with relative path to absolute path' '
+	test_config worktree.useRelativePaths true &&
+	git worktree move --no-relative-paths relative2 absolute &&
+	echo "gitdir: $(pwd)/.git/worktrees/absolute" >expect &&
+	test_cmp expect absolute/.git &&
+	echo "$(pwd)/absolute/.git" >expect &&
+	test_cmp expect .git/worktrees/absolute/gitdir
+'
+
 test_done

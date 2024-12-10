@@ -433,6 +433,12 @@ test_expect_success SYMLINKS 're-init to move gitdir symlink' '
 sep_git_dir_worktree ()  {
 	test_when_finished "rm -rf mainwt linkwt seprepo" &&
 	git init mainwt &&
+	if test "relative" = $2
+	then
+		test_config -C mainwt worktree.useRelativePaths true
+	else
+		test_config -C mainwt worktree.useRelativePaths false
+	fi
 	test_commit -C mainwt gumby &&
 	git -C mainwt worktree add --detach ../linkwt &&
 	git -C "$1" init --separate-git-dir ../seprepo &&
@@ -441,12 +447,20 @@ sep_git_dir_worktree ()  {
 	test_cmp expect actual
 }
 
-test_expect_success 're-init to move gitdir with linked worktrees' '
-	sep_git_dir_worktree mainwt
+test_expect_success 're-init to move gitdir with linked worktrees (absolute)' '
+	sep_git_dir_worktree mainwt absolute
 '
 
-test_expect_success 're-init to move gitdir within linked worktree' '
-	sep_git_dir_worktree linkwt
+test_expect_success 're-init to move gitdir within linked worktree (absolute)' '
+	sep_git_dir_worktree linkwt absolute
+'
+
+test_expect_success 're-init to move gitdir with linked worktrees (relative)' '
+	sep_git_dir_worktree mainwt relative
+'
+
+test_expect_success 're-init to move gitdir within linked worktree (relative)' '
+	sep_git_dir_worktree linkwt relative
 '
 
 test_expect_success MINGW '.git hidden' '

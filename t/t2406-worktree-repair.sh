@@ -215,4 +215,43 @@ test_expect_success 'repair copied main and linked worktrees' '
 	test_cmp dup/linked.expect dup/linked/.git
 '
 
+test_expect_success 'repair worktree with relative path with missing gitfile' '
+	test_when_finished "rm -rf main wt" &&
+	test_create_repo main &&
+	git -C main config worktree.useRelativePaths true &&
+	test_commit -C main init &&
+	git -C main worktree add --detach ../wt &&
+	rm wt/.git &&
+	test_path_is_missing wt/.git &&
+	git -C main worktree repair &&
+	echo "gitdir: ../main/.git/worktrees/wt" >expect &&
+	test_cmp expect wt/.git
+'
+
+test_expect_success 'repair absolute worktree to use relative paths' '
+	test_when_finished "rm -rf main side sidemoved" &&
+	test_create_repo main &&
+	test_commit -C main init &&
+	git -C main worktree add --detach ../side &&
+	echo "../../../../sidemoved/.git" >expect-gitdir &&
+	echo "gitdir: ../main/.git/worktrees/side" >expect-gitfile &&
+	mv side sidemoved &&
+	git -C main worktree repair --relative-paths ../sidemoved &&
+	test_cmp expect-gitdir main/.git/worktrees/side/gitdir &&
+	test_cmp expect-gitfile sidemoved/.git
+'
+
+test_expect_success 'repair relative worktree to use absolute paths' '
+	test_when_finished "rm -rf main side sidemoved" &&
+	test_create_repo main &&
+	test_commit -C main init &&
+	git -C main worktree add --relative-paths --detach ../side &&
+	echo "$(pwd)/sidemoved/.git" >expect-gitdir &&
+	echo "gitdir: $(pwd)/main/.git/worktrees/side" >expect-gitfile &&
+	mv side sidemoved &&
+	git -C main worktree repair ../sidemoved &&
+	test_cmp expect-gitdir main/.git/worktrees/side/gitdir &&
+	test_cmp expect-gitfile sidemoved/.git
+'
+
 test_done

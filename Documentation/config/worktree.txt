@@ -7,3 +7,13 @@ worktree.guessRemote::
 	such a branch exists, it is checked out and set as "upstream"
 	for the new branch.  If no such match can be found, it falls
 	back to creating a new branch from the current HEAD.
+
+worktree.useRelativePaths::
+	Link worktrees using relative paths (when "true") or absolute
+	paths (when "false"). This is particularly useful for setups
+	where the repository and worktrees may be moved between
+	different locations or environments. Defaults to "false".
++
+Note that setting `worktree.useRelativePaths` to "true" implies enabling the
+`extension.relativeWorktrees` config (see linkgit:git-config[1]),
+thus making it incompatible with older versions of Git.
