@@ -21,6 +21,9 @@ UI, Workflows & Features
 
  * Drop support for older libcURL and Perl.
 
+ * End-user experience of "git mergetool" when the command errors out
+   has been improved.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -106,6 +109,14 @@ Performance, Internal Implementation, Development Support etc.
 
  * Built-in Git subcommands are supplied the repository object to work
    with; they learned to do the same when they invoke sub-subcommands.
+
+ * Drop support for ancient environments in various CI jobs.
+
+ * Isolates the reftable subsystem from the rest of Git's codebase by
+   using fewer pieces of Git's infrastructure.
+
+ * Optimize reading random references out of the reftable backend by
+   allowing reuse of iterator objects.
 
 
 Fixes since v2.47
@@ -203,6 +214,15 @@ Fixes since v2.47
    (merge b6318cf23a sj/refs-symref-referent-fix later to maint).
 
  * The sequencer failed to honor core.commentString in some places.
+
+ * Describe a case where an option value needs to be spelled as a
+   separate argument, i.e. "--opt val", not "--opt=val".
+   (merge 1bc1e94091 jc/doc-opt-tilde-expand later to maint).
+
+ * Loosen overly strict ownership check introduced in the recent past,
+   to keep the promise "cloning a suspicious repository is a safe
+   first step to inspect it".
+   (merge 0ffb5a6bf1 bc/allow-upload-pack-from-other-people later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 77af53f56f aa/t7300-modernize later to maint).
