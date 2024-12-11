@@ -216,6 +216,14 @@ To remove a locked worktree, specify `--force` twice.
 This can also be set up as the default behaviour by using the
 `worktree.guessRemote` config option.
 
+--[no-]relative-paths::
+	Link worktrees using relative paths or absolute paths (default).
+	Overrides the `worktree.useRelativePaths` config option, see
+	linkgit:git-config[1].
++
+With `repair`, the linking files will be updated if there's an absolute/relative
+mismatch, even if the links are correct.
+
 --[no-]track::
 	When creating a new branch, if `<commit-ish>` is a branch,
 	mark it as "upstream" from the new branch.  This is the
