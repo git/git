@@ -53,11 +53,6 @@ jobs=
 recommend_shallow=
 filter=
 
-isnumber()
-{
-	n=$(($1 + 0)) 2>/dev/null && test "$n" = "$1"
-}
-
 #
 # Add a new submodule to the working tree, .gitmodules and the index
 #
@@ -524,17 +519,15 @@ cmd_summary() {
 			for_status="$1"
 			;;
 		-n|--summary-limit)
+			case "$2" in '') usage ;; esac
 			summary_limit="$2"
-			isnumber "$summary_limit" || usage
 			shift
 			;;
 		-n*)
 			summary_limit="${1#-n}"
-			isnumber "$summary_limit" || usage
 			;;
 		--summary-limit=*)
 			summary_limit="${1#--summary-limit=}"
-			isnumber "$summary_limit" || usage
 			;;
 		--)
 			shift
@@ -554,7 +547,7 @@ cmd_summary() {
 		${files:+--files} \
 		${cached:+--cached} \
 		${for_status:+--for-status} \
-		${summary_limit:+-n $summary_limit} \
+		${summary_limit:+-n "$summary_limit"} \
 		-- \
 		"$@"
 }
