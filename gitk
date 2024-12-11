@@ -7344,7 +7344,7 @@ proc selectline {l isnew {desired_loc {}} {switch_to_patch 0}} {
     global mergemax numcommits pending_select
     global cmitmode showneartags allcommits
     global targetrow targetid lastscrollrows
-    global autoselect autosellen jump_to_here
+    global autocopy autoselect autosellen jump_to_here
     global vinlinediff
 
     unset -nocomplain pending_select
@@ -7412,6 +7412,10 @@ proc selectline {l isnew {desired_loc {}} {switch_to_patch 0}} {
     $sha1entry insert 0 $id
     if {$autoselect} {
         $sha1entry selection range 0 $autosellen
+    }
+    if {$autocopy} {
+        clipboard clear
+        clipboard append [string range $id 0 [expr $autosellen - 1]]
     }
     rhighlight_sel $id
 
@@ -11576,7 +11580,7 @@ proc create_prefs_page {w} {
 
 proc prefspage_general {notebook} {
     global NS maxwidth maxgraphpct showneartags showlocalchanges
-    global tabstop limitdiffs autoselect autosellen extdifftool perfile_attrs
+    global tabstop limitdiffs autocopy autoselect autosellen extdifftool perfile_attrs
     global hideremotes want_ttk have_ttk maxrefs web_browser
 
     set page [create_prefs_page $notebook.general]
@@ -11598,6 +11602,9 @@ proc prefspage_general {notebook} {
         -variable hideremotes
     grid x $page.hideremotes -sticky w
 
+    ${NS}::checkbutton $page.autocopy -text [mc "Copy commit ID to clipboard"] \
+        -variable autocopy
+    grid x $page.autocopy -sticky w
     ${NS}::checkbutton $page.autoselect -text [mc "Copy commit ID to X11 selection"] \
         -variable autoselect
     grid x $page.autoselect -sticky w
@@ -12403,6 +12410,7 @@ set maxlinelen 200
 set showlocalchanges 1
 set limitdiffs 1
 set datetimeformat "%Y-%m-%d %H:%M:%S"
+set autocopy 0
 set autoselect 1
 set autosellen 40
 set perfile_attrs 0
@@ -12500,7 +12508,7 @@ config_check_tmp_exists 50
 
 set config_variables {
     mainfont textfont uifont tabstop findmergefiles maxgraphpct maxwidth
-    cmitmode wrapcomment autoselect autosellen showneartags maxrefs visiblerefs
+    cmitmode wrapcomment autocopy autoselect autosellen showneartags maxrefs visiblerefs
     hideremotes showlocalchanges datetimeformat limitdiffs uicolor want_ttk
     bgcolor fgcolor uifgcolor uifgdisabledcolor colors diffcolors mergecolors
     markbgcolor diffcontext selectbgcolor foundbgcolor currentsearchhitbgcolor
