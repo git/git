@@ -40,11 +40,11 @@ init=
 require_init=
 files=
 remote=
-nofetch=
+no_fetch=
 rebase=
 merge=
 checkout=
-custom_name=
+name=
 depth=
 progress=
 dissociate=
@@ -52,7 +52,7 @@ single_branch=
 jobs=
 recommend_shallow=
 filter=
-deinit_all=
+all=
 default=
 summary_limit=
 for_status=
@@ -108,11 +108,11 @@ cmd_add()
 			;;
 		--name)
 			case "$2" in '') usage ;; esac
-			custom_name="--name=$2"
+			name="--name=$2"
 			shift
 			;;
 		--name=*)
-			custom_name="$1"
+			name="$1"
 			;;
 		--depth)
 			case "$2" in '') usage ;; esac
@@ -149,7 +149,7 @@ cmd_add()
 		${reference:+"$reference"} \
 		${ref_format:+"$ref_format"} \
 		$dissociate \
-		${custom_name:+"$custom_name"} \
+		${name:+"$name"} \
 		${depth:+"$depth"} \
 		-- \
 		"$@"
@@ -240,7 +240,7 @@ cmd_deinit()
 			quiet=$1
 			;;
 		--all)
-			deinit_all=$1
+			all=$1
 			;;
 		--)
 			shift
@@ -259,7 +259,7 @@ cmd_deinit()
 	git ${wt_prefix:+-C "$wt_prefix"} submodule--helper deinit \
 		$quiet \
 		$force \
-		$deinit_all \
+		$all \
 		-- \
 		"$@"
 }
@@ -294,7 +294,7 @@ cmd_update()
 			remote=$1
 			;;
 		-N|--no-fetch)
-			nofetch=$1
+			no_fetch=$1
 			;;
 		-f|--force)
 			force=$1
@@ -381,7 +381,7 @@ cmd_update()
 		$remote \
 		$recursive \
 		$init \
-		$nofetch \
+		$no_fetch \
 		$rebase \
 		$merge \
 		$checkout \
