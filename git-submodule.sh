@@ -77,6 +77,9 @@ cmd_add()
 			branch=$2
 			shift
 			;;
+		--branch=*)
+			branch="${1#--branch=}"
+			;;
 		-f | --force)
 			force=$1
 			;;
@@ -109,6 +112,9 @@ cmd_add()
 			case "$2" in '') usage ;; esac
 			custom_name=$2
 			shift
+			;;
+		--name=*)
+			custom_name="${1#--name=}"
 			;;
 		--depth)
 			case "$2" in '') usage ;; esac
@@ -424,6 +430,9 @@ cmd_set_branch() {
 			case "$2" in '') usage ;; esac
 			branch=$2
 			shift
+			;;
+		--branch=*)
+			branch="${1#--branch=}"
 			;;
 		--)
 			shift
