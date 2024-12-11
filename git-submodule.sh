@@ -503,7 +503,6 @@ cmd_set_url() {
 cmd_summary() {
 	summary_limit=-1
 	for_status=
-	diff_cmd=diff-index
 
 	# parse $args after "submodule ... summary".
 	while test $# -ne 0
