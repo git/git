@@ -18,7 +18,8 @@ elif test true = "$GITLAB_CI"
 then
 	begin_group () {
 		need_to_end_group=t
-		printf "\e[0Ksection_start:$(date +%s):$(echo "$1" | tr ' ' _)[collapsed=true]\r\e[0K$1\n"
+		printf '\e[0Ksection_start:%s:%s[collapsed=true]\r\e[0K%s\n' \
+			"$(date +%s)" "$(echo "$1" | tr ' ' _)" "$1"
 		trap "end_group '$1'" EXIT
 		set -x
 	}
@@ -27,7 +28,8 @@ then
 		test -n "$need_to_end_group" || return 0
 		set +x
 		need_to_end_group=
-		printf "\e[0Ksection_end:$(date +%s):$(echo "$1" | tr ' ' _)\r\e[0K\n"
+		printf '\e[0Ksection_end:%s:%s\r\e[0K\n' \
+			"$(date +%s)" "$(echo "$1" | tr ' ' _)"
 		trap - EXIT
 	}
 else
