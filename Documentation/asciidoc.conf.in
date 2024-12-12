@@ -21,6 +21,9 @@ tilde=&#126;
 apostrophe=&#39;
 backtick=&#96;
 litdd=&#45;&#45;
+manmanual='Git Manual'
+mansource='Git @GIT_VERSION@'
+revdate='@GIT_DATE@'
 
 ifdef::backend-docbook[]
 [linkgit-inlinemacro]
