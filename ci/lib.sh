@@ -57,7 +57,7 @@ group () {
 	return $res
 }
 
-begin_group "CI setup"
+begin_group "CI setup via $(basename $0)"
 
 # Set 'exit on error' for all CI scripts to let the caller know that
 # something went wrong.
@@ -388,5 +388,5 @@ esac
 
 MAKEFLAGS="$MAKEFLAGS CC=${CC:-cc}"
 
-end_group "CI setup"
+end_group "CI setup via $(basename $0)"
 set -x
