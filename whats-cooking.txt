@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2024, #04; Tue, 10)
+Subject: What's cooking in git.git (Dec 2024, #05; Thu, 12)
 X-master-at: caacdb5dfd60540ecec30ec479f147f3c8167e11
-X-next-at: c27f4b7a9fc45cdb75b4a22d3d3e0e7ac90f80b2
+X-next-at: f74b3f243a33d7963d06298c0bdf84cc5f3ff26b
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2024, #04; Tue, 10)
+What's cooking in git.git (Dec 2024, #05; Thu, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,91 +46,50 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* bc/allow-upload-pack-from-other-people (2024-11-15) 1 commit
-  (merged to 'next' on 2024-12-02 at bf711f018c)
- + Allow cloning from repositories owned by another user
-
- Loosen overly strict ownership check introduced in the recent past,
- to keep the promise "cloning a suspicious repository is a safe
- first step to inspect it".
- cf. <xmqqed2yzc5z.fsf@gitster.g>
- source: <20241115005404.3747302-2-sandals@crustytoothpaste.net>
-
-
-* bc/ancient-ci (2024-11-01) 3 commits
-  (merged to 'next' on 2024-12-02 at f6128744ce)
- + Add additional CI jobs to avoid accidental breakage
- + ci: remove clause for Ubuntu 16.04
- + gitlab-ci: switch from Ubuntu 16.04 to 20.04
-
- Drop support for ancient environments in various CI jobs.
- source: <20241031234934.3451390-1-sandals@crustytoothpaste.net>
-
-
-* jc/doc-opt-tilde-expand (2024-11-25) 1 commit
-  (merged to 'next' on 2024-12-02 at e345717b87)
- + doc: option value may be separate for valid reasons
-
- Describe a case where an option value needs to be spelled as a
- separate argument, i.e. "--opt val", not "--opt=val".
- source: <xmqqh67w6m4m.fsf@gitster.g>
-
-
-* pb/mergetool-errors (2024-11-25) 5 commits
-  (merged to 'next' on 2024-12-02 at b439b146c2)
- + git-difftool--helper.sh: exit upon initialize_merge_tool errors
- + git-mergetool--lib.sh: add error message for unknown tool variant
- + git-mergetool--lib.sh: add error message if 'setup_user_tool' fails
- + git-mergetool--lib.sh: use TOOL_MODE when erroring about unknown tool
- + completion: complete '--tool-help' in 'git mergetool'
-
- End-user experience of "git mergetool" when the command errors out
- has been improved.
- source: <pull.1827.v2.git.1732305022.gitgitgadget@gmail.com>
-
-
-* ps/reftable-detach (2024-11-19) 8 commits
-  (merged to 'next' on 2024-12-02 at e105e787b6)
- + reftable/system: provide thin wrapper for lockfile subsystem
- + reftable/stack: drop only use of `get_locked_file_path()`
- + reftable/system: provide thin wrapper for tempfile subsystem
- + reftable/stack: stop using `fsync_component()` directly
- + reftable/system: stop depending on "hash.h"
- + reftable: explicitly handle hash format IDs
- + reftable/system: move "dir.h" to its only user
- + Merge branch 'ps/reftable-strbuf' into ps/reftable-detach
- (this branch is used by ps/reftable-iterator-reuse.)
-
- Isolates the reftable subsystem from the rest of Git's codebase by
- using fewer pieces of Git's infrastructure.
- source: <cover.1731943954.git.ps@pks.im>
-
-
-* ps/reftable-iterator-reuse (2024-11-26) 11 commits
-  (merged to 'next' on 2024-12-02 at 3c1d2e2a6a)
- + refs/reftable: reuse iterators when reading refs
- + reftable/merged: drain priority queue on reseek
- + reftable/stack: add mechanism to notify callers on reload
- + refs/reftable: refactor reflog expiry to use reftable backend
- + refs/reftable: refactor reading symbolic refs to use reftable backend
- + refs/reftable: read references via `struct reftable_backend`
- + refs/reftable: figure out hash via `reftable_stack`
- + reftable/stack: add accessor for the hash ID
- + refs/reftable: handle reloading stacks in the reftable backend
- + refs/reftable: encapsulate reftable stack
- + Merge branch 'ps/reftable-detach' into ps/reftable-iterator-reuse
- (this branch uses ps/reftable-detach.)
-
- Optimize reading random references out of the reftable backend by
- allowing reuse of iterator objects.
- source: <20241126-pks-reftable-backend-reuse-iter-v4-0-b17fd27df126@pks.im>
-
---------------------------------------------------
 [New Topics]
 
-* kn/reflog-migration (2024-12-10) 7 commits
+* ps/3.0-remote-deprecation (2024-12-12) 6 commits
+ - remote: announce removal of "branches/" and "remotes/"
+ - builtin/pack-redundant: remove subcommand with breaking changes
+ - ci: repurpose "linux-gcc" job for deprecations
+ - ci: merge linux-gcc-default into linux-gcc
+ - Makefile: wire up build option for deprecated features
+ - Merge branch 'ps/build' into ps/3.0-remote-deprecation
+ (this branch uses ps/build.)
+
+ Following the procedure we established to introduce breaking
+ changes for Git 3.0, allow an early opt-in for removing support of
+ $GIT_DIR/branches/ and $GIT_DIR/remotes/ directories to configure
+ remotes.
+
+ Needs review.
+ source: <20241211-pks-remote-branches-deprecation-v1-0-1431e2369135@pks.im>
+
+
+* ps/ci-meson (2024-12-12) 10 commits
+ - ci: wire up Meson builds
+ - t: introduce compatibility options to clar-based tests
+ - t: fix out-of-tree tests for some git-p4 tests
+ - Makefile: detect missing Meson tests
+ - meson: detect missing tests at configure time
+ - t/unit-tests: rename clar-based unit tests to have a common prefix
+ - Makefile: drop -DSUPPRESS_ANNOTATED_LEAKS
+ - ci/lib: support custom output directories when creating test artifacts
+ - Merge branch 'ps/build' into ps/ci-meson
+ - Merge branch 'cw/worktree-extension' into ps/ci-meson
+ (this branch uses cw/worktree-extension and ps/build.)
+
+ The meson-build procedure is integrated into CI to catch and
+ prevent bitrotting.
+
+ Needs review.
+ source: <20241211-pks-meson-ci-v1-0-28d18b494374@pks.im>
+
+--------------------------------------------------
+[Cooking]
+
+* kn/reflog-migration (2024-12-11) 8 commits
+ - SQUASH
  - refs: add support for migrating reflogs
  - refs: allow multiple reflog entries for the same refname
  - refs: introduce the `ref_transaction_update_reflog` function
@@ -144,6 +103,7 @@ Release tarballs are available at:
 
  Needs review.
  source: <20241209-320-git-refs-migrate-reflogs-v1-0-d4bc37ee860f@gmail.com>
+ source: <CAOLa=ZRsAwM8oUnyYCaRKkkudN+QW+hRSKZEvPJLThSr14M7rA@mail.gmail.com>
 
 
 * mh/doc-windows-home-env (2024-12-10) 1 commit
@@ -155,27 +115,25 @@ Release tarballs are available at:
  source: <pull.1834.git.1733771894867.gitgitgadget@gmail.com>
 
 
-* tc/bundle-with-tag-remove-workaround (2024-12-10) 1 commit
+* tc/bundle-with-tag-remove-workaround (2024-12-12) 1 commit
  - bundle: remove unneeded code
 
  "git bundle create" with an annotated tag on the positive end of
  the revision range had a workaround code for older limitation in
  the revision walker, which has become unnecessary.
 
- Expecting a reroll.
- cf. <CAOLa=ZQpBf-ZE8BmXRUXJ247p44Enj0vrJv2KHVDXtGzY6SU8w@mail.gmail.com>
- source: <20241209-fix-bundle-create-race-v1-1-e6513bdcbf8a@iotcl.com>
+ Will merge to 'next'.
+ source: <20241211-fix-bundle-create-race-v3-1-0587f6f9db1b@iotcl.com>
 
---------------------------------------------------
-[Cooking]
 
 * bf/explicit-config-set-in-advice-messages (2024-12-06) 1 commit
- - advice: suggest using subcommand "git config set"
+  (merged to 'next' on 2024-12-11 at a20c319038)
+ + advice: suggest using subcommand "git config set"
 
  The advice messages now tell the newer 'git config set' command to
  set the advice.token configuration variable to squelch a message.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20241205122225.1184215-1-bence@ferdinandy.com>
 
 
@@ -210,22 +168,26 @@ Release tarballs are available at:
  source: <20241206-424-reftable-writer-add-check-for-limits-v2-1-82ca350b10be@gmail.com>
 
 
-* ps/ci-gitlab-update (2024-12-07) 4 commits
+* ps/ci-gitlab-update (2024-12-12) 4 commits
  - ci/lib: fix "CI setup" sections with GitLab CI
- - ci/lib: use echo instead of printf to set up sections
+ - ci/lib: do not interpret escape sequences in `group ()` arguments
  - ci/lib: remove duplicate trap to end "CI setup" group
  - gitlab-ci: update macOS images to Sonoma
 
- source: <20241206-pks-ci-section-fixes-v1-0-7ab1b69e3648@pks.im>
+ GitLab CI updates.
+
+ Will merge to 'next'.
+ source: <20241212-pks-ci-section-fixes-v3-0-d9fe6baee21e@pks.im>
 
 
 * ps/commit-with-message-syntax-fix (2024-12-08) 1 commit
- - object-name: fix reversed ordering with ":/<text>" revisions
+  (merged to 'next' on 2024-12-11 at da3d13a723)
+ + object-name: fix reversed ordering with ":/<text>" revisions
 
  The syntax ":/<text>" to name the latest commit with the matching
  text was broken with a recent change, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20241206-pks-rev-parse-fix-reversed-list-v3-1-d934c17db168@pks.im>
 
 
@@ -244,7 +206,7 @@ Release tarballs are available at:
  source: <xmqqcyi5xmhr.fsf@gitster.g>
 
 
-* re/submodule-parse-opt (2024-12-10) 8 commits
+* re/submodule-parse-opt (2024-12-11) 7 commits
  - git-submodule.sh: rename some variables
  - git-submodule.sh: improve variables readability
  - git-submodule.sh: add some comments
@@ -252,24 +214,24 @@ Release tarballs are available at:
  - git-submodule.sh: get rid of isnumber
  - git-submodule.sh: improve parsing of short options
  - git-submodule.sh: improve parsing of some long options
- - git-submodule.sh: make some variables boolean
 
  "git submodule" learned various ways to spell the same option,
  e.g. "--branch=B" can be spelled "--branch B" or "-bB".
 
  Will merge to 'next'?
- source: <20241209165009.40653-1-royeldar0@gmail.com>
+ source: <20241210184442.10723-1-royeldar0@gmail.com>
 
 
 * jt/fix-fattening-promisor-fetch (2024-12-10) 3 commits
- - index-pack --promisor: also check commits' trees
- - index-pack --promisor: don't check blobs
- - index-pack --promisor: dedup before checking links
+  (merged to 'next' on 2024-12-11 at 5a408010e9)
+ + index-pack --promisor: also check commits' trees
+ + index-pack --promisor: don't check blobs
+ + index-pack --promisor: dedup before checking links
 
  Fix performance regression of a recent "fatten promisor pack with
  local objects" protection against an unwanted gc.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1733262661.git.jonathantanmy@google.com>
 
 
@@ -329,26 +291,28 @@ Release tarballs are available at:
 
 
 * rj/strvec-splice-fix (2024-12-10) 2 commits
- - strvec: `strvec_splice()` to a statically initialized vector
- - Merge branch 'ps/leakfixes-part-10' into rj/strvec-splice-fix
+  (merged to 'next' on 2024-12-11 at ddbfd8883a)
+ + strvec: `strvec_splice()` to a statically initialized vector
+ + Merge branch 'ps/leakfixes-part-10' into rj/strvec-splice-fix
 
  Correct strvec_splice() that misbehaved when the strvec is empty.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <3c7b3c26-7501-4797-8afa-c7f7e9c46558@gmail.com>
 
 
 * jc/forbid-head-as-tagname (2024-12-03) 4 commits
- - tag: "git tag" refuses to use HEAD as a tagname
- - t5604: do not expect that HEAD can be a valid tagname
- - refs: drop strbuf_ prefix from helpers
- - refs: move ref name helpers around
+  (merged to 'next' on 2024-12-11 at adea88989e)
+ + tag: "git tag" refuses to use HEAD as a tagname
+ + t5604: do not expect that HEAD can be a valid tagname
+ + refs: drop strbuf_ prefix from helpers
+ + refs: move ref name helpers around
 
  "git tag" has been taught to refuse to create refs/tags/HEAD
  as such a tag will be confusing in the context of UI provided by
  the Git Porcelain commands.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20241203023240.3852850-1-gitster@pobox.com>
 
 
@@ -370,9 +334,10 @@ Release tarballs are available at:
 
 
 * bf/fetch-set-head-config (2024-12-06) 5 commits
- - remote set-head: set followRemoteHEAD to "warn" if "always"
- - fetch set_head: add warn-if-not-$branch option
- - fetch set_head: move warn advice into advise_if_enabled
+  (merged to 'next' on 2024-12-11 at 900cadd7b7)
+ + remote set-head: set followRemoteHEAD to "warn" if "always"
+ + fetch set_head: add warn-if-not-$branch option
+ + fetch set_head: move warn advice into advise_if_enabled
   (merged to 'next' on 2024-12-04 at 69bfc59fb5)
  + fetch: add configuration for set_head behaviour
  + Merge branch 'bf/set-head-symref' into bf/fetch-set-head-config
@@ -381,7 +346,7 @@ Release tarballs are available at:
  "git fetch" honors "remote.<remote>.followRemoteHEAD" settings to
  tweak the remote-tracking HEAD in "refs/remotes/<remote>/HEAD".
 
- Will merge to 'next'.
+ Will merge to 'master' after bf/set-head-symref stabilizes.
  source: <20241128230806.2058962-1-bence@ferdinandy.com>
  source: <20241204104003.514905-1-bence@ferdinandy.com>
  source: <20241128111946.366584-1-bence@ferdinandy.com>
@@ -491,20 +456,23 @@ Release tarballs are available at:
 
 
 * jc/move-is-bare-repository-cfg-variable-to-repo (2024-11-07) 3 commits
- - repository: BUG when is_bare_cfg is not initialized
- - setup: initialize is_bare_cfg
- - git: remove is_bare_repository_cfg global variable
+ . repository: BUG when is_bare_cfg is not initialized
+ . setup: initialize is_bare_cfg
+ . git: remove is_bare_repository_cfg global variable
 
  Code rewrite to turn the is_bare_repository_cfg global variable
  into a member in the the_repo singleton repository object.
 
  Waiting for response to reviews.
  cf. <xmqqy116xvr3.fsf@gitster.g>
+ Seems to break t0021-conversion on Windows.
+ cf. https://lore.kernel.org/git/xmqqzfl1hl52.fsf@gitster.g/
  source: <pull.1826.git.git.1730926082.gitgitgadget@gmail.com>
 
 
 * jk/describe-perf (2024-12-06) 5 commits
- - describe: split "found all tags" and max_candidates logic
+  (merged to 'next' on 2024-12-11 at 509db1dc1a)
+ + describe: split "found all tags" and max_candidates logic
   (merged to 'next' on 2024-12-02 at 0f34109a85)
  + describe: stop traversing when we run out of names
  + describe: stop digging for max_candidates+1
@@ -513,7 +481,7 @@ Release tarballs are available at:
 
  "git describe" optimization.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20241106192236.GC880133@coredump.intra.peff.net>
  source: <20241206054218.GA3203047@coredump.intra.peff.net>
 
@@ -574,6 +542,7 @@ Release tarballs are available at:
  + worktree: refactor infer_backlink return
  + worktree: add `relativeWorktrees` extension
  + setup: correctly reinitialize repository version
+ (this branch is used by ps/ci-meson.)
 
  Introduce a new repository extension to prevent older Git versions
  from mis-interpreting worktrees created with relative paths.
@@ -647,36 +616,37 @@ Release tarballs are available at:
  source: <20241122123138.66960-1-bence@ferdinandy.com>
 
 
-* ps/build (2024-12-08) 25 commits
- - meson: fix conflicts with in-flight topics
- - Introduce support for the Meson build system
- - Documentation: add comparison of build systems
- - t: allow overriding build dir
- - t: better support for out-of-tree builds
- - Documentation: extract script to generate a list of mergetools
- - Documentation: teach "cmd-list.perl" about out-of-tree builds
- - Documentation: allow sourcing generated includes from separate dir
- - Makefile: simplify building of templates
- - Makefile: write absolute program path into bin-wrappers
- - Makefile: allow "bin-wrappers/" directory to exist
- - Makefile: refactor generators to be PWD-independent
- - Makefile: extract script to generate gitweb.js
- - Makefile: extract script to generate gitweb.cgi
- - Makefile: extract script to massage Python scripts
- - Makefile: extract script to massage Shell scripts
- - Makefile: use "generate-perl.sh" to massage Perl library
- - Makefile: extract script to massage Perl scripts
- - Makefile: consistently use PERL_PATH
- - Makefile: generate doc versions via GIT-VERSION-GEN
- - Makefile: generate "git.rc" via GIT-VERSION-GEN
- - Makefile: propagate Git version via generated header
- - Makefile: refactor GIT-VERSION-GEN to be reusable
- - Makefile: consistently use @PLACEHOLDER@ to substitute
- - Makefile: use common template for GIT-BUILD-OPTIONS
+* ps/build (2024-12-07) 24 commits
+  (merged to 'next' on 2024-12-11 at cb270b3dea)
+ + Introduce support for the Meson build system
+ + Documentation: add comparison of build systems
+ + t: allow overriding build dir
+ + t: better support for out-of-tree builds
+ + Documentation: extract script to generate a list of mergetools
+ + Documentation: teach "cmd-list.perl" about out-of-tree builds
+ + Documentation: allow sourcing generated includes from separate dir
+ + Makefile: simplify building of templates
+ + Makefile: write absolute program path into bin-wrappers
+ + Makefile: allow "bin-wrappers/" directory to exist
+ + Makefile: refactor generators to be PWD-independent
+ + Makefile: extract script to generate gitweb.js
+ + Makefile: extract script to generate gitweb.cgi
+ + Makefile: extract script to massage Python scripts
+ + Makefile: extract script to massage Shell scripts
+ + Makefile: use "generate-perl.sh" to massage Perl library
+ + Makefile: extract script to massage Perl scripts
+ + Makefile: consistently use PERL_PATH
+ + Makefile: generate doc versions via GIT-VERSION-GEN
+ + Makefile: generate "git.rc" via GIT-VERSION-GEN
+ + Makefile: propagate Git version via generated header
+ + Makefile: refactor GIT-VERSION-GEN to be reusable
+ + Makefile: consistently use @PLACEHOLDER@ to substitute
+ + Makefile: use common template for GIT-BUILD-OPTIONS
+ (this branch is used by ps/3.0-remote-deprecation and ps/ci-meson.)
 
- Build procedure update plus introduction of Mason based builds
+ Build procedure update plus introduction of Mason based builds.
 
- Will merge to 'next' (except for the tip one).
+ Will merge to 'master'.
  source: <20241206-pks-meson-v11-0-525ed4792b88@pks.im>
 
 
