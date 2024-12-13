@@ -24,6 +24,10 @@ UI, Workflows & Features
  * End-user experience of "git mergetool" when the command errors out
    has been improved.
 
+ * "git bundle --unbundle" and "git clone" running on a bundle file
+   both learned to trigger fsck over the new objects with configurable
+   fck check levels.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -117,6 +121,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * Optimize reading random references out of the reftable backend by
    allowing reuse of iterator objects.
+
+ * Backport oss-fuzz tests for us to our codebase.
+
+ * Introduce a new repository extension to prevent older Git versions
+   from mis-interpreting worktrees created with relative paths.
+
+ * Yet another "pass the repository through the callchain" topic.
 
 
 Fixes since v2.47
@@ -224,8 +235,19 @@ Fixes since v2.47
    first step to inspect it".
    (merge 0ffb5a6bf1 bc/allow-upload-pack-from-other-people later to maint).
 
+ * "git fast-import" learned to reject paths with ".."  and "." as
+   their components to avoid creating invalid tree objects.
+   (merge 8cb4c6e62f en/fast-import-verify-path later to maint).
+
+ * The --ancestry-path option is designed to be given a commit that is
+   on the path, which was not documented, which has been corrected.
+   (merge bc1a980759 kk/doc-ancestry-path later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 77af53f56f aa/t7300-modernize later to maint).
    (merge dcd590a39d bf/t-readme-mention-reftable later to maint).
    (merge 68e3c69efa kh/trailer-in-glossary later to maint).
    (merge 91f88f76e6 tb/boundary-traversal-fix later to maint).
+   (merge 168ebb7159 jc/doc-error-message-guidelines later to maint).
+   (merge 18693d7d65 kh/doc-bundle-typofix later to maint).
+   (merge e2f5d3b491 kh/doc-update-ref-grammofix later to maint).
