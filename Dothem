@@ -3,6 +3,12 @@
 NWD=contrib/workdir/git-new-workdir
 MASTER=master
 
+section () {
+	printf "\n\n\n"
+	printf "############ %s\n" "$@"
+	printf "\n\n\n"
+}
+
 inst_prefix=$(
 	IFS=:
 	for p in $PATH
@@ -234,15 +240,18 @@ do
 		# cocci
 		if test -n "$with_cocci"
 		then
+			section coccicheck
 			Meta/Make $M $jobs -- coccicheck
 		fi &&
 
 		# sparse
+		section sparse
 		Meta/Make $M $jobs -- NO_REGEX=NoThanks \
 			SPARSE_FLAGS=-Wsparse-error sparse &&
 		rm -f compat/regex/regex.o &&
 
 		# hdr
+		section hdr-check
 		Meta/Make $M $jobs -- hdr-check &&
 
 		# SANITIZE=address,undefined
@@ -250,10 +259,12 @@ do
 		'')
 			;;
 		test,)
+			section test
 			Meta/Make $M $noprove ${test+"$test"} $jobs $test_long $memtrash \
 			    -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $dotest
 			;;
 		*,t)
+			section SANITIZE=address,undefined
 			SANITIZE=address,undefined Meta/Make $M $jobs test &&
 			Meta/Make >/dev/null distclean
 			;;
@@ -262,6 +273,7 @@ do
 		# sha256
 		if test -n "$with_sha256"
 		then
+			section sha256
 			(
 				export GIT_TEST_DEFAULT_HASH=sha256
 				Meta/Make -j16 $T test &&
@@ -274,6 +286,7 @@ do
 			test -n "$skip_doc" ||
 			if test "$save" = "$(git rev-parse HEAD)"
 			then
+				section docs
 				Meta/Make $M $jobs -- check-docs &&
 				Meta/Make $M $jobs -- $USE_ASCIIDOCTOR doc &&
 				Meta/Make $M -- install-man install-html
@@ -283,8 +296,9 @@ do
 		} &&
 
 		# leaks
-		if test -n "with_leaks"
+		if test -n "$with_leaks"
 		then
+			section leaks
 			(
 				export SANITIZE=leak
 				export GIT_TEST_PASSING_SANITIZE_LEAK=true
@@ -297,6 +311,7 @@ do
 			test z$install = znoinstall ||
 			if test "$save" = "$(git rev-parse HEAD)"
 			then
+				section install
 				Meta/Make $M -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" install
 			else
 				echo >&2 "Head moved--not installing"
