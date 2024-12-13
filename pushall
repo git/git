@@ -1,7 +1,5 @@
 #!/bin/sh
 
-#sites='ko repo github2 sfjp sf.net'
-
 : ${sites:="github2 ko repo"}
 : ${nexts:="$sites"}
 : ${mirrors="github gob-private"}
