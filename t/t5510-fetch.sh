@@ -326,6 +326,23 @@ test_expect_success 'fetch --prune --tags with refspec prunes based on refspec' 
 	git rev-parse sometag
 '
 
+test_expect_success 'fetch --tags gets tags even without a configured remote' '
+	REMOTE="$(pwd)/test_tag_1" &&
+	git init test_tag_1 &&
+	(
+		cd test_tag_1 &&
+		test_commit foo
+	) &&
+	git init test_tag_2 &&
+	(
+		cd test_tag_2 &&
+		git fetch --tags "file://$REMOTE" &&
+		echo "foo" >expect &&
+		git tag >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success REFFILES 'fetch --prune fails to delete branches' '
 	cd "$D" &&
 	git clone . prune-fail &&
