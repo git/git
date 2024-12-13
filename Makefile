@@ -1490,7 +1490,6 @@ ifneq ($(filter undefined,$(SANITIZERS)),)
 BASIC_CFLAGS += -DSHA1DC_FORCE_ALIGNED_ACCESS
 endif
 ifneq ($(filter leak,$(SANITIZERS)),)
-BASIC_CFLAGS += -DSUPPRESS_ANNOTATED_LEAKS
 BASIC_CFLAGS += -O0
 SANITIZE_LEAK = YesCompiledWithIt
 endif
