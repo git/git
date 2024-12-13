@@ -18,7 +18,7 @@ inst_prefix=$(
 )
 
 force= with_dash= test_long= M= install= doc= notest= bootstrap= branches= jobs=
-scratch= noprove= memtrash=--memtrash with_cocci= san= clean=
+scratch= noprove= memtrash=--memtrash with_cocci= with_leaks= with_sha256= san= clean=
 while	case "$1" in
 	--pedantic | --locale=* | --loose) M="$M $1" ;;
 	--force) force=$1 ;;
@@ -41,6 +41,8 @@ while	case "$1" in
 	--branches=*) branches=${1#*=} ;;
 	--noprove) noprove=$1 ;;
 	--san) san=t ;;
+	--leaks) with_leaks=t ;;
+	--sha256) with_sha256=t ;;
 	-j*) jobs=$1 ;;
 	--) shift; break ;;
 	-*) echo >&2 "Unknown option: $1"; exit 1 ;;
@@ -229,16 +231,21 @@ do
 
 		save=$(git rev-parse HEAD) &&
 
+		# cocci
 		if test -n "$with_cocci"
 		then
 			Meta/Make $M $jobs -- coccicheck
 		fi &&
 
+		# sparse
 		Meta/Make $M $jobs -- NO_REGEX=NoThanks \
 			SPARSE_FLAGS=-Wsparse-error sparse &&
 		rm -f compat/regex/regex.o &&
+
+		# hdr
 		Meta/Make $M $jobs -- hdr-check &&
 
+		# SANITIZE=address,undefined
 		case "$dotest,$san" in
 		'')
 			;;
@@ -252,6 +259,17 @@ do
 			;;
 		esac &&
 
+		# sha256
+		if test -n "$with_sha256"
+		then
+			(
+				export GIT_TEST_DEFAULT_HASH=sha256
+				Meta/Make -j16 $T test &&
+				Meta/Make >/dev/null distclean
+			)
+		fi &&
+
+		# docs
 		{
 			test -n "$skip_doc" ||
 			if test "$save" = "$(git rev-parse HEAD)"
@@ -263,6 +281,17 @@ do
 				echo >&2 "Head moved--not installing docs"
 			fi
 		} &&
+
+		# leaks
+		if test -n "with_leaks"
+		then
+			(
+				export SANITIZE=leak
+				export GIT_TEST_PASSING_SANITIZE_LEAK=true
+				Meta/Make -j16 $T CC=clang test &&
+				Meta/Make -j16 >/dev/null distclean
+			)
+		fi &&
 
 		{
 			test z$install = znoinstall ||
