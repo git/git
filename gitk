@@ -1969,6 +1969,10 @@ proc confirm_popup {msg {owner .}} {
     return $confirm_ok
 }
 
+proc haveselectionclipboard {} {
+    return [expr {[tk windowingsystem] eq "x11"}]
+}
+
 proc setoptions {} {
     global use_ttk
 
@@ -7410,7 +7414,7 @@ proc selectline {l isnew {desired_loc {}} {switch_to_patch 0}} {
 
     $sha1entry delete 0 end
     $sha1entry insert 0 $id
-    if {$autoselect} {
+    if {$autoselect && [haveselectionclipboard]} {
         $sha1entry selection range 0 $autosellen
     }
     if {$autocopy} {
@@ -11605,9 +11609,11 @@ proc prefspage_general {notebook} {
     ${NS}::checkbutton $page.autocopy -text [mc "Copy commit ID to clipboard"] \
         -variable autocopy
     grid x $page.autocopy -sticky w
-    ${NS}::checkbutton $page.autoselect -text [mc "Copy commit ID to X11 selection"] \
-        -variable autoselect
-    grid x $page.autoselect -sticky w
+    if {[haveselectionclipboard]} {
+        ${NS}::checkbutton $page.autoselect -text [mc "Copy commit ID to X11 selection"] \
+            -variable autoselect
+        grid x $page.autoselect -sticky w
+    }
     spinbox $page.autosellen -from 1 -to 40 -width 4 -textvariable autosellen
     ${NS}::label $page.autosellenl -text [mc "Length of commit ID to copy"]
     grid x $page.autosellenl $page.autosellen -sticky w
