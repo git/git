@@ -2,17 +2,18 @@
 #include "version.h"
 #include "strbuf.h"
 #include "gettext.h"
+#include "config.h"
 
 const char git_version_string[] = GIT_VERSION;
 const char git_built_from_commit_string[] = GIT_BUILT_FROM_COMMIT;
 
 static void strbuf_sanitize(struct strbuf *buf)
 {
-	strbuf_trim(buf);
-	for (size_t i = 0; i < buf->len; i++) {
+       strbuf_trim(buf);
+       for (size_t i = 0; i < buf->len; i++) {
 		if (buf->buf[i] <= 32 || buf->buf[i] >= 127)
 			buf->buf[i] = '.';
-	}
+       }
 }
 
 const char *git_user_agent(void)
@@ -43,7 +44,7 @@ const char *git_user_agent_sanitized(void)
 	return agent;
 }
 
-int get_uname_info(struct strbuf *buf)
+int get_uname_info(struct strbuf *buf, int is_bug_report)
 {
 	struct utsname uname_info;
 
@@ -54,11 +55,14 @@ int get_uname_info(struct strbuf *buf)
 		return -1;
 	}
 
-	strbuf_addf(buf, "%s %s %s %s\n",
-		    uname_info.sysname,
-		    uname_info.release,
-		    uname_info.version,
-		    uname_info.machine);
+	if (is_bug_report)
+		strbuf_addf(buf, "%s %s %s %s\n",
+			    uname_info.sysname,
+			    uname_info.release,
+			    uname_info.version,
+			    uname_info.machine);
+	else
+		strbuf_addf(buf, "%s\n", uname_info.sysname);
 	return 0;
 }
 
@@ -69,7 +73,7 @@ const char *os_version(void)
 	if (!os) {
 		struct strbuf buf = STRBUF_INIT;
 
-		get_uname_info(&buf);
+		get_uname_info(&buf, 0);
 		os = strbuf_detach(&buf, NULL);
 	}
 
@@ -89,4 +93,16 @@ const char *os_version_sanitized(void)
 	}
 
 	return os_sanitized;
+}
+
+int advertise_os_version(struct repository *r)
+{
+	static int transfer_advertise_os_version = -1;
+
+	if (transfer_advertise_os_version == -1) {
+		repo_config_get_bool(r, "transfer.advertiseosversion", &transfer_advertise_os_version);
+		/* enabled by default */
+		transfer_advertise_os_version = !!transfer_advertise_os_version;
+	}
+	return transfer_advertise_os_version;
 }
