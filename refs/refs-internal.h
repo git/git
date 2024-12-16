@@ -113,6 +113,7 @@ struct ref_update {
 	void *backend_data;
 	unsigned int type;
 	char *msg;
+	char *committer_info;
 
 	/*
 	 * If this ref_update was split off of a symref update via
