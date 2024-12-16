@@ -129,6 +129,11 @@ Performance, Internal Implementation, Development Support etc.
 
  * Yet another "pass the repository through the callchain" topic.
 
+ * "git describe" learned to stop digging the history needlessly
+   deeper.
+
+ * Build procedure update plus introduction of Meson based builds.
+
 
 Fixes since v2.47
 -----------------
@@ -242,6 +247,23 @@ Fixes since v2.47
  * The --ancestry-path option is designed to be given a commit that is
    on the path, which was not documented, which has been corrected.
    (merge bc1a980759 kk/doc-ancestry-path later to maint).
+
+
+ * "git tag" has been taught to refuse to create refs/tags/HEAD
+   as such a tag will be confusing in the context of UI provided by
+   the Git Porcelain commands.
+   (merge bbd445d5ef jc/forbid-head-as-tagname later to maint).
+
+ * The advice messages now tell the newer 'git config set' command to
+   set the advice.token configuration variable to squelch a message.
+   (merge 6c397d0104 bf/explicit-config-set-in-advice-messages later to maint).
+
+ * The syntax ":/<text>" to name the latest commit with the matching
+   text was broken with a recent change, which has been corrected.
+   (merge 0ff919e87a ps/commit-with-message-syntax-fix later to maint).
+
+ * Fix performance regression of a recent "fatten promisor pack with
+   local objects" protection against an unwanted gc.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 77af53f56f aa/t7300-modernize later to maint).
