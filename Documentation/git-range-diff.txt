@@ -11,6 +11,7 @@ SYNOPSIS
 'git range-diff' [--color=[<when>]] [--no-color] [<diff-options>]
 	[--no-dual-color] [--creation-factor=<factor>]
 	[--left-only | --right-only] [--diff-merges=<format>]
+	[--remerge-diff]
 	( <range1> <range2> | <rev1>...<rev2> | <base> <rev1> <rev2> )
 	[[--] <path>...]
 
@@ -91,6 +92,9 @@ to use, as it shows only the diff on top of what Git's merge machinery would
 have produced. In other words, if a merge commit is the result of a
 non-conflicting `git merge`, the `remerge` mode will represent it with an empty
 diff.
+
+--remerge-diff::
+	Convenience option, equivalent to `--diff-merges=remerge`.
 
 --[no-]notes[=<ref>]::
 	This flag is passed to the `git log` program
