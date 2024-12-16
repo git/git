@@ -1,3 +1,4 @@
+#include "git-compat-util.h"
 #include "fsmonitor.h"
 #include "fsmonitor-ipc.h"
 #include "fsmonitor-path-utils.h"

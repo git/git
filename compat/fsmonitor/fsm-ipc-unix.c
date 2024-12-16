@@ -1,7 +1,9 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "config.h"
 #include "hex.h"
 #include "strbuf.h"
+#include "path.h"
+#include "gettext.h"
 #include "fsmonitor.h"
 #include "fsmonitor-ipc.h"
 #include "fsmonitor-path-utils.h"
@@ -38,9 +40,10 @@ const char *fsmonitor_ipc__get_path(struct repository *r)
 	/* Create the socket file in either socketDir or $HOME */
 	if (sock_dir && *sock_dir) {
 		strbuf_addf(&ipc_file, "%s/.git-fsmonitor-%s",
-					sock_dir, hash_to_hex(hash));
+			    sock_dir, hash_to_hex_algop(hash, r->hash_algo));
 	} else {
-		strbuf_addf(&ipc_file, "~/.git-fsmonitor-%s", hash_to_hex(hash));
+		strbuf_addf(&ipc_file, "~/.git-fsmonitor-%s",
+			    hash_to_hex_algop(hash, r->hash_algo));
 	}
 	free(sock_dir);
 

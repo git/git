@@ -1,4 +1,5 @@
 #include "git-compat-util.h"
+#include "gettext.h"
 #include "abspath.h"
 #include "fsmonitor.h"
 #include "fsmonitor-path-utils.h"

@@ -1,4 +1,7 @@
-#include "cache.h"
+#include "git-compat-util.h"
+#include "gettext.h"
+#include "string-list.h"
+#include "simple-ipc.h"
 #include "fsmonitor.h"
 #include "fsm-listen.h"
 #include "fsmonitor--daemon.h"
