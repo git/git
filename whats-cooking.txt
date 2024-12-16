@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2024, #05; Thu, 12)
-X-master-at: caacdb5dfd60540ecec30ec479f147f3c8167e11
-X-next-at: f74b3f243a33d7963d06298c0bdf84cc5f3ff26b
+Subject: What's cooking in git.git (Dec 2024, #06; Mon, 16)
+X-master-at: 063bcebf0c917140ca0e705cbe0fdea127e90086
+X-next-at: 0fc57dec578fcc8dcda5cc3de6b81fa1f6719770
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2024, #05; Thu, 12)
+What's cooking in git.git (Dec 2024, #06; Mon, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,11 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+An early preview release Git 2.48-rc0 has been tagged.  The rate of
+arrival of new topics unfortunately exceeds the rate of reviews and
+iterations, which means that many topics are left out of 'next',
+waiting to be reviewed.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -46,7 +51,39 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
+
+* ps/build-meson-html (2024-12-13) 11 commits
+ - meson: install static files for HTML documentation
+ - meson: generate articles
+ - Documentation: refactor "howto-index.sh" for out-of-tree builds
+ - Documentation: refactor "api-index.sh" for out-of-tree builds
+ - meson: generate user manual
+ - Documentation: inline user-manual.conf
+ - meson: generate HTML pages for all man page categories
+ - meson: fix generation of merge tools
+ - meson: properly wire up dependencies for our docs
+ - meson: wire up support for AsciiDoctor
+ - Merge branch 'ps/build' into ps/build-meson-html
+
+ The build procedure based on meson learned to generate HTML
+ documention pages.
+
+ Needs review.
+ source: <20241213-b4-pks-meson-docs-v1-0-0c7895952cd3@pks.im>
+
+
+* jc/doc-attr-tree (2024-12-14) 1 commit
+ - doc: give attr.tree a bit more visibility
+
+ Make sure that "git --attr-source=X", GIT_ATTR_SOURCE, and
+ attr.tree configuration variables appear at the same places in the
+ documentation.
+
+ On hold.
+ cf. <20241216111112.GA2201417@coredump.intra.peff.net>
+ source: <xmqq5xnladwi.fsf@gitster.g>
+
 
 * ps/3.0-remote-deprecation (2024-12-12) 6 commits
  - remote: announce removal of "branches/" and "remotes/"
@@ -55,7 +92,6 @@ Release tarballs are available at:
  - ci: merge linux-gcc-default into linux-gcc
  - Makefile: wire up build option for deprecated features
  - Merge branch 'ps/build' into ps/3.0-remote-deprecation
- (this branch uses ps/build.)
 
  Following the procedure we established to introduce breaking
  changes for Git 3.0, allow an early opt-in for removing support of
@@ -66,7 +102,7 @@ Release tarballs are available at:
  source: <20241211-pks-remote-branches-deprecation-v1-0-1431e2369135@pks.im>
 
 
-* ps/ci-meson (2024-12-12) 10 commits
+* ps/ci-meson (2024-12-13) 10 commits
  - ci: wire up Meson builds
  - t: introduce compatibility options to clar-based tests
  - t: fix out-of-tree tests for some git-p4 tests
@@ -77,64 +113,54 @@ Release tarballs are available at:
  - ci/lib: support custom output directories when creating test artifacts
  - Merge branch 'ps/build' into ps/ci-meson
  - Merge branch 'cw/worktree-extension' into ps/ci-meson
- (this branch uses cw/worktree-extension and ps/build.)
 
  The meson-build procedure is integrated into CI to catch and
  prevent bitrotting.
 
- Needs review.
- source: <20241211-pks-meson-ci-v1-0-28d18b494374@pks.im>
+ Will merge to 'next'.
+ cf. <87zfkwgehr.fsf@iotcl.com>
+ source: <20241213-pks-meson-ci-v2-0-634affccc694@pks.im>
 
---------------------------------------------------
-[Cooking]
 
-* kn/reflog-migration (2024-12-11) 8 commits
- - SQUASH
- - refs: add support for migrating reflogs
- - refs: allow multiple reflog entries for the same refname
- - refs: introduce the `ref_transaction_update_reflog` function
- - refs: extract out refname verification in transactions
- - refs/files: add count field to ref_lock
- - refs: add `index` field to `struct ref_udpate`
- - refs: include committer info in `ref_update` struct
+* kn/reflog-migration (2024-12-15) 9 commits
+ . refs: add support for migrating reflogs
+ . refs: allow multiple reflog entries for the same refname
+ . refs: introduce the `ref_transaction_update_reflog` function
+ . refs: add `committer_info` to `ref_transaction_add_update()`
+ . refs: extract out refname verification in transactions
+ . refs/files: add count field to ref_lock
+ . refs: add `index` field to `struct ref_udpate`
+ . refs: include committer info in `ref_update` struct
+ . Merge branch 'kn/reftable-writer-log-write-verify' into kn/reflog-migration
+ (this branch uses kn/reftable-writer-log-write-verify.)
 
  "git refs migrate" learned to also migrate the reflog data across
  backends.
 
- Needs review.
- source: <20241209-320-git-refs-migrate-reflogs-v1-0-d4bc37ee860f@gmail.com>
- source: <CAOLa=ZRsAwM8oUnyYCaRKkkudN+QW+hRSKZEvPJLThSr14M7rA@mail.gmail.com>
+ Does not seem to pass its own test.
+ source: <20241215-320-git-refs-migrate-reflogs-v3-0-4127fe707b98@gmail.com>
 
 
 * mh/doc-windows-home-env (2024-12-10) 1 commit
- - Document HOME environment variable
+  (merged to 'next' on 2024-12-13 at 9f49e6f9dd)
+ + Document HOME environment variable
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1834.git.1733771894867.gitgitgadget@gmail.com>
 
 
 * tc/bundle-with-tag-remove-workaround (2024-12-12) 1 commit
- - bundle: remove unneeded code
+  (merged to 'next' on 2024-12-13 at 7f4ebe0be3)
+ + bundle: remove unneeded code
 
  "git bundle create" with an annotated tag on the positive end of
  the revision range had a workaround code for older limitation in
  the revision walker, which has become unnecessary.
 
- Will merge to 'next'.
- source: <20241211-fix-bundle-create-race-v3-1-0587f6f9db1b@iotcl.com>
-
-
-* bf/explicit-config-set-in-advice-messages (2024-12-06) 1 commit
-  (merged to 'next' on 2024-12-11 at a20c319038)
- + advice: suggest using subcommand "git config set"
-
- The advice messages now tell the newer 'git config set' command to
- set the advice.token configuration variable to squelch a message.
-
  Will merge to 'master'.
- source: <20241205122225.1184215-1-bence@ferdinandy.com>
+ source: <20241211-fix-bundle-create-race-v3-1-0587f6f9db1b@iotcl.com>
 
 
 * cc/lop-remote (2024-12-07) 5 commits
@@ -163,37 +189,33 @@ Release tarballs are available at:
 
 
 * kn/reftable-writer-log-write-verify (2024-12-07) 1 commit
- - reftable/writer: ensure valid range for log's update_index
+  (merged to 'next' on 2024-12-15 at 7e6b58d98e)
+ + reftable/writer: ensure valid range for log's update_index
+ (this branch is used by kn/reflog-migration.)
 
+ Reftable backend adds check for upper limit of log's update_index.
+
+ Will merge to 'master'.
  source: <20241206-424-reftable-writer-add-check-for-limits-v2-1-82ca350b10be@gmail.com>
 
 
 * ps/ci-gitlab-update (2024-12-12) 4 commits
- - ci/lib: fix "CI setup" sections with GitLab CI
- - ci/lib: do not interpret escape sequences in `group ()` arguments
- - ci/lib: remove duplicate trap to end "CI setup" group
- - gitlab-ci: update macOS images to Sonoma
+  (merged to 'next' on 2024-12-15 at e0ca818197)
+ + ci/lib: fix "CI setup" sections with GitLab CI
+ + ci/lib: do not interpret escape sequences in `group ()` arguments
+ + ci/lib: remove duplicate trap to end "CI setup" group
+ + gitlab-ci: update macOS images to Sonoma
 
  GitLab CI updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20241212-pks-ci-section-fixes-v3-0-d9fe6baee21e@pks.im>
 
 
-* ps/commit-with-message-syntax-fix (2024-12-08) 1 commit
-  (merged to 'next' on 2024-12-11 at da3d13a723)
- + object-name: fix reversed ordering with ":/<text>" revisions
-
- The syntax ":/<text>" to name the latest commit with the matching
- text was broken with a recent change, which has been corrected.
-
- Will merge to 'master'.
- source: <20241206-pks-rev-parse-fix-reversed-list-v3-1-d934c17db168@pks.im>
-
-
 * jc/set-head-symref-fix (2024-12-07) 2 commits
- - fetch: do not ask for HEAD unnecessarily
- - Merge branch 'bf/set-head-symref' into js/set-head-symref-fix
+  (merged to 'next' on 2024-12-13 at 478444359e)
+ + fetch: do not ask for HEAD unnecessarily
+ + Merge branch 'bf/set-head-symref' into js/set-head-symref-fix
  (this branch uses bf/set-head-symref.)
 
  "git fetch" from a configured remote learned to update a missing
@@ -202,7 +224,7 @@ Release tarballs are available at:
  this also corrects "git fetch --tags $URL" which was broken by the
  new feature in an unspecified way.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqcyi5xmhr.fsf@gitster.g>
 
 
@@ -222,115 +244,29 @@ Release tarballs are available at:
  source: <20241210184442.10723-1-royeldar0@gmail.com>
 
 
-* jt/fix-fattening-promisor-fetch (2024-12-10) 3 commits
-  (merged to 'next' on 2024-12-11 at 5a408010e9)
- + index-pack --promisor: also check commits' trees
- + index-pack --promisor: don't check blobs
- + index-pack --promisor: dedup before checking links
-
- Fix performance regression of a recent "fatten promisor pack with
- local objects" protection against an unwanted gc.
-
- Will merge to 'master'.
- source: <cover.1733262661.git.jonathantanmy@google.com>
-
-
-* kk/doc-ancestry-path (2024-12-04) 1 commit
-  (merged to 'next' on 2024-12-05 at 36d6c51c96)
- + doc: mention rev-list --ancestry-path restrictions
-
- The --ancestry-path option is designed to be given a commit that is
- on the path, which was not documented, which has been corrected.
-
- Will merge to 'master'.
- source: <CADYQcGrD5KtM1sZQbccAtDaLmUXD8Gxv_nUWmapjfZm=TMq=Jw@mail.gmail.com>
-
-
-* kh/doc-bundle-typofix (2024-12-02) 1 commit
-  (merged to 'next' on 2024-12-04 at 5da441ce36)
- + Documentation/git-bundle.txt: fix word join typo
-
- Typofix.
-
- Will merge to 'master'.
- source: <164b94bab9214f6030909df8f1e7c476b7f79e55.1732822997.git.code@khaugsbakk.name>
-
-
-* kh/doc-update-ref-grammofix (2024-12-02) 1 commit
-  (merged to 'next' on 2024-12-04 at 9905f16afc)
- + Documentation/git-update-ref.txt: add missing word
-
- Grammofix.
-
- Will merge to 'master'.
- source: <6cc7a9d60216c966bcf77675aa22a39cfa8993e2.1732906187.git.code@khaugsbakk.name>
-
-
 * ps/build-sign-compare (2024-12-06) 16 commits
- - t/helper: don't depend on implicit wraparound
- - scalar: address -Wsign-compare warnings
- - builtin/patch-id: fix type of `get_one_patchid()`
- - builtin/blame: fix type of `length` variable when emitting object ID
- - gpg-interface: address -Wsign-comparison warnings
- - daemon: fix type of `max_connections`
- - daemon: fix loops that have mismatching integer types
- - global: trivial conversions to fix `-Wsign-compare` warnings
- - pkt-line: fix -Wsign-compare warning on 32 bit platform
- - csum-file: fix -Wsign-compare warning on 32-bit platform
- - diff.h: fix index used to loop through unsigned integer
- - config.mak.dev: drop `-Wno-sign-compare`
- - global: mark code units that generate warnings with `-Wsign-compare`
- - compat/win32: fix -Wsign-compare warning in "wWinMain()"
- - compat/regex: explicitly ignore "-Wsign-compare" warnings
- - git-compat-util: introduce macros to disable "-Wsign-compare" warnings
+  (merged to 'next' on 2024-12-16 at 1ddb1485df)
+ + t/helper: don't depend on implicit wraparound
+ + scalar: address -Wsign-compare warnings
+ + builtin/patch-id: fix type of `get_one_patchid()`
+ + builtin/blame: fix type of `length` variable when emitting object ID
+ + gpg-interface: address -Wsign-comparison warnings
+ + daemon: fix type of `max_connections`
+ + daemon: fix loops that have mismatching integer types
+ + global: trivial conversions to fix `-Wsign-compare` warnings
+ + pkt-line: fix -Wsign-compare warning on 32 bit platform
+ + csum-file: fix -Wsign-compare warning on 32-bit platform
+ + diff.h: fix index used to loop through unsigned integer
+ + config.mak.dev: drop `-Wno-sign-compare`
+ + global: mark code units that generate warnings with `-Wsign-compare`
+ + compat/win32: fix -Wsign-compare warning in "wWinMain()"
+ + compat/regex: explicitly ignore "-Wsign-compare" warnings
+ + git-compat-util: introduce macros to disable "-Wsign-compare" warnings
 
  Start working to make the codebase buildable with -Wsign-compare.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20241206-pks-sign-compare-v4-0-0344c6dfb219@pks.im>
-
-
-* rj/strvec-splice-fix (2024-12-10) 2 commits
-  (merged to 'next' on 2024-12-11 at ddbfd8883a)
- + strvec: `strvec_splice()` to a statically initialized vector
- + Merge branch 'ps/leakfixes-part-10' into rj/strvec-splice-fix
-
- Correct strvec_splice() that misbehaved when the strvec is empty.
-
- Will merge to 'master'.
- source: <3c7b3c26-7501-4797-8afa-c7f7e9c46558@gmail.com>
-
-
-* jc/forbid-head-as-tagname (2024-12-03) 4 commits
-  (merged to 'next' on 2024-12-11 at adea88989e)
- + tag: "git tag" refuses to use HEAD as a tagname
- + t5604: do not expect that HEAD can be a valid tagname
- + refs: drop strbuf_ prefix from helpers
- + refs: move ref name helpers around
-
- "git tag" has been taught to refuse to create refs/tags/HEAD
- as such a tag will be confusing in the context of UI provided by
- the Git Porcelain commands.
-
- Will merge to 'master'.
- source: <20241203023240.3852850-1-gitster@pobox.com>
-
-
-* en/fast-import-verify-path (2024-12-04) 3 commits
-  (merged to 'next' on 2024-12-05 at bbdd9b9659)
- + t9300: test verification of renamed paths
-  (merged to 'next' on 2024-12-02 at 2932fa51e4)
- + fast-import: disallow more path components
-  (merged to 'next' on 2024-11-27 at 8b145bb543)
- + fast-import: disallow "." and ".." path components
-
- "git fast-import" learned to reject paths with ".."  and "." as
- their components to avoid creating invalid tree objects.
-
- Will merge to 'master'.
- source: <pull.1831.v2.git.1732561248717.gitgitgadget@gmail.com>
- source: <pull.1832.git.1732740464398.gitgitgadget@gmail.com>
- source: <20241203210652.GA1413195@coredump.intra.peff.net>
 
 
 * bf/fetch-set-head-config (2024-12-06) 5 commits
@@ -346,40 +282,10 @@ Release tarballs are available at:
  "git fetch" honors "remote.<remote>.followRemoteHEAD" settings to
  tweak the remote-tracking HEAD in "refs/remotes/<remote>/HEAD".
 
- Will merge to 'master' after bf/set-head-symref stabilizes.
+ Will merge to 'master' after bf/set-head-symref and its fix-up.
  source: <20241128230806.2058962-1-bence@ferdinandy.com>
  source: <20241204104003.514905-1-bence@ferdinandy.com>
  source: <20241128111946.366584-1-bence@ferdinandy.com>
-
-
-* jc/doc-error-message-guidelines (2024-11-29) 1 commit
-  (merged to 'next' on 2024-12-04 at 2d19ff44e5)
- + CodingGuidelines: a handful of error message guidelines
-
- Developer documentation update.
-
- Will merge to 'master'.
- source: <xmqqa5dkqjmr.fsf_-_@gitster.g>
-
-
-* kn/midx-wo-the-repository (2024-12-04) 10 commits
-  (merged to 'next' on 2024-12-05 at e48a185ed0)
- + midx: inline the `MIDX_MIN_SIZE` definition
- + midx: pass down `hash_algo` to functions using global variables
- + midx: pass `repository` to `load_multi_pack_index`
- + midx: cleanup internal usage of `the_repository` and `the_hash_algo`
- + midx-write: pass down repository to `write_midx_file[_only]`
- + write-midx: add repository field to `write_midx_context`
- + midx-write: use `revs->repo` inside `read_refs_snapshot`
- + midx-write: pass down repository to static functions
- + Merge branch 'kn/pass-repo-to-builtin-sub-sub-commands' into kn/midx-wo-the-repository
- + Merge branch 'kn/the-repository' into kn/midx-wo-the-repository
- (this branch uses kn/the-repository.)
-
- Yet another "pass the repository through the callchain" topic.
-
- Will merge to 'master'.
- source: <20241127-374-refactor-midx-c-and-midx-write-c-to-not-depend-on-global-state-v3-0-c5a99f85009b@gmail.com>
 
 
 * tb/unsafe-hash-test (2024-11-21) 2 commits
@@ -392,22 +298,6 @@ Release tarballs are available at:
  Comments?
  cf. <xmqqr073antj.fsf@gitster.g>
  source: <cover.1730833506.git.me@ttaylorr.com>
-
-
-* jt/bundle-fsck (2024-11-28) 4 commits
-  (merged to 'next' on 2024-12-04 at bfd07a8936)
- + transport: propagate fsck configuration during bundle fetch
- + fetch-pack: split out fsck config parsing
- + bundle: support fsck message configuration
- + bundle: add bundle verification options type
-
- "git bundle --unbundle" and "git clone" running on a bundle file
- both learned to trigger fsck over the new objects with configurable
- fck check levels.
-
- Will merge to 'master'.
- cf. <Z08VoOHGZ1wecUx6@pks.im>
- source: <20241127233312.27710-1-jltobler@gmail.com>
 
 
 * tb/incremental-midx-part-2 (2024-11-20) 15 commits
@@ -441,18 +331,19 @@ Release tarballs are available at:
  other side, losing the error status from the child process, which
  has been corrected.
 
- Needs review.
+ Needs to see if competing parallel topic needs to replace this one.
  source: <20241113-pks-push-atomic-respect-exit-code-v1-0-7965f01e7f4e@pks.im>
 
 
-* js/log-remerge-keep-ancestry (2024-11-12) 1 commit
- - log: --remerge-diff needs to keep around commit parents
+* js/log-remerge-keep-ancestry (2024-12-13) 1 commit
+  (merged to 'next' on 2024-12-13 at 90156d79ed)
+ + log: --remerge-diff needs to keep around commit parents
+ (this branch is used by js/range-diff-diff-merges.)
 
  "git log -p --remerge-diff --reverse" was completely broken.
 
- Expecting a hopefully small and final reroll.
- cf. <xmqqa5e5berx.fsf@gitster.g>
- source: <pull.1825.v2.git.1731350009491.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <pull.1825.v3.git.1733999352289.gitgitgadget@gmail.com>
 
 
 * jc/move-is-bare-repository-cfg-variable-to-repo (2024-11-07) 3 commits
@@ -470,32 +361,18 @@ Release tarballs are available at:
  source: <pull.1826.git.git.1730926082.gitgitgadget@gmail.com>
 
 
-* jk/describe-perf (2024-12-06) 5 commits
-  (merged to 'next' on 2024-12-11 at 509db1dc1a)
- + describe: split "found all tags" and max_candidates logic
-  (merged to 'next' on 2024-12-02 at 0f34109a85)
- + describe: stop traversing when we run out of names
- + describe: stop digging for max_candidates+1
- + t/perf: add tests for git-describe
- + t6120: demonstrate weakness in disjoint-root handling
-
- "git describe" optimization.
-
- Will merge to 'master'.
- source: <20241106192236.GC880133@coredump.intra.peff.net>
- source: <20241206054218.GA3203047@coredump.intra.peff.net>
-
-
-* js/range-diff-diff-merges (2024-11-11) 1 commit
+* js/range-diff-diff-merges (2024-12-16) 3 commits
+ - range-diff: introduce the convenience option `--remerge-diff`
  - range-diff: optionally include merge commits' diffs in the analysis
+ - Merge branch 'js/log-remerge-keep-ancestry' into js/range-diff-diff-merges
+ (this branch uses js/log-remerge-keep-ancestry.)
 
  "git range-diff" learned to optionally show and compare merge
  commits in the ranges being compared, with the --diff-merges
  option.
 
- Expecting a (hopefully final and) small reroll.
- cf. <eb502feb-1563-b1b5-5345-784673c89c79@gmx.de>
- source: <pull.1734.v2.git.1731073383564.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1734.v3.git.1734358282.gitgitgadget@gmail.com>
 
 
 * ds/name-hash-tweaks (2024-12-03) 8 commits
@@ -528,37 +405,18 @@ Release tarballs are available at:
  Introduce a new API to visit objects in batches based on a common
  path, or by type.
 
- Will merge to 'next'?
+ Under review.
  source: <pull.1818.v3.git.1733514358.gitgitgadget@gmail.com>
 
 
-* cw/worktree-extension (2024-12-02) 8 commits
-  (merged to 'next' on 2024-12-05 at 7bd98d132c)
- + worktree: refactor `repair_worktree_after_gitdir_move()`
- + worktree: add relative cli/config options to `repair` command
- + worktree: add relative cli/config options to `move` command
- + worktree: add relative cli/config options to `add` command
- + worktree: add `write_worktree_linking_files()` function
- + worktree: refactor infer_backlink return
- + worktree: add `relativeWorktrees` extension
- + setup: correctly reinitialize repository version
- (this branch is used by ps/ci-meson.)
-
- Introduce a new repository extension to prevent older Git versions
- from mis-interpreting worktrees created with relative paths.
-
- Will merge to 'master'.
- cf. <103c7a4d-a74b-4381-a9c7-33a89d5db192@gmail.com>
- source: <20241129-wt_relative_options-v6-0-44e4e0bec8c3@pm.me>
-
-
 * as/show-index-uninitialized-hash (2024-11-11) 2 commits
- - t5300: add test for 'show-index --object-format'
- - show-index: fix uninitialized hash function
+  (merged to 'next' on 2024-12-16 at b54e9a56f0)
+ + t5300: add test for 'show-index --object-format'
+ + show-index: fix uninitialized hash function
 
  Regression fix for 'show-index' when run outside of a repository.
 
- Comments?
+ Will merge to 'master'.
  source: <20241109092739.14276-1-abhijeet.nkt@gmail.com>
 
 
@@ -582,18 +440,6 @@ Release tarballs are available at:
  source: <pull.1817.git.git.1729370390416.gitgitgadget@gmail.com>
 
 
-* es/oss-fuzz (2024-10-16) 3 commits
-  (merged to 'next' on 2024-12-05 at 1f973aece2)
- + fuzz: port fuzz-url-decode-mem from OSS-Fuzz
- + fuzz: port fuzz-parse-attr-line from OSS-Fuzz
- + fuzz: port fuzz-credential-from-url-gently from OSS-Fuzz
-
- Backport oss-fuzz tests for us to our codebase.
-
- Will merge to 'master'.
- source: <cover.1728939687.git.steadmon@google.com>
-
-
 * bf/set-head-symref (2024-11-25) 10 commits
   (merged to 'next' on 2024-12-02 at b142ff3d8e)
  + fetch set_head: handle mirrored bare repositories
@@ -612,42 +458,8 @@ Release tarballs are available at:
  missing and discovers what branch the other side points with its
  HEAD, refs/remotes/$remote/HEAD is updated to point to it.
 
- Needs to wait until set-head-symref-fix topic solidifies.
+ Will merge to 'master' together with jc/set-head-symref-fix.
  source: <20241122123138.66960-1-bence@ferdinandy.com>
-
-
-* ps/build (2024-12-07) 24 commits
-  (merged to 'next' on 2024-12-11 at cb270b3dea)
- + Introduce support for the Meson build system
- + Documentation: add comparison of build systems
- + t: allow overriding build dir
- + t: better support for out-of-tree builds
- + Documentation: extract script to generate a list of mergetools
- + Documentation: teach "cmd-list.perl" about out-of-tree builds
- + Documentation: allow sourcing generated includes from separate dir
- + Makefile: simplify building of templates
- + Makefile: write absolute program path into bin-wrappers
- + Makefile: allow "bin-wrappers/" directory to exist
- + Makefile: refactor generators to be PWD-independent
- + Makefile: extract script to generate gitweb.js
- + Makefile: extract script to generate gitweb.cgi
- + Makefile: extract script to massage Python scripts
- + Makefile: extract script to massage Shell scripts
- + Makefile: use "generate-perl.sh" to massage Perl library
- + Makefile: extract script to massage Perl scripts
- + Makefile: consistently use PERL_PATH
- + Makefile: generate doc versions via GIT-VERSION-GEN
- + Makefile: generate "git.rc" via GIT-VERSION-GEN
- + Makefile: propagate Git version via generated header
- + Makefile: refactor GIT-VERSION-GEN to be reusable
- + Makefile: consistently use @PLACEHOLDER@ to substitute
- + Makefile: use common template for GIT-BUILD-OPTIONS
- (this branch is used by ps/3.0-remote-deprecation and ps/ci-meson.)
-
- Build procedure update plus introduction of Mason based builds.
-
- Will merge to 'master'.
- source: <20241206-pks-meson-v11-0-525ed4792b88@pks.im>
 
 
 * ej/cat-file-remote-object-info (2024-11-25) 6 commits
@@ -673,30 +485,10 @@ Release tarballs are available at:
  - libgit-sys: introduce Rust wrapper for libgit.a
  - common-main: split init and exit code into new files
 
- An rust binding to libgit.a functions has been introduced.
+ A rust binding to libgit.a functions has been introduced.
 
  Will discard?
  source: <cover.1729032373.git.steadmon@google.com>
-
-
-* kn/the-repository (2024-12-04) 10 commits
- + packfile.c: remove unnecessary prepare_packed_git() call
- + midx: add repository to `multi_pack_index` struct
- + config: make `packed_git_(limit|window_size)` non-global variables
- + config: make `delta_base_cache_limit` a non-global variable
- + packfile: pass down repository to `for_each_packed_object`
- + packfile: pass down repository to `has_object[_kept]_pack`
- + packfile: pass down repository to `odb_pack_name`
- + packfile: pass `repository` to static function in the file
- + packfile: use `repository` from `packed_git` directly
- + packfile: add repository to struct `packed_git`
- (this branch is used by kn/midx-wo-the-repository.)
-
- Various implicit uses of 'the_repoository' in the packfile code
- have been eliminated.
-
- Will merge to 'master'.
- source: <cover.1733236936.git.karthik.188@gmail.com>
 
 --------------------------------------------------
 [Discarded]
