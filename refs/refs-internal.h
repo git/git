@@ -116,6 +116,13 @@ struct ref_update {
 	char *committer_info;
 
 	/*
+	 * The index overrides the default sort algorithm. This is needed
+	 * when migrating reflogs and we want to ensure we carry over the
+	 * same order.
+	 */
+	unsigned int index;
+
+	/*
 	 * If this ref_update was split off of a symref update via
 	 * split_symref_update(), then this member points at that
 	 * update. This is used for two purposes:
