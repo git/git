@@ -990,8 +990,9 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 		if (ret)
 			goto done;
 
-		string_list_append(&affected_refnames,
-				   transaction->updates[i]->refname);
+		if (!(transaction->updates[i]->flags & REF_LOG_ONLY))
+			string_list_append(&affected_refnames,
+					   transaction->updates[i]->refname);
 	}
 
 	/*
@@ -1301,6 +1302,7 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 	struct reftable_log_record *logs = NULL;
 	struct ident_split committer_ident = {0};
 	size_t logs_nr = 0, logs_alloc = 0, i;
+	uint64_t max_update_index = ts;
 	const char *committer_info;
 	int ret = 0;
 
@@ -1405,7 +1407,19 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 				}
 
 				fill_reftable_log_record(log, &c);
-				log->update_index = ts;
+
+				/*
+				 * Updates are sorted by the writer. So updates for the same
+				 * refname need to contain different update indices.
+				 */
+				log->update_index = ts + u->index;
+
+				/*
+				 * Note the max update_index so the limit can be set later on.
+				 */
+				if (log->update_index > max_update_index)
+					max_update_index = log->update_index;
+
 				log->refname = xstrdup(u->refname);
 				memcpy(log->value.update.new_hash,
 				       u->new_oid.hash, GIT_MAX_RAWSZ);
@@ -1469,6 +1483,8 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 	 * and log blocks.
 	 */
 	if (logs) {
+		reftable_writer_set_limits(writer, ts, max_update_index);
+
 		ret = reftable_writer_add_logs(writer, logs, logs_nr);
 		if (ret < 0)
 			goto done;

@@ -2611,6 +2611,9 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 
 	update->backend_data = lock;
 
+	if (update->flags & REF_LOG_ONLY)
+		goto out;
+
 	if (update->type & REF_ISSYMREF) {
 		if (update->flags & REF_NO_DEREF) {
 			/*
@@ -2829,13 +2832,16 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	 */
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
-		struct string_list_item *item =
-			string_list_append(&affected_refnames, update->refname);
+		struct string_list_item *item;
 
 		if ((update->flags & REF_IS_PRUNING) &&
 		    !(update->flags & REF_NO_DEREF))
 			BUG("REF_IS_PRUNING set without REF_NO_DEREF");
 
+		if (update->flags & REF_LOG_ONLY)
+			continue;
+
+		item = string_list_append(&affected_refnames, update->refname);
 		/*
 		 * We store a pointer to update in item->util, but at
 		 * the moment we never use the value of this field
@@ -3035,8 +3041,9 @@ static int files_transaction_finish_initial(struct files_ref_store *refs,
 
 	/* Fail if a refname appears more than once in the transaction: */
 	for (i = 0; i < transaction->nr; i++)
-		string_list_append(&affected_refnames,
-				   transaction->updates[i]->refname);
+		if (!(transaction->updates[i]->flags & REF_LOG_ONLY))
+			string_list_append(&affected_refnames,
+					   transaction->updates[i]->refname);
 	string_list_sort(&affected_refnames);
 	if (ref_update_reject_duplicates(&affected_refnames, err)) {
 		ret = TRANSACTION_GENERIC_ERROR;
