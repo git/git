@@ -53,7 +53,8 @@ int WINAPI wWinMain(_In_ HINSTANCE instance,
 	wchar_t git_command_line[32768];
 	size_t size = sizeof(git_command_line) / sizeof(wchar_t);
 	const wchar_t *needs_quotes = L"";
-	int slash = 0, i;
+	size_t slash = 0;
+	int len;
 
 	STARTUPINFO startup_info = {
 		.cb = sizeof(STARTUPINFO),
@@ -66,7 +67,7 @@ int WINAPI wWinMain(_In_ HINSTANCE instance,
 	DWORD exit_code;
 
 	/* First, determine the full path of argv[0] */
-	for (i = 0; _wpgmptr[i]; i++)
+	for (size_t i = 0; _wpgmptr[i]; i++)
 		if (_wpgmptr[i] == L' ')
 			needs_quotes = L"\"";
 		else if (_wpgmptr[i] == L'\\')
@@ -79,16 +80,16 @@ int WINAPI wWinMain(_In_ HINSTANCE instance,
 	extend_path(_wpgmptr, slash);
 
 	/* Then, add the full path of `git.exe` as argv[0] */
-	i = swprintf_s(git_command_line, size, L"%ls%.*ls\\git.exe%ls",
-		       needs_quotes, slash, _wpgmptr, needs_quotes);
-	if (i < 0)
+	len = swprintf_s(git_command_line, size, L"%ls%.*ls\\git.exe%ls",
+			 needs_quotes, (int) slash, _wpgmptr, needs_quotes);
+	if (len < 0)
 		return 127; /* Too long path */
 
 	if (*command_line) {
 		/* Now, append the command-line arguments */
-		i = swprintf_s(git_command_line + i, size - i,
-			       L" %ls", command_line);
-		if (i < 0)
+		len = swprintf_s(git_command_line + len, size - len,
+				 L" %ls", command_line);
+		if (len < 0)
 			return 127;
 	}
 

@@ -1,7 +1,6 @@
 #include "test-tool.h"
 #include "git-compat-util.h"
 
-
 int cmd__csprng(int argc, const char **argv)
 {
 	unsigned long count;
@@ -12,7 +11,7 @@ int cmd__csprng(int argc, const char **argv)
 		return 2;
 	}
 
-	count = (argc == 2) ? strtoul(argv[1], NULL, 0) : -1L;
+	count = (argc == 2) ? strtoul(argv[1], NULL, 0) : ULONG_MAX;
 
 	while (count) {
 		unsigned long chunk = count < sizeof(buf) ? count : sizeof(buf);

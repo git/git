@@ -23,7 +23,7 @@ static int compare_dir(const void *a_, const void *b_)
 
 static void dump(struct untracked_cache_dir *ucd, struct strbuf *base)
 {
-	int i, len;
+	int len;
 	QSORT(ucd->untracked, ucd->untracked_nr, compare_untracked);
 	QSORT(ucd->dirs, ucd->dirs_nr, compare_dir);
 	len = base->len;
@@ -37,9 +37,9 @@ static void dump(struct untracked_cache_dir *ucd, struct strbuf *base)
 	if (ucd->valid)
 		fputs(" valid", stdout);
 	printf("\n");
-	for (i = 0; i < ucd->untracked_nr; i++)
+	for (size_t i = 0; i < ucd->untracked_nr; i++)
 		printf("%s\n", ucd->untracked[i]);
-	for (i = 0; i < ucd->dirs_nr; i++)
+	for (size_t i = 0; i < ucd->dirs_nr; i++)
 		dump(ucd->dirs[i], base);
 	strbuf_setlen(base, len);
 }

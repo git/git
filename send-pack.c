@@ -72,7 +72,6 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 	 */
 	struct child_process po = CHILD_PROCESS_INIT;
 	FILE *po_in;
-	int i;
 	int rc;
 
 	trace2_region_enter("send_pack", "pack_objects", the_repository);
@@ -104,9 +103,9 @@ static int pack_objects(int fd, struct ref *refs, struct oid_array *advertised,
 	 * parameters by writing to the pipe.
 	 */
 	po_in = xfdopen(po.in, "w");
-	for (i = 0; i < advertised->nr; i++)
+	for (size_t i = 0; i < advertised->nr; i++)
 		feed_object(&advertised->oid[i], po_in, 1);
-	for (i = 0; i < negotiated->nr; i++)
+	for (size_t i = 0; i < negotiated->nr; i++)
 		feed_object(&negotiated->oid[i], po_in, 1);
 
 	while (refs) {

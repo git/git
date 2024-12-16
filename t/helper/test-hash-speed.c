@@ -16,12 +16,11 @@ int cmd__hash_speed(int ac, const char **av)
 	unsigned char hash[GIT_MAX_RAWSZ];
 	clock_t initial, start, end;
 	unsigned bufsizes[] = { 64, 256, 1024, 8192, 16384 };
-	int i;
 	void *p;
 	const struct git_hash_algo *algo = NULL;
 
 	if (ac == 2) {
-		for (i = 1; i < GIT_HASH_NALGOS; i++) {
+		for (size_t i = 1; i < GIT_HASH_NALGOS; i++) {
 			if (!strcmp(av[1], hash_algos[i].name)) {
 				algo = &hash_algos[i];
 				break;
@@ -36,7 +35,7 @@ int cmd__hash_speed(int ac, const char **av)
 
 	printf("algo: %s\n", algo->name);
 
-	for (i = 0; i < ARRAY_SIZE(bufsizes); i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(bufsizes); i++) {
 		unsigned long j, kb;
 		double kb_per_sec;
 		p = xcalloc(1, bufsizes[i]);

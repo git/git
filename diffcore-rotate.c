@@ -2,6 +2,7 @@
  * Copyright (C) 2021, Google LLC.
  * Based on diffcore-order.c, which is Copyright (C) 2005, Junio C Hamano
  */
+
 #include "git-compat-util.h"
 #include "gettext.h"
 #include "diff.h"

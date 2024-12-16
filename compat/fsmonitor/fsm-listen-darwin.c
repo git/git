@@ -208,13 +208,12 @@ static void fsevent_callback(ConstFSEventStreamRef streamRef UNUSED,
 	const char *slash;
 	char *resolved = NULL;
 	struct strbuf tmp = STRBUF_INIT;
-	int k;
 
 	/*
 	 * Build a list of all filesystem changes into a private/local
 	 * list and without holding any locks.
 	 */
-	for (k = 0; k < num_of_events; k++) {
+	for (size_t k = 0; k < num_of_events; k++) {
 		/*
 		 * On Mac, we receive an array of absolute paths.
 		 */

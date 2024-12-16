@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2005 Junio C Hamano
  */
+
 #include "git-compat-util.h"
 #include "gettext.h"
 #include "diff.h"
