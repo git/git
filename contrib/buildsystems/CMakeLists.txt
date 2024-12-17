@@ -867,7 +867,7 @@ list(TRANSFORM perl_modules REPLACE "${CMAKE_SOURCE_DIR}/" "")
 file(STRINGS ${CMAKE_SOURCE_DIR}/perl/header_templates/fixed_prefix.template.pl perl_header )
 string(REPLACE "@PATHSEP@" ":" perl_header "${perl_header}")
 string(REPLACE "@INSTLIBDIR@" "${INSTLIBDIR}" perl_header "${perl_header}")
-file(WRITE ${CMAKE_BINARY_DIR}/PERL-HEADER ${perl_header})
+file(WRITE ${CMAKE_BINARY_DIR}/GIT-PERL-HEADER ${perl_header})
 
 add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/GIT-VERSION-FILE"
 	COMMAND "${SH_EXE}" "${CMAKE_SOURCE_DIR}/GIT-VERSION-GEN"
@@ -888,7 +888,7 @@ foreach(script ${git_perl_scripts} ${perl_modules})
 		COMMAND "${SH_EXE}" "${CMAKE_SOURCE_DIR}/generate-perl.sh"
 			"${CMAKE_BINARY_DIR}/GIT-BUILD-OPTIONS"
 			"${CMAKE_BINARY_DIR}/GIT-VERSION-FILE"
-			"${CMAKE_BINARY_DIR}/PERL-HEADER"
+			"${CMAKE_BINARY_DIR}/GIT-PERL-HEADER"
 			"${CMAKE_SOURCE_DIR}/${script}"
 			"${CMAKE_BINARY_DIR}/${perl_gen_path}"
 		DEPENDS "${CMAKE_SOURCE_DIR}/generate-perl.sh"
