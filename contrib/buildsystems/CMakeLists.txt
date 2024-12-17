@@ -882,6 +882,10 @@ foreach(script ${git_perl_scripts} ${perl_modules})
 	string(REPLACE ".perl" "" perl_gen_path "${script}")
 
 	get_filename_component(perl_gen_dir "${perl_gen_path}" DIRECTORY)
+	if(script MATCHES "\.pm$")
+		string(REGEX REPLACE "^perl" "perl/build/lib" perl_gen_dir "${perl_gen_dir}")
+		string(REGEX REPLACE "^perl" "perl/build/lib" perl_gen_path "${perl_gen_path}")
+	endif()
 	file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${perl_gen_dir}")
 
 	add_custom_command(OUTPUT "${CMAKE_BINARY_DIR}/${perl_gen_path}"
