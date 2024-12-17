@@ -1082,7 +1082,7 @@ endif()
 
 #wrapper scripts
 set(wrapper_scripts
-	git git-upload-pack git-receive-pack git-upload-archive git-shell git-remote-ext scalar)
+	git git-upload-pack git-receive-pack git-upload-archive git-shell scalar)
 
 set(wrapper_test_scripts
 	test-fake-ssh test-tool)
