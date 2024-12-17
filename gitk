@@ -1969,6 +1969,10 @@ proc confirm_popup {msg {owner .}} {
     return $confirm_ok
 }
 
+proc haveselectionclipboard {} {
+    return [expr {[tk windowingsystem] eq "x11"}]
+}
+
 proc setoptions {} {
     global use_ttk
 
@@ -2223,7 +2227,7 @@ proc makewindow {} {
     set sha1entry .tf.bar.sha1
     set entries $sha1entry
     set sha1but .tf.bar.sha1label
-    button $sha1but -text "[mc "SHA1 ID:"] " -state disabled -relief flat \
+    button $sha1but -text "[mc "Commit ID:"] " -state disabled -relief flat \
         -command gotocommit -width 8
     $sha1but conf -disabledforeground [$sha1but cget -foreground]
     pack .tf.bar.sha1label -side left
@@ -7344,7 +7348,7 @@ proc selectline {l isnew {desired_loc {}} {switch_to_patch 0}} {
     global mergemax numcommits pending_select
     global cmitmode showneartags allcommits
     global targetrow targetid lastscrollrows
-    global autoselect autosellen jump_to_here
+    global autocopy autoselect autosellen jump_to_here
     global vinlinediff
 
     unset -nocomplain pending_select
@@ -7410,8 +7414,12 @@ proc selectline {l isnew {desired_loc {}} {switch_to_patch 0}} {
 
     $sha1entry delete 0 end
     $sha1entry insert 0 $id
-    if {$autoselect} {
+    if {$autoselect && [haveselectionclipboard]} {
         $sha1entry selection range 0 $autosellen
+    }
+    if {$autocopy} {
+        clipboard clear
+        clipboard append [string range $id 0 [expr $autosellen - 1]]
     }
     rhighlight_sel $id
 
@@ -8756,7 +8764,7 @@ proc sha1change {n1 n2 op} {
     if {$state == "normal"} {
         $sha1but conf -state normal -relief raised -text "[mc "Goto:"] "
     } else {
-        $sha1but conf -state disabled -relief flat -text "[mc "SHA1 ID:"] "
+        $sha1but conf -state disabled -relief flat -text "[mc "Commit ID:"] "
     }
 }
 
@@ -8775,7 +8783,7 @@ proc gotocommit {} {
             set matches [longid $id]
             if {$matches ne {}} {
                 if {[llength $matches] > 1} {
-                    error_popup [mc "Short SHA1 id %s is ambiguous" $id]
+                    error_popup [mc "Short commit ID %s is ambiguous" $id]
                     return
                 }
                 set id [lindex $matches 0]
@@ -8792,7 +8800,7 @@ proc gotocommit {} {
         return
     }
     if {[regexp {^[0-9a-fA-F]{4,}$} $sha1string]} {
-        set msg [mc "SHA1 id %s is not known" $sha1string]
+        set msg [mc "Commit ID %s is not known" $sha1string]
     } else {
         set msg [mc "Revision %s is not in the current view" $sha1string]
     }
@@ -11576,7 +11584,8 @@ proc create_prefs_page {w} {
 
 proc prefspage_general {notebook} {
     global NS maxwidth maxgraphpct showneartags showlocalchanges
-    global tabstop wrapcomment wrapdefault limitdiffs autoselect autosellen extdifftool perfile_attrs
+    global tabstop wrapcomment wrapdefault limitdiffs
+    global autocopy autoselect autosellen extdifftool perfile_attrs
     global hideremotes want_ttk have_ttk maxrefs web_browser
 
     set page [create_prefs_page $notebook.general]
@@ -11594,13 +11603,21 @@ proc prefspage_general {notebook} {
     ${NS}::checkbutton $page.showlocal -text [mc "Show local changes"] \
         -variable showlocalchanges
     grid x $page.showlocal -sticky w
-    ${NS}::checkbutton $page.autoselect -text [mc "Auto-select SHA1 (length)"] \
-        -variable autoselect
-    spinbox $page.autosellen -from 1 -to 40 -width 4 -textvariable autosellen
-    grid x $page.autoselect $page.autosellen -sticky w
     ${NS}::checkbutton $page.hideremotes -text [mc "Hide remote refs"] \
         -variable hideremotes
     grid x $page.hideremotes -sticky w
+
+    ${NS}::checkbutton $page.autocopy -text [mc "Copy commit ID to clipboard"] \
+        -variable autocopy
+    grid x $page.autocopy -sticky w
+    if {[haveselectionclipboard]} {
+        ${NS}::checkbutton $page.autoselect -text [mc "Copy commit ID to X11 selection"] \
+            -variable autoselect
+        grid x $page.autoselect -sticky w
+    }
+    spinbox $page.autosellen -from 1 -to 40 -width 4 -textvariable autosellen
+    ${NS}::label $page.autosellenl -text [mc "Length of commit ID to copy"]
+    grid x $page.autosellenl $page.autosellen -sticky w
 
     ${NS}::label $page.ddisp -text [mc "Diff display options"] -font mainfontbold
     grid $page.ddisp - -sticky w -pady 10
@@ -12419,6 +12436,7 @@ set maxlinelen 200
 set showlocalchanges 1
 set limitdiffs 1
 set datetimeformat "%Y-%m-%d %H:%M:%S"
+set autocopy 0
 set autoselect 1
 set autosellen 40
 set perfile_attrs 0
@@ -12516,7 +12534,8 @@ config_check_tmp_exists 50
 
 set config_variables {
     mainfont textfont uifont tabstop findmergefiles maxgraphpct maxwidth
-    cmitmode wrapcomment wrapdefault autoselect autosellen showneartags maxrefs visiblerefs
+    cmitmode wrapcomment wrapdefault autocopy autoselect autosellen
+    showneartags maxrefs visiblerefs
     hideremotes showlocalchanges datetimeformat limitdiffs uicolor want_ttk
     bgcolor fgcolor uifgcolor uifgdisabledcolor colors diffcolors mergecolors
     markbgcolor diffcontext selectbgcolor foundbgcolor currentsearchhitbgcolor
