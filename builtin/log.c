@@ -2495,7 +2495,8 @@ int cmd_format_patch(int argc,
 	rev.add_signoff = cfg.do_signoff;
 
 	if (show_progress)
-		progress = start_delayed_progress(_("Generating patches"), total);
+		progress = start_delayed_progress(the_repository,
+						  _("Generating patches"), total);
 	while (0 <= --nr) {
 		int shown;
 		display_progress(progress, total - nr);

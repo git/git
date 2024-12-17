@@ -590,7 +590,8 @@ static void unpack_all(void)
 	use(sizeof(struct pack_header));
 
 	if (!quiet)
-		progress = start_progress(_("Unpacking objects"), nr_objects);
+		progress = start_progress(the_repository,
+					  _("Unpacking objects"), nr_objects);
 	CALLOC_ARRAY(obj_list, nr_objects);
 	begin_odb_transaction();
 	for (i = 0; i < nr_objects; i++) {
