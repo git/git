@@ -658,7 +658,7 @@ int cmd_help(int argc,
 	case HELP_ACTION_ALL:
 		opt_mode_usage(argc, "--all", help_format);
 		if (verbose) {
-			setup_pager();
+			setup_pager(the_repository);
 			list_all_cmds_help(show_external_commands,
 					   show_aliases);
 			return 0;
@@ -692,7 +692,7 @@ int cmd_help(int argc,
 		return 0;
 	case HELP_ACTION_CONFIG:
 		opt_mode_usage(argc, "--config", help_format);
-		setup_pager();
+		setup_pager(the_repository);
 		list_config_help(SHOW_CONFIG_HUMAN);
 		printf("\n%s\n", _("'git help config' for more information"));
 		return 0;
