@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -166,7 +165,7 @@ static int match_partial_url(const char *url, void *cb)
 	return matches;
 }
 
-static void credential_apply_config(struct credential *c)
+static void credential_apply_config(struct repository *r, struct credential *c)
 {
 	char *normalized_url;
 	struct urlmatch_config config = URLMATCH_CONFIG_INIT;
@@ -191,7 +190,7 @@ static void credential_apply_config(struct credential *c)
 	credential_format(c, &url);
 	normalized_url = url_normalize(url.buf, &config.url);
 
-	git_config(urlmatch_config_entry, &config);
+	repo_config(r, urlmatch_config_entry, &config);
 	string_list_clear(&config.vars, 1);
 	free(normalized_url);
 	urlmatch_config_release(&config);
@@ -254,34 +253,34 @@ static char *credential_ask_one(const char *what, struct credential *c,
 	return xstrdup(r);
 }
 
-static int credential_getpass(struct credential *c)
+static int credential_getpass(struct repository *r, struct credential *c)
 {
 	int interactive;
 	char *value;
-	if (!git_config_get_maybe_bool("credential.interactive", &interactive) &&
+	if (!repo_config_get_maybe_bool(r, "credential.interactive", &interactive) &&
 	    !interactive) {
-		trace2_data_intmax("credential", the_repository,
+		trace2_data_intmax("credential", r,
 				   "interactive/skipped", 1);
 		return -1;
 	}
-	if (!git_config_get_string("credential.interactive", &value)) {
+	if (!repo_config_get_string(r, "credential.interactive", &value)) {
 		int same = !strcmp(value, "never");
 		free(value);
 		if (same) {
-			trace2_data_intmax("credential", the_repository,
+			trace2_data_intmax("credential", r,
 					   "interactive/skipped", 1);
 			return -1;
 		}
 	}
 
-	trace2_region_enter("credential", "interactive", the_repository);
+	trace2_region_enter("credential", "interactive", r);
 	if (!c->username)
 		c->username = credential_ask_one("Username", c,
 						 PROMPT_ASKPASS|PROMPT_ECHO);
 	if (!c->password)
 		c->password = credential_ask_one("Password", c,
 						 PROMPT_ASKPASS);
-	trace2_region_leave("credential", "interactive", the_repository);
+	trace2_region_leave("credential", "interactive", r);
 
 	return 0;
 }
@@ -489,7 +488,8 @@ static int credential_do(struct credential *c, const char *helper,
 	return r;
 }
 
-void credential_fill(struct credential *c, int all_capabilities)
+void credential_fill(struct repository *r,
+		     struct credential *c, int all_capabilities)
 {
 	int i;
 
@@ -499,7 +499,7 @@ void credential_fill(struct credential *c, int all_capabilities)
 	credential_next_state(c);
 	c->multistage = 0;
 
-	credential_apply_config(c);
+	credential_apply_config(r, c);
 	if (all_capabilities)
 		credential_set_all_capabilities(c, CREDENTIAL_OP_INITIAL);
 
@@ -526,12 +526,12 @@ void credential_fill(struct credential *c, int all_capabilities)
 			    c->helpers.items[i].string);
 	}
 
-	if (credential_getpass(c) ||
+	if (credential_getpass(r, c) ||
 	    (!c->username && !c->password && !c->credential))
 		die("unable to get password from user");
 }
 
-void credential_approve(struct credential *c)
+void credential_approve(struct repository *r, struct credential *c)
 {
 	int i;
 
@@ -542,20 +542,20 @@ void credential_approve(struct credential *c)
 
 	credential_next_state(c);
 
-	credential_apply_config(c);
+	credential_apply_config(r, c);
 
 	for (i = 0; i < c->helpers.nr; i++)
 		credential_do(c, c->helpers.items[i].string, "store");
 	c->approved = 1;
 }
 
-void credential_reject(struct credential *c)
+void credential_reject(struct repository *r, struct credential *c)
 {
 	int i;
 
 	credential_next_state(c);
 
-	credential_apply_config(c);
+	credential_apply_config(r, c);
 
 	for (i = 0; i < c->helpers.nr; i++)
 		credential_do(c, c->helpers.items[i].string, "erase");
