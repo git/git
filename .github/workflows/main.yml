@@ -282,6 +282,9 @@ jobs:
           - jobname: osx-gcc
             cc: gcc-13
             pool: macos-13
+          - jobname: osx-meson
+            cc: clang
+            pool: macos-13
           - jobname: linux-gcc-default
             cc: gcc
             pool: ubuntu-latest
@@ -294,11 +297,15 @@ jobs:
           - jobname: linux-asan-ubsan
             cc: clang
             pool: ubuntu-latest
+          - jobname: linux-meson
+            cc: gcc
+            pool: ubuntu-latest
     env:
       CC: ${{matrix.vector.cc}}
       CC_PACKAGE: ${{matrix.vector.cc_package}}
       jobname: ${{matrix.vector.jobname}}
       distro: ${{matrix.vector.pool}}
+      TEST_OUTPUT_DIRECTORY: ${{github.workspace}}/t
     runs-on: ${{matrix.vector.pool}}
     steps:
     - uses: actions/checkout@v4
