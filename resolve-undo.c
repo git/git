@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -34,7 +33,8 @@ void record_resolve_undo(struct index_state *istate, struct cache_entry *ce)
 	ui->mode[stage - 1] = ce->ce_mode;
 }
 
-void resolve_undo_write(struct strbuf *sb, struct string_list *resolve_undo)
+void resolve_undo_write(struct strbuf *sb, struct string_list *resolve_undo,
+			const struct git_hash_algo *algop)
 {
 	struct string_list_item *item;
 	for_each_string_list_item(item, resolve_undo) {
@@ -50,18 +50,19 @@ void resolve_undo_write(struct strbuf *sb, struct string_list *resolve_undo)
 		for (i = 0; i < 3; i++) {
 			if (!ui->mode[i])
 				continue;
-			strbuf_add(sb, ui->oid[i].hash, the_hash_algo->rawsz);
+			strbuf_add(sb, ui->oid[i].hash, algop->rawsz);
 		}
 	}
 }
 
-struct string_list *resolve_undo_read(const char *data, unsigned long size)
+struct string_list *resolve_undo_read(const char *data, unsigned long size,
+				      const struct git_hash_algo *algop)
 {
 	struct string_list *resolve_undo;
 	size_t len;
 	char *endptr;
 	int i;
-	const unsigned rawsz = the_hash_algo->rawsz;
+	const unsigned rawsz = algop->rawsz;
 
 	CALLOC_ARRAY(resolve_undo, 1);
 	resolve_undo->strdup_strings = 1;
@@ -96,8 +97,7 @@ struct string_list *resolve_undo_read(const char *data, unsigned long size)
 				continue;
 			if (size < rawsz)
 				goto error;
-			oidread(&ui->oid[i], (const unsigned char *)data,
-				the_repository->hash_algo);
+			oidread(&ui->oid[i], (const unsigned char *)data, algop);
 			size -= rawsz;
 			data += rawsz;
 		}

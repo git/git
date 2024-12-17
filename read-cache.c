@@ -1754,7 +1754,7 @@ static int read_index_extension(struct index_state *istate,
 		istate->cache_tree = cache_tree_read(data, sz);
 		break;
 	case CACHE_EXT_RESOLVE_UNDO:
-		istate->resolve_undo = resolve_undo_read(data, sz);
+		istate->resolve_undo = resolve_undo_read(data, sz, the_hash_algo);
 		break;
 	case CACHE_EXT_LINK:
 		if (read_link_extension(istate, data, sz))
@@ -3033,7 +3033,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	    istate->resolve_undo) {
 		strbuf_reset(&sb);
 
-		resolve_undo_write(&sb, istate->resolve_undo);
+		resolve_undo_write(&sb, istate->resolve_undo, the_hash_algo);
 		err = write_index_ext_header(f, eoie_c, CACHE_EXT_RESOLVE_UNDO,
 					     sb.len) < 0;
 		hashwrite(f, sb.buf, sb.len);
