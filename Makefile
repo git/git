@@ -1344,8 +1344,8 @@ THIRD_PARTY_SOURCES += sha1dc/%
 THIRD_PARTY_SOURCES += $(UNIT_TEST_DIR)/clar/%
 THIRD_PARTY_SOURCES += $(UNIT_TEST_DIR)/clar/clar/%
 
-CLAR_TEST_SUITES += ctype
-CLAR_TEST_SUITES += strvec
+CLAR_TEST_SUITES += u-ctype
+CLAR_TEST_SUITES += u-strvec
 CLAR_TEST_PROG = $(UNIT_TEST_BIN)/unit-tests$(X)
 CLAR_TEST_OBJS = $(patsubst %,$(UNIT_TEST_DIR)/%.o,$(CLAR_TEST_SUITES))
 CLAR_TEST_OBJS += $(UNIT_TEST_DIR)/clar/clar.o
@@ -1490,7 +1490,6 @@ ifneq ($(filter undefined,$(SANITIZERS)),)
 BASIC_CFLAGS += -DSHA1DC_FORCE_ALIGNED_ACCESS
 endif
 ifneq ($(filter leak,$(SANITIZERS)),)
-BASIC_CFLAGS += -DSUPPRESS_ANNOTATED_LEAKS
 BASIC_CFLAGS += -O0
 SANITIZE_LEAK = YesCompiledWithIt
 endif
