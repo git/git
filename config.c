@@ -124,6 +124,37 @@ static long config_buf_ftell(struct config_source *conf)
 	return conf->u.buf.pos;
 }
 
+struct remote_urls_entry {
+	struct hashmap_entry ent;
+	char *name;
+	struct string_list urls;
+};
+
+static struct remote_urls_entry *remote_urls_find_entry(struct hashmap *remote_urls,
+							char *name)
+{
+	struct remote_urls_entry k;
+	struct remote_urls_entry *found_entry;
+
+	hashmap_entry_init(&k.ent, strhash(name));
+	k.name = name;
+	found_entry = hashmap_get_entry(remote_urls, &k, ent, NULL);
+	return found_entry;
+}
+
+static int remote_urls_entry_cmp(const void *cmp_data UNUSED,
+				 const struct hashmap_entry *eptr,
+				 const struct hashmap_entry *entry_or_key,
+				 const void *keydata UNUSED)
+{
+	const struct remote_urls_entry *e1, *e2;
+
+	e1 = container_of(eptr, const struct remote_urls_entry, ent);
+	e2 = container_of(entry_or_key, const struct remote_urls_entry, ent);
+
+	return strcmp(e1->name, e2->name);
+}
+
 struct config_include_data {
 	int depth;
 	config_fn_t fn;
@@ -133,9 +164,10 @@ struct config_include_data {
 	struct repository *repo;
 
 	/*
-	 * All remote URLs discovered when reading all config files.
+	 * All remote names & URLs discovered when reading all config files.
 	 */
-	struct string_list *remote_urls;
+	struct hashmap remote_urls;
+	int remote_urls_initialized;
 };
 #define CONFIG_INCLUDE_INIT { 0 }
 
@@ -329,16 +361,36 @@ static int include_by_branch(struct config_include_data *data,
 static int add_remote_url(const char *var, const char *value,
 			  const struct config_context *ctx UNUSED, void *data)
 {
-	struct string_list *remote_urls = data;
-	const char *remote_name;
+	struct hashmap *remote_urls = data;
+	const char *remote_section;
 	size_t remote_name_len;
 	const char *key;
 
-	if (!parse_config_key(var, "remote", &remote_name, &remote_name_len,
+	if (!parse_config_key(var, "remote", &remote_section, &remote_name_len,
 			      &key) &&
-	    remote_name &&
-	    !strcmp(key, "url"))
-		string_list_append(remote_urls, value);
+	    remote_section &&
+	    !strcmp(key, "url")) {
+		const char *dot;
+		char *remote_name;
+		struct remote_urls_entry *e;
+
+		dot = strchr(remote_section, '.');
+		if (!dot)
+			return 0;
+
+		remote_name = xstrndup(remote_section, dot - remote_section);
+		e = remote_urls_find_entry(remote_urls, remote_name);
+		if (!e) {
+			e = xmalloc(sizeof(*e));
+			hashmap_entry_init(&e->ent, strhash(remote_name));
+			e->name = remote_name;
+			string_list_init_dup(&e->urls);
+			string_list_append(&e->urls, value);
+			hashmap_add(remote_urls, &e->ent);
+		} else {
+			string_list_append(&e->urls, value);
+		}
+	}
 	return 0;
 }
 
@@ -349,9 +401,9 @@ static void populate_remote_urls(struct config_include_data *inc)
 	opts = *inc->opts;
 	opts.unconditional_remote_url = 1;
 
-	inc->remote_urls = xmalloc(sizeof(*inc->remote_urls));
-	string_list_init_dup(inc->remote_urls);
-	config_with_options(add_remote_url, inc->remote_urls,
+	hashmap_init(&inc->remote_urls, remote_urls_entry_cmp, NULL, 0);
+	inc->remote_urls_initialized = 1;
+	config_with_options(add_remote_url, &inc->remote_urls,
 			    inc->config_source, inc->repo, &opts);
 }
 
@@ -392,12 +444,35 @@ static int at_least_one_url_matches_glob(const char *glob, int glob_len,
 static int include_by_remote_url(struct config_include_data *inc,
 		const char *cond, size_t cond_len)
 {
+	struct hashmap_iter iter;
+	struct remote_urls_entry *remote;
+
 	if (inc->opts->unconditional_remote_url)
 		return 1;
-	if (!inc->remote_urls)
+	if (!inc->remote_urls_initialized)
 		populate_remote_urls(inc);
-	return at_least_one_url_matches_glob(cond, cond_len,
-					     inc->remote_urls);
+
+	hashmap_for_each_entry(&inc->remote_urls, &iter, remote, ent)
+		if (at_least_one_url_matches_glob(cond, cond_len, &remote->urls))
+			return 1;
+	return 0;
+}
+
+static int include_by_remote_name_and_url(struct config_include_data *inc,
+					  const char *cond, size_t cond_len,
+					  char *remote_name)
+{
+	struct remote_urls_entry *e;
+
+	if (inc->opts->unconditional_remote_url)
+		return 1;
+	if (!inc->remote_urls_initialized)
+		populate_remote_urls(inc);
+
+	e = remote_urls_find_entry(&inc->remote_urls, remote_name);
+	if (!e)
+		return 0;
+	return at_least_one_url_matches_glob(cond, cond_len, &e->urls);
 }
 
 static int include_condition_is_true(const struct key_value_info *kvi,
@@ -415,6 +490,32 @@ static int include_condition_is_true(const struct key_value_info *kvi,
 	else if (skip_prefix_mem(cond, cond_len, "hasconfig:remote.*.url:", &cond,
 				   &cond_len))
 		return include_by_remote_url(inc, cond, cond_len);
+	else if (skip_prefix_mem(cond, cond_len, "hasconfig:remote.", &cond,
+				 &cond_len)) {
+		const char *dot;
+		char *remote_name;
+		char *cond_prefix;
+		int ret;
+
+		dot = strchr(cond, '.');
+		if (!dot)
+			return 0;
+
+		remote_name = xstrndup(cond, dot - cond);
+		cond_prefix = xstrfmt("%s.url:", remote_name);
+		if (!skip_prefix_mem(cond, cond_len, cond_prefix, &cond,
+				     &cond_len)) {
+			free(cond_prefix);
+			free(remote_name);
+			return 0;
+		}
+		free(cond_prefix);
+
+		ret = include_by_remote_name_and_url(inc, cond, cond_len,
+						     remote_name);
+		free(remote_name);
+		return ret;
+	}
 
 	/* unknown conditionals are always false */
 	return 0;
@@ -2130,9 +2231,15 @@ int config_with_options(config_fn_t fn, void *data,
 		ret = do_git_config_sequence(opts, repo, fn, data);
 	}
 
-	if (inc.remote_urls) {
-		string_list_clear(inc.remote_urls, 0);
-		FREE_AND_NULL(inc.remote_urls);
+	if (inc.remote_urls_initialized) {
+		struct hashmap_iter iter;
+		struct remote_urls_entry *remote;
+		hashmap_for_each_entry(&inc.remote_urls, &iter, remote, ent) {
+			string_list_clear(&remote->urls, 0);
+			free(remote->name);
+		}
+		hashmap_clear_and_free(&inc.remote_urls, struct remote_urls_entry, ent);
+		inc.remote_urls_initialized = 0;
 	}
 	return ret;
 }
