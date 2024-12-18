@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2024-10-04 08:33+0700\n"
-"PO-Revision-Date: 2024-10-04 08:52+0700\n"
+"POT-Creation-Date: 2024-12-23 18:57+0000\n"
+"PO-Revision-Date: 2025-01-06 15:50+0700\n"
 "Last-Translator: Bagas Sanjaya <bagasdotme@gmail.com>\n"
 "Language-Team: Indonesian\n"
 "Language: id\n"
@@ -755,10 +755,10 @@ msgstr "Hanya berkas biner yang berubah."
 #, c-format
 msgid ""
 "\n"
-"Disable this message with \"git config advice.%s false\""
+"Disable this message with \"git config set advice.%s false\""
 msgstr ""
 "\n"
-"Nonaktifkan pesan ini dengan \"git config advice.%s false\""
+"Nonaktifkan pesan ini dengan \"git config set advice.%s false\""
 
 #: advice.c
 #, c-format
@@ -1670,9 +1670,10 @@ msgstr "bukan nama objek valid: %s"
 msgid "not a tree object: %s"
 msgstr "bukan objek pohon: %s"
 
-#: archive.c builtin/clone.c
-msgid "unable to checkout working tree"
-msgstr "tidak dapat men-checkout pohon kerja"
+#: archive.c
+#, c-format
+msgid "failed to unpack tree object %s"
+msgstr "gagal membuka objek pohon %s"
 
 #: archive.c
 #, c-format
@@ -3734,11 +3735,11 @@ msgstr "HEAD tidak ditemukan di bawah refs/heads!"
 
 #: builtin/branch.c
 msgid ""
-"branch with --recurse-submodules can only be used if submodule."
-"propagateBranches is enabled"
+"branch with --recurse-submodules can only be used if "
+"submodule.propagateBranches is enabled"
 msgstr ""
-"cabang dengan --recurse-submodules hanya dapat digunakan jika submodule."
-"propagateBranches diaktifkan"
+"cabang dengan --recurse-submodules hanya dapat digunakan jika "
+"submodule.propagateBranches diaktifkan"
 
 #: builtin/branch.c
 msgid "--recurse-submodules can only be used to create branches"
@@ -4767,7 +4768,7 @@ msgstr "gaya konflik '%s' tidak dikenal"
 msgid "perform a 3-way merge with the new branch"
 msgstr "lakukan penggabungan 3 arah dengan cabang baru"
 
-#: builtin/checkout.c builtin/log.c parse-options.h
+#: builtin/checkout.c builtin/log.c builtin/range-diff.c parse-options.h
 msgid "style"
 msgstr "gaya"
 
@@ -4796,9 +4797,8 @@ msgid "update ignored files (default)"
 msgstr "perbarui berkas yang diabaikan (default)"
 
 #: builtin/checkout.c
-msgid "do not check if another worktree is holding the given ref"
-msgstr ""
-"jangan periksa jika pohon kerja yang lain mempunyai referensi yang diberikan"
+msgid "do not check if another worktree is using this branch"
+msgstr "jangan periksa jika pohon kerja yang lain menggunakan cabang ini"
 
 #: builtin/checkout.c
 msgid "checkout our version for unmerged files"
@@ -5179,14 +5179,13 @@ msgstr "buat klon dangkal sedalam kedalaman tersebut"
 msgid "create a shallow clone since a specific time"
 msgstr "buat klon dangkal sejak waktu yang disebutkan"
 
-#: builtin/clone.c builtin/fetch.c builtin/pull.c builtin/rebase.c
-#: builtin/replay.c
-msgid "revision"
-msgstr "revisi"
+#: builtin/clone.c builtin/fetch.c builtin/pull.c
+msgid "ref"
+msgstr "referensi"
 
 #: builtin/clone.c builtin/fetch.c builtin/pull.c
-msgid "deepen history of shallow clone, excluding rev"
-msgstr "perdalam riwayat klon dangkal, tidak termasuk rev"
+msgid "deepen history of shallow clone, excluding ref"
+msgstr "perdalam riwayat klon dangkal, kecualikan referensi"
 
 #: builtin/clone.c builtin/submodule--helper.c
 msgid "clone only one branch, HEAD or --branch"
@@ -5347,6 +5346,10 @@ msgstr "gagal menginisalisasi checkout tipis"
 #: builtin/clone.c
 msgid "remote HEAD refers to nonexistent ref, unable to checkout"
 msgstr "HEAD remote merujuk pada ref yang tidak ada, tidak dapat men-checkout"
+
+#: builtin/clone.c
+msgid "unable to checkout working tree"
+msgstr "tidak dapat men-checkout pohon kerja"
 
 #: builtin/clone.c
 msgid "unable to write parameters to config file"
@@ -6347,10 +6350,10 @@ msgstr ""
 #: builtin/config.c
 msgid ""
 "git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] "
-"<name> <value>"
+"<name>"
 msgstr ""
-"git config unset [<opsi berkas] [--all] [--value=<nilai>] [--fixed-value] "
-"<nama> <nilai>"
+"git config unset [<opsi berkas>] [--all] [--value=<nilai>] [--fixed-value] "
+"<nama>"
 
 #: builtin/config.c
 msgid "git config rename-section [<file-option>] <old-name> <new-name>"
@@ -6907,12 +6910,8 @@ msgstr "%lu komit dilintasi\n"
 
 #: builtin/describe.c
 #, c-format
-msgid ""
-"more than %i tags found; listed %i most recent\n"
-"gave up search at %s\n"
-msgstr ""
-"lebih dari %i tag ditemukan; %i terbaru didaftarkan\n"
-"menyerah mencari pada %s\n"
+msgid "found %i tags; gave up search at %s\n"
+msgstr "dapat %i tag; menyerah mencari pada %s\n"
 
 #: builtin/describe.c
 #, c-format
@@ -7389,8 +7388,8 @@ msgstr ""
 "fetch secara normal mengindikasikan cabang mana ada pembaruan terpaksa,\n"
 "tapi pemeriksaan tersebut sudah dinonaktifkan. Untuk aktifkan kembali, "
 "gunakan\n"
-"bendera '--show-forced-updates' atau jalankan 'git config fetch."
-"showForcedUpdates true'."
+"bendera '--show-forced-updates' atau jalankan 'git config "
+"fetch.showForcedUpdates true'."
 
 #: builtin/fetch.c
 #, c-format
@@ -7466,6 +7465,21 @@ msgstr "%s bukan sebuah objek valid"
 #, c-format
 msgid "the object %s does not exist"
 msgstr "objek '%s' tidak ada"
+
+#: builtin/fetch.c
+#, c-format
+msgid ""
+"Run 'git remote set-head %s %s' to follow the change, or set\n"
+"'remote.%s.followRemoteHEAD' configuration option to a different value\n"
+"if you do not want to see this message. Specifically running\n"
+"'git config set remote.%s.followRemoteHEAD %s' will disable the warning\n"
+"until the remote changes HEAD to something else."
+msgstr ""
+"Jalankan 'git remote set-head %s %s' untuk mengikuti perubahan, atau setel\n"
+"opsi konfigurasi 'remote.%s.followRemoteHEAD' ke nilai yang berbeda jika\n"
+"Anda tidak ingin melihat pesan ini lagi. Secara rinci menjalakan\n"
+"'git config set remote.%s followRemoteHEAD %s' akan mematikan peringatan\n"
+"ini sampai remote mengubah HEAD ke yang lain."
 
 #: builtin/fetch.c
 msgid "multiple branches detected, incompatible with --set-upstream"
@@ -7641,6 +7655,10 @@ msgstr "peta referensi"
 msgid "specify fetch refmap"
 msgstr "sebutkan ambil peta referensi"
 
+#: builtin/fetch.c builtin/pull.c builtin/rebase.c builtin/replay.c
+msgid "revision"
+msgstr "revisi"
+
 #: builtin/fetch.c builtin/pull.c
 msgid "report that we have only objects reachable from this object"
 msgstr ""
@@ -7711,8 +7729,8 @@ msgstr "protokol tidak mendukung --negotiate-only, keluar."
 
 #: builtin/fetch.c
 msgid ""
-"--filter can only be used with the remote configured in extensions."
-"partialclone"
+"--filter can only be used with the remote configured in "
+"extensions.partialclone"
 msgstr ""
 "--filter hanya dapat digunakan dengan remote yang terkonfigurasi di "
 "extensions.partialclone"
@@ -8565,8 +8583,25 @@ msgid "%s scheduler is not available"
 msgstr "penjadwal %s tidak tersedia"
 
 #: builtin/gc.c
-msgid "another process is scheduling background maintenance"
-msgstr "proses lainnya sedang menjadwalkan peme"
+#, c-format
+msgid ""
+"unable to create '%s.lock': %s.\n"
+"\n"
+"Another scheduled git-maintenance(1) process seems to be running in this\n"
+"repository. Please make sure no other maintenance processes are running and\n"
+"then try again. If it still fails, a git-maintenance(1) process may have\n"
+"crashed in this repository earlier: remove the file manually to continue."
+msgstr ""
+"Tidak dapat membuat '%s.lock': %s.\n"
+"\n"
+"Sepertinya proses git-maintenance(1) lainnya berjalan pada repositori ini.\n"
+"Pastikan tidak ada proses pemeliharaan lainnya yang berjalan dan coba lagi.\n"
+"Jika masih gagal, suatu proses git-maintenance(1) bisa jadi hancur pada\n"
+"repositori ini sebelumnya: hapus berkas secara manual untuk melanjutkan."
+
+#: builtin/gc.c
+msgid "cannot acquire lock for scheduled background maintenance"
+msgstr "tidak dapat memperoleh kunci untuk pemeliharran balik layar terjadwal"
 
 #: builtin/gc.c
 msgid "git maintenance start [--scheduler=<scheduler>]"
@@ -9298,6 +9333,23 @@ msgstr[0] "panjang rantai = %d: %lu objek"
 msgstr[1] "panjang rantai = %d: %lu objek"
 
 #: builtin/index-pack.c
+msgid "could not start pack-objects to repack local links"
+msgstr "tidak dapat memulai pack-objects untuk mempak ulang tautan lokal"
+
+#: builtin/index-pack.c
+msgid "failed to feed local object to pack-objects"
+msgstr "tidak dapat memasukkan objek ke pada pack-objects"
+
+#: builtin/index-pack.c
+msgid "index-pack: Expecting full hex object ID lines only from pack-objects."
+msgstr ""
+"index-pack: Mengharapkan hanya baris hex ID objek penuh daripack-objects."
+
+#: builtin/index-pack.c
+msgid "could not finish pack-objects to repack local links"
+msgstr "tidak dapat menyelesaikan pack-objects untuk mempak ulang tautan lokal"
+
+#: builtin/index-pack.c
 msgid "Cannot come back to cwd"
 msgstr "tidak dapat kembali ke direktori kerja saat ini"
 
@@ -9310,6 +9362,10 @@ msgstr "%s jelek"
 #, c-format
 msgid "unknown hash algorithm '%s'"
 msgstr "algoritma hash tak dikenal '%s'"
+
+#: builtin/index-pack.c
+msgid "--promisor cannot be used with a pack name"
+msgstr "--promisor tidak dapat digunakan dengan nama pak"
 
 #: builtin/index-pack.c
 msgid "--stdin requires a git repository"
@@ -11055,11 +11111,11 @@ msgstr "git notes [--ref <referensi catan>] [list [<objek>]]"
 msgid ""
 "git notes [--ref <notes-ref>] add [-f] [--allow-empty] [--[no-]separator|--"
 "separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c "
-"| -C) <object>] [<object>]"
+"| -C) <object>] [<object>] [-e]"
 msgstr ""
 "git notes [--ref <referensi catatan>] add [-f] [--allow-empty] [--"
 "[no-]separator|--separator=<pemisah paragraf>] [--[no-]stripspace] [-m "
-"<pesan | -F <berkas> | (-c | -C) <objek>] [<objek>]"
+"<pesan> | -F <berkas> | (-c | -C) <objek>] [<objek>] [-e]"
 
 #: builtin/notes.c
 msgid "git notes [--ref <notes-ref>] copy [-f] <from-object> <to-object>"
@@ -11070,11 +11126,11 @@ msgstr ""
 msgid ""
 "git notes [--ref <notes-ref>] append [--allow-empty] [--[no-]separator|--"
 "separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c "
-"| -C) <object>] [<object>]"
+"| -C) <object>] [<object>] [-e]"
 msgstr ""
 "git notes [--ref <referensi catatan>] append [--alow-empty] [--"
 "[no]separator|--separator=<pemisah paragraf>] [--[no-]stripspace] [-m "
-"<pesan> | -F <berkas> | (-c | -C) <objek>] [<objek>]"
+"<pesan> | -F <berkas> | (-c | -C) <objek>] [<objek>] [-e]"
 
 #: builtin/notes.c
 msgid "git notes [--ref <notes-ref>] edit [--allow-empty] [<object>]"
@@ -11226,6 +11282,10 @@ msgstr "isi catatan di dalam berkas"
 #: builtin/notes.c
 msgid "reuse and edit specified note object"
 msgstr "gunakan ulang dan sunting objek catatan yang disebutkan"
+
+#: builtin/notes.c
+msgid "edit note message in editor"
+msgstr "sunting pesan catatan dalam penyunting"
 
 #: builtin/notes.c
 msgid "reuse specified note object"
@@ -11857,6 +11917,10 @@ msgid "do not pack objects in promisor packfiles"
 msgstr "jangan pak objek di dalam pak penjanji"
 
 #: builtin/pack-objects.c
+msgid "implies --missing=allow-any"
+msgstr "mengimplikasikan --missing=allow-any"
+
+#: builtin/pack-objects.c
 msgid "respect islands during delta compression"
 msgstr "patuhi pulau selama pemampatan delta"
 
@@ -12269,8 +12333,8 @@ msgid ""
 msgstr ""
 "\n"
 "Untuk menghindari konfigurasi cabang hulu otomatis ketika namanya\n"
-"tidak akan cocok dengan cabang lokal, lihat opsi 'simple' dari branch."
-"autoSetupMerge\n"
+"tidak akan cocok dengan cabang lokal, lihat opsi 'simple' dari "
+"branch.autoSetupMerge\n"
 "di 'git help config'.\n"
 
 #: builtin/push.c
@@ -13811,6 +13875,35 @@ msgstr[0] "  Referensi lokal dikonfigurasi untuk 'git push'%s:"
 msgstr[1] "  Referensi lokal dikonfigurasi untuk 'git push'%s:"
 
 #: builtin/remote.c
+#, c-format
+msgid "'%s/HEAD' is unchanged and points to '%s'\n"
+msgstr "'%s/HEAD' tak berubah dan menunjuk pada '%s'\n"
+
+#: builtin/remote.c
+#, c-format
+msgid "'%s/HEAD' has changed from '%s' and now points to '%s'\n"
+msgstr "'%s/HEAD' berubah dari '%s' dan sekarang menunjuk pada '%s'\n"
+
+#: builtin/remote.c
+#, c-format
+msgid "'%s/HEAD' is now created and points to '%s'\n"
+msgstr "'%s/HEAD' sekarang dibuat dan menunjuk pada '%s'\n"
+
+#: builtin/remote.c
+#, c-format
+msgid "'%s/HEAD' was detached at '%s' and now points to '%s'\n"
+msgstr "%s/HEAD' terlepas pada '%s' dan sekarang menunjuk pada '%s'\n"
+
+#: builtin/remote.c
+#, c-format
+msgid ""
+"'%s/HEAD' used to point to '%s' (which is not a remote branch), but now "
+"points to '%s'\n"
+msgstr ""
+"'%s/HEAD' dulunya menunjuk pada '%s' (yang bukan cabang remote), tetapi "
+"sekarang menunjuk pada '%s'\n"
+
+#: builtin/remote.c
 msgid "set refs/remotes/<name>/HEAD according to remote"
 msgstr "setel refs/remotes/<nama>/HEAD tergantung remote"
 
@@ -13838,8 +13931,8 @@ msgstr "Bukan referensi valid: %s"
 
 #: builtin/remote.c
 #, c-format
-msgid "Could not setup %s"
-msgstr "Tidak dapat mengatur %s"
+msgid "Could not set up %s"
+msgstr "Tidak dapat menyiapkan %s"
 
 #: builtin/remote.c
 #, c-format
@@ -17247,6 +17340,10 @@ msgstr "pasang mode pelacakan (lihat git-branch(1))"
 msgid "try to match the new branch name with a remote-tracking branch"
 msgstr "coba cocokkan nama cabang baru dengan sebuah cabang pelacakan remote"
 
+#: builtin/worktree.c
+msgid "use relative paths for worktrees"
+msgstr "gunakan jalur relatif untuk pohon kerja"
+
 #: builtin/worktree.c diff.c parse-options.c
 #, c-format
 msgid "options '%s', '%s', and '%s' cannot be used together"
@@ -17587,6 +17684,31 @@ msgstr "tidak dapat membuat '%s'"
 #: bundle.c
 msgid "index-pack died"
 msgstr "index-pack mati"
+
+#: cache-tree.c
+#, c-format
+msgid "directory '%s' is present in index, but not sparse"
+msgstr "direktori '%s' ada pada indeks, tapi bukan tipis"
+
+#: cache-tree.c unpack-trees.c
+msgid "corrupted cache-tree has entries not present in index"
+msgstr "pohon tembolok rusak mempunyai entri yang tidak ada pada indeks"
+
+#: cache-tree.c
+#, c-format
+msgid "%s with flags 0x%x should not be in cache-tree"
+msgstr "%s dengan bendera 0x%x tidak boleh ada di pohon tembolok"
+
+#: cache-tree.c
+#, c-format
+msgid "bad subtree '%.*s'"
+msgstr "subpohon jelek '%.*s'"
+
+#: cache-tree.c
+#, c-format
+msgid "cache-tree for path %.*s does not match. Expected %s got %s"
+msgstr ""
+"pohon tembolok untuk jalur %.*s tidak cocok. %s diharapkan tapi dapat %s"
 
 #: chunk-format.c
 msgid "terminating chunk id appears earlier than expected"
@@ -18714,16 +18836,16 @@ msgid ""
 "to convert the grafts into replace refs.\n"
 "\n"
 "Turn this message off by running\n"
-"\"git config advice.graftFileDeprecated false\""
+"\"git config set advice.graftFileDeprecated false\""
 msgstr ""
 "Dukungan untuk <GIT_DIR>/info/grafts usang dan akan dihapus\n"
-"pada versi Git di masa yang akan datang.\n"
+"pada versi Git mendatang.\n"
 "\n"
 "Mohon gunakan \"git replace --convert-graft-file\"\n"
 "untuk mengkonversi cangkuk ke referensi penggantian.\n"
 "\n"
 "Matikan pesan ini dengan menjalankan\n"
-"\"git config advice.graftFileDeprecated false\""
+"\"git config set advice.graftFileDeprecated false\""
 
 #: commit.c
 #, c-format
@@ -19739,6 +19861,21 @@ msgstr "url tidak punya skema: %s"
 msgid "credential url cannot be parsed: %s"
 msgstr "url kredensial tidak dapat diuraikan: %s"
 
+#: daemon.c
+#, c-format
+msgid "invalid timeout '%s', expecting a non-negative integer"
+msgstr "timeout '%s' tidak valid, bilangan bulat non-negatif diharapkan"
+
+#: daemon.c
+#, c-format
+msgid "invalid init-timeout '%s', expecting a non-negative integer"
+msgstr "init-timeout '%s' tidak valid, bilangan bulat non-negatif diharapkan"
+
+#: daemon.c
+#, c-format
+msgid "invalid max-connections '%s', expecting an integer"
+msgstr "max-connections '%s' tidak valid, bilangan bulat diharapkan"
+
 #: date.c
 msgid "in the future"
 msgstr "di masa depan"
@@ -20632,6 +20769,21 @@ msgid "too many args to run %s"
 msgstr "terlalu banyak argumen untuk menjalankan %s"
 
 #: fetch-pack.c
+#, c-format
+msgid ""
+"You are attempting to fetch %s, which is in the commit graph file but not in "
+"the object database.\n"
+"This is probably due to repo corruption.\n"
+"If you are attempting to repair this repo corruption by refetching the "
+"missing object, use 'git fetch --refetch' with the missing object."
+msgstr ""
+"Anda mencoba mengambil %s, yang ada di dalam berkas grafik komit tapi bukan "
+"di dalam basis data objek.\n"
+"Bisa jadi ini dikarenakan kerusakan repositori.\n"
+"Apabila Anda mencoba memperbaiki keruskanan repositori ini dengan mengambil "
+"ulang objek yang hilang, gunakan 'git fetch --refetch' dengan objek tersebut."
+
+#: fetch-pack.c
 msgid "git fetch-pack: expected shallow list"
 msgstr "git fetch-pack: daftar dangkal diharapkan"
 
@@ -21351,11 +21503,11 @@ msgstr[1] ""
 #, c-format
 msgid ""
 "The '%s' hook was ignored because it's not set as executable.\n"
-"You can disable this warning with `git config advice.ignoredHook false`."
+"You can disable this warning with `git config set advice.ignoredHook false`."
 msgstr ""
-"Kait '%s' diabaikan karena tidak disetel sebagai dapat dieksekusi.\n"
-"Anda dapat menonaktifkan peringatan ini dengan `git config advice."
-"ignoredHook false`."
+"Kait '%s' diabaikan karena tidak disetel sebagai berkas yang dapat\n"
+"dieksekusi. Anda dapat menonaktifkan peringatan ini dengan\n"
+"`git config set advice.ignoredHook false`."
 
 #: http-fetch.c
 msgid "not a git repository"
@@ -21376,16 +21528,8 @@ msgid "Delegation control is not supported with cURL < 7.22.0"
 msgstr "Kontrol delegasi tidak didukung oleh cURL < 7.22.0"
 
 #: http.c
-msgid "Public key pinning not supported with cURL < 7.39.0"
-msgstr "Penyematan kunci publik tidak didukung oleh cURL < 7.39.0"
-
-#: http.c
 msgid "Unknown value for http.proactiveauth"
 msgstr "nilai tidak dikenal untuk http.proactiveauth"
-
-#: http.c
-msgid "CURLSSLOPT_NO_REVOKE not supported with cURL < 7.44.0"
-msgstr "CURLSSLOPT_NO_REVOKE tidak didukung dengan cURL < 7.44.0"
 
 #: http.c
 #, c-format
@@ -21608,6 +21752,11 @@ msgstr "CRLF terkutip terdeteksi"
 #, c-format
 msgid "unable to format message: %s"
 msgstr "tidak dapat memformat pesan: %s"
+
+#: merge-ll.c
+#, c-format
+msgid "invalid marker-size '%s', expecting an integer"
+msgstr "marker-size '%s' tidak valid, bilangan bulat diharapkan"
 
 #: merge-ort.c merge-recursive.c
 #, c-format
@@ -22955,19 +23104,17 @@ msgid ""
 "\n"
 "where \"$br\" is somehow empty and a 40-hex ref is created. Please\n"
 "examine these refs and maybe delete them. Turn this message off by\n"
-"running \"git config advice.objectNameWarning false\""
+"running \"git config set advice.objectNameWarning false\""
 msgstr ""
 "Biasanya Git tidak pernah membuat sebuah referensi yang diakhiri dengan\n"
-"40 karakter hex, karena akan diabaikan ketika Anda hanya menyebutkan 40-"
-"hex.\n"
+"40 karakter hex, karena akan diabaikan ketika Anda hanya merincikan 40-hex.\n"
 "Referensi tersebut bisa tidak sengaja dibuat. Misalnya,\n"
 "\n"
 "  git switch -c $br $(git rev-parse ...)\n"
 "\n"
 "dimana \"$br\" entah bagaimana kosong dan referensi 40-hex dibuat.\n"
-"Mohon periksa referensi tersebut dan mungkin hapus. Matikan pesan ini "
-"dengan\n"
-"menjalankan \"git config advice.objectNameWarning false\""
+"Mohon periksa referensi tersebut dan mungkin hapus. Matikan pesan ini\n"
+"dengan menjalankan \"git config set advice.objectNameWarning false\""
 
 #: object-name.c
 #, c-format
@@ -23165,15 +23312,6 @@ msgstr "bitmap multipak kehilangan indeks balik yang diperlukan"
 #, c-format
 msgid "could not open pack %s"
 msgstr "tidak dapat membuka '%s'"
-
-#: pack-bitmap.c t/helper/test-read-midx.c
-msgid "could not determine MIDX preferred pack"
-msgstr "tidak dapat menentukan pak MIDX terpilih"
-
-#: pack-bitmap.c
-#, c-format
-msgid "preferred pack (%s) is invalid"
-msgstr "pak yang disukai '%s' kadaluarsa"
 
 #: pack-bitmap.c
 msgid "corrupt bitmap lookup table: triplet position out of index"
@@ -24546,8 +24684,19 @@ msgid "log for %s is empty"
 msgstr "log untuk %s kosong"
 
 #: refs.c
-msgid "refusing to force and skip creation of reflog"
-msgstr "menolak memaksa dan melewatkan pembuatan reflog"
+#, c-format
+msgid "refusing to update reflog for pseudoref '%s'"
+msgstr "menolak memperbarui reflog untuk referensi semu '%s'"
+
+#: refs.c
+#, c-format
+msgid "refusing to update pseudoref '%s'"
+msgstr "menolak memperbarui referensi semu '%s'"
+
+#: refs.c
+#, c-format
+msgid "refusing to update reflog with bad name '%s'"
+msgstr "menolak memperbarui reflog dengan nama jelek '%s'"
 
 #: refs.c
 #, c-format
@@ -24555,9 +24704,8 @@ msgid "refusing to update ref with bad name '%s'"
 msgstr "menolak memperbarui referensi dengan nama jelek '%s'"
 
 #: refs.c
-#, c-format
-msgid "refusing to update pseudoref '%s'"
-msgstr "menolak memperbarui referensi semu '%s'"
+msgid "refusing to force and skip creation of reflog"
+msgstr "menolak memaksa dan melewatkan pembuatan reflog"
 
 #: refs.c
 #, c-format
@@ -24619,6 +24767,11 @@ msgid ""
 msgstr ""
 "tidak dapat mengunci referensi '%s': diharapkan referensi simbolik dengan "
 "target '%s': tetapi bukan referensi reguler"
+
+#: refs/files-backend.c
+#, c-format
+msgid "cannot read ref file '%s'"
+msgstr "tidak dapat membaca berkas referensi '%s'"
 
 #: refs/files-backend.c
 #, c-format
@@ -24882,6 +25035,11 @@ msgstr "lebih dari satu paket terima diberikan, gunakan yang pertama"
 #: remote.c
 msgid "more than one uploadpack given, using the first"
 msgstr "lebih dari satu paket unggah diberikan, gunakan yang pertama"
+
+#: remote.c
+#, c-format
+msgid "unrecognized followRemoteHEAD value '%s' ignored"
+msgstr "nilai followRemoteHEAD yang tak dikenal '%s' diabaikan"
 
 #: remote.c
 #, c-format
@@ -27240,6 +27398,10 @@ msgstr "komit %s tidak ditandai sebagai dapat dicapai"
 msgid "too many commits marked reachable"
 msgstr "terlalu banyak komit yang ditandai sebagai dapat dicapai"
 
+#: t/helper/test-read-midx.c
+msgid "could not determine MIDX preferred pack"
+msgstr "tidak dapat menentukan pak MIDX terpilih"
+
 #: t/helper/test-serve-v2.c
 msgid "test-tool serve-v2 [<options>]"
 msgstr "test-tool serve-v2 [<opsi>]"
@@ -28027,6 +28189,10 @@ msgid ".git file incorrect"
 msgstr "berkas .git salah"
 
 #: worktree.c
+msgid ".git file absolute/relative path mismatch"
+msgstr "jalur absolut/relative berkas .git tidak cocok"
+
+#: worktree.c
 msgid "not a valid path"
 msgstr "bukan jalur valid"
 
@@ -28046,6 +28212,10 @@ msgstr "tidak dapat menempatkan repositori; berkas .git rusak"
 #: worktree.c
 msgid "gitdir unreadable"
 msgstr "gitdir tidak dapat dibaca"
+
+#: worktree.c
+msgid "gitdir absolute/relative path mismatch"
+msgstr "jalur absolut/relatif gitdir tidak cocok"
 
 #: worktree.c
 msgid "gitdir incorrect"
@@ -28090,6 +28260,16 @@ msgstr "tidak dapat menyetel balik %s di '%s'"
 #: worktree.c
 msgid "failed to set extensions.worktreeConfig setting"
 msgstr "gagal menyetel setelan extensions.worktreeConfig"
+
+#: worktree.c
+msgid "unable to upgrade repository format to support relative worktrees"
+msgstr ""
+"tidak dapat meningkatkan format repositori untuk mendukung pohon kerja "
+"relatif"
+
+#: worktree.c
+msgid "unable to set extensions.relativeWorktrees setting"
+msgstr "gagal menyetel setelan extensions.relativeWorktrees"
 
 #: wrapper.c
 #, c-format
