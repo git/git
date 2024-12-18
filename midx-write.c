@@ -647,16 +647,23 @@ static uint32_t *midx_pack_order(struct write_midx_context *ctx)
 	return pack_order;
 }
 
-static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
-				     struct write_midx_context *ctx)
+static void write_midx_reverse_index(struct write_midx_context *ctx,
+				     const char *object_dir,
+				     unsigned char *midx_hash)
 {
 	struct strbuf buf = STRBUF_INIT;
 	char *tmp_file;
 
 	trace2_region_enter("midx", "write_midx_reverse_index", ctx->repo);
 
-	strbuf_addf(&buf, "%s-%s.rev", midx_name, hash_to_hex_algop(midx_hash,
-								    ctx->repo->hash_algo));
+	if (ctx->incremental)
+		get_split_midx_filename_ext(ctx->repo->hash_algo,
+					    &buf, object_dir, midx_hash,
+					    MIDX_EXT_REV);
+	else
+		get_midx_filename_ext(ctx->repo->hash_algo,
+				      &buf, object_dir, midx_hash,
+				      MIDX_EXT_REV);
 
 	tmp_file = write_rev_file_order(NULL, ctx->pack_order, ctx->entries_nr,
 					midx_hash, WRITE_REV);
@@ -829,22 +836,30 @@ static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr
 	return cb.commits;
 }
 
-static int write_midx_bitmap(struct repository *r, const char *midx_name,
+static int write_midx_bitmap(struct write_midx_context *ctx,
+			     const char *object_dir,
 			     const unsigned char *midx_hash,
 			     struct packing_data *pdata,
 			     struct commit **commits,
 			     uint32_t commits_nr,
-			     uint32_t *pack_order,
 			     unsigned flags)
 {
 	int ret, i;
 	uint16_t options = 0;
 	struct bitmap_writer writer;
 	struct pack_idx_entry **index;
-	char *bitmap_name = xstrfmt("%s-%s.bitmap", midx_name,
-				    hash_to_hex_algop(midx_hash, r->hash_algo));
+	struct strbuf bitmap_name = STRBUF_INIT;
 
-	trace2_region_enter("midx", "write_midx_bitmap", r);
+	if (ctx->incremental)
+		get_split_midx_filename_ext(ctx->repo->hash_algo,
+					    &bitmap_name, object_dir, midx_hash,
+					    MIDX_EXT_BITMAP);
+	else
+		get_midx_filename_ext(ctx->repo->hash_algo,
+				      &bitmap_name, object_dir, midx_hash,
+				      MIDX_EXT_BITMAP);
+
+	trace2_region_enter("midx", "write_midx_bitmap", ctx->repo);
 
 	if (flags & MIDX_WRITE_BITMAP_HASH_CACHE)
 		options |= BITMAP_OPT_HASH_CACHE;
@@ -861,7 +876,8 @@ static int write_midx_bitmap(struct repository *r, const char *midx_name,
 	for (i = 0; i < pdata->nr_objects; i++)
 		index[i] = &pdata->objects[i].idx;
 
-	bitmap_writer_init(&writer, r, pdata);
+	bitmap_writer_init(&writer, ctx->repo, pdata,
+			   ctx->incremental ? ctx->base_midx : NULL);
 	bitmap_writer_show_progress(&writer, flags & MIDX_PROGRESS);
 	bitmap_writer_build_type_index(&writer, index);
 
@@ -879,7 +895,7 @@ static int write_midx_bitmap(struct repository *r, const char *midx_name,
 	 * bitmap_writer_finish().
 	 */
 	for (i = 0; i < pdata->nr_objects; i++)
-		index[pack_order[i]] = &pdata->objects[i].idx;
+		index[ctx->pack_order[i]] = &pdata->objects[i].idx;
 
 	bitmap_writer_select_commits(&writer, commits, commits_nr);
 	ret = bitmap_writer_build(&writer);
@@ -887,14 +903,14 @@ static int write_midx_bitmap(struct repository *r, const char *midx_name,
 		goto cleanup;
 
 	bitmap_writer_set_checksum(&writer, midx_hash);
-	bitmap_writer_finish(&writer, index, bitmap_name, options);
+	bitmap_writer_finish(&writer, index, bitmap_name.buf, options);
 
 cleanup:
 	free(index);
-	free(bitmap_name);
+	strbuf_release(&bitmap_name);
 	bitmap_writer_free(&writer);
 
-	trace2_region_leave("midx", "write_midx_bitmap", r);
+	trace2_region_leave("midx", "write_midx_bitmap", ctx->repo);
 
 	return ret;
 }
@@ -1077,8 +1093,6 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 	ctx.repo = r;
 
 	ctx.incremental = !!(flags & MIDX_WRITE_INCREMENTAL);
-	if (ctx.incremental && (flags & MIDX_WRITE_BITMAP))
-		die(_("cannot write incremental MIDX with bitmap"));
 
 	if (ctx.incremental)
 		strbuf_addf(&midx_name,
@@ -1119,6 +1133,13 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 	if (ctx.incremental) {
 		struct multi_pack_index *m = ctx.base_midx;
 		while (m) {
+			if (flags & MIDX_WRITE_BITMAP && load_midx_revindex(m)) {
+				error(_("could not load reverse index for MIDX %s"),
+				      hash_to_hex_algop(get_midx_checksum(m),
+							r->hash_algo));
+				result = 1;
+				goto cleanup;
+			}
 			ctx.num_multi_pack_indexes_before++;
 			m = m->base_midx;
 		}
@@ -1386,7 +1407,7 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 
 	if (flags & MIDX_WRITE_REV_INDEX &&
 	    git_env_bool("GIT_TEST_MIDX_WRITE_REV", 0))
-		write_midx_reverse_index(midx_name.buf, midx_hash, &ctx);
+		write_midx_reverse_index(&ctx, object_dir, midx_hash);
 
 	if (flags & MIDX_WRITE_BITMAP) {
 		struct packing_data pdata;
@@ -1409,8 +1430,8 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 		FREE_AND_NULL(ctx.entries);
 		ctx.entries_nr = 0;
 
-		if (write_midx_bitmap(r, midx_name.buf, midx_hash, &pdata,
-				      commits, commits_nr, ctx.pack_order,
+		if (write_midx_bitmap(&ctx, object_dir,
+				      midx_hash, &pdata, commits, commits_nr,
 				      flags) < 0) {
 			error(_("could not write multi-pack bitmap"));
 			result = 1;
