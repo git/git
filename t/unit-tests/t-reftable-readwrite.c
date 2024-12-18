@@ -91,7 +91,7 @@ static void t_log_buffer_size(void)
 	int i;
 	struct reftable_log_record
 		log = { .refname = (char *) "refs/heads/master",
-			.update_index = 0xa,
+			.update_index = update_index,
 			.value_type = REFTABLE_LOG_UPDATE,
 			.value = { .update = {
 					   .name = (char *) "Han-Wen Nienhuys",
@@ -128,7 +128,7 @@ static void t_log_overflow(void)
 	int err;
 	struct reftable_log_record log = {
 		.refname = (char *) "refs/heads/master",
-		.update_index = 0xa,
+		.update_index = update_index,
 		.value_type = REFTABLE_LOG_UPDATE,
 		.value = {
 			.update = {
@@ -148,6 +148,48 @@ static void t_log_overflow(void)
 	reftable_writer_set_limits(w, update_index, update_index);
 	err = reftable_writer_add_log(w, &log);
 	check_int(err, ==, REFTABLE_ENTRY_TOO_BIG_ERROR);
+	reftable_writer_free(w);
+	reftable_buf_release(&buf);
+}
+
+static void t_log_write_limits(void)
+{
+	struct reftable_write_options opts = { 0 };
+	struct reftable_buf buf = REFTABLE_BUF_INIT;
+	struct reftable_writer *w = t_reftable_strbuf_writer(&buf, &opts);
+	struct reftable_log_record log = {
+		.refname = (char *)"refs/head/master",
+		.update_index = 0,
+		.value_type = REFTABLE_LOG_UPDATE,
+		.value = {
+			.update = {
+				.old_hash = { 1 },
+				.new_hash = { 2 },
+				.name = (char *)"Han-Wen Nienhuys",
+				.email = (char *)"hanwen@google.com",
+				.tz_offset = 100,
+				.time = 0x5e430672,
+			},
+		},
+	};
+	int err;
+
+	reftable_writer_set_limits(w, 1, 1);
+
+	/* write with update_index (0) below set limits (1, 1) */
+	err = reftable_writer_add_log(w, &log);
+	check_int(err, ==, 0);
+
+	/* write with update_index (1) in the set limits (1, 1) */
+	log.update_index = 1;
+	err = reftable_writer_add_log(w, &log);
+	check_int(err, ==, 0);
+
+	/* write with update_index (3) above set limits (1, 1) */
+	log.update_index = 3;
+	err = reftable_writer_add_log(w, &log);
+	check_int(err, ==, REFTABLE_API_ERROR);
+
 	reftable_writer_free(w);
 	reftable_buf_release(&buf);
 }
@@ -918,6 +960,7 @@ int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 	TEST(t_corrupt_table_empty(), "read-write on an empty table");
 	TEST(t_log_buffer_size(), "buffer extension for log compression");
 	TEST(t_log_overflow(), "log overflow returns expected error");
+	TEST(t_log_write_limits(), "writer limits for writing log records");
 	TEST(t_log_write_read(), "read-write on log records");
 	TEST(t_log_zlib_corruption(), "reading corrupted log record returns expected error");
 	TEST(t_table_read_api(), "read on a table");
