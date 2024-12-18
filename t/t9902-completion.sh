@@ -1616,6 +1616,41 @@ test_expect_success 'git checkout - with --detach, complete only references' '
 	EOF
 '
 
+test_expect_success 'git commit - with --fixup=, completes references along with amend: and reword:' '
+	test_completion "git commit --fixup=" <<-\EOF
+	HEAD Z
+	main Z
+	matching-branch Z
+	matching-tag Z
+	other/branch-in-other Z
+	other/main-in-other Z
+	amend:Z
+	reword:Z
+	EOF
+'
+
+test_expect_success 'git commit - with --fixup=amend:, completes references' '
+	test_completion "git commit --fixup=amend:" <<-\EOF
+	HEAD Z
+	main Z
+	matching-branch Z
+	matching-tag Z
+	other/branch-in-other Z
+	other/main-in-other Z
+	EOF
+'
+
+test_expect_success 'git commit - with --fixup=reword:, completes references' '
+	test_completion "git commit --fixup=reword:" <<-\EOF
+	HEAD Z
+	main Z
+	matching-branch Z
+	matching-tag Z
+	other/branch-in-other Z
+	other/main-in-other Z
+	EOF
+'
+
 test_expect_success 'setup sparse-checkout tests' '
 	# set up sparse-checkout repo
 	git init sparse-checkout &&
