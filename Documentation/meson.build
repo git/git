@@ -204,28 +204,85 @@ manpages = {
   'gitworkflows.txt' : 7,
 }
 
-asciidoc = find_program('asciidoc')
+docs_backend = get_option('docs_backend')
+if docs_backend == 'auto'
+  if find_program('asciidoc', required: false).found()
+    docs_backend = 'asciidoc'
+  elif find_program('asciidoctor', required: false).found()
+    docs_backend = 'asciidoctor'
+  else
+    error('Neither asciidoc nor asciidoctor were found.')
+  endif
+endif
+
+if docs_backend == 'asciidoc'
+  asciidoc = find_program('asciidoc', required: true)
+  asciidoc_html = 'xhtml11'
+  asciidoc_docbook = 'docbook'
+  xmlto_extra = [ ]
+
+  asciidoc_conf = custom_target(
+    command: [
+      shell,
+      meson.project_source_root() / 'GIT-VERSION-GEN',
+      meson.project_source_root(),
+      '@INPUT@',
+      '@OUTPUT@',
+    ],
+    input: 'asciidoc.conf.in',
+    output: 'asciidoc.conf',
+    depends: [git_version_file],
+  )
+
+  asciidoc_common_options = [
+    asciidoc,
+    '--conf-file=' + asciidoc_conf.full_path(),
+    '--attribute=build_dir=' + meson.current_build_dir(),
+  ]
+
+  documentation_deps = [
+    asciidoc_conf,
+  ]
+elif docs_backend == 'asciidoctor'
+  asciidoctor = find_program('asciidoctor', required: true)
+  asciidoc_html = 'xhtml5'
+  asciidoc_docbook = 'docbook5'
+  xmlto_extra = [
+    '--skip-validation',
+    '-x', meson.current_source_dir() / 'manpage.xsl',
+  ]
+
+  asciidoctor_extensions = custom_target(
+    command: [
+      shell,
+      meson.project_source_root() / 'GIT-VERSION-GEN',
+      meson.project_source_root(),
+      '@INPUT@',
+      '@OUTPUT@',
+    ],
+    input: 'asciidoctor-extensions.rb.in',
+    output: 'asciidoctor-extensions.rb',
+    depends: [git_version_file],
+  )
+
+  asciidoc_common_options = [
+    asciidoctor,
+    '--attribute', 'compat-mode',
+    '--attribute', 'tabsize=8',
+    '--attribute', 'litdd=&#x2d;&#x2d;',
+    '--attribute', 'docinfo=shared',
+    '--attribute', 'build_dir=' + meson.current_build_dir(),
+    '--load-path', meson.current_build_dir(),
+    '--require', 'asciidoctor-extensions',
+  ]
+
+  documentation_deps = [
+    asciidoctor_extensions,
+  ]
+endif
+
 git = find_program('git', required: false)
 xmlto = find_program('xmlto')
-
-asciidoc_conf = custom_target(
-  command: [
-    shell,
-    meson.project_source_root() / 'GIT-VERSION-GEN',
-    meson.project_source_root(),
-    '@INPUT@',
-    '@OUTPUT@',
-  ],
-  input: meson.current_source_dir() / 'asciidoc.conf.in',
-  output: 'asciidoc.conf',
-  depends: [git_version_file],
-)
-
-asciidoc_common_options = [
-  asciidoc,
-  '--conf-file=' + asciidoc_conf.full_path(),
-  '--attribute=build_dir=' + meson.current_build_dir(),
-]
 
 cmd_lists = [
   'cmds-ancillaryinterrogators.txt',
@@ -242,17 +299,14 @@ cmd_lists = [
   'cmds-foreignscminterface.txt',
 ]
 
-documentation_deps = [
-  asciidoc_conf,
-]
-
 documentation_deps += custom_target(
   command: [
     perl,
-    meson.current_source_dir() / 'cmd-list.perl',
+    '@INPUT@',
     meson.project_source_root(),
     meson.current_build_dir(),
   ] + cmd_lists,
+  input: 'cmd-list.perl',
   output: cmd_lists
 )
 
@@ -260,15 +314,15 @@ foreach mode : [ 'diff', 'merge' ]
   documentation_deps += custom_target(
     command: [
       shell,
-      meson.current_source_dir() / 'generate-mergetool-list.sh',
+      '@INPUT@',
       '..',
-      'diff',
+      mode,
       '@OUTPUT@'
     ],
     env: [
       'MERGE_TOOLS_DIR=' + meson.project_source_root() / 'mergetools',
-      'TOOL_MODE=' + mode,
     ],
+    input: 'generate-mergetool-list.sh',
     output: 'mergetools-' + mode + '.txt',
   )
 endforeach
@@ -277,12 +331,13 @@ foreach manpage, category : manpages
   if get_option('docs').contains('man')
     manpage_xml_target = custom_target(
       command: asciidoc_common_options + [
-        '--backend=docbook',
+        '--backend=' + asciidoc_docbook,
         '--doctype=manpage',
         '--out-file=@OUTPUT@',
-        meson.current_source_dir() / manpage,
+        '@INPUT@',
       ],
       depends: documentation_deps,
+      input: manpage,
       output: fs.stem(manpage) + '.xml',
     )
 
@@ -290,16 +345,18 @@ foreach manpage, category : manpages
     manpage_target = custom_target(
       command: [
         xmlto,
-        '-m',
-        meson.current_source_dir() / 'manpage-normal.xsl',
-        '-m',
-        meson.current_source_dir() / 'manpage-bold-literal.xsl',
+        '-m', '@INPUT0@',
+        '-m', '@INPUT1@',
         '--stringparam',
         'man.base.url.for.relative.links=' + get_option('prefix') / get_option('mandir'),
         'man',
         manpage_xml_target,
         '-o',
         meson.current_build_dir(),
+      ] + xmlto_extra,
+      input: [
+        'manpage-normal.xsl',
+        'manpage-bold-literal.xsl',
       ],
       output: manpage_path,
       install: true,
@@ -307,18 +364,108 @@ foreach manpage, category : manpages
     )
   endif
 
-  if get_option('docs').contains('html') and category == 1
+  if get_option('docs').contains('html')
     custom_target(
       command: asciidoc_common_options + [
-        '--backend=xhtml11',
+        '--backend=' + asciidoc_html,
         '--doctype=manpage',
         '--out-file=@OUTPUT@',
-        meson.current_source_dir() / manpage,
+        '@INPUT@',
       ],
       depends: documentation_deps,
+      input: manpage,
       output: fs.stem(manpage) + '.html',
       install: true,
       install_dir: get_option('datadir') / 'doc/git-doc',
     )
   endif
 endforeach
+
+if get_option('docs').contains('html')
+  configure_file(
+    input: 'docinfo-html.in',
+    output: 'docinfo.html',
+    copy: true,
+    install: true,
+    install_dir: get_option('datadir') / 'doc/git-doc',
+  )
+
+  configure_file(
+    input: 'docbook-xsl.css',
+    output: 'docbook-xsl.css',
+    copy: true,
+    install: true,
+    install_dir: get_option('datadir') / 'doc/git-doc',
+  )
+
+  install_symlink('index.html',
+    install_dir: get_option('datadir') / 'doc/git-doc',
+    pointing_to: 'git.html',
+  )
+
+  xsltproc = find_program('xsltproc')
+
+  user_manual_xml = custom_target(
+    command: asciidoc_common_options + [
+      '--backend=' + asciidoc_docbook,
+      '--doctype=book',
+      '--out-file=@OUTPUT@',
+      '@INPUT@',
+    ],
+    input: 'user-manual.txt',
+    output: 'user-manual.xml',
+    depends: documentation_deps,
+  )
+
+  custom_target(
+    command: [
+      xsltproc,
+      '--xinclude',
+      '--stringparam', 'html.stylesheet', 'docbook-xsl.css',
+      '--param', 'generate.consistent.ids', '1',
+      '--output', '@OUTPUT@',
+      '@INPUT@',
+      user_manual_xml,
+    ],
+    input: 'docbook.xsl',
+    output: 'user-manual.html',
+    install: true,
+    install_dir: get_option('datadir') / 'doc/git-doc',
+  )
+
+  articles = [
+    'DecisionMaking.txt',
+    'MyFirstContribution.txt',
+    'MyFirstObjectWalk.txt',
+    'ReviewingGuidelines.txt',
+    'SubmittingPatches',
+    'ToolsForGit.txt',
+    'git-bisect-lk2009.txt',
+    'git-tools.txt',
+  ]
+
+  foreach article : articles
+    custom_target(
+      command: asciidoc_common_options + [
+        '--backend=' + asciidoc_html,
+        '--out-file=@OUTPUT@',
+        '@INPUT@',
+      ],
+      input: article,
+      output: fs.stem(article) + '.html',
+      depends: documentation_deps,
+      install: true,
+      install_dir: get_option('datadir') / 'doc/git-doc',
+    )
+  endforeach
+
+  asciidoc_html_options = asciidoc_common_options + [
+    '--backend=' + asciidoc_html,
+    '--out-file=@OUTPUT@',
+    '--attribute', 'git-relative-html-prefix=../',
+    '@INPUT@',
+  ]
+
+  subdir('howto')
+  subdir('technical')
+endif

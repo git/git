@@ -25,12 +25,22 @@ manmanual='Git Manual'
 mansource='Git @GIT_VERSION@'
 revdate='@GIT_DATE@'
 
+ifdef::doctype-book[]
+[titles]
+	underlines="__","==","--","~~","^^"
+endif::doctype-book[]
+
 ifdef::backend-docbook[]
 [linkgit-inlinemacro]
+ifndef::doctype-book[]
 {0%{target}}
 {0#<citerefentry>}
 {0#<refentrytitle>{target}</refentrytitle><manvolnum>{0}</manvolnum>}
 {0#</citerefentry>}
+endif::doctype-book[]
+ifdef::doctype-book[]
+<ulink url="{target}.html">{target}{0?({0})}</ulink>
+endif::doctype-book[]
 
 [literal-inlinemacro]
 {eval:re.sub(r'(&lt;[-a-zA-Z0-9.]+&gt;)', r'<emphasis>\1</emphasis>', re.sub(r'([\[\s|()>]|^|\]|&gt;)(\.?([-a-zA-Z0-9:+=~@,\/_^\$]+\.?)+)',r'\1<literal>\2</literal>', re.sub(r'(\.\.\.?)([^\]$.])', r'<literal>\1</literal>\2', macros.passthroughs[int(attrs['passtext'][1:-1])] if attrs['passtext'][1:-1].isnumeric() else attrs['passtext'][1:-1])))}

@@ -75,6 +75,8 @@ option('docs', type: 'array', choices: ['man', 'html'], value: [],
   description: 'Which documenattion formats to build and install.')
 option('default_help_format', type: 'combo', choices: ['man', 'html'], value: 'man',
   description: 'Default format used when executing git-help(1).')
+option('docs_backend', type: 'combo', choices: ['asciidoc', 'asciidoctor', 'auto'], value: 'auto',
+  description: 'Which backend to use to generate documentation.')
 
 # Testing.
 option('tests', type: 'boolean', value: true,
