@@ -527,7 +527,7 @@ include shared.mak
 #
 # If don't enable any of the *_SHA1 settings in this section, Git will
 # default to its built-in sha1collisiondetection library, which is a
-# collision-detecting sha1 This is slower, but may detect attempted
+# collision-detecting sha1. This is slower, but may detect attempted
 # collision attacks.
 #
 # ==== Options for the sha1collisiondetection library ====
