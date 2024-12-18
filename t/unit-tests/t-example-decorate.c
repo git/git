@@ -42,9 +42,9 @@ static void t_lookup(struct test_vars *vars)
 
 static void t_loop(struct test_vars *vars)
 {
-	int i, objects_noticed = 0;
+	int objects_noticed = 0;
 
-	for (i = 0; i < vars->n.size; i++) {
+	for (size_t i = 0; i < vars->n.size; i++) {
 		if (vars->n.entries[i].base)
 			objects_noticed++;
 	}

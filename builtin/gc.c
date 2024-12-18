@@ -9,7 +9,10 @@
  *
  * Copyright (c) 2006 Shawn O. Pearce
  */
+
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "builtin.h"
 #include "abspath.h"
 #include "date.h"

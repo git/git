@@ -13,7 +13,6 @@
 
 static void print_sorted_commit_ids(struct commit_list *list)
 {
-	int i;
 	struct string_list s = STRING_LIST_INIT_DUP;
 
 	while (list) {
@@ -23,7 +22,7 @@ static void print_sorted_commit_ids(struct commit_list *list)
 
 	string_list_sort(&s);
 
-	for (i = 0; i < s.nr; i++)
+	for (size_t i = 0; i < s.nr; i++)
 		printf("%s\n", s.items[i].string);
 
 	string_list_clear(&s, 0);

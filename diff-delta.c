@@ -11,6 +11,8 @@
  * published by the Free Software Foundation.
  */
 
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "git-compat-util.h"
 #include "delta.h"
 

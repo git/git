@@ -18,6 +18,8 @@
    You should have received a copy of the GNU General Public License along
    with this program; if not, see <http://www.gnu.org/licenses/>.  */
 
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 /* To bump the minimum Windows version to Windows Vista */
 #include "git-compat-util.h"
 
