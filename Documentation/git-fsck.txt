@@ -89,7 +89,7 @@ care about this output and want to speed it up further.
 	Write dangling objects into .git/lost-found/commit/ or
 	.git/lost-found/other/, depending on type.  If the object is
 	a blob, the contents are written into the file, rather than
-	its object name.
+	its object name. This option implies `--no-reflogs`.
 
 --name-objects::
 	When displaying names of reachable objects, in addition to the
