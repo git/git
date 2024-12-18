@@ -99,10 +99,10 @@ test:osx:
   parallel:
     matrix:
       - jobname: osx-clang
-        image: macos-13-xcode-14
+        image: macos-14-xcode-15
         CC: clang
       - jobname: osx-reftable
-        image: macos-13-xcode-14
+        image: macos-14-xcode-15
         CC: clang
   artifacts:
     paths:
