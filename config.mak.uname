@@ -819,10 +819,6 @@ vcxproj:
 	sed -i 's|\(git\)-\([-a-z]*\)\.exe"|\1.exe" \2|g' \
 		bin-wrappers/git-{receive-pack,upload-archive}
 	git add -f $(test_bindir_programs)
-	# remote-ext is a builtin, but invoked as if it were external
-	sed 's|receive-pack|remote-ext|g' \
-		<bin-wrappers/git-receive-pack >bin-wrappers/git-remote-ext
-	git add -f bin-wrappers/git-remote-ext
 
 	# Add templates
 	$(MAKE) -C templates
