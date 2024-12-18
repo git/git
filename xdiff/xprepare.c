@@ -72,7 +72,7 @@ static int xdl_init_classifier(xdlclassifier_t *cf, long size, long flags) {
 	cf->flags = flags;
 
 	cf->hbits = xdl_hashbits((unsigned int) size);
-	cf->hsize = 1 << cf->hbits;
+	cf->hsize = 1U << cf->hbits;
 
 	if (xdl_cha_init(&cf->ncha, sizeof(xdlclass_t), size / 4 + 1) < 0) {
 
@@ -174,7 +174,7 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 		goto abort;
 
 	hbits = xdl_hashbits((unsigned int) narec);
-	hsize = 1 << hbits;
+	hsize = 1U << hbits;
 	if (!XDL_CALLOC_ARRAY(rhash, hsize))
 		goto abort;
 

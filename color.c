@@ -317,7 +317,7 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 		}
 		val = parse_attr(word, wordlen);
 		if (0 <= val)
-			attr |= (1 << val);
+			attr |= (1U << val);
 		else
 			goto bad;
 	}
@@ -340,7 +340,7 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 			sep++;
 
 		for (i = 0; attr; i++) {
-			unsigned bit = (1 << i);
+			unsigned bit = (1U << i);
 			if (!(attr & bit))
 				continue;
 			attr &= ~bit;

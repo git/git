@@ -156,7 +156,7 @@ struct delta_index * create_delta_index(const void *buf, unsigned long bufsize)
 	}
 	hsize = entries / 4;
 	for (i = 4; (1u << i) < hsize; i++);
-	hsize = 1 << i;
+	hsize = 1u << i;
 	hmask = hsize - 1;
 
 	/* allocate lookup index */

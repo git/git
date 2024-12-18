@@ -270,13 +270,13 @@ static void unresolved(const struct traverse_info *info, struct name_entry n[3])
 	unsigned dirmask = 0, mask = 0;
 
 	for (i = 0; i < 3; i++) {
-		mask |= (1 << i);
+		mask |= (1U << i);
 		/*
 		 * Treat missing entries as directories so that we return
 		 * after unresolved_directory has handled this.
 		 */
 		if (!n[i].mode || S_ISDIR(n[i].mode))
-			dirmask |= (1 << i);
+			dirmask |= (1U << i);
 	}
 
 	unresolved_directory(info, n);

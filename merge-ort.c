@@ -1218,7 +1218,7 @@ static void collect_rename_info(struct merge_options *opt,
 		return;
 
 	for (side = MERGE_SIDE1; side <= MERGE_SIDE2; ++side) {
-		unsigned side_mask = (1 << side);
+		unsigned side_mask = (1U << side);
 
 		/* Check for deletion on side */
 		if ((filemask & 1) && !(filemask & side_mask))
@@ -2026,7 +2026,7 @@ static void initialize_attr_index(struct merge_options *opt)
 
 		ASSIGN_AND_VERIFY_CI(ci, mi);
 		for (stage = 0; stage < 3; stage++) {
-			unsigned stage_mask = (1 << stage);
+			unsigned stage_mask = (1U << stage);
 
 			if (!(ci->filemask & stage_mask))
 				continue;
@@ -2362,7 +2362,7 @@ static char *handle_path_level_conflicts(struct merge_options *opt,
 	 */
 	if (c_info->reported_already) {
 		clean = 0;
-	} else if (path_in_way(&opt->priv->paths, new_path, 1 << side_index)) {
+	} else if (path_in_way(&opt->priv->paths, new_path, 1U << side_index)) {
 		c_info->reported_already = 1;
 		strbuf_add_separated_string_list(&collision_paths, ", ",
 						 &c_info->source_files);
@@ -2747,7 +2747,7 @@ static void apply_directory_rename_modifications(struct merge_options *opt,
 		ci->filemask = 0;
 		ci->merged.clean = 1;
 		for (i = MERGE_BASE; i <= MERGE_SIDE2; i++) {
-			if (ci->dirmask & (1 << i))
+			if (ci->dirmask & (1U << i))
 				continue;
 			/* zero out any entries related to files */
 			ci->stages[i].mode = 0;
@@ -2915,7 +2915,7 @@ static int process_renames(struct merge_options *opt,
 				assert(side1 == side2);
 				memcpy(&side1->stages[0], &base->stages[0],
 				       sizeof(merged));
-				side1->filemask |= (1 << MERGE_BASE);
+				side1->filemask |= (1U << MERGE_BASE);
 				/* Mark base as resolved by removal */
 				base->merged.is_null = 1;
 				base->merged.clean = 1;
@@ -3002,7 +3002,7 @@ static int process_renames(struct merge_options *opt,
 		target_index = pair->score; /* from collect_renames() */
 		assert(target_index == 1 || target_index == 2);
 		other_source_index = 3 - target_index;
-		old_sidemask = (1 << other_source_index); /* 2 or 4 */
+		old_sidemask = (1U << other_source_index); /* 2 or 4 */
 		source_deleted = (oldinfo->filemask == 1);
 		collision = ((newinfo->filemask & old_sidemask) != 0);
 		type_changed = !source_deleted &&
@@ -3116,7 +3116,7 @@ static int process_renames(struct merge_options *opt,
 			 */
 			memcpy(&newinfo->stages[0], &oldinfo->stages[0],
 			       sizeof(newinfo->stages[0]));
-			newinfo->filemask |= (1 << MERGE_BASE);
+			newinfo->filemask |= (1U << MERGE_BASE);
 			newinfo->pathnames[0] = oldpath;
 			if (type_changed) {
 				/* rename vs. typechange */
@@ -3139,7 +3139,7 @@ static int process_renames(struct merge_options *opt,
 				memcpy(&newinfo->stages[other_source_index],
 				       &oldinfo->stages[other_source_index],
 				       sizeof(newinfo->stages[0]));
-				newinfo->filemask |= (1 << other_source_index);
+				newinfo->filemask |= (1U << other_source_index);
 				newinfo->pathnames[other_source_index] = oldpath;
 			}
 		}
@@ -3990,7 +3990,7 @@ static int process_entry(struct merge_options *opt,
 		ci->match_mask = (ci->match_mask & ~ci->dirmask);
 		ci->dirmask = 0;
 		for (i = MERGE_BASE; i <= MERGE_SIDE2; i++) {
-			if (ci->filemask & (1 << i))
+			if (ci->filemask & (1U << i))
 				continue;
 			ci->stages[i].mode = 0;
 			oidcpy(&ci->stages[i].oid, null_oid());

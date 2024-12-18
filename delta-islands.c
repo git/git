@@ -78,7 +78,7 @@ static int island_bitmap_is_subset(struct island_bitmap *self,
 }
 
 #define ISLAND_BITMAP_BLOCK(x) (x / 32)
-#define ISLAND_BITMAP_MASK(x) (1 << (x % 32))
+#define ISLAND_BITMAP_MASK(x) (1U << (x % 32))
 
 static void island_bitmap_set(struct island_bitmap *self, uint32_t i)
 {

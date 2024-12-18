@@ -223,7 +223,7 @@ static int check_stages(unsigned stages, const struct cache_entry *ce, int pos)
 		ce = the_repository->index->cache[pos];
 		if (strcmp(name, ce->name))
 			break;
-		seen |= (1 << ce_stage(ce));
+		seen |= (1U << ce_stage(ce));
 		pos++;
 	}
 	if ((stages & seen) != stages)

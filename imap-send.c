@@ -644,7 +644,7 @@ static void parse_capability(struct imap *imap, char *cmd)
 	while ((arg = next_arg(&cmd)))
 		for (i = 0; i < ARRAY_SIZE(cap_list); i++)
 			if (!strcmp(cap_list[i], arg))
-				imap->caps |= 1 << i;
+				imap->caps |= 1U << i;
 	imap->rcaps = imap->caps;
 }
 

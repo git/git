@@ -1306,7 +1306,7 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 	struct shallow_lock shallow_lock = SHALLOW_LOCK_INIT;
 	struct oid_array extra = OID_ARRAY_INIT;
 	struct check_connected_options opt = CHECK_CONNECTED_INIT;
-	uint32_t mask = 1 << (cmd->index % 32);
+	uint32_t mask = 1U << (cmd->index % 32);
 	int i;
 
 	trace_printf_key(&trace_shallow,
