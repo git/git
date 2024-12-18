@@ -420,36 +420,6 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 				e->name);
 			goto skip_write_ref;
 		}
-		/*
-		 * If you run "git bundle create bndl v1.0..v2.0", the
-		 * name of the positive ref is "v2.0" but that is the
-		 * commit that is referenced by the tag, and not the tag
-		 * itself.
-		 */
-		if (!oideq(&oid, &e->item->oid)) {
-			/*
-			 * Is this the positive end of a range expressed
-			 * in terms of a tag (e.g. v2.0 from the range
-			 * "v1.0..v2.0")?
-			 */
-			struct commit *one = lookup_commit_reference(revs->repo, &oid);
-			struct object *obj;
-
-			if (e->item == &(one->object)) {
-				/*
-				 * Need to include e->name as an
-				 * independent ref to the pack-objects
-				 * input, so that the tag is included
-				 * in the output; otherwise we would
-				 * end up triggering "empty bundle"
-				 * error.
-				 */
-				obj = parse_object_or_die(&oid, e->name);
-				obj->flags |= SHOWN;
-				add_pending_object(revs, obj, e->name);
-			}
-			goto skip_write_ref;
-		}
 
 		ref_count++;
 		write_or_die(bundle_fd, oid_to_hex(&e->item->oid), the_hash_algo->hexsz);
