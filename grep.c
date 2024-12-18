@@ -87,6 +87,11 @@ int grep_config(const char *var, const char *value,
 		return 0;
 	}
 
+	if (!strcmp(var, "grep.perl.digit")) {
+		opt->perl_digit = git_config_bool(var, value);
+		return 0;
+	}
+
 	if (!strcmp(var, "color.grep"))
 		opt->color = git_config_colorbool(var, value);
 	if (!strcmp(var, "color.grep.match")) {
@@ -300,6 +305,7 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 	int patinforet;
 	size_t jitsizearg;
 	int literal = !opt->ignore_case && (p->fixed || p->is_fixed);
+	uint32_t xoptions = 0;
 
 	/*
 	 * Call pcre2_general_context_create() before calling any
@@ -320,23 +326,36 @@ static void compile_pcre2_pattern(struct grep_pat *p, const struct grep_opt *opt
 		}
 		options |= PCRE2_CASELESS;
 	}
-	if (!opt->ignore_locale && is_utf8_locale() && !literal)
-		options |= (PCRE2_UTF | PCRE2_UCP | PCRE2_MATCH_INVALID_UTF);
+	if (!opt->ignore_locale && is_utf8_locale() && !literal) {
+		options |= (PCRE2_UTF | PCRE2_MATCH_INVALID_UTF);
 
-#ifndef GIT_PCRE2_VERSION_10_35_OR_HIGHER
-	/*
-	 * Work around a JIT bug related to invalid Unicode character handling
-	 * fixed in 10.35:
-	 * https://github.com/PCRE2Project/pcre2/commit/c21bd977547d
-	 */
-	options &= ~PCRE2_UCP;
+#ifdef GIT_PCRE2_VERSION_10_35_OR_HIGHER
+		/*
+		 * Work around a JIT bug related to invalid Unicode character handling
+		 * fixed in 10.35:
+		 * https://github.com/PCRE2Project/pcre2/commit/c21bd977547d
+		 */
+		options |= PCRE2_UCP;
+#ifdef GIT_PCRE2_VERSION_10_43_OR_HIGHER
+		if (!opt->perl_digit)
+			xoptions |= (PCRE2_EXTRA_ASCII_BSD | PCRE2_EXTRA_ASCII_DIGIT);
 #endif
+#endif
+	}
 
 #ifndef GIT_PCRE2_VERSION_10_36_OR_HIGHER
 	/* Work around https://bugs.exim.org/show_bug.cgi?id=2642 fixed in 10.36 */
 	if (PCRE2_MATCH_INVALID_UTF && options & (PCRE2_UTF | PCRE2_CASELESS))
 		options |= PCRE2_NO_START_OPTIMIZE;
 #endif
+
+	if (xoptions) {
+		if (!p->pcre2_compile_context)
+			p->pcre2_compile_context = pcre2_compile_context_create(p->pcre2_general_context);
+
+		pcre2_set_compile_extra_options(p->pcre2_compile_context,
+						xoptions);
+	}
 
 	p->pcre2_pattern = pcre2_compile((PCRE2_SPTR)p->pattern,
 					 p->patternlen, options, &error, &erroffset,
