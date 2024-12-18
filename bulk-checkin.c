@@ -333,7 +333,7 @@ void prepare_loose_object_bulk_checkin(void)
 	if (!odb_transaction_nesting || bulk_fsync_objdir)
 		return;
 
-	bulk_fsync_objdir = tmp_objdir_create("bulk-fsync");
+	bulk_fsync_objdir = tmp_objdir_create(the_repository, "bulk-fsync");
 	if (bulk_fsync_objdir)
 		tmp_objdir_replace_primary_odb(bulk_fsync_objdir, 0);
 }

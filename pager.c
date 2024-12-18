@@ -1,5 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "config.h"
 #include "editor.h"
@@ -84,7 +82,7 @@ static int core_pager_config(const char *var, const char *value,
 	return 0;
 }
 
-const char *git_pager(int stdout_is_tty)
+const char *git_pager(struct repository *r, int stdout_is_tty)
 {
 	const char *pager;
 
@@ -94,7 +92,7 @@ const char *git_pager(int stdout_is_tty)
 	pager = getenv("GIT_PAGER");
 	if (!pager) {
 		if (!pager_program)
-			read_early_config(the_repository,
+			read_early_config(r,
 					  core_pager_config, NULL);
 		pager = pager_program;
 	}
@@ -143,10 +141,10 @@ void prepare_pager_args(struct child_process *pager_process, const char *pager)
 	pager_process->trace2_child_class = "pager";
 }
 
-void setup_pager(void)
+void setup_pager(struct repository *r)
 {
 	static int once = 0;
-	const char *pager = git_pager(isatty(1));
+	const char *pager = git_pager(r, isatty(1));
 
 	if (!pager)
 		return;
@@ -293,7 +291,7 @@ static int pager_command_config(const char *var, const char *value,
 }
 
 /* returns 0 for "no pager", 1 for "use pager", and -1 for "not specified" */
-int check_pager_config(const char *cmd)
+int check_pager_config(struct repository *r, const char *cmd)
 {
 	struct pager_command_config_data data;
 
@@ -301,7 +299,7 @@ int check_pager_config(const char *cmd)
 	data.want = -1;
 	data.value = NULL;
 
-	read_early_config(the_repository, pager_command_config, &data);
+	read_early_config(r, pager_command_config, &data);
 
 	if (data.value)
 		pager_program = data.value;

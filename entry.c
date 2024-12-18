@@ -188,7 +188,9 @@ int finish_delayed_checkout(struct checkout *state, int show_progress)
 
 	dco->state = CE_RETRY;
 	if (show_progress)
-		progress = start_delayed_progress(_("Filtering content"), dco->paths.nr);
+		progress = start_delayed_progress(the_repository,
+						  _("Filtering content"),
+						  dco->paths.nr);
 	while (dco->filters.nr > 0) {
 		for_each_string_list_item(filter, &dco->filters) {
 			struct string_list available_paths = STRING_LIST_INIT_DUP;

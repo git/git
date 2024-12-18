@@ -4,6 +4,8 @@
 #include "string-list.h"
 #include "strvec.h"
 
+struct repository;
+
 /**
  * The credentials API provides an abstracted way of gathering
  * authentication credentials from the user.
@@ -65,7 +67,7 @@
  * // Fill in the username and password fields by contacting
  * // helpers and/or asking the user. The function will die if it
  * // fails.
- * credential_fill(&c);
+ * credential_fill(repo, &c);
  *
  * // Otherwise, we have a username and password. Try to use it.
  *
@@ -218,7 +220,8 @@ void credential_clear(struct credential *);
  * If all_capabilities is set, this is an internal user that is prepared
  * to deal with all known capabilities, and we should advertise that fact.
  */
-void credential_fill(struct credential *, int all_capabilities);
+void credential_fill(struct repository *, struct credential *,
+		     int all_capabilities);
 
 /**
  * Inform the credential subsystem that the provided credentials
@@ -227,7 +230,7 @@ void credential_fill(struct credential *, int all_capabilities);
  * that they may store the result to be used again.  Any errors
  * from helpers are ignored.
  */
-void credential_approve(struct credential *);
+void credential_approve(struct repository *, struct credential *);
 
 /**
  * Inform the credential subsystem that the provided credentials
@@ -239,7 +242,7 @@ void credential_approve(struct credential *);
  * for another call to `credential_fill`). Any errors from helpers
  * are ignored.
  */
-void credential_reject(struct credential *);
+void credential_reject(struct repository *, struct credential *);
 
 /**
  * Enable all of the supported credential flags in this credential.

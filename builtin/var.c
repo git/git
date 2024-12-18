@@ -42,7 +42,7 @@ static char *sequence_editor(int ident_flag UNUSED)
 
 static char *pager(int ident_flag UNUSED)
 {
-	const char *pgm = git_pager(1);
+	const char *pgm = git_pager(the_repository, 1);
 
 	if (!pgm)
 		pgm = "cat";

@@ -617,7 +617,8 @@ int bitmap_writer_build(struct bitmap_writer *writer)
 	int closed = 1; /* until proven otherwise */
 
 	if (writer->show_progress)
-		writer->progress = start_progress("Building bitmaps",
+		writer->progress = start_progress(the_repository,
+						  "Building bitmaps",
 						  writer->selected_nr);
 	trace2_region_enter("pack-bitmap-write", "building_bitmaps_total",
 			    the_repository);
@@ -737,7 +738,8 @@ void bitmap_writer_select_commits(struct bitmap_writer *writer,
 	}
 
 	if (writer->show_progress)
-		writer->progress = start_progress("Selecting bitmap commits", 0);
+		writer->progress = start_progress(the_repository,
+						  "Selecting bitmap commits", 0);
 
 	for (;;) {
 		struct commit *chosen = NULL;

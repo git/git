@@ -822,7 +822,8 @@ static int mv(int argc, const char **argv, const char *prefix,
 		 * Count symrefs twice, since "renaming" them is done by
 		 * deleting and recreating them in two separate passes.
 		 */
-		progress = start_progress(_("Renaming remote references"),
+		progress = start_progress(the_repository,
+					  _("Renaming remote references"),
 					  rename.remote_branches->nr + rename.symrefs_nr);
 	}
 	for (i = 0; i < remote_branches.nr; i++) {

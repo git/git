@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -18,6 +17,7 @@
 #include "tempfile.h"
 
 struct update_info_ctx {
+	struct repository *repo;
 	FILE *cur_fp;
 	FILE *old_fp; /* becomes NULL if it differs from cur_fp */
 	struct strbuf cur_sb;
@@ -73,7 +73,7 @@ static int uic_printf(struct update_info_ctx *uic, const char *fmt, ...)
  * it into place. The contents of the file come from "generate", which
  * should return non-zero if it encounters an error.
  */
-static int update_info_file(char *path,
+static int update_info_file(struct repository *r, char *path,
 			int (*generate)(struct update_info_ctx *),
 			int force)
 {
@@ -81,6 +81,7 @@ static int update_info_file(char *path,
 	struct tempfile *f = NULL;
 	int ret = -1;
 	struct update_info_ctx uic = {
+		.repo = r,
 		.cur_fp = NULL,
 		.old_fp = NULL,
 		.cur_sb = STRBUF_INIT,
@@ -152,7 +153,7 @@ static int add_info_ref(const char *path, const char *referent UNUSED, const str
 			void *cb_data)
 {
 	struct update_info_ctx *uic = cb_data;
-	struct object *o = parse_object(the_repository, oid);
+	struct object *o = parse_object(uic->repo, oid);
 	if (!o)
 		return -1;
 
@@ -160,7 +161,7 @@ static int add_info_ref(const char *path, const char *referent UNUSED, const str
 		return -1;
 
 	if (o->type == OBJ_TAG) {
-		o = deref_tag(the_repository, o, path, 0);
+		o = deref_tag(uic->repo, o, path, 0);
 		if (o)
 			if (uic_printf(uic, "%s	%s^{}\n",
 				oid_to_hex(&o->oid), path) < 0)
@@ -171,14 +172,14 @@ static int add_info_ref(const char *path, const char *referent UNUSED, const str
 
 static int generate_info_refs(struct update_info_ctx *uic)
 {
-	return refs_for_each_ref(get_main_ref_store(the_repository),
+	return refs_for_each_ref(get_main_ref_store(uic->repo),
 				 add_info_ref, uic);
 }
 
-static int update_info_refs(int force)
+static int update_info_refs(struct repository *r, int force)
 {
-	char *path = git_pathdup("info/refs");
-	int ret = update_info_file(path, generate_info_refs, force);
+	char *path = repo_git_path(r, "info/refs");
+	int ret = update_info_file(r, path, generate_info_refs, force);
 	free(path);
 	return ret;
 }
@@ -284,14 +285,14 @@ static int compare_info(const void *a_, const void *b_)
 		return 1;
 }
 
-static void init_pack_info(const char *infofile, int force)
+static void init_pack_info(struct repository *r, const char *infofile, int force)
 {
 	struct packed_git *p;
 	int stale;
 	int i;
 	size_t alloc = 0;
 
-	for (p = get_all_packs(the_repository); p; p = p->next) {
+	for (p = get_all_packs(r); p; p = p->next) {
 		/* we ignore things on alternate path since they are
 		 * not available to the pullers in general.
 		 */
@@ -340,33 +341,36 @@ static int write_pack_info_file(struct update_info_ctx *uic)
 	return 0;
 }
 
-static int update_info_packs(int force)
+static int update_info_packs(struct repository *r, int force)
 {
 	char *infofile = mkpathdup("%s/info/packs",
-				   repo_get_object_directory(the_repository));
+				   repo_get_object_directory(r));
 	int ret;
 
-	init_pack_info(infofile, force);
-	ret = update_info_file(infofile, write_pack_info_file, force);
+	init_pack_info(r, infofile, force);
+	ret = update_info_file(r, infofile, write_pack_info_file, force);
 	free_pack_info();
 	free(infofile);
 	return ret;
 }
 
 /* public */
-int update_server_info(int force)
+int update_server_info(struct repository *r, int force)
 {
 	/* We would add more dumb-server support files later,
 	 * including index of available pack files and their
 	 * intended audiences.
 	 */
 	int errs = 0;
+	char *path;
 
-	errs = errs | update_info_refs(force);
-	errs = errs | update_info_packs(force);
+	errs = errs | update_info_refs(r, force);
+	errs = errs | update_info_packs(r, force);
 
 	/* remove leftover rev-cache file if there is any */
-	unlink_or_warn(git_path("info/rev-cache"));
+	path = repo_git_path(r, "info/rev-cache");
+	unlink_or_warn(path);
+	free(path);
 
 	return errs;
 }

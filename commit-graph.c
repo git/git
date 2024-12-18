@@ -1534,6 +1534,7 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 
 	if (ctx->report_progress)
 		ctx->progress = start_delayed_progress(
+					the_repository,
 					_("Loading known commits in commit graph"),
 					ctx->oids.nr);
 	for (i = 0; i < ctx->oids.nr; i++) {
@@ -1551,6 +1552,7 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 	 */
 	if (ctx->report_progress)
 		ctx->progress = start_delayed_progress(
+					the_repository,
 					_("Expanding reachable commits in commit graph"),
 					0);
 	for (i = 0; i < ctx->oids.nr; i++) {
@@ -1571,6 +1573,7 @@ static void close_reachable(struct write_commit_graph_context *ctx)
 
 	if (ctx->report_progress)
 		ctx->progress = start_delayed_progress(
+					the_repository,
 					_("Clearing commit marks in commit graph"),
 					ctx->oids.nr);
 	for (i = 0; i < ctx->oids.nr; i++) {
@@ -1688,6 +1691,7 @@ static void compute_topological_levels(struct write_commit_graph_context *ctx)
 	if (ctx->report_progress)
 		info.progress = ctx->progress
 			      = start_delayed_progress(
+					the_repository,
 					_("Computing commit graph topological levels"),
 					ctx->commits.nr);
 
@@ -1722,6 +1726,7 @@ static void compute_generation_numbers(struct write_commit_graph_context *ctx)
 	if (ctx->report_progress)
 		info.progress = ctx->progress
 			      = start_delayed_progress(
+					the_repository,
 					_("Computing commit graph generation numbers"),
 					ctx->commits.nr);
 
@@ -1798,6 +1803,7 @@ static void compute_bloom_filters(struct write_commit_graph_context *ctx)
 
 	if (ctx->report_progress)
 		progress = start_delayed_progress(
+			the_repository,
 			_("Computing commit changed paths Bloom filters"),
 			ctx->commits.nr);
 
@@ -1877,6 +1883,7 @@ int write_commit_graph_reachable(struct object_directory *odb,
 	data.commits = &commits;
 	if (flags & COMMIT_GRAPH_WRITE_PROGRESS)
 		data.progress = start_delayed_progress(
+			the_repository,
 			_("Collecting referenced commits"), 0);
 
 	refs_for_each_ref(get_main_ref_store(the_repository), add_ref_to_set,
@@ -1908,7 +1915,8 @@ static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
 			       "Finding commits for commit graph in %"PRIuMAX" packs",
 			       pack_indexes->nr),
 			    (uintmax_t)pack_indexes->nr);
-		ctx->progress = start_delayed_progress(progress_title.buf, 0);
+		ctx->progress = start_delayed_progress(the_repository,
+						       progress_title.buf, 0);
 		ctx->progress_done = 0;
 	}
 	for (i = 0; i < pack_indexes->nr; i++) {
@@ -1959,6 +1967,7 @@ static void fill_oids_from_all_packs(struct write_commit_graph_context *ctx)
 {
 	if (ctx->report_progress)
 		ctx->progress = start_delayed_progress(
+			the_repository,
 			_("Finding commits for commit graph among packed objects"),
 			ctx->approx_nr_objects);
 	for_each_packed_object(ctx->r, add_packed_commits, ctx,
@@ -1977,6 +1986,7 @@ static void copy_oids_to_commits(struct write_commit_graph_context *ctx)
 	ctx->num_extra_edges = 0;
 	if (ctx->report_progress)
 		ctx->progress = start_delayed_progress(
+			the_repository,
 			_("Finding extra edges in commit graph"),
 			ctx->oids.nr);
 	oid_array_sort(&ctx->oids);
@@ -2136,6 +2146,7 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 			       get_num_chunks(cf)),
 			    get_num_chunks(cf));
 		ctx->progress = start_delayed_progress(
+			the_repository,
 			progress_title.buf,
 			st_mult(get_num_chunks(cf), ctx->commits.nr));
 	}
@@ -2348,6 +2359,7 @@ static void sort_and_scan_merged_commits(struct write_commit_graph_context *ctx)
 
 	if (ctx->report_progress)
 		ctx->progress = start_delayed_progress(
+					the_repository,
 					_("Scanning merged commits"),
 					ctx->commits.nr);
 
@@ -2392,7 +2404,8 @@ static void merge_commit_graphs(struct write_commit_graph_context *ctx)
 		current_graph_number--;
 
 		if (ctx->report_progress)
-			ctx->progress = start_delayed_progress(_("Merging commit-graph"), 0);
+			ctx->progress = start_delayed_progress(the_repository,
+							       _("Merging commit-graph"), 0);
 
 		merge_commit_graph(ctx, g);
 		stop_progress(&ctx->progress);
@@ -2874,7 +2887,8 @@ int verify_commit_graph(struct repository *r, struct commit_graph *g, int flags)
 		if (!(flags & COMMIT_GRAPH_VERIFY_SHALLOW))
 			total += g->num_commits_in_base;
 
-		progress = start_progress(_("Verifying commits in commit graph"),
+		progress = start_progress(the_repository,
+					  _("Verifying commits in commit graph"),
 					  total);
 	}
 
