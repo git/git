@@ -4,6 +4,7 @@
 #include "../config.h"
 #include "../dir.h"
 #include "../gettext.h"
+#include "../fsck.h"
 #include "../hash.h"
 #include "../hex.h"
 #include "../refs.h"
@@ -1747,15 +1748,40 @@ static struct ref_iterator *packed_reflog_iterator_begin(struct ref_store *ref_s
 	return empty_ref_iterator_begin();
 }
 
-static int packed_fsck(struct ref_store *ref_store UNUSED,
-		       struct fsck_options *o UNUSED,
+static int packed_fsck(struct ref_store *ref_store,
+		       struct fsck_options *o,
 		       struct worktree *wt)
 {
+	struct stat st;
+	int ret = 0;
 
 	if (!is_main_worktree(wt))
-		return 0;
+		goto out;
 
-	return 0;
+	struct packed_ref_store *refs =
+		packed_downcast(ref_store, REF_STORE_READ, "fsck");
+
+	/*
+	 * If the packed-refs file doesn't exist, there's nothing to
+	 * check.
+	 */
+	if (lstat(refs->path, &st) < 0)
+		goto out;
+
+	if (o->verbose)
+		fprintf_ln(stderr, "Checking packed-refs file %s", refs->path);
+
+	if (!S_ISREG(st.st_mode)) {
+		struct fsck_ref_report report = { 0 };
+		report.path = "packed-refs";
+
+		ret = fsck_report_ref(o, &report, FSCK_MSG_BAD_REF_FILETYPE,
+				      "not a regular file");
+		goto out;
+	}
+
+out:
+	return ret;
 }
 
 struct ref_storage_be refs_be_packed = {
