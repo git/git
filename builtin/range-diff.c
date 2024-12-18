@@ -22,6 +22,7 @@ int cmd_range_diff(int argc,
 {
 	struct diff_options diffopt = { NULL };
 	struct strvec other_arg = STRVEC_INIT;
+	struct strvec diff_merges_arg = STRVEC_INIT;
 	struct range_diff_options range_diff_opts = {
 		.creation_factor = RANGE_DIFF_CREATION_FACTOR_DEFAULT,
 		.diffopt = &diffopt,
@@ -37,6 +38,10 @@ int cmd_range_diff(int argc,
 		OPT_PASSTHRU_ARGV(0, "notes", &other_arg,
 				  N_("notes"), N_("passed to 'git log'"),
 				  PARSE_OPT_OPTARG),
+		OPT_PASSTHRU_ARGV(0, "diff-merges", &diff_merges_arg,
+				  N_("style"), N_("passed to 'git log'"), 0),
+		OPT_PASSTHRU_ARGV(0, "remerge-diff", &diff_merges_arg, NULL,
+				  N_("passed to 'git log'"), PARSE_OPT_NOARG),
 		OPT_BOOL(0, "left-only", &left_only,
 			 N_("only emit output related to the first range")),
 		OPT_BOOL(0, "right-only", &right_only,
@@ -62,6 +67,12 @@ int cmd_range_diff(int argc,
 	/* force color when --dual-color was used */
 	if (!simple_color)
 		diffopt.use_color = 1;
+
+	/* If `--diff-merges` was specified, imply `--merges` */
+	if (diff_merges_arg.nr) {
+		range_diff_opts.include_merges = 1;
+		strvec_pushv(&other_arg, diff_merges_arg.v);
+	}
 
 	for (i = 0; i < argc; i++)
 		if (!strcmp(argv[i], "--")) {
@@ -156,6 +167,7 @@ int cmd_range_diff(int argc,
 	res = show_range_diff(range1.buf, range2.buf, &range_diff_opts);
 
 	strvec_clear(&other_arg);
+	strvec_clear(&diff_merges_arg);
 	strbuf_release(&range1);
 	strbuf_release(&range2);
 
