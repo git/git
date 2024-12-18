@@ -522,7 +522,6 @@ static int git_trailer_config(const char *conf_key, const char *value,
 	struct conf_info *conf;
 	char *name = NULL;
 	enum trailer_info_type type;
-	int i;
 
 	if (!skip_prefix(conf_key, "trailer.", &trailer_item))
 		return 0;
@@ -532,7 +531,7 @@ static int git_trailer_config(const char *conf_key, const char *value,
 		return 0;
 
 	variable_name++;
-	for (i = 0; i < ARRAY_SIZE(trailer_config_items); i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(trailer_config_items); i++) {
 		if (strcmp(trailer_config_items[i].name, variable_name))
 			continue;
 		name = xstrndup(trailer_item,  variable_name - trailer_item - 1);
