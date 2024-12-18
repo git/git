@@ -337,7 +337,7 @@ static void trace_encoding(const char *context, const char *path,
 			((i+1) % 8 && (i+1) < len ? ' ' : '\n')
 		);
 	}
-	strbuf_addchars(&trace, '\n', 1);
+	strbuf_addch(&trace, '\n');
 
 	trace_strbuf(&coe, &trace);
 	strbuf_release(&trace);
