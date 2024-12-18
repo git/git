@@ -2278,7 +2278,7 @@ repeat:
 
 		old_handle = CreateFileW(wpold, DELETE,
 					 FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE,
-					 NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+					 NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
 		if (old_handle == INVALID_HANDLE_VALUE) {
 			errno = err_win_to_posix(GetLastError());
 			return -1;
