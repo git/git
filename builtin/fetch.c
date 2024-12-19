@@ -1579,10 +1579,47 @@ static const char *strip_refshead(const char *name){
 	return name;
 }
 
-static int set_head(const struct ref *remote_refs)
+static void set_head_advice_msg(const char *remote, const char *head_name)
 {
-	int result = 0, is_bare;
-	struct strbuf b_head = STRBUF_INIT, b_remote_head = STRBUF_INIT;
+	const char message_advice_set_head[] =
+	N_("Run 'git remote set-head %s %s' to follow the change, or set\n"
+	   "'remote.%s.followRemoteHEAD' configuration option to a different value\n"
+	   "if you do not want to see this message. Specifically running\n"
+	   "'git config set remote.%s.followRemoteHEAD %s' will disable the warning\n"
+	   "until the remote changes HEAD to something else.");
+
+	advise_if_enabled(ADVICE_FETCH_SET_HEAD_WARN, _(message_advice_set_head),
+			remote, head_name, remote, remote, head_name);
+}
+
+static void report_set_head(const char *remote, const char *head_name,
+			struct strbuf *buf_prev, int updateres) {
+	struct strbuf buf_prefix = STRBUF_INIT;
+	const char *prev_head = NULL;
+
+	strbuf_addf(&buf_prefix, "refs/remotes/%s/", remote);
+	skip_prefix(buf_prev->buf, buf_prefix.buf, &prev_head);
+
+	if (prev_head && strcmp(prev_head, head_name)) {
+		printf("'HEAD' at '%s' is '%s', but we have '%s' locally.\n",
+			remote, head_name, prev_head);
+		set_head_advice_msg(remote, head_name);
+	}
+	else if (updateres && buf_prev->len) {
+		printf("'HEAD' at '%s' is '%s', "
+			"but we have a detached HEAD pointing to '%s' locally.\n",
+			remote, head_name, buf_prev->buf);
+		set_head_advice_msg(remote, head_name);
+	}
+	strbuf_release(&buf_prefix);
+}
+
+static int set_head(const struct ref *remote_refs, int follow_remote_head,
+		const char *no_warn_branch)
+{
+	int result = 0, create_only, is_bare, was_detached;
+	struct strbuf b_head = STRBUF_INIT, b_remote_head = STRBUF_INIT,
+		      b_local_head = STRBUF_INIT;
 	const char *remote = gtransport->remote->name;
 	char *head_name = NULL;
 	struct ref *ref, *matches;
@@ -1603,6 +1640,8 @@ static int set_head(const struct ref *remote_refs)
 		string_list_append(&heads, strip_refshead(ref->name));
 	}
 
+	if (follow_remote_head == FOLLOW_REMOTE_NEVER)
+		goto cleanup;
 
 	if (!heads.nr)
 		result = 1;
@@ -1614,6 +1653,7 @@ static int set_head(const struct ref *remote_refs)
 	if (!head_name)
 		goto cleanup;
 	is_bare = is_bare_repository();
+	create_only = follow_remote_head == FOLLOW_REMOTE_ALWAYS ? 0 : !is_bare;
 	if (is_bare) {
 		strbuf_addstr(&b_head, "HEAD");
 		strbuf_addf(&b_remote_head, "refs/heads/%s", head_name);
@@ -1626,9 +1666,16 @@ static int set_head(const struct ref *remote_refs)
 		result = 1;
 		goto cleanup;
 	}
-	if (refs_update_symref_extended(refs, b_head.buf, b_remote_head.buf,
-					"fetch", NULL, !is_bare))
+	was_detached = refs_update_symref_extended(refs, b_head.buf, b_remote_head.buf,
+					"fetch", &b_local_head, create_only);
+	if (was_detached == -1) {
 		result = 1;
+		goto cleanup;
+	}
+	if (verbosity >= 0 &&
+		follow_remote_head == FOLLOW_REMOTE_WARN &&
+		(!no_warn_branch || strcmp(no_warn_branch, head_name)))
+		report_set_head(remote, head_name, &b_local_head, was_detached);
 
 cleanup:
 	free(head_name);
@@ -1636,6 +1683,7 @@ cleanup:
 	free_refs(matches);
 	string_list_clear(&heads, 0);
 	strbuf_release(&b_head);
+	strbuf_release(&b_local_head);
 	strbuf_release(&b_remote_head);
 	return result;
 }
@@ -1873,7 +1921,8 @@ static int do_fetch(struct transport *transport,
 				  "you need to specify exactly one branch with the --set-upstream option"));
 		}
 	}
-	if (set_head(remote_refs))
+	if (set_head(remote_refs, transport->remote->follow_remote_head,
+		transport->remote->no_warn_branch))
 		;
 		/*
 		 * Way too many cases where this can go wrong

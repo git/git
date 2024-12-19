@@ -504,6 +504,17 @@ test_expect_success 'set-head --auto has no problem w/multiple HEADs' '
 	)
 '
 
+test_expect_success 'set-head changes followRemoteHEAD always to warn' '
+	(
+		cd test &&
+		git config set remote.origin.followRemoteHEAD "always" &&
+		git remote set-head --auto origin &&
+		git config get remote.origin.followRemoteHEAD >actual &&
+		echo "warn" >expect &&
+		test_cmp expect actual
+	)
+'
+
 cat >test/expect <<\EOF
 refs/remotes/origin/side2
 EOF
