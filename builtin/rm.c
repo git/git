@@ -15,12 +15,13 @@
 #include "object-name.h"
 #include "parse-options.h"
 #include "read-cache.h"
-
 #include "string-list.h"
 #include "setup.h"
 #include "sparse-index.h"
 #include "submodule.h"
 #include "pathspec.h"
+#include "prompt.h"  /* For ask() */
+#include "safety-protocol.h"
 
 static const char * const builtin_rm_usage[] = {
 	N_("git rm [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]\n"
@@ -247,64 +248,95 @@ static int ignore_unmatch = 0, pathspec_file_nul;
 static int include_sparse;
 static char *pathspec_from_file;
 
+/* Safety state for rm command */
+static struct safety_state rm_safety_state;
+
+static void check_path_safety(const char *path)
+{
+    struct strbuf sb = STRBUF_INIT;
+
+    strbuf_addstr(&sb, path);
+    if (is_nonbare_repository_dir(&sb)) {
+        warning(_("'%s' is a git repository"), path);
+    }
+    strbuf_release(&sb);
+}
+
+static int git_rm_config(const char *var, const char *value,
+                        const struct config_context *ctx, void *cb)
+{
+    return git_default_config(var, value, ctx, cb);
+}
+
 static struct option builtin_rm_options[] = {
 	OPT__DRY_RUN(&show_only, N_("dry run")),
 	OPT__QUIET(&quiet, N_("do not list removed files")),
-	OPT_BOOL( 0 , "cached",         &index_only, N_("only remove from the index")),
-	OPT__FORCE(&force, N_("override the up-to-date check"), PARSE_OPT_NOCOMPLETE),
-	OPT_BOOL('r', NULL,             &recursive,  N_("allow recursive removal")),
-	OPT_BOOL( 0 , "ignore-unmatch", &ignore_unmatch,
-				N_("exit with a zero status even if nothing matched")),
-	OPT_BOOL(0, "sparse", &include_sparse, N_("allow updating entries outside of the sparse-checkout cone")),
+	OPT_BOOL('f', "force", &force, N_("override the up-to-date check")),
+	OPT_BOOL('r', "recursive", &recursive, N_("allow recursive removal")),
+	OPT_BOOL(0, "cached", &index_only, N_("only remove from the index")),
+	OPT_BOOL(0, "ignore-unmatch", &ignore_unmatch, N_("exit with a zero status even if nothing matched")),
+	OPT_BOOL(0, "sparse", &include_sparse,
+             N_("allow updating entries outside of the sparse-checkout cone")),
 	OPT_PATHSPEC_FROM_FILE(&pathspec_from_file),
 	OPT_PATHSPEC_FILE_NUL(&pathspec_file_nul),
 	OPT_END(),
 };
 
-int cmd_rm(int argc,
-	   const char **argv,
-	   const char *prefix,
-	   struct repository *repo UNUSED)
+int cmd_rm(int argc, const char **argv, const char *prefix, struct repository *repo UNUSED)
 {
-	struct lock_file lock_file = LOCK_INIT;
-	int i, ret = 0;
+	int i;
 	struct pathspec pathspec;
+	struct dir_struct dir = DIR_INIT;
+	struct lock_file lock_file = LOCK_INIT;
 	char *seen;
+	int ret = 0;
 
-	git_config(git_default_config, NULL);
+	git_config(git_rm_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, builtin_rm_options,
-			     builtin_rm_usage, 0);
+			    builtin_rm_usage, 0);
 
-	parse_pathspec(&pathspec, 0,
-		       PATHSPEC_PREFER_CWD,
-		       prefix, argv);
+	/* Initialize safety state for rm operation */
+	safety_state_init(&rm_safety_state, SAFETY_OP_RM,
+                     "remove operation", the_repository);
+
+	if (force)
+        rm_safety_state.force_level = SAFETY_FORCE_SINGLE;
 
 	if (pathspec_from_file) {
 		if (pathspec.nr)
-			die(_("'%s' and pathspec arguments cannot be used together"), "--pathspec-from-file");
+			die(_("'%s' and pathspec arguments cannot be used together"),
+                "--pathspec-from-file");
 
 		parse_pathspec_file(&pathspec, 0,
-				    PATHSPEC_PREFER_CWD,
-				    prefix, pathspec_from_file, pathspec_file_nul);
-	} else if (pathspec_file_nul) {
-		die(_("the option '%s' requires '%s'"), "--pathspec-file-nul", "--pathspec-from-file");
+                          PATHSPEC_PREFER_FULL,
+                          prefix, pathspec_from_file, pathspec_file_nul);
+	} else {
+		parse_pathspec(&pathspec, 0,
+                      PATHSPEC_PREFER_FULL,
+                      prefix, argv);
 	}
 
-	if (!pathspec.nr)
+	if (include_sparse)
+		dir.flags |= DIR_SHOW_IGNORED;
+
+	if (!pathspec.nr && !pathspec_from_file)
 		die(_("No pathspec was given. Which files should I remove?"));
 
-	if (!index_only)
-		setup_work_tree();
-
-	prepare_repo_settings(the_repository);
-	the_repository->settings.command_requires_full_index = 0;
-	repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
+	if (!show_only)
+		repo_hold_locked_index(the_repository, &lock_file, LOCK_DIE_ON_ERROR);
 
 	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));
 
-	refresh_index(the_repository->index, REFRESH_QUIET|REFRESH_UNMERGED, &pathspec, NULL, NULL);
+	dir.flags |= DIR_SHOW_IGNORED;
+    
+	/* Refresh index to ensure we have latest state */
+	refresh_index(the_repository->index, REFRESH_QUIET|REFRESH_UNMERGED, 
+                 &pathspec, NULL, NULL);
+
+	/* Fill directory and validate paths */
+	fill_directory(&dir, the_repository->index, &pathspec);
 
 	seen = xcalloc(pathspec.nr, 1);
 
@@ -349,17 +381,22 @@ int cmd_rm(int argc,
 			if (!recursive && seen[i] == MATCHED_RECURSIVELY)
 				die(_("not removing '%s' recursively without -r"),
 				    *original ? original : ".");
+
+			/* Check each path for safety concerns */
+			if (safety_check_path(&rm_safety_state, pathspec.items[i].match)) {
+				check_path_safety(pathspec.items[i].original);
+			}
 		}
 
 		if (only_match_skip_worktree.nr) {
 			advise_on_updating_sparse_paths(&only_match_skip_worktree);
-			ret = 1;
+			return 1;
 		}
 		free(skip_worktree_seen);
 		string_list_clear(&only_match_skip_worktree, 0);
 
 		if (!seen_any)
-			exit(ret);
+			exit(1);
 	}
 	clear_pathspec(&pathspec);
 	free(seen);
@@ -438,9 +475,16 @@ int cmd_rm(int argc,
 			stage_updated_gitmodules(the_repository->index);
 	}
 
+	if (safety_confirm_operation(&rm_safety_state)) {
+		ret = 1;
+		goto cleanup;
+	}
+
 	if (write_locked_index(the_repository->index, &lock_file,
 			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
 		die(_("Unable to write new index file"));
 
+cleanup:
+	safety_clear(&rm_safety_state);
 	return ret;
 }
