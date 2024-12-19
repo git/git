@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2024, #06; Mon, 16)
-X-master-at: 063bcebf0c917140ca0e705cbe0fdea127e90086
-X-next-at: 0fc57dec578fcc8dcda5cc3de6b81fa1f6719770
+Subject: What's cooking in git.git (Dec 2024, #07; Thu, 19)
+X-master-at: ff795a5c5ed2e2d07c688c217a615d89e3f5733b
+X-next-at: 3cddc25e2affa62f1ee18d86e121316d5861298b
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2024, #06; Mon, 16)
+What's cooking in git.git (Dec 2024, #07; Thu, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -49,6 +49,193 @@ pages):
 Release tarballs are available at:
 
 	https://www.kernel.org/pub/software/scm/git/
+
+--------------------------------------------------
+[Graduated to 'master']
+
+* bf/fetch-set-head-config (2024-12-06) 5 commits
+  (merged to 'next' on 2024-12-11 at 900cadd7b7)
+ + remote set-head: set followRemoteHEAD to "warn" if "always"
+ + fetch set_head: add warn-if-not-$branch option
+ + fetch set_head: move warn advice into advise_if_enabled
+  (merged to 'next' on 2024-12-04 at 69bfc59fb5)
+ + fetch: add configuration for set_head behaviour
+ + Merge branch 'bf/set-head-symref' into bf/fetch-set-head-config
+ (this branch uses bf/set-head-symref.)
+
+ "git fetch" honors "remote.<remote>.followRemoteHEAD" settings to
+ tweak the remote-tracking HEAD in "refs/remotes/<remote>/HEAD".
+
+ Will merge to 'master' after bf/set-head-symref and its fix-up.
+ source: <20241128230806.2058962-1-bence@ferdinandy.com>
+ source: <20241204104003.514905-1-bence@ferdinandy.com>
+ source: <20241128111946.366584-1-bence@ferdinandy.com>
+
+
+* bf/set-head-symref (2024-11-25) 10 commits
+  (merged to 'next' on 2024-12-02 at b142ff3d8e)
+ + fetch set_head: handle mirrored bare repositories
+ + fetch: set remote/HEAD if it does not exist
+ + refs: add create_only option to refs_update_symref_extended
+ + refs: add TRANSACTION_CREATE_EXISTS error
+ + remote set-head: better output for --auto
+ + remote set-head: refactor for readability
+ + refs: atomically record overwritten ref in update_symref
+ + refs: standardize output of refs_read_symbolic_ref
+ + t/t5505-remote: test failure of set-head
+ + t/t5505-remote: set default branch to main
+ (this branch is used by bf/fetch-set-head-config and jc/set-head-symref-fix.)
+
+ When "git fetch $remote" notices that refs/remotes/$remote/HEAD is
+ missing and discovers what branch the other side points with its
+ HEAD, refs/remotes/$remote/HEAD is updated to point to it.
+
+ Will merge to 'master' together with jc/set-head-symref-fix.
+ source: <20241122123138.66960-1-bence@ferdinandy.com>
+
+
+* jc/set-head-symref-fix (2024-12-07) 2 commits
+  (merged to 'next' on 2024-12-13 at 478444359e)
+ + fetch: do not ask for HEAD unnecessarily
+ + Merge branch 'bf/set-head-symref' into js/set-head-symref-fix
+ (this branch uses bf/set-head-symref.)
+
+ "git fetch" from a configured remote learned to update a missing
+ remote-tracking HEAD but it asked the remote about their HEAD even
+ when it did not need to, which has been corrected.  Incidentally,
+ this also corrects "git fetch --tags $URL" which was broken by the
+ new feature in an unspecified way.
+ 
+ source: <xmqqcyi5xmhr.fsf@gitster.g>
+
+
+* js/log-remerge-keep-ancestry (2024-12-13) 1 commit
+  (merged to 'next' on 2024-12-13 at 90156d79ed)
+ + log: --remerge-diff needs to keep around commit parents
+ (this branch is used by js/range-diff-diff-merges.)
+
+ "git log -p --remerge-diff --reverse" was completely broken.
+ 
+ source: <pull.1825.v3.git.1733999352289.gitgitgadget@gmail.com>
+
+
+* mh/doc-windows-home-env (2024-12-10) 1 commit
+  (merged to 'next' on 2024-12-13 at 9f49e6f9dd)
+ + Document HOME environment variable
+
+ Doc update.
+ 
+ source: <pull.1834.git.1733771894867.gitgitgadget@gmail.com>
+
+
+* tc/bundle-with-tag-remove-workaround (2024-12-12) 1 commit
+  (merged to 'next' on 2024-12-13 at 7f4ebe0be3)
+ + bundle: remove unneeded code
+
+ "git bundle create" with an annotated tag on the positive end of
+ the revision range had a workaround code for older limitation in
+ the revision walker, which has become unnecessary.
+ 
+ source: <20241211-fix-bundle-create-race-v3-1-0587f6f9db1b@iotcl.com>
+
+--------------------------------------------------
+[New Topics]
+
+* js/github-windows-setup-fix (2024-12-17) 1 commit
+  (merged to 'next' on 2024-12-17 at 6d59340ec5)
+ + GitHub ci(windows): speed up initializing Git for Windows' minimal SDK again
+
+ Revert recent changes to the way windows environment is set up for
+ GitHub CI.
+
+ Will merge to 'master'.
+ source: <pull.1841.git.1734447458896.gitgitgadget@gmail.com>
+
+
+* js/mingw-rename-fix (2024-12-17) 1 commit
+  (merged to 'next' on 2024-12-17 at 57dc9a0ebb)
+ + mingw_rename: do support directory renames
+
+ Update the way rename() emulation on Windows handle directories to
+ correct an earlier attempt to do the same.
+
+ Will merge to 'master'.
+ source: <pull.1839.git.1734439924842.gitgitgadget@gmail.com>
+
+
+* js/ps-build-cmake-fixup (2024-12-17) 5 commits
+  (merged to 'next' on 2024-12-17 at 653a20d2f5)
+ + cmake/vcxproj: stop special-casing `remote-ext`
+ + cmake: put the Perl modules into the correct location again
+ + cmake: use the correct file name for the Perl header
+ + cmake(mergetools): better support for out-of-tree builds
+ + cmake: better support for out-of-tree builds follow-up
+
+ Build fixes for Windows.
+
+ Will merge to 'master'.
+ source: <pull.1840.git.1734456721.gitgitgadget@gmail.com>
+
+
+* kl/doc-build-fix (2024-12-17) 1 commit
+ - doc: remove extra quotes in generated docs
+
+ Build fix.
+
+ Will merge to 'next'?
+ More fixes to come.
+ cf. <Z2LL9F8WANokZJ7R@pks.im>
+ source: <pull.1847.v2.git.git.1734483422181.gitgitgadget@gmail.com>
+
+
+* ps/the-repository (2024-12-18) 15 commits
+ - match-trees: stop using `the_repository`
+ - graph: stop using `the_repository`
+ - add-interactive: stop using `the_repository`
+ - tmp-objdir: stop using `the_repository`
+ - resolve-undo: stop using `the_repository`
+ - credential: stop using `the_repository`
+ - mailinfo: stop using `the_repository`
+ - diagnose: stop using `the_repository`
+ - server-info: stop using `the_repository`
+ - send-pack: stop using `the_repository`
+ - serve: stop using `the_repository`
+ - trace: stop using `the_repository`
+ - pager: stop using `the_repository`
+ - progress: stop using `the_repository`
+ - Merge branch 'ps/build-sign-compare' into ps/the-repository
+ (this branch uses ps/build-sign-compare.)
+
+ More code paths have a repository passed through the callchain,
+ instead of assuming the primary the_repository object.
+ source: <20241217-pks-use-the-repository-conversion-v1-0-0dba48bcc239@pks.im>
+
+
+* sk/calloc-not-malloc-plus-memset (2024-12-18) 1 commit
+  (merged to 'next' on 2024-12-18 at 5af85a77f3)
+ + git: use calloc instead of malloc + memset where possible
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <pull.1390.v11.git.git.1734540512582.gitgitgadget@gmail.com>
+
+
+* tb/bitmap-fix-pack-reuse (2024-12-18) 1 commit
+ - pack-bitmap.c: ensure pack validity for all reuse packs
+
+ Code to reuse objects based on bitmap contents have been tightened
+ to avoid race condition even when multiple packs are involved.
+
+ Will merge to 'next'.
+ source: <7fdbfadc04926efc094633b238a55168c92e3d58.1734117577.git.me@ttaylorr.com>
+
+
+* ps/build-hotfix (2024-12-19) 2 commits
+ - GIT-VERSION-GEN: fix overriding GIT_BUILT_FROM_COMMIT and GIT_DATE
+ - GIT-VERSION-GEN: fix overriding version via environment
+
+ source: <20241219-b4-pks-git-version-via-environment-v1-0-9393af058240@pks.im>
 
 --------------------------------------------------
 [Cooking]
@@ -103,64 +290,44 @@ Release tarballs are available at:
 
 
 * ps/ci-meson (2024-12-13) 10 commits
- - ci: wire up Meson builds
- - t: introduce compatibility options to clar-based tests
- - t: fix out-of-tree tests for some git-p4 tests
- - Makefile: detect missing Meson tests
- - meson: detect missing tests at configure time
- - t/unit-tests: rename clar-based unit tests to have a common prefix
- - Makefile: drop -DSUPPRESS_ANNOTATED_LEAKS
- - ci/lib: support custom output directories when creating test artifacts
- - Merge branch 'ps/build' into ps/ci-meson
- - Merge branch 'cw/worktree-extension' into ps/ci-meson
+  (merged to 'next' on 2024-12-17 at fc95a5a9cb)
+ + ci: wire up Meson builds
+ + t: introduce compatibility options to clar-based tests
+ + t: fix out-of-tree tests for some git-p4 tests
+ + Makefile: detect missing Meson tests
+ + meson: detect missing tests at configure time
+ + t/unit-tests: rename clar-based unit tests to have a common prefix
+ + Makefile: drop -DSUPPRESS_ANNOTATED_LEAKS
+ + ci/lib: support custom output directories when creating test artifacts
+ + Merge branch 'ps/build' into ps/ci-meson
+ + Merge branch 'cw/worktree-extension' into ps/ci-meson
 
  The meson-build procedure is integrated into CI to catch and
  prevent bitrotting.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <87zfkwgehr.fsf@iotcl.com>
  source: <20241213-pks-meson-ci-v2-0-634affccc694@pks.im>
 
 
-* kn/reflog-migration (2024-12-15) 9 commits
- . refs: add support for migrating reflogs
- . refs: allow multiple reflog entries for the same refname
- . refs: introduce the `ref_transaction_update_reflog` function
- . refs: add `committer_info` to `ref_transaction_add_update()`
- . refs: extract out refname verification in transactions
- . refs/files: add count field to ref_lock
- . refs: add `index` field to `struct ref_udpate`
- . refs: include committer info in `ref_update` struct
- . Merge branch 'kn/reftable-writer-log-write-verify' into kn/reflog-migration
+* kn/reflog-migration (2024-12-16) 9 commits
+  (merged to 'next' on 2024-12-18 at 5634446b20)
+ + refs: add support for migrating reflogs
+ + refs: allow multiple reflog entries for the same refname
+ + refs: introduce the `ref_transaction_update_reflog` function
+ + refs: add `committer_info` to `ref_transaction_add_update()`
+ + refs: extract out refname verification in transactions
+ + refs/files: add count field to ref_lock
+ + refs: add `index` field to `struct ref_udpate`
+ + refs: include committer info in `ref_update` struct
+ + Merge branch 'kn/reftable-writer-log-write-verify' into kn/reflog-migration
  (this branch uses kn/reftable-writer-log-write-verify.)
 
  "git refs migrate" learned to also migrate the reflog data across
  backends.
 
- Does not seem to pass its own test.
- source: <20241215-320-git-refs-migrate-reflogs-v3-0-4127fe707b98@gmail.com>
-
-
-* mh/doc-windows-home-env (2024-12-10) 1 commit
-  (merged to 'next' on 2024-12-13 at 9f49e6f9dd)
- + Document HOME environment variable
-
- Doc update.
-
  Will merge to 'master'.
- source: <pull.1834.git.1733771894867.gitgitgadget@gmail.com>
-
-
-* tc/bundle-with-tag-remove-workaround (2024-12-12) 1 commit
-  (merged to 'next' on 2024-12-13 at 7f4ebe0be3)
- + bundle: remove unneeded code
-
- "git bundle create" with an annotated tag on the positive end of
- the revision range had a workaround code for older limitation in
- the revision walker, which has become unnecessary.
-
- Will merge to 'master'.
- source: <20241211-fix-bundle-create-race-v3-1-0587f6f9db1b@iotcl.com>
+ source: <20241216-320-git-refs-migrate-reflogs-v4-0-d7cd3f197453@gmail.com>
 
 
 * cc/lop-remote (2024-12-07) 5 commits
@@ -212,22 +379,6 @@ Release tarballs are available at:
  source: <20241212-pks-ci-section-fixes-v3-0-d9fe6baee21e@pks.im>
 
 
-* jc/set-head-symref-fix (2024-12-07) 2 commits
-  (merged to 'next' on 2024-12-13 at 478444359e)
- + fetch: do not ask for HEAD unnecessarily
- + Merge branch 'bf/set-head-symref' into js/set-head-symref-fix
- (this branch uses bf/set-head-symref.)
-
- "git fetch" from a configured remote learned to update a missing
- remote-tracking HEAD but it asked the remote about their HEAD even
- when it did not need to, which has been corrected.  Incidentally,
- this also corrects "git fetch --tags $URL" which was broken by the
- new feature in an unspecified way.
-
- Will merge to 'master'.
- source: <xmqqcyi5xmhr.fsf@gitster.g>
-
-
 * re/submodule-parse-opt (2024-12-11) 7 commits
  - git-submodule.sh: rename some variables
  - git-submodule.sh: improve variables readability
@@ -262,30 +413,12 @@ Release tarballs are available at:
  + compat/win32: fix -Wsign-compare warning in "wWinMain()"
  + compat/regex: explicitly ignore "-Wsign-compare" warnings
  + git-compat-util: introduce macros to disable "-Wsign-compare" warnings
+ (this branch is used by ps/the-repository.)
 
  Start working to make the codebase buildable with -Wsign-compare.
 
  Will merge to 'master'.
  source: <20241206-pks-sign-compare-v4-0-0344c6dfb219@pks.im>
-
-
-* bf/fetch-set-head-config (2024-12-06) 5 commits
-  (merged to 'next' on 2024-12-11 at 900cadd7b7)
- + remote set-head: set followRemoteHEAD to "warn" if "always"
- + fetch set_head: add warn-if-not-$branch option
- + fetch set_head: move warn advice into advise_if_enabled
-  (merged to 'next' on 2024-12-04 at 69bfc59fb5)
- + fetch: add configuration for set_head behaviour
- + Merge branch 'bf/set-head-symref' into bf/fetch-set-head-config
- (this branch uses bf/set-head-symref.)
-
- "git fetch" honors "remote.<remote>.followRemoteHEAD" settings to
- tweak the remote-tracking HEAD in "refs/remotes/<remote>/HEAD".
-
- Will merge to 'master' after bf/set-head-symref and its fix-up.
- source: <20241128230806.2058962-1-bence@ferdinandy.com>
- source: <20241204104003.514905-1-bence@ferdinandy.com>
- source: <20241128111946.366584-1-bence@ferdinandy.com>
 
 
 * tb/unsafe-hash-test (2024-11-21) 2 commits
@@ -335,17 +468,6 @@ Release tarballs are available at:
  source: <20241113-pks-push-atomic-respect-exit-code-v1-0-7965f01e7f4e@pks.im>
 
 
-* js/log-remerge-keep-ancestry (2024-12-13) 1 commit
-  (merged to 'next' on 2024-12-13 at 90156d79ed)
- + log: --remerge-diff needs to keep around commit parents
- (this branch is used by js/range-diff-diff-merges.)
-
- "git log -p --remerge-diff --reverse" was completely broken.
-
- Will merge to 'master'.
- source: <pull.1825.v3.git.1733999352289.gitgitgadget@gmail.com>
-
-
 * jc/move-is-bare-repository-cfg-variable-to-repo (2024-11-07) 3 commits
  . repository: BUG when is_bare_cfg is not initialized
  . setup: initialize is_bare_cfg
@@ -362,16 +484,16 @@ Release tarballs are available at:
 
 
 * js/range-diff-diff-merges (2024-12-16) 3 commits
- - range-diff: introduce the convenience option `--remerge-diff`
- - range-diff: optionally include merge commits' diffs in the analysis
- - Merge branch 'js/log-remerge-keep-ancestry' into js/range-diff-diff-merges
- (this branch uses js/log-remerge-keep-ancestry.)
+  (merged to 'next' on 2024-12-18 at 47394ea998)
+ + range-diff: introduce the convenience option `--remerge-diff`
+ + range-diff: optionally include merge commits' diffs in the analysis
+ + Merge branch 'js/log-remerge-keep-ancestry' into js/range-diff-diff-merges
 
  "git range-diff" learned to optionally show and compare merge
  commits in the ranges being compared, with the --diff-merges
  option.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1734.v3.git.1734358282.gitgitgadget@gmail.com>
 
 
@@ -440,28 +562,6 @@ Release tarballs are available at:
  source: <pull.1817.git.git.1729370390416.gitgitgadget@gmail.com>
 
 
-* bf/set-head-symref (2024-11-25) 10 commits
-  (merged to 'next' on 2024-12-02 at b142ff3d8e)
- + fetch set_head: handle mirrored bare repositories
- + fetch: set remote/HEAD if it does not exist
- + refs: add create_only option to refs_update_symref_extended
- + refs: add TRANSACTION_CREATE_EXISTS error
- + remote set-head: better output for --auto
- + remote set-head: refactor for readability
- + refs: atomically record overwritten ref in update_symref
- + refs: standardize output of refs_read_symbolic_ref
- + t/t5505-remote: test failure of set-head
- + t/t5505-remote: set default branch to main
- (this branch is used by bf/fetch-set-head-config and jc/set-head-symref-fix.)
-
- When "git fetch $remote" notices that refs/remotes/$remote/HEAD is
- missing and discovers what branch the other side points with its
- HEAD, refs/remotes/$remote/HEAD is updated to point to it.
-
- Will merge to 'master' together with jc/set-head-symref-fix.
- source: <20241122123138.66960-1-bence@ferdinandy.com>
-
-
 * ej/cat-file-remote-object-info (2024-11-25) 6 commits
  - cat-file: add remote-object-info to batch-command
  - transport: add client support for object-info
@@ -489,14 +589,3 @@ Release tarballs are available at:
 
  Will discard?
  source: <cover.1729032373.git.steadmon@google.com>
-
---------------------------------------------------
-[Discarded]
-
-* js/set-head-symref-fix (2024-12-06) 2 commits
- . Fix `git fetch --tags` in repo with no configured remote
- - Merge branch 'bf/set-head-symref' into js/set-head-symref-fix
- (this branch uses bf/set-head-symref.)
-
- Superseded by jc/set-head-symref-fix
- source: <b41ae080654a3603af09801018df539f656cf9d8.1733430345.git.steadmon@google.com>
