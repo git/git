@@ -35,6 +35,9 @@ See the `--trust-exit-code` option in linkgit:git-difftool[1] for more details.
 difftool.prompt::
 	Prompt before each invocation of the diff tool.
 
+difftool.<tool>.prompt::
+	Overrides `difftool.prompt` for the given tool.
+
 difftool.guiDefault::
 	Set `true` to use the `diff.guitool` by default (equivalent to specifying
 	the `--gui` argument), or `auto` to select `diff.guitool` or `diff.tool`
