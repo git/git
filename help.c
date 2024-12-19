@@ -394,7 +394,7 @@ void list_cmds_by_category(struct string_list *list,
 
 	for (i = 0; category_names[i]; i++) {
 		if (!strcmp(cat, category_names[i])) {
-			cat_id = 1UL << i;
+			cat_id = 1U << i;
 			break;
 		}
 	}
