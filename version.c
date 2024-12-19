@@ -7,7 +7,11 @@
 const char git_version_string[] = GIT_VERSION;
 const char git_built_from_commit_string[] = GIT_BUILT_FROM_COMMIT;
 
-static void strbuf_sanitize(struct strbuf *buf)
+/*
+ * Trim and replace each character with ascii code below 32 or above
+ * 127 (included) using a dot '.' character.
+*/
+static void redact_non_printables(struct strbuf *buf)
 {
        strbuf_trim(buf);
        for (size_t i = 0; i < buf->len; i++) {
@@ -37,7 +41,7 @@ const char *git_user_agent_sanitized(void)
 		struct strbuf buf = STRBUF_INIT;
 
 		strbuf_addstr(&buf, git_user_agent());
-		strbuf_sanitize(&buf);
+		redact_non_printables(&buf);
 		agent = strbuf_detach(&buf, NULL);
 	}
 
@@ -88,7 +92,7 @@ const char *os_version_sanitized(void)
 		struct strbuf buf = STRBUF_INIT;
 
 		strbuf_addstr(&buf, os_version());
-		strbuf_sanitize(&buf);
+		redact_non_printables(&buf);
 		os_sanitized = strbuf_detach(&buf, NULL);
 	}
 
