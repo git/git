@@ -28,6 +28,13 @@ UI, Workflows & Features
    both learned to trigger fsck over the new objects with configurable
    fck check levels.
 
+ * When "git fetch $remote" notices that refs/remotes/$remote/HEAD is
+   missing and discovers what branch the other side points with its
+   HEAD, refs/remotes/$remote/HEAD is updated to point to it.
+
+ * "git fetch" honors "remote.<remote>.followRemoteHEAD" settings to
+   tweak the remote-tracking HEAD in "refs/remotes/<remote>/HEAD".
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -265,6 +272,14 @@ Fixes since v2.47
  * Fix performance regression of a recent "fatten promisor pack with
    local objects" protection against an unwanted gc.
 
+ * "git log -p --remerge-diff --reverse" was completely broken.
+   (merge f94bfa1516 js/log-remerge-keep-ancestry later to maint).
+
+ * "git bundle create" with an annotated tag on the positive end of
+   the revision range had a workaround code for older limitation in
+   the revision walker, which has become unnecessary.
+   (merge dd1072dfa8 tc/bundle-with-tag-remove-workaround later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 77af53f56f aa/t7300-modernize later to maint).
    (merge dcd590a39d bf/t-readme-mention-reftable later to maint).
@@ -273,3 +288,4 @@ Fixes since v2.47
    (merge 168ebb7159 jc/doc-error-message-guidelines later to maint).
    (merge 18693d7d65 kh/doc-bundle-typofix later to maint).
    (merge e2f5d3b491 kh/doc-update-ref-grammofix later to maint).
+   (merge 8525e92886 mh/doc-windows-home-env later to maint).
