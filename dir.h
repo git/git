@@ -460,6 +460,10 @@ int hashmap_contains_parent(struct hashmap *map,
 			    struct strbuf *buffer);
 struct pattern_list *add_pattern_list(struct dir_struct *dir,
 				      int group_type, const char *src);
+struct pattern_list *add_patterns_from_string_list(struct dir_struct *dir,
+						   int group_type,
+						   const char *src,
+						   struct string_list *lst);
 int add_patterns_from_file_to_list(const char *fname, const char *base, int baselen,
 				   struct pattern_list *pl, struct index_state *istate,
 				   unsigned flags);
