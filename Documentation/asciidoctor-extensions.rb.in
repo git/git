@@ -32,7 +32,7 @@ module Git
           output = output.sub(/<refmiscinfo class="source">.*?<\/refmiscinfo>/, "")
           output = output.sub(/<refmiscinfo class="manual">.*?<\/refmiscinfo>/, "")
           new_tags = "" \
-            "<refmiscinfo class=\"source\">@GIT_VERSION@</refmiscinfo>\n" \
+            "<refmiscinfo class=\"source\">Git @GIT_VERSION@</refmiscinfo>\n" \
             "<refmiscinfo class=\"manual\">Git Manual</refmiscinfo>\n"
           output = output.sub(/<\/refmeta>/, new_tags + "</refmeta>")
         end
