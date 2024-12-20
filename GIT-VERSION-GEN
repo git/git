@@ -56,8 +56,16 @@ then
 	GIT_VERSION=$(expr "$VN" : v*'\(.*\)')
 fi
 
-GIT_BUILT_FROM_COMMIT=$(git -C "$SOURCE_DIR" rev-parse -q --verify HEAD 2>/dev/null)
-GIT_DATE=$(git -C "$SOURCE_DIR" show --quiet --format='%as' 2>/dev/null)
+if test -z "$GIT_BUILT_FROM_COMMIT"
+then
+	GIT_BUILT_FROM_COMMIT=$(git -C "$SOURCE_DIR" rev-parse -q --verify HEAD 2>/dev/null)
+fi
+
+if test -z "$GIT_DATE"
+then
+	GIT_DATE=$(git -C "$SOURCE_DIR" show --quiet --format='%as' 2>/dev/null)
+fi
+
 if test -z "$GIT_USER_AGENT"
 then
 	GIT_USER_AGENT="git/$GIT_VERSION"

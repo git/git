@@ -121,6 +121,8 @@ endef
 # absolute path to the root source directory as well as input and output files
 # as arguments, in that order.
 define version_gen
+GIT_BUILT_FROM_COMMIT="$(GIT_BUILT_FROM_COMMIT)" \
+GIT_DATE="$(GIT_DATE)" \
 GIT_USER_AGENT="$(GIT_USER_AGENT)" \
 GIT_VERSION="$(GIT_VERSION_OVERRIDE)" \
 $(SHELL_PATH) "$(1)/GIT-VERSION-GEN" "$(1)" "$(2)" "$(3)"
