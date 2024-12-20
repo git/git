@@ -50,10 +50,14 @@ static int emit_block(const char *path, struct oid_array *oids,
 		printf("%"PRIuMAX":%s:%s:EMPTY\n",
 		       tdata->batch_nr, typestr, path);
 
-	for (size_t i = 0; i < oids->nr; i++)
-		printf("%"PRIuMAX":%s:%s:%s\n",
+	for (size_t i = 0; i < oids->nr; i++) {
+		struct object *o = lookup_unknown_object(the_repository,
+							 &oids->oid[i]);
+		printf("%"PRIuMAX":%s:%s:%s%s\n",
 		       tdata->batch_nr, typestr, path,
-		       oid_to_hex(&oids->oid[i]));
+		       oid_to_hex(&oids->oid[i]),
+		       o->flags & UNINTERESTING ? ":UNINTERESTING" : "");
+	}
 
 	tdata->batch_nr++;
 	return 0;
@@ -74,6 +78,8 @@ int cmd__path_walk(int argc, const char **argv)
 			 N_("toggle inclusion of tag objects")),
 		OPT_BOOL(0, "trees", &info.trees,
 			 N_("toggle inclusion of tree objects")),
+		OPT_BOOL(0, "prune", &info.prune_all_uninteresting,
+			 N_("toggle pruning of uninteresting paths")),
 		OPT_END(),
 	};
 
