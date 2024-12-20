@@ -84,20 +84,20 @@ test_expect_success 'all' '
 	3:tree::$(git rev-parse refs/tags/tree-tag^{})
 	3:tree::$(git rev-parse refs/tags/tree-tag2^{})
 	4:blob:a:$(git rev-parse base~2:a)
-	5:tree:right/:$(git rev-parse topic:right)
-	5:tree:right/:$(git rev-parse base~1:right)
-	5:tree:right/:$(git rev-parse base~2:right)
-	6:blob:right/d:$(git rev-parse base~1:right/d)
-	7:blob:right/c:$(git rev-parse base~2:right/c)
-	7:blob:right/c:$(git rev-parse topic:right/c)
-	8:tree:left/:$(git rev-parse base:left)
-	8:tree:left/:$(git rev-parse base~2:left)
-	9:blob:left/b:$(git rev-parse base~2:left/b)
-	9:blob:left/b:$(git rev-parse base:left/b)
-	10:tree:a/:$(git rev-parse base:a)
-	11:blob:file2:$(git rev-parse refs/tags/tree-tag2^{}:file2)
-	12:tree:child/:$(git rev-parse refs/tags/tree-tag:child)
-	13:blob:child/file:$(git rev-parse refs/tags/tree-tag:child/file)
+	5:blob:file2:$(git rev-parse refs/tags/tree-tag2^{}:file2)
+	6:tree:a/:$(git rev-parse base:a)
+	7:tree:child/:$(git rev-parse refs/tags/tree-tag:child)
+	8:blob:child/file:$(git rev-parse refs/tags/tree-tag:child/file)
+	9:tree:left/:$(git rev-parse base:left)
+	9:tree:left/:$(git rev-parse base~2:left)
+	10:blob:left/b:$(git rev-parse base~2:left/b)
+	10:blob:left/b:$(git rev-parse base:left/b)
+	11:tree:right/:$(git rev-parse topic:right)
+	11:tree:right/:$(git rev-parse base~1:right)
+	11:tree:right/:$(git rev-parse base~2:right)
+	12:blob:right/c:$(git rev-parse base~2:right/c)
+	12:blob:right/c:$(git rev-parse topic:right/c)
+	13:blob:right/d:$(git rev-parse base~1:right/d)
 	blobs:10
 	commits:4
 	tags:7
@@ -154,19 +154,19 @@ test_expect_success 'branches and indexed objects mix well' '
 	1:tree::$(git rev-parse base^{tree})
 	1:tree::$(git rev-parse base~1^{tree})
 	1:tree::$(git rev-parse base~2^{tree})
-	2:blob:a:$(git rev-parse base~2:a)
-	3:tree:right/:$(git rev-parse topic:right)
-	3:tree:right/:$(git rev-parse base~1:right)
-	3:tree:right/:$(git rev-parse base~2:right)
-	4:blob:right/d:$(git rev-parse base~1:right/d)
-	4:blob:right/d:$(git rev-parse :right/d)
-	5:blob:right/c:$(git rev-parse base~2:right/c)
-	5:blob:right/c:$(git rev-parse topic:right/c)
-	6:tree:left/:$(git rev-parse base:left)
-	6:tree:left/:$(git rev-parse base~2:left)
-	7:blob:left/b:$(git rev-parse base:left/b)
-	7:blob:left/b:$(git rev-parse base~2:left/b)
-	8:tree:a/:$(git rev-parse refs/tags/third:a)
+	2:tree:a/:$(git rev-parse refs/tags/third:a)
+	3:tree:left/:$(git rev-parse base:left)
+	3:tree:left/:$(git rev-parse base~2:left)
+	4:blob:left/b:$(git rev-parse base:left/b)
+	4:blob:left/b:$(git rev-parse base~2:left/b)
+	5:tree:right/:$(git rev-parse topic:right)
+	5:tree:right/:$(git rev-parse base~1:right)
+	5:tree:right/:$(git rev-parse base~2:right)
+	6:blob:right/c:$(git rev-parse base~2:right/c)
+	6:blob:right/c:$(git rev-parse topic:right/c)
+	7:blob:right/d:$(git rev-parse base~1:right/d)
+	7:blob:right/d:$(git rev-parse :right/d)
+	8:blob:a:$(git rev-parse base~2:a)
 	blobs:7
 	commits:4
 	tags:0
@@ -186,15 +186,15 @@ test_expect_success 'topic only' '
 	1:tree::$(git rev-parse topic^{tree})
 	1:tree::$(git rev-parse base~1^{tree})
 	1:tree::$(git rev-parse base~2^{tree})
-	2:tree:right/:$(git rev-parse topic:right)
-	2:tree:right/:$(git rev-parse base~1:right)
-	2:tree:right/:$(git rev-parse base~2:right)
-	3:blob:right/d:$(git rev-parse base~1:right/d)
-	4:blob:right/c:$(git rev-parse base~2:right/c)
-	4:blob:right/c:$(git rev-parse topic:right/c)
-	5:tree:left/:$(git rev-parse base~2:left)
-	6:blob:left/b:$(git rev-parse base~2:left/b)
-	7:blob:a:$(git rev-parse base~2:a)
+	2:blob:a:$(git rev-parse base~2:a)
+	3:tree:left/:$(git rev-parse base~2:left)
+	4:blob:left/b:$(git rev-parse base~2:left/b)
+	5:tree:right/:$(git rev-parse topic:right)
+	5:tree:right/:$(git rev-parse base~1:right)
+	5:tree:right/:$(git rev-parse base~2:right)
+	6:blob:right/c:$(git rev-parse base~2:right/c)
+	6:blob:right/c:$(git rev-parse topic:right/c)
+	7:blob:right/d:$(git rev-parse base~1:right/d)
 	blobs:5
 	commits:3
 	tags:0
@@ -210,12 +210,12 @@ test_expect_success 'topic, not base' '
 	cat >expect <<-EOF &&
 	0:commit::$(git rev-parse topic)
 	1:tree::$(git rev-parse topic^{tree})
-	2:tree:right/:$(git rev-parse topic:right)
-	3:blob:right/d:$(git rev-parse topic:right/d):UNINTERESTING
-	4:blob:right/c:$(git rev-parse topic:right/c)
-	5:tree:left/:$(git rev-parse topic:left):UNINTERESTING
-	6:blob:left/b:$(git rev-parse topic:left/b):UNINTERESTING
-	7:blob:a:$(git rev-parse topic:a):UNINTERESTING
+	2:blob:a:$(git rev-parse topic:a):UNINTERESTING
+	3:tree:left/:$(git rev-parse topic:left):UNINTERESTING
+	4:blob:left/b:$(git rev-parse topic:left/b):UNINTERESTING
+	5:tree:right/:$(git rev-parse topic:right)
+	6:blob:right/c:$(git rev-parse topic:right/c)
+	7:blob:right/d:$(git rev-parse topic:right/d):UNINTERESTING
 	blobs:4
 	commits:1
 	tags:0
@@ -233,12 +233,12 @@ test_expect_success 'fourth, blob-tag2, not base' '
 	1:tag:/tags:$(git rev-parse fourth)
 	2:blob:/tagged-blobs:$(git rev-parse refs/tags/blob-tag2^{})
 	3:tree::$(git rev-parse topic^{tree})
-	4:tree:right/:$(git rev-parse topic:right)
-	5:blob:right/d:$(git rev-parse base~1:right/d):UNINTERESTING
-	6:blob:right/c:$(git rev-parse topic:right/c)
-	7:tree:left/:$(git rev-parse base~1:left):UNINTERESTING
-	8:blob:left/b:$(git rev-parse base~1:left/b):UNINTERESTING
-	9:blob:a:$(git rev-parse base~1:a):UNINTERESTING
+	4:blob:a:$(git rev-parse base~1:a):UNINTERESTING
+	5:tree:left/:$(git rev-parse base~1:left):UNINTERESTING
+	6:blob:left/b:$(git rev-parse base~1:left/b):UNINTERESTING
+	7:tree:right/:$(git rev-parse topic:right)
+	8:blob:right/c:$(git rev-parse topic:right/c)
+	9:blob:right/d:$(git rev-parse base~1:right/d):UNINTERESTING
 	blobs:5
 	commits:1
 	tags:1
@@ -253,10 +253,10 @@ test_expect_success 'topic, not base, only blobs' '
 		-- topic --not base >out &&
 
 	cat >expect <<-EOF &&
-	0:blob:right/d:$(git rev-parse topic:right/d):UNINTERESTING
-	1:blob:right/c:$(git rev-parse topic:right/c)
-	2:blob:left/b:$(git rev-parse topic:left/b):UNINTERESTING
-	3:blob:a:$(git rev-parse topic:a):UNINTERESTING
+	0:blob:a:$(git rev-parse topic:a):UNINTERESTING
+	1:blob:left/b:$(git rev-parse topic:left/b):UNINTERESTING
+	2:blob:right/c:$(git rev-parse topic:right/c)
+	3:blob:right/d:$(git rev-parse topic:right/d):UNINTERESTING
 	blobs:4
 	commits:0
 	tags:0
@@ -289,8 +289,8 @@ test_expect_success 'topic, not base, only trees' '
 
 	cat >expect <<-EOF &&
 	0:tree::$(git rev-parse topic^{tree})
-	1:tree:right/:$(git rev-parse topic:right)
-	2:tree:left/:$(git rev-parse topic:left):UNINTERESTING
+	1:tree:left/:$(git rev-parse topic:left):UNINTERESTING
+	2:tree:right/:$(git rev-parse topic:right)
 	commits:0
 	blobs:0
 	tags:0
@@ -308,14 +308,14 @@ test_expect_success 'topic, not base, boundary' '
 	0:commit::$(git rev-parse base~1):UNINTERESTING
 	1:tree::$(git rev-parse topic^{tree})
 	1:tree::$(git rev-parse base~1^{tree}):UNINTERESTING
-	2:tree:right/:$(git rev-parse topic:right)
-	2:tree:right/:$(git rev-parse base~1:right):UNINTERESTING
-	3:blob:right/d:$(git rev-parse base~1:right/d):UNINTERESTING
-	4:blob:right/c:$(git rev-parse base~1:right/c):UNINTERESTING
-	4:blob:right/c:$(git rev-parse topic:right/c)
-	5:tree:left/:$(git rev-parse base~1:left):UNINTERESTING
-	6:blob:left/b:$(git rev-parse base~1:left/b):UNINTERESTING
-	7:blob:a:$(git rev-parse base~1:a):UNINTERESTING
+	2:blob:a:$(git rev-parse base~1:a):UNINTERESTING
+	3:tree:left/:$(git rev-parse base~1:left):UNINTERESTING
+	4:blob:left/b:$(git rev-parse base~1:left/b):UNINTERESTING
+	5:tree:right/:$(git rev-parse topic:right)
+	5:tree:right/:$(git rev-parse base~1:right):UNINTERESTING
+	6:blob:right/c:$(git rev-parse base~1:right/c):UNINTERESTING
+	6:blob:right/c:$(git rev-parse topic:right/c)
+	7:blob:right/d:$(git rev-parse base~1:right/d):UNINTERESTING
 	blobs:5
 	commits:2
 	tags:0
