@@ -276,13 +276,6 @@ install-pdf: pdf
 install-html: html
 	'$(SHELL_PATH_SQ)' ./install-webdoc.sh $(DESTDIR)$(htmldir)
 
-../GIT-VERSION-FILE: FORCE
-	$(QUIET_SUBDIR0)../ $(QUIET_SUBDIR1) GIT-VERSION-FILE
-
-ifneq ($(filter-out lint-docs clean,$(MAKECMDGOALS)),)
--include ../GIT-VERSION-FILE
-endif
-
 mergetools_txt = mergetools-diff.txt mergetools-merge.txt
 
 #
