@@ -181,6 +181,10 @@ endif
 -include ../config.mak.autogen
 -include ../config.mak
 
+# Set GIT_VERSION_OVERRIDE such that version_gen knows to substitute
+# GIT_VERSION in case it was set by the user.
+GIT_VERSION_OVERRIDE := $(GIT_VERSION)
+
 ifndef NO_MAN_BOLD_LITERAL
 XMLTO_EXTRA += -m manpage-bold-literal.xsl
 endif

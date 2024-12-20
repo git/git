@@ -27,31 +27,35 @@ fi
 GIT_CEILING_DIRECTORIES="$SOURCE_DIR/.."
 export GIT_CEILING_DIRECTORIES
 
-# First see if there is a version file (included in release tarballs),
-# then try git-describe, then default.
-if test -f "$SOURCE_DIR"/version
+if test -z "$GIT_VERSION"
 then
-	VN=$(cat "$SOURCE_DIR"/version) || VN="$DEF_VER"
-elif {
-		test -d "$SOURCE_DIR/.git" ||
-		test -d "${GIT_DIR:-.git}" ||
-		test -f "$SOURCE_DIR"/.git;
-	} &&
-	VN=$(git -C "$SOURCE_DIR" describe --match "v[0-9]*" HEAD 2>/dev/null) &&
-	case "$VN" in
-	*$LF*) (exit 1) ;;
-	v[0-9]*)
-		git -C "$SOURCE_DIR" update-index -q --refresh
-		test -z "$(git -C "$SOURCE_DIR" diff-index --name-only HEAD --)" ||
-		VN="$VN-dirty" ;;
-	esac
-then
-	VN=$(echo "$VN" | sed -e 's/-/./g');
-else
-	VN="$DEF_VER"
+	# First see if there is a version file (included in release tarballs),
+	# then try git-describe, then default.
+	if test -f "$SOURCE_DIR"/version
+	then
+		VN=$(cat "$SOURCE_DIR"/version) || VN="$DEF_VER"
+	elif {
+			test -d "$SOURCE_DIR/.git" ||
+			test -d "${GIT_DIR:-.git}" ||
+			test -f "$SOURCE_DIR"/.git;
+		} &&
+		VN=$(git -C "$SOURCE_DIR" describe --match "v[0-9]*" HEAD 2>/dev/null) &&
+		case "$VN" in
+		*$LF*) (exit 1) ;;
+		v[0-9]*)
+			git -C "$SOURCE_DIR" update-index -q --refresh
+			test -z "$(git -C "$SOURCE_DIR" diff-index --name-only HEAD --)" ||
+			VN="$VN-dirty" ;;
+		esac
+	then
+		VN=$(echo "$VN" | sed -e 's/-/./g');
+	else
+		VN="$DEF_VER"
+	fi
+
+	GIT_VERSION=$(expr "$VN" : v*'\(.*\)')
 fi
 
-GIT_VERSION=$(expr "$VN" : v*'\(.*\)')
 GIT_BUILT_FROM_COMMIT=$(git -C "$SOURCE_DIR" rev-parse -q --verify HEAD 2>/dev/null)
 GIT_DATE=$(git -C "$SOURCE_DIR" show --quiet --format='%as' 2>/dev/null)
 if test -z "$GIT_USER_AGENT"

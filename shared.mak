@@ -122,5 +122,6 @@ endef
 # as arguments, in that order.
 define version_gen
 GIT_USER_AGENT="$(GIT_USER_AGENT)" \
+GIT_VERSION="$(GIT_VERSION_OVERRIDE)" \
 $(SHELL_PATH) "$(1)/GIT-VERSION-GEN" "$(1)" "$(2)" "$(3)"
 endef

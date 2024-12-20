@@ -591,13 +591,6 @@ include shared.mak
 #
 #        Disable -pedantic compilation.
 
-GIT-VERSION-FILE: FORCE
-	@OLD=$$(cat $@ 2>/dev/null || :) && \
-	$(call version_gen,"$(shell pwd)",GIT-VERSION-FILE.in,$@) && \
-	NEW=$$(cat $@ 2>/dev/null || :) && \
-	if test "$$OLD" != "$$NEW"; then echo "$$NEW" >&2; fi
--include GIT-VERSION-FILE
-
 # Set our default configuration.
 #
 # Among the variables below, these:
@@ -1464,6 +1457,18 @@ include config.mak.uname
 ifdef DEVELOPER
 include config.mak.dev
 endif
+
+GIT-VERSION-FILE: FORCE
+	@OLD=$$(cat $@ 2>/dev/null || :) && \
+	$(call version_gen,"$(shell pwd)",GIT-VERSION-FILE.in,$@) && \
+	NEW=$$(cat $@ 2>/dev/null || :) && \
+	if test "$$OLD" != "$$NEW"; then echo "$$NEW" >&2; fi
+
+# We need to set GIT_VERSION_OVERRIDE before including the version file as
+# otherwise any user-provided value for GIT_VERSION would have been overridden
+# already.
+GIT_VERSION_OVERRIDE := $(GIT_VERSION)
+-include GIT-VERSION-FILE
 
 # what 'all' will build and 'install' will install in gitexecdir,
 # excluding programs for built-in commands
