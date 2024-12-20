@@ -30,7 +30,7 @@ struct prio_queue {
 	prio_queue_compare_fn compare;
 	unsigned insertion_ctr;
 	void *cb_data;
-	int alloc, nr;
+	size_t alloc, nr;
 	struct prio_queue_entry *array;
 };
 

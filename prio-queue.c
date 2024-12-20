@@ -1,26 +1,29 @@
 #include "git-compat-util.h"
 #include "prio-queue.h"
 
-static inline int compare(struct prio_queue *queue, int i, int j)
+static inline int compare(struct prio_queue *queue, size_t i, size_t j)
 {
 	int cmp = queue->compare(queue->array[i].data, queue->array[j].data,
 				 queue->cb_data);
 	if (!cmp)
-		cmp = queue->array[i].ctr - queue->array[j].ctr;
+		cmp = (queue->array[i].ctr > queue->array[j].ctr) -
+		      (queue->array[i].ctr < queue->array[j].ctr);
 	return cmp;
 }
 
-static inline void swap(struct prio_queue *queue, int i, int j)
+static inline void swap(struct prio_queue *queue, size_t i, size_t j)
 {
 	SWAP(queue->array[i], queue->array[j]);
 }
 
 void prio_queue_reverse(struct prio_queue *queue)
 {
-	int i, j;
+	size_t i, j;
 
 	if (queue->compare)
 		BUG("prio_queue_reverse() on non-LIFO queue");
+	if (!queue->nr)
+		return;
 	for (i = 0; i < (j = (queue->nr - 1) - i); i++)
 		swap(queue, i, j);
 }
@@ -35,7 +38,7 @@ void clear_prio_queue(struct prio_queue *queue)
 
 void prio_queue_put(struct prio_queue *queue, void *thing)
 {
-	int ix, parent;
+	size_t ix, parent;
 
 	/* Append at the end */
 	ALLOC_GROW(queue->array, queue->nr + 1, queue->alloc);
@@ -58,7 +61,7 @@ void prio_queue_put(struct prio_queue *queue, void *thing)
 void *prio_queue_get(struct prio_queue *queue)
 {
 	void *result;
-	int ix, child;
+	size_t ix, child;
 
 	if (!queue->nr)
 		return NULL;
