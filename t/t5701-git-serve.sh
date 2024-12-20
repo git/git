@@ -8,13 +8,23 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'test capability advertisement' '
+	printf "agent=git/$(git version | cut -d" " -f3)" >agent_os_name &&
+	if test_have_prereq WINDOWS
+	then
+		test_config transfer.advertiseOSVersion false
+	else
+		# Octal intervals \001-\040 and \177-\377
+		# corresponds to decimal intervals 1-32 and 127-255
+		printf "\nos-version=%s\n" $(uname -s | tr -d "\n" | tr "[\001-\040][\177-\377]" ".") >>agent_os_name
+	fi &&
+
 	test_oid_cache <<-EOF &&
 	wrong_algo sha1:sha256
 	wrong_algo sha256:sha1
 	EOF
 	cat >expect.base <<-EOF &&
 	version 2
-	agent=git/$(git version | cut -d" " -f3)
+	$(cat agent_os_name)
 	ls-refs=unborn
 	fetch=shallow wait-for-done
 	server-option
@@ -346,6 +356,12 @@ test_expect_success 'basics of object-info' '
 '
 
 test_expect_success 'test capability advertisement with uploadpack.advertiseBundleURIs' '
+	# this test uses expect.base and expect.trailer from "test capability advertisement"
+	# so, transfer.advertisementOSVersion should be disabled based on testing environment.
+	if test_have_prereq WINDOWS
+	then
+		test_config transfer.advertiseOSVersion false
+	fi &&
 	test_config uploadpack.advertiseBundleURIs true &&
 
 	cat >expect.extra <<-EOF &&
