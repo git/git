@@ -1550,7 +1550,7 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 				return GIT_DIR_DISALLOWED_BARE;
 			if (!ensure_valid_ownership(NULL, NULL, dir->buf, report))
 				return GIT_DIR_INVALID_OWNERSHIP;
-			strbuf_addstr(gitdir, ".");
+			strbuf_addch(gitdir, '.');
 			return GIT_DIR_BARE;
 		}
 

@@ -1763,7 +1763,7 @@ static void add_line_count(struct strbuf *out, int count)
 		strbuf_addstr(out, "0,0");
 		break;
 	case 1:
-		strbuf_addstr(out, "1");
+		strbuf_addch(out, '1');
 		break;
 	default:
 		strbuf_addf(out, "1,%d", count);

@@ -827,7 +827,7 @@ static void path_msg(struct merge_options *opt,
 
 	va_start(ap, fmt);
 	if (opt->priv->call_depth) {
-		strbuf_addchars(dest, ' ', 2);
+		strbuf_addstr(dest, "  ");
 		strbuf_addstr(dest, "From inner merge:");
 		strbuf_addchars(dest, ' ', opt->priv->call_depth * 2);
 	}
