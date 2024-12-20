@@ -179,7 +179,7 @@ static void show_list(const char *debug, int counted, int nr,
 		subject_len = find_commit_subject(buf, &subject_start);
 		if (subject_len)
 			fprintf(stderr, " %.*s", subject_len, subject_start);
-		fprintf(stderr, "\n");
+		fputc('\n', stderr);
 	}
 }
 
