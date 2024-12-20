@@ -29,6 +29,8 @@ module Git
     class DocumentPostProcessor < Asciidoctor::Extensions::Postprocessor
       def process document, output
         if document.basebackend? 'docbook'
+          output = output.sub(/<refmiscinfo class="source">.*?<\/refmiscinfo>/, "")
+          output = output.sub(/<refmiscinfo class="manual">.*?<\/refmiscinfo>/, "")
           new_tags = "" \
             "<refmiscinfo class=\"source\">@GIT_VERSION@</refmiscinfo>\n" \
             "<refmiscinfo class=\"manual\">Git Manual</refmiscinfo>\n"
