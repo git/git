@@ -254,40 +254,46 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 				      int reuse_open)
 {
 	size_t cur_len = !st->merged ? 0 : st->merged->readers_len;
-	struct reftable_reader **cur;
+	struct reftable_reader **cur = NULL;
 	struct reftable_reader **reused = NULL;
-	struct reftable_reader **new_readers;
+	struct reftable_reader **new_readers = NULL;
 	size_t reused_len = 0, reused_alloc = 0, names_len;
 	size_t new_readers_len = 0;
 	struct reftable_merged_table *new_merged = NULL;
 	struct strbuf table_path = STRBUF_INIT;
 	int err = 0;
-	size_t i;
 
-	cur = stack_copy_readers(st, cur_len);
-	if (!cur) {
-		err = REFTABLE_OUT_OF_MEMORY_ERROR;
-		goto done;
+	if (cur_len) {
+		cur = stack_copy_readers(st, cur_len);
+		if (!cur) {
+			err = REFTABLE_OUT_OF_MEMORY_ERROR;
+			goto done;
+		}
 	}
 
 	names_len = names_length(names);
 
-	new_readers = reftable_calloc(names_len, sizeof(*new_readers));
-	if (!new_readers) {
-		err = REFTABLE_OUT_OF_MEMORY_ERROR;
-		goto done;
+	if (names_len) {
+		new_readers = reftable_calloc(names_len, sizeof(*new_readers));
+		if (!new_readers) {
+			err = REFTABLE_OUT_OF_MEMORY_ERROR;
+			goto done;
+		}
 	}
 
-	while (*names) {
+	for (size_t i = 0; i < names_len; i++) {
 		struct reftable_reader *rd = NULL;
-		const char *name = *names++;
+		const char *name = names[i];
 
-		/* this is linear; we assume compaction keeps the number of
-		   tables under control so this is not quadratic. */
-		for (i = 0; reuse_open && i < cur_len; i++) {
-			if (cur[i] && 0 == strcmp(cur[i]->name, name)) {
-				rd = cur[i];
-				cur[i] = NULL;
+		/*
+		 * this is linear; we assume compaction keeps the
+		 * number of tables under control so this is not
+		 * quadratic.
+		 */
+		for (size_t j = 0; reuse_open && j < cur_len; j++) {
+			if (cur[j] && 0 == strcmp(cur[j]->name, name)) {
+				rd = cur[j];
+				cur[j] = NULL;
 
 				/*
 				 * When reloading the stack fails, we end up
@@ -338,7 +344,7 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 	 * file of such an open reader wouldn't have been possible to be
 	 * unlinked by the compacting process.
 	 */
-	for (i = 0; i < cur_len; i++) {
+	for (size_t i = 0; i < cur_len; i++) {
 		if (cur[i]) {
 			const char *name = reader_name(cur[i]);
 			stack_filename(&table_path, st, name);
@@ -365,11 +371,11 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 	 * happen on the successful case, because on the unsuccessful one we
 	 * decrement their refcount via `new_readers`.
 	 */
-	for (i = 0; i < reused_len; i++)
+	for (size_t i = 0; i < reused_len; i++)
 		reftable_reader_decref(reused[i]);
 
 done:
-	for (i = 0; i < new_readers_len; i++)
+	for (size_t i = 0; i < new_readers_len; i++)
 		reftable_reader_decref(new_readers[i]);
 	reftable_free(new_readers);
 	reftable_free(reused);
