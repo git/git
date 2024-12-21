@@ -181,6 +181,10 @@ endif
 -include ../config.mak.autogen
 -include ../config.mak
 
+# Set GIT_VERSION_OVERRIDE such that version_gen knows to substitute
+# GIT_VERSION in case it was set by the user.
+GIT_VERSION_OVERRIDE := $(GIT_VERSION)
+
 ifndef NO_MAN_BOLD_LITERAL
 XMLTO_EXTRA += -m manpage-bold-literal.xsl
 endif
@@ -211,12 +215,10 @@ XMLTO_EXTRA += --skip-validation
 XMLTO_EXTRA += -x manpage.xsl
 
 asciidoctor-extensions.rb: asciidoctor-extensions.rb.in FORCE
-	$(QUIET_GEN)GIT_USER_AGENT="$(GIT_USER_AGENT)" $(SHELL_PATH) ../GIT-VERSION-GEN "$(shell pwd)/.." $< $@+
-	@if cmp $@+ $@ >/dev/null 2>&1; then $(RM) $@+; else mv $@+ $@; fi
+	$(QUIET_GEN)$(call version_gen,"$(shell pwd)/..",$<,$@)
 else
 asciidoc.conf: asciidoc.conf.in FORCE
-	$(QUIET_GEN)GIT_USER_AGENT="$(GIT_USER_AGENT)" $(SHELL_PATH) ../GIT-VERSION-GEN "$(shell pwd)/.." $< $@+
-	@if cmp $@+ $@ >/dev/null 2>&1; then $(RM) $@+; else mv $@+ $@; fi
+	$(QUIET_GEN)$(call version_gen,"$(shell pwd)/..",$<,$@)
 endif
 
 ASCIIDOC_DEPS += docinfo.html
@@ -275,13 +277,6 @@ install-pdf: pdf
 
 install-html: html
 	'$(SHELL_PATH_SQ)' ./install-webdoc.sh $(DESTDIR)$(htmldir)
-
-../GIT-VERSION-FILE: FORCE
-	$(QUIET_SUBDIR0)../ $(QUIET_SUBDIR1) GIT-VERSION-FILE
-
-ifneq ($(filter-out lint-docs clean,$(MAKECMDGOALS)),)
--include ../GIT-VERSION-FILE
-endif
 
 mergetools_txt = mergetools-diff.txt mergetools-merge.txt
 

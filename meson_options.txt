@@ -16,6 +16,16 @@ option('runtime_prefix', type: 'boolean', value: false,
 option('sane_tool_path', type: 'string', value: '',
   description: 'A colon-separated list of paths to prepend to PATH if your tools in /usr/bin are broken.')
 
+# Build information compiled into Git and other parts like documentation.
+option('build_date', type: 'string', value: '',
+  description: 'Build date reported by our documentation.')
+option('built_from_commit', type: 'string', value: '',
+  description: 'Commit that Git was built from reported by git-version(1).')
+option('user_agent', type: 'string', value: '',
+  description: 'User agent reported to remote servers.')
+option('version', type: 'string', value: '',
+  description: 'Version string reported by git-version(1) and other tools.')
+
 # Features supported by Git.
 option('curl', type: 'feature', value: 'enabled',
   description: 'Build helpers used to access remotes with the HTTP transport.')
