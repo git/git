@@ -12,6 +12,7 @@
 #include "object.h"
 #include "oid-array.h"
 #include "prio-queue.h"
+#include "repository.h"
 #include "revision.h"
 #include "string-list.h"
 #include "strmap.h"
@@ -172,6 +173,23 @@ static int add_tree_entries(struct path_walk_context *ctx,
 		 */
 		if (type == OBJ_TREE)
 			strbuf_addch(&path, '/');
+
+		if (ctx->info->pl) {
+			int dtype;
+			enum pattern_match_result match;
+			match = path_matches_pattern_list(path.buf, path.len,
+							  path.buf + base_len, &dtype,
+							  ctx->info->pl,
+							  ctx->repo->index);
+
+			if (ctx->info->pl->use_cone_patterns &&
+			    match == NOT_MATCHED)
+				continue;
+			else if (!ctx->info->pl->use_cone_patterns &&
+				 type == OBJ_BLOB &&
+				 match != MATCHED)
+				continue;
+		}
 
 		if (!(list = strmap_get(&ctx->paths_to_lists, path.buf))) {
 			CALLOC_ARRAY(list, 1);
@@ -583,10 +601,10 @@ void path_walk_info_init(struct path_walk_info *info)
 	memcpy(info, &empty, sizeof(empty));
 }
 
-void path_walk_info_clear(struct path_walk_info *info UNUSED)
+void path_walk_info_clear(struct path_walk_info *info)
 {
-	/*
-	 * This destructor is empty for now, as info->revs
-	 * is not owned by 'struct path_walk_info'.
-	 */
+	if (info->pl) {
+		clear_pattern_list(info->pl);
+		free(info->pl);
+	}
 }
