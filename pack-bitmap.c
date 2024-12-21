@@ -398,8 +398,7 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 	struct stat st;
 	char *bitmap_name = midx_bitmap_filename(midx);
 	int fd = git_open(bitmap_name);
-	uint32_t i, preferred_pack;
-	struct packed_git *preferred;
+	uint32_t i;
 
 	if (fd < 0) {
 		if (errno != ENOENT)
@@ -454,18 +453,6 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 				bitmap_git->midx->pack_names[i]);
 			goto cleanup;
 		}
-	}
-
-	if (midx_preferred_pack(bitmap_git->midx, &preferred_pack) < 0) {
-		warning(_("could not determine MIDX preferred pack"));
-		goto cleanup;
-	}
-
-	preferred = bitmap_git->midx->packs[preferred_pack];
-	if (!is_pack_valid(preferred)) {
-		warning(_("preferred pack (%s) is invalid"),
-			preferred->pack_name);
-		goto cleanup;
 	}
 
 	return 0;
@@ -2306,8 +2293,10 @@ void reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 			if (!pack.bitmap_nr)
 				continue;
 
-			ALLOC_GROW(packs, packs_nr + 1, packs_alloc);
-			memcpy(&packs[packs_nr++], &pack, sizeof(pack));
+			if (is_pack_valid(pack.p)) {
+				ALLOC_GROW(packs, packs_nr + 1, packs_alloc);
+				memcpy(&packs[packs_nr++], &pack, sizeof(pack));
+			}
 
 			objects_nr += pack.p->num_objects;
 		}
@@ -2341,15 +2330,21 @@ void reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 			pack_int_id = -1;
 		}
 
-		ALLOC_GROW(packs, packs_nr + 1, packs_alloc);
-		packs[packs_nr].p = pack;
-		packs[packs_nr].pack_int_id = pack_int_id;
-		packs[packs_nr].bitmap_nr = pack->num_objects;
-		packs[packs_nr].bitmap_pos = 0;
-		packs[packs_nr].from_midx = bitmap_git->midx;
+		if (is_pack_valid(pack)) {
+			ALLOC_GROW(packs, packs_nr + 1, packs_alloc);
+			packs[packs_nr].p = pack;
+			packs[packs_nr].pack_int_id = pack_int_id;
+			packs[packs_nr].bitmap_nr = pack->num_objects;
+			packs[packs_nr].bitmap_pos = 0;
+			packs[packs_nr].from_midx = bitmap_git->midx;
+			packs_nr++;
+		}
 
-		objects_nr = packs[packs_nr++].bitmap_nr;
+		objects_nr = pack->num_objects;
 	}
+
+	if (!packs_nr)
+		return;
 
 	word_alloc = objects_nr / BITS_IN_EWORD;
 	if (objects_nr % BITS_IN_EWORD)
