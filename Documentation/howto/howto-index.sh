@@ -48,7 +48,7 @@ do
 		file="$txt"
 	fi
 
-	echo "* link:$file[$title] $from
+	echo "* link:howto/$(basename "$file")[$title] $from
 $abstract
 
 "
