@@ -240,14 +240,16 @@ int merged_table_init_iter(struct reftable_merged_table *mt,
 			   struct reftable_iterator *it,
 			   uint8_t typ)
 {
-	struct merged_subiter *subiters;
+	struct merged_subiter *subiters = NULL;
 	struct merged_iter *mi = NULL;
 	int ret;
 
-	REFTABLE_CALLOC_ARRAY(subiters, mt->readers_len);
-	if (!subiters) {
-		ret = REFTABLE_OUT_OF_MEMORY_ERROR;
-		goto out;
+	if (mt->readers_len) {
+		REFTABLE_CALLOC_ARRAY(subiters, mt->readers_len);
+		if (!subiters) {
+			ret = REFTABLE_OUT_OF_MEMORY_ERROR;
+			goto out;
+		}
 	}
 
 	for (size_t i = 0; i < mt->readers_len; i++) {
