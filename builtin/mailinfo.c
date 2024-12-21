@@ -83,7 +83,7 @@ int cmd_mailinfo(int argc,
 		OPT_END()
 	};
 
-	setup_mailinfo(&mi);
+	setup_mailinfo(the_repository, &mi);
 	meta_charset.policy = CHARSET_DEFAULT;
 
 	argc = parse_options(argc, argv, prefix, options, mailinfo_usage, 0);
