@@ -254,9 +254,9 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 				      int reuse_open)
 {
 	size_t cur_len = !st->merged ? 0 : st->merged->readers_len;
-	struct reftable_reader **cur;
+	struct reftable_reader **cur = NULL;
 	struct reftable_reader **reused = NULL;
-	struct reftable_reader **new_readers;
+	struct reftable_reader **new_readers = NULL;
 	size_t reused_len = 0, reused_alloc = 0, names_len;
 	size_t new_readers_len = 0;
 	struct reftable_merged_table *new_merged = NULL;
@@ -264,18 +264,22 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 	int err = 0;
 	size_t i;
 
-	cur = stack_copy_readers(st, cur_len);
-	if (!cur) {
-		err = REFTABLE_OUT_OF_MEMORY_ERROR;
-		goto done;
+	if (cur_len) {
+		cur = stack_copy_readers(st, cur_len);
+		if (!cur) {
+			err = REFTABLE_OUT_OF_MEMORY_ERROR;
+			goto done;
+		}
 	}
 
 	names_len = names_length(names);
 
-	new_readers = reftable_calloc(names_len, sizeof(*new_readers));
-	if (!new_readers) {
-		err = REFTABLE_OUT_OF_MEMORY_ERROR;
-		goto done;
+	if (names_len) {
+		new_readers = reftable_calloc(names_len, sizeof(*new_readers));
+		if (!new_readers) {
+			err = REFTABLE_OUT_OF_MEMORY_ERROR;
+			goto done;
+		}
 	}
 
 	while (*names) {
