@@ -1,5 +1,6 @@
 clar_test_suites = [
   'unit-tests/u-ctype.c',
+  'unit-tests/u-mingw.c',
   'unit-tests/u-strvec.c',
 ]
 
