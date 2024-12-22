@@ -201,6 +201,16 @@ if get_option('sane_tool_path') != ''
   script_environment.prepend('PATH', get_option('sane_tool_path'))
 endif
 
+# The environment used by GIT-VERSION-GEN. Note that we explicitly override
+# environment variables that might be set by the user. This is by design so
+# that we always use whatever Meson has configured instead of what is present
+# in the environment.
+version_gen_environment = script_environment
+version_gen_environment.set('GIT_BUILT_FROM_COMMIT', get_option('built_from_commit'))
+version_gen_environment.set('GIT_DATE', get_option('build_date'))
+version_gen_environment.set('GIT_USER_AGENT', get_option('user_agent'))
+version_gen_environment.set('GIT_VERSION', get_option('version'))
+
 compiler = meson.get_compiler('c')
 
 libgit_sources = [
@@ -1484,6 +1494,7 @@ git_version_file = custom_target(
   ],
   input: meson.current_source_dir() / 'GIT-VERSION-FILE.in',
   output: 'GIT-VERSION-FILE',
+  env: version_gen_environment,
   build_always_stale: true,
 )
 
@@ -1500,6 +1511,7 @@ version_def_h = custom_target(
   # Depend on GIT-VERSION-FILE so that we don't always try to rebuild this
   # target for the same commit.
   depends: [git_version_file],
+  env: version_gen_environment,
 )
 
 # Build a separate library for "version.c" so that we do not have to rebuild
@@ -1543,6 +1555,7 @@ if host_machine.system() == 'windows'
     input: meson.current_source_dir() / 'git.rc.in',
     output: 'git.rc',
     depends: [git_version_file],
+    env: version_gen_environment,
   )
 
   common_main_sources += import('windows').compile_resources(git_rc,

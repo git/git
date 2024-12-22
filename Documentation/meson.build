@@ -219,6 +219,7 @@ asciidoc_conf = custom_target(
   input: meson.current_source_dir() / 'asciidoc.conf.in',
   output: 'asciidoc.conf',
   depends: [git_version_file],
+  env: version_gen_environment,
 )
 
 asciidoc_common_options = [
