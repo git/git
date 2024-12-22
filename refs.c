@@ -1256,14 +1256,22 @@ static int transaction_refname_valid(const char *refname,
 		return 1;
 
 	if (is_pseudo_ref(refname)) {
-		const char *what = flags & REF_LOG_ONLY ? "reflog for pseudoref" : "pseudoref";
-		strbuf_addf(err, _("refusing to update %s '%s'"), what, refname);
+		const char *refusal_msg;
+		if (flags & REF_LOG_ONLY)
+			refusal_msg = _("refusing to update reflog for pseudoref '%s'");
+		else
+			refusal_msg = _("refusing to update pseudoref '%s'");
+		strbuf_addf(err, refusal_msg, refname);
 		return 0;
 	} else if ((new_oid && !is_null_oid(new_oid)) ?
 		 check_refname_format(refname, REFNAME_ALLOW_ONELEVEL) :
 		 !refname_is_safe(refname)) {
-		const char *what = flags & REF_LOG_ONLY ? "reflog with bad name" : "ref with bad name";
-		strbuf_addf(err, _("refusing to update %s '%s'"), what, refname);
+		const char *refusal_msg;
+		if (flags & REF_LOG_ONLY)
+			refusal_msg = _("refusing to update reflog with bad name '%s'");
+		else
+			refusal_msg = _("refusing to update ref with bad name '%s'");
+		strbuf_addf(err, refusal_msg, refname);
 		return 0;
 	}
 
