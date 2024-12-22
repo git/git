@@ -314,6 +314,11 @@ int mingw_socket(int domain, int type, int protocol);
 int mingw_connect(int sockfd, struct sockaddr *sa, size_t sz);
 #define connect mingw_connect
 
+char *mingw_strerror(int errnum);
+#ifndef _UCRT
+#define strerror mingw_strerror
+#endif
+
 int mingw_bind(int sockfd, struct sockaddr *sa, size_t sz);
 #define bind mingw_bind
 
