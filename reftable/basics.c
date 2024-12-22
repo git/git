@@ -16,6 +16,8 @@ static void (*reftable_free_ptr)(void *);
 
 void *reftable_malloc(size_t sz)
 {
+	if (!sz)
+		return NULL;
 	if (reftable_malloc_ptr)
 		return (*reftable_malloc_ptr)(sz);
 	return malloc(sz);
@@ -23,6 +25,11 @@ void *reftable_malloc(size_t sz)
 
 void *reftable_realloc(void *p, size_t sz)
 {
+	if (!sz) {
+		reftable_free(p);
+		return NULL;
+	}
+
 	if (reftable_realloc_ptr)
 		return (*reftable_realloc_ptr)(p, sz);
 	return realloc(p, sz);
