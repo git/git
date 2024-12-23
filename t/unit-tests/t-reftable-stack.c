@@ -773,8 +773,12 @@ static void t_reftable_stack_tombstone(void)
 		}
 
 		logs[i].refname = xstrdup(buf);
-		/* update_index is part of the key. */
-		logs[i].update_index = 42;
+		/*
+		 * update_index is part of the key so should be constant.
+		 * The value itself should be less than the writer's upper
+		 * limit.
+		 */
+		logs[i].update_index = 1;
 		if (i % 2 == 0) {
 			logs[i].value_type = REFTABLE_LOG_UPDATE;
 			t_reftable_set_hash(logs[i].value.update.new_hash, i,
