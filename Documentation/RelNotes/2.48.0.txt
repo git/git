@@ -35,6 +35,10 @@ UI, Workflows & Features
  * "git fetch" honors "remote.<remote>.followRemoteHEAD" settings to
    tweak the remote-tracking HEAD in "refs/remotes/<remote>/HEAD".
 
+ * "git range-diff" learned to optionally show and compare merge
+   commits in the ranges being compared, with the --diff-merges
+   option.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -140,6 +144,22 @@ Performance, Internal Implementation, Development Support etc.
    deeper.
 
  * Build procedure update plus introduction of Meson based builds.
+
+ * Recent reftable updates mistook a NULL return from a request for
+   0-byte allocation as OOM and died unnecessarily, which has been
+   corrected.
+
+ * Reftable backend adds check for upper limit of log's update_index.
+
+ * Start working to make the codebase buildable with -Wsign-compare.
+
+ * Regression fix for 'show-index' when run outside of a repository.
+
+ * The meson-build procedure is integrated into CI to catch and
+   prevent bitrotting.
+
+ * "git refs migrate" learned to also migrate the reflog data across
+   backends.
 
 
 Fixes since v2.47
@@ -279,6 +299,13 @@ Fixes since v2.47
    the revision range had a workaround code for older limitation in
    the revision walker, which has become unnecessary.
    (merge dd1072dfa8 tc/bundle-with-tag-remove-workaround later to maint).
+
+ * GitLab CI updates.
+   (merge c6b43f663e ps/ci-gitlab-update later to maint).
+
+ * Code to reuse objects based on bitmap contents have been tightened
+   to avoid race condition even when multiple packs are involved.
+   (merge 62b3ec8a3f tb/bitmap-fix-pack-reuse later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 77af53f56f aa/t7300-modernize later to maint).
