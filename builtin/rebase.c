@@ -36,6 +36,7 @@
 #include "reset.h"
 #include "trace2.h"
 #include "hook.h"
+#include "safety-protocol.h"
 
 static char const * const builtin_rebase_usage[] = {
 	N_("git rebase [-i] [options] [--exec <cmd>] "
@@ -597,6 +598,7 @@ static int move_to_original_branch(struct rebase_options *opts)
 		    opts->head_name, oid_to_hex(&opts->onto->object.oid));
 	strbuf_addf(&head_reflog, "%s (finish): returning to %s",
 		    opts->reflog_action, opts->head_name);
+	ropts.oid = &opts->orig_head->object.oid;
 	ropts.branch = opts->head_name;
 	ropts.flags = RESET_HEAD_REFS_ONLY;
 	ropts.branch_msg = branch_reflog.buf;
@@ -856,6 +858,7 @@ static int checkout_up_to_date(struct rebase_options *options)
 	ropts.flags = RESET_HEAD_RUN_POST_CHECKOUT_HOOK;
 	if (!ropts.branch)
 		ropts.flags |=  RESET_HEAD_DETACH;
+	ropts.branch_msg = buf.buf;
 	ropts.head_msg = buf.buf;
 	if (reset_head(the_repository, &ropts) < 0)
 		ret = error(_("could not switch to %s"), options->switch_to);
@@ -1084,6 +1087,49 @@ static int check_exec_cmd(const char *cmd)
 	return 0;
 }
 
+static struct safety_state rebase_safety_state;
+
+/*
+ * Check if the rebase operation is safe to proceed
+ * Returns 0 if safe, non-zero if unsafe
+ */
+static int check_rebase_safety(const char *branch_name, struct commit *upstream,
+                             struct commit *onto, int is_interactive)
+{
+    int ret = 0;
+    struct strbuf desc = STRBUF_INIT;
+
+    /* Initialize safety state for rebase operation */
+    safety_state_init(&rebase_safety_state, SAFETY_OP_REBASE,
+                     "rebase operation", the_repository);
+
+    /* Build operation description */
+    strbuf_addstr(&desc, "Rebase ");
+    if (branch_name)
+        strbuf_addf(&desc, "branch '%s' ", branch_name);
+    if (onto)
+        strbuf_addf(&desc, "onto '%s' ", oid_to_hex(&onto->object.oid));
+    if (is_interactive)
+        strbuf_addstr(&desc, "(interactive mode) ");
+
+    /* Check for protected paths */
+    ret = safety_check_path(&rebase_safety_state, ".");
+    if (ret)
+        goto cleanup;
+
+    /* Check for uncommitted changes */
+    if (has_unstaged_changes(the_repository, 1) ||
+        has_uncommitted_changes(the_repository, 1)) {
+        warning(_("you have unstaged/uncommitted changes"));
+        ret = -1;
+        goto cleanup;
+    }
+
+cleanup:
+    strbuf_release(&desc);
+    return ret;
+}
+
 int cmd_rebase(int argc,
 	       const char **argv,
 	       const char *prefix,
@@ -1132,7 +1178,7 @@ int cmd_rebase(int argc,
 			 N_("make committer date match author date")),
 		OPT_BOOL(0, "reset-author-date", &options.ignore_date,
 			 N_("ignore author date and use current date")),
-		OPT_HIDDEN_BOOL(0, "ignore-date", &options.ignore_date,
+		OPT_BOOL(0, "ignore-date", &options.ignore_date,
 				N_("synonym of --reset-author-date")),
 		OPT_PASSTHRU_ARGV('C', NULL, &options.git_am_opts, N_("n"),
 				  N_("passed to 'git apply'"), 0),
@@ -1219,6 +1265,9 @@ int cmd_rebase(int argc,
 			 N_("automatically re-schedule any `exec` that fails")),
 		OPT_BOOL(0, "reapply-cherry-picks", &options.reapply_cherry_picks,
 			 N_("apply all changes, even those already present upstream")),
+		OPT_BOOL(0, "update-refs", &options.update_refs,
+			 N_("update branches that point to commits "
+			    "that are being rebased")),
 		OPT_END(),
 	};
 	int i;
@@ -1425,8 +1474,7 @@ int cmd_rebase(int argc,
 		strbuf_addf(&buf, "rm -fr \"%s\"", options.state_dir);
 		die(_("It seems that there is already a %s directory, and\n"
 		      "I wonder if you are in the middle of another rebase.  "
-		      "If that is the\n"
-		      "case, please try\n\t%s\n"
+		      "If that is the case, please try\n\t%s\n"
 		      "If that is not the case, please\n\t%s\n"
 		      "and run me again.  I am stopping in case you still "
 		      "have something\n"
@@ -1722,7 +1770,8 @@ int cmd_rebase(int argc,
 				die(_("'%s': need exactly one merge base"),
 				    options.onto_name);
 		}
-		options.onto = lookup_commit_or_die(&branch_base,
+		options.onto =
+			lookup_commit_or_die(&branch_base,
 						    options.onto_name);
 	} else {
 		options.onto =
@@ -1747,6 +1796,13 @@ int cmd_rebase(int argc,
 		create_autostash(the_repository,
 				 state_dir_path("autostash", &options));
 
+	if (check_rebase_safety(branch_name, options.upstream, options.onto, options.flags & REBASE_INTERACTIVE_EXPLICIT)) {
+		if (!(options.flags & REBASE_FORCE)) {
+			ret = -1;
+			goto cleanup_autostash;
+		}
+		warning(_("proceeding with rebase despite safety concerns"));
+	}
 
 	if (require_clean_work_tree(the_repository, "rebase",
 				    _("Please commit or stash them."), 1, 1)) {
@@ -1878,6 +1934,7 @@ run_rebase:
 	ret = run_specific_rebase(&options);
 
 cleanup:
+	safety_clear(&rebase_safety_state);
 	strbuf_release(&buf);
 	strbuf_release(&msg);
 	strbuf_release(&revisions);

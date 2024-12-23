@@ -38,6 +38,8 @@
 #include "trace2.h"
 #include "dir.h"
 #include "add-interactive.h"
+#include "safety-protocol.h"
+#include "wt-status.h"  /* For has_unstaged_changes and has_uncommitted_changes */
 
 #define REFRESH_INDEX_DELAY_WARNING_IN_MS (2 * 1000)
 
@@ -333,202 +335,270 @@ static int git_reset_config(const char *var, const char *value,
 	return git_default_config(var, value, ctx, cb);
 }
 
+static struct safety_state reset_safety_state;
+
+/*
+ * Check if the reset operation is safe to proceed
+ * Returns 0 if safe, non-zero if unsafe
+ */
+static int check_reset_safety(enum reset_type reset_type, const char *rev)
+{
+    int ret = 0;
+    struct strbuf desc = STRBUF_INIT;
+
+    /* Initialize safety state for reset operation */
+    safety_state_init(&reset_safety_state, SAFETY_OP_RESET,
+                     "reset operation", the_repository);
+
+    /* Build operation description */
+    strbuf_addstr(&desc, "Reset ");
+    if (rev)
+        strbuf_addf(&desc, "to '%s' ", rev);
+
+    switch (reset_type) {
+    case HARD:
+        strbuf_addstr(&desc, "(hard reset)");
+        break;
+    case MIXED:
+        strbuf_addstr(&desc, "(mixed reset)");
+        break;
+    case SOFT:
+        strbuf_addstr(&desc, "(soft reset)");
+        break;
+    case MERGE:
+        strbuf_addstr(&desc, "(merge reset)");
+        break;
+    case KEEP:
+        strbuf_addstr(&desc, "(keep reset)");
+        break;
+    default:
+        break;
+    }
+
+    /* Check for protected paths */
+    ret = safety_check_path(&reset_safety_state, ".");
+    if (ret)
+        goto cleanup;
+
+    /* Additional safety checks for hard reset */
+    if (reset_type == HARD) {
+        /* Check for uncommitted changes */
+        if (has_unstaged_changes(the_repository, 1) ||
+            has_uncommitted_changes(the_repository, 1)) {
+            warning(_("you have unstaged/uncommitted changes"));
+            ret = -1;
+            goto cleanup;
+        }
+    }
+
+cleanup:
+    strbuf_release(&desc);
+    return ret;
+}
+
 int cmd_reset(int argc,
 	      const char **argv,
 	      const char *prefix,
 	      struct repository *repo UNUSED)
 {
-	int reset_type = NONE, update_ref_status = 0, quiet = 0;
-	int no_refresh = 0;
-	int patch_mode = 0, pathspec_file_nul = 0, unborn;
-	const char *rev;
-	char *pathspec_from_file = NULL;
-	struct object_id oid;
-	struct pathspec pathspec;
-	int intent_to_add = 0;
-	const struct option options[] = {
-		OPT__QUIET(&quiet, N_("be quiet, only report errors")),
-		OPT_BOOL(0, "no-refresh", &no_refresh,
-				N_("skip refreshing the index after reset")),
-		OPT_SET_INT_F(0, "mixed", &reset_type,
-			      N_("reset HEAD and index"),
-			      MIXED, PARSE_OPT_NONEG),
-		OPT_SET_INT_F(0, "soft", &reset_type,
-			      N_("reset only HEAD"),
-			      SOFT, PARSE_OPT_NONEG),
-		OPT_SET_INT_F(0, "hard", &reset_type,
-			      N_("reset HEAD, index and working tree"),
-			      HARD, PARSE_OPT_NONEG),
-		OPT_SET_INT_F(0, "merge", &reset_type,
-			      N_("reset HEAD, index and working tree"),
-			      MERGE, PARSE_OPT_NONEG),
-		OPT_SET_INT_F(0, "keep", &reset_type,
-			      N_("reset HEAD but keep local changes"),
-			      KEEP, PARSE_OPT_NONEG),
-		OPT_CALLBACK_F(0, "recurse-submodules", NULL,
-			       "reset", "control recursive updating of submodules",
-			       PARSE_OPT_OPTARG,
-			       option_parse_recurse_submodules_worktree_updater),
-		OPT_BOOL('p', "patch", &patch_mode, N_("select hunks interactively")),
-		OPT_BOOL('N', "intent-to-add", &intent_to_add,
-				N_("record only the fact that removed paths will be added later")),
-		OPT_PATHSPEC_FROM_FILE(&pathspec_from_file),
-		OPT_PATHSPEC_FILE_NUL(&pathspec_file_nul),
-		OPT_END()
-	};
+    struct pathspec pathspec;
+    int reset_type = NONE;
+    int patch_mode = 0;
+    int quiet = 0;
+    int force = 0;
+    int no_refresh = 0;
+    int intent_to_add = 0;
+    int pathspec_file_nul = 0;
+    char *pathspec_from_file = NULL;
+    int update_ref_status = 0;
+    const char *rev;
+    struct object_id oid;
+    struct option builtin_reset_options[] = {
+        OPT_SET_INT('p', "patch", &patch_mode,
+            N_("select hunks interactively"), 1),
+        OPT_SET_INT(0, "mixed", &reset_type,
+            N_("reset HEAD and index"), MIXED),
+        OPT_SET_INT(0, "soft", &reset_type,
+            N_("reset only HEAD"), SOFT),
+        OPT_SET_INT(0, "hard", &reset_type,
+            N_("reset HEAD, index and working tree"), HARD),
+        OPT_SET_INT(0, "merge", &reset_type,
+            N_("reset HEAD, index and working tree"), MERGE),
+        OPT_SET_INT(0, "keep", &reset_type,
+            N_("reset HEAD but keep local changes"), KEEP),
+        OPT_BOOL('q', "quiet", &quiet,
+            N_("be quiet, only report errors")),
+        OPT_BOOL('f', "force", &force,
+            N_("force reset even if there are safety concerns")),
+        OPT_BOOL(0, "no-refresh", &no_refresh,
+            N_("skip refreshing the index after reset")),
+        OPT_BOOL('N', "intent-to-add", &intent_to_add,
+            N_("record only the fact that removed paths will be added later")),
+        OPT_PATHSPEC_FROM_FILE(&pathspec_from_file),
+        OPT_PATHSPEC_FILE_NUL(&pathspec_file_nul),
+        OPT_END()
+    };
 
-	git_config(git_reset_config, NULL);
+    git_config(git_reset_config, NULL);
 
-	argc = parse_options(argc, argv, prefix, options, git_reset_usage,
-						PARSE_OPT_KEEP_DASHDASH);
-	parse_args(&pathspec, argv, prefix, patch_mode, &rev);
+    argc = parse_options(argc, argv, prefix, builtin_reset_options, git_reset_usage,
+                         PARSE_OPT_KEEP_DASHDASH);
+    parse_args(&pathspec, argv, prefix, patch_mode, &rev);
 
-	if (pathspec_from_file) {
-		if (patch_mode)
-			die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--patch");
+    if (pathspec_from_file) {
+        if (patch_mode)
+            die(_("options '%s' and '%s' cannot be used together"), "--pathspec-from-file", "--patch");
 
-		if (pathspec.nr)
-			die(_("'%s' and pathspec arguments cannot be used together"), "--pathspec-from-file");
+        if (pathspec.nr)
+            die(_("'%s' and pathspec arguments cannot be used together"), "--pathspec-from-file");
 
-		parse_pathspec_file(&pathspec, 0,
-				    PATHSPEC_PREFER_FULL,
-				    prefix, pathspec_from_file, pathspec_file_nul);
-	} else if (pathspec_file_nul) {
-		die(_("the option '%s' requires '%s'"), "--pathspec-file-nul", "--pathspec-from-file");
-	}
+        parse_pathspec_file(&pathspec, 0,
+                            PATHSPEC_PREFER_FULL,
+                            prefix, pathspec_from_file, pathspec_file_nul);
+    } else if (pathspec_file_nul) {
+        die(_("the option '%s' requires '%s'"), "--pathspec-file-nul", "--pathspec-from-file");
+    }
 
-	unborn = !strcmp(rev, "HEAD") && repo_get_oid(the_repository, "HEAD",
-						      &oid);
-	if (unborn) {
-		/* reset on unborn branch: treat as reset to empty tree */
-		oidcpy(&oid, the_hash_algo->empty_tree);
-	} else if (!pathspec.nr && !patch_mode) {
-		struct commit *commit;
-		if (repo_get_oid_committish(the_repository, rev, &oid))
-			die(_("Failed to resolve '%s' as a valid revision."), rev);
-		commit = lookup_commit_reference(the_repository, &oid);
-		if (!commit)
-			die(_("Could not parse object '%s'."), rev);
-		oidcpy(&oid, &commit->object.oid);
-	} else {
-		struct tree *tree;
-		if (repo_get_oid_treeish(the_repository, rev, &oid))
-			die(_("Failed to resolve '%s' as a valid tree."), rev);
-		tree = parse_tree_indirect(&oid);
-		if (!tree)
-			die(_("Could not parse object '%s'."), rev);
-		oidcpy(&oid, &tree->object.oid);
-	}
+    int unborn = !strcmp(rev, "HEAD") && repo_get_oid(the_repository, "HEAD",
+                                                      &oid);
+    if (unborn) {
+        /* reset on unborn branch: treat as reset to empty tree */
+        oidcpy(&oid, the_hash_algo->empty_tree);
+    } else if (!pathspec.nr && !patch_mode) {
+        struct commit *commit;
+        if (repo_get_oid_committish(the_repository, rev, &oid))
+            die(_("Failed to resolve '%s' as a valid revision."), rev);
+        commit = lookup_commit_reference(the_repository, &oid);
+        if (!commit)
+            die(_("Could not parse object '%s'."), rev);
+        oidcpy(&oid, &commit->object.oid);
+    } else {
+        struct tree *tree;
+        if (repo_get_oid_treeish(the_repository, rev, &oid))
+            die(_("Failed to resolve '%s' as a valid tree."), rev);
+        tree = parse_tree_indirect(&oid);
+        if (!tree)
+            die(_("Could not parse object '%s'."), rev);
+        oidcpy(&oid, &tree->object.oid);
+    }
 
-	if (patch_mode) {
-		if (reset_type != NONE)
-			die(_("options '%s' and '%s' cannot be used together"), "--patch", "--{hard,mixed,soft}");
-		trace2_cmd_mode("patch-interactive");
-		update_ref_status = !!run_add_p(the_repository, ADD_P_RESET, rev,
-				   &pathspec);
-		goto cleanup;
-	}
+    if (patch_mode) {
+        if (reset_type != NONE)
+            die(_("options '%s' and '%s' cannot be used together"), "--patch", "--{hard,mixed,soft}");
+        trace2_cmd_mode("patch-interactive");
+        update_ref_status = !!run_add_p(the_repository, ADD_P_RESET, rev,
+                                        &pathspec);
+        goto cleanup;
+    }
 
-	/* git reset tree [--] paths... can be used to
-	 * load chosen paths from the tree into the index without
-	 * affecting the working tree nor HEAD. */
-	if (pathspec.nr) {
-		if (reset_type == MIXED)
-			warning(_("--mixed with paths is deprecated; use 'git reset -- <paths>' instead."));
-		else if (reset_type != NONE)
-			die(_("Cannot do %s reset with paths."),
-					_(reset_type_names[reset_type]));
-	}
-	if (reset_type == NONE)
-		reset_type = MIXED; /* by default */
+    if (check_reset_safety(reset_type, rev)) {
+        if (!force) {
+            die(_("reset aborted due to safety concerns (use -f to force)"));
+            return -1;
+        }
+        warning(_("proceeding with reset despite safety concerns"));
+    }
 
-	if (pathspec.nr)
-		trace2_cmd_mode("path");
-	else
-		trace2_cmd_mode(reset_type_names[reset_type]);
+    if (pathspec.nr) {
+        if (reset_type == MIXED)
+            warning(_("--mixed with paths is deprecated; use 'git reset -- <paths>' instead."));
+        else if (reset_type != NONE)
+            die(_("Cannot do %s reset with paths."),
+                    _(reset_type_names[reset_type]));
+    }
+    if (reset_type == NONE)
+        reset_type = MIXED; /* by default */
 
-	if (reset_type != SOFT && (reset_type != MIXED || repo_get_work_tree(the_repository)))
-		setup_work_tree();
+    if (pathspec.nr)
+        trace2_cmd_mode("path");
+    else
+        trace2_cmd_mode(reset_type_names[reset_type]);
 
-	if (reset_type == MIXED && is_bare_repository())
-		die(_("%s reset is not allowed in a bare repository"),
-		    _(reset_type_names[reset_type]));
+    if (reset_type != SOFT && (reset_type != MIXED || repo_get_work_tree(the_repository)))
+        setup_work_tree();
 
-	if (intent_to_add && reset_type != MIXED)
-		die(_("the option '%s' requires '%s'"), "-N", "--mixed");
+    if (reset_type == MIXED && is_bare_repository()) {
+        die(_("%s reset is not allowed in a bare repository"),
+            _(reset_type_names[reset_type]));
+    }
 
-	prepare_repo_settings(the_repository);
-	the_repository->settings.command_requires_full_index = 0;
+    if (intent_to_add && reset_type != MIXED) {
+        die(_("the option '%s' requires '%s'"), "-N", "--mixed");
+    }
 
-	if (repo_read_index(the_repository) < 0)
-		die(_("index file corrupt"));
+    prepare_repo_settings(the_repository);
+    the_repository->settings.command_requires_full_index = 0;
 
-	/* Soft reset does not touch the index file nor the working tree
-	 * at all, but requires them in a good order.  Other resets reset
-	 * the index file to the tree object we are switching to. */
-	if (reset_type == SOFT || reset_type == KEEP)
-		die_if_unmerged_cache(reset_type);
+    if (repo_read_index(the_repository) < 0)
+        die(_("index file corrupt"));
 
-	if (reset_type != SOFT) {
-		struct lock_file lock = LOCK_INIT;
-		repo_hold_locked_index(the_repository, &lock,
-				       LOCK_DIE_ON_ERROR);
-		if (reset_type == MIXED) {
-			int flags = quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN;
-			if (read_from_tree(&pathspec, &oid, intent_to_add)) {
-				update_ref_status = 1;
-				goto cleanup;
-			}
-			the_repository->index->updated_skipworktree = 1;
-			if (!no_refresh && repo_get_work_tree(the_repository)) {
-				uint64_t t_begin, t_delta_in_ms;
+    /* Soft reset does not touch the index file nor the working tree
+     * at all, but requires them in a good order.  Other resets reset
+     * the index file to the tree object we are switching to. */
+    if (reset_type == SOFT || reset_type == KEEP)
+        die_if_unmerged_cache(reset_type);
 
-				t_begin = getnanotime();
-				refresh_index(the_repository->index, flags, NULL, NULL,
-					      _("Unstaged changes after reset:"));
-				t_delta_in_ms = (getnanotime() - t_begin) / 1000000;
-				if (!quiet && advice_enabled(ADVICE_RESET_NO_REFRESH_WARNING) && t_delta_in_ms > REFRESH_INDEX_DELAY_WARNING_IN_MS) {
-					advise(_("It took %.2f seconds to refresh the index after reset.  You can use\n"
-						 "'--no-refresh' to avoid this."), t_delta_in_ms / 1000.0);
-				}
-			}
-		} else {
-			struct object_id dummy;
-			char *ref = NULL;
-			int err;
+    if (reset_type != SOFT) {
+        struct lock_file lock = LOCK_INIT;
+        repo_hold_locked_index(the_repository, &lock,
+                               LOCK_DIE_ON_ERROR);
+        if (reset_type == MIXED) {
+            int flags = quiet ? REFRESH_QUIET : REFRESH_IN_PORCELAIN;
+            if (read_from_tree(&pathspec, &oid, intent_to_add)) {
+                update_ref_status = 1;
+                goto cleanup;
+            }
+            the_repository->index->updated_skipworktree = 1;
+            if (!no_refresh && repo_get_work_tree(the_repository)) {
+                uint64_t t_begin, t_delta_in_ms;
 
-			repo_dwim_ref(the_repository, rev, strlen(rev),
-				      &dummy, &ref, 0);
-			if (ref && !starts_with(ref, "refs/"))
-				FREE_AND_NULL(ref);
+                t_begin = getnanotime();
+                refresh_index(the_repository->index, flags, NULL, NULL,
+                              _("Unstaged changes after reset:"));
+                t_delta_in_ms = (getnanotime() - t_begin) / 1000000;
+                if (!quiet && advice_enabled(ADVICE_RESET_NO_REFRESH_WARNING) && t_delta_in_ms > REFRESH_INDEX_DELAY_WARNING_IN_MS) {
+                    advise(_("It took %.2f seconds to refresh the index after reset.  You can use\n"
+                            "'--no-refresh' to avoid this."), t_delta_in_ms / 1000.0);
+                }
+            }
+        } else {
+            struct object_id dummy;
+            char *ref = NULL;
+            int err;
 
-			err = reset_index(ref, &oid, reset_type, quiet);
-			if (reset_type == KEEP && !err)
-				err = reset_index(ref, &oid, MIXED, quiet);
-			if (err)
-				die(_("Could not reset index file to revision '%s'."), rev);
-			free(ref);
-		}
+            repo_dwim_ref(the_repository, rev, strlen(rev),
+                          &dummy, &ref, 0);
+            if (ref && !starts_with(ref, "refs/"))
+                FREE_AND_NULL(ref);
 
-		if (write_locked_index(the_repository->index, &lock, COMMIT_LOCK))
-			die(_("Could not write new index file."));
-	}
+            err = reset_index(ref, &oid, reset_type, quiet);
+            if (reset_type == KEEP && !err)
+                err = reset_index(ref, &oid, MIXED, quiet);
+            if (err)
+                die(_("Could not reset index file to revision '%s'."), rev);
+            free(ref);
+        }
 
-	if (!pathspec.nr && !unborn) {
-		/* Any resets without paths update HEAD to the head being
-		 * switched to, saving the previous head in ORIG_HEAD before. */
-		update_ref_status = reset_refs(rev, &oid);
+        if (write_locked_index(the_repository->index, &lock, COMMIT_LOCK))
+            die(_("Could not write new index file."));
+    }
 
-		if (reset_type == HARD && !update_ref_status && !quiet)
-			print_new_head_line(lookup_commit_reference(the_repository, &oid));
-	}
-	if (!pathspec.nr)
-		remove_branch_state(the_repository, 0);
+    if (!pathspec.nr && !unborn) {
+        /* Any resets without paths update HEAD to the head being
+         * switched to, saving the previous head in ORIG_HEAD before. */
+        update_ref_status = reset_refs(rev, &oid);
 
-	discard_index(the_repository->index);
+        if (reset_type == HARD && !update_ref_status && !quiet)
+            print_new_head_line(lookup_commit_reference(the_repository, &oid));
+    }
+    if (!pathspec.nr)
+        remove_branch_state(the_repository, 0);
+
+    discard_index(the_repository->index);
 
 cleanup:
-	clear_pathspec(&pathspec);
-	free(pathspec_from_file);
-	return update_ref_status;
+    safety_clear(&reset_safety_state);
+    clear_pathspec(&pathspec);
+    free(pathspec_from_file);
+    return update_ref_status;
 }
