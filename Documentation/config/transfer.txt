@@ -125,3 +125,10 @@ transfer.bundleURI::
 transfer.advertiseObjectInfo::
 	When `true`, the `object-info` capability is advertised by
 	servers. Defaults to false.
+
+transfer.advertiseOSVersion::
+	When `true`, the `os-version` capability is advertised by clients and
+	servers. It makes clients and servers send to each other a string
+	representing the operating system name, like "Linux" or "Windows".
+	This string is retrieved from the 'sysname' field of the struct returned
+	by the uname(2) system call. Defaults to true.
