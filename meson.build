@@ -740,7 +740,7 @@ endif
 # features. It is optional if you want to neither execute tests nor use any of
 # these optional features.
 perl_required = get_option('perl')
-if get_option('tests')
+if get_option('tests') or get_option('gitweb').enabled()
   perl_required = true
 endif
 
@@ -1874,7 +1874,15 @@ if intl.found()
   subdir('po')
 endif
 subdir('contrib')
-subdir('gitweb')
+
+# Gitweb requires Perl, so we disable the auto-feature if Perl was not found.
+# We make sure further up that Perl is required in case the gitweb option is
+# enabled.
+gitweb_option = get_option('gitweb').disable_auto_if(not perl.found())
+if gitweb_option.enabled()
+  subdir('gitweb')
+endif
+
 subdir('templates')
 
 # Everything but the bin-wrappers need to come before this target such that we
@@ -1893,6 +1901,7 @@ summary({
   'curl': curl.found(),
   'expat': expat.found(),
   'gettext': intl.found(),
+  'gitweb': gitweb_option.enabled(),
   'https': https_backend,
   'iconv': iconv.found(),
   'pcre2': pcre2.found(),
