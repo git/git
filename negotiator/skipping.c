@@ -134,7 +134,6 @@ static int push_parent(struct data *data, struct entry *entry,
 	struct entry *parent_entry;
 
 	if (to_push->object.flags & SEEN) {
-		int i;
 		if (to_push->object.flags & POPPED)
 			/*
 			 * The entry for this commit has already been popped,
@@ -145,7 +144,7 @@ static int push_parent(struct data *data, struct entry *entry,
 		/*
 		 * Find the existing entry and use it.
 		 */
-		for (i = 0; i < data->rev_list.nr; i++) {
+		for (size_t i = 0; i < data->rev_list.nr; i++) {
 			parent_entry = data->rev_list.array[i].data;
 			if (parent_entry->commit == to_push)
 				goto parent_found;
@@ -248,7 +247,7 @@ static int ack(struct fetch_negotiator *n, struct commit *c)
 static void release(struct fetch_negotiator *n)
 {
 	struct data *data = n->data;
-	for (int i = 0; i < data->rev_list.nr; i++)
+	for (size_t i = 0; i < data->rev_list.nr; i++)
 		free(data->rev_list.array[i].data);
 	clear_prio_queue(&data->rev_list);
 	FREE_AND_NULL(data);
