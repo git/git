@@ -18,8 +18,25 @@ int cmd_main(int argc, const char **argv)
 			 N_("immediately exit upon the first failed test")),
 		OPT_STRING_LIST('r', "run", &run_args, N_("suite[::test]"),
 				N_("run only test suite or individual test <suite[::test]>")),
-		OPT_STRING_LIST('x', "exclude", &exclude_args, N_("suite"),
+		OPT_STRING_LIST(0, "exclude", &exclude_args, N_("suite"),
 				N_("exclude test suite <suite>")),
+		/*
+		 * Compatibility wrappers so that we don't have to filter
+		 * options understood by integration tests.
+		 */
+		OPT_NOOP_NOARG('d', "debug"),
+		OPT_NOOP_NOARG(0, "github-workflow-markup"),
+		OPT_NOOP_NOARG(0, "no-bin-wrappers"),
+		OPT_NOOP_ARG(0, "root"),
+		OPT_NOOP_ARG(0, "stress"),
+		OPT_NOOP_NOARG(0, "tee"),
+		OPT_NOOP_NOARG(0, "with-dashes"),
+		OPT_NOOP_ARG(0, "valgrind"),
+		OPT_NOOP_ARG(0, "valgrind-only"),
+		OPT_NOOP_NOARG('v', "verbose"),
+		OPT_NOOP_NOARG('V', "verbose-log"),
+		OPT_NOOP_ARG(0, "verbose-only"),
+		OPT_NOOP_NOARG('x', NULL),
 		OPT_END(),
 	};
 	struct strvec args = STRVEC_INIT;

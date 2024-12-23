@@ -1,6 +1,6 @@
 clar_test_suites = [
-  'unit-tests/ctype.c',
-  'unit-tests/strvec.c',
+  'unit-tests/u-ctype.c',
+  'unit-tests/u-strvec.c',
 ]
 
 clar_sources = [
@@ -1091,6 +1091,42 @@ integration_tests = [
   't9902-completion.sh',
   't9903-bash-prompt.sh',
 ]
+
+# Sanity check that we are not missing any tests present in 't/'. This check
+# only runs once at configure time and is thus best-effort, only. It is
+# sufficient to catch missing test suites in our CI though.
+foreach glob, tests : {
+  't[0-9][0-9][0-9][0-9]-*.sh': integration_tests,
+  'unit-tests/t-*.c': unit_test_programs,
+  'unit-tests/u-*.c': clar_test_suites,
+}
+  actual_tests = run_command(shell, '-c', 'ls ' + glob,
+    check: true,
+    env: script_environment,
+  ).stdout().strip().split('\n')
+
+  if tests != actual_tests
+    missing_tests = [ ]
+    foreach actual_test : actual_tests
+      if actual_test not in tests
+        missing_tests += actual_test
+      endif
+    endforeach
+    if missing_tests.length() > 0
+      error('Test files found, but not configured:\n\n - ' + '\n - '.join(missing_tests))
+    endif
+
+    superfluous_tests = [ ]
+    foreach integration_test : tests
+      if integration_test not in actual_tests
+        superfluous_tests += integration_test
+      endif
+    endforeach
+    if superfluous_tests.length() > 0
+      error('Test files configured, but not found:\n\n - ' + '\n - '.join(superfluous_tests))
+    endif
+  endif
+endforeach
 
 # GIT_BUILD_DIR needs to be Unix-style without drive prefixes as it get added
 # to the PATH variable. And given that drive prefixes contain a colon we'd
