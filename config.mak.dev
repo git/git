@@ -53,7 +53,6 @@ ifeq ($(filter extra-all,$(DEVOPTS)),)
 # These are disabled because we have these all over the place.
 DEVELOPER_CFLAGS += -Wno-empty-body
 DEVELOPER_CFLAGS += -Wno-missing-field-initializers
-DEVELOPER_CFLAGS += -Wno-sign-compare
 endif
 endif
 

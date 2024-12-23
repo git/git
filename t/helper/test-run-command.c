@@ -8,6 +8,8 @@
  * published by the Free Software Foundation.
  */
 
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "test-tool.h"
 #include "run-command.h"
 #include "strvec.h"
