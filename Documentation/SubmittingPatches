@@ -692,16 +692,17 @@ rebase when I receive your patches).
 Some parts of the system have dedicated maintainers with their own
 repositories.
 
-- `git-gui/` comes from git-gui project, maintained by Johannes Sixt:
+- `git-gui/` comes from the git-gui project, maintained by Johannes Sixt:
 
         https://github.com/j6t/git-gui
 
-- `gitk-git/` comes from Paul Mackerras's gitk project:
+   Contibutions should go via the git mailing list.
 
-	git://git.ozlabs.org/~paulus/gitk
+- `gitk-git/` comes from the gitk project, maintained by Johannes Sixt:
 
-   Those who are interested in improving gitk can volunteer to help Paul
-   maintain it, cf. <YntxL/fTplFm8lr6@cleo>.
+	https://github.com/j6t/gitk
+
+   Contibutions should go via the git mailing list.
 
 - `po/` comes from the localization coordinator, Jiang Xin:
 
