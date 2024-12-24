@@ -21,8 +21,8 @@ them.
 You would then need to clone the git-gui project repository and create
 a feature branch to begin working:
 
-	$ git clone git://repo.or.cz/git-gui.git
-	$ cd git-gui.git
+	$ git clone https://github.com/j6t/git-gui
+	$ cd git-gui
 	$ git checkout -b my-translation
 
 The "git checkout" command creates a new branch to keep your work
@@ -153,7 +153,7 @@ your patch series to the maintainer and the Git mailing list:
 	$ git add po/af.po
 	$ git commit -s -m 'git-gui: added Afrikaans translation.'
 	$ git send-email --to 'git@vger.kernel.org' \
-	   --cc 'Pat Thoyts <patthoyts@users.sourceforge.net>' \
+	   --cc 'Johannes Sixt <j6t@kdbg.org>' \
 	   --subject 'git-gui: Afrikaans translation' \
 	   master..
 
