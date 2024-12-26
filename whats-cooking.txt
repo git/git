@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2024, #08; Mon, 23)
-X-master-at: 996f0c583b36aa5d6c6308285aea1421eb7efae7
-X-next-at: 73897bcc729bd26ea18552b27e1ed5ffad93a951
+Subject: What's cooking in git.git (Dec 2024, #09; Thu, 26)
+X-master-at: 76cf4f61c87855ebf0784b88aaf737d6b09f504b
+X-next-at: b6c66824c156363e934b3d989fb123efb1a9c63d
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2024, #08; Mon, 23)
+What's cooking in git.git (Dec 2024, #09; Thu, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,11 +17,14 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Let's wait for git-gui, gitk, and possibly po/ and delay the tagging
-of the -rc1.  Many people are already offline for the end-of-year
-holidays and it is a slow week, and 'master' front has too many new
-things graduated from 'next' a bit too early for me to feel
-comfortable.
+Let's wait for gitk and possibly po/ and delay the tagging of the
+-rc1.  Many people are already offline for the end-of-year holidays
+and it is a slow week, and 'master' front has too many new things
+graduated from 'next' a bit too early for me to feel comfortable.
+
+Extra testing the tip of 'master' before we actually tag it is as
+always very much appreciated.  Right now, the optional meson-based
+build does not pass gitweb tests, IIUC.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -52,231 +55,33 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* as/show-index-uninitialized-hash (2024-11-11) 2 commits
-  (merged to 'next' on 2024-12-16 at b54e9a56f0)
- + t5300: add test for 'show-index --object-format'
- + show-index: fix uninitialized hash function
+* as/gitk-git-gui-repo-update (2024-12-26) 1 commit
+  (merged to 'next' on 2024-12-26 at 10b9e8227b)
+ + Update the official repo of gitk
 
- Regression fix for 'show-index' when run outside of a repository.
- source: <20241109092739.14276-1-abhijeet.nkt@gmail.com>
+ The developer documentation has been updated to give the latest
+ info on gitk and git-gui maintainer.
 
-
-* jk/prio-queue-sign-compare-fix (2024-12-20) 1 commit
-  (merged to 'next' on 2024-12-21 at 11a5c3d11f)
- + prio-queue: use size_t rather than int for size
-
- Type clean-up.
- source: <20241220084949.GA132704@coredump.intra.peff.net>
+ Will merge to 'master'.
+ source: <20241224122912.20666-2-ash@kambanaria.org>
 
 
-* js/github-windows-setup-fix (2024-12-17) 1 commit
-  (merged to 'next' on 2024-12-17 at 6d59340ec5)
- + GitHub ci(windows): speed up initializing Git for Windows' minimal SDK again
+* rs/reftable-realloc-errors (2024-12-26) 4 commits
+ - t-reftable-merged: check realloc errors
+ - reftable: handle realloc error in parse_names()
+ - reftable: fix allocation count on realloc error
+ - reftable: avoid leaks on realloc error
 
- Revert recent changes to the way windows environment is set up for
- GitHub CI.
- source: <pull.1841.git.1734447458896.gitgitgadget@gmail.com>
+ The custom allocator code in the reftable library did not handle
+ failing realloc() very well, which has been addressed.
 
-
-* js/mingw-rename-fix (2024-12-17) 1 commit
-  (merged to 'next' on 2024-12-17 at 57dc9a0ebb)
- + mingw_rename: do support directory renames
-
- Update the way rename() emulation on Windows handle directories to
- correct an earlier attempt to do the same.
- source: <pull.1839.git.1734439924842.gitgitgadget@gmail.com>
-
-
-* js/ps-build-cmake-fixup (2024-12-17) 5 commits
-  (merged to 'next' on 2024-12-17 at 653a20d2f5)
- + cmake/vcxproj: stop special-casing `remote-ext`
- + cmake: put the Perl modules into the correct location again
- + cmake: use the correct file name for the Perl header
- + cmake(mergetools): better support for out-of-tree builds
- + cmake: better support for out-of-tree builds follow-up
-
- Build fixes for Windows.
- source: <pull.1840.git.1734456721.gitgitgadget@gmail.com>
-
-
-* js/range-diff-diff-merges (2024-12-16) 3 commits
-  (merged to 'next' on 2024-12-18 at 47394ea998)
- + range-diff: introduce the convenience option `--remerge-diff`
- + range-diff: optionally include merge commits' diffs in the analysis
- + Merge branch 'js/log-remerge-keep-ancestry' into js/range-diff-diff-merges
-
- "git range-diff" learned to optionally show and compare merge
- commits in the ranges being compared, with the --diff-merges
- option.
- source: <pull.1734.v3.git.1734358282.gitgitgadget@gmail.com>
-
-
-* kl/doc-build-fix (2024-12-17) 1 commit
-  (merged to 'next' on 2024-12-21 at d6f8295805)
- + doc: remove extra quotes in generated docs
-
- Build fix.
- source: <pull.1847.v2.git.git.1734483422181.gitgitgadget@gmail.com>
-
-
-* kn/reflog-migration (2024-12-20) 10 commits
-  (merged to 'next' on 2024-12-22 at b75456bef5)
- + refs: mark invalid refname message for translation
-  (merged to 'next' on 2024-12-18 at 5634446b20)
- + refs: add support for migrating reflogs
- + refs: allow multiple reflog entries for the same refname
- + refs: introduce the `ref_transaction_update_reflog` function
- + refs: add `committer_info` to `ref_transaction_add_update()`
- + refs: extract out refname verification in transactions
- + refs/files: add count field to ref_lock
- + refs: add `index` field to `struct ref_udpate`
- + refs: include committer info in `ref_update` struct
- + Merge branch 'kn/reftable-writer-log-write-verify' into kn/reflog-migration
- (this branch uses kn/reftable-writer-log-write-verify.)
-
- "git refs migrate" learned to also migrate the reflog data across
- backends.
- source: <20241216-320-git-refs-migrate-reflogs-v4-0-d7cd3f197453@gmail.com>
- source: <20241220125837.2774153-1-karthik.188@gmail.com>
-
-
-* kn/reftable-writer-log-write-verify (2024-12-07) 1 commit
-  (merged to 'next' on 2024-12-15 at 7e6b58d98e)
- + reftable/writer: ensure valid range for log's update_index
- (this branch is used by kn/reflog-migration.)
-
- Reftable backend adds check for upper limit of log's update_index.
- source: <20241206-424-reftable-writer-add-check-for-limits-v2-1-82ca350b10be@gmail.com>
-
-
-* ma/asciidoctor-build-fixes (2024-12-20) 4 commits
-  (merged to 'next' on 2024-12-22 at 7a2aad750e)
- + asciidoctor-extensions.rb.in: inject GIT_DATE
- + asciidoctor-extensions.rb.in: add missing word
- + asciidoctor-extensions.rb.in: delete existing <refmiscinfo/>
- + Merge branch 'ps/build-hotfix' into ma/asciidoctor-build-fixes
- (this branch uses ps/build-hotfix.)
-
- A topic to optionally build with meson, which has graduated to
- 'master' recently, broke Documentation pipeline with asciidoctor
- for the normal Makefile build as well as meson-based one, which
- have been corrected.
- cf. <Z2abxaGVzA5Kce-s@pks.im>
- source: <cover.1734734612.git.martin.agren@gmail.com>
-
-
-* ps/build-hotfix (2024-12-20) 6 commits
-  (merged to 'next' on 2024-12-22 at 0d4dfd121e)
- + meson: add options to override build information
- + GIT-VERSION-GEN: fix overriding GIT_BUILT_FROM_COMMIT and GIT_DATE
- + GIT-VERSION-GEN: fix overriding GIT_VERSION
- + Makefile: introduce template for GIT-VERSION-GEN
- + Makefile: drop unneeded indirection for GIT-VERSION-GEN outputs
- + Makefile: stop including "GIT-VERSION-FILE" in docs
- (this branch is used by ma/asciidoctor-build-fixes.)
-
- A topic to optionally build with meson, which has graduated to
- 'master' recently, has regressed the normal Makefile build, which
- is being corrected.
- source: <20241220-b4-pks-git-version-via-environment-v3-0-1fd79b52a5fb@pks.im>
-
-
-* ps/build-meson-gitweb (2024-12-20) 1 commit
-  (merged to 'next' on 2024-12-21 at f775554ea5)
- + meson: skip gitweb build when Perl is disabled
-
- meson-based build still tried to build and install gitweb even when
- Perl is disabled, which has been corrected.
- source: <20241220-b4-pks-meson-fix-gitweb-wo-perl-v2-1-18ab23dd6446@pks.im>
-
-
-* ps/build-sign-compare (2024-12-06) 16 commits
-  (merged to 'next' on 2024-12-16 at 1ddb1485df)
- + t/helper: don't depend on implicit wraparound
- + scalar: address -Wsign-compare warnings
- + builtin/patch-id: fix type of `get_one_patchid()`
- + builtin/blame: fix type of `length` variable when emitting object ID
- + gpg-interface: address -Wsign-comparison warnings
- + daemon: fix type of `max_connections`
- + daemon: fix loops that have mismatching integer types
- + global: trivial conversions to fix `-Wsign-compare` warnings
- + pkt-line: fix -Wsign-compare warning on 32 bit platform
- + csum-file: fix -Wsign-compare warning on 32-bit platform
- + diff.h: fix index used to loop through unsigned integer
- + config.mak.dev: drop `-Wno-sign-compare`
- + global: mark code units that generate warnings with `-Wsign-compare`
- + compat/win32: fix -Wsign-compare warning in "wWinMain()"
- + compat/regex: explicitly ignore "-Wsign-compare" warnings
- + git-compat-util: introduce macros to disable "-Wsign-compare" warnings
- (this branch is used by ps/the-repository.)
-
- Start working to make the codebase buildable with -Wsign-compare.
- source: <20241206-pks-sign-compare-v4-0-0344c6dfb219@pks.im>
-
-
-* ps/ci-gitlab-update (2024-12-12) 4 commits
-  (merged to 'next' on 2024-12-15 at e0ca818197)
- + ci/lib: fix "CI setup" sections with GitLab CI
- + ci/lib: do not interpret escape sequences in `group ()` arguments
- + ci/lib: remove duplicate trap to end "CI setup" group
- + gitlab-ci: update macOS images to Sonoma
-
- GitLab CI updates.
- source: <20241212-pks-ci-section-fixes-v3-0-d9fe6baee21e@pks.im>
-
-
-* ps/ci-meson (2024-12-13) 10 commits
-  (merged to 'next' on 2024-12-17 at fc95a5a9cb)
- + ci: wire up Meson builds
- + t: introduce compatibility options to clar-based tests
- + t: fix out-of-tree tests for some git-p4 tests
- + Makefile: detect missing Meson tests
- + meson: detect missing tests at configure time
- + t/unit-tests: rename clar-based unit tests to have a common prefix
- + Makefile: drop -DSUPPRESS_ANNOTATED_LEAKS
- + ci/lib: support custom output directories when creating test artifacts
- + Merge branch 'ps/build' into ps/ci-meson
- + Merge branch 'cw/worktree-extension' into ps/ci-meson
-
- The meson-build procedure is integrated into CI to catch and
- prevent bitrotting.
- cf. <87zfkwgehr.fsf@iotcl.com>
- source: <20241213-pks-meson-ci-v2-0-634affccc694@pks.im>
-
-
-* ps/reftable-alloc-failures-zalloc-fix (2024-12-22) 4 commits
-  (merged to 'next' on 2024-12-22 at 92bc55b18e)
- + reftable/basics: return NULL on zero-sized allocations
- + reftable/stack: fix zero-sized allocation when there are no readers
- + reftable/merged: fix zero-sized allocation when there are no readers
- + reftable/stack: don't perform auto-compaction with less than two tables
-
- Recent reftable updates mistook a NULL return from a request for
- 0-byte allocation as OOM and died unnecessarily, which has been
- corrected.
- source: <20241222-b4-pks-reftable-oom-fix-without-readers-v2-0-19550090d15a@pks.im>
-
-
-* sk/calloc-not-malloc-plus-memset (2024-12-18) 1 commit
-  (merged to 'next' on 2024-12-18 at 5af85a77f3)
- + git: use calloc instead of malloc + memset where possible
-
- Code clean-up.
- source: <pull.1390.v11.git.git.1734540512582.gitgitgadget@gmail.com>
-
-
-* tb/bitmap-fix-pack-reuse (2024-12-18) 1 commit
-  (merged to 'next' on 2024-12-21 at 104463402b)
- + pack-bitmap.c: ensure pack validity for all reuse packs
-
- Code to reuse objects based on bitmap contents have been tightened
- to avoid race condition even when multiple packs are involved.
- source: <7fdbfadc04926efc094633b238a55168c92e3d58.1734117577.git.me@ttaylorr.com>
+ Needs review.
+ source: <2b9fba8d-be63-4145-9d25-a2151e422cfa@web.de>
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * jc/show-index-h-update (2024-12-20) 1 commit
  - show-index: the short help should say the command reads from its input
@@ -287,8 +92,6 @@ Release tarballs are available at:
  Comments?
  source: <xmqqfrmidyhk.fsf@gitster.g>
 
---------------------------------------------------
-[Cooking]
 
 * ps/the-repository (2024-12-18) 15 commits
  - match-trees: stop using `the_repository`
