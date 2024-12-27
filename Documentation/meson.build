@@ -384,6 +384,27 @@ foreach manpage, category : manpages
 endforeach
 
 if get_option('docs').contains('html')
+  configure_file(
+    input: 'docinfo-html.in',
+    output: 'docinfo.html',
+    copy: true,
+    install: true,
+    install_dir: get_option('datadir') / 'doc/git-doc',
+  )
+
+  configure_file(
+    input: 'docbook-xsl.css',
+    output: 'docbook-xsl.css',
+    copy: true,
+    install: true,
+    install_dir: get_option('datadir') / 'doc/git-doc',
+  )
+
+  install_symlink('index.html',
+    install_dir: get_option('datadir') / 'doc/git-doc',
+    pointing_to: 'git.html',
+  )
+
   xsltproc = find_program('xsltproc')
 
   user_manual_xml = custom_target(
