@@ -318,12 +318,11 @@ foreach mode : [ 'diff', 'merge' ]
       shell,
       '@INPUT@',
       '..',
-      'diff',
+      mode,
       '@OUTPUT@'
     ],
     env: [
       'MERGE_TOOLS_DIR=' + meson.project_source_root() / 'mergetools',
-      'TOOL_MODE=' + mode,
     ],
     input: 'generate-mergetool-list.sh',
     output: 'mergetools-' + mode + '.txt',
