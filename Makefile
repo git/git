@@ -3171,6 +3171,7 @@ GIT-BUILD-OPTIONS: FORCE
 		-e "s|@NO_CURL@|\'$(NO_CURL)\'|" \
 		-e "s|@NO_EXPAT@|\'$(NO_EXPAT)\'|" \
 		-e "s|@NO_GETTEXT@|\'$(NO_GETTEXT)\'|" \
+		-e "s|@NO_GITWEB@|\'$(NO_GITWEB)\'|" \
 		-e "s|@NO_ICONV@|\'$(NO_ICONV)\'|" \
 		-e "s|@NO_PERL@|\'$(NO_PERL)\'|" \
 		-e "s|@NO_PERL_CPAN_FALLBACKS@|\'$(NO_PERL_CPAN_FALLBACKS_SQ)\'|" \

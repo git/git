@@ -1184,6 +1184,7 @@ string(REPLACE "@LOCALEDIR@" "'${LOCALEDIR}'" git_build_options "${git_build_opt
 string(REPLACE "@NO_CURL@" "${NO_CURL}" git_build_options "${git_build_options}")
 string(REPLACE "@NO_EXPAT@" "${NO_EXPAT}" git_build_options "${git_build_options}")
 string(REPLACE "@NO_GETTEXT@" "${NO_GETTEXT}" git_build_options "${git_build_options}")
+string(REPLACE "@NO_GITWEB@" "1" git_build_options "${git_build_options}")
 string(REPLACE "@NO_ICONV@" "${NO_ICONV}" git_build_options "${git_build_options}")
 string(REPLACE "@NO_PERL@" "${NO_PERL}" git_build_options "${git_build_options}")
 string(REPLACE "@NO_PERL_CPAN_FALLBACKS@" "" git_build_options "${git_build_options}")
