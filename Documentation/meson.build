@@ -471,3 +471,34 @@ if get_option('docs').contains('html')
   subdir('howto')
   subdir('technical')
 endif
+
+# Sanity check that we are not missing any tests present in 't/'. This check
+# only runs once at configure time and is thus best-effort, only. Furthermore,
+# it only verifies man pages for the sake of simplicity.
+configured_manpages = manpages.keys() + [ 'git-bisect-lk2009.txt', 'git-tools.txt' ]
+actual_manpages = run_command(shell, '-c', 'ls git*.txt scalar.txt',
+  check: true,
+  env: script_environment,
+).stdout().strip().split('\n')
+
+if configured_manpages != actual_manpages
+  missing_manpage = [ ]
+  foreach actual_manpage : actual_manpages
+    if actual_manpage not in configured_manpages
+      missing_manpage += actual_manpage
+    endif
+  endforeach
+  if missing_manpage.length() > 0
+    error('Man page found, but not configured:\n\n - ' + '\n - '.join(missing_manpage))
+  endif
+
+  superfluous_manpage = [ ]
+  foreach configured_manpage : configured_manpages
+    if configured_manpage not in actual_manpages
+      superfluous_manpage += configured_manpage
+    endif
+  endforeach
+  if superfluous_manpage.length() > 0
+    error('Man page configured, but not found:\n\n - ' + '\n - '.join(superfluous_manpage))
+  endif
+endif

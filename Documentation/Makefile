@@ -339,6 +339,7 @@ clean:
 	$(RM) $(cmds_txt) $(mergetools_txt) *.made
 	$(RM) GIT-ASCIIDOCFLAGS
 	$(RM) asciidoc.conf asciidoctor-extensions.rb
+	$(RM) -rf tmp-meson-diff
 
 docinfo.html: docinfo-html.in
 	$(QUIET_GEN)$(RM) $@ && cat $< >$@
@@ -494,6 +495,20 @@ lint-docs-fsck-msgids: $(LINT_DOCS_FSCK_MSGIDS)
 lint-docs-manpages:
 	$(QUIET_GEN)./lint-manpages.sh
 
+.PHONY: lint-docs-meson
+lint-docs-meson:
+	@# awk acts up when trying to match single quotes, so we use \047 instead.
+	@mkdir -p tmp-meson-diff && \
+	awk "/^manpages = {$$/ {flag=1 ; next } /^}$$/ { flag=0 } flag { gsub(/^  \047/, \"\"); gsub(/\047 : [157],\$$/, \"\"); print }" meson.build | \
+		grep -v -e '#' -e '^$$' | \
+		sort >tmp-meson-diff/meson.txt && \
+	ls git*.txt scalar.txt | grep -v -e git-bisect-lk2009.txt -e git-tools.txt >tmp-meson-diff/actual.txt && \
+	if ! cmp tmp-meson-diff/meson.txt tmp-meson-diff/actual.txt; then \
+		echo "Meson man pages differ from actual man pages:"; \
+		diff -u tmp-meson-diff/meson.txt tmp-meson-diff/actual.txt; \
+		exit 1; \
+	fi
+
 ## Lint: list of targets above
 .PHONY: lint-docs
 lint-docs: lint-docs-fsck-msgids
@@ -501,6 +516,7 @@ lint-docs: lint-docs-gitlink
 lint-docs: lint-docs-man-end-blurb
 lint-docs: lint-docs-man-section-order
 lint-docs: lint-docs-manpages
+lint-docs: lint-docs-meson
 
 ifeq ($(wildcard po/Makefile),po/Makefile)
 doc-l10n install-l10n::
