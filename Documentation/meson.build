@@ -382,3 +382,35 @@ foreach manpage, category : manpages
     )
   endif
 endforeach
+
+if get_option('docs').contains('html')
+  xsltproc = find_program('xsltproc')
+
+  user_manual_xml = custom_target(
+    command: asciidoc_common_options + [
+      '--backend=' + asciidoc_docbook,
+      '--doctype=book',
+      '--out-file=@OUTPUT@',
+      '@INPUT@',
+    ],
+    input: 'user-manual.txt',
+    output: 'user-manual.xml',
+    depends: documentation_deps,
+  )
+
+  custom_target(
+    command: [
+      xsltproc,
+      '--xinclude',
+      '--stringparam', 'html.stylesheet', 'docbook-xsl.css',
+      '--param', 'generate.consistent.ids', '1',
+      '--output', '@OUTPUT@',
+      '@INPUT@',
+      user_manual_xml,
+    ],
+    input: 'docbook.xsl',
+    output: 'user-manual.html',
+    install: true,
+    install_dir: get_option('datadir') / 'doc/git-doc',
+  )
+endif
