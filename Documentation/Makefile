@@ -411,8 +411,8 @@ gitman.info: gitman.texi
 $(patsubst %.txt,%.texi,$(MAN_TXT)): %.texi : %.xml
 	$(QUIET_DB2TEXI)$(DOCBOOK2X_TEXI) --to-stdout $*.xml >$@
 
-howto-index.txt: howto-index.sh $(HOWTO_TXT)
-	$(QUIET_GEN)'$(SHELL_PATH_SQ)' ./howto-index.sh $(sort $(HOWTO_TXT)) >$@
+howto-index.txt: howto/howto-index.sh $(HOWTO_TXT)
+	$(QUIET_GEN)'$(SHELL_PATH_SQ)' ./howto/howto-index.sh $(sort $(HOWTO_TXT)) >$@
 
 $(patsubst %,%.html,$(ARTICLES)) : %.html : %.txt $(ASCIIDOC_DEPS)
 	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) $*.txt
