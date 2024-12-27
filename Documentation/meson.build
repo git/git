@@ -366,7 +366,7 @@ foreach manpage, category : manpages
     )
   endif
 
-  if get_option('docs').contains('html') and category == 1
+  if get_option('docs').contains('html')
     custom_target(
       command: asciidoc_common_options + [
         '--backend=' + asciidoc_html,
