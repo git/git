@@ -210,7 +210,7 @@ struct commit *pop_most_recent_commit(struct commit_list **list,
 struct commit *pop_commit(struct commit_list **stack);
 
 void clear_commit_marks(struct commit *commit, unsigned int mark);
-void clear_commit_marks_many(int nr, struct commit **commit, unsigned int mark);
+void clear_commit_marks_many(size_t nr, struct commit **commit, unsigned int mark);
 
 
 enum rev_sort_order {

@@ -95,8 +95,8 @@ int can_all_from_reach(struct commit_list *from, struct commit_list *to,
  * This method uses the PARENT1 and PARENT2 flags during its operation,
  * so be sure these flags are not set before calling the method.
  */
-struct commit_list *get_reachable_subset(struct commit **from, int nr_from,
-					 struct commit **to, int nr_to,
+struct commit_list *get_reachable_subset(struct commit **from, size_t nr_from,
+					 struct commit **to, size_t nr_to,
 					 unsigned int reachable_flag);
 
 struct ahead_behind_count {

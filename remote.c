@@ -1535,7 +1535,7 @@ static struct ref **tail_ref(struct ref **head)
 
 struct tips {
 	struct commit **tip;
-	int nr, alloc;
+	size_t nr, alloc;
 };
 
 static void add_to_tips(struct tips *tips, const struct object_id *oid)
@@ -1602,7 +1602,7 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 		const int reachable_flag = 1;
 		struct commit_list *found_commits;
 		struct commit **src_commits;
-		int nr_src_commits = 0, alloc_src_commits = 16;
+		size_t nr_src_commits = 0, alloc_src_commits = 16;
 		ALLOC_ARRAY(src_commits, alloc_src_commits);
 
 		for_each_string_list_item(item, &src_tag) {

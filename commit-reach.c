@@ -791,8 +791,8 @@ int can_all_from_reach_with_flag(struct object_array *from,
 				 timestamp_t min_generation)
 {
 	struct commit **list = NULL;
-	int i;
-	int nr_commits;
+	size_t i;
+	size_t nr_commits;
 	int result = 1;
 
 	ALLOC_ARRAY(list, from->nr);
@@ -944,8 +944,8 @@ int can_all_from_reach(struct commit_list *from, struct commit_list *to,
 	return result;
 }
 
-struct commit_list *get_reachable_subset(struct commit **from, int nr_from,
-					 struct commit **to, int nr_to,
+struct commit_list *get_reachable_subset(struct commit **from, size_t nr_from,
+					 struct commit **to, size_t nr_to,
 					 unsigned int reachable_flag)
 {
 	struct commit **item;

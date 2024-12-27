@@ -3041,7 +3041,7 @@ static void reach_filter(struct ref_array *array,
 			 struct commit_list **check_reachable,
 			 int include_reached)
 {
-	int i, old_nr;
+	size_t i, old_nr;
 	struct commit **to_clear;
 
 	if (!*check_reachable)
