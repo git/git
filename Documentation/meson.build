@@ -204,29 +204,87 @@ manpages = {
   'gitworkflows.txt' : 7,
 }
 
-asciidoc = find_program('asciidoc')
+docs_backend = get_option('docs_backend')
+if docs_backend == 'auto'
+  if find_program('asciidoc', required: false).found()
+    docs_backend = 'asciidoc'
+  elif find_program('asciidoctor', required: false).found()
+    docs_backend = 'asciidoctor'
+  else
+    error('Neither asciidoc nor asciidoctor were found.')
+  endif
+endif
+
+if docs_backend == 'asciidoc'
+  asciidoc = find_program('asciidoc', required: true)
+  asciidoc_html = 'xhtml11'
+  asciidoc_docbook = 'docbook'
+  xmlto_extra = [ ]
+
+  asciidoc_conf = custom_target(
+    command: [
+      shell,
+      meson.project_source_root() / 'GIT-VERSION-GEN',
+      meson.project_source_root(),
+      '@INPUT@',
+      '@OUTPUT@',
+    ],
+    input: meson.current_source_dir() / 'asciidoc.conf.in',
+    output: 'asciidoc.conf',
+    depends: [git_version_file],
+    env: version_gen_environment,
+  )
+
+  asciidoc_common_options = [
+    asciidoc,
+    '--conf-file=' + asciidoc_conf.full_path(),
+    '--attribute=build_dir=' + meson.current_build_dir(),
+  ]
+
+  documentation_deps = [
+    asciidoc_conf,
+  ]
+elif docs_backend == 'asciidoctor'
+  asciidoctor = find_program('asciidoctor', required: true)
+  asciidoc_html = 'xhtml5'
+  asciidoc_docbook = 'docbook5'
+  xmlto_extra = [
+    '--skip-validation',
+    '-x', meson.current_source_dir() / 'manpage.xsl',
+  ]
+
+  asciidoctor_extensions = custom_target(
+    command: [
+      shell,
+      meson.project_source_root() / 'GIT-VERSION-GEN',
+      meson.project_source_root(),
+      '@INPUT@',
+      '@OUTPUT@',
+    ],
+    input: meson.current_source_dir() / 'asciidoctor-extensions.rb.in',
+    output: 'asciidoctor-extensions.rb',
+    depends: [git_version_file],
+    env: version_gen_environment,
+  )
+
+  asciidoc_common_options = [
+    asciidoctor,
+    '--attribute', 'compat-mode',
+    '--attribute', 'tabsize=8',
+    '--attribute', 'litdd=&#x2d;&#x2d;',
+    '--attribute', 'docinfo=shared',
+    '--attribute', 'build_dir=' + meson.current_build_dir(),
+    '--load-path', meson.current_build_dir(),
+    '--require', 'asciidoctor-extensions',
+  ]
+
+  documentation_deps = [
+    asciidoctor_extensions,
+  ]
+endif
+
 git = find_program('git', required: false)
 xmlto = find_program('xmlto')
-
-asciidoc_conf = custom_target(
-  command: [
-    shell,
-    meson.project_source_root() / 'GIT-VERSION-GEN',
-    meson.project_source_root(),
-    '@INPUT@',
-    '@OUTPUT@',
-  ],
-  input: meson.current_source_dir() / 'asciidoc.conf.in',
-  output: 'asciidoc.conf',
-  depends: [git_version_file],
-  env: version_gen_environment,
-)
-
-asciidoc_common_options = [
-  asciidoc,
-  '--conf-file=' + asciidoc_conf.full_path(),
-  '--attribute=build_dir=' + meson.current_build_dir(),
-]
 
 cmd_lists = [
   'cmds-ancillaryinterrogators.txt',
@@ -241,10 +299,6 @@ cmd_lists = [
   'cmds-userinterfaces.txt',
   'cmds-purehelpers.txt',
   'cmds-foreignscminterface.txt',
-]
-
-documentation_deps = [
-  asciidoc_conf,
 ]
 
 documentation_deps += custom_target(
@@ -278,7 +332,7 @@ foreach manpage, category : manpages
   if get_option('docs').contains('man')
     manpage_xml_target = custom_target(
       command: asciidoc_common_options + [
-        '--backend=docbook',
+        '--backend=' + asciidoc_docbook,
         '--doctype=manpage',
         '--out-file=@OUTPUT@',
         meson.current_source_dir() / manpage,
@@ -301,7 +355,7 @@ foreach manpage, category : manpages
         manpage_xml_target,
         '-o',
         meson.current_build_dir(),
-      ],
+      ] + xmlto_extra,
       output: manpage_path,
       install: true,
       install_dir: get_option('mandir') / 'man' + category.to_string(),
@@ -311,7 +365,7 @@ foreach manpage, category : manpages
   if get_option('docs').contains('html') and category == 1
     custom_target(
       command: asciidoc_common_options + [
-        '--backend=xhtml11',
+        '--backend=' + asciidoc_html,
         '--doctype=manpage',
         '--out-file=@OUTPUT@',
         meson.current_source_dir() / manpage,
