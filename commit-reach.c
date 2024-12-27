@@ -1,5 +1,4 @@
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "commit.h"
@@ -421,7 +420,7 @@ static int remove_redundant(struct repository *r, struct commit **array,
 
 static int get_merge_bases_many_0(struct repository *r,
 				  struct commit *one,
-				  int n,
+				  size_t n,
 				  struct commit **twos,
 				  int cleanup,
 				  struct commit_list **result)
@@ -469,7 +468,7 @@ static int get_merge_bases_many_0(struct repository *r,
 
 int repo_get_merge_bases_many(struct repository *r,
 			      struct commit *one,
-			      int n,
+			      size_t n,
 			      struct commit **twos,
 			      struct commit_list **result)
 {
@@ -478,7 +477,7 @@ int repo_get_merge_bases_many(struct repository *r,
 
 int repo_get_merge_bases_many_dirty(struct repository *r,
 				    struct commit *one,
-				    int n,
+				    size_t n,
 				    struct commit **twos,
 				    struct commit_list **result)
 {
