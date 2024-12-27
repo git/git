@@ -1863,7 +1863,7 @@ subdir('contrib')
 # We make sure further up that Perl is required in case the gitweb option is
 # enabled.
 gitweb_option = get_option('gitweb').disable_auto_if(not perl.found())
-if gitweb_option.enabled()
+if gitweb_option.allowed()
   subdir('gitweb')
   build_options_config.set('NO_GITWEB', '')
 else
@@ -1916,7 +1916,7 @@ summary({
   'curl': curl.found(),
   'expat': expat.found(),
   'gettext': intl.found(),
-  'gitweb': gitweb_option.enabled(),
+  'gitweb': gitweb_option.allowed(),
   'https': https_backend,
   'iconv': iconv.found(),
   'pcre2': pcre2.found(),
