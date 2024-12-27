@@ -54,13 +54,13 @@ test_expect_success 'fails without MERGE_HEAD (unstarted merge)' '
 '
 
 test_expect_success 'fails without MERGE_HEAD (unstarted merge): .git/MERGE_HEAD sanity' '
-	test ! -f .git/MERGE_HEAD &&
+	test_path_is_missing .git/MERGE_HEAD &&
 	test "$pre_merge_head" = "$(git rev-parse HEAD)"
 '
 
 test_expect_success 'fails without MERGE_HEAD (completed merge)' '
 	git merge clean_branch &&
-	test ! -f .git/MERGE_HEAD &&
+	test_path_is_missing .git/MERGE_HEAD &&
 	# Merge successfully completed
 	post_merge_head="$(git rev-parse HEAD)" &&
 	test_must_fail git merge --abort 2>output &&
@@ -68,7 +68,7 @@ test_expect_success 'fails without MERGE_HEAD (completed merge)' '
 '
 
 test_expect_success 'fails without MERGE_HEAD (completed merge): .git/MERGE_HEAD sanity' '
-	test ! -f .git/MERGE_HEAD &&
+	test_path_is_missing .git/MERGE_HEAD &&
 	test "$post_merge_head" = "$(git rev-parse HEAD)"
 '
 
@@ -79,10 +79,10 @@ test_expect_success 'Forget previous merge' '
 test_expect_success 'Abort after --no-commit' '
 	# Redo merge, but stop before creating merge commit
 	git merge --no-commit clean_branch &&
-	test -f .git/MERGE_HEAD &&
+	test_path_is_file .git/MERGE_HEAD &&
 	# Abort non-conflicting merge
 	git merge --abort &&
-	test ! -f .git/MERGE_HEAD &&
+	test_path_is_missing .git/MERGE_HEAD &&
 	test "$pre_merge_head" = "$(git rev-parse HEAD)" &&
 	test -z "$(git diff)" &&
 	test -z "$(git diff --staged)"
@@ -91,10 +91,10 @@ test_expect_success 'Abort after --no-commit' '
 test_expect_success 'Abort after conflicts' '
 	# Create conflicting merge
 	test_must_fail git merge conflict_branch &&
-	test -f .git/MERGE_HEAD &&
+	test_path_is_file .git/MERGE_HEAD &&
 	# Abort conflicting merge
 	git merge --abort &&
-	test ! -f .git/MERGE_HEAD &&
+	test_path_is_missing .git/MERGE_HEAD &&
 	test "$pre_merge_head" = "$(git rev-parse HEAD)" &&
 	test -z "$(git diff)" &&
 	test -z "$(git diff --staged)"
@@ -105,7 +105,7 @@ test_expect_success 'Clean merge with dirty index fails' '
 	git add foo &&
 	git diff --staged > expect &&
 	test_must_fail git merge clean_branch &&
-	test ! -f .git/MERGE_HEAD &&
+	test_path_is_missing .git/MERGE_HEAD &&
 	test "$pre_merge_head" = "$(git rev-parse HEAD)" &&
 	test -z "$(git diff)" &&
 	git diff --staged > actual &&
@@ -114,7 +114,7 @@ test_expect_success 'Clean merge with dirty index fails' '
 
 test_expect_success 'Conflicting merge with dirty index fails' '
 	test_must_fail git merge conflict_branch &&
-	test ! -f .git/MERGE_HEAD &&
+	test_path_is_missing .git/MERGE_HEAD &&
 	test "$pre_merge_head" = "$(git rev-parse HEAD)" &&
 	test -z "$(git diff)" &&
 	git diff --staged > actual &&
@@ -129,10 +129,10 @@ test_expect_success 'Reset index (but preserve worktree changes)' '
 
 test_expect_success 'Abort clean merge with non-conflicting dirty worktree' '
 	git merge --no-commit clean_branch &&
-	test -f .git/MERGE_HEAD &&
+	test_path_is_file .git/MERGE_HEAD &&
 	# Abort merge
 	git merge --abort &&
-	test ! -f .git/MERGE_HEAD &&
+	test_path_is_missing .git/MERGE_HEAD &&
 	test "$pre_merge_head" = "$(git rev-parse HEAD)" &&
 	test -z "$(git diff --staged)" &&
 	git diff > actual &&
@@ -141,10 +141,10 @@ test_expect_success 'Abort clean merge with non-conflicting dirty worktree' '
 
 test_expect_success 'Abort conflicting merge with non-conflicting dirty worktree' '
 	test_must_fail git merge conflict_branch &&
-	test -f .git/MERGE_HEAD &&
+	test_path_is_file .git/MERGE_HEAD &&
 	# Abort merge
 	git merge --abort &&
-	test ! -f .git/MERGE_HEAD &&
+	test_path_is_missing .git/MERGE_HEAD &&
 	test "$pre_merge_head" = "$(git rev-parse HEAD)" &&
 	test -z "$(git diff --staged)" &&
 	git diff > actual &&
@@ -159,7 +159,7 @@ test_expect_success 'Fail clean merge with conflicting dirty worktree' '
 	echo xyzzy >> bar &&
 	git diff > expect &&
 	test_must_fail git merge --no-commit clean_branch &&
-	test ! -f .git/MERGE_HEAD &&
+	test_path_is_missing .git/MERGE_HEAD &&
 	test "$pre_merge_head" = "$(git rev-parse HEAD)" &&
 	test -z "$(git diff --staged)" &&
 	git diff > actual &&
@@ -168,7 +168,7 @@ test_expect_success 'Fail clean merge with conflicting dirty worktree' '
 
 test_expect_success 'Fail conflicting merge with conflicting dirty worktree' '
 	test_must_fail git merge conflict_branch &&
-	test ! -f .git/MERGE_HEAD &&
+	test_path_is_missing .git/MERGE_HEAD &&
 	test "$pre_merge_head" = "$(git rev-parse HEAD)" &&
 	test -z "$(git diff --staged)" &&
 	git diff > actual &&
@@ -183,7 +183,7 @@ test_expect_success 'Fail clean merge with matching dirty worktree' '
 	echo bart > bar &&
 	git diff > expect &&
 	test_must_fail git merge --no-commit clean_branch &&
-	test ! -f .git/MERGE_HEAD &&
+	test_path_is_missing .git/MERGE_HEAD &&
 	test "$pre_merge_head" = "$(git rev-parse HEAD)" &&
 	test -z "$(git diff --staged)" &&
 	git diff > actual &&
@@ -194,7 +194,7 @@ test_expect_success 'Fail conflicting merge with matching dirty worktree' '
 	echo barf > bar &&
 	git diff > expect &&
 	test_must_fail git merge conflict_branch &&
-	test ! -f .git/MERGE_HEAD &&
+	test_path_is_missing .git/MERGE_HEAD &&
 	test "$pre_merge_head" = "$(git rev-parse HEAD)" &&
 	test -z "$(git diff --staged)" &&
 	git diff > actual &&
