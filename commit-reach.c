@@ -212,12 +212,13 @@ int get_octopus_merge_bases(struct commit_list *in, struct commit_list **result)
 }
 
 static int remove_redundant_no_gen(struct repository *r,
-				   struct commit **array, int cnt)
+				   struct commit **array,
+				   size_t cnt, size_t *dedup_cnt)
 {
 	struct commit **work;
 	unsigned char *redundant;
-	int *filled_index;
-	int i, j, filled;
+	size_t *filled_index;
+	size_t i, j, filled;
 
 	CALLOC_ARRAY(work, cnt);
 	redundant = xcalloc(cnt, 1);
@@ -267,20 +268,22 @@ static int remove_redundant_no_gen(struct repository *r,
 	for (i = filled = 0; i < cnt; i++)
 		if (!redundant[i])
 			array[filled++] = work[i];
+	*dedup_cnt = filled;
 	free(work);
 	free(redundant);
 	free(filled_index);
-	return filled;
+	return 0;
 }
 
 static int remove_redundant_with_gen(struct repository *r,
-				     struct commit **array, int cnt)
+				     struct commit **array, size_t cnt,
+				     size_t *dedup_cnt)
 {
-	int i, count_non_stale = 0, count_still_independent = cnt;
+	size_t i, count_non_stale = 0, count_still_independent = cnt;
 	timestamp_t min_generation = GENERATION_NUMBER_INFINITY;
 	struct commit **walk_start, **sorted;
 	size_t walk_start_nr = 0, walk_start_alloc = cnt;
-	int min_gen_pos = 0;
+	size_t min_gen_pos = 0;
 
 	/*
 	 * Sort the input by generation number, ascending. This allows
@@ -326,12 +329,12 @@ static int remove_redundant_with_gen(struct repository *r,
 	 * terminate early. Otherwise, we will do the same amount of work
 	 * as before.
 	 */
-	for (i = walk_start_nr - 1; i >= 0 && count_still_independent > 1; i--) {
+	for (i = walk_start_nr; i && count_still_independent > 1; i--) {
 		/* push the STALE bits up to min generation */
 		struct commit_list *stack = NULL;
 
-		commit_list_insert(walk_start[i], &stack);
-		walk_start[i]->object.flags |= STALE;
+		commit_list_insert(walk_start[i - 1], &stack);
+		walk_start[i - 1]->object.flags |= STALE;
 
 		while (stack) {
 			struct commit_list *parents;
@@ -388,10 +391,12 @@ static int remove_redundant_with_gen(struct repository *r,
 	clear_commit_marks_many(walk_start_nr, walk_start, STALE);
 	free(walk_start);
 
-	return count_non_stale;
+	*dedup_cnt = count_non_stale;
+	return 0;
 }
 
-static int remove_redundant(struct repository *r, struct commit **array, int cnt)
+static int remove_redundant(struct repository *r, struct commit **array,
+			    size_t cnt, size_t *dedup_cnt)
 {
 	/*
 	 * Some commit in the array may be an ancestor of
@@ -401,19 +406,17 @@ static int remove_redundant(struct repository *r, struct commit **array, int cnt
 	 * that number.
 	 */
 	if (generation_numbers_enabled(r)) {
-		int i;
-
 		/*
 		 * If we have a single commit with finite generation
 		 * number, then the _with_gen algorithm is preferred.
 		 */
-		for (i = 0; i < cnt; i++) {
+		for (size_t i = 0; i < cnt; i++) {
 			if (commit_graph_generation(array[i]) < GENERATION_NUMBER_INFINITY)
-				return remove_redundant_with_gen(r, array, cnt);
+				return remove_redundant_with_gen(r, array, cnt, dedup_cnt);
 		}
 	}
 
-	return remove_redundant_no_gen(r, array, cnt);
+	return remove_redundant_no_gen(r, array, cnt, dedup_cnt);
 }
 
 static int get_merge_bases_many_0(struct repository *r,
@@ -425,7 +428,8 @@ static int get_merge_bases_many_0(struct repository *r,
 {
 	struct commit_list *list;
 	struct commit **rslt;
-	int cnt, i;
+	size_t cnt, i;
+	int ret;
 
 	if (merge_bases_many(r, one, n, twos, result) < 0)
 		return -1;
@@ -452,8 +456,8 @@ static int get_merge_bases_many_0(struct repository *r,
 	clear_commit_marks(one, all_flags);
 	clear_commit_marks_many(n, twos, all_flags);
 
-	cnt = remove_redundant(r, rslt, cnt);
-	if (cnt < 0) {
+	ret = remove_redundant(r, rslt, cnt, &cnt);
+	if (ret < 0) {
 		free(rslt);
 		return -1;
 	}
@@ -582,7 +586,8 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 	struct commit_list *p;
 	struct commit_list *result = NULL, **tail = &result;
 	struct commit **array;
-	int num_head, i;
+	size_t num_head, i;
+	int ret;
 
 	if (!heads)
 		return NULL;
@@ -603,11 +608,13 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 			p->item->object.flags &= ~STALE;
 		}
 	}
-	num_head = remove_redundant(the_repository, array, num_head);
-	if (num_head < 0) {
+
+	ret = remove_redundant(the_repository, array, num_head, &num_head);
+	if (ret < 0) {
 		free(array);
 		return NULL;
 	}
+
 	for (i = 0; i < num_head; i++)
 		tail = &commit_list_insert(array[i], tail)->next;
 	free(array);
