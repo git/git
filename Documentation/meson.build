@@ -413,4 +413,40 @@ if get_option('docs').contains('html')
     install: true,
     install_dir: get_option('datadir') / 'doc/git-doc',
   )
+
+  articles = [
+    'DecisionMaking.txt',
+    'MyFirstContribution.txt',
+    'MyFirstObjectWalk.txt',
+    'ReviewingGuidelines.txt',
+    'SubmittingPatches',
+    'ToolsForGit.txt',
+    'git-bisect-lk2009.txt',
+    'git-tools.txt',
+  ]
+
+  foreach article : articles
+    custom_target(
+      command: asciidoc_common_options + [
+        '--backend=' + asciidoc_html,
+        '--out-file=@OUTPUT@',
+        '@INPUT@',
+      ],
+      input: article,
+      output: fs.stem(article) + '.html',
+      depends: documentation_deps,
+      install: true,
+      install_dir: get_option('datadir') / 'doc/git-doc',
+    )
+  endforeach
+
+  asciidoc_html_options = asciidoc_common_options + [
+    '--backend=' + asciidoc_html,
+    '--out-file=@OUTPUT@',
+    '--attribute', 'git-relative-html-prefix=../',
+    '@INPUT@',
+  ]
+
+  subdir('howto')
+  subdir('technical')
 endif
