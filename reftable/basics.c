@@ -241,7 +241,8 @@ char **parse_names(char *buf, int size)
 		p = next + 1;
 	}
 
-	REFTABLE_REALLOC_ARRAY(names, names_len + 1);
+	if (REFTABLE_ALLOC_GROW(names, names_len + 1, names_cap))
+		goto err;
 	names[names_len] = NULL;
 
 	return names;
