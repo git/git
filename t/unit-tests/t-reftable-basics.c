@@ -146,6 +146,32 @@ int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 		check_int(in, ==, out);
 	}
 
+	if_test ("REFTABLE_ALLOC_GROW works") {
+		int *arr = NULL, *old_arr;
+		size_t alloc = 0, old_alloc;
+
+		check(!REFTABLE_ALLOC_GROW(arr, 1, alloc));
+		check(arr != NULL);
+		check_uint(alloc, >=, 1);
+		arr[0] = 42;
+
+		old_alloc = alloc;
+		old_arr = arr;
+		reftable_set_alloc(malloc, realloc_stub, free);
+		check(REFTABLE_ALLOC_GROW(arr, old_alloc + 1, alloc));
+		check(arr == old_arr);
+		check_uint(alloc, ==, old_alloc);
+
+		old_alloc = alloc;
+		reftable_set_alloc(malloc, realloc, free);
+		check(!REFTABLE_ALLOC_GROW(arr, old_alloc + 1, alloc));
+		check(arr != NULL);
+		check_uint(alloc, >, old_alloc);
+		arr[alloc - 1] = 42;
+
+		reftable_free(arr);
+	}
+
 	if_test ("REFTABLE_ALLOC_GROW_OR_NULL works") {
 		int *arr = NULL;
 		size_t alloc = 0, old_alloc;

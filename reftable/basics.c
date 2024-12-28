@@ -124,11 +124,8 @@ int reftable_buf_add(struct reftable_buf *buf, const void *data, size_t len)
 	size_t newlen = buf->len + len;
 
 	if (newlen + 1 > buf->alloc) {
-		char *reallocated = buf->buf;
-		REFTABLE_ALLOC_GROW(reallocated, newlen + 1, buf->alloc);
-		if (!reallocated)
+		if (REFTABLE_ALLOC_GROW(buf->buf, newlen + 1, buf->alloc))
 			return REFTABLE_OUT_OF_MEMORY_ERROR;
-		buf->buf = reallocated;
 	}
 
 	memcpy(buf->buf + buf->len, data, len);
@@ -233,11 +230,9 @@ char **parse_names(char *buf, int size)
 			next = end;
 		}
 		if (p < next) {
-			char **names_grown = names;
-			REFTABLE_ALLOC_GROW(names_grown, names_len + 1, names_cap);
-			if (!names_grown)
+			if (REFTABLE_ALLOC_GROW(names, names_len + 1,
+						names_cap))
 				goto err;
-			names = names_grown;
 
 			names[names_len] = reftable_strdup(p);
 			if (!names[names_len++])
