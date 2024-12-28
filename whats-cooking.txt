@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2024, #09; Thu, 26)
-X-master-at: 76cf4f61c87855ebf0784b88aaf737d6b09f504b
-X-next-at: b6c66824c156363e934b3d989fb123efb1a9c63d
+Subject: What's cooking in git.git (Dec 2024, #10; Sat, 28)
+X-master-at: df2faf1a65fc821384e618b3c291a184fbed039e
+X-next-at: bfe548d87ed7786f06c2d9519f69c38ed47176e6
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2024, #09; Thu, 26)
+What's cooking in git.git (Dec 2024, #10; Sat, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,14 +17,10 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Let's wait for gitk and possibly po/ and delay the tagging of the
--rc1.  Many people are already offline for the end-of-year holidays
-and it is a slow week, and 'master' front has too many new things
-graduated from 'next' a bit too early for me to feel comfortable.
+Hopefully we can tag -rc1 40-hours+ from now.
 
 Extra testing the tip of 'master' before we actually tag it is as
-always very much appreciated.  Right now, the optional meson-based
-build does not pass gitweb tests, IIUC.
+always very much appreciated.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -55,7 +51,7 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[New Topics]
+[Graduated to 'master']
 
 * as/gitk-git-gui-repo-update (2024-12-26) 1 commit
   (merged to 'next' on 2024-12-26 at 10b9e8227b)
@@ -63,13 +59,89 @@ Release tarballs are available at:
 
  The developer documentation has been updated to give the latest
  info on gitk and git-gui maintainer.
-
- Will merge to 'master'.
+ 
  source: <20241224122912.20666-2-ash@kambanaria.org>
 
+--------------------------------------------------
+[New Topics]
 
-* rs/reftable-realloc-errors (2024-12-26) 4 commits
- - t-reftable-merged: check realloc errors
+* sk/strlen-returns-size_t (2024-12-26) 1 commit
+ - date.c: Fix type missmatch warings from msvc
+
+ Code clean-up.
+
+ The remainder needs to be reviewed.
+ source: <20241223110407.3308-3-soekkle@freenet.de>
+
+
+* ms/t7611-test-path-is-file (2024-12-27) 1 commit
+  (merged to 'next' on 2024-12-28 at b08a0c8e23)
+ + t7611: replace test -f with test_path_is* helpers
+
+ Test modernization.
+
+ Will merge to 'master'.
+ source: <20241227105345.10184-1-meetsoni3017@gmail.com>
+
+
+* ps/meson-test-wo-gitweb (2024-12-27) 3 commits
+  (merged to 'next' on 2024-12-28 at 39938f41fd)
+ + meson: enable auto-discovered "gitweb"
+ + GIT-BUILD-OPTIONS: wire up NO_GITWEB option
+ + GIT-BUILD-OPTIONS: sort variables alphabetically
+
+ meson-based build without GitWeb failed the self tests.
+
+ Will merge to 'master'.
+ source: <20241227-b4-pks-meson-wo-gitweb-v1-0-14ca8515bb3b@pks.im>
+
+
+* ps/more-sign-compare (2024-12-27) 10 commits
+ - sign-compare: avoid comparing ptrdiff with an int/unsigned
+ - commit-reach: use `size_t` to track indices when computing merge bases
+ - shallow: fix -Wsign-compare warnings
+ - builtin/log: fix remaining -Wsign-compare warnings
+ - builtin/log: use `size_t` to track indices
+ - commit-reach: use `size_t` to track indices in `get_reachable_subset()`
+ - commit-reach: use `size_t` to track indices in `remove_redundant()`
+ - commit-reach: fix type of `min_commit_date`
+ - commit-reach: fix index used to loop through unsigned integer
+ - prio-queue: fix type of `insertion_ctr`
+
+ More -Wsign-compare fixes.
+
+ Expecting a reroll?
+ cf. <Z2-2dbYVuuLxpNmK@pks.im>
+ cf. https://staticthinking.wordpress.com/2023/07/25/wsign-compare-is-garbage/
+ source: <20241227-b4-pks-commit-reach-sign-compare-v1-0-07c59c2aa632@pks.im>
+
+
+* as/long-option-help-i18n (2024-12-28) 2 commits
+ - SQUASH???
+ - parse-options: localize mark-up of placeholder text in the short help
+
+ Tweak the help text used for the option value placeholders by
+ parse-options API so that translations can customize the "<>"
+ placeholder signal (e.g. "--option=<value>").
+
+ Will merge to 'next' after squashing the fix-up in?
+ source: <20241228114221.10351-4-ash@kambanaria.org>
+
+
+* sk/maintenance-remote-prune (2024-12-28) 1 commit
+ - maintenance: add prune-remote-refs task
+
+ A new periodic maintenance task to run "git remote prune" has been
+ introduced.
+
+ Will merge to 'next'?
+ source: <pull.1838.v2.git.1735380461980.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* rs/reftable-realloc-errors (2024-12-28) 4 commits
+ - t-reftable-merged: handle realloc errors
  - reftable: handle realloc error in parse_names()
  - reftable: fix allocation count on realloc error
  - reftable: avoid leaks on realloc error
@@ -77,11 +149,9 @@ Release tarballs are available at:
  The custom allocator code in the reftable library did not handle
  failing realloc() very well, which has been addressed.
 
- Needs review.
- source: <2b9fba8d-be63-4145-9d25-a2151e422cfa@web.de>
+ Will merge to 'next'?
+ source: <f4677194-0a3a-4f07-b003-c0295b51c100@web.de>
 
---------------------------------------------------
-[Cooking]
 
 * jc/show-index-h-update (2024-12-20) 1 commit
  - show-index: the short help should say the command reads from its input
@@ -115,7 +185,9 @@ Release tarballs are available at:
  source: <20241217-pks-use-the-repository-conversion-v1-0-0dba48bcc239@pks.im>
 
 
-* ps/build-meson-html (2024-12-13) 11 commits
+* ps/build-meson-html (2024-12-27) 12 commits
+ - Documentation: wire up sanity checks for Meson
+ - t/Makefile: make "check-meson" work with Dash
  - meson: install static files for HTML documentation
  - meson: generate articles
  - Documentation: refactor "howto-index.sh" for out-of-tree builds
@@ -126,13 +198,12 @@ Release tarballs are available at:
  - meson: fix generation of merge tools
  - meson: properly wire up dependencies for our docs
  - meson: wire up support for AsciiDoctor
- - Merge branch 'ps/build' into ps/build-meson-html
 
  The build procedure based on meson learned to generate HTML
  documention pages.
 
  Needs review. On hold.
- source: <20241213-b4-pks-meson-docs-v1-0-0c7895952cd3@pks.im>
+ source: <20241227-b4-pks-meson-docs-v2-0-f61e63edbfa1@pks.im>
 
 
 * jc/doc-attr-tree (2024-12-14) 1 commit
