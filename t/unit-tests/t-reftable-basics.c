@@ -20,6 +20,11 @@ static int integer_needle_lesseq(size_t i, void *_args)
 	return args->needle <= args->haystack[i];
 }
 
+static void *realloc_stub(void *p UNUSED, size_t size UNUSED)
+{
+	return NULL;
+}
+
 int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 {
 	if_test ("binary search with binsearch works") {
@@ -139,6 +144,31 @@ int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 		put_be16(dest, in);
 		out = get_be16(dest);
 		check_int(in, ==, out);
+	}
+
+	if_test ("REFTABLE_ALLOC_GROW_OR_NULL works") {
+		int *arr = NULL;
+		size_t alloc = 0, old_alloc;
+
+		REFTABLE_ALLOC_GROW_OR_NULL(arr, 1, alloc);
+		check(arr != NULL);
+		check_uint(alloc, >=, 1);
+		arr[0] = 42;
+
+		old_alloc = alloc;
+		REFTABLE_ALLOC_GROW_OR_NULL(arr, old_alloc + 1, alloc);
+		check(arr != NULL);
+		check_uint(alloc, >, old_alloc);
+		arr[alloc - 1] = 42;
+
+		old_alloc = alloc;
+		reftable_set_alloc(malloc, realloc_stub, free);
+		REFTABLE_ALLOC_GROW_OR_NULL(arr, old_alloc + 1, alloc);
+		check(arr == NULL);
+		check_uint(alloc, ==, 0);
+		reftable_set_alloc(malloc, realloc, free);
+
+		reftable_free(arr);
 	}
 
 	return test_done();

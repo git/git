@@ -129,6 +129,16 @@ char *reftable_strdup(const char *str);
 			REFTABLE_REALLOC_ARRAY(x, alloc); \
 		} \
 	} while (0)
+
+#define REFTABLE_ALLOC_GROW_OR_NULL(x, nr, alloc) do { \
+	void *reftable_alloc_grow_or_null_orig_ptr = (x); \
+	REFTABLE_ALLOC_GROW((x), (nr), (alloc)); \
+	if (!(x)) { \
+		reftable_free(reftable_alloc_grow_or_null_orig_ptr); \
+		alloc = 0; \
+	} \
+} while (0)
+
 #define REFTABLE_FREE_AND_NULL(p) do { reftable_free(p); (p) = NULL; } while (0)
 
 #ifndef REFTABLE_ALLOW_BANNED_ALLOCATORS

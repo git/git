@@ -49,7 +49,7 @@ int merged_iter_pqueue_add(struct merged_iter_pqueue *pq, const struct pq_entry 
 {
 	size_t i = 0;
 
-	REFTABLE_ALLOC_GROW(pq->heap, pq->len + 1, pq->cap);
+	REFTABLE_ALLOC_GROW_OR_NULL(pq->heap, pq->len + 1, pq->cap);
 	if (!pq->heap)
 		return REFTABLE_OUT_OF_MEMORY_ERROR;
 	pq->heap[pq->len++] = *e;
