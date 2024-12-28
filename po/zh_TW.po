@@ -30,8 +30,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2024-12-17 20:14+0800\n"
-"PO-Revision-Date: 2024-12-17 20:52+0800\n"
+"POT-Creation-Date: 2024-12-28 13:16+0800\n"
+"PO-Revision-Date: 2024-12-28 13:23+0800\n"
 "Last-Translator: Yi-Jyun Pan <pan93412@gmail.com>\n"
 "Language-Team: Chinese (Traditional) <http://weblate.slat.org/projects/git-"
 "po/git-cli/zh_Hant/>\n"
@@ -941,12 +941,12 @@ msgstr "引數過多"
 #: apply.c
 #, c-format
 msgid "unrecognized whitespace option '%s'"
-msgstr "空白字元選項「%s」無法識別"
+msgstr "空白字元選項「%s」不認識"
 
 #: apply.c
 #, c-format
 msgid "unrecognized whitespace ignore option '%s'"
-msgstr "空白字元忽略選項「%s」無法識別"
+msgstr "空白字元忽略選項「%s」不認識"
 
 #: apply.c archive.c builtin/add.c builtin/branch.c builtin/checkout-index.c
 #: builtin/checkout.c builtin/clean.c builtin/clone.c builtin/commit.c
@@ -1081,7 +1081,7 @@ msgstr "二進位修補檔在第 %d 列損壞：%.*s"
 #: apply.c
 #, c-format
 msgid "unrecognized binary patch at line %d"
-msgstr "第 %d 列的二進位修補檔無法識別"
+msgstr "第 %d 列的二進位修補檔不認識"
 
 #: apply.c
 #, c-format
@@ -3021,7 +3021,7 @@ msgstr "「 」不是有效術語"
 #: builtin/bisect.c
 #, c-format
 msgid "unrecognized option: '%s'"
-msgstr "無法識別選項：「%s」"
+msgstr "不認識選項：「%s」"
 
 #: builtin/bisect.c
 #, c-format
@@ -4689,7 +4689,7 @@ msgstr "未知的衝突輸出風格「%s」"
 msgid "perform a 3-way merge with the new branch"
 msgstr "和新分支進行三方合併"
 
-#: builtin/checkout.c builtin/log.c parse-options.h
+#: builtin/checkout.c builtin/log.c builtin/range-diff.c parse-options.h
 msgid "style"
 msgstr "style"
 
@@ -4719,7 +4719,7 @@ msgstr "更新忽略的檔案（預設值）"
 
 #: builtin/checkout.c
 msgid "do not check if another worktree is using this branch"
-msgstr "不檢查其他工作區是否正在使用這個提交"
+msgstr "不檢查其他工作區是否正在使用此分支"
 
 #: builtin/checkout.c
 msgid "checkout our version for unmerged files"
@@ -5100,7 +5100,6 @@ msgid "create a shallow clone since a specific time"
 msgstr "建立從指定時間到現在的淺層複製"
 
 #: builtin/clone.c builtin/fetch.c builtin/pull.c
-#| msgid "rev"
 msgid "ref"
 msgstr "ref"
 
@@ -5495,7 +5494,7 @@ msgstr "無法開啟提交圖鏈「%s」"
 #: builtin/commit-graph.c
 #, c-format
 msgid "unrecognized --split argument, %s"
-msgstr "無法識別的 --split 參數，%s"
+msgstr "不認識的 --split 參數，%s"
 
 #: builtin/commit-graph.c
 #, c-format
@@ -6253,9 +6252,6 @@ msgstr ""
 "value] <名稱> <值>"
 
 #: builtin/config.c
-#| msgid ""
-#| "git config unset [<file-option>] [--all] [--value=<value>] [--fixed-"
-#| "value] <name> <value>"
 msgid ""
 "git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] "
 "<name>"
@@ -6393,7 +6389,7 @@ msgstr "除了顯示組態值，額外顯示其鍵名"
 #: builtin/config.c
 #, c-format
 msgid "unrecognized --type argument, %s"
-msgstr "無法識別的 --type 參數，%s"
+msgstr "不認識的 --type 參數，%s"
 
 #: builtin/config.c
 msgid "only one type at a time"
@@ -7357,6 +7353,21 @@ msgid "the object %s does not exist"
 msgstr "%s 物件不存在"
 
 #: builtin/fetch.c
+#, c-format
+msgid ""
+"Run 'git remote set-head %s %s' to follow the change, or set\n"
+"'remote.%s.followRemoteHEAD' configuration option to a different value\n"
+"if you do not want to see this message. Specifically running\n"
+"'git config set remote.%s.followRemoteHEAD %s' will disable the warning\n"
+"until the remote changes HEAD to something else."
+msgstr ""
+"執行「git remote set-head %s %s」以追蹤這個變更，或者\n"
+"如果您不想看到這則訊息，請將「remote.%s.followRemoteHEAD」\n"
+"組態選項設定成不同的值。更具體些來說，執行\n"
+"「git config set remote.%s.followRemoteHEAD %s」會停用這個警告，\n"
+"直到遠端將 HEAD 變更為其他內容。"
+
+#: builtin/fetch.c
 msgid "multiple branches detected, incompatible with --set-upstream"
 msgstr "檢測到多分支，和 --set-upstream 不相容"
 
@@ -8254,7 +8265,7 @@ msgstr "不允許 --no-schedule"
 #: builtin/gc.c
 #, c-format
 msgid "unrecognized --schedule argument '%s'"
-msgstr "無法識別的 --schedule 引數 '%s'"
+msgstr "不認識的 --schedule 引數 '%s'"
 
 #: builtin/gc.c
 msgid "failed to write commit-graph"
@@ -8428,7 +8439,7 @@ msgstr "無法執行 systemctl"
 #: builtin/gc.c
 #, c-format
 msgid "unrecognized --scheduler argument '%s'"
-msgstr "無法識別的 --scheduler 引數 '%s'"
+msgstr "不認識的 --scheduler 引數 '%s'"
 
 #: builtin/gc.c
 msgid "neither systemd timers nor crontab are available"
@@ -8846,7 +8857,7 @@ msgstr "git help [[-i|--info] [-m|--man] [-w|--web]] [<command>|<doc>]"
 #: builtin/help.c
 #, c-format
 msgid "unrecognized help format '%s'"
-msgstr "無法識別的協助格式 '%s'"
+msgstr "不認識的協助格式 '%s'"
 
 #: builtin/help.c
 msgid "Failed to start emacsclient."
@@ -9429,7 +9440,7 @@ msgstr "追蹤 <開始>,<結束> 範圍中橫列或 <檔案> 中> :<函數名稱
 #: builtin/log.c builtin/replay.c builtin/shortlog.c bundle.c
 #, c-format
 msgid "unrecognized argument: %s"
-msgstr "無法識別的引數：%s"
+msgstr "不認識的引數：%s"
 
 #: builtin/log.c
 msgid "-L<range>:<file> cannot be used with pathspec"
@@ -10923,10 +10934,6 @@ msgid "git notes [--ref <notes-ref>] [list [<object>]]"
 msgstr "git notes [--ref <註解引用>] [list [<物件>]]"
 
 #: builtin/notes.c
-#| msgid ""
-#| "git notes [--ref <notes-ref>] add [-f] [--allow-empty] [--"
-#| "[no-]separator|--separator=<paragraph-break>] [--[no-]stripspace] [-m "
-#| "<msg> | -F <file> | (-c | -C) <object>] [<object>]"
 msgid ""
 "git notes [--ref <notes-ref>] add [-f] [--allow-empty] [--[no-]separator|--"
 "separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c "
@@ -10941,10 +10948,6 @@ msgid "git notes [--ref <notes-ref>] copy [-f] <from-object> <to-object>"
 msgstr "git notes [--ref <註解引用>] copy [-f] <來源物件> <目標物件>"
 
 #: builtin/notes.c
-#| msgid ""
-#| "git notes [--ref <notes-ref>] append [--allow-empty] [--[no-]separator|--"
-#| "separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | "
-#| "(-c | -C) <object>] [<object>]"
 msgid ""
 "git notes [--ref <notes-ref>] append [--allow-empty] [--[no-]separator|--"
 "separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c "
@@ -12634,7 +12637,7 @@ msgstr "--empty=ask 已棄用。請改用「--empty=stop」。"
 msgid ""
 "unrecognized empty type '%s'; valid values are \"drop\", \"keep\", and "
 "\"stop\"."
-msgstr "無法識別空類型「%s」；有效的數值有「drop」、「keep」跟「stop」。"
+msgstr "不認識空類型「%s」；有效的數值有「drop」、「keep」跟「stop」。"
 
 #: builtin/rebase.c
 msgid ""
@@ -13612,6 +13615,33 @@ msgid_plural "  Local refs configured for 'git push'%s:"
 msgstr[0] "  為 'git push' 設定的本機引用%s："
 
 #: builtin/remote.c
+#, c-format
+msgid "'%s/HEAD' is unchanged and points to '%s'\n"
+msgstr "「%s/HEAD」沒有變更，指向「%s」\n"
+
+#: builtin/remote.c
+#, c-format
+msgid "'%s/HEAD' has changed from '%s' and now points to '%s'\n"
+msgstr "「%s/HEAD」已經從「%s」變更，現在指向「%s」\n"
+
+#: builtin/remote.c
+#, c-format
+msgid "'%s/HEAD' is now created and points to '%s'\n"
+msgstr "「%s/HEAD」現在已經建立並指向「%s」\n"
+
+#: builtin/remote.c
+#, c-format
+msgid "'%s/HEAD' was detached at '%s' and now points to '%s'\n"
+msgstr "「%s/HEAD」已經在「%s」處分離，現在指向「%s」\n"
+
+#: builtin/remote.c
+#, c-format
+msgid ""
+"'%s/HEAD' used to point to '%s' (which is not a remote branch), but now "
+"points to '%s'\n"
+msgstr "「%s/HEAD」原本指向「%s」（不是遠端分支），但現在指向「%s」\n"
+
+#: builtin/remote.c
 msgid "set refs/remotes/<name>/HEAD according to remote"
 msgstr "根據遠端設定 refs/remotes/<名稱>/HEAD"
 
@@ -13639,7 +13669,7 @@ msgstr "不是一個有效引用：%s"
 
 #: builtin/remote.c
 #, c-format
-msgid "Could not setup %s"
+msgid "Could not set up %s"
 msgstr "無法配置 %s"
 
 #  譯者：請維持前導空格
@@ -17178,7 +17208,7 @@ msgstr "無法儲存最大的建立權杖"
 #: bundle-uri.c
 #, c-format
 msgid "unrecognized bundle mode from URI '%s'"
-msgstr "無法識別從 URI「%s」取回的套件包模式"
+msgstr "不認識從 URI「%s」取回的套件包模式"
 
 #: bundle-uri.c
 #, c-format
@@ -17219,7 +17249,7 @@ msgstr "bundle-uri: 列有空鍵或空值"
 #: bundle.c
 #, c-format
 msgid "unrecognized bundle hash algorithm: %s"
-msgstr "無法識別的套件包雜湊演算法：%s"
+msgstr "不認識的套件包雜湊演算法：%s"
 
 #: bundle.c
 #, c-format
@@ -17234,7 +17264,7 @@ msgstr "「%s」不像是一個 v2 或 v3 版本的套件包檔案"
 #: bundle.c
 #, c-format
 msgid "unrecognized header: %s%s (%d)"
-msgstr "無法識別的標頭：%s%s (%d)"
+msgstr "不認識的標頭：%s%s (%d)"
 
 #: bundle.c
 msgid "Repository lacks these prerequisite commits:"
@@ -20233,12 +20263,12 @@ msgstr "路徑規格 '%s' 未符合任何 git 已知檔案"
 #: dir.c
 #, c-format
 msgid "unrecognized pattern: '%s'"
-msgstr "無法識別樣式：「%s」"
+msgstr "不認識樣式：「%s」"
 
 #: dir.c
 #, c-format
 msgid "unrecognized negative pattern: '%s'"
-msgstr "無法識別反向模式：「%s」"
+msgstr "不認識反向模式：「%s」"
 
 #: dir.c
 #, c-format
@@ -22807,15 +22837,6 @@ msgstr "多包位圖缺少需要的反向索引"
 msgid "could not open pack %s"
 msgstr "無法開啟封包 %s"
 
-#: pack-bitmap.c t/helper/test-read-midx.c
-msgid "could not determine MIDX preferred pack"
-msgstr "無法確定 MIDX 偏好的封裝"
-
-#: pack-bitmap.c
-#, c-format
-msgid "preferred pack (%s) is invalid"
-msgstr "偏好的封包 (%s) 無效"
-
 #: pack-bitmap.c
 msgid "corrupt bitmap lookup table: triplet position out of index"
 msgstr "位圖查詢表損壞：三元組位置超出索引"
@@ -23681,7 +23702,7 @@ msgstr ""
 #, c-format
 msgid ""
 "unrecognized setting %s for option rebase.missingCommitsCheck. Ignoring."
-msgstr "選項 rebase.missingCommitsCheck 的值 %s 無法識別。已忽略。"
+msgstr "選項 rebase.missingCommitsCheck 的值 %s 不認識。已忽略。"
 
 #: rebase-interactive.c
 msgid ""
@@ -23842,7 +23863,7 @@ msgstr "%%(%.*s) 不取引數"
 #: ref-filter.c
 #, c-format
 msgid "unrecognized %%(%.*s) argument: %s"
-msgstr "無法識別的 %%(%.*s) 引數：%s"
+msgstr "不認識的 %%(%.*s) 引數：%s"
 
 #: ref-filter.c
 #, c-format
@@ -23852,7 +23873,7 @@ msgstr "期望的格式：%%(color:<顏色>)"
 #: ref-filter.c
 #, c-format
 msgid "unrecognized color: %%(color:%s)"
-msgstr "無法識別的顏色：%%(color:%s)"
+msgstr "不認識的顏色：%%(color:%s)"
 
 #: ref-filter.c
 #, c-format
@@ -23912,17 +23933,17 @@ msgstr "期望的格式：%%(align:<寬度>,<位置>)"
 #: ref-filter.c
 #, c-format
 msgid "unrecognized position:%s"
-msgstr "無法識別的位置：%s"
+msgstr "不認識的位置：%s"
 
 #: ref-filter.c
 #, c-format
 msgid "unrecognized width:%s"
-msgstr "無法識別的寬度：%s"
+msgstr "不認識的寬度：%s"
 
 #: ref-filter.c
 #, c-format
 msgid "unrecognized %%(%s) argument: %s"
-msgstr "無法識別的 %%(%s) 參數：%s"
+msgstr "不認識的 %%(%s) 參數：%s"
 
 #: ref-filter.c
 #, c-format
@@ -24151,8 +24172,19 @@ msgid "log for %s is empty"
 msgstr "%s 的日誌為空"
 
 #: refs.c
-msgid "refusing to force and skip creation of reflog"
-msgstr "拒絕強制並略過建立引用日誌"
+#, c-format
+msgid "refusing to update reflog for pseudoref '%s'"
+msgstr "拒絕更新偽引用「%s」 的 reflog"
+
+#: refs.c
+#, c-format
+msgid "refusing to update pseudoref '%s'"
+msgstr "拒絕更新偽引用「%s」"
+
+#: refs.c
+#, c-format
+msgid "refusing to update reflog with bad name '%s'"
+msgstr "拒絕更新有錯誤名稱「%s」的 reflog"
 
 #: refs.c
 #, c-format
@@ -24160,9 +24192,8 @@ msgid "refusing to update ref with bad name '%s'"
 msgstr "拒絕更新有錯誤名稱 '%s' 的引用"
 
 #: refs.c
-#, c-format
-msgid "refusing to update pseudoref '%s'"
-msgstr "拒絕更新偽引用「%s」"
+msgid "refusing to force and skip creation of reflog"
+msgstr "拒絕強制並略過建立引用日誌"
 
 #: refs.c
 #, c-format
@@ -24486,8 +24517,13 @@ msgstr "提供了一個以上的 uploadpack，使用第一個"
 
 #: remote.c
 #, c-format
+msgid "unrecognized followRemoteHEAD value '%s' ignored"
+msgstr "已經忽略不認識的「%s」數值"
+
+#: remote.c
+#, c-format
 msgid "unrecognized value transfer.credentialsInUrl: '%s'"
-msgstr "數值 transfer.credentialsInUrl 無法識別：「%s」"
+msgstr "數值 transfer.credentialsInUrl 不認識：「%s」"
 
 #: remote.c
 #, c-format
@@ -26797,6 +26833,10 @@ msgstr "提交 %s 沒有標記為可以取得"
 msgid "too many commits marked reachable"
 msgstr "太多提交標記為可以取得"
 
+#: t/helper/test-read-midx.c
+msgid "could not determine MIDX preferred pack"
+msgstr "無法確定 MIDX 偏好的封裝"
+
 #: t/helper/test-serve-v2.c
 msgid "test-tool serve-v2 [<options>]"
 msgstr "test-tool serve-v2 [<選項>]"
@@ -28716,6 +28756,10 @@ msgstr "略過 %s 含備份後綴 '%s'。\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "您真的要傳送 %s？[y|N]： "
+
+#, c-format
+#~ msgid "preferred pack (%s) is invalid"
+#~ msgstr "偏好的封包 (%s) 無效"
 
 #, c-format
 #~ msgid ""
