@@ -1456,34 +1456,6 @@ else
   build_options_config.set('RUNTIME_PREFIX', 'false')
 endif
 
-foreach key, value : {
-  'DIFF': diff.full_path(),
-  'GIT_TEST_CMP': diff.full_path() + ' -u',
-  'GIT_TEST_GITPERLLIB': meson.project_build_root() / 'perl',
-  'GIT_TEST_MERGE_TOOLS_DIR': meson.project_source_root() / 'mergetools',
-  'GIT_TEST_POPATH': meson.project_source_root() / 'po',
-  'GIT_TEST_TEMPLATE_DIR': meson.project_build_root() / 'templates',
-  'GIT_TEST_TEXTDOMAINDIR': meson.project_build_root() / 'po',
-  'PAGER_ENV': get_option('pager_environment'),
-  'PERL_PATH': perl.found() ? perl.full_path() : '',
-  'PYTHON_PATH': python.found () ? python.full_path() : '',
-  'SHELL_PATH': shell.full_path(),
-  'TAR': tar.full_path(),
-  'TEST_OUTPUT_DIRECTORY': test_output_directory,
-  'TEST_SHELL_PATH': shell.full_path(),
-}
-  if value != '' and cygpath.found()
-    value = run_command(cygpath, value, check: true).stdout().strip()
-  endif
-  build_options_config.set_quoted(key, value)
-endforeach
-
-configure_file(
-  input: 'GIT-BUILD-OPTIONS.in',
-  output: 'GIT-BUILD-OPTIONS',
-  configuration: build_options_config,
-)
-
 git_version_file = custom_target(
   command: [
     shell,
@@ -1891,8 +1863,11 @@ subdir('contrib')
 # We make sure further up that Perl is required in case the gitweb option is
 # enabled.
 gitweb_option = get_option('gitweb').disable_auto_if(not perl.found())
-if gitweb_option.enabled()
+if gitweb_option.allowed()
   subdir('gitweb')
+  build_options_config.set('NO_GITWEB', '')
+else
+  build_options_config.set('NO_GITWEB', '1')
 endif
 
 subdir('templates')
@@ -1909,11 +1884,39 @@ if get_option('docs') != []
   subdir('Documentation')
 endif
 
+foreach key, value : {
+  'DIFF': diff.full_path(),
+  'GIT_TEST_CMP': diff.full_path() + ' -u',
+  'GIT_TEST_GITPERLLIB': meson.project_build_root() / 'perl',
+  'GIT_TEST_MERGE_TOOLS_DIR': meson.project_source_root() / 'mergetools',
+  'GIT_TEST_POPATH': meson.project_source_root() / 'po',
+  'GIT_TEST_TEMPLATE_DIR': meson.project_build_root() / 'templates',
+  'GIT_TEST_TEXTDOMAINDIR': meson.project_build_root() / 'po',
+  'PAGER_ENV': get_option('pager_environment'),
+  'PERL_PATH': perl.found() ? perl.full_path() : '',
+  'PYTHON_PATH': python.found () ? python.full_path() : '',
+  'SHELL_PATH': shell.full_path(),
+  'TAR': tar.full_path(),
+  'TEST_OUTPUT_DIRECTORY': test_output_directory,
+  'TEST_SHELL_PATH': shell.full_path(),
+}
+  if value != '' and cygpath.found()
+    value = run_command(cygpath, value, check: true).stdout().strip()
+  endif
+  build_options_config.set_quoted(key, value)
+endforeach
+
+configure_file(
+  input: 'GIT-BUILD-OPTIONS.in',
+  output: 'GIT-BUILD-OPTIONS',
+  configuration: build_options_config,
+)
+
 summary({
   'curl': curl.found(),
   'expat': expat.found(),
   'gettext': intl.found(),
-  'gitweb': gitweb_option.enabled(),
+  'gitweb': gitweb_option.allowed(),
   'https': https_backend,
   'iconv': iconv.found(),
   'pcre2': pcre2.found(),

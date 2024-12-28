@@ -105,6 +105,11 @@ if ! test_have_prereq PERL; then
 	test_done
 fi
 
+if ! test_have_prereq GITWEB; then
+	skip_all='skipping gitweb tests, gitweb not available'
+	test_done
+fi
+
 perl -MEncode -e '$e="";decode_utf8($e, Encode::FB_CROAK)' >/dev/null 2>&1 || {
 	skip_all='skipping gitweb tests, perl version is too old'
 	test_done
