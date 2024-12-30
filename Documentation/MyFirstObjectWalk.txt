@@ -376,7 +376,7 @@ $ ./bin-wrappers/git walken
 
 You should see all of the subject lines of all the commits in
 your tree's history, in order, ending with the initial commit, "Initial revision
-of "git", the information manager from hell". Congratulations! You've written
+of "git", Distributed version control system". Congratulations! You've written
 your first revision walk. You can play with printing some additional fields
 from each commit if you're curious; have a look at the functions available in
 `commit.h`.
