@@ -1982,13 +1982,15 @@ static int check_collision(const char *filename_a, const char *filename_b)
 
 	fd_a = open(filename_a, O_RDONLY);
 	if (fd_a < 0) {
-		ret = error_errno(_("unable to open %s"), filename_a);
+		if (errno != ENOENT)
+			ret = error_errno(_("unable to open %s"), filename_a);
 		goto out;
 	}
 
 	fd_b = open(filename_b, O_RDONLY);
 	if (fd_b < 0) {
-		ret = error_errno(_("unable to open %s"), filename_b);
+		if (errno != ENOENT)
+			ret = error_errno(_("unable to open %s"), filename_b);
 		goto out;
 	}
 
