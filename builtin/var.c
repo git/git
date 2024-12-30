@@ -1,5 +1,5 @@
 /*
- * GIT - The information manager from hell
+ * GIT - Distributed version control system
  *
  * Copyright (C) Eric Biederman, 2005
  */
