@@ -1943,3 +1943,10 @@ summary({
   'perl': perl_features_enabled,
   'python': python.found(),
 }, section: 'Auto-detected features')
+
+summary({
+  'https': https_backend,
+  'sha1': sha1_backend,
+  'sha1_unsafe': sha1_unsafe_backend,
+  'sha256': sha256_backend,
+}, section: 'Backends')
