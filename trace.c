@@ -1,5 +1,5 @@
 /*
- * GIT - The information manager from hell
+ * GIT - Distributed version control system
  *
  * Copyright (C) 2000-2002 Michael R. Elkins <me@mutt.org>
  * Copyright (C) 2002-2004 Oswald Buddenhagen <ossi@users.sf.net>
