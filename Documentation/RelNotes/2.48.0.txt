@@ -161,6 +161,9 @@ Performance, Internal Implementation, Development Support etc.
  * "git refs migrate" learned to also migrate the reflog data across
    backends.
 
+ * The developer documentation has been updated to give the latest
+   info on gitk and git-gui maintainer.
+
 
 Fixes since v2.47
 -----------------
