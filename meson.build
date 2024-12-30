@@ -1367,7 +1367,7 @@ if sha1_backend == 'sha1dc'
     'sha1dc/sha1.c',
     'sha1dc/ubc_check.c',
   ]
-elif sha1_backend == 'common-crypto'
+elif sha1_backend == 'CommonCrypto'
   libgit_c_args += '-DCOMMON_DIGEST_FOR_OPENSSL'
   libgit_c_args += '-DSHA1_APPLE'
   # Apple CommonCrypto requires chunking
