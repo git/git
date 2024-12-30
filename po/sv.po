@@ -5,10 +5,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git 2.47.0\n"
+"Project-Id-Version: git 2.48.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2024-09-19 02:06+0000\n"
-"PO-Revision-Date: 2024-09-28 15:45+0100\n"
+"POT-Creation-Date: 2024-12-30 11:57+0100\n"
+"PO-Revision-Date: 2024-12-30 12:03+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Svenska <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -624,10 +624,10 @@ msgstr "Endast binära filer ändrade."
 #, c-format
 msgid ""
 "\n"
-"Disable this message with \"git config advice.%s false\""
+"Disable this message with \"git config set advice.%s false\""
 msgstr ""
 "\n"
-"Slå av meddelandet med ”git config advice.%s false”"
+"Slå av meddelandet med ”git config set advice.%s false”"
 
 #, c-format
 msgid "%shint:%s%.*s%s\n"
@@ -1356,6 +1356,10 @@ msgstr "objektnamnet är inte giltigt: %s"
 #, c-format
 msgid "not a tree object: %s"
 msgstr "inte ett trädobjekt: %s"
+
+#, c-format
+msgid "failed to unpack tree object %s"
+msgstr "misslyckades packa upp trädobjektet %s"
 
 #, c-format
 msgid "File not found: %s"
@@ -3825,9 +3829,8 @@ msgstr "ny ofödd gren"
 msgid "update ignored files (default)"
 msgstr "uppdatera ignorerade filer (standard)"
 
-msgid "do not check if another worktree is holding the given ref"
-msgstr ""
-"kontrollera inte om en annan arbetskatalog håller den angivna referensen"
+msgid "do not check if another worktree is using this branch"
+msgstr "kontrollera inte om en annan arbetskatalog använder grenen"
 
 msgid "checkout our version for unmerged files"
 msgstr "checka ut vår version för ej sammanslagna filer"
@@ -4125,11 +4128,11 @@ msgstr "skapa en grund klon på detta djup"
 msgid "create a shallow clone since a specific time"
 msgstr "skapa en grund klon från en angiven tidpunkt"
 
-msgid "revision"
-msgstr "revision"
+msgid "ref"
+msgstr "ref"
 
-msgid "deepen history of shallow clone, excluding rev"
-msgstr "fördjupa historik för grund klon, exkludera revisionen"
+msgid "deepen history of shallow clone, excluding ref"
+msgstr "fördjupa historik för grund klon, exkludera ref"
 
 msgid "clone only one branch, HEAD or --branch"
 msgstr "klona endast en gren, HEAD eller --branch"
@@ -5054,10 +5057,10 @@ msgstr ""
 
 msgid ""
 "git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] "
-"<name> <value>"
+"<name>"
 msgstr ""
 "git config unset [<filflagga>] [--all] [--value=<värde>] [--fixed-value] "
-"<namn> <värde>"
+"<namn>"
 
 msgid "git config rename-section [<file-option>] <old-name> <new-name>"
 msgstr "git config rename-section [<filflagga>] <gammalt-namn> <nytt-namn>"
@@ -5490,12 +5493,8 @@ msgid "traversed %lu commits\n"
 msgstr "traverserade %lu incheckningar\n"
 
 #, c-format
-msgid ""
-"more than %i tags found; listed %i most recent\n"
-"gave up search at %s\n"
-msgstr ""
-"mer än %i taggar hittades; listar de %i senaste\n"
-"gav upp sökningen vid %s\n"
+msgid "found %i tags; gave up search at %s\n"
+msgstr "hittade %i taggar; gav upp sökning vid %s\n"
 
 #, c-format
 msgid "describe %s\n"
@@ -5927,6 +5926,20 @@ msgstr "%s är inte ett giltigt objekt"
 msgid "the object %s does not exist"
 msgstr "objektet %s finns inte"
 
+#, c-format
+msgid ""
+"Run 'git remote set-head %s %s' to follow the change, or set\n"
+"'remote.%s.followRemoteHEAD' configuration option to a different value\n"
+"if you do not want to see this message. Specifically running\n"
+"'git config set remote.%s.followRemoteHEAD %s' will disable the warning\n"
+"until the remote changes HEAD to something else."
+msgstr ""
+"Kör ”git remote set-head %s %s” för att följa ändringen, eller sätt\n"
+"konfigurationsflaggan ”remote %s.followRemoteHEAD” till ett annat värde\n"
+"om du inte vill se det här meddelandet. Du kan specifikt inaktivera\n"
+"varningen till fjärren ändrar HEAD till något annat genom att köra\n"
+"”git config set remote %s.followRemoteHEAD %s”."
+
 msgid "multiple branches detected, incompatible with --set-upstream"
 msgstr "flera grenar upptäcktes, inkompatibelt med --set-upstream"
 
@@ -6063,6 +6076,9 @@ msgstr "referenskarta"
 
 msgid "specify fetch refmap"
 msgstr "ange referenskarta för ”fetch”"
+
+msgid "revision"
+msgstr "revision"
 
 msgid "report that we have only objects reachable from this object"
 msgstr "rapportera att vi bara har objekt nåbara från detta objektet"
@@ -6789,8 +6805,25 @@ msgstr "varken systemd-timer eller crontab är tillgänglig"
 msgid "%s scheduler is not available"
 msgstr "%s-schemaläggare är inte tillgänglig"
 
-msgid "another process is scheduling background maintenance"
-msgstr "en annan process schemalägger bakgrundsunderhåll"
+#, c-format
+msgid ""
+"unable to create '%s.lock': %s.\n"
+"\n"
+"Another scheduled git-maintenance(1) process seems to be running in this\n"
+"repository. Please make sure no other maintenance processes are running and\n"
+"then try again. If it still fails, a git-maintenance(1) process may have\n"
+"crashed in this repository earlier: remove the file manually to continue."
+msgstr ""
+"Kunde inte skapa ”%s.lock”: %s.\n"
+"\n"
+"Det verkar som en annan schemalagd git-maintenance(1)-process kör i det\n"
+"här arkivet. Se till att inga andra underhållsprocesser körs och försök\n"
+"sedan igen. Om det fortfarande misslyckas kanske en git-maintenance(1)-\n"
+"process har kraschat i det här arkivet tidigare: ta bort filen manuellt\n"
+"för att fortsätta."
+
+msgid "cannot acquire lock for scheduled background maintenance"
+msgstr "kan inte erhålla låset för schemalagt bakgrundsunderhåll"
 
 msgid "git maintenance start [--scheduler=<scheduler>]"
 msgstr "git maintenance start [--scheduler=<schemaläggare>]"
@@ -7320,7 +7353,7 @@ msgstr "paketfilnamnet ”%s” slutar inte med ”.%s”"
 
 #, c-format
 msgid "cannot write %s file '%s'"
-msgstr "kan inte ta skriva %s-fil ”%s”"
+msgstr "kan inte skriva %s-fil ”%s”"
 
 #, c-format
 msgid "cannot close written %s file '%s'"
@@ -7357,6 +7390,19 @@ msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "kedjelängd = %d: %lu objekt"
 msgstr[1] "kedjelängd = %d: %lu objekt"
 
+msgid "could not start pack-objects to repack local links"
+msgstr "kunde inte starta pack-objects för att packa om lokala länkar"
+
+msgid "failed to feed local object to pack-objects"
+msgstr "misslyckades sända lokala objekt till pack-objects"
+
+msgid "index-pack: Expecting full hex object ID lines only from pack-objects."
+msgstr ""
+"index-pack: Förväntar kompletta hex-objekt-ID-rader endast från pack-objects."
+
+msgid "could not finish pack-objects to repack local links"
+msgstr "kunde inte avsluta pack-objects för att packa om lokala länkar"
+
 msgid "Cannot come back to cwd"
 msgstr "Kan inte gå tillbaka till arbetskatalogen (cwd)"
 
@@ -7367,6 +7413,9 @@ msgstr "felaktig %s"
 #, c-format
 msgid "unknown hash algorithm '%s'"
 msgstr "okänd hashningsalgoritm ”%s”"
+
+msgid "--promisor cannot be used with a pack name"
+msgstr "--promisor kan inte användas med ett paketnamn"
 
 msgid "--stdin requires a git repository"
 msgstr "--stdin kräver ett git-arkiv"
@@ -8708,11 +8757,11 @@ msgstr "git notes [--ref <anteckningsref>] [list [<objekt>]]"
 msgid ""
 "git notes [--ref <notes-ref>] add [-f] [--allow-empty] [--[no-]separator|--"
 "separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c "
-"| -C) <object>] [<object>]"
+"| -C) <object>] [<object>] [-e]"
 msgstr ""
 "git notes [--ref <anteckningsref>] add [-f] [--allow-empty] [--"
 "[no-]separator|--separator=<styckebrytning>] [--[no-]stripspace] [-m <medd> "
-"| -F <fil> | (-c | -C) <objekt>] [<objekt>]"
+"| -F <fil> | (-c | -C) <objekt>] [<objekt>] [-e]"
 
 msgid "git notes [--ref <notes-ref>] copy [-f] <from-object> <to-object>"
 msgstr ""
@@ -8721,11 +8770,11 @@ msgstr ""
 msgid ""
 "git notes [--ref <notes-ref>] append [--allow-empty] [--[no-]separator|--"
 "separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c "
-"| -C) <object>] [<object>]"
+"| -C) <object>] [<object>] [-e]"
 msgstr ""
 "git notes [--ref <anteckningsref>] append [--allow-empty] [--"
 "[no-]separator|--separator=<styckebrytning>] [--[no-]stripspace] [-m <medd> "
-"| -F <fil> | (-c | -C) <objekt>] [<objekt>]"
+"| -F <fil> | (-c | -C) <objekt>] [<objekt>] [-e]"
 
 msgid "git notes [--ref <notes-ref>] edit [--allow-empty] [<object>]"
 msgstr "git notes [--ref <anteckningsref>] edit [--allow-empty] [<objekt>]"
@@ -8843,6 +8892,9 @@ msgstr "anteckningsinnehåll i en fil"
 
 msgid "reuse and edit specified note object"
 msgstr "återanvänd och redigera angivet anteckningsobjekt"
+
+msgid "edit note message in editor"
+msgstr "redigera anteckning i textredigeringsprogram"
 
 msgid "reuse specified note object"
 msgstr "återanvänd angivet anteckningsobjekt"
@@ -9335,6 +9387,9 @@ msgstr "hantering av saknade objekt"
 
 msgid "do not pack objects in promisor packfiles"
 msgstr "packa inte objekt i kontraktspackfiler"
+
+msgid "implies --missing=allow-any"
+msgstr "implicerar --missing=allow-any"
 
 msgid "respect islands during delta compression"
 msgstr "respektera öar under deltakomprimering"
@@ -10919,6 +10974,30 @@ msgid_plural "  Local refs configured for 'git push'%s:"
 msgstr[0] "  Lokal referens konfigurerad för ”git push”%s:"
 msgstr[1] "  Lokala referenser konfigurerade för ”git push”%s:"
 
+#, c-format
+msgid "'%s/HEAD' is unchanged and points to '%s'\n"
+msgstr "”%s/HEAD” är oförändrad och pekar på ”%s”\n"
+
+#, c-format
+msgid "'%s/HEAD' has changed from '%s' and now points to '%s'\n"
+msgstr "”%s/HEAD” har ändrats från ”%s” och pekar nu på ”%s”\n"
+
+#, c-format
+msgid "'%s/HEAD' is now created and points to '%s'\n"
+msgstr "”%s/HEAD” har nu skapats och pekar på ”%s”\n"
+
+#, c-format
+msgid "'%s/HEAD' was detached at '%s' and now points to '%s'\n"
+msgstr "”%s/HEAD” kopplades från vid ”%s” och pekar nu på ”%s”\n"
+
+#, c-format
+msgid ""
+"'%s/HEAD' used to point to '%s' (which is not a remote branch), but now "
+"points to '%s'\n"
+msgstr ""
+"”%s/HEAD” pekade tidigare på ”%s” (som inte är en fjärrgren), men pekar nu "
+"på ”%s”\n"
+
 msgid "set refs/remotes/<name>/HEAD according to remote"
 msgstr "sätt refs/remotes/<namn>/HEAD enligt fjärren"
 
@@ -10940,7 +11019,7 @@ msgid "Not a valid ref: %s"
 msgstr "Inte en giltig referens: %s"
 
 #, c-format
-msgid "Could not setup %s"
+msgid "Could not set up %s"
 msgstr "Kunde inte ställa in %s"
 
 #, c-format
@@ -13641,6 +13720,9 @@ msgstr "ställ in spårningsläge (se git-branch(1))"
 msgid "try to match the new branch name with a remote-tracking branch"
 msgstr "försök träffa namn på ny gren mot en fjärrspårande gren"
 
+msgid "use relative paths for worktrees"
+msgstr "använd relativa sökvägar för arbetskataloger"
+
 #, c-format
 msgid "options '%s', '%s', and '%s' cannot be used together"
 msgstr "flaggorna ”%s”, ”%s” och ”%s” kan inte användas samtidigt"
@@ -13911,6 +13993,26 @@ msgstr "kan inte skapa ”%s”"
 
 msgid "index-pack died"
 msgstr "index-pack dog"
+
+#, c-format
+msgid "directory '%s' is present in index, but not sparse"
+msgstr "katalogen ”%s” finns i indexet, men inte glest"
+
+msgid "corrupted cache-tree has entries not present in index"
+msgstr "trasigt cacheträd innehåller poster som inte finns i indexet"
+
+#, c-format
+msgid "%s with flags 0x%x should not be in cache-tree"
+msgstr "%s med flaggorna 0x%x borde inte finnas i cacheträdet"
+
+#, c-format
+msgid "bad subtree '%.*s'"
+msgstr "felaktigt underträd ”%.*s”"
+
+#, c-format
+msgid "cache-tree for path %.*s does not match. Expected %s got %s"
+msgstr ""
+"cacheträd för sökvägen %.*s stämmer inte överens. Förväntade %s fick %s"
 
 msgid "terminating chunk id appears earlier than expected"
 msgstr "avslutande stycke-id förekommer tidigare än förväntat"
@@ -14777,7 +14879,7 @@ msgid ""
 "to convert the grafts into replace refs.\n"
 "\n"
 "Turn this message off by running\n"
-"\"git config advice.graftFileDeprecated false\""
+"\"git config set advice.graftFileDeprecated false\""
 msgstr ""
 "Stöd för <GIT_DIR>/info/grafts avråds från och\n"
 "kommer tas bort i en framtida version av Git.\n"
@@ -14786,7 +14888,7 @@ msgstr ""
 "för att omvandla grafts till ersättningsreferenser.\n"
 "\n"
 "Slå av detta meddelande genom att skriva\n"
-"”git config advice.graftFileDeprecated false”"
+"”git config set advice.graftFileDeprecated false”"
 
 #, c-format
 msgid "commit %s exists in commit-graph but not in the object database"
@@ -15597,6 +15699,19 @@ msgstr "url saknar protokoll: %s"
 msgid "credential url cannot be parsed: %s"
 msgstr "kan inte tolka url för inloggingsuppgifter: %s"
 
+#, c-format
+msgid "invalid timeout '%s', expecting a non-negative integer"
+msgstr "felaktig tidsgräns ”%s”, förväntade ett icke-negativt heltal"
+
+#, c-format
+msgid "invalid init-timeout '%s', expecting a non-negative integer"
+msgstr ""
+"felaktig värde för init-timeout ”%s”, förväntade ett icke-negativt heltal"
+
+#, c-format
+msgid "invalid max-connections '%s', expecting an integer"
+msgstr "felaktigt värde för max-connections ”%s”, förväntade ett heltal"
+
 msgid "in the future"
 msgstr "i framtiden"
 
@@ -16296,6 +16411,20 @@ msgstr "felaktig git-namnrymdssökväg ”%s”"
 msgid "too many args to run %s"
 msgstr "för många flaggor för att köra %s"
 
+#, c-format
+msgid ""
+"You are attempting to fetch %s, which is in the commit graph file but not in "
+"the object database.\n"
+"This is probably due to repo corruption.\n"
+"If you are attempting to repair this repo corruption by refetching the "
+"missing object, use 'git fetch --refetch' with the missing object."
+msgstr ""
+"Du försöker hämta %s som är i incheckningsgrafen men inte i "
+"objektdatabasen.\n"
+"Det händer antagligen på grund av att arkivet är trasigt.\n"
+"Om du försöker reparera det trasiga arkivet genom att hämta om det saknade "
+"objektet, använd ”git fetch --refetch” med det saknade objektet."
+
 msgid "git fetch-pack: expected shallow list"
 msgstr "git fetch-pack: förväntade grund lista"
 
@@ -16880,10 +17009,10 @@ msgstr[1] ""
 #, c-format
 msgid ""
 "The '%s' hook was ignored because it's not set as executable.\n"
-"You can disable this warning with `git config advice.ignoredHook false`."
+"You can disable this warning with `git config set advice.ignoredHook false`."
 msgstr ""
 "Kroken ”%s” ignorerades eftersom den inte är markerad som körbar.\n"
-"Du kan inaktivera varningen med ”git config advice.ignoredHook false”."
+"Du kan inaktivera varningen med ”git config set advice.ignoredHook false”."
 
 msgid "not a git repository"
 msgstr "inte ett git-arkiv"
@@ -16900,14 +17029,8 @@ msgstr "http.postBuffer har negativt värde; använder förvalet %d"
 msgid "Delegation control is not supported with cURL < 7.22.0"
 msgstr "Delegerad styrning stöds inte av cURL < 7.22.0"
 
-msgid "Public key pinning not supported with cURL < 7.39.0"
-msgstr "Fastnålning av öppen nyckel stöds inte av cURL < 7.39.0"
-
 msgid "Unknown value for http.proactiveauth"
 msgstr "Okänt värde för http.proactiveauth"
-
-msgid "CURLSSLOPT_NO_REVOKE not supported with cURL < 7.44.0"
-msgstr "CURLSSLOPT_NO_REVOKE stöds inte av cURL < 7.44.0"
 
 #, c-format
 msgid "Unsupported SSL backend '%s'. Supported SSL backends:"
@@ -17090,6 +17213,10 @@ msgstr "citerad CRLF upptäcktes"
 #, c-format
 msgid "unable to format message: %s"
 msgstr "kan inte formatera meddelandet: %s"
+
+#, c-format
+msgid "invalid marker-size '%s', expecting an integer"
+msgstr "felaktigt värde för marker-size ”%s”, förväntade ett heltal"
 
 #, c-format
 msgid "Failed to merge submodule %s (not checked out)"
@@ -17996,6 +18123,14 @@ msgid "missing mapping of %s to %s"
 msgstr "saknar koppling av %s till %s"
 
 #, c-format
+msgid "unable to open %s"
+msgstr "kan inte öppna %s"
+
+#, c-format
+msgid "files '%s' and '%s' differ in contents"
+msgstr "filerna ”%s” och ”%s” har olika innehåll"
+
+#, c-format
 msgid "unable to write file %s"
 msgstr "kan inte skriva filen %s"
 
@@ -18079,10 +18214,6 @@ msgstr "%s: filtypen stöds ej"
 #, c-format
 msgid "%s is not a valid '%s' object"
 msgstr "%s är inte ett giltigt ”%s”-objekt"
-
-#, c-format
-msgid "unable to open %s"
-msgstr "kan inte öppna %s"
 
 #, c-format
 msgid "hash mismatch for %s (expected %s)"
@@ -18185,7 +18316,7 @@ msgid ""
 "\n"
 "where \"$br\" is somehow empty and a 40-hex ref is created. Please\n"
 "examine these refs and maybe delete them. Turn this message off by\n"
-"running \"git config advice.objectNameWarning false\""
+"running \"git config set advice.objectNameWarning false\""
 msgstr ""
 "Git skapar normalt aldrig referenser som slutar med 40 hexadecimala\n"
 "tecken, då detta ignoreras när du anger 40-hex enbart. Dessa\n"
@@ -18195,7 +18326,7 @@ msgstr ""
 "\n"
 "där ”$br” på något sätt blivit tomt och en 40-hex-referens skapats.\n"
 "Undersök referenserna och ta kanske bort dem. Stäng av meddelandet\n"
-"genom att köra ”git config advice.objectNameWarning false”"
+"genom att köra ”git config set advice.objectNameWarning false”"
 
 #, c-format
 msgid "log for '%.*s' only goes back to %s"
@@ -18353,13 +18484,6 @@ msgstr "flerpaketsbitkarta saknar nödvändigt omvänt index"
 #, c-format
 msgid "could not open pack %s"
 msgstr "kunde inte öppna paketfilen %s"
-
-msgid "could not determine MIDX preferred pack"
-msgstr "kunde inte bestämma det föredragna MIDX-paketet"
-
-#, c-format
-msgid "preferred pack (%s) is invalid"
-msgstr "föredragen paketfil (%s) är ogiltig"
 
 msgid "corrupt bitmap lookup table: triplet position out of index"
 msgstr "trasig bitkarteuppslagstabell: trippelposition utanför indexet"
@@ -19475,16 +19599,24 @@ msgstr "loggen för referensen %s slutade oväntat på %s"
 msgid "log for %s is empty"
 msgstr "loggen för %s är tom"
 
-msgid "refusing to force and skip creation of reflog"
-msgstr "vägrar att tvinga och hoppa över skapande av reflogg"
+#, c-format
+msgid "refusing to update reflog for pseudoref '%s'"
+msgstr "vägrar uppdatera referenslogg för pseudoreferensen ”%s”"
+
+#, c-format
+msgid "refusing to update pseudoref '%s'"
+msgstr "vägrar uppdatera pseudoreferensen ”%s”"
+
+#, c-format
+msgid "refusing to update reflog with bad name '%s'"
+msgstr "vägrar uppdatera referenslogg med trasigt namn ”%s”"
 
 #, c-format
 msgid "refusing to update ref with bad name '%s'"
 msgstr "vägrar uppdatera referens med trasigt namn ”%s”"
 
-#, c-format
-msgid "refusing to update pseudoref '%s'"
-msgstr "vägrar uppdatera pseudoreferensen ”%s”"
+msgid "refusing to force and skip creation of reflog"
+msgstr "vägrar att tvinga och hoppa över skapande av reflogg"
 
 #, c-format
 msgid "update_ref failed for ref '%s': %s"
@@ -19534,6 +19666,10 @@ msgid ""
 msgstr ""
 "kan inte läsa referensen ”%s”: förväntade symbolisk referens med målet ”%s”: "
 "men är en vanlig referens"
+
+#, c-format
+msgid "cannot read ref file '%s'"
+msgstr "kan inte läsa ref-fil ”%s”"
 
 #, c-format
 msgid "cannot open directory %s"
@@ -19739,6 +19875,10 @@ msgstr "mer än en receivepack angavs, använder den första"
 
 msgid "more than one uploadpack given, using the first"
 msgstr "mer än en uploadpack angavs, använder den första"
+
+#, c-format
+msgid "unrecognized followRemoteHEAD value '%s' ignored"
+msgstr "okänt värde ”%s” för followRemoteHEAD ignorerades"
 
 #, c-format
 msgid "unrecognized value transfer.credentialsInUrl: '%s'"
@@ -21665,6 +21805,9 @@ msgstr "incheckning %s är inte märkt nåbar"
 msgid "too many commits marked reachable"
 msgstr "för många incheckningar markerade nåbara"
 
+msgid "could not determine MIDX preferred pack"
+msgstr "kunde inte bestämma det föredragna MIDX-paketet"
+
 msgid "test-tool serve-v2 [<options>]"
 msgstr "test-tool serve-v2 [<flaggor>]"
 
@@ -22319,6 +22462,9 @@ msgstr ".git-filen är trasig"
 msgid ".git file incorrect"
 msgstr ".git-filen är felaktig"
 
+msgid ".git file absolute/relative path mismatch"
+msgstr "absolut/relativ sökväg för .git-fil stämmer inte överens"
+
 msgid "not a valid path"
 msgstr "inte en giltig sökväg"
 
@@ -22333,6 +22479,9 @@ msgstr "kan inte hitta arkivet; ”.git”-filen är trasig"
 
 msgid "gitdir unreadable"
 msgstr "gitdir är oläsbar"
+
+msgid "gitdir absolute/relative path mismatch"
+msgstr "absolut/relativ sökväg för git-katalog stämmer inte överens"
 
 msgid "gitdir incorrect"
 msgstr "gitdir är felaktig"
@@ -22367,6 +22516,13 @@ msgstr "kan inte slå av %s i ”%s”"
 
 msgid "failed to set extensions.worktreeConfig setting"
 msgstr "misslyckades ändra inställningen extensions.worktreeConfig"
+
+msgid "unable to upgrade repository format to support relative worktrees"
+msgstr ""
+"kunde inte uppgradera arkivformat till att stöda relativa arbetskataloger"
+
+msgid "unable to set extensions.relativeWorktrees setting"
+msgstr "misslyckades ändra inställningen extensions.relativeWorktrees"
 
 #, c-format
 msgid "could not setenv '%s'"
@@ -23217,10 +23373,3 @@ msgstr ""
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Vill du verkligen sända %s? [y=ja, n=nej]: "
-
-#~ msgid "revision walk setup failed\n"
-#~ msgstr "misslyckades starta revisionstraversering\n"
-
-#, c-format
-#~ msgid "unable to parse contact: %s"
-#~ msgstr "kan inte tolka kontakt: %s"
