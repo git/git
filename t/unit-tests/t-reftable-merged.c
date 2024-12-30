@@ -178,7 +178,7 @@ static void t_merged_refs(void)
 		if (err > 0)
 			break;
 
-		REFTABLE_ALLOC_GROW(out, len + 1, cap);
+		check(!REFTABLE_ALLOC_GROW(out, len + 1, cap));
 		out[len++] = ref;
 	}
 	reftable_iterator_destroy(&it);
@@ -459,7 +459,7 @@ static void t_merged_logs(void)
 		if (err > 0)
 			break;
 
-		REFTABLE_ALLOC_GROW(out, len + 1, cap);
+		check(!REFTABLE_ALLOC_GROW(out, len + 1, cap));
 		out[len++] = log;
 	}
 	reftable_iterator_destroy(&it);
