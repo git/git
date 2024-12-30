@@ -1329,7 +1329,7 @@ https_backend = get_option('https_backend')
 sha1_backend = get_option('sha1_backend')
 sha256_backend = get_option('sha256_backend')
 
-security_framework = dependency('Security', required: https_backend == 'CommonCrypto')
+security_framework = dependency('Security', required: https_backend == 'CommonCrypto' or sha1_backend == 'CommonCrypto')
 core_foundation_framework = dependency('CoreFoundation', required: security_framework.found())
 if https_backend == 'auto' and security_framework.found()
   https_backend = 'CommonCrypto'
