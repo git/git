@@ -1327,15 +1327,16 @@ endif
 
 https_backend = get_option('https_backend')
 sha1_backend = get_option('sha1_backend')
+sha1_unsafe_backend = get_option('sha1_unsafe_backend')
 sha256_backend = get_option('sha256_backend')
 
-security_framework = dependency('Security', required: 'CommonCrypto' in [https_backend, sha1_backend])
+security_framework = dependency('Security', required: 'CommonCrypto' in [https_backend, sha1_backend, sha1_unsafe_backend])
 core_foundation_framework = dependency('CoreFoundation', required: security_framework.found())
 if https_backend == 'auto' and security_framework.found()
   https_backend = 'CommonCrypto'
 endif
 
-openssl_required = 'openssl' in [https_backend, sha1_backend, sha256_backend]
+openssl_required = 'openssl' in [https_backend, sha1_backend, sha1_unsafe_backend, sha256_backend]
 openssl = dependency('openssl', required: openssl_required, default_options: ['default_library=static'])
 if https_backend == 'auto' and openssl.found()
   https_backend = 'openssl'
@@ -1368,19 +1369,38 @@ if sha1_backend == 'sha1dc'
     'sha1dc/sha1.c',
     'sha1dc/ubc_check.c',
   ]
-elif sha1_backend == 'CommonCrypto'
+endif
+if sha1_backend == 'CommonCrypto' or sha1_unsafe_backend == 'CommonCrypto'
+  if sha1_backend == 'CommonCrypto'
+    libgit_c_args += '-DSHA1_APPLE'
+  endif
+  if sha1_unsafe_backend == 'CommonCrypto'
+    libgit_c_args += '-DSHA1_APPLE_UNSAFE'
+  endif
+
   libgit_c_args += '-DCOMMON_DIGEST_FOR_OPENSSL'
-  libgit_c_args += '-DSHA1_APPLE'
   # Apple CommonCrypto requires chunking
   libgit_c_args += '-DSHA1_MAX_BLOCK_SIZE=1024L*1024L*1024L'
-elif sha1_backend == 'openssl'
-  libgit_c_args += '-DSHA1_OPENSSL'
+endif
+if sha1_backend == 'openssl' or sha1_unsafe_backend == 'openssl'
+  if sha1_backend == 'openssl'
+    libgit_c_args += '-DSHA1_OPENSSL'
+  endif
+  if sha1_unsafe_backend == 'openssl'
+    libgit_c_args += '-DSHA1_OPENSSL_UNSAFE'
+  endif
+
   libgit_dependencies += openssl
-elif sha1_backend == 'block'
-  libgit_c_args += '-DSHA1_BLK'
+endif
+if sha1_backend == 'block' or sha1_unsafe_backend == 'block'
+  if sha1_backend == 'block'
+    libgit_c_args += '-DSHA1_BLK'
+  endif
+  if sha1_unsafe_backend == 'block'
+    libgit_c_args += '-DSHA1_BLK_UNSAFE'
+  endif
+
   libgit_sources += 'block-sha1/sha1.c'
-else
-  error('Unhandled SHA1 backend ' + sha1_backend)
 endif
 
 if sha256_backend == 'openssl'
