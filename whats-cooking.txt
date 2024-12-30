@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Dec 2024, #10; Sat, 28)
-X-master-at: df2faf1a65fc821384e618b3c291a184fbed039e
-X-next-at: bfe548d87ed7786f06c2d9519f69c38ed47176e6
+Subject: What's cooking in git.git (Dec 2024, #11; Mon, 30)
+X-master-at: bc2c65770dca70c1d4e151fad971bc7c7235a702
+X-next-at: 8677dc54d23642379db0014f8fa76565a086b1d5
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Dec 2024, #10; Sat, 28)
+What's cooking in git.git (Dec 2024, #11; Mon, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,7 +17,9 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Hopefully we can tag -rc1 40-hours+ from now.
+It has been a very slow week, and I expect this week will also be
+slow.  Git 2.48-rc1 has been tagged.  Hopefully we can have 2.48
+final around the end of next week.
 
 Extra testing the tip of 'master' before we actually tag it is as
 always very much appreciated.
@@ -51,36 +53,76 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* as/gitk-git-gui-repo-update (2024-12-26) 1 commit
-  (merged to 'next' on 2024-12-26 at 10b9e8227b)
- + Update the official repo of gitk
-
- The developer documentation has been updated to give the latest
- info on gitk and git-gui maintainer.
- 
- source: <20241224122912.20666-2-ash@kambanaria.org>
-
---------------------------------------------------
 [New Topics]
 
-* sk/strlen-returns-size_t (2024-12-26) 1 commit
- - date.c: Fix type missmatch warings from msvc
+* jk/lsan-race-with-barrier (2024-12-30) 5 commits
+  (merged to 'next' on 2024-12-30 at 3fc0e14928)
+ + grep: work around LSan threading race with barrier
+ + index-pack: work around LSan threading race with barrier
+ + thread-utils: introduce optional barrier type
+ + Revert "index-pack: spawn threads atomically"
+ + test-lib: use individual lsan dir for --stress runs
 
- Code clean-up.
+ CI jobs that run threaded programs under LSan has been giving false
+ positives from time to time, which has been worked around.
 
- The remainder needs to be reviewed.
- source: <20241223110407.3308-3-soekkle@freenet.de>
+ Will merge to 'master'.
+ source: <20241230042325.GA112439@coredump.intra.peff.net>
 
+
+* ps/meson-weak-sha1-build (2024-12-30) 8 commits
+ - meson: provide a summary of configured backends
+ - meson: wire up unsafe SHA1 backend
+ - meson: add missing dots for build options
+ - meson: simplify conditions for HTTPS and SHA1 dependencies
+ - meson: require SecurityFramework when it's used as SHA1 backend
+ - meson: deduplicate access to SHA1/SHA256 backend options
+ - meson: consistenlty spell 'CommonCrypto'
+ - Merge branch 'ps/weak-sha1-for-tail-sum-fix' into ps/meson-weak-sha1-build
+ (this branch uses ps/weak-sha1-for-tail-sum-fix.)
+
+ meson-based build now supports the unsafe-sha1 build knob.
+
+ Will merge to 'next'.
+ source: <20241230-pks-meson-sha1-unsafe-v1-0-efb276e171f5@pks.im>
+
+
+* ps/object-collision-check (2024-12-30) 1 commit
+  (merged to 'next' on 2024-12-30 at e083ea3154)
+ + object-file: fix race in object collision check
+
+ CI jobs gave sporadic failures, which turns out that that the
+ object finalization code was giving an error when it did not have
+ to.
+
+ Will merge to 'master'.
+ source: <20241230-b4-pks-object-file-racy-collision-check-v1-1-11571294e60a@pks.im>
+
+
+* ps/weak-sha1-for-tail-sum-fix (2024-12-30) 3 commits
+  (merged to 'next' on 2024-12-30 at c24783e99d)
+ + ci: exercise unsafe OpenSSL backend
+ + builtin/fast-import: fix segfault with unsafe SHA1 backend
+ + bulk-checkin: fix segfault with unsafe SHA1 backend
+ (this branch is used by ps/meson-weak-sha1-build.)
+
+ An earlier "csum-file checksum does not have to be computed with
+ sha1dc" topic had a few code paths that had initialized an
+ implementation of a hash function to be used by an unmatching hash
+ by mistake, which have been corrected.
+
+ Will merge to 'master'.
+ source: <20241230-pks-meson-sha1-unsafe-v1-0-efb276e171f5@pks.im>
+
+--------------------------------------------------
+[Graduated to 'master']
 
 * ms/t7611-test-path-is-file (2024-12-27) 1 commit
   (merged to 'next' on 2024-12-28 at b08a0c8e23)
  + t7611: replace test -f with test_path_is* helpers
 
  Test modernization.
-
- Will merge to 'master'.
+ 
  source: <20241227105345.10184-1-meetsoni3017@gmail.com>
 
 
@@ -91,9 +133,18 @@ Release tarballs are available at:
  + GIT-BUILD-OPTIONS: sort variables alphabetically
 
  meson-based build without GitWeb failed the self tests.
-
- Will merge to 'master'.
  source: <20241227-b4-pks-meson-wo-gitweb-v1-0-14ca8515bb3b@pks.im>
+
+--------------------------------------------------
+[Cooking]
+
+* sk/strlen-returns-size_t (2024-12-26) 1 commit
+ - date.c: Fix type missmatch warings from msvc
+
+ Code clean-up.
+
+ The remainder needs to be reviewed.
+ source: <20241223110407.3308-3-soekkle@freenet.de>
 
 
 * ps/more-sign-compare (2024-12-27) 10 commits
@@ -110,21 +161,20 @@ Release tarballs are available at:
 
  More -Wsign-compare fixes.
 
- Expecting a reroll?
- cf. <Z2-2dbYVuuLxpNmK@pks.im>
+ Will merge to 'next'.
  cf. https://staticthinking.wordpress.com/2023/07/25/wsign-compare-is-garbage/
  source: <20241227-b4-pks-commit-reach-sign-compare-v1-0-07c59c2aa632@pks.im>
 
 
-* as/long-option-help-i18n (2024-12-28) 2 commits
- - SQUASH???
- - parse-options: localize mark-up of placeholder text in the short help
+* as/long-option-help-i18n (2024-12-30) 1 commit
+  (merged to 'next' on 2024-12-30 at 900c79808f)
+ + parse-options: localize mark-up of placeholder text in the short help
 
  Tweak the help text used for the option value placeholders by
  parse-options API so that translations can customize the "<>"
  placeholder signal (e.g. "--option=<value>").
 
- Will merge to 'next' after squashing the fix-up in?
+ Will cook in 'next'.
  source: <20241228114221.10351-4-ash@kambanaria.org>
 
 
@@ -134,22 +184,23 @@ Release tarballs are available at:
  A new periodic maintenance task to run "git remote prune" has been
  introduced.
 
- Will merge to 'next'?
+ Expecting a reroll.
+ cf. <Z3JLdIG4C9D2-1ZT@pks.im>
  source: <pull.1838.v2.git.1735380461980.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * rs/reftable-realloc-errors (2024-12-28) 4 commits
- - t-reftable-merged: handle realloc errors
- - reftable: handle realloc error in parse_names()
- - reftable: fix allocation count on realloc error
- - reftable: avoid leaks on realloc error
+  (merged to 'next' on 2024-12-30 at ebc9625a4c)
+ + t-reftable-merged: handle realloc errors
+ + reftable: handle realloc error in parse_names()
+ + reftable: fix allocation count on realloc error
+ + reftable: avoid leaks on realloc error
 
  The custom allocator code in the reftable library did not handle
  failing realloc() very well, which has been addressed.
 
- Will merge to 'next'?
+ Will merge to 'master'?
+ cf. <Z3JLdIG4C9D2-1ZT@pks.im>
  source: <f4677194-0a3a-4f07-b003-c0295b51c100@web.de>
 
 
