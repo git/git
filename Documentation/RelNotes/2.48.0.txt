@@ -165,6 +165,10 @@ Performance, Internal Implementation, Development Support etc.
    info on gitk and git-gui maintainer.
 
 
+ * CI jobs that run threaded programs under LSan has been giving false
+   positives from time to time, which has been worked around.
+
+
 Fixes since v2.47
 -----------------
 
@@ -309,6 +313,12 @@ Fixes since v2.47
  * Code to reuse objects based on bitmap contents have been tightened
    to avoid race condition even when multiple packs are involved.
    (merge 62b3ec8a3f tb/bitmap-fix-pack-reuse later to maint).
+
+ * An earlier "csum-file checksum does not have to be computed with
+   sha1dc" topic had a few code paths that had initialized an
+   implementation of a hash function to be used by an unmatching hash
+   by mistake, which have been corrected.
+   (merge 599a63409b ps/weak-sha1-for-tail-sum-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 77af53f56f aa/t7300-modernize later to maint).
