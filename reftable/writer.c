@@ -254,7 +254,8 @@ static int writer_index_hash(struct reftable_writer *w, struct reftable_buf *has
 	if (key->offset_len > 0 && key->offsets[key->offset_len - 1] == off)
 		return 0;
 
-	REFTABLE_ALLOC_GROW(key->offsets, key->offset_len + 1, key->offset_cap);
+	REFTABLE_ALLOC_GROW_OR_NULL(key->offsets, key->offset_len + 1,
+				    key->offset_cap);
 	if (!key->offsets)
 		return REFTABLE_OUT_OF_MEMORY_ERROR;
 	key->offsets[key->offset_len++] = off;
@@ -820,7 +821,7 @@ static int writer_flush_nonempty_block(struct reftable_writer *w)
 	 * Note that this also applies when flushing index blocks, in which
 	 * case we will end up with a multi-level index.
 	 */
-	REFTABLE_ALLOC_GROW(w->index, w->index_len + 1, w->index_cap);
+	REFTABLE_ALLOC_GROW_OR_NULL(w->index, w->index_len + 1, w->index_cap);
 	if (!w->index)
 		return REFTABLE_OUT_OF_MEMORY_ERROR;
 

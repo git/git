@@ -53,7 +53,8 @@ static int block_writer_register_restart(struct block_writer *w, int n,
 	if (2 + 3 * rlen + n > w->block_size - w->next)
 		return -1;
 	if (is_restart) {
-		REFTABLE_ALLOC_GROW(w->restarts, w->restart_len + 1, w->restart_cap);
+		REFTABLE_ALLOC_GROW_OR_NULL(w->restarts, w->restart_len + 1,
+					    w->restart_cap);
 		if (!w->restarts)
 			return REFTABLE_OUT_OF_MEMORY_ERROR;
 		w->restarts[w->restart_len++] = w->next;
@@ -176,7 +177,8 @@ int block_writer_finish(struct block_writer *w)
 		 * is guaranteed to return `Z_STREAM_END`.
 		 */
 		compressed_len = deflateBound(w->zstream, src_len);
-		REFTABLE_ALLOC_GROW(w->compressed, compressed_len, w->compressed_cap);
+		REFTABLE_ALLOC_GROW_OR_NULL(w->compressed, compressed_len,
+					    w->compressed_cap);
 		if (!w->compressed) {
 			ret = REFTABLE_OUT_OF_MEMORY_ERROR;
 			return ret;
@@ -235,8 +237,8 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		uLong src_len = block->len - block_header_skip;
 
 		/* Log blocks specify the *uncompressed* size in their header. */
-		REFTABLE_ALLOC_GROW(br->uncompressed_data, sz,
-				    br->uncompressed_cap);
+		REFTABLE_ALLOC_GROW_OR_NULL(br->uncompressed_data, sz,
+					    br->uncompressed_cap);
 		if (!br->uncompressed_data) {
 			err = REFTABLE_OUT_OF_MEMORY_ERROR;
 			goto done;

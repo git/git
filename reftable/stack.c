@@ -317,7 +317,9 @@ static int reftable_stack_reload_once(struct reftable_stack *st,
 				 * thus need to keep them alive here, which we
 				 * do by bumping their refcount.
 				 */
-				REFTABLE_ALLOC_GROW(reused, reused_len + 1, reused_alloc);
+				REFTABLE_ALLOC_GROW_OR_NULL(reused,
+							    reused_len + 1,
+							    reused_alloc);
 				if (!reused) {
 					err = REFTABLE_OUT_OF_MEMORY_ERROR;
 					goto done;
@@ -949,8 +951,8 @@ int reftable_addition_add(struct reftable_addition *add,
 	if (err < 0)
 		goto done;
 
-	REFTABLE_ALLOC_GROW(add->new_tables, add->new_tables_len + 1,
-			    add->new_tables_cap);
+	REFTABLE_ALLOC_GROW_OR_NULL(add->new_tables, add->new_tables_len + 1,
+				    add->new_tables_cap);
 	if (!add->new_tables) {
 		err = REFTABLE_OUT_OF_MEMORY_ERROR;
 		goto done;
