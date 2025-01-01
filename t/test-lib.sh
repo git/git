@@ -1177,7 +1177,8 @@ check_test_results_san_file_empty_ () {
 	! find "$TEST_RESULTS_SAN_DIR" \
 		-type f \
 		-name "$TEST_RESULTS_SAN_FILE_PFX.*" 2>/dev/null |
-	xargs grep -q ^DEDUP_TOKEN
+	xargs grep ^DEDUP_TOKEN |
+	grep -qv sanitizer::GetThreadStackTopAndBottom
 }
 
 check_test_results_san_file_ () {
