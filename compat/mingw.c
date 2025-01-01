@@ -2231,18 +2231,235 @@ static void ensure_socket_initialization(void)
 	initialized = 1;
 }
 
+static int winsock_error_to_errno(DWORD err)
+{
+	switch (err) {
+	case WSAEINTR: return EINTR;
+	case WSAEBADF: return EBADF;
+	case WSAEACCES: return EACCES;
+	case WSAEFAULT: return EFAULT;
+	case WSAEINVAL: return EINVAL;
+	case WSAEMFILE: return EMFILE;
+	case WSAEWOULDBLOCK: return EWOULDBLOCK;
+	case WSAEINPROGRESS: return EINPROGRESS;
+	case WSAEALREADY: return EALREADY;
+	case WSAENOTSOCK: return ENOTSOCK;
+	case WSAEDESTADDRREQ: return EDESTADDRREQ;
+	case WSAEMSGSIZE: return EMSGSIZE;
+	case WSAEPROTOTYPE: return EPROTOTYPE;
+	case WSAENOPROTOOPT: return ENOPROTOOPT;
+	case WSAEPROTONOSUPPORT: return EPROTONOSUPPORT;
+	case WSAEOPNOTSUPP: return EOPNOTSUPP;
+	case WSAEAFNOSUPPORT: return EAFNOSUPPORT;
+	case WSAEADDRINUSE: return EADDRINUSE;
+	case WSAEADDRNOTAVAIL: return EADDRNOTAVAIL;
+	case WSAENETDOWN: return ENETDOWN;
+	case WSAENETUNREACH: return ENETUNREACH;
+	case WSAENETRESET: return ENETRESET;
+	case WSAECONNABORTED: return ECONNABORTED;
+	case WSAECONNRESET: return ECONNRESET;
+	case WSAENOBUFS: return ENOBUFS;
+	case WSAEISCONN: return EISCONN;
+	case WSAENOTCONN: return ENOTCONN;
+	case WSAETIMEDOUT: return ETIMEDOUT;
+	case WSAECONNREFUSED: return ECONNREFUSED;
+	case WSAELOOP: return ELOOP;
+	case WSAENAMETOOLONG: return ENAMETOOLONG;
+	case WSAEHOSTUNREACH: return EHOSTUNREACH;
+	case WSAENOTEMPTY: return ENOTEMPTY;
+	/* No errno equivalent; default to EIO */
+	case WSAESOCKTNOSUPPORT:
+	case WSAEPFNOSUPPORT:
+	case WSAESHUTDOWN:
+	case WSAETOOMANYREFS:
+	case WSAEHOSTDOWN:
+	case WSAEPROCLIM:
+	case WSAEUSERS:
+	case WSAEDQUOT:
+	case WSAESTALE:
+	case WSAEREMOTE:
+	case WSASYSNOTREADY:
+	case WSAVERNOTSUPPORTED:
+	case WSANOTINITIALISED:
+	case WSAEDISCON:
+	case WSAENOMORE:
+	case WSAECANCELLED:
+	case WSAEINVALIDPROCTABLE:
+	case WSAEINVALIDPROVIDER:
+	case WSAEPROVIDERFAILEDINIT:
+	case WSASYSCALLFAILURE:
+	case WSASERVICE_NOT_FOUND:
+	case WSATYPE_NOT_FOUND:
+	case WSA_E_NO_MORE:
+	case WSA_E_CANCELLED:
+	case WSAEREFUSED:
+	case WSAHOST_NOT_FOUND:
+	case WSATRY_AGAIN:
+	case WSANO_RECOVERY:
+	case WSANO_DATA:
+	case WSA_QOS_RECEIVERS:
+	case WSA_QOS_SENDERS:
+	case WSA_QOS_NO_SENDERS:
+	case WSA_QOS_NO_RECEIVERS:
+	case WSA_QOS_REQUEST_CONFIRMED:
+	case WSA_QOS_ADMISSION_FAILURE:
+	case WSA_QOS_POLICY_FAILURE:
+	case WSA_QOS_BAD_STYLE:
+	case WSA_QOS_BAD_OBJECT:
+	case WSA_QOS_TRAFFIC_CTRL_ERROR:
+	case WSA_QOS_GENERIC_ERROR:
+	case WSA_QOS_ESERVICETYPE:
+	case WSA_QOS_EFLOWSPEC:
+	case WSA_QOS_EPROVSPECBUF:
+	case WSA_QOS_EFILTERSTYLE:
+	case WSA_QOS_EFILTERTYPE:
+	case WSA_QOS_EFILTERCOUNT:
+	case WSA_QOS_EOBJLENGTH:
+	case WSA_QOS_EFLOWCOUNT:
+#ifndef _MSC_VER
+	case WSA_QOS_EUNKNOWNPSOBJ:
+#endif
+	case WSA_QOS_EPOLICYOBJ:
+	case WSA_QOS_EFLOWDESC:
+	case WSA_QOS_EPSFLOWSPEC:
+	case WSA_QOS_EPSFILTERSPEC:
+	case WSA_QOS_ESDMODEOBJ:
+	case WSA_QOS_ESHAPERATEOBJ:
+	case WSA_QOS_RESERVED_PETYPE:
+	default: return EIO;
+	}
+}
+
+/*
+ * On Windows, `errno` is a global macro to a function call.
+ * This makes it difficult to debug and single-step our mappings.
+ */
+static inline void set_wsa_errno(void)
+{
+	DWORD wsa = WSAGetLastError();
+	int e = winsock_error_to_errno(wsa);
+	errno = e;
+
+#ifdef DEBUG_WSA_ERRNO
+	fprintf(stderr, "winsock error: %d -> %d\n", wsa, e);
+	fflush(stderr);
+#endif
+}
+
+static inline int winsock_return(int ret)
+{
+	if (ret < 0)
+		set_wsa_errno();
+
+	return ret;
+}
+
+#define WINSOCK_RETURN(x) do { return winsock_return(x); } while (0)
+
+#undef strerror
+char *mingw_strerror(int errnum)
+{
+	static char buf[41] ="";
+	switch (errnum) {
+		case EWOULDBLOCK:
+			xsnprintf(buf, 41, "%s", "Operation would block");
+			break;
+		case EINPROGRESS:
+			xsnprintf(buf, 41, "%s", "Operation now in progress");
+			break;
+		case EALREADY:
+			xsnprintf(buf, 41, "%s", "Operation already in progress");
+			break;
+		case ENOTSOCK:
+			xsnprintf(buf, 41, "%s", "Socket operation on non-socket");
+			break;
+		case EDESTADDRREQ:
+			xsnprintf(buf, 41, "%s", "Destination address required");
+			break;
+		case EMSGSIZE:
+			xsnprintf(buf, 41, "%s", "Message too long");
+			break;
+		case EPROTOTYPE:
+			xsnprintf(buf, 41, "%s", "Protocol wrong type for socket");
+			break;
+		case ENOPROTOOPT:
+			xsnprintf(buf, 41, "%s", "Protocol not available");
+			break;
+		case EPROTONOSUPPORT:
+			xsnprintf(buf, 41, "%s", "Protocol not supported");
+			break;
+		case EOPNOTSUPP:
+			xsnprintf(buf, 41, "%s", "Operation not supported");
+			break;
+		case EAFNOSUPPORT:
+			xsnprintf(buf, 41, "%s", "Address family not supported by protocol");
+			break;
+		case EADDRINUSE:
+			xsnprintf(buf, 41, "%s", "Address already in use");
+			break;
+		case EADDRNOTAVAIL:
+			xsnprintf(buf, 41, "%s", "Cannot assign requested address");
+			break;
+		case ENETDOWN:
+			xsnprintf(buf, 41, "%s", "Network is down");
+			break;
+		case ENETUNREACH:
+			xsnprintf(buf, 41, "%s", "Network is unreachable");
+			break;
+		case ENETRESET:
+			xsnprintf(buf, 41, "%s", "Network dropped connection on reset");
+			break;
+		case ECONNABORTED:
+			xsnprintf(buf, 41, "%s", "Software caused connection abort");
+			break;
+		case ECONNRESET:
+			xsnprintf(buf, 41, "%s", "Connection reset by peer");
+			break;
+		case ENOBUFS:
+			xsnprintf(buf, 41, "%s", "No buffer space available");
+			break;
+		case EISCONN:
+			xsnprintf(buf, 41, "%s", "Transport endpoint is already connected");
+			break;
+		case ENOTCONN:
+			xsnprintf(buf, 41, "%s", "Transport endpoint is not connected");
+			break;
+		case ETIMEDOUT:
+			xsnprintf(buf, 41, "%s", "Connection timed out");
+			break;
+		case ECONNREFUSED:
+			xsnprintf(buf, 41, "%s", "Connection refused");
+			break;
+		case ELOOP:
+			xsnprintf(buf, 41, "%s", "Too many levels of symbolic links");
+			break;
+		case EHOSTUNREACH:
+			xsnprintf(buf, 41, "%s", "No route to host");
+			break;
+		default: return strerror(errnum);
+	}
+	return buf;
+}
+
 #undef gethostname
 int mingw_gethostname(char *name, int namelen)
 {
-    ensure_socket_initialization();
-    return gethostname(name, namelen);
+	ensure_socket_initialization();
+	WINSOCK_RETURN(gethostname(name, namelen));
 }
 
 #undef gethostbyname
 struct hostent *mingw_gethostbyname(const char *host)
 {
+	struct hostent *ret;
+
 	ensure_socket_initialization();
-	return gethostbyname(host);
+
+	ret = gethostbyname(host);
+	if (!ret)
+		set_wsa_errno();
+
+	return ret;
 }
 
 #undef getaddrinfo
@@ -2250,7 +2467,7 @@ int mingw_getaddrinfo(const char *node, const char *service,
 		      const struct addrinfo *hints, struct addrinfo **res)
 {
 	ensure_socket_initialization();
-	return getaddrinfo(node, service, hints, res);
+	WINSOCK_RETURN(getaddrinfo(node, service, hints, res));
 }
 
 int mingw_socket(int domain, int type, int protocol)
@@ -2261,16 +2478,7 @@ int mingw_socket(int domain, int type, int protocol)
 	ensure_socket_initialization();
 	s = WSASocket(domain, type, protocol, NULL, 0, 0);
 	if (s == INVALID_SOCKET) {
-		/*
-		 * WSAGetLastError() values are regular BSD error codes
-		 * biased by WSABASEERR.
-		 * However, strerror() does not know about networking
-		 * specific errors, which are values beginning at 38 or so.
-		 * Therefore, we choose to leave the biased error code
-		 * in errno so that _if_ someone looks up the code somewhere,
-		 * then it is at least the number that are usually listed.
-		 */
-		errno = WSAGetLastError();
+		set_wsa_errno();
 		return -1;
 	}
 	/* convert into a file descriptor */
@@ -2286,35 +2494,35 @@ int mingw_socket(int domain, int type, int protocol)
 int mingw_connect(int sockfd, struct sockaddr *sa, size_t sz)
 {
 	SOCKET s = (SOCKET)_get_osfhandle(sockfd);
-	return connect(s, sa, sz);
+	WINSOCK_RETURN(connect(s, sa, sz));
 }
 
 #undef bind
 int mingw_bind(int sockfd, struct sockaddr *sa, size_t sz)
 {
 	SOCKET s = (SOCKET)_get_osfhandle(sockfd);
-	return bind(s, sa, sz);
+	WINSOCK_RETURN(bind(s, sa, sz));
 }
 
 #undef setsockopt
 int mingw_setsockopt(int sockfd, int lvl, int optname, void *optval, int optlen)
 {
 	SOCKET s = (SOCKET)_get_osfhandle(sockfd);
-	return setsockopt(s, lvl, optname, (const char*)optval, optlen);
+	WINSOCK_RETURN(setsockopt(s, lvl, optname, (const char*)optval, optlen));
 }
 
 #undef shutdown
 int mingw_shutdown(int sockfd, int how)
 {
 	SOCKET s = (SOCKET)_get_osfhandle(sockfd);
-	return shutdown(s, how);
+	WINSOCK_RETURN(shutdown(s, how));
 }
 
 #undef listen
 int mingw_listen(int sockfd, int backlog)
 {
 	SOCKET s = (SOCKET)_get_osfhandle(sockfd);
-	return listen(s, backlog);
+	WINSOCK_RETURN(listen(s, backlog));
 }
 
 #undef accept
@@ -2324,6 +2532,11 @@ int mingw_accept(int sockfd1, struct sockaddr *sa, socklen_t *sz)
 
 	SOCKET s1 = (SOCKET)_get_osfhandle(sockfd1);
 	SOCKET s2 = accept(s1, sa, sz);
+
+	if (s2 == INVALID_SOCKET) {
+		set_wsa_errno();
+		return -1;
+	}
 
 	/* convert into a file descriptor */
 	if ((sockfd2 = _open_osfhandle(s2, O_RDWR|O_BINARY)) < 0) {
