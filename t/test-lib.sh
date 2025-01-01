@@ -1177,7 +1177,7 @@ check_test_results_san_file_empty_ () {
 	! find "$TEST_RESULTS_SAN_DIR" \
 		-type f \
 		-name "$TEST_RESULTS_SAN_FILE_PFX.*" 2>/dev/null |
-	xargs grep -qv "Unable to get registers from thread"
+	xargs grep -q ^DEDUP_TOKEN
 }
 
 check_test_results_san_file_ () {
