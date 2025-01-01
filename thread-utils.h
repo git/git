@@ -53,22 +53,5 @@ int dummy_pthread_init(void *);
 int online_cpus(void);
 int init_recursive_mutex(pthread_mutex_t*);
 
-#ifdef THREAD_BARRIER_PTHREAD
-#define maybe_thread_barrier_t pthread_barrier_t
-#define maybe_thread_barrier_init pthread_barrier_init
-#define maybe_thread_barrier_wait pthread_barrier_wait
-#define maybe_thread_barrier_destroy pthread_barrier_destroy
-#else
-#define maybe_thread_barrier_t int
-static inline int maybe_thread_barrier_init(maybe_thread_barrier_t *b UNUSED,
-					    void *attr UNUSED,
-					    unsigned nr UNUSED)
-{
-	errno = ENOSYS;
-	return -1;
-}
-#define maybe_thread_barrier_wait(barrier)
-#define maybe_thread_barrier_destroy(barrier)
-#endif
 
 #endif /* THREAD_COMPAT_H */

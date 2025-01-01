@@ -101,9 +101,6 @@ static pthread_cond_t cond_write;
 /* Signalled when we are finished with everything. */
 static pthread_cond_t cond_result;
 
-/* Synchronize the start of all threads */
-static maybe_thread_barrier_t start_barrier;
-
 static int skip_first_line;
 
 static void add_work(struct grep_opt *opt, struct grep_source *gs)
@@ -201,8 +198,6 @@ static void *run(void *arg)
 	int hit = 0;
 	struct grep_opt *opt = arg;
 
-	maybe_thread_barrier_wait(&start_barrier);
-
 	while (1) {
 		struct work_item *w = get_work();
 		if (!w)
@@ -234,7 +229,6 @@ static void start_threads(struct grep_opt *opt)
 	pthread_cond_init(&cond_add, NULL);
 	pthread_cond_init(&cond_write, NULL);
 	pthread_cond_init(&cond_result, NULL);
-	maybe_thread_barrier_init(&start_barrier, NULL, num_threads + 1);
 	grep_use_locks = 1;
 	enable_obj_read_lock();
 
@@ -254,7 +248,6 @@ static void start_threads(struct grep_opt *opt)
 			die(_("grep: failed to create thread: %s"),
 			    strerror(err));
 	}
-	maybe_thread_barrier_wait(&start_barrier);
 }
 
 static int wait_all(void)
@@ -291,7 +284,6 @@ static int wait_all(void)
 	pthread_cond_destroy(&cond_add);
 	pthread_cond_destroy(&cond_write);
 	pthread_cond_destroy(&cond_result);
-	maybe_thread_barrier_destroy(&start_barrier);
 	grep_use_locks = 0;
 	disable_obj_read_lock();
 
