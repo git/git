@@ -780,10 +780,10 @@ static struct commit *get_commit_reference(struct repository *r,
 }
 
 static struct commit **get_bad_and_good_commits(struct repository *r,
-						int *rev_nr)
+						size_t *rev_nr)
 {
 	struct commit **rev;
-	int i, n = 0;
+	size_t i, n = 0;
 
 	ALLOC_ARRAY(rev, 1 + good_revs.nr);
 	rev[n++] = get_commit_reference(r, current_bad_oid);
@@ -855,7 +855,7 @@ static void handle_skipped_merge_base(const struct object_id *mb)
  * for early success, this will be converted back to 0 in
  * check_good_are_ancestors_of_bad().
  */
-static enum bisect_error check_merge_bases(int rev_nr, struct commit **rev, int no_checkout)
+static enum bisect_error check_merge_bases(size_t rev_nr, struct commit **rev, int no_checkout)
 {
 	enum bisect_error res = BISECT_OK;
 	struct commit_list *result = NULL;
@@ -887,7 +887,7 @@ static enum bisect_error check_merge_bases(int rev_nr, struct commit **rev, int 
 	return res;
 }
 
-static int check_ancestors(struct repository *r, int rev_nr,
+static int check_ancestors(struct repository *r, size_t rev_nr,
 			   struct commit **rev, const char *prefix)
 {
 	struct strvec rev_argv = STRVEC_INIT;
@@ -922,7 +922,8 @@ static enum bisect_error check_good_are_ancestors_of_bad(struct repository *r,
 {
 	char *filename;
 	struct stat st;
-	int fd, rev_nr;
+	int fd;
+	size_t rev_nr;
 	enum bisect_error res = BISECT_OK;
 	struct commit **rev;
 

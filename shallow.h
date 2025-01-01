@@ -59,8 +59,8 @@ void prune_shallow(unsigned options);
  */
 struct shallow_info {
 	struct oid_array *shallow;
-	int *ours, nr_ours;
-	int *theirs, nr_theirs;
+	size_t *ours, nr_ours;
+	size_t *theirs, nr_theirs;
 	struct oid_array *ref;
 
 	/* for receive-pack */
@@ -69,7 +69,7 @@ struct shallow_info {
 	int *reachable;
 	int *shallow_ref;
 	struct commit **commits;
-	int nr_commits;
+	size_t nr_commits;
 };
 
 void prepare_shallow_info(struct shallow_info *, struct oid_array *);
