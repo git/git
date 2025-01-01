@@ -2673,6 +2673,91 @@ static inline int winsock_return(int ret)
 
 #define WINSOCK_RETURN(x) do { return winsock_return(x); } while (0)
 
+#undef strerror
+char *mingw_strerror(int errnum)
+{
+	static char buf[41] ="";
+	switch (errnum) {
+		case EWOULDBLOCK:
+			xsnprintf(buf, 41, "%s", "Operation would block");
+			break;
+		case EINPROGRESS:
+			xsnprintf(buf, 41, "%s", "Operation now in progress");
+			break;
+		case EALREADY:
+			xsnprintf(buf, 41, "%s", "Operation already in progress");
+			break;
+		case ENOTSOCK:
+			xsnprintf(buf, 41, "%s", "Socket operation on non-socket");
+			break;
+		case EDESTADDRREQ:
+			xsnprintf(buf, 41, "%s", "Destination address required");
+			break;
+		case EMSGSIZE:
+			xsnprintf(buf, 41, "%s", "Message too long");
+			break;
+		case EPROTOTYPE:
+			xsnprintf(buf, 41, "%s", "Protocol wrong type for socket");
+			break;
+		case ENOPROTOOPT:
+			xsnprintf(buf, 41, "%s", "Protocol not available");
+			break;
+		case EPROTONOSUPPORT:
+			xsnprintf(buf, 41, "%s", "Protocol not supported");
+			break;
+		case EOPNOTSUPP:
+			xsnprintf(buf, 41, "%s", "Operation not supported");
+			break;
+		case EAFNOSUPPORT:
+			xsnprintf(buf, 41, "%s", "Address family not supported by protocol");
+			break;
+		case EADDRINUSE:
+			xsnprintf(buf, 41, "%s", "Address already in use");
+			break;
+		case EADDRNOTAVAIL:
+			xsnprintf(buf, 41, "%s", "Cannot assign requested address");
+			break;
+		case ENETDOWN:
+			xsnprintf(buf, 41, "%s", "Network is down");
+			break;
+		case ENETUNREACH:
+			xsnprintf(buf, 41, "%s", "Network is unreachable");
+			break;
+		case ENETRESET:
+			xsnprintf(buf, 41, "%s", "Network dropped connection on reset");
+			break;
+		case ECONNABORTED:
+			xsnprintf(buf, 41, "%s", "Software caused connection abort");
+			break;
+		case ECONNRESET:
+			xsnprintf(buf, 41, "%s", "Connection reset by peer");
+			break;
+		case ENOBUFS:
+			xsnprintf(buf, 41, "%s", "No buffer space available");
+			break;
+		case EISCONN:
+			xsnprintf(buf, 41, "%s", "Transport endpoint is already connected");
+			break;
+		case ENOTCONN:
+			xsnprintf(buf, 41, "%s", "Transport endpoint is not connected");
+			break;
+		case ETIMEDOUT:
+			xsnprintf(buf, 41, "%s", "Connection timed out");
+			break;
+		case ECONNREFUSED:
+			xsnprintf(buf, 41, "%s", "Connection refused");
+			break;
+		case ELOOP:
+			xsnprintf(buf, 41, "%s", "Too many levels of symbolic links");
+			break;
+		case EHOSTUNREACH:
+			xsnprintf(buf, 41, "%s", "No route to host");
+			break;
+		default: return strerror(errnum);
+	}
+	return buf;
+}
+
 #undef gethostname
 int mingw_gethostname(char *name, int namelen)
 {
@@ -2710,15 +2795,6 @@ int mingw_socket(int domain, int type, int protocol)
 	ensure_socket_initialization();
 	s = WSASocket(domain, type, protocol, NULL, 0, 0);
 	if (s == INVALID_SOCKET) {
-		/*
-		 * WSAGetLastError() values are regular BSD error codes
-		 * biased by WSABASEERR.
-		 * However, strerror() does not know about networking
-		 * specific errors, which are values beginning at 38 or so.
-		 * Therefore, we choose to leave the biased error code
-		 * in errno so that _if_ someone looks up the code somewhere,
-		 * then it is at least the number that are usually listed.
-		 */
 		set_wsa_errno();
 		return -1;
 	}
