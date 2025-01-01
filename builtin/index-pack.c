@@ -185,6 +185,8 @@ static pthread_mutex_t deepest_delta_mutex;
 
 static pthread_key_t key;
 
+static maybe_thread_barrier_t start_barrier;
+
 static inline void lock_mutex(pthread_mutex_t *mutex)
 {
 	if (threads_active)
@@ -209,6 +211,7 @@ static void init_thread(void)
 	if (show_stat)
 		pthread_mutex_init(&deepest_delta_mutex, NULL);
 	pthread_key_create(&key, NULL);
+	maybe_thread_barrier_init(&start_barrier, NULL, nr_threads);
 	CALLOC_ARRAY(thread_data, nr_threads);
 	for (i = 0; i < nr_threads; i++) {
 		thread_data[i].pack_fd = xopen(curr_pack, O_RDONLY);
@@ -231,6 +234,7 @@ static void cleanup_thread(void)
 	for (i = 0; i < nr_threads; i++)
 		close(thread_data[i].pack_fd);
 	pthread_key_delete(key);
+	maybe_thread_barrier_destroy(&start_barrier);
 	free(thread_data);
 }
 
@@ -1100,6 +1104,8 @@ static int compare_ref_delta_entry(const void *a, const void *b)
 
 static void *threaded_second_pass(void *data)
 {
+	if (threads_active)
+		maybe_thread_barrier_wait(&start_barrier);
 	if (data)
 		set_thread_data(data);
 	for (;;) {
@@ -1336,7 +1342,6 @@ static void resolve_deltas(struct pack_idx_option *opts)
 	base_cache_limit = opts->delta_base_cache_limit * nr_threads;
 	if (nr_threads > 1 || getenv("GIT_FORCE_THREADS")) {
 		init_thread();
-		work_lock();
 		for (i = 0; i < nr_threads; i++) {
 			int ret = pthread_create(&thread_data[i].thread, NULL,
 						 threaded_second_pass, thread_data + i);
@@ -1344,7 +1349,6 @@ static void resolve_deltas(struct pack_idx_option *opts)
 				die(_("unable to create thread: %s"),
 				    strerror(ret));
 		}
-		work_unlock();
 		for (i = 0; i < nr_threads; i++)
 			pthread_join(thread_data[i].thread, NULL);
 		cleanup_thread();

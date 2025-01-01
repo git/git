@@ -141,6 +141,10 @@ include shared.mak
 #
 # Define NO_PTHREADS if you do not have or do not want to use Pthreads.
 #
+# Define THREAD_BARRIER_PTHREAD if your system has pthread_barrier_t. Barrier
+# support is optional and is only helpful when building with SANITIZE=leak, as
+# it is used to eliminate some races in the leak-checker.
+#
 # Define NO_PREAD if you have a problem with pread() system call (e.g.
 # cygwin1.dll before v1.5.22).
 #
@@ -2079,6 +2083,9 @@ ifdef NO_PTHREADS
 else
 	BASIC_CFLAGS += $(PTHREAD_CFLAGS)
 	EXTLIBS += $(PTHREAD_LIBS)
+	ifdef THREAD_BARRIER_PTHREAD
+		BASIC_CFLAGS += -DTHREAD_BARRIER_PTHREAD
+	endif
 endif
 
 ifdef HAVE_PATHS_H
