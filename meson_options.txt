@@ -49,10 +49,12 @@ option('regex', type: 'feature', value: 'auto',
 # Backends.
 option('https_backend', type: 'combo', value: 'auto', choices: ['auto', 'openssl', 'CommonCrypto', 'none'],
   description: 'The HTTPS backend to use when connecting to remotes.')
-option('sha1_backend', type: 'combo', choices: ['openssl', 'block', 'sha1dc', 'common-crypto'], value: 'sha1dc',
-  description: 'The backend used for hashing objects with the SHA1 object format')
+option('sha1_backend', type: 'combo', choices: ['openssl', 'block', 'sha1dc', 'CommonCrypto'], value: 'sha1dc',
+  description: 'The backend used for hashing objects with the SHA1 object format.')
+option('sha1_unsafe_backend', type: 'combo', choices: ['openssl', 'block', 'CommonCrypto', 'none'], value: 'none',
+  description: 'The backend used for hashing data with the SHA1 object format in case no cryptographic security is needed.')
 option('sha256_backend', type: 'combo', choices: ['openssl', 'nettle', 'gcrypt', 'block'], value: 'block',
-  description: 'The backend used for hashing objects with the SHA256 object format')
+  description: 'The backend used for hashing objects with the SHA256 object format.')
 
 # Build tweaks.
 option('macos_use_homebrew_gettext', type: 'boolean', value: true,
