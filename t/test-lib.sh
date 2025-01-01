@@ -340,17 +340,6 @@ case "$TRASH_DIRECTORY" in
  *) TRASH_DIRECTORY="$TEST_OUTPUT_DIRECTORY/$TRASH_DIRECTORY" ;;
 esac
 
-# Utility functions using $TEST_RESULTS_* variables
-nr_san_dir_leaks_ () {
-	# stderr piped to /dev/null because the directory may have
-	# been "rmdir"'d already.
-	find "$TEST_RESULTS_SAN_DIR" \
-		-type f \
-		-name "$TEST_RESULTS_SAN_FILE_PFX.*" 2>/dev/null |
-	xargs grep -lv "Unable to get registers from thread" |
-	wc -l
-}
-
 # If --stress was passed, run this test repeatedly in several parallel loops.
 if test "$GIT_TEST_STRESS_STARTED" = "done"
 then
@@ -1181,8 +1170,14 @@ test_atexit_handler () {
 }
 
 check_test_results_san_file_empty_ () {
-	test -z "$TEST_RESULTS_SAN_FILE" ||
-	test "$(nr_san_dir_leaks_)" = 0
+	test -z "$TEST_RESULTS_SAN_FILE" && return 0
+
+	# stderr piped to /dev/null because the directory may have
+	# been "rmdir"'d already.
+	! find "$TEST_RESULTS_SAN_DIR" \
+		-type f \
+		-name "$TEST_RESULTS_SAN_FILE_PFX.*" 2>/dev/null |
+	xargs grep -qv "Unable to get registers from thread"
 }
 
 check_test_results_san_file_ () {
