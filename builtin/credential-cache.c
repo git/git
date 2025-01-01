@@ -23,7 +23,7 @@ static int connection_closed(int error)
 
 static int connection_fatally_broken(int error)
 {
-	return (error != ENOENT) && (error != ENETDOWN);
+	return (error != ENOENT) && (error != ENETDOWN) && (error != ECONNREFUSED);
 }
 
 #else
