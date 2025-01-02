@@ -385,7 +385,6 @@ linux-musl)
 	;;
 linux-leaks|linux-reftable-leaks)
 	export SANITIZE=leak
-	export THREAD_BARRIER_PTHREAD=1
 	;;
 linux-asan-ubsan)
 	export SANITIZE=address,undefined
