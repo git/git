@@ -275,7 +275,7 @@ jobs:
       CC: ${{matrix.vector.cc}}
       CC_PACKAGE: ${{matrix.vector.cc_package}}
       jobname: ${{matrix.vector.jobname}}
-      distro: ${{matrix.vector.pool}}
+      CI_JOB_IMAGE: ${{matrix.vector.pool}}
       TEST_OUTPUT_DIRECTORY: ${{github.workspace}}/t
     runs-on: ${{matrix.vector.pool}}
     steps:
@@ -316,63 +316,49 @@ jobs:
         - jobname: linux-sha256
           image: ubuntu:latest
           cc: clang
-          distro: ubuntu-latest
         - jobname: linux-reftable
           image: ubuntu:latest
           cc: clang
-          distro: ubuntu-latest
         - jobname: linux-gcc
           image: ubuntu:20.04
           cc: gcc
           cc_package: gcc-8
-          distro: ubuntu-20.04
         - jobname: linux-TEST-vars
           image: ubuntu:20.04
           cc: gcc
           cc_package: gcc-8
-          distro: ubuntu-20.04
         - jobname: linux-gcc-default
           image: ubuntu:latest
           cc: gcc
-          distro: ubuntu-latest
         - jobname: linux-leaks
           image: ubuntu:latest
           cc: gcc
-          distro: ubuntu-latest
         - jobname: linux-reftable-leaks
           image: ubuntu:latest
           cc: gcc
-          distro: ubuntu-latest
         - jobname: linux-asan-ubsan
           image: ubuntu:latest
           cc: clang
-          distro: ubuntu-latest
         - jobname: linux-meson
           image: ubuntu:latest
           cc: gcc
-          distro: ubuntu-latest
         - jobname: linux-musl
-          image: alpine
-          distro: alpine-latest
+          image: alpine:latest
         # Supported until 2025-04-02.
         - jobname: linux32
           image: i386/ubuntu:focal
-          distro: ubuntu32-20.04
         - jobname: pedantic
-          image: fedora
-          distro: fedora-latest
+          image: fedora:latest
         # A RHEL 8 compatible distro.  Supported until 2029-05-31.
         - jobname: almalinux-8
           image: almalinux:8
-          distro: almalinux-8
         # Supported until 2026-08-31.
         - jobname: debian-11
           image: debian:11
-          distro: debian-11
     env:
       jobname: ${{matrix.vector.jobname}}
-      distro: ${{matrix.vector.distro}}
       CC: ${{matrix.vector.cc}}
+      CI_JOB_IMAGE: ${{matrix.vector.image}}
     runs-on: ubuntu-latest
     container: ${{matrix.vector.image}}
     steps:

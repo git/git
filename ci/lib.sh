@@ -246,6 +246,8 @@ then
 
 	GIT_TEST_OPTS="--github-workflow-markup"
 	JOBS=10
+
+	distro=$(echo "$CI_JOB_IMAGE" | tr : -)
 elif test true = "$GITLAB_CI"
 then
 	CI_TYPE=gitlab-ci
