@@ -36,9 +36,6 @@ test:linux:
       fi
   parallel:
     matrix:
-      - jobname: linux-old
-        image: ubuntu:20.04
-        CC: gcc
       - jobname: linux-sha256
         image: ubuntu:latest
         CC: clang
