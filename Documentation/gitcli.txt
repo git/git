@@ -91,7 +91,7 @@ scripting Git:
    written in the 'stuck' form.
 
  * Despite the above suggestion, when Arg is a path relative to the
-   home directory of a user, e.g. ~/directory/file or ~u/d/f, you
+   home directory of a user, e.g. `~/directory/file` or `~u/d/f`, you
    may want to use the separate form, e.g. `git foo --file ~/mine`,
    not `git foo --file=~/mine`.  The shell will expand `~/` in the
    former to your home directory, but most shells keep the tilde in
