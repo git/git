@@ -632,7 +632,7 @@ static void t_reftable_stack_iterator(void)
 		logs[i].update_index = i + 1;
 		logs[i].value_type = REFTABLE_LOG_UPDATE;
 		logs[i].value.update.email = xstrdup("johndoe@invalid");
-		logs[i].value.update.message = xstrdup("commit\n");
+		logs[i].value.update.message = xstrdup("commit");
 		t_reftable_set_hash(logs[i].value.update.new_hash, i, REFTABLE_HASH_SHA1);
 	}
 
@@ -732,7 +732,7 @@ static void t_reftable_stack_log_normalize(void)
 
 	err = reftable_stack_read_log(st, input.refname, &dest);
 	check(!err);
-	check_str(dest.value.update.message, "one\n");
+	check_str(dest.value.update.message, "one");
 
 	input.value.update.message = (char *) "two\n";
 	arg.update_index = 2;
@@ -740,7 +740,7 @@ static void t_reftable_stack_log_normalize(void)
 	check(!err);
 	err = reftable_stack_read_log(st, input.refname, &dest);
 	check(!err);
-	check_str(dest.value.update.message, "two\n");
+	check_str(dest.value.update.message, "two");
 
 	/* cleanup */
 	reftable_stack_destroy(st);
