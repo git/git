@@ -166,9 +166,13 @@ do
 	'
 done
 
-test_expect_success !MINGW 'git submodule status --recursive propagates SIGPIPE' '
-	{ git submodule status --recursive 2>err; echo $?>status; } |
-		grep -q X/S &&
+test_lazy_prereq STDBUF '
+	stdbuf --version
+'
+
+test_expect_success !MINGW,STDBUF 'git submodule status --recursive propagates SIGPIPE' '
+	{ stdbuf -oL git submodule status --recursive 2>err; echo $?>status; } |
+		stdbuf -i0 grep -q X/S &&
 	test_must_be_empty err &&
 	test_match_signal 13 "$(cat status)"
 '
