@@ -460,10 +460,6 @@ int reftable_writer_add_log(struct reftable_writer *w,
 			goto done;
 		}
 
-		err = reftable_buf_addstr(&cleaned_message, "\n");
-		if (err < 0)
-			goto done;
-
 		log->value.update.message = cleaned_message.buf;
 	}
 

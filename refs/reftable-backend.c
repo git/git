@@ -2106,6 +2106,7 @@ static int yield_log_record(struct reftable_ref_store *refs,
 {
 	struct object_id old_oid, new_oid;
 	const char *full_committer;
+	size_t message_len;
 
 	oidread(&old_oid, log->value.update.old_hash, refs->base.repo->hash_algo);
 	oidread(&new_oid, log->value.update.new_hash, refs->base.repo->hash_algo);
@@ -2120,6 +2121,14 @@ static int yield_log_record(struct reftable_ref_store *refs,
 
 	full_committer = fmt_ident(log->value.update.name, log->value.update.email,
 				   WANT_COMMITTER_IDENT, NULL, IDENT_NO_DATE);
+
+	message_len = strlen(log->value.update.message);
+	if (message_len && log->value.update.message[message_len - 1] != '\n') {
+		ALLOC_GROW(log->value.update.message, message_len + 2, log->value.update.message_cap);
+		log->value.update.message[message_len] = '\n';
+		log->value.update.message[message_len + 1] = 0;
+	}
+
 	return fn(&old_oid, &new_oid, full_committer,
 		  log->value.update.time, log->value.update.tz_offset,
 		  log->value.update.message, cb_data);
