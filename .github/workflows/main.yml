@@ -259,20 +259,6 @@ jobs:
       fail-fast: false
       matrix:
         vector:
-          - jobname: linux-sha256
-            cc: clang
-            pool: ubuntu-latest
-          - jobname: linux-reftable
-            cc: clang
-            pool: ubuntu-latest
-          - jobname: linux-gcc
-            cc: gcc
-            cc_package: gcc-8
-            pool: ubuntu-20.04
-          - jobname: linux-TEST-vars
-            cc: gcc
-            cc_package: gcc-8
-            pool: ubuntu-20.04
           - jobname: osx-clang
             cc: clang
             pool: macos-13
@@ -285,21 +271,6 @@ jobs:
           - jobname: osx-meson
             cc: clang
             pool: macos-13
-          - jobname: linux-gcc-default
-            cc: gcc
-            pool: ubuntu-latest
-          - jobname: linux-leaks
-            cc: gcc
-            pool: ubuntu-latest
-          - jobname: linux-reftable-leaks
-            cc: gcc
-            pool: ubuntu-latest
-          - jobname: linux-asan-ubsan
-            cc: clang
-            pool: ubuntu-latest
-          - jobname: linux-meson
-            cc: gcc
-            pool: ubuntu-latest
     env:
       CC: ${{matrix.vector.cc}}
       CC_PACKAGE: ${{matrix.vector.cc_package}}
@@ -342,6 +313,44 @@ jobs:
       fail-fast: false
       matrix:
         vector:
+        - jobname: linux-sha256
+          image: ubuntu:latest
+          cc: clang
+          distro: ubuntu-latest
+        - jobname: linux-reftable
+          image: ubuntu:latest
+          cc: clang
+          distro: ubuntu-latest
+        - jobname: linux-gcc
+          image: ubuntu:20.04
+          cc: gcc
+          cc_package: gcc-8
+          distro: ubuntu-20.04
+        - jobname: linux-TEST-vars
+          image: ubuntu:20.04
+          cc: gcc
+          cc_package: gcc-8
+          distro: ubuntu-20.04
+        - jobname: linux-gcc-default
+          image: ubuntu:latest
+          cc: gcc
+          distro: ubuntu-latest
+        - jobname: linux-leaks
+          image: ubuntu:latest
+          cc: gcc
+          distro: ubuntu-latest
+        - jobname: linux-reftable-leaks
+          image: ubuntu:latest
+          cc: gcc
+          distro: ubuntu-latest
+        - jobname: linux-asan-ubsan
+          image: ubuntu:latest
+          cc: clang
+          distro: ubuntu-latest
+        - jobname: linux-meson
+          image: ubuntu:latest
+          cc: gcc
+          distro: ubuntu-latest
         - jobname: linux-musl
           image: alpine
           distro: alpine-latest
@@ -363,6 +372,7 @@ jobs:
     env:
       jobname: ${{matrix.vector.jobname}}
       distro: ${{matrix.vector.distro}}
+      CC: ${{matrix.vector.cc}}
     runs-on: ubuntu-latest
     container: ${{matrix.vector.image}}
     steps:
