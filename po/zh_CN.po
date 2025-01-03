@@ -154,8 +154,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2024-10-05 03:31+0800\n"
-"PO-Revision-Date: 2024-10-05 03:32+0800\n"
+"POT-Creation-Date: 2025-01-02 20:43+0800\n"
+"PO-Revision-Date: 2025-01-05 19:01+0800\n"
 "Last-Translator: Teng Long <dyroneteng@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/dyrone/git/>\n"
 "Language: zh_CN\n"
@@ -886,10 +886,10 @@ msgstr "只有二进制文件被修改。"
 #, c-format
 msgid ""
 "\n"
-"Disable this message with \"git config advice.%s false\""
+"Disable this message with \"git config set advice.%s false\""
 msgstr ""
 "\n"
-"使用 \"git config advice.%s false\" 来关闭此消息"
+"使用 \"git config set advice.%s false\" 来关闭此消息"
 
 #: advice.c
 #, c-format
@@ -1778,9 +1778,10 @@ msgstr "不是一个有效的对象名：%s"
 msgid "not a tree object: %s"
 msgstr "不是一个树对象：%s"
 
-#: archive.c builtin/clone.c
-msgid "unable to checkout working tree"
-msgstr "不能检出工作区"
+#: archive.c
+#, c-format
+msgid "failed to unpack tree object %s"
+msgstr "无法解包树对象 %s"
 
 #: archive.c
 #, c-format
@@ -1957,7 +1958,7 @@ msgstr "忽略过大的 gitattributes 数据对象 '%s'"
 
 #: attr.c
 msgid "cannot use --attr-source or GIT_ATTR_SOURCE without repo"
-msgstr "无法在没有存储库的情况下使用 --attr-source 或 GIT_ATTR_SOURCE"
+msgstr "无法在没有仓库的情况下使用 --attr-source 或 GIT_ATTR_SOURCE"
 
 #: attr.c
 msgid "bad --attr-source or GIT_ATTR_SOURCE"
@@ -4813,7 +4814,7 @@ msgstr "未知的冲突风格 '%s'"
 msgid "perform a 3-way merge with the new branch"
 msgstr "和新的分支执行三方合并"
 
-#: builtin/checkout.c builtin/log.c parse-options.h
+#: builtin/checkout.c builtin/log.c builtin/range-diff.c parse-options.h
 msgid "style"
 msgstr "风格"
 
@@ -4842,8 +4843,8 @@ msgid "update ignored files (default)"
 msgstr "更新忽略的文件（默认）"
 
 #: builtin/checkout.c
-msgid "do not check if another worktree is holding the given ref"
-msgstr "不检查指定的引用是否被其他工作区所占用"
+msgid "do not check if another worktree is using this branch"
+msgstr "不检查其他工作区是否正在使用该分支"
 
 #: builtin/checkout.c
 msgid "checkout our version for unmerged files"
@@ -5222,14 +5223,13 @@ msgstr "创建一个指定深度的浅克隆"
 msgid "create a shallow clone since a specific time"
 msgstr "从一个特定时间创建一个浅克隆"
 
-#: builtin/clone.c builtin/fetch.c builtin/pull.c builtin/rebase.c
-#: builtin/replay.c
-msgid "revision"
-msgstr "版本"
+#: builtin/clone.c builtin/fetch.c builtin/pull.c
+msgid "ref"
+msgstr "引用"
 
 #: builtin/clone.c builtin/fetch.c builtin/pull.c
-msgid "deepen history of shallow clone, excluding rev"
-msgstr "深化浅克隆的历史，除了特定版本"
+msgid "deepen history of shallow clone, excluding ref"
+msgstr "深化浅克隆的历史，除了给定的引用"
 
 #: builtin/clone.c builtin/submodule--helper.c
 msgid "clone only one branch, HEAD or --branch"
@@ -5389,6 +5389,10 @@ msgstr "无法初始化稀疏检出"
 #: builtin/clone.c
 msgid "remote HEAD refers to nonexistent ref, unable to checkout"
 msgstr "远程 HEAD 指向一个不存在的引用，无法检出"
+
+#: builtin/clone.c
+msgid "unable to checkout working tree"
+msgstr "不能检出工作区"
 
 #: builtin/clone.c
 msgid "unable to write parameters to config file"
@@ -6368,10 +6372,9 @@ msgstr ""
 #: builtin/config.c
 msgid ""
 "git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] "
-"<name> <value>"
+"<name>"
 msgstr ""
-"git config unset [<文件选项>] [--all] [--value=<值>] [--fixed-value] <名称> <"
-"值>"
+"git config unset [<文件选项>] [--all] [--value=<值>] [--fixed-value] <名称>"
 
 #: builtin/config.c
 msgid "git config rename-section [<file-option>] <old-name> <new-name>"
@@ -6915,12 +6918,8 @@ msgstr "已遍历 %lu 个提交\n"
 
 #: builtin/describe.c
 #, c-format
-msgid ""
-"more than %i tags found; listed %i most recent\n"
-"gave up search at %s\n"
-msgstr ""
-"发现多于 %i 个标签，列出最近的 %i 个\n"
-"在 %s 放弃搜索\n"
+msgid "found %i tags; gave up search at %s\n"
+msgstr "找到 %i 个标签；在 %s 处放弃搜索\n"
 
 #: builtin/describe.c
 #, c-format
@@ -7469,6 +7468,21 @@ msgid "the object %s does not exist"
 msgstr "对象 '%s' 不存在"
 
 #: builtin/fetch.c
+#, c-format
+msgid ""
+"Run 'git remote set-head %s %s' to follow the change, or set\n"
+"'remote.%s.followRemoteHEAD' configuration option to a different value\n"
+"if you do not want to see this message. Specifically running\n"
+"'git config set remote.%s.followRemoteHEAD %s' will disable the warning\n"
+"until the remote changes HEAD to something else."
+msgstr ""
+"运行 'git remote set-head %s %s' 以跟随更改，或者\n"
+"如果您不想看到此消息，则将'remote.%s.followRemoteHEAD' 配置选项设置为不同的"
+"值。\n"
+"特别地，运行 'git config set remote.%s.followRemoteHEAD %s' 将禁用警告，直到"
+"远程将 HEAD 更改为其他内容。\""
+
+#: builtin/fetch.c
 msgid "multiple branches detected, incompatible with --set-upstream"
 msgstr "检测到多分支，和 --set-upstream 不兼容"
 
@@ -7634,6 +7648,10 @@ msgstr "引用映射"
 #: builtin/fetch.c builtin/pull.c
 msgid "specify fetch refmap"
 msgstr "指定获取操作的引用映射"
+
+#: builtin/fetch.c builtin/pull.c builtin/rebase.c builtin/replay.c
+msgid "revision"
+msgstr "版本"
 
 #: builtin/fetch.c builtin/pull.c
 msgid "report that we have only objects reachable from this object"
@@ -7830,7 +7848,7 @@ msgstr "存储着仓库路径列表的配置项键名"
 
 #: builtin/for-each-repo.c
 msgid "keep going even if command fails in a repository"
-msgstr "即使存储库中的命令失败，仍继续执行"
+msgstr "即使仓库中的命令失败，仍继续执行"
 
 #: builtin/for-each-repo.c
 msgid "missing --config=<config>"
@@ -8546,8 +8564,24 @@ msgid "%s scheduler is not available"
 msgstr "%s 调度器不可用"
 
 #: builtin/gc.c
-msgid "another process is scheduling background maintenance"
-msgstr "另外一个进程正运行于后台维护"
+#, c-format
+msgid ""
+"unable to create '%s.lock': %s.\n"
+"\n"
+"Another scheduled git-maintenance(1) process seems to be running in this\n"
+"repository. Please make sure no other maintenance processes are running and\n"
+"then try again. If it still fails, a git-maintenance(1) process may have\n"
+"crashed in this repository earlier: remove the file manually to continue."
+msgstr ""
+"无法创建 '%s.lock'：%s。\n"
+"\n"
+"另一个已计划的 git-maintenance(1) 进程似乎正在该仓库中运行。\n"
+"请确保没有其他维护进程正在运行，然后重试。如果仍然运行失败，则\n"
+"git-maintenance(1) 进程可能之前已在此仓库中崩溃：请手动删除该文件以继续。"
+
+#: builtin/gc.c
+msgid "cannot acquire lock for scheduled background maintenance"
+msgstr "无法获取计划的后台维护锁"
 
 #: builtin/gc.c
 msgid "git maintenance start [--scheduler=<scheduler>]"
@@ -9273,6 +9307,23 @@ msgstr[0] "链长 = %d: %lu 对象"
 msgstr[1] "链长 = %d: %lu 对象"
 
 #: builtin/index-pack.c
+msgid "could not start pack-objects to repack local links"
+msgstr "无法启动 pack-objects 来重新打包本地链接"
+
+#: builtin/index-pack.c
+msgid "failed to feed local object to pack-objects"
+msgstr "无法将本地对象提供给 pack-objects"
+
+#: builtin/index-pack.c
+msgid "index-pack: Expecting full hex object ID lines only from pack-objects."
+msgstr ""
+"index-pack：期望仅从 pack-objects 的输出行中获得完整的十六进制对象 ID。"
+
+#: builtin/index-pack.c
+msgid "could not finish pack-objects to repack local links"
+msgstr "无法完成 pack-objects 来重新打包本地链接"
+
+#: builtin/index-pack.c
 msgid "Cannot come back to cwd"
 msgstr "无法返回当前工作目录"
 
@@ -9285,6 +9336,10 @@ msgstr "错误选项 %s"
 #, c-format
 msgid "unknown hash algorithm '%s'"
 msgstr "未知的哈希算法 '%s'"
+
+#: builtin/index-pack.c
+msgid "--promisor cannot be used with a pack name"
+msgstr "--promisor 无法与包名称一起使用"
 
 #: builtin/index-pack.c
 msgid "--stdin requires a git repository"
@@ -11002,11 +11057,11 @@ msgstr "git notes [--ref <注解引用>] [list [<对象>]]"
 msgid ""
 "git notes [--ref <notes-ref>] add [-f] [--allow-empty] [--[no-]separator|--"
 "separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c "
-"| -C) <object>] [<object>]"
+"| -C) <object>] [<object>] [-e]"
 msgstr ""
 "git notes [--ref <注解引用>] add [-f] [--allow-empty] [--[no-]separator|--"
 "separator=<分段符>] [--[no-]stripspace] [-m <说明> | -F <文件> | (-c | -C) <"
-"对象>] [<对象>]"
+"对象>] [<对象>] [-e]"
 
 #: builtin/notes.c
 msgid "git notes [--ref <notes-ref>] copy [-f] <from-object> <to-object>"
@@ -11016,11 +11071,11 @@ msgstr "git notes [--ref <注解引用>] copy [-f] <源对象> <目标对象>"
 msgid ""
 "git notes [--ref <notes-ref>] append [--allow-empty] [--[no-]separator|--"
 "separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c "
-"| -C) <object>] [<object>]"
+"| -C) <object>] [<object>] [-e]"
 msgstr ""
 "git notes [--ref <注解引用>] append [--allow-empty] [--[no-]separator|--"
 "separator=<分段符>] [--[no-]stripspace] [-m <说明> | -F <文件> | (-c | -C) <"
-"对象>] [<对象>]"
+"对象>] [<对象>] [-e]"
 
 #: builtin/notes.c
 msgid "git notes [--ref <notes-ref>] edit [--allow-empty] [<object>]"
@@ -11170,6 +11225,10 @@ msgstr "注解内容到一个文件中"
 #: builtin/notes.c
 msgid "reuse and edit specified note object"
 msgstr "重用和编辑指定的注解对象"
+
+#: builtin/notes.c
+msgid "edit note message in editor"
+msgstr "在编辑器中编辑注释说明"
 
 #: builtin/notes.c
 msgid "reuse specified note object"
@@ -11783,6 +11842,10 @@ msgstr "处理丢失的对象"
 #: builtin/pack-objects.c
 msgid "do not pack objects in promisor packfiles"
 msgstr "不要打包 promisor 包文件中的对象"
+
+#: builtin/pack-objects.c
+msgid "implies --missing=allow-any"
+msgstr "暗含 --missing=allow-any"
 
 #: builtin/pack-objects.c
 msgid "respect islands during delta compression"
@@ -13669,6 +13732,33 @@ msgstr[0] "  为 'git push' 配置的本地引用%s："
 msgstr[1] "  为 'git push' 配置的本地引用%s："
 
 #: builtin/remote.c
+#, c-format
+msgid "'%s/HEAD' is unchanged and points to '%s'\n"
+msgstr "'%s/HEAD' 未改变并指向 '%s'\n"
+
+#: builtin/remote.c
+#, c-format
+msgid "'%s/HEAD' has changed from '%s' and now points to '%s'\n"
+msgstr "'%s/HEAD' 已从 '%s' 更改，现在指向 '%s'\n"
+
+#: builtin/remote.c
+#, c-format
+msgid "'%s/HEAD' is now created and points to '%s'\n"
+msgstr "'%s/HEAD' 现已创建并指向 '%s'\n"
+
+#: builtin/remote.c
+#, c-format
+msgid "'%s/HEAD' was detached at '%s' and now points to '%s'\n"
+msgstr "'%s/HEAD' 在 '%s' 处分离并且现在指向 '%s'\n"
+
+#: builtin/remote.c
+#, c-format
+msgid ""
+"'%s/HEAD' used to point to '%s' (which is not a remote branch), but now "
+"points to '%s'\n"
+msgstr "'%s/HEAD' 曾指向 '%s'（不是远程分支），但现在指向 '%s'\n"
+
+#: builtin/remote.c
 msgid "set refs/remotes/<name>/HEAD according to remote"
 msgstr "根据远程设置 refs/remotes/<名称>/HEAD"
 
@@ -13696,7 +13786,7 @@ msgstr "不是一个有效引用：%s"
 
 #: builtin/remote.c
 #, c-format
-msgid "Could not setup %s"
+msgid "Could not set up %s"
 msgstr "不能设置 %s"
 
 #  译者：注意保持前导空格
@@ -17034,6 +17124,10 @@ msgstr "设置跟踪模式（参见 git-branch(1)）"
 msgid "try to match the new branch name with a remote-tracking branch"
 msgstr "尝试为新分支名匹配一个远程跟踪分支"
 
+#: builtin/worktree.c
+msgid "use relative paths for worktrees"
+msgstr "对工作区使用相对路径"
+
 #: builtin/worktree.c diff.c parse-options.c
 #, c-format
 msgid "options '%s', '%s', and '%s' cannot be used together"
@@ -17369,6 +17463,30 @@ msgstr "不能创建 '%s'"
 #: bundle.c
 msgid "index-pack died"
 msgstr "index-pack 终止"
+
+#: cache-tree.c
+#, c-format
+msgid "directory '%s' is present in index, but not sparse"
+msgstr "目录 '%s' 存在于索引中，但不是稀疏的"
+
+#: cache-tree.c unpack-trees.c
+msgid "corrupted cache-tree has entries not present in index"
+msgstr "损坏的缓存树包含索引中不存在的条目"
+
+#: cache-tree.c
+#, c-format
+msgid "%s with flags 0x%x should not be in cache-tree"
+msgstr "标志位为 0x%2$x 的 %1$s 不应位于缓存树中"
+
+#: cache-tree.c
+#, c-format
+msgid "bad subtree '%.*s'"
+msgstr "损坏的子树 '%.*s'"
+
+#: cache-tree.c
+#, c-format
+msgid "cache-tree for path %.*s does not match. Expected %s got %s"
+msgstr "路径 %.*s 的缓存树不匹配。预期为 %s，实际为 %s"
 
 #: chunk-format.c
 msgid "terminating chunk id appears earlier than expected"
@@ -18477,15 +18595,15 @@ msgid ""
 "to convert the grafts into replace refs.\n"
 "\n"
 "Turn this message off by running\n"
-"\"git config advice.graftFileDeprecated false\""
+"\"git config set advice.graftFileDeprecated false\""
 msgstr ""
 "对 <GIT_DIR>/info/grafts 的支持已过时，并将在\n"
 "未来的Git版本中被移除。\n"
 "\n"
 "请使用 \"git replace --convert-graft-file\" 将\n"
-"grafts 转换为替换引用。\n"
+"（提交）移植转换为替换引用。\n"
 "\n"
-"设置 \"git config advice.graftFileDeprecated false\"\n"
+"运行 \"git config set advice.graftFileDeprecated false\"\n"
 "可关闭本消息"
 
 #: commit.c
@@ -19485,6 +19603,21 @@ msgstr "URL 没有 scheme：%s"
 msgid "credential url cannot be parsed: %s"
 msgstr "不能解析凭据 URL：%s"
 
+#: daemon.c
+#, c-format
+msgid "invalid timeout '%s', expecting a non-negative integer"
+msgstr "无效的超时值 '%s'，应为非负整数"
+
+#: daemon.c
+#, c-format
+msgid "invalid init-timeout '%s', expecting a non-negative integer"
+msgstr "无效的初始超时值 '%s'，应为非负整数"
+
+#: daemon.c
+#, c-format
+msgid "invalid max-connections '%s', expecting an integer"
+msgstr "无效的最大连接数 '%s'，应为一个整数"
+
 #: date.c
 msgid "in the future"
 msgstr "在将来"
@@ -20352,6 +20485,20 @@ msgid "too many args to run %s"
 msgstr "执行 %s 的参数太多"
 
 #: fetch-pack.c
+#, c-format
+msgid ""
+"You are attempting to fetch %s, which is in the commit graph file but not in "
+"the object database.\n"
+"This is probably due to repo corruption.\n"
+"If you are attempting to repair this repo corruption by refetching the "
+"missing object, use 'git fetch --refetch' with the missing object."
+msgstr ""
+"您正在尝试获取 %s，它位于提交图文件中，但不在对象数据库中。\n"
+"这可能是由于仓库损坏造成的。\n"
+"如果您尝试通过重新获取丢失的对象来修复此仓库损坏，请对丢失的对象使用 'git "
+"fetch --refetch'。"
+
+#: fetch-pack.c
 msgid "git fetch-pack: expected shallow list"
 msgstr "git fetch-pack：应为 shallow 列表"
 
@@ -21062,10 +21209,10 @@ msgstr[1] ""
 #, c-format
 msgid ""
 "The '%s' hook was ignored because it's not set as executable.\n"
-"You can disable this warning with `git config advice.ignoredHook false`."
+"You can disable this warning with `git config set advice.ignoredHook false`."
 msgstr ""
 "因为没有将钩子 '%s' 设置为可执行，钩子被忽略。您可以通过\n"
-"配置 `git config advice.ignoredHook false` 来关闭这条警告。"
+"配置 `git config set advice.ignoredHook false` 来关闭这条警告。"
 
 #: http-fetch.c
 msgid "not a git repository"
@@ -21086,16 +21233,8 @@ msgid "Delegation control is not supported with cURL < 7.22.0"
 msgstr "不支持委托控制，因为 cURL < 7.22.0"
 
 #: http.c
-msgid "Public key pinning not supported with cURL < 7.39.0"
-msgstr "不支持公钥文件锁定，因为 cURL < 7.39.0"
-
-#: http.c
 msgid "Unknown value for http.proactiveauth"
 msgstr "http.proactiveauth 为未知取值"
-
-#: http.c
-msgid "CURLSSLOPT_NO_REVOKE not supported with cURL < 7.44.0"
-msgstr "不支持 CURLSSLOPT_NO_REVOKE，因为 cURL < 7.44.0"
 
 #: http.c
 #, c-format
@@ -21315,6 +21454,11 @@ msgstr "检测到被引用的 CRLF"
 #, c-format
 msgid "unable to format message: %s"
 msgstr "无法格式化消息：%s"
+
+#: merge-ll.c
+#, c-format
+msgid "invalid marker-size '%s', expecting an integer"
+msgstr "无效的标记大小 '%s'，应为一个整数"
 
 #: merge-ort.c merge-recursive.c
 #, c-format
@@ -22623,7 +22767,7 @@ msgid ""
 "\n"
 "where \"$br\" is somehow empty and a 40-hex ref is created. Please\n"
 "examine these refs and maybe delete them. Turn this message off by\n"
-"running \"git config advice.objectNameWarning false\""
+"running \"git config set advice.objectNameWarning false\""
 msgstr ""
 "Git 通常不会创建一个以40个十六进制字符结尾的引用，因为当您只提供40\n"
 "个十六进制字符时将被忽略。这些引用可能被错误地创建。例如：\n"
@@ -22631,7 +22775,7 @@ msgstr ""
 "  git switch -c $br $(git rev-parse ...)\n"
 "\n"
 "当 \"$br\" 某种原因空白时，一个40位十六进制的引用将被创建。请检查这些\n"
-"引用，可能需要删除它们。运行 \"git config advice.objectNameWarning\n"
+"引用，可能需要删除它们。运行 \"git config set advice.objectNameWarning\n"
 "false\" 命令关闭本消息通知。"
 
 #: object-name.c
@@ -22825,15 +22969,6 @@ msgstr "多包位图缺少必需的反向索引"
 #, c-format
 msgid "could not open pack %s"
 msgstr "不能打开包 %s"
-
-#: pack-bitmap.c t/helper/test-read-midx.c
-msgid "could not determine MIDX preferred pack"
-msgstr "不能确定多包索引的首选包"
-
-#: pack-bitmap.c
-#, c-format
-msgid "preferred pack (%s) is invalid"
-msgstr "首选包 (%s) 无效"
 
 #: pack-bitmap.c
 msgid "corrupt bitmap lookup table: triplet position out of index"
@@ -24170,8 +24305,19 @@ msgid "log for %s is empty"
 msgstr "%s 的日志为空"
 
 #: refs.c
-msgid "refusing to force and skip creation of reflog"
-msgstr "拒绝既强制又跳过创建引用日志"
+#, c-format
+msgid "refusing to update reflog for pseudoref '%s'"
+msgstr "拒绝为伪引用 '%s' 更新引用日志"
+
+#: refs.c
+#, c-format
+msgid "refusing to update pseudoref '%s'"
+msgstr "拒绝更新伪引用 '%s'"
+
+#: refs.c
+#, c-format
+msgid "refusing to update reflog with bad name '%s'"
+msgstr "拒绝使用错误名称 '%s' 更新引用日志"
 
 #: refs.c
 #, c-format
@@ -24179,9 +24325,8 @@ msgid "refusing to update ref with bad name '%s'"
 msgstr "拒绝更新有错误名称 '%s' 的引用"
 
 #: refs.c
-#, c-format
-msgid "refusing to update pseudoref '%s'"
-msgstr "拒绝更新伪引用 '%s'"
+msgid "refusing to force and skip creation of reflog"
+msgstr "拒绝强制跳过创建引用日志"
 
 #: refs.c
 #, c-format
@@ -24241,6 +24386,11 @@ msgstr "迁移的引用可以在 '%s' 处找到"
 msgid ""
 "cannot lock ref '%s': expected symref with target '%s': but is a regular ref"
 msgstr "无法锁定引用 '%s'：预期目标为 '%s' 的符号引用：但是是普通引用"
+
+#: refs/files-backend.c
+#, c-format
+msgid "cannot read ref file '%s'"
+msgstr "无法读取引用文件 '%s'"
 
 #: refs/files-backend.c
 #, c-format
@@ -24497,6 +24647,11 @@ msgstr "提供了一个以上的 receivepack，使用第一个"
 #: remote.c
 msgid "more than one uploadpack given, using the first"
 msgstr "提供了一个以上的 uploadpack，使用第一个"
+
+#: remote.c
+#, c-format
+msgid "unrecognized followRemoteHEAD value '%s' ignored"
+msgstr "已忽略无法识别的 followRemoteHEAD 值 '%s'"
 
 #: remote.c
 #, c-format
@@ -26810,6 +26965,10 @@ msgstr "提交 %s 没有标记为可达"
 msgid "too many commits marked reachable"
 msgstr "太多提交标记为可达"
 
+#: t/helper/test-read-midx.c
+msgid "could not determine MIDX preferred pack"
+msgstr "不能确定多包索引的首选包"
+
 #: t/helper/test-serve-v2.c
 msgid "test-tool serve-v2 [<options>]"
 msgstr "test-tool serve-v2 [<选项>]"
@@ -27585,6 +27744,10 @@ msgid ".git file incorrect"
 msgstr ".git 文件不正确"
 
 #: worktree.c
+msgid ".git file absolute/relative path mismatch"
+msgstr ".git 文件绝对/相对路径不匹配"
+
+#: worktree.c
 msgid "not a valid path"
 msgstr "不是一个有效的路径"
 
@@ -27603,6 +27766,10 @@ msgstr "无法定位仓库，.git 文件损坏"
 #: worktree.c
 msgid "gitdir unreadable"
 msgstr "gitdir 不可读"
+
+#: worktree.c
+msgid "gitdir absolute/relative path mismatch"
+msgstr "gitdir 绝对/相对路径不匹配"
 
 #: worktree.c
 msgid "gitdir incorrect"
@@ -27647,6 +27814,14 @@ msgstr "无法在 '%2$s' 中取消设置 %1$s"
 #: worktree.c
 msgid "failed to set extensions.worktreeConfig setting"
 msgstr "无法设置 extensions.worktreeConfig"
+
+#: worktree.c
+msgid "unable to upgrade repository format to support relative worktrees"
+msgstr "无法升级仓库格式以支持相对工作区"
+
+#: worktree.c
+msgid "unable to set extensions.relativeWorktrees setting"
+msgstr "无法设定 extensions.relativeWorktrees 的设置"
 
 #: wrapper.c
 #, c-format
