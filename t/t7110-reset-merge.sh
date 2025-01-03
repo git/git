@@ -270,13 +270,13 @@ test_expect_success '--merge is ok with added/deleted merge' '
 	git reset --hard third &&
 	rm -f file2 &&
 	test_must_fail git merge branch3 &&
-	! test -f file2 &&
-	test -f file3 &&
+	test_path_is_missing file2 &&
+	test_path_is_file file3 &&
 	git diff --exit-code file3 &&
 	git diff --exit-code branch3 file3 &&
 	git reset --merge HEAD &&
-	! test -f file3 &&
-	! test -f file2 &&
+	test_path_is_missing file3 &&
+	test_path_is_missing file2 &&
 	git diff --exit-code --cached
 '
 
@@ -284,8 +284,8 @@ test_expect_success '--keep fails with added/deleted merge' '
 	git reset --hard third &&
 	rm -f file2 &&
 	test_must_fail git merge branch3 &&
-	! test -f file2 &&
-	test -f file3 &&
+	test_path_is_missing file2 &&
+	test_path_is_file file3 &&
 	git diff --exit-code file3 &&
 	git diff --exit-code branch3 file3 &&
 	test_must_fail git reset --keep HEAD 2>err.log &&
