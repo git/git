@@ -314,10 +314,10 @@ jobs:
       matrix:
         vector:
         - jobname: linux-sha256
-          image: ubuntu:latest
+          image: ubuntu:rolling
           cc: clang
         - jobname: linux-reftable
-          image: ubuntu:latest
+          image: ubuntu:rolling
           cc: clang
         - jobname: linux-gcc
           image: ubuntu:20.04
@@ -328,19 +328,19 @@ jobs:
           cc: gcc
           cc_package: gcc-8
         - jobname: linux-gcc-default
-          image: ubuntu:latest
+          image: ubuntu:rolling
           cc: gcc
         - jobname: linux-leaks
-          image: ubuntu:latest
+          image: ubuntu:rolling
           cc: gcc
         - jobname: linux-reftable-leaks
-          image: ubuntu:latest
+          image: ubuntu:rolling
           cc: gcc
         - jobname: linux-asan-ubsan
-          image: ubuntu:latest
+          image: ubuntu:rolling
           cc: clang
         - jobname: linux-meson
-          image: ubuntu:latest
+          image: ubuntu:rolling
           cc: gcc
         - jobname: linux-musl
           image: alpine:latest
