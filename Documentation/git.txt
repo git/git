@@ -478,7 +478,7 @@ their values the same way as Boolean valued configuration variables, e.g.
 Here are the variables:
 
 System
-~~~~~~~~~~~~~~~~~~
+~~~~~~
 `HOME`::
 	Specifies the path to the user's home directory. On Windows, if
 	unset, Git will set a process environment variable equal to:
