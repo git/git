@@ -4,11 +4,11 @@
 # https://raw.githubusercontent.com/git-l10n/git-po/pot/main/po/git.pot
 # ---
 # Copyright (C) 2012-2022, Translation Project, Vietnamese Team <http://translationproject.org/team/vi.html>
-# Copyright (C) 2024, Vũ Tiến Hưng <newcomerminecraft@gmail.com>
+# Copyright (C) 2024-2025, Vũ Tiến Hưng <newcomerminecraft@gmail.com>
 # Nguyễn Thái Ngọc Duy <pclouds@gmail.com>, 2012.
 # Đoàn Trần Công Danh <congdanhqx@gmail.com>, 2020.
 # Trần Ngọc Quân <vnwildman@gmail.com>, 2012-2022.
-# Vũ Tiến Hưng <newcomerminecraft@gmail.com>, 2024.
+# Vũ Tiến Hưng <newcomerminecraft@gmail.com>, 2024-2025.
 # ---
 # BẢNG THUẬT NGỮ / TERMINOLOGY
 # Updated: 2024-07-26, git 2.46
@@ -64,10 +64,10 @@
 # +------------------------------------------------------------------+
 msgid ""
 msgstr ""
-"Project-Id-Version: git 2.47\n"
+"Project-Id-Version: git 2.48\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2024-10-05 01:20+0000\n"
-"PO-Revision-Date: 2024-10-05 16:48+0700\n"
+"POT-Creation-Date: 2024-12-23 18:57+0000\n"
+"PO-Revision-Date: 2025-01-05 01:20+0700\n"
 "Last-Translator: Vũ Tiến Hưng <newcomerminecraft@gmail.com>\n"
 "Language-Team: Vietnamese <https://github.com/Nekosha/git-po>\n"
 "Language: vi\n"
@@ -686,10 +686,10 @@ msgstr "Chỉ có các tập tin nhị phân thay đổi."
 #, c-format
 msgid ""
 "\n"
-"Disable this message with \"git config advice.%s false\""
+"Disable this message with \"git config set advice.%s false\""
 msgstr ""
 "\n"
-"Tắt lời nhắn này bằng \"git config advice.%s false\""
+"Tắt lời nhắn này bằng \"git config set advice.%s false\""
 
 #, c-format
 msgid "%shint:%s%.*s%s\n"
@@ -1904,7 +1904,7 @@ msgid "update tracked files"
 msgstr "cập nhật các tập tin được theo dõi"
 
 msgid "renormalize EOL of tracked files (implies -u)"
-msgstr "thường hóa lại EOL của các tập tin được theo dõi (ngụ ý -u)"
+msgstr "thường hóa lại EOL của các tập tin được theo dõi (ngầm chỉ định -u)"
 
 msgid "record only the fact that the path will be added later"
 msgstr "chỉ ghi lại sự việc mà đường dẫn sẽ được thêm vào sau"
@@ -2017,7 +2017,7 @@ msgstr "không hiểu cú pháp %s"
 
 #, c-format
 msgid "'%s' was deleted by the applypatch-msg hook"
-msgstr "'%s' bị xóa bởi móc applypatch-msg"
+msgstr "'%s' bị xóa bởi hook applypatch-msg"
 
 #, c-format
 msgid "Malformed input line: '%s'."
@@ -3040,11 +3040,11 @@ msgid "HEAD not found below refs/heads!"
 msgstr "Không tìm thấy HEAD ở dưới refs/heads!"
 
 msgid ""
-"branch with --recurse-submodules can only be used if submodule."
-"propagateBranches is enabled"
+"branch with --recurse-submodules can only be used if "
+"submodule.propagateBranches is enabled"
 msgstr ""
-"nhánh với --recurse-submodules chỉ có thể được sử dụng nếu submodule."
-"propagateBranches được kích hoạt"
+"nhánh với --recurse-submodules chỉ có thể được sử dụng nếu "
+"submodule.propagateBranches được kích hoạt"
 
 msgid "--recurse-submodules can only be used to create branches"
 msgstr "--recurse-submodules chỉ có thể được sử dụng để tạo ra các nhánh"
@@ -3125,7 +3125,7 @@ msgid "libc info: "
 msgstr "thông tin libc: "
 
 msgid "not run from a git repository - no hooks to show\n"
-msgstr "không chạy từ một kho git - nên chẳng có móc nào để hiển thị cả\n"
+msgstr "không chạy từ một kho git - nên chẳng có hook nào để hiển thị cả\n"
 
 msgid ""
 "git bugreport [(-o | --output-directory) <path>]\n"
@@ -3200,7 +3200,7 @@ msgid "System Info"
 msgstr "Thông tin hệ thống"
 
 msgid "Enabled Hooks"
-msgstr "Các Móc đã được bật"
+msgstr "Các hook đã được bật"
 
 #, c-format
 msgid "unable to write to %s"
@@ -3880,8 +3880,8 @@ msgstr "nhánh chưa sinh mới"
 msgid "update ignored files (default)"
 msgstr "cập nhật các tập tin bị bỏ qua (mặc định)"
 
-msgid "do not check if another worktree is holding the given ref"
-msgstr "không kiểm tra nếu cây làm việc khác đang giữ tham chiếu đã cho"
+msgid "do not check if another worktree is using this branch"
+msgstr "không kiểm tra nếu cây làm việc khác đang sử dụng nhánh này"
 
 msgid "checkout our version for unmerged files"
 msgstr "checkout phiên bản của ta cho các tập tin chưa được hòa trộn"
@@ -4129,7 +4129,7 @@ msgid "create a bare repository"
 msgstr "tạo kho bare"
 
 msgid "create a mirror repository (implies --bare)"
-msgstr "tạo kho bản sao (ngụ ý --bare)"
+msgstr "tạo kho bản sao (ngầm chỉ định --bare)"
 
 msgid "to clone from a local repository"
 msgstr "để nhân bản từ kho nội bộ"
@@ -4182,11 +4182,11 @@ msgstr "tạo bản sao không đầy đủ cho mức sâu đã cho"
 msgid "create a shallow clone since a specific time"
 msgstr "tạo bản sao không đầy đủ từ thời điểm đã cho"
 
-msgid "revision"
-msgstr "điểm xét duyệt"
+msgid "ref"
+msgstr "ref"
 
-msgid "deepen history of shallow clone, excluding rev"
-msgstr "làm sâu hơn lịch sử của bản sao shallow, bằng điểm xét duyệt loại trừ"
+msgid "deepen history of shallow clone, excluding ref"
+msgstr "làm sâu hơn lịch sử của bản sao shallow, loại trừ tham chiếu"
 
 msgid "clone only one branch, HEAD or --branch"
 msgstr "chỉ nhân bản một nhánh, HEAD hoặc --branch"
@@ -5068,7 +5068,7 @@ msgid "commit only specified files"
 msgstr "chỉ chuyển giao các tập tin đã chỉ ra"
 
 msgid "bypass pre-commit and commit-msg hooks"
-msgstr "vòng qua móc (hook) pre-commit và commit-msg"
+msgstr "bỏ qua hook pre-commit và commit-msg"
 
 msgid "show what would be committed"
 msgstr "hiển thị xem cái gì có thể được chuyển giao"
@@ -5077,7 +5077,7 @@ msgid "amend previous commit"
 msgstr "'tu bổ' (amend) lần commit trước"
 
 msgid "bypass post-rewrite hook"
-msgstr "vòng qua móc (hook) post-rewrite"
+msgstr "bỏ qua hook post-rewrite"
 
 msgid "ok to record an empty change"
 msgstr "ok để ghi lại một thay đổi trống rỗng"
@@ -5143,10 +5143,10 @@ msgstr ""
 
 msgid ""
 "git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] "
-"<name> <value>"
+"<name>"
 msgstr ""
 "git config unset [<tuỳ-chọn>] [--all] [--value=<giá-trị>] [--fixed-value] "
-"<khoá> <giá-trị>"
+"<khoá>"
 
 msgid "git config rename-section [<file-option>] <old-name> <new-name>"
 msgstr "git config rename-section [<tuỳ-chọn>] <tên-cũ> <tên-mới>"
@@ -5579,12 +5579,8 @@ msgid "traversed %lu commits\n"
 msgstr "đã xuyên %lu qua lần chuyển giao\n"
 
 #, c-format
-msgid ""
-"more than %i tags found; listed %i most recent\n"
-"gave up search at %s\n"
-msgstr ""
-"tìm thấy nhiều hơn %i thẻ; đã liệt kê %i cái gần\n"
-"đây nhất bỏ đi tìm kiếm tại %s\n"
+msgid "found %i tags; gave up search at %s\n"
+msgstr "tìm thấy %i thẻ; từ bỏ tìm kiếm tại %s\n"
 
 #, c-format
 msgid "describe %s\n"
@@ -6020,6 +6016,19 @@ msgstr "%s không phải là một đối tượng hợp lệ"
 msgid "the object %s does not exist"
 msgstr "đối tượng '%s' không tồn tại"
 
+#, c-format
+msgid ""
+"Run 'git remote set-head %s %s' to follow the change, or set\n"
+"'remote.%s.followRemoteHEAD' configuration option to a different value\n"
+"if you do not want to see this message. Specifically running\n"
+"'git config set remote.%s.followRemoteHEAD %s' will disable the warning\n"
+"until the remote changes HEAD to something else."
+msgstr ""
+"Chạy 'git remote set-head %s %s' để làm theo thay đổi, hoặc đặt tuỳ chọn\n"
+"'remote.%s.followRemoteHEAD' sang giá trị khác nếu bạn không muốn thấy\n"
+"thông báo này. Cụ thể, 'git config set remote.%s.followRemoteHEAD %s'\n"
+"sẽ vô hiệu cảnh báo này tới khi máy chủ đổi HEAD về chỗ khác."
+
 msgid "multiple branches detected, incompatible with --set-upstream"
 msgstr "phát hiện nhiều nhánh, không tương thích với --set-upstream"
 
@@ -6157,6 +6166,9 @@ msgstr "refmap"
 msgid "specify fetch refmap"
 msgstr "chỉ ra refmap cần lấy về"
 
+msgid "revision"
+msgstr "điểm xét duyệt"
+
 msgid "report that we have only objects reachable from this object"
 msgstr "báo rằng ta chỉ có các đối tượng tiếp cận được từ đối tượng này"
 
@@ -6209,11 +6221,11 @@ msgid "protocol does not support --negotiate-only, exiting"
 msgstr "giao thức không hỗ trợ --negotiate-only, nên thoát"
 
 msgid ""
-"--filter can only be used with the remote configured in extensions."
-"partialclone"
+"--filter can only be used with the remote configured in "
+"extensions.partialclone"
 msgstr ""
-"--filter chỉ có thể được dùng với máy chủ được cấu hình bằng extensions."
-"partialclone"
+"--filter chỉ có thể được dùng với máy chủ được cấu hình bằng "
+"extensions.partialclone"
 
 msgid "--atomic can only be used when fetching from one remote"
 msgstr "--atomic chỉ có thể dùng khi lấy về từ một máy chủ"
@@ -6882,8 +6894,24 @@ msgstr "hoặc là bộ lập lịch systemd hoặc là crontab không sẵn có
 msgid "%s scheduler is not available"
 msgstr "bộ lên lịch %s không sẵn có"
 
-msgid "another process is scheduling background maintenance"
-msgstr "một tiến trình khác được lập kế hoạch chạy nền để bảo trì"
+#, c-format
+msgid ""
+"unable to create '%s.lock': %s.\n"
+"\n"
+"Another scheduled git-maintenance(1) process seems to be running in this\n"
+"repository. Please make sure no other maintenance processes are running and\n"
+"then try again. If it still fails, a git-maintenance(1) process may have\n"
+"crashed in this repository earlier: remove the file manually to continue."
+msgstr ""
+"Không thể tạo '%s.lock': %s.\n"
+"\n"
+"Tiến trình git-maintenance(1) khác có lẽ đang chạy ở kho này. Vui lòng\n"
+"chắc chắn rằng mọi tiến trình đã kết thúc và sau đó thử lại. Nếu vẫn lỗi,\n"
+"một tiến trình git-maintenance(1) có lẽ đã crash ở kho này trước đó:\n"
+"gõ bỏ tập tin thủ công để tiếp tục."
+
+msgid "cannot acquire lock for scheduled background maintenance"
+msgstr "không thể lấy được lock để bảo trì nền theo kế hoạch"
 
 msgid "git maintenance start [--scheduler=<scheduler>]"
 msgstr "git maintenance start [--scheduler=<bộ lên lịch>]"
@@ -7250,8 +7278,8 @@ msgid ""
 "git hook run [--ignore-missing] [--to-stdin=<path>] <hook-name> [-- <hook-"
 "args>]"
 msgstr ""
-"git hook run [--ignore-missing] [--to-stdin=</đường/dẫn/>] <tên-móc> [-- "
-"<các tham số cho móc>]"
+"git hook run [--ignore-missing] [--to-stdin=</đường/dẫn/>] <tên-hook> [-- "
+"<các tham số cho hook>]"
 
 msgid "silently ignore missing requested <hook-name>"
 msgstr "âm thầm bỏ qua các <hook-name> đã yêu cầu còn thiếu"
@@ -7445,6 +7473,20 @@ msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "chiều dài chuỗi = %d: %lu đối tượng"
 
+msgid "could not start pack-objects to repack local links"
+msgstr "không thể bắt đầu pack-objects để đóng gói lại các link cục bộ"
+
+msgid "failed to feed local object to pack-objects"
+msgstr "gặp lỗi khi đưa local object cho pack-objects"
+
+msgid "index-pack: Expecting full hex object ID lines only from pack-objects."
+msgstr ""
+"index-pack: Đang chỉ cần các dòng ID đối tượng dạng hexa đầy đủ từ pack-"
+"objects."
+
+msgid "could not finish pack-objects to repack local links"
+msgstr "không thể hoàn tất pack-objects để đóng gói các link cục bộ"
+
 msgid "Cannot come back to cwd"
 msgstr "Không thể quay lại thư mục hiện hành"
 
@@ -7455,6 +7497,9 @@ msgstr "%s sai"
 #, c-format
 msgid "unknown hash algorithm '%s'"
 msgstr "không hiểu thuật toán băm dữ liệu '%s'"
+
+msgid "--promisor cannot be used with a pack name"
+msgstr "không được dùng --promisor với tên pack"
 
 msgid "--stdin requires a git repository"
 msgstr "--stdin cần một kho git"
@@ -8101,7 +8146,8 @@ msgid "use full path names"
 msgstr "dùng tên đường dẫn đầy đủ"
 
 msgid "list entire tree; not just current directory (implies --full-name)"
-msgstr "liệt kê cây mục tin; không chỉ thư mục hiện hành (ngụ ý --full-name)"
+msgstr ""
+"liệt kê cây mục tin; không chỉ thư mục hiện hành (ngầm chỉ định --full-name)"
 
 msgid "--format can't be combined with other format-altering options"
 msgstr ""
@@ -8390,10 +8436,10 @@ msgid "continue the current in-progress merge"
 msgstr "tiếp tục quá trình hòa trộn hiện tại đang thực hiện"
 
 msgid "bypass pre-merge-commit and commit-msg hooks"
-msgstr "vòng qua móc (hook) pre-merge-commit và commit-msg"
+msgstr "bỏ qua hook pre-merge-commit và commit-msg"
 
 msgid "could not run stash."
-msgstr "không thể chạy stash."
+msgstr "không thể chạy tạm cất."
 
 msgid "stash failed"
 msgstr "lệnh tạm cất gặp lỗi"
@@ -8815,11 +8861,11 @@ msgstr "git notes [--ref <notes-ref>] [list [<đối-tượng>]]"
 msgid ""
 "git notes [--ref <notes-ref>] add [-f] [--allow-empty] [--[no-]separator|--"
 "separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c "
-"| -C) <object>] [<object>]"
+"| -C) <object>] [<object>] [-e]"
 msgstr ""
 "git notes [--ref <notes-ref>] add [-f] [--allow-empty] [--[no-]separator|--"
 "separator=<paragraph-break>] [--[no-]stripspace] [-m <lời-nhắn> | -F <tập-"
-"tin> | (-c | -C) <đối-tượng>] [<đối-tượng>]"
+"tin> | (-c | -C) <đối-tượng>] [<đối-tượng>] [-e]"
 
 msgid "git notes [--ref <notes-ref>] copy [-f] <from-object> <to-object>"
 msgstr "git notes [--ref <notes-ref>] copy [-f] <từ-đối-tượng> <đến-đối-tượng>"
@@ -8827,11 +8873,11 @@ msgstr "git notes [--ref <notes-ref>] copy [-f] <từ-đối-tượng> <đến-�
 msgid ""
 "git notes [--ref <notes-ref>] append [--allow-empty] [--[no-]separator|--"
 "separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c "
-"| -C) <object>] [<object>]"
+"| -C) <object>] [<object>] [-e]"
 msgstr ""
 "git notes [--ref <notes-ref>] append [--allow-empty] [--[no-]separator|--"
 "separator=<paragraph-break>] [--[no-]stripspace] [-m <lời-nhắn> | -F <tập-"
-"tin> | (-c | -C) <đối-tượng>] [<đối-tượng>]"
+"tin> | (-c | -C) <đối-tượng>] [<đối-tượng>] [-e]"
 
 msgid "git notes [--ref <notes-ref>] edit [--allow-empty] [<object>]"
 msgstr "git notes [--ref <notes-ref>] edit [--allow-empty] [<đối-tượng>]"
@@ -8950,6 +8996,9 @@ msgstr "nội dung ghi chú (note) nằm trong một tập tin"
 msgid "reuse and edit specified note object"
 msgstr "dùng lại nhưng có sửa chữa đối tượng note đã chỉ ra"
 
+msgid "edit note message in editor"
+msgstr "sửa lại chú thích trong trình soạn thảo"
+
 msgid "reuse specified note object"
 msgstr "dùng lại đối tượng ghi chú (note) đã chỉ ra"
 
@@ -8988,7 +9037,7 @@ msgid "read objects from stdin"
 msgstr "đọc các đối tượng từ stdin"
 
 msgid "load rewriting config for <command> (implies --stdin)"
-msgstr "tải cấu hình chép lại cho <lệnh> (ngụ ý --stdin)"
+msgstr "tải cấu hình chép lại cho <lệnh> (ngầm chỉ định --stdin)"
 
 msgid "too few arguments"
 msgstr "quá ít đối số"
@@ -9355,7 +9404,7 @@ msgid "limit pack window by memory in addition to object limit"
 msgstr "giới hạn cửa sổ đóng gói theo bộ nhớ cộng thêm với giới hạn đối tượng"
 
 msgid "maximum length of delta chain allowed in the resulting pack"
-msgstr "độ dài tối đa của chuỗi móc xích 'delta' được phép trong gói kết quả"
+msgstr "độ dài tối đa của chuỗi delta được phép trong gói kết quả"
 
 msgid "reuse existing deltas"
 msgstr "dùng lại các delta sẵn có"
@@ -9448,8 +9497,11 @@ msgstr "xử lý cho thiếu đối tượng"
 msgid "do not pack objects in promisor packfiles"
 msgstr "không thể đóng gói các đối tượng trong các tập tin gói promisor"
 
+msgid "implies --missing=allow-any"
+msgstr "ngầm chỉ định --missing=allow-any"
+
 msgid "respect islands during delta compression"
-msgstr "tôn trọng island trong suốt quá trình nén 'delta'"
+msgstr "tôn trọng island trong suốt quá trình nén delta"
 
 msgid "protocol"
 msgstr "giao thức"
@@ -9584,7 +9636,7 @@ msgid "allow fast-forward"
 msgstr "cho phép chuyển-tiếp-nhanh"
 
 msgid "control use of pre-merge-commit and commit-msg hooks"
-msgstr "điều khiển cách dùng các móc (hook) pre-merge-commit và commit-msg"
+msgstr "điều khiển cách dùng các hook pre-merge-commit và commit-msg"
 
 msgid "automatically stash/stash pop before and after"
 msgstr "tự động stash/stash pop trước và sau"
@@ -9785,8 +9837,8 @@ msgid ""
 msgstr ""
 "\n"
 "Để tránh tự động cấu hình nhánh thượng nguồn khi tên của chúng\n"
-"không khớp với nhánh nội bộ, xem tùy chọn 'simple' của branch."
-"autoSetupMerge\n"
+"không khớp với nhánh nội bộ, xem tùy chọn 'simple' của "
+"branch.autoSetupMerge\n"
 "trong 'git help config'.\n"
 
 #, c-format
@@ -9994,7 +10046,7 @@ msgid "prune locally removed refs"
 msgstr "xén tỉa những tham chiếu bị gỡ bỏ"
 
 msgid "bypass pre-push hook"
-msgstr "vòng qua móc tiền-đẩy (pre-push)"
+msgstr "bỏ qua hook tiền-đẩy (pre-push)"
 
 msgid "push missing but relevant tags"
 msgstr "push phần bị thiếu nhưng các thẻ lại thích hợp"
@@ -10289,10 +10341,10 @@ msgid "use the merge-base of upstream and branch as the current base"
 msgstr "sử dụng gốc hòa trộn của thượng nguồn và nhánh làm gốc hiện tại"
 
 msgid "allow pre-rebase hook to run"
-msgstr "cho phép móc (hook) pre-rebase được chạy"
+msgstr "cho phép hook pre-rebase được chạy"
 
 msgid "be quiet. implies --no-stat"
-msgstr "im lặng. ngụ ý --no-stat"
+msgstr "im lặng. ngầm chỉ định --no-stat"
 
 msgid "display a diffstat of what changed upstream"
 msgstr "hiển thị diffstat của những thay đổi thượng nguồn"
@@ -10526,14 +10578,14 @@ msgid "Current branch %s is up to date.\n"
 msgstr "Nhánh hiện tại %s đã được cập nhật rồi.\n"
 
 msgid "HEAD is up to date, rebase forced."
-msgstr "HEAD hiện đã được cập nhật rồi, bị ép buộc rebase."
+msgstr "HEAD hiện đã được cập nhật rồi, ép buộc rebase."
 
 #, c-format
 msgid "Current branch %s is up to date, rebase forced.\n"
-msgstr "Nhánh hiện tại %s đã được cập nhật rồi, lệnh rebase ép buộc.\n"
+msgstr "Nhánh hiện tại %s đã được cập nhật rồi, ép buộc rebase.\n"
 
 msgid "The pre-rebase hook refused to rebase."
-msgstr "Móc (hook) pre-rebase từ chối rebase."
+msgstr "Hook pre-rebase từ chối rebase."
 
 #, c-format
 msgid "Changes to %s:\n"
@@ -10546,7 +10598,7 @@ msgstr "Thay đổi từ %s thành %s:\n"
 #, c-format
 msgid "First, rewinding head to replay your work on top of it...\n"
 msgstr ""
-"Trước tiên, di chuyển head để xem lại các công việc trên đỉnh của nó...\n"
+"Trước tiên, di chuyển lại head để thực hiện lại các thay đổi trên nó...\n"
 
 msgid "Could not detach HEAD"
 msgstr "Không thể tách rời HEAD"
@@ -11048,6 +11100,29 @@ msgid "  Local ref configured for 'git push'%s:"
 msgid_plural "  Local refs configured for 'git push'%s:"
 msgstr[0] "  Những tham chiếu nội bộ được cấu hình cho lệnh 'git push'%s:"
 
+#, c-format
+msgid "'%s/HEAD' is unchanged and points to '%s'\n"
+msgstr "'%s/HEAD' không đổi và trỏ đến '%s'\n"
+
+#, c-format
+msgid "'%s/HEAD' has changed from '%s' and now points to '%s'\n"
+msgstr "'%s/HEAD' đã đổi từ '%s' để trỏ đến '%s'\n"
+
+#, c-format
+msgid "'%s/HEAD' is now created and points to '%s'\n"
+msgstr "'%s/HEAD' đã tạo và trỏ đến '%s'\n"
+
+#, c-format
+msgid "'%s/HEAD' was detached at '%s' and now points to '%s'\n"
+msgstr "'%s/HEAD' đã tách ra ở '%s' và trỏ đến '%s'\n"
+
+#, c-format
+msgid ""
+"'%s/HEAD' used to point to '%s' (which is not a remote branch), but now "
+"points to '%s'\n"
+msgstr ""
+"'%s/HEAD' từng trỏ đến '%s' (không phải nhánh máy chủ) và giờ trỏ đến '%s'\n"
+
 msgid "set refs/remotes/<name>/HEAD according to remote"
 msgstr "đặt refs/remotes/<tên>/HEAD cho phù hợp với máy chủ"
 
@@ -11069,7 +11144,7 @@ msgid "Not a valid ref: %s"
 msgstr "Không phải là tham chiếu hợp lệ: %s"
 
 #, c-format
-msgid "Could not setup %s"
+msgid "Could not set up %s"
 msgstr "Không thể cài đặt %s"
 
 #, c-format
@@ -12955,7 +13030,7 @@ msgid "don't print cloning progress"
 msgstr "đừng in tiến trình nhân bản"
 
 msgid "disallow cloning into non-empty directory, implies --init"
-msgstr "không cho phép nhân bản vào thư mục trống, ngụ ý --init"
+msgstr "không cho phép nhân bản vào thư mục trống, ngầm chỉ định --init"
 
 msgid ""
 "git submodule [--quiet] update [--init [--filter=<filter-spec>]] [--remote] "
@@ -13778,6 +13853,9 @@ msgstr "cài đặt chế độ theo dõi (xem git-branch(1))"
 msgid "try to match the new branch name with a remote-tracking branch"
 msgstr "có khớp tên tên nhánh mới với một nhánh theo dõi máy chủ"
 
+msgid "use relative paths for worktrees"
+msgstr "dùng đường dẫn tương đối cho thư mục làm việc"
+
 #, c-format
 msgid "options '%s', '%s', and '%s' cannot be used together"
 msgstr "tùy chọn '%s', '%s' và '%s' không thể dùng cùng nhau"
@@ -14049,6 +14127,25 @@ msgstr "không thể tạo '%s'"
 msgid "index-pack died"
 msgstr "index-pack đã chết"
 
+#, c-format
+msgid "directory '%s' is present in index, but not sparse"
+msgstr "Thư mục '%s' có ở trong chỉ mục, mà không phải dạng sparse?"
+
+msgid "corrupted cache-tree has entries not present in index"
+msgstr "cache-tree bị hỏng, chứa mục không có trong chỉ mục"
+
+#, c-format
+msgid "%s with flags 0x%x should not be in cache-tree"
+msgstr "%s với cờ 0x%x không nên có trong cache-tree"
+
+#, c-format
+msgid "bad subtree '%.*s'"
+msgstr "subtree sai '%.*s'"
+
+#, c-format
+msgid "cache-tree for path %.*s does not match. Expected %s got %s"
+msgstr "cache-tree cho đường dẫn %.*s không khớp. Cần %s nhưng có %s"
+
 msgid "terminating chunk id appears earlier than expected"
 msgstr "id chunk kết thúc sớm hơn bình thường"
 
@@ -14264,7 +14361,7 @@ msgid "Display help information about Git"
 msgstr "Hiển thị thông tin trợ giúp về Git"
 
 msgid "Run git hooks"
-msgstr "Chạy các móc git"
+msgstr "Chạy các hook git"
 
 msgid "Server side implementation of Git over HTTP"
 msgstr "Hỗ trợ phía máy chủ của Git qua HTTP"
@@ -14930,7 +15027,7 @@ msgid ""
 "to convert the grafts into replace refs.\n"
 "\n"
 "Turn this message off by running\n"
-"\"git config advice.graftFileDeprecated false\""
+"\"git config set advice.graftFileDeprecated false\""
 msgstr ""
 "Hỗ trợ cho <GIT_DIR>/info/grafts đã không còn\n"
 "và sẽ bị xóa bỏ ở phiên bản Git tương lai.\n"
@@ -14939,7 +15036,7 @@ msgstr ""
 "để chuyển đổi các graft thành các tham chiếu thay thế.\n"
 "\n"
 "Tắt lời nhắn này bằng cách chạy\n"
-"\"git config advice.graftFileDeprecated false\""
+"\"git config set advice.graftFileDeprecated false\""
 
 #, c-format
 msgid "commit %s exists in commit-graph but not in the object database"
@@ -15750,6 +15847,18 @@ msgstr "url không có lược đồ: %s"
 msgid "credential url cannot be parsed: %s"
 msgstr "không hiểu cú pháp giấy chứng thực url: %s"
 
+#, c-format
+msgid "invalid timeout '%s', expecting a non-negative integer"
+msgstr "timeout không hợp lệ '%s', cần số nguyên không âm"
+
+#, c-format
+msgid "invalid init-timeout '%s', expecting a non-negative integer"
+msgstr "init-timeout không hợp lệ '%s', cần số nguyên không âm"
+
+#, c-format
+msgid "invalid max-connections '%s', expecting an integer"
+msgstr "max-connections không hợp lệ '%s', cần số nguyên"
+
 msgid "in the future"
 msgstr "ở tương lai"
 
@@ -16445,6 +16554,20 @@ msgstr "đường dẫn không gian tên git \"%s\" sai"
 msgid "too many args to run %s"
 msgstr "quá nhiều tham số để chạy %s"
 
+#, c-format
+msgid ""
+"You are attempting to fetch %s, which is in the commit graph file but not in "
+"the object database.\n"
+"This is probably due to repo corruption.\n"
+"If you are attempting to repair this repo corruption by refetching the "
+"missing object, use 'git fetch --refetch' with the missing object."
+msgstr ""
+"Bạn đang muốn lấy về %s, nằm trong tập tin đồ-thị-chuyển-giao nhưng nằm "
+"ngoài cơ sở dữ liệu đối tượng.\n"
+"Nhiều khả năng kho chứa đã bị hỏng.\n"
+"Nếu bạn đang cần sửa chữa lại kho chứa bằng cách lấy về đối tượng còn thiếu, "
+"dùng 'git fetch --refetch' với đối tượng đó."
+
 msgid "git fetch-pack: expected shallow list"
 msgstr "git fetch-pack: cần danh sách shallow"
 
@@ -16878,8 +17001,8 @@ msgid ""
 "given pattern contains NULL byte (via -f <file>). This is only supported "
 "with -P under PCRE v2"
 msgstr ""
-"mẫu đã cho có chứa NULL byte (qua -f <file>). Điều này chỉ được hỗ trợ với -"
-"P dưới PCRE v2"
+"mẫu đã cho có chứa NULL byte (qua -f <file>). Điều này chỉ được hỗ trợ với "
+"-P dưới PCRE v2"
 
 #, c-format
 msgid "'%s': unable to read %s"
@@ -17023,10 +17146,10 @@ msgstr[0] ""
 #, c-format
 msgid ""
 "The '%s' hook was ignored because it's not set as executable.\n"
-"You can disable this warning with `git config advice.ignoredHook false`."
+"You can disable this warning with `git config set advice.ignoredHook false`."
 msgstr ""
-"Móc '%s' bị bỏ qua bởi vì nó không có cờ thực thi được.\n"
-"Bạn có thể tắt cảnh báo này bằng 'git config advice.ignoredHook false'."
+"Hook '%s' bị bỏ qua bởi vì nó không có cờ thực thi được.\n"
+"Bạn có thể tắt cảnh báo này bằng 'git config set advice.ignoredHook false'."
 
 msgid "not a git repository"
 msgstr "không phải là kho git"
@@ -17042,14 +17165,8 @@ msgstr "giá trị âm cho http.postBuffer; đặt thành mặc định là %d"
 msgid "Delegation control is not supported with cURL < 7.22.0"
 msgstr "Điều khiển giao quyền không được hỗ trợ với cURL < 7.22.0"
 
-msgid "Public key pinning not supported with cURL < 7.39.0"
-msgstr "Chốt khóa công không được hỗ trợ với cURL < 7.39.0"
-
 msgid "Unknown value for http.proactiveauth"
 msgstr "không hiểu giá trị cho http.proactiveauth"
-
-msgid "CURLSSLOPT_NO_REVOKE not supported with cURL < 7.44.0"
-msgstr "CURLSSLOPT_NO_REVOKE không được hỗ trợ với cURL < 7.44.0"
 
 #, c-format
 msgid "Unsupported SSL backend '%s'. Supported SSL backends:"
@@ -17204,7 +17321,7 @@ msgstr ""
 "Tiến trình git khác có lẽ đang chạy ở kho này, ví dụ\n"
 "một trình soạn thảo được mở bởi 'git commit'. Vui lòng chắc chắn\n"
 "rằng mọi tiến trình đã kết thúc và sau đó thử lại. Nếu vẫn lỗi,\n"
-"một tiến trình git có lẽ đã crash khi thực hiện ở kho này trước đó:\n"
+"một tiến trình git có lẽ đã crash ở kho này trước đó:\n"
 "gõ bỏ tập tin một cách thủ công để tiếp tục."
 
 #, c-format
@@ -17237,8 +17354,12 @@ msgid "unable to format message: %s"
 msgstr "không thể định dạng thông điệp: %s"
 
 #, c-format
+msgid "invalid marker-size '%s', expecting an integer"
+msgstr "marker-size không hợp lệ '%s', cần số nguyên"
+
+#, c-format
 msgid "Failed to merge submodule %s (not checked out)"
-msgstr "Gặp lỗi khi hòa trộn mô-đun-con %s (không checkout được)"
+msgstr "Gặp lỗi khi hòa trộn mô-đun-con %s (không checkout)"
 
 #, c-format
 msgid "Failed to merge submodule %s (no merge base)"
@@ -18335,7 +18456,7 @@ msgid ""
 "\n"
 "where \"$br\" is somehow empty and a 40-hex ref is created. Please\n"
 "examine these refs and maybe delete them. Turn this message off by\n"
-"running \"git config advice.objectNameWarning false\""
+"running \"git config set advice.objectNameWarning false\""
 msgstr ""
 "Git thường không bao giờ tạo tham chiếu kết thúc với 40 ký tự hex\n"
 "bởi vì nó sẽ bị bỏ qua khi bạn chỉ định 40 ký tự hex. Những tham chiếu\n"
@@ -18344,8 +18465,8 @@ msgstr ""
 "  git switch -c $br $(git rev-parse ...)\n"
 "\n"
 "với \"$br\" không hiểu lý do vì sao rỗng và tạo ra tham chiếu 40-hex.\n"
-" Xin hãy kiểm tra những tham chiếu này và xóa chúng đi nếu cần. Tắt\n"
-"lời nhắn này bằng cách chạy lệnh \"git config advice.objectNameWarning "
+"Xin hãy kiểm tra những tham chiếu này và xóa chúng đi nếu cần. Tắt\n"
+"lời nhắn này bằng cách chạy lệnh \"git config set advice.objectNameWarning "
 "false\""
 
 #, c-format
@@ -18501,13 +18622,6 @@ msgstr "bitmap multi-pack thiếu chỉ mục để dành cần thiết"
 #, c-format
 msgid "could not open pack %s"
 msgstr "không thể mở gói '%s'"
-
-msgid "could not determine MIDX preferred pack"
-msgstr "không thể xác định gói MIDX ưa dùng"
-
-#, c-format
-msgid "preferred pack (%s) is invalid"
-msgstr "preferred pack (%s) không hợp lệ"
 
 msgid "corrupt bitmap lookup table: triplet position out of index"
 msgstr "bảng tìm kiếm bitmap bị hỏng: vị trí bộ ba nằm ngoài chỉ mục"
@@ -19619,16 +19733,24 @@ msgstr "nhật ký cho tham chiếu %s kết thúc bất ngờ trên %s"
 msgid "log for %s is empty"
 msgstr "nhật ký cho %s trống rỗng"
 
-msgid "refusing to force and skip creation of reflog"
-msgstr "từ chối bỏ qua việc tạo log tham chiếu"
+#, c-format
+msgid "refusing to update reflog for pseudoref '%s'"
+msgstr "từ chối cập nhật reflog cho tham chiếu ảo '%s'"
+
+#, c-format
+msgid "refusing to update pseudoref '%s'"
+msgstr "từ chối cập nhật tham chiếu ảo '%s'"
+
+#, c-format
+msgid "refusing to update reflog with bad name '%s'"
+msgstr "từ chối cập nhật reflog với tên sai '%s'"
 
 #, c-format
 msgid "refusing to update ref with bad name '%s'"
 msgstr "từ chối cập nhật tham chiếu với tên sai '%s'"
 
-#, c-format
-msgid "refusing to update pseudoref '%s'"
-msgstr "từ chối cập nhật tham chiếu ảo '%s'"
+msgid "refusing to force and skip creation of reflog"
+msgstr "từ chối bỏ qua việc tạo log tham chiếu"
 
 #, c-format
 msgid "update_ref failed for ref '%s': %s"
@@ -19642,7 +19764,7 @@ msgid "ref updates forbidden inside quarantine environment"
 msgstr "cập nhật tham chiếu bị cấm trong môi trường kiểm tra"
 
 msgid "ref updates aborted by hook"
-msgstr "các cập nhật tham chiếu bị huỷ bỏ bởi móc"
+msgstr "các cập nhật tham chiếu bị huỷ bỏ bởi hook"
 
 #, c-format
 msgid "'%s' exists; cannot create '%s'"
@@ -19678,6 +19800,10 @@ msgid ""
 msgstr ""
 "không thể lock tham chiếu '%s': cần tham chiếu mềm tới '%s': nhưng lại là "
 "tham chiếu thường"
+
+#, c-format
+msgid "cannot read ref file '%s'"
+msgstr "không thể đọc tập tin ref '%s'"
 
 #, c-format
 msgid "cannot open directory %s"
@@ -19885,6 +20011,10 @@ msgstr "đã đưa ra nhiều hơn một gói nhận về, đang sử dụng cá
 
 msgid "more than one uploadpack given, using the first"
 msgstr "đã đưa ra nhiều hơn một gói tải lên, đang sử dụng cái đầu tiên"
+
+#, c-format
+msgid "unrecognized followRemoteHEAD value '%s' ignored"
+msgstr "bỏ qua giá trị không chấp nhận cho followRemoteHEAD '%s'"
 
 #, c-format
 msgid "unrecognized value transfer.credentialsInUrl: '%s'"
@@ -20650,7 +20780,7 @@ msgstr ""
 "  git rebase --continue\n"
 
 msgid "'prepare-commit-msg' hook failed"
-msgstr "móc 'prepare-commit-msg' bị lỗi"
+msgstr "hook 'prepare-commit-msg' bị lỗi"
 
 msgid ""
 "Your name and email address were configured automatically based\n"
@@ -21812,6 +21942,9 @@ msgstr "lần chuyển giao %s chưa được đánh dấu là tiếp cận đư
 msgid "too many commits marked reachable"
 msgstr "có quá nhiều lần chuyển giao được đánh dấu là tiếp cận được"
 
+msgid "could not determine MIDX preferred pack"
+msgstr "không thể xác định gói MIDX ưa dùng"
+
 msgid "test-tool serve-v2 [<options>]"
 msgstr "test-tool serve-v2 [<các tùy chọn>]"
 
@@ -22478,6 +22611,9 @@ msgstr "tập tin .git bị hỏng"
 msgid ".git file incorrect"
 msgstr "tập tin .git không chính xác"
 
+msgid ".git file absolute/relative path mismatch"
+msgstr "đường dẫn tương đối/tuyệt đối đến file .git không khớp"
+
 msgid "not a valid path"
 msgstr "không phải là một đường dẫn hợp lệ"
 
@@ -22492,6 +22628,9 @@ msgstr "không thể định vị kho chứa; tập tin .git bị hỏng"
 
 msgid "gitdir unreadable"
 msgstr "gitdir không thể đọc được"
+
+msgid "gitdir absolute/relative path mismatch"
+msgstr "đường dẫn tương đối/tuyệt đối đến gitdir không khớp"
 
 msgid "gitdir incorrect"
 msgstr "gitdir không chính xác"
@@ -22526,6 +22665,13 @@ msgstr "không thể bỏ đặt %s trong '%s'"
 
 msgid "failed to set extensions.worktreeConfig setting"
 msgstr "gặp lỗi khi đặt cài đặt extensions.worktreeConfig"
+
+msgid "unable to upgrade repository format to support relative worktrees"
+msgstr ""
+"không thể nâng cấp định định dạng kho chứa để hỗ trợ cây làm việc tương đối"
+
+msgid "unable to set extensions.relativeWorktrees setting"
+msgstr "gặp lỗi khi đặt cài đặt extensions.relativeWorktrees"
 
 #, c-format
 msgid "could not setenv '%s'"
