@@ -1300,7 +1300,7 @@ msgstr "fel i deflate (%d)"
 
 #, c-format
 msgid "unable to start '%s' filter"
-msgstr "kane inte starta filtret ”%s”"
+msgstr "kan inte starta filtret ”%s”"
 
 msgid "unable to redirect descriptor"
 msgstr "kan inte omdirigera handtag"
@@ -2812,7 +2812,7 @@ msgstr "kunde inte slå upp HEAD"
 
 #, c-format
 msgid "HEAD (%s) points outside of refs/heads/"
-msgstr "HEAD (%s) pekar utenför refs/heads/"
+msgstr "HEAD (%s) pekar utanför refs/heads/"
 
 #, c-format
 msgid "branch %s is being rebased at %s"
@@ -2828,7 +2828,7 @@ msgstr "HEAD i arbetskatalogen %s har inte uppdaterats"
 
 #, c-format
 msgid "invalid branch name: '%s'"
-msgstr "gelaktigt namn på gren: ”%s”"
+msgstr "felaktigt namn på gren: ”%s”"
 
 #, c-format
 msgid "no commit on branch '%s' yet"
@@ -3301,7 +3301,7 @@ msgid "read commands from stdin"
 msgstr "läs kommandon från standard in"
 
 msgid "with --batch[-check]: ignores stdin, batches all known objects"
-msgstr "med --batch[-check]: ignorear standard in, buntar alla kända objekt"
+msgstr "med --batch[-check]: ignorerar standard in, buntar alla kända objekt"
 
 msgid "Change or optimize batch output"
 msgstr "Ändra eller optimera buntutdata"
@@ -3687,13 +3687,13 @@ msgid ""
 "one remote, e.g. the 'origin' remote, consider setting\n"
 "checkout.defaultRemote=origin in your config."
 msgstr ""
-"Om du menade checka ut en spårad fjärrgren på t.ex ”origin”, kan du\n"
+"Om du menade checka ut en spårad fjärrgren på t.ex. ”origin”, kan du\n"
 "göra det genom att ange hela namnet med flaggan --track:\n"
 "\n"
 "    git checkout --track origin/<namn>\n"
 "\n"
 "Om du alltid vill att utcheckningar med tvetydiga <namn> ska\n"
-"föredra en fjärr, t.ex fjärren ”origin” kan du ställa in\n"
+"föredra en fjärr, t.ex. fjärren ”origin” kan du ställa in\n"
 "checkout.defaultRemote=origin i din konfiguration."
 
 #, c-format
@@ -3799,7 +3799,7 @@ msgid "Cannot switch branch to a non-commit '%s'"
 msgstr "Kan inte växla gren till icke-incheckningen ”%s”"
 
 msgid "missing branch or commit argument"
-msgstr "saknar gren- eller incheckingsargument"
+msgstr "saknar gren- eller incheckningsargument"
 
 #, c-format
 msgid "unknown conflict style '%s'"
@@ -4425,7 +4425,7 @@ msgid "the object directory to store the graph"
 msgstr "objektkatalogen där grafen ska lagras"
 
 msgid "if the commit-graph is split, only verify the tip file"
-msgstr "om inchecknignsgrafen är delad, kontrollera bara spetsfilen"
+msgstr "om incheckningsgrafen är delad, kontrollera bara spetsfilen"
 
 #, c-format
 msgid "Could not open commit-graph '%s'"
@@ -4471,7 +4471,7 @@ msgstr "tillåt skriva en inkrementell incheckningsgraffil"
 
 msgid "maximum number of commits in a non-base split commit-graph"
 msgstr ""
-"maximalt antal incheckningar i en delad incheckingsgraf som inte är bad"
+"maximalt antal incheckningar i en delad incheckningsgraf som inte är bad"
 
 msgid "maximum ratio between two levels of a split commit-graph"
 msgstr "maximalt förhållande mellan två nivåer av en delad incheckningsgraf"
@@ -4480,7 +4480,7 @@ msgid "only expire files older than a given date-time"
 msgstr "låt tid endast gå ut för filer äldre än givet datum och tid"
 
 msgid "maximum number of changed-path Bloom filters to compute"
-msgstr "maximalt antal Bloom-filer med ändrad sökväg att beräkna"
+msgstr "maximalt antal Bloom-filter med ändrad sökväg att beräkna"
 
 msgid "use at most one of --reachable, --stdin-commits, or --stdin-packs"
 msgstr "använd som mest en av --reachable, --stdin-commits och --stdin-packs"
@@ -5426,7 +5426,7 @@ msgstr "”credential-cache” ej tillgänglig; stöd för unix-uttag saknas"
 
 #, c-format
 msgid "unable to get credential storage lock in %d ms"
-msgstr "kan inte erhålla låset för lagring av inlogginsuppgifter på %d ms"
+msgstr "kan inte erhålla låset för lagring av inloggningsuppgifter på %d ms"
 
 msgid ""
 "git describe [--all] [--tags] [--contains] [--abbrev=<n>] [<commit-ish>...]"
@@ -5782,7 +5782,7 @@ msgid "Expected 'to' command, got %s"
 msgstr "Förväntade ”to”-kommando, fick %s"
 
 msgid "Expected format name:filename for submodule rewrite option"
-msgstr "Förvändae formatet namn:filnamn för undermodul-omskrivningsflaggan"
+msgstr "Förväntade formatet namn:filnamn för undermodul-omskrivningsflaggan"
 
 #, c-format
 msgid "feature '%s' forbidden in input without --allow-unsafe-features"
@@ -6093,7 +6093,7 @@ msgid "check for forced-updates on all updated branches"
 msgstr "se efter tvingade uppdateringar i alla uppdaterade grenar"
 
 msgid "write the commit-graph after fetching"
-msgstr "skriv incheckingsgrafen efter hämtning"
+msgstr "skriv incheckningsgrafen efter hämtning"
 
 msgid "accept refspecs from stdin"
 msgstr "ta emot referenser från standard in"
@@ -6141,7 +6141,7 @@ msgid "--atomic can only be used when fetching from one remote"
 msgstr "--atomic kan bara användas vid hämtning från en fjärr"
 
 msgid "--stdin can only be used when fetching from one remote"
-msgstr "--stdin kan bara användas vid hämtning fårn en fjärr"
+msgstr "--stdin kan bara användas vid hämtning från en fjärr"
 
 msgid ""
 "git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]"
@@ -6438,7 +6438,7 @@ msgid "report root nodes"
 msgstr "rapportera rotnoder"
 
 msgid "make index objects head nodes"
-msgstr "gör indexojekt till huvudnoder"
+msgstr "gör indexobjekt till huvudnoder"
 
 msgid "make reflogs head nodes (default)"
 msgstr "gör refloggar till huvudnoder (standard)"
@@ -7732,7 +7732,7 @@ msgid "cover-from-description-mode"
 msgstr "cover-from-description-läge"
 
 msgid "generate parts of a cover letter based on a branch's description"
-msgstr "skapa delar av omslagsbrevet baserat på grenbeskrivelsen"
+msgstr "skapa delar av omslagsbrevet baserat på grenbeskrivningen"
 
 msgid "use branch description from file"
 msgstr "använd grenbeskrivningar från fil"
@@ -7974,7 +7974,7 @@ msgid "show debugging data"
 msgstr "visa felsökningsutdata"
 
 msgid "suppress duplicate entries"
-msgstr "undertyck dublettposter"
+msgstr "undertryck dublettposter"
 
 msgid "show sparse directories in the presence of a sparse index"
 msgstr "visa glesa kataloger när et glest index existerar"
@@ -8066,7 +8066,7 @@ msgid "keep subject"
 msgstr "behåll ärenderad"
 
 msgid "keep non patch brackets in subject"
-msgstr "behåll hakparanterser som inte är ”patch” i ärenderaden"
+msgstr "behåll hakparenteser som inte är ”patch” i ärenderaden"
 
 msgid "copy Message-ID to the end of commit message"
 msgstr "kopiera Message-ID till slutet av incheckningsmeddelandet"
@@ -8221,7 +8221,7 @@ msgid "git merge-tree [--write-tree] [<options>] <branch1> <branch2>"
 msgstr "git merge-tree [--write-tree] [<flaggor>] <gren1> <gren2>"
 
 msgid "git merge-tree [--trivial-merge] <base-tree> <branch1> <branch2>"
-msgstr "git merge-tree [--trivial-merge] <baseträd> <gren1> <gren2>"
+msgstr "git merge-tree [--trivial-merge] <basträd> <gren1> <gren2>"
 
 msgid "do a real merge instead of a trivial merge"
 msgstr "gör en riktig sammanslagning istället för en enkel sammanslagning"
@@ -9244,7 +9244,7 @@ msgstr "kan inte öppna paketfilen"
 
 #, c-format
 msgid "loose object at %s could not be examined"
-msgstr "lösa objekt på %s kunde inte underökas"
+msgstr "lösa objekt på %s kunde inte undersökas"
 
 msgid "unable to force loose object"
 msgstr "kan inte tvinga lösa objekt"
@@ -9693,7 +9693,7 @@ msgid "Need to specify how to reconcile divergent branches."
 msgstr "Måste ange hur avvikande grenar skall förlikas."
 
 msgid "cannot rebase with locally recorded submodule modifications"
-msgstr "kan inte ombasera med lokalt lagrade ändringar i undermoful"
+msgstr "kan inte ombasera med lokalt lagrade ändringar i undermodul"
 
 msgid "git push [<options>] [<repository> [<refspec>...]]"
 msgstr "git push [<flaggor>] [<arkiv> [<refspec>...]]"
@@ -10211,7 +10211,7 @@ msgid "empty exec command"
 msgstr "tomt exec-kommando"
 
 msgid "rebase onto given branch instead of upstream"
-msgstr "ombasera mot given grenen istället för uppström"
+msgstr "ombasera mot given gren istället för uppström"
 
 msgid "use the merge-base of upstream and branch as the current base"
 msgstr "använd sammanslagningsbasen mellan uppströms och gren som aktuell bas"
@@ -10603,7 +10603,7 @@ msgid "process the reflogs of all references"
 msgstr "hantera referensloggar för alla referenser"
 
 msgid "limits processing to reflogs from the current worktree only"
-msgstr "begränsar hantering av referensloggar till endst aktuell arbetskatalog"
+msgstr "begränsar hantering av referensloggar till endast aktuell arbetskatalog"
 
 #, c-format
 msgid "Marking reachable objects..."
@@ -11866,7 +11866,7 @@ msgstr "Ingen sökvägsangivelse gavs. Vilka filer ska jag ta bort?"
 
 msgid "please stage your changes to .gitmodules or stash them to proceed"
 msgstr ""
-"löa dina ändringar i .gitmodules eller använd ”stash” för att fortsätta"
+"köa dina ändringar i .gitmodules eller använd ”stash” för att fortsätta"
 
 #, c-format
 msgid "not removing '%s' recursively without -r"
@@ -11940,7 +11940,7 @@ msgid "linewrap output"
 msgstr "radbryt utdata"
 
 msgid "field"
-msgstr "föt"
+msgstr "fält"
 
 msgid "group by field"
 msgstr "gruppera efter fält"
@@ -12101,7 +12101,7 @@ msgid "stricter reference checking, requires exact ref path"
 msgstr "striktare referenskontroll, kräver exakt referenssökväg"
 
 msgid "show the HEAD reference, even if it would be filtered out"
-msgstr "visa HEAD-refrens, även när den skulle filtreras ut"
+msgstr "visa HEAD-referens, även när den skulle filtreras ut"
 
 msgid "dereference tags into object IDs"
 msgstr "avreferera taggar till objekt-id"
@@ -12158,7 +12158,7 @@ msgid "initialize the sparse-checkout in cone mode"
 msgstr "initiera sparse-checkout i konläge"
 
 msgid "toggle the use of a sparse index"
-msgstr "slå på/av använding av glest index"
+msgstr "slå på/av användning av glest index"
 
 #, c-format
 msgid "unable to create leading directories of %s"
@@ -12329,7 +12329,7 @@ msgstr "Inga ”stash”-poster hittades."
 
 #, c-format
 msgid "%s is not a valid reference"
-msgstr "%s är inte en giltigt referens"
+msgstr "%s är inte en giltig referens"
 
 msgid "git stash clear with arguments is unimplemented"
 msgstr "”git stash clear” med argument har inte implementerats"
@@ -12580,7 +12580,7 @@ msgstr ""
 "HEAD"
 
 msgid "git submodule status [--quiet] [--cached] [--recursive] [<path>...]"
-msgstr "git submodule status [--quitet] [--cached] [--recursive] [<sökväg>...]"
+msgstr "git submodule status [--quiet] [--cached] [--recursive] [<sökväg>...]"
 
 #, c-format
 msgid "* %s %s(blob)->%s(submodule)"
@@ -12603,7 +12603,7 @@ msgid "unexpected mode %o"
 msgstr "okänt läge %o"
 
 msgid "use the commit stored in the index instead of the submodule HEAD"
-msgstr "använd incechkning lagrad i indexet istället för undermodulens HEAD"
+msgstr "använd incheckning lagrad i indexet istället för undermodulens HEAD"
 
 msgid "compare the commit in the index with that in the submodule HEAD"
 msgstr "jämför incheckningen i indexet med den i undermodulens HEAD"
@@ -13884,7 +13884,7 @@ msgstr "misslyckades lagra maximal skaparsymbol"
 
 #, c-format
 msgid "unrecognized bundle mode from URI '%s'"
-msgstr "okänt buntlägre från URI:en ”%s”"
+msgstr "okänt buntläge från URI:en ”%s”"
 
 #, c-format
 msgid "exceeded bundle URI recursion limit (%d)"
@@ -14233,7 +14233,7 @@ msgid "Send a collection of patches from stdin to an IMAP folder"
 msgstr "Sänd en samling patchar från stdin till en IMAP-mapp"
 
 msgid "Build pack index file for an existing packed archive"
-msgstr "SKapa pack-indexfiler för ett befintligt packat arkiv"
+msgstr "Skapa pack-indexfiler för ett befintligt packat arkiv"
 
 msgid "Create an empty Git repository or reinitialize an existing one"
 msgstr "Skapa tomt Git-arkiv eller ominitiera ett befintligt"
@@ -14455,7 +14455,7 @@ msgid "Creates a temporary file with a blob's contents"
 msgstr "Skapar temporära filer med innehållet från en blob"
 
 msgid "Unpack objects from a packed archive"
-msgstr "Packa upp objekt från ett pakat arkiv"
+msgstr "Packa upp objekt från ett packat arkiv"
 
 msgid "Register file contents in the working tree to the index"
 msgstr "Registrera filinnehållet från arbetskatalogen i indexet"
@@ -14512,7 +14512,7 @@ msgid "Git for CVS users"
 msgstr "Git för CVS-användare"
 
 msgid "Tweaking diff output"
-msgstr "Justrea diff-utdata"
+msgstr "Justera diff-utdata"
 
 msgid "A useful minimum set of commands for Everyday Git"
 msgstr "Ett användbart minsta uppsättning kommandon för vardags-Git"
@@ -14620,7 +14620,7 @@ msgid "commit-graph generations chunk is wrong size"
 msgstr "incheckningsgrafens generationsstycke har fel storlek"
 
 msgid "commit-graph changed-path index chunk is too small"
-msgstr "incheckningsgrafens ändrade-sökvägar-indexstycke är förö litet"
+msgstr "incheckningsgrafens ändrade-sökvägar-indexstycke är för litet"
 
 #, c-format
 msgid ""
@@ -14684,10 +14684,10 @@ msgstr "incheckningsgrafens kedjefil är för liten"
 
 #, c-format
 msgid "invalid commit-graph chain: line '%s' not a hash"
-msgstr "ogiltig incheckingsgrafkedja: rad ”%s” är inte ett hash-värde"
+msgstr "ogiltig incheckningsgrafkedja: rad ”%s” är inte ett hash-värde"
 
 msgid "unable to find all commit-graph files"
-msgstr "kan inte hitta alla incheckingsgraffiler"
+msgstr "kan inte hitta alla incheckningsgraffiler"
 
 msgid "invalid commit position. commit-graph is likely corrupt"
 msgstr "ogiltig incheckningsposition. incheckningsgrafen är troligtvis trasig"
@@ -14729,8 +14729,8 @@ msgstr "Samlar refererade incheckningar"
 #, c-format
 msgid "Finding commits for commit graph in %<PRIuMAX> pack"
 msgid_plural "Finding commits for commit graph in %<PRIuMAX> packs"
-msgstr[0] "Söker incheckningar för incheckingsgraf i %<PRIuMAX> paket"
-msgstr[1] "Söker incheckningar för incheckingsgraf i %<PRIuMAX> paket"
+msgstr[0] "Söker incheckningar för incheckningsgraf i %<PRIuMAX> paket"
+msgstr[1] "Söker incheckningar för incheckningsgraf i %<PRIuMAX> paket"
 
 #, c-format
 msgid "error adding pack %s"
@@ -14741,10 +14741,10 @@ msgid "error opening index for %s"
 msgstr "fel vid öppning av indexet för %s"
 
 msgid "Finding commits for commit graph among packed objects"
-msgstr "Söker incheckningar för incheckingsgraf i packade objekt"
+msgstr "Söker incheckningar för incheckningsgraf i packade objekt"
 
 msgid "Finding extra edges in commit graph"
-msgstr "Söker ytterligare kanter i incheckingsgraf"
+msgstr "Söker ytterligare kanter i incheckningsgraf"
 
 msgid "failed to write correct number of base graph ids"
 msgstr "misslyckades skriva korrekt antal bas-graf-id:n"
@@ -14766,7 +14766,7 @@ msgid "unable to open commit-graph chain file"
 msgstr "kan inte öppna incheckningsgrafkedjefilen"
 
 msgid "failed to rename base commit-graph file"
-msgstr "misslyckades byta namn på bas-incheckingsgraffilen"
+msgstr "misslyckades byta namn på bas-incheckningsgraffilen"
 
 msgid "failed to rename temporary commit-graph file"
 msgstr "misslyckades byta namn på temporär incheckningsgraffil"
@@ -15335,7 +15335,7 @@ msgstr "referensen ”%s” pekar inte på en blob"
 
 #, c-format
 msgid "unable to resolve config blob '%s'"
-msgstr "kan inte slå upp konfigurerings-bloben ”%s”"
+msgstr "kan inte slå upp konfigurerings-blobben ”%s”"
 
 msgid "unable to parse command-line config"
 msgstr "kan inte tolka kommandoradskonfiguration"
@@ -15697,7 +15697,7 @@ msgstr "url saknar protokoll: %s"
 
 #, c-format
 msgid "credential url cannot be parsed: %s"
-msgstr "kan inte tolka url för inloggingsuppgifter: %s"
+msgstr "kan inte tolka url för inloggningsuppgifter: %s"
 
 #, c-format
 msgid "invalid timeout '%s', expecting a non-negative integer"
@@ -16102,7 +16102,7 @@ msgid "use default prefixes a/ and b/"
 msgstr "använd standardprefixen a/ och b/"
 
 msgid "show context between diff hunks up to the specified number of lines"
-msgstr "visa sammnhang mellan diff-stycken upp till angivet antal rader"
+msgstr "visa sammanhang mellan diff-stycken upp till angivet antal rader"
 
 msgid "<char>"
 msgstr "<tecken>"
@@ -16622,7 +16622,7 @@ msgstr "Servern tillåter inte förfrågan om ej tillkännagivet objekt %s"
 
 #, c-format
 msgid "fsmonitor_ipc__send_query: invalid path '%s'"
-msgstr "fsmonitor_ipc__send_query: ogilitg sökväg ”%s”"
+msgstr "fsmonitor_ipc__send_query: ogiltig sökväg ”%s”"
 
 #, c-format
 msgid "fsmonitor_ipc__send_query: unspecified error on '%s'"
@@ -16896,7 +16896,7 @@ msgid "Interacting with Others"
 msgstr "Interaktion med andra"
 
 msgid "Low-level Commands / Manipulators"
-msgstr "Lågnivåkommandon / maniupulerare"
+msgstr "Lågnivåkommandon / manipulerare"
 
 msgid "Low-level Commands / Interrogators"
 msgstr "Lågnivåkommandon / frågare"
@@ -16936,7 +16936,7 @@ msgid "External commands"
 msgstr "Externa kommandon"
 
 msgid "Command aliases"
-msgstr "Kommadoalias"
+msgstr "Kommandoalias"
 
 msgid "See 'git help <command>' to read about a specific subcommand"
 msgstr "Se ”git help <kommando>” för att läsa om ett specifikt underkommando"
@@ -17279,7 +17279,7 @@ msgid ""
 "CONFLICT (implicit dir rename): Existing file/dir at %s in the way of "
 "implicit directory rename(s) putting the following path(s) there: %s."
 msgstr ""
-"KONFLIKT (implicit nämnändrad kat): Befintlig fil/kat vid %s är i vägen för "
+"KONFLIKT (implicit namnändrad kat): Befintlig fil/kat vid %s är i vägen för "
 "implicit namnändrad(e) katalog(er) som lägger dit följande sökväg(ar): %s."
 
 #, c-format
@@ -17441,7 +17441,7 @@ msgid ""
 " - resolve any other conflicts in the superproject\n"
 " - commit the resulting index in the superproject\n"
 msgstr ""
-"Rekursiv sammanslaning med undermoduler stöder för närvarande endast enkla "
+"Rekursiv sammanslagning med undermoduler stöder för närvarande endast enkla "
 "fall.\n"
 "Du måste hantera sammanslagning av undermoduler i konflikt manuellt.\n"
 "Detta kan göras genom att utföra följande steg:\n"
@@ -18174,7 +18174,7 @@ msgstr "kan inte utföra ”deflate” på nytt strömobjekt (%d)"
 
 #, c-format
 msgid "deflateEnd on stream object failed (%d)"
-msgstr "”deflatEend” på strömobjektet misslyckades (%d)"
+msgstr "”deflateEnd” på strömobjektet misslyckades (%d)"
 
 #, c-format
 msgid "unable to create directory %s"
@@ -18444,7 +18444,7 @@ msgid ""
 "corrupted bitmap index file (too short to fit pseudo-merge table header)"
 msgstr ""
 "trasig bitkarteindexfil (för kort för att få plats för pseudo-"
-"sammanslagningsatbellhuvudet)"
+"sammanslagningstabellhuvudet)"
 
 msgid "corrupted bitmap index file (too short to fit pseudo-merge table)"
 msgstr ""
@@ -18538,7 +18538,7 @@ msgstr "bitkarteresultat stämmer inte överens"
 
 #, c-format
 msgid "pseudo-merge index out of range (%<PRIu32> >= %<PRIuMAX>)"
-msgstr "pseudosammanslaningsindex utenför intervallet (%<PRIu32> ≥ %<PRIuMAX>)"
+msgstr "pseudosammanslagningsindex utanför intervallet (%<PRIu32> ≥ %<PRIuMAX>)"
 
 #, c-format
 msgid "could not find '%s' in pack '%s' at offset %<PRIuMAX>"
@@ -18633,7 +18633,7 @@ msgstr "offset före slutet av packindex för %s (trasigt index?)"
 
 #, c-format
 msgid "offset beyond end of pack index for %s (truncated index?)"
-msgstr "offset borton slutet av packindex för %s (trunkerat index?)"
+msgstr "offset bortom slutet av packindex för %s (trunkerat index?)"
 
 #, c-format
 msgid "malformed expiration date '%s'"
@@ -19009,7 +19009,7 @@ msgid ""
 "could not parse first line of `log` output: did not start with 'commit ': "
 "'%s'"
 msgstr ""
-"kunde inte tolka första raden i ”log”-updata: börjar inte med ”commit ”: ”%s”"
+"kunde inte tolka första raden i ”log”-utdata: börjar inte med ”commit ”: ”%s”"
 
 #, c-format
 msgid "could not parse git header '%.*s'"
@@ -19124,7 +19124,7 @@ msgstr "%s: öppning av indexfilen misslyckades"
 
 #, c-format
 msgid "%s: cannot stat the open index"
-msgstr "%s: kan inte ta startus på det öppna indexet"
+msgstr "%s: kan inte ta status på det öppna indexet"
 
 #, c-format
 msgid "%s: index file smaller than expected"
@@ -19393,7 +19393,7 @@ msgstr "kan inte helt tolka %s=%s"
 
 #, c-format
 msgid "value expected %s="
-msgstr "vädre förväntades %s="
+msgstr "värde förväntades %s="
 
 #, c-format
 msgid "positive value expected '%s' in %%(%s)"
@@ -19932,7 +19932,7 @@ msgid ""
 "\n"
 "Neither worked, so we gave up. You must fully qualify the ref."
 msgstr ""
-"Målet du angav är inte ett komplett referensamn (dvs.,\n"
+"Målet du angav är inte ett komplett referensnamn (dvs.,\n"
 "startar med ”refs/”). Vi försökte gissa vad du menade genom att:\n"
 "\n"
 "- Se efter en referens som motsvarar ”%s” på fjärrsidan.\n"
@@ -20190,7 +20190,7 @@ msgstr "misslyckades hitta trädet för %s."
 
 #, c-format
 msgid "unsupported section for hidden refs: %s"
-msgstr "sktionen för dolda referenser stöds ej: %s"
+msgstr "sektionen för dolda referenser stöds ej: %s"
 
 msgid "--exclude-hidden= passed more than once"
 msgstr "--exclude-hidden= angavs mer än en gång"
@@ -20473,7 +20473,7 @@ msgid ""
 "not sending a push certificate since the receiving end does not support --"
 "signed push"
 msgstr ""
-"sänder inte push-certifikat eftersom mottagarsidan inte stlder push med --"
+"sänder inte push-certifikat eftersom mottagarsidan inte stöder push med --"
 "signed"
 
 msgid "the receiving end does not support --atomic push"
@@ -20833,7 +20833,7 @@ msgstr "”%s” är inte ett giltigt referensnamn"
 
 #, c-format
 msgid "update-ref requires a fully qualified refname e.g. refs/heads/%s"
-msgstr "update-ref kräver ett fullständigt referensnamn, t.ex refs/heads/%s"
+msgstr "update-ref kräver ett fullständigt referensnamn, t.ex. refs/heads/%s"
 
 #, c-format
 msgid "'%s' does not accept merge commits"
@@ -21841,7 +21841,7 @@ msgstr ""
 "[<buntstorlek>]"
 
 msgid "name or pathname of unix domain socket"
-msgstr "namn eller sövkäg till unixdomän-uttag"
+msgstr "namn eller sökväg till unixdomän-uttag"
 
 msgid "named-pipe name"
 msgstr "namn på namngivet rör"
@@ -21943,10 +21943,10 @@ msgstr "kunde inte läsa referensen %s"
 
 #, c-format
 msgid "unknown response to connect: %s"
-msgstr "okänt svar på ansluntning: %s"
+msgstr "okänt svar på anslutning: %s"
 
 msgid "setting remote service path not supported by protocol"
-msgstr "protkollet stöder inte att sätta sökväg till fjärrtjänst"
+msgstr "protokollet stöder inte att sätta sökväg till fjärrtjänst"
 
 msgid "invalid remote service path"
 msgstr "felaktig sökväg till fjärrtjänst"
@@ -21959,7 +21959,7 @@ msgid "--negotiate-only requires protocol v2"
 msgstr "--negotiate-only kräver protokoll v2"
 
 msgid "'option' without a matching 'ok/error' directive"
-msgstr "”option” utan mostsvarande ”ok/error”-direktiv"
+msgstr "”option” utan motsvarande ”ok/error”-direktiv"
 
 #, c-format
 msgid "expected ok/error, helper said '%s'"
@@ -23022,7 +23022,7 @@ msgstr "Kan inte byta katalog till $cdup, toppnivån på arbetskatalogen"
 
 #, sh-format
 msgid "fatal: $program_name cannot be used without a working tree."
-msgstr "ödesdigetrt: $program_name kan inte användas utan arbetskatalog."
+msgstr "ödesdigert: $program_name kan inte användas utan arbetskatalog."
 
 msgid "Cannot rewrite branches: You have unstaged changes."
 msgstr "Kan inte skriva om grenar: Du har oköade ändringar."
@@ -23071,7 +23071,7 @@ msgid "--dump-aliases incompatible with other options\n"
 msgstr "--dump-aliases är inkompatibelt med andra flaggor\n"
 
 msgid "--dump-aliases and --translate-aliases are mutually exclusive\n"
-msgstr "--dump-aliases och --translate-aliases är ömsesidigt utelsutande\n"
+msgstr "--dump-aliases och --translate-aliases är ömsesidigt uteslutande\n"
 
 msgid ""
 "fatal: found configuration options for 'sendmail'\n"
@@ -23112,7 +23112,7 @@ msgstr "varning: ”:include:” stöds inte: %s\n"
 
 #, perl-format
 msgid "warning: `/file` or `|pipe` redirection not supported: %s\n"
-msgstr "varning: omdirigering til ”/fil” eller ”|rör” stöds inte: %s\n"
+msgstr "varning: omdirigering till ”/fil” eller ”|rör” stöds inte: %s\n"
 
 #, perl-format
 msgid "warning: sendmail line is not recognized: %s\n"
@@ -23340,7 +23340,7 @@ msgid "cannot send message as 7bit"
 msgstr "kan inte sända brev som sjubitars"
 
 msgid "invalid transfer encoding"
-msgstr "ogiltig överföringskondning"
+msgstr "ogiltig överföringskodning"
 
 #, perl-format
 msgid ""
