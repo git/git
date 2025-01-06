@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2025, #01; Fri, 3)
-X-master-at: 1b4e9a5f8b5f048972c21fe8acafe0404096f694
-X-next-at: b3e6e7acbc16ce8a8986ee84b24ad7d97f6017c4
+Subject: What's cooking in git.git (Jan 2025, #02; Mon, 6)
+X-master-at: b74ff38af58464688b211140b90ec90598d340c6
+X-next-at: 9ec6785566993ea05d28010e7a742dc2d8f0daae
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2025, #01; Fri, 3)
+What's cooking in git.git (Jan 2025, #02; Mon, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,12 +17,10 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-It has been a very slow week, and I expect this week will also be
-slow.  Git 2.48-rc1 has been tagged.  Hopefully we can have 2.48
-final around the end of next week.
-
-Extra testing the tip of 'master' before we actually tag it is as
-always very much appreciated.
+Git 2.48-rc2 has been tagged.  I expect there will be a few more
+"finishing touches" before the final release is tagged later this
+week.  Extra testing the tip of 'master' before we actually tag it
+is as always very much appreciated.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -53,17 +51,7 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[New Topics]
-
-* ja/doc-commit-markup-updates (2025-01-03) 3 commits
- - doc: git-commit: migrate secondary files to new format
- - doc: git-commit.txt: convert git commit config to new format
- - doc: git-commit: apply new documentation guidelines
-
- Doc updates.
-
- source: <pull.1845.git.1735912046.gitgitgadget@gmail.com>
-
+[Graduated to 'master']
 
 * jc/doc-opt-tilde-expand (2025-01-03) 1 commit
   (merged to 'next' on 2025-01-03 at b3e6e7acbc)
@@ -84,8 +72,68 @@ Release tarballs are available at:
  Will merge to 'next' and then to 'master'.
  source: <50e47d14a8a0a2ca0dd158f01b833a28c7b46887.1735903029.git.martin.agren@gmail.com>
 
+--------------------------------------------------
+[New Topics]
 
-* ps/ci-misc-updates (2025-01-03) 10 commits
+* ja/doc-notes-markup-updates (2025-01-03) 1 commit
+ - doc: git-notes.txt: migrate to new documentation format
+
+ Doc mark-up updates.
+
+ source: <pull.1846.git.1735924216993.gitgitgadget@gmail.com>
+
+
+* mb/t7110-use-test-path-helper (2025-01-03) 1 commit
+ - t7110: replace `test -f` with `test_path_is_*` helpers
+
+ Test modernization.
+
+ Will merge to 'next'.
+ source: <20250103130035.79376-1-matteobagnolini2003@gmail.com>
+
+
+* bf/fetch-set-head-config (2025-01-06) 1 commit
+  (merged to 'next' on 2025-01-06 at 841c3a38a6)
+ + fetch: fix erroneous set_head advice message
+
+ A hotfix on an advice messagge added during this cycle.
+
+ Will merge to 'master'.
+ source: <20250105161017.210412-1-bence@ferdinandy.com>
+
+
+* ja/doc-restore-markup-update (2025-01-04) 1 commit
+ - doc: git-restore: migrate to new style format
+
+ Doc mark-up updates.
+
+ source: <pull.1847.git.1735996601092.gitgitgadget@gmail.com>
+
+
+* ua/os-version-capability (2025-01-06) 4 commits
+ - version: introduce osversion.command config for os-version output
+ - connect: advertise OS version
+ - version: refactor get_uname_info()
+ - version: refactor redact_non_printables()
+
+ The value of "uname -s" is by default sent over the wire as a new
+ capability, with an opt-out for privacy-concious folks.
+
+ source: <20250106103713.1452035-1-usmanakinyemi202@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* ja/doc-commit-markup-updates (2025-01-03) 3 commits
+ - doc: git-commit: migrate secondary files to new format
+ - doc: git-commit.txt: convert git commit config to new format
+ - doc: git-commit: apply new documentation guidelines
+
+ Doc updates.
+ source: <pull.1845.git.1735912046.gitgitgadget@gmail.com>
+
+
+* ps/ci-misc-updates (2025-01-06) 10 commits
  - ci: remove stale code for Azure Pipelines
  - ci: use latest Ubuntu release
  - ci: stop special-casing for Ubuntu 16.04
@@ -98,89 +146,8 @@ Release tarballs are available at:
  - t0060: fix EBUSY in MinGW when setting up runtime prefix
 
  CI updates (containerization, dropping stale ones, etc.).
+ source: <20250106-b4-pks-ci-fixes-v2-0-06ae540771b7@pks.im>
 
- source: <20250103-b4-pks-ci-fixes-v1-0-a9bb95dff833@pks.im>
-
---------------------------------------------------
-[Graduated to 'master']
-
-* jk/lsan-race-ignore-false-positive (2025-01-01) 5 commits
-  (merged to 'next' on 2025-01-02 at 7b5c9e281e)
- + test-lib: ignore leaks in the sanitizer's thread code
- + test-lib: check leak logs for presence of DEDUP_TOKEN
- + test-lib: simplify leak-log checking
- + test-lib: rely on logs to detect leaks
- + Revert barrier-based LSan threading race workaround
-
- CI jobs that run threaded programs under LSan has been giving false
- positives from time to time, which has been worked around.
-
- This is an alternative to the jk/lsan-race-with-barrier topic with
- much smaller change to the production code.
- source: <20250101201226.GA3304465@coredump.intra.peff.net>
-
-
-* jk/lsan-race-with-barrier (2024-12-30) 5 commits
-  (merged to 'next' on 2024-12-30 at 3fc0e14928)
- + grep: work around LSan threading race with barrier
- + index-pack: work around LSan threading race with barrier
- + thread-utils: introduce optional barrier type
- + Revert "index-pack: spawn threads atomically"
- + test-lib: use individual lsan dir for --stress runs
-
- CI jobs that run threaded programs under LSan has been giving false
- positives from time to time, which has been worked around.
- source: <20241230042325.GA112439@coredump.intra.peff.net>
-
-
-* ps/build-meson-html (2024-12-27) 12 commits
-  (merged to 'next' on 2025-01-02 at 115458a58b)
- + Documentation: wire up sanity checks for Meson
- + t/Makefile: make "check-meson" work with Dash
- + meson: install static files for HTML documentation
- + meson: generate articles
- + Documentation: refactor "howto-index.sh" for out-of-tree builds
- + Documentation: refactor "api-index.sh" for out-of-tree builds
- + meson: generate user manual
- + Documentation: inline user-manual.conf
- + meson: generate HTML pages for all man page categories
- + meson: fix generation of merge tools
- + meson: properly wire up dependencies for our docs
- + meson: wire up support for AsciiDoctor
-
- The build procedure based on meson learned to generate HTML
- documention pages.
- source: <20241227-b4-pks-meson-docs-v2-0-f61e63edbfa1@pks.im>
-
-
-* ps/weak-sha1-for-tail-sum-fix (2024-12-30) 3 commits
-  (merged to 'next' on 2024-12-30 at c24783e99d)
- + ci: exercise unsafe OpenSSL backend
- + builtin/fast-import: fix segfault with unsafe SHA1 backend
- + bulk-checkin: fix segfault with unsafe SHA1 backend
- (this branch is used by ps/meson-weak-sha1-build.)
-
- An earlier "csum-file checksum does not have to be computed with
- sha1dc" topic had a few code paths that had initialized an
- implementation of a hash function to be used by an unmatching hash
- by mistake, which have been corrected.
- source: <20241230-pks-meson-sha1-unsafe-v1-0-efb276e171f5@pks.im>
-
-
-* rs/reftable-realloc-errors (2024-12-28) 4 commits
-  (merged to 'next' on 2024-12-30 at ebc9625a4c)
- + t-reftable-merged: handle realloc errors
- + reftable: handle realloc error in parse_names()
- + reftable: fix allocation count on realloc error
- + reftable: avoid leaks on realloc error
-
- The custom allocator code in the reftable library did not handle
- failing realloc() very well, which has been addressed.
- cf. <Z3JLdIG4C9D2-1ZT@pks.im>
- source: <f4677194-0a3a-4f07-b003-c0295b51c100@web.de>
-
---------------------------------------------------
-[Cooking]
 
 * ps/meson-weak-sha1-build (2024-12-30) 8 commits
   (merged to 'next' on 2025-01-01 at e01db872e4)
@@ -199,18 +166,18 @@ Release tarballs are available at:
  source: <20241230-pks-meson-sha1-unsafe-v1-0-efb276e171f5@pks.im>
 
 
-* ps/object-collision-check (2025-01-03) 3 commits
- - object-file: retry linking file into place when occluding file vanishes
- - object-file: rename variables in `check_collision()`
+* ps/object-collision-check (2025-01-06) 4 commits
+  (merged to 'next' on 2025-01-06 at 540e2bae11)
+ + object-file: retry linking file into place when occluding file vanishes
+ + object-file: don't special-case missing source file in collision check
+ + object-file: rename variables in `check_collision()`
   (merged to 'next' on 2024-12-30 at e083ea3154)
  + object-file: fix race in object collision check
 
  CI jobs gave sporadic failures, which turns out that that the
  object finalization code was giving an error when it did not have
  to.
-
- source: <20241230-b4-pks-object-file-racy-collision-check-v1-1-11571294e60a@pks.im>
- source: <20250103-b4-pks-object-file-racy-collision-check-v1-0-6ef9e2da1f87@pks.im>
+ source: <20250106-b4-pks-object-file-racy-collision-check-v2-0-8b3984ecbb18@pks.im>
 
 
 * sk/strlen-returns-size_t (2024-12-26) 1 commit
@@ -254,15 +221,14 @@ Release tarballs are available at:
  source: <20241228114221.10351-4-ash@kambanaria.org>
 
 
-* sk/maintenance-remote-prune (2024-12-28) 1 commit
+* sk/maintenance-remote-prune (2025-01-03) 1 commit
  - maintenance: add prune-remote-refs task
 
  A new periodic maintenance task to run "git remote prune" has been
  introduced.
 
  Expecting a reroll.
- cf. <Z3JLdIG4C9D2-1ZT@pks.im>
- source: <pull.1838.v2.git.1735380461980.gitgitgadget@gmail.com>
+ source: <pull.1838.v3.git.1735928035056.gitgitgadget@gmail.com>
 
 
 * jc/show-index-h-update (2024-12-20) 1 commit
@@ -309,7 +275,7 @@ Release tarballs are available at:
  source: <xmqq5xnladwi.fsf@gitster.g>
 
 
-* ps/3.0-remote-deprecation (2024-12-12) 6 commits
+* ps/3.0-remote-deprecation (2025-01-06) 6 commits
  - remote: announce removal of "branches/" and "remotes/"
  - builtin/pack-redundant: remove subcommand with breaking changes
  - ci: repurpose "linux-gcc" job for deprecations
@@ -322,8 +288,7 @@ Release tarballs are available at:
  $GIT_DIR/branches/ and $GIT_DIR/remotes/ directories to configure
  remotes.
 
- Needs review.
- source: <20241211-pks-remote-branches-deprecation-v1-0-1431e2369135@pks.im>
+ source: <20250106-pks-remote-branches-deprecation-v2-0-2ce87c053536@pks.im>
 
 
 * cc/lop-remote (2024-12-07) 5 commits
