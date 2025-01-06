@@ -1982,8 +1982,7 @@ static int check_collision(const char *source, const char *dest)
 
 	fd_source = open(source, O_RDONLY);
 	if (fd_source < 0) {
-		if (errno != ENOENT)
-			ret = error_errno(_("unable to open %s"), source);
+		ret = error_errno(_("unable to open %s"), source);
 		goto out;
 	}
 
