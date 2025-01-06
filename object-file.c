@@ -1974,56 +1974,56 @@ static void write_object_file_prepare_literally(const struct git_hash_algo *algo
 	hash_object_body(algo, &c, buf, len, oid, hdr, hdrlen);
 }
 
-static int check_collision(const char *filename_a, const char *filename_b)
+static int check_collision(const char *source, const char *dest)
 {
-	char buf_a[4096], buf_b[4096];
-	int fd_a = -1, fd_b = -1;
+	char buf_source[4096], buf_dest[4096];
+	int fd_source = -1, fd_dest = -1;
 	int ret = 0;
 
-	fd_a = open(filename_a, O_RDONLY);
-	if (fd_a < 0) {
+	fd_source = open(source, O_RDONLY);
+	if (fd_source < 0) {
 		if (errno != ENOENT)
-			ret = error_errno(_("unable to open %s"), filename_a);
+			ret = error_errno(_("unable to open %s"), source);
 		goto out;
 	}
 
-	fd_b = open(filename_b, O_RDONLY);
-	if (fd_b < 0) {
+	fd_dest = open(dest, O_RDONLY);
+	if (fd_dest < 0) {
 		if (errno != ENOENT)
-			ret = error_errno(_("unable to open %s"), filename_b);
+			ret = error_errno(_("unable to open %s"), dest);
 		goto out;
 	}
 
 	while (1) {
 		ssize_t sz_a, sz_b;
 
-		sz_a = read_in_full(fd_a, buf_a, sizeof(buf_a));
+		sz_a = read_in_full(fd_source, buf_source, sizeof(buf_source));
 		if (sz_a < 0) {
-			ret = error_errno(_("unable to read %s"), filename_a);
+			ret = error_errno(_("unable to read %s"), source);
 			goto out;
 		}
 
-		sz_b = read_in_full(fd_b, buf_b, sizeof(buf_b));
+		sz_b = read_in_full(fd_dest, buf_dest, sizeof(buf_dest));
 		if (sz_b < 0) {
-			ret = error_errno(_("unable to read %s"), filename_b);
+			ret = error_errno(_("unable to read %s"), dest);
 			goto out;
 		}
 
-		if (sz_a != sz_b || memcmp(buf_a, buf_b, sz_a)) {
+		if (sz_a != sz_b || memcmp(buf_source, buf_dest, sz_a)) {
 			ret = error(_("files '%s' and '%s' differ in contents"),
-				    filename_a, filename_b);
+				    source, dest);
 			goto out;
 		}
 
-		if (sz_a < sizeof(buf_a))
+		if (sz_a < sizeof(buf_source))
 			break;
 	}
 
 out:
-	if (fd_a > -1)
-		close(fd_a);
-	if (fd_b > -1)
-		close(fd_b);
+	if (fd_source > -1)
+		close(fd_source);
+	if (fd_dest > -1)
+		close(fd_dest);
 	return ret;
 }
 
