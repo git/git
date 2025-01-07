@@ -47,15 +47,15 @@ Performance, Internal Implementation, Development Support etc.
 
  * The way AsciiDoc is used for SYNOPSIS part of the manual pages has
    been revamped.  The sources, at least for the simple cases, got
-   vastly pleasant to work with.
+   vastly more pleasant to work with.
 
  * The reftable library is now prepared to expect that the memory
    allocation function given to it may fail to allocate and to deal
    with such an error.
 
  * An extra worktree attached to a repository points at each other to
-   allow finding the repository from the worktree and vice versa
-   possible.  Turn this linkage to relative paths.
+   allow finding the repository from the worktree (and vice versa)
+   possible.  Use relative paths for this linkage.
 
  * Enable Windows-based CI in GitLab.
 
@@ -94,7 +94,7 @@ Performance, Internal Implementation, Development Support etc.
  * Update the project's CodingGuidelines to discourage naming functions
    with a "_1()" suffix.
 
- * Updates the '.clang-format' to match project conventions.
+ * Update '.clang-format' to match project conventions.
 
  * Centralize documentation for repository extensions into a single place.
 
@@ -116,7 +116,7 @@ Performance, Internal Implementation, Development Support etc.
  * The migration procedure between two ref backends has been optimized.
 
  * "git fsck" learned to issue warnings on "curiously formatted" ref
-   contents that have always been taken valid but something Git
+   contents that have always been treated as valid but that Git
    wouldn't have written itself (e.g., missing terminating end-of-line
    after the full object name).
 
@@ -127,13 +127,13 @@ Performance, Internal Implementation, Development Support etc.
 
  * Drop support for ancient environments in various CI jobs.
 
- * Isolates the reftable subsystem from the rest of Git's codebase by
+ * Isolate the reftable subsystem from the rest of Git's codebase by
    using fewer pieces of Git's infrastructure.
 
  * Optimize reading random references out of the reftable backend by
    allowing reuse of iterator objects.
 
- * Backport oss-fuzz tests for us to our codebase.
+ * Backport oss-fuzz tests to our codebase.
 
  * Introduce a new repository extension to prevent older Git versions
    from mis-interpreting worktrees created with relative paths.
@@ -173,13 +173,13 @@ Fixes since v2.47
 -----------------
 
  * Doc update to clarify how periodical maintenance are scheduled,
-   spread across time to avoid thundering hurds.
+   spread across time to avoid thundering herds.
 
  * Use after free and double freeing at the end in "git log -L... -p"
    had been identified and fixed.
 
  * On macOS, fsmonitor can fall into a race condition that results in
-   a client waiting forever to be notified for an event that have
+   a client waiting forever to be notified about an event that has
    already happened.  This problem has been corrected.
 
  * "git maintenance start" crashed due to an uninitialized variable
@@ -203,7 +203,7 @@ Fixes since v2.47
  * The dumb-http code regressed when the result of re-indexing a pack
    yielded an *.idx file that differs in content from the *.idx file
    it downloaded from the remote. This has been corrected by no longer
-   relying on: the *.idx file we got from the remote.
+   relying on the *.idx file we got from the remote.
 
  * When called with '--left-right' and '--use-bitmap-index', 'rev-list'
    will produce output without any left/right markers, which has been
@@ -227,7 +227,7 @@ Fixes since v2.47
  * "git gc" discards any objects that are outside promisor packs that
    are referred to by an object in a promisor pack, and we do not
    refetch them from the promisor at runtime, resulting an unusable
-   repository.  Work it around by including these objects in the
+   repository.  Work around it by including these objects in the
    referring promisor pack at the receiving end of the fetch.
 
  * Avoid build/test breakage on a system without working malloc debug
@@ -282,9 +282,8 @@ Fixes since v2.47
    on the path, which was not documented, which has been corrected.
    (merge bc1a980759 kk/doc-ancestry-path later to maint).
 
-
  * "git tag" has been taught to refuse to create refs/tags/HEAD
-   as such a tag will be confusing in the context of UI provided by
+   since such a tag will be confusing in the context of the UI provided by
    the Git Porcelain commands.
    (merge bbd445d5ef jc/forbid-head-as-tagname later to maint).
 
