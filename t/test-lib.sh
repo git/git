@@ -1172,6 +1172,11 @@ test_atexit_handler () {
 check_test_results_san_file_has_entries_ () {
 	test -z "$TEST_RESULTS_SAN_FILE" && return 1
 
+	# Lines marked with DEDUP_TOKEN show unique leaks. We only care that we
+	# found at least one.
+	#
+	# But also suppress any false positives caused by bugs or races in the
+	# sanitizer itself.
 	grep -s ^DEDUP_TOKEN "$TEST_RESULTS_SAN_FILE".* |
 	grep -qv sanitizer::GetThreadStackTopAndBottom
 }
