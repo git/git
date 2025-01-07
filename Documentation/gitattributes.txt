@@ -1166,7 +1166,7 @@ internal merge and the final merge.
 The merge driver can learn the pathname in which the merged result
 will be stored via placeholder `%P`. The conflict labels to be used
 for the common ancestor, local head and other head can be passed by
-using '%S', '%X' and '%Y` respectively.
+using `%S`, `%X` and `%Y` respectively.
 
 `conflict-marker-size`
 ^^^^^^^^^^^^^^^^^^^^^^
