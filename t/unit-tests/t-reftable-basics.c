@@ -157,13 +157,13 @@ int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 
 		old_alloc = alloc;
 		old_arr = arr;
-		reftable_set_alloc(malloc, realloc_stub, free);
+		reftable_set_alloc(NULL, realloc_stub, NULL);
 		check(REFTABLE_ALLOC_GROW(arr, old_alloc + 1, alloc));
 		check(arr == old_arr);
 		check_uint(alloc, ==, old_alloc);
 
 		old_alloc = alloc;
-		reftable_set_alloc(malloc, realloc, free);
+		reftable_set_alloc(NULL, NULL, NULL);
 		check(!REFTABLE_ALLOC_GROW(arr, old_alloc + 1, alloc));
 		check(arr != NULL);
 		check_uint(alloc, >, old_alloc);
@@ -188,11 +188,11 @@ int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 		arr[alloc - 1] = 42;
 
 		old_alloc = alloc;
-		reftable_set_alloc(malloc, realloc_stub, free);
+		reftable_set_alloc(NULL, realloc_stub, NULL);
 		REFTABLE_ALLOC_GROW_OR_NULL(arr, old_alloc + 1, alloc);
 		check(arr == NULL);
 		check_uint(alloc, ==, 0);
-		reftable_set_alloc(malloc, realloc, free);
+		reftable_set_alloc(NULL, NULL, NULL);
 
 		reftable_free(arr);
 	}
