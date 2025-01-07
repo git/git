@@ -1169,12 +1169,12 @@ test_atexit_handler () {
 	teardown_malloc_check
 }
 
-check_test_results_san_file_empty_ () {
-	test -z "$TEST_RESULTS_SAN_FILE" && return 0
+check_test_results_san_file_has_entries_ () {
+	test -z "$TEST_RESULTS_SAN_FILE" && return 1
 
 	# stderr piped to /dev/null because the directory may have
 	# been "rmdir"'d already.
-	! find "$TEST_RESULTS_SAN_DIR" \
+	find "$TEST_RESULTS_SAN_DIR" \
 		-type f \
 		-name "$TEST_RESULTS_SAN_FILE_PFX.*" 2>/dev/null |
 	xargs grep ^DEDUP_TOKEN |
@@ -1182,7 +1182,7 @@ check_test_results_san_file_empty_ () {
 }
 
 check_test_results_san_file_ () {
-	if check_test_results_san_file_empty_
+	if ! check_test_results_san_file_has_entries_
 	then
 		return
 	fi &&
