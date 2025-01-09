@@ -125,32 +125,6 @@ static int emit_diff_first_parent_only(struct diff_options *opt, struct combine_
 
 
 /*
- * Make a new combine_diff_path from path/mode/sha1
- * and append it to paths list tail.
- */
-static struct combine_diff_path *path_appendnew(struct combine_diff_path *last,
-	int nparent, const char *path, size_t len,
-	unsigned mode, const struct object_id *oid)
-{
-	struct combine_diff_path *p;
-	size_t alloclen = combine_diff_path_size(nparent, len);
-
-	p = xmalloc(alloclen);
-	p->next = NULL;
-	last->next = p;
-
-	p->path = (char *)&(p->parent[nparent]);
-	memcpy(p->path, path, len);
-	p->path[len] = 0;
-	p->mode = mode;
-	oidcpy(&p->oid, oid ? oid : null_oid());
-
-	memset(p->parent, 0, sizeof(p->parent[0]) * nparent);
-
-	return p;
-}
-
-/*
  * new path should be added to combine diff
  *
  * 3 cases on how/when it should be called and behaves:
@@ -206,7 +180,10 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 		struct combine_diff_path *pprev = p;
 
 		strbuf_add(base, path, pathlen);
-		p = path_appendnew(p, nparent, base->buf, base->len, mode, oid);
+		p = combine_diff_path_new(base->buf, base->len, mode,
+					  oid ? oid : null_oid(),
+					  nparent);
+		pprev->next = p;
 		strbuf_setlen(base, old_baselen);
 
 		for (i = 0; i < nparent; ++i) {
