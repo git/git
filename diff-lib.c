@@ -156,18 +156,6 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 			size_t path_len;
 			struct stat st;
 
-			path_len = ce_namelen(ce);
-
-			dpath = xmalloc(combine_diff_path_size(5, path_len));
-			dpath->path = (char *) &(dpath->parent[5]);
-
-			dpath->next = NULL;
-			memcpy(dpath->path, ce->name, path_len);
-			dpath->path[path_len] = '\0';
-			oidclr(&dpath->oid, the_repository->hash_algo);
-			memset(&(dpath->parent[0]), 0,
-			       sizeof(struct combine_diff_parent)*5);
-
 			changed = check_removed(ce, &st);
 			if (!changed)
 				wt_mode = ce_mode_from_stat(ce, st.st_mode);
@@ -178,7 +166,19 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 				}
 				wt_mode = 0;
 			}
+
+			path_len = ce_namelen(ce);
+
+			dpath = xmalloc(combine_diff_path_size(5, path_len));
+			dpath->path = (char *) &(dpath->parent[5]);
+
+			dpath->next = NULL;
+			memcpy(dpath->path, ce->name, path_len);
+			dpath->path[path_len] = '\0';
+			oidclr(&dpath->oid, the_repository->hash_algo);
 			dpath->mode = wt_mode;
+			memset(&(dpath->parent[0]), 0,
+			       sizeof(struct combine_diff_parent)*5);
 
 			while (i < entries) {
 				struct cache_entry *nce = istate->cache[i];
