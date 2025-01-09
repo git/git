@@ -166,8 +166,13 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 				wt_mode = 0;
 			}
 
+			/*
+			 * Allocate space for two parents, which will come from
+			 * index stages #2 and #3, if present. Below we'll fill
+			 * these from (stage - 2).
+			 */
 			dpath = combine_diff_path_new(ce->name, ce_namelen(ce),
-						      wt_mode, null_oid(), 5);
+						      wt_mode, null_oid(), 2);
 
 			while (i < entries) {
 				struct cache_entry *nce = istate->cache[i];
