@@ -86,11 +86,11 @@ sed -e "s|@GIT_VERSION@|$GIT_VERSION|" \
 	-e "s|@GIT_BUILT_FROM_COMMIT@|$GIT_BUILT_FROM_COMMIT|" \
 	-e "s|@GIT_USER_AGENT@|$GIT_USER_AGENT|" \
 	-e "s|@GIT_DATE@|$GIT_DATE|" \
-	"$INPUT" >"$OUTPUT"+
+	"$INPUT" >"$OUTPUT".$$
 
-if ! test -f "$OUTPUT" || ! cmp "$OUTPUT"+ "$OUTPUT" >/dev/null
+if ! test -f "$OUTPUT" || ! cmp "$OUTPUT".$$ "$OUTPUT" >/dev/null
 then
-	mv "$OUTPUT"+ "$OUTPUT"
+	mv "$OUTPUT".$$ "$OUTPUT"
 else
-	rm "$OUTPUT"+
+	rm "$OUTPUT".$$
 fi
