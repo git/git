@@ -1658,8 +1658,9 @@ struct combine_diff_path *combine_diff_path_new(const char *path,
 						size_t num_parents)
 {
 	struct combine_diff_path *p;
+	size_t parent_len = st_mult(sizeof(p->parent[0]), num_parents);
 
-	p = xmalloc(combine_diff_path_size(num_parents, path_len));
+	p = xmalloc(st_add4(sizeof(*p), path_len, 1, parent_len));
 	p->path = (char *)&(p->parent[num_parents]);
 	memcpy(p->path, path, path_len);
 	p->path[path_len] = 0;
@@ -1667,7 +1668,7 @@ struct combine_diff_path *combine_diff_path_new(const char *path,
 	p->mode = mode;
 	oidcpy(&p->oid, oid);
 
-	memset(p->parent, 0, sizeof(p->parent[0]) * num_parents);
+	memset(p->parent, 0, parent_len);
 
 	return p;
 }
