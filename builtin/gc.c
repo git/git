@@ -1909,7 +1909,7 @@ static int get_random_minute(void)
 	if (getenv("GIT_TEST_MAINT_SCHEDULER"))
 		return 13;
 
-	return git_rand() % 60;
+	return git_rand(0) % 60;
 }
 
 static int is_launchctl_available(void)
