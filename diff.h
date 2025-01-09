@@ -480,6 +480,12 @@ struct combine_diff_path {
 		char status;
 		unsigned int mode;
 		struct object_id oid;
+		/*
+		 * This per-parent path is filled only when doing a combined
+		 * diff with revs.combined_all_paths set, and only if the path
+		 * differs from the post-image (e.g., a rename or copy).
+		 * Otherwise it is left NULL.
+		 */
 		char *path;
 	} parent[FLEX_ARRAY];
 };
