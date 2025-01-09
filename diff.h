@@ -462,7 +462,7 @@ const char *diff_line_prefix(struct diff_options *);
 extern const char mime_boundary_leader[];
 
 struct combine_diff_path *diff_tree_paths(
-	struct combine_diff_path *p, const struct object_id *oid,
+	const struct object_id *oid,
 	const struct object_id **parents_oid, int nparent,
 	struct strbuf *base, struct diff_options *opt);
 void diff_tree_oid(const struct object_id *old_oid,

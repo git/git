@@ -510,11 +510,14 @@ static struct combine_diff_path *ll_diff_tree_paths(
 }
 
 struct combine_diff_path *diff_tree_paths(
-	struct combine_diff_path *p, const struct object_id *oid,
+	const struct object_id *oid,
 	const struct object_id **parents_oid, int nparent,
 	struct strbuf *base, struct diff_options *opt)
 {
-	p = ll_diff_tree_paths(p, oid, parents_oid, nparent, base, opt, 0);
+	struct combine_diff_path head, *p;
+	/* fake list head, so worker can assume it is non-NULL */
+	head.next = NULL;
+	p = ll_diff_tree_paths(&head, oid, parents_oid, nparent, base, opt, 0);
 	return p;
 }
 
@@ -631,14 +634,13 @@ static void ll_diff_tree_oid(const struct object_id *old_oid,
 			     const struct object_id *new_oid,
 			     struct strbuf *base, struct diff_options *opt)
 {
-	struct combine_diff_path phead, *p;
+	struct combine_diff_path *paths, *p;
 	pathchange_fn_t pathchange_old = opt->pathchange;
 
-	phead.next = NULL;
 	opt->pathchange = emit_diff_first_parent_only;
-	diff_tree_paths(&phead, new_oid, &old_oid, 1, base, opt);
+	paths = diff_tree_paths(new_oid, &old_oid, 1, base, opt);
 
-	for (p = phead.next; p;) {
+	for (p = paths; p;) {
 		struct combine_diff_path *pprev = p;
 		p = p->next;
 		free(pprev);
