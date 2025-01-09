@@ -540,6 +540,8 @@ include::config/tar.txt[]
 
 include::config/trace2.txt[]
 
+include::config/trailer.txt[]
+
 include::config/transfer.txt[]
 
 include::config/uploadarchive.txt[]

@@ -1,0 +1,136 @@
+trailer.separators::
+	This option tells which characters are recognized as trailer
+	separators. By default only ':' is recognized as a trailer
+	separator, except that '=' is always accepted on the command
+	line for compatibility with other git commands.
++
+The first character given by this option will be the default character
+used when another separator is not specified in the config for this
+trailer.
++
+For example, if the value for this option is "%=$", then only lines
+using the format '<key><sep><value>' with <sep> containing '%', '='
+or '$' and then spaces will be considered trailers. And '%' will be
+the default separator used, so by default trailers will appear like:
+'<key>% <value>' (one percent sign and one space will appear between
+the key and the value).
+
+trailer.where::
+	This option tells where a new trailer will be added.
++
+This can be `end`, which is the default, `start`, `after` or `before`.
++
+If it is `end`, then each new trailer will appear at the end of the
+existing trailers.
++
+If it is `start`, then each new trailer will appear at the start,
+instead of the end, of the existing trailers.
++
+If it is `after`, then each new trailer will appear just after the
+last trailer with the same <key>.
++
+If it is `before`, then each new trailer will appear just before the
+first trailer with the same <key>.
+
+trailer.ifexists::
+	This option makes it possible to choose what action will be
+	performed when there is already at least one trailer with the
+	same <key> in the input.
++
+The valid values for this option are: `addIfDifferentNeighbor` (this
+is the default), `addIfDifferent`, `add`, `replace` or `doNothing`.
++
+With `addIfDifferentNeighbor`, a new trailer will be added only if no
+trailer with the same (<key>, <value>) pair is above or below the line
+where the new trailer will be added.
++
+With `addIfDifferent`, a new trailer will be added only if no trailer
+with the same (<key>, <value>) pair is already in the input.
++
+With `add`, a new trailer will be added, even if some trailers with
+the same (<key>, <value>) pair are already in the input.
++
+With `replace`, an existing trailer with the same <key> will be
+deleted and the new trailer will be added. The deleted trailer will be
+the closest one (with the same <key>) to the place where the new one
+will be added.
++
+With `doNothing`, nothing will be done; that is no new trailer will be
+added if there is already one with the same <key> in the input.
+
+trailer.ifmissing::
+	This option makes it possible to choose what action will be
+	performed when there is not yet any trailer with the same
+	<key> in the input.
++
+The valid values for this option are: `add` (this is the default) and
+`doNothing`.
++
+With `add`, a new trailer will be added.
++
+With `doNothing`, nothing will be done.
+
+trailer.<keyAlias>.key::
+	Defines a <keyAlias> for the <key>. The <keyAlias> must be a
+	prefix (case does not matter) of the <key>. For example, in `git
+	config trailer.ack.key "Acked-by"` the "Acked-by" is the <key> and
+	the "ack" is the <keyAlias>. This configuration allows the shorter
+	`--trailer "ack:..."` invocation on the command line using the "ack"
+	<keyAlias> instead of the longer `--trailer "Acked-by:..."`.
++
+At the end of the <key>, a separator can appear and then some
+space characters. By default the only valid separator is ':',
+but this can be changed using the `trailer.separators` config
+variable.
++
+If there is a separator in the key, then it overrides the default
+separator when adding the trailer.
+
+trailer.<keyAlias>.where::
+	This option takes the same values as the 'trailer.where'
+	configuration variable and it overrides what is specified by
+	that option for trailers with the specified <keyAlias>.
+
+trailer.<keyAlias>.ifexists::
+	This option takes the same values as the 'trailer.ifexists'
+	configuration variable and it overrides what is specified by
+	that option for trailers with the specified <keyAlias>.
+
+trailer.<keyAlias>.ifmissing::
+	This option takes the same values as the 'trailer.ifmissing'
+	configuration variable and it overrides what is specified by
+	that option for trailers with the specified <keyAlias>.
+
+trailer.<keyAlias>.command::
+	Deprecated in favor of 'trailer.<keyAlias>.cmd'.
+	This option behaves in the same way as 'trailer.<keyAlias>.cmd', except
+	that it doesn't pass anything as argument to the specified command.
+	Instead the first occurrence of substring $ARG is replaced by the
+	<value> that would be passed as argument.
++
+Note that $ARG in the user's command is
+only replaced once and that the original way of replacing $ARG is not safe.
++
+When both 'trailer.<keyAlias>.cmd' and 'trailer.<keyAlias>.command' are given
+for the same <keyAlias>, 'trailer.<keyAlias>.cmd' is used and
+'trailer.<keyAlias>.command' is ignored.
+
+trailer.<keyAlias>.cmd::
+	This option can be used to specify a shell command that will be called
+	once to automatically add a trailer with the specified <keyAlias>, and then
+	called each time a '--trailer <keyAlias>=<value>' argument is specified to
+	modify the <value> of the trailer that this option would produce.
++
+When the specified command is first called to add a trailer
+with the specified <keyAlias>, the behavior is as if a special
+'--trailer <keyAlias>=<value>' argument was added at the beginning
+of the "git interpret-trailers" command, where <value>
+is taken to be the standard output of the command with any
+leading and trailing whitespace trimmed off.
++
+If some '--trailer <keyAlias>=<value>' arguments are also passed
+on the command line, the command is called again once for each
+of these arguments with the same <keyAlias>. And the <value> part
+of these arguments, if any, will be passed to the command as its
+first argument. This way the command can produce a <value> computed
+from the <value> passed in the '--trailer <keyAlias>=<value>' argument.
