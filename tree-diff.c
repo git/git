@@ -49,7 +49,7 @@
 } while(0)
 
 static struct combine_diff_path *ll_diff_tree_paths(
-	struct combine_diff_path *p, const struct object_id *oid,
+	struct combine_diff_path *tail, const struct object_id *oid,
 	const struct object_id **parents_oid, int nparent,
 	struct strbuf *base, struct diff_options *opt,
 	int depth);
@@ -134,7 +134,7 @@ static int emit_diff_first_parent_only(struct diff_options *opt, struct combine_
  *	 t,  tp		-> path modified/added
  *			   (M for tp[i]=tp[imin], A otherwise)
  */
-static struct combine_diff_path *emit_path(struct combine_diff_path *p,
+static struct combine_diff_path *emit_path(struct combine_diff_path *tail,
 	struct strbuf *base, struct diff_options *opt, int nparent,
 	struct tree_desc *t, struct tree_desc *tp,
 	int imin, int depth)
@@ -177,13 +177,14 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 
 	if (emitthis) {
 		int keep;
-		struct combine_diff_path *pprev = p;
+		struct combine_diff_path *pprev = tail, *p;
 
 		strbuf_add(base, path, pathlen);
 		p = combine_diff_path_new(base->buf, base->len, mode,
 					  oid ? oid : null_oid(),
 					  nparent);
-		pprev->next = p;
+		tail->next = p;
+		tail = p;
 		strbuf_setlen(base, old_baselen);
 
 		for (i = 0; i < nparent; ++i) {
@@ -222,7 +223,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 		if (!keep) {
 			free(p);
 			pprev->next = NULL;
-			p = pprev;
+			tail = pprev;
 		}
 	}
 
@@ -239,13 +240,13 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 
 		strbuf_add(base, path, pathlen);
 		strbuf_addch(base, '/');
-		p = ll_diff_tree_paths(p, oid, parents_oid, nparent, base, opt,
-				       depth + 1);
+		tail = ll_diff_tree_paths(tail, oid, parents_oid, nparent, base, opt,
+					  depth + 1);
 		FAST_ARRAY_FREE(parents_oid, nparent);
 	}
 
 	strbuf_setlen(base, old_baselen);
-	return p;
+	return tail;
 }
 
 static void skip_uninteresting(struct tree_desc *t, struct strbuf *base,
@@ -359,7 +360,7 @@ static inline void update_tp_entries(struct tree_desc *tp, int nparent)
 }
 
 static struct combine_diff_path *ll_diff_tree_paths(
-	struct combine_diff_path *p, const struct object_id *oid,
+	struct combine_diff_path *tail, const struct object_id *oid,
 	const struct object_id **parents_oid, int nparent,
 	struct strbuf *base, struct diff_options *opt,
 	int depth)
@@ -463,8 +464,8 @@ static struct combine_diff_path *ll_diff_tree_paths(
 			}
 
 			/* D += {δ(t,pi) if pi=p[imin];  "+a" if pi > p[imin]} */
-			p = emit_path(p, base, opt, nparent,
-					&t, tp, imin, depth);
+			tail = emit_path(tail, base, opt, nparent,
+					 &t, tp, imin, depth);
 
 		skip_emit_t_tp:
 			/* t↓,  ∀ pi=p[imin]  pi↓ */
@@ -475,8 +476,8 @@ static struct combine_diff_path *ll_diff_tree_paths(
 		/* t < p[imin] */
 		else if (cmp < 0) {
 			/* D += "+t" */
-			p = emit_path(p, base, opt, nparent,
-					&t, /*tp=*/NULL, -1, depth);
+			tail = emit_path(tail, base, opt, nparent,
+					 &t, /*tp=*/NULL, -1, depth);
 
 			/* t↓ */
 			update_tree_entry(&t);
@@ -491,8 +492,8 @@ static struct combine_diff_path *ll_diff_tree_paths(
 						goto skip_emit_tp;
 			}
 
-			p = emit_path(p, base, opt, nparent,
-					/*t=*/NULL, tp, imin, depth);
+			tail = emit_path(tail, base, opt, nparent,
+					 /*t=*/NULL, tp, imin, depth);
 
 		skip_emit_tp:
 			/* ∀ pi=p[imin]  pi↓ */
@@ -506,7 +507,7 @@ static struct combine_diff_path *ll_diff_tree_paths(
 	FAST_ARRAY_FREE(tptree, nparent);
 	FAST_ARRAY_FREE(tp, nparent);
 
-	return p;
+	return tail;
 }
 
 struct combine_diff_path *diff_tree_paths(
