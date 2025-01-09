@@ -151,8 +151,6 @@ static int emit_diff_first_parent_only(struct diff_options *opt, struct combine_
  *	process(p);
  *	p = pprev;
  *	; don't forget to free tail->next in the end
- *
- * p->parent[] remains uninitialized.
  */
 static struct combine_diff_path *path_appendnew(struct combine_diff_path *last,
 	int nparent, const struct strbuf *base, const char *path, int pathlen,
@@ -186,6 +184,8 @@ static struct combine_diff_path *path_appendnew(struct combine_diff_path *last,
 	p->path[len] = 0;
 	p->mode = mode;
 	oidcpy(&p->oid, oid ? oid : null_oid());
+
+	memset(p->parent, 0, sizeof(p->parent[0]) * nparent);
 
 	return p;
 }
