@@ -476,6 +476,13 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 		size_t length = (opt & OUTPUT_LONG_OBJECT_NAME) ?
 			the_hash_algo->hexsz : (size_t) abbrev;
 
+		/*
+		 * Leave enough space for ^, * and ? indicators (boundary,
+		 * unblamable, ignored).
+		 */
+		if (length > GIT_MAX_HEXSZ + 3)
+			length = GIT_MAX_HEXSZ + 3;
+
 		if (opt & OUTPUT_COLOR_LINE) {
 			if (cnt > 0) {
 				color = repeated_meta_color;
@@ -505,7 +512,7 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 			length--;
 			putchar('?');
 		}
-		fwrite(hex, 1, length, stdout);
+		printf("%.*s", (int)length, hex);
 		if (opt & OUTPUT_ANNOTATE_COMPAT) {
 			const char *name;
 			if (opt & OUTPUT_SHOW_EMAIL)

@@ -126,6 +126,10 @@ test_expect_success '--no-abbrev works like --abbrev with full length' '
 	check_abbrev $hexsz --no-abbrev
 '
 
+test_expect_success 'blame --abbrev gets truncated' '
+	check_abbrev 9000 --abbrev=9000 HEAD..
+'
+
 test_expect_success '--exclude-promisor-objects does not BUG-crash' '
 	test_must_fail git blame --exclude-promisor-objects one
 '
