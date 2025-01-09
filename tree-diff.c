@@ -177,14 +177,12 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *tail,
 
 	if (emitthis) {
 		int keep;
-		struct combine_diff_path *pprev = tail, *p;
+		struct combine_diff_path *p;
 
 		strbuf_add(base, path, pathlen);
 		p = combine_diff_path_new(base->buf, base->len, mode,
 					  oid ? oid : null_oid(),
 					  nparent);
-		tail->next = p;
-		tail = p;
 		strbuf_setlen(base, old_baselen);
 
 		for (i = 0; i < nparent; ++i) {
@@ -220,10 +218,11 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *tail,
 		if (opt->pathchange)
 			keep = opt->pathchange(opt, p);
 
-		if (!keep) {
+		if (keep) {
+			tail->next = p;
+			tail = p;
+		} else {
 			free(p);
-			pprev->next = NULL;
-			tail = pprev;
 		}
 	}
 
