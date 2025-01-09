@@ -486,6 +486,11 @@ struct combine_diff_path {
 #define combine_diff_path_size(n, l) \
 	st_add4(sizeof(struct combine_diff_path), (l), 1, \
 		st_mult(sizeof(struct combine_diff_parent), (n)))
+struct combine_diff_path *combine_diff_path_new(const char *path,
+						size_t path_len,
+						unsigned int mode,
+						const struct object_id *oid,
+						size_t num_parents);
 
 void show_combined_diff(struct combine_diff_path *elem, int num_parent,
 			struct rev_info *);

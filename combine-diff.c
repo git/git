@@ -47,22 +47,13 @@ static struct combine_diff_path *intersect_paths(
 
 	if (!n) {
 		for (i = 0; i < q->nr; i++) {
-			int len;
-			const char *path;
 			if (diff_unmodified_pair(q->queue[i]))
 				continue;
-			path = q->queue[i]->two->path;
-			len = strlen(path);
-			p = xmalloc(combine_diff_path_size(num_parent, len));
-			p->path = (char *) &(p->parent[num_parent]);
-			memcpy(p->path, path, len);
-			p->path[len] = 0;
-			p->next = NULL;
-			memset(p->parent, 0,
-			       sizeof(p->parent[0]) * num_parent);
-
-			oidcpy(&p->oid, &q->queue[i]->two->oid);
-			p->mode = q->queue[i]->two->mode;
+			p = combine_diff_path_new(q->queue[i]->two->path,
+						  strlen(q->queue[i]->two->path),
+						  q->queue[i]->two->mode,
+						  &q->queue[i]->two->oid,
+						  num_parent);
 			oidcpy(&p->parent[n].oid, &q->queue[i]->one->oid);
 			p->parent[n].mode = q->queue[i]->one->mode;
 			p->parent[n].status = q->queue[i]->status;
@@ -1666,4 +1657,25 @@ void diff_tree_combined_merge(const struct commit *commit,
 	}
 	diff_tree_combined(&commit->object.oid, &parents, rev);
 	oid_array_clear(&parents);
+}
+
+struct combine_diff_path *combine_diff_path_new(const char *path,
+						size_t path_len,
+						unsigned int mode,
+						const struct object_id *oid,
+						size_t num_parents)
+{
+	struct combine_diff_path *p;
+
+	p = xmalloc(combine_diff_path_size(num_parents, path_len));
+	p->path = (char *)&(p->parent[num_parents]);
+	memcpy(p->path, path, path_len);
+	p->path[path_len] = 0;
+	p->next = NULL;
+	p->mode = mode;
+	oidcpy(&p->oid, oid);
+
+	memset(p->parent, 0, sizeof(p->parent[0]) * num_parents);
+
+	return p;
 }
