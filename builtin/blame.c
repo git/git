@@ -1193,14 +1193,16 @@ parse_done:
 	sb.found_guilty_entry = &found_guilty_entry;
 	sb.found_guilty_entry_data = &pi;
 	if (show_progress)
-		pi.progress = start_delayed_progress(_("Blaming lines"), num_lines);
+		pi.progress = start_delayed_progress(the_repository,
+						     _("Blaming lines"),
+						     num_lines);
 
 	assign_blame(&sb, opt);
 
 	stop_progress(&pi.progress);
 
 	if (!incremental)
-		setup_pager();
+		setup_pager(the_repository);
 	else
 		goto cleanup;
 

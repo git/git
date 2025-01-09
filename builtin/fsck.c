@@ -197,7 +197,8 @@ static int traverse_reachable(void)
 	unsigned int nr = 0;
 	int result = 0;
 	if (show_progress)
-		progress = start_delayed_progress(_("Checking connectivity"), 0);
+		progress = start_delayed_progress(the_repository,
+						  _("Checking connectivity"), 0);
 	while (pending.nr) {
 		result |= traverse_one_object(object_array_pop(&pending));
 		display_progress(progress, ++nr);
@@ -703,7 +704,8 @@ static void fsck_object_dir(const char *path)
 		fprintf_ln(stderr, _("Checking object directory"));
 
 	if (show_progress)
-		progress = start_progress(_("Checking object directories"), 256);
+		progress = start_progress(the_repository,
+					  _("Checking object directories"), 256);
 
 	for_each_loose_file_in_objdir(path, fsck_loose, fsck_cruft, fsck_subdir,
 				      &cb_data);
@@ -879,7 +881,8 @@ static int check_pack_rev_indexes(struct repository *r, int show_progress)
 	if (show_progress) {
 		for (struct packed_git *p = get_all_packs(r); p; p = p->next)
 			pack_count++;
-		progress = start_delayed_progress("Verifying reverse pack-indexes", pack_count);
+		progress = start_delayed_progress(the_repository,
+						  "Verifying reverse pack-indexes", pack_count);
 		pack_count = 0;
 	}
 
@@ -989,7 +992,8 @@ int cmd_fsck(int argc,
 					total += p->num_objects;
 				}
 
-				progress = start_progress(_("Checking objects"), total);
+				progress = start_progress(the_repository,
+							  _("Checking objects"), total);
 			}
 			for (p = get_all_packs(the_repository); p;
 			     p = p->next) {

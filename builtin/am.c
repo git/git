@@ -1211,7 +1211,7 @@ static int parse_mail(struct am_state *state, const char *mail)
 	int ret = 0;
 	struct mailinfo mi;
 
-	setup_mailinfo(&mi);
+	setup_mailinfo(the_repository, &mi);
 
 	if (state->utf8)
 		mi.metainfo_charset = get_commit_output_encoding();
@@ -1786,7 +1786,7 @@ static int do_interactive(struct am_state *state)
 			}
 			strbuf_release(&msg);
 		} else if (*reply == 'v' || *reply == 'V') {
-			const char *pager = git_pager(1);
+			const char *pager = git_pager(the_repository, 1);
 			struct child_process cp = CHILD_PROCESS_INIT;
 
 			if (!pager)
@@ -2246,7 +2246,7 @@ static int show_patch(struct am_state *state, enum resume_type resume_mode)
 	if (len < 0)
 		die_errno(_("failed to read '%s'"), patch_path);
 
-	setup_pager();
+	setup_pager(the_repository);
 	write_in_full(1, sb.buf, sb.len);
 	strbuf_release(&sb);
 	return 0;

@@ -4,6 +4,7 @@
 #include "strbuf.h"
 
 struct option;
+struct repository;
 
 enum diagnose_mode {
 	DIAGNOSE_NONE,
@@ -13,6 +14,8 @@ enum diagnose_mode {
 
 int option_parse_diagnose(const struct option *opt, const char *arg, int unset);
 
-int create_diagnostics_archive(struct strbuf *zip_path, enum diagnose_mode mode);
+int create_diagnostics_archive(struct repository *r,
+			       struct strbuf *zip_path,
+			       enum diagnose_mode mode);
 
 #endif /* DIAGNOSE_H */

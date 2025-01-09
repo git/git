@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "builtin.h"
 #include "abspath.h"
 #include "gettext.h"
@@ -58,7 +60,7 @@ int cmd_diagnose(int argc,
 	}
 
 	/* Prepare diagnostics */
-	if (create_diagnostics_archive(&zip_path, mode))
+	if (create_diagnostics_archive(the_repository, &zip_path, mode))
 		die_errno(_("unable to create diagnostics archive %s"),
 			  zip_path.buf);
 

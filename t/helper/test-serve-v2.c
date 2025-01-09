@@ -1,6 +1,9 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "test-tool.h"
 #include "gettext.h"
 #include "parse-options.h"
+#include "repository.h"
 #include "serve.h"
 #include "setup.h"
 
@@ -28,9 +31,9 @@ int cmd__serve_v2(int argc, const char **argv)
 			     PARSE_OPT_KEEP_UNKNOWN_OPT);
 
 	if (advertise_capabilities)
-		protocol_v2_advertise_capabilities();
+		protocol_v2_advertise_capabilities(the_repository);
 	else
-		protocol_v2_serve_loop(stateless_rpc);
+		protocol_v2_serve_loop(the_repository, stateless_rpc);
 
 	return 0;
 }

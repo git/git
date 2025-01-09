@@ -735,7 +735,8 @@ int cmd_rev_list(int argc,
 		revs.limited = 1;
 
 	if (show_progress)
-		progress = start_delayed_progress(show_progress, 0);
+		progress = start_delayed_progress(the_repository,
+						  show_progress, 0);
 
 	if (use_bitmap_index) {
 		if (!try_bitmap_count(&revs, filter_provided_objects))

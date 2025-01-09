@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -351,7 +350,7 @@ struct git_graph *graph_init(struct rev_info *opt)
 
 	if (!column_colors) {
 		char *string;
-		if (git_config_get_string("log.graphcolors", &string)) {
+		if (repo_config_get_string(opt->repo, "log.graphcolors", &string)) {
 			/* not configured -- use default */
 			graph_set_column_colors(column_colors_ansi,
 						column_colors_ansi_max);
