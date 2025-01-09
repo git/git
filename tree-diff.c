@@ -127,30 +127,6 @@ static int emit_diff_first_parent_only(struct diff_options *opt, struct combine_
 /*
  * Make a new combine_diff_path from path/mode/sha1
  * and append it to paths list tail.
- *
- * Memory for created elements could be reused:
- *
- *	- if last->next == NULL, the memory is allocated;
- *
- *	- if last->next != NULL, it is assumed that p=last->next was returned
- *	  earlier by this function, and p->next was *not* modified.
- *	  The memory is then reused from p.
- *
- * so for clients,
- *
- * - if you do need to keep the element
- *
- *	p = path_appendnew(p, ...);
- *	process(p);
- *	p->next = NULL;
- *
- * - if you don't need to keep the element after processing
- *
- *	pprev = p;
- *	p = path_appendnew(p, ...);
- *	process(p);
- *	p = pprev;
- *	; don't forget to free tail->next in the end
  */
 static struct combine_diff_path *path_appendnew(struct combine_diff_path *last,
 	int nparent, const struct strbuf *base, const char *path, int pathlen,
@@ -160,22 +136,8 @@ static struct combine_diff_path *path_appendnew(struct combine_diff_path *last,
 	size_t len = st_add(base->len, pathlen);
 	size_t alloclen = combine_diff_path_size(nparent, len);
 
-	/* if last->next is !NULL - it is a pre-allocated memory, we can reuse */
-	p = last->next;
-	if (p && (alloclen > (intptr_t)p->next)) {
-		FREE_AND_NULL(p);
-	}
-
-	if (!p) {
-		p = xmalloc(alloclen);
-
-		/*
-		 * until we go to it next round, .next holds how many bytes we
-		 * allocated (for faster realloc - we don't need copying old data).
-		 */
-		p->next = (struct combine_diff_path *)(intptr_t)alloclen;
-	}
-
+	p = xmalloc(alloclen);
+	p->next = NULL;
 	last->next = p;
 
 	p->path = (char *)&(p->parent[nparent]);
@@ -279,21 +241,11 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 		if (opt->pathchange)
 			keep = opt->pathchange(opt, p);
 
-		/*
-		 * If a path was filtered or consumed - we don't need to add it
-		 * to the list and can reuse its memory, leaving it as
-		 * pre-allocated element on the tail.
-		 *
-		 * On the other hand, if path needs to be kept, we need to
-		 * correct its .next to NULL, as it was pre-initialized to how
-		 * much memory was allocated.
-		 *
-		 * see path_appendnew() for details.
-		 */
-		if (!keep)
+		if (!keep) {
+			free(p);
+			pprev->next = NULL;
 			p = pprev;
-		else
-			p->next = NULL;
+		}
 	}
 
 	if (recurse) {
@@ -585,13 +537,6 @@ struct combine_diff_path *diff_tree_paths(
 	struct strbuf *base, struct diff_options *opt)
 {
 	p = ll_diff_tree_paths(p, oid, parents_oid, nparent, base, opt, 0);
-
-	/*
-	 * free pre-allocated last element, if any
-	 * (see path_appendnew() for details about why)
-	 */
-	FREE_AND_NULL(p->next);
-
 	return p;
 }
 
