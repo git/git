@@ -480,7 +480,7 @@ struct combine_diff_path {
 		char status;
 		unsigned int mode;
 		struct object_id oid;
-		struct strbuf path;
+		char *path;
 	} parent[FLEX_ARRAY];
 };
 #define combine_diff_path_size(n, l) \

@@ -60,9 +60,7 @@ static struct combine_diff_path *intersect_paths(
 
 			if (combined_all_paths &&
 			    filename_changed(p->parent[n].status)) {
-				strbuf_init(&p->parent[n].path, 0);
-				strbuf_addstr(&p->parent[n].path,
-					      q->queue[i]->one->path);
+				p->parent[n].path = xstrdup(q->queue[i]->one->path);
 			}
 			*tail = p;
 			tail = &p->next;
@@ -83,9 +81,7 @@ static struct combine_diff_path *intersect_paths(
 			/* p->path not in q->queue[]; drop it */
 			*tail = p->next;
 			for (j = 0; j < num_parent; j++)
-				if (combined_all_paths &&
-				    filename_changed(p->parent[j].status))
-					strbuf_release(&p->parent[j].path);
+				free(p->parent[j].path);
 			free(p);
 			continue;
 		}
@@ -101,8 +97,7 @@ static struct combine_diff_path *intersect_paths(
 		p->parent[n].status = q->queue[i]->status;
 		if (combined_all_paths &&
 		    filename_changed(p->parent[n].status))
-			strbuf_addstr(&p->parent[n].path,
-				      q->queue[i]->one->path);
+			p->parent[n].path = xstrdup(q->queue[i]->one->path);
 
 		tail = &p->next;
 		i++;
@@ -987,8 +982,9 @@ static void show_combined_header(struct combine_diff_path *elem,
 
 	if (rev->combined_all_paths) {
 		for (i = 0; i < num_parent; i++) {
-			char *path = filename_changed(elem->parent[i].status)
-				? elem->parent[i].path.buf : elem->path;
+			const char *path = elem->parent[i].path ?
+					   elem->parent[i].path :
+					   elem->path;
 			if (elem->parent[i].status == DIFF_STATUS_ADDED)
 				dump_quoted_path("--- ", "", "/dev/null",
 						 line_prefix, c_meta, c_reset);
@@ -1269,12 +1265,10 @@ static void show_raw_diff(struct combine_diff_path *p, int num_parent, struct re
 
 	for (i = 0; i < num_parent; i++)
 		if (rev->combined_all_paths) {
-			if (filename_changed(p->parent[i].status))
-				write_name_quoted(p->parent[i].path.buf, stdout,
-						  inter_name_termination);
-			else
-				write_name_quoted(p->path, stdout,
-						  inter_name_termination);
+			const char *path = p->parent[i].path ?
+					   p->parent[i].path :
+					   p->path;
+			write_name_quoted(path, stdout, inter_name_termination);
 		}
 	write_name_quoted(p->path, stdout, line_termination);
 }
@@ -1636,9 +1630,7 @@ void diff_tree_combined(const struct object_id *oid,
 		struct combine_diff_path *tmp = paths;
 		paths = paths->next;
 		for (i = 0; i < num_parent; i++)
-			if (rev->combined_all_paths &&
-			    filename_changed(tmp->parent[i].status))
-				strbuf_release(&tmp->parent[i].path);
+			free(tmp->parent[i].path);
 		free(tmp);
 	}
 
