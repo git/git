@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2025, #02; Mon, 6)
-X-master-at: b74ff38af58464688b211140b90ec90598d340c6
-X-next-at: 9ec6785566993ea05d28010e7a742dc2d8f0daae
+Subject: What's cooking in git.git (Jan 2025, #03; Fri, 10)
+X-master-at: fbe8d3079d4a96aeb4e4529cc93cc0043b759a05
+X-next-at: d3603152ad074a50ed6022133a71b91a16cc7baf
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2025, #02; Mon, 6)
+What's cooking in git.git (Jan 2025, #03; Fri, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,10 +17,13 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Git 2.48-rc2 has been tagged.  I expect there will be a few more
-"finishing touches" before the final release is tagged later this
-week.  Extra testing the tip of 'master' before we actually tag it
-is as always very much appreciated.
+Git 2.48.0 has been tagged.  Thank you, everybody, for your hard
+work.
+
+There are quite a few topics that are listed here but without much
+review activities.  I'll review the notes below with list archive
+myself to see which ones are truly stale and discard them, maybe
+later next week.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -53,60 +56,232 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* jc/doc-opt-tilde-expand (2025-01-03) 1 commit
-  (merged to 'next' on 2025-01-03 at b3e6e7acbc)
- + gitcli.txt: typeset pathnames as monospace
+* bf/fetch-set-head-config (2025-01-06) 1 commit
+  (merged to 'next' on 2025-01-06 at 841c3a38a6)
+ + fetch: fix erroneous set_head advice message
 
- Docfix.
-
- Will merge to 'next' and then to 'master'.
- source: <6e0abe96b60a94d4fdee15a45b7d53c2f44a0c69.1735903029.git.martin.agren@gmail.com>
+ A hotfix on an advice message added during this cycle.
+ source: <20250105161017.210412-1-bence@ferdinandy.com>
 
 
-* mh/doc-windows-home-env (2025-01-03) 1 commit
-  (merged to 'next' on 2025-01-03 at 1d4db69ce0)
- + git.txt: fix heading line of tildes
+* js/git-version-gen-update (2025-01-10) 1 commit
+  (merged to 'next' on 2025-01-10 at e4c4bf6b44)
+ + GIT-VERSION-GEN: allow it to be run in parallel
 
- Docfix.
+ Build regression fix.
+ 
+ source: <pull.1850.v2.git.1736509717426.gitgitgadget@gmail.com>
 
- Will merge to 'next' and then to 'master'.
- source: <50e47d14a8a0a2ca0dd158f01b833a28c7b46887.1735903029.git.martin.agren@gmail.com>
+
+* js/reftable-realloc-errors-fix (2025-01-08) 1 commit
+  (merged to 'next' on 2025-01-08 at 5efe7e2f5d)
+ + t-reftable-basics: allow for `malloc` to be `#define`d
+
+ Last-minute fix to a recent update.
+ source: <pull.1848.git.1736352005578.gitgitgadget@gmail.com>
+
+
+* ps/build-sign-compare (2025-01-10) 2 commits
+  (merged to 'next' on 2025-01-10 at 8b4d916cbf)
+ + builtin/blame: fix out-of-bounds write with blank boundary commits
+ + builtin/blame: fix out-of-bounds read with excessive `--abbrev`
+
+ Last-minute fix for a regression in "git blame --abbrev=<length>"
+ when insane <length> is specified; we used to correctly cap it to
+ the hash output length but broke it during the cycle.
+ 
+ source: <20250110-b4-pks-blame-truncate-hash-length-v3-0-e61f25b68f30@pks.im>
+
+
+* sj/meson-perl-build-fix (2025-01-08) 1 commit
+  (merged to 'next' on 2025-01-08 at cce5ed7397)
+ + meson: fix perl dependencies
+
+ The build procedure in "meson" for the "perl/" hierarchy lacked
+ necessary dependencies, which has been corrected.
+ source: <371571630df201b0b0c680f6437decc6c60ecd3b.1736307757.git.sam@gentoo.org>
 
 --------------------------------------------------
 [New Topics]
+
+* dk/zsh-config-completion-fix (2025-01-06) 1 commit
+  (merged to 'next' on 2025-01-10 at efba7d534c)
+ + completion: repair config completion for Zsh
+
+ Completion script updates for zsh
+
+ Will cook in 'next'.
+ source: <pull.1860.v3.git.git.1736200026899.gitgitgadget@gmail.com>
+
+
+* en/object-name-with-funny-refname-fix (2025-01-06) 2 commits
+ - object-name: be more strict in parsing describe-like output
+ - object-name: fix resolution of object names containing curly braces
+
+ Extended SHA-1 expression parser did not work well when a branch
+ with an unusual name (e.g. "foo{bar") is involved.
+
+ Expecting a reroll.
+ cf. <CABPp-BHyWgu47mCDH_f_MkS4CMGh_OtX4K-YGFsB-fZvvaNJPQ@mail.gmail.com>
+ source: <pull.1844.v2.git.1735949870.gitgitgadget@gmail.com>
+
+
+* sj/ref-consistency-checks-more (2025-01-06) 10 commits
+ - builtin/fsck: add `git refs verify` child process
+ - packed-backend: check whether the "packed-refs" is sorted
+ - packed-backend: add check for object consistency
+ - packed-backend: create "fsck_packed_ref_entry" to store parsing info
+ - packed-backend: add "packed-refs" entry consistency check
+ - packed-backend: check whether the refname contains NULL binaries
+ - packed-backend: add "packed-refs" header consistency check
+ - packed-backend: check whether the "packed-refs" is regular
+ - builtin/refs.h: get worktrees without reading head info
+ - files-backend: add object check for regular ref
+
+ "git fsck" becomes more careful when checking the refs.
+ source: <Z3qNUizvHJLgMx1y@ArchLinux>
+
+
+* jk/lsan-race-ignore-false-positive (2025-01-07) 3 commits
+  (merged to 'next' on 2025-01-09 at 3d7cd910b5)
+ + test-lib: add a few comments to LSan log checking
+ + test-lib: simplify lsan results check
+ + test-lib: invert return value of check_test_results_san_file_empty
+
+ The code to check LSan results has been simplified and made more
+ robust.
+
+ Will cook in 'next'.
+ source: <20250107070409.GA584456@coredump.intra.peff.net>
+
+
+* jk/t7407-use-test-grep (2025-01-07) 1 commit
+  (merged to 'next' on 2025-01-09 at 1d584ee42d)
+ + t7407: use test_grep
+
+ Test clean-up.
+
+ Will cook in 'next'.
+ source: <20250107071824.GA594237@coredump.intra.peff.net>
+
+
+* jt/fsck-skiplist-parse-fix (2025-01-07) 1 commit
+  (merged to 'next' on 2025-01-09 at d08b30fd78)
+ + fsck: reject misconfigured fsck.skipList
+
+ A misconfigured "fsck.skiplist" configuration variable was not
+ diagnosed as an error, which has been corrected.
+
+ Will cook in 'next'.
+ source: <20250107162914.3756968-2-jltobler@gmail.com>
+
+
+* ps/reftable-get-random-fix (2025-01-07) 2 commits
+  (merged to 'next' on 2025-01-09 at bc024b7a45)
+ + reftable/stack: accept insecure random bytes
+ + wrapper: allow generating insecure random bytes
+
+ The code to compute "unique" name used git_rand() which can fail or
+ get stuck; the callsite does not require cryptographic security.
+ Introduce the "insecure" mode and use it appropriately.
+
+ Will cook in 'next'.
+ source: <20250107-b4-pks-reftable-csprng-v1-0-6109a54a8756@pks.im>
+
+
+* mh/credential-cache-authtype-request-fix (2025-01-09) 1 commit
+ - credential-cache: respect authtype capability
+
+ The "cache" credential back-end did not handle authtype correctly,
+ which has been corrected.
+ source: <pull.1842.v5.git.1736462721156.gitgitgadget@gmail.com>
+
+
+* mh/gitattr-doc-markup-fix (2025-01-07) 1 commit
+  (merged to 'next' on 2025-01-10 at 9b8f84ebe2)
+ + docs: fix typesetting of merge driver placeholders
+
+ Doc markup fix.
+
+ Will cook in 'next'.
+ source: <20250107212421.7yyvuzw4uqxnqv7t@archP14s>
+
+
+* sk/unit-test-hash (2025-01-09) 1 commit
+ - t/unit-tests: convert hash to use clar test framework
+
+ Test update.
+
+ Will merge to 'next'.
+ source: <20250109140952.5267-1-kuforiji98@gmail.com>
+
+
+* aj/difftool-config-doc-fix (2025-01-09) 1 commit
+  (merged to 'next' on 2025-01-10 at b8902a53d1)
+ + difftool docs: restore correct position of tool list
+
+ Docfix.
+
+ Will cook in 'next'.
+ source: <pull.1849.git.1736379323427.gitgitgadget@gmail.com>
+
+
+* jk/combine-diff-cleanup (2025-01-09) 14 commits
+ - tree-diff: make list tail-passing more explicit
+ - tree-diff: simplify emit_path() list management
+ - tree-diff: use the name "tail" to refer to list tail
+ - tree-diff: drop list-tail argument to diff_tree_paths()
+ - combine-diff: drop public declaration of combine_diff_path_size()
+ - tree-diff: inline path_appendnew()
+ - tree-diff: pass whole path string to path_appendnew()
+ - tree-diff: drop path_appendnew() alloc optimization
+ - run_diff_files(): de-mystify the size of combine_diff_path struct
+ - diff: add a comment about combine_diff_path.parent.path
+ - combine-diff: use pointer for parent paths
+ - tree-diff: clear parent array in path_appendnew()
+ - combine-diff: add combine_diff_path_new()
+ - run_diff_files(): delay allocation of combine_diff_path
+
+ Code clean-up for code paths around combined diff.
+ source: <20250109082723.GA2748497@coredump.intra.peff.net>
+
+
+* sc/help-autocorrect-one (2025-01-09) 1 commit
+ - help: interpret help.autocorrect=1 as "immediate" rather than 0.1s
+
+ "[help] autocorrect = 1" used to be a way to say "please wait for
+ 0.1 second after suggesting a typofix of the command name before
+ running that command"; now it means "yes, if there is a plausible
+ typofix for the command name, please run it immediately".
+
+ Expecting a reroll.
+ Almost there.
+ source: <pull.1869.git.git.1736364707068.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * ja/doc-notes-markup-updates (2025-01-03) 1 commit
  - doc: git-notes.txt: migrate to new documentation format
 
  Doc mark-up updates.
-
  source: <pull.1846.git.1735924216993.gitgitgadget@gmail.com>
 
 
 * mb/t7110-use-test-path-helper (2025-01-03) 1 commit
- - t7110: replace `test -f` with `test_path_is_*` helpers
+  (merged to 'next' on 2025-01-06 at cd96b0ac82)
+ + t7110: replace `test -f` with `test_path_is_*` helpers
 
  Test modernization.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20250103130035.79376-1-matteobagnolini2003@gmail.com>
-
-
-* bf/fetch-set-head-config (2025-01-06) 1 commit
-  (merged to 'next' on 2025-01-06 at 841c3a38a6)
- + fetch: fix erroneous set_head advice message
-
- A hotfix on an advice messagge added during this cycle.
-
- Will merge to 'master'.
- source: <20250105161017.210412-1-bence@ferdinandy.com>
 
 
 * ja/doc-restore-markup-update (2025-01-04) 1 commit
  - doc: git-restore: migrate to new style format
 
  Doc mark-up updates.
-
  source: <pull.1847.git.1735996601092.gitgitgadget@gmail.com>
 
 
@@ -118,11 +293,8 @@ Release tarballs are available at:
 
  The value of "uname -s" is by default sent over the wire as a new
  capability, with an opt-out for privacy-concious folks.
-
  source: <20250106103713.1452035-1-usmanakinyemi202@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * ja/doc-commit-markup-updates (2025-01-03) 3 commits
  - doc: git-commit: migrate secondary files to new format
@@ -133,7 +305,7 @@ Release tarballs are available at:
  source: <pull.1845.git.1735912046.gitgitgadget@gmail.com>
 
 
-* ps/ci-misc-updates (2025-01-06) 10 commits
+* ps/ci-misc-updates (2025-01-10) 10 commits
  - ci: remove stale code for Azure Pipelines
  - ci: use latest Ubuntu release
  - ci: stop special-casing for Ubuntu 16.04
@@ -146,7 +318,7 @@ Release tarballs are available at:
  - t0060: fix EBUSY in MinGW when setting up runtime prefix
 
  CI updates (containerization, dropping stale ones, etc.).
- source: <20250106-b4-pks-ci-fixes-v2-0-06ae540771b7@pks.im>
+ source: <20250110-b4-pks-ci-fixes-v4-0-6e4613446080@pks.im>
 
 
 * ps/meson-weak-sha1-build (2024-12-30) 8 commits
@@ -177,6 +349,8 @@ Release tarballs are available at:
  CI jobs gave sporadic failures, which turns out that that the
  object finalization code was giving an error when it did not have
  to.
+
+ Will cook in 'next'.
  source: <20250106-b4-pks-object-file-racy-collision-check-v2-0-8b3984ecbb18@pks.im>
 
 
@@ -242,24 +416,27 @@ Release tarballs are available at:
 
 
 * ps/the-repository (2024-12-18) 15 commits
- - match-trees: stop using `the_repository`
- - graph: stop using `the_repository`
- - add-interactive: stop using `the_repository`
- - tmp-objdir: stop using `the_repository`
- - resolve-undo: stop using `the_repository`
- - credential: stop using `the_repository`
- - mailinfo: stop using `the_repository`
- - diagnose: stop using `the_repository`
- - server-info: stop using `the_repository`
- - send-pack: stop using `the_repository`
- - serve: stop using `the_repository`
- - trace: stop using `the_repository`
- - pager: stop using `the_repository`
- - progress: stop using `the_repository`
- - Merge branch 'ps/build-sign-compare' into ps/the-repository
+  (merged to 'next' on 2025-01-09 at 1de40edade)
+ + match-trees: stop using `the_repository`
+ + graph: stop using `the_repository`
+ + add-interactive: stop using `the_repository`
+ + tmp-objdir: stop using `the_repository`
+ + resolve-undo: stop using `the_repository`
+ + credential: stop using `the_repository`
+ + mailinfo: stop using `the_repository`
+ + diagnose: stop using `the_repository`
+ + server-info: stop using `the_repository`
+ + send-pack: stop using `the_repository`
+ + serve: stop using `the_repository`
+ + trace: stop using `the_repository`
+ + pager: stop using `the_repository`
+ + progress: stop using `the_repository`
+ + Merge branch 'ps/build-sign-compare' into ps/the-repository
 
  More code paths have a repository passed through the callchain,
  instead of assuming the primary the_repository object.
+
+ Will cook in 'next'.
  source: <20241217-pks-use-the-repository-conversion-v1-0-0dba48bcc239@pks.im>
 
 
@@ -287,7 +464,6 @@ Release tarballs are available at:
  changes for Git 3.0, allow an early opt-in for removing support of
  $GIT_DIR/branches/ and $GIT_DIR/remotes/ directories to configure
  remotes.
-
  source: <20250106-pks-remote-branches-deprecation-v2-0-2ce87c053536@pks.im>
 
 
