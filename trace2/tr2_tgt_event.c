@@ -493,7 +493,8 @@ static void fn_param_fl(const char *file, int line, const char *param,
 	event_fmt_prepare(event_name, file, line, NULL, &jw);
 	jw_object_string(&jw, "scope", scope_name);
 	jw_object_string(&jw, "param", param);
-	jw_object_string(&jw, "value", value);
+	if (value)
+		jw_object_string(&jw, "value", value);
 	jw_end(&jw);
 
 	tr2_dst_write_line(&tr2dst_event, &jw.json);
