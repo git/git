@@ -126,6 +126,32 @@ test_expect_success '--no-abbrev works like --abbrev with full length' '
 	check_abbrev $hexsz --no-abbrev
 '
 
+test_expect_success 'blame --abbrev gets truncated' '
+	check_abbrev $hexsz --abbrev=9000 HEAD
+'
+
+test_expect_success 'blame --abbrev gets truncated with boundary commit' '
+	check_abbrev $hexsz --abbrev=9000 ^HEAD
+'
+
+test_expect_success 'blame --abbrev -b truncates the blank boundary' '
+	# Note that `--abbrev=` always gets incremented by 1, which is why we
+	# expect 11 leading spaces and not 10.
+	cat >expect <<-EOF &&
+	$(printf "%0.s " $(test_seq 11)) (<author@example.com> 2005-04-07 15:45:13 -0700 1) abbrev
+	EOF
+	git blame -b --abbrev=10 ^HEAD -- abbrev.t >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'blame with excessive --abbrev and -b culls to hash length' '
+	cat >expect <<-EOF &&
+	$(printf "%0.s " $(test_seq $hexsz)) (<author@example.com> 2005-04-07 15:45:13 -0700 1) abbrev
+	EOF
+	git blame -b --abbrev=9000 ^HEAD -- abbrev.t >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success '--exclude-promisor-objects does not BUG-crash' '
 	test_must_fail git blame --exclude-promisor-objects one
 '
