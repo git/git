@@ -1,0 +1,15 @@
+Git v2.49 Release Notes
+=======================
+
+UI, Workflows & Features
+------------------------
+
+
+Performance, Internal Implementation, Development Support etc.
+--------------------------------------------------------------
+
+
+Fixes since v2.48
+-----------------
+
+ * Other code cleanup, docfix, build fix, etc.
