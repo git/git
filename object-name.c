@@ -2052,12 +2052,14 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 		return -1;
 	}
 	for (cp = name, bracket_depth = 0; *cp; cp++) {
-		if (*cp == '{')
+		if (strchr("@^", *cp) && cp[1] == '{') {
+			cp++;
 			bracket_depth++;
-		else if (bracket_depth && *cp == '}')
+		} else if (bracket_depth && *cp == '}') {
 			bracket_depth--;
-		else if (!bracket_depth && *cp == ':')
+		} else if (!bracket_depth && *cp == ':') {
 			break;
+		}
 	}
 	if (*cp == ':') {
 		struct object_id tree_oid;
