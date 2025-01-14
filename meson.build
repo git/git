@@ -178,6 +178,14 @@ project('git', 'c',
     capture: true,
     check: true,
   ).stdout().strip() : 'unknown',
+  default_options: [
+    # Git requires C99 with GNU extensions, which of course isn't supported by
+    # MSVC. Funny enough, C99 doesn't work with MSVC either, as it has only
+    # learned to define __STDC_VERSION__ with C11 and later. We thus require
+    # GNU C99 and fall back to C11. Meson only learned to handle the fallback
+    # with version 1.3.0, so on older versions we use GNU C99 unconditionally.
+    'c_std=' + (meson.version().version_compare('>=1.3.0') ? 'gnu99,c11' : 'gnu99'),
+  ],
 )
 
 fs = import('fs')
