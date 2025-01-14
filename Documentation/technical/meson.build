@@ -60,6 +60,7 @@ foreach article : api_docs + articles
     command: asciidoc_html_options,
     input: article,
     output: fs.stem(article) + '.html',
+    depends: documentation_deps,
     install: true,
     install_dir: get_option('datadir') / 'doc/git-doc/technical',
   )
