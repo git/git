@@ -170,7 +170,14 @@
 
 project('git', 'c',
   meson_version: '>=0.61.0',
-  version: 'v2.47.GIT',
+  # The version is only of cosmetic nature, so if we cannot find a shell yet we
+  # simply don't set up a version at all. This may be the case for example on
+  # Windows systems, where we first have to bootstrap the host environment.
+  version: find_program('sh', required: false).found() ? run_command(
+    'GIT-VERSION-GEN', meson.current_source_dir(), '--format=@GIT_VERSION@',
+    capture: true,
+    check: true,
+  ).stdout().strip() : 'unknown',
 )
 
 fs = import('fs')
