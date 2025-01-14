@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2025, #03; Fri, 10)
-X-master-at: fbe8d3079d4a96aeb4e4529cc93cc0043b759a05
-X-next-at: d3603152ad074a50ed6022133a71b91a16cc7baf
+Subject: What's cooking in git.git (Jan 2025, #04; Tue, 14)
+X-master-at: 757161efcca150a9a96b312d9e780a071e601a03
+X-next-at: 85cc9f2d1ee4d65cb1edb00d4f56863185a53e0f
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2025, #03; Fri, 10)
+What's cooking in git.git (Jan 2025, #04; Tue, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,8 +17,9 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Git 2.48.0 has been tagged.  Thank you, everybody, for your hard
-work.
+Git 2.48.1 and other maintenance releases have been tagged and
+released.  A handful of topics that were marked with "Will discard?"
+without seeing any further activity have been discarded.
 
 There are quite a few topics that are listed here but without much
 review activities.  I'll review the notes below with list archive
@@ -54,55 +55,102 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* bf/fetch-set-head-config (2025-01-06) 1 commit
-  (merged to 'next' on 2025-01-06 at 841c3a38a6)
- + fetch: fix erroneous set_head advice message
+* ak/instaweb-python-port-binding-fix (2025-01-10) 1 commit
+ - instaweb: fix ip binding for the python http.server
 
- A hotfix on an advice message added during this cycle.
- source: <20250105161017.210412-1-bence@ferdinandy.com>
+ The "instaweb" bound only to local IP address without "--local" and
+ to all addresses with "--local", which was the other way around, when
+ using Python's http.server class, which has been corrected.
 
-
-* js/git-version-gen-update (2025-01-10) 1 commit
-  (merged to 'next' on 2025-01-10 at e4c4bf6b44)
- + GIT-VERSION-GEN: allow it to be run in parallel
-
- Build regression fix.
- 
- source: <pull.1850.v2.git.1736509717426.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <20250110101346.30416-1-alecsk@gmail.com>
 
 
-* js/reftable-realloc-errors-fix (2025-01-08) 1 commit
-  (merged to 'next' on 2025-01-08 at 5efe7e2f5d)
- + t-reftable-basics: allow for `malloc` to be `#define`d
+* bf/fetch-set-head-fix (2025-01-13) 1 commit
+ - fetch set_head: fix non-mirror remotes in bare repositories
 
- Last-minute fix to a recent update.
- source: <pull.1848.git.1736352005578.gitgitgadget@gmail.com>
+ Fetching into a bare repository incorrectly assumed it always used
+ a mirror layout when deciding to update remote-tracking HEAD, which
+ has been corrected.
 
-
-* ps/build-sign-compare (2025-01-10) 2 commits
-  (merged to 'next' on 2025-01-10 at 8b4d916cbf)
- + builtin/blame: fix out-of-bounds write with blank boundary commits
- + builtin/blame: fix out-of-bounds read with excessive `--abbrev`
-
- Last-minute fix for a regression in "git blame --abbrev=<length>"
- when insane <length> is specified; we used to correctly cap it to
- the hash output length but broke it during the cycle.
- 
- source: <20250110-b4-pks-blame-truncate-hash-length-v3-0-e61f25b68f30@pks.im>
+ Needs review.
+ source: <20250112165125.130400-1-bence@ferdinandy.com>
 
 
-* sj/meson-perl-build-fix (2025-01-08) 1 commit
-  (merged to 'next' on 2025-01-08 at cce5ed7397)
- + meson: fix perl dependencies
+* mh/doc-credential-helpers-with-pat (2025-01-10) 2 commits
+ - docs: discuss caching personal access tokens
+ - docs: list popular credential helpers
 
- The build procedure in "meson" for the "perl/" hierarchy lacked
- necessary dependencies, which has been corrected.
- source: <371571630df201b0b0c680f6437decc6c60ecd3b.1736307757.git.sam@gentoo.org>
+ Document that it is insecure to use Personal Access Tokens, which
+ some hosting providers take as username/password, embedded in URLs.
+
+ Will merge to 'next'.
+ source: <pull.1851.v2.git.1736549677.gitgitgadget@gmail.com>
+
+
+* ps/build-meson-fixes (2025-01-13) 10 commits
+ - ci: wire up Visual Studio build with Meson
+ - meson: fix compilation with Visual Studio
+ - meson: make the CSPRNG backend configurable
+ - meson: wire up generation of distribution archive
+ - meson: wire up fuzzers
+ - meson: wire up development environments
+ - meson: fix dependencies for generated headers
+ - GIT-VERSION-GEN: move default version into a separate file
+ - GIT-VERSION-GEN: simplify computing the dirty marker
+ - Merge branch 'ps/meson-weak-sha1-build' into ps/build-meson-fixes
+ (this branch uses ps/meson-weak-sha1-build.)
+
+ More build fixes and enhancements on meson based build procedure.
+ source: <20250113-b4-pks-meson-additions-v1-0-97f6a93f691d@pks.im>
+
+
+* ps/zlib-ng (2025-01-10) 9 commits
+ - compat/zlib: allow use of zlib-ng as backend
+ - git-zlib: cast away potential constness of `next_in` pointer
+ - compat/zlib: provide stubs for `deflateSetHeader()`
+ - compat/zlib: provide `deflateBound()` shim centrally
+ - git-compat-util: move include of "compat/zlib.h" into "git-zlib.h"
+ - compat: introduce new "zlib.h" header
+ - git-compat-util: drop `z_const` define
+ - compat: drop `uncompress2()` compatibility shim
+ - Merge branch 'ps/meson-weak-sha1-build' into ps/zlib-ng
+ (this branch uses ps/meson-weak-sha1-build.)
+
+ The code paths to interact with zlib has been cleaned up in
+ preparation for building with zlib-ng.
+ source: <20250110-b4-pks-compat-drop-uncompress2-v1-0-965d0022a74d@pks.im>
+
+
+* rs/ref-fitler-used-atoms-value-fix (2025-01-13) 1 commit
+ - ref-filter: share bases and is_base_tips between formatting and sorting
+
+ "git branch --sort=..." and "git for-each-ref --format=... --sort=..."
+ did not work as expected with some atoms, which has been corrected.
+
+ cf. https://lore.kernel.org/git/20250113051700.GA767856@coredump.intra.peff.net/
+ source: <6b824f05-6f16-4cd9-85b7-3b8b236158b4@web.de>
+
+
+* tb/unsafe-hash-cleanup (2025-01-10) 8 commits
+ - hash.h: drop unsafe_ function variants
+ - csum-file: introduce hashfile_checkpoint_init()
+ - t/helper/test-hash.c: use unsafe_hash_algo()
+ - csum-file.c: use unsafe_hash_algo()
+ - hash.h: introduce `unsafe_hash_algo()`
+ - csum-file.c: extract algop from hashfile_checksum_valid()
+ - csum-file: store the hash algorithm as a struct field
+ - t/helper/test-tool: implement sha1-unsafe helper
+
+ The API around choosing to use unsafe variant of SHA-1
+ implementation has been updated in an attempt to make it harder to
+ abuse.
+ source: <cover.1736363652.git.me@ttaylorr.com>
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * dk/zsh-config-completion-fix (2025-01-06) 1 commit
   (merged to 'next' on 2025-01-10 at efba7d534c)
@@ -110,20 +158,19 @@ Release tarballs are available at:
 
  Completion script updates for zsh
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1860.v3.git.git.1736200026899.gitgitgadget@gmail.com>
 
 
-* en/object-name-with-funny-refname-fix (2025-01-06) 2 commits
+* en/object-name-with-funny-refname-fix (2025-01-13) 2 commits
  - object-name: be more strict in parsing describe-like output
  - object-name: fix resolution of object names containing curly braces
 
  Extended SHA-1 expression parser did not work well when a branch
  with an unusual name (e.g. "foo{bar") is involved.
 
- Expecting a reroll.
- cf. <CABPp-BHyWgu47mCDH_f_MkS4CMGh_OtX4K-YGFsB-fZvvaNJPQ@mail.gmail.com>
- source: <pull.1844.v2.git.1735949870.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <pull.1844.v3.git.1736788417.gitgitgadget@gmail.com>
 
 
 * sj/ref-consistency-checks-more (2025-01-06) 10 commits
@@ -151,7 +198,7 @@ Release tarballs are available at:
  The code to check LSan results has been simplified and made more
  robust.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250107070409.GA584456@coredump.intra.peff.net>
 
 
@@ -161,7 +208,7 @@ Release tarballs are available at:
 
  Test clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250107071824.GA594237@coredump.intra.peff.net>
 
 
@@ -172,7 +219,7 @@ Release tarballs are available at:
  A misconfigured "fsck.skiplist" configuration variable was not
  diagnosed as an error, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250107162914.3756968-2-jltobler@gmail.com>
 
 
@@ -185,7 +232,7 @@ Release tarballs are available at:
  get stuck; the callsite does not require cryptographic security.
  Introduce the "insecure" mode and use it appropriately.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250107-b4-pks-reftable-csprng-v1-0-6109a54a8756@pks.im>
 
 
@@ -203,16 +250,17 @@ Release tarballs are available at:
 
  Doc markup fix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250107212421.7yyvuzw4uqxnqv7t@archP14s>
 
 
 * sk/unit-test-hash (2025-01-09) 1 commit
- - t/unit-tests: convert hash to use clar test framework
+  (merged to 'next' on 2025-01-13 at 865b121824)
+ + t/unit-tests: convert hash to use clar test framework
 
  Test update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250109140952.5267-1-kuforiji98@gmail.com>
 
 
@@ -222,7 +270,7 @@ Release tarballs are available at:
 
  Docfix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1849.git.1736379323427.gitgitgadget@gmail.com>
 
 
@@ -246,26 +294,23 @@ Release tarballs are available at:
  source: <20250109082723.GA2748497@coredump.intra.peff.net>
 
 
-* sc/help-autocorrect-one (2025-01-09) 1 commit
- - help: interpret help.autocorrect=1 as "immediate" rather than 0.1s
+* sc/help-autocorrect-one (2025-01-13) 1 commit
+ - help: interpret boolean string values for help.autocorrect
 
  "[help] autocorrect = 1" used to be a way to say "please wait for
  0.1 second after suggesting a typofix of the command name before
  running that command"; now it means "yes, if there is a plausible
  typofix for the command name, please run it immediately".
 
- Expecting a reroll.
- Almost there.
- source: <pull.1869.git.git.1736364707068.gitgitgadget@gmail.com>
+ Looking good except for "should 0 and false be 'tell it without doing it'?".
+ source: <pull.1869.v4.git.git.1736760824201.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
-* ja/doc-notes-markup-updates (2025-01-03) 1 commit
- - doc: git-notes.txt: migrate to new documentation format
+* ja/doc-notes-markup-updates (2025-01-10) 1 commit
+ - doc: convert git-notes to new documentation format
 
  Doc mark-up updates.
- source: <pull.1846.git.1735924216993.gitgitgadget@gmail.com>
+ source: <pull.1846.v2.git.1736503703573.gitgitgadget@gmail.com>
 
 
 * mb/t7110-use-test-path-helper (2025-01-03) 1 commit
@@ -274,15 +319,15 @@ Release tarballs are available at:
 
  Test modernization.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250103130035.79376-1-matteobagnolini2003@gmail.com>
 
 
-* ja/doc-restore-markup-update (2025-01-04) 1 commit
- - doc: git-restore: migrate to new style format
+* ja/doc-restore-markup-update (2025-01-10) 1 commit
+ - doc: convert git-restore to new style format
 
  Doc mark-up updates.
- source: <pull.1847.git.1735996601092.gitgitgadget@gmail.com>
+ source: <pull.1847.v2.git.1736503760086.gitgitgadget@gmail.com>
 
 
 * ua/os-version-capability (2025-01-06) 4 commits
@@ -331,10 +376,11 @@ Release tarballs are available at:
  + meson: deduplicate access to SHA1/SHA256 backend options
  + meson: consistenlty spell 'CommonCrypto'
  + Merge branch 'ps/weak-sha1-for-tail-sum-fix' into ps/meson-weak-sha1-build
+ (this branch is used by ps/build-meson-fixes and ps/zlib-ng.)
 
  meson-based build now supports the unsafe-sha1 build knob.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20241230-pks-meson-sha1-unsafe-v1-0-efb276e171f5@pks.im>
 
 
@@ -350,7 +396,7 @@ Release tarballs are available at:
  object finalization code was giving an error when it did not have
  to.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250106-b4-pks-object-file-racy-collision-check-v2-0-8b3984ecbb18@pks.im>
 
 
@@ -378,7 +424,7 @@ Release tarballs are available at:
 
  More -Wsign-compare fixes.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  cf. https://staticthinking.wordpress.com/2023/07/25/wsign-compare-is-garbage/
  source: <20241227-b4-pks-commit-reach-sign-compare-v1-0-07c59c2aa632@pks.im>
 
@@ -391,7 +437,7 @@ Release tarballs are available at:
  parse-options API so that translations can customize the "<>"
  placeholder signal (e.g. "--option=<value>").
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20241228114221.10351-4-ash@kambanaria.org>
 
 
@@ -436,7 +482,7 @@ Release tarballs are available at:
  More code paths have a repository passed through the callchain,
  instead of assuming the primary the_repository object.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20241217-pks-use-the-repository-conversion-v1-0-0dba48bcc239@pks.im>
 
 
@@ -509,20 +555,8 @@ Release tarballs are available at:
  "git submodule" learned various ways to spell the same option,
  e.g. "--branch=B" can be spelled "--branch B" or "-bB".
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20241211063234.7610-1-royeldar0@gmail.com>
-
-
-* tb/unsafe-hash-test (2024-11-21) 2 commits
- - t/helper/test-tool: implement sha1-unsafe helper
- - t/helper/test-sha1: prepare for an unsafe mode
-
- Preliminary addition to the test tool to allow a plain SHA-1 hash
- algorithm without collision protection.
-
- Comments?
- cf. <xmqqr073antj.fsf@gitster.g>
- source: <cover.1730833506.git.me@ttaylorr.com>
 
 
 * tb/incremental-midx-part-2 (2024-11-20) 15 commits
@@ -611,50 +645,63 @@ Release tarballs are available at:
  source: <pull.1818.v4.git.1734711675.gitgitgadget@gmail.com>
 
 
-* km/config-remote-by-name (2024-10-21) 1 commit
- - config: support remote name in includeIf.hasconfig condition
-
- Support conditionally including configuration by remote name, instead
- of just URL.
-
- Will discard?
- source: <20241020173216.40852-2-ken@kmatsui.me>
-
-
-* y5/diff-pager (2024-10-21) 1 commit
- - diff: setup pager only before diff contents truly ready
-
- Delay setting up the pager in 'git diff' until after the diff contents
- itself is fully prepared.
-
- Will discard?
- source: <pull.1817.git.git.1729370390416.gitgitgadget@gmail.com>
-
-
-* ej/cat-file-remote-object-info (2024-11-25) 6 commits
+* ej/cat-file-remote-object-info (2025-01-10) 8 commits
  - cat-file: add remote-object-info to batch-command
  - transport: add client support for object-info
  - serve: advertise object-info feature
  - fetch-pack: move fetch initialization
  - fetch-pack: refactor packet writing
+ - cat-file: split test utility functions into a separate library file
  - cat-file: add declaration of variable i inside its for loop
+ - git-compat-util: add strtoul_ul() with error handling
 
  "git cat-file --batch" and friends can optionally ask a remote
  server about objects it does not have.
+ source: <20250108183740.67022-1-eric.peijian@gmail.com>
 
- Expecting a reroll.
- cf. <Z0RIrKwUnaWWm_gJ@pks.im>
- source: <20241125053616.25170-1-eric.peijian@gmail.com>
+--------------------------------------------------
+[Discarded]
+
+* km/config-remote-by-name (2024-10-21) 1 commit
+ . config: support remote name in includeIf.hasconfig condition
+
+ Support conditionally including configuration by remote name, instead
+ of just URL.
+
+ Discarded.
+ source: <20241020173216.40852-2-ken@kmatsui.me>
+
+
+* y5/diff-pager (2024-10-21) 1 commit
+ . diff: setup pager only before diff contents truly ready
+
+ Delay setting up the pager in 'git diff' until after the diff contents
+ itself is fully prepared.
+
+ Discarded.
+ source: <pull.1817.git.git.1729370390416.gitgitgadget@gmail.com>
 
 
 * js/libgit-rust (2024-10-16) 5 commits
- - Makefile: add option to build and test libgit-rs and libgit-rs-sys
- - libgit: add higher-level libgit crate
- - libgit-sys: also export some config_set functions
- - libgit-sys: introduce Rust wrapper for libgit.a
- - common-main: split init and exit code into new files
+ . Makefile: add option to build and test libgit-rs and libgit-rs-sys
+ . libgit: add higher-level libgit crate
+ . libgit-sys: also export some config_set functions
+ . libgit-sys: introduce Rust wrapper for libgit.a
+ . common-main: split init and exit code into new files
 
  A rust binding to libgit.a functions has been introduced.
 
- Will discard?
+ Discarded.
  source: <cover.1729032373.git.steadmon@google.com>
+
+
+* tb/unsafe-hash-test (2024-11-21) 2 commits
+ . t/helper/test-tool: implement sha1-unsafe helper
+ . t/helper/test-sha1: prepare for an unsafe mode
+
+ Preliminary addition to the test tool to allow a plain SHA-1 hash
+ algorithm without collision protection.
+
+ Superseded by tb/unsafe-hash-cleanup
+ cf. <Z4Km9QaGflwAI7tA@nand.local>
+ source: <cover.1730833506.git.me@ttaylorr.com>
