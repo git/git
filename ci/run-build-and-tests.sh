@@ -52,6 +52,7 @@ esac
 case "$jobname" in
 *-meson)
 	group "Configure" meson setup build . \
+		--fatal-meson-warnings \
 		--warnlevel 2 --werror \
 		--wrap-mode nofallback \
 		-Dfuzzers=true
