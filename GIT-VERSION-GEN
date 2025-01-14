@@ -28,6 +28,10 @@ case "$2" in
 esac
 
 OUTPUT="$3"
+if test -n "$OUTPUT" && test -n "$MESON_DIST_ROOT"
+then
+    OUTPUT="$MESON_DIST_ROOT/$OUTPUT"
+fi
 
 # Protect us from reading Git version information outside of the Git directory
 # in case it is not a repository itself, but embedded in an unrelated
