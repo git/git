@@ -203,6 +203,7 @@ struct ref_transaction {
 	enum ref_transaction_state state;
 	void *backend_data;
 	unsigned int flags;
+	unsigned int max_index;
 };
 
 /*
