@@ -66,7 +66,7 @@ OPTIONS
 -------
 `-a`::
 `--all`::
-	Tell the command to automatically stage files that have
+	Automatically stage files that have
 	been modified and deleted, but new files you have not
 	told Git about are not affected.
 
@@ -166,7 +166,7 @@ See linkgit:git-rebase[1] for details.
 
 `-F <file>`::
 `--file=<file>`::
-	Take the commit message from the given file.  Use '-' to
+	Take the commit message from _<file>_.  Use '-' to
 	read the message from the standard input.
 
 `--author=<author>`::
@@ -181,7 +181,7 @@ See linkgit:git-rebase[1] for details.
 
 `-m <msg>`::
 `--message=<msg>`::
-	Use the given <msg> as the commit message.
+	Use _<msg>_ as the commit message.
 	If multiple `-m` options are given, their values are
 	concatenated as separate paragraphs.
 +
@@ -190,7 +190,7 @@ The `-m` option is mutually exclusive with `-c`, `-C`, and `-F`.
 `-t <file>`::
 `--template=<file>`::
 	When editing the commit message, start the editor with the
-	contents in the given file.  The `commit.template` configuration
+	contents in _<file>_.  The `commit.template` configuration
 	variable is often used to give this option implicitly to the
 	command.  This mechanism can be used by projects that want to
 	guide participants with some hints on what to write in the message
@@ -213,8 +213,7 @@ include::signoff-option.txt[]
 
 `-n`::
 `--[no-]verify`::
-	By default, the pre-commit and commit-msg hooks are run.
-	When any of `--no-verify` or `-n` is given, these are bypassed.
+	Bypass the `pre-commit` and `commit-msg` hooks.
 	See also linkgit:githooks[5].
 
 `--allow-empty`::
@@ -224,13 +223,12 @@ include::signoff-option.txt[]
 	is primarily for use by foreign SCM interface scripts.
 
 `--allow-empty-message`::
-       Like `--allow-empty` this command is primarily for use by foreign
-       SCM interface scripts. It allows you to create a commit with an
-       empty commit message without using plumbing commands like
-       linkgit:git-commit-tree[1].
+	Create a commit with an empty commit message without using plumbing
+	commands like linkgit:git-commit-tree[1]. Like `--allow-empty`, this
+	command is primarily for use by foreign SCM interface scripts.
 
 `--cleanup=<mode>`::
-	This option determines how the supplied commit message should be
+	Determine how the supplied commit message should be
 	cleaned up before committing.  The '<mode>' can be `strip`,
 	`whitespace`, `verbatim`, `scissors` or `default`.
 +
@@ -259,10 +257,9 @@ variable (see linkgit:git-config[1]).
 
 `-e`::
 `--edit`::
-	The message taken from file with `-F`, command line with
-	`-m`, and from commit object with `-C` are usually used as
-	the commit log message unmodified. This option lets you
-	further edit the message taken from these sources.
+	Let the user further edit the message taken from _<file>_
+	with `-F <file>`, command line with `-m <message>`, and
+	from _<commit>_ with `-C <commit>`.
 
 `--no-edit`::
 	Use the selected commit message without launching an editor.
@@ -320,7 +317,7 @@ FROM UPSTREAM REBASE" section in linkgit:git-rebase[1].)
 	paths are also not required, and an empty commit will be created.
 
 `--pathspec-from-file=<file>`::
-	Pathspec is passed in _<file>_ instead of commandline args. If
+	Pass pathspec in _<file>_ instead of commandline args. If
 	_<file>_ is exactly `-` then standard input is used. Pathspec
 	elements are separated by _LF_ or _CR_/_LF_. Pathspec elements can be
 	quoted as explained for the configuration variable `core.quotePath`
