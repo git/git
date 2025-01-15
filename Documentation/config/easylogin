@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Function to update the username
+function usernameset {
+    local username=$1
+    git config --global user.name "$username"
+    echo "The username has been changed to '$username'."
+}
+
+# Function to update the email
+function emailset {
+    local email=$1
+    git config --global user.email "$email"
+    echo "The email has been changed to '$email'."
+}
+
+# Check if the correct number of arguments is provided
+if [ "$#" -ne 2 ]; then
+    echo "Usage: $0 username email"
+    exit 1
+fi
+
+# Get the username and email from command line arguments
+username=$1
+email=$2
+
+# Call the functions
+usernameset "$username"
+emailset "$email"
