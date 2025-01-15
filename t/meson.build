@@ -1,6 +1,7 @@
 clar_test_suites = [
   'unit-tests/u-ctype.c',
   'unit-tests/u-mem-pool.c',
+  'unit-tests/u-prio-queue.c',
   'unit-tests/u-strvec.c',
 ]
 
@@ -47,7 +48,6 @@ unit_test_programs = [
   'unit-tests/t-oid-array.c',
   'unit-tests/t-oidmap.c',
   'unit-tests/t-oidtree.c',
-  'unit-tests/t-prio-queue.c',
   'unit-tests/t-reftable-basics.c',
   'unit-tests/t-reftable-block.c',
   'unit-tests/t-reftable-merged.c',
