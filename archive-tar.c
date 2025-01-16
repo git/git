@@ -473,9 +473,7 @@ static const char internal_gzip_command[] = "git archive gzip";
 static int write_tar_filter_archive(const struct archiver *ar,
 				    struct archiver_args *args)
 {
-#if ZLIB_VERNUM >= 0x1221
 	struct gz_header_s gzhead = { .os = 3 }; /* Unix, for reproducibility */
-#endif
 	struct strbuf cmd = STRBUF_INIT;
 	struct child_process filter = CHILD_PROCESS_INIT;
 	int r;
@@ -486,10 +484,8 @@ static int write_tar_filter_archive(const struct archiver *ar,
 	if (!strcmp(ar->filter_command, internal_gzip_command)) {
 		write_block = tgz_write_block;
 		git_deflate_init_gzip(&gzstream, args->compression_level);
-#if ZLIB_VERNUM >= 0x1221
 		if (deflateSetHeader(&gzstream.z, &gzhead) != Z_OK)
 			BUG("deflateSetHeader() called too late");
-#endif
 		gzstream.next_out = outbuf;
 		gzstream.avail_out = sizeof(outbuf);
 
