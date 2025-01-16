@@ -27,7 +27,8 @@ int cmd_upload_archive_writer(int argc,
 	const char *arg_cmd = "argument ";
 	int ret;
 
-	if (argc != 2 || !strcmp(argv[1], "-h"))
+	show_usage_if_asked(argc, argv, upload_archive_usage);
+	if (argc != 2)
 		usage(upload_archive_usage);
 
 	if (!enter_repo(argv[1], 0))
