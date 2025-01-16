@@ -577,7 +577,7 @@ static int writer_finish_section(struct reftable_writer *w)
 
 struct common_prefix_arg {
 	struct reftable_buf *last;
-	int max;
+	size_t max;
 };
 
 static void update_common(void *void_arg, void *key)
