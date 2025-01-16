@@ -1,13 +1,36 @@
 #ifndef COMPAT_ZLIB_H
 #define COMPAT_ZLIB_H
 
-#include <zlib.h>
+#ifdef HAVE_ZLIB_NG
+# include <zlib-ng.h>
 
-#if defined(NO_DEFLATE_BOUND) || ZLIB_VERNUM < 0x1200
-# define deflateBound(c,s)  ((s) + (((s) + 7) >> 3) + (((s) + 63) >> 6) + 11)
-#endif
+# define z_stream zng_stream
+#define gz_header_s zng_gz_header_s
 
-#if ZLIB_VERNUM < 0x1221
+# define crc32(crc, buf, len) zng_crc32(crc, buf, len)
+
+# define inflate(strm, bits) zng_inflate(strm, bits)
+# define inflateEnd(strm) zng_inflateEnd(strm)
+# define inflateInit(strm) zng_inflateInit(strm)
+# define inflateInit2(strm, bits) zng_inflateInit2(strm, bits)
+# define inflateReset(strm) zng_inflateReset(strm)
+
+# define deflate(strm, flush) zng_deflate(strm, flush)
+# define deflateBound(strm, source_len) zng_deflateBound(strm, source_len)
+# define deflateEnd(strm) zng_deflateEnd(strm)
+# define deflateInit(strm, level) zng_deflateInit(strm, level)
+# define deflateInit2(stream, level, method, window_bits, mem_level, strategy) zng_deflateInit2(stream, level, method, window_bits, mem_level, strategy)
+# define deflateReset(strm) zng_deflateReset(strm)
+# define deflateSetHeader(strm, head) zng_deflateSetHeader(strm, head)
+
+#else
+# include <zlib.h>
+
+# if defined(NO_DEFLATE_BOUND) || ZLIB_VERNUM < 0x1200
+#  define deflateBound(c,s)  ((s) + (((s) + 7) >> 3) + (((s) + 63) >> 6) + 11)
+# endif
+
+# if ZLIB_VERNUM < 0x1221
 struct gz_header_s {
 	int os;
 };
@@ -18,6 +41,7 @@ static int deflateSetHeader(z_streamp strm, struct gz_header_s *head)
 	(void)(head);
 	return Z_OK;
 }
-#endif
+# endif
+#endif /* HAVE_ZLIB_NG */
 
 #endif /* COMPAT_ZLIB_H */
