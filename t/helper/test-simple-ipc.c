@@ -612,8 +612,8 @@ int cmd__simple_ipc(int argc, const char **argv)
 	if (argc < 2)
 		usage_with_options(simple_ipc_usage, options);
 
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage_with_options(simple_ipc_usage, options);
+	show_usage_with_options_if_asked(argc, argv,
+					 simple_ipc_usage, options);
 
 	if (argc == 2 && !strcmp(argv[1], "SUPPORTS_SIMPLE_IPC"))
 		return 0;

@@ -784,8 +784,8 @@ int cmd_branch(int argc,
 	filter.kind = FILTER_REFS_BRANCHES;
 	filter.abbrev = -1;
 
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage_with_options(builtin_branch_usage, options);
+	show_usage_with_options_if_asked(argc, argv,
+					 builtin_branch_usage, options);
 
 	/*
 	 * Try to set sort keys from config. If config does not set any,

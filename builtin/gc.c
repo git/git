@@ -710,8 +710,8 @@ struct repository *repo UNUSED)
 		OPT_END()
 	};
 
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage_with_options(builtin_gc_usage, builtin_gc_options);
+	show_usage_with_options_if_asked(argc, argv,
+					 builtin_gc_usage, builtin_gc_options);
 
 	strvec_pushl(&reflog, "reflog", "expire", "--all", NULL);
 	strvec_pushl(&repack, "repack", "-d", "-l", NULL);
