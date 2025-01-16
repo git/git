@@ -67,7 +67,7 @@ test:linux:
         CC: clang
       - jobname: pedantic
         image: fedora:latest
-      - jobname: linux-musl
+      - jobname: linux-musl-meson
         image: alpine:latest
       - jobname: linux-meson
         image: ubuntu:latest

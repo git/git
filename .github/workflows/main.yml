@@ -394,7 +394,7 @@ jobs:
       fail-fast: false
       matrix:
         vector:
-        - jobname: linux-musl
+        - jobname: linux-musl-meson
           image: alpine
           distro: alpine-latest
         # Supported until 2025-04-02.
