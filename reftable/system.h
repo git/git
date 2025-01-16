@@ -14,6 +14,7 @@ https://developers.google.com/open-source/licenses/bsd
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
+#include "compat/zlib-compat.h"
 
 /*
  * An implementation-specific temporary file. By making this specific to the
