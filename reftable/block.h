@@ -137,10 +137,10 @@ void block_iter_reset(struct block_iter *it);
 void block_iter_close(struct block_iter *it);
 
 /* size of file header, depending on format version */
-int header_size(int version);
+size_t header_size(int version);
 
 /* size of file footer, depending on format version */
-int footer_size(int version);
+size_t footer_size(int version);
 
 /* returns a block to its source. */
 void reftable_block_done(struct reftable_block *ret);
