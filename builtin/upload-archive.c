@@ -93,8 +93,7 @@ struct repository *repo UNUSED)
 
 	BUG_ON_NON_EMPTY_PREFIX(prefix);
 
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage(upload_archive_usage);
+	show_usage_if_asked(argc, argv, upload_archive_usage);
 
 	/*
 	 * Set up sideband subprocess.

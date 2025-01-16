@@ -257,14 +257,8 @@ do
 			export GIT_CEILING_DIRECTORIES &&
 			test_expect_code 129 git -C sub $builtin -h >output 2>err
 		) &&
-		if test -n "$GIT_TEST_HELP_MUST_BE_STDOUT"
-		then
-			test_must_be_empty err &&
-			test_grep usage output
-		else
-			test_grep usage output ||
-			test_grep usage err
-		fi
+		test_must_be_empty err &&
+		test_grep usage output
 	'
 done <builtins
 
