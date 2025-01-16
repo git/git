@@ -76,7 +76,7 @@ static void t_varint_overflow(void)
 
 static void set_hash(uint8_t *h, int j)
 {
-	for (int i = 0; i < hash_size(REFTABLE_HASH_SHA1); i++)
+	for (size_t i = 0; i < hash_size(REFTABLE_HASH_SHA1); i++)
 		h[i] = (j >> i) & 0xff;
 }
 
