@@ -1537,7 +1537,7 @@ int cmd_main(int, const char **);
 int common_exit(const char *file, int line, int code);
 #define exit(code) exit(common_exit(__FILE__, __LINE__, (code)))
 
-#include <zlib.h>
+#include "compat/zlib-compat.h"
 
 /*
  * This include must come after system headers, since it introduces macros that
