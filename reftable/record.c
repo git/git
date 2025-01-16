@@ -21,47 +21,40 @@ static void *reftable_record_data(struct reftable_record *rec);
 
 int get_var_int(uint64_t *dest, struct string_view *in)
 {
-	int ptr = 0;
+	const unsigned char *buf = in->buf;
+	unsigned char c;
 	uint64_t val;
 
-	if (in->len == 0)
+	if (!in->len)
 		return -1;
-	val = in->buf[ptr] & 0x7f;
+	c = *buf++;
+	val = c & 0x7f;
 
-	while (in->buf[ptr] & 0x80) {
-		ptr++;
-		if (ptr > in->len) {
+	while (c & 0x80) {
+		val += 1;
+		if (!val || (val & (uint64_t)(~0ULL << (64 - 7))))
+			return -1; /* overflow */
+		if (buf >= in->buf + in->len)
 			return -1;
-		}
-		val = (val + 1) << 7 | (uint64_t)(in->buf[ptr] & 0x7f);
+		c = *buf++;
+		val = (val << 7) | (c & 0x7f);
 	}
 
 	*dest = val;
-	return ptr + 1;
+	return buf - in->buf;
 }
 
-int put_var_int(struct string_view *dest, uint64_t val)
+int put_var_int(struct string_view *dest, uint64_t value)
 {
-	uint8_t buf[10] = { 0 };
-	int i = 9;
-	int n = 0;
-	buf[i] = (uint8_t)(val & 0x7f);
-	i--;
-	while (1) {
-		val >>= 7;
-		if (!val) {
-			break;
-		}
-		val--;
-		buf[i] = 0x80 | (uint8_t)(val & 0x7f);
-		i--;
-	}
-
-	n = sizeof(buf) - i - 1;
-	if (dest->len < n)
+	unsigned char varint[10];
+	unsigned pos = sizeof(varint) - 1;
+	varint[pos] = value & 127;
+	while (value >>= 7)
+		varint[--pos] = 128 | (--value & 127);
+	if (dest->len < sizeof(varint) - pos)
 		return -1;
-	memcpy(dest->buf, &buf[i + 1], n);
-	return n;
+	memcpy(dest->buf, varint + pos, sizeof(varint) - pos);
+	return sizeof(varint) - pos;
 }
 
 int reftable_is_block_type(uint8_t typ)
