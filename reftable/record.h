@@ -73,9 +73,6 @@ struct reftable_record_vtable {
 	 * the same type.
 	 */
 	int (*cmp)(const void *a, const void *b);
-
-	/* Print on stdout, for debugging. */
-	void (*print)(const void *rec, int hash_size);
 };
 
 /* returns true for recognized block types. Block start with the block type. */
