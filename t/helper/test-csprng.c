@@ -15,7 +15,7 @@ int cmd__csprng(int argc, const char **argv)
 
 	while (count) {
 		unsigned long chunk = count < sizeof(buf) ? count : sizeof(buf);
-		if (csprng_bytes(buf, chunk) < 0) {
+		if (csprng_bytes(buf, chunk, 0) < 0) {
 			perror("failed to read");
 			return 5;
 		}
