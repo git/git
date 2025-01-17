@@ -26,8 +26,7 @@ int cmd_diff_index(int argc,
 	int i;
 	int result;
 
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage(diff_cache_usage);
+	show_usage_if_asked(argc, argv, diff_cache_usage);
 
 	git_config(git_diff_basic_config, NULL); /* no "diff" UI options */
 

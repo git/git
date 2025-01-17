@@ -713,6 +713,8 @@ int cmd_rev_parse(int argc,
 	int seen_end_of_options = 0;
 	enum format_type format = FORMAT_DEFAULT;
 
+	show_usage_if_asked(argc, argv, builtin_rev_parse_usage);
+
 	if (argc > 1 && !strcmp("--parseopt", argv[1]))
 		return cmd_parseopt(argc - 1, argv + 1, prefix);
 

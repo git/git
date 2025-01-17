@@ -620,6 +620,8 @@ int cmd_unpack_objects(int argc,
 
 	quiet = !isatty(2);
 
+	show_usage_if_asked(argc, argv, unpack_usage);
+
 	for (i = 1 ; i < argc; i++) {
 		const char *arg = argv[i];
 

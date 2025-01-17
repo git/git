@@ -18,7 +18,8 @@ int cmd_credential(int argc,
 
 	git_config(git_default_config, NULL);
 
-	if (argc != 2 || !strcmp(argv[1], "-h"))
+	show_usage_if_asked(argc, argv, usage_msg);
+	if (argc != 2)
 		usage(usage_msg);
 	op = argv[1];
 

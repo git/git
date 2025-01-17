@@ -644,8 +644,8 @@ int cmd_ls_files(int argc,
 	};
 	int ret = 0;
 
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage_with_options(ls_files_usage, builtin_ls_files_options);
+	show_usage_with_options_if_asked(argc, argv,
+					 ls_files_usage, builtin_ls_files_options);
 
 	prepare_repo_settings(the_repository);
 	the_repository->settings.command_requires_full_index = 0;

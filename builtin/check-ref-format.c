@@ -64,8 +64,8 @@ int cmd_check_ref_format(int argc,
 
 	BUG_ON_NON_EMPTY_PREFIX(prefix);
 
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage(builtin_check_ref_format_usage);
+	show_usage_if_asked(argc, argv,
+			    builtin_check_ref_format_usage);
 
 	if (argc == 3 && !strcmp(argv[1], "--branch"))
 		return check_ref_format_branch(argv[2]);
