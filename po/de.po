@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2024-10-05 16:17+0200\n"
-"PO-Revision-Date: 2024-10-05 16:18+0200\n"
+"POT-Creation-Date: 2024-12-20 17:44+0100\n"
+"PO-Revision-Date: 2024-12-27 16:43+0100\n"
 "Last-Translator: Ralf Thielow <ralf.thielow@gmail.com>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -366,11 +366,11 @@ msgstr ""
 #, c-format
 msgid "Discard mode change from index and worktree [y,n,q,a,d%s,?]? "
 msgstr ""
-"Modusänderung vom Index und Arbeitsverzeichnis verwerfen [y,n,q,a,d%s,?]? "
+"Modusänderung im Index und Arbeitsverzeichnis verwerfen [y,n,q,a,d%s,?]? "
 
 #, c-format
 msgid "Discard deletion from index and worktree [y,n,q,a,d%s,?]? "
-msgstr "Löschung vom Index und Arbeitsverzeichnis verwerfen [y,n,q,a,d%s,?]? "
+msgstr "Löschung im Index und Arbeitsverzeichnis verwerfen [y,n,q,a,d%s,?]? "
 
 #, c-format
 msgid "Discard addition from index and worktree [y,n,q,a,d%s,?]? "
@@ -379,7 +379,7 @@ msgstr "Ergänzung im Index und Arbeitsverzeichnis verwerfen [y,n,q,a,d%s,?]? "
 #, c-format
 msgid "Discard this hunk from index and worktree [y,n,q,a,d%s,?]? "
 msgstr ""
-"Diesen Patch-Block vom Index und Arbeitsverzeichnis verwerfen [y,n,q,a,"
+"Diesen Patch-Block im Index und Arbeitsverzeichnis verwerfen [y,n,q,a,"
 "d%s,?]? "
 
 msgid ""
@@ -650,10 +650,10 @@ msgstr "Nur Binärdateien geändert."
 #, c-format
 msgid ""
 "\n"
-"Disable this message with \"git config advice.%s false\""
+"Disable this message with \"git config set advice.%s false\""
 msgstr ""
 "\n"
-"Deaktivieren Sie diese Nachricht mit \"git config advice.%s false\""
+"Deaktivieren Sie diese Meldung mit \"git config set advice.%s false\""
 
 #, c-format
 msgid "%shint:%s%.*s%s\n"
@@ -3962,10 +3962,9 @@ msgstr "neuer ungeborener Branch"
 msgid "update ignored files (default)"
 msgstr "ignorierte Dateien aktualisieren (Standard)"
 
-msgid "do not check if another worktree is holding the given ref"
+msgid "do not check if another worktree is using this branch"
 msgstr ""
-"Prüfung, ob die Referenz bereits in einem anderen Arbeitsverzeichnis "
-"ausgecheckt wurde, deaktivieren"
+"nicht prüfen, ob ein anderes Arbeitsverzeichnis diesen Branch verwendet"
 
 msgid "checkout our version for unmerged files"
 msgstr "unsere Variante für nicht zusammengeführte Dateien auschecken"
@@ -4272,13 +4271,11 @@ msgstr ""
 "Zeit\n"
 "erstellen"
 
-msgid "revision"
-msgstr "Commit"
+msgid "ref"
+msgstr "Referenz"
 
-msgid "deepen history of shallow clone, excluding rev"
-msgstr ""
-"die Historie eines Klons mit unvollständiger Historie (shallow) mittels\n"
-"Ausschluss eines Commits vertiefen"
+msgid "deepen history of shallow clone, excluding ref"
+msgstr "Historie eines flachen Klons vertiefen, Referenz exkludiert"
 
 msgid "clone only one branch, HEAD or --branch"
 msgstr "nur einen Branch klonen, HEAD oder --branch"
@@ -5232,8 +5229,7 @@ msgid ""
 "regexp] [--value=<value>] [--fixed-value] [--default=<default>] <name>"
 msgstr ""
 "git config get [<Datei-Option>] [<Anzeige-Option>] [--includes] [--all] [--"
-"regexp] [--value=<Wert>] [--fixed-value] [--default=<Standardwert>] "
-"<Name>"
+"regexp] [--value=<Wert>] [--fixed-value] [--default=<Standardwert>] <Name>"
 
 msgid ""
 "git config set [<file-option>] [--type=<type>] [--all] [--value=<value>] [--"
@@ -5244,10 +5240,10 @@ msgstr ""
 
 msgid ""
 "git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] "
-"<name> <value>"
+"<name>"
 msgstr ""
 "git config unset [<Datei-Option>] [--all] [--value=<Wert>] [--fixed-value] "
-"<Name> <Wert>"
+"<Name>"
 
 msgid "git config rename-section [<file-option>] <old-name> <new-name>"
 msgstr "git config rename-section [<Datei-Option>] <alter-Name> <neuer-Name>"
@@ -5695,12 +5691,8 @@ msgid "traversed %lu commits\n"
 msgstr "%lu Commits durchlaufen\n"
 
 #, c-format
-msgid ""
-"more than %i tags found; listed %i most recent\n"
-"gave up search at %s\n"
-msgstr ""
-"mehr als %i Tags gefunden; führe die ersten %i auf\n"
-"Suche bei %s aufgegeben\n"
+msgid "found %i tags; gave up search at %s\n"
+msgstr "%i Tags gefunden; Suche bei %s aufgegeben\n"
 
 #, c-format
 msgid "describe %s\n"
@@ -6142,6 +6134,20 @@ msgstr "%s ist kein gültiges Objekt"
 msgid "the object %s does not exist"
 msgstr "das Objekt %s ist nicht vorhanden"
 
+#, c-format
+msgid ""
+"Run 'git remote set-head %s %s' to follow the change, or set\n"
+"'remote.%s.followRemoteHEAD' configuration option to a different value\n"
+"if you do not want to see this message. Specifically running\n"
+"'git config set remote.%s.followRemoteHEAD %s' will disable the warning\n"
+"until the remote changes HEAD to something else."
+msgstr ""
+"Führen Sie 'git remote set-head %s %s' aus, um der Änderung zu folgen,\n"
+"oder setzen Sie die Konfiguration 'remote.%s.followRemoteHEAD' auf einen\n"
+"anderen Wert, wenn Sie diese Meldung nicht sehen wollen. Konkret wird diese\n"
+"Warnung mit 'git config set remote.%s.followRemoteHEAD %s' deaktiviert\n"
+"bis die Gegenstelle HEAD in etwas anderes ändert."
+
 msgid "multiple branches detected, incompatible with --set-upstream"
 msgstr "mehrere Branches erkannt, inkompatibel mit --set-upstream"
 
@@ -6286,6 +6292,9 @@ msgstr "Refmap"
 
 msgid "specify fetch refmap"
 msgstr "Refmap für 'fetch' angeben"
+
+msgid "revision"
+msgstr "Commit"
 
 msgid "report that we have only objects reachable from this object"
 msgstr ""
@@ -7030,8 +7039,26 @@ msgstr "weder Timer von systemd, noch crontab ist verfügbar"
 msgid "%s scheduler is not available"
 msgstr "%s Scheduler ist nicht verfügbar"
 
-msgid "another process is scheduling background maintenance"
-msgstr "ein anderer Prozess plant die Hintergrundwartung"
+#, c-format
+msgid ""
+"unable to create '%s.lock': %s.\n"
+"\n"
+"Another scheduled git-maintenance(1) process seems to be running in this\n"
+"repository. Please make sure no other maintenance processes are running and\n"
+"then try again. If it still fails, a git-maintenance(1) process may have\n"
+"crashed in this repository earlier: remove the file manually to continue."
+msgstr ""
+"Konnte '%s.lock' nicht erstellen: %s.\n"
+"\n"
+"Ein weiterer geplanter git-maintenance(1)-Prozess scheint in diesem\n"
+"Repository zu laufen. Bitte stellen Sie sicher, dass keine anderen\n"
+"Wartungsprozesse laufen und versuchen Sie es dann erneut. Wenn es\n"
+"immer noch fehlschlägt, ist möglicherweise ein git-maintenance(1)-Prozess\n"
+"in diesem Repository abgestürzt: Entfernen Sie die Datei manuell, um\n"
+"fortzufahren."
+
+msgid "cannot acquire lock for scheduled background maintenance"
+msgstr "kann keine Sperre für die geplante Hintergrundwartung erhalten"
 
 msgid "git maintenance start [--scheduler=<scheduler>]"
 msgstr "git maintenance start [--scheduler=<Scheduler>]"
@@ -7612,6 +7639,22 @@ msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "Länge der Objekt-Liste = %d: %lu Objekt"
 msgstr[1] "Länge der Objekt-Liste = %d: %lu Objekte"
 
+msgid "could not start pack-objects to repack local links"
+msgstr ""
+"konnte pack-objects nicht starten, um lokale Verknüpfungen neu zu packen"
+
+msgid "failed to feed local object to pack-objects"
+msgstr "lokales Objekt konnte nicht an pack-objects übergeben werden"
+
+msgid "index-pack: Expecting full hex object ID lines only from pack-objects."
+msgstr ""
+"index-pack: Erwarte vollständige Hex-Objekt-ID-Zeilen nur von pack-objects."
+
+msgid "could not finish pack-objects to repack local links"
+msgstr ""
+"konnte pack-objects nicht vollständig ausführen, um lokale Verknüpfungen neu "
+"zu packen"
+
 msgid "Cannot come back to cwd"
 msgstr "Kann nicht zurück zum Arbeitsverzeichnis wechseln"
 
@@ -7622,6 +7665,9 @@ msgstr "%s ist ungültig"
 #, c-format
 msgid "unknown hash algorithm '%s'"
 msgstr "unbekannter Hash-Algorithmus '%s'"
+
+msgid "--promisor cannot be used with a pack name"
+msgstr "--promisor kann nicht mit einem Paketnamen verwendet werden"
 
 msgid "--stdin requires a git repository"
 msgstr "--stdin erfordert ein Git-Repository"
@@ -9003,11 +9049,11 @@ msgstr "git notes [--ref <Notiz-Referenz>] [list [<Objekt>]]"
 msgid ""
 "git notes [--ref <notes-ref>] add [-f] [--allow-empty] [--[no-]separator|--"
 "separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c "
-"| -C) <object>] [<object>]"
+"| -C) <object>] [<object>] [-e]"
 msgstr ""
 "git notes [--ref <Notiz-Referenz>] add [-f] [--allow-empty] [--"
 "[no-]separator|--separator=<Absatz-Unterbrechung>] [--[no-]stripspace] [-m "
-"<Nachricht> | -F <Datei> | (-c | -C) <Objekt>] [<Objekt>]"
+"<Nachricht> | -F <Datei> | (-c | -C) <Objekt>] [<Objekt>] [-e]"
 
 msgid "git notes [--ref <notes-ref>] copy [-f] <from-object> <to-object>"
 msgstr ""
@@ -9016,11 +9062,11 @@ msgstr ""
 msgid ""
 "git notes [--ref <notes-ref>] append [--allow-empty] [--[no-]separator|--"
 "separator=<paragraph-break>] [--[no-]stripspace] [-m <msg> | -F <file> | (-c "
-"| -C) <object>] [<object>]"
+"| -C) <object>] [<object>] [-e]"
 msgstr ""
 "git notes [--ref <Notiz-Referenz>] append [--allow-empty] [--"
 "[no-]separator|--separator=<Absatz-Unterbrechnung>] [--[no-]stripspace] [-m "
-"<Nachricht> | -F <Datei> | (-c | -C) <Objekt>] [<Object>]"
+"<Nachricht> | -F <Datei> | (-c | -C) <Objekt>] [<Objekt>] [-e]"
 
 msgid "git notes [--ref <notes-ref>] edit [--allow-empty] [<object>]"
 msgstr "git notes [--ref <Notiz-Referenz>] edit [--allow-empty] [<Objekt>]"
@@ -9141,6 +9187,9 @@ msgstr "Notizinhalte in einer Datei"
 
 msgid "reuse and edit specified note object"
 msgstr "Wiederverwendung und Bearbeitung des angegebenen Notiz-Objektes"
+
+msgid "edit note message in editor"
+msgstr "Notizmeldung im Editor bearbeiten"
 
 msgid "reuse specified note object"
 msgstr "Wiederverwendung des angegebenen Notiz-Objektes"
@@ -9654,6 +9703,9 @@ msgid "do not pack objects in promisor packfiles"
 msgstr ""
 "keine Objekte aus Packdateien von partiell geklonten Remote-Repositories "
 "packen"
+
+msgid "implies --missing=allow-any"
+msgstr "impliziert --missing=allow-any"
 
 msgid "respect islands during delta compression"
 msgstr "Delta-Islands bei Delta-Kompression beachten"
@@ -11317,6 +11369,30 @@ msgid_plural "  Local refs configured for 'git push'%s:"
 msgstr[0] "  Lokale Referenz konfiguriert für 'git push'%s:"
 msgstr[1] "  Lokale Referenzen konfiguriert für 'git push'%s:"
 
+#, c-format
+msgid "'%s/HEAD' is unchanged and points to '%s'\n"
+msgstr "'%s/HEAD' ist unverändert und zeigt auf '%s'\n"
+
+#, c-format
+msgid "'%s/HEAD' has changed from '%s' and now points to '%s'\n"
+msgstr "'%s/HEAD' hat sich von '%s' geändert und zeigt jetzt auf '%s'\n"
+
+#, c-format
+msgid "'%s/HEAD' is now created and points to '%s'\n"
+msgstr "'%s/HEAD' ist nun erstellt und zeigt auf '%s'\n"
+
+#, c-format
+msgid "'%s/HEAD' was detached at '%s' and now points to '%s'\n"
+msgstr "'%s/HEAD' war losgelöst bei '%s' und zeigt nun auf '%s'\n"
+
+#, c-format
+msgid ""
+"'%s/HEAD' used to point to '%s' (which is not a remote branch), but now "
+"points to '%s'\n"
+msgstr ""
+"'%s/HEAD' zeigte vorher auf '%s' (was kein Remote-Branch ist), zeigt jetzt "
+"aber auf '%s'\n"
+
 msgid "set refs/remotes/<name>/HEAD according to remote"
 msgstr "setzt refs/remotes/<Name>/HEAD gemäß dem Remote-Repository"
 
@@ -11340,7 +11416,7 @@ msgid "Not a valid ref: %s"
 msgstr "keine gültige Referenz: %s"
 
 #, c-format
-msgid "Could not setup %s"
+msgid "Could not set up %s"
 msgstr "Konnte %s nicht einrichten"
 
 #, c-format
@@ -14142,6 +14218,9 @@ msgstr ""
 "versuchen, eine Übereinstimmung des Branchnamens mit einem\n"
 "Remote-Tracking-Branch herzustellen"
 
+msgid "use relative paths for worktrees"
+msgstr "relative Pfade für Arbeitsverzeichnisse verwenden"
+
 #, c-format
 msgid "options '%s', '%s', and '%s' cannot be used together"
 msgstr ""
@@ -14425,6 +14504,28 @@ msgstr "kann '%s' nicht erstellen"
 
 msgid "index-pack died"
 msgstr "Erstellung der Paketindexdatei abgebrochen"
+
+#, c-format
+msgid "directory '%s' is present in index, but not sparse"
+msgstr "Verzeichnis '%s' ist im Index vorhanden, aber nicht partiell"
+
+msgid "corrupted cache-tree has entries not present in index"
+msgstr ""
+"das beschädigte Cache-Verzeichnis enthält Einträge, die nicht im Index "
+"enthalten sind"
+
+#, c-format
+msgid "%s with flags 0x%x should not be in cache-tree"
+msgstr "%s mit Flags 0x%x sollte nicht im Cache-Verzeichnis sein"
+
+#, c-format
+msgid "bad subtree '%.*s'"
+msgstr "ungültiges Unterverzeichnis '%.*s'"
+
+#, c-format
+msgid "cache-tree for path %.*s does not match. Expected %s got %s"
+msgstr ""
+"Cache-Verzeichnis für Pfad %.*s stimmt nicht überein. Erwartete %s bekam %s"
 
 msgid "terminating chunk id appears earlier than expected"
 msgstr "abschließende Chunk-ID erscheint eher als erwartet"
@@ -15322,17 +15423,18 @@ msgid ""
 "to convert the grafts into replace refs.\n"
 "\n"
 "Turn this message off by running\n"
-"\"git config advice.graftFileDeprecated false\""
+"\"git config set advice.graftFileDeprecated false\""
 msgstr ""
 "Die Unterstützung für <GIT_DIR>/info/grafts ist veraltet\n"
-"und wird in zukünftigen Git Versionen entfernt.\n"
+"und wird in einer zukünftigen Git-Version entfernt.\n"
 "\n"
-"Bitte benutzen Sie \"git replace --convert-graft-file\"\n"
-"zum Konvertieren der künstlichen Vorgänger (\"grafts\")\n"
-"in ersetzende Referenzen.<\n"
+"Bitte verwenden Sie \"git replace --convert-graft-file\"\n"
+"um die künstlichen Vorgänger (\"graft\") in ersetzende Referenzen\n"
+"zu konvertieren.\n"
 "\n"
-"Sie können diese Meldung unterdrücken, indem Sie\n"
-"\"git config advice.graftFileDeprecated false\" ausführen."
+"Deaktivieren Sie diese Meldung, indem Sie\n"
+"\"git config set advice.graftFileDeprecated false\"\n"
+"ausführen."
 
 #, c-format
 msgid "commit %s exists in commit-graph but not in the object database"
@@ -16166,6 +16268,18 @@ msgstr "URL hat kein Schema: %s"
 msgid "credential url cannot be parsed: %s"
 msgstr "URL mit Zugangsdaten konnte nicht geparst werden: %s"
 
+#, c-format
+msgid "invalid timeout '%s', expecting a non-negative integer"
+msgstr "ungültiger timeout '%s', nicht-negative ganze Zahl erwartet"
+
+#, c-format
+msgid "invalid init-timeout '%s', expecting a non-negative integer"
+msgstr "ungültiger init-timeout '%s', nicht-negative ganze Zahl erwartet"
+
+#, c-format
+msgid "invalid max-connections '%s', expecting an integer"
+msgstr "ungültiges max-connections '%s', ganze Zahl erwartet"
+
 msgid "in the future"
 msgstr "in der Zukunft"
 
@@ -16896,6 +17010,22 @@ msgstr "ungültiger Git-Namespace-Pfad \"%s\""
 msgid "too many args to run %s"
 msgstr "zu viele Argumente angegeben, um %s auszuführen"
 
+#, c-format
+msgid ""
+"You are attempting to fetch %s, which is in the commit graph file but not in "
+"the object database.\n"
+"This is probably due to repo corruption.\n"
+"If you are attempting to repair this repo corruption by refetching the "
+"missing object, use 'git fetch --refetch' with the missing object."
+msgstr ""
+"Sie versuchen %s zu holen, welches sich in der Commit-Graph-Datei, aber "
+"nicht in der Objektdatenbank befindet.\n"
+"Dies ist wahrscheinlich auf eine Beschädigung des Repositories "
+"zurückzuführen.\n"
+"Wenn Sie versuchen, die Beschädigung des Repositories zu beheben, indem Sie "
+"das fehlende Objekt erneut holen,\n"
+"verwenden Sie 'git fetch --refetch' mit dem fehlenden Objekt."
+
 msgid "git fetch-pack: expected shallow list"
 msgstr "git fetch-pack: erwartete shallow-Liste"
 
@@ -17329,8 +17459,8 @@ msgid ""
 "given pattern contains NULL byte (via -f <file>). This is only supported "
 "with -P under PCRE v2"
 msgstr ""
-"Angegebenes Muster enthält NULL Byte (über -f <Datei>). Das wird nur mit -"
-"Punter PCRE v2 unterstützt."
+"Angegebenes Muster enthält NULL Byte (über -f <Datei>). Das wird nur mit -P "
+"unter PCRE v2 unterstützt."
 
 #, c-format
 msgid "'%s': unable to read %s"
@@ -17483,10 +17613,11 @@ msgstr[1] ""
 #, c-format
 msgid ""
 "The '%s' hook was ignored because it's not set as executable.\n"
-"You can disable this warning with `git config advice.ignoredHook false`."
+"You can disable this warning with `git config set advice.ignoredHook false`."
 msgstr ""
-"Der '%s' Hook wurde ignoriert, weil er nicht als ausführbar markiert ist.\n"
-"Sie können diese Warnung mit `git config advice.ignoredHook false` "
+"Der '%s'-Hook wurde ignoriert, weil er nicht als ausführbar eingestellt "
+"ist.\n"
+"Sie können diese Warnung mit `git config set advice.ignoredHook false` "
 "deaktivieren."
 
 msgid "not a git repository"
@@ -17503,16 +17634,8 @@ msgstr "negativer Wert für http.postBuffer; benutze Standardwert %d"
 msgid "Delegation control is not supported with cURL < 7.22.0"
 msgstr "Kontrolle über Delegation wird mit cURL < 7.22.0 nicht unterstützt"
 
-msgid "Public key pinning not supported with cURL < 7.39.0"
-msgstr ""
-"Das Anheften des öffentlichen Schlüssels wird mit cURL < 7.39.0 nicht "
-"unterstützt"
-
 msgid "Unknown value for http.proactiveauth"
 msgstr "Unbekannter Wert für http.proactiveauth"
-
-msgid "CURLSSLOPT_NO_REVOKE not supported with cURL < 7.44.0"
-msgstr "CURLSSLOPT_NO_REVOKE wird mit cURL < 7.44.0 nicht unterstützt."
 
 #, c-format
 msgid "Unsupported SSL backend '%s'. Supported SSL backends:"
@@ -17699,6 +17822,10 @@ msgstr "angeführtes CRLF entdeckt"
 #, c-format
 msgid "unable to format message: %s"
 msgstr "Meldung kann nicht formatiert werden: %s"
+
+#, c-format
+msgid "invalid marker-size '%s', expecting an integer"
+msgstr "ungültige marker-size '%s', ganze Zahl erwartet"
 
 #, c-format
 msgid "Failed to merge submodule %s (not checked out)"
@@ -18837,19 +18964,18 @@ msgid ""
 "\n"
 "where \"$br\" is somehow empty and a 40-hex ref is created. Please\n"
 "examine these refs and maybe delete them. Turn this message off by\n"
-"running \"git config advice.objectNameWarning false\""
+"running \"git config set advice.objectNameWarning false\""
 msgstr ""
-"Git erzeugt normalerweise keine Referenzen die mit\n"
-"40 Hex-Zeichen enden, da diese ignoriert werden wenn\n"
-"Sie diese angeben. Diese Referenzen könnten aus Versehen\n"
-"erzeugt worden sein. Zum Beispiel,\n"
+"Git erstellt normalerweise nie eine Referenz, die mit 40-Hex-Zeichen endet,\n"
+"weil sie ignoriert wird, wenn Sie nur 40-Hex-Zeichen angeben. Diese\n"
+"Referenzen können aus Versehen erstellt werden. Zum Beispiel,\n"
 "\n"
 "  git switch -c $br $(git rev-parse ...)\n"
 "\n"
-"wobei \"$br\" leer ist und eine 40-Hex-Referenz erzeugt\n"
-"wurde. Bitte prüfen Sie diese Referenzen und löschen\n"
-"Sie sie gegebenenfalls. Unterdrücken Sie diese Meldung\n"
-"indem Sie \"git config advice.objectNameWarning false\"\n"
+"wobei \"$br\" irgendwie leer ist und eine 40-Hex-Referenz erstellt wird.\n"
+"Bitte überprüfen Sie die Referenzen und löschen Sie diese gegebenenfalls.\n"
+"Schalten Sie diese Meldung aus, indem Sie\n"
+"\"git config set advice.objectNameWarning false\"\n"
 "ausführen."
 
 #, c-format
@@ -19009,13 +19135,6 @@ msgstr "Multi-Pack-Bitmap fehlt erforderlicher Reverse-Index"
 #, c-format
 msgid "could not open pack %s"
 msgstr "konnte Paket '%s' nicht öffnen"
-
-msgid "could not determine MIDX preferred pack"
-msgstr "konnte das von MIDX bevorzugte Paket nicht ermitteln"
-
-#, c-format
-msgid "preferred pack (%s) is invalid"
-msgstr "bevorzugtes Paket (%s) ist ungültig"
 
 msgid "corrupt bitmap lookup table: triplet position out of index"
 msgstr "Bitmap-Lookup-Tabelle beschädigt: Triplet-Position außerhalb des Index"
@@ -20151,16 +20270,24 @@ msgstr "Log für Referenz %s unerwartet bei %s beendet."
 msgid "log for %s is empty"
 msgstr "Log für %s ist leer."
 
-msgid "refusing to force and skip creation of reflog"
-msgstr "Erzwingen der Aktion verweigert; überspringe Erstellung des Reflogs"
+#, c-format
+msgid "refusing to update reflog for pseudoref '%s'"
+msgstr "Aktualisierung des Reflogs für Pseudoreferenz '%s' verweigert"
+
+#, c-format
+msgid "refusing to update pseudoref '%s'"
+msgstr "Aktualisierung von Pseudoreferenz '%s' verweigert"
+
+#, c-format
+msgid "refusing to update reflog with bad name '%s'"
+msgstr "Aktualisierung des Reflogs mit fehlerhaftem Namen '%s' verweigert"
 
 #, c-format
 msgid "refusing to update ref with bad name '%s'"
 msgstr "verweigere Aktualisierung einer Referenz mit fehlerhaftem Namen '%s'"
 
-#, c-format
-msgid "refusing to update pseudoref '%s'"
-msgstr "Aktualisierung von Pseudoreferenz '%s' verweigert"
+msgid "refusing to force and skip creation of reflog"
+msgstr "Erzwingen der Aktion verweigert; überspringe Erstellung des Reflogs"
 
 #, c-format
 msgid "update_ref failed for ref '%s': %s"
@@ -20214,6 +20341,10 @@ msgid ""
 msgstr ""
 "kann Referenz '%s' nicht sperren: erwartete symbolische Referenz mit Ziel "
 "'%s': ist aber eine reguläre Referenz"
+
+#, c-format
+msgid "cannot read ref file '%s'"
+msgstr "kann Ref-Datei '%s' nicht lesen"
 
 #, c-format
 msgid "cannot open directory %s"
@@ -20429,6 +20560,10 @@ msgstr "Mehr als ein receivepack-Befehl angegeben, benutze den ersten."
 
 msgid "more than one uploadpack given, using the first"
 msgstr "Mehr als ein uploadpack-Befehl angegeben, benutze den ersten."
+
+#, c-format
+msgid "unrecognized followRemoteHEAD value '%s' ignored"
+msgstr "nicht erkannter followRemoteHEAD-Wert '%s' ignoriert"
 
 #, c-format
 msgid "unrecognized value transfer.credentialsInUrl: '%s'"
@@ -22391,6 +22526,9 @@ msgstr "Commit %s ist nicht als erreichbar gekennzeichnet."
 msgid "too many commits marked reachable"
 msgstr "Zu viele Commits als erreichbar gekennzeichnet."
 
+msgid "could not determine MIDX preferred pack"
+msgstr "konnte das von MIDX bevorzugte Paket nicht ermitteln"
+
 msgid "test-tool serve-v2 [<options>]"
 msgstr "test-tool serve-v2 [<Optionen>]"
 
@@ -23061,6 +23199,9 @@ msgstr ".git-Datei kaputt"
 msgid ".git file incorrect"
 msgstr ".git-Datei fehlerhaft"
 
+msgid ".git file absolute/relative path mismatch"
+msgstr "absoluter/relativer Pfad der .git-Datei stimmt nicht überein"
+
 msgid "not a valid path"
 msgstr "kein gültiger Pfad"
 
@@ -23076,6 +23217,9 @@ msgstr "Konnte Repository nicht finden; .git-Datei ist kaputt"
 
 msgid "gitdir unreadable"
 msgstr "gitdir nicht lesbar"
+
+msgid "gitdir absolute/relative path mismatch"
+msgstr "absolute/relative Pfadabweichung in gitdir"
 
 msgid "gitdir incorrect"
 msgstr "gitdir fehlerhaft"
@@ -23110,6 +23254,14 @@ msgstr "konnte %s nicht in '%s' aufheben"
 
 msgid "failed to set extensions.worktreeConfig setting"
 msgstr "Einstellung für extensions.worktreeConfig konnte nicht gesetzt werden"
+
+msgid "unable to upgrade repository format to support relative worktrees"
+msgstr ""
+"Repository-Format konnte nicht aktualisiert werden, um relative "
+"Arbeitsverzeichnisse zu unterstützen"
+
+msgid "unable to set extensions.relativeWorktrees setting"
+msgstr "Einstellung extensions.relativeWorktrees kann nicht gesetzt werden"
 
 #, c-format
 msgid "could not setenv '%s'"
@@ -24038,3 +24190,7 @@ msgstr "Lasse %s mit Backup-Suffix '%s' aus.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Wollen Sie %s wirklich versenden? [y|N]: "
+
+#, c-format
+#~ msgid "preferred pack (%s) is invalid"
+#~ msgstr "bevorzugtes Paket (%s) ist ungültig"

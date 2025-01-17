@@ -476,13 +476,6 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 		size_t length = (opt & OUTPUT_LONG_OBJECT_NAME) ?
 			the_hash_algo->hexsz : (size_t) abbrev;
 
-		/*
-		 * Leave enough space for ^, * and ? indicators (boundary,
-		 * unblamable, ignored).
-		 */
-		if (length > GIT_MAX_HEXSZ + 3)
-			length = GIT_MAX_HEXSZ + 3;
-
 		if (opt & OUTPUT_COLOR_LINE) {
 			if (cnt > 0) {
 				color = repeated_meta_color;
@@ -496,9 +489,9 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 			fputs(color, stdout);
 
 		if (suspect->commit->object.flags & UNINTERESTING) {
-			if (blank_boundary)
-				memset(hex, ' ', length);
-			else if (!(opt & OUTPUT_ANNOTATE_COMPAT)) {
+			if (blank_boundary) {
+				memset(hex, ' ', strlen(hex));
+			} else if (!(opt & OUTPUT_ANNOTATE_COMPAT)) {
 				length--;
 				putchar('^');
 			}
@@ -512,7 +505,8 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 			length--;
 			putchar('?');
 		}
-		printf("%.*s", (int)length, hex);
+
+		printf("%.*s", (int)(length < GIT_MAX_HEXSZ ? length : GIT_MAX_HEXSZ), hex);
 		if (opt & OUTPUT_ANNOTATE_COMPAT) {
 			const char *name;
 			if (opt & OUTPUT_SHOW_EMAIL)

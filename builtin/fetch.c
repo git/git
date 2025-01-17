@@ -1588,8 +1588,8 @@ static void set_head_advice_msg(const char *remote, const char *head_name)
 	N_("Run 'git remote set-head %s %s' to follow the change, or set\n"
 	   "'remote.%s.followRemoteHEAD' configuration option to a different value\n"
 	   "if you do not want to see this message. Specifically running\n"
-	   "'git config set remote.%s.followRemoteHEAD %s' will disable the warning\n"
-	   "until the remote changes HEAD to something else.");
+	   "'git config set remote.%s.followRemoteHEAD warn-if-not-branch-%s'\n"
+	   "will disable the warning until the remote changes HEAD to something else.");
 
 	advise_if_enabled(ADVICE_FETCH_SET_HEAD_WARN, _(message_advice_set_head),
 			remote, head_name, remote, remote, head_name);
