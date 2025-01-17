@@ -1,6 +1,9 @@
 clar_test_suites = [
   'unit-tests/u-ctype.c',
   'unit-tests/u-hash.c',
+  'unit-tests/u-mem-pool.c',
+  'unit-tests/u-prio-queue.c',
+  'unit-tests/u-reftable-tree.c',
   'unit-tests/u-strvec.c',
 ]
 
@@ -43,11 +46,9 @@ test('unit-tests', clar_unit_tests)
 unit_test_programs = [
   'unit-tests/t-example-decorate.c',
   'unit-tests/t-hashmap.c',
-  'unit-tests/t-mem-pool.c',
   'unit-tests/t-oid-array.c',
   'unit-tests/t-oidmap.c',
   'unit-tests/t-oidtree.c',
-  'unit-tests/t-prio-queue.c',
   'unit-tests/t-reftable-basics.c',
   'unit-tests/t-reftable-block.c',
   'unit-tests/t-reftable-merged.c',
@@ -56,7 +57,6 @@ unit_test_programs = [
   'unit-tests/t-reftable-readwrite.c',
   'unit-tests/t-reftable-record.c',
   'unit-tests/t-reftable-stack.c',
-  'unit-tests/t-reftable-tree.c',
   'unit-tests/t-strbuf.c',
   'unit-tests/t-strcmp-offset.c',
   'unit-tests/t-trailer.c',
