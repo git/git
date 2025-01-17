@@ -942,7 +942,7 @@ struct write_transaction_table_arg {
 	size_t updates_nr;
 	size_t updates_alloc;
 	size_t updates_expected;
-	unsigned int max_index;
+	uint64_t max_index;
 };
 
 struct reftable_transaction_data {

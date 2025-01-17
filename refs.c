@@ -1325,7 +1325,7 @@ static int ref_transaction_update_reflog(struct ref_transaction *transaction,
 					 const char *committer_info,
 					 unsigned int flags,
 					 const char *msg,
-					 unsigned int index,
+					 uint64_t index,
 					 struct strbuf *err)
 {
 	struct ref_update *update;
@@ -2807,7 +2807,7 @@ done:
 }
 
 struct reflog_migration_data {
-	unsigned int index;
+	uint64_t index;
 	const char *refname;
 	struct ref_store *old_refs;
 	struct ref_transaction *transaction;
