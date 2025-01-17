@@ -259,19 +259,6 @@ jobs:
       fail-fast: false
       matrix:
         vector:
-          - jobname: linux-sha256
-            cc: clang
-            pool: ubuntu-latest
-          - jobname: linux-reftable
-            cc: clang
-            pool: ubuntu-latest
-          - jobname: linux-breaking-changes
-            cc: gcc
-            pool: ubuntu-20.04
-          - jobname: linux-TEST-vars
-            cc: gcc
-            cc_package: gcc-8
-            pool: ubuntu-20.04
           - jobname: osx-clang
             cc: clang
             pool: macos-13
@@ -284,23 +271,11 @@ jobs:
           - jobname: osx-meson
             cc: clang
             pool: macos-13
-          - jobname: linux-leaks
-            cc: gcc
-            pool: ubuntu-latest
-          - jobname: linux-reftable-leaks
-            cc: gcc
-            pool: ubuntu-latest
-          - jobname: linux-asan-ubsan
-            cc: clang
-            pool: ubuntu-latest
-          - jobname: linux-meson
-            cc: gcc
-            pool: ubuntu-latest
     env:
       CC: ${{matrix.vector.cc}}
       CC_PACKAGE: ${{matrix.vector.cc_package}}
       jobname: ${{matrix.vector.jobname}}
-      distro: ${{matrix.vector.pool}}
+      CI_JOB_IMAGE: ${{matrix.vector.pool}}
       TEST_OUTPUT_DIRECTORY: ${{github.workspace}}/t
     runs-on: ${{matrix.vector.pool}}
     steps:
@@ -338,27 +313,48 @@ jobs:
       fail-fast: false
       matrix:
         vector:
+        - jobname: linux-sha256
+          image: ubuntu:rolling
+          cc: clang
+        - jobname: linux-reftable
+          image: ubuntu:rolling
+          cc: clang
+        - jobname: linux-TEST-vars
+          image: ubuntu:20.04
+          cc: gcc
+          cc_package: gcc-8
+        - jobname: linux-breaking-changes
+          cc: gcc
+          image: ubuntu:rolling
+        - jobname: linux-leaks
+          image: ubuntu:rolling
+          cc: gcc
+        - jobname: linux-reftable-leaks
+          image: ubuntu:rolling
+          cc: gcc
+        - jobname: linux-asan-ubsan
+          image: ubuntu:rolling
+          cc: clang
+        - jobname: linux-meson
+          image: ubuntu:rolling
+          cc: gcc
         - jobname: linux-musl
-          image: alpine
-          distro: alpine-latest
+          image: alpine:latest
         # Supported until 2025-04-02.
         - jobname: linux32
           image: i386/ubuntu:focal
-          distro: ubuntu32-20.04
         - jobname: pedantic
-          image: fedora
-          distro: fedora-latest
+          image: fedora:latest
         # A RHEL 8 compatible distro.  Supported until 2029-05-31.
         - jobname: almalinux-8
           image: almalinux:8
-          distro: almalinux-8
         # Supported until 2026-08-31.
         - jobname: debian-11
           image: debian:11
-          distro: debian-11
     env:
       jobname: ${{matrix.vector.jobname}}
-      distro: ${{matrix.vector.distro}}
+      CC: ${{matrix.vector.cc}}
+      CI_JOB_IMAGE: ${{matrix.vector.image}}
     runs-on: ubuntu-latest
     container: ${{matrix.vector.image}}
     steps:
@@ -367,10 +363,12 @@ jobs:
       run: apt -q update && apt -q -y install libc6-amd64 lib64stdc++6
     - uses: actions/checkout@v4
     - run: ci/install-dependencies.sh
-    - run: ci/run-build-and-tests.sh
+    - run: useradd builder --create-home
+    - run: chown -R builder .
+    - run: sudo --preserve-env --set-home --user=builder ci/run-build-and-tests.sh
     - name: print test failures
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
-      run: ci/print-test-failures.sh
+      run: sudo --preserve-env --set-home --user=builder ci/print-test-failures.sh
     - name: Upload failed tests' directories
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
       uses: actions/upload-artifact@v4

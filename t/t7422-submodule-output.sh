@@ -167,10 +167,45 @@ do
 done
 
 test_expect_success !MINGW 'git submodule status --recursive propagates SIGPIPE' '
-	{ git submodule status --recursive 2>err; echo $?>status; } |
-		grep -q X/S &&
-	test_must_be_empty err &&
-	test_match_signal 13 "$(cat status)"
+	# The test setup is somewhat involved because triggering a SIGPIPE is
+	# racy with buffered pipes. To avoid the raciness we thus need to make
+	# sure that the subprocess in question fills the buffers completely,
+	# which requires a couple thousand submodules in total.
+	test_when_finished "rm -rf submodule repo" &&
+	git init submodule &&
+	(
+		cd submodule &&
+		test_commit initial &&
+
+		COMMIT=$(git rev-parse HEAD) &&
+		for i in $(test_seq 2000)
+		do
+			printf "[submodule \"sm-$i\"]\npath = recursive-submodule-path-$i\n" "$i" ||
+			return 1
+		done >gitmodules &&
+		BLOB=$(git hash-object -w --stdin <gitmodules) &&
+
+		printf "100644 blob $BLOB\t.gitmodules\n" >tree &&
+		for i in $(test_seq 2000)
+		do
+			printf "160000 commit $COMMIT\trecursive-submodule-path-%d\n" "$i" ||
+			return 1
+		done >>tree &&
+		TREE=$(git mktree <tree) &&
+
+		COMMIT=$(git commit-tree "$TREE") &&
+		git reset --hard "$COMMIT"
+	) &&
+
+	git init repo &&
+	(
+		cd repo &&
+		GIT_ALLOW_PROTOCOL=file git submodule add "$(pwd)"/../submodule &&
+		{ git submodule status --recursive 2>err; echo $?>status; } |
+			grep -q recursive-submodule-path-1 &&
+		test_must_be_empty err &&
+		test_match_signal 13 "$(cat status)"
+	)
 '
 
 test_done
