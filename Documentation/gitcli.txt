@@ -161,6 +161,23 @@ can use `--no-track` to override that behaviour. The same goes for `--color`
 and `--no-color`.
 
 
+Options trump configuration and environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When there is a configuration variable or an environment variable
+that tweak the behaviour of an aspect of a Git command, and also a
+command line option that tweaks the same, the command line option
+overrides what the configuration and/or environment variable say.
+
+For example, the `user.name` configuration variable is used to
+specify the human-readable name used by the `git commit` command to
+record the author and the committer name in a newly created commit.
+The `GIT_AUTHOR_NAME` environment variable, if set, takes precedence
+when deciding what author name to record.  The `--author=<author>`
+command line option of the `git commit` command, when given, takes
+precedence over these two sources of information.
+
+
 Aggregating short options
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 Commands that support the enhanced option parser allow you to aggregate short
