@@ -9,7 +9,7 @@ git-show-index - Show packed archive index
 SYNOPSIS
 --------
 [verse]
-'git show-index' [--object-format=<hash-algorithm>]
+'git show-index' [--object-format=<hash-algorithm>] < <pack-idx-file>
 
 
 DESCRIPTION
