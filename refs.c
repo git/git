@@ -1345,6 +1345,13 @@ int ref_transaction_update_reflog(struct ref_transaction *transaction,
 	update->flags &= ~REF_HAVE_OLD;
 	update->index = index;
 
+	/*
+	 * Reference backends may need to know the max index to optimize
+	 * their writes. So we store the max_index on the transaction level.
+	 */
+	if (index > transaction->max_index)
+		transaction->max_index = index;
+
 	return 0;
 }
 
