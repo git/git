@@ -220,9 +220,9 @@ void reftable_stack_destroy(struct reftable_stack *st)
 	}
 
 	if (st->readers) {
-		int i = 0;
 		struct reftable_buf filename = REFTABLE_BUF_INIT;
-		for (i = 0; i < st->readers_len; i++) {
+
+		for (size_t i = 0; i < st->readers_len; i++) {
 			const char *name = reader_name(st->readers[i]);
 			int try_unlinking = 1;
 
@@ -238,6 +238,7 @@ void reftable_stack_destroy(struct reftable_stack *st)
 				unlink(filename.buf);
 			}
 		}
+
 		reftable_buf_release(&filename);
 		st->readers_len = 0;
 		REFTABLE_FREE_AND_NULL(st->readers);
@@ -568,7 +569,6 @@ static int stack_uptodate(struct reftable_stack *st)
 {
 	char **names = NULL;
 	int err;
-	int i = 0;
 
 	/*
 	 * When we have cached stat information available then we use it to
@@ -608,7 +608,7 @@ static int stack_uptodate(struct reftable_stack *st)
 	if (err < 0)
 		return err;
 
-	for (i = 0; i < st->readers_len; i++) {
+	for (size_t i = 0; i < st->readers_len; i++) {
 		if (!names[i]) {
 			err = 1;
 			goto done;
@@ -1767,14 +1767,12 @@ static int reftable_stack_clean_locked(struct reftable_stack *st)
 	}
 
 	while ((d = readdir(dir))) {
-		int i = 0;
 		int found = 0;
 		if (!is_table_name(d->d_name))
 			continue;
 
-		for (i = 0; !found && i < st->readers_len; i++) {
+		for (size_t i = 0; !found && i < st->readers_len; i++)
 			found = !strcmp(reader_name(st->readers[i]), d->d_name);
-		}
 		if (found)
 			continue;
 

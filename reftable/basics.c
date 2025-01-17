@@ -263,18 +263,16 @@ int names_equal(const char **a, const char **b)
 	return a[i] == b[i];
 }
 
-int common_prefix_size(struct reftable_buf *a, struct reftable_buf *b)
+size_t common_prefix_size(struct reftable_buf *a, struct reftable_buf *b)
 {
-	int p = 0;
-	for (; p < a->len && p < b->len; p++) {
+	size_t p = 0;
+	for (; p < a->len && p < b->len; p++)
 		if (a->buf[p] != b->buf[p])
 			break;
-	}
-
 	return p;
 }
 
-int hash_size(enum reftable_hash id)
+uint32_t hash_size(enum reftable_hash id)
 {
 	if (!id)
 		return REFTABLE_HASH_SIZE_SHA1;

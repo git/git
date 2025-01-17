@@ -24,8 +24,8 @@ static void reftable_buf_close(void *b UNUSED)
 {
 }
 
-static int reftable_buf_read_block(void *v, struct reftable_block *dest,
-				   uint64_t off, uint32_t size)
+static ssize_t reftable_buf_read_block(void *v, struct reftable_block *dest,
+				       uint64_t off, uint32_t size)
 {
 	struct reftable_buf *b = v;
 	assert(off + size <= b->len);
@@ -78,8 +78,8 @@ static void file_close(void *v)
 	reftable_free(b);
 }
 
-static int file_read_block(void *v, struct reftable_block *dest, uint64_t off,
-			   uint32_t size)
+static ssize_t file_read_block(void *v, struct reftable_block *dest, uint64_t off,
+			       uint32_t size)
 {
 	struct file_block_source *b = v;
 	assert(off + size <= b->size);

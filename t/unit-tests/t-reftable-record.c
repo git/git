@@ -58,9 +58,25 @@ static void t_varint_roundtrip(void)
 	}
 }
 
+static void t_varint_overflow(void)
+{
+	unsigned char buf[] = {
+		0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0xFF, 0xFF, 0xFF,
+		0xFF, 0x00,
+	};
+	struct string_view view = {
+		.buf = buf,
+		.len = sizeof(buf),
+	};
+	uint64_t value;
+	int err = get_var_int(&value, &view);
+	check_int(err, ==, -1);
+}
+
 static void set_hash(uint8_t *h, int j)
 {
-	for (int i = 0; i < hash_size(REFTABLE_HASH_SHA1); i++)
+	for (size_t i = 0; i < hash_size(REFTABLE_HASH_SHA1); i++)
 		h[i] = (j >> i) & 0xff;
 }
 
@@ -544,6 +560,7 @@ int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 	TEST(t_reftable_log_record_roundtrip(), "record operations work on log record");
 	TEST(t_reftable_ref_record_roundtrip(), "record operations work on ref record");
 	TEST(t_varint_roundtrip(), "put_var_int and get_var_int work");
+	TEST(t_varint_overflow(), "get_var_int notices an integer overflow");
 	TEST(t_key_roundtrip(), "reftable_encode_key and reftable_decode_key work");
 	TEST(t_reftable_obj_record_roundtrip(), "record operations work on obj record");
 	TEST(t_reftable_index_record_roundtrip(), "record operations work on index record");

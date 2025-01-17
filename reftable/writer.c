@@ -577,7 +577,7 @@ static int writer_finish_section(struct reftable_writer *w)
 
 struct common_prefix_arg {
 	struct reftable_buf *last;
-	int max;
+	size_t max;
 };
 
 static void update_common(void *void_arg, void *key)
@@ -585,10 +585,9 @@ static void update_common(void *void_arg, void *key)
 	struct common_prefix_arg *arg = void_arg;
 	struct obj_index_tree_node *entry = key;
 	if (arg->last) {
-		int n = common_prefix_size(&entry->hash, arg->last);
-		if (n > arg->max) {
+		size_t n = common_prefix_size(&entry->hash, arg->last);
+		if (n > arg->max)
 			arg->max = n;
-		}
 	}
 	arg->last = &entry->hash;
 }

@@ -22,7 +22,7 @@ struct reftable_block_source {
  * so it can return itself into the pool. */
 struct reftable_block {
 	uint8_t *data;
-	int len;
+	size_t len;
 	struct reftable_block_source source;
 };
 
@@ -31,10 +31,13 @@ struct reftable_block_source_vtable {
 	/* returns the size of a block source */
 	uint64_t (*size)(void *source);
 
-	/* reads a segment from the block source. It is an error to read
-	   beyond the end of the block */
-	int (*read_block)(void *source, struct reftable_block *dest,
-			  uint64_t off, uint32_t size);
+	/*
+	 * Reads a segment from the block source. It is an error to read beyond
+	 * the end of the block.
+	 */
+	ssize_t (*read_block)(void *source, struct reftable_block *dest,
+			     uint64_t off, uint32_t size);
+
 	/* mark the block as read; may return the data back to malloc */
 	void (*return_block)(void *source, struct reftable_block *blockp);
 
