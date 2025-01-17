@@ -82,11 +82,13 @@ check_describe R-2-gHASH HEAD^^
 check_describe A-3-gHASH HEAD^^2
 check_describe B HEAD^^2^
 check_describe R-1-gHASH HEAD^^^
+check_describe R-1-gHASH R-1-g$(git rev-parse --short HEAD^^)~1
 
 check_describe c-7-gHASH --tags HEAD
 check_describe c-6-gHASH --tags HEAD^
 check_describe e-1-gHASH --tags HEAD^^
 check_describe c-2-gHASH --tags HEAD^^2
+check_describe c-2-gHASH --tags c-2-g$(git rev-parse --short HEAD^^2)^0
 check_describe B --tags HEAD^^2^
 check_describe e --tags HEAD^^^
 check_describe e --tags --exact-match HEAD^^^
@@ -723,6 +725,28 @@ test_expect_success '--always with no refs falls back to commit hash' '
 
 test_expect_success '--exact-match does not show --always fallback' '
 	test_must_fail git describe --exact-match --always
+'
+
+test_expect_success 'avoid being fooled by describe-like filename' '
+	test_when_finished rm out &&
+
+	git rev-parse --short HEAD >out &&
+	FILENAME=filename-g$(cat out) &&
+	touch $FILENAME &&
+	git add $FILENAME &&
+	git commit -m "Add $FILENAME" &&
+
+	git cat-file -t HEAD:$FILENAME >actual &&
+
+	echo blob >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'do not be fooled by invalid describe format ' '
+	test_when_finished rm out &&
+
+	git rev-parse --short HEAD >out &&
+	test_must_fail git cat-file -t "refs/tags/super-invalid/./../...../ ~^:/?*[////\\\\\\&}/busted.lock-42-g"$(cat out)
 '
 
 test_done
