@@ -8,8 +8,26 @@ UI, Workflows & Features
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
 
+ * More -Wsign-compare fixes.
+
+ * meson-based build now supports the unsafe-sha1 build knob.
+
 
 Fixes since v2.48
 -----------------
+
+ * "git submodule" learned various ways to spell the same option,
+   e.g. "--branch=B" can be spelled "--branch B" or "-bB".
+   (merge b86f0f9071 re/submodule-parse-opt later to maint).
+
+ * Tweak the help text used for the option value placeholders by
+   parse-options API so that translations can customize the "<>"
+   placeholder signal (e.g. "--option=<value>").
+   (merge 5b34dd08d0 as/long-option-help-i18n later to maint).
+
+ * CI jobs gave sporadic failures, which turns out that that the
+   object finalization code was giving an error when it did not have
+   to.
+   (merge d7fcbe2c56 ps/object-collision-check later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
