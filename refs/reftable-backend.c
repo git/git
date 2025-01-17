@@ -942,6 +942,7 @@ struct write_transaction_table_arg {
 	size_t updates_nr;
 	size_t updates_alloc;
 	size_t updates_expected;
+	unsigned int max_index;
 };
 
 struct reftable_transaction_data {
@@ -1428,7 +1429,6 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 	struct reftable_log_record *logs = NULL;
 	struct ident_split committer_ident = {0};
 	size_t logs_nr = 0, logs_alloc = 0, i;
-	uint64_t max_update_index = ts;
 	const char *committer_info;
 	int ret = 0;
 
@@ -1438,7 +1438,12 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 
 	QSORT(arg->updates, arg->updates_nr, transaction_update_cmp);
 
-	reftable_writer_set_limits(writer, ts, ts);
+	/*
+	 * During reflog migration, we add indexes for a single reflog with
+	 * multiple entries. Each entry will contain a different update_index,
+	 * so set the limits accordingly.
+	 */
+	reftable_writer_set_limits(writer, ts, ts + arg->max_index);
 
 	for (i = 0; i < arg->updates_nr; i++) {
 		struct reftable_transaction_update *tx_update = &arg->updates[i];
@@ -1540,12 +1545,6 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 				 */
 				log->update_index = ts + u->index;
 
-				/*
-				 * Note the max update_index so the limit can be set later on.
-				 */
-				if (log->update_index > max_update_index)
-					max_update_index = log->update_index;
-
 				log->refname = xstrdup(u->refname);
 				memcpy(log->value.update.new_hash,
 				       u->new_oid.hash, GIT_MAX_RAWSZ);
@@ -1609,8 +1608,6 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 	 * and log blocks.
 	 */
 	if (logs) {
-		reftable_writer_set_limits(writer, ts, max_update_index);
-
 		ret = reftable_writer_add_logs(writer, logs, logs_nr);
 		if (ret < 0)
 			goto done;
@@ -1630,6 +1627,9 @@ static int reftable_be_transaction_finish(struct ref_store *ref_store UNUSED,
 {
 	struct reftable_transaction_data *tx_data = transaction->backend_data;
 	int ret = 0;
+
+	if (tx_data->args)
+		tx_data->args->max_index = transaction->max_index;
 
 	for (size_t i = 0; i < tx_data->args_nr; i++) {
 		ret = reftable_addition_add(tx_data->args[i].addition,
