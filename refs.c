@@ -1318,13 +1318,15 @@ int ref_transaction_update(struct ref_transaction *transaction,
 	return 0;
 }
 
-int ref_transaction_update_reflog(struct ref_transaction *transaction,
-				  const char *refname,
-				  const struct object_id *new_oid,
-				  const struct object_id *old_oid,
-				  const char *committer_info, unsigned int flags,
-				  const char *msg, unsigned int index,
-				  struct strbuf *err)
+static int ref_transaction_update_reflog(struct ref_transaction *transaction,
+					 const char *refname,
+					 const struct object_id *new_oid,
+					 const struct object_id *old_oid,
+					 const char *committer_info,
+					 unsigned int flags,
+					 const char *msg,
+					 unsigned int index,
+					 struct strbuf *err)
 {
 	struct ref_update *update;
 
