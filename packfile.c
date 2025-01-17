@@ -2297,17 +2297,20 @@ int is_promisor_object(const struct object_id *oid)
 
 int parse_pack_header_option(const char *in, unsigned char *out, unsigned int *len)
 {
-	struct pack_header *hdr;
+	unsigned char *hdr;
 	char *c;
 
-	hdr = (struct pack_header *)out;
-	hdr->hdr_signature = htonl(PACK_SIGNATURE);
-	hdr->hdr_version = htonl(strtoul(in, &c, 10));
+	hdr = out;
+	put_be32(hdr, PACK_SIGNATURE);
+	hdr += 4;
+	put_be32(hdr, strtoul(in, &c, 10));
+	hdr += 4;
 	if (*c != ',')
 		return -1;
-	hdr->hdr_entries = htonl(strtoul(c + 1, &c, 10));
+	put_be32(hdr, strtoul(c + 1, &c, 10));
+	hdr += 4;
 	if (*c)
 		return -1;
-	*len = sizeof(*hdr);
+	*len = hdr - out;
 	return 0;
 }
