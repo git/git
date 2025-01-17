@@ -44,8 +44,9 @@ static void finish_tmp_packfile(struct strbuf *basename,
 {
 	char *idx_tmp_name = NULL;
 
-	stage_tmp_packfiles(basename, pack_tmp_name, written_list, nr_written,
-			    NULL, pack_idx_opts, hash, &idx_tmp_name);
+	stage_tmp_packfiles(the_hash_algo, basename, pack_tmp_name,
+			    written_list, nr_written, NULL, pack_idx_opts, hash,
+			    &idx_tmp_name);
 	rename_tmp_packfile_idx(basename, &idx_tmp_name);
 
 	free(idx_tmp_name);
@@ -70,7 +71,7 @@ static void flush_bulk_checkin_packfile(struct bulk_checkin_packfile *state)
 				  CSUM_HASH_IN_STREAM | CSUM_FSYNC | CSUM_CLOSE);
 	} else {
 		int fd = finalize_hashfile(state->f, hash, FSYNC_COMPONENT_PACK, 0);
-		fixup_pack_header_footer(fd, hash, state->pack_tmp_name,
+		fixup_pack_header_footer(the_hash_algo, fd, hash, state->pack_tmp_name,
 					 state->nr_written, hash,
 					 state->offset);
 		close(fd);

@@ -665,8 +665,8 @@ static void write_midx_reverse_index(struct write_midx_context *ctx,
 				      &buf, object_dir, midx_hash,
 				      MIDX_EXT_REV);
 
-	tmp_file = write_rev_file_order(NULL, ctx->pack_order, ctx->entries_nr,
-					midx_hash, WRITE_REV);
+	tmp_file = write_rev_file_order(ctx->repo->hash_algo, NULL, ctx->pack_order,
+					ctx->entries_nr, midx_hash, WRITE_REV);
 
 	if (finalize_object_file(tmp_file, buf.buf))
 		die(_("cannot store reverse index file"));
