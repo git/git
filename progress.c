@@ -9,7 +9,6 @@
  */
 
 #define GIT_TEST_PROGRESS_ONLY
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -37,6 +36,7 @@ struct throughput {
 };
 
 struct progress {
+	struct repository *repo;
 	const char *title;
 	uint64_t last_value;
 	uint64_t total;
@@ -254,10 +254,12 @@ void display_progress(struct progress *progress, uint64_t n)
 		display(progress, n, NULL);
 }
 
-static struct progress *start_progress_delay(const char *title, uint64_t total,
+static struct progress *start_progress_delay(struct repository *r,
+					     const char *title, uint64_t total,
 					     unsigned delay, unsigned sparse)
 {
 	struct progress *progress = xmalloc(sizeof(*progress));
+	progress->repo = r;
 	progress->title = title;
 	progress->total = total;
 	progress->last_value = -1;
@@ -270,7 +272,7 @@ static struct progress *start_progress_delay(const char *title, uint64_t total,
 	progress->title_len = utf8_strwidth(title);
 	progress->split = 0;
 	set_progress_signal();
-	trace2_region_enter("progress", title, the_repository);
+	trace2_region_enter("progress", title, r);
 	return progress;
 }
 
@@ -284,14 +286,16 @@ static int get_default_delay(void)
 	return delay_in_secs;
 }
 
-struct progress *start_delayed_progress(const char *title, uint64_t total)
+struct progress *start_delayed_progress(struct repository *r,
+					const char *title, uint64_t total)
 {
-	return start_progress_delay(title, total, get_default_delay(), 0);
+	return start_progress_delay(r, title, total, get_default_delay(), 0);
 }
 
-struct progress *start_progress(const char *title, uint64_t total)
+struct progress *start_progress(struct repository *r,
+				const char *title, uint64_t total)
 {
-	return start_progress_delay(title, total, 0, 0);
+	return start_progress_delay(r, title, total, 0, 0);
 }
 
 /*
@@ -303,15 +307,17 @@ struct progress *start_progress(const char *title, uint64_t total)
  * When "sparse" is set, stop_progress() will automatically force the done
  * message to show 100%.
  */
-struct progress *start_sparse_progress(const char *title, uint64_t total)
+struct progress *start_sparse_progress(struct repository *r,
+				       const char *title, uint64_t total)
 {
-	return start_progress_delay(title, total, 0, 1);
+	return start_progress_delay(r, title, total, 0, 1);
 }
 
-struct progress *start_delayed_sparse_progress(const char *title,
+struct progress *start_delayed_sparse_progress(struct repository *r,
+					       const char *title,
 					       uint64_t total)
 {
-	return start_progress_delay(title, total, get_default_delay(), 1);
+	return start_progress_delay(r, title, total, get_default_delay(), 1);
 }
 
 static void finish_if_sparse(struct progress *progress)
@@ -341,14 +347,14 @@ static void force_last_update(struct progress *progress, const char *msg)
 
 static void log_trace2(struct progress *progress)
 {
-	trace2_data_intmax("progress", the_repository, "total_objects",
+	trace2_data_intmax("progress", progress->repo, "total_objects",
 			   progress->total);
 
 	if (progress->throughput)
-		trace2_data_intmax("progress", the_repository, "total_bytes",
+		trace2_data_intmax("progress", progress->repo, "total_bytes",
 				   progress->throughput->curr_total);
 
-	trace2_region_leave("progress", progress->title, the_repository);
+	trace2_region_leave("progress", progress->title, progress->repo);
 }
 
 void stop_progress_msg(struct progress **p_progress, const char *msg)

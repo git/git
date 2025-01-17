@@ -92,7 +92,9 @@ extern struct trace_key trace_default_key;
 extern struct trace_key trace_perf_key;
 extern struct trace_key trace_setup_key;
 
-void trace_repo_setup(void);
+struct repository;
+
+void trace_repo_setup(struct repository *r);
 
 /**
  * Checks whether the trace key is enabled. Used to prevent expensive
