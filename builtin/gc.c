@@ -23,6 +23,7 @@
 #include "lockfile.h"
 #include "parse-options.h"
 #include "run-command.h"
+#include "remote.h"
 #include "sigchain.h"
 #include "strvec.h"
 #include "commit.h"
@@ -921,6 +922,63 @@ static int maintenance_opt_schedule(const struct option *opt, const char *arg,
 	return 0;
 }
 
+struct remote_cb_data {
+	struct maintenance_run_opts *maintenance_opts;
+	struct string_list failed_remotes;
+};
+
+static void report_failed_remotes(struct string_list *failed_remotes,
+				  const char *action_name)
+{
+	if (failed_remotes->nr) {
+		int i;
+		struct strbuf msg = STRBUF_INIT;
+		strbuf_addf(&msg, _("failed to %s the following remotes: "),
+			    action_name);
+		for (i = 0; i < failed_remotes->nr; i++) {
+			if (i)
+				strbuf_addstr(&msg, ", ");
+			strbuf_addstr(&msg, failed_remotes->items[i].string);
+		}
+		error("%s", msg.buf);
+		strbuf_release(&msg);
+	}
+}
+
+static int prune_remote(struct remote *remote, void *cb_data)
+{
+	struct child_process child = CHILD_PROCESS_INIT;
+	struct remote_cb_data *data = cb_data;
+
+	if (!remote->url.nr)
+		return 0;
+
+	child.git_cmd = 1;
+	strvec_pushl(&child.args, "remote", "prune", remote->name, NULL);
+
+	if (run_command(&child))
+		string_list_append(&data->failed_remotes, remote->name);
+
+	return 0;
+}
+
+static int maintenance_task_prune_remote(struct maintenance_run_opts *opts,
+					 struct gc_config *cfg UNUSED)
+{
+	struct remote_cb_data cbdata = { .maintenance_opts = opts,
+					 .failed_remotes = STRING_LIST_INIT_DUP };
+
+	int result;
+	result = for_each_remote(prune_remote, &cbdata);
+
+	report_failed_remotes(&cbdata.failed_remotes, "prune");
+	if (cbdata.failed_remotes.nr)
+		result = 1;
+
+	string_list_clear(&cbdata.failed_remotes, 0);
+	return result;
+}
+
 /* Remember to update object flag allocation in object.h */
 #define SEEN		(1u<<0)
 
@@ -1041,8 +1099,8 @@ static int maintenance_task_commit_graph(struct maintenance_run_opts *opts,
 
 static int fetch_remote(struct remote *remote, void *cbdata)
 {
-	struct maintenance_run_opts *opts = cbdata;
 	struct child_process child = CHILD_PROCESS_INIT;
+	struct remote_cb_data *data = cbdata;
 
 	if (remote->skip_default_update)
 		return 0;
@@ -1053,21 +1111,34 @@ static int fetch_remote(struct remote *remote, void *cbdata)
 		     "--no-write-fetch-head", "--recurse-submodules=no",
 		     NULL);
 
-	if (opts->quiet)
+	if (data->maintenance_opts->quiet)
 		strvec_push(&child.args, "--quiet");
 
-	return !!run_command(&child);
+	if (run_command(&child))
+		string_list_append(&data->failed_remotes, remote->name);
+
+	return 0;
 }
 
 static int maintenance_task_prefetch(struct maintenance_run_opts *opts,
 				     struct gc_config *cfg UNUSED)
 {
-	if (for_each_remote(fetch_remote, opts)) {
-		error(_("failed to prefetch remotes"));
-		return 1;
+	struct remote_cb_data cbdata = { .maintenance_opts = opts,
+					 .failed_remotes = STRING_LIST_INIT_DUP };
+
+	int result = 0;
+
+	if (for_each_remote(fetch_remote, &cbdata)) {
+		error(_("failed to prefetch some remotes"));
+		result = 1;
 	}
 
-	return 0;
+	report_failed_remotes(&cbdata.failed_remotes, "prefetch");
+	if (cbdata.failed_remotes.nr)
+		result = 1;
+
+	string_list_clear(&cbdata.failed_remotes, 0);
+	return result;
 }
 
 static int maintenance_task_gc(struct maintenance_run_opts *opts,
@@ -1383,6 +1454,7 @@ enum maintenance_task_label {
 	TASK_GC,
 	TASK_COMMIT_GRAPH,
 	TASK_PACK_REFS,
+	TASK_PRUNE_REMOTE_REFS,
 
 	/* Leave as final value */
 	TASK__COUNT
@@ -1418,6 +1490,10 @@ static struct maintenance_task tasks[] = {
 		"pack-refs",
 		maintenance_task_pack_refs,
 		pack_refs_condition,
+	},
+	[TASK_PRUNE_REMOTE_REFS] = {
+		"prune-remote-refs",
+		maintenance_task_prune_remote,
 	},
 };
 
@@ -1513,6 +1589,8 @@ static void initialize_maintenance_strategy(void)
 		tasks[TASK_LOOSE_OBJECTS].schedule = SCHEDULE_DAILY;
 		tasks[TASK_PACK_REFS].enabled = 1;
 		tasks[TASK_PACK_REFS].schedule = SCHEDULE_WEEKLY;
+		tasks[TASK_PRUNE_REMOTE_REFS].enabled = 0;
+		tasks[TASK_PRUNE_REMOTE_REFS].schedule = SCHEDULE_DAILY;
 	}
 }
 

@@ -447,6 +447,88 @@ test_expect_success 'pack-refs task' '
 	test_subcommand git pack-refs --all --prune <pack-refs.txt
 '
 
+test_expect_success 'prune-remote-refs task not enabled by default' '
+	git clone . prune-test &&
+	(
+		cd prune-test &&
+		GIT_TRACE2_EVENT="$(pwd)/prune.txt" git maintenance run 2>err &&
+		test_subcommand ! git remote prune origin <prune.txt
+	)
+'
+
+test_expect_success 'prune-remote-refs task cleans stale remote refs' '
+	test_commit initial &&
+
+	# Create two separate remote repos
+	git clone . remote1 &&
+	git clone . remote2 &&
+
+	git clone . prune-test-clean &&
+	(
+		cd prune-test-clean &&
+		git config maintenance.prune-remote-refs.enabled true &&
+
+		# Add both remotes
+		git remote add remote1 "../remote1" &&
+		git remote add remote2 "../remote2" &&
+
+		# Create and push branches to both remotes
+		git branch -f side2 HEAD &&
+		git push remote1 side2 &&
+		git push remote2 side2 &&
+
+		# Rename branches in each remote to simulate a stale branch
+		git -C ../remote1 branch -m side2 side3 &&
+		git -C ../remote2 branch -m side2 side4 &&
+
+		GIT_TRACE2_EVENT="$(pwd)/prune.txt" git maintenance run --task=prune-remote-refs &&
+
+		# Verify pruning happened for both remotes
+		test_subcommand git remote prune remote1 <prune.txt &&
+		test_subcommand git remote prune remote2 <prune.txt &&
+		test_must_fail git rev-parse refs/remotes/remote1/side2 &&
+		test_must_fail git rev-parse refs/remotes/remote2/side2
+	)
+'
+
+test_expect_success 'prune-remote-refs task continues to prune remotes even if some fail' '
+	test_commit initial-prune-remote-refs &&
+
+	git clone . remote-bad1 &&
+	git clone . remote-bad2 &&
+	git clone . remote-good &&
+
+	git clone . prune-test-partial &&
+	(
+		cd prune-test-partial &&
+		git config maintenance.prune-remote-refs.enabled true &&
+
+		# Add remotes in alphabetical order to ensure processing order
+		git remote add aaa-bad1 "../remote-bad1" &&
+		git remote add bbb-bad2 "../remote-bad2" &&
+		git remote add ccc-good "../remote-good" &&
+
+		# Create and push branches to all remotes
+		git branch -f side2 HEAD &&
+		git push aaa-bad1 side2 &&
+		git push bbb-bad2 side2 &&
+		git push ccc-good side2 &&
+
+		# Rename branch in good remote to simulate a stale branch
+		git -C ../remote-good branch -m side2 side3 &&
+
+		# Break the bad remotes by removing their directories
+		rm -rf ../remote-bad1 ../remote-bad2 &&
+
+		GIT_TRACE2_EVENT="$(pwd)/prune.txt" git maintenance run --task=prune-remote-refs 2>err || true &&
+
+		# Verify pruning happened for good remote despite bad remote failures
+		test_subcommand git remote prune ccc-good <prune.txt &&
+		test_must_fail git rev-parse refs/remotes/ccc-good/side2 &&
+		test_grep "error: failed to prune the following remotes: aaa-bad1, bbb-bad2" err
+	)
+'
+
 test_expect_success '--auto and --schedule incompatible' '
 	test_must_fail git maintenance run --auto --schedule=daily 2>err &&
 	test_grep "at most one" err
