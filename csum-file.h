@@ -36,6 +36,7 @@ struct hashfile_checkpoint {
 	git_hash_ctx ctx;
 };
 
+void hashfile_checkpoint_init(struct hashfile *, struct hashfile_checkpoint *);
 void hashfile_checkpoint(struct hashfile *, struct hashfile_checkpoint *);
 int hashfile_truncate(struct hashfile *, struct hashfile_checkpoint *);
 

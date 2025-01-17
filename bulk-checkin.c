@@ -261,7 +261,7 @@ static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
 	git_hash_ctx ctx;
 	unsigned char obuf[16384];
 	unsigned header_len;
-	struct hashfile_checkpoint checkpoint = {0};
+	struct hashfile_checkpoint checkpoint;
 	struct pack_idx_entry *idx = NULL;
 
 	seekback = lseek(fd, 0, SEEK_CUR);
@@ -272,11 +272,14 @@ static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
 					  OBJ_BLOB, size);
 	the_hash_algo->init_fn(&ctx);
 	the_hash_algo->update_fn(&ctx, obuf, header_len);
-	the_hash_algo->unsafe_init_fn(&checkpoint.ctx);
 
 	/* Note: idx is non-NULL when we are writing */
-	if ((flags & HASH_WRITE_OBJECT) != 0)
+	if ((flags & HASH_WRITE_OBJECT) != 0) {
 		CALLOC_ARRAY(idx, 1);
+
+		prepare_to_stream(state, flags);
+		hashfile_checkpoint_init(state->f, &checkpoint);
+	}
 
 	already_hashed_to = 0;
 
