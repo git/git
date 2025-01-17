@@ -1,4 +1,6 @@
 *~
+asciidoc.conf
+asciidoctor-extensions.rb
 git-subtree
 git-subtree.1
 git-subtree.html

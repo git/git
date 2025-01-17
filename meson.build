@@ -1915,7 +1915,6 @@ endforeach
 if intl.found()
   subdir('po')
 endif
-subdir('contrib')
 
 # Gitweb requires Perl, so we disable the auto-feature if Perl was not found.
 # We make sure further up that Perl is required in case the gitweb option is
@@ -1945,6 +1944,8 @@ subdir('bin-wrappers')
 if get_option('docs') != []
   subdir('Documentation')
 endif
+
+subdir('contrib')
 
 foreach key, value : {
   'DIFF': diff.full_path(),
