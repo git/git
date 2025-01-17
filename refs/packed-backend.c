@@ -5,6 +5,7 @@
 #include "../config.h"
 #include "../dir.h"
 #include "../gettext.h"
+#include "../fsck.h"
 #include "../hash.h"
 #include "../hex.h"
 #include "../refs.h"
@@ -13,6 +14,7 @@
 #include "../iterator.h"
 #include "../lockfile.h"
 #include "../chdir-notify.h"
+#include "../packfile.h"
 #include "../statinfo.h"
 #include "../worktree.h"
 #include "../wrapper.h"
@@ -299,14 +301,8 @@ struct snapshot_record {
 	size_t len;
 };
 
-static int cmp_packed_ref_records(const void *v1, const void *v2,
-				  void *cb_data)
+static int cmp_packed_refname(const char *r1, const char *r2)
 {
-	const struct snapshot *snapshot = cb_data;
-	const struct snapshot_record *e1 = v1, *e2 = v2;
-	const char *r1 = e1->start + snapshot_hexsz(snapshot) + 1;
-	const char *r2 = e2->start + snapshot_hexsz(snapshot) + 1;
-
 	while (1) {
 		if (*r1 == '\n')
 			return *r2 == '\n' ? 0 : -1;
@@ -319,6 +315,17 @@ static int cmp_packed_ref_records(const void *v1, const void *v2,
 		r1++;
 		r2++;
 	}
+}
+
+static int cmp_packed_ref_records(const void *v1, const void *v2,
+				  void *cb_data)
+{
+	const struct snapshot *snapshot = cb_data;
+	const struct snapshot_record *e1 = v1, *e2 = v2;
+	const char *r1 = e1->start + snapshot_hexsz(snapshot) + 1;
+	const char *r2 = e2->start + snapshot_hexsz(snapshot) + 1;
+
+	return cmp_packed_refname(r1, r2);
 }
 
 /*
@@ -491,6 +498,23 @@ static void verify_buffer_safe(struct snapshot *snapshot)
 	    eof - last_line < snapshot_hexsz(snapshot) + 2)
 		die_invalid_line(snapshot->refs->path,
 				 last_line, eof - last_line);
+}
+
+/*
+ * When parsing the "packed-refs" file, we will parse it line by line.
+ * Because we know the start pointer of the refname and the next
+ * newline pointer, we could calculate the length of the refname by
+ * subtracting the two pointers. However, there is a corner case where
+ * the refname contains corrupted embedded NULL binaries. And
+ * `check_refname_format()` will not catch this when the truncated
+ * refname is still a valid refname. To prevent this, we need to check
+ * whether the refname contains the NULL binaries.
+ */
+static int refname_contains_null(struct strbuf refname)
+{
+	if (refname.len != strlen(refname.buf))
+		return 1;
+	return 0;
 }
 
 #define SMALL_FILE_SIZE (32*1024)
@@ -893,6 +917,9 @@ static int next_record(struct packed_ref_iterator *iter)
 
 	strbuf_add(&iter->refname_buf, p, eol - p);
 	iter->base.refname = iter->refname_buf.buf;
+
+	if (refname_contains_null(iter->refname_buf))
+		die("packed refname contains embedded NULL: %s", iter->base.refname);
 
 	if (check_refname_format(iter->base.refname, REFNAME_ALLOW_ONELEVEL)) {
 		if (!refname_is_safe(iter->base.refname))
@@ -1748,15 +1775,379 @@ static struct ref_iterator *packed_reflog_iterator_begin(struct ref_store *ref_s
 	return empty_ref_iterator_begin();
 }
 
-static int packed_fsck(struct ref_store *ref_store UNUSED,
-		       struct fsck_options *o UNUSED,
-		       struct worktree *wt)
-{
+struct fsck_packed_ref_entry {
+	int line_number;
 
-	if (!is_main_worktree(wt))
-		return 0;
+	int has_peeled;
+	struct object_id oid;
+	struct object_id peeled;
+
+	struct snapshot_record record;
+};
+
+static struct fsck_packed_ref_entry *create_fsck_packed_ref_entry(int line_number,
+								  const char *start)
+{
+	struct fsck_packed_ref_entry *entry = xcalloc(1, sizeof(*entry));
+	entry->line_number = line_number;
+	entry->has_peeled = 0;
+	entry->record.start = start;
+	return entry;
+}
+
+static void free_fsck_packed_ref_entries(struct fsck_packed_ref_entry **entries, int nr)
+{
+	for (int i = 0; i < nr; i++)
+		free(entries[i]);
+	free(entries);
+}
+
+static int packed_fsck_ref_next_line(struct fsck_options *o,
+				     int line_number, const char *start,
+				     const char *eof, const char **eol)
+{
+	int ret = 0;
+
+	*eol = memchr(start, '\n', eof - start);
+	if (!*eol) {
+		struct strbuf packed_entry = STRBUF_INIT;
+		struct fsck_ref_report report = { 0 };
+
+		strbuf_addf(&packed_entry, "packed-refs line %d", line_number);
+		report.path = packed_entry.buf;
+		ret = fsck_report_ref(o, &report,
+				      FSCK_MSG_PACKED_REF_ENTRY_NOT_TERMINATED,
+				      "'%.*s' is not terminated with a newline",
+				      (int)(eof - start), start);
+
+		/*
+		 * There is no newline but we still want to parse it to the end of
+		 * the buffer.
+		 */
+		*eol = eof;
+		strbuf_release(&packed_entry);
+	}
+
+	return ret;
+}
+
+static int packed_fsck_ref_header(struct fsck_options *o, const char *start, const char *eol)
+{
+	const char *err_fmt = NULL;
+	int fsck_msg_id = -1;
+
+	if (!starts_with(start, "# pack-refs with:")) {
+		err_fmt = "'%.*s' does not start with '# pack-refs with:'";
+		fsck_msg_id = FSCK_MSG_BAD_PACKED_REF_HEADER;
+	} else if (strncmp(start, PACKED_REFS_HEADER, strlen(PACKED_REFS_HEADER))) {
+		err_fmt = "'%.*s' is not the official packed-refs header";
+		fsck_msg_id = FSCK_MSG_UNKNOWN_PACKED_REF_HEADER;
+	}
+
+	if (err_fmt && fsck_msg_id >= 0) {
+		struct fsck_ref_report report = { 0 };
+		report.path = "packed-refs.header";
+
+		return fsck_report_ref(o, &report, fsck_msg_id, err_fmt,
+				       (int)(eol - start), start);
+
+	}
 
 	return 0;
+}
+
+static int packed_fsck_ref_peeled_line(struct fsck_options *o,
+				       struct ref_store *ref_store,
+				       struct fsck_packed_ref_entry *entry,
+				       const char *start, const char *eol)
+{
+	struct strbuf peeled_entry = STRBUF_INIT;
+	struct fsck_ref_report report = { 0 };
+	const char *p;
+	int ret = 0;
+
+	strbuf_addf(&peeled_entry, "packed-refs line %d", entry->line_number + 1);
+	report.path = peeled_entry.buf;
+
+	start++;
+	if (parse_oid_hex_algop(start, &entry->peeled, &p, ref_store->repo->hash_algo)) {
+		ret |= fsck_report_ref(o, &report,
+				       FSCK_MSG_BAD_PACKED_REF_ENTRY,
+				       "'%.*s' has invalid peeled oid",
+				       (int)(eol - start), start);
+		goto cleanup;
+	}
+
+	if (p != eol) {
+		ret |= fsck_report_ref(o, &report,
+				       FSCK_MSG_BAD_PACKED_REF_ENTRY,
+				       "has trailing garbage after peeled oid '%.*s'",
+				       (int)(eol - p), p);
+		goto cleanup;
+	}
+
+cleanup:
+	strbuf_release(&peeled_entry);
+	return ret;
+}
+
+static int packed_fsck_ref_main_line(struct fsck_options *o,
+				     struct ref_store *ref_store,
+				     struct fsck_packed_ref_entry *entry,
+				     const char *start, const char *eol)
+{
+	struct strbuf packed_entry = STRBUF_INIT;
+	struct fsck_ref_report report = { 0 };
+	struct strbuf refname = STRBUF_INIT;
+	const char *p;
+	int ret = 0;
+
+	strbuf_addf(&packed_entry, "packed-refs line %d", entry->line_number);
+	report.path = packed_entry.buf;
+
+	if (parse_oid_hex_algop(start, &entry->oid, &p, ref_store->repo->hash_algo)) {
+		ret |= fsck_report_ref(o, &report,
+				       FSCK_MSG_BAD_PACKED_REF_ENTRY,
+				       "'%.*s' has invalid oid",
+				       (int)(eol - start), start);
+		goto cleanup;
+	}
+
+	if (p == eol || !isspace(*p)) {
+		ret |= fsck_report_ref(o, &report,
+				       FSCK_MSG_BAD_PACKED_REF_ENTRY,
+				       "has no space after oid '%s' but with '%.*s'",
+				       oid_to_hex(&entry->oid), (int)(eol - p), p);
+		goto cleanup;
+	}
+
+	p++;
+	strbuf_add(&refname, p, eol - p);
+	if (refname_contains_null(refname)) {
+		ret |= fsck_report_ref(o, &report,
+				       FSCK_MSG_BAD_PACKED_REF_ENTRY,
+				       "refname '%s' contains NULL binaries",
+				       refname.buf);
+		goto cleanup;
+	}
+
+	if (check_refname_format(refname.buf, 0)) {
+		ret |= fsck_report_ref(o, &report,
+				       FSCK_MSG_BAD_REF_NAME,
+				       "has bad refname '%s'", refname.buf);
+		goto cleanup;
+	}
+
+cleanup:
+	strbuf_release(&packed_entry);
+	strbuf_release(&refname);
+	return ret;
+}
+
+static int packed_fsck_ref_oid(struct fsck_options *o, struct ref_store *ref_store,
+			       struct fsck_packed_ref_entry **entries, int nr)
+{
+	struct strbuf packed_entry = STRBUF_INIT;
+	struct fsck_ref_report report = { 0 };
+	struct object *obj;
+	int ret = 0;
+
+	for (int i = 0; i < nr; i++) {
+		struct fsck_packed_ref_entry *entry = entries[i];
+
+		strbuf_release(&packed_entry);
+		strbuf_addf(&packed_entry, "packed-refs line %d", entry->line_number);
+		report.path = packed_entry.buf;
+
+		if (is_promisor_object(ref_store->repo, &entry->oid))
+			continue;
+
+		obj = parse_object(ref_store->repo, &entry->oid);
+		if (!obj) {
+			ret |= fsck_report_ref(o, &report,
+					       FSCK_MSG_BAD_PACKED_REF_ENTRY,
+					       "'%s' is not a valid object",
+					       oid_to_hex(&entry->oid));
+		}
+		if (entry->has_peeled) {
+			strbuf_reset(&packed_entry);
+			strbuf_addf(&packed_entry, "packed-refs line %d",
+				    entry->line_number + 1);
+			report.path = packed_entry.buf;
+
+			obj = parse_object(ref_store->repo, &entry->peeled);
+			if (!obj) {
+				ret |= fsck_report_ref(o, &report,
+						       FSCK_MSG_BAD_PACKED_REF_ENTRY,
+						       "'%s' is not a valid object",
+						       oid_to_hex(&entry->peeled));
+			}
+		}
+
+	}
+
+	strbuf_release(&packed_entry);
+	return ret;
+}
+
+static int packed_fsck_ref_sorted(struct fsck_options *o,
+				  struct ref_store *ref_store,
+				  struct fsck_packed_ref_entry **entries,
+				  int nr)
+{
+	size_t hexsz = ref_store->repo->hash_algo->hexsz;
+	struct strbuf packed_entry = STRBUF_INIT;
+	struct fsck_ref_report report = { 0 };
+	struct strbuf refname1 = STRBUF_INIT;
+	struct strbuf refname2 = STRBUF_INIT;
+	int ret = 0;
+
+	for (int i = 1; i < nr; i++) {
+		const char *r1 = entries[i - 1]->record.start + hexsz + 1;
+		const char *r2 = entries[i]->record.start + hexsz + 1;
+
+		if (cmp_packed_refname(r1, r2) >= 0) {
+			const char *err_fmt =
+				"refname '%s' is not less than next refname '%s'";
+			const char *eol;
+			eol = memchr(entries[i - 1]->record.start, '\n',
+				     entries[i - 1]->record.len);
+			strbuf_add(&refname1, r1, eol - r1);
+			eol = memchr(entries[i]->record.start, '\n',
+				     entries[i]->record.len);
+			strbuf_add(&refname2, r2, eol - r2);
+
+			strbuf_addf(&packed_entry, "packed-refs line %d",
+				    entries[i - 1]->line_number);
+			report.path = packed_entry.buf;
+			ret = fsck_report_ref(o, &report,
+					      FSCK_MSG_PACKED_REF_UNSORTED,
+					      err_fmt, refname1.buf, refname2.buf);
+			goto cleanup;
+		}
+	}
+
+cleanup:
+	strbuf_release(&packed_entry);
+	strbuf_release(&refname1);
+	strbuf_release(&refname2);
+	return ret;
+}
+
+static int packed_fsck_ref_content(struct fsck_options *o,
+				   struct ref_store *ref_store,
+				   const char *start, const char *eof)
+{
+	struct fsck_packed_ref_entry **entries;
+	int entry_alloc = 20;
+	int line_number = 1;
+	int entry_nr = 0;
+	const char *eol;
+	int ret = 0;
+
+	ret |= packed_fsck_ref_next_line(o, line_number, start, eof, &eol);
+	if (*start == '#') {
+		ret |= packed_fsck_ref_header(o, start, eol);
+
+		start = eol + 1;
+		line_number++;
+	} else {
+		struct fsck_ref_report report = { 0 };
+		report.path = "packed-refs";
+
+		ret |= fsck_report_ref(o, &report,
+				       FSCK_MSG_PACKED_REF_MISSING_HEADER,
+				       "missing header line");
+	}
+
+	ALLOC_ARRAY(entries, entry_alloc);
+	while (start < eof) {
+		struct fsck_packed_ref_entry *entry
+			= create_fsck_packed_ref_entry(line_number, start);
+		ALLOC_GROW(entries, entry_nr + 1, entry_alloc);
+		entries[entry_nr++] = entry;
+
+		ret |= packed_fsck_ref_next_line(o, line_number, start, eof, &eol);
+		ret |= packed_fsck_ref_main_line(o, ref_store, entry, start, eol);
+		start = eol + 1;
+		line_number++;
+		if (start < eof && *start == '^') {
+			entry->has_peeled = 1;
+			ret |= packed_fsck_ref_next_line(o, line_number, start, eof, &eol);
+			ret |= packed_fsck_ref_peeled_line(o, ref_store, entry,
+							   start, eol);
+			start = eol + 1;
+			line_number++;
+		}
+		entry->record.len = start - entry->record.start;
+	}
+
+	/*
+	 * If there is anything wrong during the parsing of the "packed-refs"
+	 * file, we should not check the object of the refs.
+	 */
+	if (ret) {
+		o->safe_object_check = 0;
+	} else {
+		ret |= packed_fsck_ref_oid(o, ref_store, entries, entry_nr);
+		ret |= packed_fsck_ref_sorted(o, ref_store, entries, entry_nr);
+	}
+
+	free_fsck_packed_ref_entries(entries, entry_nr);
+	return ret;
+}
+
+static int packed_fsck(struct ref_store *ref_store,
+		       struct fsck_options *o,
+		       struct worktree *wt)
+{
+	struct packed_ref_store *refs = packed_downcast(ref_store,
+							REF_STORE_READ, "fsck");
+	struct strbuf packed_ref_content = STRBUF_INIT;
+	struct stat st;
+	int ret = 0;
+
+	if (!is_main_worktree(wt))
+		goto cleanup;
+
+	/*
+	 * If the packed-refs file doesn't exist, there's nothing to
+	 * check.
+	 */
+	if (lstat(refs->path, &st) < 0)
+		goto cleanup;
+
+	if (o->verbose)
+		fprintf_ln(stderr, "Checking packed-refs file %s", refs->path);
+
+	if (!S_ISREG(st.st_mode)) {
+		struct fsck_ref_report report = { 0 };
+		report.path = "packed-refs";
+
+		ret = fsck_report_ref(o, &report, FSCK_MSG_BAD_REF_FILETYPE,
+				      "not a regular file");
+		goto cleanup;
+	}
+
+	if (strbuf_read_file(&packed_ref_content, refs->path, 0) < 0) {
+		/*
+		 * Although we have checked that the file exists, there is a possibility
+		 * that it has been removed between the lstat() and the read attempt by
+		 * another process. In that case, we should not report an error.
+		 */
+		if (errno == ENOENT)
+			goto cleanup;
+
+		ret = error_errno("could not read %s", refs->path);
+		goto cleanup;
+	}
+
+	ret = packed_fsck_ref_content(o, ref_store, packed_ref_content.buf,
+				      packed_ref_content.buf + packed_ref_content.len);
+
+cleanup:
+	strbuf_release(&packed_ref_content);
+	return ret;
 }
 
 struct ref_storage_be refs_be_packed = {

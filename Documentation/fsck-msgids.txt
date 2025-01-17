@@ -16,6 +16,13 @@
 `badObjectSha1`::
 	(ERROR) An object has a bad sha1.
 
+`badPackedRefEntry`::
+	(ERROR) The "packed-refs" file contains an invalid entry.
+
+`badPackedRefHeader`::
+	(ERROR) The "packed-refs" file contains an invalid
+	header.
+
 `badParentSha1`::
 	(ERROR) A commit object has a bad parent sha1.
 
@@ -176,6 +183,16 @@
 `nullSha1`::
 	(WARN) Tree contains entries pointing to a null sha1.
 
+`packedRefEntryNotTerminated`::
+	(ERROR) The "packed-refs" file contains an entry that is
+	not terminated by a newline.
+
+`packedRefMissingHeader`::
+	(INFO) The "packed-refs" file does not contain the header.
+
+`packedRefUnsorted`::
+	(ERROR) The "packed-refs" file is not sorted.
+
 `refMissingNewline`::
 	(INFO) A loose ref that does not end with newline(LF). As
 	valid implementations of Git never created such a loose ref
@@ -207,6 +224,11 @@
 
 `treeNotSorted`::
 	(ERROR) A tree is not properly sorted.
+
+`unknownPackedRefHeader`::
+	(INFO) The "packed-refs" header starts with "# pack-refs with:"
+	but the remaining content is not the same as what `git pack-refs`
+	would write.
 
 `unknownType`::
 	(ERROR) Found an unknown object type.
