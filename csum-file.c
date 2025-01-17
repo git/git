@@ -242,14 +242,15 @@ int hashfile_checksum_valid(const unsigned char *data, size_t total_len)
 {
 	unsigned char got[GIT_MAX_RAWSZ];
 	git_hash_ctx ctx;
-	size_t data_len = total_len - the_hash_algo->rawsz;
+	const struct git_hash_algo *algop = the_hash_algo;
+	size_t data_len = total_len - algop->rawsz;
 
-	if (total_len < the_hash_algo->rawsz)
+	if (total_len < algop->rawsz)
 		return 0; /* say "too short"? */
 
-	the_hash_algo->unsafe_init_fn(&ctx);
-	the_hash_algo->unsafe_update_fn(&ctx, data, data_len);
-	the_hash_algo->unsafe_final_fn(got, &ctx);
+	algop->unsafe_init_fn(&ctx);
+	algop->unsafe_update_fn(&ctx, data, data_len);
+	algop->unsafe_final_fn(got, &ctx);
 
-	return hasheq(got, data + data_len, the_repository->hash_algo);
+	return hasheq(got, data + data_len, algop);
 }
