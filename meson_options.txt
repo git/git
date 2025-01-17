@@ -59,6 +59,8 @@ option('sha1_unsafe_backend', type: 'combo', choices: ['openssl', 'block', 'Comm
   description: 'The backend used for hashing data with the SHA1 object format in case no cryptographic security is needed.')
 option('sha256_backend', type: 'combo', choices: ['openssl', 'nettle', 'gcrypt', 'block'], value: 'block',
   description: 'The backend used for hashing objects with the SHA256 object format.')
+option('zlib_backend', type: 'combo', choices: ['auto', 'zlib', 'zlib-ng'], value: 'auto',
+  description: 'The backend used for compressing objects and other data.')
 
 # Build tweaks.
 option('breaking_changes', type: 'boolean', value: false,
@@ -101,5 +103,7 @@ option('tests', type: 'boolean', value: true,
   description: 'Enable building tests. This requires Perl, but is separate from the "perl" option such that you can build tests without Perl features enabled.')
 option('test_output_directory', type: 'string',
   description: 'Path to the directory used to store test outputs')
+option('test_utf8_locale', type: 'string',
+  description: 'Name of a UTF-8 locale used for testing.')
 option('fuzzers', type: 'boolean', value: false,
   description: 'Enable building fuzzers.')

@@ -56,7 +56,8 @@ case "$jobname" in
 		--fatal-meson-warnings \
 		--warnlevel 2 --werror \
 		--wrap-mode nofallback \
-		-Dfuzzers=true
+		-Dfuzzers=true \
+		$MESONFLAGS
 	group "Build" meson compile -C build --
 	if test -n "$run_tests"
 	then

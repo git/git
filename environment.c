@@ -16,6 +16,7 @@
 #include "convert.h"
 #include "environment.h"
 #include "gettext.h"
+#include "git-zlib.h"
 #include "repository.h"
 #include "config.h"
 #include "refs.h"
