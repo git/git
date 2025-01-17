@@ -34,14 +34,11 @@ test_expect_success "clone and setup child repos" '
 	git clone . three &&
 	(
 		cd three &&
-		git config branch.main.remote two &&
-		git config branch.main.merge refs/heads/one &&
-		mkdir -p .git/remotes &&
-		cat >.git/remotes/two <<-\EOF
-		URL: ../two/.git/
-		Pull: refs/heads/main:refs/heads/two
-		Pull: refs/heads/one:refs/heads/one
-		EOF
+		git config set remote.two.url ../two/.git/ &&
+		git config set remote.two.fetch refs/heads/main:refs/heads/two &&
+		git config set --append remote.two.fetch refs/heads/one:refs/heads/one &&
+		git config set branch.main.remote two &&
+		git config set branch.main.merge refs/heads/one
 	) &&
 	git clone . bundle &&
 	git clone . seven

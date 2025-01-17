@@ -45,17 +45,13 @@ test:linux:
       - jobname: linux-reftable
         image: ubuntu:latest
         CC: clang
-      - jobname: linux-gcc
+      - jobname: linux-breaking-changes
         image: ubuntu:20.04
         CC: gcc
-        CC_PACKAGE: gcc-8
       - jobname: linux-TEST-vars
         image: ubuntu:20.04
         CC: gcc
         CC_PACKAGE: gcc-8
-      - jobname: linux-gcc-default
-        image: ubuntu:latest
-        CC: gcc
       - jobname: linux-leaks
         image: ubuntu:latest
         CC: gcc

@@ -21,8 +21,10 @@ struct transport_ls_refs_options;
 enum {
 	REMOTE_UNCONFIGURED = 0,
 	REMOTE_CONFIG,
+#ifndef WITH_BREAKING_CHANGES
 	REMOTE_REMOTES,
 	REMOTE_BRANCHES
+#endif /* WITH_BREAKING_CHANGES */
 };
 
 struct rewrite {
