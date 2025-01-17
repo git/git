@@ -182,6 +182,13 @@ int reftable_writer_new(struct reftable_writer **out,
 void reftable_writer_set_limits(struct reftable_writer *w, uint64_t min,
 				uint64_t max)
 {
+	/*
+	 * The limits shouldn't be modified post writing the first block, else
+	 * it would cause a mismatch between the header and the footer.
+	 */
+	if (w->next)
+		BUG("update index modified after writing first block");
+
 	w->min_update_index = min;
 	w->max_update_index = max;
 }

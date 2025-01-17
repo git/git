@@ -120,7 +120,7 @@ struct ref_update {
 	 * when migrating reflogs and we want to ensure we carry over the
 	 * same order.
 	 */
-	unsigned int index;
+	uint64_t index;
 
 	/*
 	 * If this ref_update was split off of a symref update via
@@ -203,7 +203,7 @@ struct ref_transaction {
 	enum ref_transaction_state state;
 	void *backend_data;
 	unsigned int flags;
-	unsigned int max_index;
+	uint64_t max_index;
 };
 
 /*
