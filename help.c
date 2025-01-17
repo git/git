@@ -556,6 +556,27 @@ struct help_unknown_cmd_config {
 #define AUTOCORRECT_NEVER (-2)
 #define AUTOCORRECT_IMMEDIATELY (-1)
 
+static int parse_autocorrect(const char *value)
+{
+	switch (git_parse_maybe_bool_text(value)) {
+		case 1:
+			return AUTOCORRECT_IMMEDIATELY;
+		case 0:
+			return AUTOCORRECT_NEVER;
+		default: /* other random text */
+			break;
+	}
+
+	if (!strcmp(value, "prompt"))
+		return AUTOCORRECT_PROMPT;
+	if (!strcmp(value, "never"))
+		return AUTOCORRECT_NEVER;
+	if (!strcmp(value, "immediate"))
+		return AUTOCORRECT_IMMEDIATELY;
+
+	return 0;
+}
+
 static int git_unknown_cmd_config(const char *var, const char *value,
 				  const struct config_context *ctx,
 				  void *cb)
@@ -564,20 +585,17 @@ static int git_unknown_cmd_config(const char *var, const char *value,
 	const char *p;
 
 	if (!strcmp(var, "help.autocorrect")) {
-		if (!value)
-			return config_error_nonbool(var);
-		if (!strcmp(value, "never")) {
-			cfg->autocorrect = AUTOCORRECT_NEVER;
-		} else if (!strcmp(value, "immediate")) {
-			cfg->autocorrect = AUTOCORRECT_IMMEDIATELY;
-		} else if (!strcmp(value, "prompt")) {
-			cfg->autocorrect = AUTOCORRECT_PROMPT;
-		} else {
-			int v = git_config_int(var, value, ctx->kvi);
-			cfg->autocorrect = (v < 0)
-				? AUTOCORRECT_IMMEDIATELY : v;
+		int v = parse_autocorrect(value);
+
+		if (!v) {
+			v = git_config_int(var, value, ctx->kvi);
+			if (v < 0 || v == 1)
+				v = AUTOCORRECT_IMMEDIATELY;
 		}
+
+		cfg->autocorrect = v;
 	}
+
 	/* Also use aliases for command lookup */
 	if (skip_prefix(var, "alias.", &p))
 		add_cmdname(&cfg->aliases, p, strlen(p));
