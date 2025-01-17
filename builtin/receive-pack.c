@@ -2304,7 +2304,7 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		if (status)
 			return "index-pack fork failed";
 
-		lockfile = index_pack_lockfile(child.out, NULL);
+		lockfile = index_pack_lockfile(the_repository, child.out, NULL);
 		if (lockfile) {
 			pack_lockfile = register_tempfile(lockfile);
 			free(lockfile);
