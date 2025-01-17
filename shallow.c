@@ -1,5 +1,4 @@
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "hex.h"
@@ -134,7 +133,8 @@ static void free_depth_in_slab(int **ptr)
 struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 		int shallow_flag, int not_shallow_flag)
 {
-	int i = 0, cur_depth = 0;
+	size_t i = 0;
+	int cur_depth = 0;
 	struct commit_list *result = NULL;
 	struct object_array stack = OBJECT_ARRAY_INIT;
 	struct commit *commit = NULL;
@@ -335,16 +335,16 @@ static int write_shallow_commits_1(struct strbuf *out, int use_pack_protocol,
 				   const struct oid_array *extra,
 				   unsigned flags)
 {
-	struct write_shallow_data data;
-	int i;
-	data.out = out;
-	data.use_pack_protocol = use_pack_protocol;
-	data.count = 0;
-	data.flags = flags;
+	struct write_shallow_data data = {
+		.out = out,
+		.use_pack_protocol = use_pack_protocol,
+		.flags = flags,
+	};
+
 	for_each_commit_graft(write_one_shallow, &data);
 	if (!extra)
 		return data.count;
-	for (i = 0; i < extra->nr; i++) {
+	for (size_t i = 0; i < extra->nr; i++) {
 		strbuf_addstr(out, oid_to_hex(extra->oid + i));
 		strbuf_addch(out, '\n');
 		data.count++;
@@ -466,7 +466,6 @@ struct trace_key trace_shallow = TRACE_KEY_INIT(SHALLOW);
  */
 void prepare_shallow_info(struct shallow_info *info, struct oid_array *sa)
 {
-	int i;
 	trace_printf_key(&trace_shallow, "shallow: prepare_shallow_info\n");
 	memset(info, 0, sizeof(*info));
 	info->shallow = sa;
@@ -474,7 +473,7 @@ void prepare_shallow_info(struct shallow_info *info, struct oid_array *sa)
 		return;
 	ALLOC_ARRAY(info->ours, sa->nr);
 	ALLOC_ARRAY(info->theirs, sa->nr);
-	for (i = 0; i < sa->nr; i++) {
+	for (size_t i = 0; i < sa->nr; i++) {
 		if (repo_has_object_file(the_repository, sa->oid + i)) {
 			struct commit_graft *graft;
 			graft = lookup_commit_graft(the_repository,
@@ -507,7 +506,7 @@ void clear_shallow_info(struct shallow_info *info)
 void remove_nonexistent_theirs_shallow(struct shallow_info *info)
 {
 	struct object_id *oid = info->shallow->oid;
-	int i, dst;
+	size_t i, dst;
 	trace_printf_key(&trace_shallow, "shallow: remove_nonexistent_theirs_shallow\n");
 	for (i = dst = 0; i < info->nr_theirs; i++) {
 		if (i != dst)
@@ -535,7 +534,7 @@ static uint32_t *paint_alloc(struct paint_info *info)
 	unsigned nr = DIV_ROUND_UP(info->nr_bits, 32);
 	unsigned size = nr * sizeof(uint32_t);
 	void *p;
-	if (!info->pool_count || size > info->end - info->free) {
+	if (!info->pool_count || info->end < info->free + size) {
 		if (size > POOL_SIZE)
 			BUG("pool size too small for %d in paint_alloc()",
 			    size);
@@ -560,7 +559,7 @@ static void paint_down(struct paint_info *info, const struct object_id *oid,
 {
 	unsigned int i, nr;
 	struct commit_list *head = NULL;
-	int bitmap_nr = DIV_ROUND_UP(info->nr_bits, 32);
+	size_t bitmap_nr = DIV_ROUND_UP(info->nr_bits, 32);
 	size_t bitmap_size = st_mult(sizeof(uint32_t), bitmap_nr);
 	struct commit *c = lookup_commit_reference_gently(the_repository, oid,
 							  1);
@@ -660,7 +659,7 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 	struct object_id *oid = info->shallow->oid;
 	struct oid_array *ref = info->ref;
 	unsigned int i, nr;
-	int *shallow, nr_shallow = 0;
+	size_t *shallow, nr_shallow = 0;
 	struct paint_info pi;
 
 	trace_printf_key(&trace_shallow, "shallow: assign_shallow_commits_to_refs\n");
@@ -735,7 +734,7 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 
 struct commit_array {
 	struct commit **commits;
-	int nr, alloc;
+	size_t nr, alloc;
 };
 
 static int add_ref(const char *refname UNUSED,
@@ -753,12 +752,11 @@ static int add_ref(const char *refname UNUSED,
 	return 0;
 }
 
-static void update_refstatus(int *ref_status, int nr, uint32_t *bitmap)
+static void update_refstatus(int *ref_status, size_t nr, uint32_t *bitmap)
 {
-	unsigned int i;
 	if (!ref_status)
 		return;
-	for (i = 0; i < nr; i++)
+	for (size_t i = 0; i < nr; i++)
 		if (bitmap[i / 32] & (1U << (i % 32)))
 			ref_status[i]++;
 }
@@ -773,8 +771,8 @@ static void post_assign_shallow(struct shallow_info *info,
 	struct object_id *oid = info->shallow->oid;
 	struct commit *c;
 	uint32_t **bitmap;
-	int dst, i, j;
-	int bitmap_nr = DIV_ROUND_UP(info->ref->nr, 32);
+	size_t dst, i, j;
+	size_t bitmap_nr = DIV_ROUND_UP(info->ref->nr, 32);
 	struct commit_array ca;
 
 	trace_printf_key(&trace_shallow, "shallow: post_assign_shallow\n");

@@ -6,7 +6,6 @@
  */
 
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "builtin.h"
 #include "abspath.h"
@@ -209,7 +208,6 @@ static void cmd_log_init_defaults(struct rev_info *rev,
 
 static void set_default_decoration_filter(struct decoration_filter *decoration_filter)
 {
-	int i;
 	char *value = NULL;
 	struct string_list *include = decoration_filter->include_ref_pattern;
 	const struct string_list *config_exclude;
@@ -243,7 +241,7 @@ static void set_default_decoration_filter(struct decoration_filter *decoration_f
 	 * No command-line or config options were given, so
 	 * populate with sensible defaults.
 	 */
-	for (i = 0; i < ARRAY_SIZE(ref_namespace); i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(ref_namespace); i++) {
 		if (!ref_namespace[i].decoration)
 			continue;
 
@@ -717,14 +715,14 @@ static int show_tag_object(const struct object_id *oid, struct rev_info *rev)
 	unsigned long size;
 	enum object_type type;
 	char *buf = repo_read_object_file(the_repository, oid, &type, &size);
-	int offset = 0;
+	unsigned long offset = 0;
 
 	if (!buf)
 		return error(_("could not read object %s"), oid_to_hex(oid));
 
 	assert(type == OBJ_TAG);
 	while (offset < size && buf[offset] != '\n') {
-		int new_offset = offset + 1;
+		unsigned long new_offset = offset + 1;
 		const char *ident;
 		while (new_offset < size && buf[new_offset++] != '\n')
 			; /* do nothing */
@@ -1316,24 +1314,25 @@ static void print_signature(const char *signature, FILE *file)
 
 static char *find_branch_name(struct rev_info *rev)
 {
-	int i, positive = -1;
 	struct object_id branch_oid;
 	const struct object_id *tip_oid;
 	const char *ref, *v;
 	char *full_ref, *branch = NULL;
+	int interesting_found = 0;
+	size_t idx;
 
-	for (i = 0; i < rev->cmdline.nr; i++) {
+	for (size_t i = 0; i < rev->cmdline.nr; i++) {
 		if (rev->cmdline.rev[i].flags & UNINTERESTING)
 			continue;
-		if (positive < 0)
-			positive = i;
-		else
+		if (interesting_found)
 			return NULL;
+		interesting_found = 1;
+		idx = i;
 	}
-	if (positive < 0)
+	if (!interesting_found)
 		return NULL;
-	ref = rev->cmdline.rev[positive].name;
-	tip_oid = &rev->cmdline.rev[positive].item->oid;
+	ref = rev->cmdline.rev[idx].name;
+	tip_oid = &rev->cmdline.rev[idx].item->oid;
 	if (repo_dwim_ref(the_repository, ref, strlen(ref), &branch_oid,
 			  &full_ref, 0) &&
 	    skip_prefix(full_ref, "refs/heads/", &v) &&
@@ -1746,11 +1745,12 @@ struct base_tree_info {
 
 static struct commit *get_base_commit(const struct format_config *cfg,
 				      struct commit **list,
-				      int total)
+				      size_t total)
 {
 	struct commit *base = NULL;
 	struct commit **rev;
-	int i = 0, rev_nr = 0, auto_select, die_on_failure, ret;
+	int auto_select, die_on_failure, ret;
+	size_t i = 0, rev_nr = 0;
 
 	switch (cfg->auto_base) {
 	case AUTO_BASE_NEVER:
@@ -1885,13 +1885,12 @@ define_commit_slab(commit_base, int);
 static void prepare_bases(struct base_tree_info *bases,
 			  struct commit *base,
 			  struct commit **list,
-			  int total)
+			  size_t total)
 {
 	struct commit *commit;
 	struct rev_info revs;
 	struct diff_options diffopt;
 	struct commit_base commit_base;
-	int i;
 
 	if (!base)
 		return;
@@ -1906,7 +1905,7 @@ static void prepare_bases(struct base_tree_info *bases,
 	repo_init_revisions(the_repository, &revs, NULL);
 	revs.max_parents = 1;
 	revs.topo_order = 1;
-	for (i = 0; i < total; i++) {
+	for (size_t i = 0; i < total; i++) {
 		list[i]->object.flags &= ~UNINTERESTING;
 		add_pending_object(&revs, &list[i]->object, "rev_list");
 		*commit_base_at(&commit_base, list[i]) = 1;
@@ -2007,7 +2006,7 @@ int cmd_format_patch(int argc,
 	struct rev_info rev;
 	char *to_free = NULL;
 	struct setup_revision_opt s_r_opt;
-	int nr = 0, total, i;
+	size_t nr = 0, total, i;
 	int use_stdout = 0;
 	int start_number = -1;
 	int just_numbers = 0;
@@ -2183,7 +2182,7 @@ int cmd_format_patch(int argc,
 		fmt_patch_suffix = cfg.fmt_patch_suffix;
 
 	/* Make sure "0000-$sub.patch" gives non-negative length for $sub */
-	if (cfg.log.fmt_patch_name_max <= strlen("0000-") + strlen(fmt_patch_suffix))
+	if (cfg.log.fmt_patch_name_max <= cast_size_t_to_int(strlen("0000-") + strlen(fmt_patch_suffix)))
 		cfg.log.fmt_patch_name_max = strlen("0000-") + strlen(fmt_patch_suffix);
 
 	if (cover_from_description_arg)
@@ -2500,11 +2499,14 @@ int cmd_format_patch(int argc,
 
 	if (show_progress)
 		progress = start_delayed_progress(_("Generating patches"), total);
-	while (0 <= --nr) {
+	for (i = 0; i < nr; i++) {
+		size_t idx = nr - i - 1;
 		int shown;
-		display_progress(progress, total - nr);
-		commit = list[nr];
-		rev.nr = total - nr + (start_number - 1);
+
+		display_progress(progress, total - idx);
+		commit = list[idx];
+		rev.nr = total - idx + (start_number - 1);
+
 		/* Make the second and subsequent mails replies to the first */
 		if (cfg.thread) {
 			/* Have we already had a message ID? */

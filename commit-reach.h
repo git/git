@@ -14,12 +14,12 @@ int repo_get_merge_bases(struct repository *r,
 			 struct commit *rev2,
 			 struct commit_list **result);
 int repo_get_merge_bases_many(struct repository *r,
-			      struct commit *one, int n,
+			      struct commit *one, size_t n,
 			      struct commit **twos,
 			      struct commit_list **result);
 /* To be used only when object flags after this call no longer matter */
 int repo_get_merge_bases_many_dirty(struct repository *r,
-				    struct commit *one, int n,
+				    struct commit *one, size_t n,
 				    struct commit **twos,
 				    struct commit_list **result);
 
@@ -81,7 +81,7 @@ int commit_contains(struct ref_filter *filter, struct commit *commit,
 int can_all_from_reach_with_flag(struct object_array *from,
 				 unsigned int with_flag,
 				 unsigned int assign_flag,
-				 time_t min_commit_date,
+				 timestamp_t min_commit_date,
 				 timestamp_t min_generation);
 int can_all_from_reach(struct commit_list *from, struct commit_list *to,
 		       int commit_date_cutoff);
@@ -95,8 +95,8 @@ int can_all_from_reach(struct commit_list *from, struct commit_list *to,
  * This method uses the PARENT1 and PARENT2 flags during its operation,
  * so be sure these flags are not set before calling the method.
  */
-struct commit_list *get_reachable_subset(struct commit **from, int nr_from,
-					 struct commit **to, int nr_to,
+struct commit_list *get_reachable_subset(struct commit **from, size_t nr_from,
+					 struct commit **to, size_t nr_to,
 					 unsigned int reachable_flag);
 
 struct ahead_behind_count {
