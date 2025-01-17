@@ -6,6 +6,7 @@ manpages = {
   'git-apply.txt' : 1,
   'git-archimport.txt' : 1,
   'git-archive.txt' : 1,
+  'git-backfill.txt' : 1,
   'git-bisect.txt' : 1,
   'git-blame.txt' : 1,
   'git-branch.txt' : 1,
