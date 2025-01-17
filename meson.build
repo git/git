@@ -1513,7 +1513,9 @@ libgit_version_library = static_library('git-version',
     'version.c',
     version_def_h,
   ],
-  c_args: libgit_c_args,
+  c_args: libgit_c_args + [
+    '-DGIT_VERSION_H="' + version_def_h.full_path() + '"',
+  ],
   dependencies: libgit_dependencies,
   include_directories: libgit_include_directories,
 )
