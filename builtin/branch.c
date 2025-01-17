@@ -473,7 +473,7 @@ static void print_ref_list(struct ref_filter *filter, struct ref_sorting *sortin
 	if (verify_ref_format(format))
 		die(_("unable to parse format string"));
 
-	filter_ahead_behind(the_repository, format, &array);
+	filter_ahead_behind(the_repository, &array);
 	ref_array_sort(sorting, &array);
 
 	if (column_active(colopts)) {
@@ -884,7 +884,6 @@ int cmd_branch(int argc,
 		string_list_clear(&output, 0);
 		ref_sorting_release(sorting);
 		ref_filter_clear(&filter);
-		ref_format_clear(&format);
 
 		ret = 0;
 		goto out;

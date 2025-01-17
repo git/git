@@ -69,6 +69,5 @@ int cmd_verify_tag(int argc,
 		if (format.format)
 			pretty_print_ref(name, &oid, &format);
 	}
-	ref_format_clear(&format);
 	return had_error;
 }
