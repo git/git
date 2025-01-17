@@ -2315,3 +2315,23 @@ int is_promisor_object(struct repository *r, const struct object_id *oid)
 	}
 	return oidset_contains(&promisor_objects, oid);
 }
+
+int parse_pack_header_option(const char *in, unsigned char *out, unsigned int *len)
+{
+	unsigned char *hdr;
+	char *c;
+
+	hdr = out;
+	put_be32(hdr, PACK_SIGNATURE);
+	hdr += 4;
+	put_be32(hdr, strtoul(in, &c, 10));
+	hdr += 4;
+	if (*c != ',')
+		return -1;
+	put_be32(hdr, strtoul(c + 1, &c, 10));
+	hdr += 4;
+	if (*c)
+		return -1;
+	*len = hdr - out;
+	return 0;
+}

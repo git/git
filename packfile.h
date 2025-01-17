@@ -216,4 +216,10 @@ int is_promisor_object(struct repository *r, const struct object_id *oid);
 int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
 	     size_t idx_size, struct packed_git *p);
 
+/*
+ * Parse a --pack_header option as accepted by index-pack and unpack-objects,
+ * turning it into the matching bytes we'd find in a pack.
+ */
+int parse_pack_header_option(const char *in, unsigned char *out, unsigned int *len);
+
 #endif
