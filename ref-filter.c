@@ -236,6 +236,7 @@ static struct used_atom {
 			       S_FINGERPRINT, S_PRI_KEY_FP, S_TRUST_LEVEL } option;
 		} signature;
 		struct {
+			char *name;
 			struct commit *commit;
 		} base;
 		struct strvec describe_args;
@@ -908,18 +909,16 @@ static int ahead_behind_atom_parser(struct ref_format *format UNUSED,
 	return 0;
 }
 
-static int is_base_atom_parser(struct ref_format *format,
-			       struct used_atom *atom UNUSED,
+static int is_base_atom_parser(struct ref_format *format UNUSED,
+			       struct used_atom *atom,
 			       const char *arg, struct strbuf *err)
 {
-	struct string_list_item *item;
-
 	if (!arg)
 		return strbuf_addf_ret(err, -1, _("expected format: %%(is-base:<committish>)"));
 
-	item = string_list_append(&format->is_base_tips, arg);
-	item->util = lookup_commit_reference_by_name(arg);
-	if (!item->util)
+	atom->u.base.name = xstrdup(arg);
+	atom->u.base.commit = lookup_commit_reference_by_name(arg);
+	if (!atom->u.base.commit)
 		die("failed to find '%s'", arg);
 
 	return 0;
@@ -3009,6 +3008,8 @@ void ref_array_clear(struct ref_array *array)
 			free(atom->u.head);
 		else if (atom->atom_type == ATOM_DESCRIBE)
 			strvec_clear(&atom->u.describe_args);
+		else if (atom->atom_type == ATOM_ISBASE)
+			free(atom->u.base.name);
 		else if (atom->atom_type == ATOM_TRAILERS ||
 			 (atom->atom_type == ATOM_CONTENTS &&
 			  atom->u.contents.option == C_TRAILERS)) {
@@ -3133,14 +3134,20 @@ void filter_ahead_behind(struct repository *r,
 }
 
 void filter_is_base(struct repository *r,
-		    struct ref_format *format,
 		    struct ref_array *array)
 {
 	struct commit **bases;
-	size_t bases_nr = 0;
+	size_t bases_nr = 0, is_base_nr;
 	struct ref_array_item **back_index;
 
-	if (!format->is_base_tips.nr || !array->nr)
+	if (!array->nr)
+		return;
+
+	for (size_t i = is_base_nr = 0; i < used_atom_cnt; i++) {
+		if (used_atom[i].atom_type == ATOM_ISBASE)
+			is_base_nr++;
+	}
+	if (!is_base_nr)
 		return;
 
 	CALLOC_ARRAY(back_index, array->nr);
@@ -3150,7 +3157,7 @@ void filter_is_base(struct repository *r,
 		const char *name = array->items[i]->refname;
 		struct commit *c = lookup_commit_reference_by_name_gently(name, 1);
 
-		CALLOC_ARRAY(array->items[i]->is_base, format->is_base_tips.nr);
+		CALLOC_ARRAY(array->items[i]->is_base, is_base_nr);
 
 		if (!c)
 			continue;
@@ -3160,15 +3167,20 @@ void filter_is_base(struct repository *r,
 		bases_nr++;
 	}
 
-	for (size_t i = 0; i < format->is_base_tips.nr; i++) {
-		struct commit *tip = format->is_base_tips.items[i].util;
-		int base_index = get_branch_base_for_tip(r, tip, bases, bases_nr);
+	for (size_t i = 0, j = 0; i < used_atom_cnt; i++) {
+		struct commit *tip;
+		int base_index;
 
+		if (used_atom[i].atom_type != ATOM_ISBASE)
+			continue;
+
+		tip = used_atom[i].u.base.commit;
+		base_index = get_branch_base_for_tip(r, tip, bases, bases_nr);
 		if (base_index < 0)
 			continue;
 
 		/* Store the string for use in output later. */
-		back_index[base_index]->is_base[i] = xstrdup(format->is_base_tips.items[i].string);
+		back_index[base_index]->is_base[j++] = xstrdup(used_atom[i].u.base.name);
 	}
 
 	free(back_index);
@@ -3260,8 +3272,7 @@ struct ref_sorting {
 };
 
 static inline int can_do_iterative_format(struct ref_filter *filter,
-					  struct ref_sorting *sorting,
-					  struct ref_format *format)
+					  struct ref_sorting *sorting)
 {
 	/*
 	 * Reference backends sort patterns lexicographically by refname, so if
@@ -3288,17 +3299,17 @@ static inline int can_do_iterative_format(struct ref_filter *filter,
 	for (size_t i = 0; i < used_atom_cnt; i++) {
 		if (used_atom[i].atom_type == ATOM_AHEADBEHIND)
 			return 0;
+		if (used_atom[i].atom_type == ATOM_ISBASE)
+			return 0;
 	}
-	return !(filter->reachable_from ||
-		 filter->unreachable_from ||
-		 format->is_base_tips.nr);
+	return !(filter->reachable_from || filter->unreachable_from);
 }
 
 void filter_and_format_refs(struct ref_filter *filter, unsigned int type,
 			    struct ref_sorting *sorting,
 			    struct ref_format *format)
 {
-	if (can_do_iterative_format(filter, sorting, format)) {
+	if (can_do_iterative_format(filter, sorting)) {
 		int save_commit_buffer_orig;
 		struct ref_filter_and_format_cbdata ref_cbdata = {
 			.filter = filter,
@@ -3315,7 +3326,7 @@ void filter_and_format_refs(struct ref_filter *filter, unsigned int type,
 		struct ref_array array = { 0 };
 		filter_refs(&array, filter, type);
 		filter_ahead_behind(the_repository, &array);
-		filter_is_base(the_repository, format, &array);
+		filter_is_base(the_repository, &array);
 		ref_array_sort(sorting, &array);
 		print_formatted_ref_array(&array, format);
 		ref_array_clear(&array);
@@ -3658,6 +3669,5 @@ void ref_format_init(struct ref_format *format)
 
 void ref_format_clear(struct ref_format *format)
 {
-	string_list_clear(&format->is_base_tips, 0);
 	ref_format_init(format);
 }
