@@ -109,6 +109,16 @@ of invocation during users' typical daily workflow.
 (We've seen some other effort in this space with the implementation of popular
 commands such as `sl`.)
 
+:mailinglist: git+subscribe@vger.kernel.org
+
+For future reference, here's where you can find bugs and feature requests existing in the system:
+
+ - Git uses a mailing list for discussion on bugs, features and patches. Search for relevant topics or tagged issues
+   like #leftoverbits in the archives: https://lore.kernel.org/git/. If you encounter a bug, have a feature request,
+   or wish to discuss or share suggestions, please use the mailing list. You can find more details in the <<getting-help>> section.
+ - Unofficial bug trackers - https://github.com/gitgitgadget/git/issues [NOTE: This is for feature requests only],
+   https://git.issues.gerritcodereview.com/
+
 [[setup-workspace]]
 === Set Up Your Workspace
 
