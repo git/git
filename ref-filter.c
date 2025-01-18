@@ -3660,14 +3660,3 @@ void ref_filter_clear(struct ref_filter *filter)
 	free_commit_list(filter->unreachable_from);
 	ref_filter_init(filter);
 }
-
-void ref_format_init(struct ref_format *format)
-{
-	struct ref_format blank = REF_FORMAT_INIT;
-	memcpy(format, &blank, sizeof(blank));
-}
-
-void ref_format_clear(struct ref_format *format)
-{
-	ref_format_init(format);
-}

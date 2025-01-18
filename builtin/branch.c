@@ -884,7 +884,6 @@ int cmd_branch(int argc,
 		string_list_clear(&output, 0);
 		ref_sorting_release(sorting);
 		ref_filter_clear(&filter);
-		ref_format_clear(&format);
 
 		ret = 0;
 		goto out;
