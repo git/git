@@ -235,6 +235,9 @@ static struct used_atom {
 			enum { S_BARE, S_GRADE, S_SIGNER, S_KEY,
 			       S_FINGERPRINT, S_PRI_KEY_FP, S_TRUST_LEVEL } option;
 		} signature;
+		struct {
+			struct commit *commit;
+		} base;
 		struct strvec describe_args;
 		struct refname_atom refname;
 		char *head;
@@ -891,18 +894,15 @@ static int rest_atom_parser(struct ref_format *format UNUSED,
 	return 0;
 }
 
-static int ahead_behind_atom_parser(struct ref_format *format,
-				    struct used_atom *atom UNUSED,
+static int ahead_behind_atom_parser(struct ref_format *format UNUSED,
+				    struct used_atom *atom,
 				    const char *arg, struct strbuf *err)
 {
-	struct string_list_item *item;
-
 	if (!arg)
 		return strbuf_addf_ret(err, -1, _("expected format: %%(ahead-behind:<committish>)"));
 
-	item = string_list_append(&format->bases, arg);
-	item->util = lookup_commit_reference_by_name(arg);
-	if (!item->util)
+	atom->u.base.commit = lookup_commit_reference_by_name(arg);
+	if (!atom->u.base.commit)
 		die("failed to find '%s'", arg);
 
 	return 0;
@@ -3084,22 +3084,30 @@ static void reach_filter(struct ref_array *array,
 }
 
 void filter_ahead_behind(struct repository *r,
-			 struct ref_format *format,
 			 struct ref_array *array)
 {
 	struct commit **commits;
-	size_t commits_nr = format->bases.nr + array->nr;
+	size_t bases_nr, commits_nr;
 
-	if (!format->bases.nr || !array->nr)
+	if (!array->nr)
 		return;
 
-	ALLOC_ARRAY(commits, commits_nr);
-	for (size_t i = 0; i < format->bases.nr; i++)
-		commits[i] = format->bases.items[i].util;
+	for (size_t i = bases_nr = 0; i < used_atom_cnt; i++) {
+		if (used_atom[i].atom_type == ATOM_AHEADBEHIND)
+			bases_nr++;
+	}
+	if (!bases_nr)
+		return;
 
-	ALLOC_ARRAY(array->counts, st_mult(format->bases.nr, array->nr));
+	ALLOC_ARRAY(commits, st_add(bases_nr, array->nr));
+	for (size_t i = 0, j = 0; i < used_atom_cnt; i++) {
+		if (used_atom[i].atom_type == ATOM_AHEADBEHIND)
+			commits[j++] = used_atom[i].u.base.commit;
+	}
 
-	commits_nr = format->bases.nr;
+	ALLOC_ARRAY(array->counts, st_mult(bases_nr, array->nr));
+
+	commits_nr = bases_nr;
 	array->counts_nr = 0;
 	for (size_t i = 0; i < array->nr; i++) {
 		const char *name = array->items[i]->refname;
@@ -3108,8 +3116,8 @@ void filter_ahead_behind(struct repository *r,
 		if (!commits[commits_nr])
 			continue;
 
-		CALLOC_ARRAY(array->items[i]->counts, format->bases.nr);
-		for (size_t j = 0; j < format->bases.nr; j++) {
+		CALLOC_ARRAY(array->items[i]->counts, bases_nr);
+		for (size_t j = 0; j < bases_nr; j++) {
 			struct ahead_behind_count *count;
 			count = &array->counts[array->counts_nr++];
 			count->tip_index = commits_nr;
@@ -3277,9 +3285,12 @@ static inline int can_do_iterative_format(struct ref_filter *filter,
 	 * - filtering on reachability
 	 * - including ahead-behind information in the formatted output
 	 */
+	for (size_t i = 0; i < used_atom_cnt; i++) {
+		if (used_atom[i].atom_type == ATOM_AHEADBEHIND)
+			return 0;
+	}
 	return !(filter->reachable_from ||
 		 filter->unreachable_from ||
-		 format->bases.nr ||
 		 format->is_base_tips.nr);
 }
 
@@ -3303,7 +3314,7 @@ void filter_and_format_refs(struct ref_filter *filter, unsigned int type,
 	} else {
 		struct ref_array array = { 0 };
 		filter_refs(&array, filter, type);
-		filter_ahead_behind(the_repository, format, &array);
+		filter_ahead_behind(the_repository, &array);
 		filter_is_base(the_repository, format, &array);
 		ref_array_sort(sorting, &array);
 		print_formatted_ref_array(&array, format);
@@ -3647,7 +3658,6 @@ void ref_format_init(struct ref_format *format)
 
 void ref_format_clear(struct ref_format *format)
 {
-	string_list_clear(&format->bases, 0);
 	string_list_clear(&format->is_base_tips, 0);
 	ref_format_init(format);
 }
