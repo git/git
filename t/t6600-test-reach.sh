@@ -733,4 +733,33 @@ test_expect_success 'for-each-ref is-base:multiple' '
 		--format="%(refname)[%(is-base:commit-2-3)-%(is-base:commit-6-5)]" --stdin
 '
 
+test_expect_success 'for-each-ref is-base: --sort' '
+	cat >input <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-4-2
+	refs/heads/commit-4-4
+	refs/heads/commit-8-4
+	EOF
+
+	cat >expect <<-\EOF &&
+	refs/heads/commit-1-1
+	refs/heads/commit-4-4
+	refs/heads/commit-8-4
+	refs/heads/commit-4-2
+	EOF
+	run_all_modes git for-each-ref \
+		--format="%(refname)" --stdin \
+		--sort=refname --sort=is-base:commit-2-3 &&
+
+	cat >expect <<-\EOF &&
+	refs/heads/commit-4-2
+	refs/heads/commit-1-1
+	refs/heads/commit-4-4
+	refs/heads/commit-8-4
+	EOF
+	run_all_modes git for-each-ref \
+		--format="%(refname)" --stdin \
+		--sort=refname --sort=-is-base:commit-2-3
+'
+
 test_done
