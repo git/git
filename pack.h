@@ -86,7 +86,12 @@ struct progress;
 /* Note, the data argument could be NULL if object type is blob */
 typedef int (*verify_fn)(const struct object_id *, enum object_type, unsigned long, void*, int*);
 
-const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects, int nr_objects, const struct pack_idx_option *, const unsigned char *sha1);
+const char *write_idx_file(const struct git_hash_algo *hash_algo,
+			   const char *index_name,
+			   struct pack_idx_entry **objects,
+			   int nr_objects,
+			   const struct pack_idx_option *,
+			   const unsigned char *sha1);
 int check_pack_crc(struct packed_git *p, struct pack_window **w_curs, off_t offset, off_t len, unsigned int nr);
 int verify_pack_index(struct packed_git *);
 int verify_pack(struct repository *, struct packed_git *, verify_fn fn, struct progress *, uint32_t);
@@ -119,7 +124,8 @@ int read_pack_header(int fd, struct pack_header *);
 struct packing_data;
 
 struct hashfile *create_tmp_packfile(char **pack_tmp_name);
-void stage_tmp_packfiles(struct strbuf *name_buffer,
+void stage_tmp_packfiles(const struct git_hash_algo *hash_algo,
+			 struct strbuf *name_buffer,
 			 const char *pack_tmp_name,
 			 struct pack_idx_entry **written_list,
 			 uint32_t nr_written,
