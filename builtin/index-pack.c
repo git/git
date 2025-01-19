@@ -1802,11 +1802,11 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 					warning(_("no threads support, ignoring %s"), arg);
 					nr_threads = 1;
 				}
-			} else if (starts_with(arg, "--pack_header=")) {
-				if (parse_pack_header_option(arg + 14,
+			} else if (skip_prefix(arg, "--pack_header=", &arg)) {
+				if (parse_pack_header_option(arg,
 							     input_buffer,
 							     &input_len) < 0)
-					die(_("bad %s"), arg);
+					die(_("bad --pack_header: %s"), arg);
 			} else if (!strcmp(arg, "-v")) {
 				verbose = 1;
 			} else if (!strcmp(arg, "--progress-title")) {
