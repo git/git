@@ -2315,3 +2315,20 @@ int is_promisor_object(struct repository *r, const struct object_id *oid)
 	}
 	return oidset_contains(&promisor_objects, oid);
 }
+
+int parse_pack_header_option(const char *in, unsigned char *out, unsigned int *len)
+{
+	struct pack_header *hdr;
+	char *c;
+
+	hdr = (struct pack_header *)out;
+	hdr->hdr_signature = htonl(PACK_SIGNATURE);
+	hdr->hdr_version = htonl(strtoul(in, &c, 10));
+	if (*c != ',')
+		return -1;
+	hdr->hdr_entries = htonl(strtoul(c + 1, &c, 10));
+	if (*c)
+		return -1;
+	*len = sizeof(*hdr);
+	return 0;
+}
