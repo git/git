@@ -1,5 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "environment.h"
 #include "gettext.h"
@@ -211,9 +209,10 @@ static void write_rev_index_positions(struct hashfile *f,
 		hashwrite_be32(f, pack_order[i]);
 }
 
-static void write_rev_trailer(struct hashfile *f, const unsigned char *hash)
+static void write_rev_trailer(const struct git_hash_algo *hash_algo,
+			      struct hashfile *f, const unsigned char *hash)
 {
-	hashwrite(f, hash, the_hash_algo->rawsz);
+	hashwrite(f, hash, hash_algo->rawsz);
 }
 
 char *write_rev_file(const struct git_hash_algo *hash_algo,
@@ -286,7 +285,7 @@ char *write_rev_file_order(const struct git_hash_algo *hash_algo,
 	write_rev_header(hash_algo, f);
 
 	write_rev_index_positions(f, pack_order, nr_objects);
-	write_rev_trailer(f, hash);
+	write_rev_trailer(hash_algo, f, hash);
 
 	if (adjust_shared_perm(path) < 0)
 		die(_("failed to make %s readable"), path);
@@ -298,11 +297,12 @@ char *write_rev_file_order(const struct git_hash_algo *hash_algo,
 	return path;
 }
 
-static void write_mtimes_header(struct hashfile *f)
+static void write_mtimes_header(const struct git_hash_algo *hash_algo,
+				struct hashfile *f)
 {
 	hashwrite_be32(f, MTIMES_SIGNATURE);
 	hashwrite_be32(f, MTIMES_VERSION);
-	hashwrite_be32(f, oid_version(the_hash_algo));
+	hashwrite_be32(f, oid_version(hash_algo));
 }
 
 /*
@@ -322,12 +322,14 @@ static void write_mtimes_objects(struct hashfile *f,
 	}
 }
 
-static void write_mtimes_trailer(struct hashfile *f, const unsigned char *hash)
+static void write_mtimes_trailer(const struct git_hash_algo *hash_algo,
+				 struct hashfile *f, const unsigned char *hash)
 {
-	hashwrite(f, hash, the_hash_algo->rawsz);
+	hashwrite(f, hash, hash_algo->rawsz);
 }
 
-static char *write_mtimes_file(struct packing_data *to_pack,
+static char *write_mtimes_file(const struct git_hash_algo *hash_algo,
+			       struct packing_data *to_pack,
 			       struct pack_idx_entry **objects,
 			       uint32_t nr_objects,
 			       const unsigned char *hash)
@@ -344,9 +346,9 @@ static char *write_mtimes_file(struct packing_data *to_pack,
 	mtimes_name = strbuf_detach(&tmp_file, NULL);
 	f = hashfd(fd, mtimes_name);
 
-	write_mtimes_header(f);
+	write_mtimes_header(hash_algo, f);
 	write_mtimes_objects(f, to_pack, objects, nr_objects);
-	write_mtimes_trailer(f, hash);
+	write_mtimes_trailer(hash_algo, f, hash);
 
 	if (adjust_shared_perm(mtimes_name) < 0)
 		die(_("failed to make %s readable"), mtimes_name);
@@ -575,8 +577,8 @@ void stage_tmp_packfiles(const struct git_hash_algo *hash_algo,
 				      hash, pack_idx_opts->flags);
 
 	if (pack_idx_opts->flags & WRITE_MTIMES) {
-		mtimes_tmp_name = write_mtimes_file(to_pack, written_list,
-						    nr_written,
+		mtimes_tmp_name = write_mtimes_file(hash_algo, to_pack,
+						    written_list, nr_written,
 						    hash);
 	}
 
