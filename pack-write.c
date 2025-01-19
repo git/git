@@ -194,11 +194,12 @@ static int pack_order_cmp(const void *va, const void *vb, void *ctx)
 	return 0;
 }
 
-static void write_rev_header(struct hashfile *f)
+static void write_rev_header(const struct git_hash_algo *hash_algo,
+			     struct hashfile *f)
 {
 	hashwrite_be32(f, RIDX_SIGNATURE);
 	hashwrite_be32(f, RIDX_VERSION);
-	hashwrite_be32(f, oid_version(the_hash_algo));
+	hashwrite_be32(f, oid_version(hash_algo));
 }
 
 static void write_rev_index_positions(struct hashfile *f,
@@ -215,7 +216,8 @@ static void write_rev_trailer(struct hashfile *f, const unsigned char *hash)
 	hashwrite(f, hash, the_hash_algo->rawsz);
 }
 
-char *write_rev_file(const char *rev_name,
+char *write_rev_file(const struct git_hash_algo *hash_algo,
+		     const char *rev_name,
 		     struct pack_idx_entry **objects,
 		     uint32_t nr_objects,
 		     const unsigned char *hash,
@@ -233,15 +235,16 @@ char *write_rev_file(const char *rev_name,
 		pack_order[i] = i;
 	QSORT_S(pack_order, nr_objects, pack_order_cmp, objects);
 
-	ret = write_rev_file_order(rev_name, pack_order, nr_objects, hash,
-				   flags);
+	ret = write_rev_file_order(hash_algo, rev_name, pack_order, nr_objects,
+				   hash, flags);
 
 	free(pack_order);
 
 	return ret;
 }
 
-char *write_rev_file_order(const char *rev_name,
+char *write_rev_file_order(const struct git_hash_algo *hash_algo,
+			   const char *rev_name,
 			   uint32_t *pack_order,
 			   uint32_t nr_objects,
 			   const unsigned char *hash,
@@ -280,7 +283,7 @@ char *write_rev_file_order(const char *rev_name,
 		return NULL;
 	}
 
-	write_rev_header(f);
+	write_rev_header(hash_algo, f);
 
 	write_rev_index_positions(f, pack_order, nr_objects);
 	write_rev_trailer(f, hash);
@@ -568,8 +571,8 @@ void stage_tmp_packfiles(const struct git_hash_algo *hash_algo,
 	if (adjust_shared_perm(*idx_tmp_name))
 		die_errno("unable to make temporary index file readable");
 
-	rev_tmp_name = write_rev_file(NULL, written_list, nr_written, hash,
-				      pack_idx_opts->flags);
+	rev_tmp_name = write_rev_file(hash_algo, NULL, written_list, nr_written,
+				      hash, pack_idx_opts->flags);
 
 	if (pack_idx_opts->flags & WRITE_MTIMES) {
 		mtimes_tmp_name = write_mtimes_file(to_pack, written_list,

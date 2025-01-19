@@ -2096,9 +2096,9 @@ int cmd_index_pack(int argc,
 	curr_index = write_idx_file(the_hash_algo, index_name, idx_objects,
 				    nr_objects, &opts, pack_hash);
 	if (rev_index)
-		curr_rev_index = write_rev_file(rev_index_name, idx_objects,
-						nr_objects, pack_hash,
-						opts.flags);
+		curr_rev_index = write_rev_file(the_hash_algo, rev_index_name,
+						idx_objects, nr_objects,
+						pack_hash, opts.flags);
 	free(idx_objects);
 
 	if (!verify)
