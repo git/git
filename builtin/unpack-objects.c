@@ -640,10 +640,10 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix UNUSED)
 				fsck_set_msg_types(&fsck_options, arg);
 				continue;
 			}
-			if (starts_with(arg, "--pack_header=")) {
-				if (parse_pack_header_option(arg + 14,
+			if (skip_prefix(arg, "--pack_header=", &arg)) {
+				if (parse_pack_header_option(arg,
 							     buffer, &len) < 0)
-					die(_("bad %s"), arg);
+					die(_("bad --pack_header: %s"), arg);
 				continue;
 			}
 			if (skip_prefix(arg, "--max-input-size=", &arg)) {
