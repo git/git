@@ -579,15 +579,16 @@ static void unpack_one(unsigned nr)
 static void unpack_all(void)
 {
 	int i;
-	struct pack_header *hdr = fill(sizeof(struct pack_header));
+	unsigned char *hdr = fill(sizeof(struct pack_header));
 
-	nr_objects = ntohl(hdr->hdr_entries);
-
-	if (ntohl(hdr->hdr_signature) != PACK_SIGNATURE)
+	if (get_be32(hdr) != PACK_SIGNATURE)
 		die("bad pack file");
-	if (!pack_version_ok(hdr->hdr_version))
+	hdr += 4;
+	if (!pack_version_ok_native(get_be32(hdr)))
 		die("unknown pack file version %"PRIu32,
-			ntohl(hdr->hdr_version));
+		    get_be32(hdr));
+	hdr += 4;
+	nr_objects = get_be32(hdr);
 	use(sizeof(struct pack_header));
 
 	if (!quiet)

@@ -379,16 +379,18 @@ static const char *open_pack_file(const char *pack_name)
 
 static void parse_pack_header(void)
 {
-	struct pack_header *hdr = fill(sizeof(struct pack_header));
+	unsigned char *hdr = fill(sizeof(struct pack_header));
 
 	/* Header consistency check */
-	if (hdr->hdr_signature != htonl(PACK_SIGNATURE))
+	if (get_be32(hdr) != PACK_SIGNATURE)
 		die(_("pack signature mismatch"));
-	if (!pack_version_ok(hdr->hdr_version))
+	hdr += 4;
+	if (!pack_version_ok_native(get_be32(hdr)))
 		die(_("pack version %"PRIu32" unsupported"),
-			ntohl(hdr->hdr_version));
+		    get_be32(hdr));
+	hdr += 4;
 
-	nr_objects = ntohl(hdr->hdr_entries);
+	nr_objects = get_be32(hdr);
 	use(sizeof(struct pack_header));
 }
 
