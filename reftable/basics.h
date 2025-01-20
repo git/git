@@ -171,7 +171,7 @@ static inline void *reftable_alloc_grow(void *p, size_t nelem, size_t elsize,
 /* Find the longest shared prefix size of `a` and `b` */
 size_t common_prefix_size(struct reftable_buf *a, struct reftable_buf *b);
 
-int hash_size(enum reftable_hash id);
+uint32_t hash_size(enum reftable_hash id);
 
 /*
  * Format IDs that identify the hash function used by a reftable. Note that

@@ -272,7 +272,7 @@ size_t common_prefix_size(struct reftable_buf *a, struct reftable_buf *b)
 	return p;
 }
 
-int hash_size(enum reftable_hash id)
+uint32_t hash_size(enum reftable_hash id)
 {
 	if (!id)
 		return REFTABLE_HASH_SIZE_SHA1;

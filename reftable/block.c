@@ -72,7 +72,7 @@ static int block_writer_register_restart(struct block_writer *w, int n,
 }
 
 int block_writer_init(struct block_writer *bw, uint8_t typ, uint8_t *block,
-		      uint32_t block_size, uint32_t header_off, int hash_size)
+		      uint32_t block_size, uint32_t header_off, uint32_t hash_size)
 {
 	bw->block = block;
 	bw->hash_size = hash_size;
@@ -214,7 +214,7 @@ int block_writer_finish(struct block_writer *w)
 
 int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		      uint32_t header_off, uint32_t table_block_size,
-		      int hash_size)
+		      uint32_t hash_size)
 {
 	uint32_t full_block_size = table_block_size;
 	uint8_t typ = block->data[header_off];

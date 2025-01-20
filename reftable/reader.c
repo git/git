@@ -750,7 +750,7 @@ static int reftable_reader_refs_for_unindexed(struct reftable_reader *r,
 	struct table_iter *ti;
 	struct filtering_ref_iterator *filter = NULL;
 	struct filtering_ref_iterator empty = FILTERING_REF_ITERATOR_INIT;
-	int oid_len = hash_size(r->hash_id);
+	uint32_t oid_len = hash_size(r->hash_id);
 	int err;
 
 	REFTABLE_ALLOC_ARRAY(ti, 1);
