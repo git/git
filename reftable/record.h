@@ -32,8 +32,10 @@ static inline void string_view_consume(struct string_view *s, int n)
 	s->len -= n;
 }
 
-/* utilities for de/encoding varints */
-
+/*
+ * Decode and encode a varint. Returns the number of bytes read/written, or a
+ * negative value in case encoding/decoding the varint has failed.
+ */
 int get_var_int(uint64_t *dest, struct string_view *in);
 int put_var_int(struct string_view *dest, uint64_t val);
 
