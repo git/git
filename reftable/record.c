@@ -144,9 +144,9 @@ int reftable_encode_key(int *restart, struct string_view dest,
 			uint8_t extra)
 {
 	struct string_view start = dest;
-	int prefix_len = common_prefix_size(&prev_key, &key);
+	size_t prefix_len = common_prefix_size(&prev_key, &key);
 	uint64_t suffix_len = key.len - prefix_len;
-	int n = put_var_int(&dest, (uint64_t)prefix_len);
+	int n = put_var_int(&dest, prefix_len);
 	if (n < 0)
 		return -1;
 	string_view_consume(&dest, n);
