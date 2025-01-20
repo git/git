@@ -22,7 +22,7 @@ struct reftable_block_source {
  * so it can return itself into the pool. */
 struct reftable_block {
 	uint8_t *data;
-	int len;
+	size_t len;
 	struct reftable_block_source source;
 };
 
