@@ -643,7 +643,7 @@ static void t_write_empty_table(void)
 	check_int(err, ==, REFTABLE_EMPTY_TABLE_ERROR);
 	reftable_writer_free(w);
 
-	check_int(buf.len, ==, header_size(1) + footer_size(1));
+	check_uint(buf.len, ==, header_size(1) + footer_size(1));
 
 	block_source_from_buf(&source, &buf);
 

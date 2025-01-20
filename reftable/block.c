@@ -15,7 +15,7 @@ https://developers.google.com/open-source/licenses/bsd
 #include "system.h"
 #include <zlib.h>
 
-int header_size(int version)
+size_t header_size(int version)
 {
 	switch (version) {
 	case 1:
@@ -26,7 +26,7 @@ int header_size(int version)
 	abort();
 }
 
-int footer_size(int version)
+size_t footer_size(int version)
 {
 	switch (version) {
 	case 1:
