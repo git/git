@@ -40,16 +40,15 @@ size_t footer_size(int version)
 static int block_writer_register_restart(struct block_writer *w, int n,
 					 int is_restart, struct reftable_buf *key)
 {
-	int rlen, err;
+	uint32_t rlen;
+	int err;
 
 	rlen = w->restart_len;
-	if (rlen >= MAX_RESTARTS) {
+	if (rlen >= MAX_RESTARTS)
 		is_restart = 0;
-	}
 
-	if (is_restart) {
+	if (is_restart)
 		rlen++;
-	}
 	if (2 + 3 * rlen + n > w->block_size - w->next)
 		return -1;
 	if (is_restart) {
@@ -148,8 +147,7 @@ done:
 
 int block_writer_finish(struct block_writer *w)
 {
-	int i;
-	for (i = 0; i < w->restart_len; i++) {
+	for (uint32_t i = 0; i < w->restart_len; i++) {
 		put_be24(w->block + w->next, w->restarts[i]);
 		w->next += 3;
 	}
