@@ -126,7 +126,7 @@ static int decode_string(struct reftable_buf *dest, struct string_view in)
 static int encode_string(const char *str, struct string_view s)
 {
 	struct string_view start = s;
-	int l = strlen(str);
+	size_t l = strlen(str);
 	int n = put_var_int(&s, l);
 	if (n < 0)
 		return -1;
@@ -565,7 +565,6 @@ static int reftable_obj_record_decode(void *rec, struct reftable_buf key,
 	uint64_t count = val_type;
 	int n = 0;
 	uint64_t last;
-	int j;
 
 	reftable_obj_record_release(r);
 
@@ -600,8 +599,7 @@ static int reftable_obj_record_decode(void *rec, struct reftable_buf key,
 	string_view_consume(&in, n);
 
 	last = r->offsets[0];
-	j = 1;
-	while (j < count) {
+	for (uint64_t j = 1; j < count; j++) {
 		uint64_t delta = 0;
 		int n = get_var_int(&delta, &in);
 		if (n < 0) {
@@ -610,7 +608,6 @@ static int reftable_obj_record_decode(void *rec, struct reftable_buf key,
 		string_view_consume(&in, n);
 
 		last = r->offsets[j] = (delta + last);
-		j++;
 	}
 	return start.len - in.len;
 }
