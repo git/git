@@ -98,7 +98,8 @@ static void t_read_file(void)
 static int write_test_ref(struct reftable_writer *wr, void *arg)
 {
 	struct reftable_ref_record *ref = arg;
-	reftable_writer_set_limits(wr, ref->update_index, ref->update_index);
+	check(!reftable_writer_set_limits(wr, ref->update_index,
+					  ref->update_index));
 	return reftable_writer_add_ref(wr, ref);
 }
 
@@ -138,7 +139,8 @@ static int write_test_log(struct reftable_writer *wr, void *arg)
 {
 	struct write_log_arg *wla = arg;
 
-	reftable_writer_set_limits(wr, wla->update_index, wla->update_index);
+	check(!reftable_writer_set_limits(wr, wla->update_index,
+					  wla->update_index));
 	return reftable_writer_add_log(wr, wla->log);
 }
 
@@ -956,7 +958,7 @@ static void t_reflog_expire(void)
 
 static int write_nothing(struct reftable_writer *wr, void *arg UNUSED)
 {
-	reftable_writer_set_limits(wr, 1, 1);
+	check(!reftable_writer_set_limits(wr, 1, 1));
 	return 0;
 }
 
