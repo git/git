@@ -4,6 +4,8 @@ Git v2.49 Release Notes
 UI, Workflows & Features
 ------------------------
 
+ * Completion script updates for zsh
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -11,6 +13,13 @@ Performance, Internal Implementation, Development Support etc.
  * More -Wsign-compare fixes.
 
  * meson-based build now supports the unsafe-sha1 build knob.
+
+ * The code to check LSan results has been simplified and made more
+   robust.
+   (merge 164a2516eb jk/lsan-race-ignore-false-positive later to maint).
+
+ * More code paths have a repository passed through the callchain,
+   instead of assuming the primary the_repository object.
 
 
 Fixes since v2.48
@@ -30,4 +39,17 @@ Fixes since v2.48
    to.
    (merge d7fcbe2c56 ps/object-collision-check later to maint).
 
+ * The code to compute "unique" name used git_rand() which can fail or
+   get stuck; the callsite does not require cryptographic security.
+   Introduce the "insecure" mode and use it appropriately.
+   (merge 0b4f8afef6 ps/reftable-get-random-fix later to maint).
+
+ * A misconfigured "fsck.skiplist" configuration variable was not
+   diagnosed as an error, which has been corrected.
+   (merge ca7158076f jt/fsck-skiplist-parse-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
+   (merge ddb5287894 jk/t7407-use-test-grep later to maint).
+   (merge 21e1b44865 aj/difftool-config-doc-fix later to maint).
+   (merge 6a63995335 mh/gitattr-doc-markup-fix later to maint).
+   (merge 43850dcf9c sk/unit-test-hash later to maint).
