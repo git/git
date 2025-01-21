@@ -171,23 +171,23 @@ static inline uint64_t get_be64(const void *ptr)
 static inline void put_be32(void *ptr, uint32_t value)
 {
 	unsigned char *p = ptr;
-	p[0] = value >> 24;
-	p[1] = value >> 16;
-	p[2] = value >>  8;
-	p[3] = value >>  0;
+	p[0] = (value >> 24) & 0xff;
+	p[1] = (value >> 16) & 0xff;
+	p[2] = (value >>  8) & 0xff;
+	p[3] = (value >>  0) & 0xff;
 }
 
 static inline void put_be64(void *ptr, uint64_t value)
 {
 	unsigned char *p = ptr;
-	p[0] = value >> 56;
-	p[1] = value >> 48;
-	p[2] = value >> 40;
-	p[3] = value >> 32;
-	p[4] = value >> 24;
-	p[5] = value >> 16;
-	p[6] = value >>  8;
-	p[7] = value >>  0;
+	p[0] = (value >> 56) & 0xff;
+	p[1] = (value >> 48) & 0xff;
+	p[2] = (value >> 40) & 0xff;
+	p[3] = (value >> 32) & 0xff;
+	p[4] = (value >> 24) & 0xff;
+	p[5] = (value >> 16) & 0xff;
+	p[6] = (value >>  8) & 0xff;
+	p[7] = (value >>  0) & 0xff;
 }
 
 #endif /* COMPAT_BSWAP_H */
