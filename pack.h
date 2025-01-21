@@ -13,7 +13,8 @@ struct repository;
  */
 #define PACK_SIGNATURE 0x5041434b	/* "PACK" */
 #define PACK_VERSION 2
-#define pack_version_ok(v) ((v) == htonl(2) || (v) == htonl(3))
+#define pack_version_ok(v) pack_version_ok_native(ntohl(v))
+#define pack_version_ok_native(v) ((v) == 2 || (v) == 3)
 struct pack_header {
 	uint32_t hdr_signature;
 	uint32_t hdr_version;
