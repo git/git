@@ -13,6 +13,8 @@ diff.guitool::
 	and requires that a corresponding difftool.<guitool>.cmd variable
 	is defined.
 
+include::{build_dir}/mergetools-diff.txt[]
+
 difftool.<tool>.cmd::
 	Specify the command to invoke the specified diff tool.
 	The specified command is evaluated in shell with the following
