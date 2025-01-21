@@ -1,5 +1,6 @@
 clar_test_suites = [
   'unit-tests/u-ctype.c',
+  'unit-tests/u-hash.c',
   'unit-tests/u-strvec.c',
 ]
 
@@ -41,7 +42,6 @@ test('unit-tests', clar_unit_tests)
 
 unit_test_programs = [
   'unit-tests/t-example-decorate.c',
-  'unit-tests/t-hash.c',
   'unit-tests/t-hashmap.c',
   'unit-tests/t-mem-pool.c',
   'unit-tests/t-oid-array.c',
