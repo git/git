@@ -1,5 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "diagnose.h"
 #include "compat/disk.h"
@@ -12,6 +10,7 @@
 #include "object-store-ll.h"
 #include "packfile.h"
 #include "parse-options.h"
+#include "repository.h"
 #include "write-or-die.h"
 
 struct archive_dir {
@@ -179,7 +178,9 @@ static int add_directory_to_archiver(struct strvec *archiver_args,
 	return res;
 }
 
-int create_diagnostics_archive(struct strbuf *zip_path, enum diagnose_mode mode)
+int create_diagnostics_archive(struct repository *r,
+			       struct strbuf *zip_path,
+			       enum diagnose_mode mode)
 {
 	struct strvec archiver_args = STRVEC_INIT;
 	char **argv_copy = NULL;
@@ -218,7 +219,7 @@ int create_diagnostics_archive(struct strbuf *zip_path, enum diagnose_mode mode)
 	strbuf_addstr(&buf, "Collecting diagnostic info\n\n");
 	get_version_info(&buf, 1);
 
-	strbuf_addf(&buf, "Repository root: %s\n", the_repository->worktree);
+	strbuf_addf(&buf, "Repository root: %s\n", r->worktree);
 	get_disk_info(&buf);
 	write_or_die(stdout_fd, buf.buf, buf.len);
 	strvec_pushf(&archiver_args,
@@ -227,7 +228,7 @@ int create_diagnostics_archive(struct strbuf *zip_path, enum diagnose_mode mode)
 
 	strbuf_reset(&buf);
 	strbuf_addstr(&buf, "--add-virtual-file=packs-local.txt:");
-	dir_file_stats(the_repository->objects->odb, &buf);
+	dir_file_stats(r->objects->odb, &buf);
 	foreach_alt_odb(dir_file_stats, &buf);
 	strvec_push(&archiver_args, buf.buf);
 
@@ -250,13 +251,13 @@ int create_diagnostics_archive(struct strbuf *zip_path, enum diagnose_mode mode)
 	}
 
 	strvec_pushl(&archiver_args, "--prefix=",
-		     oid_to_hex(the_hash_algo->empty_tree), "--", NULL);
+		     oid_to_hex(r->hash_algo->empty_tree), "--", NULL);
 
 	/* `write_archive()` modifies the `argv` passed to it. Let it. */
 	argv_copy = xmemdupz(archiver_args.v,
 			     sizeof(char *) * archiver_args.nr);
 	res = write_archive(archiver_args.nr, (const char **)argv_copy, NULL,
-			    the_repository, NULL, 0);
+			    r, NULL, 0);
 	if (res) {
 		error(_("failed to write archive"));
 		goto diagnose_cleanup;
