@@ -206,9 +206,9 @@ manpages = {
 
 docs_backend = get_option('docs_backend')
 if docs_backend == 'auto'
-  if find_program('asciidoc', required: false).found()
+  if find_program('asciidoc', dirs: program_path, required: false).found()
     docs_backend = 'asciidoc'
-  elif find_program('asciidoctor', required: false).found()
+  elif find_program('asciidoctor', dirs: program_path, required: false).found()
     docs_backend = 'asciidoctor'
   else
     error('Neither asciidoc nor asciidoctor were found.')
@@ -216,7 +216,7 @@ if docs_backend == 'auto'
 endif
 
 if docs_backend == 'asciidoc'
-  asciidoc = find_program('asciidoc', required: true)
+  asciidoc = find_program('asciidoc', dirs: program_path)
   asciidoc_html = 'xhtml11'
   asciidoc_docbook = 'docbook'
   xmlto_extra = [ ]
@@ -245,7 +245,7 @@ if docs_backend == 'asciidoc'
     asciidoc_conf,
   ]
 elif docs_backend == 'asciidoctor'
-  asciidoctor = find_program('asciidoctor', required: true)
+  asciidoctor = find_program('asciidoctor', dirs: program_path)
   asciidoc_html = 'xhtml5'
   asciidoc_docbook = 'docbook5'
   xmlto_extra = [
@@ -283,7 +283,7 @@ elif docs_backend == 'asciidoctor'
   ]
 endif
 
-xmlto = find_program('xmlto')
+xmlto = find_program('xmlto', dirs: program_path)
 
 cmd_lists = [
   'cmds-ancillaryinterrogators.txt',
@@ -404,7 +404,7 @@ if get_option('docs').contains('html')
     pointing_to: 'git.html',
   )
 
-  xsltproc = find_program('xsltproc')
+  xsltproc = find_program('xsltproc', dirs: program_path)
 
   user_manual_xml = custom_target(
     command: asciidoc_common_options + [
