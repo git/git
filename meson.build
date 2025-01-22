@@ -1947,6 +1947,19 @@ devenv.set('GIT_BUILD_DIR', meson.current_build_dir())
 devenv.prepend('PATH', meson.current_build_dir() / 'bin-wrappers')
 meson.add_devenv(devenv)
 
+# Generate the 'version' file in the distribution tarball. This is used via
+# `meson dist -C <builddir>` to populate the source archive with the Git
+# version that the archive is being generated from.
+meson.add_dist_script(
+  shell,
+  '-c',
+  '"$1" "$2" "$3" --format="@GIT_VERSION@" "$MESON_DIST_ROOT/version"',
+  'GIT-VERSION-GEN',
+  shell,
+  meson.current_source_dir() / 'GIT-VERSION-GEN',
+  meson.current_source_dir(),
+)
+
 summary({
   'curl': curl.found(),
   'expat': expat.found(),
