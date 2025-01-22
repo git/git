@@ -84,7 +84,7 @@ struct reftable_block_stats {
 	/* total number of entries written */
 	int entries;
 	/* total number of key restarts */
-	int restarts;
+	uint32_t restarts;
 	/* total number of blocks */
 	int blocks;
 	/* total number of index blocks */

@@ -11,8 +11,6 @@ https://developers.google.com/open-source/licenses/bsd
 
 /* This header glues the reftable library to the rest of Git */
 
-#define DISABLE_SIGN_COMPARE_WARNINGS
-
 #include "git-compat-util.h"
 
 /*
