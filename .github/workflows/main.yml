@@ -248,6 +248,58 @@ jobs:
       with:
         name: failed-tests-windows-vs-${{ matrix.nr }}
         path: ${{env.FAILED_TEST_ARTIFACTS}}
+
+  windows-meson-build:
+    name: win+Meson build
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
+    runs-on: windows-latest
+    concurrency:
+      group: windows-meson-build-${{ github.ref }}
+      cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+    - name: Set up dependencies
+      shell: pwsh
+      run: pip install meson ninja
+    - name: Setup
+      shell: pwsh
+      run: meson setup build -Dperl=disabled
+    - name: Compile
+      shell: pwsh
+      run: meson compile -C build
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-meson-artifacts
+        path: build
+  windows-meson-test:
+    name: win+Meson test
+    runs-on: windows-latest
+    needs: [ci-config, windows-meson-build]
+    strategy:
+      fail-fast: false
+      matrix:
+        nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    concurrency:
+      group: windows-meson-test-${{ matrix.nr }}-${{ github.ref }}
+      cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+    - name: Set up dependencies
+      shell: pwsh
+      run: pip install meson ninja
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: windows-meson-artifacts
+        path: build
+    - name: Test
+      shell: pwsh
+      run: meson test -C build --list | Select-Object -Skip 1 | Select-String .* | Group-Object -Property { $_.LineNumber % 10 } | Where-Object Name -EQ ${{ matrix.nr }} | ForEach-Object { meson test -C build --no-rebuild --print-errorlogs $_.Group }
+
   regular:
     name: ${{matrix.vector.jobname}} (${{matrix.vector.pool}})
     needs: ci-config
