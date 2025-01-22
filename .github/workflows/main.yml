@@ -269,7 +269,7 @@ jobs:
           - jobname: linux-reftable
             cc: clang
             pool: ubuntu-latest
-          - jobname: linux-gcc
+          - jobname: linux-breaking-changes
             cc: gcc
             pool: ubuntu-20.04
           - jobname: linux-TEST-vars
