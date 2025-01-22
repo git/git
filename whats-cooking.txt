@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2025, #05; Fri, 17)
-X-master-at: efff4a85a4fce58b2aa850c6fbf4d8828329f51d
-X-next-at: 71f41b00d8cac733315206fddf476d8bed484a36
+Subject: What's cooking in git.git (Jan 2025, #06; Wed, 22)
+X-master-at: 4e746b1a31f9f0036032b6f94279cf16fb363203
+X-next-at: 3171845b731fb90dfa49d89be174ccc6dfbf5729
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2025, #05; Fri, 17)
+What's cooking in git.git (Jan 2025, #06; Wed, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,14 +17,11 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Git 2.48.1 and other maintenance releases have been tagged and
-released.  A handful of topics that were marked with "Will discard?"
-without seeing any further activity have been discarded.
-
 There are quite a few topics that are listed here but without much
-review activities.  I'll review the notes below with list archive
-myself to see which ones are truly stale and discard them, maybe
-later next week.
+review activities.  I earlier said that I'll review the notes below
+with list archive myself to see which ones are truly stale and
+discard them, but this is progressing a lot slower than my liking.
+Help is greatly appreciated.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -57,88 +54,145 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* as/long-option-help-i18n (2024-12-30) 1 commit
-  (merged to 'next' on 2024-12-30 at 900c79808f)
- + parse-options: localize mark-up of placeholder text in the short help
+* aj/difftool-config-doc-fix (2025-01-09) 1 commit
+  (merged to 'next' on 2025-01-10 at b8902a53d1)
+ + difftool docs: restore correct position of tool list
 
- Tweak the help text used for the option value placeholders by
- parse-options API so that translations can customize the "<>"
- placeholder signal (e.g. "--option=<value>").
- source: <20241228114221.10351-4-ash@kambanaria.org>
+ Docfix.
+ source: <pull.1849.git.1736379323427.gitgitgadget@gmail.com>
 
 
-* mb/t7110-use-test-path-helper (2025-01-03) 1 commit
-  (merged to 'next' on 2025-01-06 at cd96b0ac82)
- + t7110: replace `test -f` with `test_path_is_*` helpers
+* dk/zsh-config-completion-fix (2025-01-06) 1 commit
+  (merged to 'next' on 2025-01-10 at efba7d534c)
+ + completion: repair config completion for Zsh
 
- Test modernization.
- source: <20250103130035.79376-1-matteobagnolini2003@gmail.com>
-
-
-* ps/meson-weak-sha1-build (2024-12-30) 8 commits
-  (merged to 'next' on 2025-01-01 at e01db872e4)
- + meson: provide a summary of configured backends
- + meson: wire up unsafe SHA1 backend
- + meson: add missing dots for build options
- + meson: simplify conditions for HTTPS and SHA1 dependencies
- + meson: require SecurityFramework when it's used as SHA1 backend
- + meson: deduplicate access to SHA1/SHA256 backend options
- + meson: consistenlty spell 'CommonCrypto'
- + Merge branch 'ps/weak-sha1-for-tail-sum-fix' into ps/meson-weak-sha1-build
- (this branch is used by ps/build-meson-fixes and ps/zlib-ng.)
-
- meson-based build now supports the unsafe-sha1 build knob.
- source: <20241230-pks-meson-sha1-unsafe-v1-0-efb276e171f5@pks.im>
+ Completion script updates for zsh
+ source: <pull.1860.v3.git.git.1736200026899.gitgitgadget@gmail.com>
 
 
-* ps/more-sign-compare (2024-12-27) 10 commits
-  (merged to 'next' on 2025-01-01 at 41c78cf690)
- + sign-compare: avoid comparing ptrdiff with an int/unsigned
- + commit-reach: use `size_t` to track indices when computing merge bases
- + shallow: fix -Wsign-compare warnings
- + builtin/log: fix remaining -Wsign-compare warnings
- + builtin/log: use `size_t` to track indices
- + commit-reach: use `size_t` to track indices in `get_reachable_subset()`
- + commit-reach: use `size_t` to track indices in `remove_redundant()`
- + commit-reach: fix type of `min_commit_date`
- + commit-reach: fix index used to loop through unsigned integer
- + prio-queue: fix type of `insertion_ctr`
+* jk/lsan-race-ignore-false-positive (2025-01-07) 3 commits
+  (merged to 'next' on 2025-01-09 at 3d7cd910b5)
+ + test-lib: add a few comments to LSan log checking
+ + test-lib: simplify lsan results check
+ + test-lib: invert return value of check_test_results_san_file_empty
 
- More -Wsign-compare fixes.
- cf. https://staticthinking.wordpress.com/2023/07/25/wsign-compare-is-garbage/
- source: <20241227-b4-pks-commit-reach-sign-compare-v1-0-07c59c2aa632@pks.im>
+ The code to check LSan results has been simplified and made more
+ robust.
+ source: <20250107070409.GA584456@coredump.intra.peff.net>
 
 
-* ps/object-collision-check (2025-01-06) 4 commits
-  (merged to 'next' on 2025-01-06 at 540e2bae11)
- + object-file: retry linking file into place when occluding file vanishes
- + object-file: don't special-case missing source file in collision check
- + object-file: rename variables in `check_collision()`
-  (merged to 'next' on 2024-12-30 at e083ea3154)
- + object-file: fix race in object collision check
+* jk/t7407-use-test-grep (2025-01-07) 1 commit
+  (merged to 'next' on 2025-01-09 at 1d584ee42d)
+ + t7407: use test_grep
 
- CI jobs gave sporadic failures, which turns out that that the
- object finalization code was giving an error when it did not have
- to.
- source: <20250106-b4-pks-object-file-racy-collision-check-v2-0-8b3984ecbb18@pks.im>
+ Test clean-up.
+ source: <20250107071824.GA594237@coredump.intra.peff.net>
 
 
-* re/submodule-parse-opt (2024-12-11) 7 commits
-  (merged to 'next' on 2024-12-21 at 9e65a56a63)
- + git-submodule.sh: rename some variables
- + git-submodule.sh: improve variables readability
- + git-submodule.sh: add some comments
- + git-submodule.sh: get rid of unused variable
- + git-submodule.sh: get rid of isnumber
- + git-submodule.sh: improve parsing of short options
- + git-submodule.sh: improve parsing of some long options
+* jt/fsck-skiplist-parse-fix (2025-01-07) 1 commit
+  (merged to 'next' on 2025-01-09 at d08b30fd78)
+ + fsck: reject misconfigured fsck.skipList
 
- "git submodule" learned various ways to spell the same option,
- e.g. "--branch=B" can be spelled "--branch B" or "-bB".
- source: <20241211063234.7610-1-royeldar0@gmail.com>
+ A misconfigured "fsck.skiplist" configuration variable was not
+ diagnosed as an error, which has been corrected.
+ source: <20250107162914.3756968-2-jltobler@gmail.com>
+
+
+* mh/gitattr-doc-markup-fix (2025-01-07) 1 commit
+  (merged to 'next' on 2025-01-10 at 9b8f84ebe2)
+ + docs: fix typesetting of merge driver placeholders
+
+ Doc markup fix.
+ source: <20250107212421.7yyvuzw4uqxnqv7t@archP14s>
+
+
+* ps/reftable-get-random-fix (2025-01-07) 2 commits
+  (merged to 'next' on 2025-01-09 at bc024b7a45)
+ + reftable/stack: accept insecure random bytes
+ + wrapper: allow generating insecure random bytes
+
+ The code to compute "unique" name used git_rand() which can fail or
+ get stuck; the callsite does not require cryptographic security.
+ Introduce the "insecure" mode and use it appropriately.
+ source: <20250107-b4-pks-reftable-csprng-v1-0-6109a54a8756@pks.im>
+
+
+* ps/the-repository (2024-12-18) 15 commits
+  (merged to 'next' on 2025-01-09 at 1de40edade)
+ + match-trees: stop using `the_repository`
+ + graph: stop using `the_repository`
+ + add-interactive: stop using `the_repository`
+ + tmp-objdir: stop using `the_repository`
+ + resolve-undo: stop using `the_repository`
+ + credential: stop using `the_repository`
+ + mailinfo: stop using `the_repository`
+ + diagnose: stop using `the_repository`
+ + server-info: stop using `the_repository`
+ + send-pack: stop using `the_repository`
+ + serve: stop using `the_repository`
+ + trace: stop using `the_repository`
+ + pager: stop using `the_repository`
+ + progress: stop using `the_repository`
+ + Merge branch 'ps/build-sign-compare' into ps/the-repository
+
+ More code paths have a repository passed through the callchain,
+ instead of assuming the primary the_repository object.
+ source: <20241217-pks-use-the-repository-conversion-v1-0-0dba48bcc239@pks.im>
+
+
+* sk/unit-test-hash (2025-01-09) 1 commit
+  (merged to 'next' on 2025-01-13 at 865b121824)
+ + t/unit-tests: convert hash to use clar test framework
+
+ Test update.
+ source: <20250109140952.5267-1-kuforiji98@gmail.com>
 
 --------------------------------------------------
 [New Topics]
+
+* bc/doc-adoc-not-txt (2025-01-21) 5 commits
+ - Remove obsolete ".txt" extensions for AsciiDoc files
+ - doc: use .adoc extension for AsciiDoc files
+ - gitattributes: mark AsciiDoc files as LF-only
+ - editorconfig: add .adoc extension
+ - doc: update gitignore for .adoc extension
+
+ All the documentation .txt files have been renamed to .adoc to help
+ content aware editors.
+
+ Will merge to 'next' and keep it there for at least 3 weeks.
+ source: <20250120015603.1980991-1-sandals@crustytoothpaste.net>
+
+
+* jp/t8002-printf-fix (2025-01-21) 1 commit
+  (merged to 'next' on 2025-01-22 at 20bc202378)
+ + t8002: fix ambiguous printf conversion specifications
+
+ Test fix.
+
+ Will merge to 'master'.
+ source: <20250120114106.2844157-1-jpalus@fastmail.com>
+
+
+* am/trace2-with-valueless-true (2025-01-22) 1 commit
+ - trace2: prevent segfault on config collection with valueless true
+
+ source: <pull.1814.v2.git.1736494100622.gitgitgadget@gmail.com>
+
+
+* kn/reflog-symref-fix (2025-01-22) 1 commit
+ - refs: fix creation of corrupted reflogs for symrefs
+
+ source: <20250122100319.2280647-1-karthik.188@gmail.com>
+
+
+* ps/reflog-migration-with-logall-fix (2025-01-22) 1 commit
+ - refs: fix migration of reflogs respecting "core.logAllRefUpdates"
+
+ source: <20250122-b4-pks-reflog-migration-fix-stash-v1-1-27dbae4602f7@pks.im>
+
+--------------------------------------------------
+[Cooking]
 
 * sj/meson-doc-technical-dependency-fix (2025-01-14) 1 commit
   (merged to 'next' on 2025-01-16 at 3ec55e0703)
@@ -172,8 +226,10 @@ Release tarballs are available at:
 
  Foreign language interface for Rust into our code base has been added.
 
- Needs to be aware of meson build?
+ Expecting a reroll.
  cf. <xmqqtt9ypj4m.fsf@gitster.g>
+ cf. <Z47jgK-oMjFRSslr@tapette.crustytoothpaste.net>
+ cf. <Z47kr0_fYYdaMWyA@tapette.crustytoothpaste.net>
  source: <cover.1736971328.git.steadmon@google.com>
 
 
@@ -184,28 +240,31 @@ Release tarballs are available at:
 
  "git refs migrate" for migrating reflog data was broken.
 
- Will merge to 'master'.
+ On Hold.
  cf. <Z4mUizLNUdq_1BgY@tapette.crustytoothpaste.net>
+ cf. <CAOLa=ZT4nws0irdZKUuWc70Rv9RUNQuSXnGAt1SnE1O+umSReg@mail.gmail.com>
  source: <CAOLa=ZTL9n_DPhNr49XAd6bT838kc09oVx_AH7Pb4o8VK_xQ9w@mail.gmail.com>
 
 
 * jc/show-usage-help (2025-01-17) 6 commits
- - builtin: send usage() help text to standard output
- - oddballs: send usage() help text to standard output
- - builtins: send usage_with_options() help text to standard output
- - usage: add show_usage_if_asked()
- - parse-options: add show_usage_with_options_if_asked()
- - t0012: optionally check that "-h" output goes to stdout
+  (merged to 'next' on 2025-01-21 at 5a17181a32)
+ + builtin: send usage() help text to standard output
+ + oddballs: send usage() help text to standard output
+ + builtins: send usage_with_options() help text to standard output
+ + usage: add show_usage_if_asked()
+ + parse-options: add show_usage_with_options_if_asked()
+ + t0012: optionally check that "-h" output goes to stdout
 
  The help text from "git $cmd -h" appear on the standard output for
  some $cmd and the standard error for others.  The built-in commands
  have been fixed to show them on the standard output consistently.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <20250117114123.GA2356746@coredump.intra.peff.net>
+ source: <20250117213148.3974552-1-gitster@pobox.com>
 
 
-* kn/pack-write-with-reduced-globals (2025-01-17) 5 commits
+* kn/pack-write-with-reduced-globals (2025-01-21) 5 commits
  - pack-write: pass hash_algo to internal functions
  - pack-write: pass hash_algo to `write_rev_file()`
  - pack-write: pass hash_algo to `write_idx_file()`
@@ -215,37 +274,38 @@ Release tarballs are available at:
  Code clean-up.
 
  Well merge to 'next'?
- cf. <Z4kIg8ihbgPPb3C_@pks.im>
- source: <20250117-kn-the-repo-cleanup-v2-0-a7fdc19688f5@gmail.com>
+ source: <20250119-kn-the-repo-cleanup-v3-0-a495fce08d71@gmail.com>
 
 
-* ps/reftable-sign-compare (2025-01-16) 10 commits
- - reftable: address trivial -Wsign-compare warnings
- - reftable/blocksource: adjust `read_block()` to return `ssize_t`
- - reftable/blocksource: adjust type of the block length
- - reftable/block: adjust type of the restart length
- - reftable/block: adapt header and footer size to return a `size_t`
- - reftable/basics: adjust `hash_size()` to return `uint32_t`
- - reftable/basics: adjust `common_prefix_size()` to return `size_t`
- - reftable/record: handle overflows when decoding varints
- - reftable/record: drop unused `print` function pointer
- - meson: stop disabling -Wsign-compare
+* ps/reftable-sign-compare (2025-01-21) 10 commits
+  (merged to 'next' on 2025-01-22 at a5ae1ce801)
+ + reftable: address trivial -Wsign-compare warnings
+ + reftable/blocksource: adjust `read_block()` to return `ssize_t`
+ + reftable/blocksource: adjust type of the block length
+ + reftable/block: adjust type of the restart length
+ + reftable/block: adapt header and footer size to return a `size_t`
+ + reftable/basics: adjust `hash_size()` to return `uint32_t`
+ + reftable/basics: adjust `common_prefix_size()` to return `size_t`
+ + reftable/record: handle overflows when decoding varints
+ + reftable/record: drop unused `print` function pointer
+ + meson: stop disabling -Wsign-compare
 
  THe reftable/ library code has been made -Wsign-compare clean.
 
- Will merge to 'next'?
- source: <20250116-b4-pks-reftable-sign-compare-v1-0-bd30e2ee96e7@pks.im>
+ Will merge to 'master'.
+ source: <20250120-b4-pks-reftable-sign-compare-v2-0-b4566d02e4a5@pks.im>
 
 
 * sk/unit-tests (2025-01-17) 4 commits
- - t/unit-tests: convert reftable tree test to use clar test framework
- - t/unit-tests: adapt priority queue test to use clar test framework
- - t/unit-tests: convert mem-pool test to use clar test framework
- - t/unit-tests: handle dashes in test suite filenames
+  (merged to 'next' on 2025-01-21 at 799bbc6b82)
+ + t/unit-tests: convert reftable tree test to use clar test framework
+ + t/unit-tests: adapt priority queue test to use clar test framework
+ + t/unit-tests: convert mem-pool test to use clar test framework
+ + t/unit-tests: handle dashes in test suite filenames
 
  Move a few more unit tests to the clar test framework.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250117122926.101749-1-kuforiji98@gmail.com>
 
 
@@ -269,20 +329,23 @@ Release tarballs are available at:
  source: <xmqqzfjqmbza.fsf@gitster.g>
 
 
-* jk/pack-header-parse-alignment-fix (2025-01-17) 3 commits
- - index-pack, unpack-objects: use skip_prefix to avoid magic number
- - parse_pack_header_option(): avoid unaligned memory writes
- - packfile: factor out --pack_header argument parsing
+* jk/pack-header-parse-alignment-fix (2025-01-21) 5 commits
+  (merged to 'next' on 2025-01-21 at 60017ef61a)
+ + index-pack, unpack-objects: use skip_prefix to avoid magic number
+ + index-pack, unpack-objects: use get_be32() for reading pack header
+ + parse_pack_header_option(): avoid unaligned memory writes
+ + packfile: factor out --pack_header argument parsing
+ + bswap.h: squelch potential sparse -Wcast-truncate warnings
 
  It was possible for "git unpack-objects" and "git index-pack" to
  make an unaligned access, which has been corrected.
 
- Will merge to 'next'.
- source: <20250117125207.GB2356599@coredump.intra.peff.net>
+ Will merge to 'master'.
+ source: <20250119131224.GA1541095@coredump.intra.peff.net>
 
 
-* kn/reflog-migration-fix-followup (2025-01-17) 4 commits
- - reftable: prevent 'update_index' changes after header write
+* kn/reflog-migration-fix-followup (2025-01-22) 4 commits
+ - reftable: prevent 'update_index' changes after adding records
  - refs: use 'uint64_t' for 'ref_update.index'
  - refs: mark `ref_transaction_update_reflog()` as static
  - Merge branch 'kn/reflog-migration-fix' into kn/reflog-migration-fix-followup
@@ -290,32 +353,34 @@ Release tarballs are available at:
 
  Code clean-up.
 
- source: <20250117-461-corrupted-reftable-followup-v1-0-70ee605ae3fe@gmail.com>
+ Will merge to 'next'.
+ cf. <Z5DgxQuc2j_-5GHg@pks.im>
+ source: <20250122-461-corrupted-reftable-followup-v3-0-ae5f88bf04fa@gmail.com>
 
 
 * mh/connect-sign-compare (2025-01-17) 1 commit
- - connect: address -Wsign-compare warnings
+  (merged to 'next' on 2025-01-21 at 6d872e6042)
+ + connect: address -Wsign-compare warnings
 
  The code in connect.c has been updated to work around complaints
  from -Wsign-compare.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250117074909.1430067-1-mh@glandium.org>
 
 
 * ps/build-meson-subtree (2025-01-17) 3 commits
- - meson: wire up the git-subtree(1) command
- - meson: introduce build option for contrib
- - contrib/subtree: fix building docs
+  (merged to 'next' on 2025-01-21 at fe4e60a331)
+ + meson: wire up the git-subtree(1) command
+ + meson: introduce build option for contrib
+ + contrib/subtree: fix building docs
 
  THe meson-driven build is now aware of "git-subtree" housed in
  contrib/subtree hierarchy.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250117-b4-pks-build-subtree-v1-0-03c2ed6cc42e@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * ak/instaweb-python-port-binding-fix (2025-01-10) 1 commit
   (merged to 'next' on 2025-01-17 at bcb5e21e0b)
@@ -352,7 +417,7 @@ Release tarballs are available at:
  source: <pull.1851.v2.git.1736549677.gitgitgadget@gmail.com>
 
 
-* ps/build-meson-fixes (2025-01-14) 12 commits
+* ps/build-meson-fixes (2025-01-22) 12 commits
  - ci: wire up Visual Studio build with Meson
  - ci: raise error when Meson generates warnings
  - meson: fix compilation with Visual Studio
@@ -369,11 +434,11 @@ Release tarballs are available at:
 
  More build fixes and enhancements on meson based build procedure.
 
- Needs review.
- source: <20250114-b4-pks-meson-additions-v2-0-8d7ec676cfd9@pks.im>
+ Will merge to 'next'?
+ source: <20250122-b4-pks-meson-additions-v3-0-5a51eb5d3dcd@pks.im>
 
 
-* ps/zlib-ng (2025-01-16) 12 commits
+* ps/zlib-ng (2025-01-22) 12 commits
  - ci: make "linux-musl" job use zlib-ng
  - ci: switch linux-musl to use Meson
  - compat/zlib: allow use of zlib-ng as backend
@@ -395,13 +460,15 @@ Release tarballs are available at:
  source: <20250116-b4-pks-compat-drop-uncompress2-v3-0-f2af1f5c4a06@pks.im>
 
 
-* rs/ref-fitler-used-atoms-value-fix (2025-01-13) 1 commit
- - ref-filter: share bases and is_base_tips between formatting and sorting
+* rs/ref-fitler-used-atoms-value-fix (2025-01-21) 3 commits
+ - ref-filter: remove ref_format_clear()
+ - ref-filter: move is-base tip to used_atom
+ - ref-filter: move ahead-behind bases into used_atom
 
  "git branch --sort=..." and "git for-each-ref --format=... --sort=..."
  did not work as expected with some atoms, which has been corrected.
 
- cf. https://lore.kernel.org/git/20250113051700.GA767856@coredump.intra.peff.net/
+ Will merge to 'next'.
  source: <6b824f05-6f16-4cd9-85b7-3b8b236158b4@web.de>
 
 
@@ -419,18 +486,9 @@ Release tarballs are available at:
  implementation has been updated in an attempt to make it harder to
  abuse.
 
- Will merge to 'next'?
+ Expecting a hopefully small and final reroll.
+ cf. <20250118124343.GA3828177@coredump.intra.peff.net>
  source: <cover.1737151386.git.me@ttaylorr.com>
-
-
-* dk/zsh-config-completion-fix (2025-01-06) 1 commit
-  (merged to 'next' on 2025-01-10 at efba7d534c)
- + completion: repair config completion for Zsh
-
- Completion script updates for zsh
-
- Will merge to 'master'.
- source: <pull.1860.v3.git.git.1736200026899.gitgitgadget@gmail.com>
 
 
 * en/object-name-with-funny-refname-fix (2025-01-13) 2 commits
@@ -461,89 +519,15 @@ Release tarballs are available at:
  source: <Z3qNUizvHJLgMx1y@ArchLinux>
 
 
-* jk/lsan-race-ignore-false-positive (2025-01-07) 3 commits
-  (merged to 'next' on 2025-01-09 at 3d7cd910b5)
- + test-lib: add a few comments to LSan log checking
- + test-lib: simplify lsan results check
- + test-lib: invert return value of check_test_results_san_file_empty
-
- The code to check LSan results has been simplified and made more
- robust.
-
- Will merge to 'master'.
- source: <20250107070409.GA584456@coredump.intra.peff.net>
-
-
-* jk/t7407-use-test-grep (2025-01-07) 1 commit
-  (merged to 'next' on 2025-01-09 at 1d584ee42d)
- + t7407: use test_grep
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <20250107071824.GA594237@coredump.intra.peff.net>
-
-
-* jt/fsck-skiplist-parse-fix (2025-01-07) 1 commit
-  (merged to 'next' on 2025-01-09 at d08b30fd78)
- + fsck: reject misconfigured fsck.skipList
-
- A misconfigured "fsck.skiplist" configuration variable was not
- diagnosed as an error, which has been corrected.
-
- Will merge to 'master'.
- source: <20250107162914.3756968-2-jltobler@gmail.com>
-
-
-* ps/reftable-get-random-fix (2025-01-07) 2 commits
-  (merged to 'next' on 2025-01-09 at bc024b7a45)
- + reftable/stack: accept insecure random bytes
- + wrapper: allow generating insecure random bytes
-
- The code to compute "unique" name used git_rand() which can fail or
- get stuck; the callsite does not require cryptographic security.
- Introduce the "insecure" mode and use it appropriately.
-
- Will merge to 'master'.
- source: <20250107-b4-pks-reftable-csprng-v1-0-6109a54a8756@pks.im>
-
-
 * mh/credential-cache-authtype-request-fix (2025-01-09) 1 commit
- - credential-cache: respect authtype capability
+  (merged to 'next' on 2025-01-22 at 51a22e98a1)
+ + credential-cache: respect authtype capability
 
  The "cache" credential back-end did not handle authtype correctly,
  which has been corrected.
+
+ Will merge to 'master'.
  source: <pull.1842.v5.git.1736462721156.gitgitgadget@gmail.com>
-
-
-* mh/gitattr-doc-markup-fix (2025-01-07) 1 commit
-  (merged to 'next' on 2025-01-10 at 9b8f84ebe2)
- + docs: fix typesetting of merge driver placeholders
-
- Doc markup fix.
-
- Will merge to 'master'.
- source: <20250107212421.7yyvuzw4uqxnqv7t@archP14s>
-
-
-* sk/unit-test-hash (2025-01-09) 1 commit
-  (merged to 'next' on 2025-01-13 at 865b121824)
- + t/unit-tests: convert hash to use clar test framework
-
- Test update.
-
- Will merge to 'master'.
- source: <20250109140952.5267-1-kuforiji98@gmail.com>
-
-
-* aj/difftool-config-doc-fix (2025-01-09) 1 commit
-  (merged to 'next' on 2025-01-10 at b8902a53d1)
- + difftool docs: restore correct position of tool list
-
- Docfix.
-
- Will merge to 'master'.
- source: <pull.1849.git.1736379323427.gitgitgadget@gmail.com>
 
 
 * jk/combine-diff-cleanup (2025-01-09) 14 commits
@@ -593,16 +577,15 @@ Release tarballs are available at:
 
 
 * ua/os-version-capability (2025-01-17) 6 commits
- . version: introduce osversion.command config for os-version output
- . connect: advertise OS version
- . t5701: add setup test to remove side-effect dependency
- . version: extend get_uname_info() to hide system details
- . version: refactor get_uname_info()
- . version: refactor redact_non_printables()
+ - version: introduce osversion.command config for os-version output
+ - connect: advertise OS version
+ - t5701: add setup test to remove side-effect dependency
+ - version: extend get_uname_info() to hide system details
+ - version: refactor get_uname_info()
+ - version: refactor redact_non_printables()
 
  The value of "uname -s" is by default sent over the wire as a new
  capability, with an opt-out for privacy-concious folks.
-
  source: <20250117104639.65608-1-usmanakinyemi202@gmail.com>
 
 
@@ -615,7 +598,7 @@ Release tarballs are available at:
 
  Doc updates.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.1845.v2.git.1736972628.gitgitgadget@gmail.com>
 
 
@@ -664,31 +647,6 @@ Release tarballs are available at:
  source: <xmqqfrmidyhk.fsf@gitster.g>
 
 
-* ps/the-repository (2024-12-18) 15 commits
-  (merged to 'next' on 2025-01-09 at 1de40edade)
- + match-trees: stop using `the_repository`
- + graph: stop using `the_repository`
- + add-interactive: stop using `the_repository`
- + tmp-objdir: stop using `the_repository`
- + resolve-undo: stop using `the_repository`
- + credential: stop using `the_repository`
- + mailinfo: stop using `the_repository`
- + diagnose: stop using `the_repository`
- + server-info: stop using `the_repository`
- + send-pack: stop using `the_repository`
- + serve: stop using `the_repository`
- + trace: stop using `the_repository`
- + pager: stop using `the_repository`
- + progress: stop using `the_repository`
- + Merge branch 'ps/build-sign-compare' into ps/the-repository
-
- More code paths have a repository passed through the callchain,
- instead of assuming the primary the_repository object.
-
- Will merge to 'master'.
- source: <20241217-pks-use-the-repository-conversion-v1-0-0dba48bcc239@pks.im>
-
-
 * jc/doc-attr-tree (2024-12-14) 1 commit
  - doc: give attr.tree a bit more visibility
 
@@ -701,7 +659,8 @@ Release tarballs are available at:
  source: <xmqq5xnladwi.fsf@gitster.g>
 
 
-* ps/3.0-remote-deprecation (2025-01-06) 6 commits
+* ps/3.0-remote-deprecation (2025-01-22) 7 commits
+ - SQUASH???
  - remote: announce removal of "branches/" and "remotes/"
  - builtin/pack-redundant: remove subcommand with breaking changes
  - ci: repurpose "linux-gcc" job for deprecations
@@ -713,7 +672,9 @@ Release tarballs are available at:
  changes for Git 3.0, allow an early opt-in for removing support of
  $GIT_DIR/branches/ and $GIT_DIR/remotes/ directories to configure
  remotes.
- source: <20250106-pks-remote-branches-deprecation-v2-0-2ce87c053536@pks.im>
+
+ Will merge to 'next'?
+ source: <20250122-pks-remote-branches-deprecation-v4-0-5cbf5b28afd5@pks.im>
 
 
 * cc/lop-remote (2024-12-07) 5 commits
@@ -796,24 +757,26 @@ Release tarballs are available at:
  selection to produce a packfile with deeper history than window
  size.
 
- Comments?
+ Will merge to 'next'.
+ (microhalt) <Z5E5KdbwHE7fmiJx@nand.local>
  source: <pull.1823.v3.git.1734715194.gitgitgadget@gmail.com>
 
 
 * ds/path-walk-1 (2024-12-20) 7 commits
- - path-walk: reorder object visits
- - path-walk: mark trees and blobs as UNINTERESTING
- - path-walk: visit tags and cached objects
- - path-walk: allow consumer to specify object types
- - t6601: add helper for testing path-walk API
- - test-lib-functions: add test_cmp_sorted
- - path-walk: introduce an object walk by path
+  (merged to 'next' on 2025-01-22 at 3171845b73)
+ + path-walk: reorder object visits
+ + path-walk: mark trees and blobs as UNINTERESTING
+ + path-walk: visit tags and cached objects
+ + path-walk: allow consumer to specify object types
+ + t6601: add helper for testing path-walk API
+ + test-lib-functions: add test_cmp_sorted
+ + path-walk: introduce an object walk by path
  (this branch is used by ds/backfill.)
 
  Introduce a new API to visit objects in batches based on a common
  path, or by type.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  cf. <Z4jeQSLmARruE5l3@pks.im>
  source: <pull.1818.v4.git.1734711675.gitgitgadget@gmail.com>
 
