@@ -1646,6 +1646,8 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 
 	bol = gs->buf;
 	left = gs->size;
+	if (left && gs->buf[left-1] == '\n')
+		left--;
 	while (left) {
 		const char *eol;
 		int hit;
