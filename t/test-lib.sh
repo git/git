@@ -1864,6 +1864,10 @@ test_lazy_prereq CURL '
 	curl --version
 '
 
+test_lazy_prereq WITHOUT_BREAKING_CHANGES '
+	test -z "$WITH_BREAKING_CHANGES"
+'
+
 # SHA1 is a test if the hash algorithm in use is SHA-1.  This is both for tests
 # which will not work with other hash algorithms and tests that work but don't
 # test anything meaningful (e.g. special values which cause short collisions).
