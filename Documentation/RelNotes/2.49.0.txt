@@ -48,8 +48,30 @@ Fixes since v2.48
    diagnosed as an error, which has been corrected.
    (merge ca7158076f jt/fsck-skiplist-parse-fix later to maint).
 
+ * Extended SHA-1 expression parser did not work well when a branch
+   with an unusual name (e.g. "foo{bar") is involved.
+   (merge 191f0c8db2 en/object-name-with-funny-refname-fix later to maint).
+
+ * The meson build procedure looked for the 'version-def.h' file in a
+   wrong directory, which has been corrected.
+   (merge 4771501c0a tc/meson-use-our-version-def-h later to maint).
+
+ * The meson build procedure for Documentation/technical/ hierarchy was
+   missing necessary dependencies, which has been corrected.
+   (merge 1dca492edd sj/meson-doc-technical-dependency-fix later to maint).
+
+ * The "instaweb" bound only to local IP address without "--local" and
+   to all addresses with "--local", which was the other way around, when
+   using Python's http.server class, which has been corrected.
+   (merge 76baf97fa1 ak/instaweb-python-port-binding-fix later to maint).
+
+ * Document that it is insecure to use Personal Access Tokens, which
+   some hosting providers take as username/password, embedded in URLs.
+   (merge a90ff409f0 mh/doc-credential-helpers-with-pat later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge ddb5287894 jk/t7407-use-test-grep later to maint).
    (merge 21e1b44865 aj/difftool-config-doc-fix later to maint).
    (merge 6a63995335 mh/gitattr-doc-markup-fix later to maint).
    (merge 43850dcf9c sk/unit-test-hash later to maint).
+   (merge 4ad47d2de3 jc/cli-doc-option-and-config later to maint).
