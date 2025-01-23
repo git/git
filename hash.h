@@ -305,6 +305,9 @@ struct git_hash_algo {
 
 	/* The all-zeros OID. */
 	const struct object_id *null_oid;
+
+	/* The unsafe variant of this hash function, if one exists. */
+	const struct git_hash_algo *unsafe;
 };
 extern const struct git_hash_algo hash_algos[GIT_HASH_NALGOS];
 
@@ -320,8 +323,16 @@ int hash_algo_by_length(int len);
 /* Identical, except for a pointer to struct git_hash_algo. */
 static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
 {
-	return p - hash_algos;
+	size_t i;
+	for (i = 0; i < GIT_HASH_NALGOS; i++) {
+		const struct git_hash_algo *algop = &hash_algos[i];
+		if (p == algop)
+			return i;
+	}
+	return GIT_HASH_UNKNOWN;
 }
+
+const struct git_hash_algo *unsafe_hash_algo(const struct git_hash_algo *algop);
 
 const struct object_id *null_oid(void);
 
