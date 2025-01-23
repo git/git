@@ -1618,9 +1618,9 @@ static void report_set_head(const char *remote, const char *head_name,
 }
 
 static int set_head(const struct ref *remote_refs, int follow_remote_head,
-		const char *no_warn_branch)
+		const char *no_warn_branch, int mirror)
 {
-	int result = 0, create_only, is_bare, was_detached;
+	int result = 0, create_only, baremirror, was_detached;
 	struct strbuf b_head = STRBUF_INIT, b_remote_head = STRBUF_INIT,
 		      b_local_head = STRBUF_INIT;
 	const char *remote = gtransport->remote->name;
@@ -1655,9 +1655,9 @@ static int set_head(const struct ref *remote_refs, int follow_remote_head,
 
 	if (!head_name)
 		goto cleanup;
-	is_bare = is_bare_repository();
-	create_only = follow_remote_head == FOLLOW_REMOTE_ALWAYS ? 0 : !is_bare;
-	if (is_bare) {
+	baremirror = is_bare_repository() && mirror;
+	create_only = follow_remote_head == FOLLOW_REMOTE_ALWAYS ? 0 : !baremirror;
+	if (baremirror) {
 		strbuf_addstr(&b_head, "HEAD");
 		strbuf_addf(&b_remote_head, "refs/heads/%s", head_name);
 	} else {
@@ -1665,7 +1665,7 @@ static int set_head(const struct ref *remote_refs, int follow_remote_head,
 		strbuf_addf(&b_remote_head, "refs/remotes/%s/%s", remote, head_name);
 	}
 		/* make sure it's valid */
-	if (!is_bare && !refs_ref_exists(refs, b_remote_head.buf)) {
+	if (!baremirror && !refs_ref_exists(refs, b_remote_head.buf)) {
 		result = 1;
 		goto cleanup;
 	}
@@ -1925,7 +1925,8 @@ static int do_fetch(struct transport *transport,
 		}
 	}
 	if (set_head(remote_refs, transport->remote->follow_remote_head,
-		transport->remote->no_warn_branch))
+		transport->remote->no_warn_branch,
+		transport->remote->mirror))
 		;
 		/*
 		 * Way too many cases where this can go wrong

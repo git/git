@@ -2615,9 +2615,6 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 
 	update->backend_data = lock;
 
-	if (update->flags & REF_LOG_ONLY)
-		goto out;
-
 	if (update->type & REF_ISSYMREF) {
 		if (update->flags & REF_NO_DEREF) {
 			/*
