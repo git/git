@@ -126,7 +126,6 @@ static int add_tree_entries(struct path_walk_context *ctx,
 	strbuf_addstr(&path, base_path);
 	base_len = path.len;
 
-	parse_tree(tree);
 	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
 	while (tree_entry(&desc, &entry)) {
 		struct type_and_oid_list *list;
