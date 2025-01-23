@@ -584,13 +584,24 @@ static int mingw_open_existing(const wchar_t *filename, int oflags, ...)
 			     &security_attributes, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (handle == INVALID_HANDLE_VALUE) {
 		DWORD err = GetLastError();
+		if (err == ERROR_ACCESS_DENIED) {
+			DWORD attrs = GetFileAttributesW(filename);
+			if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
+				handle = CreateFileW(filename, access,
+							FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE,
+							&security_attributes, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL| FILE_FLAG_BACKUP_SEMANTICS, NULL);
+		}
 
-		/* See `mingw_open_append()` for why we have this conversion. */
-		if (err == ERROR_INVALID_PARAMETER)
-			err = ERROR_PATH_NOT_FOUND;
+		if (handle == INVALID_HANDLE_VALUE) {
+			err = GetLastError();
 
-		errno = err_win_to_posix(err);
-		return -1;
+			/* See `mingw_open_append()` for why we have this conversion. */
+			if (err == ERROR_INVALID_PARAMETER)
+				err = ERROR_PATH_NOT_FOUND;
+
+			errno = err_win_to_posix(err);
+			return -1;
+		}
 	}
 
 	fd = _open_osfhandle((intptr_t)handle, oflags | O_BINARY);
