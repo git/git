@@ -206,6 +206,13 @@ struct hashfile *hashfd_throughput(int fd, const char *name, struct progress *tp
 	return hashfd_internal(fd, name, tp, 8 * 1024);
 }
 
+void hashfile_checkpoint_init(struct hashfile *f,
+			      struct hashfile_checkpoint *checkpoint)
+{
+	memset(checkpoint, 0, sizeof(*checkpoint));
+	f->algop->init_fn(&checkpoint->ctx);
+}
+
 void hashfile_checkpoint(struct hashfile *f, struct hashfile_checkpoint *checkpoint)
 {
 	hashflush(f);
