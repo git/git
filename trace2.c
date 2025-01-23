@@ -764,7 +764,7 @@ void trace2_def_param_fl(const char *file, int line, const char *param,
 	if (!trace2_enabled)
 		return;
 
-	redacted = redact_arg(value);
+	redacted = value ? redact_arg(value) : NULL;
 
 	for_each_wanted_builtin (j, tgt_j)
 		if (tgt_j->pfn_param_fl)
