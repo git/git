@@ -7,6 +7,7 @@
 #  Changwoo Ryu <cwryu@debian.org>, 2015-2018.
 #  Sihyeon Jang <uneedsihyeon@gmail.com>, 2018.
 #  Gwan-gyeong Mun <elongbug@gmail.com>, 2018.
+#  Seoyeon Kwon <syeon0204@gmail.com>, 2025.
 #
 # - 작업자는 위 Contributors 목록에 추가해 주세요.
 # - 번역하면서 80컬럼을 넘어가지 않도록 해 주세요.
@@ -7666,7 +7667,7 @@ msgid ""
 "    git commit --allow-empty\n"
 "\n"
 msgstr ""
-"이전 커맷 빼오기가 비어 있습니다. 아마도 충돌 해결 과정에서 그렇게 됐을\n"
+"이전 커밋 빼오기가 비어 있습니다. 아마도 충돌 해결 과정에서 그렇게 됐을\n"
 "것입니다. 그래도 커밋하려면 다음과 같이 하십시오:\n"
 "\n"
 "    git commit --allow-empty\n"
