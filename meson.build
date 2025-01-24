@@ -627,7 +627,7 @@ libgit_sources += custom_target(
 )
 
 libgit_sources += custom_target(
-  input: 'Documentation/githooks.txt',
+  input: 'Documentation/githooks.adoc',
   output: 'hook-list.h',
   command: [
     shell,

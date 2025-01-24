@@ -76,7 +76,7 @@ print_command_list () {
 				break
 				;;
 			esac
-		done <"$1/Documentation/$cmd.txt"
+		done <"$1/Documentation/$cmd.adoc"
 
 		printf '\t{ "%s", N_("%s"), 0' "$cmd" "$synopsis"
 		printf " | CAT_%s" $rest
