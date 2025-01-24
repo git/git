@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2025, #06; Wed, 22)
-X-master-at: 4e746b1a31f9f0036032b6f94279cf16fb363203
-X-next-at: 3171845b731fb90dfa49d89be174ccc6dfbf5729
+Subject: What's cooking in git.git (Jan 2025, #07; Fri, 24)
+X-master-at: 5f8f7081f7761acdf83d0a4c6819fe3d724f01d7
+X-next-at: b27710019bdb95530e7c7a2659767cbd15f87f22
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2025, #06; Wed, 22)
+What's cooking in git.git (Jan 2025, #07; Fri, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -54,113 +54,101 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* aj/difftool-config-doc-fix (2025-01-09) 1 commit
-  (merged to 'next' on 2025-01-10 at b8902a53d1)
- + difftool docs: restore correct position of tool list
+* ak/instaweb-python-port-binding-fix (2025-01-10) 1 commit
+  (merged to 'next' on 2025-01-17 at bcb5e21e0b)
+ + instaweb: fix ip binding for the python http.server
 
- Docfix.
- source: <pull.1849.git.1736379323427.gitgitgadget@gmail.com>
-
-
-* dk/zsh-config-completion-fix (2025-01-06) 1 commit
-  (merged to 'next' on 2025-01-10 at efba7d534c)
- + completion: repair config completion for Zsh
-
- Completion script updates for zsh
- source: <pull.1860.v3.git.git.1736200026899.gitgitgadget@gmail.com>
+ The "instaweb" bound only to local IP address without "--local" and
+ to all addresses with "--local", which was the other way around, when
+ using Python's http.server class, which has been corrected.
+ source: <20250110101346.30416-1-alecsk@gmail.com>
 
 
-* jk/lsan-race-ignore-false-positive (2025-01-07) 3 commits
-  (merged to 'next' on 2025-01-09 at 3d7cd910b5)
- + test-lib: add a few comments to LSan log checking
- + test-lib: simplify lsan results check
- + test-lib: invert return value of check_test_results_san_file_empty
+* en/object-name-with-funny-refname-fix (2025-01-13) 2 commits
+  (merged to 'next' on 2025-01-16 at 89cd7778c9)
+ + object-name: be more strict in parsing describe-like output
+ + object-name: fix resolution of object names containing curly braces
 
- The code to check LSan results has been simplified and made more
- robust.
- source: <20250107070409.GA584456@coredump.intra.peff.net>
-
-
-* jk/t7407-use-test-grep (2025-01-07) 1 commit
-  (merged to 'next' on 2025-01-09 at 1d584ee42d)
- + t7407: use test_grep
-
- Test clean-up.
- source: <20250107071824.GA594237@coredump.intra.peff.net>
+ Extended SHA-1 expression parser did not work well when a branch
+ with an unusual name (e.g. "foo{bar") is involved.
+ source: <pull.1844.v3.git.1736788417.gitgitgadget@gmail.com>
 
 
-* jt/fsck-skiplist-parse-fix (2025-01-07) 1 commit
-  (merged to 'next' on 2025-01-09 at d08b30fd78)
- + fsck: reject misconfigured fsck.skipList
+* jc/cli-doc-option-and-config (2025-01-17) 1 commit
+  (merged to 'next' on 2025-01-17 at 71f41b00d8)
+ + gitcli: document that command line trumps config and env
 
- A misconfigured "fsck.skiplist" configuration variable was not
- diagnosed as an error, which has been corrected.
- source: <20250107162914.3756968-2-jltobler@gmail.com>
-
-
-* mh/gitattr-doc-markup-fix (2025-01-07) 1 commit
-  (merged to 'next' on 2025-01-10 at 9b8f84ebe2)
- + docs: fix typesetting of merge driver placeholders
-
- Doc markup fix.
- source: <20250107212421.7yyvuzw4uqxnqv7t@archP14s>
+ Doc update.
+ source: <xmqqzfjqmbza.fsf@gitster.g>
 
 
-* ps/reftable-get-random-fix (2025-01-07) 2 commits
-  (merged to 'next' on 2025-01-09 at bc024b7a45)
- + reftable/stack: accept insecure random bytes
- + wrapper: allow generating insecure random bytes
+* mh/doc-credential-helpers-with-pat (2025-01-10) 2 commits
+  (merged to 'next' on 2025-01-17 at a70beabaf5)
+ + docs: discuss caching personal access tokens
+ + docs: list popular credential helpers
 
- The code to compute "unique" name used git_rand() which can fail or
- get stuck; the callsite does not require cryptographic security.
- Introduce the "insecure" mode and use it appropriately.
- source: <20250107-b4-pks-reftable-csprng-v1-0-6109a54a8756@pks.im>
-
-
-* ps/the-repository (2024-12-18) 15 commits
-  (merged to 'next' on 2025-01-09 at 1de40edade)
- + match-trees: stop using `the_repository`
- + graph: stop using `the_repository`
- + add-interactive: stop using `the_repository`
- + tmp-objdir: stop using `the_repository`
- + resolve-undo: stop using `the_repository`
- + credential: stop using `the_repository`
- + mailinfo: stop using `the_repository`
- + diagnose: stop using `the_repository`
- + server-info: stop using `the_repository`
- + send-pack: stop using `the_repository`
- + serve: stop using `the_repository`
- + trace: stop using `the_repository`
- + pager: stop using `the_repository`
- + progress: stop using `the_repository`
- + Merge branch 'ps/build-sign-compare' into ps/the-repository
-
- More code paths have a repository passed through the callchain,
- instead of assuming the primary the_repository object.
- source: <20241217-pks-use-the-repository-conversion-v1-0-0dba48bcc239@pks.im>
+ Document that it is insecure to use Personal Access Tokens, which
+ some hosting providers take as username/password, embedded in URLs.
+ source: <pull.1851.v2.git.1736549677.gitgitgadget@gmail.com>
 
 
-* sk/unit-test-hash (2025-01-09) 1 commit
-  (merged to 'next' on 2025-01-13 at 865b121824)
- + t/unit-tests: convert hash to use clar test framework
+* sj/meson-doc-technical-dependency-fix (2025-01-14) 1 commit
+  (merged to 'next' on 2025-01-16 at 3ec55e0703)
+ + meson: fix missing deps for technical articles
 
- Test update.
- source: <20250109140952.5267-1-kuforiji98@gmail.com>
+ The meson build procedure for Documentation/technical/ hierarchy was
+ missing necessary dependencies, which has been corrected.
+ source: <5114dc9a00377826a55f6bab007d2ad1a4de8bc5.1736866030.git.sam@gentoo.org>
+
+
+* tc/meson-use-our-version-def-h (2025-01-14) 1 commit
+  (merged to 'next' on 2025-01-16 at 76e9e81736)
+ + meson: ensure correct version-def.h is used
+
+ The meson build procedure looked for the 'version-def.h' file in a
+ wrong directory, which has been corrected.
+ source: <20250114-toon-fix-meson-version-v2-1-66ddb1a82c28@iotcl.com>
 
 --------------------------------------------------
 [New Topics]
 
+* ac/doc-http-ssl-type-config (2025-01-23) 1 commit
+ - docs: indicate http.sslCertType and sslKeyType
+
+ Two configuration variables about SSL authentication material that
+ weren't mentioned in the documentations are now mentioned.
+
+ Waiting for review response.
+ cf. <Z5GOfwBR7JBloIs0@tapette.crustytoothpaste.net>
+ source: <pull.1854.git.1737591366672.gitgitgadget@gmail.com>
+
+
+* kn/reflog-migration-fix-fix (2025-01-23) 1 commit
+ - SQUASH - needs to describe the breakage and fix in v1
+ (this branch uses kn/reflog-migration-fix.)
+
+ Fix bugs in an earlier attempt to fix "git refs migration".
+
+ Expecting a reroll.
+ cf. <xmqqbjvxs8me.fsf@gitster.g>
+ source: <CAOLa=ZTL9n_DPhNr49XAd6bT838kc09oVx_AH7Pb4o8VK_xQ9w@mail.gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * bc/doc-adoc-not-txt (2025-01-21) 5 commits
- - Remove obsolete ".txt" extensions for AsciiDoc files
- - doc: use .adoc extension for AsciiDoc files
- - gitattributes: mark AsciiDoc files as LF-only
- - editorconfig: add .adoc extension
- - doc: update gitignore for .adoc extension
+  (merged to 'next' on 2025-01-24 at 737049d332)
+ + Remove obsolete ".txt" extensions for AsciiDoc files
+ + doc: use .adoc extension for AsciiDoc files
+ + gitattributes: mark AsciiDoc files as LF-only
+ + editorconfig: add .adoc extension
+ + doc: update gitignore for .adoc extension
 
  All the documentation .txt files have been renamed to .adoc to help
  content aware editors.
 
- Will merge to 'next' and keep it there for at least 3 weeks.
+ Will cook in 'next' for at least 3 weeks til mid Feb 2025.
+ cf. <xmqqmsfl2gro.fsf@gitster.g>
  source: <20250120015603.1980991-1-sandals@crustytoothpaste.net>
 
 
@@ -174,46 +162,39 @@ Release tarballs are available at:
  source: <20250120114106.2844157-1-jpalus@fastmail.com>
 
 
-* am/trace2-with-valueless-true (2025-01-22) 1 commit
- - trace2: prevent segfault on config collection with valueless true
+* am/trace2-with-valueless-true (2025-01-23) 1 commit
+  (merged to 'next' on 2025-01-23 at 7dc4bdaea8)
+ + trace2: prevent segfault on config collection with valueless true
 
+ The trace2 code was not prepared to show a configuration variable
+ that is set to true using the valueless true syntax, which has been
+ corrected.
+
+ Will merge to 'master'.
  source: <pull.1814.v2.git.1736494100622.gitgitgadget@gmail.com>
 
 
-* kn/reflog-symref-fix (2025-01-22) 1 commit
- - refs: fix creation of corrupted reflogs for symrefs
+* kn/reflog-symref-fix (2025-01-23) 1 commit
+  (merged to 'next' on 2025-01-23 at 123929bd42)
+ + refs: fix creation of reflog entries for symrefs
 
- source: <20250122100319.2280647-1-karthik.188@gmail.com>
+ reflog entries for symbolic ref updates were broken, which has been
+ corrected.
+
+ Will merge to 'master'.
+ source: <20250123112944.3922712-1-karthik.188@gmail.com>
 
 
 * ps/reflog-migration-with-logall-fix (2025-01-22) 1 commit
- - refs: fix migration of reflogs respecting "core.logAllRefUpdates"
+  (merged to 'next' on 2025-01-23 at 079036d154)
+ + refs: fix migration of reflogs respecting "core.logAllRefUpdates"
 
+ The "git refs migrate" command did not migrate the reflog for
+ refs/stash, which is the contents of the stashes, which has been
+ corrected.
+
+ Will merge to 'master'.
  source: <20250122-b4-pks-reflog-migration-fix-stash-v1-1-27dbae4602f7@pks.im>
-
---------------------------------------------------
-[Cooking]
-
-* sj/meson-doc-technical-dependency-fix (2025-01-14) 1 commit
-  (merged to 'next' on 2025-01-16 at 3ec55e0703)
- + meson: fix missing deps for technical articles
-
- The meson build procedure for Documentation/technical/ hiearchy was
- missing necessary dependencies, which has been corrected.
-
- Will merge to 'master'.
- source: <5114dc9a00377826a55f6bab007d2ad1a4de8bc5.1736866030.git.sam@gentoo.org>
-
-
-* tc/meson-use-our-version-def-h (2025-01-14) 1 commit
-  (merged to 'next' on 2025-01-16 at 76e9e81736)
- + meson: ensure correct version-def.h is used
-
- The meson build procedure looked for the 'version-def.h' file in a
- wrong directory, which has been corrected.
-
- Will merge to 'master'.
- source: <20250114-toon-fix-meson-version-v2-1-66ddb1a82c28@iotcl.com>
 
 
 * js/libgit-rust (2025-01-16) 6 commits
@@ -236,11 +217,11 @@ Release tarballs are available at:
 * kn/reflog-migration-fix (2025-01-15) 1 commit
   (merged to 'next' on 2025-01-16 at ae8f9ce9a0)
  + reftable: write correct max_update_index to header
- (this branch is used by kn/reflog-migration-fix-followup.)
+ (this branch is used by kn/reflog-migration-fix-fix and kn/reflog-migration-fix-followup.)
 
  "git refs migrate" for migrating reflog data was broken.
 
- On Hold.
+ On hold.
  cf. <Z4mUizLNUdq_1BgY@tapette.crustytoothpaste.net>
  cf. <CAOLa=ZT4nws0irdZKUuWc70Rv9RUNQuSXnGAt1SnE1O+umSReg@mail.gmail.com>
  source: <CAOLa=ZTL9n_DPhNr49XAd6bT838kc09oVx_AH7Pb4o8VK_xQ9w@mail.gmail.com>
@@ -273,7 +254,7 @@ Release tarballs are available at:
 
  Code clean-up.
 
- Well merge to 'next'?
+ Will merge to 'next'.
  source: <20250119-kn-the-repo-cleanup-v3-0-a495fce08d71@gmail.com>
 
 
@@ -290,7 +271,7 @@ Release tarballs are available at:
  + reftable/record: drop unused `print` function pointer
  + meson: stop disabling -Wsign-compare
 
- THe reftable/ library code has been made -Wsign-compare clean.
+ The reftable/ library code has been made -Wsign-compare clean.
 
  Will merge to 'master'.
  source: <20250120-b4-pks-reftable-sign-compare-v2-0-b4566d02e4a5@pks.im>
@@ -319,16 +300,6 @@ Release tarballs are available at:
  source: <pull.1843.v3.git.1736994932003.gitgitgadget@gmail.com>
 
 
-* jc/cli-doc-option-and-config (2025-01-17) 1 commit
-  (merged to 'next' on 2025-01-17 at 71f41b00d8)
- + gitcli: document that command line trumps config and env
-
- Doc update.
-
- Will merge to 'master'.
- source: <xmqqzfjqmbza.fsf@gitster.g>
-
-
 * jk/pack-header-parse-alignment-fix (2025-01-21) 5 commits
   (merged to 'next' on 2025-01-21 at 60017ef61a)
  + index-pack, unpack-objects: use skip_prefix to avoid magic number
@@ -353,7 +324,7 @@ Release tarballs are available at:
 
  Code clean-up.
 
- Will merge to 'next'.
+ On hold.
  cf. <Z5DgxQuc2j_-5GHg@pks.im>
  source: <20250122-461-corrupted-reftable-followup-v3-0-ae5f88bf04fa@gmail.com>
 
@@ -375,46 +346,23 @@ Release tarballs are available at:
  + meson: introduce build option for contrib
  + contrib/subtree: fix building docs
 
- THe meson-driven build is now aware of "git-subtree" housed in
+ The meson-driven build is now aware of "git-subtree" housed in
  contrib/subtree hierarchy.
 
  Will merge to 'master'.
  source: <20250117-b4-pks-build-subtree-v1-0-03c2ed6cc42e@pks.im>
 
 
-* ak/instaweb-python-port-binding-fix (2025-01-10) 1 commit
-  (merged to 'next' on 2025-01-17 at bcb5e21e0b)
- + instaweb: fix ip binding for the python http.server
-
- The "instaweb" bound only to local IP address without "--local" and
- to all addresses with "--local", which was the other way around, when
- using Python's http.server class, which has been corrected.
-
- Will merge to 'master'.
- source: <20250110101346.30416-1-alecsk@gmail.com>
-
-
-* bf/fetch-set-head-fix (2025-01-13) 1 commit
+* bf/fetch-set-head-fix (2025-01-23) 1 commit
  - fetch set_head: fix non-mirror remotes in bare repositories
 
  Fetching into a bare repository incorrectly assumed it always used
  a mirror layout when deciding to update remote-tracking HEAD, which
  has been corrected.
 
- Needs review.
+ Expecting a (hopefully small and final) reroll.
+ cf. <Z5Mrk02wMdABtrVZ@pks.im>
  source: <20250112165125.130400-1-bence@ferdinandy.com>
-
-
-* mh/doc-credential-helpers-with-pat (2025-01-10) 2 commits
-  (merged to 'next' on 2025-01-17 at a70beabaf5)
- + docs: discuss caching personal access tokens
- + docs: list popular credential helpers
-
- Document that it is insecure to use Personal Access Tokens, which
- some hosting providers take as username/password, embedded in URLs.
-
- Will merge to 'master'.
- source: <pull.1851.v2.git.1736549677.gitgitgadget@gmail.com>
 
 
 * ps/build-meson-fixes (2025-01-22) 12 commits
@@ -434,7 +382,7 @@ Release tarballs are available at:
 
  More build fixes and enhancements on meson based build procedure.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20250122-b4-pks-meson-additions-v3-0-5a51eb5d3dcd@pks.im>
 
 
@@ -461,18 +409,19 @@ Release tarballs are available at:
 
 
 * rs/ref-fitler-used-atoms-value-fix (2025-01-21) 3 commits
- - ref-filter: remove ref_format_clear()
- - ref-filter: move is-base tip to used_atom
- - ref-filter: move ahead-behind bases into used_atom
+  (merged to 'next' on 2025-01-23 at 714518543f)
+ + ref-filter: remove ref_format_clear()
+ + ref-filter: move is-base tip to used_atom
+ + ref-filter: move ahead-behind bases into used_atom
 
  "git branch --sort=..." and "git for-each-ref --format=... --sort=..."
  did not work as expected with some atoms, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <6b824f05-6f16-4cd9-85b7-3b8b236158b4@web.de>
 
 
-* tb/unsafe-hash-cleanup (2025-01-17) 8 commits
+* tb/unsafe-hash-cleanup (2025-01-23) 8 commits
  - hash.h: drop unsafe_ function variants
  - csum-file: introduce hashfile_checkpoint_init()
  - t/helper/test-hash.c: use unsafe_hash_algo()
@@ -486,21 +435,8 @@ Release tarballs are available at:
  implementation has been updated in an attempt to make it harder to
  abuse.
 
- Expecting a hopefully small and final reroll.
- cf. <20250118124343.GA3828177@coredump.intra.peff.net>
- source: <cover.1737151386.git.me@ttaylorr.com>
-
-
-* en/object-name-with-funny-refname-fix (2025-01-13) 2 commits
-  (merged to 'next' on 2025-01-16 at 89cd7778c9)
- + object-name: be more strict in parsing describe-like output
- + object-name: fix resolution of object names containing curly braces
-
- Extended SHA-1 expression parser did not work well when a branch
- with an unusual name (e.g. "foo{bar") is involved.
-
- Will merge to 'master'.
- source: <pull.1844.v3.git.1736788417.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <cover.1737653640.git.me@ttaylorr.com>
 
 
 * sj/ref-consistency-checks-more (2025-01-06) 10 commits
@@ -516,6 +452,9 @@ Release tarballs are available at:
  - files-backend: add object check for regular ref
 
  "git fsck" becomes more careful when checking the refs.
+
+ Expecting a reroll.
+ cf. <Z4pqVRsCg3KfjJf-@ArchLinux>
  source: <Z3qNUizvHJLgMx1y@ArchLinux>
 
 
@@ -547,6 +486,8 @@ Release tarballs are available at:
  - run_diff_files(): delay allocation of combine_diff_path
 
  Code clean-up for code paths around combined diff.
+
+ Will merge to 'next'.
  source: <20250109082723.GA2748497@coredump.intra.peff.net>
 
 
@@ -563,16 +504,22 @@ Release tarballs are available at:
 
 
 * ja/doc-notes-markup-updates (2025-01-10) 1 commit
- - doc: convert git-notes to new documentation format
+  (merged to 'next' on 2025-01-24 at d02f3c8a9c)
+ + doc: convert git-notes to new documentation format
 
  Doc mark-up updates.
+
+ Will merge to 'master'.
  source: <pull.1846.v2.git.1736503703573.gitgitgadget@gmail.com>
 
 
 * ja/doc-restore-markup-update (2025-01-10) 1 commit
- - doc: convert git-restore to new style format
+  (merged to 'next' on 2025-01-24 at ba5df28904)
+ + doc: convert git-restore to new style format
 
  Doc mark-up updates.
+
+ Will merge to 'master'.
  source: <pull.1847.v2.git.1736503760086.gitgitgadget@gmail.com>
 
 
@@ -590,15 +537,16 @@ Release tarballs are available at:
 
 
 * ja/doc-commit-markup-updates (2025-01-15) 5 commits
- - doc: migrate git-commit manpage secondary files to new format
- - doc: convert git commit config to new format
- - doc: make more direct explanations in git commit options
- - doc: the mode param of -u of git commit is optional
- - doc: apply new documentation guidelines to git commit
+  (merged to 'next' on 2025-01-23 at aa9235f015)
+ + doc: migrate git-commit manpage secondary files to new format
+ + doc: convert git commit config to new format
+ + doc: make more direct explanations in git commit options
+ + doc: the mode param of -u of git commit is optional
+ + doc: apply new documentation guidelines to git commit
 
  Doc updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1845.v2.git.1736972628.gitgitgadget@gmail.com>
 
 
@@ -615,15 +563,18 @@ Release tarballs are available at:
  - t0060: fix EBUSY in MinGW when setting up runtime prefix
 
  CI updates (containerization, dropping stale ones, etc.).
+
+ Will merge to 'master'.
  source: <20250110-b4-pks-ci-fixes-v4-0-6e4613446080@pks.im>
 
 
 * sk/strlen-returns-size_t (2024-12-26) 1 commit
- - date.c: Fix type missmatch warings from msvc
+  (merged to 'next' on 2025-01-24 at 43464adc45)
+ + date.c: Fix type missmatch warings from msvc
 
  Code clean-up.
 
- The remainder needs to be reviewed.
+ Will merge to 'master'.
  source: <20241223110407.3308-3-soekkle@freenet.de>
 
 
@@ -643,7 +594,7 @@ Release tarballs are available at:
  Doc and short-help text for "show-index" has been clarified to
  stress that the command reads its data from the standard input.
 
- Comments?
+ Will merge to 'next'.
  source: <xmqqfrmidyhk.fsf@gitster.g>
 
 
@@ -659,8 +610,7 @@ Release tarballs are available at:
  source: <xmqq5xnladwi.fsf@gitster.g>
 
 
-* ps/3.0-remote-deprecation (2025-01-22) 7 commits
- - SQUASH???
+* ps/3.0-remote-deprecation (2025-01-24) 6 commits
  - remote: announce removal of "branches/" and "remotes/"
  - builtin/pack-redundant: remove subcommand with breaking changes
  - ci: repurpose "linux-gcc" job for deprecations
@@ -673,7 +623,7 @@ Release tarballs are available at:
  $GIT_DIR/branches/ and $GIT_DIR/remotes/ directories to configure
  remotes.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20250122-pks-remote-branches-deprecation-v4-0-5cbf5b28afd5@pks.im>
 
 
@@ -689,7 +639,7 @@ Release tarballs are available at:
  source: <20241206124248.160494-1-christian.couder@gmail.com>
 
 
-* ds/backfill (2024-12-20) 6 commits
+* ds/backfill (2025-01-23) 6 commits
  - backfill: assume --sparse when sparse-checkout is enabled
  - backfill: add --sparse option
  - backfill: add --min-batch-size=<n> option
@@ -738,7 +688,9 @@ Release tarballs are available at:
  other side, losing the error status from the child process, which
  has been corrected.
 
+ On hold.
  Needs to see if competing parallel topic needs to replace this one.
+ cf. <Z5MuCd_GbbLK_puS@pks.im>
  source: <20241113-pks-push-atomic-respect-exit-code-v1-0-7965f01e7f4e@pks.im>
 
 
@@ -757,12 +709,14 @@ Release tarballs are available at:
  selection to produce a packfile with deeper history than window
  size.
 
- Will merge to 'next'.
- (microhalt) <Z5E5KdbwHE7fmiJx@nand.local>
+ Will merge to 'next'?
+ cf. <Z5E5KdbwHE7fmiJx@nand.local>
  source: <pull.1823.v3.git.1734715194.gitgitgadget@gmail.com>
 
 
-* ds/path-walk-1 (2024-12-20) 7 commits
+* ds/path-walk-1 (2025-01-22) 8 commits
+  (merged to 'next' on 2025-01-23 at 1d3743f005)
+ + path-walk: drop redundant parse_tree() call
   (merged to 'next' on 2025-01-22 at 3171845b73)
  + path-walk: reorder object visits
  + path-walk: mark trees and blobs as UNINTERESTING
@@ -797,6 +751,8 @@ Release tarballs are available at:
  Comments?
  source: <20250114021502.41499-1-eric.peijian@gmail.com>
 
+--------------------------------------------------
+[Discarded]
 
 * jc/move-is-bare-repository-cfg-variable-to-repo (2024-11-07) 3 commits
  . repository: BUG when is_bare_cfg is not initialized
@@ -806,7 +762,6 @@ Release tarballs are available at:
  Code rewrite to turn the is_bare_repository_cfg global variable
  into a member in the the_repo singleton repository object.
 
- Will discard.
  Has been in "Waiting for response to reviews" state for too long.
  cf. <xmqqy116xvr3.fsf@gitster.g>
  Seems to break t0021-conversion on Windows.
