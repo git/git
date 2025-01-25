@@ -62,6 +62,8 @@ struct unbundle_opts {
  *
  * Before unbundling, this method will call verify_bundle() with 'flags'
  * provided in 'opts'.
+ *
+ * Note that the `bundle_fd` will be closed as part of the operation.
  */
 int unbundle(struct repository *r, struct bundle_header *header,
 	     int bundle_fd, struct strvec *extra_index_pack_args,
