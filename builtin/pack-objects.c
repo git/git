@@ -284,6 +284,14 @@ static void validate_name_hash_version(void)
 
 static inline uint32_t pack_name_hash_fn(const char *name)
 {
+	static int seen_version = -1;
+
+	if (seen_version < 0)
+		seen_version = name_hash_version;
+	else if (seen_version != name_hash_version)
+		BUG("name hash version changed from %d to %d mid-process",
+		    seen_version, name_hash_version);
+
 	switch (name_hash_version) {
 	case 1:
 		return pack_name_hash(name);
