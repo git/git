@@ -13,7 +13,7 @@ https://developers.google.com/open-source/licenses/bsd
 #include "record.h"
 #include "reftable-error.h"
 #include "system.h"
-#include <zlib.h>
+#include "compat/zlib-compat.h"
 
 int header_size(int version)
 {
