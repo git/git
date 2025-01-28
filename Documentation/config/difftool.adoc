@@ -13,7 +13,7 @@ diff.guitool::
 	and requires that a corresponding difftool.<guitool>.cmd variable
 	is defined.
 
-include::{build_dir}/mergetools-diff.txt[]
+include::{build_dir}/mergetools-diff.adoc[]
 
 difftool.<tool>.cmd::
 	Specify the command to invoke the specified diff tool.
