@@ -87,20 +87,37 @@ struct progress;
 /* Note, the data argument could be NULL if object type is blob */
 typedef int (*verify_fn)(const struct object_id *, enum object_type, unsigned long, void*, int*);
 
-const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects, int nr_objects, const struct pack_idx_option *, const unsigned char *sha1);
+const char *write_idx_file(const struct git_hash_algo *hash_algo,
+			   const char *index_name,
+			   struct pack_idx_entry **objects,
+			   int nr_objects,
+			   const struct pack_idx_option *,
+			   const unsigned char *sha1);
 int check_pack_crc(struct packed_git *p, struct pack_window **w_curs, off_t offset, off_t len, unsigned int nr);
 int verify_pack_index(struct packed_git *);
 int verify_pack(struct repository *, struct packed_git *, verify_fn fn, struct progress *, uint32_t);
 off_t write_pack_header(struct hashfile *f, uint32_t);
-void fixup_pack_header_footer(int, unsigned char *, const char *, uint32_t, unsigned char *, off_t);
-char *index_pack_lockfile(int fd, int *is_well_formed);
+void fixup_pack_header_footer(const struct git_hash_algo *, int,
+			      unsigned char *, const char *, uint32_t,
+			      unsigned char *, off_t);
+char *index_pack_lockfile(struct repository *r, int fd, int *is_well_formed);
 
 struct ref;
 
 void write_promisor_file(const char *promisor_name, struct ref **sought, int nr_sought);
 
-char *write_rev_file(const char *rev_name, struct pack_idx_entry **objects, uint32_t nr_objects, const unsigned char *hash, unsigned flags);
-char *write_rev_file_order(const char *rev_name, uint32_t *pack_order, uint32_t nr_objects, const unsigned char *hash, unsigned flags);
+char *write_rev_file(const struct git_hash_algo *hash_algo,
+		     const char *rev_name,
+		     struct pack_idx_entry **objects,
+		     uint32_t nr_objects,
+		     const unsigned char *hash,
+		     unsigned flags);
+char *write_rev_file_order(const struct git_hash_algo *hash_algo,
+			   const char *rev_name,
+			   uint32_t *pack_order,
+			   uint32_t nr_objects,
+			   const unsigned char *hash,
+			   unsigned flags);
 
 /*
  * The "hdr" output buffer should be at least this big, which will handle sizes
@@ -118,7 +135,8 @@ int read_pack_header(int fd, struct pack_header *);
 struct packing_data;
 
 struct hashfile *create_tmp_packfile(char **pack_tmp_name);
-void stage_tmp_packfiles(struct strbuf *name_buffer,
+void stage_tmp_packfiles(const struct git_hash_algo *hash_algo,
+			 struct strbuf *name_buffer,
 			 const char *pack_tmp_name,
 			 struct pack_idx_entry **written_list,
 			 uint32_t nr_written,
