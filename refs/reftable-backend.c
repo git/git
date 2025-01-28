@@ -1020,6 +1020,7 @@ static int prepare_transaction_update(struct write_transaction_table_arg **out,
 		arg->updates_nr = 0;
 		arg->updates_alloc = 0;
 		arg->updates_expected = 0;
+		arg->max_index = 0;
 	}
 
 	arg->updates_expected++;
@@ -1628,10 +1629,9 @@ static int reftable_be_transaction_finish(struct ref_store *ref_store UNUSED,
 	struct reftable_transaction_data *tx_data = transaction->backend_data;
 	int ret = 0;
 
-	if (tx_data->args)
-		tx_data->args->max_index = transaction->max_index;
-
 	for (size_t i = 0; i < tx_data->args_nr; i++) {
+		tx_data->args[i].max_index = transaction->max_index;
+
 		ret = reftable_addition_add(tx_data->args[i].addition,
 					    write_transaction_table, &tx_data->args[i]);
 		if (ret < 0)
