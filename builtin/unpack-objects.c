@@ -18,6 +18,7 @@
 #include "progress.h"
 #include "decorate.h"
 #include "fsck.h"
+#include "packfile.h"
 
 static int dry_run, quiet, recover, has_errors, strict;
 static const char unpack_usage[] = "git unpack-objects [-n] [-q] [-r] [--strict]";
@@ -578,15 +579,16 @@ static void unpack_one(unsigned nr)
 static void unpack_all(void)
 {
 	int i;
-	struct pack_header *hdr = fill(sizeof(struct pack_header));
+	unsigned char *hdr = fill(sizeof(struct pack_header));
 
-	nr_objects = ntohl(hdr->hdr_entries);
-
-	if (ntohl(hdr->hdr_signature) != PACK_SIGNATURE)
+	if (get_be32(hdr) != PACK_SIGNATURE)
 		die("bad pack file");
-	if (!pack_version_ok(hdr->hdr_version))
+	hdr += 4;
+	if (!pack_version_ok_native(get_be32(hdr)))
 		die("unknown pack file version %"PRIu32,
-			ntohl(hdr->hdr_version));
+		    get_be32(hdr));
+	hdr += 4;
+	nr_objects = get_be32(hdr);
 	use(sizeof(struct pack_header));
 
 	if (!quiet)
@@ -647,19 +649,10 @@ int cmd_unpack_objects(int argc,
 				fsck_set_msg_types(&fsck_options, arg);
 				continue;
 			}
-			if (starts_with(arg, "--pack_header=")) {
-				struct pack_header *hdr;
-				char *c;
-
-				hdr = (struct pack_header *)buffer;
-				hdr->hdr_signature = htonl(PACK_SIGNATURE);
-				hdr->hdr_version = htonl(strtoul(arg + 14, &c, 10));
-				if (*c != ',')
-					die("bad %s", arg);
-				hdr->hdr_entries = htonl(strtoul(c + 1, &c, 10));
-				if (*c)
-					die("bad %s", arg);
-				len = sizeof(*hdr);
+			if (skip_prefix(arg, "--pack_header=", &arg)) {
+				if (parse_pack_header_option(arg,
+							     buffer, &len) < 0)
+					die(_("bad --pack_header: %s"), arg);
 				continue;
 			}
 			if (skip_prefix(arg, "--max-input-size=", &arg)) {
