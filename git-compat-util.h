@@ -1540,15 +1540,6 @@ int common_exit(const char *file, int line, int code);
 #define z_const
 #include <zlib.h>
 
-#if ZLIB_VERNUM < 0x1290
-/*
- * This is uncompress2, which is only available in zlib >= 1.2.9
- * (released as of early 2017). See compat/zlib-uncompress2.c.
- */
-int uncompress2(Bytef *dest, uLongf *destLen, const Bytef *source,
-		uLong *sourceLen);
-#endif
-
 /*
  * This include must come after system headers, since it introduces macros that
  * replace system names.

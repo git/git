@@ -263,7 +263,6 @@ libgit_sources = [
   'compat/nonblock.c',
   'compat/obstack.c',
   'compat/terminal.c',
-  'compat/zlib-uncompress2.c',
   'config.c',
   'connect.c',
   'connected.c',
