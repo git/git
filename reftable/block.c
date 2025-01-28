@@ -15,7 +15,7 @@ https://developers.google.com/open-source/licenses/bsd
 #include "system.h"
 #include <zlib.h>
 
-int header_size(int version)
+size_t header_size(int version)
 {
 	switch (version) {
 	case 1:
@@ -26,7 +26,7 @@ int header_size(int version)
 	abort();
 }
 
-int footer_size(int version)
+size_t footer_size(int version)
 {
 	switch (version) {
 	case 1:
@@ -40,16 +40,15 @@ int footer_size(int version)
 static int block_writer_register_restart(struct block_writer *w, int n,
 					 int is_restart, struct reftable_buf *key)
 {
-	int rlen, err;
+	uint32_t rlen;
+	int err;
 
 	rlen = w->restart_len;
-	if (rlen >= MAX_RESTARTS) {
+	if (rlen >= MAX_RESTARTS)
 		is_restart = 0;
-	}
 
-	if (is_restart) {
+	if (is_restart)
 		rlen++;
-	}
 	if (2 + 3 * rlen + n > w->block_size - w->next)
 		return -1;
 	if (is_restart) {
@@ -72,7 +71,7 @@ static int block_writer_register_restart(struct block_writer *w, int n,
 }
 
 int block_writer_init(struct block_writer *bw, uint8_t typ, uint8_t *block,
-		      uint32_t block_size, uint32_t header_off, int hash_size)
+		      uint32_t block_size, uint32_t header_off, uint32_t hash_size)
 {
 	bw->block = block;
 	bw->hash_size = hash_size;
@@ -148,8 +147,7 @@ done:
 
 int block_writer_finish(struct block_writer *w)
 {
-	int i;
-	for (i = 0; i < w->restart_len; i++) {
+	for (uint32_t i = 0; i < w->restart_len; i++) {
 		put_be24(w->block + w->next, w->restarts[i]);
 		w->next += 3;
 	}
@@ -214,7 +212,7 @@ int block_writer_finish(struct block_writer *w)
 
 int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		      uint32_t header_off, uint32_t table_block_size,
-		      int hash_size)
+		      uint32_t hash_size)
 {
 	uint32_t full_block_size = table_block_size;
 	uint8_t typ = block->data[header_off];
