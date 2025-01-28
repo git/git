@@ -27,6 +27,8 @@ option('version', type: 'string', value: '',
   description: 'Version string reported by git-version(1) and other tools.')
 
 # Features supported by Git.
+option('contrib', type: 'array', value: [ 'completion' ], choices: [ 'completion', 'subtree' ],
+  description: 'Contributed features to include.')
 option('curl', type: 'feature', value: 'enabled',
   description: 'Build helpers used to access remotes with the HTTP transport.')
 option('expat', type: 'feature', value: 'enabled',
