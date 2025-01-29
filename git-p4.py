@@ -1584,7 +1584,7 @@ class GitLFS(LargeFileSystem):
            content.
            """
         if os.path.getsize(contentFile) == 0:
-            return (None, '', None)
+            return ('', None)
 
         pointerProcess = subprocess.Popen(
             ['git', 'lfs', 'pointer', '--file=' + contentFile],
