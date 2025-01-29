@@ -307,8 +307,9 @@ static void fn_param_fl(const char *file, int line, const char *param,
 	enum config_scope scope = kvi->scope;
 	const char *scope_name = config_scope_name(scope);
 
-	strbuf_addf(&buf_payload, "def_param scope:%s %s=%s", scope_name, param,
-		    value);
+	strbuf_addf(&buf_payload, "def_param scope:%s %s", scope_name, param);
+	if (value)
+		strbuf_addf(&buf_payload, "=%s", value);
 	normal_io_write_fl(file, line, &buf_payload);
 	strbuf_release(&buf_payload);
 }
