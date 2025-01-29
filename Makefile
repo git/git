@@ -417,7 +417,7 @@ include shared.mak
 # programs in oss-fuzz/.
 #
 # Define INCLUDE_LIBGIT_RS if you want `make all` and `make test` to build and
-# test the Rust crate in contrib/libgit-sys.
+# test the Rust crates in contrib/libgit-sys and contrib/libgit-rs.
 #
 # === Optional library: libintl ===
 #
@@ -3742,7 +3742,7 @@ clean: profile-clean coverage-clean cocciclean
 	$(RM) $(htmldocs).tar.gz $(manpages).tar.gz
 	$(MAKE) -C Documentation/ clean
 	$(RM) Documentation/GIT-EXCLUDED-PROGRAMS
-	$(RM) -r contrib/libgit-sys/target
+	$(RM) -r contrib/libgit-sys/target contrib/libgit-rs/target
 	$(RM) contrib/libgit-sys/partial_symbol_export.o
 	$(RM) contrib/libgit-sys/hidden_symbol_export.o
 	$(RM) contrib/libgit-sys/libgitpub.a
@@ -3908,14 +3908,14 @@ build-unit-tests: $(UNIT_TEST_PROGS) $(CLAR_TEST_PROG)
 unit-tests: $(UNIT_TEST_PROGS) $(CLAR_TEST_PROG) t/helper/test-tool$X
 	$(MAKE) -C t/ unit-tests
 
-.PHONY: libgit-sys
-libgit-sys:
+.PHONY: libgit-sys libgit-rs
+libgit-sys libgit-rs:
 	$(QUIET)(\
-		cd contrib/libgit-sys && \
+		cd contrib/$@ && \
 		cargo build \
 	)
 ifdef INCLUDE_LIBGIT_RS
-all:: libgit-sys
+all:: libgit-sys libgit-rs
 endif
 
 LIBGIT_PUB_OBJS += contrib/libgit-sys/public_symbol_export.o
