@@ -1463,7 +1463,7 @@ class LargeFileSystem(object):
         self.largeFiles = set()
         self.writeToGitStream = writeToGitStream
 
-    def generatePointer(self, cloneDestination, contentFile):
+    def generatePointer(self, contentFile):
         """Return the content of a pointer file that is stored in Git instead
            of the actual content.
            """
@@ -1528,9 +1528,8 @@ class LargeFileSystem(object):
 
         if self.exceedsLargeFileThreshold(relPath, contents) or self.hasLargeFileExtension(relPath):
             contentTempFile = self.generateTempFile(contents)
-            pointer_git_mode, contents, localLargeFile = self.generatePointer(contentTempFile)
-            if pointer_git_mode:
-                git_mode = pointer_git_mode
+            # LFS Spec states that pointer files should match the execute permission of the underlying file.
+            contents, localLargeFile = self.generatePointer(contentTempFile)
             if localLargeFile:
                 # Move temp file to final location in large file system
                 largeFileDir = os.path.dirname(localLargeFile)
@@ -1555,10 +1554,9 @@ class MockLFS(LargeFileSystem):
            """
         with open(contentFile, 'r') as f:
             content = next(f)
-            gitMode = '100644'
             pointerContents = 'pointer-' + content
             localLargeFile = os.path.join(os.getcwd(), '.git', 'mock-storage', 'local', content[:-1])
-            return (gitMode, pointerContents, localLargeFile)
+            return (pointerContents, localLargeFile)
 
     def pushFile(self, localLargeFile):
         """The remote filename of the large file storage is the same as the
@@ -1616,9 +1614,7 @@ class GitLFS(LargeFileSystem):
             'objects', oid[:2], oid[2:4],
             oid,
         )
-        # LFS Spec states that pointer files should not have the executable bit set.
-        gitMode = '100644'
-        return (gitMode, pointerFile, localLargeFile)
+        return (pointerFile, localLargeFile)
 
     def pushFile(self, localLargeFile):
         uploadProcess = subprocess.Popen(
