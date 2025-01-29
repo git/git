@@ -36,14 +36,11 @@ test:linux:
       fi
   parallel:
     matrix:
-      - jobname: linux-old
-        image: ubuntu:20.04
-        CC: gcc
       - jobname: linux-sha256
-        image: ubuntu:latest
+        image: ubuntu:rolling
         CC: clang
       - jobname: linux-reftable
-        image: ubuntu:latest
+        image: ubuntu:rolling
         CC: clang
       - jobname: linux-breaking-changes
         image: ubuntu:20.04
@@ -53,20 +50,22 @@ test:linux:
         CC: gcc
         CC_PACKAGE: gcc-8
       - jobname: linux-leaks
-        image: ubuntu:latest
+        image: ubuntu:rolling
         CC: gcc
       - jobname: linux-reftable-leaks
-        image: ubuntu:latest
+        image: ubuntu:rolling
         CC: gcc
       - jobname: linux-asan-ubsan
-        image: ubuntu:latest
+        image: ubuntu:rolling
         CC: clang
       - jobname: pedantic
         image: fedora:latest
       - jobname: linux-musl
         image: alpine:latest
+      - jobname: linux32
+        image: i386/ubuntu:20.04
       - jobname: linux-meson
-        image: ubuntu:latest
+        image: ubuntu:rolling
         CC: gcc
   artifacts:
     paths:
