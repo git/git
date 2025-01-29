@@ -23,6 +23,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * Move a few more unit tests to the clar test framework.
 
+ * Introduce a new API to visit objects in batches based on a common
+   path, or by type.
+
 
 Fixes since v2.48
 -----------------
@@ -87,6 +90,24 @@ Fixes since v2.48
  * The "cache" credential back-end did not handle authtype correctly,
    which has been corrected.
    (merge 0b43274850 mh/credential-cache-authtype-request-fix later to maint).
+
+ * "git branch --sort=..." and "git for-each-ref --format=... --sort=..."
+   did not work as expected with some atoms, which has been corrected.
+   (merge c5490ce9d1 rs/ref-fitler-used-atoms-value-fix later to maint).
+
+ * reflog entries for symbolic ref updates were broken, which has been
+   corrected.
+   (merge 3519492430 kn/reflog-symref-fix later to maint).
+
+ * The trace2 code was not prepared to show a configuration variable
+   that is set to true using the valueless true syntax, which has been
+   corrected.
+   (merge 2fd367cf63 am/trace2-with-valueless-true later to maint).
+
+ * The "git refs migrate" command did not migrate the reflog for
+   refs/stash, which is the contents of the stashes, which has been
+   corrected.
+   (merge a0bea0978f ps/reflog-migration-with-logall-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge ddb5287894 jk/t7407-use-test-grep later to maint).
