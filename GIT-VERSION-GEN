@@ -5,21 +5,29 @@ DEF_VER=v2.48.GIT
 LF='
 '
 
-if test "$#" -ne 3
+if test "$#" -lt 2 || test "$#" -gt 3
 then
-    echo >&2 "USAGE: $0 <SOURCE_DIR> <INPUT> <OUTPUT>"
+    echo >&2 "USAGE: $0 <SOURCE_DIR> (--format=<STRING>|<INPUT>) [<OUTPUT>]"
     exit 1
 fi
 
 SOURCE_DIR="$1"
-INPUT="$2"
-OUTPUT="$3"
 
-if ! test -f "$INPUT"
-then
-	echo >&2 "Input is not a file: $INPUT"
-	exit 1
-fi
+case "$2" in
+--format=*)
+	INPUT="${2#--format=}"
+	;;
+*)
+	if ! test -f "$2"
+	then
+		echo >&2 "Input is not a file: $2"
+		exit 1
+	fi
+	INPUT=$(cat "$2")
+	;;
+esac
+
+OUTPUT="$3"
 
 # Protect us from reading Git version information outside of the Git directory
 # in case it is not a repository itself, but embedded in an unrelated
@@ -39,13 +47,9 @@ then
 			test -d "${GIT_DIR:-.git}" ||
 			test -f "$SOURCE_DIR"/.git;
 		} &&
-		VN=$(git -C "$SOURCE_DIR" describe --match "v[0-9]*" HEAD 2>/dev/null) &&
+		VN=$(git -C "$SOURCE_DIR" describe --dirty --match="v[0-9]*" 2>/dev/null) &&
 		case "$VN" in
 		*$LF*) (exit 1) ;;
-		v[0-9]*)
-			git -C "$SOURCE_DIR" update-index -q --refresh
-			test -z "$(git -C "$SOURCE_DIR" diff-index --name-only HEAD --)" ||
-			VN="$VN-dirty" ;;
 		esac
 	then
 		VN=$(echo "$VN" | sed -e 's/-/./g');
@@ -78,19 +82,25 @@ read GIT_MAJOR_VERSION GIT_MINOR_VERSION GIT_MICRO_VERSION GIT_PATCH_LEVEL trail
 $(echo "$GIT_VERSION" 0 0 0 0 | tr '.a-zA-Z-' ' ')
 EOF
 
-sed -e "s|@GIT_VERSION@|$GIT_VERSION|" \
+REPLACED=$(printf "%s" "$INPUT" | sed -e "s|@GIT_VERSION@|$GIT_VERSION|" \
 	-e "s|@GIT_MAJOR_VERSION@|$GIT_MAJOR_VERSION|" \
 	-e "s|@GIT_MINOR_VERSION@|$GIT_MINOR_VERSION|" \
 	-e "s|@GIT_MICRO_VERSION@|$GIT_MICRO_VERSION|" \
 	-e "s|@GIT_PATCH_LEVEL@|$GIT_PATCH_LEVEL|" \
 	-e "s|@GIT_BUILT_FROM_COMMIT@|$GIT_BUILT_FROM_COMMIT|" \
 	-e "s|@GIT_USER_AGENT@|$GIT_USER_AGENT|" \
-	-e "s|@GIT_DATE@|$GIT_DATE|" \
-	"$INPUT" >"$OUTPUT".$$+
+	-e "s|@GIT_DATE@|$GIT_DATE|"
+)
 
-if ! test -f "$OUTPUT" || ! cmp "$OUTPUT".$$+ "$OUTPUT" >/dev/null
+if test -z "$OUTPUT"
 then
-	mv "$OUTPUT".$$+ "$OUTPUT"
+	printf "%s\n" "$REPLACED"
 else
-	rm "$OUTPUT".$$+
+	printf "%s\n" "$REPLACED" >"$OUTPUT".$$+
+	if ! test -f "$OUTPUT" || ! cmp "$OUTPUT".$$+ "$OUTPUT" >/dev/null
+	then
+		mv "$OUTPUT".$$+ "$OUTPUT"
+	else
+		rm "$OUTPUT".$$+
+	fi
 fi
