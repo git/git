@@ -201,11 +201,12 @@ endif
 cygpath = find_program('cygpath', dirs: program_path, required: false)
 diff = find_program('diff', dirs: program_path)
 git = find_program('git', dirs: program_path, required: false)
+sed = find_program('sed', dirs: program_path)
 shell = find_program('sh', dirs: program_path)
 tar = find_program('tar', dirs: program_path)
 
 # Sanity-check that programs required for the build exist.
-foreach tool : ['cat', 'cut', 'grep', 'sed', 'sort', 'tr', 'uname']
+foreach tool : ['cat', 'cut', 'grep', 'sort', 'tr', 'uname']
   find_program(tool, dirs: program_path)
 endforeach
 
