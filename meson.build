@@ -198,19 +198,19 @@ endif
 
 cygpath = find_program('cygpath', dirs: program_path, required: false)
 diff = find_program('diff', dirs: program_path)
+git = find_program('git', dirs: program_path, required: false)
 shell = find_program('sh', dirs: program_path)
 tar = find_program('tar', dirs: program_path)
 
-script_environment = environment()
+# Sanity-check that programs required for the build exist.
 foreach tool : ['cat', 'cut', 'grep', 'sed', 'sort', 'tr', 'uname']
-  program = find_program(tool, dirs: program_path)
-  script_environment.prepend('PATH', fs.parent(program.full_path()))
+  find_program(tool, dirs: program_path)
 endforeach
 
-git = find_program('git', dirs: program_path, required: false)
-if git.found()
-  script_environment.prepend('PATH', fs.parent(git.full_path()))
-endif
+script_environment = environment()
+foreach path : program_path
+  script_environment.prepend('PATH', path)
+endforeach
 
 if get_option('sane_tool_path') != ''
   script_environment.prepend('PATH', get_option('sane_tool_path'))
