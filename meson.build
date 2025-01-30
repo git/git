@@ -1605,13 +1605,13 @@ libgit_commonmain = declare_dependency(
 bin_wrappers = [ ]
 test_dependencies = [ ]
 
-git = executable('git',
+git_builtin = executable('git',
   sources: builtin_sources + 'git.c',
   dependencies: [libgit_commonmain],
   install: true,
   install_dir: get_option('libexecdir') / 'git-core',
 )
-bin_wrappers += git
+bin_wrappers += git_builtin
 
 test_dependencies += executable('git-daemon',
   sources: 'daemon.c',
@@ -1702,7 +1702,7 @@ test_dependencies += executable('git-imap-send',
 
 foreach alias : [ 'git-receive-pack', 'git-upload-archive', 'git-upload-pack' ]
   bin_wrappers += executable(alias,
-    objects: git.extract_all_objects(recursive: false),
+    objects: git_builtin.extract_all_objects(recursive: false),
     dependencies: [libgit],
   )
 
