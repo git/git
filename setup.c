@@ -2534,7 +2534,9 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 		ref_format = ref_storage_format_by_name(env);
 		if (ref_format == REF_STORAGE_FORMAT_UNKNOWN)
 			die(_("unknown ref storage format '%s'"), env);
-		repo_fmt->ref_storage_format = ref_format;
+		if (repo_fmt->version < 0 ||
+		    repo_fmt->ref_storage_format == REF_STORAGE_FORMAT_UNKNOWN)
+			repo_fmt->ref_storage_format = ref_format;
 	} else if (cfg.ref_format != REF_STORAGE_FORMAT_UNKNOWN) {
 		repo_fmt->ref_storage_format = cfg.ref_format;
 	}

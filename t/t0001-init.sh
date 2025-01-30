@@ -697,6 +697,15 @@ do
 		git -C refformat rev-parse --show-ref-format >actual &&
 		test_cmp expect actual
 	'
+
+	test_expect_success "reinit repository with GIT_DEFAULT_REF_FORMAT=$format does not change format" '
+		test_when_finished "rm -rf refformat" &&
+		git init refformat &&
+		git -C refformat rev-parse --show-ref-format >expect &&
+		GIT_DEFAULT_REF_FORMAT=$format git init refformat &&
+		git -C refformat rev-parse --show-ref-format >actual &&
+		test_cmp expect actual
+	'
 done
 
 test_expect_success "--ref-format= overrides GIT_DEFAULT_REF_FORMAT" '
