@@ -1555,17 +1555,15 @@ libgit_version_library = static_library('git-version',
   include_directories: libgit_include_directories,
 )
 
-libgit_library = static_library('git',
-  sources: libgit_sources,
-  c_args: libgit_c_args,
-  link_with: libgit_version_library,
-  dependencies: libgit_dependencies,
-  include_directories: libgit_include_directories,
-)
-
 libgit = declare_dependency(
+  link_with: static_library('git',
+    sources: libgit_sources,
+    c_args: libgit_c_args,
+    link_with: libgit_version_library,
+    dependencies: libgit_dependencies,
+    include_directories: libgit_include_directories,
+  ),
   compile_args: libgit_c_args,
-  link_with: libgit_library,
   dependencies: libgit_dependencies,
   include_directories: libgit_include_directories,
 )
