@@ -13,8 +13,8 @@ option('perl_cpan_fallback', type: 'boolean', value: true,
   description: 'Install bundled copies of CPAN modules that serve as a fallback in case the modules are not available on the system.')
 option('runtime_prefix', type: 'boolean', value: false,
   description: 'Resolve ancillary tooling and support files relative to the location of the runtime binary instead of hard-coding them into the binary.')
-option('sane_tool_path', type: 'string', value: '',
-  description: 'A colon-separated list of paths to prepend to PATH if your tools in /usr/bin are broken.')
+option('sane_tool_path', type: 'array', value: [],
+  description: 'An array of paths to pick up tools from in case the normal tools are broken or lacking.')
 
 # Build information compiled into Git and other parts like documentation.
 option('build_date', type: 'string', value: '',
