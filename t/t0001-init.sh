@@ -861,15 +861,6 @@ test_expect_success 're-init with includeIf.onbranch condition' '
 	test_cmp expect actual
 '
 
-test_expect_success 're-init with includeIf.onbranch condition' '
-	test_when_finished "rm -rf repo" &&
-	git init repo &&
-	git -c includeIf.onbranch:nonexistent.path=/does/not/exist init repo &&
-	echo $GIT_DEFAULT_REF_FORMAT >expect &&
-	git -C repo rev-parse --show-ref-format >actual &&
-	test_cmp expect actual
-'
-
 test_expect_success 're-init skips non-matching includeIf.onbranch' '
 	test_when_finished "rm -rf repo config" &&
 	cat >config <<-EOF &&
