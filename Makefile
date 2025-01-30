@@ -183,7 +183,8 @@ include shared.mak
 # byte-order mark (BOM) when writing UTF-16 or UTF-32 and always writes in
 # big-endian format.
 #
-# Define NO_DEFLATE_BOUND if your zlib does not have deflateBound.
+# Define NO_DEFLATE_BOUND if your zlib does not have deflateBound. Define
+# ZLIB_NG if you want to use zlib-ng instead of zlib.
 #
 # Define NO_NORETURN if using buggy versions of gcc 4.6+ and profile feedback,
 # as the compiler can crash (https://gcc.gnu.org/bugzilla/show_bug.cgi?id=49299)
@@ -985,7 +986,6 @@ LIB_OBJS += commit.o
 LIB_OBJS += compat/nonblock.o
 LIB_OBJS += compat/obstack.o
 LIB_OBJS += compat/terminal.o
-LIB_OBJS += compat/zlib-uncompress2.o
 LIB_OBJS += config.o
 LIB_OBJS += connect.o
 LIB_OBJS += connected.o
@@ -1692,11 +1692,20 @@ else
 endif
 IMAP_SEND_LDFLAGS += $(OPENSSL_LINK) $(OPENSSL_LIBSSL) $(LIB_4_CRYPTO)
 
-ifdef ZLIB_PATH
-	BASIC_CFLAGS += -I$(ZLIB_PATH)/include
-	EXTLIBS += $(call libpath_template,$(ZLIB_PATH)/$(lib))
+ifdef ZLIB_NG
+	BASIC_CFLAGS += -DHAVE_ZLIB_NG
+	ifdef ZLIB_NG_PATH
+		BASIC_CFLAGS += -I$(ZLIB_NG_PATH)/include
+		EXTLIBS += $(call libpath_template,$(ZLIB_NG_PATH)/$(lib))
+	endif
+	EXTLIBS += -lz-ng
+else
+	ifdef ZLIB_PATH
+		BASIC_CFLAGS += -I$(ZLIB_PATH)/include
+		EXTLIBS += $(call libpath_template,$(ZLIB_PATH)/$(lib))
+	endif
+	EXTLIBS += -lz
 endif
-EXTLIBS += -lz
 
 ifndef NO_OPENSSL
 	OPENSSL_LIBSSL = -lssl

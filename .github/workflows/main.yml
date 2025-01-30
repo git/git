@@ -390,7 +390,7 @@ jobs:
         - jobname: linux-meson
           image: ubuntu:rolling
           cc: gcc
-        - jobname: linux-musl
+        - jobname: linux-musl-meson
           image: alpine:latest
         # Supported until 2025-04-02.
         - jobname: linux32
