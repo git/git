@@ -2517,7 +2517,9 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 		int env_algo = hash_algo_by_name(env);
 		if (env_algo == GIT_HASH_UNKNOWN)
 			die(_("unknown hash algorithm '%s'"), env);
-		repo_fmt->hash_algo = env_algo;
+		if (repo_fmt->version < 0 ||
+		    repo_fmt->hash_algo == GIT_HASH_UNKNOWN)
+			repo_fmt->hash_algo = env_algo;
 	} else if (cfg.hash != GIT_HASH_UNKNOWN) {
 		repo_fmt->hash_algo = cfg.hash;
 	}
