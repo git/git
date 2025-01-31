@@ -20,6 +20,7 @@ struct hashfile {
 	size_t buffer_len;
 	unsigned char *buffer;
 	unsigned char *check_buffer;
+	const struct git_hash_algo *algop;
 
 	/**
 	 * If non-zero, skip_hash indicates that we should
@@ -35,6 +36,7 @@ struct hashfile_checkpoint {
 	git_hash_ctx ctx;
 };
 
+void hashfile_checkpoint_init(struct hashfile *, struct hashfile_checkpoint *);
 void hashfile_checkpoint(struct hashfile *, struct hashfile_checkpoint *);
 int hashfile_truncate(struct hashfile *, struct hashfile_checkpoint *);
 
