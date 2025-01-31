@@ -109,6 +109,10 @@ Fixes since v2.48
    corrected.
    (merge a0bea0978f ps/reflog-migration-with-logall-fix later to maint).
 
+ * Doc and short-help text for "show-index" has been clarified to
+   stress that the command reads its data from the standard input.
+   (merge 49edce4ff9 jc/show-index-h-update later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge ddb5287894 jk/t7407-use-test-grep later to maint).
    (merge 21e1b44865 aj/difftool-config-doc-fix later to maint).
@@ -116,3 +120,6 @@ Fixes since v2.48
    (merge 43850dcf9c sk/unit-test-hash later to maint).
    (merge 4ad47d2de3 jc/cli-doc-option-and-config later to maint).
    (merge 2d0ff147e5 jp/t8002-printf-fix later to maint).
+   (merge 69666e6746 ja/doc-restore-markup-update later to maint).
+   (merge d11d003ba5 sk/strlen-returns-size_t later to maint).
+   (merge 77b2d29e91 ja/doc-notes-markup-updates later to maint).
