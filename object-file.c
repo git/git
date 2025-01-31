@@ -88,82 +88,82 @@ static const struct object_id null_oid_sha256 = {
 
 static void git_hash_sha1_init(git_hash_ctx *ctx)
 {
-	git_SHA1_Init(&ctx->sha1);
+	git_SHA1_Init(&ctx->state.sha1);
 }
 
 static void git_hash_sha1_clone(git_hash_ctx *dst, const git_hash_ctx *src)
 {
-	git_SHA1_Clone(&dst->sha1, &src->sha1);
+	git_SHA1_Clone(&dst->state.sha1, &src->state.sha1);
 }
 
 static void git_hash_sha1_update(git_hash_ctx *ctx, const void *data, size_t len)
 {
-	git_SHA1_Update(&ctx->sha1, data, len);
+	git_SHA1_Update(&ctx->state.sha1, data, len);
 }
 
 static void git_hash_sha1_final(unsigned char *hash, git_hash_ctx *ctx)
 {
-	git_SHA1_Final(hash, &ctx->sha1);
+	git_SHA1_Final(hash, &ctx->state.sha1);
 }
 
 static void git_hash_sha1_final_oid(struct object_id *oid, git_hash_ctx *ctx)
 {
-	git_SHA1_Final(oid->hash, &ctx->sha1);
+	git_SHA1_Final(oid->hash, &ctx->state.sha1);
 	memset(oid->hash + GIT_SHA1_RAWSZ, 0, GIT_MAX_RAWSZ - GIT_SHA1_RAWSZ);
 	oid->algo = GIT_HASH_SHA1;
 }
 
 static void git_hash_sha1_init_unsafe(git_hash_ctx *ctx)
 {
-	git_SHA1_Init_unsafe(&ctx->sha1_unsafe);
+	git_SHA1_Init_unsafe(&ctx->state.sha1_unsafe);
 }
 
 static void git_hash_sha1_clone_unsafe(git_hash_ctx *dst, const git_hash_ctx *src)
 {
-	git_SHA1_Clone_unsafe(&dst->sha1_unsafe, &src->sha1_unsafe);
+	git_SHA1_Clone_unsafe(&dst->state.sha1_unsafe, &src->state.sha1_unsafe);
 }
 
 static void git_hash_sha1_update_unsafe(git_hash_ctx *ctx, const void *data,
 				      size_t len)
 {
-	git_SHA1_Update_unsafe(&ctx->sha1_unsafe, data, len);
+	git_SHA1_Update_unsafe(&ctx->state.sha1_unsafe, data, len);
 }
 
 static void git_hash_sha1_final_unsafe(unsigned char *hash, git_hash_ctx *ctx)
 {
-	git_SHA1_Final_unsafe(hash, &ctx->sha1_unsafe);
+	git_SHA1_Final_unsafe(hash, &ctx->state.sha1_unsafe);
 }
 
 static void git_hash_sha1_final_oid_unsafe(struct object_id *oid, git_hash_ctx *ctx)
 {
-	git_SHA1_Final_unsafe(oid->hash, &ctx->sha1_unsafe);
+	git_SHA1_Final_unsafe(oid->hash, &ctx->state.sha1_unsafe);
 	memset(oid->hash + GIT_SHA1_RAWSZ, 0, GIT_MAX_RAWSZ - GIT_SHA1_RAWSZ);
 	oid->algo = GIT_HASH_SHA1;
 }
 
 static void git_hash_sha256_init(git_hash_ctx *ctx)
 {
-	git_SHA256_Init(&ctx->sha256);
+	git_SHA256_Init(&ctx->state.sha256);
 }
 
 static void git_hash_sha256_clone(git_hash_ctx *dst, const git_hash_ctx *src)
 {
-	git_SHA256_Clone(&dst->sha256, &src->sha256);
+	git_SHA256_Clone(&dst->state.sha256, &src->state.sha256);
 }
 
 static void git_hash_sha256_update(git_hash_ctx *ctx, const void *data, size_t len)
 {
-	git_SHA256_Update(&ctx->sha256, data, len);
+	git_SHA256_Update(&ctx->state.sha256, data, len);
 }
 
 static void git_hash_sha256_final(unsigned char *hash, git_hash_ctx *ctx)
 {
-	git_SHA256_Final(hash, &ctx->sha256);
+	git_SHA256_Final(hash, &ctx->state.sha256);
 }
 
 static void git_hash_sha256_final_oid(struct object_id *oid, git_hash_ctx *ctx)
 {
-	git_SHA256_Final(oid->hash, &ctx->sha256);
+	git_SHA256_Final(oid->hash, &ctx->state.sha256);
 	/*
 	 * This currently does nothing, so the compiler should optimize it out,
 	 * but keep it in case we extend the hash size again.

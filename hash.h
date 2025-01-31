@@ -234,13 +234,14 @@ enum get_oid_result {
 #endif
 
 /* A suitably aligned type for stack allocations of hash contexts. */
-union git_hash_ctx {
-	git_SHA_CTX sha1;
-	git_SHA_CTX_unsafe sha1_unsafe;
-
-	git_SHA256_CTX sha256;
+struct git_hash_ctx {
+	union {
+		git_SHA_CTX sha1;
+		git_SHA_CTX_unsafe sha1_unsafe;
+		git_SHA256_CTX sha256;
+	} state;
 };
-typedef union git_hash_ctx git_hash_ctx;
+typedef struct git_hash_ctx git_hash_ctx;
 
 typedef void (*git_hash_init_fn)(git_hash_ctx *ctx);
 typedef void (*git_hash_clone_fn)(git_hash_ctx *dst, const git_hash_ctx *src);
