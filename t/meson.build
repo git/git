@@ -6,6 +6,7 @@ clar_test_suites = [
   'unit-tests/u-mem-pool.c',
   'unit-tests/u-prio-queue.c',
   'unit-tests/u-reftable-tree.c',
+  'unit-tests/u-strbuf.c',
   'unit-tests/u-strvec.c',
 ]
 
@@ -57,7 +58,6 @@ unit_test_programs = [
   'unit-tests/t-reftable-readwrite.c',
   'unit-tests/t-reftable-record.c',
   'unit-tests/t-reftable-stack.c',
-  'unit-tests/t-strbuf.c',
   'unit-tests/t-strcmp-offset.c',
   'unit-tests/t-trailer.c',
   'unit-tests/t-urlmatch-normalization.c',
