@@ -48,9 +48,9 @@ int cmd_hash_impl(int ac, const char **av, int algo, int unsafe)
 		}
 		if (this_sz == 0)
 			break;
-		algop->update_fn(&ctx, buffer, this_sz);
+		git_hash_update(&ctx, buffer, this_sz);
 	}
-	algop->final_fn(hash, &ctx);
+	git_hash_final(hash, &ctx);
 
 	if (binary)
 		fwrite(hash, 1, algop->rawsz, stdout);

@@ -70,7 +70,7 @@ static void *fill(int min)
 	if (min > sizeof(buffer))
 		die("cannot fill %d bytes", min);
 	if (offset) {
-		the_hash_algo->update_fn(&ctx, buffer, offset);
+		git_hash_update(&ctx, buffer, offset);
 		memmove(buffer, buffer + offset, len);
 		offset = 0;
 	}
@@ -667,10 +667,9 @@ int cmd_unpack_objects(int argc,
 	}
 	the_hash_algo->init_fn(&ctx);
 	unpack_all();
-	the_hash_algo->update_fn(&ctx, buffer, offset);
-	the_hash_algo->init_fn(&tmp_ctx);
-	the_hash_algo->clone_fn(&tmp_ctx, &ctx);
-	the_hash_algo->final_oid_fn(&oid, &tmp_ctx);
+	git_hash_update(&ctx, buffer, offset);
+	git_hash_clone(&tmp_ctx, &ctx);
+	git_hash_final_oid(&oid, &tmp_ctx);
 	if (strict) {
 		write_rest();
 		if (fsck_finish(&fsck_options))

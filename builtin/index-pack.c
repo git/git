@@ -301,7 +301,7 @@ static void flush(void)
 	if (input_offset) {
 		if (output_fd >= 0)
 			write_or_die(output_fd, input_buffer, input_offset);
-		the_hash_algo->update_fn(&input_ctx, input_buffer, input_offset);
+		git_hash_update(&input_ctx, input_buffer, input_offset);
 		memmove(input_buffer, input_buffer + input_offset, input_len);
 		input_offset = 0;
 	}
@@ -482,7 +482,7 @@ static void *unpack_entry_data(off_t offset, unsigned long size,
 	if (!is_delta_type(type)) {
 		hdrlen = format_object_header(hdr, sizeof(hdr), type, size);
 		the_hash_algo->init_fn(&c);
-		the_hash_algo->update_fn(&c, hdr, hdrlen);
+		git_hash_update(&c, hdr, hdrlen);
 	} else
 		oid = NULL;
 	if (type == OBJ_BLOB && size > big_file_threshold)
@@ -502,7 +502,7 @@ static void *unpack_entry_data(off_t offset, unsigned long size,
 		status = git_inflate(&stream, 0);
 		use(input_len - stream.avail_in);
 		if (oid)
-			the_hash_algo->update_fn(&c, last_out, stream.next_out - last_out);
+			git_hash_update(&c, last_out, stream.next_out - last_out);
 		if (buf == fixed_buf) {
 			stream.next_out = buf;
 			stream.avail_out = sizeof(fixed_buf);
@@ -512,7 +512,7 @@ static void *unpack_entry_data(off_t offset, unsigned long size,
 		bad_object(offset, _("inflate returned %d"), status);
 	git_inflate_end(&stream);
 	if (oid)
-		the_hash_algo->final_oid_fn(oid, &c);
+		git_hash_final_oid(oid, &c);
 	return buf == fixed_buf ? NULL : buf;
 }
 
@@ -1286,9 +1286,8 @@ static void parse_pack_objects(unsigned char *hash)
 
 	/* Check pack integrity */
 	flush();
-	the_hash_algo->init_fn(&tmp_ctx);
-	the_hash_algo->clone_fn(&tmp_ctx, &input_ctx);
-	the_hash_algo->final_fn(hash, &tmp_ctx);
+	git_hash_clone(&tmp_ctx, &input_ctx);
+	git_hash_final(hash, &tmp_ctx);
 	if (!hasheq(fill(the_hash_algo->rawsz), hash, the_repository->hash_algo))
 		die(_("pack is corrupted (SHA1 mismatch)"));
 	use(the_hash_algo->rawsz);

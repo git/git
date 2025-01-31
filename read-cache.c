@@ -1739,8 +1739,8 @@ static int verify_hdr(const struct cache_header *hdr, unsigned long size)
 		return 0;
 
 	the_hash_algo->init_fn(&c);
-	the_hash_algo->update_fn(&c, hdr, size - the_hash_algo->rawsz);
-	the_hash_algo->final_fn(hash, &c);
+	git_hash_update(&c, hdr, size - the_hash_algo->rawsz);
+	git_hash_final(hash, &c);
 	if (!hasheq(hash, start, the_repository->hash_algo))
 		return error(_("bad index file sha1 signature"));
 	return 0;
@@ -2576,8 +2576,8 @@ static int write_index_ext_header(struct hashfile *f,
 	if (eoie_f) {
 		ext = htonl(ext);
 		sz = htonl(sz);
-		the_hash_algo->update_fn(eoie_f, &ext, sizeof(ext));
-		the_hash_algo->update_fn(eoie_f, &sz, sizeof(sz));
+		git_hash_update(eoie_f, &ext, sizeof(ext));
+		git_hash_update(eoie_f, &sz, sizeof(sz));
 	}
 	return 0;
 }
@@ -3634,12 +3634,12 @@ static size_t read_eoie_extension(const char *mmap, size_t mmap_size)
 		if (src_offset + 8 + extsize < src_offset)
 			return 0;
 
-		the_hash_algo->update_fn(&c, mmap + src_offset, 8);
+		git_hash_update(&c, mmap + src_offset, 8);
 
 		src_offset += 8;
 		src_offset += extsize;
 	}
-	the_hash_algo->final_fn(hash, &c);
+	git_hash_final(hash, &c);
 	if (!hasheq(hash, (const unsigned char *)index, the_repository->hash_algo))
 		return 0;
 
@@ -3660,7 +3660,7 @@ static void write_eoie_extension(struct strbuf *sb, struct git_hash_ctx *eoie_co
 	strbuf_add(sb, &buffer, sizeof(uint32_t));
 
 	/* hash */
-	the_hash_algo->final_fn(hash, eoie_context);
+	git_hash_final(hash, eoie_context);
 	strbuf_add(sb, hash, the_hash_algo->rawsz);
 }
 

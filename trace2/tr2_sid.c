@@ -46,8 +46,8 @@ static void tr2_sid_append_my_sid_component(void)
 		strbuf_add(&tr2sid_buf, "Localhost", 9);
 	else {
 		algo->init_fn(&ctx);
-		algo->update_fn(&ctx, hostname, strlen(hostname));
-		algo->final_fn(hash, &ctx);
+		git_hash_update(&ctx, hostname, strlen(hostname));
+		git_hash_final(hash, &ctx);
 		hash_to_hex_algop_r(hex, hash, algo);
 		strbuf_addch(&tr2sid_buf, 'H');
 		strbuf_add(&tr2sid_buf, hex, 8);

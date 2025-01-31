@@ -1199,7 +1199,7 @@ int stream_object_signature(struct repository *r, const struct object_id *oid)
 
 	/* Sha1.. */
 	r->hash_algo->init_fn(&c);
-	r->hash_algo->update_fn(&c, hdr, hdrlen);
+	git_hash_update(&c, hdr, hdrlen);
 	for (;;) {
 		char buf[1024 * 16];
 		ssize_t readlen = read_istream(st, buf, sizeof(buf));
@@ -1210,9 +1210,9 @@ int stream_object_signature(struct repository *r, const struct object_id *oid)
 		}
 		if (!readlen)
 			break;
-		r->hash_algo->update_fn(&c, buf, readlen);
+		git_hash_update(&c, buf, readlen);
 	}
-	r->hash_algo->final_oid_fn(&real_oid, &c);
+	git_hash_final_oid(&real_oid, &c);
 	close_istream(st);
 	return !oideq(oid, &real_oid) ? -1 : 0;
 }
@@ -1957,9 +1957,9 @@ static void hash_object_body(const struct git_hash_algo *algo, struct git_hash_c
 			     char *hdr, int *hdrlen)
 {
 	algo->init_fn(c);
-	algo->update_fn(c, hdr, *hdrlen);
-	algo->update_fn(c, buf, len);
-	algo->final_oid_fn(oid, c);
+	git_hash_update(c, hdr, *hdrlen);
+	git_hash_update(c, buf, len);
+	git_hash_final_oid(oid, c);
 }
 
 static void write_object_file_prepare(const struct git_hash_algo *algo,
@@ -2246,9 +2246,9 @@ static int start_loose_object_common(struct strbuf *tmp_file,
 	stream->avail_in = hdrlen;
 	while (git_deflate(stream, 0) == Z_OK)
 		; /* nothing */
-	algo->update_fn(c, hdr, hdrlen);
+	git_hash_update(c, hdr, hdrlen);
 	if (compat && compat_c)
-		compat->update_fn(compat_c, hdr, hdrlen);
+		git_hash_update(compat_c, hdr, hdrlen);
 
 	return fd;
 }
@@ -2264,14 +2264,13 @@ static int write_loose_object_common(struct git_hash_ctx *c, struct git_hash_ctx
 				     const size_t compressed_len)
 {
 	struct repository *repo = the_repository;
-	const struct git_hash_algo *algo = repo->hash_algo;
 	const struct git_hash_algo *compat = repo->compat_hash_algo;
 	int ret;
 
 	ret = git_deflate(stream, flush ? Z_FINISH : 0);
-	algo->update_fn(c, in0, stream->next_in - in0);
+	git_hash_update(c, in0, stream->next_in - in0);
 	if (compat && compat_c)
-		compat->update_fn(compat_c, in0, stream->next_in - in0);
+		git_hash_update(compat_c, in0, stream->next_in - in0);
 	if (write_in_full(fd, compressed, stream->next_out - compressed) < 0)
 		die_errno(_("unable to write loose object file"));
 	stream->next_out = compressed;
@@ -2291,16 +2290,15 @@ static int end_loose_object_common(struct git_hash_ctx *c, struct git_hash_ctx *
 				   struct object_id *compat_oid)
 {
 	struct repository *repo = the_repository;
-	const struct git_hash_algo *algo = repo->hash_algo;
 	const struct git_hash_algo *compat = repo->compat_hash_algo;
 	int ret;
 
 	ret = git_deflate_end_gently(stream);
 	if (ret != Z_OK)
 		return ret;
-	algo->final_oid_fn(oid, c);
+	git_hash_final_oid(oid, c);
 	if (compat && compat_c)
-		compat->final_oid_fn(compat_oid, compat_c);
+		git_hash_final_oid(compat_oid, compat_c);
 
 	return Z_OK;
 }
@@ -3059,7 +3057,7 @@ static int check_stream_oid(git_zstream *stream,
 	int status = Z_OK;
 
 	the_hash_algo->init_fn(&c);
-	the_hash_algo->update_fn(&c, hdr, stream->total_out);
+	git_hash_update(&c, hdr, stream->total_out);
 
 	/*
 	 * We already read some bytes into hdr, but the ones up to the NUL
@@ -3079,7 +3077,7 @@ static int check_stream_oid(git_zstream *stream,
 		if (size - total_read < stream->avail_out)
 			stream->avail_out = size - total_read;
 		status = git_inflate(stream, Z_FINISH);
-		the_hash_algo->update_fn(&c, buf, stream->next_out - buf);
+		git_hash_update(&c, buf, stream->next_out - buf);
 		total_read += stream->next_out - buf;
 	}
 	git_inflate_end(stream);
@@ -3094,7 +3092,7 @@ static int check_stream_oid(git_zstream *stream,
 		return -1;
 	}
 
-	the_hash_algo->final_oid_fn(&real_oid, &c);
+	git_hash_final_oid(&real_oid, &c);
 	if (!oideq(expected_oid, &real_oid)) {
 		error(_("hash mismatch for %s (expected %s)"), path,
 		      oid_to_hex(expected_oid));

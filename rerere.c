@@ -396,12 +396,12 @@ static int handle_conflict(struct strbuf *out, struct rerere_io *io,
 			strbuf_addbuf(out, &two);
 			rerere_strbuf_putconflict(out, '>', marker_size);
 			if (ctx) {
-				the_hash_algo->update_fn(ctx, one.buf ?
-							 one.buf : "",
-							 one.len + 1);
-				the_hash_algo->update_fn(ctx, two.buf ?
-							 two.buf : "",
-							 two.len + 1);
+				git_hash_update(ctx, one.buf ?
+						one.buf : "",
+						one.len + 1);
+				git_hash_update(ctx, two.buf ?
+						two.buf : "",
+						two.len + 1);
 			}
 			break;
 		} else if (hunk == RR_SIDE_1)
@@ -453,7 +453,7 @@ static int handle_path(unsigned char *hash, struct rerere_io *io, int marker_siz
 	strbuf_release(&out);
 
 	if (hash)
-		the_hash_algo->final_fn(hash, &ctx);
+		git_hash_final(hash, &ctx);
 
 	return has_conflicts;
 }
