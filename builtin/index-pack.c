@@ -151,7 +151,7 @@ static unsigned int input_offset, input_len;
 static off_t consumed_bytes;
 static off_t max_input_size;
 static unsigned deepest_delta;
-static git_hash_ctx input_ctx;
+static struct git_hash_ctx input_ctx;
 static uint32_t input_crc32;
 static int input_fd, output_fd;
 static const char *curr_pack;
@@ -475,7 +475,7 @@ static void *unpack_entry_data(off_t offset, unsigned long size,
 	int status;
 	git_zstream stream;
 	void *buf;
-	git_hash_ctx c;
+	struct git_hash_ctx c;
 	char hdr[32];
 	int hdrlen;
 
@@ -1248,7 +1248,7 @@ static void parse_pack_objects(unsigned char *hash)
 	struct ofs_delta_entry *ofs_delta = ofs_deltas;
 	struct object_id ref_delta_oid;
 	struct stat st;
-	git_hash_ctx tmp_ctx;
+	struct git_hash_ctx tmp_ctx;
 
 	if (verbose)
 		progress = start_progress(

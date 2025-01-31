@@ -3,7 +3,7 @@
 
 int cmd_hash_impl(int ac, const char **av, int algo, int unsafe)
 {
-	git_hash_ctx ctx;
+	struct git_hash_ctx ctx;
 	unsigned char hash[GIT_MAX_HEXSZ];
 	unsigned bufsz = 8192;
 	int binary = 0;

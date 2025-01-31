@@ -161,7 +161,7 @@ static int already_written(struct bulk_checkin_packfile *state, struct object_id
  * with a new pack.
  */
 static int stream_blob_to_pack(struct bulk_checkin_packfile *state,
-			       git_hash_ctx *ctx, off_t *already_hashed_to,
+			       struct git_hash_ctx *ctx, off_t *already_hashed_to,
 			       int fd, size_t size, const char *path,
 			       unsigned flags)
 {
@@ -258,7 +258,7 @@ static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
 				const char *path, unsigned flags)
 {
 	off_t seekback, already_hashed_to;
-	git_hash_ctx ctx;
+	struct git_hash_ctx ctx;
 	unsigned char obuf[16384];
 	unsigned header_len;
 	struct hashfile_checkpoint checkpoint;

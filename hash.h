@@ -241,13 +241,12 @@ struct git_hash_ctx {
 		git_SHA256_CTX sha256;
 	} state;
 };
-typedef struct git_hash_ctx git_hash_ctx;
 
-typedef void (*git_hash_init_fn)(git_hash_ctx *ctx);
-typedef void (*git_hash_clone_fn)(git_hash_ctx *dst, const git_hash_ctx *src);
-typedef void (*git_hash_update_fn)(git_hash_ctx *ctx, const void *in, size_t len);
-typedef void (*git_hash_final_fn)(unsigned char *hash, git_hash_ctx *ctx);
-typedef void (*git_hash_final_oid_fn)(struct object_id *oid, git_hash_ctx *ctx);
+typedef void (*git_hash_init_fn)(struct git_hash_ctx *ctx);
+typedef void (*git_hash_clone_fn)(struct git_hash_ctx *dst, const struct git_hash_ctx *src);
+typedef void (*git_hash_update_fn)(struct git_hash_ctx *ctx, const void *in, size_t len);
+typedef void (*git_hash_final_fn)(unsigned char *hash, struct git_hash_ctx *ctx);
+typedef void (*git_hash_final_oid_fn)(struct object_id *oid, struct git_hash_ctx *ctx);
 
 struct git_hash_algo {
 	/*

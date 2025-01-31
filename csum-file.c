@@ -248,7 +248,7 @@ uint32_t crc32_end(struct hashfile *f)
 int hashfile_checksum_valid(const unsigned char *data, size_t total_len)
 {
 	unsigned char got[GIT_MAX_RAWSZ];
-	git_hash_ctx ctx;
+	struct git_hash_ctx ctx;
 	const struct git_hash_algo *algop = unsafe_hash_algo(the_hash_algo);
 	size_t data_len = total_len - algop->rawsz;
 

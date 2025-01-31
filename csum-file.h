@@ -11,7 +11,7 @@ struct hashfile {
 	int fd;
 	int check_fd;
 	unsigned int offset;
-	git_hash_ctx ctx;
+	struct git_hash_ctx ctx;
 	off_t total;
 	struct progress *tp;
 	const char *name;
@@ -33,7 +33,7 @@ struct hashfile {
 /* Checkpoint */
 struct hashfile_checkpoint {
 	off_t offset;
-	git_hash_ctx ctx;
+	struct git_hash_ctx ctx;
 };
 
 void hashfile_checkpoint_init(struct hashfile *, struct hashfile_checkpoint *);

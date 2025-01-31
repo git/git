@@ -32,7 +32,7 @@ static void tr2_sid_append_my_sid_component(void)
 {
 	const struct git_hash_algo *algo = &hash_algos[GIT_HASH_SHA1];
 	struct tr2_tbuf tb_now;
-	git_hash_ctx ctx;
+	struct git_hash_ctx ctx;
 	pid_t pid = getpid();
 	unsigned char hash[GIT_MAX_RAWSZ + 1];
 	char hex[GIT_MAX_HEXSZ + 1];

@@ -28,7 +28,7 @@ static unsigned char buffer[4096];
 static unsigned int offset, len;
 static off_t consumed_bytes;
 static off_t max_input_size;
-static git_hash_ctx ctx;
+static struct git_hash_ctx ctx;
 static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
 static struct progress *progress;
 
@@ -614,7 +614,7 @@ int cmd_unpack_objects(int argc,
 {
 	int i;
 	struct object_id oid;
-	git_hash_ctx tmp_ctx;
+	struct git_hash_ctx tmp_ctx;
 
 	disable_replace_refs();
 

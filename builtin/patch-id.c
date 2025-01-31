@@ -70,7 +70,7 @@ static size_t get_one_patchid(struct object_id *next_oid, struct object_id *resu
 	int before = -1, after = -1;
 	int diff_is_binary = 0;
 	char pre_oid_str[GIT_MAX_HEXSZ + 1], post_oid_str[GIT_MAX_HEXSZ + 1];
-	git_hash_ctx ctx;
+	struct git_hash_ctx ctx;
 
 	the_hash_algo->init_fn(&ctx);
 	oidclr(result, the_repository->hash_algo);

@@ -388,7 +388,7 @@ void fixup_pack_header_footer(int pack_fd,
 			 off_t partial_pack_offset)
 {
 	int aligned_sz, buf_sz = 8 * 1024;
-	git_hash_ctx old_hash_ctx, new_hash_ctx;
+	struct git_hash_ctx old_hash_ctx, new_hash_ctx;
 	struct pack_header hdr;
 	char *buf;
 	ssize_t read_result;

@@ -8,7 +8,7 @@ static void check_hash_data(const void *data, size_t data_length,
 	cl_assert(data != NULL);
 
 	for (size_t i = 1; i < ARRAY_SIZE(hash_algos); i++) {
-		git_hash_ctx ctx;
+		struct git_hash_ctx ctx;
 		unsigned char hash[GIT_MAX_HEXSZ];
 		const struct git_hash_algo *algop = &hash_algos[i];
 
