@@ -88,11 +88,13 @@ static const struct object_id null_oid_sha256 = {
 
 static void git_hash_sha1_init(struct git_hash_ctx *ctx)
 {
+	ctx->algop = &hash_algos[GIT_HASH_SHA1];
 	git_SHA1_Init(&ctx->state.sha1);
 }
 
 static void git_hash_sha1_clone(struct git_hash_ctx *dst, const struct git_hash_ctx *src)
 {
+	dst->algop = src->algop;
 	git_SHA1_Clone(&dst->state.sha1, &src->state.sha1);
 }
 
@@ -115,11 +117,13 @@ static void git_hash_sha1_final_oid(struct object_id *oid, struct git_hash_ctx *
 
 static void git_hash_sha1_init_unsafe(struct git_hash_ctx *ctx)
 {
+	ctx->algop = unsafe_hash_algo(&hash_algos[GIT_HASH_SHA1]);
 	git_SHA1_Init_unsafe(&ctx->state.sha1_unsafe);
 }
 
 static void git_hash_sha1_clone_unsafe(struct git_hash_ctx *dst, const struct git_hash_ctx *src)
 {
+	dst->algop = src->algop;
 	git_SHA1_Clone_unsafe(&dst->state.sha1_unsafe, &src->state.sha1_unsafe);
 }
 
@@ -143,11 +147,13 @@ static void git_hash_sha1_final_oid_unsafe(struct object_id *oid, struct git_has
 
 static void git_hash_sha256_init(struct git_hash_ctx *ctx)
 {
+	ctx->algop = unsafe_hash_algo(&hash_algos[GIT_HASH_SHA256]);
 	git_SHA256_Init(&ctx->state.sha256);
 }
 
 static void git_hash_sha256_clone(struct git_hash_ctx *dst, const struct git_hash_ctx *src)
 {
+	dst->algop = src->algop;
 	git_SHA256_Clone(&dst->state.sha256, &src->state.sha256);
 }
 

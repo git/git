@@ -235,6 +235,7 @@ enum get_oid_result {
 
 /* A suitably aligned type for stack allocations of hash contexts. */
 struct git_hash_ctx {
+	const struct git_hash_algo *algop;
 	union {
 		git_SHA_CTX sha1;
 		git_SHA_CTX_unsafe sha1_unsafe;
@@ -295,6 +296,26 @@ struct git_hash_algo {
 	const struct git_hash_algo *unsafe;
 };
 extern const struct git_hash_algo hash_algos[GIT_HASH_NALGOS];
+
+static inline void git_hash_clone(struct git_hash_ctx *dst, const struct git_hash_ctx *src)
+{
+	src->algop->clone_fn(dst, src);
+}
+
+static inline void git_hash_update(struct git_hash_ctx *ctx, const void *in, size_t len)
+{
+	ctx->algop->update_fn(ctx, in, len);
+}
+
+static inline void git_hash_final(unsigned char *hash, struct git_hash_ctx *ctx)
+{
+	ctx->algop->final_fn(hash, ctx);
+}
+
+static inline void git_hash_final_oid(struct object_id *oid, struct git_hash_ctx *ctx)
+{
+	ctx->algop->final_oid_fn(oid, ctx);
+}
 
 /*
  * Return a GIT_HASH_* constant based on the name.  Returns GIT_HASH_UNKNOWN if
