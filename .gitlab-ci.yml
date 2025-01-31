@@ -183,7 +183,7 @@ check-whitespace:
   # be defined in all pipelines.
   script:
     - |
-      R=${CI_MERGE_REQUEST_TARGET_BRANCH_SHA-${CI_MERGE_REQUEST_DIFF_BASE_SHA:?}} || exit
+      R=${CI_MERGE_REQUEST_TARGET_BRANCH_SHA:-${CI_MERGE_REQUEST_DIFF_BASE_SHA:?}} || exit
       ./ci/check-whitespace.sh "$R"
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
@@ -203,7 +203,7 @@ check-style:
   # be defined in all pipelines.
   script:
     - |
-      R=${CI_MERGE_REQUEST_TARGET_BRANCH_SHA-${CI_MERGE_REQUEST_DIFF_BASE_SHA:?}} || exit
+      R=${CI_MERGE_REQUEST_TARGET_BRANCH_SHA:-${CI_MERGE_REQUEST_DIFF_BASE_SHA:?}} || exit
       ./ci/run-style-check.sh "$R"
   rules:
     - if: $CI_PIPELINE_SOURCE == 'merge_request_event'
