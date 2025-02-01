@@ -18,6 +18,7 @@
 #include "write-or-die.h"
 #include "xdiff-interface.h"
 #include "date.h"
+#include "abspath.h"
 
 static int zip_date;
 static int zip_time;
@@ -637,6 +638,10 @@ static int write_zip_archive(const struct archiver *ar UNUSED,
 	dos_time(&args->time, &zip_date, &zip_time);
 
 	strbuf_init(&zip_dir, 0);
+
+	if (is_absolute_path(args->base)) {
+		return error(_("absolute paths are not allowed in zip archives: %s"), args->base);
+	}
 
 	err = write_archive_entries(args, write_zip_entry);
 	if (!err)

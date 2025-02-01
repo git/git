@@ -187,4 +187,6 @@ int apply_all_patches(struct apply_state *state,
 		      int argc, const char **argv,
 		      int options);
 
+int is_absolute_path(const char *path);
+
 #endif

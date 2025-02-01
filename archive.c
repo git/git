@@ -774,6 +774,10 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	parse_treeish_arg(argv, &args, remote);
 	parse_pathspec_arg(argv + 1, &args);
 
+	if (is_absolute_path(args.base)) {
+		die(_("absolute paths are not allowed in archives: %s"), args.base);
+	}
+
 	rc = ar->write_archive(ar, &args);
 
 	string_list_clear_func(&args.extra_files, extra_file_info_clear);

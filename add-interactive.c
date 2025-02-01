@@ -1093,9 +1093,7 @@ static void print_command_item(int i, int selected UNUSED,
 	    !is_valid_prefix(item->string, util->prefix_length))
 		printf(" %2d: %s", i + 1, item->string);
 	else
-		printf(" %2d: %s%.*s%s%s", i + 1,
-		       d->color, (int)util->prefix_length, item->string,
-		       d->reset, item->string + util->prefix_length);
+		printf(" %2d: %s%.*s%s%s", i + 1, d->color, (int)util->prefix_length, item->string, d->reset, item->string + util->prefix_length);
 }
 
 static void command_prompt_help(struct add_i_state *s)

@@ -16,6 +16,7 @@
 #include "repository.h"
 #include "tag.h"
 #include "alloc.h"
+#include "abspath.h"
 
 #define BLOCKING 1024
 

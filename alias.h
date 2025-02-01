@@ -12,4 +12,6 @@ int split_cmdline(char *cmdline, const char ***argv);
 const char *split_cmdline_strerror(int cmdline_errno);
 void list_aliases(struct string_list *list);
 
+int is_absolute_path(const char *path);
+
 #endif
