@@ -574,6 +574,8 @@ static int parse_autocorrect(const char *value)
 		return AUTOCORRECT_NEVER;
 	if (!strcmp(value, "immediate"))
 		return AUTOCORRECT_IMMEDIATELY;
+	if (!strcmp(value, "show"))
+		return AUTOCORRECT_SHOW;
 
 	return 0;
 }

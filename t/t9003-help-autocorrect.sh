@@ -28,7 +28,7 @@ test_expect_success 'setup' '
 	test_cmp expect actual
 '
 
-for show in false no off 0
+for show in false no off 0 show
 do
 	test_expect_success 'autocorrect showing candidates' '
 		git config help.autocorrect $show &&
