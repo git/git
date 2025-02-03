@@ -509,6 +509,7 @@ builtin_sources = [
   'builtin/annotate.c',
   'builtin/apply.c',
   'builtin/archive.c',
+  'builtin/backfill.c',
   'builtin/bisect.c',
   'builtin/blame.c',
   'builtin/branch.c',
