@@ -1205,6 +1205,7 @@ string(REPLACE "@TEST_OUTPUT_DIRECTORY@" "" git_build_options "${git_build_optio
 string(REPLACE "@TEST_SHELL_PATH@" "'${TEST_SHELL_PATH}'" git_build_options "${git_build_options}")
 string(REPLACE "@USE_GETTEXT_SCHEME@" "" git_build_options "${git_build_options}")
 string(REPLACE "@USE_LIBPCRE2@" "" git_build_options "${git_build_options}")
+string(REPLACE "@WITH_BREAKING_CHANGES@" "" git_build_options "${git_build_options}")
 string(REPLACE "@X@" "${EXE_EXTENSION}" git_build_options "${git_build_options}")
 if(USE_VCPKG)
 	string(APPEND git_build_options "PATH=\"$PATH:$TEST_DIRECTORY/../compat/vcbuild/vcpkg/installed/x64-windows/bin\"\n")

@@ -294,11 +294,27 @@ static void add_instead_of(struct rewrite *rewrite, const char *instead_of)
 	rewrite->instead_of_nr++;
 }
 
+#ifndef WITH_BREAKING_CHANGES
 static const char *skip_spaces(const char *s)
 {
 	while (isspace(*s))
 		s++;
 	return s;
+}
+
+static void warn_about_deprecated_remote_type(const char *type,
+					      const struct remote *remote)
+{
+	warning(_("reading remote from \"%s/%s\", which is nominated for removal.\n"
+		  "\n"
+		  "If you still use the \"remotes/\" directory it is recommended to\n"
+		  "migrate to config-based remotes:\n"
+		  "\n"
+		  "\tgit remote rename %s %s\n"
+		  "\n"
+		  "If you cannot, please let us know why you still need to use it by\n"
+		  "sending an e-mail to <git@vger.kernel.org>."),
+		type, remote->name, remote->name, remote->name);
 }
 
 static void read_remotes_file(struct remote_state *remote_state,
@@ -309,6 +325,9 @@ static void read_remotes_file(struct remote_state *remote_state,
 
 	if (!f)
 		return;
+
+	warn_about_deprecated_remote_type("remotes", remote);
+
 	remote->configured_in_repo = 1;
 	remote->origin = REMOTE_REMOTES;
 	while (strbuf_getline(&buf, f) != EOF) {
@@ -337,6 +356,8 @@ static void read_branches_file(struct remote_state *remote_state,
 
 	if (!f)
 		return;
+
+	warn_about_deprecated_remote_type("branches", remote);
 
 	strbuf_getline_lf(&buf, f);
 	fclose(f);
@@ -375,6 +396,7 @@ static void read_branches_file(struct remote_state *remote_state,
 	strbuf_release(&buf);
 	free(to_free);
 }
+#endif /* WITH_BREAKING_CHANGES */
 
 static int handle_config(const char *key, const char *value,
 			 const struct config_context *ctx, void *cb)
@@ -591,6 +613,7 @@ static void read_config(struct repository *repo, int early)
 	alias_all_urls(repo->remote_state);
 }
 
+#ifndef WITH_BREAKING_CHANGES
 static int valid_remote_nick(const char *name)
 {
 	if (!name[0] || is_dot_or_dotdot(name))
@@ -602,6 +625,7 @@ static int valid_remote_nick(const char *name)
 			return 0;
 	return 1;
 }
+#endif /* WITH_BREAKING_CHANGES */
 
 static const char *remotes_remote_for_branch(struct remote_state *remote_state,
 					     struct branch *branch,
@@ -744,12 +768,14 @@ remotes_remote_get_1(struct remote_state *remote_state, const char *name,
 				   &name_given);
 
 	ret = make_remote(remote_state, name, 0);
+#ifndef WITH_BREAKING_CHANGES
 	if (valid_remote_nick(name) && have_git_dir()) {
 		if (!valid_remote(ret))
 			read_remotes_file(remote_state, ret);
 		if (!valid_remote(ret))
 			read_branches_file(remote_state, ret);
 	}
+#endif /* WITH_BREAKING_CHANGES */
 	if (name_given && !valid_remote(ret))
 		add_url_alias(remote_state, ret, name);
 	if (!valid_remote(ret))

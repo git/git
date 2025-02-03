@@ -153,7 +153,7 @@ config.worktree::
 	linkgit:git-worktree[1]).
 
 branches::
-	A slightly deprecated way to store shorthands to be used
+	A deprecated way to store shorthands to be used
 	to specify a URL to 'git fetch', 'git pull' and 'git push'.
 	A file can be stored as `branches/<name>` and then
 	'name' can be given to these commands in place of
@@ -162,7 +162,8 @@ branches::
 	and not likely to be found in modern repositories. This
 	directory is ignored if $GIT_COMMON_DIR is set and
 	"$GIT_COMMON_DIR/branches" will be used instead.
-
++
+Git will stop reading remotes from this directory in Git 3.0.
 
 hooks::
 	Hooks are customization scripts used by various Git
@@ -238,6 +239,8 @@ remotes::
 	and not likely to be found in modern repositories. This
 	directory is ignored if $GIT_COMMON_DIR is set and
 	"$GIT_COMMON_DIR/remotes" will be used instead.
++
+Git will stop reading remotes from this directory in Git 3.0.
 
 logs::
 	Records of changes made to refs are stored in this directory.
