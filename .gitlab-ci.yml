@@ -145,6 +145,44 @@ test:mingw64:
     - git-sdk/usr/bin/bash.exe -l -c 'ci/print-test-failures.sh'
   parallel: 10
 
+.msvc-meson:
+  tags:
+    - saas-windows-medium-amd64
+  before_script:
+    - choco install -y git meson ninja openssl
+    - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
+    - refreshenv
+    # The certificate store for Python on Windows is broken and fails to fetch
+    # certificates, see https://bugs.python.org/issue36011. This seems to
+    # mostly be an issue with how the GitLab image is set up as it is a
+    # non-issue on GitHub Actions. Work around the issue by importing
+    # cetrificates manually.
+    - Invoke-WebRequest https://curl.haxx.se/ca/cacert.pem -OutFile cacert.pem
+    - openssl pkcs12 -export -nokeys -in cacert.pem -out certs.pfx -passout "pass:"
+    - Import-PfxCertificate -CertStoreLocation Cert:\LocalMachine\Root -FilePath certs.pfx
+
+build:msvc-meson:
+  extends: .msvc-meson
+  stage: build
+  script:
+    - meson setup build -Dperl=disabled
+    - meson compile -C build
+  artifacts:
+    paths:
+      - build
+
+test:msvc-meson:
+  extends: .msvc-meson
+  stage: test
+  when: manual
+  timeout: 6h
+  needs:
+    - job: "build:msvc-meson"
+      artifacts: true
+  script:
+    - meson test -C build --list | Select-Object -Skip 1 | Select-String .* | Group-Object -Property { $_.LineNumber % $Env:CI_NODE_TOTAL + 1 } | Where-Object Name -EQ $Env:CI_NODE_INDEX | ForEach-Object { meson test -C build --no-rebuild --print-errorlogs $_.Group }
+  parallel: 10
+
 test:fuzz-smoke-tests:
   image: ubuntu:latest
   stage: test

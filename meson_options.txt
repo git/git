@@ -49,6 +49,8 @@ option('regex', type: 'feature', value: 'auto',
   description: 'Use the system-provided regex library instead of the bundled one.')
 
 # Backends.
+option('csprng_backend', type: 'combo', value: 'auto', choices: ['auto', 'arc4random', 'arc4random_bsd', 'getrandom', 'getentropy', 'rtlgenrandom', 'openssl', 'urandom'],
+  description: 'The backend to use for generating cryptographically-secure pseudo-random numbers.')
 option('https_backend', type: 'combo', value: 'auto', choices: ['auto', 'openssl', 'CommonCrypto', 'none'],
   description: 'The HTTPS backend to use when connecting to remotes.')
 option('sha1_backend', type: 'combo', choices: ['openssl', 'block', 'sha1dc', 'CommonCrypto'], value: 'sha1dc',
@@ -99,3 +101,5 @@ option('tests', type: 'boolean', value: true,
   description: 'Enable building tests. This requires Perl, but is separate from the "perl" option such that you can build tests without Perl features enabled.')
 option('test_output_directory', type: 'string',
   description: 'Path to the directory used to store test outputs')
+option('fuzzers', type: 'boolean', value: false,
+  description: 'Enable building fuzzers.')
