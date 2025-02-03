@@ -54,29 +54,65 @@ format_and_save_expect () {
 	sed -e 's/^> //' -e 's/Z$//' >expect
 }
 
+create_upstream_template () {
+	git init --bare upstream-template.git &&
+	git clone upstream-template.git tmp_work_dir &&
+	create_commits_in tmp_work_dir A B &&
+	(
+		cd tmp_work_dir &&
+		git push origin \
+			$B:refs/heads/main \
+			$A:refs/heads/foo \
+			$A:refs/heads/bar \
+			$A:refs/heads/baz
+	) &&
+	rm -rf tmp_work_dir
+}
+
+setup_upstream () {
+	if test $# -ne 1
+	then
+		BUG "location of upstream repository is not provided"
+	fi &&
+	rm -rf "$1" &&
+	if ! test -d upstream-template.git
+	then
+		create_upstream_template
+	fi &&
+	git clone --mirror upstream-template.git "$1" &&
+	# The upstream repository provides services using the HTTP protocol.
+	if ! test "$1" = "upstream.git"
+	then
+		git -C "$1" config http.receivepack true
+	fi
+}
+
 setup_upstream_and_workbench () {
+	if test $# -ne 1
+	then
+		BUG "location of upstream repository is not provided"
+	fi
+	upstream="$1"
+
 	# Upstream  after setup : main(B)  foo(A)  bar(A)  baz(A)
 	# Workbench after setup : main(A)
 	test_expect_success "setup upstream repository and workbench" '
-		rm -rf upstream.git workbench &&
-		git init --bare upstream.git &&
-		git init workbench &&
-		create_commits_in workbench A B &&
+		setup_upstream "$upstream" &&
+		rm -rf workbench &&
+		git clone "$upstream" workbench &&
 		(
 			cd workbench &&
+			git update-ref refs/heads/main $A &&
 			# Try to make a stable fixed width for abbreviated commit ID,
 			# this fixed-width oid will be replaced with "<OID>".
 			git config core.abbrev 7 &&
-			git remote add origin ../upstream.git &&
-			git update-ref refs/heads/main $A &&
-			git push origin \
-				$B:refs/heads/main \
-				$A:refs/heads/foo \
-				$A:refs/heads/bar \
-				$A:refs/heads/baz
+			git config advice.pushUpdateRejected false
 		) &&
-		git -C "workbench" config advice.pushUpdateRejected false &&
-		upstream=upstream.git
+		# The upstream repository provides services using the HTTP protocol.
+		if ! test "$upstream" = "upstream.git"
+		then
+			git -C workbench remote set-url origin "$HTTPD_URL/smart/upstream.git"
+		fi
 	'
 }
 
@@ -88,7 +124,7 @@ run_git_push_porcelain_output_test() {
 		;;
 	file)
 		PROTOCOL="builtin protocol"
-		URL_PREFIX="\.\."
+		URL_PREFIX=".*"
 		;;
 	esac
 
@@ -247,10 +283,8 @@ run_git_push_porcelain_output_test() {
 	'
 }
 
-# Initialize the upstream repository and local workbench.
-setup_upstream_and_workbench
+setup_upstream_and_workbench upstream.git
 
-# Run git-push porcelain test on builtin protocol
 run_git_push_porcelain_output_test file
 
 ROOT_PATH="$PWD"
@@ -258,21 +292,10 @@ ROOT_PATH="$PWD"
 . "$TEST_DIRECTORY"/lib-httpd.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 start_httpd
-
-# Re-initialize the upstream repository and local workbench.
-setup_upstream_and_workbench
-
-test_expect_success "setup for http" '
-	git -C upstream.git config http.receivepack true &&
-	upstream="$HTTPD_DOCUMENT_ROOT_PATH/upstream.git" &&
-	mv upstream.git "$upstream" &&
-
-	git -C workbench remote set-url origin $HTTPD_URL/smart/upstream.git
-'
-
 setup_askpass_helper
 
-# Run git-push porcelain test on HTTP protocol
+setup_upstream_and_workbench "$HTTPD_DOCUMENT_ROOT_PATH/upstream.git"
+
 run_git_push_porcelain_output_test http
 
 test_done
