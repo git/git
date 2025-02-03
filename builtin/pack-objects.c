@@ -1319,8 +1319,9 @@ static void write_pack_file(void)
 			 */
 
 			int fd = finalize_hashfile(f, hash, FSYNC_COMPONENT_PACK, 0);
-			fixup_pack_header_footer(fd, hash, pack_tmp_name,
-						 nr_written, hash, offset);
+			fixup_pack_header_footer(the_hash_algo, fd, hash,
+						 pack_tmp_name, nr_written,
+						 hash, offset);
 			close(fd);
 			if (write_bitmap_index) {
 				if (write_bitmap_index != WRITE_BITMAP_QUIET)
@@ -1368,9 +1369,10 @@ static void write_pack_file(void)
 			if (cruft)
 				pack_idx_opts.flags |= WRITE_MTIMES;
 
-			stage_tmp_packfiles(&tmpname, pack_tmp_name,
-					    written_list, nr_written,
-					    &to_pack, &pack_idx_opts, hash,
+			stage_tmp_packfiles(the_hash_algo, &tmpname,
+					    pack_tmp_name, written_list,
+					    nr_written, &to_pack,
+					    &pack_idx_opts, hash,
 					    &idx_tmp_name);
 
 			if (write_bitmap_index) {
