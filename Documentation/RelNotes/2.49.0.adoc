@@ -26,6 +26,11 @@ Performance, Internal Implementation, Development Support etc.
  * Introduce a new API to visit objects in batches based on a common
    path, or by type.
 
+ * Following the procedure we established to introduce breaking
+   changes for Git 3.0, allow an early opt-in for removing support of
+   $GIT_DIR/branches/ and $GIT_DIR/remotes/ directories to configure
+   remotes.
+
 
 Fixes since v2.48
 -----------------
@@ -113,6 +118,14 @@ Fixes since v2.48
    stress that the command reads its data from the standard input.
    (merge 49edce4ff9 jc/show-index-h-update later to maint).
 
+ * The API around choosing to use unsafe variant of SHA-1
+   implementation has been updated in an attempt to make it harder to
+   abuse.
+   (merge 04292c3796 tb/unsafe-hash-cleanup later to maint).
+
+ * Fix bugs in an earlier attempt to fix "git refs migration".
+   (merge f11f0a5a2d kn/reflog-migration-fix-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge ddb5287894 jk/t7407-use-test-grep later to maint).
    (merge 21e1b44865 aj/difftool-config-doc-fix later to maint).
@@ -123,3 +136,5 @@ Fixes since v2.48
    (merge 69666e6746 ja/doc-restore-markup-update later to maint).
    (merge d11d003ba5 sk/strlen-returns-size_t later to maint).
    (merge 77b2d29e91 ja/doc-notes-markup-updates later to maint).
+   (merge 6979bf6f8f jk/combine-diff-cleanup later to maint).
+   (merge 8705c9bd13 kn/pack-write-with-reduced-globals later to maint).
