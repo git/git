@@ -280,7 +280,7 @@ test_expect_success 'atomic push reports (reject by non-ff)' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'atomic push reports exit code failure' '
+test_expect_success 'atomic push reports exit code failure' '
 	write_script receive-pack-wrapper <<-\EOF &&
 	git-receive-pack "$@"
 	exit 1
@@ -296,7 +296,7 @@ test_expect_failure 'atomic push reports exit code failure' '
 	test_cmp expect err
 '
 
-test_expect_failure 'atomic push reports exit code failure with porcelain' '
+test_expect_success 'atomic push reports exit code failure with porcelain' '
 	write_script receive-pack-wrapper <<-\EOF &&
 	git-receive-pack "$@"
 	exit 1
