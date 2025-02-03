@@ -77,6 +77,94 @@ test_expect_success 'do partial clone 2, backfill min batch size' '
 	test_line_count = 0 revs2
 '
 
+test_expect_success 'backfill --sparse' '
+	git clone --sparse --filter=blob:none		\
+		--single-branch --branch=main 		\
+		"file://$(pwd)/srv.bare" backfill3 &&
+
+	# Initial checkout includes four files at root.
+	git -C backfill3 rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 44 missing &&
+
+	# Initial sparse-checkout is just the files at root, so we get the
+	# older versions of the four files at tip.
+	GIT_TRACE2_EVENT="$(pwd)/sparse-trace1" git \
+		-C backfill3 backfill --sparse &&
+	test_trace2_data promisor fetch_count 4 <sparse-trace1 &&
+	test_trace2_data path-walk paths 5 <sparse-trace1 &&
+	git -C backfill3 rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 40 missing &&
+
+	# Expand the sparse-checkout to include 'd' recursively. This
+	# engages the algorithm to skip the trees for 'a'. Note that
+	# the "sparse-checkout set" command downloads the objects at tip
+	# to satisfy the current checkout.
+	git -C backfill3 sparse-checkout set d &&
+	GIT_TRACE2_EVENT="$(pwd)/sparse-trace2" git \
+		-C backfill3 backfill --sparse &&
+	test_trace2_data promisor fetch_count 8 <sparse-trace2 &&
+	test_trace2_data path-walk paths 15 <sparse-trace2 &&
+	git -C backfill3 rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 24 missing
+'
+
+test_expect_success 'backfill --sparse without cone mode (positive)' '
+	git clone --no-checkout --filter=blob:none		\
+		--single-branch --branch=main 		\
+		"file://$(pwd)/srv.bare" backfill4 &&
+
+	# No blobs yet
+	git -C backfill4 rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 48 missing &&
+
+	# Define sparse-checkout by filename regardless of parent directory.
+	# This downloads 6 blobs to satisfy the checkout.
+	git -C backfill4 sparse-checkout set --no-cone "**/file.1.txt" &&
+	git -C backfill4 checkout main &&
+
+	# Track new blob count
+	git -C backfill4 rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 42 missing &&
+
+	GIT_TRACE2_EVENT="$(pwd)/no-cone-trace1" git \
+		-C backfill4 backfill --sparse &&
+	test_trace2_data promisor fetch_count 6 <no-cone-trace1 &&
+
+	# This walk needed to visit all directories to search for these paths.
+	test_trace2_data path-walk paths 12 <no-cone-trace1 &&
+	git -C backfill4 rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 36 missing
+'
+
+test_expect_success 'backfill --sparse without cone mode (negative)' '
+	git clone --no-checkout --filter=blob:none		\
+		--single-branch --branch=main 		\
+		"file://$(pwd)/srv.bare" backfill5 &&
+
+	# No blobs yet
+	git -C backfill5 rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 48 missing &&
+
+	# Define sparse-checkout by filename regardless of parent directory.
+	# This downloads 18 blobs to satisfy the checkout
+	git -C backfill5 sparse-checkout set --no-cone "**/file*" "!**/file.1.txt" &&
+	git -C backfill5 checkout main &&
+
+	# Track new blob count
+	git -C backfill5 rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 30 missing &&
+
+	GIT_TRACE2_EVENT="$(pwd)/no-cone-trace2" git \
+		-C backfill5 backfill --sparse &&
+	test_trace2_data promisor fetch_count 18 <no-cone-trace2 &&
+
+	# This walk needed to visit all directories to search for these paths, plus
+	# 12 extra "file.?.txt" paths than the previous test.
+	test_trace2_data path-walk paths 24 <no-cone-trace2 &&
+	git -C backfill5 rev-list --quiet --objects --missing=print HEAD >missing &&
+	test_line_count = 12 missing
+'
+
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 

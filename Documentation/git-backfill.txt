@@ -9,7 +9,7 @@ git-backfill - Download missing objects in a partial clone
 SYNOPSIS
 --------
 [synopsis]
-git backfill [--min-batch-size=<n>]
+git backfill [--min-batch-size=<n>] [--[no-]sparse]
 
 DESCRIPTION
 -----------
@@ -56,6 +56,10 @@ OPTIONS
 	from the server. This size may be exceeded by the last set of
 	blobs seen at a given path. The default minimum batch size is
 	50,000.
+
+`--[no-]sparse`::
+	Only download objects if they appear at a path that matches the
+	current sparse-checkout.
 
 SEE ALSO
 --------
