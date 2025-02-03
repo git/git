@@ -21,7 +21,7 @@
 #include "path-walk.h"
 
 static const char * const builtin_backfill_usage[] = {
-	N_("git backfill [<options>]"),
+	N_("git backfill [--min-batch-size=<n>]"),
 	NULL
 };
 
@@ -108,6 +108,8 @@ int cmd_backfill(int argc, const char **argv, const char *prefix, struct reposit
 		.min_batch_size = 50000,
 	};
 	struct option options[] = {
+		OPT_INTEGER(0, "min-batch-size", &ctx.min_batch_size,
+			    N_("Minimum number of objects to request at a time")),
 		OPT_END(),
 	};
 
