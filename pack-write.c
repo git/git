@@ -395,7 +395,7 @@ void fixup_pack_header_footer(const struct git_hash_algo *hash_algo,
 			 off_t partial_pack_offset)
 {
 	int aligned_sz, buf_sz = 8 * 1024;
-	git_hash_ctx old_hash_ctx, new_hash_ctx;
+	struct git_hash_ctx old_hash_ctx, new_hash_ctx;
 	struct pack_header hdr;
 	char *buf;
 	ssize_t read_result;
@@ -413,9 +413,9 @@ void fixup_pack_header_footer(const struct git_hash_algo *hash_algo,
 			  pack_name);
 	if (lseek(pack_fd, 0, SEEK_SET) != 0)
 		die_errno("Failed seeking to start of '%s'", pack_name);
-	hash_algo->update_fn(&old_hash_ctx, &hdr, sizeof(hdr));
+	git_hash_update(&old_hash_ctx, &hdr, sizeof(hdr));
 	hdr.hdr_entries = htonl(object_count);
-	hash_algo->update_fn(&new_hash_ctx, &hdr, sizeof(hdr));
+	git_hash_update(&new_hash_ctx, &hdr, sizeof(hdr));
 	write_or_die(pack_fd, &hdr, sizeof(hdr));
 	partial_pack_offset -= sizeof(hdr);
 
@@ -430,7 +430,7 @@ void fixup_pack_header_footer(const struct git_hash_algo *hash_algo,
 			break;
 		if (n < 0)
 			die_errno("Failed to checksum '%s'", pack_name);
-		hash_algo->update_fn(&new_hash_ctx, buf, n);
+		git_hash_update(&new_hash_ctx, buf, n);
 
 		aligned_sz -= n;
 		if (!aligned_sz)
@@ -439,12 +439,13 @@ void fixup_pack_header_footer(const struct git_hash_algo *hash_algo,
 		if (!partial_pack_hash)
 			continue;
 
-		hash_algo->update_fn(&old_hash_ctx, buf, n);
+		git_hash_update(&old_hash_ctx, buf, n);
 		partial_pack_offset -= n;
 		if (partial_pack_offset == 0) {
 			unsigned char hash[GIT_MAX_RAWSZ];
-			hash_algo->final_fn(hash, &old_hash_ctx);
-			if (!hasheq(hash, partial_pack_hash, hash_algo))
+			git_hash_final(hash, &old_hash_ctx);
+			if (!hasheq(hash, partial_pack_hash,
+				    hash_algo))
 				die("Unexpected checksum for %s "
 				    "(disk corruption?)", pack_name);
 			/*
@@ -460,8 +461,8 @@ void fixup_pack_header_footer(const struct git_hash_algo *hash_algo,
 	free(buf);
 
 	if (partial_pack_hash)
-		hash_algo->final_fn(partial_pack_hash, &old_hash_ctx);
-	hash_algo->final_fn(new_pack_hash, &new_hash_ctx);
+		git_hash_final(partial_pack_hash, &old_hash_ctx);
+	git_hash_final(new_pack_hash, &new_hash_ctx);
 	write_or_die(pack_fd, new_pack_hash, hash_algo->rawsz);
 	fsync_component_or_die(FSYNC_COMPONENT_PACK, pack_fd, pack_name);
 }
