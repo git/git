@@ -71,4 +71,13 @@ struct strvec;
 void refspec_ref_prefixes(const struct refspec *rs,
 			  struct strvec *ref_prefixes);
 
+int refname_matches_negative_refspec_item(const char *refname, struct refspec *rs);
+
+/*
+ * Checks whether a name matches a pattern and optionally generates a result.
+ * Returns 1 if the name matches the pattern, 0 otherwise.
+ */
+int match_name_with_pattern(const char *key, const char *name,
+				   const char *value, char **result);
+
 #endif /* REFSPEC_H */

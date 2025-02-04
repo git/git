@@ -276,3 +276,51 @@ void refspec_ref_prefixes(const struct refspec *rs,
 		}
 	}
 }
+
+int match_name_with_pattern(const char *key, const char *name,
+				   const char *value, char **result)
+{
+	const char *kstar = strchr(key, '*');
+	size_t klen;
+	size_t ksuffixlen;
+	size_t namelen;
+	int ret;
+	if (!kstar)
+		die(_("key '%s' of pattern had no '*'"), key);
+	klen = kstar - key;
+	ksuffixlen = strlen(kstar + 1);
+	namelen = strlen(name);
+	ret = !strncmp(name, key, klen) && namelen >= klen + ksuffixlen &&
+		!memcmp(name + namelen - ksuffixlen, kstar + 1, ksuffixlen);
+	if (ret && value) {
+		struct strbuf sb = STRBUF_INIT;
+		const char *vstar = strchr(value, '*');
+		if (!vstar)
+			die(_("value '%s' of pattern has no '*'"), value);
+		strbuf_add(&sb, value, vstar - value);
+		strbuf_add(&sb, name + klen, namelen - klen - ksuffixlen);
+		strbuf_addstr(&sb, vstar + 1);
+		*result = strbuf_detach(&sb, NULL);
+	}
+	return ret;
+}
+
+static int refspec_match(const struct refspec_item *refspec,
+			 const char *name)
+{
+	if (refspec->pattern)
+		return match_name_with_pattern(refspec->src, name, NULL, NULL);
+
+	return !strcmp(refspec->src, name);
+}
+
+int refname_matches_negative_refspec_item(const char *refname, struct refspec *rs)
+{
+	int i;
+
+	for (i = 0; i < rs->nr; i++) {
+		if (rs->items[i].negative && refspec_match(&rs->items[i], refname))
+			return 1;
+	}
+	return 0;
+}
