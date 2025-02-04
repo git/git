@@ -195,4 +195,20 @@ test_expect_success 'repack -k packs unreachable loose objects' '
 	git cat-file -p $sha1
 '
 
+test_expect_success 'repack -k packs unreachable loose objects without existing packfiles' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+
+		oid=$(echo would-be-deleted-loose | git hash-object -w --stdin) &&
+		objpath=.git/objects/$(echo $sha1 | sed "s,..,&/,") &&
+		test_path_is_file $objpath &&
+
+		git repack -ad --keep-unreachable &&
+		test_path_is_missing $objpath &&
+		git cat-file -p $oid
+	)
+'
+
 test_done
