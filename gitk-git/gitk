@@ -8205,12 +8205,13 @@ proc parseblobdiffline {ids line} {
 
         if {$type eq "--cc"} {
             # start of a new file in a merge diff
-            set fname [string range $line 10 end]
+            set fname_raw [string range $line 10 end]
+            set fname [encoding convertfrom $fname_raw]
             if {[lsearch -exact $treediffs($ids) $fname] < 0} {
                 lappend treediffs($ids) $fname
                 add_flist [list $fname]
             }
-
+            set fname $fname_raw
         } else {
             set line [string range $line 11 end]
             # If the name hasn't changed the length will be odd,
@@ -8310,6 +8311,7 @@ proc parseblobdiffline {ids line} {
             set diffinhdr 0
             return
         }
+        set line [encoding convertfrom $line]
         $ctext insert end "$line\n" filesep
 
     } else {
