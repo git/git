@@ -269,7 +269,7 @@ int refname_matches_negative_refspec_item(const char *refname, struct refspec *r
  */
 struct ref *apply_negative_refspecs(struct ref *ref_map, struct refspec *rs);
 
-int query_refspecs(struct refspec *rs, struct refspec_item *query);
+int refspec_find_match(struct refspec *rs, struct refspec_item *query);
 char *apply_refspecs(struct refspec *rs, const char *name);
 
 int check_push_refs(struct ref *src, struct refspec *rs);

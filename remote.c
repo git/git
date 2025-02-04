@@ -925,7 +925,7 @@ struct ref *apply_negative_refspecs(struct ref *ref_map, struct refspec *rs)
 	return ref_map;
 }
 
-static int query_matches_negative_refspec(struct refspec *rs, struct refspec_item *query)
+static int refspec_find_negative_match(struct refspec *rs, struct refspec_item *query)
 {
 	int i, matched_negative = 0;
 	int find_src = !query->src;
@@ -982,7 +982,7 @@ static int query_matches_negative_refspec(struct refspec *rs, struct refspec_ite
 	return matched_negative;
 }
 
-static void query_refspecs_multiple(struct refspec *rs,
+static void refspec_find_all_matches(struct refspec *rs,
 				    struct refspec_item *query,
 				    struct string_list *results)
 {
@@ -990,9 +990,9 @@ static void query_refspecs_multiple(struct refspec *rs,
 	int find_src = !query->src;
 
 	if (find_src && !query->dst)
-		BUG("query_refspecs_multiple: need either src or dst");
+		BUG("refspec_find_all_matches: need either src or dst");
 
-	if (query_matches_negative_refspec(rs, query))
+	if (refspec_find_negative_match(rs, query))
 		return;
 
 	for (i = 0; i < rs->nr; i++) {
@@ -1013,7 +1013,7 @@ static void query_refspecs_multiple(struct refspec *rs,
 	}
 }
 
-int query_refspecs(struct refspec *rs, struct refspec_item *query)
+int refspec_find_match(struct refspec *rs, struct refspec_item *query)
 {
 	int i;
 	int find_src = !query->src;
@@ -1021,9 +1021,9 @@ int query_refspecs(struct refspec *rs, struct refspec_item *query)
 	char **result = find_src ? &query->src : &query->dst;
 
 	if (find_src && !query->dst)
-		BUG("query_refspecs: need either src or dst");
+		BUG("refspec_find_match: need either src or dst");
 
-	if (query_matches_negative_refspec(rs, query))
+	if (refspec_find_negative_match(rs, query))
 		return -1;
 
 	for (i = 0; i < rs->nr; i++) {
@@ -1054,7 +1054,7 @@ char *apply_refspecs(struct refspec *rs, const char *name)
 	memset(&query, 0, sizeof(struct refspec_item));
 	query.src = (char *)name;
 
-	if (query_refspecs(rs, &query))
+	if (refspec_find_match(rs, &query))
 		return NULL;
 
 	return query.dst;
@@ -1062,7 +1062,7 @@ char *apply_refspecs(struct refspec *rs, const char *name)
 
 int remote_find_tracking(struct remote *remote, struct refspec_item *refspec)
 {
-	return query_refspecs(&remote->fetch, refspec);
+	return refspec_find_match(&remote->fetch, refspec);
 }
 
 static struct ref *alloc_ref_with_prefix(const char *prefix, size_t prefixlen,
@@ -2487,7 +2487,7 @@ static int get_stale_heads_cb(const char *refname, const char *referent UNUSED, 
 	memset(&query, 0, sizeof(struct refspec_item));
 	query.dst = (char *)refname;
 
-	query_refspecs_multiple(info->rs, &query, &matches);
+	refspec_find_all_matches(info->rs, &query, &matches);
 	if (matches.nr == 0)
 		goto clean_exit; /* No matches */
 
