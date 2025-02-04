@@ -12379,6 +12379,7 @@ catch {
 if {$gitencoding == ""} {
     set gitencoding "utf-8"
 }
+encoding system utf-8
 set tclencoding [tcl_encoding $gitencoding]
 if {$tclencoding == {}} {
     puts stderr "Warning: encoding $gitencoding is not supported by Tcl/Tk"
