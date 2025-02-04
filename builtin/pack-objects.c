@@ -1,4 +1,6 @@
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "builtin.h"
 #include "environment.h"
 #include "gettext.h"
@@ -1262,7 +1264,8 @@ static void write_pack_file(void)
 	struct object_entry **write_order;
 
 	if (progress > pack_to_stdout)
-		progress_state = start_progress(_("Writing objects"), nr_result);
+		progress_state = start_progress(the_repository,
+						_("Writing objects"), nr_result);
 	ALLOC_ARRAY(written_list, to_pack.nr_objects);
 	write_order = compute_write_order();
 
@@ -1316,8 +1319,9 @@ static void write_pack_file(void)
 			 */
 
 			int fd = finalize_hashfile(f, hash, FSYNC_COMPONENT_PACK, 0);
-			fixup_pack_header_footer(fd, hash, pack_tmp_name,
-						 nr_written, hash, offset);
+			fixup_pack_header_footer(the_hash_algo, fd, hash,
+						 pack_tmp_name, nr_written,
+						 hash, offset);
 			close(fd);
 			if (write_bitmap_index) {
 				if (write_bitmap_index != WRITE_BITMAP_QUIET)
@@ -1365,9 +1369,10 @@ static void write_pack_file(void)
 			if (cruft)
 				pack_idx_opts.flags |= WRITE_MTIMES;
 
-			stage_tmp_packfiles(&tmpname, pack_tmp_name,
-					    written_list, nr_written,
-					    &to_pack, &pack_idx_opts, hash,
+			stage_tmp_packfiles(the_hash_algo, &tmpname,
+					    pack_tmp_name, written_list,
+					    nr_written, &to_pack,
+					    &pack_idx_opts, hash,
 					    &idx_tmp_name);
 
 			if (write_bitmap_index) {
@@ -1515,7 +1520,7 @@ static int want_found_object(const struct object_id *oid, int exclude,
 			return 0;
 		if (ignore_packed_keep_in_core && p->pack_keep_in_core)
 			return 0;
-		if (has_object_kept_pack(oid, flags))
+		if (has_object_kept_pack(p->repo, oid, flags))
 			return 0;
 	}
 
@@ -2398,7 +2403,8 @@ static void get_object_details(void)
 	struct object_entry **sorted_by_offset;
 
 	if (progress)
-		progress_state = start_progress(_("Counting objects"),
+		progress_state = start_progress(the_repository,
+						_("Counting objects"),
 						to_pack.nr_objects);
 
 	CALLOC_ARRAY(sorted_by_offset, to_pack.nr_objects);
@@ -3218,7 +3224,8 @@ static void prepare_pack(int window, int depth)
 		unsigned nr_done = 0;
 
 		if (progress)
-			progress_state = start_progress(_("Compressing objects"),
+			progress_state = start_progress(the_repository,
+							_("Compressing objects"),
 							nr_deltas);
 		QSORT(delta_list, n, type_size_sort);
 		ll_find_deltas(delta_list, n, window+1, depth, &nr_done);
@@ -3613,7 +3620,7 @@ static void show_cruft_commit(struct commit *commit, void *data)
 
 static int cruft_include_check_obj(struct object *obj, void *data UNUSED)
 {
-	return !has_object_kept_pack(&obj->oid, IN_CORE_KEEP_PACKS);
+	return !has_object_kept_pack(to_pack.repo, &obj->oid, IN_CORE_KEEP_PACKS);
 }
 
 static int cruft_include_check(struct commit *commit, void *data)
@@ -3646,7 +3653,8 @@ static void add_objects_in_unpacked_packs(void);
 static void enumerate_cruft_objects(void)
 {
 	if (progress)
-		progress_state = start_progress(_("Enumerating cruft objects"), 0);
+		progress_state = start_progress(the_repository,
+						_("Enumerating cruft objects"), 0);
 
 	add_objects_in_unpacked_packs();
 	add_unreachable_loose_objects();
@@ -3672,7 +3680,8 @@ static void enumerate_and_traverse_cruft_objects(struct string_list *fresh_packs
 	revs.ignore_missing_links = 1;
 
 	if (progress)
-		progress_state = start_progress(_("Enumerating cruft objects"), 0);
+		progress_state = start_progress(the_repository,
+						_("Enumerating cruft objects"), 0);
 	ret = add_unseen_recent_objects_to_traversal(&revs, cruft_expiration,
 						     set_cruft_mtime, 1);
 	stop_progress(&progress_state);
@@ -3691,7 +3700,8 @@ static void enumerate_and_traverse_cruft_objects(struct string_list *fresh_packs
 	if (prepare_revision_walk(&revs))
 		die(_("revision walk setup failed"));
 	if (progress)
-		progress_state = start_progress(_("Traversing cruft objects"), 0);
+		progress_state = start_progress(the_repository,
+						_("Traversing cruft objects"), 0);
 	nr_seen = 0;
 	traverse_commit_list(&revs, show_cruft_commit, show_cruft_object, NULL);
 
@@ -3844,7 +3854,8 @@ static void show_object__ma_allow_promisor(struct object *obj, const char *name,
 	 * Quietly ignore EXPECTED missing objects.  This avoids problems with
 	 * staging them now and getting an odd error later.
 	 */
-	if (!has_object(the_repository, &obj->oid, 0) && is_promisor_object(&obj->oid))
+	if (!has_object(the_repository, &obj->oid, 0) &&
+	    is_promisor_object(to_pack.repo, &obj->oid))
 		return;
 
 	show_object(obj, name, data);
@@ -3913,7 +3924,9 @@ static int add_object_in_unpacked_pack(const struct object_id *oid,
 
 static void add_objects_in_unpacked_packs(void)
 {
-	if (for_each_packed_object(add_object_in_unpacked_pack, NULL,
+	if (for_each_packed_object(to_pack.repo,
+				   add_object_in_unpacked_pack,
+				   NULL,
 				   FOR_EACH_OBJECT_PACK_ORDER |
 				   FOR_EACH_OBJECT_LOCAL_ONLY |
 				   FOR_EACH_OBJECT_SKIP_IN_CORE_KEPT_PACKS |
@@ -4620,7 +4633,8 @@ int cmd_pack_objects(int argc,
 	prepare_packing_data(the_repository, &to_pack);
 
 	if (progress && !cruft)
-		progress_state = start_progress(_("Enumerating objects"), 0);
+		progress_state = start_progress(the_repository,
+						_("Enumerating objects"), 0);
 	if (stdin_packs) {
 		/* avoids adding objects in excluded packs */
 		ignore_packed_keep_in_core = 1;

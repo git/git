@@ -11,7 +11,7 @@
  * Example:
  *
  *	struct child_process child = CHILD_PROCESS_INIT;
- *	struct tmp_objdir *t = tmp_objdir_create("incoming");
+ *	struct tmp_objdir *t = tmp_objdir_create(repo, "incoming");
  *	strvec_push(&child.args, cmd);
  *	strvec_pushv(&child.env, tmp_objdir_env(t));
  *	if (!run_command(&child)) && !tmp_objdir_migrate(t))
@@ -21,13 +21,14 @@
  *
  */
 
+struct repository;
 struct tmp_objdir;
 
 /*
  * Create a new temporary object directory with the specified prefix;
  * returns NULL on failure.
  */
-struct tmp_objdir *tmp_objdir_create(const char *prefix);
+struct tmp_objdir *tmp_objdir_create(struct repository *r, const char *prefix);
 
 /*
  * Return a list of environment strings, suitable for use with

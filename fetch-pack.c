@@ -1,4 +1,5 @@
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "repository.h"
@@ -1035,7 +1036,9 @@ static int get_pack(struct fetch_pack_args *args,
 		die(_("fetch-pack: unable to fork off %s"), cmd_name);
 	if (do_keep && (pack_lockfiles || fsck_objects)) {
 		int is_well_formed;
-		char *pack_lockfile = index_pack_lockfile(cmd.out, &is_well_formed);
+		char *pack_lockfile = index_pack_lockfile(the_repository,
+							  cmd.out,
+							  &is_well_formed);
 
 		if (!is_well_formed)
 			die(_("fetch-pack: invalid index-pack output"));
@@ -1857,8 +1860,8 @@ static struct ref *do_fetch_pack_v2(struct fetch_pack_args *args,
 	return ref;
 }
 
-static int fetch_pack_config_cb(const char *var, const char *value,
-				const struct config_context *ctx, void *cb)
+int fetch_pack_fsck_config(const char *var, const char *value,
+			   struct strbuf *msg_types)
 {
 	const char *msg_id;
 
@@ -1866,9 +1869,9 @@ static int fetch_pack_config_cb(const char *var, const char *value,
 		char *path ;
 
 		if (git_config_pathname(&path, var, value))
-			return 1;
-		strbuf_addf(&fsck_msg_types, "%cskiplist=%s",
-			fsck_msg_types.len ? ',' : '=', path);
+			return -1;
+		strbuf_addf(msg_types, "%cskiplist=%s",
+			msg_types->len ? ',' : '=', path);
 		free(path);
 		return 0;
 	}
@@ -1877,14 +1880,24 @@ static int fetch_pack_config_cb(const char *var, const char *value,
 		if (!value)
 			return config_error_nonbool(var);
 		if (is_valid_msg_type(msg_id, value))
-			strbuf_addf(&fsck_msg_types, "%c%s=%s",
-				fsck_msg_types.len ? ',' : '=', msg_id, value);
+			strbuf_addf(msg_types, "%c%s=%s",
+				msg_types->len ? ',' : '=', msg_id, value);
 		else
 			warning("Skipping unknown msg id '%s'", msg_id);
 		return 0;
 	}
 
-	return git_default_config(var, value, ctx, cb);
+	return 1;
+}
+
+static int fetch_pack_config_cb(const char *var, const char *value,
+				const struct config_context *ctx, void *cb)
+{
+	int ret = fetch_pack_fsck_config(var, value, &fsck_msg_types);
+	if (ret > 0)
+		return git_default_config(var, value, ctx, cb);
+
+	return ret;
 }
 
 static void fetch_pack_config(void)

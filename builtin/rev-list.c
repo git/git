@@ -1,4 +1,6 @@
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "builtin.h"
 #include "config.h"
 #include "commit.h"
@@ -121,7 +123,7 @@ static inline void finish_object__ma(struct object *obj)
 		return;
 
 	case MA_ALLOW_PROMISOR:
-		if (is_promisor_object(&obj->oid))
+		if (is_promisor_object(the_repository, &obj->oid))
 			return;
 		die("unexpected missing %s object '%s'",
 		    type_name(obj->type), oid_to_hex(&obj->oid));
@@ -540,8 +542,7 @@ int cmd_rev_list(int argc,
 	const char *show_progress = NULL;
 	int ret = 0;
 
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage(rev_list_usage);
+	show_usage_if_asked(argc, argv, rev_list_usage);
 
 	git_config(git_default_config, NULL);
 	repo_init_revisions(the_repository, &revs, prefix);
@@ -733,7 +734,8 @@ int cmd_rev_list(int argc,
 		revs.limited = 1;
 
 	if (show_progress)
-		progress = start_delayed_progress(show_progress, 0);
+		progress = start_delayed_progress(the_repository,
+						  show_progress, 0);
 
 	if (use_bitmap_index) {
 		if (!try_bitmap_count(&revs, filter_provided_objects))

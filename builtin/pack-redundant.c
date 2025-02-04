@@ -5,6 +5,7 @@
 * This file is licensed under the GPL v2.
 *
 */
+
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "builtin.h"
@@ -389,7 +390,6 @@ static int cmp_remaining_objects(const void *a, const void *b)
 static void sort_pack_list(struct pack_list **pl)
 {
 	struct pack_list **ary, *p;
-	int i;
 	size_t n = pack_list_size(*pl);
 
 	if (n < 2)
@@ -403,7 +403,7 @@ static void sort_pack_list(struct pack_list **pl)
 	QSORT(ary, n, cmp_remaining_objects);
 
 	/* link them back again */
-	for (i = 0; i < n - 1; i++)
+	for (size_t i = 0; i < n - 1; i++)
 		ary[i]->next = ary[i + 1];
 	ary[n - 1]->next = NULL;
 	*pl = ary[0];
@@ -595,8 +595,7 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix UNUSED, s
 	struct strbuf idx_name = STRBUF_INIT;
 	char buf[GIT_MAX_HEXSZ + 2]; /* hex hash + \n + \0 */
 
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage(pack_redundant_usage);
+	show_usage_if_asked(argc, argv, pack_redundant_usage);
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
@@ -690,7 +689,7 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix UNUSED, s
 	pl = red = pack_list_difference(local_packs, min);
 	while (pl) {
 		printf("%s\n%s\n",
-		       odb_pack_name(&idx_name, pl->pack->hash, "idx"),
+		       odb_pack_name(pl->pack->repo, &idx_name, pl->pack->hash, "idx"),
 		       pl->pack->pack_name);
 		pl = pl->next;
 	}

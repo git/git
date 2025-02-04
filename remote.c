@@ -1,4 +1,5 @@
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "abspath.h"
@@ -293,11 +294,27 @@ static void add_instead_of(struct rewrite *rewrite, const char *instead_of)
 	rewrite->instead_of_nr++;
 }
 
+#ifndef WITH_BREAKING_CHANGES
 static const char *skip_spaces(const char *s)
 {
 	while (isspace(*s))
 		s++;
 	return s;
+}
+
+static void warn_about_deprecated_remote_type(const char *type,
+					      const struct remote *remote)
+{
+	warning(_("reading remote from \"%s/%s\", which is nominated for removal.\n"
+		  "\n"
+		  "If you still use the \"remotes/\" directory it is recommended to\n"
+		  "migrate to config-based remotes:\n"
+		  "\n"
+		  "\tgit remote rename %s %s\n"
+		  "\n"
+		  "If you cannot, please let us know why you still need to use it by\n"
+		  "sending an e-mail to <git@vger.kernel.org>."),
+		type, remote->name, remote->name, remote->name);
 }
 
 static void read_remotes_file(struct remote_state *remote_state,
@@ -308,6 +325,9 @@ static void read_remotes_file(struct remote_state *remote_state,
 
 	if (!f)
 		return;
+
+	warn_about_deprecated_remote_type("remotes", remote);
+
 	remote->configured_in_repo = 1;
 	remote->origin = REMOTE_REMOTES;
 	while (strbuf_getline(&buf, f) != EOF) {
@@ -336,6 +356,8 @@ static void read_branches_file(struct remote_state *remote_state,
 
 	if (!f)
 		return;
+
+	warn_about_deprecated_remote_type("branches", remote);
 
 	strbuf_getline_lf(&buf, f);
 	fclose(f);
@@ -374,6 +396,7 @@ static void read_branches_file(struct remote_state *remote_state,
 	strbuf_release(&buf);
 	free(to_free);
 }
+#endif /* WITH_BREAKING_CHANGES */
 
 static int handle_config(const char *key, const char *value,
 			 const struct config_context *ctx, void *cb)
@@ -514,6 +537,24 @@ static int handle_config(const char *key, const char *value,
 	} else if (!strcmp(subkey, "serveroption")) {
 		return parse_transport_option(key, value,
 					      &remote->server_options);
+	} else if (!strcmp(subkey, "followremotehead")) {
+		const char *no_warn_branch;
+		if (!strcmp(value, "never"))
+			remote->follow_remote_head = FOLLOW_REMOTE_NEVER;
+		else if (!strcmp(value, "create"))
+			remote->follow_remote_head = FOLLOW_REMOTE_CREATE;
+		else if (!strcmp(value, "warn")) {
+			remote->follow_remote_head = FOLLOW_REMOTE_WARN;
+			remote->no_warn_branch = NULL;
+		} else if (skip_prefix(value, "warn-if-not-", &no_warn_branch)) {
+			remote->follow_remote_head = FOLLOW_REMOTE_WARN;
+			remote->no_warn_branch = no_warn_branch;
+		} else if (!strcmp(value, "always")) {
+			remote->follow_remote_head = FOLLOW_REMOTE_ALWAYS;
+		} else {
+			warning(_("unrecognized followRemoteHEAD value '%s' ignored"),
+				value);
+		}
 	}
 	return 0;
 }
@@ -572,6 +613,7 @@ static void read_config(struct repository *repo, int early)
 	alias_all_urls(repo->remote_state);
 }
 
+#ifndef WITH_BREAKING_CHANGES
 static int valid_remote_nick(const char *name)
 {
 	if (!name[0] || is_dot_or_dotdot(name))
@@ -583,6 +625,7 @@ static int valid_remote_nick(const char *name)
 			return 0;
 	return 1;
 }
+#endif /* WITH_BREAKING_CHANGES */
 
 static const char *remotes_remote_for_branch(struct remote_state *remote_state,
 					     struct branch *branch,
@@ -725,12 +768,14 @@ remotes_remote_get_1(struct remote_state *remote_state, const char *name,
 				   &name_given);
 
 	ret = make_remote(remote_state, name, 0);
+#ifndef WITH_BREAKING_CHANGES
 	if (valid_remote_nick(name) && have_git_dir()) {
 		if (!valid_remote(ret))
 			read_remotes_file(remote_state, ret);
 		if (!valid_remote(ret))
 			read_branches_file(remote_state, ret);
 	}
+#endif /* WITH_BREAKING_CHANGES */
 	if (name_given && !valid_remote(ret))
 		add_url_alias(remote_state, ret, name);
 	if (!valid_remote(ret))
@@ -1516,7 +1561,7 @@ static struct ref **tail_ref(struct ref **head)
 
 struct tips {
 	struct commit **tip;
-	int nr, alloc;
+	size_t nr, alloc;
 };
 
 static void add_to_tips(struct tips *tips, const struct object_id *oid)
@@ -1583,7 +1628,7 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 		const int reachable_flag = 1;
 		struct commit_list *found_commits;
 		struct commit **src_commits;
-		int nr_src_commits = 0, alloc_src_commits = 16;
+		size_t nr_src_commits = 0, alloc_src_commits = 16;
 		ALLOC_ARRAY(src_commits, alloc_src_commits);
 
 		for_each_string_list_item(item, &src_tag) {
@@ -2854,9 +2899,9 @@ void apply_push_cas(struct push_cas_option *cas,
 
 struct remote_state *remote_state_new(void)
 {
-	struct remote_state *r = xmalloc(sizeof(*r));
+	struct remote_state *r;
 
-	memset(r, 0, sizeof(*r));
+	CALLOC_ARRAY(r, 1);
 
 	hashmap_init(&r->remotes_hash, remotes_hash_cmp, NULL, 0);
 	hashmap_init(&r->branches_hash, branches_hash_cmp, NULL, 0);

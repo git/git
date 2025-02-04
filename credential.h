@@ -4,6 +4,8 @@
 #include "string-list.h"
 #include "strvec.h"
 
+struct repository;
+
 /**
  * The credentials API provides an abstracted way of gathering
  * authentication credentials from the user.
@@ -65,7 +67,7 @@
  * // Fill in the username and password fields by contacting
  * // helpers and/or asking the user. The function will die if it
  * // fails.
- * credential_fill(&c);
+ * credential_fill(repo, &c);
  *
  * // Otherwise, we have a username and password. Try to use it.
  *
@@ -168,7 +170,9 @@ struct credential {
 		 multistage: 1,
 		 quit:1,
 		 use_http_path:1,
-		 username_from_proto:1;
+		 username_from_proto:1,
+		 sanitize_prompt:1,
+		 protect_protocol:1;
 
 	struct credential_capability capa_authtype;
 	struct credential_capability capa_state;
@@ -195,6 +199,8 @@ struct credential {
 	.wwwauth_headers = STRVEC_INIT, \
 	.state_headers = STRVEC_INIT, \
 	.state_headers_to_send = STRVEC_INIT, \
+	.sanitize_prompt = 1, \
+	.protect_protocol = 1, \
 }
 
 /* Initialize a credential structure, setting all fields to empty. */
@@ -218,7 +224,8 @@ void credential_clear(struct credential *);
  * If all_capabilities is set, this is an internal user that is prepared
  * to deal with all known capabilities, and we should advertise that fact.
  */
-void credential_fill(struct credential *, int all_capabilities);
+void credential_fill(struct repository *, struct credential *,
+		     int all_capabilities);
 
 /**
  * Inform the credential subsystem that the provided credentials
@@ -227,7 +234,7 @@ void credential_fill(struct credential *, int all_capabilities);
  * that they may store the result to be used again.  Any errors
  * from helpers are ignored.
  */
-void credential_approve(struct credential *);
+void credential_approve(struct repository *, struct credential *);
 
 /**
  * Inform the credential subsystem that the provided credentials
@@ -239,7 +246,7 @@ void credential_approve(struct credential *);
  * for another call to `credential_fill`). Any errors from helpers
  * are ignored.
  */
-void credential_reject(struct credential *);
+void credential_reject(struct repository *, struct credential *);
 
 /**
  * Enable all of the supported credential flags in this credential.

@@ -120,15 +120,38 @@ char *reftable_strdup(const char *str);
 #define REFTABLE_ALLOC_ARRAY(x, alloc) (x) = reftable_malloc(st_mult(sizeof(*(x)), (alloc)))
 #define REFTABLE_CALLOC_ARRAY(x, alloc) (x) = reftable_calloc((alloc), sizeof(*(x)))
 #define REFTABLE_REALLOC_ARRAY(x, alloc) (x) = reftable_realloc((x), st_mult(sizeof(*(x)), (alloc)))
-#define REFTABLE_ALLOC_GROW(x, nr, alloc) \
-	do { \
-		if ((nr) > alloc) { \
-			alloc = 2 * (alloc) + 1; \
-			if (alloc < (nr)) \
-				alloc = (nr); \
-			REFTABLE_REALLOC_ARRAY(x, alloc); \
-		} \
-	} while (0)
+
+static inline void *reftable_alloc_grow(void *p, size_t nelem, size_t elsize,
+					size_t *allocp)
+{
+	void *new_p;
+	size_t alloc = *allocp * 2 + 1;
+	if (alloc < nelem)
+		alloc = nelem;
+	new_p = reftable_realloc(p, st_mult(elsize, alloc));
+	if (!new_p)
+		return p;
+	*allocp = alloc;
+	return new_p;
+}
+
+#define REFTABLE_ALLOC_GROW(x, nr, alloc) ( \
+	(nr) > (alloc) && ( \
+		(x) = reftable_alloc_grow((x), (nr), sizeof(*(x)), &(alloc)), \
+		(nr) > (alloc) \
+	) \
+)
+
+#define REFTABLE_ALLOC_GROW_OR_NULL(x, nr, alloc) do { \
+	size_t reftable_alloc_grow_or_null_alloc = alloc; \
+	if (REFTABLE_ALLOC_GROW((x), (nr), reftable_alloc_grow_or_null_alloc)) { \
+		REFTABLE_FREE_AND_NULL(x); \
+		alloc = 0; \
+	} else { \
+		alloc = reftable_alloc_grow_or_null_alloc; \
+	} \
+} while (0)
+
 #define REFTABLE_FREE_AND_NULL(p) do { reftable_free(p); (p) = NULL; } while (0)
 
 #ifndef REFTABLE_ALLOW_BANNED_ALLOCATORS
@@ -146,8 +169,16 @@ char *reftable_strdup(const char *str);
 #endif
 
 /* Find the longest shared prefix size of `a` and `b` */
-int common_prefix_size(struct reftable_buf *a, struct reftable_buf *b);
+size_t common_prefix_size(struct reftable_buf *a, struct reftable_buf *b);
 
-int hash_size(uint32_t id);
+uint32_t hash_size(enum reftable_hash id);
+
+/*
+ * Format IDs that identify the hash function used by a reftable. Note that
+ * these constants end up on disk and thus mustn't change. The format IDs are
+ * "sha1" and "s256" in big endian, respectively.
+ */
+#define REFTABLE_FORMAT_ID_SHA1   ((uint32_t) 0x73686131)
+#define REFTABLE_FORMAT_ID_SHA256 ((uint32_t) 0x73323536)
 
 #endif

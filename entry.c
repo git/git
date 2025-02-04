@@ -188,7 +188,9 @@ int finish_delayed_checkout(struct checkout *state, int show_progress)
 
 	dco->state = CE_RETRY;
 	if (show_progress)
-		progress = start_delayed_progress(_("Filtering content"), dco->paths.nr);
+		progress = start_delayed_progress(the_repository,
+						  _("Filtering content"),
+						  dco->paths.nr);
 	while (dco->filters.nr > 0) {
 		for_each_string_list_item(filter, &dco->filters) {
 			struct string_list available_paths = STRING_LIST_INIT_DUP;
@@ -441,7 +443,7 @@ static int check_path(const char *path, int len, struct stat *st, int skiplen)
 static void mark_colliding_entries(const struct checkout *state,
 				   struct cache_entry *ce, struct stat *st)
 {
-	int i, trust_ino = check_stat;
+	int trust_ino = check_stat;
 
 #if defined(GIT_WINDOWS_NATIVE) || defined(__CYGWIN__)
 	trust_ino = 0;
@@ -451,7 +453,7 @@ static void mark_colliding_entries(const struct checkout *state,
 
 	/* TODO: audit for interaction with sparse-index. */
 	ensure_full_index(state->istate);
-	for (i = 0; i < state->istate->cache_nr; i++) {
+	for (size_t i = 0; i < state->istate->cache_nr; i++) {
 		struct cache_entry *dup = state->istate->cache[i];
 
 		if (dup == ce) {

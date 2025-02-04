@@ -39,7 +39,7 @@ const char *find_hook(struct repository *r, const char *name)
 				advise(_("The '%s' hook was ignored because "
 					 "it's not set as executable.\n"
 					 "You can disable this warning with "
-					 "`git config advice.ignoredHook false`."),
+					 "`git config set advice.ignoredHook false`."),
 				       path.buf);
 			}
 		}

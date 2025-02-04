@@ -83,6 +83,17 @@ int refs_read_ref_full(struct ref_store *refs, const char *refname,
 
 int refs_read_ref(struct ref_store *refs, const char *refname, struct object_id *oid);
 
+#define NOT_A_SYMREF -2
+
+/*
+ * Read the symbolic ref named "refname" and write its immediate referent into
+ * the provided buffer. Referent is left empty if "refname" is not a symbolic
+ * ref. It does not resolve the symbolic reference recursively in case the
+ * target is also a symbolic ref.
+ *
+ * Returns 0 on success, -2 if the "refname" is not a symbolic ref,
+ * -1 otherwise.
+ */
 int refs_read_symbolic_ref(struct ref_store *ref_store, const char *refname,
 			   struct strbuf *referent);
 
@@ -182,6 +193,35 @@ int repo_dwim_log(struct repository *r, const char *str, int len, struct object_
  * The return value is an allocated string.
  */
 char *repo_default_branch_name(struct repository *r, int quiet);
+
+/*
+ * Copy "name" to "sb", expanding any special @-marks as handled by
+ * repo_interpret_branch_name(). The result is a non-qualified branch name
+ * (so "foo" or "origin/master" instead of "refs/heads/foo" or
+ * "refs/remotes/origin/master").
+ *
+ * Note that the resulting name may not be a syntactically valid refname.
+ *
+ * If "allowed" is non-zero, restrict the set of allowed expansions. See
+ * repo_interpret_branch_name() for details.
+ */
+void copy_branchname(struct strbuf *sb, const char *name,
+		       unsigned allowed);
+
+/*
+ * Like copy_branchname() above, but confirm that the result is
+ * syntactically valid to be used as a local branch name in refs/heads/.
+ *
+ * The return value is "0" if the result is valid, and "-1" otherwise.
+ */
+int check_branch_ref(struct strbuf *sb, const char *name);
+
+/*
+ * Similar for a tag name in refs/tags/.
+ *
+ * The return value is "0" if the result is valid, and "-1" otherwise.
+ */
+int check_tag_ref(struct strbuf *sb, const char *name);
 
 /*
  * A ref_transaction represents a collection of reference updates that
@@ -575,6 +615,10 @@ int refs_copy_existing_ref(struct ref_store *refs, const char *oldref,
 int refs_update_symref(struct ref_store *refs, const char *refname,
 		       const char *target, const char *logmsg);
 
+int refs_update_symref_extended(struct ref_store *refs, const char *refname,
+		       const char *target, const char *logmsg,
+		       struct strbuf *referent, int create_only);
+
 enum action_on_err {
 	UPDATE_REFS_MSG_ON_ERR,
 	UPDATE_REFS_DIE_ON_ERR,
@@ -728,6 +772,20 @@ int ref_transaction_update(struct ref_transaction *transaction,
 			   struct strbuf *err);
 
 /*
+ * Similar to`ref_transaction_update`, but this function is only for adding
+ * a reflog update. Supports providing custom committer information. The index
+ * field can be utiltized to order updates as desired. When not used, the
+ * updates default to being ordered by refname.
+ */
+int ref_transaction_update_reflog(struct ref_transaction *transaction,
+				  const char *refname,
+				  const struct object_id *new_oid,
+				  const struct object_id *old_oid,
+				  const char *committer_info, unsigned int flags,
+				  const char *msg, unsigned int index,
+				  struct strbuf *err);
+
+/*
  * Add a reference creation to transaction. new_oid is the value that
  * the reference should have after the update; it must not be
  * null_oid. It is verified that the reference does not exist
@@ -776,8 +834,10 @@ int ref_transaction_verify(struct ref_transaction *transaction,
 
 /* Naming conflict (for example, the ref names A and A/B conflict). */
 #define TRANSACTION_NAME_CONFLICT -1
+/* When only creation was requested, but the ref already exists. */
+#define TRANSACTION_CREATE_EXISTS -2
 /* All other errors. */
-#define TRANSACTION_GENERIC_ERROR -2
+#define TRANSACTION_GENERIC_ERROR -3
 
 /*
  * Perform the preparatory stages of committing `transaction`. Acquire

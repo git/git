@@ -167,10 +167,12 @@ test_expect_success 'fsck with unsorted skipList' '
 
 test_expect_success 'fsck with invalid or bogus skipList input' '
 	git -c fsck.skipList=/dev/null -c fsck.missingEmail=ignore fsck &&
+	test_must_fail git -c fsck.skipList -c fsck.missingEmail=ignore fsck 2>err &&
+	test_grep "unable to parse '\'fsck.skiplist\'' from command-line config" err &&
 	test_must_fail git -c fsck.skipList=does-not-exist -c fsck.missingEmail=ignore fsck 2>err &&
 	test_grep "could not open.*: does-not-exist" err &&
 	test_must_fail git -c fsck.skipList=.git/config -c fsck.missingEmail=ignore fsck 2>err &&
-	test_grep "invalid object name: \[core\]" err
+	test_grep "invalid object name: " err
 '
 
 test_expect_success 'fsck with other accepted skipList input (comments & empty lines)' '
@@ -213,6 +215,11 @@ test_expect_success 'fsck with exhaustive accepted skipList input (various types
 	test_must_be_empty err
 '
 
+test_expect_success 'receive-pack with missing receive.fsck.skipList path' '
+	test_must_fail git -c receive.fsck.skipList receive-pack dst 2>err &&
+	test_grep "unable to parse '\'receive.fsck.skiplist\'' from command-line config" err
+'
+
 test_expect_success 'push with receive.fsck.skipList' '
 	git push . $commit:refs/heads/bogus &&
 	rm -rf dst &&
@@ -233,7 +240,7 @@ test_expect_success 'push with receive.fsck.skipList' '
 	test_grep "could not open.*: does-not-exist" err &&
 	git --git-dir=dst/.git config receive.fsck.skipList config &&
 	test_must_fail git push --porcelain dst bogus 2>err &&
-	test_grep "invalid object name: \[core\]" err &&
+	test_grep "invalid object name: " err &&
 
 	git --git-dir=dst/.git config receive.fsck.skipList SKIP &&
 	git push --porcelain dst bogus
@@ -255,6 +262,9 @@ test_expect_success 'fetch with fetch.fsck.skipList' '
 	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec &&
 
 	# Invalid and/or bogus skipList input
+	test_must_fail git --git-dir=dst/.git -c fetch.fsck.skipList fetch \
+		"file://$(pwd)" $refspec 2>err &&
+	test_grep "unable to parse '\'fetch.fsck.skiplist\'' from command-line config" err &&
 	git --git-dir=dst/.git config fetch.fsck.skipList /dev/null &&
 	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec &&
 	git --git-dir=dst/.git config fetch.fsck.skipList does-not-exist &&
@@ -262,7 +272,7 @@ test_expect_success 'fetch with fetch.fsck.skipList' '
 	test_grep "could not open.*: does-not-exist" err &&
 	git --git-dir=dst/.git config fetch.fsck.skipList dst/.git/config &&
 	test_must_fail git --git-dir=dst/.git fetch "file://$(pwd)" $refspec 2>err &&
-	test_grep "invalid object name: \[core\]" err &&
+	test_grep "invalid object name: " err &&
 
 	git --git-dir=dst/.git config fetch.fsck.skipList dst/.git/SKIP &&
 	git --git-dir=dst/.git fetch "file://$(pwd)" $refspec

@@ -24,14 +24,13 @@ struct flag_definition {
 static unsigned int parse_flags(const char *str, struct flag_definition *defs)
 {
 	struct string_list masks = STRING_LIST_INIT_DUP;
-	int i = 0;
 	unsigned int result = 0;
 
 	if (!strcmp(str, "0"))
 		return 0;
 
 	string_list_split(&masks, str, ',', 64);
-	for (; i < masks.nr; i++) {
+	for (size_t i = 0; i < masks.nr; i++) {
 		const char *name = masks.items[i].string;
 		struct flag_definition *def = defs;
 		int found = 0;

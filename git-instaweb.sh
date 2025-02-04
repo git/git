@@ -3,7 +3,7 @@
 # Copyright (c) 2006 Eric Wong
 #
 
-PERL='@@PERL@@'
+PERL='@PERL_PATH@'
 OPTIONS_KEEPDASHDASH=
 OPTIONS_STUCKLONG=
 OPTIONS_SPEC="\
@@ -38,8 +38,8 @@ conf="$GIT_DIR/gitweb/httpd.conf"
 # if installed, it doesn't need further configuration (module_path)
 test -z "$httpd" && httpd='lighttpd -f'
 
-# Default is @@GITWEBDIR@@
-test -z "$root" && root='@@GITWEBDIR@@'
+# Default is @GITWEBDIR@
+test -z "$root" && root='@GITWEBDIR@'
 
 # any untaken local port will do...
 test -z "$port" && port=1234
@@ -694,9 +694,9 @@ class GitWebRequestHandler(CGIHTTPRequestHandler):
 		return result
 
 
-bind = "127.0.0.1"
+bind = "0.0.0.0"
 if "$local" == "true":
-	bind = "0.0.0.0"
+	bind = "127.0.0.1"
 
 # Set our http root directory
 # This is a work around for a missing directory argument in older Python versions
@@ -716,7 +716,7 @@ EOF
 
 gitweb_conf() {
 	cat > "$fqgitdir/gitweb/gitweb_config.perl" <<EOF
-#!@@PERL@@
+#!@PERL_PATH@
 our \$projectroot = "$(dirname "$fqgitdir")";
 our \$git_temp = "$fqgitdir/gitweb/tmp";
 our \$projects_list = \$projectroot;

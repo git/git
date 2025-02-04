@@ -35,13 +35,7 @@ else
 	# needing to exist.
 	TEST_DIRECTORY=$(cd "$TEST_DIRECTORY" && pwd) || exit 1
 fi
-if test -z "$TEST_OUTPUT_DIRECTORY"
-then
-	# Similarly, override this to store the test-results subdir
-	# elsewhere
-	TEST_OUTPUT_DIRECTORY=$TEST_DIRECTORY
-fi
-GIT_BUILD_DIR="${TEST_DIRECTORY%/t}"
+GIT_BUILD_DIR="${GIT_BUILD_DIR:-${TEST_DIRECTORY%/t}}"
 if test "$TEST_DIRECTORY" = "$GIT_BUILD_DIR"
 then
 	echo "PANIC: Running in a $TEST_DIRECTORY that doesn't end in '/t'?" >&2
@@ -86,11 +80,21 @@ prepend_var ASAN_OPTIONS : detect_leaks=0
 export ASAN_OPTIONS
 
 prepend_var LSAN_OPTIONS : $GIT_SAN_OPTIONS
+prepend_var LSAN_OPTIONS : exitcode=0
 prepend_var LSAN_OPTIONS : fast_unwind_on_malloc=0
 export LSAN_OPTIONS
 
 prepend_var UBSAN_OPTIONS : $GIT_SAN_OPTIONS
 export UBSAN_OPTIONS
+
+# The TEST_OUTPUT_DIRECTORY will be overwritten via GIT-BUILD-OPTIONS. So in
+# case the caller has manually set up this variable via the environment we must
+# make sure to not overwrite that value, and thus we save it into
+# TEST_OUTPUT_DIRECTORY_OVERRIDE here.
+if test -n "$TEST_OUTPUT_DIRECTORY" && test -z "$TEST_OUTPUT_DIRECTORY_OVERRIDE"
+then
+	TEST_OUTPUT_DIRECTORY_OVERRIDE=$TEST_OUTPUT_DIRECTORY
+fi
 
 if test ! -f "$GIT_BUILD_DIR"/GIT-BUILD-OPTIONS
 then
@@ -99,6 +103,13 @@ then
 fi
 . "$GIT_BUILD_DIR"/GIT-BUILD-OPTIONS
 export PERL_PATH SHELL_PATH
+
+if test -z "$TEST_OUTPUT_DIRECTORY"
+then
+	# Similarly, override this to store the test-results subdir
+	# elsewhere
+	TEST_OUTPUT_DIRECTORY=$TEST_DIRECTORY
+fi
 
 # In t0000, we need to override test directories of nested testcases. In case
 # the developer has TEST_OUTPUT_DIRECTORY part of his build options, then we'd
@@ -321,24 +332,13 @@ TEST_RESULTS_BASE="$TEST_RESULTS_DIR/$TEST_NAME$TEST_STRESS_JOB_SFX"
 TEST_RESULTS_SAN_FILE_PFX=trace
 TEST_RESULTS_SAN_DIR_SFX=leak
 TEST_RESULTS_SAN_FILE=
-TEST_RESULTS_SAN_DIR="$TEST_RESULTS_DIR/$TEST_NAME.$TEST_RESULTS_SAN_DIR_SFX"
+TEST_RESULTS_SAN_DIR="$TEST_RESULTS_BASE.$TEST_RESULTS_SAN_DIR_SFX"
 TRASH_DIRECTORY="trash directory.$TEST_NAME$TEST_STRESS_JOB_SFX"
 test -n "$root" && TRASH_DIRECTORY="$root/$TRASH_DIRECTORY"
 case "$TRASH_DIRECTORY" in
 /*) ;; # absolute path is good
  *) TRASH_DIRECTORY="$TEST_OUTPUT_DIRECTORY/$TRASH_DIRECTORY" ;;
 esac
-
-# Utility functions using $TEST_RESULTS_* variables
-nr_san_dir_leaks_ () {
-	# stderr piped to /dev/null because the directory may have
-	# been "rmdir"'d already.
-	find "$TEST_RESULTS_SAN_DIR" \
-		-type f \
-		-name "$TEST_RESULTS_SAN_FILE_PFX.*" 2>/dev/null |
-	xargs grep -lv "Unable to get registers from thread" |
-	wc -l
-}
 
 # If --stress was passed, run this test repeatedly in several parallel loops.
 if test "$GIT_TEST_STRESS_STARTED" = "done"
@@ -512,6 +512,7 @@ unset VISUAL EMAIL LANGUAGE $("$PERL_PATH" -e '
 		PERF_
 		CURL_VERBOSE
 		TRACE_CURL
+		BUILD_DIR
 	));
 	my @vars = grep(/^GIT_/ && !/^GIT_($ok)/o, @env);
 	print join("\n", @vars);
@@ -1168,13 +1169,20 @@ test_atexit_handler () {
 	teardown_malloc_check
 }
 
-check_test_results_san_file_empty_ () {
-	test -z "$TEST_RESULTS_SAN_FILE" ||
-	test "$(nr_san_dir_leaks_)" = 0
+check_test_results_san_file_has_entries_ () {
+	test -z "$TEST_RESULTS_SAN_FILE" && return 1
+
+	# Lines marked with DEDUP_TOKEN show unique leaks. We only care that we
+	# found at least one.
+	#
+	# But also suppress any false positives caused by bugs or races in the
+	# sanitizer itself.
+	grep -s ^DEDUP_TOKEN "$TEST_RESULTS_SAN_FILE".* |
+	grep -qv sanitizer::GetThreadStackTopAndBottom
 }
 
 check_test_results_san_file_ () {
-	if check_test_results_san_file_empty_
+	if ! check_test_results_san_file_has_entries_
 	then
 		return
 	fi &&
@@ -1409,7 +1417,7 @@ else # normal case, use ../bin-wrappers only unless $with_dashes:
 		PATH="$GIT_BUILD_DIR:$GIT_BUILD_DIR/t/helper:$PATH"
 	fi
 fi
-GIT_TEMPLATE_DIR="$GIT_BUILD_DIR"/templates/blt
+GIT_TEMPLATE_DIR="$GIT_TEST_TEMPLATE_DIR"
 GIT_CONFIG_NOSYSTEM=1
 GIT_ATTR_NOSYSTEM=1
 GIT_CEILING_DIRECTORIES="$TRASH_DIRECTORY/.."
@@ -1475,9 +1483,9 @@ then
 	fi
 fi
 
-GITPERLLIB="$GIT_BUILD_DIR"/perl/build/lib
+GITPERLLIB="$GIT_TEST_GITPERLLIB"
 export GITPERLLIB
-test -d "$GIT_BUILD_DIR"/templates/blt || {
+test -d "$GIT_TEMPLATE_DIR" || {
 	BAIL_OUT "You haven't built things yet, have you?"
 }
 
@@ -1676,6 +1684,7 @@ esac
 
 ( COLUMNS=1 && test $COLUMNS = 1 ) && test_set_prereq COLUMNS_CAN_BE_1
 test -z "$NO_CURL" && test_set_prereq LIBCURL
+test -z "$NO_GITWEB" && test_set_prereq GITWEB
 test -z "$NO_ICONV" && test_set_prereq ICONV
 test -z "$NO_PERL" && test_set_prereq PERL
 test -z "$NO_PTHREADS" && test_set_prereq PTHREADS
@@ -1851,6 +1860,10 @@ test_lazy_prereq TIME_T_IS_64BIT 'test-tool date time_t-is64bit'
 
 test_lazy_prereq CURL '
 	curl --version
+'
+
+test_lazy_prereq WITHOUT_BREAKING_CHANGES '
+	test -z "$WITH_BREAKING_CHANGES"
 '
 
 # SHA1 is a test if the hash algorithm in use is SHA-1.  This is both for tests

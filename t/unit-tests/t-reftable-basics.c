@@ -20,6 +20,11 @@ static int integer_needle_lesseq(size_t i, void *_args)
 	return args->needle <= args->haystack[i];
 }
 
+static void *realloc_stub(void *p UNUSED, size_t size UNUSED)
+{
+	return NULL;
+}
+
 int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 {
 	if_test ("binary search with binsearch works") {
@@ -115,7 +120,7 @@ int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 		for (size_t i = 0; i < ARRAY_SIZE(cases); i++) {
 			check(!reftable_buf_addstr(&a, cases[i].a));
 			check(!reftable_buf_addstr(&b, cases[i].b));
-			check_int(common_prefix_size(&a, &b), ==, cases[i].want);
+			check_uint(common_prefix_size(&a, &b), ==, cases[i].want);
 			reftable_buf_reset(&a);
 			reftable_buf_reset(&b);
 		}
@@ -139,6 +144,57 @@ int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 		put_be16(dest, in);
 		out = get_be16(dest);
 		check_int(in, ==, out);
+	}
+
+	if_test ("REFTABLE_ALLOC_GROW works") {
+		int *arr = NULL, *old_arr;
+		size_t alloc = 0, old_alloc;
+
+		check(!REFTABLE_ALLOC_GROW(arr, 1, alloc));
+		check(arr != NULL);
+		check_uint(alloc, >=, 1);
+		arr[0] = 42;
+
+		old_alloc = alloc;
+		old_arr = arr;
+		reftable_set_alloc(NULL, realloc_stub, NULL);
+		check(REFTABLE_ALLOC_GROW(arr, old_alloc + 1, alloc));
+		check(arr == old_arr);
+		check_uint(alloc, ==, old_alloc);
+
+		old_alloc = alloc;
+		reftable_set_alloc(NULL, NULL, NULL);
+		check(!REFTABLE_ALLOC_GROW(arr, old_alloc + 1, alloc));
+		check(arr != NULL);
+		check_uint(alloc, >, old_alloc);
+		arr[alloc - 1] = 42;
+
+		reftable_free(arr);
+	}
+
+	if_test ("REFTABLE_ALLOC_GROW_OR_NULL works") {
+		int *arr = NULL;
+		size_t alloc = 0, old_alloc;
+
+		REFTABLE_ALLOC_GROW_OR_NULL(arr, 1, alloc);
+		check(arr != NULL);
+		check_uint(alloc, >=, 1);
+		arr[0] = 42;
+
+		old_alloc = alloc;
+		REFTABLE_ALLOC_GROW_OR_NULL(arr, old_alloc + 1, alloc);
+		check(arr != NULL);
+		check_uint(alloc, >, old_alloc);
+		arr[alloc - 1] = 42;
+
+		old_alloc = alloc;
+		reftable_set_alloc(NULL, realloc_stub, NULL);
+		REFTABLE_ALLOC_GROW_OR_NULL(arr, old_alloc + 1, alloc);
+		check(arr == NULL);
+		check_uint(alloc, ==, 0);
+		reftable_set_alloc(NULL, NULL, NULL);
+
+		reftable_free(arr);
 	}
 
 	return test_done();

@@ -32,8 +32,10 @@ static inline void string_view_consume(struct string_view *s, int n)
 	s->len -= n;
 }
 
-/* utilities for de/encoding varints */
-
+/*
+ * Decode and encode a varint. Returns the number of bytes read/written, or a
+ * negative value in case encoding/decoding the varint has failed.
+ */
 int get_var_int(uint64_t *dest, struct string_view *in);
 int put_var_int(struct string_view *dest, uint64_t val);
 
@@ -45,18 +47,18 @@ struct reftable_record_vtable {
 	/* The record type of ('r' for ref). */
 	uint8_t type;
 
-	int (*copy_from)(void *dest, const void *src, int hash_size);
+	int (*copy_from)(void *dest, const void *src, uint32_t hash_size);
 
 	/* a value of [0..7], indicating record subvariants (eg. ref vs. symref
 	 * vs ref deletion) */
 	uint8_t (*val_type)(const void *rec);
 
 	/* encodes rec into dest, returning how much space was used. */
-	int (*encode)(const void *rec, struct string_view dest, int hash_size);
+	int (*encode)(const void *rec, struct string_view dest, uint32_t hash_size);
 
 	/* decode data from `src` into the record. */
 	int (*decode)(void *rec, struct reftable_buf key, uint8_t extra,
-		      struct string_view src, int hash_size,
+		      struct string_view src, uint32_t hash_size,
 		      struct reftable_buf *scratch);
 
 	/* deallocate and null the record. */
@@ -66,16 +68,13 @@ struct reftable_record_vtable {
 	int (*is_deletion)(const void *rec);
 
 	/* Are two records equal? This assumes they have the same type. Returns 0 for non-equal. */
-	int (*equal)(const void *a, const void *b, int hash_size);
+	int (*equal)(const void *a, const void *b, uint32_t hash_size);
 
 	/*
 	 * Compare keys of two records with each other. The records must have
 	 * the same type.
 	 */
 	int (*cmp)(const void *a, const void *b);
-
-	/* Print on stdout, for debugging. */
-	void (*print)(const void *rec, int hash_size);
 };
 
 /* returns true for recognized block types. Block start with the block type. */
@@ -136,16 +135,16 @@ void reftable_record_init(struct reftable_record *rec, uint8_t typ);
 
 /* see struct record_vtable */
 int reftable_record_cmp(struct reftable_record *a, struct reftable_record *b);
-int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, int hash_size);
+int reftable_record_equal(struct reftable_record *a, struct reftable_record *b, uint32_t hash_size);
 int reftable_record_key(struct reftable_record *rec, struct reftable_buf *dest);
 int reftable_record_copy_from(struct reftable_record *rec,
-			      struct reftable_record *src, int hash_size);
+			      struct reftable_record *src, uint32_t hash_size);
 uint8_t reftable_record_val_type(struct reftable_record *rec);
 int reftable_record_encode(struct reftable_record *rec, struct string_view dest,
-			   int hash_size);
+			   uint32_t hash_size);
 int reftable_record_decode(struct reftable_record *rec, struct reftable_buf key,
 			   uint8_t extra, struct string_view src,
-			   int hash_size, struct reftable_buf *scratch);
+			   uint32_t hash_size, struct reftable_buf *scratch);
 int reftable_record_is_deletion(struct reftable_record *rec);
 
 static inline uint8_t reftable_record_type(struct reftable_record *rec)

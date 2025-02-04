@@ -104,28 +104,31 @@ test_expect_success setup '
 	git config remote.config-glob.fetch refs/heads/*:refs/remotes/rem/* &&
 	remotes="$remotes config-glob" &&
 
-	mkdir -p .git/remotes &&
-	cat >.git/remotes/remote-explicit <<-\EOF &&
-	URL: ../.git/
-	Pull: refs/heads/main:remotes/rem/main
-	Pull: refs/heads/one:remotes/rem/one
-	Pull: two:remotes/rem/two
-	Pull: refs/heads/three:remotes/rem/three
-	EOF
-	remotes="$remotes remote-explicit" &&
+	if test_have_prereq WITHOUT_BREAKING_CHANGES
+	then
+		mkdir -p .git/remotes &&
+		cat >.git/remotes/remote-explicit <<-\EOF &&
+		URL: ../.git/
+		Pull: refs/heads/main:remotes/rem/main
+		Pull: refs/heads/one:remotes/rem/one
+		Pull: two:remotes/rem/two
+		Pull: refs/heads/three:remotes/rem/three
+		EOF
+		remotes="$remotes remote-explicit" &&
 
-	cat >.git/remotes/remote-glob <<-\EOF &&
-	URL: ../.git/
-	Pull: refs/heads/*:refs/remotes/rem/*
-	EOF
-	remotes="$remotes remote-glob" &&
+		cat >.git/remotes/remote-glob <<-\EOF &&
+		URL: ../.git/
+		Pull: refs/heads/*:refs/remotes/rem/*
+		EOF
+		remotes="$remotes remote-glob" &&
 
-	mkdir -p .git/branches &&
-	echo "../.git" > .git/branches/branches-default &&
-	remotes="$remotes branches-default" &&
+		mkdir -p .git/branches &&
+		echo "../.git" > .git/branches/branches-default &&
+		remotes="$remotes branches-default" &&
 
-	echo "../.git#one" > .git/branches/branches-one &&
-	remotes="$remotes branches-one" &&
+		echo "../.git#one" > .git/branches/branches-one &&
+		remotes="$remotes branches-one"
+	fi &&
 
 	for remote in $remotes ; do
 		git config branch.br-$remote.remote $remote &&

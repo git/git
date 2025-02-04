@@ -2,6 +2,9 @@
 
 test_description='git remote porcelain-ish'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 setup_repository () {
@@ -70,7 +73,7 @@ test_expect_success 'add another remote' '
 		cd test &&
 		git remote add -f second ../two &&
 		tokens_match "origin second" "$(git remote)" &&
-		check_tracking_branch second main side another &&
+		check_tracking_branch second main side another HEAD &&
 		git for-each-ref "--format=%(refname)" refs/remotes |
 		sed -e "/^refs\/remotes\/origin\//d" \
 		    -e "/^refs\/remotes\/second\//d" >actual &&
@@ -428,13 +431,87 @@ test_expect_success 'set-head --auto' '
 	)
 '
 
+test_expect_success REFFILES 'set-head --auto failure' '
+	test_when_finished "rm -f test/.git/refs/remotes/origin/HEAD.lock" &&
+	(
+		cd test &&
+		touch .git/refs/remotes/origin/HEAD.lock &&
+		test_must_fail git remote set-head --auto origin 2>err &&
+		tail -n1 err >output &&
+		echo "error: Could not set up refs/remotes/origin/HEAD" >expect &&
+		test_cmp expect output
+	)
+'
+
+test_expect_success 'set-head --auto detects creation' '
+	(
+		cd test &&
+		git update-ref --no-deref -d refs/remotes/origin/HEAD &&
+		git remote set-head --auto origin >output &&
+		echo "${SQ}origin/HEAD${SQ} is now created and points to ${SQ}main${SQ}" >expect &&
+		test_cmp expect output
+	)
+'
+
+test_expect_success 'set-head --auto to update a non symbolic ref' '
+	(
+		cd test &&
+		git update-ref --no-deref -d refs/remotes/origin/HEAD &&
+		git update-ref refs/remotes/origin/HEAD HEAD &&
+		HEAD=$(git log --pretty="%H") &&
+		git remote set-head --auto origin >output &&
+		echo "${SQ}origin/HEAD${SQ} was detached at ${SQ}${HEAD}${SQ} and now points to ${SQ}main${SQ}" >expect &&
+		test_cmp expect output
+	)
+'
+
+test_expect_success 'set-head --auto detects no change' '
+	(
+		cd test &&
+		git remote set-head --auto origin >output &&
+		echo "${SQ}origin/HEAD${SQ} is unchanged and points to ${SQ}main${SQ}" >expect &&
+		test_cmp expect output
+	)
+'
+
+test_expect_success 'set-head --auto detects change' '
+	(
+		cd test &&
+		git symbolic-ref refs/remotes/origin/HEAD refs/remotes/origin/ahead &&
+		git remote set-head --auto origin >output &&
+		echo "${SQ}origin/HEAD${SQ} has changed from ${SQ}ahead${SQ} and now points to ${SQ}main${SQ}" >expect &&
+		test_cmp expect output
+	)
+'
+
+test_expect_success 'set-head --auto detects strange ref' '
+	(
+		cd test &&
+		git symbolic-ref refs/remotes/origin/HEAD refs/heads/main &&
+		git remote set-head --auto origin >output &&
+		echo "${SQ}origin/HEAD${SQ} used to point to ${SQ}refs/heads/main${SQ} (which is not a remote branch), but now points to ${SQ}main${SQ}" >expect &&
+		test_cmp expect output
+	)
+'
+
 test_expect_success 'set-head --auto has no problem w/multiple HEADs' '
 	(
 		cd test &&
 		git fetch two "refs/heads/*:refs/remotes/two/*" &&
 		git remote set-head --auto two >output 2>&1 &&
-		echo "two/HEAD set to main" >expect &&
+		echo "${SQ}two/HEAD${SQ} is unchanged and points to ${SQ}main${SQ}" >expect &&
 		test_cmp expect output
+	)
+'
+
+test_expect_success 'set-head changes followRemoteHEAD always to warn' '
+	(
+		cd test &&
+		git config set remote.origin.followRemoteHEAD "always" &&
+		git remote set-head --auto origin &&
+		git config get remote.origin.followRemoteHEAD >actual &&
+		echo "warn" >expect &&
+		test_cmp expect actual
 	)
 '
 
@@ -448,6 +525,16 @@ test_expect_success 'set-head explicit' '
 		git remote set-head origin side2 &&
 		git symbolic-ref refs/remotes/origin/HEAD >output &&
 		git remote set-head origin main &&
+		test_cmp expect output
+	)
+'
+
+test_expect_success 'set-head --auto reports change' '
+	(
+		cd test &&
+		git remote set-head origin side2 &&
+		git remote set-head --auto origin >output 2>&1 &&
+		echo "${SQ}origin/HEAD${SQ} has changed from ${SQ}side2${SQ} and now points to ${SQ}main${SQ}" >expect &&
 		test_cmp expect output
 	)
 '
@@ -489,6 +576,16 @@ test_expect_success 'add --mirror && prune' '
 		git remote prune origin &&
 		test_must_fail git rev-parse --verify refs/heads/side2 &&
 		git rev-parse --verify refs/heads/side
+	)
+'
+
+test_expect_success 'add --mirror setting HEAD' '
+	mkdir headmirror &&
+	(
+		cd headmirror &&
+		git init --bare -b notmain &&
+		git remote add --mirror -f origin ../one &&
+		test "$(git symbolic-ref HEAD)" = "refs/heads/main"
 	)
 '
 
@@ -711,8 +808,10 @@ test_expect_success 'reject --no-no-tags' '
 '
 
 cat >one/expect <<\EOF
+  apis/HEAD -> apis/main
   apis/main
   apis/side
+  drosophila/HEAD -> drosophila/main
   drosophila/another
   drosophila/main
   drosophila/side
@@ -730,11 +829,14 @@ test_expect_success 'update' '
 '
 
 cat >one/expect <<\EOF
+  drosophila/HEAD -> drosophila/main
   drosophila/another
   drosophila/main
   drosophila/side
+  manduca/HEAD -> manduca/main
   manduca/main
   manduca/side
+  megaloprepus/HEAD -> megaloprepus/main
   megaloprepus/main
   megaloprepus/side
 EOF
@@ -742,7 +844,7 @@ EOF
 test_expect_success 'update with arguments' '
 	(
 		cd one &&
-		for b in $(git branch -r)
+		for b in $(git branch -r | grep -v HEAD)
 		do
 		git branch -r -d $b || exit 1
 		done &&
@@ -774,10 +876,13 @@ test_expect_success 'update --prune' '
 '
 
 cat >one/expect <<-\EOF
+  apis/HEAD -> apis/main
   apis/main
   apis/side
+  manduca/HEAD -> manduca/main
   manduca/main
   manduca/side
+  megaloprepus/HEAD -> megaloprepus/main
   megaloprepus/main
   megaloprepus/side
 EOF
@@ -785,7 +890,7 @@ EOF
 test_expect_success 'update default' '
 	(
 		cd one &&
-		for b in $(git branch -r)
+		for b in $(git branch -r | grep -v HEAD)
 		do
 		git branch -r -d $b || exit 1
 		done &&
@@ -797,6 +902,7 @@ test_expect_success 'update default' '
 '
 
 cat >one/expect <<\EOF
+  drosophila/HEAD -> drosophila/main
   drosophila/another
   drosophila/main
   drosophila/side
@@ -805,7 +911,7 @@ EOF
 test_expect_success 'update default (overridden, with funny whitespace)' '
 	(
 		cd one &&
-		for b in $(git branch -r)
+		for b in $(git branch -r | grep -v HEAD)
 		do
 		git branch -r -d $b || exit 1
 		done &&
@@ -819,7 +925,7 @@ test_expect_success 'update default (overridden, with funny whitespace)' '
 test_expect_success 'update (with remotes.default defined)' '
 	(
 		cd one &&
-		for b in $(git branch -r)
+		for b in $(git branch -r | grep -v HEAD)
 		do
 		git branch -r -d $b || exit 1
 		done &&
@@ -1007,7 +1113,7 @@ Pull: refs/heads/main:refs/heads/origin
 Pull: refs/heads/next:refs/heads/origin2
 EOF
 
-test_expect_success 'migrate a remote from named file in $GIT_DIR/remotes' '
+test_expect_success WITHOUT_BREAKING_CHANGES 'migrate a remote from named file in $GIT_DIR/remotes' '
 	git clone one five &&
 	origin_url=$(pwd)/one &&
 	(
@@ -1033,7 +1139,7 @@ test_expect_success 'migrate a remote from named file in $GIT_DIR/remotes' '
 	)
 '
 
-test_expect_success 'migrate a remote from named file in $GIT_DIR/branches' '
+test_expect_success WITHOUT_BREAKING_CHANGES 'migrate a remote from named file in $GIT_DIR/branches' '
 	git clone --template= one six &&
 	origin_url=$(pwd)/one &&
 	(
@@ -1049,7 +1155,7 @@ test_expect_success 'migrate a remote from named file in $GIT_DIR/branches' '
 	)
 '
 
-test_expect_success 'migrate a remote from named file in $GIT_DIR/branches (2)' '
+test_expect_success WITHOUT_BREAKING_CHANGES 'migrate a remote from named file in $GIT_DIR/branches (2)' '
 	git clone --template= one seven &&
 	(
 		cd seven &&

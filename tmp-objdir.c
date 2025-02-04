@@ -1,5 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "tmp-objdir.h"
 #include "abspath.h"
@@ -16,6 +14,7 @@
 #include "repository.h"
 
 struct tmp_objdir {
+	struct repository *repo;
 	struct strbuf path;
 	struct strvec env;
 	struct object_directory *prev_odb;
@@ -116,7 +115,8 @@ static int setup_tmp_objdir(const char *root)
 	return ret;
 }
 
-struct tmp_objdir *tmp_objdir_create(const char *prefix)
+struct tmp_objdir *tmp_objdir_create(struct repository *r,
+				     const char *prefix)
 {
 	static int installed_handlers;
 	struct tmp_objdir *t;
@@ -125,6 +125,7 @@ struct tmp_objdir *tmp_objdir_create(const char *prefix)
 		BUG("only one tmp_objdir can be used at a time");
 
 	t = xcalloc(1, sizeof(*t));
+	t->repo = r;
 	strbuf_init(&t->path, 0);
 	strvec_init(&t->env);
 
@@ -134,7 +135,7 @@ struct tmp_objdir *tmp_objdir_create(const char *prefix)
 	 * them.
 	 */
 	strbuf_addf(&t->path, "%s/tmp_objdir-%s-XXXXXX",
-		    repo_get_object_directory(the_repository), prefix);
+		    repo_get_object_directory(r), prefix);
 
 	if (!mkdtemp(t->path.buf)) {
 		/* free, not destroy, as we never touched the filesystem */
@@ -154,7 +155,7 @@ struct tmp_objdir *tmp_objdir_create(const char *prefix)
 	}
 
 	env_append(&t->env, ALTERNATE_DB_ENVIRONMENT,
-		   absolute_path(repo_get_object_directory(the_repository)));
+		   absolute_path(repo_get_object_directory(r)));
 	env_replace(&t->env, DB_ENVIRONMENT, absolute_path(t->path.buf));
 	env_replace(&t->env, GIT_QUARANTINE_ENVIRONMENT,
 		    absolute_path(t->path.buf));
@@ -237,7 +238,6 @@ static int migrate_paths(struct strbuf *src, struct strbuf *dst,
 {
 	size_t src_len = src->len, dst_len = dst->len;
 	struct string_list paths = STRING_LIST_INIT_DUP;
-	int i;
 	int ret = 0;
 
 	if (read_dir_paths(&paths, src->buf) < 0)
@@ -245,7 +245,7 @@ static int migrate_paths(struct strbuf *src, struct strbuf *dst,
 	paths.cmp = pack_copy_cmp;
 	string_list_sort(&paths);
 
-	for (i = 0; i < paths.nr; i++) {
+	for (size_t i = 0; i < paths.nr; i++) {
 		const char *name = paths.items[i].string;
 		enum finalize_object_file_flags flags_copy = flags;
 
@@ -274,14 +274,14 @@ int tmp_objdir_migrate(struct tmp_objdir *t)
 		return 0;
 
 	if (t->prev_odb) {
-		if (the_repository->objects->odb->will_destroy)
+		if (t->repo->objects->odb->will_destroy)
 			BUG("migrating an ODB that was marked for destruction");
 		restore_primary_odb(t->prev_odb, t->path.buf);
 		t->prev_odb = NULL;
 	}
 
 	strbuf_addbuf(&src, &t->path);
-	strbuf_addstr(&dst, repo_get_object_directory(the_repository));
+	strbuf_addstr(&dst, repo_get_object_directory(t->repo));
 
 	ret = migrate_paths(&src, &dst, 0);
 

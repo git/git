@@ -412,7 +412,8 @@ Default mode::
 
 --ancestry-path[=<commit>]::
 	When given a range of commits to display (e.g. 'commit1..commit2'
-	or 'commit2 {caret}commit1'), only display commits in that range
+	or 'commit2 {caret}commit1'), and a commit <commit> in that range,
+	only display commits in that range
 	that are ancestors of <commit>, descendants of <commit>, or
 	<commit> itself.  If no commit is specified, use 'commit1' (the
 	excluded part of the range) as <commit>.  Can be passed multiple

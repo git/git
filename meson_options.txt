@@ -1,0 +1,105 @@
+# Configuration for how Git behaves at runtime.
+option('default_pager', type: 'string', value: 'less',
+  description: 'Fall-back pager.')
+option('default_editor', type: 'string', value: 'vi',
+  description: 'Fall-back editor.')
+option('gitconfig', type: 'string', value: '/etc/gitconfig',
+  description: 'Path to the global git configuration file.')
+option('gitattributes', type: 'string', value: '/etc/gitattributes',
+  description: 'Path to the global git attributes file.')
+option('pager_environment', type: 'string', value: 'LESS=FRX LV=-c',
+  description: 'Environment used when spawning the pager')
+option('perl_cpan_fallback', type: 'boolean', value: true,
+  description: 'Install bundled copies of CPAN modules that serve as a fallback in case the modules are not available on the system.')
+option('runtime_prefix', type: 'boolean', value: false,
+  description: 'Resolve ancillary tooling and support files relative to the location of the runtime binary instead of hard-coding them into the binary.')
+option('sane_tool_path', type: 'string', value: '',
+  description: 'A colon-separated list of paths to prepend to PATH if your tools in /usr/bin are broken.')
+
+# Build information compiled into Git and other parts like documentation.
+option('build_date', type: 'string', value: '',
+  description: 'Build date reported by our documentation.')
+option('built_from_commit', type: 'string', value: '',
+  description: 'Commit that Git was built from reported by git-version(1).')
+option('user_agent', type: 'string', value: '',
+  description: 'User agent reported to remote servers.')
+option('version', type: 'string', value: '',
+  description: 'Version string reported by git-version(1) and other tools.')
+
+# Features supported by Git.
+option('contrib', type: 'array', value: [ 'completion' ], choices: [ 'completion', 'subtree' ],
+  description: 'Contributed features to include.')
+option('curl', type: 'feature', value: 'enabled',
+  description: 'Build helpers used to access remotes with the HTTP transport.')
+option('expat', type: 'feature', value: 'enabled',
+  description: 'Build helpers used to push to remotes with the HTTP transport.')
+option('gettext', type: 'feature', value: 'auto',
+  description: 'Build translation files.')
+option('gitweb', type: 'feature', value: 'auto',
+  description: 'Build Git web interface. Requires Perl.')
+option('iconv', type: 'feature', value: 'auto',
+  description: 'Support reencoding strings with different encodings.')
+option('pcre2', type: 'feature', value: 'enabled',
+  description: 'Support Perl-compatible regular expressions in e.g. git-grep(1).')
+option('perl', type: 'feature', value: 'auto',
+  description: 'Build tools written in Perl.')
+option('python', type: 'feature', value: 'auto',
+  description: 'Build tools written in Python.')
+option('regex', type: 'feature', value: 'auto',
+  description: 'Use the system-provided regex library instead of the bundled one.')
+
+# Backends.
+option('csprng_backend', type: 'combo', value: 'auto', choices: ['auto', 'arc4random', 'arc4random_bsd', 'getrandom', 'getentropy', 'rtlgenrandom', 'openssl', 'urandom'],
+  description: 'The backend to use for generating cryptographically-secure pseudo-random numbers.')
+option('https_backend', type: 'combo', value: 'auto', choices: ['auto', 'openssl', 'CommonCrypto', 'none'],
+  description: 'The HTTPS backend to use when connecting to remotes.')
+option('sha1_backend', type: 'combo', choices: ['openssl', 'block', 'sha1dc', 'CommonCrypto'], value: 'sha1dc',
+  description: 'The backend used for hashing objects with the SHA1 object format.')
+option('sha1_unsafe_backend', type: 'combo', choices: ['openssl', 'block', 'CommonCrypto', 'none'], value: 'none',
+  description: 'The backend used for hashing data with the SHA1 object format in case no cryptographic security is needed.')
+option('sha256_backend', type: 'combo', choices: ['openssl', 'nettle', 'gcrypt', 'block'], value: 'block',
+  description: 'The backend used for hashing objects with the SHA256 object format.')
+
+# Build tweaks.
+option('breaking_changes', type: 'boolean', value: false,
+  description: 'Enable upcoming breaking changes.')
+option('macos_use_homebrew_gettext', type: 'boolean', value: true,
+  description: 'Use gettext from Homebrew instead of the slightly-broken system-provided one.')
+
+# gitweb configuration.
+option('gitweb_config', type: 'string', value: 'gitweb_config.perl')
+option('gitweb_config_system', type: 'string', value: '/etc/gitweb.conf')
+option('gitweb_config_common', type: 'string', value: '/etc/gitweb-common.conf')
+option('gitweb_home_link_str', type: 'string', value: 'projects')
+option('gitweb_sitename', type: 'string', value: '')
+option('gitweb_projectroot', type: 'string', value: '/pub/git')
+option('gitweb_project_maxdepth', type: 'string', value: '2007')
+option('gitweb_export_ok', type: 'string', value: '')
+option('gitweb_strict_export', type: 'string', value: '')
+option('gitweb_base_url', type: 'string', value: '')
+option('gitweb_list', type: 'string', value: '')
+option('gitweb_hometext', type: 'string', value: 'indextext.html')
+option('gitweb_css', type: 'string', value: 'static/gitweb.css')
+option('gitweb_logo', type: 'string', value: 'static/git-logo.png')
+option('gitweb_favicon', type: 'string', value: 'static/git-favicon.png')
+option('gitweb_js', type: 'string', value: 'static/gitweb.js')
+option('gitweb_site_html_head_string', type: 'string', value: '')
+option('gitweb_site_header', type: 'string', value: '')
+option('gitweb_site_footer', type: 'string', value: '')
+option('highlight_bin', type: 'string', value: 'highlight')
+
+# Documentation.
+option('docs', type: 'array', choices: ['man', 'html'], value: [],
+  description: 'Which documenattion formats to build and install.')
+option('default_help_format', type: 'combo', choices: ['man', 'html'], value: 'man',
+  description: 'Default format used when executing git-help(1).')
+option('docs_backend', type: 'combo', choices: ['asciidoc', 'asciidoctor', 'auto'], value: 'auto',
+  description: 'Which backend to use to generate documentation.')
+
+# Testing.
+option('tests', type: 'boolean', value: true,
+  description: 'Enable building tests. This requires Perl, but is separate from the "perl" option such that you can build tests without Perl features enabled.')
+option('test_output_directory', type: 'string',
+  description: 'Path to the directory used to store test outputs')
+option('fuzzers', type: 'boolean', value: false,
+  description: 'Enable building fuzzers.')

@@ -79,7 +79,7 @@ static void options_set_defaults(struct reftable_write_options *opts)
 	}
 
 	if (opts->hash_id == 0) {
-		opts->hash_id = GIT_SHA1_FORMAT_ID;
+		opts->hash_id = REFTABLE_HASH_SHA1;
 	}
 	if (opts->block_size == 0) {
 		opts->block_size = DEFAULT_BLOCK_SIZE;
@@ -88,7 +88,7 @@ static void options_set_defaults(struct reftable_write_options *opts)
 
 static int writer_version(struct reftable_writer *w)
 {
-	return (w->opts.hash_id == 0 || w->opts.hash_id == GIT_SHA1_FORMAT_ID) ?
+	return (w->opts.hash_id == 0 || w->opts.hash_id == REFTABLE_HASH_SHA1) ?
 			     1 :
 			     2;
 }
@@ -103,8 +103,22 @@ static int writer_write_header(struct reftable_writer *w, uint8_t *dest)
 	put_be64(dest + 8, w->min_update_index);
 	put_be64(dest + 16, w->max_update_index);
 	if (writer_version(w) == 2) {
-		put_be32(dest + 24, w->opts.hash_id);
+		uint32_t hash_id;
+
+		switch (w->opts.hash_id) {
+		case REFTABLE_HASH_SHA1:
+			hash_id = REFTABLE_FORMAT_ID_SHA1;
+			break;
+		case REFTABLE_HASH_SHA256:
+			hash_id = REFTABLE_FORMAT_ID_SHA256;
+			break;
+		default:
+			return -1;
+		}
+
+		put_be32(dest + 24, hash_id);
 	}
+
 	return header_size(writer_version(w));
 }
 
@@ -240,7 +254,8 @@ static int writer_index_hash(struct reftable_writer *w, struct reftable_buf *has
 	if (key->offset_len > 0 && key->offsets[key->offset_len - 1] == off)
 		return 0;
 
-	REFTABLE_ALLOC_GROW(key->offsets, key->offset_len + 1, key->offset_cap);
+	REFTABLE_ALLOC_GROW_OR_NULL(key->offsets, key->offset_len + 1,
+				    key->offset_cap);
 	if (!key->offsets)
 		return REFTABLE_OUT_OF_MEMORY_ERROR;
 	key->offsets[key->offset_len++] = off;
@@ -411,6 +426,18 @@ int reftable_writer_add_log(struct reftable_writer *w,
 	if (log->value_type == REFTABLE_LOG_DELETION)
 		return reftable_writer_add_log_verbatim(w, log);
 
+	/*
+	 * Verify only the upper limit of the update_index. Each reflog entry
+	 * is tied to a specific update_index. Entries in the reflog can be
+	 * replaced by adding a new entry with the same update_index,
+	 * effectively canceling the old one.
+	 *
+	 * Consequently, reflog updates may include update_index values lower
+	 * than the writer's min_update_index.
+	 */
+	if (log->update_index > w->max_update_index)
+		return REFTABLE_API_ERROR;
+
 	if (!log->refname)
 		return REFTABLE_API_ERROR;
 
@@ -550,7 +577,7 @@ static int writer_finish_section(struct reftable_writer *w)
 
 struct common_prefix_arg {
 	struct reftable_buf *last;
-	int max;
+	size_t max;
 };
 
 static void update_common(void *void_arg, void *key)
@@ -558,10 +585,9 @@ static void update_common(void *void_arg, void *key)
 	struct common_prefix_arg *arg = void_arg;
 	struct obj_index_tree_node *entry = key;
 	if (arg->last) {
-		int n = common_prefix_size(&entry->hash, arg->last);
-		if (n > arg->max) {
+		size_t n = common_prefix_size(&entry->hash, arg->last);
+		if (n > arg->max)
 			arg->max = n;
-		}
 	}
 	arg->last = &entry->hash;
 }
@@ -794,7 +820,7 @@ static int writer_flush_nonempty_block(struct reftable_writer *w)
 	 * Note that this also applies when flushing index blocks, in which
 	 * case we will end up with a multi-level index.
 	 */
-	REFTABLE_ALLOC_GROW(w->index, w->index_len + 1, w->index_cap);
+	REFTABLE_ALLOC_GROW_OR_NULL(w->index, w->index_len + 1, w->index_cap);
 	if (!w->index)
 		return REFTABLE_OUT_OF_MEMORY_ERROR;
 

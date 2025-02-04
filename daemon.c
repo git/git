@@ -152,6 +152,7 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 	size_t rlen;
 	const char *path;
 	const char *dir;
+	unsigned enter_repo_flags;
 
 	dir = directory;
 
@@ -242,14 +243,15 @@ static const char *path_ok(const char *directory, struct hostinfo *hi)
 		dir = rpath;
 	}
 
-	path = enter_repo(dir, strict_paths);
+	enter_repo_flags = strict_paths ? ENTER_REPO_STRICT : 0;
+	path = enter_repo(dir, enter_repo_flags);
 	if (!path && base_path && base_path_relaxed) {
 		/*
 		 * if we fail and base_path_relaxed is enabled, try without
 		 * prefixing the base path
 		 */
 		dir = directory;
-		path = enter_repo(dir, strict_paths);
+		path = enter_repo(dir, enter_repo_flags);
 	}
 
 	if (!path) {
@@ -502,8 +504,7 @@ static struct daemon_service daemon_service[] = {
 
 static void enable_service(const char *name, int ena)
 {
-	int i;
-	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		if (!strcmp(daemon_service[i].name, name)) {
 			daemon_service[i].enabled = ena;
 			return;
@@ -514,8 +515,7 @@ static void enable_service(const char *name, int ena)
 
 static void make_service_overridable(const char *name, int ena)
 {
-	int i;
-	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		if (!strcmp(daemon_service[i].name, name)) {
 			daemon_service[i].overridable = ena;
 			return;
@@ -736,7 +736,7 @@ static void set_keep_alive(int sockfd)
 static int execute(void)
 {
 	char *line = packet_buffer;
-	int pktlen, len, i;
+	int pktlen, len;
 	char *addr = getenv("REMOTE_ADDR"), *port = getenv("REMOTE_PORT");
 	struct hostinfo hi = HOSTINFO_INIT;
 	struct strvec env = STRVEC_INIT;
@@ -757,7 +757,7 @@ static int execute(void)
 	if (len != pktlen)
 		parse_extra_args(&hi, &env, line + len + 1, pktlen - len - 1);
 
-	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		struct daemon_service *s = &(daemon_service[i]);
 		const char *arg;
 
@@ -802,8 +802,7 @@ static int addrcmp(const struct sockaddr_storage *s1,
 	return 0;
 }
 
-static int max_connections = 32;
-
+static unsigned int max_connections = 32;
 static unsigned int live_children;
 
 static struct child {
@@ -1107,8 +1106,8 @@ static void socksetup(struct string_list *listen_addr, int listen_port, struct s
 	if (!listen_addr->nr)
 		setup_named_sock(NULL, listen_port, socklist);
 	else {
-		int i, socknum;
-		for (i = 0; i < listen_addr->nr; i++) {
+		int socknum;
+		for (size_t i = 0; i < listen_addr->nr; i++) {
 			socknum = setup_named_sock(listen_addr->items[i].string,
 						   listen_port, socklist);
 
@@ -1122,11 +1121,10 @@ static void socksetup(struct string_list *listen_addr, int listen_port, struct s
 static int service_loop(struct socketlist *socklist)
 {
 	struct pollfd *pfd;
-	int i;
 
 	CALLOC_ARRAY(pfd, socklist->nr);
 
-	for (i = 0; i < socklist->nr; i++) {
+	for (size_t i = 0; i < socklist->nr; i++) {
 		pfd[i].fd = socklist->list[i];
 		pfd[i].events = POLLIN;
 	}
@@ -1134,8 +1132,6 @@ static int service_loop(struct socketlist *socklist)
 	signal(SIGCHLD, child_handler);
 
 	for (;;) {
-		int i;
-
 		check_dead_children();
 
 		if (poll(pfd, socklist->nr, -1) < 0) {
@@ -1147,7 +1143,7 @@ static int service_loop(struct socketlist *socklist)
 			continue;
 		}
 
-		for (i = 0; i < socklist->nr; i++) {
+		for (size_t i = 0; i < socklist->nr; i++) {
 			if (pfd[i].revents & POLLIN) {
 				union {
 					struct sockaddr sa;
@@ -1319,10 +1315,11 @@ int cmd_main(int argc, const char **argv)
 			continue;
 		}
 		if (skip_prefix(arg, "--max-connections=", &v)) {
-			if (strtol_i(v, 10, &max_connections))
+			int parsed_value;
+			if (strtol_i(v, 10, &parsed_value))
 				die(_("invalid max-connections '%s', expecting an integer"), v);
-			if (max_connections < 0)
-				max_connections = 0;  /* unlimited */
+			/* A negative value indicates unlimited children. */
+			max_connections = parsed_value < 0 ? 0 : parsed_value;
 			continue;
 		}
 		if (!strcmp(arg, "--strict-paths")) {

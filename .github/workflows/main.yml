@@ -113,15 +113,13 @@ jobs:
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     steps:
     - uses: actions/checkout@v4
-    - name: setup SDK
-      shell: powershell
-      run: ci/install-sdk.ps1
+    - uses: git-for-windows/setup-git-for-windows-sdk@v1
     - name: build
-      shell: powershell
+      shell: bash
       env:
         HOME: ${{runner.workspace}}
         NO_PERL: 1
-      run: git-sdk/usr/bin/bash.exe -l -c 'ci/make-test-artifacts.sh artifacts'
+      run: . /etc/profile && ci/make-test-artifacts.sh artifacts
     - name: zip up tracked files
       run: git archive -o artifacts/tracked.tar.gz HEAD
     - name: upload tracked files and build artifacts
@@ -149,12 +147,10 @@ jobs:
     - name: extract tracked files and build artifacts
       shell: bash
       run: tar xf artifacts.tar.gz && tar xf tracked.tar.gz
-    - name: setup SDK
-      shell: powershell
-      run: ci/install-sdk.ps1
+    - uses: git-for-windows/setup-git-for-windows-sdk@v1
     - name: test
-      shell: powershell
-      run: git-sdk/usr/bin/bash.exe -l -c 'ci/run-test-slice.sh ${{matrix.nr}} 10'
+      shell: bash
+      run: . /etc/profile && ci/run-test-slice.sh ${{matrix.nr}} 10
     - name: print test failures
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
       shell: bash
@@ -252,6 +248,58 @@ jobs:
       with:
         name: failed-tests-windows-vs-${{ matrix.nr }}
         path: ${{env.FAILED_TEST_ARTIFACTS}}
+
+  windows-meson-build:
+    name: win+Meson build
+    needs: ci-config
+    if: needs.ci-config.outputs.enabled == 'yes'
+    runs-on: windows-latest
+    concurrency:
+      group: windows-meson-build-${{ github.ref }}
+      cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+    - name: Set up dependencies
+      shell: pwsh
+      run: pip install meson ninja
+    - name: Setup
+      shell: pwsh
+      run: meson setup build -Dperl=disabled
+    - name: Compile
+      shell: pwsh
+      run: meson compile -C build
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: windows-meson-artifacts
+        path: build
+  windows-meson-test:
+    name: win+Meson test
+    runs-on: windows-latest
+    needs: [ci-config, windows-meson-build]
+    strategy:
+      fail-fast: false
+      matrix:
+        nr: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    concurrency:
+      group: windows-meson-test-${{ matrix.nr }}-${{ github.ref }}
+      cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+    - name: Set up dependencies
+      shell: pwsh
+      run: pip install meson ninja
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: windows-meson-artifacts
+        path: build
+    - name: Test
+      shell: pwsh
+      run: meson test -C build --list | Select-Object -Skip 1 | Select-String .* | Group-Object -Property { $_.LineNumber % 10 } | Where-Object Name -EQ ${{ matrix.nr }} | ForEach-Object { meson test -C build --no-rebuild --print-errorlogs $_.Group }
+
   regular:
     name: ${{matrix.vector.jobname}} (${{matrix.vector.pool}})
     needs: ci-config
@@ -269,9 +317,8 @@ jobs:
           - jobname: linux-reftable
             cc: clang
             pool: ubuntu-latest
-          - jobname: linux-gcc
+          - jobname: linux-breaking-changes
             cc: gcc
-            cc_package: gcc-8
             pool: ubuntu-20.04
           - jobname: linux-TEST-vars
             cc: gcc
@@ -286,9 +333,9 @@ jobs:
           - jobname: osx-gcc
             cc: gcc-13
             pool: macos-13
-          - jobname: linux-gcc-default
-            cc: gcc
-            pool: ubuntu-latest
+          - jobname: osx-meson
+            cc: clang
+            pool: macos-13
           - jobname: linux-leaks
             cc: gcc
             pool: ubuntu-latest
@@ -298,11 +345,15 @@ jobs:
           - jobname: linux-asan-ubsan
             cc: clang
             pool: ubuntu-latest
+          - jobname: linux-meson
+            cc: gcc
+            pool: ubuntu-latest
     env:
       CC: ${{matrix.vector.cc}}
       CC_PACKAGE: ${{matrix.vector.cc_package}}
       jobname: ${{matrix.vector.jobname}}
       distro: ${{matrix.vector.pool}}
+      TEST_OUTPUT_DIRECTORY: ${{github.workspace}}/t
     runs-on: ${{matrix.vector.pool}}
     steps:
     - uses: actions/checkout@v4
@@ -342,12 +393,21 @@ jobs:
         - jobname: linux-musl
           image: alpine
           distro: alpine-latest
+        # Supported until 2025-04-02.
         - jobname: linux32
           image: i386/ubuntu:focal
           distro: ubuntu32-20.04
         - jobname: pedantic
           image: fedora
           distro: fedora-latest
+        # A RHEL 8 compatible distro.  Supported until 2029-05-31.
+        - jobname: almalinux-8
+          image: almalinux:8
+          distro: almalinux-8
+        # Supported until 2026-08-31.
+        - jobname: debian-11
+          image: debian:11
+          distro: debian-11
     env:
       jobname: ${{matrix.vector.jobname}}
       distro: ${{matrix.vector.distro}}

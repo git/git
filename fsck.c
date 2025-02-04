@@ -1295,7 +1295,7 @@ static int fsck_blobs(struct oidset *blobs_found, struct oidset *blobs_done,
 
 		buf = repo_read_object_file(the_repository, oid, &type, &size);
 		if (!buf) {
-			if (is_promisor_object(oid))
+			if (is_promisor_object(the_repository, oid))
 				continue;
 			ret |= report(options,
 				      oid, OBJ_BLOB, msg_missing,
@@ -1353,7 +1353,7 @@ int git_fsck_config(const char *var, const char *value,
 		struct strbuf sb = STRBUF_INIT;
 
 		if (git_config_pathname(&path, var, value))
-			return 1;
+			return -1;
 		strbuf_addf(&sb, "skiplist=%s", path);
 		free(path);
 		fsck_set_msg_types(options, sb.buf);

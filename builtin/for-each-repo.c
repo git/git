@@ -1,4 +1,5 @@
 #define USE_THE_REPOSITORY_VARIABLE
+
 #include "builtin.h"
 #include "config.h"
 #include "gettext.h"
@@ -36,7 +37,7 @@ int cmd_for_each_repo(int argc,
 {
 	static const char *config_key = NULL;
 	int keep_going = 0;
-	int i, result = 0;
+	int result = 0;
 	const struct string_list *values;
 	int err;
 
@@ -61,7 +62,7 @@ int cmd_for_each_repo(int argc,
 	else if (err)
 		return 0;
 
-	for (i = 0; i < values->nr; i++) {
+	for (size_t i = 0; i < values->nr; i++) {
 		int ret = run_command_on_repo(values->items[i].string, argc, argv);
 		if (ret) {
 			if (!keep_going)

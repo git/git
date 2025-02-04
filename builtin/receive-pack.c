@@ -1,4 +1,6 @@
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "builtin.h"
 #include "abspath.h"
 
@@ -172,7 +174,7 @@ static int receive_pack_config(const char *var, const char *value,
 		char *path;
 
 		if (git_config_pathname(&path, var, value))
-			return 1;
+			return -1;
 		strbuf_addf(&fsck_msg_types, "%cskiplist=%s",
 			fsck_msg_types.len ? ',' : '=', path);
 		free(path);
@@ -2237,7 +2239,7 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		strvec_push(&child.args, alt_shallow_file);
 	}
 
-	tmp_objdir = tmp_objdir_create("incoming");
+	tmp_objdir = tmp_objdir_create(the_repository, "incoming");
 	if (!tmp_objdir) {
 		if (err_fd > 0)
 			close(err_fd);
@@ -2302,7 +2304,7 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		if (status)
 			return "index-pack fork failed";
 
-		lockfile = index_pack_lockfile(child.out, NULL);
+		lockfile = index_pack_lockfile(the_repository, child.out, NULL);
 		if (lockfile) {
 			pack_lockfile = register_tempfile(lockfile);
 			free(lockfile);
@@ -2626,7 +2628,7 @@ int cmd_receive_pack(int argc,
 			}
 		}
 		if (auto_update_server_info)
-			update_server_info(0);
+			update_server_info(the_repository, 0);
 		clear_shallow_info(&si);
 	}
 	if (use_sideband)

@@ -55,7 +55,7 @@ static void list_builtins(struct string_list *list, unsigned int exclude_option)
 
 static void exclude_helpers_from_list(struct string_list *list)
 {
-	int i = 0;
+	size_t i = 0;
 
 	while (i < list->nr) {
 		if (strstr(list->items[i].string, "--"))
@@ -75,7 +75,6 @@ static int match_token(const char *spec, int len, const char *token)
 static int list_cmds(const char *spec)
 {
 	struct string_list list = STRING_LIST_INIT_DUP;
-	int i;
 	int nongit;
 
 	/*
@@ -113,7 +112,7 @@ static int list_cmds(const char *spec)
 		if (*spec == ',')
 			spec++;
 	}
-	for (i = 0; i < list.nr; i++)
+	for (size_t i = 0; i < list.nr; i++)
 		puts(list.items[i].string);
 	string_list_clear(&list, 0);
 	return 0;
@@ -126,7 +125,7 @@ static void commit_pager_choice(void)
 		setenv("GIT_PAGER", "cat", 1);
 		break;
 	case 1:
-		setup_pager();
+		setup_pager(the_repository);
 		break;
 	default:
 		break;
@@ -137,7 +136,7 @@ void setup_auto_pager(const char *cmd, int def)
 {
 	if (use_pager != -1 || pager_in_use())
 		return;
-	use_pager = check_pager_config(cmd);
+	use_pager = check_pager_config(the_repository, cmd);
 	if (use_pager == -1)
 		use_pager = def;
 	commit_pager_choice();
@@ -322,10 +321,9 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			trace2_cmd_name("_query_");
 			if (!strcmp(cmd, "parseopt")) {
 				struct string_list list = STRING_LIST_INIT_DUP;
-				int i;
 
 				list_builtins(&list, NO_PARSEOPT);
-				for (i = 0; i < list.nr; i++)
+				for (size_t i = 0; i < list.nr; i++)
 					printf("%s ", list.items[i].string);
 				string_list_clear(&list, 0);
 				exit(0);
@@ -464,12 +462,12 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv, struct
 	precompose_argv_prefix(argc, argv, NULL);
 	if (use_pager == -1 && run_setup &&
 		!(p->option & DELAY_PAGER_CONFIG))
-		use_pager = check_pager_config(p->cmd);
+		use_pager = check_pager_config(the_repository, p->cmd);
 	if (use_pager == -1 && p->option & USE_PAGER)
 		use_pager = 1;
 	if (run_setup && startup_info->have_repository)
 		/* get_git_dir() may set up repo, avoid that */
-		trace_repo_setup();
+		trace_repo_setup(the_repository);
 	commit_pager_choice();
 
 	if (!help && p->option & NEED_WORK_TREE)
@@ -589,7 +587,9 @@ static struct cmd_struct commands[] = {
 	{ "name-rev", cmd_name_rev, RUN_SETUP },
 	{ "notes", cmd_notes, RUN_SETUP },
 	{ "pack-objects", cmd_pack_objects, RUN_SETUP },
+#ifndef WITH_BREAKING_CHANGES
 	{ "pack-redundant", cmd_pack_redundant, RUN_SETUP | NO_PARSEOPT },
+#endif
 	{ "pack-refs", cmd_pack_refs, RUN_SETUP },
 	{ "patch-id", cmd_patch_id, RUN_SETUP_GENTLY | NO_PARSEOPT },
 	{ "pickaxe", cmd_blame, RUN_SETUP },
@@ -651,8 +651,7 @@ static struct cmd_struct commands[] = {
 
 static struct cmd_struct *get_builtin(const char *s)
 {
-	int i;
-	for (i = 0; i < ARRAY_SIZE(commands); i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(commands); i++) {
 		struct cmd_struct *p = commands + i;
 		if (!strcmp(s, p->cmd))
 			return p;
@@ -667,8 +666,7 @@ int is_builtin(const char *s)
 
 static void list_builtins(struct string_list *out, unsigned int exclude_option)
 {
-	int i;
-	for (i = 0; i < ARRAY_SIZE(commands); i++) {
+	for (size_t i = 0; i < ARRAY_SIZE(commands); i++) {
 		if (exclude_option &&
 		    (commands[i].option & exclude_option))
 			continue;
@@ -679,7 +677,6 @@ static void list_builtins(struct string_list *out, unsigned int exclude_option)
 void load_builtin_commands(const char *prefix, struct cmdnames *cmds)
 {
 	const char *name;
-	int i;
 
 	/*
 	 * Callers can ask for a subset of the commands based on a certain
@@ -690,7 +687,7 @@ void load_builtin_commands(const char *prefix, struct cmdnames *cmds)
 	if (!skip_prefix(prefix, "git-", &prefix))
 		BUG("prefix '%s' must start with 'git-'", prefix);
 
-	for (i = 0; i < ARRAY_SIZE(commands); i++)
+	for (size_t i = 0; i < ARRAY_SIZE(commands); i++)
 		if (skip_prefix(commands[i].cmd, prefix, &name))
 			add_cmdname(cmds, name, strlen(name));
 }
@@ -755,7 +752,7 @@ static void execv_dashed_external(const char **argv)
 	int status;
 
 	if (use_pager == -1 && !is_builtin(argv[0]))
-		use_pager = check_pager_config(argv[0]);
+		use_pager = check_pager_config(the_repository, argv[0]);
 	commit_pager_choice();
 
 	strvec_pushf(&cmd.args, "git-%s", argv[0]);
@@ -812,7 +809,7 @@ static int run_argv(struct strvec *args)
 			handle_builtin(args);
 		else if (get_builtin(args->v[0])) {
 			struct child_process cmd = CHILD_PROCESS_INIT;
-			int i;
+			int err;
 
 			/*
 			 * The current process is committed to launching a
@@ -826,7 +823,7 @@ static int run_argv(struct strvec *args)
 			commit_pager_choice();
 
 			strvec_push(&cmd.args, "git");
-			for (i = 0; i < args->nr; i++)
+			for (size_t i = 0; i < args->nr; i++)
 				strvec_push(&cmd.args, args->v[i]);
 
 			trace_argv_printf(cmd.args.v, "trace: exec:");
@@ -839,9 +836,9 @@ static int run_argv(struct strvec *args)
 			cmd.clean_on_exit = 1;
 			cmd.wait_after_clean = 1;
 			cmd.trace2_child_class = "git_alias";
-			i = run_command(&cmd);
-			if (i >= 0 || errno != ENOENT)
-				exit(i);
+			err = run_command(&cmd);
+			if (err >= 0 || errno != ENOENT)
+				exit(err);
 			die("could not execute builtin %s", args->v[0]);
 		}
 
@@ -850,9 +847,8 @@ static int run_argv(struct strvec *args)
 
 		seen = unsorted_string_list_lookup(&cmd_list, args->v[0]);
 		if (seen) {
-			int i;
 			struct strbuf sb = STRBUF_INIT;
-			for (i = 0; i < cmd_list.nr; i++) {
+			for (size_t i = 0; i < cmd_list.nr; i++) {
 				struct string_list_item *item = &cmd_list.items[i];
 
 				strbuf_addf(&sb, "\n  %s", item->string);
@@ -946,7 +942,7 @@ int cmd_main(int argc, const char **argv)
 	 */
 	setup_path();
 
-	for (size_t i = 0; i < argc; i++)
+	for (int i = 0; i < argc; i++)
 		strvec_push(&args, argv[i]);
 
 	while (1) {

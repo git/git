@@ -2258,20 +2258,20 @@ test_expect_success 'non-merge commands reject merge commits' '
 	error: ${SQ}pick${SQ} does not accept merge commits
 	hint: ${SQ}pick${SQ} does not take a merge commit. If you wanted to
 	hint: replay the merge, use ${SQ}merge -C${SQ} on the commit.
-	hint: Disable this message with "git config advice.rebaseTodoError false"
+	hint: Disable this message with "git config set advice.rebaseTodoError false"
 	error: invalid line 1: pick $oid
 	error: ${SQ}reword${SQ} does not accept merge commits
 	hint: ${SQ}reword${SQ} does not take a merge commit. If you wanted to
 	hint: replay the merge and reword the commit message, use
 	hint: ${SQ}merge -c${SQ} on the commit
-	hint: Disable this message with "git config advice.rebaseTodoError false"
+	hint: Disable this message with "git config set advice.rebaseTodoError false"
 	error: invalid line 2: reword $oid
 	error: ${SQ}edit${SQ} does not accept merge commits
 	hint: ${SQ}edit${SQ} does not take a merge commit. If you wanted to
 	hint: replay the merge, use ${SQ}merge -C${SQ} on the commit, and then
 	hint: ${SQ}break${SQ} to give the control back to you so that you can
 	hint: do ${SQ}git commit --amend && git rebase --continue${SQ}.
-	hint: Disable this message with "git config advice.rebaseTodoError false"
+	hint: Disable this message with "git config set advice.rebaseTodoError false"
 	error: invalid line 3: edit $oid
 	error: cannot squash merge commit into another commit
 	error: invalid line 4: fixup $oid

@@ -1,4 +1,5 @@
 #define USE_THE_REPOSITORY_VARIABLE
+
 #include "builtin.h"
 #include "tree-walk.h"
 #include "xdiff-interface.h"
@@ -497,10 +498,9 @@ static int real_merge(struct merge_tree_options *o,
 	if (!result.clean) {
 		struct string_list conflicted_files = STRING_LIST_INIT_NODUP;
 		const char *last = NULL;
-		int i;
 
 		merge_get_conflicted_files(&result, &conflicted_files);
-		for (i = 0; i < conflicted_files.nr; i++) {
+		for (size_t i = 0; i < conflicted_files.nr; i++) {
 			const char *name = conflicted_files.items[i].string;
 			struct stage_info *c = conflicted_files.items[i].util;
 			if (!o->name_only)
@@ -584,7 +584,7 @@ int cmd_merge_tree(int argc,
 
 	if (xopts.nr && o.mode == MODE_TRIVIAL)
 		die(_("--trivial-merge is incompatible with all other options"));
-	for (int x = 0; x < xopts.nr; x++)
+	for (size_t x = 0; x < xopts.nr; x++)
 		if (parse_merge_opt(&o.merge_options, xopts.v[x]))
 			die(_("unknown strategy option: -X%s"), xopts.v[x]);
 

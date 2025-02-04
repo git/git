@@ -17,6 +17,8 @@ static void (*reftable_free_ptr)(void *);
 
 void *reftable_malloc(size_t sz)
 {
+	if (!sz)
+		return NULL;
 	if (reftable_malloc_ptr)
 		return (*reftable_malloc_ptr)(sz);
 	return malloc(sz);
@@ -24,6 +26,11 @@ void *reftable_malloc(size_t sz)
 
 void *reftable_realloc(void *p, size_t sz)
 {
+	if (!sz) {
+		reftable_free(p);
+		return NULL;
+	}
+
 	if (reftable_realloc_ptr)
 		return (*reftable_realloc_ptr)(p, sz);
 	return realloc(p, sz);
@@ -117,11 +124,8 @@ int reftable_buf_add(struct reftable_buf *buf, const void *data, size_t len)
 	size_t newlen = buf->len + len;
 
 	if (newlen + 1 > buf->alloc) {
-		char *reallocated = buf->buf;
-		REFTABLE_ALLOC_GROW(reallocated, newlen + 1, buf->alloc);
-		if (!reallocated)
+		if (REFTABLE_ALLOC_GROW(buf->buf, newlen + 1, buf->alloc))
 			return REFTABLE_OUT_OF_MEMORY_ERROR;
-		buf->buf = reallocated;
 	}
 
 	memcpy(buf->buf + buf->len, data, len);
@@ -226,11 +230,9 @@ char **parse_names(char *buf, int size)
 			next = end;
 		}
 		if (p < next) {
-			char **names_grown = names;
-			REFTABLE_ALLOC_GROW(names_grown, names_len + 1, names_cap);
-			if (!names_grown)
+			if (REFTABLE_ALLOC_GROW(names, names_len + 1,
+						names_cap))
 				goto err;
-			names = names_grown;
 
 			names[names_len] = reftable_strdup(p);
 			if (!names[names_len++])
@@ -239,7 +241,8 @@ char **parse_names(char *buf, int size)
 		p = next + 1;
 	}
 
-	REFTABLE_REALLOC_ARRAY(names, names_len + 1);
+	if (REFTABLE_ALLOC_GROW(names, names_len + 1, names_cap))
+		goto err;
 	names[names_len] = NULL;
 
 	return names;
@@ -260,25 +263,24 @@ int names_equal(const char **a, const char **b)
 	return a[i] == b[i];
 }
 
-int common_prefix_size(struct reftable_buf *a, struct reftable_buf *b)
+size_t common_prefix_size(struct reftable_buf *a, struct reftable_buf *b)
 {
-	int p = 0;
-	for (; p < a->len && p < b->len; p++) {
+	size_t p = 0;
+	for (; p < a->len && p < b->len; p++)
 		if (a->buf[p] != b->buf[p])
 			break;
-	}
-
 	return p;
 }
 
-int hash_size(uint32_t id)
+uint32_t hash_size(enum reftable_hash id)
 {
+	if (!id)
+		return REFTABLE_HASH_SIZE_SHA1;
 	switch (id) {
-	case 0:
-	case GIT_SHA1_FORMAT_ID:
-		return GIT_SHA1_RAWSZ;
-	case GIT_SHA256_FORMAT_ID:
-		return GIT_SHA256_RAWSZ;
+	case REFTABLE_HASH_SHA1:
+		return REFTABLE_HASH_SIZE_SHA1;
+	case REFTABLE_HASH_SHA256:
+		return REFTABLE_HASH_SIZE_SHA256;
 	}
 	abort();
 }

@@ -1,4 +1,5 @@
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "../git-compat-util.h"
 #include "../abspath.h"
@@ -71,6 +72,7 @@ struct ref_lock {
 	char *ref_name;
 	struct lock_file lk;
 	struct object_id old_oid;
+	unsigned int count; /* track users of the lock (ref update + reflog updates) */
 };
 
 struct files_ref_store {
@@ -598,10 +600,9 @@ static int files_read_symbolic_ref(struct ref_store *ref_store, const char *refn
 	unsigned int type;
 
 	ret = read_ref_internal(ref_store, refname, &oid, referent, &type, &failure_errno, 1);
-	if (ret)
-		return ret;
-
-	return !(type & REF_ISSYMREF);
+	if (!ret && !(type & REF_ISSYMREF))
+		return NOT_A_SYMREF;
+	return ret;
 }
 
 int parse_loose_ref_contents(const struct git_hash_algo *algop,
@@ -638,9 +639,12 @@ int parse_loose_ref_contents(const struct git_hash_algo *algop,
 
 static void unlock_ref(struct ref_lock *lock)
 {
-	rollback_lock_file(&lock->lk);
-	free(lock->ref_name);
-	free(lock);
+	lock->count--;
+	if (!lock->count) {
+		rollback_lock_file(&lock->lk);
+		free(lock->ref_name);
+		free(lock);
+	}
 }
 
 /*
@@ -696,6 +700,7 @@ static int lock_raw_ref(struct files_ref_store *refs,
 	*lock_p = CALLOC_ARRAY(lock, 1);
 
 	lock->ref_name = xstrdup(refname);
+	lock->count = 1;
 	files_ref_path(refs, &ref_file, refname);
 
 retry:
@@ -1169,6 +1174,7 @@ static struct ref_lock *lock_ref_oid_basic(struct files_ref_store *refs,
 		goto error_return;
 
 	lock->ref_name = xstrdup(refname);
+	lock->count = 1;
 
 	if (raceproof_create_file(ref_file.buf, create_reflock, &lock->lk)) {
 		unable_to_lock_message(ref_file.buf, errno, err);
@@ -1264,7 +1270,7 @@ static void prune_ref(struct files_ref_store *refs, struct ref_to_prune *r)
 	ref_transaction_add_update(
 			transaction, r->name,
 			REF_NO_DEREF | REF_HAVE_NEW | REF_HAVE_OLD | REF_IS_PRUNING,
-			null_oid(), &r->oid, NULL, NULL, NULL);
+			null_oid(), &r->oid, NULL, NULL, NULL, NULL);
 	if (ref_transaction_commit(transaction, &err))
 		goto cleanup;
 
@@ -1858,6 +1864,9 @@ static int log_ref_write_fd(int fd, const struct object_id *old_oid,
 	struct strbuf sb = STRBUF_INIT;
 	int ret = 0;
 
+	if (!committer)
+		committer = git_committer_info(0);
+
 	strbuf_addf(&sb, "%s %s %s", oid_to_hex(old_oid), oid_to_hex(new_oid), committer);
 	if (msg && *msg) {
 		strbuf_addch(&sb, '\t');
@@ -1871,8 +1880,10 @@ static int log_ref_write_fd(int fd, const struct object_id *old_oid,
 }
 
 static int files_log_ref_write(struct files_ref_store *refs,
-			       const char *refname, const struct object_id *old_oid,
-			       const struct object_id *new_oid, const char *msg,
+			       const char *refname,
+			       const struct object_id *old_oid,
+			       const struct object_id *new_oid,
+			       const char *committer_info, const char *msg,
 			       int flags, struct strbuf *err)
 {
 	int logfd, result;
@@ -1889,8 +1900,7 @@ static int files_log_ref_write(struct files_ref_store *refs,
 
 	if (logfd < 0)
 		return 0;
-	result = log_ref_write_fd(logfd, old_oid, new_oid,
-				  git_committer_info(0), msg);
+	result = log_ref_write_fd(logfd, old_oid, new_oid, committer_info, msg);
 	if (result) {
 		struct strbuf sb = STRBUF_INIT;
 		int save_errno = errno;
@@ -1974,8 +1984,7 @@ static int commit_ref_update(struct files_ref_store *refs,
 	files_assert_main_repository(refs, "commit_ref_update");
 
 	clear_loose_ref_cache(refs);
-	if (files_log_ref_write(refs, lock->ref_name,
-				&lock->old_oid, oid,
+	if (files_log_ref_write(refs, lock->ref_name, &lock->old_oid, oid, NULL,
 				logmsg, flags, err)) {
 		char *old_msg = strbuf_detach(err, NULL);
 		strbuf_addf(err, "cannot update the ref '%s': %s",
@@ -2007,9 +2016,9 @@ static int commit_ref_update(struct files_ref_store *refs,
 		if (head_ref && (head_flag & REF_ISSYMREF) &&
 		    !strcmp(head_ref, lock->ref_name)) {
 			struct strbuf log_err = STRBUF_INIT;
-			if (files_log_ref_write(refs, "HEAD",
-						&lock->old_oid, oid,
-						logmsg, flags, &log_err)) {
+			if (files_log_ref_write(refs, "HEAD", &lock->old_oid,
+						oid, NULL, logmsg, flags,
+						&log_err)) {
 				error("%s", log_err.buf);
 				strbuf_release(&log_err);
 			}
@@ -2408,7 +2417,7 @@ static int split_head_update(struct ref_update *update,
 			transaction, "HEAD",
 			update->flags | REF_LOG_ONLY | REF_NO_DEREF,
 			&update->new_oid, &update->old_oid,
-			NULL, NULL, update->msg);
+			NULL, NULL, update->committer_info, update->msg);
 
 	/*
 	 * Add "HEAD". This insertion is O(N) in the transaction
@@ -2472,7 +2481,8 @@ static int split_symref_update(struct ref_update *update,
 			transaction, referent, new_flags,
 			update->new_target ? NULL : &update->new_oid,
 			update->old_target ? NULL : &update->old_oid,
-			update->new_target, update->old_target, update->msg);
+			update->new_target, update->old_target, NULL,
+			update->msg);
 
 	new_update->parent_update = update;
 
@@ -2509,14 +2519,18 @@ static int split_symref_update(struct ref_update *update,
 static int check_old_oid(struct ref_update *update, struct object_id *oid,
 			 struct strbuf *err)
 {
+	int ret = TRANSACTION_GENERIC_ERROR;
+
 	if (!(update->flags & REF_HAVE_OLD) ||
 		   oideq(oid, &update->old_oid))
 		return 0;
 
-	if (is_null_oid(&update->old_oid))
+	if (is_null_oid(&update->old_oid)) {
 		strbuf_addf(err, "cannot lock ref '%s': "
 			    "reference already exists",
 			    ref_update_original_update_refname(update));
+		ret = TRANSACTION_CREATE_EXISTS;
+	}
 	else if (is_null_oid(oid))
 		strbuf_addf(err, "cannot lock ref '%s': "
 			    "reference is missing but expected %s",
@@ -2529,8 +2543,14 @@ static int check_old_oid(struct ref_update *update, struct object_id *oid,
 			    oid_to_hex(oid),
 			    oid_to_hex(&update->old_oid));
 
-	return -1;
+	return ret;
 }
+
+struct files_transaction_backend_data {
+	struct ref_transaction *packed_transaction;
+	int packed_refs_locked;
+	struct strmap ref_locks;
+};
 
 /*
  * Prepare for carrying out update:
@@ -2554,10 +2574,13 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 {
 	struct strbuf referent = STRBUF_INIT;
 	int mustexist = ref_update_expects_existing_old_ref(update);
+	struct files_transaction_backend_data *backend_data;
 	int ret = 0;
 	struct ref_lock *lock;
 
 	files_assert_main_repository(refs, "lock_ref_for_update");
+
+	backend_data = transaction->backend_data;
 
 	if ((update->flags & REF_HAVE_NEW) && ref_update_has_null_new_value(update))
 		update->flags |= REF_DELETING;
@@ -2569,18 +2592,25 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			goto out;
 	}
 
-	ret = lock_raw_ref(refs, update->refname, mustexist,
-			   affected_refnames,
-			   &lock, &referent,
-			   &update->type, err);
-	if (ret) {
-		char *reason;
+	lock = strmap_get(&backend_data->ref_locks, update->refname);
+	if (lock) {
+		lock->count++;
+	} else {
+		ret = lock_raw_ref(refs, update->refname, mustexist,
+				   affected_refnames,
+				   &lock, &referent,
+				   &update->type, err);
+		if (ret) {
+			char *reason;
 
-		reason = strbuf_detach(err, NULL);
-		strbuf_addf(err, "cannot lock ref '%s': %s",
-			    ref_update_original_update_refname(update), reason);
-		free(reason);
-		goto out;
+			reason = strbuf_detach(err, NULL);
+			strbuf_addf(err, "cannot lock ref '%s': %s",
+				    ref_update_original_update_refname(update), reason);
+			free(reason);
+			goto out;
+		}
+
+		strmap_put(&backend_data->ref_locks, update->refname, lock);
 	}
 
 	update->backend_data = lock;
@@ -2609,9 +2639,11 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 					ret = TRANSACTION_GENERIC_ERROR;
 					goto out;
 				}
-			} else if  (check_old_oid(update, &lock->old_oid, err)) {
-				ret = TRANSACTION_GENERIC_ERROR;
-				goto out;
+			} else {
+				ret = check_old_oid(update, &lock->old_oid, err);
+				if  (ret) {
+					goto out;
+				}
 			}
 		} else {
 			/*
@@ -2642,9 +2674,11 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 				    update->old_target);
 			ret = TRANSACTION_GENERIC_ERROR;
 			goto out;
-		} else if  (check_old_oid(update, &lock->old_oid, err)) {
-			ret = TRANSACTION_GENERIC_ERROR;
-			goto out;
+		} else {
+			ret = check_old_oid(update, &lock->old_oid, err);
+			if  (ret) {
+				goto out;
+			}
 		}
 
 		/*
@@ -2727,11 +2761,6 @@ out:
 	return ret;
 }
 
-struct files_transaction_backend_data {
-	struct ref_transaction *packed_transaction;
-	int packed_refs_locked;
-};
-
 /*
  * Unlock any references in `transaction` that are still locked, and
  * mark the transaction closed.
@@ -2764,6 +2793,8 @@ static void files_transaction_cleanup(struct files_ref_store *refs,
 		if (backend_data->packed_refs_locked)
 			packed_refs_unlock(refs->packed_ref_store);
 
+		strmap_clear(&backend_data->ref_locks, 0);
+
 		free(backend_data);
 	}
 
@@ -2793,6 +2824,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 		goto cleanup;
 
 	CALLOC_ARRAY(backend_data, 1);
+	strmap_init(&backend_data->ref_locks);
 	transaction->backend_data = backend_data;
 
 	/*
@@ -2805,13 +2837,16 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	 */
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
-		struct string_list_item *item =
-			string_list_append(&affected_refnames, update->refname);
+		struct string_list_item *item;
 
 		if ((update->flags & REF_IS_PRUNING) &&
 		    !(update->flags & REF_NO_DEREF))
 			BUG("REF_IS_PRUNING set without REF_NO_DEREF");
 
+		if (update->flags & REF_LOG_ONLY)
+			continue;
+
+		item = string_list_append(&affected_refnames, update->refname);
 		/*
 		 * We store a pointer to update in item->util, but at
 		 * the moment we never use the value of this field
@@ -2891,7 +2926,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 					packed_transaction, update->refname,
 					REF_HAVE_NEW | REF_NO_DEREF,
 					&update->new_oid, NULL,
-					NULL, NULL, NULL);
+					NULL, NULL, NULL, NULL);
 		}
 	}
 
@@ -2969,7 +3004,8 @@ static int parse_and_write_reflog(struct files_ref_store *refs,
 	}
 
 	if (files_log_ref_write(refs, lock->ref_name, &lock->old_oid,
-				&update->new_oid, update->msg, update->flags, err)) {
+				&update->new_oid, update->committer_info,
+				update->msg, update->flags, err)) {
 		char *old_msg = strbuf_detach(err, NULL);
 
 		strbuf_addf(err, "cannot update the ref '%s': %s",
@@ -3010,8 +3046,9 @@ static int files_transaction_finish_initial(struct files_ref_store *refs,
 
 	/* Fail if a refname appears more than once in the transaction: */
 	for (i = 0; i < transaction->nr; i++)
-		string_list_append(&affected_refnames,
-				   transaction->updates[i]->refname);
+		if (!(transaction->updates[i]->flags & REF_LOG_ONLY))
+			string_list_append(&affected_refnames,
+					   transaction->updates[i]->refname);
 	string_list_sort(&affected_refnames);
 	if (ref_update_reject_duplicates(&affected_refnames, err)) {
 		ret = TRANSACTION_GENERIC_ERROR;
@@ -3055,10 +3092,12 @@ static int files_transaction_finish_initial(struct files_ref_store *refs,
 		}
 
 		/*
-		 * packed-refs don't support symbolic refs and root refs, so we
-		 * have to queue these references via the loose transaction.
+		 * packed-refs don't support symbolic refs, root refs and reflogs,
+		 * so we have to queue these references via the loose transaction.
 		 */
-		if (update->new_target || is_root_ref(update->refname)) {
+		if (update->new_target ||
+		    is_root_ref(update->refname) ||
+		    (update->flags & REF_LOG_ONLY)) {
 			if (!loose_transaction) {
 				loose_transaction = ref_store_transaction_begin(&refs->base, 0, err);
 				if (!loose_transaction) {
@@ -3067,15 +3106,22 @@ static int files_transaction_finish_initial(struct files_ref_store *refs,
 				}
 			}
 
-			ref_transaction_add_update(loose_transaction, update->refname,
-						   update->flags & ~REF_HAVE_OLD,
-						   update->new_target ? NULL : &update->new_oid, NULL,
-						   update->new_target, NULL, NULL);
+			if (update->flags & REF_LOG_ONLY)
+				ref_transaction_add_update(loose_transaction, update->refname,
+							   update->flags, &update->new_oid,
+							   &update->old_oid, NULL, NULL,
+							   update->committer_info, update->msg);
+			else
+				ref_transaction_add_update(loose_transaction, update->refname,
+							   update->flags & ~REF_HAVE_OLD,
+							   update->new_target ? NULL : &update->new_oid, NULL,
+							   update->new_target, NULL, update->committer_info,
+							   NULL);
 		} else {
 			ref_transaction_add_update(packed_transaction, update->refname,
 						   update->flags & ~REF_HAVE_OLD,
 						   &update->new_oid, &update->old_oid,
-						   NULL, NULL, NULL);
+						   NULL, NULL, update->committer_info, NULL);
 		}
 	}
 

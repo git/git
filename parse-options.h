@@ -353,6 +353,18 @@ struct option {
 	.callback = parse_opt_noop_cb, \
 }
 
+static char *parse_options_noop_ignored_value MAYBE_UNUSED;
+#define OPT_NOOP_ARG(s, l) { \
+	.type = OPTION_CALLBACK, \
+	.short_name = (s), \
+	.long_name = (l), \
+	.value = &parse_options_noop_ignored_value, \
+	.argh = "ignored", \
+	.help = N_("no-op (backward compatibility)"), \
+	.flags = PARSE_OPT_HIDDEN, \
+	.callback = parse_opt_noop_cb, \
+}
+
 #define OPT_ALIAS(s, l, source_long_name) { \
 	.type = OPTION_ALIAS, \
 	.short_name = (s), \
@@ -389,6 +401,10 @@ int parse_options(int argc, const char **argv, const char *prefix,
 
 NORETURN void usage_with_options(const char * const *usagestr,
 				 const struct option *options);
+
+void show_usage_with_options_if_asked(int ac, const char **av,
+				      const char * const *usage,
+				      const struct option *options);
 
 NORETURN void usage_msg_opt(const char *msg,
 			    const char * const *usagestr,

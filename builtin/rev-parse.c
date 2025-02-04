@@ -3,7 +3,10 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
+
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "builtin.h"
 
 #include "abspath.h"
@@ -709,6 +712,8 @@ int cmd_rev_parse(int argc,
 	struct strbuf buf = STRBUF_INIT;
 	int seen_end_of_options = 0;
 	enum format_type format = FORMAT_DEFAULT;
+
+	show_usage_if_asked(argc, argv, builtin_rev_parse_usage);
 
 	if (argc > 1 && !strcmp("--parseopt", argv[1]))
 		return cmd_parseopt(argc - 1, argv + 1, prefix);

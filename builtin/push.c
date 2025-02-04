@@ -1,7 +1,9 @@
 /*
  * "git push"
  */
+
 #define USE_THE_REPOSITORY_VARIABLE
+
 #include "builtin.h"
 #include "advice.h"
 #include "branch.h"
@@ -417,7 +419,7 @@ static int do_push(int flags,
 		   const struct string_list *push_options,
 		   struct remote *remote)
 {
-	int i, errs;
+	int errs;
 	struct strvec *url;
 	struct refspec *push_refspec = &rs;
 
@@ -432,7 +434,7 @@ static int do_push(int flags,
 	}
 	errs = 0;
 	url = push_url_of_remote(remote);
-	for (i = 0; i < url->nr; i++) {
+	for (size_t i = 0; i < url->nr; i++) {
 		struct transport *transport =
 			transport_get(remote, url->v[i]);
 		if (flags & TRANSPORT_PUSH_OPTIONS)

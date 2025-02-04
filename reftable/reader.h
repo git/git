@@ -16,9 +16,9 @@ https://developers.google.com/open-source/licenses/bsd
 
 uint64_t block_source_size(struct reftable_block_source *source);
 
-int block_source_read_block(struct reftable_block_source *source,
-			    struct reftable_block *dest, uint64_t off,
-			    uint32_t size);
+ssize_t block_source_read_block(struct reftable_block_source *source,
+				struct reftable_block *dest, uint64_t off,
+				uint32_t size);
 void block_source_close(struct reftable_block_source *source);
 
 /* metadata for a block type */
@@ -37,8 +37,8 @@ struct reftable_reader {
 	/* Size of the file, excluding the footer. */
 	uint64_t size;
 
-	/* 'sha1' for SHA1, 's256' for SHA-256 */
-	uint32_t hash_id;
+	/* The hash function used for ref records. */
+	enum reftable_hash hash_id;
 
 	uint32_t block_size;
 	uint64_t min_update_index;

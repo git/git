@@ -525,6 +525,24 @@ test_expect_success 'index-pack --strict <pack> works in non-repo' '
 	test_path_is_file foo.idx
 '
 
+test_expect_success SHA1 'show-index works OK outside a repository' '
+	nongit git show-index <foo.idx
+'
+
+for hash in sha1 sha256
+do
+	test_expect_success 'show-index works OK outside a repository with hash algo passed in via --object-format' '
+		test_when_finished "rm -rf explicit-hash-$hash" &&
+		git init --object-format=$hash explicit-hash-$hash &&
+		test_commit -C explicit-hash-$hash one &&
+		git -C explicit-hash-$hash rev-parse one >in &&
+		git -C explicit-hash-$hash pack-objects explicit-hash-$hash <in &&
+		idx=$(echo explicit-hash-$hash/explicit-hash-$hash*.idx) &&
+		nongit git show-index --object-format=$hash <"$idx" >actual &&
+		test_line_count = 1 actual
+	'
+done
+
 test_expect_success !PTHREADS,!FAIL_PREREQS \
 	'index-pack --threads=N or pack.threads=N warns when no pthreads' '
 	test_must_fail git index-pack --threads=2 2>err &&

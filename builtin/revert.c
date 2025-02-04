@@ -1,4 +1,5 @@
 #define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "builtin.h"
 #include "parse-options.h"

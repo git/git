@@ -1,4 +1,5 @@
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "pseudo-merge.h"
@@ -458,7 +459,8 @@ void select_pseudo_merges(struct bitmap_writer *writer)
 		return;
 
 	if (writer->show_progress)
-		progress = start_progress("Selecting pseudo-merge commits",
+		progress = start_progress(the_repository,
+					  "Selecting pseudo-merge commits",
 					  writer->pseudo_merge_groups.nr);
 
 	refs_for_each_ref(get_main_ref_store(the_repository),

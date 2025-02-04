@@ -3,6 +3,7 @@
  */
 
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "bulk-checkin.h"
@@ -43,8 +44,9 @@ static void finish_tmp_packfile(struct strbuf *basename,
 {
 	char *idx_tmp_name = NULL;
 
-	stage_tmp_packfiles(basename, pack_tmp_name, written_list, nr_written,
-			    NULL, pack_idx_opts, hash, &idx_tmp_name);
+	stage_tmp_packfiles(the_hash_algo, basename, pack_tmp_name,
+			    written_list, nr_written, NULL, pack_idx_opts, hash,
+			    &idx_tmp_name);
 	rename_tmp_packfile_idx(basename, &idx_tmp_name);
 
 	free(idx_tmp_name);
@@ -69,7 +71,7 @@ static void flush_bulk_checkin_packfile(struct bulk_checkin_packfile *state)
 				  CSUM_HASH_IN_STREAM | CSUM_FSYNC | CSUM_CLOSE);
 	} else {
 		int fd = finalize_hashfile(state->f, hash, FSYNC_COMPONENT_PACK, 0);
-		fixup_pack_header_footer(fd, hash, state->pack_tmp_name,
+		fixup_pack_header_footer(the_hash_algo, fd, hash, state->pack_tmp_name,
 					 state->nr_written, hash,
 					 state->offset);
 		close(fd);
@@ -260,7 +262,7 @@ static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
 	git_hash_ctx ctx;
 	unsigned char obuf[16384];
 	unsigned header_len;
-	struct hashfile_checkpoint checkpoint = {0};
+	struct hashfile_checkpoint checkpoint;
 	struct pack_idx_entry *idx = NULL;
 
 	seekback = lseek(fd, 0, SEEK_CUR);
@@ -271,11 +273,14 @@ static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
 					  OBJ_BLOB, size);
 	the_hash_algo->init_fn(&ctx);
 	the_hash_algo->update_fn(&ctx, obuf, header_len);
-	the_hash_algo->init_fn(&checkpoint.ctx);
 
 	/* Note: idx is non-NULL when we are writing */
-	if ((flags & HASH_WRITE_OBJECT) != 0)
+	if ((flags & HASH_WRITE_OBJECT) != 0) {
 		CALLOC_ARRAY(idx, 1);
+
+		prepare_to_stream(state, flags);
+		hashfile_checkpoint_init(state->f, &checkpoint);
+	}
 
 	already_hashed_to = 0;
 
@@ -332,7 +337,7 @@ void prepare_loose_object_bulk_checkin(void)
 	if (!odb_transaction_nesting || bulk_fsync_objdir)
 		return;
 
-	bulk_fsync_objdir = tmp_objdir_create("bulk-fsync");
+	bulk_fsync_objdir = tmp_objdir_create(the_repository, "bulk-fsync");
 	if (bulk_fsync_objdir)
 		tmp_objdir_replace_primary_odb(bulk_fsync_objdir, 0);
 }

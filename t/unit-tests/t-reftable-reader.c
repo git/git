@@ -31,7 +31,7 @@ static int t_reader_seek_once(void)
 	ret = reftable_iterator_next_ref(&it, &ref);
 	check(!ret);
 
-	ret = reftable_ref_record_equal(&ref, &records[0], GIT_SHA1_RAWSZ);
+	ret = reftable_ref_record_equal(&ref, &records[0], REFTABLE_HASH_SIZE_SHA1);
 	check_int(ret, ==, 1);
 
 	ret = reftable_iterator_next_ref(&it, &ref);
@@ -74,7 +74,7 @@ static int t_reader_reseek(void)
 		ret = reftable_iterator_next_ref(&it, &ref);
 		check(!ret);
 
-		ret = reftable_ref_record_equal(&ref, &records[0], GIT_SHA1_RAWSZ);
+		ret = reftable_ref_record_equal(&ref, &records[0], REFTABLE_HASH_SIZE_SHA1);
 		check_int(ret, ==, 1);
 
 		ret = reftable_iterator_next_ref(&it, &ref);

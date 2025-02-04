@@ -21,8 +21,10 @@ struct transport_ls_refs_options;
 enum {
 	REMOTE_UNCONFIGURED = 0,
 	REMOTE_CONFIG,
+#ifndef WITH_BREAKING_CHANGES
 	REMOTE_REMOTES,
 	REMOTE_BRANCHES
+#endif /* WITH_BREAKING_CHANGES */
 };
 
 struct rewrite {
@@ -58,6 +60,13 @@ struct remote_state {
 
 void remote_state_clear(struct remote_state *remote_state);
 struct remote_state *remote_state_new(void);
+
+	enum follow_remote_head_settings {
+		FOLLOW_REMOTE_NEVER = -1,
+		FOLLOW_REMOTE_CREATE = 0,
+		FOLLOW_REMOTE_WARN = 1,
+		FOLLOW_REMOTE_ALWAYS = 2,
+	};
 
 struct remote {
 	struct hashmap_entry ent;
@@ -107,6 +116,9 @@ struct remote {
 	char *http_proxy_authmethod;
 
 	struct string_list server_options;
+
+	enum follow_remote_head_settings follow_remote_head;
+	const char *no_warn_branch;
 };
 
 /**

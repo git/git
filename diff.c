@@ -3,6 +3,7 @@
  */
 
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "abspath.h"
@@ -4041,7 +4042,8 @@ static int reuse_worktree_file(struct index_state *istate,
 	 * objects however would tend to be slower as they need
 	 * to be individually opened and inflated.
 	 */
-	if (!FAST_WORKING_DIRECTORY && !want_file && has_object_pack(oid))
+	if (!FAST_WORKING_DIRECTORY && !want_file &&
+	    has_object_pack(istate->repo, oid))
 		return 0;
 
 	/*
@@ -7384,6 +7386,6 @@ void setup_diff_pager(struct diff_options *opt)
 	 * --exit-code" in hooks and other scripts, we do not do so.
 	 */
 	if (!opt->flags.exit_with_status &&
-	    check_pager_config("diff") != 0)
-		setup_pager();
+	    check_pager_config(the_repository, "diff") != 0)
+		setup_pager(the_repository);
 }

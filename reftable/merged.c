@@ -66,6 +66,8 @@ static int merged_iter_seek(struct merged_iter *mi, struct reftable_record *want
 	int err;
 
 	mi->advance_index = -1;
+	while (!merged_iter_pqueue_is_empty(mi->pq))
+		merged_iter_pqueue_remove(&mi->pq);
 
 	for (size_t i = 0; i < mi->subiters_len; i++) {
 		err = iterator_seek(&mi->subiters[i].iter, want);
@@ -181,7 +183,7 @@ static void iterator_from_merged_iter(struct reftable_iterator *it,
 
 int reftable_merged_table_new(struct reftable_merged_table **dest,
 			      struct reftable_reader **readers, size_t n,
-			      uint32_t hash_id)
+			      enum reftable_hash hash_id)
 {
 	struct reftable_merged_table *m = NULL;
 	uint64_t last_max = 0;
@@ -238,14 +240,16 @@ int merged_table_init_iter(struct reftable_merged_table *mt,
 			   struct reftable_iterator *it,
 			   uint8_t typ)
 {
-	struct merged_subiter *subiters;
+	struct merged_subiter *subiters = NULL;
 	struct merged_iter *mi = NULL;
 	int ret;
 
-	REFTABLE_CALLOC_ARRAY(subiters, mt->readers_len);
-	if (!subiters) {
-		ret = REFTABLE_OUT_OF_MEMORY_ERROR;
-		goto out;
+	if (mt->readers_len) {
+		REFTABLE_CALLOC_ARRAY(subiters, mt->readers_len);
+		if (!subiters) {
+			ret = REFTABLE_OUT_OF_MEMORY_ERROR;
+			goto out;
+		}
 	}
 
 	for (size_t i = 0; i < mt->readers_len; i++) {
@@ -293,7 +297,7 @@ int reftable_merged_table_init_log_iterator(struct reftable_merged_table *mt,
 	return merged_table_init_iter(mt, it, BLOCK_TYPE_LOG);
 }
 
-uint32_t reftable_merged_table_hash_id(struct reftable_merged_table *mt)
+enum reftable_hash reftable_merged_table_hash_id(struct reftable_merged_table *mt)
 {
 	return mt->hash_id;
 }

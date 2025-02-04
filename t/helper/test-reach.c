@@ -13,7 +13,6 @@
 
 static void print_sorted_commit_ids(struct commit_list *list)
 {
-	int i;
 	struct string_list s = STRING_LIST_INIT_DUP;
 
 	while (list) {
@@ -23,7 +22,7 @@ static void print_sorted_commit_ids(struct commit_list *list)
 
 	string_list_sort(&s);
 
-	for (i = 0; i < s.nr; i++)
+	for (size_t i = 0; i < s.nr; i++)
 		printf("%s\n", s.items[i].string);
 
 	string_list_clear(&s, 0);
@@ -36,7 +35,7 @@ int cmd__reach(int ac, const char **av)
 	struct commit_list *X, *Y;
 	struct object_array X_obj = OBJECT_ARRAY_INIT;
 	struct commit **X_array, **Y_array;
-	int X_nr, X_alloc, Y_nr, Y_alloc;
+	size_t X_nr, X_alloc, Y_nr, Y_alloc;
 	struct strbuf buf = STRBUF_INIT;
 	struct repository *r = the_repository;
 
@@ -158,7 +157,7 @@ int cmd__reach(int ac, const char **av)
 		clear_contains_cache(&cache);
 	} else if (!strcmp(av[1], "get_reachable_subset")) {
 		const int reachable_flag = 1;
-		int i, count = 0;
+		int count = 0;
 		struct commit_list *current;
 		struct commit_list *list = get_reachable_subset(X_array, X_nr,
 								Y_array, Y_nr,
@@ -170,7 +169,7 @@ int cmd__reach(int ac, const char **av)
 				    oid_to_hex(&list->item->object.oid));
 			count++;
 		}
-		for (i = 0; i < Y_nr; i++) {
+		for (size_t i = 0; i < Y_nr; i++) {
 			if (Y_array[i]->object.flags & reachable_flag)
 				count--;
 		}

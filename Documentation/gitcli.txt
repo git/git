@@ -90,6 +90,15 @@ scripting Git:
    for long options.  An option that takes optional option-argument must be
    written in the 'stuck' form.
 
+ * Despite the above suggestion, when Arg is a path relative to the
+   home directory of a user, e.g. `~/directory/file` or `~u/d/f`, you
+   may want to use the separate form, e.g. `git foo --file ~/mine`,
+   not `git foo --file=~/mine`.  The shell will expand `~/` in the
+   former to your home directory, but most shells keep the tilde in
+   the latter.  Some of our commands know how to tilde-expand the
+   option value even when given in the stuck form, but not all of
+   them do.
+
  * When you give a revision parameter to a command, make sure the parameter is
    not ambiguous with a name of a file in the work tree.  E.g. do not write
    `git log -1 HEAD` but write `git log -1 HEAD --`; the former will not work
@@ -150,6 +159,23 @@ Options with long option names can be negated by prefixing `--no-`. For
 example, `git branch` has the option `--track` which is 'on' by default. You
 can use `--no-track` to override that behaviour. The same goes for `--color`
 and `--no-color`.
+
+
+Options trump configuration and environment
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When there is a configuration variable or an environment variable
+that tweak the behaviour of an aspect of a Git command, and also a
+command line option that tweaks the same, the command line option
+overrides what the configuration and/or environment variable say.
+
+For example, the `user.name` configuration variable is used to
+specify the human-readable name used by the `git commit` command to
+record the author and the committer name in a newly created commit.
+The `GIT_AUTHOR_NAME` environment variable, if set, takes precedence
+when deciding what author name to record.  The `--author=<author>`
+command line option of the `git commit` command, when given, takes
+precedence over these two sources of information.
 
 
 Aggregating short options

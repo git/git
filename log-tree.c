@@ -1,4 +1,5 @@
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "commit-reach.h"
@@ -1041,7 +1042,7 @@ static int do_remerge_diff(struct rev_info *opt,
 	 * into the alternative object store list as the primary.
 	 */
 	if (opt->remerge_diff && !opt->remerge_objdir) {
-		opt->remerge_objdir = tmp_objdir_create("remerge-diff");
+		opt->remerge_objdir = tmp_objdir_create(the_repository, "remerge-diff");
 		if (!opt->remerge_objdir)
 			return error(_("unable to create temporary object directory"));
 		tmp_objdir_replace_primary_odb(opt->remerge_objdir, 1);

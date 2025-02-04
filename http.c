@@ -1,4 +1,5 @@
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "git-curl-compat.h"
@@ -608,7 +609,7 @@ static void init_curl_http_auth(CURL *result)
 		}
 	}
 
-	credential_fill(&http_auth, 1);
+	credential_fill(the_repository, &http_auth, 1);
 
 	if (http_auth.password) {
 		if (always_auth_proactively()) {
@@ -651,7 +652,7 @@ static void init_curl_proxy_auth(CURL *result)
 {
 	if (proxy_auth.username) {
 		if (!proxy_auth.password && !proxy_auth.credential)
-			credential_fill(&proxy_auth, 1);
+			credential_fill(the_repository, &proxy_auth, 1);
 		set_proxyauth_name_password(result);
 	}
 
@@ -685,7 +686,7 @@ static int has_cert_password(void)
 		cert_auth.host = xstrdup("");
 		cert_auth.username = xstrdup("");
 		cert_auth.path = xstrdup(ssl_cert);
-		credential_fill(&cert_auth, 0);
+		credential_fill(the_repository, &cert_auth, 0);
 	}
 	return 1;
 }
@@ -699,7 +700,7 @@ static int has_proxy_cert_password(void)
 		proxy_cert_auth.host = xstrdup("");
 		proxy_cert_auth.username = xstrdup("");
 		proxy_cert_auth.path = xstrdup(http_proxy_ssl_cert);
-		credential_fill(&proxy_cert_auth, 0);
+		credential_fill(the_repository, &proxy_cert_auth, 0);
 	}
 	return 1;
 }
@@ -1783,9 +1784,9 @@ static int handle_curl_result(struct slot_results *results)
 			      curl_errorstr, sizeof(curl_errorstr));
 
 	if (results->curl_result == CURLE_OK) {
-		credential_approve(&http_auth);
-		credential_approve(&proxy_auth);
-		credential_approve(&cert_auth);
+		credential_approve(the_repository, &http_auth);
+		credential_approve(the_repository, &proxy_auth);
+		credential_approve(the_repository, &cert_auth);
 		return HTTP_OK;
 	} else if (results->curl_result == CURLE_SSL_CERTPROBLEM) {
 		/*
@@ -1794,7 +1795,7 @@ static int handle_curl_result(struct slot_results *results)
 		 * with the certificate.  So we reject the credential to
 		 * avoid caching or saving a bad password.
 		 */
-		credential_reject(&cert_auth);
+		credential_reject(the_repository, &cert_auth);
 		return HTTP_NOAUTH;
 	} else if (results->curl_result == CURLE_SSL_PINNEDPUBKEYNOTMATCH) {
 		return HTTP_NOMATCHPUBLICKEY;
@@ -1807,7 +1808,7 @@ static int handle_curl_result(struct slot_results *results)
 				credential_clear_secrets(&http_auth);
 				return HTTP_REAUTH;
 			}
-			credential_reject(&http_auth);
+			credential_reject(the_repository, &http_auth);
 			if (always_auth_proactively())
 				http_proactive_auth = PROACTIVE_AUTH_NONE;
 			return HTTP_NOAUTH;
@@ -1821,7 +1822,7 @@ static int handle_curl_result(struct slot_results *results)
 		}
 	} else {
 		if (results->http_connectcode == 407)
-			credential_reject(&proxy_auth);
+			credential_reject(the_repository, &proxy_auth);
 		if (!curl_errorstr[0])
 			strlcpy(curl_errorstr,
 				curl_easy_strerror(results->curl_result),
@@ -2209,7 +2210,7 @@ static int http_request_reauth(const char *url,
 	int ret;
 
 	if (always_auth_proactively())
-		credential_fill(&http_auth, 1);
+		credential_fill(the_repository, &http_auth, 1);
 
 	ret = http_request(url, result, target, options);
 
@@ -2250,7 +2251,7 @@ static int http_request_reauth(const char *url,
 			BUG("Unknown http_request target");
 		}
 
-		credential_fill(&http_auth, 1);
+		credential_fill(the_repository, &http_auth, 1);
 
 		ret = http_request(url, result, target, options);
 	}
@@ -2381,7 +2382,7 @@ static int fetch_and_setup_pack_index(struct packed_git **packs_head,
 	if (!tmp_idx)
 		return -1;
 
-	new_pack = parse_pack_index(sha1, tmp_idx);
+	new_pack = parse_pack_index(the_repository, sha1, tmp_idx);
 	if (!new_pack) {
 		unlink(tmp_idx);
 		free(tmp_idx);
@@ -2523,7 +2524,7 @@ struct http_pack_request *new_direct_http_pack_request(
 
 	preq->url = url;
 
-	odb_pack_name(&preq->tmpfile, packed_git_hash, "pack");
+	odb_pack_name(the_repository, &preq->tmpfile, packed_git_hash, "pack");
 	strbuf_addstr(&preq->tmpfile, ".temp");
 	preq->packfile = fopen(preq->tmpfile.buf, "a");
 	if (!preq->packfile) {

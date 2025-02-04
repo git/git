@@ -1,3 +1,5 @@
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "git-compat-util.h"
 #include "config.h"
 #include "repository.h"
@@ -446,8 +448,9 @@ static void fn_param_fl(const char *file, int line, const char *param,
 	struct strbuf scope_payload = STRBUF_INIT;
 	enum config_scope scope = kvi->scope;
 	const char *scope_name = config_scope_name(scope);
-
-	strbuf_addf(&buf_payload, "%s:%s", param, value);
+	strbuf_addstr(&buf_payload, param);
+	if (value)
+		strbuf_addf(&buf_payload, ":%s", value);
 	strbuf_addf(&scope_payload, "%s:%s", "scope", scope_name);
 
 	perf_io_write_fl(file, line, event_name, NULL, NULL, NULL,

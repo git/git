@@ -44,6 +44,16 @@ struct strbuf;
  #define GIT_GNUC_PREREQ(maj, min) 0
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+#  define PRAGMA(pragma)           _Pragma(#pragma)
+#  define DISABLE_WARNING(warning) PRAGMA(GCC diagnostic ignored #warning)
+#else
+#  define DISABLE_WARNING(warning)
+#endif
+
+#ifdef DISABLE_SIGN_COMPARE_WARNINGS
+DISABLE_WARNING(-Wsign-compare)
+#endif
 
 #ifndef FLEX_ARRAY
 /*
@@ -690,6 +700,8 @@ int error(const char *err, ...) __attribute__((format (printf, 1, 2)));
 int error_errno(const char *err, ...) __attribute__((format (printf, 1, 2)));
 void warning(const char *err, ...) __attribute__((format (printf, 1, 2)));
 void warning_errno(const char *err, ...) __attribute__((format (printf, 1, 2)));
+
+void show_usage_if_asked(int ac, const char **av, const char *err);
 
 #ifndef NO_OPENSSL
 #ifdef APPLE_COMMON_CRYPTO

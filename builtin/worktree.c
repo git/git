@@ -1,4 +1,6 @@
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "builtin.h"
 #include "abspath.h"
 #include "advice.h"
@@ -120,12 +122,14 @@ struct add_opts {
 	int quiet;
 	int checkout;
 	int orphan;
+	int relative_paths;
 	const char *keep_locked;
 };
 
 static int show_only;
 static int verbose;
 static int guess_remote;
+static int use_relative_paths;
 static timestamp_t expire;
 
 static int git_worktree_config(const char *var, const char *value,
@@ -133,6 +137,9 @@ static int git_worktree_config(const char *var, const char *value,
 {
 	if (!strcmp(var, "worktree.guessremote")) {
 		guess_remote = git_config_bool(var, value);
+		return 0;
+	} else if (!strcmp(var, "worktree.userelativepaths")) {
+		use_relative_paths = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -415,8 +422,7 @@ static int add_worktree(const char *path, const char *refname,
 			const struct add_opts *opts)
 {
 	struct strbuf sb_git = STRBUF_INIT, sb_repo = STRBUF_INIT;
-	struct strbuf sb = STRBUF_INIT, sb_tmp = STRBUF_INIT;
-	struct strbuf sb_path_realpath = STRBUF_INIT, sb_repo_realpath = STRBUF_INIT;
+	struct strbuf sb = STRBUF_INIT;
 	const char *name;
 	struct strvec child_env = STRVEC_INIT;
 	unsigned int counter = 0;
@@ -434,7 +440,7 @@ static int add_worktree(const char *path, const char *refname,
 	worktrees = NULL;
 
 	/* is 'refname' a branch or commit? */
-	if (!opts->detach && !strbuf_check_branch_ref(&symref, refname) &&
+	if (!opts->detach && !check_branch_ref(&symref, refname) &&
 	    refs_ref_exists(get_main_ref_store(the_repository), symref.buf)) {
 		is_branch = 1;
 		if (!opts->force)
@@ -492,10 +498,7 @@ static int add_worktree(const char *path, const char *refname,
 
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/gitdir", sb_repo.buf);
-	strbuf_realpath(&sb_path_realpath, path, 1);
-	strbuf_realpath(&sb_repo_realpath, sb_repo.buf, 1);
-	write_file(sb.buf, "%s/.git", relative_path(sb_path_realpath.buf, sb_repo_realpath.buf, &sb_tmp));
-	write_file(sb_git.buf, "gitdir: %s", relative_path(sb_repo_realpath.buf, sb_path_realpath.buf, &sb_tmp));
+	write_worktree_linking_files(sb_git, sb, opts->relative_paths);
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/commondir", sb_repo.buf);
 	write_file(sb.buf, "../..");
@@ -579,12 +582,9 @@ done:
 
 	strvec_clear(&child_env);
 	strbuf_release(&sb);
-	strbuf_release(&sb_tmp);
 	strbuf_release(&symref);
 	strbuf_release(&sb_repo);
-	strbuf_release(&sb_repo_realpath);
 	strbuf_release(&sb_git);
-	strbuf_release(&sb_path_realpath);
 	strbuf_release(&sb_name);
 	free_worktree(wt);
 	return ret;
@@ -607,7 +607,7 @@ static void print_preparing_worktree_line(int detach,
 		fprintf_ln(stderr, _("Preparing worktree (new branch '%s')"), new_branch);
 	} else {
 		struct strbuf s = STRBUF_INIT;
-		if (!detach && !strbuf_check_branch_ref(&s, branch) &&
+		if (!detach && !check_branch_ref(&s, branch) &&
 		    refs_ref_exists(get_main_ref_store(the_repository), s.buf))
 			fprintf_ln(stderr, _("Preparing worktree (checking out '%s')"),
 				  branch);
@@ -748,7 +748,7 @@ static char *dwim_branch(const char *path, char **new_branch)
 	char *branchname = xstrndup(s, n);
 	struct strbuf ref = STRBUF_INIT;
 
-	branch_exists = !strbuf_check_branch_ref(&ref, branchname) &&
+	branch_exists = !check_branch_ref(&ref, branchname) &&
 			refs_ref_exists(get_main_ref_store(the_repository),
 					ref.buf);
 	strbuf_release(&ref);
@@ -798,12 +798,15 @@ static int add(int ac, const char **av, const char *prefix,
 			     PARSE_OPT_NOARG | PARSE_OPT_OPTARG),
 		OPT_BOOL(0, "guess-remote", &guess_remote,
 			 N_("try to match the new branch name with a remote-tracking branch")),
+		OPT_BOOL(0, "relative-paths", &opts.relative_paths,
+			 N_("use relative paths for worktrees")),
 		OPT_END()
 	};
 	int ret;
 
 	memset(&opts, 0, sizeof(opts));
 	opts.checkout = 1;
+	opts.relative_paths = use_relative_paths;
 	ac = parse_options(ac, av, prefix, options, git_worktree_add_usage, 0);
 	if (!!opts.detach + !!new_branch + !!new_branch_force > 1)
 		die(_("options '%s', '%s', and '%s' cannot be used together"), "-b", "-B", "--detach");
@@ -842,7 +845,7 @@ static int add(int ac, const char **av, const char *prefix,
 		new_branch = new_branch_force;
 
 		if (!opts.force &&
-		    !strbuf_check_branch_ref(&symref, new_branch) &&
+		    !check_branch_ref(&symref, new_branch) &&
 		    refs_ref_exists(get_main_ref_store(the_repository), symref.buf))
 			die_if_checked_out(symref.buf, 0);
 		strbuf_release(&symref);
@@ -1195,6 +1198,8 @@ static int move_worktree(int ac, const char **av, const char *prefix,
 		OPT__FORCE(&force,
 			 N_("force move even if worktree is dirty or locked"),
 			 PARSE_OPT_NOCOMPLETE),
+		OPT_BOOL(0, "relative-paths", &use_relative_paths,
+			 N_("use relative paths for worktrees")),
 		OPT_END()
 	};
 	struct worktree **worktrees, *wt;
@@ -1247,7 +1252,7 @@ static int move_worktree(int ac, const char **av, const char *prefix,
 	if (rename(wt->path, dst.buf) == -1)
 		die_errno(_("failed to move '%s' to '%s'"), wt->path, dst.buf);
 
-	update_worktree_location(wt, dst.buf);
+	update_worktree_location(wt, dst.buf, use_relative_paths);
 
 	strbuf_release(&dst);
 	free_worktrees(worktrees);
@@ -1390,6 +1395,8 @@ static int repair(int ac, const char **av, const char *prefix,
 	const char **p;
 	const char *self[] = { ".", NULL };
 	struct option options[] = {
+		OPT_BOOL(0, "relative-paths", &use_relative_paths,
+			 N_("use relative paths for worktrees")),
 		OPT_END()
 	};
 	int rc = 0;
@@ -1397,8 +1404,8 @@ static int repair(int ac, const char **av, const char *prefix,
 	ac = parse_options(ac, av, prefix, options, git_worktree_repair_usage, 0);
 	p = ac > 0 ? av : self;
 	for (; *p; p++)
-		repair_worktree_at_path(*p, report_repair, &rc);
-	repair_worktrees(report_repair, &rc);
+		repair_worktree_at_path(*p, report_repair, &rc, use_relative_paths);
+	repair_worktrees(report_repair, &rc, use_relative_paths);
 	return rc;
 }
 

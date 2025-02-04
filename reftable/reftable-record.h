@@ -9,7 +9,7 @@ https://developers.google.com/open-source/licenses/bsd
 #ifndef REFTABLE_RECORD_H
 #define REFTABLE_RECORD_H
 
-#include "hash.h"
+#include "reftable-basics.h"
 #include <stdint.h>
 
 /*
@@ -40,10 +40,10 @@ struct reftable_ref_record {
 #define REFTABLE_NR_REF_VALUETYPES 4
 	} value_type;
 	union {
-		unsigned char val1[GIT_MAX_RAWSZ];
+		unsigned char val1[REFTABLE_HASH_SIZE_MAX];
 		struct {
-			unsigned char value[GIT_MAX_RAWSZ]; /* first hash  */
-			unsigned char target_value[GIT_MAX_RAWSZ]; /* second hash */
+			unsigned char value[REFTABLE_HASH_SIZE_MAX]; /* first hash  */
+			unsigned char target_value[REFTABLE_HASH_SIZE_MAX]; /* second hash */
 		} val2;
 		char *symref; /* referent, malloced 0-terminated string */
 	} value;
@@ -65,7 +65,7 @@ void reftable_ref_record_release(struct reftable_ref_record *ref);
 
 /* returns whether two reftable_ref_records are the same. Useful for testing. */
 int reftable_ref_record_equal(const struct reftable_ref_record *a,
-			      const struct reftable_ref_record *b, int hash_size);
+			      const struct reftable_ref_record *b, uint32_t hash_size);
 
 /* reftable_log_record holds a reflog entry */
 struct reftable_log_record {
@@ -85,8 +85,8 @@ struct reftable_log_record {
 
 	union {
 		struct {
-			unsigned char new_hash[GIT_MAX_RAWSZ];
-			unsigned char old_hash[GIT_MAX_RAWSZ];
+			unsigned char new_hash[REFTABLE_HASH_SIZE_MAX];
+			unsigned char old_hash[REFTABLE_HASH_SIZE_MAX];
 			char *name;
 			char *email;
 			uint64_t time;
@@ -105,6 +105,6 @@ void reftable_log_record_release(struct reftable_log_record *log);
 
 /* returns whether two records are equal. Useful for testing. */
 int reftable_log_record_equal(const struct reftable_log_record *a,
-			      const struct reftable_log_record *b, int hash_size);
+			      const struct reftable_log_record *b, uint32_t hash_size);
 
 #endif

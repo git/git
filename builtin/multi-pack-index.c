@@ -120,7 +120,7 @@ static void read_packs_from_stdin(struct string_list *to)
 
 static int cmd_multi_pack_index_write(int argc, const char **argv,
 				      const char *prefix,
-				      struct repository *repo UNUSED)
+				      struct repository *repo)
 {
 	struct option *options;
 	static struct option builtin_multi_pack_index_write_options[] = {
@@ -165,7 +165,7 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 
 		read_packs_from_stdin(&packs);
 
-		ret = write_midx_file_only(opts.object_dir, &packs,
+		ret = write_midx_file_only(repo, opts.object_dir, &packs,
 					   opts.preferred_pack,
 					   opts.refs_snapshot, opts.flags);
 
@@ -176,7 +176,7 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 
 	}
 
-	ret = write_midx_file(opts.object_dir, opts.preferred_pack,
+	ret = write_midx_file(repo, opts.object_dir, opts.preferred_pack,
 			      opts.refs_snapshot, opts.flags);
 
 	free(opts.refs_snapshot);

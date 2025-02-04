@@ -12,6 +12,9 @@ cmds-*.txt
 mergetools-*.txt
 SubmittingPatches.txt
 tmp-doc-diff/
+tmp-meson-diff/
 GIT-ASCIIDOCFLAGS
 /.build/
 /GIT-EXCLUDED-PROGRAMS
+/asciidoc.conf
+/asciidoctor-extensions.rb

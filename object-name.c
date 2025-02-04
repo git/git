@@ -1,4 +1,5 @@
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "object-name.h"
@@ -952,7 +953,7 @@ static int get_oid_basic(struct repository *r, const char *str, int len,
 	"\n"
 	"where \"$br\" is somehow empty and a 40-hex ref is created. Please\n"
 	"examine these refs and maybe delete them. Turn this message off by\n"
-	"running \"git config advice.objectNameWarning false\"");
+	"running \"git config set advice.objectNameWarning false\"");
 	struct object_id tmp_oid;
 	char *real_ref = NULL;
 	int refs_found = 0;
@@ -1271,6 +1272,58 @@ static int peel_onion(struct repository *r, const char *name, int len,
 	return 0;
 }
 
+/*
+ * Documentation/revisions.txt says:
+ *    '<describeOutput>', e.g. 'v1.7.4.2-679-g3bee7fb'::
+ *      Output from `git describe`; i.e. a closest tag, optionally
+ *      followed by a dash and a number of commits, followed by a dash, a
+ *      'g', and an abbreviated object name.
+ *
+ * which means that the stuff before '-g${HASH}' needs to be a valid
+ * refname, a dash, and a non-negative integer.  This function verifies
+ * that.
+ *
+ * In particular, we do not want to treat
+ *   branchname:path/to/file/named/i-gaffed
+ * as a request for commit affed.
+ *
+ * More generally, we should probably not treat
+ *   'refs/heads/./../.../ ~^:/?*[////\\\&}/busted.lock-g050e0ef6ead'
+ * as a request for object 050e0ef6ead either.
+ *
+ * We are called with name[len] == '-' and name[len+1] == 'g', i.e.
+ * we are verifying ${REFNAME}-{INTEGER} part of the name.
+ */
+static int ref_and_count_parts_valid(const char *name, int len)
+{
+	struct strbuf sb;
+	const char *cp;
+	int flags = REFNAME_ALLOW_ONELEVEL;
+	int ret = 1;
+
+	/* Ensure we have at least one digit */
+	if (!isxdigit(name[len-1]))
+		return 0;
+
+	/* Skip over digits backwards until we get to the dash */
+	for (cp = name + len - 2; name < cp; cp--) {
+		if (*cp == '-')
+			break;
+		if (!isxdigit(*cp))
+			return 0;
+	}
+	/* Ensure we found the leading dash */
+	if (*cp != '-')
+		return 0;
+
+	len = cp - name;
+	strbuf_init(&sb, len);
+	strbuf_add(&sb, name, len);
+	ret = !check_refname_format(sb.buf, flags);
+	strbuf_release(&sb);
+	return ret;
+}
+
 static int get_describe_name(struct repository *r,
 			     const char *name, int len,
 			     struct object_id *oid)
@@ -1284,7 +1337,8 @@ static int get_describe_name(struct repository *r,
 			/* We must be looking at g in "SOMETHING-g"
 			 * for it to be describe output.
 			 */
-			if (ch == 'g' && cp[-1] == '-') {
+			if (ch == 'g' && cp[-1] == '-' &&
+			    ref_and_count_parts_valid(name, cp - 1 - name)) {
 				cp++;
 				len -= cp - name;
 				return get_short_oid(r,
@@ -1401,7 +1455,7 @@ static int get_oid_oneline(struct repository *r,
 			   const char *prefix, struct object_id *oid,
 			   const struct commit_list *list)
 {
-	struct commit_list *copy = NULL;
+	struct commit_list *copy = NULL, **copy_tail = &copy;
 	const struct commit_list *l;
 	int found = 0;
 	int negative = 0;
@@ -1423,7 +1477,7 @@ static int get_oid_oneline(struct repository *r,
 
 	for (l = list; l; l = l->next) {
 		l->item->object.flags |= ONELINE_SEEN;
-		commit_list_insert(l->item, &copy);
+		copy_tail = &commit_list_insert(l->item, copy_tail)->next;
 	}
 	while (copy) {
 		const char *p, *buf;
@@ -1732,42 +1786,6 @@ int repo_interpret_branch_name(struct repository *r,
 	}
 
 	return -1;
-}
-
-void strbuf_branchname(struct strbuf *sb, const char *name, unsigned allowed)
-{
-	int len = strlen(name);
-	struct interpret_branch_name_options options = {
-		.allowed = allowed
-	};
-	int used = repo_interpret_branch_name(the_repository, name, len, sb,
-					      &options);
-
-	if (used < 0)
-		used = 0;
-	strbuf_add(sb, name + used, len - used);
-}
-
-int strbuf_check_branch_ref(struct strbuf *sb, const char *name)
-{
-	if (startup_info->have_repository)
-		strbuf_branchname(sb, name, INTERPRET_BRANCH_LOCAL);
-	else
-		strbuf_addstr(sb, name);
-
-	/*
-	 * This splice must be done even if we end up rejecting the
-	 * name; builtin/branch.c::copy_or_rename_branch() still wants
-	 * to see what the name expanded to so that "branch -m" can be
-	 * used as a tool to correct earlier mistakes.
-	 */
-	strbuf_splice(sb, 0, 0, "refs/heads/", 11);
-
-	if (*name == '-' ||
-	    !strcmp(sb->buf, "refs/heads/HEAD"))
-		return -1;
-
-	return check_refname_format(sb->buf, 0);
 }
 
 void object_context_release(struct object_context *ctx)
@@ -2087,12 +2105,14 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 		return -1;
 	}
 	for (cp = name, bracket_depth = 0; *cp; cp++) {
-		if (*cp == '{')
+		if (strchr("@^", *cp) && cp[1] == '{') {
+			cp++;
 			bracket_depth++;
-		else if (bracket_depth && *cp == '}')
+		} else if (bracket_depth && *cp == '}') {
 			bracket_depth--;
-		else if (!bracket_depth && *cp == ':')
+		} else if (!bracket_depth && *cp == ':') {
 			break;
+		}
 	}
 	if (*cp == ':') {
 		struct object_id tree_oid;

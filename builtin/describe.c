@@ -1,4 +1,6 @@
 #define USE_THE_REPOSITORY_VARIABLE
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "builtin.h"
 #include "config.h"
 #include "environment.h"
@@ -366,6 +368,13 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 		struct commit_name **slot;
 
 		seen_commits++;
+
+		if (match_cnt == max_candidates ||
+		    match_cnt == hashmap_get_size(&names)) {
+			gave_up_on = c;
+			break;
+		}
+
 		slot = commit_names_peek(&commit_names, c);
 		n = slot ? *slot : NULL;
 		if (n) {
@@ -380,10 +389,6 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 				c->object.flags |= t->flag_within;
 				if (n->prio == 2)
 					annotated_cnt++;
-			}
-			else {
-				gave_up_on = c;
-				break;
 			}
 		}
 		for (cur_match = 0; cur_match < match_cnt; cur_match++) {
@@ -470,9 +475,8 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 		fprintf(stderr, _("traversed %lu commits\n"), seen_commits);
 		if (gave_up_on) {
 			fprintf(stderr,
-				_("more than %i tags found; listed %i most recent\n"
-				"gave up search at %s\n"),
-				max_candidates, max_candidates,
+				_("found %i tags; gave up search at %s\n"),
+				max_candidates,
 				oid_to_hex(&gave_up_on->object.oid));
 		}
 	}

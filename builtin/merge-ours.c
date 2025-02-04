@@ -7,7 +7,9 @@
  *
  * Pretend we resolved the heads, but declare our tree trumps everybody else.
  */
+
 #define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "builtin.h"
 #include "diff.h"
@@ -21,8 +23,7 @@ int cmd_merge_ours(int argc,
 		   const char *prefix UNUSED,
 		   struct repository *repo UNUSED)
 {
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage(builtin_merge_ours_usage);
+	show_usage_if_asked(argc, argv, builtin_merge_ours_usage);
 
 	/*
 	 * The contents of the current index becomes the tree we
