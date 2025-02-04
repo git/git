@@ -30,6 +30,8 @@ struct refspec_item {
 	char *raw;
 };
 
+struct string_list;
+
 #define REFSPEC_FETCH 1
 #define REFSPEC_PUSH 0
 
@@ -79,5 +81,19 @@ int refname_matches_negative_refspec_item(const char *refname, struct refspec *r
  */
 int match_name_with_pattern(const char *key, const char *name,
 				   const char *value, char **result);
+
+/*
+ * Queries a refspec for a match and updates the query item.
+ * Returns 0 on success, -1 if no match is found or negative refspec matches.
+ */
+int refspec_find_match(struct refspec *rs, struct refspec_item *query);
+
+/*
+ * Queries a refspec for all matches and appends results to the provided string
+ * list.
+ */
+void refspec_find_all_matches(struct refspec *rs,
+				    struct refspec_item *query,
+				    struct string_list *results);
 
 #endif /* REFSPEC_H */
