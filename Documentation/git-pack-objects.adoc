@@ -15,7 +15,8 @@ SYNOPSIS
 	[--revs [--unpacked | --all]] [--keep-pack=<pack-name>]
 	[--cruft] [--cruft-expiration=<time>]
 	[--stdout [--filter=<filter-spec>] | <base-name>]
-	[--shallow] [--keep-true-parents] [--[no-]sparse] < <object-list>
+	[--shallow] [--keep-true-parents] [--[no-]sparse]
+	[--name-hash-version=<n>] < <object-list>
 
 
 DESCRIPTION
@@ -344,6 +345,35 @@ raise an error.
 --delta-islands::
 	Restrict delta matches based on "islands". See DELTA ISLANDS
 	below.
+
+--name-hash-version=<n>::
+	While performing delta compression, Git groups objects that may be
+	similar based on heuristics using the path to that object. While
+	grouping objects by an exact path match is good for paths with
+	many versions, there are benefits for finding delta pairs across
+	different full paths. Git collects objects by type and then by a
+	"name hash" of the path and then by size, hoping to group objects
+	that will compress well together.
++
+The default name hash version is `1`, which prioritizes hash locality by
+considering the final bytes of the path as providing the maximum magnitude
+to the hash function. This version excels at distinguishing short paths
+and finding renames across directories. However, the hash function depends
+primarily on the final 16 bytes of the path. If there are many paths in
+the repo that have the same final 16 bytes and differ only by parent
+directory, then this name-hash may lead to too many collisions and cause
+poor results. At the moment, this version is required when writing
+reachability bitmap files with `--write-bitmap-index`.
++
+The name hash version `2` has similar locality features as version `1`,
+except it considers each path component separately and overlays the hashes
+with a shift. This still prioritizes the final bytes of the path, but also
+"salts" the lower bits of the hash using the parent directory names. This
+method allows for some of the locality benefits of version `1` while
+breaking most of the collisions from a similarly-named file appearing in
+many different directories. At the moment, this version is not allowed
+when writing reachability bitmap files with `--write-bitmap-index` and it
+will be automatically changed to version `1`.
 
 
 DELTA ISLANDS
