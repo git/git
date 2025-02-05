@@ -164,6 +164,7 @@ do
 
 			oid="$(git rev-parse "$obj")" &&
 			path=".git/objects/$(test_oid_to_path $oid)" &&
+			type_info=" type=$(git cat-file -t $oid)" &&
 
 			case $obj in
 			HEAD:foo)
@@ -184,7 +185,7 @@ do
 			# get the expected oids.
 			git rev-list --objects --no-object-names \
 				HEAD ^"$obj" >expect.raw &&
-			echo "?$oid$path_info" >>expect.raw &&
+			echo "?$oid$path_info$type_info" >>expect.raw &&
 
 			mv "$path" "$path.hidden" &&
 			git rev-list --objects --no-object-names \

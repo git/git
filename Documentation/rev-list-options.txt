@@ -1038,6 +1038,9 @@ one of the following:
 * The `path=<path>` shows the path of the missing object inferred from a
   containing object. A path containing SP or special characters is enclosed in
   double-quotes in the C style as needed.
++
+* The `type=<type>` shows the type of the missing object inferred from a
+  containing object.
 --
 +
 If some tips passed to the traversal are missing, they will be
