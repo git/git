@@ -540,6 +540,8 @@ include::config/tar.adoc[]
 
 include::config/trace2.adoc[]
 
+include::config/trailer.adoc[]
+
 include::config/transfer.adoc[]
 
 include::config/uploadarchive.adoc[]
