@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jan 2025, #09; Fri, 31)
-X-master-at: 58b5801aa94ad5031978f8e42c1be1230b3d352f
-X-next-at: 6defb0235c6e7c46974d7d65de7530e559ddcf0c
+Subject: What's cooking in git.git (Feb 2025, #01; Tue, 4)
+X-master-at: bc204b742735ae06f65bb20291c95985c9633b7f
+X-next-at: 6bd1c91b067bc73fdcedcc85aa2367f340cf3a2b
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jan 2025, #09; Fri, 31)
+What's cooking in git.git (Feb 2025, #01; Tue, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,111 +48,196 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* am/trace2-with-valueless-true (2025-01-23) 1 commit
-  (merged to 'next' on 2025-01-23 at 7dc4bdaea8)
- + trace2: prevent segfault on config collection with valueless true
+* jk/combine-diff-cleanup (2025-01-09) 14 commits
+  (merged to 'next' on 2025-01-28 at 97e76074b3)
+ + tree-diff: make list tail-passing more explicit
+ + tree-diff: simplify emit_path() list management
+ + tree-diff: use the name "tail" to refer to list tail
+ + tree-diff: drop list-tail argument to diff_tree_paths()
+ + combine-diff: drop public declaration of combine_diff_path_size()
+ + tree-diff: inline path_appendnew()
+ + tree-diff: pass whole path string to path_appendnew()
+ + tree-diff: drop path_appendnew() alloc optimization
+ + run_diff_files(): de-mystify the size of combine_diff_path struct
+ + diff: add a comment about combine_diff_path.parent.path
+ + combine-diff: use pointer for parent paths
+ + tree-diff: clear parent array in path_appendnew()
+ + combine-diff: add combine_diff_path_new()
+ + run_diff_files(): delay allocation of combine_diff_path
 
- The trace2 code was not prepared to show a configuration variable
- that is set to true using the valueless true syntax, which has been
- corrected.
- source: <pull.1814.v2.git.1736494100622.gitgitgadget@gmail.com>
-
-
-* ds/path-walk-1 (2025-01-22) 8 commits
-  (merged to 'next' on 2025-01-23 at 1d3743f005)
- + path-walk: drop redundant parse_tree() call
-  (merged to 'next' on 2025-01-22 at 3171845b73)
- + path-walk: reorder object visits
- + path-walk: mark trees and blobs as UNINTERESTING
- + path-walk: visit tags and cached objects
- + path-walk: allow consumer to specify object types
- + t6601: add helper for testing path-walk API
- + test-lib-functions: add test_cmp_sorted
- + path-walk: introduce an object walk by path
- (this branch is used by ds/backfill.)
-
- Introduce a new API to visit objects in batches based on a common
- path, or by type.
- cf. <Z4jeQSLmARruE5l3@pks.im>
- source: <pull.1818.v4.git.1734711675.gitgitgadget@gmail.com>
+ Code clean-up for code paths around combined diff.
+ source: <20250109082723.GA2748497@coredump.intra.peff.net>
 
 
-* ja/doc-commit-markup-updates (2025-01-15) 5 commits
-  (merged to 'next' on 2025-01-23 at aa9235f015)
- + doc: migrate git-commit manpage secondary files to new format
- + doc: convert git commit config to new format
- + doc: make more direct explanations in git commit options
- + doc: the mode param of -u of git commit is optional
- + doc: apply new documentation guidelines to git commit
-
- Doc updates.
- source: <pull.1845.v2.git.1736972628.gitgitgadget@gmail.com>
-
-
-* ja/doc-notes-markup-updates (2025-01-10) 1 commit
-  (merged to 'next' on 2025-01-24 at d02f3c8a9c)
- + doc: convert git-notes to new documentation format
-
- Doc mark-up updates.
- source: <pull.1846.v2.git.1736503703573.gitgitgadget@gmail.com>
-
-
-* ja/doc-restore-markup-update (2025-01-10) 1 commit
-  (merged to 'next' on 2025-01-24 at ba5df28904)
- + doc: convert git-restore to new style format
-
- Doc mark-up updates.
- source: <pull.1847.v2.git.1736503760086.gitgitgadget@gmail.com>
-
-
-* jc/show-index-h-update (2024-12-20) 1 commit
-  (merged to 'next' on 2025-01-28 at 2196ecadc4)
- + show-index: the short help should say the command reads from its input
-
- Doc and short-help text for "show-index" has been clarified to
- stress that the command reads its data from the standard input.
- source: <xmqqfrmidyhk.fsf@gitster.g>
-
-
-* kn/reflog-symref-fix (2025-01-23) 1 commit
-  (merged to 'next' on 2025-01-23 at 123929bd42)
- + refs: fix creation of reflog entries for symrefs
-
- reflog entries for symbolic ref updates were broken, which has been
- corrected.
- source: <20250123112944.3922712-1-karthik.188@gmail.com>
-
-
-* ps/reflog-migration-with-logall-fix (2025-01-22) 1 commit
-  (merged to 'next' on 2025-01-23 at 079036d154)
- + refs: fix migration of reflogs respecting "core.logAllRefUpdates"
-
- The "git refs migrate" command did not migrate the reflog for
- refs/stash, which is the contents of the stashes, which has been
- corrected.
- source: <20250122-b4-pks-reflog-migration-fix-stash-v1-1-27dbae4602f7@pks.im>
-
-
-* rs/ref-fitler-used-atoms-value-fix (2025-01-21) 3 commits
-  (merged to 'next' on 2025-01-23 at 714518543f)
- + ref-filter: remove ref_format_clear()
- + ref-filter: move is-base tip to used_atom
- + ref-filter: move ahead-behind bases into used_atom
-
- "git branch --sort=..." and "git for-each-ref --format=... --sort=..."
- did not work as expected with some atoms, which has been corrected.
- source: <6b824f05-6f16-4cd9-85b7-3b8b236158b4@web.de>
-
-
-* sk/strlen-returns-size_t (2024-12-26) 1 commit
-  (merged to 'next' on 2025-01-24 at 43464adc45)
- + date.c: Fix type missmatch warings from msvc
+* kn/pack-write-with-reduced-globals (2025-01-21) 5 commits
+  (merged to 'next' on 2025-01-28 at bb5f4b8547)
+ + pack-write: pass hash_algo to internal functions
+ + pack-write: pass hash_algo to `write_rev_file()`
+ + pack-write: pass hash_algo to `write_idx_file()`
+ + pack-write: pass repository to `index_pack_lockfile()`
+ + pack-write: pass hash_algo to `fixup_pack_header_footer()`
 
  Code clean-up.
- source: <20241223110407.3308-3-soekkle@freenet.de>
+ source: <20250119-kn-the-repo-cleanup-v3-0-a495fce08d71@gmail.com>
+
+
+* kn/reflog-migration-fix (2025-01-15) 1 commit
+  (merged to 'next' on 2025-01-16 at ae8f9ce9a0)
+ + reftable: write correct max_update_index to header
+ (this branch is used by kn/reflog-migration-fix-fix and kn/reflog-migration-fix-followup.)
+
+ "git refs migrate" for migrating reflog data was broken.
+ source: <CAOLa=ZTL9n_DPhNr49XAd6bT838kc09oVx_AH7Pb4o8VK_xQ9w@mail.gmail.com>
+
+
+* kn/reflog-migration-fix-fix (2025-01-27) 1 commit
+  (merged to 'next' on 2025-01-28 at e70c392ca2)
+ + refs/reftable: fix uninitialized memory access of `max_index`
+ (this branch uses kn/reflog-migration-fix.)
+
+ Fix bugs in an earlier attempt to fix "git refs migration".
+ source: <Z4UbkcmJAU1MT-Rs@tapette.crustytoothpaste.net>
+
+
+* ps/3.0-remote-deprecation (2025-01-24) 6 commits
+  (merged to 'next' on 2025-01-28 at 970fcdf59d)
+ + remote: announce removal of "branches/" and "remotes/"
+ + builtin/pack-redundant: remove subcommand with breaking changes
+ + ci: repurpose "linux-gcc" job for deprecations
+ + ci: merge linux-gcc-default into linux-gcc
+ + Makefile: wire up build option for deprecated features
+ + Merge branch 'ps/build' into ps/3.0-remote-deprecation
+
+ Following the procedure we established to introduce breaking
+ changes for Git 3.0, allow an early opt-in for removing support of
+ $GIT_DIR/branches/ and $GIT_DIR/remotes/ directories to configure
+ remotes.
+ source: <20250122-pks-remote-branches-deprecation-v4-0-5cbf5b28afd5@pks.im>
+
+
+* ps/build-meson-fixes (2025-01-22) 12 commits
+  (merged to 'next' on 2025-01-28 at c7c317a06f)
+ + ci: wire up Visual Studio build with Meson
+ + ci: raise error when Meson generates warnings
+ + meson: fix compilation with Visual Studio
+ + meson: make the CSPRNG backend configurable
+ + meson: wire up fuzzers
+ + meson: wire up generation of distribution archive
+ + meson: wire up development environments
+ + meson: fix dependencies for generated headers
+ + meson: populate project version via GIT-VERSION-GEN
+ + GIT-VERSION-GEN: allow running without input and output files
+ + GIT-VERSION-GEN: simplify computing the dirty marker
+ + Merge branch 'ps/meson-weak-sha1-build' into ps/build-meson-fixes
+ (this branch is used by ps/build-meson-fixes-0130 and ps/zlib-ng.)
+
+ More build fixes and enhancements on meson based build procedure.
+ source: <20250122-b4-pks-meson-additions-v3-0-5a51eb5d3dcd@pks.im>
+
+
+* tb/unsafe-hash-cleanup (2025-01-23) 8 commits
+  (merged to 'next' on 2025-01-28 at 9e0d6f9a5e)
+ + hash.h: drop unsafe_ function variants
+ + csum-file: introduce hashfile_checkpoint_init()
+ + t/helper/test-hash.c: use unsafe_hash_algo()
+ + csum-file.c: use unsafe_hash_algo()
+ + hash.h: introduce `unsafe_hash_algo()`
+ + csum-file.c: extract algop from hashfile_checksum_valid()
+ + csum-file: store the hash algorithm as a struct field
+ + t/helper/test-tool: implement sha1-unsafe helper
+ (this branch is used by ps/hash-cleanup.)
+
+ The API around choosing to use unsafe variant of SHA-1
+ implementation has been updated in an attempt to make it harder to
+ abuse.
+ source: <cover.1737653640.git.me@ttaylorr.com>
 
 --------------------------------------------------
 [New Topics]
+
+* jk/ci-coverity-update (2025-02-03) 2 commits
+  (merged to 'next' on 2025-02-03 at 9597182d1d)
+ + ci: set CI_JOB_IMAGE for coverity job
+ + Merge branch 'ps/ci-misc-updates' into jk/ci-coverity-update
+ (this branch uses ps/ci-misc-updates.)
+
+ CI update to make Coverity job work again.
+
+ Will merge to 'master'.
+ source: <20250131233015.GA3544301@coredump.intra.peff.net>
+
+
+* ps/repack-keep-unreachable-in-unpacked-repo (2025-02-04) 1 commit
+  (merged to 'next' on 2025-02-04 at 96a862b6f8)
+ + builtin/repack: fix `--keep-unreachable` when there are no packs
+
+ "git repack --keep-unreachable" to send unreachable objects to the
+ main pack "git repack -ad" produces did not work when there is no
+ existing packs, which has been corrected.
+
+ Will merge to 'master'.
+ source: <20250204-b4-pks-repack-unreachable-objects-wo-packfiles-v2-1-1eae23366711@pks.im>
+
+
+* ac/t5401-use-test-path-is-file (2025-02-03) 1 commit
+  (merged to 'next' on 2025-02-04 at 6bd1c91b06)
+ + t5401: prefer test_path_is_* helper function
+
+ Test clean-up.
+
+ Will merge to 'master'.
+ source: <20250201071210.30509-1-amch9605@gmail.com>
+
+
+* ac/t6423-unhide-git-exit-status (2025-02-03) 1 commit
+  (merged to 'next' on 2025-02-04 at 5290fb63c2)
+ + t6423: fix suppression of Git’s exit code in tests
+
+ Test clean-up.
+
+ Will merge to 'master'.
+ source: <20250202120926.322417-1-ayu.chandekar@gmail.com>
+
+
+* bc/contrib-thunderbird-patch-inline-fix (2025-02-04) 1 commit
+ - thunderbird-patch-inline: avoid bashism
+
+ A thunderbird helper script lost its bashism.
+
+ Expecting a reroll.
+ cf. <Z6F-ySoYbDJxJ3xs@tapette.crustytoothpaste.net>
+ source: <20250204014652.3509928-1-sandals@crustytoothpaste.net>
+
+
+* da/help-autocorrect-one-fix (2025-02-03) 3 commits
+ - help: add "show" as a valid configuration value
+ - help: show the suggested command when help.autocorrect is false
+ - Merge branch 'sc/help-autocorrect-one' into da/help-autocorrect-one-fix
+ (this branch uses sc/help-autocorrect-one.)
+
+ "git -c help.autocorrect=0 psuh" shows the suggested typofix,
+ unlike the previous attempt in the base topic.
+
+ WIll merge to 'next'.
+ source: <pull.1869.v4.git.git.1736760824201.gitgitgadget@gmail.com>
+
+
+* ms/remote-valid-remote-name (2025-02-04) 1 commit
+ - remote: relocate valid_remote_name
+
+ Code shuffling.
+
+ Will merge to 'next'.
+ source: <20250204142852.13035-1-meetsoni3017@gmail.com>
+
+
+* da/difftool-sans-the-repository (2025-02-04) 1 commit
+ - difftool: eliminate use of global variables
+
+ source: <20250204225501.597873-1-davvid@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * ps/leakfixes-0129 (2025-01-30) 2 commits
   (merged to 'next' on 2025-01-30 at 6dc24dfdaf)
@@ -180,7 +265,6 @@ Release tarballs are available at:
  - meson: fix OpenSSL fallback when not explicitly required
  - meson: fix exec path with enabled runtime prefix
  - Merge branch 'ps/build-meson-fixes' into ps/build-meson-fixes-0130
- (this branch uses ps/build-meson-fixes.)
 
  Assorted fixes and improvements to the build procedure based on
  meson.
@@ -190,50 +274,54 @@ Release tarballs are available at:
 
 
 * ps/setup-reinit-fixes (2025-01-30) 3 commits
- - setup: fix reinit of repos with incompatible GIT_DEFAULT_HASH
- - setup: fix reinit of repos with incompatible GIT_DEFAULT_REF_FORMAT
- - t0001: remove duplicate test
+  (merged to 'next' on 2025-02-03 at b4eb8f2fc8)
+ + setup: fix reinit of repos with incompatible GIT_DEFAULT_HASH
+ + setup: fix reinit of repos with incompatible GIT_DEFAULT_REF_FORMAT
+ + t0001: remove duplicate test
 
  "git init" to reinitialize a repository that already exists cannot
  change the hash function and ref backends; such a request is
  silently ignored now.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250130-b4-pks-reinit-default-ref-format-v1-0-d2769ca01207@pks.im>
 
 
 * pw/apply-ulong-overflow-check (2025-01-30) 1 commit
- - apply: detect overflow when parsing hunk header
+  (merged to 'next' on 2025-02-03 at e2b37c2c77)
+ + apply: detect overflow when parsing hunk header
 
  "git apply" internally uses unsigned long for line numbers and uses
  strtoul() to parse numbers on the hunk headers.  It however forgot
  to check parse errors.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1858.git.1738235310815.gitgitgadget@gmail.com>
 
 
 * sk/unit-tests-0130 (2025-01-31) 4 commits
- - t/unit-tests: convert strcmp-offset test to use clar test framework
- - t/unit-tests: convert strbuf test to use clar test framework
- - t/unit-tests: adapt example decorate test to use clar test framework
- - t/unit-tests: convert hashmap test to use clar test framework
+  (merged to 'next' on 2025-02-03 at 163109072c)
+ + t/unit-tests: convert strcmp-offset test to use clar test framework
+ + t/unit-tests: convert strbuf test to use clar test framework
+ + t/unit-tests: adapt example decorate test to use clar test framework
+ + t/unit-tests: convert hashmap test to use clar test framework
 
  Convert a handful of unit tests to work with the clar framework.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250131221420.38161-1-kuforiji98@gmail.com>
 
 
 * jt/gitlab-ci-base-fix (2025-01-31) 1 commit
- - ci: fix base commit fallback for check-whitespace and check-style
+  (merged to 'next' on 2025-02-03 at bf225248c9)
+ + ci: fix base commit fallback for check-whitespace and check-style
 
  Two CI tasks, whitespace check and style check, work on the
  difference from the base version and the version being checked, but
  the base was computed incorrectly in GitLab CI in some cases, which
  has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250131173938.3592899-1-jltobler@gmail.com>
 
 
@@ -244,28 +332,29 @@ Release tarballs are available at:
  bare?" did not work correctly when per-worktree configuration
  option was in use, which has been corrected.
 
- Will merge to 'next'?
+ Expecting a (hopefully minor and final) reroll.
+ cf. <xmqq8qqq7n26.fsf@gitster.g>
  source: <pull.1829.v3.git.1738346881907.gitgitgadget@gmail.com>
 
 
 * ps/hash-cleanup (2025-01-31) 5 commits
- - global: adapt callers to use generic hash context helpers
- - hash: provide generic wrappers to update hash contexts
- - hash: stop typedeffing the hash context
- - hash: convert hashing context to a structure
- - Merge branch 'tb/unsafe-hash-cleanup' into ps/hash-cleanup
- (this branch uses tb/unsafe-hash-cleanup.)
+  (merged to 'next' on 2025-02-03 at 98bdef7666)
+ + global: adapt callers to use generic hash context helpers
+ + hash: provide generic wrappers to update hash contexts
+ + hash: stop typedeffing the hash context
+ + hash: convert hashing context to a structure
+ + Merge branch 'tb/unsafe-hash-cleanup' into ps/hash-cleanup
 
  Further code clean-up on the use of hash functions.  Now the
  context object knows what hash function it is working with.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250131-b4-pks-hash-context-direct-v1-0-67a6d3f49d6e@pks.im>
 
 
-* tc/clone-single-revision (2025-01-31) 7 commits
- - fixup! builtin/clone: teach git-clone(1) the --revision= option
+* tc/clone-single-revision (2025-02-04) 7 commits
  - builtin/clone: teach git-clone(1) the --revision= option
+ - parse-options: introduce die_for_incompatible_opt2()
  - clone: introduce struct clone_opts in builtin/clone.c
  - clone: add tags refspec earlier to fetch refspec
  - clone: refactor wanted_peer_refs()
@@ -275,18 +364,16 @@ Release tarballs are available at:
  "git clone" learned to make a shallow clone for a single commit
  that is not necessarily be at the tip of any branch.
 
- Needs review.
- source: <20250131-toon-clone-refs-v4-0-2a4ff851498f@iotcl.com>
+ Will merge to 'next'?
+ source: <20250204-toon-clone-refs-v5-0-37e34af283c8@iotcl.com>
 
---------------------------------------------------
-[Cooking]
 
 * jp/doc-trailer-config (2025-01-24) 1 commit
  - config.txt: add trailer.* variables
 
  Documentaiton updates.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.1871.git.git.1736429142334.gitgitgadget@gmail.com>
 
 
@@ -303,22 +390,24 @@ Release tarballs are available at:
  source: <pull.1857.git.1737849456338.gitgitgadget@gmail.com>
 
 
-* ms/refspec-cleanup (2025-01-27) 3 commits
+* ms/refspec-cleanup (2025-02-04) 5 commits
  - refspec: relocate apply_refspecs and related funtions
- - refspec: relocate query related functions
- - refspec: relocate omit_name_by_refspec and related functions
+ - refspec: relocate matching related functions
+ - remote: rename query_refspecs functions
+ - refspec: relocate refname_matches_negative_refspec_item
+ - remote: rename function omit_name_by_refspec
 
  Code clean-up.
- source: <20250127103644.36627-1-meetsoni3017@gmail.com>
+ Will merge to 'next'.
+ cf. <Z6G-toOJjMmK8iJG@pks.im>
+ source: <20250204040558.34766-1-meetsoni3017@gmail.com>
 
 
-* ps/reftable-sans-compat-util (2025-01-28) 21 commits
+* ps/reftable-sans-compat-util (2025-02-03) 19 commits
  - Makefile: skip reftable library for Coccinelle
  - reftable: decouple from Git codebase by pulling in "compat/posix.h"
  - git-compat-util.h: split out POSIX-emulating bits
- - compat/msvc: split out POSIX-related bits
  - compat/mingw: split out POSIX-related bits
- - compat: consistently resolve headers via project root
  - reftable/basics: stop using `UNUSED` annotation
  - reftable/basics: stop using `SWAP()` macro
  - reftable/stack: stop using `sleep_millisec()`
@@ -338,7 +427,9 @@ Release tarballs are available at:
  Make the code in reftable library less reliant on the service
  routines it used to borrow from Git proper, to make it easier to
  use by external users of the library.
- source: <20250128-pks-reftable-drop-git-compat-util-v2-0-c85c20336317@pks.im>
+
+ Will merge to 'next'?
+ source: <20250203-pks-reftable-drop-git-compat-util-v3-0-446c9ed4ee9e@pks.im>
 
 
 * ac/doc-http-ssl-type-config (2025-01-23) 1 commit
@@ -350,17 +441,6 @@ Release tarballs are available at:
  Waiting for review response.
  cf. <Z5GOfwBR7JBloIs0@tapette.crustytoothpaste.net>
  source: <pull.1854.git.1737591366672.gitgitgadget@gmail.com>
-
-
-* kn/reflog-migration-fix-fix (2025-01-27) 1 commit
-  (merged to 'next' on 2025-01-28 at e70c392ca2)
- + refs/reftable: fix uninitialized memory access of `max_index`
- (this branch uses kn/reflog-migration-fix.)
-
- Fix bugs in an earlier attempt to fix "git refs migration".
-
- Will merge to 'master'.
- source: <Z4UbkcmJAU1MT-Rs@tapette.crustytoothpaste.net>
 
 
 * bc/doc-adoc-not-txt (2025-01-21) 5 commits
@@ -387,35 +467,8 @@ Release tarballs are available at:
 
  Foreign language interface for Rust into our code base has been added.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <cover.1738187176.git.steadmon@google.com>
-
-
-* kn/reflog-migration-fix (2025-01-15) 1 commit
-  (merged to 'next' on 2025-01-16 at ae8f9ce9a0)
- + reftable: write correct max_update_index to header
- (this branch is used by kn/reflog-migration-fix-fix and kn/reflog-migration-fix-followup.)
-
- "git refs migrate" for migrating reflog data was broken.
-
- On hold.
- cf. <Z4mUizLNUdq_1BgY@tapette.crustytoothpaste.net>
- cf. <CAOLa=ZT4nws0irdZKUuWc70Rv9RUNQuSXnGAt1SnE1O+umSReg@mail.gmail.com>
- source: <CAOLa=ZTL9n_DPhNr49XAd6bT838kc09oVx_AH7Pb4o8VK_xQ9w@mail.gmail.com>
-
-
-* kn/pack-write-with-reduced-globals (2025-01-21) 5 commits
-  (merged to 'next' on 2025-01-28 at bb5f4b8547)
- + pack-write: pass hash_algo to internal functions
- + pack-write: pass hash_algo to `write_rev_file()`
- + pack-write: pass hash_algo to `write_idx_file()`
- + pack-write: pass repository to `index_pack_lockfile()`
- + pack-write: pass hash_algo to `fixup_pack_header_footer()`
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <20250119-kn-the-repo-cleanup-v3-0-a495fce08d71@gmail.com>
 
 
 * zh/gc-expire-to (2025-01-24) 1 commit
@@ -424,7 +477,8 @@ Release tarballs are available at:
  "git gc" learned the "--expire-to" option and passes it down to
  underlying "git repack".
 
- Will merge to 'next'?
+ Will merge to 'next'.
+ cf. <>
  source: <pull.1843.v4.git.1737704954987.gitgitgadget@gmail.com>
 
 
@@ -433,7 +487,6 @@ Release tarballs are available at:
  - refs: use 'uint64_t' for 'ref_update.index'
  - refs: mark `ref_transaction_update_reflog()` as static
  - Merge branch 'kn/reflog-migration-fix' into kn/reflog-migration-fix-followup
- (this branch uses kn/reflog-migration-fix.)
 
  Code clean-up.
 
@@ -454,28 +507,6 @@ Release tarballs are available at:
  source: <Z5Mrk02wMdABtrVZ@pks.im>
 
 
-* ps/build-meson-fixes (2025-01-22) 12 commits
-  (merged to 'next' on 2025-01-28 at c7c317a06f)
- + ci: wire up Visual Studio build with Meson
- + ci: raise error when Meson generates warnings
- + meson: fix compilation with Visual Studio
- + meson: make the CSPRNG backend configurable
- + meson: wire up fuzzers
- + meson: wire up generation of distribution archive
- + meson: wire up development environments
- + meson: fix dependencies for generated headers
- + meson: populate project version via GIT-VERSION-GEN
- + GIT-VERSION-GEN: allow running without input and output files
- + GIT-VERSION-GEN: simplify computing the dirty marker
- + Merge branch 'ps/meson-weak-sha1-build' into ps/build-meson-fixes
- (this branch is used by ps/build-meson-fixes-0130 and ps/zlib-ng.)
-
- More build fixes and enhancements on meson based build procedure.
-
- Will merge to 'master'.
- source: <20250122-b4-pks-meson-additions-v3-0-5a51eb5d3dcd@pks.im>
-
-
 * ps/zlib-ng (2025-01-28) 12 commits
   (merged to 'next' on 2025-01-30 at ecf8e8bbef)
  + ci: make "linux-musl" job use zlib-ng
@@ -490,7 +521,6 @@ Release tarballs are available at:
  + compat: drop `uncompress2()` compatibility shim
  + Merge branch 'ps/build-meson-fixes' into ps/zlib-ng
  + Merge branch 'ps/meson-weak-sha1-build' into ps/zlib-ng
- (this branch uses ps/build-meson-fixes.)
 
  The code paths to interact with zlib has been cleaned up in
  preparation for building with zlib-ng.
@@ -499,74 +529,33 @@ Release tarballs are available at:
  source: <20250128-b4-pks-compat-drop-uncompress2-v4-0-129bc36ae8f5@pks.im>
 
 
-* tb/unsafe-hash-cleanup (2025-01-23) 8 commits
-  (merged to 'next' on 2025-01-28 at 9e0d6f9a5e)
- + hash.h: drop unsafe_ function variants
- + csum-file: introduce hashfile_checkpoint_init()
- + t/helper/test-hash.c: use unsafe_hash_algo()
- + csum-file.c: use unsafe_hash_algo()
- + hash.h: introduce `unsafe_hash_algo()`
- + csum-file.c: extract algop from hashfile_checksum_valid()
- + csum-file: store the hash algorithm as a struct field
- + t/helper/test-tool: implement sha1-unsafe helper
- (this branch is used by ps/hash-cleanup.)
-
- The API around choosing to use unsafe variant of SHA-1
- implementation has been updated in an attempt to make it harder to
- abuse.
-
- Will merge to 'master'.
- source: <cover.1737653640.git.me@ttaylorr.com>
-
-
 * sj/ref-consistency-checks-more (2025-01-30) 8 commits
- . builtin/fsck: add `git refs verify` child process
- . packed-backend: check whether the "packed-refs" is sorted
- . packed-backend: add "packed-refs" entry consistency check
- . packed-backend: check whether the refname contains NUL characters
- . packed-backend: add "packed-refs" header consistency check
- . packed-backend: check whether the "packed-refs" is regular
- . builtin/refs: get worktrees without reading head info
- . t0602: use subshell to ensure working directory unchanged
+ - builtin/fsck: add `git refs verify` child process
+ - packed-backend: check whether the "packed-refs" is sorted
+ - packed-backend: add "packed-refs" entry consistency check
+ - packed-backend: check whether the refname contains NUL characters
+ - packed-backend: add "packed-refs" header consistency check
+ - packed-backend: check whether the "packed-refs" is regular
+ - builtin/refs: get worktrees without reading head info
+ - t0602: use subshell to ensure working directory unchanged
 
  "git fsck" becomes more careful when checking the refs.
 
- A reroll exists.
+ Expecting a reroll.
+ cf. <Z6CBC5kyvIhBuLk6@pks.im>
  source: <Z5r6ZnLH3Ee8IQnN@ArchLinux>
-
-
-* jk/combine-diff-cleanup (2025-01-09) 14 commits
-  (merged to 'next' on 2025-01-28 at 97e76074b3)
- + tree-diff: make list tail-passing more explicit
- + tree-diff: simplify emit_path() list management
- + tree-diff: use the name "tail" to refer to list tail
- + tree-diff: drop list-tail argument to diff_tree_paths()
- + combine-diff: drop public declaration of combine_diff_path_size()
- + tree-diff: inline path_appendnew()
- + tree-diff: pass whole path string to path_appendnew()
- + tree-diff: drop path_appendnew() alloc optimization
- + run_diff_files(): de-mystify the size of combine_diff_path struct
- + diff: add a comment about combine_diff_path.parent.path
- + combine-diff: use pointer for parent paths
- + tree-diff: clear parent array in path_appendnew()
- + combine-diff: add combine_diff_path_new()
- + run_diff_files(): delay allocation of combine_diff_path
-
- Code clean-up for code paths around combined diff.
-
- Will merge to 'master'.
- source: <20250109082723.GA2748497@coredump.intra.peff.net>
 
 
 * sc/help-autocorrect-one (2025-01-13) 1 commit
  - help: interpret boolean string values for help.autocorrect
+ (this branch is used by da/help-autocorrect-one-fix.)
 
  "[help] autocorrect = 1" used to be a way to say "please wait for
  0.1 second after suggesting a typofix of the command name before
  running that command"; now it means "yes, if there is a plausible
  typofix for the command name, please run it immediately".
 
- Looking good except for "should 0 and false be 'tell it without doing it'?".
+ Will merge together with da/help-autocorrect-one-fix to 'next'.
  source: <pull.1869.v4.git.git.1736760824201.gitgitgadget@gmail.com>
 
 
@@ -597,6 +586,7 @@ Release tarballs are available at:
  + github: adapt containerized jobs to be rootless
  + t7422: fix flaky test caused by buffered stdout
  + t0060: fix EBUSY in MinGW when setting up runtime prefix
+ (this branch is used by jk/ci-coverity-update.)
 
  CI updates (containerization, dropping stale ones, etc.).
 
@@ -610,7 +600,8 @@ Release tarballs are available at:
  A new periodic maintenance task to run "git remote prune" has been
  introduced.
 
- Expecting a reroll.
+ Will discard.
+ Has been expecting a reroll for too long.
  source: <pull.1838.v3.git.1735928035056.gitgitgadget@gmail.com>
 
 
@@ -626,24 +617,6 @@ Release tarballs are available at:
  source: <xmqq5xnladwi.fsf@gitster.g>
 
 
-* ps/3.0-remote-deprecation (2025-01-24) 6 commits
-  (merged to 'next' on 2025-01-28 at 970fcdf59d)
- + remote: announce removal of "branches/" and "remotes/"
- + builtin/pack-redundant: remove subcommand with breaking changes
- + ci: repurpose "linux-gcc" job for deprecations
- + ci: merge linux-gcc-default into linux-gcc
- + Makefile: wire up build option for deprecated features
- + Merge branch 'ps/build' into ps/3.0-remote-deprecation
-
- Following the procedure we established to introduce breaking
- changes for Git 3.0, allow an early opt-in for removing support of
- $GIT_DIR/branches/ and $GIT_DIR/remotes/ directories to configure
- remotes.
-
- Will merge to 'master'.
- source: <20250122-pks-remote-branches-deprecation-v4-0-5cbf5b28afd5@pks.im>
-
-
 * cc/lop-remote (2025-01-27) 6 commits
  - doc: add technical design doc for large object promisors
  - promisor-remote: check advertised name or URL
@@ -656,21 +629,21 @@ Release tarballs are available at:
  source: <20250127151701.2321341-1-christian.couder@gmail.com>
 
 
-* ds/backfill (2025-01-23) 6 commits
+* ds/backfill (2025-02-03) 7 commits
  - backfill: assume --sparse when sparse-checkout is enabled
  - backfill: add --sparse option
  - backfill: add --min-batch-size=<n> option
  - backfill: basic functionality and tests
  - backfill: add builtin boilerplate
+ - Merge branch 'master' into ds/backfill
  - Merge branch 'ds/path-walk-1' into ds/backfill
 
  Lazy-loading missing files in a blobless clone on demand is costly
  as it tends to be one-blob-at-a-time.  "git backfill" is introduced
  to help bulk-download necessary files beforehand.
 
- Expecting a reroll.
- cf. <Z4jeQSLmARruE5l3@pks.im>
- source: <pull.1820.v2.git.1734712193.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1820.v3.git.1738602667.gitgitgadget@gmail.com>
 
 
 * tb/incremental-midx-part-2 (2024-11-20) 15 commits
@@ -696,7 +669,7 @@ Release tarballs are available at:
  source: <cover.1732054032.git.me@ttaylorr.com>
 
 
-* ps/send-pack-unhide-error-in-atomic-push (2025-01-31) 8 commits
+* ps/send-pack-unhide-error-in-atomic-push (2025-02-03) 8 commits
  - send-pack: gracefully close the connection for atomic push
  - t5543: atomic push reports exit code failure
  - send-pack: new return code "ERROR_SEND_PACK_BAD_REF_STATUS"
@@ -710,25 +683,27 @@ Release tarballs are available at:
  other side, losing the error status from the child process, which
  has been corrected.
 
- Needs review.
- source: <20250131-pks-push-atomic-respect-exit-code-v4-0-a8b41f01a676@pks.im>
+ Will merge to 'next'?
+ source: <20250203-pks-push-atomic-respect-exit-code-v5-0-d66481e36622@pks.im>
 
 
 * ds/name-hash-tweaks (2025-01-27) 7 commits
- - pack-objects: prevent name hash version change
- - test-tool: add helper for name-hash values
- - p5313: add size comparison test
- - pack-objects: add GIT_TEST_NAME_HASH_VERSION
- - repack: add --name-hash-version option
- - pack-objects: add --name-hash-version option
- - pack-objects: create new name-hash function version
+  (merged to 'next' on 2025-02-04 at d83bc700a7)
+ + pack-objects: prevent name hash version change
+ + test-tool: add helper for name-hash values
+ + p5313: add size comparison test
+ + pack-objects: add GIT_TEST_NAME_HASH_VERSION
+ + repack: add --name-hash-version option
+ + pack-objects: add --name-hash-version option
+ + pack-objects: create new name-hash function version
 
  "git pack-objects" and its wrapper "git repack" learned an option
  to use an alternative path-hash function to improve delta-base
  selection to produce a packfile with deeper history than window
  size.
 
- Will merge to 'next'?
+ Will merge to 'master'.
+ cf. <Z51DHdS8SStRGalX@nand.local>
  source: <pull.1823.v4.git.1738004554.gitgitgadget@gmail.com>
 
 
