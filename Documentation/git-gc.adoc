@@ -69,6 +69,13 @@ be performed as well.
 	the `--max-cruft-size` option of linkgit:git-repack[1] for
 	more.
 
+--expire-to=<dir>::
+	When packing unreachable objects into a cruft pack, write a cruft
+	pack containing pruned objects (if any) to the directory `<dir>`.
+	This option only has an effect when used together with `--cruft`.
+	See the `--expire-to` option of linkgit:git-repack[1] for
+	more information.
+
 --prune=<date>::
 	Prune loose objects older than date (default is 2 weeks ago,
 	overridable by the config variable `gc.pruneExpire`).
