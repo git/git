@@ -28,15 +28,18 @@ test_expect_success 'setup' '
 	test_cmp expect actual
 '
 
-test_expect_success 'autocorrect showing candidates' '
-	git config help.autocorrect 0 &&
+for show in false no off 0 show
+do
+	test_expect_success 'autocorrect showing candidates' '
+		git config help.autocorrect $show &&
 
-	test_must_fail git lfg 2>actual &&
-	grep "^	lgf" actual &&
+		test_must_fail git lfg 2>actual &&
+		grep "^	lgf" actual &&
 
-	test_must_fail git distimdist 2>actual &&
-	grep "^	distimdistim" actual
-'
+		test_must_fail git distimdist 2>actual &&
+		grep "^	distimdistim" actual
+	'
+done
 
 for immediate in -1 immediate
 do
