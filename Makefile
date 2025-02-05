@@ -417,6 +417,9 @@ include shared.mak
 # Define LINK_FUZZ_PROGRAMS if you want `make all` to also build the fuzz test
 # programs in oss-fuzz/.
 #
+# Define INCLUDE_LIBGIT_RS if you want `make all` and `make test` to build and
+# test the Rust crates in contrib/libgit-sys and contrib/libgit-rs.
+#
 # === Optional library: libintl ===
 #
 # Define NO_GETTEXT if you don't want Git output to be translated.
@@ -658,6 +661,8 @@ CURL_CONFIG = curl-config
 GCOV = gcov
 STRIP = strip
 SPATCH = spatch
+LD = ld
+OBJCOPY = objcopy
 
 export TCL_PATH TCLTK_PATH
 
@@ -676,6 +681,7 @@ FUZZ_OBJS =
 FUZZ_PROGRAMS =
 GIT_OBJS =
 LIB_OBJS =
+LIBGIT_PUB_OBJS =
 SCALAR_OBJS =
 OBJECTS =
 OTHER_PROGRAMS =
@@ -984,6 +990,8 @@ LIB_OBJS += combine-diff.o
 LIB_OBJS += commit-graph.o
 LIB_OBJS += commit-reach.o
 LIB_OBJS += commit.o
+LIB_OBJS += common-exit.o
+LIB_OBJS += common-init.o
 LIB_OBJS += compat/nonblock.o
 LIB_OBJS += compat/obstack.o
 LIB_OBJS += compat/terminal.o
@@ -2252,6 +2260,12 @@ ifdef WITH_BREAKING_CHANGES
 	BASIC_CFLAGS += -DWITH_BREAKING_CHANGES
 endif
 
+ifdef INCLUDE_LIBGIT_RS
+	# Enable symbol hiding in contrib/libgit-sys/libgitpub.a without making
+	# us rebuild the whole tree every time we run a Rust build.
+	BASIC_CFLAGS += -fvisibility=hidden
+endif
+
 ifeq ($(TCLTK_PATH),)
 NO_TCLTK = NoThanks
 endif
@@ -2747,6 +2761,10 @@ OBJECTS += $(REFTABLE_OBJS) $(REFTABLE_TEST_OBJS)
 OBJECTS += $(UNIT_TEST_OBJS)
 OBJECTS += $(CLAR_TEST_OBJS)
 OBJECTS += $(patsubst %,$(UNIT_TEST_DIR)/%.o,$(UNIT_TEST_PROGRAMS))
+
+ifdef INCLUDE_LIBGIT_RS
+	OBJECTS += contrib/libgit-sys/public_symbol_export.o
+endif
 
 ifndef NO_CURL
 	OBJECTS += http.o http-walker.o remote-curl.o
@@ -3743,6 +3761,10 @@ clean: profile-clean coverage-clean cocciclean
 	$(RM) $(htmldocs).tar.gz $(manpages).tar.gz
 	$(MAKE) -C Documentation/ clean
 	$(RM) Documentation/GIT-EXCLUDED-PROGRAMS
+	$(RM) -r contrib/libgit-sys/target contrib/libgit-rs/target
+	$(RM) contrib/libgit-sys/partial_symbol_export.o
+	$(RM) contrib/libgit-sys/hidden_symbol_export.o
+	$(RM) contrib/libgit-sys/libgitpub.a
 ifndef NO_PERL
 	$(RM) -r perl/build/
 endif
@@ -3904,3 +3926,31 @@ $(CLAR_TEST_PROG): $(UNIT_TEST_DIR)/clar.suite $(CLAR_TEST_OBJS) $(GITLIBS) GIT-
 build-unit-tests: $(UNIT_TEST_PROGS) $(CLAR_TEST_PROG)
 unit-tests: $(UNIT_TEST_PROGS) $(CLAR_TEST_PROG) t/helper/test-tool$X
 	$(MAKE) -C t/ unit-tests
+
+.PHONY: libgit-sys libgit-rs
+libgit-sys libgit-rs:
+	$(QUIET)(\
+		cd contrib/$@ && \
+		cargo build \
+	)
+ifdef INCLUDE_LIBGIT_RS
+all:: libgit-sys libgit-rs
+endif
+
+LIBGIT_PUB_OBJS += contrib/libgit-sys/public_symbol_export.o
+LIBGIT_PUB_OBJS += libgit.a
+LIBGIT_PUB_OBJS += reftable/libreftable.a
+LIBGIT_PUB_OBJS += xdiff/lib.a
+
+LIBGIT_PARTIAL_EXPORT = contrib/libgit-sys/partial_symbol_export.o
+
+LIBGIT_HIDDEN_EXPORT = contrib/libgit-sys/hidden_symbol_export.o
+
+$(LIBGIT_PARTIAL_EXPORT): $(LIBGIT_PUB_OBJS)
+	$(LD) -r $^ -o $@
+
+$(LIBGIT_HIDDEN_EXPORT): $(LIBGIT_PARTIAL_EXPORT)
+	$(OBJCOPY) --localize-hidden $^ $@
+
+contrib/libgit-sys/libgitpub.a: $(LIBGIT_HIDDEN_EXPORT)
+	$(AR) $(ARFLAGS) $@ $^
