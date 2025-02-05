@@ -2828,3 +2828,13 @@ char *relative_url(const char *remote_url, const char *url,
 	free(out);
 	return strbuf_detach(&sb, NULL);
 }
+
+int valid_remote_name(const char *name)
+{
+	int result;
+	struct strbuf refspec = STRBUF_INIT;
+	strbuf_addf(&refspec, "refs/heads/test:refs/remotes/%s/test", name);
+	result = valid_fetch_refspec(refspec.buf);
+	strbuf_release(&refspec);
+	return result;
+}
