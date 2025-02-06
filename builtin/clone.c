@@ -434,46 +434,37 @@ static struct ref *wanted_peer_refs(const struct ref *refs,
 {
 	struct ref *head = copy_ref(find_ref_by_name(refs, "HEAD"));
 	struct ref *local_refs = head;
-	struct ref **tail = head ? &head->next : &local_refs;
+	struct ref **tail = local_refs ? &local_refs->next : &local_refs;
 	struct refspec_item tag_refspec;
+	struct ref *to_free = NULL;
 
 	refspec_item_init(&tag_refspec, TAG_REFSPEC, 0);
 
 	if (option_single_branch) {
-		struct ref *remote_head = NULL;
-
 		if (!option_branch)
-			remote_head = guess_remote_head(head, refs, 0);
+			refs = to_free = guess_remote_head(head, refs, 0);
 		else {
 			free_one_ref(head);
 			local_refs = head = NULL;
 			tail = &local_refs;
-			remote_head = copy_ref(find_remote_branch(refs, option_branch));
+			refs = to_free = copy_ref(find_remote_branch(refs, option_branch));
 		}
-
-		if (!remote_head && option_branch)
-			warning(_("Could not find remote branch %s to clone."),
-				option_branch);
-		else {
-			int i;
-			for (i = 0; i < refspec->nr; i++)
-				get_fetch_map(remote_head, &refspec->items[i],
-					      &tail, 0);
-
-			/* if --branch=tag, pull the requested tag explicitly */
-			get_fetch_map(remote_head, &tag_refspec, &tail, 0);
-		}
-		free_refs(remote_head);
-	} else {
-		int i;
-		for (i = 0; i < refspec->nr; i++)
-			get_fetch_map(refs, &refspec->items[i], &tail, 0);
 	}
 
-	if (!option_mirror && !option_single_branch && option_tags)
+	for (size_t i = 0; i < refspec->nr; i++)
+		get_fetch_map(refs, &refspec->items[i], &tail, 0);
+
+	/*
+	 * Grab all refs that match the TAG_REFSPEC. Any tags we don't care
+	 * about won't be present in `refs` anyway.
+	 * Except with option --mirror, where we grab all refs already.
+	 */
+	if (!option_mirror)
 		get_fetch_map(refs, &tag_refspec, &tail, 0);
 
+	free_one_ref(to_free);
 	refspec_item_clear(&tag_refspec);
+
 	return local_refs;
 }
 
