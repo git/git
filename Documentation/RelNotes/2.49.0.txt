@@ -31,6 +31,9 @@ Performance, Internal Implementation, Development Support etc.
    $GIT_DIR/branches/ and $GIT_DIR/remotes/ directories to configure
    remotes.
 
+ * The code paths to interact with zlib has been cleaned up in
+   preparation for building with zlib-ng.
+
 
 Fixes since v2.48
 -----------------
@@ -126,6 +129,12 @@ Fixes since v2.48
  * Fix bugs in an earlier attempt to fix "git refs migration".
    (merge f11f0a5a2d kn/reflog-migration-fix-fix later to maint).
 
+ * The code path used when "git fetch" fetches from a bundle file
+   closed the same file descriptor twice, which sometimes broke things
+   unexpectedly when the file descriptor was reused, which has been
+   corrected.
+   (merge 9a84794ad8 js/bundle-unbundle-fd-reuse-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge ddb5287894 jk/t7407-use-test-grep later to maint).
    (merge 21e1b44865 aj/difftool-config-doc-fix later to maint).
@@ -138,3 +147,4 @@ Fixes since v2.48
    (merge 77b2d29e91 ja/doc-notes-markup-updates later to maint).
    (merge 6979bf6f8f jk/combine-diff-cleanup later to maint).
    (merge 8705c9bd13 kn/pack-write-with-reduced-globals later to maint).
+   (merge 087740d65a ps/leakfixes-0129 later to maint).
