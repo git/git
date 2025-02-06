@@ -207,6 +207,7 @@ static int fetch_refs_from_bundle(struct transport *transport,
 
 	ret = unbundle(the_repository, &data->header, data->fd,
 		       &extra_index_pack_args, &opts);
+	data->fd = -1; /* `unbundle()` closes the file descriptor */
 	transport->hash_algo = data->header.hash_algo;
 
 	strvec_clear(&extra_index_pack_args);

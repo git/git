@@ -607,8 +607,10 @@ int unbundle(struct repository *r, struct bundle_header *header,
 	if (!opts)
 		opts = &opts_fallback;
 
-	if (verify_bundle(r, header, opts->flags))
+	if (verify_bundle(r, header, opts->flags)) {
+		close(bundle_fd);
 		return -1;
+	}
 
 	strvec_pushl(&ip.args, "index-pack", "--fix-thin", "--stdin", NULL);
 
