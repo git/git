@@ -13,7 +13,7 @@ git clone [--template=<template-directory>]
 	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare] [--mirror]
 	  [-o <name>] [-b <name>] [-u <upload-pack>] [--reference <repository>]
 	  [--dissociate] [--separate-git-dir <git-dir>]
-	  [--depth <depth>] [--[no-]single-branch] [--no-tags]
+	  [--depth <depth>] [--[no-]single-branch] [--[no-]tags]
 	  [--recurse-submodules[=<pathspec>]] [--[no-]shallow-submodules]
 	  [--[no-]remote-submodules] [--jobs <n>] [--sparse] [--[no-]reject-shallow]
 	  [--filter=<filter-spec>] [--also-filter-submodules]] [--] <repository>
@@ -273,12 +273,15 @@ corresponding `--mirror` and `--no-tags` options instead.
 	branch when `--single-branch` clone was made, no remote-tracking
 	branch is created.
 
-`--no-tags`::
-	Don't clone any tags, and set
-	`remote.<remote>.tagOpt=--no-tags` in the config, ensuring
-	that future `git pull` and `git fetch` operations won't follow
-	any tags. Subsequent explicit tag fetches will still work,
-	(see linkgit:git-fetch[1]).
+`--[no-]tags`::
+	Control whether or not tags will be cloned. When `--no-tags` is
+	given, the option will be become permanent by setting the
+	`remote.<remote>.tagOpt=--no-tags` configuration. This ensures that
+	future `git pull` and `git fetch` won't follow any tags. Subsequent
+	explicit tag fetches will still work (see linkgit:git-fetch[1]).
+
+	By default, tags are cloned and passing `--tags` is thus typically a
+	no-op, unless it cancels out a previous `--no-tags`.
 +
 Can be used in conjunction with `--single-branch` to clone and
 maintain a branch with no references other than a single cloned
