@@ -221,6 +221,15 @@ objects from the source repository into a pack in the cloned repository.
 	`--branch` can also take tags and detaches the `HEAD` at that commit
 	in the resulting repository.
 
+`--revision=<rev>`::
+	Create a new repository, and fetch the history leading to the given
+	revision _<rev>_ (and nothing else), without making any remote-tracking
+	branch, and without making any local branch, and detach `HEAD` to
+	_<rev>_. The argument can be a ref name (e.g. `refs/heads/main` or
+	`refs/tags/v1.0`) that peels down to a commit, or a hexadecimal object
+	name.
+	This option is incompatible with `--branch` and `--mirror`.
+
 `-u` _<upload-pack>_::
 `--upload-pack` _<upload-pack>_::
 	When given, and the repository to clone from is accessed

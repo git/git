@@ -59,6 +59,7 @@
 
 struct clone_opts {
 	int wants_head;
+	int detach;
 };
 #define CLONE_OPTS_INIT { \
 	.wants_head = 1 /* default enabled */ \
@@ -565,11 +566,11 @@ static void update_remote_refs(const struct ref *refs,
 	}
 }
 
-static void update_head(const struct ref *our, const struct ref *remote,
+static void update_head(struct clone_opts *opts, const struct ref *our, const struct ref *remote,
 			const char *unborn, const char *msg)
 {
 	const char *head;
-	if (our && skip_prefix(our->name, "refs/heads/", &head)) {
+	if (our && !opts->detach && skip_prefix(our->name, "refs/heads/", &head)) {
 		/* Local default branch link */
 		if (refs_update_symref(get_main_ref_store(the_repository), "HEAD", our->name, NULL) < 0)
 			die(_("unable to update HEAD"));
@@ -580,8 +581,9 @@ static void update_head(const struct ref *our, const struct ref *remote,
 			install_branch_config(0, head, remote_name, our->name);
 		}
 	} else if (our) {
-		struct commit *c = lookup_commit_reference(the_repository,
-							   &our->old_oid);
+		struct commit *c = lookup_commit_or_die(&our->old_oid,
+							our->name);
+
 		/* --branch specifies a non-branch (i.e. tags), detach HEAD */
 		refs_update_ref(get_main_ref_store(the_repository), msg,
 				"HEAD", &c->object.oid, NULL, REF_NO_DEREF,
@@ -900,6 +902,7 @@ int cmd_clone(int argc,
 	int option_filter_submodules = -1; /* unspecified */
 	struct string_list server_options = STRING_LIST_INIT_NODUP;
 	const char *bundle_uri = NULL;
+	char *option_rev = NULL;
 
 	struct clone_opts opts = CLONE_OPTS_INIT;
 
@@ -943,6 +946,8 @@ int cmd_clone(int argc,
 			   N_("use <name> instead of 'origin' to track upstream")),
 		OPT_STRING('b', "branch", &option_branch, N_("branch"),
 			   N_("checkout <branch> instead of the remote's HEAD")),
+		OPT_STRING(0, "revision", &option_rev, N_("rev"),
+			   N_("clone single revision <rev> and check out")),
 		OPT_STRING('u', "upload-pack", &option_upload_pack, N_("path"),
 			   N_("path to git-upload-pack on the remote")),
 		OPT_STRING(0, "depth", &option_depth, N_("depth"),
@@ -1279,7 +1284,7 @@ int cmd_clone(int argc,
 		strbuf_addstr(&branch_top, src_ref_prefix);
 
 		git_config_set("core.bare", "true");
-	} else {
+	} else if (!option_rev) {
 		strbuf_addf(&branch_top, "refs/remotes/%s/", remote_name);
 	}
 
@@ -1298,8 +1303,9 @@ int cmd_clone(int argc,
 
 	remote = remote_get_early(remote_name);
 
-	refspec_appendf(&remote->fetch, "+%s*:%s*", src_ref_prefix,
-			branch_top.buf);
+	if (!option_rev)
+		refspec_appendf(&remote->fetch, "+%s*:%s*", src_ref_prefix,
+				branch_top.buf);
 
 	path = get_repo_path(remote->url.v[0], &is_bundle);
 	is_local = option_local != 0 && path && !is_bundle;
@@ -1342,6 +1348,11 @@ int cmd_clone(int argc,
 
 	transport_set_option(transport, TRANS_OPT_KEEP, "yes");
 
+	die_for_incompatible_opt2(!!option_rev, "--revision",
+				  !!option_branch, "--branch");
+	die_for_incompatible_opt2(!!option_rev, "--revision",
+				  option_mirror, "--mirror");
+
 	if (reject_shallow)
 		transport_set_option(transport, TRANS_OPT_REJECT_SHALLOW, "1");
 	if (option_depth)
@@ -1378,7 +1389,14 @@ int cmd_clone(int argc,
 	if (transport->smart_options && !deepen && !filter_options.choice)
 		transport->smart_options->check_self_contained_and_connected = 1;
 
-	strvec_push(&transport_ls_refs_options.ref_prefixes, "HEAD");
+	if (option_rev) {
+		option_tags = 0;
+		option_single_branch = 0;
+		opts.wants_head = 0;
+		opts.detach = 1;
+
+		refspec_append(&remote->fetch, option_rev);
+	}
 
 	if (option_tags || option_branch)
 		/*
@@ -1392,6 +1410,17 @@ int cmd_clone(int argc,
 	if (option_branch)
 		expand_ref_prefix(&transport_ls_refs_options.ref_prefixes,
 				  option_branch);
+
+	/*
+	 * As part of transport_get_remote_refs() the server tells us the hash
+	 * algorithm, which we require to initialize the repo. But calling that
+	 * function without any ref prefix, will cause the server to announce
+	 * all known refs. If the argument passed to --revision was a hex oid,
+	 * ref_prefixes will be empty so we fall back to asking about HEAD to
+	 * reduce traffic from the server.
+	 */
+	if (opts.wants_head || transport_ls_refs_options.ref_prefixes.nr == 0)
+		strvec_push(&transport_ls_refs_options.ref_prefixes, "HEAD");
 
 	refs = transport_get_remote_refs(transport, &transport_ls_refs_options);
 
@@ -1501,6 +1530,11 @@ int cmd_clone(int argc,
 		if (!our_head_points_at)
 			die(_("Remote branch %s not found in upstream %s"),
 			    option_branch, remote_name);
+	} else if (option_rev) {
+		our_head_points_at = mapped_refs;
+		if (!our_head_points_at)
+			die(_("Remote revision %s not found in upstream %s"),
+			    option_rev, remote_name);
 	} else if (remote_head_points_at) {
 		our_head_points_at = remote_head_points_at;
 	} else if (remote_head) {
@@ -1539,8 +1573,9 @@ int cmd_clone(int argc,
 		free(to_free);
 	}
 
-	write_refspec_config(src_ref_prefix, our_head_points_at,
-			remote_head_points_at, &branch_top);
+	if (!option_rev)
+		write_refspec_config(src_ref_prefix, our_head_points_at,
+				     remote_head_points_at, &branch_top);
 
 	if (filter_options.choice)
 		partial_clone_register(remote_name, &filter_options);
@@ -1556,7 +1591,7 @@ int cmd_clone(int argc,
 			   branch_top.buf, reflog_msg.buf, transport,
 			   !is_local);
 
-	update_head(our_head_points_at, remote_head, unborn_head, reflog_msg.buf);
+	update_head(&opts, our_head_points_at, remote_head, unborn_head, reflog_msg.buf);
 
 	/*
 	 * We want to show progress for recursive submodule clones iff
