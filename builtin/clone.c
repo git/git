@@ -56,42 +56,22 @@
  *  - dropping use-separate-remote and no-separate-remote compatibility
  *
  */
-static const char * const builtin_clone_usage[] = {
-	N_("git clone [<options>] [--] <repo> [<dir>]"),
-	NULL
-};
 
 static int option_no_checkout, option_bare, option_mirror, option_single_branch = -1;
 static int option_local = -1, option_no_hardlinks, option_shared;
 static int option_no_tags;
 static int option_shallow_submodules;
-static int option_reject_shallow = -1;    /* unspecified */
 static int config_reject_shallow = -1;    /* unspecified */
-static int deepen;
-static char *option_template, *option_depth, *option_since;
-static char *option_origin = NULL;
 static char *remote_name = NULL;
 static char *option_branch = NULL;
-static struct string_list option_not = STRING_LIST_INIT_NODUP;
-static const char *real_git_dir;
-static const char *ref_format;
-static const char *option_upload_pack = "git-upload-pack";
 static int option_verbosity;
-static int option_progress = -1;
-static int option_sparse_checkout;
-static enum transport_family family;
-static struct string_list option_config = STRING_LIST_INIT_NODUP;
 static struct string_list option_required_reference = STRING_LIST_INIT_NODUP;
 static struct string_list option_optional_reference = STRING_LIST_INIT_NODUP;
-static int option_dissociate;
 static int max_jobs = -1;
 static struct string_list option_recurse_submodules = STRING_LIST_INIT_NODUP;
 static struct list_objects_filter_options filter_options = LIST_OBJECTS_FILTER_INIT;
-static int option_filter_submodules = -1;    /* unspecified */
 static int config_filter_submodules = -1;    /* unspecified */
-static struct string_list server_options = STRING_LIST_INIT_NODUP;
 static int option_remote_submodules;
-static const char *bundle_uri;
 
 static int recurse_submodules_cb(const struct option *opt,
 				 const char *arg, int unset)
@@ -106,78 +86,6 @@ static int recurse_submodules_cb(const struct option *opt,
 
 	return 0;
 }
-
-static struct option builtin_clone_options[] = {
-	OPT__VERBOSITY(&option_verbosity),
-	OPT_BOOL(0, "progress", &option_progress,
-		 N_("force progress reporting")),
-	OPT_BOOL(0, "reject-shallow", &option_reject_shallow,
-		 N_("don't clone shallow repository")),
-	OPT_BOOL('n', "no-checkout", &option_no_checkout,
-		 N_("don't create a checkout")),
-	OPT_BOOL(0, "bare", &option_bare, N_("create a bare repository")),
-	OPT_HIDDEN_BOOL(0, "naked", &option_bare,
-			N_("create a bare repository")),
-	OPT_BOOL(0, "mirror", &option_mirror,
-		 N_("create a mirror repository (implies --bare)")),
-	OPT_BOOL('l', "local", &option_local,
-		N_("to clone from a local repository")),
-	OPT_BOOL(0, "no-hardlinks", &option_no_hardlinks,
-		    N_("don't use local hardlinks, always copy")),
-	OPT_BOOL('s', "shared", &option_shared,
-		    N_("setup as shared repository")),
-	{ OPTION_CALLBACK, 0, "recurse-submodules", &option_recurse_submodules,
-	  N_("pathspec"), N_("initialize submodules in the clone"),
-	  PARSE_OPT_OPTARG, recurse_submodules_cb, (intptr_t)"." },
-	OPT_ALIAS(0, "recursive", "recurse-submodules"),
-	OPT_INTEGER('j', "jobs", &max_jobs,
-		    N_("number of submodules cloned in parallel")),
-	OPT_STRING(0, "template", &option_template, N_("template-directory"),
-		   N_("directory from which templates will be used")),
-	OPT_STRING_LIST(0, "reference", &option_required_reference, N_("repo"),
-			N_("reference repository")),
-	OPT_STRING_LIST(0, "reference-if-able", &option_optional_reference,
-			N_("repo"), N_("reference repository")),
-	OPT_BOOL(0, "dissociate", &option_dissociate,
-		 N_("use --reference only while cloning")),
-	OPT_STRING('o', "origin", &option_origin, N_("name"),
-		   N_("use <name> instead of 'origin' to track upstream")),
-	OPT_STRING('b', "branch", &option_branch, N_("branch"),
-		   N_("checkout <branch> instead of the remote's HEAD")),
-	OPT_STRING('u', "upload-pack", &option_upload_pack, N_("path"),
-		   N_("path to git-upload-pack on the remote")),
-	OPT_STRING(0, "depth", &option_depth, N_("depth"),
-		    N_("create a shallow clone of that depth")),
-	OPT_STRING(0, "shallow-since", &option_since, N_("time"),
-		    N_("create a shallow clone since a specific time")),
-	OPT_STRING_LIST(0, "shallow-exclude", &option_not, N_("ref"),
-			N_("deepen history of shallow clone, excluding ref")),
-	OPT_BOOL(0, "single-branch", &option_single_branch,
-		    N_("clone only one branch, HEAD or --branch")),
-	OPT_BOOL(0, "no-tags", &option_no_tags,
-		 N_("don't clone any tags, and make later fetches not to follow them")),
-	OPT_BOOL(0, "shallow-submodules", &option_shallow_submodules,
-		    N_("any cloned submodules will be shallow")),
-	OPT_STRING(0, "separate-git-dir", &real_git_dir, N_("gitdir"),
-		   N_("separate git dir from working tree")),
-	OPT_STRING(0, "ref-format", &ref_format, N_("format"),
-		   N_("specify the reference format to use")),
-	OPT_STRING_LIST('c', "config", &option_config, N_("key=value"),
-			N_("set config inside the new repository")),
-	OPT_STRING_LIST(0, "server-option", &server_options,
-			N_("server-specific"), N_("option to transmit")),
-	OPT_IPVERSION(&family),
-	OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
-	OPT_BOOL(0, "also-filter-submodules", &option_filter_submodules,
-		    N_("apply partial clone filters to submodules")),
-	OPT_BOOL(0, "remote-submodules", &option_remote_submodules,
-		    N_("any cloned submodules will use their remote-tracking branch")),
-	OPT_BOOL(0, "sparse", &option_sparse_checkout,
-		    N_("initialize sparse-checkout file to include only files at root")),
-	OPT_STRING(0, "bundle-uri", &bundle_uri,
-		   N_("uri"), N_("a URI for downloading bundles before fetching from origin remote")),
-	OPT_END()
-};
 
 static const char *get_repo_path_1(struct strbuf *path, int *is_bundle)
 {
@@ -989,9 +897,102 @@ int cmd_clone(int argc,
 	int hash_algo;
 	enum ref_storage_format ref_storage_format = REF_STORAGE_FORMAT_UNKNOWN;
 	const int do_not_override_repo_unix_permissions = -1;
+	int option_reject_shallow = -1; /* unspecified */
+	int deepen = 0;
+	char *option_template = NULL, *option_depth = NULL, *option_since = NULL;
+	char *option_origin = NULL;
+	struct string_list option_not = STRING_LIST_INIT_NODUP;
+	const char *real_git_dir = NULL;
+	const char *ref_format = NULL;
+	const char *option_upload_pack = "git-upload-pack";
+	int option_progress = -1;
+	int option_sparse_checkout = 0;
+	enum transport_family family = TRANSPORT_FAMILY_ALL;
+	struct string_list option_config = STRING_LIST_INIT_DUP;
+	int option_dissociate = 0;
+	int option_filter_submodules = -1; /* unspecified */
+	struct string_list server_options = STRING_LIST_INIT_NODUP;
+	const char *bundle_uri = NULL;
 
 	struct transport_ls_refs_options transport_ls_refs_options =
 		TRANSPORT_LS_REFS_OPTIONS_INIT;
+
+	struct option builtin_clone_options[] = {
+		OPT__VERBOSITY(&option_verbosity),
+		OPT_BOOL(0, "progress", &option_progress,
+			 N_("force progress reporting")),
+		OPT_BOOL(0, "reject-shallow", &option_reject_shallow,
+			 N_("don't clone shallow repository")),
+		OPT_BOOL('n', "no-checkout", &option_no_checkout,
+			 N_("don't create a checkout")),
+		OPT_BOOL(0, "bare", &option_bare, N_("create a bare repository")),
+		OPT_HIDDEN_BOOL(0, "naked", &option_bare,
+				N_("create a bare repository")),
+		OPT_BOOL(0, "mirror", &option_mirror,
+			 N_("create a mirror repository (implies --bare)")),
+		OPT_BOOL('l', "local", &option_local,
+			 N_("to clone from a local repository")),
+		OPT_BOOL(0, "no-hardlinks", &option_no_hardlinks,
+			 N_("don't use local hardlinks, always copy")),
+		OPT_BOOL('s', "shared", &option_shared,
+			 N_("setup as shared repository")),
+		{ OPTION_CALLBACK, 0, "recurse-submodules", &option_recurse_submodules,
+		  N_("pathspec"), N_("initialize submodules in the clone"),
+		  PARSE_OPT_OPTARG, recurse_submodules_cb, (intptr_t)"." },
+		OPT_ALIAS(0, "recursive", "recurse-submodules"),
+		OPT_INTEGER('j', "jobs", &max_jobs,
+			    N_("number of submodules cloned in parallel")),
+		OPT_STRING(0, "template", &option_template, N_("template-directory"),
+			   N_("directory from which templates will be used")),
+		OPT_STRING_LIST(0, "reference", &option_required_reference, N_("repo"),
+				N_("reference repository")),
+		OPT_STRING_LIST(0, "reference-if-able", &option_optional_reference,
+				N_("repo"), N_("reference repository")),
+		OPT_BOOL(0, "dissociate", &option_dissociate,
+			 N_("use --reference only while cloning")),
+		OPT_STRING('o', "origin", &option_origin, N_("name"),
+			   N_("use <name> instead of 'origin' to track upstream")),
+		OPT_STRING('b', "branch", &option_branch, N_("branch"),
+			   N_("checkout <branch> instead of the remote's HEAD")),
+		OPT_STRING('u', "upload-pack", &option_upload_pack, N_("path"),
+			   N_("path to git-upload-pack on the remote")),
+		OPT_STRING(0, "depth", &option_depth, N_("depth"),
+			   N_("create a shallow clone of that depth")),
+		OPT_STRING(0, "shallow-since", &option_since, N_("time"),
+			   N_("create a shallow clone since a specific time")),
+		OPT_STRING_LIST(0, "shallow-exclude", &option_not, N_("ref"),
+				N_("deepen history of shallow clone, excluding ref")),
+		OPT_BOOL(0, "single-branch", &option_single_branch,
+			 N_("clone only one branch, HEAD or --branch")),
+		OPT_BOOL(0, "no-tags", &option_no_tags,
+			 N_("don't clone any tags, and make later fetches not to follow them")),
+		OPT_BOOL(0, "shallow-submodules", &option_shallow_submodules,
+			 N_("any cloned submodules will be shallow")),
+		OPT_STRING(0, "separate-git-dir", &real_git_dir, N_("gitdir"),
+			   N_("separate git dir from working tree")),
+		OPT_STRING(0, "ref-format", &ref_format, N_("format"),
+			   N_("specify the reference format to use")),
+		OPT_STRING_LIST('c', "config", &option_config, N_("key=value"),
+				N_("set config inside the new repository")),
+		OPT_STRING_LIST(0, "server-option", &server_options,
+				N_("server-specific"), N_("option to transmit")),
+		OPT_IPVERSION(&family),
+		OPT_PARSE_LIST_OBJECTS_FILTER(&filter_options),
+		OPT_BOOL(0, "also-filter-submodules", &option_filter_submodules,
+			 N_("apply partial clone filters to submodules")),
+		OPT_BOOL(0, "remote-submodules", &option_remote_submodules,
+			 N_("any cloned submodules will use their remote-tracking branch")),
+		OPT_BOOL(0, "sparse", &option_sparse_checkout,
+			 N_("initialize sparse-checkout file to include only files at root")),
+		OPT_STRING(0, "bundle-uri", &bundle_uri,
+			   N_("uri"), N_("a URI for downloading bundles before fetching from origin remote")),
+		OPT_END()
+	};
+
+	const char * const builtin_clone_usage[] = {
+		N_("git clone [<options>] [--] <repo> [<dir>]"),
+		NULL
+	};
 
 	packet_trace_identity("clone");
 
@@ -1138,8 +1139,8 @@ int cmd_clone(int argc,
 		for_each_string_list_item(item, &option_recurse_submodules) {
 			strbuf_addf(&sb, "submodule.active=%s",
 				    item->string);
-			string_list_append(&option_config,
-					   strbuf_detach(&sb, NULL));
+			string_list_append(&option_config, sb.buf);
+			strbuf_reset(&sb);
 		}
 
 		if (!git_config_get_bool("submodule.stickyRecursiveClone", &val) &&
@@ -1161,6 +1162,8 @@ int cmd_clone(int argc,
 			string_list_append(&option_config,
 				"submodule.alternateErrorStrategy=info");
 		}
+
+		strbuf_release(&sb);
 	}
 
 	/*
@@ -1577,6 +1580,10 @@ int cmd_clone(int argc,
 	junk_mode = JUNK_LEAVE_REPO;
 	err = checkout(submodule_progress, filter_submodules,
 		       ref_storage_format);
+
+	string_list_clear(&option_not, 0);
+	string_list_clear(&option_config, 0);
+	string_list_clear(&server_options, 0);
 
 	free(remote_name);
 	strbuf_release(&reflog_msg);
