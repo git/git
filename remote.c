@@ -1234,7 +1234,7 @@ int count_refspec_match(const char *pattern,
 	}
 }
 
-static void tail_link_ref(struct ref *ref, struct ref ***tail)
+void tail_link_ref(struct ref *ref, struct ref ***tail)
 {
 	**tail = ref;
 	while (ref->next)

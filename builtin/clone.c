@@ -57,6 +57,13 @@
  *
  */
 
+struct clone_opts {
+	int wants_head;
+};
+#define CLONE_OPTS_INIT { \
+	.wants_head = 1 /* default enabled */ \
+}
+
 static int option_no_checkout, option_bare, option_mirror, option_single_branch = -1;
 static int option_local = -1, option_no_hardlinks, option_shared;
 static int option_tags = 1; /* default enabled */
@@ -429,23 +436,24 @@ static struct ref *find_remote_branch(const struct ref *refs, const char *branch
 	return ref;
 }
 
-static struct ref *wanted_peer_refs(const struct ref *refs,
-		struct refspec *refspec)
+static struct ref *wanted_peer_refs(struct clone_opts *opts,
+				    const struct ref *refs,
+				    struct refspec *refspec)
 {
-	struct ref *head = copy_ref(find_ref_by_name(refs, "HEAD"));
-	struct ref *local_refs = head;
-	struct ref **tail = local_refs ? &local_refs->next : &local_refs;
+	struct ref *local_refs = NULL;
+	struct ref **tail = &local_refs;
 	struct ref *to_free = NULL;
 
-	if (option_single_branch) {
-		if (!option_branch)
+	if (opts->wants_head) {
+		struct ref *head = copy_ref(find_ref_by_name(refs, "HEAD"));
+		if (head)
+			tail_link_ref(head, &tail);
+		if (option_single_branch)
 			refs = to_free = guess_remote_head(head, refs, 0);
-		else {
-			free_one_ref(head);
-			local_refs = head = NULL;
-			tail = &local_refs;
-			refs = to_free = copy_ref(find_remote_branch(refs, option_branch));
-		}
+	} else if (option_single_branch) {
+		local_refs = NULL;
+		tail = &local_refs;
+		refs = to_free = copy_ref(find_remote_branch(refs, option_branch));
 	}
 
 	for (size_t i = 0; i < refspec->nr; i++)
@@ -892,6 +900,8 @@ int cmd_clone(int argc,
 	int option_filter_submodules = -1; /* unspecified */
 	struct string_list server_options = STRING_LIST_INIT_NODUP;
 	const char *bundle_uri = NULL;
+
+	struct clone_opts opts = CLONE_OPTS_INIT;
 
 	struct transport_ls_refs_options transport_ls_refs_options =
 		TRANSPORT_LS_REFS_OPTIONS_INIT;
@@ -1343,8 +1353,12 @@ int cmd_clone(int argc,
 	if (option_not.nr)
 		transport_set_option(transport, TRANS_OPT_DEEPEN_NOT,
 				     (const char *)&option_not);
-	if (option_single_branch)
+	if (option_single_branch) {
 		transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, "1");
+
+		if (option_branch)
+			opts.wants_head = 0;
+	}
 
 	if (option_upload_pack)
 		transport_set_option(transport, TRANS_OPT_UPLOADPACK,
@@ -1454,7 +1468,7 @@ int cmd_clone(int argc,
 	}
 
 	if (refs)
-		mapped_refs = wanted_peer_refs(refs, &remote->fetch);
+		mapped_refs = wanted_peer_refs(&opts, refs, &remote->fetch);
 
 	if (mapped_refs) {
 		/*
