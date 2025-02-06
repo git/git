@@ -409,6 +409,7 @@ void load_builtin_commands(const char *prefix UNUSED,
 static int cmd_clone(int argc, const char **argv)
 {
 	const char *branch = NULL;
+	char *branch_to_free = NULL;
 	int full_clone = 0, single_branch = 0, show_progress = isatty(2);
 	int src = 1, tags = 1;
 	struct option clone_options[] = {
@@ -490,7 +491,7 @@ static int cmd_clone(int argc, const char **argv)
 	/* common-main already logs `argv` */
 	trace2_def_repo(the_repository);
 
-	if (!branch && !(branch = remote_default_branch(url))) {
+	if (!branch && !(branch = branch_to_free = remote_default_branch(url))) {
 		res = error(_("failed to get default branch for '%s'"), url);
 		goto cleanup;
 	}
@@ -552,6 +553,7 @@ static int cmd_clone(int argc, const char **argv)
 	res = register_dir();
 
 cleanup:
+	free(branch_to_free);
 	free(enlistment);
 	free(dir);
 	strbuf_release(&buf);
