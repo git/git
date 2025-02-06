@@ -435,10 +435,7 @@ static struct ref *wanted_peer_refs(const struct ref *refs,
 	struct ref *head = copy_ref(find_ref_by_name(refs, "HEAD"));
 	struct ref *local_refs = head;
 	struct ref **tail = local_refs ? &local_refs->next : &local_refs;
-	struct refspec_item tag_refspec;
 	struct ref *to_free = NULL;
-
-	refspec_item_init(&tag_refspec, TAG_REFSPEC, 0);
 
 	if (option_single_branch) {
 		if (!option_branch)
@@ -454,16 +451,7 @@ static struct ref *wanted_peer_refs(const struct ref *refs,
 	for (size_t i = 0; i < refspec->nr; i++)
 		get_fetch_map(refs, &refspec->items[i], &tail, 0);
 
-	/*
-	 * Grab all refs that match the TAG_REFSPEC. Any tags we don't care
-	 * about won't be present in `refs` anyway.
-	 * Except with option --mirror, where we grab all refs already.
-	 */
-	if (!option_mirror)
-		get_fetch_map(refs, &tag_refspec, &tail, 0);
-
 	free_one_ref(to_free);
-	refspec_item_clear(&tag_refspec);
 
 	return local_refs;
 }
@@ -1011,8 +999,10 @@ int cmd_clone(int argc,
 			die(_("unknown ref storage format '%s'"), ref_format);
 	}
 
-	if (option_mirror)
+	if (option_mirror) {
 		option_bare = 1;
+		option_tags = 0;
+	}
 
 	if (option_bare) {
 		if (real_git_dir)
@@ -1375,14 +1365,19 @@ int cmd_clone(int argc,
 		transport->smart_options->check_self_contained_and_connected = 1;
 
 	strvec_push(&transport_ls_refs_options.ref_prefixes, "HEAD");
+
+	if (option_tags || option_branch)
+		/*
+		 * Add tags refspec when user asked for tags (implicitly) or
+		 * specified --branch, whose argument might be a tag.
+		 */
+		refspec_append(&remote->fetch, TAG_REFSPEC);
+
 	refspec_ref_prefixes(&remote->fetch,
 			     &transport_ls_refs_options.ref_prefixes);
 	if (option_branch)
 		expand_ref_prefix(&transport_ls_refs_options.ref_prefixes,
 				  option_branch);
-	if (option_tags)
-		strvec_push(&transport_ls_refs_options.ref_prefixes,
-			    "refs/tags/");
 
 	refs = transport_get_remote_refs(transport, &transport_ls_refs_options);
 
