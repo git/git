@@ -1109,11 +1109,11 @@ elif host_machine.system() == 'windows'
   libgit_sources += [
     'compat/mingw.c',
     'compat/winansi.c',
+    'compat/win32/dirent.c',
     'compat/win32/flush.c',
     'compat/win32/path-utils.c',
     'compat/win32/pthread.c',
     'compat/win32/syslog.c',
-    'compat/win32/dirent.c',
     'compat/win32mmap.c',
     'compat/nedmalloc/nedmalloc.c',
   ]
