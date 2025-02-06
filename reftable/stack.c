@@ -1058,8 +1058,10 @@ static int stack_write_compact(struct reftable_stack *st,
 
 	for (size_t i = first; i <= last; i++)
 		st->stats.bytes += st->readers[i]->size;
-	reftable_writer_set_limits(wr, st->readers[first]->min_update_index,
-				   st->readers[last]->max_update_index);
+	err = reftable_writer_set_limits(wr, st->readers[first]->min_update_index,
+					 st->readers[last]->max_update_index);
+	if (err < 0)
+		goto done;
 
 	err = reftable_merged_table_new(&mt, st->readers + first, subtabs_len,
 					st->opts.hash_id);
