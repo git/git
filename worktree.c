@@ -65,6 +65,28 @@ static int is_current_worktree(struct worktree *wt)
 	return is_current;
 }
 
+/*
+* When in a secondary worktree, and when extensions.worktreeConfig
+* is true, only $commondir/config and $commondir/worktrees/<id>/
+* config.worktree are consulted, hence any core.bare=true setting in
+* $commondir/config.worktree gets overlooked. Thus, check it manually
+* to determine if the repository is bare.
+*/
+static int is_main_worktree_bare(struct repository *repo)
+{
+	int bare = 0;
+	struct config_set cs = {0};
+	char *worktree_config = xstrfmt("%s/config.worktree", repo_get_common_dir(repo));
+
+	git_configset_init(&cs);
+	git_configset_add_file(&cs, worktree_config);
+	git_configset_get_bool(&cs, "core.bare", &bare);
+
+	git_configset_clear(&cs);
+	free(worktree_config);
+	return bare;
+}
+
 /**
  * get the main worktree
  */
@@ -79,16 +101,17 @@ static struct worktree *get_main_worktree(int skip_reading_head)
 	CALLOC_ARRAY(worktree, 1);
 	worktree->repo = the_repository;
 	worktree->path = strbuf_detach(&worktree_path, NULL);
-	/*
-	 * NEEDSWORK: If this function is called from a secondary worktree and
-	 * config.worktree is present, is_bare_repository_cfg will reflect the
-	 * contents of config.worktree, not the contents of the main worktree.
-	 * This means that worktree->is_bare may be set to 0 even if the main
-	 * worktree is configured to be bare.
-	 */
-	worktree->is_bare = (is_bare_repository_cfg == 1) ||
-		is_bare_repository();
 	worktree->is_current = is_current_worktree(worktree);
+	worktree->is_bare = (is_bare_repository_cfg == 1) ||
+		is_bare_repository() ||
+		/*
+		 * When in a secondary worktree we have to also verify if the main
+		 * worktree is bare in $commondir/config.worktree.
+		 * This check is unnecessary if we're currently in the main worktree,
+		 * as prior checks already consulted all configs of the current worktree.
+		 */
+		(!worktree->is_current && is_main_worktree_bare(the_repository));
+
 	if (!skip_reading_head)
 		add_head_info(worktree);
 	return worktree;
