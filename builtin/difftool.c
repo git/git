@@ -36,18 +36,27 @@
 #include "entry.h"
 #include "setup.h"
 
-static int trust_exit_code;
-
 static const char *const builtin_difftool_usage[] = {
 	N_("git difftool [<options>] [<commit> [<commit>]] [--] [<path>...]"),
 	NULL
 };
 
+struct difftool_options {
+	int has_symlinks;
+	int symlinks;
+	int trust_exit_code;
+};
+
 static int difftool_config(const char *var, const char *value,
 			   const struct config_context *ctx, void *cb)
 {
+	struct difftool_options *dt_options = (struct difftool_options *)cb;
 	if (!strcmp(var, "difftool.trustexitcode")) {
-		trust_exit_code = git_config_bool(var, value);
+		dt_options->trust_exit_code = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "core.symlinks")) {
+		dt_options->has_symlinks = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -291,13 +300,14 @@ static int ensure_leading_directories(char *path)
  * to compare the readlink(2) result as text, even on a filesystem that is
  * capable of doing a symbolic link.
  */
-static char *get_symlink(const struct object_id *oid, const char *path)
+static char *get_symlink(struct difftool_options *dt_options,
+			 const struct object_id *oid, const char *path)
 {
 	char *data;
 	if (is_null_oid(oid)) {
 		/* The symlink is unknown to Git so read from the filesystem */
 		struct strbuf link = STRBUF_INIT;
-		if (has_symlinks) {
+		if (dt_options->has_symlinks) {
 			if (strbuf_readlink(&link, path, strlen(path)))
 				die(_("could not read symlink %s"), path);
 		} else if (strbuf_read_file(&link, path, 128))
@@ -355,7 +365,8 @@ static void write_standin_files(struct pair_entry *entry,
 		write_file_in_directory(rdir, rdir_len, entry->path, entry->right);
 }
 
-static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
+static int run_dir_diff(struct difftool_options *dt_options,
+			const char *extcmd, const char *prefix,
 			struct child_process *child)
 {
 	struct strbuf info = STRBUF_INIT, lpath = STRBUF_INIT;
@@ -469,13 +480,13 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		}
 
 		if (S_ISLNK(lmode)) {
-			char *content = get_symlink(&loid, src_path);
+			char *content = get_symlink(dt_options, &loid, src_path);
 			add_left_or_right(&symlinks2, src_path, content, 0);
 			free(content);
 		}
 
 		if (S_ISLNK(rmode)) {
-			char *content = get_symlink(&roid, dst_path);
+			char *content = get_symlink(dt_options, &roid, dst_path);
 			add_left_or_right(&symlinks2, dst_path, content, 1);
 			free(content);
 		}
@@ -528,7 +539,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 					goto finish;
 				}
 				add_path(&wtdir, wtdir_len, dst_path);
-				if (symlinks) {
+				if (dt_options->symlinks) {
 					if (symlink(wtdir.buf, rdir.buf)) {
 						ret = error_errno("could not symlink '%s' to '%s'", wtdir.buf, rdir.buf);
 						goto finish;
@@ -614,7 +625,7 @@ static int run_dir_diff(const char *extcmd, int symlinks, const char *prefix,
 		if (lstat(rdir.buf, &st))
 			continue;
 
-		if ((symlinks && S_ISLNK(st.st_mode)) || !S_ISREG(st.st_mode))
+		if ((dt_options->symlinks && S_ISLNK(st.st_mode)) || !S_ISREG(st.st_mode))
 			continue;
 
 		if (!indices_loaded) {
@@ -704,9 +715,13 @@ int cmd_difftool(int argc,
 		 const char *prefix,
 		 struct repository *repo UNUSED)
 {
-	int use_gui_tool = -1, dir_diff = 0, prompt = -1, symlinks = 0,
-	    tool_help = 0, no_index = 0;
+	int use_gui_tool = -1, dir_diff = 0, prompt = -1, tool_help = 0, no_index = 0;
 	static char *difftool_cmd = NULL, *extcmd = NULL;
+	struct difftool_options dt_options = {
+		.has_symlinks = 1,
+		.symlinks = 1,
+		.trust_exit_code = 0
+	};
 	struct option builtin_difftool_options[] = {
 		OPT_BOOL('g', "gui", &use_gui_tool,
 			 N_("use `diff.guitool` instead of `diff.tool`")),
@@ -717,14 +732,14 @@ int cmd_difftool(int argc,
 			0, PARSE_OPT_NONEG),
 		OPT_SET_INT_F(0, "prompt", &prompt, NULL,
 			1, PARSE_OPT_NONEG | PARSE_OPT_HIDDEN),
-		OPT_BOOL(0, "symlinks", &symlinks,
+		OPT_BOOL(0, "symlinks", &dt_options.symlinks,
 			 N_("use symlinks in dir-diff mode")),
 		OPT_STRING('t', "tool", &difftool_cmd, N_("tool"),
 			   N_("use the specified diff tool")),
 		OPT_BOOL(0, "tool-help", &tool_help,
 			 N_("print a list of diff tools that may be used with "
 			    "`--tool`")),
-		OPT_BOOL(0, "trust-exit-code", &trust_exit_code,
+		OPT_BOOL(0, "trust-exit-code", &dt_options.trust_exit_code,
 			 N_("make 'git-difftool' exit when an invoked diff "
 			    "tool returns a non-zero exit code")),
 		OPT_STRING('x', "extcmd", &extcmd, N_("command"),
@@ -734,8 +749,8 @@ int cmd_difftool(int argc,
 	};
 	struct child_process child = CHILD_PROCESS_INIT;
 
-	git_config(difftool_config, NULL);
-	symlinks = has_symlinks;
+	git_config(difftool_config, &dt_options);
+	dt_options.symlinks = dt_options.has_symlinks;
 
 	argc = parse_options(argc, argv, prefix, builtin_difftool_options,
 			     builtin_difftool_usage, PARSE_OPT_KEEP_UNKNOWN_OPT |
@@ -783,7 +798,7 @@ int cmd_difftool(int argc,
 	}
 
 	setenv("GIT_DIFFTOOL_TRUST_EXIT_CODE",
-	       trust_exit_code ? "true" : "false", 1);
+	       dt_options.trust_exit_code ? "true" : "false", 1);
 
 	/*
 	 * In directory diff mode, 'git-difftool--helper' is called once
@@ -799,6 +814,6 @@ int cmd_difftool(int argc,
 	strvec_pushv(&child.args, argv);
 
 	if (dir_diff)
-		return run_dir_diff(extcmd, symlinks, prefix, &child);
+		return run_dir_diff(&dt_options, extcmd, prefix, &child);
 	return run_file_diff(prompt, prefix, &child);
 }
