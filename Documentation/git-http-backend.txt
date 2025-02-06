@@ -56,6 +56,10 @@ http.receivepack::
 	disabled by setting this item to `false`, or enabled for all
 	users, including anonymous users, by setting it to `true`.
 
+http.uploadarchive::
+	This serves 'git archive' clients for remote archive over HTTP/HTTPS
+	protocols. It is disabled by default. It only works in protocol v2.
+
 URL TRANSLATION
 ---------------
 To determine the location of the repository on disk, 'git http-backend'
