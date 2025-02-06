@@ -31,6 +31,12 @@ struct worktree {
 struct worktree **get_worktrees(void);
 
 /*
+ * Like `get_worktrees`, but does not read HEAD. This is useful when checking
+ * the consistency, as reading HEAD may not be necessary.
+ */
+struct worktree **get_worktrees_without_reading_head(void);
+
+/*
  * Returns 1 if linked worktrees exist, 0 otherwise.
  */
 int submodule_uses_worktrees(const char *path);
