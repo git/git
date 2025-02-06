@@ -300,14 +300,9 @@ struct snapshot_record {
 	size_t len;
 };
 
-static int cmp_packed_ref_records(const void *v1, const void *v2,
-				  void *cb_data)
-{
-	const struct snapshot *snapshot = cb_data;
-	const struct snapshot_record *e1 = v1, *e2 = v2;
-	const char *r1 = e1->start + snapshot_hexsz(snapshot) + 1;
-	const char *r2 = e2->start + snapshot_hexsz(snapshot) + 1;
 
+static int cmp_packed_refname(const char *r1, const char *r2)
+{
 	while (1) {
 		if (*r1 == '\n')
 			return *r2 == '\n' ? 0 : -1;
@@ -320,6 +315,17 @@ static int cmp_packed_ref_records(const void *v1, const void *v2,
 		r1++;
 		r2++;
 	}
+}
+
+static int cmp_packed_ref_records(const void *v1, const void *v2,
+				  void *cb_data)
+{
+	const struct snapshot *snapshot = cb_data;
+	const struct snapshot_record *e1 = v1, *e2 = v2;
+	const char *r1 = e1->start + snapshot_hexsz(snapshot) + 1;
+	const char *r2 = e2->start + snapshot_hexsz(snapshot) + 1;
+
+	return cmp_packed_refname(r1, r2);
 }
 
 /*
@@ -1767,6 +1773,28 @@ static struct ref_iterator *packed_reflog_iterator_begin(struct ref_store *ref_s
 	return empty_ref_iterator_begin();
 }
 
+struct fsck_packed_ref_entry {
+	unsigned long line_number;
+
+	struct snapshot_record record;
+};
+
+static struct fsck_packed_ref_entry *create_fsck_packed_ref_entry(unsigned long line_number,
+								  const char *start)
+{
+	struct fsck_packed_ref_entry *entry = xcalloc(1, sizeof(*entry));
+	entry->line_number = line_number;
+	entry->record.start = start;
+	return entry;
+}
+
+static void free_fsck_packed_ref_entries(struct fsck_packed_ref_entry **entries, size_t nr)
+{
+	for (size_t i = 0; i < nr; i++)
+		free(entries[i]);
+	free(entries);
+}
+
 static int packed_fsck_ref_next_line(struct fsck_options *o,
 				     struct strbuf *packed_entry, const char *start,
 				     const char *eof, const char **eol)
@@ -1794,19 +1822,33 @@ static int packed_fsck_ref_next_line(struct fsck_options *o,
 }
 
 static int packed_fsck_ref_header(struct fsck_options *o,
-				  const char *start, const char *eol)
+				  const char *start, const char *eol,
+				  unsigned int *sorted)
 {
-	if (!starts_with(start, "# pack-refs with:")) {
+	struct string_list traits = STRING_LIST_INIT_NODUP;
+	char *tmp_line;
+	int ret = 0;
+	char *p;
+
+	tmp_line = xmemdupz(start, eol - start);
+	if (!skip_prefix(tmp_line, "# pack-refs with:", (const char **)&p)) {
 		struct fsck_ref_report report = { 0 };
 		report.path = "packed-refs.header";
 
-		return fsck_report_ref(o, &report,
-				       FSCK_MSG_BAD_PACKED_REF_HEADER,
-				       "'%.*s' does not start with '# pack-refs with:'",
-				       (int)(eol - start), start);
+		ret = fsck_report_ref(o, &report,
+				      FSCK_MSG_BAD_PACKED_REF_HEADER,
+				      "'%.*s' does not start with '# pack-refs with:'",
+				      (int)(eol - start), start);
+		goto cleanup;
 	}
 
-	return 0;
+	string_list_split_in_place(&traits, p, " ", -1);
+	*sorted = unsorted_string_list_has_string(&traits, "sorted");
+
+cleanup:
+	free(tmp_line);
+	string_list_clear(&traits, 0);
+	return ret;
 }
 
 static int packed_fsck_ref_peeled_line(struct fsck_options *o,
@@ -1880,26 +1922,80 @@ static int packed_fsck_ref_main_line(struct fsck_options *o,
 	return 0;
 }
 
+static int packed_fsck_ref_sorted(struct fsck_options *o,
+				  struct ref_store *ref_store,
+				  struct fsck_packed_ref_entry **entries,
+				  size_t nr)
+{
+	size_t hexsz = ref_store->repo->hash_algo->hexsz;
+	struct strbuf packed_entry = STRBUF_INIT;
+	struct fsck_ref_report report = { 0 };
+	struct strbuf refname1 = STRBUF_INIT;
+	struct strbuf refname2 = STRBUF_INIT;
+	int ret = 0;
+
+	for (size_t i = 1; i < nr; i++) {
+		const char *r1 = entries[i - 1]->record.start + hexsz + 1;
+		const char *r2 = entries[i]->record.start + hexsz + 1;
+
+		if (cmp_packed_refname(r1, r2) >= 0) {
+			const char *err_fmt =
+				"refname '%s' is not less than next refname '%s'";
+			const char *eol;
+			eol = memchr(entries[i - 1]->record.start, '\n',
+				     entries[i - 1]->record.len);
+			strbuf_add(&refname1, r1, eol - r1);
+			eol = memchr(entries[i]->record.start, '\n',
+				     entries[i]->record.len);
+			strbuf_add(&refname2, r2, eol - r2);
+
+			strbuf_addf(&packed_entry, "packed-refs line %lu",
+				    entries[i - 1]->line_number);
+			report.path = packed_entry.buf;
+			ret = fsck_report_ref(o, &report,
+					      FSCK_MSG_PACKED_REF_UNSORTED,
+					      err_fmt, refname1.buf, refname2.buf);
+			goto cleanup;
+		}
+	}
+
+cleanup:
+	strbuf_release(&packed_entry);
+	strbuf_release(&refname1);
+	strbuf_release(&refname2);
+	return ret;
+}
+
 static int packed_fsck_ref_content(struct fsck_options *o,
 				   struct ref_store *ref_store,
 				   const char *start, const char *eof)
 {
 	struct strbuf packed_entry = STRBUF_INIT;
+	struct fsck_packed_ref_entry **entries;
 	struct strbuf refname = STRBUF_INIT;
 	unsigned long line_number = 1;
+	unsigned int sorted = 0;
+	size_t entry_alloc = 20;
+	size_t entry_nr = 0;
 	const char *eol;
 	int ret = 0;
 
 	strbuf_addf(&packed_entry, "packed-refs line %lu", line_number);
 	ret |= packed_fsck_ref_next_line(o, &packed_entry, start, eof, &eol);
 	if (*start == '#') {
-		ret |= packed_fsck_ref_header(o, start, eol);
+		ret |= packed_fsck_ref_header(o, start, eol, &sorted);
 
 		start = eol + 1;
 		line_number++;
 	}
 
+	ALLOC_ARRAY(entries, entry_alloc);
 	while (start < eof) {
+		struct fsck_packed_ref_entry *entry
+			= create_fsck_packed_ref_entry(line_number, start);
+
+		ALLOC_GROW(entries, entry_nr + 1, entry_alloc);
+		entries[entry_nr++] = entry;
 		strbuf_reset(&packed_entry);
 		strbuf_addf(&packed_entry, "packed-refs line %lu", line_number);
 		ret |= packed_fsck_ref_next_line(o, &packed_entry, start, eof, &eol);
@@ -1915,11 +2011,16 @@ static int packed_fsck_ref_content(struct fsck_options *o,
 			start = eol + 1;
 			line_number++;
 		}
+		entry->record.len = start - entry->record.start;
 	}
+
+	if (!ret && sorted)
+		ret |= packed_fsck_ref_sorted(o, ref_store, entries, entry_nr);
 
 	strbuf_release(&packed_entry);
 	strbuf_release(&refname);
 	strbuf_release(&packed_entry);
+	free_fsck_packed_ref_entries(entries, entry_nr);
 	return ret;
 }
 
