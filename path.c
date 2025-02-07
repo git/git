@@ -414,7 +414,7 @@ static void strbuf_worktree_gitdir(struct strbuf *buf,
 	else if (!wt->id)
 		strbuf_addstr(buf, repo->commondir);
 	else
-		strbuf_git_common_path(buf, repo, "worktrees/%s", wt->id);
+		repo_common_path_append(repo, buf, "worktrees/%s", wt->id);
 }
 
 void repo_git_pathv(const struct repository *repo,
@@ -596,14 +596,38 @@ void repo_common_pathv(const struct repository *repo,
 	strbuf_cleanup_path(sb);
 }
 
-void strbuf_git_common_path(struct strbuf *sb,
-			    const struct repository *repo,
-			    const char *fmt, ...)
+char *repo_common_path(const struct repository *repo,
+		       const char *fmt, ...)
+{
+	struct strbuf sb = STRBUF_INIT;
+	va_list args;
+	va_start(args, fmt);
+	repo_common_pathv(repo, &sb, fmt, args);
+	va_end(args);
+	return strbuf_detach(&sb, NULL);
+}
+
+const char *repo_common_path_append(const struct repository *repo,
+				    struct strbuf *sb,
+				    const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
 	repo_common_pathv(repo, sb, fmt, args);
 	va_end(args);
+	return sb->buf;
+}
+
+const char *repo_common_path_replace(const struct repository *repo,
+				     struct strbuf *sb,
+				     const char *fmt, ...)
+{
+	va_list args;
+	strbuf_reset(sb);
+	va_start(args, fmt);
+	repo_common_pathv(repo, sb, fmt, args);
+	va_end(args);
+	return sb->buf;
 }
 
 static struct passwd *getpw_str(const char *username, size_t len)

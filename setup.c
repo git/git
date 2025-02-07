@@ -792,7 +792,7 @@ int upgrade_repository_format(int target_version)
 	struct repository_format repo_fmt = REPOSITORY_FORMAT_INIT;
 	int ret;
 
-	strbuf_git_common_path(&sb, the_repository, "config");
+	repo_common_path_append(the_repository, &sb, "config");
 	read_repository_format(&repo_fmt, sb.buf);
 	strbuf_release(&sb);
 
@@ -2242,7 +2242,7 @@ void initialize_repository_version(int hash_algo,
 		struct strbuf config = STRBUF_INIT;
 		struct repository_format repo_fmt = REPOSITORY_FORMAT_INIT;
 
-		strbuf_git_common_path(&config, the_repository, "config");
+		repo_common_path_append(the_repository, &config, "config");
 		read_repository_format(&repo_fmt, config.buf);
 
 		if (repo_fmt.v1_only_extensions.nr)

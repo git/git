@@ -2192,8 +2192,8 @@ struct ref_store *get_worktree_ref_store(const struct worktree *wt)
 
 	if (wt->id) {
 		struct strbuf common_path = STRBUF_INIT;
-		strbuf_git_common_path(&common_path, wt->repo,
-				      "worktrees/%s", wt->id);
+		repo_common_path_append(wt->repo, &common_path,
+					"worktrees/%s", wt->id);
 		refs = ref_store_init(wt->repo, wt->repo->ref_storage_format,
 				      common_path.buf, REF_STORE_ALL_CAPS);
 		strbuf_release(&common_path);
