@@ -546,7 +546,7 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 	if (xgethostname(my_host, sizeof(my_host)))
 		xsnprintf(my_host, sizeof(my_host), "unknown");
 
-	pidfile_path = git_pathdup("gc.pid");
+	pidfile_path = repo_git_path(the_repository, "gc.pid");
 	fd = hold_lock_file_for_update(&lock, pidfile_path,
 				       LOCK_DIE_ON_ERROR);
 	if (!force) {
@@ -607,7 +607,7 @@ static int report_last_gc_error(void)
 	int ret = 0;
 	ssize_t len;
 	struct stat st;
-	char *gc_log_path = git_pathdup("gc.log");
+	char *gc_log_path = repo_git_path(the_repository, "gc.log");
 
 	if (stat(gc_log_path, &st)) {
 		if (errno == ENOENT)

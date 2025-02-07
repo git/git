@@ -292,23 +292,9 @@ static inline const char *git_path(const char *fmt, ...)
 	{ \
 		static char *ret; \
 		if (!ret) \
-			ret = git_pathdup(filename); \
+			ret = repo_git_path(the_repository, filename); \
 		return ret; \
 	}
-
-/*
- * Return a path into the main repository's (the_repository) git directory.
- */
-__attribute__((format (printf, 1, 2)))
-static inline char *git_pathdup(const char *fmt, ...)
-{
-	struct strbuf path = STRBUF_INIT;
-	va_list args;
-	va_start(args, fmt);
-	repo_git_pathv(the_repository, NULL, &path, fmt, args);
-	va_end(args);
-	return strbuf_detach(&path, NULL);
-}
 
 # endif /* USE_THE_REPOSITORY_VARIABLE */
 

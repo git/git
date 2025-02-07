@@ -309,7 +309,7 @@ static void write_buf_to_worktree(const struct object_id *obj,
 				  const char *buf, unsigned long size)
 {
 	int fd;
-	char *path = git_pathdup(NOTES_MERGE_WORKTREE "/%s", oid_to_hex(obj));
+	char *path = repo_git_path(the_repository, NOTES_MERGE_WORKTREE "/%s", oid_to_hex(obj));
 	if (safe_create_leading_directories_const(path))
 		die_errno("unable to create directory for '%s'", path);
 

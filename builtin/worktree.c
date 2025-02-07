@@ -337,7 +337,7 @@ static void check_candidate_path(const char *path,
 
 static void copy_sparse_checkout(const char *worktree_git_dir)
 {
-	char *from_file = git_pathdup("info/sparse-checkout");
+	char *from_file = repo_git_path(the_repository, "info/sparse-checkout");
 	char *to_file = xstrfmt("%s/info/sparse-checkout", worktree_git_dir);
 
 	if (file_exists(from_file)) {
@@ -353,7 +353,7 @@ static void copy_sparse_checkout(const char *worktree_git_dir)
 
 static void copy_filtered_worktree_config(const char *worktree_git_dir)
 {
-	char *from_file = git_pathdup("config.worktree");
+	char *from_file = repo_git_path(the_repository, "config.worktree");
 	char *to_file = xstrfmt("%s/config.worktree", worktree_git_dir);
 
 	if (file_exists(from_file)) {
