@@ -3451,7 +3451,7 @@ void setup_standard_excludes(struct dir_struct *dir)
 
 char *get_sparse_checkout_filename(void)
 {
-	return git_pathdup("info/sparse-checkout");
+	return repo_git_path(the_repository, "info/sparse-checkout");
 }
 
 int get_sparse_checkout_patterns(struct pattern_list *pl)

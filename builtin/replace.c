@@ -345,7 +345,7 @@ static int edit_and_replace(const char *object_ref, int force, int raw)
 	}
 	strbuf_release(&ref);
 
-	tmpfile = git_pathdup("REPLACE_EDITOBJ");
+	tmpfile = repo_git_path(the_repository, "REPLACE_EDITOBJ");
 	if (export_object(&old_oid, type, raw, tmpfile)) {
 		free(tmpfile);
 		return -1;

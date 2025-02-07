@@ -835,7 +835,7 @@ static void write_refspec_config(const char *src_ref_prefix,
 
 static void dissociate_from_references(void)
 {
-	char *alternates = git_pathdup("objects/info/alternates");
+	char *alternates = repo_git_path(the_repository, "objects/info/alternates");
 
 	if (!access(alternates, F_OK)) {
 		struct child_process cmd = CHILD_PROCESS_INIT;

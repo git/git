@@ -723,7 +723,7 @@ static void read_info_alternates(struct repository *r,
 void add_to_alternates_file(const char *reference)
 {
 	struct lock_file lock = LOCK_INIT;
-	char *alts = git_pathdup("objects/info/alternates");
+	char *alts = repo_git_path(the_repository, "objects/info/alternates");
 	FILE *in, *out;
 	int found = 0;
 

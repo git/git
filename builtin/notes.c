@@ -197,7 +197,7 @@ static void prepare_note_data(const struct object_id *object, struct note_data *
 		struct strbuf buf = STRBUF_INIT;
 
 		/* write the template message before editing: */
-		d->edit_path = git_pathdup("NOTES_EDITMSG");
+		d->edit_path = repo_git_path(the_repository, "NOTES_EDITMSG");
 		fd = xopen(d->edit_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 
 		if (d->msg_nr)
