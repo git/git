@@ -312,8 +312,8 @@ int repo_submodule_init(struct repository *subrepo,
 	struct strbuf worktree = STRBUF_INIT;
 	int ret = 0;
 
-	strbuf_repo_worktree_path(&gitdir, superproject, "%s/.git", path);
-	strbuf_repo_worktree_path(&worktree, superproject, "%s", path);
+	repo_worktree_path_append(superproject, &gitdir, "%s/.git", path);
+	repo_worktree_path_append(superproject, &worktree, "%s", path);
 
 	if (repo_init(subrepo, gitdir.buf, worktree.buf)) {
 		/*
