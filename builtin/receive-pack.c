@@ -1435,7 +1435,8 @@ static const char *push_to_checkout(unsigned char *hash,
 
 static const char *update_worktree(unsigned char *sha1, const struct worktree *worktree)
 {
-	const char *retval, *git_dir;
+	const char *retval;
+	char *git_dir;
 	struct strvec env = STRVEC_INIT;
 	int invoked_hook;
 
@@ -1453,6 +1454,7 @@ static const char *update_worktree(unsigned char *sha1, const struct worktree *w
 		retval = push_to_deploy(sha1, &env, worktree->path);
 
 	strvec_clear(&env);
+	free(git_dir);
 	return retval;
 }
 

@@ -59,8 +59,9 @@ static void add_head_info(struct worktree *wt)
 static int is_current_worktree(struct worktree *wt)
 {
 	char *git_dir = absolute_pathdup(repo_get_git_dir(the_repository));
-	const char *wt_git_dir = get_worktree_git_dir(wt);
+	char *wt_git_dir = get_worktree_git_dir(wt);
 	int is_current = !fspathcmp(git_dir, absolute_path(wt_git_dir));
+	free(wt_git_dir);
 	free(git_dir);
 	return is_current;
 }
@@ -198,14 +199,14 @@ struct worktree **get_worktrees(void)
 	return get_worktrees_internal(0);
 }
 
-const char *get_worktree_git_dir(const struct worktree *wt)
+char *get_worktree_git_dir(const struct worktree *wt)
 {
 	if (!wt)
-		return repo_get_git_dir(the_repository);
+		return xstrdup(repo_get_git_dir(the_repository));
 	else if (!wt->id)
-		return repo_get_common_dir(the_repository);
+		return xstrdup(repo_get_common_dir(the_repository));
 	else
-		return git_common_path("worktrees/%s", wt->id);
+		return xstrdup(git_common_path("worktrees/%s", wt->id));
 }
 
 static struct worktree *find_worktree_by_suffix(struct worktree **list,
