@@ -1826,7 +1826,7 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 
 	connect_work_tree_and_git_dir(clone_data_path, sm_gitdir, 0);
 
-	p = git_pathdup_submodule(clone_data_path, "config");
+	p = repo_submodule_path(the_repository, clone_data_path, "config");
 	if (!p)
 		die(_("could not get submodule directory for '%s'"), clone_data_path);
 
