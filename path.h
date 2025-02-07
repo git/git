@@ -25,22 +25,20 @@ char *mkpathdup(const char *fmt, ...)
 	__attribute__((format (printf, 1, 2)));
 
 /*
- * The `strbuf_git_common_path` family of functions will construct a path into a
+ * The `repo_common_path` family of functions will construct a path into a
  * repository's common git directory, which is shared by all worktrees.
  */
-
-/*
- * Constructs a path into the common git directory of repository `repo` and
- * append it in the provided buffer `sb`.
- */
-void strbuf_git_common_path(struct strbuf *sb,
-			    const struct repository *repo,
-			    const char *fmt, ...)
+char *repo_common_path(const struct repository *repo,
+		       const char *fmt, ...)
+	__attribute__((format (printf, 2, 3)));
+const char *repo_common_path_append(const struct repository *repo,
+				    struct strbuf *sb,
+				    const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));
-void repo_common_pathv(const struct repository *repo,
-		       struct strbuf *buf,
-		       const char *fmt,
-		       va_list args);
+const char *repo_common_path_replace(const struct repository *repo,
+				     struct strbuf *sb,
+				     const char *fmt, ...)
+	__attribute__((format (printf, 3, 4)));
 
 /*
  * The `repo_git_path` family of functions will construct a path into a repository's
@@ -242,6 +240,12 @@ struct strbuf *get_pathname(void);
 # ifdef USE_THE_REPOSITORY_VARIABLE
 #  include "strbuf.h"
 #  include "repository.h"
+
+/* Internal implementation detail that should not be used. */
+void repo_common_pathv(const struct repository *repo,
+		       struct strbuf *buf,
+		       const char *fmt,
+		       va_list args);
 
 /*
  * Return a statically allocated path into the main repository's

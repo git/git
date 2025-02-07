@@ -104,7 +104,7 @@ struct worktree *get_linked_worktree(const char *id,
 	if (!id)
 		die("Missing linked worktree name");
 
-	strbuf_git_common_path(&path, the_repository, "worktrees/%s/gitdir", id);
+	repo_common_path_append(the_repository, &path, "worktrees/%s/gitdir", id);
 	if (strbuf_read_file(&worktree_path, path.buf, 0) <= 0)
 		/* invalid gitdir file */
 		goto done;
@@ -731,8 +731,7 @@ static ssize_t infer_backlink(const char *gitfile, struct strbuf *inferred)
 	id++; /* advance past '/' to point at <id> */
 	if (!*id)
 		goto error;
-	strbuf_reset(inferred);
-	strbuf_git_common_path(inferred, the_repository, "worktrees/%s", id);
+	repo_common_path_replace(the_repository, inferred, "worktrees/%s", id);
 	if (!is_directory(inferred->buf))
 		goto error;
 
