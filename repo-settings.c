@@ -21,7 +21,6 @@ static void repo_cfg_int(struct repository *r, const char *key, int *dest,
 
 void prepare_repo_settings(struct repository *r)
 {
-	const struct repo_settings defaults = REPO_SETTINGS_INIT;
 	int experimental;
 	int value;
 	const char *strval;
@@ -35,7 +34,7 @@ void prepare_repo_settings(struct repository *r)
 	if (r->settings.initialized)
 		return;
 
-	memcpy(&r->settings, &defaults, sizeof(defaults));
+	repo_settings_clear(r);
 	r->settings.initialized++;
 
 	/* Booleans config or default, cascades to other settings */
@@ -141,6 +140,13 @@ void prepare_repo_settings(struct repository *r)
 
 	if (!repo_config_get_ulong(r, "core.packedgitlimit", &ulongval))
 		r->settings.packed_git_limit = ulongval;
+}
+
+void repo_settings_clear(struct repository *r)
+{
+	struct repo_settings empty = REPO_SETTINGS_INIT;
+	FREE_AND_NULL(r->settings.fsmonitor);
+	r->settings = empty;
 }
 
 enum log_refs_config repo_settings_get_log_all_ref_updates(struct repository *repo)

@@ -380,7 +380,7 @@ void repo_clear(struct repository *repo)
 	parsed_object_pool_clear(repo->parsed_objects);
 	FREE_AND_NULL(repo->parsed_objects);
 
-	FREE_AND_NULL(repo->settings.fsmonitor);
+	repo_settings_clear(repo);
 
 	if (repo->config) {
 		git_configset_clear(repo->config);
