@@ -257,22 +257,6 @@ static inline const char *git_common_path(const char *fmt, ...)
 }
 
 /*
- * Construct a path into the main repository's (the_repository) git directory
- * and place it in the provided buffer `buf`, the contents of the buffer will
- * be overridden.
- */
-__attribute__((format (printf, 2, 3)))
-static inline char *git_path_buf(struct strbuf *buf, const char *fmt, ...)
-{
-	va_list args;
-	strbuf_reset(buf);
-	va_start(args, fmt);
-	repo_git_pathv(the_repository, NULL, buf, fmt, args);
-	va_end(args);
-	return buf->buf;
-}
-
-/*
  * Return a statically allocated path into the main repository's
  * (the_repository) git directory.
  */
