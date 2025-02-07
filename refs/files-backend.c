@@ -1831,7 +1831,7 @@ static int log_ref_setup(struct files_ref_store *refs,
 	}
 
 	if (*logfd >= 0)
-		adjust_shared_perm(logfile);
+		adjust_shared_perm(the_repository, logfile);
 
 	free(logfile);
 	return 0;
@@ -3488,8 +3488,8 @@ static int files_ref_store_create_on_disk(struct ref_store *ref_store,
 	 *   they do not understand the reference format extension.
 	 */
 	strbuf_addf(&sb, "%s/refs", ref_store->gitdir);
-	safe_create_dir(sb.buf, 1);
-	adjust_shared_perm(sb.buf);
+	safe_create_dir(the_repository, sb.buf, 1);
+	adjust_shared_perm(the_repository, sb.buf);
 
 	/*
 	 * There is no need to create directories for common refs when creating
@@ -3501,11 +3501,11 @@ static int files_ref_store_create_on_disk(struct ref_store *ref_store,
 		 */
 		strbuf_reset(&sb);
 		files_ref_path(refs, &sb, "refs/heads");
-		safe_create_dir(sb.buf, 1);
+		safe_create_dir(the_repository, sb.buf, 1);
 
 		strbuf_reset(&sb);
 		files_ref_path(refs, &sb, "refs/tags");
-		safe_create_dir(sb.buf, 1);
+		safe_create_dir(the_repository, sb.buf, 1);
 	}
 
 	strbuf_release(&sb);

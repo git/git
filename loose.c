@@ -190,7 +190,7 @@ static int write_one_object(struct repository *repo, const struct object_id *oid
 		goto errout;
 	if (close(fd))
 		goto errout;
-	adjust_shared_perm(path.buf);
+	adjust_shared_perm(repo, path.buf);
 	rollback_lock_file(&lock);
 	strbuf_release(&buf);
 	strbuf_release(&path);
