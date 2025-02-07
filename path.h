@@ -52,29 +52,16 @@ const char *repo_common_path_replace(const struct repository *repo,
  * For an exhaustive list of the adjustments made look at `common_list` and
  * `adjust_git_path` in path.c.
  */
-
-/*
- * Return a path into the git directory of repository `repo`.
- */
 char *repo_git_path(const struct repository *repo,
 		    const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
-
-/*
- * Print a path into the git directory of repository `repo` into the provided
- * buffer.
- */
-void repo_git_pathv(const struct repository *repo,
-		    const struct worktree *wt, struct strbuf *buf,
-		    const char *fmt, va_list args);
-
-/*
- * Construct a path into the git directory of repository `repo` and append it
- * to the provided buffer `sb`.
- */
-void strbuf_repo_git_path(struct strbuf *sb,
-			  const struct repository *repo,
-			  const char *fmt, ...)
+const char *repo_git_path_append(const struct repository *repo,
+				 struct strbuf *sb,
+				 const char *fmt, ...)
+	__attribute__((format (printf, 3, 4)));
+const char *repo_git_path_replace(const struct repository *repo,
+				  struct strbuf *sb,
+				  const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));
 
 /*
@@ -241,11 +228,14 @@ struct strbuf *get_pathname(void);
 #  include "strbuf.h"
 #  include "repository.h"
 
-/* Internal implementation detail that should not be used. */
+/* Internal implementation details that should not be used. */
 void repo_common_pathv(const struct repository *repo,
 		       struct strbuf *buf,
 		       const char *fmt,
 		       va_list args);
+void repo_git_pathv(const struct repository *repo,
+		    const struct worktree *wt, struct strbuf *buf,
+		    const char *fmt, va_list args);
 
 /*
  * Return a statically allocated path into the main repository's
