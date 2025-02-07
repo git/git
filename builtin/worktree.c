@@ -163,7 +163,9 @@ static int delete_git_dir(const char *id)
 
 static void delete_worktrees_dir_if_empty(void)
 {
-	rmdir(git_path("worktrees")); /* ignore failed removal */
+	char *path = repo_git_path(the_repository, "worktrees");
+	rmdir(path); /* ignore failed removal */
+	free(path);
 }
 
 static void prune_worktree(const char *id, const char *reason)
@@ -212,8 +214,13 @@ static void prune_worktrees(void)
 	struct strbuf reason = STRBUF_INIT;
 	struct strbuf main_path = STRBUF_INIT;
 	struct string_list kept = STRING_LIST_INIT_DUP;
-	DIR *dir = opendir(git_path("worktrees"));
+	char *path;
+	DIR *dir;
 	struct dirent *d;
+
+	path = repo_git_path(the_repository, "worktrees");
+	dir = opendir(path);
+	free(path);
 	if (!dir)
 		return;
 	while ((d = readdir_skip_dot_and_dotdot(dir)) != NULL) {

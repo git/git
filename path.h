@@ -221,36 +221,9 @@ char *xdg_cache_home(const char *filename);
  */
 void safe_create_dir(const char *dir, int share);
 
-/*
- * Do not use this function. It is only exported to other subsystems until we
- * can get rid of the below block of functions that implicitly rely on
- * `the_repository`.
- */
-struct strbuf *get_pathname(void);
-
 # ifdef USE_THE_REPOSITORY_VARIABLE
 #  include "strbuf.h"
 #  include "repository.h"
-
-/* Internal implementation details that should not be used. */
-void repo_git_pathv(const struct repository *repo,
-		    const struct worktree *wt, struct strbuf *buf,
-		    const char *fmt, va_list args);
-
-/*
- * Return a statically allocated path into the main repository's
- * (the_repository) git directory.
- */
-__attribute__((format (printf, 1, 2)))
-static inline const char *git_path(const char *fmt, ...)
-{
-	struct strbuf *pathname = get_pathname();
-	va_list args;
-	va_start(args, fmt);
-	repo_git_pathv(the_repository, NULL, pathname, fmt, args);
-	va_end(args);
-	return pathname->buf;
-}
 
 #define GIT_PATH_FUNC(func, filename) \
 	const char *func(void) \

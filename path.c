@@ -30,7 +30,7 @@ static int get_st_mode_bits(const char *path, int *mode)
 	return 0;
 }
 
-struct strbuf *get_pathname(void)
+static struct strbuf *get_pathname(void)
 {
 	static struct strbuf pathname_array[4] = {
 		STRBUF_INIT, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT
@@ -417,9 +417,9 @@ static void strbuf_worktree_gitdir(struct strbuf *buf,
 		repo_common_path_append(repo, buf, "worktrees/%s", wt->id);
 }
 
-void repo_git_pathv(const struct repository *repo,
-		    const struct worktree *wt, struct strbuf *buf,
-		    const char *fmt, va_list args)
+static void repo_git_pathv(const struct repository *repo,
+			   const struct worktree *wt, struct strbuf *buf,
+			   const char *fmt, va_list args)
 {
 	int gitdir_len;
 	strbuf_worktree_gitdir(buf, repo, wt);
