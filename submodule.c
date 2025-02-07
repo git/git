@@ -536,7 +536,8 @@ static struct repository *open_submodule(const char *path)
 	struct strbuf sb = STRBUF_INIT;
 	struct repository *out = xmalloc(sizeof(*out));
 
-	if (submodule_to_gitdir(&sb, path) || repo_init(out, sb.buf, NULL)) {
+	if (submodule_to_gitdir(the_repository, &sb, path) ||
+	    repo_init(out, sb.buf, NULL)) {
 		strbuf_release(&sb);
 		free(out);
 		return NULL;
@@ -2572,7 +2573,8 @@ int get_superproject_working_tree(struct strbuf *buf)
  * Put the gitdir for a submodule (given relative to the main
  * repository worktree) into `buf`, or return -1 on error.
  */
-int submodule_to_gitdir(struct strbuf *buf, const char *submodule)
+int submodule_to_gitdir(struct repository *repo,
+			struct strbuf *buf, const char *submodule)
 {
 	const struct submodule *sub;
 	const char *git_dir;
@@ -2592,14 +2594,13 @@ int submodule_to_gitdir(struct strbuf *buf, const char *submodule)
 		strbuf_addstr(buf, git_dir);
 	}
 	if (!is_git_directory(buf->buf)) {
-		sub = submodule_from_path(the_repository, null_oid(),
-					  submodule);
+		sub = submodule_from_path(repo, null_oid(), submodule);
 		if (!sub) {
 			ret = -1;
 			goto cleanup;
 		}
 		strbuf_reset(buf);
-		submodule_name_to_gitdir(buf, the_repository, sub->name);
+		submodule_name_to_gitdir(buf, repo, sub->name);
 	}
 
 cleanup:
