@@ -39,7 +39,7 @@ int submodule_uses_worktrees(const char *path);
  * Return git dir of the worktree. Note that the path may be relative.
  * If wt is NULL, git dir of current worktree is returned.
  */
-const char *get_worktree_git_dir(const struct worktree *wt);
+char *get_worktree_git_dir(const struct worktree *wt);
 
 /*
  * Search for the worktree identified unambiguously by `arg` -- typically

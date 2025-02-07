@@ -657,8 +657,9 @@ static int can_use_local_refs(const struct add_opts *opts)
 		if (!opts->quiet) {
 			struct strbuf path = STRBUF_INIT;
 			struct strbuf contents = STRBUF_INIT;
+			char *wt_gitdir = get_worktree_git_dir(NULL);
 
-			strbuf_add_real_path(&path, get_worktree_git_dir(NULL));
+			strbuf_add_real_path(&path, wt_gitdir);
 			strbuf_addstr(&path, "/HEAD");
 			strbuf_read_file(&contents, path.buf, 64);
 			strbuf_stripspace(&contents, NULL);
@@ -670,6 +671,7 @@ static int can_use_local_refs(const struct add_opts *opts)
 				  path.buf, contents.buf);
 			strbuf_release(&path);
 			strbuf_release(&contents);
+			free(wt_gitdir);
 		}
 		return 1;
 	}
@@ -1157,6 +1159,9 @@ static void validate_no_submodules(const struct worktree *wt)
 	struct index_state istate = INDEX_STATE_INIT(the_repository);
 	struct strbuf path = STRBUF_INIT;
 	int i, found_submodules = 0;
+	char *wt_gitdir;
+
+	wt_gitdir = get_worktree_git_dir(wt);
 
 	if (is_directory(worktree_git_path(the_repository, wt, "modules"))) {
 		/*
@@ -1166,7 +1171,7 @@ static void validate_no_submodules(const struct worktree *wt)
 		 */
 		found_submodules = 1;
 	} else if (read_index_from(&istate, worktree_git_path(the_repository, wt, "index"),
-				   get_worktree_git_dir(wt)) > 0) {
+				   wt_gitdir) > 0) {
 		for (i = 0; i < istate.cache_nr; i++) {
 			struct cache_entry *ce = istate.cache[i];
 			int err;
@@ -1185,6 +1190,7 @@ static void validate_no_submodules(const struct worktree *wt)
 	}
 	discard_index(&istate);
 	strbuf_release(&path);
+	free(wt_gitdir);
 
 	if (found_submodules)
 		die(_("working trees containing submodules cannot be moved or removed"));
