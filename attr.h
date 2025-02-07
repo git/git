@@ -283,4 +283,6 @@ struct match_attr {
 struct match_attr *parse_attr_line(const char *line, const char *src,
 				   int lineno, unsigned flags);
 
+int is_absolute_path(const char *path);
+
 #endif /* ATTR_H */

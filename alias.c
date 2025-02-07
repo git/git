@@ -6,6 +6,7 @@
 #include "gettext.h"
 #include "strbuf.h"
 #include "string-list.h"
+#include "abspath.h"
 
 struct config_alias_data {
 	const char *alias;
@@ -40,6 +41,10 @@ char *alias_lookup(const char *alias)
 	struct config_alias_data data = { alias, NULL };
 
 	read_early_config(the_repository, config_alias_cb, &data);
+
+	if (is_absolute_path(data.v)) {
+		return data.v;
+	}
 
 	return data.v;
 }

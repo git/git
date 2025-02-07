@@ -38,4 +38,6 @@ enum add_p_mode {
 int run_add_p(struct repository *r, enum add_p_mode mode,
 	      const char *revision, const struct pathspec *ps);
 
+int is_absolute_path(const char *path);
+
 #endif

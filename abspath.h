@@ -25,10 +25,7 @@ char *prefix_filename(const char *prefix, const char *path);
 /* Likewise, but path=="-" always yields "-" */
 char *prefix_filename_except_for_dash(const char *prefix, const char *path);
 
-static inline int is_absolute_path(const char *path)
-{
-	return is_dir_sep(path[0]) || has_dos_drive_prefix(path);
-}
+int is_absolute_path(const char *path);
 
 /**
  * Add a path to a buffer, converting a relative path to an

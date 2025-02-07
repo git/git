@@ -325,3 +325,8 @@ void strbuf_add_real_path(struct strbuf *sb, const char *path)
 	} else
 		strbuf_realpath(sb, path, 1);
 }
+
+int is_absolute_path(const char *path)
+{
+	return is_dir_sep(path[0]) || has_dos_drive_prefix(path);
+}

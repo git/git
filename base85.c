@@ -1,5 +1,6 @@
 #include "git-compat-util.h"
 #include "base85.h"
+#include "abspath.h"
 
 #undef DEBUG_85
 
@@ -110,7 +111,7 @@ int main(int ac, char **av)
 		int len = strlen(av[2]);
 		encode_85(buf, av[2], len);
 		if (len <= 26) len = len + 'A' - 1;
-		else len = len + 'a' - 26 - 1;
+		else len = len + 'a' - 26 + 1;
 		printf("encoded: %c%s\n", len, buf);
 		return 0;
 	}
