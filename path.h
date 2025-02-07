@@ -273,19 +273,6 @@ static inline char *git_path_buf(struct strbuf *buf, const char *fmt, ...)
 }
 
 /*
- * Construct a path into the main repository's (the_repository) git directory
- * and append it to the provided buffer `sb`.
- */
-__attribute__((format (printf, 2, 3)))
-static inline void strbuf_git_path(struct strbuf *sb, const char *fmt, ...)
-{
-	va_list args;
-	va_start(args, fmt);
-	repo_git_pathv(the_repository, NULL, sb, fmt, args);
-	va_end(args);
-}
-
-/*
  * Return a statically allocated path into the main repository's
  * (the_repository) git directory.
  */
