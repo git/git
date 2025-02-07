@@ -519,9 +519,6 @@ char *repo_worktree_path(const struct repository *repo, const char *fmt, ...)
 	struct strbuf path = STRBUF_INIT;
 	va_list args;
 
-	if (!repo->worktree)
-		return NULL;
-
 	va_start(args, fmt);
 	do_worktree_path(repo, &path, fmt, args);
 	va_end(args);
@@ -529,18 +526,37 @@ char *repo_worktree_path(const struct repository *repo, const char *fmt, ...)
 	return strbuf_detach(&path, NULL);
 }
 
-void strbuf_repo_worktree_path(struct strbuf *sb,
-			       const struct repository *repo,
-			       const char *fmt, ...)
+const char *repo_worktree_path_append(const struct repository *repo,
+				      struct strbuf *sb,
+				      const char *fmt, ...)
 {
 	va_list args;
 
 	if (!repo->worktree)
-		return;
+		return NULL;
 
 	va_start(args, fmt);
 	do_worktree_path(repo, sb, fmt, args);
 	va_end(args);
+
+	return sb->buf;
+}
+
+const char *repo_worktree_path_replace(const struct repository *repo,
+				       struct strbuf *sb,
+				       const char *fmt, ...)
+{
+	va_list args;
+
+	strbuf_reset(sb);
+	if (!repo->worktree)
+		return NULL;
+
+	va_start(args, fmt);
+	do_worktree_path(repo, sb, fmt, args);
+	va_end(args);
+
+	return sb->buf;
 }
 
 /* Returns 0 on success, negative on failure. */

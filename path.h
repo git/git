@@ -75,23 +75,21 @@ const char *worktree_git_path(struct repository *r,
 	__attribute__((format (printf, 3, 4)));
 
 /*
- * Return a path into the worktree of repository `repo`.
+ * The `repo_worktree_path` family of functions will construct a path into a
+ * repository's worktree.
  *
- * If the repository doesn't have a worktree NULL is returned.
+ * Returns a `NULL` pointer in case the repository has no worktree.
  */
 char *repo_worktree_path(const struct repository *repo,
 				const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
-
-/*
- * Construct a path into the worktree of repository `repo` and append it
- * to the provided buffer `sb`.
- *
- * If the repository doesn't have a worktree nothing will be appended to `sb`.
- */
-void strbuf_repo_worktree_path(struct strbuf *sb,
-				      const struct repository *repo,
+const char *repo_worktree_path_append(const struct repository *repo,
+				      struct strbuf *sb,
 				      const char *fmt, ...)
+	__attribute__((format (printf, 3, 4)));
+const char *repo_worktree_path_replace(const struct repository *repo,
+				       struct strbuf *sb,
+				       const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));
 
 /*
