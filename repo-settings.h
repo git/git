@@ -61,6 +61,8 @@ struct repo_settings {
 	size_t delta_base_cache_limit;
 	size_t packed_git_window_size;
 	size_t packed_git_limit;
+
+	char *hooks_path;
 };
 #define REPO_SETTINGS_INIT { \
 	.index_version = -1, \
@@ -79,5 +81,7 @@ void repo_settings_clear(struct repository *r);
 enum log_refs_config repo_settings_get_log_all_ref_updates(struct repository *repo);
 /* Read the value for "core.warnAmbiguousRefs". */
 int repo_settings_get_warn_ambiguous_refs(struct repository *repo);
+/* Read the value for "core.hooksPath". */
+const char *repo_settings_get_hooks_path(struct repository *repo);
 
 #endif /* REPO_SETTINGS_H */

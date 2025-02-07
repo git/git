@@ -146,6 +146,7 @@ void repo_settings_clear(struct repository *r)
 {
 	struct repo_settings empty = REPO_SETTINGS_INIT;
 	FREE_AND_NULL(r->settings.fsmonitor);
+	FREE_AND_NULL(r->settings.hooks_path);
 	r->settings = empty;
 }
 
@@ -172,4 +173,11 @@ int repo_settings_get_warn_ambiguous_refs(struct repository *repo)
 		repo_cfg_bool(repo, "core.warnambiguousrefs",
 			      &repo->settings.warn_ambiguous_refs, 1);
 	return repo->settings.warn_ambiguous_refs;
+}
+
+const char *repo_settings_get_hooks_path(struct repository *repo)
+{
+	if (!repo->settings.hooks_path)
+		repo_config_get_pathname(repo, "core.hookspath", &repo->settings.hooks_path);
+	return repo->settings.hooks_path;
 }
