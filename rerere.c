@@ -127,8 +127,12 @@ static int is_rr_file(const char *name, const char *filename, int *variant)
 static void scan_rerere_dir(struct rerere_dir *rr_dir)
 {
 	struct dirent *de;
-	DIR *dir = opendir(git_path("rr-cache/%s", rr_dir->name));
+	char *path;
+	DIR *dir;
 
+	path = repo_git_path(the_repository, "rr-cache/%s", rr_dir->name);
+	dir = opendir(path);
+	free(path);
 	if (!dir)
 		return;
 	while ((de = readdir(dir)) != NULL) {
@@ -1234,6 +1238,7 @@ void rerere_gc(struct repository *r, struct string_list *rr)
 	timestamp_t now = time(NULL);
 	timestamp_t cutoff_noresolve = now - 15 * 86400;
 	timestamp_t cutoff_resolve = now - 60 * 86400;
+	struct strbuf buf = STRBUF_INIT;
 
 	if (setup_rerere(r, rr, 0) < 0)
 		return;
@@ -1243,7 +1248,7 @@ void rerere_gc(struct repository *r, struct string_list *rr)
 	repo_config_get_expiry_in_days(the_repository, "gc.rerereunresolved",
 				       &cutoff_noresolve, now);
 	git_config(git_default_config, NULL);
-	dir = opendir(git_path("rr-cache"));
+	dir = opendir(repo_git_path_replace(the_repository, &buf, "rr-cache"));
 	if (!dir)
 		die_errno(_("unable to open rr-cache directory"));
 	/* Collect stale conflict IDs ... */
@@ -1272,9 +1277,12 @@ void rerere_gc(struct repository *r, struct string_list *rr)
 
 	/* ... and then remove the empty directories */
 	for (i = 0; i < to_remove.nr; i++)
-		rmdir(git_path("rr-cache/%s", to_remove.items[i].string));
+		rmdir(repo_git_path_replace(the_repository, &buf,
+					    "rr-cache/%s", to_remove.items[i].string));
+
 	string_list_clear(&to_remove, 0);
 	rollback_lock_file(&write_lock);
+	strbuf_release(&buf);
 }
 
 /*
