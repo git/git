@@ -233,28 +233,9 @@ struct strbuf *get_pathname(void);
 #  include "repository.h"
 
 /* Internal implementation details that should not be used. */
-void repo_common_pathv(const struct repository *repo,
-		       struct strbuf *buf,
-		       const char *fmt,
-		       va_list args);
 void repo_git_pathv(const struct repository *repo,
 		    const struct worktree *wt, struct strbuf *buf,
 		    const char *fmt, va_list args);
-
-/*
- * Return a statically allocated path into the main repository's
- * (the_repository) common git directory.
- */
-__attribute__((format (printf, 1, 2)))
-static inline const char *git_common_path(const char *fmt, ...)
-{
-	struct strbuf *pathname = get_pathname();
-	va_list args;
-	va_start(args, fmt);
-	repo_common_pathv(the_repository, pathname, fmt, args);
-	va_end(args);
-	return pathname->buf;
-}
 
 /*
  * Return a statically allocated path into the main repository's

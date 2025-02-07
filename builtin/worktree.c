@@ -151,7 +151,7 @@ static int delete_git_dir(const char *id)
 	struct strbuf sb = STRBUF_INIT;
 	int ret;
 
-	strbuf_addstr(&sb, git_common_path("worktrees/%s", id));
+	repo_common_path_append(the_repository, &sb, "worktrees/%s", id);
 	ret = remove_dir_recursively(&sb, 0);
 	if (ret < 0 && errno == ENOTDIR)
 		ret = unlink(sb.buf);
@@ -1102,6 +1102,7 @@ static int lock_worktree(int ac, const char **av, const char *prefix,
 		OPT_END()
 	};
 	struct worktree **worktrees, *wt;
+	char *path;
 
 	ac = parse_options(ac, av, prefix, options, git_worktree_lock_usage, 0);
 	if (ac != 1)
@@ -1122,9 +1123,11 @@ static int lock_worktree(int ac, const char **av, const char *prefix,
 		die(_("'%s' is already locked"), av[0]);
 	}
 
-	write_file(git_common_path("worktrees/%s/locked", wt->id),
-		   "%s", reason);
+	path = repo_common_path(the_repository, "worktrees/%s/locked", wt->id);
+	write_file(path, "%s", reason);
+
 	free_worktrees(worktrees);
+	free(path);
 	return 0;
 }
 
@@ -1135,6 +1138,7 @@ static int unlock_worktree(int ac, const char **av, const char *prefix,
 		OPT_END()
 	};
 	struct worktree **worktrees, *wt;
+	char *path;
 	int ret;
 
 	ac = parse_options(ac, av, prefix, options, git_worktree_unlock_usage, 0);
@@ -1149,8 +1153,12 @@ static int unlock_worktree(int ac, const char **av, const char *prefix,
 		die(_("The main working tree cannot be locked or unlocked"));
 	if (!worktree_lock_reason(wt))
 		die(_("'%s' is not locked"), av[0]);
-	ret = unlink_or_warn(git_common_path("worktrees/%s/locked", wt->id));
+
+	path = repo_common_path(the_repository, "worktrees/%s/locked", wt->id);
+	ret = unlink_or_warn(path);
+
 	free_worktrees(worktrees);
+	free(path);
 	return ret;
 }
 

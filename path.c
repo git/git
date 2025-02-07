@@ -634,10 +634,10 @@ const char *repo_submodule_path_replace(struct repository *repo,
 	return buf->buf;
 }
 
-void repo_common_pathv(const struct repository *repo,
-		       struct strbuf *sb,
-		       const char *fmt,
-		       va_list args)
+static void repo_common_pathv(const struct repository *repo,
+			      struct strbuf *sb,
+			      const char *fmt,
+			      va_list args)
 {
 	strbuf_addstr(sb, repo->commondir);
 	if (sb->len && !is_dir_sep(sb->buf[sb->len - 1]))
