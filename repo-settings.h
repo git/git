@@ -73,6 +73,7 @@ struct repo_settings {
 }
 
 void prepare_repo_settings(struct repository *r);
+void repo_settings_clear(struct repository *r);
 
 /* Read the value for "core.logAllRefUpdates". */
 enum log_refs_config repo_settings_get_log_all_ref_updates(struct repository *repo);
