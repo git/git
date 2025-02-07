@@ -52,14 +52,14 @@ const char *repo_common_path_replace(const struct repository *repo,
  * For an exhaustive list of the adjustments made look at `common_list` and
  * `adjust_git_path` in path.c.
  */
-char *repo_git_path(const struct repository *repo,
+char *repo_git_path(struct repository *repo,
 		    const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
-const char *repo_git_path_append(const struct repository *repo,
+const char *repo_git_path_append(struct repository *repo,
 				 struct strbuf *sb,
 				 const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));
-const char *repo_git_path_replace(const struct repository *repo,
+const char *repo_git_path_replace(struct repository *repo,
 				  struct strbuf *sb,
 				  const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));

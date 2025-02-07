@@ -387,10 +387,11 @@ void report_linked_checkout_garbage(struct repository *r)
 	strbuf_release(&sb);
 }
 
-static void adjust_git_path(const struct repository *repo,
+static void adjust_git_path(struct repository *repo,
 			    struct strbuf *buf, int git_dir_len)
 {
 	const char *base = buf->buf + git_dir_len;
+
 	if (is_dir_file(base, "info", "grafts"))
 		strbuf_splice(buf, 0, buf->len,
 			      repo->graft_file, strlen(repo->graft_file));
@@ -399,8 +400,8 @@ static void adjust_git_path(const struct repository *repo,
 			      repo->index_file, strlen(repo->index_file));
 	else if (dir_prefix(base, "objects"))
 		replace_dir(buf, git_dir_len + 7, repo->objects->odb->path);
-	else if (git_hooks_path && dir_prefix(base, "hooks"))
-		replace_dir(buf, git_dir_len + 5, git_hooks_path);
+	else if (repo_settings_get_hooks_path(repo) && dir_prefix(base, "hooks"))
+		replace_dir(buf, git_dir_len + 5, repo_settings_get_hooks_path(repo));
 	else if (repo->different_commondir)
 		update_common_dir(buf, git_dir_len, repo->commondir);
 }
@@ -417,7 +418,7 @@ static void strbuf_worktree_gitdir(struct strbuf *buf,
 		repo_common_path_append(repo, buf, "worktrees/%s", wt->id);
 }
 
-static void repo_git_pathv(const struct repository *repo,
+static void repo_git_pathv(struct repository *repo,
 			   const struct worktree *wt, struct strbuf *buf,
 			   const char *fmt, va_list args)
 {
@@ -432,7 +433,7 @@ static void repo_git_pathv(const struct repository *repo,
 	strbuf_cleanup_path(buf);
 }
 
-char *repo_git_path(const struct repository *repo,
+char *repo_git_path(struct repository *repo,
 		    const char *fmt, ...)
 {
 	struct strbuf path = STRBUF_INIT;
@@ -443,7 +444,7 @@ char *repo_git_path(const struct repository *repo,
 	return strbuf_detach(&path, NULL);
 }
 
-const char *repo_git_path_append(const struct repository *repo,
+const char *repo_git_path_append(struct repository *repo,
 				 struct strbuf *sb,
 				 const char *fmt, ...)
 {
@@ -454,7 +455,7 @@ const char *repo_git_path_append(const struct repository *repo,
 	return sb->buf;
 }
 
-const char *repo_git_path_replace(const struct repository *repo,
+const char *repo_git_path_replace(struct repository *repo,
 				  struct strbuf *sb,
 				  const char *fmt, ...)
 {
