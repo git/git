@@ -141,8 +141,8 @@ const char *git_path_shallow(struct repository *r);
 
 int ends_with_path_components(const char *path, const char *components);
 
-int calc_shared_perm(int mode);
-int adjust_shared_perm(const char *path);
+int calc_shared_perm(struct repository *repo, int mode);
+int adjust_shared_perm(struct repository *repo, const char *path);
 
 char *interpolate_path(const char *path, int real_home);
 
@@ -219,7 +219,7 @@ char *xdg_cache_home(const char *filename);
  * directories under $GIT_DIR.  Don't use it for working tree
  * directories.
  */
-void safe_create_dir(const char *dir, int share);
+void safe_create_dir(struct repository *repo, const char *dir, int share);
 
 # ifdef USE_THE_REPOSITORY_VARIABLE
 #  include "strbuf.h"

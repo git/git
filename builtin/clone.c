@@ -1220,7 +1220,7 @@ int cmd_clone(int argc,
 
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "%s/refs", git_dir);
-	safe_create_dir(buf.buf, 1);
+	safe_create_dir(the_repository, buf.buf, 1);
 
 	/*
 	 * additional config can be injected with -c, make sure it's included

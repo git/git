@@ -3290,7 +3290,7 @@ static int write_shared_index(struct index_state *istate,
 
 	if (ret)
 		return ret;
-	ret = adjust_shared_perm(get_tempfile_path(*temp));
+	ret = adjust_shared_perm(the_repository, get_tempfile_path(*temp));
 	if (ret) {
 		error(_("cannot fix permission bits on '%s'"), get_tempfile_path(*temp));
 		return ret;

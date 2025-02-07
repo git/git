@@ -2,8 +2,6 @@
  * Utilities for paths and pathnames
  */
 
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "environment.h"
@@ -840,21 +838,22 @@ const char *enter_repo(const char *path, unsigned flags)
 	return NULL;
 }
 
-int calc_shared_perm(int mode)
+int calc_shared_perm(struct repository *repo,
+		     int mode)
 {
 	int tweak;
 
-	if (repo_settings_get_shared_repository(the_repository) < 0)
-		tweak = -repo_settings_get_shared_repository(the_repository);
+	if (repo_settings_get_shared_repository(repo) < 0)
+		tweak = -repo_settings_get_shared_repository(repo);
 	else
-		tweak = repo_settings_get_shared_repository(the_repository);
+		tweak = repo_settings_get_shared_repository(repo);
 
 	if (!(mode & S_IWUSR))
 		tweak &= ~0222;
 	if (mode & S_IXUSR)
 		/* Copy read bits to execute bits */
 		tweak |= (tweak & 0444) >> 2;
-	if (repo_settings_get_shared_repository(the_repository) < 0)
+	if (repo_settings_get_shared_repository(repo) < 0)
 		mode = (mode & ~0777) | tweak;
 	else
 		mode |= tweak;
@@ -862,17 +861,17 @@ int calc_shared_perm(int mode)
 	return mode;
 }
 
-
-int adjust_shared_perm(const char *path)
+int adjust_shared_perm(struct repository *repo,
+		       const char *path)
 {
 	int old_mode, new_mode;
 
-	if (!repo_settings_get_shared_repository(the_repository))
+	if (!repo_settings_get_shared_repository(repo))
 		return 0;
 	if (get_st_mode_bits(path, &old_mode) < 0)
 		return -1;
 
-	new_mode = calc_shared_perm(old_mode);
+	new_mode = calc_shared_perm(repo, old_mode);
 	if (S_ISDIR(old_mode)) {
 		/* Copy read bits to execute bits */
 		new_mode |= (new_mode & 0444) >> 2;
@@ -891,7 +890,7 @@ int adjust_shared_perm(const char *path)
 	return 0;
 }
 
-void safe_create_dir(const char *dir, int share)
+void safe_create_dir(struct repository *repo, const char *dir, int share)
 {
 	if (mkdir(dir, 0777) < 0) {
 		if (errno != EEXIST) {
@@ -899,7 +898,7 @@ void safe_create_dir(const char *dir, int share)
 			exit(1);
 		}
 	}
-	else if (share && adjust_shared_perm(dir))
+	else if (share && adjust_shared_perm(repo, dir))
 		die(_("Could not make %s writable by group"), dir);
 }
 

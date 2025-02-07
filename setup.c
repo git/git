@@ -2088,7 +2088,7 @@ static void copy_templates_1(struct strbuf *path, struct strbuf *template_path,
 	 * with the way the namespace under .git/ is organized, should
 	 * be really carefully chosen.
 	 */
-	safe_create_dir(path->buf, 1);
+	safe_create_dir(the_repository, path->buf, 1);
 	while ((de = readdir(dir)) != NULL) {
 		struct stat st_git, st_template;
 		int exists = 0;
@@ -2352,7 +2352,7 @@ static int create_default_files(const char *template_path,
 	 * shared-repository settings, we would need to fix them up.
 	 */
 	if (repo_settings_get_shared_repository(the_repository)) {
-		adjust_shared_perm(repo_get_git_dir(the_repository));
+		adjust_shared_perm(the_repository, repo_get_git_dir(the_repository));
 	}
 
 	initialize_repository_version(fmt->hash_algo, fmt->ref_storage_format, reinit);
@@ -2413,15 +2413,15 @@ static void create_object_directory(void)
 	strbuf_addstr(&path, repo_get_object_directory(the_repository));
 	baselen = path.len;
 
-	safe_create_dir(path.buf, 1);
+	safe_create_dir(the_repository, path.buf, 1);
 
 	strbuf_setlen(&path, baselen);
 	strbuf_addstr(&path, "/pack");
-	safe_create_dir(path.buf, 1);
+	safe_create_dir(the_repository, path.buf, 1);
 
 	strbuf_setlen(&path, baselen);
 	strbuf_addstr(&path, "/info");
-	safe_create_dir(path.buf, 1);
+	safe_create_dir(the_repository, path.buf, 1);
 
 	strbuf_release(&path);
 }
@@ -2588,7 +2588,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	 */
 	git_config(platform_core_config, NULL);
 
-	safe_create_dir(git_dir, 0);
+	safe_create_dir(the_repository, git_dir, 0);
 
 	reinit = create_default_files(template_dir, original_git_dir,
 				      &repo_fmt, init_shared_repository);
