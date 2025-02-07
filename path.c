@@ -443,14 +443,27 @@ char *repo_git_path(const struct repository *repo,
 	return strbuf_detach(&path, NULL);
 }
 
-void strbuf_repo_git_path(struct strbuf *sb,
-			  const struct repository *repo,
-			  const char *fmt, ...)
+const char *repo_git_path_append(const struct repository *repo,
+				 struct strbuf *sb,
+				 const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
 	repo_git_pathv(repo, NULL, sb, fmt, args);
 	va_end(args);
+	return sb->buf;
+}
+
+const char *repo_git_path_replace(const struct repository *repo,
+				  struct strbuf *sb,
+				  const char *fmt, ...)
+{
+	va_list args;
+	strbuf_reset(sb);
+	va_start(args, fmt);
+	repo_git_pathv(repo, NULL, sb, fmt, args);
+	va_end(args);
+	return sb->buf;
 }
 
 char *mkpathdup(const char *fmt, ...)

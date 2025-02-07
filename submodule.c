@@ -1315,7 +1315,7 @@ static int repo_has_absorbed_submodules(struct repository *r)
 	int ret;
 	struct strbuf buf = STRBUF_INIT;
 
-	strbuf_repo_git_path(&buf, r, "modules/");
+	repo_git_path_append(r, &buf, "modules/");
 	ret = file_exists(buf.buf) && !is_empty_dir(buf.buf);
 	strbuf_release(&buf);
 	return ret;
@@ -2629,6 +2629,6 @@ void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
 	 * administrators can explicitly set. Nothing has been decided,
 	 * so for now, just append the name at the end of the path.
 	 */
-	strbuf_repo_git_path(buf, r, "modules/");
+	repo_git_path_append(r, buf, "modules/");
 	strbuf_addstr(buf, submodule_name);
 }
