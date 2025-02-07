@@ -457,7 +457,7 @@ static int add_worktree(const char *path, const char *refname,
 		BUG("How come '%s' becomes empty after sanitization?", sb.buf);
 	strbuf_reset(&sb);
 	name = sb_name.buf;
-	git_path_buf(&sb_repo, "worktrees/%s", name);
+	repo_git_path_replace(the_repository, &sb_repo, "worktrees/%s", name);
 	len = sb_repo.len;
 	if (safe_create_leading_directories_const(sb_repo.buf))
 		die_errno(_("could not create leading directories of '%s'"),

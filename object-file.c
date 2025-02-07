@@ -482,14 +482,14 @@ int odb_mkstemp(struct strbuf *temp_filename, const char *pattern)
 	 * restrictive except to remove write permission.
 	 */
 	int mode = 0444;
-	git_path_buf(temp_filename, "objects/%s", pattern);
+	repo_git_path_replace(the_repository, temp_filename, "objects/%s", pattern);
 	fd = git_mkstemp_mode(temp_filename->buf, mode);
 	if (0 <= fd)
 		return fd;
 
 	/* slow path */
 	/* some mkstemp implementations erase temp_filename on failure */
-	git_path_buf(temp_filename, "objects/%s", pattern);
+	repo_git_path_replace(the_repository, temp_filename, "objects/%s", pattern);
 	safe_create_leading_directories(temp_filename->buf);
 	return xmkstemp_mode(temp_filename->buf, mode);
 }
