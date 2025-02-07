@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2025, #01; Tue, 4)
-X-master-at: bc204b742735ae06f65bb20291c95985c9633b7f
-X-next-at: 6bd1c91b067bc73fdcedcc85aa2367f340cf3a2b
+Subject: What's cooking in git.git (Feb 2025, #02; Fri, 7)
+X-master-at: 9520f7d9985d8879bddd157309928fc0679c8e92
+X-next-at: 30ceb7b040fb0d98a6c17a39c106f6eb9a112b24
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2025, #01; Tue, 4)
+What's cooking in git.git (Feb 2025, #02; Fri, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,118 +48,127 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* jk/combine-diff-cleanup (2025-01-09) 14 commits
-  (merged to 'next' on 2025-01-28 at 97e76074b3)
- + tree-diff: make list tail-passing more explicit
- + tree-diff: simplify emit_path() list management
- + tree-diff: use the name "tail" to refer to list tail
- + tree-diff: drop list-tail argument to diff_tree_paths()
- + combine-diff: drop public declaration of combine_diff_path_size()
- + tree-diff: inline path_appendnew()
- + tree-diff: pass whole path string to path_appendnew()
- + tree-diff: drop path_appendnew() alloc optimization
- + run_diff_files(): de-mystify the size of combine_diff_path struct
- + diff: add a comment about combine_diff_path.parent.path
- + combine-diff: use pointer for parent paths
- + tree-diff: clear parent array in path_appendnew()
- + combine-diff: add combine_diff_path_new()
- + run_diff_files(): delay allocation of combine_diff_path
+* js/bundle-unbundle-fd-reuse-fix (2025-01-25) 1 commit
+  (merged to 'next' on 2025-01-29 at e490587933)
+ + bundle: avoid closing file descriptor twice
 
- Code clean-up for code paths around combined diff.
- source: <20250109082723.GA2748497@coredump.intra.peff.net>
+ The code path used when "git fetch" fetches from a bundle file
+ closed the same file descriptor twice, which sometimes broke things
+ unexpectedly when the file descriptor was reused, which has been
+ corrected.
+ source: <pull.1857.git.1737849456338.gitgitgadget@gmail.com>
 
 
-* kn/pack-write-with-reduced-globals (2025-01-21) 5 commits
-  (merged to 'next' on 2025-01-28 at bb5f4b8547)
- + pack-write: pass hash_algo to internal functions
- + pack-write: pass hash_algo to `write_rev_file()`
- + pack-write: pass hash_algo to `write_idx_file()`
- + pack-write: pass repository to `index_pack_lockfile()`
- + pack-write: pass hash_algo to `fixup_pack_header_footer()`
+* ps/ci-misc-updates (2025-01-10) 10 commits
+  (merged to 'next' on 2025-01-29 at 4d2f9d7f18)
+ + ci: remove stale code for Azure Pipelines
+ + ci: use latest Ubuntu release
+ + ci: stop special-casing for Ubuntu 16.04
+ + gitlab-ci: add linux32 job testing against i386
+ + gitlab-ci: remove the "linux-old" job
+ + github: simplify computation of the job's distro
+ + github: convert all Linux jobs to be containerized
+ + github: adapt containerized jobs to be rootless
+ + t7422: fix flaky test caused by buffered stdout
+ + t0060: fix EBUSY in MinGW when setting up runtime prefix
+ (this branch is used by jk/ci-coverity-update.)
 
- Code clean-up.
- source: <20250119-kn-the-repo-cleanup-v3-0-a495fce08d71@gmail.com>
-
-
-* kn/reflog-migration-fix (2025-01-15) 1 commit
-  (merged to 'next' on 2025-01-16 at ae8f9ce9a0)
- + reftable: write correct max_update_index to header
- (this branch is used by kn/reflog-migration-fix-fix and kn/reflog-migration-fix-followup.)
-
- "git refs migrate" for migrating reflog data was broken.
- source: <CAOLa=ZTL9n_DPhNr49XAd6bT838kc09oVx_AH7Pb4o8VK_xQ9w@mail.gmail.com>
+ CI updates (containerization, dropping stale ones, etc.).
+ source: <20250110-b4-pks-ci-fixes-v4-0-6e4613446080@pks.im>
 
 
-* kn/reflog-migration-fix-fix (2025-01-27) 1 commit
-  (merged to 'next' on 2025-01-28 at e70c392ca2)
- + refs/reftable: fix uninitialized memory access of `max_index`
- (this branch uses kn/reflog-migration-fix.)
+* ps/leakfixes-0129 (2025-01-30) 2 commits
+  (merged to 'next' on 2025-01-30 at 6dc24dfdaf)
+ + scalar: free result of `remote_default_branch()`
+ + unix-socket: fix memory leak when chdir(3p) fails
 
- Fix bugs in an earlier attempt to fix "git refs migration".
- source: <Z4UbkcmJAU1MT-Rs@tapette.crustytoothpaste.net>
-
-
-* ps/3.0-remote-deprecation (2025-01-24) 6 commits
-  (merged to 'next' on 2025-01-28 at 970fcdf59d)
- + remote: announce removal of "branches/" and "remotes/"
- + builtin/pack-redundant: remove subcommand with breaking changes
- + ci: repurpose "linux-gcc" job for deprecations
- + ci: merge linux-gcc-default into linux-gcc
- + Makefile: wire up build option for deprecated features
- + Merge branch 'ps/build' into ps/3.0-remote-deprecation
-
- Following the procedure we established to introduce breaking
- changes for Git 3.0, allow an early opt-in for removing support of
- $GIT_DIR/branches/ and $GIT_DIR/remotes/ directories to configure
- remotes.
- source: <20250122-pks-remote-branches-deprecation-v4-0-5cbf5b28afd5@pks.im>
+ A few more leakfixes.
+ source: <20250130-b4-pks-memory-leaks-v2-0-fc29dc7d4b19@pks.im>
 
 
-* ps/build-meson-fixes (2025-01-22) 12 commits
-  (merged to 'next' on 2025-01-28 at c7c317a06f)
- + ci: wire up Visual Studio build with Meson
- + ci: raise error when Meson generates warnings
- + meson: fix compilation with Visual Studio
- + meson: make the CSPRNG backend configurable
- + meson: wire up fuzzers
- + meson: wire up generation of distribution archive
- + meson: wire up development environments
- + meson: fix dependencies for generated headers
- + meson: populate project version via GIT-VERSION-GEN
- + GIT-VERSION-GEN: allow running without input and output files
- + GIT-VERSION-GEN: simplify computing the dirty marker
- + Merge branch 'ps/meson-weak-sha1-build' into ps/build-meson-fixes
- (this branch is used by ps/build-meson-fixes-0130 and ps/zlib-ng.)
+* ps/zlib-ng (2025-01-28) 12 commits
+  (merged to 'next' on 2025-01-30 at ecf8e8bbef)
+ + ci: make "linux-musl" job use zlib-ng
+ + ci: switch linux-musl to use Meson
+ + compat/zlib: allow use of zlib-ng as backend
+ + git-zlib: cast away potential constness of `next_in` pointer
+ + compat/zlib: provide stubs for `deflateSetHeader()`
+ + compat/zlib: provide `deflateBound()` shim centrally
+ + git-compat-util: move include of "compat/zlib.h" into "git-zlib.h"
+ + compat: introduce new "zlib.h" header
+ + git-compat-util: drop `z_const` define
+ + compat: drop `uncompress2()` compatibility shim
+ + Merge branch 'ps/build-meson-fixes' into ps/zlib-ng
+ + Merge branch 'ps/meson-weak-sha1-build' into ps/zlib-ng
 
- More build fixes and enhancements on meson based build procedure.
- source: <20250122-b4-pks-meson-additions-v3-0-5a51eb5d3dcd@pks.im>
-
-
-* tb/unsafe-hash-cleanup (2025-01-23) 8 commits
-  (merged to 'next' on 2025-01-28 at 9e0d6f9a5e)
- + hash.h: drop unsafe_ function variants
- + csum-file: introduce hashfile_checkpoint_init()
- + t/helper/test-hash.c: use unsafe_hash_algo()
- + csum-file.c: use unsafe_hash_algo()
- + hash.h: introduce `unsafe_hash_algo()`
- + csum-file.c: extract algop from hashfile_checksum_valid()
- + csum-file: store the hash algorithm as a struct field
- + t/helper/test-tool: implement sha1-unsafe helper
- (this branch is used by ps/hash-cleanup.)
-
- The API around choosing to use unsafe variant of SHA-1
- implementation has been updated in an attempt to make it harder to
- abuse.
- source: <cover.1737653640.git.me@ttaylorr.com>
+ The code paths to interact with zlib has been cleaned up in
+ preparation for building with zlib-ng.
+ source: <20250128-b4-pks-compat-drop-uncompress2-v4-0-129bc36ae8f5@pks.im>
 
 --------------------------------------------------
 [New Topics]
+
+* jt/rev-list-missing-print-info (2025-02-05) 2 commits
+ - rev-list: extend print-info to print missing object type
+ - rev-list: add print-info action to print missing object path
+
+ "git rev-list --missing=" learned to accept "print-info" that gives
+ known details expected of the missing objects, like path and type.
+
+ Will merge to 'next'.
+ cf. <CAP8UFD31kbtqXQDp9LyA+x+h+m592=HQHHbskSfar3S2GOfWVg@mail.gmail.com>
+ source: <20250205004147.887106-1-jltobler@gmail.com>
+
+
+* pw/rebase-i-ff-empty-commit (2025-02-05) 1 commit
+ - rebase -i: reword empty commit after fast-forward
+
+ "git rebase -i" failed to allow rewording an empty commit that has
+ been fast-forwarded.
+
+ Expecting a reroll.
+ cf. <xmqqtt98nt89.fsf@gitster.g>
+ source: <pull.1860.git.1738751840816.gitgitgadget@gmail.com>
+
+
+* ib/diff-S-G-with-longhand (2025-02-06) 1 commit
+ - diff: --patch-{modifies,grep} arg names for -S and -G
+
+ The commands in the "diff" family learned longhands for "-S" and
+ "-G" options.
+
+ Expecting a reroll.
+ cf. <xmqqseoqiybi.fsf@gitster.g>
+ source: <20250206014324.1839232-2-illia.bobyr@gmail.com>
+
+
+* ps/doc-http-upload-archive-service (2025-02-06) 1 commit
+  (merged to 'next' on 2025-02-06 at dd19c245e9)
+ + doc: documentation for http.uploadarchive config option
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <pull.1885.v2.git.git.1738863927849.gitgitgadget@gmail.com>
+
+
+* ps/reftable-windows-unlink-fix (2025-02-07) 2 commits
+ - reftable: ignore file-in-use errors when unlink(3p) fails on Windows
+ - Merge branch 'ps/reftable-sans-compat-util' into ps/reftable-windows-unlink-fix
+ (this branch uses ps/reftable-sans-compat-util.)
+
+ Portability fix.
+
+ Waiting for the base topic.
+ source: <20250206-b4-pks-reftable-win32-in-use-errors-v2-1-56985a4f6186@pks.im>
+
+--------------------------------------------------
+[Cooking]
 
 * jk/ci-coverity-update (2025-02-03) 2 commits
   (merged to 'next' on 2025-02-03 at 9597182d1d)
  + ci: set CI_JOB_IMAGE for coverity job
  + Merge branch 'ps/ci-misc-updates' into jk/ci-coverity-update
- (this branch uses ps/ci-misc-updates.)
 
  CI update to make Coverity job work again.
 
@@ -210,44 +219,39 @@ Release tarballs are available at:
 
 
 * da/help-autocorrect-one-fix (2025-02-03) 3 commits
- - help: add "show" as a valid configuration value
- - help: show the suggested command when help.autocorrect is false
- - Merge branch 'sc/help-autocorrect-one' into da/help-autocorrect-one-fix
+  (merged to 'next' on 2025-02-05 at 74a3c43834)
+ + help: add "show" as a valid configuration value
+ + help: show the suggested command when help.autocorrect is false
+ + Merge branch 'sc/help-autocorrect-one' into da/help-autocorrect-one-fix
  (this branch uses sc/help-autocorrect-one.)
 
  "git -c help.autocorrect=0 psuh" shows the suggested typofix,
  unlike the previous attempt in the base topic.
 
- WIll merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1869.v4.git.git.1736760824201.gitgitgadget@gmail.com>
 
 
 * ms/remote-valid-remote-name (2025-02-04) 1 commit
- - remote: relocate valid_remote_name
+  (merged to 'next' on 2025-02-05 at 3d58d63932)
+ + remote: relocate valid_remote_name
 
  Code shuffling.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250204142852.13035-1-meetsoni3017@gmail.com>
 
 
-* da/difftool-sans-the-repository (2025-02-04) 1 commit
+* da/difftool-sans-the-repository (2025-02-06) 3 commits
+ - difftool: eliminate use of USE_THE_REPOSITORY_VARIABLE
+ - difftool: eliminate use of the_repository
  - difftool: eliminate use of global variables
 
- source: <20250204225501.597873-1-davvid@gmail.com>
+ "git difftool" code clean-up.
 
---------------------------------------------------
-[Cooking]
-
-* ps/leakfixes-0129 (2025-01-30) 2 commits
-  (merged to 'next' on 2025-01-30 at 6dc24dfdaf)
- + scalar: free result of `remote_default_branch()`
- + unix-socket: fix memory leak when chdir(3p) fails
-
- A few more leakfixes.
-
- Will merge to 'master'.
- source: <20250130-b4-pks-memory-leaks-v2-0-fc29dc7d4b19@pks.im>
+ Will merge to 'next'.
+ cf. <xmqq4j15hch1.fsf@gitster.g>
+ source: <20250206042010.865947-3-davvid@gmail.com>
 
 
 * ps/build-meson-fixes-0130 (2025-01-30) 14 commits
@@ -325,16 +329,16 @@ Release tarballs are available at:
  source: <20250131173938.3592899-1-jltobler@gmail.com>
 
 
-* op/worktree-is-main-bare-fix (2025-01-31) 1 commit
- - worktree: detect from secondary worktree if main worktree is bare
+* op/worktree-is-main-bare-fix (2025-02-05) 1 commit
+  (merged to 'next' on 2025-02-06 at 25c618bf37)
+ + worktree: detect from secondary worktree if main worktree is bare
 
  Going into a secondary worktree and asking "is the main worktree
  bare?" did not work correctly when per-worktree configuration
  option was in use, which has been corrected.
 
- Expecting a (hopefully minor and final) reroll.
- cf. <xmqq8qqq7n26.fsf@gitster.g>
- source: <pull.1829.v3.git.1738346881907.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <pull.1829.v4.git.1738737014194.gitgitgadget@gmail.com>
 
 
 * ps/hash-cleanup (2025-01-31) 5 commits
@@ -352,63 +356,54 @@ Release tarballs are available at:
  source: <20250131-b4-pks-hash-context-direct-v1-0-67a6d3f49d6e@pks.im>
 
 
-* tc/clone-single-revision (2025-02-04) 7 commits
- - builtin/clone: teach git-clone(1) the --revision= option
- - parse-options: introduce die_for_incompatible_opt2()
- - clone: introduce struct clone_opts in builtin/clone.c
- - clone: add tags refspec earlier to fetch refspec
- - clone: refactor wanted_peer_refs()
- - clone: make it possible to specify --tags
- - clone: cut down on global variables in clone.c
+* tc/clone-single-revision (2025-02-06) 7 commits
+  (merged to 'next' on 2025-02-06 at d67b50d35c)
+ + builtin/clone: teach git-clone(1) the --revision= option
+ + parse-options: introduce die_for_incompatible_opt2()
+ + clone: introduce struct clone_opts in builtin/clone.c
+ + clone: add tags refspec earlier to fetch refspec
+ + clone: refactor wanted_peer_refs()
+ + clone: make it possible to specify --tags
+ + clone: cut down on global variables in clone.c
 
  "git clone" learned to make a shallow clone for a single commit
  that is not necessarily be at the tip of any branch.
 
- Will merge to 'next'?
- source: <20250204-toon-clone-refs-v5-0-37e34af283c8@iotcl.com>
+ Will merge to 'master'.
+ cf. <xmqq4j16kefu.fsf@gitster.g>
+ source: <20250206-toon-clone-refs-v7-0-4622b7392202@iotcl.com>
 
 
 * jp/doc-trailer-config (2025-01-24) 1 commit
- - config.txt: add trailer.* variables
+  (merged to 'next' on 2025-02-05 at 7bbd51e504)
+ + config.txt: add trailer.* variables
 
  Documentaiton updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1871.git.git.1736429142334.gitgitgadget@gmail.com>
 
 
-* js/bundle-unbundle-fd-reuse-fix (2025-01-25) 1 commit
-  (merged to 'next' on 2025-01-29 at e490587933)
- + bundle: avoid closing file descriptor twice
-
- The code path used when "git fetch" fetches from a bundle file
- closed the same file descriptor twice, which sometimes broke things
- unexpectedly when the file descriptor was reused, which has been
- corrected.
-
- Will merge to 'master'.
- source: <pull.1857.git.1737849456338.gitgitgadget@gmail.com>
-
-
 * ms/refspec-cleanup (2025-02-04) 5 commits
- - refspec: relocate apply_refspecs and related funtions
- - refspec: relocate matching related functions
- - remote: rename query_refspecs functions
- - refspec: relocate refname_matches_negative_refspec_item
- - remote: rename function omit_name_by_refspec
+  (merged to 'next' on 2025-02-05 at 5b53c49215)
+ + refspec: relocate apply_refspecs and related funtions
+ + refspec: relocate matching related functions
+ + remote: rename query_refspecs functions
+ + refspec: relocate refname_matches_negative_refspec_item
+ + remote: rename function omit_name_by_refspec
 
  Code clean-up.
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <Z6G-toOJjMmK8iJG@pks.im>
  source: <20250204040558.34766-1-meetsoni3017@gmail.com>
 
 
-* ps/reftable-sans-compat-util (2025-02-03) 19 commits
+* ps/reftable-sans-compat-util (2025-02-07) 19 commits
  - Makefile: skip reftable library for Coccinelle
  - reftable: decouple from Git codebase by pulling in "compat/posix.h"
  - git-compat-util.h: split out POSIX-emulating bits
  - compat/mingw: split out POSIX-related bits
- - reftable/basics: stop using `UNUSED` annotation
+ - reftable/basics: introduce `REFTABLE_UNUSED` annotation
  - reftable/basics: stop using `SWAP()` macro
  - reftable/stack: stop using `sleep_millisec()`
  - reftable/system: introduce `reftable_rand()`
@@ -423,24 +418,25 @@ Release tarballs are available at:
  - reftable/stack: stop using `write_in_full()`
  - reftable/stack: stop using `read_in_full()`
  - Merge branch 'ps/reftable-sign-compare' into ps/reftable-sans-compat-util
+ (this branch is used by ps/reftable-windows-unlink-fix.)
 
  Make the code in reftable library less reliant on the service
  routines it used to borrow from Git proper, to make it easier to
  use by external users of the library.
 
- Will merge to 'next'?
- source: <20250203-pks-reftable-drop-git-compat-util-v3-0-446c9ed4ee9e@pks.im>
+ Waiting for Acks?  Otherwise looking good.
+ cf. <Z6MNRVrhw3Nxz6Iw@pks.im>
+ source: <20250207-pks-reftable-drop-git-compat-util-v5-0-ba2adc79110f@pks.im>
 
 
-* ac/doc-http-ssl-type-config (2025-01-23) 1 commit
+* ac/doc-http-ssl-type-config (2025-02-05) 1 commit
  - docs: indicate http.sslCertType and sslKeyType
 
  Two configuration variables about SSL authentication material that
  weren't mentioned in the documentations are now mentioned.
 
- Waiting for review response.
- cf. <Z5GOfwBR7JBloIs0@tapette.crustytoothpaste.net>
- source: <pull.1854.git.1737591366672.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <20250205053856.72723-1-andrew@emailcarter.com>
 
 
 * bc/doc-adoc-not-txt (2025-01-21) 5 commits
@@ -460,94 +456,76 @@ Release tarballs are available at:
 
 
 * js/libgit-rust (2025-01-29) 4 commits
- - libgit: add higher-level libgit crate
- - libgit-sys: also export some config_set functions
- - libgit-sys: introduce Rust wrapper for libgit.a
- - common-main: split init and exit code into new files
+  (merged to 'next' on 2025-02-05 at ac1fefbba1)
+ + libgit: add higher-level libgit crate
+ + libgit-sys: also export some config_set functions
+ + libgit-sys: introduce Rust wrapper for libgit.a
+ + common-main: split init and exit code into new files
 
  Foreign language interface for Rust into our code base has been added.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1738187176.git.steadmon@google.com>
 
 
 * zh/gc-expire-to (2025-01-24) 1 commit
- - gc: add `--expire-to` option
+  (merged to 'next' on 2025-02-05 at e075d609ae)
+ + gc: add `--expire-to` option
 
  "git gc" learned the "--expire-to" option and passes it down to
  underlying "git repack".
 
- Will merge to 'next'.
- cf. <>
+ Will merge to 'master'.
  source: <pull.1843.v4.git.1737704954987.gitgitgadget@gmail.com>
 
 
 * kn/reflog-migration-fix-followup (2025-01-22) 4 commits
- - reftable: prevent 'update_index' changes after adding records
- - refs: use 'uint64_t' for 'ref_update.index'
- - refs: mark `ref_transaction_update_reflog()` as static
- - Merge branch 'kn/reflog-migration-fix' into kn/reflog-migration-fix-followup
+  (merged to 'next' on 2025-02-06 at 1b0fc3be42)
+ + reftable: prevent 'update_index' changes after adding records
+ + refs: use 'uint64_t' for 'ref_update.index'
+ + refs: mark `ref_transaction_update_reflog()` as static
+ + Merge branch 'kn/reflog-migration-fix' into kn/reflog-migration-fix-followup
 
  Code clean-up.
 
- On hold.
- cf. <Z5DgxQuc2j_-5GHg@pks.im>
+ Will merge to 'master'.
+ cf. <Z6MNRVrhw3Nxz6Iw@pks.im>
  source: <20250122-461-corrupted-reftable-followup-v3-0-ae5f88bf04fa@gmail.com>
 
 
 * bf/fetch-set-head-fix (2025-01-27) 2 commits
- - fetch set_head: fix non-mirror remotes in bare repositories
- - fetch set_head: refactor to use remote directly
+  (merged to 'next' on 2025-02-06 at 9d20f0b55a)
+ + fetch set_head: fix non-mirror remotes in bare repositories
+ + fetch set_head: refactor to use remote directly
 
  Fetching into a bare repository incorrectly assumed it always used
  a mirror layout when deciding to update remote-tracking HEAD, which
  has been corrected.
 
- Will merge to 'next'?
+ Will merge to 'master'.
+ cf. <Z6MNRVrhw3Nxz6Iw@pks.im>
  source: <Z5Mrk02wMdABtrVZ@pks.im>
 
 
-* ps/zlib-ng (2025-01-28) 12 commits
-  (merged to 'next' on 2025-01-30 at ecf8e8bbef)
- + ci: make "linux-musl" job use zlib-ng
- + ci: switch linux-musl to use Meson
- + compat/zlib: allow use of zlib-ng as backend
- + git-zlib: cast away potential constness of `next_in` pointer
- + compat/zlib: provide stubs for `deflateSetHeader()`
- + compat/zlib: provide `deflateBound()` shim centrally
- + git-compat-util: move include of "compat/zlib.h" into "git-zlib.h"
- + compat: introduce new "zlib.h" header
- + git-compat-util: drop `z_const` define
- + compat: drop `uncompress2()` compatibility shim
- + Merge branch 'ps/build-meson-fixes' into ps/zlib-ng
- + Merge branch 'ps/meson-weak-sha1-build' into ps/zlib-ng
-
- The code paths to interact with zlib has been cleaned up in
- preparation for building with zlib-ng.
-
- Will merge to 'master'.
- source: <20250128-b4-pks-compat-drop-uncompress2-v4-0-129bc36ae8f5@pks.im>
-
-
-* sj/ref-consistency-checks-more (2025-01-30) 8 commits
+* sj/ref-consistency-checks-more (2025-02-06) 8 commits
  - builtin/fsck: add `git refs verify` child process
  - packed-backend: check whether the "packed-refs" is sorted
  - packed-backend: add "packed-refs" entry consistency check
  - packed-backend: check whether the refname contains NUL characters
  - packed-backend: add "packed-refs" header consistency check
- - packed-backend: check whether the "packed-refs" is regular
- - builtin/refs: get worktrees without reading head info
+ - packed-backend: check whether the "packed-refs" is regular file
+ - builtin/refs: get worktrees without reading head information
  - t0602: use subshell to ensure working directory unchanged
 
  "git fsck" becomes more careful when checking the refs.
 
- Expecting a reroll.
- cf. <Z6CBC5kyvIhBuLk6@pks.im>
- source: <Z5r6ZnLH3Ee8IQnN@ArchLinux>
+ Comments?
+ source: <Z6RPJI10-2QkwyqH@ArchLinux>
 
 
 * sc/help-autocorrect-one (2025-01-13) 1 commit
- - help: interpret boolean string values for help.autocorrect
+  (merged to 'next' on 2025-02-05 at 1ecb7c7c9c)
+ + help: interpret boolean string values for help.autocorrect
  (this branch is used by da/help-autocorrect-one-fix.)
 
  "[help] autocorrect = 1" used to be a way to say "please wait for
@@ -555,12 +533,12 @@ Release tarballs are available at:
  running that command"; now it means "yes, if there is a plausible
  typofix for the command name, please run it immediately".
 
- Will merge together with da/help-autocorrect-one-fix to 'next'.
+ Will merge together with da/help-autocorrect-one-fix to 'master'.
  source: <pull.1869.v4.git.git.1736760824201.gitgitgadget@gmail.com>
 
 
-* ua/os-version-capability (2025-01-24) 6 commits
- - connect: advertise OS version
+* ua/os-version-capability (2025-02-05) 6 commits
+ - agent: advertise OS name via agent capability
  - t5701: add setup test to remove side-effect dependency
  - version: extend get_uname_info() to hide system details
  - version: refactor get_uname_info()
@@ -570,39 +548,8 @@ Release tarballs are available at:
  The value of "uname -s" is by default sent over the wire as a new
  capability, with an opt-out for privacy-concious folks.
 
- Will merge to 'next'?
- source: <20250124122217.250925-1-usmanakinyemi202@gmail.com>
-
-
-* ps/ci-misc-updates (2025-01-10) 10 commits
-  (merged to 'next' on 2025-01-29 at 4d2f9d7f18)
- + ci: remove stale code for Azure Pipelines
- + ci: use latest Ubuntu release
- + ci: stop special-casing for Ubuntu 16.04
- + gitlab-ci: add linux32 job testing against i386
- + gitlab-ci: remove the "linux-old" job
- + github: simplify computation of the job's distro
- + github: convert all Linux jobs to be containerized
- + github: adapt containerized jobs to be rootless
- + t7422: fix flaky test caused by buffered stdout
- + t0060: fix EBUSY in MinGW when setting up runtime prefix
- (this branch is used by jk/ci-coverity-update.)
-
- CI updates (containerization, dropping stale ones, etc.).
-
- Will merge to 'master'.
- source: <20250110-b4-pks-ci-fixes-v4-0-6e4613446080@pks.im>
-
-
-* sk/maintenance-remote-prune (2025-01-03) 1 commit
- - maintenance: add prune-remote-refs task
-
- A new periodic maintenance task to run "git remote prune" has been
- introduced.
-
- Will discard.
- Has been expecting a reroll for too long.
- source: <pull.1838.v3.git.1735928035056.gitgitgadget@gmail.com>
+ Under discussion.
+ source: <20250205185246.111447-1-usmanakinyemi202@gmail.com>
 
 
 * jc/doc-attr-tree (2024-12-14) 1 commit
@@ -642,7 +589,8 @@ Release tarballs are available at:
  as it tends to be one-blob-at-a-time.  "git backfill" is introduced
  to help bulk-download necessary files beforehand.
 
- Will merge to 'next'?
+ Will merge to 'next'.
+ cf. <Z6MQK6anxpMhlL9i@pks.im>
  source: <pull.1820.v3.git.1738602667.gitgitgadget@gmail.com>
 
 
@@ -683,7 +631,8 @@ Release tarballs are available at:
  other side, losing the error status from the child process, which
  has been corrected.
 
- Will merge to 'next'?
+ Will merge to 'next'.
+ cf. <xmqqh65azk3a.fsf@gitster.g>
  source: <20250203-pks-push-atomic-respect-exit-code-v5-0-d66481e36622@pks.im>
 
 
@@ -722,3 +671,14 @@ Release tarballs are available at:
 
  Comments?
  source: <20250114021502.41499-1-eric.peijian@gmail.com>
+
+
+* sk/maintenance-remote-prune (2025-01-03) 1 commit
+ . maintenance: add prune-remote-refs task
+
+ A new periodic maintenance task to run "git remote prune" has been
+ introduced.
+
+ Will discard.
+ Has been expecting a reroll for too long.
+ source: <pull.1838.v3.git.1735928035056.gitgitgadget@gmail.com>
