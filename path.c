@@ -560,14 +560,15 @@ const char *repo_worktree_path_replace(const struct repository *repo,
 }
 
 /* Returns 0 on success, negative on failure. */
-static int do_submodule_path(struct strbuf *buf, const char *path,
+static int do_submodule_path(struct repository *repo,
+			     struct strbuf *buf, const char *path,
 			     const char *fmt, va_list args)
 {
 	struct strbuf git_submodule_common_dir = STRBUF_INIT;
 	struct strbuf git_submodule_dir = STRBUF_INIT;
 	int ret;
 
-	ret = submodule_to_gitdir(the_repository, &git_submodule_dir, path);
+	ret = submodule_to_gitdir(repo, &git_submodule_dir, path);
 	if (ret)
 		goto cleanup;
 
@@ -586,13 +587,14 @@ cleanup:
 	return ret;
 }
 
-char *git_pathdup_submodule(const char *path, const char *fmt, ...)
+char *repo_submodule_path(struct repository *repo,
+			  const char *path, const char *fmt, ...)
 {
 	int err;
 	va_list args;
 	struct strbuf buf = STRBUF_INIT;
 	va_start(args, fmt);
-	err = do_submodule_path(&buf, path, fmt, args);
+	err = do_submodule_path(repo, &buf, path, fmt, args);
 	va_end(args);
 	if (err) {
 		strbuf_release(&buf);
@@ -601,16 +603,35 @@ char *git_pathdup_submodule(const char *path, const char *fmt, ...)
 	return strbuf_detach(&buf, NULL);
 }
 
-int strbuf_git_path_submodule(struct strbuf *buf, const char *path,
-			      const char *fmt, ...)
+const char *repo_submodule_path_append(struct repository *repo,
+				       struct strbuf *buf,
+				       const char *path,
+				       const char *fmt, ...)
 {
 	int err;
 	va_list args;
 	va_start(args, fmt);
-	err = do_submodule_path(buf, path, fmt, args);
+	err = do_submodule_path(repo, buf, path, fmt, args);
 	va_end(args);
+	if (err)
+		return NULL;
+	return buf->buf;
+}
 
-	return err;
+const char *repo_submodule_path_replace(struct repository *repo,
+					struct strbuf *buf,
+					const char *path,
+					const char *fmt, ...)
+{
+	int err;
+	va_list args;
+	strbuf_reset(buf);
+	va_start(args, fmt);
+	err = do_submodule_path(repo, buf, path, fmt, args);
+	va_end(args);
+	if (err)
+		return NULL;
+	return buf->buf;
 }
 
 void repo_common_pathv(const struct repository *repo,

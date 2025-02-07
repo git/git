@@ -487,7 +487,8 @@ int submodule_uses_worktrees(const char *path)
 	int ret = 0;
 	struct repository_format format = REPOSITORY_FORMAT_INIT;
 
-	submodule_gitdir = git_pathdup_submodule(path, "%s", "");
+	submodule_gitdir = repo_submodule_path(the_repository,
+					       path, "%s", "");
 	if (!submodule_gitdir)
 		return 0;
 

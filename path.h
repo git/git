@@ -93,20 +93,26 @@ const char *repo_worktree_path_replace(const struct repository *repo,
 	__attribute__((format (printf, 3, 4)));
 
 /*
- * Return a path into a submodule's git directory located at `path`.  `path`
- * must only reference a submodule of the main repository (the_repository).
+ * The `repo_submodule_path` family of functions will construct a path into a
+ * submodule's git directory located at `path`. `path` must be a submodule path
+ * as found in the index and must be part of the given repository.
+ *
+ * Returns a `NULL` pointer in case the submodule cannot be found.
  */
-char *git_pathdup_submodule(const char *path, const char *fmt, ...)
-	__attribute__((format (printf, 2, 3)));
-
-/*
- * Construct a path into a submodule's git directory located at `path` and
- * append it to the provided buffer `sb`.  `path` must only reference a
- * submodule of the main repository (the_repository).
- */
-int strbuf_git_path_submodule(struct strbuf *sb, const char *path,
-				     const char *fmt, ...)
+char *repo_submodule_path(struct repository *repo,
+			  const char *path,
+			  const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));
+const char *repo_submodule_path_append(struct repository *repo,
+				       struct strbuf *sb,
+				       const char *path,
+				       const char *fmt, ...)
+	__attribute__((format (printf, 4, 5)));
+const char *repo_submodule_path_replace(struct repository *repo,
+					struct strbuf *sb,
+					const char *path,
+					const char *fmt, ...)
+	__attribute__((format (printf, 4, 5)));
 
 void report_linked_checkout_garbage(struct repository *r);
 
