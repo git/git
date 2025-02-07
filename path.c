@@ -844,17 +844,17 @@ int calc_shared_perm(int mode)
 {
 	int tweak;
 
-	if (get_shared_repository() < 0)
-		tweak = -get_shared_repository();
+	if (repo_settings_get_shared_repository(the_repository) < 0)
+		tweak = -repo_settings_get_shared_repository(the_repository);
 	else
-		tweak = get_shared_repository();
+		tweak = repo_settings_get_shared_repository(the_repository);
 
 	if (!(mode & S_IWUSR))
 		tweak &= ~0222;
 	if (mode & S_IXUSR)
 		/* Copy read bits to execute bits */
 		tweak |= (tweak & 0444) >> 2;
-	if (get_shared_repository() < 0)
+	if (repo_settings_get_shared_repository(the_repository) < 0)
 		mode = (mode & ~0777) | tweak;
 	else
 		mode |= tweak;
@@ -867,7 +867,7 @@ int adjust_shared_perm(const char *path)
 {
 	int old_mode, new_mode;
 
-	if (!get_shared_repository())
+	if (!repo_settings_get_shared_repository(the_repository))
 		return 0;
 	if (get_st_mode_bits(path, &old_mode) < 0)
 		return -1;

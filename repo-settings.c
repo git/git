@@ -4,6 +4,7 @@
 #include "repository.h"
 #include "midx.h"
 #include "pack-objects.h"
+#include "setup.h"
 
 static void repo_cfg_bool(struct repository *r, const char *key, int *dest,
 			  int def)
@@ -180,4 +181,29 @@ const char *repo_settings_get_hooks_path(struct repository *repo)
 	if (!repo->settings.hooks_path)
 		repo_config_get_pathname(repo, "core.hookspath", &repo->settings.hooks_path);
 	return repo->settings.hooks_path;
+}
+
+int repo_settings_get_shared_repository(struct repository *repo)
+{
+	if (!repo->settings.shared_repository_initialized) {
+		const char *var = "core.sharedrepository";
+		const char *value;
+		if (!repo_config_get_value(repo, var, &value))
+			repo->settings.shared_repository = git_config_perm(var, value);
+		else
+			repo->settings.shared_repository = PERM_UMASK;
+		repo->settings.shared_repository_initialized = 1;
+	}
+	return repo->settings.shared_repository;
+}
+
+void repo_settings_set_shared_repository(struct repository *repo, int value)
+{
+	repo->settings.shared_repository = value;
+	repo->settings.shared_repository_initialized = 1;
+}
+
+void repo_settings_reset_shared_repository(struct repository *repo)
+{
+	repo->settings.shared_repository_initialized = 0;
 }
