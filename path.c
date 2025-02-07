@@ -567,7 +567,7 @@ static int do_submodule_path(struct strbuf *buf, const char *path,
 	struct strbuf git_submodule_dir = STRBUF_INIT;
 	int ret;
 
-	ret = submodule_to_gitdir(&git_submodule_dir, path);
+	ret = submodule_to_gitdir(the_repository, &git_submodule_dir, path);
 	if (ret)
 		goto cleanup;
 

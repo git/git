@@ -2154,7 +2154,7 @@ struct ref_store *repo_get_submodule_ref_store(struct repository *repo,
 	if (!is_nonbare_repository_dir(&submodule_sb))
 		goto done;
 
-	if (submodule_to_gitdir(&submodule_sb, submodule))
+	if (submodule_to_gitdir(repo, &submodule_sb, submodule))
 		goto done;
 
 	subrepo = xmalloc(sizeof(*subrepo));

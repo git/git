@@ -1301,7 +1301,7 @@ static void sync_submodule(const char *path, const char *prefix,
 	remote_key = xstrfmt("remote.%s.url", default_remote);
 	free(default_remote);
 
-	submodule_to_gitdir(&sb, path);
+	submodule_to_gitdir(the_repository, &sb, path);
 	strbuf_addstr(&sb, "/config");
 
 	if (git_config_set_in_file_gently(sb.buf, remote_key, NULL, sub_origin_url))
