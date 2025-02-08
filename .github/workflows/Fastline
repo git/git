@@ -1,2 +1,7 @@
-cd android && fastlane init
+platform :android do
+  lane :deploy_to_playstore do
+    gradle(task: "bundleRelease")
+    upload_to_play_store(track: "internal", aab: "app/build/outputs/bundle/release/app-release.aab")
+  end
+endcd android && fastlane init
 cd ../ios && fastlane init
