@@ -1,0 +1,2 @@
+cd android && fastlane init
+cd ../ios && fastlane init
