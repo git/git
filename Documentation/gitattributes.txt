@@ -701,8 +701,8 @@ where the attribute is not in place would normally cause merge
 conflicts.
 
 To prevent these unnecessary merge conflicts, Git can be told to run a
-virtual check-out and check-in of all three stages of a file when
-resolving a three-way merge by setting the `merge.renormalize`
+virtual check-out and check-in of all three stages of each file that
+needs a three-way content merge, by setting the `merge.renormalize`
 configuration variable.  This prevents changes caused by check-in
 conversion from causing spurious merge conflicts when a converted file
 is merged with an unconverted file.
