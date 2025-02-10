@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2025, #02; Fri, 7)
-X-master-at: 9520f7d9985d8879bddd157309928fc0679c8e92
-X-next-at: 30ceb7b040fb0d98a6c17a39c106f6eb9a112b24
+Subject: What's cooking in git.git (Feb 2025, #03; Mon, 10)
+X-master-at: 388218fac77d0405a5083cd4b4ee20f6694609c3
+X-next-at: 782243c5383dd40d26d75dc97d7fc39900fb60a7
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2025, #02; Fri, 7)
+What's cooking in git.git (Feb 2025, #03; Mon, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,74 +48,125 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* js/bundle-unbundle-fd-reuse-fix (2025-01-25) 1 commit
-  (merged to 'next' on 2025-01-29 at e490587933)
- + bundle: avoid closing file descriptor twice
+* jk/ci-coverity-update (2025-02-03) 2 commits
+  (merged to 'next' on 2025-02-03 at 9597182d1d)
+ + ci: set CI_JOB_IMAGE for coverity job
+ + Merge branch 'ps/ci-misc-updates' into jk/ci-coverity-update
 
- The code path used when "git fetch" fetches from a bundle file
- closed the same file descriptor twice, which sometimes broke things
- unexpectedly when the file descriptor was reused, which has been
- corrected.
- source: <pull.1857.git.1737849456338.gitgitgadget@gmail.com>
-
-
-* ps/ci-misc-updates (2025-01-10) 10 commits
-  (merged to 'next' on 2025-01-29 at 4d2f9d7f18)
- + ci: remove stale code for Azure Pipelines
- + ci: use latest Ubuntu release
- + ci: stop special-casing for Ubuntu 16.04
- + gitlab-ci: add linux32 job testing against i386
- + gitlab-ci: remove the "linux-old" job
- + github: simplify computation of the job's distro
- + github: convert all Linux jobs to be containerized
- + github: adapt containerized jobs to be rootless
- + t7422: fix flaky test caused by buffered stdout
- + t0060: fix EBUSY in MinGW when setting up runtime prefix
- (this branch is used by jk/ci-coverity-update.)
-
- CI updates (containerization, dropping stale ones, etc.).
- source: <20250110-b4-pks-ci-fixes-v4-0-6e4613446080@pks.im>
+ CI update to make Coverity job work again.
+ 
+ source: <20250131233015.GA3544301@coredump.intra.peff.net>
 
 
-* ps/leakfixes-0129 (2025-01-30) 2 commits
-  (merged to 'next' on 2025-01-30 at 6dc24dfdaf)
- + scalar: free result of `remote_default_branch()`
- + unix-socket: fix memory leak when chdir(3p) fails
+* jt/gitlab-ci-base-fix (2025-01-31) 1 commit
+  (merged to 'next' on 2025-02-03 at bf225248c9)
+ + ci: fix base commit fallback for check-whitespace and check-style
 
- A few more leakfixes.
- source: <20250130-b4-pks-memory-leaks-v2-0-fc29dc7d4b19@pks.im>
+ Two CI tasks, whitespace check and style check, work on the
+ difference from the base version and the version being checked, but
+ the base was computed incorrectly in GitLab CI in some cases, which
+ has been corrected.
+ 
+ source: <20250131173938.3592899-1-jltobler@gmail.com>
 
 
-* ps/zlib-ng (2025-01-28) 12 commits
-  (merged to 'next' on 2025-01-30 at ecf8e8bbef)
- + ci: make "linux-musl" job use zlib-ng
- + ci: switch linux-musl to use Meson
- + compat/zlib: allow use of zlib-ng as backend
- + git-zlib: cast away potential constness of `next_in` pointer
- + compat/zlib: provide stubs for `deflateSetHeader()`
- + compat/zlib: provide `deflateBound()` shim centrally
- + git-compat-util: move include of "compat/zlib.h" into "git-zlib.h"
- + compat: introduce new "zlib.h" header
- + git-compat-util: drop `z_const` define
- + compat: drop `uncompress2()` compatibility shim
- + Merge branch 'ps/build-meson-fixes' into ps/zlib-ng
- + Merge branch 'ps/meson-weak-sha1-build' into ps/zlib-ng
+* ps/hash-cleanup (2025-01-31) 5 commits
+  (merged to 'next' on 2025-02-03 at 98bdef7666)
+ + global: adapt callers to use generic hash context helpers
+ + hash: provide generic wrappers to update hash contexts
+ + hash: stop typedeffing the hash context
+ + hash: convert hashing context to a structure
+ + Merge branch 'tb/unsafe-hash-cleanup' into ps/hash-cleanup
 
- The code paths to interact with zlib has been cleaned up in
- preparation for building with zlib-ng.
- source: <20250128-b4-pks-compat-drop-uncompress2-v4-0-129bc36ae8f5@pks.im>
+ Further code clean-up on the use of hash functions.  Now the
+ context object knows what hash function it is working with.
+ 
+ source: <20250131-b4-pks-hash-context-direct-v1-0-67a6d3f49d6e@pks.im>
+
+
+* ps/setup-reinit-fixes (2025-01-30) 3 commits
+  (merged to 'next' on 2025-02-03 at b4eb8f2fc8)
+ + setup: fix reinit of repos with incompatible GIT_DEFAULT_HASH
+ + setup: fix reinit of repos with incompatible GIT_DEFAULT_REF_FORMAT
+ + t0001: remove duplicate test
+
+ "git init" to reinitialize a repository that already exists cannot
+ change the hash function and ref backends; such a request is
+ silently ignored now.
+ 
+ source: <20250130-b4-pks-reinit-default-ref-format-v1-0-d2769ca01207@pks.im>
+
+
+* pw/apply-ulong-overflow-check (2025-01-30) 1 commit
+  (merged to 'next' on 2025-02-03 at e2b37c2c77)
+ + apply: detect overflow when parsing hunk header
+
+ "git apply" internally uses unsigned long for line numbers and uses
+ strtoul() to parse numbers on the hunk headers.  It however forgot
+ to check parse errors.
+ 
+ source: <pull.1858.git.1738235310815.gitgitgadget@gmail.com>
+
+
+* sk/unit-tests-0130 (2025-01-31) 4 commits
+  (merged to 'next' on 2025-02-03 at 163109072c)
+ + t/unit-tests: convert strcmp-offset test to use clar test framework
+ + t/unit-tests: convert strbuf test to use clar test framework
+ + t/unit-tests: adapt example decorate test to use clar test framework
+ + t/unit-tests: convert hashmap test to use clar test framework
+
+ Convert a handful of unit tests to work with the clar framework.
+ 
+ source: <20250131221420.38161-1-kuforiji98@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
+* lo/t7603-path-is-file-update (2025-02-10) 1 commit
+ - t7603: replace test -f by test_path_is_file
+
+ Test clean-up.
+
+ Will merge to 'next'.
+ source: <20250208165731.78804-1-lucasseikioshiro@gmail.com>
+
+
+* ps/path-sans-the-repository (2025-02-07) 16 commits
+ - path: adjust last remaining users of `the_repository`
+ - environment: move access to "core.sharedRepository" into repo settings
+ - environment: move access to "core.hooksPath" into repo settings
+ - repo-settings: introduce function to clear struct
+ - path: drop `git_path()` in favor of `repo_git_path()`
+ - rerere: let `rerere_path()` write paths into a caller-provided buffer
+ - path: drop `git_common_path()` in favor of `repo_common_path()`
+ - worktree: return allocated string from `get_worktree_git_dir()`
+ - path: drop `git_path_buf()` in favor of `repo_git_path_replace()`
+ - path: drop `git_pathdup()` in favor of `repo_git_path()`
+ - path: drop unused `strbuf_git_path()` function
+ - path: refactor `repo_submodule_path()` family of functions
+ - submodule: refactor `submodule_to_gitdir()` to accept a repo
+ - path: refactor `repo_worktree_path()` family of functions
+ - path: refactor `repo_git_path()` family of functions
+ - path: refactor `repo_common_path()` family of functions
+
+ The path.[ch] API takes an explicit repository parameter passed
+ throughout the callchain, instead of relying on the_repository
+ singleton instance.
+
+ source: <20250207-b4-pks-path-drop-the-repository-v2-0-13cad3c11b8a@pks.im>
+
+--------------------------------------------------
+[Cooking]
+
 * jt/rev-list-missing-print-info (2025-02-05) 2 commits
- - rev-list: extend print-info to print missing object type
- - rev-list: add print-info action to print missing object path
+  (merged to 'next' on 2025-02-10 at 88955fe5b4)
+ + rev-list: extend print-info to print missing object type
+ + rev-list: add print-info action to print missing object path
 
  "git rev-list --missing=" learned to accept "print-info" that gives
  known details expected of the missing objects, like path and type.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <CAP8UFD31kbtqXQDp9LyA+x+h+m592=HQHHbskSfar3S2GOfWVg@mail.gmail.com>
  source: <20250205004147.887106-1-jltobler@gmail.com>
 
@@ -161,19 +212,6 @@ Release tarballs are available at:
 
  Waiting for the base topic.
  source: <20250206-b4-pks-reftable-win32-in-use-errors-v2-1-56985a4f6186@pks.im>
-
---------------------------------------------------
-[Cooking]
-
-* jk/ci-coverity-update (2025-02-03) 2 commits
-  (merged to 'next' on 2025-02-03 at 9597182d1d)
- + ci: set CI_JOB_IMAGE for coverity job
- + Merge branch 'ps/ci-misc-updates' into jk/ci-coverity-update
-
- CI update to make Coverity job work again.
-
- Will merge to 'master'.
- source: <20250131233015.GA3544301@coredump.intra.peff.net>
 
 
 * ps/repack-keep-unreachable-in-unpacked-repo (2025-02-04) 1 commit
@@ -243,13 +281,14 @@ Release tarballs are available at:
 
 
 * da/difftool-sans-the-repository (2025-02-06) 3 commits
- - difftool: eliminate use of USE_THE_REPOSITORY_VARIABLE
- - difftool: eliminate use of the_repository
- - difftool: eliminate use of global variables
+  (merged to 'next' on 2025-02-10 at e22cc108b6)
+ + difftool: eliminate use of USE_THE_REPOSITORY_VARIABLE
+ + difftool: eliminate use of the_repository
+ + difftool: eliminate use of global variables
 
  "git difftool" code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <xmqq4j15hch1.fsf@gitster.g>
  source: <20250206042010.865947-3-davvid@gmail.com>
 
@@ -277,58 +316,6 @@ Release tarballs are available at:
  source: <20250130-b4-pks-meson-improvements-v2-0-2f05581ffb44@pks.im>
 
 
-* ps/setup-reinit-fixes (2025-01-30) 3 commits
-  (merged to 'next' on 2025-02-03 at b4eb8f2fc8)
- + setup: fix reinit of repos with incompatible GIT_DEFAULT_HASH
- + setup: fix reinit of repos with incompatible GIT_DEFAULT_REF_FORMAT
- + t0001: remove duplicate test
-
- "git init" to reinitialize a repository that already exists cannot
- change the hash function and ref backends; such a request is
- silently ignored now.
-
- Will merge to 'master'.
- source: <20250130-b4-pks-reinit-default-ref-format-v1-0-d2769ca01207@pks.im>
-
-
-* pw/apply-ulong-overflow-check (2025-01-30) 1 commit
-  (merged to 'next' on 2025-02-03 at e2b37c2c77)
- + apply: detect overflow when parsing hunk header
-
- "git apply" internally uses unsigned long for line numbers and uses
- strtoul() to parse numbers on the hunk headers.  It however forgot
- to check parse errors.
-
- Will merge to 'master'.
- source: <pull.1858.git.1738235310815.gitgitgadget@gmail.com>
-
-
-* sk/unit-tests-0130 (2025-01-31) 4 commits
-  (merged to 'next' on 2025-02-03 at 163109072c)
- + t/unit-tests: convert strcmp-offset test to use clar test framework
- + t/unit-tests: convert strbuf test to use clar test framework
- + t/unit-tests: adapt example decorate test to use clar test framework
- + t/unit-tests: convert hashmap test to use clar test framework
-
- Convert a handful of unit tests to work with the clar framework.
-
- Will merge to 'master'.
- source: <20250131221420.38161-1-kuforiji98@gmail.com>
-
-
-* jt/gitlab-ci-base-fix (2025-01-31) 1 commit
-  (merged to 'next' on 2025-02-03 at bf225248c9)
- + ci: fix base commit fallback for check-whitespace and check-style
-
- Two CI tasks, whitespace check and style check, work on the
- difference from the base version and the version being checked, but
- the base was computed incorrectly in GitLab CI in some cases, which
- has been corrected.
-
- Will merge to 'master'.
- source: <20250131173938.3592899-1-jltobler@gmail.com>
-
-
 * op/worktree-is-main-bare-fix (2025-02-05) 1 commit
   (merged to 'next' on 2025-02-06 at 25c618bf37)
  + worktree: detect from secondary worktree if main worktree is bare
@@ -339,21 +326,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <pull.1829.v4.git.1738737014194.gitgitgadget@gmail.com>
-
-
-* ps/hash-cleanup (2025-01-31) 5 commits
-  (merged to 'next' on 2025-02-03 at 98bdef7666)
- + global: adapt callers to use generic hash context helpers
- + hash: provide generic wrappers to update hash contexts
- + hash: stop typedeffing the hash context
- + hash: convert hashing context to a structure
- + Merge branch 'tb/unsafe-hash-cleanup' into ps/hash-cleanup
-
- Further code clean-up on the use of hash functions.  Now the
- context object knows what hash function it is working with.
-
- Will merge to 'master'.
- source: <20250131-b4-pks-hash-context-direct-v1-0-67a6d3f49d6e@pks.im>
 
 
 * tc/clone-single-revision (2025-02-06) 7 commits
@@ -577,19 +549,20 @@ Release tarballs are available at:
 
 
 * ds/backfill (2025-02-03) 7 commits
- - backfill: assume --sparse when sparse-checkout is enabled
- - backfill: add --sparse option
- - backfill: add --min-batch-size=<n> option
- - backfill: basic functionality and tests
- - backfill: add builtin boilerplate
- - Merge branch 'master' into ds/backfill
- - Merge branch 'ds/path-walk-1' into ds/backfill
+  (merged to 'next' on 2025-02-10 at d6348c9f60)
+ + backfill: assume --sparse when sparse-checkout is enabled
+ + backfill: add --sparse option
+ + backfill: add --min-batch-size=<n> option
+ + backfill: basic functionality and tests
+ + backfill: add builtin boilerplate
+ + Merge branch 'master' into ds/backfill
+ + Merge branch 'ds/path-walk-1' into ds/backfill
 
  Lazy-loading missing files in a blobless clone on demand is costly
  as it tends to be one-blob-at-a-time.  "git backfill" is introduced
  to help bulk-download necessary files beforehand.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <Z6MQK6anxpMhlL9i@pks.im>
  source: <pull.1820.v3.git.1738602667.gitgitgadget@gmail.com>
 
@@ -618,20 +591,21 @@ Release tarballs are available at:
 
 
 * ps/send-pack-unhide-error-in-atomic-push (2025-02-03) 8 commits
- - send-pack: gracefully close the connection for atomic push
- - t5543: atomic push reports exit code failure
- - send-pack: new return code "ERROR_SEND_PACK_BAD_REF_STATUS"
- - t5548: add porcelain push test cases for dry-run mode
- - t5548: add new porcelain test cases
- - t5548: refactor test cases by resetting upstream
- - t5548: refactor to reuse setup_upstream() function
- - t5504: modernize test by moving heredocs into test bodies
+  (merged to 'next' on 2025-02-10 at 7d93e5ad97)
+ + send-pack: gracefully close the connection for atomic push
+ + t5543: atomic push reports exit code failure
+ + send-pack: new return code "ERROR_SEND_PACK_BAD_REF_STATUS"
+ + t5548: add porcelain push test cases for dry-run mode
+ + t5548: add new porcelain test cases
+ + t5548: refactor test cases by resetting upstream
+ + t5548: refactor to reuse setup_upstream() function
+ + t5504: modernize test by moving heredocs into test bodies
 
  "git push --atomic --porcelain" used to ignore failures from the
  other side, losing the error status from the child process, which
  has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <xmqqh65azk3a.fsf@gitster.g>
  source: <20250203-pks-push-atomic-respect-exit-code-v5-0-d66481e36622@pks.im>
 
