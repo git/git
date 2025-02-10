@@ -135,6 +135,22 @@ Fixes since v2.48
    corrected.
    (merge 9a84794ad8 js/bundle-unbundle-fd-reuse-fix later to maint).
 
+ * "git init" to reinitialize a repository that already exists cannot
+   change the hash function and ref backends; such a request is
+   silently ignored now.
+   (merge 7e88640cd1 ps/setup-reinit-fixes later to maint).
+
+ * "git apply" internally uses unsigned long for line numbers and uses
+   strtoul() to parse numbers on the hunk headers.  It however forgot
+   to check parse errors.
+   (merge a206058fda pw/apply-ulong-overflow-check later to maint).
+
+ * Two CI tasks, whitespace check and style check, work on the
+   difference from the base version and the version being checked, but
+   the base was computed incorrectly in GitLab CI in some cases, which
+   has been corrected.
+   (merge acc4fb302b jt/gitlab-ci-base-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge ddb5287894 jk/t7407-use-test-grep later to maint).
    (merge 21e1b44865 aj/difftool-config-doc-fix later to maint).
