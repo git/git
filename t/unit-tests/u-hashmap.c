@@ -1,4 +1,4 @@
-#include "test-lib.h"
+#include "unit-test.h"
 #include "hashmap.h"
 #include "strbuf.h"
 
@@ -83,23 +83,23 @@ static void t_replace(struct hashmap *map, unsigned int ignore_case)
 	struct test_entry *entry;
 
 	entry = alloc_test_entry("key1", "value1", ignore_case);
-	check_pointer_eq(hashmap_put_entry(map, entry, ent), NULL);
+	cl_assert_equal_p(hashmap_put_entry(map, entry, ent), NULL);
 
 	entry = alloc_test_entry(ignore_case ? "Key1" : "key1", "value2",
 				 ignore_case);
 	entry = hashmap_put_entry(map, entry, ent);
-	if (check(entry != NULL))
-		check_str(get_value(entry), "value1");
+	cl_assert(entry != NULL);
+	cl_assert_equal_s(get_value(entry), "value1");
 	free(entry);
 
 	entry = alloc_test_entry("fooBarFrotz", "value3", ignore_case);
-	check_pointer_eq(hashmap_put_entry(map, entry, ent), NULL);
+	cl_assert_equal_p(hashmap_put_entry(map, entry, ent), NULL);
 
 	entry = alloc_test_entry(ignore_case ? "FOObarFrotz" : "fooBarFrotz",
 				 "value4", ignore_case);
 	entry = hashmap_put_entry(map, entry, ent);
-	if (check(entry != NULL))
-		check_str(get_value(entry), "value3");
+	cl_assert(entry != NULL);
+	cl_assert_equal_s(get_value(entry), "value3");
 	free(entry);
 }
 
@@ -122,20 +122,18 @@ static void t_get(struct hashmap *map, unsigned int ignore_case)
 	for (size_t i = 0; i < ARRAY_SIZE(key_val); i++) {
 		entry = alloc_test_entry(key_val[i][0], key_val[i][1],
 					 ignore_case);
-		check_pointer_eq(hashmap_put_entry(map, entry, ent), NULL);
+		cl_assert_equal_p(hashmap_put_entry(map, entry, ent), NULL);
 	}
 
 	for (size_t i = 0; i < ARRAY_SIZE(query); i++) {
 		entry = get_test_entry(map, query[i][0], ignore_case);
-		if (check(entry != NULL))
-			check_str(get_value(entry), query[i][1]);
-		else
-			test_msg("query key: %s", query[i][0]);
+		cl_assert(entry != NULL);
+		cl_assert_equal_s(get_value(entry), query[i][1]);
 	}
 
-	check_pointer_eq(get_test_entry(map, "notInMap", ignore_case), NULL);
-	check_int(map->tablesize, ==, 64);
-	check_int(hashmap_get_size(map), ==, ARRAY_SIZE(key_val));
+	cl_assert_equal_p(get_test_entry(map, "notInMap", ignore_case), NULL);
+	cl_assert_equal_i(map->tablesize, 64);
+	cl_assert_equal_i(hashmap_get_size(map), ARRAY_SIZE(key_val));
 }
 
 static void t_add(struct hashmap *map, unsigned int ignore_case)
@@ -165,39 +163,19 @@ static void t_add(struct hashmap *map, unsigned int ignore_case)
 
 		hashmap_for_each_entry_from(map, entry, ent)
 		{
-			int ret;
-			if (!check_int((ret = key_val_contains(
-						key_val, seen,
-						ARRAY_SIZE(key_val), entry)),
-				       ==, 0)) {
-				switch (ret) {
-				case 1:
-					test_msg("found entry was not given in the input\n"
-						 "    key: %s\n  value: %s",
-						 entry->key, get_value(entry));
-					break;
-				case 2:
-					test_msg("duplicate entry detected\n"
-						 "    key: %s\n  value: %s",
-						 entry->key, get_value(entry));
-					break;
-				}
-			} else {
-				count++;
-			}
+			int ret = key_val_contains(key_val, seen,
+						   ARRAY_SIZE(key_val), entry);
+			cl_assert_equal_i(ret, 0);
+			count++;
 		}
-		check_int(count, ==, 2);
+		cl_assert_equal_i(count, 2);
 	}
 
-	for (size_t i = 0; i < ARRAY_SIZE(seen); i++) {
-		if (!check_int(seen[i], ==, 1))
-			test_msg("following key-val pair was not iterated over:\n"
-				 "    key: %s\n  value: %s",
-				 key_val[i][0], key_val[i][1]);
-	}
+	for (size_t i = 0; i < ARRAY_SIZE(seen); i++)
+		cl_assert_equal_i(seen[i], 1);
 
-	check_int(hashmap_get_size(map), ==, ARRAY_SIZE(key_val));
-	check_pointer_eq(get_test_entry(map, "notInMap", ignore_case), NULL);
+	cl_assert_equal_i(hashmap_get_size(map), ARRAY_SIZE(key_val));
+	cl_assert_equal_p(get_test_entry(map, "notInMap", ignore_case), NULL);
 }
 
 static void t_remove(struct hashmap *map, unsigned int ignore_case)
@@ -211,24 +189,25 @@ static void t_remove(struct hashmap *map, unsigned int ignore_case)
 
 	for (size_t i = 0; i < ARRAY_SIZE(key_val); i++) {
 		entry = alloc_test_entry(key_val[i][0], key_val[i][1], ignore_case);
-		check_pointer_eq(hashmap_put_entry(map, entry, ent), NULL);
+		cl_assert_equal_p(hashmap_put_entry(map, entry, ent), NULL);
 	}
 
 	for (size_t i = 0; i < ARRAY_SIZE(remove); i++) {
 		entry = alloc_test_entry(remove[i][0], "", ignore_case);
 		removed = hashmap_remove_entry(map, entry, ent, remove[i][0]);
-		if (check(removed != NULL))
-			check_str(get_value(removed), remove[i][1]);
+		cl_assert(removed != NULL);
+		cl_assert_equal_s(get_value(removed), remove[i][1]);
 		free(entry);
 		free(removed);
 	}
 
 	entry = alloc_test_entry("notInMap", "", ignore_case);
-	check_pointer_eq(hashmap_remove_entry(map, entry, ent, "notInMap"), NULL);
+	cl_assert_equal_p(hashmap_remove_entry(map, entry, ent, "notInMap"), NULL);
 	free(entry);
 
-	check_int(map->tablesize, ==, 64);
-	check_int(hashmap_get_size(map), ==, ARRAY_SIZE(key_val) - ARRAY_SIZE(remove));
+	cl_assert_equal_i(map->tablesize, 64);
+	cl_assert_equal_i(hashmap_get_size(map),
+			  ARRAY_SIZE(key_val) - ARRAY_SIZE(remove));
 }
 
 static void t_iterate(struct hashmap *map, unsigned int ignore_case)
@@ -242,38 +221,21 @@ static void t_iterate(struct hashmap *map, unsigned int ignore_case)
 
 	for (size_t i = 0; i < ARRAY_SIZE(key_val); i++) {
 		entry = alloc_test_entry(key_val[i][0], key_val[i][1], ignore_case);
-		check_pointer_eq(hashmap_put_entry(map, entry, ent), NULL);
+		cl_assert_equal_p(hashmap_put_entry(map, entry, ent), NULL);
 	}
 
 	hashmap_for_each_entry(map, &iter, entry, ent /* member name */)
 	{
-		int ret;
-		if (!check_int((ret = key_val_contains(key_val, seen,
-						       ARRAY_SIZE(key_val),
-						       entry)), ==, 0)) {
-			switch (ret) {
-			case 1:
-				test_msg("found entry was not given in the input\n"
-					 "    key: %s\n  value: %s",
-					 entry->key, get_value(entry));
-				break;
-			case 2:
-				test_msg("duplicate entry detected\n"
-					 "    key: %s\n  value: %s",
-					 entry->key, get_value(entry));
-				break;
-			}
-		}
+		int ret = key_val_contains(key_val, seen,
+					   ARRAY_SIZE(key_val),
+					   entry);
+		cl_assert(ret == 0);
 	}
 
-	for (size_t i = 0; i < ARRAY_SIZE(seen); i++) {
-		if (!check_int(seen[i], ==, 1))
-			test_msg("following key-val pair was not iterated over:\n"
-				 "    key: %s\n  value: %s",
-				 key_val[i][0], key_val[i][1]);
-	}
+	for (size_t i = 0; i < ARRAY_SIZE(seen); i++)
+		cl_assert_equal_i(seen[i], 1);
 
-	check_int(hashmap_get_size(map), ==, ARRAY_SIZE(key_val));
+	cl_assert_equal_i(hashmap_get_size(map), ARRAY_SIZE(key_val));
 }
 
 static void t_alloc(struct hashmap *map, unsigned int ignore_case)
@@ -284,17 +246,17 @@ static void t_alloc(struct hashmap *map, unsigned int ignore_case)
 		char *key = xstrfmt("key%d", i);
 		char *value = xstrfmt("value%d", i);
 		entry = alloc_test_entry(key, value, ignore_case);
-		check_pointer_eq(hashmap_put_entry(map, entry, ent), NULL);
+		cl_assert_equal_p(hashmap_put_entry(map, entry, ent), NULL);
 		free(key);
 		free(value);
 	}
-	check_int(map->tablesize, ==, 64);
-	check_int(hashmap_get_size(map), ==, 51);
+	cl_assert_equal_i(map->tablesize, 64);
+	cl_assert_equal_i(hashmap_get_size(map), 51);
 
 	entry = alloc_test_entry("key52", "value52", ignore_case);
-	check_pointer_eq(hashmap_put_entry(map, entry, ent), NULL);
-	check_int(map->tablesize, ==, 256);
-	check_int(hashmap_get_size(map), ==, 52);
+	cl_assert_equal_p(hashmap_put_entry(map, entry, ent), NULL);
+	cl_assert_equal_i(map->tablesize, 256);
+	cl_assert_equal_i(hashmap_get_size(map), 52);
 
 	for (int i = 1; i <= 12; i++) {
 		char *key = xstrfmt("key%d", i);
@@ -302,27 +264,27 @@ static void t_alloc(struct hashmap *map, unsigned int ignore_case)
 
 		entry = alloc_test_entry(key, "", ignore_case);
 		removed = hashmap_remove_entry(map, entry, ent, key);
-		if (check(removed != NULL))
-			check_str(value, get_value(removed));
+		cl_assert(removed != NULL);
+		cl_assert_equal_s(value, get_value(removed));
 		free(key);
 		free(value);
 		free(entry);
 		free(removed);
 	}
-	check_int(map->tablesize, ==, 256);
-	check_int(hashmap_get_size(map), ==, 40);
+	cl_assert_equal_i(map->tablesize, 256);
+	cl_assert_equal_i(hashmap_get_size(map), 40);
 
 	entry = alloc_test_entry("key40", "", ignore_case);
 	removed = hashmap_remove_entry(map, entry, ent, "key40");
-	if (check(removed != NULL))
-		check_str("value40", get_value(removed));
-	check_int(map->tablesize, ==, 64);
-	check_int(hashmap_get_size(map), ==, 39);
+	cl_assert(removed != NULL);
+	cl_assert_equal_s("value40", get_value(removed));
+	cl_assert_equal_i(map->tablesize, 64);
+	cl_assert_equal_i(hashmap_get_size(map), 39);
 	free(entry);
 	free(removed);
 }
 
-static void t_intern(void)
+void test_hashmap__intern(void)
 {
 	const char *values[] = { "value1", "Value1", "value2", "value2" };
 
@@ -330,32 +292,68 @@ static void t_intern(void)
 		const char *i1 = strintern(values[i]);
 		const char *i2 = strintern(values[i]);
 
-		if (!check(!strcmp(i1, values[i])))
-			test_msg("strintern(%s) returns %s\n", values[i], i1);
-		else if (!check(i1 != values[i]))
-			test_msg("strintern(%s) returns input pointer\n",
-				 values[i]);
-		else if (!check_pointer_eq(i1, i2))
-			test_msg("address('%s') != address('%s'), so strintern('%s') != strintern('%s')",
-				 i1, i2, values[i], values[i]);
-		else
-			check_str(i1, values[i]);
+		cl_assert_equal_s(i1, values[i]);
+		cl_assert(i1 != values[i]);
+		cl_assert_equal_p(i1, i2);
 	}
 }
 
-int cmd_main(int argc UNUSED, const char **argv UNUSED)
+void test_hashmap__replace_case_sensitive(void)
 {
-	TEST(setup(t_replace, 0), "replace works");
-	TEST(setup(t_replace, 1), "replace (case insensitive) works");
-	TEST(setup(t_get, 0), "get works");
-	TEST(setup(t_get, 1), "get (case insensitive) works");
-	TEST(setup(t_add, 0), "add works");
-	TEST(setup(t_add, 1), "add (case insensitive) works");
-	TEST(setup(t_remove, 0), "remove works");
-	TEST(setup(t_remove, 1), "remove (case insensitive) works");
-	TEST(setup(t_iterate, 0), "iterate works");
-	TEST(setup(t_iterate, 1), "iterate (case insensitive) works");
-	TEST(setup(t_alloc, 0), "grow / shrink works");
-	TEST(t_intern(), "string interning works");
-	return test_done();
+	setup(t_replace, 0);
+}
+
+void test_hashmap__replace_case_insensitive(void)
+{
+	setup(t_replace, 1);
+}
+
+void test_hashmap__get_case_sensitive(void)
+{
+	setup(t_get, 0);
+}
+
+void test_hashmap__get_case_insensitive(void)
+{
+	setup(t_get, 1);
+}
+
+void test_hashmap__add_case_sensitive(void)
+{
+	setup(t_add, 0);
+}
+
+void test_hashmap__add_case_insensitive(void)
+{
+	setup(t_add, 1);
+}
+
+void test_hashmap__remove_case_sensitive(void)
+{
+	setup(t_remove, 0);
+}
+
+void test_hashmap__remove_case_insensitive(void)
+{
+	setup(t_remove, 1);
+}
+
+void test_hashmap__iterate_case_sensitive(void)
+{
+	setup(t_iterate, 0);
+}
+
+void test_hashmap__iterate_case_insensitive(void)
+{
+	setup(t_iterate, 1);
+}
+
+void test_hashmap__alloc_case_sensitive(void)
+{
+	setup(t_alloc, 0);
+}
+
+void test_hashmap__alloc_case_insensitive(void)
+{
+	setup(t_alloc, 1);
 }
