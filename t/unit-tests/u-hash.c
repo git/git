@@ -8,13 +8,13 @@ static void check_hash_data(const void *data, size_t data_length,
 	cl_assert(data != NULL);
 
 	for (size_t i = 1; i < ARRAY_SIZE(hash_algos); i++) {
-		git_hash_ctx ctx;
+		struct git_hash_ctx ctx;
 		unsigned char hash[GIT_MAX_HEXSZ];
 		const struct git_hash_algo *algop = &hash_algos[i];
 
 		algop->init_fn(&ctx);
-		algop->update_fn(&ctx, data, data_length);
-		algop->final_fn(hash, &ctx);
+		git_hash_update(&ctx, data, data_length);
+		git_hash_final(hash, &ctx);
 
 		cl_assert_equal_s(hash_to_hex_algop(hash,algop), expected_hashes[i - 1]);
 	}

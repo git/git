@@ -86,84 +86,90 @@ static const struct object_id null_oid_sha256 = {
 	.algo = GIT_HASH_SHA256,
 };
 
-static void git_hash_sha1_init(git_hash_ctx *ctx)
+static void git_hash_sha1_init(struct git_hash_ctx *ctx)
 {
-	git_SHA1_Init(&ctx->sha1);
+	ctx->algop = &hash_algos[GIT_HASH_SHA1];
+	git_SHA1_Init(&ctx->state.sha1);
 }
 
-static void git_hash_sha1_clone(git_hash_ctx *dst, const git_hash_ctx *src)
+static void git_hash_sha1_clone(struct git_hash_ctx *dst, const struct git_hash_ctx *src)
 {
-	git_SHA1_Clone(&dst->sha1, &src->sha1);
+	dst->algop = src->algop;
+	git_SHA1_Clone(&dst->state.sha1, &src->state.sha1);
 }
 
-static void git_hash_sha1_update(git_hash_ctx *ctx, const void *data, size_t len)
+static void git_hash_sha1_update(struct git_hash_ctx *ctx, const void *data, size_t len)
 {
-	git_SHA1_Update(&ctx->sha1, data, len);
+	git_SHA1_Update(&ctx->state.sha1, data, len);
 }
 
-static void git_hash_sha1_final(unsigned char *hash, git_hash_ctx *ctx)
+static void git_hash_sha1_final(unsigned char *hash, struct git_hash_ctx *ctx)
 {
-	git_SHA1_Final(hash, &ctx->sha1);
+	git_SHA1_Final(hash, &ctx->state.sha1);
 }
 
-static void git_hash_sha1_final_oid(struct object_id *oid, git_hash_ctx *ctx)
+static void git_hash_sha1_final_oid(struct object_id *oid, struct git_hash_ctx *ctx)
 {
-	git_SHA1_Final(oid->hash, &ctx->sha1);
+	git_SHA1_Final(oid->hash, &ctx->state.sha1);
 	memset(oid->hash + GIT_SHA1_RAWSZ, 0, GIT_MAX_RAWSZ - GIT_SHA1_RAWSZ);
 	oid->algo = GIT_HASH_SHA1;
 }
 
-static void git_hash_sha1_init_unsafe(git_hash_ctx *ctx)
+static void git_hash_sha1_init_unsafe(struct git_hash_ctx *ctx)
 {
-	git_SHA1_Init_unsafe(&ctx->sha1_unsafe);
+	ctx->algop = unsafe_hash_algo(&hash_algos[GIT_HASH_SHA1]);
+	git_SHA1_Init_unsafe(&ctx->state.sha1_unsafe);
 }
 
-static void git_hash_sha1_clone_unsafe(git_hash_ctx *dst, const git_hash_ctx *src)
+static void git_hash_sha1_clone_unsafe(struct git_hash_ctx *dst, const struct git_hash_ctx *src)
 {
-	git_SHA1_Clone_unsafe(&dst->sha1_unsafe, &src->sha1_unsafe);
+	dst->algop = src->algop;
+	git_SHA1_Clone_unsafe(&dst->state.sha1_unsafe, &src->state.sha1_unsafe);
 }
 
-static void git_hash_sha1_update_unsafe(git_hash_ctx *ctx, const void *data,
+static void git_hash_sha1_update_unsafe(struct git_hash_ctx *ctx, const void *data,
 				      size_t len)
 {
-	git_SHA1_Update_unsafe(&ctx->sha1_unsafe, data, len);
+	git_SHA1_Update_unsafe(&ctx->state.sha1_unsafe, data, len);
 }
 
-static void git_hash_sha1_final_unsafe(unsigned char *hash, git_hash_ctx *ctx)
+static void git_hash_sha1_final_unsafe(unsigned char *hash, struct git_hash_ctx *ctx)
 {
-	git_SHA1_Final_unsafe(hash, &ctx->sha1_unsafe);
+	git_SHA1_Final_unsafe(hash, &ctx->state.sha1_unsafe);
 }
 
-static void git_hash_sha1_final_oid_unsafe(struct object_id *oid, git_hash_ctx *ctx)
+static void git_hash_sha1_final_oid_unsafe(struct object_id *oid, struct git_hash_ctx *ctx)
 {
-	git_SHA1_Final_unsafe(oid->hash, &ctx->sha1_unsafe);
+	git_SHA1_Final_unsafe(oid->hash, &ctx->state.sha1_unsafe);
 	memset(oid->hash + GIT_SHA1_RAWSZ, 0, GIT_MAX_RAWSZ - GIT_SHA1_RAWSZ);
 	oid->algo = GIT_HASH_SHA1;
 }
 
-static void git_hash_sha256_init(git_hash_ctx *ctx)
+static void git_hash_sha256_init(struct git_hash_ctx *ctx)
 {
-	git_SHA256_Init(&ctx->sha256);
+	ctx->algop = unsafe_hash_algo(&hash_algos[GIT_HASH_SHA256]);
+	git_SHA256_Init(&ctx->state.sha256);
 }
 
-static void git_hash_sha256_clone(git_hash_ctx *dst, const git_hash_ctx *src)
+static void git_hash_sha256_clone(struct git_hash_ctx *dst, const struct git_hash_ctx *src)
 {
-	git_SHA256_Clone(&dst->sha256, &src->sha256);
+	dst->algop = src->algop;
+	git_SHA256_Clone(&dst->state.sha256, &src->state.sha256);
 }
 
-static void git_hash_sha256_update(git_hash_ctx *ctx, const void *data, size_t len)
+static void git_hash_sha256_update(struct git_hash_ctx *ctx, const void *data, size_t len)
 {
-	git_SHA256_Update(&ctx->sha256, data, len);
+	git_SHA256_Update(&ctx->state.sha256, data, len);
 }
 
-static void git_hash_sha256_final(unsigned char *hash, git_hash_ctx *ctx)
+static void git_hash_sha256_final(unsigned char *hash, struct git_hash_ctx *ctx)
 {
-	git_SHA256_Final(hash, &ctx->sha256);
+	git_SHA256_Final(hash, &ctx->state.sha256);
 }
 
-static void git_hash_sha256_final_oid(struct object_id *oid, git_hash_ctx *ctx)
+static void git_hash_sha256_final_oid(struct object_id *oid, struct git_hash_ctx *ctx)
 {
-	git_SHA256_Final(oid->hash, &ctx->sha256);
+	git_SHA256_Final(oid->hash, &ctx->state.sha256);
 	/*
 	 * This currently does nothing, so the compiler should optimize it out,
 	 * but keep it in case we extend the hash size again.
@@ -172,18 +178,18 @@ static void git_hash_sha256_final_oid(struct object_id *oid, git_hash_ctx *ctx)
 	oid->algo = GIT_HASH_SHA256;
 }
 
-static void git_hash_unknown_init(git_hash_ctx *ctx UNUSED)
+static void git_hash_unknown_init(struct git_hash_ctx *ctx UNUSED)
 {
 	BUG("trying to init unknown hash");
 }
 
-static void git_hash_unknown_clone(git_hash_ctx *dst UNUSED,
-				   const git_hash_ctx *src UNUSED)
+static void git_hash_unknown_clone(struct git_hash_ctx *dst UNUSED,
+				   const struct git_hash_ctx *src UNUSED)
 {
 	BUG("trying to clone unknown hash");
 }
 
-static void git_hash_unknown_update(git_hash_ctx *ctx UNUSED,
+static void git_hash_unknown_update(struct git_hash_ctx *ctx UNUSED,
 				    const void *data UNUSED,
 				    size_t len UNUSED)
 {
@@ -191,13 +197,13 @@ static void git_hash_unknown_update(git_hash_ctx *ctx UNUSED,
 }
 
 static void git_hash_unknown_final(unsigned char *hash UNUSED,
-				   git_hash_ctx *ctx UNUSED)
+				   struct git_hash_ctx *ctx UNUSED)
 {
 	BUG("trying to finalize unknown hash");
 }
 
 static void git_hash_unknown_final_oid(struct object_id *oid UNUSED,
-				       git_hash_ctx *ctx UNUSED)
+				       struct git_hash_ctx *ctx UNUSED)
 {
 	BUG("trying to finalize unknown hash");
 }
@@ -1180,7 +1186,7 @@ int stream_object_signature(struct repository *r, const struct object_id *oid)
 	unsigned long size;
 	enum object_type obj_type;
 	struct git_istream *st;
-	git_hash_ctx c;
+	struct git_hash_ctx c;
 	char hdr[MAX_HEADER_LEN];
 	int hdrlen;
 
@@ -1193,7 +1199,7 @@ int stream_object_signature(struct repository *r, const struct object_id *oid)
 
 	/* Sha1.. */
 	r->hash_algo->init_fn(&c);
-	r->hash_algo->update_fn(&c, hdr, hdrlen);
+	git_hash_update(&c, hdr, hdrlen);
 	for (;;) {
 		char buf[1024 * 16];
 		ssize_t readlen = read_istream(st, buf, sizeof(buf));
@@ -1204,9 +1210,9 @@ int stream_object_signature(struct repository *r, const struct object_id *oid)
 		}
 		if (!readlen)
 			break;
-		r->hash_algo->update_fn(&c, buf, readlen);
+		git_hash_update(&c, buf, readlen);
 	}
-	r->hash_algo->final_oid_fn(&real_oid, &c);
+	git_hash_final_oid(&real_oid, &c);
 	close_istream(st);
 	return !oideq(oid, &real_oid) ? -1 : 0;
 }
@@ -1945,15 +1951,15 @@ void *read_object_with_reference(struct repository *r,
 	}
 }
 
-static void hash_object_body(const struct git_hash_algo *algo, git_hash_ctx *c,
+static void hash_object_body(const struct git_hash_algo *algo, struct git_hash_ctx *c,
 			     const void *buf, unsigned long len,
 			     struct object_id *oid,
 			     char *hdr, int *hdrlen)
 {
 	algo->init_fn(c);
-	algo->update_fn(c, hdr, *hdrlen);
-	algo->update_fn(c, buf, len);
-	algo->final_oid_fn(oid, c);
+	git_hash_update(c, hdr, *hdrlen);
+	git_hash_update(c, buf, len);
+	git_hash_final_oid(oid, c);
 }
 
 static void write_object_file_prepare(const struct git_hash_algo *algo,
@@ -1961,7 +1967,7 @@ static void write_object_file_prepare(const struct git_hash_algo *algo,
 				      enum object_type type, struct object_id *oid,
 				      char *hdr, int *hdrlen)
 {
-	git_hash_ctx c;
+	struct git_hash_ctx c;
 
 	/* Generate the header */
 	*hdrlen = format_object_header(hdr, *hdrlen, type, len);
@@ -1975,7 +1981,7 @@ static void write_object_file_prepare_literally(const struct git_hash_algo *algo
 				      const char *type, struct object_id *oid,
 				      char *hdr, int *hdrlen)
 {
-	git_hash_ctx c;
+	struct git_hash_ctx c;
 
 	*hdrlen = format_object_header_literally(hdr, *hdrlen, type, len);
 	hash_object_body(algo, &c, buf, len, oid, hdr, hdrlen);
@@ -2206,7 +2212,7 @@ static int start_loose_object_common(struct strbuf *tmp_file,
 				     const char *filename, unsigned flags,
 				     git_zstream *stream,
 				     unsigned char *buf, size_t buflen,
-				     git_hash_ctx *c, git_hash_ctx *compat_c,
+				     struct git_hash_ctx *c, struct git_hash_ctx *compat_c,
 				     char *hdr, int hdrlen)
 {
 	struct repository *repo = the_repository;
@@ -2240,9 +2246,9 @@ static int start_loose_object_common(struct strbuf *tmp_file,
 	stream->avail_in = hdrlen;
 	while (git_deflate(stream, 0) == Z_OK)
 		; /* nothing */
-	algo->update_fn(c, hdr, hdrlen);
+	git_hash_update(c, hdr, hdrlen);
 	if (compat && compat_c)
-		compat->update_fn(compat_c, hdr, hdrlen);
+		git_hash_update(compat_c, hdr, hdrlen);
 
 	return fd;
 }
@@ -2251,21 +2257,20 @@ static int start_loose_object_common(struct strbuf *tmp_file,
  * Common steps for the inner git_deflate() loop for writing loose
  * objects. Returns what git_deflate() returns.
  */
-static int write_loose_object_common(git_hash_ctx *c, git_hash_ctx *compat_c,
+static int write_loose_object_common(struct git_hash_ctx *c, struct git_hash_ctx *compat_c,
 				     git_zstream *stream, const int flush,
 				     unsigned char *in0, const int fd,
 				     unsigned char *compressed,
 				     const size_t compressed_len)
 {
 	struct repository *repo = the_repository;
-	const struct git_hash_algo *algo = repo->hash_algo;
 	const struct git_hash_algo *compat = repo->compat_hash_algo;
 	int ret;
 
 	ret = git_deflate(stream, flush ? Z_FINISH : 0);
-	algo->update_fn(c, in0, stream->next_in - in0);
+	git_hash_update(c, in0, stream->next_in - in0);
 	if (compat && compat_c)
-		compat->update_fn(compat_c, in0, stream->next_in - in0);
+		git_hash_update(compat_c, in0, stream->next_in - in0);
 	if (write_in_full(fd, compressed, stream->next_out - compressed) < 0)
 		die_errno(_("unable to write loose object file"));
 	stream->next_out = compressed;
@@ -2280,21 +2285,20 @@ static int write_loose_object_common(git_hash_ctx *c, git_hash_ctx *compat_c,
  * - End the compression of zlib stream.
  * - Get the calculated oid to "oid".
  */
-static int end_loose_object_common(git_hash_ctx *c, git_hash_ctx *compat_c,
+static int end_loose_object_common(struct git_hash_ctx *c, struct git_hash_ctx *compat_c,
 				   git_zstream *stream, struct object_id *oid,
 				   struct object_id *compat_oid)
 {
 	struct repository *repo = the_repository;
-	const struct git_hash_algo *algo = repo->hash_algo;
 	const struct git_hash_algo *compat = repo->compat_hash_algo;
 	int ret;
 
 	ret = git_deflate_end_gently(stream);
 	if (ret != Z_OK)
 		return ret;
-	algo->final_oid_fn(oid, c);
+	git_hash_final_oid(oid, c);
 	if (compat && compat_c)
-		compat->final_oid_fn(compat_oid, compat_c);
+		git_hash_final_oid(compat_oid, compat_c);
 
 	return Z_OK;
 }
@@ -2306,7 +2310,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 	int fd, ret;
 	unsigned char compressed[4096];
 	git_zstream stream;
-	git_hash_ctx c;
+	struct git_hash_ctx c;
 	struct object_id parano_oid;
 	static struct strbuf tmp_file = STRBUF_INIT;
 	static struct strbuf filename = STRBUF_INIT;
@@ -2386,7 +2390,7 @@ int stream_loose_object(struct input_stream *in_stream, size_t len,
 	int fd, ret, err = 0, flush = 0;
 	unsigned char compressed[4096];
 	git_zstream stream;
-	git_hash_ctx c, compat_c;
+	struct git_hash_ctx c, compat_c;
 	struct strbuf tmp_file = STRBUF_INIT;
 	struct strbuf filename = STRBUF_INIT;
 	int dirlen;
@@ -3046,14 +3050,14 @@ static int check_stream_oid(git_zstream *stream,
 			    const char *path,
 			    const struct object_id *expected_oid)
 {
-	git_hash_ctx c;
+	struct git_hash_ctx c;
 	struct object_id real_oid;
 	unsigned char buf[4096];
 	unsigned long total_read;
 	int status = Z_OK;
 
 	the_hash_algo->init_fn(&c);
-	the_hash_algo->update_fn(&c, hdr, stream->total_out);
+	git_hash_update(&c, hdr, stream->total_out);
 
 	/*
 	 * We already read some bytes into hdr, but the ones up to the NUL
@@ -3073,7 +3077,7 @@ static int check_stream_oid(git_zstream *stream,
 		if (size - total_read < stream->avail_out)
 			stream->avail_out = size - total_read;
 		status = git_inflate(stream, Z_FINISH);
-		the_hash_algo->update_fn(&c, buf, stream->next_out - buf);
+		git_hash_update(&c, buf, stream->next_out - buf);
 		total_read += stream->next_out - buf;
 	}
 	git_inflate_end(stream);
@@ -3088,7 +3092,7 @@ static int check_stream_oid(git_zstream *stream,
 		return -1;
 	}
 
-	the_hash_algo->final_oid_fn(&real_oid, &c);
+	git_hash_final_oid(&real_oid, &c);
 	if (!oideq(expected_oid, &real_oid)) {
 		error(_("hash mismatch for %s (expected %s)"), path,
 		      oid_to_hex(expected_oid));

@@ -652,7 +652,7 @@ void run_diff_index(struct rev_info *revs, unsigned int option);
 
 int do_diff_cache(const struct object_id *, struct diff_options *);
 int diff_flush_patch_id(struct diff_options *, struct object_id *, int);
-void flush_one_hunk(struct object_id *result, git_hash_ctx *ctx);
+void flush_one_hunk(struct object_id *result, struct git_hash_ctx *ctx);
 
 int diff_result_code(struct rev_info *);
 

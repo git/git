@@ -162,7 +162,7 @@ static int already_written(struct bulk_checkin_packfile *state, struct object_id
  * with a new pack.
  */
 static int stream_blob_to_pack(struct bulk_checkin_packfile *state,
-			       git_hash_ctx *ctx, off_t *already_hashed_to,
+			       struct git_hash_ctx *ctx, off_t *already_hashed_to,
 			       int fd, size_t size, const char *path,
 			       unsigned flags)
 {
@@ -195,7 +195,7 @@ static int stream_blob_to_pack(struct bulk_checkin_packfile *state,
 				if (rsize < hsize)
 					hsize = rsize;
 				if (hsize)
-					the_hash_algo->update_fn(ctx, ibuf, hsize);
+					git_hash_update(ctx, ibuf, hsize);
 				*already_hashed_to = offset;
 			}
 			s.next_in = ibuf;
@@ -259,7 +259,7 @@ static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
 				const char *path, unsigned flags)
 {
 	off_t seekback, already_hashed_to;
-	git_hash_ctx ctx;
+	struct git_hash_ctx ctx;
 	unsigned char obuf[16384];
 	unsigned header_len;
 	struct hashfile_checkpoint checkpoint;
@@ -272,7 +272,7 @@ static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
 	header_len = format_object_header((char *)obuf, sizeof(obuf),
 					  OBJ_BLOB, size);
 	the_hash_algo->init_fn(&ctx);
-	the_hash_algo->update_fn(&ctx, obuf, header_len);
+	git_hash_update(&ctx, obuf, header_len);
 
 	/* Note: idx is non-NULL when we are writing */
 	if ((flags & HASH_WRITE_OBJECT) != 0) {
@@ -307,7 +307,7 @@ static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
 		if (lseek(fd, seekback, SEEK_SET) == (off_t) -1)
 			return error("cannot seek back");
 	}
-	the_hash_algo->final_oid_fn(result_oid, &ctx);
+	git_hash_final_oid(result_oid, &ctx);
 	if (!idx)
 		return 0;
 

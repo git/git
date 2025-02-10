@@ -2597,8 +2597,8 @@ static size_t fwrite_sha1_file(char *ptr, size_t eltsize, size_t nmemb,
 		freq->stream.next_out = expn;
 		freq->stream.avail_out = sizeof(expn);
 		freq->zret = git_inflate(&freq->stream, Z_SYNC_FLUSH);
-		the_hash_algo->update_fn(&freq->c, expn,
-					 sizeof(expn) - freq->stream.avail_out);
+		git_hash_update(&freq->c, expn,
+				sizeof(expn) - freq->stream.avail_out);
 	} while (freq->stream.avail_in && freq->zret == Z_OK);
 	return nmemb;
 }
@@ -2763,7 +2763,7 @@ int finish_http_object_request(struct http_object_request *freq)
 		return -1;
 	}
 
-	the_hash_algo->final_oid_fn(&freq->real_oid, &freq->c);
+	git_hash_final_oid(&freq->real_oid, &freq->c);
 	if (freq->zret != Z_STREAM_END) {
 		unlink_or_warn(freq->tmpfile.buf);
 		return -1;
