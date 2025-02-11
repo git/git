@@ -472,8 +472,9 @@ Environment Variables
 ---------------------
 Various Git commands pay attention to environment variables and change
 their behavior.  The environment variables marked as "Boolean" take
-their values the same way as Boolean valued configuration variables, e.g.
-"true", "yes", "on" and positive numbers are taken as "yes".
+their values the same way as Boolean valued configuration variables, i.e.,
+"true", "yes", "on" and positive numbers are taken as "yes", while "false",
+"no", "off", and "0" are taken as "no".
 
 Here are the variables:
 
