@@ -606,9 +606,12 @@ void diffcore_fix_diff_index(void);
 "                try unchanged files as candidate for copy detection.\n" \
 "  -l<n>         limit rename attempts up to <n> paths.\n" \
 "  -O<file>      reorder diffs according to the <file>.\n" \
+"  -G<regex>     find differences where patch contains the specified regex.\n" \
 "  -S<string>    find filepair who differ in the number of occurrences of string.\n" \
+"  --pickaxe-grep\n" \
+"                treat <string> as a regex in the -S argument.\n" \
 "  --pickaxe-all\n" \
-"                show all files diff when -S is used and hit is found.\n" \
+"                show all files diff when -G or -S is used and hit is found.\n" \
 "  -a  --text    treat all files as text.\n"
 
 int diff_queue_is_empty(struct diff_options *o);
