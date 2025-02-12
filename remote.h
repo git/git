@@ -448,4 +448,6 @@ void apply_push_cas(struct push_cas_option *, struct remote *, struct ref *);
 char *relative_url(const char *remote_url, const char *url,
 		   const char *up_path);
 
+int valid_remote_name(const char *name);
+
 #endif
