@@ -60,16 +60,37 @@ test_expect_success 'usage' '
 	test_expect_code 129 git log -S 2>err &&
 	test_grep "switch.*requires a value" err &&
 
+	test_expect_code 129 git log --patch-modifies 2>err &&
+	test_grep "option.*requires a value" err &&
+
 	test_expect_code 129 git log -G 2>err &&
 	test_grep "switch.*requires a value" err &&
 
+	test_expect_code 129 git log --patch-grep 2>err &&
+	test_grep "option.*requires a value" err &&
+
 	test_expect_code 128 git log -Gregex -Sstring 2>err &&
+	grep "cannot be used together" err &&
+
+	test_expect_code 128 git log -Gregex --patch-modifies string 2>err &&
+	grep "cannot be used together" err &&
+
+	test_expect_code 128 git log --patch-grep regex -Sstring 2>err &&
+	grep "cannot be used together" err &&
+
+	test_expect_code 128 git log --patch-grep regex --patch-modifies string 2>err &&
 	grep "cannot be used together" err &&
 
 	test_expect_code 128 git log -Gregex --find-object=HEAD 2>err &&
 	grep "cannot be used together" err &&
 
+	test_expect_code 128 git log --patch-grep regex --find-object=HEAD 2>err &&
+	grep "cannot be used together" err &&
+
 	test_expect_code 128 git log -Sstring --find-object=HEAD 2>err &&
+	grep "cannot be used together" err &&
+
+	test_expect_code 128 git log --patch-modifies string --find-object=HEAD 2>err &&
 	grep "cannot be used together" err &&
 
 	test_expect_code 128 git log --pickaxe-all --find-object=HEAD 2>err &&
@@ -78,6 +99,9 @@ test_expect_success 'usage' '
 
 test_expect_success 'usage: --pickaxe-regex' '
 	test_expect_code 128 git log -Gregex --pickaxe-regex 2>err &&
+	grep "cannot be used together" err &&
+
+	test_expect_code 128 git log --patch-grep regex --pickaxe-regex 2>err &&
 	grep "cannot be used together" err
 '
 
@@ -89,7 +113,13 @@ test_expect_success 'usage: --no-pickaxe-regex' '
 	test_expect_code 128 git log -Sstring --no-pickaxe-regex 2>actual &&
 	test_cmp expect actual &&
 
+	test_expect_code 128 git log --patch-modifies string --no-pickaxe-regex 2>actual &&
+	test_cmp expect actual &&
+
 	test_expect_code 128 git log -Gregex --no-pickaxe-regex 2>err &&
+	test_cmp expect actual &&
+
+	test_expect_code 128 git log --patch-grep regex --no-pickaxe-regex 2>err &&
 	test_cmp expect actual
 '
 
@@ -104,9 +134,13 @@ test_log_icase	expect_second	--author person
 test_log_icase	expect_nomatch	--author spreon
 
 test_log	expect_nomatch	-G picked
+test_log	expect_nomatch	--patch-grep picked
 test_log	expect_second	-G Picked
+test_log	expect_second	--patch-grep Picked
 test_log_icase	expect_nomatch	-G pickle
+test_log_icase	expect_nomatch	--patch-grep pickle
 test_log_icase	expect_second	-G picked
+test_log_icase	expect_second	--patch-grep picked
 
 test_expect_success 'log -G --textconv (missing textconv tool)' '
 	echo "* diff=test" >.gitattributes &&
@@ -122,14 +156,22 @@ test_expect_success 'log -G --no-textconv (missing textconv tool)' '
 '
 
 test_log	expect_nomatch	-S picked
+test_log	expect_nomatch	--patch-modifies picked
 test_log	expect_second	-S Picked
+test_log	expect_second	--patch-modifies Picked
 test_log_icase	expect_second	-S picked
+test_log_icase	expect_second	--patch-modifies picked
 test_log_icase	expect_nomatch	-S pickle
+test_log_icase	expect_nomatch	--patch-modifies pickle
 
 test_log	expect_nomatch	-S p.cked --pickaxe-regex
+test_log	expect_nomatch	--patch-modifies p.cked --pickaxe-regex
 test_log	expect_second	-S P.cked --pickaxe-regex
+test_log	expect_second	--patch-modifies P.cked --pickaxe-regex
 test_log_icase	expect_second	-S p.cked --pickaxe-regex
+test_log_icase	expect_second	--patch-modifies p.cked --pickaxe-regex
 test_log_icase	expect_nomatch	-S p.ckle --pickaxe-regex
+test_log_icase	expect_nomatch	--patch-modifies p.ckle --pickaxe-regex
 
 test_expect_success 'log -S --textconv (missing textconv tool)' '
 	echo "* diff=test" >.gitattributes &&

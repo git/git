@@ -245,7 +245,8 @@ diffcore-pickaxe: For Detecting Addition/Deletion of Specified String
 
 This transformation limits the set of filepairs to those that change
 specified strings between the preimage and the postimage in a certain
-way.  `-S<string>` and `-G<regex>` options are used to specify
+way.  `--patch-modifies=<string>` (`-S<string>` for short) and
+`--patch-grep=<regex>` (`-G<regex>` for short) are used to specify
 different ways these strings are sought.
 
 `-S<string>` detects filepairs whose preimage and postimage

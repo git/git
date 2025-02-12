@@ -650,6 +650,7 @@ Note that not all diffs can feature all types. For instance, copied and
 renamed entries cannot appear if detection for those types is disabled.
 
 `-S<string>`::
+`--patch-modifies=<string>`::
 	Look for differences that change the number of occurrences of
 	the specified _<string>_ (i.e. addition/deletion) in a file.
 	Intended for the scripter's use.
@@ -663,6 +664,7 @@ very first version of the block.
 Binary files are searched as well.
 
 `-G<regex>`::
+`--patch-grep=<regex>`::
 	Look for differences whose patch text contains added/removed
 	lines that match _<regex>_.
 +
