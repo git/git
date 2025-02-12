@@ -51,9 +51,6 @@ leave out at most one of _<rev-A>__ and _<rev-B>_, in which case it defaults to 
 	restore source and the restore location. See the "Interactive
 	Mode" section of linkgit:git-add[1] to learn how to operate
 	the `--patch` mode.
-+
-Note that `--patch` can accept no pathspec and will prompt to restore
-all modified paths.
 
 `-W`::
 `--worktree`::
