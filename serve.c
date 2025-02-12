@@ -29,6 +29,16 @@ static int agent_advertise(struct repository *r UNUSED,
 	return 1;
 }
 
+static int os_version_advertise(struct repository *r,
+			   struct strbuf *value)
+{
+	if (!advertise_os_version(r))
+		return 0;
+	if (value)
+		strbuf_addstr(value, os_version_sanitized());
+	return 1;
+}
+
 static int object_format_advertise(struct repository *r,
 				   struct strbuf *value)
 {
@@ -120,6 +130,10 @@ static struct protocol_capability capabilities[] = {
 	{
 		.name = "agent",
 		.advertise = agent_advertise,
+	},
+	{
+		.name = "os-version",
+		.advertise = os_version_advertise,
 	},
 	{
 		.name = "ls-refs",

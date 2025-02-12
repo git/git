@@ -123,9 +123,21 @@ test_expect_success 'git receive-pack --advertise-refs: v1' '
 '
 
 test_expect_success 'git upload-pack --advertise-refs: v2' '
+	printf "agent=FAKE" >agent_and_os_name &&
+	if test_have_prereq WINDOWS
+	then
+		# We do not use test_config here so that any tests below can reuse
+		# the 'expect' file from this test
+		git config transfer.advertiseOSVersion false
+	else
+		# Octal intervals \001-\040 and \177-\377
+		# corresponds to decimal intervals 1-32 and 127-255
+		printf "\nos-version=%s\n" $(uname -s | tr -d "\n" | tr "[\001-\040][\177-\377]" ".") >>agent_and_os_name
+	fi &&
+
 	cat >expect <<-EOF &&
 	version 2
-	agent=FAKE
+	$(cat agent_and_os_name)
 	ls-refs=unborn
 	fetch=shallow wait-for-done
 	server-option
