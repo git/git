@@ -1,0 +1,8 @@
+class RIGHT {
+    // some
+    // comments
+    // ChangeMe
+    constructor() {
+        console.log("constructing...")
+    }
+}

@@ -1,0 +1,24 @@
+console.log("Hello world?")
+foo===buz
+foo!==buz
+function fn() : string { return "ok" }
+x.someFunc()
+const x = () => {}
+(1) (-1e10) (0xabcdef) 'y'
+"y"
+[x] x.y
+!x ~x x++ x-- x*y x&y
+x*y x/y x%y
+x+y x-y
+x<<y x>>y
+x>>>=y x>>>y
+x<y x<=y x>y x>=y
+x==y x!=y
+x&y
+x^y
+x|y
+x&&y
+x||y
+x?y:z
+x=y x+=y x-=y x*=y x/=y x%=y x<<=y x>>=y x&=y x^=y x|=y
+x,y

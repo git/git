@@ -907,6 +907,8 @@ patterns are available:
 
 - `tex` suitable for source code for LaTeX documents.
 
+- `typescript` suitable for source code in the TypeScript language.
+
 
 Customizing word diff
 ^^^^^^^^^^^^^^^^^^^^^

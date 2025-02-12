@@ -1,0 +1,7 @@
+class Foo {
+    public RIGHT() {
+        // some
+        // comments
+        console.log("ChangeMe")
+    }
+}
