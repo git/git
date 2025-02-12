@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2025, #03; Mon, 10)
-X-master-at: 388218fac77d0405a5083cd4b4ee20f6694609c3
-X-next-at: 782243c5383dd40d26d75dc97d7fc39900fb60a7
+Subject: What's cooking in git.git (Feb 2025, #04; Wed, 12)
+X-master-at: e2067b49ecaef9b7f51a17ce251f9207f72ef52d
+X-next-at: 5ffbd7fcf84b313bb07e91246eb9419ebd94a7e7
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2025, #03; Mon, 10)
+What's cooking in git.git (Feb 2025, #04; Wed, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,86 +48,200 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* jk/ci-coverity-update (2025-02-03) 2 commits
-  (merged to 'next' on 2025-02-03 at 9597182d1d)
- + ci: set CI_JOB_IMAGE for coverity job
- + Merge branch 'ps/ci-misc-updates' into jk/ci-coverity-update
+* ac/t5401-use-test-path-is-file (2025-02-03) 1 commit
+  (merged to 'next' on 2025-02-04 at 6bd1c91b06)
+ + t5401: prefer test_path_is_* helper function
 
- CI update to make Coverity job work again.
- 
- source: <20250131233015.GA3544301@coredump.intra.peff.net>
+ Test clean-up.
+ source: <20250201071210.30509-1-amch9605@gmail.com>
 
 
-* jt/gitlab-ci-base-fix (2025-01-31) 1 commit
-  (merged to 'next' on 2025-02-03 at bf225248c9)
- + ci: fix base commit fallback for check-whitespace and check-style
+* ac/t6423-unhide-git-exit-status (2025-02-03) 1 commit
+  (merged to 'next' on 2025-02-04 at 5290fb63c2)
+ + t6423: fix suppression of Git’s exit code in tests
 
- Two CI tasks, whitespace check and style check, work on the
- difference from the base version and the version being checked, but
- the base was computed incorrectly in GitLab CI in some cases, which
- has been corrected.
- 
- source: <20250131173938.3592899-1-jltobler@gmail.com>
+ Test clean-up.
+ source: <20250202120926.322417-1-ayu.chandekar@gmail.com>
 
 
-* ps/hash-cleanup (2025-01-31) 5 commits
-  (merged to 'next' on 2025-02-03 at 98bdef7666)
- + global: adapt callers to use generic hash context helpers
- + hash: provide generic wrappers to update hash contexts
- + hash: stop typedeffing the hash context
- + hash: convert hashing context to a structure
- + Merge branch 'tb/unsafe-hash-cleanup' into ps/hash-cleanup
+* da/help-autocorrect-one-fix (2025-02-03) 3 commits
+  (merged to 'next' on 2025-02-05 at 74a3c43834)
+ + help: add "show" as a valid configuration value
+ + help: show the suggested command when help.autocorrect is false
+ + Merge branch 'sc/help-autocorrect-one' into da/help-autocorrect-one-fix
+ (this branch uses sc/help-autocorrect-one.)
 
- Further code clean-up on the use of hash functions.  Now the
- context object knows what hash function it is working with.
- 
- source: <20250131-b4-pks-hash-context-direct-v1-0-67a6d3f49d6e@pks.im>
+ "git -c help.autocorrect=0 psuh" shows the suggested typofix,
+ unlike the previous attempt in the base topic.
+ source: <pull.1869.v4.git.git.1736760824201.gitgitgadget@gmail.com>
 
 
-* ps/setup-reinit-fixes (2025-01-30) 3 commits
-  (merged to 'next' on 2025-02-03 at b4eb8f2fc8)
- + setup: fix reinit of repos with incompatible GIT_DEFAULT_HASH
- + setup: fix reinit of repos with incompatible GIT_DEFAULT_REF_FORMAT
- + t0001: remove duplicate test
+* ds/name-hash-tweaks (2025-01-27) 7 commits
+  (merged to 'next' on 2025-02-04 at d83bc700a7)
+ + pack-objects: prevent name hash version change
+ + test-tool: add helper for name-hash values
+ + p5313: add size comparison test
+ + pack-objects: add GIT_TEST_NAME_HASH_VERSION
+ + repack: add --name-hash-version option
+ + pack-objects: add --name-hash-version option
+ + pack-objects: create new name-hash function version
 
- "git init" to reinitialize a repository that already exists cannot
- change the hash function and ref backends; such a request is
- silently ignored now.
- 
- source: <20250130-b4-pks-reinit-default-ref-format-v1-0-d2769ca01207@pks.im>
-
-
-* pw/apply-ulong-overflow-check (2025-01-30) 1 commit
-  (merged to 'next' on 2025-02-03 at e2b37c2c77)
- + apply: detect overflow when parsing hunk header
-
- "git apply" internally uses unsigned long for line numbers and uses
- strtoul() to parse numbers on the hunk headers.  It however forgot
- to check parse errors.
- 
- source: <pull.1858.git.1738235310815.gitgitgadget@gmail.com>
+ "git pack-objects" and its wrapper "git repack" learned an option
+ to use an alternative path-hash function to improve delta-base
+ selection to produce a packfile with deeper history than window
+ size.
+ source: <pull.1823.v4.git.1738004554.gitgitgadget@gmail.com>
 
 
-* sk/unit-tests-0130 (2025-01-31) 4 commits
-  (merged to 'next' on 2025-02-03 at 163109072c)
- + t/unit-tests: convert strcmp-offset test to use clar test framework
- + t/unit-tests: convert strbuf test to use clar test framework
- + t/unit-tests: adapt example decorate test to use clar test framework
- + t/unit-tests: convert hashmap test to use clar test framework
+* jp/doc-trailer-config (2025-01-24) 1 commit
+  (merged to 'next' on 2025-02-05 at 7bbd51e504)
+ + config.txt: add trailer.* variables
 
- Convert a handful of unit tests to work with the clar framework.
- 
- source: <20250131221420.38161-1-kuforiji98@gmail.com>
+ Documentaiton updates.
+ source: <pull.1871.git.git.1736429142334.gitgitgadget@gmail.com>
+
+
+* js/libgit-rust (2025-01-29) 4 commits
+  (merged to 'next' on 2025-02-05 at ac1fefbba1)
+ + libgit: add higher-level libgit crate
+ + libgit-sys: also export some config_set functions
+ + libgit-sys: introduce Rust wrapper for libgit.a
+ + common-main: split init and exit code into new files
+
+ Foreign language interface for Rust into our code base has been added.
+ source: <cover.1738187176.git.steadmon@google.com>
+
+
+* ms/refspec-cleanup (2025-02-04) 5 commits
+  (merged to 'next' on 2025-02-05 at 5b53c49215)
+ + refspec: relocate apply_refspecs and related funtions
+ + refspec: relocate matching related functions
+ + remote: rename query_refspecs functions
+ + refspec: relocate refname_matches_negative_refspec_item
+ + remote: rename function omit_name_by_refspec
+
+ Code clean-up.  cf. <Z6G-toOJjMmK8iJG@pks.im>
+ source: <20250204040558.34766-1-meetsoni3017@gmail.com>
+
+
+* ms/remote-valid-remote-name (2025-02-04) 1 commit
+  (merged to 'next' on 2025-02-05 at 3d58d63932)
+ + remote: relocate valid_remote_name
+
+ Code shuffling.
+ source: <20250204142852.13035-1-meetsoni3017@gmail.com>
+
+
+* ps/repack-keep-unreachable-in-unpacked-repo (2025-02-04) 1 commit
+  (merged to 'next' on 2025-02-04 at 96a862b6f8)
+ + builtin/repack: fix `--keep-unreachable` when there are no packs
+
+ "git repack --keep-unreachable" to send unreachable objects to the
+ main pack "git repack -ad" produces did not work when there is no
+ existing packs, which has been corrected.
+ source: <20250204-b4-pks-repack-unreachable-objects-wo-packfiles-v2-1-1eae23366711@pks.im>
+
+
+* sc/help-autocorrect-one (2025-01-13) 1 commit
+  (merged to 'next' on 2025-02-05 at 1ecb7c7c9c)
+ + help: interpret boolean string values for help.autocorrect
+ (this branch is used by da/help-autocorrect-one-fix.)
+
+ "[help] autocorrect = 1" used to be a way to say "please wait for
+ 0.1 second after suggesting a typofix of the command name before
+ running that command"; now it means "yes, if there is a plausible
+ typofix for the command name, please run it immediately".
+
+ Will merge together with da/help-autocorrect-one-fix to 'master'.
+ source: <pull.1869.v4.git.git.1736760824201.gitgitgadget@gmail.com>
+
+
+* zh/gc-expire-to (2025-01-24) 1 commit
+  (merged to 'next' on 2025-02-05 at e075d609ae)
+ + gc: add `--expire-to` option
+
+ "git gc" learned the "--expire-to" option and passes it down to
+ underlying "git repack".
+ source: <pull.1843.v4.git.1737704954987.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
+* ua/update-server-info-sans-the-repository (2025-02-10) 1 commit
+ - builtin/update-server-info: remove the_repository global variable
+
+ Code clean-up.
+
+ Will merge ot 'next'.
+ source: <20250210181103.3609495-1-usmanakinyemi202@gmail.com>
+
+
+* en/doc-renormalize (2025-02-11) 1 commit
+ - doc: clarify the intent of the renormalize option in the merge machinery
+
+ Doc updates.
+
+ Will merge to 'next'.
+ source: <pull.1861.git.1739307712372.gitgitgadget@gmail.com>
+
+
+* jc/doc-boolean-synonyms (2025-02-11) 1 commit
+ - doc: centrally document various ways tospell `true` and `false`
+
+ Doc updates.
+
+ Will merge to 'next'.
+ source: <xmqqy0ycz9dk.fsf@gitster.g>
+
+
+* da/xdiff-w-sign-compare-workaround (2025-02-12) 6 commits
+ - xdiff: avoid signed vs. unsigned comparisons in xutils.c
+ - xdiff: avoid signed vs. unsigned comparisons in xpatience.c
+ - xdiff: avoid signed vs. unsigned comparisons in xhistogram.c
+ - xdiff: avoid signed vs. unsigned comparisons in xemit.c
+ - xdiff: avoid signed vs. unsigned comparisons in xdiffi.c
+ - xdiff: move sign comparison warning guard into each file
+
+ Noises from "-Wsign-compare" in the borrowed xdiff code has been
+ squelched.
+
+ Will merge to 'next'.
+ source: <20250212060418.1645241-6-davvid@gmail.com>
+
+
+* jt/diff-pairs (2025-02-12) 4 commits
+ - builtin/diff-pairs: allow explicit diff queue flush
+ - builtin: introduce diff-pairs command
+ - diff: return diff_filepair from diff queue helpers
+ - Merge branch 'bc/doc-adoc-not-txt' into jt/diff-pairs
+ (this branch uses bc/doc-adoc-not-txt.)
+
+ A post-processing filter for "diff --raw" output has been
+ introduced.
+
+ Needs review (and most likely a bit more polish).
+ source: <20250212041825.2455031-1-jltobler@gmail.com>
+
+
+* kn/ref-migrate-skip-reflog (2025-02-12) 1 commit
+ - builtin/refs: add '--skip-reflog' flag to bypass reflog migration
+
+ "git refs migrate" can optionally be told not to migrate the reflog.
+
+ Comments?
+ cf. <xmqqa5aqu7g9.fsf@gitster.g>
+ source: <20250212-477-refs-migrate-add-a-flag-to-ignore-reflogs-during-migration-v3-1-98b2c4d2bb0c@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * lo/t7603-path-is-file-update (2025-02-10) 1 commit
- - t7603: replace test -f by test_path_is_file
+  (merged to 'next' on 2025-02-11 at c4ad516cd7)
+ + t7603: replace test -f by test_path_is_file
 
  Test clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250208165731.78804-1-lucasseikioshiro@gmail.com>
 
 
@@ -152,11 +266,8 @@ Release tarballs are available at:
  The path.[ch] API takes an explicit repository parameter passed
  throughout the callchain, instead of relying on the_repository
  singleton instance.
-
  source: <20250207-b4-pks-path-drop-the-repository-v2-0-13cad3c11b8a@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * jt/rev-list-missing-print-info (2025-02-05) 2 commits
   (merged to 'next' on 2025-02-10 at 88955fe5b4)
@@ -171,15 +282,12 @@ Release tarballs are available at:
  source: <20250205004147.887106-1-jltobler@gmail.com>
 
 
-* pw/rebase-i-ff-empty-commit (2025-02-05) 1 commit
+* pw/rebase-i-ff-empty-commit (2025-02-11) 1 commit
  - rebase -i: reword empty commit after fast-forward
 
  "git rebase -i" failed to allow rewording an empty commit that has
  been fast-forwarded.
-
- Expecting a reroll.
- cf. <xmqqtt98nt89.fsf@gitster.g>
- source: <pull.1860.git.1738751840816.gitgitgadget@gmail.com>
+ source: <pull.1860.v2.git.1739289549299.gitgitgadget@gmail.com>
 
 
 * ib/diff-S-G-with-longhand (2025-02-06) 1 commit
@@ -214,70 +322,14 @@ Release tarballs are available at:
  source: <20250206-b4-pks-reftable-win32-in-use-errors-v2-1-56985a4f6186@pks.im>
 
 
-* ps/repack-keep-unreachable-in-unpacked-repo (2025-02-04) 1 commit
-  (merged to 'next' on 2025-02-04 at 96a862b6f8)
- + builtin/repack: fix `--keep-unreachable` when there are no packs
-
- "git repack --keep-unreachable" to send unreachable objects to the
- main pack "git repack -ad" produces did not work when there is no
- existing packs, which has been corrected.
-
- Will merge to 'master'.
- source: <20250204-b4-pks-repack-unreachable-objects-wo-packfiles-v2-1-1eae23366711@pks.im>
-
-
-* ac/t5401-use-test-path-is-file (2025-02-03) 1 commit
-  (merged to 'next' on 2025-02-04 at 6bd1c91b06)
- + t5401: prefer test_path_is_* helper function
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <20250201071210.30509-1-amch9605@gmail.com>
-
-
-* ac/t6423-unhide-git-exit-status (2025-02-03) 1 commit
-  (merged to 'next' on 2025-02-04 at 5290fb63c2)
- + t6423: fix suppression of Git’s exit code in tests
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <20250202120926.322417-1-ayu.chandekar@gmail.com>
-
-
-* bc/contrib-thunderbird-patch-inline-fix (2025-02-04) 1 commit
- - thunderbird-patch-inline: avoid bashism
+* bc/contrib-thunderbird-patch-inline-fix (2025-02-10) 1 commit
+  (merged to 'next' on 2025-02-11 at d13b5baf06)
+ + thunderbird-patch-inline: avoid bashism
 
  A thunderbird helper script lost its bashism.
 
- Expecting a reroll.
- cf. <Z6F-ySoYbDJxJ3xs@tapette.crustytoothpaste.net>
- source: <20250204014652.3509928-1-sandals@crustytoothpaste.net>
-
-
-* da/help-autocorrect-one-fix (2025-02-03) 3 commits
-  (merged to 'next' on 2025-02-05 at 74a3c43834)
- + help: add "show" as a valid configuration value
- + help: show the suggested command when help.autocorrect is false
- + Merge branch 'sc/help-autocorrect-one' into da/help-autocorrect-one-fix
- (this branch uses sc/help-autocorrect-one.)
-
- "git -c help.autocorrect=0 psuh" shows the suggested typofix,
- unlike the previous attempt in the base topic.
-
  Will merge to 'master'.
- source: <pull.1869.v4.git.git.1736760824201.gitgitgadget@gmail.com>
-
-
-* ms/remote-valid-remote-name (2025-02-04) 1 commit
-  (merged to 'next' on 2025-02-05 at 3d58d63932)
- + remote: relocate valid_remote_name
-
- Code shuffling.
-
- Will merge to 'master'.
- source: <20250204142852.13035-1-meetsoni3017@gmail.com>
+ source: <20250210234947.1317056-1-sandals@crustytoothpaste.net>
 
 
 * da/difftool-sans-the-repository (2025-02-06) 3 commits
@@ -346,30 +398,6 @@ Release tarballs are available at:
  source: <20250206-toon-clone-refs-v7-0-4622b7392202@iotcl.com>
 
 
-* jp/doc-trailer-config (2025-01-24) 1 commit
-  (merged to 'next' on 2025-02-05 at 7bbd51e504)
- + config.txt: add trailer.* variables
-
- Documentaiton updates.
-
- Will merge to 'master'.
- source: <pull.1871.git.git.1736429142334.gitgitgadget@gmail.com>
-
-
-* ms/refspec-cleanup (2025-02-04) 5 commits
-  (merged to 'next' on 2025-02-05 at 5b53c49215)
- + refspec: relocate apply_refspecs and related funtions
- + refspec: relocate matching related functions
- + remote: rename query_refspecs functions
- + refspec: relocate refname_matches_negative_refspec_item
- + remote: rename function omit_name_by_refspec
-
- Code clean-up.
- Will merge to 'master'.
- cf. <Z6G-toOJjMmK8iJG@pks.im>
- source: <20250204040558.34766-1-meetsoni3017@gmail.com>
-
-
 * ps/reftable-sans-compat-util (2025-02-07) 19 commits
  - Makefile: skip reftable library for Coccinelle
  - reftable: decouple from Git codebase by pulling in "compat/posix.h"
@@ -418,37 +446,14 @@ Release tarballs are available at:
  + gitattributes: mark AsciiDoc files as LF-only
  + editorconfig: add .adoc extension
  + doc: update gitignore for .adoc extension
+ (this branch is used by jt/diff-pairs.)
 
  All the documentation .txt files have been renamed to .adoc to help
  content aware editors.
 
- Will cook in 'next' for at least 3 weeks til mid Feb 2025.
+ Will merge to 'master'.
  cf. <xmqqmsfl2gro.fsf@gitster.g>
  source: <20250120015603.1980991-1-sandals@crustytoothpaste.net>
-
-
-* js/libgit-rust (2025-01-29) 4 commits
-  (merged to 'next' on 2025-02-05 at ac1fefbba1)
- + libgit: add higher-level libgit crate
- + libgit-sys: also export some config_set functions
- + libgit-sys: introduce Rust wrapper for libgit.a
- + common-main: split init and exit code into new files
-
- Foreign language interface for Rust into our code base has been added.
-
- Will merge to 'master'.
- source: <cover.1738187176.git.steadmon@google.com>
-
-
-* zh/gc-expire-to (2025-01-24) 1 commit
-  (merged to 'next' on 2025-02-05 at e075d609ae)
- + gc: add `--expire-to` option
-
- "git gc" learned the "--expire-to" option and passes it down to
- underlying "git repack".
-
- Will merge to 'master'.
- source: <pull.1843.v4.git.1737704954987.gitgitgadget@gmail.com>
 
 
 * kn/reflog-migration-fix-followup (2025-01-22) 4 commits
@@ -493,20 +498,6 @@ Release tarballs are available at:
 
  Comments?
  source: <Z6RPJI10-2QkwyqH@ArchLinux>
-
-
-* sc/help-autocorrect-one (2025-01-13) 1 commit
-  (merged to 'next' on 2025-02-05 at 1ecb7c7c9c)
- + help: interpret boolean string values for help.autocorrect
- (this branch is used by da/help-autocorrect-one-fix.)
-
- "[help] autocorrect = 1" used to be a way to say "please wait for
- 0.1 second after suggesting a typofix of the command name before
- running that command"; now it means "yes, if there is a plausible
- typofix for the command name, please run it immediately".
-
- Will merge together with da/help-autocorrect-one-fix to 'master'.
- source: <pull.1869.v4.git.git.1736760824201.gitgitgadget@gmail.com>
 
 
 * ua/os-version-capability (2025-02-05) 6 commits
@@ -610,26 +601,6 @@ Release tarballs are available at:
  source: <20250203-pks-push-atomic-respect-exit-code-v5-0-d66481e36622@pks.im>
 
 
-* ds/name-hash-tweaks (2025-01-27) 7 commits
-  (merged to 'next' on 2025-02-04 at d83bc700a7)
- + pack-objects: prevent name hash version change
- + test-tool: add helper for name-hash values
- + p5313: add size comparison test
- + pack-objects: add GIT_TEST_NAME_HASH_VERSION
- + repack: add --name-hash-version option
- + pack-objects: add --name-hash-version option
- + pack-objects: create new name-hash function version
-
- "git pack-objects" and its wrapper "git repack" learned an option
- to use an alternative path-hash function to improve delta-base
- selection to produce a packfile with deeper history than window
- size.
-
- Will merge to 'master'.
- cf. <Z51DHdS8SStRGalX@nand.local>
- source: <pull.1823.v4.git.1738004554.gitgitgadget@gmail.com>
-
-
 * ej/cat-file-remote-object-info (2025-01-14) 8 commits
  - cat-file: add remote-object-info to batch-command
  - transport: add client support for object-info
@@ -643,9 +614,12 @@ Release tarballs are available at:
  "git cat-file --batch" and friends can optionally ask a remote
  server about objects it does not have.
 
- Comments?
+ Will discard.
+ Has seen no activity or support for a month or so.
  source: <20250114021502.41499-1-eric.peijian@gmail.com>
 
+--------------------------------------------------
+[Discarded]
 
 * sk/maintenance-remote-prune (2025-01-03) 1 commit
  . maintenance: add prune-remote-refs task
