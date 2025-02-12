@@ -1377,9 +1377,12 @@ int cmd_repack(int argc,
 					    "--unpack-unreachable");
 			} else if (keep_unreachable) {
 				strvec_push(&cmd.args, "--keep-unreachable");
-				strvec_push(&cmd.args, "--pack-loose-unreachable");
 			}
 		}
+
+		if (keep_unreachable && delete_redundant &&
+		    !(pack_everything & PACK_CRUFT))
+			strvec_push(&cmd.args, "--pack-loose-unreachable");
 	} else if (geometry.split_factor) {
 		strvec_push(&cmd.args, "--stdin-packs");
 		strvec_push(&cmd.args, "--unpacked");
