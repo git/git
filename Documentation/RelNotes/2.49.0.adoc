@@ -6,6 +6,19 @@ UI, Workflows & Features
 
  * Completion script updates for zsh
 
+ * "git pack-objects" and its wrapper "git repack" learned an option
+   to use an alternative path-hash function to improve delta-base
+   selection to produce a packfile with deeper history than window
+   size.
+
+ * "git gc" learned the "--expire-to" option and passes it down to
+   underlying "git repack".
+
+ * "[help] autocorrect = 1" used to be a way to say "please wait for
+   0.1 second after suggesting a typofix of the command name before
+   running that command"; now it means "yes, if there is a plausible
+   typofix for the command name, please run it immediately".
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -33,6 +46,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * The code paths to interact with zlib has been cleaned up in
    preparation for building with zlib-ng.
+
+ * Foreign language interface for Rust into our code base has been added.
+
 
 
 Fixes since v2.48
@@ -151,6 +167,11 @@ Fixes since v2.48
    has been corrected.
    (merge acc4fb302b jt/gitlab-ci-base-fix later to maint).
 
+ * "git repack --keep-unreachable" to send unreachable objects to the
+   main pack "git repack -ad" produces did not work when there is no
+   existing packs, which has been corrected.
+   (merge 414c82300a ps/repack-keep-unreachable-in-unpacked-repo later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge ddb5287894 jk/t7407-use-test-grep later to maint).
    (merge 21e1b44865 aj/difftool-config-doc-fix later to maint).
@@ -164,3 +185,4 @@ Fixes since v2.48
    (merge 6979bf6f8f jk/combine-diff-cleanup later to maint).
    (merge 8705c9bd13 kn/pack-write-with-reduced-globals later to maint).
    (merge 087740d65a ps/leakfixes-0129 later to maint).
+   (merge 6bba6f604b jp/doc-trailer-config later to maint).
