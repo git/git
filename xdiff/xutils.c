@@ -20,6 +20,8 @@
  *
  */
 
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "xinclude.h"
 
 

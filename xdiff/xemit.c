@@ -20,6 +20,8 @@
  *
  */
 
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "xinclude.h"
 
 static long xdl_get_rec(xdfile_t *xdf, long ri, char const **rec) {

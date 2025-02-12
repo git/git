@@ -41,6 +41,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define DISABLE_SIGN_COMPARE_WARNINGS
+
 #include "xinclude.h"
 
 #define MAX_PTR	UINT_MAX
