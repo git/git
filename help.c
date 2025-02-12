@@ -552,6 +552,7 @@ struct help_unknown_cmd_config {
 	struct cmdnames aliases;
 };
 
+#define AUTOCORRECT_SHOW (-4)
 #define AUTOCORRECT_PROMPT (-3)
 #define AUTOCORRECT_NEVER (-2)
 #define AUTOCORRECT_IMMEDIATELY (-1)
@@ -562,7 +563,7 @@ static int parse_autocorrect(const char *value)
 		case 1:
 			return AUTOCORRECT_IMMEDIATELY;
 		case 0:
-			return AUTOCORRECT_NEVER;
+			return AUTOCORRECT_SHOW;
 		default: /* other random text */
 			break;
 	}
@@ -573,6 +574,8 @@ static int parse_autocorrect(const char *value)
 		return AUTOCORRECT_NEVER;
 	if (!strcmp(value, "immediate"))
 		return AUTOCORRECT_IMMEDIATELY;
+	if (!strcmp(value, "show"))
+		return AUTOCORRECT_SHOW;
 
 	return 0;
 }
@@ -713,7 +716,8 @@ char *help_unknown_cmd(const char *cmd)
 		     n++)
 			; /* still counting */
 	}
-	if (cfg.autocorrect && n == 1 && SIMILAR_ENOUGH(best_similarity)) {
+	if (cfg.autocorrect && cfg.autocorrect != AUTOCORRECT_SHOW && n == 1 &&
+	    SIMILAR_ENOUGH(best_similarity)) {
 		char *assumed = xstrdup(main_cmds.names[0]->name);
 
 		fprintf_ln(stderr,

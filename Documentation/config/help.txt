@@ -11,12 +11,12 @@ help.autoCorrect::
 	If git detects typos and can identify exactly one valid command similar
 	to the error, git will try to suggest the correct command or even
 	run the suggestion automatically. Possible config values are:
-	 - 0: show the suggested command (default).
+	 - 0, "false", "off", "no", "show": show the suggested command (default).
 	 - 1, "true", "on", "yes", "immediate": run the suggested command
 immediately.
 	 - positive number > 1: run the suggested command after specified
 deciseconds (0.1 sec).
-	 - "false", "off", "no", "never": don't run or show any suggested command.
+	 - "never": don't run or show any suggested command.
 	 - "prompt": show the suggestion and prompt for confirmation to run
 the command.
 
