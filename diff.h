@@ -613,9 +613,9 @@ void diffcore_fix_diff_index(void);
 "  --patch-modifies=<string>\n" \
 "                find filepair who differ in the number of occurrences of string.\n" \
 "  --pickaxe-grep\n" \
-"                treat <string> as a regex in the -S argument.\n" \
+"                treat <string> as a regex in the -S/--patch-modifies argument.\n" \
 "  --pickaxe-all\n" \
-"                show all files diff when -G or -S is used and hit is found.\n" \
+"                show all files diff for -G/--patch-grep and -S/--patch-modifies.\n" \
 "  -a  --text    treat all files as text.\n"
 
 int diff_queue_is_empty(struct diff_options *o);
