@@ -64,14 +64,14 @@ test_expect_success 'updated as expected' '
 '
 
 test_expect_success 'hooks ran' '
-	test -f victim.git/pre-receive.args &&
-	test -f victim.git/pre-receive.stdin &&
-	test -f victim.git/update.args &&
-	test -f victim.git/update.stdin &&
-	test -f victim.git/post-receive.args &&
-	test -f victim.git/post-receive.stdin &&
-	test -f victim.git/post-update.args &&
-	test -f victim.git/post-update.stdin
+	test_path_is_file victim.git/pre-receive.args &&
+	test_path_is_file victim.git/pre-receive.stdin &&
+	test_path_is_file victim.git/update.args &&
+	test_path_is_file victim.git/update.stdin &&
+	test_path_is_file victim.git/post-receive.args &&
+	test_path_is_file victim.git/post-receive.stdin &&
+	test_path_is_file victim.git/post-update.args &&
+	test_path_is_file victim.git/post-update.stdin
 '
 
 test_expect_success 'pre-receive hook input' '
