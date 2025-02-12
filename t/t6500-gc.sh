@@ -338,6 +338,39 @@ test_expect_success 'gc.maxCruftSize sets appropriate repack options' '
 	test_subcommand $cruft_max_size_opts --max-cruft-size=3145728 <trace2.txt
 '
 
+test_expect_success '--expire-to sets repack --expire-to' '
+	rm -rf expired &&
+	mkdir expired &&
+	expire_to="$(pwd)/expired/pack" &&
+	GIT_TRACE2_EVENT=$(pwd)/trace2.txt git -C cruft--max-size gc --cruft --expire-to="$expire_to" &&
+	test_subcommand $cruft_max_size_opts --expire-to="$expire_to" <trace2.txt
+'
+
+test_expect_success '--expire-to with --prune=now sets repack --expire-to' '
+	rm -rf expired &&
+	mkdir expired &&
+	expire_to="$(pwd)/expired/pack" &&
+	GIT_TRACE2_EVENT=$(pwd)/trace2.txt git -C cruft--max-size gc --cruft --prune=now --expire-to="$expire_to" &&
+	test_subcommand git repack -d -l --cruft --cruft-expiration=now --expire-to="$expire_to" <trace2.txt
+'
+
+
+test_expect_success '--expire-to with --no-cruft sets repack -A' '
+	rm -rf expired &&
+	mkdir expired &&
+	expire_to="$(pwd)/expired/pack" &&
+	GIT_TRACE2_EVENT=$(pwd)/trace2.txt git -C cruft--max-size gc --no-cruft --expire-to="$expire_to" &&
+	test_subcommand git repack -d -l -A --unpack-unreachable=2.weeks.ago <trace2.txt
+'
+
+test_expect_success '--expire-to with --no-cruft sets repack -a' '
+	rm -rf expired &&
+	mkdir expired &&
+	expire_to="$(pwd)/expired/pack" &&
+	GIT_TRACE2_EVENT=$(pwd)/trace2.txt git -C cruft--max-size gc --no-cruft --prune=now --expire-to="$expire_to" &&
+	test_subcommand git repack -d -l -a <trace2.txt
+'
+
 run_and_wait_for_gc () {
 	# We read stdout from gc for the side effect of waiting until the
 	# background gc process exits, closing its fd 9.  Furthermore, the
