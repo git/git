@@ -197,7 +197,7 @@ static void prepare_note_data(const struct object_id *object, struct note_data *
 		struct strbuf buf = STRBUF_INIT;
 
 		/* write the template message before editing: */
-		d->edit_path = git_pathdup("NOTES_EDITMSG");
+		d->edit_path = repo_git_path(the_repository, "NOTES_EDITMSG");
 		fd = xopen(d->edit_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 
 		if (d->msg_nr)
@@ -979,6 +979,8 @@ static int merge(int argc, const char **argv, const char *prefix,
 	else { /* Merge has unresolved conflicts */
 		struct worktree **worktrees;
 		const struct worktree *wt;
+		char *path;
+
 		/* Update .git/NOTES_MERGE_PARTIAL with partial merge result */
 		refs_update_ref(get_main_ref_store(the_repository), msg.buf,
 				"NOTES_MERGE_PARTIAL", &result_oid, NULL,
@@ -994,10 +996,13 @@ static int merge(int argc, const char **argv, const char *prefix,
 		if (refs_update_symref(get_main_ref_store(the_repository), "NOTES_MERGE_REF", notes_ref, NULL))
 			die(_("failed to store link to current notes ref (%s)"),
 			    notes_ref);
+
+		path = repo_git_path(the_repository, NOTES_MERGE_WORKTREE);
 		fprintf(stderr, _("Automatic notes merge failed. Fix conflicts in %s "
 				  "and commit the result with 'git notes merge --commit', "
 				  "or abort the merge with 'git notes merge --abort'.\n"),
-			git_path(NOTES_MERGE_WORKTREE));
+			path);
+		free(path);
 	}
 
 	free_notes(t);

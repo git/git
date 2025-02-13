@@ -1357,7 +1357,7 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 			return -1;
 		}
 
-		if (adjust_shared_perm(get_tempfile_path(incr))) {
+		if (adjust_shared_perm(r, get_tempfile_path(incr))) {
 			error(_("unable to adjust shared permissions for '%s'"),
 			      get_tempfile_path(incr));
 			return -1;

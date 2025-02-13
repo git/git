@@ -158,7 +158,7 @@ static void am_state_init(struct am_state *state)
 
 	memset(state, 0, sizeof(*state));
 
-	state->dir = git_pathdup("rebase-apply");
+	state->dir = repo_git_path(the_repository, "rebase-apply");
 
 	state->prec = 4;
 

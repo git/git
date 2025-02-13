@@ -326,7 +326,7 @@ static void check_unreachable_object(struct object *obj)
 				  printable_type(&obj->oid, obj->type),
 				  describe_object(&obj->oid));
 		if (write_lost_and_found) {
-			char *filename = git_pathdup("lost-found/%s/%s",
+			char *filename = repo_git_path(the_repository, "lost-found/%s/%s",
 				obj->type == OBJ_COMMIT ? "commit" : "other",
 				describe_object(&obj->oid));
 			FILE *f;
@@ -1057,7 +1057,7 @@ int cmd_fsck(int argc,
 			struct worktree *wt = *p;
 			struct index_state istate =
 				INDEX_STATE_INIT(the_repository);
-			char *path;
+			char *path, *wt_gitdir;
 
 			/*
 			 * Make a copy since the buffer is reusable
@@ -1065,9 +1065,13 @@ int cmd_fsck(int argc,
 			 * while we're examining the index.
 			 */
 			path = xstrdup(worktree_git_path(the_repository, wt, "index"));
-			read_index_from(&istate, path, get_worktree_git_dir(wt));
+			wt_gitdir = get_worktree_git_dir(wt);
+
+			read_index_from(&istate, path, wt_gitdir);
 			fsck_index(&istate, path, wt->is_current);
+
 			discard_index(&istate);
+			free(wt_gitdir);
 			free(path);
 		}
 		free_worktrees(worktrees);

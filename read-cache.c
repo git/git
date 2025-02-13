@@ -3251,15 +3251,18 @@ static int clean_shared_index_files(const char *current_hex)
 
 	while ((de = readdir(dir)) != NULL) {
 		const char *sha1_hex;
-		const char *shared_index_path;
+		char *shared_index_path;
 		if (!skip_prefix(de->d_name, "sharedindex.", &sha1_hex))
 			continue;
 		if (!strcmp(sha1_hex, current_hex))
 			continue;
-		shared_index_path = git_path("%s", de->d_name);
+
+		shared_index_path = repo_git_path(the_repository, "%s", de->d_name);
 		if (should_delete_shared_index(shared_index_path) > 0 &&
 		    unlink(shared_index_path))
 			warning_errno(_("unable to unlink: %s"), shared_index_path);
+
+		free(shared_index_path);
 	}
 	closedir(dir);
 
@@ -3271,6 +3274,7 @@ static int write_shared_index(struct index_state *istate,
 {
 	struct split_index *si = istate->split_index;
 	int ret, was_full = !istate->sparse_index;
+	char *path;
 
 	move_cache_to_base_index(istate);
 	convert_to_sparse(istate, 0);
@@ -3286,18 +3290,20 @@ static int write_shared_index(struct index_state *istate,
 
 	if (ret)
 		return ret;
-	ret = adjust_shared_perm(get_tempfile_path(*temp));
+	ret = adjust_shared_perm(the_repository, get_tempfile_path(*temp));
 	if (ret) {
 		error(_("cannot fix permission bits on '%s'"), get_tempfile_path(*temp));
 		return ret;
 	}
-	ret = rename_tempfile(temp,
-			      git_path("sharedindex.%s", oid_to_hex(&si->base->oid)));
+
+	path = repo_git_path(the_repository, "sharedindex.%s", oid_to_hex(&si->base->oid));
+	ret = rename_tempfile(temp, path);
 	if (!ret) {
 		oidcpy(&si->base_oid, &si->base->oid);
 		clean_shared_index_files(oid_to_hex(&si->base->oid));
 	}
 
+	free(path);
 	return ret;
 }
 
@@ -3378,9 +3384,12 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 	if (new_shared_index) {
 		struct tempfile *temp;
 		int saved_errno;
+		char *path;
 
 		/* Same initial permissions as the main .git/index file */
-		temp = mks_tempfile_sm(git_path("sharedindex_XXXXXX"), 0, 0666);
+		path = repo_git_path(the_repository, "sharedindex_XXXXXX");
+		temp = mks_tempfile_sm(path, 0, 0666);
+		free(path);
 		if (!temp) {
 			ret = do_write_locked_index(istate, lock, flags,
 						    ~WRITE_SPLIT_INDEX_EXTENSION);
@@ -3401,9 +3410,10 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 
 	/* Freshen the shared index only if the split-index was written */
 	if (!ret && !new_shared_index && !is_null_oid(&si->base_oid)) {
-		const char *shared_index = git_path("sharedindex.%s",
-						    oid_to_hex(&si->base_oid));
+		char *shared_index = repo_git_path(the_repository, "sharedindex.%s",
+						   oid_to_hex(&si->base_oid));
 		freshen_shared_index(shared_index, 1);
+		free(shared_index);
 	}
 
 out:
