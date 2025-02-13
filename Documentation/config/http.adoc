@@ -216,6 +216,21 @@ http.sslBackend::
 	This option is ignored if cURL lacks support for choosing the SSL
 	backend at runtime.
 
+http.sslCertType::
+	Type of client certificate used when fetching or pushing over HTTPS.
+	"PEM", "DER" are supported when using openssl or gnutls backends. "P12"
+	is supported on "openssl", "schannel", "securetransport", and gnutls 8.11+.
+	See also libcurl `CURLOPT_SSLCERTTYPE`. Can be overridden by the
+	`GIT_SSL_CERT_TYPE` environment variable.
+
+http.sslKeyType::
+	Type of client private key used when fetching or pushing over HTTPS. (e.g.
+	"PEM", "DER", or "ENG"). Only applicable when using "openssl" backend. "DER"
+	is not supported with openssl. Particularly useful when set to "ENG" for
+	authenticating with PKCS#11 tokens, with a PKCS#11 URL in sslCert option.
+	See also libcurl `CURLOPT_SSLKEYTYPE`. Can be overridden by the
+	`GIT_SSL_KEY_TYPE` environment variable.
+
 http.schannelCheckRevoke::
 	Used to enforce or disable certificate revocation checks in cURL
 	when http.sslBackend is set to "schannel". Defaults to `true` if
