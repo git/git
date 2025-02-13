@@ -179,11 +179,24 @@ int reftable_writer_new(struct reftable_writer **out,
 	return 0;
 }
 
-void reftable_writer_set_limits(struct reftable_writer *w, uint64_t min,
+int reftable_writer_set_limits(struct reftable_writer *w, uint64_t min,
 				uint64_t max)
 {
+	/*
+	  * Set the min/max update index limits for the reftable writer.
+	  * This must be called before adding any records, since:
+	  * - The 'next' field gets set after writing the first block.
+	  * - The 'last_key' field updates with each new record (but resets
+	  *   after sections).
+	  * Returns REFTABLE_API_ERROR if called after writing has begun.
+	 */
+	if (w->next || w->last_key.len)
+		return REFTABLE_API_ERROR;
+
 	w->min_update_index = min;
 	w->max_update_index = max;
+
+	return 0;
 }
 
 static void writer_release(struct reftable_writer *w)

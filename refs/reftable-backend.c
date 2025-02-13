@@ -942,7 +942,7 @@ struct write_transaction_table_arg {
 	size_t updates_nr;
 	size_t updates_alloc;
 	size_t updates_expected;
-	unsigned int max_index;
+	uint64_t max_index;
 };
 
 struct reftable_transaction_data {
@@ -1444,7 +1444,9 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 	 * multiple entries. Each entry will contain a different update_index,
 	 * so set the limits accordingly.
 	 */
-	reftable_writer_set_limits(writer, ts, ts + arg->max_index);
+	ret = reftable_writer_set_limits(writer, ts, ts + arg->max_index);
+	if (ret < 0)
+		goto done;
 
 	for (i = 0; i < arg->updates_nr; i++) {
 		struct reftable_transaction_update *tx_update = &arg->updates[i];
@@ -1766,7 +1768,9 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	deletion_ts = creation_ts = reftable_stack_next_update_index(arg->be->stack);
 	if (arg->delete_old)
 		creation_ts++;
-	reftable_writer_set_limits(writer, deletion_ts, creation_ts);
+	ret = reftable_writer_set_limits(writer, deletion_ts, creation_ts);
+	if (ret < 0)
+		goto done;
 
 	/*
 	 * Add the new reference. If this is a rename then we also delete the
@@ -2298,7 +2302,9 @@ static int write_reflog_existence_table(struct reftable_writer *writer,
 	if (ret <= 0)
 		goto done;
 
-	reftable_writer_set_limits(writer, ts, ts);
+	ret = reftable_writer_set_limits(writer, ts, ts);
+	if (ret < 0)
+		goto done;
 
 	/*
 	 * The existence entry has both old and new object ID set to the
@@ -2357,7 +2363,9 @@ static int write_reflog_delete_table(struct reftable_writer *writer, void *cb_da
 	uint64_t ts = reftable_stack_next_update_index(arg->stack);
 	int ret;
 
-	reftable_writer_set_limits(writer, ts, ts);
+	ret = reftable_writer_set_limits(writer, ts, ts);
+	if (ret < 0)
+		goto out;
 
 	ret = reftable_stack_init_log_iterator(arg->stack, &it);
 	if (ret < 0)
@@ -2434,7 +2442,9 @@ static int write_reflog_expiry_table(struct reftable_writer *writer, void *cb_da
 		if (arg->records[i].value_type == REFTABLE_LOG_UPDATE)
 			live_records++;
 
-	reftable_writer_set_limits(writer, ts, ts);
+	ret = reftable_writer_set_limits(writer, ts, ts);
+	if (ret < 0)
+		return ret;
 
 	if (!is_null_oid(&arg->update_oid)) {
 		struct reftable_ref_record ref = {0};
