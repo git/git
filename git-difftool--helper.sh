@@ -12,7 +12,9 @@ TOOL_MODE=diff
 # and is overridden with $GIT_DIFFTOOL*_PROMPT.
 should_prompt () {
 	prompt_merge=$(git config --bool mergetool.prompt || echo true)
-	prompt=$(git config --bool difftool.prompt || echo $prompt_merge)
+	prompt=$(git config --bool "difftool.$merge_tool.prompt" ||
+		 git config --bool difftool.prompt ||
+		 echo $prompt_merge)
 	if test "$prompt" = true
 	then
 		test -z "$GIT_DIFFTOOL_NO_PROMPT"
