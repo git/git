@@ -213,7 +213,9 @@ See also <<FILES>>.
 +
 Valid `<type>`'s include:
 +
-- 'bool': canonicalize values as either "true" or "false".
+- 'bool': canonicalize values `true`, `yes`,`on`, and positive
+  numbers as "true", and values `false`, `no`, `off` and `0` as
+  "false".
 - 'int': canonicalize values as simple decimal numbers. An optional suffix of
   'k', 'm', or 'g' will cause the value to be multiplied by 1024, 1048576, or
   1073741824 upon input.
