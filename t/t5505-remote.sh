@@ -589,6 +589,16 @@ test_expect_success 'add --mirror setting HEAD' '
 	)
 '
 
+test_expect_success 'non-mirror fetch does not interfere with mirror' '
+	test_when_finished rm -rf headnotmain &&
+	(
+		git init --bare -b notmain headnotmain &&
+		cd headnotmain &&
+		git remote add -f other ../two &&
+		test "$(git symbolic-ref HEAD)" = "refs/heads/notmain"
+	)
+'
+
 test_expect_success 'add --mirror=fetch' '
 	mkdir mirror-fetch &&
 	git init -b main mirror-fetch/parent &&

@@ -1617,13 +1617,13 @@ static void report_set_head(const char *remote, const char *head_name,
 	strbuf_release(&buf_prefix);
 }
 
-static int set_head(const struct ref *remote_refs, int follow_remote_head,
-		const char *no_warn_branch)
+static int set_head(const struct ref *remote_refs, struct remote *remote)
 {
-	int result = 0, create_only, is_bare, was_detached;
+	int result = 0, create_only, baremirror, was_detached;
 	struct strbuf b_head = STRBUF_INIT, b_remote_head = STRBUF_INIT,
 		      b_local_head = STRBUF_INIT;
-	const char *remote = gtransport->remote->name;
+	int follow_remote_head = remote->follow_remote_head;
+	const char *no_warn_branch = remote->no_warn_branch;
 	char *head_name = NULL;
 	struct ref *ref, *matches;
 	struct ref *fetch_map = NULL, **fetch_map_tail = &fetch_map;
@@ -1655,17 +1655,17 @@ static int set_head(const struct ref *remote_refs, int follow_remote_head,
 
 	if (!head_name)
 		goto cleanup;
-	is_bare = is_bare_repository();
-	create_only = follow_remote_head == FOLLOW_REMOTE_ALWAYS ? 0 : !is_bare;
-	if (is_bare) {
+	baremirror = is_bare_repository() && remote->mirror;
+	create_only = follow_remote_head == FOLLOW_REMOTE_ALWAYS ? 0 : !baremirror;
+	if (baremirror) {
 		strbuf_addstr(&b_head, "HEAD");
 		strbuf_addf(&b_remote_head, "refs/heads/%s", head_name);
 	} else {
-		strbuf_addf(&b_head, "refs/remotes/%s/HEAD", remote);
-		strbuf_addf(&b_remote_head, "refs/remotes/%s/%s", remote, head_name);
+		strbuf_addf(&b_head, "refs/remotes/%s/HEAD", remote->name);
+		strbuf_addf(&b_remote_head, "refs/remotes/%s/%s", remote->name, head_name);
 	}
 		/* make sure it's valid */
-	if (!is_bare && !refs_ref_exists(refs, b_remote_head.buf)) {
+	if (!baremirror && !refs_ref_exists(refs, b_remote_head.buf)) {
 		result = 1;
 		goto cleanup;
 	}
@@ -1678,7 +1678,7 @@ static int set_head(const struct ref *remote_refs, int follow_remote_head,
 	if (verbosity >= 0 &&
 		follow_remote_head == FOLLOW_REMOTE_WARN &&
 		(!no_warn_branch || strcmp(no_warn_branch, head_name)))
-		report_set_head(remote, head_name, &b_local_head, was_detached);
+		report_set_head(remote->name, head_name, &b_local_head, was_detached);
 
 cleanup:
 	free(head_name);
@@ -1924,8 +1924,7 @@ static int do_fetch(struct transport *transport,
 				  "you need to specify exactly one branch with the --set-upstream option"));
 		}
 	}
-	if (set_head(remote_refs, transport->remote->follow_remote_head,
-		transport->remote->no_warn_branch))
+	if (set_head(remote_refs, transport->remote))
 		;
 		/*
 		 * Way too many cases where this can go wrong
