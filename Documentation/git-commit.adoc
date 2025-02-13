@@ -98,8 +98,8 @@ OPTIONS
 	replaces the log message of _<commit>_ with its own log message
 	but makes no changes to the content of _<commit>_.
 +
-The commit created by plain `--fixup=<commit>` has a subject
-composed of "fixup!" followed by the subject line from _<commit>_,
+The commit created by plain `--fixup=<commit>` has a title
+composed of "fixup!" followed by the title of _<commit>_,
 and is recognized specially by `git rebase --autosquash`. The `-m`
 option may be used to supplement the log message of the created
 commit, but the additional commentary will be thrown away once the
@@ -107,7 +107,7 @@ commit, but the additional commentary will be thrown away once the
 `git rebase --autosquash`.
 +
 The commit created by `--fixup=amend:<commit>` is similar but its
-subject is instead prefixed with "amend!". The log message of
+title is instead prefixed with "amend!". The log message of
 _<commit>_ is copied into the log message of the "amend!" commit and
 opened in an editor so it can be refined. When `git rebase
 --autosquash` squashes the "amend!" commit into _<commit>_, the
@@ -128,7 +128,7 @@ See linkgit:git-rebase[1] for details.
 
 `--squash=<commit>`::
 	Construct a commit message for use with `git rebase --autosquash`.
-	The commit message subject line is taken from the specified
+	The commit message title is taken from the specified
 	commit with a prefix of "squash! ".  Can be used with additional
 	commit message options (`-m`/`-c`/`-C`/`-F`). See
 	linkgit:git-rebase[1] for details.
