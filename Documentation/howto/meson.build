@@ -41,7 +41,7 @@ custom_target(
 foreach howto : howto_sources
   howto_stripped = custom_target(
     command: [
-      find_program('sed'),
+      sed,
       '-e',
       '1,/^$/d',
       '@INPUT@',

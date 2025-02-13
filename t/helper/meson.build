@@ -80,14 +80,14 @@ test_tool_sources = [
 
 test_tool = executable('test-tool',
   sources: test_tool_sources,
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
 )
 bin_wrappers += test_tool
 test_dependencies += test_tool
 
 test_fake_ssh = executable('test-fake-ssh',
   sources: 'test-fake-ssh.c',
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
 )
 bin_wrappers += test_fake_ssh
 test_dependencies += test_fake_ssh

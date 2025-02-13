@@ -191,30 +191,29 @@ project('git', 'c',
 fs = import('fs')
 
 program_path = []
-# Git for Windows provides all the tools we need to build Git.
-if host_machine.system() == 'windows'
-  program_path += [ 'C:/Program Files/Git/bin', 'C:/Program Files/Git/usr/bin' ]
+if get_option('sane_tool_path').length() != 0
+  program_path = get_option('sane_tool_path')
+elif host_machine.system() == 'windows'
+  # Git for Windows provides all the tools we need to build Git.
+  program_path = [ 'C:/Program Files/Git/bin', 'C:/Program Files/Git/usr/bin' ]
 endif
 
 cygpath = find_program('cygpath', dirs: program_path, required: false)
 diff = find_program('diff', dirs: program_path)
+git = find_program('git', dirs: program_path, required: false)
+sed = find_program('sed', dirs: program_path)
 shell = find_program('sh', dirs: program_path)
 tar = find_program('tar', dirs: program_path)
 
-script_environment = environment()
-foreach tool : ['cat', 'cut', 'grep', 'sed', 'sort', 'tr', 'uname']
-  program = find_program(tool, dirs: program_path)
-  script_environment.prepend('PATH', fs.parent(program.full_path()))
+# Sanity-check that programs required for the build exist.
+foreach tool : ['cat', 'cut', 'grep', 'sort', 'tr', 'uname']
+  find_program(tool, dirs: program_path)
 endforeach
 
-git = find_program('git', dirs: program_path, required: false)
-if git.found()
-  script_environment.prepend('PATH', fs.parent(git.full_path()))
-endif
-
-if get_option('sane_tool_path') != ''
-  script_environment.prepend('PATH', get_option('sane_tool_path'))
-endif
+script_environment = environment()
+foreach path : program_path
+  script_environment.prepend('PATH', path)
+endforeach
 
 # The environment used by GIT-VERSION-GEN. Note that we explicitly override
 # environment variables that might be set by the user. This is by design so
@@ -480,6 +479,7 @@ libgit_sources = [
   'userdiff.c',
   'utf8.c',
   'varint.c',
+  'version.c',
   'versioncmp.c',
   'walker.c',
   'wildmatch.c',
@@ -679,8 +679,9 @@ else
   build_options_config.set('WITH_BREAKING_CHANGES', '')
 endif
 
-if get_option('sane_tool_path') != ''
-  build_options_config.set_quoted('BROKEN_PATH_FIX', 's|^\# @BROKEN_PATH_FIX@$|git_broken_path_fix "' + get_option('sane_tool_path') + '"|')
+if get_option('sane_tool_path').length() != 0
+  sane_tool_path = (host_machine.system() == 'windows' ? ';' : ':').join(get_option('sane_tool_path'))
+  build_options_config.set_quoted('BROKEN_PATH_FIX', 's|^\# @BROKEN_PATH_FIX@$|git_broken_path_fix "' + sane_tool_path + '"|')
 else
   build_options_config.set_quoted('BROKEN_PATH_FIX', '/^\# @BROKEN_PATH_FIX@$/d')
 endif
@@ -700,7 +701,6 @@ libgit_c_args = [
   '-DETC_GITATTRIBUTES="' + get_option('gitattributes') + '"',
   '-DETC_GITCONFIG="' + get_option('gitconfig') + '"',
   '-DFALLBACK_RUNTIME_PREFIX="' + get_option('prefix') + '"',
-  '-DGIT_EXEC_PATH="' + get_option('prefix') / get_option('libexecdir') / 'git-core"',
   '-DGIT_HOST_CPU="' + host_machine.cpu_family() + '"',
   '-DGIT_HTML_PATH="' + get_option('datadir') / 'doc/git-doc"',
   '-DGIT_INFO_PATH="' + get_option('infodir') + '"',
@@ -949,7 +949,9 @@ if curl.found()
     use_curl_for_imap_send = true
   endif
 
-  libgit_dependencies += curl
+  # Most executables don't have to link against libcurl, but we still need its
+  # include directories so that we can resolve LIBCURL_VERSION in "help.c".
+  libgit_dependencies += curl.partial_dependency(includes: true)
   libgit_c_args += '-DCURL_DISABLE_TYPECHECK'
   build_options_config.set('NO_CURL', '')
 else
@@ -1376,7 +1378,11 @@ if https_backend == 'auto' and security_framework.found()
 endif
 
 openssl_required = 'openssl' in [csprng_backend, https_backend, sha1_backend, sha1_unsafe_backend, sha256_backend]
-openssl = dependency('openssl', required: openssl_required, default_options: ['default_library=static'])
+openssl = dependency('openssl',
+  required: openssl_required,
+  allow_fallback: openssl_required or https_backend == 'auto',
+  default_options: ['default_library=static'],
+)
 if https_backend == 'auto' and openssl.found()
   https_backend = 'openssl'
 endif
@@ -1390,6 +1396,7 @@ elif https_backend == 'openssl'
 else
   # We either couldn't find any dependencies with 'auto' or the user requested
   # 'none'. Both cases are benign.
+  https_backend = 'none'
 endif
 
 if https_backend != 'openssl'
@@ -1489,6 +1496,7 @@ endif
 if get_option('runtime_prefix')
   libgit_c_args += '-DRUNTIME_PREFIX'
   build_options_config.set('RUNTIME_PREFIX', 'true')
+  git_exec_path = get_option('libexecdir') / 'git-core'
 
   if compiler.has_header('mach-o/dyld.h')
     libgit_c_args += '-DHAVE_NS_GET_EXECUTABLE_PATH'
@@ -1525,7 +1533,9 @@ if get_option('runtime_prefix')
   endif
 else
   build_options_config.set('RUNTIME_PREFIX', 'false')
+  git_exec_path = get_option('prefix') / get_option('libexecdir') / 'git-core'
 endif
+libgit_c_args += '-DGIT_EXEC_PATH="' + git_exec_path + '"'
 
 git_version_file = custom_target(
   command: [
@@ -1556,32 +1566,18 @@ version_def_h = custom_target(
   depends: [git_version_file],
   env: version_gen_environment,
 )
-
-# Build a separate library for "version.c" so that we do not have to rebuild
-# everything when the current Git commit changes.
-libgit_version_library = static_library('git-version',
-  sources: [
-    'version.c',
-    version_def_h,
-  ],
-  c_args: libgit_c_args + [
-    '-DGIT_VERSION_H="' + version_def_h.full_path() + '"',
-  ],
-  dependencies: libgit_dependencies,
-  include_directories: libgit_include_directories,
-)
-
-libgit_library = static_library('git',
-  sources: libgit_sources,
-  c_args: libgit_c_args,
-  link_with: libgit_version_library,
-  dependencies: libgit_dependencies,
-  include_directories: libgit_include_directories,
-)
+libgit_sources += version_def_h
 
 libgit = declare_dependency(
+  link_with: static_library('git',
+    sources: libgit_sources,
+    c_args: libgit_c_args + [
+      '-DGIT_VERSION_H="' + version_def_h.full_path() + '"',
+    ],
+    dependencies: libgit_dependencies,
+    include_directories: libgit_include_directories,
+  ),
   compile_args: libgit_c_args,
-  link_with: libgit_library,
   dependencies: libgit_dependencies,
   include_directories: libgit_include_directories,
 )
@@ -1622,88 +1618,86 @@ if host_machine.system() == 'windows'
     error('Unsupported compiler ' + compiler.get_id())
   endif
 endif
-common_main_library = static_library('common-main',
+
+libgit_commonmain = declare_dependency(
   sources: common_main_sources,
-  c_args: libgit_c_args,
-  dependencies: libgit_dependencies,
-  include_directories: libgit_include_directories,
-)
-common_main = declare_dependency(
-  link_with: common_main_library,
   link_args: common_main_link_args,
+  dependencies: [ libgit ],
 )
 
 bin_wrappers = [ ]
 test_dependencies = [ ]
 
-git = executable('git',
+git_builtin = executable('git',
   sources: builtin_sources + 'git.c',
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
   install: true,
   install_dir: get_option('libexecdir') / 'git-core',
 )
-bin_wrappers += git
+bin_wrappers += git_builtin
 
 test_dependencies += executable('git-daemon',
   sources: 'daemon.c',
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
   install: true,
   install_dir: get_option('libexecdir') / 'git-core',
 )
 
 test_dependencies += executable('git-sh-i18n--envsubst',
   sources: 'sh-i18n--envsubst.c',
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
   install: true,
   install_dir: get_option('libexecdir') / 'git-core',
 )
 
 bin_wrappers += executable('git-shell',
   sources: 'shell.c',
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
   install: true,
   install_dir: get_option('libexecdir') / 'git-core',
 )
 
 test_dependencies += executable('git-http-backend',
   sources: 'http-backend.c',
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
   install: true,
   install_dir: get_option('libexecdir') / 'git-core',
 )
 
 bin_wrappers += executable('scalar',
   sources: 'scalar.c',
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
   install: true,
   install_dir: get_option('libexecdir') / 'git-core',
 )
 
 if get_option('curl').enabled()
-  curl_sources = [
-    'http.c',
-    'http-walker.c',
-  ]
+  libgit_curl = declare_dependency(
+    sources: [
+      'http.c',
+      'http-walker.c',
+    ],
+    dependencies: [libgit_commonmain, curl],
+  )
 
-  git_remote_http = executable('git-remote-http',
-    sources: curl_sources + 'remote-curl.c',
-    dependencies: [libgit, common_main],
+  test_dependencies += executable('git-remote-http',
+    sources: 'remote-curl.c',
+    dependencies: [libgit_curl],
     install: true,
     install_dir: get_option('libexecdir') / 'git-core',
   )
-  test_dependencies += git_remote_http
 
   test_dependencies += executable('git-http-fetch',
-    sources: curl_sources + 'http-fetch.c',
-    dependencies: [libgit, common_main],
+    sources: 'http-fetch.c',
+    dependencies: [libgit_curl],
     install: true,
     install_dir: get_option('libexecdir') / 'git-core',
   )
 
   if expat.found()
     test_dependencies += executable('git-http-push',
-      sources: curl_sources + 'http-push.c',
-      dependencies: [libgit, common_main],
+      sources: 'http-push.c',
+      dependencies: [libgit_curl],
       install: true,
       install_dir: get_option('libexecdir') / 'git-core',
     )
@@ -1711,8 +1705,8 @@ if get_option('curl').enabled()
 
   foreach alias : [ 'git-remote-https', 'git-remote-ftp', 'git-remote-ftps' ]
     test_dependencies += executable(alias,
-      objects: git_remote_http.extract_all_objects(recursive: false),
-      dependencies: [libgit, common_main],
+      sources: 'remote-curl.c',
+      dependencies: [libgit_curl],
     )
 
     install_symlink(alias + executable_suffix,
@@ -1722,22 +1716,17 @@ if get_option('curl').enabled()
   endforeach
 endif
 
-imap_send_sources = ['imap-send.c']
-if use_curl_for_imap_send
-  imap_send_sources += curl_sources
-endif
-
 test_dependencies += executable('git-imap-send',
-  sources: imap_send_sources,
-  dependencies: [libgit, common_main],
+  sources: 'imap-send.c',
+  dependencies: [ use_curl_for_imap_send ? libgit_curl : libgit_commonmain ],
   install: true,
   install_dir: get_option('libexecdir') / 'git-core',
 )
 
 foreach alias : [ 'git-receive-pack', 'git-upload-archive', 'git-upload-pack' ]
   bin_wrappers += executable(alias,
-    objects: git.extract_all_objects(recursive: false),
-    dependencies: [libgit, common_main],
+    objects: git_builtin.extract_all_objects(recursive: false),
+    dependencies: [libgit],
   )
 
   install_symlink(alias + executable_suffix,
