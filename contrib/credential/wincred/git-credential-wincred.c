@@ -12,7 +12,9 @@
 
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof(x[0]))
 
+#ifndef _MSC_VER
 __attribute__((format (printf, 1, 2)))
+#endif
 static void die(const char *err, ...)
 {
 	char msg[4096];
