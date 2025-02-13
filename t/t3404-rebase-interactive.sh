@@ -791,6 +791,20 @@ test_expect_success 'reword' '
 	grep "C changed" actual
 '
 
+test_expect_success 'reword fast-forwarded empty commit' '
+	git commit --allow-empty -m "empty commit" --only &&
+	(
+		set_fake_editor &&
+		FAKE_COMMIT_AMEND=edited FAKE_LINES="reword 1" \
+			git rebase -i HEAD^
+	) &&
+	test_commit_message HEAD <<-\EOF
+	empty commit
+
+	edited
+	EOF
+'
+
 test_expect_success 'no uncommitted changes when rewording and the todo list is reloaded' '
 	git checkout E &&
 	test_when_finished "git checkout @{-1}" &&
