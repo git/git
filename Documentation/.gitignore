@@ -6,11 +6,11 @@
 *.pdf
 git.info
 gitman.info
-howto-index.txt
+howto-index.adoc
 doc.dep
-cmds-*.txt
-mergetools-*.txt
-SubmittingPatches.txt
+cmds-*.adoc
+mergetools-*.adoc
+SubmittingPatches.adoc
 tmp-doc-diff/
 tmp-meson-diff/
 GIT-ASCIIDOCFLAGS

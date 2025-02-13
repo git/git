@@ -13,18 +13,18 @@ OUTPUT="$2"
 	cd "$SOURCE_DIR"
 
 	c=////////////////////////////////////////////////////////////////
-	skel=api-index-skel.txt
+	skel=api-index-skel.adoc
 	sed -e '/^\/\/ table of contents begin/q' "$skel"
 	echo "$c"
 
-	ls api-*.txt |
+	ls api-*.adoc |
 	while read filename
 	do
 		case "$filename" in
-		api-index-skel.txt | api-index.txt) continue ;;
+		api-index-skel.adoc | api-index.adoc) continue ;;
 		esac
 		title=$(sed -e 1q "$filename")
-		html=${filename%.txt}.html
+		html=${filename%.adoc}.html
 		echo "* link:$html[$title]"
 	done
 	echo "$c"

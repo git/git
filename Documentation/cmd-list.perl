@@ -5,11 +5,11 @@ use File::Compare qw(compare);
 sub format_one {
 	my ($source_dir, $out, $nameattr) = @_;
 	my ($name, $attr) = @$nameattr;
-	my ($path) = "$source_dir/Documentation/$name.txt";
+	my ($path) = "$source_dir/Documentation/$name.adoc";
 	my ($state, $description);
 	my $mansection;
 	$state = 0;
-	open I, '<', "$path" or die "No such file $path.txt";
+	open I, '<', "$path" or die "No such file $path.adoc";
 	while (<I>) {
 		if (/^(?:git|scalar)[a-z0-9-]*\(([0-9])\)$/) {
 			$mansection = $1;
@@ -30,7 +30,7 @@ sub format_one {
 	}
 	close I;
 	if (!defined $description) {
-		die "No description found in $path.txt";
+		die "No description found in $path.adoc";
 	}
 	if (my ($verify_name, $text) = ($description =~ /^($name) - (.*)/)) {
 		print $out "linkgit:$name\[$mansection\]::\n\t";
@@ -63,7 +63,7 @@ for (sort <IN>) {
 close IN;
 
 for my $out (@categories) {
-	my ($cat) = $out =~ /^cmds-(.*)\.txt$/;
+	my ($cat) = $out =~ /^cmds-(.*)\.adoc$/;
 	my ($path) = "$build_dir/$out";
 	open O, '>', "$path+" or die "Cannot open output file $out+";
 	for (@{$cmds{$cat}}) {

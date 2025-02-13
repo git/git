@@ -1,0 +1,101 @@
+git-commit-tree(1)
+==================
+
+NAME
+----
+git-commit-tree - Create a new commit object
+
+
+SYNOPSIS
+--------
+[verse]
+'git commit-tree' <tree> [(-p <parent>)...]
+'git commit-tree' [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...]
+		  [(-F <file>)...] <tree>
+
+
+DESCRIPTION
+-----------
+This is usually not what an end user wants to run directly.  See
+linkgit:git-commit[1] instead.
+
+Creates a new commit object based on the provided tree object and
+emits the new commit object id on stdout. The log message is read
+from the standard input, unless `-m` or `-F` options are given.
+
+The `-m` and `-F` options can be given any number of times, in any
+order. The commit log message will be composed in the order in which
+the options are given.
+
+A commit object may have any number of parents. With exactly one
+parent, it is an ordinary commit. Having more than one parent makes
+the commit a merge between several lines of history. Initial (root)
+commits have no parents.
+
+While a tree represents a particular directory state of a working
+directory, a commit represents that state in "time", and explains how
+to get there.
+
+Normally a commit would identify a new "HEAD" state, and while Git
+doesn't care where you save the note about that state, in practice we
+tend to just write the result to the file that is pointed at by
+`.git/HEAD`, so that we can always see what the last committed
+state was.
+
+OPTIONS
+-------
+<tree>::
+	An existing tree object.
+
+-p <parent>::
+	Each `-p` indicates the id of a parent commit object.
+
+-m <message>::
+	A paragraph in the commit log message. This can be given more than
+	once and each <message> becomes its own paragraph.
+
+-F <file>::
+	Read the commit log message from the given file. Use `-` to read
+	from the standard input. This can be given more than once and the
+	content of each file becomes its own paragraph.
+
+-S[<keyid>]::
+--gpg-sign[=<keyid>]::
+--no-gpg-sign::
+	GPG-sign commits. The `keyid` argument is optional and
+	defaults to the committer identity; if specified, it must be
+	stuck to the option without a space. `--no-gpg-sign` is useful to
+	countermand a `--gpg-sign` option given earlier on the command line.
+
+Commit Information
+------------------
+
+A commit encapsulates:
+
+- all parent object ids
+- author name, email and date
+- committer name and email and the commit time.
+
+A commit comment is read from stdin. If a changelog
+entry is not provided via "<" redirection, 'git commit-tree' will just wait
+for one to be entered and terminated with ^D.
+
+include::date-formats.adoc[]
+
+Discussion
+----------
+
+include::i18n.adoc[]
+
+FILES
+-----
+/etc/mailname
+
+SEE ALSO
+--------
+linkgit:git-write-tree[1]
+linkgit:git-commit[1]
+
+GIT
+---
+Part of the linkgit:git[1] suite

@@ -3,10 +3,10 @@
 T="$1"
 
 for h in \
-	*.txt *.html \
-	howto/*.txt howto/*.html \
-	technical/*.txt technical/*.html \
-	RelNotes/*.txt *.css
+	*.adoc *.html \
+	howto/*.adoc howto/*.html \
+	technical/*.adoc technical/*.html \
+	RelNotes/*.adoc *.css
 do
 	if test ! -f "$h"
 	then
@@ -24,13 +24,13 @@ do
 done
 strip_leading=$(echo "$T/" | sed -e 's|.|.|g')
 for th in \
-	"$T"/*.html "$T"/*.txt \
-	"$T"/howto/*.txt "$T"/howto/*.html \
-	"$T"/technical/*.txt "$T"/technical/*.html
+	"$T"/*.html "$T"/*.adoc \
+	"$T"/howto/*.adoc "$T"/howto/*.html \
+	"$T"/technical/*.adoc "$T"/technical/*.html
 do
 	h=$(expr "$th" : "$strip_leading"'\(.*\)')
 	case "$h" in
-	RelNotes-*.txt | index.html) continue ;;
+	RelNotes-*.adoc | index.html) continue ;;
 	esac
 	test -f "$h" && continue
 	echo >&2 "# rm -f $th"

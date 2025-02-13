@@ -643,7 +643,7 @@ builtin_sources += custom_target(
 )
 
 builtin_sources += custom_target(
-  input: 'Documentation/githooks.txt',
+  input: 'Documentation/githooks.adoc',
   output: 'hook-list.h',
   command: [
     shell,

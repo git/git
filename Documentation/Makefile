@@ -17,56 +17,56 @@ OBSOLETE_HTML =
 -include GIT-EXCLUDED-PROGRAMS
 
 MAN1_TXT += $(filter-out \
-		$(patsubst %,%.txt,$(EXCLUDED_PROGRAMS)) \
-		$(addsuffix .txt, $(ARTICLES) $(SP_ARTICLES)), \
-		$(wildcard git-*.txt))
-MAN1_TXT += git.txt
-MAN1_TXT += gitk.txt
-MAN1_TXT += gitweb.txt
-MAN1_TXT += scalar.txt
+		$(patsubst %,%.adoc,$(EXCLUDED_PROGRAMS)) \
+		$(addsuffix .adoc, $(ARTICLES) $(SP_ARTICLES)), \
+		$(wildcard git-*.adoc))
+MAN1_TXT += git.adoc
+MAN1_TXT += gitk.adoc
+MAN1_TXT += gitweb.adoc
+MAN1_TXT += scalar.adoc
 
 # man5 / man7 guides (note: new guides should also be added to command-list.txt)
-MAN5_TXT += gitattributes.txt
-MAN5_TXT += gitformat-bundle.txt
-MAN5_TXT += gitformat-chunk.txt
-MAN5_TXT += gitformat-commit-graph.txt
-MAN5_TXT += gitformat-index.txt
-MAN5_TXT += gitformat-pack.txt
-MAN5_TXT += gitformat-signature.txt
-MAN5_TXT += githooks.txt
-MAN5_TXT += gitignore.txt
-MAN5_TXT += gitmailmap.txt
-MAN5_TXT += gitmodules.txt
-MAN5_TXT += gitprotocol-capabilities.txt
-MAN5_TXT += gitprotocol-common.txt
-MAN5_TXT += gitprotocol-http.txt
-MAN5_TXT += gitprotocol-pack.txt
-MAN5_TXT += gitprotocol-v2.txt
-MAN5_TXT += gitrepository-layout.txt
-MAN5_TXT += gitweb.conf.txt
+MAN5_TXT += gitattributes.adoc
+MAN5_TXT += gitformat-bundle.adoc
+MAN5_TXT += gitformat-chunk.adoc
+MAN5_TXT += gitformat-commit-graph.adoc
+MAN5_TXT += gitformat-index.adoc
+MAN5_TXT += gitformat-pack.adoc
+MAN5_TXT += gitformat-signature.adoc
+MAN5_TXT += githooks.adoc
+MAN5_TXT += gitignore.adoc
+MAN5_TXT += gitmailmap.adoc
+MAN5_TXT += gitmodules.adoc
+MAN5_TXT += gitprotocol-capabilities.adoc
+MAN5_TXT += gitprotocol-common.adoc
+MAN5_TXT += gitprotocol-http.adoc
+MAN5_TXT += gitprotocol-pack.adoc
+MAN5_TXT += gitprotocol-v2.adoc
+MAN5_TXT += gitrepository-layout.adoc
+MAN5_TXT += gitweb.conf.adoc
 
-MAN7_TXT += gitcli.txt
-MAN7_TXT += gitcore-tutorial.txt
-MAN7_TXT += gitcredentials.txt
-MAN7_TXT += gitcvs-migration.txt
-MAN7_TXT += gitdiffcore.txt
-MAN7_TXT += giteveryday.txt
-MAN7_TXT += gitfaq.txt
-MAN7_TXT += gitglossary.txt
-MAN7_TXT += gitpacking.txt
-MAN7_TXT += gitnamespaces.txt
-MAN7_TXT += gitremote-helpers.txt
-MAN7_TXT += gitrevisions.txt
-MAN7_TXT += gitsubmodules.txt
-MAN7_TXT += gittutorial-2.txt
-MAN7_TXT += gittutorial.txt
-MAN7_TXT += gitworkflows.txt
+MAN7_TXT += gitcli.adoc
+MAN7_TXT += gitcore-tutorial.adoc
+MAN7_TXT += gitcredentials.adoc
+MAN7_TXT += gitcvs-migration.adoc
+MAN7_TXT += gitdiffcore.adoc
+MAN7_TXT += giteveryday.adoc
+MAN7_TXT += gitfaq.adoc
+MAN7_TXT += gitglossary.adoc
+MAN7_TXT += gitpacking.adoc
+MAN7_TXT += gitnamespaces.adoc
+MAN7_TXT += gitremote-helpers.adoc
+MAN7_TXT += gitrevisions.adoc
+MAN7_TXT += gitsubmodules.adoc
+MAN7_TXT += gittutorial-2.adoc
+MAN7_TXT += gittutorial.adoc
+MAN7_TXT += gitworkflows.adoc
 
-HOWTO_TXT += $(wildcard howto/*.txt)
+HOWTO_TXT += $(wildcard howto/*.adoc)
 
-DOC_DEP_TXT += $(wildcard *.txt)
-DOC_DEP_TXT += $(wildcard config/*.txt)
-DOC_DEP_TXT += $(wildcard includes/*.txt)
+DOC_DEP_TXT += $(wildcard *.adoc)
+DOC_DEP_TXT += $(wildcard config/*.adoc)
+DOC_DEP_TXT += $(wildcard includes/*.adoc)
 
 ifdef MAN_FILTER
 MAN_TXT = $(filter $(MAN_FILTER),$(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT))
@@ -75,8 +75,8 @@ MAN_TXT = $(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT)
 MAN_FILTER = $(MAN_TXT)
 endif
 
-MAN_XML = $(patsubst %.txt,%.xml,$(MAN_TXT))
-MAN_HTML = $(patsubst %.txt,%.html,$(MAN_TXT))
+MAN_XML = $(patsubst %.adoc,%.xml,$(MAN_TXT))
+MAN_HTML = $(patsubst %.adoc,%.html,$(MAN_TXT))
 GIT_MAN_REF = master
 
 OBSOLETE_HTML += everyday.html
@@ -103,7 +103,7 @@ SP_ARTICLES += howto/rebase-from-internal-branch
 SP_ARTICLES += howto/keep-canonical-history-correct
 SP_ARTICLES += howto/maintain-git
 SP_ARTICLES += howto/coordinate-embargoed-releases
-API_DOCS = $(patsubst %.txt,%,$(filter-out technical/api-index-skel.txt technical/api-index.txt, $(wildcard technical/api-*.txt)))
+API_DOCS = $(patsubst %.adoc,%,$(filter-out technical/api-index-skel.adoc technical/api-index.adoc, $(wildcard technical/api-*.adoc)))
 SP_ARTICLES += $(API_DOCS)
 
 TECH_DOCS += DecisionMaking
@@ -136,9 +136,9 @@ ARTICLES_HTML += $(patsubst %,%.html,$(ARTICLES) $(SP_ARTICLES))
 HTML_FILTER ?= $(ARTICLES_HTML) $(OBSOLETE_HTML)
 DOC_HTML = $(MAN_HTML) $(filter $(HTML_FILTER),$(ARTICLES_HTML) $(OBSOLETE_HTML))
 
-DOC_MAN1 = $(patsubst %.txt,%.1,$(filter $(MAN_FILTER),$(MAN1_TXT)))
-DOC_MAN5 = $(patsubst %.txt,%.5,$(filter $(MAN_FILTER),$(MAN5_TXT)))
-DOC_MAN7 = $(patsubst %.txt,%.7,$(filter $(MAN_FILTER),$(MAN7_TXT)))
+DOC_MAN1 = $(patsubst %.adoc,%.1,$(filter $(MAN_FILTER),$(MAN1_TXT)))
+DOC_MAN5 = $(patsubst %.adoc,%.5,$(filter $(MAN_FILTER),$(MAN5_TXT)))
+DOC_MAN7 = $(patsubst %.adoc,%.7,$(filter $(MAN_FILTER),$(MAN7_TXT)))
 
 prefix ?= $(HOME)
 bindir ?= $(prefix)/bin
@@ -278,7 +278,7 @@ install-pdf: pdf
 install-html: html
 	'$(SHELL_PATH_SQ)' ./install-webdoc.sh $(DESTDIR)$(htmldir)
 
-mergetools_txt = mergetools-diff.txt mergetools-merge.txt
+mergetools_txt = mergetools-diff.adoc mergetools-merge.adoc
 
 #
 # Determine "include::" file references in asciidoc files.
@@ -294,18 +294,18 @@ ifneq ($(MAKECMDGOALS),clean)
 -include doc.dep
 endif
 
-cmds_txt = cmds-ancillaryinterrogators.txt \
-	cmds-ancillarymanipulators.txt \
-	cmds-mainporcelain.txt \
-	cmds-plumbinginterrogators.txt \
-	cmds-plumbingmanipulators.txt \
-	cmds-synchingrepositories.txt \
-	cmds-synchelpers.txt \
-	cmds-guide.txt \
-	cmds-developerinterfaces.txt \
-	cmds-userinterfaces.txt \
-	cmds-purehelpers.txt \
-	cmds-foreignscminterface.txt
+cmds_txt = cmds-ancillaryinterrogators.adoc \
+	cmds-ancillarymanipulators.adoc \
+	cmds-mainporcelain.adoc \
+	cmds-plumbinginterrogators.adoc \
+	cmds-plumbingmanipulators.adoc \
+	cmds-synchingrepositories.adoc \
+	cmds-synchelpers.adoc \
+	cmds-guide.adoc \
+	cmds-developerinterfaces.adoc \
+	cmds-userinterfaces.adoc \
+	cmds-purehelpers.adoc \
+	cmds-foreignscminterface.adoc
 
 $(cmds_txt): cmd-list.made
 
@@ -313,10 +313,10 @@ cmd-list.made: cmd-list.perl ../command-list.txt $(MAN1_TXT)
 	$(QUIET_GEN)$(PERL_PATH) ./cmd-list.perl .. . $(cmds_txt) && \
 	date >$@
 
-mergetools-%.txt: generate-mergetool-list.sh ../git-mergetool--lib.sh $(wildcard ../mergetools/*)
-mergetools-diff.txt:
+mergetools-%.adoc: generate-mergetool-list.sh ../git-mergetool--lib.sh $(wildcard ../mergetools/*)
+mergetools-diff.adoc:
 	$(QUIET_GEN)$(SHELL_PATH) ./generate-mergetool-list.sh .. diff $@
-mergetools-merge.txt:
+mergetools-merge.adoc:
 	$(QUIET_GEN)$(SHELL_PATH) ./generate-mergetool-list.sh .. merge $@
 
 TRACK_ASCIIDOCFLAGS = $(subst ','\'',$(ASCIIDOC_COMMON):$(ASCIIDOC_HTML):$(ASCIIDOC_DOCBOOK))
@@ -333,9 +333,9 @@ clean:
 	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7
 	$(RM) *.texi *.texi+ *.texi++ git.info gitman.info
 	$(RM) *.pdf
-	$(RM) howto-index.txt howto/*.html doc.dep
-	$(RM) technical/*.html technical/api-index.txt
-	$(RM) SubmittingPatches.txt
+	$(RM) howto-index.adoc howto/*.html doc.dep
+	$(RM) technical/*.html technical/api-index.adoc
+	$(RM) SubmittingPatches.adoc
 	$(RM) $(cmds_txt) $(mergetools_txt) *.made
 	$(RM) GIT-ASCIIDOCFLAGS
 	$(RM) asciidoc.conf asciidoctor-extensions.rb
@@ -344,10 +344,10 @@ clean:
 docinfo.html: docinfo-html.in
 	$(QUIET_GEN)$(RM) $@ && cat $< >$@
 
-$(MAN_HTML): %.html : %.txt $(ASCIIDOC_DEPS)
+$(MAN_HTML): %.html : %.adoc $(ASCIIDOC_DEPS)
 	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) -d manpage -o $@ $<
 
-$(OBSOLETE_HTML): %.html : %.txto $(ASCIIDOC_DEPS)
+$(OBSOLETE_HTML): %.html : %.adoco $(ASCIIDOC_DEPS)
 	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) -o $@ $<
 
 manpage-prereqs := $(wildcard manpage*.xsl)
@@ -360,22 +360,22 @@ manpage-cmd = $(QUIET_XMLTO)$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
 %.7 : %.xml $(manpage-prereqs)
 	$(manpage-cmd)
 
-%.xml : %.txt $(ASCIIDOC_DEPS)
+%.xml : %.adoc $(ASCIIDOC_DEPS)
 	$(QUIET_ASCIIDOC)$(TXT_TO_XML) -d manpage -o $@ $<
 
-user-manual.xml: user-manual.txt $(ASCIIDOC_DEPS)
+user-manual.xml: user-manual.adoc $(ASCIIDOC_DEPS)
 	$(QUIET_ASCIIDOC)$(TXT_TO_XML) -d book -o $@ $<
 
-technical/api-index.txt: technical/api-index-skel.txt \
-	technical/api-index.sh $(patsubst %,%.txt,$(API_DOCS))
-	$(QUIET_GEN)'$(SHELL_PATH_SQ)' technical/api-index.sh ./technical ./technical/api-index.txt
+technical/api-index.adoc: technical/api-index-skel.adoc \
+	technical/api-index.sh $(patsubst %,%.adoc,$(API_DOCS))
+	$(QUIET_GEN)'$(SHELL_PATH_SQ)' technical/api-index.sh ./technical ./technical/api-index.adoc
 
 technical/%.html: ASCIIDOC_EXTRA += -a git-relative-html-prefix=../
-$(patsubst %,%.html,$(API_DOCS) technical/api-index $(TECH_DOCS)): %.html : %.txt \
+$(patsubst %,%.html,$(API_DOCS) technical/api-index $(TECH_DOCS)): %.html : %.adoc \
 	$(ASCIIDOC_DEPS)
-	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) $*.txt
+	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) $*.adoc
 
-SubmittingPatches.txt: SubmittingPatches
+SubmittingPatches.adoc: SubmittingPatches
 	$(QUIET_GEN) cp $< $@
 
 XSLT = docbook.xsl
@@ -409,19 +409,19 @@ gitman.texi: $(MAN_XML) cat-texi.perl texi.xsl
 gitman.info: gitman.texi
 	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split --no-validate $<
 
-$(patsubst %.txt,%.texi,$(MAN_TXT)): %.texi : %.xml
+$(patsubst %.adoc,%.texi,$(MAN_TXT)): %.texi : %.xml
 	$(QUIET_DB2TEXI)$(DOCBOOK2X_TEXI) --to-stdout $*.xml >$@
 
-howto-index.txt: howto/howto-index.sh $(HOWTO_TXT)
+howto-index.adoc: howto/howto-index.sh $(HOWTO_TXT)
 	$(QUIET_GEN)'$(SHELL_PATH_SQ)' ./howto/howto-index.sh $(sort $(HOWTO_TXT)) >$@
 
-$(patsubst %,%.html,$(ARTICLES)) : %.html : %.txt $(ASCIIDOC_DEPS)
-	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) $*.txt
+$(patsubst %,%.html,$(ARTICLES)) : %.html : %.adoc $(ASCIIDOC_DEPS)
+	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) $*.adoc
 
 WEBDOC_DEST = /pub/software/scm/git/docs
 
 howto/%.html: ASCIIDOC_EXTRA += -a git-relative-html-prefix=../
-$(patsubst %.txt,%.html,$(HOWTO_TXT)): %.html : %.txt $(ASCIIDOC_DEPS)
+$(patsubst %.adoc,%.html,$(HOWTO_TXT)): %.html : %.adoc $(ASCIIDOC_DEPS)
 	$(QUIET_ASCIIDOC) \
 	sed -e '1,/^$$/d' $< | \
 	$(TXT_TO_HTML) - >$@
@@ -452,9 +452,9 @@ print-man1:
 	@for i in $(MAN1_TXT); do echo $$i; done
 
 ## Lint: gitlink
-LINT_DOCS_GITLINK = $(patsubst %.txt,.build/lint-docs/gitlink/%.ok,$(HOWTO_TXT) $(DOC_DEP_TXT))
+LINT_DOCS_GITLINK = $(patsubst %.adoc,.build/lint-docs/gitlink/%.ok,$(HOWTO_TXT) $(DOC_DEP_TXT))
 $(LINT_DOCS_GITLINK): lint-gitlink.perl
-$(LINT_DOCS_GITLINK): .build/lint-docs/gitlink/%.ok: %.txt
+$(LINT_DOCS_GITLINK): .build/lint-docs/gitlink/%.ok: %.adoc
 	$(call mkdir_p_parent_template)
 	$(QUIET_LINT_GITLINK)$(PERL_PATH) lint-gitlink.perl \
 		$< \
@@ -466,17 +466,17 @@ $(LINT_DOCS_GITLINK): .build/lint-docs/gitlink/%.ok: %.txt
 lint-docs-gitlink: $(LINT_DOCS_GITLINK)
 
 ## Lint: man-end-blurb
-LINT_DOCS_MAN_END_BLURB = $(patsubst %.txt,.build/lint-docs/man-end-blurb/%.ok,$(MAN_TXT))
+LINT_DOCS_MAN_END_BLURB = $(patsubst %.adoc,.build/lint-docs/man-end-blurb/%.ok,$(MAN_TXT))
 $(LINT_DOCS_MAN_END_BLURB): lint-man-end-blurb.perl
-$(LINT_DOCS_MAN_END_BLURB): .build/lint-docs/man-end-blurb/%.ok: %.txt
+$(LINT_DOCS_MAN_END_BLURB): .build/lint-docs/man-end-blurb/%.ok: %.adoc
 	$(call mkdir_p_parent_template)
 	$(QUIET_LINT_MANEND)$(PERL_PATH) lint-man-end-blurb.perl $< >$@
 .PHONY: lint-docs-man-end-blurb
 
 ## Lint: man-section-order
-LINT_DOCS_MAN_SECTION_ORDER = $(patsubst %.txt,.build/lint-docs/man-section-order/%.ok,$(MAN_TXT))
+LINT_DOCS_MAN_SECTION_ORDER = $(patsubst %.adoc,.build/lint-docs/man-section-order/%.ok,$(MAN_TXT))
 $(LINT_DOCS_MAN_SECTION_ORDER): lint-man-section-order.perl
-$(LINT_DOCS_MAN_SECTION_ORDER): .build/lint-docs/man-section-order/%.ok: %.txt
+$(LINT_DOCS_MAN_SECTION_ORDER): .build/lint-docs/man-section-order/%.ok: %.adoc
 	$(call mkdir_p_parent_template)
 	$(QUIET_LINT_MANSEC)$(PERL_PATH) lint-man-section-order.perl $< >$@
 .PHONY: lint-docs-man-section-order
@@ -485,10 +485,10 @@ lint-docs-man-section-order: $(LINT_DOCS_MAN_SECTION_ORDER)
 .PHONY: lint-docs-fsck-msgids
 LINT_DOCS_FSCK_MSGIDS = .build/lint-docs/fsck-msgids.ok
 $(LINT_DOCS_FSCK_MSGIDS): lint-fsck-msgids.perl
-$(LINT_DOCS_FSCK_MSGIDS): ../fsck.h fsck-msgids.txt
+$(LINT_DOCS_FSCK_MSGIDS): ../fsck.h fsck-msgids.adoc
 	$(call mkdir_p_parent_template)
 	$(QUIET_GEN)$(PERL_PATH) lint-fsck-msgids.perl \
-		../fsck.h fsck-msgids.txt $@
+		../fsck.h fsck-msgids.adoc $@
 
 lint-docs-fsck-msgids: $(LINT_DOCS_FSCK_MSGIDS)
 
@@ -501,11 +501,11 @@ lint-docs-meson:
 	@mkdir -p tmp-meson-diff && \
 	awk "/^manpages = {$$/ {flag=1 ; next } /^}$$/ { flag=0 } flag { gsub(/^  \047/, \"\"); gsub(/\047 : [157],\$$/, \"\"); print }" meson.build | \
 		grep -v -e '#' -e '^$$' | \
-		sort >tmp-meson-diff/meson.txt && \
-	ls git*.txt scalar.txt | grep -v -e git-bisect-lk2009.txt -e git-tools.txt >tmp-meson-diff/actual.txt && \
-	if ! cmp tmp-meson-diff/meson.txt tmp-meson-diff/actual.txt; then \
+		sort >tmp-meson-diff/meson.adoc && \
+	ls git*.adoc scalar.adoc | grep -v -e git-bisect-lk2009.adoc -e git-tools.adoc >tmp-meson-diff/actual.adoc && \
+	if ! cmp tmp-meson-diff/meson.adoc tmp-meson-diff/actual.adoc; then \
 		echo "Meson man pages differ from actual man pages:"; \
-		diff -u tmp-meson-diff/meson.txt tmp-meson-diff/actual.txt; \
+		diff -u tmp-meson-diff/meson.adoc tmp-meson-diff/actual.adoc; \
 		exit 1; \
 	fi
 
