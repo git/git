@@ -22,7 +22,10 @@
 #include "progress.h"
 #include "reflog-walk.h"
 #include "oidset.h"
+#include "oidmap.h"
 #include "packfile.h"
+#include "quote.h"
+#include "strbuf.h"
 
 static const char rev_list_usage[] =
 "git rev-list [<options>] <commit>... [--] [<path>...]\n"
@@ -73,11 +76,17 @@ static unsigned progress_counter;
 static struct oidset omitted_objects;
 static int arg_print_omitted; /* print objects omitted by filter */
 
-static struct oidset missing_objects;
+struct missing_objects_map_entry {
+	struct oidmap_entry entry;
+	const char *path;
+	unsigned type;
+};
+static struct oidmap missing_objects;
 enum missing_action {
 	MA_ERROR = 0,    /* fail if any missing objects are encountered */
 	MA_ALLOW_ANY,    /* silently allow ALL missing objects */
 	MA_PRINT,        /* print ALL missing objects in special section */
+	MA_PRINT_INFO,   /* same as MA_PRINT but also prints missing object info */
 	MA_ALLOW_PROMISOR, /* silently allow all missing PROMISOR objects */
 };
 static enum missing_action arg_missing_action;
@@ -101,7 +110,49 @@ static off_t get_object_disk_usage(struct object *obj)
 	return size;
 }
 
-static inline void finish_object__ma(struct object *obj)
+static void add_missing_object_entry(struct object_id *oid, const char *path,
+				     unsigned type)
+{
+	struct missing_objects_map_entry *entry;
+
+	if (oidmap_get(&missing_objects, oid))
+		return;
+
+	CALLOC_ARRAY(entry, 1);
+	entry->entry.oid = *oid;
+	entry->type = type;
+	if (path)
+		entry->path = xstrdup(path);
+	oidmap_put(&missing_objects, entry);
+}
+
+static void print_missing_object(struct missing_objects_map_entry *entry,
+				 int print_missing_info)
+{
+	struct strbuf sb = STRBUF_INIT;
+
+	if (!print_missing_info) {
+		printf("?%s\n", oid_to_hex(&entry->entry.oid));
+		return;
+	}
+
+	if (entry->path && *entry->path) {
+		struct strbuf path = STRBUF_INIT;
+
+		strbuf_addstr(&sb, " path=");
+		quote_path(entry->path, NULL, &path, QUOTE_PATH_QUOTE_SP);
+		strbuf_addbuf(&sb, &path);
+
+		strbuf_release(&path);
+	}
+	if (entry->type)
+		strbuf_addf(&sb, " type=%s", type_name(entry->type));
+
+	printf("?%s%s\n", oid_to_hex(&entry->entry.oid), sb.buf);
+	strbuf_release(&sb);
+}
+
+static inline void finish_object__ma(struct object *obj, const char *name)
 {
 	/*
 	 * Whether or not we try to dynamically fetch missing objects
@@ -119,7 +170,8 @@ static inline void finish_object__ma(struct object *obj)
 		return;
 
 	case MA_PRINT:
-		oidset_insert(&missing_objects, &obj->oid);
+	case MA_PRINT_INFO:
+		add_missing_object_entry(&obj->oid, name, obj->type);
 		return;
 
 	case MA_ALLOW_PROMISOR:
@@ -152,7 +204,7 @@ static void show_commit(struct commit *commit, void *data)
 
 	if (revs->do_not_die_on_missing_objects &&
 	    oidset_contains(&revs->missing_commits, &commit->object.oid)) {
-		finish_object__ma(&commit->object);
+		finish_object__ma(&commit->object, NULL);
 		return;
 	}
 
@@ -268,12 +320,11 @@ static void show_commit(struct commit *commit, void *data)
 	finish_commit(commit);
 }
 
-static int finish_object(struct object *obj, const char *name UNUSED,
-			 void *cb_data)
+static int finish_object(struct object *obj, const char *name, void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
 	if (oid_object_info_extended(the_repository, &obj->oid, NULL, 0) < 0) {
-		finish_object__ma(obj);
+		finish_object__ma(obj, name);
 		return 1;
 	}
 	if (info->revs->verify_objects && !obj->parsed && obj->type != OBJ_COMMIT)
@@ -410,6 +461,12 @@ static inline int parse_missing_action_value(const char *value)
 
 	if (!strcmp(value, "print")) {
 		arg_missing_action = MA_PRINT;
+		fetch_if_missing = 0;
+		return 1;
+	}
+
+	if (!strcmp(value, "print-info")) {
+		arg_missing_action = MA_PRINT_INFO;
 		fetch_if_missing = 0;
 		return 1;
 	}
@@ -781,10 +838,18 @@ int cmd_rev_list(int argc,
 
 	if (arg_print_omitted)
 		oidset_init(&omitted_objects, DEFAULT_OIDSET_SIZE);
-	if (arg_missing_action == MA_PRINT) {
-		oidset_init(&missing_objects, DEFAULT_OIDSET_SIZE);
+	if (arg_missing_action == MA_PRINT ||
+	    arg_missing_action == MA_PRINT_INFO) {
+		struct oidset_iter iter;
+		struct object_id *oid;
+
+		oidmap_init(&missing_objects, DEFAULT_OIDSET_SIZE);
+		oidset_iter_init(&revs.missing_commits, &iter);
+
 		/* Add missing tips */
-		oidset_insert_from_set(&missing_objects, &revs.missing_commits);
+		while ((oid = oidset_iter_next(&iter)))
+			add_missing_object_entry(oid, NULL, 0);
+
 		oidset_clear(&revs.missing_commits);
 	}
 
@@ -800,13 +865,20 @@ int cmd_rev_list(int argc,
 			printf("~%s\n", oid_to_hex(oid));
 		oidset_clear(&omitted_objects);
 	}
-	if (arg_missing_action == MA_PRINT) {
-		struct oidset_iter iter;
-		struct object_id *oid;
-		oidset_iter_init(&missing_objects, &iter);
-		while ((oid = oidset_iter_next(&iter)))
-			printf("?%s\n", oid_to_hex(oid));
-		oidset_clear(&missing_objects);
+	if (arg_missing_action == MA_PRINT ||
+	    arg_missing_action == MA_PRINT_INFO) {
+		struct missing_objects_map_entry *entry;
+		struct oidmap_iter iter;
+
+		oidmap_iter_init(&missing_objects, &iter);
+
+		while ((entry = oidmap_iter_next(&iter))) {
+			print_missing_object(entry, arg_missing_action ==
+							    MA_PRINT_INFO);
+			free((void *)entry->path);
+		}
+
+		oidmap_free(&missing_objects, true);
 	}
 
 	stop_progress(&progress);

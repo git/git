@@ -1024,6 +1024,25 @@ Unexpected missing objects will raise an error.
 The form '--missing=print' is like 'allow-any', but will also print a
 list of the missing objects.  Object IDs are prefixed with a ``?'' character.
 +
+The form '--missing=print-info' is like 'print', but will also print additional
+information about the missing object inferred from its containing object. The
+information is all printed on the same line with the missing object ID in the
+form: `?<oid> [<token>=<value>]...`. The `<token>=<value>` pairs containing
+additional information are separated from each other by a SP. The value is
+encoded in a token specific fashion, but SP or LF contained in value are always
+expected to be represented in such a way that the resulting encoded value does
+not have either of these two problematic bytes. Each `<token>=<value>` may be
+one of the following:
++
+--
+* The `path=<path>` shows the path of the missing object inferred from a
+  containing object. A path containing SP or special characters is enclosed in
+  double-quotes in the C style as needed.
++
+* The `type=<type>` shows the type of the missing object inferred from a
+  containing object.
+--
++
 If some tips passed to the traversal are missing, they will be
 considered as missing too, and the traversal will ignore them. In case
 we cannot get their Object ID though, an error will be raised.

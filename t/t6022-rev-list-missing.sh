@@ -145,4 +145,57 @@ do
 	done
 done
 
+for obj in "HEAD~1" "HEAD^{tree}" "HEAD:foo" "HEAD:foo/bar" "HEAD:baz baz"
+do
+	test_expect_success "--missing=print-info with missing '$obj'" '
+		test_when_finished rm -rf missing-info &&
+
+		git init missing-info &&
+		(
+			cd missing-info &&
+			git commit --allow-empty -m first &&
+
+			mkdir foo &&
+			echo bar >foo/bar &&
+			echo baz >"baz baz" &&
+			echo bat >bat\" &&
+			git add -A &&
+			git commit -m second &&
+
+			oid="$(git rev-parse "$obj")" &&
+			path=".git/objects/$(test_oid_to_path $oid)" &&
+			type_info=" type=$(git cat-file -t $oid)" &&
+
+			case $obj in
+			HEAD:foo)
+				path_info=" path=foo"
+				;;
+			HEAD:foo/bar)
+				path_info=" path=foo/bar"
+				;;
+			"HEAD:baz baz")
+				path_info=" path=\"baz baz\""
+				;;
+			"HEAD:bat\"")
+				path_info=" path=\"bat\\\"\""
+				;;
+			esac &&
+
+			# Before the object is made missing, we use rev-list to
+			# get the expected oids.
+			git rev-list --objects --no-object-names \
+				HEAD ^"$obj" >expect.raw &&
+			echo "?$oid$path_info$type_info" >>expect.raw &&
+
+			mv "$path" "$path.hidden" &&
+			git rev-list --objects --no-object-names \
+				--missing=print-info HEAD >actual.raw &&
+
+			sort actual.raw >actual &&
+			sort expect.raw >expect &&
+			test_cmp expect actual
+		)
+	'
+done
+
 test_done
