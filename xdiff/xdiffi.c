@@ -19,7 +19,6 @@
  *  Davide Libenzi <davidel@xmailserver.org>
  *
  */
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "xinclude.h"
 
@@ -1014,7 +1013,7 @@ static void xdl_mark_ignorable_lines(xdchange_t *xscr, xdfenv_t *xe, long flags)
 
 static int record_matches_regex(xrecord_t *rec, xpparam_t const *xpp) {
 	regmatch_t regmatch;
-	int i;
+	size_t i;
 
 	for (i = 0; i < xpp->ignore_regex_nr; i++)
 		if (!regexec_buf(xpp->ignore_regex[i], rec->ptr, rec->size, 1,

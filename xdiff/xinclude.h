@@ -23,8 +23,6 @@
 #if !defined(XINCLUDE_H)
 #define XINCLUDE_H
 
-#define DISABLE_SIGN_COMPARE_WARNINGS
-
 #include "git-compat-util.h"
 #include "xmacros.h"
 #include "xdiff.h"

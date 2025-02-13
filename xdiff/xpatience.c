@@ -19,6 +19,7 @@
  *  Davide Libenzi <davidel@xmailserver.org>
  *
  */
+
 #include "xinclude.h"
 
 /*
@@ -75,7 +76,7 @@ struct hashmap {
 
 static int is_anchor(xpparam_t const *xpp, const char *line)
 {
-	int i;
+	size_t i;
 	for (i = 0; i < xpp->anchors_nr; i++) {
 		if (!strncmp(line, xpp->anchors[i], strlen(xpp->anchors[i])))
 			return 1;
