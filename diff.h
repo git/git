@@ -508,6 +508,21 @@ void diff_set_default_prefix(struct diff_options *options);
 
 int diff_can_quit_early(struct diff_options *);
 
+struct diff_filepair *diff_filepair_addremove(struct diff_options *,
+					      int addremove, unsigned mode,
+					      const struct object_id *oid,
+					      int oid_valid, const char *fullpath,
+					      unsigned dirty_submodule);
+
+struct diff_filepair *diff_filepair_change(struct diff_options *,
+					   unsigned mode1, unsigned mode2,
+					   const struct object_id *old_oid,
+					   const struct object_id *new_oid,
+					   int old_oid_valid, int new_oid_valid,
+					   const char *fullpath,
+					   unsigned dirty_submodule1,
+					   unsigned dirty_submodule2);
+
 void diff_addremove(struct diff_options *,
 		    int addremove,
 		    unsigned mode,
