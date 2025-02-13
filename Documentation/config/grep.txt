@@ -26,3 +26,7 @@ grep.fullName::
 grep.fallbackToNoIndex::
 	If set to true, fall back to `git grep --no-index` if `git grep`
 	is executed outside of a git repository.  Defaults to false.
+
+grep.perl.digit::
+	If set to true, use the perl definitions for \d and [:digit:].
+	Defaults to false.
