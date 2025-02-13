@@ -6,6 +6,7 @@ manpages = {
   'git-apply.adoc' : 1,
   'git-archimport.adoc' : 1,
   'git-archive.adoc' : 1,
+  'git-backfill.adoc' : 1,
   'git-bisect.adoc' : 1,
   'git-blame.adoc' : 1,
   'git-branch.adoc' : 1,
