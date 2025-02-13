@@ -184,11 +184,16 @@ form `agent=X`) to notify the client that the server is running version
 the `agent` capability with a value `Y` (in the form `agent=Y`) in its
 request to the server (but it MUST NOT do so if the server did not
 advertise the agent capability). The `X` and `Y` strings may contain any
-printable ASCII characters except space (i.e., the byte range 32 < x <
-127), and are typically of the form "package/version" (e.g.,
-"git/1.8.3.1"). The agent strings are purely informative for statistics
-and debugging purposes, and MUST NOT be used to programmatically assume
-the presence or absence of particular features.
+printable ASCII characters (i.e., the byte range 32 < x < 127), and are
+typically of the form "package/version os" (e.g., "git/1.8.3.1 Linux")
+where `os` is the operating system name (e.g., "Linux"). `X` and `Y` can
+be configured using the GIT_USER_AGENT environment variable and it takes
+priority. If `transfer.advertiseOSInfo` is `false` on the server, the server
+omits the `os` from X. If it is `false` on the client, the client omits the
+`os` from `Y`. The `os` is retrieved using the 'sysname' field of the `uname(2)`
+system call or its equivalent. The agent strings are purely informative for
+statistics and debugging purposes, and MUST NOT be used to programmatically
+assume the presence or absence of particular features.
 
 ls-refs
 ~~~~~~~

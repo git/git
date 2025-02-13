@@ -125,3 +125,11 @@ transfer.bundleURI::
 transfer.advertiseObjectInfo::
 	When `true`, the `object-info` capability is advertised by
 	servers. Defaults to false.
+
+transfer.advertiseOSInfo::
+	When `true`, both the client and server independently append their
+	operating system name (os) to the `agent` capability value. The `agent`
+	capability will now be in form of "package/version os" (e.g.,
+	"git/1.8.3.1 Linux"). When `false`, the `agent` capability will be
+	in the form of "package/version" e.g "git/1.8.3.1". The server's
+	configuration is independent of the client's. Defaults to `true`.
