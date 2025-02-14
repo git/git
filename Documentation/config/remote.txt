@@ -101,6 +101,11 @@ remote.<name>.serverOption::
 	The default set of server options used when fetching from this remote.
 	These server options can be overridden by the `--server-option=` command
 	line arguments.
++
+This is a multi-valued variable, and an empty value can be used in a higher
+priority configuration file (e.g. `.git/config` in a repository) to clear
+the values inherited from a lower priority configuration files (e.g.
+`$HOME/.gitconfig`).
 
 remote.<name>.followRemoteHEAD::
 	How linkgit:git-fetch[1] should handle updates to `remotes/<name>/HEAD`.
@@ -114,8 +119,3 @@ remote.<name>.followRemoteHEAD::
 	Setting to "always" will silently update it to the value on the remote.
 	Finally, setting it to "never" will never change or create the local
 	reference.
-+
-This is a multi-valued variable, and an empty value can be used in a higher
-priority configuration file (e.g. `.git/config` in a repository) to clear
-the values inherited from a lower priority configuration files (e.g.
-`$HOME/.gitconfig`).
