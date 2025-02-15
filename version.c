@@ -2,6 +2,7 @@
 #include "version.h"
 #include "strbuf.h"
 #include "sane-ctype.h"
+#include "gettext.h"
 
 #ifndef GIT_VERSION_H
 # include "version-def.h"
@@ -51,4 +52,23 @@ const char *git_user_agent_sanitized(void)
 	}
 
 	return agent;
+}
+
+int get_uname_info(struct strbuf *buf)
+{
+	struct utsname uname_info;
+
+	if (uname(&uname_info)) {
+		strbuf_addf(buf, _("uname() failed with error '%s' (%d)\n"),
+			    strerror(errno),
+			    errno);
+		return -1;
+	}
+
+	strbuf_addf(buf, "%s %s %s %s\n",
+		    uname_info.sysname,
+		    uname_info.release,
+		    uname_info.version,
+		    uname_info.machine);
+	return 0;
 }
