@@ -1824,8 +1824,17 @@ _git_commit ()
 			" "" "${cur##--cleanup=}"
 		return
 		;;
+	--fixup=amend:*|--fixup=reword:*)
+		__git_complete_refs --cur="${cur#*:}"
+		return
+		;;
+	--fixup=*)
+		__git_complete_refs --cur="${cur#*=}"
+		__gitcomp_direct_append "$(compgen -W "amend: reword:" "${cur#*=}")"
+		return
+		;;
 	--reuse-message=*|--reedit-message=*|\
-	--fixup=*|--squash=*)
+	--squash=*)
 		__git_complete_refs --cur="${cur#*=}"
 		return
 		;;
