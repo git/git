@@ -5,7 +5,7 @@ use warnings;
 
 # Parse arguments, a simple state machine for input like:
 #
-# <file-to-check.txt> <valid-files-to-link-to> --section=1 git.txt git-add.txt [...] --to-lint git-add.txt a-file.txt [...]
+# <file-to-check.adoc> <valid-files-to-link-to> --section=1 git.adoc git-add.adoc [...] --to-lint git-add.adoc a-file.adoc [...]
 my %TXT;
 my %SECTION;
 my $section;
@@ -17,7 +17,7 @@ for my $arg (@ARGV) {
 		next;
 	}
 
-	my ($name) = $arg =~ /^(.*?)\.txt$/s;
+	my ($name) = $arg =~ /^(.*?)\.adoc$/s;
 	unless (defined $section) {
 		$TXT{$name} = $arg;
 		next;
