@@ -1,8 +1,9 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "version.h"
 #include "version-def.h"
 #include "strbuf.h"
-#include "sane-ctype.h"
 #include "gettext.h"
 
 const char git_version_string[] = GIT_VERSION;
@@ -34,6 +35,27 @@ const char *git_user_agent(void)
 	return agent;
 }
 
+/*
+  Retrieve, sanitize and cache operating system info for subsequent
+  calls. Return a pointer to the sanitized operating system info
+  string.
+*/
+static const char *os_info(void)
+{
+	static const char *os = NULL;
+
+	if (!os) {
+		struct strbuf buf = STRBUF_INIT;
+
+		get_uname_info(&buf, 0);
+		/* Sanitize the os information immediately */
+		redact_non_printables(&buf);
+		os = strbuf_detach(&buf, NULL);
+	}
+
+	return os;
+}
+
 const char *git_user_agent_sanitized(void)
 {
 	static const char *agent = NULL;
@@ -42,6 +64,11 @@ const char *git_user_agent_sanitized(void)
 		struct strbuf buf = STRBUF_INIT;
 
 		strbuf_addstr(&buf, git_user_agent());
+
+		if (!getenv("GIT_USER_AGENT")) {
+			strbuf_addch(&buf, '-');
+			strbuf_addstr(&buf, os_info());
+		}
 		redact_non_printables(&buf);
 		agent = strbuf_detach(&buf, NULL);
 	}
