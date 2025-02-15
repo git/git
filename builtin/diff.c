@@ -108,6 +108,7 @@ static void builtin_diff_b_f(struct rev_info *revs,
 		     1, 0,
 		     blob[0]->path ? blob[0]->path : path,
 		     path);
+	setup_diff_pager(&revs->diffopt);
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 }
@@ -132,6 +133,7 @@ static void builtin_diff_blobs(struct rev_info *revs,
 		     &blob[0]->item->oid, &blob[1]->item->oid,
 		     1, 1,
 		     blob_path(blob[0]), blob_path(blob[1]));
+	setup_diff_pager(&revs->diffopt);
 	diffcore_std(&revs->diffopt);
 	diff_flush(&revs->diffopt);
 }
@@ -167,6 +169,7 @@ static void builtin_diff_index(struct rev_info *revs,
 	} else if (repo_read_index(the_repository) < 0) {
 		die_errno("repo_read_cache");
 	}
+	setup_diff_pager(&revs->diffopt);
 	run_diff_index(revs, option);
 }
 
@@ -204,6 +207,7 @@ static void builtin_diff_tree(struct rev_info *revs,
 		oid[swap] = &ent0->item->oid;
 		oid[1 - swap] = &ent1->item->oid;
 	}
+	setup_diff_pager(&revs->diffopt);
 	diff_tree_oid(oid[0], oid[1], "", &revs->diffopt);
 	log_tree_diff_flush(revs);
 }
@@ -230,6 +234,7 @@ static void builtin_diff_combined(struct rev_info *revs,
 		if (i != first_non_parent)
 			oid_array_append(&parents, &ent[i].item->oid);
 	}
+	setup_diff_pager(&revs->diffopt);
 	diff_tree_combined(&ent[first_non_parent].item->oid, &parents, revs);
 	oid_array_clear(&parents);
 }
@@ -286,6 +291,7 @@ static void builtin_diff_files(struct rev_info *revs, int argc, const char **arg
 				    0) < 0) {
 		die_errno("repo_read_index_preload");
 	}
+	setup_diff_pager(&revs->diffopt);
 	run_diff_files(revs, options);
 }
 
@@ -525,8 +531,6 @@ int cmd_diff(int argc,
 
 	rev.diffopt.flags.recursive = 1;
 	rev.diffopt.rotate_to_strict = 1;
-
-	setup_diff_pager(&rev.diffopt);
 
 	/*
 	 * Do we have --cached and not have a pending object, then
