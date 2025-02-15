@@ -8,19 +8,13 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 
 test_expect_success 'setup to generate files with expected content' '
-	printf "agent=git/%s" "$(git version | cut -d" " -f3)" >agent_capability &&
+	printf "agent=git/%s\n" "$(git version | cut -d" " -f3)" >agent_capability &&
 
 	test_oid_cache <<-EOF &&
 	wrong_algo sha1:sha256
 	wrong_algo sha256:sha1
 	EOF
 
-	if test_have_prereq WINDOWS
-	then
-		printf "agent=FAKE\n" >agent_capability
-	else
-		printf -- "-%s\n" $(uname -s | test_redact_non_printables) >>agent_capability
-	fi &&
 	cat >expect.base <<-EOF &&
 	version 2
 	$(cat agent_capability)
@@ -37,10 +31,6 @@ test_expect_success 'setup to generate files with expected content' '
 test_expect_success 'test capability advertisement' '
 	cat expect.base expect.trailer >expect &&
 
-	if test_have_prereq WINDOWS
-	then
-		GIT_USER_AGENT=FAKE && export GIT_USER_AGENT
-	fi &&
 	GIT_TEST_SIDEBAND_ALL=0 test-tool serve-v2 \
 		--advertise-capabilities >out &&
 	test-tool pkt-line unpack <out >actual &&
@@ -371,10 +361,6 @@ test_expect_success 'test capability advertisement with uploadpack.advertiseBund
 	    expect.extra \
 	    expect.trailer >expect &&
 
-	if test_have_prereq WINDOWS
-	then
-		GIT_USER_AGENT=FAKE && export GIT_USER_AGENT
-	fi &&
 	GIT_TEST_SIDEBAND_ALL=0 test-tool serve-v2 \
 		--advertise-capabilities >out &&
 	test-tool pkt-line unpack <out >actual &&
