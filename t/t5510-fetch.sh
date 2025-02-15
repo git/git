@@ -81,6 +81,23 @@ test_expect_success "fetch test remote HEAD" '
 	branch=$(git rev-parse refs/remotes/origin/main) &&
 	test "z$head" = "z$branch"'
 
+test_expect_success "fetch test remote HEAD in bare repository" '
+	test_when_finished rm -rf barerepo &&
+	(
+		cd "$D" &&
+		git init --bare barerepo &&
+		cd barerepo &&
+		git remote add upstream ../two &&
+		git fetch upstream &&
+		git rev-parse --verify refs/remotes/upstream/HEAD &&
+		git rev-parse --verify refs/remotes/upstream/main &&
+		head=$(git rev-parse refs/remotes/upstream/HEAD) &&
+		branch=$(git rev-parse refs/remotes/upstream/main) &&
+		test "z$head" = "z$branch"
+	)
+'
+
+
 test_expect_success "fetch test remote HEAD change" '
 	cd "$D" &&
 	cd two &&
