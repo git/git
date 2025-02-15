@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2025, #04; Wed, 12)
-X-master-at: e2067b49ecaef9b7f51a17ce251f9207f72ef52d
-X-next-at: 5ffbd7fcf84b313bb07e91246eb9419ebd94a7e7
+Subject: What's cooking in git.git (Feb 2025, #05; Sat, 15)
+X-master-at: 03944513488db4a81fdb4c21c3b515e4cb260b05
+X-next-at: ff9fcf71b758c504e9ecc82cc8ec07acd674097b
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2025, #04; Wed, 12)
+What's cooking in git.git (Feb 2025, #05; Sat, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,149 +48,150 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ac/t5401-use-test-path-is-file (2025-02-03) 1 commit
-  (merged to 'next' on 2025-02-04 at 6bd1c91b06)
- + t5401: prefer test_path_is_* helper function
+* bc/doc-adoc-not-txt (2025-01-21) 5 commits
+  (merged to 'next' on 2025-01-24 at 737049d332)
+ + Remove obsolete ".txt" extensions for AsciiDoc files
+ + doc: use .adoc extension for AsciiDoc files
+ + gitattributes: mark AsciiDoc files as LF-only
+ + editorconfig: add .adoc extension
+ + doc: update gitignore for .adoc extension
+ (this branch is used by jt/diff-pairs.)
 
- Test clean-up.
- source: <20250201071210.30509-1-amch9605@gmail.com>
-
-
-* ac/t6423-unhide-git-exit-status (2025-02-03) 1 commit
-  (merged to 'next' on 2025-02-04 at 5290fb63c2)
- + t6423: fix suppression of Git’s exit code in tests
-
- Test clean-up.
- source: <20250202120926.322417-1-ayu.chandekar@gmail.com>
-
-
-* da/help-autocorrect-one-fix (2025-02-03) 3 commits
-  (merged to 'next' on 2025-02-05 at 74a3c43834)
- + help: add "show" as a valid configuration value
- + help: show the suggested command when help.autocorrect is false
- + Merge branch 'sc/help-autocorrect-one' into da/help-autocorrect-one-fix
- (this branch uses sc/help-autocorrect-one.)
-
- "git -c help.autocorrect=0 psuh" shows the suggested typofix,
- unlike the previous attempt in the base topic.
- source: <pull.1869.v4.git.git.1736760824201.gitgitgadget@gmail.com>
+ All the documentation .txt files have been renamed to .adoc to help
+ content aware editors.
+ cf. <xmqqmsfl2gro.fsf@gitster.g>
+ source: <20250120015603.1980991-1-sandals@crustytoothpaste.net>
 
 
-* ds/name-hash-tweaks (2025-01-27) 7 commits
-  (merged to 'next' on 2025-02-04 at d83bc700a7)
- + pack-objects: prevent name hash version change
- + test-tool: add helper for name-hash values
- + p5313: add size comparison test
- + pack-objects: add GIT_TEST_NAME_HASH_VERSION
- + repack: add --name-hash-version option
- + pack-objects: add --name-hash-version option
- + pack-objects: create new name-hash function version
+* bf/fetch-set-head-fix (2025-01-27) 2 commits
+  (merged to 'next' on 2025-02-06 at 9d20f0b55a)
+ + fetch set_head: fix non-mirror remotes in bare repositories
+ + fetch set_head: refactor to use remote directly
 
- "git pack-objects" and its wrapper "git repack" learned an option
- to use an alternative path-hash function to improve delta-base
- selection to produce a packfile with deeper history than window
- size.
- source: <pull.1823.v4.git.1738004554.gitgitgadget@gmail.com>
+ Fetching into a bare repository incorrectly assumed it always used
+ a mirror layout when deciding to update remote-tracking HEAD, which
+ has been corrected.
+ cf. <Z6MNRVrhw3Nxz6Iw@pks.im>
+ source: <Z5Mrk02wMdABtrVZ@pks.im>
 
 
-* jp/doc-trailer-config (2025-01-24) 1 commit
-  (merged to 'next' on 2025-02-05 at 7bbd51e504)
- + config.txt: add trailer.* variables
+* kn/reflog-migration-fix-followup (2025-01-22) 4 commits
+  (merged to 'next' on 2025-02-06 at 1b0fc3be42)
+ + reftable: prevent 'update_index' changes after adding records
+ + refs: use 'uint64_t' for 'ref_update.index'
+ + refs: mark `ref_transaction_update_reflog()` as static
+ + Merge branch 'kn/reflog-migration-fix' into kn/reflog-migration-fix-followup
 
- Documentaiton updates.
- source: <pull.1871.git.git.1736429142334.gitgitgadget@gmail.com>
-
-
-* js/libgit-rust (2025-01-29) 4 commits
-  (merged to 'next' on 2025-02-05 at ac1fefbba1)
- + libgit: add higher-level libgit crate
- + libgit-sys: also export some config_set functions
- + libgit-sys: introduce Rust wrapper for libgit.a
- + common-main: split init and exit code into new files
-
- Foreign language interface for Rust into our code base has been added.
- source: <cover.1738187176.git.steadmon@google.com>
+ Code clean-up.
+ cf. <Z6MNRVrhw3Nxz6Iw@pks.im>
+ source: <20250122-461-corrupted-reftable-followup-v3-0-ae5f88bf04fa@gmail.com>
 
 
-* ms/refspec-cleanup (2025-02-04) 5 commits
-  (merged to 'next' on 2025-02-05 at 5b53c49215)
- + refspec: relocate apply_refspecs and related funtions
- + refspec: relocate matching related functions
- + remote: rename query_refspecs functions
- + refspec: relocate refname_matches_negative_refspec_item
- + remote: rename function omit_name_by_refspec
+* op/worktree-is-main-bare-fix (2025-02-05) 1 commit
+  (merged to 'next' on 2025-02-06 at 25c618bf37)
+ + worktree: detect from secondary worktree if main worktree is bare
 
- Code clean-up.  cf. <Z6G-toOJjMmK8iJG@pks.im>
- source: <20250204040558.34766-1-meetsoni3017@gmail.com>
+ Going into a secondary worktree and asking "is the main worktree
+ bare?" did not work correctly when per-worktree configuration
+ option was in use, which has been corrected.
+ source: <pull.1829.v4.git.1738737014194.gitgitgadget@gmail.com>
 
 
-* ms/remote-valid-remote-name (2025-02-04) 1 commit
-  (merged to 'next' on 2025-02-05 at 3d58d63932)
- + remote: relocate valid_remote_name
+* ps/doc-http-upload-archive-service (2025-02-06) 1 commit
+  (merged to 'next' on 2025-02-06 at dd19c245e9)
+ + doc: documentation for http.uploadarchive config option
 
- Code shuffling.
- source: <20250204142852.13035-1-meetsoni3017@gmail.com>
-
-
-* ps/repack-keep-unreachable-in-unpacked-repo (2025-02-04) 1 commit
-  (merged to 'next' on 2025-02-04 at 96a862b6f8)
- + builtin/repack: fix `--keep-unreachable` when there are no packs
-
- "git repack --keep-unreachable" to send unreachable objects to the
- main pack "git repack -ad" produces did not work when there is no
- existing packs, which has been corrected.
- source: <20250204-b4-pks-repack-unreachable-objects-wo-packfiles-v2-1-1eae23366711@pks.im>
+ Doc update.
+ source: <pull.1885.v2.git.git.1738863927849.gitgitgadget@gmail.com>
 
 
-* sc/help-autocorrect-one (2025-01-13) 1 commit
-  (merged to 'next' on 2025-02-05 at 1ecb7c7c9c)
- + help: interpret boolean string values for help.autocorrect
- (this branch is used by da/help-autocorrect-one-fix.)
+* tc/clone-single-revision (2025-02-06) 7 commits
+  (merged to 'next' on 2025-02-06 at d67b50d35c)
+ + builtin/clone: teach git-clone(1) the --revision= option
+ + parse-options: introduce die_for_incompatible_opt2()
+ + clone: introduce struct clone_opts in builtin/clone.c
+ + clone: add tags refspec earlier to fetch refspec
+ + clone: refactor wanted_peer_refs()
+ + clone: make it possible to specify --tags
+ + clone: cut down on global variables in clone.c
 
- "[help] autocorrect = 1" used to be a way to say "please wait for
- 0.1 second after suggesting a typofix of the command name before
- running that command"; now it means "yes, if there is a plausible
- typofix for the command name, please run it immediately".
-
- Will merge together with da/help-autocorrect-one-fix to 'master'.
- source: <pull.1869.v4.git.git.1736760824201.gitgitgadget@gmail.com>
-
-
-* zh/gc-expire-to (2025-01-24) 1 commit
-  (merged to 'next' on 2025-02-05 at e075d609ae)
- + gc: add `--expire-to` option
-
- "git gc" learned the "--expire-to" option and passes it down to
- underlying "git repack".
- source: <pull.1843.v4.git.1737704954987.gitgitgadget@gmail.com>
+ "git clone" learned to make a shallow clone for a single commit
+ that is not necessarily be at the tip of any branch.
+ cf. <xmqq4j16kefu.fsf@gitster.g>
+ source: <20250206-toon-clone-refs-v7-0-4622b7392202@iotcl.com>
 
 --------------------------------------------------
 [New Topics]
 
+* mh/doc-commit-title-not-subject (2025-02-13) 1 commit
+ - doc: use 'title' consistently
+
+ Update "git commit" documentation to refer to commit titles as
+ such, not "subject".
+
+ Expecting a reroll.
+ source: <pull.1893.git.git.1739477118350.gitgitgadget@gmail.com>
+
+
+* mh/meson-credential-helpers (2025-02-13) 2 commits
+ - meson: wire up credential-libsecret
+ - meson: wire up credential-wincred
+
+ On hold.
+ source: <pull.1859.git.1739471859.gitgitgadget@gmail.com>
+
+
+* tb/new-make-fix (2025-02-13) 1 commit
+ - Makefile: remove accidental recipe prefix in conditional
+
+ Workaround the overly picky HT/SP rule in newer GNU Make.
+
+ Will merge to 'next'.
+ source: <a79e9e9f50410721d85747b03559d55be98bca20.1739478347.git.me@ttaylorr.com>
+
+
+* ms/merge-recursive-string-list-micro-optimization (2025-02-13) 1 commit
+ - merge-recursive: optimize time complexity for process_renames
+
+ source: <20250214044129.15282-1-meetsoni3017@gmail.com>
+
+
+* pb/doc-follow-remote-head (2025-02-14) 2 commits
+ - config/remote.txt: improve wording for 'remote.<name>.followRemoteHEAD'
+ - config/remote.txt: reunite 'severOption' description paragraphs
+
+ source: <pull.1894.git.git.1739554578.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * ua/update-server-info-sans-the-repository (2025-02-10) 1 commit
- - builtin/update-server-info: remove the_repository global variable
+  (merged to 'next' on 2025-02-13 at d4e8288c9b)
+ + builtin/update-server-info: remove the_repository global variable
 
  Code clean-up.
 
- Will merge ot 'next'.
+ Will merge to 'master'.
  source: <20250210181103.3609495-1-usmanakinyemi202@gmail.com>
 
 
 * en/doc-renormalize (2025-02-11) 1 commit
- - doc: clarify the intent of the renormalize option in the merge machinery
+  (merged to 'next' on 2025-02-13 at 2069f4865c)
+ + doc: clarify the intent of the renormalize option in the merge machinery
 
  Doc updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1861.git.1739307712372.gitgitgadget@gmail.com>
 
 
 * jc/doc-boolean-synonyms (2025-02-11) 1 commit
- - doc: centrally document various ways tospell `true` and `false`
+  (merged to 'next' on 2025-02-13 at ab142d21e8)
+ + doc: centrally document various ways tospell `true` and `false`
 
  Doc updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqy0ycz9dk.fsf@gitster.g>
 
 
@@ -214,7 +215,6 @@ Release tarballs are available at:
  - builtin: introduce diff-pairs command
  - diff: return diff_filepair from diff queue helpers
  - Merge branch 'bc/doc-adoc-not-txt' into jt/diff-pairs
- (this branch uses bc/doc-adoc-not-txt.)
 
  A post-processing filter for "diff --raw" output has been
  introduced.
@@ -232,8 +232,6 @@ Release tarballs are available at:
  cf. <xmqqa5aqu7g9.fsf@gitster.g>
  source: <20250212-477-refs-migrate-add-a-flag-to-ignore-reflogs-during-migration-v3-1-98b2c4d2bb0c@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * lo/t7603-path-is-file-update (2025-02-10) 1 commit
   (merged to 'next' on 2025-02-11 at c4ad516cd7)
@@ -290,25 +288,23 @@ Release tarballs are available at:
  source: <pull.1860.v2.git.1739289549299.gitgitgadget@gmail.com>
 
 
-* ib/diff-S-G-with-longhand (2025-02-06) 1 commit
- - diff: --patch-{modifies,grep} arg names for -S and -G
+* ib/diff-S-G-with-longhand (2025-02-12) 10 commits
+ - diff: docs: Use --patch-{grep,modifies} over -G/-S
+ - diff: --pickaxe-{all,regex} help: Add --patch-{grep,modifies}
+ - diff: test: Use --patch-{grep,modifies} over -G/-S
+ - completion: Support --patch-{grep,modifies}
+ - diff: --patch-{grep,modifies} arg names for -G and -S
+ - docs: gitdiffcore: -G and -S: Use regex/string placeholders
+ - diff: short help: Add -G and --pickaxe-grep
+ - diff: short help: Correct -S description
+ - diff: -G description: Correct copy/paste error
+ - t/t4209-log-pickaxe: Naming typo: -G takes a regex
 
  The commands in the "diff" family learned longhands for "-S" and
  "-G" options.
 
- Expecting a reroll.
- cf. <xmqqseoqiybi.fsf@gitster.g>
- source: <20250206014324.1839232-2-illia.bobyr@gmail.com>
-
-
-* ps/doc-http-upload-archive-service (2025-02-06) 1 commit
-  (merged to 'next' on 2025-02-06 at dd19c245e9)
- + doc: documentation for http.uploadarchive config option
-
- Doc update.
-
- Will merge to 'master'.
- source: <pull.1885.v2.git.git.1738863927849.gitgitgadget@gmail.com>
+ The core part looked mostly good.
+ source: <20250212032657.1807939-1-illia.bobyr@gmail.com>
 
 
 * ps/reftable-windows-unlink-fix (2025-02-07) 2 commits
@@ -368,36 +364,6 @@ Release tarballs are available at:
  source: <20250130-b4-pks-meson-improvements-v2-0-2f05581ffb44@pks.im>
 
 
-* op/worktree-is-main-bare-fix (2025-02-05) 1 commit
-  (merged to 'next' on 2025-02-06 at 25c618bf37)
- + worktree: detect from secondary worktree if main worktree is bare
-
- Going into a secondary worktree and asking "is the main worktree
- bare?" did not work correctly when per-worktree configuration
- option was in use, which has been corrected.
-
- Will merge to 'master'.
- source: <pull.1829.v4.git.1738737014194.gitgitgadget@gmail.com>
-
-
-* tc/clone-single-revision (2025-02-06) 7 commits
-  (merged to 'next' on 2025-02-06 at d67b50d35c)
- + builtin/clone: teach git-clone(1) the --revision= option
- + parse-options: introduce die_for_incompatible_opt2()
- + clone: introduce struct clone_opts in builtin/clone.c
- + clone: add tags refspec earlier to fetch refspec
- + clone: refactor wanted_peer_refs()
- + clone: make it possible to specify --tags
- + clone: cut down on global variables in clone.c
-
- "git clone" learned to make a shallow clone for a single commit
- that is not necessarily be at the tip of any branch.
-
- Will merge to 'master'.
- cf. <xmqq4j16kefu.fsf@gitster.g>
- source: <20250206-toon-clone-refs-v7-0-4622b7392202@iotcl.com>
-
-
 * ps/reftable-sans-compat-util (2025-02-07) 19 commits
  - Makefile: skip reftable library for Coccinelle
  - reftable: decouple from Git codebase by pulling in "compat/posix.h"
@@ -426,65 +392,23 @@ Release tarballs are available at:
 
  Waiting for Acks?  Otherwise looking good.
  cf. <Z6MNRVrhw3Nxz6Iw@pks.im>
+ The Windows bits may not be ready yet.
+ cf. <e202a870-921b-8f38-58af-3d44e94c447d@gmx.de>
  source: <20250207-pks-reftable-drop-git-compat-util-v5-0-ba2adc79110f@pks.im>
 
 
 * ac/doc-http-ssl-type-config (2025-02-05) 1 commit
- - docs: indicate http.sslCertType and sslKeyType
+  (merged to 'next' on 2025-02-13 at 4767266eb4)
+ + docs: indicate http.sslCertType and sslKeyType
 
  Two configuration variables about SSL authentication material that
  weren't mentioned in the documentations are now mentioned.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20250205053856.72723-1-andrew@emailcarter.com>
 
 
-* bc/doc-adoc-not-txt (2025-01-21) 5 commits
-  (merged to 'next' on 2025-01-24 at 737049d332)
- + Remove obsolete ".txt" extensions for AsciiDoc files
- + doc: use .adoc extension for AsciiDoc files
- + gitattributes: mark AsciiDoc files as LF-only
- + editorconfig: add .adoc extension
- + doc: update gitignore for .adoc extension
- (this branch is used by jt/diff-pairs.)
-
- All the documentation .txt files have been renamed to .adoc to help
- content aware editors.
-
- Will merge to 'master'.
- cf. <xmqqmsfl2gro.fsf@gitster.g>
- source: <20250120015603.1980991-1-sandals@crustytoothpaste.net>
-
-
-* kn/reflog-migration-fix-followup (2025-01-22) 4 commits
-  (merged to 'next' on 2025-02-06 at 1b0fc3be42)
- + reftable: prevent 'update_index' changes after adding records
- + refs: use 'uint64_t' for 'ref_update.index'
- + refs: mark `ref_transaction_update_reflog()` as static
- + Merge branch 'kn/reflog-migration-fix' into kn/reflog-migration-fix-followup
-
- Code clean-up.
-
- Will merge to 'master'.
- cf. <Z6MNRVrhw3Nxz6Iw@pks.im>
- source: <20250122-461-corrupted-reftable-followup-v3-0-ae5f88bf04fa@gmail.com>
-
-
-* bf/fetch-set-head-fix (2025-01-27) 2 commits
-  (merged to 'next' on 2025-02-06 at 9d20f0b55a)
- + fetch set_head: fix non-mirror remotes in bare repositories
- + fetch set_head: refactor to use remote directly
-
- Fetching into a bare repository incorrectly assumed it always used
- a mirror layout when deciding to update remote-tracking HEAD, which
- has been corrected.
-
- Will merge to 'master'.
- cf. <Z6MNRVrhw3Nxz6Iw@pks.im>
- source: <Z5Mrk02wMdABtrVZ@pks.im>
-
-
-* sj/ref-consistency-checks-more (2025-02-06) 8 commits
+* sj/ref-consistency-checks-more (2025-02-13) 8 commits
  - builtin/fsck: add `git refs verify` child process
  - packed-backend: check whether the "packed-refs" is sorted
  - packed-backend: add "packed-refs" entry consistency check
@@ -497,10 +421,10 @@ Release tarballs are available at:
  "git fsck" becomes more careful when checking the refs.
 
  Comments?
- source: <Z6RPJI10-2QkwyqH@ArchLinux>
+ source: <Z67LkxAFIAeaYr0U@ArchLinux>
 
 
-* ua/os-version-capability (2025-02-05) 6 commits
+* ua/os-version-capability (2025-02-14) 6 commits
  - agent: advertise OS name via agent capability
  - t5701: add setup test to remove side-effect dependency
  - version: extend get_uname_info() to hide system details
@@ -511,8 +435,8 @@ Release tarballs are available at:
  The value of "uname -s" is by default sent over the wire as a new
  capability, with an opt-out for privacy-concious folks.
 
- Under discussion.
- source: <20250205185246.111447-1-usmanakinyemi202@gmail.com>
+ Getting there.
+ source: <20250214123734.1403120-1-usmanakinyemi202@gmail.com>
 
 
 * jc/doc-attr-tree (2024-12-14) 1 commit
@@ -527,7 +451,7 @@ Release tarballs are available at:
  source: <xmqq5xnladwi.fsf@gitster.g>
 
 
-* cc/lop-remote (2025-01-27) 6 commits
+* cc/lop-remote (2025-02-14) 6 commits
  - doc: add technical design doc for large object promisors
  - promisor-remote: check advertised name or URL
  - Add 'promisor-remote' capability to protocol v2
