@@ -19,6 +19,9 @@ UI, Workflows & Features
    running that command"; now it means "yes, if there is a plausible
    typofix for the command name, please run it immediately".
 
+ * "git clone" learned to make a shallow clone for a single commit
+   that is not necessarily be at the tip of any branch.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -49,6 +52,8 @@ Performance, Internal Implementation, Development Support etc.
 
  * Foreign language interface for Rust into our code base has been added.
 
+ * All the documentation .txt files have been renamed to .adoc to help
+   content aware editors.
 
 
 Fixes since v2.48
@@ -171,6 +176,15 @@ Fixes since v2.48
    main pack "git repack -ad" produces did not work when there is no
    existing packs, which has been corrected.
    (merge 414c82300a ps/repack-keep-unreachable-in-unpacked-repo later to maint).
+
+ * Going into a secondary worktree and asking "is the main worktree
+   bare?" did not work correctly when per-worktree configuration
+   option was in use, which has been corrected.
+
+ * Fetching into a bare repository incorrectly assumed it always used
+   a mirror layout when deciding to update remote-tracking HEAD, which
+   has been corrected.
+   (merge 93dc16483a bf/fetch-set-head-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge ddb5287894 jk/t7407-use-test-grep later to maint).
