@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "version.h"
 #include "strbuf.h"
+#include "sane-ctype.h"
 
 #ifndef GIT_VERSION_H
 # include "version-def.h"
@@ -34,7 +35,7 @@ const char *git_user_agent_sanitized(void)
 		strbuf_addstr(&buf, git_user_agent());
 		strbuf_trim(&buf);
 		for (size_t i = 0; i < buf.len; i++) {
-			if (buf.buf[i] <= 32 || buf.buf[i] >= 127)
+			if (!isprint(buf.buf[i]) || buf.buf[i] == ' ')
 				buf.buf[i] = '.';
 		}
 		agent = buf.buf;
