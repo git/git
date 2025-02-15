@@ -221,6 +221,11 @@ struct ref *alloc_ref(const char *name);
 struct ref *copy_ref(const struct ref *ref);
 struct ref *copy_ref_list(const struct ref *ref);
 int count_refspec_match(const char *, struct ref *refs, struct ref **matched_ref);
+/*
+ * Put a ref in the tail and prepare tail for adding another one.
+ * *tail is the pointer to the tail of the list of refs.
+ */
+void tail_link_ref(struct ref *ref, struct ref ***tail);
 
 int check_ref_type(const struct ref *ref, int flags);
 
