@@ -601,7 +601,6 @@ int cmd_merge_tree(int argc,
 		line_termination = '\0';
 		while (strbuf_getline_lf(&buf, stdin) != EOF) {
 			struct strbuf **split;
-			int result;
 			const char *input_merge_base = NULL;
 
 			split = strbuf_split(&buf, ' ');
@@ -618,16 +617,14 @@ int cmd_merge_tree(int argc,
 			if (input_merge_base && split[2] && split[3] && !split[4]) {
 				strbuf_rtrim(split[2]);
 				strbuf_rtrim(split[3]);
-				result = real_merge(&o, input_merge_base, split[2]->buf, split[3]->buf, prefix);
+				real_merge(&o, input_merge_base, split[2]->buf, split[3]->buf, prefix);
 			} else if (!input_merge_base && !split[2]) {
-				result = real_merge(&o, NULL, split[0]->buf, split[1]->buf, prefix);
+				real_merge(&o, NULL, split[0]->buf, split[1]->buf, prefix);
 			} else {
 				die(_("malformed input line: '%s'."), buf.buf);
 			}
 			maybe_flush_or_die(stdout, "stdout");
 
-			if (result < 0)
-				die(_("merging cannot continue; got unclean result of %d"), result);
 			strbuf_list_free(split);
 		}
 		strbuf_release(&buf);
