@@ -40,6 +40,11 @@ After the merge completes, a new toplevel tree object is created.  See
 OPTIONS
 -------
 
+--stdin::
+	Read the commits to merge from the standard input rather than
+	the command-line. See <<INPUT,INPUT FORMAT>> below for more
+	information.  Implies `-z`.
+
 -z::
 	Do not quote filenames in the <Conflicted file info> section,
 	and end each filename with a NUL character rather than
@@ -116,8 +121,6 @@ This is an integer status followed by a NUL character.  The integer status is:
 
      0: merge had conflicts
      1: merge was clean
-     <0: something prevented the merge from running (e.g. access to repository
-	 objects denied by filesystem)
 
 [[OIDTLT]]
 OID of toplevel tree
@@ -235,6 +238,7 @@ with linkgit:git-merge[1]:
   * any messages that would have been printed to stdout (the
     <<IM,Informational messages>>)
 
+[[INPUT]]
 INPUT FORMAT
 ------------
 'git merge-tree --stdin' input format is fully text based. Each line
