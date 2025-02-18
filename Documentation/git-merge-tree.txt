@@ -49,7 +49,8 @@ OPTIONS
 	Do not quote filenames in the <Conflicted file info> section,
 	and end each filename with a NUL character rather than
 	newline.  Also begin the messages section with a NUL character
-	instead of a newline.  See <<OUTPUT>> below for more information.
+	instead of a newline.  See <<OUTPUT,OUTPUT>> below for more
+	information.
 
 --name-only::
 	In the Conflicted file info section, instead of writing a list
