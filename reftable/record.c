@@ -689,7 +689,7 @@ static int reftable_log_record_key(const void *r, struct reftable_buf *dest)
 		return err;
 
 	ts = (~ts) - rec->update_index;
-	put_be64(&i64[0], ts);
+	reftable_put_be64(&i64[0], ts);
 
 	err = reftable_buf_add(dest, i64, sizeof(i64));
 	if (err < 0)
@@ -814,7 +814,7 @@ static int reftable_log_record_encode(const void *rec, struct string_view s,
 	if (s.len < 2)
 		return -1;
 
-	put_be16(s.buf, r->value.update.tz_offset);
+	reftable_put_be16(s.buf, r->value.update.tz_offset);
 	string_view_consume(&s, 2);
 
 	n = encode_string(
@@ -846,7 +846,7 @@ static int reftable_log_record_decode(void *rec, struct reftable_buf key,
 	}
 
 	memcpy(r->refname, key.buf, key.len - 8);
-	ts = get_be64(key.buf + key.len - 8);
+	ts = reftable_get_be64((unsigned char *)key.buf + key.len - 8);
 
 	r->update_index = (~max) - ts;
 
@@ -937,7 +937,7 @@ static int reftable_log_record_decode(void *rec, struct reftable_buf key,
 		goto done;
 	}
 
-	r->value.update.tz_offset = get_be16(in.buf);
+	r->value.update.tz_offset = reftable_get_be16(in.buf);
 	string_view_consume(&in, 2);
 
 	n = decode_string(scratch, in);
