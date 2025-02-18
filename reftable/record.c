@@ -504,11 +504,17 @@ static int reftable_obj_record_copy_from(void *rec, const void *src_rec,
 	if (src->hash_prefix_len)
 		memcpy(obj->hash_prefix, src->hash_prefix, obj->hash_prefix_len);
 
-	REFTABLE_ALLOC_ARRAY(obj->offsets, src->offset_len);
-	if (!obj->offsets)
-		return REFTABLE_OUT_OF_MEMORY_ERROR;
-	obj->offset_len = src->offset_len;
-	COPY_ARRAY(obj->offsets, src->offsets, src->offset_len);
+	if (src->offset_len) {
+		if (sizeof(*src->offsets) > SIZE_MAX / src->offset_len)
+			return REFTABLE_OUT_OF_MEMORY_ERROR;
+
+		REFTABLE_ALLOC_ARRAY(obj->offsets, src->offset_len);
+		if (!obj->offsets)
+			return REFTABLE_OUT_OF_MEMORY_ERROR;
+
+		memcpy(obj->offsets, src->offsets, sizeof(*src->offsets) * src->offset_len);
+		obj->offset_len = src->offset_len;
+	}
 
 	return 0;
 }
