@@ -18,6 +18,7 @@
 #include "tree.h"
 #include "config.h"
 #include "strvec.h"
+#include "write-or-die.h"
 
 static int line_termination = '\n';
 
@@ -623,6 +624,7 @@ int cmd_merge_tree(int argc,
 			} else {
 				die(_("malformed input line: '%s'."), buf.buf);
 			}
+			maybe_flush_or_die(stdout, "stdout");
 
 			if (result < 0)
 				die(_("merging cannot continue; got unclean result of %d"), result);
