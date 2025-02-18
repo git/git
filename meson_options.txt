@@ -27,7 +27,7 @@ option('version', type: 'string', value: '',
   description: 'Version string reported by git-version(1) and other tools.')
 
 # Features supported by Git.
-option('contrib', type: 'array', value: [ 'completion' ], choices: [ 'completion', 'subtree' ],
+option('contrib', type: 'array', value: [ 'completion' ], choices: [ 'completion', 'contacts', 'subtree' ],
   description: 'Contributed features to include.')
 option('credential_helpers', type: 'array', value: [ ], choices: [ 'libsecret', 'netrc', 'osxkeychain', 'wincred' ],
   description: 'Contributed features to include.')
