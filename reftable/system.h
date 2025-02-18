@@ -15,6 +15,12 @@ https://developers.google.com/open-source/licenses/bsd
 #include "compat/zlib-compat.h"
 
 /*
+ * Return a random 32 bit integer. This function is expected to return
+ * pre-seeded data.
+ */
+uint32_t reftable_rand(void);
+
+/*
  * An implementation-specific temporary file. By making this specific to the
  * implementation it becomes possible to tie temporary files into any kind of
  * signal or atexit handlers for cleanup on abnormal situations.
