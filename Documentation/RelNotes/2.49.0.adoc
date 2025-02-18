@@ -22,6 +22,17 @@ UI, Workflows & Features
  * "git clone" learned to make a shallow clone for a single commit
    that is not necessarily be at the tip of any branch.
 
+ * Lazy-loading missing files in a blobless clone on demand is costly
+   as it tends to be one-blob-at-a-time.  "git backfill" is introduced
+   to help bulk-download necessary files beforehand.
+
+ * "git push --atomic --porcelain" used to ignore failures from the
+   other side, losing the error status from the child process, which
+   has been corrected.
+
+ * "git rev-list --missing=" learned to accept "print-info" that gives
+   known details expected of the missing objects, like path and type.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -54,6 +65,8 @@ Performance, Internal Implementation, Development Support etc.
 
  * All the documentation .txt files have been renamed to .adoc to help
    content aware editors.
+
+ * "git difftool" code clean-up.
 
 
 Fixes since v2.48
@@ -186,6 +199,9 @@ Fixes since v2.48
    has been corrected.
    (merge 93dc16483a bf/fetch-set-head-fix later to maint).
 
+ * A thunderbird helper script lost its bashism.
+   (merge 59d26bd961 bc/contrib-thunderbird-patch-inline-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge ddb5287894 jk/t7407-use-test-grep later to maint).
    (merge 21e1b44865 aj/difftool-config-doc-fix later to maint).
@@ -200,3 +216,4 @@ Fixes since v2.48
    (merge 8705c9bd13 kn/pack-write-with-reduced-globals later to maint).
    (merge 087740d65a ps/leakfixes-0129 later to maint).
    (merge 6bba6f604b jp/doc-trailer-config later to maint).
+   (merge f1cc562b77 lo/t7603-path-is-file-update later to maint).
