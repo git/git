@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2025, #05; Sat, 15)
-X-master-at: 03944513488db4a81fdb4c21c3b515e4cb260b05
-X-next-at: ff9fcf71b758c504e9ecc82cc8ec07acd674097b
+Subject: What's cooking in git.git (Feb 2025, #06; Tue, 18)
+X-master-at: a554262210b4a2ee6fa2d594e1f09f5830888c56
+X-next-at: f705b3209ce9f624048d39a62745ce582d01df2c
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2025, #05; Sat, 15)
+What's cooking in git.git (Feb 2025, #06; Tue, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,105 +48,186 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* bc/doc-adoc-not-txt (2025-01-21) 5 commits
-  (merged to 'next' on 2025-01-24 at 737049d332)
- + Remove obsolete ".txt" extensions for AsciiDoc files
- + doc: use .adoc extension for AsciiDoc files
- + gitattributes: mark AsciiDoc files as LF-only
- + editorconfig: add .adoc extension
- + doc: update gitignore for .adoc extension
- (this branch is used by jt/diff-pairs.)
+* bc/contrib-thunderbird-patch-inline-fix (2025-02-10) 1 commit
+  (merged to 'next' on 2025-02-11 at d13b5baf06)
+ + thunderbird-patch-inline: avoid bashism
 
- All the documentation .txt files have been renamed to .adoc to help
- content aware editors.
- cf. <xmqqmsfl2gro.fsf@gitster.g>
- source: <20250120015603.1980991-1-sandals@crustytoothpaste.net>
+ A thunderbird helper script lost its bashism.
+ 
+ source: <20250210234947.1317056-1-sandals@crustytoothpaste.net>
 
 
-* bf/fetch-set-head-fix (2025-01-27) 2 commits
-  (merged to 'next' on 2025-02-06 at 9d20f0b55a)
- + fetch set_head: fix non-mirror remotes in bare repositories
- + fetch set_head: refactor to use remote directly
+* da/difftool-sans-the-repository (2025-02-06) 3 commits
+  (merged to 'next' on 2025-02-10 at e22cc108b6)
+ + difftool: eliminate use of USE_THE_REPOSITORY_VARIABLE
+ + difftool: eliminate use of the_repository
+ + difftool: eliminate use of global variables
 
- Fetching into a bare repository incorrectly assumed it always used
- a mirror layout when deciding to update remote-tracking HEAD, which
+ "git difftool" code clean-up.
+  cf. <xmqq4j15hch1.fsf@gitster.g>
+ source: <20250206042010.865947-3-davvid@gmail.com>
+
+
+* ds/backfill (2025-02-03) 7 commits
+  (merged to 'next' on 2025-02-10 at d6348c9f60)
+ + backfill: assume --sparse when sparse-checkout is enabled
+ + backfill: add --sparse option
+ + backfill: add --min-batch-size=<n> option
+ + backfill: basic functionality and tests
+ + backfill: add builtin boilerplate
+ + Merge branch 'master' into ds/backfill
+ + Merge branch 'ds/path-walk-1' into ds/backfill
+
+ Lazy-loading missing files in a blobless clone on demand is costly
+ as it tends to be one-blob-at-a-time.  "git backfill" is introduced
+ to help bulk-download necessary files beforehand.
+  cf. <Z6MQK6anxpMhlL9i@pks.im>
+ source: <pull.1820.v3.git.1738602667.gitgitgadget@gmail.com>
+
+
+* jt/rev-list-missing-print-info (2025-02-05) 2 commits
+  (merged to 'next' on 2025-02-10 at 88955fe5b4)
+ + rev-list: extend print-info to print missing object type
+ + rev-list: add print-info action to print missing object path
+
+ "git rev-list --missing=" learned to accept "print-info" that gives
+ known details expected of the missing objects, like path and type.
+  cf. <CAP8UFD31kbtqXQDp9LyA+x+h+m592=HQHHbskSfar3S2GOfWVg@mail.gmail.com>
+ source: <20250205004147.887106-1-jltobler@gmail.com>
+
+
+* lo/t7603-path-is-file-update (2025-02-10) 1 commit
+  (merged to 'next' on 2025-02-11 at c4ad516cd7)
+ + t7603: replace test -f by test_path_is_file
+
+ Test clean-up.
+ 
+ source: <20250208165731.78804-1-lucasseikioshiro@gmail.com>
+
+
+* ps/send-pack-unhide-error-in-atomic-push (2025-02-03) 8 commits
+  (merged to 'next' on 2025-02-10 at 7d93e5ad97)
+ + send-pack: gracefully close the connection for atomic push
+ + t5543: atomic push reports exit code failure
+ + send-pack: new return code "ERROR_SEND_PACK_BAD_REF_STATUS"
+ + t5548: add porcelain push test cases for dry-run mode
+ + t5548: add new porcelain test cases
+ + t5548: refactor test cases by resetting upstream
+ + t5548: refactor to reuse setup_upstream() function
+ + t5504: modernize test by moving heredocs into test bodies
+
+ "git push --atomic --porcelain" used to ignore failures from the
+ other side, losing the error status from the child process, which
  has been corrected.
- cf. <Z6MNRVrhw3Nxz6Iw@pks.im>
- source: <Z5Mrk02wMdABtrVZ@pks.im>
-
-
-* kn/reflog-migration-fix-followup (2025-01-22) 4 commits
-  (merged to 'next' on 2025-02-06 at 1b0fc3be42)
- + reftable: prevent 'update_index' changes after adding records
- + refs: use 'uint64_t' for 'ref_update.index'
- + refs: mark `ref_transaction_update_reflog()` as static
- + Merge branch 'kn/reflog-migration-fix' into kn/reflog-migration-fix-followup
-
- Code clean-up.
- cf. <Z6MNRVrhw3Nxz6Iw@pks.im>
- source: <20250122-461-corrupted-reftable-followup-v3-0-ae5f88bf04fa@gmail.com>
-
-
-* op/worktree-is-main-bare-fix (2025-02-05) 1 commit
-  (merged to 'next' on 2025-02-06 at 25c618bf37)
- + worktree: detect from secondary worktree if main worktree is bare
-
- Going into a secondary worktree and asking "is the main worktree
- bare?" did not work correctly when per-worktree configuration
- option was in use, which has been corrected.
- source: <pull.1829.v4.git.1738737014194.gitgitgadget@gmail.com>
-
-
-* ps/doc-http-upload-archive-service (2025-02-06) 1 commit
-  (merged to 'next' on 2025-02-06 at dd19c245e9)
- + doc: documentation for http.uploadarchive config option
-
- Doc update.
- source: <pull.1885.v2.git.git.1738863927849.gitgitgadget@gmail.com>
-
-
-* tc/clone-single-revision (2025-02-06) 7 commits
-  (merged to 'next' on 2025-02-06 at d67b50d35c)
- + builtin/clone: teach git-clone(1) the --revision= option
- + parse-options: introduce die_for_incompatible_opt2()
- + clone: introduce struct clone_opts in builtin/clone.c
- + clone: add tags refspec earlier to fetch refspec
- + clone: refactor wanted_peer_refs()
- + clone: make it possible to specify --tags
- + clone: cut down on global variables in clone.c
-
- "git clone" learned to make a shallow clone for a single commit
- that is not necessarily be at the tip of any branch.
- cf. <xmqq4j16kefu.fsf@gitster.g>
- source: <20250206-toon-clone-refs-v7-0-4622b7392202@iotcl.com>
+  cf. <xmqqh65azk3a.fsf@gitster.g>
+ source: <20250203-pks-push-atomic-respect-exit-code-v5-0-d66481e36622@pks.im>
 
 --------------------------------------------------
 [New Topics]
 
-* mh/doc-commit-title-not-subject (2025-02-13) 1 commit
+* ad/set-default-target-in-makefiles (2025-02-18) 1 commit
+ - Makefile: set default goals in makefiles
+
+ Correct the default target in Documentation/Makefile, and
+ future-proof all Makefiles from similar breakages by declaring the
+ default target (which happens to be "all") upfront.
+
+ Will merge to 'next'.
+ source: <20250215211904.41883-1-adam@dinwoodie.org>
+
+
+* bc/diff-reject-empty-arg-to-pickaxe (2025-02-18) 1 commit
+ - diff: don't crash with empty argument to -G or -S
+
+ The -G/-S options to the "diff" family of commands caused us to hit
+ a BUG() when they get no values; they have been corrected.
+
+ Will merge to 'next'.
+ source: <20250217175759.1576684-1-sandals@crustytoothpaste.net>
+
+
+* md/userdiff-bash-update (2025-02-18) 1 commit
+ . userdiff: extend Bash pattern to cover more shell function forms
+
+ The userdiff patterns for shell language have been updated.
+
+ Broken.
+ source: <20250218153537.16320-2-dhar61595@gmail.com>
+
+
+* ms/rename-match-name-with-pattern (2025-02-18) 1 commit
+ - refspec: clarify function naming and documentation
+
+ Code renaming.
+
+ Will merge to 'next'.
+ source: <20250215084539.73799-1-meetsoni3017@gmail.com>
+
+
+* po/meson-perl-fix (2025-02-18) 2 commits
+ - meson: fix Perl version check for Meson versions before 1.7.0
+ - meson: bump minimum required Perl version to 5.26.0
+
+ Upgrade the minimum Perl version enforced by meson-based build to
+ match what Makefile-based build uses.
+
+ Will merge to 'next'?
+ cf. <xmqq8qq3kqyk.fsf@gitster.g>
+ source: <20250218153043.63535-1-git@mavit.org.uk>
+
+
+* ps/meson-contrib-bits (2025-02-18) 12 commits
+ - ci: exercise credential helpers
+ - ci: fix propagating UTF-8 test locale in musl-based Meson job
+ - meson: wire up Gitk
+ - gitk: extract script to build Gitk
+ - meson: wire up static analysis via Coccinelle
+ - meson: wire up git-contacts(1)
+ - meson: wire up credential helpers
+ - contrib/credential: fix compilation of "osxkeychain" helper
+ - contrib/credential: fix compiling "libsecret" helper
+ - contrib/credential: fix compilation of wincred helper with MSVC
+ - contrib/credential: fix "netrc" tests with out-of-tree builds
+ - GIT-BUILD-OPTIONS: propagate project's source directory
+
+ Update meson-based build procedure to cover contrib/ and other
+ places as well.
+ source: <20250218-b4-pks-meson-contrib-v1-0-c3edd292beb8@pks.im>
+
+
+* pw/merge-tree-stdin-deadlock-fix (2025-02-18) 5 commits
+ - merge-tree: fix link formatting in html docs
+ - merge-tree: improve docs for --stdin
+ - merge-tree: only use basic merge config
+ - merge-tree: remove redundant code
+ - merge-tree --stdin: flush stdout to avoid deadlock
+
+ "git merge-tree --stdin" has been improved (including a workaround
+ for a deadlock).
+
+ Will merge to 'next'.
+ source: <pull.1862.v2.git.1739895879.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* mh/doc-commit-title-not-subject (2025-02-18) 1 commit
  - doc: use 'title' consistently
 
  Update "git commit" documentation to refer to commit titles as
  such, not "subject".
 
- Expecting a reroll.
- source: <pull.1893.git.git.1739477118350.gitgitgadget@gmail.com>
-
-
-* mh/meson-credential-helpers (2025-02-13) 2 commits
- - meson: wire up credential-libsecret
- - meson: wire up credential-wincred
-
- On hold.
- source: <pull.1859.git.1739471859.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <pull.1893.v2.git.git.1739739761445.gitgitgadget@gmail.com>
 
 
 * tb/new-make-fix (2025-02-13) 1 commit
- - Makefile: remove accidental recipe prefix in conditional
+  (merged to 'next' on 2025-02-18 at 8fd74ceeed)
+ + Makefile: remove accidental recipe prefix in conditional
 
  Workaround the overly picky HT/SP rule in newer GNU Make.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <a79e9e9f50410721d85747b03559d55be98bca20.1739478347.git.me@ttaylorr.com>
 
 
@@ -162,8 +243,6 @@ Release tarballs are available at:
 
  source: <pull.1894.git.git.1739554578.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * ua/update-server-info-sans-the-repository (2025-02-10) 1 commit
   (merged to 'next' on 2025-02-13 at d4e8288c9b)
@@ -196,17 +275,18 @@ Release tarballs are available at:
 
 
 * da/xdiff-w-sign-compare-workaround (2025-02-12) 6 commits
- - xdiff: avoid signed vs. unsigned comparisons in xutils.c
- - xdiff: avoid signed vs. unsigned comparisons in xpatience.c
- - xdiff: avoid signed vs. unsigned comparisons in xhistogram.c
- - xdiff: avoid signed vs. unsigned comparisons in xemit.c
- - xdiff: avoid signed vs. unsigned comparisons in xdiffi.c
- - xdiff: move sign comparison warning guard into each file
+  (merged to 'next' on 2025-02-18 at 4af44766d5)
+ + xdiff: avoid signed vs. unsigned comparisons in xutils.c
+ + xdiff: avoid signed vs. unsigned comparisons in xpatience.c
+ + xdiff: avoid signed vs. unsigned comparisons in xhistogram.c
+ + xdiff: avoid signed vs. unsigned comparisons in xemit.c
+ + xdiff: avoid signed vs. unsigned comparisons in xdiffi.c
+ + xdiff: move sign comparison warning guard into each file
 
  Noises from "-Wsign-compare" in the borrowed xdiff code has been
  squelched.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250212060418.1645241-6-davvid@gmail.com>
 
 
@@ -233,16 +313,6 @@ Release tarballs are available at:
  source: <20250212-477-refs-migrate-add-a-flag-to-ignore-reflogs-during-migration-v3-1-98b2c4d2bb0c@gmail.com>
 
 
-* lo/t7603-path-is-file-update (2025-02-10) 1 commit
-  (merged to 'next' on 2025-02-11 at c4ad516cd7)
- + t7603: replace test -f by test_path_is_file
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <20250208165731.78804-1-lucasseikioshiro@gmail.com>
-
-
 * ps/path-sans-the-repository (2025-02-07) 16 commits
  - path: adjust last remaining users of `the_repository`
  - environment: move access to "core.sharedRepository" into repo settings
@@ -265,19 +335,6 @@ Release tarballs are available at:
  throughout the callchain, instead of relying on the_repository
  singleton instance.
  source: <20250207-b4-pks-path-drop-the-repository-v2-0-13cad3c11b8a@pks.im>
-
-
-* jt/rev-list-missing-print-info (2025-02-05) 2 commits
-  (merged to 'next' on 2025-02-10 at 88955fe5b4)
- + rev-list: extend print-info to print missing object type
- + rev-list: add print-info action to print missing object path
-
- "git rev-list --missing=" learned to accept "print-info" that gives
- known details expected of the missing objects, like path and type.
-
- Will merge to 'master'.
- cf. <CAP8UFD31kbtqXQDp9LyA+x+h+m592=HQHHbskSfar3S2GOfWVg@mail.gmail.com>
- source: <20250205004147.887106-1-jltobler@gmail.com>
 
 
 * pw/rebase-i-ff-empty-commit (2025-02-11) 1 commit
@@ -307,38 +364,15 @@ Release tarballs are available at:
  source: <20250212032657.1807939-1-illia.bobyr@gmail.com>
 
 
-* ps/reftable-windows-unlink-fix (2025-02-07) 2 commits
+* ps/reftable-windows-unlink-fix (2025-02-18) 2 commits
  - reftable: ignore file-in-use errors when unlink(3p) fails on Windows
  - Merge branch 'ps/reftable-sans-compat-util' into ps/reftable-windows-unlink-fix
  (this branch uses ps/reftable-sans-compat-util.)
 
  Portability fix.
 
- Waiting for the base topic.
+ Waiting for the base topic to settle.
  source: <20250206-b4-pks-reftable-win32-in-use-errors-v2-1-56985a4f6186@pks.im>
-
-
-* bc/contrib-thunderbird-patch-inline-fix (2025-02-10) 1 commit
-  (merged to 'next' on 2025-02-11 at d13b5baf06)
- + thunderbird-patch-inline: avoid bashism
-
- A thunderbird helper script lost its bashism.
-
- Will merge to 'master'.
- source: <20250210234947.1317056-1-sandals@crustytoothpaste.net>
-
-
-* da/difftool-sans-the-repository (2025-02-06) 3 commits
-  (merged to 'next' on 2025-02-10 at e22cc108b6)
- + difftool: eliminate use of USE_THE_REPOSITORY_VARIABLE
- + difftool: eliminate use of the_repository
- + difftool: eliminate use of global variables
-
- "git difftool" code clean-up.
-
- Will merge to 'master'.
- cf. <xmqq4j15hch1.fsf@gitster.g>
- source: <20250206042010.865947-3-davvid@gmail.com>
 
 
 * ps/build-meson-fixes-0130 (2025-01-30) 14 commits
@@ -364,7 +398,7 @@ Release tarballs are available at:
  source: <20250130-b4-pks-meson-improvements-v2-0-2f05581ffb44@pks.im>
 
 
-* ps/reftable-sans-compat-util (2025-02-07) 19 commits
+* ps/reftable-sans-compat-util (2025-02-18) 18 commits
  - Makefile: skip reftable library for Coccinelle
  - reftable: decouple from Git codebase by pulling in "compat/posix.h"
  - git-compat-util.h: split out POSIX-emulating bits
@@ -383,18 +417,14 @@ Release tarballs are available at:
  - reftable/blocksource: stop using `xmmap()`
  - reftable/stack: stop using `write_in_full()`
  - reftable/stack: stop using `read_in_full()`
- - Merge branch 'ps/reftable-sign-compare' into ps/reftable-sans-compat-util
  (this branch is used by ps/reftable-windows-unlink-fix.)
 
  Make the code in reftable library less reliant on the service
  routines it used to borrow from Git proper, to make it easier to
  use by external users of the library.
 
- Waiting for Acks?  Otherwise looking good.
- cf. <Z6MNRVrhw3Nxz6Iw@pks.im>
- The Windows bits may not be ready yet.
- cf. <e202a870-921b-8f38-58af-3d44e94c447d@gmx.de>
- source: <20250207-pks-reftable-drop-git-compat-util-v5-0-ba2adc79110f@pks.im>
+ Waiting for Acks, especially for Windows bits?
+ source: <20250218-pks-reftable-drop-git-compat-util-v6-0-8c1f39fb4c02@pks.im>
 
 
 * ac/doc-http-ssl-type-config (2025-02-05) 1 commit
@@ -424,7 +454,8 @@ Release tarballs are available at:
  source: <Z67LkxAFIAeaYr0U@ArchLinux>
 
 
-* ua/os-version-capability (2025-02-14) 6 commits
+* ua/os-version-capability (2025-02-18) 7 commits
+ - fixup! agent: advertise OS name via agent capability
  - agent: advertise OS name via agent capability
  - t5701: add setup test to remove side-effect dependency
  - version: extend get_uname_info() to hide system details
@@ -435,8 +466,8 @@ Release tarballs are available at:
  The value of "uname -s" is by default sent over the wire as a new
  capability, with an opt-out for privacy-concious folks.
 
- Getting there.
- source: <20250214123734.1403120-1-usmanakinyemi202@gmail.com>
+ Will merge to 'next' after squashing the fixup in???
+ source: <20250215155130.1756934-1-usmanakinyemi202@gmail.com>
 
 
 * jc/doc-attr-tree (2024-12-14) 1 commit
@@ -451,35 +482,15 @@ Release tarballs are available at:
  source: <xmqq5xnladwi.fsf@gitster.g>
 
 
-* cc/lop-remote (2025-02-14) 6 commits
+* cc/lop-remote (2025-02-18) 3 commits
  - doc: add technical design doc for large object promisors
  - promisor-remote: check advertised name or URL
  - Add 'promisor-remote' capability to protocol v2
- - version: make redact_non_printables() non-static
- - version: refactor redact_non_printables()
- - version: replace manual ASCII checks with isprint() for clarity
 
- Needs review.
- source: <20250127151701.2321341-1-christian.couder@gmail.com>
+ Large-object promisor protocol extension.
 
-
-* ds/backfill (2025-02-03) 7 commits
-  (merged to 'next' on 2025-02-10 at d6348c9f60)
- + backfill: assume --sparse when sparse-checkout is enabled
- + backfill: add --sparse option
- + backfill: add --min-batch-size=<n> option
- + backfill: basic functionality and tests
- + backfill: add builtin boilerplate
- + Merge branch 'master' into ds/backfill
- + Merge branch 'ds/path-walk-1' into ds/backfill
-
- Lazy-loading missing files in a blobless clone on demand is costly
- as it tends to be one-blob-at-a-time.  "git backfill" is introduced
- to help bulk-download necessary files beforehand.
-
- Will merge to 'master'.
- cf. <Z6MQK6anxpMhlL9i@pks.im>
- source: <pull.1820.v3.git.1738602667.gitgitgadget@gmail.com>
+ Comments?
+ source: <20250218113204.2847463-1-christian.couder@gmail.com>
 
 
 * tb/incremental-midx-part-2 (2024-11-20) 15 commits
@@ -503,26 +514,6 @@ Release tarballs are available at:
 
  Needs review.
  source: <cover.1732054032.git.me@ttaylorr.com>
-
-
-* ps/send-pack-unhide-error-in-atomic-push (2025-02-03) 8 commits
-  (merged to 'next' on 2025-02-10 at 7d93e5ad97)
- + send-pack: gracefully close the connection for atomic push
- + t5543: atomic push reports exit code failure
- + send-pack: new return code "ERROR_SEND_PACK_BAD_REF_STATUS"
- + t5548: add porcelain push test cases for dry-run mode
- + t5548: add new porcelain test cases
- + t5548: refactor test cases by resetting upstream
- + t5548: refactor to reuse setup_upstream() function
- + t5504: modernize test by moving heredocs into test bodies
-
- "git push --atomic --porcelain" used to ignore failures from the
- other side, losing the error status from the child process, which
- has been corrected.
-
- Will merge to 'master'.
- cf. <xmqqh65azk3a.fsf@gitster.g>
- source: <20250203-pks-push-atomic-respect-exit-code-v5-0-d66481e36622@pks.im>
 
 
 * ej/cat-file-remote-object-info (2025-01-14) 8 commits
@@ -554,3 +545,11 @@ Release tarballs are available at:
  Will discard.
  Has been expecting a reroll for too long.
  source: <pull.1838.v3.git.1735928035056.gitgitgadget@gmail.com>
+
+
+* mh/meson-credential-helpers (2025-02-13) 2 commits
+ . meson: wire up credential-libsecret
+ . meson: wire up credential-wincred
+
+ Superseded by the ps/meson-contrib-bits topic.
+ source: <pull.1859.git.1739471859.gitgitgadget@gmail.com>
