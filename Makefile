@@ -1704,16 +1704,16 @@ IMAP_SEND_LDFLAGS += $(OPENSSL_LINK) $(OPENSSL_LIBSSL) $(LIB_4_CRYPTO)
 
 ifdef ZLIB_NG
 	BASIC_CFLAGS += -DHAVE_ZLIB_NG
-	ifdef ZLIB_NG_PATH
+        ifdef ZLIB_NG_PATH
 		BASIC_CFLAGS += -I$(ZLIB_NG_PATH)/include
 		EXTLIBS += $(call libpath_template,$(ZLIB_NG_PATH)/$(lib))
-	endif
+        endif
 	EXTLIBS += -lz-ng
 else
-	ifdef ZLIB_PATH
+        ifdef ZLIB_PATH
 		BASIC_CFLAGS += -I$(ZLIB_PATH)/include
 		EXTLIBS += $(call libpath_template,$(ZLIB_PATH)/$(lib))
-	endif
+        endif
 	EXTLIBS += -lz
 endif
 
