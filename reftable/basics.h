@@ -16,6 +16,8 @@ https://developers.google.com/open-source/licenses/bsd
 #include "system.h"
 #include "reftable-basics.h"
 
+#define REFTABLE_UNUSED __attribute__((__unused__))
+
 struct reftable_buf {
 	size_t alloc;
 	size_t len;
