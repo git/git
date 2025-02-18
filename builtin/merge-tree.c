@@ -576,7 +576,7 @@ int cmd_merge_tree(int argc,
 	};
 
 	/* Init merge options */
-	init_ui_merge_options(&o.merge_options, the_repository);
+	init_basic_merge_options(&o.merge_options, the_repository);
 
 	/* Parse arguments */
 	original_argc = argc - 1; /* ignoring argv[0] */
