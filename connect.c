@@ -22,6 +22,7 @@
 #include "protocol.h"
 #include "alias.h"
 #include "bundle-uri.h"
+#include "promisor-remote.h"
 
 static char *server_capabilities_v1;
 static struct strvec server_capabilities_v2 = STRVEC_INIT;
@@ -487,6 +488,7 @@ void check_stateless_delimiter(int stateless_rpc,
 static void send_capabilities(int fd_out, struct packet_reader *reader)
 {
 	const char *hash_name;
+	const char *promisor_remote_info;
 
 	if (server_supports_v2("agent"))
 		packet_write_fmt(fd_out, "agent=%s", git_user_agent_sanitized());
@@ -499,6 +501,13 @@ static void send_capabilities(int fd_out, struct packet_reader *reader)
 		packet_write_fmt(fd_out, "object-format=%s", reader->hash_algo->name);
 	} else {
 		reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
+	}
+	if (server_feature_v2("promisor-remote", &promisor_remote_info)) {
+		char *reply = promisor_remote_reply(promisor_remote_info);
+		if (reply) {
+			packet_write_fmt(fd_out, "promisor-remote=%s", reply);
+			free(reply);
+		}
 	}
 }
 
