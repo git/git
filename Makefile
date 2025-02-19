@@ -8,6 +8,7 @@ gitk_libdir   ?= $(sharedir)/gitk/lib
 msgsdir    ?= $(gitk_libdir)/msgs
 msgsdir_SQ  = $(subst ','\'',$(msgsdir))
 
+SHELL_PATH ?= /bin/sh
 TCL_PATH ?= tclsh
 TCLTK_PATH ?= wish
 INSTALL ?= install
@@ -64,9 +65,7 @@ clean::
 
 gitk-wish: gitk GIT-TCLTK-VARS
 	$(QUIET_GEN)$(RM) $@ $@+ && \
-	sed -e '1,3s|^exec .* "$$0"|exec $(subst |,'\|',$(TCLTK_PATH_SQ)) "$$0"|' <gitk >$@+ && \
-	chmod +x $@+ && \
-	mv -f $@+ $@
+	$(SHELL_PATH) ./generate-tcl.sh "$(TCLTK_PATH_SQ)" "$<" "$@"
 
 $(PO_TEMPLATE): gitk
 	$(XGETTEXT) -kmc -LTcl -o $@ gitk
