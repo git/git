@@ -75,11 +75,12 @@ void refspec_ref_prefixes(const struct refspec *rs,
 int refname_matches_negative_refspec_item(const char *refname, struct refspec *rs);
 
 /*
- * Checks whether a name matches a pattern and optionally generates a result.
- * Returns 1 if the name matches the pattern, 0 otherwise.
+ * Checks if a refname matches a globbing refspec pattern.
+ * If replacement is provided, computes the corresponding mapped refname.
+ * Returns 1 if refname matches pattern, 0 otherwise.
  */
-int match_name_with_pattern(const char *key, const char *name,
-				   const char *value, char **result);
+int match_refname_with_pattern(const char *pattern, const char *refname,
+				   const char *replacement, char **result);
 
 /*
  * Queries a refspec for a match and updates the query item.
