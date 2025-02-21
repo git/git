@@ -33,6 +33,8 @@ UI, Workflows & Features
  * "git rev-list --missing=" learned to accept "print-info" that gives
    known details expected of the missing objects, like path and type.
 
+ * Comes with an updated "gitk".
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -217,3 +219,6 @@ Fixes since v2.48
    (merge 087740d65a ps/leakfixes-0129 later to maint).
    (merge 6bba6f604b jp/doc-trailer-config later to maint).
    (merge f1cc562b77 lo/t7603-path-is-file-update later to maint).
+   (merge 45761988ac en/doc-renormalize later to maint).
+   (merge 832f56f06a jc/doc-boolean-synonyms later to maint).
+   (merge 3eeed876a9 ac/doc-http-ssl-type-config later to maint).
