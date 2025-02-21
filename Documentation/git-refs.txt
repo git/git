@@ -8,9 +8,9 @@ git-refs - Low-level access to refs
 
 SYNOPSIS
 --------
-[verse]
-'git refs migrate' --ref-format=<format> [--dry-run]
-'git refs verify' [--strict] [--verbose]
+[synopsis]
+git refs migrate --ref-format=<format> [--no-reflog] [--dry-run]
+git refs verify [--strict] [--verbose]
 
 DESCRIPTION
 -----------
@@ -42,6 +42,11 @@ include::ref-storage-format.txt[]
 	separately. The name of the directory will be reported on stdout. This
 	can be used to double check that the migration works as expected before
 	performing the actual migration.
+
+--reflog::
+--no-reflog::
+	Choose between migrating the reflog data to the new backend,
+	and discarding them.  The default is "--reflog", to migrate.
 
 The following options are specific to 'git refs verify':
 
