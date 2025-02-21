@@ -339,10 +339,10 @@ insert an empty string unless we are traversing reflog entries (e.g., by
 decoration format if `--decorate` was not already provided on the command
 line.
 
-The boolean options accept an optional value `[=<bool-value>]`. The values
-`true`, `false`, `on`, `off` etc. are all accepted. See the "boolean"
-sub-section in "EXAMPLES" in linkgit:git-config[1]. If a boolean
-option is given with no value, it's enabled.
+The boolean options accept an optional value `[=<bool-value>]`. The
+values taken by `--type=bool` git-config[1], like `yes` and `off`,
+are all accepted.  Giving a boolean option without `=<value>` is
+equivalent to giving it with `=true`.
 
 If you add a `+` (plus sign) after '%' of a placeholder, a line-feed
 is inserted immediately before the expansion if and only if the
