@@ -201,4 +201,14 @@ test_expect_failure 'push to password-protected repository (no user in URL)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'push to password-protected repository (netrc)' '
+	test_commit pw-netrc &&
+	echo "default login user@host password pass@host" >"$HOME/.netrc" &&
+	GIT_TRACE=1 GIT_CURL_VERBOSE=1 git push "$HTTPD_URL/auth/dumb/test_repo.git" HEAD &&
+	git rev-parse --verify HEAD >expect &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/auth/dumb/test_repo.git" \
+		rev-parse --verify HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done
