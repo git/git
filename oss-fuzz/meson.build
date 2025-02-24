@@ -15,6 +15,6 @@ foreach fuzz_program : fuzz_programs
       'dummy-cmd-main.c',
       fuzz_program,
     ],
-    dependencies: [libgit, common_main],
+    dependencies: [libgit_commonmain],
   )
 endforeach
