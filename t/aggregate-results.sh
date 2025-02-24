@@ -44,7 +44,7 @@ then
 		tr -s "," "\n" |
 		grep -v '^$' |
 		sort -u |
-		paste -s -d ' ')
+		paste -s -d ' ' -)
 	if test -n "$unique_missing_prereq"
 	then
 		printf "\nmissing prereq: $unique_missing_prereq\n\n"
