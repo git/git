@@ -624,7 +624,7 @@ const char *parse_feature_value(const char *feature_list, const char *feature, s
 					*offset = found + len - orig_start;
 				return value;
 			}
-			/* feature with a value (e.g., "agent=git/1.2.3") */
+			/* feature with a value (e.g., "agent=git/1.2.3-Linux") */
 			else if (*value == '=') {
 				size_t end;
 
