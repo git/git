@@ -670,7 +670,9 @@ int fscache_is_mount_point(struct strbuf *path)
 {
 	int dirlen, base, len;
 #pragma GCC diagnostic push
+#ifdef __clang__
 #pragma GCC diagnostic ignored "-Wflexible-array-extensions"
+#endif
 	struct heap_fsentry key[2];
 #pragma GCC diagnostic pop
 	struct fsentry *fse;
