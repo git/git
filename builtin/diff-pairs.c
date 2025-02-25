@@ -63,6 +63,7 @@ int cmd_diff_pairs(int argc, const char **argv, const char *prefix,
 
 	repo_init_revisions(repo, &revs, prefix);
 	repo_config(repo, git_diff_basic_config, NULL);
+	revs.diffopt.no_free = 1;
 	revs.disable_stdin = 1;
 	revs.abbrev = 0;
 	revs.diff = 1;
@@ -106,6 +107,17 @@ int cmd_diff_pairs(int argc, const char **argv, const char *prefix,
 			break;
 
 		p = meta.buf;
+		if (!*p) {
+			flush_diff_queue(&revs.diffopt);
+			/*
+			 * When the diff queue is explicitly flushed, append a
+			 * NUL byte to separate batches of diffs.
+			 */
+			fputc('\0', revs.diffopt.file);
+			fflush(revs.diffopt.file);
+			continue;
+		}
+
 		if (*p != ':')
 			die(_("invalid raw diff input"));
 		p++;
@@ -180,6 +192,7 @@ int cmd_diff_pairs(int argc, const char **argv, const char *prefix,
 		}
 	}
 
+	revs.diffopt.no_free = 0;
 	flush_diff_queue(&revs.diffopt);
 	ret = diff_result_code(&revs);
 
