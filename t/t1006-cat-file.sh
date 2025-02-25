@@ -836,6 +836,38 @@ test_expect_success 'truncated object with --allow-unknown-type' - <<\EOT
 	test_grep "unable to unpack $blob header" err
 EOT
 
+test_expect_success 'object reading handles zlib dictionary' - <<\EOT
+	echo 'content that will be recompressed' >file &&
+	blob=$(git hash-object -w file) &&
+	objpath=.git/objects/$(test_oid_to_path "$blob") &&
+
+	# Recompress a loose object using a precomputed zlib dictionary.
+	# This was originally done with:
+	#
+	#  perl -MCompress::Raw::Zlib -e '
+	#    binmode STDIN;
+	#    binmode STDOUT;
+	#    my $data = do { local $/; <STDIN> };
+	#    my $in = new Compress::Raw::Zlib::Inflate;
+	#    my $de = new Compress::Raw::Zlib::Deflate(
+	#      -Dictionary => "anything"
+	#    );
+	#    $in->inflate($data, $raw);
+	#    $de->deflate($raw, $out);
+	#    print $out;
+	#  ' <obj.bak >$objpath
+	#
+	# but we do not want to require the perl module for all test runs (nor
+	# carry a custom t/helper program that uses zlib features we don't
+	# otherwise care about).
+	mv "$objpath" obj.bak &&
+	test_when_finished 'mv obj.bak "$objpath"' &&
+	printf '\170\273\017\112\003\143' >$objpath &&
+
+	test_must_fail git cat-file blob $blob 2>err &&
+	test_grep 'error: inflate: needs dictionary' err
+EOT
+
 # Tests for git cat-file --follow-symlinks
 test_expect_success 'prep for symlink tests' '
 	echo_without_newline "$hello_content" >morx &&
