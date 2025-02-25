@@ -1273,7 +1273,7 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 	obj_read_unlock();
 	status = git_inflate(stream, 0);
 	obj_read_lock();
-	if (status < Z_OK)
+	if (status != Z_OK && status != Z_STREAM_END)
 		return ULHR_BAD;
 
 	/*

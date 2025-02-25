@@ -865,6 +865,8 @@ test_expect_success 'object reading handles zlib dictionary' - <<\EOT
 	printf '\170\273\017\112\003\143' >$objpath &&
 
 	test_must_fail git cat-file blob $blob 2>err &&
+	test_grep ! 'too long' err &&
+	test_grep 'error: unable to unpack' err &&
 	test_grep 'error: inflate: needs dictionary' err
 EOT
 
