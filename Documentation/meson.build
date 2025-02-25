@@ -42,6 +42,7 @@ manpages = {
   'git-diagnose.adoc' : 1,
   'git-diff-files.adoc' : 1,
   'git-diff-index.adoc' : 1,
+  'git-diff-pairs.adoc' : 1,
   'git-difftool.adoc' : 1,
   'git-diff-tree.adoc' : 1,
   'git-diff.adoc' : 1,
