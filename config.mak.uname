@@ -432,7 +432,11 @@ ifeq ($(uname_S),Windows)
         ifeq (MINGW32,$(MSYSTEM))
 		prefix = /mingw32
         else
-		prefix = /mingw64
+		ifeq (CLANGARM64,$(MSYSTEM))
+			prefix = /clangarm64
+		else
+			prefix = /mingw64
+		endif
         endif
 	# Prepend MSVC 64-bit tool-chain to PATH.
 	#
