@@ -817,6 +817,25 @@ test_expect_success 'cat-file -t and -s on corrupt loose object' '
 	)
 '
 
+test_expect_success 'truncated object with --allow-unknown-type' - <<\EOT
+	objtype='a really long type name that exceeds the 32-byte limit' &&
+	blob=$(git hash-object -w --literally -t "$objtype" /dev/null) &&
+	objpath=.git/objects/$(test_oid_to_path "$blob") &&
+
+	# We want to truncate the object far enough in that we don't hit the
+	# end while inflating the first 32 bytes (since we want to have to dig
+	# for the trailing NUL of the header). But we don't want to go too far,
+	# since our header isn't very big. And of course we are counting
+	# deflated zlib bytes in the on-disk file, so it's a bit of a guess.
+	# Empirically 50 seems to work.
+	mv "$objpath" obj.bak &&
+	test_when_finished 'mv obj.bak "$objpath"' &&
+	test_copy_bytes 50 <obj.bak >"$objpath" &&
+
+	test_must_fail git cat-file --allow-unknown-type -t $blob 2>err &&
+	test_grep "unable to unpack $blob header" err
+EOT
+
 # Tests for git cat-file --follow-symlinks
 test_expect_success 'prep for symlink tests' '
 	echo_without_newline "$hello_content" >morx &&

@@ -1307,7 +1307,7 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 		strbuf_add(header, buffer, stream->next_out - (unsigned char *)buffer);
 		if (memchr(buffer, '\0', stream->next_out - (unsigned char *)buffer))
 			return 0;
-	} while (status != Z_STREAM_END);
+	} while (status == Z_OK);
 	return ULHR_BAD;
 }
 
