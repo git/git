@@ -1,3 +1,6 @@
+# The default target of this Makefile is...
+all::
+
 -include ../../../config.mak.autogen
 -include ../../../config.mak
 
@@ -6,7 +9,7 @@ SHELL_PATH ?= $(SHELL)
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 T = $(wildcard t[0-9][0-9][0-9][0-9]-*.sh)
 
-all: test
+all:: test
 test: $(T)
 
 .PHONY: help clean all test $(T)
