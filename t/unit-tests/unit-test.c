@@ -1,5 +1,7 @@
 #include "unit-test.h"
+#include "hex.h"
 #include "parse-options.h"
+#include "strbuf.h"
 #include "string-list.h"
 #include "strvec.h"
 

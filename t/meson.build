@@ -14,6 +14,7 @@ clar_test_suites = [
 clar_sources = [
   'unit-tests/clar/clar.c',
   'unit-tests/unit-test.c',
+  'unit-tests/lib-oid.c'
 ]
 
 clar_decls_h = custom_target(
@@ -68,7 +69,6 @@ foreach unit_test_program : unit_test_programs
   unit_test = executable(unit_test_name,
     sources: [
       'unit-tests/test-lib.c',
-      'unit-tests/lib-oid.c',
       'unit-tests/lib-reftable.c',
       unit_test_program,
     ],
