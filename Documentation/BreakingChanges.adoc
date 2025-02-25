@@ -169,8 +169,8 @@ started to migrate away from ".git/remotes/" in favor of config-based remotes,
 and we have marked the directory as legacy in 3d3d282146 (Documentation:
 Grammar correction, wording fixes and cleanup, 2011-08-23)
 +
-As our documentation mentions, these directories are not to be found in modern
-repositories at all and most users aren't even aware of these mechanisms. They
+As our documentation mentions, these directories are unlikely to be used in
+modern repositories and most users aren't even aware of these mechanisms. They
 have been deprecated for almost 20 years and 14 years respectively, and we are
 not aware of any active users that have complained about this deprecation.
 Furthermore, the ".git/branches/" directory is nowadays misleadingly named and
