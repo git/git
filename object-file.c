@@ -1296,18 +1296,17 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 	 * reading the stream.
 	 */
 	strbuf_add(header, buffer, stream->next_out - (unsigned char *)buffer);
-	stream->next_out = buffer;
-	stream->avail_out = bufsiz;
 
 	do {
+		stream->next_out = buffer;
+		stream->avail_out = bufsiz;
+
 		obj_read_unlock();
 		status = git_inflate(stream, 0);
 		obj_read_lock();
 		strbuf_add(header, buffer, stream->next_out - (unsigned char *)buffer);
 		if (memchr(buffer, '\0', stream->next_out - (unsigned char *)buffer))
 			return 0;
-		stream->next_out = buffer;
-		stream->avail_out = bufsiz;
 	} while (status != Z_STREAM_END);
 	return ULHR_TOO_LONG;
 }
