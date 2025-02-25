@@ -757,12 +757,7 @@ ifeq ($(uname_S),MINGW)
 		ETC_GITCONFIG = ../etc/gitconfig
 		ETC_GITATTRIBUTES = ../etc/gitattributes
         endif
-ifeq (i686,$(uname_M))
-	MINGW_PREFIX := mingw32
-endif
-ifeq (x86_64,$(uname_M))
-	MINGW_PREFIX := mingw64
-endif
+	MINGW_PREFIX := $(subst /,,$(prefix))
 
 	DESTDIR_WINDOWS = $(shell cygpath -aw '$(DESTDIR_SQ)')
 	DESTDIR_MIXED = $(shell cygpath -am '$(DESTDIR_SQ)')
