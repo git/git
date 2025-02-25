@@ -79,7 +79,9 @@ struct fsentry {
 #pragma GCC diagnostic pop
 
 #pragma GCC diagnostic push
+#ifdef __clang__
 #pragma GCC diagnostic ignored "-Wflexible-array-extensions"
+#endif
 struct heap_fsentry {
 	union {
 		struct fsentry ent;
@@ -600,7 +602,9 @@ int fscache_lstat(const char *filename, struct stat *st)
 {
 	int dirlen, base, len;
 #pragma GCC diagnostic push
+#ifdef __clang__
 #pragma GCC diagnostic ignored "-Wflexible-array-extensions"
+#endif
 	struct heap_fsentry key[2];
 #pragma GCC diagnostic pop
 	struct fsentry *fse;
