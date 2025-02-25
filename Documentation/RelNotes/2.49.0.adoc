@@ -35,6 +35,9 @@ UI, Workflows & Features
 
  * Comes with an updated "gitk".
 
+ * The documentation of "git commit" and "git rebase" now refer to
+   commit titles as such, not "subject".
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -203,6 +206,19 @@ Fixes since v2.48
 
  * A thunderbird helper script lost its bashism.
    (merge 59d26bd961 bc/contrib-thunderbird-patch-inline-fix later to maint).
+
+ * The -G/-S options to the "diff" family of commands caused us to hit
+   a BUG() when they get no values; they have been corrected.
+   (merge a620046b29 bc/diff-reject-empty-arg-to-pickaxe later to maint).
+
+ * "git merge-tree --stdin" has been improved (including a workaround
+   for a deadlock).
+   (merge 6a9ae81015 pw/merge-tree-stdin-deadlock-fix later to maint).
+
+ * Correct the default target in Documentation/Makefile, and
+   future-proof all Makefiles from similar breakages by declaring the
+   default target (which happens to be "all") upfront.
+   (merge 5309c1e9fb ad/set-default-target-in-makefiles later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge ddb5287894 jk/t7407-use-test-grep later to maint).
