@@ -1491,6 +1491,8 @@ static int loose_object_info(struct repository *r,
 
 		if (!oi->contentp)
 			break;
+		if (hdrbuf.len)
+			BUG("unpacking content with unknown types not yet supported");
 		*oi->contentp = unpack_loose_rest(&stream, hdr, *oi->sizep, oid);
 		if (*oi->contentp)
 			goto cleanup;
