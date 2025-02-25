@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2025, #07; Mon, 24)
-X-master-at: 2d2a71ce85026edcc40f469678a1035df0dfcf57
-X-next-at: 8a9f3a5cdca8beda7b0ba5c019d652683327a923
+Subject: What's cooking in git.git (Feb 2025, #08; Tue, 25)
+X-master-at: 5a526e5e18ddb9a7dfc5a2967d21d6154df64a4f
+X-next-at: 4e5a29be8250487b387ff3b254e30b2320407821
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2025, #07; Mon, 24)
+What's cooking in git.git (Feb 2025, #08; Tue, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,40 +48,119 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ac/doc-http-ssl-type-config (2025-02-05) 1 commit
-  (merged to 'next' on 2025-02-13 at 4767266eb4)
- + docs: indicate http.sslCertType and sslKeyType
+* ad/set-default-target-in-makefiles (2025-02-18) 1 commit
+  (merged to 'next' on 2025-02-19 at 21d81b4f09)
+ + Makefile: set default goals in makefiles
 
- Two configuration variables about SSL authentication material that
- weren't mentioned in the documentations are now mentioned.
- source: <20250205053856.72723-1-andrew@emailcarter.com>
-
-
-* en/doc-renormalize (2025-02-11) 1 commit
-  (merged to 'next' on 2025-02-13 at 2069f4865c)
- + doc: clarify the intent of the renormalize option in the merge machinery
-
- Doc updates.
- source: <pull.1861.git.1739307712372.gitgitgadget@gmail.com>
+ Correct the default target in Documentation/Makefile, and
+ future-proof all Makefiles from similar breakages by declaring the
+ default target (which happens to be "all") upfront.
+ 
+ source: <20250215211904.41883-1-adam@dinwoodie.org>
 
 
-* jc/doc-boolean-synonyms (2025-02-11) 1 commit
-  (merged to 'next' on 2025-02-13 at ab142d21e8)
- + doc: centrally document various ways tospell `true` and `false`
+* bc/diff-reject-empty-arg-to-pickaxe (2025-02-18) 1 commit
+  (merged to 'next' on 2025-02-19 at 85d8a43baa)
+ + diff: don't crash with empty argument to -G or -S
 
- Doc updates.
- source: <xmqqy0ycz9dk.fsf@gitster.g>
+ The -G/-S options to the "diff" family of commands caused us to hit
+ a BUG() when they get no values; they have been corrected.
+ 
+ source: <20250217175759.1576684-1-sandals@crustytoothpaste.net>
 
 
-* ua/update-server-info-sans-the-repository (2025-02-10) 1 commit
-  (merged to 'next' on 2025-02-13 at d4e8288c9b)
- + builtin/update-server-info: remove the_repository global variable
+* da/xdiff-w-sign-compare-workaround (2025-02-12) 6 commits
+  (merged to 'next' on 2025-02-18 at 4af44766d5)
+ + xdiff: avoid signed vs. unsigned comparisons in xutils.c
+ + xdiff: avoid signed vs. unsigned comparisons in xpatience.c
+ + xdiff: avoid signed vs. unsigned comparisons in xhistogram.c
+ + xdiff: avoid signed vs. unsigned comparisons in xemit.c
+ + xdiff: avoid signed vs. unsigned comparisons in xdiffi.c
+ + xdiff: move sign comparison warning guard into each file
 
- Code clean-up.
- source: <20250210181103.3609495-1-usmanakinyemi202@gmail.com>
+ Noises from "-Wsign-compare" in the borrowed xdiff code has been
+ squelched.
+ 
+ source: <20250212060418.1645241-6-davvid@gmail.com>
+
+
+* mh/doc-commit-title-not-subject (2025-02-18) 1 commit
+  (merged to 'next' on 2025-02-19 at ee145da188)
+ + doc: use 'title' consistently
+
+ The documentation of "git commit" and "git rebase" now refer to
+ commit titles as such, not "subject".
+ 
+ source: <pull.1893.v2.git.git.1739739761445.gitgitgadget@gmail.com>
+
+
+* ms/rename-match-name-with-pattern (2025-02-18) 1 commit
+  (merged to 'next' on 2025-02-19 at 717d13af36)
+ + refspec: clarify function naming and documentation
+
+ Code renaming.
+ 
+ source: <20250215084539.73799-1-meetsoni3017@gmail.com>
+
+
+* po/meson-perl-fix (2025-02-19) 2 commits
+  (merged to 'next' on 2025-02-19 at 168d449ef4)
+ + meson: fix Perl version check for Meson versions before 1.7.0
+ + meson: bump minimum required Perl version to 5.26.0
+
+ Upgrade the minimum Perl version enforced by meson-based build to
+ match what Makefile-based build uses.
+ 
+ source: <20250218153043.63535-1-git@mavit.org.uk>
+
+
+* pw/merge-tree-stdin-deadlock-fix (2025-02-18) 5 commits
+  (merged to 'next' on 2025-02-19 at ebc3ae6ffc)
+ + merge-tree: fix link formatting in html docs
+ + merge-tree: improve docs for --stdin
+ + merge-tree: only use basic merge config
+ + merge-tree: remove redundant code
+ + merge-tree --stdin: flush stdout to avoid deadlock
+
+ "git merge-tree --stdin" has been improved (including a workaround
+ for a deadlock).
+ 
+ source: <pull.1862.v2.git.1739895879.gitgitgadget@gmail.com>
+
+
+* tb/new-make-fix (2025-02-13) 1 commit
+  (merged to 'next' on 2025-02-18 at 8fd74ceeed)
+ + Makefile: remove accidental recipe prefix in conditional
+
+ Workaround the overly picky HT/SP rule in newer GNU Make.
+ 
+ source: <a79e9e9f50410721d85747b03559d55be98bca20.1739478347.git.me@ttaylorr.com>
 
 --------------------------------------------------
 [New Topics]
+
+* jc/3.0-branches-remotes-update (2025-02-25) 1 commit
+ - BreakingChanges: clarify branches/ and remotes/
+
+ source: <xmqqcyf5io61.fsf@gitster.g>
+
+
+* jk/zlib-inflate-fixes (2025-02-25) 10 commits
+ - unpack_loose_rest(): rewrite return handling for clarity
+ - unpack_loose_rest(): simplify error handling
+ - unpack_loose_rest(): never clean up zstream
+ - unpack_loose_rest(): avoid numeric comparison of zlib status
+ - unpack_loose_header(): avoid numeric comparison of zlib status
+ - git_inflate(): skip zlib_post_call() sanity check on Z_NEED_DICT
+ - unpack_loose_header(): fix infinite loop on broken zlib input
+ - unpack_loose_header(): report headers without NUL as "bad"
+ - unpack_loose_header(): simplify next_out assignment
+ - loose_object_info(): BUG() on inflating content with unknown type
+
+ source: <20250225062518.GA1293854@coredump.intra.peff.net>
+
+--------------------------------------------------
+[Cooking]
 
 * ek/mingw-rename-symlink (2025-02-21) 1 commit
   (merged to 'next' on 2025-02-24 at 8a9f3a5cdc)
@@ -94,17 +173,22 @@ Release tarballs are available at:
 
 
 * jk/check-mailmap-wo-name-fix (2025-02-21) 1 commit
- - mailmap: fix check-mailmap with full mailmap line
+  (merged to 'next' on 2025-02-25 at d6d4e05ad1)
+ + mailmap: fix check-mailmap with full mailmap line
 
  "git check-mailmap" segfault fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250221-jk-fix-sendemail-mailinfo-v2-1-9aca7dc05dbb@gmail.com>
 
 
 * bc/http-push-auth-netrc-fix (2025-02-24) 1 commit
  - http: allow using netrc for WebDAV-based HTTP protocol
 
+ The netrc support (via the cURL library) for the HTTP transport has
+ been re-enabled.
+
+ Will merge to 'next'.
  source: <20250223015331.588161-2-sandals@crustytoothpaste.net>
 
 
@@ -116,76 +200,42 @@ Release tarballs are available at:
  - fast-export: fix missing whitespace after switch
  - git-fast-import.adoc: add missing LF in the BNF
 
+ "git fast-export | git fast-import" learns to deal with commit and
+ tag objects with embedded signatures a bit better.
+
+ Needs review.
  source: <20250224142744.279643-1-christian.couder@gmail.com>
 
 
 * dk/test-aggregate-results-paste-fix (2025-02-24) 1 commit
  - t/aggregate-results: fix paste(1) invocation
 
+ The use of "paste" command for aggregating the test results have
+ been corrected.
+
+ Will merge to 'next'.
  source: <20250224192724.7625-1-ben.knoble+github@gmail.com>
 
 
 * rs/clear-commit-marks-optim (2025-02-24) 1 commit
  - commit: avoid parent list buildup in clear_commit_marks_many()
 
+ A micro-optimization.
+
+ Will merge to 'next'.
  source: <2bd2d71f-0ee6-405f-bec8-368406ca53c8@web.de>
 
 
-* sk/unit-test-oid (2025-02-24) 5 commits
- - fixup! t/unit-tests: implement clar specific oid helper functions
+* sk/unit-test-oid (2025-02-25) 4 commits
  - t/unit-tests: convert oidtree test to use clar test framework
  - t/unit-tests: convert oidmap test to use clar test framework
  - t/unit-tests: convert oid-array test to use clar test framework
  - t/unit-tests: implement clar specific oid helper functions
 
- source: <20250224152704.70289-1-kuforiji98@gmail.com>
+ Convert a few unit tests to the clar framework.
 
---------------------------------------------------
-[Cooking]
-
-* ad/set-default-target-in-makefiles (2025-02-18) 1 commit
-  (merged to 'next' on 2025-02-19 at 21d81b4f09)
- + Makefile: set default goals in makefiles
-
- Correct the default target in Documentation/Makefile, and
- future-proof all Makefiles from similar breakages by declaring the
- default target (which happens to be "all") upfront.
-
- Will merge to 'master'.
- source: <20250215211904.41883-1-adam@dinwoodie.org>
-
-
-* bc/diff-reject-empty-arg-to-pickaxe (2025-02-18) 1 commit
-  (merged to 'next' on 2025-02-19 at 85d8a43baa)
- + diff: don't crash with empty argument to -G or -S
-
- The -G/-S options to the "diff" family of commands caused us to hit
- a BUG() when they get no values; they have been corrected.
-
- Will merge to 'master'.
- source: <20250217175759.1576684-1-sandals@crustytoothpaste.net>
-
-
-* ms/rename-match-name-with-pattern (2025-02-18) 1 commit
-  (merged to 'next' on 2025-02-19 at 717d13af36)
- + refspec: clarify function naming and documentation
-
- Code renaming.
-
- Will merge to 'master'.
- source: <20250215084539.73799-1-meetsoni3017@gmail.com>
-
-
-* po/meson-perl-fix (2025-02-19) 2 commits
-  (merged to 'next' on 2025-02-19 at 168d449ef4)
- + meson: fix Perl version check for Meson versions before 1.7.0
- + meson: bump minimum required Perl version to 5.26.0
-
- Upgrade the minimum Perl version enforced by meson-based build to
- match what Makefile-based build uses.
-
- Will merge to 'master'.
- source: <20250218153043.63535-1-git@mavit.org.uk>
+ Comments?
+ source: <20250225101044.84210-1-kuforiji98@gmail.com>
 
 
 * ps/meson-contrib-bits (2025-02-20) 10 commits
@@ -207,42 +257,6 @@ Release tarballs are available at:
  source: <20250218-b4-pks-meson-contrib-v1-0-c3edd292beb8@pks.im>
 
 
-* pw/merge-tree-stdin-deadlock-fix (2025-02-18) 5 commits
-  (merged to 'next' on 2025-02-19 at ebc3ae6ffc)
- + merge-tree: fix link formatting in html docs
- + merge-tree: improve docs for --stdin
- + merge-tree: only use basic merge config
- + merge-tree: remove redundant code
- + merge-tree --stdin: flush stdout to avoid deadlock
-
- "git merge-tree --stdin" has been improved (including a workaround
- for a deadlock).
-
- Will merge to 'master'.
- source: <pull.1862.v2.git.1739895879.gitgitgadget@gmail.com>
-
-
-* mh/doc-commit-title-not-subject (2025-02-18) 1 commit
-  (merged to 'next' on 2025-02-19 at ee145da188)
- + doc: use 'title' consistently
-
- Update "git commit" documentation to refer to commit titles as
- such, not "subject".
-
- Will merge to 'master'.
- source: <pull.1893.v2.git.git.1739739761445.gitgitgadget@gmail.com>
-
-
-* tb/new-make-fix (2025-02-13) 1 commit
-  (merged to 'next' on 2025-02-18 at 8fd74ceeed)
- + Makefile: remove accidental recipe prefix in conditional
-
- Workaround the overly picky HT/SP rule in newer GNU Make.
-
- Will merge to 'master'.
- source: <a79e9e9f50410721d85747b03559d55be98bca20.1739478347.git.me@ttaylorr.com>
-
-
 * ms/merge-recursive-string-list-micro-optimization (2025-02-13) 1 commit
  - merge-recursive: optimize time complexity for process_renames
 
@@ -254,22 +268,6 @@ Release tarballs are available at:
  - config/remote.txt: reunite 'severOption' description paragraphs
 
  source: <pull.1894.git.git.1739554578.gitgitgadget@gmail.com>
-
-
-* da/xdiff-w-sign-compare-workaround (2025-02-12) 6 commits
-  (merged to 'next' on 2025-02-18 at 4af44766d5)
- + xdiff: avoid signed vs. unsigned comparisons in xutils.c
- + xdiff: avoid signed vs. unsigned comparisons in xpatience.c
- + xdiff: avoid signed vs. unsigned comparisons in xhistogram.c
- + xdiff: avoid signed vs. unsigned comparisons in xemit.c
- + xdiff: avoid signed vs. unsigned comparisons in xdiffi.c
- + xdiff: move sign comparison warning guard into each file
-
- Noises from "-Wsign-compare" in the borrowed xdiff code has been
- squelched.
-
- Will merge to 'master'.
- source: <20250212060418.1645241-6-davvid@gmail.com>
 
 
 * jt/diff-pairs (2025-02-12) 4 commits
@@ -286,11 +284,12 @@ Release tarballs are available at:
 
 
 * kn/ref-migrate-skip-reflog (2025-02-21) 1 commit
- - builtin/refs: add '--no-reflog' flag to drop reflogs
+  (merged to 'next' on 2025-02-25 at c402e09d08)
+ + builtin/refs: add '--no-reflog' flag to drop reflogs
 
  "git refs migrate" can optionally be told not to migrate the reflog.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250221100423.91075-1-karthik.188@gmail.com>
 
 
@@ -322,12 +321,13 @@ Release tarballs are available at:
 
 
 * pw/rebase-i-ff-empty-commit (2025-02-11) 1 commit
- - rebase -i: reword empty commit after fast-forward
+  (merged to 'next' on 2025-02-25 at 63db268d47)
+ + rebase -i: reword empty commit after fast-forward
 
  "git rebase -i" failed to allow rewording an empty commit that has
  been fast-forwarded.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1860.v2.git.1739289549299.gitgitgadget@gmail.com>
 
 
@@ -381,7 +381,9 @@ Release tarballs are available at:
  Assorted fixes and improvements to the build procedure based on
  meson.
 
- Will merge to 'master'.
+ On hold.
+ Breaks all the "win+Meson test" CI jobs.
+ cf. <xmqqo6ypiz9w.fsf@gitster.g>
  source: <20250130-b4-pks-meson-improvements-v2-0-2f05581ffb44@pks.im>
 
 
@@ -414,12 +416,13 @@ Release tarballs are available at:
  source: <20250218-pks-reftable-drop-git-compat-util-v6-0-8c1f39fb4c02@pks.im>
 
 
-* sj/ref-consistency-checks-more (2025-02-13) 8 commits
+* sj/ref-consistency-checks-more (2025-02-25) 9 commits
  - builtin/fsck: add `git refs verify` child process
  - packed-backend: check whether the "packed-refs" is sorted
  - packed-backend: add "packed-refs" entry consistency check
  - packed-backend: check whether the refname contains NUL characters
  - packed-backend: add "packed-refs" header consistency check
+ - packed-backend: check if header starts with "# pack-refs with: "
  - packed-backend: check whether the "packed-refs" is regular file
  - builtin/refs: get worktrees without reading head information
  - t0602: use subshell to ensure working directory unchanged
@@ -427,7 +430,7 @@ Release tarballs are available at:
  "git fsck" becomes more careful when checking the refs.
 
  Comments?
- source: <Z67LkxAFIAeaYr0U@ArchLinux>
+ source: <Z73DTwr9RicKMINe@ArchLinux>
 
 
 * ua/os-version-capability (2025-02-19) 6 commits
@@ -504,17 +507,4 @@ Release tarballs are available at:
 
  "git cat-file --batch" and friends can optionally ask a remote
  server about objects it does not have.
-
  source: <20250221190451.12536-1-eric.peijian@gmail.com>
-
---------------------------------------------------
-[Discarded]
-
-* md/userdiff-bash-update (2025-02-18) 1 commit
- . userdiff: extend Bash pattern to cover more shell function forms
-
- The userdiff patterns for shell language have been updated.
-
- Broken.
- cf. <xmqq34gaj02j.fsf@gitster.g>
- source: <20250218153537.16320-2-dhar61595@gmail.com>
