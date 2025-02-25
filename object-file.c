@@ -1352,7 +1352,7 @@ static void *unpack_loose_rest(git_zstream *stream,
 		return buf;
 	}
 
-	if (status < 0)
+	if (status != Z_STREAM_END)
 		error(_("corrupt loose object '%s'"), oid_to_hex(oid));
 	else if (stream->avail_in)
 		error(_("garbage at end of loose object '%s'"),
