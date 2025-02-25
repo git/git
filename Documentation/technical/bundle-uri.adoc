@@ -232,13 +232,13 @@ will interact with bundle URIs according to the following flow:
    are present in the client repository. If some are missing, then the
    client delays unbundling until other bundles have been unbundled,
    making those OIDs present. When all required OIDs are present, the
-   client unbundles that data using a refspec. The default refspec is
-   `+refs/heads/*:refs/bundles/*`, but this can be configured. These refs
-   are stored so that later `git fetch` negotiations can communicate each
-   bundled ref as a `have`, reducing the size of the fetch over the Git
-   protocol. To allow pruning refs from this ref namespace, Git may
-   introduce a numbered namespace (such as `refs/bundles/<i>/*`) such that
-   stale bundle refs can be deleted.
+   client unbundles that data using a refspec. The refspec used is
+   `+refs/*:refs/bundles/*`. These refs are stored so that later
+   `git fetch` negotiations can communicate each bundled ref as a `have`,
+   reducing the size of the fetch over the Git protocol. To allow pruning
+   refs from this ref namespace, Git may introduce a numbered namespace
+   (such as `refs/bundles/<i>/*`) such that stale bundle refs can be
+   deleted.
 
 3. If the file is instead a bundle list, then the client inspects the
    `bundle.mode` to see if the list is of the `all` or `any` form.
