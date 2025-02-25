@@ -665,7 +665,10 @@ int fscache_lstat(const char *filename, struct stat *st)
 int fscache_is_mount_point(struct strbuf *path)
 {
 	int dirlen, base, len;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wflexible-array-extensions"
 	struct heap_fsentry key[2];
+#pragma GCC diagnostic pop
 	struct fsentry *fse;
 	struct fscache *cache = fscache_getcache();
 
