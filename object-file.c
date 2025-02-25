@@ -1347,15 +1347,15 @@ static void *unpack_loose_rest(git_zstream *stream,
 			obj_read_lock();
 		}
 	}
-	if (status == Z_STREAM_END && !stream->avail_in) {
-		return buf;
-	}
 
 	if (status != Z_STREAM_END)
 		error(_("corrupt loose object '%s'"), oid_to_hex(oid));
 	else if (stream->avail_in)
 		error(_("garbage at end of loose object '%s'"),
 		      oid_to_hex(oid));
+	else
+		return buf;
+
 	free(buf);
 	return NULL;
 }
