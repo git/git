@@ -78,12 +78,15 @@ struct fsentry {
 };
 #pragma GCC diagnostic pop
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wflexible-array-extensions"
 struct heap_fsentry {
 	union {
 		struct fsentry ent;
 		char dummy[sizeof(struct fsentry) + MAX_LONG_PATH];
 	} u;
 };
+#pragma GCC diagnostic pop
 
 /*
  * Compares the paths of two fsentry structures for equality.
@@ -596,7 +599,10 @@ void fscache_flush(void)
 int fscache_lstat(const char *filename, struct stat *st)
 {
 	int dirlen, base, len;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wflexible-array-extensions"
 	struct heap_fsentry key[2];
+#pragma GCC diagnostic pop
 	struct fsentry *fse;
 	struct fscache *cache = fscache_getcache();
 
