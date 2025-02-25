@@ -778,7 +778,22 @@ endif
 
 # Note that we only set NO_PERL if the Perl features were disabled by the user.
 # It may not be set when we have found Perl, but only use it to run tests.
-perl = find_program('perl', version: '>=5.8.1', dirs: program_path, required: perl_required)
+#
+# At the time of writing, executing `perl --version` results in a string
+# similar to the following output:
+#
+#     This is perl 5, version 40, subversion 0 (v5.40.0) built for x86_64-linux-thread-multi
+#
+# Meson picks up the "40" as version number instead of using "v5.40.0"
+# due to the regular expression it uses. This got fixed in Meson 1.7.0,
+# but meanwhile we have to either use `-V:version` instead of `--version`,
+# which we can do starting with Meson 1.5.0 and newer, or we have to
+# match against the minor version.
+if meson.version().version_compare('>=1.5.0')
+  perl = find_program('perl', dirs: program_path, required: perl_required, version: '>=5.26.0', version_argument: '-V:version')
+else
+  perl = find_program('perl', dirs: program_path, required: perl_required, version: '>=26')
+endif
 perl_features_enabled = perl.found() and get_option('perl').allowed()
 if perl_features_enabled
   build_options_config.set('NO_PERL', '')
