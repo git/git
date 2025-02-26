@@ -598,8 +598,7 @@ static void init_curl_http_auth(CURL *result)
 {
 	if ((!http_auth.username || !*http_auth.username) &&
 	    (!http_auth.credential || !*http_auth.credential)) {
-		int empty_auth = curl_empty_auth_enabled();
-		if ((empty_auth != -1 && !always_auth_proactively()) || empty_auth == 1) {
+		if (!always_auth_proactively() && curl_empty_auth_enabled()) {
 			curl_easy_setopt(result, CURLOPT_USERPWD, ":");
 			return;
 		} else if (!always_auth_proactively()) {
