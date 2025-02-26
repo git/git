@@ -1696,30 +1696,32 @@ bin_wrappers += executable('scalar',
 )
 
 if get_option('curl').enabled()
-  curl_sources = [
-    'http.c',
-    'http-walker.c',
-  ]
-
-  git_remote_http = executable('git-remote-http',
-    sources: curl_sources + 'remote-curl.c',
+  libgit_curl = declare_dependency(
+    sources: [
+      'http.c',
+      'http-walker.c',
+    ],
     dependencies: [libgit_commonmain],
+  )
+
+  test_dependencies += executable('git-remote-http',
+    sources: 'remote-curl.c',
+    dependencies: [libgit_curl],
     install: true,
     install_dir: get_option('libexecdir') / 'git-core',
   )
-  test_dependencies += git_remote_http
 
   test_dependencies += executable('git-http-fetch',
-    sources: curl_sources + 'http-fetch.c',
-    dependencies: [libgit_commonmain],
+    sources: 'http-fetch.c',
+    dependencies: [libgit_curl],
     install: true,
     install_dir: get_option('libexecdir') / 'git-core',
   )
 
   if expat.found()
     test_dependencies += executable('git-http-push',
-      sources: curl_sources + 'http-push.c',
-      dependencies: [libgit_commonmain],
+      sources: 'http-push.c',
+      dependencies: [libgit_curl],
       install: true,
       install_dir: get_option('libexecdir') / 'git-core',
     )
@@ -1727,8 +1729,8 @@ if get_option('curl').enabled()
 
   foreach alias : [ 'git-remote-https', 'git-remote-ftp', 'git-remote-ftps' ]
     test_dependencies += executable(alias,
-      objects: git_remote_http.extract_all_objects(recursive: false),
-      dependencies: [libgit_commonmain],
+      sources: 'remote-curl.c',
+      dependencies: [libgit_curl],
     )
 
     install_symlink(alias + executable_suffix,
@@ -1738,14 +1740,9 @@ if get_option('curl').enabled()
   endforeach
 endif
 
-imap_send_sources = ['imap-send.c']
-if use_curl_for_imap_send
-  imap_send_sources += curl_sources
-endif
-
 test_dependencies += executable('git-imap-send',
-  sources: imap_send_sources,
-  dependencies: [libgit_commonmain],
+  sources: 'imap-send.c',
+  dependencies: [ use_curl_for_imap_send ? libgit_curl : libgit_commonmain ],
   install: true,
   install_dir: get_option('libexecdir') / 'git-core',
 )
