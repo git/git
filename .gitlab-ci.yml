@@ -121,6 +121,9 @@ build:mingw64:
   before_script:
     - ./ci/install-sdk.ps1 -directory "git-sdk"
   script:
+    - echo $PSVersionTable.PSVersion
+    - echo $ErrorActionPreference
+    - echo $PSNativeCommandUseErrorActionPreference
     - git-sdk/usr/bin/bash.exe -l -c 'ci/make-test-artifacts.sh artifacts'
   artifacts:
     paths:
@@ -173,13 +176,13 @@ build:msvc-meson:
 test:msvc-meson:
   extends: .msvc-meson
   stage: test
-  when: manual
   timeout: 6h
   needs:
     - job: "build:msvc-meson"
       artifacts: true
+  shell: pwsh
   script:
-    - meson test -C build --list | Select-Object -Skip 1 | Select-String .* | Group-Object -Property { $_.LineNumber % $Env:CI_NODE_TOTAL + 1 } | Where-Object Name -EQ $Env:CI_NODE_INDEX | ForEach-Object { meson test -C build --no-rebuild --print-errorlogs $_.Group }
+    - meson test -C build --list | Select-Object -Skip 1 | Select-String .* | Group-Object -Property { $_.LineNumber % $Env:CI_NODE_TOTAL + 1 } | Where-Object Name -EQ $Env:CI_NODE_INDEX | ForEach-Object { meson test -C build --no-rebuild --print-errorlogs $_.Group; if (!$?) { exit $LASTEXITCODE } }
   parallel: 10
 
 test:fuzz-smoke-tests:

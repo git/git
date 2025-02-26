@@ -263,6 +263,12 @@ jobs:
     - name: Set up dependencies
       shell: pwsh
       run: pip install meson ninja
+    - name: Versions
+      shell: pwsh
+      run: |
+        echo $PSVersionTable.PSVersion
+        echo $ErrorActionPreference
+        echo $PSNativeCommandUseErrorActionPreference
     - name: Setup
       shell: pwsh
       run: meson setup build -Dperl=disabled
@@ -298,7 +304,11 @@ jobs:
         path: build
     - name: Test
       shell: pwsh
-      run: meson test -C build --list | Select-Object -Skip 1 | Select-String .* | Group-Object -Property { $_.LineNumber % 10 } | Where-Object Name -EQ ${{ matrix.nr }} | ForEach-Object { meson test -C build --no-rebuild --print-errorlogs $_.Group }
+      run: |
+        echo $PSVersionTable.PSVersion
+        echo $ErrorActionPreference
+        echo $PSNativeCommandUseErrorActionPreference
+        meson test -C build --list | Select-Object -Skip 1 | Select-String .* | Group-Object -Property { $_.LineNumber % 10 } | Where-Object Name -EQ ${{ matrix.nr }} | ForEach-Object { meson test -C build --no-rebuild --print-errorlogs $_.Group }
 
   regular:
     name: ${{matrix.vector.jobname}} (${{matrix.vector.pool}})

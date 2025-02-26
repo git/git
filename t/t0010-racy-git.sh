@@ -14,6 +14,7 @@ do
 		echo frotz >infocom &&
 		git update-index --add infocom &&
 		echo xyzzy >infocom &&
+		exit 1 &&
 
 		git diff-files -p >out &&
 		test_file_not_empty out
