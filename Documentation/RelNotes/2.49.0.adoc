@@ -220,6 +220,12 @@ Fixes since v2.48
    default target (which happens to be "all") upfront.
    (merge 5309c1e9fb ad/set-default-target-in-makefiles later to maint).
 
+ * "git check-mailmap" used to segfault when queried without human
+   readable name.
+   (merge bb60c52131 jk/check-mailmap-wo-name-fix later to maint).
+
+ * Support for renaming of symbolic links on Windows has been improved.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge ddb5287894 jk/t7407-use-test-grep later to maint).
    (merge 21e1b44865 aj/difftool-config-doc-fix later to maint).
