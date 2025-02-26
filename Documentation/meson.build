@@ -284,7 +284,6 @@ elif docs_backend == 'asciidoctor'
   ]
 endif
 
-git = find_program('git', required: false)
 xmlto = find_program('xmlto')
 
 cmd_lists = [
