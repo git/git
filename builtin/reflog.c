@@ -63,9 +63,6 @@ static const char *const reflog_usage[] = {
 	NULL
 };
 
-static timestamp_t default_reflog_expire;
-static timestamp_t default_reflog_expire_unreachable;
-
 struct worktree_reflogs {
 	struct worktree *worktree;
 	struct string_list reflogs;
@@ -122,6 +119,7 @@ static struct reflog_expire_cfg *find_cfg_ent(const char *pattern, size_t len)
 static int reflog_expire_config(const char *var, const char *value,
 				const struct config_context *ctx, void *cb)
 {
+	struct reflog_expire_options *opts = cb;
 	const char *pattern, *key;
 	size_t pattern_len;
 	timestamp_t expire;
@@ -145,10 +143,10 @@ static int reflog_expire_config(const char *var, const char *value,
 	if (!pattern) {
 		switch (slot) {
 		case EXPIRE_TOTAL:
-			default_reflog_expire = expire;
+			opts->default_expire_total = expire;
 			break;
 		case EXPIRE_UNREACH:
-			default_reflog_expire_unreachable = expire;
+			opts->default_expire_unreachable = expire;
 			break;
 		}
 		return 0;
@@ -198,9 +196,9 @@ static void set_reflog_expiry_param(struct reflog_expire_options *cb, const char
 
 	/* Nothing matched -- use the default value */
 	if (!(cb->explicit_expiry & EXPIRE_TOTAL))
-		cb->expire_total = default_reflog_expire;
+		cb->expire_total = cb->default_expire_total;
 	if (!(cb->explicit_expiry & EXPIRE_UNREACH))
-		cb->expire_unreachable = default_reflog_expire_unreachable;
+		cb->expire_unreachable = cb->default_expire_unreachable;
 }
 
 static int expire_unreachable_callback(const struct option *opt,
@@ -276,8 +274,8 @@ static int cmd_reflog_list(int argc, const char **argv, const char *prefix,
 static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 			     struct repository *repo UNUSED)
 {
-	struct reflog_expire_options opts = { 0 };
 	timestamp_t now = time(NULL);
+	struct reflog_expire_options opts = REFLOG_EXPIRE_OPTIONS_INIT(now);
 	int i, status, do_all, single_worktree = 0;
 	unsigned int flags = 0;
 	int verbose = 0;
@@ -308,16 +306,10 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 		OPT_END()
 	};
 
-	default_reflog_expire_unreachable = now - 30 * 24 * 3600;
-	default_reflog_expire = now - 90 * 24 * 3600;
-	git_config(reflog_expire_config, NULL);
+	git_config(reflog_expire_config, &opts);
 
 	save_commit_buffer = 0;
 	do_all = status = 0;
-
-	opts.explicit_expiry = 0;
-	opts.expire_total = default_reflog_expire;
-	opts.expire_unreachable = default_reflog_expire_unreachable;
 
 	argc = parse_options(argc, argv, prefix, options, reflog_expire_usage, 0);
 
