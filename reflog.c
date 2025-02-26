@@ -252,15 +252,15 @@ int should_expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
 	struct expire_reflog_policy_cb *cb = cb_data;
 	struct commit *old_commit, *new_commit;
 
-	if (timestamp < cb->cmd.expire_total)
+	if (timestamp < cb->opts.expire_total)
 		return 1;
 
 	old_commit = new_commit = NULL;
-	if (cb->cmd.stalefix &&
+	if (cb->opts.stalefix &&
 	    (!keep_entry(&old_commit, ooid) || !keep_entry(&new_commit, noid)))
 		return 1;
 
-	if (timestamp < cb->cmd.expire_unreachable) {
+	if (timestamp < cb->opts.expire_unreachable) {
 		switch (cb->unreachable_expire_kind) {
 		case UE_ALWAYS:
 			return 1;
@@ -272,7 +272,7 @@ int should_expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
 		}
 	}
 
-	if (cb->cmd.recno && --(cb->cmd.recno) == 0)
+	if (cb->opts.recno && --(cb->opts.recno) == 0)
 		return 1;
 
 	return 0;
@@ -331,7 +331,7 @@ void reflog_expiry_prepare(const char *refname,
 	struct commit_list *elem;
 	struct commit *commit = NULL;
 
-	if (!cb->cmd.expire_unreachable || is_head(refname)) {
+	if (!cb->opts.expire_unreachable || is_head(refname)) {
 		cb->unreachable_expire_kind = UE_HEAD;
 	} else {
 		commit = lookup_commit_reference_gently(the_repository,
@@ -341,7 +341,7 @@ void reflog_expiry_prepare(const char *refname,
 		cb->unreachable_expire_kind = commit ? UE_NORMAL : UE_ALWAYS;
 	}
 
-	if (cb->cmd.expire_unreachable <= cb->cmd.expire_total)
+	if (cb->opts.expire_unreachable <= cb->opts.expire_total)
 		cb->unreachable_expire_kind = UE_ALWAYS;
 
 	switch (cb->unreachable_expire_kind) {
@@ -358,7 +358,7 @@ void reflog_expiry_prepare(const char *refname,
 		/* For reflog_expiry_cleanup() below */
 		cb->tip_commit = commit;
 	}
-	cb->mark_limit = cb->cmd.expire_total;
+	cb->mark_limit = cb->opts.expire_total;
 	mark_reachable(cb);
 }
 
@@ -390,7 +390,7 @@ int count_reflog_ent(struct object_id *ooid UNUSED,
 		     timestamp_t timestamp, int tz UNUSED,
 		     const char *message UNUSED, void *cb_data)
 {
-	struct cmd_reflog_expire_cb *cb = cb_data;
+	struct reflog_expire_options *cb = cb_data;
 	if (!cb->expire_total || timestamp < cb->expire_total)
 		cb->recno++;
 	return 0;
@@ -398,7 +398,7 @@ int count_reflog_ent(struct object_id *ooid UNUSED,
 
 int reflog_delete(const char *rev, enum expire_reflog_flags flags, int verbose)
 {
-	struct cmd_reflog_expire_cb cmd = { 0 };
+	struct reflog_expire_options opts = { 0 };
 	int status = 0;
 	reflog_expiry_should_prune_fn *should_prune_fn = should_expire_reflog_ent;
 	const char *spec = strstr(rev, "@{");
@@ -421,17 +421,17 @@ int reflog_delete(const char *rev, enum expire_reflog_flags flags, int verbose)
 
 	recno = strtoul(spec + 2, &ep, 10);
 	if (*ep == '}') {
-		cmd.recno = -recno;
+		opts.recno = -recno;
 		refs_for_each_reflog_ent(get_main_ref_store(the_repository),
-					 ref, count_reflog_ent, &cmd);
+					 ref, count_reflog_ent, &opts);
 	} else {
-		cmd.expire_total = approxidate(spec + 2);
+		opts.expire_total = approxidate(spec + 2);
 		refs_for_each_reflog_ent(get_main_ref_store(the_repository),
-					 ref, count_reflog_ent, &cmd);
-		cmd.expire_total = 0;
+					 ref, count_reflog_ent, &opts);
+		opts.expire_total = 0;
 	}
 
-	cb.cmd = cmd;
+	cb.opts = opts;
 	status |= refs_reflog_expire(get_main_ref_store(the_repository), ref,
 				     flags,
 				     reflog_expiry_prepare,

@@ -2,7 +2,7 @@
 #define REFLOG_H
 #include "refs.h"
 
-struct cmd_reflog_expire_cb {
+struct reflog_expire_options {
 	int stalefix;
 	int explicit_expiry;
 	timestamp_t expire_total;
@@ -18,7 +18,7 @@ struct expire_reflog_policy_cb {
 	} unreachable_expire_kind;
 	struct commit_list *mark_list;
 	unsigned long mark_limit;
-	struct cmd_reflog_expire_cb cmd;
+	struct reflog_expire_options opts;
 	struct commit *tip_commit;
 	struct commit_list *tips;
 	unsigned int dry_run:1;
