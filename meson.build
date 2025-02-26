@@ -691,7 +691,6 @@ libgit_c_args = [
   '-DETC_GITATTRIBUTES="' + get_option('gitattributes') + '"',
   '-DETC_GITCONFIG="' + get_option('gitconfig') + '"',
   '-DFALLBACK_RUNTIME_PREFIX="' + get_option('prefix') + '"',
-  '-DGIT_EXEC_PATH="' + get_option('prefix') / get_option('libexecdir') / 'git-core"',
   '-DGIT_HOST_CPU="' + host_machine.cpu_family() + '"',
   '-DGIT_HTML_PATH="' + get_option('datadir') / 'doc/git-doc"',
   '-DGIT_INFO_PATH="' + get_option('infodir') + '"',
@@ -1466,6 +1465,7 @@ endif
 if get_option('runtime_prefix')
   libgit_c_args += '-DRUNTIME_PREFIX'
   build_options_config.set('RUNTIME_PREFIX', 'true')
+  git_exec_path = get_option('libexecdir') / 'git-core'
 
   if compiler.has_header('mach-o/dyld.h')
     libgit_c_args += '-DHAVE_NS_GET_EXECUTABLE_PATH'
@@ -1502,7 +1502,9 @@ if get_option('runtime_prefix')
   endif
 else
   build_options_config.set('RUNTIME_PREFIX', 'false')
+  git_exec_path = get_option('prefix') / get_option('libexecdir') / 'git-core'
 endif
+libgit_c_args += '-DGIT_EXEC_PATH="' + git_exec_path + '"'
 
 git_version_file = custom_target(
   command: [
