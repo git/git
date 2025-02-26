@@ -88,113 +88,6 @@ static int collect_reflog(const char *ref, void *cb_data)
 	return 0;
 }
 
-static struct reflog_expire_entry_option *find_cfg_ent(struct reflog_expire_options *opts,
-						       const char *pattern, size_t len)
-{
-	struct reflog_expire_entry_option *ent;
-
-	if (!opts->entries_tail)
-		opts->entries_tail = &opts->entries;
-
-	for (ent = opts->entries; ent; ent = ent->next)
-		if (!xstrncmpz(ent->pattern, pattern, len))
-			return ent;
-
-	FLEX_ALLOC_MEM(ent, pattern, pattern, len);
-	*opts->entries_tail = ent;
-	opts->entries_tail = &(ent->next);
-	return ent;
-}
-
-/* expiry timer slot */
-#define EXPIRE_TOTAL   01
-#define EXPIRE_UNREACH 02
-
-static int reflog_expire_config(const char *var, const char *value,
-				const struct config_context *ctx, void *cb)
-{
-	struct reflog_expire_options *opts = cb;
-	const char *pattern, *key;
-	size_t pattern_len;
-	timestamp_t expire;
-	int slot;
-	struct reflog_expire_entry_option *ent;
-
-	if (parse_config_key(var, "gc", &pattern, &pattern_len, &key) < 0)
-		return git_default_config(var, value, ctx, cb);
-
-	if (!strcmp(key, "reflogexpire")) {
-		slot = EXPIRE_TOTAL;
-		if (git_config_expiry_date(&expire, var, value))
-			return -1;
-	} else if (!strcmp(key, "reflogexpireunreachable")) {
-		slot = EXPIRE_UNREACH;
-		if (git_config_expiry_date(&expire, var, value))
-			return -1;
-	} else
-		return git_default_config(var, value, ctx, cb);
-
-	if (!pattern) {
-		switch (slot) {
-		case EXPIRE_TOTAL:
-			opts->default_expire_total = expire;
-			break;
-		case EXPIRE_UNREACH:
-			opts->default_expire_unreachable = expire;
-			break;
-		}
-		return 0;
-	}
-
-	ent = find_cfg_ent(opts, pattern, pattern_len);
-	if (!ent)
-		return -1;
-	switch (slot) {
-	case EXPIRE_TOTAL:
-		ent->expire_total = expire;
-		break;
-	case EXPIRE_UNREACH:
-		ent->expire_unreachable = expire;
-		break;
-	}
-	return 0;
-}
-
-static void set_reflog_expiry_param(struct reflog_expire_options *cb, const char *ref)
-{
-	struct reflog_expire_entry_option *ent;
-
-	if (cb->explicit_expiry == (EXPIRE_TOTAL|EXPIRE_UNREACH))
-		return; /* both given explicitly -- nothing to tweak */
-
-	for (ent = cb->entries; ent; ent = ent->next) {
-		if (!wildmatch(ent->pattern, ref, 0)) {
-			if (!(cb->explicit_expiry & EXPIRE_TOTAL))
-				cb->expire_total = ent->expire_total;
-			if (!(cb->explicit_expiry & EXPIRE_UNREACH))
-				cb->expire_unreachable = ent->expire_unreachable;
-			return;
-		}
-	}
-
-	/*
-	 * If unconfigured, make stash never expire
-	 */
-	if (!strcmp(ref, "refs/stash")) {
-		if (!(cb->explicit_expiry & EXPIRE_TOTAL))
-			cb->expire_total = 0;
-		if (!(cb->explicit_expiry & EXPIRE_UNREACH))
-			cb->expire_unreachable = 0;
-		return;
-	}
-
-	/* Nothing matched -- use the default value */
-	if (!(cb->explicit_expiry & EXPIRE_TOTAL))
-		cb->expire_total = cb->default_expire_total;
-	if (!(cb->explicit_expiry & EXPIRE_UNREACH))
-		cb->expire_unreachable = cb->default_expire_unreachable;
-}
-
 static int expire_unreachable_callback(const struct option *opt,
 				 const char *arg,
 				 int unset)
@@ -207,7 +100,7 @@ static int expire_unreachable_callback(const struct option *opt,
 		die(_("invalid timestamp '%s' given to '--%s'"),
 		    arg, opt->long_name);
 
-	opts->explicit_expiry |= EXPIRE_UNREACH;
+	opts->explicit_expiry |= REFLOG_EXPIRE_UNREACH;
 	return 0;
 }
 
@@ -223,7 +116,7 @@ static int expire_total_callback(const struct option *opt,
 		die(_("invalid timestamp '%s' given to '--%s'"),
 		    arg, opt->long_name);
 
-	opts->explicit_expiry |= EXPIRE_TOTAL;
+	opts->explicit_expiry |= REFLOG_EXPIRE_TOTAL;
 	return 0;
 }
 
@@ -353,7 +246,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 				.dry_run = !!(flags & EXPIRE_REFLOGS_DRY_RUN),
 			};
 
-			set_reflog_expiry_param(&cb.opts,  item->string);
+			reflog_expire_options_set_refname(&cb.opts,  item->string);
 			status |= refs_reflog_expire(get_main_ref_store(the_repository),
 						     item->string, flags,
 						     reflog_expiry_prepare,
@@ -372,7 +265,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 			status |= error(_("%s points nowhere!"), argv[i]);
 			continue;
 		}
-		set_reflog_expiry_param(&cb.opts, ref);
+		reflog_expire_options_set_refname(&cb.opts, ref);
 		status |= refs_reflog_expire(get_main_ref_store(the_repository),
 					     ref, flags,
 					     reflog_expiry_prepare,
