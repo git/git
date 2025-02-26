@@ -1604,15 +1604,14 @@ if host_machine.system() == 'windows'
     error('Unsupported compiler ' + compiler.get_id())
   endif
 endif
-common_main_library = static_library('common-main',
-  sources: common_main_sources,
-  c_args: libgit_c_args,
-  dependencies: libgit_dependencies,
-  include_directories: libgit_include_directories,
-)
-common_main = declare_dependency(
-  link_with: common_main_library,
+
+libgit_commonmain = declare_dependency(
+  link_with: static_library('common-main',
+    sources: common_main_sources,
+    dependencies: [ libgit ],
+  ),
   link_args: common_main_link_args,
+  dependencies: [ libgit ],
 )
 
 bin_wrappers = [ ]
@@ -1620,7 +1619,7 @@ test_dependencies = [ ]
 
 git = executable('git',
   sources: builtin_sources + 'git.c',
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
   install: true,
   install_dir: get_option('libexecdir') / 'git-core',
 )
@@ -1628,35 +1627,35 @@ bin_wrappers += git
 
 test_dependencies += executable('git-daemon',
   sources: 'daemon.c',
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
   install: true,
   install_dir: get_option('libexecdir') / 'git-core',
 )
 
 test_dependencies += executable('git-sh-i18n--envsubst',
   sources: 'sh-i18n--envsubst.c',
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
   install: true,
   install_dir: get_option('libexecdir') / 'git-core',
 )
 
 bin_wrappers += executable('git-shell',
   sources: 'shell.c',
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
   install: true,
   install_dir: get_option('libexecdir') / 'git-core',
 )
 
 test_dependencies += executable('git-http-backend',
   sources: 'http-backend.c',
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
   install: true,
   install_dir: get_option('libexecdir') / 'git-core',
 )
 
 bin_wrappers += executable('scalar',
   sources: 'scalar.c',
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
   install: true,
   install_dir: get_option('libexecdir') / 'git-core',
 )
@@ -1669,7 +1668,7 @@ if get_option('curl').enabled()
 
   git_remote_http = executable('git-remote-http',
     sources: curl_sources + 'remote-curl.c',
-    dependencies: [libgit, common_main],
+    dependencies: [libgit_commonmain],
     install: true,
     install_dir: get_option('libexecdir') / 'git-core',
   )
@@ -1677,7 +1676,7 @@ if get_option('curl').enabled()
 
   test_dependencies += executable('git-http-fetch',
     sources: curl_sources + 'http-fetch.c',
-    dependencies: [libgit, common_main],
+    dependencies: [libgit_commonmain],
     install: true,
     install_dir: get_option('libexecdir') / 'git-core',
   )
@@ -1685,7 +1684,7 @@ if get_option('curl').enabled()
   if expat.found()
     test_dependencies += executable('git-http-push',
       sources: curl_sources + 'http-push.c',
-      dependencies: [libgit, common_main],
+      dependencies: [libgit_commonmain],
       install: true,
       install_dir: get_option('libexecdir') / 'git-core',
     )
@@ -1694,7 +1693,7 @@ if get_option('curl').enabled()
   foreach alias : [ 'git-remote-https', 'git-remote-ftp', 'git-remote-ftps' ]
     test_dependencies += executable(alias,
       objects: git_remote_http.extract_all_objects(recursive: false),
-      dependencies: [libgit, common_main],
+      dependencies: [libgit_commonmain],
     )
 
     install_symlink(alias + executable_suffix,
@@ -1711,7 +1710,7 @@ endif
 
 test_dependencies += executable('git-imap-send',
   sources: imap_send_sources,
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
   install: true,
   install_dir: get_option('libexecdir') / 'git-core',
 )
@@ -1719,7 +1718,7 @@ test_dependencies += executable('git-imap-send',
 foreach alias : [ 'git-receive-pack', 'git-upload-archive', 'git-upload-pack' ]
   bin_wrappers += executable(alias,
     objects: git.extract_all_objects(recursive: false),
-    dependencies: [libgit, common_main],
+    dependencies: [libgit_commonmain],
   )
 
   install_symlink(alias + executable_suffix,
