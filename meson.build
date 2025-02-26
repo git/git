@@ -191,9 +191,11 @@ project('git', 'c',
 fs = import('fs')
 
 program_path = []
-# Git for Windows provides all the tools we need to build Git.
-if host_machine.system() == 'windows'
-  program_path += [ 'C:/Program Files/Git/bin', 'C:/Program Files/Git/usr/bin' ]
+if get_option('sane_tool_path').length() != 0
+  program_path = get_option('sane_tool_path')
+elif host_machine.system() == 'windows'
+  # Git for Windows provides all the tools we need to build Git.
+  program_path = [ 'C:/Program Files/Git/bin', 'C:/Program Files/Git/usr/bin' ]
 endif
 
 cygpath = find_program('cygpath', dirs: program_path, required: false)
@@ -211,10 +213,6 @@ script_environment = environment()
 foreach path : program_path
   script_environment.prepend('PATH', path)
 endforeach
-
-if get_option('sane_tool_path') != ''
-  script_environment.prepend('PATH', get_option('sane_tool_path'))
-endif
 
 # The environment used by GIT-VERSION-GEN. Note that we explicitly override
 # environment variables that might be set by the user. This is by design so
@@ -260,11 +258,10 @@ libgit_sources = [
   'commit-graph.c',
   'commit-reach.c',
   'commit.c',
-  'common-exit.c',
-  'common-init.c',
   'compat/nonblock.c',
   'compat/obstack.c',
   'compat/terminal.c',
+  'compat/zlib-uncompress2.c',
   'config.c',
   'connect.c',
   'connected.c',
@@ -511,7 +508,6 @@ builtin_sources = [
   'builtin/annotate.c',
   'builtin/apply.c',
   'builtin/archive.c',
-  'builtin/backfill.c',
   'builtin/bisect.c',
   'builtin/blame.c',
   'builtin/branch.c',
@@ -645,7 +641,7 @@ builtin_sources += custom_target(
 )
 
 builtin_sources += custom_target(
-  input: 'Documentation/githooks.adoc',
+  input: 'Documentation/githooks.txt',
   output: 'hook-list.h',
   command: [
     shell,
@@ -669,18 +665,13 @@ build_options_config.set('GIT_TEST_CMP_USE_COPIED_CONTEXT', '')
 build_options_config.set('GIT_TEST_INDEX_VERSION', '')
 build_options_config.set('GIT_TEST_OPTS', '')
 build_options_config.set('GIT_TEST_PERL_FATAL_WARNINGS', '')
-build_options_config.set_quoted('GIT_TEST_UTF8_LOCALE', get_option('test_utf8_locale'))
+build_options_config.set('GIT_TEST_UTF8_LOCALE', '')
 build_options_config.set_quoted('LOCALEDIR', fs.as_posix(get_option('prefix') / get_option('localedir')))
 build_options_config.set('GITWEBDIR', fs.as_posix(get_option('prefix') / get_option('datadir') / 'gitweb'))
 
-if get_option('breaking_changes')
-  build_options_config.set('WITH_BREAKING_CHANGES', 'YesPlease')
-else
-  build_options_config.set('WITH_BREAKING_CHANGES', '')
-endif
-
-if get_option('sane_tool_path') != ''
-  build_options_config.set_quoted('BROKEN_PATH_FIX', 's|^\# @BROKEN_PATH_FIX@$|git_broken_path_fix "' + get_option('sane_tool_path') + '"|')
+if get_option('sane_tool_path').length() != 0
+  sane_tool_path = (host_machine.system() == 'windows' ? ';' : ':').join(get_option('sane_tool_path'))
+  build_options_config.set_quoted('BROKEN_PATH_FIX', 's|^\# @BROKEN_PATH_FIX@$|git_broken_path_fix "' + sane_tool_path + '"|')
 else
   build_options_config.set_quoted('BROKEN_PATH_FIX', '/^\# @BROKEN_PATH_FIX@$/d')
 endif
@@ -778,22 +769,7 @@ endif
 
 # Note that we only set NO_PERL if the Perl features were disabled by the user.
 # It may not be set when we have found Perl, but only use it to run tests.
-#
-# At the time of writing, executing `perl --version` results in a string
-# similar to the following output:
-#
-#     This is perl 5, version 40, subversion 0 (v5.40.0) built for x86_64-linux-thread-multi
-#
-# Meson picks up the "40" as version number instead of using "v5.40.0"
-# due to the regular expression it uses. This got fixed in Meson 1.7.0,
-# but meanwhile we have to either use `-V:version` instead of `--version`,
-# which we can do starting with Meson 1.5.0 and newer, or we have to
-# match against the minor version.
-if meson.version().version_compare('>=1.5.0')
-  perl = find_program('perl', dirs: program_path, required: perl_required, version: '>=5.26.0', version_argument: '-V:version')
-else
-  perl = find_program('perl', dirs: program_path, required: perl_required, version: '>=26')
-endif
+perl = find_program('perl', version: '>=5.8.1', dirs: program_path, required: perl_required)
 perl_features_enabled = perl.found() and get_option('perl').allowed()
 if perl_features_enabled
   build_options_config.set('NO_PERL', '')
@@ -816,23 +792,11 @@ else
   build_options_config.set('NO_PERL_CPAN_FALLBACKS', '')
 endif
 
-zlib_backend = get_option('zlib_backend')
-if zlib_backend in ['auto', 'zlib-ng']
-  zlib_ng = dependency('zlib-ng', required: zlib_backend == 'zlib-ng')
-  if zlib_ng.found()
-    zlib_backend = 'zlib-ng'
-    libgit_c_args += '-DHAVE_ZLIB_NG'
-    libgit_dependencies += zlib_ng
-  endif
+zlib = dependency('zlib', default_options: ['default_library=static', 'tests=disabled'])
+if zlib.version().version_compare('<1.2.0')
+  libgit_c_args += '-DNO_DEFLATE_BOUND'
 endif
-if zlib_backend in ['auto', 'zlib']
-  zlib = dependency('zlib', default_options: ['default_library=static', 'tests=disabled'])
-  if zlib.version().version_compare('<1.2.0')
-    libgit_c_args += '-DNO_DEFLATE_BOUND'
-  endif
-  zlib_backend = 'zlib'
-  libgit_dependencies += zlib
-endif
+libgit_dependencies += zlib
 
 threads = dependency('threads', required: false)
 if threads.found()
@@ -2033,5 +1997,4 @@ summary({
   'sha1': sha1_backend,
   'sha1_unsafe': sha1_unsafe_backend,
   'sha256': sha256_backend,
-  'zlib': zlib_backend,
 }, section: 'Backends')
