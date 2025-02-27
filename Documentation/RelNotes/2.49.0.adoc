@@ -38,6 +38,17 @@ UI, Workflows & Features
  * The documentation of "git commit" and "git rebase" now refer to
    commit titles as such, not "subject".
 
+ * The value of "uname -s" is by default sent over the wire as a part
+   of the "version" capability.
+
+ * "git refs migrate" can optionally be told not to migrate the reflog.
+
+ * The netrc support (via the cURL library) for the HTTP transport has
+   been re-enabled.
+
+ * Removal of ".git/branches" and ".git/remotes" support in the
+   BreakingChanges document has been further clarified.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -225,6 +236,10 @@ Fixes since v2.48
    (merge bb60c52131 jk/check-mailmap-wo-name-fix later to maint).
 
  * Support for renaming of symbolic links on Windows has been improved.
+
+ * "git rebase -i" failed to allow rewording an empty commit that has
+   been fast-forwarded.
+   (merge af8fc7be10 pw/rebase-i-ff-empty-commit later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge ddb5287894 jk/t7407-use-test-grep later to maint).
