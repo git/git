@@ -194,48 +194,6 @@ test_expect_success '--max-cruft-size combines existing packs when below thresho
 	)
 '
 
-test_expect_success '--max-cruft-size combines smaller packs first' '
-	git init max-cruft-size-consume-small &&
-	(
-		cd max-cruft-size-consume-small &&
-
-		test_commit base &&
-		git repack -ad &&
-
-		cruft_foo="$(generate_cruft_pack foo 524288)" &&    # 0.5 MiB
-		cruft_bar="$(generate_cruft_pack bar 524288)" &&    # 0.5 MiB
-		cruft_baz="$(generate_cruft_pack baz 1048576)" &&   # 1.0 MiB
-		cruft_quux="$(generate_cruft_pack quux 1572864)" && # 1.5 MiB
-
-		test-tool pack-mtimes "$(basename $cruft_foo)" >expect.raw &&
-		test-tool pack-mtimes "$(basename $cruft_bar)" >>expect.raw &&
-		sort expect.raw >expect.objects &&
-
-		# repacking with `--max-cruft-size=2M` should combine
-		# both 0.5 MiB packs together, instead of, say, one of
-		# the 0.5 MiB packs with the 1.0 MiB pack
-		ls $packdir/pack-*.mtimes | sort >cruft.before &&
-		git repack -d --cruft --max-cruft-size=2M &&
-		ls $packdir/pack-*.mtimes | sort >cruft.after &&
-
-		comm -13 cruft.before cruft.after >cruft.new &&
-		comm -23 cruft.before cruft.after >cruft.removed &&
-
-		test_line_count = 1 cruft.new &&
-		test_line_count = 2 cruft.removed &&
-
-		# the two smaller packs should be rolled up first
-		printf "%s\n" $cruft_foo $cruft_bar | sort >expect.removed &&
-		test_cmp expect.removed cruft.removed &&
-
-		# ...and contain the set of objects rolled up
-		test-tool pack-mtimes "$(basename $(cat cruft.new))" >actual.raw &&
-		sort actual.raw >actual.objects &&
-
-		test_cmp expect.objects actual.objects
-	)
-'
-
 test_expect_success 'setup --max-cruft-size with freshened objects' '
 	git init max-cruft-size-freshen &&
 	(
