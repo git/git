@@ -2758,23 +2758,22 @@ static int process_renames(struct merge_options *opt,
 	const struct rename *sre;
 
 	/*
-	 * FIXME: As string-list.h notes, it's O(n^2) to build a sorted
-	 * string_list one-by-one, but O(n log n) to build it unsorted and
-	 * then sort it.  Note that as we build the list, we do not need to
-	 * check if the existing destination path is already in the list,
-	 * because the structure of diffcore_rename guarantees we won't
-	 * have duplicates.
+	 * Note that as we build the list, we do not need to check if the
+	 * existing destination path is already in the list, because the
+	 * structure of diffcore_rename guarantees we won't have duplicates.
 	 */
 	for (i = 0; i < a_renames->nr; i++) {
 		sre = a_renames->items[i].util;
-		string_list_insert(&a_by_dst, sre->pair->two->path)->util
+		string_list_append(&a_by_dst, sre->pair->two->path)->util
 			= (void *)sre;
 	}
 	for (i = 0; i < b_renames->nr; i++) {
 		sre = b_renames->items[i].util;
-		string_list_insert(&b_by_dst, sre->pair->two->path)->util
+		string_list_append(&b_by_dst, sre->pair->two->path)->util
 			= (void *)sre;
 	}
+	string_list_sort(&a_by_dst);
+	string_list_sort(&b_by_dst);
 
 	for (i = 0, j = 0; i < a_renames->nr || j < b_renames->nr;) {
 		struct string_list *renames1, *renames2Dst;
