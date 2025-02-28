@@ -353,6 +353,14 @@ struct diff_options {
 	/* to support internal diff recursion by --follow hack*/
 	int found_follow;
 
+	/*
+	 * By default, diffcore_std() resolves the statuses for queued diff file
+	 * pairs by calling diff_resolve_rename_copy(). If status information
+	 * has already been manually set, this option prevents diffcore_std()
+	 * from resetting statuses.
+	 */
+	int skip_resolving_statuses;
+
 	/* Callback which allows tweaking the options in diff_setup_done(). */
 	void (*set_default)(struct diff_options *);
 

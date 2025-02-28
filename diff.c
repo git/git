@@ -7085,7 +7085,7 @@ void diffcore_std(struct diff_options *options)
 		diffcore_order(options->orderfile);
 	if (options->rotate_to)
 		diffcore_rotate(options);
-	if (!options->found_follow)
+	if (!options->found_follow && !options->skip_resolving_statuses)
 		/* See try_to_follow_renames() in tree-diff.c */
 		diff_resolve_rename_copy();
 	diffcore_apply_filter(options);
