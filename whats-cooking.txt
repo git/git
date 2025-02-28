@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Feb 2025, #08; Tue, 25)
-X-master-at: 5a526e5e18ddb9a7dfc5a2967d21d6154df64a4f
-X-next-at: 4e5a29be8250487b387ff3b254e30b2320407821
+Subject: What's cooking in git.git (Feb 2025, #09; Fri, 28)
+X-master-at: cb0ae672aeabefca9704477ea8018ac94f523970
+X-next-at: 41875498b7944e2c73e7a8ed9b6a91c9d7001b12
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Feb 2025, #08; Tue, 25)
+What's cooking in git.git (Feb 2025, #09; Fri, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,102 +48,155 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ad/set-default-target-in-makefiles (2025-02-18) 1 commit
-  (merged to 'next' on 2025-02-19 at 21d81b4f09)
- + Makefile: set default goals in makefiles
+* bc/http-push-auth-netrc-fix (2025-02-24) 1 commit
+  (merged to 'next' on 2025-02-26 at c2b83ec2e7)
+ + http: allow using netrc for WebDAV-based HTTP protocol
 
- Correct the default target in Documentation/Makefile, and
- future-proof all Makefiles from similar breakages by declaring the
- default target (which happens to be "all") upfront.
- 
- source: <20250215211904.41883-1-adam@dinwoodie.org>
+ The netrc support (via the cURL library) for the HTTP transport has
+ been re-enabled.
+ source: <20250223015331.588161-2-sandals@crustytoothpaste.net>
 
 
-* bc/diff-reject-empty-arg-to-pickaxe (2025-02-18) 1 commit
-  (merged to 'next' on 2025-02-19 at 85d8a43baa)
- + diff: don't crash with empty argument to -G or -S
+* ek/mingw-rename-symlink (2025-02-21) 1 commit
+  (merged to 'next' on 2025-02-24 at 8a9f3a5cdc)
+ + compat/mingw: rename the symlink, not the target
 
- The -G/-S options to the "diff" family of commands caused us to hit
- a BUG() when they get no values; they have been corrected.
- 
- source: <20250217175759.1576684-1-sandals@crustytoothpaste.net>
+ Symlink renaming fix.
+ source: <pull.1864.git.1740139296483.gitgitgadget@gmail.com>
 
 
-* da/xdiff-w-sign-compare-workaround (2025-02-12) 6 commits
-  (merged to 'next' on 2025-02-18 at 4af44766d5)
- + xdiff: avoid signed vs. unsigned comparisons in xutils.c
- + xdiff: avoid signed vs. unsigned comparisons in xpatience.c
- + xdiff: avoid signed vs. unsigned comparisons in xhistogram.c
- + xdiff: avoid signed vs. unsigned comparisons in xemit.c
- + xdiff: avoid signed vs. unsigned comparisons in xdiffi.c
- + xdiff: move sign comparison warning guard into each file
+* jc/3.0-branches-remotes-update (2025-02-25) 1 commit
+  (merged to 'next' on 2025-02-26 at 76db3e05d5)
+ + BreakingChanges: clarify branches/ and remotes/
 
- Noises from "-Wsign-compare" in the borrowed xdiff code has been
- squelched.
- 
- source: <20250212060418.1645241-6-davvid@gmail.com>
+ Removal of ".git/branches" and ".git/remotes" support in the
+ BreakingChanges document has been further clarified.
+ source: <xmqqcyf5io61.fsf@gitster.g>
 
 
-* mh/doc-commit-title-not-subject (2025-02-18) 1 commit
-  (merged to 'next' on 2025-02-19 at ee145da188)
- + doc: use 'title' consistently
+* jk/check-mailmap-wo-name-fix (2025-02-21) 1 commit
+  (merged to 'next' on 2025-02-25 at d6d4e05ad1)
+ + mailmap: fix check-mailmap with full mailmap line
 
- The documentation of "git commit" and "git rebase" now refer to
- commit titles as such, not "subject".
- 
- source: <pull.1893.v2.git.git.1739739761445.gitgitgadget@gmail.com>
+ "git check-mailmap" segfault fix.
+ source: <20250221-jk-fix-sendemail-mailinfo-v2-1-9aca7dc05dbb@gmail.com>
 
 
-* ms/rename-match-name-with-pattern (2025-02-18) 1 commit
-  (merged to 'next' on 2025-02-19 at 717d13af36)
- + refspec: clarify function naming and documentation
+* kn/ref-migrate-skip-reflog (2025-02-21) 1 commit
+  (merged to 'next' on 2025-02-25 at c402e09d08)
+ + builtin/refs: add '--no-reflog' flag to drop reflogs
 
- Code renaming.
- 
- source: <20250215084539.73799-1-meetsoni3017@gmail.com>
-
-
-* po/meson-perl-fix (2025-02-19) 2 commits
-  (merged to 'next' on 2025-02-19 at 168d449ef4)
- + meson: fix Perl version check for Meson versions before 1.7.0
- + meson: bump minimum required Perl version to 5.26.0
-
- Upgrade the minimum Perl version enforced by meson-based build to
- match what Makefile-based build uses.
- 
- source: <20250218153043.63535-1-git@mavit.org.uk>
+ "git refs migrate" can optionally be told not to migrate the reflog.
+ source: <20250221100423.91075-1-karthik.188@gmail.com>
 
 
-* pw/merge-tree-stdin-deadlock-fix (2025-02-18) 5 commits
-  (merged to 'next' on 2025-02-19 at ebc3ae6ffc)
- + merge-tree: fix link formatting in html docs
- + merge-tree: improve docs for --stdin
- + merge-tree: only use basic merge config
- + merge-tree: remove redundant code
- + merge-tree --stdin: flush stdout to avoid deadlock
+* pw/rebase-i-ff-empty-commit (2025-02-11) 1 commit
+  (merged to 'next' on 2025-02-25 at 63db268d47)
+ + rebase -i: reword empty commit after fast-forward
 
- "git merge-tree --stdin" has been improved (including a workaround
- for a deadlock).
- 
- source: <pull.1862.v2.git.1739895879.gitgitgadget@gmail.com>
+ "git rebase -i" failed to allow rewording an empty commit that has
+ been fast-forwarded.
+ source: <pull.1860.v2.git.1739289549299.gitgitgadget@gmail.com>
 
 
-* tb/new-make-fix (2025-02-13) 1 commit
-  (merged to 'next' on 2025-02-18 at 8fd74ceeed)
- + Makefile: remove accidental recipe prefix in conditional
+* rs/clear-commit-marks-optim (2025-02-24) 1 commit
+  (merged to 'next' on 2025-02-26 at 1773f2a2ff)
+ + commit: avoid parent list buildup in clear_commit_marks_many()
 
- Workaround the overly picky HT/SP rule in newer GNU Make.
- 
- source: <a79e9e9f50410721d85747b03559d55be98bca20.1739478347.git.me@ttaylorr.com>
+ A micro-optimization.
+ source: <2bd2d71f-0ee6-405f-bec8-368406ca53c8@web.de>
+
+
+* ua/os-version-capability (2025-02-19) 6 commits
+  (merged to 'next' on 2025-02-24 at 89ad48db14)
+ + agent: advertise OS name via agent capability
+ + t5701: add setup test to remove side-effect dependency
+ + version: extend get_uname_info() to hide system details
+ + version: refactor get_uname_info()
+ + version: refactor redact_non_printables()
+ + version: replace manual ASCII checks with isprint() for clarity
+
+ The value of "uname -s" is by default sent over the wire as a part
+ of the "version" capability.
+ source: <20250215155130.1756934-1-usmanakinyemi202@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* jc/3.0-branches-remotes-update (2025-02-25) 1 commit
- - BreakingChanges: clarify branches/ and remotes/
+* lo/doc-merge-submodule-update (2025-02-25) 1 commit
+  (merged to 'next' on 2025-02-27 at 8086c4ca60)
+ + merge-strategies.adoc: detail submodule merge
 
- source: <xmqqcyf5io61.fsf@gitster.g>
+ What happens to submodules during merge has been documented in a
+ bit more detail.
 
+ Will merge to 'master'.
+ source: <20250225161800.8268-1-lucasseikioshiro@gmail.com>
+
+
+* ps/maintenance-reflog-expire (2025-02-26) 6 commits
+ - builtin/maintenance: introduce "reflog-expire" task
+ - builtin/gc: split out function to expire reflog entries
+ - builtin/reflog: make functions regarding `reflog_expire_options` public
+ - builtin/reflog: stop storing per-reflog expiry dates globally
+ - builtin/reflog: stop storing default reflog expiry dates globally
+ - reflog: rename `cmd_reflog_expire_cb` to `reflog_expire_options`
+
+ "git maintenance" learns a new task to expire reflog entries.
+
+ Needs (real) review.
+ source: <20250226-pks-maintenance-reflog-expire-v1-0-a1204a814952@pks.im>
+
+
+* ps/refname-avail-check-optim (2025-02-28) 16 commits
+ - refs: reuse iterators when determining refname availability
+ - refs/iterator: implement seeking for files iterators
+ - refs/iterator: implement seeking for packed-ref iterators
+ - refs/iterator: implement seeking for ref-cache iterators
+ - refs/iterator: implement seeking for reftable iterators
+ - refs/iterator: implement seeking for merged iterators
+ - refs/iterator: provide infrastructure to re-seek iterators
+ - refs/iterator: separate lifecycle from iteration
+ - refs: stop re-verifying common prefixes for availability
+ - refs/files: batch refname availability checks for initial transactions
+ - refs/files: batch refname availability checks for normal transactions
+ - refs/reftable: batch refname availability checks
+ - refs: introduce function to batch refname availability checks
+ - builtin/update-ref: skip ambiguity checks when parsing object IDs
+ - object-name: allow skipping ambiguity checks in `get_oid()` family
+ - object-name: introduce `repo_get_oid_with_flags()`
+
+ The code paths to check whether a refname X is available (by seeing
+ if another ref X/Y exists, etc.) have been optimized.
+
+ Needs review.
+ source: <20250228-pks-update-ref-optimization-v4-0-6425c04268b5@pks.im>
+
+
+* ps/build-meson-fixes (2025-02-27) 1 commit
+  (merged to 'next' on 2025-02-28 at 7e8431ab25)
+ + gitlab-ci: fix "msvc-meson" test job succeeding despite test failures
+
+ CI fix.
+
+ Will merge to 'master'.
+ source: <20250227-b4-pks-gitlab-ci-fix-msvc-meson-tests-v1-1-0420abde3807@pks.im>
+
+
+* tb/multi-cruft-paxk-refresh-fix (2025-02-27) 2 commits
+ - builtin/pack-objects.c: freshen objects from existing cruft packs
+ - builtin/repack.c: simplify cruft pack aggregation
+
+ Certain "cruft" objects would have never been refreshed when there
+ are multiple cruft packs in the repository, which has been
+ corrected.
+
+ Expecting a (hopefully minor and final) reroll.
+ cf. <Z8Dvr3F1t7JKuNQf@nand.local>
+ source: <cover.1740680964.git.me@ttaylorr.com>
+
+--------------------------------------------------
+[Cooking]
 
 * jk/zlib-inflate-fixes (2025-02-25) 10 commits
  - unpack_loose_rest(): rewrite return handling for clarity
@@ -157,39 +210,10 @@ Release tarballs are available at:
  - unpack_loose_header(): simplify next_out assignment
  - loose_object_info(): BUG() on inflating content with unknown type
 
+ Fix our use of zlib corner cases.
+
+ Will merge to 'next'?
  source: <20250225062518.GA1293854@coredump.intra.peff.net>
-
---------------------------------------------------
-[Cooking]
-
-* ek/mingw-rename-symlink (2025-02-21) 1 commit
-  (merged to 'next' on 2025-02-24 at 8a9f3a5cdc)
- + compat/mingw: rename the symlink, not the target
-
- Symlink renaming fix.
-
- Will merge to 'master'.
- source: <pull.1864.git.1740139296483.gitgitgadget@gmail.com>
-
-
-* jk/check-mailmap-wo-name-fix (2025-02-21) 1 commit
-  (merged to 'next' on 2025-02-25 at d6d4e05ad1)
- + mailmap: fix check-mailmap with full mailmap line
-
- "git check-mailmap" segfault fix.
-
- Will merge to 'master'.
- source: <20250221-jk-fix-sendemail-mailinfo-v2-1-9aca7dc05dbb@gmail.com>
-
-
-* bc/http-push-auth-netrc-fix (2025-02-24) 1 commit
- - http: allow using netrc for WebDAV-based HTTP protocol
-
- The netrc support (via the cURL library) for the HTTP transport has
- been re-enabled.
-
- Will merge to 'next'.
- source: <20250223015331.588161-2-sandals@crustytoothpaste.net>
 
 
 * cc/signed-fast-export-import (2025-02-24) 6 commits
@@ -208,22 +232,14 @@ Release tarballs are available at:
 
 
 * dk/test-aggregate-results-paste-fix (2025-02-24) 1 commit
- - t/aggregate-results: fix paste(1) invocation
+  (merged to 'next' on 2025-02-27 at cf8ba1cde5)
+ + t/aggregate-results: fix paste(1) invocation
 
  The use of "paste" command for aggregating the test results have
  been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250224192724.7625-1-ben.knoble+github@gmail.com>
-
-
-* rs/clear-commit-marks-optim (2025-02-24) 1 commit
- - commit: avoid parent list buildup in clear_commit_marks_many()
-
- A micro-optimization.
-
- Will merge to 'next'.
- source: <2bd2d71f-0ee6-405f-bec8-368406ca53c8@web.de>
 
 
 * sk/unit-test-oid (2025-02-25) 4 commits
@@ -239,27 +255,33 @@ Release tarballs are available at:
 
 
 * ps/meson-contrib-bits (2025-02-20) 10 commits
- - ci: exercise credential helpers
- - ci: fix propagating UTF-8 test locale in musl-based Meson job
- - meson: wire up static analysis via Coccinelle
- - meson: wire up git-contacts(1)
- - meson: wire up credential helpers
- - contrib/credential: fix compilation of "osxkeychain" helper
- - contrib/credential: fix compiling "libsecret" helper
- - contrib/credential: fix compilation of wincred helper with MSVC
- - contrib/credential: fix "netrc" tests with out-of-tree builds
- - GIT-BUILD-OPTIONS: propagate project's source directory
+  (merged to 'next' on 2025-02-27 at ef18273a2d)
+ + ci: exercise credential helpers
+ + ci: fix propagating UTF-8 test locale in musl-based Meson job
+ + meson: wire up static analysis via Coccinelle
+ + meson: wire up git-contacts(1)
+ + meson: wire up credential helpers
+ + contrib/credential: fix compilation of "osxkeychain" helper
+ + contrib/credential: fix compiling "libsecret" helper
+ + contrib/credential: fix compilation of wincred helper with MSVC
+ + contrib/credential: fix "netrc" tests with out-of-tree builds
+ + GIT-BUILD-OPTIONS: propagate project's source directory
 
  Update meson-based build procedure to cover contrib/ and other
  places as well.
 
- Expecting a reroll.
+ Will merge to 'master'.
  source: <20250218-b4-pks-meson-contrib-v1-0-c3edd292beb8@pks.im>
 
 
 * ms/merge-recursive-string-list-micro-optimization (2025-02-13) 1 commit
- - merge-recursive: optimize time complexity for process_renames
+  (merged to 'next' on 2025-02-27 at 839741ad40)
+ + merge-recursive: optimize time complexity for process_renames
 
+ Rename processing in the recursive merge backend has seen a micro
+ optimization.
+
+ Will merge to 'master'.
  source: <20250214044129.15282-1-meetsoni3017@gmail.com>
 
 
@@ -270,65 +292,43 @@ Release tarballs are available at:
  source: <pull.1894.git.git.1739554578.gitgitgadget@gmail.com>
 
 
-* jt/diff-pairs (2025-02-12) 4 commits
+* jt/diff-pairs (2025-02-26) 3 commits
  - builtin/diff-pairs: allow explicit diff queue flush
  - builtin: introduce diff-pairs command
  - diff: return diff_filepair from diff queue helpers
- - Merge branch 'bc/doc-adoc-not-txt' into jt/diff-pairs
 
  A post-processing filter for "diff --raw" output has been
  introduced.
 
- Needs review (and most likely a bit more polish).
- source: <20250212041825.2455031-1-jltobler@gmail.com>
+ Comments?
+ source: <20250225233925.1345086-1-jltobler@gmail.com>
 
 
-* kn/ref-migrate-skip-reflog (2025-02-21) 1 commit
-  (merged to 'next' on 2025-02-25 at c402e09d08)
- + builtin/refs: add '--no-reflog' flag to drop reflogs
-
- "git refs migrate" can optionally be told not to migrate the reflog.
-
- Will merge to 'master'.
- source: <20250221100423.91075-1-karthik.188@gmail.com>
-
-
-* ps/path-sans-the-repository (2025-02-24) 17 commits
- - fixup! rerere: let `rerere_path()` write paths into a caller-provided buffer
- - path: adjust last remaining users of `the_repository`
- - environment: move access to "core.sharedRepository" into repo settings
- - environment: move access to "core.hooksPath" into repo settings
- - repo-settings: introduce function to clear struct
- - path: drop `git_path()` in favor of `repo_git_path()`
- - rerere: let `rerere_path()` write paths into a caller-provided buffer
- - path: drop `git_common_path()` in favor of `repo_common_path()`
- - worktree: return allocated string from `get_worktree_git_dir()`
- - path: drop `git_path_buf()` in favor of `repo_git_path_replace()`
- - path: drop `git_pathdup()` in favor of `repo_git_path()`
- - path: drop unused `strbuf_git_path()` function
- - path: refactor `repo_submodule_path()` family of functions
- - submodule: refactor `submodule_to_gitdir()` to accept a repo
- - path: refactor `repo_worktree_path()` family of functions
- - path: refactor `repo_git_path()` family of functions
- - path: refactor `repo_common_path()` family of functions
+* ps/path-sans-the-repository (2025-02-28) 16 commits
+  (merged to 'next' on 2025-02-28 at 41875498b7)
+ + path: adjust last remaining users of `the_repository`
+ + environment: move access to "core.sharedRepository" into repo settings
+ + environment: move access to "core.hooksPath" into repo settings
+ + repo-settings: introduce function to clear struct
+ + path: drop `git_path()` in favor of `repo_git_path()`
+ + rerere: let `rerere_path()` write paths into a caller-provided buffer
+ + path: drop `git_common_path()` in favor of `repo_common_path()`
+ + worktree: return allocated string from `get_worktree_git_dir()`
+ + path: drop `git_path_buf()` in favor of `repo_git_path_replace()`
+ + path: drop `git_pathdup()` in favor of `repo_git_path()`
+ + path: drop unused `strbuf_git_path()` function
+ + path: refactor `repo_submodule_path()` family of functions
+ + submodule: refactor `submodule_to_gitdir()` to accept a repo
+ + path: refactor `repo_worktree_path()` family of functions
+ + path: refactor `repo_git_path()` family of functions
+ + path: refactor `repo_common_path()` family of functions
 
  The path.[ch] API takes an explicit repository parameter passed
  throughout the callchain, instead of relying on the_repository
  singleton instance.
 
- Will merge to 'next'?
- source: <20250207-b4-pks-path-drop-the-repository-v2-0-13cad3c11b8a@pks.im>
-
-
-* pw/rebase-i-ff-empty-commit (2025-02-11) 1 commit
-  (merged to 'next' on 2025-02-25 at 63db268d47)
- + rebase -i: reword empty commit after fast-forward
-
- "git rebase -i" failed to allow rewording an empty commit that has
- been fast-forwarded.
-
  Will merge to 'master'.
- source: <pull.1860.v2.git.1739289549299.gitgitgadget@gmail.com>
+ source: <20250207-b4-pks-path-drop-the-repository-v2-0-13cad3c11b8a@pks.im>
 
 
 * ib/diff-S-G-with-longhand (2025-02-12) 10 commits
@@ -361,8 +361,8 @@ Release tarballs are available at:
  source: <20250206-b4-pks-reftable-win32-in-use-errors-v2-1-56985a4f6186@pks.im>
 
 
-* ps/build-meson-fixes-0130 (2025-01-30) 14 commits
-  (merged to 'next' on 2025-02-24 at 6cd5b60792)
+* ps/build-meson-fixes-0130 (2025-02-26) 14 commits
+  (merged to 'next' on 2025-02-27 at 55aaa8c63e)
  + gitlab-ci: restrict maximum number of link jobs on Windows
  + meson: consistently use custom program paths to resolve programs
  + meson: fix overwritten `git` variable
@@ -381,10 +381,8 @@ Release tarballs are available at:
  Assorted fixes and improvements to the build procedure based on
  meson.
 
- On hold.
- Breaks all the "win+Meson test" CI jobs.
- cf. <xmqqo6ypiz9w.fsf@gitster.g>
- source: <20250130-b4-pks-meson-improvements-v2-0-2f05581ffb44@pks.im>
+ Will merge to 'master'.
+ source: <20250226-b4-pks-meson-improvements-v3-0-60c77cf673ae@pks.im>
 
 
 * ps/reftable-sans-compat-util (2025-02-18) 18 commits
@@ -416,7 +414,7 @@ Release tarballs are available at:
  source: <20250218-pks-reftable-drop-git-compat-util-v6-0-8c1f39fb4c02@pks.im>
 
 
-* sj/ref-consistency-checks-more (2025-02-25) 9 commits
+* sj/ref-consistency-checks-more (2025-02-27) 9 commits
  - builtin/fsck: add `git refs verify` child process
  - packed-backend: check whether the "packed-refs" is sorted
  - packed-backend: add "packed-refs" entry consistency check
@@ -430,23 +428,7 @@ Release tarballs are available at:
  "git fsck" becomes more careful when checking the refs.
 
  Comments?
- source: <Z73DTwr9RicKMINe@ArchLinux>
-
-
-* ua/os-version-capability (2025-02-19) 6 commits
-  (merged to 'next' on 2025-02-24 at 89ad48db14)
- + agent: advertise OS name via agent capability
- + t5701: add setup test to remove side-effect dependency
- + version: extend get_uname_info() to hide system details
- + version: refactor get_uname_info()
- + version: refactor redact_non_printables()
- + version: replace manual ASCII checks with isprint() for clarity
-
- The value of "uname -s" is by default sent over the wire as a new
- capability, with an opt-out for privacy-concious folks.
-
- Will merge to 'master'.
- source: <20250215155130.1756934-1-usmanakinyemi202@gmail.com>
+ source: <Z8CMx7O19PMs9sVY@ArchLinux>
 
 
 * jc/doc-attr-tree (2024-12-14) 1 commit
