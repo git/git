@@ -678,6 +678,7 @@ static void unlock_ref(struct ref_lock *lock)
  */
 static int lock_raw_ref(struct files_ref_store *refs,
 			const char *refname, int mustexist,
+			struct string_list *refnames_to_check,
 			const struct string_list *extras,
 			struct ref_lock **lock_p,
 			struct strbuf *referent,
@@ -855,16 +856,11 @@ retry:
 		}
 
 		/*
-		 * If the ref did not exist and we are creating it,
-		 * make sure there is no existing packed ref that
-		 * conflicts with refname:
+		 * If the ref did not exist and we are creating it, we have to
+		 * make sure there is no existing packed ref that conflicts
+		 * with refname. This check is deferred so that we can batch it.
 		 */
-		if (refs_verify_refname_available(
-				    refs->packed_ref_store, refname,
-				    extras, NULL, 0, err)) {
-			ret = TRANSACTION_NAME_CONFLICT;
-			goto error_return;
-		}
+		string_list_insert(refnames_to_check, refname);
 	}
 
 	ret = 0;
@@ -2569,6 +2565,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			       struct ref_update *update,
 			       struct ref_transaction *transaction,
 			       const char *head_ref,
+			       struct string_list *refnames_to_check,
 			       struct string_list *affected_refnames,
 			       struct strbuf *err)
 {
@@ -2597,7 +2594,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 		lock->count++;
 	} else {
 		ret = lock_raw_ref(refs, update->refname, mustexist,
-				   affected_refnames,
+				   refnames_to_check, affected_refnames,
 				   &lock, &referent,
 				   &update->type, err);
 		if (ret) {
@@ -2811,6 +2808,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	size_t i;
 	int ret = 0;
 	struct string_list affected_refnames = STRING_LIST_INIT_NODUP;
+	struct string_list refnames_to_check = STRING_LIST_INIT_NODUP;
 	char *head_ref = NULL;
 	int head_type;
 	struct files_transaction_backend_data *backend_data;
@@ -2898,7 +2896,8 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 		struct ref_update *update = transaction->updates[i];
 
 		ret = lock_ref_for_update(refs, update, transaction,
-					  head_ref, &affected_refnames, err);
+					  head_ref, &refnames_to_check,
+					  &affected_refnames, err);
 		if (ret)
 			goto cleanup;
 
@@ -2928,6 +2927,26 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 					&update->new_oid, NULL,
 					NULL, NULL, NULL, NULL);
 		}
+	}
+
+	/*
+	 * Verify that none of the loose reference that we're about to write
+	 * conflict with any existing packed references. Ideally, we'd do this
+	 * check after the packed-refs are locked so that the file cannot
+	 * change underneath our feet. But introducing such a lock now would
+	 * probably do more harm than good as users rely on there not being a
+	 * global lock with the "files" backend.
+	 *
+	 * Another alternative would be to do the check after the (optional)
+	 * lock, but that would extend the time we spend in the globally-locked
+	 * state.
+	 *
+	 * So instead, we accept the race for now.
+	 */
+	if (refs_verify_refnames_available(refs->packed_ref_store, &refnames_to_check,
+					   &affected_refnames, NULL, 0, err)) {
+		ret = TRANSACTION_NAME_CONFLICT;
+		goto cleanup;
 	}
 
 	if (packed_transaction) {
@@ -2972,6 +2991,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 cleanup:
 	free(head_ref);
 	string_list_clear(&affected_refnames, 0);
+	string_list_clear(&refnames_to_check, 0);
 
 	if (ret)
 		files_transaction_cleanup(refs, transaction);
