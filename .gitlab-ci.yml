@@ -164,7 +164,7 @@ build:msvc-meson:
   extends: .msvc-meson
   stage: build
   script:
-    - meson setup build -Dperl=disabled
+    - meson setup build -Dperl=disabled -Dbackend_max_links=1
     - meson compile -C build
   artifacts:
     paths:
