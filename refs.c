@@ -2484,6 +2484,7 @@ int refs_verify_refnames_available(struct ref_store *refs,
 {
 	struct strbuf dirname = STRBUF_INIT;
 	struct strbuf referent = STRBUF_INIT;
+	struct strset dirnames;
 	int ret = -1;
 
 	/*
@@ -2492,6 +2493,8 @@ int refs_verify_refnames_available(struct ref_store *refs,
 	 */
 
 	assert(err);
+
+	strset_init(&dirnames);
 
 	for (size_t i = 0; i < refnames->nr; i++) {
 		const char *refname = refnames->items[i].string;
@@ -2520,6 +2523,14 @@ int refs_verify_refnames_available(struct ref_store *refs,
 			 * it is a conflict, *unless* it is in skip.
 			 */
 			if (skip && string_list_has_string(skip, dirname.buf))
+				continue;
+
+			/*
+			 * If we've already seen the directory we don't need to
+			 * process it again. Skip it to avoid checking checking
+			 * common prefixes like "refs/heads/" repeatedly.
+			 */
+			if (!strset_add(&dirnames, dirname.buf))
 				continue;
 
 			if (!initial_transaction &&
@@ -2582,6 +2593,7 @@ int refs_verify_refnames_available(struct ref_store *refs,
 cleanup:
 	strbuf_release(&referent);
 	strbuf_release(&dirname);
+	strset_clear(&dirnames);
 	return ret;
 }
 
