@@ -22,6 +22,13 @@ ort::
 	was written as a replacement for the previous default
 	algorithm, `recursive`.
 +
+In the case where the path is a submodule, if the submodule commit used on
+one side of the merge is a descendant of the submodule commit used on the
+other side of the merge, Git attempts to fast-forward to the
+descendant. Otherwise, Git will treat this case as a conflict, suggesting
+as a resolution a submodule commit that is descendant of the conflicting
+ones, if one exists.
++
 The 'ort' strategy can take the following options:
 
 ours;;
@@ -95,6 +102,9 @@ recursive::
 	renames.  It does not make use of detected copies.  This was
 	the default strategy for resolving two heads from Git v0.99.9k
 	until v2.33.0.
++
+For a path that is a submodule, the same caution as 'ort' applies to this
+strategy.
 +
 The 'recursive' strategy takes the same options as 'ort'.  However,
 there are three additional options that 'ort' ignores (not documented
