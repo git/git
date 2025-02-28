@@ -16,6 +16,8 @@ https://developers.google.com/open-source/licenses/bsd
 #include "system.h"
 #include "reftable-basics.h"
 
+#define REFTABLE_UNUSED __attribute__((__unused__))
+
 struct reftable_buf {
 	size_t alloc;
 	size_t len;
@@ -76,9 +78,79 @@ char *reftable_buf_detach(struct reftable_buf *buf);
 
 /* Bigendian en/decoding of integers */
 
-void put_be24(uint8_t *out, uint32_t i);
-uint32_t get_be24(uint8_t *in);
-void put_be16(uint8_t *out, uint16_t i);
+static inline void reftable_put_be16(void *out, uint16_t i)
+{
+	unsigned char *p = out;
+	p[0] = (uint8_t)((i >> 8) & 0xff);
+	p[1] = (uint8_t)((i >> 0) & 0xff);
+}
+
+static inline void reftable_put_be24(void *out, uint32_t i)
+{
+	unsigned char *p = out;
+	p[0] = (uint8_t)((i >> 16) & 0xff);
+	p[1] = (uint8_t)((i >>  8) & 0xff);
+	p[2] = (uint8_t)((i >>  0) & 0xff);
+}
+
+static inline void reftable_put_be32(void *out, uint32_t i)
+{
+	unsigned char *p = out;
+	p[0] = (uint8_t)((i >> 24) & 0xff);
+	p[1] = (uint8_t)((i >> 16) & 0xff);
+	p[2] = (uint8_t)((i >>  8) & 0xff);
+	p[3] = (uint8_t)((i >>  0) & 0xff);
+}
+
+static inline void reftable_put_be64(void *out, uint64_t i)
+{
+	unsigned char *p = out;
+	p[0] = (uint8_t)((i >> 56) & 0xff);
+	p[1] = (uint8_t)((i >> 48) & 0xff);
+	p[2] = (uint8_t)((i >> 40) & 0xff);
+	p[3] = (uint8_t)((i >> 32) & 0xff);
+	p[4] = (uint8_t)((i >> 24) & 0xff);
+	p[5] = (uint8_t)((i >> 16) & 0xff);
+	p[6] = (uint8_t)((i >>  8) & 0xff);
+	p[7] = (uint8_t)((i >>  0) & 0xff);
+}
+
+static inline uint16_t reftable_get_be16(const void *in)
+{
+	const unsigned char *p = in;
+	return (uint16_t)(p[0]) << 8 |
+	       (uint16_t)(p[1]) << 0;
+}
+
+static inline uint32_t reftable_get_be24(const void *in)
+{
+	const unsigned char *p = in;
+	return (uint32_t)(p[0]) << 16 |
+	       (uint32_t)(p[1]) << 8 |
+	       (uint32_t)(p[2]) << 0;
+}
+
+static inline uint32_t reftable_get_be32(const void *in)
+{
+	const unsigned char *p = in;
+	return (uint32_t)(p[0]) << 24 |
+	       (uint32_t)(p[1]) << 16 |
+	       (uint32_t)(p[2]) <<  8|
+	       (uint32_t)(p[3]) <<  0;
+}
+
+static inline uint64_t reftable_get_be64(const void *in)
+{
+	const unsigned char *p = in;
+	return (uint64_t)(p[0]) << 56 |
+	       (uint64_t)(p[1]) << 48 |
+	       (uint64_t)(p[2]) << 40 |
+	       (uint64_t)(p[3]) << 32 |
+	       (uint64_t)(p[4]) << 24 |
+	       (uint64_t)(p[5]) << 16 |
+	       (uint64_t)(p[6]) <<  8 |
+	       (uint64_t)(p[7]) <<  0;
+}
 
 /*
  * find smallest index i in [0, sz) at which `f(i) > 0`, assuming that f is
@@ -117,18 +189,46 @@ void reftable_free(void *p);
 void *reftable_calloc(size_t nelem, size_t elsize);
 char *reftable_strdup(const char *str);
 
-#define REFTABLE_ALLOC_ARRAY(x, alloc) (x) = reftable_malloc(st_mult(sizeof(*(x)), (alloc)))
+static inline int reftable_alloc_size(size_t nelem, size_t elsize, size_t *out)
+{
+	if (nelem && elsize > SIZE_MAX / nelem)
+		return -1;
+	*out = nelem * elsize;
+	return 0;
+}
+
+#define REFTABLE_ALLOC_ARRAY(x, alloc) do { \
+		size_t alloc_size; \
+		if (reftable_alloc_size(sizeof(*(x)), (alloc), &alloc_size) < 0) { \
+			errno = ENOMEM; \
+			(x) = NULL; \
+		} else { \
+			(x) = reftable_malloc(alloc_size); \
+		} \
+	} while (0)
 #define REFTABLE_CALLOC_ARRAY(x, alloc) (x) = reftable_calloc((alloc), sizeof(*(x)))
-#define REFTABLE_REALLOC_ARRAY(x, alloc) (x) = reftable_realloc((x), st_mult(sizeof(*(x)), (alloc)))
+#define REFTABLE_REALLOC_ARRAY(x, alloc) do { \
+		size_t alloc_size; \
+		if (reftable_alloc_size(sizeof(*(x)), (alloc), &alloc_size) < 0) { \
+			errno = ENOMEM; \
+			(x) = NULL; \
+		} else { \
+			(x) = reftable_realloc((x), alloc_size); \
+		} \
+	} while (0)
 
 static inline void *reftable_alloc_grow(void *p, size_t nelem, size_t elsize,
 					size_t *allocp)
 {
 	void *new_p;
-	size_t alloc = *allocp * 2 + 1;
+	size_t alloc = *allocp * 2 + 1, alloc_bytes;
 	if (alloc < nelem)
 		alloc = nelem;
-	new_p = reftable_realloc(p, st_mult(elsize, alloc));
+	if (reftable_alloc_size(elsize, alloc, &alloc_bytes) < 0) {
+		errno = ENOMEM;
+		return p;
+	}
+	new_p = reftable_realloc(p, alloc_bytes);
 	if (!new_p)
 		return p;
 	*allocp = alloc;
@@ -167,6 +267,15 @@ static inline void *reftable_alloc_grow(void *p, size_t nelem, size_t elsize,
 # undef strdup
 # define strdup(str) REFTABLE_BANNED(strdup)
 #endif
+
+#define REFTABLE_SWAP(a, b) do {								\
+	void *_swap_a_ptr = &(a);								\
+	void *_swap_b_ptr = &(b);								\
+	unsigned char _swap_buffer[sizeof(a) - 2 * sizeof(a) * (sizeof(a) != sizeof(b))];	\
+	memcpy(_swap_buffer, _swap_a_ptr, sizeof(a));						\
+	memcpy(_swap_a_ptr, _swap_b_ptr, sizeof(a));						\
+	memcpy(_swap_b_ptr, _swap_buffer, sizeof(a));						\
+} while (0)
 
 /* Find the longest shared prefix size of `a` and `b` */
 size_t common_prefix_size(struct reftable_buf *a, struct reftable_buf *b);

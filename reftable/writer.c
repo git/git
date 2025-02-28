@@ -99,9 +99,9 @@ static int writer_write_header(struct reftable_writer *w, uint8_t *dest)
 
 	dest[4] = writer_version(w);
 
-	put_be24(dest + 5, w->opts.block_size);
-	put_be64(dest + 8, w->min_update_index);
-	put_be64(dest + 16, w->max_update_index);
+	reftable_put_be24(dest + 5, w->opts.block_size);
+	reftable_put_be64(dest + 8, w->min_update_index);
+	reftable_put_be64(dest + 16, w->max_update_index);
 	if (writer_version(w) == 2) {
 		uint32_t hash_id;
 
@@ -116,7 +116,7 @@ static int writer_write_header(struct reftable_writer *w, uint8_t *dest)
 			return -1;
 		}
 
-		put_be32(dest + 24, hash_id);
+		reftable_put_be32(dest + 24, hash_id);
 	}
 
 	return header_size(writer_version(w));
@@ -158,7 +158,7 @@ int reftable_writer_new(struct reftable_writer **out,
 		opts = *_opts;
 	options_set_defaults(&opts);
 	if (opts.block_size >= (1 << 24))
-		BUG("configured block size exceeds 16MB");
+		return REFTABLE_API_ERROR;
 
 	reftable_buf_init(&wp->block_writer_data.last_key);
 	reftable_buf_init(&wp->last_key);
@@ -302,8 +302,7 @@ static int writer_add_record(struct reftable_writer *w,
 	}
 
 	if (block_writer_type(w->block_writer) != reftable_record_type(rec))
-		BUG("record of type %d added to writer of type %d",
-		    reftable_record_type(rec), block_writer_type(w->block_writer));
+		return REFTABLE_API_ERROR;
 
 	/*
 	 * Try to add the record to the writer. If this succeeds then we're
@@ -650,7 +649,7 @@ static void write_object_record(void *void_arg, void *key)
 done:;
 }
 
-static void object_record_free(void *void_arg UNUSED, void *key)
+static void object_record_free(void *void_arg REFTABLE_UNUSED, void *key)
 {
 	struct obj_index_tree_node *entry = key;
 
@@ -731,19 +730,19 @@ int reftable_writer_close(struct reftable_writer *w)
 	}
 
 	p += writer_write_header(w, footer);
-	put_be64(p, w->stats.ref_stats.index_offset);
+	reftable_put_be64(p, w->stats.ref_stats.index_offset);
 	p += 8;
-	put_be64(p, (w->stats.obj_stats.offset) << 5 | w->stats.object_id_len);
+	reftable_put_be64(p, (w->stats.obj_stats.offset) << 5 | w->stats.object_id_len);
 	p += 8;
-	put_be64(p, w->stats.obj_stats.index_offset);
-	p += 8;
-
-	put_be64(p, w->stats.log_stats.offset);
-	p += 8;
-	put_be64(p, w->stats.log_stats.index_offset);
+	reftable_put_be64(p, w->stats.obj_stats.index_offset);
 	p += 8;
 
-	put_be32(p, crc32(0, footer, p - footer));
+	reftable_put_be64(p, w->stats.log_stats.offset);
+	p += 8;
+	reftable_put_be64(p, w->stats.log_stats.index_offset);
+	p += 8;
+
+	reftable_put_be32(p, crc32(0, footer, p - footer));
 	p += 4;
 
 	err = w->flush(w->write_arg);
