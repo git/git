@@ -59,10 +59,10 @@ static void credential_clear(struct credential *c);
 /* ----------------- Secret Service functions ----------------- */
 
 static const SecretSchema schema = {
-	"org.git.Password",
+	.name = "org.git.Password",
 	/* Ignore schema name during search for backwards compatibility */
-	SECRET_SCHEMA_DONT_MATCH_NAME,
-	{
+	.flags = SECRET_SCHEMA_DONT_MATCH_NAME,
+	.attributes = {
 		/*
 		 * libsecret assumes attribute values are non-confidential and
 		 * unchanging, so we can't include oauth_refresh_token or
@@ -168,7 +168,7 @@ static int keyring_get(struct credential *c)
 				g_free(c->password);
 				c->password = g_strdup("");
 			}
-			for (int i = 1; i < g_strv_length(parts); i++) {
+			for (guint i = 1; i < g_strv_length(parts); i++) {
 				if (g_str_has_prefix(parts[i], "password_expiry_utc=")) {
 					g_free(c->password_expiry_utc);
 					c->password_expiry_utc = g_strdup(&parts[i][20]);
@@ -424,7 +424,7 @@ int main(int argc, char *argv[])
 	struct credential_operation const *try_op = credential_helper_ops;
 	struct credential cred = CREDENTIAL_INIT;
 
-	if (!argv[1]) {
+	if (argc < 2 || !*argv[1]) {
 		usage(argv[0]);
 		exit(EXIT_FAILURE);
 	}

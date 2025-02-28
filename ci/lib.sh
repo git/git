@@ -348,8 +348,11 @@ case "$jobname" in
 linux32)
 	CC=gcc
 	;;
-linux-musl)
-	MESONFLAGS="$MESONFLAGS -DGIT_TEST_UTF8_LOCALE=C.UTF-8"
+linux-meson)
+	MESONFLAGS="$MESONFLAGS -Dcredential_helpers=libsecret,netrc"
+	;;
+linux-musl-meson)
+	MESONFLAGS="$MESONFLAGS -Dtest_utf8_locale=C.UTF-8"
 	;;
 linux-leaks|linux-reftable-leaks)
 	export SANITIZE=leak
@@ -358,6 +361,9 @@ linux-asan-ubsan)
 	export SANITIZE=address,undefined
 	export NO_SVN_TESTS=LetsSaveSomeTime
 	MAKEFLAGS="$MAKEFLAGS NO_PYTHON=YepBecauseP4FlakesTooOften"
+	;;
+osx-meson)
+	MESONFLAGS="$MESONFLAGS -Dcredential_helpers=osxkeychain"
 	;;
 esac
 

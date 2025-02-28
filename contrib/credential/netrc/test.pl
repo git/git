@@ -15,10 +15,11 @@ BEGIN {
 
 my @global_credential_args = @ARGV;
 my $scriptDir = dirname rel2abs $0;
-my ($netrc, $netrcGpg, $gcNetrc) = map { catfile $scriptDir, $_; }
+my ($netrc, $netrcGpg) = map { catfile $scriptDir, $_; }
                                        qw(test.netrc
-                                          test.netrc.gpg
-                                          git-credential-netrc);
+                                          test.netrc.gpg);
+my $gcNetrc = $ENV{CREDENTIAL_NETRC_PATH} || catfile $scriptDir, qw(git-credential-netrc);
+
 local $ENV{PATH} = join ':'
                       , $scriptDir
                       , $ENV{PATH}

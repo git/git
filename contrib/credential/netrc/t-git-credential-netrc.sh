@@ -15,7 +15,7 @@
 
 	export PERL5LIB="$GITPERLLIB"
 	test_expect_success 'git-credential-netrc' '
-		perl "$GIT_BUILD_DIR"/contrib/credential/netrc/test.pl
+		perl "$GIT_SOURCE_DIR"/contrib/credential/netrc/test.pl
 	'
 
 	test_done

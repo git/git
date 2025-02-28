@@ -422,7 +422,7 @@ int main(int argc, const char **argv)
 	const char *usage =
 		"usage: git credential-osxkeychain <get|store|erase>";
 
-	if (!argv[1])
+	if (argc < 2 || !*argv[1])
 		die("%s", usage);
 
 	if (open(argv[0], O_RDONLY | O_EXLOCK) == -1)

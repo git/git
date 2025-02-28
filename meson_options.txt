@@ -27,7 +27,9 @@ option('version', type: 'string', value: '',
   description: 'Version string reported by git-version(1) and other tools.')
 
 # Features supported by Git.
-option('contrib', type: 'array', value: [ 'completion' ], choices: [ 'completion', 'subtree' ],
+option('contrib', type: 'array', value: [ 'completion' ], choices: [ 'completion', 'contacts', 'subtree' ],
+  description: 'Contributed features to include.')
+option('credential_helpers', type: 'array', value: [ ], choices: [ 'libsecret', 'netrc', 'osxkeychain', 'wincred' ],
   description: 'Contributed features to include.')
 option('curl', type: 'feature', value: 'enabled',
   description: 'Build helpers used to access remotes with the HTTP transport.')
@@ -99,6 +101,8 @@ option('docs_backend', type: 'combo', choices: ['asciidoc', 'asciidoctor', 'auto
   description: 'Which backend to use to generate documentation.')
 
 # Testing.
+option('coccinelle', type: 'feature', value: 'auto',
+  description: 'Provide a coccicheck target that generates a Coccinelle patch.')
 option('tests', type: 'boolean', value: true,
   description: 'Enable building tests. This requires Perl, but is separate from the "perl" option such that you can build tests without Perl features enabled.')
 option('test_output_directory', type: 'string',
