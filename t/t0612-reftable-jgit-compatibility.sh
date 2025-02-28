@@ -80,9 +80,7 @@ test_expect_success 'JGit repository can be read by CGit' '
 
 		test_same_refs &&
 		test_same_ref HEAD &&
-		# Interestingly, JGit cannot read its own reflog here. CGit can
-		# though.
-		printf "%s HEAD@{0}: commit (initial): initial commit" "$(git rev-parse --short HEAD)" >expect &&
+		jgit reflog HEAD >expect &&
 		git reflog HEAD >actual &&
 		test_cmp expect actual
 	)
