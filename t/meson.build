@@ -4,6 +4,9 @@ clar_test_suites = [
   'unit-tests/u-hash.c',
   'unit-tests/u-hashmap.c',
   'unit-tests/u-mem-pool.c',
+  'unit-tests/u-oid-array.c',
+  'unit-tests/u-oidmap.c',
+  'unit-tests/u-oidtree.c',
   'unit-tests/u-prio-queue.c',
   'unit-tests/u-reftable-tree.c',
   'unit-tests/u-strbuf.c',
@@ -14,6 +17,7 @@ clar_test_suites = [
 clar_sources = [
   'unit-tests/clar/clar.c',
   'unit-tests/unit-test.c',
+  'unit-tests/lib-oid.c'
 ]
 
 clar_decls_h = custom_target(
@@ -48,9 +52,6 @@ clar_unit_tests = executable('unit-tests',
 test('unit-tests', clar_unit_tests)
 
 unit_test_programs = [
-  'unit-tests/t-oid-array.c',
-  'unit-tests/t-oidmap.c',
-  'unit-tests/t-oidtree.c',
   'unit-tests/t-reftable-basics.c',
   'unit-tests/t-reftable-block.c',
   'unit-tests/t-reftable-merged.c',
@@ -68,7 +69,6 @@ foreach unit_test_program : unit_test_programs
   unit_test = executable(unit_test_name,
     sources: [
       'unit-tests/test-lib.c',
-      'unit-tests/lib-oid.c',
       'unit-tests/lib-reftable.c',
       unit_test_program,
     ],
