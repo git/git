@@ -78,4 +78,13 @@ test_expect_success 'diff-pairs does not support pathspec arguments' '
 	test_cmp expect err
 '
 
+test_expect_success 'diff-pairs explicit queue flush' '
+	git diff-tree -r -M -C -C -z base new >expect &&
+	printf "\0" >>expect &&
+	git diff-tree -r -M -C -C -z base new >>expect &&
+
+	git diff-pairs --raw -z <expect >actual &&
+	test_cmp expect actual
+'
+
 test_done
