@@ -835,7 +835,7 @@ static void write_refspec_config(const char *src_ref_prefix,
 
 static void dissociate_from_references(void)
 {
-	char *alternates = git_pathdup("objects/info/alternates");
+	char *alternates = repo_git_path(the_repository, "objects/info/alternates");
 
 	if (!access(alternates, F_OK)) {
 		struct child_process cmd = CHILD_PROCESS_INIT;
@@ -1219,7 +1219,7 @@ int cmd_clone(int argc,
 
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "%s/refs", git_dir);
-	safe_create_dir(buf.buf, 1);
+	safe_create_dir(the_repository, buf.buf, 1);
 
 	/*
 	 * additional config can be injected with -c, make sure it's included

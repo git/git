@@ -42,6 +42,8 @@
  * file created by its parent.
  */
 
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "path.h"
@@ -148,7 +150,7 @@ struct tempfile *create_tempfile_mode(const char *path, int mode)
 		return NULL;
 	}
 	activate_tempfile(tempfile);
-	if (adjust_shared_perm(tempfile->filename.buf)) {
+	if (adjust_shared_perm(the_repository, tempfile->filename.buf)) {
 		int save_errno = errno;
 		error("cannot fix permission bits on %s", tempfile->filename.buf);
 		delete_tempfile(&tempfile);

@@ -136,7 +136,8 @@ int push_unpushed_submodules(struct repository *r,
  * path of that submodule in 'buf'. Return -1 on error or when the
  * submodule is not initialized.
  */
-int submodule_to_gitdir(struct strbuf *buf, const char *submodule);
+int submodule_to_gitdir(struct repository *repo,
+			struct strbuf *buf, const char *submodule);
 
 /*
  * Given a submodule name, create a path to where the submodule's gitdir lives

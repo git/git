@@ -380,7 +380,7 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	default:
 		BUG("unknown hash algorithm %d", repo->hash_algo->format_id);
 	}
-	refs->write_options.default_permissions = calc_shared_perm(0666 & ~mask);
+	refs->write_options.default_permissions = calc_shared_perm(the_repository, 0666 & ~mask);
 	refs->write_options.disable_auto_compact =
 		!git_env_bool("GIT_TEST_REFTABLE_AUTOCOMPACTION", 1);
 	refs->write_options.lock_timeout_ms = 100;
@@ -470,21 +470,21 @@ static int reftable_be_create_on_disk(struct ref_store *ref_store,
 	struct strbuf sb = STRBUF_INIT;
 
 	strbuf_addf(&sb, "%s/reftable", refs->base.gitdir);
-	safe_create_dir(sb.buf, 1);
+	safe_create_dir(the_repository, sb.buf, 1);
 	strbuf_reset(&sb);
 
 	strbuf_addf(&sb, "%s/HEAD", refs->base.gitdir);
 	write_file(sb.buf, "ref: refs/heads/.invalid");
-	adjust_shared_perm(sb.buf);
+	adjust_shared_perm(the_repository, sb.buf);
 	strbuf_reset(&sb);
 
 	strbuf_addf(&sb, "%s/refs", refs->base.gitdir);
-	safe_create_dir(sb.buf, 1);
+	safe_create_dir(the_repository, sb.buf, 1);
 	strbuf_reset(&sb);
 
 	strbuf_addf(&sb, "%s/refs/heads", refs->base.gitdir);
 	write_file(sb.buf, "this repository uses the reftable format");
-	adjust_shared_perm(sb.buf);
+	adjust_shared_perm(the_repository, sb.buf);
 
 	strbuf_release(&sb);
 	return 0;

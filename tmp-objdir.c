@@ -207,10 +207,12 @@ static int read_dir_paths(struct string_list *out, const char *path)
 	return 0;
 }
 
-static int migrate_paths(struct strbuf *src, struct strbuf *dst,
+static int migrate_paths(struct tmp_objdir *t,
+			 struct strbuf *src, struct strbuf *dst,
 			 enum finalize_object_file_flags flags);
 
-static int migrate_one(struct strbuf *src, struct strbuf *dst,
+static int migrate_one(struct tmp_objdir *t,
+		       struct strbuf *src, struct strbuf *dst,
 		       enum finalize_object_file_flags flags)
 {
 	struct stat st;
@@ -219,11 +221,11 @@ static int migrate_one(struct strbuf *src, struct strbuf *dst,
 		return -1;
 	if (S_ISDIR(st.st_mode)) {
 		if (!mkdir(dst->buf, 0777)) {
-			if (adjust_shared_perm(dst->buf))
+			if (adjust_shared_perm(t->repo, dst->buf))
 				return -1;
 		} else if (errno != EEXIST)
 			return -1;
-		return migrate_paths(src, dst, flags);
+		return migrate_paths(t, src, dst, flags);
 	}
 	return finalize_object_file_flags(src->buf, dst->buf, flags);
 }
@@ -233,7 +235,8 @@ static int is_loose_object_shard(const char *name)
 	return strlen(name) == 2 && isxdigit(name[0]) && isxdigit(name[1]);
 }
 
-static int migrate_paths(struct strbuf *src, struct strbuf *dst,
+static int migrate_paths(struct tmp_objdir *t,
+			 struct strbuf *src, struct strbuf *dst,
 			 enum finalize_object_file_flags flags)
 {
 	size_t src_len = src->len, dst_len = dst->len;
@@ -255,7 +258,7 @@ static int migrate_paths(struct strbuf *src, struct strbuf *dst,
 		if (is_loose_object_shard(name))
 			flags_copy |= FOF_SKIP_COLLISION_CHECK;
 
-		ret |= migrate_one(src, dst, flags_copy);
+		ret |= migrate_one(t, src, dst, flags_copy);
 
 		strbuf_setlen(src, src_len);
 		strbuf_setlen(dst, dst_len);
@@ -283,7 +286,7 @@ int tmp_objdir_migrate(struct tmp_objdir *t)
 	strbuf_addbuf(&src, &t->path);
 	strbuf_addstr(&dst, repo_get_object_directory(t->repo));
 
-	ret = migrate_paths(&src, &dst, 0);
+	ret = migrate_paths(t, &src, &dst, 0);
 
 	strbuf_release(&src);
 	strbuf_release(&dst);
