@@ -2154,7 +2154,7 @@ struct ref_store *repo_get_submodule_ref_store(struct repository *repo,
 	if (!is_nonbare_repository_dir(&submodule_sb))
 		goto done;
 
-	if (submodule_to_gitdir(&submodule_sb, submodule))
+	if (submodule_to_gitdir(repo, &submodule_sb, submodule))
 		goto done;
 
 	subrepo = xmalloc(sizeof(*subrepo));
@@ -2192,8 +2192,8 @@ struct ref_store *get_worktree_ref_store(const struct worktree *wt)
 
 	if (wt->id) {
 		struct strbuf common_path = STRBUF_INIT;
-		strbuf_git_common_path(&common_path, wt->repo,
-				      "worktrees/%s", wt->id);
+		repo_common_path_append(wt->repo, &common_path,
+					"worktrees/%s", wt->id);
 		refs = ref_store_init(wt->repo, wt->repo->ref_storage_format,
 				      common_path.buf, REF_STORE_ALL_CAPS);
 		strbuf_release(&common_path);

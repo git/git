@@ -667,7 +667,7 @@ int cmd_tag(int argc,
 	if (create_tag_object) {
 		if (force_sign_annotate && !annotate)
 			opt.sign = 1;
-		path = git_pathdup("TAG_EDITMSG");
+		path = repo_git_path(the_repository, "TAG_EDITMSG");
 		create_tag(&object, object_ref, tag, &buf, &opt, &prev, &object,
 			   &trailer_args, path);
 	}
