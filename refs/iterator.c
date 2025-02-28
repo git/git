@@ -21,9 +21,14 @@ int ref_iterator_peel(struct ref_iterator *ref_iterator,
 	return ref_iterator->vtable->peel(ref_iterator, peeled);
 }
 
-int ref_iterator_abort(struct ref_iterator *ref_iterator)
+void ref_iterator_free(struct ref_iterator *ref_iterator)
 {
-	return ref_iterator->vtable->abort(ref_iterator);
+	if (ref_iterator) {
+		ref_iterator->vtable->release(ref_iterator);
+		/* Help make use-after-free bugs fail quickly: */
+		ref_iterator->vtable = NULL;
+		free(ref_iterator);
+	}
 }
 
 void base_ref_iterator_init(struct ref_iterator *iter,
@@ -36,20 +41,13 @@ void base_ref_iterator_init(struct ref_iterator *iter,
 	iter->flags = 0;
 }
 
-void base_ref_iterator_free(struct ref_iterator *iter)
-{
-	/* Help make use-after-free bugs fail quickly: */
-	iter->vtable = NULL;
-	free(iter);
-}
-
 struct empty_ref_iterator {
 	struct ref_iterator base;
 };
 
-static int empty_ref_iterator_advance(struct ref_iterator *ref_iterator)
+static int empty_ref_iterator_advance(struct ref_iterator *ref_iterator UNUSED)
 {
-	return ref_iterator_abort(ref_iterator);
+	return ITER_DONE;
 }
 
 static int empty_ref_iterator_peel(struct ref_iterator *ref_iterator UNUSED,
@@ -58,16 +56,14 @@ static int empty_ref_iterator_peel(struct ref_iterator *ref_iterator UNUSED,
 	BUG("peel called for empty iterator");
 }
 
-static int empty_ref_iterator_abort(struct ref_iterator *ref_iterator)
+static void empty_ref_iterator_release(struct ref_iterator *ref_iterator UNUSED)
 {
-	base_ref_iterator_free(ref_iterator);
-	return ITER_DONE;
 }
 
 static struct ref_iterator_vtable empty_ref_iterator_vtable = {
 	.advance = empty_ref_iterator_advance,
 	.peel = empty_ref_iterator_peel,
-	.abort = empty_ref_iterator_abort,
+	.release = empty_ref_iterator_release,
 };
 
 struct ref_iterator *empty_ref_iterator_begin(void)
@@ -151,11 +147,13 @@ static int merge_ref_iterator_advance(struct ref_iterator *ref_iterator)
 	if (!iter->current) {
 		/* Initialize: advance both iterators to their first entries */
 		if ((ok = ref_iterator_advance(iter->iter0)) != ITER_OK) {
+			ref_iterator_free(iter->iter0);
 			iter->iter0 = NULL;
 			if (ok == ITER_ERROR)
 				goto error;
 		}
 		if ((ok = ref_iterator_advance(iter->iter1)) != ITER_OK) {
+			ref_iterator_free(iter->iter1);
 			iter->iter1 = NULL;
 			if (ok == ITER_ERROR)
 				goto error;
@@ -166,6 +164,7 @@ static int merge_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		 * entry:
 		 */
 		if ((ok = ref_iterator_advance(*iter->current)) != ITER_OK) {
+			ref_iterator_free(*iter->current);
 			*iter->current = NULL;
 			if (ok == ITER_ERROR)
 				goto error;
@@ -179,9 +178,8 @@ static int merge_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			iter->select(iter->iter0, iter->iter1, iter->cb_data);
 
 		if (selection == ITER_SELECT_DONE) {
-			return ref_iterator_abort(ref_iterator);
+			return ITER_DONE;
 		} else if (selection == ITER_SELECT_ERROR) {
-			ref_iterator_abort(ref_iterator);
 			return ITER_ERROR;
 		}
 
@@ -195,6 +193,7 @@ static int merge_ref_iterator_advance(struct ref_iterator *ref_iterator)
 
 		if (selection & ITER_SKIP_SECONDARY) {
 			if ((ok = ref_iterator_advance(*secondary)) != ITER_OK) {
+				ref_iterator_free(*secondary);
 				*secondary = NULL;
 				if (ok == ITER_ERROR)
 					goto error;
@@ -211,7 +210,6 @@ static int merge_ref_iterator_advance(struct ref_iterator *ref_iterator)
 	}
 
 error:
-	ref_iterator_abort(ref_iterator);
 	return ITER_ERROR;
 }
 
@@ -227,28 +225,18 @@ static int merge_ref_iterator_peel(struct ref_iterator *ref_iterator,
 	return ref_iterator_peel(*iter->current, peeled);
 }
 
-static int merge_ref_iterator_abort(struct ref_iterator *ref_iterator)
+static void merge_ref_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct merge_ref_iterator *iter =
 		(struct merge_ref_iterator *)ref_iterator;
-	int ok = ITER_DONE;
-
-	if (iter->iter0) {
-		if (ref_iterator_abort(iter->iter0) != ITER_DONE)
-			ok = ITER_ERROR;
-	}
-	if (iter->iter1) {
-		if (ref_iterator_abort(iter->iter1) != ITER_DONE)
-			ok = ITER_ERROR;
-	}
-	base_ref_iterator_free(ref_iterator);
-	return ok;
+	ref_iterator_free(iter->iter0);
+	ref_iterator_free(iter->iter1);
 }
 
 static struct ref_iterator_vtable merge_ref_iterator_vtable = {
 	.advance = merge_ref_iterator_advance,
 	.peel = merge_ref_iterator_peel,
-	.abort = merge_ref_iterator_abort,
+	.release = merge_ref_iterator_release,
 };
 
 struct ref_iterator *merge_ref_iterator_begin(
@@ -310,10 +298,10 @@ struct ref_iterator *overlay_ref_iterator_begin(
 	 * them.
 	 */
 	if (is_empty_ref_iterator(front)) {
-		ref_iterator_abort(front);
+		ref_iterator_free(front);
 		return back;
 	} else if (is_empty_ref_iterator(back)) {
-		ref_iterator_abort(back);
+		ref_iterator_free(back);
 		return front;
 	}
 
@@ -350,19 +338,10 @@ static int prefix_ref_iterator_advance(struct ref_iterator *ref_iterator)
 
 	while ((ok = ref_iterator_advance(iter->iter0)) == ITER_OK) {
 		int cmp = compare_prefix(iter->iter0->refname, iter->prefix);
-
 		if (cmp < 0)
 			continue;
-
-		if (cmp > 0) {
-			/*
-			 * As the source iterator is ordered, we
-			 * can stop the iteration as soon as we see a
-			 * refname that comes after the prefix:
-			 */
-			ok = ref_iterator_abort(iter->iter0);
-			break;
-		}
+		if (cmp > 0)
+			return ITER_DONE;
 
 		if (iter->trim) {
 			/*
@@ -386,9 +365,6 @@ static int prefix_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		return ITER_OK;
 	}
 
-	iter->iter0 = NULL;
-	if (ref_iterator_abort(ref_iterator) != ITER_DONE)
-		return ITER_ERROR;
 	return ok;
 }
 
@@ -401,23 +377,18 @@ static int prefix_ref_iterator_peel(struct ref_iterator *ref_iterator,
 	return ref_iterator_peel(iter->iter0, peeled);
 }
 
-static int prefix_ref_iterator_abort(struct ref_iterator *ref_iterator)
+static void prefix_ref_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct prefix_ref_iterator *iter =
 		(struct prefix_ref_iterator *)ref_iterator;
-	int ok = ITER_DONE;
-
-	if (iter->iter0)
-		ok = ref_iterator_abort(iter->iter0);
+	ref_iterator_free(iter->iter0);
 	free(iter->prefix);
-	base_ref_iterator_free(ref_iterator);
-	return ok;
 }
 
 static struct ref_iterator_vtable prefix_ref_iterator_vtable = {
 	.advance = prefix_ref_iterator_advance,
 	.peel = prefix_ref_iterator_peel,
-	.abort = prefix_ref_iterator_abort,
+	.release = prefix_ref_iterator_release,
 };
 
 struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
@@ -453,20 +424,14 @@ int do_for_each_ref_iterator(struct ref_iterator *iter,
 	current_ref_iter = iter;
 	while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
 		retval = fn(iter->refname, iter->referent, iter->oid, iter->flags, cb_data);
-		if (retval) {
-			/*
-			 * If ref_iterator_abort() returns ITER_ERROR,
-			 * we ignore that error in deference to the
-			 * callback function's return value.
-			 */
-			ref_iterator_abort(iter);
+		if (retval)
 			goto out;
-		}
 	}
 
 out:
 	current_ref_iter = old_ref_iter;
 	if (ok == ITER_ERROR)
-		return -1;
+		retval = -1;
+	ref_iterator_free(iter);
 	return retval;
 }

@@ -179,19 +179,18 @@ static int debug_ref_iterator_peel(struct ref_iterator *ref_iterator,
 	return res;
 }
 
-static int debug_ref_iterator_abort(struct ref_iterator *ref_iterator)
+static void debug_ref_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct debug_ref_iterator *diter =
 		(struct debug_ref_iterator *)ref_iterator;
-	int res = diter->iter->vtable->abort(diter->iter);
-	trace_printf_key(&trace_refs, "iterator_abort: %d\n", res);
-	return res;
+	diter->iter->vtable->release(diter->iter);
+	trace_printf_key(&trace_refs, "iterator_abort\n");
 }
 
 static struct ref_iterator_vtable debug_ref_iterator_vtable = {
 	.advance = debug_ref_iterator_advance,
 	.peel = debug_ref_iterator_peel,
-	.abort = debug_ref_iterator_abort,
+	.release = debug_ref_iterator_release,
 };
 
 static struct ref_iterator *

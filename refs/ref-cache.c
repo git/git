@@ -409,7 +409,7 @@ static int cache_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		if (++level->index == level->dir->nr) {
 			/* This level is exhausted; pop up a level */
 			if (--iter->levels_nr == 0)
-				return ref_iterator_abort(ref_iterator);
+				return ITER_DONE;
 
 			continue;
 		}
@@ -452,21 +452,18 @@ static int cache_ref_iterator_peel(struct ref_iterator *ref_iterator,
 	return peel_object(iter->repo, ref_iterator->oid, peeled) ? -1 : 0;
 }
 
-static int cache_ref_iterator_abort(struct ref_iterator *ref_iterator)
+static void cache_ref_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct cache_ref_iterator *iter =
 		(struct cache_ref_iterator *)ref_iterator;
-
 	free((char *)iter->prefix);
 	free(iter->levels);
-	base_ref_iterator_free(ref_iterator);
-	return ITER_DONE;
 }
 
 static struct ref_iterator_vtable cache_ref_iterator_vtable = {
 	.advance = cache_ref_iterator_advance,
 	.peel = cache_ref_iterator_peel,
-	.abort = cache_ref_iterator_abort
+	.release = cache_ref_iterator_release,
 };
 
 struct ref_iterator *cache_ref_iterator_begin(struct ref_cache *cache,

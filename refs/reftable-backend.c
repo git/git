@@ -711,17 +711,10 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		break;
 	}
 
-	if (iter->err > 0) {
-		if (ref_iterator_abort(ref_iterator) != ITER_DONE)
-			return ITER_ERROR;
+	if (iter->err > 0)
 		return ITER_DONE;
-	}
-
-	if (iter->err < 0) {
-		ref_iterator_abort(ref_iterator);
+	if (iter->err < 0)
 		return ITER_ERROR;
-	}
-
 	return ITER_OK;
 }
 
@@ -740,7 +733,7 @@ static int reftable_ref_iterator_peel(struct ref_iterator *ref_iterator,
 	return -1;
 }
 
-static int reftable_ref_iterator_abort(struct ref_iterator *ref_iterator)
+static void reftable_ref_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct reftable_ref_iterator *iter =
 		(struct reftable_ref_iterator *)ref_iterator;
@@ -751,14 +744,12 @@ static int reftable_ref_iterator_abort(struct ref_iterator *ref_iterator)
 			free(iter->exclude_patterns[i]);
 		free(iter->exclude_patterns);
 	}
-	free(iter);
-	return ITER_DONE;
 }
 
 static struct ref_iterator_vtable reftable_ref_iterator_vtable = {
 	.advance = reftable_ref_iterator_advance,
 	.peel = reftable_ref_iterator_peel,
-	.abort = reftable_ref_iterator_abort
+	.release = reftable_ref_iterator_release,
 };
 
 static int qsort_strcmp(const void *va, const void *vb)
@@ -2021,17 +2012,10 @@ static int reftable_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 		break;
 	}
 
-	if (iter->err > 0) {
-		if (ref_iterator_abort(ref_iterator) != ITER_DONE)
-			return ITER_ERROR;
+	if (iter->err > 0)
 		return ITER_DONE;
-	}
-
-	if (iter->err < 0) {
-		ref_iterator_abort(ref_iterator);
+	if (iter->err < 0)
 		return ITER_ERROR;
-	}
-
 	return ITER_OK;
 }
 
@@ -2042,21 +2026,19 @@ static int reftable_reflog_iterator_peel(struct ref_iterator *ref_iterator UNUSE
 	return -1;
 }
 
-static int reftable_reflog_iterator_abort(struct ref_iterator *ref_iterator)
+static void reftable_reflog_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct reftable_reflog_iterator *iter =
 		(struct reftable_reflog_iterator *)ref_iterator;
 	reftable_log_record_release(&iter->log);
 	reftable_iterator_destroy(&iter->iter);
 	strbuf_release(&iter->last_name);
-	free(iter);
-	return ITER_DONE;
 }
 
 static struct ref_iterator_vtable reftable_reflog_iterator_vtable = {
 	.advance = reftable_reflog_iterator_advance,
 	.peel = reftable_reflog_iterator_peel,
-	.abort = reftable_reflog_iterator_abort
+	.release = reftable_reflog_iterator_release,
 };
 
 static struct reftable_reflog_iterator *reflog_iterator_for_stack(struct reftable_ref_store *refs,
