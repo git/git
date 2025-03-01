@@ -4,15 +4,15 @@ my ($build_dir) = @ARGV;
 my %include = ();
 my %included = ();
 
-for my $text (<*.txt>) {
-    open I, '<', $text || die "cannot read: $text";
+for my $adoc (<*.adoc>) {
+    open I, '<', $adoc || die "cannot read: $adoc";
     while (<I>) {
 	if (/^include::/) {
 	    chomp;
 	    s/^include::\s*//;
 	    s/\[\]//;
 	    s/{build_dir}/${build_dir}/;
-	    $include{$text}{$_} = 1;
+	    $include{$adoc}{$_} = 1;
 	    $included{$_} = 1;
 	}
     }
@@ -23,14 +23,14 @@ for my $text (<*.txt>) {
 my $changed = 1;
 while ($changed) {
     $changed = 0;
-    while (my ($text, $included) = each %include) {
+    while (my ($adoc, $included) = each %include) {
 	for my $i (keys %$included) {
-	    # $text has include::$i; if $i includes $j
-	    # $text indirectly includes $j.
+	    # $adoc has include::$i; if $i includes $j
+	    # $adoc indirectly includes $j.
 	    if (exists $include{$i}) {
 		for my $j (keys %{$include{$i}}) {
-		    if (!exists $include{$text}{$j}) {
-			$include{$text}{$j} = 1;
+		    if (!exists $include{$adoc}{$j}) {
+			$include{$adoc}{$j} = 1;
 			$included{$j} = 1;
 			$changed = 1;
 		    }
@@ -40,10 +40,10 @@ while ($changed) {
     }
 }
 
-foreach my $text (sort keys %include) {
-    my $included = $include{$text};
-    if (! exists $included{$text} &&
-	(my $base = $text) =~ s/\.txt$//) {
+foreach my $adoc (sort keys %include) {
+    my $included = $include{$adoc};
+    if (! exists $included{$adoc} &&
+	(my $base = $adoc) =~ s/\.adoc$//) {
 	print "$base.html $base.xml : ", join(" ", sort keys %$included), "\n";
     }
 }
