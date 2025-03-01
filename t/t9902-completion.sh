@@ -149,7 +149,8 @@ fi
 test_expect_success 'setup for __git_find_repo_path/__gitdir tests' '
 	mkdir -p subdir/subsubdir &&
 	mkdir -p non-repo &&
-	git init -b main otherrepo
+	git init -b main otherrepo &&
+	git init -b main slashrepo
 '
 
 test_expect_success '__git_find_repo_path - from command line (through $__git_dir)' '
@@ -681,6 +682,13 @@ test_expect_success 'setup for ref completion' '
 	) &&
 	git remote add other "$ROOT/otherrepo/.git" &&
 	git fetch --no-tags other &&
+	(
+		cd slashrepo &&
+		git commit --allow-empty -m initial &&
+		git branch -m main branch/with/slash
+	) &&
+	git remote add remote/with/slash "$ROOT/slashrepo/.git" &&
+	git fetch --no-tags remote/with/slash &&
 	rm -f .git/FETCH_HEAD &&
 	git init thirdrepo
 '
@@ -693,6 +701,8 @@ test_expect_success '__git_refs - simple' '
 	other/HEAD
 	other/branch-in-other
 	other/main-in-other
+	remote/with/slash/HEAD
+	remote/with/slash/branch/with/slash
 	matching-tag
 	EOF
 	(
@@ -709,6 +719,8 @@ test_expect_success '__git_refs - full refs' '
 	refs/remotes/other/HEAD
 	refs/remotes/other/branch-in-other
 	refs/remotes/other/main-in-other
+	refs/remotes/remote/with/slash/HEAD
+	refs/remotes/remote/with/slash/branch/with/slash
 	refs/tags/matching-tag
 	EOF
 	(
@@ -770,6 +782,19 @@ test_expect_success '__git_refs - configured remote' '
 	(
 		cur= &&
 		__git_refs other >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success '__git_refs - configured remote - with slash' '
+	cat >expected <<-EOF &&
+	HEAD
+	HEAD
+	branch/with/slash
+	EOF
+	(
+		cur= &&
+		__git_refs remote/with/slash >"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
@@ -916,17 +941,19 @@ test_expect_success '__git_refs - unique remote branches for git checkout DWIMer
 	other/ambiguous
 	other/branch-in-other
 	other/main-in-other
-	remote/ambiguous
-	remote/branch-in-remote
+	remote/with/slash/HEAD
+	remote/with/slash/ambiguous
+	remote/with/slash/branch-in-remote
+	remote/with/slash/branch/with/slash
 	matching-tag
-	HEAD
 	branch-in-other
 	branch-in-remote
+	branch/with/slash
 	main-in-other
 	EOF
 	for remote_ref in refs/remotes/other/ambiguous \
-		refs/remotes/remote/ambiguous \
-		refs/remotes/remote/branch-in-remote
+		refs/remotes/remote/with/slash/ambiguous \
+		refs/remotes/remote/with/slash/branch-in-remote
 	do
 		git update-ref $remote_ref main &&
 		test_when_finished "git update-ref -d $remote_ref" || return 1
@@ -946,6 +973,8 @@ test_expect_success '__git_refs - after --opt=' '
 	other/HEAD
 	other/branch-in-other
 	other/main-in-other
+	remote/with/slash/HEAD
+	remote/with/slash/branch/with/slash
 	matching-tag
 	EOF
 	(
@@ -962,6 +991,8 @@ test_expect_success '__git_refs - after --opt= - full refs' '
 	refs/remotes/other/HEAD
 	refs/remotes/other/branch-in-other
 	refs/remotes/other/main-in-other
+	refs/remotes/remote/with/slash/HEAD
+	refs/remotes/remote/with/slash/branch/with/slash
 	refs/tags/matching-tag
 	EOF
 	(
@@ -979,6 +1010,8 @@ test_expect_success '__git refs - excluding refs' '
 	^other/HEAD
 	^other/branch-in-other
 	^other/main-in-other
+	^remote/with/slash/HEAD
+	^remote/with/slash/branch/with/slash
 	^matching-tag
 	EOF
 	(
@@ -995,6 +1028,8 @@ test_expect_success '__git refs - excluding full refs' '
 	^refs/remotes/other/HEAD
 	^refs/remotes/other/branch-in-other
 	^refs/remotes/other/main-in-other
+	^refs/remotes/remote/with/slash/HEAD
+	^refs/remotes/remote/with/slash/branch/with/slash
 	^refs/tags/matching-tag
 	EOF
 	(
@@ -1022,6 +1057,8 @@ test_expect_success '__git_refs - do not filter refs unless told so' '
 	other/branch-in-other
 	other/main-in-other
 	other/matching/branch-in-other
+	remote/with/slash/HEAD
+	remote/with/slash/branch/with/slash
 	matching-tag
 	matching/tag
 	EOF
@@ -1142,6 +1179,8 @@ test_expect_success '__git_complete_refs - simple' '
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	matching-tag Z
 	EOF
 	(
@@ -1180,6 +1219,20 @@ test_expect_success '__git_complete_refs - remote' '
 	test_cmp expected out
 '
 
+test_expect_success '__git_complete_refs - remote - with slash' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	HEAD Z
+	HEAD Z
+	branch/with/slash Z
+	EOF
+	(
+		cur= &&
+		__git_complete_refs --remote=remote/with/slash &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
 test_expect_success '__git_complete_refs - track' '
 	sed -e "s/Z$//" >expected <<-EOF &&
 	HEAD Z
@@ -1188,9 +1241,11 @@ test_expect_success '__git_complete_refs - track' '
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	matching-tag Z
-	HEAD Z
 	branch-in-other Z
+	branch/with/slash Z
 	main-in-other Z
 	EOF
 	(
@@ -1235,6 +1290,8 @@ test_expect_success '__git_complete_refs - suffix' '
 	other/HEAD.
 	other/branch-in-other.
 	other/main-in-other.
+	remote/with/slash/HEAD.
+	remote/with/slash/branch/with/slash.
 	matching-tag.
 	EOF
 	(
@@ -1255,6 +1312,20 @@ test_expect_success '__git_complete_fetch_refspecs - simple' '
 	(
 		cur= &&
 		__git_complete_fetch_refspecs other &&
+		print_comp
+	) &&
+	test_cmp expected out
+'
+
+test_expect_success '__git_complete_fetch_refspecs - with slash' '
+	sed -e "s/Z$//" >expected <<-EOF &&
+	HEAD:HEAD Z
+	HEAD:HEAD Z
+	branch/with/slash:branch/with/slash Z
+	EOF
+	(
+		cur= &&
+		__git_complete_fetch_refspecs remote/with/slash &&
 		print_comp
 	) &&
 	test_cmp expected out
@@ -1340,8 +1411,8 @@ test_expect_success '__git_complete_worktree_paths with -C' '
 
 test_expect_success 'git switch - with no options, complete local branches and unique remote branch names for DWIM logic' '
 	test_completion "git switch " <<-\EOF
-	HEAD Z
 	branch-in-other Z
+	branch/with/slash Z
 	main Z
 	main-in-other Z
 	matching-branch Z
@@ -1487,8 +1558,8 @@ test_expect_success 'git-bisect - existing view subcommand is recognized and ena
 test_expect_success 'git checkout - completes refs and unique remote branches for DWIM' '
 	test_completion "git checkout " <<-\EOF
 	HEAD Z
-	HEAD Z
 	branch-in-other Z
+	branch/with/slash Z
 	main Z
 	main-in-other Z
 	matching-branch Z
@@ -1496,6 +1567,8 @@ test_expect_success 'git checkout - completes refs and unique remote branches fo
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1515,8 +1588,8 @@ test_expect_success 'git switch - with GIT_COMPLETION_CHECKOUT_NO_GUESS=1, compl
 
 test_expect_success 'git switch - --guess overrides GIT_COMPLETION_CHECKOUT_NO_GUESS=1, complete local branches and unique remote names for DWIM logic' '
 	GIT_COMPLETION_CHECKOUT_NO_GUESS=1 test_completion "git switch --guess " <<-\EOF
-	HEAD Z
 	branch-in-other Z
+	branch/with/slash Z
 	main Z
 	main-in-other Z
 	matching-branch Z
@@ -1525,8 +1598,8 @@ test_expect_success 'git switch - --guess overrides GIT_COMPLETION_CHECKOUT_NO_G
 
 test_expect_success 'git switch - a later --guess overrides previous --no-guess, complete local and remote unique branches for DWIM' '
 	test_completion "git switch --no-guess --guess " <<-\EOF
-	HEAD Z
 	branch-in-other Z
+	branch/with/slash Z
 	main Z
 	main-in-other Z
 	matching-branch Z
@@ -1549,14 +1622,16 @@ test_expect_success 'git checkout - with GIT_COMPLETION_NO_GUESS=1 only complete
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
 test_expect_success 'git checkout - --guess overrides GIT_COMPLETION_NO_GUESS=1, complete refs and unique remote branches for DWIM' '
 	GIT_COMPLETION_CHECKOUT_NO_GUESS=1 test_completion "git checkout --guess " <<-\EOF
 	HEAD Z
-	HEAD Z
 	branch-in-other Z
+	branch/with/slash Z
 	main Z
 	main-in-other Z
 	matching-branch Z
@@ -1564,6 +1639,8 @@ test_expect_success 'git checkout - --guess overrides GIT_COMPLETION_NO_GUESS=1,
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1576,14 +1653,16 @@ test_expect_success 'git checkout - with --no-guess, only completes refs' '
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
 test_expect_success 'git checkout - a later --guess overrides previous --no-guess, complete refs and unique remote branches for DWIM' '
 	test_completion "git checkout --no-guess --guess " <<-\EOF
 	HEAD Z
-	HEAD Z
 	branch-in-other Z
+	branch/with/slash Z
 	main Z
 	main-in-other Z
 	matching-branch Z
@@ -1591,6 +1670,8 @@ test_expect_success 'git checkout - a later --guess overrides previous --no-gues
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1603,6 +1684,8 @@ test_expect_success 'git checkout - a later --no-guess overrides previous --gues
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1616,6 +1699,8 @@ test_expect_success 'git checkout - with checkout.guess = false, only completes 
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1623,8 +1708,8 @@ test_expect_success 'git checkout - with checkout.guess = true, completes refs a
 	test_config checkout.guess true &&
 	test_completion "git checkout " <<-\EOF
 	HEAD Z
-	HEAD Z
 	branch-in-other Z
+	branch/with/slash Z
 	main Z
 	main-in-other Z
 	matching-branch Z
@@ -1632,6 +1717,8 @@ test_expect_success 'git checkout - with checkout.guess = true, completes refs a
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1639,8 +1726,8 @@ test_expect_success 'git checkout - a later --guess overrides previous checkout.
 	test_config checkout.guess false &&
 	test_completion "git checkout --guess " <<-\EOF
 	HEAD Z
-	HEAD Z
 	branch-in-other Z
+	branch/with/slash Z
 	main Z
 	main-in-other Z
 	matching-branch Z
@@ -1648,6 +1735,8 @@ test_expect_success 'git checkout - a later --guess overrides previous checkout.
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1661,6 +1750,8 @@ test_expect_success 'git checkout - a later --no-guess overrides previous checko
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1673,6 +1764,8 @@ test_expect_success 'git switch - with --detach, complete all references' '
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1685,6 +1778,8 @@ test_expect_success 'git checkout - with --detach, complete only references' '
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1857,6 +1952,8 @@ test_expect_success 'git switch - with -d, complete all references' '
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1869,6 +1966,8 @@ test_expect_success 'git checkout - with -d, complete only references' '
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1877,11 +1976,15 @@ test_expect_success 'git switch - with --track, complete only remote branches' '
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 	test_completion "git switch -t " <<-\EOF
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1890,11 +1993,15 @@ test_expect_success 'git checkout - with --track, complete only remote branches'
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 	test_completion "git checkout -t " <<-\EOF
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1914,6 +2021,8 @@ test_expect_success 'git checkout - with --no-track, complete only local referen
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1926,6 +2035,8 @@ test_expect_success 'git switch - with -c, complete all references' '
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1938,6 +2049,8 @@ test_expect_success 'git switch - with -C, complete all references' '
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1950,6 +2063,8 @@ test_expect_success 'git switch - with -c and --track, complete all references' 
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1962,6 +2077,8 @@ test_expect_success 'git switch - with -C and --track, complete all references' 
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1974,6 +2091,8 @@ test_expect_success 'git switch - with -c and --no-track, complete all reference
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1986,6 +2105,8 @@ test_expect_success 'git switch - with -C and --no-track, complete all reference
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -1998,6 +2119,8 @@ test_expect_success 'git checkout - with -b, complete all references' '
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -2010,6 +2133,8 @@ test_expect_success 'git checkout - with -B, complete all references' '
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -2022,6 +2147,8 @@ test_expect_success 'git checkout - with -b and --track, complete all references
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -2034,6 +2161,8 @@ test_expect_success 'git checkout - with -B and --track, complete all references
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -2046,6 +2175,8 @@ test_expect_success 'git checkout - with -b and --no-track, complete all referen
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -2058,13 +2189,15 @@ test_expect_success 'git checkout - with -B and --no-track, complete all referen
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
 test_expect_success 'git switch - for -c, complete local branches and unique remote branches' '
 	test_completion "git switch -c " <<-\EOF
-	HEAD Z
 	branch-in-other Z
+	branch/with/slash Z
 	main Z
 	main-in-other Z
 	matching-branch Z
@@ -2073,8 +2206,8 @@ test_expect_success 'git switch - for -c, complete local branches and unique rem
 
 test_expect_success 'git switch - for -C, complete local branches and unique remote branches' '
 	test_completion "git switch -C " <<-\EOF
-	HEAD Z
 	branch-in-other Z
+	branch/with/slash Z
 	main Z
 	main-in-other Z
 	matching-branch Z
@@ -2111,8 +2244,8 @@ test_expect_success 'git switch - for -C with --no-track, complete local branche
 
 test_expect_success 'git checkout - for -b, complete local branches and unique remote branches' '
 	test_completion "git checkout -b " <<-\EOF
-	HEAD Z
 	branch-in-other Z
+	branch/with/slash Z
 	main Z
 	main-in-other Z
 	matching-branch Z
@@ -2121,8 +2254,8 @@ test_expect_success 'git checkout - for -b, complete local branches and unique r
 
 test_expect_success 'git checkout - for -B, complete local branches and unique remote branches' '
 	test_completion "git checkout -B " <<-\EOF
-	HEAD Z
 	branch-in-other Z
+	branch/with/slash Z
 	main Z
 	main-in-other Z
 	matching-branch Z
@@ -2159,8 +2292,8 @@ test_expect_success 'git checkout - for -B with --no-track, complete local branc
 
 test_expect_success 'git switch - with --orphan completes local branch names and unique remote branch names' '
 	test_completion "git switch --orphan " <<-\EOF
-	HEAD Z
 	branch-in-other Z
+	branch/with/slash Z
 	main Z
 	main-in-other Z
 	matching-branch Z
@@ -2175,8 +2308,8 @@ test_expect_success 'git switch - --orphan with branch already provided complete
 
 test_expect_success 'git checkout - with --orphan completes local branch names and unique remote branch names' '
 	test_completion "git checkout --orphan " <<-\EOF
-	HEAD Z
 	branch-in-other Z
+	branch/with/slash Z
 	main Z
 	main-in-other Z
 	matching-branch Z
@@ -2192,6 +2325,8 @@ test_expect_success 'git checkout - --orphan with branch already provided comple
 	other/HEAD Z
 	other/branch-in-other Z
 	other/main-in-other Z
+	remote/with/slash/HEAD Z
+	remote/with/slash/branch/with/slash Z
 	EOF
 '
 
@@ -2206,7 +2341,8 @@ test_expect_success 'git restore completes modified files' '
 test_expect_success 'teardown after ref completion' '
 	git branch -d matching-branch &&
 	git tag -d matching-tag &&
-	git remote remove other
+	git remote remove other &&
+	git remote remove remote/with/slash
 '
 
 

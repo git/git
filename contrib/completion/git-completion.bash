@@ -807,11 +807,15 @@ __git_dwim_remote_heads ()
 	# employ the heuristic used by git checkout and git switch
 	# Try to find a remote branch that cur_es the completion word
 	# but only output if the branch name is unique
-	__git for-each-ref --format="$fer_pfx%(refname:strip=3)$sfx" \
-		--sort="refname:strip=3" \
-		${GIT_COMPLETION_IGNORE_CASE+--ignore-case} \
-		"refs/remotes/*/$cur_*" "refs/remotes/*/$cur_*/**" | \
-	uniq -u
+	local remote
+	for remote in $(__git_remotes); do
+		local base="$(__git_escape_fnmatch "refs/remotes/$remote")"
+		local strip="$(__git_count_path_components "$base")"
+		__git for-each-ref \
+			--format="$fer_pfx%(refname:strip=$strip)$sfx" \
+			${GIT_COMPLETION_IGNORE_CASE+--ignore-case} \
+			"$base/$cur_*" "$base/$cur_*/**"
+	done | sort | uniq -u
 }
 
 # Lists refs from the local (by default) or from a remote repository.
@@ -917,7 +921,8 @@ __git_refs ()
 			case "HEAD" in
 			$match*|$umatch*)	echo "${pfx}HEAD$sfx" ;;
 			esac
-			__git for-each-ref --format="$fer_pfx%(refname:strip=3)$sfx" \
+			local strip="$(__git_count_path_components "refs/remotes/$remote")"
+			__git for-each-ref --format="$fer_pfx%(refname:strip=$strip)$sfx" \
 				${GIT_COMPLETION_IGNORE_CASE+--ignore-case} \
 				"refs/remotes/$remote/$match*" \
 				"refs/remotes/$remote/$match*/**"
