@@ -32,7 +32,7 @@ if get_option('docs').contains('man')
       '@INPUT@',
     ],
     depends: documentation_deps,
-    input: 'git-subtree.txt',
+    input: 'git-subtree.adoc',
     output: 'git-subtree.xml',
   )
 
@@ -63,7 +63,7 @@ if get_option('docs').contains('html')
       '@INPUT@',
     ],
     depends: documentation_deps,
-    input: 'git-subtree.txt',
+    input: 'git-subtree.adoc',
     output: 'git-subtree.html',
     install: true,
     install_dir: get_option('datadir') / 'doc/git-doc',
