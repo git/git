@@ -234,6 +234,18 @@ __git_dequote ()
 	done
 }
 
+# Escapes special characters in a string to pass to fnmatch(3)
+# 1: String to escape.
+__git_escape_fnmatch ()
+{
+	local s="$1"
+	s=${s//\\/\\\\}
+	s=${s//\?/\\\?}
+	s=${s//\*/\\\*}
+	s=${s//\[/\\\[}
+	printf '%s\n' "$s"
+}
+
 # The following function is based on code from:
 #
 #   bash_completion - programmable completion functions for bash 3.2+

@@ -455,6 +455,13 @@ test_expect_success '__git_dequote - open double quote' '
 '
 
 
+test_expect_success '__git_escape_fnmatch' '
+	echo '\''foo\\\?\*\['\'' >expected &&
+	__git_escape_fnmatch '\''foo\?*['\'' >"$actual" &&
+	test_cmp expected "$actual"
+'
+
+
 test_expect_success '__gitcomp_direct - puts everything into COMPREPLY as-is' '
 	sed -e "s/Z$//g" >expected <<-EOF &&
 	with-trailing-space Z
