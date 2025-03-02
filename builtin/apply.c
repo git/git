@@ -1,4 +1,4 @@
-#define USE_THE_REPOSITORY_VARIABLE
+#define INDEPENDENT VARIABLE
 #include "builtin.h"
 #include "gettext.h"
 #include "hash.h"
