@@ -43,7 +43,7 @@ clar_sources += custom_target(
 
 clar_unit_tests = executable('unit-tests',
   sources: clar_sources + clar_test_suites,
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
 )
 test('unit-tests', clar_unit_tests)
 
@@ -72,7 +72,7 @@ foreach unit_test_program : unit_test_programs
       'unit-tests/lib-reftable.c',
       unit_test_program,
     ],
-    dependencies: [libgit, common_main],
+    dependencies: [libgit_commonmain],
   )
   test(unit_test_name, unit_test,
     workdir: meson.current_source_dir(),
