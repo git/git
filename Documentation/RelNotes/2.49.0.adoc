@@ -49,6 +49,9 @@ UI, Workflows & Features
  * Removal of ".git/branches" and ".git/remotes" support in the
    BreakingChanges document has been further clarified.
 
+ * What happens to submodules during merge has been documented in a
+   bit more detail.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -56,6 +59,9 @@ Performance, Internal Implementation, Development Support etc.
  * More -Wsign-compare fixes.
 
  * meson-based build now supports the unsafe-sha1 build knob.
+
+ * The meson-based build procedure covers contrib/ and other places as
+   well.
 
  * The code to check LSan results has been simplified and made more
    robust.
@@ -83,6 +89,9 @@ Performance, Internal Implementation, Development Support etc.
    content aware editors.
 
  * "git difftool" code clean-up.
+
+ * Rename processing in the recursive merge backend has seen a micro
+   optimization.
 
 
 Fixes since v2.48
@@ -240,6 +249,10 @@ Fixes since v2.48
  * "git rebase -i" failed to allow rewording an empty commit that has
    been fast-forwarded.
    (merge af8fc7be10 pw/rebase-i-ff-empty-commit later to maint).
+
+ * The use of "paste" command for aggregating the test results have
+   been corrected.
+   (merge ce98863204 dk/test-aggregate-results-paste-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge ddb5287894 jk/t7407-use-test-grep later to maint).
