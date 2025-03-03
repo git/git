@@ -15,7 +15,7 @@ enum fsck_msg_type {
 };
 
 /*
- * Documentation/fsck-msgids.txt documents these; when
+ * Documentation/fsck-msgids.adoc documents these; when
  * modifying this list in any way, make sure to keep the
  * two in sync.
  */
