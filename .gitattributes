@@ -12,7 +12,7 @@ CODE_OF_CONDUCT.md -whitespace
 /GIT-VERSION-GEN text eol=lf
 /mergetools/* text eol=lf
 /t/oid-info/* text eol=lf
-/Documentation/git-merge.txt conflict-marker-size=32
-/Documentation/gitk.txt conflict-marker-size=32
-/Documentation/user-manual.txt conflict-marker-size=32
+/Documentation/git-merge.adoc conflict-marker-size=32
+/Documentation/gitk.adoc conflict-marker-size=32
+/Documentation/user-manual.adoc conflict-marker-size=32
 /t/t????-*.sh conflict-marker-size=32
