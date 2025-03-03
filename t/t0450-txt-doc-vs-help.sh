@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='assert (unbuilt) Documentation/*.txt and -h output
+test_description='assert (unbuilt) Documentation/*.adoc and -h output
 
 Run this with --debug to see a summary of where we still fail to make
 the two versions consistent with one another.'
@@ -11,11 +11,11 @@ test_expect_success 'setup: list of builtins' '
 	git --list-cmds=builtins >builtins
 '
 
-test_expect_success 'list of txt and help mismatches is sorted' '
-	sort -u "$TEST_DIRECTORY"/t0450/txt-help-mismatches >expect &&
-	if ! test_cmp expect "$TEST_DIRECTORY"/t0450/txt-help-mismatches
+test_expect_success 'list of adoc and help mismatches is sorted' '
+	sort -u "$TEST_DIRECTORY"/t0450/adoc-help-mismatches >expect &&
+	if ! test_cmp expect "$TEST_DIRECTORY"/t0450/adoc-help-mismatches
 	then
-		BUG "please keep the list of txt and help mismatches sorted"
+		BUG "please keep the list of adoc and help mismatches sorted"
 	fi
 '
 
@@ -40,20 +40,20 @@ help_to_synopsis () {
 	echo "$out"
 }
 
-builtin_to_txt () {
-       echo "$GIT_BUILD_DIR/Documentation/git-$1.txt"
+builtin_to_adoc () {
+       echo "$GIT_BUILD_DIR/Documentation/git-$1.adoc"
 }
 
-txt_to_synopsis () {
+adoc_to_synopsis () {
 	builtin="$1" &&
 	out_dir="out/$builtin" &&
-	out="$out_dir/txt.synopsis" &&
+	out="$out_dir/adoc.synopsis" &&
 	if test -f "$out"
 	then
 		echo "$out" &&
 		return 0
 	fi &&
-	b2t="$(builtin_to_txt "$builtin")" &&
+	b2t="$(builtin_to_adoc "$builtin")" &&
 	sed -n \
 		-E '/^\[(verse|synopsis)\]$/,/^$/ {
 			/^$/d;
@@ -109,29 +109,29 @@ do
 		fi
 	'
 
-	txt="$(builtin_to_txt "$builtin")" &&
-	preq="$(echo BUILTIN_TXT_$builtin | tr '[:lower:]-' '[:upper:]_')" &&
+	adoc="$(builtin_to_adoc "$builtin")" &&
+	preq="$(echo BUILTIN_ADOC_$builtin | tr '[:lower:]-' '[:upper:]_')" &&
 
-	if test -f "$txt"
+	if test -f "$adoc"
 	then
 		test_set_prereq "$preq"
 	fi &&
 
-	# *.txt output assertions
-	test_expect_success "$preq" "$builtin *.txt SYNOPSIS has dashed labels" '
-		check_dashed_labels "$(txt_to_synopsis "$builtin")"
+	# *.adoc output assertions
+	test_expect_success "$preq" "$builtin *.adoc SYNOPSIS has dashed labels" '
+		check_dashed_labels "$(adoc_to_synopsis "$builtin")"
 	'
 
-	# *.txt output consistency assertions
+	# *.adoc output consistency assertions
 	result=
-	if grep -q "^$builtin$" "$TEST_DIRECTORY"/t0450/txt-help-mismatches
+	if grep -q "^$builtin$" "$TEST_DIRECTORY"/t0450/adoc-help-mismatches
 	then
 		result=failure
 	else
 		result=success
 	fi &&
 	test_expect_$result "$preq" "$builtin -h output and SYNOPSIS agree" '
-		t2s="$(txt_to_synopsis "$builtin")" &&
+		t2s="$(adoc_to_synopsis "$builtin")" &&
 		if test "$builtin" = "merge-tree"
 		then
 			test_when_finished "rm -f t2s.new" &&
@@ -140,17 +140,17 @@ do
 		fi &&
 		h2s="$(help_to_synopsis "$builtin")" &&
 
-		# The *.txt and -h use different spacing for the
+		# The *.adoc and -h use different spacing for the
 		# alignment of continued usage output, normalize it.
-		align_after_nl "$builtin" <"$t2s" >txt &&
+		align_after_nl "$builtin" <"$t2s" >adoc &&
 		align_after_nl "$builtin" <"$h2s" >help &&
-		test_cmp txt help
+		test_cmp adoc help
 	'
 
-	if test_have_prereq "$preq" && test -e txt && test -e help
+	if test_have_prereq "$preq" && test -e adoc && test -e help
 	then
 		test_debug '
-			if test_cmp txt help >cmp 2>/dev/null
+			if test_cmp adoc help >cmp 2>/dev/null
 			then
 				echo "=== DONE: $builtin ==="
 			else
@@ -161,7 +161,7 @@ do
 
 		# Not in test_expect_success in case --run is being
 		# used with --debug
-		rm -f txt help tmp 2>/dev/null
+		rm -f adoc help tmp 2>/dev/null
 	fi
 done <builtins
 
