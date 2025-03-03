@@ -85,7 +85,7 @@ See "filter" in linkgit:gitprotocol-pack[5].
   server to request filtering during packfile construction.
 +
 There are various filters available to accommodate different situations.
-See "--filter=<filter-spec>" in Documentation/rev-list-options.txt.
+See "--filter=<filter-spec>" in Documentation/rev-list-options.adoc.
 
 - On the server pack-objects applies the requested filter-spec as it
   creates "filtered" packfiles for the client.
