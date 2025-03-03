@@ -1822,7 +1822,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	 *
 	 * Regardless of the state of nongit_ok, startup_info->prefix and
 	 * the GIT_PREFIX environment variable must always match. For details
-	 * see Documentation/config/alias.txt.
+	 * see Documentation/config/alias.adoc.
 	 */
 	if (nongit_ok && *nongit_ok)
 		startup_info->have_repository = 0;
