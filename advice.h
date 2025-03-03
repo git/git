@@ -7,7 +7,7 @@ struct string_list;
  * To add a new advice, you need to:
  * Define a new advice_type.
  * Add a new entry to advice_setting array.
- * Add the new config variable to Documentation/config/advice.txt.
+ * Add the new config variable to Documentation/config/advice.adoc.
  * Call advise_if_enabled to print your advice.
  */
 enum advice_type {
