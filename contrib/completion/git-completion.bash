@@ -234,18 +234,6 @@ __git_dequote ()
 	done
 }
 
-# Escapes special characters in a string to pass to fnmatch(3)
-# 1: String to escape.
-__git_escape_fnmatch ()
-{
-	local s="$1"
-	s=${s//\\/\\\\}
-	s=${s//\?/\\\?}
-	s=${s//\*/\\\*}
-	s=${s//\[/\\\[}
-	printf '%s\n' "$s"
-}
-
 # Prints the number of slash-separated components in a path.
 # 1: Path to count components of.
 __git_count_path_components ()

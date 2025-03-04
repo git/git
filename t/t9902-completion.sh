@@ -456,13 +456,6 @@ test_expect_success '__git_dequote - open double quote' '
 '
 
 
-test_expect_success '__git_escape_fnmatch' '
-	echo '\''foo\\\?\*\['\'' >expected &&
-	__git_escape_fnmatch '\''foo\?*['\'' >"$actual" &&
-	test_cmp expected "$actual"
-'
-
-
 test_expect_success '__git_count_path_components - no slashes' '
 	echo 1 >expected &&
 	__git_count_path_components a >"$actual" &&
