@@ -53,6 +53,7 @@ int cmd__dir_iterator(int argc, const char **argv)
 		printf("(%s) [%s] %s\n", diter->relative_path, diter->basename,
 		       diter->path.buf);
 	}
+	dir_iterator_free(diter);
 
 	if (iter_status != ITER_DONE) {
 		printf("dir_iterator_advance failure\n");

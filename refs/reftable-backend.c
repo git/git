@@ -547,7 +547,7 @@ struct reftable_ref_iterator {
 	struct reftable_ref_record ref;
 	struct object_id oid;
 
-	const char *prefix;
+	char *prefix;
 	size_t prefix_len;
 	char **exclude_patterns;
 	size_t exclude_patterns_index;
@@ -711,18 +711,25 @@ static int reftable_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		break;
 	}
 
-	if (iter->err > 0) {
-		if (ref_iterator_abort(ref_iterator) != ITER_DONE)
-			return ITER_ERROR;
+	if (iter->err > 0)
 		return ITER_DONE;
-	}
-
-	if (iter->err < 0) {
-		ref_iterator_abort(ref_iterator);
+	if (iter->err < 0)
 		return ITER_ERROR;
-	}
-
 	return ITER_OK;
+}
+
+static int reftable_ref_iterator_seek(struct ref_iterator *ref_iterator,
+				      const char *prefix)
+{
+	struct reftable_ref_iterator *iter =
+		(struct reftable_ref_iterator *)ref_iterator;
+
+	free(iter->prefix);
+	iter->prefix = xstrdup_or_null(prefix);
+	iter->prefix_len = prefix ? strlen(prefix) : 0;
+	iter->err = reftable_iterator_seek_ref(&iter->iter, prefix);
+
+	return iter->err;
 }
 
 static int reftable_ref_iterator_peel(struct ref_iterator *ref_iterator,
@@ -740,7 +747,7 @@ static int reftable_ref_iterator_peel(struct ref_iterator *ref_iterator,
 	return -1;
 }
 
-static int reftable_ref_iterator_abort(struct ref_iterator *ref_iterator)
+static void reftable_ref_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct reftable_ref_iterator *iter =
 		(struct reftable_ref_iterator *)ref_iterator;
@@ -751,14 +758,14 @@ static int reftable_ref_iterator_abort(struct ref_iterator *ref_iterator)
 			free(iter->exclude_patterns[i]);
 		free(iter->exclude_patterns);
 	}
-	free(iter);
-	return ITER_DONE;
+	free(iter->prefix);
 }
 
 static struct ref_iterator_vtable reftable_ref_iterator_vtable = {
 	.advance = reftable_ref_iterator_advance,
+	.seek = reftable_ref_iterator_seek,
 	.peel = reftable_ref_iterator_peel,
-	.abort = reftable_ref_iterator_abort
+	.release = reftable_ref_iterator_release,
 };
 
 static int qsort_strcmp(const void *va, const void *vb)
@@ -815,8 +822,6 @@ static struct reftable_ref_iterator *ref_iterator_for_stack(struct reftable_ref_
 
 	iter = xcalloc(1, sizeof(*iter));
 	base_ref_iterator_init(&iter->base, &reftable_ref_iterator_vtable);
-	iter->prefix = prefix;
-	iter->prefix_len = prefix ? strlen(prefix) : 0;
 	iter->base.oid = &iter->oid;
 	iter->flags = flags;
 	iter->refs = refs;
@@ -830,8 +835,11 @@ static struct reftable_ref_iterator *ref_iterator_for_stack(struct reftable_ref_
 	if (ret)
 		goto done;
 
-	reftable_stack_init_ref_iterator(stack, &iter->iter);
-	ret = reftable_iterator_seek_ref(&iter->iter, prefix);
+	ret = reftable_stack_init_ref_iterator(stack, &iter->iter);
+	if (ret)
+		goto done;
+
+	ret = reftable_ref_iterator_seek(&iter->base, prefix);
 	if (ret)
 		goto done;
 
@@ -1069,6 +1077,7 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 		reftable_be_downcast(ref_store, REF_STORE_WRITE|REF_STORE_MAIN, "ref_transaction_prepare");
 	struct strbuf referent = STRBUF_INIT, head_referent = STRBUF_INIT;
 	struct string_list affected_refnames = STRING_LIST_INIT_NODUP;
+	struct string_list refnames_to_check = STRING_LIST_INIT_NODUP;
 	struct reftable_transaction_data *tx_data = NULL;
 	struct reftable_backend *be;
 	struct object_id head_oid;
@@ -1224,12 +1233,7 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 			 * can output a proper error message instead of failing
 			 * at a later point.
 			 */
-			ret = refs_verify_refname_available(ref_store, u->refname,
-							    &affected_refnames, NULL,
-							    transaction->flags & REF_TRANSACTION_FLAG_INITIAL,
-							    err);
-			if (ret < 0)
-				goto done;
+			string_list_append(&refnames_to_check, u->refname);
 
 			/*
 			 * There is no need to write the reference deletion
@@ -1379,6 +1383,13 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 		}
 	}
 
+	string_list_sort(&refnames_to_check);
+	ret = refs_verify_refnames_available(ref_store, &refnames_to_check, &affected_refnames, NULL,
+					     transaction->flags & REF_TRANSACTION_FLAG_INITIAL,
+					     err);
+	if (ret < 0)
+		goto done;
+
 	transaction->backend_data = tx_data;
 	transaction->state = REF_TRANSACTION_PREPARED;
 
@@ -1394,6 +1405,7 @@ done:
 	string_list_clear(&affected_refnames, 0);
 	strbuf_release(&referent);
 	strbuf_release(&head_referent);
+	string_list_clear(&refnames_to_check, 0);
 
 	return ret;
 }
@@ -2017,18 +2029,18 @@ static int reftable_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 		break;
 	}
 
-	if (iter->err > 0) {
-		if (ref_iterator_abort(ref_iterator) != ITER_DONE)
-			return ITER_ERROR;
+	if (iter->err > 0)
 		return ITER_DONE;
-	}
-
-	if (iter->err < 0) {
-		ref_iterator_abort(ref_iterator);
+	if (iter->err < 0)
 		return ITER_ERROR;
-	}
-
 	return ITER_OK;
+}
+
+static int reftable_reflog_iterator_seek(struct ref_iterator *ref_iterator UNUSED,
+					 const char *prefix UNUSED)
+{
+	BUG("reftable reflog iterator cannot be seeked");
+	return -1;
 }
 
 static int reftable_reflog_iterator_peel(struct ref_iterator *ref_iterator UNUSED,
@@ -2038,21 +2050,20 @@ static int reftable_reflog_iterator_peel(struct ref_iterator *ref_iterator UNUSE
 	return -1;
 }
 
-static int reftable_reflog_iterator_abort(struct ref_iterator *ref_iterator)
+static void reftable_reflog_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct reftable_reflog_iterator *iter =
 		(struct reftable_reflog_iterator *)ref_iterator;
 	reftable_log_record_release(&iter->log);
 	reftable_iterator_destroy(&iter->iter);
 	strbuf_release(&iter->last_name);
-	free(iter);
-	return ITER_DONE;
 }
 
 static struct ref_iterator_vtable reftable_reflog_iterator_vtable = {
 	.advance = reftable_reflog_iterator_advance,
+	.seek = reftable_reflog_iterator_seek,
 	.peel = reftable_reflog_iterator_peel,
-	.abort = reftable_reflog_iterator_abort
+	.release = reftable_reflog_iterator_release,
 };
 
 static struct reftable_reflog_iterator *reflog_iterator_for_stack(struct reftable_ref_store *refs,
