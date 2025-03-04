@@ -2,13 +2,44 @@
 #define REFLOG_H
 #include "refs.h"
 
-struct cmd_reflog_expire_cb {
+#define REFLOG_EXPIRE_TOTAL   (1 << 0)
+#define REFLOG_EXPIRE_UNREACH (1 << 1)
+
+struct reflog_expire_entry_option {
+	struct reflog_expire_entry_option *next;
+	timestamp_t expire_total;
+	timestamp_t expire_unreachable;
+	char pattern[FLEX_ARRAY];
+};
+
+struct reflog_expire_options {
+	struct reflog_expire_entry_option *entries, **entries_tail;
 	int stalefix;
 	int explicit_expiry;
+	timestamp_t default_expire_total;
 	timestamp_t expire_total;
+	timestamp_t default_expire_unreachable;
 	timestamp_t expire_unreachable;
 	int recno;
 };
+#define REFLOG_EXPIRE_OPTIONS_INIT(now) { \
+	.default_expire_total = now - 30 * 24 * 3600, \
+	.default_expire_unreachable = now - 90 * 24 * 3600, \
+}
+
+/*
+ * Parse the reflog expire configuration. This should be used with
+ * `repo_config()`.
+ */
+int reflog_expire_config(const char *var, const char *value,
+			 const struct config_context *ctx, void *cb);
+
+/*
+ * Adapt the options so that they apply to the given refname. This applies any
+ * per-reference reflog expiry configuration that may exist to the options.
+ */
+void reflog_expire_options_set_refname(struct reflog_expire_options *cb,
+				       const char *refname);
 
 struct expire_reflog_policy_cb {
 	enum {
@@ -18,7 +49,7 @@ struct expire_reflog_policy_cb {
 	} unreachable_expire_kind;
 	struct commit_list *mark_list;
 	unsigned long mark_limit;
-	struct cmd_reflog_expire_cb cmd;
+	struct reflog_expire_options opts;
 	struct commit *tip_commit;
 	struct commit_list *tips;
 	unsigned int dry_run:1;
