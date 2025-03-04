@@ -185,6 +185,15 @@ subproject.
 --message=<message>::
 	Specify <message> as the commit message for the merge commit.
 
+-S[<keyid>]::
+--gpg-sign[=<keyid>]::
+--no-gpg-sign::
+	GPG-sign commits. The `keyid` argument is optional and
+	defaults to the committer identity; if specified, it must be
+	stuck to the option without a space. `--no-gpg-sign` is useful to
+	countermand both `commit.gpgSign` configuration variable, and
+	earlier `--gpg-sign`.
+
 OPTIONS FOR 'split' (ALSO: 'push')
 ----------------------------------
 These options for 'split' may also be given to 'push' (which wraps
