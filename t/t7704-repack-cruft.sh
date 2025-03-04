@@ -194,48 +194,6 @@ test_expect_success '--max-cruft-size combines existing packs when below thresho
 	)
 '
 
-test_expect_success '--max-cruft-size combines smaller packs first' '
-	git init max-cruft-size-consume-small &&
-	(
-		cd max-cruft-size-consume-small &&
-
-		test_commit base &&
-		git repack -ad &&
-
-		cruft_foo="$(generate_cruft_pack foo 524288)" &&    # 0.5 MiB
-		cruft_bar="$(generate_cruft_pack bar 524288)" &&    # 0.5 MiB
-		cruft_baz="$(generate_cruft_pack baz 1048576)" &&   # 1.0 MiB
-		cruft_quux="$(generate_cruft_pack quux 1572864)" && # 1.5 MiB
-
-		test-tool pack-mtimes "$(basename $cruft_foo)" >expect.raw &&
-		test-tool pack-mtimes "$(basename $cruft_bar)" >>expect.raw &&
-		sort expect.raw >expect.objects &&
-
-		# repacking with `--max-cruft-size=2M` should combine
-		# both 0.5 MiB packs together, instead of, say, one of
-		# the 0.5 MiB packs with the 1.0 MiB pack
-		ls $packdir/pack-*.mtimes | sort >cruft.before &&
-		git repack -d --cruft --max-cruft-size=2M &&
-		ls $packdir/pack-*.mtimes | sort >cruft.after &&
-
-		comm -13 cruft.before cruft.after >cruft.new &&
-		comm -23 cruft.before cruft.after >cruft.removed &&
-
-		test_line_count = 1 cruft.new &&
-		test_line_count = 2 cruft.removed &&
-
-		# the two smaller packs should be rolled up first
-		printf "%s\n" $cruft_foo $cruft_bar | sort >expect.removed &&
-		test_cmp expect.removed cruft.removed &&
-
-		# ...and contain the set of objects rolled up
-		test-tool pack-mtimes "$(basename $(cat cruft.new))" >actual.raw &&
-		sort actual.raw >actual.objects &&
-
-		test_cmp expect.objects actual.objects
-	)
-'
-
 test_expect_success 'setup --max-cruft-size with freshened objects' '
 	git init max-cruft-size-freshen &&
 	(
@@ -300,6 +258,70 @@ test_expect_success '--max-cruft-size with freshened objects (packed)' '
 		echo "$foo $(cat foo.mtime)" >expect.raw &&
 		echo "$bar $(cat foo.mtime)" >>expect.raw &&
 		sort expect.raw >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '--max-cruft-size with freshened objects (previously cruft)' '
+	git init max-cruft-size-threshold &&
+	(
+		cd max-cruft-size-threshold &&
+
+		test_commit base &&
+		foo="$(generate_random_blob foo $((2*1024*1024)))" &&
+		bar="$(generate_random_blob bar $((2*1024*1024)))" &&
+		baz="$(generate_random_blob baz $((2*1024*1024)))" &&
+
+		test-tool chmtime --get -100000 \
+			"$objdir/$(test_oid_to_path "$foo")" >foo.old &&
+		test-tool chmtime --get -100000 \
+			"$objdir/$(test_oid_to_path "$bar")" >bar.old &&
+		test-tool chmtime --get -100000 \
+			"$objdir/$(test_oid_to_path "$baz")" >baz.old &&
+
+		git repack --cruft -d &&
+
+		# Make a packed copy of object $foo with a more recent
+		# mtime.
+		foo="$(generate_random_blob foo $((2*1024*1024)))" &&
+		foo_pack="$(echo "$foo" | git pack-objects $packdir/pack)" &&
+		test-tool chmtime --get -100 \
+			"$packdir/pack-$foo_pack.pack" >foo.new &&
+		git prune-packed &&
+
+		# Make a loose copy of object $bar with a more recent
+		# mtime.
+		bar="$(generate_random_blob bar $((2*1024*1024)))" &&
+		test-tool chmtime --get -100 \
+			"$objdir/$(test_oid_to_path "$bar")" >bar.new &&
+
+		# Make a new cruft object $quux to ensure we do not
+		# generate an identical pack to the existing cruft
+		# pack.
+		quux="$(generate_random_blob quux $((1024)))" &&
+		test-tool chmtime --get -100 \
+			"$objdir/$(test_oid_to_path "$quux")" >quux.new &&
+
+		git repack --cruft --max-cruft-size=3M -d &&
+
+		for p in $packdir/pack-*.mtimes
+		do
+			test-tool pack-mtimes "$(basename "$p")" || return 1
+		done >actual.raw &&
+		sort actual.raw >actual &&
+
+		# Among the set of all cruft packs, we should see both
+		# mtimes for object $foo and $bar, as well as the
+		# single new copy of $baz.
+		sort >expect <<-EOF &&
+		$foo $(cat foo.old)
+		$foo $(cat foo.new)
+		$bar $(cat bar.old)
+		$bar $(cat bar.new)
+		$baz $(cat baz.old)
+		$quux $(cat quux.new)
+		EOF
+
 		test_cmp expect actual
 	)
 '
