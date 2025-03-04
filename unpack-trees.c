@@ -2904,7 +2904,7 @@ int threeway_merge(const struct cache_entry * const *stages,
  * The rule is to "carry forward" what is in the index without losing
  * information across a "fast-forward", favoring a successful merge
  * over a merge failure when it makes sense.  For details of the
- * "carry forward" rule, please see <Documentation/git-read-tree.txt>.
+ * "carry forward" rule, please see <Documentation/git-read-tree.adoc>.
  *
  */
 int twoway_merge(const struct cache_entry * const *src,

@@ -1,7 +1,7 @@
 #!/usr/bin/perl
 #
 # Example implementation for the Git filter protocol version 2
-# See Documentation/gitattributes.txt, section "Filter Protocol"
+# See Documentation/gitattributes.adoc, section "Filter Protocol"
 #
 # Please note, this pass-thru filter is a minimal skeleton. No proper
 # error handling was implemented.

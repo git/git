@@ -34,7 +34,7 @@ GIT_CONTACTS := git-contacts
 
 GIT_CONTACTS_DOC := git-contacts.1
 GIT_CONTACTS_XML := git-contacts.xml
-GIT_CONTACTS_TXT := git-contacts.txt
+GIT_CONTACTS_TXT := git-contacts.adoc
 GIT_CONTACTS_HTML := git-contacts.html
 
 doc: $(GIT_CONTACTS_DOC) $(GIT_CONTACTS_HTML)

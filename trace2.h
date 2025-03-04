@@ -31,7 +31,7 @@
  *
  * For more info about: trace2 targets, conventions for public functions and
  * macros, trace2 target formats and examples on trace2 API usage refer to
- * Documentation/technical/api-trace2.txt
+ * Documentation/technical/api-trace2.adoc
  *
  */
 

@@ -16,7 +16,7 @@ if get_option('docs').contains('man')
       '@INPUT@',
     ],
     depends: documentation_deps,
-    input: 'git-contacts.txt',
+    input: 'git-contacts.adoc',
     output: 'git-contacts.xml',
   )
 
@@ -47,7 +47,7 @@ if get_option('docs').contains('html')
       '@INPUT@',
     ],
     depends: documentation_deps,
-    input: 'git-contacts.txt',
+    input: 'git-contacts.adoc',
     output: 'git-contacts.html',
     install: true,
     install_dir: get_option('datadir') / 'doc/git-doc',

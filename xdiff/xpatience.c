@@ -64,7 +64,7 @@ struct hashmap {
 
 		/*
 		 * If 1, this entry can serve as an anchor. See
-		 * Documentation/diff-options.txt for more information.
+		 * Documentation/diff-options.adoc for more information.
 		 */
 		unsigned anchor : 1;
 	} *entries, *first, *last;

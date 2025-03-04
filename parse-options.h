@@ -6,7 +6,7 @@
 struct repository;
 
 /**
- * Refer to Documentation/technical/api-parse-options.txt for the API doc.
+ * Refer to Documentation/technical/api-parse-options.adoc for the API doc.
  */
 
 enum parse_opt_type {

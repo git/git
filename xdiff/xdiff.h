@@ -85,7 +85,7 @@ typedef struct s_xpparam {
 	regex_t **ignore_regex;
 	size_t ignore_regex_nr;
 
-	/* See Documentation/diff-options.txt. */
+	/* See Documentation/diff-options.adoc. */
 	char **anchors;
 	size_t anchors_nr;
 } xpparam_t;

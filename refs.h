@@ -577,7 +577,7 @@ int refs_for_each_reflog(struct ref_store *refs, each_reflog_fn fn, void *cb_dat
 
 /*
  * Return 0 iff refname has the correct format for a refname according
- * to the rules described in Documentation/git-check-ref-format.txt.
+ * to the rules described in Documentation/git-check-ref-format.adoc.
  * If REFNAME_ALLOW_ONELEVEL is set in flags, then accept one-level
  * reference names.  If REFNAME_REFSPEC_PATTERN is set in flags, then
  * allow a single "*" wildcard character in the refspec. No leading or

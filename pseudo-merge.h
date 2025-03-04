@@ -101,7 +101,7 @@ void select_pseudo_merges(struct bitmap_writer *writer);
 
 /*
  * Represents a serialized view of a file containing pseudo-merge(s)
- * (see Documentation/technical/bitmap-format.txt for a specification
+ * (see Documentation/technical/bitmap-format.adoc for a specification
  * of the format).
  */
 struct pseudo_merge_map {

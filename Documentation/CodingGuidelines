@@ -44,7 +44,7 @@ code are expected to match the style the surrounding code already
 uses (even if it doesn't match the overall style of existing code).
 
 But if you must have a list of rules, here are some language
-specific ones. Note that Documentation/ToolsForGit.txt document
+specific ones. Note that Documentation/ToolsForGit.adoc document
 has a collection of tips to help you use some external tools
 to conform to these guidelines.
 
@@ -755,7 +755,7 @@ Externally Visible Names
 Writing Documentation:
 
  Most (if not all) of the documentation pages are written in the
- AsciiDoc format in *.txt files (e.g. Documentation/git.txt), and
+ AsciiDoc format in *.adoc files (e.g. Documentation/git.adoc), and
  processed into HTML and manpages (e.g. git.html and git.1 in the
  same directory).
 

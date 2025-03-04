@@ -333,7 +333,7 @@ struct diff_options {
 	int xdl_opts;
 	int ignore_driver_algorithm;
 
-	/* see Documentation/diff-options.txt */
+	/* see Documentation/diff-options.adoc */
 	char **anchors;
 	size_t anchors_nr, anchors_alloc;
 

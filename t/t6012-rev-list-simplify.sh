@@ -177,7 +177,7 @@ test_expect_success '--full-diff is not affected by --parents' '
 #   \ /      /\        /
 #    `---X--'  `---Y--'
 #
-# This example is explained in Documentation/rev-list-options.txt
+# This example is explained in Documentation/rev-list-options.adoc
 
 test_expect_success 'setup rebuild repo' '
 	rm -rf .git * &&

@@ -15,7 +15,7 @@ revision walk is used for operations like `git log`.
 
 === Related Reading
 
-- `Documentation/user-manual.txt` under "Hacking Git" contains some coverage of
+- `Documentation/user-manual.adoc` under "Hacking Git" contains some coverage of
   the revision walker in its various incarnations.
 - `revision.h`
 - https://eagain.net/articles/git-for-computer-scientists/[Git for Computer Scientists]
@@ -112,7 +112,7 @@ $ GIT_TRACE=1 ./bin-wrappers/git walken
 ----
 
 NOTE: For a more exhaustive overview of the new command process, take a look at
-`Documentation/MyFirstContribution.txt`.
+`Documentation/MyFirstContribution.adoc`.
 
 NOTE: A reference implementation can be found at
 https://github.com/nasamuffin/git/tree/revwalk.
@@ -132,7 +132,7 @@ used to track the allocated size of the list.
 Per entry, we find:
 
 `item` is the object provided upon which to base the object walk. Items in Git
-can be blobs, trees, commits, or tags. (See `Documentation/gittutorial-2.txt`.)
+can be blobs, trees, commits, or tags. (See `Documentation/gittutorial-2.adoc`.)
 
 `name` is the object ID (OID) of the object - a hex string you may be familiar
 with from using Git to organize your source in the past. Check the tutorial
@@ -141,7 +141,7 @@ from.
 
 `whence` indicates some information about what to do with the parents of the
 specified object. We'll explore this flag more later on; take a look at
-`Documentation/revisions.txt` to get an idea of what could set the `whence`
+`Documentation/revisions.adoc` to get an idea of what could set the `whence`
 value.
 
 `flags` are used to hint the beginning of the revision walk and are the first
@@ -153,7 +153,7 @@ can be used during the walk, as well.
 
 This one is quite a bit longer, and many fields are only used during the walk
 by `revision.c` - not configuration options. Most of the configurable flags in
-`struct rev_info` have a mirror in `Documentation/rev-list-options.txt`. It's a
+`struct rev_info` have a mirror in `Documentation/rev-list-options.adoc`. It's a
 good idea to take some time and read through that document.
 
 == Basic Commit Walk
@@ -710,7 +710,7 @@ objects grows along with the Git project.
 === Adding a Filter
 
 There are a handful of filters that we can apply to the object walk laid out in
-`Documentation/rev-list-options.txt`. These filters are typically useful for
+`Documentation/rev-list-options.adoc`. These filters are typically useful for
 operations such as creating packfiles or performing a partial clone. They are
 defined in `list-objects-filter-options.h`. For the purposes of this tutorial we
 will use the "tree:1" filter, which causes the walk to omit all trees and blobs

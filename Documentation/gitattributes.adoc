@@ -513,7 +513,7 @@ If the filter command (a string value) is defined via
 `filter.<driver>.process` then Git can process all blobs with a
 single filter invocation for the entire life of a single Git
 command. This is achieved by using the long-running process protocol
-(described in technical/long-running-process-protocol.txt).
+(described in Documentation/technical/long-running-process-protocol.adoc).
 
 When Git encounters the first file that needs to be cleaned or smudged,
 it starts the filter and performs the handshake. In the handshake, the
@@ -1177,11 +1177,11 @@ integer has a meaningful effect.
 
 For example, this line in `.gitattributes` can be used to tell the merge
 machinery to leave much longer (instead of the usual 7-character-long)
-conflict markers when merging the file `Documentation/git-merge.txt`
+conflict markers when merging the file `Documentation/git-merge.adoc`
 results in a conflict.
 
 ------------------------
-Documentation/git-merge.txt	conflict-marker-size=32
+Documentation/git-merge.adoc	conflict-marker-size=32
 ------------------------
 
 

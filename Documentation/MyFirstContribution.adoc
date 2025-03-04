@@ -21,7 +21,7 @@ This tutorial aims to summarize the following documents, but the reader may find
 useful additional context:
 
 - `Documentation/SubmittingPatches`
-- `Documentation/howto/new-command.txt`
+- `Documentation/howto/new-command.adoc`
 
 [[getting-help]]
 === Getting Help
@@ -331,7 +331,7 @@ function body:
 apply standard precedence rules. `git_config_get_string_tmp()` will look up
 a specific key ("user.name") and give you the value. There are a number of
 single-key lookup functions like this one; you can see them all (and more info
-about how to use `git_config()`) in `Documentation/technical/api-config.txt`.
+about how to use `git_config()`) in `Documentation/technical/api-config.adoc`.
 
 You should see that the name printed matches the one you see when you run:
 
@@ -461,10 +461,10 @@ $ ./bin-wrappers/git help psuh
 
 Your new command is undocumented! Let's fix that.
 
-Take a look at `Documentation/git-*.txt`. These are the manpages for the
+Take a look at `Documentation/git-*.adoc`. These are the manpages for the
 subcommands that Git knows about. You can open these up and take a look to get
 acquainted with the format, but then go ahead and make a new file
-`Documentation/git-psuh.txt`. Like with most of the documentation in the Git
+`Documentation/git-psuh.adoc`. Like with most of the documentation in the Git
 project, help pages are written with AsciiDoc (see CodingGuidelines, "Writing
 Documentation" section). Use the following template to fill out your own
 manpage:
@@ -543,7 +543,7 @@ Try and run `./bin-wrappers/git psuh -h`. Your command should crash at the end.
 That's because `-h` is a special case which your command should handle by
 printing usage.
 
-Take a look at `Documentation/technical/api-parse-options.txt`. This is a handy
+Take a look at `Documentation/technical/api-parse-options.adoc`. This is a handy
 tool for pulling out options you need to be able to handle, and it takes a
 usage string.
 
@@ -1088,14 +1088,14 @@ This gives reviewers a summary of what they're in for when reviewing your topic.
 The one generated for `psuh` from the sample implementation looks like this:
 
 ----
- Documentation/git-psuh.txt | 40 +++++++++++++++++++++
- Makefile                   |  1 +
- builtin.h                  |  1 +
- builtin/psuh.c             | 73 ++++++++++++++++++++++++++++++++++++++
- git.c                      |  1 +
- t/t9999-psuh-tutorial.sh   | 12 +++++++
+ Documentation/git-psuh.adoc | 40 +++++++++++++++++++++
+ Makefile                    |  1 +
+ builtin.h                   |  1 +
+ builtin/psuh.c              | 73 ++++++++++++++++++++++++++++++++++++++
+ git.c                       |  1 +
+ t/t9999-psuh-tutorial.sh    | 12 +++++++
  6 files changed, 128 insertions(+)
- create mode 100644 Documentation/git-psuh.txt
+ create mode 100644 Documentation/git-psuh.adoc
  create mode 100644 builtin/psuh.c
  create mode 100755 t/t9999-psuh-tutorial.sh
 ----

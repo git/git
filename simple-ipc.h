@@ -2,7 +2,7 @@
 #define GIT_SIMPLE_IPC_H
 
 /*
- * See Documentation/technical/api-simple-ipc.txt
+ * See Documentation/technical/api-simple-ipc.adoc
  */
 
 enum ipc_active_state {

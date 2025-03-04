@@ -1,6 +1,6 @@
 /*
  * Example implementation for the Git filter protocol version 2
- * See Documentation/gitattributes.txt, section "Filter Protocol"
+ * See Documentation/gitattributes.adoc, section "Filter Protocol"
  *
  * Usage: test-tool rot13-filter [--always-delay] --log=<path> <capabilities>
  *

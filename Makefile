@@ -194,7 +194,7 @@ include shared.mak
 # Linux, kernel 2.6.11 or newer is required for reliable sub-second file times
 # on file systems with exactly 1 ns or 1 s resolution. If you intend to use Git
 # on other file systems (e.g. CEPH, CIFS, NTFS, UDF), don't enable USE_NSEC. See
-# Documentation/technical/racy-git.txt for details.
+# Documentation/technical/racy-git.adoc for details.
 #
 # Define USE_ST_TIMESPEC if your "struct stat" uses "st_ctimespec" instead of
 # "st_ctim"
