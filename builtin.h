@@ -63,7 +63,7 @@
  *
  * . Add tests to `t/` directory.
  *
- * . Write documentation in `Documentation/git-foo.txt`.
+ * . Write documentation in `Documentation/git-foo.adoc`.
  *
  * . Add an entry for `git-foo` to `command-list.txt`.
  *
