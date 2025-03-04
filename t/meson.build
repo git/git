@@ -10,6 +10,7 @@ clar_test_suites = [
   'unit-tests/u-strcmp-offset.c',
   'unit-tests/u-strvec.c',
   'unit-tests/u-trailer.c',
+  'unit-tests/u-urlmatch-normalization.c',
 ]
 
 clar_sources = [
@@ -60,7 +61,6 @@ unit_test_programs = [
   'unit-tests/t-reftable-readwrite.c',
   'unit-tests/t-reftable-record.c',
   'unit-tests/t-reftable-stack.c',
-  'unit-tests/t-urlmatch-normalization.c',
 ]
 
 foreach unit_test_program : unit_test_programs
