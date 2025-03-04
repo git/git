@@ -1,3 +1,5 @@
+#define USE_THE_REPOSITORY_VARIABLE
+
 #include "git-compat-util.h"
 #include "environment.h"
 #include "gettext.h"
@@ -287,7 +289,7 @@ char *write_rev_file_order(const struct git_hash_algo *hash_algo,
 	write_rev_index_positions(f, pack_order, nr_objects);
 	write_rev_trailer(hash_algo, f, hash);
 
-	if (adjust_shared_perm(path) < 0)
+	if (adjust_shared_perm(the_repository, path) < 0)
 		die(_("failed to make %s readable"), path);
 
 	finalize_hashfile(f, NULL, FSYNC_COMPONENT_PACK_METADATA,
@@ -350,7 +352,7 @@ static char *write_mtimes_file(const struct git_hash_algo *hash_algo,
 	write_mtimes_objects(f, to_pack, objects, nr_objects);
 	write_mtimes_trailer(hash_algo, f, hash);
 
-	if (adjust_shared_perm(mtimes_name) < 0)
+	if (adjust_shared_perm(the_repository, mtimes_name) < 0)
 		die(_("failed to make %s readable"), mtimes_name);
 
 	finalize_hashfile(f, NULL, FSYNC_COMPONENT_PACK_METADATA,
@@ -566,12 +568,12 @@ void stage_tmp_packfiles(const struct git_hash_algo *hash_algo,
 	char *rev_tmp_name = NULL;
 	char *mtimes_tmp_name = NULL;
 
-	if (adjust_shared_perm(pack_tmp_name))
+	if (adjust_shared_perm(the_repository, pack_tmp_name))
 		die_errno("unable to make temporary pack file readable");
 
 	*idx_tmp_name = (char *)write_idx_file(hash_algo, NULL, written_list,
 					       nr_written, pack_idx_opts, hash);
-	if (adjust_shared_perm(*idx_tmp_name))
+	if (adjust_shared_perm(the_repository, *idx_tmp_name))
 		die_errno("unable to make temporary index file readable");
 
 	rev_tmp_name = write_rev_file(hash_algo, NULL, written_list, nr_written,

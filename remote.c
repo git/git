@@ -321,10 +321,11 @@ static void read_remotes_file(struct remote_state *remote_state,
 			      struct remote *remote)
 {
 	struct strbuf buf = STRBUF_INIT;
-	FILE *f = fopen_or_warn(git_path("remotes/%s", remote->name), "r");
+	FILE *f = fopen_or_warn(repo_git_path_append(the_repository, &buf,
+						     "remotes/%s", remote->name), "r");
 
 	if (!f)
-		return;
+		goto out;
 
 	warn_about_deprecated_remote_type("remotes", remote);
 
@@ -343,8 +344,10 @@ static void read_remotes_file(struct remote_state *remote_state,
 		else if (skip_prefix(buf.buf, "Pull:", &v))
 			refspec_append(&remote->fetch, skip_spaces(v));
 	}
-	strbuf_release(&buf);
 	fclose(f);
+
+out:
+	strbuf_release(&buf);
 }
 
 static void read_branches_file(struct remote_state *remote_state,
@@ -352,20 +355,19 @@ static void read_branches_file(struct remote_state *remote_state,
 {
 	char *frag, *to_free = NULL;
 	struct strbuf buf = STRBUF_INIT;
-	FILE *f = fopen_or_warn(git_path("branches/%s", remote->name), "r");
+	FILE *f = fopen_or_warn(repo_git_path_append(the_repository, &buf,
+						     "branches/%s", remote->name), "r");
 
 	if (!f)
-		return;
+		goto out;
 
 	warn_about_deprecated_remote_type("branches", remote);
 
 	strbuf_getline_lf(&buf, f);
 	fclose(f);
 	strbuf_trim(&buf);
-	if (!buf.len) {
-		strbuf_release(&buf);
-		return;
-	}
+	if (!buf.len)
+		goto out;
 
 	remote->configured_in_repo = 1;
 	remote->origin = REMOTE_BRANCHES;
@@ -393,6 +395,7 @@ static void read_branches_file(struct remote_state *remote_state,
 	refspec_appendf(&remote->push, "HEAD:refs/heads/%s", frag);
 	remote->fetch_tags = 1; /* always auto-follow */
 
+out:
 	strbuf_release(&buf);
 	free(to_free);
 }

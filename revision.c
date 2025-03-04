@@ -1874,15 +1874,20 @@ void add_index_objects_to_pending(struct rev_info *revs, unsigned int flags)
 	for (p = worktrees; *p; p++) {
 		struct worktree *wt = *p;
 		struct index_state istate = INDEX_STATE_INIT(revs->repo);
+		char *wt_gitdir;
 
 		if (wt->is_current)
 			continue; /* current index already taken care of */
 
+		wt_gitdir = get_worktree_git_dir(wt);
+
 		if (read_index_from(&istate,
 				    worktree_git_path(the_repository, wt, "index"),
-				    get_worktree_git_dir(wt)) > 0)
+				    wt_gitdir) > 0)
 			do_add_index_objects_to_pending(revs, &istate, flags);
+
 		discard_index(&istate);
+		free(wt_gitdir);
 	}
 	free_worktrees(worktrees);
 }

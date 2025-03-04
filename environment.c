@@ -43,7 +43,6 @@ char *git_log_output_encoding;
 char *apply_default_whitespace;
 char *apply_default_ignorewhitespace;
 char *git_attributes_file;
-char *git_hooks_path;
 int zlib_compression_level = Z_BEST_SPEED;
 int pack_compression_level = Z_DEFAULT_COMPRESSION;
 int fsync_object_files = -1;
@@ -206,32 +205,6 @@ const char *get_log_output_encoding(void)
 const char *get_commit_output_encoding(void)
 {
 	return git_commit_encoding ? git_commit_encoding : "UTF-8";
-}
-
-static int the_shared_repository = PERM_UMASK;
-static int need_shared_repository_from_config = 1;
-
-void set_shared_repository(int value)
-{
-	the_shared_repository = value;
-	need_shared_repository_from_config = 0;
-}
-
-int get_shared_repository(void)
-{
-	if (need_shared_repository_from_config) {
-		const char *var = "core.sharedrepository";
-		const char *value;
-		if (!git_config_get_value(var, &value))
-			the_shared_repository = git_config_perm(var, value);
-		need_shared_repository_from_config = 0;
-	}
-	return the_shared_repository;
-}
-
-void reset_shared_repository(void)
-{
-	need_shared_repository_from_config = 1;
 }
 
 int use_optional_locks(void)

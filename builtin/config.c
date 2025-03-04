@@ -775,13 +775,13 @@ static void location_options_init(struct config_location_options *opts,
 		opts->source.file = opts->file_to_free = git_system_config();
 		opts->source.scope = CONFIG_SCOPE_SYSTEM;
 	} else if (opts->use_local_config) {
-		opts->source.file = opts->file_to_free = git_pathdup("config");
+		opts->source.file = opts->file_to_free = repo_git_path(the_repository, "config");
 		opts->source.scope = CONFIG_SCOPE_LOCAL;
 	} else if (opts->use_worktree_config) {
 		struct worktree **worktrees = get_worktrees();
 		if (the_repository->repository_format_worktree_config)
 			opts->source.file = opts->file_to_free =
-				git_pathdup("config.worktree");
+				repo_git_path(the_repository, "config.worktree");
 		else if (worktrees[0] && worktrees[1])
 			die(_("--worktree cannot be used with multiple "
 			      "working trees unless the config\n"
@@ -790,7 +790,7 @@ static void location_options_init(struct config_location_options *opts,
 			      "section in \"git help worktree\" for details"));
 		else
 			opts->source.file = opts->file_to_free =
-				git_pathdup("config");
+				repo_git_path(the_repository, "config");
 		opts->source.scope = CONFIG_SCOPE_LOCAL;
 		free_worktrees(worktrees);
 	} else if (opts->source.file) {
@@ -1087,7 +1087,7 @@ static int show_editor(struct config_location_options *opts)
 	git_config(git_default_config, NULL);
 	config_file = opts->source.file ?
 			xstrdup(opts->source.file) :
-			git_pathdup("config");
+			repo_git_path(the_repository, "config");
 	if (opts->use_global_config) {
 		int fd = open(config_file, O_CREAT | O_EXCL | O_WRONLY, 0666);
 		if (fd >= 0) {

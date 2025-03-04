@@ -328,7 +328,7 @@ static void write_branch_report(FILE *rpt, struct branch *b)
 
 static void write_crash_report(const char *err)
 {
-	char *loc = git_pathdup("fast_import_crash_%"PRIuMAX, (uintmax_t) getpid());
+	char *loc = repo_git_path(the_repository, "fast_import_crash_%"PRIuMAX, (uintmax_t) getpid());
 	FILE *rpt = fopen(loc, "w");
 	struct branch *b;
 	unsigned long lu;
@@ -3280,7 +3280,7 @@ static char* make_fast_import_path(const char *path)
 {
 	if (!relative_marks_paths || is_absolute_path(path))
 		return prefix_filename(global_prefix, path);
-	return git_pathdup("info/fast-import/%s", path);
+	return repo_git_path(the_repository, "info/fast-import/%s", path);
 }
 
 static void option_import_marks(const char *marks,

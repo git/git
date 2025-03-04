@@ -2309,8 +2309,8 @@ int cmd_format_patch(int argc,
 		 * We consider <outdir> as 'outside of gitdir', therefore avoid
 		 * applying adjust_shared_perm in s-c-l-d.
 		 */
-		saved = get_shared_repository();
-		set_shared_repository(0);
+		saved = repo_settings_get_shared_repository(the_repository);
+		repo_settings_set_shared_repository(the_repository, 0);
 		switch (safe_create_leading_directories_const(output_directory)) {
 		case SCLD_OK:
 		case SCLD_EXISTS:
@@ -2319,7 +2319,7 @@ int cmd_format_patch(int argc,
 			die(_("could not create leading directories "
 			      "of '%s'"), output_directory);
 		}
-		set_shared_repository(saved);
+		repo_settings_set_shared_repository(the_repository, saved);
 		if (mkdir(output_directory, 0777) < 0 && errno != EEXIST)
 			die_errno(_("could not create directory '%s'"),
 				  output_directory);
