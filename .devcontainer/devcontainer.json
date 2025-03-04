@@ -1,0 +1,4 @@
+https:\/\/[a-zA-Z0-9.-]+(:[0-9]+)?(\/[^\s]*)?{
+  "image": "mcr.microsoft.com/devcontainers/universal:2",
+  "features": {}
+}
