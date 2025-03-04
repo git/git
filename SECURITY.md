@@ -1,7 +1,5 @@
 # Security Policy
-
 ## Reporting a vulnerability
-
 Please send a detailed mail to git-security@googlegroups.com to
 report vulnerabilities in Git.
 
