@@ -65,8 +65,10 @@ static void add_rebase_files(struct rev_info *revs)
 	struct worktree **worktrees = get_worktrees();
 
 	for (struct worktree **wt = worktrees; *wt; wt++) {
+		char *wt_gitdir = get_worktree_git_dir(*wt);
+
 		strbuf_reset(&buf);
-		strbuf_addstr(&buf, get_worktree_git_dir(*wt));
+		strbuf_addstr(&buf, wt_gitdir);
 		strbuf_complete(&buf, '/');
 		len = buf.len;
 		for (size_t i = 0; i < ARRAY_SIZE(path); i++) {
@@ -74,6 +76,8 @@ static void add_rebase_files(struct rev_info *revs)
 			strbuf_addstr(&buf, path[i]);
 			add_one_file(buf.buf, revs);
 		}
+
+		free(wt_gitdir);
 	}
 	strbuf_release(&buf);
 	free_worktrees(worktrees);

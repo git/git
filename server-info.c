@@ -125,7 +125,7 @@ static int update_info_file(struct repository *r, char *path,
 	uic.cur_fp = NULL;
 
 	if (uic_is_stale(&uic)) {
-		if (adjust_shared_perm(get_tempfile_path(f)) < 0)
+		if (adjust_shared_perm(r, get_tempfile_path(f)) < 0)
 			goto out;
 		if (rename_tempfile(&f, path) < 0)
 			goto out;

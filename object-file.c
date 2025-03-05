@@ -394,7 +394,7 @@ int mkdir_in_gitdir(const char *path)
 		}
 		strbuf_release(&sb);
 	}
-	return adjust_shared_perm(path);
+	return adjust_shared_perm(the_repository, path);
 }
 
 static enum scld_error safe_create_leading_directories_1(char *path, int share)
@@ -443,7 +443,7 @@ static enum scld_error safe_create_leading_directories_1(char *path, int share)
 				ret = SCLD_VANISHED;
 			else
 				ret = SCLD_FAILED;
-		} else if (share && adjust_shared_perm(path)) {
+		} else if (share && adjust_shared_perm(the_repository, path)) {
 			ret = SCLD_PERMS;
 		}
 		*slash = slash_character;
@@ -482,14 +482,14 @@ int odb_mkstemp(struct strbuf *temp_filename, const char *pattern)
 	 * restrictive except to remove write permission.
 	 */
 	int mode = 0444;
-	git_path_buf(temp_filename, "objects/%s", pattern);
+	repo_git_path_replace(the_repository, temp_filename, "objects/%s", pattern);
 	fd = git_mkstemp_mode(temp_filename->buf, mode);
 	if (0 <= fd)
 		return fd;
 
 	/* slow path */
 	/* some mkstemp implementations erase temp_filename on failure */
-	git_path_buf(temp_filename, "objects/%s", pattern);
+	repo_git_path_replace(the_repository, temp_filename, "objects/%s", pattern);
 	safe_create_leading_directories(temp_filename->buf);
 	return xmkstemp_mode(temp_filename->buf, mode);
 }
@@ -723,7 +723,7 @@ static void read_info_alternates(struct repository *r,
 void add_to_alternates_file(const char *reference)
 {
 	struct lock_file lock = LOCK_INIT;
-	char *alts = git_pathdup("objects/info/alternates");
+	char *alts = repo_git_path(the_repository, "objects/info/alternates");
 	FILE *in, *out;
 	int found = 0;
 
@@ -2111,7 +2111,7 @@ retry:
 	}
 
 out:
-	if (adjust_shared_perm(filename))
+	if (adjust_shared_perm(the_repository, filename))
 		return error(_("unable to set permission to '%s'"), filename);
 	return 0;
 }
@@ -2187,7 +2187,7 @@ static int create_tmpfile(struct strbuf *tmp, const char *filename)
 		strbuf_add(tmp, filename, dirlen - 1);
 		if (mkdir(tmp->buf, 0777) && errno != EEXIST)
 			return -1;
-		if (adjust_shared_perm(tmp->buf))
+		if (adjust_shared_perm(the_repository, tmp->buf))
 			return -1;
 
 		/* Try again */
