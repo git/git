@@ -66,22 +66,21 @@ changes are made at a certain version boundary, and recording these
 decisions in this document, are necessary but not sufficient.
 Because such changes are expected to be numerous, and the design and
 implementation of them are expected to span over time, they have to
-be deployable trivially at such a version boundary.
+be deployable trivially at such a version boundary, prepared over long
+time.
 
 The breaking changes MUST be guarded with the a compile-time switch,
 WITH_BREAKING_CHANGES, to help this process.  When built with it,
 the resulting Git binary together with its documentation would
 behave as if these breaking changes slated for the next big version
-boundary are already in effect.  We may also want to have a CI job
-or two to exercise the work-in-progress version of Git with these
-breaking changes.
+boundary are already in effect.  We also have a CI job to exercise
+the work-in-progress version of Git with these breaking changes.
 
 
 == Git 3.0
 
 The following subsections document upcoming breaking changes for Git 3.0. There
-is no planned release date for this breaking version yet.  The early
-adopter configuration used for changes for this release is `feature.git3`.
+is no planned release date for this breaking version yet.
 
 Proposed changes and removals only include items which are "ready" to be done.
 In other words, this is not supposed to be a wishlist of features that should
