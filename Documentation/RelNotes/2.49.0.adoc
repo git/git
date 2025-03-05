@@ -93,6 +93,18 @@ Performance, Internal Implementation, Development Support etc.
  * Rename processing in the recursive merge backend has seen a micro
    optimization.
 
+ * The path.[ch] API takes an explicit repository parameter passed
+   throughout the callchain, instead of relying on the_repository
+   singleton instance.
+
+ * Large-object promisor protocol extension has been introduced.
+
+ * The editorconfig file is updated to tell us that bash scripts are
+   similar to general Bourne shell scripts.
+
+ * Meson-based build procedure forgot to build some docs, which has
+   been corrected.
+
 
 Fixes since v2.48
 -----------------
@@ -272,3 +284,4 @@ Fixes since v2.48
    (merge 45761988ac en/doc-renormalize later to maint).
    (merge 832f56f06a jc/doc-boolean-synonyms later to maint).
    (merge 3eeed876a9 ac/doc-http-ssl-type-config later to maint).
+   (merge c268e3285d jc/breaking-changes-early-adopter-option later to maint).
