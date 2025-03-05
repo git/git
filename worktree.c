@@ -199,6 +199,11 @@ struct worktree **get_worktrees(void)
 	return get_worktrees_internal(0);
 }
 
+struct worktree **get_worktrees_without_reading_head(void)
+{
+	return get_worktrees_internal(1);
+}
+
 char *get_worktree_git_dir(const struct worktree *wt)
 {
 	if (!wt)
