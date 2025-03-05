@@ -284,6 +284,10 @@ elif docs_backend == 'asciidoctor'
   ]
 endif
 
+if get_option('breaking_changes')
+   asciidoc_common_options += ['--attribute', 'with-breaking-changes']
+endif
+
 xmlto = find_program('xmlto', dirs: program_path)
 
 cmd_lists = [
