@@ -1569,7 +1569,11 @@ struct ref_iterator *refs_ref_iterator_begin(
 			if (!len)
 				continue;
 
-			strvec_push(&normalized_exclude_patterns, pattern);
+			if (pattern[len - 1] == '/')
+				strvec_push(&normalized_exclude_patterns, pattern);
+			else
+				strvec_pushf(&normalized_exclude_patterns, "%s/",
+					     pattern);
 		}
 
 		exclude_patterns = normalized_exclude_patterns.v;
