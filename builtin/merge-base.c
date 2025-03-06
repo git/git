@@ -8,7 +8,7 @@
 #include "parse-options.h"
 #include "commit-reach.h"
 
-static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
+static int show_merge_base(struct commit **rev, size_t rev_nr, int show_all)
 {
 	struct commit_list *result = NULL, *r;
 
@@ -149,7 +149,7 @@ int cmd_merge_base(int argc,
 		   struct repository *repo UNUSED)
 {
 	struct commit **rev;
-	int rev_nr = 0;
+	size_t rev_nr = 0;
 	int show_all = 0;
 	int cmdmode = 0;
 	int ret;

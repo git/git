@@ -1464,7 +1464,7 @@ static int patch_update_file(struct add_p_state *s,
 		if (file_diff->hunk_nr) {
 			if (rendered_hunk_index != hunk_index) {
 				if (use_pager) {
-					setup_pager();
+					setup_pager(the_repository);
 					sigchain_push(SIGPIPE, SIG_IGN);
 				}
 				render_hunk(s, hunk, 0, colored, &s->buf);

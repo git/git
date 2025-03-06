@@ -142,10 +142,8 @@ int strbuf_edit_interactively(struct repository *r,
 	struct strbuf sb = STRBUF_INIT;
 	int fd, res = 0;
 
-	if (!is_absolute_path(path)) {
-		strbuf_repo_git_path(&sb, r, "%s", path);
-		path = sb.buf;
-	}
+	if (!is_absolute_path(path))
+		path = repo_git_path_append(r, &sb, "%s", path);
 
 	fd = open(path, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 	if (fd < 0)

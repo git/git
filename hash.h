@@ -234,19 +234,20 @@ enum get_oid_result {
 #endif
 
 /* A suitably aligned type for stack allocations of hash contexts. */
-union git_hash_ctx {
-	git_SHA_CTX sha1;
-	git_SHA_CTX_unsafe sha1_unsafe;
-
-	git_SHA256_CTX sha256;
+struct git_hash_ctx {
+	const struct git_hash_algo *algop;
+	union {
+		git_SHA_CTX sha1;
+		git_SHA_CTX_unsafe sha1_unsafe;
+		git_SHA256_CTX sha256;
+	} state;
 };
-typedef union git_hash_ctx git_hash_ctx;
 
-typedef void (*git_hash_init_fn)(git_hash_ctx *ctx);
-typedef void (*git_hash_clone_fn)(git_hash_ctx *dst, const git_hash_ctx *src);
-typedef void (*git_hash_update_fn)(git_hash_ctx *ctx, const void *in, size_t len);
-typedef void (*git_hash_final_fn)(unsigned char *hash, git_hash_ctx *ctx);
-typedef void (*git_hash_final_oid_fn)(struct object_id *oid, git_hash_ctx *ctx);
+typedef void (*git_hash_init_fn)(struct git_hash_ctx *ctx);
+typedef void (*git_hash_clone_fn)(struct git_hash_ctx *dst, const struct git_hash_ctx *src);
+typedef void (*git_hash_update_fn)(struct git_hash_ctx *ctx, const void *in, size_t len);
+typedef void (*git_hash_final_fn)(unsigned char *hash, struct git_hash_ctx *ctx);
+typedef void (*git_hash_final_oid_fn)(struct object_id *oid, struct git_hash_ctx *ctx);
 
 struct git_hash_algo {
 	/*
@@ -282,21 +283,6 @@ struct git_hash_algo {
 	/* The hash finalization function for object IDs. */
 	git_hash_final_oid_fn final_oid_fn;
 
-	/* The non-cryptographic hash initialization function. */
-	git_hash_init_fn unsafe_init_fn;
-
-	/* The non-cryptographic hash context cloning function. */
-	git_hash_clone_fn unsafe_clone_fn;
-
-	/* The non-cryptographic hash update function. */
-	git_hash_update_fn unsafe_update_fn;
-
-	/* The non-cryptographic hash finalization function. */
-	git_hash_final_fn unsafe_final_fn;
-
-	/* The non-cryptographic hash finalization function. */
-	git_hash_final_oid_fn unsafe_final_oid_fn;
-
 	/* The OID of the empty tree. */
 	const struct object_id *empty_tree;
 
@@ -305,8 +291,31 @@ struct git_hash_algo {
 
 	/* The all-zeros OID. */
 	const struct object_id *null_oid;
+
+	/* The unsafe variant of this hash function, if one exists. */
+	const struct git_hash_algo *unsafe;
 };
 extern const struct git_hash_algo hash_algos[GIT_HASH_NALGOS];
+
+static inline void git_hash_clone(struct git_hash_ctx *dst, const struct git_hash_ctx *src)
+{
+	src->algop->clone_fn(dst, src);
+}
+
+static inline void git_hash_update(struct git_hash_ctx *ctx, const void *in, size_t len)
+{
+	ctx->algop->update_fn(ctx, in, len);
+}
+
+static inline void git_hash_final(unsigned char *hash, struct git_hash_ctx *ctx)
+{
+	ctx->algop->final_fn(hash, ctx);
+}
+
+static inline void git_hash_final_oid(struct object_id *oid, struct git_hash_ctx *ctx)
+{
+	ctx->algop->final_oid_fn(oid, ctx);
+}
 
 /*
  * Return a GIT_HASH_* constant based on the name.  Returns GIT_HASH_UNKNOWN if
@@ -320,8 +329,16 @@ int hash_algo_by_length(int len);
 /* Identical, except for a pointer to struct git_hash_algo. */
 static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
 {
-	return p - hash_algos;
+	size_t i;
+	for (i = 0; i < GIT_HASH_NALGOS; i++) {
+		const struct git_hash_algo *algop = &hash_algos[i];
+		if (p == algop)
+			return i;
+	}
+	return GIT_HASH_UNKNOWN;
 }
+
+const struct git_hash_algo *unsafe_hash_algo(const struct git_hash_algo *algop);
 
 const struct object_id *null_oid(void);
 

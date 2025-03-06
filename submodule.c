@@ -536,7 +536,8 @@ static struct repository *open_submodule(const char *path)
 	struct strbuf sb = STRBUF_INIT;
 	struct repository *out = xmalloc(sizeof(*out));
 
-	if (submodule_to_gitdir(&sb, path) || repo_init(out, sb.buf, NULL)) {
+	if (submodule_to_gitdir(the_repository, &sb, path) ||
+	    repo_init(out, sb.buf, NULL)) {
 		strbuf_release(&sb);
 		free(out);
 		return NULL;
@@ -1315,7 +1316,7 @@ static int repo_has_absorbed_submodules(struct repository *r)
 	int ret;
 	struct strbuf buf = STRBUF_INIT;
 
-	strbuf_repo_git_path(&buf, r, "modules/");
+	repo_git_path_append(r, &buf, "modules/");
 	ret = file_exists(buf.buf) && !is_empty_dir(buf.buf);
 	strbuf_release(&buf);
 	return ret;
@@ -2572,7 +2573,8 @@ int get_superproject_working_tree(struct strbuf *buf)
  * Put the gitdir for a submodule (given relative to the main
  * repository worktree) into `buf`, or return -1 on error.
  */
-int submodule_to_gitdir(struct strbuf *buf, const char *submodule)
+int submodule_to_gitdir(struct repository *repo,
+			struct strbuf *buf, const char *submodule)
 {
 	const struct submodule *sub;
 	const char *git_dir;
@@ -2592,14 +2594,13 @@ int submodule_to_gitdir(struct strbuf *buf, const char *submodule)
 		strbuf_addstr(buf, git_dir);
 	}
 	if (!is_git_directory(buf->buf)) {
-		sub = submodule_from_path(the_repository, null_oid(),
-					  submodule);
+		sub = submodule_from_path(repo, null_oid(), submodule);
 		if (!sub) {
 			ret = -1;
 			goto cleanup;
 		}
 		strbuf_reset(buf);
-		submodule_name_to_gitdir(buf, the_repository, sub->name);
+		submodule_name_to_gitdir(buf, repo, sub->name);
 	}
 
 cleanup:
@@ -2629,6 +2630,6 @@ void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
 	 * administrators can explicitly set. Nothing has been decided,
 	 * so for now, just append the name at the end of the path.
 	 */
-	strbuf_repo_git_path(buf, r, "modules/");
+	repo_git_path_append(r, buf, "modules/");
 	strbuf_addstr(buf, submodule_name);
 }

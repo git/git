@@ -19,6 +19,7 @@
 #include "convert.h"
 #include "environment.h"
 #include "gettext.h"
+#include "git-zlib.h"
 #include "ident.h"
 #include "repository.h"
 #include "lockfile.h"
@@ -1434,11 +1435,6 @@ static int git_default_core_config(const char *var, const char *value,
 	if (!strcmp(var, "core.attributesfile")) {
 		FREE_AND_NULL(git_attributes_file);
 		return git_config_pathname(&git_attributes_file, var, value);
-	}
-
-	if (!strcmp(var, "core.hookspath")) {
-		FREE_AND_NULL(git_hooks_path);
-		return git_config_pathname(&git_hooks_path, var, value);
 	}
 
 	if (!strcmp(var, "core.bare")) {

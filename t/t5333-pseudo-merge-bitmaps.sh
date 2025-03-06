@@ -208,7 +208,8 @@ test_expect_success 'bitmapPseudoMerge.stableThreshold creates stable groups' '
 '
 
 test_expect_success 'out of order thresholds are rejected' '
-	test_must_fail git \
+	# Disable the test var to remove a stderr message.
+	test_must_fail env GIT_TEST_NAME_HASH_VERSION=1 git \
 		-c bitmapPseudoMerge.test.pattern="refs/*" \
 		-c bitmapPseudoMerge.test.threshold=1.month.ago \
 		-c bitmapPseudoMerge.test.stableThreshold=1.week.ago \

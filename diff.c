@@ -5493,6 +5493,8 @@ static int diff_opt_pickaxe_regex(const struct option *opt,
 	BUG_ON_OPT_NEG(unset);
 	options->pickaxe = arg;
 	options->pickaxe_opts |= DIFF_PICKAXE_KIND_G;
+	if (arg && !*arg)
+		return error(_("-G requires a non-empty argument"));
 	return 0;
 }
 
@@ -5504,6 +5506,8 @@ static int diff_opt_pickaxe_string(const struct option *opt,
 	BUG_ON_OPT_NEG(unset);
 	options->pickaxe = arg;
 	options->pickaxe_opts |= DIFF_PICKAXE_KIND_S;
+	if (arg && !*arg)
+		return error(_("-S requires a non-empty argument"));
 	return 0;
 }
 
@@ -6392,7 +6396,7 @@ static void diff_summary(struct diff_options *opt, struct diff_filepair *p)
 }
 
 struct patch_id_t {
-	git_hash_ctx *ctx;
+	struct git_hash_ctx *ctx;
 	int patchlen;
 };
 
@@ -6409,13 +6413,13 @@ static int remove_space(char *line, int len)
 	return dst - line;
 }
 
-void flush_one_hunk(struct object_id *result, git_hash_ctx *ctx)
+void flush_one_hunk(struct object_id *result, struct git_hash_ctx *ctx)
 {
 	unsigned char hash[GIT_MAX_RAWSZ];
 	unsigned short carry = 0;
 	int i;
 
-	the_hash_algo->final_fn(hash, ctx);
+	git_hash_final(hash, ctx);
 	the_hash_algo->init_fn(ctx);
 	/* 20-byte sum, with carry */
 	for (i = 0; i < the_hash_algo->rawsz; ++i) {
@@ -6434,22 +6438,22 @@ static int patch_id_consume(void *priv, char *line, unsigned long len)
 		return 0;
 	new_len = remove_space(line, len);
 
-	the_hash_algo->update_fn(data->ctx, line, new_len);
+	git_hash_update(data->ctx, line, new_len);
 	data->patchlen += new_len;
 	return 0;
 }
 
-static void patch_id_add_string(git_hash_ctx *ctx, const char *str)
+static void patch_id_add_string(struct git_hash_ctx *ctx, const char *str)
 {
-	the_hash_algo->update_fn(ctx, str, strlen(str));
+	git_hash_update(ctx, str, strlen(str));
 }
 
-static void patch_id_add_mode(git_hash_ctx *ctx, unsigned mode)
+static void patch_id_add_mode(struct git_hash_ctx *ctx, unsigned mode)
 {
 	/* large enough for 2^32 in octal */
 	char buf[12];
 	int len = xsnprintf(buf, sizeof(buf), "%06o", mode);
-	the_hash_algo->update_fn(ctx, buf, len);
+	git_hash_update(ctx, buf, len);
 }
 
 /* returns 0 upon success, and writes result into oid */
@@ -6457,7 +6461,7 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int i;
-	git_hash_ctx ctx;
+	struct git_hash_ctx ctx;
 	struct patch_id_t data;
 
 	the_hash_algo->init_fn(&ctx);
@@ -6493,9 +6497,9 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 		len2 = remove_space(p->two->path, strlen(p->two->path));
 		patch_id_add_string(&ctx, "diff--git");
 		patch_id_add_string(&ctx, "a/");
-		the_hash_algo->update_fn(&ctx, p->one->path, len1);
+		git_hash_update(&ctx, p->one->path, len1);
 		patch_id_add_string(&ctx, "b/");
-		the_hash_algo->update_fn(&ctx, p->two->path, len2);
+		git_hash_update(&ctx, p->two->path, len2);
 
 		if (p->one->mode == 0) {
 			patch_id_add_string(&ctx, "newfilemode");
@@ -6514,24 +6518,24 @@ static int diff_get_patch_id(struct diff_options *options, struct object_id *oid
 			/* don't do anything since we're only populating header info */
 		} else if (diff_filespec_is_binary(options->repo, p->one) ||
 		    diff_filespec_is_binary(options->repo, p->two)) {
-			the_hash_algo->update_fn(&ctx, oid_to_hex(&p->one->oid),
+			git_hash_update(&ctx, oid_to_hex(&p->one->oid),
 					the_hash_algo->hexsz);
-			the_hash_algo->update_fn(&ctx, oid_to_hex(&p->two->oid),
+			git_hash_update(&ctx, oid_to_hex(&p->two->oid),
 					the_hash_algo->hexsz);
 		} else {
 			if (p->one->mode == 0) {
 				patch_id_add_string(&ctx, "---/dev/null");
 				patch_id_add_string(&ctx, "+++b/");
-				the_hash_algo->update_fn(&ctx, p->two->path, len2);
+				git_hash_update(&ctx, p->two->path, len2);
 			} else if (p->two->mode == 0) {
 				patch_id_add_string(&ctx, "---a/");
-				the_hash_algo->update_fn(&ctx, p->one->path, len1);
+				git_hash_update(&ctx, p->one->path, len1);
 				patch_id_add_string(&ctx, "+++/dev/null");
 			} else {
 				patch_id_add_string(&ctx, "---a/");
-				the_hash_algo->update_fn(&ctx, p->one->path, len1);
+				git_hash_update(&ctx, p->one->path, len1);
 				patch_id_add_string(&ctx, "+++b/");
-				the_hash_algo->update_fn(&ctx, p->two->path, len2);
+				git_hash_update(&ctx, p->two->path, len2);
 			}
 
 			if (fill_mmfile(options->repo, &mf1, p->one) < 0 ||
@@ -7386,6 +7390,6 @@ void setup_diff_pager(struct diff_options *opt)
 	 * --exit-code" in hooks and other scripts, we do not do so.
 	 */
 	if (!opt->flags.exit_with_status &&
-	    check_pager_config("diff") != 0)
-		setup_pager();
+	    check_pager_config(the_repository, "diff") != 0)
+		setup_pager(the_repository);
 }

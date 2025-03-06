@@ -36,6 +36,12 @@ relationship between packs and objects is as follows:
 
 . ./test-lib.sh
 
+if ! test_have_prereq WITHOUT_BREAKING_CHANGES
+then
+	skip_all='skipping git-pack-redundant tests; built with breaking changes'
+	test_done
+fi
+
 main_repo=main.git
 shared_repo=shared.git
 

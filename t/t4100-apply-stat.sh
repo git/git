@@ -38,4 +38,17 @@ incomplete (1)
 incomplete (2)
 EOF
 
+test_expect_success 'applying a hunk header which overflows fails' '
+	cat >patch <<-\EOF &&
+	diff -u a/file b/file
+	--- a/file
+	+++ b/file
+	@@ -98765432109876543210 +98765432109876543210 @@
+	-a
+	+b
+	EOF
+	test_must_fail git apply patch 2>err &&
+	echo "error: corrupt patch at line 4" >expect &&
+	test_cmp expect err
+'
 test_done

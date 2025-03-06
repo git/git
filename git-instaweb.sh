@@ -694,9 +694,9 @@ class GitWebRequestHandler(CGIHTTPRequestHandler):
 		return result
 
 
-bind = "127.0.0.1"
+bind = "0.0.0.0"
 if "$local" == "true":
-	bind = "0.0.0.0"
+	bind = "127.0.0.1"
 
 # Set our http root directory
 # This is a work around for a missing directory argument in older Python versions

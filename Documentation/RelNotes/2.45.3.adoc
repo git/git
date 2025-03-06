@@ -1,0 +1,112 @@
+Git v2.45.3 Release Notes
+=========================
+
+This release merges up the fix that appears in v2.40.4, v2.41.3,
+v2.42.4, v2.43.6 and v2.44.3 to address the security issues
+CVE-2024-50349 and CVE-2024-52006; see the release notes for
+these versions for details.
+
+This version also backports various small fixes accumulated on the
+'master' front during the development towards Git 2.46, the next
+feature release.
+
+
+Fixes since v2.45.2
+-------------------
+
+ * Git-GUI has a new maintainer, Johannes Sixt.
+
+ * Tests that try to corrupt in-repository files in chunked format did
+   not work well on macOS due to its broken "mv", which has been
+   worked around.
+
+ * The maximum size of attribute files is enforced more consistently.
+
+ * Unbreak CI jobs so that we do not attempt to use Python 2 that has
+   been removed from the platform.
+
+ * Git 2.43 started using the tree of HEAD as the source of attributes
+   in a bare repository, which has severe performance implications.
+   For now, revert the change, without ripping out a more explicit
+   support for the attr.tree configuration variable.
+
+ * Windows CI running in GitHub Actions started complaining about the
+   order of arguments given to calloc(); the imported regex code uses
+   the wrong order almost consistently, which has been corrected.
+
+ * The SubmittingPatches document now refers folks to manpages
+   translation project.
+
+ * "git rebase --signoff" used to forget that it needs to add a
+   sign-off to the resulting commit when told to continue after a
+   conflict stops its operation.
+
+ * The procedure to build multi-pack-index got confused by the
+   replace-refs mechanism, which has been corrected by disabling the
+   latter.
+
+ * "git stash -S" did not handle binary files correctly, which has
+   been corrected.
+
+ * A scheduled "git maintenance" job is expected to work on all
+   repositories it knows about, but it stopped at the first one that
+   errored out.  Now it keeps going.
+
+ * zsh can pretend to be a normal shell pretty well except for some
+   glitches that we tickle in some of our scripts. Work them around
+   so that "vimdiff" and our test suite works well enough with it.
+
+ * Command line completion support for zsh (in contrib/) has been
+   updated to stop exposing internal state to end-user shell
+   interaction.
+
+ * The documentation for "git diff --name-only" has been clarified
+   that it is about showing the names in the post-image tree.
+
+ * The chainlint script (invoked during "make test") did nothing when
+   it failed to detect the number of available CPUs.  It now falls
+   back to 1 CPU to avoid the problem.
+
+ * "git init" in an already created directory, when the user
+   configuration has includeif.onbranch, started to fail recently,
+   which has been corrected.
+
+ * The safe.directory configuration knob has been updated to
+   optionally allow leading path matches.
+
+ * An overly large ".gitignore" files are now rejected silently.
+
+ * Fix for an embarrassing typo that prevented Python2 tests from running
+   anywhere.
+
+ * Varargs functions that are unannotated as printf-like or execl-like
+   have been annotated as such.
+
+ * The "-k" and "--rfc" options of "format-patch" will now error out
+   when used together, as one tells us not to add anything to the
+   title of the commit, and the other one tells us to add "RFC" in
+   addition to "PATCH".
+
+ * When the user adds to "git rebase -i" instruction to "pick" a merge
+   commit, the error experience is not pleasant.  Such an error is now
+   caught earlier in the process that parses the todo list.
+
+ * We forgot to normalize the result of getcwd() to NFC on macOS where
+   all other paths are normalized, which has been corrected.  This still
+   does not address the case where core.precomposeUnicode configuration
+   is not defined globally.
+
+ * Earlier we stopped using the tree of HEAD as the default source of
+   attributes in a bare repository, but failed to document it.  This
+   has been corrected.
+
+ * An unused extern declaration for mingw has been removed to prevent
+   it from causing build failure.
+
+ * A helper function shared between two tests had a copy-paste bug,
+   which has been corrected.
+
+ * "git fetch-pack -k -k" without passing "--lock-pack" (which we
+   never do ourselves) did not work at all, which has been corrected.
+
+Also contains various documentation updates and code clean-ups.

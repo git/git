@@ -778,16 +778,16 @@ static void clear_commit_marks_1(struct commit_list **plist,
 	}
 }
 
-void clear_commit_marks_many(int nr, struct commit **commit, unsigned int mark)
+void clear_commit_marks_many(size_t nr, struct commit **commit, unsigned int mark)
 {
-	struct commit_list *list = NULL;
+	for (size_t i = 0; i < nr; i++) {
+		struct commit_list *list = NULL;
 
-	while (nr--) {
 		clear_commit_marks_1(&list, *commit, mark);
+		while (list)
+			clear_commit_marks_1(&list, pop_commit(&list), mark);
 		commit++;
 	}
-	while (list)
-		clear_commit_marks_1(&list, pop_commit(&list), mark);
 }
 
 void clear_commit_marks(struct commit *commit, unsigned int mark)

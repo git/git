@@ -3,6 +3,9 @@
 # Copyright (c) 2005 Junio C Hamano
 #
 
+# The default target of this Makefile is...
+all::
+
 -include ../../../config.mak.autogen
 -include ../../../config.mak
 
@@ -31,7 +34,7 @@ TSVN = $(sort $(wildcard t91[0-9][0-9]-*.sh))
 TGITWEB = $(sort $(wildcard t95[0-9][0-9]-*.sh))
 THELPERS = $(sort $(filter-out $(T),$(wildcard *.sh)))
 
-all: $(DEFAULT_TEST_TARGET)
+all:: $(DEFAULT_TEST_TARGET)
 
 test: pre-clean $(TEST_LINT)
 	$(MAKE) aggregate-results-and-cleanup

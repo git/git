@@ -21,7 +21,6 @@
  *  along with this program; if not, see <https://www.gnu.org/licenses/>.
  */
 
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -298,7 +297,7 @@ static const char *quote_crnl(const char *path)
 	return new_path.buf;
 }
 
-void trace_repo_setup(void)
+void trace_repo_setup(struct repository *r)
 {
 	const char *git_work_tree, *prefix = startup_info->prefix;
 	char *cwd;
@@ -308,14 +307,14 @@ void trace_repo_setup(void)
 
 	cwd = xgetcwd();
 
-	if (!(git_work_tree = repo_get_work_tree(the_repository)))
+	if (!(git_work_tree = repo_get_work_tree(r)))
 		git_work_tree = "(null)";
 
 	if (!startup_info->prefix)
 		prefix = "(null)";
 
-	trace_printf_key(&trace_setup_key, "setup: git_dir: %s\n", quote_crnl(repo_get_git_dir(the_repository)));
-	trace_printf_key(&trace_setup_key, "setup: git_common_dir: %s\n", quote_crnl(repo_get_common_dir(the_repository)));
+	trace_printf_key(&trace_setup_key, "setup: git_dir: %s\n", quote_crnl(repo_get_git_dir(r)));
+	trace_printf_key(&trace_setup_key, "setup: git_common_dir: %s\n", quote_crnl(repo_get_common_dir(r)));
 	trace_printf_key(&trace_setup_key, "setup: worktree: %s\n", quote_crnl(git_work_tree));
 	trace_printf_key(&trace_setup_key, "setup: cwd: %s\n", quote_crnl(cwd));
 	trace_printf_key(&trace_setup_key, "setup: prefix: %s\n", quote_crnl(prefix));

@@ -1,0 +1,330 @@
+Git v2.48 Release Notes
+=======================
+
+UI, Workflows & Features
+------------------------
+
+ * A new configuration variable remote.<name>.serverOption makes the
+   transport layer act as if the --serverOption=<value> option is
+   given from the command line.
+
+ * "git rebase --rebase-merges" now uses branch names as labels when
+   able.
+
+ * Describe the policy to introduce breaking changes.
+
+ * Teach 'git notes add' and 'git notes append' a new '-e' flag,
+   instructing them to open the note in $GIT_EDITOR before saving.
+
+ * Documentation for "git bundle" saw improvements to more prominently
+   call out the use of '--all' when creating bundles.
+
+ * Drop support for older libcURL and Perl.
+
+ * End-user experience of "git mergetool" when the command errors out
+   has been improved.
+
+ * "git bundle --unbundle" and "git clone" running on a bundle file
+   both learned to trigger fsck over the new objects with configurable
+   fck check levels.
+
+ * When "git fetch $remote" notices that refs/remotes/$remote/HEAD is
+   missing and discovers what branch the other side points with its
+   HEAD, refs/remotes/$remote/HEAD is updated to point to it.
+
+ * "git fetch" honors "remote.<remote>.followRemoteHEAD" settings to
+   tweak the remote-tracking HEAD in "refs/remotes/<remote>/HEAD".
+
+ * "git range-diff" learned to optionally show and compare merge
+   commits in the ranges being compared, with the --diff-merges
+   option.
+
+
+Performance, Internal Implementation, Development Support etc.
+--------------------------------------------------------------
+
+ * Document "amlog" notes.
+
+ * The way AsciiDoc is used for SYNOPSIS part of the manual pages has
+   been revamped.  The sources, at least for the simple cases, got
+   vastly more pleasant to work with.
+
+ * The reftable library is now prepared to expect that the memory
+   allocation function given to it may fail to allocate and to deal
+   with such an error.
+
+ * An extra worktree attached to a repository points at each other to
+   allow finding the repository from the worktree (and vice versa)
+   possible.  Use relative paths for this linkage.
+
+ * Enable Windows-based CI in GitLab.
+
+ * Commands that can also work outside Git have learned to take the
+   repository instance "repo" when we know we are in a repository, and
+   NULL when we are not, in a parameter.  The uses of the_repository
+   variable in a few of them have been removed using the new calling
+   convention.
+
+ * The reftable sub-system grew a new reftable-specific strbuf
+   replacement to reduce its dependency on Git-specific data
+   structures.
+
+ * The ref-filter machinery learns to recognize and avoid cases where
+   sorting would be redundant.
+
+ * Various platform compatibility fixes split out of the larger effort
+   to use Meson as the primary build tool.
+
+ * Treat ECONNABORTED the same as ECONNRESET in 'git credential-cache'
+   to work around a possible Cygwin regression. This resolves a race
+   condition caused by changes in Cygwin's handling of socket
+   closures, allowing the client to exit cleanly when encountering
+   ECONNABORTED.
+
+ * Demonstrate an assertion failure in 'git mv'.
+
+ * Documentation update to clarify that 'uploadpack.allowAnySHA1InWant'
+   implies both 'allowTipSHA1InWant' and 'allowReachableSHA1InWant'.
+
+ * Replace various calls to atoi() with strtol_i() and strtoul_ui(),
+   and add improved error handling.
+
+ * Documentation updates to 'git-update-ref(1)'.
+
+ * Update the project's CodingGuidelines to discourage naming functions
+   with a "_1()" suffix.
+
+ * Update '.clang-format' to match project conventions.
+
+ * Centralize documentation for repository extensions into a single place.
+
+ * Buildfix and upgrade of Clar to a newer version.
+
+ * Documentation mark-up updates.
+
+ * Renaming a handful of variables and structure fields.
+
+ * Fix for clar unit tests to support CMake build.
+
+ * C23 compatibility updates.
+
+ * GCC 15 compatibility updates.
+
+ * We now ensure "index-pack" is used with the "--promisor" option
+   only during a "git fetch".
+
+ * The migration procedure between two ref backends has been optimized.
+
+ * "git fsck" learned to issue warnings on "curiously formatted" ref
+   contents that have always been treated as valid but that Git
+   wouldn't have written itself (e.g., missing terminating end-of-line
+   after the full object name).
+
+ * Work around Coverity warning that would not trigger in practice.
+
+ * Built-in Git subcommands are supplied the repository object to work
+   with; they learned to do the same when they invoke sub-subcommands.
+
+ * Drop support for ancient environments in various CI jobs.
+
+ * Isolate the reftable subsystem from the rest of Git's codebase by
+   using fewer pieces of Git's infrastructure.
+
+ * Optimize reading random references out of the reftable backend by
+   allowing reuse of iterator objects.
+
+ * Backport oss-fuzz tests to our codebase.
+
+ * Introduce a new repository extension to prevent older Git versions
+   from mis-interpreting worktrees created with relative paths.
+
+ * Yet another "pass the repository through the callchain" topic.
+
+ * "git describe" learned to stop digging the history needlessly
+   deeper.
+
+ * Build procedure update plus introduction of Meson based builds.
+
+ * Recent reftable updates mistook a NULL return from a request for
+   0-byte allocation as OOM and died unnecessarily, which has been
+   corrected.
+
+ * Reftable backend adds check for upper limit of log's update_index.
+
+ * Start working to make the codebase buildable with -Wsign-compare.
+
+ * Regression fix for 'show-index' when run outside of a repository.
+
+ * The meson-build procedure is integrated into CI to catch and
+   prevent bitrotting.
+
+ * "git refs migrate" learned to also migrate the reflog data across
+   backends.
+
+ * The developer documentation has been updated to give the latest
+   info on gitk and git-gui maintainer.
+
+
+ * CI jobs that run threaded programs under LSan has been giving false
+   positives from time to time, which has been worked around.
+
+
+Fixes since v2.47
+-----------------
+
+ * Doc update to clarify how periodical maintenance are scheduled,
+   spread across time to avoid thundering herds.
+
+ * Use after free and double freeing at the end in "git log -L... -p"
+   had been identified and fixed.
+
+ * On macOS, fsmonitor can fall into a race condition that results in
+   a client waiting forever to be notified about an event that has
+   already happened.  This problem has been corrected.
+
+ * "git maintenance start" crashed due to an uninitialized variable
+   reference, which has been corrected.
+
+ * Fail gracefully instead of crashing when attempting to write the
+   contents of a corrupt in-core index as a tree object.
+
+ * A "git fetch" from the superproject going down to a submodule used
+   a wrong remote when the default remote names are set differently
+   between them.
+
+ * Fixes compile time warnings with 64-bit MSVC.
+
+ * Teaches 'shortlog' to explicitly use SHA-1 when operating outside
+   of a repository.
+
+ * Fix 'git grep' regression on macOS by disabling lookahead when
+   encountering invalid UTF-8 byte sequences.
+
+ * The dumb-http code regressed when the result of re-indexing a pack
+   yielded an *.idx file that differs in content from the *.idx file
+   it downloaded from the remote. This has been corrected by no longer
+   relying on the *.idx file we got from the remote.
+
+ * When called with '--left-right' and '--use-bitmap-index', 'rev-list'
+   will produce output without any left/right markers, which has been
+   corrected.
+
+ * More leakfixes.
+
+ * Test modernization.
+
+ * The "--shallow-exclude=<ref>" option to various history transfer
+   commands takes a ref, not an arbitrary revision.
+
+ * A regression where commit objects missing from a commit-graph can
+   cause an infinite loop when doing a fetch in a partial clone has
+   been fixed.
+
+ * The MinGW compatibility layer has been taught to support POSIX
+   semantics for atomic renames when other process(es) have a file
+   opened at the destination path.
+
+ * "git gc" discards any objects that are outside promisor packs that
+   are referred to by an object in a promisor pack, and we do not
+   refetch them from the promisor at runtime, resulting an unusable
+   repository.  Work around it by including these objects in the
+   referring promisor pack at the receiving end of the fetch.
+
+ * Avoid build/test breakage on a system without working malloc debug
+   support dynamic library.
+   (merge 72ad6dc368 jk/test-malloc-debug-check later to maint).
+
+ * Double-free fix.
+   (merge fe17a25905 jk/fetch-prefetch-double-free-fix later to maint).
+
+ * Use of some uninitialized variables in "git difftool" has been
+   corrected.
+
+ * Object reuse code based on multi-pack-index sent an unwanted copy
+   of object.
+   (merge e199290592 tb/multi-pack-reuse-dupfix later to maint).
+
+ * "git fast-import" can be tricked into a replace ref that maps an
+   object to itself, which is a useless thing to do.
+   (merge 5e904f1a4a en/fast-import-avoid-self-replace later to maint).
+
+ * The ref-transaction hook triggered for reflog updates, which has
+   been corrected.
+   (merge b886db48c6 kn/ref-transaction-hook-with-reflog later to maint).
+
+ * Give a bit of advice/hint message when "git maintenance" stops finding a
+   lock file left by another instance that still is potentially running.
+   (merge ba874d1dac ps/gc-stale-lock-warning later to maint).
+
+ * Use the right helper program to measure file size in performance tests.
+   (merge 3f97f1bce6 tb/use-test-file-size-more later to maint).
+
+ * A double-free that may not trigger in practice by luck has been
+   corrected in the reference resolution code.
+   (merge b6318cf23a sj/refs-symref-referent-fix later to maint).
+
+ * The sequencer failed to honor core.commentString in some places.
+
+ * Describe a case where an option value needs to be spelled as a
+   separate argument, i.e. "--opt val", not "--opt=val".
+   (merge 1bc1e94091 jc/doc-opt-tilde-expand later to maint).
+
+ * Loosen overly strict ownership check introduced in the recent past,
+   to keep the promise "cloning a suspicious repository is a safe
+   first step to inspect it".
+   (merge 0ffb5a6bf1 bc/allow-upload-pack-from-other-people later to maint).
+
+ * "git fast-import" learned to reject paths with ".."  and "." as
+   their components to avoid creating invalid tree objects.
+   (merge 8cb4c6e62f en/fast-import-verify-path later to maint).
+
+ * The --ancestry-path option is designed to be given a commit that is
+   on the path, which was not documented, which has been corrected.
+   (merge bc1a980759 kk/doc-ancestry-path later to maint).
+
+ * "git tag" has been taught to refuse to create refs/tags/HEAD
+   since such a tag will be confusing in the context of the UI provided by
+   the Git Porcelain commands.
+   (merge bbd445d5ef jc/forbid-head-as-tagname later to maint).
+
+ * The advice messages now tell the newer 'git config set' command to
+   set the advice.token configuration variable to squelch a message.
+   (merge 6c397d0104 bf/explicit-config-set-in-advice-messages later to maint).
+
+ * The syntax ":/<text>" to name the latest commit with the matching
+   text was broken with a recent change, which has been corrected.
+   (merge 0ff919e87a ps/commit-with-message-syntax-fix later to maint).
+
+ * Fix performance regression of a recent "fatten promisor pack with
+   local objects" protection against an unwanted gc.
+
+ * "git log -p --remerge-diff --reverse" was completely broken.
+   (merge f94bfa1516 js/log-remerge-keep-ancestry later to maint).
+
+ * "git bundle create" with an annotated tag on the positive end of
+   the revision range had a workaround code for older limitation in
+   the revision walker, which has become unnecessary.
+   (merge dd1072dfa8 tc/bundle-with-tag-remove-workaround later to maint).
+
+ * GitLab CI updates.
+   (merge c6b43f663e ps/ci-gitlab-update later to maint).
+
+ * Code to reuse objects based on bitmap contents have been tightened
+   to avoid race condition even when multiple packs are involved.
+   (merge 62b3ec8a3f tb/bitmap-fix-pack-reuse later to maint).
+
+ * An earlier "csum-file checksum does not have to be computed with
+   sha1dc" topic had a few code paths that had initialized an
+   implementation of a hash function to be used by an unmatching hash
+   by mistake, which have been corrected.
+   (merge 599a63409b ps/weak-sha1-for-tail-sum-fix later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 77af53f56f aa/t7300-modernize later to maint).
+   (merge dcd590a39d bf/t-readme-mention-reftable later to maint).
+   (merge 68e3c69efa kh/trailer-in-glossary later to maint).
+   (merge 91f88f76e6 tb/boundary-traversal-fix later to maint).
+   (merge 168ebb7159 jc/doc-error-message-guidelines later to maint).
+   (merge 18693d7d65 kh/doc-bundle-typofix later to maint).
+   (merge e2f5d3b491 kh/doc-update-ref-grammofix later to maint).
+   (merge 8525e92886 mh/doc-windows-home-env later to maint).

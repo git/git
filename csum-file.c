@@ -11,9 +11,10 @@
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "git-compat-util.h"
-#include "progress.h"
 #include "csum-file.h"
+#include "git-zlib.h"
 #include "hash.h"
+#include "progress.h"
 
 static void verify_buffer_or_die(struct hashfile *f,
 				 const void *buf,
@@ -50,7 +51,7 @@ void hashflush(struct hashfile *f)
 
 	if (offset) {
 		if (!f->skip_hash)
-			the_hash_algo->unsafe_update_fn(&f->ctx, f->buffer, offset);
+			git_hash_update(&f->ctx, f->buffer, offset);
 		flush(f, f->buffer, offset);
 		f->offset = 0;
 	}
@@ -71,14 +72,14 @@ int finalize_hashfile(struct hashfile *f, unsigned char *result,
 	hashflush(f);
 
 	if (f->skip_hash)
-		hashclr(f->buffer, the_repository->hash_algo);
+		hashclr(f->buffer, f->algop);
 	else
-		the_hash_algo->unsafe_final_fn(f->buffer, &f->ctx);
+		git_hash_final(f->buffer, &f->ctx);
 
 	if (result)
-		hashcpy(result, f->buffer, the_repository->hash_algo);
+		hashcpy(result, f->buffer, f->algop);
 	if (flags & CSUM_HASH_IN_STREAM)
-		flush(f, f->buffer, the_hash_algo->rawsz);
+		flush(f, f->buffer, f->algop->rawsz);
 	if (flags & CSUM_FSYNC)
 		fsync_component_or_die(component, f->fd, f->name);
 	if (flags & CSUM_CLOSE) {
@@ -128,7 +129,7 @@ void hashwrite(struct hashfile *f, const void *buf, unsigned int count)
 			 * f->offset is necessarily zero.
 			 */
 			if (!f->skip_hash)
-				the_hash_algo->unsafe_update_fn(&f->ctx, buf, nr);
+				git_hash_update(&f->ctx, buf, nr);
 			flush(f, buf, nr);
 		} else {
 			/*
@@ -174,7 +175,9 @@ static struct hashfile *hashfd_internal(int fd, const char *name,
 	f->name = name;
 	f->do_crc = 0;
 	f->skip_hash = 0;
-	the_hash_algo->unsafe_init_fn(&f->ctx);
+
+	f->algop = unsafe_hash_algo(the_hash_algo);
+	f->algop->init_fn(&f->ctx);
 
 	f->buffer_len = buffer_len;
 	f->buffer = xmalloc(buffer_len);
@@ -204,11 +207,18 @@ struct hashfile *hashfd_throughput(int fd, const char *name, struct progress *tp
 	return hashfd_internal(fd, name, tp, 8 * 1024);
 }
 
+void hashfile_checkpoint_init(struct hashfile *f,
+			      struct hashfile_checkpoint *checkpoint)
+{
+	memset(checkpoint, 0, sizeof(*checkpoint));
+	f->algop->init_fn(&checkpoint->ctx);
+}
+
 void hashfile_checkpoint(struct hashfile *f, struct hashfile_checkpoint *checkpoint)
 {
 	hashflush(f);
 	checkpoint->offset = f->total;
-	the_hash_algo->unsafe_clone_fn(&checkpoint->ctx, &f->ctx);
+	git_hash_clone(&checkpoint->ctx, &f->ctx);
 }
 
 int hashfile_truncate(struct hashfile *f, struct hashfile_checkpoint *checkpoint)
@@ -219,7 +229,7 @@ int hashfile_truncate(struct hashfile *f, struct hashfile_checkpoint *checkpoint
 	    lseek(f->fd, offset, SEEK_SET) != offset)
 		return -1;
 	f->total = offset;
-	the_hash_algo->unsafe_clone_fn(&f->ctx, &checkpoint->ctx);
+	git_hash_clone(&f->ctx, &checkpoint->ctx);
 	f->offset = 0; /* hashflush() was called in checkpoint */
 	return 0;
 }
@@ -239,15 +249,16 @@ uint32_t crc32_end(struct hashfile *f)
 int hashfile_checksum_valid(const unsigned char *data, size_t total_len)
 {
 	unsigned char got[GIT_MAX_RAWSZ];
-	git_hash_ctx ctx;
-	size_t data_len = total_len - the_hash_algo->rawsz;
+	struct git_hash_ctx ctx;
+	const struct git_hash_algo *algop = unsafe_hash_algo(the_hash_algo);
+	size_t data_len = total_len - algop->rawsz;
 
-	if (total_len < the_hash_algo->rawsz)
+	if (total_len < algop->rawsz)
 		return 0; /* say "too short"? */
 
-	the_hash_algo->unsafe_init_fn(&ctx);
-	the_hash_algo->unsafe_update_fn(&ctx, data, data_len);
-	the_hash_algo->unsafe_final_fn(got, &ctx);
+	algop->init_fn(&ctx);
+	git_hash_update(&ctx, data, data_len);
+	git_hash_final(got, &ctx);
 
-	return hasheq(got, data + data_len, the_repository->hash_algo);
+	return hasheq(got, data + data_len, algop);
 }

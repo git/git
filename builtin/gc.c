@@ -99,9 +99,11 @@ static void process_log_file(void)
 		/* There was some error recorded in the lock file */
 		commit_lock_file(&log_lock);
 	} else {
+		char *path = repo_git_path(the_repository, "gc.log");
 		/* No error, clean up any old gc.log */
-		unlink(git_path("gc.log"));
+		unlink(path);
 		rollback_lock_file(&log_lock);
+		free(path);
 	}
 }
 
@@ -139,6 +141,7 @@ struct gc_config {
 	char *prune_worktrees_expire;
 	char *repack_filter;
 	char *repack_filter_to;
+	char *repack_expire_to;
 	unsigned long big_pack_threshold;
 	unsigned long max_delta_cache_size;
 	/*
@@ -299,8 +302,11 @@ static int too_many_loose_objects(struct gc_config *cfg)
 	int num_loose = 0;
 	int needed = 0;
 	const unsigned hexsz_loose = the_hash_algo->hexsz - 2;
+	char *path;
 
-	dir = opendir(git_path("objects/17"));
+	path = repo_git_path(the_repository, "objects/17");
+	dir = opendir(path);
+	free(path);
 	if (!dir)
 		return 0;
 
@@ -445,7 +451,8 @@ static int keep_one_pack(struct string_list_item *item, void *data UNUSED)
 static void add_repack_all_option(struct gc_config *cfg,
 				  struct string_list *keep_pack)
 {
-	if (cfg->prune_expire && !strcmp(cfg->prune_expire, "now"))
+	if (cfg->prune_expire && !strcmp(cfg->prune_expire, "now")
+		&& !(cfg->cruft_packs && cfg->repack_expire_to))
 		strvec_push(&repack, "-a");
 	else if (cfg->cruft_packs) {
 		strvec_push(&repack, "--cruft");
@@ -454,6 +461,8 @@ static void add_repack_all_option(struct gc_config *cfg,
 		if (cfg->max_cruft_size)
 			strvec_pushf(&repack, "--max-cruft-size=%lu",
 				     cfg->max_cruft_size);
+		if (cfg->repack_expire_to)
+			strvec_pushf(&repack, "--expire-to=%s", cfg->repack_expire_to);
 	} else {
 		strvec_push(&repack, "-A");
 		if (cfg->prune_expire)
@@ -546,7 +555,7 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 	if (xgethostname(my_host, sizeof(my_host)))
 		xsnprintf(my_host, sizeof(my_host), "unknown");
 
-	pidfile_path = git_pathdup("gc.pid");
+	pidfile_path = repo_git_path(the_repository, "gc.pid");
 	fd = hold_lock_file_for_update(&lock, pidfile_path,
 				       LOCK_DIE_ON_ERROR);
 	if (!force) {
@@ -607,7 +616,7 @@ static int report_last_gc_error(void)
 	int ret = 0;
 	ssize_t len;
 	struct stat st;
-	char *gc_log_path = git_pathdup("gc.log");
+	char *gc_log_path = repo_git_path(the_repository, "gc.log");
 
 	if (stat(gc_log_path, &st)) {
 		if (errno == ENOENT)
@@ -688,7 +697,6 @@ struct repository *repo UNUSED)
 	const char *prune_expire_sentinel = "sentinel";
 	const char *prune_expire_arg = prune_expire_sentinel;
 	int ret;
-
 	struct option builtin_gc_options[] = {
 		OPT__QUIET(&quiet, N_("suppress progress reporting")),
 		{ OPTION_STRING, 0, "prune", &prune_expire_arg, N_("date"),
@@ -707,11 +715,13 @@ struct repository *repo UNUSED)
 			   PARSE_OPT_NOCOMPLETE),
 		OPT_BOOL(0, "keep-largest-pack", &keep_largest_pack,
 			 N_("repack all other packs except the largest pack")),
+		OPT_STRING(0, "expire-to", &cfg.repack_expire_to, N_("dir"),
+			   N_("pack prefix to store a pack containing pruned objects")),
 		OPT_END()
 	};
 
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage_with_options(builtin_gc_usage, builtin_gc_options);
+	show_usage_with_options_if_asked(argc, argv,
+					 builtin_gc_usage, builtin_gc_options);
 
 	strvec_pushl(&reflog, "reflog", "expire", "--all", NULL);
 	strvec_pushl(&repack, "repack", "-d", "-l", NULL);
@@ -821,11 +831,12 @@ struct repository *repo UNUSED)
 	}
 
 	if (daemonized) {
-		hold_lock_file_for_update(&log_lock,
-					  git_path("gc.log"),
+		char *path = repo_git_path(the_repository, "gc.log");
+		hold_lock_file_for_update(&log_lock, path,
 					  LOCK_DIE_ON_ERROR);
 		dup2(get_lock_file_fd(&log_lock), 2);
 		atexit(process_log_file_at_exit);
+		free(path);
 	}
 
 	gc_before_repack(&opts, &cfg);
@@ -887,8 +898,11 @@ struct repository *repo UNUSED)
 		warning(_("There are too many unreachable loose objects; "
 			"run 'git prune' to remove them."));
 
-	if (!daemonized)
-		unlink(git_path("gc.log"));
+	if (!daemonized) {
+		char *path = repo_git_path(the_repository, "gc.log");
+		unlink(path);
+		free(path);
+	}
 
 out:
 	gc_config_release(&cfg);
@@ -1909,7 +1923,7 @@ static int get_random_minute(void)
 	if (getenv("GIT_TEST_MAINT_SCHEDULER"))
 		return 13;
 
-	return git_rand() % 60;
+	return git_rand(0) % 60;
 }
 
 static int is_launchctl_available(void)

@@ -12,10 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# The default target of this Makefile is...
+all::
+
 BUILD_LABEL=$(shell cut -d" " -f3 ../../GIT-VERSION-FILE)
 TAR_OUT=$(shell go env GOOS)_$(shell go env GOARCH).tar.gz
 
-all: git-remote-persistent-https git-remote-persistent-https--proxy \
+all:: git-remote-persistent-https git-remote-persistent-https--proxy \
 	git-remote-persistent-http
 
 git-remote-persistent-https--proxy: git-remote-persistent-https

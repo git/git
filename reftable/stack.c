@@ -220,9 +220,9 @@ void reftable_stack_destroy(struct reftable_stack *st)
 	}
 
 	if (st->readers) {
-		int i = 0;
 		struct reftable_buf filename = REFTABLE_BUF_INIT;
-		for (i = 0; i < st->readers_len; i++) {
+
+		for (size_t i = 0; i < st->readers_len; i++) {
 			const char *name = reader_name(st->readers[i]);
 			int try_unlinking = 1;
 
@@ -238,6 +238,7 @@ void reftable_stack_destroy(struct reftable_stack *st)
 				unlink(filename.buf);
 			}
 		}
+
 		reftable_buf_release(&filename);
 		st->readers_len = 0;
 		REFTABLE_FREE_AND_NULL(st->readers);
@@ -493,7 +494,7 @@ static int reftable_stack_reload_maybe_reuse(struct reftable_stack *st,
 		close(fd);
 		fd = -1;
 
-		delay = delay + (delay * rand()) / RAND_MAX + 1;
+		delay = delay + (delay * git_rand(CSPRNG_BYTES_INSECURE)) / UINT32_MAX + 1;
 		sleep_millisec(delay);
 	}
 
@@ -568,7 +569,6 @@ static int stack_uptodate(struct reftable_stack *st)
 {
 	char **names = NULL;
 	int err;
-	int i = 0;
 
 	/*
 	 * When we have cached stat information available then we use it to
@@ -608,7 +608,7 @@ static int stack_uptodate(struct reftable_stack *st)
 	if (err < 0)
 		return err;
 
-	for (i = 0; i < st->readers_len; i++) {
+	for (size_t i = 0; i < st->readers_len; i++) {
 		if (!names[i]) {
 			err = 1;
 			goto done;
@@ -659,7 +659,7 @@ int reftable_stack_add(struct reftable_stack *st,
 static int format_name(struct reftable_buf *dest, uint64_t min, uint64_t max)
 {
 	char buf[100];
-	uint32_t rnd = (uint32_t)git_rand();
+	uint32_t rnd = git_rand(CSPRNG_BYTES_INSECURE);
 	snprintf(buf, sizeof(buf), "0x%012" PRIx64 "-0x%012" PRIx64 "-%08x",
 		 min, max, rnd);
 	reftable_buf_reset(dest);
@@ -1058,8 +1058,10 @@ static int stack_write_compact(struct reftable_stack *st,
 
 	for (size_t i = first; i <= last; i++)
 		st->stats.bytes += st->readers[i]->size;
-	reftable_writer_set_limits(wr, st->readers[first]->min_update_index,
-				   st->readers[last]->max_update_index);
+	err = reftable_writer_set_limits(wr, st->readers[first]->min_update_index,
+					 st->readers[last]->max_update_index);
+	if (err < 0)
+		goto done;
 
 	err = reftable_merged_table_new(&mt, st->readers + first, subtabs_len,
 					st->opts.hash_id);
@@ -1767,14 +1769,12 @@ static int reftable_stack_clean_locked(struct reftable_stack *st)
 	}
 
 	while ((d = readdir(dir))) {
-		int i = 0;
 		int found = 0;
 		if (!is_table_name(d->d_name))
 			continue;
 
-		for (i = 0; !found && i < st->readers_len; i++) {
+		for (size_t i = 0; !found && i < st->readers_len; i++)
 			found = !strcmp(reader_name(st->readers[i]), d->d_name);
-		}
 		if (found)
 			continue;
 

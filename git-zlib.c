@@ -59,7 +59,8 @@ static void zlib_post_call(git_zstream *s)
 
 	s->total_out = s->z.total_out;
 	s->total_in = s->z.total_in;
-	s->next_in = s->z.next_in;
+	/* zlib-ng marks `next_in` as `const`, so we have to cast it away. */
+	s->next_in = (unsigned char *) s->z.next_in;
 	s->next_out = s->z.next_out;
 	s->avail_in -= bytes_consumed;
 	s->avail_out -= bytes_produced;
@@ -146,10 +147,6 @@ int git_inflate(git_zstream *strm, int flush)
 	      strm->z.msg ? strm->z.msg : "no message");
 	return status;
 }
-
-#if defined(NO_DEFLATE_BOUND) || ZLIB_VERNUM < 0x1200
-#define deflateBound(c,s)  ((s) + (((s) + 7) >> 3) + (((s) + 63) >> 6) + 11)
-#endif
 
 unsigned long git_deflate_bound(git_zstream *strm, unsigned long size)
 {

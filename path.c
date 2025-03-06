@@ -2,8 +2,6 @@
  * Utilities for paths and pathnames
  */
 
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "environment.h"
@@ -30,7 +28,7 @@ static int get_st_mode_bits(const char *path, int *mode)
 	return 0;
 }
 
-struct strbuf *get_pathname(void)
+static struct strbuf *get_pathname(void)
 {
 	static struct strbuf pathname_array[4] = {
 		STRBUF_INIT, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT
@@ -387,10 +385,11 @@ void report_linked_checkout_garbage(struct repository *r)
 	strbuf_release(&sb);
 }
 
-static void adjust_git_path(const struct repository *repo,
+static void adjust_git_path(struct repository *repo,
 			    struct strbuf *buf, int git_dir_len)
 {
 	const char *base = buf->buf + git_dir_len;
+
 	if (is_dir_file(base, "info", "grafts"))
 		strbuf_splice(buf, 0, buf->len,
 			      repo->graft_file, strlen(repo->graft_file));
@@ -399,8 +398,8 @@ static void adjust_git_path(const struct repository *repo,
 			      repo->index_file, strlen(repo->index_file));
 	else if (dir_prefix(base, "objects"))
 		replace_dir(buf, git_dir_len + 7, repo->objects->odb->path);
-	else if (git_hooks_path && dir_prefix(base, "hooks"))
-		replace_dir(buf, git_dir_len + 5, git_hooks_path);
+	else if (repo_settings_get_hooks_path(repo) && dir_prefix(base, "hooks"))
+		replace_dir(buf, git_dir_len + 5, repo_settings_get_hooks_path(repo));
 	else if (repo->different_commondir)
 		update_common_dir(buf, git_dir_len, repo->commondir);
 }
@@ -414,12 +413,12 @@ static void strbuf_worktree_gitdir(struct strbuf *buf,
 	else if (!wt->id)
 		strbuf_addstr(buf, repo->commondir);
 	else
-		strbuf_git_common_path(buf, repo, "worktrees/%s", wt->id);
+		repo_common_path_append(repo, buf, "worktrees/%s", wt->id);
 }
 
-void repo_git_pathv(const struct repository *repo,
-		    const struct worktree *wt, struct strbuf *buf,
-		    const char *fmt, va_list args)
+static void repo_git_pathv(struct repository *repo,
+			   const struct worktree *wt, struct strbuf *buf,
+			   const char *fmt, va_list args)
 {
 	int gitdir_len;
 	strbuf_worktree_gitdir(buf, repo, wt);
@@ -432,7 +431,7 @@ void repo_git_pathv(const struct repository *repo,
 	strbuf_cleanup_path(buf);
 }
 
-char *repo_git_path(const struct repository *repo,
+char *repo_git_path(struct repository *repo,
 		    const char *fmt, ...)
 {
 	struct strbuf path = STRBUF_INIT;
@@ -443,14 +442,27 @@ char *repo_git_path(const struct repository *repo,
 	return strbuf_detach(&path, NULL);
 }
 
-void strbuf_repo_git_path(struct strbuf *sb,
-			  const struct repository *repo,
-			  const char *fmt, ...)
+const char *repo_git_path_append(struct repository *repo,
+				 struct strbuf *sb,
+				 const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
 	repo_git_pathv(repo, NULL, sb, fmt, args);
 	va_end(args);
+	return sb->buf;
+}
+
+const char *repo_git_path_replace(struct repository *repo,
+				  struct strbuf *sb,
+				  const char *fmt, ...)
+{
+	va_list args;
+	strbuf_reset(sb);
+	va_start(args, fmt);
+	repo_git_pathv(repo, NULL, sb, fmt, args);
+	va_end(args);
+	return sb->buf;
 }
 
 char *mkpathdup(const char *fmt, ...)
@@ -506,9 +518,6 @@ char *repo_worktree_path(const struct repository *repo, const char *fmt, ...)
 	struct strbuf path = STRBUF_INIT;
 	va_list args;
 
-	if (!repo->worktree)
-		return NULL;
-
 	va_start(args, fmt);
 	do_worktree_path(repo, &path, fmt, args);
 	va_end(args);
@@ -516,29 +525,49 @@ char *repo_worktree_path(const struct repository *repo, const char *fmt, ...)
 	return strbuf_detach(&path, NULL);
 }
 
-void strbuf_repo_worktree_path(struct strbuf *sb,
-			       const struct repository *repo,
-			       const char *fmt, ...)
+const char *repo_worktree_path_append(const struct repository *repo,
+				      struct strbuf *sb,
+				      const char *fmt, ...)
 {
 	va_list args;
 
 	if (!repo->worktree)
-		return;
+		return NULL;
 
 	va_start(args, fmt);
 	do_worktree_path(repo, sb, fmt, args);
 	va_end(args);
+
+	return sb->buf;
+}
+
+const char *repo_worktree_path_replace(const struct repository *repo,
+				       struct strbuf *sb,
+				       const char *fmt, ...)
+{
+	va_list args;
+
+	strbuf_reset(sb);
+	if (!repo->worktree)
+		return NULL;
+
+	va_start(args, fmt);
+	do_worktree_path(repo, sb, fmt, args);
+	va_end(args);
+
+	return sb->buf;
 }
 
 /* Returns 0 on success, negative on failure. */
-static int do_submodule_path(struct strbuf *buf, const char *path,
+static int do_submodule_path(struct repository *repo,
+			     struct strbuf *buf, const char *path,
 			     const char *fmt, va_list args)
 {
 	struct strbuf git_submodule_common_dir = STRBUF_INIT;
 	struct strbuf git_submodule_dir = STRBUF_INIT;
 	int ret;
 
-	ret = submodule_to_gitdir(&git_submodule_dir, path);
+	ret = submodule_to_gitdir(repo, &git_submodule_dir, path);
 	if (ret)
 		goto cleanup;
 
@@ -557,13 +586,14 @@ cleanup:
 	return ret;
 }
 
-char *git_pathdup_submodule(const char *path, const char *fmt, ...)
+char *repo_submodule_path(struct repository *repo,
+			  const char *path, const char *fmt, ...)
 {
 	int err;
 	va_list args;
 	struct strbuf buf = STRBUF_INIT;
 	va_start(args, fmt);
-	err = do_submodule_path(&buf, path, fmt, args);
+	err = do_submodule_path(repo, &buf, path, fmt, args);
 	va_end(args);
 	if (err) {
 		strbuf_release(&buf);
@@ -572,22 +602,41 @@ char *git_pathdup_submodule(const char *path, const char *fmt, ...)
 	return strbuf_detach(&buf, NULL);
 }
 
-int strbuf_git_path_submodule(struct strbuf *buf, const char *path,
-			      const char *fmt, ...)
+const char *repo_submodule_path_append(struct repository *repo,
+				       struct strbuf *buf,
+				       const char *path,
+				       const char *fmt, ...)
 {
 	int err;
 	va_list args;
 	va_start(args, fmt);
-	err = do_submodule_path(buf, path, fmt, args);
+	err = do_submodule_path(repo, buf, path, fmt, args);
 	va_end(args);
-
-	return err;
+	if (err)
+		return NULL;
+	return buf->buf;
 }
 
-void repo_common_pathv(const struct repository *repo,
-		       struct strbuf *sb,
-		       const char *fmt,
-		       va_list args)
+const char *repo_submodule_path_replace(struct repository *repo,
+					struct strbuf *buf,
+					const char *path,
+					const char *fmt, ...)
+{
+	int err;
+	va_list args;
+	strbuf_reset(buf);
+	va_start(args, fmt);
+	err = do_submodule_path(repo, buf, path, fmt, args);
+	va_end(args);
+	if (err)
+		return NULL;
+	return buf->buf;
+}
+
+static void repo_common_pathv(const struct repository *repo,
+			      struct strbuf *sb,
+			      const char *fmt,
+			      va_list args)
 {
 	strbuf_addstr(sb, repo->commondir);
 	if (sb->len && !is_dir_sep(sb->buf[sb->len - 1]))
@@ -596,14 +645,38 @@ void repo_common_pathv(const struct repository *repo,
 	strbuf_cleanup_path(sb);
 }
 
-void strbuf_git_common_path(struct strbuf *sb,
-			    const struct repository *repo,
-			    const char *fmt, ...)
+char *repo_common_path(const struct repository *repo,
+		       const char *fmt, ...)
+{
+	struct strbuf sb = STRBUF_INIT;
+	va_list args;
+	va_start(args, fmt);
+	repo_common_pathv(repo, &sb, fmt, args);
+	va_end(args);
+	return strbuf_detach(&sb, NULL);
+}
+
+const char *repo_common_path_append(const struct repository *repo,
+				    struct strbuf *sb,
+				    const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);
 	repo_common_pathv(repo, sb, fmt, args);
 	va_end(args);
+	return sb->buf;
+}
+
+const char *repo_common_path_replace(const struct repository *repo,
+				     struct strbuf *sb,
+				     const char *fmt, ...)
+{
+	va_list args;
+	strbuf_reset(sb);
+	va_start(args, fmt);
+	repo_common_pathv(repo, sb, fmt, args);
+	va_end(args);
+	return sb->buf;
 }
 
 static struct passwd *getpw_str(const char *username, size_t len)
@@ -765,21 +838,22 @@ const char *enter_repo(const char *path, unsigned flags)
 	return NULL;
 }
 
-int calc_shared_perm(int mode)
+int calc_shared_perm(struct repository *repo,
+		     int mode)
 {
 	int tweak;
 
-	if (get_shared_repository() < 0)
-		tweak = -get_shared_repository();
+	if (repo_settings_get_shared_repository(repo) < 0)
+		tweak = -repo_settings_get_shared_repository(repo);
 	else
-		tweak = get_shared_repository();
+		tweak = repo_settings_get_shared_repository(repo);
 
 	if (!(mode & S_IWUSR))
 		tweak &= ~0222;
 	if (mode & S_IXUSR)
 		/* Copy read bits to execute bits */
 		tweak |= (tweak & 0444) >> 2;
-	if (get_shared_repository() < 0)
+	if (repo_settings_get_shared_repository(repo) < 0)
 		mode = (mode & ~0777) | tweak;
 	else
 		mode |= tweak;
@@ -787,17 +861,17 @@ int calc_shared_perm(int mode)
 	return mode;
 }
 
-
-int adjust_shared_perm(const char *path)
+int adjust_shared_perm(struct repository *repo,
+		       const char *path)
 {
 	int old_mode, new_mode;
 
-	if (!get_shared_repository())
+	if (!repo_settings_get_shared_repository(repo))
 		return 0;
 	if (get_st_mode_bits(path, &old_mode) < 0)
 		return -1;
 
-	new_mode = calc_shared_perm(old_mode);
+	new_mode = calc_shared_perm(repo, old_mode);
 	if (S_ISDIR(old_mode)) {
 		/* Copy read bits to execute bits */
 		new_mode |= (new_mode & 0444) >> 2;
@@ -816,7 +890,7 @@ int adjust_shared_perm(const char *path)
 	return 0;
 }
 
-void safe_create_dir(const char *dir, int share)
+void safe_create_dir(struct repository *repo, const char *dir, int share)
 {
 	if (mkdir(dir, 0777) < 0) {
 		if (errno != EEXIST) {
@@ -824,7 +898,7 @@ void safe_create_dir(const char *dir, int share)
 			exit(1);
 		}
 	}
-	else if (share && adjust_shared_perm(dir))
+	else if (share && adjust_shared_perm(repo, dir))
 		die(_("Could not make %s writable by group"), dir);
 }
 

@@ -2573,7 +2573,9 @@ void test_bitmap_walk(struct rev_info *revs)
 	tdata.trees = ewah_to_bitmap(bitmap_git->trees);
 	tdata.blobs = ewah_to_bitmap(bitmap_git->blobs);
 	tdata.tags = ewah_to_bitmap(bitmap_git->tags);
-	tdata.prg = start_progress("Verifying bitmap entries", result_popcnt);
+	tdata.prg = start_progress(revs->repo,
+				   "Verifying bitmap entries",
+				   result_popcnt);
 	tdata.seen = 0;
 
 	traverse_commit_list(revs, &test_show_commit, &test_show_object, &tdata);

@@ -1423,7 +1423,10 @@ static int parse_num(const char *line, unsigned long *p)
 
 	if (!isdigit(*line))
 		return 0;
+	errno = 0;
 	*p = strtoul(line, &ptr, 10);
+	if (errno)
+		return 0;
 	return ptr - line;
 }
 

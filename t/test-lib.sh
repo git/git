@@ -1169,20 +1169,20 @@ test_atexit_handler () {
 	teardown_malloc_check
 }
 
-check_test_results_san_file_empty_ () {
-	test -z "$TEST_RESULTS_SAN_FILE" && return 0
+check_test_results_san_file_has_entries_ () {
+	test -z "$TEST_RESULTS_SAN_FILE" && return 1
 
-	# stderr piped to /dev/null because the directory may have
-	# been "rmdir"'d already.
-	! find "$TEST_RESULTS_SAN_DIR" \
-		-type f \
-		-name "$TEST_RESULTS_SAN_FILE_PFX.*" 2>/dev/null |
-	xargs grep ^DEDUP_TOKEN |
+	# Lines marked with DEDUP_TOKEN show unique leaks. We only care that we
+	# found at least one.
+	#
+	# But also suppress any false positives caused by bugs or races in the
+	# sanitizer itself.
+	grep -s ^DEDUP_TOKEN "$TEST_RESULTS_SAN_FILE".* |
 	grep -qv sanitizer::GetThreadStackTopAndBottom
 }
 
 check_test_results_san_file_ () {
-	if check_test_results_san_file_empty_
+	if ! check_test_results_san_file_has_entries_
 	then
 		return
 	fi &&
@@ -1860,6 +1860,10 @@ test_lazy_prereq TIME_T_IS_64BIT 'test-tool date time_t-is64bit'
 
 test_lazy_prereq CURL '
 	curl --version
+'
+
+test_lazy_prereq WITHOUT_BREAKING_CHANGES '
+	test -z "$WITH_BREAKING_CHANGES"
 '
 
 # SHA1 is a test if the hash algorithm in use is SHA-1.  This is both for tests

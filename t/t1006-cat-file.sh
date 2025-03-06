@@ -240,7 +240,8 @@ test_expect_success "setup" '
 	git config extensions.objectformat $test_hash_algo &&
 	git config extensions.compatobjectformat $test_compat_hash_algo &&
 	echo_without_newline "$hello_content" > hello &&
-	git update-index --add hello
+	git update-index --add hello &&
+	git commit -m "add hello file"
 '
 
 run_blob_tests () {
@@ -599,6 +600,34 @@ test_expect_success FUNNYNAMES '--batch-check, -z with newline in input' '
 test_expect_success FUNNYNAMES '--batch-check, -Z with newline in input' '
 	git cat-file --batch-check -Z <in >actual &&
 	printf "%s\0" "$(git rev-parse "HEAD:newline${LF}embedded") blob 0" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'setup with curly braches in input' '
+	git branch "foo{bar" HEAD &&
+	git branch "foo@" HEAD
+'
+
+test_expect_success 'object reference with curly brace' '
+	git cat-file -p "foo{bar:hello" >actual &&
+	git cat-file -p HEAD:hello >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'object reference with at-sign' '
+	git cat-file -p "foo@@{0}:hello" >actual &&
+	git cat-file -p HEAD:hello >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'setup with commit with colon' '
+	git commit-tree -m "testing: just a bunch of junk" HEAD^{tree} >out &&
+	git branch other $(cat out)
+'
+
+test_expect_success 'object reference via commit text search' '
+	git cat-file -p "other^{/testing:}:hello" >actual &&
+	git cat-file -p HEAD:hello >expect &&
 	test_cmp expect actual
 '
 

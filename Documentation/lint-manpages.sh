@@ -31,7 +31,7 @@ check_missing_docs () (
 		git-?*--?* ) continue ;;
 		esac
 
-		if ! test -f "$v.txt"
+		if ! test -f "$v.adoc"
 		then
 			echo "no doc: $v"
 			ret=1
@@ -63,9 +63,9 @@ check_extraneous_docs () {
 		    -e 's/[ 	].*//' \
 		    -e 's/^/listed /' ../command-list.txt
 		make print-man1 |
-		grep '\.txt$' |
+		grep '\.adoc$' |
 		sed -e 's|^|documented |' \
-		    -e 's/\.txt//'
+		    -e 's/\.adoc//'
 	) | (
 		all_commands="$(printf "%s " "$ALL_COMMANDS" "$BUILT_INS" "$EXCLUDED_PROGRAMS" | tr '\n' ' ')"
 		ret=0

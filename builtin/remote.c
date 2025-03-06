@@ -383,7 +383,7 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 				states->remote->fetch.items[i].raw);
 
 	for (ref = fetch_map; ref; ref = ref->next) {
-		if (omit_name_by_refspec(ref->name, &states->remote->fetch))
+		if (refname_matches_negative_refspec_item(ref->name, &states->remote->fetch))
 			string_list_append(&states->skipped, abbrev_branch(ref->name));
 		else if (!ref->peer_ref || !refs_ref_exists(get_main_ref_store(the_repository), ref->peer_ref->name))
 			string_list_append(&states->new_refs, abbrev_branch(ref->name));
@@ -642,10 +642,14 @@ static int migrate_file(struct remote *remote)
 	strbuf_addf(&buf, "remote.%s.fetch", remote->name);
 	for (i = 0; i < remote->fetch.nr; i++)
 		git_config_set_multivar(buf.buf, remote->fetch.items[i].raw, "^$", 0);
+#ifndef WITH_BREAKING_CHANGES
 	if (remote->origin == REMOTE_REMOTES)
-		unlink_or_warn(git_path("remotes/%s", remote->name));
+		unlink_or_warn(repo_git_path_replace(the_repository, &buf,
+						     "remotes/%s", remote->name));
 	else if (remote->origin == REMOTE_BRANCHES)
-		unlink_or_warn(git_path("branches/%s", remote->name));
+		unlink_or_warn(repo_git_path_replace(the_repository, &buf,
+						     "branches/%s", remote->name));
+#endif /* WITH_BREAKING_CHANGES */
 	strbuf_release(&buf);
 
 	return 0;
@@ -820,7 +824,8 @@ static int mv(int argc, const char **argv, const char *prefix,
 		 * Count symrefs twice, since "renaming" them is done by
 		 * deleting and recreating them in two separate passes.
 		 */
-		progress = start_progress(_("Renaming remote references"),
+		progress = start_progress(the_repository,
+					  _("Renaming remote references"),
 					  rename.remote_branches->nr + rename.symrefs_nr);
 	}
 	for (i = 0; i < remote_branches.nr; i++) {

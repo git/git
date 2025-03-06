@@ -125,7 +125,7 @@ static void commit_pager_choice(void)
 		setenv("GIT_PAGER", "cat", 1);
 		break;
 	case 1:
-		setup_pager();
+		setup_pager(the_repository);
 		break;
 	default:
 		break;
@@ -136,7 +136,7 @@ void setup_auto_pager(const char *cmd, int def)
 {
 	if (use_pager != -1 || pager_in_use())
 		return;
-	use_pager = check_pager_config(cmd);
+	use_pager = check_pager_config(the_repository, cmd);
 	if (use_pager == -1)
 		use_pager = def;
 	commit_pager_choice();
@@ -462,12 +462,12 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv, struct
 	precompose_argv_prefix(argc, argv, NULL);
 	if (use_pager == -1 && run_setup &&
 		!(p->option & DELAY_PAGER_CONFIG))
-		use_pager = check_pager_config(p->cmd);
+		use_pager = check_pager_config(the_repository, p->cmd);
 	if (use_pager == -1 && p->option & USE_PAGER)
 		use_pager = 1;
 	if (run_setup && startup_info->have_repository)
 		/* get_git_dir() may set up repo, avoid that */
-		trace_repo_setup();
+		trace_repo_setup(the_repository);
 	commit_pager_choice();
 
 	if (!help && p->option & NEED_WORK_TREE)
@@ -506,6 +506,7 @@ static struct cmd_struct commands[] = {
 	{ "annotate", cmd_annotate, RUN_SETUP },
 	{ "apply", cmd_apply, RUN_SETUP_GENTLY },
 	{ "archive", cmd_archive, RUN_SETUP_GENTLY },
+	{ "backfill", cmd_backfill, RUN_SETUP },
 	{ "bisect", cmd_bisect, RUN_SETUP },
 	{ "blame", cmd_blame, RUN_SETUP },
 	{ "branch", cmd_branch, RUN_SETUP | DELAY_PAGER_CONFIG },
@@ -587,7 +588,9 @@ static struct cmd_struct commands[] = {
 	{ "name-rev", cmd_name_rev, RUN_SETUP },
 	{ "notes", cmd_notes, RUN_SETUP },
 	{ "pack-objects", cmd_pack_objects, RUN_SETUP },
+#ifndef WITH_BREAKING_CHANGES
 	{ "pack-redundant", cmd_pack_redundant, RUN_SETUP | NO_PARSEOPT },
+#endif
 	{ "pack-refs", cmd_pack_refs, RUN_SETUP },
 	{ "patch-id", cmd_patch_id, RUN_SETUP_GENTLY | NO_PARSEOPT },
 	{ "pickaxe", cmd_blame, RUN_SETUP },
@@ -750,7 +753,7 @@ static void execv_dashed_external(const char **argv)
 	int status;
 
 	if (use_pager == -1 && !is_builtin(argv[0]))
-		use_pager = check_pager_config(argv[0]);
+		use_pager = check_pager_config(the_repository, argv[0]);
 	commit_pager_choice();
 
 	strvec_pushf(&cmd.args, "git-%s", argv[0]);

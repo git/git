@@ -1,3 +1,6 @@
+# The default target of this Makefile is...
+all::
+
 MAIN:=git-credential-libsecret
 all:: $(MAIN)
 

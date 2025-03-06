@@ -108,8 +108,8 @@ static void t_log_buffer_size(void)
 	   hash, to ensure that the compressed part is larger than the original.
 	*/
 	for (i = 0; i < REFTABLE_HASH_SIZE_SHA1; i++) {
-		log.value.update.old_hash[i] = (uint8_t)(git_rand() % 256);
-		log.value.update.new_hash[i] = (uint8_t)(git_rand() % 256);
+		log.value.update.old_hash[i] = (uint8_t)(git_rand(0) % 256);
+		log.value.update.new_hash[i] = (uint8_t)(git_rand(0) % 256);
 	}
 	reftable_writer_set_limits(w, update_index, update_index);
 	err = reftable_writer_add_log(w, &log);
@@ -325,7 +325,7 @@ static void t_log_zlib_corruption(void)
 	};
 
 	for (i = 0; i < sizeof(message) - 1; i++)
-		message[i] = (uint8_t)(git_rand() % 64 + ' ');
+		message[i] = (uint8_t)(git_rand(0) % 64 + ' ');
 
 	reftable_writer_set_limits(w, 1, 1);
 
@@ -643,7 +643,7 @@ static void t_write_empty_table(void)
 	check_int(err, ==, REFTABLE_EMPTY_TABLE_ERROR);
 	reftable_writer_free(w);
 
-	check_int(buf.len, ==, header_size(1) + footer_size(1));
+	check_uint(buf.len, ==, header_size(1) + footer_size(1));
 
 	block_source_from_buf(&source, &buf);
 

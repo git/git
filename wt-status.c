@@ -1289,7 +1289,8 @@ static void show_am_in_progress(struct wt_status *s,
 static char *read_line_from_git_path(const char *filename)
 {
 	struct strbuf buf = STRBUF_INIT;
-	FILE *fp = fopen_or_warn(git_path("%s", filename), "r");
+	FILE *fp = fopen_or_warn(repo_git_path_append(the_repository, &buf,
+						      "%s", filename), "r");
 
 	if (!fp) {
 		strbuf_release(&buf);
@@ -1383,27 +1384,33 @@ static void abbrev_oid_in_line(struct strbuf *line)
 
 static int read_rebase_todolist(const char *fname, struct string_list *lines)
 {
-	struct strbuf line = STRBUF_INIT;
-	FILE *f = fopen(git_path("%s", fname), "r");
+	struct strbuf buf = STRBUF_INIT;
+	FILE *f = fopen(repo_git_path_append(the_repository, &buf, "%s", fname), "r");
+	int ret;
 
 	if (!f) {
-		if (errno == ENOENT)
-			return -1;
+		if (errno == ENOENT) {
+			ret = -1;
+			goto out;
+		}
 		die_errno("Could not open file %s for reading",
-			  git_path("%s", fname));
+			  repo_git_path_replace(the_repository, &buf, "%s", fname));
 	}
-	while (!strbuf_getline_lf(&line, f)) {
-		if (starts_with(line.buf, comment_line_str))
+	while (!strbuf_getline_lf(&buf, f)) {
+		if (starts_with(buf.buf, comment_line_str))
 			continue;
-		strbuf_trim(&line);
-		if (!line.len)
+		strbuf_trim(&buf);
+		if (!buf.len)
 			continue;
-		abbrev_oid_in_line(&line);
-		string_list_append(lines, line.buf);
+		abbrev_oid_in_line(&buf);
+		string_list_append(lines, buf.buf);
 	}
 	fclose(f);
-	strbuf_release(&line);
-	return 0;
+
+	ret = 0;
+out:
+	strbuf_release(&buf);
+	return ret;
 }
 
 static void show_rebase_information(struct wt_status *s,
@@ -1434,9 +1441,12 @@ static void show_rebase_information(struct wt_status *s,
 				i < have_done.nr;
 				i++)
 				status_printf_ln(s, color, "   %s", have_done.items[i].string);
-			if (have_done.nr > nr_lines_to_show && s->hints)
+			if (have_done.nr > nr_lines_to_show && s->hints) {
+				char *path = repo_git_path(the_repository, "rebase-merge/done");
 				status_printf_ln(s, color,
-					_("  (see more in file %s)"), git_path("rebase-merge/done"));
+					_("  (see more in file %s)"), path);
+				free(path);
+			}
 		}
 
 		if (yet_to_do.nr == 0)

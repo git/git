@@ -197,7 +197,8 @@ static int traverse_reachable(void)
 	unsigned int nr = 0;
 	int result = 0;
 	if (show_progress)
-		progress = start_delayed_progress(_("Checking connectivity"), 0);
+		progress = start_delayed_progress(the_repository,
+						  _("Checking connectivity"), 0);
 	while (pending.nr) {
 		result |= traverse_one_object(object_array_pop(&pending));
 		display_progress(progress, ++nr);
@@ -325,7 +326,7 @@ static void check_unreachable_object(struct object *obj)
 				  printable_type(&obj->oid, obj->type),
 				  describe_object(&obj->oid));
 		if (write_lost_and_found) {
-			char *filename = git_pathdup("lost-found/%s/%s",
+			char *filename = repo_git_path(the_repository, "lost-found/%s/%s",
 				obj->type == OBJ_COMMIT ? "commit" : "other",
 				describe_object(&obj->oid));
 			FILE *f;
@@ -703,7 +704,8 @@ static void fsck_object_dir(const char *path)
 		fprintf_ln(stderr, _("Checking object directory"));
 
 	if (show_progress)
-		progress = start_progress(_("Checking object directories"), 256);
+		progress = start_progress(the_repository,
+					  _("Checking object directories"), 256);
 
 	for_each_loose_file_in_objdir(path, fsck_loose, fsck_cruft, fsck_subdir,
 				      &cb_data);
@@ -879,7 +881,8 @@ static int check_pack_rev_indexes(struct repository *r, int show_progress)
 	if (show_progress) {
 		for (struct packed_git *p = get_all_packs(r); p; p = p->next)
 			pack_count++;
-		progress = start_delayed_progress("Verifying reverse pack-indexes", pack_count);
+		progress = start_delayed_progress(the_repository,
+						  "Verifying reverse pack-indexes", pack_count);
 		pack_count = 0;
 	}
 
@@ -989,7 +992,8 @@ int cmd_fsck(int argc,
 					total += p->num_objects;
 				}
 
-				progress = start_progress(_("Checking objects"), total);
+				progress = start_progress(the_repository,
+							  _("Checking objects"), total);
 			}
 			for (p = get_all_packs(the_repository); p;
 			     p = p->next) {
@@ -1053,7 +1057,7 @@ int cmd_fsck(int argc,
 			struct worktree *wt = *p;
 			struct index_state istate =
 				INDEX_STATE_INIT(the_repository);
-			char *path;
+			char *path, *wt_gitdir;
 
 			/*
 			 * Make a copy since the buffer is reusable
@@ -1061,9 +1065,13 @@ int cmd_fsck(int argc,
 			 * while we're examining the index.
 			 */
 			path = xstrdup(worktree_git_path(the_repository, wt, "index"));
-			read_index_from(&istate, path, get_worktree_git_dir(wt));
+			wt_gitdir = get_worktree_git_dir(wt);
+
+			read_index_from(&istate, path, wt_gitdir);
 			fsck_index(&istate, path, wt->is_current);
+
 			discard_index(&istate);
+			free(wt_gitdir);
 			free(path);
 		}
 		free_worktrees(worktrees);

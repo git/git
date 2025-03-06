@@ -103,7 +103,8 @@ static void t_read_file(void)
 static int write_test_ref(struct reftable_writer *wr, void *arg)
 {
 	struct reftable_ref_record *ref = arg;
-	reftable_writer_set_limits(wr, ref->update_index, ref->update_index);
+	check(!reftable_writer_set_limits(wr, ref->update_index,
+					  ref->update_index));
 	return reftable_writer_add_ref(wr, ref);
 }
 
@@ -143,7 +144,8 @@ static int write_test_log(struct reftable_writer *wr, void *arg)
 {
 	struct write_log_arg *wla = arg;
 
-	reftable_writer_set_limits(wr, wla->update_index, wla->update_index);
+	check(!reftable_writer_set_limits(wr, wla->update_index,
+					  wla->update_index));
 	return reftable_writer_add_log(wr, wla->log);
 }
 
@@ -961,7 +963,7 @@ static void t_reflog_expire(void)
 
 static int write_nothing(struct reftable_writer *wr, void *arg UNUSED)
 {
-	reftable_writer_set_limits(wr, 1, 1);
+	check(!reftable_writer_set_limits(wr, 1, 1));
 	return 0;
 }
 
@@ -1369,11 +1371,57 @@ static void t_reftable_stack_reload_with_missing_table(void)
 	clear_dir(dir);
 }
 
+static int write_limits_after_ref(struct reftable_writer *wr, void *arg)
+{
+	struct reftable_ref_record *ref = arg;
+	check(!reftable_writer_set_limits(wr, ref->update_index, ref->update_index));
+	check(!reftable_writer_add_ref(wr, ref));
+	return reftable_writer_set_limits(wr, ref->update_index, ref->update_index);
+}
+
+static void t_reftable_invalid_limit_updates(void)
+{
+	struct reftable_ref_record ref = {
+		.refname = (char *) "HEAD",
+		.update_index = 1,
+		.value_type = REFTABLE_REF_SYMREF,
+		.value.symref = (char *) "master",
+	};
+	struct reftable_write_options opts = {
+		.default_permissions = 0660,
+	};
+	struct reftable_addition *add = NULL;
+	char *dir = get_tmp_dir(__LINE__);
+	struct reftable_stack *st = NULL;
+	int err;
+
+	err = reftable_new_stack(&st, dir, &opts);
+	check(!err);
+
+	reftable_addition_destroy(add);
+
+	err = reftable_stack_new_addition(&add, st, 0);
+	check(!err);
+
+	/*
+	 * write_limits_after_ref also updates the update indexes after adding
+	 * the record. This should cause an err to be returned, since the limits
+	 * must be set at the start.
+	 */
+	err = reftable_addition_add(add, write_limits_after_ref, &ref);
+	check_int(err, ==, REFTABLE_API_ERROR);
+
+	reftable_addition_destroy(add);
+	reftable_stack_destroy(st);
+	clear_dir(dir);
+}
+
 int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 {
 	TEST(t_empty_add(), "empty addition to stack");
 	TEST(t_read_file(), "read_lines works");
 	TEST(t_reflog_expire(), "expire reflog entries");
+	TEST(t_reftable_invalid_limit_updates(), "prevent limit updates after adding records");
 	TEST(t_reftable_stack_add(), "add multiple refs and logs to stack");
 	TEST(t_reftable_stack_add_one(), "add a single ref record to stack");
 	TEST(t_reftable_stack_add_performs_auto_compaction(), "addition to stack triggers auto-compaction");

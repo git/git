@@ -78,7 +78,7 @@ static void refspec_append_mapped(struct refspec *refspec, const char *ref,
 			.src = matched->name,
 		};
 
-		if (!query_refspecs(&remote->push, &query) && query.dst) {
+		if (!refspec_find_match(&remote->push, &query) && query.dst) {
 			refspec_appendf(refspec, "%s%s:%s",
 					query.force ? "+" : "",
 					query.src, query.dst);

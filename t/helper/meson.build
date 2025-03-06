@@ -34,12 +34,14 @@ test_tool_sources = [
   'test-match-trees.c',
   'test-mergesort.c',
   'test-mktemp.c',
+  'test-name-hash.c',
   'test-online-cpus.c',
   'test-pack-mtimes.c',
   'test-parse-options.c',
   'test-parse-pathspec-file.c',
   'test-partial-clone.c',
   'test-path-utils.c',
+  'test-path-walk.c',
   'test-pcre2-config.c',
   'test-pkt-line.c',
   'test-proc-receive.c',
@@ -78,14 +80,14 @@ test_tool_sources = [
 
 test_tool = executable('test-tool',
   sources: test_tool_sources,
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
 )
 bin_wrappers += test_tool
 test_dependencies += test_tool
 
 test_fake_ssh = executable('test-fake-ssh',
   sources: 'test-fake-ssh.c',
-  dependencies: [libgit, common_main],
+  dependencies: [libgit_commonmain],
 )
 bin_wrappers += test_fake_ssh
 test_dependencies += test_fake_ssh

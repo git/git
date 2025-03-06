@@ -658,8 +658,8 @@ static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
 	strbuf_addf(&buf, "%s-%s.rev", midx_name, hash_to_hex_algop(midx_hash,
 								    ctx->repo->hash_algo));
 
-	tmp_file = write_rev_file_order(NULL, ctx->pack_order, ctx->entries_nr,
-					midx_hash, WRITE_REV);
+	tmp_file = write_rev_file_order(ctx->repo->hash_algo, NULL, ctx->pack_order,
+					ctx->entries_nr, midx_hash, WRITE_REV);
 
 	if (finalize_object_file(tmp_file, buf.buf))
 		die(_("cannot store reverse index file"));
@@ -1131,7 +1131,8 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 
 	ctx.pack_paths_checked = 0;
 	if (flags & MIDX_PROGRESS)
-		ctx.progress = start_delayed_progress(_("Adding packfiles to multi-pack-index"), 0);
+		ctx.progress = start_delayed_progress(r,
+						      _("Adding packfiles to multi-pack-index"), 0);
 	else
 		ctx.progress = NULL;
 
@@ -1335,7 +1336,7 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 			return -1;
 		}
 
-		if (adjust_shared_perm(get_tempfile_path(incr))) {
+		if (adjust_shared_perm(r, get_tempfile_path(incr))) {
 			error(_("unable to adjust shared permissions for '%s'"),
 			      get_tempfile_path(incr));
 			return -1;
@@ -1539,7 +1540,9 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 	CALLOC_ARRAY(count, m->num_packs);
 
 	if (flags & MIDX_PROGRESS)
-		progress = start_delayed_progress(_("Counting referenced objects"),
+		progress = start_delayed_progress(
+					  r,
+					  _("Counting referenced objects"),
 					  m->num_objects);
 	for (i = 0; i < m->num_objects; i++) {
 		int pack_int_id = nth_midxed_pack_int_id(m, i);
@@ -1549,7 +1552,9 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 	stop_progress(&progress);
 
 	if (flags & MIDX_PROGRESS)
-		progress = start_delayed_progress(_("Finding and deleting unreferenced packfiles"),
+		progress = start_delayed_progress(
+					  r,
+					  _("Finding and deleting unreferenced packfiles"),
 					  m->num_packs);
 	for (i = 0; i < m->num_packs; i++) {
 		char *pack_name;

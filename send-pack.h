@@ -6,11 +6,15 @@
 struct child_process;
 struct oid_array;
 struct ref;
+struct repository;
 
 /* Possible values for push_cert field in send_pack_args. */
 #define SEND_PACK_PUSH_CERT_NEVER 0
 #define SEND_PACK_PUSH_CERT_IF_ASKED 1
 #define SEND_PACK_PUSH_CERT_ALWAYS 2
+
+/* At least one reference has been rejected by the remote side. */
+#define ERROR_SEND_PACK_BAD_REF_STATUS 1
 
 struct send_pack_args {
 	const char *url;
@@ -35,7 +39,17 @@ struct option;
 int option_parse_push_signed(const struct option *opt,
 			     const char *arg, int unset);
 
-int send_pack(struct send_pack_args *args,
+/*
+ * Compute a packfile and write it to a file descriptor. The `fd` array needs
+ * to contain two file descriptors: `fd[0]` is the file descriptor used as
+ * input for the packet reader, whereas `fd[1]` is the file descriptor the
+ * packfile will be written to.
+ *
+ * Returns 0 on success, non-zero otherwise. Negative return values indicate a
+ * generic error, whereas positive return values indicate specific error
+ * conditions as documented with the `ERROR_SEND_PACK_*` constants.
+ */
+int send_pack(struct repository *r, struct send_pack_args *args,
 	      int fd[], struct child_process *conn,
 	      struct ref *remote_refs, struct oid_array *extra_have);
 
