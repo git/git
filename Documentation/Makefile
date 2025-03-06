@@ -224,6 +224,10 @@ asciidoc.conf: asciidoc.conf.in FORCE
 	$(QUIET_GEN)$(call version_gen,"$(shell pwd)/..",$<,$@)
 endif
 
+ifdef WITH_BREAKING_CHANGES
+ASCIIDOC_EXTRA += -awith-breaking-changes
+endif
+
 ASCIIDOC_DEPS += docinfo.html
 
 SHELL_PATH ?= $(SHELL)
