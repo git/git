@@ -5391,7 +5391,7 @@ test_setup_12n () {
 	)
 }
 
-test_expect_failure '12n: Directory rename transitively makes rename back to self' '
+test_expect_success '12n: Directory rename transitively makes rename back to self' '
 	test_setup_12n &&
 	(
 		cd 12n &&
