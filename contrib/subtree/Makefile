@@ -50,7 +50,7 @@ GIT_SUBTREE    := git-subtree
 
 GIT_SUBTREE_DOC := git-subtree.1
 GIT_SUBTREE_XML := git-subtree.xml
-GIT_SUBTREE_TXT := git-subtree.txt
+GIT_SUBTREE_TXT := git-subtree.adoc
 GIT_SUBTREE_HTML := git-subtree.html
 GIT_SUBTREE_TEST := ../../git-subtree
 

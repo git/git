@@ -7,7 +7,7 @@
 
 /*
  * Each entry represents a trace2 setting.
- * See Documentation/technical/api-trace2.txt
+ * See Documentation/technical/api-trace2.adoc
  */
 struct tr2_sysenv_entry {
 	const char *env_var_name;

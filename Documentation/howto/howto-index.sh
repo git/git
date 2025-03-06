@@ -9,9 +9,9 @@ people describing how they use Git in their workflow.
 
 EOF
 
-for txt
+for adoc
 do
-	title=$(expr "$txt" : '.*/\(.*\)\.txt$')
+	title=$(expr "$adoc" : '.*/\(.*\)\.adoc$')
 	from=$(sed -ne '
 	/^$/q
 	/^From:[ 	]/{
@@ -21,7 +21,7 @@ do
 		s/^/by /
 		p
 	}
-	' "$txt")
+	' "$adoc")
 
 	abstract=$(sed -ne '
 	/^Abstract:[ 	]/{
@@ -39,13 +39,13 @@ do
 		x
 		p
 		q
-	}' "$txt")
+	}' "$adoc")
 
-	if grep 'Content-type: text/asciidoc' >/dev/null $txt
+	if grep 'Content-type: text/asciidoc' >/dev/null $adoc
 	then
-		file=$(expr "$txt" : '\(.*\)\.txt$').html
+		file=$(expr "$adoc" : '\(.*\)\.adoc$').html
 	else
-		file="$txt"
+		file="$adoc"
 	fi
 
 	echo "* link:howto/$(basename "$file")[$title] $from

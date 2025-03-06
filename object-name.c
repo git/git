@@ -1273,7 +1273,7 @@ static int peel_onion(struct repository *r, const char *name, int len,
 }
 
 /*
- * Documentation/revisions.txt says:
+ * Documentation/revisions.adoc says:
  *    '<describeOutput>', e.g. 'v1.7.4.2-679-g3bee7fb'::
  *      Output from `git describe`; i.e. a closest tag, optionally
  *      followed by a dash and a number of commits, followed by a dash, a

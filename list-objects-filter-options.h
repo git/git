@@ -82,7 +82,7 @@ void list_objects_filter_init(struct list_objects_filter_options *filter_options
  *       "filter" SP <arg>
  *
  * The filter keyword will be used by many commands.
- * See Documentation/rev-list-options.txt for allowed values for <arg>.
+ * See Documentation/rev-list-options.adoc for allowed values for <arg>.
  *
  * Capture the given arg as the "filter_spec".  This can be forwarded to
  * subordinate commands when necessary (although it's better to pass it through

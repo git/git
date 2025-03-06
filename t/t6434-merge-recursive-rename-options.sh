@@ -22,7 +22,7 @@ R075    2-old   2-new
 R100    3-old   3-new
 
 Actual similarity indices are parsed from diff output. We rely on the fact that
-they are rounded down (see, e.g., Documentation/diff-generate-patch.txt, which
+they are rounded down (see, e.g., Documentation/diff-generate-patch.adoc, which
 mentions this in a different context).
 '
 

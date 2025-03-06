@@ -394,7 +394,7 @@ inflated again in step 3, for a total of two inflations.
 
 Step 4 is probably necessary for good read-time performance. "git
 pack-objects" on the server optimizes the pack file for good data
-locality (see Documentation/technical/pack-heuristics.txt).
+locality (see Documentation/technical/pack-heuristics.adoc).
 
 Details of this process are likely to change. It will take some
 experimenting to get this to perform well.
