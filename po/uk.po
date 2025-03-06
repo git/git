@@ -17077,7 +17077,7 @@ msgstr ""
 
 #, c-format
 msgid "git: '%s' is not a git command. See 'git --help'."
-msgstr "git: \"%s\" не є командою git. Дивітья git --help."
+msgstr "git: \"%s\" не є командою git. Дивіться git --help."
 
 msgid "Uh oh. Your system reports no Git commands at all."
 msgstr "Ой-ой. Ваша система повідомляє про повну відсутність Git команд."
