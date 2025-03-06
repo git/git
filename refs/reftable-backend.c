@@ -381,6 +381,8 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	mask = umask(0);
 	umask(mask);
 
+	reftable_set_alloc(malloc, realloc, free);
+
 	refs_compute_filesystem_location(gitdir, payload, &is_worktree, &refdir,
 					 &ref_common_dir);
 
