@@ -152,6 +152,7 @@ config.worktree::
 	working directory in multiple working directory setup (see
 	linkgit:git-worktree[1]).
 
+ifndef::with-breaking-changes[]
 branches::
 	A deprecated way to store shorthands to be used
 	to specify a URL to 'git fetch', 'git pull' and 'git push'.
@@ -164,6 +165,7 @@ branches::
 	"$GIT_COMMON_DIR/branches" will be used instead.
 +
 Git will stop reading remotes from this directory in Git 3.0.
+endif::with-breaking-changes[]
 
 hooks::
 	Hooks are customization scripts used by various Git
@@ -231,6 +233,7 @@ info/sparse-checkout::
 	This file stores sparse checkout patterns.
 	See also: linkgit:git-read-tree[1].
 
+ifndef::with-breaking-changes[]
 remotes::
 	Stores shorthands for URL and default refnames for use
 	when interacting with remote repositories via 'git fetch',
@@ -241,6 +244,7 @@ remotes::
 	"$GIT_COMMON_DIR/remotes" will be used instead.
 +
 Git will stop reading remotes from this directory in Git 3.0.
+endif::with-breaking-changes[]
 
 logs::
 	Records of changes made to refs are stored in this directory.
