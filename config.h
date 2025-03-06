@@ -219,6 +219,9 @@ void read_very_early_config(config_fn_t cb, void *data);
  * repo-specific one; by overwriting, the higher-priority repo-specific
  * value is left at the end).
  *
+ * In cases where the repository variable is NULL, repo_config() will
+ * call read_early_config().
+ *
  * Unlike git_config_from_file(), this function respects includes.
  */
 void repo_config(struct repository *r, config_fn_t fn, void *);
