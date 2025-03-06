@@ -125,4 +125,14 @@ test_expect_success 'meta-characters are discarded' '
 	assert_no_jumps perf
 '
 
+test_expect_success 'empty string exclude pattern is ignored' '
+	git update-ref refs/heads/loose $(git rev-parse refs/heads/foo/1) &&
+
+	for_each_ref__exclude refs/heads "" >actual 2>perf &&
+	for_each_ref >expect &&
+
+	test_cmp expect actual &&
+	assert_no_jumps perf
+'
+
 test_done
