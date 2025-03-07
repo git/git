@@ -2,6 +2,7 @@
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
+#include "git-zlib.h"
 #include "config.h"
 #include "builtin.h"
 #include "exec-cmd.h"
