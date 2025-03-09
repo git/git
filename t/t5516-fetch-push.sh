@@ -1312,7 +1312,6 @@ test_expect_success 'fetch exact oid in protocol v2' '
 	test_must_fail git -C child cat-file -t $the_commit &&
 
 	# fetching the hidden object succeeds by default
-	# NEEDSWORK: should this match the v0 behavior instead?
 	git -C child fetch -v ../testrepo $the_commit:refs/heads/copy
 '
 
