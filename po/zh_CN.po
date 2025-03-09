@@ -154,8 +154,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2025-01-02 20:43+0800\n"
-"PO-Revision-Date: 2025-01-05 19:01+0800\n"
+"POT-Creation-Date: 2025-03-09 20:34+0800\n"
+"PO-Revision-Date: 2025-03-10 11:14+0800\n"
 "Last-Translator: Teng Long <dyroneteng@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/dyrone/git/>\n"
 "Language: zh_CN\n"
@@ -2962,6 +2962,22 @@ msgstr "git archive：协议错误"
 msgid "git archive: expected a flush"
 msgstr "git archive：应有一个 flush 包"
 
+#: builtin/backfill.c
+msgid "git backfill [--min-batch-size=<n>] [--[no-]sparse]"
+msgstr "git backfill [--min-batch-size=<n>] [--[no-]sparse]"
+
+#: builtin/backfill.c
+msgid "problem loading sparse-checkout"
+msgstr "加载稀疏检出时出现问题"
+
+#: builtin/backfill.c
+msgid "Minimum number of objects to request at a time"
+msgstr "单次请求的最少对象数量"
+
+#: builtin/backfill.c
+msgid "Restrict the missing objects to the current sparse-checkout"
+msgstr "将缺少的对象限制在当前的稀疏检出中"
+
 #: builtin/bisect.c
 msgid ""
 "git bisect start [--term-(new|bad)=<term> --term-(old|good)=<term>]    [--no-"
@@ -3381,7 +3397,7 @@ msgstr "显示作者的邮箱而不是名字（默认：关闭）"
 msgid "ignore whitespace differences"
 msgstr "忽略空白差异"
 
-#: builtin/blame.c builtin/log.c
+#: builtin/blame.c builtin/clone.c builtin/log.c
 msgid "rev"
 msgstr "版本"
 
@@ -3803,8 +3819,8 @@ msgstr "HEAD 没有位于 /refs/heads 之下！"
 
 #: builtin/branch.c
 msgid ""
-"branch with --recurse-submodules can only be used if submodule."
-"propagateBranches is enabled"
+"branch with --recurse-submodules can only be used if "
+"submodule.propagateBranches is enabled"
 msgstr ""
 "带有 --recurse-submodules 的分支只能在 submodule.propagateBranches 启用时使用"
 
@@ -3890,11 +3906,6 @@ msgstr "不再支持选项 '--set-upstream'。请使用 '--track' 或 '--set-ups
 #: builtin/bugreport.c
 msgid "git version:\n"
 msgstr "git 版本：\n"
-
-#: builtin/bugreport.c
-#, c-format
-msgid "uname() failed with error '%s' (%d)\n"
-msgstr "uname() 失败，错误为 '%s'（%d）\n"
 
 #: builtin/bugreport.c
 msgid "compiler info: "
@@ -5134,166 +5145,6 @@ msgid "clean.requireForce is true and -f not given: refusing to clean"
 msgstr "clean.requireForce 设置为 true 且未提供 -f 选项：拒绝执行清理动作"
 
 #: builtin/clone.c
-msgid "git clone [<options>] [--] <repo> [<dir>]"
-msgstr "git clone [<选项>] [--] <仓库> [<路径>]"
-
-#: builtin/clone.c
-msgid "don't clone shallow repository"
-msgstr "不克隆浅仓库"
-
-#: builtin/clone.c
-msgid "don't create a checkout"
-msgstr "不创建一个检出"
-
-#: builtin/clone.c builtin/init-db.c
-msgid "create a bare repository"
-msgstr "创建一个纯仓库"
-
-#: builtin/clone.c
-msgid "create a mirror repository (implies --bare)"
-msgstr "创建一个镜像仓库（隐含 --bare）"
-
-#: builtin/clone.c
-msgid "to clone from a local repository"
-msgstr "从本地仓库克隆"
-
-#: builtin/clone.c
-msgid "don't use local hardlinks, always copy"
-msgstr "不使用本地硬链接，始终复制"
-
-#: builtin/clone.c
-msgid "setup as shared repository"
-msgstr "设置为共享仓库"
-
-#: builtin/clone.c
-msgid "pathspec"
-msgstr "路径规格"
-
-#: builtin/clone.c
-msgid "initialize submodules in the clone"
-msgstr "在克隆时初始化子模组"
-
-#: builtin/clone.c
-msgid "number of submodules cloned in parallel"
-msgstr "并发克隆的子模组的数量"
-
-#: builtin/clone.c builtin/init-db.c
-msgid "template-directory"
-msgstr "模板目录"
-
-#: builtin/clone.c builtin/init-db.c
-msgid "directory from which templates will be used"
-msgstr "模板目录将被使用"
-
-#: builtin/clone.c builtin/submodule--helper.c
-msgid "reference repository"
-msgstr "参考仓库"
-
-#: builtin/clone.c builtin/submodule--helper.c
-msgid "use --reference only while cloning"
-msgstr "仅在克隆时参考 --reference 指向的本地仓库"
-
-#: builtin/clone.c builtin/column.c builtin/fmt-merge-msg.c builtin/init-db.c
-#: builtin/merge-file.c builtin/merge.c builtin/pack-objects.c builtin/repack.c
-#: builtin/submodule--helper.c t/helper/test-simple-ipc.c
-msgid "name"
-msgstr "名称"
-
-#: builtin/clone.c
-msgid "use <name> instead of 'origin' to track upstream"
-msgstr "使用 <名称> 而不是 'origin' 去跟踪上游"
-
-#: builtin/clone.c
-msgid "checkout <branch> instead of the remote's HEAD"
-msgstr "检出 <分支> 而不是远程 HEAD"
-
-#: builtin/clone.c
-msgid "path to git-upload-pack on the remote"
-msgstr "远程 git-upload-pack 路径"
-
-#: builtin/clone.c builtin/fetch.c builtin/pull.c
-msgid "depth"
-msgstr "深度"
-
-#: builtin/clone.c
-msgid "create a shallow clone of that depth"
-msgstr "创建一个指定深度的浅克隆"
-
-#: builtin/clone.c
-msgid "create a shallow clone since a specific time"
-msgstr "从一个特定时间创建一个浅克隆"
-
-#: builtin/clone.c builtin/fetch.c builtin/pull.c
-msgid "ref"
-msgstr "引用"
-
-#: builtin/clone.c builtin/fetch.c builtin/pull.c
-msgid "deepen history of shallow clone, excluding ref"
-msgstr "深化浅克隆的历史，除了给定的引用"
-
-#: builtin/clone.c builtin/submodule--helper.c
-msgid "clone only one branch, HEAD or --branch"
-msgstr "只克隆一个分支、HEAD 或 --branch"
-
-#: builtin/clone.c
-msgid "don't clone any tags, and make later fetches not to follow them"
-msgstr "不要克隆任何标签，并且后续获取操作也不下载它们"
-
-#: builtin/clone.c
-msgid "any cloned submodules will be shallow"
-msgstr "子模组将以浅下载模式克隆"
-
-#: builtin/clone.c builtin/init-db.c
-msgid "gitdir"
-msgstr "git目录"
-
-#: builtin/clone.c builtin/init-db.c
-msgid "separate git dir from working tree"
-msgstr "git目录和工作区分离"
-
-#: builtin/clone.c builtin/init-db.c builtin/submodule--helper.c
-msgid "specify the reference format to use"
-msgstr "指定要使用的引用格式"
-
-#: builtin/clone.c
-msgid "key=value"
-msgstr "key=value"
-
-#: builtin/clone.c
-msgid "set config inside the new repository"
-msgstr "在新仓库中设置配置信息"
-
-#: builtin/clone.c builtin/fetch.c builtin/ls-remote.c builtin/pull.c
-#: builtin/push.c builtin/send-pack.c
-msgid "server-specific"
-msgstr "server-specific"
-
-#: builtin/clone.c builtin/fetch.c builtin/ls-remote.c builtin/pull.c
-#: builtin/push.c builtin/send-pack.c
-msgid "option to transmit"
-msgstr "传输选项"
-
-#: builtin/clone.c
-msgid "apply partial clone filters to submodules"
-msgstr "对子模组使用部分克隆过滤器"
-
-#: builtin/clone.c
-msgid "any cloned submodules will use their remote-tracking branch"
-msgstr "任何克隆的子模组将使用它们的远程跟踪分支"
-
-#: builtin/clone.c
-msgid "initialize sparse-checkout file to include only files at root"
-msgstr "初始化稀疏检出文件，只包含根目录文件"
-
-#: builtin/clone.c
-msgid "uri"
-msgstr "uri"
-
-#: builtin/clone.c
-msgid "a URI for downloading bundles before fetching from origin remote"
-msgstr "用于在从 origin 远程获取之前下载归档包的 URI"
-
-#: builtin/clone.c
 #, c-format
 msgid "info: Could not add alternate for '%s': %s\n"
 msgstr "info: 不能为 '%s' 添加一个备用：%s\n"
@@ -5368,11 +5219,6 @@ msgstr ""
 "您可以通过 'git status' 检查哪些已被检出，然后使用命令\n"
 "'git restore --source=HEAD :/' 重试\n"
 
-#: builtin/clone.c
-#, c-format
-msgid "Could not find remote branch %s to clone."
-msgstr "不能发现要克隆的远程分支 %s。"
-
 #: builtin/clone.c fetch-pack.c
 msgid "remote did not send all necessary objects"
 msgstr "远程没有发送所有必需的对象"
@@ -5404,7 +5250,171 @@ msgstr "无法执行 repack 来清理"
 
 #: builtin/clone.c
 msgid "cannot unlink temporary alternates file"
-msgstr "无法删除临时的 alternates 文件"
+msgstr "无法删除临时的备用文件"
+
+#: builtin/clone.c
+msgid "don't clone shallow repository"
+msgstr "不克隆浅仓库"
+
+#: builtin/clone.c
+msgid "don't create a checkout"
+msgstr "不创建一个检出"
+
+#: builtin/clone.c builtin/init-db.c
+msgid "create a bare repository"
+msgstr "创建一个纯仓库"
+
+#: builtin/clone.c
+msgid "create a mirror repository (implies --bare)"
+msgstr "创建一个镜像仓库（隐含 --bare）"
+
+#: builtin/clone.c
+msgid "to clone from a local repository"
+msgstr "从本地仓库克隆"
+
+#: builtin/clone.c
+msgid "don't use local hardlinks, always copy"
+msgstr "不使用本地硬链接，始终复制"
+
+#: builtin/clone.c
+msgid "setup as shared repository"
+msgstr "设置为共享仓库"
+
+#: builtin/clone.c
+msgid "pathspec"
+msgstr "路径规格"
+
+#: builtin/clone.c
+msgid "initialize submodules in the clone"
+msgstr "在克隆时初始化子模组"
+
+#: builtin/clone.c
+msgid "number of submodules cloned in parallel"
+msgstr "并发克隆的子模组的数量"
+
+#: builtin/clone.c builtin/init-db.c
+msgid "template-directory"
+msgstr "模板目录"
+
+#: builtin/clone.c builtin/init-db.c
+msgid "directory from which templates will be used"
+msgstr "模板目录将被使用"
+
+#: builtin/clone.c builtin/submodule--helper.c
+msgid "reference repository"
+msgstr "参考仓库"
+
+#: builtin/clone.c builtin/submodule--helper.c
+msgid "use --reference only while cloning"
+msgstr "仅在克隆时参考 --reference 指向的本地仓库"
+
+#: builtin/clone.c builtin/column.c builtin/fmt-merge-msg.c builtin/init-db.c
+#: builtin/merge-file.c builtin/merge.c builtin/pack-objects.c builtin/repack.c
+#: builtin/submodule--helper.c t/helper/test-simple-ipc.c
+msgid "name"
+msgstr "名称"
+
+#: builtin/clone.c
+msgid "use <name> instead of 'origin' to track upstream"
+msgstr "使用 <名称> 而不是 'origin' 去跟踪上游"
+
+#: builtin/clone.c
+msgid "checkout <branch> instead of the remote's HEAD"
+msgstr "检出 <分支> 而不是远程 HEAD"
+
+#: builtin/clone.c
+msgid "clone single revision <rev> and check out"
+msgstr "克隆单个版本 <版本> 并检出"
+
+#: builtin/clone.c
+msgid "path to git-upload-pack on the remote"
+msgstr "远程 git-upload-pack 路径"
+
+#: builtin/clone.c builtin/fetch.c builtin/pull.c
+msgid "depth"
+msgstr "深度"
+
+#: builtin/clone.c
+msgid "create a shallow clone of that depth"
+msgstr "创建一个指定深度的浅克隆"
+
+#: builtin/clone.c
+msgid "create a shallow clone since a specific time"
+msgstr "从一个特定时间创建一个浅克隆"
+
+#: builtin/clone.c builtin/fetch.c builtin/pull.c
+msgid "ref"
+msgstr "引用"
+
+#: builtin/clone.c builtin/fetch.c builtin/pull.c
+msgid "deepen history of shallow clone, excluding ref"
+msgstr "深化浅克隆的历史，除了给定的引用"
+
+#: builtin/clone.c builtin/submodule--helper.c
+msgid "clone only one branch, HEAD or --branch"
+msgstr "只克隆一个分支、HEAD 或 --branch"
+
+#: builtin/clone.c
+msgid "clone tags, and make later fetches not to follow them"
+msgstr "克隆标签，并在后续获取时不跟随它们"
+
+#: builtin/clone.c
+msgid "any cloned submodules will be shallow"
+msgstr "子模组将以浅下载模式克隆"
+
+#: builtin/clone.c builtin/init-db.c
+msgid "gitdir"
+msgstr "git目录"
+
+#: builtin/clone.c builtin/init-db.c
+msgid "separate git dir from working tree"
+msgstr "git目录和工作区分离"
+
+#: builtin/clone.c builtin/init-db.c builtin/submodule--helper.c
+msgid "specify the reference format to use"
+msgstr "指定要使用的引用格式"
+
+#: builtin/clone.c
+msgid "key=value"
+msgstr "key=value"
+
+#: builtin/clone.c
+msgid "set config inside the new repository"
+msgstr "在新仓库中设置配置信息"
+
+#: builtin/clone.c builtin/fetch.c builtin/ls-remote.c builtin/pull.c
+#: builtin/push.c builtin/send-pack.c
+msgid "server-specific"
+msgstr "server-specific"
+
+#: builtin/clone.c builtin/fetch.c builtin/ls-remote.c builtin/pull.c
+#: builtin/push.c builtin/send-pack.c
+msgid "option to transmit"
+msgstr "传输选项"
+
+#: builtin/clone.c
+msgid "apply partial clone filters to submodules"
+msgstr "对子模组使用部分克隆过滤器"
+
+#: builtin/clone.c
+msgid "any cloned submodules will use their remote-tracking branch"
+msgstr "任何克隆的子模组将使用它们的远程跟踪分支"
+
+#: builtin/clone.c
+msgid "initialize sparse-checkout file to include only files at root"
+msgstr "初始化稀疏检出文件，只包含根目录文件"
+
+#: builtin/clone.c
+msgid "uri"
+msgstr "uri"
+
+#: builtin/clone.c
+msgid "a URI for downloading bundles before fetching from origin remote"
+msgstr "用于在从 origin 远程获取之前下载归档包的 URI"
+
+#: builtin/clone.c
+msgid "git clone [<options>] [--] <repo> [<dir>]"
+msgstr "git clone [<选项>] [--] <仓库> [<路径>]"
 
 #: builtin/clone.c
 msgid "Too many arguments."
@@ -5531,6 +5541,11 @@ msgid "Remote branch %s not found in upstream %s"
 msgstr "远程分支 %s 在上游 %s 未发现"
 
 #: builtin/clone.c
+#, c-format
+msgid "Remote revision %s not found in upstream %s"
+msgstr "远程版本 %s 在上游 %s 未发现"
+
+#: builtin/clone.c
 msgid "You appear to have cloned an empty repository."
 msgstr "您似乎克隆了一个空仓库。"
 
@@ -5593,7 +5608,8 @@ msgstr ""
 "[no-]progress]\n"
 "                       <切分选项>"
 
-#: builtin/commit-graph.c builtin/fetch.c builtin/log.c builtin/repack.c
+#: builtin/commit-graph.c builtin/fetch.c builtin/gc.c builtin/log.c
+#: builtin/repack.c
 msgid "dir"
 msgstr "目录"
 
@@ -5751,7 +5767,7 @@ msgstr "git commit-tree：无法读取"
 
 #: builtin/commit.c
 msgid ""
-"git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u[<mode>]] [--amend]\n"
 "           [--dry-run] [(-c | -C | --squash) <commit> | --fixup [(amend|"
 "reword):]<commit>]\n"
 "           [-F <file> | -m <msg>] [--reset-author] [--allow-empty]\n"
@@ -5761,7 +5777,7 @@ msgid ""
 "           [(--trailer <token>[(=|:)<value>])...] [-S[<keyid>]]\n"
 "           [--] [<pathspec>...]"
 msgstr ""
-"git commit [-a | --interactive | --patch] [-s] [-v] [-u<模式>] [--amend]\n"
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u[<模式>]] [--amend]\n"
 "           [--dry-run] [(-c | -C | --squash) <提交> | --fixup [(amend|"
 "reword):]<提交>]\n"
 "           [-F <文件> | -m <消息>] [--reset-author] [--allow-empty]\n"
@@ -7473,14 +7489,13 @@ msgid ""
 "Run 'git remote set-head %s %s' to follow the change, or set\n"
 "'remote.%s.followRemoteHEAD' configuration option to a different value\n"
 "if you do not want to see this message. Specifically running\n"
-"'git config set remote.%s.followRemoteHEAD %s' will disable the warning\n"
-"until the remote changes HEAD to something else."
+"'git config set remote.%s.followRemoteHEAD warn-if-not-branch-%s'\n"
+"will disable the warning until the remote changes HEAD to something else."
 msgstr ""
-"运行 'git remote set-head %s %s' 以跟随更改，或者\n"
-"如果您不想看到此消息，则将'remote.%s.followRemoteHEAD' 配置选项设置为不同的"
-"值。\n"
-"特别地，运行 'git config set remote.%s.followRemoteHEAD %s' 将禁用警告，直到"
-"远程将 HEAD 更改为其他内容。\""
+"运行 'git remote set-head %s %s' 以跟随更改，或者如果您不想看到此消息，可将\n"
+"'remote.%s.followRemoteHEAD' 配置选项设置为不同的值。具体来说，运行\n"
+"'git config set remote.%s.followRemoteHEAD warn-if-not-branch-%s' 将\n"
+"禁用警告，直到远程将 HEAD 更改为其他内容。\""
 
 #: builtin/fetch.c
 msgid "multiple branches detected, incompatible with --set-upstream"
@@ -7721,8 +7736,8 @@ msgstr "协议不支持 --negotiate-only，退出"
 
 #: builtin/fetch.c
 msgid ""
-"--filter can only be used with the remote configured in extensions."
-"partialclone"
+"--filter can only be used with the remote configured in "
+"extensions.partialclone"
 msgstr "只可以将 --filter 用于在 extensions.partialclone 中配置的远程仓库"
 
 #: builtin/fetch.c
@@ -8327,6 +8342,10 @@ msgstr "强制执行 gc 即使另外一个 gc 正在执行"
 #: builtin/gc.c
 msgid "repack all other packs except the largest pack"
 msgstr "除了最大的包之外，对所有其它包文件重新打包"
+
+#: builtin/gc.c builtin/repack.c
+msgid "pack prefix to store a pack containing pruned objects"
+msgstr "储存被清除的对象的包的前缀"
 
 #: builtin/gc.c
 #, c-format
@@ -9326,6 +9345,11 @@ msgstr "无法完成 pack-objects 来重新打包本地链接"
 #: builtin/index-pack.c
 msgid "Cannot come back to cwd"
 msgstr "无法返回当前工作目录"
+
+#: builtin/index-pack.c builtin/unpack-objects.c
+#, c-format
+msgid "bad --pack_header: %s"
+msgstr "错误的 --pack_header：%s"
 
 #: builtin/index-pack.c
 #, c-format
@@ -10432,11 +10456,6 @@ msgstr "未知的策略选项：-X%s"
 msgid "malformed input line: '%s'."
 msgstr "格式错误的输入行：'%s'。"
 
-#: builtin/merge-tree.c
-#, c-format
-msgid "merging cannot continue; got unclean result of %d"
-msgstr "合并无法继续；得到不干净的结果 %d"
-
 #: builtin/merge.c
 msgid "git merge [<options>] [<commit>...]"
 msgstr "git merge [<选项>] [<提交>...]"
@@ -11454,6 +11473,15 @@ msgstr "git pack-objects [<选项>] <前缀名称> [< <引用列表> | < <对象
 
 #: builtin/pack-objects.c
 #, c-format
+msgid "invalid --name-hash-version option: %d"
+msgstr "无效的 --name-hash-version 选项：%d"
+
+#: builtin/pack-objects.c
+msgid "currently, --write-bitmap-index requires --name-hash-version=1"
+msgstr "当前，--write-bitmap-index 要求 --name-hash-version=1"
+
+#: builtin/pack-objects.c
+#, c-format
 msgid ""
 "write_reuse_object: could not locate %s, expected at offset %<PRIuMAX> in "
 "pack %s"
@@ -11858,6 +11886,10 @@ msgstr "协议"
 #: builtin/pack-objects.c
 msgid "exclude any configured uploadpack.blobpackfileuri with this protocol"
 msgstr "使用此协议排除任何已配置的 uploadpack.blobpackfileuri"
+
+#: builtin/pack-objects.c
+msgid "use the specified name-hash function to group similar objects"
+msgstr "使用指定的名称哈希函数对相似的对象进行分组"
 
 #: builtin/pack-objects.c
 #, c-format
@@ -12284,8 +12316,8 @@ msgid ""
 "upstream, see 'push.autoSetupRemote' in 'git help config'.\n"
 msgstr ""
 "\n"
-"为了让没有追踪上游的分支自动配置，参见 'git help config' 中的 push."
-"autoSetupRemote。\n"
+"为了让没有追踪上游的分支自动配置，参见 'git help config' 中的 "
+"push.autoSetupRemote。\n"
 
 #: builtin/push.c
 #, c-format
@@ -13294,8 +13326,8 @@ msgid "invalid ref format: %s"
 msgstr "无效的引用格式：%s"
 
 #: builtin/refs.c
-msgid "git refs migrate --ref-format=<format> [--dry-run]"
-msgstr "git refs migrate --ref-format=<格式> [--dry-run]"
+msgid "git refs migrate --ref-format=<format> [--no-reflog] [--dry-run]"
+msgstr "git refs migrate --ref-format=<格式> [--no-reflog] [--dry-run]"
 
 #: builtin/refs.c
 msgid "git refs verify [--strict] [--verbose]"
@@ -13308,6 +13340,10 @@ msgstr "指定要转换的引用格式"
 #: builtin/refs.c
 msgid "perform a non-destructive dry-run"
 msgstr "进行非破坏性的试运行（dry-run）"
+
+#: builtin/refs.c
+msgid "drop reflogs entirely during the migration"
+msgstr "在迁移期间删除引用日志"
 
 #: builtin/refs.c
 msgid "missing --ref-format=<format>"
@@ -13881,8 +13917,14 @@ msgid "be verbose; must be placed before a subcommand"
 msgstr "冗长输出；必须置于子命令之前"
 
 #: builtin/repack.c
-msgid "git repack [<options>]"
-msgstr "git repack [<选项>]"
+msgid ""
+"git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
+"[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>]\n"
+"[--write-midx] [--name-hash-version=<n>]"
+msgstr ""
+"git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
+"[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<包名>]\n"
+"[--write-midx] [--name-hash-version=<n>]"
 
 #: builtin/repack.c
 msgid ""
@@ -13975,6 +14017,11 @@ msgid "pass --no-reuse-object to git-pack-objects"
 msgstr "向 git-pack-objects 传递参数 --no-reuse-object"
 
 #: builtin/repack.c
+msgid ""
+"specify the name hash version to use for grouping similar objects by path"
+msgstr "指定用于按路径分组相似对象的名称哈希版本"
+
+#: builtin/repack.c
 msgid "do not run git-update-server-info"
 msgstr "不运行 git-update-server-info"
 
@@ -14037,10 +14084,6 @@ msgstr "使用因子 <n> 查找几何级数"
 #: builtin/repack.c
 msgid "write a multi-pack index of the resulting packs"
 msgstr "写入结果包的多包索引"
-
-#: builtin/repack.c
-msgid "pack prefix to store a pack containing pruned objects"
-msgstr "储存被清除的对象的包的前缀"
 
 #: builtin/repack.c
 msgid "pack prefix to store a pack containing filtered out objects"
@@ -14313,10 +14356,6 @@ msgstr "只能为 -l 提供一个模式"
 #: builtin/replay.c
 msgid "need some commits to replay"
 msgstr "需要一些提交来重放"
-
-#: builtin/replay.c
-msgid "--onto and --advance are incompatible"
-msgstr "--onto 和 --advance 不兼容"
 
 #: builtin/replay.c
 msgid "all positive revisions given must be references"
@@ -17546,6 +17585,10 @@ msgid "Create an archive of files from a named tree"
 msgstr "基于一个指定的树创建文件存档"
 
 #: command-list.h
+msgid "Download missing objects in a partial clone"
+msgstr "在部分克隆（partial clone）中下载缺失的对象"
+
+#: command-list.h
 msgid "Use binary search to find the commit that introduced a bug"
 msgstr "通过二分查找定位引入 bug 的提交"
 
@@ -18927,8 +18970,8 @@ msgid ""
 "remote URLs cannot be configured in file directly or indirectly included by "
 "includeIf.hasconfig:remote.*.url"
 msgstr ""
-"远程 URL 不能在文件中配置，不管直接地还是通过 includeIf.hasconfig:remote.*."
-"url 间接地包含。"
+"远程 URL 不能在文件中配置，不管直接地还是通过 "
+"includeIf.hasconfig:remote.*.url 间接地包含。"
 
 #: config.c
 #, c-format
@@ -19924,6 +19967,14 @@ msgstr "%s 的参数无效"
 #, c-format
 msgid "invalid regex given to -I: '%s'"
 msgstr "选项 -I 的正则表达式无效：'%s'"
+
+#: diff.c
+msgid "-G requires a non-empty argument"
+msgstr "-G 需要一个非空参数"
+
+#: diff.c
+msgid "-S requires a non-empty argument"
+msgstr "-S 需要一个非空参数"
 
 #: diff.c
 #, c-format
@@ -22430,7 +22481,7 @@ msgstr "无法读取替代文件"
 
 #: object-file.c
 msgid "unable to move new alternates file into place"
-msgstr "无法将新的替代文件移动到位"
+msgstr "无法将新的备用文件移动到位"
 
 #: object-file.c
 #, c-format
@@ -22550,6 +22601,11 @@ msgstr "文件 '%s' 和 '%s' 的内容不同"
 #, c-format
 msgid "unable to write file %s"
 msgstr "无法写文件 %s"
+
+#: object-file.c
+#, c-format
+msgid "unable to write repeatedly vanishing file %s"
+msgstr "无法重复写入消失的文件 %s"
 
 #: object-file.c
 #, c-format
@@ -23233,6 +23289,55 @@ msgstr "未知开关 `%c'"
 msgid "unknown non-ascii option in string: `%s'"
 msgstr "字符串中未知的非 ascii 字符选项：`%s'"
 
+#. TRANSLATORS: The "<%s>" part of this string
+#. stands for an optional value given to a command
+#. line option in the long form, and "<>" is there
+#. as a convention to signal that it is a
+#. placeholder (i.e. the user should substitute it
+#. with the real value).  If your language uses a
+#. different convention, you can change "<%s>" part
+#. to match yours, e.g. it might use "|%s|" instead,
+#. or if the alphabet is different enough it may use
+#. "%s" without any placeholder signal.  Most
+#. translations leave this message as is.
+#.
+#: parse-options.c
+#, c-format
+msgid "[=<%s>]"
+msgstr "[=<%s>]"
+
+#. TRANSLATORS: The "<%s>" part of this string
+#. stands for an optional value given to a command
+#. line option in the short form, and "<>" is there
+#. as a convention to signal that it is a
+#. placeholder (i.e. the user should substitute it
+#. with the real value).  If your language uses a
+#. different convention, you can change "<%s>" part
+#. to match yours, e.g. it might use "|%s|" instead,
+#. or if the alphabet is different enough it may use
+#. "%s" without any placeholder signal.  Most
+#. translations leave this message as is.
+#.
+#: parse-options.c
+#, c-format
+msgid "[<%s>]"
+msgstr "[<%s>]"
+
+#. TRANSLATORS: The "<%s>" part of this string stands for a
+#. value given to a command line option, and "<>" is there
+#. as a convention to signal that it is a placeholder
+#. (i.e. the user should substitute it with the real value).
+#. If your language uses a different convention, you can
+#. change "<%s>" part to match yours, e.g. it might use
+#. "|%s|" instead, or if the alphabet is different enough it
+#. may use "%s" without any placeholder signal.  Most
+#. translations leave this message as is.
+#.
+#: parse-options.c
+#, c-format
+msgid " <%s>"
+msgstr " <%s>"
+
 #: parse-options.c
 msgid "..."
 msgstr "..."
@@ -23335,6 +23440,25 @@ msgstr "对于 '%2$s' 的错误的布尔环境取值 '%1$s'"
 #, c-format
 msgid "failed to parse %s"
 msgstr "无法解析 %s"
+
+#: path-walk.c
+#, c-format
+msgid "failed to walk children of tree %s: not found"
+msgstr "无法遍历树 %s 的子节点：未找到"
+
+#: path-walk.c
+#, c-format
+msgid "failed to find object %s"
+msgstr "无法找到对象 %s"
+
+#: path-walk.c
+#, c-format
+msgid "failed to find tag %s"
+msgstr "无法找到标签 %s"
+
+#: path-walk.c
+msgid "failed to setup revision walk"
+msgstr "初始化版本遍历失败"
 
 #: path.c
 #, c-format
@@ -23516,6 +23640,26 @@ msgstr "promisor 远程名称不能以 '/' 开始：%s"
 #, c-format
 msgid "could not fetch %s from promisor remote"
 msgstr "无法从承诺者远程获取 %s"
+
+#: promisor-remote.c
+#, c-format
+msgid "known remote named '%s' but with url '%s' instead of '%s'"
+msgstr "已知远程名称为 '%s'，但 url 为 '%s' 而不是 '%s'"
+
+#: promisor-remote.c
+#, c-format
+msgid "unknown '%s' value for '%s' config option"
+msgstr "配置项 '%2$s' 为未知的取值 '%1$s'"
+
+#: promisor-remote.c
+#, c-format
+msgid "unknown element '%s' from remote info"
+msgstr "远程信息中的未知元素 '%s'"
+
+#: promisor-remote.c
+#, c-format
+msgid "accepted promisor remote '%s' not found"
+msgstr "未找到已接受的承诺者远程 '%s'"
 
 #: protocol-caps.c
 msgid "object-info: expected flush after arguments"
@@ -24484,6 +24628,16 @@ msgstr "引用名 %s 是一个符号引用，不支持复制"
 msgid "invalid refspec '%s'"
 msgstr "无效的引用规格：'%s'"
 
+#: refspec.c
+#, c-format
+msgid "pattern '%s' has no '*'"
+msgstr "模式 '%s' 没有 '*'"
+
+#: refspec.c
+#, c-format
+msgid "replacement '%s' has no '*'"
+msgstr "替换 '%s' 没有 '*'"
+
 #: remote-curl.c
 #, c-format
 msgid "invalid quoting in push-option value: '%s'"
@@ -24637,6 +24791,27 @@ msgstr "remote-curl：未知的来自 git 的命令 '%s'"
 
 #: remote.c
 #, c-format
+msgid ""
+"reading remote from \"%s/%s\", which is nominated for removal.\n"
+"\n"
+"If you still use the \"remotes/\" directory it is recommended to\n"
+"migrate to config-based remotes:\n"
+"\n"
+"\tgit remote rename %s %s\n"
+"\n"
+"If you cannot, please let us know why you still need to use it by\n"
+"sending an e-mail to <git@vger.kernel.org>."
+msgstr ""
+"正在从 \"%s/%s\" 读取远程内容，该内容被提名删除。如果你仍\n"
+"然在使用 \"remotes/\" 目录，建议迁移到基于配置远程的方式：\n"
+"\n"
+"\tgit remote rename %s %s\n"
+"\n"
+"如果你无法迁移，请发送电子邮件至 <git@vger.kernel.org>\n"
+"告诉我们你仍然需要使用它的原因。"
+
+#: remote.c
+#, c-format
 msgid "config remote shorthand cannot begin with '/': %s"
 msgstr "配置的远程短名称不能以 '/' 开始：%s"
 
@@ -24677,16 +24852,6 @@ msgstr "%s 通常跟踪 %s，而非 %s"
 #, c-format
 msgid "%s tracks both %s and %s"
 msgstr "%s 同时跟踪 %s 和 %s"
-
-#: remote.c
-#, c-format
-msgid "key '%s' of pattern had no '*'"
-msgstr "模式的键 '%s' 没有 '*'"
-
-#: remote.c
-#, c-format
-msgid "value '%s' of pattern has no '*'"
-msgstr "模式的值 '%s' 没有 '*'"
 
 #: remote.c
 #, c-format
@@ -26956,6 +27121,34 @@ msgstr "在每次迭代前清除缓存树"
 msgid "number of entries in the cache tree to invalidate (default 0)"
 msgstr "缓存树中无效化的条目数量（默认 0）"
 
+#: t/helper/test-path-walk.c
+msgid "test-tool path-walk <options> -- <revision-options>"
+msgstr "test-tool path-walk <选项> -- <版本选项>"
+
+#: t/helper/test-path-walk.c
+msgid "toggle inclusion of blob objects"
+msgstr "切换是否包含数据对象"
+
+#: t/helper/test-path-walk.c
+msgid "toggle inclusion of commit objects"
+msgstr "切换是否包含提交对象"
+
+#: t/helper/test-path-walk.c
+msgid "toggle inclusion of tag objects"
+msgstr "切换是否包含标签对象"
+
+#: t/helper/test-path-walk.c
+msgid "toggle inclusion of tree objects"
+msgstr "切换是否包含标签对象"
+
+#: t/helper/test-path-walk.c
+msgid "toggle pruning of uninteresting paths"
+msgstr "切换无兴趣路径的清除"
+
+#: t/helper/test-path-walk.c
+msgid "read a pattern list over stdin"
+msgstr "从标准输入读取模式列表"
+
 #: t/helper/test-reach.c
 #, c-format
 msgid "commit %s is not marked reachable"
@@ -27702,6 +27895,11 @@ msgstr "错误："
 #: usage.c
 msgid "warning: "
 msgstr "警告："
+
+#: version.c
+#, c-format
+msgid "uname() failed with error '%s' (%d)\n"
+msgstr "uname() 失败，错误为 '%s'（%d）\n"
 
 #: walker.c
 msgid "Fetching objects"
