@@ -1312,7 +1312,10 @@ test_expect_success 'fetch exact oid in protocol v2' '
 	test_must_fail git -C child cat-file -t $the_commit &&
 
 	# fetching the hidden object succeeds by default
-	git -C child fetch -v ../testrepo $the_commit:refs/heads/copy
+	GIT_TRACE_PACKET=$PWD/trace.out \
+	git -C child fetch -v ../testrepo $the_commit:refs/heads/copy &&
+
+	test_grep ! "ref-prefix.*$the_commit" trace.out
 '
 
 for configallowtipsha1inwant in true false
