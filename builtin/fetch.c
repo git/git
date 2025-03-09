@@ -1718,7 +1718,6 @@ static int do_fetch(struct transport *transport,
 	const struct ref *remote_refs;
 	struct transport_ls_refs_options transport_ls_refs_options =
 		TRANSPORT_LS_REFS_OPTIONS_INIT;
-	int must_list_refs = 1;
 	struct fetch_head fetch_head = { 0 };
 	struct strbuf err = STRBUF_INIT;
 
@@ -1737,21 +1736,7 @@ static int do_fetch(struct transport *transport,
 	}
 
 	if (rs->nr) {
-		int i;
-
 		refspec_ref_prefixes(rs, &transport_ls_refs_options.ref_prefixes);
-
-		/*
-		 * We can avoid listing refs if all of them are exact
-		 * OIDs
-		 */
-		must_list_refs = 0;
-		for (i = 0; i < rs->nr; i++) {
-			if (!rs->items[i].exact_sha1) {
-				must_list_refs = 1;
-				break;
-			}
-		}
 	} else {
 		struct branch *branch = branch_get(NULL);
 
@@ -1776,18 +1761,20 @@ static int do_fetch(struct transport *transport,
 				    "HEAD");
 	}
 
-	if (tags == TAGS_SET || tags == TAGS_DEFAULT) {
-		must_list_refs = 1;
+	if (tags == TAGS_SET || tags == TAGS_DEFAULT)
 		strvec_push(&transport_ls_refs_options.ref_prefixes,
 			    "refs/tags/");
-	}
 
-	if (must_list_refs &&
+	if (transport_ls_refs_options.ref_prefixes.nr &&
 	    uses_remote_tracking(transport, rs))
 		strvec_push(&transport_ls_refs_options.ref_prefixes,
 			    "HEAD");
 
-	if (must_list_refs) {
+	/*
+	 * Only initiate ref listing if we have at least one ref we want to
+	 * know about.
+	 */
+	if (transport_ls_refs_options.ref_prefixes.nr) {
 		trace2_region_enter("fetch", "remote_refs", the_repository);
 		remote_refs = transport_get_remote_refs(transport,
 							&transport_ls_refs_options);
