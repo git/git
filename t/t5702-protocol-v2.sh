@@ -665,7 +665,7 @@ test_expect_success 'even with handcrafted request, filter does not work if not 
 	test-tool -C server serve-v2 --stateless-rpc <in >/dev/null
 '
 
-test_expect_success 'default refspec is used to filter ref when fetchcing' '
+test_expect_success 'default refspec is used to filter ref when fetching' '
 	test_when_finished "rm -f log" &&
 
 	GIT_TRACE_PACKET="$(pwd)/log" git -C file_child -c protocol.version=2 \
