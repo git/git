@@ -682,6 +682,7 @@ test_expect_success 'default refspec is used to filter ref when fetching' '
 test_expect_success 'set up parent for prefix tests' '
 	git init prefix-parent &&
 	git -C prefix-parent commit --allow-empty -m foo &&
+	git -C prefix-parent tag my-tag &&
 	git -C prefix-parent branch unrelated-branch
 '
 
@@ -692,6 +693,19 @@ test_expect_success 'empty refspec filters refs when fetching' '
 	GIT_TRACE_PACKET="$(pwd)/log" \
 		git -C configless-child fetch ../prefix-parent &&
 	test_grep ! unrelated-branch log
+'
+
+test_expect_success 'exact oid fetch with tag following' '
+	git init exact-oid-tags &&
+
+	commit=$(git -C prefix-parent rev-parse --verify HEAD) &&
+
+	test_when_finished "rm -f log" &&
+	GIT_TRACE_PACKET="$(pwd)/log" \
+		git -C exact-oid-tags fetch ../prefix-parent \
+			$commit:refs/heads/exact &&
+	test_grep ! unrelated-branch log &&
+	git -C exact-oid-tags rev-parse --verify my-tag
 '
 
 test_expect_success 'fetch supports various ways of have lines' '
