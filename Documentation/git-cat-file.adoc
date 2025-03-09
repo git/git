@@ -322,10 +322,10 @@ of `%(objectsize)` bytes), followed by a newline.
 
 For example, `--batch` without a custom format would produce:
 
-------------
+-----------
 <oid> SP <type> SP <size> LF
 <contents> LF
-------------
+-----------
 
 Whereas `--batch-check='%(objectname) %(objecttype)'` would produce:
 

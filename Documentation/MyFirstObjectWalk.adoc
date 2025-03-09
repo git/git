@@ -287,6 +287,7 @@ static void final_rev_info_setup(struct rev_info *rev)
 ====
 Instead of using the shorthand `add_head_to_pending()`, you could do
 something like this:
+
 ----
 	struct setup_revision_opt opt;
 
@@ -295,6 +296,7 @@ something like this:
 	opt.revarg_opt = REVARG_COMMITTISH;
 	setup_revisions(argc, argv, rev, &opt);
 ----
+
 Using a `setup_revision_opt` gives you finer control over your walk's starting
 point.
 ====

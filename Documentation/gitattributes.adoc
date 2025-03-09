@@ -531,13 +531,14 @@ must not send any response before it received the content and the
 final flush packet. Also note that the "value" of a "key=value" pair
 can contain the "=" character whereas the key would never contain
 that character.
-------------------------
+
+-----------------------
 packet:          git> command=smudge
 packet:          git> pathname=path/testfile.dat
 packet:          git> 0000
 packet:          git> CONTENT
 packet:          git> 0000
-------------------------
+-----------------------
 
 The filter is expected to respond with a list of "key=value" pairs
 terminated with a flush packet. If the filter does not experience
@@ -559,6 +560,7 @@ packet:          git< 0000  # empty list, keep "status=success" unchanged!
 
 If the result content is empty then the filter is expected to respond
 with a "success" status and a flush packet to signal the empty content.
+
 ------------------------
 packet:          git< status=success
 packet:          git< 0000
@@ -568,14 +570,16 @@ packet:          git< 0000  # empty list, keep "status=success" unchanged!
 
 In case the filter cannot or does not want to process the content,
 it is expected to respond with an "error" status.
-------------------------
+
+-----------------------
 packet:          git< status=error
 packet:          git< 0000
-------------------------
+-----------------------
 
 If the filter experiences an error during processing, then it can
 send the status "error" after the content was (partially or
 completely) sent.
+
 ------------------------
 packet:          git< status=success
 packet:          git< 0000
@@ -589,10 +593,11 @@ In case the filter cannot or does not want to process the content
 as well as any future content for the lifetime of the Git process,
 then it is expected to respond with an "abort" status at any point
 in the protocol.
-------------------------
+
+-----------------------
 packet:          git< status=abort
 packet:          git< 0000
-------------------------
+-----------------------
 
 Git neither stops nor restarts the filter process in case the
 "error"/"abort" status is set. However, Git sets its exit code
@@ -613,7 +618,8 @@ flag "can-delay" after the filter command and pathname. This flag
 denotes that the filter can delay filtering the current blob (e.g. to
 compensate network latencies) by responding with no content but with
 the status "delayed" and a flush packet.
-------------------------
+
+-----------------------
 packet:          git> command=smudge
 packet:          git> pathname=path/testfile.dat
 packet:          git> can-delay=1
@@ -622,7 +628,7 @@ packet:          git> CONTENT
 packet:          git> 0000
 packet:          git< status=delayed
 packet:          git< 0000
-------------------------
+-----------------------
 
 If the filter supports the "delay" capability then it must support the
 "list_available_blobs" command. If Git sends this command, then the
@@ -647,10 +653,12 @@ packet:          git< status=success
 packet:          git< 0000
 ------------------------
 
+
 After Git received the pathnames, it will request the corresponding
 blobs again. These requests contain a pathname and an empty content
 section. The filter is expected to respond with the smudged content
 in the usual way as explained above.
+
 ------------------------
 packet:          git> command=smudge
 packet:          git> pathname=path/testfile.dat

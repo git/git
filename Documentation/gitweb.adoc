@@ -103,6 +103,7 @@ You can generate the projects list index file using the project_index action
 "Generating projects list using gitweb" section below.
 
 Example contents:
+
 -----------------------------------------------------------------------
 foo.git       Joe+R+Hacker+<joe@example.com>
 foo/bar.git   O+W+Ner+<owner@example.org>
@@ -124,6 +125,7 @@ Generating projects list using gitweb
 
 We assume that GITWEB_CONFIG has its default Makefile value, namely
 'gitweb_config.perl'. Put the following in 'gitweb_make_index.perl' file:
+
 ----------------------------------------------------------------------------
 read_config_file("gitweb_config.perl");
 $projects_list = $projectroot;
@@ -518,12 +520,14 @@ rules.
 If you use the rewrite rules from the example you *might* also need
 something like the following in your gitweb configuration file
 (`/etc/gitweb.conf` following example):
+
 ----------------------------------------------------------------------------
 @stylesheets = ("/some/absolute/path/gitweb.css");
 $my_uri    = "/";
 $home_link = "/";
 $per_request_config = 1;
 ----------------------------------------------------------------------------
+
 Nowadays though gitweb should create HTML base tag when needed (to set base
 URI for relative links), so it should work automatically.
 
@@ -535,6 +539,7 @@ Apache virtual host and gitweb configuration files in the following way.
 
 The virtual host configuration (in Apache configuration file) should look
 like this:
+
 --------------------------------------------------------------------------
 <VirtualHost *:80>
     ServerName    git.example.org
@@ -575,9 +580,11 @@ like this:
 Here actual project root is passed to gitweb via `GITWEB_PROJECT_ROOT`
 environment variable from a web server, so you need to put the following
 line in gitweb configuration file (`/etc/gitweb.conf` in above example):
+
 --------------------------------------------------------------------------
 $projectroot = $ENV{'GITWEB_PROJECTROOT'} || "/pub/git";
 --------------------------------------------------------------------------
+
 *Note* that this requires to be set for each request, so either
 `$per_request_config` must be false, or the above must be put in code
 referenced by `$per_request_config`;
@@ -604,9 +611,11 @@ the third and the fourth.
 PATH_INFO usage
 ~~~~~~~~~~~~~~~
 If you enable PATH_INFO usage in gitweb by putting
+
 ----------------------------------------------------------------------------
 $feature{'pathinfo'}{'default'} = [1];
 ----------------------------------------------------------------------------
+
 in your gitweb configuration file, it is possible to set up your server so
 that it consumes and produces URLs in the form
 
@@ -636,6 +645,7 @@ complementary static files (stylesheet, favicon, JavaScript):
 	</Directory>
 </VirtualHost>
 ----------------------------------------------------------------------------
+
 The rewrite rule guarantees that existing static files will be properly
 served, whereas any other URL will be passed to gitweb as PATH_INFO
 parameter.
@@ -647,6 +657,7 @@ for fetching" section).  A possible workaround for the latter is the
 following: in your project root dir (e.g. `/pub/git`) have the projects
 named *without* a .git extension (e.g. `/pub/git/project` instead of
 `/pub/git/project.git`) and configure Apache as follows:
+
 ----------------------------------------------------------------------------
 <VirtualHost *:80>
 	ServerAlias git.example.com

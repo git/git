@@ -80,6 +80,7 @@ This:
 
 To reproduce the entire p4 history in Git, use the '@all' modifier on
 the depot path:
+
 ------------
 $ git p4 clone //depot/path/project@all
 ------------
@@ -89,19 +90,23 @@ Sync
 ~~~~
 As development continues in the p4 repository, those changes can
 be included in the Git repository using:
+
 ------------
 $ git p4 sync
 ------------
+
 This command finds new changes in p4 and imports them as Git commits.
 
 P4 repositories can be added to an existing Git repository using
 'git p4 sync' too:
+
 ------------
 $ mkdir repo-git
 $ cd repo-git
 $ git init
 $ git p4 sync //path/in/your/perforce/depot
 ------------
+
 This imports the specified depot into
 'refs/remotes/p4/master' in an existing Git repository.  The
 `--branch` option can be used to specify a different branch to
@@ -125,6 +130,7 @@ and merge them with local uncommitted changes.  Often, the p4 repository
 is the ultimate location for all code, thus a rebase workflow makes
 sense.  This command does 'git p4 sync' followed by 'git rebase' to move
 local commits on top of updated p4 changes.
+
 ------------
 $ git p4 rebase
 ------------
@@ -140,16 +146,19 @@ will be created and populated if it does not already exist.
 
 To submit all changes that are in the current Git branch but not in
 the 'p4/master' branch, use:
+
 ------------
 $ git p4 submit
 ------------
 
 To specify a branch other than the current one, use:
+
 ------------
 $ git p4 submit topicbranch
 ------------
 
 To specify a single commit or a range of commits, use:
+
 ------------
 $ git p4 submit --commit <sha1>
 $ git p4 submit --commit <sha1..sha1>
@@ -510,20 +519,24 @@ when cloning or syncing to have 'git p4' automatically find
 subdirectories in p4, and to generate these as branches in Git.
 
 For example, if the P4 repository structure is:
+
 ----
 //depot/main/...
 //depot/branch1/...
 ----
 
 And "p4 branch -o branch1" shows a View line that looks like:
+
 ----
 //depot/main/... //depot/branch1/...
 ----
 
 Then this 'git p4 clone' command:
+
 ----
 git p4 clone --detect-branches //depot@all
 ----
+
 produces a separate branch in 'refs/remotes/p4/' for //depot/main,
 called 'master', and one for //depot/branch1 called 'depot/branch1'.
 
@@ -536,6 +549,7 @@ simple p4 branch specification, where the "source" and "destination" are
 the path elements in the p4 repository.  The example above relied on the
 presence of the p4 branch.  Without p4 branches, the same result will
 occur with:
+
 ----
 git init depot
 cd depot
