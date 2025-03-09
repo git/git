@@ -1766,6 +1766,14 @@ static int do_fetch(struct transport *transport,
 					    branch->merge[i]->src);
 			}
 		}
+
+		/*
+		 * If there are no refs specified to fetch, then we just
+		 * fetch HEAD; mention that to narrow the advertisement.
+		 */
+		if (!transport_ls_refs_options.ref_prefixes.nr)
+			strvec_push(&transport_ls_refs_options.ref_prefixes,
+				    "HEAD");
 	}
 
 	if (tags == TAGS_SET || tags == TAGS_DEFAULT) {

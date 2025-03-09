@@ -679,6 +679,21 @@ test_expect_success 'default refspec is used to filter ref when fetching' '
 	grep "ref-prefix refs/tags/" log
 '
 
+test_expect_success 'set up parent for prefix tests' '
+	git init prefix-parent &&
+	git -C prefix-parent commit --allow-empty -m foo &&
+	git -C prefix-parent branch unrelated-branch
+'
+
+test_expect_success 'empty refspec filters refs when fetching' '
+	git init configless-child &&
+
+	test_when_finished "rm -f log" &&
+	GIT_TRACE_PACKET="$(pwd)/log" \
+		git -C configless-child fetch ../prefix-parent &&
+	test_grep ! unrelated-branch log
+'
+
 test_expect_success 'fetch supports various ways of have lines' '
 	rm -rf server client trace &&
 	git init server &&
