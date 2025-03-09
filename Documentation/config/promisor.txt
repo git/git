@@ -1,3 +1,0 @@
-promisor.quiet::
-	If set to "true" assume `--quiet` when fetching additional
-	objects for a partial clone.

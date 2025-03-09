@@ -63,7 +63,7 @@
  *
  * . Add tests to `t/` directory.
  *
- * . Write documentation in `Documentation/git-foo.txt`.
+ * . Write documentation in `Documentation/git-foo.adoc`.
  *
  * . Add an entry for `git-foo` to `command-list.txt`.
  *
@@ -120,6 +120,7 @@ int cmd_am(int argc, const char **argv, const char *prefix, struct repository *r
 int cmd_annotate(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_apply(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_archive(int argc, const char **argv, const char *prefix, struct repository *repo);
+int cmd_backfill(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_bisect(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_blame(int argc, const char **argv, const char *prefix, struct repository *repo);
 int cmd_branch(int argc, const char **argv, const char *prefix, struct repository *repo);

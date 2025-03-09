@@ -380,7 +380,7 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	default:
 		BUG("unknown hash algorithm %d", repo->hash_algo->format_id);
 	}
-	refs->write_options.default_permissions = calc_shared_perm(0666 & ~mask);
+	refs->write_options.default_permissions = calc_shared_perm(the_repository, 0666 & ~mask);
 	refs->write_options.disable_auto_compact =
 		!git_env_bool("GIT_TEST_REFTABLE_AUTOCOMPACTION", 1);
 	refs->write_options.lock_timeout_ms = 100;
@@ -470,21 +470,21 @@ static int reftable_be_create_on_disk(struct ref_store *ref_store,
 	struct strbuf sb = STRBUF_INIT;
 
 	strbuf_addf(&sb, "%s/reftable", refs->base.gitdir);
-	safe_create_dir(sb.buf, 1);
+	safe_create_dir(the_repository, sb.buf, 1);
 	strbuf_reset(&sb);
 
 	strbuf_addf(&sb, "%s/HEAD", refs->base.gitdir);
 	write_file(sb.buf, "ref: refs/heads/.invalid");
-	adjust_shared_perm(sb.buf);
+	adjust_shared_perm(the_repository, sb.buf);
 	strbuf_reset(&sb);
 
 	strbuf_addf(&sb, "%s/refs", refs->base.gitdir);
-	safe_create_dir(sb.buf, 1);
+	safe_create_dir(the_repository, sb.buf, 1);
 	strbuf_reset(&sb);
 
 	strbuf_addf(&sb, "%s/refs/heads", refs->base.gitdir);
 	write_file(sb.buf, "this repository uses the reftable format");
-	adjust_shared_perm(sb.buf);
+	adjust_shared_perm(the_repository, sb.buf);
 
 	strbuf_release(&sb);
 	return 0;
@@ -942,6 +942,7 @@ struct write_transaction_table_arg {
 	size_t updates_nr;
 	size_t updates_alloc;
 	size_t updates_expected;
+	uint64_t max_index;
 };
 
 struct reftable_transaction_data {
@@ -1019,6 +1020,7 @@ static int prepare_transaction_update(struct write_transaction_table_arg **out,
 		arg->updates_nr = 0;
 		arg->updates_alloc = 0;
 		arg->updates_expected = 0;
+		arg->max_index = 0;
 	}
 
 	arg->updates_expected++;
@@ -1428,7 +1430,6 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 	struct reftable_log_record *logs = NULL;
 	struct ident_split committer_ident = {0};
 	size_t logs_nr = 0, logs_alloc = 0, i;
-	uint64_t max_update_index = ts;
 	const char *committer_info;
 	int ret = 0;
 
@@ -1438,7 +1439,14 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 
 	QSORT(arg->updates, arg->updates_nr, transaction_update_cmp);
 
-	reftable_writer_set_limits(writer, ts, ts);
+	/*
+	 * During reflog migration, we add indexes for a single reflog with
+	 * multiple entries. Each entry will contain a different update_index,
+	 * so set the limits accordingly.
+	 */
+	ret = reftable_writer_set_limits(writer, ts, ts + arg->max_index);
+	if (ret < 0)
+		goto done;
 
 	for (i = 0; i < arg->updates_nr; i++) {
 		struct reftable_transaction_update *tx_update = &arg->updates[i];
@@ -1540,12 +1548,6 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 				 */
 				log->update_index = ts + u->index;
 
-				/*
-				 * Note the max update_index so the limit can be set later on.
-				 */
-				if (log->update_index > max_update_index)
-					max_update_index = log->update_index;
-
 				log->refname = xstrdup(u->refname);
 				memcpy(log->value.update.new_hash,
 				       u->new_oid.hash, GIT_MAX_RAWSZ);
@@ -1609,8 +1611,6 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 	 * and log blocks.
 	 */
 	if (logs) {
-		reftable_writer_set_limits(writer, ts, max_update_index);
-
 		ret = reftable_writer_add_logs(writer, logs, logs_nr);
 		if (ret < 0)
 			goto done;
@@ -1632,6 +1632,8 @@ static int reftable_be_transaction_finish(struct ref_store *ref_store UNUSED,
 	int ret = 0;
 
 	for (size_t i = 0; i < tx_data->args_nr; i++) {
+		tx_data->args[i].max_index = transaction->max_index;
+
 		ret = reftable_addition_add(tx_data->args[i].addition,
 					    write_transaction_table, &tx_data->args[i]);
 		if (ret < 0)
@@ -1766,7 +1768,9 @@ static int write_copy_table(struct reftable_writer *writer, void *cb_data)
 	deletion_ts = creation_ts = reftable_stack_next_update_index(arg->be->stack);
 	if (arg->delete_old)
 		creation_ts++;
-	reftable_writer_set_limits(writer, deletion_ts, creation_ts);
+	ret = reftable_writer_set_limits(writer, deletion_ts, creation_ts);
+	if (ret < 0)
+		goto done;
 
 	/*
 	 * Add the new reference. If this is a rename then we also delete the
@@ -2298,7 +2302,9 @@ static int write_reflog_existence_table(struct reftable_writer *writer,
 	if (ret <= 0)
 		goto done;
 
-	reftable_writer_set_limits(writer, ts, ts);
+	ret = reftable_writer_set_limits(writer, ts, ts);
+	if (ret < 0)
+		goto done;
 
 	/*
 	 * The existence entry has both old and new object ID set to the
@@ -2357,7 +2363,9 @@ static int write_reflog_delete_table(struct reftable_writer *writer, void *cb_da
 	uint64_t ts = reftable_stack_next_update_index(arg->stack);
 	int ret;
 
-	reftable_writer_set_limits(writer, ts, ts);
+	ret = reftable_writer_set_limits(writer, ts, ts);
+	if (ret < 0)
+		goto out;
 
 	ret = reftable_stack_init_log_iterator(arg->stack, &it);
 	if (ret < 0)
@@ -2434,7 +2442,9 @@ static int write_reflog_expiry_table(struct reftable_writer *writer, void *cb_da
 		if (arg->records[i].value_type == REFTABLE_LOG_UPDATE)
 			live_records++;
 
-	reftable_writer_set_limits(writer, ts, ts);
+	ret = reftable_writer_set_limits(writer, ts, ts);
+	if (ret < 0)
+		return ret;
 
 	if (!is_null_oid(&arg->update_oid)) {
 		struct reftable_ref_record ref = {0};

@@ -75,6 +75,8 @@ int cmd_fetch_pack(int argc,
 	list_objects_filter_init(&args.filter_options);
 	args.uploadpack = "git-upload-pack";
 
+	show_usage_if_asked(argc, argv, fetch_pack_usage);
+
 	for (i = 1; i < argc && *argv[i] == '-'; i++) {
 		const char *arg = argv[i];
 

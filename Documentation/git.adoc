@@ -1,0 +1,1191 @@
+git(1)
+======
+
+NAME
+----
+git - the stupid content tracker
+
+
+SYNOPSIS
+--------
+[verse]
+'git' [-v | --version] [-h | --help] [-C <path>] [-c <name>=<value>]
+    [--exec-path[=<path>]] [--html-path] [--man-path] [--info-path]
+    [-p | --paginate | -P | --no-pager] [--no-replace-objects] [--no-lazy-fetch]
+    [--no-optional-locks] [--no-advice] [--bare] [--git-dir=<path>]
+    [--work-tree=<path>] [--namespace=<name>] [--config-env=<name>=<envvar>]
+    <command> [<args>]
+
+DESCRIPTION
+-----------
+Git is a fast, scalable, distributed revision control system with an
+unusually rich command set that provides both high-level operations
+and full access to internals.
+
+See linkgit:gittutorial[7] to get started, then see
+linkgit:giteveryday[7] for a useful minimum set of
+commands.  The link:user-manual.html[Git User's Manual] has a more
+in-depth introduction.
+
+After you mastered the basic concepts, you can come back to this
+page to learn what commands Git offers.  You can learn more about
+individual Git commands with "git help command".  linkgit:gitcli[7]
+manual page gives you an overview of the command-line command syntax.
+
+A formatted and hyperlinked copy of the latest Git documentation
+can be viewed at https://git.github.io/htmldocs/git.html
+or https://git-scm.com/docs.
+
+
+OPTIONS
+-------
+-v::
+--version::
+	Prints the Git suite version that the 'git' program came from.
++
+This option is internally converted to `git version ...` and accepts
+the same options as the linkgit:git-version[1] command. If `--help` is
+also given, it takes precedence over `--version`.
+
+-h::
+--help::
+	Prints the synopsis and a list of the most commonly used
+	commands. If the option `--all` or `-a` is given then all
+	available commands are printed. If a Git command is named this
+	option will bring up the manual page for that command.
++
+Other options are available to control how the manual page is
+displayed. See linkgit:git-help[1] for more information,
+because `git --help ...` is converted internally into `git
+help ...`.
+
+-C <path>::
+	Run as if git was started in '<path>' instead of the current working
+	directory.  When multiple `-C` options are given, each subsequent
+	non-absolute `-C <path>` is interpreted relative to the preceding `-C
+	<path>`.  If '<path>' is present but empty, e.g. `-C ""`, then the
+	current working directory is left unchanged.
++
+This option affects options that expect path name like `--git-dir` and
+`--work-tree` in that their interpretations of the path names would be
+made relative to the working directory caused by the `-C` option. For
+example the following invocations are equivalent:
+
+    git --git-dir=a.git --work-tree=b -C c status
+    git --git-dir=c/a.git --work-tree=c/b status
+
+-c <name>=<value>::
+	Pass a configuration parameter to the command. The value
+	given will override values from configuration files.
+	The <name> is expected in the same format as listed by
+	'git config' (subkeys separated by dots).
++
+Note that omitting the `=` in `git -c foo.bar ...` is allowed and sets
+`foo.bar` to the boolean true value (just like `[foo]bar` would in a
+config file). Including the equals but with an empty value (like `git -c
+foo.bar= ...`) sets `foo.bar` to the empty string which `git config
+--type=bool` will convert to `false`.
+
+--config-env=<name>=<envvar>::
+	Like `-c <name>=<value>`, give configuration variable
+	'<name>' a value, where <envvar> is the name of an
+	environment variable from which to retrieve the value. Unlike
+	`-c` there is no shortcut for directly setting the value to an
+	empty string, instead the environment variable itself must be
+	set to the empty string.  It is an error if the `<envvar>` does not exist
+	in the environment. `<envvar>` may not contain an equals sign
+	to avoid ambiguity with `<name>` containing one.
++
+This is useful for cases where you want to pass transitory
+configuration options to git, but are doing so on operating systems
+where other processes might be able to read your command line
+(e.g. `/proc/self/cmdline`), but not your environment
+(e.g. `/proc/self/environ`). That behavior is the default on
+Linux, but may not be on your system.
++
+Note that this might add security for variables such as
+`http.extraHeader` where the sensitive information is part of
+the value, but not e.g. `url.<base>.insteadOf` where the
+sensitive information can be part of the key.
+
+--exec-path[=<path>]::
+	Path to wherever your core Git programs are installed.
+	This can also be controlled by setting the GIT_EXEC_PATH
+	environment variable. If no path is given, 'git' will print
+	the current setting and then exit.
+
+--html-path::
+	Print the path, without trailing slash, where Git's HTML
+	documentation is installed and exit.
+
+--man-path::
+	Print the manpath (see `man(1)`) for the man pages for
+	this version of Git and exit.
+
+--info-path::
+	Print the path where the Info files documenting this
+	version of Git are installed and exit.
+
+-p::
+--paginate::
+	Pipe all output into 'less' (or if set, $PAGER) if standard
+	output is a terminal.  This overrides the `pager.<cmd>`
+	configuration options (see the "Configuration Mechanism" section
+	below).
+
+-P::
+--no-pager::
+	Do not pipe Git output into a pager.
+
+--git-dir=<path>::
+	Set the path to the repository (".git" directory). This can also be
+	controlled by setting the `GIT_DIR` environment variable. It can be
+	an absolute path or relative path to current working directory.
++
+Specifying the location of the ".git" directory using this
+option (or `GIT_DIR` environment variable) turns off the
+repository discovery that tries to find a directory with
+".git" subdirectory (which is how the repository and the
+top-level of the working tree are discovered), and tells Git
+that you are at the top level of the working tree.  If you
+are not at the top-level directory of the working tree, you
+should tell Git where the top-level of the working tree is,
+with the `--work-tree=<path>` option (or `GIT_WORK_TREE`
+environment variable)
++
+If you just want to run git as if it was started in `<path>` then use
+`git -C <path>`.
+
+--work-tree=<path>::
+	Set the path to the working tree. It can be an absolute path
+	or a path relative to the current working directory.
+	This can also be controlled by setting the GIT_WORK_TREE
+	environment variable and the core.worktree configuration
+	variable (see core.worktree in linkgit:git-config[1] for a
+	more detailed discussion).
+
+--namespace=<path>::
+	Set the Git namespace.  See linkgit:gitnamespaces[7] for more
+	details.  Equivalent to setting the `GIT_NAMESPACE` environment
+	variable.
+
+--bare::
+	Treat the repository as a bare repository.  If GIT_DIR
+	environment is not set, it is set to the current working
+	directory.
+
+--no-replace-objects::
+	Do not use replacement refs to replace Git objects.
+	This is equivalent to exporting the `GIT_NO_REPLACE_OBJECTS`
+	environment variable with any value.
+	See linkgit:git-replace[1] for more information.
+
+--no-lazy-fetch::
+	Do not fetch missing objects from the promisor remote on
+	demand.  Useful together with `git cat-file -e <object>` to
+	see if the object is locally available.
+	This is equivalent to setting the `GIT_NO_LAZY_FETCH`
+	environment variable to `1`.
+
+--no-optional-locks::
+	Do not perform optional operations that require locks. This is
+	equivalent to setting the `GIT_OPTIONAL_LOCKS` to `0`.
+
+--no-advice::
+	Disable all advice hints from being printed.
+
+--literal-pathspecs::
+	Treat pathspecs literally (i.e. no globbing, no pathspec magic).
+	This is equivalent to setting the `GIT_LITERAL_PATHSPECS` environment
+	variable to `1`.
+
+--glob-pathspecs::
+	Add "glob" magic to all pathspec. This is equivalent to setting
+	the `GIT_GLOB_PATHSPECS` environment variable to `1`. Disabling
+	globbing on individual pathspecs can be done using pathspec
+	magic ":(literal)"
+
+--noglob-pathspecs::
+	Add "literal" magic to all pathspec. This is equivalent to setting
+	the `GIT_NOGLOB_PATHSPECS` environment variable to `1`. Enabling
+	globbing on individual pathspecs can be done using pathspec
+	magic ":(glob)"
+
+--icase-pathspecs::
+	Add "icase" magic to all pathspec. This is equivalent to setting
+	the `GIT_ICASE_PATHSPECS` environment variable to `1`.
+
+--list-cmds=<group>[,<group>...]::
+	List commands by group. This is an internal/experimental
+	option and may change or be removed in the future. Supported
+	groups are: builtins, parseopt (builtin commands that use
+	parse-options), main (all commands in libexec directory),
+	others (all other commands in `$PATH` that have git- prefix),
+	list-<category> (see categories in command-list.txt),
+	nohelpers (exclude helper commands), alias and config
+	(retrieve command list from config variable completion.commands)
+
+--attr-source=<tree-ish>::
+	Read gitattributes from <tree-ish> instead of the worktree. See
+	linkgit:gitattributes[5]. This is equivalent to setting the
+	`GIT_ATTR_SOURCE` environment variable.
+
+GIT COMMANDS
+------------
+
+We divide Git into high level ("porcelain") commands and low level
+("plumbing") commands.
+
+High-level commands (porcelain)
+-------------------------------
+
+We separate the porcelain commands into the main commands and some
+ancillary user utilities.
+
+Main porcelain commands
+~~~~~~~~~~~~~~~~~~~~~~~
+
+include::{build_dir}/cmds-mainporcelain.adoc[]
+
+Ancillary Commands
+~~~~~~~~~~~~~~~~~~
+Manipulators:
+
+include::{build_dir}/cmds-ancillarymanipulators.adoc[]
+
+Interrogators:
+
+include::{build_dir}/cmds-ancillaryinterrogators.adoc[]
+
+
+Interacting with Others
+~~~~~~~~~~~~~~~~~~~~~~~
+
+These commands are to interact with foreign SCM and with other
+people via patch over e-mail.
+
+include::{build_dir}/cmds-foreignscminterface.adoc[]
+
+Reset, restore and revert
+~~~~~~~~~~~~~~~~~~~~~~~~~
+There are three commands with similar names: `git reset`,
+`git restore` and `git revert`.
+
+* linkgit:git-revert[1] is about making a new commit that reverts the
+  changes made by other commits.
+
+* linkgit:git-restore[1] is about restoring files in the working tree
+  from either the index or another commit. This command does not
+  update your branch. The command can also be used to restore files in
+  the index from another commit.
+
+* linkgit:git-reset[1] is about updating your branch, moving the tip
+  in order to add or remove commits from the branch. This operation
+  changes the commit history.
++
+`git reset` can also be used to restore the index, overlapping with
+`git restore`.
+
+
+Low-level commands (plumbing)
+-----------------------------
+
+Although Git includes its
+own porcelain layer, its low-level commands are sufficient to support
+development of alternative porcelains.  Developers of such porcelains
+might start by reading about linkgit:git-update-index[1] and
+linkgit:git-read-tree[1].
+
+The interface (input, output, set of options and the semantics)
+to these low-level commands are meant to be a lot more stable
+than Porcelain level commands, because these commands are
+primarily for scripted use.  The interface to Porcelain commands
+on the other hand are subject to change in order to improve the
+end user experience.
+
+The following description divides
+the low-level commands into commands that manipulate objects (in
+the repository, index, and working tree), commands that interrogate and
+compare objects, and commands that move objects and references between
+repositories.
+
+
+Manipulation commands
+~~~~~~~~~~~~~~~~~~~~~
+
+include::{build_dir}/cmds-plumbingmanipulators.adoc[]
+
+
+Interrogation commands
+~~~~~~~~~~~~~~~~~~~~~~
+
+include::{build_dir}/cmds-plumbinginterrogators.adoc[]
+
+In general, the interrogate commands do not touch the files in
+the working tree.
+
+
+Syncing repositories
+~~~~~~~~~~~~~~~~~~~~
+
+include::{build_dir}/cmds-synchingrepositories.adoc[]
+
+The following are helper commands used by the above; end users
+typically do not use them directly.
+
+include::{build_dir}/cmds-synchelpers.adoc[]
+
+
+Internal helper commands
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+These are internal helper commands used by other commands; end
+users typically do not use them directly.
+
+include::{build_dir}/cmds-purehelpers.adoc[]
+
+Guides
+------
+
+The following documentation pages are guides about Git concepts.
+
+include::{build_dir}/cmds-guide.adoc[]
+
+Repository, command and file interfaces
+---------------------------------------
+
+This documentation discusses repository and command interfaces which
+users are expected to interact with directly. See `--user-formats` in
+linkgit:git-help[1] for more details on the criteria.
+
+include::{build_dir}/cmds-userinterfaces.adoc[]
+
+File formats, protocols and other developer interfaces
+------------------------------------------------------
+
+This documentation discusses file formats, over-the-wire protocols and
+other git developer interfaces. See `--developer-interfaces` in
+linkgit:git-help[1].
+
+include::{build_dir}/cmds-developerinterfaces.adoc[]
+
+Configuration Mechanism
+-----------------------
+
+Git uses a simple text format to store customizations that are per
+repository and are per user.  Such a configuration file may look
+like this:
+
+------------
+#
+# A '#' or ';' character indicates a comment.
+#
+
+; core variables
+[core]
+	; Don't trust file modes
+	filemode = false
+
+; user identity
+[user]
+	name = "Junio C Hamano"
+	email = "gitster@pobox.com"
+
+------------
+
+Various commands read from the configuration file and adjust
+their operation accordingly.  See linkgit:git-config[1] for a
+list and more details about the configuration mechanism.
+
+
+Identifier Terminology
+----------------------
+<object>::
+	Indicates the object name for any type of object.
+
+<blob>::
+	Indicates a blob object name.
+
+<tree>::
+	Indicates a tree object name.
+
+<commit>::
+	Indicates a commit object name.
+
+<tree-ish>::
+	Indicates a tree, commit or tag object name.  A
+	command that takes a <tree-ish> argument ultimately wants to
+	operate on a <tree> object but automatically dereferences
+	<commit> and <tag> objects that point at a <tree>.
+
+<commit-ish>::
+	Indicates a commit or tag object name.  A
+	command that takes a <commit-ish> argument ultimately wants to
+	operate on a <commit> object but automatically dereferences
+	<tag> objects that point at a <commit>.
+
+<type>::
+	Indicates that an object type is required.
+	Currently one of: `blob`, `tree`, `commit`, or `tag`.
+
+<file>::
+	Indicates a filename - almost always relative to the
+	root of the tree structure `GIT_INDEX_FILE` describes.
+
+Symbolic Identifiers
+--------------------
+Any Git command accepting any <object> can also use the following
+symbolic notation:
+
+HEAD::
+	indicates the head of the current branch.
+
+<tag>::
+	a valid tag 'name'
+	(i.e. a `refs/tags/<tag>` reference).
+
+<head>::
+	a valid head 'name'
+	(i.e. a `refs/heads/<head>` reference).
+
+For a more complete list of ways to spell object names, see
+"SPECIFYING REVISIONS" section in linkgit:gitrevisions[7].
+
+
+File/Directory Structure
+------------------------
+
+Please see the linkgit:gitrepository-layout[5] document.
+
+Read linkgit:githooks[5] for more details about each hook.
+
+Higher level SCMs may provide and manage additional information in the
+`$GIT_DIR`.
+
+
+Terminology
+-----------
+Please see linkgit:gitglossary[7].
+
+
+Environment Variables
+---------------------
+Various Git commands pay attention to environment variables and change
+their behavior.  The environment variables marked as "Boolean" take
+their values the same way as Boolean valued configuration variables, i.e.,
+"true", "yes", "on" and positive numbers are taken as "yes", while "false",
+"no", "off", and "0" are taken as "no".
+
+Here are the variables:
+
+System
+~~~~~~
+`HOME`::
+	Specifies the path to the user's home directory. On Windows, if
+	unset, Git will set a process environment variable equal to:
+	`$HOMEDRIVE$HOMEPATH` if both `$HOMEDRIVE` and `$HOMEPATH` exist;
+	otherwise `$USERPROFILE` if `$USERPROFILE` exists.
+
+The Git Repository
+~~~~~~~~~~~~~~~~~~
+These environment variables apply to 'all' core Git commands. Nb: it
+is worth noting that they may be used/overridden by SCMS sitting above
+Git so take care if using a foreign front-end.
+
+`GIT_INDEX_FILE`::
+	This environment variable specifies an alternate
+	index file. If not specified, the default of `$GIT_DIR/index`
+	is used.
+
+`GIT_INDEX_VERSION`::
+	This environment variable specifies what index version is used
+	when writing the index file out.  It won't affect existing index
+	files.  By default index file version 2 or 3 is used. See
+	linkgit:git-update-index[1] for more information.
+
+`GIT_OBJECT_DIRECTORY`::
+	If the object storage directory is specified via this
+	environment variable then the sha1 directories are created
+	underneath - otherwise the default `$GIT_DIR/objects`
+	directory is used.
+
+`GIT_ALTERNATE_OBJECT_DIRECTORIES`::
+	Due to the immutable nature of Git objects, old objects can be
+	archived into shared, read-only directories. This variable
+	specifies a ":" separated (on Windows ";" separated) list
+	of Git object directories which can be used to search for Git
+	objects. New objects will not be written to these directories.
++
+Entries that begin with `"` (double-quote) will be interpreted
+as C-style quoted paths, removing leading and trailing
+double-quotes and respecting backslash escapes. E.g., the value
+`"path-with-\"-and-:-in-it":vanilla-path` has two paths:
+`path-with-"-and-:-in-it` and `vanilla-path`.
+
+`GIT_DIR`::
+	If the `GIT_DIR` environment variable is set then it
+	specifies a path to use instead of the default `.git`
+	for the base of the repository.
+	The `--git-dir` command-line option also sets this value.
+
+`GIT_WORK_TREE`::
+	Set the path to the root of the working tree.
+	This can also be controlled by the `--work-tree` command-line
+	option and the core.worktree configuration variable.
+
+`GIT_NAMESPACE`::
+	Set the Git namespace; see linkgit:gitnamespaces[7] for details.
+	The `--namespace` command-line option also sets this value.
+
+`GIT_CEILING_DIRECTORIES`::
+	This should be a colon-separated list of absolute paths.  If
+	set, it is a list of directories that Git should not chdir up
+	into while looking for a repository directory (useful for
+	excluding slow-loading network directories).  It will not
+	exclude the current working directory or a GIT_DIR set on the
+	command line or in the environment.  Normally, Git has to read
+	the entries in this list and resolve any symlink that
+	might be present in order to compare them with the current
+	directory.  However, if even this access is slow, you
+	can add an empty entry to the list to tell Git that the
+	subsequent entries are not symlinks and needn't be resolved;
+	e.g.,
+	`GIT_CEILING_DIRECTORIES=/maybe/symlink::/very/slow/non/symlink`.
+
+`GIT_DISCOVERY_ACROSS_FILESYSTEM`::
+	When run in a directory that does not have ".git" repository
+	directory, Git tries to find such a directory in the parent
+	directories to find the top of the working tree, but by default it
+	does not cross filesystem boundaries.  This Boolean environment variable
+	can be set to true to tell Git not to stop at filesystem
+	boundaries.  Like `GIT_CEILING_DIRECTORIES`, this will not affect
+	an explicit repository directory set via `GIT_DIR` or on the
+	command line.
+
+`GIT_COMMON_DIR`::
+	If this variable is set to a path, non-worktree files that are
+	normally in $GIT_DIR will be taken from this path
+	instead. Worktree-specific files such as HEAD or index are
+	taken from $GIT_DIR. See linkgit:gitrepository-layout[5] and
+	linkgit:git-worktree[1] for
+	details. This variable has lower precedence than other path
+	variables such as GIT_INDEX_FILE, GIT_OBJECT_DIRECTORY...
+
+`GIT_DEFAULT_HASH`::
+	If this variable is set, the default hash algorithm for new
+	repositories will be set to this value. This value is
+	ignored when cloning and the setting of the remote repository
+	is always used. The default is "sha1".
+	See `--object-format` in linkgit:git-init[1].
+
+`GIT_DEFAULT_REF_FORMAT`::
+	If this variable is set, the default reference backend format for new
+	repositories will be set to this value. The default is "files".
+	See `--ref-format` in linkgit:git-init[1].
+
+Git Commits
+~~~~~~~~~~~
+`GIT_AUTHOR_NAME`::
+	The human-readable name used in the author identity when creating commit or
+	tag objects, or when writing reflogs. Overrides the `user.name` and
+	`author.name` configuration settings.
+
+`GIT_AUTHOR_EMAIL`::
+	The email address used in the author identity when creating commit or
+	tag objects, or when writing reflogs. Overrides the `user.email` and
+	`author.email` configuration settings.
+
+`GIT_AUTHOR_DATE`::
+	The date used for the author identity when creating commit or tag objects, or
+	when writing reflogs. See linkgit:git-commit[1] for valid formats.
+
+`GIT_COMMITTER_NAME`::
+	The human-readable name used in the committer identity when creating commit or
+	tag objects, or when writing reflogs. Overrides the `user.name` and
+	`committer.name` configuration settings.
+
+`GIT_COMMITTER_EMAIL`::
+	The email address used in the author identity when creating commit or
+	tag objects, or when writing reflogs. Overrides the `user.email` and
+	`committer.email` configuration settings.
+
+`GIT_COMMITTER_DATE`::
+	The date used for the committer identity when creating commit or tag objects, or
+	when writing reflogs. See linkgit:git-commit[1] for valid formats.
+
+`EMAIL`::
+	The email address used in the author and committer identities if no other
+	relevant environment variable or configuration setting has been set.
+
+Git Diffs
+~~~~~~~~~
+`GIT_DIFF_OPTS`::
+	Only valid setting is "--unified=??" or "-u??" to set the
+	number of context lines shown when a unified diff is created.
+	This takes precedence over any "-U" or "--unified" option
+	value passed on the Git diff command line.
+
+`GIT_EXTERNAL_DIFF`::
+	When the environment variable `GIT_EXTERNAL_DIFF` is set, the
+	program named by it is called to generate diffs, and Git
+	does not use its builtin diff machinery.
+	For a path that is added, removed, or modified,
+	`GIT_EXTERNAL_DIFF` is called with 7 parameters:
+
+	path old-file old-hex old-mode new-file new-hex new-mode
++
+where:
+
+	<old|new>-file:: are files GIT_EXTERNAL_DIFF can use to read the
+                         contents of <old|new>,
+	<old|new>-hex:: are the 40-hexdigit SHA-1 hashes,
+	<old|new>-mode:: are the octal representation of the file modes.
++
+The file parameters can point at the user's working file
+(e.g. `new-file` in "git-diff-files"), `/dev/null` (e.g. `old-file`
+when a new file is added), or a temporary file (e.g. `old-file` in the
+index).  `GIT_EXTERNAL_DIFF` should not worry about unlinking the
+temporary file -- it is removed when `GIT_EXTERNAL_DIFF` exits.
++
+For a path that is unmerged, `GIT_EXTERNAL_DIFF` is called with 1
+parameter, <path>.
++
+For each path `GIT_EXTERNAL_DIFF` is called, two environment variables,
+`GIT_DIFF_PATH_COUNTER` and `GIT_DIFF_PATH_TOTAL` are set.
+
+`GIT_EXTERNAL_DIFF_TRUST_EXIT_CODE`::
+	If this Boolean environment variable is set to true then the
+	`GIT_EXTERNAL_DIFF` command is expected to return exit code
+	0 if it considers the input files to be equal or 1 if it
+	considers them to be different, like `diff(1)`.
+	If it is set to false, which is the default, then the command
+	is expected to return exit code 0 regardless of equality.
+	Any other exit code causes Git to report a fatal error.
+
+
+`GIT_DIFF_PATH_COUNTER`::
+	A 1-based counter incremented by one for every path.
+
+`GIT_DIFF_PATH_TOTAL`::
+	The total number of paths.
+
+other
+~~~~~
+`GIT_MERGE_VERBOSITY`::
+	A number controlling the amount of output shown by
+	the recursive merge strategy.  Overrides merge.verbosity.
+	See linkgit:git-merge[1]
+
+`GIT_PAGER`::
+	This environment variable overrides `$PAGER`. If it is set
+	to an empty string or to the value "cat", Git will not launch
+	a pager.  See also the `core.pager` option in
+	linkgit:git-config[1].
+
+`GIT_PROGRESS_DELAY`::
+	A number controlling how many seconds to delay before showing
+	optional progress indicators. Defaults to 2.
+
+`GIT_EDITOR`::
+	This environment variable overrides `$EDITOR` and `$VISUAL`.
+	It is used by several Git commands when, on interactive mode,
+	an editor is to be launched. See also linkgit:git-var[1]
+	and the `core.editor` option in linkgit:git-config[1].
+
+`GIT_SEQUENCE_EDITOR`::
+	This environment variable overrides the configured Git editor
+	when editing the todo list of an interactive rebase. See also
+	linkgit:git-rebase[1] and the `sequence.editor` option in
+	linkgit:git-config[1].
+
+`GIT_SSH`::
+`GIT_SSH_COMMAND`::
+	If either of these environment variables is set then 'git fetch'
+	and 'git push' will use the specified command instead of 'ssh'
+	when they need to connect to a remote system.
+	The command-line parameters passed to the configured command are
+	determined by the ssh variant.  See `ssh.variant` option in
+	linkgit:git-config[1] for details.
++
+`$GIT_SSH_COMMAND` takes precedence over `$GIT_SSH`, and is interpreted
+by the shell, which allows additional arguments to be included.
+`$GIT_SSH` on the other hand must be just the path to a program
+(which can be a wrapper shell script, if additional arguments are
+needed).
++
+Usually it is easier to configure any desired options through your
+personal `.ssh/config` file.  Please consult your ssh documentation
+for further details.
+
+`GIT_SSH_VARIANT`::
+	If this environment variable is set, it overrides Git's autodetection
+	whether `GIT_SSH`/`GIT_SSH_COMMAND`/`core.sshCommand` refer to OpenSSH,
+	plink or tortoiseplink. This variable overrides the config setting
+	`ssh.variant` that serves the same purpose.
+
+`GIT_SSL_NO_VERIFY`::
+	Setting and exporting this environment variable to any value
+	tells Git not to verify the SSL certificate when fetching or
+	pushing over HTTPS.
+
+`GIT_ATTR_SOURCE`::
+	Sets the treeish that gitattributes will be read from.
+
+`GIT_ASKPASS`::
+	If this environment variable is set, then Git commands which need to
+	acquire passwords or passphrases (e.g. for HTTP or IMAP authentication)
+	will call this program with a suitable prompt as command-line argument
+	and read the password from its STDOUT. See also the `core.askPass`
+	option in linkgit:git-config[1].
+
+`GIT_TERMINAL_PROMPT`::
+	If this Boolean environment variable is set to false, git will not prompt
+	on the terminal (e.g., when asking for HTTP authentication).
+
+`GIT_CONFIG_GLOBAL`::
+`GIT_CONFIG_SYSTEM`::
+	Take the configuration from the given files instead from global or
+	system-level configuration files. If `GIT_CONFIG_SYSTEM` is set, the
+	system config file defined at build time (usually `/etc/gitconfig`)
+	will not be read. Likewise, if `GIT_CONFIG_GLOBAL` is set, neither
+	`$HOME/.gitconfig` nor `$XDG_CONFIG_HOME/git/config` will be read. Can
+	be set to `/dev/null` to skip reading configuration files of the
+	respective level.
+
+`GIT_CONFIG_NOSYSTEM`::
+	Whether to skip reading settings from the system-wide
+	`$(prefix)/etc/gitconfig` file.  This Boolean environment variable can
+	be used along with `$HOME` and `$XDG_CONFIG_HOME` to create a
+	predictable environment for a picky script, or you can set it
+	to true to temporarily avoid using a buggy `/etc/gitconfig` file while
+	waiting for someone with sufficient permissions to fix it.
+
+`GIT_FLUSH`::
+	If this Boolean environment variable is set to true, then commands such
+	as 'git blame' (in incremental mode), 'git rev-list', 'git log',
+	'git check-attr' and 'git check-ignore' will
+	force a flush of the output stream after each record have been
+	flushed. If this
+	variable is set to false, the output of these commands will be done
+	using completely buffered I/O.   If this environment variable is
+	not set, Git will choose buffered or record-oriented flushing
+	based on whether stdout appears to be redirected to a file or not.
+
+`GIT_TRACE`::
+	Enables general trace messages, e.g. alias expansion, built-in
+	command execution and external command execution.
++
+If this variable is set to "1", "2" or "true" (comparison
+is case insensitive), trace messages will be printed to
+stderr.
++
+If the variable is set to an integer value greater than 2
+and lower than 10 (strictly) then Git will interpret this
+value as an open file descriptor and will try to write the
+trace messages into this file descriptor.
++
+Alternatively, if the variable is set to an absolute path
+(starting with a '/' character), Git will interpret this
+as a file path and will try to append the trace messages
+to it.
++
+Unsetting the variable, or setting it to empty, "0" or
+"false" (case insensitive) disables trace messages.
+
+`GIT_TRACE_FSMONITOR`::
+	Enables trace messages for the filesystem monitor extension.
+	See `GIT_TRACE` for available trace output options.
+
+`GIT_TRACE_PACK_ACCESS`::
+	Enables trace messages for all accesses to any packs. For each
+	access, the pack file name and an offset in the pack is
+	recorded. This may be helpful for troubleshooting some
+	pack-related performance problems.
+	See `GIT_TRACE` for available trace output options.
+
+`GIT_TRACE_PACKET`::
+	Enables trace messages for all packets coming in or out of a
+	given program. This can help with debugging object negotiation
+	or other protocol issues. Tracing is turned off at a packet
+	starting with "PACK" (but see `GIT_TRACE_PACKFILE` below).
+	See `GIT_TRACE` for available trace output options.
+
+`GIT_TRACE_PACKFILE`::
+	Enables tracing of packfiles sent or received by a
+	given program. Unlike other trace output, this trace is
+	verbatim: no headers, and no quoting of binary data. You almost
+	certainly want to direct into a file (e.g.,
+	`GIT_TRACE_PACKFILE=/tmp/my.pack`) rather than displaying it on
+	the terminal or mixing it with other trace output.
++
+Note that this is currently only implemented for the client side
+of clones and fetches.
+
+`GIT_TRACE_PERFORMANCE`::
+	Enables performance related trace messages, e.g. total execution
+	time of each Git command.
+	See `GIT_TRACE` for available trace output options.
+
+`GIT_TRACE_REFS`::
+	Enables trace messages for operations on the ref database.
+	See `GIT_TRACE` for available trace output options.
+
+`GIT_TRACE_SETUP`::
+	Enables trace messages printing the .git, working tree and current
+	working directory after Git has completed its setup phase.
+	See `GIT_TRACE` for available trace output options.
+
+`GIT_TRACE_SHALLOW`::
+	Enables trace messages that can help debugging fetching /
+	cloning of shallow repositories.
+	See `GIT_TRACE` for available trace output options.
+
+`GIT_TRACE_CURL`::
+	Enables a curl full trace dump of all incoming and outgoing data,
+	including descriptive information, of the git transport protocol.
+	This is similar to doing curl `--trace-ascii` on the command line.
+	See `GIT_TRACE` for available trace output options.
+
+`GIT_TRACE_CURL_NO_DATA`::
+	When a curl trace is enabled (see `GIT_TRACE_CURL` above), do not dump
+	data (that is, only dump info lines and headers).
+
+`GIT_TRACE2`::
+	Enables more detailed trace messages from the "trace2" library.
+	Output from `GIT_TRACE2` is a simple text-based format for human
+	readability.
++
+If this variable is set to "1", "2" or "true" (comparison
+is case insensitive), trace messages will be printed to
+stderr.
++
+If the variable is set to an integer value greater than 2
+and lower than 10 (strictly) then Git will interpret this
+value as an open file descriptor and will try to write the
+trace messages into this file descriptor.
++
+Alternatively, if the variable is set to an absolute path
+(starting with a '/' character), Git will interpret this
+as a file path and will try to append the trace messages
+to it.  If the path already exists and is a directory, the
+trace messages will be written to files (one per process)
+in that directory, named according to the last component
+of the SID and an optional counter (to avoid filename
+collisions).
++
+In addition, if the variable is set to
+`af_unix:[<socket-type>:]<absolute-pathname>`, Git will try
+to open the path as a Unix Domain Socket.  The socket type
+can be either `stream` or `dgram`.
++
+Unsetting the variable, or setting it to empty, "0" or
+"false" (case insensitive) disables trace messages.
++
+See link:technical/api-trace2.html[Trace2 documentation]
+for full details.
+
+
+`GIT_TRACE2_EVENT`::
+	This setting writes a JSON-based format that is suited for machine
+	interpretation.
+	See `GIT_TRACE2` for available trace output options and
+	link:technical/api-trace2.html[Trace2 documentation] for full details.
+
+`GIT_TRACE2_PERF`::
+	In addition to the text-based messages available in `GIT_TRACE2`, this
+	setting writes a column-based format for understanding nesting
+	regions.
+	See `GIT_TRACE2` for available trace output options and
+	link:technical/api-trace2.html[Trace2 documentation] for full details.
+
+`GIT_TRACE_REDACT`::
+	By default, when tracing is activated, Git redacts the values of
+	cookies, the "Authorization:" header, the "Proxy-Authorization:"
+	header and packfile URIs. Set this Boolean environment variable to false to prevent this
+	redaction.
+
+`GIT_NO_REPLACE_OBJECTS`::
+	Setting and exporting this environment variable tells Git to
+	ignore replacement refs and do not replace Git objects.
+
+`GIT_LITERAL_PATHSPECS`::
+	Setting this Boolean environment variable to true will cause Git to treat all
+	pathspecs literally, rather than as glob patterns. For example,
+	running `GIT_LITERAL_PATHSPECS=1 git log -- '*.c'` will search
+	for commits that touch the path `*.c`, not any paths that the
+	glob `*.c` matches. You might want this if you are feeding
+	literal paths to Git (e.g., paths previously given to you by
+	`git ls-tree`, `--raw` diff output, etc).
+
+`GIT_GLOB_PATHSPECS`::
+	Setting this Boolean environment variable to true will cause Git to treat all
+	pathspecs as glob patterns (aka "glob" magic).
+
+`GIT_NOGLOB_PATHSPECS`::
+	Setting this Boolean environment variable to true will cause Git to treat all
+	pathspecs as literal (aka "literal" magic).
+
+`GIT_ICASE_PATHSPECS`::
+	Setting this Boolean environment variable to true will cause Git to treat all
+	pathspecs as case-insensitive.
+
+`GIT_NO_LAZY_FETCH`::
+	Setting this Boolean environment variable to true tells Git
+	not to lazily fetch missing objects from the promisor remote
+	on demand.
+
+`GIT_REFLOG_ACTION`::
+	When a ref is updated, reflog entries are created to keep
+	track of the reason why the ref was updated (which is
+	typically the name of the high-level command that updated
+	the ref), in addition to the old and new values of the ref.
+	A scripted Porcelain command can use set_reflog_action
+	helper function in `git-sh-setup` to set its name to this
+	variable when it is invoked as the top level command by the
+	end user, to be recorded in the body of the reflog.
+
+`GIT_REF_PARANOIA`::
+	If this Boolean environment variable is set to false, ignore broken or badly named refs when iterating
+	over lists of refs. Normally Git will try to include any such
+	refs, which may cause some operations to fail. This is usually
+	preferable, as potentially destructive operations (e.g.,
+	linkgit:git-prune[1]) are better off aborting rather than
+	ignoring broken refs (and thus considering the history they
+	point to as not worth saving). The default value is `1` (i.e.,
+	be paranoid about detecting and aborting all operations). You
+	should not normally need to set this to `0`, but it may be
+	useful when trying to salvage data from a corrupted repository.
+
+`GIT_COMMIT_GRAPH_PARANOIA`::
+	When loading a commit object from the commit-graph, Git performs an
+	existence check on the object in the object database. This is done to
+	avoid issues with stale commit-graphs that contain references to
+	already-deleted commits, but comes with a performance penalty.
++
+The default is "false", which disables the aforementioned behavior.
+Setting this to "true" enables the existence check so that stale commits
+will never be returned from the commit-graph at the cost of performance.
+
+`GIT_ALLOW_PROTOCOL`::
+	If set to a colon-separated list of protocols, behave as if
+	`protocol.allow` is set to `never`, and each of the listed
+	protocols has `protocol.<name>.allow` set to `always`
+	(overriding any existing configuration). See the description of
+	`protocol.allow` in linkgit:git-config[1] for more details.
+
+`GIT_PROTOCOL_FROM_USER`::
+	Set this Boolean environment variable to false to prevent protocols used by fetch/push/clone which are
+	configured to the `user` state.  This is useful to restrict recursive
+	submodule initialization from an untrusted repository or for programs
+	which feed potentially-untrusted URLS to git commands.  See
+	linkgit:git-config[1] for more details.
+
+`GIT_PROTOCOL`::
+	For internal use only.  Used in handshaking the wire protocol.
+	Contains a colon ':' separated list of keys with optional values
+	'<key>[=<value>]'.  Presence of unknown keys and values must be
+	ignored.
++
+Note that servers may need to be configured to allow this variable to
+pass over some transports. It will be propagated automatically when
+accessing local repositories (i.e., `file://` or a filesystem path), as
+well as over the `git://` protocol. For git-over-http, it should work
+automatically in most configurations, but see the discussion in
+linkgit:git-http-backend[1]. For git-over-ssh, the ssh server may need
+to be configured to allow clients to pass this variable (e.g., by using
+`AcceptEnv GIT_PROTOCOL` with OpenSSH).
++
+This configuration is optional. If the variable is not propagated, then
+clients will fall back to the original "v0" protocol (but may miss out
+on some performance improvements or features). This variable currently
+only affects clones and fetches; it is not yet used for pushes (but may
+be in the future).
+
+`GIT_OPTIONAL_LOCKS`::
+	If this Boolean environment variable is set to false, Git will complete any requested operation without
+	performing any optional sub-operations that require taking a lock.
+	For example, this will prevent `git status` from refreshing the
+	index as a side effect. This is useful for processes running in
+	the background which do not want to cause lock contention with
+	other operations on the repository.  Defaults to `1`.
+
+`GIT_REDIRECT_STDIN`::
+`GIT_REDIRECT_STDOUT`::
+`GIT_REDIRECT_STDERR`::
+	Windows-only: allow redirecting the standard input/output/error
+	handles to paths specified by the environment variables. This is
+	particularly useful in multi-threaded applications where the
+	canonical way to pass standard handles via `CreateProcess()` is
+	not an option because it would require the handles to be marked
+	inheritable (and consequently *every* spawned process would
+	inherit them, possibly blocking regular Git operations). The
+	primary intended use case is to use named pipes for communication
+	(e.g. `\\.\pipe\my-git-stdin-123`).
++
+Two special values are supported: `off` will simply close the
+corresponding standard handle, and if `GIT_REDIRECT_STDERR` is
+`2>&1`, standard error will be redirected to the same handle as
+standard output.
+
+`GIT_PRINT_SHA1_ELLIPSIS` (deprecated)::
+	If set to `yes`, print an ellipsis following an
+	(abbreviated) SHA-1 value.  This affects indications of
+	detached HEADs (linkgit:git-checkout[1]) and the raw
+	diff output (linkgit:git-diff[1]).  Printing an
+	ellipsis in the cases mentioned is no longer considered
+	adequate and support for it is likely to be removed in the
+	foreseeable future (along with the variable).
+
+`GIT_ADVICE`::
+	If set to `0`, then disable all advice messages. These messages are
+	intended to provide hints to human users that may help them get out of
+	problematic situations or take advantage of new features. Users can
+	disable individual messages using the `advice.*` config keys. These
+	messages may be disruptive to tools that execute Git processes, so this
+	variable is available to disable the messages. (The `--no-advice`
+	global option is also available, but old Git versions may fail when
+	this option is not understood. The environment variable will be ignored
+	by Git versions that do not understand it.)
+
+Discussion[[Discussion]]
+------------------------
+
+More detail on the following is available from the
+link:user-manual.html#git-concepts[Git concepts chapter of the
+user-manual] and linkgit:gitcore-tutorial[7].
+
+A Git project normally consists of a working directory with a ".git"
+subdirectory at the top level.  The .git directory contains, among other
+things, a compressed object database representing the complete history
+of the project, an "index" file which links that history to the current
+contents of the working tree, and named pointers into that history such
+as tags and branch heads.
+
+The object database contains objects of three main types: blobs, which
+hold file data; trees, which point to blobs and other trees to build up
+directory hierarchies; and commits, which each reference a single tree
+and some number of parent commits.
+
+The commit, equivalent to what other systems call a "changeset" or
+"version", represents a step in the project's history, and each parent
+represents an immediately preceding step.  Commits with more than one
+parent represent merges of independent lines of development.
+
+All objects are named by the SHA-1 hash of their contents, normally
+written as a string of 40 hex digits.  Such names are globally unique.
+The entire history leading up to a commit can be vouched for by signing
+just that commit.  A fourth object type, the tag, is provided for this
+purpose.
+
+When first created, objects are stored in individual files, but for
+efficiency may later be compressed together into "pack files".
+
+Named pointers called refs mark interesting points in history.  A ref
+may contain the SHA-1 name of an object or the name of another ref (the
+latter is called a "symbolic ref").
+Refs with names beginning `refs/head/` contain the SHA-1 name of the most
+recent commit (or "head") of a branch under development.  SHA-1 names of
+tags of interest are stored under `refs/tags/`.  A symbolic ref named
+`HEAD` contains the name of the currently checked-out branch.
+
+The index file is initialized with a list of all paths and, for each
+path, a blob object and a set of attributes.  The blob object represents
+the contents of the file as of the head of the current branch.  The
+attributes (last modified time, size, etc.) are taken from the
+corresponding file in the working tree.  Subsequent changes to the
+working tree can be found by comparing these attributes.  The index may
+be updated with new content, and new commits may be created from the
+content stored in the index.
+
+The index is also capable of storing multiple entries (called "stages")
+for a given pathname.  These stages are used to hold the various
+unmerged version of a file when a merge is in progress.
+
+SECURITY
+--------
+
+Some configuration options and hook files may cause Git to run arbitrary
+shell commands. Because configuration and hooks are not copied using
+`git clone`, it is generally safe to clone remote repositories with
+untrusted content, inspect them with `git log`, and so on.
+
+However, it is not safe to run Git commands in a `.git` directory (or
+the working tree that surrounds it) when that `.git` directory itself
+comes from an untrusted source. The commands in its config and hooks
+are executed in the usual way.
+
+By default, Git will refuse to run when the repository is owned by
+someone other than the user running the command. See the entry for
+`safe.directory` in linkgit:git-config[1]. While this can help protect
+you in a multi-user environment, note that you can also acquire
+untrusted repositories that are owned by you (for example, if you
+extract a zip file or tarball from an untrusted source). In such cases,
+you'd need to "sanitize" the untrusted repository first.
+
+If you have an untrusted `.git` directory, you should first clone it
+with `git clone --no-local` to obtain a clean copy. Git does restrict
+the set of options and hooks that will be run by `upload-pack`, which
+handles the server side of a clone or fetch, but beware that the
+surface area for attack against `upload-pack` is large, so this does
+carry some risk. The safest thing is to serve the repository as an
+unprivileged user (either via linkgit:git-daemon[1], ssh, or using
+other tools to change user ids). See the discussion in the `SECURITY`
+section of linkgit:git-upload-pack[1].
+
+FURTHER DOCUMENTATION
+---------------------
+
+See the references in the "description" section to get started
+using Git.  The following is probably more detail than necessary
+for a first-time user.
+
+The link:user-manual.html#git-concepts[Git concepts chapter of the
+user-manual] and linkgit:gitcore-tutorial[7] both provide
+introductions to the underlying Git architecture.
+
+See linkgit:gitworkflows[7] for an overview of recommended workflows.
+
+See also the link:howto-index.html[howto] documents for some useful
+examples.
+
+The internals are documented in the
+link:technical/api-index.html[Git API documentation].
+
+Users migrating from CVS may also want to
+read linkgit:gitcvs-migration[7].
+
+
+Authors
+-------
+Git was started by Linus Torvalds, and is currently maintained by Junio
+C Hamano. Numerous contributions have come from the Git mailing list
+<git@vger.kernel.org>.  https://openhub.net/p/git/contributors/summary
+gives you a more complete list of contributors.
+
+If you have a clone of git.git itself, the
+output of linkgit:git-shortlog[1] and linkgit:git-blame[1] can show you
+the authors for specific parts of the project.
+
+Reporting Bugs
+--------------
+
+Report bugs to the Git mailing list <git@vger.kernel.org> where the
+development and maintenance is primarily done.  You do not have to be
+subscribed to the list to send a message there.  See the list archive
+at https://lore.kernel.org/git for previous bug reports and other
+discussions.
+
+Issues which are security relevant should be disclosed privately to
+the Git Security mailing list <git-security@googlegroups.com>.
+
+SEE ALSO
+--------
+linkgit:gittutorial[7], linkgit:gittutorial-2[7],
+linkgit:giteveryday[7], linkgit:gitcvs-migration[7],
+linkgit:gitglossary[7], linkgit:gitcore-tutorial[7],
+linkgit:gitcli[7], link:user-manual.html[The Git User's Manual],
+linkgit:gitworkflows[7]
+
+GIT
+---
+Part of the linkgit:git[1] suite

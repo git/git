@@ -32,7 +32,7 @@ static void tr2_sid_append_my_sid_component(void)
 {
 	const struct git_hash_algo *algo = &hash_algos[GIT_HASH_SHA1];
 	struct tr2_tbuf tb_now;
-	git_hash_ctx ctx;
+	struct git_hash_ctx ctx;
 	pid_t pid = getpid();
 	unsigned char hash[GIT_MAX_RAWSZ + 1];
 	char hex[GIT_MAX_HEXSZ + 1];
@@ -46,8 +46,8 @@ static void tr2_sid_append_my_sid_component(void)
 		strbuf_add(&tr2sid_buf, "Localhost", 9);
 	else {
 		algo->init_fn(&ctx);
-		algo->update_fn(&ctx, hostname, strlen(hostname));
-		algo->final_fn(hash, &ctx);
+		git_hash_update(&ctx, hostname, strlen(hostname));
+		git_hash_final(hash, &ctx);
 		hash_to_hex_algop_r(hex, hash, algo);
 		strbuf_addch(&tr2sid_buf, 'H');
 		strbuf_add(&tr2sid_buf, hex, 8);

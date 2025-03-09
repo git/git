@@ -82,7 +82,7 @@ static int parse_whitespace_option(struct apply_state *state, const char *option
 	}
 	/*
 	 * Please update $__git_whitespacelist in git-completion.bash,
-	 * Documentation/git-apply.txt, and Documentation/git-am.txt
+	 * Documentation/git-apply.adoc, and Documentation/git-am.adoc
 	 * when you add new options.
 	 */
 	return error(_("unrecognized whitespace option '%s'"), option);
@@ -1423,7 +1423,10 @@ static int parse_num(const char *line, unsigned long *p)
 
 	if (!isdigit(*line))
 		return 0;
+	errno = 0;
 	*p = strtoul(line, &ptr, 10);
+	if (errno)
+		return 0;
 	return ptr - line;
 }
 

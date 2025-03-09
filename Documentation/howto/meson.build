@@ -1,20 +1,20 @@
 howto_sources = [
-  'coordinate-embargoed-releases.txt',
-  'keep-canonical-history-correct.txt',
-  'maintain-git.txt',
-  'new-command.txt',
-  'rebase-from-internal-branch.txt',
-  'rebuild-from-update-hook.txt',
-  'recover-corrupted-blob-object.txt',
-  'recover-corrupted-object-harder.txt',
-  'revert-a-faulty-merge.txt',
-  'revert-branch-rebase.txt',
-  'separating-topic-branches.txt',
-  'setup-git-server-over-http.txt',
-  'update-hook-example.txt',
-  'use-git-daemon.txt',
-  'using-merge-subtree.txt',
-  'using-signed-tag-in-pull-request.txt',
+  'coordinate-embargoed-releases.adoc',
+  'keep-canonical-history-correct.adoc',
+  'maintain-git.adoc',
+  'new-command.adoc',
+  'rebase-from-internal-branch.adoc',
+  'rebuild-from-update-hook.adoc',
+  'recover-corrupted-blob-object.adoc',
+  'recover-corrupted-object-harder.adoc',
+  'revert-a-faulty-merge.adoc',
+  'revert-branch-rebase.adoc',
+  'separating-topic-branches.adoc',
+  'setup-git-server-over-http.adoc',
+  'update-hook-example.adoc',
+  'use-git-daemon.adoc',
+  'using-merge-subtree.adoc',
+  'using-signed-tag-in-pull-request.adoc',
 ]
 
 howto_index = custom_target(
@@ -26,7 +26,7 @@ howto_index = custom_target(
   env: script_environment,
   capture: true,
   input: howto_sources,
-  output: 'howto-index.txt',
+  output: 'howto-index.adoc',
 )
 
 custom_target(
@@ -41,7 +41,7 @@ custom_target(
 foreach howto : howto_sources
   howto_stripped = custom_target(
     command: [
-      find_program('sed'),
+      sed,
       '-e',
       '1,/^$/d',
       '@INPUT@',

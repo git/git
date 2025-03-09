@@ -19,6 +19,7 @@
 #include "convert.h"
 #include "environment.h"
 #include "gettext.h"
+#include "git-zlib.h"
 #include "ident.h"
 #include "repository.h"
 #include "lockfile.h"
@@ -1436,11 +1437,6 @@ static int git_default_core_config(const char *var, const char *value,
 		return git_config_pathname(&git_attributes_file, var, value);
 	}
 
-	if (!strcmp(var, "core.hookspath")) {
-		FREE_AND_NULL(git_hooks_path);
-		return git_config_pathname(&git_hooks_path, var, value);
-	}
-
 	if (!strcmp(var, "core.bare")) {
 		is_bare_repository_cfg = git_config_bool(var, value);
 		return 0;
@@ -1651,7 +1647,7 @@ static int git_default_core_config(const char *var, const char *value,
 		return 0;
 	}
 
-	/* Add other config variables here and to Documentation/config.txt. */
+	/* Add other config variables here and to Documentation/config.adoc. */
 	return platform_core_config(var, value, ctx, cb);
 }
 
@@ -1662,7 +1658,7 @@ static int git_default_sparse_config(const char *var, const char *value)
 		return 0;
 	}
 
-	/* Add other config variables here and to Documentation/config/sparse.txt. */
+	/* Add other config variables here and to Documentation/config/sparse.adoc. */
 	return 0;
 }
 
@@ -1678,7 +1674,7 @@ static int git_default_i18n_config(const char *var, const char *value)
 		return git_config_string(&git_log_output_encoding, var, value);
 	}
 
-	/* Add other config variables here and to Documentation/config.txt. */
+	/* Add other config variables here and to Documentation/config.adoc. */
 	return 0;
 }
 
@@ -1714,7 +1710,7 @@ static int git_default_branch_config(const char *var, const char *value)
 		return 0;
 	}
 
-	/* Add other config variables here and to Documentation/config.txt. */
+	/* Add other config variables here and to Documentation/config.adoc. */
 	return 0;
 }
 
@@ -1743,7 +1739,7 @@ static int git_default_push_config(const char *var, const char *value)
 		return 0;
 	}
 
-	/* Add other config variables here and to Documentation/config.txt. */
+	/* Add other config variables here and to Documentation/config.adoc. */
 	return 0;
 }
 
@@ -1759,7 +1755,7 @@ static int git_default_mailmap_config(const char *var, const char *value)
 		return git_config_string(&git_mailmap_blob, var, value);
 	}
 
-	/* Add other config variables here and to Documentation/config.txt. */
+	/* Add other config variables here and to Documentation/config.adoc. */
 	return 0;
 }
 
@@ -1772,7 +1768,7 @@ static int git_default_attr_config(const char *var, const char *value)
 
 	/*
 	 * Add other attribute related config variables here and to
-	 * Documentation/config/attr.txt.
+	 * Documentation/config/attr.adoc.
 	 */
 	return 0;
 }
@@ -1830,7 +1826,7 @@ int git_default_config(const char *var, const char *value,
 	if (starts_with(var, "sparse."))
 		return git_default_sparse_config(var, value);
 
-	/* Add other config variables here and to Documentation/config.txt. */
+	/* Add other config variables here and to Documentation/config.adoc. */
 	return 0;
 }
 

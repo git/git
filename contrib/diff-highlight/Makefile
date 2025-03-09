@@ -1,4 +1,5 @@
-all: diff-highlight
+# The default target of this Makefile is...
+all:: diff-highlight
 
 PERL_PATH = /usr/bin/perl
 -include ../../config.mak

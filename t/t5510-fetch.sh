@@ -34,14 +34,11 @@ test_expect_success "clone and setup child repos" '
 	git clone . three &&
 	(
 		cd three &&
-		git config branch.main.remote two &&
-		git config branch.main.merge refs/heads/one &&
-		mkdir -p .git/remotes &&
-		cat >.git/remotes/two <<-\EOF
-		URL: ../two/.git/
-		Pull: refs/heads/main:refs/heads/two
-		Pull: refs/heads/one:refs/heads/one
-		EOF
+		git config set remote.two.url ../two/.git/ &&
+		git config set remote.two.fetch refs/heads/main:refs/heads/two &&
+		git config set --append remote.two.fetch refs/heads/one:refs/heads/one &&
+		git config set branch.main.remote two &&
+		git config set branch.main.merge refs/heads/one
 	) &&
 	git clone . bundle &&
 	git clone . seven
@@ -83,6 +80,23 @@ test_expect_success "fetch test remote HEAD" '
 	head=$(git rev-parse refs/remotes/origin/HEAD) &&
 	branch=$(git rev-parse refs/remotes/origin/main) &&
 	test "z$head" = "z$branch"'
+
+test_expect_success "fetch test remote HEAD in bare repository" '
+	test_when_finished rm -rf barerepo &&
+	(
+		cd "$D" &&
+		git init --bare barerepo &&
+		cd barerepo &&
+		git remote add upstream ../two &&
+		git fetch upstream &&
+		git rev-parse --verify refs/remotes/upstream/HEAD &&
+		git rev-parse --verify refs/remotes/upstream/main &&
+		head=$(git rev-parse refs/remotes/upstream/HEAD) &&
+		branch=$(git rev-parse refs/remotes/upstream/main) &&
+		test "z$head" = "z$branch"
+	)
+'
+
 
 test_expect_success "fetch test remote HEAD change" '
 	cd "$D" &&
@@ -1240,7 +1254,12 @@ test_expect_success 'all boundary commits are excluded' '
 	test_tick &&
 	git merge otherside &&
 	ad=$(git log --no-walk --format=%ad HEAD) &&
-	git bundle create twoside-boundary.bdl main --since="$ad" &&
+
+	# If the a different name hash function is used here, then no delta
+	# pair is found and the bundle does not expand to three objects
+	# when fixing the thin object.
+	GIT_TEST_NAME_HASH_VERSION=1 \
+		git bundle create twoside-boundary.bdl main --since="$ad" &&
 	test_bundle_object_count --thin twoside-boundary.bdl 3
 '
 

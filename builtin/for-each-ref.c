@@ -108,7 +108,6 @@ int cmd_for_each_ref(int argc,
 	filter_and_format_refs(&filter, flags, sorting, &format);
 
 	ref_filter_clear(&filter);
-	ref_format_clear(&format);
 	ref_sorting_release(sorting);
 	strvec_clear(&vec);
 	return 0;

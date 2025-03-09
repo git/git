@@ -1,0 +1,77 @@
+git-refs(1)
+===========
+
+NAME
+----
+git-refs - Low-level access to refs
+
+
+SYNOPSIS
+--------
+[synopsis]
+git refs migrate --ref-format=<format> [--no-reflog] [--dry-run]
+git refs verify [--strict] [--verbose]
+
+DESCRIPTION
+-----------
+
+This command provides low-level access to refs.
+
+COMMANDS
+--------
+
+migrate::
+	Migrate ref store between different formats.
+
+verify::
+	Verify reference database consistency.
+
+OPTIONS
+-------
+
+The following options are specific to 'git refs migrate':
+
+--ref-format=<format>::
+	The ref format to migrate the ref store to. Can be one of:
++
+include::ref-storage-format.adoc[]
+
+--dry-run::
+	Perform the migration, but do not modify the repository. The migrated
+	refs will be written into a separate directory that can be inspected
+	separately. The name of the directory will be reported on stdout. This
+	can be used to double check that the migration works as expected before
+	performing the actual migration.
+
+--reflog::
+--no-reflog::
+	Choose between migrating the reflog data to the new backend,
+	and discarding them.  The default is "--reflog", to migrate.
+
+The following options are specific to 'git refs verify':
+
+--strict::
+	Enable stricter error checking. This will cause warnings to be
+	reported as errors. See linkgit:git-fsck[1].
+
+--verbose::
+	When verifying the reference database consistency, be chatty.
+
+KNOWN LIMITATIONS
+-----------------
+
+The ref format migration has several known limitations in its current form:
+
+* It is not possible to migrate repositories that have worktrees.
+
+* There is no way to block concurrent writes to the repository during an
+  ongoing migration. Concurrent writes can lead to an inconsistent migrated
+  state. Users are expected to block writes on a higher level. If your
+  repository is registered for scheduled maintenance, it is recommended to
+  unregister it first with git-maintenance(1).
+
+These limitations may eventually be lifted.
+
+GIT
+---
+Part of the linkgit:git[1] suite

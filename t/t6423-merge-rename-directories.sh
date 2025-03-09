@@ -5071,7 +5071,8 @@ test_expect_success '12i: Directory rename causes rename-to-self' '
 		test_path_is_file source/bar &&
 		test_path_is_file source/baz &&
 
-		git ls-files | uniq >tracked &&
+		git ls-files >actual &&
+		uniq <actual >tracked &&
 		test_line_count = 3 tracked &&
 
 		git status --porcelain -uno >actual &&
@@ -5129,7 +5130,8 @@ test_expect_success '12j: Directory rename to root causes rename-to-self' '
 		test_path_is_file bar &&
 		test_path_is_file baz &&
 
-		git ls-files | uniq >tracked &&
+		git ls-files >actual &&
+		uniq <actual >tracked &&
 		test_line_count = 3 tracked &&
 
 		git status --porcelain -uno >actual &&
@@ -5187,7 +5189,8 @@ test_expect_success '12k: Directory rename with sibling causes rename-to-self' '
 		test_path_is_file dirA/bar &&
 		test_path_is_file dirA/baz &&
 
-		git ls-files | uniq >tracked &&
+		git ls-files >actual &&
+		uniq <actual >tracked &&
 		test_line_count = 3 tracked &&
 
 		git status --porcelain -uno >actual &&

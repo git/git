@@ -13,8 +13,9 @@ esac
 run_tests=t
 
 case "$jobname" in
-linux-gcc)
+linux-breaking-changes)
 	export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+	export WITH_BREAKING_CHANGES=YesPlease
 	;;
 linux-TEST-vars)
 	export OPENSSL_SHA1_UNSAFE=YesPlease
@@ -52,8 +53,11 @@ esac
 case "$jobname" in
 *-meson)
 	group "Configure" meson setup build . \
+		--fatal-meson-warnings \
 		--warnlevel 2 --werror \
-		--wrap-mode nofallback
+		--wrap-mode nofallback \
+		-Dfuzzers=true \
+		$MESONFLAGS
 	group "Build" meson compile -C build --
 	if test -n "$run_tests"
 	then

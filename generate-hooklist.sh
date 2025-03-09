@@ -22,7 +22,7 @@ EOF
 sed -n \
 	-e '/^~~~~*$/ {x; s/^.*$/	"&",/; p;}' \
 	-e 'x' \
-	<"$SOURCE_DIR"/Documentation/githooks.txt |
+	<"$SOURCE_DIR"/Documentation/githooks.adoc |
 	LC_ALL=C sort
 
 cat <<EOF

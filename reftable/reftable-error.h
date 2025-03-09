@@ -30,6 +30,7 @@ enum reftable_error {
 
 	/* Misuse of the API:
 	 *  - on writing a record with NULL refname.
+	 *  - on writing a record before setting the writer limits.
 	 *  - on writing a reftable_ref_record outside the table limits
 	 *  - on writing a ref or log record before the stack's
 	 * next_update_inde*x

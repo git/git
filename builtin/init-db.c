@@ -132,8 +132,8 @@ int cmd_init_db(int argc,
 				 * and we know shared_repository should always be 0;
 				 * but just in case we play safe.
 				 */
-				saved = get_shared_repository();
-				set_shared_repository(0);
+				saved = repo_settings_get_shared_repository(the_repository);
+				repo_settings_set_shared_repository(the_repository, 0);
 				switch (safe_create_leading_directories_const(argv[0])) {
 				case SCLD_OK:
 				case SCLD_PERMS:
@@ -145,7 +145,7 @@ int cmd_init_db(int argc,
 					die_errno(_("cannot mkdir %s"), argv[0]);
 					break;
 				}
-				set_shared_repository(saved);
+				repo_settings_set_shared_repository(the_repository, saved);
 				if (mkdir(argv[0], 0777) < 0)
 					die_errno(_("cannot mkdir %s"), argv[0]);
 				mkdir_tried = 1;
@@ -175,7 +175,7 @@ int cmd_init_db(int argc,
 	}
 
 	if (init_shared_repository != -1)
-		set_shared_repository(init_shared_repository);
+		repo_settings_set_shared_repository(the_repository, init_shared_repository);
 
 	/*
 	 * GIT_WORK_TREE makes sense only in conjunction with GIT_DIR

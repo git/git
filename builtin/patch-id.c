@@ -70,7 +70,7 @@ static size_t get_one_patchid(struct object_id *next_oid, struct object_id *resu
 	int before = -1, after = -1;
 	int diff_is_binary = 0;
 	char pre_oid_str[GIT_MAX_HEXSZ + 1], post_oid_str[GIT_MAX_HEXSZ + 1];
-	git_hash_ctx ctx;
+	struct git_hash_ctx ctx;
 
 	the_hash_algo->init_fn(&ctx);
 	oidclr(result, the_repository->hash_algo);
@@ -85,7 +85,7 @@ static size_t get_one_patchid(struct object_id *next_oid, struct object_id *resu
 		    !skip_prefix(line, "From ", &p) &&
 		    starts_with(line, "\\ ") && 12 < strlen(line)) {
 			if (verbatim)
-				the_hash_algo->update_fn(&ctx, line, strlen(line));
+				git_hash_update(&ctx, line, strlen(line));
 			continue;
 		}
 
@@ -104,10 +104,10 @@ static size_t get_one_patchid(struct object_id *next_oid, struct object_id *resu
 			    starts_with(line, "Binary files")) {
 				diff_is_binary = 1;
 				before = 0;
-				the_hash_algo->update_fn(&ctx, pre_oid_str,
-							 strlen(pre_oid_str));
-				the_hash_algo->update_fn(&ctx, post_oid_str,
-							 strlen(post_oid_str));
+				git_hash_update(&ctx, pre_oid_str,
+						strlen(pre_oid_str));
+				git_hash_update(&ctx, post_oid_str,
+						strlen(post_oid_str));
 				if (stable)
 					flush_one_hunk(result, &ctx);
 				continue;
@@ -165,7 +165,7 @@ static size_t get_one_patchid(struct object_id *next_oid, struct object_id *resu
 		/* Add line to hash algo (possibly removing whitespace) */
 		len = verbatim ? strlen(line) : remove_space(line);
 		patchlen += len;
-		the_hash_algo->update_fn(&ctx, line, len);
+		git_hash_update(&ctx, line, len);
 	}
 
 	if (!found_next)

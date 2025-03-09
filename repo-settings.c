@@ -4,6 +4,7 @@
 #include "repository.h"
 #include "midx.h"
 #include "pack-objects.h"
+#include "setup.h"
 
 static void repo_cfg_bool(struct repository *r, const char *key, int *dest,
 			  int def)
@@ -21,7 +22,6 @@ static void repo_cfg_int(struct repository *r, const char *key, int *dest,
 
 void prepare_repo_settings(struct repository *r)
 {
-	const struct repo_settings defaults = REPO_SETTINGS_INIT;
 	int experimental;
 	int value;
 	const char *strval;
@@ -35,7 +35,7 @@ void prepare_repo_settings(struct repository *r)
 	if (r->settings.initialized)
 		return;
 
-	memcpy(&r->settings, &defaults, sizeof(defaults));
+	repo_settings_clear(r);
 	r->settings.initialized++;
 
 	/* Booleans config or default, cascades to other settings */
@@ -143,6 +143,14 @@ void prepare_repo_settings(struct repository *r)
 		r->settings.packed_git_limit = ulongval;
 }
 
+void repo_settings_clear(struct repository *r)
+{
+	struct repo_settings empty = REPO_SETTINGS_INIT;
+	FREE_AND_NULL(r->settings.fsmonitor);
+	FREE_AND_NULL(r->settings.hooks_path);
+	r->settings = empty;
+}
+
 enum log_refs_config repo_settings_get_log_all_ref_updates(struct repository *repo)
 {
 	const char *value;
@@ -166,4 +174,36 @@ int repo_settings_get_warn_ambiguous_refs(struct repository *repo)
 		repo_cfg_bool(repo, "core.warnambiguousrefs",
 			      &repo->settings.warn_ambiguous_refs, 1);
 	return repo->settings.warn_ambiguous_refs;
+}
+
+const char *repo_settings_get_hooks_path(struct repository *repo)
+{
+	if (!repo->settings.hooks_path)
+		repo_config_get_pathname(repo, "core.hookspath", &repo->settings.hooks_path);
+	return repo->settings.hooks_path;
+}
+
+int repo_settings_get_shared_repository(struct repository *repo)
+{
+	if (!repo->settings.shared_repository_initialized) {
+		const char *var = "core.sharedrepository";
+		const char *value;
+		if (!repo_config_get_value(repo, var, &value))
+			repo->settings.shared_repository = git_config_perm(var, value);
+		else
+			repo->settings.shared_repository = PERM_UMASK;
+		repo->settings.shared_repository_initialized = 1;
+	}
+	return repo->settings.shared_repository;
+}
+
+void repo_settings_set_shared_repository(struct repository *repo, int value)
+{
+	repo->settings.shared_repository = value;
+	repo->settings.shared_repository_initialized = 1;
+}
+
+void repo_settings_reset_shared_repository(struct repository *repo)
+{
+	repo->settings.shared_repository_initialized = 0;
 }

@@ -6,7 +6,7 @@
 struct repository;
 
 /**
- * Refer to Documentation/technical/api-parse-options.txt for the API doc.
+ * Refer to Documentation/technical/api-parse-options.adoc for the API doc.
  */
 
 enum parse_opt_type {
@@ -402,6 +402,10 @@ int parse_options(int argc, const char **argv, const char *prefix,
 NORETURN void usage_with_options(const char * const *usagestr,
 				 const struct option *options);
 
+void show_usage_with_options_if_asked(int ac, const char **av,
+				      const char * const *usage,
+				      const struct option *options);
+
 NORETURN void usage_msg_opt(const char *msg,
 			    const char * const *usagestr,
 			    const struct option *options);
@@ -429,6 +433,15 @@ static inline void die_for_incompatible_opt3(int opt1, const char *opt1_name,
 	die_for_incompatible_opt4(opt1, opt1_name,
 				  opt2, opt2_name,
 				  opt3, opt3_name,
+				  0, "");
+}
+
+static inline void die_for_incompatible_opt2(int opt1, const char *opt1_name,
+					     int opt2, const char *opt2_name)
+{
+	die_for_incompatible_opt4(opt1, opt1_name,
+				  opt2, opt2_name,
+				  0, "",
 				  0, "");
 }
 

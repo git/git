@@ -333,7 +333,7 @@ struct diff_options {
 	int xdl_opts;
 	int ignore_driver_algorithm;
 
-	/* see Documentation/diff-options.txt */
+	/* see Documentation/diff-options.adoc */
 	char **anchors;
 	size_t anchors_nr, anchors_alloc;
 
@@ -462,7 +462,7 @@ const char *diff_line_prefix(struct diff_options *);
 extern const char mime_boundary_leader[];
 
 struct combine_diff_path *diff_tree_paths(
-	struct combine_diff_path *p, const struct object_id *oid,
+	const struct object_id *oid,
 	const struct object_id **parents_oid, int nparent,
 	struct strbuf *base, struct diff_options *opt);
 void diff_tree_oid(const struct object_id *old_oid,
@@ -480,12 +480,20 @@ struct combine_diff_path {
 		char status;
 		unsigned int mode;
 		struct object_id oid;
-		struct strbuf path;
+		/*
+		 * This per-parent path is filled only when doing a combined
+		 * diff with revs.combined_all_paths set, and only if the path
+		 * differs from the post-image (e.g., a rename or copy).
+		 * Otherwise it is left NULL.
+		 */
+		char *path;
 	} parent[FLEX_ARRAY];
 };
-#define combine_diff_path_size(n, l) \
-	st_add4(sizeof(struct combine_diff_path), (l), 1, \
-		st_mult(sizeof(struct combine_diff_parent), (n)))
+struct combine_diff_path *combine_diff_path_new(const char *path,
+						size_t path_len,
+						unsigned int mode,
+						const struct object_id *oid,
+						size_t num_parents);
 
 void show_combined_diff(struct combine_diff_path *elem, int num_parent,
 			struct rev_info *);
@@ -644,7 +652,7 @@ void run_diff_index(struct rev_info *revs, unsigned int option);
 
 int do_diff_cache(const struct object_id *, struct diff_options *);
 int diff_flush_patch_id(struct diff_options *, struct object_id *, int);
-void flush_one_hunk(struct object_id *result, git_hash_ctx *ctx);
+void flush_one_hunk(struct object_id *result, struct git_hash_ctx *ctx);
 
 int diff_result_code(struct rev_info *);
 

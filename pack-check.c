@@ -58,7 +58,7 @@ static int verify_packfile(struct repository *r,
 {
 	off_t index_size = p->index_size;
 	const unsigned char *index_base = p->index_data;
-	git_hash_ctx ctx;
+	struct git_hash_ctx ctx;
 	unsigned char hash[GIT_MAX_RAWSZ], *pack_sig;
 	off_t offset = 0, pack_sig_ofs = 0;
 	uint32_t nr_objects, i;
@@ -77,9 +77,9 @@ static int verify_packfile(struct repository *r,
 			pack_sig_ofs = p->pack_size - r->hash_algo->rawsz;
 		if (offset > pack_sig_ofs)
 			remaining -= (unsigned int)(offset - pack_sig_ofs);
-		r->hash_algo->update_fn(&ctx, in, remaining);
+		git_hash_update(&ctx, in, remaining);
 	} while (offset < pack_sig_ofs);
-	r->hash_algo->final_fn(hash, &ctx);
+	git_hash_final(hash, &ctx);
 	pack_sig = use_pack(p, w_curs, pack_sig_ofs, NULL);
 	if (!hasheq(hash, pack_sig, the_repository->hash_algo))
 		err = error("%s pack checksum mismatch",

@@ -1,3 +1,4 @@
+# The default target of this Makefile is...
 all:: git-credential-osxkeychain
 
 CC = gcc

@@ -3,16 +3,16 @@
 
 #define NUM_SECONDS 3
 
-static inline void compute_hash(const struct git_hash_algo *algo, git_hash_ctx *ctx, uint8_t *final, const void *p, size_t len)
+static inline void compute_hash(const struct git_hash_algo *algo, struct git_hash_ctx *ctx, uint8_t *final, const void *p, size_t len)
 {
 	algo->init_fn(ctx);
-	algo->update_fn(ctx, p, len);
-	algo->final_fn(final, ctx);
+	git_hash_update(ctx, p, len);
+	git_hash_final(final, ctx);
 }
 
 int cmd__hash_speed(int ac, const char **av)
 {
-	git_hash_ctx ctx;
+	struct git_hash_ctx ctx;
 	unsigned char hash[GIT_MAX_RAWSZ];
 	clock_t initial, start, end;
 	unsigned bufsizes[] = { 64, 256, 1024, 8192, 16384 };

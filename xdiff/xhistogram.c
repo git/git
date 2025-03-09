@@ -106,7 +106,7 @@ static int scanA(struct histindex *index, int line1, int count1)
 	unsigned int chain_len;
 	struct record **rec_chain, *rec;
 
-	for (ptr = LINE_END(1); line1 <= ptr; ptr--) {
+	for (ptr = LINE_END(1); (unsigned int)line1 <= ptr; ptr--) {
 		tbl_idx = TABLE_HASH(index, 1, ptr);
 		rec_chain = index->records + tbl_idx;
 		rec = *rec_chain;
@@ -181,14 +181,14 @@ static int try_lcs(struct histindex *index, struct region *lcs, int b_ptr,
 			be = bs;
 			rc = rec->cnt;
 
-			while (line1 < as && line2 < bs
+			while ((unsigned int)line1 < as && (unsigned int)line2 < bs
 				&& CMP(index, 1, as - 1, 2, bs - 1)) {
 				as--;
 				bs--;
 				if (1 < rc)
 					rc = XDL_MIN(rc, CNT(index, as));
 			}
-			while (ae < LINE_END(1) && be < LINE_END(2)
+			while (ae < (unsigned int)LINE_END(1) && be < (unsigned int)LINE_END(2)
 				&& CMP(index, 1, ae + 1, 2, be + 1)) {
 				ae++;
 				be++;
@@ -313,7 +313,7 @@ redo:
 	if (count1 <= 0 && count2 <= 0)
 		return 0;
 
-	if (LINE_END(1) >= MAX_PTR)
+	if ((unsigned int)LINE_END(1) >= MAX_PTR)
 		return -1;
 
 	if (!count1) {
