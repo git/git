@@ -1782,11 +1782,10 @@ static int do_fetch(struct transport *transport,
 			    "refs/tags/");
 	}
 
-	if (uses_remote_tracking(transport, rs)) {
-		must_list_refs = 1;
+	if (must_list_refs &&
+	    uses_remote_tracking(transport, rs))
 		strvec_push(&transport_ls_refs_options.ref_prefixes,
 			    "HEAD");
-	}
 
 	if (must_list_refs) {
 		trace2_region_enter("fetch", "remote_refs", the_repository);

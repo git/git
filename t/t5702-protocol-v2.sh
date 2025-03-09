@@ -708,6 +708,19 @@ test_expect_success 'exact oid fetch with tag following' '
 	git -C exact-oid-tags rev-parse --verify my-tag
 '
 
+test_expect_success 'exact oid fetch avoids pointless HEAD request' '
+	git init exact-oid-head &&
+	git -C exact-oid-head remote add origin ../prefix-parent &&
+
+	commit=$(git -C prefix-parent rev-parse --verify HEAD) &&
+
+	test_when_finished "rm -f log" &&
+	GIT_TRACE_PACKET="$(pwd)/log" \
+		git -C exact-oid-head fetch --no-tags origin \
+			$commit:refs/heads/exact &&
+	test_grep ! command=ls-refs log
+'
+
 test_expect_success 'fetch supports various ways of have lines' '
 	rm -rf server client trace &&
 	git init server &&
