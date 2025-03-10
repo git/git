@@ -1449,7 +1449,7 @@ void upload_pack(const int advertise_refs, const int stateless_rpc,
 		for_each_namespaced_ref_1(send_ref, &data);
 		if (!data.sent_capabilities) {
 			const char *refname = "capabilities^{}";
-			write_v0_ref(&data, refname, refname, null_oid());
+			write_v0_ref(&data, refname, refname, null_oid(the_hash_algo));
 		}
 		/*
 		 * fflush stdout before calling advertise_shallow_grafts because send_ref

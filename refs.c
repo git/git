@@ -1377,7 +1377,7 @@ int ref_transaction_create(struct ref_transaction *transaction,
 		return 1;
 	}
 	return ref_transaction_update(transaction, refname, new_oid,
-				      null_oid(), new_target, NULL, flags,
+				      null_oid(the_hash_algo), new_target, NULL, flags,
 				      msg, err);
 }
 
@@ -1396,7 +1396,7 @@ int ref_transaction_delete(struct ref_transaction *transaction,
 	if (old_target && !(flags & REF_NO_DEREF))
 		BUG("delete cannot operate on symrefs with deref mode");
 	return ref_transaction_update(transaction, refname,
-				      null_oid(), old_oid,
+				      null_oid(the_hash_algo), old_oid,
 				      NULL, old_target, flags,
 				      msg, err);
 }
@@ -2160,7 +2160,7 @@ struct ref_store *repo_get_submodule_ref_store(struct repository *repo,
 	subrepo = xmalloc(sizeof(*subrepo));
 
 	if (repo_submodule_init(subrepo, repo, submodule,
-				null_oid())) {
+				null_oid(the_hash_algo))) {
 		free(subrepo);
 		goto done;
 	}
@@ -2345,14 +2345,14 @@ static int run_transaction_hook(struct ref_transaction *transaction,
 		strbuf_reset(&buf);
 
 		if (!(update->flags & REF_HAVE_OLD))
-			strbuf_addf(&buf, "%s ", oid_to_hex(null_oid()));
+			strbuf_addf(&buf, "%s ", oid_to_hex(null_oid(the_hash_algo)));
 		else if (update->old_target)
 			strbuf_addf(&buf, "ref:%s ", update->old_target);
 		else
 			strbuf_addf(&buf, "%s ", oid_to_hex(&update->old_oid));
 
 		if (!(update->flags & REF_HAVE_NEW))
-			strbuf_addf(&buf, "%s ", oid_to_hex(null_oid()));
+			strbuf_addf(&buf, "%s ", oid_to_hex(null_oid(the_hash_algo)));
 		else if (update->new_target)
 			strbuf_addf(&buf, "ref:%s ", update->new_target);
 		else
@@ -2794,7 +2794,7 @@ static int migrate_one_ref(const char *refname, const char *referent UNUSED, con
 		if (ret < 0)
 			goto done;
 
-		ret = ref_transaction_update(data->transaction, refname, NULL, null_oid(),
+		ret = ref_transaction_update(data->transaction, refname, NULL, null_oid(the_hash_algo),
 					     symref_target.buf, NULL,
 					     REF_SKIP_CREATE_REFLOG | REF_NO_DEREF, NULL, data->errbuf);
 		if (ret < 0)

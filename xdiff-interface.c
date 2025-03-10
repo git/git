@@ -181,7 +181,7 @@ void read_mmblob(mmfile_t *ptr, const struct object_id *oid)
 	unsigned long size;
 	enum object_type type;
 
-	if (oideq(oid, null_oid())) {
+	if (oideq(oid, null_oid(the_hash_algo))) {
 		ptr->ptr = xstrdup("");
 		ptr->size = 0;
 		return;

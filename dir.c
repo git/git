@@ -4035,7 +4035,7 @@ static void connect_wt_gitdir_in_nested(const char *sub_worktree,
 			 */
 			i++;
 
-		sub = submodule_from_path(&subrepo, null_oid(), ce->name);
+		sub = submodule_from_path(&subrepo, null_oid(the_hash_algo), ce->name);
 		if (!sub || !is_submodule_active(&subrepo, ce->name))
 			/* .gitmodules broken or inactive sub */
 			continue;

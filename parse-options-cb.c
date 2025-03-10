@@ -145,7 +145,7 @@ int parse_opt_object_id(const struct option *opt, const char *arg, int unset)
 	struct object_id *target = opt->value;
 
 	if (unset) {
-		oidcpy(target, null_oid());
+		oidcpy(target, null_oid(the_hash_algo));
 		return 0;
 	}
 	if (!arg)

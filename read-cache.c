@@ -1735,7 +1735,7 @@ static int verify_hdr(const struct cache_header *hdr, unsigned long size)
 	end = (unsigned char *)hdr + size;
 	start = end - the_hash_algo->rawsz;
 	oidread(&oid, start, the_repository->hash_algo);
-	if (oideq(&oid, null_oid()))
+	if (oideq(&oid, null_oid(the_hash_algo)))
 		return 0;
 
 	the_hash_algo->init_fn(&c);

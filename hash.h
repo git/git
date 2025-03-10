@@ -340,7 +340,7 @@ static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
 
 const struct git_hash_algo *unsafe_hash_algo(const struct git_hash_algo *algop);
 
-const struct object_id *null_oid(void);
+const struct object_id *null_oid(const struct git_hash_algo *algop);
 
 static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2, const struct git_hash_algo *algop)
 {

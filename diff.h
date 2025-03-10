@@ -656,7 +656,7 @@ void flush_one_hunk(struct object_id *result, struct git_hash_ctx *ctx);
 
 int diff_result_code(struct rev_info *);
 
-int diff_no_index(struct rev_info *,
+int diff_no_index(struct rev_info *, const struct git_hash_algo *algop,
 		  int implicit_no_index, int, const char **);
 
 int index_differs_from(struct repository *r, const char *def,

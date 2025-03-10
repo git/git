@@ -181,7 +181,7 @@ static void emit_path(struct combine_diff_path ***tail,
 
 		strbuf_add(base, path, pathlen);
 		p = combine_diff_path_new(base->buf, base->len, mode,
-					  oid ? oid : null_oid(),
+					  oid ? oid : null_oid(the_hash_algo),
 					  nparent);
 		strbuf_setlen(base, old_baselen);
 
@@ -206,7 +206,7 @@ static void emit_path(struct combine_diff_path ***tail,
 				mode_i = tp[i].entry.mode;
 			}
 			else {
-				oid_i = null_oid();
+				oid_i = null_oid(the_hash_algo);
 				mode_i = 0;
 			}
 

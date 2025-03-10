@@ -1,5 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "hash.h"
 #include "hex.h"
@@ -232,9 +230,9 @@ const struct git_hash_algo hash_algos[GIT_HASH_NALGOS] = {
 	}
 };
 
-const struct object_id *null_oid(void)
+const struct object_id *null_oid(const struct git_hash_algo *algop)
 {
-	return the_hash_algo->null_oid;
+	return algop->null_oid;
 }
 
 const char *empty_tree_oid_hex(const struct git_hash_algo *algop)

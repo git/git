@@ -502,7 +502,7 @@ static int get_tree_entry_if_blob(struct repository *r,
 
 	ret = get_tree_entry(r, tree, path, &dfs->oid, &dfs->mode);
 	if (S_ISDIR(dfs->mode)) {
-		oidcpy(&dfs->oid, null_oid());
+		oidcpy(&dfs->oid, null_oid(the_hash_algo));
 		dfs->mode = 0;
 	}
 	return ret;
@@ -1238,7 +1238,7 @@ static int merge_submodule(struct merge_options *opt,
 	if (is_null_oid(b))
 		return 0;
 
-	if (repo_submodule_init(&subrepo, opt->repo, path, null_oid())) {
+	if (repo_submodule_init(&subrepo, opt->repo, path, null_oid(the_hash_algo))) {
 		output(opt, 1, _("Failed to merge submodule %s (not checked out)"), path);
 		return 0;
 	}
@@ -1698,7 +1698,7 @@ static int handle_file_collision(struct merge_options *opt,
 
 	/* Store things in diff_filespecs for functions that need it */
 	null.path = (char *)collide_path;
-	oidcpy(&null.oid, null_oid());
+	oidcpy(&null.oid, null_oid(the_hash_algo));
 	null.mode = 0;
 
 	if (merge_mode_and_contents(opt, &null, a, b, collide_path,
@@ -2897,14 +2897,14 @@ static int process_renames(struct merge_options *opt,
 			dst_other.mode = ren1->dst_entry->stages[other_stage].mode;
 			try_merge = 0;
 
-			if (oideq(&src_other.oid, null_oid()) &&
+			if (oideq(&src_other.oid, null_oid(the_hash_algo)) &&
 			    ren1->dir_rename_original_type == 'A') {
 				setup_rename_conflict_info(RENAME_VIA_DIR,
 							   opt, ren1, NULL);
 			} else if (renamed_to_self) {
 				setup_rename_conflict_info(RENAME_NORMAL,
 							   opt, ren1, NULL);
-			} else if (oideq(&src_other.oid, null_oid())) {
+			} else if (oideq(&src_other.oid, null_oid(the_hash_algo))) {
 				setup_rename_conflict_info(RENAME_DELETE,
 							   opt, ren1, NULL);
 			} else if ((dst_other.mode == ren1->pair->two->mode) &&
@@ -2923,7 +2923,7 @@ static int process_renames(struct merge_options *opt,
 						      1, /* update_cache */
 						      0  /* update_wd    */))
 					clean_merge = -1;
-			} else if (!oideq(&dst_other.oid, null_oid())) {
+			} else if (!oideq(&dst_other.oid, null_oid(the_hash_algo))) {
 				/*
 				 * Probably not a clean merge, but it's
 				 * premature to set clean_merge to 0 here,

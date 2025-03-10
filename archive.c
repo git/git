@@ -312,7 +312,7 @@ int write_archive_entries(struct archiver_args *args,
 	struct object_id fake_oid;
 	int i;
 
-	oidcpy(&fake_oid, null_oid());
+	oidcpy(&fake_oid, null_oid(the_hash_algo));
 
 	if (args->baselen > 0 && args->base[args->baselen - 1] == '/') {
 		size_t len = args->baselen;

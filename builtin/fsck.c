@@ -625,7 +625,7 @@ static int fsck_loose(const struct object_id *oid, const char *path, void *data)
 	void *contents = NULL;
 	int eaten;
 	struct object_info oi = OBJECT_INFO_INIT;
-	struct object_id real_oid = *null_oid();
+	struct object_id real_oid = *null_oid(the_hash_algo);
 	int err = 0;
 
 	strbuf_reset(&cb_data->obj_type);

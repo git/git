@@ -217,7 +217,7 @@ static int debug_read_raw_ref(struct ref_store *ref_store, const char *refname,
 	struct debug_ref_store *drefs = (struct debug_ref_store *)ref_store;
 	int res = 0;
 
-	oidcpy(oid, null_oid());
+	oidcpy(oid, null_oid(ref_store->repo->hash_algo));
 	res = drefs->refs->be->read_raw_ref(drefs->refs, refname, oid, referent,
 					    type, failure_errno);
 

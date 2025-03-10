@@ -4346,7 +4346,7 @@ static struct diff_tempfile *prepare_temp_file(struct repository *r,
 				die_errno("readlink(%s)", one->path);
 			prep_temp_blob(r->index, one->path, temp, sb.buf, sb.len,
 				       (one->oid_valid ?
-					&one->oid : null_oid()),
+					&one->oid : null_oid(the_hash_algo)),
 				       (one->oid_valid ?
 					one->mode : S_IFLNK));
 			strbuf_release(&sb);
@@ -4355,7 +4355,7 @@ static struct diff_tempfile *prepare_temp_file(struct repository *r,
 			/* we can borrow from the file in the work tree */
 			temp->name = one->path;
 			if (!one->oid_valid)
-				oid_to_hex_r(temp->hex, null_oid());
+				oid_to_hex_r(temp->hex, null_oid(the_hash_algo));
 			else
 				oid_to_hex_r(temp->hex, &one->oid);
 			/* Even though we may sometimes borrow the
@@ -6649,8 +6649,8 @@ static void create_filepairs_for_header_only_notifications(struct diff_options *
 
 			one = alloc_filespec(e->key);
 			two = alloc_filespec(e->key);
-			fill_filespec(one, null_oid(), 0, 0);
-			fill_filespec(two, null_oid(), 0, 0);
+			fill_filespec(one, null_oid(the_hash_algo), 0, 0);
+			fill_filespec(two, null_oid(the_hash_algo), 0, 0);
 			p = diff_queue(q, one, two);
 			p->status = DIFF_STATUS_MODIFIED;
 		}

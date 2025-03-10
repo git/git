@@ -453,7 +453,7 @@ static int grep_submodule(struct grep_opt *opt,
 		return 0;
 
 	subrepo = xmalloc(sizeof(*subrepo));
-	if (repo_submodule_init(subrepo, superproject, path, null_oid())) {
+	if (repo_submodule_init(subrepo, superproject, path, null_oid(opt->repo->hash_algo))) {
 		free(subrepo);
 		return 0;
 	}

@@ -234,7 +234,8 @@ static void show_submodule(struct repository *superproject,
 {
 	struct repository subrepo;
 
-	if (repo_submodule_init(&subrepo, superproject, path, null_oid()))
+	if (repo_submodule_init(&subrepo, superproject, path,
+				null_oid(superproject->hash_algo)))
 		return;
 
 	if (repo_read_index(&subrepo) < 0)

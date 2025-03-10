@@ -500,7 +500,7 @@ static void parse_cmd_symref_verify(struct ref_transaction *transaction,
 	 */
 	old_target = parse_next_refname(&next);
 	if (!old_target)
-		oidcpy(&old_oid, null_oid());
+		oidcpy(&old_oid, null_oid(the_hash_algo));
 
 	if (*next != line_termination)
 		die("symref-verify %s: extra input: %s", refname, next);
