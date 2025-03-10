@@ -12,9 +12,9 @@ of [Git](http://git-scm.com/).
 The Git for Windows project is run using a [governance
 model](http://git-for-windows.github.io/governance-model.html). If you
 encounter problems, you can report them as [GitHub
-issues](https://github.com/git-for-windows/git/issues), discuss them on Git
-for Windows' [Google Group](http://groups.google.com/group/git-for-windows),
-and [contribute bug
+issues](https://github.com/git-for-windows/git/issues), discuss them in Git
+for Windows' [Discussions](https://github.com/git-for-windows/git/discussions)
+or on the [Git mailing list](mailto:git@vger.kernel.org), and [contribute bug
 fixes](https://github.com/git-for-windows/git/wiki/How-to-participate).
 
 To build Git for Windows, please either install [Git for Windows'
