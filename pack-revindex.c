@@ -322,7 +322,8 @@ int verify_pack_revindex(struct packed_git *p)
 	if (!p->revindex_map || !p->revindex_data)
 		return res;
 
-	if (!hashfile_checksum_valid((const unsigned char *)p->revindex_map, p->revindex_size)) {
+	if (!hashfile_checksum_valid(the_repository->hash_algo,
+				     (const unsigned char *)p->revindex_map, p->revindex_size)) {
 		error(_("invalid checksum"));
 		res = -1;
 	}
