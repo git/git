@@ -1777,7 +1777,9 @@ static int do_fetch(struct transport *transport,
 
 	if (uses_remote_tracking(transport, rs)) {
 		must_list_refs = 1;
-		strvec_push(&transport_ls_refs_options.ref_prefixes, "HEAD");
+		if (transport_ls_refs_options.ref_prefixes.nr)
+			strvec_push(&transport_ls_refs_options.ref_prefixes,
+				    "HEAD");
 	}
 
 	if (must_list_refs) {
