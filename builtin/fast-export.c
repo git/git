@@ -694,7 +694,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	if (anonymize) {
 		reencoded = anonymize_commit_message();
 	} else if (encoding) {
-		switch(reencode_mode) {
+		switch (reencode_mode) {
 		case REENCODE_YES:
 			reencoded = reencode_string(message, "UTF-8", encoding);
 			break;
@@ -828,7 +828,7 @@ static void handle_tag(const char *name, struct tag *tag)
 		const char *signature = strstr(message,
 					       "\n-----BEGIN PGP SIGNATURE-----\n");
 		if (signature)
-			switch(signed_tag_mode) {
+			switch (signed_tag_mode) {
 			case SIGNED_TAG_ABORT:
 				die("encountered signed tag %s; use "
 				    "--signed-tags=<mode> to handle it",
@@ -853,7 +853,7 @@ static void handle_tag(const char *name, struct tag *tag)
 	tagged = tag->tagged;
 	tagged_mark = get_object_mark(tagged);
 	if (!tagged_mark) {
-		switch(tag_of_filtered_mode) {
+		switch (tag_of_filtered_mode) {
 		case TAG_FILTERING_ABORT:
 			die("tag %s tags unexported object; use "
 			    "--tag-of-filtered-object=<mode> to handle it",
@@ -965,7 +965,7 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 			continue;
 		}
 
-		switch(commit->object.type) {
+		switch (commit->object.type) {
 		case OBJ_COMMIT:
 			break;
 		case OBJ_BLOB:
