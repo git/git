@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -48,6 +47,7 @@ void bitmap_writer_init(struct bitmap_writer *writer, struct repository *r,
 	memset(writer, 0, sizeof(struct bitmap_writer));
 	if (writer->bitmaps)
 		BUG("bitmap writer already initialized");
+	writer->repo = r;
 	writer->bitmaps = kh_init_oid_map();
 	writer->pseudo_merge_commits = kh_init_oid_map();
 	writer->to_pack = pdata;
@@ -415,9 +415,9 @@ next:
 		bb->commits[bb->commits_nr++] = r->item;
 	}
 
-	trace2_data_intmax("pack-bitmap-write", the_repository,
+	trace2_data_intmax("pack-bitmap-write", writer->repo,
 			   "num_selected_commits", writer->selected_nr);
-	trace2_data_intmax("pack-bitmap-write", the_repository,
+	trace2_data_intmax("pack-bitmap-write", writer->repo,
 			   "num_maximal_commits", num_maximal);
 
 	release_revisions(&revs);
@@ -460,7 +460,7 @@ static int fill_bitmap_tree(struct bitmap_writer *writer,
 		switch (object_type(entry.mode)) {
 		case OBJ_TREE:
 			if (fill_bitmap_tree(writer, bitmap,
-					     lookup_tree(the_repository, &entry.oid)) < 0)
+					     lookup_tree(writer->repo, &entry.oid)) < 0)
 				return -1;
 			break;
 		case OBJ_BLOB:
@@ -536,7 +536,7 @@ static int fill_bitmap_commit(struct bitmap_writer *writer,
 				return -1;
 			bitmap_set(ent->bitmap, pos);
 			prio_queue_put(tree_queue,
-				       repo_get_commit_tree(the_repository, c));
+				       repo_get_commit_tree(writer->repo, c));
 		}
 
 		for (p = c->parents; p; p = p->next) {
@@ -590,11 +590,11 @@ int bitmap_writer_build(struct bitmap_writer *writer)
 	int closed = 1; /* until proven otherwise */
 
 	if (writer->show_progress)
-		writer->progress = start_progress(the_repository,
+		writer->progress = start_progress(writer->repo,
 						  "Building bitmaps",
 						  writer->selected_nr);
 	trace2_region_enter("pack-bitmap-write", "building_bitmaps_total",
-			    the_repository);
+			    writer->repo);
 
 	old_bitmap = prepare_bitmap_git(writer->to_pack->repo);
 	if (old_bitmap)
@@ -645,10 +645,10 @@ int bitmap_writer_build(struct bitmap_writer *writer)
 	free(mapping);
 
 	trace2_region_leave("pack-bitmap-write", "building_bitmaps_total",
-			    the_repository);
-	trace2_data_intmax("pack-bitmap-write", the_repository,
+			    writer->repo);
+	trace2_data_intmax("pack-bitmap-write", writer->repo,
 			   "building_bitmaps_reused", reused_bitmaps_nr);
-	trace2_data_intmax("pack-bitmap-write", the_repository,
+	trace2_data_intmax("pack-bitmap-write", writer->repo,
 			   "building_bitmaps_pseudo_merge_reused",
 			   reused_pseudo_merge_bitmaps_nr);
 
@@ -711,7 +711,7 @@ void bitmap_writer_select_commits(struct bitmap_writer *writer,
 	}
 
 	if (writer->show_progress)
-		writer->progress = start_progress(the_repository,
+		writer->progress = start_progress(writer->repo,
 						  "Selecting bitmap commits", 0);
 
 	for (;;) {
@@ -960,7 +960,7 @@ static void write_lookup_table(struct bitmap_writer *writer, struct hashfile *f,
 	for (i = 0; i < bitmap_writer_nr_selected_commits(writer); i++)
 		table_inv[table[i]] = i;
 
-	trace2_region_enter("pack-bitmap-write", "writing_lookup_table", the_repository);
+	trace2_region_enter("pack-bitmap-write", "writing_lookup_table", writer->repo);
 	for (i = 0; i < bitmap_writer_nr_selected_commits(writer); i++) {
 		struct bitmapped_commit *selected = &writer->selected[table[i]];
 		uint32_t xor_offset = selected->xor_offset;
@@ -987,7 +987,7 @@ static void write_lookup_table(struct bitmap_writer *writer, struct hashfile *f,
 		hashwrite_be64(f, (uint64_t)offsets[table[i]]);
 		hashwrite_be32(f, xor_row);
 	}
-	trace2_region_leave("pack-bitmap-write", "writing_lookup_table", the_repository);
+	trace2_region_leave("pack-bitmap-write", "writing_lookup_table", writer->repo);
 
 	free(table);
 	free(table_inv);
@@ -1008,7 +1008,7 @@ static void write_hash_cache(struct hashfile *f,
 void bitmap_writer_set_checksum(struct bitmap_writer *writer,
 				const unsigned char *sha1)
 {
-	hashcpy(writer->pack_checksum, sha1, the_repository->hash_algo);
+	hashcpy(writer->pack_checksum, sha1, writer->repo->hash_algo);
 }
 
 void bitmap_writer_finish(struct bitmap_writer *writer,
@@ -1030,15 +1030,15 @@ void bitmap_writer_finish(struct bitmap_writer *writer,
 	if (writer->pseudo_merges_nr)
 		options |= BITMAP_OPT_PSEUDO_MERGES;
 
-	f = hashfd(the_repository->hash_algo, fd, tmp_file.buf);
+	f = hashfd(writer->repo->hash_algo, fd, tmp_file.buf);
 
 	memcpy(header.magic, BITMAP_IDX_SIGNATURE, sizeof(BITMAP_IDX_SIGNATURE));
 	header.version = htons(default_version);
 	header.options = htons(flags | options);
 	header.entry_count = htonl(bitmap_writer_nr_selected_commits(writer));
-	hashcpy(header.checksum, writer->pack_checksum, the_repository->hash_algo);
+	hashcpy(header.checksum, writer->pack_checksum, writer->repo->hash_algo);
 
-	hashwrite(f, &header, sizeof(header) - GIT_MAX_RAWSZ + the_hash_algo->rawsz);
+	hashwrite(f, &header, sizeof(header) - GIT_MAX_RAWSZ + writer->repo->hash_algo->rawsz);
 	dump_bitmap(f, writer->commits);
 	dump_bitmap(f, writer->trees);
 	dump_bitmap(f, writer->blobs);
@@ -1072,7 +1072,7 @@ void bitmap_writer_finish(struct bitmap_writer *writer,
 	finalize_hashfile(f, NULL, FSYNC_COMPONENT_PACK_METADATA,
 			  CSUM_HASH_IN_STREAM | CSUM_FSYNC | CSUM_CLOSE);
 
-	if (adjust_shared_perm(the_repository, tmp_file.buf))
+	if (adjust_shared_perm(writer->repo, tmp_file.buf))
 		die_errno("unable to make temporary bitmap file readable");
 
 	if (rename(tmp_file.buf, filename))

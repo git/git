@@ -104,6 +104,7 @@ int bitmap_has_oid_in_uninteresting(struct bitmap_index *, const struct object_i
 off_t get_disk_usage_from_bitmap(struct bitmap_index *, struct rev_info *);
 
 struct bitmap_writer {
+	struct repository *repo;
 	struct ewah_bitmap *commits;
 	struct ewah_bitmap *trees;
 	struct ewah_bitmap *blobs;
