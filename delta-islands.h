@@ -12,7 +12,7 @@ void resolve_tree_islands(struct repository *r,
 			  int progress,
 			  struct packing_data *to_pack);
 void load_delta_islands(struct repository *r, int progress);
-void propagate_island_marks(struct commit *commit);
+void propagate_island_marks(struct repository *r, struct commit *commit);
 int compute_pack_layers(struct packing_data *to_pack);
 void free_island_marks(void);
 
