@@ -36,7 +36,7 @@ static const char *fast_export_usage[] = {
 };
 
 static int progress;
-static enum signed_tag_mode { SIGNED_TAG_ABORT, VERBATIM, WARN, WARN_STRIP, STRIP } signed_tag_mode = SIGNED_TAG_ABORT;
+static enum signed_tag_mode { SIGNED_TAG_ABORT, VERBATIM, WARN_VERBATIM, WARN_STRIP, STRIP } signed_tag_mode = SIGNED_TAG_ABORT;
 static enum tag_of_filtered_mode { TAG_FILTERING_ABORT, DROP, REWRITE } tag_of_filtered_mode = TAG_FILTERING_ABORT;
 static enum reencode_mode { REENCODE_ABORT, REENCODE_YES, REENCODE_NO } reencode_mode = REENCODE_ABORT;
 static int fake_missing_tagger;
@@ -62,8 +62,8 @@ static int parse_opt_signed_tag_mode(const struct option *opt,
 		*val = SIGNED_TAG_ABORT;
 	else if (!strcmp(arg, "verbatim") || !strcmp(arg, "ignore"))
 		*val = VERBATIM;
-	else if (!strcmp(arg, "warn"))
-		*val = WARN;
+	else if (!strcmp(arg, "warn-verbatim") || !strcmp(arg, "warn"))
+		*val = WARN_VERBATIM;
 	else if (!strcmp(arg, "warn-strip"))
 		*val = WARN_STRIP;
 	else if (!strcmp(arg, "strip"))
@@ -833,7 +833,7 @@ static void handle_tag(const char *name, struct tag *tag)
 				die("encountered signed tag %s; use "
 				    "--signed-tags=<mode> to handle it",
 				    oid_to_hex(&tag->object.oid));
-			case WARN:
+			case WARN_VERBATIM:
 				warning("exporting signed tag %s",
 					oid_to_hex(&tag->object.oid));
 				/* fallthru */
