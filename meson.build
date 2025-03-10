@@ -310,6 +310,7 @@ libgit_sources = [
   'graph.c',
   'grep.c',
   'hash-lookup.c',
+  'hash.c',
   'hashmap.c',
   'help.c',
   'hex.c',
