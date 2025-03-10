@@ -1314,7 +1314,7 @@ static void write_pack_file(void)
 			f = hashfd_throughput(the_repository->hash_algo, 1,
 					      "<stdout>", progress_state);
 		else
-			f = create_tmp_packfile(&pack_tmp_name);
+			f = create_tmp_packfile(the_repository, &pack_tmp_name);
 
 		offset = write_pack_header(f, nr_remaining);
 
@@ -1407,7 +1407,7 @@ static void write_pack_file(void)
 			if (cruft)
 				pack_idx_opts.flags |= WRITE_MTIMES;
 
-			stage_tmp_packfiles(the_hash_algo, &tmpname,
+			stage_tmp_packfiles(the_repository, &tmpname,
 					    pack_tmp_name, written_list,
 					    nr_written, &to_pack,
 					    &pack_idx_opts, hash,
