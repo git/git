@@ -1793,7 +1793,7 @@ static int oid_object_info_convert(struct repository *r,
 		if (type == -1)
 			return -1;
 		if (type != OBJ_BLOB) {
-			ret = convert_object_file(&outbuf,
+			ret = convert_object_file(the_repository, &outbuf,
 						  the_hash_algo, input_algo,
 						  content, size, type, !do_die);
 			free(content);
@@ -2510,7 +2510,7 @@ int write_object_file_flags(const void *buf, unsigned long len,
 			hash_object_file(compat, buf, len, type, &compat_oid);
 		else {
 			struct strbuf converted = STRBUF_INIT;
-			convert_object_file(&converted, algo, compat,
+			convert_object_file(the_repository, &converted, algo, compat,
 					    buf, len, type, 0);
 			hash_object_file(compat, converted.buf, converted.len,
 					 type, &compat_oid);
@@ -2550,7 +2550,8 @@ int write_object_file_literally(const void *buf, unsigned long len,
 					 &compat_oid);
 		else if (compat_type != -1) {
 			struct strbuf converted = STRBUF_INIT;
-			convert_object_file(&converted, algo, compat,
+			convert_object_file(the_repository,
+					    &converted, algo, compat,
 					    buf, len, compat_type, 0);
 			hash_object_file(compat, converted.buf, converted.len,
 					 compat_type, &compat_oid);
