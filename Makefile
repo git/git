@@ -9,9 +9,6 @@ all::
 
 GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN . $@
-ifneq ($(MAKECMDGOALS),clean)
--include GIT-VERSION-FILE
-endif
 
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
@@ -262,9 +259,9 @@ endif
 	$(QUIET)$(REMOVE_D0)'$(DESTDIR_SQ)$(libdir_SQ)' $(REMOVE_D1)
 	$(QUIET)$(REMOVE_D0)`dirname '$(DESTDIR_SQ)$(libdir_SQ)'` $(REMOVE_D1)
 
-dist-version:
+dist-version: GIT-VERSION-FILE
 	@mkdir -p $(TARDIR)
-	@echo $(GITGUI_VERSION) > $(TARDIR)/version
+	@sed 's|^GITGUI_VERSION=||' <GIT-VERSION-FILE  >$(TARDIR)/version
 
 clean::
 	$(RM_RF) $(GITGUI_MAIN) lib/tclIndex po/*.msg $(PO_TEMPLATE)
