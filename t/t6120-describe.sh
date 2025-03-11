@@ -292,13 +292,15 @@ test_expect_success 'name-rev --annotate-stdin' '
 		echo "$rev ($name)" >>expect.unsorted || return 1
 	done &&
 	sort <expect.unsorted >expect &&
-	git rev-list --all | git name-rev --annotate-stdin >actual.unsorted &&
+	git rev-list --all >list &&
+	git name-rev --annotate-stdin <list >actual.unsorted &&
 	sort <actual.unsorted >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'name-rev --stdin deprecated' "
-	git rev-list --all | git name-rev --stdin 2>actual &&
+	git rev-list --all >list &&
+	git name-rev --stdin <list 2>actual &&
 	grep -E 'warning: --stdin is deprecated' actual
 "
 
