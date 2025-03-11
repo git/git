@@ -298,11 +298,11 @@ test_expect_success 'name-rev --annotate-stdin' '
 	test_cmp expect actual
 '
 
-test_expect_success 'name-rev --stdin deprecated' "
+test_expect_success 'name-rev --stdin deprecated' '
 	git rev-list --all >list &&
 	git name-rev --stdin <list 2>actual &&
-	grep -E 'warning: --stdin is deprecated' actual
-"
+	test_grep "warning: --stdin is deprecated" actual
+'
 
 test_expect_success 'describe --contains with the exact tags' '
 	echo "A^0" >expect &&
