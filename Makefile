@@ -113,6 +113,7 @@ ifeq ($(uname_S),Darwin)
                 endif
         endif
 	TKEXECUTABLE = $(shell basename "$(TKFRAMEWORK)" .app)
+	TKEXECUTABLE_SQ = $(subst ','\'',$(TKEXECUTABLE))
 endif
 
 ifeq ($(findstring $(firstword -$(MAKEFLAGS)),s),s)
@@ -155,20 +156,8 @@ endif
 ifdef GITGUI_MACOSXAPP
 GITGUI_MAIN := git-gui.tcl
 
-git-gui: GIT-VERSION-FILE GIT-GUI-BUILD-OPTIONS
-	$(QUIET_GEN)rm -f $@ $@+ && \
-	echo '#!$(SHELL_PATH_SQ)' >$@+ && \
-	echo 'if test "z$$*" = zversion ||' >>$@+ && \
-	echo '   test "z$$*" = z--version' >>$@+ && \
-	echo then >>$@+ && \
-	echo '	'echo \'git-gui version '$(GITGUI_VERSION)'\' >>$@+ && \
-	echo else >>$@+ && \
-	echo '	libdir="$${GIT_GUI_LIB_DIR:-$(libdir_SQ)}"' >>$@+ && \
-	echo '	'exec \"'$$libdir/Git Gui.app/Contents/MacOS/$(subst \,,$(TKEXECUTABLE))'\" \
-		'"$$0" "$$@"' >>$@+ && \
-	echo fi >>$@+ && \
-	chmod +x $@+ && \
-	mv $@+ $@
+git-gui: generate-macos-wrapper.sh GIT-VERSION-FILE GIT-GUI-BUILD-OPTIONS
+	$(QUIET_GEN)$(SHELL_PATH) generate-macos-wrapper.sh "$@" ./GIT-GUI-BUILD-OPTIONS ./GIT-VERSION-FILE
 
 Git\ Gui.app: GIT-VERSION-FILE GIT-GUI-BUILD-OPTIONS \
 		macosx/Info.plist \
@@ -236,6 +225,7 @@ GIT-GUI-BUILD-OPTIONS: FORCE
 		-e 's|@SHELL_PATH@|$(SHELL_PATH_SQ)|' \
 		-e 's|@TCLTK_PATH@|$(TCLTK_PATH_SQ)|' \
 		-e 's|@TCL_PATH@|$(TCL_PATH_SQ)|' \
+		-e 's|@TKEXECUTABLE@|$(TKEXECUTABLE_SQ)|' \
 		$@.in >$@+
 	@if grep -q '^[A-Z][A-Z_]*=@.*@$$' $@+; then echo "Unsubstituted build options in $@" >&2 && exit 1; fi
 	@if cmp $@+ $@ >/dev/null 2>&1; then $(RM) $@+; else mv $@+ $@; fi
