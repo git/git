@@ -983,8 +983,10 @@ see test-lib-functions.sh for the full list and their options.
    SYMLINKS ...".  The script is run in a temporary directory inside
    a subshell, so you do not have to worry about removing temporary
    files you create there.  When the script exits with status 0, the
-   prerequisite is set.  Exiting with non-zero status makes the
-   prerequisite unsatisified.
+   prerequisite is set.  Exiting with non-zero status other than 125
+   makes the prerequisite unsatisified.  Exiting the script with 125
+   signals a programming error and is used to mark a prerequisite that
+   should not be used by test scripts.
 
  - test_expect_code <exit-code> <command>
 
