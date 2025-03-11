@@ -134,7 +134,6 @@ libdir_SQ  = $(subst ','\'',$(gg_libdir))
 libdir_SED = $(subst ','\'',$(subst \,\\,$(gg_libdir_sed_in)))
 exedir     = $(dir $(gitexecdir))share/git-gui/lib
 
-GITGUI_SCRIPT   := $$0
 GITGUI_RELATIVE :=
 GITGUI_MACOSXAPP :=
 
@@ -206,7 +205,6 @@ $(GITGUI_MAIN): git-gui.sh GIT-VERSION-FILE GIT-GUI-BUILD-OPTIONS
 	$(QUIET_GEN)rm -f $@ $@+ && \
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 		-e 's|@@SHELL_PATH@@|$(SHELL_PATH_SQ)|' \
-		-e '1,30s|^ argv0=$$0| argv0=$(GITGUI_SCRIPT)|' \
 		-e '1,30s|^ exec wish | exec '\''$(TCLTK_PATH_SED)'\'' |' \
 		-e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
 		-e 's|@@GITGUI_RELATIVE@@|$(GITGUI_RELATIVE)|' \
