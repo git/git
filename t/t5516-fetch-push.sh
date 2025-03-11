@@ -975,7 +975,7 @@ test_expect_success 'allow push to HEAD of non-bare repository (config)' '
 	! grep "warning: updating the current branch" stderr
 '
 
-test_expect_success WITHOUT_BREAKING_CHANGES 'fetch with branches' '
+test_expect_success !WITH_BREAKING_CHANGES 'fetch with branches' '
 	mk_empty testrepo &&
 	git branch second $the_first_commit &&
 	git checkout second &&
@@ -991,7 +991,7 @@ test_expect_success WITHOUT_BREAKING_CHANGES 'fetch with branches' '
 	git checkout main
 '
 
-test_expect_success WITHOUT_BREAKING_CHANGES 'fetch with branches containing #' '
+test_expect_success !WITH_BREAKING_CHANGES 'fetch with branches containing #' '
 	mk_empty testrepo &&
 	mkdir testrepo/.git/branches &&
 	echo "..#second" > testrepo/.git/branches/branch2 &&
@@ -1005,7 +1005,7 @@ test_expect_success WITHOUT_BREAKING_CHANGES 'fetch with branches containing #' 
 	git checkout main
 '
 
-test_expect_success WITHOUT_BREAKING_CHANGES 'push with branches' '
+test_expect_success !WITH_BREAKING_CHANGES 'push with branches' '
 	mk_empty testrepo &&
 	git checkout second &&
 
@@ -1022,7 +1022,7 @@ test_expect_success WITHOUT_BREAKING_CHANGES 'push with branches' '
 	)
 '
 
-test_expect_success WITHOUT_BREAKING_CHANGES 'push with branches containing #' '
+test_expect_success !WITH_BREAKING_CHANGES 'push with branches containing #' '
 	mk_empty testrepo &&
 
 	test_when_finished "rm -rf .git/branches" &&
