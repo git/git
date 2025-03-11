@@ -8,7 +8,7 @@ all::
 #
 
 GIT-VERSION-FILE: FORCE
-	@$(SHELL_PATH) ./GIT-VERSION-GEN
+	@$(SHELL_PATH) ./GIT-VERSION-GEN . $@
 ifneq ($(MAKECMDGOALS),clean)
 -include GIT-VERSION-FILE
 endif
