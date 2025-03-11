@@ -127,7 +127,6 @@ gitexecdir_SQ = $(subst ','\'',$(gitexecdir))
 SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 TCL_PATH_SQ = $(subst ','\'',$(TCL_PATH))
 TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
-TCLTK_PATH_SED = $(subst ','\'',$(subst \,\\,$(TCLTK_PATH)))
 
 gg_libdir ?= $(sharedir)/git-gui/lib
 libdir_SQ  = $(subst ','\'',$(gg_libdir))
@@ -202,16 +201,7 @@ git-gui: windows/git-gui.sh
 endif
 
 $(GITGUI_MAIN): git-gui.sh GIT-VERSION-FILE GIT-GUI-BUILD-OPTIONS
-	$(QUIET_GEN)rm -f $@ $@+ && \
-	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
-		-e 's|@@SHELL_PATH@@|$(SHELL_PATH_SQ)|' \
-		-e '1,30s|^ exec wish | exec '\''$(TCLTK_PATH_SED)'\'' |' \
-		-e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
-		-e 's|@@GITGUI_RELATIVE@@|$(GITGUI_RELATIVE)|' \
-		-e '$(GITGUI_RELATIVE)s|@@GITGUI_LIBDIR@@|$(libdir_SED)|' \
-		git-gui.sh >$@+ && \
-	chmod +x $@+ && \
-	mv $@+ $@
+	$(QUIET_GEN)$(SHELL_PATH) generate-git-gui.sh "$<" "$@" ./GIT-GUI-BUILD-OPTIONS ./GIT-VERSION-FILE
 
 XGETTEXT   ?= xgettext
 ifdef NO_MSGFMT
