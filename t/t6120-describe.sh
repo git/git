@@ -300,8 +300,14 @@ test_expect_success 'name-rev --annotate-stdin' '
 
 test_expect_success 'name-rev --stdin deprecated' '
 	git rev-list --all >list &&
-	git name-rev --stdin <list 2>actual &&
-	test_grep "warning: --stdin is deprecated" actual
+	if ! test_have_prereq WITH_BREAKING_CHANGES
+	then
+		git name-rev --stdin <list 2>actual &&
+		test_grep "warning: --stdin is deprecated" actual
+	else
+		test_must_fail git name-rev --stdin <list 2>actual &&
+		test_grep "unknown option .stdin." actual
+	fi
 '
 
 test_expect_success 'describe --contains with the exact tags' '
