@@ -285,3 +285,4 @@ Fixes since v2.48
    (merge 832f56f06a jc/doc-boolean-synonyms later to maint).
    (merge 3eeed876a9 ac/doc-http-ssl-type-config later to maint).
    (merge c268e3285d jc/breaking-changes-early-adopter-option later to maint).
+   (merge 0d03fda6a5 pb/doc-follow-remote-head later to maint).
