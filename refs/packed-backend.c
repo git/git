@@ -954,9 +954,6 @@ static int packed_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		return ITER_OK;
 	}
 
-	if (ref_iterator_abort(ref_iterator) != ITER_DONE)
-		ok = ITER_ERROR;
-
 	return ok;
 }
 
@@ -976,23 +973,19 @@ static int packed_ref_iterator_peel(struct ref_iterator *ref_iterator,
 	}
 }
 
-static int packed_ref_iterator_abort(struct ref_iterator *ref_iterator)
+static void packed_ref_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct packed_ref_iterator *iter =
 		(struct packed_ref_iterator *)ref_iterator;
-	int ok = ITER_DONE;
-
 	strbuf_release(&iter->refname_buf);
 	free(iter->jump);
 	release_snapshot(iter->snapshot);
-	base_ref_iterator_free(ref_iterator);
-	return ok;
 }
 
 static struct ref_iterator_vtable packed_ref_iterator_vtable = {
 	.advance = packed_ref_iterator_advance,
 	.peel = packed_ref_iterator_peel,
-	.abort = packed_ref_iterator_abort
+	.release = packed_ref_iterator_release,
 };
 
 static int jump_list_entry_cmp(const void *va, const void *vb)
@@ -1362,8 +1355,10 @@ static int write_with_updates(struct packed_ref_store *refs,
 	 */
 	iter = packed_ref_iterator_begin(&refs->base, "", NULL,
 					 DO_FOR_EACH_INCLUDE_BROKEN);
-	if ((ok = ref_iterator_advance(iter)) != ITER_OK)
+	if ((ok = ref_iterator_advance(iter)) != ITER_OK) {
+		ref_iterator_free(iter);
 		iter = NULL;
+	}
 
 	i = 0;
 
@@ -1411,8 +1406,10 @@ static int write_with_updates(struct packed_ref_store *refs,
 				 * the iterator over the unneeded
 				 * value.
 				 */
-				if ((ok = ref_iterator_advance(iter)) != ITER_OK)
+				if ((ok = ref_iterator_advance(iter)) != ITER_OK) {
+					ref_iterator_free(iter);
 					iter = NULL;
+				}
 				cmp = +1;
 			} else {
 				/*
@@ -1449,8 +1446,10 @@ static int write_with_updates(struct packed_ref_store *refs,
 					       peel_error ? NULL : &peeled))
 				goto write_error;
 
-			if ((ok = ref_iterator_advance(iter)) != ITER_OK)
+			if ((ok = ref_iterator_advance(iter)) != ITER_OK) {
+				ref_iterator_free(iter);
 				iter = NULL;
+			}
 		} else if (is_null_oid(&update->new_oid)) {
 			/*
 			 * The update wants to delete the reference,
@@ -1499,9 +1498,7 @@ write_error:
 		    get_tempfile_path(refs->tempfile), strerror(errno));
 
 error:
-	if (iter)
-		ref_iterator_abort(iter);
-
+	ref_iterator_free(iter);
 	delete_tempfile(&refs->tempfile);
 	return -1;
 }

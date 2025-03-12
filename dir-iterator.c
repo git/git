@@ -193,9 +193,9 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
 
 	if (S_ISDIR(iter->base.st.st_mode) && push_level(iter)) {
 		if (errno != ENOENT && iter->flags & DIR_ITERATOR_PEDANTIC)
-			goto error_out;
+			return ITER_ERROR;
 		if (iter->levels_nr == 0)
-			goto error_out;
+			return ITER_ERROR;
 	}
 
 	/* Loop until we find an entry that we can give back to the caller. */
@@ -211,11 +211,11 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
 			int ret = next_directory_entry(level->dir, iter->base.path.buf, &de);
 			if (ret < 0) {
 				if (iter->flags & DIR_ITERATOR_PEDANTIC)
-					goto error_out;
+					return ITER_ERROR;
 				continue;
 			} else if (ret > 0) {
 				if (pop_level(iter) == 0)
-					return dir_iterator_abort(dir_iterator);
+					return ITER_DONE;
 				continue;
 			}
 
@@ -223,7 +223,7 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
 		} else {
 			if (level->entries_idx >= level->entries.nr) {
 				if (pop_level(iter) == 0)
-					return dir_iterator_abort(dir_iterator);
+					return ITER_DONE;
 				continue;
 			}
 
@@ -232,21 +232,20 @@ int dir_iterator_advance(struct dir_iterator *dir_iterator)
 
 		if (prepare_next_entry_data(iter, name)) {
 			if (errno != ENOENT && iter->flags & DIR_ITERATOR_PEDANTIC)
-				goto error_out;
+				return ITER_ERROR;
 			continue;
 		}
 
 		return ITER_OK;
 	}
-
-error_out:
-	dir_iterator_abort(dir_iterator);
-	return ITER_ERROR;
 }
 
-int dir_iterator_abort(struct dir_iterator *dir_iterator)
+void dir_iterator_free(struct dir_iterator *dir_iterator)
 {
 	struct dir_iterator_int *iter = (struct dir_iterator_int *)dir_iterator;
+
+	if (!iter)
+		return;
 
 	for (; iter->levels_nr; iter->levels_nr--) {
 		struct dir_iterator_level *level =
@@ -266,7 +265,6 @@ int dir_iterator_abort(struct dir_iterator *dir_iterator)
 	free(iter->levels);
 	strbuf_release(&iter->base.path);
 	free(iter);
-	return ITER_DONE;
 }
 
 struct dir_iterator *dir_iterator_begin(const char *path, unsigned int flags)
@@ -301,7 +299,7 @@ struct dir_iterator *dir_iterator_begin(const char *path, unsigned int flags)
 	return dir_iterator;
 
 error_out:
-	dir_iterator_abort(dir_iterator);
+	dir_iterator_free(dir_iterator);
 	errno = saved_errno;
 	return NULL;
 }

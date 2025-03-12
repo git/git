@@ -2485,6 +2485,7 @@ int refs_verify_refnames_available(struct ref_store *refs,
 	struct strbuf dirname = STRBUF_INIT;
 	struct strbuf referent = STRBUF_INIT;
 	struct string_list_item *item;
+	struct ref_iterator *iter = NULL;
 	struct strset dirnames;
 	int ret = -1;
 
@@ -2561,7 +2562,6 @@ int refs_verify_refnames_available(struct ref_store *refs,
 		strbuf_addch(&dirname, '/');
 
 		if (!initial_transaction) {
-			struct ref_iterator *iter;
 			int ok;
 
 			iter = refs_ref_iterator_begin(refs, dirname.buf, NULL, 0,
@@ -2573,12 +2573,14 @@ int refs_verify_refnames_available(struct ref_store *refs,
 
 				strbuf_addf(err, _("'%s' exists; cannot create '%s'"),
 					    iter->refname, refname);
-				ref_iterator_abort(iter);
 				goto cleanup;
 			}
 
 			if (ok != ITER_DONE)
 				BUG("error while iterating over references");
+
+			ref_iterator_free(iter);
+			iter = NULL;
 		}
 
 		extra_refname = find_descendant_ref(dirname.buf, extras, skip);
@@ -2595,6 +2597,7 @@ cleanup:
 	strbuf_release(&referent);
 	strbuf_release(&dirname);
 	strset_clear(&dirnames);
+	ref_iterator_free(iter);
 	return ret;
 }
 

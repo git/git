@@ -915,10 +915,6 @@ static int files_ref_iterator_advance(struct ref_iterator *ref_iterator)
 		return ITER_OK;
 	}
 
-	iter->iter0 = NULL;
-	if (ref_iterator_abort(ref_iterator) != ITER_DONE)
-		ok = ITER_ERROR;
-
 	return ok;
 }
 
@@ -931,23 +927,17 @@ static int files_ref_iterator_peel(struct ref_iterator *ref_iterator,
 	return ref_iterator_peel(iter->iter0, peeled);
 }
 
-static int files_ref_iterator_abort(struct ref_iterator *ref_iterator)
+static void files_ref_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct files_ref_iterator *iter =
 		(struct files_ref_iterator *)ref_iterator;
-	int ok = ITER_DONE;
-
-	if (iter->iter0)
-		ok = ref_iterator_abort(iter->iter0);
-
-	base_ref_iterator_free(ref_iterator);
-	return ok;
+	ref_iterator_free(iter->iter0);
 }
 
 static struct ref_iterator_vtable files_ref_iterator_vtable = {
 	.advance = files_ref_iterator_advance,
 	.peel = files_ref_iterator_peel,
-	.abort = files_ref_iterator_abort,
+	.release = files_ref_iterator_release,
 };
 
 static struct ref_iterator *files_ref_iterator_begin(
@@ -1378,7 +1368,7 @@ static int should_pack_refs(struct files_ref_store *refs,
 				    iter->flags, opts))
 			refcount++;
 		if (refcount >= limit) {
-			ref_iterator_abort(iter);
+			ref_iterator_free(iter);
 			return 1;
 		}
 	}
@@ -1386,6 +1376,7 @@ static int should_pack_refs(struct files_ref_store *refs,
 	if (ret != ITER_DONE)
 		die("error while iterating over references");
 
+	ref_iterator_free(iter);
 	return 0;
 }
 
@@ -1452,6 +1443,7 @@ static int files_pack_refs(struct ref_store *ref_store,
 	packed_refs_unlock(refs->packed_ref_store);
 
 	prune_refs(refs, &refs_to_prune);
+	ref_iterator_free(iter);
 	strbuf_release(&err);
 	return 0;
 }
@@ -2299,9 +2291,6 @@ static int files_reflog_iterator_advance(struct ref_iterator *ref_iterator)
 		return ITER_OK;
 	}
 
-	iter->dir_iterator = NULL;
-	if (ref_iterator_abort(ref_iterator) == ITER_ERROR)
-		ok = ITER_ERROR;
 	return ok;
 }
 
@@ -2311,23 +2300,17 @@ static int files_reflog_iterator_peel(struct ref_iterator *ref_iterator UNUSED,
 	BUG("ref_iterator_peel() called for reflog_iterator");
 }
 
-static int files_reflog_iterator_abort(struct ref_iterator *ref_iterator)
+static void files_reflog_iterator_release(struct ref_iterator *ref_iterator)
 {
 	struct files_reflog_iterator *iter =
 		(struct files_reflog_iterator *)ref_iterator;
-	int ok = ITER_DONE;
-
-	if (iter->dir_iterator)
-		ok = dir_iterator_abort(iter->dir_iterator);
-
-	base_ref_iterator_free(ref_iterator);
-	return ok;
+	dir_iterator_free(iter->dir_iterator);
 }
 
 static struct ref_iterator_vtable files_reflog_iterator_vtable = {
 	.advance = files_reflog_iterator_advance,
 	.peel = files_reflog_iterator_peel,
-	.abort = files_reflog_iterator_abort,
+	.release = files_reflog_iterator_release,
 };
 
 static struct ref_iterator *reflog_iterator_begin(struct ref_store *ref_store,
@@ -3837,6 +3820,7 @@ static int files_fsck_refs_dir(struct ref_store *ref_store,
 		ret = error(_("failed to iterate over '%s'"), sb.buf);
 
 out:
+	dir_iterator_free(iter);
 	strbuf_release(&sb);
 	strbuf_release(&refname);
 	return ret;
