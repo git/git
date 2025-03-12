@@ -581,7 +581,6 @@ builtin_sources = [
   'builtin/name-rev.c',
   'builtin/notes.c',
   'builtin/pack-objects.c',
-  'builtin/pack-redundant.c',
   'builtin/pack-refs.c',
   'builtin/patch-id.c',
   'builtin/prune-packed.c',
@@ -631,6 +630,10 @@ builtin_sources = [
   'builtin/worktree.c',
   'builtin/write-tree.c',
 ]
+
+if not get_option('breaking_changes')
+  builtin_sources += 'builtin/pack-redundant.c'
+endif
 
 builtin_sources += custom_target(
   output: 'config-list.h',
