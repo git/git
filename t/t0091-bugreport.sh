@@ -47,7 +47,8 @@ test_expect_success 'sanity check "System Info" section' '
 	# This is bound to differ from environment to environment,
 	# so we just do some rather high-level checks.
 	grep "uname: ." system &&
-	grep "compiler info: ." system
+	grep "compiler info: ." system &&
+	grep "zlib." system
 '
 
 test_expect_success 'dies if file with same name as report already exists' '
