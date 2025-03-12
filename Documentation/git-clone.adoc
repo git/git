@@ -288,9 +288,9 @@ corresponding `--mirror` and `--no-tags` options instead.
 	`remote.<remote>.tagOpt=--no-tags` configuration. This ensures that
 	future `git pull` and `git fetch` won't follow any tags. Subsequent
 	explicit tag fetches will still work (see linkgit:git-fetch[1]).
-
-	By default, tags are cloned and passing `--tags` is thus typically a
-	no-op, unless it cancels out a previous `--no-tags`.
++
+By default, tags are cloned and passing `--tags` is thus typically a
+no-op, unless it cancels out a previous `--no-tags`.
 +
 Can be used in conjunction with `--single-branch` to clone and
 maintain a branch with no references other than a single cloned
