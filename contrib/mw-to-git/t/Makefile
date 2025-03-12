@@ -8,7 +8,8 @@
 #
 ## Test git-remote-mediawiki
 
-all: test
+# The default target of this Makefile is...
+all:: test
 
 -include ../../../config.mak.autogen
 -include ../../../config.mak

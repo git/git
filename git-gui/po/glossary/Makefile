@@ -1,3 +1,6 @@
+# The default target of this Makefile is...
+update-po::
+
 PO_TEMPLATE = git-gui-glossary.pot
 
 ALL_POFILES = $(wildcard *.po)

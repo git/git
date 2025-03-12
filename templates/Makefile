@@ -1,3 +1,6 @@
+# The default target of this Makefile is...
+all::
+
 # Import tree-wide shared Makefile behavior and libraries
 include ../shared.mak
 
@@ -23,7 +26,7 @@ PERL_PATH_SQ = $(subst ','\'',$(PERL_PATH))
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 template_instdir_SQ = $(subst ','\'',$(template_instdir))
 
-all: boilerplates.made custom
+all:: boilerplates.made custom
 
 # Put templates that can be copied straight from the source
 # in a file direc--tory--file in the source.  They will be

@@ -12,6 +12,9 @@
 #
 #   make install
 
+# The default target of this Makefile is...
+all::
+
 GIT_MEDIAWIKI_PM=Git/Mediawiki.pm
 SCRIPT_PERL=git-remote-mediawiki.perl
 SCRIPT_PERL+=git-mw.perl
@@ -27,7 +30,7 @@ INSTLIBDIR=$(shell $(MAKE) -C $(GIT_ROOT_DIR)/ \
 DESTDIR_SQ = $(subst ','\'',$(DESTDIR))
 INSTLIBDIR_SQ = $(subst ','\'',$(INSTLIBDIR))
 
-all: build
+all:: build
 
 test: all
 	$(MAKE) -C t

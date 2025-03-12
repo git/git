@@ -375,7 +375,7 @@ static int xdl_format_hunk_hdr(long s1, long c1, long s2, long c2,
 	nb += 3;
 	if (func && funclen) {
 		buf[nb++] = ' ';
-		if (funclen > sizeof(buf) - nb - 1)
+		if ((size_t)funclen > sizeof(buf) - nb - 1)
 			funclen = sizeof(buf) - nb - 1;
 		memcpy(buf + nb, func, funclen);
 		nb += funclen;
@@ -437,7 +437,7 @@ void* xdl_alloc_grow_helper(void *p, long nr, long *alloc, size_t size)
 {
 	void *tmp = NULL;
 	size_t n = ((LONG_MAX - 16) / 2 >= *alloc) ? 2 * *alloc + 16 : LONG_MAX;
-	if (nr > n)
+	if ((size_t)nr > n)
 		n = nr;
 	if (SIZE_MAX / size >= n)
 		tmp = xdl_realloc(p, n * size);

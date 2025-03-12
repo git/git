@@ -1,3 +1,6 @@
+# The default target of this Makefile is...
+all::
+
 # Import tree-wide shared Makefile behavior and libraries
 include ../shared.mak
 
@@ -238,7 +241,7 @@ DEFAULT_EDITOR_SQ = $(subst ','\'',$(DEFAULT_EDITOR))
 ASCIIDOC_EXTRA += -a 'git-default-editor=$(DEFAULT_EDITOR_SQ)'
 endif
 
-all: html man
+all:: html man
 
 html: $(DOC_HTML)
 

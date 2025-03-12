@@ -5493,6 +5493,8 @@ static int diff_opt_pickaxe_regex(const struct option *opt,
 	BUG_ON_OPT_NEG(unset);
 	options->pickaxe = arg;
 	options->pickaxe_opts |= DIFF_PICKAXE_KIND_G;
+	if (arg && !*arg)
+		return error(_("-G requires a non-empty argument"));
 	return 0;
 }
 
@@ -5504,6 +5506,8 @@ static int diff_opt_pickaxe_string(const struct option *opt,
 	BUG_ON_OPT_NEG(unset);
 	options->pickaxe = arg;
 	options->pickaxe_opts |= DIFF_PICKAXE_KIND_S;
+	if (arg && !*arg)
+		return error(_("-S requires a non-empty argument"));
 	return 0;
 }
 

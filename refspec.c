@@ -269,28 +269,28 @@ void refspec_ref_prefixes(const struct refspec *rs,
 	}
 }
 
-int match_name_with_pattern(const char *key, const char *name,
-				   const char *value, char **result)
+int match_refname_with_pattern(const char *pattern, const char *refname,
+				   const char *replacement, char **result)
 {
-	const char *kstar = strchr(key, '*');
+	const char *kstar = strchr(pattern, '*');
 	size_t klen;
 	size_t ksuffixlen;
 	size_t namelen;
 	int ret;
 	if (!kstar)
-		die(_("key '%s' of pattern had no '*'"), key);
-	klen = kstar - key;
+		die(_("pattern '%s' has no '*'"), pattern);
+	klen = kstar - pattern;
 	ksuffixlen = strlen(kstar + 1);
-	namelen = strlen(name);
-	ret = !strncmp(name, key, klen) && namelen >= klen + ksuffixlen &&
-		!memcmp(name + namelen - ksuffixlen, kstar + 1, ksuffixlen);
-	if (ret && value) {
+	namelen = strlen(refname);
+	ret = !strncmp(refname, pattern, klen) && namelen >= klen + ksuffixlen &&
+		!memcmp(refname + namelen - ksuffixlen, kstar + 1, ksuffixlen);
+	if (ret && replacement) {
 		struct strbuf sb = STRBUF_INIT;
-		const char *vstar = strchr(value, '*');
+		const char *vstar = strchr(replacement, '*');
 		if (!vstar)
-			die(_("value '%s' of pattern has no '*'"), value);
-		strbuf_add(&sb, value, vstar - value);
-		strbuf_add(&sb, name + klen, namelen - klen - ksuffixlen);
+			die(_("replacement '%s' has no '*'"), replacement);
+		strbuf_add(&sb, replacement, vstar - replacement);
+		strbuf_add(&sb, refname + klen, namelen - klen - ksuffixlen);
 		strbuf_addstr(&sb, vstar + 1);
 		*result = strbuf_detach(&sb, NULL);
 	}
@@ -301,7 +301,7 @@ static int refspec_match(const struct refspec_item *refspec,
 			 const char *name)
 {
 	if (refspec->pattern)
-		return match_name_with_pattern(refspec->src, name, NULL, NULL);
+		return match_refname_with_pattern(refspec->src, name, NULL, NULL);
 
 	return !strcmp(refspec->src, name);
 }
@@ -352,7 +352,7 @@ static int refspec_find_negative_match(struct refspec *rs, struct refspec_item *
 			const char *key = refspec->dst ? refspec->dst : refspec->src;
 			const char *value = refspec->src;
 
-			if (match_name_with_pattern(key, needle, value, &expn_name))
+			if (match_refname_with_pattern(key, needle, value, &expn_name))
 				string_list_append_nodup(&reversed, expn_name);
 		} else if (refspec->matching) {
 			/* For the special matching refspec, any query should match */
@@ -397,7 +397,7 @@ void refspec_find_all_matches(struct refspec *rs,
 		if (!refspec->dst || refspec->negative)
 			continue;
 		if (refspec->pattern) {
-			if (match_name_with_pattern(key, needle, value, result))
+			if (match_refname_with_pattern(key, needle, value, result))
 				string_list_append_nodup(results, *result);
 		} else if (!strcmp(needle, key)) {
 			string_list_append(results, value);
@@ -426,7 +426,7 @@ int refspec_find_match(struct refspec *rs, struct refspec_item *query)
 		if (!refspec->dst || refspec->negative)
 			continue;
 		if (refspec->pattern) {
-			if (match_name_with_pattern(key, needle, value, result)) {
+			if (match_refname_with_pattern(key, needle, value, result)) {
 				query->force = refspec->force;
 				return 0;
 			}

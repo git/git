@@ -1,4 +1,5 @@
-all: git-credential-wincred.exe
+# The default target of this Makefile is...
+all:: git-credential-wincred.exe
 
 -include ../../../config.mak.autogen
 -include ../../../config.mak

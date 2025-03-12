@@ -93,6 +93,22 @@ test_expect_success 'usage: --no-pickaxe-regex' '
 	test_cmp expect actual
 '
 
+test_expect_success 'usage: -G and -S with empty argument' '
+	cat >expect <<-\EOF &&
+	error: -S requires a non-empty argument
+	EOF
+
+	test_expect_code 129 git log -S "" 2>actual &&
+	test_cmp expect actual &&
+
+	cat >expect <<-\EOF &&
+	error: -G requires a non-empty argument
+	EOF
+
+	test_expect_code 129 git log -G "" 2>actual &&
+	test_cmp expect actual
+'
+
 test_log	expect_initial	--grep initial
 test_log	expect_nomatch	--grep InItial
 test_log_icase	expect_initial	--grep InItial

@@ -35,7 +35,7 @@ static void check_mailmap(struct string_list *mailmap, const char *contact)
 		mail = ident.mail_begin;
 		maillen = ident.mail_end - ident.mail_begin;
 	} else {
-		name = NULL;
+		name = "";
 		namelen = 0;
 		mail = contact;
 		maillen = strlen(contact);

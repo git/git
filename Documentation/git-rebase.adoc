@@ -599,11 +599,11 @@ See also INCOMPATIBLE OPTIONS below.
 --no-autosquash::
 	Automatically squash commits with specially formatted messages into
 	previous commits being rebased.  If a commit message starts with
-	"squash! ", "fixup! " or "amend! ", the remainder of the subject line
+	"squash! ", "fixup! " or "amend! ", the remainder of the title
 	is taken as a commit specifier, which matches a previous commit if it
-	matches the subject line or the hash of that commit.  If no commit
+	matches the title or the hash of that commit.  If no commit
 	matches fully, matches of the specifier with the start of commit
-	subjects are considered.
+	titles are considered.
 +
 In the rebase todo list, the actions of squash, fixup and amend commits are
 changed from `pick` to `squash`, `fixup` or `fixup -C`, respectively, and they
@@ -613,7 +613,7 @@ be used to review and edit the todo list before proceeding.
 The recommended way to create commits with squash markers is by using the
 `--squash`, `--fixup`, `--fixup=amend:` or `--fixup=reword:` options of
 linkgit:git-commit[1], which take the target commit as an argument and
-automatically fill in the subject line of the new commit from that.
+automatically fill in the title of the new commit from that.
 +
 Setting configuration variable `rebase.autoSquash` to true enables
 auto-squashing by default for interactive rebase.  The `--no-autosquash`
