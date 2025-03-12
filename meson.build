@@ -672,12 +672,6 @@ build_options_config.set_quoted('GIT_TEST_UTF8_LOCALE', get_option('test_utf8_lo
 build_options_config.set_quoted('LOCALEDIR', fs.as_posix(get_option('prefix') / get_option('localedir')))
 build_options_config.set('GITWEBDIR', fs.as_posix(get_option('prefix') / get_option('datadir') / 'gitweb'))
 
-if get_option('breaking_changes')
-  build_options_config.set('WITH_BREAKING_CHANGES', 'YesPlease')
-else
-  build_options_config.set('WITH_BREAKING_CHANGES', '')
-endif
-
 if get_option('sane_tool_path').length() != 0
   sane_tool_path = (host_machine.system() == 'windows' ? ';' : ':').join(get_option('sane_tool_path'))
   build_options_config.set_quoted('BROKEN_PATH_FIX', 's|^\# @BROKEN_PATH_FIX@$|git_broken_path_fix "' + sane_tool_path + '"|')
@@ -737,6 +731,13 @@ if get_option('warning_level') in ['2','3', 'everything'] and compiler.get_argum
       libgit_c_args += cflag
     endif
   endforeach
+endif
+
+if get_option('breaking_changes')
+  build_options_config.set('WITH_BREAKING_CHANGES', 'YesPlease')
+  libgit_c_args += '-DWITH_BREAKING_CHANGES'
+else
+  build_options_config.set('WITH_BREAKING_CHANGES', '')
 endif
 
 if get_option('b_sanitize').contains('address')
