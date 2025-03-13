@@ -3448,6 +3448,11 @@ static int detect_and_process_renames(struct merge_options *opt)
 
 	if (!possible_renames(renames))
 		goto cleanup;
+	if (!opt->detect_renames) {
+		renames->redo_after_renames = 0;
+		renames->cached_pairs_valid_side = 0;
+		goto cleanup;
+	}
 
 	trace2_region_enter("merge", "regular renames", opt->repo);
 	detection_run |= detect_regular_renames(opt, MERGE_SIDE1);
