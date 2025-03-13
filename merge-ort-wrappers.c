@@ -33,6 +33,7 @@ int merge_ort_nonrecursive(struct merge_options *opt,
 			   struct tree *merge_base)
 {
 	struct merge_result result;
+	int show_msgs;
 
 	if (unclean(opt, head))
 		return -1;
@@ -42,9 +43,10 @@ int merge_ort_nonrecursive(struct merge_options *opt,
 		return 1;
 	}
 
+	show_msgs = !!opt->verbosity;
 	memset(&result, 0, sizeof(result));
 	merge_incore_nonrecursive(opt, merge_base, head, merge, &result);
-	merge_switch_to_result(opt, head, &result, 1, 1);
+	merge_switch_to_result(opt, head, &result, 1, show_msgs);
 
 	return result.clean;
 }
@@ -57,13 +59,15 @@ int merge_ort_recursive(struct merge_options *opt,
 {
 	struct tree *head = repo_get_commit_tree(opt->repo, side1);
 	struct merge_result tmp;
+	int show_msgs;
 
 	if (unclean(opt, head))
 		return -1;
 
+	show_msgs = !!opt->verbosity;
 	memset(&tmp, 0, sizeof(tmp));
 	merge_incore_recursive(opt, merge_bases, side1, side2, &tmp);
-	merge_switch_to_result(opt, head, &tmp, 1, 1);
+	merge_switch_to_result(opt, head, &tmp, 1, show_msgs);
 	*result = NULL;
 
 	return tmp.clean;
