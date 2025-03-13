@@ -195,7 +195,7 @@ test_expect_success 'using replay on bare repo to rebase multiple divergent bran
 	done
 '
 
-test_expect_failure 'merge.directoryRenames=false' '
+test_expect_success 'merge.directoryRenames=false' '
 	# create a test case that stress-tests the rename caching
 	git switch -c rename-onto &&
 
