@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2024-12-20 17:44+0100\n"
-"PO-Revision-Date: 2024-12-27 16:43+0100\n"
+"POT-Creation-Date: 2025-03-06 18:29+0100\n"
+"PO-Revision-Date: 2025-03-07 17:28+0100\n"
 "Last-Translator: Ralf Thielow <ralf.thielow@gmail.com>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -2400,6 +2400,18 @@ msgstr "git archive: Protokollfehler"
 msgid "git archive: expected a flush"
 msgstr "git archive: erwartete eine Spülung (flush)"
 
+msgid "git backfill [--min-batch-size=<n>] [--[no-]sparse]"
+msgstr "git backfill [--min-batch-size=<n>] [--[no-]sparse]"
+
+msgid "problem loading sparse-checkout"
+msgstr "Problem beim Laden von sparse-checkout"
+
+msgid "Minimum number of objects to request at a time"
+msgstr "Mindestanzahl der gleichzeitig anzufordernden Objekte"
+
+msgid "Restrict the missing objects to the current sparse-checkout"
+msgstr "fehlenden Objekte im aktuellen sparse-checkout beschränken"
+
 msgid ""
 "git bisect start [--term-(new|bad)=<term> --term-(old|good)=<term>]    [--no-"
 "checkout] [--first-parent] [<bad> [<good>...]] [--]    [<pathspec>...]"
@@ -3166,10 +3178,6 @@ msgstr ""
 
 msgid "git version:\n"
 msgstr "git Version:\n"
-
-#, c-format
-msgid "uname() failed with error '%s' (%d)\n"
-msgstr "uname() ist fehlgeschlagen mit Fehler '%s' (%d)\n"
 
 msgid "compiler info: "
 msgstr "Compiler Info: "
@@ -4201,131 +4209,6 @@ msgstr ""
 "clean.requireForce ist 'true' und -f ist nicht angegeben: clean wird "
 "verweigert"
 
-msgid "git clone [<options>] [--] <repo> [<dir>]"
-msgstr "git clone [<Optionen>] [--] <Repository> [<Verzeichnis>]"
-
-msgid "don't clone shallow repository"
-msgstr "Repository mit unvollständiger Historie nicht klonen"
-
-msgid "don't create a checkout"
-msgstr "kein Auschecken"
-
-msgid "create a bare repository"
-msgstr "ein Bare-Repository erstellen"
-
-msgid "create a mirror repository (implies --bare)"
-msgstr "ein Spiegel-Repository erstellen (impliziert --bare)"
-
-msgid "to clone from a local repository"
-msgstr "von einem lokalen Repository klonen"
-
-msgid "don't use local hardlinks, always copy"
-msgstr "lokal keine harten Verweise verwenden, immer Kopien"
-
-msgid "setup as shared repository"
-msgstr "als verteiltes Repository einrichten"
-
-msgid "pathspec"
-msgstr "Pfadspezifikation"
-
-msgid "initialize submodules in the clone"
-msgstr "Submodule im Klon initialisieren"
-
-msgid "number of submodules cloned in parallel"
-msgstr "Anzahl der parallel zu klonenden Submodule"
-
-msgid "template-directory"
-msgstr "Vorlagenverzeichnis"
-
-msgid "directory from which templates will be used"
-msgstr "Verzeichnis, von welchem die Vorlagen verwendet werden"
-
-msgid "reference repository"
-msgstr "Repository referenzieren"
-
-msgid "use --reference only while cloning"
-msgstr "--reference nur während des Klonens benutzen"
-
-msgid "name"
-msgstr "Name"
-
-msgid "use <name> instead of 'origin' to track upstream"
-msgstr "<Name> statt 'origin' für Upstream-Repository verwenden"
-
-msgid "checkout <branch> instead of the remote's HEAD"
-msgstr "<Branch> auschecken, anstatt HEAD des Remote-Repositories"
-
-msgid "path to git-upload-pack on the remote"
-msgstr "Pfad zu \"git-upload-pack\" auf der Gegenseite"
-
-msgid "depth"
-msgstr "Tiefe"
-
-msgid "create a shallow clone of that depth"
-msgstr ""
-"einen Klon mit unvollständiger Historie (shallow) in dieser Tiefe erstellen"
-
-msgid "create a shallow clone since a specific time"
-msgstr ""
-"einen Klon mit unvollständiger Historie (shallow) seit einer bestimmten "
-"Zeit\n"
-"erstellen"
-
-msgid "ref"
-msgstr "Referenz"
-
-msgid "deepen history of shallow clone, excluding ref"
-msgstr "Historie eines flachen Klons vertiefen, Referenz exkludiert"
-
-msgid "clone only one branch, HEAD or --branch"
-msgstr "nur einen Branch klonen, HEAD oder --branch"
-
-msgid "don't clone any tags, and make later fetches not to follow them"
-msgstr "keine Tags klonen, und auch bei späteren Abrufen nicht beachten"
-
-msgid "any cloned submodules will be shallow"
-msgstr "jedes geklonte Submodul mit unvollständiger Historie (shallow)"
-
-msgid "gitdir"
-msgstr ".git-Verzeichnis"
-
-msgid "separate git dir from working tree"
-msgstr "Git-Verzeichnis vom Arbeitsverzeichnis separieren"
-
-msgid "specify the reference format to use"
-msgstr "das zu verwendende Referenzformat angeben"
-
-msgid "key=value"
-msgstr "Schlüssel=Wert"
-
-msgid "set config inside the new repository"
-msgstr "Konfiguration innerhalb des neuen Repositories setzen"
-
-msgid "server-specific"
-msgstr "serverspezifisch"
-
-msgid "option to transmit"
-msgstr "Option übertragen"
-
-msgid "apply partial clone filters to submodules"
-msgstr "partielle Klonfilter auf Submodule anwenden"
-
-msgid "any cloned submodules will use their remote-tracking branch"
-msgstr "jedes geklonte Submodul nutzt seinen Remote-Tracking-Branch"
-
-msgid "initialize sparse-checkout file to include only files at root"
-msgstr ""
-"Initialisiere Datei für partiellen Checkout, um nur Dateien im\n"
-"Root-Verzeichnis einzubeziehen"
-
-msgid "uri"
-msgstr "uri"
-
-msgid "a URI for downloading bundles before fetching from origin remote"
-msgstr ""
-"eine URI für das Herunterladen von Bundles vor dem Abruf\n"
-"aus dem ursprünglichen Remote-Repository"
-
 #, c-format
 msgid "info: Could not add alternate for '%s': %s\n"
 msgstr "info: Konnte Alternative für '%s' nicht hinzufügen: %s\n"
@@ -4389,10 +4272,6 @@ msgstr ""
 "Sie können mit 'git status' prüfen, was ausgecheckt worden ist\n"
 "und das Auschecken mit 'git restore --source=HEAD :/' erneut versuchen.\n"
 
-#, c-format
-msgid "Could not find remote branch %s to clone."
-msgstr "Konnte zu klonenden Remote-Branch %s nicht finden."
-
 msgid "remote did not send all necessary objects"
 msgstr "Remote-Repository hat nicht alle erforderlichen Objekte gesendet"
 
@@ -4419,6 +4298,134 @@ msgstr "Kann \"repack\" zum Aufräumen nicht aufrufen"
 
 msgid "cannot unlink temporary alternates file"
 msgstr "Kann temporäre \"alternates\"-Datei nicht entfernen"
+
+msgid "don't clone shallow repository"
+msgstr "Repository mit unvollständiger Historie nicht klonen"
+
+msgid "don't create a checkout"
+msgstr "kein Auschecken"
+
+msgid "create a bare repository"
+msgstr "ein Bare-Repository erstellen"
+
+msgid "create a mirror repository (implies --bare)"
+msgstr "ein Spiegel-Repository erstellen (impliziert --bare)"
+
+msgid "to clone from a local repository"
+msgstr "von einem lokalen Repository klonen"
+
+msgid "don't use local hardlinks, always copy"
+msgstr "lokal keine harten Verweise verwenden, immer Kopien"
+
+msgid "setup as shared repository"
+msgstr "als verteiltes Repository einrichten"
+
+msgid "pathspec"
+msgstr "Pfadspezifikation"
+
+msgid "initialize submodules in the clone"
+msgstr "Submodule im Klon initialisieren"
+
+msgid "number of submodules cloned in parallel"
+msgstr "Anzahl der parallel zu klonenden Submodule"
+
+msgid "template-directory"
+msgstr "Vorlagenverzeichnis"
+
+msgid "directory from which templates will be used"
+msgstr "Verzeichnis, von welchem die Vorlagen verwendet werden"
+
+msgid "reference repository"
+msgstr "Repository referenzieren"
+
+msgid "use --reference only while cloning"
+msgstr "--reference nur während des Klonens benutzen"
+
+msgid "name"
+msgstr "Name"
+
+msgid "use <name> instead of 'origin' to track upstream"
+msgstr "<Name> statt 'origin' für Upstream-Repository verwenden"
+
+msgid "checkout <branch> instead of the remote's HEAD"
+msgstr "<Branch> auschecken, anstatt HEAD des Remote-Repositories"
+
+msgid "clone single revision <rev> and check out"
+msgstr "einzelnen Commit <Commit> klonen und auschecken"
+
+msgid "path to git-upload-pack on the remote"
+msgstr "Pfad zu \"git-upload-pack\" auf der Gegenseite"
+
+msgid "depth"
+msgstr "Tiefe"
+
+msgid "create a shallow clone of that depth"
+msgstr ""
+"einen Klon mit unvollständiger Historie (shallow) in dieser Tiefe erstellen"
+
+msgid "create a shallow clone since a specific time"
+msgstr ""
+"einen Klon mit unvollständiger Historie (shallow) seit einer bestimmten "
+"Zeit\n"
+"erstellen"
+
+msgid "ref"
+msgstr "Referenz"
+
+msgid "deepen history of shallow clone, excluding ref"
+msgstr "Historie eines flachen Klons vertiefen, Referenz exkludiert"
+
+msgid "clone only one branch, HEAD or --branch"
+msgstr "nur einen Branch klonen, HEAD oder --branch"
+
+msgid "clone tags, and make later fetches not to follow them"
+msgstr "Tags klonen und dafür sorgen, dass spätere Abrufe ihnen nicht folgen"
+
+msgid "any cloned submodules will be shallow"
+msgstr "jedes geklonte Submodul mit unvollständiger Historie (shallow)"
+
+msgid "gitdir"
+msgstr ".git-Verzeichnis"
+
+msgid "separate git dir from working tree"
+msgstr "Git-Verzeichnis vom Arbeitsverzeichnis separieren"
+
+msgid "specify the reference format to use"
+msgstr "das zu verwendende Referenzformat angeben"
+
+msgid "key=value"
+msgstr "Schlüssel=Wert"
+
+msgid "set config inside the new repository"
+msgstr "Konfiguration innerhalb des neuen Repositories setzen"
+
+msgid "server-specific"
+msgstr "serverspezifisch"
+
+msgid "option to transmit"
+msgstr "Option übertragen"
+
+msgid "apply partial clone filters to submodules"
+msgstr "partielle Klonfilter auf Submodule anwenden"
+
+msgid "any cloned submodules will use their remote-tracking branch"
+msgstr "jedes geklonte Submodul nutzt seinen Remote-Tracking-Branch"
+
+msgid "initialize sparse-checkout file to include only files at root"
+msgstr ""
+"Initialisiere Datei für partiellen Checkout, um nur Dateien im\n"
+"Root-Verzeichnis einzubeziehen"
+
+msgid "uri"
+msgstr "uri"
+
+msgid "a URI for downloading bundles before fetching from origin remote"
+msgstr ""
+"eine URI für das Herunterladen von Bundles vor dem Abruf\n"
+"aus dem ursprünglichen Remote-Repository"
+
+msgid "git clone [<options>] [--] <repo> [<dir>]"
+msgstr "git clone [<Optionen>] [--] <Repository> [<Verzeichnis>]"
 
 msgid "Too many arguments."
 msgstr "Zu viele Argumente."
@@ -4530,6 +4537,10 @@ msgstr "Remoteübertragung meldete Fehler"
 #, c-format
 msgid "Remote branch %s not found in upstream %s"
 msgstr "Remote-Branch %s nicht im Upstream-Repository %s gefunden"
+
+#, c-format
+msgid "Remote revision %s not found in upstream %s"
+msgstr "Remote-Commit %s nicht im Upstream-Repository %s gefunden"
 
 msgid "You appear to have cloned an empty repository."
 msgstr "Sie scheinen ein leeres Repository geklont zu haben."
@@ -4710,7 +4721,7 @@ msgid "git commit-tree: failed to read"
 msgstr "git commit-tree: Fehler beim Lesen"
 
 msgid ""
-"git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u[<mode>]] [--amend]\n"
 "           [--dry-run] [(-c | -C | --squash) <commit> | --fixup [(amend|"
 "reword):]<commit>]\n"
 "           [-F <file> | -m <msg>] [--reset-author] [--allow-empty]\n"
@@ -4720,14 +4731,14 @@ msgid ""
 "           [(--trailer <token>[(=|:)<value>])...] [-S[<keyid>]]\n"
 "           [--] [<pathspec>...]"
 msgstr ""
-"git commit [-a | --interactive | --patch] [-s] [-v] [-u<Modus>] [--amend]\n"
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u[<Modus>]] [--amend]\n"
 "           [--dry-run] [(-c | -C | --squash) <Commit> | --fixup [(amend|"
 "reword):]<Commit>]\n"
 "           [-F <Datei> | -m <Nachricht>] [--reset-author] [--allow-empty]\n"
 "           [--allow-empty-message] [--no-verify] [-e] [--author=<Autor>]\n"
 "           [--date=<Datum>] [--cleanup=<Modus>] [--[no-]status]\n"
 "           [-i | -o] [--pathspec-from-file=<Datei> [--pathspec-file-nul]]\n"
-"           [(--trailer <Token>[(=|:)<Wert>])...] [-S[<Key-Id>]]\n"
+"           [(--trailer <Token>[(=|:)<Wert>])...] [-S[<Key-ID>>]]\n"
 "           [--] [<Pfadspezifikation>...]"
 
 msgid "git status [<options>] [--] [<pathspec>...]"
@@ -6139,14 +6150,15 @@ msgid ""
 "Run 'git remote set-head %s %s' to follow the change, or set\n"
 "'remote.%s.followRemoteHEAD' configuration option to a different value\n"
 "if you do not want to see this message. Specifically running\n"
-"'git config set remote.%s.followRemoteHEAD %s' will disable the warning\n"
-"until the remote changes HEAD to something else."
+"'git config set remote.%s.followRemoteHEAD warn-if-not-branch-%s'\n"
+"will disable the warning until the remote changes HEAD to something else."
 msgstr ""
 "Führen Sie 'git remote set-head %s %s' aus, um der Änderung zu folgen,\n"
 "oder setzen Sie die Konfiguration 'remote.%s.followRemoteHEAD' auf einen\n"
-"anderen Wert, wenn Sie diese Meldung nicht sehen wollen. Konkret wird diese\n"
-"Warnung mit 'git config set remote.%s.followRemoteHEAD %s' deaktiviert\n"
-"bis die Gegenstelle HEAD in etwas anderes ändert."
+"anderen Wert wenn Sie diese Meldung nicht sehen wollen. Speziell der Befehl\n"
+"'git config set remote.%s.followRemoteHEAD warn-if-not-branch-%s'\n"
+"wird die Warnung deaktivieren, bis das Remote-Repository HEAD in etwas\n"
+"anderes ändert."
 
 msgid "multiple branches detected, incompatible with --set-upstream"
 msgstr "mehrere Branches erkannt, inkompatibel mit --set-upstream"
@@ -6841,6 +6853,9 @@ msgstr ""
 
 msgid "repack all other packs except the largest pack"
 msgstr "alle anderen Pakete, außer das größte Paket, neu packen"
+
+msgid "pack prefix to store a pack containing pruned objects"
+msgstr "pack-Präfix zum Speichern eines Pakets mit gelöschten Objekten"
 
 #, c-format
 msgid "failed to parse gc.logExpiry value %s"
@@ -7657,6 +7672,10 @@ msgstr ""
 
 msgid "Cannot come back to cwd"
 msgstr "Kann nicht zurück zum Arbeitsverzeichnis wechseln"
+
+#, c-format
+msgid "bad --pack_header: %s"
+msgstr "ungültiger --pack_header: %s"
 
 #, c-format
 msgid "bad %s"
@@ -8537,11 +8556,6 @@ msgstr "unbekannte Strategie-Option: -X%s"
 msgid "malformed input line: '%s'."
 msgstr "Fehlerhafte Eingabezeile: '%s'."
 
-#, c-format
-msgid "merging cannot continue; got unclean result of %d"
-msgstr ""
-"Merge kann nicht fortgesetzt werden; unsauberes Ergebnis von %d erhalten"
-
 msgid "git merge [<options>] [<commit>...]"
 msgstr "git merge [<Optionen>] [<Commit>...]"
 
@@ -9382,6 +9396,13 @@ msgstr ""
 "<Objektliste>]"
 
 #, c-format
+msgid "invalid --name-hash-version option: %d"
+msgstr "ungültige Option für --name-hash-version: %d"
+
+msgid "currently, --write-bitmap-index requires --name-hash-version=1"
+msgstr "derzeit erfordert --write-bitmap-index --name-hash-version=1"
+
+#, c-format
 msgid ""
 "write_reuse_object: could not locate %s, expected at offset %<PRIuMAX> in "
 "pack %s"
@@ -9717,6 +9738,11 @@ msgid "exclude any configured uploadpack.blobpackfileuri with this protocol"
 msgstr ""
 "jegliche konfigurierte uploadpack.blobpackfileuri für dieses Protkoll "
 "ausschließen"
+
+msgid "use the specified name-hash function to group similar objects"
+msgstr ""
+"die angegebene Name-Hash-Funktion verwenden, um ähnliche Objekte zu "
+"gruppieren"
 
 #, c-format
 msgid "delta chain depth %d is too deep, forcing %d"
@@ -11006,8 +11032,8 @@ msgstr "Kein Reflog zum Löschen angegeben."
 msgid "invalid ref format: %s"
 msgstr "Ungültiges Format für Referenzen: %s"
 
-msgid "git refs migrate --ref-format=<format> [--dry-run]"
-msgstr "git refs migrate --ref-format=<Format> [--dry-run]"
+msgid "git refs migrate --ref-format=<format> [--no-reflog] [--dry-run]"
+msgstr "git refs migrate --ref-format=<Format> [--no-reflog] [--dry-run]"
 
 msgid "git refs verify [--strict] [--verbose]"
 msgstr "git refs verify [--strict] [--verbose]"
@@ -11017,6 +11043,9 @@ msgstr "das Referenzformat angeben, in das konvertiert werden soll"
 
 msgid "perform a non-destructive dry-run"
 msgstr "einen zerstörungsfreien Trockenlauf durchführen"
+
+msgid "drop reflogs entirely during the migration"
+msgstr "Reflogs während der Migration vollständig zu löschen"
 
 msgid "missing --ref-format=<format>"
 msgstr "fehlendes --ref-format=<Format>"
@@ -11488,8 +11517,14 @@ msgstr "Werde keine URLs entfernen, die nicht für \"push\" bestimmt sind"
 msgid "be verbose; must be placed before a subcommand"
 msgstr "erweiterte Ausgaben; muss vor einem Unterbefehl angegeben werden"
 
-msgid "git repack [<options>]"
-msgstr "git repack [<Optionen>]"
+msgid ""
+"git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
+"[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>]\n"
+"[--write-midx] [--name-hash-version=<n>]"
+msgstr ""
+"git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
+"[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<Paketname>]\n"
+"[--write-midx] [--name-hash-version=<n>]"
 
 msgid ""
 "Incremental repacks are incompatible with bitmap indexes.  Use\n"
@@ -11568,6 +11603,12 @@ msgstr "--no-reuse-delta an git-pack-objects übergeben"
 msgid "pass --no-reuse-object to git-pack-objects"
 msgstr "--no-reuse-object an git-pack-objects übergeben"
 
+msgid ""
+"specify the name hash version to use for grouping similar objects by path"
+msgstr ""
+"die Version des Hash-Namens angeben, die für die Gruppierung ähnlicher "
+"Objekte nach Pfad verwendet werden soll"
+
 msgid "do not run git-update-server-info"
 msgstr "git-update-server-info nicht ausführen"
 
@@ -11618,9 +11659,6 @@ msgstr "eine geometrische Progression mit Faktor <N> finden"
 
 msgid "write a multi-pack index of the resulting packs"
 msgstr "ein Multi-Pack-Index des resultierenden Pakets schreiben"
-
-msgid "pack prefix to store a pack containing pruned objects"
-msgstr "pack-Präfix zum Speichern eines Pakets mit gelöschten Objekten"
 
 msgid "pack prefix to store a pack containing filtered out objects"
 msgstr "Paketpräfix, um ein Paket mit herausgefilterten Objekten zu speichern"
@@ -11838,9 +11876,6 @@ msgstr "Mit -l kann nur ein Muster angegeben werden"
 
 msgid "need some commits to replay"
 msgstr "zum erneuten Abspielen werden Commits benötigt"
-
-msgid "--onto and --advance are incompatible"
-msgstr "--onto und --advance sind inkompatibel"
 
 msgid "all positive revisions given must be references"
 msgstr "alle angegebenen positiven Commits müssen Referenzen sein"
@@ -14571,6 +14606,9 @@ msgstr "ein GNU Arch Repository in Git importieren"
 msgid "Create an archive of files from a named tree"
 msgstr "Dateiarchiv von angegebenem Verzeichnis erstellen"
 
+msgid "Download missing objects in a partial clone"
+msgstr "fehlender Objekte in einem partiellen Klon herunterladen"
+
 msgid "Use binary search to find the commit that introduced a bug"
 msgstr ""
 "Binärsuche verwenden, um den Commit zu finden, der einen Fehler verursacht "
@@ -16542,6 +16580,12 @@ msgstr "ungültiges Argument für %s"
 #, c-format
 msgid "invalid regex given to -I: '%s'"
 msgstr "ungültiger regulärer Ausdruck für -I gegeben: '%s'"
+
+msgid "-G requires a non-empty argument"
+msgstr "-G erfordert ein nicht leeres Argument"
+
+msgid "-S requires a non-empty argument"
+msgstr "-S erfordert ein nicht leeres Argument"
 
 #, c-format
 msgid "failed to parse --submodule option parameter: '%s'"
@@ -18782,6 +18826,10 @@ msgid "unable to write file %s"
 msgstr "Konnte Datei %s nicht schreiben."
 
 #, c-format
+msgid "unable to write repeatedly vanishing file %s"
+msgstr "konnte nicht in eine wiederholt verschwindende Datei %s schreiben"
+
+#, c-format
 msgid "unable to set permission to '%s'"
 msgstr "Konnte Zugriffsberechtigung auf '%s' nicht setzen."
 
@@ -19355,6 +19403,52 @@ msgstr "Unbekannter Schalter `%c'"
 msgid "unknown non-ascii option in string: `%s'"
 msgstr "Unbekannte nicht-Ascii Option in String: `%s'"
 
+#. TRANSLATORS: The "<%s>" part of this string
+#. stands for an optional value given to a command
+#. line option in the long form, and "<>" is there
+#. as a convention to signal that it is a
+#. placeholder (i.e. the user should substitute it
+#. with the real value).  If your language uses a
+#. different convention, you can change "<%s>" part
+#. to match yours, e.g. it might use "|%s|" instead,
+#. or if the alphabet is different enough it may use
+#. "%s" without any placeholder signal.  Most
+#. translations leave this message as is.
+#.
+#, c-format
+msgid "[=<%s>]"
+msgstr "[=<%s>]"
+
+#. TRANSLATORS: The "<%s>" part of this string
+#. stands for an optional value given to a command
+#. line option in the short form, and "<>" is there
+#. as a convention to signal that it is a
+#. placeholder (i.e. the user should substitute it
+#. with the real value).  If your language uses a
+#. different convention, you can change "<%s>" part
+#. to match yours, e.g. it might use "|%s|" instead,
+#. or if the alphabet is different enough it may use
+#. "%s" without any placeholder signal.  Most
+#. translations leave this message as is.
+#.
+#, c-format
+msgid "[<%s>]"
+msgstr "[<%s>]"
+
+#. TRANSLATORS: The "<%s>" part of this string stands for a
+#. value given to a command line option, and "<>" is there
+#. as a convention to signal that it is a placeholder
+#. (i.e. the user should substitute it with the real value).
+#. If your language uses a different convention, you can
+#. change "<%s>" part to match yours, e.g. it might use
+#. "|%s|" instead, or if the alphabet is different enough it
+#. may use "%s" without any placeholder signal.  Most
+#. translations leave this message as is.
+#.
+#, c-format
+msgid " <%s>"
+msgstr " <%s>"
+
 msgid "..."
 msgstr "..."
 
@@ -19440,6 +19534,21 @@ msgstr "falscher boolescher Wert von Umgebungsvariable '%s' für '%s'"
 #, c-format
 msgid "failed to parse %s"
 msgstr "Fehler beim Parsen von %s."
+
+#, c-format
+msgid "failed to walk children of tree %s: not found"
+msgstr "Fehlen beim Durchlaufen der Kinder von Baum %s: nicht gefunden"
+
+#, c-format
+msgid "failed to find object %s"
+msgstr "Objekt nicht gefunden: %s"
+
+#, c-format
+msgid "failed to find tag %s"
+msgstr "Tag nicht gefunden: %s"
+
+msgid "failed to setup revision walk"
+msgstr "Einrichtung des Revisionsgangs fehlgeschlagen"
 
 #, c-format
 msgid "Could not make %s writable by group"
@@ -19590,6 +19699,25 @@ msgstr "Promisor-Remote-Name kann nicht mit '/' beginnen: %s"
 #, c-format
 msgid "could not fetch %s from promisor remote"
 msgstr "konnte %s nicht von Promisor-Remote abrufen"
+
+#, c-format
+msgid "known remote named '%s' but with url '%s' instead of '%s'"
+msgstr ""
+"bekanntes Remote-Repository mit dem Namen '%s', aber mit der URL '%s' statt "
+"'%s'"
+
+#, c-format
+msgid "unknown '%s' value for '%s' config option"
+msgstr "unbekannter '%s'-Wert für '%s'-Konfigurationsoption"
+
+#, c-format
+msgid "unknown element '%s' from remote info"
+msgstr "unbekanntes Element '%s' aus Information aus Remote-Repository"
+
+#, c-format
+msgid "accepted promisor remote '%s' not found"
+msgstr ""
+"akzeptiertes partiell geklontes \"Remote-Repository '%s' nicht gefunden"
 
 msgid "object-info: expected flush after arguments"
 msgstr "object-info: erwartete Flush nach Argumenten"
@@ -20428,6 +20556,14 @@ msgid "invalid refspec '%s'"
 msgstr "ungültige Refspec '%s'"
 
 #, c-format
+msgid "pattern '%s' has no '*'"
+msgstr "Muster '%s' hat keinen '*'"
+
+#, c-format
+msgid "replacement '%s' has no '*'"
+msgstr "Ersetzung '%s' hat keinen '*'"
+
+#, c-format
 msgid "invalid quoting in push-option value: '%s'"
 msgstr "Ungültiges Quoting beim \"push-option\"-Wert: '%s'"
 
@@ -20550,6 +20686,28 @@ msgid "remote-curl: unknown command '%s' from git"
 msgstr "remote-curl: Unbekannter Befehl '%s' von Git"
 
 #, c-format
+msgid ""
+"reading remote from \"%s/%s\", which is nominated for removal.\n"
+"\n"
+"If you still use the \"remotes/\" directory it is recommended to\n"
+"migrate to config-based remotes:\n"
+"\n"
+"\tgit remote rename %s %s\n"
+"\n"
+"If you cannot, please let us know why you still need to use it by\n"
+"sending an e-mail to <git@vger.kernel.org>."
+msgstr ""
+"Lese von Remote-Repository \"%s/%s\", das zum Entfernen vorgeschlagen wird.\n"
+"\n"
+"Wenn Sie noch das Verzeichnis \"remotes/\" verwenden, wird empfohlen\n"
+"auf konfigurationsbasierte Remote-Repositories umzusteigen:\n"
+"\n"
+"\tgit remote rename %s %s\n"
+"\n"
+"Wenn dies nicht möglich ist, teilen Sie uns bitte mit, warum Sie das noch\n"
+"verwenden müssen, indem Sie eine E-Mail an <git@vger.kernel.org> senden."
+
+#, c-format
 msgid "config remote shorthand cannot begin with '/': %s"
 msgstr ""
 "Kürzel für Remote-Repository in der Konfiguration kann nicht mit '/' "
@@ -20584,14 +20742,6 @@ msgstr "%s folgt üblicherweise %s, nicht %s"
 #, c-format
 msgid "%s tracks both %s and %s"
 msgstr "%s folgt sowohl %s als auch %s"
-
-#, c-format
-msgid "key '%s' of pattern had no '*'"
-msgstr "Schlüssel '%s' des Musters hatte kein '*'."
-
-#, c-format
-msgid "value '%s' of pattern has no '*'"
-msgstr "Wert '%s' des Musters hat kein '*'."
 
 #, c-format
 msgid "src refspec %s does not match any"
@@ -22519,6 +22669,27 @@ msgstr ""
 "Anzahl der Einträge im Cache-Verzeichnis, die ungültig gemacht werden sollen "
 "(Standardwert 0)"
 
+msgid "test-tool path-walk <options> -- <revision-options>"
+msgstr "test-tool path-walk <Optionen> -- <Commit-Optionen>"
+
+msgid "toggle inclusion of blob objects"
+msgstr "Einbeziehung von Blob-Objekten umschalten"
+
+msgid "toggle inclusion of commit objects"
+msgstr "Einbeziehung von Commit-Objekten umschalten"
+
+msgid "toggle inclusion of tag objects"
+msgstr "Einbeziehung von Tag-Objekten umschalten"
+
+msgid "toggle inclusion of tree objects"
+msgstr "Einbeziehung von Tree-Objekten umschalten"
+
+msgid "toggle pruning of uninteresting paths"
+msgstr "Auslassen von uninteressanten Pfaden umschalten"
+
+msgid "read a pattern list over stdin"
+msgstr "Liste von Mustern von der Standard-Eingabe lesen"
+
 #, c-format
 msgid "commit %s is not marked reachable"
 msgstr "Commit %s ist nicht als erreichbar gekennzeichnet."
@@ -23167,6 +23338,10 @@ msgstr "Fehler: "
 
 msgid "warning: "
 msgstr "Warnung: "
+
+#, c-format
+msgid "uname() failed with error '%s' (%d)\n"
+msgstr "uname() ist fehlgeschlagen mit Fehler '%s' (%d)\n"
 
 msgid "Fetching objects"
 msgstr "Anfordern der Objekte"
@@ -24190,7 +24365,3 @@ msgstr "Lasse %s mit Backup-Suffix '%s' aus.\n"
 #, perl-format
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Wollen Sie %s wirklich versenden? [y|N]: "
-
-#, c-format
-#~ msgid "preferred pack (%s) is invalid"
-#~ msgstr "bevorzugtes Paket (%s) ist ungültig"
