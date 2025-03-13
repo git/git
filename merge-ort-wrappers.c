@@ -1,9 +1,13 @@
 #include "git-compat-util.h"
 #include "gettext.h"
 #include "hash.h"
+#include "hex.h"
+#include "lockfile.h"
 #include "merge-ort.h"
 #include "merge-ort-wrappers.h"
 #include "read-cache-ll.h"
+#include "repository.h"
+#include "tag.h"
 #include "tree.h"
 
 #include "commit.h"
@@ -63,4 +67,64 @@ int merge_ort_recursive(struct merge_options *opt,
 	*result = NULL;
 
 	return tmp.clean;
+}
+
+static struct commit *get_ref(struct repository *repo,
+			      const struct object_id *oid,
+			      const char *name)
+{
+	struct object *object;
+
+	object = deref_tag(repo, parse_object(repo, oid),
+			   name, strlen(name));
+	if (!object)
+		return NULL;
+	if (object->type == OBJ_TREE)
+		return make_virtual_commit(repo, (struct tree*)object, name);
+	if (object->type != OBJ_COMMIT)
+		return NULL;
+	if (repo_parse_commit(repo, (struct commit *)object))
+		return NULL;
+	return (struct commit *)object;
+}
+
+int merge_ort_generic(struct merge_options *opt,
+		      const struct object_id *head,
+		      const struct object_id *merge,
+		      int num_merge_bases,
+		      const struct object_id *merge_bases,
+		      struct commit **result)
+{
+	int clean;
+	struct lock_file lock = LOCK_INIT;
+	struct commit *head_commit = get_ref(opt->repo, head, opt->branch1);
+	struct commit *next_commit = get_ref(opt->repo, merge, opt->branch2);
+	struct commit_list *ca = NULL;
+
+	if (merge_bases) {
+		int i;
+		for (i = 0; i < num_merge_bases; ++i) {
+			struct commit *base;
+			if (!(base = get_ref(opt->repo, &merge_bases[i],
+					     oid_to_hex(&merge_bases[i]))))
+				return error(_("Could not parse object '%s'"),
+					     oid_to_hex(&merge_bases[i]));
+			commit_list_insert(base, &ca);
+		}
+	}
+
+	repo_hold_locked_index(opt->repo, &lock, LOCK_DIE_ON_ERROR);
+	clean = merge_ort_recursive(opt, head_commit, next_commit, ca,
+				    result);
+	free_commit_list(ca);
+	if (clean < 0) {
+		rollback_lock_file(&lock);
+		return clean;
+	}
+
+	if (write_locked_index(opt->repo->index, &lock,
+			       COMMIT_LOCK | SKIP_IF_UNCHANGED))
+		return error(_("Unable to write index."));
+
+	return clean ? 0 : 1;
 }

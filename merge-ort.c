@@ -4878,9 +4878,9 @@ static inline void set_commit_tree(struct commit *c, struct tree *t)
 	c->maybe_tree = t;
 }
 
-static struct commit *make_virtual_commit(struct repository *repo,
-					  struct tree *tree,
-					  const char *comment)
+struct commit *make_virtual_commit(struct repository *repo,
+				   struct tree *tree,
+				   const char *comment)
 {
 	struct commit *commit = alloc_commit_node(repo);
 
@@ -5186,6 +5186,8 @@ static void merge_ort_internal(struct merge_options *opt,
 		ancestor_name = "empty tree";
 	} else if (merge_bases) {
 		ancestor_name = "merged common ancestors";
+	} else if (opt->ancestor) {
+		ancestor_name = opt->ancestor;
 	} else {
 		strbuf_add_unique_abbrev(&merge_base_abbrev,
 					 &merged_merge_bases->object.oid,
@@ -5275,8 +5277,13 @@ void merge_incore_recursive(struct merge_options *opt,
 {
 	trace2_region_enter("merge", "incore_recursive", opt->repo);
 
-	/* We set the ancestor label based on the merge_bases */
-	assert(opt->ancestor == NULL);
+	/*
+	 * We set the ancestor label based on the merge_bases...but we
+	 * allow one exception through so that builtin/am can override
+	 * with its constructed fake ancestor.
+	 */
+	assert(opt->ancestor == NULL ||
+	       (merge_bases && !merge_bases->next));
 
 	trace2_region_enter("merge", "merge_start", opt->repo);
 	merge_start(opt, result);
