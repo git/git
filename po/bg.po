@@ -1,7 +1,7 @@
 # Bulgarian translation of git po-file.
-# Copyright (C) 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024 Alexander Shopov <ash@kambanaria.org>.
+# Copyright (C) 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025 Alexander Shopov <ash@kambanaria.org>.
 # This file is distributed under the same license as the git package.
-# Alexander Shopov <ash@kambanaria.org>, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024.
+# Alexander Shopov <ash@kambanaria.org>, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025.
 # ========================
 # DICTIONARY TO MERGE IN GIT GUI
 # ------------------------
@@ -233,6 +233,7 @@
 # cache-tree кеша на обектите-дървета
 # acquire lock придобивам ключалка
 # detached отделѐн, несвързан
+# revision walk обхождане на версиите
 #
 # ------------------------
 # „$var“ - може да не сработва за shell има gettext и eval_gettext - проверка - намират се лесно по „$
@@ -261,8 +262,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.48\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2024-12-27 22:37+0100\n"
-"PO-Revision-Date: 2024-12-27 22:40+0100\n"
+"POT-Creation-Date: 2025-03-05 22:57+0000\n"
+"PO-Revision-Date: 2025-03-06 09:15+0100\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -2655,6 +2656,18 @@ msgstr "git archive: протоколна грешка"
 msgid "git archive: expected a flush"
 msgstr "git archive: очакваше се изчистване на буферите чрез „flush“"
 
+msgid "git backfill [--min-batch-size=<n>] [--[no-]sparse]"
+msgstr "git backfill [--min-batch-size=БРОЙ] [--[no-]sparse]"
+
+msgid "problem loading sparse-checkout"
+msgstr "проблем при зареждане на частично хранилище"
+
+msgid "Minimum number of objects to request at a time"
+msgstr "Минимален БРОЙ обекти заявявани наведнъж"
+
+msgid "Restrict the missing objects to the current sparse-checkout"
+msgstr "Ограничаване на липсващите обекти до текущото частично хранилище"
+
 msgid ""
 "git bisect start [--term-(new|bad)=<term> --term-(old|good)=<term>]    [--no-"
 "checkout] [--first-parent] [<bad> [<good>...]] [--]    [<pathspec>...]"
@@ -3433,10 +3446,6 @@ msgstr ""
 
 msgid "git version:\n"
 msgstr "версия на git:\n"
-
-#, c-format
-msgid "uname() failed with error '%s' (%d)\n"
-msgstr "грешка при изпълнението на „uname()“ — „%s“ (%d)\n"
 
 msgid "compiler info: "
 msgstr "компилатор: "
@@ -4466,130 +4475,6 @@ msgstr ""
 "Настройката „clean.requireForce“ е зададена, което изисква опцията „-f“.  "
 "Няма да се извърши изчистване"
 
-msgid "git clone [<options>] [--] <repo> [<dir>]"
-msgstr "git clone [ОПЦИЯ…] [--] ХРАНИЛИЩЕ [ДИРЕКТОРИЯ]"
-
-msgid "don't clone shallow repository"
-msgstr "без клониране на плитко хранилище"
-
-msgid "don't create a checkout"
-msgstr "без създаване на работно дърво"
-
-msgid "create a bare repository"
-msgstr "създаване на голо хранилище"
-
-msgid "create a mirror repository (implies --bare)"
-msgstr ""
-"създаване на хранилище-огледало (включва опцията „--bare“ за голо хранилище)"
-
-msgid "to clone from a local repository"
-msgstr "клониране от локално хранилище"
-
-msgid "don't use local hardlinks, always copy"
-msgstr "без твърди връзки, файловете винаги да се копират"
-
-msgid "setup as shared repository"
-msgstr "настройване за споделено хранилище"
-
-msgid "pathspec"
-msgstr "път"
-
-msgid "initialize submodules in the clone"
-msgstr "инициализиране на подмодулите при това клониране"
-
-msgid "number of submodules cloned in parallel"
-msgstr "брой подмодули, клонирани паралелно"
-
-msgid "template-directory"
-msgstr "директория с шаблони"
-
-msgid "directory from which templates will be used"
-msgstr "директория, която съдържа шаблоните, които да се ползват"
-
-msgid "reference repository"
-msgstr "еталонно хранилище"
-
-msgid "use --reference only while cloning"
-msgstr "опцията „--reference“ може да се използва само при клониране"
-
-msgid "name"
-msgstr "ИМЕ"
-
-msgid "use <name> instead of 'origin' to track upstream"
-msgstr "използване на това ИМЕ вместо „origin“ при проследяване на клони"
-
-msgid "checkout <branch> instead of the remote's HEAD"
-msgstr "изтегляне на този КЛОН, а не соченият от отдалечения указател „HEAD“"
-
-msgid "path to git-upload-pack on the remote"
-msgstr "път към командата „git-upload-pack“ на отдалеченото хранилище"
-
-msgid "depth"
-msgstr "ДЪЛБОЧИНА"
-
-msgid "create a shallow clone of that depth"
-msgstr "плитко клониране до тази ДЪЛБОЧИНА"
-
-msgid "create a shallow clone since a specific time"
-msgstr "плитко клониране до момент във времето"
-
-msgid "ref"
-msgstr "УКАЗ"
-
-msgid "deepen history of shallow clone, excluding ref"
-msgstr "задълбочаване на историята на плитко хранилище до изключващ указател"
-
-msgid "clone only one branch, HEAD or --branch"
-msgstr ""
-"клониране само на един клон — или сочения от отдалечения „HEAD“, или изрично "
-"зададения с „--branch“"
-
-msgid "don't clone any tags, and make later fetches not to follow them"
-msgstr ""
-"без клониране на етикети, като последващите доставяния няма да ги следят"
-
-msgid "any cloned submodules will be shallow"
-msgstr "всички клонирани подмодули ще са плитки"
-
-msgid "gitdir"
-msgstr "СЛУЖЕБНА_ДИРЕКТОРИЯ"
-
-msgid "separate git dir from working tree"
-msgstr "отделна СЛУЖЕБНА_ДИРЕКТОРИЯ за git извън работното дърво"
-
-msgid "specify the reference format to use"
-msgstr "указване на форма̀та за указател"
-
-msgid "key=value"
-msgstr "КЛЮЧ=СТОЙНОСТ"
-
-msgid "set config inside the new repository"
-msgstr "задаване на настройките на новото хранилище"
-
-msgid "server-specific"
-msgstr "специфични за сървъра"
-
-msgid "option to transmit"
-msgstr "опция за пренос"
-
-msgid "apply partial clone filters to submodules"
-msgstr "прилагане на филтрите за непълно хранилище към подмодулите"
-
-msgid "any cloned submodules will use their remote-tracking branch"
-msgstr "всички клонирани подмодули ще ползват следящите си клони"
-
-msgid "initialize sparse-checkout file to include only files at root"
-msgstr ""
-"инициализиране на файла за частично изтегляне („.git/info/sparse-checkout“) "
-"да съдържа само файловете в основната директория"
-
-msgid "uri"
-msgstr "АДРЕС"
-
-msgid "a URI for downloading bundles before fetching from origin remote"
-msgstr ""
-"АДРЕС за доставяне на пратки на git преди доставяне от отдалеченото хранилище"
-
 #, c-format
 msgid "info: Could not add alternate for '%s': %s\n"
 msgstr ""
@@ -4656,12 +4541,6 @@ msgstr ""
 "\n"
 "    git restore --source=HEAD :/\n"
 
-#, c-format
-msgid "Could not find remote branch %s to clone."
-msgstr ""
-"Клонът „%s“ от отдалеченото хранилище, което клонирате,\n"
-"и който следва да бъде изтеглен, не съществува."
-
 msgid "remote did not send all necessary objects"
 msgstr "отдалеченото хранилище не изпрати всички необходими обекти."
 
@@ -4688,6 +4567,132 @@ msgstr "не може да се извърши пакетиране за изч�
 
 msgid "cannot unlink temporary alternates file"
 msgstr "временният файл за алтернативни обекти не може да бъде изтрит"
+
+msgid "don't clone shallow repository"
+msgstr "без клониране на плитко хранилище"
+
+msgid "don't create a checkout"
+msgstr "без създаване на работно дърво"
+
+msgid "create a bare repository"
+msgstr "създаване на голо хранилище"
+
+msgid "create a mirror repository (implies --bare)"
+msgstr ""
+"създаване на хранилище-огледало (включва опцията „--bare“ за голо хранилище)"
+
+msgid "to clone from a local repository"
+msgstr "клониране от локално хранилище"
+
+msgid "don't use local hardlinks, always copy"
+msgstr "без твърди връзки, файловете винаги да се копират"
+
+msgid "setup as shared repository"
+msgstr "настройване за споделено хранилище"
+
+msgid "pathspec"
+msgstr "път"
+
+msgid "initialize submodules in the clone"
+msgstr "инициализиране на подмодулите при това клониране"
+
+msgid "number of submodules cloned in parallel"
+msgstr "брой подмодули, клонирани паралелно"
+
+msgid "template-directory"
+msgstr "директория с шаблони"
+
+msgid "directory from which templates will be used"
+msgstr "директория, която съдържа шаблоните, които да се ползват"
+
+msgid "reference repository"
+msgstr "еталонно хранилище"
+
+msgid "use --reference only while cloning"
+msgstr "опцията „--reference“ може да се използва само при клониране"
+
+msgid "name"
+msgstr "ИМЕ"
+
+msgid "use <name> instead of 'origin' to track upstream"
+msgstr "използване на това ИМЕ вместо „origin“ при проследяване на клони"
+
+msgid "checkout <branch> instead of the remote's HEAD"
+msgstr "изтегляне на този КЛОН, а не соченият от отдалечения указател „HEAD“"
+
+msgid "clone single revision <rev> and check out"
+msgstr "клониране на единствена ВЕРСИЯ и изтегляне в работната директория"
+
+msgid "path to git-upload-pack on the remote"
+msgstr "път към командата „git-upload-pack“ на отдалеченото хранилище"
+
+msgid "depth"
+msgstr "ДЪЛБОЧИНА"
+
+msgid "create a shallow clone of that depth"
+msgstr "плитко клониране до тази ДЪЛБОЧИНА"
+
+msgid "create a shallow clone since a specific time"
+msgstr "плитко клониране до момент във времето"
+
+msgid "ref"
+msgstr "УКАЗ"
+
+msgid "deepen history of shallow clone, excluding ref"
+msgstr "задълбочаване на историята на плитко хранилище до изключващ указател"
+
+msgid "clone only one branch, HEAD or --branch"
+msgstr ""
+"клониране само на един клон — или сочения от отдалечения „HEAD“, или изрично "
+"зададения с „--branch“"
+
+msgid "clone tags, and make later fetches not to follow them"
+msgstr "клониране на етикети, като последващите доставяния няма да ги следят"
+
+msgid "any cloned submodules will be shallow"
+msgstr "всички клонирани подмодули ще са плитки"
+
+msgid "gitdir"
+msgstr "СЛУЖЕБНА_ДИРЕКТОРИЯ"
+
+msgid "separate git dir from working tree"
+msgstr "отделна СЛУЖЕБНА_ДИРЕКТОРИЯ за git извън работното дърво"
+
+msgid "specify the reference format to use"
+msgstr "указване на форма̀та за указател"
+
+msgid "key=value"
+msgstr "КЛЮЧ=СТОЙНОСТ"
+
+msgid "set config inside the new repository"
+msgstr "задаване на настройките на новото хранилище"
+
+msgid "server-specific"
+msgstr "специфични за сървъра"
+
+msgid "option to transmit"
+msgstr "опция за пренос"
+
+msgid "apply partial clone filters to submodules"
+msgstr "прилагане на филтрите за непълно хранилище към подмодулите"
+
+msgid "any cloned submodules will use their remote-tracking branch"
+msgstr "всички клонирани подмодули ще ползват следящите си клони"
+
+msgid "initialize sparse-checkout file to include only files at root"
+msgstr ""
+"инициализиране на файла за частично изтегляне („.git/info/sparse-checkout“) "
+"да съдържа само файловете в основната директория"
+
+msgid "uri"
+msgstr "АДРЕС"
+
+msgid "a URI for downloading bundles before fetching from origin remote"
+msgstr ""
+"АДРЕС за доставяне на пратки на git преди доставяне от отдалеченото хранилище"
+
+msgid "git clone [<options>] [--] <repo> [<dir>]"
+msgstr "git clone [ОПЦИЯ…] [--] ХРАНИЛИЩЕ [ДИРЕКТОРИЯ]"
 
 msgid "Too many arguments."
 msgstr "Прекалено много аргументи."
@@ -4795,6 +4800,10 @@ msgstr "отдалеченият транспорт върна грешка"
 #, c-format
 msgid "Remote branch %s not found in upstream %s"
 msgstr "Отдалеченият клон „%s“ липсва в клонираното хранилище „%s“"
+
+#, c-format
+msgid "Remote revision %s not found in upstream %s"
+msgstr "Отдалечената версия „%s“ липсва в клонираното хранилище „%s“"
 
 msgid "You appear to have cloned an empty repository."
 msgstr "Изглежда клонирахте празно хранилище."
@@ -4975,7 +4984,7 @@ msgid "git commit-tree: failed to read"
 msgstr "git commit-tree: не може да се прочете"
 
 msgid ""
-"git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u[<mode>]] [--amend]\n"
 "           [--dry-run] [(-c | -C | --squash) <commit> | --fixup [(amend|"
 "reword):]<commit>]\n"
 "           [-F <file> | -m <msg>] [--reset-author] [--allow-empty]\n"
@@ -4985,7 +4994,7 @@ msgid ""
 "           [(--trailer <token>[(=|:)<value>])...] [-S[<keyid>]]\n"
 "           [--] [<pathspec>...]"
 msgstr ""
-"git commit [-a|--interactive|--patch] [-s] [-v] [-u РЕЖИМ] [--amend]\n"
+"git commit [-a|--interactive|--patch] [-s] [-v] [-u[РЕЖИМ]] [--amend]\n"
 "           [--dry-run] [(-c|-C|--squash) ПОДАВАНЕ |--fixup [(amend|"
 "reword):]ПОДАВАНЕ]\n"
 "           [-F ФАЙЛ|-m СЪОБЩЕНИЕ] [--reset-author] [--allow-empty]\n"
@@ -6424,8 +6433,8 @@ msgid ""
 "Run 'git remote set-head %s %s' to follow the change, or set\n"
 "'remote.%s.followRemoteHEAD' configuration option to a different value\n"
 "if you do not want to see this message. Specifically running\n"
-"'git config set remote.%s.followRemoteHEAD %s' will disable the warning\n"
-"until the remote changes HEAD to something else."
+"'git config set remote.%s.followRemoteHEAD warn-if-not-branch-%s'\n"
+"will disable the warning until the remote changes HEAD to something else."
 msgstr ""
 "Изпълнете\n"
 "\n"
@@ -6435,7 +6444,7 @@ msgstr ""
 "„remote.%s.followRemoteHEAD, ако не искате тези съобщения.\n"
 "Изпълнението на\n"
 "\n"
-"    git config set remote.%s.followRemoteHEAD %s\n"
+"    git config set remote.%s.followRemoteHEAD warn-if-not-branch-%s\n"
 "\n"
 "ще изключи предупреждението, докато отдалеченият указател HEAD не\n"
 "започне да сочи нещо друго."
@@ -7123,6 +7132,9 @@ msgstr ""
 
 msgid "repack all other packs except the largest pack"
 msgstr "препакетиране на всичко без най-големия пакет"
+
+msgid "pack prefix to store a pack containing pruned objects"
+msgstr "префикс на имената на пакетите за окастрени обекти"
 
 #, c-format
 msgid "failed to parse gc.logExpiry value %s"
@@ -7942,6 +7954,10 @@ msgstr ""
 
 msgid "Cannot come back to cwd"
 msgstr "Процесът не може да се върне към предишната работна директория"
+
+#, c-format
+msgid "bad --pack_header: %s"
+msgstr "неправилна стойност за „--pack_header“: „%s“"
 
 #, c-format
 msgid "bad %s"
@@ -8835,10 +8851,6 @@ msgstr "непозната опция за стратегия: -X%s"
 msgid "malformed input line: '%s'."
 msgstr "входен ред с неправилен формат: „%s“."
 
-#, c-format
-msgid "merging cannot continue; got unclean result of %d"
-msgstr "сливането не може да продължи — %d-тото завърши с грешка"
-
 msgid "git merge [<options>] [<commit>...]"
 msgstr "git merge [ОПЦИЯ…] [ПОДАВАНЕ…]"
 
@@ -9685,6 +9697,13 @@ msgstr ""
 "СПИСЪК_С_ОБЕКТИ]"
 
 #, c-format
+msgid "invalid --name-hash-version option: %d"
+msgstr "неправилна опция „--name-hash-version“: %d"
+
+msgid "currently, --write-bitmap-index requires --name-hash-version=1"
+msgstr "текущо опцията „--write-bitmap-index“ изисква „--name-hash-version=1“"
+
+#, c-format
 msgid ""
 "write_reuse_object: could not locate %s, expected at offset %<PRIuMAX> in "
 "pack %s"
@@ -10024,6 +10043,11 @@ msgstr "протокол"
 
 msgid "exclude any configured uploadpack.blobpackfileuri with this protocol"
 msgstr "без ползване на настройки „uploadpack.blobpackfileuri“ с този протокол"
+
+msgid "use the specified name-hash function to group similar objects"
+msgstr ""
+"използване на указаната функция за контролни суми за групиране на подобните "
+"обекти"
 
 #, c-format
 msgid "delta chain depth %d is too deep, forcing %d"
@@ -11304,8 +11328,8 @@ msgstr "не е указан журнал с подавания за изтри�
 msgid "invalid ref format: %s"
 msgstr "неправилен формат на указател: %s"
 
-msgid "git refs migrate --ref-format=<format> [--dry-run]"
-msgstr "git refs migrate --ref-format=ФОРМАТ [--dry-run]"
+msgid "git refs migrate --ref-format=<format> [--no-reflog] [--dry-run]"
+msgstr "git refs migrate --ref-format=ФОРМАТ [--no-reflog] [--dry-run]"
 
 msgid "git refs verify [--strict] [--verbose]"
 msgstr "git refs verify [--strict] [--verbose]"
@@ -11315,6 +11339,9 @@ msgstr "указване на форма̀та за указател, към к�
 
 msgid "perform a non-destructive dry-run"
 msgstr "пробно изпълнение — без промяна на данни"
+
+msgid "drop reflogs entirely during the migration"
+msgstr "журналът на указателите да се изтрие изцяло по време на миграцията"
 
 msgid "missing --ref-format=<format>"
 msgstr "липсва опцията --ref-format=ФОРМАТ"
@@ -11786,8 +11813,14 @@ msgstr "Никой от адресите, които не са за изтлас
 msgid "be verbose; must be placed before a subcommand"
 msgstr "повече подробности.  Поставя се пред подкоманда"
 
-msgid "git repack [<options>]"
-msgstr "git repack [ОПЦИЯ…]"
+msgid ""
+"git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
+"[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>]\n"
+"[--write-midx] [--name-hash-version=<n>]"
+msgstr ""
+"git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
+"[--window=БРОЙ] [--depth=БРОЙ] [--threads=БРОЙ] [--keep-pack=ИМЕ_НА_ПАКЕТ]\n"
+"[--write-midx] [--name-hash-version=БРОЙ]"
 
 msgid ""
 "Incremental repacks are incompatible with bitmap indexes.  Use\n"
@@ -11875,6 +11908,11 @@ msgid "pass --no-reuse-object to git-pack-objects"
 msgstr ""
 "подаване на опцията „--no-reuse-object“ на командата „git-pack-objects“"
 
+msgid ""
+"specify the name hash version to use for grouping similar objects by path"
+msgstr ""
+"укажете функция за контролни суми за групиране на подобните обекти по път"
+
 msgid "do not run git-update-server-info"
 msgstr "без изпълнение на командата „git-update-server-info“"
 
@@ -11926,9 +11964,6 @@ msgstr "откриване на геометрична прогресия с ч�
 
 msgid "write a multi-pack index of the resulting packs"
 msgstr "запазване на многопакетен индекс за създадените пакети"
-
-msgid "pack prefix to store a pack containing pruned objects"
-msgstr "префикс на имената на пакетите за окастрени обекти"
 
 msgid "pack prefix to store a pack containing filtered out objects"
 msgstr "префикс на имената на пакетите за филтрирани обекти"
@@ -12145,9 +12180,6 @@ msgstr "опцията „-l“ приема точно един шаблон"
 
 msgid "need some commits to replay"
 msgstr "необходимо е да има подавания за прилагане отново"
-
-msgid "--onto and --advance are incompatible"
-msgstr "опциите „--onto“ и „--advance“ са несъвместими"
 
 msgid "all positive revisions given must be references"
 msgstr "всички зададени положителни версии трябва да са указатели"
@@ -14852,6 +14884,9 @@ msgstr "Внасяне на хранилище на GNU Arch в Git"
 msgid "Create an archive of files from a named tree"
 msgstr "Създаване на архив с файловете от именовано дърво"
 
+msgid "Download missing objects in a partial clone"
+msgstr "Изтегляне на липсващите обекти в частично хранилище"
+
 msgid "Use binary search to find the commit that introduced a bug"
 msgstr "Двоично търсене на промяната, която е причинила грешка"
 
@@ -16851,6 +16886,12 @@ msgstr "неправилен аргумент към „%s“"
 #, c-format
 msgid "invalid regex given to -I: '%s'"
 msgstr "неправилен регулярен израз подаден към „-I“: „%s“"
+
+msgid "-G requires a non-empty argument"
+msgstr "опцията „-G“ изисква аргумент"
+
+msgid "-S requires a non-empty argument"
+msgstr "опцията „-S“ изисква аргумент"
 
 #, c-format
 msgid "failed to parse --submodule option parameter: '%s'"
@@ -19123,6 +19164,10 @@ msgid "unable to write file %s"
 msgstr "файлът „%s“ не може да бъде записан"
 
 #, c-format
+msgid "unable to write repeatedly vanishing file %s"
+msgstr "смаляващият се файл „%s“ не може да бъде записван"
+
+#, c-format
 msgid "unable to set permission to '%s'"
 msgstr "права̀та за достъп до „%s“ не може да бъдат зададени"
 
@@ -19722,6 +19767,52 @@ msgstr "непознат флаг „%c“"
 msgid "unknown non-ascii option in string: `%s'"
 msgstr "непозната стойност извън „ascii“ в низа: „%s“"
 
+#. TRANSLATORS: The "<%s>" part of this string
+#. stands for an optional value given to a command
+#. line option in the long form, and "<>" is there
+#. as a convention to signal that it is a
+#. placeholder (i.e. the user should substitute it
+#. with the real value).  If your language uses a
+#. different convention, you can change "<%s>" part
+#. to match yours, e.g. it might use "|%s|" instead,
+#. or if the alphabet is different enough it may use
+#. "%s" without any placeholder signal.  Most
+#. translations leave this message as is.
+#.
+#, c-format
+msgid "[=<%s>]"
+msgstr "[=%s]"
+
+#. TRANSLATORS: The "<%s>" part of this string
+#. stands for an optional value given to a command
+#. line option in the short form, and "<>" is there
+#. as a convention to signal that it is a
+#. placeholder (i.e. the user should substitute it
+#. with the real value).  If your language uses a
+#. different convention, you can change "<%s>" part
+#. to match yours, e.g. it might use "|%s|" instead,
+#. or if the alphabet is different enough it may use
+#. "%s" without any placeholder signal.  Most
+#. translations leave this message as is.
+#.
+#, c-format
+msgid "[<%s>]"
+msgstr "[%s]"
+
+#. TRANSLATORS: The "<%s>" part of this string stands for a
+#. value given to a command line option, and "<>" is there
+#. as a convention to signal that it is a placeholder
+#. (i.e. the user should substitute it with the real value).
+#. If your language uses a different convention, you can
+#. change "<%s>" part to match yours, e.g. it might use
+#. "|%s|" instead, or if the alphabet is different enough it
+#. may use "%s" without any placeholder signal.  Most
+#. translations leave this message as is.
+#.
+#, c-format
+msgid " <%s>"
+msgstr " %s"
+
 msgid "..."
 msgstr "…"
 
@@ -19807,6 +19898,21 @@ msgstr "неправилна булева стойност „%s“ за „%s�
 #, c-format
 msgid "failed to parse %s"
 msgstr "„%s“ не може да бъде анализиран"
+
+#, c-format
+msgid "failed to walk children of tree %s: not found"
+msgstr "неуспешно обхождане на дъщерните елементи на дървото „%s“: то липсва"
+
+#, c-format
+msgid "failed to find object %s"
+msgstr "обектът „%s“ липсва"
+
+#, c-format
+msgid "failed to find tag %s"
+msgstr "етикетът „%s“ липсва"
+
+msgid "failed to setup revision walk"
+msgstr "неуспешно настройване на обхождането на версиите"
 
 #, c-format
 msgid "Could not make %s writable by group"
@@ -19956,6 +20062,22 @@ msgstr ""
 #, c-format
 msgid "could not fetch %s from promisor remote"
 msgstr "„%s“ не може да се достави от гарантиращото хранилище"
+
+#, c-format
+msgid "known remote named '%s' but with url '%s' instead of '%s'"
+msgstr "има хранилище с име „%s“, но адресът му сочи към „%s“, а не към „%s“"
+
+#, c-format
+msgid "unknown '%s' value for '%s' config option"
+msgstr "непозната стойност „%s“ за настройката „%s“"
+
+#, c-format
+msgid "unknown element '%s' from remote info"
+msgstr "непознат елемент „%s“ в информацията за отдалеченото хранилище"
+
+#, c-format
+msgid "accepted promisor remote '%s' not found"
+msgstr "липсва приетото вече хранилище-гарант „%s“"
 
 msgid "object-info: expected flush after arguments"
 msgstr "object-info: след аргументите се очаква изчистване на буферите"
@@ -20803,6 +20925,14 @@ msgid "invalid refspec '%s'"
 msgstr "неправилен указател: „%s“"
 
 #, c-format
+msgid "pattern '%s' has no '*'"
+msgstr "шаблонът „%s“ не съдържа „*“"
+
+#, c-format
+msgid "replacement '%s' has no '*'"
+msgstr "заместителят „%s“ не съдържа „*“"
+
+#, c-format
 msgid "invalid quoting in push-option value: '%s'"
 msgstr ""
 "неправилно екраниране или цитиране в стойността към опция за изтласкване: "
@@ -20930,6 +21060,28 @@ msgid "remote-curl: unknown command '%s' from git"
 msgstr "remote-curl: непозната команда „%s“ от git"
 
 #, c-format
+msgid ""
+"reading remote from \"%s/%s\", which is nominated for removal.\n"
+"\n"
+"If you still use the \"remotes/\" directory it is recommended to\n"
+"migrate to config-based remotes:\n"
+"\n"
+"\tgit remote rename %s %s\n"
+"\n"
+"If you cannot, please let us know why you still need to use it by\n"
+"sending an e-mail to <git@vger.kernel.org>."
+msgstr ""
+"изчитането на отдалеченото хранилище от „%s/%s“ предстои да бъде "
+"премахнато.\n"
+"Ако все още ползвате директорията „remotes/“, препоръчваме да я мигрирате\n"
+"към следящи директории на база настройки чрез командата:\n"
+"\n"
+"    git remote rename %s %s\n"
+"\n"
+"Ако не може поради някаква причина, молим да ни известите за нея с\n"
+"е-писмо до пощенския списък: <git@vger.kernel.org>."
+
+#, c-format
 msgid "config remote shorthand cannot begin with '/': %s"
 msgstr ""
 "съкращението за отдалечено хранилище не може за започва със знака „/“: %s"
@@ -20963,14 +21115,6 @@ msgstr "„%s“ обикновено следи „%s“, а не „%s“"
 #, c-format
 msgid "%s tracks both %s and %s"
 msgstr "„%s“ следи както „%s“, така и „%s“"
-
-#, c-format
-msgid "key '%s' of pattern had no '*'"
-msgstr "ключ „%s“ на шаблона не съдържа „*“"
-
-#, c-format
-msgid "value '%s' of pattern has no '*'"
-msgstr "стойност „%s“ на шаблона не съдържа „*“"
 
 #, c-format
 msgid "src refspec %s does not match any"
@@ -22945,6 +23089,28 @@ msgstr ""
 "какъв брой записи в кеша на обектите-дървета да се отбележат като невалидни "
 "(стандартно е 0)"
 
+msgid "test-tool path-walk <options> -- <revision-options>"
+msgstr "test-tool path-walk ОПЦИЯ… -- ОПЦИЯ_ЗА_ВЕРСИИ…"
+
+msgid "toggle inclusion of blob objects"
+msgstr "превключване на поместването на обекти-BLOB"
+
+msgid "toggle inclusion of commit objects"
+msgstr "превключване на поместването на обекти-подавания"
+
+msgid "toggle inclusion of tag objects"
+msgstr "превключване на поместването на обекти-етикети"
+
+msgid "toggle inclusion of tree objects"
+msgstr "превключване на поместването на обекти-дърво"
+
+msgid "toggle pruning of uninteresting paths"
+msgstr ""
+"превключване на окастрянето на пътищата, които не представляват интерес"
+
+msgid "read a pattern list over stdin"
+msgstr "изчитане на списък с шаблони от стандартния вход"
+
 #, c-format
 msgid "commit %s is not marked reachable"
 msgstr "подаването „%s“ не е отбелязано като достижимо"
@@ -23580,6 +23746,10 @@ msgstr "грешка: "
 
 msgid "warning: "
 msgstr "предупреждение: "
+
+#, c-format
+msgid "uname() failed with error '%s' (%d)\n"
+msgstr "грешка при изпълнението на „uname()“ — „%s“ (%d)\n"
 
 msgid "Fetching objects"
 msgstr "Доставяне на обектите"

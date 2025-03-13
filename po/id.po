@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2024-12-23 18:57+0000\n"
-"PO-Revision-Date: 2025-01-06 15:50+0700\n"
+"POT-Creation-Date: 2025-03-05 22:57+0000\n"
+"PO-Revision-Date: 2025-03-09 17:44+0700\n"
 "Last-Translator: Bagas Sanjaya <bagasdotme@gmail.com>\n"
 "Language-Team: Indonesian\n"
 "Language: id\n"
@@ -2890,6 +2890,22 @@ msgstr "git archive: kesalahan protokol"
 msgid "git archive: expected a flush"
 msgstr "git archive: sebuah bilasan diharapkan"
 
+#: builtin/backfill.c
+msgid "git backfill [--min-batch-size=<n>] [--[no-]sparse]"
+msgstr "git backfill [--min-batch-size=<n>] [--[no-]sparse]"
+
+#: builtin/backfill.c
+msgid "problem loading sparse-checkout"
+msgstr "galat memuat sparse-checkout"
+
+#: builtin/backfill.c
+msgid "Minimum number of objects to request at a time"
+msgstr "Jumlah objek minum yang diminta pada suatu waktu"
+
+#: builtin/backfill.c
+msgid "Restrict the missing objects to the current sparse-checkout"
+msgstr "Batasi objek yang hilang ke sparse-checkout saat ini"
+
 #: builtin/bisect.c
 msgid ""
 "git bisect start [--term-(new|bad)=<term> --term-(old|good)=<term>]    [--no-"
@@ -3312,7 +3328,7 @@ msgstr "perlihatkan email pengarang daripada nama (asali: off)"
 msgid "ignore whitespace differences"
 msgstr "abaikan perbedaan spasi putih"
 
-#: builtin/blame.c builtin/log.c
+#: builtin/blame.c builtin/clone.c builtin/log.c
 msgid "rev"
 msgstr "revisi"
 
@@ -3827,11 +3843,6 @@ msgstr ""
 #: builtin/bugreport.c
 msgid "git version:\n"
 msgstr "versi git:\n"
-
-#: builtin/bugreport.c
-#, c-format
-msgid "uname() failed with error '%s' (%d)\n"
-msgstr "uname() gagal dengan kesalahan '%s' (%d)\n"
 
 #: builtin/bugreport.c
 msgid "compiler info: "
@@ -5090,167 +5101,6 @@ msgid "clean.requireForce is true and -f not given: refusing to clean"
 msgstr "clean.requireForce 'true' dan -f tidak diberikan: menolak membersihkan"
 
 #: builtin/clone.c
-msgid "git clone [<options>] [--] <repo> [<dir>]"
-msgstr "git clone [<opsi>] [--] <repo> [<direktori>]"
-
-#: builtin/clone.c
-msgid "don't clone shallow repository"
-msgstr "jangan kloning repositori dangkal"
-
-#: builtin/clone.c
-msgid "don't create a checkout"
-msgstr "jangan buat checkout"
-
-#: builtin/clone.c builtin/init-db.c
-msgid "create a bare repository"
-msgstr "buat repositori bare"
-
-#: builtin/clone.c
-msgid "create a mirror repository (implies --bare)"
-msgstr "buat repositori cermin (mengimplikasikan --bare)"
-
-#: builtin/clone.c
-msgid "to clone from a local repository"
-msgstr "kloning dari repositori lokal"
-
-#: builtin/clone.c
-msgid "don't use local hardlinks, always copy"
-msgstr "jangan gunakan tautan keras lokal, selalu salin"
-
-#: builtin/clone.c
-msgid "setup as shared repository"
-msgstr "siapkan sebagai repositori berbagi"
-
-#: builtin/clone.c
-msgid "pathspec"
-msgstr "spek jalur"
-
-#: builtin/clone.c
-msgid "initialize submodules in the clone"
-msgstr "inisialisasi submodul dalam klon"
-
-#: builtin/clone.c
-msgid "number of submodules cloned in parallel"
-msgstr "jumlah submodul yang diklon secara paralel"
-
-#: builtin/clone.c builtin/init-db.c
-msgid "template-directory"
-msgstr "direktori templat"
-
-#: builtin/clone.c builtin/init-db.c
-msgid "directory from which templates will be used"
-msgstr "direktori dimana templat akan digunakan"
-
-#: builtin/clone.c builtin/submodule--helper.c
-msgid "reference repository"
-msgstr "repositori rujukan"
-
-#: builtin/clone.c builtin/submodule--helper.c
-msgid "use --reference only while cloning"
-msgstr "gunakan --reference hanya pada saat kloning"
-
-#: builtin/clone.c builtin/column.c builtin/fmt-merge-msg.c builtin/init-db.c
-#: builtin/merge-file.c builtin/merge.c builtin/pack-objects.c builtin/repack.c
-#: builtin/submodule--helper.c t/helper/test-simple-ipc.c
-msgid "name"
-msgstr "nama"
-
-#: builtin/clone.c
-msgid "use <name> instead of 'origin' to track upstream"
-msgstr "gunakan <nama> daripada 'origin' untuk lacak hulu"
-
-#: builtin/clone.c
-msgid "checkout <branch> instead of the remote's HEAD"
-msgstr "checkout <cabang> daripada HEAD remote"
-
-#: builtin/clone.c
-msgid "path to git-upload-pack on the remote"
-msgstr "jalur ke git-upload-pack pada remote"
-
-#: builtin/clone.c builtin/fetch.c builtin/pull.c
-msgid "depth"
-msgstr "kedalaman"
-
-#: builtin/clone.c
-msgid "create a shallow clone of that depth"
-msgstr "buat klon dangkal sedalam kedalaman tersebut"
-
-#: builtin/clone.c
-msgid "create a shallow clone since a specific time"
-msgstr "buat klon dangkal sejak waktu yang disebutkan"
-
-#: builtin/clone.c builtin/fetch.c builtin/pull.c
-msgid "ref"
-msgstr "referensi"
-
-#: builtin/clone.c builtin/fetch.c builtin/pull.c
-msgid "deepen history of shallow clone, excluding ref"
-msgstr "perdalam riwayat klon dangkal, kecualikan referensi"
-
-#: builtin/clone.c builtin/submodule--helper.c
-msgid "clone only one branch, HEAD or --branch"
-msgstr "klon hanya satu cabang, HEAD atau --branch"
-
-#: builtin/clone.c
-msgid "don't clone any tags, and make later fetches not to follow them"
-msgstr "jangan klon tag apapun, dan buat pengambilan nanti tidak mengikutinya"
-
-#: builtin/clone.c
-msgid "any cloned submodules will be shallow"
-msgstr "submodul yang diklon akan dangkal"
-
-#: builtin/clone.c builtin/init-db.c
-msgid "gitdir"
-msgstr "direktori git"
-
-#: builtin/clone.c builtin/init-db.c
-msgid "separate git dir from working tree"
-msgstr "pisahkan direktori git dari pohon kerja"
-
-#: builtin/clone.c builtin/init-db.c builtin/submodule--helper.c
-msgid "specify the reference format to use"
-msgstr "sebutkan format referensi untuk digunakan"
-
-#: builtin/clone.c
-msgid "key=value"
-msgstr "kunci=nilai"
-
-#: builtin/clone.c
-msgid "set config inside the new repository"
-msgstr "setel konfigurasi di dalam repositori baru"
-
-#: builtin/clone.c builtin/fetch.c builtin/ls-remote.c builtin/pull.c
-#: builtin/push.c builtin/send-pack.c
-msgid "server-specific"
-msgstr "spesifik ke server"
-
-#: builtin/clone.c builtin/fetch.c builtin/ls-remote.c builtin/pull.c
-#: builtin/push.c builtin/send-pack.c
-msgid "option to transmit"
-msgstr "opsi untuk transmisi"
-
-#: builtin/clone.c
-msgid "apply partial clone filters to submodules"
-msgstr "terapkan saringan kloning parsial ke submodul"
-
-#: builtin/clone.c
-msgid "any cloned submodules will use their remote-tracking branch"
-msgstr "submodul yang diklon akan menggunakan cabang yang melacak remotenya"
-
-#: builtin/clone.c
-msgid "initialize sparse-checkout file to include only files at root"
-msgstr ""
-"inisialisasi berkas checkout tipis agar memasukkan hanya berkas pada akar"
-
-#: builtin/clone.c
-msgid "uri"
-msgstr "URI"
-
-#: builtin/clone.c
-msgid "a URI for downloading bundles before fetching from origin remote"
-msgstr "sebuah URI untuk mengunduh bundel sebelum mengambil dari remote asal"
-
-#: builtin/clone.c
 #, c-format
 msgid "info: Could not add alternate for '%s': %s\n"
 msgstr "info: Tidak dapat menambahkan alternatif untuk '%s': %s\n"
@@ -5325,11 +5175,6 @@ msgstr ""
 "Anda dapat periksa apa yang dicheckout dengan 'git status'\n"
 "dan coba lagi dengan 'git restore --source=HEAD :/'\n"
 
-#: builtin/clone.c
-#, c-format
-msgid "Could not find remote branch %s to clone."
-msgstr "Tidak dapat menemukan cabang remote %s untuk diklon."
-
 #: builtin/clone.c fetch-pack.c
 msgid "remote did not send all necessary objects"
 msgstr "remote tidak mengirim semua objek yang dibutuhkan"
@@ -5362,6 +5207,171 @@ msgstr "tidak dapat memaket ulang untuk pembersihan"
 #: builtin/clone.c
 msgid "cannot unlink temporary alternates file"
 msgstr "tidak dapat batal-taut berkas alternatif sementara"
+
+#: builtin/clone.c
+msgid "don't clone shallow repository"
+msgstr "jangan kloning repositori dangkal"
+
+#: builtin/clone.c
+msgid "don't create a checkout"
+msgstr "jangan buat checkout"
+
+#: builtin/clone.c builtin/init-db.c
+msgid "create a bare repository"
+msgstr "buat repositori bare"
+
+#: builtin/clone.c
+msgid "create a mirror repository (implies --bare)"
+msgstr "buat repositori cermin (mengimplikasikan --bare)"
+
+#: builtin/clone.c
+msgid "to clone from a local repository"
+msgstr "kloning dari repositori lokal"
+
+#: builtin/clone.c
+msgid "don't use local hardlinks, always copy"
+msgstr "jangan gunakan tautan keras lokal, selalu salin"
+
+#: builtin/clone.c
+msgid "setup as shared repository"
+msgstr "siapkan sebagai repositori berbagi"
+
+#: builtin/clone.c
+msgid "pathspec"
+msgstr "spek jalur"
+
+#: builtin/clone.c
+msgid "initialize submodules in the clone"
+msgstr "inisialisasi submodul dalam klon"
+
+#: builtin/clone.c
+msgid "number of submodules cloned in parallel"
+msgstr "jumlah submodul yang diklon secara paralel"
+
+#: builtin/clone.c builtin/init-db.c
+msgid "template-directory"
+msgstr "direktori templat"
+
+#: builtin/clone.c builtin/init-db.c
+msgid "directory from which templates will be used"
+msgstr "direktori dimana templat akan digunakan"
+
+#: builtin/clone.c builtin/submodule--helper.c
+msgid "reference repository"
+msgstr "repositori rujukan"
+
+#: builtin/clone.c builtin/submodule--helper.c
+msgid "use --reference only while cloning"
+msgstr "gunakan --reference hanya pada saat kloning"
+
+#: builtin/clone.c builtin/column.c builtin/fmt-merge-msg.c builtin/init-db.c
+#: builtin/merge-file.c builtin/merge.c builtin/pack-objects.c builtin/repack.c
+#: builtin/submodule--helper.c t/helper/test-simple-ipc.c
+msgid "name"
+msgstr "nama"
+
+#: builtin/clone.c
+msgid "use <name> instead of 'origin' to track upstream"
+msgstr "gunakan <nama> daripada 'origin' untuk lacak hulu"
+
+#: builtin/clone.c
+msgid "checkout <branch> instead of the remote's HEAD"
+msgstr "checkout <cabang> daripada HEAD remote"
+
+#: builtin/clone.c
+msgid "clone single revision <rev> and check out"
+msgstr "klon satu revisi <revisi> dan check out"
+
+#: builtin/clone.c
+msgid "path to git-upload-pack on the remote"
+msgstr "jalur ke git-upload-pack pada remote"
+
+#: builtin/clone.c builtin/fetch.c builtin/pull.c
+msgid "depth"
+msgstr "kedalaman"
+
+#: builtin/clone.c
+msgid "create a shallow clone of that depth"
+msgstr "buat klon dangkal sedalam kedalaman tersebut"
+
+#: builtin/clone.c
+msgid "create a shallow clone since a specific time"
+msgstr "buat klon dangkal sejak waktu yang disebutkan"
+
+#: builtin/clone.c builtin/fetch.c builtin/pull.c
+msgid "ref"
+msgstr "referensi"
+
+#: builtin/clone.c builtin/fetch.c builtin/pull.c
+msgid "deepen history of shallow clone, excluding ref"
+msgstr "perdalam riwayat klon dangkal, kecualikan referensi"
+
+#: builtin/clone.c builtin/submodule--helper.c
+msgid "clone only one branch, HEAD or --branch"
+msgstr "klon hanya satu cabang, HEAD atau --branch"
+
+#: builtin/clone.c
+msgid "clone tags, and make later fetches not to follow them"
+msgstr "klon tag dan jangan ikuti mereka pada pengambilan berikutnya"
+
+#: builtin/clone.c
+msgid "any cloned submodules will be shallow"
+msgstr "submodul yang diklon akan dangkal"
+
+#: builtin/clone.c builtin/init-db.c
+msgid "gitdir"
+msgstr "direktori git"
+
+#: builtin/clone.c builtin/init-db.c
+msgid "separate git dir from working tree"
+msgstr "pisahkan direktori git dari pohon kerja"
+
+#: builtin/clone.c builtin/init-db.c builtin/submodule--helper.c
+msgid "specify the reference format to use"
+msgstr "sebutkan format referensi untuk digunakan"
+
+#: builtin/clone.c
+msgid "key=value"
+msgstr "kunci=nilai"
+
+#: builtin/clone.c
+msgid "set config inside the new repository"
+msgstr "setel konfigurasi di dalam repositori baru"
+
+#: builtin/clone.c builtin/fetch.c builtin/ls-remote.c builtin/pull.c
+#: builtin/push.c builtin/send-pack.c
+msgid "server-specific"
+msgstr "spesifik ke server"
+
+#: builtin/clone.c builtin/fetch.c builtin/ls-remote.c builtin/pull.c
+#: builtin/push.c builtin/send-pack.c
+msgid "option to transmit"
+msgstr "opsi untuk transmisi"
+
+#: builtin/clone.c
+msgid "apply partial clone filters to submodules"
+msgstr "terapkan saringan kloning parsial ke submodul"
+
+#: builtin/clone.c
+msgid "any cloned submodules will use their remote-tracking branch"
+msgstr "submodul yang diklon akan menggunakan cabang yang melacak remotenya"
+
+#: builtin/clone.c
+msgid "initialize sparse-checkout file to include only files at root"
+msgstr ""
+"inisialisasi berkas checkout tipis agar memasukkan hanya berkas pada akar"
+
+#: builtin/clone.c
+msgid "uri"
+msgstr "URI"
+
+#: builtin/clone.c
+msgid "a URI for downloading bundles before fetching from origin remote"
+msgstr "sebuah URI untuk mengunduh bundel sebelum mengambil dari remote asal"
+
+#: builtin/clone.c
+msgid "git clone [<options>] [--] <repo> [<dir>]"
+msgstr "git clone [<opsi>] [--] <repo> [<direktori>]"
 
 #: builtin/clone.c
 msgid "Too many arguments."
@@ -5492,6 +5502,11 @@ msgid "Remote branch %s not found in upstream %s"
 msgstr "Cabang remote %s tidak ditemukan di hulu %s"
 
 #: builtin/clone.c
+#, c-format
+msgid "Remote revision %s not found in upstream %s"
+msgstr "Revisi remote %s tidak ditemukan di hulu %s"
+
+#: builtin/clone.c
 msgid "You appear to have cloned an empty repository."
 msgstr "Anda tampaknya mengklon repositori kosong."
 
@@ -5555,7 +5570,8 @@ msgstr ""
 "[no-]progress]\n"
 "                       <opsi pemisahan>"
 
-#: builtin/commit-graph.c builtin/fetch.c builtin/log.c builtin/repack.c
+#: builtin/commit-graph.c builtin/fetch.c builtin/gc.c builtin/log.c
+#: builtin/repack.c
 msgid "dir"
 msgstr "direktori"
 
@@ -5715,7 +5731,7 @@ msgstr "git commit-tree: gagal membaca"
 
 #: builtin/commit.c
 msgid ""
-"git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u[<mode>]] [--amend]\n"
 "           [--dry-run] [(-c | -C | --squash) <commit> | --fixup [(amend|"
 "reword):]<commit>]\n"
 "           [-F <file> | -m <msg>] [--reset-author] [--allow-empty]\n"
@@ -5725,7 +5741,7 @@ msgid ""
 "           [(--trailer <token>[(=|:)<value>])...] [-S[<keyid>]]\n"
 "           [--] [<pathspec>...]"
 msgstr ""
-"git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u[<mode>]] [--amend]\n"
 "           [--dry-run] [(-c | -C | --squash) <komit> | --fixup [(amend|"
 "reword):]<komit>]\n"
 "           [-F <berkas> | -m <pesan>] [--reset-author] [--allow-empty]\n"
@@ -7472,14 +7488,14 @@ msgid ""
 "Run 'git remote set-head %s %s' to follow the change, or set\n"
 "'remote.%s.followRemoteHEAD' configuration option to a different value\n"
 "if you do not want to see this message. Specifically running\n"
-"'git config set remote.%s.followRemoteHEAD %s' will disable the warning\n"
-"until the remote changes HEAD to something else."
+"'git config set remote.%s.followRemoteHEAD warn-if-not-branch-%s'\n"
+"will disable the warning until the remote changes HEAD to something else."
 msgstr ""
 "Jalankan 'git remote set-head %s %s' untuk mengikuti perubahan, atau setel\n"
 "opsi konfigurasi 'remote.%s.followRemoteHEAD' ke nilai yang berbeda jika\n"
-"Anda tidak ingin melihat pesan ini lagi. Secara rinci menjalakan\n"
-"'git config set remote.%s followRemoteHEAD %s' akan mematikan peringatan\n"
-"ini sampai remote mengubah HEAD ke yang lain."
+"Anda tidak ingin melihat pesan ini lagi. Secara rinci menjalankan\n"
+"'git config set remote.%s.followRemoteHEAD warn-if-not-branch-%s' akan\n"
+"mematikan peringatan ini sampai remote mengubah HEAD ke yang lain."
 
 #: builtin/fetch.c
 msgid "multiple branches detected, incompatible with --set-upstream"
@@ -8340,6 +8356,10 @@ msgstr "paksa jalankan gc bahkan jika mungkin ada gc lain yang berjalan"
 #: builtin/gc.c
 msgid "repack all other packs except the largest pack"
 msgstr "pak ulang semua pak yang lain kecuali pak terbesar"
+
+#: builtin/gc.c builtin/repack.c
+msgid "pack prefix to store a pack containing pruned objects"
+msgstr "awalan pak untuk menyimpan pak berisi objek terpangkas"
 
 #: builtin/gc.c
 #, c-format
@@ -9352,6 +9372,11 @@ msgstr "tidak dapat menyelesaikan pack-objects untuk mempak ulang tautan lokal"
 #: builtin/index-pack.c
 msgid "Cannot come back to cwd"
 msgstr "tidak dapat kembali ke direktori kerja saat ini"
+
+#: builtin/index-pack.c builtin/unpack-objects.c
+#, c-format
+msgid "bad --pack_header: %s"
+msgstr "--pack_header jelek: %s"
 
 #: builtin/index-pack.c
 #, c-format
@@ -10476,11 +10501,6 @@ msgstr "opsi strategi tidak dikenal: -X%s"
 msgid "malformed input line: '%s'."
 msgstr "baris masukan jelek: '%s'."
 
-#: builtin/merge-tree.c
-#, c-format
-msgid "merging cannot continue; got unclean result of %d"
-msgstr "penggabungan tidak dapat berlanjut; dapat hasil kotor dari %d"
-
 #: builtin/merge.c
 msgid "git merge [<options>] [<commit>...]"
 msgstr "git merge [<opsi>] [<komit>...]"
@@ -11524,6 +11544,15 @@ msgstr ""
 
 #: builtin/pack-objects.c
 #, c-format
+msgid "invalid --name-hash-version option: %d"
+msgstr "opsi --name-hash-version tidak valid: %d"
+
+#: builtin/pack-objects.c
+msgid "currently, --write-bitmap-index requires --name-hash-version=1"
+msgstr "saat ini, --write-bitmap-index memerlukan --name-hash-version=1"
+
+#: builtin/pack-objects.c
+#, c-format
 msgid ""
 "write_reuse_object: could not locate %s, expected at offset %<PRIuMAX> in "
 "pack %s"
@@ -11933,6 +11962,12 @@ msgid "exclude any configured uploadpack.blobpackfileuri with this protocol"
 msgstr ""
 "abaikan uploadpack.blobpackfileuri apapun yang dikonfigurasikan dengan "
 "protokol ini"
+
+#: builtin/pack-objects.c
+msgid "use the specified name-hash function to group similar objects"
+msgstr ""
+"gunakan fungsi nama-hash yang dirincikan untuk mengelompokan objek yang "
+"serupa"
 
 #: builtin/pack-objects.c
 #, c-format
@@ -13428,8 +13463,8 @@ msgid "invalid ref format: %s"
 msgstr "format referensi tidak valid: %s"
 
 #: builtin/refs.c
-msgid "git refs migrate --ref-format=<format> [--dry-run]"
-msgstr "git refs migrate --ref-format=<format> [--dry-run]"
+msgid "git refs migrate --ref-format=<format> [--no-reflog] [--dry-run]"
+msgstr "git refs migrate --ref-format=<format> [--no-reflog] [--dry-run]"
 
 #: builtin/refs.c
 msgid "git refs verify [--strict] [--verbose]"
@@ -13442,6 +13477,10 @@ msgstr "sebutkan format referensi untuk dikonversi"
 #: builtin/refs.c
 msgid "perform a non-destructive dry-run"
 msgstr "lakukan uji coba non desktruktif"
+
+#: builtin/refs.c
+msgid "drop reflogs entirely during the migration"
+msgstr "buang keseluruhan log referensi selama migrasi"
 
 #: builtin/refs.c
 msgid "missing --ref-format=<format>"
@@ -14024,8 +14063,14 @@ msgid "be verbose; must be placed before a subcommand"
 msgstr "jadi lebih bertele-tele; harus ditempatkan sebelum subperintah"
 
 #: builtin/repack.c
-msgid "git repack [<options>]"
-msgstr "git repack [<opsi>]"
+msgid ""
+"git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
+"[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>]\n"
+"[--write-midx] [--name-hash-version=<n>]"
+msgstr ""
+"git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
+"[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<nama pak>]\n"
+"[--write-midx] [--name-hash-version=<n>]"
 
 #: builtin/repack.c
 msgid ""
@@ -14119,6 +14164,13 @@ msgid "pass --no-reuse-object to git-pack-objects"
 msgstr "lewatkan --no-reuse-object ke git-pack-objects"
 
 #: builtin/repack.c
+msgid ""
+"specify the name hash version to use for grouping similar objects by path"
+msgstr ""
+"tentukan versi nama hash yang digunakan untuk mengelompokan objek yang "
+"serupa berdasarkan jalur"
+
+#: builtin/repack.c
 msgid "do not run git-update-server-info"
 msgstr "jangan jalankan git-update-server-info"
 
@@ -14183,10 +14235,6 @@ msgstr "temukan deret geometri dengan faktor <N>"
 #: builtin/repack.c
 msgid "write a multi-pack index of the resulting packs"
 msgstr "tulis indeks multipak dari pak yang dihasilkan"
-
-#: builtin/repack.c
-msgid "pack prefix to store a pack containing pruned objects"
-msgstr "awalan pak untuk menyimpan pak berisi objek terpangkas"
 
 #: builtin/repack.c
 msgid "pack prefix to store a pack containing filtered out objects"
@@ -14461,10 +14509,6 @@ msgstr "hanya satu pola yang dapat diberikan dengan -l"
 #: builtin/replay.c
 msgid "need some commits to replay"
 msgstr "butuh beberapa komit untuk dimainkan ulang"
-
-#: builtin/replay.c
-msgid "--onto and --advance are incompatible"
-msgstr "--onto dan --advance tidak kompatibel"
 
 #: builtin/replay.c
 msgid "all positive revisions given must be references"
@@ -17768,6 +17812,10 @@ msgid "Create an archive of files from a named tree"
 msgstr "Buat arsip berkas dari pohon bernama"
 
 #: command-list.h
+msgid "Download missing objects in a partial clone"
+msgstr "Unduh objek yang hilang dalam klon parsial"
+
+#: command-list.h
 msgid "Use binary search to find the commit that introduced a bug"
 msgstr "Gunakan pencarian biner untuk mencari komit yang memasukkan bug"
 
@@ -20189,6 +20237,14 @@ msgstr "argumen tidak valid ke %s"
 #, c-format
 msgid "invalid regex given to -I: '%s'"
 msgstr "regex tidak valid diberikan ke -I: '%s'"
+
+#: diff.c
+msgid "-G requires a non-empty argument"
+msgstr "-G butuh sebuah argumen bukan kosong"
+
+#: diff.c
+msgid "-S requires a non-empty argument"
+msgstr "-S butuh sebuah argumen bukan kosong"
 
 #: diff.c
 #, c-format
@@ -22888,6 +22944,11 @@ msgstr "tidak dapat menulis berkas %s"
 
 #: object-file.c
 #, c-format
+msgid "unable to write repeatedly vanishing file %s"
+msgstr "tidak dapat menulis berkas yang menghilang %s terus-menerus"
+
+#: object-file.c
+#, c-format
 msgid "unable to set permission to '%s'"
 msgstr "tidak dapat menyetel perizinan ke '%s'"
 
@@ -23579,6 +23640,55 @@ msgstr "sakelar tidak dikenal `%c'"
 msgid "unknown non-ascii option in string: `%s'"
 msgstr "opsi non-ascii di dalam untai tidak dikenal: `%s'"
 
+#. TRANSLATORS: The "<%s>" part of this string
+#. stands for an optional value given to a command
+#. line option in the long form, and "<>" is there
+#. as a convention to signal that it is a
+#. placeholder (i.e. the user should substitute it
+#. with the real value).  If your language uses a
+#. different convention, you can change "<%s>" part
+#. to match yours, e.g. it might use "|%s|" instead,
+#. or if the alphabet is different enough it may use
+#. "%s" without any placeholder signal.  Most
+#. translations leave this message as is.
+#.
+#: parse-options.c
+#, c-format
+msgid "[=<%s>]"
+msgstr "[=<%s>]"
+
+#. TRANSLATORS: The "<%s>" part of this string
+#. stands for an optional value given to a command
+#. line option in the short form, and "<>" is there
+#. as a convention to signal that it is a
+#. placeholder (i.e. the user should substitute it
+#. with the real value).  If your language uses a
+#. different convention, you can change "<%s>" part
+#. to match yours, e.g. it might use "|%s|" instead,
+#. or if the alphabet is different enough it may use
+#. "%s" without any placeholder signal.  Most
+#. translations leave this message as is.
+#.
+#: parse-options.c
+#, c-format
+msgid "[<%s>]"
+msgstr "[<%s>]"
+
+#. TRANSLATORS: The "<%s>" part of this string stands for a
+#. value given to a command line option, and "<>" is there
+#. as a convention to signal that it is a placeholder
+#. (i.e. the user should substitute it with the real value).
+#. If your language uses a different convention, you can
+#. change "<%s>" part to match yours, e.g. it might use
+#. "|%s|" instead, or if the alphabet is different enough it
+#. may use "%s" without any placeholder signal.  Most
+#. translations leave this message as is.
+#.
+#: parse-options.c
+#, c-format
+msgid " <%s>"
+msgstr " <%s>"
+
 #: parse-options.c
 msgid "..."
 msgstr "..."
@@ -23681,6 +23791,25 @@ msgstr "nilai lingkungan boolean '%s' jelek untuk '%s'"
 #, c-format
 msgid "failed to parse %s"
 msgstr "gagal menguraikan %s"
+
+#: path-walk.c
+#, c-format
+msgid "failed to walk children of tree %s: not found"
+msgstr "gagal berjalan anak pohon %s: tidak ditemukan"
+
+#: path-walk.c
+#, c-format
+msgid "failed to find object %s"
+msgstr "gagal menemukan objek %s"
+
+#: path-walk.c
+#, c-format
+msgid "failed to find tag %s"
+msgstr "gagal menemukan tag %s"
+
+#: path-walk.c
+msgid "failed to setup revision walk"
+msgstr "gagal men-setup jalan revisi"
 
 #: path.c
 #, c-format
@@ -23867,6 +23996,26 @@ msgstr "nama remote penjanji tidak dapat diawali dengan '/': %s"
 #, c-format
 msgid "could not fetch %s from promisor remote"
 msgstr "tidak dapat mengambil %s dari remote penjanji"
+
+#: promisor-remote.c
+#, c-format
+msgid "known remote named '%s' but with url '%s' instead of '%s'"
+msgstr "remote yang terkenal bernama '%s' tapi dengan url '%s' daripada '%s'"
+
+#: promisor-remote.c
+#, c-format
+msgid "unknown '%s' value for '%s' config option"
+msgstr "nilai '%s' tidak dikenal untuk opsi konfigurasi '%s'"
+
+#: promisor-remote.c
+#, c-format
+msgid "unknown element '%s' from remote info"
+msgstr "elemen '%s' dari info remote tidak dikenal"
+
+#: promisor-remote.c
+#, c-format
+msgid "accepted promisor remote '%s' not found"
+msgstr "remote penjanji yang diterima '%s' tidak ditemukan"
 
 #: protocol-caps.c
 msgid "object-info: expected flush after arguments"
@@ -24870,6 +25019,16 @@ msgstr "nama referensi %s simbolik, menyalinnya tidak didukung"
 msgid "invalid refspec '%s'"
 msgstr "spek referensi tidak valid '%s'"
 
+#: refspec.c
+#, c-format
+msgid "pattern '%s' has no '*'"
+msgstr "pola '%s' tidak mempunyai '*'"
+
+#: refspec.c
+#, c-format
+msgid "replacement '%s' has no '*'"
+msgstr "pengganti '%s' tidak mempunyai '*'"
+
 #: remote-curl.c
 #, c-format
 msgid "invalid quoting in push-option value: '%s'"
@@ -25025,6 +25184,28 @@ msgstr "remote-curl: perintah tidak dikenal '%s' dari git"
 
 #: remote.c
 #, c-format
+msgid ""
+"reading remote from \"%s/%s\", which is nominated for removal.\n"
+"\n"
+"If you still use the \"remotes/\" directory it is recommended to\n"
+"migrate to config-based remotes:\n"
+"\n"
+"\tgit remote rename %s %s\n"
+"\n"
+"If you cannot, please let us know why you still need to use it by\n"
+"sending an e-mail to <git@vger.kernel.org>."
+msgstr ""
+"membaca remote dari \"%s/%s\", yang dinominasikan untuk dihapus.\n"
+"\n"
+"Jika Anda masih menggunakan direktori \"remotes/\" disarankan untuk\n"
+"migrasi ke remote berdasarkan konfigurasi:\n"
+"\n"
+"\tgit remote rename %s %s\n"
+"Jika tidak, mohon beri tahu kami mengapa Anda masih menggunakannya dengan\n"
+"mengirimkan surel ke <git@vger.kernel.org>."
+
+#: remote.c
+#, c-format
 msgid "config remote shorthand cannot begin with '/': %s"
 msgstr "pintasan konfigurasi remote tidak dapat diawali dengan '/': %s"
 
@@ -25065,16 +25246,6 @@ msgstr "%s biasanya melacak %s, bukan %s"
 #, c-format
 msgid "%s tracks both %s and %s"
 msgstr "%s melacak baik %s dan %s"
-
-#: remote.c
-#, c-format
-msgid "key '%s' of pattern had no '*'"
-msgstr "kunci '%s' dari pola tidak ada '*'"
-
-#: remote.c
-#, c-format
-msgid "value '%s' of pattern has no '*'"
-msgstr "nilai '%s' dari pola tidak ada '*'"
 
 #: remote.c
 #, c-format
@@ -27389,6 +27560,34 @@ msgstr "bersihkan pohon tembolok sebelum setiap iterasi"
 msgid "number of entries in the cache tree to invalidate (default 0)"
 msgstr "jumlah entri di dalam pohon tembolok untuk dinirvalidasi (asali 0)"
 
+#: t/helper/test-path-walk.c
+msgid "test-tool path-walk <options> -- <revision-options>"
+msgstr "test-tool path-walk <opsi> -- <opsi revisi>"
+
+#: t/helper/test-path-walk.c
+msgid "toggle inclusion of blob objects"
+msgstr "sertakan objek blob"
+
+#: t/helper/test-path-walk.c
+msgid "toggle inclusion of commit objects"
+msgstr "sertakan objek komit"
+
+#: t/helper/test-path-walk.c
+msgid "toggle inclusion of tag objects"
+msgstr "sertakan objek tag"
+
+#: t/helper/test-path-walk.c
+msgid "toggle inclusion of tree objects"
+msgstr "sertakan objek pohon"
+
+#: t/helper/test-path-walk.c
+msgid "toggle pruning of uninteresting paths"
+msgstr "pangkas jalur yang tidak menarik"
+
+#: t/helper/test-path-walk.c
+msgid "read a pattern list over stdin"
+msgstr "baca daftar pola dari masukan standar"
+
 #: t/helper/test-reach.c
 #, c-format
 msgid "commit %s is not marked reachable"
@@ -28147,6 +28346,11 @@ msgstr "kesalahan: "
 #: usage.c
 msgid "warning: "
 msgstr "peringatan: "
+
+#: version.c
+#, c-format
+msgid "uname() failed with error '%s' (%d)\n"
+msgstr "uname() gagal dengan kesalahan '%s' (%d)\n"
 
 #: walker.c
 msgid "Fetching objects"
