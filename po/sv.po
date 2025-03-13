@@ -1,14 +1,14 @@
 # Swedish translations for Git.
-# Copyright (C) 2010-2024 Peter Krefting <peter@softwolves.pp.se>
+# Copyright (C) 2010-2025 Peter Krefting <peter@softwolves.pp.se>
 # This file is distributed under the same license as the Git package.
-# Peter Krefting <peter@softwolves.pp.se>, 2010-2024.
+# Peter Krefting <peter@softwolves.pp.se>, 2010-2025.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git 2.48.0\n"
+"Project-Id-Version: git 2.49.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2024-12-30 11:57+0100\n"
-"PO-Revision-Date: 2024-12-30 12:03+0100\n"
+"POT-Creation-Date: 2025-03-10 17:45+0100\n"
+"PO-Revision-Date: 2025-03-10 17:48+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Svenska <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -1477,7 +1477,7 @@ msgid ""
 "Use '\\!' for literal leading exclamation."
 msgstr ""
 "Negativa mönster ignoreras i git-attribut\n"
-"Använd '\\!' för att inleda med ett utropstecken."
+"Använd ”\\!” för att inleda med ett utropstecken."
 
 #, c-format
 msgid "cannot fstat gitattributes file '%s'"
@@ -2060,7 +2060,7 @@ msgid ""
 "It does not apply to blobs recorded in its index."
 msgstr ""
 "Har du handredigerat din patch?\n"
-"Den kan inte tillämpas på blobbar som antecknats i dess index."
+"Den kan inte tillämpas på blob:ar som antecknats i dess index."
 
 msgid "Falling back to patching base and 3-way merge..."
 msgstr ""
@@ -2315,6 +2315,18 @@ msgstr "git archive: protokollfel"
 
 msgid "git archive: expected a flush"
 msgstr "git archive: förväntade en tömning (flush)"
+
+msgid "git backfill [--min-batch-size=<n>] [--[no-]sparse]"
+msgstr "git backfill [--min-batch-size=<n>] [--[no-]sparse]"
+
+msgid "problem loading sparse-checkout"
+msgstr "problem med att läsa filen sparse-checkout"
+
+msgid "Minimum number of objects to request at a time"
+msgstr "Minsta antal objekt att be om varje gång"
+
+msgid "Restrict the missing objects to the current sparse-checkout"
+msgstr "Begränsa saknade objekt till befintlig ”sparse-checkout”"
 
 msgid ""
 "git bisect start [--term-(new|bad)=<term> --term-(old|good)=<term>]    [--no-"
@@ -2921,7 +2933,7 @@ msgid "delete branch (even if not merged)"
 msgstr "ta bort gren (även om inte helt sammanslagen)"
 
 msgid "move/rename a branch and its reflog"
-msgstr "flytta/ta bort en gren och dess reflogg"
+msgstr "flytta/ta bort en gren och dess referenslogg"
 
 msgid "move/rename a branch, even if target exists"
 msgstr "flytta/ta bort en gren, även om målet finns"
@@ -2930,7 +2942,7 @@ msgid "do not output a newline after empty formatted refs"
 msgstr "skriv inte ut ett nyradstecken efter tomma formaterade referenser"
 
 msgid "copy a branch and its reflog"
-msgstr "kopiera en gren och dess reflogg"
+msgstr "kopiera en gren och dess referenslogg"
 
 msgid "copy a branch, even if target exists"
 msgstr "kopiera en gren, även om målet finns"
@@ -2942,7 +2954,7 @@ msgid "show current branch name"
 msgstr "visa namn på aktuell gren"
 
 msgid "create the branch's reflog"
-msgstr "skapa grenens reflogg"
+msgstr "skapa grenens referenslogg"
 
 msgid "edit the description for the branch"
 msgstr "redigera beskrivning för grenen"
@@ -3055,10 +3067,6 @@ msgstr ""
 msgid "git version:\n"
 msgstr "git version:\n"
 
-#, c-format
-msgid "uname() failed with error '%s' (%d)\n"
-msgstr "uname() misslyckades med felet ”%s” (%d)\n"
-
 msgid "compiler info: "
 msgstr "kompilatorinfo:"
 
@@ -3095,7 +3103,7 @@ msgid ""
 "You can delete any lines you don't wish to share.\n"
 msgstr ""
 "Tack för att du skriver en buggraport för Git!\n"
-"Om du svarar på följande frågor är det lättare för oss att första "
+"Om du svarar på följande frågor är det lättare för oss att förstå "
 "problemet.\n"
 "Skriv gärna på engelska\n"
 "\n"
@@ -3332,11 +3340,11 @@ msgid "blob|tree"
 msgstr "blob|träd"
 
 msgid "use a <path> for (--textconv | --filters); Not with 'batch'"
-msgstr "använd en <sökväg> för (--textconv | --filters): Inte med 'batch'"
+msgstr "använd en <sökväg> för (--textconv | --filters): Inte med ”batch”"
 
 #, c-format
 msgid "'%s=<%s>' needs '%s' or '%s'"
-msgstr "'%s=<%s>' behöver '%s' eller '%s'"
+msgstr "”%s=<%s>” behöver ”%s” eller ”%s”"
 
 msgid "path|tree-ish"
 msgstr "sökväg|träd-igt"
@@ -3368,13 +3376,13 @@ msgid ""
 "git check-attr [--source <tree-ish>] [-a | --all | <attr>...] [--] "
 "<pathname>..."
 msgstr ""
-"git check-attr [--source <träd:igt>] [-a | --all | <attr>...] [--] "
+"git check-attr [--source <träd-igt>] [-a | --all | <attr>...] [--] "
 "<sökväg>..."
 
 msgid ""
 "git check-attr --stdin [-z] [--source <tree-ish>] [-a | --all | <attr>...]"
 msgstr ""
-"git check-attr --stdin [-z] [--source <träd:igt>] [-a | --all | <attr>...]"
+"git check-attr --stdin [-z] [--source <träd-igt>] [-a | --all | <attr>...]"
 
 msgid "report all attributes set on file"
 msgstr "visa alla attribut som satts på filen"
@@ -3887,7 +3895,7 @@ msgid "create/reset and checkout a branch"
 msgstr "skapa/nollställ och checka ut en gren"
 
 msgid "create reflog for new branch"
-msgstr "skapa reflogg för ny gren"
+msgstr "skapa referenslogg för ny gren"
 
 msgid "second guess 'git checkout <no-such-branch>' (default)"
 msgstr "förutspå ”git checkout <gren-saknas>” (förval)"
@@ -4062,123 +4070,6 @@ msgstr "ta endast bort ignorerade filer"
 msgid "clean.requireForce is true and -f not given: refusing to clean"
 msgstr "clean.requireForce är true och -f angavs inte: vägrar städa"
 
-msgid "git clone [<options>] [--] <repo> [<dir>]"
-msgstr "git clone [<flaggor>] [--] <arkiv> [<kat>]"
-
-msgid "don't clone shallow repository"
-msgstr "klona inte grunt arkiv"
-
-msgid "don't create a checkout"
-msgstr "skapa inte någon utcheckning"
-
-msgid "create a bare repository"
-msgstr "skapa ett naket (”bare”) arkiv"
-
-msgid "create a mirror repository (implies --bare)"
-msgstr "skapa ett spegelarkiv (implicerar --bare)"
-
-msgid "to clone from a local repository"
-msgstr "för att klona från ett lokalt arkiv"
-
-msgid "don't use local hardlinks, always copy"
-msgstr "skapa inte lokala hårda länkar, kopiera alltid"
-
-msgid "setup as shared repository"
-msgstr "skapa som ett delat arkiv"
-
-msgid "pathspec"
-msgstr "sökvägsangivelse"
-
-msgid "initialize submodules in the clone"
-msgstr "initiera undermoduler i klonen"
-
-msgid "number of submodules cloned in parallel"
-msgstr "antal undermoduler som klonas parallellt"
-
-msgid "template-directory"
-msgstr "mallkatalog"
-
-msgid "directory from which templates will be used"
-msgstr "katalog att använda mallar från"
-
-msgid "reference repository"
-msgstr "referensarkiv"
-
-msgid "use --reference only while cloning"
-msgstr "använd --reference endast under kloningen"
-
-msgid "name"
-msgstr "namn"
-
-msgid "use <name> instead of 'origin' to track upstream"
-msgstr "använd <namn> istället för ”origin” för att spåra uppströms"
-
-msgid "checkout <branch> instead of the remote's HEAD"
-msgstr "checka ut <gren> istället för fjärrens HEAD"
-
-msgid "path to git-upload-pack on the remote"
-msgstr "sökväg till git-upload-pack på fjärren"
-
-msgid "depth"
-msgstr "djup"
-
-msgid "create a shallow clone of that depth"
-msgstr "skapa en grund klon på detta djup"
-
-msgid "create a shallow clone since a specific time"
-msgstr "skapa en grund klon från en angiven tidpunkt"
-
-msgid "ref"
-msgstr "ref"
-
-msgid "deepen history of shallow clone, excluding ref"
-msgstr "fördjupa historik för grund klon, exkludera ref"
-
-msgid "clone only one branch, HEAD or --branch"
-msgstr "klona endast en gren, HEAD eller --branch"
-
-msgid "don't clone any tags, and make later fetches not to follow them"
-msgstr "klona inga taggar och gör att senare hämtningar inte följer dem"
-
-msgid "any cloned submodules will be shallow"
-msgstr "klonade undermoduler kommer vara grunda"
-
-msgid "gitdir"
-msgstr "gitkat"
-
-msgid "separate git dir from working tree"
-msgstr "separera gitkatalogen från arbetskatalogen"
-
-msgid "specify the reference format to use"
-msgstr "använd referensformatet som ska användas"
-
-msgid "key=value"
-msgstr "nyckel=värde"
-
-msgid "set config inside the new repository"
-msgstr "ställ in konfiguration i det nya arkivet"
-
-msgid "server-specific"
-msgstr "serverspecifik"
-
-msgid "option to transmit"
-msgstr "flagga att sända"
-
-msgid "apply partial clone filters to submodules"
-msgstr "tillämpa delvisa klonfilter på undermoduler"
-
-msgid "any cloned submodules will use their remote-tracking branch"
-msgstr "klonade undermoduler kommer använda sin fjärrspårningsgren"
-
-msgid "initialize sparse-checkout file to include only files at root"
-msgstr "initiera sparse-checkout-filen till att bara ta med filer i roten"
-
-msgid "uri"
-msgstr "uri"
-
-msgid "a URI for downloading bundles before fetching from origin remote"
-msgstr "en URI för att hämta buntar innan de hämtas från ursprungsfjärr"
-
 #, c-format
 msgid "info: Could not add alternate for '%s': %s\n"
 msgstr "info: Kan inte skapa suppleant för ”%s”: %s\n"
@@ -4240,10 +4131,6 @@ msgstr ""
 "Du kan inspektera det som checkades ut med ”git status”\n"
 "och försöka med ”git restore --source=HEAD :/”\n"
 
-#, c-format
-msgid "Could not find remote branch %s to clone."
-msgstr "Kunde inte hitta fjärrgrenen %s för att klona."
-
 msgid "remote did not send all necessary objects"
 msgstr "fjärren sände inte alla nödvändiga objekt"
 
@@ -4268,6 +4155,126 @@ msgstr "kan inte packa om för att städa upp"
 
 msgid "cannot unlink temporary alternates file"
 msgstr "kunde inte ta bort temporär ”alternates”-fil"
+
+msgid "don't clone shallow repository"
+msgstr "klona inte grunt arkiv"
+
+msgid "don't create a checkout"
+msgstr "skapa inte någon utcheckning"
+
+msgid "create a bare repository"
+msgstr "skapa ett naket (”bare”) arkiv"
+
+msgid "create a mirror repository (implies --bare)"
+msgstr "skapa ett spegelarkiv (implicerar --bare)"
+
+msgid "to clone from a local repository"
+msgstr "för att klona från ett lokalt arkiv"
+
+msgid "don't use local hardlinks, always copy"
+msgstr "skapa inte lokala hårda länkar, kopiera alltid"
+
+msgid "setup as shared repository"
+msgstr "skapa som ett delat arkiv"
+
+msgid "pathspec"
+msgstr "sökvägsangivelse"
+
+msgid "initialize submodules in the clone"
+msgstr "initiera undermoduler i klonen"
+
+msgid "number of submodules cloned in parallel"
+msgstr "antal undermoduler som klonas parallellt"
+
+msgid "template-directory"
+msgstr "mallkatalog"
+
+msgid "directory from which templates will be used"
+msgstr "katalog att använda mallar från"
+
+msgid "reference repository"
+msgstr "referensarkiv"
+
+msgid "use --reference only while cloning"
+msgstr "använd --reference endast under kloningen"
+
+msgid "name"
+msgstr "namn"
+
+msgid "use <name> instead of 'origin' to track upstream"
+msgstr "använd <namn> istället för ”origin” för att spåra uppströms"
+
+msgid "checkout <branch> instead of the remote's HEAD"
+msgstr "checka ut <gren> istället för fjärrens HEAD"
+
+msgid "clone single revision <rev> and check out"
+msgstr "klona ensam revision <rev> och checka ut"
+
+msgid "path to git-upload-pack on the remote"
+msgstr "sökväg till git-upload-pack på fjärren"
+
+msgid "depth"
+msgstr "djup"
+
+msgid "create a shallow clone of that depth"
+msgstr "skapa en grund klon på detta djup"
+
+msgid "create a shallow clone since a specific time"
+msgstr "skapa en grund klon från en angiven tidpunkt"
+
+msgid "ref"
+msgstr "ref"
+
+msgid "deepen history of shallow clone, excluding ref"
+msgstr "fördjupa historik för grund klon, exkludera ref"
+
+msgid "clone only one branch, HEAD or --branch"
+msgstr "klona endast en gren, HEAD eller --branch"
+
+msgid "clone tags, and make later fetches not to follow them"
+msgstr "klona taggar och gör att senare hämtningar inte följer dem"
+
+msgid "any cloned submodules will be shallow"
+msgstr "klonade undermoduler kommer vara grunda"
+
+msgid "gitdir"
+msgstr "gitkat"
+
+msgid "separate git dir from working tree"
+msgstr "separera gitkatalogen från arbetskatalogen"
+
+msgid "specify the reference format to use"
+msgstr "använd referensformatet som ska användas"
+
+msgid "key=value"
+msgstr "nyckel=värde"
+
+msgid "set config inside the new repository"
+msgstr "ställ in konfiguration i det nya arkivet"
+
+msgid "server-specific"
+msgstr "serverspecifik"
+
+msgid "option to transmit"
+msgstr "flagga att sända"
+
+msgid "apply partial clone filters to submodules"
+msgstr "tillämpa delvisa klonfilter på undermoduler"
+
+msgid "any cloned submodules will use their remote-tracking branch"
+msgstr "klonade undermoduler kommer använda sin fjärrspårningsgren"
+
+msgid "initialize sparse-checkout file to include only files at root"
+msgstr "initiera sparse-checkout-filen till att bara ta med filer i roten"
+
+msgid "uri"
+msgstr "uri"
+
+msgid "a URI for downloading bundles before fetching from origin remote"
+msgstr "en URI för att hämta buntar innan de hämtas från ursprungsfjärr"
+
+msgid "git clone [<options>] [--] <repo> [<dir>]"
+msgstr "git clone [<flaggor>] [--] <arkiv> [<kat>]"
 
 msgid "Too many arguments."
 msgstr "För många argument."
@@ -4366,6 +4373,10 @@ msgstr "fjärrtransport rapporterade fel"
 #, c-format
 msgid "Remote branch %s not found in upstream %s"
 msgstr "Fjärrgrenen %s hittades inte i uppströmsarkivet %s"
+
+#, c-format
+msgid "Remote revision %s not found in upstream %s"
+msgstr "Fjärr-revisionen %s hittades inte i uppströmsarkivet %s"
 
 msgid "You appear to have cloned an empty repository."
 msgstr "Du verkar ha klonat ett tomt arkiv."
@@ -4540,7 +4551,7 @@ msgid "git commit-tree: failed to read"
 msgstr "git commit-tree: misslyckades läsa"
 
 msgid ""
-"git commit [-a | --interactive | --patch] [-s] [-v] [-u<mode>] [--amend]\n"
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u[<mode>]] [--amend]\n"
 "           [--dry-run] [(-c | -C | --squash) <commit> | --fixup [(amend|"
 "reword):]<commit>]\n"
 "           [-F <file> | -m <msg>] [--reset-author] [--allow-empty]\n"
@@ -4550,7 +4561,7 @@ msgid ""
 "           [(--trailer <token>[(=|:)<value>])...] [-S[<keyid>]]\n"
 "           [--] [<pathspec>...]"
 msgstr ""
-"git commit [-a | --interactive | --patch] [-s] [-v] [-u<läge>] [--amend]\n"
+"git commit [-a | --interactive | --patch] [-s] [-v] [-u[<läge>]] [--amend]\n"
 "           [--dry-run] [(-c | -C | --squash) <incheckning> | --fixup [(amend|"
 "reword):]<incheckning>]\n"
 "           [-F <fil> | -m <medd>] [--reset-author] [--allow-empty]\n"
@@ -4791,7 +4802,7 @@ msgstr "Ange meddelandet en av flaggorna -m eller -F.\n"
 #, c-format
 msgid "--author '%s' is not 'Name <email>' and matches no existing author"
 msgstr ""
-"--author '%s' är inte 'Namn <epost>' och motsvarar ingen befintlig författare"
+"--author ”%s” är inte ”Namn <epost>” och motsvarar ingen befintlig författare"
 
 #, c-format
 msgid "Invalid ignored mode '%s'"
@@ -5202,7 +5213,7 @@ msgid "writing to stdin is not supported"
 msgstr "skriva till standard in stöds inte"
 
 msgid "writing config blobs is not supported"
-msgstr "skriva konfigurations-blobbar stöds inte"
+msgstr "skriva konfigurations-blob:ar stöds inte"
 
 #, c-format
 msgid ""
@@ -5239,7 +5250,7 @@ msgid ""
 "section in \"git help worktree\" for details"
 msgstr ""
 "--worktree kan inte användas med flera arbetskataloger om inte\n"
-"konfigurationsutöknignen worktreeConfig har aktiverats. Läsa stycket\n"
+"konfigurationsutökningen worktreeConfig har aktiverats. Läsa stycket\n"
 "”KONFIGURATIONSFIL” i ”git help worktree” för detaljer"
 
 msgid "Other"
@@ -5325,7 +5336,7 @@ msgid "editing stdin is not supported"
 msgstr "redigering av standard in stöds ej"
 
 msgid "editing blobs is not supported"
-msgstr "redigering av blobbar stöds ej"
+msgstr "redigering av blob:ar stöds ej"
 
 #, c-format
 msgid "cannot create configuration file %s"
@@ -5601,7 +5612,7 @@ msgstr "objektet ”%s” som angavs är felaktigt."
 
 #, c-format
 msgid "more than two blobs given: '%s'"
-msgstr "mer än två blobbar angavs: ”%s”"
+msgstr "mer än två blob:ar angavs: ”%s”"
 
 #, c-format
 msgid "unhandled object '%s' given."
@@ -5760,7 +5771,7 @@ msgid "reference parents which are not in fast-export stream by object id"
 msgstr "referera föräldrar som inte finns i fast-export-ström med objekt-id"
 
 msgid "show original object ids of blobs/commits"
-msgstr "visa ursprungliga objekt-id för blobbar/incheckningar"
+msgstr "visa ursprungliga objekt-id för blob:ar/incheckningar"
 
 msgid "label tags with mark ids"
 msgstr "märk taggar med märke-id"
@@ -5931,14 +5942,14 @@ msgid ""
 "Run 'git remote set-head %s %s' to follow the change, or set\n"
 "'remote.%s.followRemoteHEAD' configuration option to a different value\n"
 "if you do not want to see this message. Specifically running\n"
-"'git config set remote.%s.followRemoteHEAD %s' will disable the warning\n"
-"until the remote changes HEAD to something else."
+"'git config set remote.%s.followRemoteHEAD warn-if-not-branch-%s'\n"
+"will disable the warning until the remote changes HEAD to something else."
 msgstr ""
 "Kör ”git remote set-head %s %s” för att följa ändringen, eller sätt\n"
 "konfigurationsflaggan ”remote %s.followRemoteHEAD” till ett annat värde\n"
 "om du inte vill se det här meddelandet. Du kan specifikt inaktivera\n"
 "varningen till fjärren ändrar HEAD till något annat genom att köra\n"
-"”git config set remote %s.followRemoteHEAD %s”."
+"”git config set remote %s.followRemoteHEAD warn-if-not-branch-%s”."
 
 msgid "multiple branches detected, incompatible with --set-upstream"
 msgstr "flera grenar upptäcktes, inkompatibelt med --set-upstream"
@@ -6328,11 +6339,11 @@ msgstr "%s: objekt trasigt eller saknas"
 
 #, c-format
 msgid "%s: invalid reflog entry %s"
-msgstr "%s: ogiltig reflog-post %s"
+msgstr "%s: ogiltig referensloggpost %s"
 
 #, c-format
 msgid "Checking reflog %s->%s"
-msgstr "Kontrollerar reflog %s→%s"
+msgstr "Kontrollerar referenslogg %s→%s"
 
 #, c-format
 msgid "%s: invalid sha1 pointer %s"
@@ -6441,7 +6452,7 @@ msgid "make index objects head nodes"
 msgstr "gör indexobjekt till huvudnoder"
 
 msgid "make reflogs head nodes (default)"
-msgstr "gör refloggar till huvudnoder (standard)"
+msgstr "gör referensloggar till huvudnoder (standard)"
 
 msgid "also consider packs and alternate objects"
 msgstr "ta även hänsyn till paket och supplerande objekt"
@@ -6502,11 +6513,11 @@ msgstr "kunde inte skapa fsmonitor-kaka ”%s”"
 
 #, c-format
 msgid "fsmonitor: cookie_result '%d' != SEEN"
-msgstr "fsmonitor: cookie_result '%d' != SEEN"
+msgstr "fsmonitor: cookie_result ”%d” != SEEN"
 
 #, c-format
 msgid "could not start IPC thread pool on '%s'"
-msgstr "kunde inte starta IPC-trådpol på ”%s”"
+msgstr "kunde inte starta IPC-trådpool på ”%s”"
 
 msgid "could not start fsmonitor listener thread"
 msgstr "kunde inte starta fsmonitor-lyssnartråd"
@@ -6617,6 +6628,9 @@ msgstr "tvinga gc-körning även om en annan gc kanske körs"
 
 msgid "repack all other packs except the largest pack"
 msgstr "packa om alla paket förutom det största paketet"
+
+msgid "pack prefix to store a pack containing pruned objects"
+msgstr "paketprefix att lagra ett paket som innehåller bortrensade objekt"
 
 #, c-format
 msgid "failed to parse gc.logExpiry value %s"
@@ -7176,7 +7190,7 @@ msgstr "flaggan ”%s” tar inte några argument som inte är flaggor"
 msgid ""
 "the '--no-[external-commands|aliases]' options can only be used with '--all'"
 msgstr ""
-"flaggorna '--no-[external-commands|aliases]' kan endast användas med ”--all”"
+"flaggorna ”--no-[external-commands|aliases]” kan endast användas med ”--all”"
 
 #, c-format
 msgid "usage: %s%s"
@@ -7405,6 +7419,10 @@ msgstr "kunde inte avsluta pack-objects för att packa om lokala länkar"
 
 msgid "Cannot come back to cwd"
 msgstr "Kan inte gå tillbaka till arbetskatalogen (cwd)"
+
+#, c-format
+msgid "bad --pack_header: %s"
+msgstr "felaktig --pack_header: %s"
 
 #, c-format
 msgid "bad %s"
@@ -7977,7 +7995,7 @@ msgid "suppress duplicate entries"
 msgstr "undertryck dublettposter"
 
 msgid "show sparse directories in the presence of a sparse index"
-msgstr "visa glesa kataloger när et glest index existerar"
+msgstr "visa glesa kataloger när ett glest index existerar"
 
 msgid ""
 "--format cannot be used with -s, -o, -k, -t, --resolve-undo, --deduplicate, "
@@ -8260,10 +8278,6 @@ msgstr "okänd strategiflagga: -X%s"
 #, c-format
 msgid "malformed input line: '%s'."
 msgstr "felaktig indatarad: ”%s”."
-
-#, c-format
-msgid "merging cannot continue; got unclean result of %d"
-msgstr "sammanslagning kan inte fortsätta; fick inte rent resultat från %d"
 
 msgid "git merge [<options>] [<commit>...]"
 msgstr "git merge [<flaggor>] [<incheckning>...]"
@@ -8969,7 +8983,7 @@ msgid "failed to remove 'git notes merge' worktree"
 msgstr "misslyckades ta bort arbetskatalogen för ”git notes merge”"
 
 msgid "failed to read ref NOTES_MERGE_PARTIAL"
-msgstr "misslyckades läsa references NOTES_MERGE_PARTIAL"
+msgstr "misslyckades läsa referensen NOTES_MERGE_PARTIAL"
 
 msgid "could not find commit from NOTES_MERGE_PARTIAL."
 msgstr "kunde inte hitta incheckning från NOTES_MERGE_PARTIAL."
@@ -9081,6 +9095,13 @@ msgstr ""
 "git pack-objects [<flaggor>] <basnamn> [< <reflista> | < <objektlista>]"
 
 #, c-format
+msgid "invalid --name-hash-version option: %d"
+msgstr "ogiltig flagga för --name-hash-version: %d"
+
+msgid "currently, --write-bitmap-index requires --name-hash-version=1"
+msgstr "--write-bitmap-index kräver för närvarande, --name-hash-version=1"
+
+#, c-format
 msgid ""
 "write_reuse_object: could not locate %s, expected at offset %<PRIuMAX> in "
 "pack %s"
@@ -9190,14 +9211,14 @@ msgid ""
 "value of uploadpack.blobpackfileuri must be of the form '<object-hash> <pack-"
 "hash> <uri>' (got '%s')"
 msgstr ""
-"värdet på uploadpack.blobpackfileuri måste vara på formen '<objekt-hash> "
-"<paket-hash> <uri>' (fick '%s')"
+"värdet på uploadpack.blobpackfileuri måste vara på formen ”<objekt-hash> "
+"<paket-hash> <uri>” (fick ”%s”)"
 
 #, c-format
 msgid ""
 "object already configured in another uploadpack.blobpackfileuri (got '%s')"
 msgstr ""
-"objektet redan konfigurerat i et annat uploadpack.blobpackfileuri (fick '%s)"
+"objektet redan konfigurerat i ett annat uploadpack.blobpackfileuri (fick ”%s”"
 
 #, c-format
 msgid "could not get type of object %s in pack %s"
@@ -9400,6 +9421,10 @@ msgstr "protokoll"
 msgid "exclude any configured uploadpack.blobpackfileuri with this protocol"
 msgstr ""
 "uteslut redan konfigurerade uploadpack.blobpackfileuri med detta protokoll"
+
+msgid "use the specified name-hash function to group similar objects"
+msgstr ""
+"använd den angivna namn-hash-funktionen för att gruppera liknande objekt"
 
 #, c-format
 msgid "delta chain depth %d is too deep, forcing %d"
@@ -10189,7 +10214,7 @@ msgstr ""
 "Ange vilken gren du vill ombasera mot.\n"
 "Se git-rebase(1) för detaljer.\n"
 "\n"
-"    git rebase '<gren>'\n"
+"    git rebase ”<gren>”\n"
 "\n"
 
 #, c-format
@@ -10603,7 +10628,8 @@ msgid "process the reflogs of all references"
 msgstr "hantera referensloggar för alla referenser"
 
 msgid "limits processing to reflogs from the current worktree only"
-msgstr "begränsar hantering av referensloggar till endast aktuell arbetskatalog"
+msgstr ""
+"begränsar hantering av referensloggar till endast aktuell arbetskatalog"
 
 #, c-format
 msgid "Marking reachable objects..."
@@ -10620,8 +10646,8 @@ msgstr "ingen referenslogg att ta bort angavs"
 msgid "invalid ref format: %s"
 msgstr "felaktigt referensformat: %s"
 
-msgid "git refs migrate --ref-format=<format> [--dry-run]"
-msgstr "git refs migrate --ref-format=<format> [--dry-run]"
+msgid "git refs migrate --ref-format=<format> [--no-reflog] [--dry-run]"
+msgstr "git refs migrate --ref-format=<format> [--no-reflog] [--dry-run]"
 
 msgid "git refs verify [--strict] [--verbose]"
 msgstr "git refs verify [--strict] [--verbose]"
@@ -10631,6 +10657,9 @@ msgstr "ange referensformatet att konvertera till"
 
 msgid "perform a non-destructive dry-run"
 msgstr "utför ett icke-destruktiv testkörning"
+
+msgid "drop reflogs entirely during the migration"
+msgstr "kasta referensloggar helt under migreringen"
 
 msgid "missing --ref-format=<format>"
 msgstr "saknad --ref-format=<format>"
@@ -11091,8 +11120,14 @@ msgstr "Kommer inte ta bort alla icke-sänd-URL:er"
 msgid "be verbose; must be placed before a subcommand"
 msgstr "var pratsam; måste skrivas före ett underkommando"
 
-msgid "git repack [<options>]"
-msgstr "git repack [<flaggor>]"
+msgid ""
+"git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
+"[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>]\n"
+"[--write-midx] [--name-hash-version=<n>]"
+msgstr ""
+"git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
+"[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<paket-namn>]\n"
+"[--write-midx] [--name-hash-version=<n>]"
 
 msgid ""
 "Incremental repacks are incompatible with bitmap indexes.  Use\n"
@@ -11166,6 +11201,12 @@ msgstr "sänd --no-reuse-delta till git-pack-objects"
 msgid "pass --no-reuse-object to git-pack-objects"
 msgstr "sänd --no-reuse-object till git-pack-objects"
 
+msgid ""
+"specify the name hash version to use for grouping similar objects by path"
+msgstr ""
+"ange den namnhash-version som ska användas för att gruppera liknande objekt "
+"efter sökväg"
+
 msgid "do not run git-update-server-info"
 msgstr "kör inte git-update-server-info"
 
@@ -11213,9 +11254,6 @@ msgstr "hitta ett geometrisk förlopp med faktor <N>"
 
 msgid "write a multi-pack index of the resulting packs"
 msgstr "skriv ett flerpaketsindex för de skapade paketen"
-
-msgid "pack prefix to store a pack containing pruned objects"
-msgstr "paketprefix att lagra ett paket som innehåller bortrensade objekt"
 
 msgid "pack prefix to store a pack containing filtered out objects"
 msgstr "paketprefix att lagra ett paket som innehåller utfiltrerade objekt"
@@ -11432,9 +11470,6 @@ msgstr "endast ett mönster kan anges med -l"
 
 msgid "need some commits to replay"
 msgstr "behöver några incheckningar för omspelning"
-
-msgid "--onto and --advance are incompatible"
-msgstr "--onto och --advance kan inte kombineras"
 
 msgid "all positive revisions given must be references"
 msgstr "alla positiva revisioner som anges måste vara referenser"
@@ -12020,7 +12055,7 @@ msgid "<n>[,<base>]"
 msgstr "<n>[,<bas>]"
 
 msgid "show <n> most recent ref-log entries starting at base"
-msgstr "visa <n> nyaste refloggposter med början på bas"
+msgstr "visa <n> nyaste referensloggposter med början på bas"
 
 msgid "no branches given, and HEAD is not valid"
 msgstr "inga grenar angavs, och HEAD är inte giltigt"
@@ -12134,7 +12169,7 @@ msgid ""
 "directory '%s' contains untracked files, but is not in the sparse-checkout "
 "cone"
 msgstr ""
-"katalogen ”%s” innehåller ospårade filer, men är inte i området som ages i "
+"katalogen ”%s” innehåller ospårade filer, men är inte i området som anges i "
 "”sparse-checkout”"
 
 #, c-format
@@ -12726,7 +12761,7 @@ msgstr "misslyckades klona ”%s” till undermodulsökvägen ”%s”"
 
 #, c-format
 msgid "could not get submodule directory for '%s'"
-msgstr "kunde inte få tag i undermodulkatalog för ”%s”"
+msgstr "kunde inte få tag i undermodulskatalog för ”%s”"
 
 msgid "alternative anchor for relative paths"
 msgstr "alternativa ankare för relativa sökvägar"
@@ -12830,8 +12865,8 @@ msgid ""
 "Fetched in submodule path '%s', but it did not contain %s. Direct fetching "
 "of that commit failed."
 msgstr ""
-"Hämtade i undermodulssökvägen ”%s”, men den innehöll inte %s. Direkt "
-"hämtning av incheckningen misslyckades."
+"Hämtade i undermodulsökvägen ”%s”, men den innehöll inte %s. Direkt hämtning "
+"av incheckningen misslyckades."
 
 #, c-format
 msgid "could not initialize submodule at path '%s'"
@@ -13199,7 +13234,7 @@ msgid "replace the tag if exists"
 msgstr "ersätt taggen om den finns"
 
 msgid "create a reflog"
-msgstr "skapa en reflog"
+msgstr "skapa en referenslogg"
 
 msgid "Tag listing options"
 msgstr "Alternativ för listning av taggar"
@@ -13924,7 +13959,7 @@ msgstr "okänd kapabilitet ”%s”"
 
 #, c-format
 msgid "'%s' does not look like a v2 or v3 bundle file"
-msgstr "'%s' ser inte ut som en v2- eller v3-bunt-fil"
+msgstr "”%s” ser inte ut som en v2- eller v3-bunt-fil"
 
 #, c-format
 msgid "unrecognized header: %s%s (%d)"
@@ -14058,6 +14093,9 @@ msgstr "Importera ett GNU Arch-arkiv till Git"
 msgid "Create an archive of files from a named tree"
 msgstr "Skapa ett arkiv över filer från ett namngivet träd"
 
+msgid "Download missing objects in a partial clone"
+msgstr "Hämta saknade objekt i en delvis kloning"
+
 msgid "Use binary search to find the commit that introduced a bug"
 msgstr "Använd binärsökning för att hitta ändringen som introducerade ett fel"
 
@@ -14164,7 +14202,7 @@ msgid "Compare a tree to the working tree or index"
 msgstr "Jämför en träd med arbetskatalogen eller indexet"
 
 msgid "Compares the content and mode of blobs found via two tree objects"
-msgstr "Visar innehåll och läge för blobbar som hittats via två trädobjekt"
+msgstr "Visar innehåll och läge för blob:ar som hittats via två trädobjekt"
 
 msgid "Show changes using common diff tools"
 msgstr "Visa ändringar med vanliga diff-verktyg"
@@ -14996,19 +15034,19 @@ msgstr "kunde inte läsa katalogändringar [GLE %ld]"
 
 #, c-format
 msgid "opendir('%s') failed"
-msgstr "opendir('%s') misslyckades"
+msgstr "opendir(”%s”) misslyckades"
 
 #, c-format
 msgid "lstat('%s') failed"
-msgstr "lstat('%s') misslyckades"
+msgstr "lstat(”%s”) misslyckades"
 
 #, c-format
 msgid "strbuf_readlink('%s') failed"
-msgstr "strbuf_readlink('%s') misslyckades"
+msgstr "strbuf_readlink(”%s”) misslyckades"
 
 #, c-format
 msgid "closedir('%s') failed"
-msgstr "closedir('%s') misslyckades"
+msgstr "closedir(”%s”) misslyckades"
 
 #, c-format
 msgid "[GLE %ld] unable to open for read '%ls'"
@@ -15335,7 +15373,7 @@ msgstr "referensen ”%s” pekar inte på en blob"
 
 #, c-format
 msgid "unable to resolve config blob '%s'"
-msgstr "kan inte slå upp konfigurerings-blobben ”%s”"
+msgstr "kan inte slå upp konfigurerings-blob:en ”%s”"
 
 msgid "unable to parse command-line config"
 msgstr "kan inte tolka kommandoradskonfiguration"
@@ -15968,6 +16006,12 @@ msgstr "ogiltigt argument för %s"
 msgid "invalid regex given to -I: '%s'"
 msgstr "ogiltigt reguljärt uttryck angavs för -I: ”%s”"
 
+msgid "-G requires a non-empty argument"
+msgstr "-G kräver ett icke-tomt argument"
+
+msgid "-S requires a non-empty argument"
+msgstr "-S kräver ett icke-tomt argument"
+
 #, c-format
 msgid "failed to parse --submodule option parameter: '%s'"
 msgstr "misslyckades tolka argument till flaggan --submodule: ”%s”"
@@ -16080,7 +16124,7 @@ msgid ""
 "do not munge pathnames and use NULs as output field terminators in --raw or "
 "--numstat"
 msgstr ""
-"skriv inte om sökvägsnamn och använd NUL-tecken som fältseparerare i --raw "
+"skriv inte om sökvägsnamn och använd NUL-tecken som fältavdelare i --raw "
 "eller --numstat"
 
 msgid "<prefix>"
@@ -16495,7 +16539,7 @@ msgid "already have %s (%s)"
 msgstr "har redan %s (%s)"
 
 msgid "fetch-pack: unable to fork off sideband demultiplexer"
-msgstr "fetch-patch: kan inte grena (fork) av sidbandsmultiplexare"
+msgstr "fetch-patch: kan inte grena (fork) av sidbands-avmultiplexare"
 
 msgid "protocol error: bad pack header"
 msgstr "protokollfel: felaktigt packhuvud"
@@ -16689,7 +16733,7 @@ msgstr ""
 "”git help -a” och ”git help -g” visar tillgängliga underkommandon och\n"
 "några konceptvägledningar. Se ”git help <kommando>” eller ”git help\n"
 "<koncept>” för att läsa mer om specifika underkommandon och koncept.\n"
-"See ”git help git” för en översikt över systemet."
+"Se ”git help git” för en översikt över systemet."
 
 #, c-format
 msgid "unsupported command listing type '%s'"
@@ -17020,7 +17064,7 @@ msgstr "inte ett git-arkiv"
 #, c-format
 msgid "argument to --packfile must be a valid hash (got '%s')"
 msgstr ""
-"argumentet till --packfile måste vara ett giltigt hashvärde (fick '%s')"
+"argumentet till --packfile måste vara ett giltigt hashvärde (fick ”%s”)"
 
 #, c-format
 msgid "negative value for http.postBuffer; defaulting to %d"
@@ -17056,7 +17100,7 @@ msgid ""
 "  asked for: %s\n"
 "   redirect: %s"
 msgstr ""
-"kan inte uppdatera urlbas från omdirigerin:\n"
+"kan inte uppdatera urlbas från omdirigering:\n"
 "        bad om: %s\n"
 "  omdirigering: %s"
 
@@ -17914,7 +17958,7 @@ msgid "multi-pack-index stores a 64-bit offset, but off_t is too small"
 msgstr "multi-pack-index innehåller 64-bitars offset, men off_t är för liten"
 
 msgid "multi-pack-index large offset out of bounds"
-msgstr "stort offset för mult-pack-index utanför gränsen"
+msgstr "stort offset för multi-pack-index utanför gränsen"
 
 msgid "multi-pack-index file exists, but failed to parse"
 msgstr "multi-pack-indexfilen finns, men kunde inte tolkas"
@@ -17985,7 +18029,7 @@ msgstr "Kan inte checka in oinitierat/orefererat anteckningsträd"
 
 #, c-format
 msgid "Bad notes.rewriteMode value: '%s'"
-msgstr "Felaktigt värde för notes.rewriteMode: '%s'"
+msgstr "Felaktigt värde för notes.rewriteMode: ”%s”"
 
 #, c-format
 msgid "Refusing to rewrite notes in %s (outside of refs/notes/)"
@@ -18133,6 +18177,10 @@ msgstr "filerna ”%s” och ”%s” har olika innehåll"
 #, c-format
 msgid "unable to write file %s"
 msgstr "kan inte skriva filen %s"
+
+#, c-format
+msgid "unable to write repeatedly vanishing file %s"
+msgstr "kan inte skriva till filen %s som hela tiden försvinner"
 
 #, c-format
 msgid "unable to set permission to '%s'"
@@ -18538,7 +18586,8 @@ msgstr "bitkarteresultat stämmer inte överens"
 
 #, c-format
 msgid "pseudo-merge index out of range (%<PRIu32> >= %<PRIuMAX>)"
-msgstr "pseudosammanslagningsindex utanför intervallet (%<PRIu32> ≥ %<PRIuMAX>)"
+msgstr ""
+"pseudosammanslagningsindex utanför intervallet (%<PRIu32> ≥ %<PRIuMAX>)"
 
 #, c-format
 msgid "could not find '%s' in pack '%s' at offset %<PRIuMAX>"
@@ -18694,6 +18743,52 @@ msgstr "okänd flagga ”%c”"
 msgid "unknown non-ascii option in string: `%s'"
 msgstr "okänd icke-ascii-flagga i strängen: ”%s”"
 
+#. TRANSLATORS: The "<%s>" part of this string
+#. stands for an optional value given to a command
+#. line option in the long form, and "<>" is there
+#. as a convention to signal that it is a
+#. placeholder (i.e. the user should substitute it
+#. with the real value).  If your language uses a
+#. different convention, you can change "<%s>" part
+#. to match yours, e.g. it might use "|%s|" instead,
+#. or if the alphabet is different enough it may use
+#. "%s" without any placeholder signal.  Most
+#. translations leave this message as is.
+#.
+#, c-format
+msgid "[=<%s>]"
+msgstr "[=<%s>]"
+
+#. TRANSLATORS: The "<%s>" part of this string
+#. stands for an optional value given to a command
+#. line option in the short form, and "<>" is there
+#. as a convention to signal that it is a
+#. placeholder (i.e. the user should substitute it
+#. with the real value).  If your language uses a
+#. different convention, you can change "<%s>" part
+#. to match yours, e.g. it might use "|%s|" instead,
+#. or if the alphabet is different enough it may use
+#. "%s" without any placeholder signal.  Most
+#. translations leave this message as is.
+#.
+#, c-format
+msgid "[<%s>]"
+msgstr "[<%s>]"
+
+#. TRANSLATORS: The "<%s>" part of this string stands for a
+#. value given to a command line option, and "<>" is there
+#. as a convention to signal that it is a placeholder
+#. (i.e. the user should substitute it with the real value).
+#. If your language uses a different convention, you can
+#. change "<%s>" part to match yours, e.g. it might use
+#. "|%s|" instead, or if the alphabet is different enough it
+#. may use "%s" without any placeholder signal.  Most
+#. translations leave this message as is.
+#.
+#, c-format
+msgid " <%s>"
+msgstr " <%s>"
+
 msgid "..."
 msgstr "..."
 
@@ -18777,6 +18872,21 @@ msgstr "felaktigt booleskt miljövariabelvärde ”%s” för ”%s”"
 #, c-format
 msgid "failed to parse %s"
 msgstr "misslyckades tolka %s"
+
+#, c-format
+msgid "failed to walk children of tree %s: not found"
+msgstr "misslyckades traversera löven i trädet %s: hittades inte"
+
+#, c-format
+msgid "failed to find object %s"
+msgstr "misslyckades hitta objektet %s"
+
+#, c-format
+msgid "failed to find tag %s"
+msgstr "misslyckades hitta taggen %s"
+
+msgid "failed to setup revision walk"
+msgstr "misslyckades starta revisionstraversering"
 
 #, c-format
 msgid "Could not make %s writable by group"
@@ -18922,6 +19032,22 @@ msgstr "kontraktsfjärr kan inte börja med ”/”: %s"
 #, c-format
 msgid "could not fetch %s from promisor remote"
 msgstr "kunde inte hämta %s från kontraktsfjärr"
+
+#, c-format
+msgid "known remote named '%s' but with url '%s' instead of '%s'"
+msgstr "känd fjärr som heter ”%s” med med url:en ”%s” istället för ”%s”"
+
+#, c-format
+msgid "unknown '%s' value for '%s' config option"
+msgstr "okänt värde ”%s” för inställningen ”%s”"
+
+#, c-format
+msgid "unknown element '%s' from remote info"
+msgstr "okänt värde ”%s” från fjärrinformation"
+
+#, c-format
+msgid "accepted promisor remote '%s' not found"
+msgstr "godkänd kontraktsfjärr ”%s” hittades inte"
 
 msgid "object-info: expected flush after arguments"
 msgstr "object-info: förväntade ”flush” efter argument"
@@ -19248,7 +19374,7 @@ msgstr ""
 "        enrads, om inget incheckningsmeddelande angavs); använd\n"
 "        -c <incheckning> för att skriva om meddelandet.\n"
 "u, update-ref <ref> = spåra en platshållare för <ref> att uppdatera\n"
-"                      till denna position bland nya inchecknngar.\n"
+"                      till denna position bland nya incheckningar.\n"
 "                      <ref> uppdateras i slutet av ombaseringen.\n"
 "\n"
 "Du kan byta ordning på raderna; de utförs uppifrån och ned.\n"
@@ -19616,7 +19742,7 @@ msgid "refusing to update ref with bad name '%s'"
 msgstr "vägrar uppdatera referens med trasigt namn ”%s”"
 
 msgid "refusing to force and skip creation of reflog"
-msgstr "vägrar att tvinga och hoppa över skapande av reflogg"
+msgstr "vägrar att tvinga och hoppa över skapande av referenslogg"
 
 #, c-format
 msgid "update_ref failed for ref '%s': %s"
@@ -19749,6 +19875,14 @@ msgid "invalid refspec '%s'"
 msgstr "felaktig referensspecifikation: ”%s”"
 
 #, c-format
+msgid "pattern '%s' has no '*'"
+msgstr "mönstret ”%s” innehåller ingen ”*”"
+
+#, c-format
+msgid "replacement '%s' has no '*'"
+msgstr "ersättningen ”%s” innehåller ingen ”*”"
+
+#, c-format
 msgid "invalid quoting in push-option value: '%s'"
 msgstr "felaktig citering på värde för push-option: ”%s”"
 
@@ -19867,6 +20001,28 @@ msgid "remote-curl: unknown command '%s' from git"
 msgstr "remote-curl: okänt kommando ”%s” från git"
 
 #, c-format
+msgid ""
+"reading remote from \"%s/%s\", which is nominated for removal.\n"
+"\n"
+"If you still use the \"remotes/\" directory it is recommended to\n"
+"migrate to config-based remotes:\n"
+"\n"
+"\tgit remote rename %s %s\n"
+"\n"
+"If you cannot, please let us know why you still need to use it by\n"
+"sending an e-mail to <git@vger.kernel.org>."
+msgstr ""
+"läser fjärren från ”%s/%s”, som har nominerats för borttagning.\n"
+"\n"
+"Om du fortfarande använder ”remotes/”-katalogen rekommenderas du\n"
+"migrera till konfigurationsbaserade fjärrar:\n"
+"\n"
+"\tgit remote rename %s %s\n"
+"\n"
+"Om du inte kan det, berätta för oss varför du fortfarande behöver\n"
+"använda det på e-post till <git@vger.kernel.org>."
+
+#, c-format
 msgid "config remote shorthand cannot begin with '/': %s"
 msgstr "konfigurerad kortform för fjärr kan inte börja med ”/”: %s"
 
@@ -19899,14 +20055,6 @@ msgstr "%s spårar vanligtvis %s, inte %s"
 #, c-format
 msgid "%s tracks both %s and %s"
 msgstr "%s spårar både %s och %s"
-
-#, c-format
-msgid "key '%s' of pattern had no '*'"
-msgstr "nyckeln ”%s” i mönstret innehåller ingen ”*”"
-
-#, c-format
-msgid "value '%s' of pattern has no '*'"
-msgstr "värdet ”%s” i mönstret innehåller ingen ”*”"
 
 #, c-format
 msgid "src refspec %s does not match any"
@@ -21798,6 +21946,27 @@ msgstr "töm cacheträdet före varje iteration"
 msgid "number of entries in the cache tree to invalidate (default 0)"
 msgstr "antal poster i cacheträdet att ogiltigförklara (förval är 0)"
 
+msgid "test-tool path-walk <options> -- <revision-options>"
+msgstr "test-tool path-walk <flaggor> -- <revision-flaggor>"
+
+msgid "toggle inclusion of blob objects"
+msgstr "växla om blob-objekt ska vara med eller inte"
+
+msgid "toggle inclusion of commit objects"
+msgstr "växla om incheckningsobjekt ska vara med eller inte"
+
+msgid "toggle inclusion of tag objects"
+msgstr "växla om taggobjekt ska vara med eller inte"
+
+msgid "toggle inclusion of tree objects"
+msgstr "växla om trädobjekt ska vara med eller inte"
+
+msgid "toggle pruning of uninteresting paths"
+msgstr "växla bortrensning av ointressanta sökvägar"
+
+msgid "read a pattern list over stdin"
+msgstr "läs en mönsterlista från standard in"
+
 #, c-format
 msgid "commit %s is not marked reachable"
 msgstr "incheckning %s är inte märkt nåbar"
@@ -22430,6 +22599,10 @@ msgstr "fel: "
 
 msgid "warning: "
 msgstr "varning: "
+
+#, c-format
+msgid "uname() failed with error '%s' (%d)\n"
+msgstr "uname() misslyckades med felet ”%s” (%d)\n"
 
 msgid "Fetching objects"
 msgstr "Hämtar objekt"
@@ -23265,7 +23438,7 @@ msgstr "Nödvändig SMTP-server har inte angivits korrekt."
 
 #, perl-format
 msgid "Server does not support STARTTLS! %s"
-msgstr "Servern stöder inte SMARTTLS! %s"
+msgstr "Servern stöder inte STARTTLS! %s"
 
 #, perl-format
 msgid "STARTTLS failed! %s"

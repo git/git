@@ -17602,7 +17602,7 @@ msgstr "Controllo la ridenominazione di '%s' in '%s'\n"
 
 #: builtin/mv.c:185
 msgid "bad source"
-msgstr "sourgente errata"
+msgstr "sorgente errata"
 
 #: builtin/mv.c:188
 msgid "can not move directory into itself"
