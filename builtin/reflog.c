@@ -383,7 +383,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 		struct expire_reflog_policy_cb cb = { .cmd = cmd };
 
 		if (!repo_dwim_log(the_repository, argv[i], strlen(argv[i]), NULL, &ref)) {
-			status |= error(_("%s points nowhere!"), argv[i]);
+			status |= error(_("reflog could not be found: '%s'"), argv[i]);
 			continue;
 		}
 		set_reflog_expiry_param(&cb.cmd, ref);

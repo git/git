@@ -315,9 +315,9 @@ test_expect_success 'git reflog expire unknown reference' '
 	test_config gc.reflogexpireunreachable never &&
 
 	test_must_fail git reflog expire main@{123} 2>stderr &&
-	test_grep "points nowhere" stderr &&
+	test_grep "error: reflog could not be found: ${SQ}main@{123}${SQ}" stderr &&
 	test_must_fail git reflog expire does-not-exist 2>stderr &&
-	test_grep "points nowhere" stderr
+	test_grep "error: reflog could not be found: ${SQ}does-not-exist${SQ}" stderr
 '
 
 test_expect_success 'checkout should not delete log for packed ref' '
