@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2025, #03; Wed, 12)
-X-master-at: 4b68faf6b93311254efad80e554780e372deb42f
-X-next-at: e278b902bb770b75d0295eb776545312351efd36
+Subject: What's cooking in git.git (Mar 2025, #04; Fri, 14)
+X-master-at: 683c54c999c301c2cd6f715c411407c413b1d84e
+X-next-at: d1b26642dacc169ed6e4a1495e3fa114e8b27faa
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Mar 2025, #03; Wed, 12)
+What's cooking in git.git (Mar 2025, #04; Fri, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,50 +46,23 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ma/clone-doc-markup-fix (2025-03-10) 1 commit
-  (merged to 'next' on 2025-03-10 at f6994c5077)
- + git-clone doc: fix indentation
-
- Doc markup fix.
- 
- source: <20250310110758.601206-1-martin.agren@gmail.com>
-
-
-* pb/doc-follow-remote-head (2025-02-14) 2 commits
-  (merged to 'next' on 2025-03-11 at 67ce5e4795)
- + config/remote.txt: improve wording for 'remote.<name>.followRemoteHEAD'
- + config/remote.txt: reunite 'severOption' description paragraphs
-
- Doc updates.
- 
- source: <pull.1894.git.git.1739554578.gitgitgadget@gmail.com>
-
-
-* tb/fetch-follow-tags-fix (2025-03-07) 1 commit
-  (merged to 'next' on 2025-03-07 at 9432ccae14)
- + fetch: fix following tags when fetching specific OID
-
- "git fetch --follow-tags" was broken with recent updates, which has
- been corrected.
- source: <61147be4b9a0ee76f1fe0f3376d7316205da350c.1741389941.git.me@ttaylorr.com>
-
-
-* tc/zlib-ng-fix (2025-03-07) 2 commits
-  (merged to 'next' on 2025-03-07 at e13861b9f1)
- + help: print zlib-ng version number
- + help: include git-zlib.h to print zlib version
-
- "git version --build-options" stopped showing zlib version by
- mistake due to recent refactoring, which has been corrected.
- 
- source: <20250307-toon-zlib-git-version-v1-0-5e8069752bb9@iotcl.com>
-
---------------------------------------------------
 [New Topics]
 
-* en/merge-ort-prepare-to-remove-recursive (2025-03-07) 3 commits
+* en/diff-rename-follow-fix (2025-03-13) 1 commit
+ - diffcore-rename: fix BUG when break detection and --follow used together
+
+ A corner-case bug in "git log --follow -B" has been fixed.
+
+ Will merge to 'next'.
+ source: <pull.1876.git.1741395615315.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* en/merge-ort-prepare-to-remove-recursive (2025-03-13) 6 commits
+ - am: switch from merge_recursive_generic() to merge_ort_generic()
+ - merge-ort: fix merge.directoryRenames=false
+ - t3650: document bug when directory renames are turned off
  - merge-ort: support having merge verbosity be set to 0
  - merge-ort: allow rename detection to be disabled
  - merge-ort: add new merge_ort_generic() function
@@ -97,7 +70,7 @@ Release tarballs are available at:
  First step of deprecating and removing merge-recursive.
 
  Will merge to 'next'.
- source: <pull.1875.git.1741362522.gitgitgadget@gmail.com>
+ source: <pull.1875.v2.git.1741834001.gitgitgadget@gmail.com>
 
 
 * jk/use-wunreachable-code-for-devs (2025-03-07) 1 commit
@@ -186,9 +159,11 @@ Release tarballs are available at:
  source: <20250309030101.GA2334064@coredump.intra.peff.net>
 
 
-* jt/rev-list-z (2025-03-10) 4 commits
+* jt/rev-list-z (2025-03-13) 6 commits
  - rev-list: support NUL-delimited --missing option
+ - rev-list: support NUL-delimited --boundary option
  - rev-list: support delimiting objects with NUL bytes
+ - revision: support NUL-delimited --stdin mode
  - rev-list: refactor early option parsing
  - rev-list: inline `show_object_with_name()` in `show_object()`
 
@@ -196,7 +171,7 @@ Release tarballs are available at:
  each field with NUL.
 
  Will merge to 'next'?
- source: <20250310192829.661692-1-jltobler@gmail.com>
+ source: <20250313001706.3390502-1-jltobler@gmail.com>
 
 
 * kn/reflog-drop (2025-03-10) 1 commit
@@ -218,11 +193,13 @@ Release tarballs are available at:
  source: <pull.1879.git.1741705175922.gitgitgadget@gmail.com>
 
 
-* cc/lop-remote (2025-03-12) 1 commit
+* cc/lop-remote (2025-03-13) 1 commit
  - promisor-remote: fix segfault when remote URL is missing
 
  Bugfix in newly introduced large-object-promisor remote support.
- source: <20250312114628.2744747-1-christian.couder@gmail.com>
+
+ Will merge to 'next'?
+ source: <20250313103859.817127-1-christian.couder@gmail.com>
 
 
 * ps/ci-meson-check-build-docs (2025-03-12) 1 commit
@@ -244,8 +221,6 @@ Release tarballs are available at:
  Will merge to 'next'.
  source: <20250312-b4-pks-meson-breaking-changes-v1-0-b89e9a59d228@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * md/t1403-path-is-file (2025-03-04) 1 commit
  - t1403: verify that path exists and is a file
@@ -404,18 +379,15 @@ Release tarballs are available at:
  source: <20250312-pks-update-ref-optimization-v6-0-f778e0414f55@pks.im>
 
 
-* tb/multi-cruft-pack-refresh-fix (2025-03-11) 6 commits
+* tb/multi-cruft-pack-refresh-fix (2025-03-13) 1 commit
  - builtin/pack-objects.c: freshen objects from existing cruft packs
- - builtin/repack.c: simplify cruft pack aggregation
- - pack-objects: generate cruft packs at most one object over threshold
- - t/lib-cruft.sh: extract some cruft-related helpers
- - t7704-repack-cruft.sh: consolidate `write_blob()`
- - t/t5329-pack-objects-cruft.sh: evict 'repack'-related tests
 
  Certain "cruft" objects would have never been refreshed when there
  are multiple cruft packs in the repository, which has been
  corrected.
- source: <cover.1741648467.git.me@ttaylorr.com>
+
+ Will merge to 'next'.
+ source: <1563552bbda0bc910c9f41b0fabc3225c4d778fc.1741889018.git.me@ttaylorr.com>
 
 
 * jk/zlib-inflate-fixes (2025-02-25) 10 commits
