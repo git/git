@@ -12,8 +12,12 @@ git_subtree = custom_target(
   install_dir: get_option('libexecdir') / 'git-core',
 )
 
-subtree_test_environment = test_environment
-subtree_test_environment.prepend('PATH', meson.current_build_dir())
+if get_option('tests')
+  subtree_test_environment = test_environment
+  subtree_test_environment.prepend('PATH', meson.current_build_dir())
+else
+  subtree_test_environment = environment()
+endif
 
 test('t7900-subtree', shell,
   args: [ 't7900-subtree.sh' ],
