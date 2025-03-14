@@ -643,12 +643,11 @@ test_expect_success 'basic: commit and list refs' '
 	test_cmp actual expect
 '
 
-test_expect_success PERL_TEST_HELPERS 'basic: can write large commit message' '
+test_expect_success 'basic: can write large commit message' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
-	perl -e "
-		print \"this is a long commit message\" x 50000
-	" >commit-msg &&
+
+	awk "BEGIN { for (i = 0; i < 50000; i++) print \"this is a long commit message\" }" >commit-msg &&
 	git -C repo commit --allow-empty --file=../commit-msg
 '
 

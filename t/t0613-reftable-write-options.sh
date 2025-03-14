@@ -139,13 +139,13 @@ test_expect_success 'small block size leads to multiple ref blocks' '
 	)
 '
 
-test_expect_success PERL_TEST_HELPERS 'small block size fails with large reflog message' '
+test_expect_success 'small block size fails with large reflog message' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(
 		cd repo &&
 		test_commit A &&
-		perl -e "print \"a\" x 500" >logmsg &&
+		test-tool genzeros 500 | tr "\000" "a" >logmsg &&
 		cat >expect <<-EOF &&
 		fatal: update_ref failed for ref ${SQ}refs/heads/logme${SQ}: reftable: transaction failure: entry too large
 		EOF

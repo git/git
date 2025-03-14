@@ -107,7 +107,7 @@ test_expect_success 'set up abbrev tests' '
 		expect=$1 && shift &&
 		echo $sha1 | cut -c 1-$expect >expect &&
 		git blame "$@" abbrev.t >actual &&
-		perl -lne "/[0-9a-f]+/ and print \$&" <actual >actual.sha &&
+		sed -n "s/^[\^]\{0,1\}\([0-9a-f][0-9a-f]*\).*/\1/p" <actual >actual.sha &&
 		test_cmp expect actual.sha
 	}
 '
