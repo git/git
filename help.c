@@ -2,6 +2,7 @@
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
+#include "git-zlib.h"
 #include "config.h"
 #include "builtin.h"
 #include "exec-cmd.h"
@@ -797,7 +798,9 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 #if defined OPENSSL_VERSION_TEXT
 		strbuf_addf(buf, "OpenSSL: %s\n", OPENSSL_VERSION_TEXT);
 #endif
-#if defined ZLIB_VERSION
+#if defined ZLIBNG_VERSION
+		strbuf_addf(buf, "zlib-ng: %s\n", ZLIBNG_VERSION);
+#elif defined ZLIB_VERSION
 		strbuf_addf(buf, "zlib: %s\n", ZLIB_VERSION);
 #endif
 	}
