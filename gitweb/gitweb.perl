@@ -1431,7 +1431,7 @@ sub href {
 
 		# since we destructively absorb parameters, we keep this
 		# boolean that remembers if we're handling a snapshot
-		my $is_snapshot = $params{'action'} eq 'snapshot';
+		my $is_snapshot = defined $params{'action'} && $params{'action'} eq 'snapshot';
 
 		# Summary just uses the project path URL, any other action is
 		# added to the URL
@@ -6016,7 +6016,7 @@ sub git_history_body {
 		      $cgi->a({-href => href(action=>$ftype, hash_base=>$commit, file_name=>$file_name)}, $ftype) . " | " .
 		      $cgi->a({-href => href(action=>"commitdiff", hash=>$commit)}, "commitdiff");
 
-		if ($ftype eq 'blob') {
+		if (defined $ftype && $ftype eq 'blob') {
 			print " | " .
 			      $cgi->a({-href => href(action=>"blob_plain", hash_base=>$commit, file_name=>$file_name)}, "raw");
 
