@@ -698,7 +698,7 @@ test_expect_success '%(trailers:only=no,only=true) shows only "key: value" trail
 	test_cmp expect actual
 '
 
-test_expect_success '%(trailers:unfold) unfolds trailers' '
+test_expect_success PERL_TEST_HELPERS '%(trailers:unfold) unfolds trailers' '
 	git log --no-walk --pretty="%(trailers:unfold)" >actual &&
 	{
 		unfold <trailers &&
@@ -707,7 +707,7 @@ test_expect_success '%(trailers:unfold) unfolds trailers' '
 	test_cmp expect actual
 '
 
-test_expect_success ':only and :unfold work together' '
+test_expect_success PERL_TEST_HELPERS ':only and :unfold work together' '
 	git log --no-walk --pretty="%(trailers:only,unfold)" >actual &&
 	git log --no-walk --pretty="%(trailers:unfold,only)" >reverse &&
 	test_cmp actual reverse &&
@@ -754,7 +754,7 @@ test_expect_success '%(trailers:key=foo) handles multiple lines even if folded' 
 	test_cmp expect actual
 '
 
-test_expect_success '%(trailers:key=foo,unfold) properly unfolds' '
+test_expect_success PERL_TEST_HELPERS '%(trailers:key=foo,unfold) properly unfolds' '
 	git log --no-walk --pretty="format:%(trailers:key=Signed-Off-by,unfold)" >actual &&
 	unfold <trailers | grep Signed-off-by >expect &&
 	test_cmp expect actual

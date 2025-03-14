@@ -26,7 +26,7 @@ test_expect_success 'set up --reverse example' '
 	commit five
 	'
 
-test_expect_success '--reverse --parents --full-history combines correctly' '
+test_expect_success PERL_TEST_HELPERS '--reverse --parents --full-history combines correctly' '
 	git rev-list --parents --full-history main -- foo |
 		perl -e "print reverse <>" > expected &&
 	git rev-list --reverse --parents --full-history main -- foo \
@@ -34,7 +34,7 @@ test_expect_success '--reverse --parents --full-history combines correctly' '
 	test_cmp expected actual
 	'
 
-test_expect_success '--boundary does too' '
+test_expect_success PERL_TEST_HELPERS '--boundary does too' '
 	git rev-list --boundary --parents --full-history main ^root -- foo |
 		perl -e "print reverse <>" > expected &&
 	git rev-list --boundary --reverse --parents --full-history \

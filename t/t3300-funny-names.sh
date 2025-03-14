@@ -63,7 +63,7 @@ test_expect_success 'ls-files quotes funny filename' '
 	test_cmp expected current
 '
 
-test_expect_success 'ls-files -z does not quote funny filename' '
+test_expect_success PERL_TEST_HELPERS 'ls-files -z does not quote funny filename' '
 	cat >expected <<-\EOF &&
 	just space
 	no-funny
@@ -101,7 +101,7 @@ test_expect_success 'diff-tree --name-status quotes funny filename' '
 	test_cmp expected current
 '
 
-test_expect_success 'diff-index -z does not quote funny filename' '
+test_expect_success PERL_TEST_HELPERS 'diff-index -z does not quote funny filename' '
 	cat >expected <<-\EOF &&
 	A
 	tabs	," (dq) and spaces
@@ -111,7 +111,7 @@ test_expect_success 'diff-index -z does not quote funny filename' '
 	test_cmp expected current
 '
 
-test_expect_success 'diff-tree -z does not quote funny filename' '
+test_expect_success PERL_TEST_HELPERS 'diff-tree -z does not quote funny filename' '
 	cat >expected <<-\EOF &&
 	A
 	tabs	," (dq) and spaces

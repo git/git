@@ -4,6 +4,12 @@ test_description='upload-pack ref-in-want'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping upload-pack ref-in-want tests; Perl not available'
+	test_done
+fi
+
 get_actual_refs () {
 	sed -n -e '/wanted-refs/,/0001/{
 		/wanted-refs/d

@@ -1270,7 +1270,7 @@ extract_batch_output () {
     ' "$@"
 }
 
-test_expect_success 'cat-file --batch-all-objects --batch ignores replace' '
+test_expect_success PERL_TEST_HELPERS 'cat-file --batch-all-objects --batch ignores replace' '
 	git cat-file --batch-all-objects --batch >actual.raw &&
 	extract_batch_output $orig <actual.raw >actual &&
 	{

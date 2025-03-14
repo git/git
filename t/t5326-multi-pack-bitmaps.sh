@@ -153,7 +153,7 @@ test_midx_bitmap_cases () {
 		)
 	'
 
-	test_expect_success 'pack.preferBitmapTips' '
+	test_expect_success PERL_TEST_HELPERS 'pack.preferBitmapTips' '
 		git init repo &&
 		test_when_finished "rm -fr repo" &&
 		(

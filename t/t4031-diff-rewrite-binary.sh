@@ -70,7 +70,7 @@ test_expect_success 'setup textconv' '
 	git config diff.foo.textconv "\"$(pwd)\""/dump
 '
 
-test_expect_success 'rewrite diff respects textconv' '
+test_expect_success PERL_TEST_HELPERS 'rewrite diff respects textconv' '
 	git diff -B >diff &&
 	grep "dissimilarity index" diff &&
 	grep "^-61" diff &&

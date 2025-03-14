@@ -7,6 +7,12 @@ test_description='Tests git rev-list --bisect functionality'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-t6000.sh # t6xxx specific functions
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping rev-list bisect tests; Perl not available'
+	test_done
+fi
+
 # usage: test_bisection max-diff bisect-option head ^prune...
 #
 # e.g. test_bisection 1 --bisect l1 ^l0

@@ -661,7 +661,7 @@ test_expect_success 'setup trace2' '
 	export GIT_TRACE2_BRIEF
 '
 
-test_expect_success 'setup large log output' '
+test_expect_success PERL_TEST_HELPERS 'setup large log output' '
 	perl -e "
 		print \"this is a long commit message\" x 50000
 	" >commit-msg &&

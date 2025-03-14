@@ -4,6 +4,12 @@ test_description='git blame textconv support'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping blame textconv tests; Perl not available'
+	test_done
+fi
+
 find_blame() {
 	sed -e 's/^[^(]*//'
 }

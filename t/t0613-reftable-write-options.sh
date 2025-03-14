@@ -139,7 +139,7 @@ test_expect_success 'small block size leads to multiple ref blocks' '
 	)
 '
 
-test_expect_success 'small block size fails with large reflog message' '
+test_expect_success PERL_TEST_HELPERS 'small block size fails with large reflog message' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	(

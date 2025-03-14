@@ -1073,7 +1073,7 @@ test_expect_success 'am --patch-format=mboxrd handles mboxrd' '
 	test_cmp msg out
 '
 
-test_expect_success 'am works with multi-line in-body headers' '
+test_expect_success PERL_TEST_HELPERS 'am works with multi-line in-body headers' '
 	FORTY="String that has a length of more than forty characters" &&
 	LONG="$FORTY $FORTY" &&
 	rm -fr .git/rebase-apply &&

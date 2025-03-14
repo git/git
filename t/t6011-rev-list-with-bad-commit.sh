@@ -4,6 +4,12 @@ test_description='git rev-list should notice bad commits'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping rev-list with bad commit tests; Perl not available'
+	test_done
+fi
+
 # Note:
 # - compression level is set to zero to make "corruptions" easier to perform
 # - reflog is disabled to avoid extra references which would twart the test

@@ -10,6 +10,12 @@ test_description='git apply in reverse
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping apply reverse tests; Perl not available'
+	test_done
+fi
+
 test_expect_success setup '
 
 	test_write_lines a b c d e f g h i j k l m n >file1 &&

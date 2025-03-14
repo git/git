@@ -220,7 +220,7 @@ test_expect_success 'refs/heads prefix' '
 	test_cmp expect actual
 '
 
-test_expect_success 'ignore very large set of prefixes' '
+test_expect_success PERL_TEST_HELPERS 'ignore very large set of prefixes' '
 	# generate a large number of ref-prefixes that we expect
 	# to match nothing; the value here exceeds TOO_MANY_PREFIXES
 	# from ls-refs.c.

@@ -4,6 +4,12 @@ test_description='check handling of disallowed .gitmodule urls'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping submodule dash URL tests; Perl not available'
+	test_done
+fi
+
 test_expect_success 'setup' '
 	git config --global protocol.file.allow always
 '
