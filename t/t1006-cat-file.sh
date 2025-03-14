@@ -1323,7 +1323,7 @@ test_expect_success 'batch-command flush without --buffer' '
 	grep "^fatal:.*flush is only for --buffer mode.*" err
 '
 
-script='
+perl_script='
 use warnings;
 use strict;
 use IPC::Open2;
@@ -1345,12 +1345,16 @@ $? == 0 or die "\$?=$?";
 
 expect="$hello_oid blob $hello_size"
 
-test_expect_success PERL '--batch-check is unbuffered by default' '
-	perl -e "$script" -- --batch-check $hello_oid "$expect"
+test_lazy_prereq PERL_IPC_OPEN2 '
+	perl -MIPC::Open2 -e "exit 0"
 '
 
-test_expect_success PERL '--batch-command info is unbuffered by default' '
-	perl -e "$script" -- --batch-command $hello_oid "$expect" "info "
+test_expect_success PERL_IPC_OPEN2 '--batch-check is unbuffered by default' '
+	perl -e "$perl_script" -- --batch-check $hello_oid "$expect"
+'
+
+test_expect_success PERL_IPC_OPEN2 '--batch-command info is unbuffered by default' '
+	perl -e "$perl_script" -- --batch-command $hello_oid "$expect" "info "
 '
 
 test_done
