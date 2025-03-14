@@ -818,7 +818,7 @@ __git_dwim_remote_heads ()
 		}
 	}
 	'
-	__git for-each-ref --format='%(refname)' 'refs/remotes/**' |
+	__git for-each-ref --format='%(refname)' refs/remotes/ |
 		PFX="$pfx" SFX="$sfx" CUR_="$cur_" \
 			IGNORE_CASE=${GIT_COMPLETION_IGNORE_CASE+1} \
 			REMOTES="$(__git_remotes | sort -r)" awk "$awk_script" |
