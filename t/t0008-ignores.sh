@@ -5,12 +5,6 @@ test_description=check-ignore
 TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
-if ! test_have_prereq PERL_TEST_HELPERS
-then
-	skip_all='skipping ignores tests; Perl not available'
-	test_done
-fi
-
 init_vars () {
 	global_excludes="global-excludes"
 }
@@ -45,11 +39,11 @@ test_stderr () {
 }
 
 broken_c_unquote () {
-	"$PERL_PATH" -pe 's/^"//; s/\\//; s/"$//; tr/\n/\0/' "$@"
+	<"$1" sed -e 's/^"//' -e 's/\\//' -e 's/"$//' | tr '\n' '\0'
 }
 
 broken_c_unquote_verbose () {
-	"$PERL_PATH" -pe 's/	"/	/; s/\\//; s/"$//; tr/:\t\n/\0/' "$@"
+	<"$1" sed -e 's/	"/	/' -e 's/\\//' -e 's/"$//' | tr ':\t\n' '\000'
 }
 
 stderr_contains () {

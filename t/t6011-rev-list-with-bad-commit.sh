@@ -4,12 +4,6 @@ test_description='git rev-list should notice bad commits'
 
 . ./test-lib.sh
 
-if ! test_have_prereq PERL_TEST_HELPERS
-then
-	skip_all='skipping rev-list with bad commit tests; Perl not available'
-	test_done
-fi
-
 # Note:
 # - compression level is set to zero to make "corruptions" easier to perform
 # - reflog is disabled to avoid extra references which would twart the test
@@ -41,11 +35,15 @@ test_expect_success 'verify number of revisions' \
    first_commit=$(git rev-parse HEAD~3)
    '
 
-test_expect_success 'corrupt second commit object' \
-   '
-   perl -i.bak -pe "s/second commit/socond commit/" .git/objects/pack/*.pack &&
-   test_must_fail git fsck --full
-   '
+test_expect_success 'corrupt second commit object' '
+	for p in .git/objects/pack/*.pack
+	do
+		sed "s/second commit/socond commit/" <"$p" >"$p.munged" &&
+		mv "$p.munged" "$p" ||
+		return 1
+	done &&
+	test_must_fail git fsck --full
+'
 
 test_expect_success 'rev-list should fail' '
 	test_must_fail env GIT_TEST_COMMIT_GRAPH=0 git -c core.commitGraph=false rev-list --all > /dev/null
