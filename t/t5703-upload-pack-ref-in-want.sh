@@ -4,12 +4,6 @@ test_description='upload-pack ref-in-want'
 
 . ./test-lib.sh
 
-if ! test_have_prereq PERL_TEST_HELPERS
-then
-	skip_all='skipping upload-pack ref-in-want tests; Perl not available'
-	test_done
-fi
-
 get_actual_refs () {
 	sed -n -e '/wanted-refs/,/0001/{
 		/wanted-refs/d
@@ -89,18 +83,15 @@ test_expect_success 'setup repository' '
 
 test_expect_success 'config controls ref-in-want advertisement' '
 	test-tool serve-v2 --advertise-capabilities >out &&
-	perl -ne "/ref-in-want/ and print" out >out.filter &&
-	test_must_be_empty out.filter &&
+	test_grep ! "ref-in-want" out &&
 
 	git config uploadpack.allowRefInWant false &&
 	test-tool serve-v2 --advertise-capabilities >out &&
-	perl -ne "/ref-in-want/ and print" out >out.filter &&
-	test_must_be_empty out.filter &&
+	test_grep ! "ref-in-want" out &&
 
 	git config uploadpack.allowRefInWant true &&
 	test-tool serve-v2 --advertise-capabilities >out &&
-	perl -ne "/ref-in-want/ and print" out >out.filter &&
-	test_file_not_empty out.filter
+	test_grep "ref-in-want" out
 '
 
 test_expect_success 'invalid want-ref line' '
@@ -486,7 +477,7 @@ inconsistency () {
 	EOF
 }
 
-test_expect_success 'server is initially ahead - no ref in want' '
+test_expect_success PERL_TEST_HELPERS 'server is initially ahead - no ref in want' '
 	git -C "$REPO" config uploadpack.allowRefInWant false &&
 	rm -rf local &&
 	cp -r "$LOCAL_PRISTINE" local &&
@@ -495,7 +486,7 @@ test_expect_success 'server is initially ahead - no ref in want' '
 	test_grep "fatal: remote error: upload-pack: not our ref" err
 '
 
-test_expect_success 'server is initially ahead - ref in want' '
+test_expect_success PERL_TEST_HELPERS 'server is initially ahead - ref in want' '
 	git -C "$REPO" config uploadpack.allowRefInWant true &&
 	rm -rf local &&
 	cp -r "$LOCAL_PRISTINE" local &&
@@ -507,7 +498,7 @@ test_expect_success 'server is initially ahead - ref in want' '
 	test_cmp expected actual
 '
 
-test_expect_success 'server is initially behind - no ref in want' '
+test_expect_success PERL_TEST_HELPERS 'server is initially behind - no ref in want' '
 	git -C "$REPO" config uploadpack.allowRefInWant false &&
 	rm -rf local &&
 	cp -r "$LOCAL_PRISTINE" local &&
@@ -519,7 +510,7 @@ test_expect_success 'server is initially behind - no ref in want' '
 	test_cmp expected actual
 '
 
-test_expect_success 'server is initially behind - ref in want' '
+test_expect_success PERL_TEST_HELPERS 'server is initially behind - ref in want' '
 	git -C "$REPO" config uploadpack.allowRefInWant true &&
 	rm -rf local &&
 	cp -r "$LOCAL_PRISTINE" local &&
@@ -531,7 +522,7 @@ test_expect_success 'server is initially behind - ref in want' '
 	test_cmp expected actual
 '
 
-test_expect_success 'server loses a ref - ref in want' '
+test_expect_success PERL_TEST_HELPERS 'server loses a ref - ref in want' '
 	git -C "$REPO" config uploadpack.allowRefInWant true &&
 	rm -rf local &&
 	cp -r "$LOCAL_PRISTINE" local &&
