@@ -29,6 +29,13 @@ As an anti-spam measure, the mailing list software rejects messages
 that are not text/plain and drops them on the floor.  If you are a
 GMail user, you'd want to make sure "Plain text mode" is checked.
 
+The mailing list, while welcoming non code contributions like bug
+reports, mostly discusses updating contents of the source tree to the
+(core) Git software, including documentation "git help" gives.
+Non-code contributions may have places other than the mailing list
+that are more preferrable.  See the "other places" section near the
+end.
+
 Before sending patches, please read Documentation/SubmittingPatches
 and Documentation/CodingGuidelines to familiarize yourself with the
 project convention.
@@ -293,3 +300,36 @@ own authoritative repository and maintainers:
 When sending proposed updates and fixes to these parts of the system,
 please base your patches on these trees, not git.git (the former two
 even have different directory structures).
+
+
+* Other places.
+
+As the Git ecosystem has grown larger over the years, there are
+documentation sites and third-party tools that have been created and
+maintained by friendly third-parties.  Reporting issues with them to
+the main mailing list is still welcomed by the list participants, but
+most likely you will be asked to contact these third-parties directly.
+
+ - git-scm website (https://www.git-scm.com/) is maintained directly
+   on its GitHub repository and its issues are managed there.
+
+   https://github.com/git/git-scm.com/issues
+   https://github.com/git/git-scm.com/?tab=readme-ov-file#contributing
+
+ - Git for Windows (https://gitforwindows.org/) is a project that
+   packages (core) Git software with some other goodies for the
+   Windows platform.  They manage their own issues list and their
+   changes are managed directly on GitHub via pull requests, focused
+   primarily on Windows specific issues and their additions (like
+   Windows installer).
+
+   https://github.com/git-for-windows/git/wiki/How-to-participate
+   https://github.com/git-for-windows/git/issues
+
+ - The online edition of ProGit Book hosted at git-scm.com/book/ is
+   managed by the Pro Git book folks, and they maintain their work and
+   issues at their GitHub repository.
+
+   https://github.com/progit/progit2/issues
+   https://github.com/progit/progit2/blob/main/CONTRIBUTING.md
+
