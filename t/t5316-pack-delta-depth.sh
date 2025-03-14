@@ -76,18 +76,18 @@ test_expect_success 'create series of packs' '
 
 max_chain() {
 	git index-pack --verify-stat-only "$1" >output &&
-	perl -lne '
-	  BEGIN { $len = 0 }
-	  /chain length = (\d+)/ and $len = $1;
-	  END { print $len }
-	' output
+	awk '
+		BEGIN { len=0 }
+		/chain length = [0-9]+:/{ len=$4 }
+		END { print len }
+	' <output | tr -d ':'
 }
 
 # Note that this whole setup is pretty reliant on the current
 # packing heuristics. We double-check that our test case
 # actually produces a long chain. If it doesn't, it should be
 # adjusted (or scrapped if the heuristics have become too unreliable)
-test_expect_success PERL_TEST_HELPERS 'packing produces a long delta' '
+test_expect_success 'packing produces a long delta' '
 	# Use --window=0 to make sure we are seeing reused deltas,
 	# not computing a new long chain.
 	pack=$(git pack-objects --all --window=0 </dev/null pack) &&
@@ -96,21 +96,21 @@ test_expect_success PERL_TEST_HELPERS 'packing produces a long delta' '
 	test_cmp expect actual
 '
 
-test_expect_success PERL_TEST_HELPERS '--depth limits depth' '
+test_expect_success '--depth limits depth' '
 	pack=$(git pack-objects --all --depth=5 </dev/null pack) &&
 	echo 5 >expect &&
 	max_chain pack-$pack.pack >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success PERL_TEST_HELPERS '--depth=0 disables deltas' '
+test_expect_success '--depth=0 disables deltas' '
 	pack=$(git pack-objects --all --depth=0 </dev/null pack) &&
 	echo 0 >expect &&
 	max_chain pack-$pack.pack >actual &&
 	test_cmp expect actual
 '
 
-test_expect_success PERL_TEST_HELPERS 'negative depth disables deltas' '
+test_expect_success 'negative depth disables deltas' '
 	pack=$(git pack-objects --all --depth=-1 </dev/null pack) &&
 	echo 0 >expect &&
 	max_chain pack-$pack.pack >actual &&
