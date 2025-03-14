@@ -72,3 +72,4 @@ and the name as (depending on your mood):
 [Documentation/SubmittingPatches]: Documentation/SubmittingPatches
 [Documentation/CodingGuidelines]: Documentation/CodingGuidelines
 [po/README.md]: po/README.md
+[![CI](https://github.com/git/git/actions/workflows/main.yml/badge.svg)](https://github.com/git/git/actions/workflows/main.yml)
