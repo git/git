@@ -4,12 +4,6 @@ test_description='git grep in binary files'
 
 . ./test-lib.sh
 
-if ! test_have_prereq PERL_TEST_HELPERS
-then
-	skip_all='skipping grep binary tests; Perl not available'
-	test_done
-fi
-
 test_expect_success 'setup' "
 	echo 'binaryQfileQm[*]cQ*æQð' | q_to_nul >a &&
 	git add a &&
@@ -120,13 +114,10 @@ test_expect_success 'grep respects not-binary diff attribute' '
 	test_cmp expect actual
 '
 
-cat >nul_to_q_textconv <<'EOF'
-#!/bin/sh
-"$PERL_PATH" -pe 'y/\000/Q/' < "$1"
-EOF
-chmod +x nul_to_q_textconv
-
 test_expect_success 'setup textconv filters' '
+	write_script nul_to_q_textconv <<-\EOF &&
+	tr "\000" "Q" <"$1"
+	EOF
 	echo a diff=foo >.gitattributes &&
 	git config diff.foo.textconv "\"$(pwd)\""/nul_to_q_textconv
 '
