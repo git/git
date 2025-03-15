@@ -316,26 +316,47 @@ on the command line, including the name of our command. (If `prefix` is empty
 for you, try `cd Documentation/ && ../bin-wrappers/git psuh`). That's not so
 helpful. So what other context can we get?
 
-Add a line to `#include "config.h"`. Then, add the following bits to the
+Add `#include "config.h"` and `#include "repository.h"`. Then, add the following bits to the
 function body:
 
 ----
-	const char *cfg_name;
+#include "builtin.h"
+#include "gettext.h"
+#include "config.h"
+#include "repository.h"  // Required for repo_config_get_string_tmp()
 
-...
+int cmd_psuh(int argc, const char **argv, const char *prefix, struct repository *repo)
+{
+    const char *cfg_name;
 
-	git_config(git_default_config, NULL);
-	if (git_config_get_string_tmp("user.name", &cfg_name) > 0)
-		printf(_("No name is found in config\n"));
-	else
-		printf(_("Your name: %s\n"), cfg_name);
+    printf(Q_("Your args (there is %d):\n",
+              "Your args (there are %d):\n",
+              argc),
+           argc);
+
+    for (int i = 0; i < argc; i++) {
+        printf("%d: %s\n", i, argv[i]);
+    }
+
+    printf(_("Your current working directory:\n<top-level>%s%s\n"),
+           prefix ? "/" : "", prefix ? prefix : "");
+
+    repo_config(repo, git_default_config, NULL);
+
+    if (repo_config_get_string_tmp(repo, "user.name", &cfg_name))
+        printf(_("No name is found in config\n"));
+    else
+        printf(_("Your name: %s\n"), cfg_name);
+
+    return 0;
+}
 ----
 
-`git_config()` will grab the configuration from config files known to Git and
-apply standard precedence rules. `git_config_get_string_tmp()` will look up
+`repo_config()` will grab the configuration from config files known to Git and
+apply standard precedence rules. `repo_config_get_string_tmp()` will look up
 a specific key ("user.name") and give you the value. There are a number of
 single-key lookup functions like this one; you can see them all (and more info
-about how to use `git_config()`) in `Documentation/technical/api-config.adoc`.
+about how to use `repo_config()` ) in `Documentation/git-config.adoc`.
 
 You should see that the name printed matches the one you see when you run:
 
@@ -383,8 +404,8 @@ prepare it, and print its contents:
 
 ...
 
-	wt_status_prepare(the_repository, &status);
-	git_config(git_default_config, &status);
+	wt_status_prepare(repo, &status);
+	repo_config(repo, git_default_config, &status);
 
 ...
 
@@ -1093,11 +1114,11 @@ The one generated for `psuh` from the sample implementation looks like this:
 
 ----
  Documentation/git-psuh.adoc | 40 +++++++++++++++++++++
- Makefile                    |  1 +
- builtin.h                   |  1 +
- builtin/psuh.c              | 73 ++++++++++++++++++++++++++++++++++++++
- git.c                       |  1 +
- t/t9999-psuh-tutorial.sh    | 12 +++++++
+ Makefile                   |  1 +
+ builtin.h                  |  1 +
+ builtin/psuh.c             | 73 ++++++++++++++++++++++++++++++++++++++
+ git.c                      |  1 +
+ t/t9999-psuh-tutorial.sh   | 12 +++++++
  6 files changed, 128 insertions(+)
  create mode 100644 Documentation/git-psuh.adoc
  create mode 100644 builtin/psuh.c
