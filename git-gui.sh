@@ -880,6 +880,12 @@ proc apply_config {} {
 			color::sync_with_theme
 		}
 	}
+
+	global comment_string
+	set comment_string [get_config core.commentstring]
+	if {$comment_string eq {}} {
+		set comment_string [get_config core.commentchar]
+	}
 }
 
 set default_config(branch.autosetupmerge) true
@@ -890,6 +896,8 @@ set default_config(merge.summary) false
 set default_config(merge.verbosity) 2
 set default_config(user.name) {}
 set default_config(user.email) {}
+set default_config(core.commentchar) "#"
+set default_config(core.commentstring) {}
 
 set default_config(gui.encoding) [encoding system]
 set default_config(gui.matchtrackingbranch) false
