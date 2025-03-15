@@ -13,6 +13,7 @@ the Git tree, sending it for review, and making changes based on comments.
 
 This tutorial assumes you're already fairly familiar with using Git to manage
 source code.  The Git workflow steps will largely remain unexplained.
+This tutorial also assumes you know/understand C programming language in a good capacity.
 
 [[related-reading]]
 === Related Reading
@@ -40,13 +41,6 @@ the list by sending an email to <git+subscribe@vger.kernel.org>
 The https://lore.kernel.org/git[archive] of this mailing list is
 available to view in a browser.
 
-==== https://groups.google.com/forum/#!forum/git-mentoring[git-mentoring@googlegroups.com]
-
-This mailing list is targeted to new contributors and was created as a place to
-post questions and receive answers outside of the public eye of the main list.
-Veteran contributors who are especially interested in helping mentor newcomers
-are present on the list. In order to avoid search indexers, group membership is
-required to view messages; anyone can join and no approval is required.
 
 ==== https://web.libera.chat/#git-devel[#git-devel] on Libera Chat
 
