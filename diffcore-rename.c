@@ -33,7 +33,7 @@ static struct diff_rename_dst *locate_rename_dst(struct diff_filepair *p)
 {
 	/* Lookup by p->ONE->path */
 	int idx = break_idx ? strintmap_get(break_idx, p->one->path) : -1;
-	return (idx == -1) ? NULL : &rename_dst[idx];
+	return (idx == -1 || idx == rename_dst_nr) ? NULL : &rename_dst[idx];
 }
 
 /*
@@ -1669,9 +1669,10 @@ void diffcore_rename_extended(struct diff_options *options,
 			if (DIFF_PAIR_BROKEN(p)) {
 				/* broken delete */
 				struct diff_rename_dst *dst = locate_rename_dst(p);
-				if (!dst)
-					BUG("tracking failed somehow; failed to find associated dst for broken pair");
-				if (dst->is_rename)
+				if (options->single_follow && dst &&
+				    strcmp(dst->p->two->path, p->two->path))
+					dst = NULL;
+				if (dst && dst->is_rename)
 					/* counterpart is now rename/copy */
 					pair_to_free = p;
 			}
