@@ -142,9 +142,13 @@ followed by the name of the subcommand, in a source file named after the
 subcommand and contained within `builtin/`. So it makes sense to implement your
 command in `builtin/psuh.c`. Create that file, and within it, write the entry
 point for your command in a function matching the style and signature:
-
 ----
-int cmd_psuh(int argc, const char **argv, const char *prefix)
+int cmd_psuh(int argc, const char **argv, const char *prefix, struct repository *repo)
+----
+Before proceeding further, we should use the UNUSED macro to suppress warnings about unused parameters in the function.
+This prevents the compiler from generating warnings when certain parameters are not used within the function body:
+----
+int cmd_psuh(int argc UNUSED, const char **argv UNUSED, const char *prefix UNUSED, struct repository *repo UNUSED)
 ----
 
 We'll also need to add the declaration of psuh; open up `builtin.h`, find the
@@ -152,7 +156,7 @@ declaration for `cmd_pull`, and add a new line for `psuh` immediately before it,
 in order to keep the declarations alphabetically sorted:
 
 ----
-int cmd_psuh(int argc, const char **argv, const char *prefix);
+int cmd_psuh(int argc, const char **argv, const char *prefix, struct repository *repo);
 ----
 
 Be sure to `#include "builtin.h"` in your `psuh.c`. You'll also need to
@@ -168,7 +172,7 @@ Throughout the tutorial, we will mark strings for translation as necessary; you
 should also do so when writing your user-facing commands in the future.
 
 ----
-int cmd_psuh(int argc, const char **argv, const char *prefix)
+int cmd_psuh(int argc UNUSED, const char **argv UNUSED, const char *prefix UNUSED, struct repository *repo UNUSED)
 {
 	printf(_("Pony saying hello goes here.\n"));
 	return 0;
@@ -199,6 +203,9 @@ with the command name, a function pointer to the command implementation, and a
 setup option flag. For now, let's keep mimicking `push`. Find the line where
 `cmd_push` is registered, copy it, and modify it for `cmd_psuh`, placing the new
 line in alphabetical order (immediately before `cmd_pull`).
+----
+{ "psuh", cmd_psuh, RUN_SETUP}
+----
 
 The options are documented in `builtin.h` under "Adding a new built-in." Since
 we hope to print some data about the user's current workspace context later,
@@ -285,6 +292,8 @@ Modify your `cmd_psuh` implementation to dump the args you're passed, keeping
 existing `printf()` calls in place:
 
 ----
+int cmd_psuh(int argc, const char **argv, const char *prefix, struct repository *repo UNUSED)
+{
 	int i;
 
 	...
@@ -298,7 +307,8 @@ existing `printf()` calls in place:
 
 	printf(_("Your current working directory:\n<top-level>%s%s\n"),
 	       prefix ? "/" : "", prefix ? prefix : "");
-
+	...
+}
 ----
 
 Build and try it. As you may expect, there's pretty much just whatever we give
