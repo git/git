@@ -3423,9 +3423,9 @@ static int collect_renames(struct merge_options *opt,
 
 		/*
 		 * p->score comes back from diffcore_rename_extended() with
-		 * the similarity of the renamed file.  The similarity is
-		 * was used to determine that the two files were related
-		 * and are a rename, which we have already used, but beyond
+		 * the similarity of the renamed file.  The similarity was
+		 * used to determine that the two files were related and
+		 * are a rename, which we have already used, but beyond
 		 * that we have no use for the similarity.  So p->score is
 		 * now irrelevant.  However, process_renames() will need to
 		 * know which side of the merge this rename was associated
