@@ -1517,8 +1517,8 @@ static int handle_deferred_entries(struct merge_options *opt,
 		struct strintmap copy;
 
 		/* Loop over the set of paths we need to know rename info for */
-		strset_for_each_entry(&renames->relevant_sources[side],
-				      &iter, entry) {
+		strintmap_for_each_entry(&renames->relevant_sources[side],
+					 &iter, entry) {
 			char *rename_target, *dir, *dir_marker;
 			struct strmap_entry *e;
 
