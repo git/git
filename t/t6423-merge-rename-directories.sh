@@ -5549,9 +5549,9 @@ test_expect_success '13b(info): messages for transitive rename with conflicted c
 #   Commit A: y/{b,c,d}, x/e
 #   Commit B: z/{b,c,d}, x/e
 #   Expected: y/{b,c,d}, x/e, with info or conflict messages for d
-#             A: renamed x/d -> z/d; B: renamed z/ -> y/ AND renamed x/d to y/d
-#             One could argue A had partial knowledge of what was done with
-#             d and B had full knowledge, but that's a slippery slope as
+#             B: renamed x/d -> z/d; A: renamed z/ -> y/ AND renamed x/d to y/d
+#             One could argue B had partial knowledge of what was done with
+#             d and A had full knowledge, but that's a slippery slope as
 #             shown in testcase 13d.
 
 test_setup_13c () {
