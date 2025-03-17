@@ -249,6 +249,7 @@ libgit_sources = [
   'compat/obstack.c',
   'compat/terminal.c',
   'compat/zlib-uncompress2.c',
+  'compiler-tricks/not-constant.c',
   'config.c',
   'connect.c',
   'connected.c',

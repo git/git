@@ -516,14 +516,12 @@ static void atfork_prepare(struct atfork_state *as)
 	sigset_t all;
 
 	/*
-	 * Do not use the return value of sigfillset(). It is transparently 0
-	 * on some platforms, meaning a clever compiler may complain that
-	 * the conditional body is dead code. Instead, check for error via
-	 * errno, which outsmarts the compiler.
+	 * POSIX says sigfillset() can fail, but an overly clever
+	 * compiler can see through the header files and decide
+	 * it cannot fail on a particular platform it is compiling for,
+	 * triggering -Wunreachable-code false positive.
 	 */
-	errno = 0;
-	sigfillset(&all);
-	if (errno)
+	if (NOT_CONSTANT(sigfillset(&all)))
 		die_errno("sigfillset");
 #ifdef NO_PTHREADS
 	if (sigprocmask(SIG_SETMASK, &all, &as->old))
