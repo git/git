@@ -9,6 +9,19 @@ exec wish "$0" -- "$@"
 
 package require Tk
 
+
+# Wrap open to sanitize arguments
+
+proc safe_open_file {filename flags} {
+    # a file name starting with "|" would attempt to run a process
+    # but such a file name must be treated as a relative path
+    # hide the "|" behind "./"
+    if {[string index $filename 0] eq "|"} {
+        set filename [file join . $filename]
+    }
+    open $filename $flags
+}
+
 proc hasworktree {} {
     return [expr {[exec git rev-parse --is-bare-repository] == "false" &&
                   [exec git rev-parse --is-inside-git-dir] == "false"}]
@@ -2874,7 +2887,7 @@ proc savestuff {w} {
     set remove_tmp 0
     if {[catch {
         set try_count 0
-        while {[catch {set f [open $config_file_tmp {WRONLY CREAT EXCL}]}]} {
+        while {[catch {set f [safe_open_file $config_file_tmp {WRONLY CREAT EXCL}]}]} {
             if {[incr try_count] > 50} {
                 error "Unable to write config file: $config_file_tmp exists"
             }
@@ -3869,7 +3882,7 @@ proc show_line_source {} {
                 # must be a merge in progress...
                 if {[catch {
                     # get the last line from .git/MERGE_HEAD
-                    set f [open [file join $gitdir MERGE_HEAD] r]
+                    set f [safe_open_file [file join $gitdir MERGE_HEAD] r]
                     set id [lindex [split [read $f] "\n"] end-1]
                     close $f
                 } err]} {
@@ -7723,7 +7736,7 @@ proc showfile {f} {
         return
     }
     if {$diffids eq $nullid} {
-        if {[catch {set bf [open $f r]} err]} {
+        if {[catch {set bf [safe_open_file $f r]} err]} {
             puts "oops, can't read $f: $err"
             return
         }
@@ -10200,7 +10213,7 @@ proc getallcommits {} {
         set cachedarcs 0
         set allccache [file join $gitdir "gitk.cache"]
         if {![catch {
-            set f [open $allccache r]
+            set f [safe_open_file $allccache r]
             set allcwait 1
             getcache $f
         }]} return
@@ -10624,7 +10637,7 @@ proc savecache {} {
     set cachearc 0
     set cachedarcs $nextarc
     catch {
-        set f [open $allccache w]
+        set f [safe_open_file $allccache w]
         puts $f [list 1 $cachedarcs]
         run writecache $f
     }
