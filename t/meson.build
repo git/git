@@ -1090,6 +1090,7 @@ integration_tests = [
   't9834-git-p4-file-dir-bug.sh',
   't9835-git-p4-metadata-encoding-python2.sh',
   't9836-git-p4-metadata-encoding-python3.sh',
+  't9837-git-p4-error-encoding.sh',
   't9850-shell.sh',
   't9901-git-web--browse.sh',
   't9902-completion.sh',
