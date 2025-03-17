@@ -10,7 +10,35 @@ exec wish "$0" -- "$@"
 package require Tk
 
 
-# Wrap open to sanitize arguments
+# Wrap exec/open to sanitize arguments
+
+# unsafe arguments begin with redirections or the pipe or background operators
+proc is_arg_unsafe {arg} {
+    regexp {^([<|>&]|2>)} $arg
+}
+
+proc make_arg_safe {arg} {
+    if {[is_arg_unsafe $arg]} {
+        set arg [file join . $arg]
+    }
+    return $arg
+}
+
+proc make_arglist_safe {arglist} {
+    set res {}
+    foreach arg $arglist {
+        lappend res [make_arg_safe $arg]
+    }
+    return $res
+}
+
+# executes one command
+# no redirections or pipelines are possible
+# cmd is a list that specifies the command and its arguments
+# calls `exec` and returns its value
+proc safe_exec {cmd} {
+    eval exec [make_arglist_safe $cmd]
+}
 
 proc safe_open_file {filename flags} {
     # a file name starting with "|" would attempt to run a process
@@ -21,6 +49,8 @@ proc safe_open_file {filename flags} {
     }
     open $filename $flags
 }
+
+# End exec/open wrappers
 
 proc hasworktree {} {
     return [expr {[exec git rev-parse --is-bare-repository] == "false" &&
@@ -387,7 +417,7 @@ proc start_rev_list {view} {
     set args $viewargs($view)
     if {$viewargscmd($view) ne {}} {
         if {[catch {
-            set str [exec sh -c $viewargscmd($view)]
+            set str [safe_exec [list sh -c $viewargscmd($view)]]
         } err]} {
             error_popup "[mc "Error executing --argscmd command:"] $err"
             return 0
@@ -459,9 +489,9 @@ proc stop_instance {inst} {
         set pid [pid $fd]
 
         if {$::tcl_platform(platform) eq {windows}} {
-            exec taskkill /pid $pid
+            safe_exec [list taskkill /pid $pid]
         } else {
-            exec kill $pid
+            safe_exec [list kill $pid]
         }
     }
     catch {close $fd}
@@ -1540,8 +1570,8 @@ proc getcommitlines {fd inst view updating}  {
             # and if we already know about it, using the rewritten
             # parent as a substitute parent for $id's children.
             if {![catch {
-                set rwid [exec git rev-list --first-parent --max-count=1 \
-                              $id -- $vfilelimit($view)]
+                set rwid [safe_exec [list git rev-list --first-parent --max-count=1 \
+                              $id -- $vfilelimit($view)]]
             }]} {
                 if {$rwid ne {} && [info exists varcid($view,$rwid)]} {
                     # use $rwid in place of $id
@@ -1845,7 +1875,7 @@ proc readrefs {} {
     set selectheadid {}
     if {$selecthead ne {}} {
         catch {
-            set selectheadid [exec git rev-parse --verify $selecthead]
+            set selectheadid [safe_exec [list git rev-parse --verify $selecthead]]
         }
     }
 }
@@ -3603,7 +3633,7 @@ proc gitknewtmpdir {} {
             set tmpdir $gitdir
         }
         set gitktmpformat [file join $tmpdir ".gitk-tmp.XXXXXX"]
-        if {[catch {set gitktmpdir [exec mktemp -d $gitktmpformat]}]} {
+        if {[catch {set gitktmpdir [safe_exec [list mktemp -d $gitktmpformat]]}]} {
             set gitktmpdir [file join $gitdir [format ".gitk-tmp.%s" [pid]]]
         }
         if {[catch {file mkdir $gitktmpdir} err]} {
@@ -8774,7 +8804,7 @@ proc gotocommit {} {
                 set id [lindex $matches 0]
             }
         } else {
-            if {[catch {set id [exec git rev-parse --verify $sha1string]}]} {
+            if {[catch {set id [safe_exec [list git rev-parse --verify $sha1string]]}]} {
                 error_popup [mc "Revision %s is not known" $sha1string]
                 return
             }
@@ -9394,9 +9424,9 @@ proc domktag {} {
     }
     if {[catch {
         if {$msg != {}} {
-            exec git tag -a -m $msg $tag $id
+            safe_exec [list git tag -a -m $msg $tag $id]
         } else {
-            exec git tag $tag $id
+            safe_exec [list git tag $tag $id]
         }
     } err]} {
         error_popup "[mc "Error creating tag:"] $err" $mktagtop
@@ -9723,7 +9753,7 @@ proc cherrypick {} {
     update
     # Unfortunately git-cherry-pick writes stuff to stderr even when
     # no error occurs, and exec takes that as an indication of error...
-    if {[catch {exec sh -c "git cherry-pick -r $rowmenuid 2>&1"} err]} {
+    if {[catch {safe_exec [list sh -c "git cherry-pick -r $rowmenuid 2>&1"]} err]} {
         notbusy cherrypick
         if {[regexp -line \
                  {Entry '(.*)' (would be overwritten by merge|not uptodate)} \
@@ -9785,7 +9815,7 @@ proc revert {} {
     nowbusy revert [mc "Reverting"]
     update
 
-    if [catch {exec git revert --no-edit $rowmenuid} err] {
+    if [catch {safe_exec [list git revert --no-edit $rowmenuid]} err] {
         notbusy revert
         if [regexp {files would be overwritten by merge:(\n(( |\t)+[^\n]+\n)+)}\
                 $err match files] {
@@ -10018,7 +10048,7 @@ proc rmbranch {} {
     }
     nowbusy rmbranch
     update
-    if {[catch {exec git branch -D $head} err]} {
+    if {[catch {safe_exec [list git branch -D $head]} err]} {
         notbusy rmbranch
         error_popup $err
         return
@@ -11336,7 +11366,7 @@ proc add_tag_ctext {tag} {
 
     if {![info exists cached_tagcontent($tag)]} {
         catch {
-            set cached_tagcontent($tag) [exec git cat-file -p $tag]
+            set cached_tagcontent($tag) [safe_exec [list git cat-file -p $tag]]
         }
     }
     $ctext insert end "[mc "Tag"]: $tag\n" bold
@@ -12222,7 +12252,7 @@ proc gitattr {path attr default} {
         set r $path_attr_cache($attr,$path)
     } else {
         set r "unspecified"
-        if {![catch {set line [exec git check-attr $attr -- $path]}]} {
+        if {![catch {set line [safe_exec [list git check-attr $attr -- $path]]}]} {
             regexp "(.*): $attr: (.*)" $line m f r
         }
         set path_attr_cache($attr,$path) $r
@@ -12302,11 +12332,11 @@ if {[catch {package require Tk 8.4} err]} {
 
 # on OSX bring the current Wish process window to front
 if {[tk windowingsystem] eq "aqua"} {
-    exec osascript -e [format {
+    safe_exec [list osascript -e [format {
         tell application "System Events"
             set frontmost of processes whose unix id is %d to true
         end tell
-    } [pid] ]
+    } [pid] ]]
 }
 
 # Unset GIT_TRACE var if set
