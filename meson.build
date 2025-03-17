@@ -698,6 +698,7 @@ if get_option('warning_level') in ['2','3', 'everything'] and compiler.get_argum
     '-Woverflow',
     '-Wpointer-arith',
     '-Wstrict-prototypes',
+    '-Wunreachable-code',
     '-Wunused',
     '-Wvla',
     '-Wwrite-strings',
