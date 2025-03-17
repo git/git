@@ -7892,7 +7892,7 @@ proc diffcmd {ids flags} {
     if {$i >= 0} {
         if {[llength $ids] > 1 && $j < 0} {
             # comparing working directory with some specific revision
-            set cmd [concat | git diff-index $flags]
+            set cmd [concat git diff-index $flags]
             if {$i == 0} {
                 lappend cmd -R [lindex $ids 1]
             } else {
@@ -7900,7 +7900,7 @@ proc diffcmd {ids flags} {
             }
         } else {
             # comparing working directory with index
-            set cmd [concat | git diff-files $flags]
+            set cmd [concat git diff-files $flags]
             if {$j == 1} {
                 lappend cmd -R
             }
@@ -7909,7 +7909,7 @@ proc diffcmd {ids flags} {
         if {[package vcompare $git_version "1.7.2"] >= 0} {
             set flags "$flags --ignore-submodules=dirty"
         }
-        set cmd [concat | git diff-index --cached $flags]
+        set cmd [concat git diff-index --cached $flags]
         if {[llength $ids] > 1} {
             # comparing index with specific revision
             if {$j == 0} {
@@ -7925,7 +7925,7 @@ proc diffcmd {ids flags} {
         if {$log_showroot} {
             lappend flags --root
         }
-        set cmd [concat | git diff-tree -r $flags $ids]
+        set cmd [concat git diff-tree -r $flags $ids]
     }
     return $cmd
 }
@@ -7937,7 +7937,7 @@ proc gettreediffs {ids} {
     if {$limitdiffs && $vfilelimit($curview) ne {}} {
             set cmd [concat $cmd -- $vfilelimit($curview)]
     }
-    if {[catch {set gdtf [open $cmd r]}]} return
+    if {[catch {set gdtf [open |$cmd r]}]} return
 
     set treepending $ids
     set treediff {}
@@ -8057,7 +8057,7 @@ proc getblobdiffs {ids} {
     if {$limitdiffs && $vfilelimit($curview) ne {}} {
         set cmd [concat $cmd -- $vfilelimit($curview)]
     }
-    if {[catch {set bdf [open $cmd r]} err]} {
+    if {[catch {set bdf [open |$cmd r]} err]} {
         error_popup [mc "Error getting diffs: %s" $err]
         return
     }
@@ -9080,8 +9080,6 @@ proc getpatchid {id} {
 
     if {![info exists patchids($id)]} {
         set cmd [diffcmd [list $id] {-p --root}]
-        # trim off the initial "|"
-        set cmd [lrange $cmd 1 end]
         if {[catch {
             set x [eval exec $cmd | git patch-id]
             set patchids($id) [lindex $x 0]
@@ -9326,8 +9324,6 @@ proc mkpatchgo {} {
     set newid [$patchtop.tosha1 get]
     set fname [$patchtop.fname get]
     set cmd [diffcmd [list $oldid $newid] -p]
-    # trim off the initial "|"
-    set cmd [lrange $cmd 1 end]
     lappend cmd >$fname &
     if {[catch {eval exec $cmd} err]} {
         error_popup "[mc "Error creating patch:"] $err" $patchtop
