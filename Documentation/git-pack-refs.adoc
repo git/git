@@ -88,10 +88,10 @@ Do not pack refs matching the given `glob(7)` pattern. Repetitions of this optio
 accumulate exclusion patterns. Use `--no-exclude` to clear and reset the list of
 patterns. If a ref is already packed, including it with `--exclude` will not
 unpack it.
-
++
 When used with `--all`, pack only loose refs which do not match any of
 the provided `--exclude` patterns.
-
++
 When used with `--include`, refs provided to `--include`, minus refs that are
 provided to `--exclude` will be packed.
 
