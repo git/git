@@ -13,7 +13,6 @@
 #include "lockfile.h"
 #include "cache-tree.h"
 #include "unpack-trees.h"
-#include "merge-recursive.h"
 #include "merge-ort-wrappers.h"
 #include "strvec.h"
 #include "run-command.h"
