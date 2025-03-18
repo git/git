@@ -370,13 +370,13 @@ char *promisor_remote_info(struct repository *repo)
 
 /*
  * Find first index of 'nicks' where there is 'nick'. 'nick' is
- * compared case insensitively to the strings in 'nicks'. If not found
+ * compared case sensitively to the strings in 'nicks'. If not found
  * 'nicks->nr' is returned.
  */
 static size_t remote_nick_find(struct strvec *nicks, const char *nick)
 {
 	for (size_t i = 0; i < nicks->nr; i++)
-		if (!strcasecmp(nicks->v[i], nick))
+		if (!strcmp(nicks->v[i], nick))
 			return i;
 	return nicks->nr;
 }
