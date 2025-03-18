@@ -7,7 +7,7 @@ sha1_file() {
 # LINT: broken &&-chain in function and after function
 remove_object() {
 	file=$(sha1_file "$*") &&
-	test -e "$file"
+	test_path_exists "$file"
 	rm -f "$file"
 }
 

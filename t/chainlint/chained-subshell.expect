@@ -5,6 +5,6 @@
 6 ) &&
 7 
 8 cut "-d " -f actual | (read s1 s2 s3 &&
-9 test -f $s1 ?!LINT: missing '&&'?!
+9 test_path_is_file $s1 ?!LINT: missing '&&'?!
 10 test $(cat $s2) = tree2path1 &&
 11 test $(cat $s3) = tree3path1)
