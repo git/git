@@ -178,10 +178,16 @@ void refspec_item_clear(struct refspec_item *item)
 	item->exact_sha1 = 0;
 }
 
-void refspec_init(struct refspec *rs, int fetch)
+void refspec_init_fetch(struct refspec *rs)
 {
-	memset(rs, 0, sizeof(*rs));
-	rs->fetch = fetch;
+	struct refspec blank = REFSPEC_INIT_FETCH;
+	memcpy(rs, &blank, sizeof(*rs));
+}
+
+void refspec_init_push(struct refspec *rs)
+{
+	struct refspec blank = REFSPEC_INIT_PUSH;
+	memcpy(rs, &blank, sizeof(*rs));
 }
 
 void refspec_append(struct refspec *rs, const char *refspec)
