@@ -160,13 +160,6 @@ int refspec_item_init(struct refspec_item *item, const char *refspec, int fetch)
 	return parse_refspec(item, refspec, fetch);
 }
 
-void refspec_item_init_or_die(struct refspec_item *item, const char *refspec,
-			      int fetch)
-{
-	if (!refspec_item_init(item, refspec, fetch))
-		die(_("invalid refspec '%s'"), refspec);
-}
-
 void refspec_item_clear(struct refspec_item *item)
 {
 	FREE_AND_NULL(item->src);
@@ -194,7 +187,8 @@ void refspec_append(struct refspec *rs, const char *refspec)
 {
 	struct refspec_item item;
 
-	refspec_item_init_or_die(&item, refspec, rs->fetch);
+	if (!refspec_item_init(&item, refspec, rs->fetch))
+		die(_("invalid refspec '%s'"), refspec);
 
 	ALLOC_GROW(rs->items, rs->nr + 1, rs->alloc);
 	rs->items[rs->nr] = item;
