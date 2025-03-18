@@ -1643,9 +1643,6 @@ static int set_head(const struct ref *remote_refs, struct remote *remote)
 		string_list_append(&heads, strip_refshead(ref->name));
 	}
 
-	if (follow_remote_head == FOLLOW_REMOTE_NEVER)
-		goto cleanup;
-
 	if (!heads.nr)
 		result = 1;
 	else if (heads.nr > 1)
@@ -1729,7 +1726,8 @@ static int do_fetch(struct transport *transport,
 		if (transport->remote->fetch.nr) {
 			refspec_ref_prefixes(&transport->remote->fetch,
 					     &transport_ls_refs_options.ref_prefixes);
-			do_set_head = 1;
+			if (transport->remote->follow_remote_head != FOLLOW_REMOTE_NEVER)
+				do_set_head = 1;
 		}
 		if (branch_has_merge_config(branch) &&
 		    !strcmp(branch->remote_name, transport->remote->name)) {

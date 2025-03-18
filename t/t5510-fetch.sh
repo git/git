@@ -119,7 +119,10 @@ test_expect_success "fetch test followRemoteHEAD never" '
 		cd two &&
 		git update-ref --no-deref -d refs/remotes/origin/HEAD &&
 		git config set remote.origin.followRemoteHEAD "never" &&
-		git fetch &&
+		GIT_TRACE_PACKET=$PWD/trace.out git fetch &&
+		# Confirm that we do not even ask for HEAD when we are
+		# not going to act on it.
+		test_grep ! "ref-prefix HEAD" trace.out &&
 		test_must_fail git rev-parse --verify refs/remotes/origin/HEAD
 	)
 '
