@@ -1583,4 +1583,13 @@ static inline void *container_of_or_null_offset(void *ptr, size_t offset)
 	((uintptr_t)&(ptr)->member - (uintptr_t)(ptr))
 #endif /* !__GNUC__ */
 
+/*
+ * Prevent an overly clever compiler from optimizing an expression
+ * out, triggering a false positive when building with the
+ * -Wunreachable-code option. false_but_the_compiler_does_not_know_it_
+ * is defined in a compilation unit separate from where the macro is
+ * used, initialized to 0, and never modified.
+ */
+#define NOT_CONSTANT(expr) ((expr) || false_but_the_compiler_does_not_know_it_)
+extern int false_but_the_compiler_does_not_know_it_;
 #endif
