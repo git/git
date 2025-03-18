@@ -409,10 +409,15 @@ static int should_accept_remote(enum accept_promisor accept,
 	if (accept != ACCEPT_KNOWN_URL)
 		BUG("Unhandled 'enum accept_promisor' value '%d'", accept);
 
+	if (!remote_url || !*remote_url) {
+		warning(_("no or empty URL advertised for remote '%s'"), remote_name);
+		return 0;
+	}
+
 	if (!strcmp(urls->v[i], remote_url))
 		return 1;
 
-	warning(_("known remote named '%s' but with url '%s' instead of '%s'"),
+	warning(_("known remote named '%s' but with URL '%s' instead of '%s'"),
 		remote_name, urls->v[i], remote_url);
 
 	return 0;
