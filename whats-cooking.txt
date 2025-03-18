@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2025, #04; Fri, 14)
+Subject: What's cooking in git.git (Mar 2025, #05; Tue, 18)
 X-master-at: 683c54c999c301c2cd6f715c411407c413b1d84e
-X-next-at: d1b26642dacc169ed6e4a1495e3fa114e8b27faa
+X-next-at: e94155a9ecafb89f308d834dea8fed4f7ad85d2a
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Mar 2025, #04; Fri, 14)
+What's cooking in git.git (Mar 2025, #05; Tue, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,12 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+Now Git 2.49 is out, we may see some regression reports, in which
+case we would have to first deal with them.  I'll be on vacation for
+a few weeks, and will be back in early April.  I may occasionally be
+online to merge some topics down but I will generally be much slower
+than usual during the latter half of this month.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,48 +54,223 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* en/diff-rename-follow-fix (2025-03-13) 1 commit
- - diffcore-rename: fix BUG when break detection and --follow used together
+* aj/doc-restore-p-update (2025-03-18) 1 commit
+ - doc: restore: remove note on --patch w/ pathspecs
 
- A corner-case bug in "git log --follow -B" has been fixed.
+ Stale description in "git restore -p" documentation has been
+ updated.
 
  Will merge to 'next'.
- source: <pull.1876.git.1741395615315.gitgitgadget@gmail.com>
+ source: <pull.1504.v2.git.git.1685654097812.gitgitgadget@gmail.com>
+
+
+* en/random-cleanups (2025-03-17) 5 commits
+  (merged to 'next' on 2025-03-18 at 87acd24a85)
+ + merge-ort: remove extraneous word in comment
+ + merge-ort: fix accidental strset<->strintmap
+ + t7615: be more explicit about diff algorithm used
+ + t6423: fix a comment that accidentally reversed two commits
+ + stash: remove merge-recursive.h include
+
+ Miscellaneous code clean-ups.
+
+ Will merge to 'master'.
+ source: <pull.1882.git.1742108339.gitgitgadget@gmail.com>
+
+
+* es/meson-building-docs-requires-perl (2025-03-17) 1 commit
+  (merged to 'next' on 2025-03-18 at 1c1d88dcb7)
+ + meson: fix perl detection when docs are enabled, but perl bindings aren't
+
+ Build update.
+
+ Will merge to 'master'.
+ source: <20250316060605.166364-1-eschwartz@gentoo.org>
+
+
+* hj/doc-rev-list-ancestry-fix (2025-03-18) 1 commit
+  (merged to 'next' on 2025-03-18 at e94155a9ec)
+ + doc: add missing commit C to the graph for --ancestry-path=H D..M
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <pull.1883.git.1742089659610.gitgitgadget@gmail.com>
+
+
+* ja/doc-branch-markup (2025-03-17) 2 commits
+ - doc: apply new format to git-branch man page
+ - completion: take into account the formatting backticks for options
+
+ Expecting a reroll to lose GNUism.
+ cf. <2773494.mvXUDI8C0e@cayenne>
+ source: <pull.1880.git.1742056310.gitgitgadget@gmail.com>
+
+
+* jc/ci-meson-check-build-docs-fix (2025-03-14) 1 commit
+ - install meson for Documentation job
+ (this branch uses ps/ci-meson-check-build-docs.)
+
+ The documentation CI job tries to build test documentation pages
+ with both make- and meson-based build procedures, but somehow
+ forgot to install meson in the Ci environment, which has been
+ corrected.
+
+ Will discard.  Karthik root-caused the issue.
+ cf. <xmqqmsdi49h8.fsf_-_@gitster.g>
+ cf. <CAOLa=ZRODjYfDXQ8m+hDosV7RBGDWeehzSvsR-+-HCmbS+tAcQ@mail.gmail.com>
+ source: <20250314184130.GA578421@coredump.intra.peff.net>
+
+
+* ps/mingw-creat-excl-fix (2025-03-13) 2 commits
+ - compat/mingw: fix EACCESS when opening files with `O_CREAT | O_EXCL`
+ - compat/mingw: handle O_CLOEXEC in `mingw_open_existing()`
+
+ Attempt to fix lockfile contention in reftable code on Windows.
+
+ The second step needs rethinking.
+ cf. <Z9g85X8sNqFOwRaU@pks.im>
+ source: <20250313-b4-pks-mingw-lockfile-flake-v1-0-bc5d3e70f516@pks.im>
+
+
+* rs/xdiff-context-length-fix (2025-03-14) 1 commit
+  (merged to 'next' on 2025-03-18 at aca4b320d2)
+ + xdiff: avoid arithmetic overflow in xdl_get_hunk()
+
+ The xdiff code on 32-bit platform misbehaved when an insanely large
+ context size is given, which has been corrected.
+
+ Will merge to 'master'.
+ source: <4e9b6b4c-aaa1-4c6f-93f4-7bb04607e843@web.de>
+
+
+* sj/meson-test-environ-fix (2025-03-14) 1 commit
+ - meson: use test_environment conditionally.
+
+ meson-based build procedure was overly aggressive in using test
+ environment in two contrib/ directories, which was corrected.
+
+ Needs review.
+ source: <3d127f293818f935efdb9ca7bb556e6a8f233ef7.1741975557.git.sam@gentoo.org>
+
+
+* tb/combine-cruft-below-size (2025-03-17) 6 commits
+ - repack: begin combining cruft packs with `--combine-cruft-below-size`
+ - repack: avoid combining cruft packs with `--max-cruft-size`
+ - t/t7704-repack-cruft.sh: consolidate `write_blob()`
+ - t/t7704-repack-cruft.sh: clarify wording in --max-cruft-size tests
+ - t/t5329-pack-objects-cruft.sh: evict 'repack'-related tests
+ - Merge branch 'tb/multi-cruft-pack-refresh-fix' into tb/combine-cruft-below-size
+ (this branch uses tb/multi-cruft-pack-refresh-fix.)
+
+ "git repack" learned "--combine-cruft-below-size" option that
+ controls how cruft-packs are combined.
+
+ Needs review.
+ source: <cover.1742252411.git.me@ttaylorr.com>
+
+
+* jh/hash-init-fixes (2025-03-18) 1 commit
+ - index-pack, unpack-objects: restore missing ->init_fn
+
+ An earlier code refactoring of the hash machinery missed a few
+ required calls to init_fn.
+
+ Needs review.
+ source: <20250318111616.113941-1-hmz007@gmail.com>
+
+
+* jk/fetch-follow-remote-head-fix (2025-03-18) 3 commits
+ - fetch: don't ask for remote HEAD if followRemoteHEAD is "never"
+ - fetch: only respect followRemoteHEAD with configured refspecs
+ - Merge branch 'jk/fetch-ref-prefix-cleanup' into jk/fetch-follow-remote-head-fix
+ (this branch uses jk/fetch-ref-prefix-cleanup.)
+
+ "git fetch [<remote>]" with only the configured fetch refspec
+ should be the only thing to update refs/remotes/<remote>/HEAD,
+ but the code was overly eager to do so in other cases.
+
+ Will merge to 'next'?
+ source: <20250318053905.GA2051217@coredump.intra.peff.net>
+
+
+* pw/build-breaking-changes-doc (2025-03-18) 1 commit
+ - docs: add BreakingChanges to TECH_DOCS target
+
+ A documentation page was left out from formatting and installation,
+ which has been corrected.
+
+ Will merge to 'next'.
+ source: <pull.1921.git.git.1742308900290.gitgitgadget@gmail.com>
+
+
+* pw/doc-pack-refs-markup-fix (2025-03-18) 1 commit
+ - pack-refs doc: fix indentation for --exclude
+
+ Doc markup fix.
+
+ Will merge to 'next'.
+ source: <pull.1920.git.git.1742308828163.gitgitgadget@gmail.com>
+
+
+* sc/bundle-uri-use-all-refs-in-bundle (2025-03-18) 2 commits
+ - bundle-uri: add test for bundle-uri clones with tags
+ - bundle-uri: copy all bundle references ino the refs/bundle space
+
+ Bundle-URI feature did not use refs recorded in the bundle other
+ than normal branches as anchoring points to optimize the follow-up
+ fetch during "git clone"; now it is told to utilize all.
+
+ Comments?
+ source: <pull.1897.v3.git.git.1742312173.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Cooking]
 
-* en/merge-ort-prepare-to-remove-recursive (2025-03-13) 6 commits
- - am: switch from merge_recursive_generic() to merge_ort_generic()
- - merge-ort: fix merge.directoryRenames=false
- - t3650: document bug when directory renames are turned off
- - merge-ort: support having merge verbosity be set to 0
- - merge-ort: allow rename detection to be disabled
- - merge-ort: add new merge_ort_generic() function
+* en/diff-rename-follow-fix (2025-03-14) 1 commit
+  (merged to 'next' on 2025-03-18 at 56808a7eda)
+ + diffcore-rename: fix BUG when break detection and --follow used together
+
+ A corner-case bug in "git log --follow -B" has been fixed.
+
+ Will merge to 'master'.
+ source: <pull.1876.v2.git.1742000894041.gitgitgadget@gmail.com>
+
+
+* en/merge-ort-prepare-to-remove-recursive (2025-03-18) 6 commits
+  (merged to 'next' on 2025-03-18 at a911944a1c)
+ + am: switch from merge_recursive_generic() to merge_ort_generic()
+ + merge-ort: fix merge.directoryRenames=false
+ + t3650: document bug when directory renames are turned off
+ + merge-ort: support having merge verbosity be set to 0
+ + merge-ort: allow rename detection to be disabled
+ + merge-ort: add new merge_ort_generic() function
 
  First step of deprecating and removing merge-recursive.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1875.v2.git.1741834001.gitgitgadget@gmail.com>
 
 
-* jk/use-wunreachable-code-for-devs (2025-03-07) 1 commit
-  (merged to 'next' on 2025-03-07 at b5c54fea6a)
+* jk/use-wunreachable-code-for-devs (2025-03-17) 3 commits
+  (merged to 'next' on 2025-03-18 at fe32168eef)
  + config.mak.dev: enable -Wunreachable-code
+ + git-compat-util: add NOT_CONSTANT macro and use it in atfork_prepare()
+ + run-command: use errno to check for sigfillset() error
 
  Enable -Wunreachable-code for developer builds.
 
- Reverted out of 'next', as macOS CI job stops with a false positive.
- cf. <20250310160440.GA26189@coredump.intra.peff.net>
- source: <20250307225444.GA42758@coredump.intra.peff.net>
+ Will merge to 'master'.
+ source: <20250317235329.809302-1-gitster@pobox.com>
 
 
 * ab/decorate-code-cleanup (2025-03-10) 1 commit
- - decorate: fix sign comparison warnings
+  (merged to 'next' on 2025-03-18 at 7ede1484eb)
+ + decorate: fix sign comparison warnings
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <7c219279-8151-49c0-8fc0-8abe2624aca9@gmail.com>
 
 
@@ -119,7 +300,7 @@ Release tarballs are available at:
 
  Doc markup updates.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1878.git.1741549511665.gitgitgadget@gmail.com>
 
 
@@ -140,22 +321,24 @@ Release tarballs are available at:
 
 
 * jk/fetch-ref-prefix-cleanup (2025-03-10) 9 commits
- - fetch: use ref prefix list to skip ls-refs
- - fetch: avoid ls-refs only to ask for HEAD symref update
- - fetch: stop protecting additions to ref-prefix list
- - fetch: ask server to advertise HEAD for config-less fetch
- - refspec_ref_prefixes(): clean up refspec_item logic
- - t5516: beef up exact-oid ref prefixes test
- - t5516: drop NEEDSWORK about v2 reachability behavior
- - t5516: prefer "oid" to "sha1" in some test titles
- - t5702: fix typo in test name
+  (merged to 'next' on 2025-03-18 at ab3e5cf19f)
+ + fetch: use ref prefix list to skip ls-refs
+ + fetch: avoid ls-refs only to ask for HEAD symref update
+ + fetch: stop protecting additions to ref-prefix list
+ + fetch: ask server to advertise HEAD for config-less fetch
+ + refspec_ref_prefixes(): clean up refspec_item logic
+ + t5516: beef up exact-oid ref prefixes test
+ + t5516: drop NEEDSWORK about v2 reachability behavior
+ + t5516: prefer "oid" to "sha1" in some test titles
+ + t5702: fix typo in test name
+ (this branch is used by jk/fetch-follow-remote-head-fix.)
 
  In protocol v2 where the refs advertisement is constrained, we try
  to tell the server side not to limit the advertisement when there
  is no specific need to, which has been the source of confusion and
  recent bugs.  Revamp the logic to simplify.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250309030101.GA2334064@coredump.intra.peff.net>
 
 
@@ -174,51 +357,58 @@ Release tarballs are available at:
  source: <20250313001706.3390502-1-jltobler@gmail.com>
 
 
-* kn/reflog-drop (2025-03-10) 1 commit
+* kn/reflog-drop (2025-03-17) 2 commits
  - reflog: implement subcommand to drop reflogs
+ - reflog: improve error for when reflog is not found
 
  "git reflog" learns "drop" subcommand, that discards the entire
  reflog data for a ref.
 
  Will merge to 'next'?
- source: <20250310-493-add-command-to-purge-reflog-entries-v2-1-05caa92e0bfa@gmail.com>
+ source: <20250314-493-add-command-to-purge-reflog-entries-v3-0-c24e23a6146d@gmail.com>
 
 
 * am/dir-dedup-decl-of-repository (2025-03-11) 1 commit
- - dir.h: remove duplicate forward declaration of struct repository
+  (merged to 'next' on 2025-03-18 at 9075454132)
+ + dir.h: remove duplicate forward declaration of struct repository
 
  Code cleanup.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1879.git.1741705175922.gitgitgadget@gmail.com>
 
 
-* cc/lop-remote (2025-03-13) 1 commit
+* cc/lop-remote (2025-03-18) 4 commits
+ - promisor-remote: compare remote names case sensitively
+ - promisor-remote: fix possible issue when no URL is advertised
  - promisor-remote: fix segfault when remote URL is missing
+ - t5710: arrange to delete the client before cloning
 
  Bugfix in newly introduced large-object-promisor remote support.
 
- Will merge to 'next'?
- source: <20250313103859.817127-1-christian.couder@gmail.com>
+ Will merge to 'next'.
+ source: <20250318110008.656695-1-christian.couder@gmail.com>
 
 
 * ps/ci-meson-check-build-docs (2025-03-12) 1 commit
  - ci: perform build and smoke tests for Meson docs
+ (this branch is used by jc/ci-meson-check-build-docs-fix.)
 
  CI update.
 
- Will merge to 'next'.
+ On hold waiting for the fix-up to settle.
  source: <20250312-b4-pks-ci-meson-docs-v1-1-5e7cf7ac959a@pks.im>
 
 
 * ps/meson-with-breaking-changes (2025-03-12) 3 commits
- - meson: don't install git-pack-redundant(1) docs with breaking changes
- - meson: don't compile git-pack-redundant(1) with breaking changes
- - meson: define WITH_BREAKING_CHANGES when enabling breaking changes
+  (merged to 'next' on 2025-03-18 at 15b1c62eff)
+ + meson: don't install git-pack-redundant(1) docs with breaking changes
+ + meson: don't compile git-pack-redundant(1) with breaking changes
+ + meson: define WITH_BREAKING_CHANGES when enabling breaking changes
 
  Update meson based build procedure for breaking changes support.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250312-b4-pks-meson-breaking-changes-v1-0-b89e9a59d228@pks.im>
 
 
@@ -240,7 +430,7 @@ Release tarballs are available at:
  source: <20250304113323.10564-1-kuforiji98@gmail.com>
 
 
-* dm/completion-remote-names-fix (2025-03-05) 2 commits
+* dm/completion-remote-names-fix (2025-03-18) 2 commits
  - completion: fix bugs with slashes in remote names
  - completion: add helper to count path components
 
@@ -248,8 +438,8 @@ Release tarballs are available at:
  updated to cope with remote repository nicknames with slashes in
  them.
 
- Comments?
- source: <d5860dbe1e6a149d72739af3271369b3@mandelberg.org>
+ Will merge to 'next'.
+ source: <1587533591c81d38977e62165784f8eb@mandelberg.org>
 
 
 * tb/refs-exclude-fixes (2025-03-06) 2 commits
@@ -261,7 +451,7 @@ Release tarballs are available at:
  broken for some time, which confused upload-pack to advertise
  different set of refs.  This has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <cover.1741275245.git.me@ttaylorr.com>
 
 
@@ -273,7 +463,7 @@ Release tarballs are available at:
  The merge-recursive and merge-ort machinery crashed in corner cases
  when certain renames are involved.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1873.git.1741275027.gitgitgadget@gmail.com>
 
 
@@ -335,7 +525,7 @@ Release tarballs are available at:
  to use the repository instance supplied by git.c:run_builtin(), its
  caller.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250307233543.1721552-1-usmanakinyemi202@gmail.com>
 
 
@@ -354,39 +544,42 @@ Release tarballs are available at:
 
 
 * ps/refname-avail-check-optim (2025-03-12) 16 commits
- - refs: reuse iterators when determining refname availability
- - refs/iterator: implement seeking for files iterators
- - refs/iterator: implement seeking for packed-ref iterators
- - refs/iterator: implement seeking for ref-cache iterators
- - refs/iterator: implement seeking for reftable iterators
- - refs/iterator: implement seeking for merged iterators
- - refs/iterator: provide infrastructure to re-seek iterators
- - refs/iterator: separate lifecycle from iteration
- - refs: stop re-verifying common prefixes for availability
- - refs/files: batch refname availability checks for initial transactions
- - refs/files: batch refname availability checks for normal transactions
- - refs/reftable: batch refname availability checks
- - refs: introduce function to batch refname availability checks
- - builtin/update-ref: skip ambiguity checks when parsing object IDs
- - object-name: allow skipping ambiguity checks in `get_oid()` family
- - object-name: introduce `repo_get_oid_with_flags()`
+  (merged to 'next' on 2025-03-18 at 726197f7e0)
+ + refs: reuse iterators when determining refname availability
+ + refs/iterator: implement seeking for files iterators
+ + refs/iterator: implement seeking for packed-ref iterators
+ + refs/iterator: implement seeking for ref-cache iterators
+ + refs/iterator: implement seeking for reftable iterators
+ + refs/iterator: implement seeking for merged iterators
+ + refs/iterator: provide infrastructure to re-seek iterators
+ + refs/iterator: separate lifecycle from iteration
+ + refs: stop re-verifying common prefixes for availability
+ + refs/files: batch refname availability checks for initial transactions
+ + refs/files: batch refname availability checks for normal transactions
+ + refs/reftable: batch refname availability checks
+ + refs: introduce function to batch refname availability checks
+ + builtin/update-ref: skip ambiguity checks when parsing object IDs
+ + object-name: allow skipping ambiguity checks in `get_oid()` family
+ + object-name: introduce `repo_get_oid_with_flags()`
  (this branch is used by kn/non-transactional-batch-updates.)
 
  The code paths to check whether a refname X is available (by seeing
  if another ref X/Y exists, etc.) have been optimized.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250312-pks-update-ref-optimization-v6-0-f778e0414f55@pks.im>
 
 
 * tb/multi-cruft-pack-refresh-fix (2025-03-13) 1 commit
- - builtin/pack-objects.c: freshen objects from existing cruft packs
+  (merged to 'next' on 2025-03-18 at e3f090e427)
+ + builtin/pack-objects.c: freshen objects from existing cruft packs
+ (this branch is used by tb/combine-cruft-below-size.)
 
  Certain "cruft" objects would have never been refreshed when there
  are multiple cruft packs in the repository, which has been
  corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <1563552bbda0bc910c9f41b0fabc3225c4d778fc.1741889018.git.me@ttaylorr.com>
 
 
@@ -410,17 +603,18 @@ Release tarballs are available at:
 
 
 * cc/signed-fast-export-import (2025-03-10) 6 commits
- - fast-export, fast-import: add support for signed-commits
- - fast-export: do not modify memory from get_commit_buffer
- - git-fast-export.adoc: clarify why 'verbatim' may not be a good idea
- - fast-export: rename --signed-tags='warn' to 'warn-verbatim'
- - fast-export: fix missing whitespace after switch
- - git-fast-import.adoc: add missing LF in the BNF
+  (merged to 'next' on 2025-03-18 at d98973e2cb)
+ + fast-export, fast-import: add support for signed-commits
+ + fast-export: do not modify memory from get_commit_buffer
+ + git-fast-export.adoc: clarify why 'verbatim' may not be a good idea
+ + fast-export: rename --signed-tags='warn' to 'warn-verbatim'
+ + fast-export: fix missing whitespace after switch
+ + git-fast-import.adoc: add missing LF in the BNF
 
  "git fast-export | git fast-import" learns to deal with commit and
  tag objects with embedded signatures a bit better.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <CABPp-BGyA8iBA0BFO8FcpZAMca94aVu2vHHRi4Oz=nCWxJSDPg@mail.gmail.com>
  source: <20250310155746.879481-1-christian.couder@gmail.com>
 
@@ -435,7 +629,7 @@ Release tarballs are available at:
  A post-processing filter for "diff --raw" output has been
  introduced.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250228213346.1335224-1-jltobler@gmail.com>
 
 
@@ -512,7 +706,7 @@ Release tarballs are available at:
 
  "git fsck" becomes more careful when checking the refs.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <Z8CMx7O19PMs9sVY@ArchLinux>
 
 
@@ -528,7 +722,7 @@ Release tarballs are available at:
  source: <xmqq5xnladwi.fsf@gitster.g>
 
 
-* tb/incremental-midx-part-2 (2024-11-20) 15 commits
+* tb/incremental-midx-part-2 (2025-03-14) 13 commits
  - midx: implement writing incremental MIDX bitmaps
  - pack-bitmap.c: use `ewah_or_iterator` for type bitmap iterators
  - pack-bitmap.c: keep track of each layer's type bitmaps
@@ -542,14 +736,11 @@ Release tarballs are available at:
  - pack-bitmap.c: open and store incremental bitmap layers
  - pack-revindex: prepare for incremental MIDX bitmaps
  - Documentation: describe incremental MIDX bitmaps
- - Merge branch 'tb/pseudo-merge-bitmap-fixes' into tb/incremental-midx-part-2
- - Merge branch 'tb/incremental-midx-part-1' into tb/incremental-midx-part-2
 
  Incrementally updating multi-pack index files.
 
- Expecting a (hopefully minor and final) reroll.
- cf. <Z8JSreTnEFlocYQ9@nand.local> <Z8JLbxBQh7XUpplz@nand.local>
- source: <cover.1732054032.git.me@ttaylorr.com>
+ Will merge to 'next'.
+ source: <cover.1741983492.git.me@ttaylorr.com>
 
 
 * ej/cat-file-remote-object-info (2025-02-24) 8 commits
