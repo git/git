@@ -73,6 +73,12 @@ test_expect_success 'Clean merge' '
 	test_cmp expect actual
 '
 
+# Repeat the previous test, but turn off rename detection
+test_expect_success 'Failed merge without rename detection' '
+	test_must_fail git -c diff.renames=false merge-tree --write-tree side1 side3 >out &&
+	grep "CONFLICT (modify/delete): numbers deleted" out
+'
+
 test_expect_success 'Content merge and a few conflicts' '
 	git checkout side1^0 &&
 	test_must_fail git merge side2 &&
