@@ -233,7 +233,7 @@ void refspec_clear(struct refspec *rs)
 int valid_fetch_refspec(const char *fetch_refspec_str)
 {
 	struct refspec_item refspec;
-	int ret = refspec_item_init(&refspec, fetch_refspec_str, REFSPEC_FETCH);
+	int ret = refspec_item_init(&refspec, fetch_refspec_str, 1);
 	refspec_item_clear(&refspec);
 	return ret;
 }
@@ -249,7 +249,7 @@ void refspec_ref_prefixes(const struct refspec *rs,
 		if (item->negative)
 			continue;
 
-		if (rs->fetch == REFSPEC_FETCH) {
+		if (rs->fetch) {
 			if (item->exact_sha1)
 				continue;
 			prefix = item->src;

@@ -162,7 +162,7 @@ static struct child_process *get_helper(struct transport *transport)
 
 	data->helper = helper;
 	data->no_disconnect_req = 0;
-	refspec_init(&data->rs, REFSPEC_FETCH);
+	refspec_init(&data->rs, 1);
 
 	/*
 	 * Open the output as FILE* so strbuf_getline_*() family of
