@@ -323,13 +323,15 @@ static void promisor_info_vecs(struct repository *repo,
 	promisor_remote_init(repo);
 
 	for (r = repo->promisor_remote_config->promisors; r; r = r->next) {
-		char *url;
+		const char *url;
 		char *url_key = xstrfmt("remote.%s.url", r->name);
 
-		strvec_push(names, r->name);
-		strvec_push(urls, git_config_get_string(url_key, &url) ? NULL : url);
+		/* Only add remotes with a non empty URL */
+		if (!git_config_get_string_tmp(url_key, &url) && *url) {
+			strvec_push(names, r->name);
+			strvec_push(urls, url);
+		}
 
-		free(url);
 		free(url_key);
 	}
 }
@@ -356,10 +358,8 @@ char *promisor_remote_info(struct repository *repo)
 			strbuf_addch(&sb, ';');
 		strbuf_addstr(&sb, "name=");
 		strbuf_addstr_urlencode(&sb, names.v[i], allow_unsanitized);
-		if (urls.v[i]) {
-			strbuf_addstr(&sb, ",url=");
-			strbuf_addstr_urlencode(&sb, urls.v[i], allow_unsanitized);
-		}
+		strbuf_addstr(&sb, ",url=");
+		strbuf_addstr_urlencode(&sb, urls.v[i], allow_unsanitized);
 	}
 
 	strvec_clear(&names);
