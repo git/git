@@ -1256,10 +1256,30 @@ static void set_from_env(char **var, const char *envname)
 	}
 }
 
+static void set_long_from_env(long *var, const char *envname)
+{
+	const char *val = getenv(envname);
+	if (val) {
+		long tmp;
+		char *endp;
+		int saved_errno = errno;
+
+		errno = 0;
+		tmp = strtol(val, &endp, 10);
+
+		if (errno)
+			warning_errno(_("failed to parse %s"), envname);
+		else if (*endp || endp == val)
+			warning(_("failed to parse %s"), envname);
+		else
+			*var = tmp;
+
+		errno = saved_errno;
+	}
+}
+
 void http_init(struct remote *remote, const char *url, int proactive_auth)
 {
-	char *low_speed_limit;
-	char *low_speed_time;
 	char *normalized_url;
 	struct urlmatch_config config = URLMATCH_CONFIG_INIT;
 
@@ -1338,12 +1358,8 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 
 	set_from_env(&user_agent, "GIT_HTTP_USER_AGENT");
 
-	low_speed_limit = getenv("GIT_HTTP_LOW_SPEED_LIMIT");
-	if (low_speed_limit)
-		curl_low_speed_limit = strtol(low_speed_limit, NULL, 10);
-	low_speed_time = getenv("GIT_HTTP_LOW_SPEED_TIME");
-	if (low_speed_time)
-		curl_low_speed_time = strtol(low_speed_time, NULL, 10);
+	set_long_from_env(&curl_low_speed_limit, "GIT_HTTP_LOW_SPEED_LIMIT");
+	set_long_from_env(&curl_low_speed_time, "GIT_HTTP_LOW_SPEED_TIME");
 
 	if (curl_ssl_verify == -1)
 		curl_ssl_verify = 1;
