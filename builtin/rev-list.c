@@ -357,10 +357,15 @@ static void show_object(struct object *obj, const char *name, void *cb_data)
 		return;
 	}
 
-	if (arg_show_object_names)
-		show_object_with_name(stdout, obj, name);
-	else
-		printf("%s\n", oid_to_hex(&obj->oid));
+	printf("%s", oid_to_hex(&obj->oid));
+
+	if (arg_show_object_names) {
+		putchar(' ');
+		for (const char *p = name; *p && *p != '\n'; p++)
+			putchar(*p);
+	}
+
+	putchar('\n');
 }
 
 static void show_edge(struct commit *commit)
