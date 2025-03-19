@@ -2261,6 +2261,10 @@ ifdef WITH_BREAKING_CHANGES
 	BASIC_CFLAGS += -DWITH_BREAKING_CHANGES
 endif
 
+ifdef CHECK_ASSERTION_SIDE_EFFECTS
+	BASIC_CFLAGS += -DCHECK_ASSERTION_SIDE_EFFECTS
+endif
+
 ifdef INCLUDE_LIBGIT_RS
 	# Enable symbol hiding in contrib/libgit-sys/libgitpub.a without making
 	# us rebuild the whole tree every time we run a Rust build.
