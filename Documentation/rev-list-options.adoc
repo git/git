@@ -361,6 +361,27 @@ ifdef::git-rev-list[]
 --progress=<header>::
 	Show progress reports on stderr as objects are considered. The
 	`<header>` text will be printed with each progress update.
+
+-z::
+	Instead of being newline-delimited, each outputted object and its
+	accompanying metadata is delimited using NUL bytes. Output is printed
+	in the following form:
++
+-----------------------------------------------------------------------
+<OID> NUL [<token>=<value> NUL]...
+-----------------------------------------------------------------------
++
+Additional object metadata, such as object paths, is printed using the
+`<token>=<value>` form. Token values are printed as-is without any
+encoding/truncation. An OID entry never contains a '=' character and thus
+is used to signal the start of a new object record. Examples:
++
+-----------------------------------------------------------------------
+<OID> NUL
+<OID> NUL path=<path> NUL
+-----------------------------------------------------------------------
++
+This mode is only compatible with the `--objects` output option.
 endif::git-rev-list[]
 
 History Simplification

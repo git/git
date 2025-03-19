@@ -65,6 +65,7 @@ static const char rev_list_usage[] =
 "    --abbrev-commit\n"
 "    --left-right\n"
 "    --count\n"
+"    -z\n"
 "  special purpose:\n"
 "    --bisect\n"
 "    --bisect-vars\n"
@@ -96,6 +97,9 @@ static enum missing_action arg_missing_action;
 static int arg_show_object_names = 1;
 
 #define DEFAULT_OIDSET_SIZE     (16*1024)
+
+static char line_term = '\n';
+static char info_term = ' ';
 
 static int show_disk_usage;
 static off_t total_disk_usage;
@@ -264,7 +268,7 @@ static void show_commit(struct commit *commit, void *data)
 	if (revs->commit_format == CMIT_FMT_ONELINE)
 		putchar(' ');
 	else if (revs->include_header)
-		putchar('\n');
+		putchar(line_term);
 
 	if (revs->verbose_header) {
 		struct strbuf buf = STRBUF_INIT;
@@ -361,12 +365,16 @@ static void show_object(struct object *obj, const char *name, void *cb_data)
 	printf("%s", oid_to_hex(&obj->oid));
 
 	if (arg_show_object_names) {
-		putchar(' ');
-		for (const char *p = name; *p && *p != '\n'; p++)
-			putchar(*p);
+		if (line_term) {
+			putchar(info_term);
+			for (const char *p = name; *p && *p != '\n'; p++)
+				putchar(*p);
+		} else if (*name) {
+			printf("%cpath=%s", info_term, name);
+		}
 	}
 
-	putchar('\n');
+	putchar(line_term);
 }
 
 static void show_edge(struct commit *commit)
@@ -642,6 +650,9 @@ int cmd_rev_list(int argc,
 			revs.exclude_promisor_objects = 1;
 		} else if (skip_prefix(arg, "--missing=", &arg)) {
 			parse_missing_action_value(arg);
+		} else if (!strcmp(arg, "-z")) {
+			line_term = '\0';
+			info_term = '\0';
 		}
 	}
 
@@ -757,6 +768,20 @@ int cmd_rev_list(int argc,
 		usage(rev_list_usage);
 
 	}
+
+	/*
+	 * Reject options currently incompatible with -z. For some options, this
+	 * is not an inherent limitation and support may be implemented in the
+	 * future.
+	 */
+	if (!line_term) {
+		if (revs.graph || revs.verbose_header || show_disk_usage ||
+		    info.show_timestamp || info.header_prefix || bisect_list ||
+		    use_bitmap_index || revs.edge_hint || revs.left_right ||
+		    revs.cherry_mark || arg_missing_action || revs.boundary)
+			die(_("-z option used with unsupported option"));
+	}
+
 	if (revs.commit_format != CMIT_FMT_USERFORMAT)
 		revs.include_header = 1;
 	if (revs.commit_format != CMIT_FMT_UNSPECIFIED) {
