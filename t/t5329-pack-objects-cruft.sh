@@ -695,4 +695,56 @@ test_expect_success 'additional cruft blobs via gc.recentObjectsHook' '
 	)
 '
 
+test_expect_success 'split cruft packs with --max-cruft-size' '
+	repo=cruft-with--max-cruft-size &&
+	test_when_finished "rm -fr $repo" &&
+
+	git init "$repo" &&
+
+	(
+		cd "$repo" &&
+
+		git config core.compression 0 &&
+
+		sz=$((1024 * 1024)) && # 1MiB
+		test-tool genrandom foo $sz >foo &&
+		test-tool genrandom bar $sz >bar &&
+		foo="$(git hash-object -w -t blob foo)" &&
+		bar="$(git hash-object -w -t blob bar)" &&
+
+		to=$packdir/pack &&
+		# Pack together foo and bar into a single 2MiB pack.
+		pack="$(git pack-objects $to <<-EOF
+		$foo
+		$bar
+		EOF
+		)" &&
+
+		# Then generate a cruft pack containing foo and bar.
+		#
+		# Generate the pack with --max-pack-size equal to the
+		# size of one object, forcing us to write two cruft
+		# packs.
+		git pack-objects --cruft --max-pack-size=$sz $to <<-EOF &&
+		-pack-$pack.pack
+		EOF
+
+		ls $packdir/pack-*.mtimes >crufts &&
+		test_line_count = 2 crufts &&
+
+		for cruft in $(cat crufts)
+		do
+			test-tool pack-mtimes "$(basename "$cruft")" || return 1
+		done >actual.raw &&
+
+		cut -d" " -f1 <actual.raw | sort >actual &&
+		sort >expect <<-EOF &&
+		$foo
+		$bar
+		EOF
+
+		test_cmp expect actual
+	)
+'
+
 test_done
