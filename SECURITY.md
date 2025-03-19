@@ -32,7 +32,7 @@ Git for Windows is a "friendly fork" of [Git](https://git-scm.com/), i.e. change
 
 While Git maintains several release trains (when v2.19.1 was released, there were updates to v2.14.x-v2.18.x, too, for example), Git for Windows follows only the latest Git release. For example, there is no Git for Windows release corresponding to Git v2.16.5 (which was released after v2.19.0).
 
-One exception is [MinGit for Windows](https://github.com/git-for-windows/git/wiki/MinGit) (a minimal subset of Git for Windows, intended for bundling with third-party applications that do not need any interactive commands nor support for `git svn`): critical security fixes are backported to the v2.11.x, v2.14.x, v2.19.x, v2.21.x and v2.23.x release trains.
+One exception is [MinGit for Windows](https://gitforwindows.org/mingit) (a minimal subset of Git for Windows, intended for bundling with third-party applications that do not need any interactive commands nor support for `git svn`): critical security fixes are backported to the v2.11.x, v2.14.x, v2.19.x, v2.21.x and v2.23.x release trains.
 
 ## Version number scheme
 
