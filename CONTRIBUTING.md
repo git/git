@@ -39,8 +39,8 @@ When running `make`, you can use `-j$(nproc)` to automatically use the number of
 on your machine as the number of concurrent build processes.
 
 You can go deeper on the Windows-specific build process by reading the
-[technical overview](https://github.com/git-for-windows/git/wiki/Technical-overview) or the
-[guide to compiling Git with Visual Studio](https://github.com/git-for-windows/git/wiki/Compiling-Git-with-Visual-Studio).
+[technical overview](https://gitforwindows.org/technical-overview) or the
+[guide to compiling Git with Visual Studio](https://gitforwindows.org/compiling-git-with-visual-studio).
 
 ## Building `git` on Windows with Visual Studio
 
@@ -120,7 +120,7 @@ you want to extend the functional tests to be sure no one breaks your feature in
 ### Functional Tests
 
 Navigate to the `t/` directory and type `make` to run all tests or use `prove` as
-[described in the Git for Windows wiki](https://github.com/git-for-windows/git/wiki/Building-Git):
+[described in the Git for Windows wiki](https://gitforwindows.org/building-git):
 
 ```
 prove -j12 --state=failed,save ./t[0-9]*.sh
