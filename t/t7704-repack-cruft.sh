@@ -149,7 +149,7 @@ generate_cruft_pack () {
 	echo "$packdir/pack-$pack.mtimes"
 }
 
-test_expect_success '--max-cruft-size creates new packs when above threshold' '
+test_expect_success '--max-cruft-size creates new packs when too large' '
 	git init max-cruft-size-large &&
 	(
 		cd max-cruft-size-large &&
@@ -173,7 +173,7 @@ test_expect_success '--max-cruft-size creates new packs when above threshold' '
 	)
 '
 
-test_expect_success '--max-cruft-size combines existing packs when below threshold' '
+test_expect_success '--max-cruft-size combines existing packs when not too large' '
 	git init max-cruft-size-small &&
 	(
 		cd max-cruft-size-small &&
@@ -236,10 +236,10 @@ test_expect_success '--max-cruft-size combines smaller packs first' '
 	)
 '
 
-test_expect_success 'setup --max-cruft-size with freshened objects' '
-	git init max-cruft-size-freshen &&
+test_expect_success 'setup cruft with freshened objects' '
+	git init cruft-freshen &&
 	(
-		cd max-cruft-size-freshen &&
+		cd cruft-freshen &&
 
 		test_commit base &&
 		git repack -ad &&
@@ -257,9 +257,9 @@ test_expect_success 'setup --max-cruft-size with freshened objects' '
 	)
 '
 
-test_expect_success '--max-cruft-size with freshened objects (loose)' '
+test_expect_success 'cruft with freshened objects (loose)' '
 	(
-		cd max-cruft-size-freshen &&
+		cd cruft-freshen &&
 
 		# regenerate the object, setting its mtime to be more recent
 		foo="$(generate_random_blob foo 64)" &&
@@ -275,9 +275,9 @@ test_expect_success '--max-cruft-size with freshened objects (loose)' '
 	)
 '
 
-test_expect_success '--max-cruft-size with freshened objects (packed)' '
+test_expect_success 'cruft with freshened objects (packed)' '
 	(
-		cd max-cruft-size-freshen &&
+		cd cruft-freshen &&
 
 		# regenerate the object and store it in a packfile,
 		# setting its mtime to be more recent
@@ -304,7 +304,7 @@ test_expect_success '--max-cruft-size with freshened objects (packed)' '
 	)
 '
 
-test_expect_success '--max-cruft-size with freshened objects (previously cruft)' '
+test_expect_success 'multi-cruft with freshened objects (previously cruft)' '
 	repo="max-cruft-size-threshold" &&
 
 	test_when_finished "rm -fr $repo" &&
