@@ -217,4 +217,20 @@ test_expect_success 'rev-list -z --objects' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rev-list -z --boundary' '
+	test_when_finished rm -rf repo &&
+
+	git init repo &&
+	test_commit -C repo 1 &&
+	test_commit -C repo 2 &&
+
+	oid1=$(git -C repo rev-parse HEAD~) &&
+	oid2=$(git -C repo rev-parse HEAD) &&
+
+	printf "%s\0%s\0boundary=yes\0" "$oid2" "$oid1" >expect &&
+	git -C repo rev-list -z --boundary HEAD~.. >actual &&
+
+	test_cmp expect actual
+'
+
 test_done

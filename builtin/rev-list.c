@@ -240,13 +240,18 @@ static void show_commit(struct commit *commit, void *data)
 		fputs(info->header_prefix, stdout);
 
 	if (revs->include_header) {
-		if (!revs->graph)
+		if (!revs->graph && line_term)
 			fputs(get_revision_mark(revs, commit), stdout);
 		if (revs->abbrev_commit && revs->abbrev)
 			fputs(repo_find_unique_abbrev(the_repository, &commit->object.oid, revs->abbrev),
 			      stdout);
 		else
 			fputs(oid_to_hex(&commit->object.oid), stdout);
+
+		if (!line_term) {
+			if (commit->object.flags & BOUNDARY)
+				printf("%cboundary=yes", info_term);
+		}
 	}
 	if (revs->print_parents) {
 		struct commit_list *parents = commit->parents;
@@ -778,7 +783,7 @@ int cmd_rev_list(int argc,
 		if (revs.graph || revs.verbose_header || show_disk_usage ||
 		    info.show_timestamp || info.header_prefix || bisect_list ||
 		    use_bitmap_index || revs.edge_hint || revs.left_right ||
-		    revs.cherry_mark || arg_missing_action || revs.boundary)
+		    revs.cherry_mark || arg_missing_action)
 			die(_("-z option used with unsupported option"));
 	}
 
