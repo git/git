@@ -194,10 +194,13 @@ test_expect_success '--max-cruft-size combines existing packs when not too large
 	)
 '
 
-test_expect_failure '--max-cruft-size combines smaller packs first' '
-	git init max-cruft-size-consume-small &&
+test_expect_success '--combine-cruft-below-size combines packs' '
+	repo=combine-cruft-below-size &&
+	test_when_finished "rm -fr $repo" &&
+
+	git init "$repo" &&
 	(
-		cd max-cruft-size-consume-small &&
+		cd "$repo" &&
 
 		test_commit base &&
 		git repack -ad &&
@@ -211,11 +214,11 @@ test_expect_failure '--max-cruft-size combines smaller packs first' '
 		test-tool pack-mtimes "$(basename $cruft_bar)" >>expect.raw &&
 		sort expect.raw >expect.objects &&
 
-		# repacking with `--max-cruft-size=2M` should combine
-		# both 0.5 MiB packs together, instead of, say, one of
-		# the 0.5 MiB packs with the 1.0 MiB pack
+		# Repacking with `--combine-cruft-below-size=1M`
+		# should combine both 0.5 MiB packs together, but
+		# ignore the two packs which are >= 1.0 MiB.
 		ls $packdir/pack-*.mtimes | sort >cruft.before &&
-		git repack -d --cruft --max-cruft-size=2M &&
+		git repack -d --cruft --combine-cruft-below-size=1M &&
 		ls $packdir/pack-*.mtimes | sort >cruft.after &&
 
 		comm -13 cruft.before cruft.after >cruft.new &&
@@ -224,11 +227,12 @@ test_expect_failure '--max-cruft-size combines smaller packs first' '
 		test_line_count = 1 cruft.new &&
 		test_line_count = 2 cruft.removed &&
 
-		# the two smaller packs should be rolled up first
+		# The two packs smaller than 1.0MiB should be repacked
+		# together.
 		printf "%s\n" $cruft_foo $cruft_bar | sort >expect.removed &&
 		test_cmp expect.removed cruft.removed &&
 
-		# ...and contain the set of objects rolled up
+		# ...and contain the set of objects rolled up.
 		test-tool pack-mtimes "$(basename $(cat cruft.new))" >actual.raw &&
 		sort actual.raw >actual.objects &&
 
