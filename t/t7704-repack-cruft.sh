@@ -618,11 +618,6 @@ test_expect_success 'cruft repack with no reachable objects' '
 	)
 '
 
-write_blob () {
-	test-tool genrandom "$@" >in &&
-	git hash-object -w -t blob in
-}
-
 find_pack () {
 	for idx in $(ls $packdir/pack-*.idx)
 	do
@@ -641,8 +636,8 @@ test_expect_success 'cruft repack with --max-pack-size' '
 		test_commit base &&
 
 		# two cruft objects which exceed the maximum pack size
-		foo=$(write_blob foo 1048576) &&
-		bar=$(write_blob bar 1048576) &&
+		foo=$(generate_random_blob foo 1048576) &&
+		bar=$(generate_random_blob bar 1048576) &&
 		test-tool chmtime --get -1000 \
 			"$objdir/$(test_oid_to_path $foo)" >foo.mtime &&
 		test-tool chmtime --get -2000 \
