@@ -380,10 +380,11 @@ and thus is used to signal the start of a new object record. Examples:
 <OID> NUL
 <OID> NUL path=<path> NUL
 <OID> NUL boundary=yes NUL
+<OID> NUL missing=yes NUL [<token>=<value> NUL]...
 -----------------------------------------------------------------------
 +
-This mode is only compatible with the `--objects` and `--boundary` output
-options.
+This mode is only compatible with the `--objects`, `--boundary`, and
+`--missing` output options.
 endif::git-rev-list[]
 
 History Simplification
