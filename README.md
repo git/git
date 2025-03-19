@@ -15,7 +15,7 @@ encounter problems, you can report them as [GitHub
 issues](https://github.com/git-for-windows/git/issues), discuss them in Git
 for Windows' [Discussions](https://github.com/git-for-windows/git/discussions)
 or on the [Git mailing list](mailto:git@vger.kernel.org), and [contribute bug
-fixes](https://github.com/git-for-windows/git/wiki/How-to-participate).
+fixes](https://gitforwindows.org/how-to-participate).
 
 To build Git for Windows, please either install [Git for Windows'
 SDK](https://gitforwindows.org/#download-sdk), start its `git-bash.exe`, `cd`
