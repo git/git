@@ -438,11 +438,11 @@ static int http_options(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp("http.lowspeedlimit", var)) {
-		curl_low_speed_limit = (long)git_config_int(var, value, ctx->kvi);
+		curl_low_speed_limit = git_config_int(var, value, ctx->kvi);
 		return 0;
 	}
 	if (!strcmp("http.lowspeedtime", var)) {
-		curl_low_speed_time = (long)git_config_int(var, value, ctx->kvi);
+		curl_low_speed_time = git_config_int(var, value, ctx->kvi);
 		return 0;
 	}
 
