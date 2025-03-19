@@ -120,7 +120,7 @@ you want to extend the functional tests to be sure no one breaks your feature in
 ### Functional Tests
 
 Navigate to the `t/` directory and type `make` to run all tests or use `prove` as
-[described in the Git for Windows wiki](https://gitforwindows.org/building-git):
+[described on this Git for Windows page](https://gitforwindows.org/building-git):
 
 ```
 prove -j12 --state=failed,save ./t[0-9]*.sh
