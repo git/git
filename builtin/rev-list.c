@@ -16,6 +16,7 @@
 #include "object-file.h"
 #include "object-store-ll.h"
 #include "pack-bitmap.h"
+#include "parse-options.h"
 #include "log-tree.h"
 #include "graph.h"
 #include "bisect.h"
@@ -639,18 +640,14 @@ int cmd_rev_list(int argc,
 		if (!strcmp(arg, "--exclude-promisor-objects")) {
 			fetch_if_missing = 0;
 			revs.exclude_promisor_objects = 1;
-			break;
+		} else if (skip_prefix(arg, "--missing=", &arg)) {
+			parse_missing_action_value(arg);
 		}
 	}
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
-		if (skip_prefix(arg, "--missing=", &arg)) {
-			if (revs.exclude_promisor_objects)
-				die(_("options '%s' and '%s' cannot be used together"), "--exclude-promisor-objects", "--missing");
-			if (parse_missing_action_value(arg))
-				break;
-		}
-	}
+
+	die_for_incompatible_opt2(revs.exclude_promisor_objects,
+				  "--exclude_promisor_objects",
+				  arg_missing_action, "--missing");
 
 	if (arg_missing_action)
 		revs.do_not_die_on_missing_objects = 1;
