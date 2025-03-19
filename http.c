@@ -704,10 +704,6 @@ static int has_proxy_cert_password(void)
 	return 1;
 }
 
-static void set_curl_keepalive(CURL *c)
-{
-	curl_easy_setopt(c, CURLOPT_TCP_KEEPALIVE, 1);
-}
 
 /* Return 1 if redactions have been made, 0 otherwise. */
 static int redact_sensitive_header(struct strbuf *header, size_t offset)
@@ -1242,7 +1238,7 @@ static CURL *get_curl_handle(void)
 	}
 	init_curl_proxy_auth(result);
 
-	set_curl_keepalive(result);
+	curl_easy_setopt(result, CURLOPT_TCP_KEEPALIVE, 1);
 
 	return result;
 }
