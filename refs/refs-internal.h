@@ -124,6 +124,12 @@ struct ref_update {
 	uint64_t index;
 
 	/*
+	 * Used in batched reference updates to mark if a given update
+	 * was rejected.
+	 */
+	enum ref_transaction_error rejection_err;
+
+	/*
 	 * If this ref_update was split off of a symref update via
 	 * split_symref_update(), then this member points at that
 	 * update. This is used for two purposes:
@@ -141,6 +147,13 @@ struct ref_update {
 int refs_read_raw_ref(struct ref_store *ref_store, const char *refname,
 		      struct object_id *oid, struct strbuf *referent,
 		      unsigned int *type, int *failure_errno);
+
+/*
+ * Mark a given update as rejected with a given reason.
+ */
+int ref_transaction_maybe_set_rejected(struct ref_transaction *transaction,
+				       size_t update_idx,
+				       enum ref_transaction_error err);
 
 /*
  * Add a ref_update with the specified properties to transaction, and
@@ -184,6 +197,18 @@ enum ref_transaction_state {
 };
 
 /*
+ * Data structure to hold indices of updates which were rejected, for batched
+ * reference updates. While the updates themselves hold the rejection error,
+ * this structure allows a transaction to iterate only over the rejected
+ * updates.
+ */
+struct ref_transaction_rejections {
+	size_t *update_indices;
+	size_t alloc;
+	size_t nr;
+};
+
+/*
  * Data structure for holding a reference transaction, which can
  * consist of checks and updates to multiple references, carried out
  * as atomically as possible.  This structure is opaque to callers.
@@ -195,6 +220,7 @@ struct ref_transaction {
 	size_t alloc;
 	size_t nr;
 	enum ref_transaction_state state;
+	struct ref_transaction_rejections *rejections;
 	void *backend_data;
 	unsigned int flags;
 	uint64_t max_index;

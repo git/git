@@ -2852,8 +2852,15 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 		ret = lock_ref_for_update(refs, update, transaction,
 					  head_ref, &refnames_to_check,
 					  err);
-		if (ret)
+		if (ret) {
+			if (ref_transaction_maybe_set_rejected(transaction, i, ret)) {
+				strbuf_setlen(err, 0);
+				ret = 0;
+
+				continue;
+			}
 			goto cleanup;
+		}
 
 		if (update->flags & REF_DELETING &&
 		    !(update->flags & REF_LOG_ONLY) &&
@@ -3150,6 +3157,9 @@ static int files_transaction_finish(struct ref_store *ref_store,
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
 		struct ref_lock *lock = update->backend_data;
+
+		if (update->rejection_err)
+			continue;
 
 		if (update->flags & REF_NEEDS_COMMIT ||
 		    update->flags & REF_LOG_ONLY) {
