@@ -11,6 +11,12 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-diff.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping diff various tests; Perl not available'
+	test_done
+fi
+
 test_expect_success setup '
 
 	GIT_AUTHOR_DATE="2006-06-26 00:00:00 +0000" &&

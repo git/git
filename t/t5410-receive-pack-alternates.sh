@@ -17,7 +17,7 @@ test_expect_success 'setup' '
 '
 
 extract_haves () {
-	depacketize | perl -lne '/^(\S+) \.have/ and print $1'
+	depacketize | sed -n 's/^\([^ ][^ ]*\) \.have/\1/p'
 }
 
 test_expect_success 'with core.alternateRefsCommand' '

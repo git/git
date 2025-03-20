@@ -7,6 +7,12 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping tagfollow tests; Perl not available'
+	test_done
+fi
+
 # End state of the repository:
 #
 #         T - tag1          S - tag2

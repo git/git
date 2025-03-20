@@ -39,11 +39,11 @@ test_stderr () {
 }
 
 broken_c_unquote () {
-	"$PERL_PATH" -pe 's/^"//; s/\\//; s/"$//; tr/\n/\0/' "$@"
+	<"$1" sed -e 's/^"//' -e 's/\\//' -e 's/"$//' | tr '\n' '\0'
 }
 
 broken_c_unquote_verbose () {
-	"$PERL_PATH" -pe 's/	"/	/; s/\\//; s/"$//; tr/:\t\n/\0/' "$@"
+	<"$1" sed -e 's/	"/	/' -e 's/\\//' -e 's/"$//' | tr ':\t\n' '\000'
 }
 
 stderr_contains () {

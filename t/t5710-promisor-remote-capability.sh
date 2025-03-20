@@ -4,6 +4,12 @@ test_description='handling of promisor remote advertisement'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping promisor remote capabilities tests; Perl not available'
+	test_done
+fi
+
 GIT_TEST_MULTI_PACK_INDEX=0
 GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL=0
 

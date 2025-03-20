@@ -662,9 +662,9 @@ test_expect_success 'setup trace2' '
 '
 
 test_expect_success 'setup large log output' '
-	perl -e "
-		print \"this is a long commit message\" x 50000
-	" >commit-msg &&
+	test-tool genzeros 50000 |
+	tr "\000" "a" |
+	sed "s/a/this is a long commit message/g" >commit-msg &&
 	git commit --allow-empty -F commit-msg
 '
 
