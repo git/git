@@ -167,16 +167,6 @@ m->num_objects_in_base`).
 Future Work
 -----------
 
-- The multi-pack-index allows many packfiles, especially in a context
-  where repacking is expensive (such as a very large repo), or
-  unexpected maintenance time is unacceptable (such as a high-demand
-  build machine). However, the multi-pack-index needs to be rewritten
-  in full every time. We can extend the format to be incremental, so
-  writes are fast. By storing a small "tip" multi-pack-index that
-  points to large "base" MIDX files, we can keep writes fast while
-  still reducing the number of binary searches required for object
-  lookups.
-
 - If the multi-pack-index is extended to store a "stable object order"
   (a function Order(hash) = integer that is constant for a given hash,
   even as the multi-pack-index is updated) then MIDX bitmaps could be
