@@ -66,6 +66,15 @@ proc safe_open_command {cmd} {
     open |[make_arglist_safe $cmd] r
 }
 
+# opens a command pipeline for reading with redirections
+# cmd is a list that specifies the command and its arguments
+# redir is a list that specifies redirections
+# calls `open` and returns the file id
+proc safe_open_command_redirect {cmd redir} {
+    set cmd [make_arglist_safe $cmd]
+    open |[concat $cmd $redir] r
+}
+
 # End exec/open wrappers
 
 proc hasworktree {} {
@@ -9906,8 +9915,8 @@ proc resethead {} {
     bind $w <Visibility> "grab $w; focus $w"
     tkwait window $w
     if {!$confirm_ok} return
-    if {[catch {set fd [open \
-            [list | git reset --$resettype $rowmenuid 2>@1] r]} err]} {
+    if {[catch {set fd [safe_open_command_redirect \
+            [list git reset --$resettype $rowmenuid] [list 2>@1]]} err]} {
         error_popup $err
     } else {
         dohidelocalchanges
@@ -9978,7 +9987,7 @@ proc cobranch {} {
 
     # check the tree is clean first??
     set newhead $headmenuhead
-    set command [list | git checkout]
+    set command [list git checkout]
     if {[string match "remotes/*" $newhead]} {
         set remote $newhead
         set newhead [string range $newhead [expr [string last / $newhead] + 1] end]
@@ -9992,12 +10001,11 @@ proc cobranch {} {
     } else {
         lappend command $newhead
     }
-    lappend command 2>@1
     nowbusy checkout [mc "Checking out"]
     update
     dohidelocalchanges
     if {[catch {
-        set fd [open $command r]
+        set fd [safe_open_command_redirect $command [list 2>@1]]
     } err]} {
         notbusy checkout
         error_popup $err
