@@ -111,6 +111,7 @@ struct bitmap_writer {
 
 	kh_oid_map_t *bitmaps;
 	struct packing_data *to_pack;
+	struct multi_pack_index *midx; /* if appending to a MIDX chain */
 
 	struct bitmapped_commit *selected;
 	unsigned int selected_nr, selected_alloc;
@@ -125,7 +126,8 @@ struct bitmap_writer {
 };
 
 void bitmap_writer_init(struct bitmap_writer *writer, struct repository *r,
-			struct packing_data *pdata);
+			struct packing_data *pdata,
+			struct multi_pack_index *midx);
 void bitmap_writer_show_progress(struct bitmap_writer *writer, int show);
 void bitmap_writer_set_checksum(struct bitmap_writer *writer,
 				const unsigned char *sha1);
