@@ -59,6 +59,13 @@ proc safe_open_file {filename flags} {
     open $filename $flags
 }
 
+# opens a command pipeline for reading
+# cmd is a list that specifies the command and its arguments
+# calls `open` and returns the file id
+proc safe_open_command {cmd} {
+    open |[make_arglist_safe $cmd] r
+}
+
 # End exec/open wrappers
 
 proc hasworktree {} {
@@ -186,7 +193,7 @@ proc unmerged_files {files} {
     set mlist {}
     set nr_unmerged 0
     if {[catch {
-        set fd [open "| git ls-files -u" r]
+        set fd [safe_open_command {git ls-files -u}]
     } err]} {
         show_error {} . "[mc "Couldn't get list of unmerged files:"] $err"
         exit 1
@@ -463,8 +470,8 @@ proc start_rev_list {view} {
     }
 
     if {[catch {
-        set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
-                        --parents --boundary $args "--" $files] r]
+        set fd [safe_open_command [concat git log --no-color -z --pretty=raw $show_notes \
+                        --parents --boundary $args "--" $files]]
     } err]} {
         error_popup "[mc "Error executing git log:"] $err"
         return 0
@@ -611,8 +618,8 @@ proc updatecommits {} {
         set args $vorigargs($view)
     }
     if {[catch {
-        set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
-                        --parents --boundary $args "--" $vfilelimit($view)] r]
+        set fd [safe_open_command [concat git log --no-color -z --pretty=raw $show_notes \
+                        --parents --boundary $args "--" $vfilelimit($view)]]
     } err]} {
         error_popup "[mc "Error executing git log:"] $err"
         return
@@ -1700,7 +1707,7 @@ proc do_readcommit {id} {
     global tclencoding
 
     # Invoke git-log to handle automatic encoding conversion
-    set fd [open [concat | git log --no-color --pretty=raw -1 $id] r]
+    set fd [safe_open_command [concat git log --no-color --pretty=raw -1 $id]]
     # Read the results using i18n.logoutputencoding
     fconfigure $fd -translation lf -eofchar {}
     if {$tclencoding != {}} {
@@ -1836,7 +1843,7 @@ proc readrefs {} {
     foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
         unset -nocomplain $v
     }
-    set refd [open [list | git show-ref -d] r]
+    set refd [safe_open_command [list git show-ref -d]]
     if {$tclencoding != {}} {
         fconfigure $refd -encoding $tclencoding
     }
@@ -3729,7 +3736,7 @@ proc external_diff {} {
 
     if {$difffromfile ne {} && $difftofile ne {}} {
         set cmd [list [shellsplit $extdifftool] $difffromfile $difftofile]
-        if {[catch {set fl [open |$cmd r]} err]} {
+        if {[catch {set fl [safe_open_command $cmd]} err]} {
             file delete -force $diffdir
             error_popup "$extdifftool: [mc "command failed:"] $err"
         } else {
@@ -3833,7 +3840,7 @@ proc external_blame_diff {} {
 # Find the SHA1 ID of the blob for file $fname in the index
 # at stage 0 or 2
 proc index_sha1 {fname} {
-    set f [open [list | git ls-files -s $fname] r]
+    set f [safe_open_command [list git ls-files -s $fname]]
     while {[gets $f line] >= 0} {
         set info [lindex [split $line "\t"] 0]
         set stage [lindex $info 2]
@@ -5311,8 +5318,8 @@ proc get_viewmainhead {view} {
     global viewmainheadid vfilelimit viewinstances mainheadid
 
     catch {
-        set rfd [open [concat | git rev-list -1 $mainheadid \
-                           -- $vfilelimit($view)] r]
+        set rfd [safe_open_command [concat git rev-list -1 $mainheadid \
+                           -- $vfilelimit($view)]]
         set j [reg_instance $rfd]
         lappend viewinstances($view) $j
         fconfigure $rfd -blocking 0
@@ -5377,14 +5384,14 @@ proc dodiffindex {} {
     if {!$showlocalchanges || !$hasworktree} return
     incr lserial
     if {[package vcompare $git_version "1.7.2"] >= 0} {
-        set cmd "|git diff-index --cached --ignore-submodules=dirty HEAD"
+        set cmd "git diff-index --cached --ignore-submodules=dirty HEAD"
     } else {
-        set cmd "|git diff-index --cached HEAD"
+        set cmd "git diff-index --cached HEAD"
     }
     if {$vfilelimit($curview) ne {}} {
         set cmd [concat $cmd -- $vfilelimit($curview)]
     }
-    set fd [open $cmd r]
+    set fd [safe_open_command $cmd]
     fconfigure $fd -blocking 0
     set i [reg_instance $fd]
     filerun $fd [list readdiffindex $fd $lserial $i]
@@ -5409,11 +5416,11 @@ proc readdiffindex {fd serial inst} {
     }
 
     # now see if there are any local changes not checked in to the index
-    set cmd "|git diff-files"
+    set cmd "git diff-files"
     if {$vfilelimit($curview) ne {}} {
         set cmd [concat $cmd -- $vfilelimit($curview)]
     }
-    set fd [open $cmd r]
+    set fd [safe_open_command $cmd]
     fconfigure $fd -blocking 0
     set i [reg_instance $fd]
     filerun $fd [list readdifffiles $fd $serial $i]
@@ -7705,13 +7712,13 @@ proc gettree {id} {
     if {![info exists treefilelist($id)]} {
         if {![info exists treepending]} {
             if {$id eq $nullid} {
-                set cmd [list | git ls-files]
+                set cmd [list git ls-files]
             } elseif {$id eq $nullid2} {
-                set cmd [list | git ls-files --stage -t]
+                set cmd [list git ls-files --stage -t]
             } else {
-                set cmd [list | git ls-tree -r $id]
+                set cmd [list git ls-tree -r $id]
             }
-            if {[catch {set gtf [open $cmd r]}]} {
+            if {[catch {set gtf [safe_open_command $cmd]}]} {
                 return
             }
             set treepending $id
@@ -7781,7 +7788,7 @@ proc showfile {f} {
         }
     } else {
         set blob [lindex $treeidlist($diffids) $i]
-        if {[catch {set bf [open [concat | git cat-file blob $blob] r]} err]} {
+        if {[catch {set bf [safe_open_command [concat git cat-file blob $blob]]} err]} {
             puts "oops, error reading blob $blob: $err"
             return
         }
@@ -7976,7 +7983,7 @@ proc gettreediffs {ids} {
     if {$limitdiffs && $vfilelimit($curview) ne {}} {
             set cmd [concat $cmd -- $vfilelimit($curview)]
     }
-    if {[catch {set gdtf [open |$cmd r]}]} return
+    if {[catch {set gdtf [safe_open_command $cmd]}]} return
 
     set treepending $ids
     set treediff {}
@@ -8096,7 +8103,7 @@ proc getblobdiffs {ids} {
     if {$limitdiffs && $vfilelimit($curview) ne {}} {
         set cmd [concat $cmd -- $vfilelimit($curview)]
     }
-    if {[catch {set bdf [open |$cmd r]} err]} {
+    if {[catch {set bdf [safe_open_command $cmd]} err]} {
         error_popup [mc "Error getting diffs: %s" $err]
         return
     }
@@ -9223,7 +9230,7 @@ proc diffcommits {a b} {
         return
     }
     if {[catch {
-        set fd [open "| diff -U$diffcontext $fna $fnb" r]
+        set fd [safe_open_command "diff -U$diffcontext $fna $fnb"]
     } err]} {
         error_popup [mc "Error diffing commits: %s" $err]
         return
@@ -10256,7 +10263,7 @@ proc getallcommits {} {
     if {$allcwait} {
         return
     }
-    set cmd [list | git rev-list --parents]
+    set cmd [list git rev-list --parents]
     set allcupdate [expr {$seeds ne {}}]
     if {!$allcupdate} {
         set ids "--all"
@@ -10281,7 +10288,7 @@ proc getallcommits {} {
         }
     }
     if {$ids ne {}} {
-        set fd [open [concat $cmd $ids] r]
+        set fd [safe_open_command [concat $cmd $ids]]
         fconfigure $fd -blocking 0
         incr allcommits
         nowbusy allcommits
