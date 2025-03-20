@@ -1074,6 +1074,7 @@ static enum ref_transaction_error prepare_single_update(struct reftable_ref_stor
 							struct ref_transaction *transaction,
 							struct reftable_backend *be,
 							struct ref_update *u,
+							size_t update_idx,
 							struct string_list *refnames_to_check,
 							unsigned int head_type,
 							struct strbuf *head_referent,
@@ -1149,6 +1150,7 @@ static enum ref_transaction_error prepare_single_update(struct reftable_ref_stor
 	if (ret < 0)
 		return REF_TRANSACTION_ERROR_GENERIC;
 	if (ret > 0 && !ref_update_expects_existing_old_ref(u)) {
+		struct string_list_item *item;
 		/*
 		 * The reference does not exist, and we either have no
 		 * old object ID or expect the reference to not exist.
@@ -1158,7 +1160,9 @@ static enum ref_transaction_error prepare_single_update(struct reftable_ref_stor
 		 * can output a proper error message instead of failing
 		 * at a later point.
 		 */
-		string_list_append(refnames_to_check, u->refname);
+		item = string_list_append(refnames_to_check, u->refname);
+		item->util = xmalloc(sizeof(update_idx));
+		memcpy(item->util, &update_idx, sizeof(update_idx));
 
 		/*
 		 * There is no need to write the reference deletion
@@ -1368,7 +1372,7 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 
 	for (i = 0; i < transaction->nr; i++) {
 		ret = prepare_single_update(refs, tx_data, transaction, be,
-					    transaction->updates[i],
+					    transaction->updates[i], i,
 					    &refnames_to_check, head_type,
 					    &head_referent, &referent, err);
 		if (ret) {
@@ -1384,6 +1388,7 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 
 	ret = refs_verify_refnames_available(ref_store, &refnames_to_check,
 					     &transaction->refnames, NULL,
+					     transaction,
 					     transaction->flags & REF_TRANSACTION_FLAG_INITIAL,
 					     err);
 	if (ret < 0)
@@ -1402,7 +1407,7 @@ done:
 	}
 	strbuf_release(&referent);
 	strbuf_release(&head_referent);
-	string_list_clear(&refnames_to_check, 0);
+	string_list_clear(&refnames_to_check, 1);
 
 	return ret;
 }

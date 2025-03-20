@@ -2540,6 +2540,7 @@ enum ref_transaction_error refs_verify_refnames_available(struct ref_store *refs
 					  const struct string_list *refnames,
 					  const struct string_list *extras,
 					  const struct string_list *skip,
+					  struct ref_transaction *transaction,
 					  unsigned int initial_transaction,
 					  struct strbuf *err)
 {
@@ -2560,6 +2561,7 @@ enum ref_transaction_error refs_verify_refnames_available(struct ref_store *refs
 	strset_init(&dirnames);
 
 	for_each_string_list_item(item, refnames) {
+		const size_t *update_idx = (size_t *)item->util;
 		const char *refname = item->string;
 		const char *extra_refname;
 		struct object_id oid;
@@ -2599,12 +2601,26 @@ enum ref_transaction_error refs_verify_refnames_available(struct ref_store *refs
 			if (!initial_transaction &&
 			    !refs_read_raw_ref(refs, dirname.buf, &oid, &referent,
 					       &type, &ignore_errno)) {
+				if (transaction && ref_transaction_maybe_set_rejected(
+					    transaction, *update_idx,
+					    REF_TRANSACTION_ERROR_NAME_CONFLICT)) {
+					strset_remove(&dirnames, dirname.buf);
+					continue;
+				}
+
 				strbuf_addf(err, _("'%s' exists; cannot create '%s'"),
 					    dirname.buf, refname);
 				goto cleanup;
 			}
 
 			if (extras && string_list_has_string(extras, dirname.buf)) {
+				if (transaction && ref_transaction_maybe_set_rejected(
+					    transaction, *update_idx,
+					    REF_TRANSACTION_ERROR_NAME_CONFLICT)) {
+					strset_remove(&dirnames, dirname.buf);
+					continue;
+				}
+
 				strbuf_addf(err, _("cannot process '%s' and '%s' at the same time"),
 					    refname, dirname.buf);
 				goto cleanup;
@@ -2637,6 +2653,11 @@ enum ref_transaction_error refs_verify_refnames_available(struct ref_store *refs
 				    string_list_has_string(skip, iter->refname))
 					continue;
 
+				if (transaction && ref_transaction_maybe_set_rejected(
+					    transaction, *update_idx,
+					    REF_TRANSACTION_ERROR_NAME_CONFLICT))
+					continue;
+
 				strbuf_addf(err, _("'%s' exists; cannot create '%s'"),
 					    iter->refname, refname);
 				goto cleanup;
@@ -2648,6 +2669,11 @@ enum ref_transaction_error refs_verify_refnames_available(struct ref_store *refs
 
 		extra_refname = find_descendant_ref(dirname.buf, extras, skip);
 		if (extra_refname) {
+			if (transaction && ref_transaction_maybe_set_rejected(
+				    transaction, *update_idx,
+				    REF_TRANSACTION_ERROR_NAME_CONFLICT))
+				continue;
+
 			strbuf_addf(err, _("cannot process '%s' and '%s' at the same time"),
 				    refname, extra_refname);
 			goto cleanup;
@@ -2679,7 +2705,7 @@ enum ref_transaction_error refs_verify_refname_available(
 	};
 
 	return refs_verify_refnames_available(refs, &refnames, extras, skip,
-					      initial_transaction, err);
+					      NULL, initial_transaction, err);
 }
 
 struct do_for_each_reflog_help {
