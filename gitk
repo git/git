@@ -7,7 +7,7 @@ exec wish "$0" -- "$@"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-if {[catch {package require Tcl 8.6-8.8} err]} {
+if {[catch {package require Tcl 8.6-} err]} {
     catch {wm withdraw .}
     tk_messageBox \
         -icon error \
