@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2025, #05; Tue, 18)
+Subject: What's cooking in git.git (Mar 2025, #06; Fri, 21)
 X-master-at: 683c54c999c301c2cd6f715c411407c413b1d84e
 X-next-at: e94155a9ecafb89f308d834dea8fed4f7ad85d2a
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Mar 2025, #05; Tue, 18)
+What's cooking in git.git (Mar 2025, #06; Fri, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,12 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-Now Git 2.49 is out, we may see some regression reports, in which
-case we would have to first deal with them.  I'll be on vacation for
-a few weeks, and will be back in early April.  I may occasionally be
-online to merge some topics down but I will generally be much slower
-than usual during the latter half of this month.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -53,6 +47,103 @@ Release tarballs are available at:
 
 --------------------------------------------------
 [New Topics]
+
+* en/assert-wo-side-effects (2025-03-21) 3 commits
+ - treewide: replace assert() with ASSERT() in special cases
+ - ci: add build checking for side-effects in assert() calls
+ - git-compat-util: introduce ASSERT() macro
+
+ Ensure what we write in assert() does not have side effects,
+ and introduce ASSERT() macro to mark those that cannot be
+ mechanically checked for lack of side effects.
+
+ Will merge to 'next'.
+ source: <pull.1881.v3.git.1742401378.gitgitgadget@gmail.com>
+
+
+* jt/ref-transaction-abort-fix (2025-03-21) 1 commit
+ - builtin/fetch: avoid aborting closed reference transaction
+
+ A ref transaction corner case fix.
+
+ Will merge to 'next'?
+ source: <20250321004437.505461-1-jltobler@gmail.com>
+
+
+* kn/ci-meson-check-build-docs-fix (2025-03-20) 1 commit
+ - ci/github: add missing 'CI_JOB_IMAGE' env variable
+
+ GitHub Actions CI switched on a CI/CD variable that does not exist
+ when choosing what packages to install etc., which has been
+ corrected.
+
+ Will merge to 'next'.
+ source: <20250319163328.525284-1-karthik.188@gmail.com>
+
+
+* ms/reftable-block-writer-errors (2025-03-21) 3 commits
+ - reftable: adapt write_object_record() to propagate block_writer_add() errors
+ - reftable: adapt writer_add_record() to propagate block_writer_add() errors
+ - reftable: propagate specific error codes in block_writer_add()
+
+ Give more meaningful error return values from block writer layer of
+ the reftable ref-API backend.
+
+ Will merge to 'next'.
+ cf. <Z9rnZzbEasyRbHIY@pks.im>
+ source: <20250319152927.1263033-1-meetsoni3017@gmail.com>
+
+
+* tb/bitamp-typofix (2025-03-21) 1 commit
+ - pseudo-merge.h: fix a typo
+
+ Typofix.
+
+ Will merge to 'next'.
+ source: <3b3cc5c0fa2d0696eb15c5d3c97a6c93a0d39252.1742338479.git.me@ttaylorr.com>
+
+
+* tb/http-curl-keepalive (2025-03-21) 4 commits
+ - http.c: allow custom TCP keepalive behavior via config
+ - http.c: inline `set_curl_keepalive()`
+ - http.c: introduce `set_long_from_env()` for convenience
+ - http.c: remove unnecessary casts to long
+
+ TCP keepalive behaviour on http transports can now be configured by
+ calling cURL library.
+
+ Will merge to 'next'.
+ cf. <CABPp-BEn+NfGu1c=ZWjwnFBJgmsxRVSq+Roin-KDQGqKPdDhCg@mail.gmail.com>
+ source: <cover.1742423021.git.me@ttaylorr.com>
+
+
+* tb/refspec-fetch-cleanup (2025-03-21) 5 commits
+ - refspec: replace `refspec_item_init()` with fetch/push variants
+ - refspec: remove refspec_item_init_or_die()
+ - refspec: replace `refspec_init()` with fetch/push variants
+ - refspec: treat 'fetch' as a Boolean value
+ - Merge branch 'jk/fetch-ref-prefix-cleanup' into tb/refspec-fetch-cleanup
+ (this branch uses jk/fetch-ref-prefix-cleanup.)
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ cf. <CABPp-BE6JmiXB+pUL1Z4ewVDbG2RBxCdA2m5-WTYtoKMTtu_Xw@mail.gmail.com>
+ source: <cover.1742338207.git.me@ttaylorr.com>
+
+
+* zy/send-email-error-handling (2025-03-21) 2 commits
+ . send-email: finer-grained SMTP error handling
+ . send-email: capture errors in an eval {} block
+
+ Auth-related (and unrelated) error handling in send-email has been
+ made more robust.
+
+ Breaks t9001.
+ source: <20250321025128.68463-1-05ZYT30@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * aj/doc-restore-p-update (2025-03-18) 1 commit
  - doc: restore: remove note on --patch w/ pathspecs
@@ -98,39 +189,24 @@ Release tarballs are available at:
  source: <pull.1883.git.1742089659610.gitgitgadget@gmail.com>
 
 
-* ja/doc-branch-markup (2025-03-17) 2 commits
+* ja/doc-branch-markup (2025-03-20) 2 commits
  - doc: apply new format to git-branch man page
  - completion: take into account the formatting backticks for options
 
- Expecting a reroll to lose GNUism.
- cf. <2773494.mvXUDI8C0e@cayenne>
- source: <pull.1880.git.1742056310.gitgitgadget@gmail.com>
+ Doc mark-up updates.
+
+ Will merge to 'next'.
+ source: <pull.1880.v2.git.1742372183.gitgitgadget@gmail.com>
 
 
-* jc/ci-meson-check-build-docs-fix (2025-03-14) 1 commit
- - install meson for Documentation job
- (this branch uses ps/ci-meson-check-build-docs.)
-
- The documentation CI job tries to build test documentation pages
- with both make- and meson-based build procedures, but somehow
- forgot to install meson in the Ci environment, which has been
- corrected.
-
- Will discard.  Karthik root-caused the issue.
- cf. <xmqqmsdi49h8.fsf_-_@gitster.g>
- cf. <CAOLa=ZRODjYfDXQ8m+hDosV7RBGDWeehzSvsR-+-HCmbS+tAcQ@mail.gmail.com>
- source: <20250314184130.GA578421@coredump.intra.peff.net>
-
-
-* ps/mingw-creat-excl-fix (2025-03-13) 2 commits
+* ps/mingw-creat-excl-fix (2025-03-21) 2 commits
  - compat/mingw: fix EACCESS when opening files with `O_CREAT | O_EXCL`
- - compat/mingw: handle O_CLOEXEC in `mingw_open_existing()`
+ - meson: fix compat sources when compiling with MSVC
 
- Attempt to fix lockfile contention in reftable code on Windows.
+ Fix lockfile contention in reftable code on Windows.
 
- The second step needs rethinking.
- cf. <Z9g85X8sNqFOwRaU@pks.im>
- source: <20250313-b4-pks-mingw-lockfile-flake-v1-0-bc5d3e70f516@pks.im>
+ Comments?
+ source: <20250320-b4-pks-mingw-lockfile-flake-v2-0-a84c90cfc6c2@pks.im>
 
 
 * rs/xdiff-context-length-fix (2025-03-14) 1 commit
@@ -154,7 +230,7 @@ Release tarballs are available at:
  source: <3d127f293818f935efdb9ca7bb556e6a8f233ef7.1741975557.git.sam@gentoo.org>
 
 
-* tb/combine-cruft-below-size (2025-03-17) 6 commits
+* tb/combine-cruft-below-size (2025-03-21) 6 commits
  - repack: begin combining cruft packs with `--combine-cruft-below-size`
  - repack: avoid combining cruft packs with `--max-cruft-size`
  - t/t7704-repack-cruft.sh: consolidate `write_blob()`
@@ -166,8 +242,8 @@ Release tarballs are available at:
  "git repack" learned "--combine-cruft-below-size" option that
  controls how cruft-packs are combined.
 
- Needs review.
- source: <cover.1742252411.git.me@ttaylorr.com>
+ Will merge to 'next'.
+ source: <cover.1742424671.git.me@ttaylorr.com>
 
 
 * jh/hash-init-fixes (2025-03-18) 1 commit
@@ -176,7 +252,8 @@ Release tarballs are available at:
  An earlier code refactoring of the hash machinery missed a few
  required calls to init_fn.
 
- Needs review.
+ Will merge to 'next'.
+ cf. <Z9rC0VCbh8Noaq4e@pks.im>
  source: <20250318111616.113941-1-hmz007@gmail.com>
 
 
@@ -224,8 +301,6 @@ Release tarballs are available at:
  Comments?
  source: <pull.1897.v3.git.git.1742312173.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * en/diff-rename-follow-fix (2025-03-14) 1 commit
   (merged to 'next' on 2025-03-18 at 56808a7eda)
@@ -331,7 +406,7 @@ Release tarballs are available at:
  + t5516: drop NEEDSWORK about v2 reachability behavior
  + t5516: prefer "oid" to "sha1" in some test titles
  + t5702: fix typo in test name
- (this branch is used by jk/fetch-follow-remote-head-fix.)
+ (this branch is used by jk/fetch-follow-remote-head-fix and tb/refspec-fetch-cleanup.)
 
  In protocol v2 where the refs advertisement is constrained, we try
  to tell the server side not to limit the advertisement when there
@@ -342,11 +417,10 @@ Release tarballs are available at:
  source: <20250309030101.GA2334064@coredump.intra.peff.net>
 
 
-* jt/rev-list-z (2025-03-13) 6 commits
+* jt/rev-list-z (2025-03-21) 5 commits
  - rev-list: support NUL-delimited --missing option
  - rev-list: support NUL-delimited --boundary option
  - rev-list: support delimiting objects with NUL bytes
- - revision: support NUL-delimited --stdin mode
  - rev-list: refactor early option parsing
  - rev-list: inline `show_object_with_name()` in `show_object()`
 
@@ -354,7 +428,7 @@ Release tarballs are available at:
  each field with NUL.
 
  Will merge to 'next'?
- source: <20250313001706.3390502-1-jltobler@gmail.com>
+ source: <20250319183410.1225428-1-jltobler@gmail.com>
 
 
 * kn/reflog-drop (2025-03-17) 2 commits
@@ -467,16 +541,16 @@ Release tarballs are available at:
  source: <pull.1873.git.1741275027.gitgitgadget@gmail.com>
 
 
-* kn/non-transactional-batch-updates (2025-03-12) 9 commits
- . update-ref: add --allow-partial flag for stdin mode
- . refs: support partial update rejections during F/D checks
- . refs: implement partial reference transaction support
- . refs: introduce enum-based transaction error types
- . refs/reftable: extract code from the transaction preparation
- . refs/files: remove duplicate duplicates check
- . refs: move duplicate refname update check to generic layer
- . refs/files: remove redundant check in split_symref_update()
- . Merge branch 'ps/refname-avail-check-optim' into kn/non-transactional-batch-updates
+* kn/non-transactional-batch-updates (2025-03-21) 9 commits
+ - update-ref: add --batch-updates flag for stdin mode
+ - refs: support rejection in batch updates during F/D checks
+ - refs: implement batch reference update support
+ - refs: introduce enum-based transaction error types
+ - refs/reftable: extract code from the transaction preparation
+ - refs/files: remove duplicate duplicates check
+ - refs: move duplicate refname update check to generic layer
+ - refs/files: remove redundant check in split_symref_update()
+ - Merge branch 'ps/refname-avail-check-optim' into kn/non-transactional-batch-updates
  (this branch uses ps/refname-avail-check-optim.)
 
  Updating multiple references have only been possible in all-or-none
@@ -485,8 +559,8 @@ Release tarballs are available at:
  best-effort manner.  A new "best effort batches of updates" mode
  has been introduced.
 
- Trips up -Wunreachable-code checker.
- source: <20250305-245-partially-atomic-ref-updates-v3-0-0c64e3052354@gmail.com>
+ Comments?
+ source: <20250320-245-partially-atomic-ref-updates-v4-0-3dcc1b311dc9@gmail.com>
 
 
 * ps/object-wo-the-repository (2025-03-10) 12 commits
@@ -722,7 +796,7 @@ Release tarballs are available at:
  source: <xmqq5xnladwi.fsf@gitster.g>
 
 
-* tb/incremental-midx-part-2 (2025-03-14) 13 commits
+* tb/incremental-midx-part-2 (2025-03-21) 14 commits
  - midx: implement writing incremental MIDX bitmaps
  - pack-bitmap.c: use `ewah_or_iterator` for type bitmap iterators
  - pack-bitmap.c: keep track of each layer's type bitmaps
@@ -736,11 +810,12 @@ Release tarballs are available at:
  - pack-bitmap.c: open and store incremental bitmap layers
  - pack-revindex: prepare for incremental MIDX bitmaps
  - Documentation: describe incremental MIDX bitmaps
+ - Documentation: remove a "future work" item from the MIDX docs
 
  Incrementally updating multi-pack index files.
 
- Will merge to 'next'.
- source: <cover.1741983492.git.me@ttaylorr.com>
+ Comments?
+ source: <cover.1742493373.git.me@ttaylorr.com>
 
 
 * ej/cat-file-remote-object-info (2025-02-24) 8 commits
@@ -756,3 +831,20 @@ Release tarballs are available at:
  "git cat-file --batch" and friends can optionally ask a remote
  server about objects it does not have.
  source: <20250221190451.12536-1-eric.peijian@gmail.com>
+
+--------------------------------------------------
+[Discarded]
+
+* jc/ci-meson-check-build-docs-fix (2025-03-14) 1 commit
+ . install meson for Documentation job
+ (this branch uses ps/ci-meson-check-build-docs.)
+
+ The documentation CI job tries to build test documentation pages
+ with both make- and meson-based build procedures, but somehow
+ forgot to install meson in the Ci environment, which has been
+ corrected.
+
+ Discarded.  kn/ci-meson-check-build-docs-fix gives us the right fix.
+ cf. <xmqqmsdi49h8.fsf_-_@gitster.g>
+ cf. <CAOLa=ZRODjYfDXQ8m+hDosV7RBGDWeehzSvsR-+-HCmbS+tAcQ@mail.gmail.com>
+ source: <20250314184130.GA578421@coredump.intra.peff.net>
