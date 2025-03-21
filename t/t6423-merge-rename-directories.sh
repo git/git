@@ -5363,6 +5363,47 @@ test_expect_merge_algorithm failure success '12m: Change parent of renamed-dir t
 	)
 '
 
+test_setup_12n () {
+	git init 12n &&
+	(
+		cd 12n &&
+
+		mkdir tools &&
+		echo hello >tools/hello &&
+		git add tools/hello &&
+		git commit -m "O" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git switch A &&
+		echo world >world &&
+		git add world &&
+		git commit -q world -m 'Add world' &&
+
+		git mv world tools/world &&
+		git commit -m "Move world into tools/" &&
+
+		git switch B &&
+		git mv tools/hello hello &&
+		git commit -m "Move hello from tools/ to toplevel"
+	)
+}
+
+test_expect_success '12n: Directory rename transitively makes rename back to self' '
+	test_setup_12n &&
+	(
+		cd 12n &&
+
+		git checkout -q B^0 &&
+
+		test_must_fail git cherry-pick A^0 >out &&
+		grep "CONFLICT (file location).*should perhaps be moved" out
+	)
+'
+
+
 ###########################################################################
 # SECTION 13: Checking informational and conflict messages
 #
