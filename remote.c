@@ -143,8 +143,8 @@ static struct remote *make_remote(struct remote_state *remote_state,
 	ret->prune = -1;  /* unspecified */
 	ret->prune_tags = -1;  /* unspecified */
 	ret->name = xstrndup(name, len);
-	refspec_init(&ret->push, REFSPEC_PUSH);
-	refspec_init(&ret->fetch, REFSPEC_FETCH);
+	refspec_init_push(&ret->push);
+	refspec_init_fetch(&ret->fetch);
 	string_list_init_dup(&ret->server_options);
 
 	ALLOC_GROW(remote_state->remotes, remote_state->remotes_nr + 1,
