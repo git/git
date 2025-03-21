@@ -20,6 +20,13 @@ static void repo_cfg_int(struct repository *r, const char *key, int *dest,
 		*dest = def;
 }
 
+static void repo_cfg_ulong(struct repository *r, const char *key, unsigned long *dest,
+			   unsigned long def)
+{
+	if (repo_config_get_ulong(r, key, dest))
+		*dest = def;
+}
+
 void prepare_repo_settings(struct repository *r)
 {
 	int experimental;
@@ -149,6 +156,19 @@ void repo_settings_clear(struct repository *r)
 	FREE_AND_NULL(r->settings.fsmonitor);
 	FREE_AND_NULL(r->settings.hooks_path);
 	r->settings = empty;
+}
+
+unsigned long repo_settings_get_big_file_threshold(struct repository *repo)
+{
+	if (!repo->settings.big_file_threshold)
+		repo_cfg_ulong(repo, "core.bigfilethreshold",
+			       &repo->settings.big_file_threshold, 512 * 1024 * 1024);
+	return repo->settings.big_file_threshold;
+}
+
+void repo_settings_set_big_file_threshold(struct repository *repo, unsigned long value)
+{
+	repo->settings.big_file_threshold = value;
 }
 
 enum log_refs_config repo_settings_get_log_all_ref_updates(struct repository *repo)

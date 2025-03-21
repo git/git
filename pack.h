@@ -87,7 +87,7 @@ struct progress;
 /* Note, the data argument could be NULL if object type is blob */
 typedef int (*verify_fn)(const struct object_id *, enum object_type, unsigned long, void*, int*);
 
-const char *write_idx_file(const struct git_hash_algo *hash_algo,
+const char *write_idx_file(struct repository *repo,
 			   const char *index_name,
 			   struct pack_idx_entry **objects,
 			   int nr_objects,
@@ -106,13 +106,13 @@ struct ref;
 
 void write_promisor_file(const char *promisor_name, struct ref **sought, int nr_sought);
 
-char *write_rev_file(const struct git_hash_algo *hash_algo,
+char *write_rev_file(struct repository *repo,
 		     const char *rev_name,
 		     struct pack_idx_entry **objects,
 		     uint32_t nr_objects,
 		     const unsigned char *hash,
 		     unsigned flags);
-char *write_rev_file_order(const struct git_hash_algo *hash_algo,
+char *write_rev_file_order(struct repository *repo,
 			   const char *rev_name,
 			   uint32_t *pack_order,
 			   uint32_t nr_objects,
@@ -134,8 +134,9 @@ int read_pack_header(int fd, struct pack_header *);
 
 struct packing_data;
 
-struct hashfile *create_tmp_packfile(char **pack_tmp_name);
-void stage_tmp_packfiles(const struct git_hash_algo *hash_algo,
+struct hashfile *create_tmp_packfile(struct repository *repo,
+				     char **pack_tmp_name);
+void stage_tmp_packfiles(struct repository *repo,
 			 struct strbuf *name_buffer,
 			 const char *pack_tmp_name,
 			 struct pack_idx_entry **written_list,

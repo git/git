@@ -1353,7 +1353,7 @@ int copy_note(struct notes_tree *t,
 	if (note)
 		return add_note(t, to_obj, note, combine_notes);
 	else if (existing_note)
-		return add_note(t, to_obj, null_oid(), combine_notes);
+		return add_note(t, to_obj, null_oid(the_hash_algo), combine_notes);
 
 	return 0;
 }

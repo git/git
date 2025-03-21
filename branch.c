@@ -633,7 +633,7 @@ void create_branch(struct repository *r,
 						  0, &err);
 	if (!transaction ||
 		ref_transaction_update(transaction, ref.buf,
-					&oid, forcing ? NULL : null_oid(),
+					&oid, forcing ? NULL : null_oid(the_hash_algo),
 					NULL, NULL, flags, msg, &err) ||
 		ref_transaction_commit(transaction, &err))
 		die("%s", err.buf);

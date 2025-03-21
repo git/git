@@ -505,7 +505,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			 * has not been resolved yet.
 			 */
 			oidclr(&obj_list[nr].oid, the_repository->hash_algo);
-			add_delta_to_list(nr, null_oid(), base_offset,
+			add_delta_to_list(nr, null_oid(the_hash_algo), base_offset,
 					  delta_data, delta_size);
 			return;
 		}
@@ -553,7 +553,8 @@ static void unpack_one(unsigned nr)
 
 	switch (type) {
 	case OBJ_BLOB:
-		if (!dry_run && size > big_file_threshold) {
+		if (!dry_run &&
+		    size > repo_settings_get_big_file_threshold(the_repository)) {
 			stream_blob(size, nr);
 			return;
 		}

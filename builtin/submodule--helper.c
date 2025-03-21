@@ -78,7 +78,7 @@ static int get_default_remote_submodule(const char *module_path, char **default_
 	int ret;
 
 	if (repo_submodule_init(&subrepo, the_repository, module_path,
-				null_oid()) < 0)
+				null_oid(the_hash_algo)) < 0)
 		return die_message(_("could not get a repository handle for submodule '%s'"),
 				   module_path);
 	ret = repo_get_default_remote(&subrepo, default_remote);
@@ -308,7 +308,7 @@ static void runcommand_in_submodule_cb(const struct cache_entry *list_item,
 	displaypath = get_submodule_displaypath(path, info->prefix,
 						info->super_prefix);
 
-	sub = submodule_from_path(the_repository, null_oid(), path);
+	sub = submodule_from_path(the_repository, null_oid(the_hash_algo), path);
 
 	if (!sub)
 		die(_("No url found for submodule path '%s' in .gitmodules"),
@@ -468,7 +468,7 @@ static void init_submodule(const char *path, const char *prefix,
 
 	displaypath = get_submodule_displaypath(path, prefix, super_prefix);
 
-	sub = submodule_from_path(the_repository, null_oid(), path);
+	sub = submodule_from_path(the_repository, null_oid(the_hash_algo), path);
 
 	if (!sub)
 		die(_("No url found for submodule path '%s' in .gitmodules"),
@@ -645,14 +645,14 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 	if (validate_submodule_path(path) < 0)
 		exit(128);
 
-	if (!submodule_from_path(the_repository, null_oid(), path))
+	if (!submodule_from_path(the_repository, null_oid(the_hash_algo), path))
 		die(_("no submodule mapping found in .gitmodules for path '%s'"),
 		      path);
 
 	displaypath = get_submodule_displaypath(path, prefix, super_prefix);
 
 	if ((CE_STAGEMASK & ce_flags) >> CE_STAGESHIFT) {
-		print_status(flags, 'U', path, null_oid(), displaypath);
+		print_status(flags, 'U', path, null_oid(the_hash_algo), displaypath);
 		goto cleanup;
 	}
 
@@ -912,7 +912,7 @@ static void generate_submodule_summary(struct summary_cb *info,
 	struct strbuf errmsg = STRBUF_INIT;
 	int total_commits = -1;
 
-	if (!info->cached && oideq(&p->oid_dst, null_oid())) {
+	if (!info->cached && oideq(&p->oid_dst, null_oid(the_hash_algo))) {
 		if (S_ISGITLINK(p->mod_dst)) {
 			struct ref_store *refs = repo_get_submodule_ref_store(the_repository,
 									      p->sm_path);
@@ -1051,7 +1051,7 @@ static void prepare_submodule_summary(struct summary_cb *info,
 
 		if (info->for_status && p->status != 'A' &&
 		    (sub = submodule_from_path(the_repository,
-					       null_oid(), p->sm_path))) {
+					       null_oid(the_hash_algo), p->sm_path))) {
 			char *config_key = NULL;
 			const char *value;
 			int ignore_all = 0;
@@ -1259,7 +1259,7 @@ static void sync_submodule(const char *path, const char *prefix,
 	if (validate_submodule_path(path) < 0)
 		exit(128);
 
-	sub = submodule_from_path(the_repository, null_oid(), path);
+	sub = submodule_from_path(the_repository, null_oid(the_hash_algo), path);
 
 	if (sub && sub->url) {
 		if (starts_with_dot_dot_slash(sub->url) ||
@@ -1404,7 +1404,7 @@ static void deinit_submodule(const char *path, const char *prefix,
 	if (validate_submodule_path(path) < 0)
 		exit(128);
 
-	sub = submodule_from_path(the_repository, null_oid(), path);
+	sub = submodule_from_path(the_repository, null_oid(the_hash_algo), path);
 
 	if (!sub || !sub->name)
 		goto cleanup;
@@ -1929,7 +1929,7 @@ static int determine_submodule_update_strategy(struct repository *r,
 					       enum submodule_update_type update,
 					       struct submodule_update_strategy *out)
 {
-	const struct submodule *sub = submodule_from_path(r, null_oid(), path);
+	const struct submodule *sub = submodule_from_path(r, null_oid(the_hash_algo), path);
 	char *key;
 	const char *val;
 	int ret;
@@ -2089,7 +2089,7 @@ static int prepare_to_clone_next_submodule(const struct cache_entry *ce,
 		goto cleanup;
 	}
 
-	sub = submodule_from_path(the_repository, null_oid(), ce->name);
+	sub = submodule_from_path(the_repository, null_oid(the_hash_algo), ce->name);
 
 	if (!sub) {
 		next_submodule_warn_missing(suc, out, displaypath);
@@ -2485,7 +2485,7 @@ static int remote_submodule_branch(const char *path, const char **branch)
 	char *key;
 	*branch = NULL;
 
-	sub = submodule_from_path(the_repository, null_oid(), path);
+	sub = submodule_from_path(the_repository, null_oid(the_hash_algo), path);
 	if (!sub)
 		return die_message(_("could not initialize submodule at path '%s'"),
 				   path);
@@ -2531,7 +2531,7 @@ static int ensure_core_worktree(const char *path)
 	const char *cw;
 	struct repository subrepo;
 
-	if (repo_submodule_init(&subrepo, the_repository, path, null_oid()))
+	if (repo_submodule_init(&subrepo, the_repository, path, null_oid(the_hash_algo)))
 		return die_message(_("could not get a repository handle for submodule '%s'"),
 				   path);
 
@@ -2644,7 +2644,7 @@ static int update_submodule(struct update_data *update_data)
 		return ret;
 
 	if (update_data->just_cloned)
-		oidcpy(&update_data->suboid, null_oid());
+		oidcpy(&update_data->suboid, null_oid(the_hash_algo));
 	else if (repo_resolve_gitlink_ref(the_repository, update_data->sm_path,
 					  "HEAD", &update_data->suboid))
 		return die_message(_("Unable to find current revision in submodule path '%s'"),
@@ -2697,8 +2697,8 @@ static int update_submodule(struct update_data *update_data)
 		struct update_data next = *update_data;
 
 		next.prefix = NULL;
-		oidcpy(&next.oid, null_oid());
-		oidcpy(&next.suboid, null_oid());
+		oidcpy(&next.oid, null_oid(the_hash_algo));
+		oidcpy(&next.suboid, null_oid(the_hash_algo));
 
 		cp.dir = update_data->sm_path;
 		cp.git_cmd = 1;
@@ -3057,7 +3057,7 @@ static int module_set_url(int argc, const char **argv, const char *prefix,
 	if (argc != 2 || !(path = argv[0]) || !(newurl = argv[1]))
 		usage_with_options(usage, options);
 
-	sub = submodule_from_path(the_repository, null_oid(), path);
+	sub = submodule_from_path(the_repository, null_oid(the_hash_algo), path);
 
 	if (!sub)
 		die(_("no submodule mapping found in .gitmodules for path '%s'"),
@@ -3113,7 +3113,7 @@ static int module_set_branch(int argc, const char **argv, const char *prefix,
 	if (argc != 1 || !(path = argv[0]))
 		usage_with_options(usage, options);
 
-	sub = submodule_from_path(the_repository, null_oid(), path);
+	sub = submodule_from_path(the_repository, null_oid(the_hash_algo), path);
 
 	if (!sub)
 		die(_("no submodule mapping found in .gitmodules for path '%s'"),

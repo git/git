@@ -1380,7 +1380,7 @@ static int convert_commit_extra_headers(const struct commit_extra_header *orig,
 		struct commit_extra_header *new;
 		CALLOC_ARRAY(new, 1);
 		if (!strcmp(orig->key, "mergetag")) {
-			if (convert_object_file(&out, algo, compat,
+			if (convert_object_file(the_repository, &out, algo, compat,
 						orig->value, orig->len,
 						OBJ_TAG, 1)) {
 				free(new);
