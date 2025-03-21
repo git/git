@@ -1699,6 +1699,24 @@ struct ref_iterator *refs_ref_iterator_begin(
 		enum do_for_each_ref_flags flags)
 {
 	struct ref_iterator *iter;
+	struct strvec normalized_exclude_patterns = STRVEC_INIT;
+
+	if (exclude_patterns) {
+		for (size_t i = 0; exclude_patterns[i]; i++) {
+			const char *pattern = exclude_patterns[i];
+			size_t len = strlen(pattern);
+			if (!len)
+				continue;
+
+			if (pattern[len - 1] == '/')
+				strvec_push(&normalized_exclude_patterns, pattern);
+			else
+				strvec_pushf(&normalized_exclude_patterns, "%s/",
+					     pattern);
+		}
+
+		exclude_patterns = normalized_exclude_patterns.v;
+	}
 
 	if (!(flags & DO_FOR_EACH_INCLUDE_BROKEN)) {
 		static int ref_paranoia = -1;
@@ -1718,6 +1736,8 @@ struct ref_iterator *refs_ref_iterator_begin(
 	 */
 	if (trim)
 		iter = prefix_ref_iterator_begin(iter, "", trim);
+
+	strvec_clear(&normalized_exclude_patterns);
 
 	return iter;
 }
