@@ -49,7 +49,7 @@ static int block_writer_register_restart(struct block_writer *w, int n,
 	if (is_restart)
 		rlen++;
 	if (2 + 3 * rlen + n > w->block_size - w->next)
-		return -1;
+		return REFTABLE_ENTRY_TOO_BIG_ERROR;
 	if (is_restart) {
 		REFTABLE_ALLOC_GROW_OR_NULL(w->restarts, w->restart_len + 1,
 					    w->restart_cap);
@@ -97,9 +97,10 @@ uint8_t block_writer_type(struct block_writer *bw)
 	return bw->block[bw->header_off];
 }
 
-/* Adds the reftable_record to the block. Returns -1 if it does not fit, 0 on
-   success. Returns REFTABLE_API_ERROR if attempting to write a record with
-   empty key. */
+/*
+ * Adds the reftable_record to the block. Returns 0 on success and
+ * appropriate error codes on failure.
+ */
 int block_writer_add(struct block_writer *w, struct reftable_record *rec)
 {
 	struct reftable_buf empty = REFTABLE_BUF_INIT;
@@ -126,14 +127,14 @@ int block_writer_add(struct block_writer *w, struct reftable_record *rec)
 	n = reftable_encode_key(&is_restart, out, last, w->scratch,
 				reftable_record_val_type(rec));
 	if (n < 0) {
-		err = -1;
+		err = n;
 		goto done;
 	}
 	string_view_consume(&out, n);
 
 	n = reftable_record_encode(rec, out, w->hash_size);
 	if (n < 0) {
-		err = -1;
+		err = n;
 		goto done;
 	}
 	string_view_consume(&out, n);
