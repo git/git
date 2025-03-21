@@ -194,9 +194,11 @@ int cmd_main(int argc, const char **argv)
 		/* Accept "git foo" as if the caller said "git-foo". */
 		prog[3] = '-';
 
+	cd_to_homedir();
 	for (cmd = cmd_list ; cmd->name ; cmd++) {
 		int len = strlen(cmd->name);
 		char *arg;
+		char *full_cmd;
 		if (strncmp(cmd->name, prog, len))
 			continue;
 		arg = NULL;
@@ -210,10 +212,16 @@ int cmd_main(int argc, const char **argv)
 		default:
 			continue;
 		}
-		return cmd->exec(cmd->name, arg);
+		/* Allow overriding built-in commands */
+		full_cmd = make_cmd(cmd->name);
+		if (!access(full_cmd, F_OK)) {
+			const char *argv[3] = { cmd->name, arg, NULL };
+			return execv(full_cmd, (char *const *) argv);
+		} else {
+			return cmd->exec(cmd->name, arg);
+		}
 	}
 
-	cd_to_homedir();
 	count = split_cmdline(prog, &user_argv);
 	if (count >= 0) {
 		if (is_valid_cmd_name(user_argv[0])) {
