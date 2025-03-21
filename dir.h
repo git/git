@@ -43,7 +43,6 @@ struct repository;
  *
  */
 
-struct repository;
 
 struct dir_entry {
 	unsigned int len;
