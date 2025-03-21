@@ -245,33 +245,34 @@ diffcore-pickaxe: For Detecting Addition/Deletion of Specified String
 
 This transformation limits the set of filepairs to those that change
 specified strings between the preimage and the postimage in a certain
-way.  -S<block-of-text> and -G<regular-expression> options are used to
-specify different ways these strings are sought.
+way.  `--patch-modifies=<string>` and `--patch-grep=<regex>` are used
+to specify different ways these strings are sought.
 
-"-S<block-of-text>" detects filepairs whose preimage and postimage
-have different number of occurrences of the specified block of text.
-By definition, it will not detect in-file moves.  Also, when a
-changeset moves a file wholesale without affecting the interesting
-string, diffcore-rename kicks in as usual, and `-S` omits the filepair
-(since the number of occurrences of that string didn't change in that
-rename-detected filepair).  When used with `--pickaxe-regex`, treat
-the <block-of-text> as an extended POSIX regular expression to match,
-instead of a literal string.
+`--patch-modifies=<string>` (`-S<string>` for short) detects filepairs
+whose preimage and postimage have different number of occurrences of
+the specified _<string>_.  By definition, it will not detect in-file
+moves.  Also, when a changeset moves a file wholesale without
+affecting the interesting string, diffcore-rename kicks in as usual,
+and `--patch-modifies` omits the filepair (since the number of
+occurrences of that string didn't change in that rename-detected
+filepair).  When used with `--pickaxe-regex`, treat the _<string>_ as
+an extended POSIX regular expression to match, instead of a literal
+string.
 
-"-G<regular-expression>" (mnemonic: grep) detects filepairs whose
-textual diff has an added or a deleted line that matches the given
-regular expression.  This means that it will detect in-file (or what
-rename-detection considers the same file) moves, which is noise.  The
-implementation runs diff twice and greps, and this can be quite
-expensive.  To speed things up, binary files without textconv filters
-will be ignored.
+`--patch-grep=<regex>` (`-G<regex>` for short, mnemonic: grep) detects
+filepairs whose textual diff has an added or a deleted line that
+matches the given regular expression.  This means that it will detect
+in-file (or what rename-detection considers the same file) moves,
+which is noise.  The implementation runs diff twice and greps, and
+this can be quite expensive.  To speed things up, binary files without
+textconv filters will be ignored.
 
-When `-S` or `-G` are used without `--pickaxe-all`, only filepairs
-that match their respective criterion are kept in the output.  When
-`--pickaxe-all` is used, if even one filepair matches their respective
-criterion in a changeset, the entire changeset is kept.  This behavior
-is designed to make reviewing changes in the context of the whole
-changeset easier.
+When `--patch-modifies` or `--patch-grep` are used without
+`--pickaxe-all`, only filepairs that match their respective criterion
+are kept in the output.  When `--pickaxe-all` is used, if even one
+filepair matches their respective criterion in a changeset, the entire
+changeset is kept.  This behavior is designed to make reviewing
+changes in the context of the whole changeset easier.
 
 diffcore-order: For Sorting the Output Based on Filenames
 ---------------------------------------------------------
