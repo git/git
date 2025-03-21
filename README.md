@@ -1,5 +1,8 @@
 [![Build status](https://github.com/git/git/workflows/CI/badge.svg)](https://github.com/git/git/actions?query=branch%3Amaster+event%3Apush)
 
+
+[![CodeQL Advanced](https://github.com/nodoubtz/git/actions/workflows/codeql.yml/badge.svg)](https://github.com/nodoubtz/git/actions/workflows/codeql.yml)
+
 Git - fast, scalable, distributed revision control system
 =========================================================
 
