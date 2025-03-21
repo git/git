@@ -554,6 +554,19 @@ test_expect_success 'fetch --atomic --append appends to FETCH_HEAD' '
 	test_cmp expected atomic/.git/FETCH_HEAD
 '
 
+test_expect_success REFFILES 'fetch --atomic fails transaction if reference locked' '
+	test_when_finished "rm -rf upstream repo" &&
+
+	git init upstream &&
+	git -C upstream commit --allow-empty -m 1 &&
+	git -C upstream switch -c foobar &&
+	git clone --mirror upstream repo &&
+	git -C upstream commit --allow-empty -m 2 &&
+	touch repo/refs/heads/foobar.lock &&
+
+	test_must_fail git -C repo fetch --atomic origin
+'
+
 test_expect_success '--refmap="" ignores configured refspec' '
 	cd "$TRASH_DIRECTORY" &&
 	git clone "$D" remote-refs &&
