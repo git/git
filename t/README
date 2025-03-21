@@ -818,7 +818,7 @@ Skipping tests
 --------------
 
 If you need to skip tests you should do so by using the three-arg form
-of the test_* functions (see the "Test harness library" section
+of the test_expect_* functions (see the "Test harness library" section
 below), e.g.:
 
     test_expect_success PERL 'I need Perl' '
@@ -964,6 +964,29 @@ see test-lib-functions.sh for the full list and their options.
 	    skip_all='skipping perl interface tests, perl not available'
 	    test_done
 	fi
+
+ - test_lazy_prereq <prereq> <script>
+
+   Declare the way to determine if a test prerequisite <prereq> is
+   satisified or not, but delay the actual determination until the
+   prerequisite is actually used by "test_have_prereq" or the
+   three-arg form of the test_expect_* functions.  For example, this
+   is how the SYMLINKS prerequisite is declared to see if the platform
+   supports symbolic links:
+
+	test_lazy_prereq SYMLINKS '
+		ln -s x y && test -h y
+	'
+
+   The script is lazily invoked when SYMLINKS prerequisite is first
+   queried by either "test_have_prereq SYMLINKS" or "test_expect_*
+   SYMLINKS ...".  The script is run in a temporary directory inside
+   a subshell, so you do not have to worry about removing temporary
+   files you create there.  When the script exits with status 0, the
+   prerequisite is set.  Exiting with non-zero status other than 125
+   makes the prerequisite unsatisified.  Exiting the script with 125
+   signals a programming error and is used to mark a prerequisite that
+   should not be used by test scripts.
 
  - test_expect_code <exit-code> <command>
 

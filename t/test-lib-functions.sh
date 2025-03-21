@@ -773,6 +773,8 @@ mkdir -p "$TRASH_DIRECTORY/prereq-test-dir-'"$1"'" &&
 	rm -rf "$TRASH_DIRECTORY/prereq-test-dir-$1"
 	if test "$eval_ret" = 0; then
 		say >&3 "prerequisite $1 ok"
+	elif test "$eval_ret" = 125; then
+		:;
 	else
 		say >&3 "prerequisite $1 not satisfied"
 	fi
@@ -811,6 +813,9 @@ test_have_prereq () {
 				if test_run_lazy_prereq_ "$prerequisite" "$script"
 				then
 					test_set_prereq $prerequisite
+				elif test $? = 125
+				then
+					BUG "Do not use $prerequisite"
 				fi
 				lazily_tested_prereq="$lazily_tested_prereq$prerequisite "
 			esac

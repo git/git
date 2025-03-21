@@ -178,6 +178,12 @@ references.
 +
 These features will be removed.
 
+* Support for "--stdin" option in the "name-rev" command was
+  deprecated (and hidden from the documentation) in the Git 2.40
+  timeframe, in preference to its synonym "--annotate-stdin".  Git 3.0
+  removes the support for "--stdin" altogether.
+
+
 == Superseded features that will not be deprecated
 
 Some features have gained newer replacements that aim to improve the design in
