@@ -21,6 +21,9 @@
 #include "gettext.h"
 #define SECURITY_WIN32
 #include <sspi.h>
+#include <winternl.h>
+
+#define STATUS_DELETE_PENDING ((NTSTATUS) 0xC0000056)
 
 #define HCAST(type, handle) ((type)(intptr_t)handle)
 
@@ -624,6 +627,8 @@ int mingw_open (const char *filename, int oflags, ...)
 	wchar_t wfilename[MAX_PATH];
 	open_fn_t open_fn;
 
+	DECLARE_PROC_ADDR(ntdll.dll, NTSTATUS, NTAPI, RtlGetLastNtStatus, void);
+
 	va_start(args, oflags);
 	mode = va_arg(args, int);
 	va_end(args);
@@ -647,6 +652,21 @@ int mingw_open (const char *filename, int oflags, ...)
 
 	fd = open_fn(wfilename, oflags, mode);
 
+	/*
+	 * Internally, `_wopen()` uses the `CreateFile()` API with CREATE_NEW,
+	 * which may error out with ERROR_ACCESS_DENIED and an NtStatus of
+	 * STATUS_DELETE_PENDING when the file is scheduled for deletion via
+	 * `DeleteFileW()`. The file essentially exists, so we map errno to
+	 * EEXIST instead of EACCESS so that callers don't have to special-case
+	 * this.
+	 *
+	 * This fixes issues for example with the lockfile interface when one
+	 * process has a lock that it is about to commit or release while
+	 * another process wants to acquire it.
+	 */
+	if (fd < 0 && create && GetLastError() == ERROR_ACCESS_DENIED &&
+	    INIT_PROC_ADDR(RtlGetLastNtStatus) && RtlGetLastNtStatus() == STATUS_DELETE_PENDING)
+		errno = EEXIST;
 	if (fd < 0 && (oflags & O_ACCMODE) != O_RDONLY && errno == EACCES) {
 		DWORD attrs = GetFileAttributesW(wfilename);
 		if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
