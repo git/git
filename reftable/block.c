@@ -147,13 +147,13 @@ done:
 int block_writer_finish(struct block_writer *w)
 {
 	for (uint32_t i = 0; i < w->restart_len; i++) {
-		put_be24(w->block + w->next, w->restarts[i]);
+		reftable_put_be24(w->block + w->next, w->restarts[i]);
 		w->next += 3;
 	}
 
-	put_be16(w->block + w->next, w->restart_len);
+	reftable_put_be16(w->block + w->next, w->restart_len);
 	w->next += 2;
-	put_be24(w->block + 1 + w->header_off, w->next);
+	reftable_put_be24(w->block + 1 + w->header_off, w->next);
 
 	/*
 	 * Log records are stored zlib-compressed. Note that the compression
@@ -215,7 +215,7 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 {
 	uint32_t full_block_size = table_block_size;
 	uint8_t typ = block->data[header_off];
-	uint32_t sz = get_be24(block->data + header_off + 1);
+	uint32_t sz = reftable_get_be24(block->data + header_off + 1);
 	int err = 0;
 	uint16_t restart_count = 0;
 	uint32_t restart_start = 0;
@@ -299,7 +299,7 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		full_block_size = sz;
 	}
 
-	restart_count = get_be16(block->data + sz - 2);
+	restart_count = reftable_get_be16(block->data + sz - 2);
 	restart_start = sz - 2 - 3 * restart_count;
 	restart_bytes = block->data + restart_start;
 
@@ -354,7 +354,7 @@ int block_reader_first_key(const struct block_reader *br, struct reftable_buf *k
 
 static uint32_t block_reader_restart_offset(const struct block_reader *br, size_t idx)
 {
-	return get_be24(br->restart_bytes + 3 * idx);
+	return reftable_get_be24(br->restart_bytes + 3 * idx);
 }
 
 void block_iter_seek_start(struct block_iter *it, const struct block_reader *br)
@@ -508,7 +508,9 @@ int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
 	it->block_len = br->block_len;
 	it->hash_size = br->hash_size;
 
-	reftable_record_init(&rec, block_reader_type(br));
+	err = reftable_record_init(&rec, block_reader_type(br));
+	if (err < 0)
+		goto done;
 
 	/*
 	 * We're looking for the last entry less than the wanted key so that
