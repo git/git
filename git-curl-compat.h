@@ -45,4 +45,11 @@
 #define GIT_CURL_HAVE_CURLOPT_PROTOCOLS_STR 1
 #endif
 
+/**
+ * CURLOPT_TCP_KEEPCNT was added in 8.9.0, released in July, 2024.
+ */
+#if LIBCURL_VERSION_NUM >= 0x080900
+#define GIT_CURL_HAVE_CURLOPT_TCP_KEEPCNT
+#endif
+
 #endif
