@@ -97,7 +97,6 @@ manpages = {
   'git-notes.adoc' : 1,
   'git-p4.adoc' : 1,
   'git-pack-objects.adoc' : 1,
-  'git-pack-redundant.adoc' : 1,
   'git-pack-refs.adoc' : 1,
   'git-patch-id.adoc' : 1,
   'git-prune-packed.adoc' : 1,
@@ -205,6 +204,14 @@ manpages = {
   'gittutorial.adoc' : 7,
   'gitworkflows.adoc' : 7,
 }
+
+manpages_breaking_changes = {
+  'git-pack-redundant.adoc' : 1,
+}
+
+if not get_option('breaking_changes')
+  manpages += manpages_breaking_changes
+endif
 
 docs_backend = get_option('docs_backend')
 if docs_backend == 'auto'
@@ -480,7 +487,9 @@ endif
 # Sanity check that we are not missing any tests present in 't/'. This check
 # only runs once at configure time and is thus best-effort, only. Furthermore,
 # it only verifies man pages for the sake of simplicity.
-configured_manpages = manpages.keys() + [ 'git-bisect-lk2009.adoc', 'git-tools.adoc' ]
+configured_manpages = manpages.keys()
+configured_manpages += manpages_breaking_changes.keys()
+configured_manpages += [ 'git-bisect-lk2009.adoc', 'git-tools.adoc' ]
 actual_manpages = run_command(shell, '-c', 'ls git*.adoc scalar.adoc',
   check: true,
   env: script_environment,
