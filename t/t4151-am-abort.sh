@@ -112,7 +112,7 @@ test_expect_success 'am --abort will keep dirty index intact' '
 test_expect_success 'am -3 stops on conflict on unborn branch' '
 	git checkout -f --orphan orphan &&
 	git reset &&
-	rm -f otherfile-4 &&
+	rm -f file-1 otherfile-4 &&
 	test_must_fail git am -3 0003-*.patch &&
 	test 2 -eq $(git ls-files -u | wc -l) &&
 	test 4 = "$(cat otherfile-4)"

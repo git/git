@@ -3405,6 +3405,11 @@ static int collect_renames(struct merge_options *opt,
 			pool_diff_free_filepair(&opt->priv->pool, p);
 			continue;
 		}
+		if (opt->detect_directory_renames == MERGE_DIRECTORY_RENAMES_NONE &&
+		    p->status == 'R' && 1) {
+			possibly_cache_new_pair(renames, p, side_index, NULL);
+			goto skip_directory_renames;
+		}
 
 		new_path = check_for_directory_rename(opt, p->two->path,
 						      side_index,
@@ -3422,6 +3427,7 @@ static int collect_renames(struct merge_options *opt,
 		if (new_path)
 			apply_directory_rename_modifications(opt, p, new_path);
 
+skip_directory_renames:
 		/*
 		 * p->score comes back from diffcore_rename_extended() with
 		 * the similarity of the renamed file.  The similarity is
@@ -3449,6 +3455,11 @@ static int detect_and_process_renames(struct merge_options *opt)
 
 	if (!possible_renames(renames))
 		goto cleanup;
+	if (!opt->detect_renames) {
+		renames->redo_after_renames = 0;
+		renames->cached_pairs_valid_side = 0;
+		goto cleanup;
+	}
 
 	trace2_region_enter("merge", "regular renames", opt->repo);
 	detection_run |= detect_regular_renames(opt, MERGE_SIDE1);
@@ -4879,9 +4890,9 @@ static inline void set_commit_tree(struct commit *c, struct tree *t)
 	c->maybe_tree = t;
 }
 
-static struct commit *make_virtual_commit(struct repository *repo,
-					  struct tree *tree,
-					  const char *comment)
+struct commit *make_virtual_commit(struct repository *repo,
+				   struct tree *tree,
+				   const char *comment)
 {
 	struct commit *commit = alloc_commit_node(repo);
 
@@ -5021,7 +5032,8 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	trace2_region_leave("merge", "allocate/init", opt->repo);
 }
 
-static void merge_check_renames_reusable(struct merge_result *result,
+static void merge_check_renames_reusable(struct merge_options *opt,
+					 struct merge_result *result,
 					 struct tree *merge_base,
 					 struct tree *side1,
 					 struct tree *side2)
@@ -5042,6 +5054,26 @@ static void merge_check_renames_reusable(struct merge_result *result,
 	 */
 	if (!merge_trees[0]) {
 		assert(!merge_trees[0] && !merge_trees[1] && !merge_trees[2]);
+		renames->cached_pairs_valid_side = 0; /* neither side valid */
+		return;
+	}
+
+	/*
+	 * Avoid using cached renames when directory rename detection is
+	 * turned off.  Cached renames are far less important in that case,
+	 * and they lead to testcases with an interesting intersection of
+	 * effects from relevant renames optimization, trivial directory
+	 * resolution optimization, and cached renames all converging when
+	 * the target of a cached rename is in a directory that
+	 * collect_merge_info() does not recurse into.  To avoid such
+	 * problems, simply disable cached renames for this case (similar
+	 * to the rename/rename(1to1) case; see the "disabling the
+	 * optimization" comment near that case).
+	 *
+	 * This could be revisited in the future; see the commit message
+	 * where this comment was added for some possible pointers.
+	 */
+	if (opt->detect_directory_renames == MERGE_DIRECTORY_RENAMES_NONE) {
 		renames->cached_pairs_valid_side = 0; /* neither side valid */
 		return;
 	}
@@ -5187,6 +5219,8 @@ static void merge_ort_internal(struct merge_options *opt,
 		ancestor_name = "empty tree";
 	} else if (merge_bases) {
 		ancestor_name = "merged common ancestors";
+	} else if (opt->ancestor) {
+		ancestor_name = opt->ancestor;
 	} else {
 		strbuf_add_unique_abbrev(&merge_base_abbrev,
 					 &merged_merge_bases->object.oid,
@@ -5252,7 +5286,7 @@ void merge_incore_nonrecursive(struct merge_options *opt,
 
 	trace2_region_enter("merge", "merge_start", opt->repo);
 	assert(opt->ancestor != NULL);
-	merge_check_renames_reusable(result, merge_base, side1, side2);
+	merge_check_renames_reusable(opt, result, merge_base, side1, side2);
 	merge_start(opt, result);
 	/*
 	 * Record the trees used in this merge, so if there's a next merge in
@@ -5276,8 +5310,13 @@ void merge_incore_recursive(struct merge_options *opt,
 {
 	trace2_region_enter("merge", "incore_recursive", opt->repo);
 
-	/* We set the ancestor label based on the merge_bases */
-	assert(opt->ancestor == NULL);
+	/*
+	 * We set the ancestor label based on the merge_bases...but we
+	 * allow one exception through so that builtin/am can override
+	 * with its constructed fake ancestor.
+	 */
+	assert(opt->ancestor == NULL ||
+	       (merge_bases && !merge_bases->next));
 
 	trace2_region_enter("merge", "merge_start", opt->repo);
 	merge_start(opt, result);

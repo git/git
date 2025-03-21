@@ -82,6 +82,11 @@ find-renames[=<n>];;
 rename-threshold=<n>;;
 	Deprecated synonym for `find-renames=<n>`.
 
+no-renames;;
+	Turn off rename detection. This overrides the `merge.renames`
+	configuration variable.
+	See also linkgit:git-diff[1] `--no-renames`.
+
 subtree[=<path>];;
 	This option is a more advanced form of 'subtree' strategy, where
 	the strategy makes a guess on how two trees must be shifted to
@@ -107,7 +112,7 @@ For a path that is a submodule, the same caution as 'ort' applies to this
 strategy.
 +
 The 'recursive' strategy takes the same options as 'ort'.  However,
-there are three additional options that 'ort' ignores (not documented
+there are two additional options that 'ort' ignores (not documented
 above) that are potentially useful with the 'recursive' strategy:
 
 patience;;
@@ -120,11 +125,6 @@ diff-algorithm=[patience|minimal|histogram|myers];;
 	linkgit:git-diff[1] `--diff-algorithm`.  Note that `ort`
 	specifically uses `diff-algorithm=histogram`, while `recursive`
 	defaults to the `diff.algorithm` config setting.
-
-no-renames;;
-	Turn off rename detection. This overrides the `merge.renames`
-	configuration variable.
-	See also linkgit:git-diff[1] `--no-renames`.
 
 resolve::
 	This can only resolve two heads (i.e. the current branch

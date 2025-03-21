@@ -44,6 +44,11 @@ struct merge_result {
 	unsigned _properly_initialized;
 };
 
+/* Mostly internal function also used by merge-ort-wrappers.c */
+struct commit *make_virtual_commit(struct repository *repo,
+				   struct tree *tree,
+				   const char *comment);
+
 /*
  * rename-detecting three-way merge with recursive ancestor consolidation.
  * working tree and index are untouched.
