@@ -26,5 +26,5 @@ promisor.acceptFromServer::
 	server will be accepted. By accepting a promisor remote, the
 	client agrees that the server might omit objects that are
 	lazily fetchable from this promisor remote from its responses
-	to "fetch" and "clone" requests from the client. See
-	linkgit:gitprotocol-v2[5].
+	to "fetch" and "clone" requests from the client. Name and URL
+	comparisons are case sensitive. See linkgit:gitprotocol-v2[5].
