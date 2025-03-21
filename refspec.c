@@ -246,14 +246,24 @@ void refspec_ref_prefixes(const struct refspec *rs,
 		const struct refspec_item *item = &rs->items[i];
 		const char *prefix = NULL;
 
-		if (item->exact_sha1 || item->negative)
+		if (item->negative)
 			continue;
-		if (rs->fetch == REFSPEC_FETCH)
+
+		if (rs->fetch == REFSPEC_FETCH) {
+			if (item->exact_sha1)
+				continue;
 			prefix = item->src;
-		else if (item->dst)
-			prefix = item->dst;
-		else if (item->src && !item->exact_sha1)
-			prefix = item->src;
+		} else {
+			/*
+			 * Pushes can have an explicit destination like
+			 * "foo:bar", or can implicitly use the src for both
+			 * ("foo" is the same as "foo:foo").
+			 */
+			if (item->dst)
+				prefix = item->dst;
+			else if (item->src && !item->exact_sha1)
+				prefix = item->src;
+		}
 
 		if (!prefix)
 			continue;

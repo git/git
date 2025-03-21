@@ -495,7 +495,7 @@ test_expect_success 'push tag with non-existent, incomplete dest' '
 
 '
 
-test_expect_success 'push sha1 with non-existent, incomplete dest' '
+test_expect_success 'push oid with non-existent, incomplete dest' '
 
 	mk_test testrepo &&
 	test_must_fail git push testrepo $(git rev-parse main):foo
@@ -1251,7 +1251,7 @@ do
 	'
 done
 
-test_expect_success 'fetch exact SHA1' '
+test_expect_success 'fetch exact oid' '
 	mk_test testrepo heads/main hidden/one &&
 	git push testrepo main:refs/hidden/one &&
 	(
@@ -1297,7 +1297,7 @@ test_expect_success 'fetch exact SHA1' '
 	)
 '
 
-test_expect_success 'fetch exact SHA1 in protocol v2' '
+test_expect_success 'fetch exact oid in protocol v2' '
 	mk_test testrepo heads/main hidden/one &&
 	git push testrepo main:refs/hidden/one &&
 	git -C testrepo config transfer.hiderefs refs/hidden &&
@@ -1312,8 +1312,10 @@ test_expect_success 'fetch exact SHA1 in protocol v2' '
 	test_must_fail git -C child cat-file -t $the_commit &&
 
 	# fetching the hidden object succeeds by default
-	# NEEDSWORK: should this match the v0 behavior instead?
-	git -C child fetch -v ../testrepo $the_commit:refs/heads/copy
+	GIT_TRACE_PACKET=$PWD/trace.out \
+	git -C child fetch -v ../testrepo $the_commit:refs/heads/copy &&
+
+	test_grep ! "ref-prefix.*$the_commit" trace.out
 '
 
 for configallowtipsha1inwant in true false
