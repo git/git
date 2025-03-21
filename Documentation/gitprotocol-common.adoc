@@ -21,11 +21,13 @@ ABNF Notation
 
 ABNF notation as described by RFC 5234 is used within the protocol documents,
 except the following replacement core rules are used:
+
 ----
   HEXDIG    =  DIGIT / "a" / "b" / "c" / "d" / "e" / "f"
 ----
 
 We also define the following common rules:
+
 ----
   NUL       =  %x00
   zero-id   =  40*"0"

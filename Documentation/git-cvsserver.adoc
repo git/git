@@ -125,9 +125,11 @@ creation in your platform (e.g. mkpasswd in Linux, encrypt in OpenBSD or
 pwhash in NetBSD) and paste it in the right location.
 
 Then provide your password via the pserver method, for example:
+
 ------
    cvs -d:pserver:someuser:somepassword@server:/path/repo.git co <HEAD_name>
 ------
+
 No special setup is needed for SSH access, other than having Git tools
 in the PATH. If you have clients that do not accept the CVS_SERVER
 environment variable, you can rename 'git-cvsserver' to `cvs`.
@@ -138,6 +140,7 @@ CVS_SERVER directly in CVSROOT like
 ------
    cvs -d ":ext;CVS_SERVER=git cvsserver:user@server/path/repo.git" co <HEAD_name>
 ------
+
 This has the advantage that it will be saved in your 'CVS/Root' files and
 you don't need to worry about always setting the correct environment
 variable.  SSH users restricted to 'git-shell' don't need to override the default
@@ -168,6 +171,7 @@ All configuration variables can also be overridden for a specific method of
 access. Valid method names are "ext" (for SSH access) and "pserver". The
 following example configuration would disable pserver access while still
 allowing access over SSH.
+
 ------
    [gitcvs]
         enabled=0

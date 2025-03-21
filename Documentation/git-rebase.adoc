@@ -1107,10 +1107,12 @@ In that case, the fix is easy because 'git rebase' knows to skip
 changes that are already present in the new upstream (unless
 `--reapply-cherry-picks` is given). So if you say
 (assuming you're on 'topic')
+
 ------------
     $ git rebase subsystem
 ------------
 you will end up with the fixed history
+
 ------------
     o---o---o---o---o---o---o---o  master
 				 \
@@ -1145,6 +1147,7 @@ of the old 'subsystem', for example:
 
 You can then transplant the old `subsystem..topic` to the new tip by
 saying (for the reflog case, and assuming you are on 'topic' already):
+
 ------------
     $ git rebase --onto subsystem subsystem@{1}
 ------------

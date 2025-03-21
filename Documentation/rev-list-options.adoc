@@ -429,6 +429,7 @@ filtered for `foo`, they look different and equal, respectively.)
 In the following, we will always refer to the same example history to
 illustrate the differences between simplification settings.  We assume
 that you are filtering for a file `foo` in this commit graph:
+
 -----------------------------------------------------------------------
 	  .-A---M---N---O---P---Q
 	 /     /   /   /   /   /
@@ -436,6 +437,7 @@ that you are filtering for a file `foo` in this commit graph:
 	 \   /   /   /   /   /
 	  `-------------'   X
 -----------------------------------------------------------------------
+
 The horizontal line of history A---Q is taken to be the first parent of
 each merge.  The commits are:
 
