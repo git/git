@@ -16,6 +16,13 @@
 `badObjectSha1`::
 	(ERROR) An object has a bad sha1.
 
+`badPackedRefEntry`::
+	(ERROR) The "packed-refs" file contains an invalid entry.
+
+`badPackedRefHeader`::
+	(ERROR) The "packed-refs" file contains an invalid
+	header.
+
 `badParentSha1`::
 	(ERROR) A commit object has a bad parent sha1.
 
@@ -175,6 +182,13 @@
 
 `nullSha1`::
 	(WARN) Tree contains entries pointing to a null sha1.
+
+`packedRefEntryNotTerminated`::
+	(ERROR) The "packed-refs" file contains an entry that is
+	not terminated by a newline.
+
+`packedRefUnsorted`::
+	(ERROR) The "packed-refs" file is not sorted.
 
 `refMissingNewline`::
 	(INFO) A loose ref that does not end with newline(LF). As
