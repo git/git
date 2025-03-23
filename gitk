@@ -82,6 +82,17 @@ proc safe_open_command_redirect {cmd redir} {
     open |[concat $cmd $redir] r
 }
 
+# opens a pipeline with several commands for reading
+# cmds is a list of lists, each of which specifies a command and its arguments
+# calls `open` and returns the file id
+proc safe_open_pipeline {cmds} {
+    set cmd {}
+    foreach subcmd $cmds {
+        set cmd [concat $cmd | [make_arglist_safe $subcmd]]
+    }
+    open $cmd r
+}
+
 # End exec/open wrappers
 
 proc hasworktree {} {
@@ -3970,14 +3981,14 @@ proc show_line_source {} {
     set blamefile [file join $cdup $flist_menu_file]
     if {$from_index ne {}} {
         set blameargs [list \
-            | git cat-file blob $from_index \
-            | git blame -p -L$line,+1 --contents - -- $blamefile]
+            [list git cat-file blob $from_index] \
+            [list git blame -p -L$line,+1 --contents - -- $blamefile]]
     } else {
         set blameargs [list \
-            | git blame -p -L$line,+1 $id -- $blamefile]
+            [list git blame -p -L$line,+1 $id -- $blamefile]]
     }
     if {[catch {
-        set f [open $blameargs r]
+        set f [safe_open_pipeline $blameargs]
     } err]} {
         error_popup [mc "Couldn't start git blame: %s" $err]
         return
