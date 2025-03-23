@@ -3967,17 +3967,15 @@ proc show_line_source {} {
         }
         set line [lindex $h 1]
     }
-    set blameargs {}
+    set blamefile [file join $cdup $flist_menu_file]
     if {$from_index ne {}} {
-        lappend blameargs | git cat-file blob $from_index
-    }
-    lappend blameargs | git blame -p -L$line,+1
-    if {$from_index ne {}} {
-        lappend blameargs --contents -
+        set blameargs [list \
+            | git cat-file blob $from_index \
+            | git blame -p -L$line,+1 --contents - -- $blamefile]
     } else {
-        lappend blameargs $id
+        set blameargs [list \
+            | git blame -p -L$line,+1 $id -- $blamefile]
     }
-    lappend blameargs -- [file join $cdup $flist_menu_file]
     if {[catch {
         set f [open $blameargs r]
     } err]} {
