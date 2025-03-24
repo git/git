@@ -12469,14 +12469,14 @@ catch {
         set config_file_tmp [file join $env(XDG_CONFIG_HOME) git gitk-tmp]
     } else {
         # default XDG_CONFIG_HOME
-        set config_file "~/.config/git/gitk"
-        set config_file_tmp "~/.config/git/gitk-tmp"
+        set config_file "$env(HOME)/.config/git/gitk"
+        set config_file_tmp "$env(HOME)/.config/git/gitk-tmp"
     }
     if {![file exists $config_file]} {
         # for backward compatibility use the old config file if it exists
-        if {[file exists "~/.gitk"]} {
-            set config_file "~/.gitk"
-            set config_file_tmp "~/.gitk-tmp"
+        if {[file exists "$env(HOME)/.gitk"]} {
+            set config_file "$env(HOME)/.gitk"
+            set config_file_tmp "$env(HOME)/.gitk-tmp"
         } elseif {![file exists [file dirname $config_file]]} {
             file mkdir [file dirname $config_file]
         }
