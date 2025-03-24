@@ -86,7 +86,7 @@ command.
 +
 --
 When `MERGED` is not present in the layout, you must "mark" one of the
-buffers with an asterisk. That will become the buffer you need to edit and
+buffers with an arobase (`@`). That will become the buffer you need to edit and
 save after resolving the conflicts.
 ....
 ------------------------------------------
