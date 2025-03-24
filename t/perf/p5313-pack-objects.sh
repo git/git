@@ -55,23 +55,21 @@ test_all_with_args () {
 	test_size "shallow pack size with $parameter" '
 		test_file_size out
 	'
-}
 
-for version in 1 2
-do
-	export version
-
-	test_all_with_args --name-hash-version=$version
-
-	test_perf "repack with --name-hash-version=$version" '
-		git repack -adf --name-hash-version=$version
+	test_perf "repack with $parameter" '
+		git repack -adf $parameter
 	'
 
-	test_size "repack size with --name-hash-version=$version" '
+	test_size "repack size with $parameter" '
 		gitdir=$(git rev-parse --git-dir) &&
 		pack=$(ls $gitdir/objects/pack/pack-*.pack) &&
 		test_file_size "$pack"
 	'
+}
+
+for version in 1 2
+do
+	test_all_with_args --name-hash-version=$version
 done
 
 test_all_with_args --path-walk
