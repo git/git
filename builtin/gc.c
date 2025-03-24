@@ -1163,6 +1163,7 @@ static int write_loose_object_to_stdin(const struct object_id *oid,
 
 	fprintf(d->in, "%s\n", oid_to_hex(oid));
 
+	/* If batch_size is INT_MAX, then this will return 0 always. */
 	return ++(d->count) > d->batch_size;
 }
 
@@ -1207,6 +1208,15 @@ static int pack_loose(struct maintenance_run_opts *opts)
 	data.in = xfdopen(pack_proc.in, "w");
 	data.count = 0;
 	data.batch_size = 50000;
+
+	repo_config_get_int(r, "maintenance.loose-objects.batchSize",
+			    &data.batch_size);
+
+	/* If configured as 0, then remove limit. */
+	if (!data.batch_size)
+		data.batch_size = INT_MAX;
+	else if (data.batch_size > 0)
+		data.batch_size--; /* Decrease for equality on limit. */
 
 	for_each_loose_file_in_objdir(r->objects->odb->path,
 				      write_loose_object_to_stdin,
