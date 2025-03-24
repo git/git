@@ -1029,6 +1029,8 @@ static int run_write_commit_graph(struct maintenance_run_opts *opts)
 
 	if (opts->quiet)
 		strvec_push(&child.args, "--no-progress");
+	else
+		strvec_push(&child.args, "--progress");
 
 	return !!run_command(&child);
 }
@@ -1185,6 +1187,8 @@ static int pack_loose(struct maintenance_run_opts *opts)
 	strvec_push(&pack_proc.args, "pack-objects");
 	if (opts->quiet)
 		strvec_push(&pack_proc.args, "--quiet");
+	else
+		strvec_push(&pack_proc.args, "--no-quiet");
 	strvec_pushf(&pack_proc.args, "%s/pack/loose", r->objects->odb->path);
 
 	pack_proc.in = -1;
@@ -1263,6 +1267,8 @@ static int multi_pack_index_write(struct maintenance_run_opts *opts)
 
 	if (opts->quiet)
 		strvec_push(&child.args, "--no-progress");
+	else
+		strvec_push(&child.args, "--progress");
 
 	if (run_command(&child))
 		return error(_("failed to write multi-pack-index"));
@@ -1279,6 +1285,8 @@ static int multi_pack_index_expire(struct maintenance_run_opts *opts)
 
 	if (opts->quiet)
 		strvec_push(&child.args, "--no-progress");
+	else
+		strvec_push(&child.args, "--progress");
 
 	if (run_command(&child))
 		return error(_("'git multi-pack-index expire' failed"));
@@ -1335,6 +1343,8 @@ static int multi_pack_index_repack(struct maintenance_run_opts *opts)
 
 	if (opts->quiet)
 		strvec_push(&child.args, "--no-progress");
+	else
+		strvec_push(&child.args, "--progress");
 
 	strvec_pushf(&child.args, "--batch-size=%"PRIuMAX,
 				  (uintmax_t)get_auto_pack_size());
