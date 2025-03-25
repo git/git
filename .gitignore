@@ -55,6 +55,7 @@
 /git-diff
 /git-diff-files
 /git-diff-index
+/git-diff-pairs
 /git-diff-tree
 /git-difftool
 /git-difftool--helper

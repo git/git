@@ -353,6 +353,14 @@ struct diff_options {
 	/* to support internal diff recursion by --follow hack*/
 	int found_follow;
 
+	/*
+	 * By default, diffcore_std() resolves the statuses for queued diff file
+	 * pairs by calling diff_resolve_rename_copy(). If status information
+	 * has already been manually set, this option prevents diffcore_std()
+	 * from resetting statuses.
+	 */
+	int skip_resolving_statuses;
+
 	/* Callback which allows tweaking the options in diff_setup_done(). */
 	void (*set_default)(struct diff_options *);
 
@@ -507,6 +515,31 @@ void diff_set_noprefix(struct diff_options *options);
 void diff_set_default_prefix(struct diff_options *options);
 
 int diff_can_quit_early(struct diff_options *);
+
+/*
+ * Stages changes in the provided diff queue for file additions and deletions.
+ * If a file pair gets queued, it is returned.
+ */
+struct diff_filepair *diff_queue_addremove(struct diff_queue_struct *queue,
+					   struct diff_options *,
+					   int addremove, unsigned mode,
+					   const struct object_id *oid,
+					   int oid_valid, const char *fullpath,
+					   unsigned dirty_submodule);
+
+/*
+ * Stages changes in the provided diff queue for file modifications.
+ * If a file pair gets queued, it is returned.
+ */
+struct diff_filepair *diff_queue_change(struct diff_queue_struct *queue,
+					struct diff_options *,
+					unsigned mode1, unsigned mode2,
+					const struct object_id *old_oid,
+					const struct object_id *new_oid,
+					int old_oid_valid, int new_oid_valid,
+					const char *fullpath,
+					unsigned dirty_submodule1,
+					unsigned dirty_submodule2);
 
 void diff_addremove(struct diff_options *,
 		    int addremove,
