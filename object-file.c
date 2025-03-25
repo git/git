@@ -1362,7 +1362,7 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 	obj_read_unlock();
 	status = git_inflate(stream, 0);
 	obj_read_lock();
-	if (status < Z_OK)
+	if (status != Z_OK && status != Z_STREAM_END)
 		return ULHR_BAD;
 
 	/*
@@ -1385,20 +1385,19 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 	 * reading the stream.
 	 */
 	strbuf_add(header, buffer, stream->next_out - (unsigned char *)buffer);
-	stream->next_out = buffer;
-	stream->avail_out = bufsiz;
 
 	do {
+		stream->next_out = buffer;
+		stream->avail_out = bufsiz;
+
 		obj_read_unlock();
 		status = git_inflate(stream, 0);
 		obj_read_lock();
 		strbuf_add(header, buffer, stream->next_out - (unsigned char *)buffer);
 		if (memchr(buffer, '\0', stream->next_out - (unsigned char *)buffer))
 			return 0;
-		stream->next_out = buffer;
-		stream->avail_out = bufsiz;
-	} while (status != Z_STREAM_END);
-	return ULHR_TOO_LONG;
+	} while (status == Z_OK);
+	return ULHR_BAD;
 }
 
 static void *unpack_loose_rest(git_zstream *stream,
@@ -1437,18 +1436,17 @@ static void *unpack_loose_rest(git_zstream *stream,
 			obj_read_lock();
 		}
 	}
-	if (status == Z_STREAM_END && !stream->avail_in) {
-		git_inflate_end(stream);
-		return buf;
-	}
 
-	if (status < 0)
+	if (status != Z_STREAM_END) {
 		error(_("corrupt loose object '%s'"), oid_to_hex(oid));
-	else if (stream->avail_in)
+		FREE_AND_NULL(buf);
+	} else if (stream->avail_in) {
 		error(_("garbage at end of loose object '%s'"),
 		      oid_to_hex(oid));
-	free(buf);
-	return NULL;
+		FREE_AND_NULL(buf);
+	}
+
+	return buf;
 }
 
 /*
@@ -1580,6 +1578,8 @@ static int loose_object_info(struct repository *r,
 
 		if (!oi->contentp)
 			break;
+		if (hdrbuf.len)
+			BUG("unpacking content with unknown types not yet supported");
 		*oi->contentp = unpack_loose_rest(&stream, hdr, *oi->sizep, oid);
 		if (*oi->contentp)
 			goto cleanup;
@@ -1600,8 +1600,8 @@ static int loose_object_info(struct repository *r,
 		die(_("loose object %s (stored in %s) is corrupt"),
 		    oid_to_hex(oid), path);
 
-	git_inflate_end(&stream);
 cleanup:
+	git_inflate_end(&stream);
 	munmap(map, mapsize);
 	if (oi->sizep == &size_scratch)
 		oi->sizep = NULL;
@@ -3080,7 +3080,6 @@ static int check_stream_oid(git_zstream *stream,
 		git_hash_update(&c, buf, stream->next_out - buf);
 		total_read += stream->next_out - buf;
 	}
-	git_inflate_end(stream);
 
 	if (status != Z_STREAM_END) {
 		error(_("corrupt loose object '%s'"), oid_to_hex(expected_oid));
@@ -3127,35 +3126,34 @@ int read_loose_object(const char *path,
 	if (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr),
 				NULL) != ULHR_OK) {
 		error(_("unable to unpack header of %s"), path);
-		git_inflate_end(&stream);
-		goto out;
+		goto out_inflate;
 	}
 
 	if (parse_loose_header(hdr, oi) < 0) {
 		error(_("unable to parse header of %s"), path);
-		git_inflate_end(&stream);
-		goto out;
+		goto out_inflate;
 	}
 
 	if (*oi->typep == OBJ_BLOB && *size > big_file_threshold) {
 		if (check_stream_oid(&stream, hdr, *size, path, expected_oid) < 0)
-			goto out;
+			goto out_inflate;
 	} else {
 		*contents = unpack_loose_rest(&stream, hdr, *size, expected_oid);
 		if (!*contents) {
 			error(_("unable to unpack contents of %s"), path);
-			git_inflate_end(&stream);
-			goto out;
+			goto out_inflate;
 		}
 		hash_object_file_literally(the_repository->hash_algo,
 					   *contents, *size,
 					   oi->type_name->buf, real_oid);
 		if (!oideq(expected_oid, real_oid))
-			goto out;
+			goto out_inflate;
 	}
 
 	ret = 0; /* everything checks out */
 
+out_inflate:
+	git_inflate_end(&stream);
 out:
 	if (map)
 		munmap(map, mapsize);
