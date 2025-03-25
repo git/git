@@ -310,11 +310,12 @@ static int writer_add_record(struct reftable_writer *w,
 	 * done. Otherwise the block writer may have hit the block size limit
 	 * and needs to be flushed.
 	 */
-	if (!block_writer_add(w->block_writer, rec)) {
-		err = 0;
+	err = block_writer_add(w->block_writer, rec);
+	if (err == 0)
 		goto done;
-	}
 
+	if (err != REFTABLE_ENTRY_TOO_BIG_ERROR)
+		goto done;
 	/*
 	 * The current block is full, so we need to flush and reinitialize the
 	 * writer to start writing the next block.
@@ -329,16 +330,10 @@ static int writer_add_record(struct reftable_writer *w,
 	/*
 	 * Try to add the record to the writer again. If this still fails then
 	 * the record does not fit into the block size.
-	 *
-	 * TODO: it would be great to have `block_writer_add()` return proper
-	 *       error codes so that we don't have to second-guess the failure
-	 *       mode here.
 	 */
 	err = block_writer_add(w->block_writer, rec);
-	if (err) {
-		err = REFTABLE_ENTRY_TOO_BIG_ERROR;
+	if (err)
 		goto done;
-	}
 
 done:
 	return err;
@@ -625,10 +620,22 @@ static void write_object_record(void *void_arg, void *key)
 	if (arg->err < 0)
 		goto done;
 
+	/*
+	 * Try to add the record to the writer. If this succeeds then we're
+	 * done. Otherwise the block writer may have hit the block size limit
+	 * and needs to be flushed.
+	 */
 	arg->err = block_writer_add(arg->w->block_writer, &rec);
 	if (arg->err == 0)
 		goto done;
 
+	if (arg->err != REFTABLE_ENTRY_TOO_BIG_ERROR)
+		goto done;
+
+	/*
+	 * The current block is full, so we need to flush and reinitialize the
+	 * writer to start writing the next block.
+	 */
 	arg->err = writer_flush_block(arg->w);
 	if (arg->err < 0)
 		goto done;
@@ -637,8 +644,15 @@ static void write_object_record(void *void_arg, void *key)
 	if (arg->err < 0)
 		goto done;
 
+	/*
+	 * If this still fails then we may need to reset record's offset
+	 * length to reduce the data size to be written.
+	 */
 	arg->err = block_writer_add(arg->w->block_writer, &rec);
 	if (arg->err == 0)
+		goto done;
+
+	if (arg->err != REFTABLE_ENTRY_TOO_BIG_ERROR)
 		goto done;
 
 	rec.u.obj.offset_len = 0;
