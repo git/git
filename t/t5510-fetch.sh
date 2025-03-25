@@ -119,7 +119,10 @@ test_expect_success "fetch test followRemoteHEAD never" '
 		cd two &&
 		git update-ref --no-deref -d refs/remotes/origin/HEAD &&
 		git config set remote.origin.followRemoteHEAD "never" &&
-		git fetch &&
+		GIT_TRACE_PACKET=$PWD/trace.out git fetch &&
+		# Confirm that we do not even ask for HEAD when we are
+		# not going to act on it.
+		test_grep ! "ref-prefix HEAD" trace.out &&
 		test_must_fail git rev-parse --verify refs/remotes/origin/HEAD
 	)
 '
@@ -247,6 +250,20 @@ test_expect_success "fetch test followRemoteHEAD always" '
 		head=$(git rev-parse refs/remotes/origin/HEAD) &&
 		branch=$(git rev-parse refs/remotes/origin/main) &&
 		test "z$head" = "z$branch"
+	)
+'
+
+test_expect_success 'followRemoteHEAD does not kick in with refspecs' '
+	test_when_finished "git config unset remote.origin.followRemoteHEAD" &&
+	(
+		cd "$D" &&
+		cd two &&
+		git remote set-head origin other &&
+		git config set remote.origin.followRemoteHEAD always &&
+		git fetch origin refs/heads/main:refs/remotes/origin/main &&
+		echo refs/remotes/origin/other >expect &&
+		git symbolic-ref refs/remotes/origin/HEAD >actual &&
+		test_cmp expect actual
 	)
 '
 
