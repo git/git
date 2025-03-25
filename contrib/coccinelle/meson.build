@@ -1,4 +1,9 @@
-spatch = find_program('spatch', required: get_option('coccinelle'))
+coccinelle_opt = get_option('coccinelle').require(
+  fs.exists(meson.project_source_root() / '.git'),
+  error_message: 'coccinelle can only be run from a git checkout',
+)
+
+spatch = find_program('spatch', required: coccinelle_opt)
 if not spatch.found()
   subdir_done()
 endif
