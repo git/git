@@ -342,6 +342,8 @@ static void copy_or_link_directory(struct strbuf *src, struct strbuf *dest,
 		strbuf_setlen(src, src_len);
 		die(_("failed to iterate over '%s'"), src->buf);
 	}
+
+	dir_iterator_free(iter);
 }
 
 static void clone_local(const char *src_repo, const char *dest_repo)

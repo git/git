@@ -12,7 +12,7 @@
 #define ITER_OK 0
 
 /*
- * The iterator is exhausted and has been freed.
+ * The iterator is exhausted.
  */
 #define ITER_DONE -1
 
