@@ -130,8 +130,8 @@ static int post_checkout_hook(struct commit *old_commit, struct commit *new_comm
 			      int changed)
 {
 	return run_hooks_l(the_repository, "post-checkout",
-			   oid_to_hex(old_commit ? &old_commit->object.oid : null_oid()),
-			   oid_to_hex(new_commit ? &new_commit->object.oid : null_oid()),
+			   oid_to_hex(old_commit ? &old_commit->object.oid : null_oid(the_hash_algo)),
+			   oid_to_hex(new_commit ? &new_commit->object.oid : null_oid(the_hash_algo)),
 			   changed ? "1" : "0", NULL);
 	/* "new_commit" can be NULL when checking out from the index before
 	   a commit exists. */
@@ -710,7 +710,7 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 	opts.src_index = the_repository->index;
 	opts.dst_index = the_repository->index;
 	init_checkout_metadata(&opts.meta, info->refname,
-			       info->commit ? &info->commit->object.oid : null_oid(),
+			       info->commit ? &info->commit->object.oid : null_oid(the_hash_algo),
 			       NULL);
 	if (parse_tree(tree) < 0)
 		return 128;

@@ -499,7 +499,7 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 {
 	struct strbuf headers = STRBUF_INIT;
 	const char *name = oid_to_hex(opt->zero_commit ?
-				      null_oid() : &commit->object.oid);
+				      null_oid(the_hash_algo) : &commit->object.oid);
 
 	*need_8bit_cte_p = 0; /* unknown */
 
