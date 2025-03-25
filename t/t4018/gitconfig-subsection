@@ -1,0 +1,8 @@
+[LEFT]
+
+[LEFT "RIGHT"]
+      # comment
+      ; comment
+      name = value
+      ChangeMe
+

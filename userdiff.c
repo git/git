@@ -198,6 +198,10 @@ IPATTERN("fountain",
 	 "^((\\.[^.]|(int|ext|est|int\\.?/ext|i/e)[. ]).*)$",
 	 /* -- */
 	 "[^ \t-]+"),
+PATTERNS("gitconfig",
+	 "^\\[[a-zA-Z0-9]+\\]|\\[[a-zA-Z0-9]+[ \t]+\".+\"\\]$",
+	 /* -- */
+	 "[^ \t]+"),
 PATTERNS("golang",
 	 /* Functions */
 	 "^[ \t]*(func[ \t]*.*(\\{[ \t]*)?)\n"
