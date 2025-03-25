@@ -101,18 +101,18 @@ static int parse_footer(struct reftable_reader *r, uint8_t *footer,
 	}
 
 	f++;
-	r->block_size = get_be24(f);
+	r->block_size = reftable_get_be24(f);
 
 	f += 3;
-	r->min_update_index = get_be64(f);
+	r->min_update_index = reftable_get_be64(f);
 	f += 8;
-	r->max_update_index = get_be64(f);
+	r->max_update_index = reftable_get_be64(f);
 	f += 8;
 
 	if (r->version == 1) {
 		r->hash_id = REFTABLE_HASH_SHA1;
 	} else {
-		switch (get_be32(f)) {
+		switch (reftable_get_be32(f)) {
 		case REFTABLE_FORMAT_ID_SHA1:
 			r->hash_id = REFTABLE_HASH_SHA1;
 			break;
@@ -127,24 +127,24 @@ static int parse_footer(struct reftable_reader *r, uint8_t *footer,
 		f += 4;
 	}
 
-	r->ref_offsets.index_offset = get_be64(f);
+	r->ref_offsets.index_offset = reftable_get_be64(f);
 	f += 8;
 
-	r->obj_offsets.offset = get_be64(f);
+	r->obj_offsets.offset = reftable_get_be64(f);
 	f += 8;
 
 	r->object_id_len = r->obj_offsets.offset & ((1 << 5) - 1);
 	r->obj_offsets.offset >>= 5;
 
-	r->obj_offsets.index_offset = get_be64(f);
+	r->obj_offsets.index_offset = reftable_get_be64(f);
 	f += 8;
-	r->log_offsets.offset = get_be64(f);
+	r->log_offsets.offset = reftable_get_be64(f);
 	f += 8;
-	r->log_offsets.index_offset = get_be64(f);
+	r->log_offsets.index_offset = reftable_get_be64(f);
 	f += 8;
 
 	computed_crc = crc32(0, footer, f - footer);
-	file_crc = get_be32(f);
+	file_crc = reftable_get_be32(f);
 	f += 4;
 	if (computed_crc != file_crc) {
 		err = REFTABLE_FORMAT_ERROR;
@@ -214,7 +214,7 @@ static int32_t extract_block_size(uint8_t *data, uint8_t *typ, uint64_t off,
 
 	*typ = data[0];
 	if (reftable_is_block_type(*typ)) {
-		result = get_be24(data + 1);
+		result = reftable_get_be24(data + 1);
 	}
 	return result;
 }
@@ -360,7 +360,10 @@ static int table_iter_seek_linear(struct table_iter *ti,
 	struct reftable_record rec;
 	int err;
 
-	reftable_record_init(&rec, reftable_record_type(want));
+	err = reftable_record_init(&rec, reftable_record_type(want));
+	if (err < 0)
+		goto done;
+
 	err = reftable_record_key(want, &want_key);
 	if (err < 0)
 		goto done;
@@ -676,8 +679,6 @@ done:
 
 void reftable_reader_incref(struct reftable_reader *r)
 {
-	if (!r->refcount)
-		BUG("cannot increment ref counter of dead reader");
 	r->refcount++;
 }
 
@@ -685,8 +686,6 @@ void reftable_reader_decref(struct reftable_reader *r)
 {
 	if (!r)
 		return;
-	if (!r->refcount)
-		BUG("cannot decrement ref counter of dead reader");
 	if (--r->refcount)
 		return;
 	block_source_close(&r->source);
@@ -852,7 +851,7 @@ int reftable_reader_print_blocks(const char *tablename)
 	printf("header:\n");
 	printf("  block_size: %d\n", r->block_size);
 
-	for (i = 0; i < ARRAY_SIZE(sections); i++) {
+	for (i = 0; i < sizeof(sections) / sizeof(*sections); i++) {
 		err = table_iter_seek_start(&ti, sections[i].type, 0);
 		if (err < 0)
 			goto done;
