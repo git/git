@@ -305,6 +305,9 @@ gen_cmd () {
 	elif echo "$LAYOUT" | grep @BASE >/dev/null
 	then
 		FINAL_TARGET="BASE"
+	elif echo "$LAYOUT" | grep @REMOTE >/dev/null
+	then
+		FINAL_TARGET="REMOTE"
 	else
 		FINAL_TARGET="MERGED"
 	fi
