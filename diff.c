@@ -4879,15 +4879,17 @@ void diff_setup_done(struct diff_options *options)
 
 	if (HAS_MULTI_BITS(options->pickaxe_opts & DIFF_PICKAXE_KINDS_MASK))
 		die(_("options '%s', '%s', and '%s' cannot be used together"),
-			"-G", "-S", "--find-object");
+			"-G/--patch-grep", "-S/--patch-modifies", "--find-object");
 
 	if (HAS_MULTI_BITS(options->pickaxe_opts & DIFF_PICKAXE_KINDS_G_REGEX_MASK))
 		die(_("options '%s' and '%s' cannot be used together, use '%s' with '%s'"),
-			"-G", "--pickaxe-regex", "--pickaxe-regex", "-S");
+			"-G/--patch-grep", "--pickaxe-regex",
+			"--pickaxe-regex", "-S/--patch-modifies");
 
 	if (HAS_MULTI_BITS(options->pickaxe_opts & DIFF_PICKAXE_KINDS_ALL_OBJFIND_MASK))
 		die(_("options '%s' and '%s' cannot be used together, use '%s' with '%s' and '%s'"),
-			"--pickaxe-all", "--find-object", "--pickaxe-all", "-G", "-S");
+			"--pickaxe-all", "--find-object",
+			"--pickaxe-all", "-G/--patch-grep", "-S/--patch-modifies");
 
 	/*
 	 * Most of the time we can say "there are changes"
@@ -5868,17 +5870,17 @@ struct option *add_diff_options(const struct option *opts,
 		OPT_SET_INT_F(0, "ita-visible-in-index", &options->ita_invisible_in_index,
 			      N_("treat 'git add -N' entries as real in the index"),
 			      0, PARSE_OPT_NONEG),
-		OPT_CALLBACK_F('S', NULL, options, N_("<string>"),
+		OPT_CALLBACK_F('S', "patch-modifies", options, N_("<string>"),
 			       N_("look for differences that change the number of occurrences of the specified string"),
 			       0, diff_opt_pickaxe_string),
-		OPT_CALLBACK_F('G', NULL, options, N_("<regex>"),
-			       N_("look for differences that change the number of occurrences of the specified regex"),
+		OPT_CALLBACK_F('G', "patch-grep", options, N_("<regex>"),
+			       N_("look for differences where a patch contains the specified regex"),
 			       0, diff_opt_pickaxe_regex),
 		OPT_BIT_F(0, "pickaxe-all", &options->pickaxe_opts,
-			  N_("show all changes in the changeset with -S or -G"),
+			  N_("show all changes in the changeset with -S/--patch-modifies or -G/--patch-grep"),
 			  DIFF_PICKAXE_ALL, PARSE_OPT_NONEG),
 		OPT_BIT_F(0, "pickaxe-regex", &options->pickaxe_opts,
-			  N_("treat <string> in -S as extended POSIX regular expression"),
+			  N_("treat <string> in -S/--patch-modifies as extended POSIX regular expression"),
 			  DIFF_PICKAXE_REGEX, PARSE_OPT_NONEG),
 		OPT_FILENAME('O', NULL, &options->orderfile,
 			     N_("control the order in which files appear in the output")),
