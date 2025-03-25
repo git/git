@@ -228,7 +228,10 @@ If you just want to run git as if it was started in `<path>` then use
 --attr-source=<tree-ish>::
 	Read gitattributes from <tree-ish> instead of the worktree. See
 	linkgit:gitattributes[5]. This is equivalent to setting the
-	`GIT_ATTR_SOURCE` environment variable.
+	`GIT_ATTR_SOURCE` environment variable.  The `attr.tree`
+	configuration variable is used as a fallback when this option
+	or the environment variable are not in use.
+
 
 GIT COMMANDS
 ------------
