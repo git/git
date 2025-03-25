@@ -33,6 +33,7 @@
 #include "pack.h"
 #include "pack-objects.h"
 #include "path.h"
+#include "reflog.h"
 #include "blob.h"
 #include "tree.h"
 #include "promisor-remote.h"
@@ -53,7 +54,6 @@ static const char * const builtin_gc_usage[] = {
 
 static timestamp_t gc_log_expire_time;
 
-static struct strvec reflog = STRVEC_INIT;
 static struct strvec repack = STRVEC_INIT;
 static struct strvec prune = STRVEC_INIT;
 static struct strvec prune_worktrees = STRVEC_INIT;
@@ -285,6 +285,58 @@ static int maintenance_task_pack_refs(struct maintenance_run_opts *opts,
 	if (opts->auto_flag)
 		strvec_push(&cmd.args, "--auto");
 
+	return run_command(&cmd);
+}
+
+struct count_reflog_entries_data {
+	struct expire_reflog_policy_cb policy;
+	size_t count;
+	size_t limit;
+};
+
+static int count_reflog_entries(struct object_id *old_oid, struct object_id *new_oid,
+				const char *committer, timestamp_t timestamp,
+				int tz, const char *msg, void *cb_data)
+{
+	struct count_reflog_entries_data *data = cb_data;
+	if (should_expire_reflog_ent(old_oid, new_oid, committer, timestamp, tz, msg, &data->policy))
+		data->count++;
+	return data->count >= data->limit;
+}
+
+static int reflog_expire_condition(struct gc_config *cfg UNUSED)
+{
+	timestamp_t now = time(NULL);
+	struct count_reflog_entries_data data = {
+		.policy = {
+			.opts = REFLOG_EXPIRE_OPTIONS_INIT(now),
+		},
+	};
+	int limit = 100;
+
+	git_config_get_int("maintenance.reflog-expire.auto", &limit);
+	if (!limit)
+		return 0;
+	if (limit < 0)
+		return 1;
+	data.limit = limit;
+
+	repo_config(the_repository, reflog_expire_config, &data.policy.opts);
+
+	reflog_expire_options_set_refname(&data.policy.opts, "HEAD");
+	refs_for_each_reflog_ent(get_main_ref_store(the_repository), "HEAD",
+				 count_reflog_entries, &data);
+
+	reflog_expiry_cleanup(&data.policy);
+	return data.count >= data.limit;
+}
+
+static int maintenance_task_reflog_expire(struct maintenance_run_opts *opts UNUSED,
+					  struct gc_config *cfg UNUSED)
+{
+	struct child_process cmd = CHILD_PROCESS_INIT;
+	cmd.git_cmd = 1;
+	strvec_pushl(&cmd.args, "reflog", "expire", "--all", NULL);
 	return run_command(&cmd);
 }
 
@@ -667,15 +719,8 @@ static void gc_before_repack(struct maintenance_run_opts *opts,
 
 	if (cfg->pack_refs && maintenance_task_pack_refs(opts, cfg))
 		die(FAILED_RUN, "pack-refs");
-
-	if (cfg->prune_reflogs) {
-		struct child_process cmd = CHILD_PROCESS_INIT;
-
-		cmd.git_cmd = 1;
-		strvec_pushv(&cmd.args, reflog.v);
-		if (run_command(&cmd))
-			die(FAILED_RUN, reflog.v[0]);
-	}
+	if (cfg->prune_reflogs && maintenance_task_reflog_expire(opts, cfg))
+		die(FAILED_RUN, "reflog");
 }
 
 int cmd_gc(int argc,
@@ -723,7 +768,6 @@ struct repository *repo UNUSED)
 	show_usage_with_options_if_asked(argc, argv,
 					 builtin_gc_usage, builtin_gc_options);
 
-	strvec_pushl(&reflog, "reflog", "expire", "--all", NULL);
 	strvec_pushl(&repack, "repack", "-d", "-l", NULL);
 	strvec_pushl(&prune, "prune", "--expire", NULL);
 	strvec_pushl(&prune_worktrees, "worktree", "prune", "--expire", NULL);
@@ -1392,6 +1436,7 @@ enum maintenance_task_label {
 	TASK_GC,
 	TASK_COMMIT_GRAPH,
 	TASK_PACK_REFS,
+	TASK_REFLOG_EXPIRE,
 
 	/* Leave as final value */
 	TASK__COUNT
@@ -1427,6 +1472,11 @@ static struct maintenance_task tasks[] = {
 		"pack-refs",
 		maintenance_task_pack_refs,
 		pack_refs_condition,
+	},
+	[TASK_REFLOG_EXPIRE] = {
+		"reflog-expire",
+		maintenance_task_reflog_expire,
+		reflog_expire_condition,
 	},
 };
 

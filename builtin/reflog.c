@@ -63,9 +63,6 @@ static const char *const reflog_usage[] = {
 	NULL
 };
 
-static timestamp_t default_reflog_expire;
-static timestamp_t default_reflog_expire_unreachable;
-
 struct worktree_reflogs {
 	struct worktree *worktree;
 	struct string_list reflogs;
@@ -91,131 +88,19 @@ static int collect_reflog(const char *ref, void *cb_data)
 	return 0;
 }
 
-static struct reflog_expire_cfg {
-	struct reflog_expire_cfg *next;
-	timestamp_t expire_total;
-	timestamp_t expire_unreachable;
-	char pattern[FLEX_ARRAY];
-} *reflog_expire_cfg, **reflog_expire_cfg_tail;
-
-static struct reflog_expire_cfg *find_cfg_ent(const char *pattern, size_t len)
-{
-	struct reflog_expire_cfg *ent;
-
-	if (!reflog_expire_cfg_tail)
-		reflog_expire_cfg_tail = &reflog_expire_cfg;
-
-	for (ent = reflog_expire_cfg; ent; ent = ent->next)
-		if (!xstrncmpz(ent->pattern, pattern, len))
-			return ent;
-
-	FLEX_ALLOC_MEM(ent, pattern, pattern, len);
-	*reflog_expire_cfg_tail = ent;
-	reflog_expire_cfg_tail = &(ent->next);
-	return ent;
-}
-
-/* expiry timer slot */
-#define EXPIRE_TOTAL   01
-#define EXPIRE_UNREACH 02
-
-static int reflog_expire_config(const char *var, const char *value,
-				const struct config_context *ctx, void *cb)
-{
-	const char *pattern, *key;
-	size_t pattern_len;
-	timestamp_t expire;
-	int slot;
-	struct reflog_expire_cfg *ent;
-
-	if (parse_config_key(var, "gc", &pattern, &pattern_len, &key) < 0)
-		return git_default_config(var, value, ctx, cb);
-
-	if (!strcmp(key, "reflogexpire")) {
-		slot = EXPIRE_TOTAL;
-		if (git_config_expiry_date(&expire, var, value))
-			return -1;
-	} else if (!strcmp(key, "reflogexpireunreachable")) {
-		slot = EXPIRE_UNREACH;
-		if (git_config_expiry_date(&expire, var, value))
-			return -1;
-	} else
-		return git_default_config(var, value, ctx, cb);
-
-	if (!pattern) {
-		switch (slot) {
-		case EXPIRE_TOTAL:
-			default_reflog_expire = expire;
-			break;
-		case EXPIRE_UNREACH:
-			default_reflog_expire_unreachable = expire;
-			break;
-		}
-		return 0;
-	}
-
-	ent = find_cfg_ent(pattern, pattern_len);
-	if (!ent)
-		return -1;
-	switch (slot) {
-	case EXPIRE_TOTAL:
-		ent->expire_total = expire;
-		break;
-	case EXPIRE_UNREACH:
-		ent->expire_unreachable = expire;
-		break;
-	}
-	return 0;
-}
-
-static void set_reflog_expiry_param(struct cmd_reflog_expire_cb *cb, const char *ref)
-{
-	struct reflog_expire_cfg *ent;
-
-	if (cb->explicit_expiry == (EXPIRE_TOTAL|EXPIRE_UNREACH))
-		return; /* both given explicitly -- nothing to tweak */
-
-	for (ent = reflog_expire_cfg; ent; ent = ent->next) {
-		if (!wildmatch(ent->pattern, ref, 0)) {
-			if (!(cb->explicit_expiry & EXPIRE_TOTAL))
-				cb->expire_total = ent->expire_total;
-			if (!(cb->explicit_expiry & EXPIRE_UNREACH))
-				cb->expire_unreachable = ent->expire_unreachable;
-			return;
-		}
-	}
-
-	/*
-	 * If unconfigured, make stash never expire
-	 */
-	if (!strcmp(ref, "refs/stash")) {
-		if (!(cb->explicit_expiry & EXPIRE_TOTAL))
-			cb->expire_total = 0;
-		if (!(cb->explicit_expiry & EXPIRE_UNREACH))
-			cb->expire_unreachable = 0;
-		return;
-	}
-
-	/* Nothing matched -- use the default value */
-	if (!(cb->explicit_expiry & EXPIRE_TOTAL))
-		cb->expire_total = default_reflog_expire;
-	if (!(cb->explicit_expiry & EXPIRE_UNREACH))
-		cb->expire_unreachable = default_reflog_expire_unreachable;
-}
-
 static int expire_unreachable_callback(const struct option *opt,
 				 const char *arg,
 				 int unset)
 {
-	struct cmd_reflog_expire_cb *cmd = opt->value;
+	struct reflog_expire_options *opts = opt->value;
 
 	BUG_ON_OPT_NEG(unset);
 
-	if (parse_expiry_date(arg, &cmd->expire_unreachable))
+	if (parse_expiry_date(arg, &opts->expire_unreachable))
 		die(_("invalid timestamp '%s' given to '--%s'"),
 		    arg, opt->long_name);
 
-	cmd->explicit_expiry |= EXPIRE_UNREACH;
+	opts->explicit_expiry |= REFLOG_EXPIRE_UNREACH;
 	return 0;
 }
 
@@ -223,15 +108,15 @@ static int expire_total_callback(const struct option *opt,
 				 const char *arg,
 				 int unset)
 {
-	struct cmd_reflog_expire_cb *cmd = opt->value;
+	struct reflog_expire_options *opts = opt->value;
 
 	BUG_ON_OPT_NEG(unset);
 
-	if (parse_expiry_date(arg, &cmd->expire_total))
+	if (parse_expiry_date(arg, &opts->expire_total))
 		die(_("invalid timestamp '%s' given to '--%s'"),
 		    arg, opt->long_name);
 
-	cmd->explicit_expiry |= EXPIRE_TOTAL;
+	opts->explicit_expiry |= REFLOG_EXPIRE_TOTAL;
 	return 0;
 }
 
@@ -276,8 +161,8 @@ static int cmd_reflog_list(int argc, const char **argv, const char *prefix,
 static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 			     struct repository *repo UNUSED)
 {
-	struct cmd_reflog_expire_cb cmd = { 0 };
 	timestamp_t now = time(NULL);
+	struct reflog_expire_options opts = REFLOG_EXPIRE_OPTIONS_INIT(now);
 	int i, status, do_all, single_worktree = 0;
 	unsigned int flags = 0;
 	int verbose = 0;
@@ -292,15 +177,15 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 			N_("update the reference to the value of the top reflog entry"),
 			EXPIRE_REFLOGS_UPDATE_REF),
 		OPT_BOOL(0, "verbose", &verbose, N_("print extra information on screen")),
-		OPT_CALLBACK_F(0, "expire", &cmd, N_("timestamp"),
+		OPT_CALLBACK_F(0, "expire", &opts, N_("timestamp"),
 			       N_("prune entries older than the specified time"),
 			       PARSE_OPT_NONEG,
 			       expire_total_callback),
-		OPT_CALLBACK_F(0, "expire-unreachable", &cmd, N_("timestamp"),
+		OPT_CALLBACK_F(0, "expire-unreachable", &opts, N_("timestamp"),
 			       N_("prune entries older than <time> that are not reachable from the current tip of the branch"),
 			       PARSE_OPT_NONEG,
 			       expire_unreachable_callback),
-		OPT_BOOL(0, "stale-fix", &cmd.stalefix,
+		OPT_BOOL(0, "stale-fix", &opts.stalefix,
 			 N_("prune any reflog entries that point to broken commits")),
 		OPT_BOOL(0, "all", &do_all, N_("process the reflogs of all references")),
 		OPT_BOOL(0, "single-worktree", &single_worktree,
@@ -308,16 +193,10 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 		OPT_END()
 	};
 
-	default_reflog_expire_unreachable = now - 30 * 24 * 3600;
-	default_reflog_expire = now - 90 * 24 * 3600;
-	git_config(reflog_expire_config, NULL);
+	git_config(reflog_expire_config, &opts);
 
 	save_commit_buffer = 0;
 	do_all = status = 0;
-
-	cmd.explicit_expiry = 0;
-	cmd.expire_total = default_reflog_expire;
-	cmd.expire_unreachable = default_reflog_expire_unreachable;
 
 	argc = parse_options(argc, argv, prefix, options, reflog_expire_usage, 0);
 
@@ -329,7 +208,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 	 * even in older repository.  We cannot trust what's reachable
 	 * from reflog if the repository was pruned with older git.
 	 */
-	if (cmd.stalefix) {
+	if (opts.stalefix) {
 		struct rev_info revs;
 
 		repo_init_revisions(the_repository, &revs, prefix);
@@ -363,11 +242,11 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 
 		for_each_string_list_item(item, &collected.reflogs) {
 			struct expire_reflog_policy_cb cb = {
-				.cmd = cmd,
+				.opts = opts,
 				.dry_run = !!(flags & EXPIRE_REFLOGS_DRY_RUN),
 			};
 
-			set_reflog_expiry_param(&cb.cmd,  item->string);
+			reflog_expire_options_set_refname(&cb.opts,  item->string);
 			status |= refs_reflog_expire(get_main_ref_store(the_repository),
 						     item->string, flags,
 						     reflog_expiry_prepare,
@@ -380,13 +259,13 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 
 	for (i = 0; i < argc; i++) {
 		char *ref;
-		struct expire_reflog_policy_cb cb = { .cmd = cmd };
+		struct expire_reflog_policy_cb cb = { .opts = opts };
 
 		if (!repo_dwim_log(the_repository, argv[i], strlen(argv[i]), NULL, &ref)) {
 			status |= error(_("%s points nowhere!"), argv[i]);
 			continue;
 		}
-		set_reflog_expiry_param(&cb.cmd, ref);
+		reflog_expire_options_set_refname(&cb.opts, ref);
 		status |= refs_reflog_expire(get_main_ref_store(the_repository),
 					     ref, flags,
 					     reflog_expiry_prepare,
