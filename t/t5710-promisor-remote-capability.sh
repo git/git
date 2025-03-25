@@ -93,6 +93,7 @@ test_expect_success "setup for testing promisor remote advertisement" '
 
 test_expect_success "clone with promisor.advertise set to 'true'" '
 	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
 
 	# Clone from server to create a client
 	GIT_NO_LAZY_FETCH=0 git clone -c remote.lop.promisor=true \
@@ -100,7 +101,6 @@ test_expect_success "clone with promisor.advertise set to 'true'" '
 		-c remote.lop.url="file://$(pwd)/lop" \
 		-c promisor.acceptfromserver=All \
 		--no-local --filter="blob:limit=5k" server client &&
-	test_when_finished "rm -rf client" &&
 
 	# Check that the largest object is still missing on the server
 	check_missing_objects server 1 "$oid"
@@ -108,6 +108,7 @@ test_expect_success "clone with promisor.advertise set to 'true'" '
 
 test_expect_success "clone with promisor.advertise set to 'false'" '
 	git -C server config promisor.advertise false &&
+	test_when_finished "rm -rf client" &&
 
 	# Clone from server to create a client
 	GIT_NO_LAZY_FETCH=0 git clone -c remote.lop.promisor=true \
@@ -115,7 +116,6 @@ test_expect_success "clone with promisor.advertise set to 'false'" '
 		-c remote.lop.url="file://$(pwd)/lop" \
 		-c promisor.acceptfromserver=All \
 		--no-local --filter="blob:limit=5k" server client &&
-	test_when_finished "rm -rf client" &&
 
 	# Check that the largest object is not missing on the server
 	check_missing_objects server 0 "" &&
@@ -126,6 +126,7 @@ test_expect_success "clone with promisor.advertise set to 'false'" '
 
 test_expect_success "clone with promisor.acceptfromserver set to 'None'" '
 	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
 
 	# Clone from server to create a client
 	GIT_NO_LAZY_FETCH=0 git clone -c remote.lop.promisor=true \
@@ -133,7 +134,6 @@ test_expect_success "clone with promisor.acceptfromserver set to 'None'" '
 		-c remote.lop.url="file://$(pwd)/lop" \
 		-c promisor.acceptfromserver=None \
 		--no-local --filter="blob:limit=5k" server client &&
-	test_when_finished "rm -rf client" &&
 
 	# Check that the largest object is not missing on the server
 	check_missing_objects server 0 "" &&
@@ -144,8 +144,8 @@ test_expect_success "clone with promisor.acceptfromserver set to 'None'" '
 
 test_expect_success "init + fetch with promisor.advertise set to 'true'" '
 	git -C server config promisor.advertise true &&
-
 	test_when_finished "rm -rf client" &&
+
 	mkdir client &&
 	git -C client init &&
 	git -C client config remote.lop.promisor true &&
@@ -162,6 +162,7 @@ test_expect_success "init + fetch with promisor.advertise set to 'true'" '
 
 test_expect_success "clone with promisor.acceptfromserver set to 'KnownName'" '
 	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
 
 	# Clone from server to create a client
 	GIT_NO_LAZY_FETCH=0 git clone -c remote.lop.promisor=true \
@@ -169,7 +170,6 @@ test_expect_success "clone with promisor.acceptfromserver set to 'KnownName'" '
 		-c remote.lop.url="file://$(pwd)/lop" \
 		-c promisor.acceptfromserver=KnownName \
 		--no-local --filter="blob:limit=5k" server client &&
-	test_when_finished "rm -rf client" &&
 
 	# Check that the largest object is still missing on the server
 	check_missing_objects server 1 "$oid"
@@ -177,6 +177,7 @@ test_expect_success "clone with promisor.acceptfromserver set to 'KnownName'" '
 
 test_expect_success "clone with 'KnownName' and different remote names" '
 	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
 
 	# Clone from server to create a client
 	GIT_NO_LAZY_FETCH=0 git clone -c remote.serverTwo.promisor=true \
@@ -184,7 +185,25 @@ test_expect_success "clone with 'KnownName' and different remote names" '
 		-c remote.serverTwo.url="file://$(pwd)/lop" \
 		-c promisor.acceptfromserver=KnownName \
 		--no-local --filter="blob:limit=5k" server client &&
+
+	# Check that the largest object is not missing on the server
+	check_missing_objects server 0 "" &&
+
+	# Reinitialize server so that the largest object is missing again
+	initialize_server 1 "$oid"
+'
+
+test_expect_success "clone with 'KnownName' and missing URL in the config" '
+	git -C server config promisor.advertise true &&
 	test_when_finished "rm -rf client" &&
+
+	# Clone from server to create a client
+	# Lazy fetching by the client from the LOP will fail because of the
+	# missing URL in the client config, so the server will have to lazy
+	# fetch from the LOP.
+	GIT_NO_LAZY_FETCH=0 git clone -c remote.lop.promisor=true \
+		-c promisor.acceptfromserver=KnownName \
+		--no-local --filter="blob:limit=5k" server client &&
 
 	# Check that the largest object is not missing on the server
 	check_missing_objects server 0 "" &&
@@ -195,6 +214,7 @@ test_expect_success "clone with 'KnownName' and different remote names" '
 
 test_expect_success "clone with promisor.acceptfromserver set to 'KnownUrl'" '
 	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
 
 	# Clone from server to create a client
 	GIT_NO_LAZY_FETCH=0 git clone -c remote.lop.promisor=true \
@@ -202,7 +222,6 @@ test_expect_success "clone with promisor.acceptfromserver set to 'KnownUrl'" '
 		-c remote.lop.url="file://$(pwd)/lop" \
 		-c promisor.acceptfromserver=KnownUrl \
 		--no-local --filter="blob:limit=5k" server client &&
-	test_when_finished "rm -rf client" &&
 
 	# Check that the largest object is still missing on the server
 	check_missing_objects server 1 "$oid"
@@ -212,6 +231,7 @@ test_expect_success "clone with 'KnownUrl' and different remote urls" '
 	ln -s lop serverTwo &&
 
 	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
 
 	# Clone from server to create a client
 	GIT_NO_LAZY_FETCH=0 git clone -c remote.lop.promisor=true \
@@ -219,13 +239,54 @@ test_expect_success "clone with 'KnownUrl' and different remote urls" '
 		-c remote.lop.url="file://$(pwd)/serverTwo" \
 		-c promisor.acceptfromserver=KnownUrl \
 		--no-local --filter="blob:limit=5k" server client &&
-	test_when_finished "rm -rf client" &&
 
 	# Check that the largest object is not missing on the server
 	check_missing_objects server 0 "" &&
 
 	# Reinitialize server so that the largest object is missing again
 	initialize_server 1 "$oid"
+'
+
+test_expect_success "clone with 'KnownUrl' and url not configured on the server" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
+
+	test_when_finished "git -C server config set remote.lop.url \"file://$(pwd)/lop\"" &&
+	git -C server config unset remote.lop.url &&
+
+	# Clone from server to create a client
+	# It should fail because the client will reject the LOP as URLs are
+	# different, and the server cannot lazy fetch as the LOP URL is
+	# missing, so the remote name will be used instead which will fail.
+	test_must_fail env GIT_NO_LAZY_FETCH=0 git clone -c remote.lop.promisor=true \
+		-c remote.lop.fetch="+refs/heads/*:refs/remotes/lop/*" \
+		-c remote.lop.url="file://$(pwd)/lop" \
+		-c promisor.acceptfromserver=KnownUrl \
+		--no-local --filter="blob:limit=5k" server client &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
+'
+
+test_expect_success "clone with 'KnownUrl' and empty url, so not advertised" '
+	git -C server config promisor.advertise true &&
+	test_when_finished "rm -rf client" &&
+
+	test_when_finished "git -C server config set remote.lop.url \"file://$(pwd)/lop\"" &&
+	git -C server config set remote.lop.url "" &&
+
+	# Clone from server to create a client
+	# It should fail because the client will reject the LOP as an empty URL is
+	# not advertised, and the server cannot lazy fetch as the LOP URL is empty,
+	# so the remote name will be used instead which will fail.
+	test_must_fail env GIT_NO_LAZY_FETCH=0 git clone -c remote.lop.promisor=true \
+		-c remote.lop.fetch="+refs/heads/*:refs/remotes/lop/*" \
+		-c remote.lop.url="file://$(pwd)/lop" \
+		-c promisor.acceptfromserver=KnownUrl \
+		--no-local --filter="blob:limit=5k" server client &&
+
+	# Check that the largest object is still missing on the server
+	check_missing_objects server 1 "$oid"
 '
 
 test_expect_success "clone with promisor.advertise set to 'true' but don't delete the client" '
