@@ -349,6 +349,7 @@ jobs:
     if: needs.ci-config.outputs.enabled == 'yes'
     env:
       CC: clang
+      CI_JOB_IMAGE: ubuntu-latest
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -432,6 +433,7 @@ jobs:
     if: needs.ci-config.outputs.enabled == 'yes'
     env:
       jobname: StaticAnalysis
+      CI_JOB_IMAGE: ubuntu-22.04
     runs-on: ubuntu-22.04
     concurrency:
       group: static-analysis-${{ github.ref }}
@@ -446,6 +448,7 @@ jobs:
     if: needs.ci-config.outputs.enabled == 'yes'
     env:
       jobname: sparse
+      CI_JOB_IMAGE: ubuntu-20.04
     runs-on: ubuntu-20.04
     concurrency:
       group: sparse-${{ github.ref }}
@@ -473,6 +476,7 @@ jobs:
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     env:
       jobname: Documentation
+      CI_JOB_IMAGE: ubuntu-latest
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
