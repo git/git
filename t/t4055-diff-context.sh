@@ -89,4 +89,14 @@ test_expect_success '-U0 is valid, so is diff.context=0' '
 	grep "^+MODIFIED" output
 '
 
+test_expect_success '-U2147483647 works' '
+	echo APPENDED >>x &&
+	test_line_count = 16 x &&
+	git diff -U2147483647 >output &&
+	test_line_count = 22 output &&
+	grep "^-ADDED" output &&
+	grep "^+MODIFIED" output &&
+	grep "^+APPENDED" output
+'
+
 test_done
