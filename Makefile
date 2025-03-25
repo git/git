@@ -2201,7 +2201,8 @@ $(MIMALLOC_OBJS): COMPAT_CFLAGS += \
 	-Wno-pedantic \
 	-Wno-declaration-after-statement \
 	-Wno-old-style-definition \
-	-Wno-missing-prototypes
+	-Wno-missing-prototypes \
+	-Wno-implicit-function-declaration
 endif
 endif
 
