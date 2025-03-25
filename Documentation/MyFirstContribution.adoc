@@ -367,6 +367,7 @@ But as we drill down, we can find that `status_init_config()` wraps a call
 to `git_config()`. Let's modify the code we wrote in the previous commit.
 
 Be sure to include the header to allow you to use `struct wt_status`:
+
 ----
 #include "wt-status.h"
 ----
