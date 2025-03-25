@@ -219,6 +219,15 @@ void read_very_early_config(config_fn_t cb, void *data);
  * repo-specific one; by overwriting, the higher-priority repo-specific
  * value is left at the end).
  *
+ * In cases where the repository variable is NULL, repo_config() will
+ * skip the per-repository config but retain system and global configs
+ * by calling read_very_early_config() which also ignores one-time
+ * overrides like "git -c var=val". This is to support handling "git foo -h"
+ * (which lets git.c:run_builtin() to pass NULL and have the cmd_foo()
+ * call repo_config() before calling parse_options() to notice "-h", give
+ * help and exit) for a command that ordinarily require a repository
+ * so this limitation may be OK (but if needed you are welcome to fix it).
+ *
  * Unlike git_config_from_file(), this function respects includes.
  */
 void repo_config(struct repository *r, config_fn_t fn, void *);
