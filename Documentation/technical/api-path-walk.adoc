@@ -56,6 +56,14 @@ better off using the revision walk API instead.
 	the revision walk so that the walk emits commits marked with the
 	`UNINTERESTING` flag.
 
+`edge_aggressive`::
+	For performance reasons, usually only the boundary commits are
+	explored to find UNINTERESTING objects. However, in the case of
+	shallow clones it can be helpful to mark all trees and blobs
+	reachable from UNINTERESTING tip commits as UNINTERESTING. This
+	matches the behavior of `--objects-edge-aggressive` in the
+	revision API.
+
 `pl`::
 	This pattern list pointer allows focusing the path-walk search to
 	a set of patterns, only emitting paths that match the given
@@ -69,4 +77,5 @@ Examples
 
 See example usages in:
 	`t/helper/test-path-walk.c`,
+	`builtin/pack-objects.c`,
 	`builtin/backfill.c`
