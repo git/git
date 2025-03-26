@@ -7,7 +7,7 @@ https://developers.google.com/open-source/licenses/bsd
 */
 
 #include "unit-test.h"
-#include "lib-reftable-clar.h"
+#include "lib-reftable.h"
 #include "reftable/basics.h"
 
 struct integer_needle_lesseq_args {

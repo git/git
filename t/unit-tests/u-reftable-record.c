@@ -7,7 +7,7 @@
 */
 
 #include "unit-test.h"
-#include "lib-reftable-clar.h"
+#include "lib-reftable.h"
 #include "reftable/basics.h"
 #include "reftable/constants.h"
 #include "reftable/record.h"
