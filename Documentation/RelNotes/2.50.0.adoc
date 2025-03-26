@@ -1,0 +1,34 @@
+Git v2.50 Release Notes
+=======================
+
+UI, Workflows & Features
+------------------------
+
+ * A post-processing filter for "diff --raw" output has been
+   introduced.
+
+
+Performance, Internal Implementation, Development Support etc.
+--------------------------------------------------------------
+
+ * A handful of built-in command implementations have been rewritten
+   to use the repository instance supplied by git.c:run_builtin(), its
+   caller.
+
+ * "git fsck" becomes more careful when checking the refs.
+
+
+Fixes since v2.49
+-----------------
+
+ * The refname exclusion logic in the packed-ref backend has been
+   broken for some time, which confused upload-pack to advertise
+   different set of refs.  This has been corrected.
+   (merge 10e8a9352b tb/refs-exclude-fixes later to maint).
+
+ * The merge-recursive and merge-ort machinery crashed in corner cases
+   when certain renames are involved.
+   (merge 3adba40858 en/merge-process-renames-crash-fix later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
