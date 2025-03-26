@@ -3048,7 +3048,8 @@ static int process_renames(struct merge_options *opt,
 			}
 		}
 
-		assert(source_deleted || oldinfo->filemask & old_sidemask);
+		assert(source_deleted || oldinfo->filemask & old_sidemask ||
+		       !strcmp(pair->one->path, pair->two->path));
 
 		/* Need to check for special types of rename conflicts... */
 		if (collision && !source_deleted) {
