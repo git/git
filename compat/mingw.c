@@ -2606,7 +2606,7 @@ repeat:
 		 * current system doesn't support FileRenameInfoEx. Keep us
 		 * from using it in future calls and retry.
 		 */
-		if (gle == ERROR_INVALID_PARAMETER) {
+		if (gle == ERROR_INVALID_PARAMETER || gle == ERROR_NOT_SUPPORTED) {
 			supports_file_rename_info_ex = 0;
 			goto repeat;
 		}
