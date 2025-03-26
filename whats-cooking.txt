@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Mar 2025, #06; Fri, 21)
-X-master-at: 683c54c999c301c2cd6f715c411407c413b1d84e
-X-next-at: e94155a9ecafb89f308d834dea8fed4f7ad85d2a
+Subject: What's cooking in git.git (Mar 2025, #07; Wed, 26)
+X-master-at: 66b90d9bad8476f6f3d71f5add5cf78809a998ed
+X-next-at: 12c9017322054d91838b18540dea310d9448fd6e
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Mar 2025, #06; Fri, 21)
+What's cooking in git.git (Mar 2025, #07; Wed, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,9 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+I am still officially on vacation, but 2.50 cycle has been started
+and the first batch of topics are now in 'master'.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -46,7 +49,215 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* en/merge-process-renames-crash-fix (2025-03-06) 2 commits
+  (merged to 'next' on 2025-03-06 at 8f38331e32)
+ + merge-ort: fix slightly overzealous assertion for rename-to-self
+ + t6423: add a testcase causing a failed assertion in process_renames
+
+ The merge-recursive and merge-ort machinery crashed in corner cases
+ when certain renames are involved.
+ 
+ source: <pull.1873.git.1741275027.gitgitgadget@gmail.com>
+
+
+* ja/doc-block-delimiter-markup-fix (2025-03-10) 1 commit
+  (merged to 'next' on 2025-03-11 at 8d6641a77e)
+ + doc: add a blank line around block delimiters
+
+ Doc markup updates.
+ 
+ source: <pull.1878.git.1741549511665.gitgitgadget@gmail.com>
+
+
+* jt/diff-pairs (2025-03-03) 4 commits
+  (merged to 'next' on 2025-03-03 at 32346e0c3b)
+ + builtin/diff-pairs: allow explicit diff queue flush
+ + builtin: introduce diff-pairs command
+ + diff: add option to skip resolving diff statuses
+ + diff: return diff_filepair from diff queue helpers
+
+ A post-processing filter for "diff --raw" output has been
+ introduced.
+ 
+ source: <20250228213346.1335224-1-jltobler@gmail.com>
+
+
+* sj/ref-consistency-checks-more (2025-02-27) 9 commits
+  (merged to 'next' on 2025-03-05 at 6bea9376c4)
+ + builtin/fsck: add `git refs verify` child process
+ + packed-backend: check whether the "packed-refs" is sorted
+ + packed-backend: add "packed-refs" entry consistency check
+ + packed-backend: check whether the refname contains NUL characters
+ + packed-backend: add "packed-refs" header consistency check
+ + packed-backend: check if header starts with "# pack-refs with: "
+ + packed-backend: check whether the "packed-refs" is regular file
+ + builtin/refs: get worktrees without reading head information
+ + t0602: use subshell to ensure working directory unchanged
+
+ "git fsck" becomes more careful when checking the refs.
+ 
+ source: <Z8CMx7O19PMs9sVY@ArchLinux>
+
+
+* tb/refs-exclude-fixes (2025-03-06) 2 commits
+  (merged to 'next' on 2025-03-06 at 50707f29db)
+ + refs.c: stop matching non-directory prefixes in exclude patterns
+ + refs.c: remove empty '--exclude' patterns
+
+ The refname exclusion logic in the packed-ref backend has been
+ broken for some time, which confused upload-pack to advertise
+ different set of refs.  This has been corrected.
+ 
+ source: <cover.1741275245.git.me@ttaylorr.com>
+
+
+* ua/some-builtins-wo-the-repository (2025-03-07) 8 commits
+  (merged to 'next' on 2025-03-07 at 01f2b84529)
+ + builtin/checkout-index: stop using `the_repository`
+ + builtin/for-each-ref: stop using `the_repository`
+ + builtin/ls-files: stop using `the_repository`
+ + builtin/pack-refs: stop using `the_repository`
+ + builtin/send-pack: stop using `the_repository`
+ + builtin/verify-commit: stop using `the_repository`
+ + builtin/verify-tag: stop using `the_repository`
+ + config: teach repo_config to allow `repo` to be NULL
+
+ A handful of built-in command implementations have been rewritten
+ to use the repository instance supplied by git.c:run_builtin(), its
+ caller.
+ 
+ source: <20250307233543.1721552-1-usmanakinyemi202@gmail.com>
+
+--------------------------------------------------
 [New Topics]
+
+* ds/maintenance-loose-objects-batchsize (2025-03-23) 2 commits
+ - maintenance: add loose-objects.batchSize config
+ - maintenance: force progress/no-quiet to children
+
+ The job to coalesce loose objects into packfiles in "git
+ maintenance" now has configurable batch size.
+
+ Will merge to 'next'?
+ source: <pull.1885.git.1742777512.gitgitgadget@gmail.com>
+
+
+* js/libgit-cargo-package (2025-03-22) 5 commits
+ . libgit-{sys,rs}: add license and description fields
+ . libgit-sys: exclude unnecessary directories in git-src
+ . libgit-sys: parallelize build with Cargo's jobserver
+ . libgit-sys: add symlink to git repo root and build out of tree
+ . libgitpub: move to separate contrib/ directory
+
+ Breaks Windows CI job with "../.." symbolic link in the source.
+ source: <cover.1742594960.git.steadmon@google.com>
+
+
+* jt/clone-guess-remote-head-fix (2025-03-25) 3 commits
+ - advice: allow disabling default branch name advice
+ - builtin/clone: suppress unexpected default branch advice
+ - remote: allow `guess_remote_head()` to suppress advice
+
+ "git clone" still gave the message about the default branch name;
+ this message has been turned into an advice message that can be
+ turned off.
+ source: <20250325005148.1771502-1-jltobler@gmail.com>
+
+
+* lo/userdiff-gitconfig (2025-03-23) 1 commit
+ - userdiff: add builtin driver for gitconfig syntax
+
+ Expecting a reroll?
+ source: <20250324021101.7483-1-lucasseikioshiro@gmail.com>
+
+
+* rs/clear-commit-marks-simplify (2025-03-24) 1 commit
+ - commit: move clear_commit_marks_many() loop body to clear_commit_marks()
+
+ Code clean-up.
+
+ Will merge to 'next'.
+ source: <80bfd7a9-904c-49d8-a367-ca268c096a9f@web.de>
+
+
+* ta/bulk-checkin-signed-compare-false-warning-fix (2025-03-25) 1 commit
+ - bulk-checkin: fix sign compare warnings
+
+ Compiler warnings workaround.
+
+ Will merge to 'next'.
+ source: <20250324214703.7547-1-taahol@utu.fi>
+
+
+* dk/vimdiff-doc-fix (2025-03-25) 1 commit
+ - vimdiff: clarify the sigil used for marking the buffer to save
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <20250324205327.79627-1-ben.knoble+github@gmail.com>
+
+
+* es/meson-build-skip-coccinelle (2025-03-25) 1 commit
+ - meson: disable coccinelle configuration when building from a tarball
+
+ Build fix.
+
+ Will merge to 'next'.
+ source: <20250325200920.198057-1-eschwartz@gentoo.org>
+
+
+* fr/vimdiff-layout-fixes (2025-03-25) 2 commits
+ - mergetools: vimdiff: add tests for layout with REMOTE as the target
+ - mergetools: vimdiff: fix layout where REMOTE is the target
+
+ Layout configuration in vimdiff backend didn't work as advertised,
+ which has been corrected.
+
+ Will merge to 'next'.
+ source: <20250325222311.400748-1-greenfoo@u92.eu>
+
+
+* js/comma-semicolon-confusion (2025-03-25) 10 commits
+ - detect-compiler: detect clang even if it found CUDA
+ - clang: warn when the comma operator is used
+ - compat/regex: explicitly mark intentional use of the comma operator
+ - wildmatch: explicitly mark intentional use of the comma operator
+ - diff-delta: explicitly mark intentional use of the comma operator
+ - xdiff: avoid using the comma operator unnecessarily
+ - clar: avoid using the comma operator unnecessarily
+ - kwset: avoid using the comma operator unnecessarily
+ - rebase: avoid using the comma operator unnecessarily
+ - remote-curl: avoid using the comma operator unnecessarily
+
+ Code clean-up.
+
+ Will merge to 'next'?
+ source: <pull.1889.v2.git.1742945534.gitgitgadget@gmail.com>
+
+
+* js/imap-send-peer-cert-verify (2025-03-25) 1 commit
+  (merged to 'next' on 2025-03-26 at 69df4dd915)
+ + imap-send: explicitly verify the peer certificate
+
+ Will merge to 'master'.
+ source: <pull.1886.git.1742819282360.gitgitgadget@gmail.com>
+
+
+* js/mingw-admins-are-special (2025-03-25) 2 commits
+  (merged to 'next' on 2025-03-26 at dfcb9661a6)
+ + test-tool path-utils: support debugging "dubious ownership" issues
+ + mingw: special-case administrators even more
+
+ "Dubious ownership" checks on Windows has been tightened up.
+
+ Will merge to 'master'.
+ source: <pull.1893.git.1742899110.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * en/assert-wo-side-effects (2025-03-21) 3 commits
  - treewide: replace assert() with ASSERT() in special cases
@@ -71,13 +282,14 @@ Release tarballs are available at:
 
 
 * kn/ci-meson-check-build-docs-fix (2025-03-20) 1 commit
- - ci/github: add missing 'CI_JOB_IMAGE' env variable
+  (merged to 'next' on 2025-03-24 at 135ce9ce61)
+ + ci/github: add missing 'CI_JOB_IMAGE' env variable
 
  GitHub Actions CI switched on a CI/CD variable that does not exist
  when choosing what packages to install etc., which has been
  corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250319163328.525284-1-karthik.188@gmail.com>
 
 
@@ -95,11 +307,12 @@ Release tarballs are available at:
 
 
 * tb/bitamp-typofix (2025-03-21) 1 commit
- - pseudo-merge.h: fix a typo
+  (merged to 'next' on 2025-03-26 at f068ddb5bb)
+ + pseudo-merge.h: fix a typo
 
  Typofix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <3b3cc5c0fa2d0696eb15c5d3c97a6c93a0d39252.1742338479.git.me@ttaylorr.com>
 
 
@@ -132,26 +345,25 @@ Release tarballs are available at:
  source: <cover.1742338207.git.me@ttaylorr.com>
 
 
-* zy/send-email-error-handling (2025-03-21) 2 commits
- . send-email: finer-grained SMTP error handling
- . send-email: capture errors in an eval {} block
+* zy/send-email-error-handling (2025-03-25) 2 commits
+ - send-email: finer-grained SMTP error handling
+ - send-email: capture errors in an eval {} block
 
  Auth-related (and unrelated) error handling in send-email has been
  made more robust.
 
- Breaks t9001.
- source: <20250321025128.68463-1-05ZYT30@gmail.com>
+ Getting there.
+ source: <20250324145332.571813-1-05ZYT30@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * aj/doc-restore-p-update (2025-03-18) 1 commit
- - doc: restore: remove note on --patch w/ pathspecs
+  (merged to 'next' on 2025-03-24 at bdcfdc7f4e)
+ + doc: restore: remove note on --patch w/ pathspecs
 
  Stale description in "git restore -p" documentation has been
  updated.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1504.v2.git.git.1685654097812.gitgitgadget@gmail.com>
 
 
@@ -190,12 +402,13 @@ Release tarballs are available at:
 
 
 * ja/doc-branch-markup (2025-03-20) 2 commits
- - doc: apply new format to git-branch man page
- - completion: take into account the formatting backticks for options
+  (merged to 'next' on 2025-03-24 at ba6e1c7d0b)
+ + doc: apply new format to git-branch man page
+ + completion: take into account the formatting backticks for options
 
  Doc mark-up updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1880.v2.git.1742372183.gitgitgadget@gmail.com>
 
 
@@ -231,28 +444,30 @@ Release tarballs are available at:
 
 
 * tb/combine-cruft-below-size (2025-03-21) 6 commits
- - repack: begin combining cruft packs with `--combine-cruft-below-size`
- - repack: avoid combining cruft packs with `--max-cruft-size`
- - t/t7704-repack-cruft.sh: consolidate `write_blob()`
- - t/t7704-repack-cruft.sh: clarify wording in --max-cruft-size tests
- - t/t5329-pack-objects-cruft.sh: evict 'repack'-related tests
- - Merge branch 'tb/multi-cruft-pack-refresh-fix' into tb/combine-cruft-below-size
+  (merged to 'next' on 2025-03-24 at 699b83a925)
+ + repack: begin combining cruft packs with `--combine-cruft-below-size`
+ + repack: avoid combining cruft packs with `--max-cruft-size`
+ + t/t7704-repack-cruft.sh: consolidate `write_blob()`
+ + t/t7704-repack-cruft.sh: clarify wording in --max-cruft-size tests
+ + t/t5329-pack-objects-cruft.sh: evict 'repack'-related tests
+ + Merge branch 'tb/multi-cruft-pack-refresh-fix' into tb/combine-cruft-below-size
  (this branch uses tb/multi-cruft-pack-refresh-fix.)
 
  "git repack" learned "--combine-cruft-below-size" option that
  controls how cruft-packs are combined.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1742424671.git.me@ttaylorr.com>
 
 
 * jh/hash-init-fixes (2025-03-18) 1 commit
- - index-pack, unpack-objects: restore missing ->init_fn
+  (merged to 'next' on 2025-03-24 at 85b8299403)
+ + index-pack, unpack-objects: restore missing ->init_fn
 
  An earlier code refactoring of the hash machinery missed a few
  required calls to init_fn.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <Z9rC0VCbh8Noaq4e@pks.im>
  source: <20250318111616.113941-1-hmz007@gmail.com>
 
@@ -272,21 +487,23 @@ Release tarballs are available at:
 
 
 * pw/build-breaking-changes-doc (2025-03-18) 1 commit
- - docs: add BreakingChanges to TECH_DOCS target
+  (merged to 'next' on 2025-03-24 at 56efeea47e)
+ + docs: add BreakingChanges to TECH_DOCS target
 
  A documentation page was left out from formatting and installation,
  which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1921.git.git.1742308900290.gitgitgadget@gmail.com>
 
 
 * pw/doc-pack-refs-markup-fix (2025-03-18) 1 commit
- - pack-refs doc: fix indentation for --exclude
+  (merged to 'next' on 2025-03-24 at 3bcea36a83)
+ + pack-refs doc: fix indentation for --exclude
 
  Doc markup fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1920.git.git.1742308828163.gitgitgadget@gmail.com>
 
 
@@ -349,7 +566,7 @@ Release tarballs are available at:
  source: <7c219279-8151-49c0-8fc0-8abe2624aca9@gmail.com>
 
 
-* ds/path-walk-2 (2025-03-10) 13 commits
+* ds/path-walk-2 (2025-03-25) 13 commits
  - pack-objects: allow --shallow and --path-walk
  - path-walk: add new 'edge_aggressive' option
  - pack-objects: thread the path-based compression
@@ -366,32 +583,25 @@ Release tarballs are available at:
 
  "git pack-objects" learns to find delta bases from blobs at the
  same path, using the --path-walk API.
- source: <pull.1819.git.1741571455.gitgitgadget@gmail.com>
 
-
-* ja/doc-block-delimiter-markup-fix (2025-03-10) 1 commit
-  (merged to 'next' on 2025-03-11 at 8d6641a77e)
- + doc: add a blank line around block delimiters
-
- Doc markup updates.
-
- Will merge to 'master'.
- source: <pull.1878.git.1741549511665.gitgitgadget@gmail.com>
+ Comments?
+ source: <pull.1819.v2.git.1742829769.gitgitgadget@gmail.com>
 
 
 * jc/name-rev-stdin (2025-03-12) 6 commits
- - name-rev: remove "--stdin" support
- - t6120: further modernize
- - t6120: avoid hiding "git" exit status
- - t: introduce WITH_BREAKING_CHANGES prerequisite
- - t: extend test_lazy_prereq
- - t: document test_lazy_prereq
+  (merged to 'next' on 2025-03-24 at cfec2e409f)
+ + name-rev: remove "--stdin" support
+ + t6120: further modernize
+ + t6120: avoid hiding "git" exit status
+ + t: introduce WITH_BREAKING_CHANGES prerequisite
+ + t: extend test_lazy_prereq
+ + t: document test_lazy_prereq
 
  Using "git name-rev --stdin" as an example, improve the framework to
  prepare tests to pretend to be in the future where the breaking
  changes have already happened.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250311212505.2920181-1-gitster@pobox.com>
 
 
@@ -453,24 +663,24 @@ Release tarballs are available at:
 
 
 * cc/lop-remote (2025-03-18) 4 commits
- - promisor-remote: compare remote names case sensitively
- - promisor-remote: fix possible issue when no URL is advertised
- - promisor-remote: fix segfault when remote URL is missing
- - t5710: arrange to delete the client before cloning
+  (merged to 'next' on 2025-03-24 at 3b685ceef0)
+ + promisor-remote: compare remote names case sensitively
+ + promisor-remote: fix possible issue when no URL is advertised
+ + promisor-remote: fix segfault when remote URL is missing
+ + t5710: arrange to delete the client before cloning
 
  Bugfix in newly introduced large-object-promisor remote support.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250318110008.656695-1-christian.couder@gmail.com>
 
 
 * ps/ci-meson-check-build-docs (2025-03-12) 1 commit
  - ci: perform build and smoke tests for Meson docs
- (this branch is used by jc/ci-meson-check-build-docs-fix.)
 
  CI update.
 
- On hold waiting for the fix-up to settle.
+ Will merge to 'next'.
  source: <20250312-b4-pks-ci-meson-docs-v1-1-5e7cf7ac959a@pks.im>
 
 
@@ -504,41 +714,17 @@ Release tarballs are available at:
  source: <20250304113323.10564-1-kuforiji98@gmail.com>
 
 
-* dm/completion-remote-names-fix (2025-03-18) 2 commits
- - completion: fix bugs with slashes in remote names
- - completion: add helper to count path components
+* dm/completion-remote-names-fix (2025-03-23) 2 commits
+  (merged to 'next' on 2025-03-26 at b9460e20ae)
+ + completion: fix bugs with slashes in remote names
+ + completion: add helper to count path components
 
  The bash command line completion script (in contrib/) has been
  updated to cope with remote repository nicknames with slashes in
  them.
 
- Will merge to 'next'.
- source: <1587533591c81d38977e62165784f8eb@mandelberg.org>
-
-
-* tb/refs-exclude-fixes (2025-03-06) 2 commits
-  (merged to 'next' on 2025-03-06 at 50707f29db)
- + refs.c: stop matching non-directory prefixes in exclude patterns
- + refs.c: remove empty '--exclude' patterns
-
- The refname exclusion logic in the packed-ref backend has been
- broken for some time, which confused upload-pack to advertise
- different set of refs.  This has been corrected.
-
  Will merge to 'master'.
- source: <cover.1741275245.git.me@ttaylorr.com>
-
-
-* en/merge-process-renames-crash-fix (2025-03-06) 2 commits
-  (merged to 'next' on 2025-03-06 at 8f38331e32)
- + merge-ort: fix slightly overzealous assertion for rename-to-self
- + t6423: add a testcase causing a failed assertion in process_renames
-
- The merge-recursive and merge-ort machinery crashed in corner cases
- when certain renames are involved.
-
- Will merge to 'master'.
- source: <pull.1873.git.1741275027.gitgitgadget@gmail.com>
+ source: <17274df2746d304db876ebd82ad8d932@mandelberg.org>
 
 
 * kn/non-transactional-batch-updates (2025-03-21) 9 commits
@@ -582,25 +768,6 @@ Release tarballs are available at:
 
  Looking good.
  source: <20250310-b4-pks-objects-without-the-repository-v4-0-f201b8ec57ba@pks.im>
-
-
-* ua/some-builtins-wo-the-repository (2025-03-07) 8 commits
-  (merged to 'next' on 2025-03-07 at 01f2b84529)
- + builtin/checkout-index: stop using `the_repository`
- + builtin/for-each-ref: stop using `the_repository`
- + builtin/ls-files: stop using `the_repository`
- + builtin/pack-refs: stop using `the_repository`
- + builtin/send-pack: stop using `the_repository`
- + builtin/verify-commit: stop using `the_repository`
- + builtin/verify-tag: stop using `the_repository`
- + config: teach repo_config to allow `repo` to be NULL
-
- A handful of built-in command implementations have been rewritten
- to use the repository instance supplied by git.c:run_builtin(), its
- caller.
-
- Will merge to 'master'.
- source: <20250307233543.1721552-1-usmanakinyemi202@gmail.com>
 
 
 * ps/maintenance-reflog-expire (2025-02-26) 6 commits
@@ -693,20 +860,6 @@ Release tarballs are available at:
  source: <20250310155746.879481-1-christian.couder@gmail.com>
 
 
-* jt/diff-pairs (2025-03-03) 4 commits
-  (merged to 'next' on 2025-03-03 at 32346e0c3b)
- + builtin/diff-pairs: allow explicit diff queue flush
- + builtin: introduce diff-pairs command
- + diff: add option to skip resolving diff statuses
- + diff: return diff_filepair from diff queue helpers
-
- A post-processing filter for "diff --raw" output has been
- introduced.
-
- Will merge to 'master'.
- source: <20250228213346.1335224-1-jltobler@gmail.com>
-
-
 * ib/diff-S-G-with-longhand (2025-02-12) 10 commits
  - diff: docs: Use --patch-{grep,modifies} over -G/-S
  - diff: --pickaxe-{all,regex} help: Add --patch-{grep,modifies}
@@ -764,24 +917,6 @@ Release tarballs are available at:
 
  Waiting for Acks, especially for Windows bits?
  source: <20250218-pks-reftable-drop-git-compat-util-v6-0-8c1f39fb4c02@pks.im>
-
-
-* sj/ref-consistency-checks-more (2025-02-27) 9 commits
-  (merged to 'next' on 2025-03-05 at 6bea9376c4)
- + builtin/fsck: add `git refs verify` child process
- + packed-backend: check whether the "packed-refs" is sorted
- + packed-backend: add "packed-refs" entry consistency check
- + packed-backend: check whether the refname contains NUL characters
- + packed-backend: add "packed-refs" header consistency check
- + packed-backend: check if header starts with "# pack-refs with: "
- + packed-backend: check whether the "packed-refs" is regular file
- + builtin/refs: get worktrees without reading head information
- + t0602: use subshell to ensure working directory unchanged
-
- "git fsck" becomes more careful when checking the refs.
-
- Will merge to 'master'.
- source: <Z8CMx7O19PMs9sVY@ArchLinux>
 
 
 * jc/doc-attr-tree (2024-12-14) 1 commit
