@@ -211,8 +211,10 @@ static long xdl_split(unsigned long const *ha1, long off1, long lim1,
 			for (d = fmax; d >= fmin; d -= 2) {
 				i1 = XDL_MIN(kvdf[d], lim1);
 				i2 = i1 - d;
-				if (lim2 < i2)
-					i1 = lim2 + d, i2 = lim2;
+				if (lim2 < i2) {
+					i1 = lim2 + d;
+					i2 = lim2;
+				}
 				if (fbest < i1 + i2) {
 					fbest = i1 + i2;
 					fbest1 = i1;
@@ -223,8 +225,10 @@ static long xdl_split(unsigned long const *ha1, long off1, long lim1,
 			for (d = bmax; d >= bmin; d -= 2) {
 				i1 = XDL_MAX(off1, kvdb[d]);
 				i2 = i1 - d;
-				if (i2 < off2)
-					i1 = off2 + d, i2 = off2;
+				if (i2 < off2) {
+					i1 = off2 + d;
+					i2 = off2;
+				}
 				if (i1 + i2 < bbest) {
 					bbest = i1 + i2;
 					bbest1 = i1;
