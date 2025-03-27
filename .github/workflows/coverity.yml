@@ -1,4 +1,4 @@
-name: Coverity
+name: Coverity 
 
 # This GitHub workflow automates submitting builds to Coverity Scan. To enable it,
 # set the repository variable `ENABLE_COVERITY_SCAN_FOR_BRANCHES` (for details, see
