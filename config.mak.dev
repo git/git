@@ -40,6 +40,10 @@ DEVELOPER_CFLAGS += -Wvla
 DEVELOPER_CFLAGS += -Wwrite-strings
 DEVELOPER_CFLAGS += -fno-common
 
+ifneq ($(filter clang9,$(COMPILER_FEATURES)),)
+DEVELOPER_CFLAGS += -Wcomma
+endif
+
 ifneq ($(filter clang4,$(COMPILER_FEATURES)),)
 DEVELOPER_CFLAGS += -Wtautological-constant-out-of-range-compare
 endif

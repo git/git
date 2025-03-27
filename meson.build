@@ -715,6 +715,7 @@ libgit_dependencies = [ ]
 # Makefile.
 if get_option('warning_level') in ['2','3', 'everything'] and compiler.get_argument_syntax() == 'gcc'
   foreach cflag : [
+    '-Wcomma',
     '-Wdeclaration-after-statement',
     '-Wformat-security',
     '-Wold-style-definition',
