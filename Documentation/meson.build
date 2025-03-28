@@ -441,6 +441,7 @@ if get_option('docs').contains('html')
   )
 
   articles = [
+    'BreakingChanges.adoc',
     'DecisionMaking.adoc',
     'MyFirstContribution.adoc',
     'MyFirstObjectWalk.adoc',
