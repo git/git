@@ -228,7 +228,10 @@ test_expect_success 'ignore very large set of prefixes' '
 		echo command=ls-refs &&
 		echo object-format=$(test_oid algo) &&
 		echo 0001 &&
-		perl -le "print \"ref-prefix refs/heads/\$_\" for (1..65536)" &&
+		awk "{
+			for (i = 1; i <= 65536; i++)
+				print \"ref-prefix refs/heads/\", \$i
+		}" &&
 		echo 0000
 	} |
 	test-tool pkt-line pack >in &&

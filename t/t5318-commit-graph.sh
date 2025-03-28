@@ -837,7 +837,7 @@ check_corrupt_chunk () {
 	test_cmp expect.out out
 }
 
-test_expect_success 'reader notices too-small oid fanout chunk' '
+test_expect_success PERL_TEST_HELPERS 'reader notices too-small oid fanout chunk' '
 	# make it big enough that the graph file is plausible,
 	# otherwise we hit an earlier check
 	check_corrupt_chunk OIDF clear $(printf "000000%02x" $(test_seq 250)) &&
@@ -848,7 +848,7 @@ test_expect_success 'reader notices too-small oid fanout chunk' '
 	test_cmp expect.err err
 '
 
-test_expect_success 'reader notices fanout/lookup table mismatch' '
+test_expect_success PERL_TEST_HELPERS 'reader notices fanout/lookup table mismatch' '
 	check_corrupt_chunk OIDF 1020 "FFFFFFFF" &&
 	cat >expect.err <<-\EOF &&
 	error: commit-graph OID lookup chunk is the wrong size
@@ -857,7 +857,7 @@ test_expect_success 'reader notices fanout/lookup table mismatch' '
 	test_cmp expect.err err
 '
 
-test_expect_success 'reader notices out-of-bounds fanout' '
+test_expect_success PERL_TEST_HELPERS 'reader notices out-of-bounds fanout' '
 	# Rather than try to corrupt a specific hash, we will just
 	# wreck them all. But we cannot just set them all to 0xFFFFFFFF or
 	# similar, as they are used for hi/lo starts in a binary search (so if
@@ -873,7 +873,7 @@ test_expect_success 'reader notices out-of-bounds fanout' '
 	test_cmp expect.err err
 '
 
-test_expect_success 'reader notices too-small commit data chunk' '
+test_expect_success PERL_TEST_HELPERS 'reader notices too-small commit data chunk' '
 	check_corrupt_chunk CDAT clear 00000000 &&
 	cat >expect.err <<-\EOF &&
 	error: commit-graph commit data chunk is wrong size
@@ -882,7 +882,7 @@ test_expect_success 'reader notices too-small commit data chunk' '
 	test_cmp expect.err err
 '
 
-test_expect_success 'reader notices out-of-bounds extra edge' '
+test_expect_success PERL_TEST_HELPERS 'reader notices out-of-bounds extra edge' '
 	check_corrupt_chunk EDGE clear &&
 	cat >expect.err <<-\EOF &&
 	error: commit-graph extra-edges pointer out of bounds
@@ -890,7 +890,7 @@ test_expect_success 'reader notices out-of-bounds extra edge' '
 	test_cmp expect.err err
 '
 
-test_expect_success 'reader notices too-small generations chunk' '
+test_expect_success PERL_TEST_HELPERS 'reader notices too-small generations chunk' '
 	check_corrupt_chunk GDA2 clear 00000000 &&
 	cat >expect.err <<-\EOF &&
 	error: commit-graph generations chunk is wrong size

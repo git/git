@@ -13,14 +13,14 @@ test_description='git apply in reverse
 test_expect_success setup '
 
 	test_write_lines a b c d e f g h i j k l m n >file1 &&
-	perl -pe "y/ijk/\\000\\001\\002/" <file1 >file2 &&
+	tr "ijk" "\000\001\002" <file1 >file2 &&
 
 	git add file1 file2 &&
 	git commit -m initial &&
 	git tag initial &&
 
 	test_write_lines a b c g h i J K L m o n p q >file1 &&
-	perl -pe "y/mon/\\000\\001\\002/" <file1 >file2 &&
+	tr "mon" "\000\001\002" <file1 >file2 &&
 
 	git commit -a -m second &&
 	git tag second &&
