@@ -6,14 +6,14 @@ license that can be found in the LICENSE file or at
 https://developers.google.com/open-source/licenses/bsd
 */
 
-#include "test-lib.h"
+#include "unit-test.h"
 #include "reftable/block.h"
 #include "reftable/blocksource.h"
 #include "reftable/constants.h"
 #include "reftable/reftable-error.h"
 #include "strbuf.h"
 
-static void t_ref_block_read_write(void)
+void test_reftable_block__index_read_write(void)
 {
 	const int header_off = 21; /* random */
 	struct reftable_record recs[30];
@@ -33,17 +33,17 @@ static void t_ref_block_read_write(void)
 	struct reftable_buf want = REFTABLE_BUF_INIT, buf = REFTABLE_BUF_INIT;
 
 	REFTABLE_CALLOC_ARRAY(block.data, block_size);
-	check(block.data != NULL);
+	cl_assert(block.data != NULL);
 	block.len = block_size;
 	block_source_from_buf(&block.source ,&buf);
 	ret = block_writer_init(&bw, BLOCK_TYPE_REF, block.data, block_size,
 				header_off, hash_size(REFTABLE_HASH_SHA1));
-	check(!ret);
+	cl_assert(ret == 0);
 
 	rec.u.ref.refname = (char *) "";
 	rec.u.ref.value_type = REFTABLE_REF_DELETION;
 	ret = block_writer_add(&bw, &rec);
-	check_int(ret, ==, REFTABLE_API_ERROR);
+	cl_assert_equal_i(ret, REFTABLE_API_ERROR);
 
 	for (i = 0; i < N; i++) {
 		rec.u.ref.refname = xstrfmt("branch%02"PRIuMAX, (uintmax_t)i);
@@ -54,11 +54,11 @@ static void t_ref_block_read_write(void)
 		ret = block_writer_add(&bw, &rec);
 		rec.u.ref.refname = NULL;
 		rec.u.ref.value_type = REFTABLE_REF_DELETION;
-		check_int(ret, ==, 0);
+		cl_assert_equal_i(ret, 0);
 	}
 
 	ret = block_writer_finish(&bw);
-	check_int(ret, >, 0);
+	cl_assert(ret > 0);
 
 	block_writer_release(&bw);
 
@@ -68,12 +68,12 @@ static void t_ref_block_read_write(void)
 
 	for (i = 0; ; i++) {
 		ret = block_iter_next(&it, &rec);
-		check_int(ret, >=, 0);
+		cl_assert(ret >= 0);
 		if (ret > 0) {
-			check_int(i, ==, N);
+			cl_assert_equal_i(i, N);
 			break;
 		}
-		check(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1));
+		cl_assert_equal_i(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1), 1);
 	}
 
 	for (i = 0; i < N; i++) {
@@ -81,20 +81,20 @@ static void t_ref_block_read_write(void)
 		reftable_record_key(&recs[i], &want);
 
 		ret = block_iter_seek_key(&it, &br, &want);
-		check_int(ret, ==, 0);
+		cl_assert_equal_i(ret, 0);
 
 		ret = block_iter_next(&it, &rec);
-		check_int(ret, ==, 0);
+		cl_assert_equal_i(ret, 0);
 
-		check(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1));
+		cl_assert_equal_i(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1), 1);
 
 		want.len--;
 		ret = block_iter_seek_key(&it, &br, &want);
-		check_int(ret, ==, 0);
+		cl_assert_equal_i(ret, 0);
 
 		ret = block_iter_next(&it, &rec);
-		check_int(ret, ==, 0);
-		check(reftable_record_equal(&recs[10 * (i / 10)], &rec, REFTABLE_HASH_SIZE_SHA1));
+		cl_assert_equal_i(ret, 0);
+		cl_assert_equal_i(reftable_record_equal(&recs[10 * (i / 10)], &rec, REFTABLE_HASH_SIZE_SHA1), 1);
 	}
 
 	block_reader_release(&br);
@@ -107,7 +107,7 @@ static void t_ref_block_read_write(void)
 		reftable_record_release(&recs[i]);
 }
 
-static void t_log_block_read_write(void)
+void test_reftable_block__log_read_write(void)
 {
 	const int header_off = 21;
 	struct reftable_record recs[30];
@@ -127,12 +127,12 @@ static void t_log_block_read_write(void)
 	struct reftable_buf want = REFTABLE_BUF_INIT, buf = REFTABLE_BUF_INIT;
 
 	REFTABLE_CALLOC_ARRAY(block.data, block_size);
-	check(block.data != NULL);
+	cl_assert(block.data != NULL);
 	block.len = block_size;
 	block_source_from_buf(&block.source ,&buf);
 	ret = block_writer_init(&bw, BLOCK_TYPE_LOG, block.data, block_size,
 				header_off, hash_size(REFTABLE_HASH_SHA1));
-	check(!ret);
+	cl_assert(ret == 0);
 
 	for (i = 0; i < N; i++) {
 		rec.u.log.refname = xstrfmt("branch%02"PRIuMAX , (uintmax_t)i);
@@ -143,11 +143,11 @@ static void t_log_block_read_write(void)
 		ret = block_writer_add(&bw, &rec);
 		rec.u.log.refname = NULL;
 		rec.u.log.value_type = REFTABLE_LOG_DELETION;
-		check_int(ret, ==, 0);
+		cl_assert_equal_i(ret, 0);
 	}
 
 	ret = block_writer_finish(&bw);
-	check_int(ret, >, 0);
+	cl_assert(ret > 0);
 
 	block_writer_release(&bw);
 
@@ -157,34 +157,34 @@ static void t_log_block_read_write(void)
 
 	for (i = 0; ; i++) {
 		ret = block_iter_next(&it, &rec);
-		check_int(ret, >=, 0);
+		cl_assert(ret >= 0);
 		if (ret > 0) {
-			check_int(i, ==, N);
+			cl_assert_equal_i(i, N);
 			break;
 		}
-		check(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1));
+		cl_assert_equal_i(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1), 1);
 	}
 
 	for (i = 0; i < N; i++) {
 		block_iter_reset(&it);
 		reftable_buf_reset(&want);
-		check(!reftable_buf_addstr(&want, recs[i].u.log.refname));
+		cl_assert(reftable_buf_addstr(&want, recs[i].u.log.refname) == 0);
 
 		ret = block_iter_seek_key(&it, &br, &want);
-		check_int(ret, ==, 0);
+		cl_assert_equal_i(ret, 0);
 
 		ret = block_iter_next(&it, &rec);
-		check_int(ret, ==, 0);
+		cl_assert_equal_i(ret, 0);
 
-		check(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1));
+		cl_assert_equal_i(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1), 1);
 
 		want.len--;
 		ret = block_iter_seek_key(&it, &br, &want);
-		check_int(ret, ==, 0);
+		cl_assert_equal_i(ret, 0);
 
 		ret = block_iter_next(&it, &rec);
-		check_int(ret, ==, 0);
-		check(reftable_record_equal(&recs[10 * (i / 10)], &rec, REFTABLE_HASH_SIZE_SHA1));
+		cl_assert_equal_i(ret, 0);
+		cl_assert_equal_i(reftable_record_equal(&recs[10 * (i / 10)], &rec, REFTABLE_HASH_SIZE_SHA1), 1);
 	}
 
 	block_reader_release(&br);
@@ -197,7 +197,7 @@ static void t_log_block_read_write(void)
 		reftable_record_release(&recs[i]);
 }
 
-static void t_obj_block_read_write(void)
+void test_reftable_block__obj_read_write(void)
 {
 	const int header_off = 21;
 	struct reftable_record recs[30];
@@ -217,12 +217,12 @@ static void t_obj_block_read_write(void)
 	struct reftable_buf want = REFTABLE_BUF_INIT, buf = REFTABLE_BUF_INIT;
 
 	REFTABLE_CALLOC_ARRAY(block.data, block_size);
-	check(block.data != NULL);
+	cl_assert(block.data != NULL);
 	block.len = block_size;
 	block_source_from_buf(&block.source, &buf);
 	ret = block_writer_init(&bw, BLOCK_TYPE_OBJ, block.data, block_size,
 				header_off, hash_size(REFTABLE_HASH_SHA1));
-	check(!ret);
+	cl_assert(ret == 0);
 
 	for (i = 0; i < N; i++) {
 		uint8_t bytes[] = { i, i + 1, i + 2, i + 3, i + 5 }, *allocated;
@@ -235,11 +235,11 @@ static void t_obj_block_read_write(void)
 		ret = block_writer_add(&bw, &rec);
 		rec.u.obj.hash_prefix = NULL;
 		rec.u.obj.hash_prefix_len = 0;
-		check_int(ret, ==, 0);
+		cl_assert_equal_i(ret, 0);
 	}
 
 	ret = block_writer_finish(&bw);
-	check_int(ret, >, 0);
+	cl_assert(ret > 0);
 
 	block_writer_release(&bw);
 
@@ -249,12 +249,12 @@ static void t_obj_block_read_write(void)
 
 	for (i = 0; ; i++) {
 		ret = block_iter_next(&it, &rec);
-		check_int(ret, >=, 0);
+		cl_assert(ret >= 0);
 		if (ret > 0) {
-			check_int(i, ==, N);
+			cl_assert_equal_i(i, N);
 			break;
 		}
-		check(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1));
+		cl_assert_equal_i(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1), 1);
 	}
 
 	for (i = 0; i < N; i++) {
@@ -262,12 +262,12 @@ static void t_obj_block_read_write(void)
 		reftable_record_key(&recs[i], &want);
 
 		ret = block_iter_seek_key(&it, &br, &want);
-		check_int(ret, ==, 0);
+		cl_assert_equal_i(ret, 0);
 
 		ret = block_iter_next(&it, &rec);
-		check_int(ret, ==, 0);
+		cl_assert_equal_i(ret, 0);
 
-		check(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1));
+		cl_assert_equal_i(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1), 1);
 	}
 
 	block_reader_release(&br);
@@ -280,7 +280,7 @@ static void t_obj_block_read_write(void)
 		reftable_record_release(&recs[i]);
 }
 
-static void t_index_block_read_write(void)
+void test_reftable_block__ref_read_write(void)
 {
 	const int header_off = 21;
 	struct reftable_record recs[30];
@@ -301,12 +301,12 @@ static void t_index_block_read_write(void)
 	struct reftable_buf want = REFTABLE_BUF_INIT, buf = REFTABLE_BUF_INIT;
 
 	REFTABLE_CALLOC_ARRAY(block.data, block_size);
-	check(block.data != NULL);
+	cl_assert(block.data != NULL);
 	block.len = block_size;
 	block_source_from_buf(&block.source, &buf);
 	ret = block_writer_init(&bw, BLOCK_TYPE_INDEX, block.data, block_size,
 				header_off, hash_size(REFTABLE_HASH_SHA1));
-	check(!ret);
+	cl_assert(ret == 0);
 
 	for (i = 0; i < N; i++) {
 		char buf[128];
@@ -315,15 +315,15 @@ static void t_index_block_read_write(void)
 
 		reftable_buf_init(&recs[i].u.idx.last_key);
 		recs[i].type = BLOCK_TYPE_INDEX;
-		check(!reftable_buf_addstr(&recs[i].u.idx.last_key, buf));
+		cl_assert(reftable_buf_addstr(&recs[i].u.idx.last_key, buf) == 0);
 		recs[i].u.idx.offset = i;
 
 		ret = block_writer_add(&bw, &recs[i]);
-		check_int(ret, ==, 0);
+		cl_assert_equal_i(ret, 0);
 	}
 
 	ret = block_writer_finish(&bw);
-	check_int(ret, >, 0);
+	cl_assert(ret > 0);
 
 	block_writer_release(&bw);
 
@@ -333,12 +333,12 @@ static void t_index_block_read_write(void)
 
 	for (i = 0; ; i++) {
 		ret = block_iter_next(&it, &rec);
-		check_int(ret, >=, 0);
+		cl_assert(ret >= 0);
 		if (ret > 0) {
-			check_int(i, ==, N);
+			cl_assert_equal_i(i, N);
 			break;
 		}
-		check(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1));
+		cl_assert_equal_i(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1), 1);
 	}
 
 	for (i = 0; i < N; i++) {
@@ -346,20 +346,20 @@ static void t_index_block_read_write(void)
 		reftable_record_key(&recs[i], &want);
 
 		ret = block_iter_seek_key(&it, &br, &want);
-		check_int(ret, ==, 0);
+		cl_assert_equal_i(ret, 0);
 
 		ret = block_iter_next(&it, &rec);
-		check_int(ret, ==, 0);
+		cl_assert_equal_i(ret, 0);
 
-		check(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1));
+		cl_assert_equal_i(reftable_record_equal(&recs[i], &rec, REFTABLE_HASH_SIZE_SHA1), 1);
 
 		want.len--;
 		ret = block_iter_seek_key(&it, &br, &want);
-		check_int(ret, ==, 0);
+		cl_assert_equal_i(ret, 0);
 
 		ret = block_iter_next(&it, &rec);
-		check_int(ret, ==, 0);
-		check(reftable_record_equal(&recs[10 * (i / 10)], &rec, REFTABLE_HASH_SIZE_SHA1));
+		cl_assert_equal_i(ret, 0);
+		cl_assert_equal_i(reftable_record_equal(&recs[10 * (i / 10)], &rec, REFTABLE_HASH_SIZE_SHA1), 1);
 	}
 
 	block_reader_release(&br);
@@ -370,14 +370,4 @@ static void t_index_block_read_write(void)
 	reftable_buf_release(&buf);
 	for (i = 0; i < N; i++)
 		reftable_record_release(&recs[i]);
-}
-
-int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
-{
-	TEST(t_index_block_read_write(), "read-write operations on index blocks work");
-	TEST(t_log_block_read_write(), "read-write operations on log blocks work");
-	TEST(t_obj_block_read_write(), "read-write operations on obj blocks work");
-	TEST(t_ref_block_read_write(), "read-write operations on ref blocks work");
-
-	return test_done();
 }
