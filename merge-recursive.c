@@ -1197,7 +1197,7 @@ static void print_commit(struct repository *repo, struct commit *commit)
 	struct pretty_print_context ctx = {0};
 	ctx.date_mode.type = DATE_NORMAL;
 	/* FIXME: Merge this with output_commit_title() */
-	assert(!merge_remote_util(commit));
+	ASSERT(!merge_remote_util(commit));
 	repo_format_commit_message(repo, commit, " %h: %m %s", &sb, &ctx);
 	fprintf(stderr, "%s\n", sb.buf);
 	strbuf_release(&sb);
