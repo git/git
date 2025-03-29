@@ -65,7 +65,7 @@ static void send_info(struct repository *r, struct packet_writer *writer,
 
 		if (info->size) {
 			if (oid_object_info(r, &oid, &object_size) < 0) {
-				strbuf_addstr(&send_buffer, " ");
+				strbuf_addch(&send_buffer, ' ');
 			} else {
 				strbuf_addf(&send_buffer, " %lu", object_size);
 			}
