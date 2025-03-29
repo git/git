@@ -339,7 +339,7 @@ proc parseviewrevs {view revs} {
     } elseif {[lsearch -exact $revs --all] >= 0} {
         lappend revs HEAD
     }
-    if {[catch {set ids [eval exec git rev-parse $revs]} err]} {
+    if {[catch {set ids [safe_exec [concat git rev-parse $revs]]} err]} {
         # we get stdout followed by stderr in $err
         # for an unknown rev, git rev-parse echoes it and then errors out
         set errlines [split $err "\n"]
@@ -9494,7 +9494,7 @@ proc copyreference {} {
     if {$autosellen < 40} {
         lappend cmd --abbrev=$autosellen
     }
-    set reference [eval exec $cmd $rowmenuid]
+    set reference [safe_exec [concat $cmd $rowmenuid]]
 
     clipboard clear
     clipboard append $reference
@@ -9648,7 +9648,7 @@ proc mkbrgo {top} {
     nowbusy newbranch
     update
     if {[catch {
-        eval exec git branch $cmdargs
+        safe_exec [concat git branch $cmdargs]
     } err]} {
         notbusy newbranch
         error_popup $err
@@ -9689,7 +9689,7 @@ proc mvbrgo {top prevname} {
     nowbusy renamebranch
     update
     if {[catch {
-        eval exec git branch $cmdargs
+        safe_exec [concat git branch $cmdargs]
     } err]} {
         notbusy renamebranch
         error_popup $err
@@ -12279,7 +12279,7 @@ proc cache_gitattr {attr pathlist} {
     while {$newlist ne {}} {
         set head [lrange $newlist 0 [expr {$lim - 1}]]
         set newlist [lrange $newlist $lim end]
-        if {![catch {set rlist [eval exec git check-attr $attr -- $head]}]} {
+        if {![catch {set rlist [safe_exec [concat git check-attr $attr -- $head]]}]} {
             foreach row [split $rlist "\n"] {
                 if {[regexp "(.*): $attr: (.*)" $row m path value]} {
                     if {[string index $path 0] eq "\""} {
@@ -12581,7 +12581,7 @@ if {$selecthead eq "HEAD"} {
 if {$i >= [llength $argv] && $revtreeargs ne {}} {
     # no -- on command line, but some arguments (other than --argscmd)
     if {[catch {
-        set f [eval exec git rev-parse --no-revs --no-flags $revtreeargs]
+        set f [safe_exec [concat git rev-parse --no-revs --no-flags $revtreeargs]]
         set cmdline_files [split $f "\n"]
         set n [llength $cmdline_files]
         set revtreeargs [lrange $revtreeargs 0 end-$n]
