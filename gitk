@@ -40,6 +40,15 @@ proc safe_exec {cmd} {
     eval exec [make_arglist_safe $cmd]
 }
 
+# executes one command with redirections
+# no pipelines are possible
+# cmd is a list that specifies the command and its arguments
+# redir is a list that specifies redirections (output, background)
+# calls `exec` and returns its value
+proc safe_exec_redirect {cmd redir} {
+    eval exec [make_arglist_safe $cmd] $redir
+}
+
 proc safe_open_file {filename flags} {
     # a file name starting with "|" would attempt to run a process
     # but such a file name must be treated as a relative path
@@ -2135,7 +2144,7 @@ proc makewindow {} {
             {mc "Reread re&ferences" command rereadrefs}
             {mc "&List references" command showrefs -accelerator F2}
             {xx "" separator}
-            {mc "Start git &gui" command {exec git gui &}}
+            {mc "Start git &gui" command {safe_exec_redirect [list git gui] [list &]}}
             {xx "" separator}
             {mc "&Quit" command doquit -accelerator Meta1-Q}
         }}
@@ -3655,7 +3664,7 @@ proc gitknewtmpdir {} {
 proc save_file_from_commit {filename output what} {
     global nullfile
 
-    if {[catch {exec git show $filename -- > $output} err]} {
+    if {[catch {safe_exec_redirect [list git show $filename --] [list > $output]} err]} {
         if {[string match "fatal: bad revision *" $err]} {
             return $nullfile
         }
@@ -3884,7 +3893,7 @@ proc external_blame {parent_idx {line {}}} {
     # being given an absolute path...
     set f [make_relative $f]
     lappend cmdline $base_commit $f
-    if {[catch {eval exec $cmdline &} err]} {
+    if {[catch {safe_exec_redirect $cmdline [list &]} err]} {
         error_popup "[mc "git gui blame: command failed:"] $err"
     }
 }
@@ -7193,8 +7202,8 @@ proc browseweb {url} {
     global web_browser
 
     if {$web_browser eq {}} return
-    # Use eval here in case $web_browser is a command plus some arguments
-    if {[catch {eval exec $web_browser [list $url] &} err]} {
+    # Use concat here in case $web_browser is a command plus some arguments
+    if {[catch {safe_exec_redirect [concat $web_browser [list $url]] [list &]} err]} {
         error_popup "[mc "Error starting web browser:"] $err"
     }
 }
@@ -9207,8 +9216,8 @@ proc diffcommits {a b} {
     set fna [file join $tmpdir "commit-[string range $a 0 7]"]
     set fnb [file join $tmpdir "commit-[string range $b 0 7]"]
     if {[catch {
-        exec git diff-tree -p --pretty $a >$fna
-        exec git diff-tree -p --pretty $b >$fnb
+        safe_exec_redirect [list git diff-tree -p --pretty $a] [list >$fna]
+        safe_exec_redirect [list git diff-tree -p --pretty $b] [list >$fnb]
     } err]} {
         error_popup [mc "Error writing commit to file: %s" $err]
         return
@@ -9730,7 +9739,7 @@ proc exec_citool {tool_args {baseid {}}} {
         }
     }
 
-    eval exec git citool $tool_args &
+    safe_exec_redirect [concat git citool $tool_args] [list &]
 
     array unset env GIT_AUTHOR_*
     array set env $save_env
