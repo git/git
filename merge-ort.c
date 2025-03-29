@@ -1517,8 +1517,8 @@ static int handle_deferred_entries(struct merge_options *opt,
 		struct strintmap copy;
 
 		/* Loop over the set of paths we need to know rename info for */
-		strset_for_each_entry(&renames->relevant_sources[side],
-				      &iter, entry) {
+		strintmap_for_each_entry(&renames->relevant_sources[side],
+					 &iter, entry) {
 			char *rename_target, *dir, *dir_marker;
 			struct strmap_entry *e;
 
@@ -3430,9 +3430,9 @@ static int collect_renames(struct merge_options *opt,
 skip_directory_renames:
 		/*
 		 * p->score comes back from diffcore_rename_extended() with
-		 * the similarity of the renamed file.  The similarity is
-		 * was used to determine that the two files were related
-		 * and are a rename, which we have already used, but beyond
+		 * the similarity of the renamed file.  The similarity was
+		 * used to determine that the two files were related and
+		 * are a rename, which we have already used, but beyond
 		 * that we have no use for the similarity.  So p->score is
 		 * now irrelevant.  However, process_renames() will need to
 		 * know which side of the merge this rename was associated
