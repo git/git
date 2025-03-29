@@ -43,7 +43,7 @@ proc safe_exec {cmd} {
 # executes one command with redirections
 # no pipelines are possible
 # cmd is a list that specifies the command and its arguments
-# redir is a list that specifies redirections (output, background)
+# redir is a list that specifies redirections (output, background, constant(!) commands)
 # calls `exec` and returns its value
 proc safe_exec_redirect {cmd redir} {
     eval exec [make_arglist_safe $cmd] $redir
@@ -9120,7 +9120,7 @@ proc getpatchid {id} {
     if {![info exists patchids($id)]} {
         set cmd [diffcmd [list $id] {-p --root}]
         if {[catch {
-            set x [eval exec $cmd | git patch-id]
+            set x [safe_exec_redirect $cmd [list | git patch-id]]
             set patchids($id) [lindex $x 0]
         }]} {
             set patchids($id) "error"
