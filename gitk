@@ -498,9 +498,9 @@ proc start_rev_list {view} {
     }
 
     if {[catch {
-        set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
-                        --parents --boundary $args --stdin \
-                        [list "<<[join [concat $revs "--" $files] "\n"]"]] r]
+        set fd [safe_open_command_redirect [concat git log --no-color -z --pretty=raw $show_notes \
+                        --parents --boundary $args --stdin] \
+                        [list "<<[join [concat $revs "--" $files] "\n"]"]]
     } err]} {
         error_popup "[mc "Error executing git log:"] $err"
         return 0
@@ -651,9 +651,9 @@ proc updatecommits {} {
         set args $vorigargs($view)
     }
     if {[catch {
-        set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
-                        --parents --boundary $args --stdin \
-                        [list "<<[join [concat $revs "--" $vfilelimit($view)] "\n"]"]] r]
+        set fd [safe_open_command_redirect [concat git log --no-color -z --pretty=raw $show_notes \
+                        --parents --boundary $args --stdin] \
+                        [list "<<[join [concat $revs "--" $vfilelimit($view)] "\n"]"]]
     } err]} {
         error_popup "[mc "Error executing git log:"] $err"
         return
@@ -10322,10 +10322,11 @@ proc getallcommits {} {
     if {$ids ne {}} {
         if {$ids eq "--all"} {
             set cmd [concat $cmd "--all"]
+            set fd [safe_open_command $cmd]
         } else {
-            set cmd [concat $cmd --stdin [list "<<[join $ids "\n"]"]]
+            set cmd [concat $cmd --stdin]
+            set fd [safe_open_command_redirect $cmd [list "<<[join $ids "\n"]"]]
         }
-        set fd [open $cmd r]
         fconfigure $fd -blocking 0
         incr allcommits
         nowbusy allcommits
