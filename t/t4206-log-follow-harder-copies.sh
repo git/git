@@ -54,4 +54,36 @@ test_expect_success 'validate the output.' '
 	compare_diff_patch current expected
 '
 
+test_expect_success 'log --follow -B does not BUG' '
+	git switch --orphan break_and_follow_are_icky_so_use_both &&
+
+	test_seq 1 127 >numbers &&
+	git add numbers &&
+	git commit -m "numbers" &&
+
+	printf "%s\n" A B C D E F G H I J K L M N O Q R S T U V W X Y Z >pool &&
+	echo changed >numbers &&
+	git add pool numbers &&
+	git commit -m "pool" &&
+
+	git log -1 -B --raw --follow -- "p*"
+'
+
+test_expect_success 'log --follow -B does not die or use uninitialized memory' '
+	printf "%s\n" A B C D E F G H I J K L M N O P Q R S T U V W X Y Z >z &&
+	git add z &&
+	git commit -m "Initial" &&
+
+	test_seq 1 130 >z &&
+	echo lame >somefile &&
+	git add z somefile &&
+	git commit -m "Rewrite z, introduce lame somefile" &&
+
+	echo Content >somefile &&
+	git add somefile &&
+	git commit -m "Rewrite somefile" &&
+
+	git log -B --follow somefile
+'
+
 test_done
