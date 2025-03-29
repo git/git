@@ -147,25 +147,6 @@ char *reftable_buf_detach(struct reftable_buf *buf)
 	return result;
 }
 
-void put_be24(uint8_t *out, uint32_t i)
-{
-	out[0] = (uint8_t)((i >> 16) & 0xff);
-	out[1] = (uint8_t)((i >> 8) & 0xff);
-	out[2] = (uint8_t)(i & 0xff);
-}
-
-uint32_t get_be24(uint8_t *in)
-{
-	return (uint32_t)(in[0]) << 16 | (uint32_t)(in[1]) << 8 |
-	       (uint32_t)(in[2]);
-}
-
-void put_be16(uint8_t *out, uint16_t i)
-{
-	out[0] = (uint8_t)((i >> 8) & 0xff);
-	out[1] = (uint8_t)(i & 0xff);
-}
-
 size_t binsearch(size_t sz, int (*f)(size_t k, void *args), void *args)
 {
 	size_t lo = 0;
