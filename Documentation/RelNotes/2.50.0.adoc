@@ -17,6 +17,26 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git fsck" becomes more careful when checking the refs.
 
+ * "git fast-export | git fast-import" learns to deal with commit and
+   tag objects with embedded signatures a bit better.
+
+ * The code paths to check whether a refname X is available (by seeing
+   if another ref X/Y exists, etc.) have been optimized.
+
+ * First step of deprecating and removing merge-recursive.
+
+ * In protocol v2 where the refs advertisement is constrained, we try
+   to tell the server side not to limit the advertisement when there
+   is no specific need to, which has been the source of confusion and
+   recent bugs.  Revamp the logic to simplify.
+
+ * Update meson based build procedure for breaking changes support.
+
+ * Enable -Wunreachable-code for developer builds.
+
+ * Build update.
+   (merge 7c8cd9c158 es/meson-building-docs-requires-perl later to maint).
+
 
 Fixes since v2.49
 -----------------
@@ -30,5 +50,19 @@ Fixes since v2.49
    when certain renames are involved.
    (merge 3adba40858 en/merge-process-renames-crash-fix later to maint).
 
+ * Certain "cruft" objects would have never been refreshed when there
+   are multiple cruft packs in the repository, which has been
+   corrected.
+   (merge 08f612ba70 tb/multi-cruft-pack-refresh-fix later to maint).
+
+ * The xdiff code on 32-bit platform misbehaved when an insanely large
+   context size is given, which has been corrected.
+   (merge d39e28e68c rs/xdiff-context-length-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
+   (merge 2bfd3b3685 ab/decorate-code-cleanup later to maint).
+   (merge 5337daddc7 am/dir-dedup-decl-of-repository later to maint).
+   (merge 554051d691 en/diff-rename-follow-fix later to maint).
+   (merge a18c18b470 en/random-cleanups later to maint).
+   (merge 5af21c9acb hj/doc-rev-list-ancestry-fix later to maint).
