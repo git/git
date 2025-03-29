@@ -61,7 +61,7 @@ int put_var_int(struct string_view *dest, uint64_t value)
 	while (value >>= 7)
 		varint[--pos] = 0x80 | (--value & 0x7f);
 	if (dest->len < sizeof(varint) - pos)
-		return -1;
+		return REFTABLE_ENTRY_TOO_BIG_ERROR;
 	memcpy(dest->buf, varint + pos, sizeof(varint) - pos);
 	return sizeof(varint) - pos;
 }
@@ -129,10 +129,10 @@ static int encode_string(const char *str, struct string_view s)
 	size_t l = strlen(str);
 	int n = put_var_int(&s, l);
 	if (n < 0)
-		return -1;
+		return n;
 	string_view_consume(&s, n);
 	if (s.len < l)
-		return -1;
+		return REFTABLE_ENTRY_TOO_BIG_ERROR;
 	memcpy(s.buf, str, l);
 	string_view_consume(&s, l);
 
@@ -148,18 +148,18 @@ int reftable_encode_key(int *restart, struct string_view dest,
 	uint64_t suffix_len = key.len - prefix_len;
 	int n = put_var_int(&dest, prefix_len);
 	if (n < 0)
-		return -1;
+		return n;
 	string_view_consume(&dest, n);
 
 	*restart = (prefix_len == 0);
 
 	n = put_var_int(&dest, suffix_len << 3 | (uint64_t)extra);
 	if (n < 0)
-		return -1;
+		return n;
 	string_view_consume(&dest, n);
 
 	if (dest.len < suffix_len)
-		return -1;
+		return REFTABLE_ENTRY_TOO_BIG_ERROR;
 	memcpy(dest.buf, key.buf + prefix_len, suffix_len);
 	string_view_consume(&dest, suffix_len);
 
@@ -324,30 +324,27 @@ static int reftable_ref_record_encode(const void *rec, struct string_view s,
 	struct string_view start = s;
 	int n = put_var_int(&s, r->update_index);
 	if (n < 0)
-		return -1;
+		return n;
 	string_view_consume(&s, n);
 
 	switch (r->value_type) {
 	case REFTABLE_REF_SYMREF:
 		n = encode_string(r->value.symref, s);
-		if (n < 0) {
-			return -1;
-		}
+		if (n < 0)
+			return n;
 		string_view_consume(&s, n);
 		break;
 	case REFTABLE_REF_VAL2:
-		if (s.len < 2 * hash_size) {
-			return -1;
-		}
+		if (s.len < 2 * hash_size)
+			return REFTABLE_ENTRY_TOO_BIG_ERROR;
 		memcpy(s.buf, r->value.val2.value, hash_size);
 		string_view_consume(&s, hash_size);
 		memcpy(s.buf, r->value.val2.target_value, hash_size);
 		string_view_consume(&s, hash_size);
 		break;
 	case REFTABLE_REF_VAL1:
-		if (s.len < hash_size) {
-			return -1;
-		}
+		if (s.len < hash_size)
+			return REFTABLE_ENTRY_TOO_BIG_ERROR;
 		memcpy(s.buf, r->value.val1, hash_size);
 		string_view_consume(&s, hash_size);
 		break;
@@ -531,24 +528,22 @@ static int reftable_obj_record_encode(const void *rec, struct string_view s,
 	uint64_t last = 0;
 	if (r->offset_len == 0 || r->offset_len >= 8) {
 		n = put_var_int(&s, r->offset_len);
-		if (n < 0) {
-			return -1;
-		}
+		if (n < 0)
+			return n;
 		string_view_consume(&s, n);
 	}
 	if (r->offset_len == 0)
 		return start.len - s.len;
 	n = put_var_int(&s, r->offsets[0]);
 	if (n < 0)
-		return -1;
+		return n;
 	string_view_consume(&s, n);
 
 	last = r->offsets[0];
 	for (i = 1; i < r->offset_len; i++) {
 		int n = put_var_int(&s, r->offsets[i] - last);
-		if (n < 0) {
-			return -1;
-		}
+		if (n < 0)
+			return n;
 		string_view_consume(&s, n);
 		last = r->offsets[i];
 	}
@@ -783,7 +778,7 @@ static int reftable_log_record_encode(const void *rec, struct string_view s,
 		return 0;
 
 	if (s.len < 2 * hash_size)
-		return -1;
+		return REFTABLE_ENTRY_TOO_BIG_ERROR;
 
 	memcpy(s.buf, r->value.update.old_hash, hash_size);
 	memcpy(s.buf + hash_size, r->value.update.new_hash, hash_size);
@@ -791,22 +786,22 @@ static int reftable_log_record_encode(const void *rec, struct string_view s,
 
 	n = encode_string(r->value.update.name ? r->value.update.name : "", s);
 	if (n < 0)
-		return -1;
+		return n;
 	string_view_consume(&s, n);
 
 	n = encode_string(r->value.update.email ? r->value.update.email : "",
 			  s);
 	if (n < 0)
-		return -1;
+		return n;
 	string_view_consume(&s, n);
 
 	n = put_var_int(&s, r->value.update.time);
 	if (n < 0)
-		return -1;
+		return n;
 	string_view_consume(&s, n);
 
 	if (s.len < 2)
-		return -1;
+		return REFTABLE_ENTRY_TOO_BIG_ERROR;
 
 	put_be16(s.buf, r->value.update.tz_offset);
 	string_view_consume(&s, 2);
@@ -814,7 +809,7 @@ static int reftable_log_record_encode(const void *rec, struct string_view s,
 	n = encode_string(
 		r->value.update.message ? r->value.update.message : "", s);
 	if (n < 0)
-		return -1;
+		return n;
 	string_view_consume(&s, n);
 
 	return start.len - s.len;
