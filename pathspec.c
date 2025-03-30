@@ -1,5 +1,4 @@
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "abspath.h"
@@ -35,7 +34,7 @@ void add_pathspec_matches_against_index(const struct pathspec *pathspec,
 					char *seen,
 					enum ps_skip_worktree_action sw_action)
 {
-	int num_unmatched = 0, i;
+	int num_unmatched = 0;
 
 	/*
 	 * Since we are walking the index as if we were walking the directory,
@@ -43,12 +42,12 @@ void add_pathspec_matches_against_index(const struct pathspec *pathspec,
 	 * mistakenly think that the user gave a pathspec that did not match
 	 * anything.
 	 */
-	for (i = 0; i < pathspec->nr; i++)
+	for (int i = 0; i < pathspec->nr; i++)
 		if (!seen[i])
 			num_unmatched++;
 	if (!num_unmatched)
 		return;
-	for (i = 0; i < istate->cache_nr; i++) {
+	for (unsigned int i = 0; i < istate->cache_nr; i++) {
 		const struct cache_entry *ce = istate->cache[i];
 		if (sw_action == PS_IGNORE_SKIP_WORKTREE &&
 		    (ce_skip_worktree(ce) || !path_in_sparse_checkout(ce->name, istate)))
@@ -78,7 +77,7 @@ char *find_pathspecs_matching_skip_worktree(const struct pathspec *pathspec)
 {
 	struct index_state *istate = the_repository->index;
 	char *seen = xcalloc(pathspec->nr, 1);
-	int i;
+	unsigned int i;
 
 	for (i = 0; i < istate->cache_nr; i++) {
 		struct cache_entry *ce = istate->cache[i];
@@ -130,7 +129,7 @@ static void prefix_magic(struct strbuf *sb, int prefixlen,
 	if (element[1] != '(') {
 		/* Process an element in shorthand form (e.g. ":!/<match>") */
 		strbuf_addstr(sb, ":(");
-		for (int i = 0; i < ARRAY_SIZE(pathspec_magic); i++) {
+		for (unsigned int i = 0; i < ARRAY_SIZE(pathspec_magic); i++) {
 			if ((magic & pathspec_magic[i].bit) &&
 			    pathspec_magic[i].mnemonic) {
 				if (sb->buf[sb->len - 1] != '(')
@@ -341,7 +340,7 @@ static const char *parse_long_magic(unsigned *magic, int *prefix_len,
 
 	for (pos = elem + 2; *pos && *pos != ')'; pos = nextat) {
 		size_t len = strcspn_escaped(pos, ",)");
-		int i;
+		unsigned int i;
 
 		if (pos[len] == ',')
 			nextat = pos + len + 1; /* handle ',' */
@@ -354,7 +353,7 @@ static const char *parse_long_magic(unsigned *magic, int *prefix_len,
 		if (starts_with(pos, "prefix:")) {
 			char *endptr;
 			*prefix_len = strtol(pos + 7, &endptr, 10);
-			if (endptr - pos != len)
+			if ((size_t)(endptr - pos) != len)
 				die(_("invalid parameter for pathspec magic 'prefix'"));
 			continue;
 		}
@@ -400,7 +399,7 @@ static const char *parse_short_magic(unsigned *magic, const char *elem)
 
 	for (pos = elem + 1; *pos && *pos != ':'; pos++) {
 		char ch = *pos;
-		int i;
+		unsigned int i;
 
 		/* Special case alias for '!' */
 		if (ch == '^') {
@@ -564,7 +563,7 @@ static int pathspec_item_cmp(const void *a_, const void *b_)
 
 void pathspec_magic_names(unsigned magic, struct strbuf *out)
 {
-	int i;
+	unsigned int i;
 	for (i = 0; i < ARRAY_SIZE(pathspec_magic); i++) {
 		const struct pathspec_magic *m = pathspec_magic + i;
 		if (!(magic & m->bit))
@@ -803,8 +802,8 @@ int match_pathspec_attrs(struct index_state *istate,
 int pathspec_needs_expanded_index(struct index_state *istate,
 				  const struct pathspec *pathspec)
 {
-	unsigned int i, pos;
-	int res = 0;
+	unsigned int pos;
+	int i, res = 0;
 	char *skip_worktree_seen = NULL;
 
 	/*
@@ -845,7 +844,8 @@ int pathspec_needs_expanded_index(struct index_state *istate,
 			 * - not-in-cone/bar*: may need expanded index
 			 * - **.c: may need expanded index
 			 */
-			if (strspn(item.original + item.nowildcard_len, "*") == item.len - item.nowildcard_len &&
+			if (strspn(item.original + item.nowildcard_len, "*") ==
+				    (unsigned int)(item.len - item.nowildcard_len) &&
 			    path_in_cone_mode_sparse_checkout(item.original, istate))
 				continue;
 
@@ -860,8 +860,10 @@ int pathspec_needs_expanded_index(struct index_state *istate,
 				 * directory name and the sparse directory is the first
 				 * component of the pathspec, need to expand the index.
 				 */
-				if (item.nowildcard_len > ce_namelen(ce) &&
-				    !strncmp(item.original, ce->name, ce_namelen(ce))) {
+				if ((unsigned int)item.nowildcard_len >
+					    ce_namelen(ce) &&
+				    !strncmp(item.original, ce->name,
+					     ce_namelen(ce))) {
 					res = 1;
 					break;
 				}
