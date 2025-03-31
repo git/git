@@ -18,7 +18,7 @@
  * allocation overhead.
  */
 struct block_writer {
-	z_stream *zstream;
+	struct z_stream_s *zstream;
 	unsigned char *compressed;
 	size_t compressed_cap;
 
@@ -62,8 +62,6 @@ int block_writer_finish(struct block_writer *w);
 /* clears out internally allocated block_writer members. */
 void block_writer_release(struct block_writer *bw);
 
-struct z_stream;
-
 /*
  * A block part of a reftable. Contains records as well as some metadata
  * describing them.
@@ -78,7 +76,7 @@ struct reftable_block {
 	uint32_t hash_size;
 
 	/* Uncompressed data for log entries. */
-	z_stream *zstream;
+	struct z_stream_s *zstream;
 	unsigned char *uncompressed_data;
 	size_t uncompressed_cap;
 
