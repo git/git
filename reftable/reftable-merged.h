@@ -26,14 +26,14 @@
 /* A merged table is implements seeking/iterating over a stack of tables. */
 struct reftable_merged_table;
 
-struct reftable_reader;
+struct reftable_table;
 
 /*
- * reftable_merged_table_new creates a new merged table. The readers must be
+ * reftable_merged_table_new creates a new merged table. The tables must be
  * kept alive as long as the merged table is still in use.
  */
 int reftable_merged_table_new(struct reftable_merged_table **dest,
-			      struct reftable_reader **readers, size_t n,
+			      struct reftable_table **tables, size_t n,
 			      enum reftable_hash hash_id);
 
 /* Initialize a merged table iterator for reading refs. */

@@ -22,8 +22,8 @@ struct reftable_stack {
 
 	struct reftable_write_options opts;
 
-	struct reftable_reader **readers;
-	size_t readers_len;
+	struct reftable_table **tables;
+	size_t tables_len;
 	struct reftable_merged_table *merged;
 	struct reftable_compaction_stats stats;
 };

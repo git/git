@@ -12,8 +12,8 @@
 
 #include "block.h"
 #include "constants.h"
-#include "reader.h"
 #include "reftable-error.h"
+#include "table.h"
 
 int iterator_seek(struct reftable_iterator *it, struct reftable_record *want)
 {
@@ -130,8 +130,8 @@ static int indexed_table_ref_iter_next_block(struct indexed_table_ref_iter *it)
 	reftable_block_done(&it->block_reader.block);
 
 	off = it->offsets[it->offset_idx++];
-	err = reader_init_block_reader(it->r, &it->block_reader, off,
-				       BLOCK_TYPE_REF);
+	err = table_init_block_reader(it->table, &it->block_reader, off,
+				      BLOCK_TYPE_REF);
 	if (err < 0) {
 		return err;
 	}
@@ -181,7 +181,7 @@ static int indexed_table_ref_iter_next(void *p, struct reftable_record *rec)
 }
 
 int indexed_table_ref_iter_new(struct indexed_table_ref_iter **dest,
-			       struct reftable_reader *r, uint8_t *oid,
+			       struct reftable_table *t, uint8_t *oid,
 			       int oid_len, uint64_t *offsets, int offset_len)
 {
 	struct indexed_table_ref_iter empty = INDEXED_TABLE_REF_ITER_INIT;
@@ -195,7 +195,7 @@ int indexed_table_ref_iter_new(struct indexed_table_ref_iter **dest,
 	}
 
 	*itr = empty;
-	itr->r = r;
+	itr->table = t;
 
 	err = reftable_buf_add(&itr->oid, oid, oid_len);
 	if (err < 0)
