@@ -109,23 +109,11 @@ subtree[=<path>];;
 	two trees to match.
 
 recursive::
-	This can only resolve two heads using a 3-way merge
-	algorithm.  When there is more than one common
-	ancestor that can be used for 3-way merge, it creates a
-	merged tree of the common ancestors and uses that as
-	the reference tree for the 3-way merge.  This has been
-	reported to result in fewer merge conflicts without
-	causing mismerges by tests done on actual merge commits
-	taken from Linux 2.6 kernel development history.
-	Additionally this can detect and handle merges involving
-	renames.  It does not make use of detected copies.  This was
-	the default strategy for resolving two heads from Git v0.99.9k
-	until v2.33.0.
-+
-For a path that is a submodule, the same caution as 'ort' applies to this
-strategy.
-+
-The 'recursive' strategy takes the same options as 'ort'.
+	This is now a synonym for `ort`.  It was an alternative
+	implementation until v2.49.0, but was redirected to mean `ort`
+	in v2.50.0.  The previous recursive strategy was the default
+	strategy for resolving two heads from Git v0.99.9k until
+	v2.33.0.
 
 resolve::
 	This can only resolve two heads (i.e. the current branch
@@ -146,7 +134,7 @@ ours::
 	ignoring all changes from all other branches.  It is meant to
 	be used to supersede old development history of side
 	branches.  Note that this is different from the -Xours option to
-	the 'recursive' merge strategy.
+	the 'ort' merge strategy.
 
 subtree::
 	This is a modified `ort` strategy. When merging trees A and

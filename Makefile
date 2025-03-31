@@ -1069,7 +1069,6 @@ LIB_OBJS += merge-blobs.o
 LIB_OBJS += merge-ll.o
 LIB_OBJS += merge-ort.o
 LIB_OBJS += merge-ort-wrappers.o
-LIB_OBJS += merge-recursive.o
 LIB_OBJS += merge.o
 LIB_OBJS += midx.o
 LIB_OBJS += midx-write.o
