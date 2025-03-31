@@ -1686,7 +1686,7 @@ bin_wrappers += executable('scalar',
   install_dir: get_option('libexecdir') / 'git-core',
 )
 
-if get_option('curl').enabled()
+if curl.found()
   libgit_curl = declare_dependency(
     sources: [
       'http.c',
