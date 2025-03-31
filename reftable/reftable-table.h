@@ -20,8 +20,38 @@
  * reftable_merged_table and struct reftable_stack.
  */
 
+/* Metadata for a block type. */
+struct reftable_table_offsets {
+	int is_present;
+	uint64_t offset;
+	uint64_t index_offset;
+};
+
 /* The table struct is a handle to an open reftable file. */
-struct reftable_table;
+struct reftable_table {
+	/* for convenience, associate a name with the instance. */
+	char *name;
+	struct reftable_block_source source;
+
+	/* Size of the file, excluding the footer. */
+	uint64_t size;
+
+	/* The hash function used for ref records. */
+	enum reftable_hash hash_id;
+
+	uint32_t block_size;
+	uint64_t min_update_index;
+	uint64_t max_update_index;
+	/* Length of the OID keys in the 'o' section */
+	int object_id_len;
+	int version;
+
+	struct reftable_table_offsets ref_offsets;
+	struct reftable_table_offsets obj_offsets;
+	struct reftable_table_offsets log_offsets;
+
+	uint64_t refcount;
+};
 
 /* reftable_table_new opens a reftable for reading. If successful,
  * returns 0 code and sets pp. The name is used for creating a
