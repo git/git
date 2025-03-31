@@ -301,13 +301,13 @@ out:
 int reftable_merged_table_init_ref_iterator(struct reftable_merged_table *mt,
 					    struct reftable_iterator *it)
 {
-	return merged_table_init_iter(mt, it, BLOCK_TYPE_REF);
+	return merged_table_init_iter(mt, it, REFTABLE_BLOCK_TYPE_REF);
 }
 
 int reftable_merged_table_init_log_iterator(struct reftable_merged_table *mt,
 					    struct reftable_iterator *it)
 {
-	return merged_table_init_iter(mt, it, BLOCK_TYPE_LOG);
+	return merged_table_init_iter(mt, it, REFTABLE_BLOCK_TYPE_LOG);
 }
 
 enum reftable_hash reftable_merged_table_hash_id(struct reftable_merged_table *mt)

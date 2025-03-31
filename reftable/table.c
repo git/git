@@ -20,11 +20,11 @@ static struct reftable_table_offsets *
 table_offsets_for(struct reftable_table *t, uint8_t typ)
 {
 	switch (typ) {
-	case BLOCK_TYPE_REF:
+	case REFTABLE_BLOCK_TYPE_REF:
 		return &t->ref_offsets;
-	case BLOCK_TYPE_LOG:
+	case REFTABLE_BLOCK_TYPE_LOG:
 		return &t->log_offsets;
-	case BLOCK_TYPE_OBJ:
+	case REFTABLE_BLOCK_TYPE_OBJ:
 		return &t->obj_offsets;
 	}
 	abort();
@@ -112,9 +112,9 @@ static int parse_footer(struct reftable_table *t, uint8_t *footer,
 	}
 
 	first_block_typ = header[header_size(t->version)];
-	t->ref_offsets.is_present = (first_block_typ == BLOCK_TYPE_REF);
+	t->ref_offsets.is_present = (first_block_typ == REFTABLE_BLOCK_TYPE_REF);
 	t->ref_offsets.offset = 0;
-	t->log_offsets.is_present = (first_block_typ == BLOCK_TYPE_LOG ||
+	t->log_offsets.is_present = (first_block_typ == REFTABLE_BLOCK_TYPE_LOG ||
 				     t->log_offsets.offset > 0);
 	t->obj_offsets.is_present = t->obj_offsets.offset > 0;
 	if (t->obj_offsets.is_present && !t->object_id_len) {
@@ -150,7 +150,7 @@ static int table_iter_next_in_block(struct table_iter *ti,
 				    struct reftable_record *rec)
 {
 	int res = block_iter_next(&ti->bi, rec);
-	if (res == 0 && reftable_record_type(rec) == BLOCK_TYPE_REF) {
+	if (res == 0 && reftable_record_type(rec) == REFTABLE_BLOCK_TYPE_REF) {
 		rec->u.ref.update_index += ti->table->min_update_index;
 	}
 
@@ -177,7 +177,7 @@ int table_init_block(struct reftable_table *t, struct reftable_block *block,
 	if (err < 0)
 		goto done;
 
-	if (want_typ != BLOCK_TYPE_ANY && block->block_type != want_typ) {
+	if (want_typ != REFTABLE_BLOCK_TYPE_ANY && block->block_type != want_typ) {
 		err = 1;
 		goto done;
 	}
@@ -270,7 +270,7 @@ static int table_iter_seek_start(struct table_iter *ti, uint8_t typ, int index)
 		if (off == 0) {
 			return 1;
 		}
-		typ = BLOCK_TYPE_INDEX;
+		typ = REFTABLE_BLOCK_TYPE_INDEX;
 	}
 
 	return table_iter_seek_to(ti, off, typ);
@@ -366,10 +366,10 @@ static int table_iter_seek_indexed(struct table_iter *ti,
 				   struct reftable_record *rec)
 {
 	struct reftable_record want_index = {
-		.type = BLOCK_TYPE_INDEX, .u.idx = { .last_key = REFTABLE_BUF_INIT }
+		.type = REFTABLE_BLOCK_TYPE_INDEX, .u.idx = { .last_key = REFTABLE_BUF_INIT }
 	};
 	struct reftable_record index_result = {
-		.type = BLOCK_TYPE_INDEX,
+		.type = REFTABLE_BLOCK_TYPE_INDEX,
 		.u.idx = { .last_key = REFTABLE_BUF_INIT },
 	};
 	int err;
@@ -429,7 +429,7 @@ static int table_iter_seek_indexed(struct table_iter *ti,
 			break;
 		}
 
-		if (ti->typ != BLOCK_TYPE_INDEX) {
+		if (ti->typ != REFTABLE_BLOCK_TYPE_INDEX) {
 			err = REFTABLE_FORMAT_ERROR;
 			goto done;
 		}
@@ -517,13 +517,13 @@ int table_init_iter(struct reftable_table *t,
 int reftable_table_init_ref_iterator(struct reftable_table *t,
 				     struct reftable_iterator *it)
 {
-	return table_init_iter(t, it, BLOCK_TYPE_REF);
+	return table_init_iter(t, it, REFTABLE_BLOCK_TYPE_REF);
 }
 
 int reftable_table_init_log_iterator(struct reftable_table *t,
 				     struct reftable_iterator *it)
 {
-	return table_init_iter(t, it, BLOCK_TYPE_LOG);
+	return table_init_iter(t, it, REFTABLE_BLOCK_TYPE_LOG);
 }
 
 int reftable_table_new(struct reftable_table **out,
@@ -625,7 +625,7 @@ static int reftable_table_refs_for_indexed(struct reftable_table *t,
 					   uint8_t *oid)
 {
 	struct reftable_record want = {
-		.type = BLOCK_TYPE_OBJ,
+		.type = REFTABLE_BLOCK_TYPE_OBJ,
 		.u.obj = {
 			.hash_prefix = oid,
 			.hash_prefix_len = t->object_id_len,
@@ -633,14 +633,14 @@ static int reftable_table_refs_for_indexed(struct reftable_table *t,
 	};
 	struct reftable_iterator oit = { NULL };
 	struct reftable_record got = {
-		.type = BLOCK_TYPE_OBJ,
+		.type = REFTABLE_BLOCK_TYPE_OBJ,
 		.u.obj = { 0 },
 	};
 	int err = 0;
 	struct indexed_table_ref_iter *itr = NULL;
 
 	/* Look through the reverse index. */
-	err = table_init_iter(t, &oit, BLOCK_TYPE_OBJ);
+	err = table_init_iter(t, &oit, REFTABLE_BLOCK_TYPE_OBJ);
 	if (err < 0)
 		goto done;
 
@@ -692,7 +692,7 @@ static int reftable_table_refs_for_unindexed(struct reftable_table *t,
 	}
 
 	table_iter_init(ti, t);
-	err = table_iter_seek_start(ti, BLOCK_TYPE_REF, 0);
+	err = table_iter_seek_start(ti, REFTABLE_BLOCK_TYPE_REF, 0);
 	if (err < 0)
 		goto out;
 
@@ -748,15 +748,15 @@ int reftable_table_print_blocks(const char *tablename)
 	} sections[] = {
 		{
 			.name = "ref",
-			.type = BLOCK_TYPE_REF,
+			.type = REFTABLE_BLOCK_TYPE_REF,
 		},
 		{
 			.name = "obj",
-			.type = BLOCK_TYPE_OBJ,
+			.type = REFTABLE_BLOCK_TYPE_OBJ,
 		},
 		{
 			.name = "log",
-			.type = BLOCK_TYPE_LOG,
+			.type = REFTABLE_BLOCK_TYPE_LOG,
 		},
 	};
 	struct reftable_block_source src = { 0 };
