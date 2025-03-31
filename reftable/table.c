@@ -10,34 +10,11 @@
 
 #include "system.h"
 #include "block.h"
+#include "blocksource.h"
 #include "constants.h"
 #include "iter.h"
 #include "record.h"
 #include "reftable-error.h"
-
-uint64_t block_source_size(struct reftable_block_source *source)
-{
-	return source->ops->size(source->arg);
-}
-
-ssize_t block_source_read_block(struct reftable_block_source *source,
-				struct reftable_block *dest, uint64_t off,
-				uint32_t size)
-{
-	ssize_t result = source->ops->read_block(source->arg, dest, off, size);
-	dest->source = *source;
-	return result;
-}
-
-void block_source_close(struct reftable_block_source *source)
-{
-	if (!source->ops) {
-		return;
-	}
-
-	source->ops->close(source->arg);
-	source->ops = NULL;
-}
 
 static struct reftable_table_offsets *
 table_offsets_for(struct reftable_table *t, uint8_t typ)
@@ -249,7 +226,7 @@ int table_init_block_reader(struct reftable_table *t, struct block_reader *br,
 	}
 
 	if (block_size > guess_block_size) {
-		reftable_block_done(&block);
+		block_source_return_block(&block);
 		err = table_get_block(t, &block, next_off, block_size);
 		if (err < 0) {
 			goto done;
@@ -259,7 +236,7 @@ int table_init_block_reader(struct reftable_table *t, struct block_reader *br,
 	err = block_reader_init(br, &block, header_off, t->block_size,
 				hash_size(t->hash_id));
 done:
-	reftable_block_done(&block);
+	block_source_return_block(&block);
 
 	return err;
 }
@@ -666,8 +643,8 @@ int reftable_table_new(struct reftable_table **out,
 	*out = t;
 
 done:
-	reftable_block_done(&footer);
-	reftable_block_done(&header);
+	block_source_return_block(&footer);
+	block_source_return_block(&header);
 	if (err) {
 		if (t)
 			reftable_free(t->name);

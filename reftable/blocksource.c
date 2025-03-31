@@ -13,6 +13,41 @@
 #include "reftable-blocksource.h"
 #include "reftable-error.h"
 
+void block_source_return_block(struct reftable_block *block)
+{
+	struct reftable_block_source source = block->source;
+	if (block && source.ops)
+		source.ops->return_block(source.arg, block);
+	block->data = NULL;
+	block->len = 0;
+	block->source.ops = NULL;
+	block->source.arg = NULL;
+}
+
+void block_source_close(struct reftable_block_source *source)
+{
+	if (!source->ops) {
+		return;
+	}
+
+	source->ops->close(source->arg);
+	source->ops = NULL;
+}
+
+ssize_t block_source_read_block(struct reftable_block_source *source,
+				struct reftable_block *dest, uint64_t off,
+				uint32_t size)
+{
+	ssize_t result = source->ops->read_block(source->arg, dest, off, size);
+	dest->source = *source;
+	return result;
+}
+
+uint64_t block_source_size(struct reftable_block_source *source)
+{
+	return source->ops->size(source->arg);
+}
+
 static void reftable_buf_return_block(void *b REFTABLE_UNUSED, struct reftable_block *dest)
 {
 	if (dest->len)

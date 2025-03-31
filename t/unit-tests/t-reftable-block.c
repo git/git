@@ -100,7 +100,7 @@ static void t_ref_block_read_write(void)
 	block_reader_release(&br);
 	block_iter_close(&it);
 	reftable_record_release(&rec);
-	reftable_block_done(&br.block);
+	block_source_return_block(&br.block);
 	reftable_buf_release(&want);
 	reftable_buf_release(&buf);
 	for (i = 0; i < N; i++)
@@ -190,7 +190,7 @@ static void t_log_block_read_write(void)
 	block_reader_release(&br);
 	block_iter_close(&it);
 	reftable_record_release(&rec);
-	reftable_block_done(&br.block);
+	block_source_return_block(&br.block);
 	reftable_buf_release(&want);
 	reftable_buf_release(&buf);
 	for (i = 0; i < N; i++)
@@ -273,7 +273,7 @@ static void t_obj_block_read_write(void)
 	block_reader_release(&br);
 	block_iter_close(&it);
 	reftable_record_release(&rec);
-	reftable_block_done(&br.block);
+	block_source_return_block(&br.block);
 	reftable_buf_release(&want);
 	reftable_buf_release(&buf);
 	for (i = 0; i < N; i++)
@@ -365,7 +365,7 @@ static void t_index_block_read_write(void)
 	block_reader_release(&br);
 	block_iter_close(&it);
 	reftable_record_release(&rec);
-	reftable_block_done(&br.block);
+	block_source_return_block(&br.block);
 	reftable_buf_release(&want);
 	reftable_buf_release(&buf);
 	for (i = 0; i < N; i++)

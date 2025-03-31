@@ -142,7 +142,4 @@ size_t header_size(int version);
 /* size of file footer, depending on format version */
 size_t footer_size(int version);
 
-/* returns a block to its source. */
-void reftable_block_done(struct reftable_block *ret);
-
 #endif
