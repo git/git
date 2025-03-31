@@ -79,10 +79,12 @@ struct block_reader {
 	unsigned char *uncompressed_data;
 	size_t uncompressed_cap;
 
-	/* size of the data, excluding restart data. */
-	uint32_t block_len;
-	uint8_t *restart_bytes;
+	/*
+	 * Restart point data. Restart points are located after the block's
+	 * record data.
+	 */
 	uint16_t restart_count;
+	uint32_t restart_off;
 
 	/* size of the data in the file. For log blocks, this is the compressed
 	 * size. */
