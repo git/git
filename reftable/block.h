@@ -67,9 +67,7 @@ void block_writer_release(struct block_writer *bw);
 struct block_iter {
 	/* offset within the block of the next entry to read. */
 	uint32_t next_off;
-	const unsigned char *block;
-	size_t block_len;
-	uint32_t hash_size;
+	const struct reftable_block *block;
 
 	/* key for last entry we read. */
 	struct reftable_buf last_key;
