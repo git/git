@@ -210,16 +210,16 @@ int block_writer_finish(struct block_writer *w)
 }
 
 static int read_block(struct reftable_block_source *source,
-		      struct reftable_block *dest, uint64_t off,
+		      struct reftable_block_data *dest, uint64_t off,
 		      uint32_t sz)
 {
 	size_t size = block_source_size(source);
-	block_source_return_block(dest);
+	block_source_release_data(dest);
 	if (off >= size)
 		return 0;
 	if (off + sz > size)
 		sz = size - off;
-	return block_source_read_block(source, dest, off, sz);
+	return block_source_read_data(source, dest, off, sz);
 }
 
 int block_reader_init(struct block_reader *br,
@@ -310,7 +310,7 @@ int block_reader_init(struct block_reader *br,
 		}
 
 		/* We're done with the input data. */
-		block_source_return_block(&br->block);
+		block_source_release_data(&br->block);
 		br->block.data = br->uncompressed_data;
 		br->block.len = block_size;
 		full_block_size = src_len + block_header_skip - br->zstream->avail_in;
@@ -347,7 +347,7 @@ void block_reader_release(struct block_reader *br)
 	inflateEnd(br->zstream);
 	reftable_free(br->zstream);
 	reftable_free(br->uncompressed_data);
-	block_source_return_block(&br->block);
+	block_source_release_data(&br->block);
 	memset(br, 0, sizeof(*br));
 }
 

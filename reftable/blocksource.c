@@ -13,15 +13,15 @@
 #include "reftable-blocksource.h"
 #include "reftable-error.h"
 
-void block_source_return_block(struct reftable_block *block)
+void block_source_release_data(struct reftable_block_data *data)
 {
-	struct reftable_block_source source = block->source;
-	if (block && source.ops)
-		source.ops->return_block(source.arg, block);
-	block->data = NULL;
-	block->len = 0;
-	block->source.ops = NULL;
-	block->source.arg = NULL;
+	struct reftable_block_source source = data->source;
+	if (data && source.ops)
+		source.ops->release_data(source.arg, data);
+	data->data = NULL;
+	data->len = 0;
+	data->source.ops = NULL;
+	data->source.arg = NULL;
 }
 
 void block_source_close(struct reftable_block_source *source)
@@ -34,11 +34,11 @@ void block_source_close(struct reftable_block_source *source)
 	source->ops = NULL;
 }
 
-ssize_t block_source_read_block(struct reftable_block_source *source,
-				struct reftable_block *dest, uint64_t off,
-				uint32_t size)
+ssize_t block_source_read_data(struct reftable_block_source *source,
+			       struct reftable_block_data *dest, uint64_t off,
+			       uint32_t size)
 {
-	ssize_t result = source->ops->read_block(source->arg, dest, off, size);
+	ssize_t result = source->ops->read_data(source->arg, dest, off, size);
 	dest->source = *source;
 	return result;
 }
@@ -48,7 +48,7 @@ uint64_t block_source_size(struct reftable_block_source *source)
 	return source->ops->size(source->arg);
 }
 
-static void reftable_buf_return_block(void *b REFTABLE_UNUSED, struct reftable_block *dest)
+static void reftable_buf_release_data(void *b REFTABLE_UNUSED, struct reftable_block_data *dest)
 {
 	if (dest->len)
 		memset(dest->data, 0xff, dest->len);
@@ -59,8 +59,8 @@ static void reftable_buf_close(void *b REFTABLE_UNUSED)
 {
 }
 
-static ssize_t reftable_buf_read_block(void *v, struct reftable_block *dest,
-				       uint64_t off, uint32_t size)
+static ssize_t reftable_buf_read_data(void *v, struct reftable_block_data *dest,
+				      uint64_t off, uint32_t size)
 {
 	struct reftable_buf *b = v;
 	assert(off + size <= b->len);
@@ -79,8 +79,8 @@ static uint64_t reftable_buf_size(void *b)
 
 static struct reftable_block_source_vtable reftable_buf_vtable = {
 	.size = &reftable_buf_size,
-	.read_block = &reftable_buf_read_block,
-	.return_block = &reftable_buf_return_block,
+	.read_data = &reftable_buf_read_data,
+	.release_data = &reftable_buf_release_data,
 	.close = &reftable_buf_close,
 };
 
@@ -102,7 +102,7 @@ static uint64_t file_size(void *b)
 	return ((struct file_block_source *)b)->size;
 }
 
-static void file_return_block(void *b REFTABLE_UNUSED, struct reftable_block *dest REFTABLE_UNUSED)
+static void file_release_data(void *b REFTABLE_UNUSED, struct reftable_block_data *dest REFTABLE_UNUSED)
 {
 }
 
@@ -113,8 +113,8 @@ static void file_close(void *v)
 	reftable_free(b);
 }
 
-static ssize_t file_read_block(void *v, struct reftable_block *dest, uint64_t off,
-			       uint32_t size)
+static ssize_t file_read_data(void *v, struct reftable_block_data *dest, uint64_t off,
+			      uint32_t size)
 {
 	struct file_block_source *b = v;
 	assert(off + size <= b->size);
@@ -125,8 +125,8 @@ static ssize_t file_read_block(void *v, struct reftable_block *dest, uint64_t of
 
 static struct reftable_block_source_vtable file_vtable = {
 	.size = &file_size,
-	.read_block = &file_read_block,
-	.return_block = &file_return_block,
+	.read_data = &file_read_data,
+	.release_data = &file_release_data,
 	.close = &file_close,
 };
 

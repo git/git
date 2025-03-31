@@ -21,7 +21,7 @@ struct reftable_block_source {
 
 /* a contiguous segment of bytes. It keeps track of its generating block_source
  * so it can return itself into the pool. */
-struct reftable_block {
+struct reftable_block_data {
 	uint8_t *data;
 	size_t len;
 	struct reftable_block_source source;
@@ -29,20 +29,20 @@ struct reftable_block {
 
 /* block_source_vtable are the operations that make up block_source */
 struct reftable_block_source_vtable {
-	/* returns the size of a block source */
+	/* Returns the size of a block source. */
 	uint64_t (*size)(void *source);
 
 	/*
 	 * Reads a segment from the block source. It is an error to read beyond
 	 * the end of the block.
 	 */
-	ssize_t (*read_block)(void *source, struct reftable_block *dest,
-			     uint64_t off, uint32_t size);
+	ssize_t (*read_data)(void *source, struct reftable_block_data *dest,
+			uint64_t off, uint32_t size);
 
-	/* mark the block as read; may return the data back to malloc */
-	void (*return_block)(void *source, struct reftable_block *blockp);
+	/* Mark the block as read; may release the data. */
+	void (*release_data)(void *source, struct reftable_block_data *data);
 
-	/* release all resources associated with the block source */
+	/* Release all resources associated with the block source. */
 	void (*close)(void *source);
 };
 
