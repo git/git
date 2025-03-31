@@ -53,8 +53,10 @@ int table_init_iter(struct reftable_table *t,
 		    struct reftable_iterator *it,
 		    uint8_t typ);
 
-/* initialize a block reader to read from `t` */
-int table_init_block_reader(struct reftable_table *t, struct block_reader *br,
-			    uint64_t next_off, uint8_t want_typ);
+/*
+ * Initialize a block by reading from the given table and offset.
+ */
+int table_init_block(struct reftable_table *t, struct reftable_block *block,
+		     uint64_t next_off, uint8_t want_typ);
 
 #endif
