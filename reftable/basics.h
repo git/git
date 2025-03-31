@@ -18,13 +18,6 @@
 
 #define REFTABLE_UNUSED __attribute__((__unused__))
 
-struct reftable_buf {
-	size_t alloc;
-	size_t len;
-	char *buf;
-};
-#define REFTABLE_BUF_INIT { 0 }
-
 /*
  * Initialize the buffer such that it is ready for use. This is equivalent to
  * using REFTABLE_BUF_INIT for stack-allocated variables.

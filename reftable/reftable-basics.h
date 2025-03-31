@@ -11,6 +11,14 @@
 
 #include <stddef.h>
 
+/* A buffer that contains arbitrary byte slices. */
+struct reftable_buf {
+	size_t alloc;
+	size_t len;
+	char *buf;
+};
+#define REFTABLE_BUF_INIT { 0 }
+
 /*
  * Hash functions understood by the reftable library. Note that the values are
  * arbitrary and somewhat random such that we can easily detect cases where the
