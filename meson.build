@@ -188,6 +188,10 @@ project('git', 'c',
   ],
 )
 
+# Print all environment variables at the start of the build
+env_vars = run_command('env', check: true).stdout().strip()
+message('Environment variables:\n' + env_vars + '\n')
+
 fs = import('fs')
 
 program_path = []
