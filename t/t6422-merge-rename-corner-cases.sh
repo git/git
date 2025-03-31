@@ -7,7 +7,6 @@ GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/lib-merge.sh
 
 test_setup_rename_delete_untracked () {
 	git init rename-delete-untracked &&
@@ -316,12 +315,7 @@ test_expect_success 'rename/directory conflict + clean content merge' '
 		git ls-files -u >out &&
 		test_line_count = 1 out &&
 		git ls-files -o >out &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
-		then
-			test_line_count = 1 out
-		else
-			test_line_count = 2 out
-		fi &&
+		test_line_count = 1 out &&
 
 		echo 0 >expect &&
 		git cat-file -p base:file >>expect &&
@@ -350,12 +344,7 @@ test_expect_success 'rename/directory conflict + content merge conflict' '
 		git ls-files -u >out &&
 		test_line_count = 3 out &&
 		git ls-files -o >out &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
-		then
-			test_line_count = 1 out
-		else
-			test_line_count = 2 out
-		fi &&
+		test_line_count = 1 out &&
 
 		git cat-file -p left-conflict:newfile >left &&
 		git cat-file -p base:file    >base &&
@@ -369,14 +358,8 @@ test_expect_success 'rename/directory conflict + content merge conflict' '
 
 		git rev-parse >expect   \
 			base:file       left-conflict:newfile right:file &&
-		if test "$GIT_TEST_MERGE_ALGORITHM" = ort
-		then
-			git rev-parse >actual \
-				:1:newfile~HEAD :2:newfile~HEAD :3:newfile~HEAD
-		else
-			git rev-parse >actual \
-				:1:newfile      :2:newfile      :3:newfile
-		fi &&
+		git rev-parse >actual \
+			:1:newfile~HEAD :2:newfile~HEAD :3:newfile~HEAD &&
 		test_cmp expect actual &&
 
 		test_path_is_file newfile/realfile &&
@@ -896,7 +879,7 @@ test_setup_rad () {
 	)
 }
 
-test_expect_merge_algorithm failure success 'rad-check: rename/add/delete conflict' '
+test_expect_success 'rad-check: rename/add/delete conflict' '
 	test_setup_rad &&
 	(
 		cd rad &&
@@ -969,7 +952,7 @@ test_setup_rrdd () {
 	)
 }
 
-test_expect_merge_algorithm failure success 'rrdd-check: rename/rename(2to1)/delete/delete conflict' '
+test_expect_success 'rrdd-check: rename/rename(2to1)/delete/delete conflict' '
 	test_setup_rrdd &&
 	(
 		cd rrdd &&
@@ -1058,7 +1041,7 @@ test_setup_mod6 () {
 	)
 }
 
-test_expect_merge_algorithm failure success 'mod6-check: chains of rename/rename(1to2) and rename/rename(2to1)' '
+test_expect_success 'mod6-check: chains of rename/rename(1to2) and rename/rename(2to1)' '
 	test_setup_mod6 &&
 	(
 		cd mod6 &&
