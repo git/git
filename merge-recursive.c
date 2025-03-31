@@ -3981,6 +3981,7 @@ static void init_merge_options(struct merge_options *opt,
 	opt->renormalize = 0;
 
 	opt->conflict_style = -1;
+	opt->xdl_opts = DIFF_WITH_ALG(opt, HISTOGRAM_DIFF);
 
 	merge_recursive_config(opt, ui);
 	merge_verbosity = getenv("GIT_MERGE_VERBOSITY");
