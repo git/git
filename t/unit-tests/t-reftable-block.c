@@ -19,7 +19,7 @@ static void t_ref_block_read_write(void)
 	struct reftable_record recs[30];
 	const size_t N = ARRAY_SIZE(recs);
 	const size_t block_size = 1024;
-	struct reftable_block block = { 0 };
+	struct reftable_block_source source = { 0 };
 	struct block_writer bw = {
 		.last_key = REFTABLE_BUF_INIT,
 	};
@@ -30,13 +30,14 @@ static void t_ref_block_read_write(void)
 	int ret;
 	struct block_reader br = { 0 };
 	struct block_iter it = BLOCK_ITER_INIT;
-	struct reftable_buf want = REFTABLE_BUF_INIT, buf = REFTABLE_BUF_INIT;
+	struct reftable_buf want = REFTABLE_BUF_INIT;
+	struct reftable_buf block = REFTABLE_BUF_INIT;
 
-	REFTABLE_CALLOC_ARRAY(block.data, block_size);
-	check(block.data != NULL);
+	REFTABLE_CALLOC_ARRAY(block.buf, block_size);
+	check(block.buf != NULL);
 	block.len = block_size;
-	block_source_from_buf(&block.source ,&buf);
-	ret = block_writer_init(&bw, BLOCK_TYPE_REF, block.data, block_size,
+
+	ret = block_writer_init(&bw, BLOCK_TYPE_REF, (uint8_t *) block.buf, block_size,
 				header_off, hash_size(REFTABLE_HASH_SHA1));
 	check(!ret);
 
@@ -62,7 +63,8 @@ static void t_ref_block_read_write(void)
 
 	block_writer_release(&bw);
 
-	block_reader_init(&br, &block, header_off, block_size, REFTABLE_HASH_SIZE_SHA1);
+	block_source_from_buf(&source ,&block);
+	block_reader_init(&br, &source, 0, header_off, block_size, REFTABLE_HASH_SIZE_SHA1);
 
 	block_iter_seek_start(&it, &br);
 
@@ -100,9 +102,8 @@ static void t_ref_block_read_write(void)
 	block_reader_release(&br);
 	block_iter_close(&it);
 	reftable_record_release(&rec);
-	block_source_return_block(&br.block);
 	reftable_buf_release(&want);
-	reftable_buf_release(&buf);
+	reftable_buf_release(&block);
 	for (i = 0; i < N; i++)
 		reftable_record_release(&recs[i]);
 }
@@ -113,7 +114,7 @@ static void t_log_block_read_write(void)
 	struct reftable_record recs[30];
 	const size_t N = ARRAY_SIZE(recs);
 	const size_t block_size = 2048;
-	struct reftable_block block = { 0 };
+	struct reftable_block_source source = { 0 };
 	struct block_writer bw = {
 		.last_key = REFTABLE_BUF_INIT,
 	};
@@ -124,13 +125,14 @@ static void t_log_block_read_write(void)
 	int ret;
 	struct block_reader br = { 0 };
 	struct block_iter it = BLOCK_ITER_INIT;
-	struct reftable_buf want = REFTABLE_BUF_INIT, buf = REFTABLE_BUF_INIT;
+	struct reftable_buf want = REFTABLE_BUF_INIT;
+	struct reftable_buf block = REFTABLE_BUF_INIT;
 
-	REFTABLE_CALLOC_ARRAY(block.data, block_size);
-	check(block.data != NULL);
+	REFTABLE_CALLOC_ARRAY(block.buf, block_size);
+	check(block.buf != NULL);
 	block.len = block_size;
-	block_source_from_buf(&block.source ,&buf);
-	ret = block_writer_init(&bw, BLOCK_TYPE_LOG, block.data, block_size,
+
+	ret = block_writer_init(&bw, BLOCK_TYPE_LOG, (uint8_t *) block.buf, block_size,
 				header_off, hash_size(REFTABLE_HASH_SHA1));
 	check(!ret);
 
@@ -151,7 +153,8 @@ static void t_log_block_read_write(void)
 
 	block_writer_release(&bw);
 
-	block_reader_init(&br, &block, header_off, block_size, REFTABLE_HASH_SIZE_SHA1);
+	block_source_from_buf(&source, &block);
+	block_reader_init(&br, &source, 0, header_off, block_size, REFTABLE_HASH_SIZE_SHA1);
 
 	block_iter_seek_start(&it, &br);
 
@@ -190,9 +193,8 @@ static void t_log_block_read_write(void)
 	block_reader_release(&br);
 	block_iter_close(&it);
 	reftable_record_release(&rec);
-	block_source_return_block(&br.block);
 	reftable_buf_release(&want);
-	reftable_buf_release(&buf);
+	reftable_buf_release(&block);
 	for (i = 0; i < N; i++)
 		reftable_record_release(&recs[i]);
 }
@@ -203,7 +205,7 @@ static void t_obj_block_read_write(void)
 	struct reftable_record recs[30];
 	const size_t N = ARRAY_SIZE(recs);
 	const size_t block_size = 1024;
-	struct reftable_block block = { 0 };
+	struct reftable_block_source source = { 0 };
 	struct block_writer bw = {
 		.last_key = REFTABLE_BUF_INIT,
 	};
@@ -214,13 +216,14 @@ static void t_obj_block_read_write(void)
 	int ret;
 	struct block_reader br = { 0 };
 	struct block_iter it = BLOCK_ITER_INIT;
-	struct reftable_buf want = REFTABLE_BUF_INIT, buf = REFTABLE_BUF_INIT;
+	struct reftable_buf want = REFTABLE_BUF_INIT;
+	struct reftable_buf block = REFTABLE_BUF_INIT;
 
-	REFTABLE_CALLOC_ARRAY(block.data, block_size);
-	check(block.data != NULL);
+	REFTABLE_CALLOC_ARRAY(block.buf, block_size);
+	check(block.buf != NULL);
 	block.len = block_size;
-	block_source_from_buf(&block.source, &buf);
-	ret = block_writer_init(&bw, BLOCK_TYPE_OBJ, block.data, block_size,
+
+	ret = block_writer_init(&bw, BLOCK_TYPE_OBJ, (uint8_t *) block.buf, block_size,
 				header_off, hash_size(REFTABLE_HASH_SHA1));
 	check(!ret);
 
@@ -243,7 +246,8 @@ static void t_obj_block_read_write(void)
 
 	block_writer_release(&bw);
 
-	block_reader_init(&br, &block, header_off, block_size, REFTABLE_HASH_SIZE_SHA1);
+	block_source_from_buf(&source, &block);
+	block_reader_init(&br, &source, 0, header_off, block_size, REFTABLE_HASH_SIZE_SHA1);
 
 	block_iter_seek_start(&it, &br);
 
@@ -273,9 +277,8 @@ static void t_obj_block_read_write(void)
 	block_reader_release(&br);
 	block_iter_close(&it);
 	reftable_record_release(&rec);
-	block_source_return_block(&br.block);
 	reftable_buf_release(&want);
-	reftable_buf_release(&buf);
+	reftable_buf_release(&block);
 	for (i = 0; i < N; i++)
 		reftable_record_release(&recs[i]);
 }
@@ -286,7 +289,7 @@ static void t_index_block_read_write(void)
 	struct reftable_record recs[30];
 	const size_t N = ARRAY_SIZE(recs);
 	const size_t block_size = 1024;
-	struct reftable_block block = { 0 };
+	struct reftable_block_source source = { 0 };
 	struct block_writer bw = {
 		.last_key = REFTABLE_BUF_INIT,
 	};
@@ -298,13 +301,14 @@ static void t_index_block_read_write(void)
 	int ret;
 	struct block_reader br = { 0 };
 	struct block_iter it = BLOCK_ITER_INIT;
-	struct reftable_buf want = REFTABLE_BUF_INIT, buf = REFTABLE_BUF_INIT;
+	struct reftable_buf want = REFTABLE_BUF_INIT;
+	struct reftable_buf block = REFTABLE_BUF_INIT;
 
-	REFTABLE_CALLOC_ARRAY(block.data, block_size);
-	check(block.data != NULL);
+	REFTABLE_CALLOC_ARRAY(block.buf, block_size);
+	check(block.buf != NULL);
 	block.len = block_size;
-	block_source_from_buf(&block.source, &buf);
-	ret = block_writer_init(&bw, BLOCK_TYPE_INDEX, block.data, block_size,
+
+	ret = block_writer_init(&bw, BLOCK_TYPE_INDEX, (uint8_t *) block.buf, block_size,
 				header_off, hash_size(REFTABLE_HASH_SHA1));
 	check(!ret);
 
@@ -327,7 +331,8 @@ static void t_index_block_read_write(void)
 
 	block_writer_release(&bw);
 
-	block_reader_init(&br, &block, header_off, block_size, REFTABLE_HASH_SIZE_SHA1);
+	block_source_from_buf(&source, &block);
+	block_reader_init(&br, &source, 0, header_off, block_size, REFTABLE_HASH_SIZE_SHA1);
 
 	block_iter_seek_start(&it, &br);
 
@@ -365,9 +370,8 @@ static void t_index_block_read_write(void)
 	block_reader_release(&br);
 	block_iter_close(&it);
 	reftable_record_release(&rec);
-	block_source_return_block(&br.block);
 	reftable_buf_release(&want);
-	reftable_buf_release(&buf);
+	reftable_buf_release(&block);
 	for (i = 0; i < N; i++)
 		reftable_record_release(&recs[i]);
 }

@@ -89,12 +89,14 @@ struct block_reader {
 	/* size of the data in the file. For log blocks, this is the compressed
 	 * size. */
 	uint32_t full_block_size;
+	uint8_t block_type;
 };
 
 /* initializes a block reader. */
-int block_reader_init(struct block_reader *br, struct reftable_block *bl,
-		      uint32_t header_off, uint32_t table_block_size,
-		      uint32_t hash_size);
+int block_reader_init(struct block_reader *br,
+		      struct reftable_block_source *source,
+		      uint32_t offset, uint32_t header_size,
+		      uint32_t table_block_size, uint32_t hash_size);
 
 void block_reader_release(struct block_reader *br);
 
