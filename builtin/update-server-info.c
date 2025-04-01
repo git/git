@@ -20,8 +20,8 @@ int cmd_update_server_info(int argc,
 		OPT_END()
 	};
 
-	if (repo)
-		repo_config(repo, git_default_config, NULL);
+	repo_config(repo, git_default_config, NULL);
+
 	argc = parse_options(argc, argv, prefix, options,
 			     update_server_info_usage, 0);
 	if (argc > 0)
