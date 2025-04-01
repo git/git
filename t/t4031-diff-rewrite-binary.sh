@@ -57,24 +57,19 @@ test_expect_success 'diff --stat counts binary rewrite as 0 lines' '
 	grep " rewrite file" diff
 '
 
-{
-	echo "#!$SHELL_PATH"
-	cat <<'EOF'
-"$PERL_PATH" -e '$/ = undef; $_ = <>; s/./ord($&)/ge; print $_' < "$1"
-EOF
-} >dump
-chmod +x dump
-
 test_expect_success 'setup textconv' '
+	write_script dump <<-\EOF &&
+	test-tool hexdump <"$1"
+	EOF
 	echo file diff=foo >.gitattributes &&
 	git config diff.foo.textconv "\"$(pwd)\""/dump
 '
 
 test_expect_success 'rewrite diff respects textconv' '
 	git diff -B >diff &&
-	grep "dissimilarity index" diff &&
-	grep "^-61" diff &&
-	grep "^-0" diff
+	test_grep "dissimilarity index" diff &&
+	test_grep "^-3d 0a 00" diff &&
+	test_grep "^+3d 0a 01" diff
 '
 
 test_done
