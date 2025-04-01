@@ -252,8 +252,6 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 		free(opts->strategy);
 		opts->strategy = xstrdup_or_null(strategy);
 	}
-	if (!opts->strategy && getenv("GIT_TEST_MERGE_ALGORITHM"))
-		opts->strategy = xstrdup(getenv("GIT_TEST_MERGE_ALGORITHM"));
 	free(options);
 
 	if (cmd == 'q') {

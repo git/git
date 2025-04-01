@@ -781,28 +781,19 @@ static int do_recursive_merge(struct repository *r,
 	for (i = 0; i < opts->xopts.nr; i++)
 		parse_merge_opt(&o, opts->xopts.v[i]);
 
-	if (!opts->strategy || !strcmp(opts->strategy, "ort")) {
-		memset(&result, 0, sizeof(result));
-		merge_incore_nonrecursive(&o, base_tree, head_tree, next_tree,
-					    &result);
-		show_output = !is_rebase_i(opts) || !result.clean;
-		/*
-		 * TODO: merge_switch_to_result will update index/working tree;
-		 * we only really want to do that if !result.clean || this is
-		 * the final patch to be picked.  But determining this is the
-		 * final patch would take some work, and "head_tree" would need
-		 * to be replace with the tree the index matched before we
-		 * started doing any picks.
-		 */
-		merge_switch_to_result(&o, head_tree, &result, 1, show_output);
-		clean = result.clean;
-	} else {
-		ensure_full_index(r->index);
-		clean = merge_trees(&o, head_tree, next_tree, base_tree);
-		if (is_rebase_i(opts) && clean <= 0)
-			fputs(o.obuf.buf, stdout);
-		strbuf_release(&o.obuf);
-	}
+	memset(&result, 0, sizeof(result));
+	merge_incore_nonrecursive(&o, base_tree, head_tree, next_tree, &result);
+	show_output = !is_rebase_i(opts) || !result.clean;
+	/*
+	 * TODO: merge_switch_to_result will update index/working tree;
+	 * we only really want to do that if !result.clean || this is
+	 * the final patch to be picked.  But determining this is the
+	 * final patch would take some work, and "head_tree" would need
+	 * to be replace with the tree the index matched before we
+	 * started doing any picks.
+	 */
+	merge_switch_to_result(&o, head_tree, &result, 1, show_output);
+	clean = result.clean;
 	if (clean < 0) {
 		rollback_lock_file(&index_lock);
 		return clean;
@@ -4328,20 +4319,13 @@ static int do_merge(struct repository *r,
 	o.branch2 = ref_name.buf;
 	o.buffer_output = 2;
 
-	if (!opts->strategy || !strcmp(opts->strategy, "ort")) {
-		/*
-		 * TODO: Should use merge_incore_recursive() and
-		 * merge_switch_to_result(), skipping the call to
-		 * merge_switch_to_result() when we don't actually need to
-		 * update the index and working copy immediately.
-		 */
-		ret = merge_ort_recursive(&o,
-					  head_commit, merge_commit, bases,
-					  &i);
-	} else {
-		ret = merge_recursive(&o, head_commit, merge_commit, bases,
-				      &i);
-	}
+	/*
+	 * TODO: Should use merge_incore_recursive() and
+	 * merge_switch_to_result(), skipping the call to
+	 * merge_switch_to_result() when we don't actually need to
+	 * update the index and working copy immediately.
+	 */
+	ret = merge_ort_recursive(&o, head_commit, merge_commit, bases, &i);
 	if (ret <= 0)
 		fputs(o.obuf.buf, stdout);
 	strbuf_release(&o.obuf);
@@ -4353,7 +4337,7 @@ static int do_merge(struct repository *r,
 		goto leave_merge;
 	}
 	/*
-	 * The return value of merge_recursive() is 1 on clean, and 0 on
+	 * The return value of merge_ort_recursive() is 1 on clean, and 0 on
 	 * unclean merge.
 	 *
 	 * Let's reverse that, so that do_merge() returns 0 upon success and

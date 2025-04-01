@@ -45,11 +45,6 @@ git_pull_noff () {
 	$2 git pull --no-ff
 }
 
-if test "$GIT_TEST_MERGE_ALGORITHM" != ort
-then
-	KNOWN_FAILURE_NOFF_MERGE_DOESNT_CREATE_EMPTY_SUBMODULE_DIR=1
-	KNOWN_FAILURE_NOFF_MERGE_ATTEMPTS_TO_MERGE_REMOVED_SUBMODULE_FILES=1
-fi
 test_submodule_switch_func "git_pull_noff"
 
 test_expect_success 'setup' '

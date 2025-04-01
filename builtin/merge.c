@@ -39,7 +39,6 @@
 #include "rerere.h"
 #include "help.h"
 #include "merge.h"
-#include "merge-recursive.h"
 #include "merge-ort-wrappers.h"
 #include "resolve-undo.h"
 #include "remote.h"
@@ -171,7 +170,7 @@ static struct strategy *get_strategy(const char *name)
 	struct strategy *ret;
 	static struct cmdnames main_cmds = {0}, other_cmds = {0};
 	static int loaded;
-	char *default_strategy = getenv("GIT_TEST_MERGE_ALGORITHM");
+	char *default_strategy = NULL;
 
 	if (!name)
 		return NULL;
@@ -750,12 +749,8 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 
 		repo_hold_locked_index(the_repository, &lock,
 				       LOCK_DIE_ON_ERROR);
-		if (!strcmp(strategy, "ort"))
-			clean = merge_ort_recursive(&o, head, remoteheads->item,
-						    reversed, &result);
-		else
-			clean = merge_recursive(&o, head, remoteheads->item,
-						reversed, &result);
+		clean = merge_ort_recursive(&o, head, remoteheads->item,
+					    reversed, &result);
 		free_commit_list(reversed);
 		strbuf_release(&o.obuf);
 
@@ -1316,12 +1311,6 @@ int cmd_merge(int argc,
 	if (branch)
 		skip_prefix(branch, "refs/heads/", &branch);
 
-	if (!pull_twohead) {
-		char *default_strategy = getenv("GIT_TEST_MERGE_ALGORITHM");
-		if (default_strategy && !strcmp(default_strategy, "ort"))
-			pull_twohead = xstrdup("ort");
-	}
-
 	init_diff_ui_defaults();
 	git_config(git_merge_config, NULL);
 
@@ -1522,12 +1511,6 @@ int cmd_merge(int argc,
 			fast_forward = FF_NO;
 	}
 
-	if (!use_strategies && !pull_twohead &&
-	    remoteheads && !remoteheads->next) {
-		char *default_strategy = getenv("GIT_TEST_MERGE_ALGORITHM");
-		if (default_strategy)
-			append_strategy(get_strategy(default_strategy));
-	}
 	if (!use_strategies) {
 		if (!remoteheads)
 			; /* already up-to-date */

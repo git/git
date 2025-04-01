@@ -373,7 +373,6 @@ libgit_sources = [
   'merge-ll.c',
   'merge-ort.c',
   'merge-ort-wrappers.c',
-  'merge-recursive.c',
   'merge.c',
   'midx.c',
   'midx-write.c',
