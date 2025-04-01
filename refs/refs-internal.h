@@ -273,11 +273,11 @@ enum do_for_each_ref_flags {
  * the next reference and returns ITER_OK. The data pointed at by
  * refname and oid belong to the iterator; if you want to retain them
  * after calling ref_iterator_advance() again or calling
- * ref_iterator_abort(), you must make a copy. When the iteration has
+ * ref_iterator_free(), you must make a copy. When the iteration has
  * been exhausted, ref_iterator_advance() releases any resources
  * associated with the iteration, frees the ref_iterator object, and
  * returns ITER_DONE. If you want to abort the iteration early, call
- * ref_iterator_abort(), which also frees the ref_iterator object and
+ * ref_iterator_free(), which also frees the ref_iterator object and
  * any associated resources. If there was an internal error advancing
  * to the next entry, ref_iterator_advance() aborts the iteration,
  * frees the ref_iterator, and returns ITER_ERROR.
@@ -293,7 +293,7 @@ enum do_for_each_ref_flags {
  *
  *     while ((ok = ref_iterator_advance(iter)) == ITER_OK) {
  *             if (want_to_stop_iteration()) {
- *                     ok = ref_iterator_abort(iter);
+ *                     ok = ITER_DONE;
  *                     break;
  *             }
  *
@@ -307,6 +307,7 @@ enum do_for_each_ref_flags {
  *
  *     if (ok != ITER_DONE)
  *             handle_error();
+ *     ref_iterator_free(iter);
  */
 struct ref_iterator {
 	struct ref_iterator_vtable *vtable;
@@ -327,18 +328,30 @@ struct ref_iterator {
 int ref_iterator_advance(struct ref_iterator *ref_iterator);
 
 /*
+ * Seek the iterator to the first reference with the given prefix.
+ * The prefix is matched as a literal string, without regard for path
+ * separators. If prefix is NULL or the empty string, seek the iterator to the
+ * first reference again.
+ *
+ * This function is expected to behave as if a new ref iterator with the same
+ * prefix had been created, but allows reuse of iterators and thus may allow
+ * the backend to optimize. Parameters other than the prefix that have been
+ * passed when creating the iterator will remain unchanged.
+ *
+ * Returns 0 on success, a negative error code otherwise.
+ */
+int ref_iterator_seek(struct ref_iterator *ref_iterator,
+		      const char *prefix);
+
+/*
  * If possible, peel the reference currently being viewed by the
  * iterator. Return 0 on success.
  */
 int ref_iterator_peel(struct ref_iterator *ref_iterator,
 		      struct object_id *peeled);
 
-/*
- * End the iteration before it has been exhausted, freeing the
- * reference iterator and any associated resources and returning
- * ITER_DONE. If the abort itself failed, return ITER_ERROR.
- */
-int ref_iterator_abort(struct ref_iterator *ref_iterator);
+/* Free the reference iterator and any associated resources. */
+void ref_iterator_free(struct ref_iterator *ref_iterator);
 
 /*
  * An iterator over nothing (its first ref_iterator_advance() call
@@ -438,13 +451,6 @@ struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 void base_ref_iterator_init(struct ref_iterator *iter,
 			    struct ref_iterator_vtable *vtable);
 
-/*
- * Base class destructor for ref_iterators. Destroy the ref_iterator
- * part of iter and shallow-free the object. This is meant to be
- * called only by the destructors of derived classes.
- */
-void base_ref_iterator_free(struct ref_iterator *iter);
-
 /* Virtual function declarations for ref_iterators: */
 
 /*
@@ -456,6 +462,13 @@ void base_ref_iterator_free(struct ref_iterator *iter);
 typedef int ref_iterator_advance_fn(struct ref_iterator *ref_iterator);
 
 /*
+ * Seek the iterator to the first reference matching the given prefix. Should
+ * behave the same as if a new iterator was created with the same prefix.
+ */
+typedef int ref_iterator_seek_fn(struct ref_iterator *ref_iterator,
+				 const char *prefix);
+
+/*
  * Peels the current ref, returning 0 for success or -1 for failure.
  */
 typedef int ref_iterator_peel_fn(struct ref_iterator *ref_iterator,
@@ -463,15 +476,15 @@ typedef int ref_iterator_peel_fn(struct ref_iterator *ref_iterator,
 
 /*
  * Implementations of this function should free any resources specific
- * to the derived class, then call base_ref_iterator_free() to clean
- * up and free the ref_iterator object.
+ * to the derived class.
  */
-typedef int ref_iterator_abort_fn(struct ref_iterator *ref_iterator);
+typedef void ref_iterator_release_fn(struct ref_iterator *ref_iterator);
 
 struct ref_iterator_vtable {
 	ref_iterator_advance_fn *advance;
+	ref_iterator_seek_fn *seek;
 	ref_iterator_peel_fn *peel;
-	ref_iterator_abort_fn *abort;
+	ref_iterator_release_fn *release;
 };
 
 /*

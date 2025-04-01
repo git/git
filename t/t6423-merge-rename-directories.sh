@@ -5363,6 +5363,47 @@ test_expect_merge_algorithm failure success '12m: Change parent of renamed-dir t
 	)
 '
 
+test_setup_12n () {
+	git init 12n &&
+	(
+		cd 12n &&
+
+		mkdir tools &&
+		echo hello >tools/hello &&
+		git add tools/hello &&
+		git commit -m "O" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git switch A &&
+		echo world >world &&
+		git add world &&
+		git commit -q world -m 'Add world' &&
+
+		git mv world tools/world &&
+		git commit -m "Move world into tools/" &&
+
+		git switch B &&
+		git mv tools/hello hello &&
+		git commit -m "Move hello from tools/ to toplevel"
+	)
+}
+
+test_expect_success '12n: Directory rename transitively makes rename back to self' '
+	test_setup_12n &&
+	(
+		cd 12n &&
+
+		git checkout -q B^0 &&
+
+		test_must_fail git cherry-pick A^0 >out &&
+		grep "CONFLICT (file location).*should perhaps be moved" out
+	)
+'
+
+
 ###########################################################################
 # SECTION 13: Checking informational and conflict messages
 #
@@ -5549,9 +5590,9 @@ test_expect_success '13b(info): messages for transitive rename with conflicted c
 #   Commit A: y/{b,c,d}, x/e
 #   Commit B: z/{b,c,d}, x/e
 #   Expected: y/{b,c,d}, x/e, with info or conflict messages for d
-#             A: renamed x/d -> z/d; B: renamed z/ -> y/ AND renamed x/d to y/d
-#             One could argue A had partial knowledge of what was done with
-#             d and B had full knowledge, but that's a slippery slope as
+#             B: renamed x/d -> z/d; A: renamed z/ -> y/ AND renamed x/d to y/d
+#             One could argue B had partial knowledge of what was done with
+#             d and A had full knowledge, but that's a slippery slope as
 #             shown in testcase 13d.
 
 test_setup_13c () {

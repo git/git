@@ -43,6 +43,10 @@ static int xdl_emit_record(xdfile_t *xdf, long ri, char const *pre, xdemitcb_t *
 	return 0;
 }
 
+static long saturating_add(long a, long b)
+{
+	return signed_add_overflows(a, b) ? LONG_MAX : a + b;
+}
 
 /*
  * Starting at the passed change atom, find the latest change atom to be included
@@ -52,7 +56,9 @@ static int xdl_emit_record(xdfile_t *xdf, long ri, char const *pre, xdemitcb_t *
 xdchange_t *xdl_get_hunk(xdchange_t **xscr, xdemitconf_t const *xecfg)
 {
 	xdchange_t *xch, *xchp, *lxch;
-	long max_common = 2 * xecfg->ctxlen + xecfg->interhunkctxlen;
+	long max_common = saturating_add(saturating_add(xecfg->ctxlen,
+							xecfg->ctxlen),
+					 xecfg->interhunkctxlen);
 	long max_ignorable = xecfg->ctxlen;
 	long ignored = 0; /* number of ignored blank lines */
 
