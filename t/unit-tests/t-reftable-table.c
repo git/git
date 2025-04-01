@@ -142,8 +142,9 @@ static int t_table_block_iterator(void)
 
 	REFTABLE_CALLOC_ARRAY(records, nrecords);
 	for (size_t i = 0; i < nrecords; i++) {
-		records[i].value_type = REFTABLE_REF_VAL1,
-		records[i].refname = xstrfmt("refs/heads/branch-%03"PRIuMAX, (uintmax_t) i);
+		records[i].value_type = REFTABLE_REF_VAL1;
+		records[i].refname =
+			xstrfmt("refs/heads/branch-%03"PRIuMAX, (uintmax_t)i);
 	}
 
 	t_reftable_write_to_buf(&buf, records, nrecords, NULL, 0, NULL);
