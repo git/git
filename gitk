@@ -27,7 +27,7 @@ proc is_Windows {} {
 if {[is_Windows]} {
     set _search_path {}
     proc _which {what args} {
-        global env _search_exe _search_path
+        global env _search_path
 
         if {$_search_path eq {}} {
             set gitguidir [file dirname [info script]]
@@ -37,13 +37,12 @@ if {[is_Windows]} {
             # Skip empty `PATH` elements
             set _search_path [lsearch -all -inline -not -exact \
                 $_search_path ""]
-            set _search_exe .exe
         }
 
         if {[lsearch -exact $args -script] >= 0} {
             set suffix {}
         } else {
-            set suffix $_search_exe
+            set suffix .exe
         }
 
         foreach p $_search_path {
