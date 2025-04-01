@@ -22,6 +22,9 @@ OPTIONS
 --build-options::
 	Include additional information about how git was built for diagnostic
 	purposes.
++
+If built to use a faster SHA-1 implementation for non-cryptographic purposes,
+the implmentation used is denoted as "unsafe-SHA-1".
 
 GIT
 ---

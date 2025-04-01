@@ -768,6 +768,41 @@ char *help_unknown_cmd(const char *cmd)
 	exit(1);
 }
 
+static void get_sha_impl(struct strbuf *buf)
+{
+#if defined(SHA1_OPENSSL)
+	strbuf_addstr(buf, "SHA-1: OpenSSL\n");
+#elif defined(SHA1_BLK)
+	strbuf_addstr(buf, "SHA-1: blk\n");
+#elif defined(SHA1_APPLE)
+	strbuf_addstr(buf, "SHA-1: Apple CommonCrypto\n");
+#elif defined(DC_SHA1_EXTERNAL)
+	strbuf_addstr(buf, "SHA-1: Collision Detection (External)\n");
+#elif defined(DC_SHA1_SUBMODULE)
+	strbuf_addstr(buf, "SHA-1: Collision Detection (Submodule)\n");
+#elif defined(SHA1_DC)
+	strbuf_addstr(buf, "SHA-1: Collision Detection\n");
+#endif
+
+#if defined(SHA1_OPENSSL_UNSAFE)
+	strbuf_addstr(buf, "unsafe-SHA-1: OpenSSL\n");
+#elif defined(SHA1_BLK_UNSAFE)
+	strbuf_addstr(buf, "unsafe-SHA-1: blk\n");
+#elif defined(SHA1_APPLE_UNSAFE)
+	strbuf_addstr(buf, "unsafe-SHA-1: Apple CommonCrypto\n");
+#endif
+
+#if defined(SHA256_OPENSSL)
+	strbuf_addstr(buf, "SHA-256: OpenSSL\n");
+#elif defined(SHA256_NETTLE)
+	strbuf_addstr(buf, "SHA-256: Nettle\n");
+#elif defined(SHA256_GCRYPT)
+	strbuf_addstr(buf, "SHA-256: gcrypt\n");
+#elif defined(SHA256_BLK)
+	strbuf_addstr(buf, "SHA-256: blk\n");
+#endif
+}
+
 void get_version_info(struct strbuf *buf, int show_build_options)
 {
 	/*
@@ -803,6 +838,7 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 #elif defined ZLIB_VERSION
 		strbuf_addf(buf, "zlib: %s\n", ZLIB_VERSION);
 #endif
+		get_sha_impl(buf);
 	}
 }
 
