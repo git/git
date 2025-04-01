@@ -2210,7 +2210,7 @@ sift_states_bkref (const re_match_context_t *mctx, re_sift_context_t *sctx,
 	  /* mctx->bkref_ents may have changed, reload the pointer.  */
 	  entry = mctx->bkref_ents + enabled_idx;
 	}
-      while (enabled_idx++, entry++->more);
+      while ((void)enabled_idx++, entry++->more);
     }
   err = REG_NOERROR;
  free_return:

@@ -223,7 +223,7 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 						p_ch = '[';
 						if (t_ch == p_ch)
 							matched = 1;
-						continue;
+						goto next;
 					}
 					if (CC_EQ(s,i, "alnum")) {
 						if (ISALNUM(t_ch))
@@ -268,7 +268,10 @@ static int dowild(const uchar *p, const uchar *text, unsigned int flags)
 					p_ch = 0; /* This makes "prev_ch" get set to 0. */
 				} else if (t_ch == p_ch)
 					matched = 1;
-			} while (prev_ch = p_ch, (p_ch = *++p) != ']');
+next:
+				prev_ch = p_ch;
+				p_ch = *++p;
+			} while (p_ch != ']');
 			if (matched == negated ||
 			    ((flags & WM_PATHNAME) && t_ch == '/'))
 				return WM_NOMATCH;
