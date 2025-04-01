@@ -307,15 +307,37 @@ if {$_trace >= 0} {
 # branches).
 set _last_merged_branch {}
 
-proc shellpath {} {
-	global _shellpath env
-	if {[string match @@* $_shellpath]} {
-		if {[info exists env(SHELL)]} {
-			return $env(SHELL)
-		} else {
-			return /bin/sh
-		}
+# for testing, allow unconfigured _shellpath
+if {[string match @@* $_shellpath]} {
+	if {[info exists env(SHELL)]} {
+		set _shellpath $env(SHELL)
+	} else {
+		set _shellpath /bin/sh
 	}
+}
+
+if {[is_Windows]} {
+	set _shellpath [exec cygpath -m $_shellpath]
+}
+
+if {![file executable $_shellpath] || \
+	!([file pathtype $_shellpath] eq {absolute})} {
+	set errmsg "The defined shell ('$_shellpath') is not usable, \
+		it must be an absolute path to an executable."
+	puts stderr $errmsg
+
+	catch {wm withdraw .}
+	tk_messageBox \
+		-icon error \
+		-type ok \
+		-title "git-gui: configuration error" \
+		-message $errmsg
+	exit 1
+}
+
+
+proc shellpath {} {
+	global _shellpath
 	return $_shellpath
 }
 
