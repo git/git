@@ -1,10 +1,10 @@
 /*
-Copyright 2020 Google LLC
-
-Use of this source code is governed by a BSD-style
-license that can be found in the LICENSE file or at
-https://developers.google.com/open-source/licenses/bsd
-*/
+ * Copyright 2020 Google LLC
+ *
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file or at
+ * https://developers.google.com/open-source/licenses/bsd
+ */
 
 #ifndef ITER_H
 #define ITER_H
@@ -59,7 +59,7 @@ void iterator_from_filtering_ref_iterator(struct reftable_iterator *,
  * but using the object index.
  */
 struct indexed_table_ref_iter {
-	struct reftable_reader *r;
+	struct reftable_table *table;
 	struct reftable_buf oid;
 
 	/* mutable */
@@ -68,7 +68,7 @@ struct indexed_table_ref_iter {
 	/* Points to the next offset to read. */
 	int offset_idx;
 	int offset_len;
-	struct block_reader block_reader;
+	struct reftable_block block;
 	struct block_iter cur;
 	int is_finished;
 };
@@ -83,7 +83,7 @@ void iterator_from_indexed_table_ref_iter(struct reftable_iterator *it,
 
 /* Takes ownership of `offsets` */
 int indexed_table_ref_iter_new(struct indexed_table_ref_iter **dest,
-			       struct reftable_reader *r, uint8_t *oid,
+			       struct reftable_table *t, uint8_t *oid,
 			       int oid_len, uint64_t *offsets, int offset_len);
 
 #endif

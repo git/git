@@ -1,10 +1,10 @@
 /*
-Copyright 2020 Google LLC
-
-Use of this source code is governed by a BSD-style
-license that can be found in the LICENSE file or at
-https://developers.google.com/open-source/licenses/bsd
-*/
+ * Copyright 2020 Google LLC
+ *
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file or at
+ * https://developers.google.com/open-source/licenses/bsd
+ */
 
 #include "writer.h"
 
@@ -172,7 +172,7 @@ int reftable_writer_new(struct reftable_writer **out,
 	wp->write_arg = writer_arg;
 	wp->opts = opts;
 	wp->flush = flush_func;
-	writer_reinit_block_writer(wp, BLOCK_TYPE_REF);
+	writer_reinit_block_writer(wp, REFTABLE_BLOCK_TYPE_REF);
 
 	*out = wp;
 
@@ -342,7 +342,7 @@ int reftable_writer_add_ref(struct reftable_writer *w,
 			    struct reftable_ref_record *ref)
 {
 	struct reftable_record rec = {
-		.type = BLOCK_TYPE_REF,
+		.type = REFTABLE_BLOCK_TYPE_REF,
 		.u = {
 			.ref = *ref
 		},
@@ -406,13 +406,13 @@ static int reftable_writer_add_log_verbatim(struct reftable_writer *w,
 					    struct reftable_log_record *log)
 {
 	struct reftable_record rec = {
-		.type = BLOCK_TYPE_LOG,
+		.type = REFTABLE_BLOCK_TYPE_LOG,
 		.u = {
 			.log = *log,
 		},
 	};
 	if (w->block_writer &&
-	    block_writer_type(w->block_writer) == BLOCK_TYPE_REF) {
+	    block_writer_type(w->block_writer) == REFTABLE_BLOCK_TYPE_REF) {
 		int err = writer_finish_public_section(w);
 		if (err < 0)
 			return err;
@@ -532,7 +532,7 @@ static int writer_finish_section(struct reftable_writer *w)
 
 		max_level++;
 		index_start = w->next;
-		err = writer_reinit_block_writer(w, BLOCK_TYPE_INDEX);
+		err = writer_reinit_block_writer(w, REFTABLE_BLOCK_TYPE_INDEX);
 		if (err < 0)
 			return err;
 
@@ -544,7 +544,7 @@ static int writer_finish_section(struct reftable_writer *w)
 		w->index_cap = 0;
 		for (i = 0; i < idx_len; i++) {
 			struct reftable_record rec = {
-				.type = BLOCK_TYPE_INDEX,
+				.type = REFTABLE_BLOCK_TYPE_INDEX,
 				.u = {
 					.idx = idx[i],
 				},
@@ -609,7 +609,7 @@ static void write_object_record(void *void_arg, void *key)
 	struct write_record_arg *arg = void_arg;
 	struct obj_index_tree_node *entry = key;
 	struct reftable_record
-		rec = { .type = BLOCK_TYPE_OBJ,
+		rec = { .type = REFTABLE_BLOCK_TYPE_OBJ,
 			.u.obj = {
 				.hash_prefix = (uint8_t *)entry->hash.buf,
 				.hash_prefix_len = arg->w->stats.object_id_len,
@@ -639,7 +639,7 @@ static void write_object_record(void *void_arg, void *key)
 	if (arg->err < 0)
 		goto done;
 
-	arg->err = writer_reinit_block_writer(arg->w, BLOCK_TYPE_OBJ);
+	arg->err = writer_reinit_block_writer(arg->w, REFTABLE_BLOCK_TYPE_OBJ);
 	if (arg->err < 0)
 		goto done;
 
@@ -684,7 +684,7 @@ static int writer_dump_object_index(struct reftable_writer *w)
 		infix_walk(w->obj_index_tree, &update_common, &common);
 	w->stats.object_id_len = common.max + 1;
 
-	err = writer_reinit_block_writer(w, BLOCK_TYPE_OBJ);
+	err = writer_reinit_block_writer(w, REFTABLE_BLOCK_TYPE_OBJ);
 	if (err < 0)
 		return err;
 
@@ -708,7 +708,7 @@ static int writer_finish_public_section(struct reftable_writer *w)
 	err = writer_finish_section(w);
 	if (err < 0)
 		return err;
-	if (typ == BLOCK_TYPE_REF && !w->opts.skip_index_objects &&
+	if (typ == REFTABLE_BLOCK_TYPE_REF && !w->opts.skip_index_objects &&
 	    w->stats.ref_stats.index_blocks > 0) {
 		err = writer_dump_object_index(w);
 		if (err < 0)
@@ -813,7 +813,7 @@ static int writer_flush_nonempty_block(struct reftable_writer *w)
 	 * By default, all records except for log records are padded to the
 	 * block size.
 	 */
-	if (!w->opts.unpadded && typ != BLOCK_TYPE_LOG)
+	if (!w->opts.unpadded && typ != REFTABLE_BLOCK_TYPE_LOG)
 		padding = w->opts.block_size - raw_bytes;
 
 	bstats = writer_reftable_block_stats(w, typ);

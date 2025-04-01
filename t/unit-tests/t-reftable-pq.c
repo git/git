@@ -34,7 +34,7 @@ static void t_pq_record(void)
 	char *last = NULL;
 
 	for (i = 0; i < N; i++) {
-		check(!reftable_record_init(&recs[i], BLOCK_TYPE_REF));
+		check(!reftable_record_init(&recs[i], REFTABLE_BLOCK_TYPE_REF));
 		recs[i].u.ref.refname = xstrfmt("%02"PRIuMAX, (uintmax_t)i);
 	}
 
@@ -57,7 +57,7 @@ static void t_pq_record(void)
 		merged_iter_pqueue_check(&pq);
 
 		check(pq_entry_equal(&top, &e));
-		check(reftable_record_type(e.rec) == BLOCK_TYPE_REF);
+		check(reftable_record_type(e.rec) == REFTABLE_BLOCK_TYPE_REF);
 		if (last)
 			check_int(strcmp(last, e.rec->u.ref.refname), <, 0);
 		last = e.rec->u.ref.refname;
@@ -76,7 +76,7 @@ static void t_pq_index(void)
 	size_t N = ARRAY_SIZE(recs), i;
 
 	for (i = 0; i < N; i++) {
-		check(!reftable_record_init(&recs[i], BLOCK_TYPE_REF));
+		check(!reftable_record_init(&recs[i], REFTABLE_BLOCK_TYPE_REF));
 		recs[i].u.ref.refname = (char *) "refs/heads/master";
 	}
 
@@ -100,7 +100,7 @@ static void t_pq_index(void)
 		merged_iter_pqueue_check(&pq);
 
 		check(pq_entry_equal(&top, &e));
-		check(reftable_record_type(e.rec) == BLOCK_TYPE_REF);
+		check(reftable_record_type(e.rec) == REFTABLE_BLOCK_TYPE_REF);
 		check_int(e.index, ==, i);
 		if (last)
 			check_str(last, e.rec->u.ref.refname);
@@ -117,7 +117,7 @@ static void t_merged_iter_pqueue_top(void)
 	size_t N = ARRAY_SIZE(recs), i;
 
 	for (i = 0; i < N; i++) {
-		check(!reftable_record_init(&recs[i], BLOCK_TYPE_REF));
+		check(!reftable_record_init(&recs[i], REFTABLE_BLOCK_TYPE_REF));
 		recs[i].u.ref.refname = (char *) "refs/heads/master";
 	}
 

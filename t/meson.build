@@ -58,10 +58,10 @@ unit_test_programs = [
   'unit-tests/t-reftable-block.c',
   'unit-tests/t-reftable-merged.c',
   'unit-tests/t-reftable-pq.c',
-  'unit-tests/t-reftable-reader.c',
   'unit-tests/t-reftable-readwrite.c',
   'unit-tests/t-reftable-record.c',
   'unit-tests/t-reftable-stack.c',
+  'unit-tests/t-reftable-table.c',
 ]
 
 foreach unit_test_program : unit_test_programs
