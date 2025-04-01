@@ -2297,7 +2297,7 @@ struct ref *get_local_heads(void)
 
 struct ref *guess_remote_head(const struct ref *head,
 			      const struct ref *refs,
-			      int all)
+			      unsigned flags)
 {
 	const struct ref *r;
 	struct ref *list = NULL;
@@ -2315,8 +2315,10 @@ struct ref *guess_remote_head(const struct ref *head,
 		return copy_ref(find_ref_by_name(refs, head->symref));
 
 	/* If a remote branch exists with the default branch name, let's use it. */
-	if (!all) {
-		char *default_branch = repo_default_branch_name(the_repository, 0);
+	if (!(flags & REMOTE_GUESS_HEAD_ALL)) {
+		char *default_branch =
+			repo_default_branch_name(the_repository,
+						 flags & REMOTE_GUESS_HEAD_QUIET);
 		char *ref = xstrfmt("refs/heads/%s", default_branch);
 
 		r = find_ref_by_name(refs, ref);
@@ -2339,7 +2341,7 @@ struct ref *guess_remote_head(const struct ref *head,
 		    oideq(&r->old_oid, &head->old_oid)) {
 			*tail = copy_ref(r);
 			tail = &((*tail)->next);
-			if (!all)
+			if (!(flags & REMOTE_GUESS_HEAD_ALL))
 				break;
 		}
 	}
