@@ -941,7 +941,7 @@ int cmd_cat_file(int argc,
 	int input_nul_terminated = 0;
 	int nul_terminated = 0;
 
-	const char * const usage[] = {
+	const char * const builtin_catfile_usage[] = {
 		N_("git cat-file <type> <object>"),
 		N_("git cat-file (-e | -p) <object>"),
 		N_("git cat-file (-t | -s) [--allow-unknown-type] <object>"),
@@ -1007,7 +1007,7 @@ int cmd_cat_file(int argc,
 
 	batch.buffer_output = -1;
 
-	argc = parse_options(argc, argv, prefix, options, usage, 0);
+	argc = parse_options(argc, argv, prefix, options, builtin_catfile_usage, 0);
 	opt_cw = (opt == 'c' || opt == 'w');
 	opt_epts = (opt == 'e' || opt == 'p' || opt == 't' || opt == 's');
 
@@ -1021,7 +1021,7 @@ int cmd_cat_file(int argc,
 	/* Option compatibility */
 	if (force_path && !opt_cw)
 		usage_msg_optf(_("'%s=<%s>' needs '%s' or '%s'"),
-			       usage, options,
+			       builtin_catfile_usage, options,
 			       "--path", _("path|tree-ish"), "--filters",
 			       "--textconv");
 
@@ -1029,20 +1029,20 @@ int cmd_cat_file(int argc,
 	if (batch.enabled)
 		;
 	else if (batch.follow_symlinks)
-		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
-			       "--follow-symlinks");
+		usage_msg_optf(_("'%s' requires a batch mode"), builtin_catfile_usage,
+			       options, "--follow-symlinks");
 	else if (batch.buffer_output >= 0)
-		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
-			       "--buffer");
+		usage_msg_optf(_("'%s' requires a batch mode"), builtin_catfile_usage,
+			       options, "--buffer");
 	else if (batch.all_objects)
-		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
-			       "--batch-all-objects");
+		usage_msg_optf(_("'%s' requires a batch mode"), builtin_catfile_usage,
+			       options, "--batch-all-objects");
 	else if (input_nul_terminated)
-		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
-			       "-z");
+		usage_msg_optf(_("'%s' requires a batch mode"), builtin_catfile_usage,
+			       options, "-z");
 	else if (nul_terminated)
-		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
-			       "-Z");
+		usage_msg_optf(_("'%s' requires a batch mode"), builtin_catfile_usage,
+			       options, "-Z");
 
 	batch.input_delim = batch.output_delim = '\n';
 	if (input_nul_terminated)
@@ -1063,10 +1063,10 @@ int cmd_cat_file(int argc,
 			batch.transform_mode = opt;
 		else if (opt && opt != 'b')
 			usage_msg_optf(_("'-%c' is incompatible with batch mode"),
-				       usage, options, opt);
+				       builtin_catfile_usage, options, opt);
 		else if (argc)
-			usage_msg_opt(_("batch modes take no arguments"), usage,
-				      options);
+			usage_msg_opt(_("batch modes take no arguments"),
+				      builtin_catfile_usage, options);
 
 		return batch_objects(&batch);
 	}
@@ -1074,22 +1074,25 @@ int cmd_cat_file(int argc,
 	if (opt) {
 		if (!argc && opt == 'c')
 			usage_msg_optf(_("<rev> required with '%s'"),
-				       usage, options, "--textconv");
+				       builtin_catfile_usage, options,
+				       "--textconv");
 		else if (!argc && opt == 'w')
 			usage_msg_optf(_("<rev> required with '%s'"),
-				       usage, options, "--filters");
+				       builtin_catfile_usage, options,
+				       "--filters");
 		else if (!argc && opt_epts)
 			usage_msg_optf(_("<object> required with '-%c'"),
-				       usage, options, opt);
+				       builtin_catfile_usage, options, opt);
 		else if (argc == 1)
 			obj_name = argv[0];
 		else
-			usage_msg_opt(_("too many arguments"), usage, options);
+			usage_msg_opt(_("too many arguments"), builtin_catfile_usage,
+				      options);
 	} else if (!argc) {
-		usage_with_options(usage, options);
+		usage_with_options(builtin_catfile_usage, options);
 	} else if (argc != 2) {
 		usage_msg_optf(_("only two arguments allowed in <type> <object> mode, not %d"),
-			      usage, options, argc);
+			      builtin_catfile_usage, options, argc);
 	} else if (argc) {
 		exp_type = argv[0];
 		obj_name = argv[1];
