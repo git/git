@@ -79,6 +79,18 @@ int test_bitmap_pseudo_merges(struct repository *r);
 int test_bitmap_pseudo_merge_commits(struct repository *r, uint32_t n);
 int test_bitmap_pseudo_merge_objects(struct repository *r, uint32_t n);
 
+struct list_objects_filter_options;
+
+/*
+ * Filter bitmapped objects and iterate through all resulting objects,
+ * executing `show_reach` for each of them. Returns `-1` in case the filter is
+ * not supported, `0` otherwise.
+ */
+int for_each_bitmapped_object(struct bitmap_index *bitmap_git,
+			      struct list_objects_filter_options *filter,
+			      show_reachable_fn show_reach,
+			      void *payload);
+
 #define GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL \
 	"GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL"
 
