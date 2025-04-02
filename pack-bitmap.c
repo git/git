@@ -745,6 +745,21 @@ struct bitmap_index *prepare_midx_bitmap_git(struct multi_pack_index *midx)
 	return NULL;
 }
 
+int bitmap_index_contains_pack(struct bitmap_index *bitmap, struct packed_git *pack)
+{
+	for (; bitmap; bitmap = bitmap->base) {
+		if (bitmap_is_midx(bitmap)) {
+			for (size_t i = 0; i < bitmap->midx->num_packs; i++)
+				if (bitmap->midx->packs[i] == pack)
+					return 1;
+		} else if (bitmap->pack == pack) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 struct include_data {
 	struct bitmap_index *bitmap_git;
 	struct bitmap *base;
