@@ -21,6 +21,7 @@
 #include "streaming.h"
 #include "oid-array.h"
 #include "packfile.h"
+#include "pack-bitmap.h"
 #include "object-file.h"
 #include "object-name.h"
 #include "object-store-ll.h"
@@ -825,7 +826,20 @@ static int batch_one_object_packed(const struct object_id *oid,
 				 payload->payload);
 }
 
-static void batch_each_object(for_each_object_fn callback,
+static int batch_one_object_bitmapped(const struct object_id *oid,
+				      enum object_type type UNUSED,
+				      int flags UNUSED,
+				      uint32_t hash UNUSED,
+				      struct packed_git *pack,
+				      off_t offset,
+				      void *_payload)
+{
+	struct for_each_object_payload *payload = _payload;
+	return payload->callback(oid, pack, offset, payload->payload);
+}
+
+static void batch_each_object(struct batch_options *opt,
+			      for_each_object_fn callback,
 			      unsigned flags,
 			      void *_payload)
 {
@@ -833,9 +847,27 @@ static void batch_each_object(for_each_object_fn callback,
 		.callback = callback,
 		.payload = _payload,
 	};
+	struct bitmap_index *bitmap = prepare_bitmap_git(the_repository);
+
 	for_each_loose_object(batch_one_object_loose, &payload, 0);
-	for_each_packed_object(the_repository, batch_one_object_packed,
-			       &payload, flags);
+
+	if (bitmap && !for_each_bitmapped_object(bitmap, &opt->objects_filter,
+						 batch_one_object_bitmapped, &payload)) {
+		struct packed_git *pack;
+
+		for (pack = get_all_packs(the_repository); pack; pack = pack->next) {
+			if (bitmap_index_contains_pack(bitmap, pack) ||
+			    open_pack_index(pack))
+				continue;
+			for_each_object_in_pack(pack, batch_one_object_packed,
+						&payload, flags);
+		}
+	} else {
+		for_each_packed_object(the_repository, batch_one_object_packed,
+				       &payload, flags);
+	}
+
+	free_bitmap_index(bitmap);
 }
 
 static int batch_objects(struct batch_options *opt)
@@ -892,14 +924,14 @@ static int batch_objects(struct batch_options *opt)
 
 			cb.seen = &seen;
 
-			batch_each_object(batch_unordered_object,
+			batch_each_object(opt, batch_unordered_object,
 					  FOR_EACH_OBJECT_PACK_ORDER, &cb);
 
 			oidset_clear(&seen);
 		} else {
 			struct oid_array sa = OID_ARRAY_INIT;
 
-			batch_each_object(collect_object, 0, &sa);
+			batch_each_object(opt, collect_object, 0, &sa);
 			oid_array_for_each_unique(&sa, batch_object_cb, &cb);
 
 			oid_array_clear(&sa);
