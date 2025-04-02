@@ -1356,11 +1356,12 @@ test_expect_success PERL '--batch-command info is unbuffered by default' '
 test_expect_success 'setup for objects filter' '
 	git init repo &&
 	(
-		# Seed the repository with three different sets of objects:
+		# Seed the repository with four different sets of objects:
 		#
 		#   - The first set is fully packed and has a bitmap.
 		#   - The second set is packed, but has no bitmap.
 		#   - The third set is loose.
+		#   - The fourth set is loose and contains big objects.
 		#
 		# This ensures that we cover all these types as expected.
 		cd repo &&
@@ -1368,7 +1369,14 @@ test_expect_success 'setup for objects filter' '
 		git repack -Adb &&
 		test_commit second &&
 		git repack -d &&
-		test_commit third
+		test_commit third &&
+
+		for n in 1000 10000
+		do
+			printf "%"$n"s" X >large.$n || return 1
+		done &&
+		git add large.* &&
+		git commit -m fourth
 	)
 '
 
@@ -1380,7 +1388,7 @@ test_expect_success 'objects filter with unknown option' '
 	test_cmp expect err
 '
 
-for option in blob:limit=1 object:type=tag sparse:oid=1234 tree:1 sparse:path=x
+for option in object:type=tag sparse:oid=1234 tree:1 sparse:path=x
 do
 	test_expect_success "objects filter with unsupported option $option" '
 		case "$option" in
@@ -1435,5 +1443,9 @@ test_objects_filter () {
 }
 
 test_objects_filter "blob:none"
+test_objects_filter "blob:limit=1"
+test_objects_filter "blob:limit=500"
+test_objects_filter "blob:limit=1000"
+test_objects_filter "blob:limit=1k"
 
 test_done
