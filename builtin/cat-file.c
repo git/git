@@ -642,25 +642,18 @@ static int batch_object_cb(const struct object_id *oid, void *vdata)
 	return 0;
 }
 
-static int collect_loose_object(const struct object_id *oid,
-				const char *path UNUSED,
-				void *data)
-{
-	oid_array_append(data, oid);
-	return 0;
-}
-
-static int collect_packed_object(const struct object_id *oid,
-				 struct packed_git *pack UNUSED,
-				 uint32_t pos UNUSED,
-				 void *data)
+static int collect_object(const struct object_id *oid,
+			  struct packed_git *pack UNUSED,
+			  off_t offset UNUSED,
+			  void *data)
 {
 	oid_array_append(data, oid);
 	return 0;
 }
 
 static int batch_unordered_object(const struct object_id *oid,
-				  struct packed_git *pack, off_t offset,
+				  struct packed_git *pack,
+				  off_t offset,
 				  void *vdata)
 {
 	struct object_cb_data *data = vdata;
@@ -672,23 +665,6 @@ static int batch_unordered_object(const struct object_id *oid,
 	batch_object_write(NULL, data->scratch, data->opt, data->expand,
 			   pack, offset);
 	return 0;
-}
-
-static int batch_unordered_loose(const struct object_id *oid,
-				 const char *path UNUSED,
-				 void *data)
-{
-	return batch_unordered_object(oid, NULL, 0, data);
-}
-
-static int batch_unordered_packed(const struct object_id *oid,
-				  struct packed_git *pack,
-				  uint32_t pos,
-				  void *data)
-{
-	return batch_unordered_object(oid, pack,
-				      nth_packed_object_offset(pack, pos),
-				      data);
 }
 
 typedef void (*parse_cmd_fn_t)(struct batch_options *, const char *,
@@ -823,6 +799,45 @@ static void batch_objects_command(struct batch_options *opt,
 
 #define DEFAULT_FORMAT "%(objectname) %(objecttype) %(objectsize)"
 
+typedef int (*for_each_object_fn)(const struct object_id *oid, struct packed_git *pack,
+				  off_t offset, void *data);
+
+struct for_each_object_payload {
+	for_each_object_fn callback;
+	void *payload;
+};
+
+static int batch_one_object_loose(const struct object_id *oid,
+				  const char *path UNUSED,
+				  void *_payload)
+{
+	struct for_each_object_payload *payload = _payload;
+	return payload->callback(oid, NULL, 0, payload->payload);
+}
+
+static int batch_one_object_packed(const struct object_id *oid,
+				   struct packed_git *pack,
+				   uint32_t pos,
+				   void *_payload)
+{
+	struct for_each_object_payload *payload = _payload;
+	return payload->callback(oid, pack, nth_packed_object_offset(pack, pos),
+				 payload->payload);
+}
+
+static void batch_each_object(for_each_object_fn callback,
+			      unsigned flags,
+			      void *_payload)
+{
+	struct for_each_object_payload payload = {
+		.callback = callback,
+		.payload = _payload,
+	};
+	for_each_loose_object(batch_one_object_loose, &payload, 0);
+	for_each_packed_object(the_repository, batch_one_object_packed,
+			       &payload, flags);
+}
+
 static int batch_objects(struct batch_options *opt)
 {
 	struct strbuf input = STRBUF_INIT;
@@ -877,18 +892,14 @@ static int batch_objects(struct batch_options *opt)
 
 			cb.seen = &seen;
 
-			for_each_loose_object(batch_unordered_loose, &cb, 0);
-			for_each_packed_object(the_repository, batch_unordered_packed,
-					       &cb, FOR_EACH_OBJECT_PACK_ORDER);
+			batch_each_object(batch_unordered_object,
+					  FOR_EACH_OBJECT_PACK_ORDER, &cb);
 
 			oidset_clear(&seen);
 		} else {
 			struct oid_array sa = OID_ARRAY_INIT;
 
-			for_each_loose_object(collect_loose_object, &sa, 0);
-			for_each_packed_object(the_repository, collect_packed_object,
-					       &sa, 0);
-
+			batch_each_object(collect_object, 0, &sa);
 			oid_array_for_each_unique(&sa, batch_object_cb, &cb);
 
 			oid_array_clear(&sa);
