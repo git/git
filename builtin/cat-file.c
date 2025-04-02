@@ -484,7 +484,8 @@ static void batch_object_write(const char *obj_name,
 
 		if (use_mailmap ||
 		    opt->objects_filter.choice == LOFC_BLOB_NONE ||
-		    opt->objects_filter.choice == LOFC_BLOB_LIMIT)
+		    opt->objects_filter.choice == LOFC_BLOB_LIMIT ||
+		    opt->objects_filter.choice == LOFC_OBJECT_TYPE)
 			data->info.typep = &data->type;
 		if (opt->objects_filter.choice == LOFC_BLOB_LIMIT)
 			data->info.sizep = &data->size;
@@ -515,6 +516,14 @@ static void batch_object_write(const char *obj_name,
 		case LOFC_BLOB_LIMIT:
 			if (data->type == OBJ_BLOB &&
 			    data->size >= opt->objects_filter.blob_limit_value) {
+				if (!opt->all_objects)
+					report_object_status(opt, obj_name,
+							     &data->oid, "excluded");
+				return;
+			}
+			break;
+		case LOFC_OBJECT_TYPE:
+			if (data->type != opt->objects_filter.object_type) {
 				if (!opt->all_objects)
 					report_object_status(opt, obj_name,
 							     &data->oid, "excluded");
@@ -1062,6 +1071,7 @@ int cmd_cat_file(int argc,
 		break;
 	case LOFC_BLOB_NONE:
 	case LOFC_BLOB_LIMIT:
+	case LOFC_OBJECT_TYPE:
 		if (!batch.enabled)
 			usage(_("objects filter only supported in batch mode"));
 		break;

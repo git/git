@@ -1388,7 +1388,7 @@ test_expect_success 'objects filter with unknown option' '
 	test_cmp expect err
 '
 
-for option in object:type=tag sparse:oid=1234 tree:1 sparse:path=x
+for option in sparse:oid=1234 tree:1 sparse:path=x
 do
 	test_expect_success "objects filter with unsupported option $option" '
 		case "$option" in
@@ -1447,5 +1447,9 @@ test_objects_filter "blob:limit=1"
 test_objects_filter "blob:limit=500"
 test_objects_filter "blob:limit=1000"
 test_objects_filter "blob:limit=1k"
+test_objects_filter "object:type=blob"
+test_objects_filter "object:type=commit"
+test_objects_filter "object:type=tag"
+test_objects_filter "object:type=tree"
 
 test_done
