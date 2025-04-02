@@ -1354,7 +1354,22 @@ test_expect_success PERL '--batch-command info is unbuffered by default' '
 '
 
 test_expect_success 'setup for objects filter' '
-	git init repo
+	git init repo &&
+	(
+		# Seed the repository with three different sets of objects:
+		#
+		#   - The first set is fully packed and has a bitmap.
+		#   - The second set is packed, but has no bitmap.
+		#   - The third set is loose.
+		#
+		# This ensures that we cover all these types as expected.
+		cd repo &&
+		test_commit first &&
+		git repack -Adb &&
+		test_commit second &&
+		git repack -d &&
+		test_commit third
+	)
 '
 
 test_expect_success 'objects filter with unknown option' '
@@ -1365,7 +1380,7 @@ test_expect_success 'objects filter with unknown option' '
 	test_cmp expect err
 '
 
-for option in blob:none blob:limit=1 object:type=tag sparse:oid=1234 tree:1 sparse:path=x
+for option in blob:limit=1 object:type=tag sparse:oid=1234 tree:1 sparse:path=x
 do
 	test_expect_success "objects filter with unsupported option $option" '
 		case "$option" in
@@ -1392,5 +1407,33 @@ test_expect_success 'objects filter: disabled' '
 	sort expect >expect.sorted &&
 	test_cmp expect.sorted actual.sorted
 '
+
+test_objects_filter () {
+	filter="$1"
+
+	test_expect_success "objects filter: $filter" '
+		git -C repo cat-file --batch-check="%(objectname)" --batch-all-objects --filter="$filter" >actual &&
+		sort actual >actual.sorted &&
+		git -C repo rev-list --objects --no-object-names --all --filter="$filter" --filter-provided-objects >expect &&
+		sort expect >expect.sorted &&
+		test_cmp expect.sorted actual.sorted
+	'
+
+	test_expect_success "objects filter prints excluded objects: $filter" '
+		# Find all objects that would be excluded by the current filter.
+		git -C repo rev-list --objects --no-object-names --all >all &&
+		git -C repo rev-list --objects --no-object-names --all --filter="$filter" --filter-provided-objects >filtered &&
+		sort all >all.sorted &&
+		sort filtered >filtered.sorted &&
+		comm -23 all.sorted filtered.sorted >expected.excluded &&
+		test_line_count -gt 0 expected.excluded &&
+
+		git -C repo cat-file --batch-check="%(objectname)" --filter="$filter" <expected.excluded >actual &&
+		awk "/excluded/{ print \$1 }" actual | sort >actual.excluded &&
+		test_cmp expected.excluded actual.excluded
+	'
+}
+
+test_objects_filter "blob:none"
 
 test_done

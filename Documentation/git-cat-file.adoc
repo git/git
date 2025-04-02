@@ -88,7 +88,9 @@ OPTIONS
 	been explicitly requested via any of the batch modes that read objects
 	via standard input (`--batch`, `--batch-check`) will be reported as
 	"filtered". Excluded objects in `--batch-all-objects` mode will not be
-	printed at all. No filters are supported yet.
+	printed at all. The '<filter-spec>' may be one of the following:
++
+The form '--filter=blob:none' omits all blobs.
 
 --path=<path>::
 	For use with `--textconv` or `--filters`, to allow specifying an object
