@@ -2769,7 +2769,7 @@ if {[is_Windows]} {
 	}
 	.mbar.repository add command \
 		-label [mc "Git Bash"] \
-		-command {eval exec [auto_execok start] $cmdLine}
+		-command {eval exec [list [_which cmd] /c start] $cmdLine}
 }
 
 if {[is_Windows] || ![is_bare]} {
