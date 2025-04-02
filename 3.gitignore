@@ -1,0 +1,54 @@
+# Ignore .env files which may contain sensitive information
+.env
+.env.*
+
+# Ignore log files
+*.log
+
+# Ignore temporary files
+*.tmp
+*.temp
+
+# Ignore database files
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+
+# Ignore node_modules directory
+node_modules/
+
+# Ignore build directories
+build/
+dist/
+
+# Ignore coverage reports
+coverage/
+
+# Ignore compiled Python files
+*.pyc
+*.pyo
+__pycache__/
+
+# Ignore sensitive configuration files (example)
+config/settings.yml
+config/database.yml
+
+# Ignore keys and certificates
+*.pem
+*.key
+*.crt
+
+# Ignore any file that contains the word 'secret' or 'password'
+*secret*
+*password*
+
+# Ignore any file that contains the word 'token'
+*token*
+
+# Ignore Docker and Kubernetes files
+docker-compose.override.yml
+kubeconfig
+
+# Ignore AWS credentials
+.aws/
