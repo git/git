@@ -543,7 +543,7 @@ proc is_shellscript {filename} {
 # scripts specifically otherwise just call the filter command.
 proc open_cmd_pipe {cmd path} {
 	global env
-	if {![file executable [shellpath]]} {
+	if {[is_Windows]} {
 		set exe [auto_execok [lindex $cmd 0]]
 		if {[is_shellscript [lindex $exe 0]]} {
 			set run [linsert [auto_execok sh] end -c "$cmd \"\$0\"" $path]
