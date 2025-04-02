@@ -50,7 +50,8 @@ typedef int (*show_reachable_fn)(
 	int flags,
 	uint32_t hash,
 	struct packed_git *found_pack,
-	off_t found_offset);
+	off_t found_offset,
+	void *payload);
 
 struct bitmap_index;
 
