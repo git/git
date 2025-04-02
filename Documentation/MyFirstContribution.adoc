@@ -118,11 +118,11 @@ it's fine to base your work on `master`. However, in the future for bugfixes,
 etc., you should check that document and base it on the appropriate branch.
 
 For the purposes of this document, we will base all our work on the `master`
-branch of the upstream project. Create the `psuh` branch you will use for
+branch of the upstream project. Create the `push` branch you will use for
 development like so:
 
 ----
-$ git checkout -b psuh origin/master
+$ git checkout -b push origin/master
 ----
 
 We'll make a number of commits here in order to demonstrate how to send a topic
