@@ -15,6 +15,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "ident.h"
+#include "list-objects-filter-options.h"
 #include "parse-options.h"
 #include "userdiff.h"
 #include "streaming.h"
@@ -35,6 +36,7 @@ enum batch_mode {
 };
 
 struct batch_options {
+	struct list_objects_filter_options objects_filter;
 	int enabled;
 	int follow_symlinks;
 	enum batch_mode batch_mode;
@@ -495,6 +497,13 @@ static void batch_object_write(const char *obj_name,
 			return;
 		}
 
+		switch (opt->objects_filter.choice) {
+		case LOFC_DISABLED:
+			break;
+		default:
+			BUG("unsupported objects filter");
+		}
+
 		if (use_mailmap && (data->type == OBJ_COMMIT || data->type == OBJ_TAG)) {
 			size_t s = data->size;
 			char *buf = NULL;
@@ -820,7 +829,8 @@ static int batch_objects(struct batch_options *opt)
 		struct object_cb_data cb;
 		struct object_info empty = OBJECT_INFO_INIT;
 
-		if (!memcmp(&data.info, &empty, sizeof(empty)))
+		if (!memcmp(&data.info, &empty, sizeof(empty)) &&
+		    opt->objects_filter.choice == LOFC_DISABLED)
 			data.skip_object_info = 1;
 
 		if (repo_has_promisor_remote(the_repository))
@@ -944,10 +954,13 @@ int cmd_cat_file(int argc,
 	int opt_cw = 0;
 	int opt_epts = 0;
 	const char *exp_type = NULL, *obj_name = NULL;
-	struct batch_options batch = {0};
+	struct batch_options batch = {
+		.objects_filter = LIST_OBJECTS_FILTER_INIT,
+	};
 	int unknown_type = 0;
 	int input_nul_terminated = 0;
 	int nul_terminated = 0;
+	int ret;
 
 	const char * const builtin_catfile_usage[] = {
 		N_("git cat-file <type> <object>"),
@@ -1008,6 +1021,7 @@ int cmd_cat_file(int argc,
 			    N_("run filters on object's content"), 'w'),
 		OPT_STRING(0, "path", &force_path, N_("blob|tree"),
 			   N_("use a <path> for (--textconv | --filters); Not with 'batch'")),
+		OPT_PARSE_LIST_OBJECTS_FILTER(&batch.objects_filter),
 		OPT_END()
 	};
 
@@ -1021,6 +1035,14 @@ int cmd_cat_file(int argc,
 
 	if (use_mailmap)
 		read_mailmap(&mailmap);
+
+	switch (batch.objects_filter.choice) {
+	case LOFC_DISABLED:
+		break;
+	default:
+		usagef(_("objects filter not supported: '%s'"),
+		       list_object_filter_config_name(batch.objects_filter.choice));
+	}
 
 	/* --batch-all-objects? */
 	if (opt == 'b')
@@ -1076,7 +1098,8 @@ int cmd_cat_file(int argc,
 			usage_msg_opt(_("batch modes take no arguments"),
 				      builtin_catfile_usage, options);
 
-		return batch_objects(&batch);
+		ret = batch_objects(&batch);
+		goto out;
 	}
 
 	if (opt) {
@@ -1108,5 +1131,10 @@ int cmd_cat_file(int argc,
 
 	if (unknown_type && opt != 't' && opt != 's')
 		die("git cat-file --allow-unknown-type: use with -s or -t");
-	return cat_one_file(opt, exp_type, obj_name, unknown_type);
+
+	ret = cat_one_file(opt, exp_type, obj_name, unknown_type);
+
+out:
+	list_objects_filter_release(&batch.objects_filter);
+	return ret;
 }

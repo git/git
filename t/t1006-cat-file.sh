@@ -1353,4 +1353,44 @@ test_expect_success PERL '--batch-command info is unbuffered by default' '
 	perl -e "$script" -- --batch-command $hello_oid "$expect" "info "
 '
 
+test_expect_success 'setup for objects filter' '
+	git init repo
+'
+
+test_expect_success 'objects filter with unknown option' '
+	cat >expect <<-EOF &&
+	fatal: invalid filter-spec ${SQ}unknown${SQ}
+	EOF
+	test_must_fail git -C repo cat-file --filter=unknown 2>err &&
+	test_cmp expect err
+'
+
+for option in blob:none blob:limit=1 object:type=tag sparse:oid=1234 tree:1 sparse:path=x
+do
+	test_expect_success "objects filter with unsupported option $option" '
+		case "$option" in
+		tree:1)
+			echo "usage: objects filter not supported: ${SQ}tree${SQ}" >expect
+			;;
+		sparse:path=x)
+			echo "fatal: sparse:path filters support has been dropped" >expect
+			;;
+		*)
+			option_name=$(echo "$option" | cut -d= -f1) &&
+			printf "usage: objects filter not supported: ${SQ}%s${SQ}\n" "$option_name" >expect
+			;;
+		esac &&
+		test_must_fail git -C repo cat-file --filter=$option 2>err &&
+		test_cmp expect err
+	'
+done
+
+test_expect_success 'objects filter: disabled' '
+	git -C repo cat-file --batch-check="%(objectname)" --batch-all-objects --no-filter >actual &&
+	sort actual >actual.sorted &&
+	git -C repo rev-list --objects --no-object-names --all >expect &&
+	sort expect >expect.sorted &&
+	test_cmp expect.sorted actual.sorted
+'
+
 test_done

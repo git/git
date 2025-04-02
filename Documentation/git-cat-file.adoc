@@ -81,6 +81,15 @@ OPTIONS
 	end-of-line conversion, etc). In this case, `<object>` has to be of
 	the form `<tree-ish>:<path>`, or `:<path>`.
 
+--filter=<filter-spec>::
+--no-filter::
+	Omit objects from the list of printed objects. This can only be used in
+	combination with one of the batched modes. Excluded objects that have
+	been explicitly requested via any of the batch modes that read objects
+	via standard input (`--batch`, `--batch-check`) will be reported as
+	"filtered". Excluded objects in `--batch-all-objects` mode will not be
+	printed at all. No filters are supported yet.
+
 --path=<path>::
 	For use with `--textconv` or `--filters`, to allow specifying an object
 	name and a path separately, e.g. when it is difficult to figure out
@@ -338,6 +347,13 @@ the repository, then `cat-file` will ignore any custom format and print:
 
 ------------
 <object> SP missing LF
+------------
+
+If a name is specified on stdin that is filtered out via `--filter=`,
+then `cat-file` will ignore any custom format and print:
+
+------------
+<object> SP excluded LF
 ------------
 
 If a name is specified that might refer to more than one object (an ambiguous short sha), then `cat-file` will ignore any custom format and print:
