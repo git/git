@@ -455,6 +455,16 @@ static void print_default_format(struct strbuf *scratch, struct expand_data *dat
 		    (uintmax_t)data->size, opt->output_delim);
 }
 
+static void report_object_status(struct batch_options *opt,
+				 const char *obj_name,
+				 const struct object_id *oid,
+				 const char *status)
+{
+	printf("%s %s%c", obj_name ? obj_name : oid_to_hex(oid),
+	       status, opt->output_delim);
+	fflush(stdout);
+}
+
 /*
  * If "pack" is non-NULL, then "offset" is the byte offset within the pack from
  * which the object may be accessed (though note that we may also rely on
@@ -481,9 +491,7 @@ static void batch_object_write(const char *obj_name,
 						       &data->oid, &data->info,
 						       OBJECT_INFO_LOOKUP_REPLACE);
 		if (ret < 0) {
-			printf("%s missing%c",
-			       obj_name ? obj_name : oid_to_hex(&data->oid), opt->output_delim);
-			fflush(stdout);
+			report_object_status(opt, obj_name, &data->oid, "missing");
 			return;
 		}
 
@@ -535,10 +543,10 @@ static void batch_one_object(const char *obj_name,
 	if (result != FOUND) {
 		switch (result) {
 		case MISSING_OBJECT:
-			printf("%s missing%c", obj_name, opt->output_delim);
+			report_object_status(opt, obj_name, &data->oid, "missing");
 			break;
 		case SHORT_NAME_AMBIGUOUS:
-			printf("%s ambiguous%c", obj_name, opt->output_delim);
+			report_object_status(opt, obj_name, &data->oid, "ambiguous");
 			break;
 		case DANGLING_SYMLINK:
 			printf("dangling %"PRIuMAX"%c%s%c",
