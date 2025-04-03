@@ -2,16 +2,20 @@
 #define HASH_H
 
 #if defined(SHA1_APPLE)
+#define SHA1_BACKEND "SHA1_APPLE (No collision detection)"
 #include <CommonCrypto/CommonDigest.h>
 #elif defined(SHA1_OPENSSL)
+#  define SHA1_BACKEND "SHA1_OPENSSL (No collision detection)"
 #  include <openssl/sha.h>
 #  if defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 3
 #    define SHA1_NEEDS_CLONE_HELPER
 #    include "sha1/openssl.h"
 #  endif
 #elif defined(SHA1_DC)
+#define SHA1_BACKEND "SHA1_DC"
 #include "sha1dc_git.h"
 #else /* SHA1_BLK */
+#define SHA1_BACKEND "SHA1_BLK (No collision detection)"
 #include "block-sha1/sha1.h"
 #endif
 
@@ -46,17 +50,21 @@
 #endif
 
 #if defined(SHA256_NETTLE)
+#define SHA256_BACKEND "SHA256_NETTLE"
 #include "sha256/nettle.h"
 #elif defined(SHA256_GCRYPT)
+#define SHA256_BACKEND "SHA256_GCRYPT"
 #define SHA256_NEEDS_CLONE_HELPER
 #include "sha256/gcrypt.h"
 #elif defined(SHA256_OPENSSL)
+#  define SHA256_BACKEND "SHA256_OPENSSL"
 #  include <openssl/sha.h>
 #  if defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 3
 #    define SHA256_NEEDS_CLONE_HELPER
 #    include "sha256/openssl.h"
 #  endif
 #else
+#define SHA256_BACKEND "SHA256_BLK"
 #include "sha256/block/sha256.h"
 #endif
 
