@@ -1523,6 +1523,22 @@ then
 	export LSAN_OPTIONS
 fi
 
+if test -z "$PERL_PATH"
+then
+	case "${GIT_TEST_CHAIN_LINT:-unset}" in
+	unset)
+		GIT_TEST_CHAIN_LINT=0
+		;;
+	0)
+		# The user has explicitly disabled the chain linter, so we
+		# don't have anything to worry about.
+		;;
+	*)
+		BAIL_OUT 'You need Perl for the chain linter'
+		;;
+	esac
+fi
+
 if test "${GIT_TEST_CHAIN_LINT:-1}" != 0 &&
    test "${GIT_TEST_EXT_CHAIN_LINT:-1}" != 0
 then
