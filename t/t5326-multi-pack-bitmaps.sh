@@ -153,7 +153,7 @@ test_midx_bitmap_cases () {
 		)
 	'
 
-	test_expect_success PERL_TEST_HELPERS 'pack.preferBitmapTips' '
+	test_expect_success 'pack.preferBitmapTips' '
 		git init repo &&
 		test_when_finished "rm -fr repo" &&
 		(
@@ -176,8 +176,8 @@ test_midx_bitmap_cases () {
 			comm -13 bitmaps commits >before &&
 			test_line_count = 1 before &&
 
-			perl -ne "printf(\"create refs/tags/include/%d \", $.); print" \
-				<before | git update-ref --stdin &&
+			sed "s|\(.*\)|create refs/tags/include/\1 \1|" before |
+			git update-ref --stdin &&
 
 			rm -fr $midx-$(midx_checksum $objdir).bitmap &&
 			rm -fr $midx &&
