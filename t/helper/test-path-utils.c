@@ -323,6 +323,19 @@ int cmd__path_utils(int argc, const char **argv)
 		return 0;
 	}
 
+	if (argc >= 2 && !strcmp(argv[1], "readlink")) {
+		struct strbuf target = STRBUF_INIT;
+		while (argc > 2) {
+			if (strbuf_readlink(&target, argv[2], 0) < 0)
+				die_errno("cannot read link at '%s'", argv[2]);
+			puts(target.buf);
+			argc--;
+			argv++;
+		}
+		strbuf_release(&target);
+		return 0;
+	}
+
 	if (argc >= 2 && !strcmp(argv[1], "absolute_path")) {
 		while (argc > 2) {
 			puts(absolute_path(argv[2]));
