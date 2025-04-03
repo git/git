@@ -4,12 +4,6 @@ test_description='check handling of disallowed .gitmodule urls'
 
 . ./test-lib.sh
 
-if ! test_have_prereq PERL_TEST_HELPERS
-then
-	skip_all='skipping submodule dash URL tests; Perl not available'
-	test_done
-fi
-
 test_expect_success 'setup' '
 	git config --global protocol.file.allow always
 '
@@ -39,7 +33,8 @@ test_expect_success 'fsck accepts protected dash' '
 '
 
 test_expect_success 'remove ./ protection from .gitmodules url' '
-	perl -i -pe "s{\./}{}" .gitmodules &&
+	sed "s|\./||" .gitmodules >.gitmodules.munged &&
+	mv .gitmodules.munged .gitmodules &&
 	git commit -am "drop protection"
 '
 

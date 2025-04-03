@@ -15,13 +15,13 @@ test_expect_success 'initialize repo' '
 	test -e file
 	'
 
-test_expect_success PERL_TEST_HELPERS '(supposedly) non-conflicting change from SVN' '
+test_expect_success '(supposedly) non-conflicting change from SVN' '
 	test x"$(sed -n -e 58p < file)" = x58 &&
 	test x"$(sed -n -e 61p < file)" = x61 &&
 	svn_cmd co "$svnrepo" tmp &&
 	(cd tmp &&
-		perl -i.bak -p -e "s/^58$/5588/" file &&
-		perl -i.bak -p -e "s/^61$/6611/" file &&
+		sed -e "s/^58$/5588/" -e "s/^61$/6611/" file >file.munged &&
+		mv file.munged file &&
 		poke file &&
 		test x"$(sed -n -e 58p < file)" = x5588 &&
 		test x"$(sed -n -e 61p < file)" = x6611 &&
@@ -37,11 +37,13 @@ test_expect_success 'some unrelated changes to git' "
 	git commit -m bye-life life
 	"
 
-test_expect_success PERL_TEST_HELPERS 'change file but in unrelated area' "
+test_expect_success 'change file but in unrelated area' "
 	test x\"\$(sed -n -e 4p < file)\" = x4 &&
 	test x\"\$(sed -n -e 7p < file)\" = x7 &&
-	perl -i.bak -p -e 's/^4\$/4444/' file &&
-	perl -i.bak -p -e 's/^7\$/7777/' file &&
+	sed -e 's/^4\$/4444/' \
+	    -e 's/^7\$/7777/' \
+		file >file.munged &&
+	mv file.munged file &&
 	test x\"\$(sed -n -e 4p < file)\" = x4444 &&
 	test x\"\$(sed -n -e 7p < file)\" = x7777 &&
 	git commit -m '4 => 4444, 7 => 7777' file &&

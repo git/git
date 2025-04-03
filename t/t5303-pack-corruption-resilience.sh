@@ -99,11 +99,12 @@ test_expect_success '... and loose copy of first delta allows for partial recove
 	git cat-file blob $blob_3 > /dev/null
 '
 
-test_expect_success PERL_TEST_HELPERS 'create corruption in data of first object' '
+test_expect_success 'create corruption in data of first object' '
 	create_new_pack &&
 	git prune-packed &&
 	chmod +w ${pack}.pack &&
-	perl -i.bak -pe "s/ base /abcdef/" ${pack}.pack &&
+	sed "s/ base /abcdef/" ${pack}.pack >${pack}.pack.munged &&
+	mv ${pack}.pack.munged ${pack}.pack &&
 	test_must_fail git cat-file blob $blob_1 > /dev/null &&
 	test_must_fail git cat-file blob $blob_2 > /dev/null &&
 	test_must_fail git cat-file blob $blob_3 > /dev/null
@@ -156,11 +157,12 @@ test_expect_success '... and then a repack "clears" the corruption' '
 	git cat-file blob $blob_3 > /dev/null
 '
 
-test_expect_success PERL_TEST_HELPERS 'create corruption in data of first delta' '
+test_expect_success 'create corruption in data of first delta' '
 	create_new_pack &&
 	git prune-packed &&
 	chmod +w ${pack}.pack &&
-	perl -i.bak -pe "s/ delta1 /abcdefgh/" ${pack}.pack &&
+	sed "s/ delta1 /abcdefgh/" ${pack}.pack >${pack}.pack.munged &&
+	mv ${pack}.pack.munged ${pack}.pack &&
 	git cat-file blob $blob_1 > /dev/null &&
 	test_must_fail git cat-file blob $blob_2 > /dev/null &&
 	test_must_fail git cat-file blob $blob_3 > /dev/null
