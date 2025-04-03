@@ -128,7 +128,7 @@ test_expect_success 'second commit has cache-tree' '
 	test_cache_tree
 '
 
-test_expect_success PERL 'commit --interactive gives cache-tree on partial commit' '
+test_expect_success 'commit --interactive gives cache-tree on partial commit' '
 	test_when_finished "git reset --hard" &&
 	cat <<-\EOT >foo.c &&
 	int foo()
@@ -162,7 +162,7 @@ test_expect_success PERL 'commit --interactive gives cache-tree on partial commi
 	test_cache_tree expected.status
 '
 
-test_expect_success PERL 'commit -p with shrinking cache-tree' '
+test_expect_success 'commit -p with shrinking cache-tree' '
 	mkdir -p deep/very-long-subdir &&
 	echo content >deep/very-long-subdir/file &&
 	git add deep &&
