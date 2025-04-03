@@ -2549,8 +2549,8 @@ int refs_verify_refnames_available(struct ref_store *refs,
 
 			/*
 			 * If we've already seen the directory we don't need to
-			 * process it again. Skip it to avoid checking checking
-			 * common prefixes like "refs/heads/" repeatedly.
+			 * process it again. Skip it to avoid checking common
+			 * prefixes like "refs/heads/" repeatedly.
 			 */
 			if (!strset_add(&dirnames, dirname.buf))
 				continue;
