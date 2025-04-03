@@ -101,6 +101,9 @@ proc _which {what args} {
 
 	if {[is_Windows] && [lsearch -exact $args -script] >= 0} {
 		set suffix {}
+	} elseif {[is_Windows] && [string match *$_search_exe [string tolower $what]]} {
+		# The search string already has the file extension
+		set suffix {}
 	} else {
 		set suffix $_search_exe
 	}
