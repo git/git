@@ -805,6 +805,10 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 		strbuf_addf(buf, "zlib: %s\n", ZLIB_VERSION);
 #endif
 		strbuf_addf(buf, "SHA-1: %s\n", SHA1_BACKEND);
+#if defined SHA1_UNSAFE_BACKEND
+		strbuf_addf(buf, "non-collision-detecting-SHA-1: %s\n",
+			    SHA1_UNSAFE_BACKEND);
+#endif
 		strbuf_addf(buf, "SHA-256: %s\n", SHA256_BACKEND);
 	}
 }
