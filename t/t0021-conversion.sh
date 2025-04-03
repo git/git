@@ -619,7 +619,7 @@ test_expect_success 'required process filter should be used only for "clean" ope
 	)
 '
 
-test_expect_success 'required process filter should process multiple packets' '
+test_expect_success PERL_TEST_HELPERS 'required process filter should process multiple packets' '
 	test_config_global filter.protocol.process "test-tool rot13-filter --log=debug.log clean smudge" &&
 	test_config_global filter.protocol.required true &&
 
@@ -684,7 +684,7 @@ test_expect_success 'required process filter should process multiple packets' '
 	)
 '
 
-test_expect_success 'required process filter with clean error should fail' '
+test_expect_success PERL_TEST_HELPERS 'required process filter with clean error should fail' '
 	test_config_global filter.protocol.process "test-tool rot13-filter --log=debug.log clean smudge" &&
 	test_config_global filter.protocol.required true &&
 	rm -rf repo &&

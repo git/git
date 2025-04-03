@@ -5,6 +5,12 @@ test_description=check-ignore
 TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping ignores tests; Perl not available'
+	test_done
+fi
+
 init_vars () {
 	global_excludes="global-excludes"
 }

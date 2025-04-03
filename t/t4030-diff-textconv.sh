@@ -4,6 +4,12 @@ test_description='diff.*.textconv tests'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping diff textconv tests; Perl not available'
+	test_done
+fi
+
 find_diff() {
 	sed '1,/^index /d' | sed '/^-- $/,$d'
 }

@@ -4,6 +4,12 @@ test_description='git grep in binary files'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping grep binary tests; Perl not available'
+	test_done
+fi
+
 test_expect_success 'setup' "
 	echo 'binaryQfileQm[*]cQ*æQð' | q_to_nul >a &&
 	git add a &&

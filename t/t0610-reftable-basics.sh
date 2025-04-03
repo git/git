@@ -643,7 +643,7 @@ test_expect_success 'basic: commit and list refs' '
 	test_cmp actual expect
 '
 
-test_expect_success 'basic: can write large commit message' '
+test_expect_success PERL_TEST_HELPERS 'basic: can write large commit message' '
 	test_when_finished "rm -rf repo" &&
 	git init repo &&
 	perl -e "

@@ -1120,7 +1120,7 @@ test_expect_success 'push with http:// and a config of v2 does not request v2' '
 	! grep "git< version 2" log
 '
 
-test_expect_success 'when server sends "ready", expect DELIM' '
+test_expect_success PERL_TEST_HELPERS 'when server sends "ready", expect DELIM' '
 	rm -rf "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" http_child &&
 
 	git init "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
@@ -1140,7 +1140,7 @@ test_expect_success 'when server sends "ready", expect DELIM' '
 	test_grep "expected packfile to be sent after .ready." err
 '
 
-test_expect_success 'when server does not send "ready", expect FLUSH' '
+test_expect_success PERL_TEST_HELPERS 'when server does not send "ready", expect FLUSH' '
 	rm -rf "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" http_child log &&
 
 	git init "$HTTPD_DOCUMENT_ROOT_PATH/http_parent" &&
@@ -1446,7 +1446,7 @@ test_expect_success 'http:// --negotiate-only' '
 	grep "$COMMON" out
 '
 
-test_expect_success 'http:// --negotiate-only without wait-for-done support' '
+test_expect_success PERL_TEST_HELPERS 'http:// --negotiate-only without wait-for-done support' '
 	SERVER="server" &&
 	URI="$HTTPD_URL/one_time_perl/server" &&
 

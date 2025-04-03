@@ -8,6 +8,12 @@ test_description='Tests git rev-list --topo-order functionality'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-t6000.sh # t6xxx specific functions
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping rev-list topo-order tests; Perl not available'
+	test_done
+fi
+
 list_duplicates()
 {
     "$@" | sort | uniq -d

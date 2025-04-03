@@ -20,7 +20,7 @@ extract_haves () {
 	depacketize | perl -lne '/^(\S+) \.have/ and print $1'
 }
 
-test_expect_success 'with core.alternateRefsCommand' '
+test_expect_success PERL_TEST_HELPERS 'with core.alternateRefsCommand' '
 	write_script fork/alternate-refs <<-\EOF &&
 		git --git-dir="$1" for-each-ref \
 			--format="%(objectname)" \
@@ -33,7 +33,7 @@ test_expect_success 'with core.alternateRefsCommand' '
 	test_cmp expect actual.haves
 '
 
-test_expect_success 'with core.alternateRefsPrefixes' '
+test_expect_success PERL_TEST_HELPERS 'with core.alternateRefsPrefixes' '
 	test_config -C fork core.alternateRefsPrefixes "refs/heads/private" &&
 	git rev-parse private/branch >expect &&
 	printf "0000" | git receive-pack fork >actual &&

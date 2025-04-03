@@ -7,6 +7,12 @@ test_description='git pack-object'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping pack-object tests; Perl not available'
+	test_done
+fi
+
 test_expect_success 'setup' '
 	rm -f .git/index* &&
 	perl -e "print \"a\" x 4096;" >a &&

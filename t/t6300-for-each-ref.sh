@@ -10,6 +10,12 @@ GNUPGHOME_NOT_USED=$GNUPGHOME
 . "$TEST_DIRECTORY"/lib-gpg.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping for-each-ref tests; Perl not available'
+	test_done
+fi
+
 # Mon Jul 3 23:18:43 2006 +0000
 datestamp=1151968723
 setdate_and_increment () {

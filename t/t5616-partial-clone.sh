@@ -751,7 +751,7 @@ replace_packfile () {
 	}' >"$HTTPD_ROOT_PATH/one-time-perl"
 }
 
-test_expect_success 'upon cloning, check that all refs point to objects' '
+test_expect_success PERL_TEST_HELPERS 'upon cloning, check that all refs point to objects' '
 	SERVER="$HTTPD_DOCUMENT_ROOT_PATH/server" &&
 	rm -rf "$SERVER" repo &&
 	test_create_repo "$SERVER" &&
@@ -784,7 +784,7 @@ test_expect_success 'upon cloning, check that all refs point to objects' '
 	! test -e "$HTTPD_ROOT_PATH/one-time-perl"
 '
 
-test_expect_success 'when partial cloning, tolerate server not sending target of tag' '
+test_expect_success PERL_TEST_HELPERS 'when partial cloning, tolerate server not sending target of tag' '
 	SERVER="$HTTPD_DOCUMENT_ROOT_PATH/server" &&
 	rm -rf "$SERVER" repo &&
 	test_create_repo "$SERVER" &&
@@ -825,7 +825,7 @@ test_expect_success 'when partial cloning, tolerate server not sending target of
 	! test -e "$HTTPD_ROOT_PATH/one-time-perl"
 '
 
-test_expect_success 'tolerate server sending REF_DELTA against missing promisor objects' '
+test_expect_success PERL_TEST_HELPERS 'tolerate server sending REF_DELTA against missing promisor objects' '
 	SERVER="$HTTPD_DOCUMENT_ROOT_PATH/server" &&
 	rm -rf "$SERVER" repo &&
 	test_create_repo "$SERVER" &&

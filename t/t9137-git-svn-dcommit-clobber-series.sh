@@ -15,7 +15,7 @@ test_expect_success 'initialize repo' '
 	test -e file
 	'
 
-test_expect_success '(supposedly) non-conflicting change from SVN' '
+test_expect_success PERL_TEST_HELPERS '(supposedly) non-conflicting change from SVN' '
 	test x"$(sed -n -e 58p < file)" = x58 &&
 	test x"$(sed -n -e 61p < file)" = x61 &&
 	svn_cmd co "$svnrepo" tmp &&
@@ -37,7 +37,7 @@ test_expect_success 'some unrelated changes to git' "
 	git commit -m bye-life life
 	"
 
-test_expect_success 'change file but in unrelated area' "
+test_expect_success PERL_TEST_HELPERS 'change file but in unrelated area' "
 	test x\"\$(sed -n -e 4p < file)\" = x4 &&
 	test x\"\$(sed -n -e 7p < file)\" = x7 &&
 	perl -i.bak -p -e 's/^4\$/4444/' file &&
