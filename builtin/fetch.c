@@ -1903,12 +1903,13 @@ static int do_fetch(struct transport *transport,
 				  "you need to specify exactly one branch with the --set-upstream option"));
 		}
 	}
-	if (do_set_head && set_head(remote_refs, transport->remote))
-		;
+	if (do_set_head) {
 		/*
-		 * Way too many cases where this can go wrong
-		 * so let's just fail silently for now.
+		 * Way too many cases where this can go wrong so let's just
+		 * ignore errors and fail silently for now.
 		 */
+		set_head(remote_refs, transport->remote);
+	}
 
 cleanup:
 	if (retcode) {
