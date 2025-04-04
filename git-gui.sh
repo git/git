@@ -549,16 +549,6 @@ proc _git_cmd {name} {
 	return $v
 }
 
-# Test a file for a hashbang to identify executable scripts on Windows.
-proc is_shellscript {filename} {
-	if {![file exists $filename]} {return 0}
-	set f [open $filename r]
-	fconfigure $f -encoding binary
-	set magic [read $f 2]
-	close $f
-	return [expr {$magic eq "#!"}]
-}
-
 # Run a shell command connected via pipes on stdout.
 # This is for use with textconv filters and uses sh -c "..." to allow it to
 # contain a command with arguments. We presume this
