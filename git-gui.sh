@@ -1536,18 +1536,7 @@ proc rescan_stage2 {fd after} {
 		close $fd
 	}
 
-	if {[package vcompare $::_git_version 1.6.3] >= 0} {
-		set ls_others [list --exclude-standard]
-	} else {
-		set ls_others [list --exclude-per-directory=.gitignore]
-		if {[have_info_exclude]} {
-			lappend ls_others "--exclude-from=[gitdir info exclude]"
-		}
-		set user_exclude [get_config core.excludesfile]
-		if {$user_exclude ne {} && [file readable $user_exclude]} {
-			lappend ls_others "--exclude-from=[file normalize $user_exclude]"
-		}
-	}
+	set ls_others [list --exclude-standard]
 
 	set buf_rdi {}
 	set buf_rdf {}
