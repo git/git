@@ -81,10 +81,8 @@ proc is_Cygwin {} {
 
 if {[is_Windows]} {
 	set _path_sep {;}
-	set _search_exe .exe
 } else {
 	set _path_sep {:}
-	set _search_exe {}
 }
 
 if {[is_Windows]} {
@@ -114,15 +112,15 @@ set env(PATH) [join $_search_path $_path_sep]
 
 if {[is_Windows]} {
 	proc _which {what args} {
-		global _search_exe _search_path
+		global _search_path
 
 		if {[lsearch -exact $args -script] >= 0} {
 			set suffix {}
-		} elseif {[string match *$_search_exe [string tolower $what]]} {
+		} elseif {[string match *.exe [string tolower $what]]} {
 			# The search string already has the file extension
 			set suffix {}
 		} else {
-			set suffix $_search_exe
+			set suffix .exe
 		}
 
 		foreach p $_search_path {
