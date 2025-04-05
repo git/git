@@ -681,30 +681,30 @@ proc safe_open_command {cmd {redir {}}} {
 }
 
 proc git_read {cmd {redir {}}} {
-	set cmdp [_git_cmd [lindex $cmd 0]]
-	set cmd [lrange $cmd 1 end]
+	global _git
+	set cmdp [concat [list $_git] $cmd]
 
-	return [safe_open_command [concat $cmdp $cmd] $redir]
+	return [safe_open_command $cmdp $redir]
 }
 
 proc git_read_nice {cmd} {
+	global _git
 	set opt [list]
 
 	_lappend_nice opt
 
-	set cmdp [_git_cmd [lindex $cmd 0]]
-	set cmd [lrange $cmd 1 end]
+	set cmdp [concat [list $_git] $cmd]
 
-	return [safe_open_command [concat $opt $cmdp $cmd]]
+	return [safe_open_command [concat $opt $cmdp]]
 }
 
 proc git_write {cmd} {
+	global _git
 	set cmd [make_arglist_safe $cmd]
-	set cmdp [_git_cmd [lindex $cmd 0]]
-	set cmd [lrange $cmd 1 end]
+	set cmdp [concat [list $_git] $cmd]
 
-	_trace_exec [concat $cmdp $cmd]
-	return [open [concat [list | ] $cmdp $cmd] w]
+	_trace_exec $cmdp
+	return [open [concat [list | ] $cmdp] w]
 }
 
 proc githook_read {hook_name args} {
