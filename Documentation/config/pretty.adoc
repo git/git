@@ -1,9 +1,0 @@
-pretty.<name>::
-	Alias for a --pretty= format string, as specified in
-	linkgit:git-log[1]. Any aliases defined here can be used just
-	as the built-in pretty formats could. For example,
-	running `git config pretty.changelog "format:* %H %s"`
-	would cause the invocation `git log --pretty=changelog`
-	to be equivalent to running `git log "--pretty=format:* %H %s"`.
-	Note that an alias with the same name as a built-in format
-	will be silently ignored.

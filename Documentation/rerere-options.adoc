@@ -1,9 +1,0 @@
---rerere-autoupdate::
---no-rerere-autoupdate::
-	After the rerere mechanism reuses a recorded resolution on
-	the current conflict to update the files in the working
-	tree, allow it to also update the index with the result of
-	resolution.  `--no-rerere-autoupdate` is a good way to
-	double-check what `rerere` did and catch potential
-	mismerges, before committing the result to the index with a
-	separate `git add`.

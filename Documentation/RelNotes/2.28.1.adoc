@@ -1,7 +1,0 @@
-Git v2.28.1 Release Notes
-=========================
-
-This release merges up the fixes that appear in v2.17.6, v2.18.5,
-v2.19.6, v2.20.5, v2.21.4, v2.22.5, v2.23.4, v2.24.4, v2.25.5,
-v2.26.3 and v2.27.1 to address the security issue CVE-2021-21300;
-see the release notes for these versions for details.

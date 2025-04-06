@@ -1,4 +1,0 @@
-web.browser::
-	Specify a web browser that may be used by some commands.
-	Currently only linkgit:git-instaweb[1] and linkgit:git-help[1]
-	may use it.

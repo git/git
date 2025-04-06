@@ -1,3 +1,0 @@
-clean.requireForce::
-	A boolean to make git-clean refuse to delete files unless -f
-	is given. Defaults to true.
