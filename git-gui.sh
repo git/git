@@ -365,7 +365,6 @@ set _appname {Git Gui}
 set _gitdir {}
 set _gitworktree {}
 set _isbare {}
-set _gitexec {}
 set _githtmldir {}
 set _reponame {}
 set _shellpath {@@SHELL_PATH@@}
@@ -428,20 +427,6 @@ proc gitdir {args} {
 		return $_gitdir
 	}
 	return [eval [list file join $_gitdir] $args]
-}
-
-proc gitexec {args} {
-	global _gitexec
-	if {$_gitexec eq {}} {
-		if {[catch {set _gitexec [git --exec-path]} err]} {
-			error "Git not installed?\n\n$err"
-		}
-		set _gitexec [file normalize $_gitexec]
-	}
-	if {$args eq {}} {
-		return $_gitexec
-	}
-	return [eval [list file join $_gitexec] $args]
 }
 
 proc githtmldir {args} {
@@ -576,56 +561,6 @@ proc _trace_exec {cmd} {
 
 #'"  fix poor old emacs font-lock mode
 
-proc _git_cmd {name} {
-	global _git_cmd_path
-
-	if {[catch {set v $_git_cmd_path($name)}]} {
-		switch -- $name {
-		  version   -
-		--version   -
-		--exec-path { return [list $::_git $name] }
-		}
-
-		set p [gitexec git-$name$::_search_exe]
-		if {[file exists $p]} {
-			set v [list $p]
-		} elseif {[is_Windows] && [file exists [gitexec git-$name]]} {
-			# Try to determine what sort of magic will make
-			# git-$name go and do its thing, because native
-			# Tcl on Windows doesn't know it.
-			#
-			set p [gitexec git-$name]
-			set f [safe_open_file $p r]
-			set s [gets $f]
-			close $f
-
-			switch -glob -- [lindex $s 0] {
-			#!*sh     { set i sh     }
-			#!*perl   { set i perl   }
-			#!*python { set i python }
-			default   { error "git-$name is not supported: $s" }
-			}
-
-			upvar #0 _$i interp
-			if {![info exists interp]} {
-				set interp [_which $i]
-			}
-			if {$interp eq {}} {
-				error "git-$name requires $i (not in PATH)"
-			}
-			set v [concat [list $interp] [lrange $s 1 end] [list $p]]
-		} else {
-			# Assume it is builtin to git somehow and we
-			# aren't actually able to see a file for it.
-			#
-			set v [list $::_git $name]
-		}
-		set _git_cmd_path($name) $v
-	}
-	return $v
-}
-
-# Run a shell command connected via pipes on stdout.
 # This is for use with textconv filters and uses sh -c "..." to allow it to
 # contain a command with arguments. We presume this
 # to be a shellscript that the configured shell (/bin/sh by default) knows
@@ -1194,7 +1129,7 @@ set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
 
 # Suggest our implementation of askpass, if none is set
 if {![info exists env(SSH_ASKPASS)]} {
-	set env(SSH_ASKPASS) [gitexec git-gui--askpass]
+	set env(SSH_ASKPASS) [file join [git --exec-path] git-gui--askpass]
 }
 
 ######################################################################
