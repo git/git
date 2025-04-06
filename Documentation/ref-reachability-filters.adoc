@@ -1,7 +1,0 @@
-When combining multiple `--contains` and `--no-contains` filters, only
-references that contain at least one of the `--contains` commits and
-contain none of the `--no-contains` commits are shown.
-
-When combining multiple `--merged` and `--no-merged` filters, only
-references that are reachable from at least one of the `--merged`
-commits and from none of the `--no-merged` commits are shown.

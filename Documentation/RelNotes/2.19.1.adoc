@@ -1,6 +1,0 @@
-Git v2.19.1 Release Notes
-=========================
-
-This release merges up the fixes that appear in v2.14.5 and in
-v2.17.2 to address the recently reported CVE-2018-17456; see the
-release notes for those versions for details.

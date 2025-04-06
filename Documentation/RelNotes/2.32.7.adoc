@@ -1,7 +1,0 @@
-Git v2.32.7 Release Notes
-=========================
-
-This release merges the fixes that appear in v2.30.9 and v2.31.8 to
-address the security issues CVE-2023-25652, CVE-2023-25815, and
-CVE-2023-29007; see the release notes for these versions for
-details.

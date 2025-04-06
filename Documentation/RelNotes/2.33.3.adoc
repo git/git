@@ -1,4 +1,0 @@
-Git Documentation/RelNotes/2.33.3.txt Release Notes
-=========================
-
-This release merges up the fixes that appear in v2.33.3.

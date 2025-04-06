@@ -1,7 +1,0 @@
-Git v2.42.2 Release Notes
-=========================
-
-This release merges up the fix that appears in v2.39.4, v2.40.2
-and v2.41.1 to address the security issues CVE-2024-32002,
-CVE-2024-32004, CVE-2024-32020, CVE-2024-32021 and CVE-2024-32465;
-see the release notes for these versions for details.
