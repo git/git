@@ -11,6 +11,7 @@
 
 #include "basics.h"
 #include "record.h"
+#include "reftable-block.h"
 #include "reftable-blocksource.h"
 
 /*
@@ -61,53 +62,6 @@ int block_writer_finish(struct block_writer *w);
 
 /* clears out internally allocated block_writer members. */
 void block_writer_release(struct block_writer *bw);
-
-/*
- * A block part of a reftable. Contains records as well as some metadata
- * describing them.
- */
-struct reftable_block {
-	/* offset of the block header; nonzero for the first block in a
-	 * reftable. */
-	uint32_t header_off;
-
-	/* the memory block */
-	struct reftable_block_data block_data;
-	uint32_t hash_size;
-
-	/* Uncompressed data for log entries. */
-	struct z_stream_s *zstream;
-	unsigned char *uncompressed_data;
-	size_t uncompressed_cap;
-
-	/*
-	 * Restart point data. Restart points are located after the block's
-	 * record data.
-	 */
-	uint16_t restart_count;
-	uint32_t restart_off;
-
-	/* size of the data in the file. For log blocks, this is the compressed
-	 * size. */
-	uint32_t full_block_size;
-	uint8_t block_type;
-};
-
-/*
- * Initialize a reftable block from the given block source.
- */
-int reftable_block_init(struct reftable_block *b,
-			struct reftable_block_source *source,
-			uint32_t offset, uint32_t header_size,
-			uint32_t table_block_size, uint32_t hash_size);
-
-void reftable_block_release(struct reftable_block *b);
-
-/* Returns the block type (eg. 'r' for refs) */
-uint8_t reftable_block_type(const struct reftable_block *b);
-
-/* Decodes the first key in the block */
-int reftable_block_first_key(const struct reftable_block *b, struct reftable_buf *key);
 
 /* Iterate over entries in a block */
 struct block_iter {
