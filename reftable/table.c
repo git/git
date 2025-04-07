@@ -804,3 +804,50 @@ done:
 	table_iter_close(&ti);
 	return err;
 }
+
+int reftable_table_iterator_init(struct reftable_table_iterator *it,
+				 struct reftable_table *t)
+{
+	struct table_iter *ti;
+	int err;
+
+	REFTABLE_ALLOC_ARRAY(ti, 1);
+	if (!ti)
+		return REFTABLE_OUT_OF_MEMORY_ERROR;
+
+	err = table_iter_init(ti, t);
+	if (err < 0)
+		goto out;
+
+	it->iter_arg = ti;
+	err = 0;
+
+out:
+	if (err < 0)
+		reftable_free(ti);
+	return err;
+}
+
+void reftable_table_iterator_release(struct reftable_table_iterator *it)
+{
+	if (!it->iter_arg)
+		return;
+	table_iter_close(it->iter_arg);
+	reftable_free(it->iter_arg);
+	it->iter_arg = NULL;
+}
+
+int reftable_table_iterator_next(struct reftable_table_iterator *it,
+				 const struct reftable_block **out)
+{
+	struct table_iter *ti = it->iter_arg;
+	int err;
+
+	err = table_iter_next_block(ti);
+	if (err)
+		return err;
+
+	*out = &ti->block;
+
+	return 0;
+}

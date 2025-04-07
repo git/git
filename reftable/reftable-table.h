@@ -10,6 +10,7 @@
 #define REFTABLE_TABLE_H
 
 #include "reftable-iterator.h"
+#include "reftable-block.h"
 #include "reftable-blocksource.h"
 
 /*
@@ -98,5 +99,20 @@ uint64_t reftable_table_min_update_index(struct reftable_table *t);
 
 /* print blocks onto stdout for debugging. */
 int reftable_table_print_blocks(const char *tablename);
+
+/*
+ * An iterator that iterates through the blocks contained in a given table.
+ */
+struct reftable_table_iterator {
+	void *iter_arg;
+};
+
+int reftable_table_iterator_init(struct reftable_table_iterator *it,
+				 struct reftable_table *t);
+
+void reftable_table_iterator_release(struct reftable_table_iterator *it);
+
+int reftable_table_iterator_next(struct reftable_table_iterator *it,
+				 const struct reftable_block **out);
 
 #endif
