@@ -2759,17 +2759,16 @@ if {![is_bare]} {
 
 if {[is_Windows]} {
 	# Use /git-bash.exe if available
-	set normalized [file normalize $::argv0]
-	regsub "/mingw../libexec/git-core/git-gui$" \
-		$normalized "/git-bash.exe" cmdLine
-	if {$cmdLine != $normalized && [file exists $cmdLine]} {
-		set cmdLine [list "Git Bash" $cmdLine &]
+	set _git_bash [exec cygpath -m /git-bash.exe]
+	if {[file executable $_git_bash]} {
+		set _bash_cmdline [list "Git Bash" $_git_bash &]
 	} else {
-		set cmdLine [list "Git Bash" bash --login -l &]
+		set _bash_cmdline [list "Git Bash" bash --login -l &]
 	}
 	.mbar.repository add command \
 		-label [mc "Git Bash"] \
-		-command {eval exec [list [_which cmd] /c start] $cmdLine}
+		-command {eval exec [list [_which cmd] /c start] $_bash_cmdline}
+	unset _git_bash
 }
 
 if {[is_Windows] || ![is_bare]} {
