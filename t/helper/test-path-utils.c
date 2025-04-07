@@ -504,6 +504,25 @@ int cmd__path_utils(int argc, const char **argv)
 		return !!res;
 	}
 
+	if (argc > 1 && !strcmp(argv[1], "is_path_owned_by_current_user")) {
+		int res = 0;
+
+		for (int i = 2; i < argc; i++) {
+			struct strbuf buf = STRBUF_INIT;
+
+			if (is_path_owned_by_current_user(argv[i], &buf))
+				printf("'%s' is owned by current SID\n", argv[i]);
+			else {
+				printf("'%s' is not owned by current SID: %s\n", argv[i], buf.buf);
+				res = 1;
+			}
+
+			strbuf_release(&buf);
+		}
+
+		return res;
+	}
+
 	fprintf(stderr, "%s: unknown function name: %s\n", argv[0],
 		argv[1] ? argv[1] : "(there was none)");
 	return 1;
