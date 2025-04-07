@@ -114,7 +114,7 @@ static void indexed_table_ref_iter_close(void *p)
 {
 	struct indexed_table_ref_iter *it = p;
 	block_iter_close(&it->cur);
-	block_source_release_data(&it->block_reader.block_data);
+	block_source_release_data(&it->block.block_data);
 	reftable_free(it->offsets);
 	reftable_buf_release(&it->oid);
 }
@@ -128,11 +128,10 @@ static int indexed_table_ref_iter_next_block(struct indexed_table_ref_iter *it)
 		return 1;
 	}
 
-	block_source_release_data(&it->block_reader.block_data);
+	block_source_release_data(&it->block.block_data);
 
 	off = it->offsets[it->offset_idx++];
-	err = table_init_block_reader(it->table, &it->block_reader, off,
-				      BLOCK_TYPE_REF);
+	err = table_init_block(it->table, &it->block, off, BLOCK_TYPE_REF);
 	if (err < 0) {
 		return err;
 	}
@@ -140,7 +139,7 @@ static int indexed_table_ref_iter_next_block(struct indexed_table_ref_iter *it)
 		/* indexed block does not exist. */
 		return REFTABLE_FORMAT_ERROR;
 	}
-	block_iter_seek_start(&it->cur, &it->block_reader);
+	block_iter_seek_start(&it->cur, &it->block);
 	return 0;
 }
 

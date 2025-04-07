@@ -68,7 +68,7 @@ struct indexed_table_ref_iter {
 	/* Points to the next offset to read. */
 	int offset_idx;
 	int offset_len;
-	struct block_reader block_reader;
+	struct reftable_block block;
 	struct block_iter cur;
 	int is_finished;
 };

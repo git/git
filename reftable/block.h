@@ -64,8 +64,11 @@ void block_writer_release(struct block_writer *bw);
 
 struct z_stream;
 
-/* Read a block. */
-struct block_reader {
+/*
+ * A block part of a reftable. Contains records as well as some metadata
+ * describing them.
+ */
+struct reftable_block {
 	/* offset of the block header; nonzero for the first block in a
 	 * reftable. */
 	uint32_t header_off;
@@ -92,19 +95,21 @@ struct block_reader {
 	uint8_t block_type;
 };
 
-/* initializes a block reader. */
-int block_reader_init(struct block_reader *br,
-		      struct reftable_block_source *source,
-		      uint32_t offset, uint32_t header_size,
-		      uint32_t table_block_size, uint32_t hash_size);
+/*
+ * Initialize a reftable block from the given block source.
+ */
+int reftable_block_init(struct reftable_block *b,
+			struct reftable_block_source *source,
+			uint32_t offset, uint32_t header_size,
+			uint32_t table_block_size, uint32_t hash_size);
 
-void block_reader_release(struct block_reader *br);
+void reftable_block_release(struct reftable_block *b);
 
 /* Returns the block type (eg. 'r' for refs) */
-uint8_t block_reader_type(const struct block_reader *r);
+uint8_t reftable_block_type(const struct reftable_block *b);
 
 /* Decodes the first key in the block */
-int block_reader_first_key(const struct block_reader *br, struct reftable_buf *key);
+int reftable_block_first_key(const struct reftable_block *b, struct reftable_buf *key);
 
 /* Iterate over entries in a block */
 struct block_iter {
@@ -125,10 +130,10 @@ struct block_iter {
 }
 
 /* Position `it` at start of the block */
-void block_iter_seek_start(struct block_iter *it, const struct block_reader *br);
+void block_iter_seek_start(struct block_iter *it, const struct reftable_block *block);
 
 /* Position `it` to the `want` key in the block */
-int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
+int block_iter_seek_key(struct block_iter *it, const struct reftable_block *block,
 			struct reftable_buf *want);
 
 /* return < 0 for error, 0 for OK, > 0 for EOF. */

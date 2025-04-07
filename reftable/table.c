@@ -131,7 +131,7 @@ struct table_iter {
 	struct reftable_table *table;
 	uint8_t typ;
 	uint64_t block_off;
-	struct block_reader br;
+	struct reftable_block block;
 	struct block_iter bi;
 	int is_finished;
 };
@@ -159,12 +159,12 @@ static int table_iter_next_in_block(struct table_iter *ti,
 
 static void table_iter_block_done(struct table_iter *ti)
 {
-	block_reader_release(&ti->br);
+	reftable_block_release(&ti->block);
 	block_iter_reset(&ti->bi);
 }
 
-int table_init_block_reader(struct reftable_table *t, struct block_reader *br,
-			    uint64_t next_off, uint8_t want_typ)
+int table_init_block(struct reftable_table *t, struct reftable_block *block,
+		     uint64_t next_off, uint8_t want_typ)
 {
 	uint32_t header_off = next_off ? 0 : header_size(t->version);
 	int err;
@@ -172,19 +172,19 @@ int table_init_block_reader(struct reftable_table *t, struct block_reader *br,
 	if (next_off >= t->size)
 		return 1;
 
-	err = block_reader_init(br, &t->source, next_off, header_off,
-				t->block_size, hash_size(t->hash_id));
+	err = reftable_block_init(block, &t->source, next_off, header_off,
+				  t->block_size, hash_size(t->hash_id));
 	if (err < 0)
 		goto done;
 
-	if (want_typ != BLOCK_TYPE_ANY && br->block_type != want_typ) {
+	if (want_typ != BLOCK_TYPE_ANY && block->block_type != want_typ) {
 		err = 1;
 		goto done;
 	}
 
 done:
 	if (err)
-		block_reader_release(br);
+		reftable_block_release(block);
 	return err;
 }
 
@@ -197,10 +197,10 @@ static void table_iter_close(struct table_iter *ti)
 
 static int table_iter_next_block(struct table_iter *ti)
 {
-	uint64_t next_block_off = ti->block_off + ti->br.full_block_size;
+	uint64_t next_block_off = ti->block_off + ti->block.full_block_size;
 	int err;
 
-	err = table_init_block_reader(ti->table, &ti->br, next_block_off, ti->typ);
+	err = table_init_block(ti->table, &ti->block, next_block_off, ti->typ);
 	if (err > 0)
 		ti->is_finished = 1;
 	if (err)
@@ -208,7 +208,7 @@ static int table_iter_next_block(struct table_iter *ti)
 
 	ti->block_off = next_block_off;
 	ti->is_finished = 0;
-	block_iter_seek_start(&ti->bi, &ti->br);
+	block_iter_seek_start(&ti->bi, &ti->block);
 
 	return 0;
 }
@@ -250,13 +250,13 @@ static int table_iter_seek_to(struct table_iter *ti, uint64_t off, uint8_t typ)
 {
 	int err;
 
-	err = table_init_block_reader(ti->table, &ti->br, off, typ);
+	err = table_init_block(ti->table, &ti->block, off, typ);
 	if (err != 0)
 		return err;
 
-	ti->typ = block_reader_type(&ti->br);
+	ti->typ = reftable_block_type(&ti->block);
 	ti->block_off = off;
-	block_iter_seek_start(&ti->bi, &ti->br);
+	block_iter_seek_start(&ti->bi, &ti->block);
 	ti->is_finished = 0;
 	return 0;
 }
@@ -320,10 +320,10 @@ static int table_iter_seek_linear(struct table_iter *ti,
 		 * as we have more than three blocks we would have an index, so
 		 * we would not do a linear search there anymore.
 		 */
-		memset(&next.br.block_data, 0, sizeof(next.br.block_data));
-		next.br.zstream = NULL;
-		next.br.uncompressed_data = NULL;
-		next.br.uncompressed_cap = 0;
+		memset(&next.block.block_data, 0, sizeof(next.block.block_data));
+		next.block.zstream = NULL;
+		next.block.uncompressed_data = NULL;
+		next.block.uncompressed_cap = 0;
 
 		err = table_iter_next_block(&next);
 		if (err < 0)
@@ -331,7 +331,7 @@ static int table_iter_seek_linear(struct table_iter *ti,
 		if (err > 0)
 			break;
 
-		err = block_reader_first_key(&next.br, &got_key);
+		err = reftable_block_first_key(&next.block, &got_key);
 		if (err < 0)
 			goto done;
 
@@ -349,7 +349,7 @@ static int table_iter_seek_linear(struct table_iter *ti,
 	 * the wanted key inside of it. If the block does not contain our key
 	 * we know that the corresponding record does not exist.
 	 */
-	err = block_iter_seek_key(&ti->bi, &ti->br, &want_key);
+	err = block_iter_seek_key(&ti->bi, &ti->block, &want_key);
 	if (err < 0)
 		goto done;
 	err = 0;
@@ -417,7 +417,7 @@ static int table_iter_seek_indexed(struct table_iter *ti,
 		if (err != 0)
 			goto done;
 
-		err = block_iter_seek_key(&ti->bi, &ti->br, &want_index.u.idx.last_key);
+		err = block_iter_seek_key(&ti->bi, &ti->block, &want_index.u.idx.last_key);
 		if (err < 0)
 			goto done;
 
@@ -785,8 +785,8 @@ int reftable_table_print_blocks(const char *tablename)
 		printf("%s:\n", sections[i].name);
 
 		while (1) {
-			printf("  - length: %u\n", ti.br.restart_off);
-			printf("    restarts: %u\n", ti.br.restart_count);
+			printf("  - length: %u\n", ti.block.restart_off);
+			printf("    restarts: %u\n", ti.block.restart_count);
 
 			err = table_iter_next_block(&ti);
 			if (err < 0)
