@@ -13,6 +13,7 @@
 
 #include "reftable-basics.h"
 #include "reftable-blocksource.h"
+#include "reftable-iterator.h"
 
 struct z_stream_s;
 
@@ -59,6 +60,10 @@ int reftable_block_init(struct reftable_block *b,
 
 /* Release resources allocated by the block. */
 void reftable_block_release(struct reftable_block *b);
+
+/* Initialize a generic record iterator from the given block. */
+int reftable_block_init_iterator(const struct reftable_block *b,
+				 struct reftable_iterator *it);
 
 /* Returns the block type (eg. 'r' for refs). */
 uint8_t reftable_block_type(const struct reftable_block *b);

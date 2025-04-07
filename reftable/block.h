@@ -63,7 +63,7 @@ int block_writer_finish(struct block_writer *w);
 /* clears out internally allocated block_writer members. */
 void block_writer_release(struct block_writer *bw);
 
-/* Iterate over entries in a block */
+/* Iterator for records contained in a single block. */
 struct block_iter {
 	/* offset within the block of the next entry to read. */
 	uint32_t next_off;

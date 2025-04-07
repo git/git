@@ -372,12 +372,90 @@ static void t_index_block_read_write(void)
 		reftable_record_release(&recs[i]);
 }
 
+static void t_block_iterator(void)
+{
+	struct reftable_block_source source = { 0 };
+	struct block_writer writer = {
+		.last_key = REFTABLE_BUF_INIT,
+	};
+	struct reftable_record expected_refs[20];
+	struct reftable_ref_record ref = { 0 };
+	struct reftable_iterator it = { 0 };
+	struct reftable_block block = { 0 };
+	struct reftable_buf data;
+	int err;
+
+	data.len = 1024;
+	REFTABLE_CALLOC_ARRAY(data.buf, data.len);
+	check(data.buf != NULL);
+
+	err = block_writer_init(&writer, BLOCK_TYPE_REF, (uint8_t *) data.buf, data.len,
+				0, hash_size(REFTABLE_HASH_SHA1));
+	check(!err);
+
+	for (size_t i = 0; i < ARRAY_SIZE(expected_refs); i++) {
+		expected_refs[i] = (struct reftable_record) {
+			.type = BLOCK_TYPE_REF,
+			.u.ref = {
+				.value_type = REFTABLE_REF_VAL1,
+				.refname = xstrfmt("refs/heads/branch-%02"PRIuMAX, (uintmax_t)i),
+			},
+		};
+		memset(expected_refs[i].u.ref.value.val1, i, REFTABLE_HASH_SIZE_SHA1);
+
+		err = block_writer_add(&writer, &expected_refs[i]);
+		check_int(err, ==, 0);
+	}
+
+	err = block_writer_finish(&writer);
+	check_int(err, >, 0);
+
+	block_source_from_buf(&source, &data);
+	reftable_block_init(&block, &source, 0, 0, data.len, REFTABLE_HASH_SIZE_SHA1);
+
+	err = reftable_block_init_iterator(&block, &it);
+	check_int(err, ==, 0);
+
+	for (size_t i = 0; ; i++) {
+		err = reftable_iterator_next_ref(&it, &ref);
+		if (err > 0) {
+			check_int(i, ==, ARRAY_SIZE(expected_refs));
+			break;
+		}
+		check_int(err, ==, 0);
+
+		check(reftable_ref_record_equal(&ref, &expected_refs[i].u.ref,
+						REFTABLE_HASH_SIZE_SHA1));
+	}
+
+	err = reftable_iterator_seek_ref(&it, "refs/heads/does-not-exist");
+	check_int(err, ==, 0);
+	err = reftable_iterator_next_ref(&it, &ref);
+	check_int(err, ==, 1);
+
+	err = reftable_iterator_seek_ref(&it, "refs/heads/branch-13");
+	check_int(err, ==, 0);
+	err = reftable_iterator_next_ref(&it, &ref);
+	check_int(err, ==, 0);
+	check(reftable_ref_record_equal(&ref, &expected_refs[13].u.ref,
+					REFTABLE_HASH_SIZE_SHA1));
+
+	for (size_t i = 0; i < ARRAY_SIZE(expected_refs); i++)
+		reftable_free(expected_refs[i].u.ref.refname);
+	reftable_ref_record_release(&ref);
+	reftable_iterator_destroy(&it);
+	reftable_block_release(&block);
+	block_writer_release(&writer);
+	reftable_buf_release(&data);
+}
+
 int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 {
 	TEST(t_index_block_read_write(), "read-write operations on index blocks work");
 	TEST(t_log_block_read_write(), "read-write operations on log blocks work");
 	TEST(t_obj_block_read_write(), "read-write operations on obj blocks work");
 	TEST(t_ref_block_read_write(), "read-write operations on ref blocks work");
+	TEST(t_block_iterator(), "block iterator works");
 
 	return test_done();
 }

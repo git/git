@@ -10,6 +10,7 @@
 
 #include "blocksource.h"
 #include "constants.h"
+#include "iter.h"
 #include "record.h"
 #include "reftable-error.h"
 #include "system.h"
@@ -579,6 +580,61 @@ int block_iter_seek_key(struct block_iter *it, struct reftable_buf *want)
 done:
 	reftable_record_release(&rec);
 	return err;
+}
+
+static int block_iter_seek_void(void *it, struct reftable_record *want)
+{
+	struct reftable_buf buf = REFTABLE_BUF_INIT;
+	struct block_iter *bi = it;
+	int err;
+
+	if (bi->block->block_type != want->type)
+		return REFTABLE_API_ERROR;
+
+	err = reftable_record_key(want, &buf);
+	if (err < 0)
+		goto out;
+
+	err = block_iter_seek_key(it, &buf);
+	if (err < 0)
+		goto out;
+
+	err = 0;
+
+out:
+	reftable_buf_release(&buf);
+	return err;
+}
+
+static int block_iter_next_void(void *it, struct reftable_record *rec)
+{
+	return block_iter_next(it, rec);
+}
+
+static void block_iter_close_void(void *it)
+{
+	block_iter_close(it);
+}
+
+static struct reftable_iterator_vtable block_iter_vtable = {
+	.seek = &block_iter_seek_void,
+	.next = &block_iter_next_void,
+	.close = &block_iter_close_void,
+};
+
+int reftable_block_init_iterator(const struct reftable_block *b,
+				 struct reftable_iterator *it)
+{
+	struct block_iter *bi;
+
+	REFTABLE_CALLOC_ARRAY(bi, 1);
+	block_iter_init(bi, b);
+
+	assert(!it->ops);
+	it->iter_arg = bi;
+	it->ops = &block_iter_vtable;
+
+	return 0;
 }
 
 void block_writer_release(struct block_writer *bw)
