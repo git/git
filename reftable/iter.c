@@ -114,7 +114,7 @@ static void indexed_table_ref_iter_close(void *p)
 {
 	struct indexed_table_ref_iter *it = p;
 	block_iter_close(&it->cur);
-	block_source_return_block(&it->block_reader.block);
+	block_source_release_data(&it->block_reader.block_data);
 	reftable_free(it->offsets);
 	reftable_buf_release(&it->oid);
 }
@@ -128,7 +128,7 @@ static int indexed_table_ref_iter_next_block(struct indexed_table_ref_iter *it)
 		return 1;
 	}
 
-	block_source_return_block(&it->block_reader.block);
+	block_source_release_data(&it->block_reader.block_data);
 
 	off = it->offsets[it->offset_idx++];
 	err = table_init_block_reader(it->table, &it->block_reader, off,

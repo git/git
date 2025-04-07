@@ -320,7 +320,7 @@ static int table_iter_seek_linear(struct table_iter *ti,
 		 * as we have more than three blocks we would have an index, so
 		 * we would not do a linear search there anymore.
 		 */
-		memset(&next.br.block, 0, sizeof(next.br.block));
+		memset(&next.br.block_data, 0, sizeof(next.br.block_data));
 		next.br.zstream = NULL;
 		next.br.uncompressed_data = NULL;
 		next.br.uncompressed_cap = 0;
@@ -526,8 +526,8 @@ int reftable_table_init_log_iterator(struct reftable_table *t,
 int reftable_table_new(struct reftable_table **out,
 		       struct reftable_block_source *source, char const *name)
 {
-	struct reftable_block footer = { 0 };
-	struct reftable_block header = { 0 };
+	struct reftable_block_data footer = { 0 };
+	struct reftable_block_data header = { 0 };
 	struct reftable_table *t;
 	uint64_t file_size = block_source_size(source);
 	uint32_t read_size;
@@ -550,7 +550,7 @@ int reftable_table_new(struct reftable_table **out,
 		goto done;
 	}
 
-	bytes_read = block_source_read_block(source, &header, 0, read_size);
+	bytes_read = block_source_read_data(source, &header, 0, read_size);
 	if (bytes_read < 0 || (size_t)bytes_read != read_size) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
@@ -576,8 +576,8 @@ int reftable_table_new(struct reftable_table **out,
 	t->hash_id = 0;
 	t->refcount = 1;
 
-	bytes_read = block_source_read_block(source, &footer, t->size,
-					     footer_size(t->version));
+	bytes_read = block_source_read_data(source, &footer, t->size,
+					    footer_size(t->version));
 	if (bytes_read < 0 || (size_t)bytes_read != footer_size(t->version)) {
 		err = REFTABLE_IO_ERROR;
 		goto done;
@@ -590,8 +590,8 @@ int reftable_table_new(struct reftable_table **out,
 	*out = t;
 
 done:
-	block_source_return_block(&footer);
-	block_source_return_block(&header);
+	block_source_release_data(&footer);
+	block_source_release_data(&header);
 	if (err) {
 		if (t)
 			reftable_free(t->name);

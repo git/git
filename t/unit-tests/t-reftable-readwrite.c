@@ -23,22 +23,22 @@ static void t_buffer(void)
 {
 	struct reftable_buf buf = REFTABLE_BUF_INIT;
 	struct reftable_block_source source = { 0 };
-	struct reftable_block out = { 0 };
+	struct reftable_block_data out = { 0 };
 	int n;
 	uint8_t in[] = "hello";
 	check(!reftable_buf_add(&buf, in, sizeof(in)));
 	block_source_from_buf(&source, &buf);
 	check_int(block_source_size(&source), ==, 6);
-	n = block_source_read_block(&source, &out, 0, sizeof(in));
+	n = block_source_read_data(&source, &out, 0, sizeof(in));
 	check_int(n, ==, sizeof(in));
 	check(!memcmp(in, out.data, n));
-	block_source_return_block(&out);
+	block_source_release_data(&out);
 
-	n = block_source_read_block(&source, &out, 1, 2);
+	n = block_source_read_data(&source, &out, 1, 2);
 	check_int(n, ==, 2);
 	check(!memcmp(out.data, "el", 2));
 
-	block_source_return_block(&out);
+	block_source_release_data(&out);
 	block_source_close(&source);
 	reftable_buf_release(&buf);
 }

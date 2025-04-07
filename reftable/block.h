@@ -71,7 +71,7 @@ struct block_reader {
 	uint32_t header_off;
 
 	/* the memory block */
-	struct reftable_block block;
+	struct reftable_block_data block_data;
 	uint32_t hash_size;
 
 	/* Uncompressed data for log entries. */
