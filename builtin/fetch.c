@@ -1643,9 +1643,6 @@ static int set_head(const struct ref *remote_refs, struct remote *remote)
 		string_list_append(&heads, strip_refshead(ref->name));
 	}
 
-	if (follow_remote_head == FOLLOW_REMOTE_NEVER)
-		goto cleanup;
-
 	if (!heads.nr)
 		result = 1;
 	else if (heads.nr > 1)
@@ -1691,21 +1688,6 @@ cleanup:
 	return result;
 }
 
-static int uses_remote_tracking(struct transport *transport, struct refspec *rs)
-{
-	if (!remote_is_configured(transport->remote, 0))
-		return 0;
-
-	if (!rs->nr)
-		rs = &transport->remote->fetch;
-
-	for (int i = 0; i < rs->nr; i++)
-		if (rs->items[i].dst)
-			return 1;
-
-	return 0;
-}
-
 static int do_fetch(struct transport *transport,
 		    struct refspec *rs,
 		    const struct fetch_config *config)
@@ -1720,6 +1702,7 @@ static int do_fetch(struct transport *transport,
 		TRANSPORT_LS_REFS_OPTIONS_INIT;
 	struct fetch_head fetch_head = { 0 };
 	struct strbuf err = STRBUF_INIT;
+	int do_set_head = 0;
 
 	if (tags == TAGS_DEFAULT) {
 		if (transport->remote->fetch_tags == 2)
@@ -1740,9 +1723,12 @@ static int do_fetch(struct transport *transport,
 	} else {
 		struct branch *branch = branch_get(NULL);
 
-		if (transport->remote->fetch.nr)
+		if (transport->remote->fetch.nr) {
 			refspec_ref_prefixes(&transport->remote->fetch,
 					     &transport_ls_refs_options.ref_prefixes);
+			if (transport->remote->follow_remote_head != FOLLOW_REMOTE_NEVER)
+				do_set_head = 1;
+		}
 		if (branch_has_merge_config(branch) &&
 		    !strcmp(branch->remote_name, transport->remote->name)) {
 			int i;
@@ -1765,8 +1751,7 @@ static int do_fetch(struct transport *transport,
 		strvec_push(&transport_ls_refs_options.ref_prefixes,
 			    "refs/tags/");
 
-	if (transport_ls_refs_options.ref_prefixes.nr &&
-	    uses_remote_tracking(transport, rs))
+	if (do_set_head)
 		strvec_push(&transport_ls_refs_options.ref_prefixes,
 			    "HEAD");
 
@@ -1918,7 +1903,7 @@ static int do_fetch(struct transport *transport,
 				  "you need to specify exactly one branch with the --set-upstream option"));
 		}
 	}
-	if (set_head(remote_refs, transport->remote))
+	if (do_set_head && set_head(remote_refs, transport->remote))
 		;
 		/*
 		 * Way too many cases where this can go wrong
