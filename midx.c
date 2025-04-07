@@ -747,7 +747,8 @@ int prepare_multi_pack_index_one(struct repository *r, const char *object_dir, i
 
 int midx_checksum_valid(struct multi_pack_index *m)
 {
-	return hashfile_checksum_valid(m->data, m->data_len);
+	return hashfile_checksum_valid(m->repo->hash_algo,
+				       m->data, m->data_len);
 }
 
 struct clear_midx_data {

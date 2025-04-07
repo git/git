@@ -1409,7 +1409,7 @@ static struct bitmap *find_boundary_objects(struct bitmap_index *bitmap_git,
 	revs->tag_objects = tmp_tags;
 
 	reset_revision_walk();
-	clear_object_flags(UNINTERESTING);
+	clear_object_flags(repo, UNINTERESTING);
 
 	/*
 	 * Then add the boundary commit(s) as fill-in traversal tips.
@@ -2060,7 +2060,7 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 		struct object *object = revs->pending.objects[i].item;
 
 		if (object->type == OBJ_NONE)
-			parse_object_or_die(&object->oid, NULL);
+			parse_object_or_die(revs->repo, &object->oid, NULL);
 
 		while (object->type == OBJ_TAG) {
 			struct tag *tag = (struct tag *) object;
@@ -2070,7 +2070,7 @@ struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
 			else
 				object_list_insert(object, &wants);
 
-			object = parse_object_or_die(get_tagged_oid(tag), NULL);
+			object = parse_object_or_die(revs->repo, get_tagged_oid(tag), NULL);
 			object->flags |= (tag->object.flags & UNINTERESTING);
 		}
 
@@ -3216,7 +3216,8 @@ int bitmap_is_preferred_refname(struct repository *r, const char *refname)
 	return 0;
 }
 
-static int verify_bitmap_file(const char *name)
+static int verify_bitmap_file(const struct git_hash_algo *algop,
+			      const char *name)
 {
 	struct stat st;
 	unsigned char *data;
@@ -3232,7 +3233,7 @@ static int verify_bitmap_file(const char *name)
 
 	data = xmmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
-	if (!hashfile_checksum_valid(data, st.st_size))
+	if (!hashfile_checksum_valid(algop, data, st.st_size))
 		res = error(_("bitmap file '%s' has invalid checksum"),
 			    name);
 
@@ -3247,14 +3248,14 @@ int verify_bitmap_files(struct repository *r)
 	for (struct multi_pack_index *m = get_multi_pack_index(r);
 	     m; m = m->next) {
 		char *midx_bitmap_name = midx_bitmap_filename(m);
-		res |= verify_bitmap_file(midx_bitmap_name);
+		res |= verify_bitmap_file(r->hash_algo, midx_bitmap_name);
 		free(midx_bitmap_name);
 	}
 
 	for (struct packed_git *p = get_all_packs(r);
 	     p; p = p->next) {
 		char *pack_bitmap_name = pack_bitmap_filename(p);
-		res |= verify_bitmap_file(pack_bitmap_name);
+		res |= verify_bitmap_file(r->hash_algo, pack_bitmap_name);
 		free(pack_bitmap_name);
 	}
 

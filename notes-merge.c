@@ -617,7 +617,7 @@ int notes_merge(struct notes_merge_options *o,
 	if (repo_get_merge_bases(the_repository, local, remote, &bases) < 0)
 		exit(128);
 	if (!bases) {
-		base_oid = null_oid();
+		base_oid = null_oid(the_hash_algo);
 		base_tree_oid = the_hash_algo->empty_tree;
 		if (o->verbosity >= 4)
 			printf("No merge base found; doing history-less merge\n");
