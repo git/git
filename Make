@@ -215,7 +215,7 @@ determine_long_version >version
 set "prefix=$prefix" "$@"
 if test -n "$with_shell" && test -f "$with_shell"
 then
-	set "SHELL_PATH=$with_shell" "$@"
+	set "SHELL_PATH=$with_shell" "SHELL=$with_shell" "$@"
 fi
 
 if grep >/dev/null DC_SHA1 Makefile
