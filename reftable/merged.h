@@ -13,8 +13,8 @@
 #include "reftable-basics.h"
 
 struct reftable_merged_table {
-	struct reftable_reader **readers;
-	size_t readers_len;
+	struct reftable_table **tables;
+	size_t tables_len;
 	enum reftable_hash hash_id;
 
 	/* If unset, produce deletions. This is useful for compaction. For the

@@ -4,8 +4,8 @@
 #include "reftable/system.h"
 #include "reftable/reftable-error.h"
 #include "reftable/reftable-merged.h"
-#include "reftable/reftable-reader.h"
 #include "reftable/reftable-stack.h"
+#include "reftable/reftable-table.h"
 #include "test-tool.h"
 
 static void print_help(void)
@@ -126,19 +126,19 @@ static int dump_reftable(const char *tablename)
 {
 	struct reftable_block_source src = { 0 };
 	struct reftable_merged_table *mt = NULL;
-	struct reftable_reader *r = NULL;
+	struct reftable_table *table = NULL;
 	int err;
 
 	err = reftable_block_source_from_file(&src, tablename);
 	if (err < 0)
 		goto done;
 
-	err = reftable_reader_new(&r, &src, tablename);
+	err = reftable_table_new(&table, &src, tablename);
 	if (err < 0)
 		goto done;
 
-	err = reftable_merged_table_new(&mt, &r, 1,
-					reftable_reader_hash_id(r));
+	err = reftable_merged_table_new(&mt, &table, 1,
+					reftable_table_hash_id(table));
 	if (err < 0)
 		goto done;
 
@@ -146,7 +146,7 @@ static int dump_reftable(const char *tablename)
 
 done:
 	reftable_merged_table_free(mt);
-	reftable_reader_decref(r);
+	reftable_table_decref(table);
 	return err;
 }
 
@@ -184,7 +184,7 @@ int cmd__dump_reftable(int argc, const char **argv)
 	arg = argv[1];
 
 	if (opt_dump_blocks) {
-		err = reftable_reader_print_blocks(arg);
+		err = reftable_table_print_blocks(arg);
 	} else if (opt_dump_table) {
 		err = dump_reftable(arg);
 	} else if (opt_dump_stack) {

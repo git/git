@@ -11,11 +11,11 @@
 #include "constants.h"
 #include "iter.h"
 #include "pq.h"
-#include "reader.h"
 #include "record.h"
 #include "reftable-merged.h"
 #include "reftable-error.h"
 #include "system.h"
+#include "table.h"
 
 struct merged_subiter {
 	struct reftable_iterator iter;
@@ -192,7 +192,7 @@ static void iterator_from_merged_iter(struct reftable_iterator *it,
 }
 
 int reftable_merged_table_new(struct reftable_merged_table **dest,
-			      struct reftable_reader **readers, size_t n,
+			      struct reftable_table **tables, size_t n,
 			      enum reftable_hash hash_id)
 {
 	struct reftable_merged_table *m = NULL;
@@ -200,10 +200,10 @@ int reftable_merged_table_new(struct reftable_merged_table **dest,
 	uint64_t first_min = 0;
 
 	for (size_t i = 0; i < n; i++) {
-		uint64_t min = reftable_reader_min_update_index(readers[i]);
-		uint64_t max = reftable_reader_max_update_index(readers[i]);
+		uint64_t min = reftable_table_min_update_index(tables[i]);
+		uint64_t max = reftable_table_max_update_index(tables[i]);
 
-		if (reftable_reader_hash_id(readers[i]) != hash_id) {
+		if (reftable_table_hash_id(tables[i]) != hash_id) {
 			return REFTABLE_FORMAT_ERROR;
 		}
 		if (i == 0 || min < first_min) {
@@ -218,8 +218,8 @@ int reftable_merged_table_new(struct reftable_merged_table **dest,
 	if (!m)
 		return REFTABLE_OUT_OF_MEMORY_ERROR;
 
-	m->readers = readers;
-	m->readers_len = n;
+	m->tables = tables;
+	m->tables_len = n;
 	m->min = first_min;
 	m->max = last_max;
 	m->hash_id = hash_id;
@@ -254,20 +254,20 @@ int merged_table_init_iter(struct reftable_merged_table *mt,
 	struct merged_iter *mi = NULL;
 	int ret;
 
-	if (mt->readers_len) {
-		REFTABLE_CALLOC_ARRAY(subiters, mt->readers_len);
+	if (mt->tables_len) {
+		REFTABLE_CALLOC_ARRAY(subiters, mt->tables_len);
 		if (!subiters) {
 			ret = REFTABLE_OUT_OF_MEMORY_ERROR;
 			goto out;
 		}
 	}
 
-	for (size_t i = 0; i < mt->readers_len; i++) {
+	for (size_t i = 0; i < mt->tables_len; i++) {
 		ret = reftable_record_init(&subiters[i].rec, typ);
 		if (ret < 0)
 			goto out;
 
-		ret = reader_init_iter(mt->readers[i], &subiters[i].iter, typ);
+		ret = table_init_iter(mt->tables[i], &subiters[i].iter, typ);
 		if (ret < 0)
 			goto out;
 	}
@@ -280,14 +280,14 @@ int merged_table_init_iter(struct reftable_merged_table *mt,
 	mi->advance_index = -1;
 	mi->suppress_deletions = mt->suppress_deletions;
 	mi->subiters = subiters;
-	mi->subiters_len = mt->readers_len;
+	mi->subiters_len = mt->tables_len;
 
 	iterator_from_merged_iter(it, mi);
 	ret = 0;
 
 out:
 	if (ret < 0) {
-		for (size_t i = 0; subiters && i < mt->readers_len; i++) {
+		for (size_t i = 0; subiters && i < mt->tables_len; i++) {
 			reftable_iterator_destroy(&subiters[i].iter);
 			reftable_record_release(&subiters[i].rec);
 		}
