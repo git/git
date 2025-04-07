@@ -11,7 +11,8 @@
 
 #include <stdint.h>
 
-/* block_source is a generic wrapper for a seekable readable file.
+/*
+ * Generic wrapper for a seekable readable file.
  */
 struct reftable_block_source {
 	struct reftable_block_source_vtable *ops;

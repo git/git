@@ -32,13 +32,13 @@ static void t_buffer(void)
 	n = block_source_read_block(&source, &out, 0, sizeof(in));
 	check_int(n, ==, sizeof(in));
 	check(!memcmp(in, out.data, n));
-	reftable_block_done(&out);
+	block_source_return_block(&out);
 
 	n = block_source_read_block(&source, &out, 1, 2);
 	check_int(n, ==, 2);
 	check(!memcmp(out.data, "el", 2));
 
-	reftable_block_done(&out);
+	block_source_return_block(&out);
 	block_source_close(&source);
 	reftable_buf_release(&buf);
 }

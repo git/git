@@ -14,13 +14,6 @@
 #include "reftable-iterator.h"
 #include "reftable-table.h"
 
-uint64_t block_source_size(struct reftable_block_source *source);
-
-ssize_t block_source_read_block(struct reftable_block_source *source,
-				struct reftable_block *dest, uint64_t off,
-				uint32_t size);
-void block_source_close(struct reftable_block_source *source);
-
 /* metadata for a block type */
 struct reftable_table_offsets {
 	int is_present;

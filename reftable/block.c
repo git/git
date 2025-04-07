@@ -221,7 +221,7 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 	uint32_t restart_start = 0;
 	uint8_t *restart_bytes = NULL;
 
-	reftable_block_done(&br->block);
+	block_source_return_block(&br->block);
 
 	if (!reftable_is_block_type(typ)) {
 		err =  REFTABLE_FORMAT_ERROR;
@@ -285,7 +285,7 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		}
 
 		/* We're done with the input data. */
-		reftable_block_done(block);
+		block_source_return_block(block);
 		block->data = br->uncompressed_data;
 		block->len = sz;
 		full_block_size = src_len + block_header_skip - br->zstream->avail_in;
@@ -324,7 +324,7 @@ void block_reader_release(struct block_reader *br)
 	inflateEnd(br->zstream);
 	reftable_free(br->zstream);
 	reftable_free(br->uncompressed_data);
-	reftable_block_done(&br->block);
+	block_source_return_block(&br->block);
 }
 
 uint8_t block_reader_type(const struct block_reader *r)
@@ -569,15 +569,4 @@ void block_writer_release(struct block_writer *bw)
 	reftable_buf_release(&bw->scratch);
 	reftable_buf_release(&bw->last_key);
 	/* the block is not owned. */
-}
-
-void reftable_block_done(struct reftable_block *blockp)
-{
-	struct reftable_block_source source = blockp->source;
-	if (blockp && source.ops)
-		source.ops->return_block(source.arg, blockp);
-	blockp->data = NULL;
-	blockp->len = 0;
-	blockp->source.ops = NULL;
-	blockp->source.arg = NULL;
 }
