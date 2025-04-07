@@ -208,7 +208,7 @@ static int table_iter_next_block(struct table_iter *ti)
 
 	ti->block_off = next_block_off;
 	ti->is_finished = 0;
-	block_iter_seek_start(&ti->bi, &ti->block);
+	block_iter_init(&ti->bi, &ti->block);
 
 	return 0;
 }
@@ -256,7 +256,7 @@ static int table_iter_seek_to(struct table_iter *ti, uint64_t off, uint8_t typ)
 
 	ti->typ = reftable_block_type(&ti->block);
 	ti->block_off = off;
-	block_iter_seek_start(&ti->bi, &ti->block);
+	block_iter_init(&ti->bi, &ti->block);
 	ti->is_finished = 0;
 	return 0;
 }
@@ -349,7 +349,8 @@ static int table_iter_seek_linear(struct table_iter *ti,
 	 * the wanted key inside of it. If the block does not contain our key
 	 * we know that the corresponding record does not exist.
 	 */
-	err = block_iter_seek_key(&ti->bi, &ti->block, &want_key);
+	block_iter_init(&ti->bi, &ti->block);
+	err = block_iter_seek_key(&ti->bi, &want_key);
 	if (err < 0)
 		goto done;
 	err = 0;
@@ -417,7 +418,9 @@ static int table_iter_seek_indexed(struct table_iter *ti,
 		if (err != 0)
 			goto done;
 
-		err = block_iter_seek_key(&ti->bi, &ti->block, &want_index.u.idx.last_key);
+		block_iter_init(&ti->bi, &ti->block);
+
+		err = block_iter_seek_key(&ti->bi, &want_index.u.idx.last_key);
 		if (err < 0)
 			goto done;
 

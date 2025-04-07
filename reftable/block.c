@@ -381,11 +381,16 @@ static uint32_t block_restart_offset(const struct reftable_block *b, size_t idx)
 	return reftable_get_be24(b->block_data.data + b->restart_off + 3 * idx);
 }
 
-void block_iter_seek_start(struct block_iter *it, const struct reftable_block *block)
+void block_iter_init(struct block_iter *it, const struct reftable_block *block)
 {
 	it->block = block;
+	block_iter_seek_start(it);
+}
+
+void block_iter_seek_start(struct block_iter *it)
+{
 	reftable_buf_reset(&it->last_key);
-	it->next_off = block->header_off + 4;
+	it->next_off = it->block->header_off + 4;
 }
 
 struct restart_needle_less_args {
@@ -473,12 +478,11 @@ void block_iter_close(struct block_iter *it)
 	reftable_buf_release(&it->scratch);
 }
 
-int block_iter_seek_key(struct block_iter *it, const struct reftable_block *block,
-			struct reftable_buf *want)
+int block_iter_seek_key(struct block_iter *it, struct reftable_buf *want)
 {
 	struct restart_needle_less_args args = {
 		.needle = *want,
-		.block = block,
+		.block = it->block,
 	};
 	struct reftable_record rec;
 	int err = 0;
@@ -496,7 +500,7 @@ int block_iter_seek_key(struct block_iter *it, const struct reftable_block *bloc
 	 * restart point. While that works alright, we would end up scanning
 	 * too many record.
 	 */
-	i = binsearch(block->restart_count, &restart_needle_less, &args);
+	i = binsearch(it->block->restart_count, &restart_needle_less, &args);
 	if (args.error) {
 		err = REFTABLE_FORMAT_ERROR;
 		goto done;
@@ -521,12 +525,11 @@ int block_iter_seek_key(struct block_iter *it, const struct reftable_block *bloc
 	 *     starting from the preceding restart point.
 	 */
 	if (i > 0)
-		it->next_off = block_restart_offset(block, i - 1);
+		it->next_off = block_restart_offset(it->block, i - 1);
 	else
-		it->next_off = block->header_off + 4;
-	it->block = block;
+		it->next_off = it->block->header_off + 4;
 
-	err = reftable_record_init(&rec, reftable_block_type(block));
+	err = reftable_record_init(&rec, reftable_block_type(it->block));
 	if (err < 0)
 		goto done;
 

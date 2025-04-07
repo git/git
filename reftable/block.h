@@ -79,12 +79,23 @@ struct block_iter {
 	.scratch = REFTABLE_BUF_INIT, \
 }
 
-/* Position `it` at start of the block */
-void block_iter_seek_start(struct block_iter *it, const struct reftable_block *block);
+/*
+ * Initialize the block iterator with the given block. The iterator will be
+ * positioned at the first record contained in the block. The block must remain
+ * valid until the end of the iterator's lifetime. It is valid to re-initialize
+ * iterators multiple times.
+ */
+void block_iter_init(struct block_iter *it, const struct reftable_block *block);
 
-/* Position `it` to the `want` key in the block */
-int block_iter_seek_key(struct block_iter *it, const struct reftable_block *block,
-			struct reftable_buf *want);
+/* Position the initialized iterator at the first record of its block. */
+void block_iter_seek_start(struct block_iter *it);
+
+/*
+ * Position the initialized iterator at the desired record key. It is not an
+ * error in case the record cannot be found. If so, a subsequent call to
+ * `block_iter_next()` will indicate that the iterator is exhausted.
+ */
+int block_iter_seek_key(struct block_iter *it, struct reftable_buf *want);
 
 /* return < 0 for error, 0 for OK, > 0 for EOF. */
 int block_iter_next(struct block_iter *it, struct reftable_record *rec);
