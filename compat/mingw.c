@@ -2857,9 +2857,9 @@ repeat:
 			 * flex array so that the structure has to be allocated on
 			 * the heap. As we declare this structure ourselves though
 			 * we can avoid the allocation and define FileName to have
-			 * MAX_PATH bytes.
+			 * MAX_LONG_PATH bytes.
 			 */
-			WCHAR FileName[MAX_PATH];
+			WCHAR FileName[MAX_LONG_PATH];
 		} rename_info = { 0 };
 		HANDLE old_handle = INVALID_HANDLE_VALUE;
 		BOOL success;
