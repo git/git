@@ -93,6 +93,9 @@ test_expect_success 'many refs results in multiple blocks' '
 		    restarts: 3
 		  - length: 3289
 		    restarts: 3
+		idx:
+		  - length: 103
+		    restarts: 1
 		EOF
 		test-tool dump-reftable -b .git/reftable/*.ref >actual &&
 		test_cmp expect actual
@@ -241,6 +244,9 @@ test_expect_success 'object index gets written by default with ref index' '
 		    restarts: 1
 		  - length: 80
 		    restarts: 1
+		idx:
+		  - length: 55
+		    restarts: 2
 		obj:
 		  - length: 11
 		    restarts: 1
@@ -277,6 +283,9 @@ test_expect_success 'object index can be disabled' '
 		    restarts: 1
 		  - length: 80
 		    restarts: 1
+		idx:
+		  - length: 55
+		    restarts: 2
 		EOF
 		test-tool dump-reftable -b .git/reftable/*.ref >actual &&
 		test_cmp expect actual

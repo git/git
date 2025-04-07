@@ -97,9 +97,6 @@ uint64_t reftable_table_max_update_index(struct reftable_table *t);
 /* return the min_update_index for a table */
 uint64_t reftable_table_min_update_index(struct reftable_table *t);
 
-/* print blocks onto stdout for debugging. */
-int reftable_table_print_blocks(const char *tablename);
-
 /*
  * An iterator that iterates through the blocks contained in a given table.
  */
