@@ -381,13 +381,11 @@ static uint32_t block_restart_offset(const struct reftable_block *b, size_t idx)
 	return reftable_get_be24(b->block_data.data + b->restart_off + 3 * idx);
 }
 
-void block_iter_seek_start(struct block_iter *it, const struct reftable_block *b)
+void block_iter_seek_start(struct block_iter *it, const struct reftable_block *block)
 {
-	it->block = b->block_data.data;
-	it->block_len = b->restart_off;
-	it->hash_size = b->hash_size;
+	it->block = block;
 	reftable_buf_reset(&it->last_key);
-	it->next_off = b->header_off + 4;
+	it->next_off = block->header_off + 4;
 }
 
 struct restart_needle_less_args {
@@ -435,14 +433,14 @@ static int restart_needle_less(size_t idx, void *_args)
 int block_iter_next(struct block_iter *it, struct reftable_record *rec)
 {
 	struct string_view in = {
-		.buf = (unsigned char *) it->block + it->next_off,
-		.len = it->block_len - it->next_off,
+		.buf = (unsigned char *) it->block->block_data.data + it->next_off,
+		.len = it->block->restart_off - it->next_off,
 	};
 	struct string_view start = in;
 	uint8_t extra = 0;
 	int n = 0;
 
-	if (it->next_off >= it->block_len)
+	if (it->next_off >= it->block->restart_off)
 		return 1;
 
 	n = reftable_decode_key(&it->last_key, &extra, in);
@@ -452,7 +450,7 @@ int block_iter_next(struct block_iter *it, struct reftable_record *rec)
 		return REFTABLE_FORMAT_ERROR;
 
 	string_view_consume(&in, n);
-	n = reftable_record_decode(rec, it->last_key, extra, in, it->hash_size,
+	n = reftable_record_decode(rec, it->last_key, extra, in, it->block->hash_size,
 				   &it->scratch);
 	if (n < 0)
 		return -1;
@@ -467,8 +465,6 @@ void block_iter_reset(struct block_iter *it)
 	reftable_buf_reset(&it->last_key);
 	it->next_off = 0;
 	it->block = NULL;
-	it->block_len = 0;
-	it->hash_size = 0;
 }
 
 void block_iter_close(struct block_iter *it)
@@ -528,9 +524,7 @@ int block_iter_seek_key(struct block_iter *it, const struct reftable_block *bloc
 		it->next_off = block_restart_offset(block, i - 1);
 	else
 		it->next_off = block->header_off + 4;
-	it->block = block->block_data.data;
-	it->block_len = block->restart_off;
-	it->hash_size = block->hash_size;
+	it->block = block;
 
 	err = reftable_record_init(&rec, reftable_block_type(block));
 	if (err < 0)
