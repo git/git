@@ -131,7 +131,7 @@ static int indexed_table_ref_iter_next_block(struct indexed_table_ref_iter *it)
 	block_source_release_data(&it->block.block_data);
 
 	off = it->offsets[it->offset_idx++];
-	err = table_init_block(it->table, &it->block, off, BLOCK_TYPE_REF);
+	err = table_init_block(it->table, &it->block, off, REFTABLE_BLOCK_TYPE_REF);
 	if (err < 0) {
 		return err;
 	}
@@ -246,7 +246,7 @@ int reftable_iterator_seek_ref(struct reftable_iterator *it,
 			       const char *name)
 {
 	struct reftable_record want = {
-		.type = BLOCK_TYPE_REF,
+		.type = REFTABLE_BLOCK_TYPE_REF,
 		.u.ref = {
 			.refname = (char *)name,
 		},
@@ -258,7 +258,7 @@ int reftable_iterator_next_ref(struct reftable_iterator *it,
 			       struct reftable_ref_record *ref)
 {
 	struct reftable_record rec = {
-		.type = BLOCK_TYPE_REF,
+		.type = REFTABLE_BLOCK_TYPE_REF,
 		.u = {
 			.ref = *ref
 		},
@@ -272,7 +272,7 @@ int reftable_iterator_seek_log_at(struct reftable_iterator *it,
 				  const char *name, uint64_t update_index)
 {
 	struct reftable_record want = {
-		.type = BLOCK_TYPE_LOG,
+		.type = REFTABLE_BLOCK_TYPE_LOG,
 		.u.log = {
 			.refname = (char *)name,
 			.update_index = update_index,
@@ -291,7 +291,7 @@ int reftable_iterator_next_log(struct reftable_iterator *it,
 			       struct reftable_log_record *log)
 {
 	struct reftable_record rec = {
-		.type = BLOCK_TYPE_LOG,
+		.type = REFTABLE_BLOCK_TYPE_LOG,
 		.u = {
 			.log = *log,
 		},

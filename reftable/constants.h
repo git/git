@@ -9,11 +9,7 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-#define BLOCK_TYPE_LOG 'g'
-#define BLOCK_TYPE_INDEX 'i'
-#define BLOCK_TYPE_REF 'r'
-#define BLOCK_TYPE_OBJ 'o'
-#define BLOCK_TYPE_ANY 0
+#include "reftable-constants.h"
 
 #define MAX_RESTARTS ((1 << 16) - 1)
 #define DEFAULT_BLOCK_SIZE 4096

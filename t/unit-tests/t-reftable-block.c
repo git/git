@@ -24,7 +24,7 @@ static void t_ref_block_read_write(void)
 		.last_key = REFTABLE_BUF_INIT,
 	};
 	struct reftable_record rec = {
-		.type = BLOCK_TYPE_REF,
+		.type = REFTABLE_BLOCK_TYPE_REF,
 	};
 	size_t i = 0;
 	int ret;
@@ -37,7 +37,7 @@ static void t_ref_block_read_write(void)
 	check(block_data.buf != NULL);
 	block_data.len = block_size;
 
-	ret = block_writer_init(&bw, BLOCK_TYPE_REF, (uint8_t *) block_data.buf, block_size,
+	ret = block_writer_init(&bw, REFTABLE_BLOCK_TYPE_REF, (uint8_t *) block_data.buf, block_size,
 				header_off, hash_size(REFTABLE_HASH_SHA1));
 	check(!ret);
 
@@ -118,7 +118,7 @@ static void t_log_block_read_write(void)
 		.last_key = REFTABLE_BUF_INIT,
 	};
 	struct reftable_record rec = {
-		.type = BLOCK_TYPE_LOG,
+		.type = REFTABLE_BLOCK_TYPE_LOG,
 	};
 	size_t i = 0;
 	int ret;
@@ -131,7 +131,7 @@ static void t_log_block_read_write(void)
 	check(block_data.buf != NULL);
 	block_data.len = block_size;
 
-	ret = block_writer_init(&bw, BLOCK_TYPE_LOG, (uint8_t *) block_data.buf, block_size,
+	ret = block_writer_init(&bw, REFTABLE_BLOCK_TYPE_LOG, (uint8_t *) block_data.buf, block_size,
 				header_off, hash_size(REFTABLE_HASH_SHA1));
 	check(!ret);
 
@@ -208,7 +208,7 @@ static void t_obj_block_read_write(void)
 		.last_key = REFTABLE_BUF_INIT,
 	};
 	struct reftable_record rec = {
-		.type = BLOCK_TYPE_OBJ,
+		.type = REFTABLE_BLOCK_TYPE_OBJ,
 	};
 	size_t i = 0;
 	int ret;
@@ -221,7 +221,7 @@ static void t_obj_block_read_write(void)
 	check(block_data.buf != NULL);
 	block_data.len = block_size;
 
-	ret = block_writer_init(&bw, BLOCK_TYPE_OBJ, (uint8_t *) block_data.buf, block_size,
+	ret = block_writer_init(&bw, REFTABLE_BLOCK_TYPE_OBJ, (uint8_t *) block_data.buf, block_size,
 				header_off, hash_size(REFTABLE_HASH_SHA1));
 	check(!ret);
 
@@ -291,7 +291,7 @@ static void t_index_block_read_write(void)
 		.last_key = REFTABLE_BUF_INIT,
 	};
 	struct reftable_record rec = {
-		.type = BLOCK_TYPE_INDEX,
+		.type = REFTABLE_BLOCK_TYPE_INDEX,
 		.u.idx.last_key = REFTABLE_BUF_INIT,
 	};
 	size_t i = 0;
@@ -305,7 +305,7 @@ static void t_index_block_read_write(void)
 	check(block_data.buf != NULL);
 	block_data.len = block_size;
 
-	ret = block_writer_init(&bw, BLOCK_TYPE_INDEX, (uint8_t *) block_data.buf, block_size,
+	ret = block_writer_init(&bw, REFTABLE_BLOCK_TYPE_INDEX, (uint8_t *) block_data.buf, block_size,
 				header_off, hash_size(REFTABLE_HASH_SHA1));
 	check(!ret);
 
@@ -315,7 +315,7 @@ static void t_index_block_read_write(void)
 		snprintf(buf, sizeof(buf), "branch%02"PRIuMAX, (uintmax_t)i);
 
 		reftable_buf_init(&recs[i].u.idx.last_key);
-		recs[i].type = BLOCK_TYPE_INDEX;
+		recs[i].type = REFTABLE_BLOCK_TYPE_INDEX;
 		check(!reftable_buf_addstr(&recs[i].u.idx.last_key, buf));
 		recs[i].u.idx.offset = i;
 
@@ -389,13 +389,13 @@ static void t_block_iterator(void)
 	REFTABLE_CALLOC_ARRAY(data.buf, data.len);
 	check(data.buf != NULL);
 
-	err = block_writer_init(&writer, BLOCK_TYPE_REF, (uint8_t *) data.buf, data.len,
+	err = block_writer_init(&writer, REFTABLE_BLOCK_TYPE_REF, (uint8_t *) data.buf, data.len,
 				0, hash_size(REFTABLE_HASH_SHA1));
 	check(!err);
 
 	for (size_t i = 0; i < ARRAY_SIZE(expected_refs); i++) {
 		expected_refs[i] = (struct reftable_record) {
-			.type = BLOCK_TYPE_REF,
+			.type = REFTABLE_BLOCK_TYPE_REF,
 			.u.ref = {
 				.value_type = REFTABLE_REF_VAL1,
 				.refname = xstrfmt("refs/heads/branch-%02"PRIuMAX, (uintmax_t)i),

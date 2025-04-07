@@ -84,7 +84,7 @@ static void t_merged_single_record(void)
 	struct reftable_iterator it = { 0 };
 	int err;
 
-	err = merged_table_init_iter(mt, &it, BLOCK_TYPE_REF);
+	err = merged_table_init_iter(mt, &it, REFTABLE_BLOCK_TYPE_REF);
 	check(!err);
 	err = reftable_iterator_seek_ref(&it, "a");
 	check(!err);
@@ -164,7 +164,7 @@ static void t_merged_refs(void)
 	size_t cap = 0;
 	size_t i;
 
-	err = merged_table_init_iter(mt, &it, BLOCK_TYPE_REF);
+	err = merged_table_init_iter(mt, &it, REFTABLE_BLOCK_TYPE_REF);
 	check(!err);
 	err = reftable_iterator_seek_ref(&it, "a");
 	check(!err);
@@ -244,7 +244,7 @@ static void t_merged_seek_multiple_times(void)
 	struct reftable_merged_table *mt;
 
 	mt = merged_table_from_records(refs, &sources, &tables, sizes, bufs, 2);
-	merged_table_init_iter(mt, &it, BLOCK_TYPE_REF);
+	merged_table_init_iter(mt, &it, REFTABLE_BLOCK_TYPE_REF);
 
 	for (size_t i = 0; i < 5; i++) {
 		int err = reftable_iterator_seek_ref(&it, "c");
@@ -320,7 +320,7 @@ static void t_merged_seek_multiple_times_without_draining(void)
 	int err;
 
 	mt = merged_table_from_records(refs, &sources, &tables, sizes, bufs, 2);
-	merged_table_init_iter(mt, &it, BLOCK_TYPE_REF);
+	merged_table_init_iter(mt, &it, REFTABLE_BLOCK_TYPE_REF);
 
 	err = reftable_iterator_seek_ref(&it, "b");
 	check(!err);
@@ -445,7 +445,7 @@ static void t_merged_logs(void)
 	size_t cap = 0;
 	size_t i;
 
-	err = merged_table_init_iter(mt, &it, BLOCK_TYPE_LOG);
+	err = merged_table_init_iter(mt, &it, REFTABLE_BLOCK_TYPE_LOG);
 	check(!err);
 	err = reftable_iterator_seek_log(&it, "a");
 	check(!err);
@@ -469,7 +469,7 @@ static void t_merged_logs(void)
 		check(reftable_log_record_equal(want[i], &out[i],
 						 REFTABLE_HASH_SIZE_SHA1));
 
-	err = merged_table_init_iter(mt, &it, BLOCK_TYPE_LOG);
+	err = merged_table_init_iter(mt, &it, REFTABLE_BLOCK_TYPE_LOG);
 	check(!err);
 	err = reftable_iterator_seek_log_at(&it, "a", 2);
 	check(!err);

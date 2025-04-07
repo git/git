@@ -160,7 +160,7 @@ int block_writer_finish(struct block_writer *w)
 	 * Log records are stored zlib-compressed. Note that the compression
 	 * also spans over the restart points we have just written.
 	 */
-	if (block_writer_type(w) == BLOCK_TYPE_LOG) {
+	if (block_writer_type(w) == REFTABLE_BLOCK_TYPE_LOG) {
 		int block_header_skip = 4 + w->header_off;
 		uLongf src_len = w->next - block_header_skip, compressed_len;
 		int ret;
@@ -254,7 +254,7 @@ int reftable_block_init(struct reftable_block *block,
 			goto done;
 	}
 
-	if (block_type == BLOCK_TYPE_LOG) {
+	if (block_type == REFTABLE_BLOCK_TYPE_LOG) {
 		uint32_t block_header_skip = 4 + header_size;
 		uLong dst_len = block_size - block_header_skip;
 		uLong src_len = block->block_data.len - block_header_skip;

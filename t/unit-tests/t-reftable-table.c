@@ -106,33 +106,33 @@ static int t_table_block_iterator(void)
 		uint16_t record_count;
 	} expected_blocks[] = {
 		{
-			.block_type = BLOCK_TYPE_REF,
+			.block_type = REFTABLE_BLOCK_TYPE_REF,
 			.header_off = 24,
 			.restart_count = 10,
 			.record_count = 158,
 		},
 		{
-			.block_type = BLOCK_TYPE_REF,
+			.block_type = REFTABLE_BLOCK_TYPE_REF,
 			.restart_count = 10,
 			.record_count = 159,
 		},
 		{
-			.block_type = BLOCK_TYPE_REF,
+			.block_type = REFTABLE_BLOCK_TYPE_REF,
 			.restart_count = 10,
 			.record_count = 159,
 		},
 		{
-			.block_type = BLOCK_TYPE_REF,
+			.block_type = REFTABLE_BLOCK_TYPE_REF,
 			.restart_count = 2,
 			.record_count = 24,
 		},
 		{
-			.block_type = BLOCK_TYPE_INDEX,
+			.block_type = REFTABLE_BLOCK_TYPE_INDEX,
 			.restart_count = 1,
 			.record_count = 4,
 		},
 		{
-			.block_type = BLOCK_TYPE_OBJ,
+			.block_type = REFTABLE_BLOCK_TYPE_OBJ,
 			.restart_count = 1,
 			.record_count = 1,
 		},
