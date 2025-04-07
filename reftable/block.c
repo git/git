@@ -216,10 +216,9 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 	uint32_t full_block_size = table_block_size;
 	uint8_t typ = block->data[header_off];
 	uint32_t sz = reftable_get_be24(block->data + header_off + 1);
-	int err = 0;
-	uint16_t restart_count = 0;
-	uint32_t restart_start = 0;
-	uint8_t *restart_bytes = NULL;
+	uint16_t restart_count;
+	uint32_t restart_off;
+	int err;
 
 	block_source_return_block(&br->block);
 
@@ -300,8 +299,7 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 	}
 
 	restart_count = reftable_get_be16(block->data + sz - 2);
-	restart_start = sz - 2 - 3 * restart_count;
-	restart_bytes = block->data + restart_start;
+	restart_off = sz - 2 - 3 * restart_count;
 
 	/* transfer ownership. */
 	br->block = *block;
@@ -309,11 +307,12 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 	block->len = 0;
 
 	br->hash_size = hash_size;
-	br->block_len = restart_start;
+	br->restart_off = restart_off;
 	br->full_block_size = full_block_size;
 	br->header_off = header_off;
 	br->restart_count = restart_count;
-	br->restart_bytes = restart_bytes;
+
+	err = 0;
 
 done:
 	return err;
@@ -337,7 +336,7 @@ int block_reader_first_key(const struct block_reader *br, struct reftable_buf *k
 	int off = br->header_off + 4, n;
 	struct string_view in = {
 		.buf = br->block.data + off,
-		.len = br->block_len - off,
+		.len = br->restart_off - off,
 	};
 	uint8_t extra = 0;
 
@@ -354,13 +353,13 @@ int block_reader_first_key(const struct block_reader *br, struct reftable_buf *k
 
 static uint32_t block_reader_restart_offset(const struct block_reader *br, size_t idx)
 {
-	return reftable_get_be24(br->restart_bytes + 3 * idx);
+	return reftable_get_be24(br->block.data + br->restart_off + 3 * idx);
 }
 
 void block_iter_seek_start(struct block_iter *it, const struct block_reader *br)
 {
 	it->block = br->block.data;
-	it->block_len = br->block_len;
+	it->block_len = br->restart_off;
 	it->hash_size = br->hash_size;
 	reftable_buf_reset(&it->last_key);
 	it->next_off = br->header_off + 4;
@@ -378,7 +377,7 @@ static int restart_needle_less(size_t idx, void *_args)
 	uint32_t off = block_reader_restart_offset(args->reader, idx);
 	struct string_view in = {
 		.buf = args->reader->block.data + off,
-		.len = args->reader->block_len - off,
+		.len = args->reader->restart_off - off,
 	};
 	uint64_t prefix_len, suffix_len;
 	uint8_t extra;
@@ -505,7 +504,7 @@ int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
 	else
 		it->next_off = br->header_off + 4;
 	it->block = br->block.data;
-	it->block_len = br->block_len;
+	it->block_len = br->restart_off;
 	it->hash_size = br->hash_size;
 
 	err = reftable_record_init(&rec, block_reader_type(br));

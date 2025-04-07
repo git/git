@@ -838,7 +838,7 @@ int reftable_table_print_blocks(const char *tablename)
 		printf("%s:\n", sections[i].name);
 
 		while (1) {
-			printf("  - length: %u\n", ti.br.block_len);
+			printf("  - length: %u\n", ti.br.restart_off);
 			printf("    restarts: %u\n", ti.br.restart_count);
 
 			err = table_iter_next_block(&ti);
