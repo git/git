@@ -30,23 +30,6 @@ table_offsets_for(struct reftable_table *t, uint8_t typ)
 	abort();
 }
 
-static int table_get_block(struct reftable_table *t,
-			   struct reftable_block *dest, uint64_t off,
-			   uint32_t sz)
-{
-	ssize_t bytes_read;
-	if (off >= t->size)
-		return 0;
-	if (off + sz > t->size)
-		sz = t->size - off;
-
-	bytes_read = block_source_read_block(&t->source, dest, off, sz);
-	if (bytes_read < 0)
-		return (int)bytes_read;
-
-	return 0;
-}
-
 enum reftable_hash reftable_table_hash_id(struct reftable_table *t)
 {
 	return t->hash_id;
@@ -180,64 +163,28 @@ static void table_iter_block_done(struct table_iter *ti)
 	block_iter_reset(&ti->bi);
 }
 
-static int32_t extract_block_size(uint8_t *data, uint8_t *typ, uint64_t off,
-				  int version)
-{
-	int32_t result = 0;
-
-	if (off == 0) {
-		data += header_size(version);
-	}
-
-	*typ = data[0];
-	if (reftable_is_block_type(*typ)) {
-		result = reftable_get_be24(data + 1);
-	}
-	return result;
-}
-
 int table_init_block_reader(struct reftable_table *t, struct block_reader *br,
 			    uint64_t next_off, uint8_t want_typ)
 {
-	int32_t guess_block_size = t->block_size ? t->block_size :
-							 DEFAULT_BLOCK_SIZE;
-	struct reftable_block block = { NULL };
-	uint8_t block_typ = 0;
-	int err = 0;
 	uint32_t header_off = next_off ? 0 : header_size(t->version);
-	int32_t block_size = 0;
+	int err;
 
 	if (next_off >= t->size)
 		return 1;
 
-	err = table_get_block(t, &block, next_off, guess_block_size);
+	err = block_reader_init(br, &t->source, next_off, header_off,
+				t->block_size, hash_size(t->hash_id));
 	if (err < 0)
 		goto done;
 
-	block_size = extract_block_size(block.data, &block_typ, next_off,
-					t->version);
-	if (block_size < 0) {
-		err = block_size;
-		goto done;
-	}
-	if (want_typ != BLOCK_TYPE_ANY && block_typ != want_typ) {
+	if (want_typ != BLOCK_TYPE_ANY && br->block_type != want_typ) {
 		err = 1;
 		goto done;
 	}
 
-	if (block_size > guess_block_size) {
-		block_source_return_block(&block);
-		err = table_get_block(t, &block, next_off, block_size);
-		if (err < 0) {
-			goto done;
-		}
-	}
-
-	err = block_reader_init(br, &block, header_off, t->block_size,
-				hash_size(t->hash_id));
 done:
-	block_source_return_block(&block);
-
+	if (err)
+		block_reader_release(br);
 	return err;
 }
 

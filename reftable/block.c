@@ -209,31 +209,57 @@ int block_writer_finish(struct block_writer *w)
 	return w->next;
 }
 
-int block_reader_init(struct block_reader *br, struct reftable_block *block,
-		      uint32_t header_off, uint32_t table_block_size,
-		      uint32_t hash_size)
+static int read_block(struct reftable_block_source *source,
+		      struct reftable_block *dest, uint64_t off,
+		      uint32_t sz)
 {
+	size_t size = block_source_size(source);
+	block_source_return_block(dest);
+	if (off >= size)
+		return 0;
+	if (off + sz > size)
+		sz = size - off;
+	return block_source_read_block(source, dest, off, sz);
+}
+
+int block_reader_init(struct block_reader *br,
+		      struct reftable_block_source *source,
+		      uint32_t offset, uint32_t header_size,
+		      uint32_t table_block_size, uint32_t hash_size)
+{
+	uint32_t guess_block_size = table_block_size ?
+		table_block_size : DEFAULT_BLOCK_SIZE;
 	uint32_t full_block_size = table_block_size;
-	uint8_t typ = block->data[header_off];
-	uint32_t sz = reftable_get_be24(block->data + header_off + 1);
 	uint16_t restart_count;
 	uint32_t restart_off;
+	uint32_t block_size;
+	uint8_t block_type;
 	int err;
 
-	block_source_return_block(&br->block);
+	err = read_block(source, &br->block, offset, guess_block_size);
+	if (err < 0)
+		goto done;
 
-	if (!reftable_is_block_type(typ)) {
-		err =  REFTABLE_FORMAT_ERROR;
+	block_type = br->block.data[header_size];
+	if (!reftable_is_block_type(block_type)) {
+		err = REFTABLE_FORMAT_ERROR;
 		goto done;
 	}
 
-	if (typ == BLOCK_TYPE_LOG) {
-		uint32_t block_header_skip = 4 + header_off;
-		uLong dst_len = sz - block_header_skip;
-		uLong src_len = block->len - block_header_skip;
+	block_size = reftable_get_be24(br->block.data + header_size + 1);
+	if (block_size > guess_block_size) {
+		err = read_block(source, &br->block, offset, block_size);
+		if (err < 0)
+			goto done;
+	}
+
+	if (block_type == BLOCK_TYPE_LOG) {
+		uint32_t block_header_skip = 4 + header_size;
+		uLong dst_len = block_size - block_header_skip;
+		uLong src_len = br->block.len - block_header_skip;
 
 		/* Log blocks specify the *uncompressed* size in their header. */
-		REFTABLE_ALLOC_GROW_OR_NULL(br->uncompressed_data, sz,
+		REFTABLE_ALLOC_GROW_OR_NULL(br->uncompressed_data, block_size,
 					    br->uncompressed_cap);
 		if (!br->uncompressed_data) {
 			err = REFTABLE_OUT_OF_MEMORY_ERROR;
@@ -241,7 +267,7 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		}
 
 		/* Copy over the block header verbatim. It's not compressed. */
-		memcpy(br->uncompressed_data, block->data, block_header_skip);
+		memcpy(br->uncompressed_data, br->block.data, block_header_skip);
 
 		if (!br->zstream) {
 			REFTABLE_CALLOC_ARRAY(br->zstream, 1);
@@ -259,7 +285,7 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 			goto done;
 		}
 
-		br->zstream->next_in = block->data + block_header_skip;
+		br->zstream->next_in = br->block.data + block_header_skip;
 		br->zstream->avail_in = src_len;
 		br->zstream->next_out = br->uncompressed_data + block_header_skip;
 		br->zstream->avail_out = dst_len;
@@ -278,43 +304,41 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		}
 		err = 0;
 
-		if (br->zstream->total_out + block_header_skip != sz) {
+		if (br->zstream->total_out + block_header_skip != block_size) {
 			err = REFTABLE_FORMAT_ERROR;
 			goto done;
 		}
 
 		/* We're done with the input data. */
-		block_source_return_block(block);
-		block->data = br->uncompressed_data;
-		block->len = sz;
+		block_source_return_block(&br->block);
+		br->block.data = br->uncompressed_data;
+		br->block.len = block_size;
 		full_block_size = src_len + block_header_skip - br->zstream->avail_in;
 	} else if (full_block_size == 0) {
-		full_block_size = sz;
-	} else if (sz < full_block_size && sz < block->len &&
-		   block->data[sz] != 0) {
+		full_block_size = block_size;
+	} else if (block_size < full_block_size && block_size < br->block.len &&
+		   br->block.data[block_size] != 0) {
 		/* If the block is smaller than the full block size, it is
 		   padded (data followed by '\0') or the next block is
 		   unaligned. */
-		full_block_size = sz;
+		full_block_size = block_size;
 	}
 
-	restart_count = reftable_get_be16(block->data + sz - 2);
-	restart_off = sz - 2 - 3 * restart_count;
+	restart_count = reftable_get_be16(br->block.data + block_size - 2);
+	restart_off = block_size - 2 - 3 * restart_count;
 
-	/* transfer ownership. */
-	br->block = *block;
-	block->data = NULL;
-	block->len = 0;
-
+	br->block_type = block_type;
 	br->hash_size = hash_size;
 	br->restart_off = restart_off;
 	br->full_block_size = full_block_size;
-	br->header_off = header_off;
+	br->header_off = header_size;
 	br->restart_count = restart_count;
 
 	err = 0;
 
 done:
+	if (err < 0)
+		block_reader_release(br);
 	return err;
 }
 
@@ -324,6 +348,7 @@ void block_reader_release(struct block_reader *br)
 	reftable_free(br->zstream);
 	reftable_free(br->uncompressed_data);
 	block_source_return_block(&br->block);
+	memset(br, 0, sizeof(*br));
 }
 
 uint8_t block_reader_type(const struct block_reader *r)
