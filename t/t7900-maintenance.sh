@@ -306,6 +306,34 @@ test_expect_success 'maintenance.loose-objects.auto' '
 	test_subcommand git prune-packed --quiet <trace-loC
 '
 
+test_expect_success 'maintenance.loose-objects.batchSize' '
+	git init loose-batch &&
+
+	# This creates three objects per commit.
+	test_commit_bulk -C loose-batch 34 &&
+	pack=$(ls loose-batch/.git/objects/pack/pack-*.pack) &&
+	index="${pack%pack}idx" &&
+	rm "$index" &&
+	git -C loose-batch unpack-objects <"$pack" &&
+	git -C loose-batch config maintenance.loose-objects.batchSize 50 &&
+
+	GIT_PROGRESS_DELAY=0 \
+	git -C loose-batch maintenance run --no-quiet --task=loose-objects 2>err &&
+	grep "Enumerating objects: 50, done." err &&
+
+	GIT_PROGRESS_DELAY=0 \
+	git -C loose-batch maintenance run --no-quiet --task=loose-objects 2>err &&
+	grep "Enumerating objects: 50, done." err &&
+
+	GIT_PROGRESS_DELAY=0 \
+	git -C loose-batch maintenance run --no-quiet --task=loose-objects 2>err &&
+	grep "Enumerating objects: 2, done." err &&
+
+	GIT_PROGRESS_DELAY=0 \
+	git -C loose-batch maintenance run --no-quiet --task=loose-objects 2>err &&
+	test_must_be_empty err
+'
+
 test_expect_success 'incremental-repack task' '
 	packDir=.git/objects/pack &&
 	for i in $(test_seq 1 5)
