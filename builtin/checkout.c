@@ -17,7 +17,7 @@
 #include "merge-ll.h"
 #include "lockfile.h"
 #include "mem-pool.h"
-#include "merge-recursive.h"
+#include "merge-ort-wrappers.h"
 #include "object-name.h"
 #include "object-store-ll.h"
 #include "parse-options.h"
@@ -907,10 +907,10 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			o.branch1 = new_branch_info->name;
 			o.branch2 = "local";
 			o.conflict_style = opts->conflict_style;
-			ret = merge_trees(&o,
-					  new_tree,
-					  work,
-					  old_tree);
+			ret = merge_ort_nonrecursive(&o,
+						     new_tree,
+						     work,
+						     old_tree);
 			if (ret < 0)
 				exit(128);
 			ret = reset_tree(new_tree,
