@@ -7,6 +7,9 @@ UI, Workflows & Features
  * A post-processing filter for "diff --raw" output has been
    introduced.
 
+ * "git repack" learned "--combine-cruft-below-size" option that
+   controls how cruft-packs are combined.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -59,6 +62,32 @@ Fixes since v2.49
    context size is given, which has been corrected.
    (merge d39e28e68c rs/xdiff-context-length-fix later to maint).
 
+ * GitHub Actions CI switched on a CI/CD variable that does not exist
+   when choosing what packages to install etc., which has been
+   corrected.
+   (merge ee89f7c79d kn/ci-meson-check-build-docs-fix later to maint).
+
+ * Using "git name-rev --stdin" as an example, improve the framework to
+   prepare tests to pretend to be in the future where the breaking
+   changes have already happened.
+   (merge de3dec1187 jc/name-rev-stdin later to maint).
+
+ * An earlier code refactoring of the hash machinery missed a few
+   required calls to init_fn.
+   (merge d39f04b638 jh/hash-init-fixes later to maint).
+
+ * A documentation page was left out from formatting and installation,
+   which has been corrected.
+   (merge ae85116f18 pw/build-breaking-changes-doc later to maint).
+
+ * The bash command line completion script (in contrib/) has been
+   updated to cope with remote repository nicknames with slashes in
+   them.
+   (merge 778d2f1760 dm/completion-remote-names-fix later to maint).
+
+ * "Dubious ownership" checks on Windows has been tightened up.
+   (merge 5bb88e89ef js/mingw-admins-are-special later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
    (merge 2bfd3b3685 ab/decorate-code-cleanup later to maint).
@@ -66,3 +95,9 @@ Fixes since v2.49
    (merge 554051d691 en/diff-rename-follow-fix later to maint).
    (merge a18c18b470 en/random-cleanups later to maint).
    (merge 5af21c9acb hj/doc-rev-list-ancestry-fix later to maint).
+   (merge 26d76ca284 aj/doc-restore-p-update later to maint).
+   (merge 2c0dcb9754 cc/lop-remote later to maint).
+   (merge 7b399322a2 ja/doc-branch-markup later to maint).
+   (merge ee434e1807 pw/doc-pack-refs-markup-fix later to maint).
+   (merge c000918eb7 tb/bitamp-typofix later to maint).
+   (merge fa8cd29676 js/imap-send-peer-cert-verify later to maint).

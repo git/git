@@ -668,6 +668,7 @@ int cmd_unpack_objects(int argc,
 	the_hash_algo->init_fn(&ctx);
 	unpack_all();
 	git_hash_update(&ctx, buffer, offset);
+	the_hash_algo->init_fn(&tmp_ctx);
 	git_hash_clone(&tmp_ctx, &ctx);
 	git_hash_final_oid(&oid, &tmp_ctx);
 	if (strict) {

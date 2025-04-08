@@ -2826,31 +2826,44 @@ static void setup_windows_environment(void)
 	}
 }
 
-static PSID get_current_user_sid(void)
+static void get_current_user_sid(PSID *sid, HANDLE *linked_token)
 {
 	HANDLE token;
 	DWORD len = 0;
-	PSID result = NULL;
+	TOKEN_ELEVATION_TYPE elevationType;
+	DWORD size;
+
+	*sid = NULL;
+	*linked_token = NULL;
 
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
-		return NULL;
+		return;
 
 	if (!GetTokenInformation(token, TokenUser, NULL, 0, &len)) {
 		TOKEN_USER *info = xmalloc((size_t)len);
 		if (GetTokenInformation(token, TokenUser, info, len, &len)) {
 			len = GetLengthSid(info->User.Sid);
-			result = xmalloc(len);
-			if (!CopySid(len, result, info->User.Sid)) {
+			*sid = xmalloc(len);
+			if (!CopySid(len, *sid, info->User.Sid)) {
 				error(_("failed to copy SID (%ld)"),
 				      GetLastError());
-				FREE_AND_NULL(result);
+				FREE_AND_NULL(*sid);
 			}
 		}
 		FREE_AND_NULL(info);
 	}
-	CloseHandle(token);
 
-	return result;
+	if (GetTokenInformation(token, TokenElevationType, &elevationType, sizeof(elevationType), &size) &&
+	    elevationType == TokenElevationTypeLimited) {
+		/*
+		 * The current process is run by a member of the Administrators
+		 * group, but is not running elevated.
+		 */
+		if (!GetTokenInformation(token, TokenLinkedToken, linked_token, sizeof(*linked_token), &size))
+			linked_token = NULL; /* there is no linked token */
+	}
+
+	CloseHandle(token);
 }
 
 static BOOL user_sid_to_user_name(PSID sid, LPSTR *str)
@@ -2931,18 +2944,22 @@ int is_path_owned_by_current_sid(const char *path, struct strbuf *report)
 	else if (sid && IsValidSid(sid)) {
 		/* Now, verify that the SID matches the current user's */
 		static PSID current_user_sid;
+		static HANDLE linked_token;
 		BOOL is_member;
 
 		if (!current_user_sid)
-			current_user_sid = get_current_user_sid();
+			get_current_user_sid(&current_user_sid, &linked_token);
 
 		if (current_user_sid &&
 		    IsValidSid(current_user_sid) &&
 		    EqualSid(sid, current_user_sid))
 			result = 1;
 		else if (IsWellKnownSid(sid, WinBuiltinAdministratorsSid) &&
-			 CheckTokenMembership(NULL, sid, &is_member) &&
-			 is_member)
+			 ((CheckTokenMembership(NULL, sid, &is_member) &&
+			   is_member) ||
+			  (linked_token &&
+			   CheckTokenMembership(linked_token, sid, &is_member) &&
+			   is_member)))
 			/*
 			 * If owned by the Administrators group, and the
 			 * current user is an administrator, we consider that
