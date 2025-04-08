@@ -461,7 +461,8 @@ static int show_object_fast(
 	int exclude UNUSED,
 	uint32_t name_hash UNUSED,
 	struct packed_git *found_pack UNUSED,
-	off_t found_offset UNUSED)
+	off_t found_offset UNUSED,
+	void *payload UNUSED)
 {
 	fprintf(stdout, "%s\n", oid_to_hex(oid));
 	return 1;
