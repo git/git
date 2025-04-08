@@ -53,7 +53,6 @@ static const char * const builtin_gc_usage[] = {
 
 static timestamp_t gc_log_expire_time;
 
-static struct strvec reflog = STRVEC_INIT;
 static struct strvec repack = STRVEC_INIT;
 static struct strvec prune = STRVEC_INIT;
 static struct strvec prune_worktrees = STRVEC_INIT;
@@ -283,6 +282,15 @@ static int maintenance_task_pack_refs(struct maintenance_run_opts *opts,
 	if (opts->auto_flag)
 		strvec_push(&cmd.args, "--auto");
 
+	return run_command(&cmd);
+}
+
+static int maintenance_task_reflog_expire(struct maintenance_run_opts *opts UNUSED,
+					  struct gc_config *cfg UNUSED)
+{
+	struct child_process cmd = CHILD_PROCESS_INIT;
+	cmd.git_cmd = 1;
+	strvec_pushl(&cmd.args, "reflog", "expire", "--all", NULL);
 	return run_command(&cmd);
 }
 
@@ -662,15 +670,8 @@ static void gc_before_repack(struct maintenance_run_opts *opts,
 
 	if (cfg->pack_refs && maintenance_task_pack_refs(opts, cfg))
 		die(FAILED_RUN, "pack-refs");
-
-	if (cfg->prune_reflogs) {
-		struct child_process cmd = CHILD_PROCESS_INIT;
-
-		cmd.git_cmd = 1;
-		strvec_pushv(&cmd.args, reflog.v);
-		if (run_command(&cmd))
-			die(FAILED_RUN, reflog.v[0]);
-	}
+	if (cfg->prune_reflogs && maintenance_task_reflog_expire(opts, cfg))
+		die(FAILED_RUN, "reflog");
 }
 
 int cmd_gc(int argc,
@@ -718,7 +719,6 @@ struct repository *repo UNUSED)
 	show_usage_with_options_if_asked(argc, argv,
 					 builtin_gc_usage, builtin_gc_options);
 
-	strvec_pushl(&reflog, "reflog", "expire", "--all", NULL);
 	strvec_pushl(&repack, "repack", "-d", "-l", NULL);
 	strvec_pushl(&prune, "prune", "--expire", NULL);
 	strvec_pushl(&prune_worktrees, "worktree", "prune", "--expire", NULL);
