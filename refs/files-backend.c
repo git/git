@@ -677,16 +677,18 @@ static void unlock_ref(struct ref_lock *lock)
  * - Generate informative error messages in the case of failure
  */
 static enum ref_transaction_error lock_raw_ref(struct files_ref_store *refs,
-					       const char *refname,
+					       struct ref_update *update,
+					       size_t update_idx,
 					       int mustexist,
 					       struct string_list *refnames_to_check,
 					       const struct string_list *extras,
 					       struct ref_lock **lock_p,
 					       struct strbuf *referent,
-					       unsigned int *type,
 					       struct strbuf *err)
 {
 	enum ref_transaction_error ret = REF_TRANSACTION_ERROR_GENERIC;
+	const char *refname = update->refname;
+	unsigned int *type = &update->type;
 	struct ref_lock *lock;
 	struct strbuf ref_file = STRBUF_INIT;
 	int attempts_remaining = 3;
@@ -785,6 +787,8 @@ retry:
 
 	if (files_read_raw_ref(&refs->base, refname, &lock->old_oid, referent,
 			       type, &failure_errno)) {
+		struct string_list_item *item;
+
 		if (failure_errno == ENOENT) {
 			if (mustexist) {
 				/* Garden variety missing reference. */
@@ -864,7 +868,9 @@ retry:
 		 * make sure there is no existing packed ref that conflicts
 		 * with refname. This check is deferred so that we can batch it.
 		 */
-		string_list_append(refnames_to_check, refname);
+		item = string_list_append(refnames_to_check, refname);
+		item->util = xmalloc(sizeof(update_idx));
+		memcpy(item->util, &update_idx, sizeof(update_idx));
 	}
 
 	ret = 0;
@@ -2547,6 +2553,7 @@ struct files_transaction_backend_data {
  */
 static enum ref_transaction_error lock_ref_for_update(struct files_ref_store *refs,
 						      struct ref_update *update,
+						      size_t update_idx,
 						      struct ref_transaction *transaction,
 						      const char *head_ref,
 						      struct string_list *refnames_to_check,
@@ -2575,9 +2582,9 @@ static enum ref_transaction_error lock_ref_for_update(struct files_ref_store *re
 	if (lock) {
 		lock->count++;
 	} else {
-		ret = lock_raw_ref(refs, update->refname, mustexist,
+		ret = lock_raw_ref(refs, update, update_idx, mustexist,
 				   refnames_to_check, &transaction->refnames,
-				   &lock, &referent, &update->type, err);
+				   &lock, &referent, err);
 		if (ret) {
 			char *reason;
 
@@ -2849,7 +2856,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
 
-		ret = lock_ref_for_update(refs, update, transaction,
+		ret = lock_ref_for_update(refs, update, i, transaction,
 					  head_ref, &refnames_to_check,
 					  err);
 		if (ret) {
@@ -2905,7 +2912,8 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	 * So instead, we accept the race for now.
 	 */
 	if (refs_verify_refnames_available(refs->packed_ref_store, &refnames_to_check,
-					   &transaction->refnames, NULL, 0, err)) {
+					   &transaction->refnames, NULL, transaction,
+					   0, err)) {
 		ret = REF_TRANSACTION_ERROR_NAME_CONFLICT;
 		goto cleanup;
 	}
@@ -2951,7 +2959,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 
 cleanup:
 	free(head_ref);
-	string_list_clear(&refnames_to_check, 0);
+	string_list_clear(&refnames_to_check, 1);
 
 	if (ret)
 		files_transaction_cleanup(refs, transaction);
@@ -3097,7 +3105,8 @@ static int files_transaction_finish_initial(struct files_ref_store *refs,
 	}
 
 	if (refs_verify_refnames_available(&refs->base, &refnames_to_check,
-					   &affected_refnames, NULL, 1, err)) {
+					   &affected_refnames, NULL, transaction,
+					   1, err)) {
 		packed_refs_unlock(refs->packed_ref_store);
 		ret = REF_TRANSACTION_ERROR_NAME_CONFLICT;
 		goto cleanup;

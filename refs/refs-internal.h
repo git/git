@@ -806,4 +806,20 @@ enum ref_transaction_error ref_update_check_old_target(const char *referent,
  */
 int ref_update_expects_existing_old_ref(struct ref_update *update);
 
+/*
+ * Same as `refs_verify_refname_available()`, but checking for a list of
+ * refnames instead of only a single item. This is more efficient in the case
+ * where one needs to check multiple refnames.
+ *
+ * If using batched updates, then individual updates are marked rejected,
+ * reference backends are then in charge of not committing those updates.
+ */
+enum ref_transaction_error refs_verify_refnames_available(struct ref_store *refs,
+					  const struct string_list *refnames,
+					  const struct string_list *extras,
+					  const struct string_list *skip,
+					  struct ref_transaction *transaction,
+					  unsigned int initial_transaction,
+					  struct strbuf *err);
+
 #endif /* REFS_REFS_INTERNAL_H */
