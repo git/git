@@ -1844,8 +1844,15 @@ static int do_fetch(struct transport *transport,
 			goto cleanup;
 
 		retcode = ref_transaction_commit(transaction, &err);
-		if (retcode)
+		if (retcode) {
+			/*
+			 * Explicitly handle transaction cleanup to avoid
+			 * aborting an already closed transaction.
+			 */
+			ref_transaction_free(transaction);
+			transaction = NULL;
 			goto cleanup;
+		}
 	}
 
 	commit_fetch_head(&fetch_head);
