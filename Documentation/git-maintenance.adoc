@@ -158,6 +158,10 @@ pack-refs::
 	need to iterate across many references. See linkgit:git-pack-refs[1]
 	for more information.
 
+reflog-expire::
+	The `reflog-expire` task deletes any entries in the reflog older than the
+	expiry threshold. See linkgit:git-reflog[1] for more information.
+
 OPTIONS
 -------
 --auto::
