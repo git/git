@@ -10,6 +10,11 @@ UI, Workflows & Features
  * "git repack" learned "--combine-cruft-below-size" option that
    controls how cruft-packs are combined.
 
+ * TCP keepalive behaviour on http transports can now be configured by
+   calling cURL library.
+
+ * Incrementally updating multi-pack index files.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -37,8 +42,18 @@ Performance, Internal Implementation, Development Support etc.
 
  * Enable -Wunreachable-code for developer builds.
 
- * Build update.
-   (merge 7c8cd9c158 es/meson-building-docs-requires-perl later to maint).
+ * Ensure what we write in assert() does not have side effects,
+   and introduce ASSERT() macro to mark those that cannot be
+   mechanically checked for lack of side effects.
+
+ * Give more meaningful error return values from block writer layer of
+   the reftable ref-API backend.
+
+ * Make the code in reftable library less reliant on the service
+   routines it used to borrow from Git proper, to make it easier to
+   use by external users of the library.
+
+ * CI update.
 
 
 Fixes since v2.49
@@ -88,6 +103,10 @@ Fixes since v2.49
  * "Dubious ownership" checks on Windows has been tightened up.
    (merge 5bb88e89ef js/mingw-admins-are-special later to maint).
 
+ * Layout configuration in vimdiff backend didn't work as advertised,
+   which has been corrected.
+   (merge 93bab2d04b fr/vimdiff-layout-fixes later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
    (merge 2bfd3b3685 ab/decorate-code-cleanup later to maint).
@@ -101,3 +120,7 @@ Fixes since v2.49
    (merge ee434e1807 pw/doc-pack-refs-markup-fix later to maint).
    (merge c000918eb7 tb/bitamp-typofix later to maint).
    (merge fa8cd29676 js/imap-send-peer-cert-verify later to maint).
+   (merge 98b423bc1c rs/clear-commit-marks-simplify later to maint).
+   (merge 133d065dd6 ta/bulk-checkin-signed-compare-false-warning-fix later to maint).
+   (merge d2827dc31e es/meson-build-skip-coccinelle later to maint).
+   (merge ee8edb7156 dk/vimdiff-doc-fix later to maint).
