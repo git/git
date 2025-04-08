@@ -88,27 +88,21 @@ static int collect_reflog(const char *ref, void *cb_data)
 	return 0;
 }
 
-static struct reflog_expire_cfg {
-	struct reflog_expire_cfg *next;
-	timestamp_t expire_total;
-	timestamp_t expire_unreachable;
-	char pattern[FLEX_ARRAY];
-} *reflog_expire_cfg, **reflog_expire_cfg_tail;
-
-static struct reflog_expire_cfg *find_cfg_ent(const char *pattern, size_t len)
+static struct reflog_expire_entry_option *find_cfg_ent(struct reflog_expire_options *opts,
+						       const char *pattern, size_t len)
 {
-	struct reflog_expire_cfg *ent;
+	struct reflog_expire_entry_option *ent;
 
-	if (!reflog_expire_cfg_tail)
-		reflog_expire_cfg_tail = &reflog_expire_cfg;
+	if (!opts->entries_tail)
+		opts->entries_tail = &opts->entries;
 
-	for (ent = reflog_expire_cfg; ent; ent = ent->next)
+	for (ent = opts->entries; ent; ent = ent->next)
 		if (!xstrncmpz(ent->pattern, pattern, len))
 			return ent;
 
 	FLEX_ALLOC_MEM(ent, pattern, pattern, len);
-	*reflog_expire_cfg_tail = ent;
-	reflog_expire_cfg_tail = &(ent->next);
+	*opts->entries_tail = ent;
+	opts->entries_tail = &(ent->next);
 	return ent;
 }
 
@@ -124,7 +118,7 @@ static int reflog_expire_config(const char *var, const char *value,
 	size_t pattern_len;
 	timestamp_t expire;
 	int slot;
-	struct reflog_expire_cfg *ent;
+	struct reflog_expire_entry_option *ent;
 
 	if (parse_config_key(var, "gc", &pattern, &pattern_len, &key) < 0)
 		return git_default_config(var, value, ctx, cb);
@@ -152,7 +146,7 @@ static int reflog_expire_config(const char *var, const char *value,
 		return 0;
 	}
 
-	ent = find_cfg_ent(pattern, pattern_len);
+	ent = find_cfg_ent(opts, pattern, pattern_len);
 	if (!ent)
 		return -1;
 	switch (slot) {
@@ -168,12 +162,12 @@ static int reflog_expire_config(const char *var, const char *value,
 
 static void set_reflog_expiry_param(struct reflog_expire_options *cb, const char *ref)
 {
-	struct reflog_expire_cfg *ent;
+	struct reflog_expire_entry_option *ent;
 
 	if (cb->explicit_expiry == (EXPIRE_TOTAL|EXPIRE_UNREACH))
 		return; /* both given explicitly -- nothing to tweak */
 
-	for (ent = reflog_expire_cfg; ent; ent = ent->next) {
+	for (ent = cb->entries; ent; ent = ent->next) {
 		if (!wildmatch(ent->pattern, ref, 0)) {
 			if (!(cb->explicit_expiry & EXPIRE_TOTAL))
 				cb->expire_total = ent->expire_total;

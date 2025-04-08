@@ -2,7 +2,15 @@
 #define REFLOG_H
 #include "refs.h"
 
+struct reflog_expire_entry_option {
+	struct reflog_expire_entry_option *next;
+	timestamp_t expire_total;
+	timestamp_t expire_unreachable;
+	char pattern[FLEX_ARRAY];
+};
+
 struct reflog_expire_options {
+	struct reflog_expire_entry_option *entries, **entries_tail;
 	int stalefix;
 	int explicit_expiry;
 	timestamp_t default_expire_total;
