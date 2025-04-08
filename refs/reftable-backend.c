@@ -1371,8 +1371,15 @@ static int reftable_be_transaction_prepare(struct ref_store *ref_store,
 					    transaction->updates[i],
 					    &refnames_to_check, head_type,
 					    &head_referent, &referent, err);
-		if (ret)
+		if (ret) {
+			if (ref_transaction_maybe_set_rejected(transaction, i, ret)) {
+				strbuf_reset(err);
+				ret = 0;
+
+				continue;
+			}
 			goto done;
+		}
 	}
 
 	ret = refs_verify_refnames_available(ref_store, &refnames_to_check,
@@ -1453,6 +1460,9 @@ static int write_transaction_table(struct reftable_writer *writer, void *cb_data
 	for (i = 0; i < arg->updates_nr; i++) {
 		struct reftable_transaction_update *tx_update = &arg->updates[i];
 		struct ref_update *u = tx_update->update;
+
+		if (u->rejection_err)
+			continue;
 
 		/*
 		 * Write a reflog entry when updating a ref to point to
