@@ -684,7 +684,6 @@ test_expect_success 'create bundle with duplicate refnames' '
 	test_cmp expect actual
 '
 
-# This exhibits a bug, since the same refname is now added to the bundle twice.
 test_expect_success 'create bundle with duplicate refnames and --all' '
 	git bundle create out.bdl --all "main" "main" &&
 
@@ -701,7 +700,6 @@ test_expect_success 'create bundle with duplicate refnames and --all' '
 	<TAG-2> refs/tags/v2
 	<TAG-3> refs/tags/v3
 	<COMMIT-P> HEAD
-	<COMMIT-P> refs/heads/main
 	EOF
 	test_cmp expect actual
 '
@@ -717,14 +715,12 @@ test_expect_success 'create bundle with duplicate exlusion refnames' '
 	test_cmp expect actual
 '
 
-# This exhibits a bug, since the same refname is now added to the bundle twice.
 test_expect_success 'create bundle with duplicate refname short-form' '
 	git bundle create out.bdl "main" "main" "refs/heads/main" "refs/heads/main" &&
 
 	git bundle list-heads out.bdl |
 		make_user_friendly_and_stable_output >actual &&
 	cat >expect <<-\EOF &&
-	<COMMIT-P> refs/heads/main
 	<COMMIT-P> refs/heads/main
 	EOF
 	test_cmp expect actual

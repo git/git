@@ -491,39 +491,6 @@ void object_array_clear(struct object_array *array)
 	array->nr = array->alloc = 0;
 }
 
-/*
- * Return true if array already contains an entry.
- */
-static int contains_object(struct object_array *array,
-			   const struct object *item, const char *name)
-{
-	unsigned nr = array->nr, i;
-	struct object_array_entry *object = array->objects;
-
-	for (i = 0; i < nr; i++, object++)
-		if (item == object->item && !strcmp(object->name, name))
-			return 1;
-	return 0;
-}
-
-void object_array_remove_duplicates(struct object_array *array)
-{
-	unsigned nr = array->nr, src;
-	struct object_array_entry *objects = array->objects;
-
-	array->nr = 0;
-	for (src = 0; src < nr; src++) {
-		if (!contains_object(array, objects[src].item,
-				     objects[src].name)) {
-			if (src != array->nr)
-				objects[array->nr] = objects[src];
-			array->nr++;
-		} else {
-			object_array_release_entry(&objects[src]);
-		}
-	}
-}
-
 void clear_object_flags(unsigned flags)
 {
 	int i;
