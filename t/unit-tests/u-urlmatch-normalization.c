@@ -1,12 +1,11 @@
-#include "test-lib.h"
+#include "unit-test.h"
 #include "urlmatch.h"
 
 static void check_url_normalizable(const char *url, unsigned int normalizable)
 {
 	char *url_norm = url_normalize(url, NULL);
 
-	if (!check_int(normalizable, ==, url_norm ? 1 : 0))
-		test_msg("input url: %s", url);
+	cl_assert_equal_i(normalizable, url_norm ? 1 : 0);
 	free(url_norm);
 }
 
@@ -14,8 +13,7 @@ static void check_normalized_url(const char *url, const char *expect)
 {
 	char *url_norm = url_normalize(url, NULL);
 
-	if (!check_str(url_norm, expect))
-		test_msg("input url: %s", url);
+	cl_assert_equal_s(url_norm, expect);
 	free(url_norm);
 }
 
@@ -26,13 +24,9 @@ static void compare_normalized_urls(const char *url1, const char *url2,
 	char *url2_norm = url_normalize(url2, NULL);
 
 	if (equal) {
-		if (!check_str(url1_norm, url2_norm))
-			test_msg("input url1: %s\n  input url2: %s", url1,
-				 url2);
-	} else if (!check_int(strcmp(url1_norm, url2_norm), !=, 0)) {
-		test_msg(" normalized url1: %s\n   normalized url2: %s\n"
-			 "  input url1: %s\n  input url2: %s",
-			 url1_norm, url2_norm, url1, url2);
+		cl_assert_equal_s(url1_norm, url2_norm);
+	} else {
+		cl_assert(strcmp(url1_norm, url2_norm) != 0);
 	}
 	free(url1_norm);
 	free(url2_norm);
@@ -43,14 +37,12 @@ static void check_normalized_url_length(const char *url, size_t len)
 	struct url_info info;
 	char *url_norm = url_normalize(url, &info);
 
-	if (!check_int(info.url_len, ==, len))
-		test_msg("     input url: %s\n  normalized url: %s", url,
-			 url_norm);
+	cl_assert_equal_i(info.url_len, len);
 	free(url_norm);
 }
 
 /* Note that only "file:" URLs should be allowed without a host */
-static void t_url_scheme(void)
+void test_urlmatch_normalization__scheme(void)
 {
 	check_url_normalizable("", 0);
 	check_url_normalizable("_", 0);
@@ -73,7 +65,7 @@ static void t_url_scheme(void)
 	check_normalized_url("AbCdeF://x.Y", "abcdef://x.y/");
 }
 
-static void t_url_authority(void)
+void test_urlmatch_normalization__authority(void)
 {
 	check_url_normalizable("scheme://user:pass@", 0);
 	check_url_normalizable("scheme://?", 0);
@@ -109,7 +101,7 @@ static void t_url_authority(void)
 	check_url_normalizable("scheme://invalid....:[", 0);
 }
 
-static void t_url_port(void)
+void test_urlmatch_normalization__port(void)
 {
 	check_url_normalizable("xyz://q@some.host:", 1);
 	check_url_normalizable("xyz://q@some.host:456/", 1);
@@ -139,7 +131,7 @@ static void t_url_port(void)
 	check_url_normalizable("xyz://[::1]:030f/", 0);
 }
 
-static void t_url_port_normalization(void)
+void test_urlmatch_normalization__port_normalization(void)
 {
 	check_normalized_url("http://x:800", "http://x:800/");
 	check_normalized_url("http://x:0800", "http://x:800/");
@@ -154,7 +146,7 @@ static void t_url_port_normalization(void)
 	check_normalized_url("https://x:000000443", "https://x/");
 }
 
-static void t_url_general_escape(void)
+void test_urlmatch_normalization__general_escape(void)
 {
 	check_url_normalizable("http://x.y?%fg", 0);
 	check_normalized_url("X://W/%7e%41^%3a", "x://w/~A%5E%3A");
@@ -164,7 +156,7 @@ static void t_url_general_escape(void)
 	check_normalized_url("X://W?!", "x://w/?!");
 }
 
-static void t_url_high_bit(void)
+void test_urlmatch_normalization__high_bit(void)
 {
 	check_normalized_url(
 		"x://q/\x01\x02\x03\x04\x05\x06\x07\x08\x0e\x0f\x10\x11\x12",
@@ -198,26 +190,26 @@ static void t_url_high_bit(void)
 		"x://q/%F0%F1%F2%F3%F4%F5%F6%F7%F8%F9%FA%FB%FC%FD%FE%FF");
 }
 
-static void t_url_utf8_escape(void)
+void test_urlmatch_normalization__utf8_escape(void)
 {
 	check_normalized_url(
 		"x://q/\xc2\x80\xdf\xbf\xe0\xa0\x80\xef\xbf\xbd\xf0\x90\x80\x80\xf0\xaf\xbf\xbd",
 		"x://q/%C2%80%DF%BF%E0%A0%80%EF%BF%BD%F0%90%80%80%F0%AF%BF%BD");
 }
 
-static void t_url_username_pass(void)
+void test_urlmatch_normalization__username_pass(void)
 {
 	check_normalized_url("x://%41%62(^):%70+d@foo", "x://Ab(%5E):p+d@foo/");
 }
 
-static void t_url_length(void)
+void test_urlmatch_normalization__length(void)
 {
 	check_normalized_url_length("Http://%4d%65:%4d^%70@The.Host", 25);
 	check_normalized_url_length("http://%41:%42@x.y/%61/", 17);
 	check_normalized_url_length("http://@x.y/^", 15);
 }
 
-static void t_url_dots(void)
+void test_urlmatch_normalization__dots(void)
 {
 	check_normalized_url("x://y/.", "x://y/");
 	check_normalized_url("x://y/./", "x://y/");
@@ -244,7 +236,7 @@ static void t_url_dots(void)
  * "http://foo" specifies neither a user name nor a password.
  * So they should not be equivalent.
  */
-static void t_url_equivalents(void)
+void test_urlmatch_normalization__equivalents(void)
 {
 	compare_normalized_urls("httP://x", "Http://X/", 1);
 	compare_normalized_urls("Http://%4d%65:%4d^%70@The.Host", "hTTP://Me:%4D^p@the.HOST:80/", 1);
@@ -252,20 +244,4 @@ static void t_url_equivalents(void)
 	compare_normalized_urls("https://@x.y/^", "httpS://@x.y:0443/^", 1);
 	compare_normalized_urls("https://@x.y/^/../abc", "httpS://@x.y:0443/abc", 1);
 	compare_normalized_urls("https://@x.y/^/..", "httpS://@x.y:0443/", 1);
-}
-
-int cmd_main(int argc UNUSED, const char **argv UNUSED)
-{
-	TEST(t_url_scheme(), "url scheme");
-	TEST(t_url_authority(), "url authority");
-	TEST(t_url_port(), "url port checks");
-	TEST(t_url_port_normalization(), "url port normalization");
-	TEST(t_url_general_escape(), "url general escapes");
-	TEST(t_url_high_bit(), "url high-bit escapes");
-	TEST(t_url_utf8_escape(), "url utf8 escapes");
-	TEST(t_url_username_pass(), "url username/password escapes");
-	TEST(t_url_length(), "url normalized lengths");
-	TEST(t_url_dots(), "url . and .. segments");
-	TEST(t_url_equivalents(), "url equivalents");
-	return test_done();
 }
