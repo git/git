@@ -4,6 +4,12 @@ test_description='test git-http-backend respects CONTENT_LENGTH'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping http backend content tests; Perl not available'
+	test_done
+fi
+
 test_lazy_prereq GZIP 'gzip --version'
 
 verify_http_result() {

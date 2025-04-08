@@ -8,6 +8,12 @@ test_description='Per branch config variables affects "git fetch".
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-bundle.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping fetch tests; Perl not available'
+	test_done
+fi
+
 D=$(pwd)
 
 test_expect_success setup '
