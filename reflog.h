@@ -5,10 +5,16 @@
 struct reflog_expire_options {
 	int stalefix;
 	int explicit_expiry;
+	timestamp_t default_expire_total;
 	timestamp_t expire_total;
+	timestamp_t default_expire_unreachable;
 	timestamp_t expire_unreachable;
 	int recno;
 };
+#define REFLOG_EXPIRE_OPTIONS_INIT(now) { \
+	.default_expire_total = now - 30 * 24 * 3600, \
+	.default_expire_unreachable = now - 90 * 24 * 3600, \
+}
 
 struct expire_reflog_policy_cb {
 	enum {
