@@ -104,6 +104,10 @@ static struct {
 };
 #endif
 
+static long curl_tcp_keepidle = -1;
+static long curl_tcp_keepintvl = -1;
+static long curl_tcp_keepcnt = -1;
+
 enum proactive_auth {
 	PROACTIVE_AUTH_NONE = 0,
 	PROACTIVE_AUTH_IF_CREDENTIALS,
@@ -438,11 +442,11 @@ static int http_options(const char *var, const char *value,
 		return 0;
 	}
 	if (!strcmp("http.lowspeedlimit", var)) {
-		curl_low_speed_limit = (long)git_config_int(var, value, ctx->kvi);
+		curl_low_speed_limit = git_config_int(var, value, ctx->kvi);
 		return 0;
 	}
 	if (!strcmp("http.lowspeedtime", var)) {
-		curl_low_speed_time = (long)git_config_int(var, value, ctx->kvi);
+		curl_low_speed_time = git_config_int(var, value, ctx->kvi);
 		return 0;
 	}
 
@@ -554,6 +558,19 @@ static int http_options(const char *var, const char *value,
 			http_proactive_auth = PROACTIVE_AUTH_NONE;
 		else
 			warning(_("Unknown value for http.proactiveauth"));
+		return 0;
+	}
+
+	if (!strcmp("http.keepaliveidle", var)) {
+		curl_tcp_keepidle = git_config_int(var, value, ctx->kvi);
+		return 0;
+	}
+	if (!strcmp("http.keepaliveinterval", var)) {
+		curl_tcp_keepintvl = git_config_int(var, value, ctx->kvi);
+		return 0;
+	}
+	if (!strcmp("http.keepalivecount", var)) {
+		curl_tcp_keepcnt = git_config_int(var, value, ctx->kvi);
 		return 0;
 	}
 
@@ -702,11 +719,6 @@ static int has_proxy_cert_password(void)
 		credential_fill(the_repository, &proxy_cert_auth, 0);
 	}
 	return 1;
-}
-
-static void set_curl_keepalive(CURL *c)
-{
-	curl_easy_setopt(c, CURLOPT_TCP_KEEPALIVE, 1);
 }
 
 /* Return 1 if redactions have been made, 0 otherwise. */
@@ -1242,7 +1254,18 @@ static CURL *get_curl_handle(void)
 	}
 	init_curl_proxy_auth(result);
 
-	set_curl_keepalive(result);
+	curl_easy_setopt(result, CURLOPT_TCP_KEEPALIVE, 1);
+
+	if (curl_tcp_keepidle > -1)
+		curl_easy_setopt(result, CURLOPT_TCP_KEEPIDLE,
+				 curl_tcp_keepidle);
+	if (curl_tcp_keepintvl > -1)
+		curl_easy_setopt(result, CURLOPT_TCP_KEEPINTVL,
+				 curl_tcp_keepintvl);
+#ifdef GIT_CURL_HAVE_CURLOPT_TCP_KEEPCNT
+	if (curl_tcp_keepcnt > -1)
+		curl_easy_setopt(result, CURLOPT_TCP_KEEPCNT, curl_tcp_keepcnt);
+#endif
 
 	return result;
 }
@@ -1256,10 +1279,30 @@ static void set_from_env(char **var, const char *envname)
 	}
 }
 
+static void set_long_from_env(long *var, const char *envname)
+{
+	const char *val = getenv(envname);
+	if (val) {
+		long tmp;
+		char *endp;
+		int saved_errno = errno;
+
+		errno = 0;
+		tmp = strtol(val, &endp, 10);
+
+		if (errno)
+			warning_errno(_("failed to parse %s"), envname);
+		else if (*endp || endp == val)
+			warning(_("failed to parse %s"), envname);
+		else
+			*var = tmp;
+
+		errno = saved_errno;
+	}
+}
+
 void http_init(struct remote *remote, const char *url, int proactive_auth)
 {
-	char *low_speed_limit;
-	char *low_speed_time;
 	char *normalized_url;
 	struct urlmatch_config config = URLMATCH_CONFIG_INIT;
 
@@ -1338,12 +1381,8 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 
 	set_from_env(&user_agent, "GIT_HTTP_USER_AGENT");
 
-	low_speed_limit = getenv("GIT_HTTP_LOW_SPEED_LIMIT");
-	if (low_speed_limit)
-		curl_low_speed_limit = strtol(low_speed_limit, NULL, 10);
-	low_speed_time = getenv("GIT_HTTP_LOW_SPEED_TIME");
-	if (low_speed_time)
-		curl_low_speed_time = strtol(low_speed_time, NULL, 10);
+	set_long_from_env(&curl_low_speed_limit, "GIT_HTTP_LOW_SPEED_LIMIT");
+	set_long_from_env(&curl_low_speed_time, "GIT_HTTP_LOW_SPEED_TIME");
 
 	if (curl_ssl_verify == -1)
 		curl_ssl_verify = 1;
@@ -1369,6 +1408,10 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 		    starts_with(url, "https://"))
 			ssl_cert_password_required = 1;
 	}
+
+	set_long_from_env(&curl_tcp_keepidle, "GIT_TCP_KEEPIDLE");
+	set_long_from_env(&curl_tcp_keepintvl, "GIT_TCP_KEEPINTVL");
+	set_long_from_env(&curl_tcp_keepcnt, "GIT_TCP_KEEPCNT");
 
 	curl_default = get_curl_handle();
 }
