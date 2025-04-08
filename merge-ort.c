@@ -4957,9 +4957,6 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	}
 	trace2_region_leave("merge", "sanity checks", opt->repo);
 
-	/* Default to histogram diff.  Actually, just hardcode it...for now. */
-	opt->xdl_opts = DIFF_WITH_ALG(opt, HISTOGRAM_DIFF);
-
 	/* Handle attr direction stuff for renormalization */
 	if (opt->renormalize)
 		git_attr_set_direction(GIT_ATTR_CHECKOUT);
