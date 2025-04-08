@@ -265,8 +265,8 @@ static struct update_ref_record *init_update_ref_record(const char *ref)
 
 	CALLOC_ARRAY(rec, 1);
 
-	oidcpy(&rec->before, null_oid());
-	oidcpy(&rec->after, null_oid());
+	oidcpy(&rec->before, null_oid(the_hash_algo));
+	oidcpy(&rec->after, null_oid(the_hash_algo));
 
 	/* This may fail, but that's fine, we will keep the null OID. */
 	refs_read_ref(get_main_ref_store(the_repository), ref, &rec->before);
@@ -667,7 +667,7 @@ static int fast_forward_to(struct repository *r,
 	if (!transaction ||
 	    ref_transaction_update(transaction, "HEAD",
 				   to, unborn && !is_rebase_i(opts) ?
-				   null_oid() : from, NULL, NULL,
+				   null_oid(the_hash_algo) : from, NULL, NULL,
 				   0, sb.buf, &err) ||
 	    ref_transaction_commit(transaction, &err)) {
 		ref_transaction_free(transaction);
@@ -1301,7 +1301,7 @@ int update_head_with_reflog(const struct commit *old_head,
 						  0, err);
 	if (!transaction ||
 	    ref_transaction_update(transaction, "HEAD", new_head,
-				   old_head ? &old_head->object.oid : null_oid(),
+				   old_head ? &old_head->object.oid : null_oid(the_hash_algo),
 				   NULL, NULL, 0, sb.buf, err) ||
 	    ref_transaction_commit(transaction, err)) {
 		ret = -1;
@@ -4683,7 +4683,7 @@ static void create_autostash_internal(struct repository *r,
 			write_file(path, "%s", oid_to_hex(&oid));
 		} else {
 			refs_update_ref(get_main_ref_store(r), "", refname,
-					&oid, null_oid(), 0, UPDATE_REFS_DIE_ON_ERR);
+					&oid, null_oid(the_hash_algo), 0, UPDATE_REFS_DIE_ON_ERR);
 		}
 
 		printf(_("Created autostash: %s\n"), buf.buf);
