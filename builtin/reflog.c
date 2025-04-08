@@ -168,7 +168,7 @@ static int reflog_expire_config(const char *var, const char *value,
 	return 0;
 }
 
-static void set_reflog_expiry_param(struct cmd_reflog_expire_cb *cb, const char *ref)
+static void set_reflog_expiry_param(struct reflog_expire_options *cb, const char *ref)
 {
 	struct reflog_expire_cfg *ent;
 
@@ -207,15 +207,15 @@ static int expire_unreachable_callback(const struct option *opt,
 				 const char *arg,
 				 int unset)
 {
-	struct cmd_reflog_expire_cb *cmd = opt->value;
+	struct reflog_expire_options *opts = opt->value;
 
 	BUG_ON_OPT_NEG(unset);
 
-	if (parse_expiry_date(arg, &cmd->expire_unreachable))
+	if (parse_expiry_date(arg, &opts->expire_unreachable))
 		die(_("invalid timestamp '%s' given to '--%s'"),
 		    arg, opt->long_name);
 
-	cmd->explicit_expiry |= EXPIRE_UNREACH;
+	opts->explicit_expiry |= EXPIRE_UNREACH;
 	return 0;
 }
 
@@ -223,15 +223,15 @@ static int expire_total_callback(const struct option *opt,
 				 const char *arg,
 				 int unset)
 {
-	struct cmd_reflog_expire_cb *cmd = opt->value;
+	struct reflog_expire_options *opts = opt->value;
 
 	BUG_ON_OPT_NEG(unset);
 
-	if (parse_expiry_date(arg, &cmd->expire_total))
+	if (parse_expiry_date(arg, &opts->expire_total))
 		die(_("invalid timestamp '%s' given to '--%s'"),
 		    arg, opt->long_name);
 
-	cmd->explicit_expiry |= EXPIRE_TOTAL;
+	opts->explicit_expiry |= EXPIRE_TOTAL;
 	return 0;
 }
 
@@ -276,7 +276,7 @@ static int cmd_reflog_list(int argc, const char **argv, const char *prefix,
 static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 			     struct repository *repo UNUSED)
 {
-	struct cmd_reflog_expire_cb cmd = { 0 };
+	struct reflog_expire_options opts = { 0 };
 	timestamp_t now = time(NULL);
 	int i, status, do_all, single_worktree = 0;
 	unsigned int flags = 0;
@@ -292,15 +292,15 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 			N_("update the reference to the value of the top reflog entry"),
 			EXPIRE_REFLOGS_UPDATE_REF),
 		OPT_BOOL(0, "verbose", &verbose, N_("print extra information on screen")),
-		OPT_CALLBACK_F(0, "expire", &cmd, N_("timestamp"),
+		OPT_CALLBACK_F(0, "expire", &opts, N_("timestamp"),
 			       N_("prune entries older than the specified time"),
 			       PARSE_OPT_NONEG,
 			       expire_total_callback),
-		OPT_CALLBACK_F(0, "expire-unreachable", &cmd, N_("timestamp"),
+		OPT_CALLBACK_F(0, "expire-unreachable", &opts, N_("timestamp"),
 			       N_("prune entries older than <time> that are not reachable from the current tip of the branch"),
 			       PARSE_OPT_NONEG,
 			       expire_unreachable_callback),
-		OPT_BOOL(0, "stale-fix", &cmd.stalefix,
+		OPT_BOOL(0, "stale-fix", &opts.stalefix,
 			 N_("prune any reflog entries that point to broken commits")),
 		OPT_BOOL(0, "all", &do_all, N_("process the reflogs of all references")),
 		OPT_BOOL(0, "single-worktree", &single_worktree,
@@ -315,9 +315,9 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 	save_commit_buffer = 0;
 	do_all = status = 0;
 
-	cmd.explicit_expiry = 0;
-	cmd.expire_total = default_reflog_expire;
-	cmd.expire_unreachable = default_reflog_expire_unreachable;
+	opts.explicit_expiry = 0;
+	opts.expire_total = default_reflog_expire;
+	opts.expire_unreachable = default_reflog_expire_unreachable;
 
 	argc = parse_options(argc, argv, prefix, options, reflog_expire_usage, 0);
 
@@ -329,7 +329,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 	 * even in older repository.  We cannot trust what's reachable
 	 * from reflog if the repository was pruned with older git.
 	 */
-	if (cmd.stalefix) {
+	if (opts.stalefix) {
 		struct rev_info revs;
 
 		repo_init_revisions(the_repository, &revs, prefix);
@@ -363,11 +363,11 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 
 		for_each_string_list_item(item, &collected.reflogs) {
 			struct expire_reflog_policy_cb cb = {
-				.cmd = cmd,
+				.opts = opts,
 				.dry_run = !!(flags & EXPIRE_REFLOGS_DRY_RUN),
 			};
 
-			set_reflog_expiry_param(&cb.cmd,  item->string);
+			set_reflog_expiry_param(&cb.opts,  item->string);
 			status |= refs_reflog_expire(get_main_ref_store(the_repository),
 						     item->string, flags,
 						     reflog_expiry_prepare,
@@ -380,13 +380,13 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 
 	for (i = 0; i < argc; i++) {
 		char *ref;
-		struct expire_reflog_policy_cb cb = { .cmd = cmd };
+		struct expire_reflog_policy_cb cb = { .opts = opts };
 
 		if (!repo_dwim_log(the_repository, argv[i], strlen(argv[i]), NULL, &ref)) {
 			status |= error(_("%s points nowhere!"), argv[i]);
 			continue;
 		}
-		set_reflog_expiry_param(&cb.cmd, ref);
+		set_reflog_expiry_param(&cb.opts, ref);
 		status |= refs_reflog_expire(get_main_ref_store(the_repository),
 					     ref, flags,
 					     reflog_expiry_prepare,
