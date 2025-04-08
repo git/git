@@ -66,5 +66,8 @@ AUTHORS
 Originally written by:
   Kay Sievers <kay.sievers@vrfy.org>
 
+Perl warning fix:
+  Raphaël Gertz <git@rapsys.eu>
+
 Any comment/question/concern to:
   Git mailing list <git@vger.kernel.org>
