@@ -770,8 +770,9 @@ int ref_update_has_null_new_value(struct ref_update *update);
  * If everything is OK, return 0; otherwise, write an error message to
  * err and return -1.
  */
-int ref_update_check_old_target(const char *referent, struct ref_update *update,
-				struct strbuf *err);
+enum ref_transaction_error ref_update_check_old_target(const char *referent,
+						       struct ref_update *update,
+						       struct strbuf *err);
 
 /*
  * Check if the ref must exist, this means that the old_oid or

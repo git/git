@@ -663,7 +663,7 @@ static void unlock_ref(struct ref_lock *lock)
  * broken, lock the reference anyway but clear old_oid.
  *
  * Return 0 on success. On failure, write an error message to err and
- * return TRANSACTION_NAME_CONFLICT or TRANSACTION_GENERIC_ERROR.
+ * return REF_TRANSACTION_ERROR_NAME_CONFLICT or REF_TRANSACTION_ERROR_GENERIC.
  *
  * Implementation note: This function is basically
  *
@@ -676,19 +676,20 @@ static void unlock_ref(struct ref_lock *lock)
  *   avoided, namely if we were successfully able to read the ref
  * - Generate informative error messages in the case of failure
  */
-static int lock_raw_ref(struct files_ref_store *refs,
-			const char *refname, int mustexist,
-			struct string_list *refnames_to_check,
-			const struct string_list *extras,
-			struct ref_lock **lock_p,
-			struct strbuf *referent,
-			unsigned int *type,
-			struct strbuf *err)
+static enum ref_transaction_error lock_raw_ref(struct files_ref_store *refs,
+					       const char *refname,
+					       int mustexist,
+					       struct string_list *refnames_to_check,
+					       const struct string_list *extras,
+					       struct ref_lock **lock_p,
+					       struct strbuf *referent,
+					       unsigned int *type,
+					       struct strbuf *err)
 {
+	enum ref_transaction_error ret = REF_TRANSACTION_ERROR_GENERIC;
 	struct ref_lock *lock;
 	struct strbuf ref_file = STRBUF_INIT;
 	int attempts_remaining = 3;
-	int ret = TRANSACTION_GENERIC_ERROR;
 	int failure_errno;
 
 	assert(err);
@@ -728,13 +729,14 @@ retry:
 				strbuf_reset(err);
 				strbuf_addf(err, "unable to resolve reference '%s'",
 					    refname);
+				ret = REF_TRANSACTION_ERROR_NONEXISTENT_REF;
 			} else {
 				/*
 				 * The error message set by
 				 * refs_verify_refname_available() is
 				 * OK.
 				 */
-				ret = TRANSACTION_NAME_CONFLICT;
+				ret = REF_TRANSACTION_ERROR_NAME_CONFLICT;
 			}
 		} else {
 			/*
@@ -788,6 +790,7 @@ retry:
 				/* Garden variety missing reference. */
 				strbuf_addf(err, "unable to resolve reference '%s'",
 					    refname);
+				ret = REF_TRANSACTION_ERROR_NONEXISTENT_REF;
 				goto error_return;
 			} else {
 				/*
@@ -820,6 +823,7 @@ retry:
 				/* Garden variety missing reference. */
 				strbuf_addf(err, "unable to resolve reference '%s'",
 					    refname);
+				ret = REF_TRANSACTION_ERROR_NONEXISTENT_REF;
 				goto error_return;
 			} else if (remove_dir_recursively(&ref_file,
 							  REMOVE_DIR_EMPTY_ONLY)) {
@@ -830,7 +834,7 @@ retry:
 					 * The error message set by
 					 * verify_refname_available() is OK.
 					 */
-					ret = TRANSACTION_NAME_CONFLICT;
+					ret = REF_TRANSACTION_ERROR_NAME_CONFLICT;
 					goto error_return;
 				} else {
 					/*
@@ -1517,10 +1521,11 @@ static int rename_tmp_log(struct files_ref_store *refs, const char *newrefname)
 	return ret;
 }
 
-static int write_ref_to_lockfile(struct files_ref_store *refs,
-				 struct ref_lock *lock,
-				 const struct object_id *oid,
-				 int skip_oid_verification, struct strbuf *err);
+static enum ref_transaction_error write_ref_to_lockfile(struct files_ref_store *refs,
+							struct ref_lock *lock,
+							const struct object_id *oid,
+							int skip_oid_verification,
+							struct strbuf *err);
 static int commit_ref_update(struct files_ref_store *refs,
 			     struct ref_lock *lock,
 			     const struct object_id *oid, const char *logmsg,
@@ -1926,10 +1931,11 @@ static int files_log_ref_write(struct files_ref_store *refs,
  * Write oid into the open lockfile, then close the lockfile. On
  * errors, rollback the lockfile, fill in *err and return -1.
  */
-static int write_ref_to_lockfile(struct files_ref_store *refs,
-				 struct ref_lock *lock,
-				 const struct object_id *oid,
-				 int skip_oid_verification, struct strbuf *err)
+static enum ref_transaction_error write_ref_to_lockfile(struct files_ref_store *refs,
+							struct ref_lock *lock,
+							const struct object_id *oid,
+							int skip_oid_verification,
+							struct strbuf *err)
 {
 	static char term = '\n';
 	struct object *o;
@@ -1943,7 +1949,7 @@ static int write_ref_to_lockfile(struct files_ref_store *refs,
 				"trying to write ref '%s' with nonexistent object %s",
 				lock->ref_name, oid_to_hex(oid));
 			unlock_ref(lock);
-			return -1;
+			return REF_TRANSACTION_ERROR_INVALID_NEW_VALUE;
 		}
 		if (o->type != OBJ_COMMIT && is_branch(lock->ref_name)) {
 			strbuf_addf(
@@ -1951,7 +1957,7 @@ static int write_ref_to_lockfile(struct files_ref_store *refs,
 				"trying to write non-commit object %s to branch '%s'",
 				oid_to_hex(oid), lock->ref_name);
 			unlock_ref(lock);
-			return -1;
+			return REF_TRANSACTION_ERROR_INVALID_NEW_VALUE;
 		}
 	}
 	fd = get_lock_file_fd(&lock->lk);
@@ -1962,7 +1968,7 @@ static int write_ref_to_lockfile(struct files_ref_store *refs,
 		strbuf_addf(err,
 			    "couldn't write '%s'", get_lock_file_path(&lock->lk));
 		unlock_ref(lock);
-		return -1;
+		return REF_TRANSACTION_ERROR_GENERIC;
 	}
 	return 0;
 }
@@ -2376,9 +2382,10 @@ static struct ref_iterator *files_reflog_iterator_begin(struct ref_store *ref_st
  * If update is a direct update of head_ref (the reference pointed to
  * by HEAD), then add an extra REF_LOG_ONLY update for HEAD.
  */
-static int split_head_update(struct ref_update *update,
-			     struct ref_transaction *transaction,
-			     const char *head_ref, struct strbuf *err)
+static enum ref_transaction_error split_head_update(struct ref_update *update,
+						    struct ref_transaction *transaction,
+						    const char *head_ref,
+						    struct strbuf *err)
 {
 	struct ref_update *new_update;
 
@@ -2402,7 +2409,7 @@ static int split_head_update(struct ref_update *update,
 			    "multiple updates for 'HEAD' (including one "
 			    "via its referent '%s') are not allowed",
 			    update->refname);
-		return TRANSACTION_NAME_CONFLICT;
+		return REF_TRANSACTION_ERROR_NAME_CONFLICT;
 	}
 
 	new_update = ref_transaction_add_update(
@@ -2430,10 +2437,10 @@ static int split_head_update(struct ref_update *update,
  * Note that the new update will itself be subject to splitting when
  * the iteration gets to it.
  */
-static int split_symref_update(struct ref_update *update,
-			       const char *referent,
-			       struct ref_transaction *transaction,
-			       struct strbuf *err)
+static enum ref_transaction_error split_symref_update(struct ref_update *update,
+						      const char *referent,
+						      struct ref_transaction *transaction,
+						      struct strbuf *err)
 {
 	struct ref_update *new_update;
 	unsigned int new_flags;
@@ -2450,7 +2457,7 @@ static int split_symref_update(struct ref_update *update,
 			    "multiple updates for '%s' (including one "
 			    "via symref '%s') are not allowed",
 			    referent, update->refname);
-		return TRANSACTION_NAME_CONFLICT;
+		return REF_TRANSACTION_ERROR_NAME_CONFLICT;
 	}
 
 	new_flags = update->flags;
@@ -2491,11 +2498,10 @@ static int split_symref_update(struct ref_update *update,
  * everything is OK, return 0; otherwise, write an error message to
  * err and return -1.
  */
-static int check_old_oid(struct ref_update *update, struct object_id *oid,
-			 struct strbuf *err)
+static enum ref_transaction_error check_old_oid(struct ref_update *update,
+						struct object_id *oid,
+						struct strbuf *err)
 {
-	int ret = TRANSACTION_GENERIC_ERROR;
-
 	if (!(update->flags & REF_HAVE_OLD) ||
 		   oideq(oid, &update->old_oid))
 		return 0;
@@ -2504,21 +2510,20 @@ static int check_old_oid(struct ref_update *update, struct object_id *oid,
 		strbuf_addf(err, "cannot lock ref '%s': "
 			    "reference already exists",
 			    ref_update_original_update_refname(update));
-		ret = TRANSACTION_CREATE_EXISTS;
-	}
-	else if (is_null_oid(oid))
+		return REF_TRANSACTION_ERROR_CREATE_EXISTS;
+	} else if (is_null_oid(oid)) {
 		strbuf_addf(err, "cannot lock ref '%s': "
 			    "reference is missing but expected %s",
 			    ref_update_original_update_refname(update),
 			    oid_to_hex(&update->old_oid));
-	else
-		strbuf_addf(err, "cannot lock ref '%s': "
-			    "is at %s but expected %s",
-			    ref_update_original_update_refname(update),
-			    oid_to_hex(oid),
-			    oid_to_hex(&update->old_oid));
+		return REF_TRANSACTION_ERROR_NONEXISTENT_REF;
+	}
 
-	return ret;
+	strbuf_addf(err, "cannot lock ref '%s': is at %s but expected %s",
+		    ref_update_original_update_refname(update), oid_to_hex(oid),
+		    oid_to_hex(&update->old_oid));
+
+	return REF_TRANSACTION_ERROR_INCORRECT_OLD_VALUE;
 }
 
 struct files_transaction_backend_data {
@@ -2540,17 +2545,17 @@ struct files_transaction_backend_data {
  * - If it is an update of head_ref, add a corresponding REF_LOG_ONLY
  *   update of HEAD.
  */
-static int lock_ref_for_update(struct files_ref_store *refs,
-			       struct ref_update *update,
-			       struct ref_transaction *transaction,
-			       const char *head_ref,
-			       struct string_list *refnames_to_check,
-			       struct strbuf *err)
+static enum ref_transaction_error lock_ref_for_update(struct files_ref_store *refs,
+						      struct ref_update *update,
+						      struct ref_transaction *transaction,
+						      const char *head_ref,
+						      struct string_list *refnames_to_check,
+						      struct strbuf *err)
 {
 	struct strbuf referent = STRBUF_INIT;
 	int mustexist = ref_update_expects_existing_old_ref(update);
 	struct files_transaction_backend_data *backend_data;
-	int ret = 0;
+	enum ref_transaction_error ret = 0;
 	struct ref_lock *lock;
 
 	files_assert_main_repository(refs, "lock_ref_for_update");
@@ -2602,22 +2607,17 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 					strbuf_addf(err, "cannot lock ref '%s': "
 						    "error reading reference",
 						    ref_update_original_update_refname(update));
-					ret = TRANSACTION_GENERIC_ERROR;
+					ret = REF_TRANSACTION_ERROR_GENERIC;
 					goto out;
 				}
 			}
 
-			if (update->old_target) {
-				if (ref_update_check_old_target(referent.buf, update, err)) {
-					ret = TRANSACTION_GENERIC_ERROR;
-					goto out;
-				}
-			} else {
+			if (update->old_target)
+				ret = ref_update_check_old_target(referent.buf, update, err);
+			else
 				ret = check_old_oid(update, &lock->old_oid, err);
-				if  (ret) {
-					goto out;
-				}
-			}
+			if (ret)
+				goto out;
 		} else {
 			/*
 			 * Create a new update for the reference this
@@ -2644,7 +2644,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 					   "but is a regular ref"),
 				    ref_update_original_update_refname(update),
 				    update->old_target);
-			ret = TRANSACTION_GENERIC_ERROR;
+			ret = REF_TRANSACTION_ERROR_EXPECTED_SYMREF;
 			goto out;
 		} else {
 			ret = check_old_oid(update, &lock->old_oid, err);
@@ -2668,14 +2668,14 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 
 	if (update->new_target && !(update->flags & REF_LOG_ONLY)) {
 		if (create_symref_lock(lock, update->new_target, err)) {
-			ret = TRANSACTION_GENERIC_ERROR;
+			ret = REF_TRANSACTION_ERROR_GENERIC;
 			goto out;
 		}
 
 		if (close_ref_gently(lock)) {
 			strbuf_addf(err, "couldn't close '%s.lock'",
 				    update->refname);
-			ret = TRANSACTION_GENERIC_ERROR;
+			ret = REF_TRANSACTION_ERROR_GENERIC;
 			goto out;
 		}
 
@@ -2693,25 +2693,27 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			 * The reference already has the desired
 			 * value, so we don't need to write it.
 			 */
-		} else if (write_ref_to_lockfile(
-				   refs, lock, &update->new_oid,
-				   update->flags & REF_SKIP_OID_VERIFICATION,
-				   err)) {
-			char *write_err = strbuf_detach(err, NULL);
-
-			/*
-			 * The lock was freed upon failure of
-			 * write_ref_to_lockfile():
-			 */
-			update->backend_data = NULL;
-			strbuf_addf(err,
-				    "cannot update ref '%s': %s",
-				    update->refname, write_err);
-			free(write_err);
-			ret = TRANSACTION_GENERIC_ERROR;
-			goto out;
 		} else {
-			update->flags |= REF_NEEDS_COMMIT;
+			ret = write_ref_to_lockfile(
+				refs, lock, &update->new_oid,
+				update->flags & REF_SKIP_OID_VERIFICATION,
+				err);
+			if (ret) {
+				char *write_err = strbuf_detach(err, NULL);
+
+				/*
+				 * The lock was freed upon failure of
+				 * write_ref_to_lockfile():
+				 */
+				update->backend_data = NULL;
+				strbuf_addf(err,
+					    "cannot update ref '%s': %s",
+					    update->refname, write_err);
+				free(write_err);
+				goto out;
+			} else {
+				update->flags |= REF_NEEDS_COMMIT;
+			}
 		}
 	}
 	if (!(update->flags & REF_NEEDS_COMMIT)) {
@@ -2723,7 +2725,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 		if (close_ref_gently(lock)) {
 			strbuf_addf(err, "couldn't close '%s.lock'",
 				    update->refname);
-			ret = TRANSACTION_GENERIC_ERROR;
+			ret = REF_TRANSACTION_ERROR_GENERIC;
 			goto out;
 		}
 	}
@@ -2865,7 +2867,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 						refs->packed_ref_store,
 						transaction->flags, err);
 				if (!packed_transaction) {
-					ret = TRANSACTION_GENERIC_ERROR;
+					ret = REF_TRANSACTION_ERROR_GENERIC;
 					goto cleanup;
 				}
 
@@ -2897,13 +2899,13 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 	 */
 	if (refs_verify_refnames_available(refs->packed_ref_store, &refnames_to_check,
 					   &transaction->refnames, NULL, 0, err)) {
-		ret = TRANSACTION_NAME_CONFLICT;
+		ret = REF_TRANSACTION_ERROR_NAME_CONFLICT;
 		goto cleanup;
 	}
 
 	if (packed_transaction) {
 		if (packed_refs_lock(refs->packed_ref_store, 0, err)) {
-			ret = TRANSACTION_GENERIC_ERROR;
+			ret = REF_TRANSACTION_ERROR_GENERIC;
 			goto cleanup;
 		}
 		backend_data->packed_refs_locked = 1;
@@ -2934,7 +2936,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 			 */
 			backend_data->packed_transaction = NULL;
 			if (ref_transaction_abort(packed_transaction, err)) {
-				ret = TRANSACTION_GENERIC_ERROR;
+				ret = REF_TRANSACTION_ERROR_GENERIC;
 				goto cleanup;
 			}
 		}
@@ -3035,7 +3037,7 @@ static int files_transaction_finish_initial(struct files_ref_store *refs,
 	packed_transaction = ref_store_transaction_begin(refs->packed_ref_store,
 							 transaction->flags, err);
 	if (!packed_transaction) {
-		ret = TRANSACTION_GENERIC_ERROR;
+		ret = REF_TRANSACTION_ERROR_GENERIC;
 		goto cleanup;
 	}
 
@@ -3058,7 +3060,7 @@ static int files_transaction_finish_initial(struct files_ref_store *refs,
 			if (!loose_transaction) {
 				loose_transaction = ref_store_transaction_begin(&refs->base, 0, err);
 				if (!loose_transaction) {
-					ret = TRANSACTION_GENERIC_ERROR;
+					ret = REF_TRANSACTION_ERROR_GENERIC;
 					goto cleanup;
 				}
 			}
@@ -3083,19 +3085,19 @@ static int files_transaction_finish_initial(struct files_ref_store *refs,
 	}
 
 	if (packed_refs_lock(refs->packed_ref_store, 0, err)) {
-		ret = TRANSACTION_GENERIC_ERROR;
+		ret = REF_TRANSACTION_ERROR_GENERIC;
 		goto cleanup;
 	}
 
 	if (refs_verify_refnames_available(&refs->base, &refnames_to_check,
 					   &affected_refnames, NULL, 1, err)) {
 		packed_refs_unlock(refs->packed_ref_store);
-		ret = TRANSACTION_NAME_CONFLICT;
+		ret = REF_TRANSACTION_ERROR_NAME_CONFLICT;
 		goto cleanup;
 	}
 
 	if (ref_transaction_commit(packed_transaction, err)) {
-		ret = TRANSACTION_GENERIC_ERROR;
+		ret = REF_TRANSACTION_ERROR_GENERIC;
 		goto cleanup;
 	}
 	packed_refs_unlock(refs->packed_ref_store);
@@ -3103,7 +3105,7 @@ static int files_transaction_finish_initial(struct files_ref_store *refs,
 	if (loose_transaction) {
 		if (ref_transaction_prepare(loose_transaction, err) ||
 		    ref_transaction_commit(loose_transaction, err)) {
-			ret = TRANSACTION_GENERIC_ERROR;
+			ret = REF_TRANSACTION_ERROR_GENERIC;
 			goto cleanup;
 		}
 	}
@@ -3152,7 +3154,7 @@ static int files_transaction_finish(struct ref_store *ref_store,
 		if (update->flags & REF_NEEDS_COMMIT ||
 		    update->flags & REF_LOG_ONLY) {
 			if (parse_and_write_reflog(refs, update, lock, err)) {
-				ret = TRANSACTION_GENERIC_ERROR;
+				ret = REF_TRANSACTION_ERROR_GENERIC;
 				goto cleanup;
 			}
 		}
@@ -3171,7 +3173,7 @@ static int files_transaction_finish(struct ref_store *ref_store,
 				strbuf_addf(err, "couldn't set '%s'", lock->ref_name);
 				unlock_ref(lock);
 				update->backend_data = NULL;
-				ret = TRANSACTION_GENERIC_ERROR;
+				ret = REF_TRANSACTION_ERROR_GENERIC;
 				goto cleanup;
 			}
 		}
@@ -3227,7 +3229,7 @@ static int files_transaction_finish(struct ref_store *ref_store,
 				strbuf_reset(&sb);
 				files_ref_path(refs, &sb, lock->ref_name);
 				if (unlink_or_msg(sb.buf, err)) {
-					ret = TRANSACTION_GENERIC_ERROR;
+					ret = REF_TRANSACTION_ERROR_GENERIC;
 					goto cleanup;
 				}
 			}

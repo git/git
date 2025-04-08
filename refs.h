@@ -16,6 +16,23 @@ struct worktree;
 enum ref_storage_format ref_storage_format_by_name(const char *name);
 const char *ref_storage_format_to_name(enum ref_storage_format ref_storage_format);
 
+enum ref_transaction_error {
+	/* Default error code */
+	REF_TRANSACTION_ERROR_GENERIC = -1,
+	/* Ref name conflict like A vs A/B */
+	REF_TRANSACTION_ERROR_NAME_CONFLICT = -2,
+	/* Ref to be created already exists */
+	REF_TRANSACTION_ERROR_CREATE_EXISTS = -3,
+	/* ref expected but doesn't exist */
+	REF_TRANSACTION_ERROR_NONEXISTENT_REF = -4,
+	/* Provided old_oid or old_target of reference doesn't match actual */
+	REF_TRANSACTION_ERROR_INCORRECT_OLD_VALUE = -5,
+	/* Provided new_oid or new_target is invalid */
+	REF_TRANSACTION_ERROR_INVALID_NEW_VALUE = -6,
+	/* Expected ref to be symref, but is a regular ref */
+	REF_TRANSACTION_ERROR_EXPECTED_SYMREF = -7,
+};
+
 /*
  * Resolve a reference, recursively following symbolic references.
  *
@@ -117,24 +134,24 @@ int refs_read_symbolic_ref(struct ref_store *ref_store, const char *refname,
  *
  * extras and skip must be sorted.
  */
-int refs_verify_refname_available(struct ref_store *refs,
-				  const char *refname,
-				  const struct string_list *extras,
-				  const struct string_list *skip,
-				  unsigned int initial_transaction,
-				  struct strbuf *err);
+enum ref_transaction_error refs_verify_refname_available(struct ref_store *refs,
+						 const char *refname,
+						 const struct string_list *extras,
+						 const struct string_list *skip,
+						 unsigned int initial_transaction,
+						 struct strbuf *err);
 
 /*
  * Same as `refs_verify_refname_available()`, but checking for a list of
  * refnames instead of only a single item. This is more efficient in the case
  * where one needs to check multiple refnames.
  */
-int refs_verify_refnames_available(struct ref_store *refs,
-				   const struct string_list *refnames,
-				   const struct string_list *extras,
-				   const struct string_list *skip,
-				   unsigned int initial_transaction,
-				   struct strbuf *err);
+enum ref_transaction_error refs_verify_refnames_available(struct ref_store *refs,
+					  const struct string_list *refnames,
+					  const struct string_list *extras,
+					  const struct string_list *skip,
+					  unsigned int initial_transaction,
+					  struct strbuf *err);
 
 int refs_ref_exists(struct ref_store *refs, const char *refname);
 
@@ -829,13 +846,6 @@ int ref_transaction_verify(struct ref_transaction *transaction,
 			   const char *old_target,
 			   unsigned int flags,
 			   struct strbuf *err);
-
-/* Naming conflict (for example, the ref names A and A/B conflict). */
-#define TRANSACTION_NAME_CONFLICT -1
-/* When only creation was requested, but the ref already exists. */
-#define TRANSACTION_CREATE_EXISTS -2
-/* All other errors. */
-#define TRANSACTION_GENERIC_ERROR -3
 
 /*
  * Perform the preparatory stages of committing `transaction`. Acquire
