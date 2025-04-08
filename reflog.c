@@ -2,13 +2,120 @@
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
+#include "config.h"
 #include "gettext.h"
 #include "object-store-ll.h"
+#include "parse-options.h"
 #include "reflog.h"
 #include "refs.h"
 #include "revision.h"
 #include "tree.h"
 #include "tree-walk.h"
+#include "wildmatch.h"
+
+static struct reflog_expire_entry_option *find_cfg_ent(struct reflog_expire_options *opts,
+						       const char *pattern, size_t len)
+{
+	struct reflog_expire_entry_option *ent;
+
+	if (!opts->entries_tail)
+		opts->entries_tail = &opts->entries;
+
+	for (ent = opts->entries; ent; ent = ent->next)
+		if (!xstrncmpz(ent->pattern, pattern, len))
+			return ent;
+
+	FLEX_ALLOC_MEM(ent, pattern, pattern, len);
+	*opts->entries_tail = ent;
+	opts->entries_tail = &(ent->next);
+	return ent;
+}
+
+int reflog_expire_config(const char *var, const char *value,
+			 const struct config_context *ctx, void *cb)
+{
+	struct reflog_expire_options *opts = cb;
+	const char *pattern, *key;
+	size_t pattern_len;
+	timestamp_t expire;
+	int slot;
+	struct reflog_expire_entry_option *ent;
+
+	if (parse_config_key(var, "gc", &pattern, &pattern_len, &key) < 0)
+		return git_default_config(var, value, ctx, cb);
+
+	if (!strcmp(key, "reflogexpire")) {
+		slot = REFLOG_EXPIRE_TOTAL;
+		if (git_config_expiry_date(&expire, var, value))
+			return -1;
+	} else if (!strcmp(key, "reflogexpireunreachable")) {
+		slot = REFLOG_EXPIRE_UNREACH;
+		if (git_config_expiry_date(&expire, var, value))
+			return -1;
+	} else
+		return git_default_config(var, value, ctx, cb);
+
+	if (!pattern) {
+		switch (slot) {
+		case REFLOG_EXPIRE_TOTAL:
+			opts->default_expire_total = expire;
+			break;
+		case REFLOG_EXPIRE_UNREACH:
+			opts->default_expire_unreachable = expire;
+			break;
+		}
+		return 0;
+	}
+
+	ent = find_cfg_ent(opts, pattern, pattern_len);
+	if (!ent)
+		return -1;
+	switch (slot) {
+	case REFLOG_EXPIRE_TOTAL:
+		ent->expire_total = expire;
+		break;
+	case REFLOG_EXPIRE_UNREACH:
+		ent->expire_unreachable = expire;
+		break;
+	}
+	return 0;
+}
+
+void reflog_expire_options_set_refname(struct reflog_expire_options *cb,
+				       const char *ref)
+{
+	struct reflog_expire_entry_option *ent;
+
+	if (cb->explicit_expiry == (REFLOG_EXPIRE_TOTAL|REFLOG_EXPIRE_UNREACH))
+		return; /* both given explicitly -- nothing to tweak */
+
+	for (ent = cb->entries; ent; ent = ent->next) {
+		if (!wildmatch(ent->pattern, ref, 0)) {
+			if (!(cb->explicit_expiry & REFLOG_EXPIRE_TOTAL))
+				cb->expire_total = ent->expire_total;
+			if (!(cb->explicit_expiry & REFLOG_EXPIRE_UNREACH))
+				cb->expire_unreachable = ent->expire_unreachable;
+			return;
+		}
+	}
+
+	/*
+	 * If unconfigured, make stash never expire
+	 */
+	if (!strcmp(ref, "refs/stash")) {
+		if (!(cb->explicit_expiry & REFLOG_EXPIRE_TOTAL))
+			cb->expire_total = 0;
+		if (!(cb->explicit_expiry & REFLOG_EXPIRE_UNREACH))
+			cb->expire_unreachable = 0;
+		return;
+	}
+
+	/* Nothing matched -- use the default value */
+	if (!(cb->explicit_expiry & REFLOG_EXPIRE_TOTAL))
+		cb->expire_total = cb->default_expire_total;
+	if (!(cb->explicit_expiry & REFLOG_EXPIRE_UNREACH))
+		cb->expire_unreachable = cb->default_expire_unreachable;
+}
 
 /* Remember to update object flag allocation in object.h */
 #define INCOMPLETE	(1u<<10)

@@ -2,6 +2,9 @@
 #define REFLOG_H
 #include "refs.h"
 
+#define REFLOG_EXPIRE_TOTAL   (1 << 0)
+#define REFLOG_EXPIRE_UNREACH (1 << 1)
+
 struct reflog_expire_entry_option {
 	struct reflog_expire_entry_option *next;
 	timestamp_t expire_total;
@@ -23,6 +26,20 @@ struct reflog_expire_options {
 	.default_expire_total = now - 30 * 24 * 3600, \
 	.default_expire_unreachable = now - 90 * 24 * 3600, \
 }
+
+/*
+ * Parse the reflog expire configuration. This should be used with
+ * `repo_config()`.
+ */
+int reflog_expire_config(const char *var, const char *value,
+			 const struct config_context *ctx, void *cb);
+
+/*
+ * Adapt the options so that they apply to the given refname. This applies any
+ * per-reference reflog expiry configuration that may exist to the options.
+ */
+void reflog_expire_options_set_refname(struct reflog_expire_options *cb,
+				       const char *refname);
 
 struct expire_reflog_policy_cb {
 	enum {
