@@ -980,9 +980,9 @@ static int packed_ref_iterator_advance(struct ref_iterator *ref_iterator)
 			continue;
 
 		while (prefix && *prefix) {
-			if (*refname < *prefix)
+			if ((unsigned char)*refname < (unsigned char)*prefix)
 				BUG("packed-refs backend yielded reference preceding its prefix");
-			else if (*refname > *prefix)
+			else if ((unsigned char)*refname > (unsigned char)*prefix)
 				return ITER_DONE;
 			prefix++;
 			refname++;
