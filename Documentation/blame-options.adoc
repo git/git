@@ -125,7 +125,8 @@ take effect.
 	another commit will be marked with a `?` in the blame output.  If the
 	`blame.markUnblamableLines` config option is set, then those lines touched
 	by an ignored commit that we could not attribute to another revision are
-	marked with a '*'.
+	marked with a '*'. In the porcelain modes, we print 'ignored' and
+	'unblamable' on a newline respectively.
 
 --ignore-revs-file <file>::
 	Ignore revisions listed in `file`, which must be in the same format as an
