@@ -15,6 +15,7 @@
 #include "blob.h"
 #include "quote.h"
 #include "parse-options.h"
+#include "read-cache.h"
 #include "setup.h"
 #include "strbuf.h"
 #include "write-or-die.h"

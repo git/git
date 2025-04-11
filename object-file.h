@@ -4,8 +4,6 @@
 #include "git-zlib.h"
 #include "object.h"
 
-struct index_state;
-
 /*
  * Set this to 0 to prevent oid_object_info_extended() from fetching missing
  * blobs. This has a difference only if extensions.partialClone is set.
@@ -13,15 +11,6 @@ struct index_state;
  * Its default value is 1.
  */
 extern int fetch_if_missing;
-
-enum {
-	INDEX_WRITE_OBJECT = (1 << 0),
-	INDEX_FORMAT_CHECK = (1 << 1),
-	INDEX_RENORMALIZE  = (1 << 2),
-};
-
-int index_fd(struct index_state *istate, struct object_id *oid, int fd, struct stat *st, enum object_type type, const char *path, unsigned flags);
-int index_path(struct index_state *istate, struct object_id *oid, const char *path, struct stat *st, unsigned flags);
 
 struct object_directory;
 

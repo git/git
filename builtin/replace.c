@@ -20,6 +20,7 @@
 #include "object-file.h"
 #include "object-name.h"
 #include "object-store-ll.h"
+#include "read-cache.h"
 #include "replace-object.h"
 #include "tag.h"
 #include "wildmatch.h"

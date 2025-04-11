@@ -11,6 +11,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
+#include "read-cache.h"
 #include "repository.h"
 #include "csum-file.h"
 #include "pack.h"
