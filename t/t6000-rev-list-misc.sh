@@ -182,6 +182,21 @@ test_expect_success 'rev-list --unpacked' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rev-list one-sided unrelated symmetric diff' '
+	test_tick &&
+	git commit --allow-empty -m xyz &&
+	git branch cmp &&
+	git rebase --force-rebase --root &&
+
+	git rev-list --left-only  HEAD...cmp >head &&
+	git rev-list --right-only HEAD...cmp >cmp  &&
+
+	sort head >head.sorted &&
+	sort cmp >cmp.sorted &&
+	comm -12 head.sorted cmp.sorted >actual &&
+	test_line_count = 0 actual
+'
+
 test_expect_success 'rev-list -z' '
 	test_when_finished rm -rf repo &&
 
