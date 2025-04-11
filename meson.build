@@ -667,6 +667,34 @@ builtin_sources = [
   'builtin/write-tree.c',
 ]
 
+third_party_sources = [
+  ':!contrib',
+  ':!compat/inet_ntop.c',
+  ':!compat/inet_pton.c',
+  ':!compat/nedmalloc',
+  ':!compat/obstack.*',
+  ':!compat/poll',
+  ':!compat/regex',
+  ':!sha1collisiondetection',
+  ':!sha1dc',
+  ':!t/unit-tests/clar',
+  ':!t/unit-tests/clar',
+  ':!t/t[0-9][0-9][0-9][0-9]*',
+]
+
+headers = []
+if git.found()
+  foreach header : run_command(git, '-C', meson.project_source_root(), 'ls-files', '--deduplicate', '*.h', third_party_sources, check: true).stdout().split()
+    headers += header
+  endforeach
+endif
+
+headers_generated = [
+  'command-list.h',
+  'config-list.h',
+  'hook-list.h'
+]
+
 if not get_option('breaking_changes')
   builtin_sources += 'builtin/pack-redundant.c'
 endif
@@ -2012,6 +2040,107 @@ if get_option('docs') != []
 endif
 
 subdir('contrib')
+
+headers_check_exclude = headers_generated
+headers_check_exclude += [
+  'compat/apple-common-crypto.h',
+  'compat/bswap.h',
+  'compat/compiler.h',
+  'compat/disk.h',
+  'compat/fsmonitor/fsm-darwin-gcc.h',
+  'compat/fsmonitor/fsm-health.h',
+  'compat/fsmonitor/fsm-listen.h',
+  'compat/mingw.h',
+  'compat/msvc.h',
+  'compat/nedmalloc/malloc.c.h',
+  'compat/nedmalloc/nedmalloc.h',
+  'compat/nonblock.h',
+  'compat/obstack.h',
+  'compat/poll/poll.h',
+  'compat/precompose_utf8.h',
+  'compat/regex/regex.h',
+  'compat/regex/regex_internal.h',
+  'compat/sha1-chunked.h',
+  'compat/terminal.h',
+  'compat/vcbuild/include/sys/param.h',
+  'compat/vcbuild/include/sys/time.h',
+  'compat/vcbuild/include/sys/utime.h',
+  'compat/vcbuild/include/unistd.h',
+  'compat/vcbuild/include/utime.h',
+  'compat/win32.h',
+  'compat/win32/alloca.h',
+  'compat/win32/dirent.h',
+  'compat/win32/lazyload.h',
+  'compat/win32/path-utils.h',
+  'compat/win32/pthread.h',
+  'compat/win32/syslog.h',
+  'compat/zlib-compat.h',
+  't/unit-tests/clar/clar.h',
+  't/unit-tests/clar/clar/fixtures.h',
+  't/unit-tests/clar/clar/fs.h',
+  't/unit-tests/clar/clar/print.h',
+  't/unit-tests/clar/clar/sandbox.h',
+  't/unit-tests/clar/clar/summary.h',
+  't/unit-tests/clar/test/clar_test.h',
+  'unicode-width.h',
+  'xdiff/xdiff.h',
+  'xdiff/xdiffi.h',
+  'xdiff/xemit.h',
+  'xdiff/xinclude.h',
+  'xdiff/xmacros.h',
+  'xdiff/xprepare.h',
+  'xdiff/xtypes.h',
+  'xdiff/xutils.h',
+]
+
+if sha1_backend != 'openssl'
+  headers_check_exclude += 'sha1/openssl.h'
+endif
+if sha256_backend != 'openssl'
+  headers_check_exclude += 'sha256/openssl.h'
+endif
+if sha256_backend != 'nettle'
+  headers_check_exclude += 'sha256/nettle.h'
+endif
+if sha256_backend != 'gcrpyt'
+  headers_check_exclude += 'sha256/gcrypt.h'
+endif
+
+if headers.length() != 0 and compiler.get_argument_syntax() == 'gcc'
+  hco_targets = []
+  foreach h : headers
+    if headers_check_exclude.contains(h)
+      continue
+    endif
+
+    hcc = custom_target(
+      input: h,
+      output: h.underscorify() + 'cc',
+      command: [
+        shell,
+        '-c',
+        'echo \'#include "git-compat-util.h"\' > @OUTPUT@ && echo -n \'#include "' + h + '"\' >> @OUTPUT@'
+      ]
+    )
+
+    hco = custom_target(
+      input: hcc,
+      output: h.underscorify().replace('.h', '.hco'),
+      command: [
+        compiler.cmd_array(),
+        libgit_c_args,
+        '-I', meson.project_source_root(),
+        '-I', meson.project_source_root() / 't/unit-tests',
+        '-o', '/dev/null',
+        '-c', '-xc',
+        '@INPUT@'
+      ]
+    )
+    hco_targets += hco
+  endforeach
+
+  alias_target('headers-check', hco_targets)
+endif
 
 foreach key, value : {
   'DIFF': diff.full_path(),
