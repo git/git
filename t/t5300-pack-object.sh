@@ -9,9 +9,9 @@ test_description='git pack-object'
 
 test_expect_success 'setup' '
 	rm -f .git/index* &&
-	perl -e "print \"a\" x 4096;" >a &&
-	perl -e "print \"b\" x 4096;" >b &&
-	perl -e "print \"c\" x 4096;" >c &&
+	test-tool genzeros 4096 | tr "\000" "a" >a &&
+	test-tool genzeros 4096 | tr "\000" "b" >b &&
+	test-tool genzeros 4096 | tr "\000" "c" >c &&
 	test-tool genrandom "seed a" 2097152 >a_big &&
 	test-tool genrandom "seed b" 2097152 >b_big &&
 	git update-index --add a a_big b b_big c &&
@@ -140,7 +140,7 @@ test_expect_success 'pack-object <stdin parsing: --stdin-packs handles garbage' 
 # usage: check_deltas <stderr_from_pack_objects> <cmp_op> <nr_deltas>
 # e.g.: check_deltas stderr -gt 0
 check_deltas() {
-	deltas=$(perl -lne '/delta (\d+)/ and print $1' "$1") &&
+	deltas=$(sed -n 's/Total [0-9][0-9]* (delta \([0-9][0-9]*\)).*/\1/p' "$1") &&
 	shift &&
 	if ! test "$deltas" "$@"
 	then
@@ -215,7 +215,7 @@ test_expect_success 'unpack with OFS_DELTA (core.fsyncmethod=batch)' '
 	check_unpack test-3-${packname_3} obj-list "$BATCH_CONFIGURATION"
 '
 
-test_expect_success 'compare delta flavors' '
+test_expect_success PERL_TEST_HELPERS 'compare delta flavors' '
 	perl -e '\''
 		defined($_ = -s $_) or die for @ARGV;
 		exit 1 if $ARGV[0] <= $ARGV[1];

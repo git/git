@@ -448,7 +448,7 @@ cat >>expect.no-threading <<EOF
 ---
 EOF
 
-test_expect_success 'no threading' '
+test_expect_success PERL_TEST_HELPERS 'no threading' '
 	git checkout side &&
 	check_threading expect.no-threading main
 '
@@ -466,11 +466,11 @@ In-Reply-To: <0>
 References: <0>
 EOF
 
-test_expect_success 'thread' '
+test_expect_success PERL_TEST_HELPERS 'thread' '
 	check_threading expect.thread --thread main
 '
 
-test_expect_success '--thread overrides format.thread=deep' '
+test_expect_success PERL_TEST_HELPERS '--thread overrides format.thread=deep' '
 	test_config format.thread deep &&
 	check_threading expect.thread --thread main
 '
@@ -490,7 +490,7 @@ In-Reply-To: <1>
 References: <1>
 EOF
 
-test_expect_success 'thread in-reply-to' '
+test_expect_success PERL_TEST_HELPERS 'thread in-reply-to' '
 	check_threading expect.in-reply-to --in-reply-to="<test.message>" \
 		--thread main
 '
@@ -512,7 +512,7 @@ In-Reply-To: <0>
 References: <0>
 EOF
 
-test_expect_success 'thread cover-letter' '
+test_expect_success PERL_TEST_HELPERS 'thread cover-letter' '
 	check_threading expect.cover-letter --cover-letter --thread main
 '
 
@@ -538,12 +538,12 @@ References: <1>
 	<0>
 EOF
 
-test_expect_success 'thread cover-letter in-reply-to' '
+test_expect_success PERL_TEST_HELPERS 'thread cover-letter in-reply-to' '
 	check_threading expect.cl-irt --cover-letter \
 		--in-reply-to="<test.message>" --thread main
 '
 
-test_expect_success 'thread explicit shallow' '
+test_expect_success PERL_TEST_HELPERS 'thread explicit shallow' '
 	check_threading expect.cl-irt --cover-letter \
 		--in-reply-to="<test.message>" --thread=shallow main
 '
@@ -562,7 +562,7 @@ References: <0>
 	<1>
 EOF
 
-test_expect_success 'thread deep' '
+test_expect_success PERL_TEST_HELPERS 'thread deep' '
 	check_threading expect.deep --thread=deep main
 '
 
@@ -584,7 +584,7 @@ References: <1>
 	<2>
 EOF
 
-test_expect_success 'thread deep in-reply-to' '
+test_expect_success PERL_TEST_HELPERS 'thread deep in-reply-to' '
 	check_threading expect.deep-irt  --thread=deep \
 		--in-reply-to="<test.message>" main
 '
@@ -609,7 +609,7 @@ References: <0>
 	<2>
 EOF
 
-test_expect_success 'thread deep cover-letter' '
+test_expect_success PERL_TEST_HELPERS 'thread deep cover-letter' '
 	check_threading expect.deep-cl --cover-letter --thread=deep main
 '
 
@@ -638,27 +638,27 @@ References: <1>
 	<3>
 EOF
 
-test_expect_success 'thread deep cover-letter in-reply-to' '
+test_expect_success PERL_TEST_HELPERS 'thread deep cover-letter in-reply-to' '
 	check_threading expect.deep-cl-irt --cover-letter \
 		--in-reply-to="<test.message>" --thread=deep main
 '
 
-test_expect_success 'thread via config' '
+test_expect_success PERL_TEST_HELPERS 'thread via config' '
 	test_config format.thread true &&
 	check_threading expect.thread main
 '
 
-test_expect_success 'thread deep via config' '
+test_expect_success PERL_TEST_HELPERS 'thread deep via config' '
 	test_config format.thread deep &&
 	check_threading expect.deep main
 '
 
-test_expect_success 'thread config + override' '
+test_expect_success PERL_TEST_HELPERS 'thread config + override' '
 	test_config format.thread deep &&
 	check_threading expect.thread --thread main
 '
 
-test_expect_success 'thread config + --no-thread' '
+test_expect_success PERL_TEST_HELPERS 'thread config + --no-thread' '
 	test_config format.thread deep &&
 	check_threading expect.no-threading --no-thread main
 '

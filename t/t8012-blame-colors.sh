@@ -7,6 +7,12 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping blame colors tests; Perl not available'
+	test_done
+fi
+
 PROG='git blame -c'
 . "$TEST_DIRECTORY"/annotate-tests.sh
 

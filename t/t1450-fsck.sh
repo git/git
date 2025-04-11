@@ -346,7 +346,7 @@ test_expect_success 'unparseable tree object' '
 	test_grep ! "fatal: empty filename in tree entry" out
 '
 
-test_expect_success 'tree entry with type mismatch' '
+test_expect_success PERL_TEST_HELPERS 'tree entry with type mismatch' '
 	test_when_finished "remove_object \$blob" &&
 	test_when_finished "remove_object \$tree" &&
 	test_when_finished "remove_object \$commit" &&
@@ -364,7 +364,7 @@ test_expect_success 'tree entry with type mismatch' '
 	test_grep ! "dangling blob" out
 '
 
-test_expect_success 'tree entry with bogus mode' '
+test_expect_success PERL_TEST_HELPERS 'tree entry with bogus mode' '
 	test_when_finished "remove_object \$blob" &&
 	test_when_finished "remove_object \$tree" &&
 	blob=$(echo blob | git hash-object -w --stdin) &&
@@ -984,7 +984,7 @@ corrupt_index_checksum () {
 
 # Corrupt the checksum on the index and then
 # verify that only fsck notices.
-test_expect_success 'detect corrupt index file in fsck' '
+test_expect_success PERL_TEST_HELPERS 'detect corrupt index file in fsck' '
 	cp .git/index .git/index.backup &&
 	test_when_finished "mv .git/index.backup .git/index" &&
 	corrupt_index_checksum &&

@@ -4,6 +4,12 @@ test_description='git rev-list should handle unexpected object types'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping rev-list unexpected objects tests; Perl not available'
+	test_done
+fi
+
 test_expect_success 'setup well-formed objects' '
 	blob="$(printf "foo" | git hash-object -w --stdin)" &&
 	tree="$(printf "100644 blob $blob\tfoo" | git mktree)" &&

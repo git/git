@@ -738,20 +738,20 @@ check_corrupt_graph () {
 	test_cmp expect.out out
 }
 
-test_expect_success 'Bloom reader notices too-small data chunk' '
+test_expect_success PERL_TEST_HELPERS 'Bloom reader notices too-small data chunk' '
 	check_corrupt_graph BDAT clear 00000000 &&
 	echo "warning: ignoring too-small changed-path chunk" \
 		"(4 < 12) in commit-graph file" >expect.err &&
 	test_cmp expect.err err
 '
 
-test_expect_success 'Bloom reader notices out-of-bounds filter offsets' '
+test_expect_success PERL_TEST_HELPERS 'Bloom reader notices out-of-bounds filter offsets' '
 	check_corrupt_graph BIDX 12 FFFFFFFF &&
 	# use grep to avoid depending on exact chunk size
 	grep "warning: ignoring out-of-range offset (4294967295) for changed-path filter at pos 3 of .git/objects/info/commit-graph" err
 '
 
-test_expect_success 'Bloom reader notices too-small index chunk' '
+test_expect_success PERL_TEST_HELPERS 'Bloom reader notices too-small index chunk' '
 	# replace the index with a single entry, making most
 	# lookups out-of-bounds
 	check_corrupt_graph BIDX clear 00000000 &&
@@ -760,7 +760,7 @@ test_expect_success 'Bloom reader notices too-small index chunk' '
 	test_cmp expect.err err
 '
 
-test_expect_success 'Bloom reader notices out-of-order index offsets' '
+test_expect_success PERL_TEST_HELPERS 'Bloom reader notices out-of-order index offsets' '
 	# we do not know any real offsets, but we can pick
 	# something plausible; we should not get to the point of
 	# actually reading from the bogus offsets anyway.
