@@ -745,6 +745,21 @@ struct bitmap_index *prepare_midx_bitmap_git(struct multi_pack_index *midx)
 	return NULL;
 }
 
+int bitmap_index_contains_pack(struct bitmap_index *bitmap, struct packed_git *pack)
+{
+	for (; bitmap; bitmap = bitmap->base) {
+		if (bitmap_is_midx(bitmap)) {
+			for (size_t i = 0; i < bitmap->midx->num_packs; i++)
+				if (bitmap->midx->packs[i] == pack)
+					return 1;
+		} else if (bitmap->pack == pack) {
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
 struct include_data {
 	struct bitmap_index *bitmap_git;
 	struct bitmap *base;
@@ -1625,7 +1640,7 @@ static void show_extended_objects(struct bitmap_index *bitmap_git,
 		    (obj->type == OBJ_TAG && !revs->tag_objects))
 			continue;
 
-		show_reach(&obj->oid, obj->type, 0, eindex->hashes[i], NULL, 0);
+		show_reach(&obj->oid, obj->type, 0, eindex->hashes[i], NULL, 0, NULL);
 	}
 }
 
@@ -1662,16 +1677,16 @@ static void init_type_iterator(struct ewah_or_iterator *it,
 
 static void show_objects_for_type(
 	struct bitmap_index *bitmap_git,
+	struct bitmap *objects,
 	enum object_type object_type,
-	show_reachable_fn show_reach)
+	show_reachable_fn show_reach,
+	void *payload)
 {
 	size_t i = 0;
 	uint32_t offset;
 
 	struct ewah_or_iterator it;
 	eword_t filter;
-
-	struct bitmap *objects = bitmap_git->result;
 
 	init_type_iterator(&it, bitmap_git, object_type);
 
@@ -1715,7 +1730,7 @@ static void show_objects_for_type(
 			if (bitmap_git->hashes)
 				hash = get_be32(bitmap_git->hashes + index_pos);
 
-			show_reach(&oid, object_type, 0, hash, pack, ofs);
+			show_reach(&oid, object_type, 0, hash, pack, ofs, payload);
 		}
 	}
 
@@ -2022,6 +2037,50 @@ static void filter_packed_objects_from_bitmap(struct bitmap_index *bitmap_git,
 				    &eindex->objects[i]->oid))
 			bitmap_unset(result, objects_nr + i);
 	}
+}
+
+int for_each_bitmapped_object(struct bitmap_index *bitmap_git,
+			      struct list_objects_filter_options *filter,
+			      show_reachable_fn show_reach,
+			      void *payload)
+{
+	struct bitmap *filtered_bitmap = NULL;
+	uint32_t objects_nr;
+	size_t full_word_count;
+	int ret;
+
+	if (!can_filter_bitmap(filter)) {
+		ret = -1;
+		goto out;
+	}
+
+	objects_nr = bitmap_num_objects(bitmap_git);
+	full_word_count = objects_nr / BITS_IN_EWORD;
+
+	/* We start from the all-1 bitmap and then filter down from there. */
+	filtered_bitmap = bitmap_word_alloc(full_word_count + !!(objects_nr % BITS_IN_EWORD));
+	memset(filtered_bitmap->words, 0xff, full_word_count * sizeof(*filtered_bitmap->words));
+	for (size_t i = full_word_count * BITS_IN_EWORD; i < objects_nr; i++)
+		bitmap_set(filtered_bitmap, i);
+
+	if (filter_bitmap(bitmap_git, NULL, filtered_bitmap, filter) < 0) {
+		ret = -1;
+		goto out;
+	}
+
+	show_objects_for_type(bitmap_git, filtered_bitmap,
+			      OBJ_COMMIT, show_reach, payload);
+	show_objects_for_type(bitmap_git, filtered_bitmap,
+			      OBJ_TREE, show_reach, payload);
+	show_objects_for_type(bitmap_git, filtered_bitmap,
+			      OBJ_BLOB, show_reach, payload);
+	show_objects_for_type(bitmap_git, filtered_bitmap,
+			      OBJ_TAG, show_reach, payload);
+
+	ret = 0;
+out:
+	bitmap_free(filtered_bitmap);
+	return ret;
 }
 
 struct bitmap_index *prepare_bitmap_walk(struct rev_info *revs,
@@ -2518,13 +2577,17 @@ void traverse_bitmap_commit_list(struct bitmap_index *bitmap_git,
 {
 	assert(bitmap_git->result);
 
-	show_objects_for_type(bitmap_git, OBJ_COMMIT, show_reachable);
+	show_objects_for_type(bitmap_git, bitmap_git->result,
+			      OBJ_COMMIT, show_reachable, NULL);
 	if (revs->tree_objects)
-		show_objects_for_type(bitmap_git, OBJ_TREE, show_reachable);
+		show_objects_for_type(bitmap_git, bitmap_git->result,
+				      OBJ_TREE, show_reachable, NULL);
 	if (revs->blob_objects)
-		show_objects_for_type(bitmap_git, OBJ_BLOB, show_reachable);
+		show_objects_for_type(bitmap_git, bitmap_git->result,
+				      OBJ_BLOB, show_reachable, NULL);
 	if (revs->tag_objects)
-		show_objects_for_type(bitmap_git, OBJ_TAG, show_reachable);
+		show_objects_for_type(bitmap_git, bitmap_git->result,
+				      OBJ_TAG, show_reachable, NULL);
 
 	show_extended_objects(bitmap_git, revs, show_reachable);
 }

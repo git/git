@@ -1820,7 +1820,8 @@ static int add_object_entry(const struct object_id *oid, enum object_type type,
 static int add_object_entry_from_bitmap(const struct object_id *oid,
 					enum object_type type,
 					int flags UNUSED, uint32_t name_hash,
-					struct packed_git *pack, off_t offset)
+					struct packed_git *pack, off_t offset,
+					void *payload UNUSED)
 {
 	display_progress(progress_state, ++nr_seen);
 
