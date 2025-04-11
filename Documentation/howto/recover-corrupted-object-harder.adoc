@@ -125,7 +125,7 @@ static int try_zlib(unsigned char *buf, int len)
 {
 	/* make this absurdly large so we don't have to loop */
 	static unsigned char out[1024*1024];
-	z_stream z;
+	struct z_stream_s z;
 	int ret;
 
 	memset(&z, 0, sizeof(z));
@@ -278,7 +278,7 @@ int main(int argc, char **argv)
 	static unsigned char buf[25 * 1024 * 1024];
 	static unsigned char out[25 * 1024 * 1024];
 	int len;
-	z_stream z;
+	struct z_stream_s z;
 	int ret;
 
 	len = read(0, buf, sizeof(buf));

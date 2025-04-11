@@ -1,10 +1,10 @@
 /*
-Copyright 2020 Google LLC
-
-Use of this source code is governed by a BSD-style
-license that can be found in the LICENSE file or at
-https://developers.google.com/open-source/licenses/bsd
-*/
+ * Copyright 2020 Google LLC
+ *
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file or at
+ * https://developers.google.com/open-source/licenses/bsd
+ */
 
 #ifndef BASICS_H
 #define BASICS_H
@@ -17,13 +17,6 @@ https://developers.google.com/open-source/licenses/bsd
 #include "reftable-basics.h"
 
 #define REFTABLE_UNUSED __attribute__((__unused__))
-
-struct reftable_buf {
-	size_t alloc;
-	size_t len;
-	char *buf;
-};
-#define REFTABLE_BUF_INIT { 0 }
 
 /*
  * Initialize the buffer such that it is ready for use. This is equivalent to
