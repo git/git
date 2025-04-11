@@ -3,6 +3,7 @@
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "config.h"
+#include "dir.h"
 #include "hex.h"
 #include "lockfile.h"
 #include "packfile.h"

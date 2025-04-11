@@ -9,7 +9,7 @@
 #include "hex.h"
 #include "repository.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "utf8.h"
 #include "diff.h"
 #include "revision.h"
@@ -29,6 +29,7 @@
 #include "tree.h"
 #include "hook.h"
 #include "parse.h"
+#include "object-file.h"
 #include "object-file-convert.h"
 
 static struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);

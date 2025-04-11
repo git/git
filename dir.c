@@ -17,8 +17,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "name-hash.h"
-#include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "path.h"
 #include "refs.h"
 #include "repository.h"
@@ -4131,4 +4130,110 @@ int path_match_flags(const char *const str, const enum path_match_flags flags)
 	else if (flags & PATH_MATCH_XPLATFORM)
 		return is_xplatform_dir_sep(*p);
 	BUG("unreachable");
+}
+
+int mkdir_in_gitdir(const char *path)
+{
+	if (mkdir(path, 0777)) {
+		int saved_errno = errno;
+		struct stat st;
+		struct strbuf sb = STRBUF_INIT;
+
+		if (errno != EEXIST)
+			return -1;
+		/*
+		 * Are we looking at a path in a symlinked worktree
+		 * whose original repository does not yet have it?
+		 * e.g. .git/rr-cache pointing at its original
+		 * repository in which the user hasn't performed any
+		 * conflict resolution yet?
+		 */
+		if (lstat(path, &st) || !S_ISLNK(st.st_mode) ||
+		    strbuf_readlink(&sb, path, st.st_size) ||
+		    !is_absolute_path(sb.buf) ||
+		    mkdir(sb.buf, 0777)) {
+			strbuf_release(&sb);
+			errno = saved_errno;
+			return -1;
+		}
+		strbuf_release(&sb);
+	}
+	return adjust_shared_perm(the_repository, path);
+}
+
+static enum scld_error safe_create_leading_directories_1(char *path, int share)
+{
+	char *next_component = path + offset_1st_component(path);
+	enum scld_error ret = SCLD_OK;
+
+	while (ret == SCLD_OK && next_component) {
+		struct stat st;
+		char *slash = next_component, slash_character;
+
+		while (*slash && !is_dir_sep(*slash))
+			slash++;
+
+		if (!*slash)
+			break;
+
+		next_component = slash + 1;
+		while (is_dir_sep(*next_component))
+			next_component++;
+		if (!*next_component)
+			break;
+
+		slash_character = *slash;
+		*slash = '\0';
+		if (!stat(path, &st)) {
+			/* path exists */
+			if (!S_ISDIR(st.st_mode)) {
+				errno = ENOTDIR;
+				ret = SCLD_EXISTS;
+			}
+		} else if (mkdir(path, 0777)) {
+			if (errno == EEXIST &&
+			    !stat(path, &st) && S_ISDIR(st.st_mode))
+				; /* somebody created it since we checked */
+			else if (errno == ENOENT)
+				/*
+				 * Either mkdir() failed because
+				 * somebody just pruned the containing
+				 * directory, or stat() failed because
+				 * the file that was in our way was
+				 * just removed.  Either way, inform
+				 * the caller that it might be worth
+				 * trying again:
+				 */
+				ret = SCLD_VANISHED;
+			else
+				ret = SCLD_FAILED;
+		} else if (share && adjust_shared_perm(the_repository, path)) {
+			ret = SCLD_PERMS;
+		}
+		*slash = slash_character;
+	}
+	return ret;
+}
+
+enum scld_error safe_create_leading_directories(char *path)
+{
+	return safe_create_leading_directories_1(path, 1);
+}
+
+enum scld_error safe_create_leading_directories_no_share(char *path)
+{
+	return safe_create_leading_directories_1(path, 0);
+}
+
+enum scld_error safe_create_leading_directories_const(const char *path)
+{
+	int save_errno;
+	/* path points to cache entries, so xstrdup before messing with it */
+	char *buf = xstrdup(path);
+	enum scld_error result = safe_create_leading_directories(buf);
+
+	save_errno = errno;
+	free(buf);
+	errno = save_errno;
+	return result;
 }

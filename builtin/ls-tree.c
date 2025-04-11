@@ -10,7 +10,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "tree.h"
 #include "path.h"
 #include "quote.h"

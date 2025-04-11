@@ -1,5 +1,6 @@
 #define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
+#include "dir.h"
 #include "gettext.h"
 #include "hex.h"
 #include "config.h"
@@ -17,7 +18,7 @@
 #include "packfile.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "path.h"
 #include "read-cache-ll.h"
 #include "replace-object.h"

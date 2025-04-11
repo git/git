@@ -10,9 +10,11 @@
 #include "git-compat-util.h"
 #include "bulk-checkin.h"
 #include "config.h"
+#include "convert.h"
 #include "date.h"
 #include "diff.h"
 #include "diffcore.h"
+#include "fsck.h"
 #include "hex.h"
 #include "tempfile.h"
 #include "lockfile.h"
@@ -20,7 +22,7 @@
 #include "refs.h"
 #include "dir.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "oid-array.h"
 #include "tree.h"
 #include "commit.h"
@@ -706,11 +708,11 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	int intent_only = flags & ADD_CACHE_INTENT;
 	int add_option = (ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE|
 			  (intent_only ? ADD_CACHE_NEW_ONLY : 0));
-	unsigned hash_flags = pretend ? 0 : HASH_WRITE_OBJECT;
+	unsigned hash_flags = pretend ? 0 : INDEX_WRITE_OBJECT;
 	struct object_id oid;
 
 	if (flags & ADD_CACHE_RENORMALIZE)
-		hash_flags |= HASH_RENORMALIZE;
+		hash_flags |= INDEX_RENORMALIZE;
 
 	if (!S_ISREG(st_mode) && !S_ISLNK(st_mode) && !S_ISDIR(st_mode))
 		return error(_("%s: can only add regular files, symbolic links or git-directories"), path);
@@ -4006,4 +4008,226 @@ int add_files_to_cache(struct repository *repo, const char *prefix,
 
 	release_revisions(&rev);
 	return !!data.add_errors;
+}
+
+static int get_conv_flags(unsigned flags)
+{
+	if (flags & INDEX_RENORMALIZE)
+		return CONV_EOL_RENORMALIZE;
+	else if (flags & INDEX_WRITE_OBJECT)
+		return global_conv_flags_eol | CONV_WRITE_OBJECT;
+	else
+		return 0;
+}
+
+/*
+ * We can't use the normal fsck_error_function() for index_mem(),
+ * because we don't yet have a valid oid for it to report. Instead,
+ * report the minimal fsck error here, and rely on the caller to
+ * give more context.
+ */
+static int hash_format_check_report(struct fsck_options *opts UNUSED,
+				    void *fsck_report UNUSED,
+				    enum fsck_msg_type msg_type UNUSED,
+				    enum fsck_msg_id msg_id UNUSED,
+				    const char *message)
+{
+	error(_("object fails fsck: %s"), message);
+	return 1;
+}
+
+static int index_mem(struct index_state *istate,
+		     struct object_id *oid,
+		     const void *buf, size_t size,
+		     enum object_type type,
+		     const char *path, unsigned flags)
+{
+	struct strbuf nbuf = STRBUF_INIT;
+	int ret = 0;
+	int write_object = flags & INDEX_WRITE_OBJECT;
+
+	if (!type)
+		type = OBJ_BLOB;
+
+	/*
+	 * Convert blobs to git internal format
+	 */
+	if ((type == OBJ_BLOB) && path) {
+		if (convert_to_git(istate, path, buf, size, &nbuf,
+				   get_conv_flags(flags))) {
+			buf = nbuf.buf;
+			size = nbuf.len;
+		}
+	}
+	if (flags & INDEX_FORMAT_CHECK) {
+		struct fsck_options opts = FSCK_OPTIONS_DEFAULT;
+
+		opts.strict = 1;
+		opts.error_func = hash_format_check_report;
+		if (fsck_buffer(null_oid(the_hash_algo), type, buf, size, &opts))
+			die(_("refusing to create malformed object"));
+		fsck_finish(&opts);
+	}
+
+	if (write_object)
+		ret = write_object_file(buf, size, type, oid);
+	else
+		hash_object_file(the_hash_algo, buf, size, type, oid);
+
+	strbuf_release(&nbuf);
+	return ret;
+}
+
+static int index_stream_convert_blob(struct index_state *istate,
+				     struct object_id *oid,
+				     int fd,
+				     const char *path,
+				     unsigned flags)
+{
+	int ret = 0;
+	const int write_object = flags & INDEX_WRITE_OBJECT;
+	struct strbuf sbuf = STRBUF_INIT;
+
+	assert(path);
+	ASSERT(would_convert_to_git_filter_fd(istate, path));
+
+	convert_to_git_filter_fd(istate, path, fd, &sbuf,
+				 get_conv_flags(flags));
+
+	if (write_object)
+		ret = write_object_file(sbuf.buf, sbuf.len, OBJ_BLOB,
+					oid);
+	else
+		hash_object_file(the_hash_algo, sbuf.buf, sbuf.len, OBJ_BLOB,
+				 oid);
+	strbuf_release(&sbuf);
+	return ret;
+}
+
+static int index_pipe(struct index_state *istate, struct object_id *oid,
+		      int fd, enum object_type type,
+		      const char *path, unsigned flags)
+{
+	struct strbuf sbuf = STRBUF_INIT;
+	int ret;
+
+	if (strbuf_read(&sbuf, fd, 4096) >= 0)
+		ret = index_mem(istate, oid, sbuf.buf, sbuf.len, type, path, flags);
+	else
+		ret = -1;
+	strbuf_release(&sbuf);
+	return ret;
+}
+
+#define SMALL_FILE_SIZE (32*1024)
+
+static int index_core(struct index_state *istate,
+		      struct object_id *oid, int fd, size_t size,
+		      enum object_type type, const char *path,
+		      unsigned flags)
+{
+	int ret;
+
+	if (!size) {
+		ret = index_mem(istate, oid, "", size, type, path, flags);
+	} else if (size <= SMALL_FILE_SIZE) {
+		char *buf = xmalloc(size);
+		ssize_t read_result = read_in_full(fd, buf, size);
+		if (read_result < 0)
+			ret = error_errno(_("read error while indexing %s"),
+					  path ? path : "<unknown>");
+		else if (read_result != size)
+			ret = error(_("short read while indexing %s"),
+				    path ? path : "<unknown>");
+		else
+			ret = index_mem(istate, oid, buf, size, type, path, flags);
+		free(buf);
+	} else {
+		void *buf = xmmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+		ret = index_mem(istate, oid, buf, size, type, path, flags);
+		munmap(buf, size);
+	}
+	return ret;
+}
+
+/*
+ * This creates one packfile per large blob unless bulk-checkin
+ * machinery is "plugged".
+ *
+ * This also bypasses the usual "convert-to-git" dance, and that is on
+ * purpose. We could write a streaming version of the converting
+ * functions and insert that before feeding the data to fast-import
+ * (or equivalent in-core API described above). However, that is
+ * somewhat complicated, as we do not know the size of the filter
+ * result, which we need to know beforehand when writing a git object.
+ * Since the primary motivation for trying to stream from the working
+ * tree file and to avoid mmaping it in core is to deal with large
+ * binary blobs, they generally do not want to get any conversion, and
+ * callers should avoid this code path when filters are requested.
+ */
+static int index_blob_stream(struct object_id *oid, int fd, size_t size,
+			     const char *path,
+			     unsigned flags)
+{
+	return index_blob_bulk_checkin(oid, fd, size, path, flags);
+}
+
+int index_fd(struct index_state *istate, struct object_id *oid,
+	     int fd, struct stat *st,
+	     enum object_type type, const char *path, unsigned flags)
+{
+	int ret;
+
+	/*
+	 * Call xsize_t() only when needed to avoid potentially unnecessary
+	 * die() for large files.
+	 */
+	if (type == OBJ_BLOB && path && would_convert_to_git_filter_fd(istate, path))
+		ret = index_stream_convert_blob(istate, oid, fd, path, flags);
+	else if (!S_ISREG(st->st_mode))
+		ret = index_pipe(istate, oid, fd, type, path, flags);
+	else if (st->st_size <= repo_settings_get_big_file_threshold(the_repository) ||
+		 type != OBJ_BLOB ||
+		 (path && would_convert_to_git(istate, path)))
+		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
+				 type, path, flags);
+	else
+		ret = index_blob_stream(oid, fd, xsize_t(st->st_size), path,
+					flags);
+	close(fd);
+	return ret;
+}
+
+int index_path(struct index_state *istate, struct object_id *oid,
+	       const char *path, struct stat *st, unsigned flags)
+{
+	int fd;
+	struct strbuf sb = STRBUF_INIT;
+	int rc = 0;
+
+	switch (st->st_mode & S_IFMT) {
+	case S_IFREG:
+		fd = open(path, O_RDONLY);
+		if (fd < 0)
+			return error_errno("open(\"%s\")", path);
+		if (index_fd(istate, oid, fd, st, OBJ_BLOB, path, flags) < 0)
+			return error(_("%s: failed to insert into database"),
+				     path);
+		break;
+	case S_IFLNK:
+		if (strbuf_readlink(&sb, path, st->st_size))
+			return error_errno("readlink(\"%s\")", path);
+		if (!(flags & INDEX_WRITE_OBJECT))
+			hash_object_file(the_hash_algo, sb.buf, sb.len,
+					 OBJ_BLOB, oid);
+		else if (write_object_file(sb.buf, sb.len, OBJ_BLOB, oid))
+			rc = error(_("%s: failed to insert into database"), path);
+		strbuf_release(&sb);
+		break;
+	case S_IFDIR:
+		return repo_resolve_gitlink_ref(the_repository, path, "HEAD", oid);
+	default:
+		return error(_("%s: unsupported file type"), path);
+	}
+	return rc;
 }

@@ -4,7 +4,7 @@
 #include "pkt-line.h"
 #include "connect.h"
 #include "oid-array.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "fetch-object-info.h"
 #include "string-list.h"
 
