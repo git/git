@@ -77,39 +77,43 @@ proc is_Cygwin {} {
 
 ######################################################################
 ##
-## PATH lookup
+## PATH lookup. Sanitize $PATH, assure exec/open use only that
+
+if {[is_Windows]} {
+	set _path_sep {;}
+	set _search_exe .exe
+} else {
+	set _path_sep {:}
+	set _search_exe {}
+}
+
+if {[is_Windows]} {
+	set gitguidir [file dirname [info script]]
+	regsub -all ";" $gitguidir "\\;" gitguidir
+	set env(PATH) "$gitguidir;$env(PATH)"
+}
 
 set _search_path {}
-proc _which {what args} {
-	global env _search_exe _search_path
-
-	if {$_search_path eq {}} {
-		if {[is_Windows]} {
-			set gitguidir [file dirname [info script]]
-			regsub -all ";" $gitguidir "\\;" gitguidir
-			set env(PATH) "$gitguidir;$env(PATH)"
-
-			set _path_seen [dict create]
-			foreach p [split $env(PATH) {;}] {
-				# Keep only absolute paths, getting rid of ., empty, etc.
-				if {[file pathtype $p] ne {absolute}} {
-					continue
-				}
-				# Keep only the first occurence of any duplicates.
-				set norm_p [file normalize $p]
-				if {[dict exists $_path_seen $norm_p]} {
-					continue
-				}
-				dict set _path_seen $norm_p 1
-				lappend _search_path $norm_p
-			}
-			unset _path_seen
-			set _search_exe .exe
-		} else {
-			set _search_path [split $env(PATH) :]
-			set _search_exe {}
-		}
+set _path_seen [dict create]
+foreach p [split $env(PATH) $_path_sep] {
+	# Keep only absolute paths, getting rid of ., empty, etc.
+	if {[file pathtype $p] ne {absolute}} {
+		continue
 	}
+	# Keep only the first occurence of any duplicates.
+	set norm_p [file normalize $p]
+	if {[dict exists $_path_seen $norm_p]} {
+		continue
+	}
+	dict set _path_seen $norm_p 1
+	lappend _search_path $norm_p
+}
+unset _path_seen
+
+set env(PATH) [join $_search_path $_path_sep]
+
+proc _which {what args} {
+	global _search_exe _search_path
 
 	if {[is_Windows] && [lsearch -exact $args -script] >= 0} {
 		set suffix {}
