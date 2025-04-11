@@ -1,0 +1,25 @@
+my_var=10
+x=123
+y=3.14
+z=.5
+echo $USER
+${HOME}
+if [ "$a" == "$b" ] || [ "$c" != "$d" ]; then echo "OK"; fi
+((a+=b))
+((a-=b))
+$((a << b))
+$((a >> b))
+${a:-b}
+${a:=b}
+${a##*/}
+${a%.*}
+${a%%.*}
+${a^^}
+${a,}
+${a,,}
+${!a}
+${a[@]}
+${a:?error message}
+${a:2:3}
+ls -a
+ls --a

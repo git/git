@@ -1,0 +1,25 @@
+new_var=10
+x=456
+y=2.71
+z=.75
+echo $USERNAME
+${HOMEDIR}
+if [ "$x" == "$y" ] || [ "$x" != "$y" ]; then echo "OK"; fi
+((x+=y))
+((x-=y))
+$((x<<y))
+$((x>>y))
+${x:-y}
+${x:=y}
+${x##*/}
+${x%.*}
+${x%%.*}
+${x^^}
+${x,}
+${x,,}
+${!x}
+${x[@]}
+${x:?error message}
+${x:2:3}
+ls -x
+ls --x
