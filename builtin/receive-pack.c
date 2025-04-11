@@ -363,7 +363,7 @@ static void write_head_info(void)
 	strvec_clear(&excludes_vector);
 
 	if (!sent_capabilities)
-		show_ref("capabilities^{}", null_oid());
+		show_ref("capabilities^{}", null_oid(the_hash_algo));
 
 	advertise_shallow_grafts(1);
 

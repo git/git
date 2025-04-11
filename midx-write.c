@@ -664,7 +664,7 @@ static void write_midx_reverse_index(struct write_midx_context *ctx,
 		get_midx_filename_ext(ctx->repo->hash_algo, &buf, object_dir,
 				      midx_hash, MIDX_EXT_REV);
 
-	tmp_file = write_rev_file_order(ctx->repo->hash_algo, NULL, ctx->pack_order,
+	tmp_file = write_rev_file_order(ctx->repo, NULL, ctx->pack_order,
 					ctx->entries_nr, midx_hash, WRITE_REV);
 
 	if (finalize_object_file(tmp_file, buf.buf))
@@ -714,7 +714,7 @@ static int add_ref_to_pending(const char *refname, const char *referent UNUSED,
 	if (!peel_iterated_oid(revs->repo, oid, &peeled))
 		oid = &peeled;
 
-	object = parse_object_or_die(oid, refname);
+	object = parse_object_or_die(revs->repo, oid, refname);
 	if (object->type != OBJ_COMMIT)
 		return 0;
 
@@ -774,7 +774,7 @@ static int read_refs_snapshot(const char *refs_snapshot,
 		if (*end)
 			die(_("malformed line: %s"), buf.buf);
 
-		object = parse_object_or_die(&oid, NULL);
+		object = parse_object_or_die(revs->repo, &oid, NULL);
 		if (preferred)
 			object->flags |= NEEDS_BITMAP;
 
@@ -1361,10 +1361,12 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 			return -1;
 		}
 
-		f = hashfd(get_tempfile_fd(incr), get_tempfile_path(incr));
+		f = hashfd(r->hash_algo, get_tempfile_fd(incr),
+			   get_tempfile_path(incr));
 	} else {
 		hold_lock_file_for_update(&lk, midx_name.buf, LOCK_DIE_ON_ERROR);
-		f = hashfd(get_lock_file_fd(&lk), get_lock_file_path(&lk));
+		f = hashfd(r->hash_algo, get_lock_file_fd(&lk),
+			   get_lock_file_path(&lk));
 	}
 
 	cf = init_chunkfile(f);
