@@ -151,6 +151,8 @@ static inline int pack_map_entry_cmp(const void *cmp_data UNUSED,
 	return strcmp(pg1->pack_name, key ? key : pg2->pack_name);
 }
 
+struct cached_object_entry;
+
 struct raw_object_store {
 	/*
 	 * Set of all object directories; the main directory is first (and
@@ -202,6 +204,15 @@ struct raw_object_store {
 		struct packed_git **packs;
 		unsigned flags;
 	} kept_pack_cache;
+
+	/*
+	 * This is meant to hold a *small* number of objects that you would
+	 * want repo_read_object_file() to be able to return, but yet you do not want
+	 * to write them into the object store (e.g. a browse-only
+	 * application).
+	 */
+	struct cached_object_entry *cached_objects;
+	size_t cached_object_nr, cached_object_alloc;
 
 	/*
 	 * A map of packfiles to packed_git structs for tracking which
@@ -272,7 +283,8 @@ void hash_object_file(const struct git_hash_algo *algo, const void *buf,
  * object in persistent storage before writing any other new objects
  * that reference it.
  */
-int pretend_object_file(void *, unsigned long, enum object_type,
+int pretend_object_file(struct repository *repo,
+			void *buf, unsigned long len, enum object_type type,
 			struct object_id *oid);
 
 struct object_info {
