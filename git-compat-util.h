@@ -1000,6 +1000,9 @@ int git_vsnprintf(char *str, size_t maxsize,
 int git_open_with_retry(const char *path, int flag, ...);
 #endif
 
+int git_open_cloexec(const char *name, int flags);
+#define git_open(name) git_open_cloexec(name, O_RDONLY)
+
 #ifdef __GLIBC_PREREQ
 #if __GLIBC_PREREQ(2, 1)
 #define HAVE_STRCHRNUL

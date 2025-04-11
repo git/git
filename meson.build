@@ -263,6 +263,7 @@ libgit_sources = [
   'common-init.c',
   'compat/nonblock.c',
   'compat/obstack.c',
+  'compat/open.c',
   'compat/terminal.c',
   'compiler-tricks/not-constant.c',
   'config.c',
