@@ -452,7 +452,7 @@ static int update_one(struct cache_tree *it,
 				 OBJ_TREE, &it->oid);
 	} else if (write_object_file_flags(buffer.buf, buffer.len, OBJ_TREE,
 					   &it->oid, NULL, flags & WRITE_TREE_SILENT
-					   ? HASH_SILENT : 0)) {
+					   ? WRITE_OBJECT_FILE_SILENT : 0)) {
 		strbuf_release(&buffer);
 		return -1;
 	}
