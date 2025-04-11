@@ -376,9 +376,12 @@ fs_copydir_helper(const char *source, const char *dest, int dest_mode)
 	mkdir(dest, dest_mode);
 
 	cl_assert_(source_dir = opendir(source), "Could not open source dir");
-	while ((d = (errno = 0, readdir(source_dir))) != NULL) {
+	for (;;) {
 		char *child;
 
+		errno = 0;
+		if ((d = readdir(source_dir)) == NULL)
+			break;
 		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
 			continue;
 
@@ -479,9 +482,12 @@ fs_rmdir_helper(const char *path)
 	struct dirent *d;
 
 	cl_assert_(dir = opendir(path), "Could not open dir");
-	while ((d = (errno = 0, readdir(dir))) != NULL) {
+	for (;;) {
 		char *child;
 
+		errno = 0;
+		if ((d = readdir(dir)) == NULL)
+			break;
 		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
 			continue;
 
