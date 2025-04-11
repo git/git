@@ -183,6 +183,81 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'status during rebase -ir after conflicted merge (exec git merge)' '
+	git reset --hard main &&
+	git checkout -b rebase_i_merge &&
+	test_commit unrelated &&
+	git checkout -b rebase_i_merge_side &&
+	test_commit side2 main.txt &&
+	git checkout rebase_i_merge &&
+	test_commit side1 main.txt &&
+	PICK=$(git rev-parse --short rebase_i_merge) &&
+	test_must_fail git merge rebase_i_merge_side &&
+	echo side1 >main.txt &&
+	git add main.txt &&
+	test_tick &&
+	git commit --no-edit &&
+	MERGE=$(git rev-parse --short rebase_i_merge) &&
+	ONTO=$(git rev-parse --short main) &&
+	test_when_finished "git rebase --abort" &&
+	FAKE_LINES="1 2 3 5 6 7 8 9 10 exec_git_merge_refs/rewritten/rebase-i-merge-side" &&
+	export FAKE_LINES &&
+	test_must_fail git rebase -ir main &&
+	cat >expect <<EOF &&
+interactive rebase in progress; onto $ONTO
+Last commands done (8 commands done):
+   pick $PICK side1
+   exec git merge refs/rewritten/rebase-i-merge-side
+  (see more in file .git/rebase-merge/done)
+No commands remaining.
+
+You have unmerged paths.
+  (fix conflicts and run "git commit")
+  (use "git merge --abort" to abort the merge)
+
+Unmerged paths:
+  (use "git add <file>..." to mark resolution)
+	both modified:   main.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
+EOF
+	git status --untracked-files=no >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'status during rebase -ir after replaying conflicted merge (merge)' '
+	PICK=$(git rev-parse --short :/side1) &&
+	UNRELATED=$(git rev-parse --short :/unrelated) &&
+	MERGE=$(git rev-parse --short rebase_i_merge) &&
+	ONTO=$(git rev-parse --short main) &&
+	test_when_finished "git rebase --abort" &&
+	FAKE_LINES="1 2 3 5 6 7 8 9 10 11 4" &&
+	export FAKE_LINES &&
+	test_must_fail git rebase -ir main &&
+	cat >expect <<EOF &&
+interactive rebase in progress; onto $ONTO
+Last commands done (8 commands done):
+   pick $PICK side1
+   merge -C $MERGE rebase-i-merge-side # Merge branch '\''rebase_i_merge_side'\'' into rebase_i_merge
+  (see more in file .git/rebase-merge/done)
+Next command to do (1 remaining command):
+   pick $UNRELATED unrelated
+  (use "git rebase --edit-todo" to view and edit)
+You are currently rebasing branch '\''rebase_i_merge'\'' on '\''$ONTO'\''.
+  (fix conflicts and then run "git rebase --continue")
+  (use "git rebase --skip" to skip this patch)
+  (use "git rebase --abort" to check out the original branch)
+
+Unmerged paths:
+  (use "git add <file>..." to mark resolution)
+	both modified:   main.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
+EOF
+	git status --untracked-files=no >actual &&
+	test_cmp expect actual
+'
+
 
 test_expect_success 'status when rebasing -i in edit mode' '
 	git reset --hard main &&
