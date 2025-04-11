@@ -1935,6 +1935,7 @@ __git_diff_common_options="--stat --numstat --shortstat --summary
 			--output= --output-indicator-context=
 			--output-indicator-new= --output-indicator-old=
 			--ws-error-highlight=
+			--patch-grep= --patch-modifies=
 			--pickaxe-all --pickaxe-regex --patch-with-raw
 "
 
@@ -2251,7 +2252,7 @@ __git_complete_log_opts ()
 		__git_complete_symbol --cur="${cur#:}" --sfx=":"
 		return
 		;;
-	-G,*|-S,*)
+	-G,*|--patch-grep,*|-S,*|--patch-modifies,*)
 		__git_complete_symbol
 		return
 		;;
@@ -2272,6 +2273,14 @@ __git_complete_log_opts ()
 		;;
 	--diff-algorithm=*)
 		__gitcomp "$__git_diff_algorithms" "" "${cur##--diff-algorithm=}"
+		return
+		;;
+	--patch-grep=*)
+		__git_complete_symbol --pfx="--patch-grep=" --cur="${cur#--patch-grep=}"
+		return
+		;;
+	--patch-modifies=*)
+		__git_complete_symbol --pfx="--patch-modifies=" --cur="${cur#--patch-modifies=}"
 		return
 		;;
 	--submodule=*)
