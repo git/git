@@ -1,5 +1,6 @@
 #define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
+#include "dir.h"
 #include "gettext.h"
 #include "hex.h"
 #include "config.h"
