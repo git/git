@@ -42,4 +42,19 @@ test_expect_success 'no error from stale entry in packed-refs' '
 	test_cmp expect actual
 '
 
+test_expect_success 'list packed refs with unicode characters' '
+	test_when_finished "rm -rf repo" &&
+	git init repo &&
+	(
+		cd repo &&
+		test_commit --no-tag A &&
+		git update-ref refs/heads/ HEAD &&
+		git update-ref refs/heads/z HEAD &&
+		git pack-refs --all &&
+		printf "%s commit\trefs/heads/z\n" $(git rev-parse HEAD) >expect &&
+		git for-each-ref refs/heads/z >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
