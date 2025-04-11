@@ -448,21 +448,12 @@ jobs:
     if: needs.ci-config.outputs.enabled == 'yes'
     env:
       jobname: sparse
-      CI_JOB_IMAGE: ubuntu-20.04
-    runs-on: ubuntu-20.04
+      CI_JOB_IMAGE: ubuntu-22.04
+    runs-on: ubuntu-22.04
     concurrency:
       group: sparse-${{ github.ref }}
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     steps:
-    - name: Download a current `sparse` package
-      # Ubuntu's `sparse` version is too old for us
-      uses: git-for-windows/get-azure-pipelines-artifact@v0
-      with:
-        repository: git/git
-        definitionId: 10
-        artifact: sparse-20.04
-    - name: Install the current `sparse` package
-      run: sudo dpkg -i sparse-20.04/sparse_*.deb
     - uses: actions/checkout@v4
     - name: Install other dependencies
       run: ci/install-dependencies.sh

@@ -119,7 +119,7 @@ StaticAnalysis)
 sparse)
 	sudo apt-get -q update -q
 	sudo apt-get -q -y install libssl-dev libcurl4-openssl-dev \
-		libexpat-dev gettext zlib1g-dev
+		libexpat-dev gettext zlib1g-dev sparse
 	;;
 Documentation)
 	sudo apt-get -q update
