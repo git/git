@@ -92,9 +92,6 @@ struct oidtree *odb_loose_cache(struct object_directory *odb,
 /* Empty the loose object cache for the specified object directory. */
 void odb_clear_loose_cache(struct object_directory *odb);
 
-/* Clear and free the specified object directory */
-void free_object_directory(struct object_directory *odb);
-
 struct packed_git {
 	struct hashmap_entry packmap_ent;
 	struct packed_git *next;
