@@ -17,7 +17,7 @@
 #include "midx.h"
 #include "packfile.h"
 #include "prune-packed.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "promisor-remote.h"
 #include "shallow.h"
 #include "pack.h"

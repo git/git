@@ -17,7 +17,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "name-hash.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "path.h"
 #include "refs.h"
 #include "repository.h"

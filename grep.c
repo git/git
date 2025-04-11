@@ -5,7 +5,7 @@
 #include "gettext.h"
 #include "grep.h"
 #include "hex.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "pretty.h"
 #include "userdiff.h"
 #include "xdiff-interface.h"

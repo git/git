@@ -12,6 +12,7 @@
 
 #include "git-compat-util.h"
 #include "bulk-checkin.h"
+#include "dir.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"

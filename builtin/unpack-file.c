@@ -4,7 +4,7 @@
 #include "hex.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 
 static char *create_temp_file(struct object_id *oid)
 {

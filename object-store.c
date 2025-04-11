@@ -4,9 +4,11 @@
 #include "abspath.h"
 #include "commit-graph.h"
 #include "config.h"
+#include "dir.h"
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
+#include "khash.h"
 #include "lockfile.h"
 #include "loose.h"
 #include "object-file-convert.h"
@@ -23,6 +25,9 @@
 #include "strvec.h"
 #include "submodule.h"
 #include "write-or-die.h"
+
+KHASH_INIT(odb_path_map, const char * /* key: odb_path */,
+	struct object_directory *, 1, fspathhash, fspatheq)
 
 /*
  * This is meant to hold a *small* number of objects that you would
