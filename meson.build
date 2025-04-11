@@ -355,6 +355,7 @@ libgit_sources = [
   'object-file-convert.c',
   'object-file.c',
   'object-name.c',
+  'object-store.c',
   'object.c',
   'oid-array.c',
   'oidmap.c',

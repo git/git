@@ -49,12 +49,6 @@ struct object_directory {
 	char *path;
 };
 
-struct input_stream {
-	const void *(*read)(struct input_stream *, unsigned long *len);
-	void *data;
-	int is_finished;
-};
-
 void prepare_alt_odb(struct repository *r);
 int has_alt_odb(struct repository *r);
 char *compute_alternate_path(const char *path, struct strbuf *err);
@@ -273,21 +267,6 @@ void hash_object_file(const struct git_hash_algo *algo, const void *buf,
 		      unsigned long len, enum object_type type,
 		      struct object_id *oid);
 
-int write_object_file_flags(const void *buf, unsigned long len,
-			    enum object_type type, struct object_id *oid,
-			    struct object_id *comapt_oid_in, unsigned flags);
-static inline int write_object_file(const void *buf, unsigned long len,
-				    enum object_type type, struct object_id *oid)
-{
-	return write_object_file_flags(buf, len, type, oid, NULL, 0);
-}
-
-int write_object_file_literally(const void *buf, unsigned long len,
-				const char *type, struct object_id *oid,
-				unsigned flags);
-int stream_loose_object(struct input_stream *in_stream, size_t len,
-			struct object_id *oid);
-
 /*
  * Add an object file to the in-memory object store, without writing it
  * to disk.
@@ -298,8 +277,6 @@ int stream_loose_object(struct input_stream *in_stream, size_t len,
  */
 int pretend_object_file(void *, unsigned long, enum object_type,
 			struct object_id *oid);
-
-int force_object_loose(const struct object_id *oid, time_t mtime);
 
 struct object_info {
 	/* Request */
@@ -364,20 +341,6 @@ int oid_object_info_extended(struct repository *r,
 			     const struct object_id *,
 			     struct object_info *, unsigned flags);
 
-/*
- * Open the loose object at path, check its hash, and return the contents,
- * use the "oi" argument to assert things about the object, or e.g. populate its
- * type, and size. If the object is a blob, then "contents" may return NULL,
- * to allow streaming of large blobs.
- *
- * Returns 0 on success, negative on error (details may be written to stderr).
- */
-int read_loose_object(const char *path,
-		      const struct object_id *expected_oid,
-		      struct object_id *real_oid,
-		      void **contents,
-		      struct object_info *oi);
-
 /* Retry packed storage after checking packed and loose storage */
 #define HAS_OBJECT_RECHECK_PACKED 1
 
@@ -404,23 +367,6 @@ int has_object(struct repository *r, const struct object_id *oid,
 int repo_has_object_file(struct repository *r, const struct object_id *oid);
 int repo_has_object_file_with_flags(struct repository *r,
 				    const struct object_id *oid, int flags);
-
-/*
- * Return true iff an alternate object database has a loose object
- * with the specified name.  This function does not respect replace
- * references.
- */
-int has_loose_object_nonlocal(const struct object_id *);
-
-int has_loose_object(const struct object_id *);
-
-/**
- * format_object_header() is a thin wrapper around s xsnprintf() that
- * writes the initial "<type> <obj-len>" part of the loose object
- * header. It returns the size that snprintf() returns + 1.
- */
-int format_object_header(char *str, size_t size, enum object_type type,
-			 size_t objsize);
 
 void assert_oid_type(const struct object_id *oid, enum object_type expect);
 
@@ -552,5 +498,11 @@ int for_each_object_in_pack(struct packed_git *p,
 			    enum for_each_object_flags flags);
 int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
 			   void *data, enum for_each_object_flags flags);
+
+void *read_object_with_reference(struct repository *r,
+				 const struct object_id *oid,
+				 enum object_type required_type,
+				 unsigned long *size,
+				 struct object_id *oid_ret);
 
 #endif /* OBJECT_STORE_LL_H */

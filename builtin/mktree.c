@@ -11,6 +11,7 @@
 #include "strbuf.h"
 #include "tree.h"
 #include "parse-options.h"
+#include "object-file.h"
 #include "object-store-ll.h"
 
 static struct treeent {
