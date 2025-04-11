@@ -155,6 +155,37 @@
 # These machine files can be passed to `meson setup` via the `--native-file`
 # option.
 #
+# Cross compilation
+# =================
+#
+# Machine files can also be used in the context of cross-compilation to
+# describe the target machine as well as the cross-compiler toolchain that
+# shall be used. An example machine file could look like the following:
+#
+#   [binaries]
+#   c = 'x86_64-w64-mingw32-gcc'
+#   cpp = 'x86_64-w64-mingw32-g++'
+#   ar = 'x86_64-w64-mingw32-ar'
+#   windres = 'x86_64-w64-mingw32-windres'
+#   strip = 'x86_64-w64-mingw32-strip'
+#   exe_wrapper = 'wine64'
+#   sh = 'C:/Program Files/Git for Windows/usr/bin/sh.exe'
+#
+#   [host_machine]
+#   system = 'windows'
+#   cpu_family = 'x86_64'
+#   cpu = 'x86_64'
+#   endian = 'little'
+#
+# These machine files can be passed to `meson setup` via the `--cross-file`
+# option.
+#
+# Note that next to the cross-compiler toolchain, the `[binaries]` section is
+# also used to locate a couple of binaries that will be built into Git. This
+# includes `sh`, `python` and `perl`, so when cross-compiling Git you likely
+# want to set these binary paths in addition to the cross-compiler toolchain
+# binaries.
+#
 # Subproject wrappers
 # ===================
 #
@@ -173,7 +204,7 @@ project('git', 'c',
   # The version is only of cosmetic nature, so if we cannot find a shell yet we
   # simply don't set up a version at all. This may be the case for example on
   # Windows systems, where we first have to bootstrap the host environment.
-  version: find_program('sh', required: false).found() ? run_command(
+  version: find_program('sh', native: true, required: false).found() ? run_command(
     'GIT-VERSION-GEN', meson.current_source_dir(), '--format=@GIT_VERSION@',
     capture: true,
     check: true,
@@ -198,16 +229,18 @@ elif host_machine.system() == 'windows'
   program_path = [ 'C:/Program Files/Git/bin', 'C:/Program Files/Git/usr/bin' ]
 endif
 
-cygpath = find_program('cygpath', dirs: program_path, required: false)
-diff = find_program('diff', dirs: program_path)
-git = find_program('git', dirs: program_path, required: false)
-sed = find_program('sed', dirs: program_path)
-shell = find_program('sh', dirs: program_path)
-tar = find_program('tar', dirs: program_path)
+cygpath = find_program('cygpath', dirs: program_path, native: true, required: false)
+diff = find_program('diff', dirs: program_path, native: true)
+git = find_program('git', dirs: program_path, native: true, required: false)
+sed = find_program('sed', dirs: program_path, native: true)
+shell = find_program('sh', dirs: program_path, native: true)
+tar = find_program('tar', dirs: program_path, native: true)
+
+target_shell = find_program('sh', dirs: program_path, native: false)
 
 # Sanity-check that programs required for the build exist.
 foreach tool : ['cat', 'cut', 'grep', 'sort', 'tr', 'uname']
-  find_program(tool, dirs: program_path)
+  find_program(tool, dirs: program_path, native: true)
 endforeach
 
 script_environment = environment()
@@ -706,7 +739,7 @@ libgit_c_args = [
   '-DGIT_LOCALE_PATH="' + get_option('localedir') + '"',
   '-DGIT_MAN_PATH="' + get_option('mandir') + '"',
   '-DPAGER_ENV="' + get_option('pager_environment') + '"',
-  '-DSHELL_PATH="' + fs.as_posix(shell.full_path()) + '"',
+  '-DSHELL_PATH="' + fs.as_posix(target_shell.full_path()) + '"',
 ]
 libgit_include_directories = [ '.' ]
 libgit_dependencies = [ ]
@@ -770,6 +803,7 @@ endif
 build_options_config.set_quoted('X', executable_suffix)
 
 python = import('python').find_installation('python3', required: get_option('python'))
+target_python = find_program('python3', native: false, required: python.found())
 if python.found()
   build_options_config.set('NO_PYTHON', '')
 else
@@ -799,9 +833,11 @@ endif
 # which we can do starting with Meson 1.5.0 and newer, or we have to
 # match against the minor version.
 if meson.version().version_compare('>=1.5.0')
-  perl = find_program('perl', dirs: program_path, required: perl_required, version: '>=5.26.0', version_argument: '-V:version')
+  perl = find_program('perl', dirs: program_path, native: true, required: perl_required, version: '>=5.26.0', version_argument: '-V:version')
+  target_perl = find_program('perl', dirs: program_path, native: false, required: perl.found(), version: '>=5.26.0', version_argument: '-V:version')
 else
-  perl = find_program('perl', dirs: program_path, required: perl_required, version: '>=26')
+  perl = find_program('perl', dirs: program_path, native: true, required: perl_required, version: '>=26')
+  target_perl = find_program('perl', dirs: program_path, native: false, required: perl.found(), version: '>=26')
 endif
 perl_features_enabled = perl.found() and get_option('perl').allowed()
 if perl_features_enabled
@@ -852,7 +888,7 @@ else
   build_options_config.set('NO_PTHREADS', '1')
 endif
 
-msgfmt = find_program('msgfmt', dirs: program_path, required: false)
+msgfmt = find_program('msgfmt', dirs: program_path, native: true, required: false)
 gettext_option = get_option('gettext').disable_auto_if(not msgfmt.found())
 if not msgfmt.found() and gettext_option.enabled()
   error('Internationalization via libintl requires msgfmt')
@@ -1697,7 +1733,7 @@ bin_wrappers += executable('scalar',
   install_dir: get_option('libexecdir') / 'git-core',
 )
 
-if get_option('curl').enabled()
+if curl.found()
   libgit_curl = declare_dependency(
     sources: [
       'http.c',
@@ -1985,9 +2021,9 @@ foreach key, value : {
   'GIT_TEST_TEMPLATE_DIR': meson.project_build_root() / 'templates',
   'GIT_TEST_TEXTDOMAINDIR': meson.project_build_root() / 'po',
   'PAGER_ENV': get_option('pager_environment'),
-  'PERL_PATH': perl.found() ? perl.full_path() : '',
-  'PYTHON_PATH': python.found () ? python.full_path() : '',
-  'SHELL_PATH': shell.full_path(),
+  'PERL_PATH': target_perl.found() ? target_perl.full_path() : '',
+  'PYTHON_PATH': target_python.found () ? target_python.full_path() : '',
+  'SHELL_PATH': target_shell.full_path(),
   'TAR': tar.full_path(),
   'TEST_OUTPUT_DIRECTORY': test_output_directory,
   'TEST_SHELL_PATH': shell.full_path(),
