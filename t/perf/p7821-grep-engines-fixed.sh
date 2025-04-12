@@ -7,7 +7,7 @@ git-grep. Make sure to include a leading space,
 e.g. GIT_PERF_7821_GREP_OPTS=' -w'. See p7820-grep-engines.sh for more
 options to try.
 
-If GIT_PERF_7821_THREADS is set to a list of threads (e.g. '1 4 8'
+If GIT_PERF_GREP_THREADS is set to a list of threads (e.g. '1 4 8'
 etc.) we will test the patterns under those numbers of threads.
 "
 
