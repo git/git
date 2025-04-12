@@ -9,14 +9,12 @@ git-mv - Move or rename a file, a directory, or a symlink
 SYNOPSIS
 --------
 [verse]
-'git mv' [<options>] <source>... <destination>
+'git mv' [-v] [-f] [-n] [-k] <source> <destination>
+'git mv' [-v] [-f] [-n] [-k] <source> ... <destination-directory>
 
 DESCRIPTION
 -----------
 Move or rename a file, directory, or symlink.
-
- git mv [-v] [-f] [-n] [-k] <source> <destination>
- git mv [-v] [-f] [-n] [-k] <source> ... <destination-directory>
 
 In the first form, it renames <source>, which must exist and be either
 a file, symlink or directory, to <destination>.
