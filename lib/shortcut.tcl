@@ -23,7 +23,10 @@ proc do_windows_shortcut {} {
 
 	# Use git-gui.exe if found, fall back to wish + launcher
 	set link_arguments {}
-	set link_target [_which git-gui]
+	set link_target [safe_exec [list cygpath -m /cmd/git-gui.exe]]
+	if {![file executable $link_target]} {
+		set link_target [_which git-gui]
+	}
 	if {![file executable $link_target]} {
 		set link_target [file normalize [info nameofexecutable]]
 		set link_arguments [file normalize $::argv0]
