@@ -33,9 +33,9 @@
 
 static int get_conv_flags(unsigned flags)
 {
-	if (flags & HASH_RENORMALIZE)
+	if (flags & INDEX_RENORMALIZE)
 		return CONV_EOL_RENORMALIZE;
-	else if (flags & HASH_WRITE_OBJECT)
+	else if (flags & INDEX_WRITE_OBJECT)
 		return global_conv_flags_eol | CONV_WRITE_OBJECT;
 	else
 		return 0;
@@ -835,7 +835,7 @@ static int start_loose_object_common(struct strbuf *tmp_file,
 
 	fd = create_tmpfile(tmp_file, filename);
 	if (fd < 0) {
-		if (flags & HASH_SILENT)
+		if (flags & WRITE_OBJECT_FILE_SILENT)
 			return -1;
 		else if (errno == EACCES)
 			return error(_("insufficient permission for adding "
@@ -967,7 +967,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 		utb.actime = mtime;
 		utb.modtime = mtime;
 		if (utime(tmp_file.buf, &utb) < 0 &&
-		    !(flags & HASH_SILENT))
+		    !(flags & WRITE_OBJECT_FILE_SILENT))
 			warning_errno(_("failed utime() on %s"), tmp_file.buf);
 	}
 
@@ -1179,7 +1179,7 @@ int write_object_file_literally(const void *buf, unsigned long len,
 	write_object_file_prepare_literally(the_hash_algo, buf, len, type,
 					    oid, header, &hdrlen);
 
-	if (!(flags & HASH_WRITE_OBJECT))
+	if (!(flags & WRITE_OBJECT_FILE_PERSIST))
 		goto cleanup;
 	if (freshen_packed_object(oid) || freshen_loose_object(oid))
 		goto cleanup;
@@ -1250,7 +1250,7 @@ static int index_mem(struct index_state *istate,
 {
 	struct strbuf nbuf = STRBUF_INIT;
 	int ret = 0;
-	int write_object = flags & HASH_WRITE_OBJECT;
+	int write_object = flags & INDEX_WRITE_OBJECT;
 
 	if (!type)
 		type = OBJ_BLOB;
@@ -1265,7 +1265,7 @@ static int index_mem(struct index_state *istate,
 			size = nbuf.len;
 		}
 	}
-	if (flags & HASH_FORMAT_CHECK) {
+	if (flags & INDEX_FORMAT_CHECK) {
 		struct fsck_options opts = FSCK_OPTIONS_DEFAULT;
 
 		opts.strict = 1;
@@ -1291,7 +1291,7 @@ static int index_stream_convert_blob(struct index_state *istate,
 				     unsigned flags)
 {
 	int ret = 0;
-	const int write_object = flags & HASH_WRITE_OBJECT;
+	const int write_object = flags & INDEX_WRITE_OBJECT;
 	struct strbuf sbuf = STRBUF_INIT;
 
 	assert(path);
@@ -1423,7 +1423,7 @@ int index_path(struct index_state *istate, struct object_id *oid,
 	case S_IFLNK:
 		if (strbuf_readlink(&sb, path, st->st_size))
 			return error_errno("readlink(\"%s\")", path);
-		if (!(flags & HASH_WRITE_OBJECT))
+		if (!(flags & INDEX_WRITE_OBJECT))
 			hash_object_file(the_hash_algo, sb.buf, sb.len,
 					 OBJ_BLOB, oid);
 		else if (write_object_file(sb.buf, sb.len, OBJ_BLOB, oid))

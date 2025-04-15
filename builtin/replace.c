@@ -305,7 +305,7 @@ static int import_object(struct object_id *oid, enum object_type type,
 		strbuf_release(&result);
 	} else {
 		struct stat st;
-		int flags = HASH_FORMAT_CHECK | HASH_WRITE_OBJECT;
+		int flags = INDEX_FORMAT_CHECK | INDEX_WRITE_OBJECT;
 
 		if (fstat(fd, &st) < 0) {
 			error_errno(_("unable to fstat %s"), filename);

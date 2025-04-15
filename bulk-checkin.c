@@ -171,7 +171,7 @@ static int stream_blob_to_pack(struct bulk_checkin_packfile *state,
 	unsigned char obuf[16384];
 	unsigned hdrlen;
 	int status = Z_OK;
-	int write_object = (flags & HASH_WRITE_OBJECT);
+	int write_object = (flags & INDEX_WRITE_OBJECT);
 	off_t offset = 0;
 
 	git_deflate_init(&s, pack_compression_level);
@@ -241,7 +241,7 @@ static int stream_blob_to_pack(struct bulk_checkin_packfile *state,
 static void prepare_to_stream(struct bulk_checkin_packfile *state,
 			      unsigned flags)
 {
-	if (!(flags & HASH_WRITE_OBJECT) || state->f)
+	if (!(flags & INDEX_WRITE_OBJECT) || state->f)
 		return;
 
 	state->f = create_tmp_packfile(the_repository, &state->pack_tmp_name);
@@ -275,7 +275,7 @@ static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
 	git_hash_update(&ctx, obuf, header_len);
 
 	/* Note: idx is non-NULL when we are writing */
-	if ((flags & HASH_WRITE_OBJECT) != 0) {
+	if ((flags & INDEX_WRITE_OBJECT) != 0) {
 		CALLOC_ARRAY(idx, 1);
 
 		prepare_to_stream(state, flags);

@@ -14,10 +14,12 @@ struct index_state;
  */
 extern int fetch_if_missing;
 
-#define HASH_WRITE_OBJECT 1
-#define HASH_FORMAT_CHECK 2
-#define HASH_RENORMALIZE  4
-#define HASH_SILENT 8
+enum {
+	INDEX_WRITE_OBJECT = (1 << 0),
+	INDEX_FORMAT_CHECK = (1 << 1),
+	INDEX_RENORMALIZE  = (1 << 2),
+};
+
 int index_fd(struct index_state *istate, struct object_id *oid, int fd, struct stat *st, enum object_type type, const char *path, unsigned flags);
 int index_path(struct index_state *istate, struct object_id *oid, const char *path, struct stat *st, unsigned flags);
 
@@ -83,6 +85,21 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
  */
 struct object_info;
 int parse_loose_header(const char *hdr, struct object_info *oi);
+
+enum {
+	/*
+	 * By default, `write_object_file_literally()` does not actually write
+	 * anything into the object store, but only computes the object ID.
+	 * This flag changes that so that the object will be written as a loose
+	 * object and persisted.
+	 */
+	WRITE_OBJECT_FILE_PERSIST = (1 << 0),
+
+	/*
+	 * Do not print an error in case something gose wrong.
+	 */
+	WRITE_OBJECT_FILE_SILENT = (1 << 1),
+};
 
 int write_object_file_flags(const void *buf, unsigned long len,
 			    enum object_type type, struct object_id *oid,
