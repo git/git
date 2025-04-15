@@ -910,7 +910,7 @@ static int make_room_for_path(struct merge_options *opt, const char *path)
 	}
 
 	/* Make sure leading directories are created */
-	status = safe_create_leading_directories_const(path);
+	status = safe_create_leading_directories_const(the_repository, path);
 	if (status) {
 		if (status == SCLD_EXISTS)
 			/* something else exists */
@@ -1003,7 +1003,7 @@ static int update_file_flags(struct merge_options *opt,
 			close(fd);
 		} else if (S_ISLNK(contents->mode)) {
 			char *lnk = xmemdupz(buf, size);
-			safe_create_leading_directories_const(path);
+			safe_create_leading_directories_const(the_repository, path);
 			unlink(path);
 			if (symlink(lnk, path))
 				ret = err(opt, _("failed to symlink '%s': %s"),

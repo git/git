@@ -296,7 +296,7 @@ static void check_notes_merge_worktree(struct notes_merge_options *o)
 				    "(%s exists)."), repo_git_path_replace(the_repository, &buf, "NOTES_MERGE_*"));
 		}
 
-		if (safe_create_leading_directories_const(repo_git_path_replace(the_repository, &buf,
+		if (safe_create_leading_directories_const(the_repository, repo_git_path_replace(the_repository, &buf,
 				NOTES_MERGE_WORKTREE "/.test")))
 			die_errno("unable to create directory %s",
 				  repo_git_path_replace(the_repository, &buf, NOTES_MERGE_WORKTREE));
@@ -314,7 +314,7 @@ static void write_buf_to_worktree(const struct object_id *obj,
 {
 	int fd;
 	char *path = repo_git_path(the_repository, NOTES_MERGE_WORKTREE "/%s", oid_to_hex(obj));
-	if (safe_create_leading_directories_const(path))
+	if (safe_create_leading_directories_const(the_repository, path))
 		die_errno("unable to create directory for '%s'", path);
 
 	fd = xopen(path, O_WRONLY | O_EXCL | O_CREAT, 0666);

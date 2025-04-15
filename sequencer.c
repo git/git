@@ -4411,7 +4411,7 @@ static int write_update_refs_state(struct string_list *refs_to_oids)
 		goto cleanup;
 	}
 
-	if (safe_create_leading_directories(path)) {
+	if (safe_create_leading_directories(the_repository, path)) {
 		result = error(_("unable to create leading directories of %s"),
 			       path);
 		goto cleanup;
@@ -4677,7 +4677,7 @@ static void create_autostash_internal(struct repository *r,
 		strbuf_add_unique_abbrev(&buf, &oid, DEFAULT_ABBREV);
 
 		if (path) {
-			if (safe_create_leading_directories_const(path))
+			if (safe_create_leading_directories_const(the_repository, path))
 				die(_("Could not create directory for '%s'"),
 				    path);
 			write_file(path, "%s", oid_to_hex(&oid));

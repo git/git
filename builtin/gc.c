@@ -28,7 +28,6 @@
 #include "commit.h"
 #include "commit-graph.h"
 #include "packfile.h"
-#include "object-file.h"
 #include "object-store-ll.h"
 #include "pack.h"
 #include "pack-objects.h"
@@ -2099,7 +2098,7 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 	}
 	strbuf_addstr(&plist, "</array>\n</dict>\n</plist>\n");
 
-	if (safe_create_leading_directories(filename))
+	if (safe_create_leading_directories(the_repository, filename))
 		die(_("failed to create directories for '%s'"), filename);
 
 	if ((long)lock_file_timeout_ms < 0 &&
@@ -2565,7 +2564,7 @@ static int systemd_timer_write_timer_file(enum schedule_priority schedule,
 
 	filename = xdg_config_home_systemd(local_timer_name);
 
-	if (safe_create_leading_directories(filename)) {
+	if (safe_create_leading_directories(the_repository, filename)) {
 		error(_("failed to create directories for '%s'"), filename);
 		goto error;
 	}
@@ -2638,7 +2637,7 @@ static int systemd_timer_write_service_template(const char *exec_path)
 	char *local_service_name = xstrfmt(SYSTEMD_UNIT_FORMAT, "", "service");
 
 	filename = xdg_config_home_systemd(local_service_name);
-	if (safe_create_leading_directories(filename)) {
+	if (safe_create_leading_directories(the_repository, filename)) {
 		error(_("failed to create directories for '%s'"), filename);
 		goto error;
 	}

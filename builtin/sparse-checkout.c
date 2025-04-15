@@ -9,6 +9,7 @@
 #include "object-file.h"
 #include "object-name.h"
 #include "parse-options.h"
+#include "path.h"
 #include "pathspec.h"
 #include "strbuf.h"
 #include "string-list.h"
@@ -335,7 +336,7 @@ static int write_patterns_and_update(struct pattern_list *pl)
 
 	sparse_filename = get_sparse_checkout_filename();
 
-	if (safe_create_leading_directories(sparse_filename))
+	if (safe_create_leading_directories(the_repository, sparse_filename))
 		die(_("failed to create directory for sparse-checkout file"));
 
 	hold_lock_file_for_update(&lk, sparse_filename, LOCK_DIE_ON_ERROR);
@@ -491,7 +492,7 @@ static int sparse_checkout_init(int argc, const char **argv, const char *prefix,
 		FILE *fp;
 
 		/* assume we are in a fresh repo, but update the sparse-checkout file */
-		if (safe_create_leading_directories(sparse_filename))
+		if (safe_create_leading_directories(the_repository, sparse_filename))
 			die(_("unable to create leading directories of %s"),
 			    sparse_filename);
 		fp = xfopen(sparse_filename, "w");

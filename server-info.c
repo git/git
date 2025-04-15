@@ -88,7 +88,7 @@ static int update_info_file(struct repository *r, char *path,
 		.old_sb = STRBUF_INIT
 	};
 
-	safe_create_leading_directories(path);
+	safe_create_leading_directories(r, path);
 	f = mks_tempfile_m(tmp, 0666);
 	if (!f)
 		goto out;

@@ -2065,7 +2065,7 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 		ctx->graph_name = get_commit_graph_filename(ctx->odb);
 	}
 
-	if (safe_create_leading_directories(ctx->graph_name)) {
+	if (safe_create_leading_directories(the_repository, ctx->graph_name)) {
 		error(_("unable to create leading directories of %s"),
 			ctx->graph_name);
 		return -1;

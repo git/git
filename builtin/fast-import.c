@@ -1720,7 +1720,7 @@ static void dump_marks(void)
 	if (!export_marks_file || (import_marks_file && !import_marks_file_done))
 		return;
 
-	if (safe_create_leading_directories_const(export_marks_file)) {
+	if (safe_create_leading_directories_const(the_repository, export_marks_file)) {
 		failure |= error_errno("unable to create leading directories of %s",
 				       export_marks_file);
 		return;
