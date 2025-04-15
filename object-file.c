@@ -718,54 +718,6 @@ int has_loose_object(const struct object_id *oid)
 	return check_and_freshen(oid, 0);
 }
 
-static void mmap_limit_check(size_t length)
-{
-	static size_t limit = 0;
-	if (!limit) {
-		limit = git_env_ulong("GIT_MMAP_LIMIT", 0);
-		if (!limit)
-			limit = SIZE_MAX;
-	}
-	if (length > limit)
-		die(_("attempting to mmap %"PRIuMAX" over limit %"PRIuMAX),
-		    (uintmax_t)length, (uintmax_t)limit);
-}
-
-void *xmmap_gently(void *start, size_t length,
-		  int prot, int flags, int fd, off_t offset)
-{
-	void *ret;
-
-	mmap_limit_check(length);
-	ret = mmap(start, length, prot, flags, fd, offset);
-	if (ret == MAP_FAILED && !length)
-		ret = NULL;
-	return ret;
-}
-
-const char *mmap_os_err(void)
-{
-	static const char blank[] = "";
-#if defined(__linux__)
-	if (errno == ENOMEM) {
-		/* this continues an existing error message: */
-		static const char enomem[] =
-", check sys.vm.max_map_count and/or RLIMIT_DATA";
-		return enomem;
-	}
-#endif /* OS-specific bits */
-	return blank;
-}
-
-void *xmmap(void *start, size_t length,
-	int prot, int flags, int fd, off_t offset)
-{
-	void *ret = xmmap_gently(start, length, prot, flags, fd, offset);
-	if (ret == MAP_FAILED)
-		die_errno(_("mmap failed%s"), mmap_os_err());
-	return ret;
-}
-
 static int format_object_header_literally(char *str, size_t size,
 					  const char *type, size_t objsize)
 {
