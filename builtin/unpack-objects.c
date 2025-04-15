@@ -8,6 +8,7 @@
 #include "gettext.h"
 #include "git-zlib.h"
 #include "hex.h"
+#include "object-file.h"
 #include "object-store-ll.h"
 #include "object.h"
 #include "delta.h"

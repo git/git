@@ -21,6 +21,29 @@ extern int fetch_if_missing;
 int index_fd(struct index_state *istate, struct object_id *oid, int fd, struct stat *st, enum object_type type, const char *path, unsigned flags);
 int index_path(struct index_state *istate, struct object_id *oid, const char *path, struct stat *st, unsigned flags);
 
+struct object_directory;
+
+const char *odb_loose_path(struct object_directory *odb,
+			   struct strbuf *buf,
+			   const struct object_id *oid);
+
+/*
+ * Return true iff an alternate object database has a loose object
+ * with the specified name.  This function does not respect replace
+ * references.
+ */
+int has_loose_object_nonlocal(const struct object_id *);
+
+int has_loose_object(const struct object_id *);
+
+/**
+ * format_object_header() is a thin wrapper around s xsnprintf() that
+ * writes the initial "<type> <obj-len>" part of the loose object
+ * header. It returns the size that snprintf() returns + 1.
+ */
+int format_object_header(char *str, size_t size, enum object_type type,
+			 size_t objsize);
+
 /**
  * unpack_loose_header() initializes the data stream needed to unpack
  * a loose object header.
@@ -61,6 +84,29 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 struct object_info;
 int parse_loose_header(const char *hdr, struct object_info *oi);
 
+int write_object_file_flags(const void *buf, unsigned long len,
+			    enum object_type type, struct object_id *oid,
+			    struct object_id *comapt_oid_in, unsigned flags);
+static inline int write_object_file(const void *buf, unsigned long len,
+				    enum object_type type, struct object_id *oid)
+{
+	return write_object_file_flags(buf, len, type, oid, NULL, 0);
+}
+
+struct input_stream {
+	const void *(*read)(struct input_stream *, unsigned long *len);
+	void *data;
+	int is_finished;
+};
+
+int write_object_file_literally(const void *buf, unsigned long len,
+				const char *type, struct object_id *oid,
+				unsigned flags);
+int stream_loose_object(struct input_stream *in_stream, size_t len,
+			struct object_id *oid);
+
+int force_object_loose(const struct object_id *oid, time_t mtime);
+
 /**
  * With in-core object data in "buf", rehash it to make sure the
  * object name actually matches "oid" to detect object corruption.
@@ -79,6 +125,10 @@ int check_object_signature(struct repository *r, const struct object_id *oid,
  */
 int stream_object_signature(struct repository *r, const struct object_id *oid);
 
+int loose_object_info(struct repository *r,
+		      const struct object_id *oid,
+		      struct object_info *oi, int flags);
+
 enum finalize_object_file_flags {
 	FOF_SKIP_COLLISION_CHECK = 1,
 };
@@ -90,10 +140,18 @@ int finalize_object_file_flags(const char *tmpfile, const char *filename,
 /* Helper to check and "touch" a file */
 int check_and_freshen_file(const char *fn, int freshen);
 
-void *read_object_with_reference(struct repository *r,
-				 const struct object_id *oid,
-				 enum object_type required_type,
-				 unsigned long *size,
-				 struct object_id *oid_ret);
+/*
+ * Open the loose object at path, check its hash, and return the contents,
+ * use the "oi" argument to assert things about the object, or e.g. populate its
+ * type, and size. If the object is a blob, then "contents" may return NULL,
+ * to allow streaming of large blobs.
+ *
+ * Returns 0 on success, negative on error (details may be written to stderr).
+ */
+int read_loose_object(const char *path,
+		      const struct object_id *expected_oid,
+		      struct object_id *real_oid,
+		      void **contents,
+		      struct object_info *oi);
 
 #endif /* OBJECT_FILE_H */

@@ -31,6 +31,7 @@
 #include "tmp-objdir.h"
 #include "oidset.h"
 #include "packfile.h"
+#include "object-file.h"
 #include "object-name.h"
 #include "object-store-ll.h"
 #include "path.h"

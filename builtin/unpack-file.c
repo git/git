@@ -2,6 +2,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "hex.h"
+#include "object-file.h"
 #include "object-name.h"
 #include "object-store-ll.h"
 
