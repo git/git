@@ -1029,6 +1029,8 @@ static int run_write_commit_graph(struct maintenance_run_opts *opts)
 
 	if (opts->quiet)
 		strvec_push(&child.args, "--no-progress");
+	else
+		strvec_push(&child.args, "--progress");
 
 	return !!run_command(&child);
 }
@@ -1161,6 +1163,7 @@ static int write_loose_object_to_stdin(const struct object_id *oid,
 
 	fprintf(d->in, "%s\n", oid_to_hex(oid));
 
+	/* If batch_size is INT_MAX, then this will return 0 always. */
 	return ++(d->count) > d->batch_size;
 }
 
@@ -1185,6 +1188,8 @@ static int pack_loose(struct maintenance_run_opts *opts)
 	strvec_push(&pack_proc.args, "pack-objects");
 	if (opts->quiet)
 		strvec_push(&pack_proc.args, "--quiet");
+	else
+		strvec_push(&pack_proc.args, "--no-quiet");
 	strvec_pushf(&pack_proc.args, "%s/pack/loose", r->objects->odb->path);
 
 	pack_proc.in = -1;
@@ -1203,6 +1208,15 @@ static int pack_loose(struct maintenance_run_opts *opts)
 	data.in = xfdopen(pack_proc.in, "w");
 	data.count = 0;
 	data.batch_size = 50000;
+
+	repo_config_get_int(r, "maintenance.loose-objects.batchSize",
+			    &data.batch_size);
+
+	/* If configured as 0, then remove limit. */
+	if (!data.batch_size)
+		data.batch_size = INT_MAX;
+	else if (data.batch_size > 0)
+		data.batch_size--; /* Decrease for equality on limit. */
 
 	for_each_loose_file_in_objdir(r->objects->odb->path,
 				      write_loose_object_to_stdin,
@@ -1263,6 +1277,8 @@ static int multi_pack_index_write(struct maintenance_run_opts *opts)
 
 	if (opts->quiet)
 		strvec_push(&child.args, "--no-progress");
+	else
+		strvec_push(&child.args, "--progress");
 
 	if (run_command(&child))
 		return error(_("failed to write multi-pack-index"));
@@ -1279,6 +1295,8 @@ static int multi_pack_index_expire(struct maintenance_run_opts *opts)
 
 	if (opts->quiet)
 		strvec_push(&child.args, "--no-progress");
+	else
+		strvec_push(&child.args, "--progress");
 
 	if (run_command(&child))
 		return error(_("'git multi-pack-index expire' failed"));
@@ -1335,6 +1353,8 @@ static int multi_pack_index_repack(struct maintenance_run_opts *opts)
 
 	if (opts->quiet)
 		strvec_push(&child.args, "--no-progress");
+	else
+		strvec_push(&child.args, "--progress");
 
 	strvec_pushf(&child.args, "--batch-size=%"PRIuMAX,
 				  (uintmax_t)get_auto_pack_size());

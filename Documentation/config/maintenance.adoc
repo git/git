@@ -61,6 +61,11 @@ maintenance.loose-objects.auto::
 	loose objects is at least the value of `maintenance.loose-objects.auto`.
 	The default value is 100.
 
+maintenance.loose-objects.batchSize::
+	This integer config option controls the maximum number of loose objects
+	written into a packfile during the `loose-objects` task. The default is
+	fifty thousand. Use value `0` to indicate no limit.
+
 maintenance.incremental-repack.auto::
 	This integer config option controls how often the `incremental-repack`
 	task should be run as part of `git maintenance run --auto`. If zero,
