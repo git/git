@@ -30,31 +30,31 @@
  * to write them into the object store (e.g. a browse-only
  * application).
  */
-static struct cached_object_entry {
+struct cached_object_entry {
 	struct object_id oid;
 	struct cached_object {
 		enum object_type type;
 		const void *buf;
 		unsigned long size;
 	} value;
-} *cached_objects;
-static int cached_object_nr, cached_object_alloc;
+};
 
-static const struct cached_object *find_cached_object(const struct object_id *oid)
+static const struct cached_object *find_cached_object(struct raw_object_store *object_store,
+						      const struct object_id *oid)
 {
 	static const struct cached_object empty_tree = {
 		.type = OBJ_TREE,
 		.buf = "",
 	};
-	int i;
-	const struct cached_object_entry *co = cached_objects;
+	const struct cached_object_entry *co = object_store->cached_objects;
 
-	for (i = 0; i < cached_object_nr; i++, co++) {
+	for (size_t i = 0; i < object_store->cached_object_nr; i++, co++)
 		if (oideq(&co->oid, oid))
 			return &co->value;
-	}
-	if (oideq(oid, the_hash_algo->empty_tree))
+
+	if (oid->algo && oideq(oid, hash_algos[oid->algo].empty_tree))
 		return &empty_tree;
+
 	return NULL;
 }
 
@@ -650,7 +650,7 @@ static int do_oid_object_info_extended(struct repository *r,
 	if (!oi)
 		oi = &blank_oi;
 
-	co = find_cached_object(real);
+	co = find_cached_object(r->objects, real);
 	if (co) {
 		if (oi->typep)
 			*(oi->typep) = co->type;
@@ -853,18 +853,21 @@ int oid_object_info(struct repository *r,
 	return type;
 }
 
-int pretend_object_file(void *buf, unsigned long len, enum object_type type,
+int pretend_object_file(struct repository *repo,
+			void *buf, unsigned long len, enum object_type type,
 			struct object_id *oid)
 {
 	struct cached_object_entry *co;
 	char *co_buf;
 
-	hash_object_file(the_hash_algo, buf, len, type, oid);
-	if (repo_has_object_file_with_flags(the_repository, oid, OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT) ||
-	    find_cached_object(oid))
+	hash_object_file(repo->hash_algo, buf, len, type, oid);
+	if (repo_has_object_file_with_flags(repo, oid, OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT) ||
+	    find_cached_object(repo->objects, oid))
 		return 0;
-	ALLOC_GROW(cached_objects, cached_object_nr + 1, cached_object_alloc);
-	co = &cached_objects[cached_object_nr++];
+
+	ALLOC_GROW(repo->objects->cached_objects,
+		   repo->objects->cached_object_nr + 1, repo->objects->cached_object_alloc);
+	co = &repo->objects->cached_objects[repo->objects->cached_object_nr++];
 	co->value.size = len;
 	co->value.type = type;
 	co_buf = xmalloc(len);
@@ -1020,6 +1023,10 @@ void raw_object_store_clear(struct raw_object_store *o)
 	free_object_directories(o);
 	o->odb_tail = NULL;
 	o->loaded_alternates = 0;
+
+	for (size_t i = 0; i < o->cached_object_nr; i++)
+		free((char *) o->cached_objects[i].value.buf);
+	FREE_AND_NULL(o->cached_objects);
 
 	INIT_LIST_HEAD(&o->packed_git_mru);
 	close_object_store(o);
