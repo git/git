@@ -621,30 +621,34 @@ test_expect_success !VALGRIND,RUNTIME_PREFIX,CAN_EXEC_IN_PWD '%(prefix)/ works' 
 '
 
 test_expect_success MINGW,RUNTIME_PREFIX 'MSYSTEM/PATH is adjusted if necessary' '
-	mkdir -p "$HOME"/bin pretend/mingw64/bin \
-		pretend/mingw64/libexec/git-core pretend/usr/bin &&
-	cp "$GIT_EXEC_PATH"/git.exe pretend/mingw64/bin/ &&
-	cp "$GIT_EXEC_PATH"/git.exe pretend/mingw64/libexec/git-core/ &&
+	if test -z "$MINGW_PREFIX"
+	then
+		MINGW_PREFIX="/$(echo "${MSYSTEM:-MINGW64}" | tr A-Z a-z)"
+	fi &&
+	mkdir -p "$HOME"/bin pretend"$MINGW_PREFIX"/bin \
+		pretend"$MINGW_PREFIX"/libexec/git-core pretend/usr/bin &&
+	cp "$GIT_EXEC_PATH"/git.exe pretend"$MINGW_PREFIX"/bin/ &&
+	cp "$GIT_EXEC_PATH"/git.exe pretend"$MINGW_PREFIX"/libexec/git-core/ &&
 	# copy the .dll files, if any (happens when building via CMake)
 	case "$GIT_EXEC_PATH"/*.dll in
 	*/"*.dll") ;; # no `.dll` files to be copied
 	*)
-		cp "$GIT_EXEC_PATH"/*.dll pretend/mingw64/bin/ &&
-		cp "$GIT_EXEC_PATH"/*.dll pretend/mingw64/libexec/git-core/
+		cp "$GIT_EXEC_PATH"/*.dll pretend"$MINGW_PREFIX"/bin/ &&
+		cp "$GIT_EXEC_PATH"/*.dll pretend"$MINGW_PREFIX"/libexec/git-core/
 		;;
 	esac &&
 	echo "env | grep MSYSTEM=" | write_script "$HOME"/bin/git-test-home &&
-	echo "echo mingw64" | write_script pretend/mingw64/bin/git-test-bin &&
+	echo "echo ${MINGW_PREFIX#/}" | write_script pretend"$MINGW_PREFIX"/bin/git-test-bin &&
 	echo "echo usr" | write_script pretend/usr/bin/git-test-bin2 &&
 
 	(
 		MSYSTEM= &&
 		GIT_EXEC_PATH= &&
-		pretend/mingw64/libexec/git-core/git.exe test-home >actual &&
-		pretend/mingw64/libexec/git-core/git.exe test-bin >>actual &&
-		pretend/mingw64/bin/git.exe test-bin2 >>actual
+		pretend"$MINGW_PREFIX"/libexec/git-core/git.exe test-home >actual &&
+		pretend"$MINGW_PREFIX"/libexec/git-core/git.exe test-bin >>actual &&
+		pretend"$MINGW_PREFIX"/bin/git.exe test-bin2 >>actual
 	) &&
-	test_write_lines MSYSTEM=$MSYSTEM mingw64 usr >expect &&
+	test_write_lines MSYSTEM=$MSYSTEM "${MINGW_PREFIX#/}" usr >expect &&
 	test_cmp expect actual
 '
 
