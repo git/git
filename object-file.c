@@ -1356,28 +1356,6 @@ static int index_core(struct index_state *istate,
 	return ret;
 }
 
-/*
- * This creates one packfile per large blob unless bulk-checkin
- * machinery is "plugged".
- *
- * This also bypasses the usual "convert-to-git" dance, and that is on
- * purpose. We could write a streaming version of the converting
- * functions and insert that before feeding the data to fast-import
- * (or equivalent in-core API described above). However, that is
- * somewhat complicated, as we do not know the size of the filter
- * result, which we need to know beforehand when writing a git object.
- * Since the primary motivation for trying to stream from the working
- * tree file and to avoid mmaping it in core is to deal with large
- * binary blobs, they generally do not want to get any conversion, and
- * callers should avoid this code path when filters are requested.
- */
-static int index_blob_stream(struct object_id *oid, int fd, size_t size,
-			     const char *path,
-			     unsigned flags)
-{
-	return index_blob_bulk_checkin(oid, fd, size, path, flags);
-}
-
 int index_fd(struct index_state *istate, struct object_id *oid,
 	     int fd, struct stat *st,
 	     enum object_type type, const char *path, unsigned flags)
@@ -1398,8 +1376,8 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
 				 type, path, flags);
 	else
-		ret = index_blob_stream(oid, fd, xsize_t(st->st_size), path,
-					flags);
+		ret = index_blob_bulk_checkin(oid, fd, xsize_t(st->st_size), path,
+					     flags);
 	close(fd);
 	return ret;
 }
