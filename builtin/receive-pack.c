@@ -33,7 +33,7 @@
 #include "packfile.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "path.h"
 #include "protocol.h"
 #include "commit-reach.h"

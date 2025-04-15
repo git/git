@@ -18,7 +18,7 @@
 #include "tmp-objdir.h"
 #include "packfile.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 
 static int odb_transaction_nesting;
 

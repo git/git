@@ -30,7 +30,7 @@
 #include "strbuf.h"
 #include "lockfile.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "dir.h"
 #include "entry.h"
 #include "setup.h"

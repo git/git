@@ -12,7 +12,7 @@
 #include "tree.h"
 #include "parse-options.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 
 static struct treeent {
 	unsigned mode;

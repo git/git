@@ -13,6 +13,7 @@
 #include "git-compat-util.h"
 #include "bulk-checkin.h"
 #include "convert.h"
+#include "dir.h"
 #include "environment.h"
 #include "fsck.h"
 #include "gettext.h"

@@ -9,7 +9,7 @@
 #include "hex.h"
 #include "repository.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "utf8.h"
 #include "diff.h"
 #include "revision.h"
