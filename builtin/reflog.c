@@ -29,6 +29,9 @@
 #define BUILTIN_REFLOG_EXISTS_USAGE \
 	N_("git reflog exists <ref>")
 
+#define BUILTIN_REFLOG_DROP_USAGE \
+	N_("git reflog drop [--all [--single-worktree] | <refs>...]")
+
 static const char *const reflog_show_usage[] = {
 	BUILTIN_REFLOG_SHOW_USAGE,
 	NULL,
@@ -54,11 +57,17 @@ static const char *const reflog_exists_usage[] = {
 	NULL,
 };
 
+static const char *const reflog_drop_usage[] = {
+	BUILTIN_REFLOG_DROP_USAGE,
+	NULL,
+};
+
 static const char *const reflog_usage[] = {
 	BUILTIN_REFLOG_SHOW_USAGE,
 	BUILTIN_REFLOG_LIST_USAGE,
 	BUILTIN_REFLOG_EXPIRE_USAGE,
 	BUILTIN_REFLOG_DELETE_USAGE,
+	BUILTIN_REFLOG_DROP_USAGE,
 	BUILTIN_REFLOG_EXISTS_USAGE,
 	NULL
 };
@@ -383,7 +392,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 		struct expire_reflog_policy_cb cb = { .cmd = cmd };
 
 		if (!repo_dwim_log(the_repository, argv[i], strlen(argv[i]), NULL, &ref)) {
-			status |= error(_("%s points nowhere!"), argv[i]);
+			status |= error(_("reflog could not be found: '%s'"), argv[i]);
 			continue;
 		}
 		set_reflog_expiry_param(&cb.cmd, ref);
@@ -449,10 +458,64 @@ static int cmd_reflog_exists(int argc, const char **argv, const char *prefix,
 				   refname);
 }
 
+static int cmd_reflog_drop(int argc, const char **argv, const char *prefix,
+			   struct repository *repo)
+{
+	int ret = 0, do_all = 0, single_worktree = 0;
+	const struct option options[] = {
+		OPT_BOOL(0, "all", &do_all, N_("drop the reflogs of all references")),
+		OPT_BOOL(0, "single-worktree", &single_worktree,
+			 N_("drop reflogs from the current worktree only")),
+		OPT_END()
+	};
+
+	argc = parse_options(argc, argv, prefix, options, reflog_drop_usage, 0);
+
+	if (argc && do_all)
+		usage(_("references specified along with --all"));
+
+	if (do_all) {
+		struct worktree_reflogs collected = {
+			.reflogs = STRING_LIST_INIT_DUP,
+		};
+		struct string_list_item *item;
+		struct worktree **worktrees, **p;
+
+		worktrees = get_worktrees();
+		for (p = worktrees; *p; p++) {
+			if (single_worktree && !(*p)->is_current)
+				continue;
+			collected.worktree = *p;
+			refs_for_each_reflog(get_worktree_ref_store(*p),
+					     collect_reflog, &collected);
+		}
+		free_worktrees(worktrees);
+
+		for_each_string_list_item(item, &collected.reflogs)
+			ret |= refs_delete_reflog(get_main_ref_store(repo),
+						     item->string);
+		string_list_clear(&collected.reflogs, 0);
+
+		return ret;
+	}
+
+	for (int i = 0; i < argc; i++) {
+		char *ref;
+		if (!repo_dwim_log(repo, argv[i], strlen(argv[i]), NULL, &ref)) {
+			ret |= error(_("reflog could not be found: '%s'"), argv[i]);
+			continue;
+		}
+
+		ret |= refs_delete_reflog(get_main_ref_store(repo), ref);
+		free(ref);
+	}
+
+	return ret;
+}
+
 /*
  * main "reflog"
  */
-
 int cmd_reflog(int argc,
 	       const char **argv,
 	       const char *prefix,
@@ -465,6 +528,7 @@ int cmd_reflog(int argc,
 		OPT_SUBCOMMAND("expire", &fn, cmd_reflog_expire),
 		OPT_SUBCOMMAND("delete", &fn, cmd_reflog_delete),
 		OPT_SUBCOMMAND("exists", &fn, cmd_reflog_exists),
+		OPT_SUBCOMMAND("drop", &fn, cmd_reflog_drop),
 		OPT_END()
 	};
 
