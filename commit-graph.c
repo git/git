@@ -13,7 +13,6 @@
 #include "refs.h"
 #include "hash-lookup.h"
 #include "commit-graph.h"
-#include "object-file.h"
 #include "object-store-ll.h"
 #include "oid-array.h"
 #include "path.h"
