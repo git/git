@@ -578,7 +578,7 @@ done:
 
 		strvec_pushl(&opt.env, "GIT_DIR", "GIT_WORK_TREE", NULL);
 		strvec_pushl(&opt.args,
-			     oid_to_hex(null_oid()),
+			     oid_to_hex(null_oid(the_hash_algo)),
 			     oid_to_hex(&commit->object.oid),
 			     "1",
 			     NULL);

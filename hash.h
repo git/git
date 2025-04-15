@@ -326,7 +326,7 @@ int hash_algo_by_name(const char *name);
 /* Identical, except based on the format ID. */
 int hash_algo_by_id(uint32_t format_id);
 /* Identical, except based on the length. */
-int hash_algo_by_length(int len);
+int hash_algo_by_length(size_t len);
 /* Identical, except for a pointer to struct git_hash_algo. */
 static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
 {
@@ -341,7 +341,7 @@ static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
 
 const struct git_hash_algo *unsafe_hash_algo(const struct git_hash_algo *algop);
 
-const struct object_id *null_oid(void);
+const struct object_id *null_oid(const struct git_hash_algo *algop);
 
 static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2, const struct git_hash_algo *algop)
 {
