@@ -201,8 +201,12 @@ int uname(struct utsname *buf);
  * replacements of existing functions
  */
 
-int mingw_unlink(const char *pathname);
-#define unlink mingw_unlink
+int mingw_unlink(const char *pathname, int handle_in_use_error);
+#ifdef MINGW_DONT_HANDLE_IN_USE_ERROR
+# define unlink(path) mingw_unlink(path, 0)
+#else
+# define unlink(path) mingw_unlink(path, 1)
+#endif
 
 int mingw_rmdir(const char *path);
 #define rmdir mingw_rmdir
