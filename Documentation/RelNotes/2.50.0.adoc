@@ -15,6 +15,19 @@ UI, Workflows & Features
 
  * Incrementally updating multi-pack index files.
 
+ * "git reflog" learns "drop" subcommand, that discards the entire
+   reflog data for a ref.
+
+ * A new userdiff driver for ".ini" format configuration files has
+   been added.
+
+ * The job to coalesce loose objects into packfiles in "git
+   maintenance" now has configurable batch size.
+
+ * "git clone" still gave the message about the default branch name;
+   this message has been turned into an advice message that can be
+   turned off.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -54,6 +67,9 @@ Performance, Internal Implementation, Development Support etc.
    use by external users of the library.
 
  * CI update.
+
+ * The object layer has been updated to take an explicit repository
+   instance as a parameter in more code paths.
 
 
 Fixes since v2.49
@@ -107,6 +123,17 @@ Fixes since v2.49
    which has been corrected.
    (merge 93bab2d04b fr/vimdiff-layout-fixes later to maint).
 
+ * Fix our use of zlib corner cases.
+   (merge 1cb2f293f5 jk/zlib-inflate-fixes later to maint).
+
+ * Fix lockfile contention in reftable code on Windows.
+   (merge 0a3dceabf1 ps/mingw-creat-excl-fix later to maint).
+
+ * "git-merge-file" documentation source, which has lines that look
+   like conflict markers, lacked custom conflict marker size defined,
+   which has been corrected..
+   (merge d3b5832381 pw/custom-conflict-marker-size-for-merge-related-docs later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
    (merge 2bfd3b3685 ab/decorate-code-cleanup later to maint).
@@ -124,3 +151,5 @@ Fixes since v2.49
    (merge 133d065dd6 ta/bulk-checkin-signed-compare-false-warning-fix later to maint).
    (merge d2827dc31e es/meson-build-skip-coccinelle later to maint).
    (merge ee8edb7156 dk/vimdiff-doc-fix later to maint).
+   (merge 107d889303 md/t1403-path-is-file later to maint).
+   (merge abd4192b07 js/comma-semicolon-confusion later to maint).
