@@ -90,36 +90,6 @@ static int get_conv_flags(unsigned flags)
 		return 0;
 }
 
-
-int mkdir_in_gitdir(const char *path)
-{
-	if (mkdir(path, 0777)) {
-		int saved_errno = errno;
-		struct stat st;
-		struct strbuf sb = STRBUF_INIT;
-
-		if (errno != EEXIST)
-			return -1;
-		/*
-		 * Are we looking at a path in a symlinked worktree
-		 * whose original repository does not yet have it?
-		 * e.g. .git/rr-cache pointing at its original
-		 * repository in which the user hasn't performed any
-		 * conflict resolution yet?
-		 */
-		if (lstat(path, &st) || !S_ISLNK(st.st_mode) ||
-		    strbuf_readlink(&sb, path, st.st_size) ||
-		    !is_absolute_path(sb.buf) ||
-		    mkdir(sb.buf, 0777)) {
-			strbuf_release(&sb);
-			errno = saved_errno;
-			return -1;
-		}
-		strbuf_release(&sb);
-	}
-	return adjust_shared_perm(the_repository, path);
-}
-
 static enum scld_error safe_create_leading_directories_1(char *path, int share)
 {
 	char *next_component = path + offset_1st_component(path);
@@ -2196,7 +2166,8 @@ int stream_loose_object(struct input_stream *in_stream, size_t len,
 		struct strbuf dir = STRBUF_INIT;
 		strbuf_add(&dir, filename.buf, dirlen);
 
-		if (mkdir_in_gitdir(dir.buf) && errno != EEXIST) {
+		if (safe_create_dir_in_gitdir(the_repository, dir.buf) &&
+		    errno != EEXIST) {
 			err = error_errno(_("unable to create directory %s"), dir.buf);
 			strbuf_release(&dir);
 			goto cleanup;

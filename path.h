@@ -221,6 +221,17 @@ char *xdg_cache_home(const char *filename);
  */
 void safe_create_dir(struct repository *repo, const char *dir, int share);
 
+/*
+ * Similar to `safe_create_dir()`, but with two differences:
+ *
+ *   - It knows to resolve gitlink files for symlinked worktrees.
+ *
+ *   - It always adjusts shared permissions.
+ *
+ * Returns a negative erorr code on error, 0 on success.
+ */
+int safe_create_dir_in_gitdir(struct repository *repo, const char *path);
+
 # ifdef USE_THE_REPOSITORY_VARIABLE
 #  include "strbuf.h"
 #  include "repository.h"
