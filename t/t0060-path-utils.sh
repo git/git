@@ -630,13 +630,11 @@ test_expect_success MINGW,RUNTIME_PREFIX 'MSYSTEM/PATH is adjusted if necessary'
 	cp "$GIT_EXEC_PATH"/git.exe pretend"$MINGW_PREFIX"/bin/ &&
 	cp "$GIT_EXEC_PATH"/git.exe pretend"$MINGW_PREFIX"/libexec/git-core/ &&
 	# copy the .dll files, if any (happens when building via CMake)
-	case "$GIT_EXEC_PATH"/*.dll in
-	*/"*.dll") ;; # no `.dll` files to be copied
-	*)
+	if test -n "$(ls "$GIT_EXEC_PATH"/*.dll 2>/dev/null)"
+	then
 		cp "$GIT_EXEC_PATH"/*.dll pretend"$MINGW_PREFIX"/bin/ &&
 		cp "$GIT_EXEC_PATH"/*.dll pretend"$MINGW_PREFIX"/libexec/git-core/
-		;;
-	esac &&
+	fi &&
 	echo "env | grep MSYSTEM=" | write_script "$HOME"/bin/git-test-home &&
 	echo "echo ${MINGW_PREFIX#/}" | write_script pretend"$MINGW_PREFIX"/bin/git-test-bin &&
 	echo "echo usr" | write_script pretend/usr/bin/git-test-bin2 &&
