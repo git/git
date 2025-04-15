@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2025, #03; Fri, 11)
-X-master-at: 485f5f863615e670fd97ae40af744e14072cfe18
-X-next-at: 082f7c87e043e091852db09dfb249d68a17ac7a4
+Subject: What's cooking in git.git (Apr 2025, #04; Tue, 15)
+X-master-at: 77d6ee513fb1d34577aab0aa589f41b4cc4be33d
+X-next-at: fd585f713ee3339aaf1de90a7666537036391761
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Apr 2025, #03; Fri, 11)
+What's cooking in git.git (Apr 2025, #04; Tue, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,11 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-As some of you may know, I do not like to issue "What's cooking"
-reports rapidly in a row (which in turn means making merges to
-'master' too often), but with so many backlogs that have matured,
-I couldn't help it.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -51,7 +46,207 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* bc/allow-upload-pack-from-other-people (2025-04-01) 1 commit
+  (merged to 'next' on 2025-04-07 at c27755834e)
+ + t5605: fix test for cloning from a different user
+
+ Test fix for an already graduated topic.
+ source: <Z-sO9gcWAi_xh0tI@tapette.crustytoothpaste.net>
+
+
+* ds/maintenance-loose-objects-batchsize (2025-03-23) 2 commits
+  (merged to 'next' on 2025-04-07 at a4e55af4bc)
+ + maintenance: add loose-objects.batchSize config
+ + maintenance: force progress/no-quiet to children
+
+ The job to coalesce loose objects into packfiles in "git
+ maintenance" now has configurable batch size.
+ source: <pull.1885.git.1742777512.gitgitgadget@gmail.com>
+
+
+* jk/zlib-inflate-fixes (2025-02-25) 10 commits
+  (merged to 'next' on 2025-04-07 at 4343a155f7)
+ + unpack_loose_rest(): rewrite return handling for clarity
+ + unpack_loose_rest(): simplify error handling
+ + unpack_loose_rest(): never clean up zstream
+ + unpack_loose_rest(): avoid numeric comparison of zlib status
+ + unpack_loose_header(): avoid numeric comparison of zlib status
+ + git_inflate(): skip zlib_post_call() sanity check on Z_NEED_DICT
+ + unpack_loose_header(): fix infinite loop on broken zlib input
+ + unpack_loose_header(): report headers without NUL as "bad"
+ + unpack_loose_header(): simplify next_out assignment
+ + loose_object_info(): BUG() on inflating content with unknown type
+
+ Fix our use of zlib corner cases.
+ source: <20250225062518.GA1293854@coredump.intra.peff.net>
+
+
+* js/comma-semicolon-confusion (2025-03-28) 10 commits
+  (merged to 'next' on 2025-04-07 at 3c1f7f4226)
+ + detect-compiler: detect clang even if it found CUDA
+ + clang: warn when the comma operator is used
+ + compat/regex: explicitly mark intentional use of the comma operator
+ + wildmatch: avoid using of the comma operator
+ + diff-delta: avoid using the comma operator
+ + xdiff: avoid using the comma operator unnecessarily
+ + clar: avoid using the comma operator unnecessarily
+ + kwset: avoid using the comma operator unnecessarily
+ + rebase: avoid using the comma operator unnecessarily
+ + remote-curl: avoid using the comma operator unnecessarily
+
+ Code clean-up.
+ source: <pull.1889.v3.git.1743076383.gitgitgadget@gmail.com>
+
+
+* jt/clone-guess-remote-head-fix (2025-03-25) 3 commits
+  (merged to 'next' on 2025-04-07 at 35793fd7d8)
+ + advice: allow disabling default branch name advice
+ + builtin/clone: suppress unexpected default branch advice
+ + remote: allow `guess_remote_head()` to suppress advice
+
+ "git clone" still gave the message about the default branch name;
+ this message has been turned into an advice message that can be
+ turned off.
+ cf. <69ccc682-3f81-440f-8e96-a5af5d49fa60@gmail.com>
+ source: <20250325005148.1771502-1-jltobler@gmail.com>
+
+
+* kn/reflog-drop (2025-03-17) 2 commits
+  (merged to 'next' on 2025-04-07 at 193c01b203)
+ + reflog: implement subcommand to drop reflogs
+ + reflog: improve error for when reflog is not found
+
+ "git reflog" learns "drop" subcommand, that discards the entire
+ reflog data for a ref.
+ cf. <CAP8UFD1vTkPH=5b++6+=koozC31=wD1gQszvdFmzb73B9HM4Aw@mail.gmail.com>
+ source: <20250314-493-add-command-to-purge-reflog-entries-v3-0-c24e23a6146d@gmail.com>
+
+
+* lo/userdiff-gitconfig (2025-04-01) 1 commit
+  (merged to 'next' on 2025-04-07 at 1b906232a1)
+ + userdiff: add builtin driver for INI files
+
+ Will merge to 'master'.
+ cf. <Z-pGdyh0eG3xSe4W@pks.im>
+ source: <20250331031309.94682-1-lucasseikioshiro@gmail.com>
+
+
+* md/t1403-path-is-file (2025-03-04) 1 commit
+  (merged to 'next' on 2025-04-07 at 93087893e8)
+ + t1403: verify that path exists and is a file
+
+ Test tweak.
+ source: <20250304112728.41228-2-danimahendra0904@gmail.com>
+
+
+* ps/mingw-creat-excl-fix (2025-03-21) 2 commits
+  (merged to 'next' on 2025-04-07 at 590b0d4d21)
+ + compat/mingw: fix EACCESS when opening files with `O_CREAT | O_EXCL`
+ + meson: fix compat sources when compiling with MSVC
+
+ Fix lockfile contention in reftable code on Windows.
+ cf. <801fac5d-dd98-d157-6ff3-c3e8aa6a68ae@gmx.de>
+ source: <20250320-b4-pks-mingw-lockfile-flake-v2-0-a84c90cfc6c2@pks.im>
+
+
+* ps/object-wo-the-repository (2025-03-10) 12 commits
+  (merged to 'next' on 2025-04-07 at 0cc0c8631d)
+ + hash: stop depending on `the_repository` in `null_oid()`
+ + hash: fix "-Wsign-compare" warnings
+ + object-file: split out logic regarding hash algorithms
+ + delta-islands: stop depending on `the_repository`
+ + object-file-convert: stop depending on `the_repository`
+ + pack-bitmap-write: stop depending on `the_repository`
+ + pack-revindex: stop depending on `the_repository`
+ + pack-check: stop depending on `the_repository`
+ + environment: move access to "core.bigFileThreshold" into repo settings
+ + pack-write: stop depending on `the_repository` and `the_hash_algo`
+ + object: stop depending on `the_repository`
+ + csum-file: stop depending on `the_repository`
+ (this branch is used by ps/object-file-cleanup.)
+
+ The object layer has been updated to take an explicit repository
+ instance as a parameter in more code paths.
+ cf. <CABPp-BFrjqf=dMNwxzyMj3EQrAXTYkH7rDTi7X7xoWnoW_A4eA@mail.gmail.com>
+ source: <20250310-b4-pks-objects-without-the-repository-v4-0-f201b8ec57ba@pks.im>
+
+
+* ps/reftable-windows-unlink-fix (2025-02-18) 2 commits
+  (merged to 'next' on 2025-04-07 at 88e2a9a077)
+ + reftable: ignore file-in-use errors when unlink(3p) fails on Windows
+ + Merge branch 'ps/reftable-sans-compat-util' into ps/reftable-windows-unlink-fix
+
+ Portability fix.
+ source: <20250206-b4-pks-reftable-win32-in-use-errors-v2-1-56985a4f6186@pks.im>
+
+
+* pw/custom-conflict-marker-size-for-merge-related-docs (2025-03-29) 1 commit
+  (merged to 'next' on 2025-04-07 at 281b7207e3)
+ + merge-file doc: set conflict-marker-size attribute
+
+ "git-merge-file" documentation source, which has lines that look
+ like conflict markers, lacked custom conflict marker size defined,
+ which has been corrected..
+ source: <pull.1895.git.1743173140253.gitgitgadget@gmail.com>
+
+--------------------------------------------------
 [New Topics]
+
+* ps/meson-build-perf-bench (2025-04-14) 5 commits
+ - meson: wire up benchmarking options
+ - meson: wire up benchmarks
+ - t/perf: fix benchmarks with out-of-tree builds
+ - t/perf: use configured PERL_PATH
+ - t/perf: fix benchmarks with alternate repo formats
+
+ The build procedure based on Meson learned to drive the
+ benchmarking tests.
+
+ Comments?
+ source: <20250414-pks-meson-benchmarks-v2-0-04377080a167@pks.im>
+
+
+* aw/t9811-modernize (2025-04-15) 1 commit
+ - t9811: be more precise to check importing of tags
+
+ Test updates.
+
+ Will merge to 'next'?
+ source: <20250412061957.81747-2-anthonywang03@icloud.com>
+
+
+* ps/fewer-perl (2025-04-15) 5 commits
+ - Documentation: stop depending on Perl to generate command list
+ - Documentation: stop depending on Perl to massage user manual
+ - request-pull: stop depending on Perl
+ - filter-branch: stop depending on Perl
+ - Merge branch 'ps/test-wo-perl-prereq' into ps/fewer-perl
+ (this branch uses ps/test-wo-perl-prereq.)
+
+ Reduce requirement for Perl in our documentation build and a few
+ scripts.
+
+ Comments?
+ source: <20250415-b4-pks-drop-perl-v1-0-c6addf175858@pks.im>
+
+
+* ps/parse-options-integers (2025-04-15) 5 commits
+ - parse-options: detect mismatches in integer signedness
+ - parse-options: introduce `OPTION_UNSIGNED`
+ - parse-options: introduce precision handling for `OPTION_MAGNITUDE`
+ - parse-options: introduce precision handling for `OPTION_INTEGER`
+ - global: use designated initializers for options
+
+ Update parse-options API to catch mistakes to pass address of an
+ integral variable of a wrong type/size.
+
+ Will merge to 'next'?
+ source: <20250415-b4-pks-parse-options-integers-v2-0-ce07441a1f01@pks.im>
+
+--------------------------------------------------
+[Cooking]
 
 * kn/bundle-dedup-optim (2025-04-08) 2 commits
   (merged to 'next' on 2025-04-11 at 082f7c87e0)
@@ -64,8 +259,9 @@ Release tarballs are available at:
  source: <20250408-488-generating-bundles-with-many-references-has-non-linear-performance-v2-0-0802fc36a23d@gmail.com>
 
 
-* kn/meson-hdr-check (2025-04-08) 4 commits
- - meson: add support for 'headers-check'
+* kn/meson-hdr-check (2025-04-14) 5 commits
+ - makefile/meson: add 'check-headers' as alias for 'hdr-check'
+ - meson: add support for 'hdr-check'
  - meson: move headers definition from 'contrib/coccinelle'
  - coccinelle: meson: rename variables to be more specific
  - Merge branch 'es/meson-build-skip-coccinelle' into kn/meson-hdr-check
@@ -73,27 +269,27 @@ Release tarballs are available at:
  Add an equivalent to "make hdr-check" target to meson based builds.
 
  Getting there.
- cf. <xmqqsemiuwhx.fsf@gitster.g>
- source: <20250408-505-wire-up-sparse-via-meson-v1-0-17476e5cea3f@gmail.com>
+ cf. <xmqqy0w2o0l0.fsf@gitster.g>
+ source: <20250414-505-wire-up-sparse-via-meson-v3-0-edc6e7f26745@gmail.com>
 
 
-* ps/object-file-cleanup (2025-04-11) 10 commits
+* ps/object-file-cleanup (2025-04-15) 11 commits
  - object-store: merge "object-store-ll.h" and "object-store.h"
  - object-store: remove global array of cached objects
  - object: split out functions relating to object store subsystem
- - object-file: split out functions relating to index subsystem
+ - object-file: drop `index_blob_stream()`
  - object-file: split up concerns of `HASH_*` flags
  - object-file: split out functions relating to object store subsystem
  - object-file: move `xmmap()` into "wrapper.c"
  - object-file: move `git_open_cloexec()` to "compat/open.c"
- - object-file: move `safe_create_leading_directories()` into "dir.c"
+ - object-file: move `safe_create_leading_directories()` into "path.c"
+ - object-file: move `mkdir_in_gitdir()` into "path.c"
  - Merge branch 'ps/object-wo-the-repository' into ps/object-file-cleanup
- (this branch uses ps/object-wo-the-repository.)
 
  Code clean-up.
 
- Will merge to 'next'.
- source: <20250411-pks-split-object-file-v2-0-2bea0c9033ae@pks.im>
+ Will merge to 'next'?
+ source: <20250415-pks-split-object-file-v3-0-6aa7db7ad7b0@pks.im>
 
 
 * ab/environment-clean-header (2025-04-09) 1 commit
@@ -165,11 +361,10 @@ Release tarballs are available at:
 
  Various build tweaks, including CSPRNG selection on some platforms.
 
- Comments?
+ Expecting a (hopefully minor and final) reroll?
+ cf. <39bd9980-0009-4b2e-a8e8-b07b0013c2ec@ramsayjones.plus.com>
  source: <cover.1743859985.git.ramsay@ramsayjones.plus.com>
 
---------------------------------------------------
-[Cooking]
 
 * js/range-check-codeql-workaround (2025-03-28) 1 commit
  - read-cache: check range before dereferencing an array element
@@ -192,7 +387,9 @@ Release tarballs are available at:
  source: <20250403140529.497876-1-jltobler@gmail.com>
 
 
-* pb/perf-test-fixes (2025-03-28) 2 commits
+* pb/perf-test-fixes (2025-04-14) 3 commits
+  (merged to 'next' on 2025-04-15 at f911b5420a)
+ + p7821: fix instructions for testing with threads
   (merged to 'next' on 2025-04-08 at a8aaeee41e)
  + p9210: fix 'scalar clone' when running from a detached HEAD
  + p7821: fix test_perf invocation for prereqs
@@ -202,7 +399,7 @@ Release tarballs are available at:
  Will merge to 'master'.
  cf. <Z-pD1puYT87YKAd4@pks.im>
  cf. <Z_TAtJ9LEeHo2AQN@pks.im>
- source: <pull.1936.git.git.1743181669.gitgitgadget@gmail.com>
+ source: <pull.1936.v2.git.git.1744481732.gitgitgadget@gmail.com>
 
 
 * pb/status-rebase-fixes (2025-03-28) 4 commits
@@ -279,6 +476,7 @@ Release tarballs are available at:
  + t: adapt character translation helpers to not use Perl
  + t: refactor environment sanitization to not use Perl
  + t: skip chain lint when PERL_PATH is unset
+ (this branch is used by ps/fewer-perl.)
 
  "make test" used to have a hard dependency on (basic) Perl; tests
  have been rewritten help environment with NO_PERL test the build as
@@ -286,18 +484,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20250403-b4-pks-t-perlless-v4-0-be20ac3db39a@pks.im>
-
-
-* pw/custom-conflict-marker-size-for-merge-related-docs (2025-03-29) 1 commit
-  (merged to 'next' on 2025-04-07 at 281b7207e3)
- + merge-file doc: set conflict-marker-size attribute
-
- "git-merge-file" documentation source, which has lines that look
- like conflict markers, lacked custom conflict marker size defined,
- which has been corrected..
-
- Will merge to 'master'.
- source: <pull.1895.git.1743173140253.gitgitgadget@gmail.com>
 
 
 * ab/rm-sign-compare (2025-03-29) 1 commit
@@ -343,16 +529,6 @@ Release tarballs are available at:
  source: <127c3010-4b23-436e-a07d-e6031e746113@gmail.com>
 
 
-* bc/allow-upload-pack-from-other-people (2025-04-01) 1 commit
-  (merged to 'next' on 2025-04-07 at c27755834e)
- + t5605: fix test for cloning from a different user
-
- Test fix for an already graduated topic.
-
- Will merge to 'master'.
- source: <Z-sO9gcWAi_xh0tI@tapette.crustytoothpaste.net>
-
-
 * en/merge-recursive-debug (2025-04-08) 8 commits
   (merged to 'next' on 2025-04-09 at 555be94c73)
  + builtin/{merge,rebase,revert}: remove GIT_TEST_MERGE_ALGORITHM
@@ -371,17 +547,20 @@ Release tarballs are available at:
  source: <pull.1898.v3.git.1744127322.gitgitgadget@gmail.com>
 
 
-* ja/doc-reset-mv-rm-markup-updates (2025-04-01) 5 commits
- - doc: convert git-mv to new documentation format
- - doc: move synopsis git-mv commands in the synopsis section
- - doc: convert git-rm to new documentation format
- - doc: fix synopsis analysis logic
- - doc: convert git-reset to new documentation format
+* ja/doc-reset-mv-rm-markup-updates (2025-04-14) 7 commits
+  (merged to 'next' on 2025-04-15 at 0b19646642)
+ + doc: add markup for characters in Guidelines
+ + doc: fix asciidoctor synopsis processing of triple-dots
+ + doc: convert git-mv to new documentation format
+ + doc: move synopsis git-mv commands in the synopsis section
+ + doc: convert git-rm to new documentation format
+ + doc: fix synopsis analysis logic
+ + doc: convert git-reset to new documentation format
 
- Expecting a reroll.
- cf. <CAN0heSodC8_Uwg_Lw31rtkdLfOEDyGg=iE0gb1TRrUWQEynT+w@mail.gmail.com>
- cf. <dfe21538-e70c-4d19-a90f-2c3cf8d3d377@free.fr>
- source: <pull.1896.git.1743354964.gitgitgadget@gmail.com>
+ Doc mark-up updates.
+
+ Will merge to 'master'.
+ source: <pull.1896.v2.git.1744460450.gitgitgadget@gmail.com>
 
 
 * md/userdiff-bash-shell-function (2025-04-01) 1 commit
@@ -423,63 +602,11 @@ Release tarballs are available at:
  - reftable: fix formatting of the license header
  - Merge branch 'ps/reftable-sans-compat-util' into ps/reftable-api-revamp
 
- Comments?
+ Overhaul of the reftable API.
+
+ Will merge to 'next'?
+ cf. <3okrcl7bdpy75hzyzpmrp7fluan4n3zvsroioq64id4a2kt3o4@fc6fetilb6y2>
  source: <20250407-pks-reftable-polishing-v2-0-316c4ff10571@pks.im>
-
-
-* ds/maintenance-loose-objects-batchsize (2025-03-23) 2 commits
-  (merged to 'next' on 2025-04-07 at a4e55af4bc)
- + maintenance: add loose-objects.batchSize config
- + maintenance: force progress/no-quiet to children
-
- The job to coalesce loose objects into packfiles in "git
- maintenance" now has configurable batch size.
-
- Will merge to 'master'.
- source: <pull.1885.git.1742777512.gitgitgadget@gmail.com>
-
-
-* jt/clone-guess-remote-head-fix (2025-03-25) 3 commits
-  (merged to 'next' on 2025-04-07 at 35793fd7d8)
- + advice: allow disabling default branch name advice
- + builtin/clone: suppress unexpected default branch advice
- + remote: allow `guess_remote_head()` to suppress advice
-
- "git clone" still gave the message about the default branch name;
- this message has been turned into an advice message that can be
- turned off.
-
- Will merge to 'master'.
- cf. <69ccc682-3f81-440f-8e96-a5af5d49fa60@gmail.com>
- source: <20250325005148.1771502-1-jltobler@gmail.com>
-
-
-* lo/userdiff-gitconfig (2025-04-01) 1 commit
-  (merged to 'next' on 2025-04-07 at 1b906232a1)
- + userdiff: add builtin driver for INI files
-
- Will merge to 'master'.
- cf. <Z-pGdyh0eG3xSe4W@pks.im>
- source: <20250331031309.94682-1-lucasseikioshiro@gmail.com>
-
-
-* js/comma-semicolon-confusion (2025-03-28) 10 commits
-  (merged to 'next' on 2025-04-07 at 3c1f7f4226)
- + detect-compiler: detect clang even if it found CUDA
- + clang: warn when the comma operator is used
- + compat/regex: explicitly mark intentional use of the comma operator
- + wildmatch: avoid using of the comma operator
- + diff-delta: avoid using the comma operator
- + xdiff: avoid using the comma operator unnecessarily
- + clar: avoid using the comma operator unnecessarily
- + kwset: avoid using the comma operator unnecessarily
- + rebase: avoid using the comma operator unnecessarily
- + remote-curl: avoid using the comma operator unnecessarily
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <pull.1889.v3.git.1743076383.gitgitgadget@gmail.com>
 
 
 * jt/ref-transaction-abort-fix (2025-03-21) 1 commit
@@ -503,18 +630,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20250326075246.2612627-1-05ZYT30@gmail.com>
-
-
-* ps/mingw-creat-excl-fix (2025-03-21) 2 commits
-  (merged to 'next' on 2025-04-07 at 590b0d4d21)
- + compat/mingw: fix EACCESS when opening files with `O_CREAT | O_EXCL`
- + meson: fix compat sources when compiling with MSVC
-
- Fix lockfile contention in reftable code on Windows.
-
- Will merge to 'master'.
- cf. <801fac5d-dd98-d157-6ff3-c3e8aa6a68ae@gmx.de>
- source: <20250320-b4-pks-mingw-lockfile-flake-v2-0-a84c90cfc6c2@pks.im>
 
 
 * jk/fetch-follow-remote-head-fix (2025-04-09) 4 commits
@@ -585,29 +700,6 @@ Release tarballs are available at:
  source: <20250319183410.1225428-1-jltobler@gmail.com>
 
 
-* kn/reflog-drop (2025-03-17) 2 commits
-  (merged to 'next' on 2025-04-07 at 193c01b203)
- + reflog: implement subcommand to drop reflogs
- + reflog: improve error for when reflog is not found
-
- "git reflog" learns "drop" subcommand, that discards the entire
- reflog data for a ref.
-
- Will merge to 'master'.
- cf. <CAP8UFD1vTkPH=5b++6+=koozC31=wD1gQszvdFmzb73B9HM4Aw@mail.gmail.com>
- source: <20250314-493-add-command-to-purge-reflog-entries-v3-0-c24e23a6146d@gmail.com>
-
-
-* md/t1403-path-is-file (2025-03-04) 1 commit
-  (merged to 'next' on 2025-04-07 at 93087893e8)
- + t1403: verify that path exists and is a file
-
- Test tweak.
-
- Will merge to 'master'.
- source: <20250304112728.41228-2-danimahendra0904@gmail.com>
-
-
 * sk/clar-trailer-urlmatch-norm-test (2025-03-04) 2 commits
   (merged to 'next' on 2025-04-08 at 51cb3c8bce)
  + t/unit-tests: convert urlmatch-normalization test to clar
@@ -644,30 +736,6 @@ Release tarballs are available at:
  source: <20250408085120.614893-1-karthik.188@gmail.com>
 
 
-* ps/object-wo-the-repository (2025-03-10) 12 commits
-  (merged to 'next' on 2025-04-07 at 0cc0c8631d)
- + hash: stop depending on `the_repository` in `null_oid()`
- + hash: fix "-Wsign-compare" warnings
- + object-file: split out logic regarding hash algorithms
- + delta-islands: stop depending on `the_repository`
- + object-file-convert: stop depending on `the_repository`
- + pack-bitmap-write: stop depending on `the_repository`
- + pack-revindex: stop depending on `the_repository`
- + pack-check: stop depending on `the_repository`
- + environment: move access to "core.bigFileThreshold" into repo settings
- + pack-write: stop depending on `the_repository` and `the_hash_algo`
- + object: stop depending on `the_repository`
- + csum-file: stop depending on `the_repository`
- (this branch is used by ps/object-file-cleanup.)
-
- The object layer has been updated to take an explicit repository
- instance as a parameter in more code paths.
-
- Will merge to 'master'.
- cf. <CABPp-BFrjqf=dMNwxzyMj3EQrAXTYkH7rDTi7X7xoWnoW_A4eA@mail.gmail.com>
- source: <20250310-b4-pks-objects-without-the-repository-v4-0-f201b8ec57ba@pks.im>
-
-
 * ps/maintenance-reflog-expire (2025-04-08) 6 commits
   (merged to 'next' on 2025-04-08 at 40d6884143)
  + builtin/maintenance: introduce "reflog-expire" task
@@ -681,25 +749,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20250408-pks-maintenance-reflog-expire-v2-0-1ad8634798b7@pks.im>
-
-
-* jk/zlib-inflate-fixes (2025-02-25) 10 commits
-  (merged to 'next' on 2025-04-07 at 4343a155f7)
- + unpack_loose_rest(): rewrite return handling for clarity
- + unpack_loose_rest(): simplify error handling
- + unpack_loose_rest(): never clean up zstream
- + unpack_loose_rest(): avoid numeric comparison of zlib status
- + unpack_loose_header(): avoid numeric comparison of zlib status
- + git_inflate(): skip zlib_post_call() sanity check on Z_NEED_DICT
- + unpack_loose_header(): fix infinite loop on broken zlib input
- + unpack_loose_header(): report headers without NUL as "bad"
- + unpack_loose_header(): simplify next_out assignment
- + loose_object_info(): BUG() on inflating content with unknown type
-
- Fix our use of zlib corner cases.
-
- Will merge to 'master'.
- source: <20250225062518.GA1293854@coredump.intra.peff.net>
 
 
 * ib/diff-S-G-with-longhand (2025-02-12) 10 commits
@@ -719,17 +768,6 @@ Release tarballs are available at:
 
  Expecting a reroll.
  source: <20250212032657.1807939-1-illia.bobyr@gmail.com>
-
-
-* ps/reftable-windows-unlink-fix (2025-02-18) 2 commits
-  (merged to 'next' on 2025-04-07 at 88e2a9a077)
- + reftable: ignore file-in-use errors when unlink(3p) fails on Windows
- + Merge branch 'ps/reftable-sans-compat-util' into ps/reftable-windows-unlink-fix
-
- Portability fix.
-
- Will merge to 'master'.
- source: <20250206-b4-pks-reftable-win32-in-use-errors-v2-1-56985a4f6186@pks.im>
 
 
 * ej/cat-file-remote-object-info (2025-02-24) 8 commits
