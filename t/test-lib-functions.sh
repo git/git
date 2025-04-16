@@ -88,15 +88,15 @@ test_decode_color () {
 }
 
 lf_to_nul () {
-	perl -pe 'y/\012/\000/'
+	tr '\012' '\000'
 }
 
 nul_to_q () {
-	perl -pe 'y/\000/Q/'
+	tr '\000' 'Q'
 }
 
 q_to_nul () {
-	perl -pe 'y/Q/\000/'
+	tr 'Q' '\000'
 }
 
 q_to_cr () {
@@ -1645,17 +1645,7 @@ test_match_signal () {
 
 # Read up to "$1" bytes (or to EOF) from stdin and write them to stdout.
 test_copy_bytes () {
-	perl -e '
-		my $len = $ARGV[1];
-		while ($len > 0) {
-			my $s;
-			my $nread = sysread(STDIN, $s, $len);
-			die "cannot read: $!" unless defined($nread);
-			last unless $nread;
-			print $s;
-			$len -= $nread;
-		}
-	' - "$1"
+	dd ibs=1 count="$1" 2>/dev/null
 }
 
 # run "$@" inside a non-git directory
@@ -1994,7 +1984,7 @@ test_remote_https_urls() {
 # Print the destination of symlink(s) provided as arguments. Basically
 # the same as the readlink command, but it's not available everywhere.
 test_readlink () {
-	perl -le 'print readlink($_) for @ARGV' "$@"
+	test-tool path-utils readlink "$@"
 }
 
 # Set mtime to a fixed "magic" timestamp in mid February 2009, before we

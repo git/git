@@ -33,7 +33,8 @@ test_expect_success 'fsck accepts protected dash' '
 '
 
 test_expect_success 'remove ./ protection from .gitmodules url' '
-	perl -i -pe "s{\./}{}" .gitmodules &&
+	sed "s|\./||" .gitmodules >.gitmodules.munged &&
+	mv .gitmodules.munged .gitmodules &&
 	git commit -am "drop protection"
 '
 

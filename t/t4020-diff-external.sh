@@ -237,7 +237,7 @@ check_external_diff   0 empty  empty 0 on  --quiet
 check_external_diff   1 empty  empty 1 on  --quiet
 check_external_diff 128 empty  error 2 on  --quiet
 
-echo NULZbetweenZwords | perl -pe 'y/Z/\000/' > file
+echo NULZbetweenZwords | tr "Z" "\000" > file
 
 test_expect_success 'force diff with "diff"' '
 	after=$(git hash-object file) &&
