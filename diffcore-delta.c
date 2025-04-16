@@ -129,6 +129,7 @@ static struct spanhash_top *hash_chars(struct repository *r,
 	unsigned char *buf = one->data;
 	unsigned int sz = one->size;
 	int is_text = !diff_filespec_is_binary(r, one);
+	int ignore_whitespace = one->ignore_whitespace;
 
 	i = INITIAL_HASH_SIZE;
 	hash = xmalloc(st_add(sizeof(*hash),
@@ -147,6 +148,19 @@ static struct spanhash_top *hash_chars(struct repository *r,
 		/* Ignore CR in CRLF sequence if text */
 		if (is_text && c == '\r' && sz && *buf == '\n')
 			continue;
+
+		if (is_text && ignore_whitespace && isspace(c)) {
+			if (sz) {
+				char next = *buf;
+				if ( c == '\n' && next == '\n')
+					continue;
+				else if ( c != '\n' && isspace(next))
+					continue;
+			}
+			if ( c != '\n')
+				/* Normalize whitespace to space*/
+				c = ' ';
+		}
 
 		accum1 = (accum1 << 7) ^ (accum2 >> 25);
 		accum2 = (accum2 << 7) ^ (old_1 >> 25);
