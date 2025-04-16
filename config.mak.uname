@@ -245,7 +245,9 @@ ifeq ($(uname_O),Cygwin)
 		# Try commenting this out if you suspect MMAP is more efficient
 		NO_MMAP = YesPlease
         else
-		NO_REGEX = UnfortunatelyYes
+                ifeq ($(shell expr "$(uname_R)" : '1\.7\.'),4)
+		        NO_REGEX = UnfortunatelyYes
+                endif
         endif
 	HAVE_DEV_TTY = YesPlease
 	HAVE_ALLOCA_H = YesPlease
