@@ -317,8 +317,8 @@ cmds_txt = cmds-ancillaryinterrogators.adoc \
 
 $(cmds_txt): cmd-list.made
 
-cmd-list.made: cmd-list.perl ../command-list.txt $(MAN1_TXT)
-	$(QUIET_GEN)$(PERL_PATH) ./cmd-list.perl .. . $(cmds_txt) && \
+cmd-list.made: cmd-list.sh ../command-list.txt $(MAN1_TXT)
+	$(QUIET_GEN)$(SHELL_PATH) ./cmd-list.sh .. . $(cmds_txt) && \
 	date >$@
 
 mergetools-%.adoc: generate-mergetool-list.sh ../git-mergetool--lib.sh $(wildcard ../mergetools/*)
