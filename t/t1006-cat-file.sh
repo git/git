@@ -1410,4 +1410,103 @@ test_expect_success PERL_IPC_OPEN2 '--batch-command info is unbuffered by defaul
 	perl -e "$perl_script" -- --batch-command $hello_oid "$expect" "info "
 '
 
+test_expect_success 'setup for objects filter' '
+	git init repo &&
+	(
+		# Seed the repository with four different sets of objects:
+		#
+		#   - The first set is fully packed and has a bitmap.
+		#   - The second set is packed, but has no bitmap.
+		#   - The third set is loose.
+		#   - The fourth set is loose and contains big objects.
+		#
+		# This ensures that we cover all these types as expected.
+		cd repo &&
+		test_commit first &&
+		git repack -Adb &&
+		test_commit second &&
+		git repack -d &&
+		test_commit third &&
+
+		for n in 1000 10000
+		do
+			printf "%"$n"s" X >large.$n || return 1
+		done &&
+		git add large.* &&
+		git commit -m fourth
+	)
+'
+
+test_expect_success 'objects filter with unknown option' '
+	cat >expect <<-EOF &&
+	fatal: invalid filter-spec ${SQ}unknown${SQ}
+	EOF
+	test_must_fail git -C repo cat-file --filter=unknown 2>err &&
+	test_cmp expect err
+'
+
+for option in sparse:oid=1234 tree:1 sparse:path=x
+do
+	test_expect_success "objects filter with unsupported option $option" '
+		case "$option" in
+		tree:1)
+			echo "usage: objects filter not supported: ${SQ}tree${SQ}" >expect
+			;;
+		sparse:path=x)
+			echo "fatal: sparse:path filters support has been dropped" >expect
+			;;
+		*)
+			option_name=$(echo "$option" | cut -d= -f1) &&
+			printf "usage: objects filter not supported: ${SQ}%s${SQ}\n" "$option_name" >expect
+			;;
+		esac &&
+		test_must_fail git -C repo cat-file --filter=$option 2>err &&
+		test_cmp expect err
+	'
+done
+
+test_expect_success 'objects filter: disabled' '
+	git -C repo cat-file --batch-check="%(objectname)" --batch-all-objects --no-filter >actual &&
+	sort actual >actual.sorted &&
+	git -C repo rev-list --objects --no-object-names --all >expect &&
+	sort expect >expect.sorted &&
+	test_cmp expect.sorted actual.sorted
+'
+
+test_objects_filter () {
+	filter="$1"
+
+	test_expect_success "objects filter: $filter" '
+		git -C repo cat-file --batch-check="%(objectname)" --batch-all-objects --filter="$filter" >actual &&
+		sort actual >actual.sorted &&
+		git -C repo rev-list --objects --no-object-names --all --filter="$filter" --filter-provided-objects >expect &&
+		sort expect >expect.sorted &&
+		test_cmp expect.sorted actual.sorted
+	'
+
+	test_expect_success "objects filter prints excluded objects: $filter" '
+		# Find all objects that would be excluded by the current filter.
+		git -C repo rev-list --objects --no-object-names --all >all &&
+		git -C repo rev-list --objects --no-object-names --all --filter="$filter" --filter-provided-objects >filtered &&
+		sort all >all.sorted &&
+		sort filtered >filtered.sorted &&
+		comm -23 all.sorted filtered.sorted >expected.excluded &&
+		test_line_count -gt 0 expected.excluded &&
+
+		git -C repo cat-file --batch-check="%(objectname)" --filter="$filter" <expected.excluded >actual &&
+		awk "/excluded/{ print \$1 }" actual | sort >actual.excluded &&
+		test_cmp expected.excluded actual.excluded
+	'
+}
+
+test_objects_filter "blob:none"
+test_objects_filter "blob:limit=1"
+test_objects_filter "blob:limit=500"
+test_objects_filter "blob:limit=1000"
+test_objects_filter "blob:limit=1k"
+test_objects_filter "object:type=blob"
+test_objects_filter "object:type=commit"
+test_objects_filter "object:type=tag"
+test_objects_filter "object:type=tree"
+
 test_done
