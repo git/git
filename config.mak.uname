@@ -50,6 +50,7 @@ ifeq ($(uname_S),Linux)
 	HAVE_ALLOCA_H = YesPlease
 	# override in config.mak if you have glibc >= 2.38
 	NO_STRLCPY = YesPlease
+	CSPRNG_METHOD = getrandom
 	HAVE_PATHS_H = YesPlease
 	LIBC_CONTAINS_LIBINTL = YesPlease
 	HAVE_DEV_TTY = YesPlease
