@@ -693,10 +693,8 @@ endif
 # These variables are used for building libgit.a.
 libgit_c_args = [
   '-DBINDIR="' + get_option('bindir') + '"',
-  '-DDEFAULT_EDITOR="' + get_option('default_editor') + '"',
   '-DDEFAULT_GIT_TEMPLATE_DIR="' + get_option('datadir') / 'git-core/templates' + '"',
   '-DDEFAULT_HELP_FORMAT="' + get_option('default_help_format') + '"',
-  '-DDEFAULT_PAGER="' + get_option('default_pager') + '"',
   '-DETC_GITATTRIBUTES="' + get_option('gitattributes') + '"',
   '-DETC_GITCONFIG="' + get_option('gitconfig') + '"',
   '-DFALLBACK_RUNTIME_PREFIX="' + get_option('prefix') + '"',
@@ -708,6 +706,17 @@ libgit_c_args = [
   '-DPAGER_ENV="' + get_option('pager_environment') + '"',
   '-DSHELL_PATH="' + fs.as_posix(shell.full_path()) + '"',
 ]
+
+editor_opt = get_option('default_editor')
+if editor_opt != '' and editor_opt != 'vi'
+  libgit_c_args += '-DDEFAULT_EDITOR="' + editor_opt + '"'
+endif
+
+pager_opt = get_option('default_pager')
+if pager_opt != '' and pager_opt != 'less'
+  libgit_c_args += '-DDEFAULT_PAGER="' + pager_opt + '"'
+endif
+
 libgit_include_directories = [ '.' ]
 libgit_dependencies = [ ]
 

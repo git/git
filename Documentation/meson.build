@@ -242,6 +242,16 @@ if docs_backend == 'asciidoc'
     '--attribute=build_dir=' + meson.current_build_dir(),
   ]
 
+  pager_opt = get_option('default_pager')
+  if pager_opt != '' and pager_opt != 'less'
+    asciidoc_common_options += '-agit-default-pager=' + pager_opt
+  endif
+
+  editor_opt = get_option('default_editor')
+  if editor_opt != '' and editor_opt != 'vi'
+    asciidoc_common_options += '-agit-default-editor=' + editor_opt
+  endif
+
   documentation_deps = [
     asciidoc_conf,
   ]
@@ -278,6 +288,16 @@ elif docs_backend == 'asciidoctor'
     '--load-path', meson.current_build_dir(),
     '--require', 'asciidoctor-extensions',
   ]
+
+  pager_opt = get_option('default_pager')
+  if pager_opt != '' and pager_opt != 'less'
+    asciidoc_common_options += '-agit-default-pager=' + pager_opt
+  endif
+
+  editor_opt = get_option('default_editor')
+  if editor_opt != '' and editor_opt != 'vi'
+    asciidoc_common_options += '-agit-default-editor=' + editor_opt
+  endif
 
   documentation_deps = [
     asciidoctor_extensions,
