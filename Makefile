@@ -340,9 +340,6 @@ include shared.mak
 #
 # Define HAVE_SYNC_FILE_RANGE if your platform has sync_file_range.
 #
-# Define NEEDS_LIBRT if your platform requires linking with librt (glibc version
-# before 2.17) for clock_gettime and CLOCK_MONOTONIC.
-#
 # Define HAVE_BSD_SYSCTL if your platform has a BSD-compatible sysctl function.
 #
 # Define HAVE_GETDELIM if your system has the getdelim() function.
@@ -2169,10 +2166,6 @@ endif
 
 ifdef HAVE_SYNC_FILE_RANGE
 	BASIC_CFLAGS += -DHAVE_SYNC_FILE_RANGE
-endif
-
-ifdef NEEDS_LIBRT
-	EXTLIBS += -lrt
 endif
 
 ifdef HAVE_BSD_SYSCTL
