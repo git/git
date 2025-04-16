@@ -30,6 +30,7 @@ struct active_request_slot {
 	void *callback_data;
 	void (*callback_func)(void *data);
 	struct active_request_slot *next;
+	struct strbuf *errstr;
 };
 
 struct buffer {
