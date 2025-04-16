@@ -251,6 +251,8 @@ ifeq ($(uname_O),Cygwin)
         endif
 	HAVE_DEV_TTY = YesPlease
 	HAVE_GETDELIM = YesPlease
+	HAVE_CLOCK_GETTIME = YesPlease
+	HAVE_CLOCK_MONOTONIC = YesPlease
 	HAVE_ALLOCA_H = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	NO_FAST_WORKING_DIRECTORY = UnfortunatelyYes
