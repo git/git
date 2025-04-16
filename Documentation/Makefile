@@ -398,9 +398,9 @@ user-manual.html: user-manual.xml $(XSLT)
 git.info: user-manual.texi
 	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split -o $@ user-manual.texi
 
-user-manual.texi: user-manual.xml
+user-manual.texi: user-manual.xml fix-texi.sh
 	$(QUIET_DB2TEXI)$(DOCBOOK2X_TEXI) user-manual.xml --encoding=UTF-8 --to-stdout >$@+ && \
-	$(PERL_PATH) fix-texi.perl <$@+ >$@ && \
+	$(SHELL_PATH) fix-texi.sh <$@+ >$@ && \
 	$(RM) $@+
 
 user-manual.pdf: user-manual.xml
