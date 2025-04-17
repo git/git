@@ -10,6 +10,8 @@ stamp () {
 	Meta/V 2>/dev/null | sha1sum
 }
 
+export CC=clang
+
 P=previous
 O=observed
 while :
@@ -19,8 +21,12 @@ do
 		ssleep 300
 	done
 	ssleep 30
-	# opts --sha256 --leaks --san
-	time nice -20 Meta/Dothem -j32 --dash -- -- CC=clang; uptime; date
+
+	time nice -20 Meta/Dothem -j32 --meson --dash \
+		--sha256 --leaks --san \
+		CC=clang
+
+	uptime; date
 	P=$(stamp)
 	Meta/V
 done

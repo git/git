@@ -4,8 +4,10 @@ NWD=contrib/workdir/git-new-workdir
 MASTER=master
 
 section () {
+	printf "\033]0;%s %s\007" "$branch" "$*"
+
 	printf "\n\n\n"
-	printf "############ %s\n" "$@"
+	printf "############ %s %s\n" "$branch" "$*"
 	printf "\n\n\n"
 }
 
@@ -24,7 +26,7 @@ inst_prefix=$(
 )
 
 force= with_dash= test_long= M= install= doc= notest= bootstrap= branches= jobs=
-scratch= noprove= memtrash=--memtrash with_cocci= with_leaks= with_sha256= san= clean=
+scratch= noprove= memtrash=--memtrash with_cocci= with_leaks= with_sha256= san= clean= with_meson=
 while	case "$1" in
 	--pedantic | --locale=* | --loose) M="$M $1" ;;
 	--force) force=$1 ;;
@@ -49,6 +51,7 @@ while	case "$1" in
 	--san) san=t ;;
 	--leaks) with_leaks=t ;;
 	--sha256) with_sha256=t ;;
+	--meson) with_meson=t ;;
 	-j*) jobs=$1 ;;
 	--) shift; break ;;
 	-*) echo >&2 "Unknown option: $1"; exit 1 ;;
@@ -152,15 +155,15 @@ do
 		}
 	fi
 
-	private=$(git rev-parse -q --verify private-$branch 2>/dev/null)
-	case $? in 0|1) ;; *) exit $? ;; esac
-
 	version=$(find_installed $branch)
 	if	test "z$version" = "z$revision"
 	then
 		echo "* up-to-date version is already installed from $branch"
 		test -n "$force" || continue
 	fi
+
+	private=$(git rev-parse -q --verify private-$branch 2>/dev/null)
+	case $? in 0|1) ;; *) exit $? ;; esac
 
 	vtree=$(git rev-parse --verify "$version^{tree}")
 	rtree=$(git rev-parse --verify "$revision^{tree}")
@@ -237,6 +240,18 @@ do
 
 		save=$(git rev-parse HEAD) &&
 
+		if test -n "$with_meson" && test -f "meson.build"
+		then
+			section meson
+			rm -fr "../.$branch.boson" &&
+			meson setup "../.$branch.boson" &&
+			(
+				cd "../.$branch.boson" &&
+				meson compile &&
+				meson test
+			) || exit $?
+		fi &&
+
 		# cocci
 		if test -n "$with_cocci"
 		then
@@ -312,7 +327,7 @@ do
 			if test "$save" = "$(git rev-parse HEAD)"
 			then
 				section install
-				Meta/Make $M -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" install
+				Meta/Make $jobs $M -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" install
 			else
 				echo >&2 "Head moved--not installing"
 			fi
