@@ -111,7 +111,9 @@ test_expect_success 'OPT_BOOL() no negation #2' 'check_unknown_i18n --no-no-fear
 
 test_expect_success 'OPT_BOOL() positivation' 'check boolean: 0 -D --doubt'
 
-test_expect_success 'OPT_INT() negative' 'check integer: -2345 -i -2345'
+test_expect_success 'OPT_INTEGER() negative' 'check integer: -2345 -i -2345'
+test_expect_success 'OPT_INTEGER() kilo' 'check integer: 239616 -i 234k'
+test_expect_success 'OPT_INTEGER() negative kilo' 'check integer: -239616 -i -234k'
 
 test_expect_success 'OPT_MAGNITUDE() simple' '
 	check magnitude: 2345678 -m 2345678

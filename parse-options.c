@@ -73,7 +73,7 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 					  enum opt_parsed flags,
 					  const char **argp)
 {
-	const char *s, *arg;
+	const char *arg;
 	const int unset = flags & OPT_UNSET;
 	int err;
 
@@ -185,9 +185,9 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 		if (!*arg)
 			return error(_("%s expects a numerical value"),
 				     optname(opt, flags));
-		*(int *)opt->value = strtol(arg, (char **)&s, 10);
-		if (*s)
-			return error(_("%s expects a numerical value"),
+		if (!git_parse_int(arg, opt->value))
+			return error(_("%s expects an integer value"
+				       " with an optional k/m/g suffix"),
 				     optname(opt, flags));
 		return 0;
 
