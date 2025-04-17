@@ -48,6 +48,9 @@ UI, Workflows & Features
  * "git cat-file --batch" and friends learned to allow "--filter=" to
    omit certain objects, just like the transport layer does.
 
+ * "git blame --porcelain" mode now talks about unblamable lines and
+   lines that are blamed to an ignored commit.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -103,6 +106,9 @@ Performance, Internal Implementation, Development Support etc.
  * "make test" used to have a hard dependency on (basic) Perl; tests
    have been rewritten help environment with NO_PERL test the build as
    much as possible.
+
+ * Remove remnants of the recursive merge strategy backend, which was
+   superseded by the ort merge strategy.
 
 
 Fixes since v2.49
@@ -182,6 +188,13 @@ Fixes since v2.49
  * Random build fixes.
    (merge 85e1d6819f ps/misc-build-fixes later to maint).
 
+ * "git fetch [<remote>]" with only the configured fetch refspec
+   should be the only thing to update refs/remotes/<remote>/HEAD,
+   but the code was overly eager to do so in other cases.
+
+ * Incorrect sorting of refs with bytes with high-bit set on platforms
+   with signed char led to a BUG, which has been corrected.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
    (merge 2bfd3b3685 ab/decorate-code-cleanup later to maint).
@@ -201,3 +214,4 @@ Fixes since v2.49
    (merge ee8edb7156 dk/vimdiff-doc-fix later to maint).
    (merge 107d889303 md/t1403-path-is-file later to maint).
    (merge abd4192b07 js/comma-semicolon-confusion later to maint).
+   (merge 27b7264206 ab/environment-clean-header later to maint).
