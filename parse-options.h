@@ -218,7 +218,7 @@ struct option {
 	.type = OPTION_INTEGER, \
 	.short_name = (s), \
 	.long_name = (l), \
-	.value = (v), \
+	.value = (v) + BARF_UNLESS_SIGNED(*(v)), \
 	.precision = sizeof(*v), \
 	.argh = N_("n"), \
 	.help = (h), \
@@ -280,7 +280,7 @@ struct option {
 	.type = OPTION_UNSIGNED, \
 	.short_name = (s), \
 	.long_name = (l), \
-	.value = (v), \
+	.value = (v) + BARF_UNLESS_UNSIGNED(*(v)), \
 	.precision = sizeof(*v), \
 	.argh = N_("n"), \
 	.help = (h), \
