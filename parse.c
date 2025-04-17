@@ -51,7 +51,7 @@ int git_parse_signed(const char *value, intmax_t *ret, intmax_t max)
 	return 0;
 }
 
-static int git_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max)
+int git_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max)
 {
 	if (value && *value) {
 		char *end;
