@@ -23,8 +23,6 @@ test_description="merge cases"
 #                     files that might be renamed into each other's paths.)
 
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/lib-merge.sh
-
 
 # Testcase basic, conflicting changes in 'numerals'
 

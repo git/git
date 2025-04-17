@@ -26,6 +26,7 @@
 #include "cache-tree.h"
 #include "commit.h"
 #include "commit-reach.h"
+#include "config.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "dir.h"
@@ -4957,9 +4958,6 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	}
 	trace2_region_leave("merge", "sanity checks", opt->repo);
 
-	/* Default to histogram diff.  Actually, just hardcode it...for now. */
-	opt->xdl_opts = DIFF_WITH_ALG(opt, HISTOGRAM_DIFF);
-
 	/* Handle attr direction stuff for renormalization */
 	if (opt->renormalize)
 		git_attr_set_direction(GIT_ATTR_CHECKOUT);
@@ -5324,4 +5322,162 @@ void merge_incore_recursive(struct merge_options *opt,
 
 	merge_ort_internal(opt, merge_bases, side1, side2, result);
 	trace2_region_leave("merge", "incore_recursive", opt->repo);
+}
+
+static void merge_recursive_config(struct merge_options *opt, int ui)
+{
+	char *value = NULL;
+	int renormalize = 0;
+	git_config_get_int("merge.verbosity", &opt->verbosity);
+	git_config_get_int("diff.renamelimit", &opt->rename_limit);
+	git_config_get_int("merge.renamelimit", &opt->rename_limit);
+	git_config_get_bool("merge.renormalize", &renormalize);
+	opt->renormalize = renormalize;
+	if (!git_config_get_string("diff.renames", &value)) {
+		opt->detect_renames = git_config_rename("diff.renames", value);
+		free(value);
+	}
+	if (!git_config_get_string("merge.renames", &value)) {
+		opt->detect_renames = git_config_rename("merge.renames", value);
+		free(value);
+	}
+	if (!git_config_get_string("merge.directoryrenames", &value)) {
+		int boolval = git_parse_maybe_bool(value);
+		if (0 <= boolval) {
+			opt->detect_directory_renames = boolval ?
+				MERGE_DIRECTORY_RENAMES_TRUE :
+				MERGE_DIRECTORY_RENAMES_NONE;
+		} else if (!strcasecmp(value, "conflict")) {
+			opt->detect_directory_renames =
+				MERGE_DIRECTORY_RENAMES_CONFLICT;
+		} /* avoid erroring on values from future versions of git */
+		free(value);
+	}
+	if (ui) {
+		if (!git_config_get_string("diff.algorithm", &value)) {
+			long diff_algorithm = parse_algorithm_value(value);
+			if (diff_algorithm < 0)
+				die(_("unknown value for config '%s': %s"), "diff.algorithm", value);
+			opt->xdl_opts = (opt->xdl_opts & ~XDF_DIFF_ALGORITHM_MASK) | diff_algorithm;
+			free(value);
+		}
+	}
+	git_config(git_xmerge_config, NULL);
+}
+
+static void init_merge_options(struct merge_options *opt,
+			struct repository *repo, int ui)
+{
+	const char *merge_verbosity;
+	memset(opt, 0, sizeof(struct merge_options));
+
+	opt->repo = repo;
+
+	opt->detect_renames = -1;
+	opt->detect_directory_renames = MERGE_DIRECTORY_RENAMES_CONFLICT;
+	opt->rename_limit = -1;
+
+	opt->verbosity = 2;
+	opt->buffer_output = 1;
+	strbuf_init(&opt->obuf, 0);
+
+	opt->renormalize = 0;
+
+	opt->conflict_style = -1;
+	opt->xdl_opts = DIFF_WITH_ALG(opt, HISTOGRAM_DIFF);
+
+	merge_recursive_config(opt, ui);
+	merge_verbosity = getenv("GIT_MERGE_VERBOSITY");
+	if (merge_verbosity)
+		opt->verbosity = strtol(merge_verbosity, NULL, 10);
+	if (opt->verbosity >= 5)
+		opt->buffer_output = 0;
+}
+
+void init_ui_merge_options(struct merge_options *opt,
+			struct repository *repo)
+{
+	init_merge_options(opt, repo, 1);
+}
+
+void init_basic_merge_options(struct merge_options *opt,
+			struct repository *repo)
+{
+	init_merge_options(opt, repo, 0);
+}
+
+/*
+ * For now, members of merge_options do not need deep copying, but
+ * it may change in the future, in which case we would need to update
+ * this, and also make a matching change to clear_merge_options() to
+ * release the resources held by a copied instance.
+ */
+void copy_merge_options(struct merge_options *dst, struct merge_options *src)
+{
+	*dst = *src;
+}
+
+void clear_merge_options(struct merge_options *opt UNUSED)
+{
+	; /* no-op as our copy is shallow right now */
+}
+
+int parse_merge_opt(struct merge_options *opt, const char *s)
+{
+	const char *arg;
+
+	if (!s || !*s)
+		return -1;
+	if (!strcmp(s, "ours"))
+		opt->recursive_variant = MERGE_VARIANT_OURS;
+	else if (!strcmp(s, "theirs"))
+		opt->recursive_variant = MERGE_VARIANT_THEIRS;
+	else if (!strcmp(s, "subtree"))
+		opt->subtree_shift = "";
+	else if (skip_prefix(s, "subtree=", &arg))
+		opt->subtree_shift = arg;
+	else if (!strcmp(s, "patience"))
+		opt->xdl_opts = DIFF_WITH_ALG(opt, PATIENCE_DIFF);
+	else if (!strcmp(s, "histogram"))
+		opt->xdl_opts = DIFF_WITH_ALG(opt, HISTOGRAM_DIFF);
+	else if (skip_prefix(s, "diff-algorithm=", &arg)) {
+		long value = parse_algorithm_value(arg);
+		if (value < 0)
+			return -1;
+		/* clear out previous settings */
+		DIFF_XDL_CLR(opt, NEED_MINIMAL);
+		opt->xdl_opts &= ~XDF_DIFF_ALGORITHM_MASK;
+		opt->xdl_opts |= value;
+	}
+	else if (!strcmp(s, "ignore-space-change"))
+		DIFF_XDL_SET(opt, IGNORE_WHITESPACE_CHANGE);
+	else if (!strcmp(s, "ignore-all-space"))
+		DIFF_XDL_SET(opt, IGNORE_WHITESPACE);
+	else if (!strcmp(s, "ignore-space-at-eol"))
+		DIFF_XDL_SET(opt, IGNORE_WHITESPACE_AT_EOL);
+	else if (!strcmp(s, "ignore-cr-at-eol"))
+		DIFF_XDL_SET(opt, IGNORE_CR_AT_EOL);
+	else if (!strcmp(s, "renormalize"))
+		opt->renormalize = 1;
+	else if (!strcmp(s, "no-renormalize"))
+		opt->renormalize = 0;
+	else if (!strcmp(s, "no-renames"))
+		opt->detect_renames = 0;
+	else if (!strcmp(s, "find-renames")) {
+		opt->detect_renames = 1;
+		opt->rename_score = 0;
+	}
+	else if (skip_prefix(s, "find-renames=", &arg) ||
+		 skip_prefix(s, "rename-threshold=", &arg)) {
+		if ((opt->rename_score = parse_rename_score(&arg)) == -1 || *arg != 0)
+			return -1;
+		opt->detect_renames = 1;
+	}
+	/*
+	 * Please update $__git_merge_strategy_options in
+	 * git-completion.bash when you add new options
+	 */
+	else
+		return -1;
+	return 0;
 }
