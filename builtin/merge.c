@@ -254,6 +254,7 @@ static struct option builtin_merge_options[] = {
 		.type = OPTION_INTEGER,
 		.long_name = "log",
 		.value = &shortlog_len,
+		.precision = sizeof(shortlog_len),
 		.argh = N_("n"),
 		.help = N_("add (at most <n>) entries from shortlog to merge commit message"),
 		.flags = PARSE_OPT_OPTARG,

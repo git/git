@@ -22,6 +22,7 @@ usage: test-tool parse-options <options>
 
     -i, --[no-]integer <n>
                           get a integer
+    --[no-]i16 <n>        get a 16 bit integer
     -j <n>                get a integer, too
     -u, --unsigned <n>    get an unsigned integer
     --[no-]set23          set integer to 23
@@ -138,6 +139,7 @@ test_expect_success 'OPT_UNSIGNED() 3giga' '
 cat >expect <<\EOF
 boolean: 2
 integer: 1729
+i16: 0
 unsigned: 16384
 timestamp: 0
 string: 123
@@ -158,6 +160,7 @@ test_expect_success 'short options' '
 cat >expect <<\EOF
 boolean: 2
 integer: 1729
+i16: 9000
 unsigned: 16384
 timestamp: 0
 string: 321
@@ -169,7 +172,7 @@ file: prefix/fi.le
 EOF
 
 test_expect_success 'long options' '
-	test-tool parse-options --boolean --integer 1729 --unsigned 16k \
+	test-tool parse-options --boolean --integer 1729 --i16 9000 --unsigned 16k \
 		--boolean --string2=321 --verbose --verbose --no-dry-run \
 		--abbrev=10 --file fi.le --obsolete \
 		>output 2>output.err &&
@@ -181,6 +184,7 @@ test_expect_success 'abbreviate to something longer than SHA1 length' '
 	cat >expect <<-EOF &&
 	boolean: 0
 	integer: 0
+	i16: 0
 	unsigned: 0
 	timestamp: 0
 	string: (not set)
@@ -255,6 +259,7 @@ test_expect_success 'superfluous value provided: cmdmode' '
 cat >expect <<\EOF
 boolean: 1
 integer: 13
+i16: 0
 unsigned: 0
 timestamp: 0
 string: 123
@@ -278,6 +283,7 @@ test_expect_success 'intermingled arguments' '
 cat >expect <<\EOF
 boolean: 0
 integer: 2
+i16: 0
 unsigned: 0
 timestamp: 0
 string: (not set)
@@ -345,6 +351,7 @@ cat >expect <<\EOF
 Callback: "four", 0
 boolean: 5
 integer: 4
+i16: 0
 unsigned: 0
 timestamp: 0
 string: (not set)
@@ -370,6 +377,7 @@ test_expect_success 'OPT_CALLBACK() and callback errors work' '
 cat >expect <<\EOF
 boolean: 1
 integer: 23
+i16: 0
 unsigned: 0
 timestamp: 0
 string: (not set)
@@ -449,6 +457,7 @@ test_expect_success 'OPT_NUMBER_CALLBACK() works' '
 cat >expect <<\EOF
 boolean: 0
 integer: 0
+i16: 0
 unsigned: 0
 timestamp: 0
 string: (not set)
@@ -783,6 +792,18 @@ test_expect_success 'unsigned with units but no numbers' '
 	test_must_fail test-tool parse-options --unsigned m >out 2>err &&
 	grep "non-negative integer" err &&
 	test_must_be_empty out
+'
+
+test_expect_success 'i16 limits range' '
+	test-tool parse-options --i16 32767 >out &&
+	test_grep "i16: 32767" out &&
+	test_must_fail test-tool parse-options --i16 32768 2>err &&
+	test_grep "value 32768 for option .i16. not in range \[-32768,32767\]" err &&
+
+	test-tool parse-options --i16 -32768 >out &&
+	test_grep "i16: -32768" out &&
+	test_must_fail test-tool parse-options --i16 -32769 2>err &&
+	test_grep "value -32769 for option .i16. not in range \[-32768,32767\]" err
 '
 
 test_done

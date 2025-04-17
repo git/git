@@ -120,6 +120,7 @@ int cmd__parse_options(int argc, const char **argv)
 	};
 	struct string_list expect = STRING_LIST_INIT_NODUP;
 	struct string_list list = STRING_LIST_INIT_NODUP;
+	int16_t i16 = 0;
 
 	struct option options[] = {
 		OPT_BOOL(0, "yes", &boolean, "get a boolean"),
@@ -139,6 +140,7 @@ int cmd__parse_options(int argc, const char **argv)
 		OPT_NEGBIT(0, "neg-or4", &boolean, "same as --no-or4", 4),
 		OPT_GROUP(""),
 		OPT_INTEGER('i', "integer", &integer, "get a integer"),
+		OPT_INTEGER(0, "i16", &i16, "get a 16 bit integer"),
 		OPT_INTEGER('j', NULL, &integer, "get a integer, too"),
 		OPT_UNSIGNED('u', "unsigned", &unsigned_integer, "get an unsigned integer"),
 		OPT_SET_INT(0, "set23", &integer, "set integer to 23", 23),
@@ -210,6 +212,7 @@ int cmd__parse_options(int argc, const char **argv)
 	}
 	show(&expect, &ret, "boolean: %d", boolean);
 	show(&expect, &ret, "integer: %d", integer);
+	show(&expect, &ret, "i16: %"PRIdMAX, (intmax_t) i16);
 	show(&expect, &ret, "unsigned: %lu", unsigned_integer);
 	show(&expect, &ret, "timestamp: %"PRItime, timestamp);
 	show(&expect, &ret, "string: %s", string ? string : "(not set)");

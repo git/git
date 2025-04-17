@@ -92,6 +92,10 @@ typedef int parse_opt_subcommand_fn(int argc, const char **argv,
  * `value`::
  *   stores pointers to the values to be filled.
  *
+ * `precision`::
+ *   precision of the integer pointed to by `value` in number of bytes. Should
+ *   typically be its `sizeof()`.
+ *
  * `argh`::
  *   token to explain the kind of argument this option wants. Does not
  *   begin in capital letter, and does not end with a full stop.
@@ -151,6 +155,7 @@ struct option {
 	int short_name;
 	const char *long_name;
 	void *value;
+	size_t precision;
 	const char *argh;
 	const char *help;
 
@@ -214,6 +219,7 @@ struct option {
 	.short_name = (s), \
 	.long_name = (l), \
 	.value = (v), \
+	.precision = sizeof(*v), \
 	.argh = N_("n"), \
 	.help = (h), \
 	.flags = (f), \
