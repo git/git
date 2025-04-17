@@ -2480,10 +2480,12 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 			die(_("options '%s' and '%s' cannot be used together"),
 			    "--left-only", "--right-only/--cherry");
 		revs->left_only = 1;
+		revs->limited = 1;
 	} else if (!strcmp(arg, "--right-only")) {
 		if (revs->left_only)
 			die(_("options '%s' and '%s' cannot be used together"), "--right-only", "--left-only");
 		revs->right_only = 1;
+		revs->limited = 1;
 	} else if (!strcmp(arg, "--cherry")) {
 		if (revs->left_only)
 			die(_("options '%s' and '%s' cannot be used together"), "--cherry", "--left-only");
