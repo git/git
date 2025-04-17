@@ -23,7 +23,7 @@ usage: test-tool parse-options <options>
     -i, --[no-]integer <n>
                           get a integer
     -j <n>                get a integer, too
-    -m, --magnitude <n>   get a magnitude
+    -u, --unsigned <n>    get an unsigned integer
     --[no-]set23          set integer to 23
     --mode1               set integer to 1 (cmdmode option)
     --mode2               set integer to 2 (cmdmode option)
@@ -115,30 +115,30 @@ test_expect_success 'OPT_INTEGER() negative' 'check integer: -2345 -i -2345'
 test_expect_success 'OPT_INTEGER() kilo' 'check integer: 239616 -i 234k'
 test_expect_success 'OPT_INTEGER() negative kilo' 'check integer: -239616 -i -234k'
 
-test_expect_success 'OPT_MAGNITUDE() simple' '
-	check magnitude: 2345678 -m 2345678
+test_expect_success 'OPT_UNSIGNED() simple' '
+	check unsigned: 2345678 -u 2345678
 '
 
-test_expect_success 'OPT_MAGNITUDE() kilo' '
-	check magnitude: 239616 -m 234k
+test_expect_success 'OPT_UNSIGNED() kilo' '
+	check unsigned: 239616 -u 234k
 '
 
-test_expect_success 'OPT_MAGNITUDE() mega' '
-	check magnitude: 104857600 -m 100m
+test_expect_success 'OPT_UNSIGNED() mega' '
+	check unsigned: 104857600 -u 100m
 '
 
-test_expect_success 'OPT_MAGNITUDE() giga' '
-	check magnitude: 1073741824 -m 1g
+test_expect_success 'OPT_UNSIGNED() giga' '
+	check unsigned: 1073741824 -u 1g
 '
 
-test_expect_success 'OPT_MAGNITUDE() 3giga' '
-	check magnitude: 3221225472 -m 3g
+test_expect_success 'OPT_UNSIGNED() 3giga' '
+	check unsigned: 3221225472 -u 3g
 '
 
 cat >expect <<\EOF
 boolean: 2
 integer: 1729
-magnitude: 16384
+unsigned: 16384
 timestamp: 0
 string: 123
 abbrev: 7
@@ -149,7 +149,7 @@ file: prefix/my.file
 EOF
 
 test_expect_success 'short options' '
-	test-tool parse-options -s123 -b -i 1729 -m 16k -b -vv -n -F my.file \
+	test-tool parse-options -s123 -b -i 1729 -u 16k -b -vv -n -F my.file \
 	>output 2>output.err &&
 	test_cmp expect output &&
 	test_must_be_empty output.err
@@ -158,7 +158,7 @@ test_expect_success 'short options' '
 cat >expect <<\EOF
 boolean: 2
 integer: 1729
-magnitude: 16384
+unsigned: 16384
 timestamp: 0
 string: 321
 abbrev: 10
@@ -169,7 +169,7 @@ file: prefix/fi.le
 EOF
 
 test_expect_success 'long options' '
-	test-tool parse-options --boolean --integer 1729 --magnitude 16k \
+	test-tool parse-options --boolean --integer 1729 --unsigned 16k \
 		--boolean --string2=321 --verbose --verbose --no-dry-run \
 		--abbrev=10 --file fi.le --obsolete \
 		>output 2>output.err &&
@@ -181,7 +181,7 @@ test_expect_success 'abbreviate to something longer than SHA1 length' '
 	cat >expect <<-EOF &&
 	boolean: 0
 	integer: 0
-	magnitude: 0
+	unsigned: 0
 	timestamp: 0
 	string: (not set)
 	abbrev: 100
@@ -255,7 +255,7 @@ test_expect_success 'superfluous value provided: cmdmode' '
 cat >expect <<\EOF
 boolean: 1
 integer: 13
-magnitude: 0
+unsigned: 0
 timestamp: 0
 string: 123
 abbrev: 7
@@ -278,7 +278,7 @@ test_expect_success 'intermingled arguments' '
 cat >expect <<\EOF
 boolean: 0
 integer: 2
-magnitude: 0
+unsigned: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
@@ -345,7 +345,7 @@ cat >expect <<\EOF
 Callback: "four", 0
 boolean: 5
 integer: 4
-magnitude: 0
+unsigned: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
@@ -370,7 +370,7 @@ test_expect_success 'OPT_CALLBACK() and callback errors work' '
 cat >expect <<\EOF
 boolean: 1
 integer: 23
-magnitude: 0
+unsigned: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
@@ -449,7 +449,7 @@ test_expect_success 'OPT_NUMBER_CALLBACK() works' '
 cat >expect <<\EOF
 boolean: 0
 integer: 0
-magnitude: 0
+unsigned: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
@@ -773,14 +773,14 @@ test_expect_success 'subcommands are incompatible with KEEP_DASHDASH unless in c
 	grep ^BUG err
 '
 
-test_expect_success 'negative magnitude' '
-	test_must_fail test-tool parse-options --magnitude -1 >out 2>err &&
+test_expect_success 'negative unsigned' '
+	test_must_fail test-tool parse-options --unsigned -1 >out 2>err &&
 	grep "non-negative integer" err &&
 	test_must_be_empty out
 '
 
-test_expect_success 'magnitude with units but no numbers' '
-	test_must_fail test-tool parse-options --magnitude m >out 2>err &&
+test_expect_success 'unsigned with units but no numbers' '
+	test_must_fail test-tool parse-options --unsigned m >out 2>err &&
 	grep "non-negative integer" err &&
 	test_must_be_empty out
 '

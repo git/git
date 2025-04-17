@@ -6,7 +6,7 @@
 
 static int boolean = 0;
 static int integer = 0;
-static unsigned long magnitude = 0;
+static unsigned long unsigned_integer = 0;
 static timestamp_t timestamp;
 static int abbrev = 7;
 static int verbose = -1; /* unspecified */
@@ -140,7 +140,7 @@ int cmd__parse_options(int argc, const char **argv)
 		OPT_GROUP(""),
 		OPT_INTEGER('i', "integer", &integer, "get a integer"),
 		OPT_INTEGER('j', NULL, &integer, "get a integer, too"),
-		OPT_MAGNITUDE('m', "magnitude", &magnitude, "get a magnitude"),
+		OPT_UNSIGNED('u', "unsigned", &unsigned_integer, "get an unsigned integer"),
 		OPT_SET_INT(0, "set23", &integer, "set integer to 23", 23),
 		OPT_CMDMODE(0, "mode1", &integer, "set integer to 1 (cmdmode option)", 1),
 		OPT_CMDMODE(0, "mode2", &integer, "set integer to 2 (cmdmode option)", 2),
@@ -210,7 +210,7 @@ int cmd__parse_options(int argc, const char **argv)
 	}
 	show(&expect, &ret, "boolean: %d", boolean);
 	show(&expect, &ret, "integer: %d", integer);
-	show(&expect, &ret, "magnitude: %lu", magnitude);
+	show(&expect, &ret, "unsigned: %lu", unsigned_integer);
 	show(&expect, &ret, "timestamp: %"PRItime, timestamp);
 	show(&expect, &ret, "string: %s", string ? string : "(not set)");
 	show(&expect, &ret, "abbrev: %d", abbrev);
