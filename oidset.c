@@ -59,12 +59,24 @@ void oidset_parse_file_carefully(struct oidset *set, const char *path,
 				 oidset_parse_tweak_fn fn, void *cbdata)
 {
 	FILE *fp;
-	struct strbuf sb = STRBUF_INIT;
-	struct object_id oid;
 
 	fp = fopen(path, "r");
 	if (!fp)
 		die("could not open object name list: %s", path);
+
+	oidset_parse_filep_carefully(set, fp, path, algop, fn, cbdata);
+
+	fclose(fp);
+}
+
+void oidset_parse_filep_carefully(struct oidset *set, FILE *fp,
+				 const char *path,
+				 const struct git_hash_algo *algop,
+				 oidset_parse_tweak_fn fn, void *cbdata)
+{
+	struct strbuf sb = STRBUF_INIT;
+	struct object_id oid;
+
 	while (!strbuf_getline(&sb, fp)) {
 		const char *p;
 		const char *name;
@@ -89,6 +101,5 @@ void oidset_parse_file_carefully(struct oidset *set, const char *path,
 	}
 	if (ferror(fp))
 		die_errno("Could not read '%s'", path);
-	fclose(fp);
 	strbuf_release(&sb);
 }
