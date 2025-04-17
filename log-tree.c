@@ -9,7 +9,7 @@
 #include "environment.h"
 #include "hex.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "repository.h"
 #include "tmp-objdir.h"
 #include "commit.h"

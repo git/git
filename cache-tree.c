@@ -10,7 +10,7 @@
 #include "cache-tree.h"
 #include "bulk-checkin.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "read-cache-ll.h"
 #include "replace-object.h"
 #include "repository.h"
@@ -452,7 +452,7 @@ static int update_one(struct cache_tree *it,
 				 OBJ_TREE, &it->oid);
 	} else if (write_object_file_flags(buffer.buf, buffer.len, OBJ_TREE,
 					   &it->oid, NULL, flags & WRITE_TREE_SILENT
-					   ? HASH_SILENT : 0)) {
+					   ? WRITE_OBJECT_FILE_SILENT : 0)) {
 		strbuf_release(&buffer);
 		return -1;
 	}

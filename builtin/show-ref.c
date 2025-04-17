@@ -5,7 +5,7 @@
 #include "hex.h"
 #include "refs/refs-internal.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "object.h"
 #include "string-list.h"
 #include "parse-options.h"

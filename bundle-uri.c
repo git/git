@@ -14,7 +14,7 @@
 #include "fetch-pack.h"
 #include "remote.h"
 #include "trace2.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 
 static struct {
 	enum bundle_list_heuristic heuristic;

@@ -32,7 +32,7 @@
 #include "list.h"
 #include "packfile.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "replace-object.h"
 #include "dir.h"
 #include "midx.h"

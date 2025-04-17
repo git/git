@@ -1098,7 +1098,7 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 			    object_dir);
 	else
 		get_midx_filename(r->hash_algo, &midx_name, object_dir);
-	if (safe_create_leading_directories(midx_name.buf))
+	if (safe_create_leading_directories(r, midx_name.buf))
 		die_errno(_("unable to create leading directories of %s"),
 			  midx_name.buf);
 

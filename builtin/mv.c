@@ -15,6 +15,7 @@
 #include "gettext.h"
 #include "name-hash.h"
 #include "object-file.h"
+#include "path.h"
 #include "pathspec.h"
 #include "lockfile.h"
 #include "dir.h"
@@ -556,7 +557,7 @@ remove_entry:
 					 */
 					char *dst_dup = xstrdup(dst);
 					string_list_append(&dirty_paths, dst);
-					safe_create_leading_directories(dst_dup);
+					safe_create_leading_directories(the_repository, dst_dup);
 					FREE_AND_NULL(dst_dup);
 					rename(src, dst);
 				}
