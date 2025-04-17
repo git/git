@@ -2,6 +2,7 @@
 #define OIDSET_H
 
 #include "khash.h"
+#include <stdio.h>
 
 /**
  * This API is similar to oid-array, in that it maintains a set of object ids
@@ -90,6 +91,15 @@ void oidset_parse_file(struct oidset *set, const char *path,
  */
 typedef int (*oidset_parse_tweak_fn)(struct object_id *, void *);
 void oidset_parse_file_carefully(struct oidset *set, const char *path,
+				 const struct git_hash_algo *algop,
+				 oidset_parse_tweak_fn fn, void *cbdata);
+
+/*
+ * Same as oidset_parse_file_carefully, but is given a pre-opened file handle.
+ * The given path is only used for diagnostics.
+ */
+void oidset_parse_filep_carefully(struct oidset *set, FILE *fp,
+				 const char *path,
 				 const struct git_hash_algo *algop,
 				 oidset_parse_tweak_fn fn, void *cbdata);
 

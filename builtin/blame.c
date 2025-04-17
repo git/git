@@ -68,6 +68,9 @@ static int no_whole_file_rename;
 static int show_progress;
 static char repeated_meta_color[COLOR_MAXLEN];
 static int coloring_mode;
+/* Ignore-revs files specified in the config file. Processed separately to be
+ * able to ignore failing to open them. */
+static struct string_list ignore_revs_config_file_list = STRING_LIST_INIT_DUP;
 static struct string_list ignore_revs_file_list = STRING_LIST_INIT_DUP;
 static int mark_unblamable_lines;
 static int mark_ignored_lines;
@@ -731,7 +734,7 @@ static int git_blame_config(const char *var, const char *value,
 		ret = git_config_pathname(&str, var, value);
 		if (ret)
 			return ret;
-		string_list_insert(&ignore_revs_file_list, str);
+		string_list_insert(&ignore_revs_config_file_list, str);
 		free(str);
 		return 0;
 	}
@@ -848,6 +851,9 @@ static int peel_to_commit_oid(struct object_id *oid_ret, void *cbdata)
 }
 
 static void build_ignorelist(struct blame_scoreboard *sb,
+			     /* Ignore-revs files specified via the config,
+			      * which are allowed to fail to open. */
+			     struct string_list *ignore_revs_config_file_list,
 			     struct string_list *ignore_revs_file_list,
 			     struct string_list *ignore_rev_list)
 {
@@ -855,6 +861,23 @@ static void build_ignorelist(struct blame_scoreboard *sb,
 	struct object_id oid;
 
 	oidset_init(&sb->ignore_list, 0);
+	for_each_string_list_item(i, ignore_revs_config_file_list) {
+		if (!strcmp(i->string, ""))
+			oidset_clear(&sb->ignore_list);
+		else {
+			FILE *fp = fopen(i->string, "r");
+			if (!fp) {
+				if (errno == ENOENT) continue;
+				die("could not open blame.ignoreRevsFile file at %s", i->string);
+			}
+
+			oidset_parse_filep_carefully(&sb->ignore_list, fp, i->string,
+						    the_repository->hash_algo,
+						    peel_to_commit_oid, sb);
+
+			fclose(fp);
+		}
+	}
 	for_each_string_list_item(i, ignore_revs_file_list) {
 		if (!strcmp(i->string, ""))
 			oidset_clear(&sb->ignore_list);
@@ -1119,7 +1142,7 @@ parse_done:
 	sb.reverse = reverse;
 	sb.repo = the_repository;
 	sb.path = path;
-	build_ignorelist(&sb, &ignore_revs_file_list, &ignore_rev_list);
+	build_ignorelist(&sb, &ignore_revs_config_file_list, &ignore_revs_file_list, &ignore_rev_list);
 	string_list_clear(&ignore_revs_file_list, 0);
 	string_list_clear(&ignore_rev_list, 0);
 	setup_scoreboard(&sb, &o);

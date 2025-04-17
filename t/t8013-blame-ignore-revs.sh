@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/nix/store/cvlbhhrvzfkjl2hrrzhq3vr5gzan1r60-bash-interactive-5.2p37/bin/sh
 
 test_description='ignore revisions when blaming'
 
@@ -105,6 +105,20 @@ test_expect_success ignore_revs_from_files '
 # Ignore X from the config option, Y from a file.
 test_expect_success ignore_revs_from_configs_and_files '
 	git config --add blame.ignoreRevsFile ignore_x &&
+	git blame --line-porcelain file --ignore-revs-file ignore_y >blame_raw &&
+
+	sed -ne "/^[0-9a-f][0-9a-f]* [0-9][0-9]* 1/s/ .*//p" blame_raw >actual &&
+	git rev-parse A >expect &&
+	test_cmp expect actual &&
+
+	sed -ne "/^[0-9a-f][0-9a-f]* [0-9][0-9]* 2/s/ .*//p" blame_raw >actual &&
+	git rev-parse B >expect &&
+	test_cmp expect actual
+'
+
+# Ignore-revs from the config tolerates the file not existing
+test_expect_success ignore_revs_config_file_nonexistent '
+	git config --add blame.ignoreRevsFile nonexistent_ignore_file &&
 	git blame --line-porcelain file --ignore-revs-file ignore_y >blame_raw &&
 
 	sed -ne "/^[0-9a-f][0-9a-f]* [0-9][0-9]* 1/s/ .*//p" blame_raw >actual &&
