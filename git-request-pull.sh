@@ -78,41 +78,47 @@ fi
 merge_base=$(git merge-base $baserev $headrev) ||
 die "fatal: No commits in common between $base and $head"
 
-# $head is the refname from the command line.
-# Find a ref with the same name as $head that exists at the remote
+find_matching_ref () {
+	while read sha1 ref
+	do
+		case "$ref" in
+		*"^"?*)
+			ref="${ref%"^"*}"
+			deref=true
+			;;
+		*)
+			deref=
+			;;
+		esac
+
+		if test "$sha1" = "${remote:-HEAD}"
+		then
+			echo "$sha1 $sha1"
+			break
+		fi
+
+		case "$ref" in
+		"${remote:-HEAD}"|*"/${remote:-HEAD}")
+			if test -z "$deref"
+			then
+				# Remember the matching unpeeled object on the
+				# remote side.
+				remote_sha1="$sha1"
+			fi
+
+			if test "$sha1" = "$headrev"
+			then
+				echo "${remote_sha1:-$headrev} $ref"
+				break
+			fi
+			;;
+		esac
+	done
+}
+
+# Find a ref with the same name as $remote that exists at the remote
 # and points to the same commit as the local object.
-find_matching_ref='
-	my ($head,$headrev) = (@ARGV);
-	my $pattern = qr{/\Q$head\E$};
-	my ($remote_sha1, $found);
-
-	while (<STDIN>) {
-		chomp;
-		my ($sha1, $ref, $deref) = /^(\S+)\s+([^^]+)(\S*)$/;
-
-		if ($sha1 eq $head) {
-			$found = $remote_sha1 = $sha1;
-			break;
-		}
-
-		if ($ref eq $head || $ref =~ $pattern) {
-			if ($deref eq "") {
-				# Remember the matching object on the remote side
-				$remote_sha1 = $sha1;
-			}
-			if ($sha1 eq $headrev) {
-				$found = $ref;
-				break;
-			}
-		}
-	}
-	if ($found) {
-		$remote_sha1 = $headrev if ! defined $remote_sha1;
-		print "$remote_sha1 $found\n";
-	}
-'
-
-set fnord $(git ls-remote "$url" | @PERL_PATH@ -e "$find_matching_ref" "${remote:-HEAD}" "$headrev")
+set fnord $(git ls-remote "$url" | find_matching_ref)
 remote_sha1=$2
 ref=$3
 

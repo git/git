@@ -295,15 +295,18 @@ then
 	if test -n "$state_commit"
 	then
 		echo "Populating map from $state_branch ($state_commit)" 1>&2
-		perl -e'open(MAP, "-|", "git show $ARGV[0]:filter.map") or die;
-			while (<MAP>) {
-				m/(.*):(.*)/ or die;
-				open F, ">../map/$1" or die;
-				print F "$2" or die;
-				close(F) or die;
-			}
-			close(MAP) or die;' "$state_commit" \
-				|| die "Unable to load state from $state_branch:filter.map"
+
+		git show "$state_commit:filter.map" >"$tempdir"/filter-map ||
+			die "Unable to load state from $state_branch:filter.map"
+		while read line
+		do
+			case "$line" in
+			*:*)
+				echo "${line%:*}" >../map/"${line#*:}";;
+			*)
+				die "Unable to load state from $state_branch:filter.map";;
+			esac
+		done <"$tempdir"/filter-map
 	else
 		echo "Branch $state_branch does not exist. Will create" 1>&2
 	fi
@@ -633,15 +636,13 @@ if test -n "$state_branch"
 then
 	echo "Saving rewrite state to $state_branch" 1>&2
 	state_blob=$(
-		perl -e'opendir D, "../map" or die;
-			open H, "|-", "git hash-object -w --stdin" or die;
-			foreach (sort readdir(D)) {
-				next if m/^\.\.?$/;
-				open F, "<../map/$_" or die;
-				chomp($f = <F>);
-				print H "$_:$f\n" or die;
-			}
-			close(H) or die;' || die "Unable to save state")
+		for file in ../map/*
+		do
+			from_commit=$(basename "$file")
+			to_commit=$(cat "$file")
+			echo "$from_commit:$to_commit"
+		done | git hash-object -w --stdin || die "Unable to save state"
+	)
 	state_tree=$(printf '100644 blob %s\tfilter.map\n' "$state_blob" | git mktree)
 	if test -n "$state_commit"
 	then

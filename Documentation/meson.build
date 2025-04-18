@@ -335,12 +335,12 @@ cmd_lists = [
 
 documentation_deps += custom_target(
   command: [
-    perl,
+    shell,
     '@INPUT@',
     meson.project_source_root(),
     meson.current_build_dir(),
   ] + cmd_lists,
-  input: 'cmd-list.perl',
+  input: 'cmd-list.sh',
   output: cmd_lists
 )
 
