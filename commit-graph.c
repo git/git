@@ -2712,7 +2712,7 @@ static void graph_report(const char *fmt, ...)
 	verify_commit_graph_error = 1;
 	va_start(ap, fmt);
 	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, "\n");
+	fputc('\n', stderr);
 	va_end(ap);
 }
 
