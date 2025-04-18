@@ -508,6 +508,9 @@ int for_each_object_in_pack(struct packed_git *p,
 int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
 			   void *data, enum for_each_object_flags flags);
 
+/* Free pointers inside of object_info, but not object_info itself */
+void free_object_info_contents(struct object_info *object_info);
+
 void *read_object_with_reference(struct repository *r,
 				 const struct object_id *oid,
 				 enum object_type required_type,
