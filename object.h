@@ -327,12 +327,6 @@ void object_array_filter(struct object_array *array,
 			 object_array_each_func_t want, void *cb_data);
 
 /*
- * Remove from array all but the first entry with a given name.
- * Warning: this function uses an O(N^2) algorithm.
- */
-void object_array_remove_duplicates(struct object_array *array);
-
-/*
  * Remove any objects from the array, freeing all used memory; afterwards
  * the array is ready to store more objects with add_object_array().
  */
