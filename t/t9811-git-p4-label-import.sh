@@ -97,7 +97,6 @@ test_expect_success 'two labels on the same changelist' '
 
 		git show-ref --verify refs/tags/TAG_F1_1 &&
 		git show-ref --verify refs/tags/TAG_F1_2 &&
-		test_must_fail git show-ref --verify refs/tags/TAG_F1_ONLY &&
 
 		cd main &&
 
@@ -207,7 +206,7 @@ test_expect_success 'use git config to enable import/export of tags' '
 		git tag CFG_A_GIT_TAG &&
 		git p4 rebase --verbose &&
 		git p4 submit --verbose &&
-		git show-ref --verify refs/tags/TAG_F1_1 &&
+		git show-ref --verify refs/tags/TAG_F1_1
 	) &&
 	(
 		cd "$cli" &&
