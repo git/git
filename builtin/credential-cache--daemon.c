@@ -2,8 +2,8 @@
 #include "builtin.h"
 #include "abspath.h"
 #include "gettext.h"
-#include "object-file.h"
 #include "parse-options.h"
+#include "path.h"
 
 #ifndef NO_UNIX_SOCKETS
 
@@ -271,7 +271,7 @@ static void init_socket_directory(const char *path)
 		 * condition in which somebody can chdir to it, sleep, then try to open
 		 * our protected socket.
 		 */
-		if (safe_create_leading_directories_const(dir) < 0)
+		if (safe_create_leading_directories_const(the_repository, dir) < 0)
 			die_errno("unable to create directories for '%s'", dir);
 		if (mkdir(dir, 0700) < 0)
 			die_errno("unable to mkdir '%s'", dir);

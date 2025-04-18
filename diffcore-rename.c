@@ -8,7 +8,7 @@
 #include "git-compat-util.h"
 #include "diff.h"
 #include "diffcore.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "hashmap.h"
 #include "mem-pool.h"
 #include "oid-array.h"

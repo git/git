@@ -20,7 +20,7 @@
 #include "refs.h"
 #include "dir.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "oid-array.h"
 #include "tree.h"
 #include "commit.h"
@@ -706,11 +706,11 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	int intent_only = flags & ADD_CACHE_INTENT;
 	int add_option = (ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE|
 			  (intent_only ? ADD_CACHE_NEW_ONLY : 0));
-	unsigned hash_flags = pretend ? 0 : HASH_WRITE_OBJECT;
+	unsigned hash_flags = pretend ? 0 : INDEX_WRITE_OBJECT;
 	struct object_id oid;
 
 	if (flags & ADD_CACHE_RENORMALIZE)
-		hash_flags |= HASH_RENORMALIZE;
+		hash_flags |= INDEX_RENORMALIZE;
 
 	if (!S_ISREG(st_mode) && !S_ISLNK(st_mode) && !S_ISDIR(st_mode))
 		return error(_("%s: can only add regular files, symbolic links or git-directories"), path);

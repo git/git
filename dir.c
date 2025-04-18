@@ -17,8 +17,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "name-hash.h"
-#include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "path.h"
 #include "refs.h"
 #include "repository.h"
@@ -4063,12 +4062,12 @@ void connect_work_tree_and_git_dir(const char *work_tree_,
 
 	/* Prepare .git file */
 	strbuf_addf(&gitfile_sb, "%s/.git", work_tree_);
-	if (safe_create_leading_directories_const(gitfile_sb.buf))
+	if (safe_create_leading_directories_const(the_repository, gitfile_sb.buf))
 		die(_("could not create directories for %s"), gitfile_sb.buf);
 
 	/* Prepare config file */
 	strbuf_addf(&cfg_sb, "%s/config", git_dir_);
-	if (safe_create_leading_directories_const(cfg_sb.buf))
+	if (safe_create_leading_directories_const(the_repository, cfg_sb.buf))
 		die(_("could not create directories for %s"), cfg_sb.buf);
 
 	git_dir = real_pathdup(git_dir_, 1);

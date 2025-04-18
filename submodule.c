@@ -27,7 +27,7 @@
 #include "parse-options.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "commit-reach.h"
 #include "read-cache-ll.h"
 #include "setup.h"
@@ -2384,7 +2384,7 @@ static void relocate_single_git_dir_into_superproject(const char *path,
 	if (validate_submodule_git_dir(new_gitdir.buf, sub->name) < 0)
 		die(_("refusing to move '%s' into an existing git dir"),
 		    real_old_git_dir);
-	if (safe_create_leading_directories_const(new_gitdir.buf) < 0)
+	if (safe_create_leading_directories_const(the_repository, new_gitdir.buf) < 0)
 		die(_("could not create directory '%s'"), new_gitdir.buf);
 	real_new_git_dir = real_pathdup(new_gitdir.buf, 1);
 

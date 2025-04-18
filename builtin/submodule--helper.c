@@ -28,7 +28,7 @@
 #include "diff.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "advice.h"
 #include "branch.h"
 #include "list-objects-filter-options.h"
@@ -1739,7 +1739,7 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 		    !is_empty_dir(clone_data_path))
 			die(_("directory not empty: '%s'"), clone_data_path);
 
-		if (safe_create_leading_directories_const(sm_gitdir) < 0)
+		if (safe_create_leading_directories_const(the_repository, sm_gitdir) < 0)
 			die(_("could not create directory '%s'"), sm_gitdir);
 
 		prepare_possible_alternates(clone_data->name, reference);
@@ -1800,7 +1800,7 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 		if (clone_data->require_init && !stat(clone_data_path, &st) &&
 		    !is_empty_dir(clone_data_path))
 			die(_("directory not empty: '%s'"), clone_data_path);
-		if (safe_create_leading_directories_const(clone_data_path) < 0)
+		if (safe_create_leading_directories_const(the_repository, clone_data_path) < 0)
 			die(_("could not create directory '%s'"), clone_data_path);
 		path = xstrfmt("%s/index", sm_gitdir);
 		unlink_or_warn(path);

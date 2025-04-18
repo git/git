@@ -3,7 +3,7 @@
 
 #include "git-compat-util.h"
 #include "refs.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "cache-tree.h"
 #include "mergesort.h"
 #include "commit.h"
@@ -277,7 +277,7 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 	convert_to_git(r->index, path, buf.buf, buf.len, &buf, 0);
 	origin->file.ptr = buf.buf;
 	origin->file.size = buf.len;
-	pretend_object_file(buf.buf, buf.len, OBJ_BLOB, &origin->blob_oid);
+	pretend_object_file(the_repository, buf.buf, buf.len, OBJ_BLOB, &origin->blob_oid);
 
 	/*
 	 * Read the current index, replace the path entry with

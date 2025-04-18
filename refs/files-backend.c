@@ -708,7 +708,7 @@ static enum ref_transaction_error lock_raw_ref(struct files_ref_store *refs,
 	files_ref_path(refs, &ref_file, refname);
 
 retry:
-	switch (safe_create_leading_directories(ref_file.buf)) {
+	switch (safe_create_leading_directories(the_repository, ref_file.buf)) {
 	case SCLD_OK:
 		break; /* success */
 	case SCLD_EXISTS:
@@ -1119,7 +1119,7 @@ retry_fn:
 			strbuf_addstr(&path_copy, path);
 
 		do {
-			scld_result = safe_create_leading_directories(path_copy.buf);
+			scld_result = safe_create_leading_directories(the_repository, path_copy.buf);
 			if (scld_result == SCLD_OK)
 				goto retry_fn;
 		} while (scld_result == SCLD_VANISHED && create_directories_remaining-- > 0);

@@ -14,7 +14,7 @@
 #include "list-objects-filter.h"
 #include "list-objects-filter-options.h"
 #include "packfile.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "trace.h"
 #include "environment.h"
 

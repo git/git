@@ -6,7 +6,8 @@
 #include "strbuf.h"
 #include "tree.h"
 #include "tree-walk.h"
-#include "object-store-ll.h"
+#include "object-file.h"
+#include "object-store.h"
 #include "repository.h"
 
 static int score_missing(unsigned mode)

@@ -4,7 +4,7 @@
 #include "date.h"
 #include "dir.h"
 #include "hex.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "path.h"
 #include "repository.h"
 #include "object.h"
