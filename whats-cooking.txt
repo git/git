@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2025, #04; Tue, 15)
-X-master-at: 77d6ee513fb1d34577aab0aa589f41b4cc4be33d
-X-next-at: fd585f713ee3339aaf1de90a7666537036391761
+Subject: What's cooking in git.git (Apr 2025, #05; Fri, 18)
+X-master-at: 4bbb303af69990ccd05fe3a2eb58a1ce036f8220
+X-next-at: 37484f566f6a755843cc88c219327d2d99bd680f
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Apr 2025, #04; Tue, 15)
+What's cooking in git.git (Apr 2025, #05; Fri, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,151 +48,326 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* bc/allow-upload-pack-from-other-people (2025-04-01) 1 commit
-  (merged to 'next' on 2025-04-07 at c27755834e)
- + t5605: fix test for cloning from a different user
-
- Test fix for an already graduated topic.
- source: <Z-sO9gcWAi_xh0tI@tapette.crustytoothpaste.net>
-
-
-* ds/maintenance-loose-objects-batchsize (2025-03-23) 2 commits
-  (merged to 'next' on 2025-04-07 at a4e55af4bc)
- + maintenance: add loose-objects.batchSize config
- + maintenance: force progress/no-quiet to children
-
- The job to coalesce loose objects into packfiles in "git
- maintenance" now has configurable batch size.
- source: <pull.1885.git.1742777512.gitgitgadget@gmail.com>
-
-
-* jk/zlib-inflate-fixes (2025-02-25) 10 commits
-  (merged to 'next' on 2025-04-07 at 4343a155f7)
- + unpack_loose_rest(): rewrite return handling for clarity
- + unpack_loose_rest(): simplify error handling
- + unpack_loose_rest(): never clean up zstream
- + unpack_loose_rest(): avoid numeric comparison of zlib status
- + unpack_loose_header(): avoid numeric comparison of zlib status
- + git_inflate(): skip zlib_post_call() sanity check on Z_NEED_DICT
- + unpack_loose_header(): fix infinite loop on broken zlib input
- + unpack_loose_header(): report headers without NUL as "bad"
- + unpack_loose_header(): simplify next_out assignment
- + loose_object_info(): BUG() on inflating content with unknown type
-
- Fix our use of zlib corner cases.
- source: <20250225062518.GA1293854@coredump.intra.peff.net>
-
-
-* js/comma-semicolon-confusion (2025-03-28) 10 commits
-  (merged to 'next' on 2025-04-07 at 3c1f7f4226)
- + detect-compiler: detect clang even if it found CUDA
- + clang: warn when the comma operator is used
- + compat/regex: explicitly mark intentional use of the comma operator
- + wildmatch: avoid using of the comma operator
- + diff-delta: avoid using the comma operator
- + xdiff: avoid using the comma operator unnecessarily
- + clar: avoid using the comma operator unnecessarily
- + kwset: avoid using the comma operator unnecessarily
- + rebase: avoid using the comma operator unnecessarily
- + remote-curl: avoid using the comma operator unnecessarily
+* ab/environment-clean-header (2025-04-09) 1 commit
+  (merged to 'next' on 2025-04-09 at 845b92c7ef)
+ + environment.h: remove unused variables
 
  Code clean-up.
- source: <pull.1889.v3.git.1743076383.gitgitgadget@gmail.com>
+ source: <2c547567-2b72-476c-9fc5-71cac050fa15@gmail.com>
 
 
-* jt/clone-guess-remote-head-fix (2025-03-25) 3 commits
-  (merged to 'next' on 2025-04-07 at 35793fd7d8)
- + advice: allow disabling default branch name advice
- + builtin/clone: suppress unexpected default branch advice
- + remote: allow `guess_remote_head()` to suppress advice
+* ab/pathspec-sign-compare-workaround (2025-04-01) 1 commit
+  (merged to 'next' on 2025-04-08 at 875fb0e3ee)
+ + pathspec: fix sign comparison warnings
 
- "git clone" still gave the message about the default branch name;
- this message has been turned into an advice message that can be
- turned off.
- cf. <69ccc682-3f81-440f-8e96-a5af5d49fa60@gmail.com>
- source: <20250325005148.1771502-1-jltobler@gmail.com>
+ Some warnings from "-Wsign-compare" for pathspec.c have been
+ squelched.
+ source: <127c3010-4b23-436e-a07d-e6031e746113@gmail.com>
 
 
-* kn/reflog-drop (2025-03-17) 2 commits
-  (merged to 'next' on 2025-04-07 at 193c01b203)
- + reflog: implement subcommand to drop reflogs
- + reflog: improve error for when reflog is not found
+* ab/rm-sign-compare (2025-03-29) 1 commit
+  (merged to 'next' on 2025-04-08 at bc1f98e81c)
+ + rm: fix sign comparison warnings
 
- "git reflog" learns "drop" subcommand, that discards the entire
- reflog data for a ref.
- cf. <CAP8UFD1vTkPH=5b++6+=koozC31=wD1gQszvdFmzb73B9HM4Aw@mail.gmail.com>
- source: <20250314-493-add-command-to-purge-reflog-entries-v3-0-c24e23a6146d@gmail.com>
+ Some warnings from "-Wsign-compare" for builtin/rm.c have been
+ squelched.
+ source: <ecaaa968-f337-466b-b719-22ebb3587167@gmail.com>
 
 
-* lo/userdiff-gitconfig (2025-04-01) 1 commit
-  (merged to 'next' on 2025-04-07 at 1b906232a1)
- + userdiff: add builtin driver for INI files
+* cj/refname-avail-check-optim-typofix (2025-04-09) 1 commit
+  (merged to 'next' on 2025-04-09 at 95fe082872)
+ + refs: fix duplicated word in comment
 
- Will merge to 'master'.
- cf. <Z-pGdyh0eG3xSe4W@pks.im>
- source: <20250331031309.94682-1-lucasseikioshiro@gmail.com>
-
-
-* md/t1403-path-is-file (2025-03-04) 1 commit
-  (merged to 'next' on 2025-04-07 at 93087893e8)
- + t1403: verify that path exists and is a file
-
- Test tweak.
- source: <20250304112728.41228-2-danimahendra0904@gmail.com>
+ Comment fix.
+ source: <pull.1940.v2.git.git.1743857867327.gitgitgadget@gmail.com>
 
 
-* ps/mingw-creat-excl-fix (2025-03-21) 2 commits
-  (merged to 'next' on 2025-04-07 at 590b0d4d21)
- + compat/mingw: fix EACCESS when opening files with `O_CREAT | O_EXCL`
- + meson: fix compat sources when compiling with MSVC
+* dd/sparse-glibc-workaround (2025-04-09) 1 commit
+  (merged to 'next' on 2025-04-09 at 14ee53c8e4)
+ + sparse: ignore warning from new glibc headers
 
- Fix lockfile contention in reftable code on Windows.
- cf. <801fac5d-dd98-d157-6ff3-c3e8aa6a68ae@gmx.de>
- source: <20250320-b4-pks-mingw-lockfile-flake-v2-0-a84c90cfc6c2@pks.im>
+ Squelch false-positive from sparse.
+ source: <a667da3985a0fe943cc0ff6ee8513d731d75a299.1721171853.git.congdanhqx@gmail.com>
 
 
-* ps/object-wo-the-repository (2025-03-10) 12 commits
-  (merged to 'next' on 2025-04-07 at 0cc0c8631d)
- + hash: stop depending on `the_repository` in `null_oid()`
- + hash: fix "-Wsign-compare" warnings
- + object-file: split out logic regarding hash algorithms
- + delta-islands: stop depending on `the_repository`
- + object-file-convert: stop depending on `the_repository`
- + pack-bitmap-write: stop depending on `the_repository`
- + pack-revindex: stop depending on `the_repository`
- + pack-check: stop depending on `the_repository`
- + environment: move access to "core.bigFileThreshold" into repo settings
- + pack-write: stop depending on `the_repository` and `the_hash_algo`
- + object: stop depending on `the_repository`
- + csum-file: stop depending on `the_repository`
- (this branch is used by ps/object-file-cleanup.)
+* en/merge-recursive-debug (2025-04-08) 8 commits
+  (merged to 'next' on 2025-04-09 at 555be94c73)
+ + builtin/{merge,rebase,revert}: remove GIT_TEST_MERGE_ALGORITHM
+ + tests: remove GIT_TEST_MERGE_ALGORITHM and test_expect_merge_algorithm
+ + merge-recursive.[ch]: thoroughly debug these
+ + merge, sequencer: switch recursive merges over to ort
+ + sequencer: switch non-recursive merges over to ort
+ + merge-ort: enable diff-algorithms other than histogram
+ + builtin/merge-recursive: switch to using merge_ort_generic()
+ + checkout: replace merge_trees() with merge_ort_nonrecursive()
 
- The object layer has been updated to take an explicit repository
- instance as a parameter in more code paths.
- cf. <CABPp-BFrjqf=dMNwxzyMj3EQrAXTYkH7rDTi7X7xoWnoW_A4eA@mail.gmail.com>
- source: <20250310-b4-pks-objects-without-the-repository-v4-0-f201b8ec57ba@pks.im>
+ Remove remnants of the recursive merge strategy backend, which was
+ superseded by the ort merge strategy.
+ source: <pull.1898.v3.git.1744127322.gitgitgadget@gmail.com>
 
 
-* ps/reftable-windows-unlink-fix (2025-02-18) 2 commits
-  (merged to 'next' on 2025-04-07 at 88e2a9a077)
- + reftable: ignore file-in-use errors when unlink(3p) fails on Windows
- + Merge branch 'ps/reftable-sans-compat-util' into ps/reftable-windows-unlink-fix
+* jk/fetch-follow-remote-head-fix (2025-04-09) 4 commits
+  (merged to 'next' on 2025-04-09 at 3071fce577)
+ + fetch: make set_head() call easier to read
+  (merged to 'next' on 2025-04-07 at ba5ac342a5)
+ + fetch: don't ask for remote HEAD if followRemoteHEAD is "never"
+ + fetch: only respect followRemoteHEAD with configured refspecs
+ + Merge branch 'jk/fetch-ref-prefix-cleanup' into jk/fetch-follow-remote-head-fix
 
- Portability fix.
- source: <20250206-b4-pks-reftable-win32-in-use-errors-v2-1-56985a4f6186@pks.im>
+ "git fetch [<remote>]" with only the configured fetch refspec
+ should be the only thing to update refs/remotes/<remote>/HEAD,
+ but the code was overly eager to do so in other cases.
+ cf. <Z9n7myvpnDOWFWqt@nand.local>
+ source: <20250318053905.GA2051217@coredump.intra.peff.net>
+ source: <20250404085812.GA772404@coredump.intra.peff.net>
 
 
-* pw/custom-conflict-marker-size-for-merge-related-docs (2025-03-29) 1 commit
-  (merged to 'next' on 2025-04-07 at 281b7207e3)
- + merge-file doc: set conflict-marker-size attribute
+* js/ci-fedora-gawk (2025-04-16) 1 commit
+ + ci(pedantic): ensure that awk is installed
 
- "git-merge-file" documentation source, which has lines that look
- like conflict markers, lacked custom conflict marker size defined,
- which has been corrected..
- source: <pull.1895.git.1743173140253.gitgitgadget@gmail.com>
+ Work around CI breakage due to fedora base image getting updated.
+ source: <81209cfd-049e-c853-9c4a-2cf9803e56a4@gmx.de>
+
+
+* js/ci-github-update-ubuntu (2025-04-09) 1 commit
+  (merged to 'next' on 2025-04-09 at fae10a2b5b)
+ + ci: upgrade `sparse` to supported build agents
+
+ Adjust to the deprecation of use of Ubuntu 20.04 GitHub Actions CI.
+ source: <77f82414-261c-d2bc-f911-ed3d4b06c86e@gmx.de>
+
+
+* jt/help-sha-backend-info-in-build-options (2025-04-07) 2 commits
+  (merged to 'next' on 2025-04-08 at 7389752293)
+ + help: include unsafe SHA-1 build info in version
+ + help: include SHA implementation in version info
+
+ "git help --build-options" reports SHA-1 and SHA-256 backends used
+ in the build.
+ source: <20250403140529.497876-1-jltobler@gmail.com>
+
+
+* jt/ref-transaction-abort-fix (2025-03-21) 1 commit
+  (merged to 'next' on 2025-04-08 at b653d86941)
+ + builtin/fetch: avoid aborting closed reference transaction
+
+ A ref transaction corner case fix.
+ cf. <Z-E2ns9VziejSLB2@pks.im>
+ source: <20250321004437.505461-1-jltobler@gmail.com>
+
+
+* jt/rev-list-z (2025-03-21) 5 commits
+  (merged to 'next' on 2025-04-08 at e608ba85c1)
+ + rev-list: support NUL-delimited --missing option
+ + rev-list: support NUL-delimited --boundary option
+ + rev-list: support delimiting objects with NUL bytes
+ + rev-list: refactor early option parsing
+ + rev-list: inline `show_object_with_name()` in `show_object()`
+
+ "git rev-list" learns machine-parsable output format that delimits
+ each field with NUL.
+ source: <20250319183410.1225428-1-jltobler@gmail.com>
+
+
+* kn/blame-porcelain-unblamable (2025-04-07) 1 commit
+  (merged to 'next' on 2025-04-09 at 971ba23ba0)
+ + blame: print unblamable and ignored commits in porcelain mode
+
+ "git blame --porcelain" mode now talks about unblamable lines and
+ lines that are blamed to an ignored commit.
+ source: <20250403160326.120124-1-karthik.188@gmail.com>
+
+
+* kn/non-transactional-batch-updates (2025-04-08) 9 commits
+  (merged to 'next' on 2025-04-08 at de64e9c49e)
+ + update-ref: add --batch-updates flag for stdin mode
+ + refs: support rejection in batch updates during F/D checks
+ + refs: implement batch reference update support
+ + refs: introduce enum-based transaction error types
+ + refs/reftable: extract code from the transaction preparation
+ + refs/files: remove duplicate duplicates check
+ + refs: move duplicate refname update check to generic layer
+ + refs/files: remove redundant check in split_symref_update()
+ + Merge branch 'ps/refname-avail-check-optim' into kn/non-transactional-batch-updates
+
+ Updating multiple references have only been possible in all-or-none
+ fashion with transactions, but it can be more efficient to batch
+ multiple updates even when some of them are allowed to fail in a
+ best-effort manner.  A new "best effort batches of updates" mode
+ has been introduced.
+ source: <20250408085120.614893-1-karthik.188@gmail.com>
+
+
+* ps/cat-file-filter-batch (2025-04-07) 12 commits
+  (merged to 'next' on 2025-04-08 at eb8dfb17ea)
+ + builtin/cat-file: use bitmaps to efficiently filter by object type
+ + builtin/cat-file: deduplicate logic to iterate over all objects
+ + pack-bitmap: introduce function to check whether a pack is bitmapped
+ + pack-bitmap: add function to iterate over filtered bitmapped objects
+ + pack-bitmap: allow passing payloads to `show_reachable_fn()`
+ + builtin/cat-file: support "object:type=" objects filter
+ + builtin/cat-file: support "blob:limit=" objects filter
+ + builtin/cat-file: support "blob:none" objects filter
+ + builtin/cat-file: wire up an option to filter objects
+ + builtin/cat-file: introduce function to report object status
+ + builtin/cat-file: rename variable that tracks usage
+ + Merge branch 'tb/incremental-midx-part-2' into ps/cat-file-filter-batch
+
+ "git cat-file --batch" and friends learned to allow "--filter=" to
+ omit certain objects, just like the transport layer does.
+ source: <20250402-pks-cat-file-object-type-filter-v3-0-4da6bb21871c@pks.im>
+
+
+* ps/maintenance-reflog-expire (2025-04-08) 6 commits
+  (merged to 'next' on 2025-04-08 at 40d6884143)
+ + builtin/maintenance: introduce "reflog-expire" task
+ + builtin/gc: split out function to expire reflog entries
+ + builtin/reflog: make functions regarding `reflog_expire_options` public
+ + builtin/reflog: stop storing per-reflog expiry dates globally
+ + builtin/reflog: stop storing default reflog expiry dates globally
+ + reflog: rename `cmd_reflog_expire_cb` to `reflog_expire_options`
+
+ "git maintenance" learns a new task to expire reflog entries.
+ source: <20250408-pks-maintenance-reflog-expire-v2-0-1ad8634798b7@pks.im>
+
+
+* ps/misc-build-fixes (2025-04-01) 5 commits
+  (merged to 'next' on 2025-04-08 at 85693b6d96)
+ + ci: use Visual Studio for win+meson job on GitHub Workflows
+ + meson: distinguish build and target host binaries
+ + meson: respect 'tests' build option in contrib
+ + gitweb: fix generation of "gitweb.js"
+ + meson: fix handling of '-Dcurl=auto'
+
+ Random build fixes.
+ cf. <CAOLa=ZQ8bTn-prAs2ycLdLLjVaLQL4GtLw_gFsvAcx_6j=MBjA@mail.gmail.com>
+ source: <20250331-b4-pks-collect-build-fixes-v2-0-6b06136808f3@pks.im>
+
+
+* ps/refname-avail-check-optim (2025-04-09) 1 commit
+  (merged to 'next' on 2025-04-09 at 0d35104147)
+ + refs/packed: fix BUG when seeking refs with UTF-8 characters
+
+ Incorrect sorting of refs with bytes with high-bit set on platforms
+ with signed char led to a BUG, which has been corrected.
+ cf. <20250404205740.GA780449@coredump.intra.peff.net>
+ source: <20250404-b4-pks-packed-backend-seek-with-utf8-v1-1-6ceb694e3bd7@pks.im>
+
+
+* ps/test-wo-perl-prereq (2025-04-07) 20 commits
+  (merged to 'next' on 2025-04-08 at 424e2eab23)
+ + t5703: refactor test to not depend on Perl
+ + t5316: refactor `max_chain()` to not depend on Perl
+ + t0210: refactor trace2 scrubbing to not use Perl
+ + t0021: refactor `generate_random_characters()` to not depend on Perl
+ + t/lib-httpd: refactor "one-time-perl" CGI script to not depend on Perl
+ + t/lib-t6000: refactor `name_from_description()` to not depend on Perl
+ + t/lib-gpg: refactor `sanitize_pgp()` to not depend on Perl
+ + t: refactor tests depending on Perl for textconv scripts
+ + t: refactor tests depending on Perl to print data
+ + t: refactor tests depending on Perl substitution operator
+ + t: refactor tests depending on Perl transliteration operator
+ + Makefile: stop requiring Perl when running tests
+ + meson: stop requiring Perl when tests are enabled
+ + t: adapt existing PERL prerequisites
+ + t: introduce PERL_TEST_HELPERS prerequisite
+ + t: adapt `test_readlink()` to not use Perl
+ + t: adapt `test_copy_bytes()` to not use Perl
+ + t: adapt character translation helpers to not use Perl
+ + t: refactor environment sanitization to not use Perl
+ + t: skip chain lint when PERL_PATH is unset
+ (this branch is used by ps/fewer-perl.)
+
+ "make test" used to have a hard dependency on (basic) Perl; tests
+ have been rewritten help environment with NO_PERL test the build as
+ much as possible.
+ source: <20250403-b4-pks-t-perlless-v4-0-be20ac3db39a@pks.im>
+
+
+* sk/clar-trailer-urlmatch-norm-test (2025-03-04) 2 commits
+  (merged to 'next' on 2025-04-08 at 51cb3c8bce)
+ + t/unit-tests: convert urlmatch-normalization test to clar
+ + t/unit-tests: convert trailer test to use clar
+
+ A few traditional unit tests have been rewritten to use the clar
+ framework.
+ cf. <xmqqzfi0pthr.fsf@gitster.g>
+ cf. <Z_TAtJ9LEeHo2AQN@pks.im>
+ source: <20250304113323.10564-1-kuforiji98@gmail.com>
+
+
+* ua/update-update-server-info (2025-04-08) 1 commit
+  (merged to 'next' on 2025-04-09 at f0d47e97b5)
+ + builtin/update-server-info: remove unnecessary if statement
+
+ Code simplification.
+ source: <20250407195850.299348-2-usmanakinyemi202@gmail.com>
+
+
+* zy/send-email-error-handling (2025-04-07) 2 commits
+  (merged to 'next' on 2025-04-08 at d5a716a940)
+ + send-email: finer-grained SMTP error handling
+ + send-email: capture errors in an eval {} block
+
+ Auth-related (and unrelated) error handling in send-email has been
+ made more robust.
+ source: <20250326075246.2612627-1-05ZYT30@gmail.com>
 
 --------------------------------------------------
 [New Topics]
+
+* ds/doc-disable-hooks (2025-04-16) 1 commit
+  (merged to 'next' on 2025-04-18 at 4b543e57a5)
+ + docs: document core.hooksPath=/dev/null
+
+ Document the convention to disable hooks altogether by setting the
+ hooksPath configuration variable to /dev/nulll
+
+ Will merge to 'master'.
+ source: <pull.1899.v2.git.1744818135435.gitgitgadget@gmail.com>
+
+
+* tb/midx-avoid-cruft-packs (2025-04-15) 9 commits
+ - repack: exclude cruft pack(s) from the MIDX where possible
+ - pack-objects: introduce '--stdin-packs=follow'
+ - pack-objects: swap 'show_{object,commit}_pack_hint'
+ - pack-objects: fix typo in 'show_object_pack_hint()'
+ - pack-objects: perform name-hash traversal for unpacked objects
+ - pack-objects: declare 'rev_info' for '--stdin-packs' earlier
+ - pack-objects: factor out handling '--stdin-packs'
+ - pack-objects: limit scope in 'add_object_entry_from_pack()'
+ - pack-objects: use standard option incompatibility functions
+
+ "pack-objects" has been taught to avoid pointing into objects in
+ cruft packs from midx.
+
+ Comments?
+ source: <cover.1744757204.git.me@ttaylorr.com>
+
+
+* tb/pack-bitmap-lookup-tables (2025-04-17) 4 commits
+ - t/perf/lib-bitmap.sh: avoid test_perf during setup
+ - t/perf: avoid testing bitmaps without lookup table
+ - p5312: removed duplicate performance test script
+ - pack-bitmap: write lookup table extension by default
+
+ Enable lookup tables extension in pack bitmap (and midx bitmap) by
+ default.
+
+ Comments?
+ source: <cover.1744924321.git.me@ttaylorr.com>
+
+
+* as/typofix-in-env-h-header (2025-04-18) 1 commit
+ - environment: fix typo: 'setup_git_directory_gently'
+
+ Typofix.
+
+ Will merge to 'next'.
+ source: <20250418185855.52950-1-abhijeet.nkt@gmaiil.com>
+
+--------------------------------------------------
+[Cooking]
 
 * ps/meson-build-perf-bench (2025-04-14) 5 commits
  - meson: wire up benchmarking options
@@ -208,45 +383,48 @@ Release tarballs are available at:
  source: <20250414-pks-meson-benchmarks-v2-0-04377080a167@pks.im>
 
 
-* aw/t9811-modernize (2025-04-15) 1 commit
- - t9811: be more precise to check importing of tags
+* aw/t9811-modernize (2025-04-18) 2 commits
+  (merged to 'next' on 2025-04-18 at 37484f566f)
+ + t9811: fix misconversion of tests
+  (merged to 'next' on 2025-04-16 at 53103e8873)
+ + t9811: be more precise to check importing of tags
 
  Test updates.
 
- Will merge to 'next'?
- source: <20250412061957.81747-2-anthonywang03@icloud.com>
+ Will merge to 'master'.
+ source: <20250416145939.24207-2-anthonywang03@icloud.com>
 
 
-* ps/fewer-perl (2025-04-15) 5 commits
+* ps/fewer-perl (2025-04-16) 5 commits
  - Documentation: stop depending on Perl to generate command list
  - Documentation: stop depending on Perl to massage user manual
  - request-pull: stop depending on Perl
  - filter-branch: stop depending on Perl
  - Merge branch 'ps/test-wo-perl-prereq' into ps/fewer-perl
- (this branch uses ps/test-wo-perl-prereq.)
 
  Reduce requirement for Perl in our documentation build and a few
  scripts.
 
- Comments?
- source: <20250415-b4-pks-drop-perl-v1-0-c6addf175858@pks.im>
+ Will merge to 'next'?
+ source: <20250416-b4-pks-drop-perl-v2-0-bdd0492e9498@pks.im>
 
 
-* ps/parse-options-integers (2025-04-15) 5 commits
- - parse-options: detect mismatches in integer signedness
- - parse-options: introduce `OPTION_UNSIGNED`
- - parse-options: introduce precision handling for `OPTION_MAGNITUDE`
- - parse-options: introduce precision handling for `OPTION_INTEGER`
- - global: use designated initializers for options
+* ps/parse-options-integers (2025-04-17) 7 commits
+  (merged to 'next' on 2025-04-18 at 30159c9252)
+ + parse-options: detect mismatches in integer signedness
+ + parse-options: introduce precision handling for `OPTION_UNSIGNED`
+ + parse-options: introduce precision handling for `OPTION_INTEGER`
+ + parse-options: rename `OPT_MAGNITUDE()` to `OPT_UNSIGNED()`
+ + parse-options: support unit factors in `OPT_INTEGER()`
+ + global: use designated initializers for options
+ + parse: fix off-by-one for minimum signed values
 
  Update parse-options API to catch mistakes to pass address of an
  integral variable of a wrong type/size.
 
- Will merge to 'next'?
- source: <20250415-b4-pks-parse-options-integers-v2-0-ce07441a1f01@pks.im>
+ Will merge to 'master'.
+ source: <20250417-b4-pks-parse-options-integers-v4-0-9cbc76b61cfe@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * kn/bundle-dedup-optim (2025-04-08) 2 commits
   (merged to 'next' on 2025-04-11 at 082f7c87e0)
@@ -260,131 +438,71 @@ Release tarballs are available at:
 
 
 * kn/meson-hdr-check (2025-04-14) 5 commits
- - makefile/meson: add 'check-headers' as alias for 'hdr-check'
- - meson: add support for 'hdr-check'
- - meson: move headers definition from 'contrib/coccinelle'
- - coccinelle: meson: rename variables to be more specific
- - Merge branch 'es/meson-build-skip-coccinelle' into kn/meson-hdr-check
+ . makefile/meson: add 'check-headers' as alias for 'hdr-check'
+ . meson: add support for 'hdr-check'
+ . meson: move headers definition from 'contrib/coccinelle'
+ . coccinelle: meson: rename variables to be more specific
+ . Merge branch 'es/meson-build-skip-coccinelle' into kn/meson-hdr-check
 
  Add an equivalent to "make hdr-check" target to meson based builds.
 
- Getting there.
+ Seems to break linux.meson CI job at GitHub Actions.
  cf. <xmqqy0w2o0l0.fsf@gitster.g>
+ cf. <xmqqcyd99ipm.fsf@gitster.g>
  source: <20250414-505-wire-up-sparse-via-meson-v3-0-edc6e7f26745@gmail.com>
 
 
 * ps/object-file-cleanup (2025-04-15) 11 commits
- - object-store: merge "object-store-ll.h" and "object-store.h"
- - object-store: remove global array of cached objects
- - object: split out functions relating to object store subsystem
- - object-file: drop `index_blob_stream()`
- - object-file: split up concerns of `HASH_*` flags
- - object-file: split out functions relating to object store subsystem
- - object-file: move `xmmap()` into "wrapper.c"
- - object-file: move `git_open_cloexec()` to "compat/open.c"
- - object-file: move `safe_create_leading_directories()` into "path.c"
- - object-file: move `mkdir_in_gitdir()` into "path.c"
- - Merge branch 'ps/object-wo-the-repository' into ps/object-file-cleanup
+  (merged to 'next' on 2025-04-17 at 4f5b5725c6)
+ + object-store: merge "object-store-ll.h" and "object-store.h"
+ + object-store: remove global array of cached objects
+ + object: split out functions relating to object store subsystem
+ + object-file: drop `index_blob_stream()`
+ + object-file: split up concerns of `HASH_*` flags
+ + object-file: split out functions relating to object store subsystem
+ + object-file: move `xmmap()` into "wrapper.c"
+ + object-file: move `git_open_cloexec()` to "compat/open.c"
+ + object-file: move `safe_create_leading_directories()` into "path.c"
+ + object-file: move `mkdir_in_gitdir()` into "path.c"
+ + Merge branch 'ps/object-wo-the-repository' into ps/object-file-cleanup
 
  Code clean-up.
 
- Will merge to 'next'?
+ Will merge to 'master'.
+ cf. <CABPp-BFGeJ6eANb_5m4KSWRY_r9KCWarzya_qMkQNchKD5Q=xg@mail.gmail.com>
  source: <20250415-pks-split-object-file-v3-0-6aa7db7ad7b0@pks.im>
 
 
-* ab/environment-clean-header (2025-04-09) 1 commit
-  (merged to 'next' on 2025-04-09 at 845b92c7ef)
- + environment.h: remove unused variables
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <2c547567-2b72-476c-9fc5-71cac050fa15@gmail.com>
-
-
-* cj/refname-avail-check-optim-typofix (2025-04-09) 1 commit
-  (merged to 'next' on 2025-04-09 at 95fe082872)
- + refs: fix duplicated word in comment
-
- Comment fix.
-
- Will merge to 'master'.
- source: <pull.1940.v2.git.git.1743857867327.gitgitgadget@gmail.com>
-
-
-* dd/sparse-glibc-workaround (2025-04-09) 1 commit
-  (merged to 'next' on 2025-04-09 at 14ee53c8e4)
- + sparse: ignore warning from new glibc headers
-
- Squelch false-positive from sparse.
-
- Will merge to 'master'.
- source: <a667da3985a0fe943cc0ff6ee8513d731d75a299.1721171853.git.congdanhqx@gmail.com>
-
-
-* js/ci-github-update-ubuntu (2025-04-09) 1 commit
-  (merged to 'next' on 2025-04-09 at fae10a2b5b)
- + ci: upgrade `sparse` to supported build agents
-
- Adjust to the deprecation of use of Ubuntu 20.04 GitHub Actions CI.
-
- Will merge to 'master'.
- source: <77f82414-261c-d2bc-f911-ed3d4b06c86e@gmx.de>
-
-
-* ps/refname-avail-check-optim (2025-04-09) 1 commit
-  (merged to 'next' on 2025-04-09 at 0d35104147)
- + refs/packed: fix BUG when seeking refs with UTF-8 characters
-
- Incorrect sorting of refs with bytes with high-bit set on platforms
- with signed char led to a BUG, which has been corrected.
-
- Will merge to 'master'.
- cf. <20250404205740.GA780449@coredump.intra.peff.net>
- source: <20250404-b4-pks-packed-backend-seek-with-utf8-v1-1-6ceb694e3bd7@pks.im>
-
-
-* rj/build-tweaks (2025-04-09) 13 commits
- - config.mak.uname: set CSPRNG_METHOD to getrandom on Linux
- - config.mak.uname: add arc4random to the cygwin build
- - config.mak.uname: add sysinfo() configuration for cygwin
- - builtin/gc.c: correct RAM calculation when using sysinfo
- - config.mak.uname: add clock_gettime() to the cygwin build
- - config.mak.uname: add HAVE_GETDELIM to the cygwin section
- - config.mak.uname: only set NO_REGEX on cygwin for v1.7
- - config.mak.uname: add a note about NO_STRLCPY for Linux
- - Makefile: remove NEEDS_LIBRT build variable
- - meson.build: set default help format to html on windows
- - meson.build: only set build variables for non-default values
- - Makefile: only set some BASIC_CFLAGS when RUNTIME_PREFIX is set
- - meson.build: remove -DCURL_DISABLE_TYPECHECK
+* rj/build-tweaks (2025-04-17) 13 commits
+  (merged to 'next' on 2025-04-18 at 0ad43d3038)
+ + config.mak.uname: set CSPRNG_METHOD to getrandom on Linux
+ + config.mak.uname: add arc4random to the cygwin build
+ + config.mak.uname: add sysinfo() configuration for cygwin
+ + builtin/gc.c: correct RAM calculation when using sysinfo
+ + config.mak.uname: add clock_gettime() to the cygwin build
+ + config.mak.uname: add HAVE_GETDELIM to the cygwin section
+ + config.mak.uname: only set NO_REGEX on cygwin for v1.7
+ + config.mak.uname: add a note about NO_STRLCPY for Linux
+ + Makefile: remove NEEDS_LIBRT build variable
+ + meson.build: set default help format to html on windows
+ + meson.build: only set build variables for non-default values
+ + Makefile: only set some BASIC_CFLAGS when RUNTIME_PREFIX is set
+ + meson.build: remove -DCURL_DISABLE_TYPECHECK
 
  Various build tweaks, including CSPRNG selection on some platforms.
 
- Expecting a (hopefully minor and final) reroll?
- cf. <39bd9980-0009-4b2e-a8e8-b07b0013c2ec@ramsayjones.plus.com>
- source: <cover.1743859985.git.ramsay@ramsayjones.plus.com>
+ Will merge to 'master'.
+ source: <20250416231835.2492562-1-ramsay@ramsayjones.plus.com>
 
 
 * js/range-check-codeql-workaround (2025-03-28) 1 commit
- - read-cache: check range before dereferencing an array element
+  (merged to 'next' on 2025-04-17 at 809b3c3f63)
+ + read-cache: check range before dereferencing an array element
 
  Work around false positive from CodeQL checker.
 
- Will merge to 'next'?
- source: <73cae30129338cf219a810c3a2a78ef48d5637d0.1743073557.git.gitgitgadget@gmail.com>
-
-
-* jt/help-sha-backend-info-in-build-options (2025-04-07) 2 commits
-  (merged to 'next' on 2025-04-08 at 7389752293)
- + help: include unsafe SHA-1 build info in version
- + help: include SHA implementation in version info
-
- "git help --build-options" reports SHA-1 and SHA-256 backends used
- in the build.
-
  Will merge to 'master'.
- source: <20250403140529.497876-1-jltobler@gmail.com>
+ source: <73cae30129338cf219a810c3a2a78ef48d5637d0.1743073557.git.gitgitgadget@gmail.com>
 
 
 * pb/perf-test-fixes (2025-04-14) 3 commits
@@ -417,136 +535,6 @@ Release tarballs are available at:
  source: <pull.1897.git.1743181401.gitgitgadget@gmail.com>
 
 
-* ps/cat-file-filter-batch (2025-04-07) 12 commits
-  (merged to 'next' on 2025-04-08 at eb8dfb17ea)
- + builtin/cat-file: use bitmaps to efficiently filter by object type
- + builtin/cat-file: deduplicate logic to iterate over all objects
- + pack-bitmap: introduce function to check whether a pack is bitmapped
- + pack-bitmap: add function to iterate over filtered bitmapped objects
- + pack-bitmap: allow passing payloads to `show_reachable_fn()`
- + builtin/cat-file: support "object:type=" objects filter
- + builtin/cat-file: support "blob:limit=" objects filter
- + builtin/cat-file: support "blob:none" objects filter
- + builtin/cat-file: wire up an option to filter objects
- + builtin/cat-file: introduce function to report object status
- + builtin/cat-file: rename variable that tracks usage
- + Merge branch 'tb/incremental-midx-part-2' into ps/cat-file-filter-batch
-
- "git cat-file --batch" and friends learned to allow "--filter=" to
- omit certain objects, just like the transport layer does.
-
- Will merge to 'master'.
- source: <20250402-pks-cat-file-object-type-filter-v3-0-4da6bb21871c@pks.im>
-
-
-* ps/misc-build-fixes (2025-04-01) 5 commits
-  (merged to 'next' on 2025-04-08 at 85693b6d96)
- + ci: use Visual Studio for win+meson job on GitHub Workflows
- + meson: distinguish build and target host binaries
- + meson: respect 'tests' build option in contrib
- + gitweb: fix generation of "gitweb.js"
- + meson: fix handling of '-Dcurl=auto'
-
- Random build fixes.
-
- Will merge to 'master'.
- cf. <CAOLa=ZQ8bTn-prAs2ycLdLLjVaLQL4GtLw_gFsvAcx_6j=MBjA@mail.gmail.com>
- source: <20250331-b4-pks-collect-build-fixes-v2-0-6b06136808f3@pks.im>
-
-
-* ps/test-wo-perl-prereq (2025-04-07) 20 commits
-  (merged to 'next' on 2025-04-08 at 424e2eab23)
- + t5703: refactor test to not depend on Perl
- + t5316: refactor `max_chain()` to not depend on Perl
- + t0210: refactor trace2 scrubbing to not use Perl
- + t0021: refactor `generate_random_characters()` to not depend on Perl
- + t/lib-httpd: refactor "one-time-perl" CGI script to not depend on Perl
- + t/lib-t6000: refactor `name_from_description()` to not depend on Perl
- + t/lib-gpg: refactor `sanitize_pgp()` to not depend on Perl
- + t: refactor tests depending on Perl for textconv scripts
- + t: refactor tests depending on Perl to print data
- + t: refactor tests depending on Perl substitution operator
- + t: refactor tests depending on Perl transliteration operator
- + Makefile: stop requiring Perl when running tests
- + meson: stop requiring Perl when tests are enabled
- + t: adapt existing PERL prerequisites
- + t: introduce PERL_TEST_HELPERS prerequisite
- + t: adapt `test_readlink()` to not use Perl
- + t: adapt `test_copy_bytes()` to not use Perl
- + t: adapt character translation helpers to not use Perl
- + t: refactor environment sanitization to not use Perl
- + t: skip chain lint when PERL_PATH is unset
- (this branch is used by ps/fewer-perl.)
-
- "make test" used to have a hard dependency on (basic) Perl; tests
- have been rewritten help environment with NO_PERL test the build as
- much as possible.
-
- Will merge to 'master'.
- source: <20250403-b4-pks-t-perlless-v4-0-be20ac3db39a@pks.im>
-
-
-* ab/rm-sign-compare (2025-03-29) 1 commit
-  (merged to 'next' on 2025-04-08 at bc1f98e81c)
- + rm: fix sign comparison warnings
-
- Some warnings from "-Wsign-compare" for builtin/rm.c have been
- squelched.
-
- Will merge to 'master'.
- source: <ecaaa968-f337-466b-b719-22ebb3587167@gmail.com>
-
-
-* kn/blame-porcelain-unblamable (2025-04-07) 1 commit
-  (merged to 'next' on 2025-04-09 at 971ba23ba0)
- + blame: print unblamable and ignored commits in porcelain mode
-
- "git blame --porcelain" mode now talks about unblamable lines and
- lines that are blamed to an ignored commit.
-
- Will merge to 'master'.
- source: <20250403160326.120124-1-karthik.188@gmail.com>
-
-
-* ua/update-update-server-info (2025-04-08) 1 commit
-  (merged to 'next' on 2025-04-09 at f0d47e97b5)
- + builtin/update-server-info: remove unnecessary if statement
-
- Code simplification.
-
- Will merge to 'master'.
- source: <20250407195850.299348-2-usmanakinyemi202@gmail.com>
-
-
-* ab/pathspec-sign-compare-workaround (2025-04-01) 1 commit
-  (merged to 'next' on 2025-04-08 at 875fb0e3ee)
- + pathspec: fix sign comparison warnings
-
- Some warnings from "-Wsign-compare" for pathspec.c have been
- squelched.
-
- Will merge to 'master'.
- source: <127c3010-4b23-436e-a07d-e6031e746113@gmail.com>
-
-
-* en/merge-recursive-debug (2025-04-08) 8 commits
-  (merged to 'next' on 2025-04-09 at 555be94c73)
- + builtin/{merge,rebase,revert}: remove GIT_TEST_MERGE_ALGORITHM
- + tests: remove GIT_TEST_MERGE_ALGORITHM and test_expect_merge_algorithm
- + merge-recursive.[ch]: thoroughly debug these
- + merge, sequencer: switch recursive merges over to ort
- + sequencer: switch non-recursive merges over to ort
- + merge-ort: enable diff-algorithms other than histogram
- + builtin/merge-recursive: switch to using merge_ort_generic()
- + checkout: replace merge_trees() with merge_ort_nonrecursive()
-
- Remove remnants of the recursive merge strategy backend, which was
- superseded by the ort merge strategy.
-
- Will merge to 'master'.
- source: <pull.1898.v3.git.1744127322.gitgitgadget@gmail.com>
-
-
 * ja/doc-reset-mv-rm-markup-updates (2025-04-14) 7 commits
   (merged to 'next' on 2025-04-15 at 0b19646642)
  + doc: add markup for characters in Guidelines
@@ -574,12 +562,13 @@ Release tarballs are available at:
 
 
 * mh/left-right-limited (2025-04-01) 1 commit
- - revision: fix --left/right-only use with unrelated histories
+  (merged to 'next' on 2025-04-17 at 1976b29af9)
+ + revision: fix --left/right-only use with unrelated histories
 
  "git log --{left,right}-only A...B", when A and B does not share
  any common ancestor, now behaves as expected.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20250330112850.2477673-1-m@lfurio.us>
 
 
@@ -607,47 +596,6 @@ Release tarballs are available at:
  Will merge to 'next'?
  cf. <3okrcl7bdpy75hzyzpmrp7fluan4n3zvsroioq64id4a2kt3o4@fc6fetilb6y2>
  source: <20250407-pks-reftable-polishing-v2-0-316c4ff10571@pks.im>
-
-
-* jt/ref-transaction-abort-fix (2025-03-21) 1 commit
-  (merged to 'next' on 2025-04-08 at b653d86941)
- + builtin/fetch: avoid aborting closed reference transaction
-
- A ref transaction corner case fix.
-
- Will merge to 'master'.
- cf. <Z-E2ns9VziejSLB2@pks.im>
- source: <20250321004437.505461-1-jltobler@gmail.com>
-
-
-* zy/send-email-error-handling (2025-04-07) 2 commits
-  (merged to 'next' on 2025-04-08 at d5a716a940)
- + send-email: finer-grained SMTP error handling
- + send-email: capture errors in an eval {} block
-
- Auth-related (and unrelated) error handling in send-email has been
- made more robust.
-
- Will merge to 'master'.
- source: <20250326075246.2612627-1-05ZYT30@gmail.com>
-
-
-* jk/fetch-follow-remote-head-fix (2025-04-09) 4 commits
-  (merged to 'next' on 2025-04-09 at 3071fce577)
- + fetch: make set_head() call easier to read
-  (merged to 'next' on 2025-04-07 at ba5ac342a5)
- + fetch: don't ask for remote HEAD if followRemoteHEAD is "never"
- + fetch: only respect followRemoteHEAD with configured refspecs
- + Merge branch 'jk/fetch-ref-prefix-cleanup' into jk/fetch-follow-remote-head-fix
-
- "git fetch [<remote>]" with only the configured fetch refspec
- should be the only thing to update refs/remotes/<remote>/HEAD,
- but the code was overly eager to do so in other cases.
-
- Will merge to 'master'.
- cf. <Z9n7myvpnDOWFWqt@nand.local>
- source: <20250318053905.GA2051217@coredump.intra.peff.net>
- source: <20250404085812.GA772404@coredump.intra.peff.net>
 
 
 * sc/bundle-uri-use-all-refs-in-bundle (2025-03-18) 2 commits
@@ -683,72 +631,6 @@ Release tarballs are available at:
 
  Comments?
  source: <pull.1819.v2.git.1742829769.gitgitgadget@gmail.com>
-
-
-* jt/rev-list-z (2025-03-21) 5 commits
-  (merged to 'next' on 2025-04-08 at e608ba85c1)
- + rev-list: support NUL-delimited --missing option
- + rev-list: support NUL-delimited --boundary option
- + rev-list: support delimiting objects with NUL bytes
- + rev-list: refactor early option parsing
- + rev-list: inline `show_object_with_name()` in `show_object()`
-
- "git rev-list" learns machine-parsable output format that delimits
- each field with NUL.
-
- Will merge to 'master'.
- source: <20250319183410.1225428-1-jltobler@gmail.com>
-
-
-* sk/clar-trailer-urlmatch-norm-test (2025-03-04) 2 commits
-  (merged to 'next' on 2025-04-08 at 51cb3c8bce)
- + t/unit-tests: convert urlmatch-normalization test to clar
- + t/unit-tests: convert trailer test to use clar
-
- A few traditional unit tests have been rewritten to use the clar
- framework.
-
- Will merge to 'master'.
- cf. <xmqqzfi0pthr.fsf@gitster.g>
- cf. <Z_TAtJ9LEeHo2AQN@pks.im>
- source: <20250304113323.10564-1-kuforiji98@gmail.com>
-
-
-* kn/non-transactional-batch-updates (2025-04-08) 9 commits
-  (merged to 'next' on 2025-04-08 at de64e9c49e)
- + update-ref: add --batch-updates flag for stdin mode
- + refs: support rejection in batch updates during F/D checks
- + refs: implement batch reference update support
- + refs: introduce enum-based transaction error types
- + refs/reftable: extract code from the transaction preparation
- + refs/files: remove duplicate duplicates check
- + refs: move duplicate refname update check to generic layer
- + refs/files: remove redundant check in split_symref_update()
- + Merge branch 'ps/refname-avail-check-optim' into kn/non-transactional-batch-updates
-
- Updating multiple references have only been possible in all-or-none
- fashion with transactions, but it can be more efficient to batch
- multiple updates even when some of them are allowed to fail in a
- best-effort manner.  A new "best effort batches of updates" mode
- has been introduced.
-
- Will merge to 'master'.
- source: <20250408085120.614893-1-karthik.188@gmail.com>
-
-
-* ps/maintenance-reflog-expire (2025-04-08) 6 commits
-  (merged to 'next' on 2025-04-08 at 40d6884143)
- + builtin/maintenance: introduce "reflog-expire" task
- + builtin/gc: split out function to expire reflog entries
- + builtin/reflog: make functions regarding `reflog_expire_options` public
- + builtin/reflog: stop storing per-reflog expiry dates globally
- + builtin/reflog: stop storing default reflog expiry dates globally
- + reflog: rename `cmd_reflog_expire_cb` to `reflog_expire_options`
-
- "git maintenance" learns a new task to expire reflog entries.
-
- Will merge to 'master'.
- source: <20250408-pks-maintenance-reflog-expire-v2-0-1ad8634798b7@pks.im>
 
 
 * ib/diff-S-G-with-longhand (2025-02-12) 10 commits
