@@ -1066,6 +1066,14 @@ AC_CHECK_LIB([iconv], [locale_charset],
        [AC_CHECK_LIB([charset], [locale_charset],
                      [CHARSET_LIB=-lcharset])])
 GIT_CONF_SUBST([CHARSET_LIB])
+
+#
+# Define HAVE_SYSINFO=YesPlease if sysinfo is available.
+GIT_CHECK_FUNC(sysinfo,
+	[HAVE_SYSINFO=YesPlease],
+	[HAVE_SYSINFO=])
+GIT_CONF_SUBST([HAVE_SYSINFO])
+
 #
 # Define HAVE_CLOCK_GETTIME=YesPlease if clock_gettime is available.
 GIT_CHECK_FUNC(clock_gettime,

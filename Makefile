@@ -340,9 +340,6 @@ include shared.mak
 #
 # Define HAVE_SYNC_FILE_RANGE if your platform has sync_file_range.
 #
-# Define NEEDS_LIBRT if your platform requires linking with librt (glibc version
-# before 2.17) for clock_gettime and CLOCK_MONOTONIC.
-#
 # Define HAVE_BSD_SYSCTL if your platform has a BSD-compatible sysctl function.
 #
 # Define HAVE_GETDELIM if your system has the getdelim() function.
@@ -2174,16 +2171,12 @@ ifdef HAVE_SYNC_FILE_RANGE
 	BASIC_CFLAGS += -DHAVE_SYNC_FILE_RANGE
 endif
 
-ifdef NEEDS_LIBRT
-	EXTLIBS += -lrt
+ifdef HAVE_SYSINFO
+	BASIC_CFLAGS += -DHAVE_SYSINFO
 endif
 
 ifdef HAVE_BSD_SYSCTL
 	BASIC_CFLAGS += -DHAVE_BSD_SYSCTL
-endif
-
-ifdef HAVE_BSD_KERN_PROC_SYSCTL
-	BASIC_CFLAGS += -DHAVE_BSD_KERN_PROC_SYSCTL
 endif
 
 ifdef HAVE_GETDELIM
@@ -2216,25 +2209,33 @@ ifneq ($(findstring openssl,$(CSPRNG_METHOD)),)
 	EXTLIBS += -lcrypto -lssl
 endif
 
-ifneq ($(PROCFS_EXECUTABLE_PATH),)
-	procfs_executable_path_SQ = $(subst ','\'',$(PROCFS_EXECUTABLE_PATH))
-	BASIC_CFLAGS += '-DPROCFS_EXECUTABLE_PATH="$(procfs_executable_path_SQ)"'
-endif
-
 ifndef HAVE_PLATFORM_PROCINFO
 	COMPAT_OBJS += compat/stub/procinfo.o
 endif
 
-ifdef HAVE_NS_GET_EXECUTABLE_PATH
-	BASIC_CFLAGS += -DHAVE_NS_GET_EXECUTABLE_PATH
-endif
+ifdef RUNTIME_PREFIX
 
-ifdef HAVE_ZOS_GET_EXECUTABLE_PATH
-        BASIC_CFLAGS += -DHAVE_ZOS_GET_EXECUTABLE_PATH
-endif
+        ifdef HAVE_BSD_KERN_PROC_SYSCTL
+		BASIC_CFLAGS += -DHAVE_BSD_KERN_PROC_SYSCTL
+        endif
 
-ifdef HAVE_WPGMPTR
-	BASIC_CFLAGS += -DHAVE_WPGMPTR
+        ifneq ($(PROCFS_EXECUTABLE_PATH),)
+		pep_SQ = $(subst ','\'',$(PROCFS_EXECUTABLE_PATH))
+		BASIC_CFLAGS += '-DPROCFS_EXECUTABLE_PATH="$(pep_SQ)"'
+        endif
+
+        ifdef HAVE_NS_GET_EXECUTABLE_PATH
+		BASIC_CFLAGS += -DHAVE_NS_GET_EXECUTABLE_PATH
+        endif
+
+        ifdef HAVE_ZOS_GET_EXECUTABLE_PATH
+		BASIC_CFLAGS += -DHAVE_ZOS_GET_EXECUTABLE_PATH
+        endif
+
+        ifdef HAVE_WPGMPTR
+		BASIC_CFLAGS += -DHAVE_WPGMPTR
+        endif
+
 endif
 
 ifdef FILENO_IS_A_MACRO
