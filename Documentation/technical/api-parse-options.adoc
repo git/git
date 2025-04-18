@@ -211,11 +211,13 @@ There are some macros to easily define options:
 	Use of `--no-option` will clear the list of preceding values.
 
 `OPT_INTEGER(short, long, &int_var, description)`::
-	Introduce an option with integer argument.
-	The integer is put into `int_var`.
+	Introduce an option with integer argument. The argument must be a
+	integer and may include a suffix of 'k', 'm' or 'g' to
+	scale the provided value by 1024, 1024^2 or 1024^3 respectively.
+	The scaled value is put into `int_var`.
 
-`OPT_MAGNITUDE(short, long, &unsigned_long_var, description)`::
-	Introduce an option with a size argument. The argument must be a
+`OPT_UNSIGNED(short, long, &unsigned_long_var, description)`::
+	Introduce an option with an unsigned integer argument. The argument must be a
 	non-negative integer and may include a suffix of 'k', 'm' or 'g' to
 	scale the provided value by 1024, 1024^2 or 1024^3 respectively.
 	The scaled value is put into `unsigned_long_var`.

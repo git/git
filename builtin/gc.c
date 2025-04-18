@@ -743,12 +743,18 @@ struct repository *repo UNUSED)
 	int ret;
 	struct option builtin_gc_options[] = {
 		OPT__QUIET(&quiet, N_("suppress progress reporting")),
-		{ OPTION_STRING, 0, "prune", &prune_expire_arg, N_("date"),
-			N_("prune unreferenced objects"),
-			PARSE_OPT_OPTARG, NULL, (intptr_t)prune_expire_arg },
+		{
+			.type = OPTION_STRING,
+			.long_name = "prune",
+			.value = &prune_expire_arg,
+			.argh = N_("date"),
+			.help = N_("prune unreferenced objects"),
+			.flags = PARSE_OPT_OPTARG,
+			.defval = (intptr_t)prune_expire_arg,
+		},
 		OPT_BOOL(0, "cruft", &cfg.cruft_packs, N_("pack unreferenced objects separately")),
-		OPT_MAGNITUDE(0, "max-cruft-size", &cfg.max_cruft_size,
-			      N_("with --cruft, limit the size of new cruft packs")),
+		OPT_UNSIGNED(0, "max-cruft-size", &cfg.max_cruft_size,
+			     N_("with --cruft, limit the size of new cruft packs")),
 		OPT_BOOL(0, "aggressive", &aggressive, N_("be more thorough (increased runtime)")),
 		OPT_BOOL_F(0, "auto", &opts.auto_flag, N_("enable auto-gc mode"),
 			   PARSE_OPT_NOCOMPLETE),

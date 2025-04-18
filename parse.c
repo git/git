@@ -38,7 +38,7 @@ int git_parse_signed(const char *value, intmax_t *ret, intmax_t max)
 			errno = EINVAL;
 			return 0;
 		}
-		if ((val < 0 && -max / factor > val) ||
+		if ((val < 0 && (-max - 1) / factor > val) ||
 		    (val > 0 && max / factor < val)) {
 			errno = ERANGE;
 			return 0;
@@ -51,7 +51,7 @@ int git_parse_signed(const char *value, intmax_t *ret, intmax_t max)
 	return 0;
 }
 
-static int git_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max)
+int git_parse_unsigned(const char *value, uintmax_t *ret, uintmax_t max)
 {
 	if (value && *value) {
 		char *end;

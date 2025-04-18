@@ -31,10 +31,14 @@ int cmd_write_tree(int argc,
 			WRITE_TREE_MISSING_OK),
 		OPT_STRING(0, "prefix", &tree_prefix, N_("<prefix>/"),
 			   N_("write tree object for a subdirectory <prefix>")),
-		{ OPTION_BIT, 0, "ignore-cache-tree", &flags, NULL,
-		  N_("only useful for debugging"),
-		  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG, NULL,
-		  WRITE_TREE_IGNORE_CACHE_TREE },
+		{
+			.type = OPTION_BIT,
+			.long_name = "ignore-cache-tree",
+			.value = &flags,
+			.help = N_("only useful for debugging"),
+			.flags = PARSE_OPT_HIDDEN | PARSE_OPT_NOARG,
+			.defval = WRITE_TREE_IGNORE_CACHE_TREE,
+		},
 		OPT_END()
 	};
 

@@ -25,7 +25,7 @@ enum parse_opt_type {
 	/* options with arguments (usually) */
 	OPTION_STRING,
 	OPTION_INTEGER,
-	OPTION_MAGNITUDE,
+	OPTION_UNSIGNED,
 	OPTION_CALLBACK,
 	OPTION_LOWLEVEL_CALLBACK,
 	OPTION_FILENAME
@@ -92,6 +92,10 @@ typedef int parse_opt_subcommand_fn(int argc, const char **argv,
  * `value`::
  *   stores pointers to the values to be filled.
  *
+ * `precision`::
+ *   precision of the integer pointed to by `value` in number of bytes. Should
+ *   typically be its `sizeof()`.
+ *
  * `argh`::
  *   token to explain the kind of argument this option wants. Does not
  *   begin in capital letter, and does not end with a full stop.
@@ -151,6 +155,7 @@ struct option {
 	int short_name;
 	const char *long_name;
 	void *value;
+	size_t precision;
 	const char *argh;
 	const char *help;
 
@@ -213,7 +218,8 @@ struct option {
 	.type = OPTION_INTEGER, \
 	.short_name = (s), \
 	.long_name = (l), \
-	.value = (v), \
+	.value = (v) + BARF_UNLESS_SIGNED(*(v)), \
+	.precision = sizeof(*v), \
 	.argh = N_("n"), \
 	.help = (h), \
 	.flags = (f), \
@@ -270,11 +276,12 @@ struct option {
 #define OPT_CMDMODE(s, l, v, h, i)  OPT_CMDMODE_F(s, l, v, h, i, 0)
 
 #define OPT_INTEGER(s, l, v, h)     OPT_INTEGER_F(s, l, v, h, 0)
-#define OPT_MAGNITUDE(s, l, v, h) { \
-	.type = OPTION_MAGNITUDE, \
+#define OPT_UNSIGNED(s, l, v, h) { \
+	.type = OPTION_UNSIGNED, \
 	.short_name = (s), \
 	.long_name = (l), \
-	.value = (v), \
+	.value = (v) + BARF_UNLESS_UNSIGNED(*(v)), \
+	.precision = sizeof(*v), \
 	.argh = N_("n"), \
 	.help = (h), \
 	.flags = PARSE_OPT_NONEG, \
