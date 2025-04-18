@@ -142,6 +142,7 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 	int ret;
 
 	opts.flags |= MIDX_WRITE_BITMAP_HASH_CACHE;
+	opts.flags |= MIDX_WRITE_BITMAP_LOOKUP_TABLE;
 
 	git_config(git_multi_pack_index_write_config, NULL);
 

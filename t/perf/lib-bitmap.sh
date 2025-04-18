@@ -69,7 +69,7 @@ test_partial_bitmap () {
 }
 
 test_pack_bitmap () {
-	test_perf "repack to disk" '
+	test_expect_success "repack to disk" '
 		git repack -ad
 	'
 

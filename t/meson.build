@@ -1131,7 +1131,6 @@ benchmarks = [
   'perf/p5304-prune.sh',
   'perf/p5310-pack-bitmaps.sh',
   'perf/p5311-pack-bitmaps-fetch.sh',
-  'perf/p5312-pack-bitmaps-revs.sh',
   'perf/p5313-pack-objects.sh',
   'perf/p5314-name-hash.sh',
   'perf/p5326-multi-pack-bitmaps.sh',

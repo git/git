@@ -11,7 +11,6 @@ test_expect_success 'setup' '
 		-c bitmapPseudoMerge.all.threshold=now \
 		-c bitmapPseudoMerge.all.stableThreshold=never \
 		-c bitmapPseudoMerge.all.maxMerges=64 \
-		-c pack.writeBitmapLookupTable=true \
 		repack -adb
 '
 

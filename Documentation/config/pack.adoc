@@ -199,7 +199,7 @@ pack.writeBitmapLookupTable::
 	bitmap index (if one is written). This table is used to defer
 	loading individual bitmaps as late as possible. This can be
 	beneficial in repositories that have relatively large bitmap
-	indexes. Defaults to false.
+	indexes. Defaults to true.
 
 pack.readReverseIndex::
 	When true, git will read any .rev file(s) that may be available
