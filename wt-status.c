@@ -1342,9 +1342,11 @@ static int split_commit_in_progress(struct wt_status *s)
 
 /*
  * Turn
- * "pick d6a2f0303e897ec257dd0e0a39a5ccb709bc2047 some message"
+ * "pick d6a2f0303e897ec257dd0e0a39a5ccb709bc2047 some message" and
+ * "merge -C d6a2f0303e897ec257dd0e0a39a5ccb709bc2047 some-branch"
  * into
- * "pick d6a2f03 some message"
+ * "pick d6a2f03 some message" and
+ * "merge -C d6a2f03 some-branch"
  *
  * The function assumes that the line does not contain useless spaces
  * before or after the command.
@@ -1360,20 +1362,31 @@ static void abbrev_oid_in_line(struct strbuf *line)
 	    starts_with(line->buf, "l "))
 		return;
 
-	split = strbuf_split_max(line, ' ', 3);
+	split = strbuf_split_max(line, ' ', 4);
 	if (split[0] && split[1]) {
 		struct object_id oid;
+		struct strbuf *hash;
 
+		if ((!strcmp(split[0]->buf, "merge ") ||
+		     !strcmp(split[0]->buf, "m "    ) ||
+		     !strcmp(split[0]->buf, "fixup ") ||
+		     !strcmp(split[0]->buf, "f "    )) &&
+		    (!strcmp(split[1]->buf, "-C ") ||
+		     !strcmp(split[1]->buf, "-c "))) {
+			hash = split[2];
+		} else {
+			hash = split[1];
+		}
 		/*
 		 * strbuf_split_max left a space. Trim it and re-add
 		 * it after abbreviation.
 		 */
-		strbuf_trim(split[1]);
-		if (!repo_get_oid(the_repository, split[1]->buf, &oid)) {
-			strbuf_reset(split[1]);
-			strbuf_add_unique_abbrev(split[1], &oid,
+		strbuf_trim(hash);
+		if (!repo_get_oid(the_repository, hash->buf, &oid)) {
+			strbuf_reset(hash);
+			strbuf_add_unique_abbrev(hash, &oid,
 						 DEFAULT_ABBREV);
-			strbuf_addch(split[1], ' ');
+			strbuf_addch(hash, ' ');
 			strbuf_reset(line);
 			for (i = 0; split[i]; i++)
 				strbuf_addbuf(line, split[i]);
@@ -1731,6 +1744,7 @@ int wt_status_check_rebase(const struct worktree *wt,
 			   struct wt_status_state *state)
 {
 	struct stat st;
+	struct string_list have_done = STRING_LIST_INIT_DUP;
 
 	if (!stat(worktree_git_path(the_repository, wt, "rebase-apply"), &st)) {
 		if (!stat(worktree_git_path(the_repository, wt, "rebase-apply/applying"), &st)) {
@@ -1747,8 +1761,12 @@ int wt_status_check_rebase(const struct worktree *wt,
 			state->rebase_interactive_in_progress = 1;
 		else
 			state->rebase_in_progress = 1;
+		read_rebase_todolist("rebase-merge/done", &have_done);
+		if (have_done.nr > 0 && starts_with(have_done.items[have_done.nr - 1].string, "merge"))
+				state->merge_during_rebase_in_progress = 1;
 		state->branch = get_branch(wt, "rebase-merge/head-name");
 		state->onto = get_branch(wt, "rebase-merge/onto");
+		string_list_clear(&have_done, 0);
 	} else
 		return 0;
 	return 1;
@@ -1842,10 +1860,15 @@ static void wt_longstatus_print_state(struct wt_status *s)
 
 	if (state->merge_in_progress) {
 		if (state->rebase_interactive_in_progress) {
-			show_rebase_information(s, state_color);
-			fputs("\n", s->fp);
-		}
-		show_merge_in_progress(s, state_color);
+			if (state->merge_during_rebase_in_progress)
+				show_rebase_in_progress(s, state_color);
+			else {
+				show_rebase_information(s, state_color);
+				fputs("\n", s->fp);
+				show_merge_in_progress(s, state_color);
+			}
+		} else
+			show_merge_in_progress(s, state_color);
 	} else if (state->am_in_progress)
 		show_am_in_progress(s, state_color);
 	else if (state->rebase_in_progress || state->rebase_interactive_in_progress)
