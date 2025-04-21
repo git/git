@@ -82,8 +82,6 @@ defined, undefined, or not accessible at all:
 #define MI_TRACK_HEAP_DESTROY 1
 #define MI_TRACK_TOOL         "ETW"
 
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 #include "../src/prim/windows/etw.h"
 
 #define mi_track_init()                           EventRegistermicrosoft_windows_mimalloc();

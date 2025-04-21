@@ -143,13 +143,17 @@ void _mi_random_split(mi_random_ctx_t* ctx, mi_random_ctx_t* ctx_new) {
 
 uintptr_t _mi_random_next(mi_random_ctx_t* ctx) {
   mi_assert_internal(mi_random_is_initialized(ctx));
-  #if MI_INTPTR_SIZE <= 4
-    return chacha_next32(ctx);
-  #elif MI_INTPTR_SIZE == 8
-    return (((uintptr_t)chacha_next32(ctx) << 32) | chacha_next32(ctx));
-  #else
-  # error "define mi_random_next for this platform"
-  #endif
+  uintptr_t r;
+  do {
+    #if MI_INTPTR_SIZE <= 4
+    r = chacha_next32(ctx);
+    #elif MI_INTPTR_SIZE == 8
+    r = (((uintptr_t)chacha_next32(ctx) << 32) | chacha_next32(ctx));
+    #else
+    # error "define mi_random_next for this platform"
+    #endif
+  } while (r==0);
+  return r;
 }
 
 
@@ -160,10 +164,10 @@ If we cannot get good randomness, we fall back to weak randomness based on a tim
 
 uintptr_t _mi_os_random_weak(uintptr_t extra_seed) {
   uintptr_t x = (uintptr_t)&_mi_os_random_weak ^ extra_seed; // ASLR makes the address random
-  x ^= _mi_prim_clock_now();
+  x ^= _mi_prim_clock_now();  
   // and do a few randomization steps
   uintptr_t max = ((x ^ (x >> 17)) & 0x0F) + 1;
-  for (uintptr_t i = 0; i < max; i++) {
+  for (uintptr_t i = 0; i < max || x==0; i++, x++) {
     x = _mi_random_shuffle(x);
   }
   mi_assert_internal(x != 0);
@@ -179,7 +183,7 @@ static void mi_random_init_ex(mi_random_ctx_t* ctx, bool use_weak) {
     if (!use_weak) { _mi_warning_message("unable to use secure randomness\n"); }
     #endif
     uintptr_t x = _mi_os_random_weak(0);
-    for (size_t i = 0; i < 8; i++) {  // key is eight 32-bit words.
+    for (size_t i = 0; i < 8; i++, x++) {  // key is eight 32-bit words.
       x = _mi_random_shuffle(x);
       ((uint32_t*)key)[i] = (uint32_t)x;
     }

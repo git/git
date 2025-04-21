@@ -9,7 +9,6 @@ terms of the MIT license. A copy of the license can be found in the file
 
 #include "mimalloc.h"
 #include "mimalloc/internal.h"
-#include "mimalloc/atomic.h"
 #include "mimalloc/prim.h"
 #include <stdio.h>   // fputs, stderr
 
@@ -51,7 +50,7 @@ typedef NTSTATUS (__stdcall *PNtAllocateVirtualMemoryEx)(HANDLE, PVOID*, SIZE_T*
 static PVirtualAlloc2 pVirtualAlloc2 = NULL;
 static PNtAllocateVirtualMemoryEx pNtAllocateVirtualMemoryEx = NULL;
 
-// Similarly, GetNumaProcesorNodeEx is only supported since Windows 7
+// Similarly, GetNumaProcessorNodeEx is only supported since Windows 7
 typedef struct MI_PROCESSOR_NUMBER_S { WORD Group; BYTE Number; BYTE Reserved; } MI_PROCESSOR_NUMBER;
 
 typedef VOID (__stdcall *PGetCurrentProcessorNumberEx)(MI_PROCESSOR_NUMBER* ProcNumber);
@@ -62,6 +61,9 @@ static PGetCurrentProcessorNumberEx pGetCurrentProcessorNumberEx = NULL;
 static PGetNumaProcessorNodeEx      pGetNumaProcessorNodeEx = NULL;
 static PGetNumaNodeProcessorMaskEx  pGetNumaNodeProcessorMaskEx = NULL;
 static PGetNumaProcessorNode        pGetNumaProcessorNode = NULL;
+
+// Available after Windows XP
+typedef BOOL (__stdcall *PGetPhysicallyInstalledSystemMemory)( PULONGLONG TotalMemoryInKilobytes );
 
 //---------------------------------------------
 // Enable large page support dynamically (if possible)
@@ -88,11 +90,11 @@ static bool win_enable_large_os_pages(size_t* large_page_size)
       tp.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
       ok = AdjustTokenPrivileges(token, FALSE, &tp, 0, (PTOKEN_PRIVILEGES)NULL, 0);
       if (ok) {
-	err = GetLastError();
-	ok = (err == ERROR_SUCCESS);
-	if (ok && large_page_size != NULL) {
-	  *large_page_size = GetLargePageMinimum();
-	}
+        err = GetLastError();
+        ok = (err == ERROR_SUCCESS);
+        if (ok && large_page_size != NULL) {
+          *large_page_size = GetLargePageMinimum();
+        }
       }
     }
     CloseHandle(token);
@@ -112,13 +114,19 @@ static bool win_enable_large_os_pages(size_t* large_page_size)
 void _mi_prim_mem_init( mi_os_mem_config_t* config )
 {
   config->has_overcommit = false;
-  config->must_free_whole = true;
+  config->has_partial_free = false;
   config->has_virtual_reserve = true;
   // get the page size
   SYSTEM_INFO si;
   GetSystemInfo(&si);
   if (si.dwPageSize > 0) { config->page_size = si.dwPageSize; }
   if (si.dwAllocationGranularity > 0) { config->alloc_granularity = si.dwAllocationGranularity; }
+  // get virtual address bits
+  if ((uintptr_t)si.lpMaximumApplicationAddress > 0) {
+    const size_t vbits = MI_SIZE_BITS - mi_clz((uintptr_t)si.lpMaximumApplicationAddress);
+    config->virtual_address_bits = vbits;
+  }
+
   // get the VirtualAlloc2 function
   HINSTANCE  hDll;
   hDll = LoadLibrary(TEXT("kernelbase.dll"));
@@ -141,8 +149,19 @@ void _mi_prim_mem_init( mi_os_mem_config_t* config )
     pGetNumaProcessorNodeEx = (PGetNumaProcessorNodeEx)(void (*)(void))GetProcAddress(hDll, "GetNumaProcessorNodeEx");
     pGetNumaNodeProcessorMaskEx = (PGetNumaNodeProcessorMaskEx)(void (*)(void))GetProcAddress(hDll, "GetNumaNodeProcessorMaskEx");
     pGetNumaProcessorNode = (PGetNumaProcessorNode)(void (*)(void))GetProcAddress(hDll, "GetNumaProcessorNode");
+    // Get physical memory (not available on XP, so check dynamically)
+    PGetPhysicallyInstalledSystemMemory pGetPhysicallyInstalledSystemMemory = (PGetPhysicallyInstalledSystemMemory)(void (*)(void))GetProcAddress(hDll,"GetPhysicallyInstalledSystemMemory");
+    if (pGetPhysicallyInstalledSystemMemory != NULL) {
+      ULONGLONG memInKiB = 0;
+      if ((*pGetPhysicallyInstalledSystemMemory)(&memInKiB)) {
+        if (memInKiB > 0 && memInKiB <= SIZE_MAX) {
+          config->physical_memory_in_kib = (size_t)memInKiB;
+        }
+      }
+    }
     FreeLibrary(hDll);
   }
+  // Enable large/huge OS page support?
   if (mi_option_is_enabled(mi_option_allow_large_os_pages) || mi_option_is_enabled(mi_option_reserve_huge_os_pages)) {
     win_enable_large_os_pages(&config->large_page_size);
   }
@@ -162,7 +181,7 @@ int _mi_prim_free(void* addr, size_t size ) {
     // In mi_os_mem_alloc_aligned the fallback path may have returned a pointer inside
     // the memory region returned by VirtualAlloc; in that case we need to free using
     // the start of the region.
-    MEMORY_BASIC_INFORMATION info = { 0 };
+    MEMORY_BASIC_INFORMATION info; _mi_memzero_var(info);
     VirtualQuery(addr, &info, sizeof(info));
     if (info.AllocationBase < addr && ((uint8_t*)addr - (uint8_t*)info.AllocationBase) < (ptrdiff_t)MI_SEGMENT_SIZE) {
       errcode = 0;
@@ -178,7 +197,7 @@ int _mi_prim_free(void* addr, size_t size ) {
 // VirtualAlloc
 //---------------------------------------------
 
-static void* win_virtual_alloc_prim(void* addr, size_t size, size_t try_alignment, DWORD flags) {
+static void* win_virtual_alloc_prim_once(void* addr, size_t size, size_t try_alignment, DWORD flags) {
   #if (MI_INTPTR_SIZE >= 8)
   // on 64-bit systems, try to use the virtual address area after 2TiB for 4MiB aligned allocations
   if (addr == NULL) {
@@ -192,7 +211,7 @@ static void* win_virtual_alloc_prim(void* addr, size_t size, size_t try_alignmen
   }
   #endif
   // on modern Windows try use VirtualAlloc2 for aligned allocation
-  if (try_alignment > 1 && (try_alignment % _mi_os_page_size()) == 0 && pVirtualAlloc2 != NULL) {
+  if (addr == NULL && try_alignment > 1 && (try_alignment % _mi_os_page_size()) == 0 && pVirtualAlloc2 != NULL) {
     MI_MEM_ADDRESS_REQUIREMENTS reqs = { 0, 0, 0 };
     reqs.Alignment = try_alignment;
     MI_MEM_EXTENDED_PARAMETER param = { {0, 0}, {0} };
@@ -200,11 +219,51 @@ static void* win_virtual_alloc_prim(void* addr, size_t size, size_t try_alignmen
     param.Arg.Pointer = &reqs;
     void* p = (*pVirtualAlloc2)(GetCurrentProcess(), addr, size, flags, PAGE_READWRITE, &param, 1);
     if (p != NULL) return p;
-    _mi_warning_message("unable to allocate aligned OS memory (%zu bytes, error code: 0x%x, address: %p, alignment: %zu, flags: 0x%x)\n", size, GetLastError(), addr, try_alignment, flags);
+    _mi_warning_message("unable to allocate aligned OS memory (0x%zx bytes, error code: 0x%x, address: %p, alignment: 0x%zx, flags: 0x%x)\n", size, GetLastError(), addr, try_alignment, flags);
     // fall through on error
   }
   // last resort
   return VirtualAlloc(addr, size, flags, PAGE_READWRITE);
+}
+
+static bool win_is_out_of_memory_error(DWORD err) {
+  switch (err) {
+    case ERROR_COMMITMENT_MINIMUM:
+    case ERROR_COMMITMENT_LIMIT:
+    case ERROR_PAGEFILE_QUOTA:
+    case ERROR_NOT_ENOUGH_MEMORY:
+      return true;
+    default:
+      return false;
+  }
+}
+
+static void* win_virtual_alloc_prim(void* addr, size_t size, size_t try_alignment, DWORD flags) {
+  long max_retry_msecs = mi_option_get_clamp(mi_option_retry_on_oom, 0, 2000);  // at most 2 seconds
+  if (max_retry_msecs == 1) { max_retry_msecs = 100; }  // if one sets the option to "true"
+  for (long tries = 1; tries <= 10; tries++) {          // try at most 10 times (=2200ms)
+    void* p = win_virtual_alloc_prim_once(addr, size, try_alignment, flags);
+    if (p != NULL) {
+      // success, return the address
+      return p;
+    }
+    else if (max_retry_msecs > 0 && (try_alignment <= 2*MI_SEGMENT_ALIGN) &&
+              (flags&MEM_COMMIT) != 0 && (flags&MEM_LARGE_PAGES) == 0 &&
+              win_is_out_of_memory_error(GetLastError())) {
+      // if committing regular memory and being out-of-memory,
+      // keep trying for a bit in case memory frees up after all. See issue #894
+      _mi_warning_message("out-of-memory on OS allocation, try again... (attempt %lu, 0x%zx bytes, error code: 0x%x, address: %p, alignment: 0x%zx, flags: 0x%x)\n", tries, size, GetLastError(), addr, try_alignment, flags);
+      long sleep_msecs = tries*40;  // increasing waits
+      if (sleep_msecs > max_retry_msecs) { sleep_msecs = max_retry_msecs; }
+      max_retry_msecs -= sleep_msecs;
+      Sleep(sleep_msecs);
+    }
+    else {
+      // otherwise return with an error
+      break;
+    }
+  }
+  return NULL;
 }
 
 static void* win_virtual_alloc(void* addr, size_t size, size_t try_alignment, DWORD flags, bool large_only, bool allow_large, bool* is_large) {
@@ -227,7 +286,7 @@ static void* win_virtual_alloc(void* addr, size_t size, size_t try_alignment, DW
       if (large_only) return p;
       // fall back to non-large page allocation on error (`p == NULL`).
       if (p == NULL) {
-	mi_atomic_store_release(&large_page_try_ok,10UL);  // on error, don't try again for the next N allocations
+        mi_atomic_store_release(&large_page_try_ok,10UL);  // on error, don't try again for the next N allocations
       }
     }
   }
@@ -240,14 +299,14 @@ static void* win_virtual_alloc(void* addr, size_t size, size_t try_alignment, DW
   return p;
 }
 
-int _mi_prim_alloc(size_t size, size_t try_alignment, bool commit, bool allow_large, bool* is_large, bool* is_zero, void** addr) {
+int _mi_prim_alloc(void* hint_addr, size_t size, size_t try_alignment, bool commit, bool allow_large, bool* is_large, bool* is_zero, void** addr) {
   mi_assert_internal(size > 0 && (size % _mi_os_page_size()) == 0);
   mi_assert_internal(commit || !allow_large);
   mi_assert_internal(try_alignment > 0);
   *is_zero = true;
   int flags = MEM_RESERVE;
   if (commit) { flags |= MEM_COMMIT; }
-  *addr = win_virtual_alloc(NULL, size, try_alignment, flags, false, allow_large, is_large);
+  *addr = win_virtual_alloc(hint_addr, size, try_alignment, flags, false, allow_large, is_large);
   return (*addr != NULL ? 0 : (int)GetLastError());
 }
 
@@ -385,14 +444,14 @@ size_t _mi_prim_numa_node_count(void) {
       // Extended API is supported
       GROUP_AFFINITY affinity;
       if ((*pGetNumaNodeProcessorMaskEx)((USHORT)numa_max, &affinity)) {
-	if (affinity.Mask != 0) break;  // found the maximum non-empty node
+        if (affinity.Mask != 0) break;  // found the maximum non-empty node
       }
     }
     else {
       // Vista or earlier, use older API that is limited to 64 processors.
       ULONGLONG mask;
       if (GetNumaNodeProcessorMask((UCHAR)numa_max, &mask)) {
-	if (mask != 0) break; // found the maximum non-empty node
+        if (mask != 0) break; // found the maximum non-empty node
       };
     }
     // max node was invalid or had no processor assigned, try again
@@ -428,7 +487,6 @@ mi_msecs_t _mi_prim_clock_now(void) {
 // Process Info
 //----------------------------------------------------------------
 
-#include <windows.h>
 #include <psapi.h>
 
 static mi_msecs_t filetime_msecs(const FILETIME* ftime) {
@@ -461,8 +519,7 @@ void _mi_prim_process_info(mi_process_info_t* pinfo)
   }
 
   // get process info
-  PROCESS_MEMORY_COUNTERS info;
-  memset(&info, 0, sizeof(info));
+  PROCESS_MEMORY_COUNTERS info; _mi_memzero_var(info);
   if (pGetProcessMemoryInfo != NULL) {
     pGetProcessMemoryInfo(GetCurrentProcess(), &info, sizeof(info));
   }
@@ -482,7 +539,7 @@ void _mi_prim_out_stderr( const char* msg )
   // on windows with redirection, the C runtime cannot handle locale dependent output
   // after the main thread closes so we use direct console output.
   if (!_mi_preloading()) {
-    // _cputs(msg);  // _cputs cannot be used at is aborts if it fails to lock the console
+    // _cputs(msg);  // _cputs cannot be used as it aborts when failing to lock the console
     static HANDLE hcon = INVALID_HANDLE_VALUE;
     static bool hconIsConsole;
     if (hcon == INVALID_HANDLE_VALUE) {
@@ -494,15 +551,15 @@ void _mi_prim_out_stderr( const char* msg )
     if (len > 0 && len < UINT32_MAX) {
       DWORD written = 0;
       if (hconIsConsole) {
-	WriteConsoleA(hcon, msg, (DWORD)len, &written, NULL);
+        WriteConsoleA(hcon, msg, (DWORD)len, &written, NULL);
       }
       else if (hcon != INVALID_HANDLE_VALUE) {
-	// use direct write if stderr was redirected
-	WriteFile(hcon, msg, (DWORD)len, &written, NULL);
+        // use direct write if stderr was redirected
+        WriteFile(hcon, msg, (DWORD)len, &written, NULL);
       }
       else {
-	// finally fall back to fputs after all
-	fputs(msg, stderr);
+        // finally fall back to fputs after all
+        fputs(msg, stderr);
       }
     }
   }
@@ -522,7 +579,6 @@ bool _mi_prim_getenv(const char* name, char* result, size_t result_size) {
   size_t len = GetEnvironmentVariableA(name, result, (DWORD)result_size);
   return (len > 0 && len < result_size);
 }
-
 
 
 //----------------------------------------------------------------
@@ -565,58 +621,205 @@ bool _mi_prim_random_buf(void* buf, size_t buf_len) {
 
 #endif  // MI_USE_RTLGENRANDOM
 
+
+
 //----------------------------------------------------------------
-// Thread init/done
+// Process & Thread Init/Done
 //----------------------------------------------------------------
 
-#if !defined(MI_SHARED_LIB)
-
-// use thread local storage keys to detect thread ending
-#include <fibersapi.h>
-#if (_WIN32_WINNT < 0x600)  // before Windows Vista
-WINBASEAPI DWORD WINAPI FlsAlloc( _In_opt_ PFLS_CALLBACK_FUNCTION lpCallback );
-WINBASEAPI PVOID WINAPI FlsGetValue( _In_ DWORD dwFlsIndex );
-WINBASEAPI BOOL  WINAPI FlsSetValue( _In_ DWORD dwFlsIndex, _In_opt_ PVOID lpFlsData );
-WINBASEAPI BOOL  WINAPI FlsFree(_In_ DWORD dwFlsIndex);
-#endif
-
-static DWORD mi_fls_key = (DWORD)(-1);
-
-static void NTAPI mi_fls_done(PVOID value) {
-  mi_heap_t* heap = (mi_heap_t*)value;
-  if (heap != NULL) {
-    _mi_thread_done(heap);
-    FlsSetValue(mi_fls_key, NULL);  // prevent recursion as _mi_thread_done may set it back to the main heap, issue #672
+static void NTAPI mi_win_main(PVOID module, DWORD reason, LPVOID reserved) {
+  MI_UNUSED(reserved);
+  MI_UNUSED(module);
+  #if MI_TLS_SLOT >= 2
+  if ((reason==DLL_PROCESS_ATTACH || reason==DLL_THREAD_ATTACH) && mi_prim_get_default_heap() == NULL) {
+    _mi_heap_set_default_direct((mi_heap_t*)&_mi_heap_empty);
+  }
+  #endif
+  if (reason==DLL_PROCESS_ATTACH) {
+    _mi_process_load();
+  }
+  else if (reason==DLL_PROCESS_DETACH) {
+    _mi_process_done();
+  }
+  else if (reason==DLL_THREAD_DETACH && !_mi_is_redirected()) {
+    _mi_thread_done(NULL);
   }
 }
 
-void _mi_prim_thread_init_auto_done(void) {
-  mi_fls_key = FlsAlloc(&mi_fls_done);
-}
 
-void _mi_prim_thread_done_auto_done(void) {
-  // call thread-done on all threads (except the main thread) to prevent
-  // dangling callback pointer if statically linked with a DLL; Issue #208
-  FlsFree(mi_fls_key);
-}
+#if defined(MI_SHARED_LIB)
+  #define MI_PRIM_HAS_PROCESS_ATTACH  1
 
-void _mi_prim_thread_associate_default_heap(mi_heap_t* heap) {
-  mi_assert_internal(mi_fls_key != (DWORD)(-1));
-  FlsSetValue(mi_fls_key, heap);
-}
+  // Windows DLL: easy to hook into process_init and thread_done
+  BOOL WINAPI DllMain(HINSTANCE inst, DWORD reason, LPVOID reserved) {
+    mi_win_main((PVOID)inst,reason,reserved);
+    return TRUE;
+  }
 
-#else
+  // nothing to do since `_mi_thread_done` is handled through the DLL_THREAD_DETACH event.
+  void _mi_prim_thread_init_auto_done(void) { }
+  void _mi_prim_thread_done_auto_done(void) { }
+  void _mi_prim_thread_associate_default_heap(mi_heap_t* heap) {
+    MI_UNUSED(heap);
+  }
 
-// Dll; nothing to do as in that case thread_done is handled through the DLL_THREAD_DETACH event.
+#elif !defined(MI_WIN_USE_FLS)
+  #define MI_PRIM_HAS_PROCESS_ATTACH  1
 
-void _mi_prim_thread_init_auto_done(void) {
-}
+  static void NTAPI mi_win_main_attach(PVOID module, DWORD reason, LPVOID reserved) {
+    if (reason == DLL_PROCESS_ATTACH || reason == DLL_THREAD_ATTACH) {
+      mi_win_main(module, reason, reserved);
+    }
+  }
+  static void NTAPI mi_win_main_detach(PVOID module, DWORD reason, LPVOID reserved) {
+    if (reason == DLL_PROCESS_DETACH || reason == DLL_THREAD_DETACH) {
+      mi_win_main(module, reason, reserved);
+    }
+  }
 
-void _mi_prim_thread_done_auto_done(void) {
-}
+  // Set up TLS callbacks in a statically linked library by using special data sections.
+  // See <https://stackoverflow.com/questions/14538159/tls-callback-in-windows>
+  // We use 2 entries to ensure we call attach events before constructors
+  // are called, and detach events after destructors are called.
+  #if defined(__cplusplus)
+  extern "C" {
+  #endif
 
-void _mi_prim_thread_associate_default_heap(mi_heap_t* heap) {
-  MI_UNUSED(heap);
-}
+  #if defined(_WIN64)
+    #pragma comment(linker, "/INCLUDE:_tls_used")
+    #pragma comment(linker, "/INCLUDE:_mi_tls_callback_pre")
+    #pragma comment(linker, "/INCLUDE:_mi_tls_callback_post")
+    #pragma const_seg(".CRT$XLB")
+    extern const PIMAGE_TLS_CALLBACK _mi_tls_callback_pre[];
+    const PIMAGE_TLS_CALLBACK _mi_tls_callback_pre[] = { &mi_win_main_attach };
+    #pragma const_seg()
+    #pragma const_seg(".CRT$XLY")
+    extern const PIMAGE_TLS_CALLBACK _mi_tls_callback_post[];
+    const PIMAGE_TLS_CALLBACK _mi_tls_callback_post[] = { &mi_win_main_detach };
+    #pragma const_seg()
+  #else
+    #pragma comment(linker, "/INCLUDE:__tls_used")
+    #pragma comment(linker, "/INCLUDE:__mi_tls_callback_pre")
+    #pragma comment(linker, "/INCLUDE:__mi_tls_callback_post")
+    #pragma data_seg(".CRT$XLB")
+    PIMAGE_TLS_CALLBACK _mi_tls_callback_pre[] = { &mi_win_main_attach };
+    #pragma data_seg()
+    #pragma data_seg(".CRT$XLY")
+    PIMAGE_TLS_CALLBACK _mi_tls_callback_post[] = { &mi_win_main_detach };
+    #pragma data_seg()
+  #endif
 
+  #if defined(__cplusplus)
+  }
+  #endif
+
+  // nothing to do since `_mi_thread_done` is handled through the DLL_THREAD_DETACH event.
+  void _mi_prim_thread_init_auto_done(void) { }
+  void _mi_prim_thread_done_auto_done(void) { }
+  void _mi_prim_thread_associate_default_heap(mi_heap_t* heap) {
+    MI_UNUSED(heap);
+  }
+
+#else // deprecated: statically linked, use fiber api
+
+  #if defined(_MSC_VER) // on clang/gcc use the constructor attribute (in `src/prim/prim.c`)
+    // MSVC: use data section magic for static libraries
+    // See <https://www.codeguru.com/cpp/misc/misc/applicationcontrol/article.php/c6945/Running-Code-Before-and-After-Main.htm>
+    #define MI_PRIM_HAS_PROCESS_ATTACH 1
+
+    static int mi_process_attach(void) {
+      mi_win_main(NULL,DLL_PROCESS_ATTACH,NULL);
+      atexit(&_mi_process_done);
+      return 0;
+    }
+    typedef int(*mi_crt_callback_t)(void);
+    #if defined(_WIN64)
+      #pragma comment(linker, "/INCLUDE:_mi_tls_callback")
+      #pragma section(".CRT$XIU", long, read)
+    #else
+      #pragma comment(linker, "/INCLUDE:__mi_tls_callback")
+    #endif
+    #pragma data_seg(".CRT$XIU")
+    mi_decl_externc mi_crt_callback_t _mi_tls_callback[] = { &mi_process_attach };
+    #pragma data_seg()
+  #endif
+
+  // use the fiber api for calling `_mi_thread_done`.
+  #include <fibersapi.h>
+  #if (_WIN32_WINNT < 0x600)  // before Windows Vista
+  WINBASEAPI DWORD WINAPI FlsAlloc( _In_opt_ PFLS_CALLBACK_FUNCTION lpCallback );
+  WINBASEAPI PVOID WINAPI FlsGetValue( _In_ DWORD dwFlsIndex );
+  WINBASEAPI BOOL  WINAPI FlsSetValue( _In_ DWORD dwFlsIndex, _In_opt_ PVOID lpFlsData );
+  WINBASEAPI BOOL  WINAPI FlsFree(_In_ DWORD dwFlsIndex);
+  #endif
+
+  static DWORD mi_fls_key = (DWORD)(-1);
+
+  static void NTAPI mi_fls_done(PVOID value) {
+    mi_heap_t* heap = (mi_heap_t*)value;
+    if (heap != NULL) {
+      _mi_thread_done(heap);
+      FlsSetValue(mi_fls_key, NULL);  // prevent recursion as _mi_thread_done may set it back to the main heap, issue #672
+    }
+  }
+
+  void _mi_prim_thread_init_auto_done(void) {
+    mi_fls_key = FlsAlloc(&mi_fls_done);
+  }
+
+  void _mi_prim_thread_done_auto_done(void) {
+    // call thread-done on all threads (except the main thread) to prevent
+    // dangling callback pointer if statically linked with a DLL; Issue #208
+    FlsFree(mi_fls_key);
+  }
+
+  void _mi_prim_thread_associate_default_heap(mi_heap_t* heap) {
+    mi_assert_internal(mi_fls_key != (DWORD)(-1));
+    FlsSetValue(mi_fls_key, heap);
+  }
+#endif
+
+// ----------------------------------------------------
+// Communicate with the redirection module on Windows
+// ----------------------------------------------------
+#if defined(MI_SHARED_LIB) && !defined(MI_WIN_NOREDIRECT)
+  #define MI_PRIM_HAS_ALLOCATOR_INIT 1
+
+  static bool mi_redirected = false;   // true if malloc redirects to mi_malloc
+
+  bool _mi_is_redirected(void) {
+    return mi_redirected;
+  }
+
+  #ifdef __cplusplus
+  extern "C" {
+  #endif
+  mi_decl_export void _mi_redirect_entry(DWORD reason) {
+    // called on redirection; careful as this may be called before DllMain
+    #if MI_TLS_SLOT >= 2
+    if ((reason==DLL_PROCESS_ATTACH || reason==DLL_THREAD_ATTACH) && mi_prim_get_default_heap() == NULL) {
+      _mi_heap_set_default_direct((mi_heap_t*)&_mi_heap_empty);
+    }
+    #endif
+    if (reason == DLL_PROCESS_ATTACH) {
+      mi_redirected = true;
+    }
+    else if (reason == DLL_PROCESS_DETACH) {
+      mi_redirected = false;
+    }
+    else if (reason == DLL_THREAD_DETACH) {
+      _mi_thread_done(NULL);
+    }
+  }
+  __declspec(dllimport) bool mi_cdecl mi_allocator_init(const char** message);
+  __declspec(dllimport) void mi_cdecl mi_allocator_done(void);
+  #ifdef __cplusplus
+  }
+  #endif
+  bool _mi_allocator_init(const char** message) {
+    return mi_allocator_init(message);
+  }
+  void _mi_allocator_done(void) {
+    mi_allocator_done();
+  }
 #endif
