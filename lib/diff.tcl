@@ -226,7 +226,7 @@ proc show_other_diff {path w m cont_info} {
 			$ui_diff insert end \
 				"* [mc "Git Repository (subproject)"]\n" \
 				d_info
-		} elseif {![catch {set type [exec file $path]}]} {
+		} elseif {![catch {set type [safe_exec [list file $path]]}]} {
 			set n [string length $path]
 			if {[string equal -length $n $path $type]} {
 				set type [string range $type $n end]

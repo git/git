@@ -170,7 +170,35 @@ proc open {args} {
 	uplevel 1 real_open $args
 }
 
-# Wrap open to sanitize arguments
+# Wrap exec/open to sanitize arguments
+
+# unsafe arguments begin with redirections or the pipe or background operators
+proc is_arg_unsafe {arg} {
+	regexp {^([<|>&]|2>)} $arg
+}
+
+proc make_arg_safe {arg} {
+	if {[is_arg_unsafe $arg]} {
+		set arg [file join . $arg]
+	}
+	return $arg
+}
+
+proc make_arglist_safe {arglist} {
+	set res {}
+	foreach arg $arglist {
+		lappend res [make_arg_safe $arg]
+	}
+	return $res
+}
+
+# executes one command
+# no redirections or pipelines are possible
+# cmd is a list that specifies the command and its arguments
+# calls `exec` and returns its value
+proc safe_exec {cmd} {
+	eval exec [make_arglist_safe $cmd]
+}
 
 proc safe_open_file {filename flags} {
 	# a file name starting with "|" would attempt to run a process
@@ -181,6 +209,8 @@ proc safe_open_file {filename flags} {
 	}
 	open $filename $flags
 }
+
+# End exec/open wrappers
 
 ######################################################################
 ##
@@ -282,11 +312,11 @@ unset oguimsg
 
 if {[tk windowingsystem] eq "aqua"} {
 	catch {
-		exec osascript -e [format {
+		safe_exec [list osascript -e [format {
 			tell application "System Events"
 				set frontmost of processes whose unix id is %d to true
 			end tell
-		} [pid]]
+		} [pid]]]
 	}
 }
 
@@ -571,7 +601,7 @@ proc _lappend_nice {cmd_var} {
 
 	if {![info exists _nice]} {
 		set _nice [_which nice]
-		if {[catch {exec $_nice git version}]} {
+		if {[catch {safe_exec [list $_nice git version]}]} {
 			set _nice {}
 		} elseif {[is_Windows] && [file dirname $_nice] ne [file dirname $::_git]} {
 			set _nice {}
@@ -667,9 +697,9 @@ proc kill_file_process {fd} {
 
 	catch {
 		if {[is_Windows]} {
-			exec taskkill /pid $process
+			safe_exec [list taskkill /pid $process]
 		} else {
-			exec kill $process
+			safe_exec [list kill $process]
 		}
 	}
 }

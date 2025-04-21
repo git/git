@@ -30,8 +30,8 @@ proc do_cygwin_shortcut {} {
 	global argv0 _gitworktree oguilib
 
 	if {[catch {
-		set desktop [exec cygpath \
-			--desktop]
+		set desktop [safe_exec [list cygpath \
+			--desktop]]
 		}]} {
 			set desktop .
 	}
@@ -50,14 +50,14 @@ proc do_cygwin_shortcut {} {
 					"CHERE_INVOKING=1 \
 					source /etc/profile; \
 					git gui"}
-				exec /bin/mkshortcut.exe \
+				safe_exec [list /bin/mkshortcut.exe \
 					--arguments $shargs \
 					--desc "git-gui on $repodir" \
 					--icon $oguilib/git-gui.ico \
 					--name $fn \
 					--show min \
 					--workingdir $repodir \
-					/bin/sh.exe
+					/bin/sh.exe]
 			} err]} {
 			error_popup [strcat [mc "Cannot write shortcut:"] "\n\n$err"]
 		}
