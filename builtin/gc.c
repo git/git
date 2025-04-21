@@ -2061,7 +2061,7 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 
 	case SCHEDULE_DAILY:
 		repeat = "<dict>\n"
-			 "<key>Day</key><integer>%d</integer>\n"
+			 "<key>Weekday</key><integer>%d</integer>\n"
 			 "<key>Hour</key><integer>0</integer>\n"
 			 "<key>Minute</key><integer>%d</integer>\n"
 			 "</dict>\n";
@@ -2072,7 +2072,7 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 	case SCHEDULE_WEEKLY:
 		strbuf_addf(&plist,
 			    "<dict>\n"
-			    "<key>Day</key><integer>0</integer>\n"
+			    "<key>Weekday</key><integer>0</integer>\n"
 			    "<key>Hour</key><integer>0</integer>\n"
 			    "<key>Minute</key><integer>%d</integer>\n"
 			    "</dict>\n",
