@@ -1,5 +1,3 @@
-#define DISABLE_SIGN_COMPARE_WARNINGS
-
 #include "git-compat-util.h"
 #include "string-list.h"
 
@@ -41,16 +39,16 @@ static int get_entry_index(const struct string_list *list, const char *string,
 }
 
 /* returns -1-index if already exists */
-static int add_entry(int insert_at, struct string_list *list, const char *string)
+static int add_entry(struct string_list *list, const char *string)
 {
 	int exact_match = 0;
-	int index = insert_at != -1 ? insert_at : get_entry_index(list, string, &exact_match);
+	int index = get_entry_index(list, string, &exact_match);
 
 	if (exact_match)
 		return -1 - index;
 
 	ALLOC_GROW(list->items, list->nr+1, list->alloc);
-	if (index < list->nr)
+	if ((size_t)index < list->nr)
 		MOVE_ARRAY(list->items + index + 1, list->items + index,
 			   list->nr - index);
 	list->items[index].string = list->strdup_strings ?
@@ -63,7 +61,7 @@ static int add_entry(int insert_at, struct string_list *list, const char *string
 
 struct string_list_item *string_list_insert(struct string_list *list, const char *string)
 {
-	int index = add_entry(-1, list, string);
+	int index = add_entry(list, string);
 
 	if (index < 0)
 		index = -1 - index;
@@ -116,7 +114,7 @@ struct string_list_item *string_list_lookup(struct string_list *list, const char
 void string_list_remove_duplicates(struct string_list *list, int free_util)
 {
 	if (list->nr > 1) {
-		int src, dst;
+		size_t src, dst;
 		compare_strings_fn cmp = list->cmp ? list->cmp : strcmp;
 		for (src = dst = 1; src < list->nr; src++) {
 			if (!cmp(list->items[dst - 1].string, list->items[src].string)) {
@@ -134,8 +132,8 @@ void string_list_remove_duplicates(struct string_list *list, int free_util)
 int for_each_string_list(struct string_list *list,
 			 string_list_each_func_t fn, void *cb_data)
 {
-	int i, ret = 0;
-	for (i = 0; i < list->nr; i++)
+	int ret = 0;
+	for (size_t i = 0; i < list->nr; i++)
 		if ((ret = fn(&list->items[i], cb_data)))
 			break;
 	return ret;
@@ -144,8 +142,8 @@ int for_each_string_list(struct string_list *list,
 void filter_string_list(struct string_list *list, int free_util,
 			string_list_each_func_t want, void *cb_data)
 {
-	int src, dst = 0;
-	for (src = 0; src < list->nr; src++) {
+	size_t dst = 0;
+	for (size_t src = 0; src < list->nr; src++) {
 		if (want(&list->items[src], cb_data)) {
 			list->items[dst++] = list->items[src];
 		} else {
@@ -171,13 +169,12 @@ void string_list_remove_empty_items(struct string_list *list, int free_util)
 void string_list_clear(struct string_list *list, int free_util)
 {
 	if (list->items) {
-		int i;
 		if (list->strdup_strings) {
-			for (i = 0; i < list->nr; i++)
+			for (size_t i = 0; i < list->nr; i++)
 				free(list->items[i].string);
 		}
 		if (free_util) {
-			for (i = 0; i < list->nr; i++)
+			for (size_t i = 0; i < list->nr; i++)
 				free(list->items[i].util);
 		}
 		free(list->items);
@@ -189,13 +186,12 @@ void string_list_clear(struct string_list *list, int free_util)
 void string_list_clear_func(struct string_list *list, string_list_clear_func_t clearfunc)
 {
 	if (list->items) {
-		int i;
 		if (clearfunc) {
-			for (i = 0; i < list->nr; i++)
+			for (size_t i = 0; i < list->nr; i++)
 				clearfunc(list->items[i].util, list->items[i].string);
 		}
 		if (list->strdup_strings) {
-			for (i = 0; i < list->nr; i++)
+			for (size_t i = 0; i < list->nr; i++)
 				free(list->items[i].string);
 		}
 		free(list->items);
