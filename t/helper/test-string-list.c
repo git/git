@@ -46,20 +46,6 @@ static int prefix_cb(struct string_list_item *item, void *cb_data)
 
 int cmd__string_list(int argc, const char **argv)
 {
-	if (argc == 5 && !strcmp(argv[1], "split")) {
-		struct string_list list = STRING_LIST_INIT_DUP;
-		int i;
-		const char *s = argv[2];
-		int delim = *argv[3];
-		int maxsplit = atoi(argv[4]);
-
-		i = string_list_split(&list, s, delim, maxsplit);
-		printf("%d\n", i);
-		write_list(&list);
-		string_list_clear(&list, 0);
-		return 0;
-	}
-
 	if (argc == 5 && !strcmp(argv[1], "split_in_place")) {
 		struct string_list list = STRING_LIST_INIT_NODUP;
 		int i;
