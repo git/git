@@ -170,6 +170,18 @@ proc open {args} {
 	uplevel 1 real_open $args
 }
 
+# Wrap open to sanitize arguments
+
+proc safe_open_file {filename flags} {
+	# a file name starting with "|" would attempt to run a process
+	# but such a file name must be treated as a relative path
+	# hide the "|" behind "./"
+	if {[string index $filename 0] eq "|"} {
+		set filename [file join . $filename]
+	}
+	open $filename $flags
+}
+
 ######################################################################
 ##
 ## locate our library
@@ -494,7 +506,7 @@ proc _git_cmd {name} {
 			# Tcl on Windows doesn't know it.
 			#
 			set p [gitexec git-$name]
-			set f [open $p r]
+			set f [safe_open_file $p r]
 			set s [gets $f]
 			close $f
 
@@ -527,7 +539,7 @@ proc _git_cmd {name} {
 # Test a file for a hashbang to identify executable scripts on Windows.
 proc is_shellscript {filename} {
 	if {![file exists $filename]} {return 0}
-	set f [open $filename r]
+	set f [safe_open_file $filename r]
 	fconfigure $f -encoding binary
 	set magic [read $f 2]
 	close $f
@@ -683,7 +695,7 @@ proc sq {value} {
 proc load_current_branch {} {
 	global current_branch is_detached
 
-	set fd [open [gitdir HEAD] r]
+	set fd [safe_open_file [gitdir HEAD] r]
 	fconfigure $fd -translation binary -encoding utf-8
 	if {[gets $fd ref] < 1} {
 		set ref {}
@@ -1045,7 +1057,7 @@ You are using [git-version]:
 ## configure our library
 
 set idx [file join $oguilib tclIndex]
-if {[catch {set fd [open $idx r]} err]} {
+if {[catch {set fd [safe_open_file $idx r]} err]} {
 	catch {wm withdraw .}
 	tk_messageBox \
 		-icon error \
@@ -1382,7 +1394,7 @@ proc repository_state {ctvar hdvar mhvar} {
 	set merge_head [gitdir MERGE_HEAD]
 	if {[file exists $merge_head]} {
 		set ct merge
-		set fd_mh [open $merge_head r]
+		set fd_mh [safe_open_file $merge_head r]
 		while {[gets $fd_mh line] >= 0} {
 			lappend mh $line
 		}
@@ -1530,7 +1542,7 @@ proc load_message {file {encoding {}}} {
 
 	set f [gitdir $file]
 	if {[file isfile $f]} {
-		if {[catch {set fd [open $f r]}]} {
+		if {[catch {set fd [safe_open_file $f r]}]} {
 			return 0
 		}
 		fconfigure $fd -eofchar {}
@@ -1554,23 +1566,23 @@ proc run_prepare_commit_msg_hook {} {
 	# it will be .git/MERGE_MSG (merge), .git/SQUASH_MSG (squash), or an
 	# empty file but existent file.
 
-	set fd_pcm [open [gitdir PREPARE_COMMIT_MSG] a]
+	set fd_pcm [safe_open_file [gitdir PREPARE_COMMIT_MSG] a]
 
 	if {[file isfile [gitdir MERGE_MSG]]} {
 		set pcm_source "merge"
-		set fd_mm [open [gitdir MERGE_MSG] r]
+		set fd_mm [safe_open_file [gitdir MERGE_MSG] r]
 		fconfigure $fd_mm -encoding utf-8
 		puts -nonewline $fd_pcm [read $fd_mm]
 		close $fd_mm
 	} elseif {[file isfile [gitdir SQUASH_MSG]]} {
 		set pcm_source "squash"
-		set fd_sm [open [gitdir SQUASH_MSG] r]
+		set fd_sm [safe_open_file [gitdir SQUASH_MSG] r]
 		fconfigure $fd_sm -encoding utf-8
 		puts -nonewline $fd_pcm [read $fd_sm]
 		close $fd_sm
 	} elseif {[file isfile [get_config commit.template]]} {
 		set pcm_source "template"
-		set fd_sm [open [get_config commit.template] r]
+		set fd_sm [safe_open_file [get_config commit.template] r]
 		fconfigure $fd_sm -encoding utf-8
 		puts -nonewline $fd_pcm [read $fd_sm]
 		close $fd_sm
@@ -2271,7 +2283,7 @@ proc do_quit {{rc {1}}} {
 			if {![string match amend* $commit_type]
 				&& $msg ne {}} {
 				catch {
-					set fd [open $save w]
+					set fd [safe_open_file $save w]
 					fconfigure $fd -encoding utf-8
 					puts -nonewline $fd $msg
 					close $fd
@@ -4032,7 +4044,7 @@ if {[winfo exists $ui_comm]} {
 				}
 			} elseif {$m} {
 				catch {
-					set fd [open [gitdir GITGUI_BCK] w]
+					set fd [safe_open_file [gitdir GITGUI_BCK] w]
 					fconfigure $fd -encoding utf-8
 					puts -nonewline $fd $msg
 					close $fd

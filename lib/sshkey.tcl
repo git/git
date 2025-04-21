@@ -7,7 +7,7 @@ proc find_ssh_key {} {
 		~/.ssh/id_rsa.pub ~/.ssh/identity.pub
 	} {
 		if {[file exists $name]} {
-			set fh    [open $name r]
+			set fh    [safe_open_file $name r]
 			set cont  [read $fh]
 			close $fh
 			return [list $name $cont]

@@ -293,7 +293,7 @@ proc merge_tool_get_stages {target stages} {
 	foreach fname $stages {
 		if {$merge_stages($i) eq {}} {
 			file delete $fname
-			catch { close [open $fname w] }
+			catch { close [safe_open_file $fname w] }
 		} else {
 			# A hack to support autocrlf properly
 			git checkout-index -f --stage=$i -- $target

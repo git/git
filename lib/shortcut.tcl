@@ -83,7 +83,7 @@ proc do_macosx_app {} {
 
 				file mkdir $MacOS
 
-				set fd [open [file join $Contents Info.plist] w]
+				set fd [safe_open_file [file join $Contents Info.plist] w]
 				puts $fd {<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -108,7 +108,7 @@ proc do_macosx_app {} {
 </plist>}
 				close $fd
 
-				set fd [open $exe w]
+				set fd [safe_open_file $exe w]
 				puts $fd "#!/bin/sh"
 				foreach name [lsort [array names env]] {
 					set value $env($name)

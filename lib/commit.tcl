@@ -225,7 +225,7 @@ A good commit message has the following format:
 	# -- Build the message file.
 	#
 	set msg_p [gitdir GITGUI_EDITMSG]
-	set msg_wt [open $msg_p w]
+	set msg_wt [safe_open_file $msg_p w]
 	fconfigure $msg_wt -translation lf
 	setup_commit_encoding $msg_wt
 	puts $msg_wt $msg
@@ -409,7 +409,7 @@ A rescan will be automatically started now.
 	if {$commit_type ne {normal}} {
 		append reflogm " ($commit_type)"
 	}
-	set msg_fd [open $msg_p r]
+	set msg_fd [safe_open_file $msg_p r]
 	setup_commit_encoding $msg_fd 1
 	gets $msg_fd subject
 	close $msg_fd

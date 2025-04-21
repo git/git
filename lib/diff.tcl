@@ -202,7 +202,7 @@ proc show_other_diff {path w m cont_info} {
 					set sz [string length $content]
 				}
 				file {
-					set fd [open $path r]
+					set fd [safe_open_file $path r]
 					fconfigure $fd \
 						-eofchar {} \
 						-encoding [get_path_encoding $path]

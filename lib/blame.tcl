@@ -481,7 +481,7 @@ method _load {jump} {
 		if {$do_textconv ne 0} {
 			set fd [open_cmd_pipe $textconv $path]
 		} else {
-			set fd [open $path r]
+			set fd [safe_open_file $path r]
 		}
 		fconfigure $fd -eofchar {}
 	} else {

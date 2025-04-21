@@ -579,7 +579,7 @@ method _reflog_last {name} {
 
 	set last {}
 	if {[catch {set last [file mtime [gitdir $name]]}]
-	&& ![catch {set g [open [gitdir logs $name] r]}]} {
+	&& ![catch {set g [safe_open_file [gitdir logs $name] r]}]} {
 		fconfigure $g -translation binary
 		while {[gets $g line] >= 0} {
 			if {[regexp {> ([1-9][0-9]*) } $line line when]} {

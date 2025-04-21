@@ -93,7 +93,7 @@ method _start {} {
 	set spec [$w_rev get_tracking_branch]
 	set cmit [$w_rev get_commit]
 
-	set fh [open [gitdir FETCH_HEAD] w]
+	set fh [safe_open_file [gitdir FETCH_HEAD] w]
 	fconfigure $fh -translation lf
 	if {$spec eq {}} {
 		set remote .
