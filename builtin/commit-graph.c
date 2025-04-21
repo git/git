@@ -22,12 +22,12 @@
 	   "                       [--changed-paths] [--[no-]max-new-filters <n>] [--[no-]progress]\n" \
 	   "                       <split-options>")
 
-static const char * builtin_commit_graph_verify_usage[] = {
+static const char * const builtin_commit_graph_verify_usage[] = {
 	BUILTIN_COMMIT_GRAPH_VERIFY_USAGE,
 	NULL
 };
 
-static const char * builtin_commit_graph_write_usage[] = {
+static const char * const builtin_commit_graph_write_usage[] = {
 	BUILTIN_COMMIT_GRAPH_WRITE_USAGE,
 	NULL
 };

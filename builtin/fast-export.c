@@ -30,7 +30,7 @@
 #include "remote.h"
 #include "blob.h"
 
-static const char *fast_export_usage[] = {
+static const char *const fast_export_usage[] = {
 	N_("git fast-export [<rev-list-opts>]"),
 	NULL
 };

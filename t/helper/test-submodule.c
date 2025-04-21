@@ -12,33 +12,33 @@
 
 #define TEST_TOOL_CHECK_NAME_USAGE \
 	"test-tool submodule check-name"
-static const char *submodule_check_name_usage[] = {
+static const char *const submodule_check_name_usage[] = {
 	TEST_TOOL_CHECK_NAME_USAGE,
 	NULL
 };
 
 #define TEST_TOOL_CHECK_URL_USAGE \
 	"test-tool submodule check-url"
-static const char *submodule_check_url_usage[] = {
+static const char *const submodule_check_url_usage[] = {
 	TEST_TOOL_CHECK_URL_USAGE,
 	NULL
 };
 
 #define TEST_TOOL_IS_ACTIVE_USAGE \
 	"test-tool submodule is-active <name>"
-static const char *submodule_is_active_usage[] = {
+static const char *const submodule_is_active_usage[] = {
 	TEST_TOOL_IS_ACTIVE_USAGE,
 	NULL
 };
 
 #define TEST_TOOL_RESOLVE_RELATIVE_URL_USAGE \
 	"test-tool submodule resolve-relative-url <up_path> <remoteurl> <url>"
-static const char *submodule_resolve_relative_url_usage[] = {
+static const char *const submodule_resolve_relative_url_usage[] = {
 	TEST_TOOL_RESOLVE_RELATIVE_URL_USAGE,
 	NULL,
 };
 
-static const char *submodule_usage[] = {
+static const char *const submodule_usage[] = {
 	TEST_TOOL_CHECK_NAME_USAGE,
 	TEST_TOOL_CHECK_URL_USAGE,
 	TEST_TOOL_IS_ACTIVE_USAGE,
