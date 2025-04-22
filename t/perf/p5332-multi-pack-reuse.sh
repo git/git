@@ -58,7 +58,7 @@ do
 	'
 
 	test_expect_success "setup bitmaps for $nr_packs-pack scenario" '
-		find $packdir -type f -name "*.idx" | sed -e "s/.*\/\(.*\)$/+\1/g" |
+		find $packdir -type f -name "*.idx" | sed -e "s/.*\///" |
 		git multi-pack-index write --stdin-packs --bitmap \
 			--preferred-pack="$(find_pack $(git rev-parse HEAD))"
 	'
