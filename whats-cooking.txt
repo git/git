@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2025, #05; Fri, 18)
+Subject: What's cooking in git.git (Apr 2025, #06; Tue, 22)
 X-master-at: 4bbb303af69990ccd05fe3a2eb58a1ce036f8220
-X-next-at: 37484f566f6a755843cc88c219327d2d99bd680f
+X-next-at: 1f30a19c024a1458e9fb9991a929dcc38b1157d4
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Apr 2025, #05; Fri, 18)
+What's cooking in git.git (Apr 2025, #06; Tue, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,275 +46,128 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* ab/environment-clean-header (2025-04-09) 1 commit
-  (merged to 'next' on 2025-04-09 at 845b92c7ef)
- + environment.h: remove unused variables
+* js/git-perf-env-override (2025-04-20) 1 commit
+  (merged to 'next' on 2025-04-22 at 77ea361791)
+ + perf: do allow `GIT_PERF_*` to be overridden again
+
+ Developer support fix..
+
+ Will merge to 'master'.
+ source: <pull.1900.git.1743764167548.gitgitgadget@gmail.com>
+
+
+* ua/call-repo-config-with-possibly-null-repository (2025-04-20) 2 commits
+  (merged to 'next' on 2025-04-22 at 1f30a19c02)
+ + builtin/difftool: remove unnecessary if statement
+ + builtin/add: remove unnecessary if statement
+
+ Since a call to repo_config() can be called with repo set to NULL
+ these days, a command that is marked as RUN_SETUP in the builtin
+ command table does not have to check repo with NULL before making
+ the call.
+
+ Will merge to 'master'.
+ source: <20250420025501.183290-1-usmanakinyemi202@gmail.com>
+
+
+* az/tighten-string-array-constness (2025-04-21) 1 commit
+ - global: mark usage strings and string tables const
 
  Code clean-up.
- source: <2c547567-2b72-476c-9fc5-71cac050fa15@gmail.com>
+
+ Will merge to 'next'.
+ source: <daj53eijkqzsjy5cvuxchea4qm3pbiu673ehetihfffyvwzhgs@tarta.nabijaczleweli.xyz>
 
 
-* ab/pathspec-sign-compare-workaround (2025-04-01) 1 commit
-  (merged to 'next' on 2025-04-08 at 875fb0e3ee)
- + pathspec: fix sign comparison warnings
+* es/meson-cleanup (2025-04-21) 6 commits
+ - meson: only check for missing networking syms on non-Windows; add compat impls
+ - meson: fix typo in function check that prevented checking for hstrerror
+ - meson: add a couple missing networking dependencies
+ - meson: do a full usage-based compile check for sysinfo
+ - meson: check for getpagesize before using it
+ - meson: simplify and parameterize various standard function checks
 
- Some warnings from "-Wsign-compare" for pathspec.c have been
- squelched.
- source: <127c3010-4b23-436e-a07d-e6031e746113@gmail.com>
+ Code clean-up for meson-based build infrastructure.
 
-
-* ab/rm-sign-compare (2025-03-29) 1 commit
-  (merged to 'next' on 2025-04-08 at bc1f98e81c)
- + rm: fix sign comparison warnings
-
- Some warnings from "-Wsign-compare" for builtin/rm.c have been
- squelched.
- source: <ecaaa968-f337-466b-b719-22ebb3587167@gmail.com>
+ Comments?
+ source: <20250421175247.240971-6-eschwartz@gentoo.org>
 
 
-* cj/refname-avail-check-optim-typofix (2025-04-09) 1 commit
-  (merged to 'next' on 2025-04-09 at 95fe082872)
- + refs: fix duplicated word in comment
+* jh/gc-launchctl-schedule-fix (2025-04-21) 1 commit
+ - maintenance: fix launchctl calendar intervals
 
- Comment fix.
- source: <pull.1940.v2.git.git.1743857867327.gitgitgadget@gmail.com>
+ Fix for scheduled maintenance tasks on platforms using launchctl.
 
-
-* dd/sparse-glibc-workaround (2025-04-09) 1 commit
-  (merged to 'next' on 2025-04-09 at 14ee53c8e4)
- + sparse: ignore warning from new glibc headers
-
- Squelch false-positive from sparse.
- source: <a667da3985a0fe943cc0ff6ee8513d731d75a299.1721171853.git.congdanhqx@gmail.com>
+ Will merge to 'next'.
+ source: <20250421054633.231069-2-joshiheinrichs@gmail.com>
 
 
-* en/merge-recursive-debug (2025-04-08) 8 commits
-  (merged to 'next' on 2025-04-09 at 555be94c73)
- + builtin/{merge,rebase,revert}: remove GIT_TEST_MERGE_ALGORITHM
- + tests: remove GIT_TEST_MERGE_ALGORITHM and test_expect_merge_algorithm
- + merge-recursive.[ch]: thoroughly debug these
- + merge, sequencer: switch recursive merges over to ort
- + sequencer: switch non-recursive merges over to ort
- + merge-ort: enable diff-algorithms other than histogram
- + builtin/merge-recursive: switch to using merge_ort_generic()
- + checkout: replace merge_trees() with merge_ort_nonrecursive()
+* js/windows-arm64 (2025-04-21) 6 commits
+ - max_tree_depth: lower it for clangarm64 on Windows
+ - mingw(arm64): do move the `/etc/git*` location
+ - msvc: do handle builds on Windows/ARM64
+ - mingw: do not use nedmalloc on Windows/ARM64
+ - config.mak.uname: add support for clangarm64
+ - bswap.h: add support for built-in bswap functions
 
- Remove remnants of the recursive merge strategy backend, which was
- superseded by the ort merge strategy.
- source: <pull.1898.v3.git.1744127322.gitgitgadget@gmail.com>
+ Update to arm64 Windows port.
+
+ Will merge to 'next'.
+ source: <pull.1904.git.1745239150.gitgitgadget@gmail.com>
 
 
-* jk/fetch-follow-remote-head-fix (2025-04-09) 4 commits
-  (merged to 'next' on 2025-04-09 at 3071fce577)
- + fetch: make set_head() call easier to read
-  (merged to 'next' on 2025-04-07 at ba5ac342a5)
- + fetch: don't ask for remote HEAD if followRemoteHEAD is "never"
- + fetch: only respect followRemoteHEAD with configured refspecs
- + Merge branch 'jk/fetch-ref-prefix-cleanup' into jk/fetch-follow-remote-head-fix
+* jk/p5332-testfix (2025-04-22) 1 commit
+ - p5332: drop "+" from --stdin-packs input
 
- "git fetch [<remote>]" with only the configured fetch refspec
- should be the only thing to update refs/remotes/<remote>/HEAD,
- but the code was overly eager to do so in other cases.
- cf. <Z9n7myvpnDOWFWqt@nand.local>
- source: <20250318053905.GA2051217@coredump.intra.peff.net>
- source: <20250404085812.GA772404@coredump.intra.peff.net>
+ A test fix.
+
+ Will merge to 'next'.
+ source: <20250422111632.GA1855088@coredump.intra.peff.net>
 
 
-* js/ci-fedora-gawk (2025-04-16) 1 commit
- + ci(pedantic): ensure that awk is installed
+* lo/remove-log-reencode-from-rev-info (2025-04-22) 1 commit
+ - revision: remove log_reencode field from rev_info
 
- Work around CI breakage due to fedora base image getting updated.
- source: <81209cfd-049e-c853-9c4a-2cf9803e56a4@gmx.de>
+ Code clean-up.
 
-
-* js/ci-github-update-ubuntu (2025-04-09) 1 commit
-  (merged to 'next' on 2025-04-09 at fae10a2b5b)
- + ci: upgrade `sparse` to supported build agents
-
- Adjust to the deprecation of use of Ubuntu 20.04 GitHub Actions CI.
- source: <77f82414-261c-d2bc-f911-ed3d4b06c86e@gmx.de>
+ Will merge to 'next'.
+ source: <20250422213133.18685-1-lucasseikioshiro@gmail.com>
 
 
-* jt/help-sha-backend-info-in-build-options (2025-04-07) 2 commits
-  (merged to 'next' on 2025-04-08 at 7389752293)
- + help: include unsafe SHA-1 build info in version
- + help: include SHA implementation in version info
+* ps/ci-resurrect-p4-on-github (2025-04-22) 1 commit
+ - ci: fix p4d executable not being found on GitHub Actions
 
- "git help --build-options" reports SHA-1 and SHA-256 backends used
- in the build.
- source: <20250403140529.497876-1-jltobler@gmail.com>
+ CI fix.
 
-
-* jt/ref-transaction-abort-fix (2025-03-21) 1 commit
-  (merged to 'next' on 2025-04-08 at b653d86941)
- + builtin/fetch: avoid aborting closed reference transaction
-
- A ref transaction corner case fix.
- cf. <Z-E2ns9VziejSLB2@pks.im>
- source: <20250321004437.505461-1-jltobler@gmail.com>
+ Will merge to 'next'.
+ source: <aActb3dB-r3s69h6@pks.im>
 
 
-* jt/rev-list-z (2025-03-21) 5 commits
-  (merged to 'next' on 2025-04-08 at e608ba85c1)
- + rev-list: support NUL-delimited --missing option
- + rev-list: support NUL-delimited --boundary option
- + rev-list: support delimiting objects with NUL bytes
- + rev-list: refactor early option parsing
- + rev-list: inline `show_object_with_name()` in `show_object()`
+* ps/install-bash-completion (2025-04-22) 1 commit
+ - contrib/completion: install Bash completion
 
- "git rev-list" learns machine-parsable output format that delimits
- each field with NUL.
- source: <20250319183410.1225428-1-jltobler@gmail.com>
+ Build update to install bash (but not zsh) completion script.
+
+ Will merge to 'next'.
+ source: <20250422-b4-pks-meson-install-completions-v2-1-ab29d399bc6c@pks.im>
 
 
-* kn/blame-porcelain-unblamable (2025-04-07) 1 commit
-  (merged to 'next' on 2025-04-09 at 971ba23ba0)
- + blame: print unblamable and ignored commits in porcelain mode
+* sj/string-list-typefix (2025-04-22) 5 commits
+ - u-string-list: move "remove duplicates" test to "u-string-list.c"
+ - u-string-list: move "filter string" test to "u-string-list.c"
+ - u-string-list: move "test_split_in_place" to "u-string-list.c"
+ - u-string-list: move "test_split" into "u-string-list.c"
+ - string-list: fix sign compare warnings
 
- "git blame --porcelain" mode now talks about unblamable lines and
- lines that are blamed to an ignored commit.
- source: <20250403160326.120124-1-karthik.188@gmail.com>
+ Code and test clean-up around string-list API.
 
-
-* kn/non-transactional-batch-updates (2025-04-08) 9 commits
-  (merged to 'next' on 2025-04-08 at de64e9c49e)
- + update-ref: add --batch-updates flag for stdin mode
- + refs: support rejection in batch updates during F/D checks
- + refs: implement batch reference update support
- + refs: introduce enum-based transaction error types
- + refs/reftable: extract code from the transaction preparation
- + refs/files: remove duplicate duplicates check
- + refs: move duplicate refname update check to generic layer
- + refs/files: remove redundant check in split_symref_update()
- + Merge branch 'ps/refname-avail-check-optim' into kn/non-transactional-batch-updates
-
- Updating multiple references have only been possible in all-or-none
- fashion with transactions, but it can be more efficient to batch
- multiple updates even when some of them are allowed to fail in a
- best-effort manner.  A new "best effort batches of updates" mode
- has been introduced.
- source: <20250408085120.614893-1-karthik.188@gmail.com>
-
-
-* ps/cat-file-filter-batch (2025-04-07) 12 commits
-  (merged to 'next' on 2025-04-08 at eb8dfb17ea)
- + builtin/cat-file: use bitmaps to efficiently filter by object type
- + builtin/cat-file: deduplicate logic to iterate over all objects
- + pack-bitmap: introduce function to check whether a pack is bitmapped
- + pack-bitmap: add function to iterate over filtered bitmapped objects
- + pack-bitmap: allow passing payloads to `show_reachable_fn()`
- + builtin/cat-file: support "object:type=" objects filter
- + builtin/cat-file: support "blob:limit=" objects filter
- + builtin/cat-file: support "blob:none" objects filter
- + builtin/cat-file: wire up an option to filter objects
- + builtin/cat-file: introduce function to report object status
- + builtin/cat-file: rename variable that tracks usage
- + Merge branch 'tb/incremental-midx-part-2' into ps/cat-file-filter-batch
-
- "git cat-file --batch" and friends learned to allow "--filter=" to
- omit certain objects, just like the transport layer does.
- source: <20250402-pks-cat-file-object-type-filter-v3-0-4da6bb21871c@pks.im>
-
-
-* ps/maintenance-reflog-expire (2025-04-08) 6 commits
-  (merged to 'next' on 2025-04-08 at 40d6884143)
- + builtin/maintenance: introduce "reflog-expire" task
- + builtin/gc: split out function to expire reflog entries
- + builtin/reflog: make functions regarding `reflog_expire_options` public
- + builtin/reflog: stop storing per-reflog expiry dates globally
- + builtin/reflog: stop storing default reflog expiry dates globally
- + reflog: rename `cmd_reflog_expire_cb` to `reflog_expire_options`
-
- "git maintenance" learns a new task to expire reflog entries.
- source: <20250408-pks-maintenance-reflog-expire-v2-0-1ad8634798b7@pks.im>
-
-
-* ps/misc-build-fixes (2025-04-01) 5 commits
-  (merged to 'next' on 2025-04-08 at 85693b6d96)
- + ci: use Visual Studio for win+meson job on GitHub Workflows
- + meson: distinguish build and target host binaries
- + meson: respect 'tests' build option in contrib
- + gitweb: fix generation of "gitweb.js"
- + meson: fix handling of '-Dcurl=auto'
-
- Random build fixes.
- cf. <CAOLa=ZQ8bTn-prAs2ycLdLLjVaLQL4GtLw_gFsvAcx_6j=MBjA@mail.gmail.com>
- source: <20250331-b4-pks-collect-build-fixes-v2-0-6b06136808f3@pks.im>
-
-
-* ps/refname-avail-check-optim (2025-04-09) 1 commit
-  (merged to 'next' on 2025-04-09 at 0d35104147)
- + refs/packed: fix BUG when seeking refs with UTF-8 characters
-
- Incorrect sorting of refs with bytes with high-bit set on platforms
- with signed char led to a BUG, which has been corrected.
- cf. <20250404205740.GA780449@coredump.intra.peff.net>
- source: <20250404-b4-pks-packed-backend-seek-with-utf8-v1-1-6ceb694e3bd7@pks.im>
-
-
-* ps/test-wo-perl-prereq (2025-04-07) 20 commits
-  (merged to 'next' on 2025-04-08 at 424e2eab23)
- + t5703: refactor test to not depend on Perl
- + t5316: refactor `max_chain()` to not depend on Perl
- + t0210: refactor trace2 scrubbing to not use Perl
- + t0021: refactor `generate_random_characters()` to not depend on Perl
- + t/lib-httpd: refactor "one-time-perl" CGI script to not depend on Perl
- + t/lib-t6000: refactor `name_from_description()` to not depend on Perl
- + t/lib-gpg: refactor `sanitize_pgp()` to not depend on Perl
- + t: refactor tests depending on Perl for textconv scripts
- + t: refactor tests depending on Perl to print data
- + t: refactor tests depending on Perl substitution operator
- + t: refactor tests depending on Perl transliteration operator
- + Makefile: stop requiring Perl when running tests
- + meson: stop requiring Perl when tests are enabled
- + t: adapt existing PERL prerequisites
- + t: introduce PERL_TEST_HELPERS prerequisite
- + t: adapt `test_readlink()` to not use Perl
- + t: adapt `test_copy_bytes()` to not use Perl
- + t: adapt character translation helpers to not use Perl
- + t: refactor environment sanitization to not use Perl
- + t: skip chain lint when PERL_PATH is unset
- (this branch is used by ps/fewer-perl.)
-
- "make test" used to have a hard dependency on (basic) Perl; tests
- have been rewritten help environment with NO_PERL test the build as
- much as possible.
- source: <20250403-b4-pks-t-perlless-v4-0-be20ac3db39a@pks.im>
-
-
-* sk/clar-trailer-urlmatch-norm-test (2025-03-04) 2 commits
-  (merged to 'next' on 2025-04-08 at 51cb3c8bce)
- + t/unit-tests: convert urlmatch-normalization test to clar
- + t/unit-tests: convert trailer test to use clar
-
- A few traditional unit tests have been rewritten to use the clar
- framework.
- cf. <xmqqzfi0pthr.fsf@gitster.g>
- cf. <Z_TAtJ9LEeHo2AQN@pks.im>
- source: <20250304113323.10564-1-kuforiji98@gmail.com>
-
-
-* ua/update-update-server-info (2025-04-08) 1 commit
-  (merged to 'next' on 2025-04-09 at f0d47e97b5)
- + builtin/update-server-info: remove unnecessary if statement
-
- Code simplification.
- source: <20250407195850.299348-2-usmanakinyemi202@gmail.com>
-
-
-* zy/send-email-error-handling (2025-04-07) 2 commits
-  (merged to 'next' on 2025-04-08 at d5a716a940)
- + send-email: finer-grained SMTP error handling
- + send-email: capture errors in an eval {} block
-
- Auth-related (and unrelated) error handling in send-email has been
- made more robust.
- source: <20250326075246.2612627-1-05ZYT30@gmail.com>
+ Comments?
+ source: <aAetW0dan8S3Fljq@ArchLinux>
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * ds/doc-disable-hooks (2025-04-16) 1 commit
   (merged to 'next' on 2025-04-18 at 4b543e57a5)
@@ -366,10 +219,8 @@ Release tarballs are available at:
  Will merge to 'next'.
  source: <20250418185855.52950-1-abhijeet.nkt@gmaiil.com>
 
---------------------------------------------------
-[Cooking]
 
-* ps/meson-build-perf-bench (2025-04-14) 5 commits
+* ps/meson-build-perf-bench (2025-04-22) 5 commits
  - meson: wire up benchmarking options
  - meson: wire up benchmarks
  - t/perf: fix benchmarks with out-of-tree builds
@@ -380,7 +231,7 @@ Release tarballs are available at:
  benchmarking tests.
 
  Comments?
- source: <20250414-pks-meson-benchmarks-v2-0-04377080a167@pks.im>
+ source: <20250422-pks-meson-benchmarks-v3-0-7aad68bac6fd@pks.im>
 
 
 * aw/t9811-modernize (2025-04-18) 2 commits
@@ -437,19 +288,19 @@ Release tarballs are available at:
  source: <20250408-488-generating-bundles-with-many-references-has-non-linear-performance-v2-0-0802fc36a23d@gmail.com>
 
 
-* kn/meson-hdr-check (2025-04-14) 5 commits
+* kn/meson-hdr-check (2025-04-20) 6 commits
  . makefile/meson: add 'check-headers' as alias for 'hdr-check'
  . meson: add support for 'hdr-check'
+ . meson: rename 'third_party_sources' to 'third_party_excludes'
  . meson: move headers definition from 'contrib/coccinelle'
  . coccinelle: meson: rename variables to be more specific
  . Merge branch 'es/meson-build-skip-coccinelle' into kn/meson-hdr-check
 
  Add an equivalent to "make hdr-check" target to meson based builds.
 
- Seems to break linux.meson CI job at GitHub Actions.
- cf. <xmqqy0w2o0l0.fsf@gitster.g>
- cf. <xmqqcyd99ipm.fsf@gitster.g>
- source: <20250414-505-wire-up-sparse-via-meson-v3-0-edc6e7f26745@gmail.com>
+ Seems to break linux.meson CI job.
+ cf. https://github.com/git/git/actions/runs/14563669225/job/40850047961
+ source: <20250420-505-wire-up-sparse-via-meson-v4-0-66e14134e822@gmail.com>
 
 
 * ps/object-file-cleanup (2025-04-15) 11 commits
