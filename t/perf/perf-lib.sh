@@ -25,7 +25,19 @@ TEST_OUTPUT_DIRECTORY=$(pwd)
 TEST_NO_CREATE_REPO=t
 TEST_NO_MALLOC_CHECK=t
 
+# GIT-BUILD-OPTIONS, sourced by test-lib.sh, overwrites the `GIT_PERF_*`
+# values that are set by the user (if any). Let's stash them away as
+# `eval`-able assignments.
+git_perf_settings="$(env |
+	sed -n "/^GIT_PERF_/{
+		# escape all single-quotes in the value
+		s/'/'\\\\''/g
+		# turn this into an eval-able assignment
+		s/^\\([^=]*=\\)\\(.*\\)/\\1'\\2'/p
+	}")"
+
 . ../test-lib.sh
+eval "$git_perf_settings"
 
 unset GIT_CONFIG_NOSYSTEM
 GIT_CONFIG_SYSTEM="$TEST_DIRECTORY/perf/config"
