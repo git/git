@@ -110,6 +110,8 @@ Performance, Internal Implementation, Development Support etc.
  * Remove remnants of the recursive merge strategy backend, which was
    superseded by the ort merge strategy.
 
+ * Optimize the code to dedup references recorded in a bundle file.
+
 
 Fixes since v2.49
 -----------------
@@ -194,6 +196,19 @@ Fixes since v2.49
 
  * Incorrect sorting of refs with bytes with high-bit set on platforms
    with signed char led to a BUG, which has been corrected.
+
+ * "make perf" fixes.
+   (merge 1665f12fa0 pb/perf-test-fixes later to maint).
+
+ * Doc mark-up updates.
+   (merge 5a5565ec44 ja/doc-reset-mv-rm-markup-updates later to maint).
+
+ * Work around false positive from CodeQL checker.
+   (merge 0f558141ed js/range-check-codeql-workaround later to maint).
+
+ * "git log --{left,right}-only A...B", when A and B does not share
+   any common ancestor, now behaves as expected.
+   (merge e7ef4be7c2 mh/left-right-limited later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
