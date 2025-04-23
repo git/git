@@ -633,7 +633,7 @@ builtin_sources = [
   'builtin/write-tree.c',
 ]
 
-third_party_sources = [
+third_party_excludes = [
   ':!contrib',
   ':!compat/inet_ntop.c',
   ':!compat/inet_pton.c',
@@ -644,13 +644,12 @@ third_party_sources = [
   ':!sha1collisiondetection',
   ':!sha1dc',
   ':!t/unit-tests/clar',
-  ':!t/unit-tests/clar',
   ':!t/t[0-9][0-9][0-9][0-9]*',
 ]
 
 headers_to_check = []
 if git.found() and fs.exists(meson.project_source_root() / '.git')
-  foreach header : run_command(git, '-C', meson.project_source_root(), 'ls-files', '--deduplicate', '*.h', third_party_sources, check: true).stdout().split()
+  foreach header : run_command(git, '-C', meson.project_source_root(), 'ls-files', '--deduplicate', '*.h', third_party_excludes, check: true).stdout().split()
     headers_to_check += header
   endforeach
 endif

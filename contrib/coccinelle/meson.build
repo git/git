@@ -41,7 +41,7 @@ concatenated_rules = custom_target(
 )
 
 coccinelle_sources = []
-foreach source : run_command(git, '-C', meson.project_source_root(), 'ls-files', '--deduplicate', '*.c', third_party_sources, check: true).stdout().split()
+foreach source : run_command(git, '-C', meson.project_source_root(), 'ls-files', '--deduplicate', '*.c', third_party_excludes, check: true).stdout().split()
   coccinelle_sources += source
 endforeach
 
