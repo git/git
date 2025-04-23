@@ -1,10 +1,10 @@
 /*
-Copyright 2020 Google LLC
-
-Use of this source code is governed by a BSD-style
-license that can be found in the LICENSE file or at
-https://developers.google.com/open-source/licenses/bsd
-*/
+ * Copyright 2020 Google LLC
+ *
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file or at
+ * https://developers.google.com/open-source/licenses/bsd
+ */
 
 /* record.c - methods for different types of records. */
 
@@ -69,10 +69,10 @@ int put_var_int(struct string_view *dest, uint64_t value)
 int reftable_is_block_type(uint8_t typ)
 {
 	switch (typ) {
-	case BLOCK_TYPE_REF:
-	case BLOCK_TYPE_LOG:
-	case BLOCK_TYPE_OBJ:
-	case BLOCK_TYPE_INDEX:
+	case REFTABLE_BLOCK_TYPE_REF:
+	case REFTABLE_BLOCK_TYPE_LOG:
+	case REFTABLE_BLOCK_TYPE_OBJ:
+	case REFTABLE_BLOCK_TYPE_INDEX:
 		return 1;
 	}
 	return 0;
@@ -459,7 +459,7 @@ static int reftable_ref_record_cmp_void(const void *_a, const void *_b)
 
 static struct reftable_record_vtable reftable_ref_record_vtable = {
 	.key = &reftable_ref_record_key,
-	.type = BLOCK_TYPE_REF,
+	.type = REFTABLE_BLOCK_TYPE_REF,
 	.copy_from = &reftable_ref_record_copy_from,
 	.val_type = &reftable_ref_record_val_type,
 	.encode = &reftable_ref_record_encode,
@@ -659,7 +659,7 @@ static int reftable_obj_record_cmp_void(const void *_a, const void *_b)
 
 static struct reftable_record_vtable reftable_obj_record_vtable = {
 	.key = &reftable_obj_record_key,
-	.type = BLOCK_TYPE_OBJ,
+	.type = REFTABLE_BLOCK_TYPE_OBJ,
 	.copy_from = &reftable_obj_record_copy_from,
 	.val_type = &reftable_obj_record_val_type,
 	.encode = &reftable_obj_record_encode,
@@ -1030,7 +1030,7 @@ static int reftable_log_record_is_deletion_void(const void *p)
 
 static struct reftable_record_vtable reftable_log_record_vtable = {
 	.key = &reftable_log_record_key,
-	.type = BLOCK_TYPE_LOG,
+	.type = REFTABLE_BLOCK_TYPE_LOG,
 	.copy_from = &reftable_log_record_copy_from,
 	.val_type = &reftable_log_record_val_type,
 	.encode = &reftable_log_record_encode,
@@ -1132,7 +1132,7 @@ static int reftable_index_record_cmp(const void *_a, const void *_b)
 
 static struct reftable_record_vtable reftable_index_record_vtable = {
 	.key = &reftable_index_record_key,
-	.type = BLOCK_TYPE_INDEX,
+	.type = REFTABLE_BLOCK_TYPE_INDEX,
 	.copy_from = &reftable_index_record_copy_from,
 	.val_type = &reftable_index_record_val_type,
 	.encode = &reftable_index_record_encode,
@@ -1275,13 +1275,13 @@ int reftable_log_record_is_deletion(const struct reftable_log_record *log)
 static void *reftable_record_data(struct reftable_record *rec)
 {
 	switch (rec->type) {
-	case BLOCK_TYPE_REF:
+	case REFTABLE_BLOCK_TYPE_REF:
 		return &rec->u.ref;
-	case BLOCK_TYPE_LOG:
+	case REFTABLE_BLOCK_TYPE_LOG:
 		return &rec->u.log;
-	case BLOCK_TYPE_INDEX:
+	case REFTABLE_BLOCK_TYPE_INDEX:
 		return &rec->u.idx;
-	case BLOCK_TYPE_OBJ:
+	case REFTABLE_BLOCK_TYPE_OBJ:
 		return &rec->u.obj;
 	}
 	abort();
@@ -1291,13 +1291,13 @@ static struct reftable_record_vtable *
 reftable_record_vtable(struct reftable_record *rec)
 {
 	switch (rec->type) {
-	case BLOCK_TYPE_REF:
+	case REFTABLE_BLOCK_TYPE_REF:
 		return &reftable_ref_record_vtable;
-	case BLOCK_TYPE_LOG:
+	case REFTABLE_BLOCK_TYPE_LOG:
 		return &reftable_log_record_vtable;
-	case BLOCK_TYPE_INDEX:
+	case REFTABLE_BLOCK_TYPE_INDEX:
 		return &reftable_index_record_vtable;
-	case BLOCK_TYPE_OBJ:
+	case REFTABLE_BLOCK_TYPE_OBJ:
 		return &reftable_obj_record_vtable;
 	}
 	abort();
@@ -1309,11 +1309,11 @@ int reftable_record_init(struct reftable_record *rec, uint8_t typ)
 	rec->type = typ;
 
 	switch (typ) {
-	case BLOCK_TYPE_REF:
-	case BLOCK_TYPE_LOG:
-	case BLOCK_TYPE_OBJ:
+	case REFTABLE_BLOCK_TYPE_REF:
+	case REFTABLE_BLOCK_TYPE_LOG:
+	case REFTABLE_BLOCK_TYPE_OBJ:
 		return 0;
-	case BLOCK_TYPE_INDEX:
+	case REFTABLE_BLOCK_TYPE_INDEX:
 		reftable_buf_init(&rec->u.idx.last_key);
 		return 0;
 	default:

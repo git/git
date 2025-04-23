@@ -1,15 +1,16 @@
 /*
-Copyright 2020 Google LLC
-
-Use of this source code is governed by a BSD-style
-license that can be found in the LICENSE file or at
-https://developers.google.com/open-source/licenses/bsd
-*/
+ * Copyright 2020 Google LLC
+ *
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file or at
+ * https://developers.google.com/open-source/licenses/bsd
+ */
 
 #include "block.h"
 
 #include "blocksource.h"
 #include "constants.h"
+#include "iter.h"
 #include "record.h"
 #include "reftable-error.h"
 #include "system.h"
@@ -160,7 +161,7 @@ int block_writer_finish(struct block_writer *w)
 	 * Log records are stored zlib-compressed. Note that the compression
 	 * also spans over the restart points we have just written.
 	 */
-	if (block_writer_type(w) == BLOCK_TYPE_LOG) {
+	if (block_writer_type(w) == REFTABLE_BLOCK_TYPE_LOG) {
 		int block_header_skip = 4 + w->header_off;
 		uLongf src_len = w->next - block_header_skip, compressed_len;
 		int ret;
@@ -210,61 +211,86 @@ int block_writer_finish(struct block_writer *w)
 	return w->next;
 }
 
-int block_reader_init(struct block_reader *br, struct reftable_block *block,
-		      uint32_t header_off, uint32_t table_block_size,
-		      uint32_t hash_size)
+static int read_block(struct reftable_block_source *source,
+		      struct reftable_block_data *dest, uint64_t off,
+		      uint32_t sz)
 {
+	size_t size = block_source_size(source);
+	block_source_release_data(dest);
+	if (off >= size)
+		return 0;
+	if (off + sz > size)
+		sz = size - off;
+	return block_source_read_data(source, dest, off, sz);
+}
+
+int reftable_block_init(struct reftable_block *block,
+			struct reftable_block_source *source,
+			uint32_t offset, uint32_t header_size,
+			uint32_t table_block_size, uint32_t hash_size)
+{
+	uint32_t guess_block_size = table_block_size ?
+		table_block_size : DEFAULT_BLOCK_SIZE;
 	uint32_t full_block_size = table_block_size;
-	uint8_t typ = block->data[header_off];
-	uint32_t sz = reftable_get_be24(block->data + header_off + 1);
-	int err = 0;
-	uint16_t restart_count = 0;
-	uint32_t restart_start = 0;
-	uint8_t *restart_bytes = NULL;
+	uint16_t restart_count;
+	uint32_t restart_off;
+	uint32_t block_size;
+	uint8_t block_type;
+	int err;
 
-	reftable_block_done(&br->block);
+	err = read_block(source, &block->block_data, offset, guess_block_size);
+	if (err < 0)
+		goto done;
 
-	if (!reftable_is_block_type(typ)) {
-		err =  REFTABLE_FORMAT_ERROR;
+	block_type = block->block_data.data[header_size];
+	if (!reftable_is_block_type(block_type)) {
+		err = REFTABLE_FORMAT_ERROR;
 		goto done;
 	}
 
-	if (typ == BLOCK_TYPE_LOG) {
-		uint32_t block_header_skip = 4 + header_off;
-		uLong dst_len = sz - block_header_skip;
-		uLong src_len = block->len - block_header_skip;
+	block_size = reftable_get_be24(block->block_data.data + header_size + 1);
+	if (block_size > guess_block_size) {
+		err = read_block(source, &block->block_data, offset, block_size);
+		if (err < 0)
+			goto done;
+	}
+
+	if (block_type == REFTABLE_BLOCK_TYPE_LOG) {
+		uint32_t block_header_skip = 4 + header_size;
+		uLong dst_len = block_size - block_header_skip;
+		uLong src_len = block->block_data.len - block_header_skip;
 
 		/* Log blocks specify the *uncompressed* size in their header. */
-		REFTABLE_ALLOC_GROW_OR_NULL(br->uncompressed_data, sz,
-					    br->uncompressed_cap);
-		if (!br->uncompressed_data) {
+		REFTABLE_ALLOC_GROW_OR_NULL(block->uncompressed_data, block_size,
+					    block->uncompressed_cap);
+		if (!block->uncompressed_data) {
 			err = REFTABLE_OUT_OF_MEMORY_ERROR;
 			goto done;
 		}
 
 		/* Copy over the block header verbatim. It's not compressed. */
-		memcpy(br->uncompressed_data, block->data, block_header_skip);
+		memcpy(block->uncompressed_data, block->block_data.data, block_header_skip);
 
-		if (!br->zstream) {
-			REFTABLE_CALLOC_ARRAY(br->zstream, 1);
-			if (!br->zstream) {
+		if (!block->zstream) {
+			REFTABLE_CALLOC_ARRAY(block->zstream, 1);
+			if (!block->zstream) {
 				err = REFTABLE_OUT_OF_MEMORY_ERROR;
 				goto done;
 			}
 
-			err = inflateInit(br->zstream);
+			err = inflateInit(block->zstream);
 		} else {
-			err = inflateReset(br->zstream);
+			err = inflateReset(block->zstream);
 		}
 		if (err != Z_OK) {
 			err = REFTABLE_ZLIB_ERROR;
 			goto done;
 		}
 
-		br->zstream->next_in = block->data + block_header_skip;
-		br->zstream->avail_in = src_len;
-		br->zstream->next_out = br->uncompressed_data + block_header_skip;
-		br->zstream->avail_out = dst_len;
+		block->zstream->next_in = block->block_data.data + block_header_skip;
+		block->zstream->avail_in = src_len;
+		block->zstream->next_out = block->uncompressed_data + block_header_skip;
+		block->zstream->avail_out = dst_len;
 
 		/*
 		 * We know both input as well as output size, and we know that
@@ -273,72 +299,71 @@ int block_reader_init(struct block_reader *br, struct reftable_block *block,
 		 * here to instruct zlib to inflate the data in one go, which
 		 * is more efficient than using `Z_NO_FLUSH`.
 		 */
-		err = inflate(br->zstream, Z_FINISH);
+		err = inflate(block->zstream, Z_FINISH);
 		if (err != Z_STREAM_END) {
 			err = REFTABLE_ZLIB_ERROR;
 			goto done;
 		}
 		err = 0;
 
-		if (br->zstream->total_out + block_header_skip != sz) {
+		if (block->zstream->total_out + block_header_skip != block_size) {
 			err = REFTABLE_FORMAT_ERROR;
 			goto done;
 		}
 
 		/* We're done with the input data. */
-		reftable_block_done(block);
-		block->data = br->uncompressed_data;
-		block->len = sz;
-		full_block_size = src_len + block_header_skip - br->zstream->avail_in;
+		block_source_release_data(&block->block_data);
+		block->block_data.data = block->uncompressed_data;
+		block->block_data.len = block_size;
+		full_block_size = src_len + block_header_skip - block->zstream->avail_in;
 	} else if (full_block_size == 0) {
-		full_block_size = sz;
-	} else if (sz < full_block_size && sz < block->len &&
-		   block->data[sz] != 0) {
+		full_block_size = block_size;
+	} else if (block_size < full_block_size && block_size < block->block_data.len &&
+		   block->block_data.data[block_size] != 0) {
 		/* If the block is smaller than the full block size, it is
 		   padded (data followed by '\0') or the next block is
 		   unaligned. */
-		full_block_size = sz;
+		full_block_size = block_size;
 	}
 
-	restart_count = reftable_get_be16(block->data + sz - 2);
-	restart_start = sz - 2 - 3 * restart_count;
-	restart_bytes = block->data + restart_start;
+	restart_count = reftable_get_be16(block->block_data.data + block_size - 2);
+	restart_off = block_size - 2 - 3 * restart_count;
 
-	/* transfer ownership. */
-	br->block = *block;
-	block->data = NULL;
-	block->len = 0;
+	block->block_type = block_type;
+	block->hash_size = hash_size;
+	block->restart_off = restart_off;
+	block->full_block_size = full_block_size;
+	block->header_off = header_size;
+	block->restart_count = restart_count;
 
-	br->hash_size = hash_size;
-	br->block_len = restart_start;
-	br->full_block_size = full_block_size;
-	br->header_off = header_off;
-	br->restart_count = restart_count;
-	br->restart_bytes = restart_bytes;
+	err = 0;
 
 done:
+	if (err < 0)
+		reftable_block_release(block);
 	return err;
 }
 
-void block_reader_release(struct block_reader *br)
+void reftable_block_release(struct reftable_block *block)
 {
-	inflateEnd(br->zstream);
-	reftable_free(br->zstream);
-	reftable_free(br->uncompressed_data);
-	reftable_block_done(&br->block);
+	inflateEnd(block->zstream);
+	reftable_free(block->zstream);
+	reftable_free(block->uncompressed_data);
+	block_source_release_data(&block->block_data);
+	memset(block, 0, sizeof(*block));
 }
 
-uint8_t block_reader_type(const struct block_reader *r)
+uint8_t reftable_block_type(const struct reftable_block *b)
 {
-	return r->block.data[r->header_off];
+	return b->block_data.data[b->header_off];
 }
 
-int block_reader_first_key(const struct block_reader *br, struct reftable_buf *key)
+int reftable_block_first_key(const struct reftable_block *block, struct reftable_buf *key)
 {
-	int off = br->header_off + 4, n;
+	int off = block->header_off + 4, n;
 	struct string_view in = {
-		.buf = br->block.data + off,
-		.len = br->block_len - off,
+		.buf = block->block_data.data + off,
+		.len = block->restart_off - off,
 	};
 	uint8_t extra = 0;
 
@@ -353,33 +378,36 @@ int block_reader_first_key(const struct block_reader *br, struct reftable_buf *k
 	return 0;
 }
 
-static uint32_t block_reader_restart_offset(const struct block_reader *br, size_t idx)
+static uint32_t block_restart_offset(const struct reftable_block *b, size_t idx)
 {
-	return reftable_get_be24(br->restart_bytes + 3 * idx);
+	return reftable_get_be24(b->block_data.data + b->restart_off + 3 * idx);
 }
 
-void block_iter_seek_start(struct block_iter *it, const struct block_reader *br)
+void block_iter_init(struct block_iter *it, const struct reftable_block *block)
 {
-	it->block = br->block.data;
-	it->block_len = br->block_len;
-	it->hash_size = br->hash_size;
+	it->block = block;
+	block_iter_seek_start(it);
+}
+
+void block_iter_seek_start(struct block_iter *it)
+{
 	reftable_buf_reset(&it->last_key);
-	it->next_off = br->header_off + 4;
+	it->next_off = it->block->header_off + 4;
 }
 
 struct restart_needle_less_args {
 	int error;
 	struct reftable_buf needle;
-	const struct block_reader *reader;
+	const struct reftable_block *block;
 };
 
 static int restart_needle_less(size_t idx, void *_args)
 {
 	struct restart_needle_less_args *args = _args;
-	uint32_t off = block_reader_restart_offset(args->reader, idx);
+	uint32_t off = block_restart_offset(args->block, idx);
 	struct string_view in = {
-		.buf = args->reader->block.data + off,
-		.len = args->reader->block_len - off,
+		.buf = args->block->block_data.data + off,
+		.len = args->block->restart_off - off,
 	};
 	uint64_t prefix_len, suffix_len;
 	uint8_t extra;
@@ -412,14 +440,14 @@ static int restart_needle_less(size_t idx, void *_args)
 int block_iter_next(struct block_iter *it, struct reftable_record *rec)
 {
 	struct string_view in = {
-		.buf = (unsigned char *) it->block + it->next_off,
-		.len = it->block_len - it->next_off,
+		.buf = (unsigned char *) it->block->block_data.data + it->next_off,
+		.len = it->block->restart_off - it->next_off,
 	};
 	struct string_view start = in;
 	uint8_t extra = 0;
 	int n = 0;
 
-	if (it->next_off >= it->block_len)
+	if (it->next_off >= it->block->restart_off)
 		return 1;
 
 	n = reftable_decode_key(&it->last_key, &extra, in);
@@ -429,7 +457,7 @@ int block_iter_next(struct block_iter *it, struct reftable_record *rec)
 		return REFTABLE_FORMAT_ERROR;
 
 	string_view_consume(&in, n);
-	n = reftable_record_decode(rec, it->last_key, extra, in, it->hash_size,
+	n = reftable_record_decode(rec, it->last_key, extra, in, it->block->hash_size,
 				   &it->scratch);
 	if (n < 0)
 		return -1;
@@ -444,8 +472,6 @@ void block_iter_reset(struct block_iter *it)
 	reftable_buf_reset(&it->last_key);
 	it->next_off = 0;
 	it->block = NULL;
-	it->block_len = 0;
-	it->hash_size = 0;
 }
 
 void block_iter_close(struct block_iter *it)
@@ -454,12 +480,11 @@ void block_iter_close(struct block_iter *it)
 	reftable_buf_release(&it->scratch);
 }
 
-int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
-			struct reftable_buf *want)
+int block_iter_seek_key(struct block_iter *it, struct reftable_buf *want)
 {
 	struct restart_needle_less_args args = {
 		.needle = *want,
-		.reader = br,
+		.block = it->block,
 	};
 	struct reftable_record rec;
 	int err = 0;
@@ -477,7 +502,7 @@ int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
 	 * restart point. While that works alright, we would end up scanning
 	 * too many record.
 	 */
-	i = binsearch(br->restart_count, &restart_needle_less, &args);
+	i = binsearch(it->block->restart_count, &restart_needle_less, &args);
 	if (args.error) {
 		err = REFTABLE_FORMAT_ERROR;
 		goto done;
@@ -502,21 +527,18 @@ int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
 	 *     starting from the preceding restart point.
 	 */
 	if (i > 0)
-		it->next_off = block_reader_restart_offset(br, i - 1);
+		it->next_off = block_restart_offset(it->block, i - 1);
 	else
-		it->next_off = br->header_off + 4;
-	it->block = br->block.data;
-	it->block_len = br->block_len;
-	it->hash_size = br->hash_size;
+		it->next_off = it->block->header_off + 4;
 
-	err = reftable_record_init(&rec, block_reader_type(br));
+	err = reftable_record_init(&rec, reftable_block_type(it->block));
 	if (err < 0)
 		goto done;
 
 	/*
 	 * We're looking for the last entry less than the wanted key so that
 	 * the next call to `block_reader_next()` would yield the wanted
-	 * record. We thus don't want to position our reader at the sought
+	 * record. We thus don't want to position our iterator at the sought
 	 * after record, but one before. To do so, we have to go one entry too
 	 * far and then back up.
 	 */
@@ -561,6 +583,61 @@ done:
 	return err;
 }
 
+static int block_iter_seek_void(void *it, struct reftable_record *want)
+{
+	struct reftable_buf buf = REFTABLE_BUF_INIT;
+	struct block_iter *bi = it;
+	int err;
+
+	if (bi->block->block_type != want->type)
+		return REFTABLE_API_ERROR;
+
+	err = reftable_record_key(want, &buf);
+	if (err < 0)
+		goto out;
+
+	err = block_iter_seek_key(it, &buf);
+	if (err < 0)
+		goto out;
+
+	err = 0;
+
+out:
+	reftable_buf_release(&buf);
+	return err;
+}
+
+static int block_iter_next_void(void *it, struct reftable_record *rec)
+{
+	return block_iter_next(it, rec);
+}
+
+static void block_iter_close_void(void *it)
+{
+	block_iter_close(it);
+}
+
+static struct reftable_iterator_vtable block_iter_vtable = {
+	.seek = &block_iter_seek_void,
+	.next = &block_iter_next_void,
+	.close = &block_iter_close_void,
+};
+
+int reftable_block_init_iterator(const struct reftable_block *b,
+				 struct reftable_iterator *it)
+{
+	struct block_iter *bi;
+
+	REFTABLE_CALLOC_ARRAY(bi, 1);
+	block_iter_init(bi, b);
+
+	assert(!it->ops);
+	it->iter_arg = bi;
+	it->ops = &block_iter_vtable;
+
+	return 0;
+}
+
 void block_writer_release(struct block_writer *bw)
 {
 	deflateEnd(bw->zstream);
@@ -570,15 +647,4 @@ void block_writer_release(struct block_writer *bw)
 	reftable_buf_release(&bw->scratch);
 	reftable_buf_release(&bw->last_key);
 	/* the block is not owned. */
-}
-
-void reftable_block_done(struct reftable_block *blockp)
-{
-	struct reftable_block_source source = blockp->source;
-	if (blockp && source.ops)
-		source.ops->return_block(source.arg, blockp);
-	blockp->data = NULL;
-	blockp->len = 0;
-	blockp->source.ops = NULL;
-	blockp->source.arg = NULL;
 }

@@ -1,16 +1,17 @@
 /*
-Copyright 2020 Google LLC
-
-Use of this source code is governed by a BSD-style
-license that can be found in the LICENSE file or at
-https://developers.google.com/open-source/licenses/bsd
-*/
+ * Copyright 2020 Google LLC
+ *
+ * Use of this source code is governed by a BSD-style
+ * license that can be found in the LICENSE file or at
+ * https://developers.google.com/open-source/licenses/bsd
+ */
 
 #ifndef BLOCK_H
 #define BLOCK_H
 
 #include "basics.h"
 #include "record.h"
+#include "reftable-block.h"
 #include "reftable-blocksource.h"
 
 /*
@@ -18,7 +19,7 @@ https://developers.google.com/open-source/licenses/bsd
  * allocation overhead.
  */
 struct block_writer {
-	z_stream *zstream;
+	struct z_stream_s *zstream;
 	unsigned char *compressed;
 	size_t compressed_cap;
 
@@ -62,53 +63,11 @@ int block_writer_finish(struct block_writer *w);
 /* clears out internally allocated block_writer members. */
 void block_writer_release(struct block_writer *bw);
 
-struct z_stream;
-
-/* Read a block. */
-struct block_reader {
-	/* offset of the block header; nonzero for the first block in a
-	 * reftable. */
-	uint32_t header_off;
-
-	/* the memory block */
-	struct reftable_block block;
-	uint32_t hash_size;
-
-	/* Uncompressed data for log entries. */
-	z_stream *zstream;
-	unsigned char *uncompressed_data;
-	size_t uncompressed_cap;
-
-	/* size of the data, excluding restart data. */
-	uint32_t block_len;
-	uint8_t *restart_bytes;
-	uint16_t restart_count;
-
-	/* size of the data in the file. For log blocks, this is the compressed
-	 * size. */
-	uint32_t full_block_size;
-};
-
-/* initializes a block reader. */
-int block_reader_init(struct block_reader *br, struct reftable_block *bl,
-		      uint32_t header_off, uint32_t table_block_size,
-		      uint32_t hash_size);
-
-void block_reader_release(struct block_reader *br);
-
-/* Returns the block type (eg. 'r' for refs) */
-uint8_t block_reader_type(const struct block_reader *r);
-
-/* Decodes the first key in the block */
-int block_reader_first_key(const struct block_reader *br, struct reftable_buf *key);
-
-/* Iterate over entries in a block */
+/* Iterator for records contained in a single block. */
 struct block_iter {
 	/* offset within the block of the next entry to read. */
 	uint32_t next_off;
-	const unsigned char *block;
-	size_t block_len;
-	uint32_t hash_size;
+	const struct reftable_block *block;
 
 	/* key for last entry we read. */
 	struct reftable_buf last_key;
@@ -120,12 +79,23 @@ struct block_iter {
 	.scratch = REFTABLE_BUF_INIT, \
 }
 
-/* Position `it` at start of the block */
-void block_iter_seek_start(struct block_iter *it, const struct block_reader *br);
+/*
+ * Initialize the block iterator with the given block. The iterator will be
+ * positioned at the first record contained in the block. The block must remain
+ * valid until the end of the iterator's lifetime. It is valid to re-initialize
+ * iterators multiple times.
+ */
+void block_iter_init(struct block_iter *it, const struct reftable_block *block);
 
-/* Position `it` to the `want` key in the block */
-int block_iter_seek_key(struct block_iter *it, const struct block_reader *br,
-			struct reftable_buf *want);
+/* Position the initialized iterator at the first record of its block. */
+void block_iter_seek_start(struct block_iter *it);
+
+/*
+ * Position the initialized iterator at the desired record key. It is not an
+ * error in case the record cannot be found. If so, a subsequent call to
+ * `block_iter_next()` will indicate that the iterator is exhausted.
+ */
+int block_iter_seek_key(struct block_iter *it, struct reftable_buf *want);
 
 /* return < 0 for error, 0 for OK, > 0 for EOF. */
 int block_iter_next(struct block_iter *it, struct reftable_record *rec);
@@ -141,8 +111,5 @@ size_t header_size(int version);
 
 /* size of file footer, depending on format version */
 size_t footer_size(int version);
-
-/* returns a block to its source. */
-void reftable_block_done(struct reftable_block *ret);
 
 #endif
