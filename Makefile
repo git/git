@@ -3326,8 +3326,10 @@ HCC = $(HCO:hco=hcc)
 $(HCO): %.hco: %.hcc $(GENERATED_H) FORCE
 	$(QUIET_HDR)$(CC) $(ALL_CFLAGS) -o /dev/null -c -xc $<
 
-.PHONY: hdr-check $(HCO)
+# TODO: deprecate 'hdr-check' in lieu of 'check-headers' in Git 2.51+
+.PHONY: hdr-check check-headers $(HCO)
 hdr-check: $(HCO)
+check-headers: hdr-check
 
 .PHONY: style
 style:

@@ -2054,7 +2054,9 @@ if headers_to_check.length() != 0 and compiler.get_argument_syntax() == 'gcc'
     hco_targets += hco
   endforeach
 
-  alias_target('hdr-check', hco_targets)
+  # TODO: deprecate 'hdr-check' in lieu of 'check-headers' in Git 2.51+
+  hdr_check = alias_target('hdr-check', hco_targets)
+  alias_target('check-headers', hdr_check)
 endif
 
 foreach key, value : {
