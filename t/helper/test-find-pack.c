@@ -15,7 +15,7 @@
  * packfiles containing the object is not <n>.
  */
 
-static const char *find_pack_usage[] = {
+static const char *const find_pack_usage[] = {
 	"test-tool find-pack [--check-count <n>] <object>",
 	NULL
 };

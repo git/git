@@ -19,7 +19,7 @@
 #include "date.h"
 #include "wildmatch.h"
 
-static const char* show_branch_usage[] = {
+static const char*const show_branch_usage[] = {
     N_("git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
        "                [--current] [--color[=<when>] | --no-color] [--sparse]\n"
        "                [--more=<n> | --list | --independent | --merge-base]\n"

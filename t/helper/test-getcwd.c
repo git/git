@@ -2,7 +2,7 @@
 #include "git-compat-util.h"
 #include "parse-options.h"
 
-static const char *getcwd_usage[] = {
+static const char *const getcwd_usage[] = {
 	"test-tool getcwd",
 	NULL
 };
