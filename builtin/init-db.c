@@ -8,7 +8,6 @@
 #include "abspath.h"
 #include "environment.h"
 #include "gettext.h"
-#include "object-file.h"
 #include "parse-options.h"
 #include "path.h"
 #include "refs.h"
@@ -134,7 +133,7 @@ int cmd_init_db(int argc,
 				 */
 				saved = repo_settings_get_shared_repository(the_repository);
 				repo_settings_set_shared_repository(the_repository, 0);
-				switch (safe_create_leading_directories_const(argv[0])) {
+				switch (safe_create_leading_directories_const(the_repository, argv[0])) {
 				case SCLD_OK:
 				case SCLD_PERMS:
 					break;

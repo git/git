@@ -9,7 +9,7 @@
 #include "list.h"
 #include "transport.h"
 #include "packfile.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 
 struct alt_base {
 	char *base;

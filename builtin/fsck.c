@@ -17,7 +17,7 @@
 #include "packfile.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "path.h"
 #include "read-cache-ll.h"
 #include "replace-object.h"
@@ -332,7 +332,7 @@ static void check_unreachable_object(struct object *obj)
 				describe_object(&obj->oid));
 			FILE *f;
 
-			if (safe_create_leading_directories_const(filename)) {
+			if (safe_create_leading_directories_const(the_repository, filename)) {
 				error(_("could not create lost-found"));
 				free(filename);
 				return;
