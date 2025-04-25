@@ -1574,6 +1574,11 @@ Message-ID: $message_id
 	return ($recipients_ref, $to, $date, $gitversion, $cc, $ccline, $header);
 }
 
+sub is_outlook {
+	my ($host) = @_;
+	return ($host eq 'smtp.office365.com' || $host eq 'smtp-mail.outlook.com');
+}
+
 # Prepares the email, then asks the user what to do.
 #
 # If the user chooses to send the email, it's sent and 1 is returned.
@@ -1737,6 +1742,22 @@ EOF
 			$smtp->datasend("$line") or die $smtp->message;
 		}
 		$smtp->dataend() or die $smtp->message;
+
+		# Outlook discards the Message-ID header we set while sending the email
+		# and generates a new random Message-ID. So in order to avoid breaking
+		# threads, we simply retrieve the Message-ID from the server response
+		# and assign it to the $message_id variable, which will then be
+		# assigned to $in_reply_to by the caller when the next message is sent
+		# as a response to this message.
+		if (is_outlook($smtp_server)) {
+			if ($smtp->message =~ /<([^>]+)>/) {
+				$message_id = "<$1>";
+				printf __("Outlook reassigned Message-ID to: %s\n"), $message_id;
+			} else {
+				warn __("Warning: Could not retrieve Message-ID from server response.\n");
+			}
+		}
+
 		$smtp->code =~ /250|200/ or die sprintf(__("Failed to send %s\n"), $subject).$smtp->message;
 	}
 	if ($quiet) {
