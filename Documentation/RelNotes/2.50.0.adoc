@@ -112,6 +112,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * Optimize the code to dedup references recorded in a bundle file.
 
+ * Update parse-options API to catch mistakes to pass address of an
+   integral variable of a wrong type/size.
+
 
 Fixes since v2.49
 -----------------
@@ -209,6 +212,17 @@ Fixes since v2.49
  * "git log --{left,right}-only A...B", when A and B does not share
    any common ancestor, now behaves as expected.
    (merge e7ef4be7c2 mh/left-right-limited later to maint).
+
+ * Document the convention to disable hooks altogether by setting the
+   hooksPath configuration variable to /dev/nulll
+   (merge 1b2eee94f1 ds/doc-disable-hooks later to maint).
+
+ * Make sure outage of third-party sites that supply P4, Git-LFS, and
+   JGit we use for testing would not prevent our CI jobs from running
+   at all.
+
+ * Various build tweaks, including CSPRNG selection on some platforms.
+   (merge cdda67de03 rj/build-tweaks later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
