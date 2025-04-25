@@ -1088,11 +1088,14 @@ else
 endif
 libgit_dependencies += networking_dependencies
 
-foreach symbol : ['inet_ntop', 'inet_pton', 'hstrerror']
-  if not compiler.has_function(symbol, dependencies: networking_dependencies)
-    libgit_c_args += '-DNO_' + symbol.to_upper()
-  endif
-endforeach
+if host_machine.system() != 'windows'
+  foreach symbol : ['inet_ntop', 'inet_pton', 'hstrerror']
+    if not compiler.has_function(symbol, dependencies: networking_dependencies)
+      libgit_c_args += '-DNO_' + symbol.to_upper()
+      libgit_sources += 'compat/' + symbol + '.c'
+    endif
+  endforeach
+endif
 
 has_ipv6 = compiler.has_function('getaddrinfo', dependencies: networking_dependencies)
 if not has_ipv6
