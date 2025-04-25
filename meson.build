@@ -1133,11 +1133,6 @@ else
   build_options_config.set('NO_UNIX_SOCKETS', '1')
 endif
 
-if not compiler.has_function('pread')
-  libgit_c_args += '-DNO_PREAD'
-  libgit_sources += 'compat/pread.c'
-endif
-
 if host_machine.system() == 'darwin'
   libgit_sources += 'compat/precompose_utf8.c'
   libgit_c_args += '-DPRECOMPOSE_UNICODE'
@@ -1290,23 +1285,39 @@ if not compiler.has_member('struct passwd', 'pw_gecos', prefix: '#include <pwd.h
   libgit_c_args += '-DNO_GECOS_IN_PWENT'
 endif
 
+checkfuncs = {
+  'strcasestr' : ['strcasestr.c'],
+  'memmem' : ['memmem.c'],
+  'strlcpy' : ['strlcpy.c'],
+  'strtoull' : [],
+  'setenv' : ['setenv.c'],
+  'mkdtemp' : ['mkdtemp.c'],
+  'initgroups' : [],
+  'strtoumax' : ['strtoumax.c', 'strtoimax.c'],
+  'pread' : ['pread.c'],
+}
+
+if host_machine.system() == 'windows'
+  libgit_c_args += '-DUSE_WIN32_MMAP'
+else
+  checkfuncs += {
+    'mmap' : ['mmap.c'],
+    # provided by compat/mingw.c.
+    'unsetenv' : ['unsetenv.c'],
+  }
+endif
+
+foreach func, impls : checkfuncs
+  if not compiler.has_function(func)
+    libgit_c_args += '-DNO_' + func.to_upper()
+    foreach impl : impls
+      libgit_sources += 'compat/' + impl
+    endforeach
+  endif
+endforeach
+
 if compiler.has_function('sync_file_range')
   libgit_c_args += '-DHAVE_SYNC_FILE_RANGE'
-endif
-
-if not compiler.has_function('strcasestr')
-  libgit_c_args += '-DNO_STRCASESTR'
-  libgit_sources += 'compat/strcasestr.c'
-endif
-
-if not compiler.has_function('memmem')
-  libgit_c_args += '-DNO_MEMMEM'
-  libgit_sources += 'compat/memmem.c'
-endif
-
-if not compiler.has_function('strlcpy')
-  libgit_c_args += '-DNO_STRLCPY'
-  libgit_sources += 'compat/strlcpy.c'
 endif
 
 if not compiler.has_function('strdup')
@@ -1314,53 +1325,15 @@ if not compiler.has_function('strdup')
   libgit_sources += 'compat/strdup.c'
 endif
 
-if not compiler.has_function('strtoumax')
-  libgit_c_args += '-DNO_STRTOUMAX'
-  libgit_sources += [
-    'compat/strtoumax.c',
-    'compat/strtoimax.c',
-  ]
-endif
-
-if not compiler.has_function('strtoull')
-  libgit_c_args += '-DNO_STRTOULL'
-endif
-
-if not compiler.has_function('setenv')
-  libgit_c_args += '-DNO_SETENV'
-  libgit_sources += 'compat/setenv.c'
-endif
-
 if not compiler.has_function('qsort')
   libgit_c_args += '-DINTERNAL_QSORT'
 endif
 libgit_sources += 'compat/qsort_s.c'
 
-# unsetenv is provided by compat/mingw.c.
-if host_machine.system() != 'windows' and not compiler.has_function('unsetenv')
-  libgit_c_args += '-DNO_UNSETENV'
-  libgit_sources += 'compat/unsetenv.c'
-endif
-
-if not compiler.has_function('mkdtemp')
-  libgit_c_args += '-DNO_MKDTEMP'
-  libgit_sources += 'compat/mkdtemp.c'
-endif
-
-if not compiler.has_function('initgroups')
-  libgit_c_args += '-DNO_INITGROUPS'
-endif
-
 if compiler.has_function('getdelim')
   libgit_c_args += '-DHAVE_GETDELIM'
 endif
 
-if host_machine.system() == 'windows'
-  libgit_c_args += '-DUSE_WIN32_MMAP'
-elif not compiler.has_function('mmap')
-  libgit_c_args += '-DNO_MMAP'
-  libgit_sources += 'compat/mmap.c'
-endif
 
 if compiler.has_function('clock_gettime')
   libgit_c_args += '-DHAVE_CLOCK_GETTIME'
