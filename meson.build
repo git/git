@@ -236,7 +236,11 @@ sed = find_program('sed', dirs: program_path, native: true)
 shell = find_program('sh', dirs: program_path, native: true)
 tar = find_program('tar', dirs: program_path, native: true)
 
-target_shell = find_program('sh', dirs: program_path, native: false)
+# Detect the target shell that is used by Git at runtime. Note that we prefer
+# "/bin/sh" over a PATH-based lookup, which provides a working shell on most
+# supported systems. This path is also the default shell path used by our
+# Makefile. This lookup can be overridden via `program_path`.
+target_shell = find_program('sh', dirs: program_path + [ '/bin' ], native: false)
 
 # Sanity-check that programs required for the build exist.
 foreach tool : ['cat', 'cut', 'grep', 'sort', 'tr', 'uname']
