@@ -1088,7 +1088,7 @@ else
 endif
 libgit_dependencies += networking_dependencies
 
-foreach symbol : ['inet_ntop', 'inet_pton', 'strerror']
+foreach symbol : ['inet_ntop', 'inet_pton', 'hstrerror']
   if not compiler.has_function(symbol, dependencies: networking_dependencies)
     libgit_c_args += '-DNO_' + symbol.to_upper()
   endif
