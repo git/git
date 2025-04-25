@@ -48,18 +48,18 @@ ifeq ($(uname_S),OSF1)
 endif
 ifeq ($(uname_S),Linux)
 	HAVE_ALLOCA_H = YesPlease
+	# override in config.mak if you have glibc >= 2.38
 	NO_STRLCPY = YesPlease
+	CSPRNG_METHOD = getrandom
 	HAVE_PATHS_H = YesPlease
 	LIBC_CONTAINS_LIBINTL = YesPlease
 	HAVE_DEV_TTY = YesPlease
 	HAVE_CLOCK_GETTIME = YesPlease
 	HAVE_CLOCK_MONOTONIC = YesPlease
-	# -lrt is needed for clock_gettime on glibc <= 2.16
-	NEEDS_LIBRT = YesPlease
 	HAVE_SYNC_FILE_RANGE = YesPlease
 	HAVE_GETDELIM = YesPlease
 	FREAD_READS_DIRECTORIES = UnfortunatelyYes
-	BASIC_CFLAGS += -DHAVE_SYSINFO
+	HAVE_SYSINFO = YesPlease
 	PROCFS_EXECUTABLE_PATH = /proc/self/exe
 	HAVE_PLATFORM_PROCINFO = YesPlease
 	COMPAT_OBJS += compat/linux/procinfo.o
@@ -246,9 +246,16 @@ ifeq ($(uname_O),Cygwin)
 		# Try commenting this out if you suspect MMAP is more efficient
 		NO_MMAP = YesPlease
         else
-		NO_REGEX = UnfortunatelyYes
+                ifeq ($(shell expr "$(uname_R)" : '1\.7\.'),4)
+		        NO_REGEX = UnfortunatelyYes
+                endif
         endif
 	HAVE_DEV_TTY = YesPlease
+	HAVE_GETDELIM = YesPlease
+	HAVE_CLOCK_GETTIME = YesPlease
+	HAVE_CLOCK_MONOTONIC = YesPlease
+	HAVE_SYSINFO = YesPlease
+	CSPRNG_METHOD = arc4random
 	HAVE_ALLOCA_H = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	NO_FAST_WORKING_DIRECTORY = UnfortunatelyYes
