@@ -32,7 +32,7 @@ test_expect_success 'default write options' '
 		  - length: 129
 		    restarts: 2
 		log:
-		  - length: 262
+		  - length: 260
 		    restarts: 2
 		EOF
 		test-tool dump-reftable -b .git/reftable/*.ref >actual &&
@@ -83,16 +83,16 @@ test_expect_success 'many refs results in multiple blocks' '
 		  - length: 1136
 		    restarts: 3
 		log:
-		  - length: 4041
+		  - length: 3999
 		    restarts: 4
-		  - length: 4015
+		  - length: 4066
 		    restarts: 3
-		  - length: 4014
+		  - length: 4064
 		    restarts: 3
-		  - length: 4012
+		  - length: 4063
 		    restarts: 3
-		  - length: 3289
-		    restarts: 3
+		  - length: 2957
+		    restarts: 2
 		EOF
 		test-tool dump-reftable -b .git/reftable/*.ref >actual &&
 		test_cmp expect actual
@@ -192,7 +192,7 @@ test_expect_success 'restart interval at every single record' '
 		  - length: 566
 		    restarts: 13
 		log:
-		  - length: 1393
+		  - length: 1381
 		    restarts: 12
 		EOF
 		test-tool dump-reftable -b .git/reftable/*.ref >actual &&
