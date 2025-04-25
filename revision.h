@@ -292,7 +292,6 @@ struct rev_info {
 	struct string_list *ref_message_ids;
 	int		add_signoff;
 	const char	*extra_headers;
-	const char	*log_reencode;
 	const char	*subject_prefix;
 	int		patch_name_max;
 	int		no_inline;
