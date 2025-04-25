@@ -2080,3 +2080,9 @@ summary({
   'sha256': sha256_backend,
   'zlib': zlib_backend,
 }, section: 'Backends')
+
+summary({
+  'perl': target_perl,
+  'python': target_python,
+  'shell': target_shell,
+}, section: 'Runtime executable paths')
