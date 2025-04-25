@@ -5,6 +5,7 @@
 #include "abspath.h"
 #include "diff.h"
 #include "hex.h"
+#include "object-file.h"
 #include "object-name.h"
 #include "object-store.h"
 #include "config.h"

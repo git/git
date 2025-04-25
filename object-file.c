@@ -11,223 +11,35 @@
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
-#include "abspath.h"
-#include "config.h"
+#include "bulk-checkin.h"
 #include "convert.h"
+#include "dir.h"
 #include "environment.h"
+#include "fsck.h"
 #include "gettext.h"
 #include "hex.h"
-#include "string-list.h"
-#include "lockfile.h"
-#include "pack.h"
-#include "commit.h"
-#include "run-command.h"
-#include "refs.h"
-#include "bulk-checkin.h"
-#include "repository.h"
-#include "replace-object.h"
-#include "streaming.h"
-#include "dir.h"
-#include "list.h"
-#include "quote.h"
-#include "packfile.h"
+#include "loose.h"
+#include "object-file-convert.h"
 #include "object-file.h"
 #include "object-store.h"
 #include "oidtree.h"
+#include "pack.h"
+#include "packfile.h"
 #include "path.h"
-#include "promisor-remote.h"
 #include "setup.h"
-#include "submodule.h"
-#include "fsck.h"
-#include "loose.h"
-#include "object-file-convert.h"
+#include "streaming.h"
 
 /* The maximum size for an object header. */
 #define MAX_HEADER_LEN 32
 
-/*
- * This is meant to hold a *small* number of objects that you would
- * want repo_read_object_file() to be able to return, but yet you do not want
- * to write them into the object store (e.g. a browse-only
- * application).
- */
-static struct cached_object_entry {
-	struct object_id oid;
-	struct cached_object {
-		enum object_type type;
-		const void *buf;
-		unsigned long size;
-	} value;
-} *cached_objects;
-static int cached_object_nr, cached_object_alloc;
-
-static const struct cached_object *find_cached_object(const struct object_id *oid)
-{
-	static const struct cached_object empty_tree = {
-		.type = OBJ_TREE,
-		.buf = "",
-	};
-	int i;
-	const struct cached_object_entry *co = cached_objects;
-
-	for (i = 0; i < cached_object_nr; i++, co++) {
-		if (oideq(&co->oid, oid))
-			return &co->value;
-	}
-	if (oideq(oid, the_hash_algo->empty_tree))
-		return &empty_tree;
-	return NULL;
-}
-
-
 static int get_conv_flags(unsigned flags)
 {
-	if (flags & HASH_RENORMALIZE)
+	if (flags & INDEX_RENORMALIZE)
 		return CONV_EOL_RENORMALIZE;
-	else if (flags & HASH_WRITE_OBJECT)
+	else if (flags & INDEX_WRITE_OBJECT)
 		return global_conv_flags_eol | CONV_WRITE_OBJECT;
 	else
 		return 0;
-}
-
-
-int mkdir_in_gitdir(const char *path)
-{
-	if (mkdir(path, 0777)) {
-		int saved_errno = errno;
-		struct stat st;
-		struct strbuf sb = STRBUF_INIT;
-
-		if (errno != EEXIST)
-			return -1;
-		/*
-		 * Are we looking at a path in a symlinked worktree
-		 * whose original repository does not yet have it?
-		 * e.g. .git/rr-cache pointing at its original
-		 * repository in which the user hasn't performed any
-		 * conflict resolution yet?
-		 */
-		if (lstat(path, &st) || !S_ISLNK(st.st_mode) ||
-		    strbuf_readlink(&sb, path, st.st_size) ||
-		    !is_absolute_path(sb.buf) ||
-		    mkdir(sb.buf, 0777)) {
-			strbuf_release(&sb);
-			errno = saved_errno;
-			return -1;
-		}
-		strbuf_release(&sb);
-	}
-	return adjust_shared_perm(the_repository, path);
-}
-
-static enum scld_error safe_create_leading_directories_1(char *path, int share)
-{
-	char *next_component = path + offset_1st_component(path);
-	enum scld_error ret = SCLD_OK;
-
-	while (ret == SCLD_OK && next_component) {
-		struct stat st;
-		char *slash = next_component, slash_character;
-
-		while (*slash && !is_dir_sep(*slash))
-			slash++;
-
-		if (!*slash)
-			break;
-
-		next_component = slash + 1;
-		while (is_dir_sep(*next_component))
-			next_component++;
-		if (!*next_component)
-			break;
-
-		slash_character = *slash;
-		*slash = '\0';
-		if (!stat(path, &st)) {
-			/* path exists */
-			if (!S_ISDIR(st.st_mode)) {
-				errno = ENOTDIR;
-				ret = SCLD_EXISTS;
-			}
-		} else if (mkdir(path, 0777)) {
-			if (errno == EEXIST &&
-			    !stat(path, &st) && S_ISDIR(st.st_mode))
-				; /* somebody created it since we checked */
-			else if (errno == ENOENT)
-				/*
-				 * Either mkdir() failed because
-				 * somebody just pruned the containing
-				 * directory, or stat() failed because
-				 * the file that was in our way was
-				 * just removed.  Either way, inform
-				 * the caller that it might be worth
-				 * trying again:
-				 */
-				ret = SCLD_VANISHED;
-			else
-				ret = SCLD_FAILED;
-		} else if (share && adjust_shared_perm(the_repository, path)) {
-			ret = SCLD_PERMS;
-		}
-		*slash = slash_character;
-	}
-	return ret;
-}
-
-enum scld_error safe_create_leading_directories(char *path)
-{
-	return safe_create_leading_directories_1(path, 1);
-}
-
-enum scld_error safe_create_leading_directories_no_share(char *path)
-{
-	return safe_create_leading_directories_1(path, 0);
-}
-
-enum scld_error safe_create_leading_directories_const(const char *path)
-{
-	int save_errno;
-	/* path points to cache entries, so xstrdup before messing with it */
-	char *buf = xstrdup(path);
-	enum scld_error result = safe_create_leading_directories(buf);
-
-	save_errno = errno;
-	free(buf);
-	errno = save_errno;
-	return result;
-}
-
-int odb_mkstemp(struct strbuf *temp_filename, const char *pattern)
-{
-	int fd;
-	/*
-	 * we let the umask do its job, don't try to be more
-	 * restrictive except to remove write permission.
-	 */
-	int mode = 0444;
-	repo_git_path_replace(the_repository, temp_filename, "objects/%s", pattern);
-	fd = git_mkstemp_mode(temp_filename->buf, mode);
-	if (0 <= fd)
-		return fd;
-
-	/* slow path */
-	/* some mkstemp implementations erase temp_filename on failure */
-	repo_git_path_replace(the_repository, temp_filename, "objects/%s", pattern);
-	safe_create_leading_directories(temp_filename->buf);
-	return xmkstemp_mode(temp_filename->buf, mode);
-}
-
-int odb_pack_keep(const char *name)
-{
-	int fd;
-
-	fd = open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
-	if (0 <= fd)
-		return fd;
-
-	/* slow path */
-	safe_create_leading_directories_const(name);
-	return open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
 }
 
 static void fill_loose_path(struct strbuf *buf, const struct object_id *oid)
@@ -243,522 +55,15 @@ static void fill_loose_path(struct strbuf *buf, const struct object_id *oid)
 	}
 }
 
-static const char *odb_loose_path(struct object_directory *odb,
-				  struct strbuf *buf,
-				  const struct object_id *oid)
+const char *odb_loose_path(struct object_directory *odb,
+			   struct strbuf *buf,
+			   const struct object_id *oid)
 {
 	strbuf_reset(buf);
 	strbuf_addstr(buf, odb->path);
 	strbuf_addch(buf, '/');
 	fill_loose_path(buf, oid);
 	return buf->buf;
-}
-
-const char *loose_object_path(struct repository *r, struct strbuf *buf,
-			      const struct object_id *oid)
-{
-	return odb_loose_path(r->objects->odb, buf, oid);
-}
-
-/*
- * Return non-zero iff the path is usable as an alternate object database.
- */
-static int alt_odb_usable(struct raw_object_store *o,
-			  struct strbuf *path,
-			  const char *normalized_objdir, khiter_t *pos)
-{
-	int r;
-
-	/* Detect cases where alternate disappeared */
-	if (!is_directory(path->buf)) {
-		error(_("object directory %s does not exist; "
-			"check .git/objects/info/alternates"),
-		      path->buf);
-		return 0;
-	}
-
-	/*
-	 * Prevent the common mistake of listing the same
-	 * thing twice, or object directory itself.
-	 */
-	if (!o->odb_by_path) {
-		khiter_t p;
-
-		o->odb_by_path = kh_init_odb_path_map();
-		assert(!o->odb->next);
-		p = kh_put_odb_path_map(o->odb_by_path, o->odb->path, &r);
-		assert(r == 1); /* never used */
-		kh_value(o->odb_by_path, p) = o->odb;
-	}
-	if (fspatheq(path->buf, normalized_objdir))
-		return 0;
-	*pos = kh_put_odb_path_map(o->odb_by_path, path->buf, &r);
-	/* r: 0 = exists, 1 = never used, 2 = deleted */
-	return r == 0 ? 0 : 1;
-}
-
-/*
- * Prepare alternate object database registry.
- *
- * The variable alt_odb_list points at the list of struct
- * object_directory.  The elements on this list come from
- * non-empty elements from colon separated ALTERNATE_DB_ENVIRONMENT
- * environment variable, and $GIT_OBJECT_DIRECTORY/info/alternates,
- * whose contents is similar to that environment variable but can be
- * LF separated.  Its base points at a statically allocated buffer that
- * contains "/the/directory/corresponding/to/.git/objects/...", while
- * its name points just after the slash at the end of ".git/objects/"
- * in the example above, and has enough space to hold all hex characters
- * of the object ID, an extra slash for the first level indirection, and
- * the terminating NUL.
- */
-static void read_info_alternates(struct repository *r,
-				 const char *relative_base,
-				 int depth);
-static int link_alt_odb_entry(struct repository *r, const struct strbuf *entry,
-	const char *relative_base, int depth, const char *normalized_objdir)
-{
-	struct object_directory *ent;
-	struct strbuf pathbuf = STRBUF_INIT;
-	struct strbuf tmp = STRBUF_INIT;
-	khiter_t pos;
-	int ret = -1;
-
-	if (!is_absolute_path(entry->buf) && relative_base) {
-		strbuf_realpath(&pathbuf, relative_base, 1);
-		strbuf_addch(&pathbuf, '/');
-	}
-	strbuf_addbuf(&pathbuf, entry);
-
-	if (!strbuf_realpath(&tmp, pathbuf.buf, 0)) {
-		error(_("unable to normalize alternate object path: %s"),
-		      pathbuf.buf);
-		goto error;
-	}
-	strbuf_swap(&pathbuf, &tmp);
-
-	/*
-	 * The trailing slash after the directory name is given by
-	 * this function at the end. Remove duplicates.
-	 */
-	while (pathbuf.len && pathbuf.buf[pathbuf.len - 1] == '/')
-		strbuf_setlen(&pathbuf, pathbuf.len - 1);
-
-	if (!alt_odb_usable(r->objects, &pathbuf, normalized_objdir, &pos))
-		goto error;
-
-	CALLOC_ARRAY(ent, 1);
-	/* pathbuf.buf is already in r->objects->odb_by_path */
-	ent->path = strbuf_detach(&pathbuf, NULL);
-
-	/* add the alternate entry */
-	*r->objects->odb_tail = ent;
-	r->objects->odb_tail = &(ent->next);
-	ent->next = NULL;
-	assert(r->objects->odb_by_path);
-	kh_value(r->objects->odb_by_path, pos) = ent;
-
-	/* recursively add alternates */
-	read_info_alternates(r, ent->path, depth + 1);
-	ret = 0;
- error:
-	strbuf_release(&tmp);
-	strbuf_release(&pathbuf);
-	return ret;
-}
-
-static const char *parse_alt_odb_entry(const char *string,
-				       int sep,
-				       struct strbuf *out)
-{
-	const char *end;
-
-	strbuf_reset(out);
-
-	if (*string == '#') {
-		/* comment; consume up to next separator */
-		end = strchrnul(string, sep);
-	} else if (*string == '"' && !unquote_c_style(out, string, &end)) {
-		/*
-		 * quoted path; unquote_c_style has copied the
-		 * data for us and set "end". Broken quoting (e.g.,
-		 * an entry that doesn't end with a quote) falls
-		 * back to the unquoted case below.
-		 */
-	} else {
-		/* normal, unquoted path */
-		end = strchrnul(string, sep);
-		strbuf_add(out, string, end - string);
-	}
-
-	if (*end)
-		end++;
-	return end;
-}
-
-static void link_alt_odb_entries(struct repository *r, const char *alt,
-				 int sep, const char *relative_base, int depth)
-{
-	struct strbuf objdirbuf = STRBUF_INIT;
-	struct strbuf entry = STRBUF_INIT;
-
-	if (!alt || !*alt)
-		return;
-
-	if (depth > 5) {
-		error(_("%s: ignoring alternate object stores, nesting too deep"),
-				relative_base);
-		return;
-	}
-
-	strbuf_realpath(&objdirbuf, r->objects->odb->path, 1);
-
-	while (*alt) {
-		alt = parse_alt_odb_entry(alt, sep, &entry);
-		if (!entry.len)
-			continue;
-		link_alt_odb_entry(r, &entry,
-				   relative_base, depth, objdirbuf.buf);
-	}
-	strbuf_release(&entry);
-	strbuf_release(&objdirbuf);
-}
-
-static void read_info_alternates(struct repository *r,
-				 const char *relative_base,
-				 int depth)
-{
-	char *path;
-	struct strbuf buf = STRBUF_INIT;
-
-	path = xstrfmt("%s/info/alternates", relative_base);
-	if (strbuf_read_file(&buf, path, 1024) < 0) {
-		warn_on_fopen_errors(path);
-		free(path);
-		return;
-	}
-
-	link_alt_odb_entries(r, buf.buf, '\n', relative_base, depth);
-	strbuf_release(&buf);
-	free(path);
-}
-
-void add_to_alternates_file(const char *reference)
-{
-	struct lock_file lock = LOCK_INIT;
-	char *alts = repo_git_path(the_repository, "objects/info/alternates");
-	FILE *in, *out;
-	int found = 0;
-
-	hold_lock_file_for_update(&lock, alts, LOCK_DIE_ON_ERROR);
-	out = fdopen_lock_file(&lock, "w");
-	if (!out)
-		die_errno(_("unable to fdopen alternates lockfile"));
-
-	in = fopen(alts, "r");
-	if (in) {
-		struct strbuf line = STRBUF_INIT;
-
-		while (strbuf_getline(&line, in) != EOF) {
-			if (!strcmp(reference, line.buf)) {
-				found = 1;
-				break;
-			}
-			fprintf_or_die(out, "%s\n", line.buf);
-		}
-
-		strbuf_release(&line);
-		fclose(in);
-	}
-	else if (errno != ENOENT)
-		die_errno(_("unable to read alternates file"));
-
-	if (found) {
-		rollback_lock_file(&lock);
-	} else {
-		fprintf_or_die(out, "%s\n", reference);
-		if (commit_lock_file(&lock))
-			die_errno(_("unable to move new alternates file into place"));
-		if (the_repository->objects->loaded_alternates)
-			link_alt_odb_entries(the_repository, reference,
-					     '\n', NULL, 0);
-	}
-	free(alts);
-}
-
-void add_to_alternates_memory(const char *reference)
-{
-	/*
-	 * Make sure alternates are initialized, or else our entry may be
-	 * overwritten when they are.
-	 */
-	prepare_alt_odb(the_repository);
-
-	link_alt_odb_entries(the_repository, reference,
-			     '\n', NULL, 0);
-}
-
-struct object_directory *set_temporary_primary_odb(const char *dir, int will_destroy)
-{
-	struct object_directory *new_odb;
-
-	/*
-	 * Make sure alternates are initialized, or else our entry may be
-	 * overwritten when they are.
-	 */
-	prepare_alt_odb(the_repository);
-
-	/*
-	 * Make a new primary odb and link the old primary ODB in as an
-	 * alternate
-	 */
-	new_odb = xcalloc(1, sizeof(*new_odb));
-	new_odb->path = xstrdup(dir);
-
-	/*
-	 * Disable ref updates while a temporary odb is active, since
-	 * the objects in the database may roll back.
-	 */
-	new_odb->disable_ref_updates = 1;
-	new_odb->will_destroy = will_destroy;
-	new_odb->next = the_repository->objects->odb;
-	the_repository->objects->odb = new_odb;
-	return new_odb->next;
-}
-
-void restore_primary_odb(struct object_directory *restore_odb, const char *old_path)
-{
-	struct object_directory *cur_odb = the_repository->objects->odb;
-
-	if (strcmp(old_path, cur_odb->path))
-		BUG("expected %s as primary object store; found %s",
-		    old_path, cur_odb->path);
-
-	if (cur_odb->next != restore_odb)
-		BUG("we expect the old primary object store to be the first alternate");
-
-	the_repository->objects->odb = restore_odb;
-	free_object_directory(cur_odb);
-}
-
-/*
- * Compute the exact path an alternate is at and returns it. In case of
- * error NULL is returned and the human readable error is added to `err`
- * `path` may be relative and should point to $GIT_DIR.
- * `err` must not be null.
- */
-char *compute_alternate_path(const char *path, struct strbuf *err)
-{
-	char *ref_git = NULL;
-	const char *repo;
-	int seen_error = 0;
-
-	ref_git = real_pathdup(path, 0);
-	if (!ref_git) {
-		seen_error = 1;
-		strbuf_addf(err, _("path '%s' does not exist"), path);
-		goto out;
-	}
-
-	repo = read_gitfile(ref_git);
-	if (!repo)
-		repo = read_gitfile(mkpath("%s/.git", ref_git));
-	if (repo) {
-		free(ref_git);
-		ref_git = xstrdup(repo);
-	}
-
-	if (!repo && is_directory(mkpath("%s/.git/objects", ref_git))) {
-		char *ref_git_git = mkpathdup("%s/.git", ref_git);
-		free(ref_git);
-		ref_git = ref_git_git;
-	} else if (!is_directory(mkpath("%s/objects", ref_git))) {
-		struct strbuf sb = STRBUF_INIT;
-		seen_error = 1;
-		if (get_common_dir(&sb, ref_git)) {
-			strbuf_addf(err,
-				    _("reference repository '%s' as a linked "
-				      "checkout is not supported yet."),
-				    path);
-			goto out;
-		}
-
-		strbuf_addf(err, _("reference repository '%s' is not a "
-					"local repository."), path);
-		goto out;
-	}
-
-	if (!access(mkpath("%s/shallow", ref_git), F_OK)) {
-		strbuf_addf(err, _("reference repository '%s' is shallow"),
-			    path);
-		seen_error = 1;
-		goto out;
-	}
-
-	if (!access(mkpath("%s/info/grafts", ref_git), F_OK)) {
-		strbuf_addf(err,
-			    _("reference repository '%s' is grafted"),
-			    path);
-		seen_error = 1;
-		goto out;
-	}
-
-out:
-	if (seen_error) {
-		FREE_AND_NULL(ref_git);
-	}
-
-	return ref_git;
-}
-
-struct object_directory *find_odb(struct repository *r, const char *obj_dir)
-{
-	struct object_directory *odb;
-	char *obj_dir_real = real_pathdup(obj_dir, 1);
-	struct strbuf odb_path_real = STRBUF_INIT;
-
-	prepare_alt_odb(r);
-	for (odb = r->objects->odb; odb; odb = odb->next) {
-		strbuf_realpath(&odb_path_real, odb->path, 1);
-		if (!strcmp(obj_dir_real, odb_path_real.buf))
-			break;
-	}
-
-	free(obj_dir_real);
-	strbuf_release(&odb_path_real);
-
-	if (!odb)
-		die(_("could not find object directory matching %s"), obj_dir);
-	return odb;
-}
-
-static void fill_alternate_refs_command(struct child_process *cmd,
-					const char *repo_path)
-{
-	const char *value;
-
-	if (!git_config_get_value("core.alternateRefsCommand", &value)) {
-		cmd->use_shell = 1;
-
-		strvec_push(&cmd->args, value);
-		strvec_push(&cmd->args, repo_path);
-	} else {
-		cmd->git_cmd = 1;
-
-		strvec_pushf(&cmd->args, "--git-dir=%s", repo_path);
-		strvec_push(&cmd->args, "for-each-ref");
-		strvec_push(&cmd->args, "--format=%(objectname)");
-
-		if (!git_config_get_value("core.alternateRefsPrefixes", &value)) {
-			strvec_push(&cmd->args, "--");
-			strvec_split(&cmd->args, value);
-		}
-	}
-
-	strvec_pushv(&cmd->env, (const char **)local_repo_env);
-	cmd->out = -1;
-}
-
-static void read_alternate_refs(const char *path,
-				alternate_ref_fn *cb,
-				void *data)
-{
-	struct child_process cmd = CHILD_PROCESS_INIT;
-	struct strbuf line = STRBUF_INIT;
-	FILE *fh;
-
-	fill_alternate_refs_command(&cmd, path);
-
-	if (start_command(&cmd))
-		return;
-
-	fh = xfdopen(cmd.out, "r");
-	while (strbuf_getline_lf(&line, fh) != EOF) {
-		struct object_id oid;
-		const char *p;
-
-		if (parse_oid_hex(line.buf, &oid, &p) || *p) {
-			warning(_("invalid line while parsing alternate refs: %s"),
-				line.buf);
-			break;
-		}
-
-		cb(&oid, data);
-	}
-
-	fclose(fh);
-	finish_command(&cmd);
-	strbuf_release(&line);
-}
-
-struct alternate_refs_data {
-	alternate_ref_fn *fn;
-	void *data;
-};
-
-static int refs_from_alternate_cb(struct object_directory *e,
-				  void *data)
-{
-	struct strbuf path = STRBUF_INIT;
-	size_t base_len;
-	struct alternate_refs_data *cb = data;
-
-	if (!strbuf_realpath(&path, e->path, 0))
-		goto out;
-	if (!strbuf_strip_suffix(&path, "/objects"))
-		goto out;
-	base_len = path.len;
-
-	/* Is this a git repository with refs? */
-	strbuf_addstr(&path, "/refs");
-	if (!is_directory(path.buf))
-		goto out;
-	strbuf_setlen(&path, base_len);
-
-	read_alternate_refs(path.buf, cb->fn, cb->data);
-
-out:
-	strbuf_release(&path);
-	return 0;
-}
-
-void for_each_alternate_ref(alternate_ref_fn fn, void *data)
-{
-	struct alternate_refs_data cb;
-	cb.fn = fn;
-	cb.data = data;
-	foreach_alt_odb(refs_from_alternate_cb, &cb);
-}
-
-int foreach_alt_odb(alt_odb_fn fn, void *cb)
-{
-	struct object_directory *ent;
-	int r = 0;
-
-	prepare_alt_odb(the_repository);
-	for (ent = the_repository->objects->odb->next; ent; ent = ent->next) {
-		r = fn(ent, cb);
-		if (r)
-			break;
-	}
-	return r;
-}
-
-void prepare_alt_odb(struct repository *r)
-{
-	if (r->objects->loaded_alternates)
-		return;
-
-	link_alt_odb_entries(r, r->objects->alternate_db, PATH_SEP, NULL, 0);
-
-	read_info_alternates(r, r->objects->odb->path, 0);
-	r->objects->loaded_alternates = 1;
-}
-
-int has_alt_odb(struct repository *r)
-{
-	prepare_alt_odb(r);
-	return !!r->objects->odb->next;
 }
 
 /* Returns 1 if we have successfully freshened the file, 0 otherwise. */
@@ -823,54 +128,6 @@ int has_loose_object_nonlocal(const struct object_id *oid)
 int has_loose_object(const struct object_id *oid)
 {
 	return check_and_freshen(oid, 0);
-}
-
-static void mmap_limit_check(size_t length)
-{
-	static size_t limit = 0;
-	if (!limit) {
-		limit = git_env_ulong("GIT_MMAP_LIMIT", 0);
-		if (!limit)
-			limit = SIZE_MAX;
-	}
-	if (length > limit)
-		die(_("attempting to mmap %"PRIuMAX" over limit %"PRIuMAX),
-		    (uintmax_t)length, (uintmax_t)limit);
-}
-
-void *xmmap_gently(void *start, size_t length,
-		  int prot, int flags, int fd, off_t offset)
-{
-	void *ret;
-
-	mmap_limit_check(length);
-	ret = mmap(start, length, prot, flags, fd, offset);
-	if (ret == MAP_FAILED && !length)
-		ret = NULL;
-	return ret;
-}
-
-const char *mmap_os_err(void)
-{
-	static const char blank[] = "";
-#if defined(__linux__)
-	if (errno == ENOMEM) {
-		/* this continues an existing error message: */
-		static const char enomem[] =
-", check sys.vm.max_map_count and/or RLIMIT_DATA";
-		return enomem;
-	}
-#endif /* OS-specific bits */
-	return blank;
-}
-
-void *xmmap(void *start, size_t length,
-	int prot, int flags, int fd, off_t offset)
-{
-	void *ret = xmmap_gently(start, length, prot, flags, fd, offset);
-	if (ret == MAP_FAILED)
-		die_errno(_("mmap failed%s"), mmap_os_err());
-	return ret;
 }
 
 static int format_object_header_literally(char *str, size_t size,
@@ -938,33 +195,6 @@ int stream_object_signature(struct repository *r, const struct object_id *oid)
 	git_hash_final_oid(&real_oid, &c);
 	close_istream(st);
 	return !oideq(oid, &real_oid) ? -1 : 0;
-}
-
-int git_open_cloexec(const char *name, int flags)
-{
-	int fd;
-	static int o_cloexec = O_CLOEXEC;
-
-	fd = open(name, flags | o_cloexec);
-	if ((o_cloexec & O_CLOEXEC) && fd < 0 && errno == EINVAL) {
-		/* Try again w/o O_CLOEXEC: the kernel might not support it */
-		o_cloexec &= ~O_CLOEXEC;
-		fd = open(name, flags | o_cloexec);
-	}
-
-#if defined(F_GETFD) && defined(F_SETFD) && defined(FD_CLOEXEC)
-	{
-		static int fd_cloexec = FD_CLOEXEC;
-
-		if (!o_cloexec && 0 <= fd && fd_cloexec) {
-			/* Opened w/o O_CLOEXEC?  try with fcntl(2) to add it */
-			int flags = fcntl(fd, F_GETFD);
-			if (fcntl(fd, F_SETFD, flags | fd_cloexec))
-				fd_cloexec = 0;
-		}
-	}
-#endif
-	return fd;
 }
 
 /*
@@ -1235,9 +465,9 @@ int parse_loose_header(const char *hdr, struct object_info *oi)
 	return 0;
 }
 
-static int loose_object_info(struct repository *r,
-			     const struct object_id *oid,
-			     struct object_info *oi, int flags)
+int loose_object_info(struct repository *r,
+		      const struct object_id *oid,
+		      struct object_info *oi, int flags)
 {
 	int status = 0;
 	int fd;
@@ -1333,345 +563,6 @@ cleanup:
 		oi->typep = NULL;
 	oi->whence = OI_LOOSE;
 	return status;
-}
-
-int obj_read_use_lock = 0;
-pthread_mutex_t obj_read_mutex;
-
-void enable_obj_read_lock(void)
-{
-	if (obj_read_use_lock)
-		return;
-
-	obj_read_use_lock = 1;
-	init_recursive_mutex(&obj_read_mutex);
-}
-
-void disable_obj_read_lock(void)
-{
-	if (!obj_read_use_lock)
-		return;
-
-	obj_read_use_lock = 0;
-	pthread_mutex_destroy(&obj_read_mutex);
-}
-
-int fetch_if_missing = 1;
-
-static int do_oid_object_info_extended(struct repository *r,
-				       const struct object_id *oid,
-				       struct object_info *oi, unsigned flags)
-{
-	static struct object_info blank_oi = OBJECT_INFO_INIT;
-	const struct cached_object *co;
-	struct pack_entry e;
-	int rtype;
-	const struct object_id *real = oid;
-	int already_retried = 0;
-
-
-	if (flags & OBJECT_INFO_LOOKUP_REPLACE)
-		real = lookup_replace_object(r, oid);
-
-	if (is_null_oid(real))
-		return -1;
-
-	if (!oi)
-		oi = &blank_oi;
-
-	co = find_cached_object(real);
-	if (co) {
-		if (oi->typep)
-			*(oi->typep) = co->type;
-		if (oi->sizep)
-			*(oi->sizep) = co->size;
-		if (oi->disk_sizep)
-			*(oi->disk_sizep) = 0;
-		if (oi->delta_base_oid)
-			oidclr(oi->delta_base_oid, the_repository->hash_algo);
-		if (oi->type_name)
-			strbuf_addstr(oi->type_name, type_name(co->type));
-		if (oi->contentp)
-			*oi->contentp = xmemdupz(co->buf, co->size);
-		oi->whence = OI_CACHED;
-		return 0;
-	}
-
-	while (1) {
-		if (find_pack_entry(r, real, &e))
-			break;
-
-		/* Most likely it's a loose object. */
-		if (!loose_object_info(r, real, oi, flags))
-			return 0;
-
-		/* Not a loose object; someone else may have just packed it. */
-		if (!(flags & OBJECT_INFO_QUICK)) {
-			reprepare_packed_git(r);
-			if (find_pack_entry(r, real, &e))
-				break;
-		}
-
-		/*
-		 * If r is the_repository, this might be an attempt at
-		 * accessing a submodule object as if it were in the_repository
-		 * (having called add_submodule_odb() on that submodule's ODB).
-		 * If any such ODBs exist, register them and try again.
-		 */
-		if (r == the_repository &&
-		    register_all_submodule_odb_as_alternates())
-			/* We added some alternates; retry */
-			continue;
-
-		/* Check if it is a missing object */
-		if (fetch_if_missing && repo_has_promisor_remote(r) &&
-		    !already_retried &&
-		    !(flags & OBJECT_INFO_SKIP_FETCH_OBJECT)) {
-			promisor_remote_get_direct(r, real, 1);
-			already_retried = 1;
-			continue;
-		}
-
-		if (flags & OBJECT_INFO_DIE_IF_CORRUPT) {
-			const struct packed_git *p;
-			if ((flags & OBJECT_INFO_LOOKUP_REPLACE) && !oideq(real, oid))
-				die(_("replacement %s not found for %s"),
-				    oid_to_hex(real), oid_to_hex(oid));
-			if ((p = has_packed_and_bad(r, real)))
-				die(_("packed object %s (stored in %s) is corrupt"),
-				    oid_to_hex(real), p->pack_name);
-		}
-		return -1;
-	}
-
-	if (oi == &blank_oi)
-		/*
-		 * We know that the caller doesn't actually need the
-		 * information below, so return early.
-		 */
-		return 0;
-	rtype = packed_object_info(r, e.p, e.offset, oi);
-	if (rtype < 0) {
-		mark_bad_packed_object(e.p, real);
-		return do_oid_object_info_extended(r, real, oi, 0);
-	} else if (oi->whence == OI_PACKED) {
-		oi->u.packed.offset = e.offset;
-		oi->u.packed.pack = e.p;
-		oi->u.packed.is_delta = (rtype == OBJ_REF_DELTA ||
-					 rtype == OBJ_OFS_DELTA);
-	}
-
-	return 0;
-}
-
-static int oid_object_info_convert(struct repository *r,
-				   const struct object_id *input_oid,
-				   struct object_info *input_oi, unsigned flags)
-{
-	const struct git_hash_algo *input_algo = &hash_algos[input_oid->algo];
-	int do_die = flags & OBJECT_INFO_DIE_IF_CORRUPT;
-	struct strbuf type_name = STRBUF_INIT;
-	struct object_id oid, delta_base_oid;
-	struct object_info new_oi, *oi;
-	unsigned long size;
-	void *content;
-	int ret;
-
-	if (repo_oid_to_algop(r, input_oid, the_hash_algo, &oid)) {
-		if (do_die)
-			die(_("missing mapping of %s to %s"),
-			    oid_to_hex(input_oid), the_hash_algo->name);
-		return -1;
-	}
-
-	/* Is new_oi needed? */
-	oi = input_oi;
-	if (input_oi && (input_oi->delta_base_oid || input_oi->sizep ||
-			 input_oi->contentp)) {
-		new_oi = *input_oi;
-		/* Does delta_base_oid need to be converted? */
-		if (input_oi->delta_base_oid)
-			new_oi.delta_base_oid = &delta_base_oid;
-		/* Will the attributes differ when converted? */
-		if (input_oi->sizep || input_oi->contentp) {
-			new_oi.contentp = &content;
-			new_oi.sizep = &size;
-			new_oi.type_name = &type_name;
-		}
-		oi = &new_oi;
-	}
-
-	ret = oid_object_info_extended(r, &oid, oi, flags);
-	if (ret)
-		return -1;
-	if (oi == input_oi)
-		return ret;
-
-	if (new_oi.contentp) {
-		struct strbuf outbuf = STRBUF_INIT;
-		enum object_type type;
-
-		type = type_from_string_gently(type_name.buf, type_name.len,
-					       !do_die);
-		if (type == -1)
-			return -1;
-		if (type != OBJ_BLOB) {
-			ret = convert_object_file(the_repository, &outbuf,
-						  the_hash_algo, input_algo,
-						  content, size, type, !do_die);
-			free(content);
-			if (ret == -1)
-				return -1;
-			size = outbuf.len;
-			content = strbuf_detach(&outbuf, NULL);
-		}
-		if (input_oi->sizep)
-			*input_oi->sizep = size;
-		if (input_oi->contentp)
-			*input_oi->contentp = content;
-		else
-			free(content);
-		if (input_oi->type_name)
-			*input_oi->type_name = type_name;
-		else
-			strbuf_release(&type_name);
-	}
-	if (new_oi.delta_base_oid == &delta_base_oid) {
-		if (repo_oid_to_algop(r, &delta_base_oid, input_algo,
-				 input_oi->delta_base_oid)) {
-			if (do_die)
-				die(_("missing mapping of %s to %s"),
-				    oid_to_hex(&delta_base_oid),
-				    input_algo->name);
-			return -1;
-		}
-	}
-	input_oi->whence = new_oi.whence;
-	input_oi->u = new_oi.u;
-	return ret;
-}
-
-int oid_object_info_extended(struct repository *r, const struct object_id *oid,
-			     struct object_info *oi, unsigned flags)
-{
-	int ret;
-
-	if (oid->algo && (hash_algo_by_ptr(r->hash_algo) != oid->algo))
-		return oid_object_info_convert(r, oid, oi, flags);
-
-	obj_read_lock();
-	ret = do_oid_object_info_extended(r, oid, oi, flags);
-	obj_read_unlock();
-	return ret;
-}
-
-
-/* returns enum object_type or negative */
-int oid_object_info(struct repository *r,
-		    const struct object_id *oid,
-		    unsigned long *sizep)
-{
-	enum object_type type;
-	struct object_info oi = OBJECT_INFO_INIT;
-
-	oi.typep = &type;
-	oi.sizep = sizep;
-	if (oid_object_info_extended(r, oid, &oi,
-				      OBJECT_INFO_LOOKUP_REPLACE) < 0)
-		return -1;
-	return type;
-}
-
-int pretend_object_file(void *buf, unsigned long len, enum object_type type,
-			struct object_id *oid)
-{
-	struct cached_object_entry *co;
-	char *co_buf;
-
-	hash_object_file(the_hash_algo, buf, len, type, oid);
-	if (repo_has_object_file_with_flags(the_repository, oid, OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT) ||
-	    find_cached_object(oid))
-		return 0;
-	ALLOC_GROW(cached_objects, cached_object_nr + 1, cached_object_alloc);
-	co = &cached_objects[cached_object_nr++];
-	co->value.size = len;
-	co->value.type = type;
-	co_buf = xmalloc(len);
-	memcpy(co_buf, buf, len);
-	co->value.buf = co_buf;
-	oidcpy(&co->oid, oid);
-	return 0;
-}
-
-/*
- * This function dies on corrupt objects; the callers who want to
- * deal with them should arrange to call oid_object_info_extended() and give
- * error messages themselves.
- */
-void *repo_read_object_file(struct repository *r,
-			    const struct object_id *oid,
-			    enum object_type *type,
-			    unsigned long *size)
-{
-	struct object_info oi = OBJECT_INFO_INIT;
-	unsigned flags = OBJECT_INFO_DIE_IF_CORRUPT | OBJECT_INFO_LOOKUP_REPLACE;
-	void *data;
-
-	oi.typep = type;
-	oi.sizep = size;
-	oi.contentp = &data;
-	if (oid_object_info_extended(r, oid, &oi, flags))
-		return NULL;
-
-	return data;
-}
-
-void *read_object_with_reference(struct repository *r,
-				 const struct object_id *oid,
-				 enum object_type required_type,
-				 unsigned long *size,
-				 struct object_id *actual_oid_return)
-{
-	enum object_type type;
-	void *buffer;
-	unsigned long isize;
-	struct object_id actual_oid;
-
-	oidcpy(&actual_oid, oid);
-	while (1) {
-		int ref_length = -1;
-		const char *ref_type = NULL;
-
-		buffer = repo_read_object_file(r, &actual_oid, &type, &isize);
-		if (!buffer)
-			return NULL;
-		if (type == required_type) {
-			*size = isize;
-			if (actual_oid_return)
-				oidcpy(actual_oid_return, &actual_oid);
-			return buffer;
-		}
-		/* Handle references */
-		else if (type == OBJ_COMMIT)
-			ref_type = "tree ";
-		else if (type == OBJ_TAG)
-			ref_type = "object ";
-		else {
-			free(buffer);
-			return NULL;
-		}
-		ref_length = strlen(ref_type);
-
-		if (ref_length + the_hash_algo->hexsz > isize ||
-		    memcmp(buffer, ref_type, ref_length) ||
-		    get_oid_hex((char *) buffer + ref_length, &actual_oid)) {
-			free(buffer);
-			return NULL;
-		}
-		free(buffer);
-		/* Now we have the ID of the referred-to object in
-		 * actual_oid.  Check again. */
-	}
 }
 
 static void hash_object_body(const struct git_hash_algo *algo, struct git_hash_ctx *c,
@@ -1945,7 +836,7 @@ static int start_loose_object_common(struct strbuf *tmp_file,
 
 	fd = create_tmpfile(tmp_file, filename);
 	if (fd < 0) {
-		if (flags & HASH_SILENT)
+		if (flags & WRITE_OBJECT_FILE_SILENT)
 			return -1;
 		else if (errno == EACCES)
 			return error(_("insufficient permission for adding "
@@ -2077,7 +968,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 		utb.actime = mtime;
 		utb.modtime = mtime;
 		if (utime(tmp_file.buf, &utb) < 0 &&
-		    !(flags & HASH_SILENT))
+		    !(flags & WRITE_OBJECT_FILE_SILENT))
 			warning_errno(_("failed utime() on %s"), tmp_file.buf);
 	}
 
@@ -2196,7 +1087,8 @@ int stream_loose_object(struct input_stream *in_stream, size_t len,
 		struct strbuf dir = STRBUF_INIT;
 		strbuf_add(&dir, filename.buf, dirlen);
 
-		if (mkdir_in_gitdir(dir.buf) && errno != EEXIST) {
+		if (safe_create_dir_in_gitdir(the_repository, dir.buf) &&
+		    errno != EEXIST) {
 			err = error_errno(_("unable to create directory %s"), dir.buf);
 			strbuf_release(&dir);
 			goto cleanup;
@@ -2288,7 +1180,7 @@ int write_object_file_literally(const void *buf, unsigned long len,
 	write_object_file_prepare_literally(the_hash_algo, buf, len, type,
 					    oid, header, &hdrlen);
 
-	if (!(flags & HASH_WRITE_OBJECT))
+	if (!(flags & WRITE_OBJECT_FILE_PERSIST))
 		goto cleanup;
 	if (freshen_packed_object(oid) || freshen_loose_object(oid))
 		goto cleanup;
@@ -2335,32 +1227,6 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 	return ret;
 }
 
-int has_object(struct repository *r, const struct object_id *oid,
-	       unsigned flags)
-{
-	int quick = !(flags & HAS_OBJECT_RECHECK_PACKED);
-	unsigned object_info_flags = OBJECT_INFO_SKIP_FETCH_OBJECT |
-		(quick ? OBJECT_INFO_QUICK : 0);
-
-	if (!startup_info->have_repository)
-		return 0;
-	return oid_object_info_extended(r, oid, NULL, object_info_flags) >= 0;
-}
-
-int repo_has_object_file_with_flags(struct repository *r,
-				    const struct object_id *oid, int flags)
-{
-	if (!startup_info->have_repository)
-		return 0;
-	return oid_object_info_extended(r, oid, NULL, flags) >= 0;
-}
-
-int repo_has_object_file(struct repository *r,
-			 const struct object_id *oid)
-{
-	return repo_has_object_file_with_flags(r, oid, 0);
-}
-
 /*
  * We can't use the normal fsck_error_function() for index_mem(),
  * because we don't yet have a valid oid for it to report. Instead,
@@ -2385,7 +1251,7 @@ static int index_mem(struct index_state *istate,
 {
 	struct strbuf nbuf = STRBUF_INIT;
 	int ret = 0;
-	int write_object = flags & HASH_WRITE_OBJECT;
+	int write_object = flags & INDEX_WRITE_OBJECT;
 
 	if (!type)
 		type = OBJ_BLOB;
@@ -2400,7 +1266,7 @@ static int index_mem(struct index_state *istate,
 			size = nbuf.len;
 		}
 	}
-	if (flags & HASH_FORMAT_CHECK) {
+	if (flags & INDEX_FORMAT_CHECK) {
 		struct fsck_options opts = FSCK_OPTIONS_DEFAULT;
 
 		opts.strict = 1;
@@ -2426,7 +1292,7 @@ static int index_stream_convert_blob(struct index_state *istate,
 				     unsigned flags)
 {
 	int ret = 0;
-	const int write_object = flags & HASH_WRITE_OBJECT;
+	const int write_object = flags & INDEX_WRITE_OBJECT;
 	struct strbuf sbuf = STRBUF_INIT;
 
 	assert(path);
@@ -2491,28 +1357,6 @@ static int index_core(struct index_state *istate,
 	return ret;
 }
 
-/*
- * This creates one packfile per large blob unless bulk-checkin
- * machinery is "plugged".
- *
- * This also bypasses the usual "convert-to-git" dance, and that is on
- * purpose. We could write a streaming version of the converting
- * functions and insert that before feeding the data to fast-import
- * (or equivalent in-core API described above). However, that is
- * somewhat complicated, as we do not know the size of the filter
- * result, which we need to know beforehand when writing a git object.
- * Since the primary motivation for trying to stream from the working
- * tree file and to avoid mmaping it in core is to deal with large
- * binary blobs, they generally do not want to get any conversion, and
- * callers should avoid this code path when filters are requested.
- */
-static int index_blob_stream(struct object_id *oid, int fd, size_t size,
-			     const char *path,
-			     unsigned flags)
-{
-	return index_blob_bulk_checkin(oid, fd, size, path, flags);
-}
-
 int index_fd(struct index_state *istate, struct object_id *oid,
 	     int fd, struct stat *st,
 	     enum object_type type, const char *path, unsigned flags)
@@ -2533,8 +1377,8 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
 				 type, path, flags);
 	else
-		ret = index_blob_stream(oid, fd, xsize_t(st->st_size), path,
-					flags);
+		ret = index_blob_bulk_checkin(oid, fd, xsize_t(st->st_size), path,
+					     flags);
 	close(fd);
 	return ret;
 }
@@ -2558,7 +1402,7 @@ int index_path(struct index_state *istate, struct object_id *oid,
 	case S_IFLNK:
 		if (strbuf_readlink(&sb, path, st->st_size))
 			return error_errno("readlink(\"%s\")", path);
-		if (!(flags & HASH_WRITE_OBJECT))
+		if (!(flags & INDEX_WRITE_OBJECT))
 			hash_object_file(the_hash_algo, sb.buf, sb.len,
 					 OBJ_BLOB, oid);
 		else if (write_object_file(sb.buf, sb.len, OBJ_BLOB, oid))
@@ -2586,16 +1430,6 @@ int read_pack_header(int fd, struct pack_header *header)
 		/* "protocol error (pack version unsupported)" */
 		return PH_ERROR_PROTOCOL;
 	return 0;
-}
-
-void assert_oid_type(const struct object_id *oid, enum object_type expect)
-{
-	enum object_type type = oid_object_info(the_repository, oid, NULL);
-	if (type < 0)
-		die(_("%s is not a valid object"), oid_to_hex(oid));
-	if (type != expect)
-		die(_("%s is not a valid '%s' object"), oid_to_hex(oid),
-		    type_name(expect));
 }
 
 int for_each_file_in_obj_subdir(unsigned int subdir_nr,
