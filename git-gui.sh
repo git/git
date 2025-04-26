@@ -200,6 +200,14 @@ proc safe_exec {cmd} {
 	eval exec [make_arglist_safe $cmd]
 }
 
+# executes one command in the background
+# no redirections or pipelines are possible
+# cmd is a list that specifies the command and its arguments
+# calls `exec` and returns its value
+proc safe_exec_bg {cmd} {
+	eval exec [make_arglist_safe $cmd] &
+}
+
 proc safe_open_file {filename flags} {
 	# a file name starting with "|" would attempt to run a process
 	# but such a file name must be treated as a relative path
@@ -2202,7 +2210,7 @@ proc do_gitk {revs {is_submodule false}} {
 			unset env(GIT_DIR)
 			unset env(GIT_WORK_TREE)
 		}
-		eval exec $cmd $revs "--" "--" &
+		safe_exec_bg [concat $cmd $revs "--" "--"]
 
 		set env(GIT_DIR) $_gitdir
 		set env(GIT_WORK_TREE) $_gitworktree
@@ -2239,7 +2247,7 @@ proc do_git_gui {} {
 		set pwd [pwd]
 		cd $current_diff_path
 
-		eval exec $exe gui &
+		safe_exec_bg [concat $exe gui]
 
 		set env(GIT_DIR) $_gitdir
 		set env(GIT_WORK_TREE) $_gitworktree
@@ -2270,16 +2278,18 @@ proc get_explorer {} {
 
 proc do_explore {} {
 	global _gitworktree
-	set explorer [get_explorer]
-	eval exec $explorer [list [file nativename $_gitworktree]] &
+	set cmd [get_explorer]
+	lappend cmd [file nativename $_gitworktree]
+	safe_exec_bg $cmd
 }
 
 # Open file relative to the working tree by the default associated app.
 proc do_file_open {file} {
 	global _gitworktree
-	set explorer [get_explorer]
+	set cmd [get_explorer]
 	set full_file_path [file join $_gitworktree $file]
-	exec $explorer [file nativename $full_file_path] &
+	lappend cmd [file nativename $full_file_path]
+	safe_exec_bg $cmd
 }
 
 set is_quitting 0
@@ -2761,13 +2771,13 @@ if {[is_Windows]} {
 	regsub "/mingw../libexec/git-core/git-gui$" \
 		$normalized "/git-bash.exe" cmdLine
 	if {$cmdLine != $normalized && [file exists $cmdLine]} {
-		set cmdLine [list "Git Bash" $cmdLine &]
+		set cmdLine [list "Git Bash" $cmdLine]
 	} else {
-		set cmdLine [list "Git Bash" bash --login -l &]
+		set cmdLine [list "Git Bash" bash --login -l]
 	}
 	.mbar.repository add command \
 		-label [mc "Git Bash"] \
-		-command {eval exec [auto_execok start] $cmdLine}
+		-command {safe_exec_bg [concat [list [auto_execok start]] $cmdLine]}
 }
 
 if {[is_Windows] || ![is_bare]} {
