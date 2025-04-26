@@ -14,6 +14,7 @@ clar_test_suites = [
   'unit-tests/u-reftable-pq.c',
   'unit-tests/u-reftable-reader.c',
   'unit-tests/u-reftable-readwrite.c',
+  'unit-tests/u-reftable-record.c',
   'unit-tests/u-reftable-tree.c',
   'unit-tests/u-strbuf.c',
   'unit-tests/u-strcmp-offset.c',
@@ -60,7 +61,6 @@ clar_unit_tests = executable('unit-tests',
 test('unit-tests', clar_unit_tests)
 
 unit_test_programs = [
-  'unit-tests/t-reftable-record.c',
   'unit-tests/t-reftable-stack.c',
 ]
 
