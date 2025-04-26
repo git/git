@@ -15,6 +15,7 @@ clar_test_suites = [
   'unit-tests/u-reftable-reader.c',
   'unit-tests/u-reftable-readwrite.c',
   'unit-tests/u-reftable-record.c',
+  'unit-tests/u-reftable-stack.c',
   'unit-tests/u-reftable-tree.c',
   'unit-tests/u-strbuf.c',
   'unit-tests/u-strcmp-offset.c',
@@ -61,7 +62,6 @@ clar_unit_tests = executable('unit-tests',
 test('unit-tests', clar_unit_tests)
 
 unit_test_programs = [
-  'unit-tests/t-reftable-stack.c',
 ]
 
 foreach unit_test_program : unit_test_programs
@@ -1102,7 +1102,6 @@ integration_tests = [
 # sufficient to catch missing test suites in our CI though.
 foreach glob, tests : {
   't[0-9][0-9][0-9][0-9]-*.sh': integration_tests,
-  'unit-tests/t-*.c': unit_test_programs,
   'unit-tests/u-*.c': clar_test_suites,
 }
   actual_tests = run_command(shell, '-c', 'ls ' + glob,
