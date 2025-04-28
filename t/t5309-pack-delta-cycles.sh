@@ -60,7 +60,10 @@ test_expect_success 'index-pack detects REF_DELTA cycles' '
 test_expect_success 'failover to an object in another pack' '
 	clear_packs &&
 	git index-pack --stdin <ab.pack &&
-	test_must_fail git index-pack --stdin --fix-thin <cycle.pack
+
+	# This cycle does not fail since the existence of A & B in
+	# the repo allows us to resolve the cycle.
+	git index-pack --stdin --fix-thin <cycle.pack
 '
 
 test_expect_success 'failover to a duplicate object in the same pack' '
@@ -72,10 +75,13 @@ test_expect_success 'failover to a duplicate object in the same pack' '
 		pack_obj $A
 	} >recoverable.pack &&
 	pack_trailer recoverable.pack &&
-	test_must_fail git index-pack --fix-thin --stdin <recoverable.pack
+
+	# This cycle does not fail since the existence of a full copy
+	# of A in the pack allows us to resolve the cycle.
+	git index-pack --fix-thin --stdin <recoverable.pack
 '
 
-test_expect_failure 'index-pack works with thin pack A->B->C with B on disk' '
+test_expect_success 'index-pack works with thin pack A->B->C with B on disk' '
 	git init server &&
 	(
 		cd server &&
