@@ -36,6 +36,7 @@ test_tool_sources = [
   'test-mktemp.c',
   'test-name-hash.c',
   'test-online-cpus.c',
+  'test-pack-deltas.c',
   'test-pack-mtimes.c',
   'test-parse-options.c',
   'test-parse-pathspec-file.c',
