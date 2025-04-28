@@ -173,7 +173,6 @@ build:msvc-meson:
 test:msvc-meson:
   extends: .msvc-meson
   stage: test
-  when: manual
   timeout: 6h
   needs:
     - job: "build:msvc-meson"
