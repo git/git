@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2025, #07; Thu, 24)
+Subject: What's cooking in git.git (Apr 2025, #08; Mon, 28)
 X-master-at: f65182a99e545d2f2bc22e6c1c2da192133b16a3
-X-next-at: 6a0df3ecc3db97a8425365f84b36ccf308efc156
+X-next-at: 0cc8ee98dca069ce15f484c08da347f605be3239
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Apr 2025, #07; Thu, 24)
+What's cooking in git.git (Apr 2025, #08; Mon, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,159 +46,60 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* aw/t9811-modernize (2025-04-18) 2 commits
-  (merged to 'next' on 2025-04-18 at 37484f566f)
- + t9811: fix misconversion of tests
-  (merged to 'next' on 2025-04-16 at 53103e8873)
- + t9811: be more precise to check importing of tags
-
- Test updates.
- source: <20250416145939.24207-2-anthonywang03@icloud.com>
-
-
-* ds/doc-disable-hooks (2025-04-16) 1 commit
-  (merged to 'next' on 2025-04-18 at 4b543e57a5)
- + docs: document core.hooksPath=/dev/null
-
- Document the convention to disable hooks altogether by setting the
- hooksPath configuration variable to /dev/nulll
- source: <pull.1899.v2.git.1744818135435.gitgitgadget@gmail.com>
-
-
-* ja/doc-reset-mv-rm-markup-updates (2025-04-14) 7 commits
-  (merged to 'next' on 2025-04-15 at 0b19646642)
- + doc: add markup for characters in Guidelines
- + doc: fix asciidoctor synopsis processing of triple-dots
- + doc: convert git-mv to new documentation format
- + doc: move synopsis git-mv commands in the synopsis section
- + doc: convert git-rm to new documentation format
- + doc: fix synopsis analysis logic
- + doc: convert git-reset to new documentation format
-
- Doc mark-up updates.
- source: <pull.1896.v2.git.1744460450.gitgitgadget@gmail.com>
-
-
-* jc/ci-skip-unavailable-external-software (2025-04-24) 1 commit
-  (merged to 'next' on 2025-04-24 at 5bd3efe460)
- + ci: skip unavailable external software
-
- Make sure outage of third-party sites that supply P4, Git-LFS, and
- JGit we use for testing would not prevent our CI jobs from running
- at all.
- source: <xmqqmsc5rw94.fsf@gitster.g>
-
-
-* js/range-check-codeql-workaround (2025-03-28) 1 commit
-  (merged to 'next' on 2025-04-17 at 809b3c3f63)
- + read-cache: check range before dereferencing an array element
-
- Work around false positive from CodeQL checker.
- source: <73cae30129338cf219a810c3a2a78ef48d5637d0.1743073557.git.gitgitgadget@gmail.com>
-
-
-* kn/bundle-dedup-optim (2025-04-08) 2 commits
-  (merged to 'next' on 2025-04-11 at 082f7c87e0)
- + bundle: fix non-linear performance scaling with refs
- + t6020: test for duplicate refnames in bundle creation
-
- Optimize the code to dedup references recorded in a bundle file.
- source: <20250408-488-generating-bundles-with-many-references-has-non-linear-performance-v2-0-0802fc36a23d@gmail.com>
-
-
-* mh/left-right-limited (2025-04-01) 1 commit
-  (merged to 'next' on 2025-04-17 at 1976b29af9)
- + revision: fix --left/right-only use with unrelated histories
-
- "git log --{left,right}-only A...B", when A and B does not share
- any common ancestor, now behaves as expected.
- source: <20250330112850.2477673-1-m@lfurio.us>
-
-
-* pb/perf-test-fixes (2025-04-14) 3 commits
-  (merged to 'next' on 2025-04-15 at f911b5420a)
- + p7821: fix instructions for testing with threads
-  (merged to 'next' on 2025-04-08 at a8aaeee41e)
- + p9210: fix 'scalar clone' when running from a detached HEAD
- + p7821: fix test_perf invocation for prereqs
-
- "make perf" fixes.
- cf. <Z-pD1puYT87YKAd4@pks.im>
- cf. <Z_TAtJ9LEeHo2AQN@pks.im>
- source: <pull.1936.v2.git.git.1744481732.gitgitgadget@gmail.com>
-
-
-* ps/object-file-cleanup (2025-04-15) 11 commits
-  (merged to 'next' on 2025-04-17 at 4f5b5725c6)
- + object-store: merge "object-store-ll.h" and "object-store.h"
- + object-store: remove global array of cached objects
- + object: split out functions relating to object store subsystem
- + object-file: drop `index_blob_stream()`
- + object-file: split up concerns of `HASH_*` flags
- + object-file: split out functions relating to object store subsystem
- + object-file: move `xmmap()` into "wrapper.c"
- + object-file: move `git_open_cloexec()` to "compat/open.c"
- + object-file: move `safe_create_leading_directories()` into "path.c"
- + object-file: move `mkdir_in_gitdir()` into "path.c"
- + Merge branch 'ps/object-wo-the-repository' into ps/object-file-cleanup
- (this branch is used by ps/object-store-cleanup.)
-
- Code clean-up.
- cf. <CABPp-BFGeJ6eANb_5m4KSWRY_r9KCWarzya_qMkQNchKD5Q=xg@mail.gmail.com>
- source: <20250415-pks-split-object-file-v3-0-6aa7db7ad7b0@pks.im>
-
-
-* ps/parse-options-integers (2025-04-17) 7 commits
-  (merged to 'next' on 2025-04-18 at 30159c9252)
- + parse-options: detect mismatches in integer signedness
- + parse-options: introduce precision handling for `OPTION_UNSIGNED`
- + parse-options: introduce precision handling for `OPTION_INTEGER`
- + parse-options: rename `OPT_MAGNITUDE()` to `OPT_UNSIGNED()`
- + parse-options: support unit factors in `OPT_INTEGER()`
- + global: use designated initializers for options
- + parse: fix off-by-one for minimum signed values
-
- Update parse-options API to catch mistakes to pass address of an
- integral variable of a wrong type/size.
- source: <20250417-b4-pks-parse-options-integers-v4-0-9cbc76b61cfe@pks.im>
-
-
-* rj/build-tweaks (2025-04-17) 13 commits
-  (merged to 'next' on 2025-04-18 at 0ad43d3038)
- + config.mak.uname: set CSPRNG_METHOD to getrandom on Linux
- + config.mak.uname: add arc4random to the cygwin build
- + config.mak.uname: add sysinfo() configuration for cygwin
- + builtin/gc.c: correct RAM calculation when using sysinfo
- + config.mak.uname: add clock_gettime() to the cygwin build
- + config.mak.uname: add HAVE_GETDELIM to the cygwin section
- + config.mak.uname: only set NO_REGEX on cygwin for v1.7
- + config.mak.uname: add a note about NO_STRLCPY for Linux
- + Makefile: remove NEEDS_LIBRT build variable
- + meson.build: set default help format to html on windows
- + meson.build: only set build variables for non-default values
- + Makefile: only set some BASIC_CFLAGS when RUNTIME_PREFIX is set
- + meson.build: remove -DCURL_DISABLE_TYPECHECK
-
- Various build tweaks, including CSPRNG selection on some platforms.
- source: <20250416231835.2492562-1-ramsay@ramsayjones.plus.com>
-
---------------------------------------------------
 [New Topics]
 
-* ag/send-email-outlook (2025-04-23) 3 commits
- - send-email: add option to generate passswords like OAuth2 tokens
+* jc/ci-skip-unavailable-external-software (2025-04-25) 2 commits
+ - ci: download JGit from maven, not eclipse.org
+ - ci: update the message for unavailble third-party software
+
+ Further refinement on CI messages when an optional external
+ software is unavailable (e.g. due to third-party service outage).
+
+ Comments?
+ source: <20250425153827.147585-1-gitster@pobox.com>
+
+
+* js/ci-win-meson-timeout-workaround (2025-04-25) 1 commit
+ - ci(win+Meson): build in Release mode, avoiding t7001-mv hangs
+
+ One of win+Meson test CI jobs hang forever, trying to show
+ interactive abort() dialog, as CI jobs built developer's biuld.
+ Work it around by building for release, making abort() a no-op.
+
+ Comments?
+ source: <pull.1908.git.1745593515875.gitgitgadget@gmail.com>
+
+
+* ps/maintenance-missing-tasks (2025-04-25) 7 commits
+ - builtin/maintenance: introduce "rerere-gc" task
+ - builtin/gc: move rerere garbage collection into separate function
+ - builtin/maintenance: introduce "worktree-prune" task
+ - worktree: expose function to retrieve worktree names
+ - builtin/gc: move pruning of worktrees into a separate function
+ - builtin/gc: remove global variables where it trivial to do
+ - builtin/gc: fix indentation of `cmd_gc()` parameters
+
+ Make repository clean-up tasks "gc" can do available to "git
+ maintenance" front-end.
+
+ Comments?
+ source: <20250425-pks-maintenance-missing-tasks-v1-0-972ed6ab2c0d@pks.im>
+
+--------------------------------------------------
+[Cooking]
+
+* ag/send-email-outlook (2025-04-28) 2 commits
+ - send-email: add --smtp-outlook-id-tweak option
  - send-email: retrieve Message-ID from outlook SMTP server
- - send-email: implement SMTP bearer authentication
 
  Update send-email to work better with Outlook's smtp server.
 
  Will merge to 'next'?
- source: <PN3PR01MB9597A83D537E3AE96144227EB8BA2@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
+ source: <PN3PR01MB95973F4B26A8CE2BF17A3AB1B8842@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
+ source: <PN3PR01MB9597DA8661D1AFDF4C927A11B8812@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
 
 
-* ds/fix-thin-fix (2025-04-24) 3 commits
+* ds/fix-thin-fix (2025-04-28) 3 commits
  - index-pack: allow revisiting REF_DELTA chains
  - t5309: create failing test for 'git index-pack'
  - test-tool: add pack-deltas helper
@@ -208,10 +109,10 @@ Release tarballs are available at:
  such cycle.
 
  Comments?
- source: <pull.1906.git.1745430004.gitgitgadget@gmail.com>
+ source: <pull.1906.v2.git.1745871885.gitgitgadget@gmail.com>
 
 
-* ps/object-store-cleanup (2025-04-24) 14 commits
+* ps/object-store-cleanup (2025-04-25) 14 commits
  - object-store: drop `repo_has_object_file()`
  - bulk-checkin: don't fetch promised objects on write
  - list-objects: clarify how promised blobs are excluded
@@ -230,17 +131,18 @@ Release tarballs are available at:
  Further code clean-up in the object-store layer.
 
  Comments?
- source: <20250423-pks-object-store-cleanups-v1-0-81f8411a5d08@pks.im>
+ source: <20250425-pks-object-store-cleanups-v2-0-63f1695b7700@pks.im>
 
 
 * cc/fast-import-export-signature-names (2025-04-24) 1 commit
- - fast-(import|export): improve on the signature algorithm name
+ . fast-(import|export): improve on the signature algorithm name
 
  Clean up the way how signature on commit objects are exported to
  and imported from fast-import stream.
 
  Expecting a reroll.
  cf. <aAq1nvcPRlIPal5l@tapette.crustytoothpaste.net>
+ cf. https://github.com/git/git/actions/runs/14671270673/job/41178138711
  source: <20250424203904.909777-1-christian.couder@gmail.com>
 
 
@@ -249,21 +151,20 @@ Release tarballs are available at:
 
  Meson-based build framework update.
 
- Comments?
+ Looking good.  Expecting a minor reroll.
+ cf. <aA8vSPKdznjzBf6W@pks.im>
  source: <80a2a6ce7c6b05323cf931cdc20d4decb6270002.1745507677.git.congdanhqx@gmail.com>
 
 
-* ps/meson-bin-sh (2025-04-24) 2 commits
- - meson: prefer POSIX-specified shell path
+* ps/meson-bin-sh (2025-04-25) 2 commits
+ - meson: prefer shell at "/bin/sh"
  - meson: report detected runtime executable paths
 
  Meson-based build framework update.
 
  Comments?
- source: <20250424-pks-meson-posix-shell-v1-0-45e06ee4b6ad@pks.im>
+ source: <20250425-pks-meson-posix-shell-v3-0-01607a2e9334@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * js/git-perf-env-override (2025-04-20) 1 commit
   (merged to 'next' on 2025-04-22 at 77ea361791)
@@ -299,18 +200,19 @@ Release tarballs are available at:
  source: <daj53eijkqzsjy5cvuxchea4qm3pbiu673ehetihfffyvwzhgs@tarta.nabijaczleweli.xyz>
 
 
-* es/meson-cleanup (2025-04-24) 6 commits
- - meson: only check for missing networking syms on non-Windows; add compat impls
- - meson: fix typo in function check that prevented checking for hstrerror
- - meson: add a couple missing networking dependencies
- - meson: do a full usage-based compile check for sysinfo
- - meson: check for getpagesize before using it
- - meson: simplify and parameterize various standard function checks
+* es/meson-cleanup (2025-04-25) 6 commits
+  (merged to 'next' on 2025-04-28 at 0cc8ee98dc)
+ + meson: only check for missing networking syms on non-Windows; add compat impls
+ + meson: fix typo in function check that prevented checking for hstrerror
+ + meson: add a couple missing networking dependencies
+ + meson: do a full usage-based compile check for sysinfo
+ + meson: check for getpagesize before using it
+ + meson: simplify and parameterize various standard function checks
 
  Code clean-up for meson-based build infrastructure.
 
- Ready?
- source: <20250425002017.246985-1-eschwartz@gentoo.org>
+ Will merge to 'master'.
+ source: <20250425053345.17288-1-eschwartz@gentoo.org>
 
 
 * jh/gc-launchctl-schedule-fix (2025-04-23) 1 commit
@@ -324,16 +226,17 @@ Release tarballs are available at:
 
 
 * js/windows-arm64 (2025-04-23) 6 commits
- - max_tree_depth: lower it for clangarm64 on Windows
- - mingw(arm64): do move the `/etc/git*` location
- - msvc: do handle builds on Windows/ARM64
- - mingw: do not use nedmalloc on Windows/ARM64
- - config.mak.uname: add support for clangarm64
- - bswap.h: add support for built-in bswap functions
+  (merged to 'next' on 2025-04-28 at c3d4cea333)
+ + max_tree_depth: lower it for clangarm64 on Windows
+ + mingw(arm64): do move the `/etc/git*` location
+ + msvc: do handle builds on Windows/ARM64
+ + mingw: do not use nedmalloc on Windows/ARM64
+ + config.mak.uname: add support for clangarm64
+ + bswap.h: add support for built-in bswap functions
 
  Update to arm64 Windows port.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <pull.1904.v2.git.1745395308.gitgitgadget@gmail.com>
 
 
@@ -386,7 +289,8 @@ Release tarballs are available at:
 
  Code and test clean-up around string-list API.
 
- Comments?
+ Expecting a reroll.
+ cf. <aA8vSPKdznjzBf6W@pks.im>
  source: <aAetW0dan8S3Fljq@ArchLinux>
 
 
@@ -431,18 +335,19 @@ Release tarballs are available at:
  source: <20250418185855.52950-1-abhijeet.nkt@gmaiil.com>
 
 
-* ps/meson-build-perf-bench (2025-04-22) 5 commits
- - meson: wire up benchmarking options
- - meson: wire up benchmarks
- - t/perf: fix benchmarks with out-of-tree builds
- - t/perf: use configured PERL_PATH
- - t/perf: fix benchmarks with alternate repo formats
+* ps/meson-build-perf-bench (2025-04-28) 5 commits
+  (merged to 'next' on 2025-04-28 at f563542bfd)
+ + meson: wire up benchmarking options
+ + meson: wire up benchmarks
+ + t/perf: fix benchmarks with out-of-tree builds
+ + t/perf: use configured PERL_PATH
+ + t/perf: fix benchmarks with alternate repo formats
 
  The build procedure based on Meson learned to drive the
  benchmarking tests.
 
- Comments?
- source: <20250422-pks-meson-benchmarks-v3-0-7aad68bac6fd@pks.im>
+ Will merge to 'master'.
+ source: <20250428-pks-meson-benchmarks-v5-0-5010dd014d1d@pks.im>
 
 
 * ps/fewer-perl (2025-04-16) 5 commits
@@ -471,7 +376,7 @@ Release tarballs are available at:
 
  Add an equivalent to "make hdr-check" target to meson based builds.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20250423-505-wire-up-sparse-via-meson-v5-0-d1e2be4b2078@gmail.com>
 
 
@@ -527,7 +432,7 @@ Release tarballs are available at:
  source: <20250407-pks-reftable-polishing-v2-0-316c4ff10571@pks.im>
 
 
-* sc/bundle-uri-use-all-refs-in-bundle (2025-03-18) 2 commits
+* sc/bundle-uri-use-all-refs-in-bundle (2025-04-25) 2 commits
  - bundle-uri: add test for bundle-uri clones with tags
  - bundle-uri: copy all bundle references ino the refs/bundle space
 
@@ -535,9 +440,8 @@ Release tarballs are available at:
  than normal branches as anchoring points to optimize the follow-up
  fetch during "git clone"; now it is told to utilize all.
 
- Needs more work on tests.
- cf. <e4244e04-d2f3-43ab-88cf-58d9804731b8@gmail.com>
- source: <pull.1897.v3.git.git.1742312173.gitgitgadget@gmail.com>
+ Ready?
+ source: <pull.1897.v4.git.git.1745587067.gitgitgadget@gmail.com>
 
 
 * ds/path-walk-2 (2025-03-25) 13 commits
