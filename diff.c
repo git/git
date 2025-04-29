@@ -892,7 +892,7 @@ static void fill_es_indent_data(struct emitted_diff_symbol *es)
 
 	/* skip any \v \f \r at start of indentation */
 	while (s[off] == '\f' || s[off] == '\v' ||
-	       (s[off] == '\r' && off < len - 1))
+	       (off < len - 1 && s[off] == '\r'))
 		off++;
 
 	/* calculate the visual width of indentation */
