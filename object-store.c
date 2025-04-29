@@ -949,20 +949,6 @@ int has_object(struct repository *r, const struct object_id *oid,
 	return oid_object_info_extended(r, oid, NULL, object_info_flags) >= 0;
 }
 
-int repo_has_object_file_with_flags(struct repository *r,
-				    const struct object_id *oid, int flags)
-{
-	if (!startup_info->have_repository)
-		return 0;
-	return oid_object_info_extended(r, oid, NULL, flags) >= 0;
-}
-
-int repo_has_object_file(struct repository *r,
-			 const struct object_id *oid)
-{
-	return repo_has_object_file_with_flags(r, oid, 0);
-}
-
 void assert_oid_type(const struct object_id *oid, enum object_type expect)
 {
 	enum object_type type = oid_object_info(the_repository, oid, NULL);
