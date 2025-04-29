@@ -266,6 +266,13 @@ enum scld_error safe_create_leading_directories_const(struct repository *repo,
 						      const char *path);
 enum scld_error safe_create_leading_directories_no_share(char *path);
 
+/*
+ * Create a file, potentially creating its leading directories in case they
+ * don't exist. Returns the return value of the open(3p) call.
+ */
+int safe_create_file_with_leading_directories(struct repository *repo,
+					      const char *path);
+
 # ifdef USE_THE_REPOSITORY_VARIABLE
 #  include "strbuf.h"
 #  include "repository.h"
