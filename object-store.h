@@ -262,12 +262,16 @@ int oid_object_info_extended(struct repository *r,
 			     const struct object_id *,
 			     struct object_info *, unsigned flags);
 
-/* Retry packed storage after checking packed and loose storage */
-#define HAS_OBJECT_RECHECK_PACKED 1
+enum {
+	/* Retry packed storage after checking packed and loose storage */
+	HAS_OBJECT_RECHECK_PACKED = (1 << 0),
+	/* Allow fetching the object in case the repository has a promisor remote. */
+	HAS_OBJECT_FETCH_PROMISOR = (1 << 1),
+};
 
 /*
  * Returns 1 if the object exists. This function will not lazily fetch objects
- * in a partial clone.
+ * in a partial clone by default.
  */
 int has_object(struct repository *r, const struct object_id *oid,
 	       unsigned flags);

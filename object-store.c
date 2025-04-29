@@ -937,12 +937,15 @@ void *read_object_with_reference(struct repository *r,
 int has_object(struct repository *r, const struct object_id *oid,
 	       unsigned flags)
 {
-	int quick = !(flags & HAS_OBJECT_RECHECK_PACKED);
-	unsigned object_info_flags = OBJECT_INFO_SKIP_FETCH_OBJECT |
-		(quick ? OBJECT_INFO_QUICK : 0);
+	unsigned object_info_flags = 0;
 
 	if (!startup_info->have_repository)
 		return 0;
+	if (!(flags & HAS_OBJECT_RECHECK_PACKED))
+		object_info_flags |= OBJECT_INFO_QUICK;
+	if (!(flags & HAS_OBJECT_FETCH_PROMISOR))
+		object_info_flags |= OBJECT_INFO_SKIP_FETCH_OBJECT;
+
 	return oid_object_info_extended(r, oid, NULL, object_info_flags) >= 0;
 }
 
