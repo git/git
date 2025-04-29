@@ -25,6 +25,10 @@ int index_path(struct index_state *istate, struct object_id *oid, const char *pa
 
 struct object_directory;
 
+/*
+ * Put in `buf` the name of the file in the local object database that
+ * would be used to store a loose object with the specified oid.
+ */
 const char *odb_loose_path(struct object_directory *odb,
 			   struct strbuf *buf,
 			   const struct object_id *oid);

@@ -196,13 +196,6 @@ int odb_mkstemp(struct strbuf *temp_filename, const char *pattern);
  */
 int odb_pack_keep(const char *name);
 
-/*
- * Put in `buf` the name of the file in the local object database that
- * would be used to store a loose object with the specified oid.
- */
-const char *loose_object_path(struct repository *r, struct strbuf *buf,
-			      const struct object_id *oid);
-
 void *map_loose_object(struct repository *r, const struct object_id *oid,
 		       unsigned long *size);
 

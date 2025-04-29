@@ -9,6 +9,7 @@
 #include "list.h"
 #include "transport.h"
 #include "packfile.h"
+#include "object-file.h"
 #include "object-store.h"
 
 struct alt_base {
@@ -540,7 +541,7 @@ static int fetch_object(struct walker *walker, const struct object_id *oid)
 		ret = error("File %s has bad hash", hex);
 	} else if (req->rename < 0) {
 		struct strbuf buf = STRBUF_INIT;
-		loose_object_path(the_repository, &buf, &req->oid);
+		odb_loose_path(the_repository->objects->odb, &buf, &req->oid);
 		ret = error("unable to write sha1 filename %s", buf.buf);
 		strbuf_release(&buf);
 	}
