@@ -753,8 +753,7 @@ int cmd_difftool(int argc,
 	};
 	struct child_process child = CHILD_PROCESS_INIT;
 
-	if (repo)
-		repo_config(repo, difftool_config, &dt_options);
+	repo_config(repo, difftool_config, &dt_options);
 	dt_options.symlinks = dt_options.has_symlinks;
 
 	argc = parse_options(argc, argv, prefix, builtin_difftool_options,
