@@ -6,7 +6,7 @@
 #include "sigchain.h"
 #include "string-list.h"
 
-static const char *proc_receive_usage[] = {
+static const char *const proc_receive_usage[] = {
 	"test-tool proc-receive [<options>]",
 	NULL
 };

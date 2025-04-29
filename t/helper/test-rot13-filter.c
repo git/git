@@ -324,7 +324,7 @@ static void packet_initialize(void)
 	packet_flush(1);
 }
 
-static const char *rot13_usage[] = {
+static const char *const rot13_usage[] = {
 	"test-tool rot13-filter [--always-delay] --log=<path> <capabilities>",
 	NULL
 };
