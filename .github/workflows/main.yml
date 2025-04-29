@@ -408,6 +408,7 @@ jobs:
       jobname: ${{matrix.vector.jobname}}
       CC: ${{matrix.vector.cc}}
       CI_JOB_IMAGE: ${{matrix.vector.image}}
+      CUSTOM_PATH: /custom
     runs-on: ubuntu-latest
     container: ${{matrix.vector.image}}
     steps:
