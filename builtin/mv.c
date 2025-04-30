@@ -560,7 +560,8 @@ remove_entry:
 			continue;
 
 		pos = index_name_pos(the_repository->index, src, strlen(src));
-		assert(pos >= 0);
+		if (pos < 0)
+			BUG("could not find source in index: '%s'", src);
 		if (!(mode & SPARSE) && !lstat(src, &st))
 			sparse_and_dirty = ie_modified(the_repository->index,
 						       the_repository->index->cache[pos],
