@@ -3722,10 +3722,10 @@ static void setup_windows_environment(void)
 		char buf[32768];
 		size_t off = 0;
 
-#if defined(__MINGW64__) || defined(_M_AMD64)
-		setenv("MSYSTEM", "MINGW64", 1);
-#elif defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC)
+#if defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC)
 		setenv("MSYSTEM", "CLANGARM64", 1);
+#elif defined(__MINGW64__) || defined(_M_AMD64)
+		setenv("MSYSTEM", "MINGW64", 1);
 #else
 		setenv("MSYSTEM", "MINGW32", 1);
 #endif
