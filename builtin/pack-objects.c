@@ -32,7 +32,7 @@
 #include "list.h"
 #include "packfile.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "replace-object.h"
 #include "dir.h"
 #include "midx.h"
@@ -183,7 +183,7 @@ static inline void oe_set_delta_size(struct packing_data *pack,
 #define SET_DELTA_CHILD(obj, val) oe_set_delta_child(&to_pack, obj, val)
 #define SET_DELTA_SIBLING(obj, val) oe_set_delta_sibling(&to_pack, obj, val)
 
-static const char *pack_usage[] = {
+static const char *const pack_usage[] = {
 	N_("git pack-objects --stdout [<options>] [< <ref-list> | < <object-list>]"),
 	N_("git pack-objects [<options>] <base-name> [< <ref-list> | < <object-list>]"),
 	NULL
@@ -500,7 +500,8 @@ static unsigned long write_no_reuse_object(struct hashfile *f, struct object_ent
 
 	if (!usable_delta) {
 		if (oe_type(entry) == OBJ_BLOB &&
-		    oe_size_greater_than(&to_pack, entry, big_file_threshold) &&
+		    oe_size_greater_than(&to_pack, entry,
+					 repo_settings_get_big_file_threshold(the_repository)) &&
 		    (st = open_istream(the_repository, &entry->idx.oid, &type,
 				       &size, NULL)) != NULL)
 			buf = NULL;
@@ -1312,9 +1313,10 @@ static void write_pack_file(void)
 		char *pack_tmp_name = NULL;
 
 		if (pack_to_stdout)
-			f = hashfd_throughput(1, "<stdout>", progress_state);
+			f = hashfd_throughput(the_repository->hash_algo, 1,
+					      "<stdout>", progress_state);
 		else
-			f = create_tmp_packfile(&pack_tmp_name);
+			f = create_tmp_packfile(the_repository, &pack_tmp_name);
 
 		offset = write_pack_header(f, nr_remaining);
 
@@ -1398,7 +1400,8 @@ static void write_pack_file(void)
 
 			if (write_bitmap_index) {
 				bitmap_writer_init(&bitmap_writer,
-						   the_repository, &to_pack);
+						   the_repository, &to_pack,
+						   NULL);
 				bitmap_writer_set_checksum(&bitmap_writer, hash);
 				bitmap_writer_build_type_index(&bitmap_writer,
 							       written_list);
@@ -1407,7 +1410,7 @@ static void write_pack_file(void)
 			if (cruft)
 				pack_idx_opts.flags |= WRITE_MTIMES;
 
-			stage_tmp_packfiles(the_hash_algo, &tmpname,
+			stage_tmp_packfiles(the_repository, &tmpname,
 					    pack_tmp_name, written_list,
 					    nr_written, &to_pack,
 					    &pack_idx_opts, hash,
@@ -1817,7 +1820,8 @@ static int add_object_entry(const struct object_id *oid, enum object_type type,
 static int add_object_entry_from_bitmap(const struct object_id *oid,
 					enum object_type type,
 					int flags UNUSED, uint32_t name_hash,
-					struct packed_git *pack, off_t offset)
+					struct packed_git *pack, off_t offset,
+					void *payload UNUSED)
 {
 	display_progress(progress_state, ++nr_seen);
 
@@ -2535,7 +2539,8 @@ static void get_object_details(void)
 		struct object_entry *entry = sorted_by_offset[i];
 		check_object(entry, i);
 		if (entry->type_valid &&
-		    oe_size_greater_than(&to_pack, entry, big_file_threshold))
+		    oe_size_greater_than(&to_pack, entry,
+					 repo_settings_get_big_file_threshold(the_repository)))
 			entry->no_try_delta = 1;
 		display_progress(progress_state, i + 1);
 	}
@@ -3928,7 +3933,7 @@ static void show_commit(struct commit *commit, void *data UNUSED)
 		index_commit_for_bitmap(commit);
 
 	if (use_delta_islands)
-		propagate_island_marks(commit);
+		propagate_island_marks(the_repository, commit);
 }
 
 static void show_object(struct object *obj, const char *name,
@@ -4244,7 +4249,7 @@ static int mark_bitmap_preferred_tip(const char *refname,
 	if (!peel_iterated_oid(the_repository, oid, &peeled))
 		oid = &peeled;
 
-	object = parse_object_or_die(oid, refname);
+	object = parse_object_or_die(the_repository, oid, refname);
 	if (object->type == OBJ_COMMIT)
 		object->flags |= NEEDS_BITMAP;
 
@@ -4483,16 +4488,16 @@ int cmd_pack_objects(int argc,
 		OPT_CALLBACK_F(0, "index-version", &pack_idx_opts, N_("<version>[,<offset>]"),
 		  N_("write the pack index file in the specified idx format version"),
 		  PARSE_OPT_NONEG, option_parse_index_version),
-		OPT_MAGNITUDE(0, "max-pack-size", &pack_size_limit,
-			      N_("maximum size of each output pack file")),
+		OPT_UNSIGNED(0, "max-pack-size", &pack_size_limit,
+			     N_("maximum size of each output pack file")),
 		OPT_BOOL(0, "local", &local,
 			 N_("ignore borrowed objects from alternate object store")),
 		OPT_BOOL(0, "incremental", &incremental,
 			 N_("ignore packed objects")),
 		OPT_INTEGER(0, "window", &window,
 			    N_("limit pack window by objects")),
-		OPT_MAGNITUDE(0, "window-memory", &window_memory_limit,
-			      N_("limit pack window by memory in addition to object limit")),
+		OPT_UNSIGNED(0, "window-memory", &window_memory_limit,
+			     N_("limit pack window by memory in addition to object limit")),
 		OPT_INTEGER(0, "depth", &depth,
 			    N_("maximum length of delta chain allowed in the resulting pack")),
 		OPT_BOOL(0, "reuse-delta", &reuse_delta,

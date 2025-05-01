@@ -13,8 +13,7 @@
 #include "refs.h"
 #include "hash-lookup.h"
 #include "commit-graph.h"
-#include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "oid-array.h"
 #include "path.h"
 #include "alloc.h"
@@ -2065,7 +2064,7 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 		ctx->graph_name = get_commit_graph_filename(ctx->odb);
 	}
 
-	if (safe_create_leading_directories(ctx->graph_name)) {
+	if (safe_create_leading_directories(the_repository, ctx->graph_name)) {
 		error(_("unable to create leading directories of %s"),
 			ctx->graph_name);
 		return -1;
@@ -2090,11 +2089,13 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 			return -1;
 		}
 
-		f = hashfd(get_tempfile_fd(graph_layer), get_tempfile_path(graph_layer));
+		f = hashfd(the_repository->hash_algo,
+			   get_tempfile_fd(graph_layer), get_tempfile_path(graph_layer));
 	} else {
 		hold_lock_file_for_update_mode(&lk, ctx->graph_name,
 					       LOCK_DIE_ON_ERROR, 0444);
-		f = hashfd(get_lock_file_fd(&lk), get_lock_file_path(&lk));
+		f = hashfd(the_repository->hash_algo,
+			   get_lock_file_fd(&lk), get_lock_file_path(&lk));
 	}
 
 	cf = init_chunkfile(f);
@@ -2716,7 +2717,8 @@ static void graph_report(const char *fmt, ...)
 
 static int commit_graph_checksum_valid(struct commit_graph *g)
 {
-	return hashfile_checksum_valid(g->data, g->data_len);
+	return hashfile_checksum_valid(the_repository->hash_algo,
+				       g->data, g->data_len);
 }
 
 static int verify_one_commit_graph(struct repository *r,

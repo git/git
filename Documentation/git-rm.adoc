@@ -7,10 +7,10 @@ git-rm - Remove files from the working tree and from the index
 
 SYNOPSIS
 --------
-[verse]
-'git rm' [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]
-	  [--quiet] [--pathspec-from-file=<file> [--pathspec-file-nul]]
-	  [--] [<pathspec>...]
+[synopsis]
+git rm [-f | --force] [-n] [-r] [--cached] [--ignore-unmatch]
+       [--quiet] [--pathspec-from-file=<file> [--pathspec-file-nul]]
+       [--] [<pathspec>...]
 
 DESCRIPTION
 -----------
@@ -30,7 +30,7 @@ sparse-checkouts are in use (see linkgit:git-sparse-checkout[1]),
 
 OPTIONS
 -------
-<pathspec>...::
+`<pathspec>...`::
 	Files to remove.  A leading directory name (e.g. `dir` to remove
 	`dir/file1` and `dir/file2`) can be given to remove all files in
 	the directory, and recursively all sub-directories, but this
@@ -43,57 +43,57 @@ directories `d` and `d2`, there is a difference between using
 `git rm 'd*'` and `git rm 'd/*'`, as the former will also remove all
 of directory `d2`.
 +
-For more details, see the 'pathspec' entry in linkgit:gitglossary[7].
+For more details, see the _<pathspec>_ entry in linkgit:gitglossary[7].
 
--f::
---force::
+`-f`::
+`--force`::
 	Override the up-to-date check.
 
--n::
---dry-run::
+`-n`::
+`--dry-run`::
 	Don't actually remove any file(s).  Instead, just show
 	if they exist in the index and would otherwise be removed
 	by the command.
 
--r::
+`-r`::
         Allow recursive removal when a leading directory name is
         given.
 
-\--::
+`--`::
 	This option can be used to separate command-line options from
 	the list of files, (useful when filenames might be mistaken
 	for command-line options).
 
---cached::
+`--cached`::
 	Use this option to unstage and remove paths only from the index.
 	Working tree files, whether modified or not, will be
 	left alone.
 
---ignore-unmatch::
+`--ignore-unmatch`::
 	Exit with a zero status even if no files matched.
 
---sparse::
+`--sparse`::
 	Allow updating index entries outside of the sparse-checkout cone.
 	Normally, `git rm` refuses to update index entries whose paths do
 	not fit within the sparse-checkout cone. See
 	linkgit:git-sparse-checkout[1] for more.
 
--q::
---quiet::
+`-q`::
+`--quiet`::
 	`git rm` normally outputs one line (in the form of an `rm` command)
 	for each file removed. This option suppresses that output.
 
---pathspec-from-file=<file>::
-	Pathspec is passed in `<file>` instead of commandline args. If
-	`<file>` is exactly `-` then standard input is used. Pathspec
-	elements are separated by LF or CR/LF. Pathspec elements can be
+`--pathspec-from-file=<file>`::
+	Pathspec is passed in _<file>_ instead of  args. If
+	_<file>_ is exactly `-` then standard input is used. Pathspec
+	elements are separated by _LF_ or _CR_/_LF_. Pathspec elements can be
 	quoted as explained for the configuration variable `core.quotePath`
 	(see linkgit:git-config[1]). See also `--pathspec-file-nul` and
 	global `--literal-pathspecs`.
 
---pathspec-file-nul::
+`--pathspec-file-nul`::
 	Only meaningful with `--pathspec-from-file`. Pathspec elements are
-	separated with NUL character and all other characters are taken
+	separated with _NUL_ character and all other characters are taken
 	literally (including newlines and quotes).
 
 
@@ -153,15 +153,15 @@ SUBMODULES
 ----------
 Only submodules using a gitfile (which means they were cloned
 with a Git version 1.7.8 or newer) will be removed from the work
-tree, as their repository lives inside the .git directory of the
+tree, as their repository lives inside the `.git` directory of the
 superproject. If a submodule (or one of those nested inside it)
-still uses a .git directory, `git rm` will move the submodules
+still uses a `.git` directory, `git rm` moves the submodules
 git directory into the superprojects git directory to protect
-the submodule's history. If it exists the submodule.<name> section
+the submodule's history. If it exists the `submodule.<name>` section
 in the linkgit:gitmodules[5] file will also be removed and that file
-will be staged (unless --cached or -n are used).
+will be staged (unless `--cached` or `-n` are used).
 
-A submodule is considered up to date when the HEAD is the same as
+A submodule is considered up to date when the `HEAD` is the same as
 recorded in the index, no tracked files are modified and no untracked
 files that aren't ignored are present in the submodule's work tree.
 Ignored files are deemed expendable and won't stop a submodule's work

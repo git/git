@@ -17,7 +17,7 @@
 #include "midx.h"
 #include "packfile.h"
 #include "prune-packed.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "promisor-remote.h"
 #include "shallow.h"
 #include "pack.h"
@@ -1171,11 +1171,11 @@ int cmd_repack(int argc,
 				   PACK_CRUFT),
 		OPT_STRING(0, "cruft-expiration", &cruft_expiration, N_("approxidate"),
 				N_("with --cruft, expire objects older than this")),
-		OPT_MAGNITUDE(0, "combine-cruft-below-size",
-			      &combine_cruft_below_size,
-			      N_("with --cruft, only repack cruft packs smaller than this")),
-		OPT_MAGNITUDE(0, "max-cruft-size", &cruft_po_args.max_pack_size,
-				N_("with --cruft, limit the size of new cruft packs")),
+		OPT_UNSIGNED(0, "combine-cruft-below-size",
+			     &combine_cruft_below_size,
+			     N_("with --cruft, only repack cruft packs smaller than this")),
+		OPT_UNSIGNED(0, "max-cruft-size", &cruft_po_args.max_pack_size,
+			     N_("with --cruft, limit the size of new cruft packs")),
 		OPT_BOOL('d', NULL, &delete_redundant,
 				N_("remove redundant packs, and run git-prune-packed")),
 		OPT_BOOL('f', NULL, &po_args.no_reuse_delta,
@@ -1205,8 +1205,8 @@ int cmd_repack(int argc,
 				N_("limits the maximum delta depth")),
 		OPT_STRING(0, "threads", &opt_threads, N_("n"),
 				N_("limits the maximum number of threads")),
-		OPT_MAGNITUDE(0, "max-pack-size", &po_args.max_pack_size,
-				N_("maximum size of each packfile")),
+		OPT_UNSIGNED(0, "max-pack-size", &po_args.max_pack_size,
+			     N_("maximum size of each packfile")),
 		OPT_PARSE_LIST_OBJECTS_FILTER(&po_args.filter_options),
 		OPT_BOOL(0, "pack-kept-objects", &pack_kept_objects,
 				N_("repack objects in packs marked with .keep")),

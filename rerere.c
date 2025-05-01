@@ -18,7 +18,7 @@
 #include "path.h"
 #include "pathspec.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "strmap.h"
 
 #define RESOLVED 0
@@ -860,7 +860,7 @@ static int do_plain_rerere(struct repository *r,
 		string_list_insert(rr, path)->util = id;
 
 		/* Ensure that the directory exists. */
-		mkdir_in_gitdir(rerere_path(&buf, id, NULL));
+		safe_create_dir_in_gitdir(the_repository, rerere_path(&buf, id, NULL));
 	}
 
 	for (i = 0; i < rr->nr; i++)
@@ -895,7 +895,8 @@ static int is_rerere_enabled(void)
 	if (rerere_enabled < 0)
 		return rr_cache_exists;
 
-	if (!rr_cache_exists && mkdir_in_gitdir(git_path_rr_cache()))
+	if (!rr_cache_exists &&
+	    safe_create_dir_in_gitdir(the_repository, git_path_rr_cache()))
 		die(_("could not create directory '%s'"), git_path_rr_cache());
 	return 1;
 }

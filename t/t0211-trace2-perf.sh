@@ -4,6 +4,12 @@ test_description='test trace2 facility (perf target)'
 
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping trace2 tests; Perl not available'
+	test_done
+fi
+
 # Turn off any inherited trace2 settings for this test.
 sane_unset GIT_TRACE2 GIT_TRACE2_PERF GIT_TRACE2_EVENT
 sane_unset GIT_TRACE2_PERF_BRIEF

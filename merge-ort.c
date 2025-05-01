@@ -26,6 +26,7 @@
 #include "cache-tree.h"
 #include "commit.h"
 #include "commit-reach.h"
+#include "config.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "dir.h"
@@ -36,8 +37,9 @@
 #include "merge-ll.h"
 #include "match-trees.h"
 #include "mem-pool.h"
+#include "object-file.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "oid-array.h"
 #include "path.h"
 #include "promisor-remote.h"
@@ -791,7 +793,7 @@ static void path_msg(struct merge_options *opt,
 	struct strbuf tmp = STRBUF_INIT;
 
 	/* Sanity checks */
-	assert(omittable_hint ==
+	ASSERT(omittable_hint ==
 	       (!starts_with(type_short_descriptions[type], "CONFLICT") &&
 		!starts_with(type_short_descriptions[type], "ERROR")) ||
 	       type == CONFLICT_DIR_RENAME_SUGGESTED);
@@ -1642,7 +1644,7 @@ static int handle_deferred_entries(struct merge_options *opt,
 			ci = strmap_get(&opt->priv->paths, path);
 			VERIFY_CI(ci);
 
-			assert(renames->deferred[side].trivial_merges_okay &&
+			ASSERT(renames->deferred[side].trivial_merges_okay &&
 			       !strset_contains(&renames->deferred[side].target_dirs,
 						path));
 			resolve_trivial_directory_merge(ci, side);
@@ -1817,7 +1819,7 @@ static int merge_submodule(struct merge_options *opt,
 		BUG("submodule deleted on one side; this should be handled outside of merge_submodule()");
 
 	if ((sub_not_initialized = repo_submodule_init(&subrepo,
-		opt->repo, path, null_oid()))) {
+		opt->repo, path, null_oid(the_hash_algo)))) {
 		path_msg(opt, CONFLICT_SUBMODULE_NOT_INITIALIZED, 0,
 			 path, NULL, NULL, NULL,
 			 _("Failed to merge submodule %s (not checked out)"),
@@ -2199,7 +2201,7 @@ static int handle_content_merge(struct merge_options *opt,
 		two_way = ((S_IFMT & o->mode) != (S_IFMT & a->mode));
 
 		merge_status = merge_3way(opt, path,
-					  two_way ? null_oid() : &o->oid,
+					  two_way ? null_oid(the_hash_algo) : &o->oid,
 					  &a->oid, &b->oid,
 					  pathnames, extra_marker_size,
 					  &result_buf);
@@ -2231,7 +2233,7 @@ static int handle_content_merge(struct merge_options *opt,
 	} else if (S_ISGITLINK(a->mode)) {
 		int two_way = ((S_IFMT & o->mode) != (S_IFMT & a->mode));
 		clean = merge_submodule(opt, pathnames[0],
-					two_way ? null_oid() : &o->oid,
+					two_way ? null_oid(the_hash_algo) : &o->oid,
 					&a->oid, &b->oid, &result->oid);
 		if (clean < 0)
 			return -1;
@@ -2739,7 +2741,7 @@ static void apply_directory_rename_modifications(struct merge_options *opt,
 		assert(!new_ci->match_mask);
 		new_ci->dirmask = 0;
 		new_ci->stages[1].mode = 0;
-		oidcpy(&new_ci->stages[1].oid, null_oid());
+		oidcpy(&new_ci->stages[1].oid, null_oid(the_hash_algo));
 
 		/*
 		 * Now that we have the file information in new_ci, make sure
@@ -2752,7 +2754,7 @@ static void apply_directory_rename_modifications(struct merge_options *opt,
 				continue;
 			/* zero out any entries related to files */
 			ci->stages[i].mode = 0;
-			oidcpy(&ci->stages[i].oid, null_oid());
+			oidcpy(&ci->stages[i].oid, null_oid(the_hash_algo));
 		}
 
 		/* Now we want to focus on new_ci, so reassign ci to it. */
@@ -3123,7 +3125,7 @@ static int process_renames(struct merge_options *opt,
 			if (type_changed) {
 				/* rename vs. typechange */
 				/* Mark the original as resolved by removal */
-				memcpy(&oldinfo->stages[0].oid, null_oid(),
+				memcpy(&oldinfo->stages[0].oid, null_oid(the_hash_algo),
 				       sizeof(oldinfo->stages[0].oid));
 				oldinfo->stages[0].mode = 0;
 				oldinfo->filemask &= 0x06;
@@ -4006,7 +4008,7 @@ static int process_entry(struct merge_options *opt,
 			if (ci->filemask & (1 << i))
 				continue;
 			ci->stages[i].mode = 0;
-			oidcpy(&ci->stages[i].oid, null_oid());
+			oidcpy(&ci->stages[i].oid, null_oid(the_hash_algo));
 		}
 	} else if (ci->df_conflict && ci->merged.result.mode != 0) {
 		/*
@@ -4053,7 +4055,7 @@ static int process_entry(struct merge_options *opt,
 				continue;
 			/* zero out any entries related to directories */
 			new_ci->stages[i].mode = 0;
-			oidcpy(&new_ci->stages[i].oid, null_oid());
+			oidcpy(&new_ci->stages[i].oid, null_oid(the_hash_algo));
 		}
 
 		/*
@@ -4175,11 +4177,11 @@ static int process_entry(struct merge_options *opt,
 			new_ci->merged.result.mode = ci->stages[2].mode;
 			oidcpy(&new_ci->merged.result.oid, &ci->stages[2].oid);
 			new_ci->stages[1].mode = 0;
-			oidcpy(&new_ci->stages[1].oid, null_oid());
+			oidcpy(&new_ci->stages[1].oid, null_oid(the_hash_algo));
 			new_ci->filemask = 5;
 			if ((S_IFMT & b_mode) != (S_IFMT & o_mode)) {
 				new_ci->stages[0].mode = 0;
-				oidcpy(&new_ci->stages[0].oid, null_oid());
+				oidcpy(&new_ci->stages[0].oid, null_oid(the_hash_algo));
 				new_ci->filemask = 4;
 			}
 
@@ -4187,11 +4189,11 @@ static int process_entry(struct merge_options *opt,
 			ci->merged.result.mode = ci->stages[1].mode;
 			oidcpy(&ci->merged.result.oid, &ci->stages[1].oid);
 			ci->stages[2].mode = 0;
-			oidcpy(&ci->stages[2].oid, null_oid());
+			oidcpy(&ci->stages[2].oid, null_oid(the_hash_algo));
 			ci->filemask = 3;
 			if ((S_IFMT & a_mode) != (S_IFMT & o_mode)) {
 				ci->stages[0].mode = 0;
-				oidcpy(&ci->stages[0].oid, null_oid());
+				oidcpy(&ci->stages[0].oid, null_oid(the_hash_algo));
 				ci->filemask = 2;
 			}
 
@@ -4316,7 +4318,7 @@ static int process_entry(struct merge_options *opt,
 		/* Deleted on both sides */
 		ci->merged.is_null = 1;
 		ci->merged.result.mode = 0;
-		oidcpy(&ci->merged.result.oid, null_oid());
+		oidcpy(&ci->merged.result.oid, null_oid(the_hash_algo));
 		assert(!ci->df_conflict);
 		ci->merged.clean = !ci->path_conflict;
 	}
@@ -4957,9 +4959,6 @@ static void merge_start(struct merge_options *opt, struct merge_result *result)
 	}
 	trace2_region_leave("merge", "sanity checks", opt->repo);
 
-	/* Default to histogram diff.  Actually, just hardcode it...for now. */
-	opt->xdl_opts = DIFF_WITH_ALG(opt, HISTOGRAM_DIFF);
-
 	/* Handle attr direction stuff for renormalization */
 	if (opt->renormalize)
 		git_attr_set_direction(GIT_ATTR_CHECKOUT);
@@ -5324,4 +5323,162 @@ void merge_incore_recursive(struct merge_options *opt,
 
 	merge_ort_internal(opt, merge_bases, side1, side2, result);
 	trace2_region_leave("merge", "incore_recursive", opt->repo);
+}
+
+static void merge_recursive_config(struct merge_options *opt, int ui)
+{
+	char *value = NULL;
+	int renormalize = 0;
+	git_config_get_int("merge.verbosity", &opt->verbosity);
+	git_config_get_int("diff.renamelimit", &opt->rename_limit);
+	git_config_get_int("merge.renamelimit", &opt->rename_limit);
+	git_config_get_bool("merge.renormalize", &renormalize);
+	opt->renormalize = renormalize;
+	if (!git_config_get_string("diff.renames", &value)) {
+		opt->detect_renames = git_config_rename("diff.renames", value);
+		free(value);
+	}
+	if (!git_config_get_string("merge.renames", &value)) {
+		opt->detect_renames = git_config_rename("merge.renames", value);
+		free(value);
+	}
+	if (!git_config_get_string("merge.directoryrenames", &value)) {
+		int boolval = git_parse_maybe_bool(value);
+		if (0 <= boolval) {
+			opt->detect_directory_renames = boolval ?
+				MERGE_DIRECTORY_RENAMES_TRUE :
+				MERGE_DIRECTORY_RENAMES_NONE;
+		} else if (!strcasecmp(value, "conflict")) {
+			opt->detect_directory_renames =
+				MERGE_DIRECTORY_RENAMES_CONFLICT;
+		} /* avoid erroring on values from future versions of git */
+		free(value);
+	}
+	if (ui) {
+		if (!git_config_get_string("diff.algorithm", &value)) {
+			long diff_algorithm = parse_algorithm_value(value);
+			if (diff_algorithm < 0)
+				die(_("unknown value for config '%s': %s"), "diff.algorithm", value);
+			opt->xdl_opts = (opt->xdl_opts & ~XDF_DIFF_ALGORITHM_MASK) | diff_algorithm;
+			free(value);
+		}
+	}
+	git_config(git_xmerge_config, NULL);
+}
+
+static void init_merge_options(struct merge_options *opt,
+			struct repository *repo, int ui)
+{
+	const char *merge_verbosity;
+	memset(opt, 0, sizeof(struct merge_options));
+
+	opt->repo = repo;
+
+	opt->detect_renames = -1;
+	opt->detect_directory_renames = MERGE_DIRECTORY_RENAMES_CONFLICT;
+	opt->rename_limit = -1;
+
+	opt->verbosity = 2;
+	opt->buffer_output = 1;
+	strbuf_init(&opt->obuf, 0);
+
+	opt->renormalize = 0;
+
+	opt->conflict_style = -1;
+	opt->xdl_opts = DIFF_WITH_ALG(opt, HISTOGRAM_DIFF);
+
+	merge_recursive_config(opt, ui);
+	merge_verbosity = getenv("GIT_MERGE_VERBOSITY");
+	if (merge_verbosity)
+		opt->verbosity = strtol(merge_verbosity, NULL, 10);
+	if (opt->verbosity >= 5)
+		opt->buffer_output = 0;
+}
+
+void init_ui_merge_options(struct merge_options *opt,
+			struct repository *repo)
+{
+	init_merge_options(opt, repo, 1);
+}
+
+void init_basic_merge_options(struct merge_options *opt,
+			struct repository *repo)
+{
+	init_merge_options(opt, repo, 0);
+}
+
+/*
+ * For now, members of merge_options do not need deep copying, but
+ * it may change in the future, in which case we would need to update
+ * this, and also make a matching change to clear_merge_options() to
+ * release the resources held by a copied instance.
+ */
+void copy_merge_options(struct merge_options *dst, struct merge_options *src)
+{
+	*dst = *src;
+}
+
+void clear_merge_options(struct merge_options *opt UNUSED)
+{
+	; /* no-op as our copy is shallow right now */
+}
+
+int parse_merge_opt(struct merge_options *opt, const char *s)
+{
+	const char *arg;
+
+	if (!s || !*s)
+		return -1;
+	if (!strcmp(s, "ours"))
+		opt->recursive_variant = MERGE_VARIANT_OURS;
+	else if (!strcmp(s, "theirs"))
+		opt->recursive_variant = MERGE_VARIANT_THEIRS;
+	else if (!strcmp(s, "subtree"))
+		opt->subtree_shift = "";
+	else if (skip_prefix(s, "subtree=", &arg))
+		opt->subtree_shift = arg;
+	else if (!strcmp(s, "patience"))
+		opt->xdl_opts = DIFF_WITH_ALG(opt, PATIENCE_DIFF);
+	else if (!strcmp(s, "histogram"))
+		opt->xdl_opts = DIFF_WITH_ALG(opt, HISTOGRAM_DIFF);
+	else if (skip_prefix(s, "diff-algorithm=", &arg)) {
+		long value = parse_algorithm_value(arg);
+		if (value < 0)
+			return -1;
+		/* clear out previous settings */
+		DIFF_XDL_CLR(opt, NEED_MINIMAL);
+		opt->xdl_opts &= ~XDF_DIFF_ALGORITHM_MASK;
+		opt->xdl_opts |= value;
+	}
+	else if (!strcmp(s, "ignore-space-change"))
+		DIFF_XDL_SET(opt, IGNORE_WHITESPACE_CHANGE);
+	else if (!strcmp(s, "ignore-all-space"))
+		DIFF_XDL_SET(opt, IGNORE_WHITESPACE);
+	else if (!strcmp(s, "ignore-space-at-eol"))
+		DIFF_XDL_SET(opt, IGNORE_WHITESPACE_AT_EOL);
+	else if (!strcmp(s, "ignore-cr-at-eol"))
+		DIFF_XDL_SET(opt, IGNORE_CR_AT_EOL);
+	else if (!strcmp(s, "renormalize"))
+		opt->renormalize = 1;
+	else if (!strcmp(s, "no-renormalize"))
+		opt->renormalize = 0;
+	else if (!strcmp(s, "no-renames"))
+		opt->detect_renames = 0;
+	else if (!strcmp(s, "find-renames")) {
+		opt->detect_renames = 1;
+		opt->rename_score = 0;
+	}
+	else if (skip_prefix(s, "find-renames=", &arg) ||
+		 skip_prefix(s, "rename-threshold=", &arg)) {
+		if ((opt->rename_score = parse_rename_score(&arg)) == -1 || *arg != 0)
+			return -1;
+		opt->detect_renames = 1;
+	}
+	/*
+	 * Please update $__git_merge_strategy_options in
+	 * git-completion.bash when you add new options
+	 */
+	else
+		return -1;
+	return 0;
 }

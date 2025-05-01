@@ -19,7 +19,7 @@
 #include "date.h"
 #include "wildmatch.h"
 
-static const char* show_branch_usage[] = {
+static const char*const show_branch_usage[] = {
     N_("git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
        "                [--current] [--color[=<when>] | --no-color] [--sparse]\n"
        "                [--more=<n> | --list | --independent | --merge-base]\n"
@@ -667,9 +667,16 @@ int cmd_show_branch(int ac,
 			 N_("show remote-tracking branches")),
 		OPT__COLOR(&showbranch_use_color,
 			    N_("color '*!+-' corresponding to the branch")),
-		{ OPTION_INTEGER, 0, "more", &extra, N_("n"),
-			    N_("show <n> more commits after the common ancestor"),
-			    PARSE_OPT_OPTARG, NULL, (intptr_t)1 },
+		{
+			.type = OPTION_INTEGER,
+			.long_name = "more",
+			.value = &extra,
+			.precision = sizeof(extra),
+			.argh = N_("n"),
+			.help = N_("show <n> more commits after the common ancestor"),
+			.flags = PARSE_OPT_OPTARG,
+			.defval = 1,
+		},
 		OPT_SET_INT(0, "list", &extra, N_("synonym to more=-1"), -1),
 		OPT_BOOL(0, "no-name", &no_name, N_("suppress naming strings")),
 		OPT_BOOL(0, "current", &with_current_branch,

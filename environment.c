@@ -49,7 +49,6 @@ int fsync_object_files = -1;
 int use_fsync = -1;
 enum fsync_method fsync_method = FSYNC_METHOD_DEFAULT;
 enum fsync_component fsync_components = FSYNC_COMPONENTS_DEFAULT;
-unsigned long big_file_threshold = 512 * 1024 * 1024;
 char *editor_program;
 char *askpass_program;
 char *excludes_file;
@@ -107,7 +106,7 @@ int auto_comment_line_char;
 /* Parallel index stat data preload? */
 int core_preload_index = 1;
 
-/* This is set by setup_git_dir_gently() and/or git_default_config() */
+/* This is set by setup_git_directory_gently() and/or git_default_config() */
 char *git_work_tree_cfg;
 
 /*

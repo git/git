@@ -903,6 +903,59 @@ test_expect_success 'cat-file -t and -s on corrupt loose object' '
 	)
 '
 
+test_expect_success 'truncated object with --allow-unknown-type' - <<\EOT
+	objtype='a really long type name that exceeds the 32-byte limit' &&
+	blob=$(git hash-object -w --literally -t "$objtype" /dev/null) &&
+	objpath=.git/objects/$(test_oid_to_path "$blob") &&
+
+	# We want to truncate the object far enough in that we don't hit the
+	# end while inflating the first 32 bytes (since we want to have to dig
+	# for the trailing NUL of the header). But we don't want to go too far,
+	# since our header isn't very big. And of course we are counting
+	# deflated zlib bytes in the on-disk file, so it's a bit of a guess.
+	# Empirically 50 seems to work.
+	mv "$objpath" obj.bak &&
+	test_when_finished 'mv obj.bak "$objpath"' &&
+	test_copy_bytes 50 <obj.bak >"$objpath" &&
+
+	test_must_fail git cat-file --allow-unknown-type -t $blob 2>err &&
+	test_grep "unable to unpack $blob header" err
+EOT
+
+test_expect_success 'object reading handles zlib dictionary' - <<\EOT
+	echo 'content that will be recompressed' >file &&
+	blob=$(git hash-object -w file) &&
+	objpath=.git/objects/$(test_oid_to_path "$blob") &&
+
+	# Recompress a loose object using a precomputed zlib dictionary.
+	# This was originally done with:
+	#
+	#  perl -MCompress::Raw::Zlib -e '
+	#    binmode STDIN;
+	#    binmode STDOUT;
+	#    my $data = do { local $/; <STDIN> };
+	#    my $in = new Compress::Raw::Zlib::Inflate;
+	#    my $de = new Compress::Raw::Zlib::Deflate(
+	#      -Dictionary => "anything"
+	#    );
+	#    $in->inflate($data, $raw);
+	#    $de->deflate($raw, $out);
+	#    print $out;
+	#  ' <obj.bak >$objpath
+	#
+	# but we do not want to require the perl module for all test runs (nor
+	# carry a custom t/helper program that uses zlib features we don't
+	# otherwise care about).
+	mv "$objpath" obj.bak &&
+	test_when_finished 'mv obj.bak "$objpath"' &&
+	printf '\170\273\017\112\003\143' >$objpath &&
+
+	test_must_fail git cat-file blob $blob 2>err &&
+	test_grep ! 'too long' err &&
+	test_grep 'error: unable to unpack' err &&
+	test_grep 'error: inflate: needs dictionary' err
+EOT
+
 # Tests for git cat-file --follow-symlinks
 test_expect_success 'prep for symlink tests' '
 	echo_without_newline "$hello_content" >morx &&
@@ -1270,7 +1323,7 @@ extract_batch_output () {
     ' "$@"
 }
 
-test_expect_success 'cat-file --batch-all-objects --batch ignores replace' '
+test_expect_success PERL_TEST_HELPERS 'cat-file --batch-all-objects --batch ignores replace' '
 	git cat-file --batch-all-objects --batch >actual.raw &&
 	extract_batch_output $orig <actual.raw >actual &&
 	{
@@ -1323,7 +1376,7 @@ test_expect_success 'batch-command flush without --buffer' '
 	grep "^fatal:.*flush is only for --buffer mode.*" err
 '
 
-script='
+perl_script='
 use warnings;
 use strict;
 use IPC::Open2;
@@ -1345,12 +1398,115 @@ $? == 0 or die "\$?=$?";
 
 expect="$hello_oid blob $hello_size"
 
-test_expect_success PERL '--batch-check is unbuffered by default' '
-	perl -e "$script" -- --batch-check $hello_oid "$expect"
+test_lazy_prereq PERL_IPC_OPEN2 '
+	perl -MIPC::Open2 -e "exit 0"
 '
 
-test_expect_success PERL '--batch-command info is unbuffered by default' '
-	perl -e "$script" -- --batch-command $hello_oid "$expect" "info "
+test_expect_success PERL_IPC_OPEN2 '--batch-check is unbuffered by default' '
+	perl -e "$perl_script" -- --batch-check $hello_oid "$expect"
 '
+
+test_expect_success PERL_IPC_OPEN2 '--batch-command info is unbuffered by default' '
+	perl -e "$perl_script" -- --batch-command $hello_oid "$expect" "info "
+'
+
+test_expect_success 'setup for objects filter' '
+	git init repo &&
+	(
+		# Seed the repository with four different sets of objects:
+		#
+		#   - The first set is fully packed and has a bitmap.
+		#   - The second set is packed, but has no bitmap.
+		#   - The third set is loose.
+		#   - The fourth set is loose and contains big objects.
+		#
+		# This ensures that we cover all these types as expected.
+		cd repo &&
+		test_commit first &&
+		git repack -Adb &&
+		test_commit second &&
+		git repack -d &&
+		test_commit third &&
+
+		for n in 1000 10000
+		do
+			printf "%"$n"s" X >large.$n || return 1
+		done &&
+		git add large.* &&
+		git commit -m fourth
+	)
+'
+
+test_expect_success 'objects filter with unknown option' '
+	cat >expect <<-EOF &&
+	fatal: invalid filter-spec ${SQ}unknown${SQ}
+	EOF
+	test_must_fail git -C repo cat-file --filter=unknown 2>err &&
+	test_cmp expect err
+'
+
+for option in sparse:oid=1234 tree:1 sparse:path=x
+do
+	test_expect_success "objects filter with unsupported option $option" '
+		case "$option" in
+		tree:1)
+			echo "usage: objects filter not supported: ${SQ}tree${SQ}" >expect
+			;;
+		sparse:path=x)
+			echo "fatal: sparse:path filters support has been dropped" >expect
+			;;
+		*)
+			option_name=$(echo "$option" | cut -d= -f1) &&
+			printf "usage: objects filter not supported: ${SQ}%s${SQ}\n" "$option_name" >expect
+			;;
+		esac &&
+		test_must_fail git -C repo cat-file --filter=$option 2>err &&
+		test_cmp expect err
+	'
+done
+
+test_expect_success 'objects filter: disabled' '
+	git -C repo cat-file --batch-check="%(objectname)" --batch-all-objects --no-filter >actual &&
+	sort actual >actual.sorted &&
+	git -C repo rev-list --objects --no-object-names --all >expect &&
+	sort expect >expect.sorted &&
+	test_cmp expect.sorted actual.sorted
+'
+
+test_objects_filter () {
+	filter="$1"
+
+	test_expect_success "objects filter: $filter" '
+		git -C repo cat-file --batch-check="%(objectname)" --batch-all-objects --filter="$filter" >actual &&
+		sort actual >actual.sorted &&
+		git -C repo rev-list --objects --no-object-names --all --filter="$filter" --filter-provided-objects >expect &&
+		sort expect >expect.sorted &&
+		test_cmp expect.sorted actual.sorted
+	'
+
+	test_expect_success "objects filter prints excluded objects: $filter" '
+		# Find all objects that would be excluded by the current filter.
+		git -C repo rev-list --objects --no-object-names --all >all &&
+		git -C repo rev-list --objects --no-object-names --all --filter="$filter" --filter-provided-objects >filtered &&
+		sort all >all.sorted &&
+		sort filtered >filtered.sorted &&
+		comm -23 all.sorted filtered.sorted >expected.excluded &&
+		test_line_count -gt 0 expected.excluded &&
+
+		git -C repo cat-file --batch-check="%(objectname)" --filter="$filter" <expected.excluded >actual &&
+		awk "/excluded/{ print \$1 }" actual | sort >actual.excluded &&
+		test_cmp expected.excluded actual.excluded
+	'
+}
+
+test_objects_filter "blob:none"
+test_objects_filter "blob:limit=1"
+test_objects_filter "blob:limit=500"
+test_objects_filter "blob:limit=1000"
+test_objects_filter "blob:limit=1k"
+test_objects_filter "object:type=blob"
+test_objects_filter "object:type=commit"
+test_objects_filter "object:type=tag"
+test_objects_filter "object:type=tree"
 
 test_done

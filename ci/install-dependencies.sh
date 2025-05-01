@@ -31,7 +31,7 @@ alpine-*)
 	;;
 fedora-*|almalinux-*)
 	dnf -yq update >/dev/null &&
-	dnf -yq install shadow-utils sudo make gcc findutils diffutils perl python3 gettext zlib-devel expat-devel openssl-devel curl-devel pcre2-devel >/dev/null
+	dnf -yq install shadow-utils sudo make gcc findutils diffutils perl python3 gawk gettext zlib-devel expat-devel openssl-devel curl-devel pcre2-devel >/dev/null
 	;;
 ubuntu-*|i386/ubuntu-*|debian-*)
 	# Required so that apt doesn't wait for user input on certain packages.
@@ -66,16 +66,29 @@ ubuntu-*|i386/ubuntu-*|debian-*)
 		mkdir --parents "$CUSTOM_PATH"
 
 		wget --quiet --directory-prefix="$CUSTOM_PATH" \
-			"$P4WHENCE/bin.linux26x86_64/p4d" "$P4WHENCE/bin.linux26x86_64/p4"
-		chmod a+x "$CUSTOM_PATH/p4d" "$CUSTOM_PATH/p4"
+			"$P4WHENCE/bin.linux26x86_64/p4d" \
+			"$P4WHENCE/bin.linux26x86_64/p4" &&
+		chmod a+x "$CUSTOM_PATH/p4d" "$CUSTOM_PATH/p4" || {
+			rm -f "$CUSTOM_PATH/p4"
+			rm -f "$CUSTOM_PATH/p4d"
+			echo >&2 "P4 download (optional) failed"
+		}
 
-		wget --quiet "$LFSWHENCE/git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
+		wget --quiet \
+		     "$LFSWHENCE/git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz" &&
 		tar -xzf "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz" \
-			-C "$CUSTOM_PATH" --strip-components=1 "git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs"
-		rm "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
+			-C "$CUSTOM_PATH" --strip-components=1 \
+			"git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs" &&
+		rm "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz" || {
+			rm -f "$CUSTOM_PATH/git-lfs"
+			echo >&2 "LFS download (optional) failed"
+		}
 
-		wget --quiet "$JGITWHENCE" --output-document="$CUSTOM_PATH/jgit"
-		chmod a+x "$CUSTOM_PATH/jgit"
+		wget --quiet "$JGITWHENCE" --output-document="$CUSTOM_PATH/jgit" &&
+		chmod a+x "$CUSTOM_PATH/jgit" || {
+			rm -f "$CUSTOM_PATH/jgit"
+			echo >&2 "JGit download (optional) failed"
+		}
 		;;
 	esac
 	;;
@@ -119,7 +132,7 @@ StaticAnalysis)
 sparse)
 	sudo apt-get -q update -q
 	sudo apt-get -q -y install libssl-dev libcurl4-openssl-dev \
-		libexpat-dev gettext zlib1g-dev
+		libexpat-dev gettext zlib1g-dev sparse
 	;;
 Documentation)
 	sudo apt-get -q update

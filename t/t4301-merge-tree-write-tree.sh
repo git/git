@@ -4,13 +4,6 @@ test_description='git merge-tree --write-tree'
 
 . ./test-lib.sh
 
-# This test is ort-specific
-if test "$GIT_TEST_MERGE_ALGORITHM" != "ort"
-then
-	skip_all="GIT_TEST_MERGE_ALGORITHM != ort"
-	test_done
-fi
-
 test_expect_success setup '
 	test_write_lines 1 2 3 4 5 >numbers &&
 	echo hello >greeting &&

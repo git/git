@@ -277,7 +277,7 @@ static int write_pc_item_to_fd(struct parallel_checkout_item *pc_item, int fd,
 	ssize_t wrote;
 
 	/* Sanity check */
-	assert(is_eligible_for_parallel_checkout(pc_item->ce, &pc_item->ca));
+	ASSERT(is_eligible_for_parallel_checkout(pc_item->ce, &pc_item->ca));
 
 	filter = get_stream_filter_ca(&pc_item->ca, &pc_item->ce->oid);
 	if (filter) {

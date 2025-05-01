@@ -17,7 +17,7 @@
 #include "packfile.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "path.h"
 #include "read-cache-ll.h"
 #include "replace-object.h"
@@ -332,7 +332,7 @@ static void check_unreachable_object(struct object *obj)
 				describe_object(&obj->oid));
 			FILE *f;
 
-			if (safe_create_leading_directories_const(filename)) {
+			if (safe_create_leading_directories_const(the_repository, filename)) {
 				error(_("could not create lost-found"));
 				free(filename);
 				return;
@@ -400,12 +400,12 @@ static void check_connectivity(void)
 	}
 
 	/* Look up all the requirements, warn about missing objects.. */
-	max = get_max_object_index();
+	max = get_max_object_index(the_repository);
 	if (verbose)
 		fprintf_ln(stderr, _("Checking connectivity (%d objects)"), max);
 
 	for (i = 0; i < max; i++) {
-		struct object *obj = get_indexed_object(i);
+		struct object *obj = get_indexed_object(the_repository, i);
 
 		if (obj)
 			check_object(obj);
@@ -626,7 +626,7 @@ static int fsck_loose(const struct object_id *oid, const char *path, void *data)
 	void *contents = NULL;
 	int eaten;
 	struct object_info oi = OBJECT_INFO_INIT;
-	struct object_id real_oid = *null_oid();
+	struct object_id real_oid = *null_oid(the_hash_algo);
 	int err = 0;
 
 	strbuf_reset(&cb_data->obj_type);

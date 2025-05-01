@@ -7,6 +7,12 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 TEST_CREATE_REPO_NO_TEMPLATE=1
 . ./test-lib.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping blame colors tests; Perl not available'
+	test_done
+fi
+
 PROG='git blame -c'
 . "$TEST_DIRECTORY"/annotate-tests.sh
 
@@ -101,7 +107,7 @@ test_expect_success 'set up abbrev tests' '
 		expect=$1 && shift &&
 		echo $sha1 | cut -c 1-$expect >expect &&
 		git blame "$@" abbrev.t >actual &&
-		perl -lne "/[0-9a-f]+/ and print \$&" <actual >actual.sha &&
+		sed -n "s/^[\^]\{0,1\}\([0-9a-f][0-9a-f]*\).*/\1/p" actual >actual.sha &&
 		test_cmp expect actual.sha
 	}
 '

@@ -387,15 +387,18 @@ int format_tracking_info(struct branch *branch, struct strbuf *sb,
 			 int show_divergence_advice);
 
 struct ref *get_local_heads(void);
+
 /*
  * Find refs from a list which are likely to be pointed to by the given HEAD
- * ref. If 'all' is false, returns the most likely ref; otherwise, returns a
- * list of all candidate refs. If no match is found (or 'head' is NULL),
- * returns NULL. All returns are newly allocated and should be freed.
+ * ref. If REMOTE_GUESS_HEAD_ALL is set, return a list of all candidate refs;
+ * otherwise, return the most likely ref. If no match is found (or 'head' is
+ * NULL), returns NULL. All returns are newly allocated and should be freed.
  */
+#define REMOTE_GUESS_HEAD_ALL	(1 << 0)
+#define REMOTE_GUESS_HEAD_QUIET (1 << 1)
 struct ref *guess_remote_head(const struct ref *head,
 			      const struct ref *refs,
-			      int all);
+			      unsigned flags);
 
 /* Return refs which no longer exist on remote */
 struct ref *get_stale_heads(struct refspec *rs, struct ref *fetch_map);

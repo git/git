@@ -1,14 +1,12 @@
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "gettext.h"
 #include "pack-revindex.h"
-#include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "packfile.h"
 #include "strbuf.h"
 #include "trace2.h"
 #include "parse.h"
+#include "repository.h"
 #include "midx.h"
 #include "csum-file.h"
 
@@ -137,7 +135,7 @@ static void create_pack_revindex(struct packed_git *p)
 	const unsigned num_ent = p->num_objects;
 	unsigned i;
 	const char *index = p->index_data;
-	const unsigned hashsz = the_hash_algo->rawsz;
+	const unsigned hashsz = p->repo->hash_algo->rawsz;
 
 	ALLOC_ARRAY(p->revindex, num_ent + 1);
 	index += 4 * 256;
@@ -193,7 +191,11 @@ static char *pack_revindex_filename(struct packed_git *p)
 }
 
 #define RIDX_HEADER_SIZE (12)
-#define RIDX_MIN_SIZE (RIDX_HEADER_SIZE + (2 * the_hash_algo->rawsz))
+
+static size_t ridx_min_size(const struct git_hash_algo *algo)
+{
+	return RIDX_HEADER_SIZE + (2 * algo->rawsz);
+}
 
 struct revindex_header {
 	uint32_t signature;
@@ -201,7 +203,8 @@ struct revindex_header {
 	uint32_t hash_id;
 };
 
-static int load_revindex_from_disk(char *revindex_name,
+static int load_revindex_from_disk(const struct git_hash_algo *algo,
+				   char *revindex_name,
 				   uint32_t num_objects,
 				   const uint32_t **data_p, size_t *len_p)
 {
@@ -228,12 +231,12 @@ static int load_revindex_from_disk(char *revindex_name,
 
 	revindex_size = xsize_t(st.st_size);
 
-	if (revindex_size < RIDX_MIN_SIZE) {
+	if (revindex_size < ridx_min_size(algo)) {
 		ret = error(_("reverse-index file %s is too small"), revindex_name);
 		goto cleanup;
 	}
 
-	if (revindex_size - RIDX_MIN_SIZE != st_mult(sizeof(uint32_t), num_objects)) {
+	if (revindex_size - ridx_min_size(algo) != st_mult(sizeof(uint32_t), num_objects)) {
 		ret = error(_("reverse-index file %s is corrupt"), revindex_name);
 		goto cleanup;
 	}
@@ -279,7 +282,8 @@ int load_pack_revindex_from_disk(struct packed_git *p)
 
 	revindex_name = pack_revindex_filename(p);
 
-	ret = load_revindex_from_disk(revindex_name,
+	ret = load_revindex_from_disk(p->repo->hash_algo,
+				      revindex_name,
 				      p->num_objects,
 				      &p->revindex_map,
 				      &p->revindex_size);
@@ -322,7 +326,8 @@ int verify_pack_revindex(struct packed_git *p)
 	if (!p->revindex_map || !p->revindex_data)
 		return res;
 
-	if (!hashfile_checksum_valid((const unsigned char *)p->revindex_map, p->revindex_size)) {
+	if (!hashfile_checksum_valid(p->repo->hash_algo,
+				     (const unsigned char *)p->revindex_map, p->revindex_size)) {
 		error(_("invalid checksum"));
 		res = -1;
 	}
@@ -374,19 +379,26 @@ int load_midx_revindex(struct multi_pack_index *m)
 		 * not want to accidentally call munmap() in the middle of the
 		 * MIDX.
 		 */
-		trace2_data_string("load_midx_revindex", the_repository,
+		trace2_data_string("load_midx_revindex", m->repo,
 				   "source", "midx");
 		m->revindex_data = (const uint32_t *)m->chunk_revindex;
 		return 0;
 	}
 
-	trace2_data_string("load_midx_revindex", the_repository,
+	trace2_data_string("load_midx_revindex", m->repo,
 			   "source", "rev");
 
-	get_midx_filename_ext(m->repo->hash_algo, &revindex_name, m->object_dir,
-			      get_midx_checksum(m), MIDX_EXT_REV);
+	if (m->has_chain)
+		get_split_midx_filename_ext(m->repo->hash_algo, &revindex_name,
+					    m->object_dir, get_midx_checksum(m),
+					    MIDX_EXT_REV);
+	else
+		get_midx_filename_ext(m->repo->hash_algo, &revindex_name,
+				      m->object_dir, get_midx_checksum(m),
+				      MIDX_EXT_REV);
 
-	ret = load_revindex_from_disk(revindex_name.buf,
+	ret = load_revindex_from_disk(m->repo->hash_algo,
+				      revindex_name.buf,
 				      m->num_objects,
 				      &m->revindex_map,
 				      &m->revindex_len);
@@ -418,7 +430,7 @@ int offset_to_pack_pos(struct packed_git *p, off_t ofs, uint32_t *pos)
 {
 	unsigned lo, hi;
 
-	if (load_pack_revindex(the_repository, p) < 0)
+	if (load_pack_revindex(p->repo, p) < 0)
 		return -1;
 
 	lo = 0;
@@ -464,18 +476,22 @@ off_t pack_pos_to_offset(struct packed_git *p, uint32_t pos)
 	if (p->revindex)
 		return p->revindex[pos].offset;
 	else if (pos == p->num_objects)
-		return p->pack_size - the_hash_algo->rawsz;
+		return p->pack_size - p->repo->hash_algo->rawsz;
 	else
 		return nth_packed_object_offset(p, pack_pos_to_index(p, pos));
 }
 
 uint32_t pack_pos_to_midx(struct multi_pack_index *m, uint32_t pos)
 {
+	while (m && pos < m->num_objects_in_base)
+		m = m->base_midx;
+	if (!m)
+		BUG("NULL multi-pack-index for object position: %"PRIu32, pos);
 	if (!m->revindex_data)
 		BUG("pack_pos_to_midx: reverse index not yet loaded");
-	if (m->num_objects <= pos)
+	if (m->num_objects + m->num_objects_in_base <= pos)
 		BUG("pack_pos_to_midx: out-of-bounds object at %"PRIu32, pos);
-	return get_be32(m->revindex_data + pos);
+	return get_be32(m->revindex_data + pos - m->num_objects_in_base);
 }
 
 struct midx_pack_key {
@@ -491,7 +507,8 @@ static int midx_pack_order_cmp(const void *va, const void *vb)
 	const struct midx_pack_key *key = va;
 	struct multi_pack_index *midx = key->midx;
 
-	uint32_t versus = pack_pos_to_midx(midx, (uint32_t*)vb - (const uint32_t *)midx->revindex_data);
+	size_t pos = (uint32_t *)vb - (const uint32_t *)midx->revindex_data;
+	uint32_t versus = pack_pos_to_midx(midx, pos + midx->num_objects_in_base);
 	uint32_t versus_pack = nth_midxed_pack_int_id(midx, versus);
 	off_t versus_offset;
 
@@ -529,9 +546,9 @@ static int midx_key_to_pack_pos(struct multi_pack_index *m,
 {
 	uint32_t *found;
 
-	if (key->pack >= m->num_packs)
+	if (key->pack >= m->num_packs + m->num_packs_in_base)
 		BUG("MIDX pack lookup out of bounds (%"PRIu32" >= %"PRIu32")",
-		    key->pack, m->num_packs);
+		    key->pack, m->num_packs + m->num_packs_in_base);
 	/*
 	 * The preferred pack sorts first, so determine its identifier by
 	 * looking at the first object in pseudo-pack order.
@@ -551,7 +568,8 @@ static int midx_key_to_pack_pos(struct multi_pack_index *m,
 	if (!found)
 		return -1;
 
-	*pos = found - m->revindex_data;
+	*pos = (found - m->revindex_data) + m->num_objects_in_base;
+
 	return 0;
 }
 
@@ -559,9 +577,13 @@ int midx_to_pack_pos(struct multi_pack_index *m, uint32_t at, uint32_t *pos)
 {
 	struct midx_pack_key key;
 
+	while (m && at < m->num_objects_in_base)
+		m = m->base_midx;
+	if (!m)
+		BUG("NULL multi-pack-index for object position: %"PRIu32, at);
 	if (!m->revindex_data)
 		BUG("midx_to_pack_pos: reverse index not yet loaded");
-	if (m->num_objects <= at)
+	if (m->num_objects + m->num_objects_in_base <= at)
 		BUG("midx_to_pack_pos: out-of-bounds object at %"PRIu32, at);
 
 	key.pack = nth_midxed_pack_int_id(m, at);

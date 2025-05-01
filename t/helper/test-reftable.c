@@ -2,10 +2,11 @@
 #include "hash.h"
 #include "hex.h"
 #include "reftable/system.h"
+#include "reftable/reftable-constants.h"
 #include "reftable/reftable-error.h"
 #include "reftable/reftable-merged.h"
-#include "reftable/reftable-reader.h"
 #include "reftable/reftable-stack.h"
+#include "reftable/reftable-table.h"
 #include "test-tool.h"
 
 static void print_help(void)
@@ -18,6 +19,72 @@ static void print_help(void)
 	       "  -6 sha256 hash format\n"
 	       "  -h this help\n"
 	       "\n");
+}
+
+static int dump_blocks(const char *tablename)
+{
+	struct reftable_table_iterator ti = { 0 };
+	struct reftable_block_source src = { 0 };
+	struct reftable_table *table = NULL;
+	uint8_t section_type = 0;
+	int err;
+
+	err = reftable_block_source_from_file(&src, tablename);
+	if (err < 0)
+		goto done;
+
+	err = reftable_table_new(&table, &src, tablename);
+	if (err < 0)
+		goto done;
+
+	err = reftable_table_iterator_init(&ti, table);
+	if (err < 0)
+		goto done;
+
+	printf("header:\n");
+	printf("  block_size: %d\n", table->block_size);
+
+	while (1) {
+		const struct reftable_block *block;
+
+		err = reftable_table_iterator_next(&ti, &block);
+		if (err < 0)
+			goto done;
+		if (err > 0)
+			break;
+
+		if (block->block_type != section_type) {
+			const char *section;
+			switch (block->block_type) {
+			case REFTABLE_BLOCK_TYPE_LOG:
+				section = "log";
+				break;
+			case REFTABLE_BLOCK_TYPE_REF:
+				section = "ref";
+				break;
+			case REFTABLE_BLOCK_TYPE_OBJ:
+				section = "obj";
+				break;
+			case REFTABLE_BLOCK_TYPE_INDEX:
+				section = "idx";
+				break;
+			default:
+				err = -1;
+				goto done;
+			}
+
+			section_type = block->block_type;
+			printf("%s:\n", section);
+		}
+
+		printf("  - length: %u\n", block->restart_off);
+		printf("    restarts: %u\n", block->restart_count);
+	}
+
+done:
+	reftable_table_iterator_release(&ti);
+	reftable_table_decref(table);
+	return err;
 }
 
 static int dump_table(struct reftable_merged_table *mt)
@@ -126,19 +193,19 @@ static int dump_reftable(const char *tablename)
 {
 	struct reftable_block_source src = { 0 };
 	struct reftable_merged_table *mt = NULL;
-	struct reftable_reader *r = NULL;
+	struct reftable_table *table = NULL;
 	int err;
 
 	err = reftable_block_source_from_file(&src, tablename);
 	if (err < 0)
 		goto done;
 
-	err = reftable_reader_new(&r, &src, tablename);
+	err = reftable_table_new(&table, &src, tablename);
 	if (err < 0)
 		goto done;
 
-	err = reftable_merged_table_new(&mt, &r, 1,
-					reftable_reader_hash_id(r));
+	err = reftable_merged_table_new(&mt, &table, 1,
+					reftable_table_hash_id(table));
 	if (err < 0)
 		goto done;
 
@@ -146,7 +213,7 @@ static int dump_reftable(const char *tablename)
 
 done:
 	reftable_merged_table_free(mt);
-	reftable_reader_decref(r);
+	reftable_table_decref(table);
 	return err;
 }
 
@@ -184,7 +251,7 @@ int cmd__dump_reftable(int argc, const char **argv)
 	arg = argv[1];
 
 	if (opt_dump_blocks) {
-		err = reftable_reader_print_blocks(arg);
+		err = dump_blocks(arg);
 	} else if (opt_dump_table) {
 		err = dump_reftable(arg);
 	} else if (opt_dump_stack) {

@@ -12,7 +12,7 @@
 #include "refs.h"
 #include "refspec.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "path.h"
 #include "commit.h"
 #include "diff.h"
@@ -143,8 +143,8 @@ static struct remote *make_remote(struct remote_state *remote_state,
 	ret->prune = -1;  /* unspecified */
 	ret->prune_tags = -1;  /* unspecified */
 	ret->name = xstrndup(name, len);
-	refspec_init(&ret->push, REFSPEC_PUSH);
-	refspec_init(&ret->fetch, REFSPEC_FETCH);
+	refspec_init_push(&ret->push);
+	refspec_init_fetch(&ret->fetch);
 	string_list_init_dup(&ret->server_options);
 
 	ALLOC_GROW(remote_state->remotes, remote_state->remotes_nr + 1,
@@ -2297,7 +2297,7 @@ struct ref *get_local_heads(void)
 
 struct ref *guess_remote_head(const struct ref *head,
 			      const struct ref *refs,
-			      int all)
+			      unsigned flags)
 {
 	const struct ref *r;
 	struct ref *list = NULL;
@@ -2315,8 +2315,10 @@ struct ref *guess_remote_head(const struct ref *head,
 		return copy_ref(find_ref_by_name(refs, head->symref));
 
 	/* If a remote branch exists with the default branch name, let's use it. */
-	if (!all) {
-		char *default_branch = repo_default_branch_name(the_repository, 0);
+	if (!(flags & REMOTE_GUESS_HEAD_ALL)) {
+		char *default_branch =
+			repo_default_branch_name(the_repository,
+						 flags & REMOTE_GUESS_HEAD_QUIET);
 		char *ref = xstrfmt("refs/heads/%s", default_branch);
 
 		r = find_ref_by_name(refs, ref);
@@ -2339,7 +2341,7 @@ struct ref *guess_remote_head(const struct ref *head,
 		    oideq(&r->old_oid, &head->old_oid)) {
 			*tail = copy_ref(r);
 			tail = &((*tail)->next);
-			if (!all)
+			if (!(flags & REMOTE_GUESS_HEAD_ALL))
 				break;
 		}
 	}

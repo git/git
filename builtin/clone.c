@@ -25,7 +25,7 @@
 #include "refs.h"
 #include "refspec.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "tree.h"
 #include "tree-walk.h"
 #include "unpack-trees.h"
@@ -452,7 +452,9 @@ static struct ref *wanted_peer_refs(struct clone_opts *opts,
 		if (head)
 			tail_link_ref(head, &tail);
 		if (option_single_branch)
-			refs = to_free = guess_remote_head(head, refs, 0);
+			refs = to_free =
+				guess_remote_head(head, refs,
+						  REMOTE_GUESS_HEAD_QUIET);
 	} else if (option_single_branch) {
 		local_refs = NULL;
 		tail = &local_refs;
@@ -692,7 +694,7 @@ static int checkout(int submodule_progress, int filter_submodules,
 	if (write_locked_index(the_repository->index, &lock_file, COMMIT_LOCK))
 		die(_("unable to write new index file"));
 
-	err |= run_hooks_l(the_repository, "post-checkout", oid_to_hex(null_oid()),
+	err |= run_hooks_l(the_repository, "post-checkout", oid_to_hex(null_oid(the_hash_algo)),
 			   oid_to_hex(&oid), "1", NULL);
 
 	if (!err && (option_recurse_submodules.nr > 0)) {
@@ -930,9 +932,16 @@ int cmd_clone(int argc,
 			 N_("don't use local hardlinks, always copy")),
 		OPT_BOOL('s', "shared", &option_shared,
 			 N_("setup as shared repository")),
-		{ OPTION_CALLBACK, 0, "recurse-submodules", &option_recurse_submodules,
-		  N_("pathspec"), N_("initialize submodules in the clone"),
-		  PARSE_OPT_OPTARG, recurse_submodules_cb, (intptr_t)"." },
+		{
+			.type = OPTION_CALLBACK,
+			.long_name = "recurse-submodules",
+			.value = &option_recurse_submodules,
+			.argh = N_("pathspec"),
+			.help = N_("initialize submodules in the clone"),
+			.flags = PARSE_OPT_OPTARG,
+			.callback = recurse_submodules_cb,
+			.defval = (intptr_t)".",
+		},
 		OPT_ALIAS(0, "recursive", "recurse-submodules"),
 		OPT_INTEGER('j', "jobs", &max_jobs,
 			    N_("number of submodules cloned in parallel")),
@@ -1090,7 +1099,7 @@ int cmd_clone(int argc,
 	sigchain_push_common(remove_junk_on_signal);
 
 	if (!option_bare) {
-		if (safe_create_leading_directories_const(work_tree) < 0)
+		if (safe_create_leading_directories_const(the_repository, work_tree) < 0)
 			die_errno(_("could not create leading directories of '%s'"),
 				  work_tree);
 		if (dest_exists)
@@ -1111,7 +1120,7 @@ int cmd_clone(int argc,
 			junk_git_dir_flags |= REMOVE_DIR_KEEP_TOPLEVEL;
 		junk_git_dir = git_dir;
 	}
-	if (safe_create_leading_directories_const(git_dir) < 0)
+	if (safe_create_leading_directories_const(the_repository, git_dir) < 0)
 		die(_("could not create leading directories of '%s'"), git_dir);
 
 	if (0 <= option_verbosity) {
@@ -1525,7 +1534,8 @@ int cmd_clone(int argc,
 	}
 
 	remote_head = find_ref_by_name(refs, "HEAD");
-	remote_head_points_at = guess_remote_head(remote_head, mapped_refs, 0);
+	remote_head_points_at = guess_remote_head(remote_head, mapped_refs,
+						  REMOTE_GUESS_HEAD_QUIET);
 
 	if (option_branch) {
 		our_head_points_at = find_remote_branch(mapped_refs, option_branch);

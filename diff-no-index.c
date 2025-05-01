@@ -113,7 +113,8 @@ static void populate_from_stdin(struct diff_filespec *s)
 	populate_common(s, &buf);
 }
 
-static struct diff_filespec *noindex_filespec(const char *name, int mode,
+static struct diff_filespec *noindex_filespec(const struct git_hash_algo *algop,
+					      const char *name, int mode,
 					      enum special special)
 {
 	struct diff_filespec *s;
@@ -121,7 +122,7 @@ static struct diff_filespec *noindex_filespec(const char *name, int mode,
 	if (!name)
 		name = "/dev/null";
 	s = alloc_filespec(name);
-	fill_filespec(s, null_oid(), 0, mode);
+	fill_filespec(s, null_oid(algop), 0, mode);
 	if (special == SPECIAL_STDIN)
 		populate_from_stdin(s);
 	else if (special == SPECIAL_PIPE)
@@ -129,7 +130,7 @@ static struct diff_filespec *noindex_filespec(const char *name, int mode,
 	return s;
 }
 
-static int queue_diff(struct diff_options *o,
+static int queue_diff(struct diff_options *o, const struct git_hash_algo *algop,
 		      const char *name1, const char *name2, int recursing)
 {
 	int mode1 = 0, mode2 = 0;
@@ -145,14 +146,14 @@ static int queue_diff(struct diff_options *o,
 
 		if (S_ISDIR(mode1)) {
 			/* 2 is file that is created */
-			d1 = noindex_filespec(NULL, 0, SPECIAL_NONE);
-			d2 = noindex_filespec(name2, mode2, special2);
+			d1 = noindex_filespec(algop, NULL, 0, SPECIAL_NONE);
+			d2 = noindex_filespec(algop, name2, mode2, special2);
 			name2 = NULL;
 			mode2 = 0;
 		} else {
 			/* 1 is file that is deleted */
-			d1 = noindex_filespec(name1, mode1, special1);
-			d2 = noindex_filespec(NULL, 0, SPECIAL_NONE);
+			d1 = noindex_filespec(algop, name1, mode1, special1);
+			d2 = noindex_filespec(algop, NULL, 0, SPECIAL_NONE);
 			name1 = NULL;
 			mode1 = 0;
 		}
@@ -217,7 +218,7 @@ static int queue_diff(struct diff_options *o,
 				n2 = buffer2.buf;
 			}
 
-			ret = queue_diff(o, n1, n2, 1);
+			ret = queue_diff(o, algop, n1, n2, 1);
 		}
 		string_list_clear(&p1, 0);
 		string_list_clear(&p2, 0);
@@ -234,8 +235,8 @@ static int queue_diff(struct diff_options *o,
 			SWAP(special1, special2);
 		}
 
-		d1 = noindex_filespec(name1, mode1, special1);
-		d2 = noindex_filespec(name2, mode2, special2);
+		d1 = noindex_filespec(algop, name1, mode1, special1);
+		d2 = noindex_filespec(algop, name2, mode2, special2);
 		diff_queue(&diff_queued_diff, d1, d2);
 		return 0;
 	}
@@ -297,9 +298,8 @@ static const char * const diff_no_index_usage[] = {
 	NULL
 };
 
-int diff_no_index(struct rev_info *revs,
-		  int implicit_no_index,
-		  int argc, const char **argv)
+int diff_no_index(struct rev_info *revs, const struct git_hash_algo *algop,
+		  int implicit_no_index, int argc, const char **argv)
 {
 	int i, no_index;
 	int ret = 1;
@@ -354,7 +354,7 @@ int diff_no_index(struct rev_info *revs,
 	setup_diff_pager(&revs->diffopt);
 	revs->diffopt.flags.exit_with_status = 1;
 
-	if (queue_diff(&revs->diffopt, paths[0], paths[1], 0))
+	if (queue_diff(&revs->diffopt, algop, paths[0], paths[1], 0))
 		goto out;
 	diff_set_mnemonic_prefix(&revs->diffopt, "1/", "2/");
 	diffcore_std(&revs->diffopt);

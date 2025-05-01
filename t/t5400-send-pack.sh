@@ -275,7 +275,7 @@ extract_ref_advertisement () {
 	'
 }
 
-test_expect_success 'receive-pack de-dupes .have lines' '
+test_expect_success PERL_TEST_HELPERS 'receive-pack de-dupes .have lines' '
 	git init shared &&
 	git -C shared commit --allow-empty -m both &&
 	git clone -s shared fork &&

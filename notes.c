@@ -6,8 +6,9 @@
 #include "environment.h"
 #include "hex.h"
 #include "notes.h"
+#include "object-file.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "utf8.h"
 #include "strbuf.h"
 #include "tree-walk.h"
@@ -1353,7 +1354,7 @@ int copy_note(struct notes_tree *t,
 	if (note)
 		return add_note(t, to_obj, note, combine_notes);
 	else if (existing_note)
-		return add_note(t, to_obj, null_oid(), combine_notes);
+		return add_note(t, to_obj, null_oid(the_hash_algo), combine_notes);
 
 	return 0;
 }

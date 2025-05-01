@@ -5,7 +5,7 @@
 #include "environment.h"
 #include "tag.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "commit.h"
 #include "tree.h"
 #include "blob.h"

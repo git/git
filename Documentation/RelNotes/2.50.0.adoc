@@ -10,6 +10,49 @@ UI, Workflows & Features
  * "git repack" learned "--combine-cruft-below-size" option that
    controls how cruft-packs are combined.
 
+ * TCP keepalive behaviour on http transports can now be configured by
+   calling cURL library.
+
+ * Incrementally updating multi-pack index files.
+
+ * "git reflog" learns "drop" subcommand, that discards the entire
+   reflog data for a ref.
+
+ * A new userdiff driver for ".ini" format configuration files has
+   been added.
+
+ * The job to coalesce loose objects into packfiles in "git
+   maintenance" now has configurable batch size.
+
+ * "git clone" still gave the message about the default branch name;
+   this message has been turned into an advice message that can be
+   turned off.
+
+ * "git rev-list" learns machine-parsable output format that delimits
+   each field with NUL.
+
+ * "git maintenance" learns a new task to expire reflog entries.
+
+ * Auth-related (and unrelated) error handling in send-email has been
+   made more robust.
+
+ * Updating multiple references have only been possible in all-or-none
+   fashion with transactions, but it can be more efficient to batch
+   multiple updates even when some of them are allowed to fail in a
+   best-effort manner.  A new "best effort batches of updates" mode
+   has been introduced.
+
+ * "git help --build-options" reports SHA-1 and SHA-256 backends used
+   in the build.
+
+ * "git cat-file --batch" and friends learned to allow "--filter=" to
+   omit certain objects, just like the transport layer does.
+
+ * "git blame --porcelain" mode now talks about unblamable lines and
+   lines that are blamed to an ignored commit.
+
+ * The build procedure installs bash (but not zsh) completion script.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -37,8 +80,52 @@ Performance, Internal Implementation, Development Support etc.
 
  * Enable -Wunreachable-code for developer builds.
 
- * Build update.
-   (merge 7c8cd9c158 es/meson-building-docs-requires-perl later to maint).
+ * Ensure what we write in assert() does not have side effects,
+   and introduce ASSERT() macro to mark those that cannot be
+   mechanically checked for lack of side effects.
+
+ * Give more meaningful error return values from block writer layer of
+   the reftable ref-API backend.
+
+ * Make the code in reftable library less reliant on the service
+   routines it used to borrow from Git proper, to make it easier to
+   use by external users of the library.
+
+ * CI update.
+
+ * The object layer has been updated to take an explicit repository
+   instance as a parameter in more code paths.
+
+ * Some warnings from "-Wsign-compare" for builtin/rm.c have been
+   squelched.
+
+ * A few traditional unit tests have been rewritten to use the clar
+   framework.
+
+ * Some warnings from "-Wsign-compare" for pathspec.c have been
+   squelched.
+
+ * "make test" used to have a hard dependency on (basic) Perl; tests
+   have been rewritten help environment with NO_PERL test the build as
+   much as possible.
+
+ * Remove remnants of the recursive merge strategy backend, which was
+   superseded by the ort merge strategy.
+
+ * Optimize the code to dedup references recorded in a bundle file.
+
+ * Update parse-options API to catch mistakes to pass address of an
+   integral variable of a wrong type/size.
+
+ * Since a call to repo_config() can be called with repo set to NULL
+   these days, a command that is marked as RUN_SETUP in the builtin
+   command table does not have to check repo with NULL before making
+   the call.
+
+ * Overhaul of the reftable API.
+
+ * Reduce requirement for Perl in our documentation build and a few
+   scripts.
 
 
 Fixes since v2.49
@@ -88,6 +175,73 @@ Fixes since v2.49
  * "Dubious ownership" checks on Windows has been tightened up.
    (merge 5bb88e89ef js/mingw-admins-are-special later to maint).
 
+ * Layout configuration in vimdiff backend didn't work as advertised,
+   which has been corrected.
+   (merge 93bab2d04b fr/vimdiff-layout-fixes later to maint).
+
+ * Fix our use of zlib corner cases.
+   (merge 1cb2f293f5 jk/zlib-inflate-fixes later to maint).
+
+ * Fix lockfile contention in reftable code on Windows.
+   (merge 0a3dceabf1 ps/mingw-creat-excl-fix later to maint).
+
+ * "git-merge-file" documentation source, which has lines that look
+   like conflict markers, lacked custom conflict marker size defined,
+   which has been corrected..
+   (merge d3b5832381 pw/custom-conflict-marker-size-for-merge-related-docs later to maint).
+
+ * Squelch false-positive from sparse.
+   (merge da87b58014 dd/sparse-glibc-workaround later to maint).
+
+ * Adjust to the deprecation of use of Ubuntu 20.04 GitHub Actions CI.
+   (merge 832d9f6d0b js/ci-github-update-ubuntu later to maint).
+
+ * Work around CI breakage due to fedora base image getting updated.
+   (merge 8a471a663b js/ci-fedora-gawk later to maint).
+
+ * A ref transaction corner case fix.
+   (merge b9fadeead7 jt/ref-transaction-abort-fix later to maint).
+
+ * Random build fixes.
+   (merge 85e1d6819f ps/misc-build-fixes later to maint).
+
+ * "git fetch [<remote>]" with only the configured fetch refspec
+   should be the only thing to update refs/remotes/<remote>/HEAD,
+   but the code was overly eager to do so in other cases.
+
+ * Incorrect sorting of refs with bytes with high-bit set on platforms
+   with signed char led to a BUG, which has been corrected.
+
+ * "make perf" fixes.
+   (merge 1665f12fa0 pb/perf-test-fixes later to maint).
+
+ * Doc mark-up updates.
+   (merge 5a5565ec44 ja/doc-reset-mv-rm-markup-updates later to maint).
+
+ * Work around false positive from CodeQL checker.
+   (merge 0f558141ed js/range-check-codeql-workaround later to maint).
+
+ * "git log --{left,right}-only A...B", when A and B does not share
+   any common ancestor, now behaves as expected.
+   (merge e7ef4be7c2 mh/left-right-limited later to maint).
+
+ * Document the convention to disable hooks altogether by setting the
+   hooksPath configuration variable to /dev/nulll
+   (merge 1b2eee94f1 ds/doc-disable-hooks later to maint).
+
+ * Make sure outage of third-party sites that supply P4, Git-LFS, and
+   JGit we use for testing would not prevent our CI jobs from running
+   at all.
+
+ * Various build tweaks, including CSPRNG selection on some platforms.
+   (merge cdda67de03 rj/build-tweaks later to maint).
+
+ * Developer support fix..
+   (merge 32b74b9809 js/git-perf-env-override later to maint).
+
+ * Fix for scheduled maintenance tasks on platforms using launchctl.
+   (merge eb2d7beb0e jh/gc-launchctl-schedule-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
    (merge 2bfd3b3685 ab/decorate-code-cleanup later to maint).
@@ -101,3 +255,15 @@ Fixes since v2.49
    (merge ee434e1807 pw/doc-pack-refs-markup-fix later to maint).
    (merge c000918eb7 tb/bitamp-typofix later to maint).
    (merge fa8cd29676 js/imap-send-peer-cert-verify later to maint).
+   (merge 98b423bc1c rs/clear-commit-marks-simplify later to maint).
+   (merge 133d065dd6 ta/bulk-checkin-signed-compare-false-warning-fix later to maint).
+   (merge d2827dc31e es/meson-build-skip-coccinelle later to maint).
+   (merge ee8edb7156 dk/vimdiff-doc-fix later to maint).
+   (merge 107d889303 md/t1403-path-is-file later to maint).
+   (merge abd4192b07 js/comma-semicolon-confusion later to maint).
+   (merge 27b7264206 ab/environment-clean-header later to maint).
+   (merge ff4a749354 as/typofix-in-env-h-header later to maint).
+   (merge 86eef3541e az/tighten-string-array-constness later to maint).
+   (merge 25292c301d lo/remove-log-reencode-from-rev-info later to maint).
+   (merge 1aa50636fd jk/p5332-testfix later to maint).
+   (merge 42cf4ac552 ps/ci-resurrect-p4-on-github later to maint).

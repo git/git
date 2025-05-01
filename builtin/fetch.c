@@ -14,7 +14,7 @@
 #include "refs.h"
 #include "refspec.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "oidset.h"
 #include "oid-array.h"
 #include "commit.h"
@@ -586,7 +586,7 @@ static struct ref *get_ref_map(struct remote *remote,
 		struct refspec_item tag_refspec;
 
 		/* also fetch all tags */
-		refspec_item_init(&tag_refspec, TAG_REFSPEC, 0);
+		refspec_item_init_push(&tag_refspec, TAG_REFSPEC);
 		get_fetch_map(remote_refs, &tag_refspec, &tail, 0);
 		refspec_item_clear(&tag_refspec);
 	} else if (tags == TAGS_DEFAULT && *autotags) {
@@ -687,7 +687,7 @@ static int s_update_ref(const char *action,
 		switch (ref_transaction_commit(our_transaction, &err)) {
 		case 0:
 			break;
-		case TRANSACTION_NAME_CONFLICT:
+		case REF_TRANSACTION_ERROR_NAME_CONFLICT:
 			ret = STORE_REF_ERROR_DF_CONFLICT;
 			goto out;
 		default:
@@ -1638,13 +1638,10 @@ static int set_head(const struct ref *remote_refs, struct remote *remote)
 
 	get_fetch_map(remote_refs, &refspec, &fetch_map_tail, 0);
 	matches = guess_remote_head(find_ref_by_name(remote_refs, "HEAD"),
-				    fetch_map, 1);
+				    fetch_map, REMOTE_GUESS_HEAD_ALL);
 	for (ref = matches; ref; ref = ref->next) {
 		string_list_append(&heads, strip_refshead(ref->name));
 	}
-
-	if (follow_remote_head == FOLLOW_REMOTE_NEVER)
-		goto cleanup;
 
 	if (!heads.nr)
 		result = 1;
@@ -1691,21 +1688,6 @@ cleanup:
 	return result;
 }
 
-static int uses_remote_tracking(struct transport *transport, struct refspec *rs)
-{
-	if (!remote_is_configured(transport->remote, 0))
-		return 0;
-
-	if (!rs->nr)
-		rs = &transport->remote->fetch;
-
-	for (int i = 0; i < rs->nr; i++)
-		if (rs->items[i].dst)
-			return 1;
-
-	return 0;
-}
-
 static int do_fetch(struct transport *transport,
 		    struct refspec *rs,
 		    const struct fetch_config *config)
@@ -1720,6 +1702,7 @@ static int do_fetch(struct transport *transport,
 		TRANSPORT_LS_REFS_OPTIONS_INIT;
 	struct fetch_head fetch_head = { 0 };
 	struct strbuf err = STRBUF_INIT;
+	int do_set_head = 0;
 
 	if (tags == TAGS_DEFAULT) {
 		if (transport->remote->fetch_tags == 2)
@@ -1740,9 +1723,12 @@ static int do_fetch(struct transport *transport,
 	} else {
 		struct branch *branch = branch_get(NULL);
 
-		if (transport->remote->fetch.nr)
+		if (transport->remote->fetch.nr) {
 			refspec_ref_prefixes(&transport->remote->fetch,
 					     &transport_ls_refs_options.ref_prefixes);
+			if (transport->remote->follow_remote_head != FOLLOW_REMOTE_NEVER)
+				do_set_head = 1;
+		}
 		if (branch_has_merge_config(branch) &&
 		    !strcmp(branch->remote_name, transport->remote->name)) {
 			int i;
@@ -1765,8 +1751,7 @@ static int do_fetch(struct transport *transport,
 		strvec_push(&transport_ls_refs_options.ref_prefixes,
 			    "refs/tags/");
 
-	if (transport_ls_refs_options.ref_prefixes.nr &&
-	    uses_remote_tracking(transport, rs))
+	if (do_set_head)
 		strvec_push(&transport_ls_refs_options.ref_prefixes,
 			    "HEAD");
 
@@ -1859,8 +1844,15 @@ static int do_fetch(struct transport *transport,
 			goto cleanup;
 
 		retcode = ref_transaction_commit(transaction, &err);
-		if (retcode)
+		if (retcode) {
+			/*
+			 * Explicitly handle transaction cleanup to avoid
+			 * aborting an already closed transaction.
+			 */
+			ref_transaction_free(transaction);
+			transaction = NULL;
 			goto cleanup;
+		}
 	}
 
 	commit_fetch_head(&fetch_head);
@@ -1918,12 +1910,13 @@ static int do_fetch(struct transport *transport,
 				  "you need to specify exactly one branch with the --set-upstream option"));
 		}
 	}
-	if (set_head(remote_refs, transport->remote))
-		;
+	if (do_set_head) {
 		/*
-		 * Way too many cases where this can go wrong
-		 * so let's just fail silently for now.
+		 * Way too many cases where this can go wrong so let's just
+		 * ignore errors and fail silently for now.
 		 */
+		set_head(remote_refs, transport->remote);
+	}
 
 cleanup:
 	if (retcode) {
@@ -2359,8 +2352,14 @@ int cmd_fetch(int argc,
 		OPT_SET_INT_F(0, "refetch", &refetch,
 			      N_("re-fetch without negotiating common commits"),
 			      1, PARSE_OPT_NONEG),
-		{ OPTION_STRING, 0, "submodule-prefix", &submodule_prefix, N_("dir"),
-			   N_("prepend this to submodule path output"), PARSE_OPT_HIDDEN },
+		{
+			.type = OPTION_STRING,
+			.long_name = "submodule-prefix",
+			.value = &submodule_prefix,
+			.argh = N_("dir"),
+			.help = N_("prepend this to submodule path output"),
+			.flags = PARSE_OPT_HIDDEN,
+		},
 		OPT_CALLBACK_F(0, "recurse-submodules-default",
 			   &recurse_submodules_default, N_("on-demand"),
 			   N_("default for recursive fetching of submodules "

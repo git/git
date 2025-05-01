@@ -292,7 +292,6 @@ struct rev_info {
 	struct string_list *ref_message_ids;
 	int		add_signoff;
 	const char	*extra_headers;
-	const char	*log_reencode;
 	const char	*subject_prefix;
 	int		patch_name_max;
 	int		no_inline;
@@ -488,8 +487,6 @@ void put_revision_mark(const struct rev_info *revs,
 void mark_parents_uninteresting(struct rev_info *revs, struct commit *commit);
 void mark_tree_uninteresting(struct repository *r, struct tree *tree);
 void mark_trees_uninteresting_sparse(struct repository *r, struct oidset *trees);
-
-void show_object_with_name(FILE *, struct object *, const char *);
 
 /**
  * Helpers to check if a reference should be excluded.

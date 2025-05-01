@@ -28,7 +28,7 @@
 #include "line-log.h"
 #include "progress.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "pager.h"
 #include "blame.h"
 #include "refs.h"
@@ -36,17 +36,17 @@
 #include "tag.h"
 #include "write-or-die.h"
 
-static char blame_usage[] = N_("git blame [<options>] [<rev-opts>] [<rev>] [--] <file>");
-static char annotate_usage[] = N_("git annotate [<options>] [<rev-opts>] [<rev>] [--] <file>");
+static const char blame_usage[] = N_("git blame [<options>] [<rev-opts>] [<rev>] [--] <file>");
+static const char annotate_usage[] = N_("git annotate [<options>] [<rev-opts>] [<rev>] [--] <file>");
 
-static const char *blame_opt_usage[] = {
+static const char *const blame_opt_usage[] = {
 	blame_usage,
 	"",
 	N_("<rev-opts> are documented in git-rev-list(1)"),
 	NULL
 };
 
-static const char *annotate_opt_usage[] = {
+static const char *const annotate_opt_usage[] = {
 	annotate_usage,
 	"",
 	N_("<rev-opts> are documented in git-rev-list(1)"),
@@ -351,6 +351,19 @@ static void emit_porcelain_details(struct blame_origin *suspect, int repeat)
 		write_filename_info(suspect);
 }
 
+/*
+ * Information which needs to be printed per-line goes here. Any
+ * information which can be clubbed on a commit/file level, should
+ * be printed via 'emit_one_suspect_detail()'.
+ */
+static void emit_porcelain_per_line_details(struct blame_entry *ent)
+{
+	if (mark_unblamable_lines && ent->unblamable)
+		puts("unblamable");
+	if (mark_ignored_lines && ent->ignored)
+		puts("ignored");
+}
+
 static void emit_porcelain(struct blame_scoreboard *sb, struct blame_entry *ent,
 			   int opt)
 {
@@ -367,6 +380,7 @@ static void emit_porcelain(struct blame_scoreboard *sb, struct blame_entry *ent,
 	       ent->lno + 1,
 	       ent->num_lines);
 	emit_porcelain_details(suspect, repeat);
+	emit_porcelain_per_line_details(ent);
 
 	cp = blame_nth_line(sb, ent->lno);
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {
@@ -377,6 +391,7 @@ static void emit_porcelain(struct blame_scoreboard *sb, struct blame_entry *ent,
 			       ent->lno + 1 + cnt);
 			if (repeat)
 				emit_porcelain_details(suspect, 1);
+			emit_porcelain_per_line_details(ent);
 		}
 		putchar('\t');
 		do {
@@ -929,7 +944,7 @@ int cmd_blame(int argc,
 	long anchor;
 	long num_lines = 0;
 	const char *str_usage = cmd_is_annotate ? annotate_usage : blame_usage;
-	const char **opt_usage = cmd_is_annotate ? annotate_opt_usage : blame_opt_usage;
+	const char *const *opt_usage = cmd_is_annotate ? annotate_opt_usage : blame_opt_usage;
 
 	setup_default_color_by_age();
 	git_config(git_blame_config, &output_option);

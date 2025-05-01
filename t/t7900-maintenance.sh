@@ -306,6 +306,34 @@ test_expect_success 'maintenance.loose-objects.auto' '
 	test_subcommand git prune-packed --quiet <trace-loC
 '
 
+test_expect_success 'maintenance.loose-objects.batchSize' '
+	git init loose-batch &&
+
+	# This creates three objects per commit.
+	test_commit_bulk -C loose-batch 34 &&
+	pack=$(ls loose-batch/.git/objects/pack/pack-*.pack) &&
+	index="${pack%pack}idx" &&
+	rm "$index" &&
+	git -C loose-batch unpack-objects <"$pack" &&
+	git -C loose-batch config maintenance.loose-objects.batchSize 50 &&
+
+	GIT_PROGRESS_DELAY=0 \
+	git -C loose-batch maintenance run --no-quiet --task=loose-objects 2>err &&
+	grep "Enumerating objects: 50, done." err &&
+
+	GIT_PROGRESS_DELAY=0 \
+	git -C loose-batch maintenance run --no-quiet --task=loose-objects 2>err &&
+	grep "Enumerating objects: 50, done." err &&
+
+	GIT_PROGRESS_DELAY=0 \
+	git -C loose-batch maintenance run --no-quiet --task=loose-objects 2>err &&
+	grep "Enumerating objects: 2, done." err &&
+
+	GIT_PROGRESS_DELAY=0 \
+	git -C loose-batch maintenance run --no-quiet --task=loose-objects 2>err &&
+	test_must_be_empty err
+'
+
 test_expect_success 'incremental-repack task' '
 	packDir=.git/objects/pack &&
 	for i in $(test_seq 1 5)
@@ -445,6 +473,24 @@ test_expect_success 'pack-refs task' '
 	GIT_TRACE2_EVENT="$(pwd)/pack-refs.txt" \
 		git maintenance run --task=pack-refs &&
 	test_subcommand git pack-refs --all --prune <pack-refs.txt
+'
+
+test_expect_success 'reflog-expire task' '
+	GIT_TRACE2_EVENT="$(pwd)/reflog-expire.txt" \
+		git maintenance run --task=reflog-expire &&
+	test_subcommand git reflog expire --all <reflog-expire.txt
+'
+
+test_expect_success 'reflog-expire task --auto only packs when exceeding limits' '
+	git reflog expire --all --expire=now &&
+	test_commit reflog-one &&
+	test_commit reflog-two &&
+	GIT_TRACE2_EVENT="$(pwd)/reflog-expire-auto.txt" \
+		git -c maintenance.reflog-expire.auto=3 maintenance run --auto --task=reflog-expire &&
+	test_subcommand ! git reflog expire --all <reflog-expire-auto.txt &&
+	GIT_TRACE2_EVENT="$(pwd)/reflog-expire-auto.txt" \
+		git -c maintenance.reflog-expire.auto=2 maintenance run --auto --task=reflog-expire &&
+	test_subcommand git reflog expire --all <reflog-expire-auto.txt
 '
 
 test_expect_success '--auto and --schedule incompatible' '

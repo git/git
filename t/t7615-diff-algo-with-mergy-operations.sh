@@ -22,8 +22,6 @@ test_expect_success 'setup' '
 	git tag c2
 '
 
-GIT_TEST_MERGE_ALGORITHM=recursive
-
 test_expect_success 'merge c2 to c1 with recursive merge strategy fails with the current default myers diff algorithm' '
 	git reset --hard c1 &&
 	test_must_fail git merge -s recursive -Xdiff-algorithm=myers c2

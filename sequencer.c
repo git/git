@@ -13,7 +13,7 @@
 #include "dir.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "object.h"
 #include "pager.h"
 #include "commit.h"
@@ -265,8 +265,8 @@ static struct update_ref_record *init_update_ref_record(const char *ref)
 
 	CALLOC_ARRAY(rec, 1);
 
-	oidcpy(&rec->before, null_oid());
-	oidcpy(&rec->after, null_oid());
+	oidcpy(&rec->before, null_oid(the_hash_algo));
+	oidcpy(&rec->after, null_oid(the_hash_algo));
 
 	/* This may fail, but that's fine, we will keep the null OID. */
 	refs_read_ref(get_main_ref_store(the_repository), ref, &rec->before);
@@ -667,7 +667,7 @@ static int fast_forward_to(struct repository *r,
 	if (!transaction ||
 	    ref_transaction_update(transaction, "HEAD",
 				   to, unborn && !is_rebase_i(opts) ?
-				   null_oid() : from, NULL, NULL,
+				   null_oid(the_hash_algo) : from, NULL, NULL,
 				   0, sb.buf, &err) ||
 	    ref_transaction_commit(transaction, &err)) {
 		ref_transaction_free(transaction);
@@ -781,28 +781,19 @@ static int do_recursive_merge(struct repository *r,
 	for (i = 0; i < opts->xopts.nr; i++)
 		parse_merge_opt(&o, opts->xopts.v[i]);
 
-	if (!opts->strategy || !strcmp(opts->strategy, "ort")) {
-		memset(&result, 0, sizeof(result));
-		merge_incore_nonrecursive(&o, base_tree, head_tree, next_tree,
-					    &result);
-		show_output = !is_rebase_i(opts) || !result.clean;
-		/*
-		 * TODO: merge_switch_to_result will update index/working tree;
-		 * we only really want to do that if !result.clean || this is
-		 * the final patch to be picked.  But determining this is the
-		 * final patch would take some work, and "head_tree" would need
-		 * to be replace with the tree the index matched before we
-		 * started doing any picks.
-		 */
-		merge_switch_to_result(&o, head_tree, &result, 1, show_output);
-		clean = result.clean;
-	} else {
-		ensure_full_index(r->index);
-		clean = merge_trees(&o, head_tree, next_tree, base_tree);
-		if (is_rebase_i(opts) && clean <= 0)
-			fputs(o.obuf.buf, stdout);
-		strbuf_release(&o.obuf);
-	}
+	memset(&result, 0, sizeof(result));
+	merge_incore_nonrecursive(&o, base_tree, head_tree, next_tree, &result);
+	show_output = !is_rebase_i(opts) || !result.clean;
+	/*
+	 * TODO: merge_switch_to_result will update index/working tree;
+	 * we only really want to do that if !result.clean || this is
+	 * the final patch to be picked.  But determining this is the
+	 * final patch would take some work, and "head_tree" would need
+	 * to be replace with the tree the index matched before we
+	 * started doing any picks.
+	 */
+	merge_switch_to_result(&o, head_tree, &result, 1, show_output);
+	clean = result.clean;
 	if (clean < 0) {
 		rollback_lock_file(&index_lock);
 		return clean;
@@ -1301,7 +1292,7 @@ int update_head_with_reflog(const struct commit *old_head,
 						  0, err);
 	if (!transaction ||
 	    ref_transaction_update(transaction, "HEAD", new_head,
-				   old_head ? &old_head->object.oid : null_oid(),
+				   old_head ? &old_head->object.oid : null_oid(the_hash_algo),
 				   NULL, NULL, 0, sb.buf, err) ||
 	    ref_transaction_commit(transaction, err)) {
 		ret = -1;
@@ -4328,20 +4319,13 @@ static int do_merge(struct repository *r,
 	o.branch2 = ref_name.buf;
 	o.buffer_output = 2;
 
-	if (!opts->strategy || !strcmp(opts->strategy, "ort")) {
-		/*
-		 * TODO: Should use merge_incore_recursive() and
-		 * merge_switch_to_result(), skipping the call to
-		 * merge_switch_to_result() when we don't actually need to
-		 * update the index and working copy immediately.
-		 */
-		ret = merge_ort_recursive(&o,
-					  head_commit, merge_commit, bases,
-					  &i);
-	} else {
-		ret = merge_recursive(&o, head_commit, merge_commit, bases,
-				      &i);
-	}
+	/*
+	 * TODO: Should use merge_incore_recursive() and
+	 * merge_switch_to_result(), skipping the call to
+	 * merge_switch_to_result() when we don't actually need to
+	 * update the index and working copy immediately.
+	 */
+	ret = merge_ort_recursive(&o, head_commit, merge_commit, bases, &i);
 	if (ret <= 0)
 		fputs(o.obuf.buf, stdout);
 	strbuf_release(&o.obuf);
@@ -4352,7 +4336,7 @@ static int do_merge(struct repository *r,
 		goto leave_merge;
 	}
 	/*
-	 * The return value of merge_recursive() is 1 on clean, and 0 on
+	 * The return value of merge_ort_recursive() is 1 on clean, and 0 on
 	 * unclean merge.
 	 *
 	 * Let's reverse that, so that do_merge() returns 0 upon success and
@@ -4411,7 +4395,7 @@ static int write_update_refs_state(struct string_list *refs_to_oids)
 		goto cleanup;
 	}
 
-	if (safe_create_leading_directories(path)) {
+	if (safe_create_leading_directories(the_repository, path)) {
 		result = error(_("unable to create leading directories of %s"),
 			       path);
 		goto cleanup;
@@ -4677,13 +4661,13 @@ static void create_autostash_internal(struct repository *r,
 		strbuf_add_unique_abbrev(&buf, &oid, DEFAULT_ABBREV);
 
 		if (path) {
-			if (safe_create_leading_directories_const(path))
+			if (safe_create_leading_directories_const(the_repository, path))
 				die(_("Could not create directory for '%s'"),
 				    path);
 			write_file(path, "%s", oid_to_hex(&oid));
 		} else {
 			refs_update_ref(get_main_ref_store(r), "", refname,
-					&oid, null_oid(), 0, UPDATE_REFS_DIE_ON_ERR);
+					&oid, null_oid(the_hash_algo), 0, UPDATE_REFS_DIE_ON_ERR);
 		}
 
 		printf(_("Created autostash: %s\n"), buf.buf);
@@ -4965,7 +4949,7 @@ static int pick_commits(struct repository *r,
 
 	ctx->reflog_message = sequencer_reflog_action(opts);
 	if (opts->allow_ff)
-		assert(!(opts->signoff || opts->no_commit ||
+		ASSERT(!(opts->signoff || opts->no_commit ||
 			 opts->record_origin || should_edit(opts) ||
 			 opts->committer_date_is_author_date ||
 			 opts->ignore_date));
