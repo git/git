@@ -510,18 +510,8 @@ method _update_repo_state {} {
 	delete_this
 }
 
-git-version proc _detach_HEAD {log new} {
-	>= 1.5.3 {
-		git update-ref --no-deref -m $log HEAD $new
-	}
-	default {
-		set p [gitdir HEAD]
-		file delete $p
-		set fd [open $p w]
-		fconfigure $fd -translation lf -encoding utf-8
-		puts $fd $new
-		close $fd
-	}
+proc _detach_HEAD {log new} {
+	git update-ref --no-deref -m $log HEAD $new
 }
 
 method _confirm_reset {cur} {
