@@ -669,8 +669,7 @@ proc git_write {args} {
 }
 
 proc githook_read {hook_name args} {
-	set cmd [concat git hook run --ignore-missing $hook_name -- $args 2>@1]
-	return [_open_stdout_stderr $cmd]
+	git_read hook run --ignore-missing $hook_name -- $args 2>@1
 }
 
 proc kill_file_process {fd} {
