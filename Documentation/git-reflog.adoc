@@ -138,7 +138,7 @@ Options for `delete`
 used with `expire`.
 
 Options for `drop`
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~
 
 --all::
 	Drop the reflogs of all references from all worktrees.
