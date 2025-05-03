@@ -27,7 +27,7 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 	if {[catch {
 			set name ""
 			set email ""
-			set fd [git_read cat-file commit $curHEAD]
+			set fd [git_read [list cat-file commit $curHEAD]]
 			fconfigure $fd -encoding binary -translation lf
 			# By default commits are assumed to be in utf-8
 			set enc utf-8
@@ -325,7 +325,7 @@ proc commit_commitmsg_wait {fd_ph curHEAD msg_p} {
 
 proc commit_writetree {curHEAD msg_p} {
 	ui_status [mc "Committing changes..."]
-	set fd_wt [git_read write-tree]
+	set fd_wt [git_read [list write-tree]]
 	fileevent $fd_wt readable \
 		[list commit_committree $fd_wt $curHEAD $msg_p]
 }
@@ -350,7 +350,7 @@ proc commit_committree {fd_wt curHEAD msg_p} {
 	# -- Verify this wasn't an empty change.
 	#
 	if {$commit_type eq {normal}} {
-		set fd_ot [git_read cat-file commit $PARENT]
+		set fd_ot [git_read [list cat-file commit $PARENT]]
 		fconfigure $fd_ot -encoding binary -translation lf
 		set old_tree [gets $fd_ot]
 		close $fd_ot

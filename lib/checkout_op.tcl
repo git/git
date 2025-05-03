@@ -304,12 +304,12 @@ The rescan will be automatically started now.
 		_readtree $this
 	} else {
 		ui_status [mc "Refreshing file status..."]
-		set fd [git_read update-index \
+		set fd [git_read [list update-index \
 			-q \
 			--unmerged \
 			--ignore-missing \
 			--refresh \
-			]
+			]]
 		fconfigure $fd -blocking 0 -translation binary
 		fileevent $fd readable [cb _refresh_wait $fd]
 	}
@@ -345,7 +345,7 @@ method _readtree {} {
 		[mc "Updating working directory to '%s'..." [_name $this]] \
 		[mc "files checked out"]]
 
-	set fd [git_read read-tree \
+	set fd [git_read [list read-tree \
 		-m \
 		-u \
 		-v \
@@ -353,7 +353,7 @@ method _readtree {} {
 		$HEAD \
 		$new_hash \
 		2>@1 \
-		]
+		]]
 	fconfigure $fd -blocking 0 -translation binary
 	fileevent $fd readable [cb _readtree_wait $fd $status_bar_operation]
 }
@@ -573,7 +573,7 @@ method _confirm_reset {cur} {
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	set fd [git_read rev-list --pretty=oneline $cur ^$new_hash]
+	set fd [git_read [list rev-list --pretty=oneline $cur ^$new_hash]]
 	while {[gets $fd line] > 0} {
 		set abbr [string range $line 0 7]
 		set subj [string range $line 41 end]

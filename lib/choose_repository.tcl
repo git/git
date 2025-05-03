@@ -818,9 +818,9 @@ method _clone_refs {} {
 		error_popup [mc "Not a Git repository: %s" [file tail $origin_url]]
 		return 0
 	}
-	set fd_in [git_read for-each-ref \
+	set fd_in [git_read [list for-each-ref \
 		--tcl \
-		{--format=list %(refname) %(objectname) %(*objectname)}]
+		{--format=list %(refname) %(objectname) %(*objectname)}]]
 	cd $pwd
 
 	set fd [safe_open_file [gitdir packed-refs] w]
@@ -953,14 +953,14 @@ method _do_clone_checkout {HEAD} {
 		[mc "files"]]
 
 	set readtree_err {}
-	set fd [git_read read-tree \
+	set fd [git_read [list read-tree \
 		-m \
 		-u \
 		-v \
 		HEAD \
 		HEAD \
 		2>@1 \
-		]
+		]]
 	fconfigure $fd -blocking 0 -translation binary
 	fileevent $fd readable [cb _readtree_wait $fd]
 }

@@ -93,7 +93,7 @@ method _init {} {
 method exec {cmd {after {}}} {
 	lappend cmd 2>@1
 	if {[lindex $cmd 0] eq {git}} {
-		set fd_f [eval git_read [lrange $cmd 1 end]]
+		set fd_f [git_read [lrange $cmd 1 end]]
 	} else {
 		set fd_f [_open_stdout_stderr $cmd]
 	}

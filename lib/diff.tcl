@@ -338,7 +338,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 		}
 	}
 
-	if {[catch {set fd [eval git_read_nice $cmd]} err]} {
+	if {[catch {set fd [git_read_nice $cmd]} err]} {
 		set diff_active 0
 		unlock_index
 		ui_status [mc "Unable to display %s" [escape_path $path]]
@@ -617,7 +617,7 @@ proc apply_or_revert_hunk {x y revert} {
 
 	if {[catch {
 		set enc [get_path_encoding $current_diff_path]
-		set p [eval git_write $apply_cmd]
+		set p [git_write $apply_cmd]
 		fconfigure $p -translation binary -encoding $enc
 		puts -nonewline $p $wholepatch
 		close $p} err]} {
@@ -853,7 +853,7 @@ proc apply_or_revert_range_or_line {x y revert} {
 
 	if {[catch {
 		set enc [get_path_encoding $current_diff_path]
-		set p [eval git_write $apply_cmd]
+		set p [git_write $apply_cmd]
 		fconfigure $p -translation binary -encoding $enc
 		puts -nonewline $p $current_diff_header
 		puts -nonewline $p $wholepatch
@@ -890,7 +890,7 @@ proc undo_last_revert {} {
 
 	if {[catch {
 		set enc $last_revert_enc
-		set p [eval git_write $apply_cmd]
+		set p [git_write $apply_cmd]
 		fconfigure $p -translation binary -encoding $enc
 		puts -nonewline $p $last_revert
 		close $p} err]} {

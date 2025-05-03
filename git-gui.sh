@@ -621,7 +621,7 @@ proc _lappend_nice {cmd_var} {
 }
 
 proc git {args} {
-	set fd [eval [list git_read] $args]
+	set fd [git_read $args]
 	fconfigure $fd -translation binary -encoding utf-8
 	set result [string trimright [read $fd] "\n"]
 	close $fd
@@ -642,34 +642,34 @@ proc _open_stdout_stderr {cmd} {
 	return $fd
 }
 
-proc git_read {args} {
-	set cmdp [_git_cmd [lindex $args 0]]
-	set args [lrange $args 1 end]
+proc git_read {cmd} {
+	set cmdp [_git_cmd [lindex $cmd 0]]
+	set cmd [lrange $cmd 1 end]
 
-	return [_open_stdout_stderr [concat $cmdp $args]]
+	return [_open_stdout_stderr [concat $cmdp $cmd]]
 }
 
-proc git_read_nice {args} {
+proc git_read_nice {cmd} {
 	set opt [list]
 
 	_lappend_nice opt
 
-	set cmdp [_git_cmd [lindex $args 0]]
-	set args [lrange $args 1 end]
+	set cmdp [_git_cmd [lindex $cmd 0]]
+	set cmd [lrange $cmd 1 end]
 
-	return [_open_stdout_stderr [concat $opt $cmdp $args]]
+	return [_open_stdout_stderr [concat $opt $cmdp $cmd]]
 }
 
-proc git_write {args} {
-	set cmdp [_git_cmd [lindex $args 0]]
-	set args [lrange $args 1 end]
+proc git_write {cmd} {
+	set cmdp [_git_cmd [lindex $cmd 0]]
+	set cmd [lrange $cmd 1 end]
 
-	_trace_exec [concat $cmdp $args]
-	return [open [concat [list | ] $cmdp $args] w]
+	_trace_exec [concat $cmdp $cmd]
+	return [open [concat [list | ] $cmdp $cmd] w]
 }
 
 proc githook_read {hook_name args} {
-	git_read hook run --ignore-missing $hook_name -- $args 2>@1
+	git_read [concat [list hook run --ignore-missing $hook_name --] $args 2>@1]
 }
 
 proc kill_file_process {fd} {
@@ -1110,10 +1110,10 @@ proc _parse_config {arr_name args} {
 	array unset arr
 	set buf {}
 	catch {
-		set fd_rc [eval \
-			[list git_read config] \
+		set fd_rc [git_read \
+			[concat config \
 			$args \
-			[list --null --list]]
+			--null --list]]
 		fconfigure $fd_rc -translation binary -encoding utf-8
 		set buf [read $fd_rc]
 		close $fd_rc
@@ -1482,12 +1482,12 @@ proc rescan {after {honor_trustmtime 1}} {
 	} else {
 		set rescan_active 1
 		ui_status [mc "Refreshing file status..."]
-		set fd_rf [git_read update-index \
+		set fd_rf [git_read [list update-index \
 			-q \
 			--unmerged \
 			--ignore-missing \
 			--refresh \
-			]
+			]]
 		fconfigure $fd_rf -blocking 0 -translation binary
 		fileevent $fd_rf readable \
 			[list rescan_stage2 $fd_rf $after]
@@ -1527,11 +1527,11 @@ proc rescan_stage2 {fd after} {
 	set rescan_active 2
 	ui_status [mc "Scanning for modified files ..."]
 	if {[git-version >= "1.7.2"]} {
-		set fd_di [git_read diff-index --cached --ignore-submodules=dirty -z [PARENT]]
+		set fd_di [git_read [list diff-index --cached --ignore-submodules=dirty -z [PARENT]]]
 	} else {
-		set fd_di [git_read diff-index --cached -z [PARENT]]
+		set fd_di [git_read [list diff-index --cached -z [PARENT]]]
 	}
-	set fd_df [git_read diff-files -z]
+	set fd_df [git_read [list diff-files -z]]
 
 	fconfigure $fd_di -blocking 0 -translation binary -encoding binary
 	fconfigure $fd_df -blocking 0 -translation binary -encoding binary
@@ -1540,7 +1540,7 @@ proc rescan_stage2 {fd after} {
 	fileevent $fd_df readable [list read_diff_files $fd_df $after]
 
 	if {[is_config_true gui.displayuntracked]} {
-		set fd_lo [eval git_read ls-files --others -z $ls_others]
+		set fd_lo [git_read [concat ls-files --others -z $ls_others]]
 		fconfigure $fd_lo -blocking 0 -translation binary -encoding binary
 		fileevent $fd_lo readable [list read_ls_others $fd_lo $after]
 		incr rescan_active
