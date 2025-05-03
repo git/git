@@ -617,7 +617,7 @@ method _exec_blame {cur_w cur_d options cur_s} {
 	}
 
 	lappend options -- $path
-	set fd [eval git_read --nice blame $options]
+	set fd [eval git_read_nice blame $options]
 	fconfigure $fd -blocking 0 -translation lf -encoding utf-8
 	fileevent $fd readable [cb _read_blame $fd $cur_w $cur_d]
 	set current_fd $fd

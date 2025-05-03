@@ -643,22 +643,16 @@ proc _open_stdout_stderr {cmd} {
 }
 
 proc git_read {args} {
+	set cmdp [_git_cmd [lindex $args 0]]
+	set args [lrange $args 1 end]
+
+	return [_open_stdout_stderr [concat $cmdp $args]]
+}
+
+proc git_read_nice {args} {
 	set opt [list]
 
-	while {1} {
-		switch -- [lindex $args 0] {
-		--nice {
-			_lappend_nice opt
-		}
-
-		default {
-			break
-		}
-
-		}
-
-		set args [lrange $args 1 end]
-	}
+	_lappend_nice opt
 
 	set cmdp [_git_cmd [lindex $args 0]]
 	set args [lrange $args 1 end]
@@ -667,28 +661,11 @@ proc git_read {args} {
 }
 
 proc git_write {args} {
-	set opt [list]
-
-	while {1} {
-		switch -- [lindex $args 0] {
-		--nice {
-			_lappend_nice opt
-		}
-
-		default {
-			break
-		}
-
-		}
-
-		set args [lrange $args 1 end]
-	}
-
 	set cmdp [_git_cmd [lindex $args 0]]
 	set args [lrange $args 1 end]
 
-	_trace_exec [concat $opt $cmdp $args]
-	return [open [concat [list | ] $opt $cmdp $args] w]
+	_trace_exec [concat $cmdp $args]
+	return [open [concat [list | ] $cmdp $args] w]
 }
 
 proc githook_read {hook_name args} {

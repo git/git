@@ -338,7 +338,7 @@ proc start_show_diff {cont_info {add_opts {}}} {
 		}
 	}
 
-	if {[catch {set fd [eval git_read --nice $cmd]} err]} {
+	if {[catch {set fd [eval git_read_nice $cmd]} err]} {
 		set diff_active 0
 		unlock_index
 		ui_status [mc "Unable to display %s" [escape_path $path]]
