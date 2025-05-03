@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Apr 2025, #08; Mon, 28)
-X-master-at: f65182a99e545d2f2bc22e6c1c2da192133b16a3
-X-next-at: 0cc8ee98dca069ce15f484c08da347f605be3239
+Subject: What's cooking in git.git (May 2025, #01; Fri, 2)
+X-master-at: 6c0bd1fc70efaf053abe4e57c976afdc72d15377
+X-next-at: a8402760328a6f9879ce40263fe306538782a5b0
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Apr 2025, #08; Mon, 28)
+What's cooking in git.git (May 2025, #01; Fri, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,7 +46,232 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* as/typofix-in-env-h-header (2025-04-18) 1 commit
+  (merged to 'next' on 2025-04-23 at a9954f6cec)
+ + environment: fix typo: 'setup_git_directory_gently'
+
+ Typofix.
+ source: <20250418185855.52950-1-abhijeet.nkt@gmaiil.com>
+
+
+* az/tighten-string-array-constness (2025-04-21) 1 commit
+  (merged to 'next' on 2025-04-23 at 5a2b439731)
+ + global: mark usage strings and string tables const
+
+ Code clean-up.
+ source: <daj53eijkqzsjy5cvuxchea4qm3pbiu673ehetihfffyvwzhgs@tarta.nabijaczleweli.xyz>
+
+
+* jh/gc-launchctl-schedule-fix (2025-04-23) 1 commit
+  (merged to 'next' on 2025-04-23 at ab4f2e0c26)
+ + maintenance: fix launchctl calendar intervals
+
+ Fix for scheduled maintenance tasks on platforms using launchctl.
+ source: <20250421054633.231069-2-joshiheinrichs@gmail.com>
+
+
+* jk/p5332-testfix (2025-04-22) 1 commit
+  (merged to 'next' on 2025-04-24 at eafff4d7b7)
+ + p5332: drop "+" from --stdin-packs input
+
+ A test fix.
+ source: <20250422111632.GA1855088@coredump.intra.peff.net>
+
+
+* js/git-perf-env-override (2025-04-20) 1 commit
+  (merged to 'next' on 2025-04-22 at 77ea361791)
+ + perf: do allow `GIT_PERF_*` to be overridden again
+
+ Developer support fix..
+ source: <pull.1900.git.1743764167548.gitgitgadget@gmail.com>
+
+
+* lo/remove-log-reencode-from-rev-info (2025-04-22) 1 commit
+  (merged to 'next' on 2025-04-24 at 1c6c33ab1f)
+ + revision: remove log_reencode field from rev_info
+
+ Code clean-up.
+ source: <20250422213133.18685-1-lucasseikioshiro@gmail.com>
+
+
+* ps/ci-resurrect-p4-on-github (2025-04-22) 1 commit
+  (merged to 'next' on 2025-04-24 at 8594d07a3e)
+ + ci: fix p4d executable not being found on GitHub Actions
+
+ CI fix.
+ source: <aActb3dB-r3s69h6@pks.im>
+
+
+* ps/fewer-perl (2025-04-16) 5 commits
+  (merged to 'next' on 2025-04-23 at 275d267126)
+ + Documentation: stop depending on Perl to generate command list
+ + Documentation: stop depending on Perl to massage user manual
+ + request-pull: stop depending on Perl
+ + filter-branch: stop depending on Perl
+ + Merge branch 'ps/test-wo-perl-prereq' into ps/fewer-perl
+
+ Reduce requirement for Perl in our documentation build and a few
+ scripts.
+ source: <20250416-b4-pks-drop-perl-v2-0-bdd0492e9498@pks.im>
+
+
+* ps/install-bash-completion (2025-04-22) 1 commit
+  (merged to 'next' on 2025-04-24 at 1171444ac4)
+ + contrib/completion: install Bash completion
+
+ Build update to install bash (but not zsh) completion script.
+ source: <20250422-b4-pks-meson-install-completions-v2-1-ab29d399bc6c@pks.im>
+
+
+* ps/reftable-api-revamp (2025-04-07) 17 commits
+  (merged to 'next' on 2025-04-23 at 1a5f00290a)
+ + reftable/table: move printing logic into test helper
+ + reftable/constants: make block types part of the public interface
+ + reftable/table: introduce iterator for table blocks
+ + reftable/table: add `reftable_table` to the public interface
+ + reftable/block: expose a generic iterator over reftable records
+ + reftable/block: make block iterators reseekable
+ + reftable/block: store block pointer in the block iterator
+ + reftable/block: create public interface for reading blocks
+ + git-zlib: use `struct z_stream_s` instead of typedef
+ + reftable/block: rename `block_reader` to `reftable_block`
+ + reftable/block: rename `block` to `block_data`
+ + reftable/table: move reading block into block reader
+ + reftable/block: simplify how we track restart points
+ + reftable/blocksource: consolidate code into a single file
+ + reftable/reader: rename data structure to "table"
+ + reftable: fix formatting of the license header
+ + Merge branch 'ps/reftable-sans-compat-util' into ps/reftable-api-revamp
+
+ Overhaul of the reftable API.
+ cf. <3okrcl7bdpy75hzyzpmrp7fluan4n3zvsroioq64id4a2kt3o4@fc6fetilb6y2>
+ source: <20250407-pks-reftable-polishing-v2-0-316c4ff10571@pks.im>
+
+
+* ua/call-repo-config-with-possibly-null-repository (2025-04-20) 2 commits
+  (merged to 'next' on 2025-04-22 at 1f30a19c02)
+ + builtin/difftool: remove unnecessary if statement
+ + builtin/add: remove unnecessary if statement
+
+ Since a call to repo_config() can be called with repo set to NULL
+ these days, a command that is marked as RUN_SETUP in the builtin
+ command table does not have to check repo with NULL before making
+ the call.
+ source: <20250420025501.183290-1-usmanakinyemi202@gmail.com>
+
+--------------------------------------------------
 [New Topics]
+
+* cc/promisor-remote-capability (2025-04-29) 3 commits
+ - promisor-remote: allow a client to check fields
+ - promisor-remote: allow a server to advertise more fields
+ - promisor-remote: refactor to get rid of 'struct strvec'
+
+ Expecting a reroll.
+ cf. <CAP8UFD2LzijGsU3-aO-JBPtEfT+UtR_X_mqcdVigoOfdVAg1uA@mail.gmail.com>
+ source: <20250429145243.992252-1-christian.couder@gmail.com>
+
+
+* en/hashmap-clear-fix (2025-04-29) 1 commit
+  (merged to 'next' on 2025-04-30 at b0cdbeb28e)
+ + hashmap: ensure hashmaps are reusable after hashmap_clear()
+
+ hashmap API clean-up to ensure hashmap_clear() leaves a cleared map
+ in a reusable state.
+
+ Will merge to 'master'.
+ source: <pull.1911.git.1745941663160.gitgitgadget@gmail.com>
+
+
+* js/diff-codeql-false-positive-workaround (2025-04-29) 1 commit
+  (merged to 'next' on 2025-05-01 at a840276032)
+ + diff: check range before dereferencing an array element
+
+ Work around false positive given by CodeQL.
+
+ Will merge to 'master'.
+ source: <pull.1887.v3.git.1745926679028.gitgitgadget@gmail.com>
+
+
+* ng/xdiff-truly-minimal (2025-04-29) 1 commit
+ - xdiff: disable cleanup_records heuristic with --minimal
+
+ "git diff --minimal" used to give non-minimal output when its
+ optimization kicked in, which has been disabled.
+
+ Will merge to 'next'.
+ source: <20250429140949.2634935-1-n.glodny@campus.lmu.de>
+
+
+* ds/scalar-no-maintenance (2025-04-30) 2 commits
+ - scalar clone: add --no-maintenance option
+ - scalar register: add --no-maintenance option
+
+ Two "scalar" subcommands that adds a repository that hasn't been
+ under "scalar"'s control are taught an option not to enable the
+ scheduled maintenance on it.
+
+ Expecting a reroll.
+ cf. <b9a4dbf2-0064-4933-985f-b34dcb133030@gmail.com>
+ source: <pull.1913.git.1746008680.gitgitgadget@gmail.com>
+
+
+* ps/mv-contradiction-fix (2025-04-30) 2 commits
+  (merged to 'next' on 2025-05-01 at 5c27b05f45)
+ + builtin/mv: convert assert(3p) into `BUG()`
+ + builtin/mv: bail out when trying to move child and its parent
+
+ "git mv a a/b dst" would ask to move the directory 'a' itself, as
+ well as its contents, in a single destination directory, which is
+ a contradicting request that is impossible to satisfy. This case is
+ now detected and the command errors out.
+
+ Will merge to 'master'.
+ source: <20250430-pks-mv-parent-child-conflict-v1-0-11a87c55ffb9@pks.im>
+
+
+* cf/wrapper-netbsd-errno-eftype (2025-05-02) 1 commit
+ - wrapper: NetBSD gives EFTYPE where POSIX uses ELOOP
+
+ source: <20250502233403.289761-1-collin.funk1@gmail.com>
+
+
+* en/get-tree-entry-doc (2025-05-02) 1 commit
+ - tree-walk.h: fix incorrect API comment
+
+ source: <pull.1912.v2.git.1746213551473.gitgitgadget@gmail.com>
+
+
+* jc/doc-synopsis-option-markup (2025-05-02) 3 commits
+ - git-daemon doc: update mark-up of synopsis option descriptions
+ - git-{var,write-tree} docs: update mark-up of synopsis option descriptions
+ - git-verify-* doc: update mark-up of synopsis option descriptions
+
+ Doc mark-up fixes.
+
+ Comments?
+ source: <20250503011537.3035416-1-gitster@pobox.com>
+
+
+* jc/you-still-use-whatchanged (2025-05-02) 6 commits
+ - whatschanged: list it in BreakingChanges document
+ - whatchanged: remove when built with WITH_BREAKING_CHANGES
+ - whatchanged: require --i-still-use-this
+ - tests: prepare for a world without whatchanged
+ - doc: prepare for a world without whatchanged
+ - you-still-use-that??: help deprecating commands for removal
+
+ "git whatchanged" that is longer to type than "git log --raw"
+ which is its modern rough equivalent has outlived its usefulness
+ more than 10 years ago.  Plan to deprecate and remove it.
+
+ Comments?
+ source: <20250503005814.3030099-1-gitster@pobox.com>
+
+--------------------------------------------------
+[Cooking]
 
 * jc/ci-skip-unavailable-external-software (2025-04-25) 2 commits
  - ci: download JGit from maven, not eclipse.org
@@ -55,22 +280,23 @@ Release tarballs are available at:
  Further refinement on CI messages when an optional external
  software is unavailable (e.g. due to third-party service outage).
 
- Comments?
+ Will merge to 'next'.
  source: <20250425153827.147585-1-gitster@pobox.com>
 
 
 * js/ci-win-meson-timeout-workaround (2025-04-25) 1 commit
  - ci(win+Meson): build in Release mode, avoiding t7001-mv hangs
 
- One of win+Meson test CI jobs hang forever, trying to show
- interactive abort() dialog, as CI jobs built developer's biuld.
- Work it around by building for release, making abort() a no-op.
+ win+Meson CI pipeline, unlike other pipelines for Windows,
+ used to build artifacts in develper mode, which has been changed to
+ build them in release mode for consistency.
 
- Comments?
+ Expecting a reroll, stating an updated rationale for the change.
+ cf. <xmqqjz6zuf80.fsf@gitster.g>
  source: <pull.1908.git.1745593515875.gitgitgadget@gmail.com>
 
 
-* ps/maintenance-missing-tasks (2025-04-25) 7 commits
+* ps/maintenance-missing-tasks (2025-05-02) 7 commits
  - builtin/maintenance: introduce "rerere-gc" task
  - builtin/gc: move rerere garbage collection into separate function
  - builtin/maintenance: introduce "worktree-prune" task
@@ -82,19 +308,17 @@ Release tarballs are available at:
  Make repository clean-up tasks "gc" can do available to "git
  maintenance" front-end.
 
- Comments?
- source: <20250425-pks-maintenance-missing-tasks-v1-0-972ed6ab2c0d@pks.im>
+ Will merge to 'next'?
+ source: <20250502-pks-maintenance-missing-tasks-v3-0-13e130d36640@pks.im>
 
---------------------------------------------------
-[Cooking]
 
-* ag/send-email-outlook (2025-04-28) 2 commits
- - send-email: add --smtp-outlook-id-tweak option
+* ag/send-email-outlook (2025-04-29) 2 commits
+ - send-email: add --[no-]outlook-id-fix option
  - send-email: retrieve Message-ID from outlook SMTP server
 
  Update send-email to work better with Outlook's smtp server.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <PN3PR01MB95973F4B26A8CE2BF17A3AB1B8842@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
  source: <PN3PR01MB9597DA8661D1AFDF4C927A11B8812@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
 
@@ -108,19 +332,13 @@ Release tarballs are available at:
  delta chains from forming in a corner case even when there is no
  such cycle.
 
- Comments?
+ Will merge to 'next'.
  source: <pull.1906.v2.git.1745871885.gitgitgadget@gmail.com>
 
 
-* ps/object-store-cleanup (2025-04-25) 14 commits
+* ps/object-store-cleanup (2025-04-29) 8 commits
  - object-store: drop `repo_has_object_file()`
- - bulk-checkin: don't fetch promised objects on write
- - list-objects: clarify how promised blobs are excluded
- - http-walker: don't fetch objects via promisor remotes
- - refs: don't fetch promisor objects in `ref_resolves_to_object()`
- - builtin/show-ref: don't fetch objects when printing refs
- - builtin/index-pack: don't fetch promised objects for collision check
- - treewide: trivial conversions of `repo_has_object_file()`
+ - treewide: convert users of `repo_has_object_file()` to `has_object()`
  - object-store: allow fetching objects via `has_object()`
  - object-store: move function declarations to their respective subsystems
  - object-store: move and rename `odb_pack_keep()`
@@ -130,8 +348,8 @@ Release tarballs are available at:
 
  Further code clean-up in the object-store layer.
 
- Comments?
- source: <20250425-pks-object-store-cleanups-v2-0-63f1695b7700@pks.im>
+ Will merge to 'next'.
+ source: <20250429-pks-object-store-cleanups-v3-0-42902bad09a1@pks.im>
 
 
 * cc/fast-import-export-signature-names (2025-04-24) 1 commit
@@ -162,42 +380,8 @@ Release tarballs are available at:
 
  Meson-based build framework update.
 
- Comments?
+ Will merge to 'next'?
  source: <20250425-pks-meson-posix-shell-v3-0-01607a2e9334@pks.im>
-
-
-* js/git-perf-env-override (2025-04-20) 1 commit
-  (merged to 'next' on 2025-04-22 at 77ea361791)
- + perf: do allow `GIT_PERF_*` to be overridden again
-
- Developer support fix..
-
- Will merge to 'master'.
- source: <pull.1900.git.1743764167548.gitgitgadget@gmail.com>
-
-
-* ua/call-repo-config-with-possibly-null-repository (2025-04-20) 2 commits
-  (merged to 'next' on 2025-04-22 at 1f30a19c02)
- + builtin/difftool: remove unnecessary if statement
- + builtin/add: remove unnecessary if statement
-
- Since a call to repo_config() can be called with repo set to NULL
- these days, a command that is marked as RUN_SETUP in the builtin
- command table does not have to check repo with NULL before making
- the call.
-
- Will merge to 'master'.
- source: <20250420025501.183290-1-usmanakinyemi202@gmail.com>
-
-
-* az/tighten-string-array-constness (2025-04-21) 1 commit
-  (merged to 'next' on 2025-04-23 at 5a2b439731)
- + global: mark usage strings and string tables const
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <daj53eijkqzsjy5cvuxchea4qm3pbiu673ehetihfffyvwzhgs@tarta.nabijaczleweli.xyz>
 
 
 * es/meson-cleanup (2025-04-25) 6 commits
@@ -215,16 +399,6 @@ Release tarballs are available at:
  source: <20250425053345.17288-1-eschwartz@gentoo.org>
 
 
-* jh/gc-launchctl-schedule-fix (2025-04-23) 1 commit
-  (merged to 'next' on 2025-04-23 at ab4f2e0c26)
- + maintenance: fix launchctl calendar intervals
-
- Fix for scheduled maintenance tasks on platforms using launchctl.
-
- Will merge to 'master'.
- source: <20250421054633.231069-2-joshiheinrichs@gmail.com>
-
-
 * js/windows-arm64 (2025-04-23) 6 commits
   (merged to 'next' on 2025-04-28 at c3d4cea333)
  + max_tree_depth: lower it for clangarm64 on Windows
@@ -238,46 +412,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <pull.1904.v2.git.1745395308.gitgitgadget@gmail.com>
-
-
-* jk/p5332-testfix (2025-04-22) 1 commit
-  (merged to 'next' on 2025-04-24 at eafff4d7b7)
- + p5332: drop "+" from --stdin-packs input
-
- A test fix.
-
- Will merge to 'master'.
- source: <20250422111632.GA1855088@coredump.intra.peff.net>
-
-
-* lo/remove-log-reencode-from-rev-info (2025-04-22) 1 commit
-  (merged to 'next' on 2025-04-24 at 1c6c33ab1f)
- + revision: remove log_reencode field from rev_info
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <20250422213133.18685-1-lucasseikioshiro@gmail.com>
-
-
-* ps/ci-resurrect-p4-on-github (2025-04-22) 1 commit
-  (merged to 'next' on 2025-04-24 at 8594d07a3e)
- + ci: fix p4d executable not being found on GitHub Actions
-
- CI fix.
-
- Will merge to 'master'.
- source: <aActb3dB-r3s69h6@pks.im>
-
-
-* ps/install-bash-completion (2025-04-22) 1 commit
-  (merged to 'next' on 2025-04-24 at 1171444ac4)
- + contrib/completion: install Bash completion
-
- Build update to install bash (but not zsh) completion script.
-
- Will merge to 'master'.
- source: <20250422-b4-pks-meson-install-completions-v2-1-ab29d399bc6c@pks.im>
 
 
 * sj/string-list-typefix (2025-04-22) 5 commits
@@ -325,16 +459,6 @@ Release tarballs are available at:
  source: <cover.1744924321.git.me@ttaylorr.com>
 
 
-* as/typofix-in-env-h-header (2025-04-18) 1 commit
-  (merged to 'next' on 2025-04-23 at a9954f6cec)
- + environment: fix typo: 'setup_git_directory_gently'
-
- Typofix.
-
- Will merge to 'master'.
- source: <20250418185855.52950-1-abhijeet.nkt@gmaiil.com>
-
-
 * ps/meson-build-perf-bench (2025-04-28) 5 commits
   (merged to 'next' on 2025-04-28 at f563542bfd)
  + meson: wire up benchmarking options
@@ -350,33 +474,19 @@ Release tarballs are available at:
  source: <20250428-pks-meson-benchmarks-v5-0-5010dd014d1d@pks.im>
 
 
-* ps/fewer-perl (2025-04-16) 5 commits
-  (merged to 'next' on 2025-04-23 at 275d267126)
- + Documentation: stop depending on Perl to generate command list
- + Documentation: stop depending on Perl to massage user manual
- + request-pull: stop depending on Perl
- + filter-branch: stop depending on Perl
- + Merge branch 'ps/test-wo-perl-prereq' into ps/fewer-perl
-
- Reduce requirement for Perl in our documentation build and a few
- scripts.
-
- Will merge to 'master'.
- source: <20250416-b4-pks-drop-perl-v2-0-bdd0492e9498@pks.im>
-
-
 * kn/meson-hdr-check (2025-04-23) 7 commits
- - makefile/meson: add 'check-headers' as alias for 'hdr-check'
- - meson: add support for 'hdr-check'
- - meson: rename 'third_party_sources' to 'third_party_excludes'
- - meson: move headers definition from 'contrib/coccinelle'
- - coccinelle: meson: rename variables to be more specific
- - ci/github: install git before checking out the repository
- - Merge branch 'es/meson-build-skip-coccinelle' into kn/meson-hdr-check
+  (merged to 'next' on 2025-04-29 at c925448238)
+ + makefile/meson: add 'check-headers' as alias for 'hdr-check'
+ + meson: add support for 'hdr-check'
+ + meson: rename 'third_party_sources' to 'third_party_excludes'
+ + meson: move headers definition from 'contrib/coccinelle'
+ + coccinelle: meson: rename variables to be more specific
+ + ci/github: install git before checking out the repository
+ + Merge branch 'es/meson-build-skip-coccinelle' into kn/meson-hdr-check
 
  Add an equivalent to "make hdr-check" target to meson based builds.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250423-505-wire-up-sparse-via-meson-v5-0-d1e2be4b2078@gmail.com>
 
 
@@ -403,33 +513,6 @@ Release tarballs are available at:
 
  Comments?
  source: <20250330134018.9662-2-dhar61595@gmail.com>
-
-
-* ps/reftable-api-revamp (2025-04-07) 17 commits
-  (merged to 'next' on 2025-04-23 at 1a5f00290a)
- + reftable/table: move printing logic into test helper
- + reftable/constants: make block types part of the public interface
- + reftable/table: introduce iterator for table blocks
- + reftable/table: add `reftable_table` to the public interface
- + reftable/block: expose a generic iterator over reftable records
- + reftable/block: make block iterators reseekable
- + reftable/block: store block pointer in the block iterator
- + reftable/block: create public interface for reading blocks
- + git-zlib: use `struct z_stream_s` instead of typedef
- + reftable/block: rename `block_reader` to `reftable_block`
- + reftable/block: rename `block` to `block_data`
- + reftable/table: move reading block into block reader
- + reftable/block: simplify how we track restart points
- + reftable/blocksource: consolidate code into a single file
- + reftable/reader: rename data structure to "table"
- + reftable: fix formatting of the license header
- + Merge branch 'ps/reftable-sans-compat-util' into ps/reftable-api-revamp
-
- Overhaul of the reftable API.
-
- Will merge to 'master'.
- cf. <3okrcl7bdpy75hzyzpmrp7fluan4n3zvsroioq64id4a2kt3o4@fc6fetilb6y2>
- source: <20250407-pks-reftable-polishing-v2-0-316c4ff10571@pks.im>
 
 
 * sc/bundle-uri-use-all-refs-in-bundle (2025-04-25) 2 commits
@@ -462,7 +545,8 @@ Release tarballs are available at:
  "git pack-objects" learns to find delta bases from blobs at the
  same path, using the --path-walk API.
 
- Comments?
+ Will merge to 'next'?
+ cf. <aBVLC57bMJKjygyi@nand.local>
  source: <pull.1819.v2.git.1742829769.gitgitgadget@gmail.com>
 
 
