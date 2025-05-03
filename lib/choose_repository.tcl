@@ -953,12 +953,13 @@ method _do_clone_checkout {HEAD} {
 		[mc "files"]]
 
 	set readtree_err {}
-	set fd [git_read --stderr read-tree \
+	set fd [git_read read-tree \
 		-m \
 		-u \
 		-v \
 		HEAD \
 		HEAD \
+		2>@1 \
 		]
 	fconfigure $fd -blocking 0 -translation binary
 	fileevent $fd readable [cb _readtree_wait $fd]

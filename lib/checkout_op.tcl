@@ -345,13 +345,14 @@ method _readtree {} {
 		[mc "Updating working directory to '%s'..." [_name $this]] \
 		[mc "files checked out"]]
 
-	set fd [git_read --stderr read-tree \
+	set fd [git_read read-tree \
 		-m \
 		-u \
 		-v \
 		--exclude-per-directory=.gitignore \
 		$HEAD \
 		$new_hash \
+		2>@1 \
 		]
 	fconfigure $fd -blocking 0 -translation binary
 	fileevent $fd readable [cb _readtree_wait $fd $status_bar_operation]

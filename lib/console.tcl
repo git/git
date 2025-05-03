@@ -91,10 +91,10 @@ method _init {} {
 }
 
 method exec {cmd {after {}}} {
+	lappend cmd 2>@1
 	if {[lindex $cmd 0] eq {git}} {
-		set fd_f [eval git_read --stderr [lrange $cmd 1 end]]
+		set fd_f [eval git_read [lrange $cmd 1 end]]
 	} else {
-		lappend cmd 2>@1
 		set fd_f [_open_stdout_stderr $cmd]
 	}
 	fconfigure $fd_f -blocking 0 -translation binary

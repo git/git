@@ -651,10 +651,6 @@ proc git_read {args} {
 			_lappend_nice opt
 		}
 
-		--stderr {
-			lappend args 2>@1
-		}
-
 		default {
 			break
 		}
