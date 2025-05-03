@@ -1083,53 +1083,30 @@ unset -nocomplain idx fd
 ##
 ## config file parsing
 
-git-version proc _parse_config {arr_name args} {
-	>= 1.5.3 {
-		upvar $arr_name arr
-		array unset arr
-		set buf {}
-		catch {
-			set fd_rc [eval \
-				[list git_read config] \
-				$args \
-				[list --null --list]]
-			fconfigure $fd_rc -translation binary -encoding utf-8
-			set buf [read $fd_rc]
-			close $fd_rc
-		}
-		foreach line [split $buf "\0"] {
-			if {[regexp {^([^\n]+)\n(.*)$} $line line name value]} {
-				if {[is_many_config $name]} {
-					lappend arr($name) $value
-				} else {
-					set arr($name) $value
-				}
-			} elseif {[regexp {^([^\n]+)$} $line line name]} {
-				# no value given, but interpreting them as
-				# boolean will be handled as true
-				set arr($name) {}
-			}
-		}
+proc _parse_config {arr_name args} {
+	upvar $arr_name arr
+	array unset arr
+	set buf {}
+	catch {
+		set fd_rc [eval \
+			[list git_read config] \
+			$args \
+			[list --null --list]]
+		fconfigure $fd_rc -translation binary -encoding utf-8
+		set buf [read $fd_rc]
+		close $fd_rc
 	}
-	default {
-		upvar $arr_name arr
-		array unset arr
-		catch {
-			set fd_rc [eval [list git_read config --list] $args]
-			while {[gets $fd_rc line] >= 0} {
-				if {[regexp {^([^=]+)=(.*)$} $line line name value]} {
-					if {[is_many_config $name]} {
-						lappend arr($name) $value
-					} else {
-						set arr($name) $value
-					}
-				} elseif {[regexp {^([^=]+)$} $line line name]} {
-					# no value given, but interpreting them as
-					# boolean will be handled as true
-					set arr($name) {}
-				}
+	foreach line [split $buf "\0"] {
+		if {[regexp {^([^\n]+)\n(.*)$} $line line name value]} {
+			if {[is_many_config $name]} {
+				lappend arr($name) $value
+			} else {
+				set arr($name) $value
 			}
-			close $fd_rc
+		} elseif {[regexp {^([^\n]+)$} $line line name]} {
+			# no value given, but interpreting them as
+			# boolean will be handled as true
+			set arr($name) {}
 		}
 	}
 }
