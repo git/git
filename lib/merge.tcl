@@ -118,7 +118,7 @@ method _start {} {
 		set cmd [list git]
 		lappend cmd merge
 		lappend cmd --strategy=recursive
-		lappend cmd [git fmt-merge-msg <[gitdir FETCH_HEAD]]
+		lappend cmd [git_redir [list fmt-merge-msg] [list <[gitdir FETCH_HEAD]]]
 		lappend cmd HEAD
 		lappend cmd $name
 	}

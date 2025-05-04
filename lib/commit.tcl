@@ -388,8 +388,8 @@ A rescan will be automatically started now.
 	foreach p [concat $PARENT $MERGE_HEAD] {
 		lappend cmd -p $p
 	}
-	lappend cmd <$msg_p
-	if {[catch {set cmt_id [eval git $cmd]} err]} {
+	set msgtxt [list <$msg_p]
+	if {[catch {set cmt_id [git_redir $cmd $msgtxt]} err]} {
 		catch {file delete $msg_p}
 		error_popup [strcat [mc "commit-tree failed:"] "\n\n$err"]
 		ui_status [mc "Commit failed."]

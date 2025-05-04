@@ -621,7 +621,11 @@ proc _lappend_nice {cmd_var} {
 }
 
 proc git {args} {
-	set fd [git_read $args]
+	git_redir $args {}
+}
+
+proc git_redir {cmd redir} {
+	set fd [git_read $cmd $redir]
 	fconfigure $fd -translation binary -encoding utf-8
 	set result [string trimright [read $fd] "\n"]
 	close $fd
@@ -1423,7 +1427,7 @@ proc PARENT {} {
 		return $p
 	}
 	if {$empty_tree eq {}} {
-		set empty_tree [git mktree << {}]
+		set empty_tree [git_redir [list mktree] [list << {}]]
 	}
 	return $empty_tree
 }
