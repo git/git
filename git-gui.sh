@@ -642,11 +642,11 @@ proc safe_open_command {cmd {redir {}}} {
 	return $fd
 }
 
-proc git_read {cmd} {
+proc git_read {cmd {redir {}}} {
 	set cmdp [_git_cmd [lindex $cmd 0]]
 	set cmd [lrange $cmd 1 end]
 
-	return [safe_open_command [concat $cmdp $cmd]]
+	return [safe_open_command [concat $cmdp $cmd] $redir]
 }
 
 proc git_read_nice {cmd} {
@@ -669,7 +669,7 @@ proc git_write {cmd} {
 }
 
 proc githook_read {hook_name args} {
-	git_read [concat [list hook run --ignore-missing $hook_name --] $args 2>@1]
+	git_read [concat [list hook run --ignore-missing $hook_name --] $args] [list 2>@1]
 }
 
 proc kill_file_process {fd} {

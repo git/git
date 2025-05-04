@@ -959,8 +959,8 @@ method _do_clone_checkout {HEAD} {
 		-v \
 		HEAD \
 		HEAD \
-		2>@1 \
-		]]
+		] \
+		[list 2>@1]]
 	fconfigure $fd -blocking 0 -translation binary
 	fileevent $fd readable [cb _readtree_wait $fd]
 }

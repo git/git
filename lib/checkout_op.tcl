@@ -352,8 +352,8 @@ method _readtree {} {
 		--exclude-per-directory=.gitignore \
 		$HEAD \
 		$new_hash \
-		2>@1 \
-		]]
+		] \
+		[list 2>@1]]
 	fconfigure $fd -blocking 0 -translation binary
 	fileevent $fd readable [cb _readtree_wait $fd $status_bar_operation]
 }

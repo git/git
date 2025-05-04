@@ -239,7 +239,7 @@ Continue with resetting the current changes?"]
 	}
 
 	if {[ask_popup $op_question] eq {yes}} {
-		set fd [git_read [list read-tree --reset -u -v HEAD 2>@1]]
+		set fd [git_read [list read-tree --reset -u -v HEAD] [list 2>@1]]
 		fconfigure $fd -blocking 0 -translation binary
 		set status_bar_operation [$::main_status \
 			start \

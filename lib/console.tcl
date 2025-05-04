@@ -92,8 +92,7 @@ method _init {} {
 
 method exec {cmd {after {}}} {
 	if {[lindex $cmd 0] eq {git}} {
-		lappend cmd 2>@1
-		set fd_f [git_read [lrange $cmd 1 end]]
+		set fd_f [git_read [lrange $cmd 1 end] [list 2>@1]]
 	} else {
 		set fd_f [safe_open_command $cmd [list 2>@1]]
 	}
