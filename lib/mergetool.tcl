@@ -343,9 +343,9 @@ proc merge_tool_start {cmdline target backup stages} {
 
 	# Force redirection to avoid interpreting output on stderr
 	# as an error, and launch the tool
-	lappend cmdline {2>@1}
+	set redir [list {2>@1}]
 
-	if {[catch { set mtool_fd [_open_stdout_stderr $cmdline] } err]} {
+	if {[catch { set mtool_fd [safe_open_command $cmdline $redir] } err]} {
 		delete_temp_files $mtool_tmpfiles
 		error_popup [mc "Could not start the merge tool:\n\n%s" $err]
 		return

@@ -130,8 +130,7 @@ proc tools_exec {fullname} {
 }
 
 proc tools_run_silent {cmd after} {
-	lappend cmd 2>@1
-	set fd [_open_stdout_stderr $cmd]
+	set fd [safe_open_command $cmd [list 2>@1]]
 
 	fconfigure $fd -blocking 0 -translation binary
 	fileevent $fd readable [list tools_consume_input $fd $after]

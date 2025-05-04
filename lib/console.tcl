@@ -91,11 +91,11 @@ method _init {} {
 }
 
 method exec {cmd {after {}}} {
-	lappend cmd 2>@1
 	if {[lindex $cmd 0] eq {git}} {
+		lappend cmd 2>@1
 		set fd_f [git_read [lrange $cmd 1 end]]
 	} else {
-		set fd_f [_open_stdout_stderr $cmd]
+		set fd_f [safe_open_command $cmd [list 2>@1]]
 	}
 	fconfigure $fd_f -blocking 0 -translation binary
 	fileevent $fd_f readable [cb _read $fd_f $after]

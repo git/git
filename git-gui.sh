@@ -631,10 +631,10 @@ proc git {args} {
 	return $result
 }
 
-proc _open_stdout_stderr {cmd} {
-	_trace_exec $cmd
+proc safe_open_command {cmd {redir {}}} {
+	_trace_exec [concat $cmd $redir]
 	if {[catch {
-		set fd [open [concat [list | ] $cmd] r]
+		set fd [open [concat [list | ] $cmd $redir] r]
 	} err]} {
 		error $err
 	}
@@ -646,7 +646,7 @@ proc git_read {cmd} {
 	set cmdp [_git_cmd [lindex $cmd 0]]
 	set cmd [lrange $cmd 1 end]
 
-	return [_open_stdout_stderr [concat $cmdp $cmd]]
+	return [safe_open_command [concat $cmdp $cmd]]
 }
 
 proc git_read_nice {cmd} {
@@ -657,7 +657,7 @@ proc git_read_nice {cmd} {
 	set cmdp [_git_cmd [lindex $cmd 0]]
 	set cmd [lrange $cmd 1 end]
 
-	return [_open_stdout_stderr [concat $opt $cmdp $cmd]]
+	return [safe_open_command [concat $opt $cmdp $cmd]]
 }
 
 proc git_write {cmd} {
