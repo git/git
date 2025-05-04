@@ -600,6 +600,7 @@ proc open_cmd_pipe {cmd path} {
 	} else {
 		set run [list [shellpath] -c "$cmd \"\$0\"" $path]
 	}
+	set run [make_arglist_safe $run]
 	return [open |$run r]
 }
 
@@ -636,6 +637,7 @@ proc git_redir {cmd redir} {
 }
 
 proc safe_open_command {cmd {redir {}}} {
+	set cmd [make_arglist_safe $cmd]
 	_trace_exec [concat $cmd $redir]
 	if {[catch {
 		set fd [open [concat [list | ] $cmd $redir] r]
@@ -665,6 +667,7 @@ proc git_read_nice {cmd} {
 }
 
 proc git_write {cmd} {
+	set cmd [make_arglist_safe $cmd]
 	set cmdp [_git_cmd [lindex $cmd 0]]
 	set cmd [lrange $cmd 1 end]
 
