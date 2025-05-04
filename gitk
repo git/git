@@ -11736,13 +11736,11 @@ proc prefspage_general {notebook} {
     grid x $page.tabstopl $page.tabstop -sticky w
 
     ${NS}::label $page.wrapcommentl -text [mc "Wrap comment text"]
-    ${NS}::combobox $page.wrapcomment -values {none char word} -state readonly \
-        -textvariable wrapcomment
+    makedroplist $page.wrapcomment wrapcomment none char word
     grid x $page.wrapcommentl $page.wrapcomment -sticky w
 
     ${NS}::label $page.wrapdefaultl -text [mc "Wrap other text"]
-    ${NS}::combobox $page.wrapdefault -values {none char word} -state readonly \
-        -textvariable wrapdefault
+    makedroplist $page.wrapdefault wrapdefault none char word
     grid x $page.wrapdefaultl $page.wrapdefault -sticky w
 
     ${NS}::checkbutton $page.ntag -text [mc "Display nearby tags/heads"] \
