@@ -150,7 +150,8 @@ static int process(struct walker *walker, struct object *obj)
 		return 0;
 	obj->flags |= SEEN;
 
-	if (repo_has_object_file(the_repository, &obj->oid)) {
+	if (has_object(the_repository, &obj->oid,
+		       HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR)) {
 		/* We already have it, so we should scan it now. */
 		obj->flags |= TO_SCAN;
 	}

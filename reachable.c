@@ -14,7 +14,7 @@
 #include "list-objects.h"
 #include "packfile.h"
 #include "worktree.h"
-#include "object-store.h"
+#include "object-file.h"
 #include "pack-bitmap.h"
 #include "pack-mtimes.h"
 #include "config.h"

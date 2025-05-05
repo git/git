@@ -83,25 +83,6 @@ int odb_mkstemp(struct strbuf *temp_filename, const char *pattern)
 	return xmkstemp_mode(temp_filename->buf, mode);
 }
 
-int odb_pack_keep(const char *name)
-{
-	int fd;
-
-	fd = open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
-	if (0 <= fd)
-		return fd;
-
-	/* slow path */
-	safe_create_leading_directories_const(the_repository, name);
-	return open(name, O_RDWR|O_CREAT|O_EXCL, 0600);
-}
-
-const char *loose_object_path(struct repository *r, struct strbuf *buf,
-			      const struct object_id *oid)
-{
-	return odb_loose_path(r->objects->odb, buf, oid);
-}
-
 /*
  * Return non-zero iff the path is usable as an alternate object database.
  */
@@ -866,7 +847,7 @@ int pretend_object_file(struct repository *repo,
 	char *co_buf;
 
 	hash_object_file(repo->hash_algo, buf, len, type, oid);
-	if (repo_has_object_file_with_flags(repo, oid, OBJECT_INFO_QUICK | OBJECT_INFO_SKIP_FETCH_OBJECT) ||
+	if (has_object(repo, oid, 0) ||
 	    find_cached_object(repo->objects, oid))
 		return 0;
 
@@ -956,27 +937,16 @@ void *read_object_with_reference(struct repository *r,
 int has_object(struct repository *r, const struct object_id *oid,
 	       unsigned flags)
 {
-	int quick = !(flags & HAS_OBJECT_RECHECK_PACKED);
-	unsigned object_info_flags = OBJECT_INFO_SKIP_FETCH_OBJECT |
-		(quick ? OBJECT_INFO_QUICK : 0);
+	unsigned object_info_flags = 0;
 
 	if (!startup_info->have_repository)
 		return 0;
+	if (!(flags & HAS_OBJECT_RECHECK_PACKED))
+		object_info_flags |= OBJECT_INFO_QUICK;
+	if (!(flags & HAS_OBJECT_FETCH_PROMISOR))
+		object_info_flags |= OBJECT_INFO_SKIP_FETCH_OBJECT;
+
 	return oid_object_info_extended(r, oid, NULL, object_info_flags) >= 0;
-}
-
-int repo_has_object_file_with_flags(struct repository *r,
-				    const struct object_id *oid, int flags)
-{
-	if (!startup_info->have_repository)
-		return 0;
-	return oid_object_info_extended(r, oid, NULL, flags) >= 0;
-}
-
-int repo_has_object_file(struct repository *r,
-			 const struct object_id *oid)
-{
-	return repo_has_object_file_with_flags(r, oid, 0);
 }
 
 void assert_oid_type(const struct object_id *oid, enum object_type expect)

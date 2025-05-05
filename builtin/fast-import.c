@@ -811,7 +811,8 @@ static char *keep_pack(const char *curr_index_name)
 	int keep_fd;
 
 	odb_pack_name(pack_data->repo, &name, pack_data->hash, "keep");
-	keep_fd = odb_pack_keep(name.buf);
+	keep_fd = safe_create_file_with_leading_directories(pack_data->repo,
+							    name.buf);
 	if (keep_fd < 0)
 		die_errno("cannot create keep file");
 	write_or_die(keep_fd, keep_msg, strlen(keep_msg));

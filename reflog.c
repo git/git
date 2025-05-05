@@ -152,7 +152,8 @@ static int tree_is_complete(const struct object_id *oid)
 	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
 	complete = 1;
 	while (tree_entry(&desc, &entry)) {
-		if (!repo_has_object_file(the_repository, &entry.oid) ||
+		if (!has_object(the_repository, &entry.oid,
+				HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR) ||
 		    (S_ISDIR(entry.mode) && !tree_is_complete(&entry.oid))) {
 			tree->object.flags |= INCOMPLETE;
 			complete = 0;

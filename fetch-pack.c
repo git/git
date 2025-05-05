@@ -769,9 +769,7 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 		if (!commit) {
 			struct object *o;
 
-			if (!repo_has_object_file_with_flags(the_repository, &ref->old_oid,
-							     OBJECT_INFO_QUICK |
-							     OBJECT_INFO_SKIP_FETCH_OBJECT))
+			if (!has_object(the_repository, &ref->old_oid, 0))
 				continue;
 			o = parse_object(the_repository, &ref->old_oid);
 			if (!o || o->type != OBJ_COMMIT)
@@ -1985,7 +1983,8 @@ static void update_shallow(struct fetch_pack_args *args,
 		struct oid_array extra = OID_ARRAY_INIT;
 		struct object_id *oid = si->shallow->oid;
 		for (i = 0; i < si->shallow->nr; i++)
-			if (repo_has_object_file(the_repository, &oid[i]))
+			if (has_object(the_repository, &oid[i],
+				       HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
 				oid_array_append(&extra, &oid[i]);
 		if (extra.nr) {
 			setup_alternate_shallow(&shallow_lock,

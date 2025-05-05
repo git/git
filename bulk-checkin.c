@@ -130,7 +130,8 @@ static void flush_batch_fsync(void)
 static int already_written(struct bulk_checkin_packfile *state, struct object_id *oid)
 {
 	/* The object may already exist in the repository */
-	if (repo_has_object_file(the_repository, oid))
+	if (has_object(the_repository, oid,
+		       HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
 		return 1;
 
 	/* Might want to keep the list sorted */
