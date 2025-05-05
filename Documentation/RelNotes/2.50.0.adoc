@@ -127,6 +127,13 @@ Performance, Internal Implementation, Development Support etc.
  * Reduce requirement for Perl in our documentation build and a few
    scripts.
 
+ * The build procedure based on Meson learned to drive the
+   benchmarking tests.
+
+ * Code clean-up for meson-based build infrastructure.
+
+ * Add an equivalent to "make hdr-check" target to meson based builds.
+
 
 Fixes since v2.49
 -----------------
@@ -241,6 +248,9 @@ Fixes since v2.49
 
  * Fix for scheduled maintenance tasks on platforms using launchctl.
    (merge eb2d7beb0e jh/gc-launchctl-schedule-fix later to maint).
+
+ * Update to arm64 Windows port.
+   (merge 436a42215e js/windows-arm64 later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
