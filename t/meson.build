@@ -501,6 +501,7 @@ integration_tests = [
   't4068-diff-symmetric-merge-base.sh',
   't4069-remerge-diff.sh',
   't4070-diff-pairs.sh',
+  't4071-diff-minimal.sh',
   't4100-apply-stat.sh',
   't4101-apply-nonl.sh',
   't4102-apply-rename.sh',
