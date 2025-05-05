@@ -70,9 +70,15 @@
 #      # Execute single test interactively such that features like `debug ()` work.
 #      $ meson test -i --test-args='-ix' t1400-update-ref
 #
-#   Test execution is parallelized by default and scales with the number of
-#   processor cores available. You can change the number of processes by passing
-#   the `-jN` flag to `meson test`.
+#      # Execute all benchmarks.
+#      $ meson test -i --benchmark
+#
+#      # Execute single benchmark.
+#      $ meson test -i --benchmark p0000-*
+#
+#   Test execution (but not benchmark execution) is parallelized by default and
+#   scales with the number of processor cores available. You can change the
+#   number of processes by passing the `-jN` flag to `meson test`.
 #
 # 4. Install the Git distribution. Again, this can be done via Meson, Ninja or
 #    Samurai:
@@ -235,6 +241,7 @@ git = find_program('git', dirs: program_path, native: true, required: false)
 sed = find_program('sed', dirs: program_path, native: true)
 shell = find_program('sh', dirs: program_path, native: true)
 tar = find_program('tar', dirs: program_path, native: true)
+time = find_program('time', dirs: program_path, required: get_option('benchmarks'))
 
 target_shell = find_program('sh', dirs: program_path, native: false)
 
@@ -699,11 +706,11 @@ builtin_sources += custom_target(
 # build options to our tests.
 build_options_config = configuration_data()
 build_options_config.set('GIT_INTEROP_MAKE_OPTS', '')
-build_options_config.set('GIT_PERF_LARGE_REPO', '')
+build_options_config.set_quoted('GIT_PERF_LARGE_REPO', get_option('benchmark_large_repo'))
 build_options_config.set('GIT_PERF_MAKE_COMMAND', '')
 build_options_config.set('GIT_PERF_MAKE_OPTS', '')
-build_options_config.set('GIT_PERF_REPEAT_COUNT', '')
-build_options_config.set('GIT_PERF_REPO', '')
+build_options_config.set_quoted('GIT_PERF_REPEAT_COUNT', get_option('benchmark_repeat_count').to_string())
+build_options_config.set_quoted('GIT_PERF_REPO', get_option('benchmark_repo'))
 build_options_config.set('GIT_TEST_CMP_USE_COPIED_CONTEXT', '')
 build_options_config.set('GIT_TEST_INDEX_VERSION', '')
 build_options_config.set('GIT_TEST_OPTS', '')
@@ -836,7 +843,7 @@ endif
 # features. It is optional if you want to neither execute tests nor use any of
 # these optional features.
 perl_required = get_option('perl')
-if get_option('gitweb').enabled() or 'netrc' in get_option('credential_helpers')
+if get_option('benchmarks').enabled() or get_option('gitweb').enabled() or 'netrc' in get_option('credential_helpers')
   perl_required = true
 endif
 
@@ -2082,6 +2089,7 @@ meson.add_dist_script(
 )
 
 summary({
+  'benchmarks': get_option('tests') and perl.found() and time.found(),
   'curl': curl.found(),
   'expat': expat.found(),
   'gettext': intl.found(),
