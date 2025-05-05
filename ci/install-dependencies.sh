@@ -9,7 +9,7 @@ begin_group "Install dependencies"
 
 P4WHENCE=https://cdist2.perforce.com/perforce/r23.2
 LFSWHENCE=https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VERSION
-JGITWHENCE=https://repo.eclipse.org/content/groups/releases//org/eclipse/jgit/org.eclipse.jgit.pgm/6.8.0.202311291450-r/org.eclipse.jgit.pgm-6.8.0.202311291450-r.sh
+JGITWHENCE=https://repo1.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit.pgm/6.8.0.202311291450-r/org.eclipse.jgit.pgm-6.8.0.202311291450-r.sh
 
 # Make sudo a no-op and execute the command directly when running as root.
 # While using sudo would be fine on most platforms when we are root already,
@@ -71,7 +71,6 @@ ubuntu-*|i386/ubuntu-*|debian-*)
 		chmod a+x "$CUSTOM_PATH/p4d" "$CUSTOM_PATH/p4" || {
 			rm -f "$CUSTOM_PATH/p4"
 			rm -f "$CUSTOM_PATH/p4d"
-			echo >&2 "P4 download (optional) failed"
 		}
 
 		wget --quiet \
@@ -79,16 +78,12 @@ ubuntu-*|i386/ubuntu-*|debian-*)
 		tar -xzf "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz" \
 			-C "$CUSTOM_PATH" --strip-components=1 \
 			"git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs" &&
-		rm "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz" || {
-			rm -f "$CUSTOM_PATH/git-lfs"
-			echo >&2 "LFS download (optional) failed"
-		}
+		rm "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz" ||
+		rm -f "$CUSTOM_PATH/git-lfs"
 
 		wget --quiet "$JGITWHENCE" --output-document="$CUSTOM_PATH/jgit" &&
-		chmod a+x "$CUSTOM_PATH/jgit" || {
-			rm -f "$CUSTOM_PATH/jgit"
-			echo >&2 "JGit download (optional) failed"
-		}
+		chmod a+x "$CUSTOM_PATH/jgit" ||
+		rm -f "$CUSTOM_PATH/jgit"
 		;;
 	esac
 	;;
@@ -151,7 +146,7 @@ then
 	echo "$(tput setaf 6)Perforce Client Version$(tput sgr0)"
 	p4 -V
 else
-	echo >&2 "WARNING: perforce wasn't installed, see above for clues why"
+	echo >&2 "::warning:: perforce wasn't installed, see above for clues why"
 fi
 
 if type git-lfs >/dev/null 2>&1
@@ -159,7 +154,7 @@ then
 	echo "$(tput setaf 6)Git-LFS Version$(tput sgr0)"
 	git-lfs version
 else
-	echo >&2 "WARNING: git-lfs wasn't installed, see above for clues why"
+	echo >&2 "::warning:: git-lfs wasn't installed, see above for clues why"
 fi
 
 if type jgit >/dev/null 2>&1
@@ -167,7 +162,7 @@ then
 	echo "$(tput setaf 6)JGit Version$(tput sgr0)"
 	jgit version
 else
-	echo >&2 "WARNING: JGit wasn't installed, see above for clues why"
+	echo >&2 "::warning:: JGit wasn't installed, see above for clues why"
 fi
 
 end_group "Install dependencies"
