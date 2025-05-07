@@ -668,13 +668,19 @@ static int remove_deleted_enlistment(struct strbuf *path)
 static int cmd_reconfigure(int argc, const char **argv)
 {
 	int all = 0;
+	const char *maintenance_str = NULL;
+	int maintenance = 1; /* Enable maintenance by default. */
+
 	struct option options[] = {
 		OPT_BOOL('a', "all", &all,
 			 N_("reconfigure all registered enlistments")),
+		OPT_STRING(0, "maintenance", &maintenance_str,
+			 N_("<mode>"),
+			 N_("signal how to adjust background maintenance")),
 		OPT_END(),
 	};
 	const char * const usage[] = {
-		N_("scalar reconfigure [--all | <enlistment>]"),
+		N_("scalar reconfigure [--maintenance=<mode>] [--all | <enlistment>]"),
 		NULL
 	};
 	struct string_list scalar_repos = STRING_LIST_INIT_DUP;
@@ -693,6 +699,18 @@ static int cmd_reconfigure(int argc, const char **argv)
 	if (argc > 0)
 		usage_msg_opt(_("--all or <enlistment>, but not both"),
 			      usage, options);
+
+	if (maintenance_str) {
+		if (!strcmp(maintenance_str, "enable"))
+			maintenance = 1;
+		else if (!strcmp(maintenance_str, "disable"))
+			maintenance = 0;
+		else if (!strcmp(maintenance_str, "keep"))
+			maintenance = -1;
+		else
+			die(_("unknown mode for --maintenance option: %s"),
+			    maintenance_str);
+	}
 
 	git_config(get_scalar_repos, &scalar_repos);
 
@@ -758,7 +776,8 @@ static int cmd_reconfigure(int argc, const char **argv)
 		the_repository = old_repo;
 		repo_clear(&r);
 
-		if (toggle_maintenance(1) >= 0)
+		if (maintenance >= 0 &&
+		    toggle_maintenance(maintenance) >= 0)
 			succeeded = 1;
 
 loop_end:

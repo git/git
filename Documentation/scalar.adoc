@@ -14,7 +14,7 @@ scalar list
 scalar register [--[no-]maintenance] [<enlistment>]
 scalar unregister [<enlistment>]
 scalar run ( all | config | commit-graph | fetch | loose-objects | pack-files ) [<enlistment>]
-scalar reconfigure [ --all | <enlistment> ]
+scalar reconfigure [--maintenance=<mode>] [ --all | <enlistment> ]
 scalar diagnose [<enlistment>]
 scalar delete <enlistment>
 
@@ -160,8 +160,19 @@ After a Scalar upgrade, or when the configuration of a Scalar enlistment
 was somehow corrupted or changed by mistake, this subcommand allows to
 reconfigure the enlistment.
 
-With the `--all` option, all enlistments currently registered with Scalar
-will be reconfigured. Use this option after each Scalar upgrade.
+--all::
+	When `--all` is specified, reconfigure all enlistments currently
+	registered with Scalar by the `scalar.repo` config key. Use this
+	option after each upgrade to get the latest features.
+
+--maintenance=<mode>::
+	By default, Scalar configures the enlistment to use Git's
+	background maintenance feature; this is the same as using the
+	`--maintenance=enable` value for this option. Use the
+	`--maintenance=disable` to remove each considered enlistment
+	from background maintenance. Use `--maitnenance=keep' to leave
+	the background maintenance configuration untouched for These
+	repositories.
 
 Diagnose
 ~~~~~~~~
