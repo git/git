@@ -209,6 +209,12 @@ static int set_recommended_config(int reconfigure)
 	return 0;
 }
 
+/**
+ * Enable or disable the maintenance mode for the current repository:
+ *
+ * * If 'enable' is nonzero, run 'git maintenance start'.
+ * * If 'enable' is zero, run 'git maintenance unregister --force'.
+ */
 static int toggle_maintenance(int enable)
 {
 	return run_git("maintenance",
@@ -259,7 +265,15 @@ static int stop_fsmonitor_daemon(void)
 	return 0;
 }
 
-static int register_dir(void)
+/**
+ * Register the current directory as a Scalar enlistment, and set the
+ * recommended configuration.
+ *
+ * * If 'maintenance' is non-zero, then enable background maintenance.
+ * * If 'maintenance' is zero, then leave background maintenance as it is
+ *   currently configured.
+ */
+static int register_dir(int maintenance)
 {
 	if (add_or_remove_enlistment(1))
 		return error(_("could not add enlistment"));
@@ -267,8 +281,9 @@ static int register_dir(void)
 	if (set_recommended_config(0))
 		return error(_("could not set recommended config"));
 
-	if (toggle_maintenance(1))
-		warning(_("could not turn on maintenance"));
+	if (maintenance &&
+	    toggle_maintenance(maintenance))
+		warning(_("could not toggle maintenance"));
 
 	if (have_fsmonitor_support() && start_fsmonitor_daemon()) {
 		return error(_("could not start the FSMonitor daemon"));
@@ -550,7 +565,7 @@ static int cmd_clone(int argc, const char **argv)
 	if (res)
 		goto cleanup;
 
-	res = register_dir();
+	res = register_dir(1);
 
 cleanup:
 	free(branch_to_free);
@@ -610,7 +625,7 @@ static int cmd_register(int argc, const char **argv)
 
 	setup_enlistment_directory(argc, argv, usage, options, NULL);
 
-	return register_dir();
+	return register_dir(1);
 }
 
 static int get_scalar_repos(const char *key, const char *value,
@@ -803,13 +818,13 @@ static int cmd_run(int argc, const char **argv)
 	strbuf_release(&buf);
 
 	if (i == 0)
-		return register_dir();
+		return register_dir(1);
 
 	if (i > 0)
 		return run_git("maintenance", "run",
 			       "--task", tasks[i].task, NULL);
 
-	if (register_dir())
+	if (register_dir(1))
 		return -1;
 	for (i = 1; tasks[i].arg; i++)
 		if (run_git("maintenance", "run",
