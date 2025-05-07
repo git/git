@@ -43,6 +43,7 @@
 #include "hook.h"
 #include "setup.h"
 #include "trace2.h"
+#include "worktree.h"
 
 #define FAILED_RUN "failed to run %s"
 
@@ -343,6 +344,44 @@ static int maintenance_task_worktree_prune(struct maintenance_run_opts *opts UNU
 	strvec_push(&prune_worktrees_cmd.args, cfg->prune_worktrees_expire);
 
 	return run_command(&prune_worktrees_cmd);
+}
+
+static int worktree_prune_condition(struct gc_config *cfg)
+{
+	struct strbuf buf = STRBUF_INIT;
+	int should_prune = 0, limit = 1;
+	timestamp_t expiry_date;
+	struct dirent *d;
+	DIR *dir = NULL;
+
+	git_config_get_int("maintenance.worktree-prune.auto", &limit);
+	if (limit <= 0) {
+		should_prune = limit < 0;
+		goto out;
+	}
+
+	if (parse_expiry_date(cfg->prune_worktrees_expire, &expiry_date))
+		goto out;
+
+	dir = opendir(repo_git_path_replace(the_repository, &buf, "worktrees"));
+	if (!dir)
+		goto out;
+
+	while (limit && (d = readdir_skip_dot_and_dotdot(dir))) {
+		char *wtpath;
+		strbuf_reset(&buf);
+		if (should_prune_worktree(d->d_name, &buf, &wtpath, expiry_date))
+			limit--;
+		free(wtpath);
+	}
+
+	should_prune = !limit;
+
+out:
+	if (dir)
+		closedir(dir);
+	strbuf_release(&buf);
+	return should_prune;
 }
 
 static int too_many_loose_objects(struct gc_config *cfg)
@@ -1465,6 +1504,7 @@ enum maintenance_task_label {
 	TASK_COMMIT_GRAPH,
 	TASK_PACK_REFS,
 	TASK_REFLOG_EXPIRE,
+	TASK_WORKTREE_PRUNE,
 
 	/* Leave as final value */
 	TASK__COUNT
@@ -1505,6 +1545,11 @@ static struct maintenance_task tasks[] = {
 		"reflog-expire",
 		maintenance_task_reflog_expire,
 		reflog_expire_condition,
+	},
+	[TASK_WORKTREE_PRUNE] = {
+		"worktree-prune",
+		maintenance_task_worktree_prune,
+		worktree_prune_condition,
 	},
 };
 
