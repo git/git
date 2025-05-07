@@ -426,7 +426,7 @@ static int cmd_clone(int argc, const char **argv)
 	const char *branch = NULL;
 	char *branch_to_free = NULL;
 	int full_clone = 0, single_branch = 0, show_progress = isatty(2);
-	int src = 1, tags = 1;
+	int src = 1, tags = 1, maintenance = 1;
 	struct option clone_options[] = {
 		OPT_STRING('b', "branch", &branch, N_("<branch>"),
 			   N_("branch to checkout after clone")),
@@ -439,11 +439,13 @@ static int cmd_clone(int argc, const char **argv)
 			 N_("create repository within 'src' directory")),
 		OPT_BOOL(0, "tags", &tags,
 			 N_("specify if tags should be fetched during clone")),
+		OPT_BOOL(0, "maintenance", &maintenance,
+			 N_("specify if background maintenance should be enabled")),
 		OPT_END(),
 	};
 	const char * const clone_usage[] = {
 		N_("scalar clone [--single-branch] [--branch <main-branch>] [--full-clone]\n"
-		   "\t[--[no-]src] [--[no-]tags] <url> [<enlistment>]"),
+		   "\t[--[no-]src] [--[no-]tags] [--[no-]maintenance] <url> [<enlistment>]"),
 		NULL
 	};
 	const char *url;
@@ -565,7 +567,8 @@ static int cmd_clone(int argc, const char **argv)
 	if (res)
 		goto cleanup;
 
-	res = register_dir(1);
+	/* If --no-maintenance, then skip maintenance command entirely. */
+	res = register_dir(maintenance);
 
 cleanup:
 	free(branch_to_free);
