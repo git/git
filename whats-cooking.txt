@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2025, #02; Mon, 5)
+Subject: What's cooking in git.git (May 2025, #03; Wed, 7)
 X-master-at: 6f84262c44a89851c3ae5a6e4c1a9d06b2068d75
-X-next-at: 170613ef418a11cdc11d88353825adf513fdfdf5
+X-next-at: 629a3ecd64b7b81537df89c66a9cbc8514ab94c1
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (May 2025, #02; Mon, 5)
+What's cooking in git.git (May 2025, #03; Wed, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,93 +46,72 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* cf/wrapper-netbsd-errno-eftype (2025-05-02) 1 commit
- - wrapper: NetBSD gives EFTYPE where POSIX uses ELOOP
-
- source: <20250502233403.289761-1-collin.funk1@gmail.com>
-
-
-* es/meson-cleanup (2025-04-25) 6 commits
-  (merged to 'next' on 2025-04-28 at 0cc8ee98dc)
- + meson: only check for missing networking syms on non-Windows; add compat impls
- + meson: fix typo in function check that prevented checking for hstrerror
- + meson: add a couple missing networking dependencies
- + meson: do a full usage-based compile check for sysinfo
- + meson: check for getpagesize before using it
- + meson: simplify and parameterize various standard function checks
-
- Code clean-up for meson-based build infrastructure.
- 
- source: <20250425053345.17288-1-eschwartz@gentoo.org>
-
-
-* js/ci-win-meson-timeout-workaround (2025-04-25) 1 commit
- - ci(win+Meson): build in Release mode, avoiding t7001-mv hangs
-
- win+Meson CI pipeline, unlike other pipelines for Windows,
- used to build artifacts in develper mode, which has been changed to
- build them in release mode for consistency.
-
- Expecting a reroll, stating an updated rationale for the change.
- cf. <xmqqjz6zuf80.fsf@gitster.g>
- source: <pull.1908.git.1745593515875.gitgitgadget@gmail.com>
-
-
-* js/windows-arm64 (2025-04-23) 6 commits
-  (merged to 'next' on 2025-04-28 at c3d4cea333)
- + max_tree_depth: lower it for clangarm64 on Windows
- + mingw(arm64): do move the `/etc/git*` location
- + msvc: do handle builds on Windows/ARM64
- + mingw: do not use nedmalloc on Windows/ARM64
- + config.mak.uname: add support for clangarm64
- + bswap.h: add support for built-in bswap functions
-
- Update to arm64 Windows port.
- 
- source: <pull.1904.v2.git.1745395308.gitgitgadget@gmail.com>
-
-
-* kn/meson-hdr-check (2025-04-23) 7 commits
-  (merged to 'next' on 2025-04-29 at c925448238)
- + makefile/meson: add 'check-headers' as alias for 'hdr-check'
- + meson: add support for 'hdr-check'
- + meson: rename 'third_party_sources' to 'third_party_excludes'
- + meson: move headers definition from 'contrib/coccinelle'
- + coccinelle: meson: rename variables to be more specific
- + ci/github: install git before checking out the repository
- + Merge branch 'es/meson-build-skip-coccinelle' into kn/meson-hdr-check
-
- Add an equivalent to "make hdr-check" target to meson based builds.
- 
- source: <20250423-505-wire-up-sparse-via-meson-v5-0-d1e2be4b2078@gmail.com>
-
-
-* ps/meson-build-perf-bench (2025-04-28) 5 commits
-  (merged to 'next' on 2025-04-28 at f563542bfd)
- + meson: wire up benchmarking options
- + meson: wire up benchmarks
- + t/perf: fix benchmarks with out-of-tree builds
- + t/perf: use configured PERL_PATH
- + t/perf: fix benchmarks with alternate repo formats
-
- The build procedure based on Meson learned to drive the
- benchmarking tests.
- 
- source: <20250428-pks-meson-benchmarks-v5-0-5010dd014d1d@pks.im>
-
---------------------------------------------------
 [New Topics]
 
-* cf/wrapper-bsd-eloop (2025-05-02) 1 commit
- - wrapper: NetBSD gives EFTYPE where POSIX uses ELOOP
+* ag/doc-send-email (2025-05-07) 3 commits
+ - docs: add credential helper for outlook and gmail in OAuth list of helpers
+ - docs: improve send-email documentation
+ - send-mail: improve checks for valid_fqdn
+
+ source: <PN3PR01MB9597208F139D23AF3436B16AB888A@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
+
+
+* jc/t6011-mv-ro-fix (2025-05-07) 1 commit
+ - t6011: fix misconversion from perl to sed
+
+ source: <xmqq8qn9fj8o.fsf@gitster.g>
+
+
+* ps/object-store (2025-05-06) 18 commits
+ - odb: rename `read_object_with_reference()`
+ - odb: rename `pretend_object_file()`
+ - odb: rename `has_object()`
+ - odb: rename `repo_read_object_file()`
+ - odb: rename `oid_object_info()`
+ - odb: trivial refactorings to get rid of `the_repository`
+ - odb: get rid of `the_repository` when handling submodule backends
+ - odb: get rid of `the_repository` when handling the primary backend
+ - odb: get rid of `the_repository` in `for_each()` functions
+ - odb: get rid of `the_repository` when handling alternates
+ - odb: get rid of `the_repository` in `assert_oid_type()`
+ - odb: get rid of `the_repository` in `assert_oid_type()`
+ - odb: get rid of `the_repository` in `find_odb()`
+ - odb: introduce parent pointers
+ - object-store: rename files to "odb.{c,h}"
+ - object-store: rename `object_directory` to `odb_backend`
+ - object-store: rename `raw_object_store` to `object_database`
+ - Merge branch 'ps/object-store-cleanup' into ps/object-store
+ (this branch uses ps/object-store-cleanup.)
+
+ source: <20250506-pks-object-store-wo-the-repository-v1-0-c05b82e7b126@pks.im>
+
+
+* sj/use-mmap-to-check-packed-refs (2025-05-07) 4 commits
+ - packed-backend: mmap large "packed-refs" file during fsck
+ - packed-backend: extract munmap operation for `MMAP_TEMPORARY`
+ - packed-backend: extract snapshot allocation in `load_contents`
+ - packed-backend: fsck should allow an empty "packed-refs" file
+
+ source: <aBtzn4nwLsI9p5Cp@ArchLinux>
+
+
+* tb/macos-false-but-the-compiler-does-not-know-it-fix (2025-05-07) 1 commit
+ - intialize false_but_the_compiler_does_not_know_it_
+
+ source: <20250506120644.186968-1-tboegi@web.de>
+
+--------------------------------------------------
+[Cooking]
+
+* cf/wrapper-bsd-eloop (2025-05-06) 1 commit
+ - wrapper: NetBSD gives EFTYPE and FreeBSD gives EMFILE where POSIX uses ELOOP
 
  The fallback implementation of open_nofollow() depended on
  open("symlink", O_NOFOLLOW) to set errno to ELOOP, but a few BSD
  derived systems use different errno, which has been worked around.
 
- source: <20250502233403.289761-1-collin.funk1@gmail.com>
+ Will merge to 'next'.
+ source: <20250506010946.212068-1-collin.funk1@gmail.com>
 
 
 * js/ci-build-win-in-release-mode (2025-05-05) 1 commit
@@ -147,46 +126,48 @@ Release tarballs are available at:
 
 
 * js/ci-buildsystems-cleanup (2025-05-05) 3 commits
- - config.mak.uname: drop the `vcxproj` target
- - contrib/buildsystems: drop support for building . vcproj/.vcxproj files
- - ci: stop linking the `prove` cache
+  (merged to 'next' on 2025-05-06 at b2038f9a91)
+ + config.mak.uname: drop the `vcxproj` target
+ + contrib/buildsystems: drop support for building . vcproj/.vcxproj files
+ + ci: stop linking the `prove` cache
 
  Code clean-up around stale CI elements and building with Visual Studio.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1916.git.1746430790.gitgitgadget@gmail.com>
 
 
 * kh/docfixes (2025-05-05) 2 commits
- - doc: branch: fix inline-verbatim
- - doc: reflog: fix `drop` subheading
+  (merged to 'next' on 2025-05-06 at 6cd8af0fa1)
+ + doc: branch: fix inline-verbatim
+ + doc: reflog: fix `drop` subheading
 
  Docfixes.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1746299135.git.code@khaugsbakk.name>
 
 
 * kj/glob-path-with-special-char (2025-05-05) 1 commit
- - dir.c: literal match with wildcard in pathspec should still glob
+  (merged to 'next' on 2025-05-06 at 629a3ecd64)
+ + dir.c: literal match with wildcard in pathspec should still glob
 
  "git add 'f?o'" did not add 'foo' if 'f?o', an unusual pathname,
  also existed on the working tree, which has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250503060736.587286-1-jayatheerthkulkarni2005@gmail.com>
 
 
 * ps/ci-test-aggreg-fix-for-meson (2025-05-05) 1 commit
- - ci: fix aggregation of test results with Meson
+  (merged to 'next' on 2025-05-06 at 40306a837b)
+ + ci: fix aggregation of test results with Meson
 
  Test result aggregation did not work in Meson based CI jobs.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250505-b4-pks-meson-aggregate-results-v1-1-f38899a0a2cc@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * cc/promisor-remote-capability (2025-04-29) 3 commits
  - promisor-remote: allow a client to check fields
@@ -230,8 +211,8 @@ Release tarballs are available at:
  source: <20250429140949.2634935-1-n.glodny@campus.lmu.de>
 
 
-* ds/scalar-no-maintenance (2025-05-05) 4 commits
- - scalar reconfigure: add --no-maintenance option
+* ds/scalar-no-maintenance (2025-05-07) 4 commits
+ - scalar reconfigure: add --maintenance=<mode> option
  - scalar clone: add --no-maintenance option
  - scalar register: add --no-maintenance option
  - scalar: customize register_dir()'s behavior
@@ -240,8 +221,8 @@ Release tarballs are available at:
  under "scalar"'s control are taught an option not to enable the
  scheduled maintenance on it.
 
- Will merge to 'next'?
- source: <pull.1913.v2.git.1746458844.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <pull.1913.v3.git.1746582637.gitgitgadget@gmail.com>
 
 
 * ps/mv-contradiction-fix (2025-04-30) 2 commits
@@ -259,11 +240,12 @@ Release tarballs are available at:
 
 
 * en/get-tree-entry-doc (2025-05-02) 1 commit
- - tree-walk.h: fix incorrect API comment
+  (merged to 'next' on 2025-05-06 at cddf407919)
+ + tree-walk.h: fix incorrect API comment
 
  Doc update.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1912.v2.git.1746213551473.gitgitgadget@gmail.com>
 
 
@@ -306,20 +288,19 @@ Release tarballs are available at:
  source: <20250425153827.147585-1-gitster@pobox.com>
 
 
-* ps/maintenance-missing-tasks (2025-05-05) 7 commits
+* ps/maintenance-missing-tasks (2025-05-07) 6 commits
  - builtin/maintenance: introduce "rerere-gc" task
  - builtin/gc: move rerere garbage collection into separate function
  - builtin/maintenance: introduce "worktree-prune" task
- - worktree: expose function to retrieve worktree names
  - builtin/gc: move pruning of worktrees into a separate function
- - builtin/gc: remove global variables where it trivial to do
+ - builtin/gc: remove global variables where it is trivial to do
  - builtin/gc: fix indentation of `cmd_gc()` parameters
 
  Make repository clean-up tasks "gc" can do available to "git
  maintenance" front-end.
 
  Will merge to 'next'.
- source: <20250505-pks-maintenance-missing-tasks-v4-0-141f4df906a1@pks.im>
+ source: <20250507-pks-maintenance-missing-tasks-v5-0-aa5fdfb82891@pks.im>
 
 
 * ag/send-email-outlook (2025-04-29) 2 commits
@@ -358,6 +339,7 @@ Release tarballs are available at:
  + object-store: drop `loose_object_path()`
  + object-store: move `struct packed_git` into "packfile.h"
  + Merge branch 'ps/object-file-cleanup' into ps/object-store-cleanup
+ (this branch is used by ps/object-store.)
 
  Further code clean-up in the object-store layer.
 
