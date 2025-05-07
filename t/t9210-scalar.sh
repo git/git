@@ -108,7 +108,7 @@ test_expect_success 'scalar register warns when background maintenance fails' '
 	git init register-repo &&
 	GIT_TEST_MAINT_SCHEDULER="crontab:false,launchctl:false,schtasks:false" \
 		scalar register register-repo 2>err &&
-	grep "could not turn on maintenance" err
+	grep "could not toggle maintenance" err
 '
 
 test_expect_success 'scalar unregister' '
@@ -127,6 +127,17 @@ test_expect_success 'scalar unregister' '
 
 	# scalar unregister should be idempotent
 	scalar unregister vanish
+'
+
+test_expect_success 'scalar register --no-maintenance' '
+	git init register-no-maint &&
+	event_log="$(pwd)/no-maint.event" &&
+	GIT_TEST_MAINT_SCHEDULER="crontab:false,launchctl:false,schtasks:false" \
+	GIT_TRACE2_EVENT="$event_log" \
+	GIT_TRACE2_EVENT_DEPTH=100 \
+		scalar register --no-maintenance register-no-maint 2>err &&
+	test_must_be_empty err &&
+	test_subcommand ! git maintenance unregister --force <no-maint.event
 '
 
 test_expect_success 'set up repository to clone' '
