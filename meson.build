@@ -866,9 +866,8 @@ if host_machine.system() == 'cygwin' or host_machine.system() == 'windows'
 endif
 build_options_config.set_quoted('X', executable_suffix)
 
-python = import('python').find_installation('python3', required: get_option('python'))
-target_python = find_program('python3', native: false, required: python.found())
-if python.found()
+target_python = find_program('python3', native: false, required: get_option('python'))
+if target_python.found()
   build_options_config.set('NO_PYTHON', '')
 else
   libgit_c_args += '-DNO_PYTHON'
@@ -1979,7 +1978,7 @@ if perl_features_enabled
   subdir('perl')
 endif
 
-if python.found()
+if target_python.found()
   scripts_python = [
     'git-p4.py'
   ]
@@ -2202,7 +2201,7 @@ summary({
   'iconv': iconv.found(),
   'pcre2': pcre2.found(),
   'perl': perl_features_enabled,
-  'python': python.found(),
+  'python': target_python.found(),
 }, section: 'Auto-detected features')
 
 summary({
