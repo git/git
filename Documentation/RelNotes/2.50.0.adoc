@@ -251,6 +251,15 @@ Fixes since v2.49
 
  * Update to arm64 Windows port.
    (merge 436a42215e js/windows-arm64 later to maint).
+ * hashmap API clean-up to ensure hashmap_clear() leaves a cleared map
+   in a reusable state.
+   (merge 9481877de3 en/hashmap-clear-fix later to maint).
+
+ * "git mv a a/b dst" would ask to move the directory 'a' itself, as
+   well as its contents, in a single destination directory, which is
+   a contradicting request that is impossible to satisfy. This case is
+   now detected and the command errors out.
+   (merge 974f0d4664 ps/mv-contradiction-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
@@ -277,3 +286,4 @@ Fixes since v2.49
    (merge 25292c301d lo/remove-log-reencode-from-rev-info later to maint).
    (merge 1aa50636fd jk/p5332-testfix later to maint).
    (merge 42cf4ac552 ps/ci-resurrect-p4-on-github later to maint).
+   (merge 104add8368 js/diff-codeql-false-positive-workaround later to maint).
