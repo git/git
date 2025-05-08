@@ -1,3 +1,7 @@
+# Configuration for Git installation
+option('perllibdir', type: 'string', value: '',
+  description: 'Directory to install perl lib to. Defaults to <datadir>/perl5')
+
 # Configuration for how Git behaves at runtime.
 option('default_pager', type: 'string', value: 'less',
   description: 'Fall-back pager.')
