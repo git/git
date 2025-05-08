@@ -39,6 +39,13 @@ enum update_mode {
 	INDEX = (1 << 2),
 	SPARSE = (1 << 3),
 	SKIP_WORKTREE_DIR = (1 << 4),
+	/*
+	 * A file gets moved implicitly via a move of one of its parent
+	 * directories. This flag causes us to skip the check that we don't try
+	 * to move a file and any of its parent directories at the same point
+	 * in time.
+	 */
+	MOVE_VIA_PARENT_DIR = (1 << 5),
 };
 
 #define DUP_BASENAME 1
@@ -183,6 +190,21 @@ static void remove_empty_src_dirs(const char **src_dir, size_t src_dir_nr)
 	strbuf_release(&a_src_dir);
 }
 
+struct pathmap_entry {
+	struct hashmap_entry ent;
+	const char *path;
+};
+
+static int pathmap_cmp(const void *cmp_data UNUSED,
+		       const struct hashmap_entry *a,
+		       const struct hashmap_entry *b,
+		       const void *key UNUSED)
+{
+	const struct pathmap_entry *e1 = container_of(a, struct pathmap_entry, ent);
+	const struct pathmap_entry *e2 = container_of(b, struct pathmap_entry, ent);
+	return fspathcmp(e1->path, e2->path);
+}
+
 int cmd_mv(int argc,
 	   const char **argv,
 	   const char *prefix,
@@ -213,6 +235,8 @@ int cmd_mv(int argc,
 	struct cache_entry *ce;
 	struct string_list only_match_skip_worktree = STRING_LIST_INIT_DUP;
 	struct string_list dirty_paths = STRING_LIST_INIT_DUP;
+	struct hashmap moved_dirs = HASHMAP_INIT(pathmap_cmp, NULL);
+	struct strbuf pathbuf = STRBUF_INIT;
 	int ret;
 
 	git_config(git_default_config, NULL);
@@ -331,6 +355,7 @@ int cmd_mv(int argc,
 
 dir_check:
 		if (S_ISDIR(st.st_mode)) {
+			struct pathmap_entry *entry;
 			char *dst_with_slash;
 			size_t dst_with_slash_len;
 			int j, n;
@@ -347,6 +372,11 @@ dir_check:
 				bad = _("source directory is empty");
 				goto act_on_entry;
 			}
+
+			entry = xmalloc(sizeof(*entry));
+			entry->path = src;
+			hashmap_entry_init(&entry->ent, fspathhash(src));
+			hashmap_add(&moved_dirs, &entry->ent);
 
 			/* last - first >= 1 */
 			modes[i] |= WORKING_DIRECTORY;
@@ -368,8 +398,7 @@ dir_check:
 				strvec_push(&sources, path);
 				strvec_push(&destinations, prefixed_path);
 
-				memset(modes + argc + j, 0, sizeof(enum update_mode));
-				modes[argc + j] |= ce_skip_worktree(ce) ? SPARSE : INDEX;
+				modes[argc + j] = MOVE_VIA_PARENT_DIR | (ce_skip_worktree(ce) ? SPARSE : INDEX);
 				submodule_gitfiles[argc + j] = NULL;
 
 				free(prefixed_path);
@@ -465,6 +494,32 @@ remove_entry:
 		}
 	}
 
+	for (i = 0; i < argc; i++) {
+		const char *slash_pos;
+
+		if (modes[i] & MOVE_VIA_PARENT_DIR)
+			continue;
+
+		strbuf_reset(&pathbuf);
+		strbuf_addstr(&pathbuf, sources.v[i]);
+
+		slash_pos = strrchr(pathbuf.buf, '/');
+		while (slash_pos > pathbuf.buf) {
+			struct pathmap_entry needle;
+
+			strbuf_setlen(&pathbuf, slash_pos - pathbuf.buf);
+
+			needle.path = pathbuf.buf;
+			hashmap_entry_init(&needle.ent, fspathhash(pathbuf.buf));
+
+			if (hashmap_get_entry(&moved_dirs, &needle, ent, NULL))
+				die(_("cannot move both '%s' and its parent directory '%s'"),
+				    sources.v[i], pathbuf.buf);
+
+			slash_pos = strrchr(pathbuf.buf, '/');
+		}
+	}
+
 	if (only_match_skip_worktree.nr) {
 		advise_on_updating_sparse_paths(&only_match_skip_worktree);
 		if (!ignore_errors) {
@@ -507,7 +562,8 @@ remove_entry:
 			continue;
 
 		pos = index_name_pos(the_repository->index, src, strlen(src));
-		assert(pos >= 0);
+		if (pos < 0)
+			BUG("could not find source in index: '%s'", src);
 		if (!(mode & SPARSE) && !lstat(src, &st))
 			sparse_and_dirty = ie_modified(the_repository->index,
 						       the_repository->index->cache[pos],
@@ -589,6 +645,8 @@ out:
 	strvec_clear(&dest_paths);
 	strvec_clear(&destinations);
 	strvec_clear(&submodule_gitfiles_to_free);
+	hashmap_clear_and_free(&moved_dirs, struct pathmap_entry, ent);
+	strbuf_release(&pathbuf);
 	free(submodule_gitfiles);
 	free(modes);
 	return ret;
