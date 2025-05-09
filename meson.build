@@ -1904,14 +1904,19 @@ if perl_features_enabled
     perl_header_template = 'perl/header_templates/runtime_prefix.template.pl'
   endif
 
+  perllibdir = get_option('perllibdir')
+  if perllibdir == ''
+    perllibdir = get_option('datadir') / 'perl5'
+  endif
+
   perl_header = configure_file(
     input: perl_header_template,
     output: 'GIT-PERL-HEADER',
     configuration: {
       'GITEXECDIR_REL': get_option('libexecdir') / 'git-core',
-      'PERLLIBDIR_REL': get_option('datadir') / 'perl5',
+      'PERLLIBDIR_REL': perllibdir,
       'LOCALEDIR_REL': get_option('datadir') / 'locale',
-      'INSTLIBDIR': get_option('datadir') / 'perl5',
+      'INSTLIBDIR': perllibdir,
       'PATHSEP': pathsep,
     },
   )
