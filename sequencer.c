@@ -225,11 +225,6 @@ struct replay_ctx {
 	 */
 	struct strbuf current_fixups;
 	/*
-	 * Stores the reflog message that will be used when creating a
-	 * commit. Points to a static buffer and should not be free()'d.
-	 */
-	const char *reflog_message;
-	/*
 	 * The number of completed fixup and squash commands in the
 	 * current chain.
 	 */
@@ -1133,10 +1128,10 @@ static int run_command_silent_on_success(struct child_process *cmd)
  * author metadata.
  */
 static int run_git_commit(const char *defmsg,
+			  const char *reflog_action,
 			  struct replay_opts *opts,
 			  unsigned int flags)
 {
-	struct replay_ctx *ctx = opts->ctx;
 	struct child_process cmd = CHILD_PROCESS_INIT;
 
 	if ((flags & CLEANUP_MSG) && (flags & VERBATIM_MSG))
@@ -1154,7 +1149,7 @@ static int run_git_commit(const char *defmsg,
 			     gpg_opt, gpg_opt);
 	}
 
-	strvec_pushf(&cmd.env, GIT_REFLOG_ACTION "=%s", ctx->reflog_message);
+	strvec_pushf(&cmd.env, GIT_REFLOG_ACTION "=%s", reflog_action);
 
 	if (opts->committer_date_is_author_date)
 		strvec_pushf(&cmd.env, "GIT_COMMITTER_DATE=%s",
@@ -1538,10 +1533,10 @@ static int parse_head(struct repository *r, struct commit **head)
  */
 static int try_to_commit(struct repository *r,
 			 struct strbuf *msg, const char *author,
+			 const char *reflog_action,
 			 struct replay_opts *opts, unsigned int flags,
 			 struct object_id *oid)
 {
-	struct replay_ctx *ctx = opts->ctx;
 	struct object_id tree;
 	struct commit *current_head = NULL;
 	struct commit_list *parents = NULL;
@@ -1703,7 +1698,7 @@ static int try_to_commit(struct repository *r,
 		goto out;
 	}
 
-	if (update_head_with_reflog(current_head, oid, ctx->reflog_message,
+	if (update_head_with_reflog(current_head, oid, reflog_action,
 				    msg, &err)) {
 		res = error("%s", err.buf);
 		goto out;
@@ -1734,6 +1729,7 @@ static int write_rebase_head(struct object_id *oid)
 
 static int do_commit(struct repository *r,
 		     const char *msg_file, const char *author,
+		     const char *reflog_action,
 		     struct replay_opts *opts, unsigned int flags,
 		     struct object_id *oid)
 {
@@ -1749,7 +1745,7 @@ static int do_commit(struct repository *r,
 					   msg_file);
 
 		res = try_to_commit(r, msg_file ? &sb : NULL,
-				    author, opts, flags, &oid);
+				    author, reflog_action, opts, flags, &oid);
 		strbuf_release(&sb);
 		if (!res) {
 			refs_delete_ref(get_main_ref_store(r), "",
@@ -1765,7 +1761,7 @@ static int do_commit(struct repository *r,
 		if (is_rebase_i(opts) && oid)
 			if (write_rebase_head(oid))
 			    return -1;
-		return run_git_commit(msg_file, opts, flags);
+		return run_git_commit(msg_file, reflog_action, opts, flags);
 	}
 
 	return res;
@@ -2278,12 +2274,18 @@ static int do_pick_commit(struct repository *r,
 	const char *msg_file = should_edit(opts) ? NULL : git_path_merge_msg(r);
 	struct object_id head;
 	struct commit *base, *next, *parent;
-	const char *base_label, *next_label;
+	const char *base_label, *next_label, *reflog_action;
 	char *author = NULL;
 	struct commit_message msg = { NULL, NULL, NULL, NULL };
 	int res, unborn = 0, reword = 0, allow, drop_commit;
 	enum todo_command command = item->command;
 	struct commit *commit = item->commit;
+
+	if (is_rebase_i(opts))
+		reflog_action = reflog_message(
+			opts, command_to_string(item->command), NULL);
+	else
+		reflog_action = sequencer_reflog_action(opts);
 
 	if (opts->no_commit) {
 		/*
@@ -2536,14 +2538,15 @@ static int do_pick_commit(struct repository *r,
 	} /* else allow == 0 and there's nothing special to do */
 	if (!opts->no_commit && !drop_commit) {
 		if (author || command == TODO_REVERT || (flags & AMEND_MSG))
-			res = do_commit(r, msg_file, author, opts, flags,
+			res = do_commit(r, msg_file, author, reflog_action,
+					opts, flags,
 					commit? &commit->object.oid : NULL);
 		else
 			res = error(_("unable to parse commit author"));
 		*check_todo = !!(flags & EDIT_MSG);
 		if (!res && reword) {
 fast_forward_edit:
-			res = run_git_commit(NULL, opts, EDIT_MSG |
+			res = run_git_commit(NULL, reflog_action, opts, EDIT_MSG |
 					     VERIFY_MSG | AMEND_MSG |
 					     (flags & ALLOW_EMPTY));
 			*check_todo = 1;
@@ -4092,6 +4095,7 @@ static int do_merge(struct repository *r,
 	int merge_arg_len, oneline_offset, can_fast_forward, ret, k;
 	static struct lock_file lock;
 	const char *p;
+	const char *reflog_action = reflog_message(opts, "merge", NULL);
 
 	if (repo_hold_locked_index(r, &lock, LOCK_REPORT_ON_ERROR) < 0) {
 		ret = -1;
@@ -4370,14 +4374,15 @@ static int do_merge(struct repository *r,
 		 * value (a negative one would indicate that the `merge`
 		 * command needs to be rescheduled).
 		 */
-		ret = !!run_git_commit(git_path_merge_msg(r), opts,
-				       run_commit_flags);
+		ret = !!run_git_commit(git_path_merge_msg(r), reflog_action,
+				       opts, run_commit_flags);
 
 	if (!ret && flags & TODO_EDIT_MERGE_MSG) {
 	fast_forward_edit:
 		*check_todo = 1;
 		run_commit_flags |= AMEND_MSG | EDIT_MSG | VERIFY_MSG;
-		ret = !!run_git_commit(NULL, opts, run_commit_flags);
+		ret = !!run_git_commit(NULL, reflog_action, opts,
+				       run_commit_flags);
 	}
 
 
@@ -4892,13 +4897,9 @@ static int pick_one_commit(struct repository *r,
 			   struct replay_opts *opts,
 			   int *check_todo, int* reschedule)
 {
-	struct replay_ctx *ctx = opts->ctx;
 	int res;
 	struct todo_item *item = todo_list->items + todo_list->current;
 	const char *arg = todo_item_get_arg(todo_list, item);
-	if (is_rebase_i(opts))
-		ctx->reflog_message = reflog_message(
-			opts, command_to_string(item->command), NULL);
 
 	res = do_pick_commit(r, item, opts, is_final_fixup(todo_list),
 			     check_todo);
@@ -4957,7 +4958,6 @@ static int pick_commits(struct repository *r,
 	struct replay_ctx *ctx = opts->ctx;
 	int res = 0, reschedule = 0;
 
-	ctx->reflog_message = sequencer_reflog_action(opts);
 	if (opts->allow_ff)
 		assert(!(opts->signoff || opts->no_commit ||
 			 opts->record_origin || should_edit(opts) ||
@@ -5218,6 +5218,7 @@ static int commit_staged_changes(struct repository *r,
 	unsigned int flags = ALLOW_EMPTY | EDIT_MSG;
 	unsigned int final_fixup = 0, is_clean;
 	struct strbuf rev = STRBUF_INIT;
+	const char *reflog_action = reflog_message(opts, "continue", NULL);
 	int ret;
 
 	if (has_unstaged_changes(r, 1)) {
@@ -5380,7 +5381,7 @@ static int commit_staged_changes(struct repository *r,
 	}
 
 	if (run_git_commit(final_fixup ? NULL : rebase_path_message(),
-			   opts, flags)) {
+			   reflog_action, opts, flags)) {
 		ret = error(_("could not commit staged changes."));
 		goto out;
 	}
@@ -5412,7 +5413,6 @@ out:
 
 int sequencer_continue(struct repository *r, struct replay_opts *opts)
 {
-	struct replay_ctx *ctx = opts->ctx;
 	struct todo_list todo_list = TODO_LIST_INIT;
 	int res;
 
@@ -5433,7 +5433,6 @@ int sequencer_continue(struct repository *r, struct replay_opts *opts)
 			unlink(rebase_path_dropped());
 		}
 
-		ctx->reflog_message = reflog_message(opts, "continue", NULL);
 		if (commit_staged_changes(r, opts, &todo_list)) {
 			res = -1;
 			goto release_todo_list;
@@ -5485,7 +5484,6 @@ static int single_pick(struct repository *r,
 			TODO_PICK : TODO_REVERT;
 	item.commit = cmit;
 
-	opts->ctx->reflog_message = sequencer_reflog_action(opts);
 	return do_pick_commit(r, &item, opts, 0, &check_todo);
 }
 
