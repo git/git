@@ -1,0 +1,1457 @@
+# Translation of gitk
+# Copyright (C) 2024-2025 தமிழ்நேரம்
+# This file is distributed under the same license as the gitk package.
+# தமிழ்நேரம் (TamilNeram.github.io), 2025.
+#
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gitk\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-05-07 08:01+0530\n"
+"PO-Revision-Date: 2025-05-07 09:17\n"
+"Last-Translator: தமிழ்நேரம் (TamilNeram.github.io)\n"
+"Language-Team: Tamil\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: gitk:274
+msgid "Couldn't get list of unmerged files:"
+msgstr "ஒருங்கிணைக்கப்படாத கோப்புகளின் பட்டியலைப் பெற முடியவில்லை:"
+
+#: gitk:346 gitk:2565
+msgid "Color words"
+msgstr "வண்ண சொற்கள்"
+
+#: gitk:351 gitk:2565 gitk:8476 gitk:8509
+msgid "Markup words"
+msgstr "குறிக்கப்பட்ட சொற்கள்"
+
+#: gitk:458
+msgid "Error parsing revisions:"
+msgstr "பிழைகளை பாகுபடுத்துதல்:"
+
+#: gitk:524
+msgid "Error executing --argscmd command:"
+msgstr "--argscmd கட்டளையை இயக்குவதில் பிழை:"
+
+#: gitk:537
+msgid "No files selected: --merge specified but no files are unmerged."
+msgstr ""
+"கோப்புகள் எதுவும் தேர்ந்தெடுக்கப்படவில்லை: --ஒன்றிணை குறிப்பிடப்பட்டுள்ளது, "
+"ஆனால் கோப்புகள் எதுவும் அவிழ்க்கப்படவில்லை."
+
+#: gitk:540
+msgid ""
+"No files selected: --merge specified but no unmerged files are within file "
+"limit."
+msgstr ""
+"கோப்புகள் எதுவும் தேர்ந்தெடுக்கப்படவில்லை: --ஒன்றிணை குறிப்பிடப்பட்டுள்ளது, "
+"ஆனால் அவிழ்க்கப்படாத கோப்புகள் எதுவும் கோப்பு வரம்பிற்குள் இல்லை."
+
+#: gitk:565 gitk:720
+msgid "Error executing git log:"
+msgstr "அறிவிலி பதிவை இயக்குவதில் பிழை:"
+
+#: gitk:583 gitk:736
+msgid "Reading"
+msgstr "படித்தல்"
+
+#: gitk:643 gitk:4736
+msgid "Reading commits..."
+msgstr "உறுதிமொழிகளைப் படித்தல்..."
+
+#: gitk:646 gitk:1795 gitk:4739
+msgid "No commits selected"
+msgstr "எந்த உறுதிமொழிகளும் தேர்ந்தெடுக்கப்படவில்லை"
+
+#: gitk:1603 gitk:4256 gitk:12883
+msgid "Command line"
+msgstr "கட்டளை வரி"
+
+#: gitk:1669
+msgid "Can't parse git log output:"
+msgstr "அறிவிலி பதிவு வெளியீட்டை அலச முடியாது:"
+
+#: gitk:1898
+msgid "No commit information available"
+msgstr "உறுதிமொழி செய்தி எதுவும் கிடைக்கவில்லை"
+
+#: gitk:2065 gitk:2094 gitk:4526 gitk:10016 gitk:11626 gitk:11946
+msgid "OK"
+msgstr "சரி"
+
+#: gitk:2096 gitk:4528 gitk:9452 gitk:9531 gitk:9661 gitk:9747 gitk:10018
+#: gitk:11627 gitk:11947
+msgid "Cancel"
+msgstr "நீக்கறல்"
+
+#: gitk:2249
+msgid "&Update"
+msgstr "புதுப்பித்தல்"
+
+#: gitk:2250
+msgid "&Reload"
+msgstr "மீண்டும் ஏற்று"
+
+#: gitk:2251
+msgid "Reread re&ferences"
+msgstr "குறிப்புகளை மீண்டும் படி"
+
+#: gitk:2252
+msgid "&List references"
+msgstr "பட்டியல் குறிப்புகள்"
+
+#: gitk:2254
+msgid "Start git &gui"
+msgstr "அறிவிலி இடைமுகத்தைத் தொடங்கு"
+
+#: gitk:2256
+msgid "&Quit"
+msgstr "வெளியேறு"
+
+#: gitk:2248
+msgid "&File"
+msgstr "கோப்பு"
+
+#: gitk:2260
+msgid "&Preferences"
+msgstr "விருப்பத்தேர்வுகள்"
+
+#: gitk:2259
+msgid "&Edit"
+msgstr "திருத்து"
+
+#: gitk:2264
+msgid "&New view..."
+msgstr "புதிய பார்வை..."
+
+#: gitk:2265
+msgid "&Edit view..."
+msgstr "பார்வையைத் திருத்து..."
+
+#: gitk:2266
+msgid "&Delete view"
+msgstr "பார்வையை நீக்கு"
+
+#: gitk:2268
+msgid "&All files"
+msgstr "அனைத்து கோப்புகளும்"
+
+#: gitk:2263
+msgid "&View"
+msgstr "காண்க"
+
+#: gitk:2273 gitk:2283
+msgid "&About gitk"
+msgstr "அறிவிலிகே பற்றி"
+
+#: gitk:2274 gitk:2288
+msgid "&Key bindings"
+msgstr "முக்கிய பிணைப்புகள்"
+
+#: gitk:2272 gitk:2287
+msgid "&Help"
+msgstr "உதவி"
+
+#: gitk:2365 gitk:8908
+msgid "Commit ID:"
+msgstr "உறுதிமொழி அடையாளம்:"
+
+#: gitk:2409
+msgid "Row"
+msgstr "நிரை"
+
+#: gitk:2447
+msgid "Find"
+msgstr "கண்டுபிடி"
+
+#: gitk:2475
+msgid "commit"
+msgstr "உறுதிமொழி"
+
+#: gitk:2479 gitk:2481 gitk:4898 gitk:4921 gitk:4945 gitk:6966 gitk:7038
+#: gitk:7123
+msgid "containing:"
+msgstr "கொண்டிருக்கிறது:"
+
+#: gitk:2482 gitk:3737 gitk:3742 gitk:4974
+msgid "touching paths:"
+msgstr "தொடும் பாதைகள்:"
+
+#: gitk:2483 gitk:4988
+msgid "adding/removing string:"
+msgstr "சரத்தைச் சேர்ப்பது/அகற்றுவது:"
+
+#: gitk:2484 gitk:4990
+msgid "changing lines matching:"
+msgstr "பொருந்தக்கூடிய வரிகளை மாற்றுதல்:"
+
+#: gitk:2493 gitk:2495 gitk:4977
+msgid "Exact"
+msgstr "சரியான"
+
+#: gitk:2495 gitk:5065 gitk:6934
+msgid "IgnCase"
+msgstr "வழக்குதவிர்"
+
+#: gitk:2495 gitk:4947 gitk:5063 gitk:6930
+msgid "Regexp"
+msgstr "வழக்கவெளி"
+
+#: gitk:2497 gitk:2498 gitk:5085 gitk:5115 gitk:5122 gitk:7059 gitk:7127
+msgid "All fields"
+msgstr "அனைத்து புலங்களும்"
+
+#: gitk:2498 gitk:5082 gitk:5115 gitk:6997
+msgid "Headline"
+msgstr "தலைப்பு"
+
+#: gitk:2499 gitk:5082 gitk:6997 gitk:7127 gitk:7639
+msgid "Comments"
+msgstr "கருத்துகள்"
+
+#: gitk:2499 gitk:5082 gitk:5087 gitk:5122 gitk:6997 gitk:7574 gitk:9086
+#: gitk:9101
+msgid "Author"
+msgstr "நூலாசிரியர்"
+
+#: gitk:2499 gitk:5082 gitk:6997 gitk:7576
+msgid "Committer"
+msgstr "உறுதிமொழிபவர்"
+
+#: gitk:2533
+msgid "Search"
+msgstr "தேடு"
+
+#: gitk:2541
+msgid "Diff"
+msgstr "வேறுபாடு"
+
+#: gitk:2543
+msgid "Old version"
+msgstr "பழைய பதிப்பு"
+
+#: gitk:2545
+msgid "New version"
+msgstr "புதிய பதிப்பு"
+
+#: gitk:2548
+msgid "Lines of context"
+msgstr "சூழலின் வரிகள்"
+
+#: gitk:2558
+msgid "Ignore space change"
+msgstr "இடைவெளி மாற்றத்தை புறக்கணி"
+
+#: gitk:2562 gitk:2564 gitk:8209 gitk:8462
+msgid "Line diff"
+msgstr "வரி வேறுபாடு"
+
+#: gitk:2637
+msgid "Patch"
+msgstr "ஒட்டு"
+
+#: gitk:2639
+msgid "Tree"
+msgstr "மரம்"
+
+#: gitk:2814 gitk:2835
+msgid "Diff this -> selected"
+msgstr "இதை வேறுபடுத்துங்கள் -> தேர்ந்தெடுக்கப்பட்டது"
+
+#: gitk:2815 gitk:2836
+msgid "Diff selected -> this"
+msgstr "வேறுபாடு தேர்ந்தெடுக்கப்பட்டது -> இது"
+
+#: gitk:2816 gitk:2837
+msgid "Make patch"
+msgstr "ஒட்டு செய்"
+
+#: gitk:2817 gitk:9510
+msgid "Create tag"
+msgstr "குறிச்சொல்லை உருவாக்கு"
+
+#: gitk:2818
+msgid "Copy commit reference"
+msgstr "உறுதிமொழி குறிப்பு நகலெடு"
+
+#: gitk:2819 gitk:9641
+msgid "Write commit to file"
+msgstr "கோப்பில் உறவை எழுதுங்கள்"
+
+#: gitk:2820
+msgid "Create new branch"
+msgstr "புதிய கிளையை உருவாக்கு"
+
+#: gitk:2821
+msgid "Cherry-pick this commit"
+msgstr "கனி-எடு இந்த உறுதிமொழி"
+
+#: gitk:2822
+msgid "Reset HEAD branch to here"
+msgstr "தலை கிளையை இங்கே மீட்டமை"
+
+#: gitk:2823
+msgid "Mark this commit"
+msgstr "இந்த உறுதிமொழியைக் குறி"
+
+#: gitk:2824
+msgid "Return to mark"
+msgstr "மார்க்குக்குத் திரும்பு"
+
+#: gitk:2825
+msgid "Find descendant of this and mark"
+msgstr "இதன் வழித்தோன்றலைக் கண்டுபிடித்து குறி"
+
+#: gitk:2826
+msgid "Compare with marked commit"
+msgstr "குறிக்கப்பட்ட உறுதிப்பாட்டுடன் ஒப்பிடுக"
+
+#: gitk:2827 gitk:2838
+msgid "Diff this -> marked commit"
+msgstr "இதை வேறுபடுத்துங்கள் -> குறிக்கப்பட்ட உறுதிமொழி"
+
+#: gitk:2828 gitk:2839
+msgid "Diff marked commit -> this"
+msgstr "வேறுபாடு குறிக்கப்பட்ட உறுதிமொழி -> இது"
+
+#: gitk:2829
+msgid "Revert this commit"
+msgstr "இந்த உறுதிப்பாட்டை மாற்றவும்"
+
+#: gitk:2845
+msgid "Check out this branch"
+msgstr "இந்த கிளையைப் பாருங்கள்"
+
+#: gitk:2846
+msgid "Rename this branch"
+msgstr "இந்த கிளையை மறுபெயரிடு"
+
+#: gitk:2847
+msgid "Remove this branch"
+msgstr "இந்த கிளையை அகற்று"
+
+#: gitk:2848
+msgid "Copy branch name"
+msgstr "கிளை பெயரை நகலெடு"
+
+#: gitk:2855
+msgid "Highlight this too"
+msgstr "இதை முன்னிலைப்படுத்து"
+
+#: gitk:2856
+msgid "Highlight this only"
+msgstr "இதை முன்னிலைப்படுத்து"
+
+#: gitk:2857
+msgid "External diff"
+msgstr "வெளிப்புற வேறுபாடு"
+
+#: gitk:2858
+msgid "Blame parent commit"
+msgstr "பெற்றோரை குற்றம் சாட்டு"
+
+#: gitk:2859
+msgid "Copy path"
+msgstr "நகல் பாதை"
+
+#: gitk:2866
+msgid "Show origin of this line"
+msgstr "இந்த வரியின் தோற்றத்தைக் காட்டு"
+
+#: gitk:2867
+msgid "Run git gui blame on this line"
+msgstr "இந்த வரியில் அறிவிலி இடைமுகம் பழியை இயக்கு"
+
+#: gitk:3221
+msgid "About gitk"
+msgstr "அறிவிலிகே பற்றி"
+
+#: gitk:3223
+msgid ""
+"\n"
+"Gitk - a commit viewer for git\n"
+"\n"
+"Copyright © 2005-2016 Paul Mackerras\n"
+"\n"
+"Use and redistribute under the terms of the GNU General Public License"
+msgstr ""
+"\n"
+"அறிவிலிகே - அறிவிலி ஒரு உறுதிமொழி பார்வையாளர் \n"
+"\n"
+"பதிப்புரிமை © 2005-2016 பால் மெக்கெராச் \n"
+"\n"
+"குனு பொது பொதுமக்கள் உரிமத்தின் விதிமுறைகளின் கீழ் பயன்படுத்தவும் மறுபகிர்வு செய்யவும்"
+
+#: gitk:3231 gitk:3298 gitk:10231
+msgid "Close"
+msgstr "மூடு"
+
+#: gitk:3252
+msgid "Gitk key bindings"
+msgstr "அறிவிலிகே விசை பிணைப்புகள்"
+
+#: gitk:3255
+msgid "Gitk key bindings:"
+msgstr "அறிவிலிகே விசை பிணைப்புகள்:"
+
+#: gitk:3257
+#, tcl-format
+msgid "<%s-Q>\t\tQuit"
+msgstr "<%s-Q>\t\tவெளியேறு"
+
+#: gitk:3258
+#, tcl-format
+msgid "<%s-W>\t\tClose window"
+msgstr "<%s-w>\t\tசாளரத்தை மூடு"
+
+#: gitk:3259
+msgid "<Home>\t\tMove to first commit"
+msgstr "<வீடு> முதல் உறுதிமொழிக்கு நகர்த்து"
+
+#: gitk:3260
+msgid "<End>\t\tMove to last commit"
+msgstr "<முடி> கடைசி உறுதிமொழிக்கு நகர்த்து"
+
+#: gitk:3261
+msgid "<Up>, p, k\tMove up one commit"
+msgstr "<மேலே>, பி, கே\tஒரு உறுதிமொழியை மேலே நகர்த்து"
+
+#: gitk:3262
+msgid "<Down>, n, j\tMove down one commit"
+msgstr "<கீழ்>, n, j\tஒரு உறுதிமொழியை கீழே நகர்த்து"
+
+#: gitk:3263
+msgid "<Left>, z, h\tGo back in history list"
+msgstr "<இடது>, z, h\tவரலாற்று பட்டியலில் திரும்பிச் செல்"
+
+#: gitk:3264
+msgid "<Right>, x, l\tGo forward in history list"
+msgstr "<வலது>, x, l\tவரலாற்று பட்டியலில் முன்னோக்கி செல்"
+
+#: gitk:3265
+#, tcl-format
+msgid "<%s-n>\tGo to n-th parent of current commit in history list"
+msgstr ""
+"<%s-n> வரலாற்று பட்டியலில் தற்போதைய உறுதிப்பாட்டின் n- வது பெற்றோரிடம் "
+"செல்"
+
+#: gitk:3266
+msgid "<PageUp>\tMove up one page in commit list"
+msgstr "<பக்கம்மேல்>\tஉறுதிமொழி பட்டியலில் ஒரு பக்கத்தை நகர்த்து"
+
+#: gitk:3267
+msgid "<PageDown>\tMove down one page in commit list"
+msgstr "<பக்கம்கீழ்>\tஉறுதிமொழி பட்டியலில் ஒரு பக்கத்தை நகர்த்து"
+
+#: gitk:3268
+#, tcl-format
+msgid "<%s-Home>\tScroll to top of commit list"
+msgstr "<%s-வீடு>\tஉறுதிமொழி பட்டியலை மேல் பகுதிக்கு உருட்டவும்"
+
+#: gitk:3269
+#, tcl-format
+msgid "<%s-End>\tScroll to bottom of commit list"
+msgstr "<%s-முடி> உறுதிமொழி பட்டியலின் கீழ் பகுதிக்கு உருட்டவும்"
+
+#: gitk:3270
+#, tcl-format
+msgid "<%s-Up>\tScroll commit list up one line"
+msgstr "<%s-மேலே>\tஉறுதிமொழி பட்டியலை ஒரு வரி மேலே உருட்டவும்"
+
+#: gitk:3271
+#, tcl-format
+msgid "<%s-Down>\tScroll commit list down one line"
+msgstr "<%s-கீழ்>\tஉறுதிமொழி பட்டியலை ஒரு வரி கீழே உருட்டவும்"
+
+#: gitk:3272
+#, tcl-format
+msgid "<%s-PageUp>\tScroll commit list up one page"
+msgstr "<%s-பக்கம்மேலே>\tஉறுதிமொழி பட்டியலை ஒரு பக்கம் மேலே உருட்டவும்"
+
+#: gitk:3273
+#, tcl-format
+msgid "<%s-PageDown>\tScroll commit list down one page"
+msgstr "<%s-பக்கம்கீழ்>\tஉறுதிமொழி பட்டியலை ஒரு பக்கம் கீழே உருட்டவும்"
+
+#: gitk:3274
+msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
+msgstr "<உயர்த்து-மேலே>\tபின்னோக்கி கண்டுபிடி (மேல்நோக்கி, பின்னர் உறுதிமொழிகள்)"
+
+#: gitk:3275
+msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
+msgstr ""
+"<உயர்த்து-கீழே>\tமுன்னோக்குகளைக் கண்டறியவும் (கீழ்நோக்கி, முந்தைய "
+"உறுதிமொழிகள்)"
+
+#: gitk:3276
+msgid "<Delete>, b\tScroll diff view up one page"
+msgstr "<நீக்கு>, b\tசுருள் வேறுபாடு ஒரு பக்கத்தை மேலே காண்க"
+
+#: gitk:3277
+msgid "<Backspace>\tScroll diff view up one page"
+msgstr "<பின்வெளி>\tசுருள் வேறுபாடு ஒரு பக்கத்தை மேலே காண்க"
+
+#: gitk:3278
+msgid "<Space>\t\tScroll diff view down one page"
+msgstr "<Space>\t\tசுருள் வேறுபாடு ஒரு பக்கத்தைக் கீழே காண்க"
+
+#: gitk:3279
+msgid "u\t\tScroll diff view up 18 lines"
+msgstr "u\t\tசுருள் வேறுபாடு 18 வரிகளை மேலே காண்க"
+
+#: gitk:3280
+msgid "d\t\tScroll diff view down 18 lines"
+msgstr "d\t\tசுருள் வேறுபாடு 18 வரிகளைக் கீழே காண்க"
+
+#: gitk:3281
+#, tcl-format
+msgid "<%s-F>\t\tFind"
+msgstr "<%s-F>\t\tகண்டுபிடி"
+
+#: gitk:3282
+#, tcl-format
+msgid "<%s-G>\t\tMove to next find hit"
+msgstr "<%s-G>\t\tஅடுத்த கண்டுபிடிப்பு வெற்றிக்கு செல்"
+
+#: gitk:3283
+msgid "<Return>\tMove to next find hit"
+msgstr "<திரும்பு>\tஅடுத்ததைக் கண்டுபிடி"
+
+#: gitk:3284
+msgid "g\t\tGo to commit"
+msgstr "g\t\tஉறுதிமொழிக்கு செல்"
+
+#: gitk:3285
+msgid "/\t\tFocus the search box"
+msgstr "/\t\tதேடல் பெட்டியில் கவனம் செலுத்து"
+
+#: gitk:3286
+msgid "?\t\tMove to previous find hit"
+msgstr "?\t\tமுந்தைய கண்டுபிடிப்பு வெற்றிக்கு செல்"
+
+#: gitk:3287
+msgid "f\t\tScroll diff view to next file"
+msgstr "f\t\tஅடுத்த கோப்பிற்கு உருள் வேறுபாடு பார்வை"
+
+#: gitk:3288
+#, tcl-format
+msgid "<%s-S>\t\tSearch for next hit in diff view"
+msgstr "<%s-S>\t\tவேறுபாடு பார்வையில் அடுத்த வெற்றியைத் தேடுங்கள்"
+
+#: gitk:3289
+#, tcl-format
+msgid "<%s-R>\t\tSearch for previous hit in diff view"
+msgstr "<%s-r> வேறுபட்ட பார்வையில் முந்தைய வெற்றியைத் தேடுங்கள்"
+
+#: gitk:3290
+#, tcl-format
+msgid "<%s-KP+>\tIncrease font size"
+msgstr "<%s-KP+>\tஎழுத்துரு அளவை அதிகரி"
+
+#: gitk:3291
+#, tcl-format
+msgid "<%s-plus>\tIncrease font size"
+msgstr "<%s-plus>\tஎழுத்துரு அளவை அதிகரி"
+
+#: gitk:3292
+#, tcl-format
+msgid "<%s-KP->\tDecrease font size"
+msgstr "<%s-KP->\tஎழுத்துரு அளவைக் குறை"
+
+#: gitk:3293
+#, tcl-format
+msgid "<%s-minus>\tDecrease font size"
+msgstr "<%s-minus>\tஎழுத்துரு அளவைக் குறை"
+
+#: gitk:3294
+msgid "<F5>\t\tUpdate"
+msgstr "<F5>\t\tபுதுப்பிப்பு"
+
+#: gitk:3761 gitk:3770
+#, tcl-format
+msgid "Error creating temporary directory %s:"
+msgstr "தற்காலிக அடைவு %s ஐ உருவாக்குவது பிழை:"
+
+#: gitk:3783
+#, tcl-format
+msgid "Error getting \"%s\" from %s:"
+msgstr "%s இலிருந்து \" %s\" பெறுவது பிழை:"
+
+#: gitk:3846
+msgid "command failed:"
+msgstr "கட்டளை தோல்வியுற்றது:"
+
+#: gitk:3995
+msgid "No such commit"
+msgstr "அத்தகைய உறுதிமொழி இல்லை"
+
+#: gitk:4009
+msgid "git gui blame: command failed:"
+msgstr "அறிவிலி இடைமுக பழி: கட்டளை தோல்வியுற்றது:"
+
+#: gitk:4040
+#, tcl-format
+msgid "Couldn't read merge head: %s"
+msgstr "ஒன்றிணைப்பு தலையைப் படிக்க முடியவில்லை: %s"
+
+#: gitk:4048
+#, tcl-format
+msgid "Error reading index: %s"
+msgstr "பிழை வாசிப்பு குறியீடு: %s"
+
+#: gitk:4073
+#, tcl-format
+msgid "Couldn't start git blame: %s"
+msgstr "அறிவிலி பழியைத் தொடங்க முடியவில்லை: %s"
+
+#: gitk:4076 gitk:6965
+msgid "Searching"
+msgstr "தேடுகிறது"
+
+#: gitk:4108
+#, tcl-format
+msgid "Error running git blame: %s"
+msgstr "பிழை இயங்கும் அறிவிலி பழி: %s"
+
+#: gitk:4136
+#, tcl-format
+msgid "That line comes from commit %s,  which is not in this view"
+msgstr ""
+"அந்த வரி உறுதிமொழி %s என்பதிலிருந்து வருகிறது, இது இந்த பார்வையில் இல்லை"
+
+#: gitk:4150
+msgid "External diff viewer failed:"
+msgstr "வெளிப்புற வேறுபாடு பார்வையாளர் தோல்வியுற்றது:"
+
+#: gitk:4254
+msgid "All files"
+msgstr "அனைத்து கோப்புகளும்"
+
+#: gitk:4278
+msgid "View"
+msgstr "காண்க"
+
+#: gitk:4281
+msgid "Gitk view definition"
+msgstr "அறிவிலிகே பார்வை வரையறை"
+
+#: gitk:4285
+msgid "Remember this view"
+msgstr "இந்த பார்வையை நினைவில் கொள்ளுங்கள்"
+
+#: gitk:4286
+msgid "References (space separated list):"
+msgstr "குறிப்புகள் (இடைவெளி பிரிக்கப்பட்ட பட்டியல்):"
+
+#: gitk:4287
+msgid "Branches & tags:"
+msgstr "கிளைகள் மற்றும் குறிச்சொற்கள்:"
+
+#: gitk:4288
+msgid "All refs"
+msgstr "அனைத்து குறிப்புகள்"
+
+#: gitk:4289
+msgid "All (local) branches"
+msgstr "அனைத்து (உள்ளக) கிளைகளும்"
+
+#: gitk:4290
+msgid "All tags"
+msgstr "அனைத்து குறிச்சொற்களும்"
+
+#: gitk:4291
+msgid "All remote-tracking branches"
+msgstr "அனைத்து தொலை-கண்காணிப்பு கிளைகளும்"
+
+#: gitk:4292
+msgid "Commit Info (regular expressions):"
+msgstr "உறுதிமொழி செய்தி (வழக்கமான வெளிப்பாடுகள்):"
+
+#: gitk:4293
+msgid "Author:"
+msgstr "ஆசிரியர்:"
+
+#: gitk:4294
+msgid "Committer:"
+msgstr "உறுதிமொழிபவர்:"
+
+#: gitk:4295
+msgid "Commit Message:"
+msgstr "உறுதிமொழி செய்தி:"
+
+#: gitk:4296
+msgid "Matches all Commit Info criteria"
+msgstr "அனைத்து உறுதிமொழி செய்தி அளவுகோல்களையும் பொருத்துகிறது"
+
+#: gitk:4297
+msgid "Matches no Commit Info criteria"
+msgstr "உறுதிமொழி செய்தி அளவுகோல்களுடன் பொருந்தவில்லை"
+
+#: gitk:4298
+msgid "Changes to Files:"
+msgstr "கோப்புகளில் மாற்றங்கள்:"
+
+#: gitk:4299
+msgid "Fixed String"
+msgstr "நிலையான சரம்"
+
+#: gitk:4300
+msgid "Regular Expression"
+msgstr "வழக்கமான வெளிப்பாடு"
+
+#: gitk:4301
+msgid "Search string:"
+msgstr "தேடல் சரம்:"
+
+#: gitk:4302
+msgid ""
+"Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"15:27:38\"):"
+msgstr ""
+"உறுதிமொழி தேதிகள் (\"2 வாரங்களுக்கு முன்பு\", \"2009-01-16 15:27:38\", \"மார்ச் 17, "
+"2009 15:27:38\"):"
+
+#: gitk:4303
+msgid "Since:"
+msgstr "பின்னர்:"
+
+#: gitk:4304
+msgid "Until:"
+msgstr "வரை:"
+
+#: gitk:4305
+msgid "Limit and/or skip a number of revisions (positive integer):"
+msgstr ""
+"பல திருத்தங்களை (நேர்மறை முழு எண்) கட்டுப்படுத்து மற்றும்/அல்லது தவிர்:"
+
+#: gitk:4306
+msgid "Number to show:"
+msgstr "காண்பிக்க எண்:"
+
+#: gitk:4307
+msgid "Number to skip:"
+msgstr "தவிர்க்க எண்:"
+
+#: gitk:4308
+msgid "Miscellaneous options:"
+msgstr "இதர விருப்பங்கள்:"
+
+#: gitk:4309
+msgid "Strictly sort by date"
+msgstr "கண்டிப்பாக தேதியின்படி வரிசைப்படுத்து"
+
+#: gitk:4310
+msgid "Mark branch sides"
+msgstr "கிளை பக்கங்களைக் குறி"
+
+#: gitk:4311
+msgid "Limit to first parent"
+msgstr "முதல் பெற்றோருக்கு வரம்பு"
+
+#: gitk:4312
+msgid "Simple history"
+msgstr "எளிய வரலாறு"
+
+#: gitk:4313
+msgid "Additional arguments to git log:"
+msgstr "அறிவிலி பதிவுக்கு கூடுதல் வாதங்கள்:"
+
+#: gitk:4314
+msgid "Enter files and directories to include, one per line:"
+msgstr "சேர்க்க கோப்புகள் மற்றும் கோப்பகங்களை உள்ளிடவும், ஒரு வரிக்கு ஒன்று:"
+
+#: gitk:4315
+msgid "Command to generate more commits to include:"
+msgstr "சேர்க்க கூடுதல் உறுதிமொழிகளை உருவாக்க கட்டளை:"
+
+#: gitk:4439
+msgid "Gitk: edit view"
+msgstr "அறிவிலிகே: திருத்து பார்வை"
+
+#: gitk:4447
+msgid "-- criteria for selecting revisions"
+msgstr "-- திருத்தங்களைத் தேர்ந்தெடுப்பதற்கான அளவுகோல்கள்"
+
+#: gitk:4452
+msgid "View Name"
+msgstr "பெயரைக் காண்க"
+
+#: gitk:4527
+msgid "Apply (F5)"
+msgstr "இடு (F5)"
+
+#: gitk:4565
+msgid "Error in commit selection arguments:"
+msgstr "உறுதிமொழி தேர்வு வாதங்களில் பிழை:"
+
+#: gitk:4620 gitk:4673 gitk:5135 gitk:5149 gitk:6419 gitk:12820 gitk:12821
+msgid "None"
+msgstr "எதுவுமில்லை"
+
+#: gitk:5232 gitk:5237
+msgid "Descendant"
+msgstr "வழித்தோன்றல்"
+
+#: gitk:5233
+msgid "Not descendant"
+msgstr "வழித்தோன்றல் அல்ல"
+
+#: gitk:5240 gitk:5245
+msgid "Ancestor"
+msgstr "மூதாதையர்"
+
+#: gitk:5241
+msgid "Not ancestor"
+msgstr "மூதாதையர் அல்ல"
+
+#: gitk:5535
+msgid "Local changes checked in to index but not committed"
+msgstr ""
+"உள்ளக மாற்றங்கள் குறியீட்டில் சரிபார்க்கப்பட்டன, ஆனால் உறுதிமொழியவில்லை"
+
+#: gitk:5571
+msgid "Local uncommitted changes, not checked in to index"
+msgstr "உள்ளக உறுதிமொழியாத மாற்றங்கள், குறியீட்டில் சரிபார்க்கப்படவில்லை"
+
+#: gitk:7319
+msgid "Error starting web browser:"
+msgstr "வலை உலாவியைத் தொடங்குவதில் பிழை:"
+
+#: gitk:7380
+msgid "and many more"
+msgstr "மற்றும் மேலும் பல"
+
+#: gitk:7383
+msgid "many"
+msgstr "பல"
+
+#: gitk:7578
+msgid "Tags:"
+msgstr "குறிச்சொற்கள்:"
+
+#: gitk:7595 gitk:7601 gitk:9081
+msgid "Parent"
+msgstr "பெற்றோர்"
+
+#: gitk:7606
+msgid "Child"
+msgstr "குழந்தை"
+
+#: gitk:7615
+msgid "Branch"
+msgstr "கிளை"
+
+#: gitk:7618
+msgid "Follows"
+msgstr "பின்வருமாறு"
+
+#: gitk:7621
+msgid "Precedes"
+msgstr "முன்னால்"
+
+#: gitk:8216
+#, tcl-format
+msgid "Error getting diffs: %s"
+msgstr "வேறுபாடு பெறுவதில் பிழை: %s"
+
+#: gitk:8906
+msgid "Goto:"
+msgstr "செல்:"
+
+#: gitk:8927
+#, tcl-format
+msgid "Short commit ID %s is ambiguous"
+msgstr "குறுகிய உறுதிமொழி அடையாளம் %s தெளிவற்றவை"
+
+#: gitk:8934
+#, tcl-format
+msgid "Revision %s is not known"
+msgstr "திருத்தம் %s தெரியவில்லை"
+
+#: gitk:8944
+#, tcl-format
+msgid "Commit ID %s is not known"
+msgstr "உறுதிமொழி அடையாளம் %s அறியப்படவில்லை"
+
+#: gitk:8946
+#, tcl-format
+msgid "Revision %s is not in the current view"
+msgstr "திருத்தம் %s தற்போதைய பார்வையில் இல்லை"
+
+#: gitk:9088 gitk:9103
+msgid "Date"
+msgstr "திகதி"
+
+#: gitk:9091
+msgid "Children"
+msgstr "குழந்தைகள்"
+
+#: gitk:9154
+#, tcl-format
+msgid "Reset %s branch to here"
+msgstr "%s கிளையை இங்கே மீட்டமை"
+
+#: gitk:9156
+msgid "Detached head: can't reset"
+msgstr "பிரிக்கப்பட்ட தலை: மீட்டமைக்க முடியாது"
+
+#: gitk:9261 gitk:9267
+msgid "Skipping merge commit "
+msgstr "ஒன்றிணை உறுதிமொழியை தவர்கிறது "
+
+#: gitk:9276 gitk:9281
+msgid "Error getting patch ID for "
+msgstr "ஒட்டு அடையாளத்தைப் பெறுவதில் பிழை"
+
+#: gitk:9277 gitk:9282
+msgid " - stopping\n"
+msgstr "- நிறுத்துதல்\n"
+
+#: gitk:9287 gitk:9290 gitk:9298 gitk:9312 gitk:9321
+msgid "Commit "
+msgstr "உறுதிமொழி"
+
+#: gitk:9291
+msgid ""
+" is the same patch as\n"
+"       "
+msgstr "அதே ஒட்டு\n"
+"       "
+
+#: gitk:9299
+msgid ""
+" differs from\n"
+"       "
+msgstr "இருந்து வேறுபடுகிறது\n"
+"       "
+
+#: gitk:9301
+msgid ""
+"Diff of commits:\n"
+"\n"
+msgstr "உறுதிமொழியின் வேறுபாடு:\n"
+"\n"
+
+#: gitk:9313 gitk:9322
+#, tcl-format
+msgid " has %s children - stopping\n"
+msgstr "%s குழந்தைகள் உள்ளனர் - நிறுத்துதல்\n"
+
+#: gitk:9341
+#, tcl-format
+msgid "Error writing commit to file: %s"
+msgstr "உறுதிமொழி கோப்பில் எழுதுதல்  பிழை: %s"
+
+#: gitk:9347
+#, tcl-format
+msgid "Error diffing commits: %s"
+msgstr "உறுதிமொழிகள் வேறுபாடு பிழை: %s"
+
+#: gitk:9393
+msgid "Top"
+msgstr "மேலே"
+
+#: gitk:9394
+msgid "From"
+msgstr "இருந்து"
+
+#: gitk:9399
+msgid "To"
+msgstr "பெறுநர்"
+
+#: gitk:9423
+msgid "Generate patch"
+msgstr "ஒட்டை உருவாக்கு"
+
+#: gitk:9425
+msgid "From:"
+msgstr "இருந்து:"
+
+#: gitk:9434
+msgid "To:"
+msgstr "இதற்கு:"
+
+#: gitk:9443
+msgid "Reverse"
+msgstr "தலைகீழ்"
+
+#: gitk:9445 gitk:9655
+msgid "Output file:"
+msgstr "வெளியீட்டு கோப்பு:"
+
+#: gitk:9451
+msgid "Generate"
+msgstr "உருவாக்கு"
+
+#: gitk:9489
+msgid "Error creating patch:"
+msgstr "ஒட்டை உருவாக்கு பிழை:"
+
+#: gitk:9512 gitk:9643 gitk:9731
+msgid "ID:"
+msgstr "அடையாளம்:"
+
+#: gitk:9521
+msgid "Tag name:"
+msgstr "குறிச்சொல் பெயர்:"
+
+#: gitk:9524
+msgid "Tag message is optional"
+msgstr "குறிச்சொல் செய்தி விருப்பமானது"
+
+#: gitk:9526
+msgid "Tag message:"
+msgstr "குறிச்சொல் செய்தி:"
+
+#: gitk:9530 gitk:9701
+msgid "Create"
+msgstr "உருவாக்கு"
+
+#: gitk:9548
+msgid "No tag name specified"
+msgstr "குறிச்சொல் பெயர் குறிப்பிடப்படவில்லை"
+
+#: gitk:9552
+#, tcl-format
+msgid "Tag \"%s\" already exists"
+msgstr "குறிச்சொல் \"%s\" ஏற்கனவே உள்ளது"
+
+#: gitk:9562
+msgid "Error creating tag:"
+msgstr "குறிச்சொல்லை உருவாக்கு பிழை:"
+
+#: gitk:9652
+msgid "Command:"
+msgstr "கட்டளை:"
+
+#: gitk:9660
+msgid "Write"
+msgstr "எழுது"
+
+#: gitk:9678
+msgid "Error writing commit:"
+msgstr "பிழை எழுதுதல் உறுதிமொழி:"
+
+#: gitk:9700
+msgid "Create branch"
+msgstr "கிளையை உருவாக்கு"
+
+#: gitk:9716
+#, tcl-format
+msgid "Rename branch %s"
+msgstr "%s கிளையை மறுபெயரிடு"
+
+#: gitk:9717
+msgid "Rename"
+msgstr "மறுபெயரிடு"
+
+#: gitk:9741
+msgid "Name:"
+msgstr "பெயர்:"
+
+#: gitk:9765
+msgid "Please specify a name for the new branch"
+msgstr "புதிய கிளைக்கு ஒரு பெயரைக் குறிப்பிடு"
+
+#: gitk:9770
+#, tcl-format
+msgid "Branch '%s' already exists. Overwrite?"
+msgstr "கிளை '%s' ஏற்கனவே உள்ளது. மேலெழுதவா?"
+
+#: gitk:9814
+msgid "Please specify a new name for the branch"
+msgstr "கிளைக்கு ஒரு புதிய பெயரைக் குறிப்பிடு"
+
+#: gitk:9877
+#, tcl-format
+msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgstr ""
+"உறுதிமொழி %s ஏற்கனவே கிளை %s சேர்க்கப்பட்டுள்ளன-உண்மையில் அதை மீண்டும் இடவா?"
+
+#: gitk:9882
+msgid "Cherry-picking"
+msgstr "கனி எடுக்கும்"
+
+#: gitk:9891
+#, tcl-format
+msgid ""
+"Cherry-pick failed because of local changes to file '%s'.\n"
+"Please commit, reset or stash your changes and try again."
+msgstr ""
+"'%s' கோப்பில் உள்ளக மாற்றங்கள் காரணமாக கனி-எடு தோல்வியடைந்தது. \n"
+"தயவுசெய்து உங்கள் மாற்றங்களைச் உறுதிமொழி, மீட்டமை அல்லது சேமி பிறகு மீண்டும் முயற்சி."
+
+#: gitk:9897
+msgid ""
+"Cherry-pick failed because of merge conflict.\n"
+"Do you wish to run git citool to resolve it?"
+msgstr ""
+"ஒன்றிணைக்கும் மோதல் காரணமாக கனி-எடு தோல்வியடைந்தது. \n"
+"அதை தீர்க்க அறிவிலி சிஐகருவியை இயக்க விரும்புகிறீர்களா?"
+
+#: gitk:9913 gitk:9971
+msgid "No changes committed"
+msgstr "எந்த மாற்றங்களும் உறுதிமொழியப்படவில்லை"
+
+#: gitk:9940
+#, tcl-format
+msgid "Commit %s is not included in branch %s -- really revert it?"
+msgstr ""
+"உறுதிமொழி %s கிளை %s சேர்க்கப்படவில்லை - உண்மையில் அதை மீட்டெடுக்கவா?"
+
+#: gitk:9945
+msgid "Reverting"
+msgstr "மீட்டெடுத்தல்"
+
+#: gitk:9953
+#, tcl-format
+msgid ""
+"Revert failed because of local changes to the following files:%s Please "
+"commit, reset or stash  your changes and try again."
+msgstr ""
+"பின்வரும் கோப்புகளில் உள்ளக மாற்றங்கள் காரணமாக மீட்டெடு தோல்வியுற்றது:%s "
+"தயவுசெய்து உங்கள் மாற்றங்களைச் உறுதிமொழி, மீட்டமை அல்லது "
+"சேமி மற்றும் மீண்டும் முயற்சி."
+
+#: gitk:9957
+msgid ""
+"Revert failed because of merge conflict.\n"
+" Do you wish to run git citool to resolve it?"
+msgstr ""
+"ஒன்றிணைக்கும் மோதல் காரணமாக மீட்டெடு தோல்வியடைந்தது. \n"
+"அதை தீர்க்க அறிவிலி சிஐகருவியை இயக்க விரும்புகிறீர்களா?"
+
+#: gitk:10000
+msgid "Confirm reset"
+msgstr "மீட்டமைப்பை உறுதிப்படுத்து"
+
+#: gitk:10002
+#, tcl-format
+msgid "Reset branch %s to %s?"
+msgstr "%s கிளையை %s க்கு மீட்டமைக்கவா?"
+
+#: gitk:10004
+msgid "Reset type:"
+msgstr "மீட்டமை வகை:"
+
+#: gitk:10007
+msgid "Soft: Leave working tree and index untouched"
+msgstr ""
+"மென்மை: வேலை செய்யும் மரம் மற்றும் குறியீட்டைத் தீண்டாமல் விடு"
+
+#: gitk:10010
+msgid "Mixed: Leave working tree untouched, reset index"
+msgstr ""
+"கலப்பு: வேலை செய்யும் மரத்தை தீண்டாமல் விடு, குறியீட்டை மீட்டமை"
+
+#: gitk:10013
+msgid ""
+"Hard: Reset working tree and index\n"
+"(discard ALL local changes)"
+msgstr ""
+"கடினம்: வேலை செய்யும் மரம் மற்றும் குறியீட்டை மீட்டமை \n"
+"(அனைத்து உள்ளக மாற்றங்களையும் நிராகரி)"
+
+#: gitk:10030
+msgid "Resetting"
+msgstr "மீட்டமைத்தல்"
+
+#: gitk:10103
+#, tcl-format
+msgid "A local branch named %s exists already"
+msgstr "%s என்ற உள்ளக கிளை ஏற்கனவே உள்ளது"
+
+#: gitk:10111
+msgid "Checking out"
+msgstr "சரிபார்"
+
+#: gitk:10170
+msgid "Cannot delete the currently checked-out branch"
+msgstr "தற்போது சரிபார்க்கப்பட்ட கிளையை நீக்க முடியாது"
+
+#: gitk:10176
+#, tcl-format
+msgid ""
+"The commits on branch %s aren't on any other branch.\n"
+"Really delete branch %s?"
+msgstr ""
+"கிளை %s மீதான உறுதிமொழிகள் வேறு எந்த கிளையிலும் இல்லை. \n"
+"உண்மையில் கிளை %s நீக்கவா?"
+
+#: gitk:10207
+#, tcl-format
+msgid "Tags and heads: %s"
+msgstr "குறிச்சொற்கள் மற்றும் தலைகள்: %s"
+
+#: gitk:10224
+msgid "Filter"
+msgstr "வடிப்பி"
+
+#: gitk:10531
+msgid ""
+"Error reading commit topology information; branch and preceding/following "
+"tag information will be incomplete."
+msgstr ""
+"உறுதிமொழி இடவியல் தகவலை படிப்பதில் பிழை; கிளை மற்றும் அதற்கு "
+"முந்தைய/பின்வரும் குறிச்சொல் செய்தி முழுமையடையாது."
+
+#: gitk:11508
+msgid "Tag"
+msgstr "குறிச்சொல்"
+
+#: gitk:11512
+msgid "Id"
+msgstr "அடையாளம்"
+
+#: gitk:11595
+msgid "Gitk font chooser"
+msgstr "அறிவிலிகே எழுத்துரு தேர்வு"
+
+#: gitk:11612
+msgid "B"
+msgstr "பி"
+
+#: gitk:11615
+msgid "I"
+msgstr "ஐ"
+
+#: gitk:11734
+msgid "Commit list display options"
+msgstr "உறுதிமொழி பட்டியல் காட்சி விருப்பங்கள்"
+
+#: gitk:11737
+msgid "Maximum graph width (lines)"
+msgstr "அதிகபட்ச வரைபட அகலம் (கோடுகள்)"
+
+#: gitk:11741
+#, no-tcl-format
+msgid "Maximum graph width (% of pane)"
+msgstr "அதிகபட்ச வரைபட அகலம் (பலகத்தின் %)"
+
+#: gitk:11744
+msgid "Show local changes"
+msgstr "உள்ளக மாற்றங்களைக் காட்டு"
+
+#: gitk:11747
+msgid "Hide remote refs"
+msgstr "தொலை குறிகளை மறை"
+
+#: gitk:11751
+msgid "Copy commit ID to clipboard"
+msgstr "இடைநிலைப்பலகைக்கு அடையாளத்தை நகலெடு"
+
+#: gitk:11755
+msgid "Copy commit ID to X11 selection"
+msgstr "உறுதிமொழி அடையாளத்தை ஃ11 பகுதிக்கு நகலெடு"
+
+#: gitk:11760
+msgid "Length of commit ID to copy"
+msgstr "நகலெடுக்க உறுதிமொழி அடையாளத்தின் நீளம்"
+
+#: gitk:11763
+msgid "Diff display options"
+msgstr "வேறுபாடு காட்சி விருப்பங்கள்"
+
+#: gitk:11765
+msgid "Tab spacing"
+msgstr "தாவல் இடைவெளி"
+
+#: gitk:11769
+msgid "Wrap comment text"
+msgstr "கருத்து உரையை மடி"
+
+#: gitk:11774
+msgid "Wrap other text"
+msgstr "மற்ற உரையை மடி"
+
+#: gitk:11779
+msgid "Display nearby tags/heads"
+msgstr "அருகிலுள்ள குறிச்சொற்கள்/தலைகளைக் காண்பி"
+
+#: gitk:11782
+msgid "Maximum # tags/heads to show"
+msgstr "காண்பிக்க அதிகபட்ச # குறிச்சொற்கள்/தலைகள்"
+
+#: gitk:11785
+msgid "Limit diffs to listed paths"
+msgstr "பட்டியலிடப்பட்ட பாதைகளுக்கு வரம்பு வேறுபடுகிறது"
+
+#: gitk:11788
+msgid "Support per-file encodings"
+msgstr "ஒரு கோப்பு குறியீடுகளை ஆதரி"
+
+#: gitk:11794 gitk:11961
+msgid "External diff tool"
+msgstr "வெளிப்புற வேறுபாடு கருவி"
+
+#: gitk:11795
+msgid "Choose..."
+msgstr "தேர்வு..."
+
+#: gitk:11802
+msgid "Web browser"
+msgstr "வலை உலாவி"
+
+#: gitk:11807
+msgid "General options"
+msgstr "பொது விருப்பங்கள்"
+
+#: gitk:11810
+msgid "Use themed widgets"
+msgstr "கருப்பொருள் நிரல்பலகைகளைப் பயன்படுத்து"
+
+#: gitk:11812
+msgid "(change requires restart)"
+msgstr "(மாற்றத்திற்கு மறுதொடக்கம் தேவை)"
+
+#: gitk:11814
+msgid "(currently unavailable)"
+msgstr "(தற்போது கிடைக்கவில்லை)"
+
+#: gitk:11826
+msgid "Colors: press to choose"
+msgstr "நிறங்கள்: தேர்வு செய்ய அழுத்தவும்"
+
+#: gitk:11829
+msgid "Interface"
+msgstr "இடைமுகம்"
+
+#: gitk:11830
+msgid "interface"
+msgstr "இடைமுகம்"
+
+#: gitk:11833
+msgid "Background"
+msgstr "பின்னணி"
+
+#: gitk:11834 gitk:11876
+msgid "background"
+msgstr "பின்னணி"
+
+#: gitk:11837
+msgid "Foreground"
+msgstr "முன்புறம்"
+
+#: gitk:11838
+msgid "foreground"
+msgstr "முன்புறம்"
+
+#: gitk:11841
+msgid "Diff: old lines"
+msgstr "வேறுபாடு: பழைய வரிகள்"
+
+#: gitk:11842
+msgid "diff old lines"
+msgstr "பழைய வரிகள் வேறுபாடு"
+
+#: gitk:11846
+msgid "Diff: old lines bg"
+msgstr "வேறுபாடு: பழைய வரிகள் பின்ணனி"
+
+#: gitk:11848
+msgid "diff old lines bg"
+msgstr "பழைய வரிகள் பின்ணனி வேறுபாடு"
+
+#: gitk:11852
+msgid "Diff: new lines"
+msgstr "வேறுபாடு: புதிய கோடுகள்"
+
+#: gitk:11853
+msgid "diff new lines"
+msgstr "புதிய வரிகள் வேறுபாடு"
+
+#: gitk:11857
+msgid "Diff: new lines bg"
+msgstr "வேறுபாடு: புதிய வரிகள் பின்ணனி"
+
+#: gitk:11859
+msgid "diff new lines bg"
+msgstr "புதிய வரிகளை பின்ணனி வேறுபாடு"
+
+#: gitk:11863
+msgid "Diff: hunk header"
+msgstr "வேறுபாடு: அங்க் தலைப்பு"
+
+#: gitk:11865
+msgid "diff hunk header"
+msgstr "அங்க் தலைப்பு வேறுபாடு"
+
+#: gitk:11869
+msgid "Marked line bg"
+msgstr "குறிக்கப்பட்ட வரி பின்னணி"
+
+#: gitk:11871
+msgid "marked line background"
+msgstr "குறிக்கப்பட்ட வரி பின்னணி"
+
+#: gitk:11875
+msgid "Select bg"
+msgstr "பின்னணி தேர்வு"
+
+#: gitk:11884
+msgid "Fonts: press to choose"
+msgstr "எழுத்துருக்கள்: தேர்வு செய்ய அழுத்து"
+
+#: gitk:11886
+msgid "Main font"
+msgstr "முதன்மையான எழுத்துரு"
+
+#: gitk:11887
+msgid "Diff display font"
+msgstr "காட்சி எழுத்துரு வேறுபாடு"
+
+#: gitk:11888
+msgid "User interface font"
+msgstr "பயனர் இடைமுக எழுத்துரு"
+
+#: gitk:11910
+msgid "Gitk preferences"
+msgstr "அறிவிலிகே விருப்பத்தேர்வுகள்"
+
+#: gitk:11919
+msgid "General"
+msgstr "பொது"
+
+#: gitk:11920
+msgid "Colors"
+msgstr "நிறங்கள்"
+
+#: gitk:11921
+msgid "Fonts"
+msgstr "எழுத்துருக்கள்"
+
+#: gitk:11971
+#, tcl-format
+msgid "Gitk: choose color for %s"
+msgstr "அறிவிலிகே: %s க்கு வண்ணத்தைத் தேர்வுசெய்க"
+
+#: gitk:12490
+msgid ""
+"Sorry, gitk cannot run with this version of Tcl/Tk.\n"
+" Gitk requires at least Tcl/Tk 8.4."
+msgstr ""
+"மன்னிக்கவும், டிசிஎல்/டிகேயின் இந்த பதிப்பைக் கொண்டு அறிவிலிகே இயக்க முடியாது. \n"
+"அறிவிலிகேவுக்கு குறைந்தபட்சம் டிசிஎல்/டிகே 8.4 தேவைப்படுகிறது."
+
+#: gitk:12711
+msgid "Cannot find a git repository here."
+msgstr "இங்கே ஒரு அறிவிலி களஞ்சியத்தைக் கண்டுபிடிக்க முடியவில்லை."
+
+#: gitk:12758
+#, tcl-format
+msgid "Ambiguous argument '%s': both revision and filename"
+msgstr "தெளிவற்ற வாதம் '%s': திருத்தம் மற்றும் கோப்பு பெயர்"
+
+#: gitk:12770
+msgid "Bad arguments to gitk:"
+msgstr "அறிவிலிகேவிற்கு மோசமான வாதங்கள்:"
+
+#~ msgid "SHA1 ID:"
+#~ msgstr "சா1 அடையாளம்:"
+
+#~ msgid "Auto-select SHA1 (length)"
+#~ msgstr "தானாக தேர்ந்தெடுக்கப்பட்ட சா1 (நீளம்)"
