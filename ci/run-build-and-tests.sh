@@ -56,6 +56,7 @@ case "$jobname" in
 		--warnlevel 2 --werror \
 		--wrap-mode nofallback \
 		-Dfuzzers=true \
+		-Dtest_output_directory="${TEST_OUTPUT_DIRECTORY:-$(pwd)/t}" \
 		$MESONFLAGS
 	group "Build" meson compile -C build --
 	if test -n "$run_tests"
