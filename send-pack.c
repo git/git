@@ -373,7 +373,7 @@ static int generate_push_cert(struct strbuf *req_buf,
 	if (args->push_options)
 		for_each_string_list_item(item, args->push_options)
 			strbuf_addf(&cert, "push-option %s\n", item->string);
-	strbuf_addstr(&cert, "\n");
+	strbuf_addch(&cert, '\n');
 
 	for (ref = remote_refs; ref; ref = ref->next) {
 		if (check_to_send_update(ref, args) < 0)
