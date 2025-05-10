@@ -65,7 +65,7 @@ ifeq ($(uname_S),Linux)
 	COMPAT_OBJS += compat/linux/procinfo.o
 	# centos7/rhel7 provides gcc 4.8.5 and zlib 1.2.7.
         ifneq ($(findstring .el7.,$(uname_R)),)
-		BASIC_CFLAGS += -std=c99
+		BASIC_CFLAGS += -std=gnu99
         endif
 	LINK_FUZZ_PROGRAMS = YesPlease
 endif
