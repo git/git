@@ -536,8 +536,11 @@ static void decode_header(struct mailinfo *mi, struct strbuf *it)
 			dec = decode_q_segment(&piecebuf, 1);
 			break;
 		}
-		if (convert_to_utf8(mi, dec, charset_q.buf))
+		if (convert_to_utf8(mi, dec, charset_q.buf)) {
+			strbuf_release(dec);
+			free(dec);
 			goto release_return;
+		}
 
 		strbuf_addbuf(&outbuf, dec);
 		strbuf_release(dec);
