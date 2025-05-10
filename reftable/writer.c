@@ -57,8 +57,10 @@ static int padded_write(struct reftable_writer *w, uint8_t *data, size_t len,
 			return -1;
 
 		n = w->write(w->write_arg, zeroed, w->pending_padding);
-		if (n < 0)
+		if (n < 0) {
+			reftable_free(zeroed);
 			return n;
+		}
 
 		w->pending_padding = 0;
 		reftable_free(zeroed);
