@@ -388,10 +388,6 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 			return error(_("corrupt ewah bitmap: commit index %u out of range"),
 				     (unsigned)commit_idx_pos);
 
-		bitmap = read_bitmap_1(index);
-		if (!bitmap)
-			return -1;
-
 		if (xor_offset > MAX_XOR_OFFSET || xor_offset > i)
 			return error(_("corrupted bitmap pack index"));
 
@@ -401,6 +397,10 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 			if (!xor_bitmap)
 				return error(_("invalid XOR offset in bitmap pack index"));
 		}
+
+		bitmap = read_bitmap_1(index);
+		if (!bitmap)
+			return -1;
 
 		recent_bitmaps[i % MAX_XOR_OFFSET] = store_bitmap(
 			index, bitmap, &oid, xor_bitmap, flags);
