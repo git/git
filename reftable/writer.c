@@ -258,8 +258,10 @@ static int writer_index_hash(struct reftable_writer *w, struct reftable_buf *has
 
 		reftable_buf_reset(&key->hash);
 		err = reftable_buf_add(&key->hash, hash->buf, hash->len);
-		if (err < 0)
+		if (err < 0) {
+			reftable_free(key);
 			return err;
+		}
 		tree_insert(&w->obj_index_tree, key,
 			    &obj_index_tree_node_compare);
 	} else {
