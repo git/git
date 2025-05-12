@@ -1011,6 +1011,20 @@ enum scld_error safe_create_leading_directories_const(struct repository *repo,
 	return result;
 }
 
+int safe_create_file_with_leading_directories(struct repository *repo,
+					      const char *path)
+{
+	int fd;
+
+	fd = open(path, O_RDWR|O_CREAT|O_EXCL, 0600);
+	if (0 <= fd)
+		return fd;
+
+	/* slow path */
+	safe_create_leading_directories_const(repo, path);
+	return open(path, O_RDWR|O_CREAT|O_EXCL, 0600);
+}
+
 static int have_same_root(const char *path1, const char *path2)
 {
 	int is_abs1, is_abs2;

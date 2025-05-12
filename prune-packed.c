@@ -2,7 +2,7 @@
 
 #include "git-compat-util.h"
 #include "gettext.h"
-#include "object-store.h"
+#include "object-file.h"
 #include "packfile.h"
 #include "progress.h"
 #include "prune-packed.h"

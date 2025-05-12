@@ -169,7 +169,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 		goto cleanup;
 
 	case 'e':
-		ret = !repo_has_object_file(the_repository, &oid);
+		ret = !has_object(the_repository, &oid,
+				  HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR);
 		goto cleanup;
 
 	case 'w':
