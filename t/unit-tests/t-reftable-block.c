@@ -64,7 +64,8 @@ static void t_ref_block_read_write(void)
 	block_writer_release(&bw);
 
 	block_source_from_buf(&source ,&block_data);
-	reftable_block_init(&block, &source, 0, header_off, block_size, REFTABLE_HASH_SIZE_SHA1);
+	reftable_block_init(&block, &source, 0, header_off, block_size,
+			    REFTABLE_HASH_SIZE_SHA1, REFTABLE_BLOCK_TYPE_REF);
 
 	block_iter_init(&it, &block);
 
@@ -153,7 +154,8 @@ static void t_log_block_read_write(void)
 	block_writer_release(&bw);
 
 	block_source_from_buf(&source, &block_data);
-	reftable_block_init(&block, &source, 0, header_off, block_size, REFTABLE_HASH_SIZE_SHA1);
+	reftable_block_init(&block, &source, 0, header_off, block_size,
+			    REFTABLE_HASH_SIZE_SHA1, REFTABLE_BLOCK_TYPE_LOG);
 
 	block_iter_init(&it, &block);
 
@@ -245,7 +247,8 @@ static void t_obj_block_read_write(void)
 	block_writer_release(&bw);
 
 	block_source_from_buf(&source, &block_data);
-	reftable_block_init(&block, &source, 0, header_off, block_size, REFTABLE_HASH_SIZE_SHA1);
+	reftable_block_init(&block, &source, 0, header_off, block_size,
+			    REFTABLE_HASH_SIZE_SHA1, REFTABLE_BLOCK_TYPE_OBJ);
 
 	block_iter_init(&it, &block);
 
@@ -329,7 +332,8 @@ static void t_index_block_read_write(void)
 	block_writer_release(&bw);
 
 	block_source_from_buf(&source, &block_data);
-	reftable_block_init(&block, &source, 0, header_off, block_size, REFTABLE_HASH_SIZE_SHA1);
+	reftable_block_init(&block, &source, 0, header_off, block_size,
+			    REFTABLE_HASH_SIZE_SHA1, REFTABLE_BLOCK_TYPE_INDEX);
 
 	block_iter_init(&it, &block);
 
@@ -411,7 +415,8 @@ static void t_block_iterator(void)
 	check_int(err, >, 0);
 
 	block_source_from_buf(&source, &data);
-	reftable_block_init(&block, &source, 0, 0, data.len, REFTABLE_HASH_SIZE_SHA1);
+	reftable_block_init(&block, &source, 0, 0, data.len,
+			    REFTABLE_HASH_SIZE_SHA1, REFTABLE_BLOCK_TYPE_REF);
 
 	err = reftable_block_init_iterator(&block, &it);
 	check_int(err, ==, 0);
