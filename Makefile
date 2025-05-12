@@ -158,7 +158,7 @@ endif
 ifdef GITGUI_MACOSXAPP
 GITGUI_MAIN := git-gui.tcl
 
-git-gui: GIT-VERSION-FILE GIT-GUI-VARS
+git-gui: GIT-VERSION-FILE GIT-GUI-BUILD-OPTIONS
 	$(QUIET_GEN)rm -f $@ $@+ && \
 	echo '#!$(SHELL_PATH_SQ)' >$@+ && \
 	echo 'if test "z$$*" = zversion ||' >>$@+ && \
@@ -173,7 +173,7 @@ git-gui: GIT-VERSION-FILE GIT-GUI-VARS
 	chmod +x $@+ && \
 	mv $@+ $@
 
-Git\ Gui.app: GIT-VERSION-FILE GIT-GUI-VARS \
+Git\ Gui.app: GIT-VERSION-FILE GIT-GUI-BUILD-OPTIONS \
 		macosx/Info.plist \
 		macosx/git-gui.icns \
 		macosx/AppMain.tcl \
@@ -202,7 +202,7 @@ git-gui: windows/git-gui.sh
 	cp $< $@
 endif
 
-$(GITGUI_MAIN): git-gui.sh GIT-VERSION-FILE GIT-GUI-VARS
+$(GITGUI_MAIN): git-gui.sh GIT-VERSION-FILE GIT-GUI-BUILD-OPTIONS
 	$(QUIET_GEN)rm -f $@ $@+ && \
 	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' \
 		-e 's|@@SHELL_PATH@@|$(SHELL_PATH_SQ)|' \
@@ -238,7 +238,7 @@ update-po:: $(PO_TEMPLATE)
 $(ALL_MSGFILES): %.msg : %.po
 	$(QUIET_MSGFMT0)$(MSGFMT) --statistics --tcl -l $(basename $(notdir $<)) -d $(dir $@) $< $(QUIET_MSGFMT1)
 
-lib/tclIndex: $(ALL_LIBFILES) GIT-GUI-VARS
+lib/tclIndex: $(ALL_LIBFILES) GIT-GUI-BUILD-OPTIONS
 	$(QUIET_INDEX)if echo \
 	  $(foreach p,$(PRELOAD_FILES),source $p\;) \
 	  auto_mkindex lib $(patsubst lib/%,%,$(sort $(ALL_LIBFILES))) \
@@ -252,21 +252,17 @@ lib/tclIndex: $(ALL_LIBFILES) GIT-GUI-VARS
 	 echo >>$@ ; \
 	fi
 
-TRACK_VARS = \
-	$(subst ','\'',SHELL_PATH='$(SHELL_PATH_SQ)') \
-	$(subst ','\'',TCL_PATH='$(TCL_PATH_SQ)') \
-	$(subst ','\'',TCLTK_PATH='$(TCLTK_PATH_SQ)') \
-	$(subst ','\'',gitexecdir='$(gitexecdir_SQ)') \
-	$(subst ','\'',gg_libdir='$(libdir_SQ)') \
-	GITGUI_MACOSXAPP=$(GITGUI_MACOSXAPP) \
-#end TRACK_VARS
-
-GIT-GUI-VARS: FORCE
-	@VARS='$(TRACK_VARS)'; \
-	if test x"$$VARS" != x"`cat $@ 2>/dev/null`" ; then \
-		echo >&2 "    * new locations or Tcl/Tk interpreter"; \
-		echo >$@ "$$VARS"; \
-	fi
+GIT-GUI-BUILD-OPTIONS: FORCE
+	@sed \
+		-e 's|@GITGUI_GITEXECDIR@|$(gitexecdir_SQ)|' \
+		-e 's|@GITGUI_LIBDIR@|$(libdir_SQ)|' \
+		-e 's|@GITGUI_RELATIVE@|$(GITGUI_RELATIVE)|' \
+		-e 's|@SHELL_PATH@|$(SHELL_PATH_SQ)|' \
+		-e 's|@TCLTK_PATH@|$(TCLTK_PATH_SQ)|' \
+		-e 's|@TCL_PATH@|$(TCL_PATH_SQ)|' \
+		$@.in >$@+
+	@if grep -q '^[A-Z][A-Z_]*=@.*@$$' $@+; then echo "Unsubstituted build options in $@" >&2 && exit 1; fi
+	@if cmp $@+ $@ >/dev/null 2>&1; then $(RM) $@+; else mv $@+ $@; fi
 
 ifdef GITGUI_MACOSXAPP
 all:: git-gui Git\ Gui.app
@@ -322,7 +318,7 @@ dist-version:
 
 clean::
 	$(RM_RF) $(GITGUI_MAIN) lib/tclIndex po/*.msg $(PO_TEMPLATE)
-	$(RM_RF) GIT-VERSION-FILE GIT-GUI-VARS
+	$(RM_RF) GIT-VERSION-FILE GIT-GUI-BUILD-OPTIONS
 ifdef GITGUI_MACOSXAPP
 	$(RM_RF) 'Git Gui.app'* git-gui
 endif
