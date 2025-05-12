@@ -114,12 +114,14 @@ struct log_config {
 	char *fmt_pretty;
 	char *default_date_mode;
 
+#ifndef WITH_BREAKING_CHANGES
 	/*
 	 * Note: git_log_config() does not touch this member and that
 	 * is very deliberate.  This member is only to be used to
 	 * resurrect whatchanged that is deprecated.
 	 */
 	int i_still_use_this;
+#endif
 };
 
 static void log_config_init(struct log_config *cfg)
@@ -274,8 +276,10 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 		OPT__QUIET(&quiet, N_("suppress diff output")),
 		OPT_BOOL(0, "source", &source, N_("show source")),
 		OPT_BOOL(0, "use-mailmap", &mailmap, N_("use mail map file")),
+#ifndef WITH_BREAKING_CHANGES
 		OPT_HIDDEN_BOOL(0, "i-still-use-this", &cfg->i_still_use_this,
 				"<use this deprecated command>"),
+#endif
 		OPT_ALIAS(0, "mailmap", "use-mailmap"),
 		OPT_CALLBACK_F(0, "clear-decorations", NULL, NULL,
 			       N_("clear all previously-defined decoration filters"),
@@ -642,6 +646,7 @@ static int git_log_config(const char *var, const char *value,
 	return git_diff_ui_config(var, value, ctx, cb);
 }
 
+#ifndef WITH_BREAKING_CHANGES
 int cmd_whatchanged(int argc,
 		    const char **argv,
 		    const char *prefix,
@@ -678,6 +683,7 @@ int cmd_whatchanged(int argc,
 	log_config_release(&cfg);
 	return ret;
 }
+#endif
 
 static void show_tagger(const char *buf, struct rev_info *rev)
 {
