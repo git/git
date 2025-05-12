@@ -35,7 +35,7 @@ void test_oidmap__initialize(void)
 
 void test_oidmap__cleanup(void)
 {
-	oidmap_free(&map, 1);
+	oidmap_clear(&map, 1);
 }
 
 void test_oidmap__replace(void)

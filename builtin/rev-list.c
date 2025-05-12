@@ -924,7 +924,7 @@ int cmd_rev_list(int argc,
 			free((void *)entry->path);
 		}
 
-		oidmap_free(&missing_objects, true);
+		oidmap_clear(&missing_objects, true);
 	}
 
 	stop_progress(&progress);
