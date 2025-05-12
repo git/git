@@ -270,15 +270,15 @@ do
 		Meta/Make $M $jobs -- hdr-check &&
 
 		# SANITIZE=address,undefined
-		case "$dotest,$san" in
+		case "$dotest,$san,$with_sha256" in
 		'')
 			;;
-		test,)
+		test,,)
 			section test
 			Meta/Make $M $noprove ${test+"$test"} $jobs $test_long $memtrash \
 			    -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $dotest
 			;;
-		*,t)
+		*,t,*)
 			section SANITIZE=address,undefined
 			SANITIZE=address,undefined Meta/Make $M $jobs test &&
 			Meta/Make >/dev/null distclean
