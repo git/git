@@ -1386,8 +1386,22 @@ sub maildomain_mta {
 	return $maildomain;
 }
 
+sub maildomain_hostname_command {
+	my $maildomain;
+
+	if ($^O eq 'linux' || $^O eq 'darwin') {
+		my $domain = `(hostname -f) 2>/dev/null`;
+		if (!$?) {
+			chomp($domain);
+			$maildomain = $domain if valid_fqdn($domain);
+		}
+	}
+	return $maildomain;
+}
+
 sub maildomain {
-	return maildomain_net() || maildomain_mta() || 'localhost.localdomain';
+	return maildomain_net() || maildomain_mta() ||
+		maildomain_hostname_command || 'localhost.localdomain';
 }
 
 sub smtp_host_string {
