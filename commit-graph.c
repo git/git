@@ -222,7 +222,7 @@ static int commit_graph_compatible(struct repository *r)
 
 	if (replace_refs_enabled(r)) {
 		prepare_replace_object(r);
-		if (oidmap_get_size(r->objects->replace_map))
+		if (oidmap_get_size(&r->objects->replace_map))
 			return 0;
 	}
 
