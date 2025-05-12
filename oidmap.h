@@ -67,6 +67,10 @@ void *oidmap_put(struct oidmap *map, void *entry);
  */
 void *oidmap_remove(struct oidmap *map, const struct object_id *key);
 
+static inline unsigned int oidmap_get_size(struct oidmap *map)
+{
+	return hashmap_get_size(&map->map);
+}
 
 struct oidmap_iter {
 	struct hashmap_iter h_iter;
