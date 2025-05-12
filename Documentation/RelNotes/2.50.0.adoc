@@ -53,6 +53,15 @@ UI, Workflows & Features
 
  * The build procedure installs bash (but not zsh) completion script.
 
+ * send-email has been updated to work better with Outlook's smtp server.
+
+ * "git diff --minimal" used to give non-minimal output when its
+   optimization kicked in, which has been disabled.
+
+ * "git index-pack --fix-thin" used to abort to prevent a cycle in
+   delta chains from forming in a corner case even when there is no
+   such cycle.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -133,6 +142,8 @@ Performance, Internal Implementation, Development Support etc.
  * Code clean-up for meson-based build infrastructure.
 
  * Add an equivalent to "make hdr-check" target to meson based builds.
+
+ * Further code clean-up in the object-store layer.
 
 
 Fixes since v2.49
@@ -260,6 +271,10 @@ Fixes since v2.49
    a contradicting request that is impossible to satisfy. This case is
    now detected and the command errors out.
    (merge 974f0d4664 ps/mv-contradiction-fix later to maint).
+
+ * Further refinement on CI messages when an optional external
+   software is unavailable (e.g. due to third-party service outage).
+   (merge 956acbefbd jc/ci-skip-unavailable-external-software later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
