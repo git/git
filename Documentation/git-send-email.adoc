@@ -115,6 +115,19 @@ illustration below where `[PATCH v2 0/3]` is in reply to `[PATCH 0/2]`:
 Only necessary if --compose is also set.  If --compose
 is not set, this will be prompted for.
 
+--[no-]outlook-id-fix::
+	Microsoft Outlook SMTP servers discard the Message-ID sent via email and
+	assign a new random Message-ID, thus breaking threads.
++
+With `--outlook-id-fix`, 'git send-email' uses a mechanism specific to
+Outlook servers to learn the Message-ID the server assigned to fix the
+threading. Use it only when you know that the server reports the
+rewritten Message-ID the same way as Outlook servers do.
++
+Without this option specified, the fix is done by default when talking
+to 'smtp.office365.com' or 'smtp-mail.outlook.com'. Use
+`--no-outlook-id-fix` to disable even when talking to these two servers.
+
 --subject=<string>::
 	Specify the initial subject of the email thread.
 	Only necessary if --compose is also set.  If --compose
