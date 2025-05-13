@@ -176,11 +176,14 @@ struct traverse_info {
 };
 
 /**
- * Find an entry in a tree given a pathname and the sha1 of a tree to
- * search. Returns 0 if the entry is found and -1 otherwise. The third
- * and fourth parameters are set to the entry's sha1 and mode respectively.
+ * Walk trees starting with "tree_oid" to find the entry for "name", and
+ * return the the object name and the mode of the found entry via the
+ * "oid" and "mode" parameters.  Return 0 if the entry is found, and -1
+ * otherwise.
  */
-int get_tree_entry(struct repository *, const struct object_id *, const char *, struct object_id *, unsigned short *);
+int get_tree_entry(struct repository *repo, const struct object_id *tree_oid,
+		   const char *name, struct object_id *oid,
+		   unsigned short *mode);
 
 /**
  * Generate the full pathname of a tree entry based from the root of the
