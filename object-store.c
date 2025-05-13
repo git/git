@@ -987,8 +987,7 @@ void raw_object_store_clear(struct raw_object_store *o)
 {
 	FREE_AND_NULL(o->alternate_db);
 
-	oidmap_free(o->replace_map, 1);
-	FREE_AND_NULL(o->replace_map);
+	oidmap_clear(&o->replace_map, 1);
 	pthread_mutex_destroy(&o->replace_mutex);
 
 	free_commit_graph(o->commit_graph);

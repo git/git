@@ -47,7 +47,7 @@ static inline const struct object_id *lookup_replace_object(struct repository *r
 {
 	if (!replace_refs_enabled(r) ||
 	    (r->objects->replace_map_initialized &&
-	     r->objects->replace_map->map.tablesize == 0))
+	     oidmap_get_size(&r->objects->replace_map) == 0))
 		return oid;
 	return do_lookup_replace_object(r, oid);
 }
