@@ -112,7 +112,7 @@ ifeq ($(uname_S),Darwin)
 			TKFRAMEWORK = /System/Library/Frameworks/Tk.framework/Resources/Wish\ Shell.app
                 endif
         endif
-	TKEXECUTABLE = $(shell basename "$(TKFRAMEWORK)" .app)
+	TKEXECUTABLE = $(TKFRAMEWORK)/Contents/MacOS/$(shell basename "$(TKFRAMEWORK)" .app)
 	TKEXECUTABLE_SQ = $(subst ','\'',$(TKEXECUTABLE))
 endif
 
@@ -130,7 +130,6 @@ TCLTK_PATH_SQ = $(subst ','\'',$(TCLTK_PATH))
 
 gg_libdir ?= $(sharedir)/git-gui/lib
 libdir_SQ  = $(subst ','\'',$(gg_libdir))
-libdir_SED = $(subst ','\'',$(subst \,\\,$(gg_libdir_sed_in)))
 exedir     = $(dir $(gitexecdir))share/git-gui/lib
 
 GITGUI_RELATIVE :=
@@ -139,7 +138,6 @@ GITGUI_MACOSXAPP :=
 ifeq ($(exedir),$(gg_libdir))
 	GITGUI_RELATIVE := 1
 endif
-gg_libdir_sed_in := $(gg_libdir)
 ifeq ($(uname_S),Darwin)
         ifeq ($(shell test -d $(TKFRAMEWORK) && echo y),y)
 		GITGUI_MACOSXAPP := YesPlease
@@ -163,22 +161,8 @@ Git\ Gui.app: GIT-VERSION-FILE GIT-GUI-BUILD-OPTIONS \
 		macosx/Info.plist \
 		macosx/git-gui.icns \
 		macosx/AppMain.tcl \
-		$(TKFRAMEWORK)/Contents/MacOS/$(TKEXECUTABLE)
-	$(QUIET_GEN)rm -rf '$@' '$@'+ && \
-	mkdir -p '$@'+/Contents/MacOS && \
-	mkdir -p '$@'+/Contents/Resources/Scripts && \
-	cp '$(subst ','\'',$(subst \,,$(TKFRAMEWORK)/Contents/MacOS/$(TKEXECUTABLE)))' \
-		'$@'+/Contents/MacOS && \
-	cp macosx/git-gui.icns '$@'+/Contents/Resources && \
-	sed -e 's/@@GITGUI_VERSION@@/$(GITGUI_VERSION)/g' \
-		-e 's/@@GITGUI_TKEXECUTABLE@@/$(TKEXECUTABLE)/g' \
-		macosx/Info.plist \
-		>'$@'+/Contents/Info.plist && \
-	sed -e 's|@@gitexecdir@@|$(gitexecdir_SQ)|' \
-		-e 's|@@GITGUI_LIBDIR@@|$(libdir_SED)|' \
-		macosx/AppMain.tcl \
-		>'$@'+/Contents/Resources/Scripts/AppMain.tcl && \
-	mv '$@'+ '$@'
+		$(TKEXECUTABLE)
+	$(QUIET_GEN)$(SHELL_PATH) generate-macos-app.sh . "$@" ./GIT-GUI-BUILD-OPTIONS ./GIT-VERSION-FILE
 endif
 
 ifdef GITGUI_WINDOWS_WRAPPER

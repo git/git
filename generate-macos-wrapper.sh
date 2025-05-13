@@ -26,7 +26,7 @@ rm -f "$OUTPUT" "$OUTPUT+"
 		echo "git-gui version $GITGUI_VERSION"
 	else
 		libdir="${GIT_GUI_LIB_DIR:-$GITGUI_LIBDIR}"
-		exec "$libdir/Git Gui.app/Contents/MacOS/$TKEXECUTABLE" "$0" "$@"
+		exec "$libdir/Git Gui.app/Contents/MacOS/$(basename "$TKEXECUTABLE")" "$0" "$@"
 	fi
 	EOF
 ) >"$OUTPUT+"
