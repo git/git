@@ -789,6 +789,7 @@ integration_tests = [
   't6134-pathspec-in-submodule.sh',
   't6135-pathspec-with-attrs.sh',
   't6136-pathspec-in-bare.sh',
+  't6137-pathspec-wildcards-literal.sh',
   't6200-fmt-merge-msg.sh',
   't6300-for-each-ref.sh',
   't6301-for-each-ref-errors.sh',
