@@ -276,6 +276,16 @@ Fixes since v2.49
    software is unavailable (e.g. due to third-party service outage).
    (merge 956acbefbd jc/ci-skip-unavailable-external-software later to maint).
 
+ * Test result aggregation did not work in Meson based CI jobs.
+   (merge bd38ed5be1 ps/ci-test-aggreg-fix-for-meson later to maint).
+
+ * Code clean-up around stale CI elements and building with Visual Studio.
+   (merge a7b060f67f js/ci-buildsystems-cleanup later to maint).
+
+ * "git add 'f?o'" did not add 'foo' if 'f?o', an unusual pathname,
+   also existed on the working tree, which has been corrected.
+   (merge ec727e189c kj/glob-path-with-special-char later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
    (merge 2bfd3b3685 ab/decorate-code-cleanup later to maint).
@@ -302,3 +312,4 @@ Fixes since v2.49
    (merge 1aa50636fd jk/p5332-testfix later to maint).
    (merge 42cf4ac552 ps/ci-resurrect-p4-on-github later to maint).
    (merge 104add8368 js/diff-codeql-false-positive-workaround later to maint).
+   (merge f62977b93c en/get-tree-entry-doc later to maint).
