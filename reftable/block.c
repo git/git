@@ -227,7 +227,8 @@ static int read_block(struct reftable_block_source *source,
 int reftable_block_init(struct reftable_block *block,
 			struct reftable_block_source *source,
 			uint32_t offset, uint32_t header_size,
-			uint32_t table_block_size, uint32_t hash_size)
+			uint32_t table_block_size, uint32_t hash_size,
+			uint8_t want_type)
 {
 	uint32_t guess_block_size = table_block_size ?
 		table_block_size : DEFAULT_BLOCK_SIZE;
@@ -245,6 +246,10 @@ int reftable_block_init(struct reftable_block *block,
 	block_type = block->block_data.data[header_size];
 	if (!reftable_is_block_type(block_type)) {
 		err = REFTABLE_FORMAT_ERROR;
+		goto done;
+	}
+	if (want_type != REFTABLE_BLOCK_TYPE_ANY && block_type != want_type) {
+		err = 1;
 		goto done;
 	}
 
