@@ -2805,7 +2805,7 @@ endif
 compdb_dir = compile_commands
 
 ifeq ($(GENERATE_COMPILATION_DATABASE),yes)
-missing_compdb_dir = $(compdb_dir)
+missing_compdb_dir = $(filter-out $(wildcard $(compdb_dir)), $(compdb_dir))
 $(missing_compdb_dir):
 	@mkdir -p $@
 
