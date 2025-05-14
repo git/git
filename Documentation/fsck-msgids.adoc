@@ -59,6 +59,12 @@
 `emptyName`::
 	(WARN) A path contains an empty name.
 
+`emptyPackedRefsFile`::
+	(INFO) "packed-refs" file is empty. Report to the
+	git@vger.kernel.org mailing list if you see this error. As only
+	very early versions of Git would create such an empty
+	"packed_refs" file, we might tighten this rule in the future.
+
 `extraHeaderEntry`::
 	(IGNORE) Extra headers found after `tagger`.
 
