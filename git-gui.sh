@@ -393,7 +393,7 @@ if {[string match @@* $_shellpath]} {
 }
 
 if {[is_Windows]} {
-	set _shellpath [exec cygpath -m $_shellpath]
+	set _shellpath [safe_exec [list cygpath -m $_shellpath]]
 }
 
 if {![file executable $_shellpath] || \
@@ -2778,7 +2778,7 @@ if {![is_bare]} {
 
 if {[is_Windows]} {
 	# Use /git-bash.exe if available
-	set _git_bash [exec cygpath -m /git-bash.exe]
+	set _git_bash [safe_exec [list cygpath -m /git-bash.exe]]
 	if {[file executable $_git_bash]} {
 		set _bash_cmdline [list "Git Bash" $_git_bash]
 	} else {
