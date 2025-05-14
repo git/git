@@ -112,7 +112,9 @@ method _start {} {
 	close $fh
 	set _last_merged_branch $branch
 
-	if {[git-version >= "2.5.0"]} {
+	if {[git-version >= "2.34.0"]} {
+		set cmd [list git merge --strategy=ort FETCH_HEAD]
+	} elseif {[git-version >= "2.5.0"]} {
 		set cmd [list git merge --strategy=recursive FETCH_HEAD]
 	} else {
 		set cmd [list git]
