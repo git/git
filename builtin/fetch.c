@@ -2560,6 +2560,7 @@ int cmd_fetch(int argc,
 		if (server_options.nr)
 			gtransport->server_options = &server_options;
 		result = transport_fetch_refs(gtransport, NULL);
+		gtransport->smart_options->acked_commits = NULL;
 
 		oidset_iter_init(&acked_commits, &iter);
 		while ((oid = oidset_iter_next(&iter)))
