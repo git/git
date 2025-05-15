@@ -2683,6 +2683,15 @@ cleanup:
 	oid_array_clear(&ctx.oids);
 	clear_topo_level_slab(&topo_levels);
 
+	if (ctx.r->objects->commit_graph) {
+		struct commit_graph *g = ctx.r->objects->commit_graph;
+
+		while (g) {
+			g->topo_levels = NULL;
+			g = g->base_graph;
+		}
+	}
+
 	for (i = 0; i < ctx.num_commit_graphs_before; i++)
 		free(ctx.commit_graph_filenames_before[i]);
 	free(ctx.commit_graph_filenames_before);
