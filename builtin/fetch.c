@@ -1728,7 +1728,7 @@ static int do_fetch(struct transport *transport,
 			if (transport->remote->follow_remote_head != FOLLOW_REMOTE_NEVER)
 				do_set_head = 1;
 		}
-		if (branch_has_merge_config(branch) &&
+		if (branch && branch_has_merge_config(branch) &&
 		    !strcmp(branch->remote_name, transport->remote->name)) {
 			int i;
 			for (i = 0; i < branch->merge_nr; i++) {
