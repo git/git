@@ -24,26 +24,6 @@ enum {
 	HASH_OBJECT_WRITE = (1 << 1),
 };
 
-/*
- * This is to create corrupt objects for debugging and as such it
- * needs to bypass the data conversion performed by, and the type
- * limitation imposed by, index_fd() and its callees.
- */
-static int hash_literally(struct object_id *oid, int fd, const char *type, unsigned flags)
-{
-	struct strbuf buf = STRBUF_INIT;
-	int ret;
-
-	if (strbuf_read(&buf, fd, 4096) < 0)
-		ret = -1;
-	else
-		ret = write_object_file_literally(buf.buf, buf.len, type, oid,
-						  (flags & HASH_OBJECT_WRITE) ? WRITE_OBJECT_FILE_PERSIST : 0);
-	close(fd);
-	strbuf_release(&buf);
-	return ret;
-}
-
 static void hash_fd(int fd, const char *type, const char *path, unsigned flags,
 		    int literally)
 {
@@ -56,11 +36,12 @@ static void hash_fd(int fd, const char *type, const char *path, unsigned flags,
 	if (flags & HASH_OBJECT_CHECK)
 		index_flags |= INDEX_FORMAT_CHECK;
 
+	if (literally)
+		index_flags &= ~INDEX_FORMAT_CHECK;
+
 	if (fstat(fd, &st) < 0 ||
-	    (literally
-	     ? hash_literally(&oid, fd, type, flags)
-	     : index_fd(the_repository->index, &oid, fd, &st,
-			type_from_string(type), path, index_flags)))
+	    index_fd(the_repository->index, &oid, fd, &st,
+		     type_from_string(type), path, index_flags))
 		die((flags & HASH_OBJECT_WRITE)
 		    ? "Unable to add %s to database"
 		    : "Unable to hash %s", path);
