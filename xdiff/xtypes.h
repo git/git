@@ -39,9 +39,9 @@ typedef struct s_chastore {
 } chastore_t;
 
 typedef struct s_xrecord {
-	char const *ptr;
-	long size;
-	unsigned long ha;
+	u8 const* ptr;
+	usize size;
+	u64 ha;
 } xrecord_t;
 
 typedef struct s_xdfile {
