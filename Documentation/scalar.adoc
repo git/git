@@ -14,7 +14,7 @@ scalar list
 scalar register [--[no-]maintenance] [<enlistment>]
 scalar unregister [<enlistment>]
 scalar run ( all | config | commit-graph | fetch | loose-objects | pack-files ) [<enlistment>]
-scalar reconfigure [--maintenance=<mode>] [ --all | <enlistment> ]
+scalar reconfigure [--maintenance=(enable|disable|keep)] [ --all | <enlistment> ]
 scalar diagnose [<enlistment>]
 scalar delete <enlistment>
 
@@ -165,14 +165,13 @@ reconfigure the enlistment.
 	registered with Scalar by the `scalar.repo` config key. Use this
 	option after each upgrade to get the latest features.
 
---maintenance=<mode>::
+--maintenance=(enable|disable|keep)::
 	By default, Scalar configures the enlistment to use Git's
 	background maintenance feature; this is the same as using the
-	`--maintenance=enable` value for this option. Use the
-	`--maintenance=disable` to remove each considered enlistment
-	from background maintenance. Use `--maitnenance=keep' to leave
-	the background maintenance configuration untouched for These
-	repositories.
+	`enable` value for this option. Use the	`disable` value to
+	remove each considered enlistment from background maintenance.
+	Use `keep' to leave the background maintenance configuration
+	untouched for these repositories.
 
 Diagnose
 ~~~~~~~~

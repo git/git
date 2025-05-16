@@ -675,12 +675,12 @@ static int cmd_reconfigure(int argc, const char **argv)
 		OPT_BOOL('a', "all", &all,
 			 N_("reconfigure all registered enlistments")),
 		OPT_STRING(0, "maintenance", &maintenance_str,
-			 N_("<mode>"),
+			 N_("(enable|disable|keep)"),
 			 N_("signal how to adjust background maintenance")),
 		OPT_END(),
 	};
 	const char * const usage[] = {
-		N_("scalar reconfigure [--maintenance=<mode>] [--all | <enlistment>]"),
+		N_("scalar reconfigure [--maintenance=(enable|disable|keep)] [--all | <enlistment>]"),
 		NULL
 	};
 	struct string_list scalar_repos = STRING_LIST_INIT_DUP;
