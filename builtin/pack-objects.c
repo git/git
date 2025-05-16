@@ -210,6 +210,7 @@ static int keep_unreachable, unpack_unreachable, include_tag;
 static timestamp_t unpack_unreachable_expiration;
 static int pack_loose_unreachable;
 static int cruft;
+static int shallow = 0;
 static timestamp_t cruft_expiration;
 static int local;
 static int have_non_local_packs;
@@ -4490,6 +4491,7 @@ static void get_object_list_path_walk(struct rev_info *revs)
 	 * base objects.
 	 */
 	info.prune_all_uninteresting = sparse;
+	info.edge_aggressive = shallow;
 
 	trace2_region_enter("pack-objects", "path-walk", revs->repo);
 	result = walk_objects_by_path(&info);
@@ -4695,7 +4697,6 @@ int cmd_pack_objects(int argc,
 		     struct repository *repo UNUSED)
 {
 	int use_internal_rev_list = 0;
-	int shallow = 0;
 	int all_progress_implied = 0;
 	struct strvec rp = STRVEC_INIT;
 	int rev_list_unpacked = 0, rev_list_all = 0, rev_list_reflog = 0;
@@ -4881,8 +4882,6 @@ int cmd_pack_objects(int argc,
 			option = "--filter";
 		else if (use_delta_islands)
 			option = "--delta-islands";
-		else if (shallow)
-			option = "--shallow";
 
 		if (option) {
 			warning(_("cannot use %s with %s"),

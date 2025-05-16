@@ -153,7 +153,15 @@ test_expect_success 'push new commit from shallow clone has good deltas' '
 
 	# If the delta base is found, then this message uses "bytes".
 	# If the delta base is not found, then this message uses "KiB".
-	test_grep "Writing objects: .* bytes" err
+	test_grep "Writing objects: .* bytes" err &&
+
+	git -C deltas commit --amend -m "changed message" &&
+	GIT_TRACE2_EVENT="$(pwd)/config-push.txt" \
+	GIT_PROGRESS_DELAY=0 git -C deltas -c pack.usePathWalk=true \
+		push --progress -f origin deltas 2>err &&
+
+	test_grep "Enumerating objects: 1, done" err &&
+	test_region pack-objects path-walk config-push.txt
 '
 
 test_done
