@@ -420,6 +420,9 @@ int cmd_reset(int argc,
 		oidcpy(&oid, &tree->object.oid);
 	}
 
+	prepare_repo_settings(the_repository);
+	the_repository->settings.command_requires_full_index = 0;
+
 	if (patch_mode) {
 		if (reset_type != NONE)
 			die(_("options '%s' and '%s' cannot be used together"), "--patch", "--{hard,mixed,soft}");
@@ -456,9 +459,6 @@ int cmd_reset(int argc,
 
 	if (intent_to_add && reset_type != MIXED)
 		die(_("the option '%s' requires '%s'"), "-N", "--mixed");
-
-	prepare_repo_settings(the_repository);
-	the_repository->settings.command_requires_full_index = 0;
 
 	if (repo_read_index(the_repository) < 0)
 		die(_("index file corrupt"));

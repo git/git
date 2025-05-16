@@ -384,7 +384,7 @@ test_expect_success 'add, commit, checkout' '
 	test_all_match git checkout -
 '
 
-test_expect_success 'git add -p' '
+test_expect_success 'git add, checkout, and reset with -p' '
 	init_repos &&
 
 	write_script edit-contents <<-\EOF &&
@@ -398,7 +398,7 @@ test_expect_success 'git add -p' '
 	test_write_lines y n >in &&
 	run_on_all git add -p <in &&
 	test_all_match git status --porcelain=v2 &&
-	test_all_match git reset &&
+	test_all_match git reset -p <in &&
 
 	test_write_lines u 1 "" q >in &&
 	run_on_all git add -i <in &&
@@ -413,6 +413,12 @@ test_expect_success 'git add -p' '
 	test_sparse_match git reset &&
 	test_write_lines u 2 3 "" q >in &&
 	run_on_all git add -i <in &&
+	test_sparse_match git status --porcelain=v2 &&
+
+	run_on_all git add --sparse folder1 &&
+	run_on_all git commit -m "take changes" &&
+	test_write_lines y n y >in &&
+	test_sparse_match git checkout HEAD~1 --patch <in &&
 	test_sparse_match git status --porcelain=v2
 '
 
@@ -2458,6 +2464,38 @@ test_expect_success 'sparse-index is not expanded: git add -p' '
 	echo "new content" >sparse-index/folder1/a &&
 	test_write_lines u 2 3 "" q >in &&
 	ensure_expanded add -i <in
+'
+
+test_expect_success 'sparse-index is not expanded: checkout -p, reset -p' '
+	init_repos &&
+
+	# Does not expand when edits are within sparse checkout.
+	echo "new content" >sparse-index/deep/a &&
+	echo "new content" >sparse-index/deep/deeper1/a &&
+	git -C sparse-index commit -a -m "inside-changes" &&
+
+	test_write_lines y y >in &&
+	ensure_not_expanded checkout HEAD~1 --patch <in &&
+
+	echo "new content" >sparse-index/deep/a &&
+	echo "new content" >sparse-index/deep/deeper1/a &&
+	git -C sparse-index add . &&
+	ensure_not_expanded reset --patch <in &&
+
+	# -p does expand when edits are outside sparse checkout.
+	mkdir -p sparse-index/folder1 &&
+	echo "new content" >sparse-index/folder1/a &&
+	git -C sparse-index add --sparse folder1 &&
+	git -C sparse-index sparse-checkout reapply &&
+	ensure_expanded reset --patch <in &&
+
+	# Fully reset the index.
+	mkdir -p sparse-index/folder1 &&
+	echo "new content" >sparse-index/folder1/a &&
+	git -C sparse-index add --sparse folder1 &&
+	git -C sparse-index commit -m "folder1 change" &&
+	git -C sparse-index sparse-checkout reapply &&
+	ensure_expanded checkout HEAD~1 --patch <in
 '
 
 test_expect_success 'advice.sparseIndexExpanded' '
