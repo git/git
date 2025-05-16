@@ -65,6 +65,12 @@ OPTIONS
 	default is to include these messages if there are merge
 	conflicts, and to omit them otherwise.
 
+--quiet::
+	Disable all output from the program.  Useful when you are only
+	interested in the exit status.  Allows merge-tree to exit
+	early when it finds a conflict, and allows it to avoid writing
+	most objects created by merges.
+
 --allow-unrelated-histories::
 	merge-tree will by default error out if the two branches specified
 	share no common history.  This flag can be given to override that
