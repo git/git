@@ -77,6 +77,7 @@ test_tool_sources = [
   'test-windows-named-pipe.c',
   'test-write-cache.c',
   'test-xml-encode.c',
+  'test-zlib.c',
 ]
 
 test_tool = executable('test-tool',
