@@ -19,30 +19,19 @@
 #include "strbuf.h"
 #include "write-or-die.h"
 
-enum {
-	HASH_OBJECT_CHECK = (1 << 0),
-	HASH_OBJECT_WRITE = (1 << 1),
-};
-
 static void hash_fd(int fd, const char *type, const char *path, unsigned flags,
 		    int literally)
 {
-	unsigned int index_flags = 0;
 	struct stat st;
 	struct object_id oid;
 
-	if (flags & HASH_OBJECT_WRITE)
-		index_flags |= INDEX_WRITE_OBJECT;
-	if (flags & HASH_OBJECT_CHECK)
-		index_flags |= INDEX_FORMAT_CHECK;
-
 	if (literally)
-		index_flags &= ~INDEX_FORMAT_CHECK;
+		flags &= ~INDEX_FORMAT_CHECK;
 
 	if (fstat(fd, &st) < 0 ||
 	    index_fd(the_repository->index, &oid, fd, &st,
-		     type_from_string(type), path, index_flags))
-		die((flags & HASH_OBJECT_WRITE)
+		     type_from_string(type), path, flags))
+		die((flags & INDEX_WRITE_OBJECT)
 		    ? "Unable to add %s to database"
 		    : "Unable to hash %s", path);
 	printf("%s\n", oid_to_hex(&oid));
@@ -94,13 +83,13 @@ int cmd_hash_object(int argc,
 	int no_filters = 0;
 	int literally = 0;
 	int nongit = 0;
-	unsigned flags = HASH_OBJECT_CHECK;
+	unsigned flags = INDEX_FORMAT_CHECK;
 	const char *vpath = NULL;
 	char *vpath_free = NULL;
 	const struct option hash_object_options[] = {
 		OPT_STRING('t', NULL, &type, N_("type"), N_("object type")),
 		OPT_BIT('w', NULL, &flags, N_("write the object into the object database"),
-			HASH_OBJECT_WRITE),
+			INDEX_WRITE_OBJECT),
 		OPT_COUNTUP( 0 , "stdin", &hashstdin, N_("read the object from stdin")),
 		OPT_BOOL( 0 , "stdin-paths", &stdin_paths, N_("read file names from stdin")),
 		OPT_BOOL( 0 , "no-filters", &no_filters, N_("store file as is without filters")),
@@ -114,7 +103,7 @@ int cmd_hash_object(int argc,
 	argc = parse_options(argc, argv, prefix, hash_object_options,
 			     hash_object_usage, 0);
 
-	if (flags & HASH_OBJECT_WRITE)
+	if (flags & INDEX_WRITE_OBJECT)
 		prefix = setup_git_directory();
 	else
 		prefix = setup_git_directory_gently(&nongit);
