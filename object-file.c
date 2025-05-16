@@ -1662,6 +1662,12 @@ int read_loose_object(const char *path,
 		goto out_inflate;
 	}
 
+	if (*oi->typep < 0) {
+		error(_("unable to parse type from header '%s' of %s"),
+		      hdr, path);
+		goto out_inflate;
+	}
+
 	if (*oi->typep == OBJ_BLOB &&
 	    *size > repo_settings_get_big_file_threshold(the_repository)) {
 		if (check_stream_oid(&stream, hdr, *size, path, expected_oid) < 0)
@@ -1672,9 +1678,9 @@ int read_loose_object(const char *path,
 			error(_("unable to unpack contents of %s"), path);
 			goto out_inflate;
 		}
-		hash_object_file_literally(the_repository->hash_algo,
-					   *contents, *size,
-					   oi->type_name->buf, real_oid);
+		hash_object_file(the_repository->hash_algo,
+				 *contents, *size,
+				 *oi->typep, real_oid);
 		if (!oideq(expected_oid, real_oid))
 			goto out_inflate;
 	}

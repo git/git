@@ -614,12 +614,11 @@ static void get_default_heads(void)
 struct for_each_loose_cb
 {
 	struct progress *progress;
-	struct strbuf obj_type;
 };
 
-static int fsck_loose(const struct object_id *oid, const char *path, void *data)
+static int fsck_loose(const struct object_id *oid, const char *path,
+		      void *data UNUSED)
 {
-	struct for_each_loose_cb *cb_data = data;
 	struct object *obj;
 	enum object_type type = OBJ_NONE;
 	unsigned long size;
@@ -629,8 +628,6 @@ static int fsck_loose(const struct object_id *oid, const char *path, void *data)
 	struct object_id real_oid = *null_oid(the_hash_algo);
 	int err = 0;
 
-	strbuf_reset(&cb_data->obj_type);
-	oi.type_name = &cb_data->obj_type;
 	oi.sizep = &size;
 	oi.typep = &type;
 
@@ -642,10 +639,6 @@ static int fsck_loose(const struct object_id *oid, const char *path, void *data)
 			err = error(_("%s: object corrupt or missing: %s"),
 				    oid_to_hex(oid), path);
 	}
-	if (type != OBJ_NONE && type < 0)
-		err = error(_("%s: object is of unknown type '%s': %s"),
-			    oid_to_hex(&real_oid), cb_data->obj_type.buf,
-			    path);
 	if (err < 0) {
 		errors_found |= ERROR_OBJECT;
 		free(contents);
@@ -697,7 +690,6 @@ static void fsck_object_dir(const char *path)
 {
 	struct progress *progress = NULL;
 	struct for_each_loose_cb cb_data = {
-		.obj_type = STRBUF_INIT,
 		.progress = progress,
 	};
 
@@ -712,7 +704,6 @@ static void fsck_object_dir(const char *path)
 				      &cb_data);
 	display_progress(progress, 256);
 	stop_progress(&progress);
-	strbuf_release(&cb_data.obj_type);
 }
 
 static int fsck_head_link(const char *head_ref_name,
