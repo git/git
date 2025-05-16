@@ -268,10 +268,6 @@ static void append_sub_jw(struct json_writer *jw,
 	strbuf_addbuf(&jw->json, &value->json);
 }
 
-/*
- * Append existing (properly terminated) JSON sub-data (object or array)
- * as-is onto the given JSON data.
- */
 void jw_object_sub_jw(struct json_writer *jw, const char *key,
 		      const struct json_writer *value)
 {
