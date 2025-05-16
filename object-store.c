@@ -646,8 +646,6 @@ static int do_oid_object_info_extended(struct repository *r,
 			*(oi->disk_sizep) = 0;
 		if (oi->delta_base_oid)
 			oidclr(oi->delta_base_oid, the_repository->hash_algo);
-		if (oi->type_name)
-			strbuf_addstr(oi->type_name, type_name(co->type));
 		if (oi->contentp)
 			*oi->contentp = xmemdupz(co->buf, co->size);
 		oi->whence = OI_CACHED;

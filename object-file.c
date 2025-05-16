@@ -403,8 +403,6 @@ int parse_loose_header(const char *hdr, struct object_info *oi)
 	}
 
 	type = type_from_string_gently(type_buf, type_len, 1);
-	if (oi->type_name)
-		strbuf_add(oi->type_name, type_buf, type_len);
 	if (oi->typep)
 		*oi->typep = type;
 
@@ -466,7 +464,7 @@ int loose_object_info(struct repository *r,
 	 * return value implicitly indicates whether the
 	 * object even exists.
 	 */
-	if (!oi->typep && !oi->type_name && !oi->sizep && !oi->contentp) {
+	if (!oi->typep && !oi->sizep && !oi->contentp) {
 		struct stat st;
 		if (!oi->disk_sizep && (flags & OBJECT_INFO_QUICK))
 			return quick_has_loose(r, oid) ? 0 : -1;

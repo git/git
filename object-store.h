@@ -205,7 +205,6 @@ struct object_info {
 	unsigned long *sizep;
 	off_t *disk_sizep;
 	struct object_id *delta_base_oid;
-	struct strbuf *type_name;
 	void **contentp;
 
 	/* Response */
