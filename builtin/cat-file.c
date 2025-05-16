@@ -109,7 +109,6 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 	unsigned long size;
 	struct object_context obj_context = {0};
 	struct object_info oi = OBJECT_INFO_INIT;
-	struct strbuf sb = STRBUF_INIT;
 	unsigned flags = OBJECT_INFO_LOOKUP_REPLACE;
 	unsigned get_oid_flags =
 		GET_OID_RECORD_PATH |
@@ -132,16 +131,12 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 	buf = NULL;
 	switch (opt) {
 	case 't':
-		oi.type_name = &sb;
+		oi.typep = &type;
 		if (oid_object_info_extended(the_repository, &oid, &oi, flags) < 0)
 			die("git cat-file: could not get object info");
-		if (sb.len) {
-			printf("%s\n", sb.buf);
-			strbuf_release(&sb);
-			ret = 0;
-			goto cleanup;
-		}
-		break;
+		printf("%s\n", type_name(type));
+		ret = 0;
+		goto cleanup;
 
 	case 's':
 		oi.sizep = &size;
