@@ -238,7 +238,7 @@ static int open_istream_loose(struct git_istream *st, struct repository *r,
 		return -1;
 	switch (unpack_loose_header(&st->z, st->u.loose.mapped,
 				    st->u.loose.mapsize, st->u.loose.hdr,
-				    sizeof(st->u.loose.hdr), NULL)) {
+				    sizeof(st->u.loose.hdr))) {
 	case ULHR_OK:
 		break;
 	case ULHR_BAD:

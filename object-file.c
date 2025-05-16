@@ -299,8 +299,7 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 						    unsigned char *map,
 						    unsigned long mapsize,
 						    void *buffer,
-						    unsigned long bufsiz,
-						    struct strbuf *header)
+						    unsigned long bufsiz)
 {
 	int status;
 
@@ -325,32 +324,9 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 		return ULHR_OK;
 
 	/*
-	 * We have a header longer than MAX_HEADER_LEN. The "header"
-	 * here is only non-NULL when we run "cat-file
-	 * --allow-unknown-type".
+	 * We have a header longer than MAX_HEADER_LEN.
 	 */
-	if (!header)
-		return ULHR_TOO_LONG;
-
-	/*
-	 * buffer[0..bufsiz] was not large enough.  Copy the partial
-	 * result out to header, and then append the result of further
-	 * reading the stream.
-	 */
-	strbuf_add(header, buffer, stream->next_out - (unsigned char *)buffer);
-
-	do {
-		stream->next_out = buffer;
-		stream->avail_out = bufsiz;
-
-		obj_read_unlock();
-		status = git_inflate(stream, 0);
-		obj_read_lock();
-		strbuf_add(header, buffer, stream->next_out - (unsigned char *)buffer);
-		if (memchr(buffer, '\0', stream->next_out - (unsigned char *)buffer))
-			return 0;
-	} while (status == Z_OK);
-	return ULHR_BAD;
+	return ULHR_TOO_LONG;
 }
 
 static void *unpack_loose_rest(git_zstream *stream,
@@ -476,10 +452,8 @@ int loose_object_info(struct repository *r,
 	void *map;
 	git_zstream stream;
 	char hdr[MAX_HEADER_LEN];
-	struct strbuf hdrbuf = STRBUF_INIT;
 	unsigned long size_scratch;
 	enum object_type type_scratch;
-	int allow_unknown = flags & OBJECT_INFO_ALLOW_UNKNOWN_TYPE;
 
 	if (oi->delta_base_oid)
 		oidclr(oi->delta_base_oid, the_repository->hash_algo);
@@ -521,18 +495,15 @@ int loose_object_info(struct repository *r,
 	if (oi->disk_sizep)
 		*oi->disk_sizep = mapsize;
 
-	switch (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr),
-				    allow_unknown ? &hdrbuf : NULL)) {
+	switch (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr))) {
 	case ULHR_OK:
-		if (parse_loose_header(hdrbuf.len ? hdrbuf.buf : hdr, oi) < 0)
+		if (parse_loose_header(hdr, oi) < 0)
 			status = error(_("unable to parse %s header"), oid_to_hex(oid));
-		else if (!allow_unknown && *oi->typep < 0)
+		else if (*oi->typep < 0)
 			die(_("invalid object type"));
 
 		if (!oi->contentp)
 			break;
-		if (hdrbuf.len)
-			BUG("unpacking content with unknown types not yet supported");
 		*oi->contentp = unpack_loose_rest(&stream, hdr, *oi->sizep, oid);
 		if (*oi->contentp)
 			goto cleanup;
@@ -558,7 +529,6 @@ cleanup:
 	munmap(map, mapsize);
 	if (oi->sizep == &size_scratch)
 		oi->sizep = NULL;
-	strbuf_release(&hdrbuf);
 	if (oi->typep == &type_scratch)
 		oi->typep = NULL;
 	oi->whence = OI_LOOSE;
@@ -1682,8 +1652,7 @@ int read_loose_object(const char *path,
 		goto out;
 	}
 
-	if (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr),
-				NULL) != ULHR_OK) {
+	if (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr)) != ULHR_OK) {
 		error(_("unable to unpack header of %s"), path);
 		goto out_inflate;
 	}
