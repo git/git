@@ -159,7 +159,7 @@ int parse_loose_header(const char *hdr, struct object_info *oi);
 
 enum {
 	/*
-	 * By default, `write_object_file_literally()` does not actually write
+	 * By default, `write_object_file()` does not actually write
 	 * anything into the object store, but only computes the object ID.
 	 * This flag changes that so that the object will be written as a loose
 	 * object and persisted.
@@ -187,9 +187,6 @@ struct input_stream {
 	int is_finished;
 };
 
-int write_object_file_literally(const void *buf, unsigned long len,
-				const char *type, struct object_id *oid,
-				unsigned flags);
 int stream_loose_object(struct input_stream *in_stream, size_t len,
 			struct object_id *oid);
 

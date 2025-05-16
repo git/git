@@ -130,12 +130,6 @@ int has_loose_object(const struct object_id *oid)
 	return check_and_freshen(oid, 0);
 }
 
-static int format_object_header_literally(char *str, size_t size,
-					  const char *type, size_t objsize)
-{
-	return xsnprintf(str, size, "%s %"PRIuMAX, type, (uintmax_t)objsize) + 1;
-}
-
 int format_object_header(char *str, size_t size, enum object_type type,
 			 size_t objsize)
 {
@@ -144,7 +138,7 @@ int format_object_header(char *str, size_t size, enum object_type type,
 	if (!name)
 		BUG("could not get a type name for 'enum object_type' value %d", type);
 
-	return format_object_header_literally(str, size, name, objsize);
+	return xsnprintf(str, size, "%s %"PRIuMAX, name, (uintmax_t)objsize) + 1;
 }
 
 int check_object_signature(struct repository *r, const struct object_id *oid,
@@ -558,17 +552,6 @@ static void write_object_file_prepare(const struct git_hash_algo *algo,
 	hash_object_body(algo, &c, buf, len, oid, hdr, hdrlen);
 }
 
-static void write_object_file_prepare_literally(const struct git_hash_algo *algo,
-				      const void *buf, unsigned long len,
-				      const char *type, struct object_id *oid,
-				      char *hdr, int *hdrlen)
-{
-	struct git_hash_ctx c;
-
-	*hdrlen = format_object_header_literally(hdr, *hdrlen, type, len);
-	hash_object_body(algo, &c, buf, len, oid, hdr, hdrlen);
-}
-
 #define CHECK_COLLISION_DEST_VANISHED -2
 
 static int check_collision(const char *source, const char *dest)
@@ -698,21 +681,14 @@ out:
 	return 0;
 }
 
-static void hash_object_file_literally(const struct git_hash_algo *algo,
-				       const void *buf, unsigned long len,
-				       const char *type, struct object_id *oid)
-{
-	char hdr[MAX_HEADER_LEN];
-	int hdrlen = sizeof(hdr);
-
-	write_object_file_prepare_literally(algo, buf, len, type, oid, hdr, &hdrlen);
-}
-
 void hash_object_file(const struct git_hash_algo *algo, const void *buf,
 		      unsigned long len, enum object_type type,
 		      struct object_id *oid)
 {
-	hash_object_file_literally(algo, buf, len, type_name(type), oid);
+	char hdr[MAX_HEADER_LEN];
+	int hdrlen = sizeof(hdr);
+
+	write_object_file_prepare(algo, buf, len, type, oid, hdr, &hdrlen);
 }
 
 /* Finalize a file on disk, and close it. */
@@ -1112,53 +1088,6 @@ int write_object_file_flags(const void *buf, unsigned long len,
 	if (compat)
 		return repo_add_loose_object_map(repo, oid, &compat_oid);
 	return 0;
-}
-
-int write_object_file_literally(const void *buf, unsigned long len,
-				const char *type, struct object_id *oid,
-				unsigned flags)
-{
-	char *header;
-	struct repository *repo = the_repository;
-	const struct git_hash_algo *algo = repo->hash_algo;
-	const struct git_hash_algo *compat = repo->compat_hash_algo;
-	struct object_id compat_oid;
-	int hdrlen, status = 0;
-	int compat_type = -1;
-
-	if (compat) {
-		compat_type = type_from_string_gently(type, -1, 1);
-		if (compat_type == OBJ_BLOB)
-			hash_object_file(compat, buf, len, compat_type,
-					 &compat_oid);
-		else if (compat_type != -1) {
-			struct strbuf converted = STRBUF_INIT;
-			convert_object_file(the_repository,
-					    &converted, algo, compat,
-					    buf, len, compat_type, 0);
-			hash_object_file(compat, converted.buf, converted.len,
-					 compat_type, &compat_oid);
-			strbuf_release(&converted);
-		}
-	}
-
-	/* type string, SP, %lu of the length plus NUL must fit this */
-	hdrlen = strlen(type) + MAX_HEADER_LEN;
-	header = xmalloc(hdrlen);
-	write_object_file_prepare_literally(the_hash_algo, buf, len, type,
-					    oid, header, &hdrlen);
-
-	if (!(flags & WRITE_OBJECT_FILE_PERSIST))
-		goto cleanup;
-	if (freshen_packed_object(oid) || freshen_loose_object(oid))
-		goto cleanup;
-	status = write_loose_object(oid, header, hdrlen, buf, len, 0, 0);
-	if (compat_type != -1)
-		return repo_add_loose_object_map(repo, oid, &compat_oid);
-
-cleanup:
-	free(header);
-	return status;
 }
 
 int force_object_loose(const struct object_id *oid, time_t mtime)
