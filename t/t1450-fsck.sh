@@ -7,6 +7,7 @@ test_description='git fsck random collection of tests
 '
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY/lib-loose.sh"
 
 test_expect_success setup '
 	git config gc.auto 0 &&
@@ -973,7 +974,7 @@ test_expect_success 'fsck error and recovery on invalid object type' '
 	(
 		cd garbage-type &&
 
-		garbage_blob=$(git hash-object --stdin -w -t garbage --literally </dev/null) &&
+		garbage_blob=$(loose_obj objects garbage </dev/null) &&
 
 		test_must_fail git fsck 2>err &&
 		grep -e "^error" -e "^fatal" err >errors &&

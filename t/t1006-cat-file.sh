@@ -3,6 +3,7 @@
 test_description='git cat-file'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY/lib-loose.sh"
 
 test_cmdmode_usage () {
 	test_expect_code 129 "$@" 2>err &&
@@ -657,12 +658,12 @@ test_expect_success 'setup bogus data' '
 	bogus_short_type="bogus" &&
 	bogus_short_content="bogus" &&
 	bogus_short_size=$(strlen "$bogus_short_content") &&
-	bogus_short_oid=$(echo_without_newline "$bogus_short_content" | git hash-object -t $bogus_short_type --literally -w --stdin) &&
+	bogus_short_oid=$(echo_without_newline "$bogus_short_content" | loose_obj .git/objects $bogus_short_type) &&
 
 	bogus_long_type="abcdefghijklmnopqrstuvwxyz1234679" &&
 	bogus_long_content="bogus" &&
 	bogus_long_size=$(strlen "$bogus_long_content") &&
-	bogus_long_oid=$(echo_without_newline "$bogus_long_content" | git hash-object -t $bogus_long_type --literally -w --stdin)
+	bogus_long_oid=$(echo_without_newline "$bogus_long_content" | loose_obj .git/objects $bogus_long_type)
 '
 
 for arg1 in -s -t -p
