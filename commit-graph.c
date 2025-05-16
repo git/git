@@ -1929,6 +1929,8 @@ static int fill_oids_from_packs(struct write_commit_graph_context *ctx,
 		}
 		if (open_pack_index(p)) {
 			ret = error(_("error opening index for %s"), packname.buf);
+			close_pack(p);
+			free(p);
 			goto cleanup;
 		}
 		for_each_object_in_pack(p, add_packed_commits, ctx,
