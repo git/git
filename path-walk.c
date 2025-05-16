@@ -503,7 +503,11 @@ int walk_objects_by_path(struct path_walk_info *info)
 	if (prepare_revision_walk(info->revs))
 		die(_("failed to setup revision walk"));
 
-	/* Walk trees to mark them as UNINTERESTING. */
+	/*
+	 * Walk trees to mark them as UNINTERESTING.
+	 * This is particularly important when 'edge_aggressive' is set.
+	 */
+	info->revs->edge_hint_aggressive = info->edge_aggressive;
 	edge_repo = info->revs->repo;
 	edge_tree_list = root_tree_list;
 	mark_edges_uninteresting(info->revs, show_edge,
