@@ -180,7 +180,7 @@ enum {
 
 int write_object_file_flags(const void *buf, unsigned long len,
 			    enum object_type type, struct object_id *oid,
-			    struct object_id *comapt_oid_in, unsigned flags);
+			    struct object_id *compat_oid_in, unsigned flags);
 static inline int write_object_file(const void *buf, unsigned long len,
 				    enum object_type type, struct object_id *oid)
 {
