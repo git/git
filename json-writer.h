@@ -28,6 +28,34 @@
  * object/array) -or- by building them inline in one pass.  This is a
  * personal style and/or data shape choice.
  *
+ * USAGE:
+ * ======
+ *
+ * - Initialize the json_writer with jw_init.
+ *
+ * - Open an object as the main data structure with jw_object_begin.
+ *   Append a key-value pair to it using the jw_object_<type> functions.
+ *   Conclude with jw_end.
+ *
+ * - Alternatively, open an array as the main data structure with
+ *   jw_array_begin. Append a value to it using the jw_array_<type>
+ *   functions. Conclude with jw_end.
+ *
+ * - Append a new, unterminated array or object to the current
+ *   object using the jw_object_inline_begin_{array, object} functions.
+ *   Similarly, append a new, unterminated array or object to
+ *   the current array using the jw_array_inline_begin_{array, object}
+ *   functions.
+ *
+ * - Append other json_writer as a value to the current array or object
+ *   using the jw_{array, object}_sub_jw functions.
+ *
+ * - Extend the current array with an null-terminated array of strings
+ *   by using jw_array_argv or with a fixed number of elements of a
+ *   array of string by using jw_array_argc_argv.
+ *
+ * - Release the json_writer after using it by calling jw_release.
+ *
  * See t/helper/test-json-writer.c for various usage examples.
  *
  * LIMITATIONS:
