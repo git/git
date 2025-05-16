@@ -44,6 +44,7 @@
 #include "blob.h"
 #include "tree.h"
 #include "path-walk.h"
+#include "trace2.h"
 
 /*
  * Objects we are going to pack are collected in the `to_pack` structure.
@@ -4283,6 +4284,7 @@ static void get_object_list_path_walk(struct rev_info *revs)
 {
 	struct path_walk_info info = PATH_WALK_INFO_INIT;
 	unsigned int processed = 0;
+	int result;
 
 	info.revs = revs;
 	info.path_fn = add_objects_by_path;
@@ -4296,7 +4298,11 @@ static void get_object_list_path_walk(struct rev_info *revs)
 	 */
 	info.prune_all_uninteresting = sparse;
 
-	if (walk_objects_by_path(&info))
+	trace2_region_enter("pack-objects", "path-walk", revs->repo);
+	result = walk_objects_by_path(&info);
+	trace2_region_leave("pack-objects", "path-walk", revs->repo);
+
+	if (result)
 		die(_("failed to pack objects via path-walk"));
 }
 
@@ -4652,6 +4658,9 @@ int cmd_pack_objects(int argc,
 		if (use_bitmap_index > 0 ||
 		    !use_internal_rev_list)
 			path_walk = 0;
+		else if (the_repository->gitdir &&
+			 the_repository->settings.pack_use_path_walk)
+			path_walk = 1;
 		else
 			path_walk = git_env_bool("GIT_TEST_PACK_PATH_WALK", 0);
 	}
