@@ -38,6 +38,7 @@ test_expect_success 'verify number of revisions' \
 test_expect_success 'corrupt second commit object' '
 	for p in .git/objects/pack/*.pack
 	do
+		chmod +w "$p" &&
 		sed "s/second commit/socond commit/" "$p" >"$p.munged" &&
 		mv "$p.munged" "$p" ||
 		return 1
