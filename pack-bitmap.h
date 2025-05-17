@@ -85,6 +85,7 @@ int test_bitmap_hashes(struct repository *r);
 int test_bitmap_pseudo_merges(struct repository *r);
 int test_bitmap_pseudo_merge_commits(struct repository *r, uint32_t n);
 int test_bitmap_pseudo_merge_objects(struct repository *r, uint32_t n);
+int test_bitmap_load_corrupt(struct repository *r);
 
 struct list_objects_filter_options;
 

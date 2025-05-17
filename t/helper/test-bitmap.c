@@ -20,6 +20,11 @@ static int bitmap_dump_pseudo_merges(void)
 	return test_bitmap_pseudo_merges(the_repository);
 }
 
+static int bitmap_load_corrupt(void)
+{
+	return test_bitmap_load_corrupt(the_repository);
+}
+
 static int bitmap_dump_pseudo_merge_commits(uint32_t n)
 {
 	return test_bitmap_pseudo_merge_commits(the_repository, n);
@@ -40,6 +45,8 @@ int cmd__bitmap(int argc, const char **argv)
 		return bitmap_dump_hashes();
 	if (argc == 2 && !strcmp(argv[1], "dump-pseudo-merges"))
 		return bitmap_dump_pseudo_merges();
+	if (argc == 2 && !strcmp(argv[1], "load-corrupt"))
+		return bitmap_load_corrupt();
 	if (argc == 3 && !strcmp(argv[1], "dump-pseudo-merge-commits"))
 		return bitmap_dump_pseudo_merge_commits(atoi(argv[2]));
 	if (argc == 3 && !strcmp(argv[1], "dump-pseudo-merge-objects"))
@@ -48,6 +55,7 @@ int cmd__bitmap(int argc, const char **argv)
 	usage("\ttest-tool bitmap list-commits\n"
 	      "\ttest-tool bitmap dump-hashes\n"
 	      "\ttest-tool bitmap dump-pseudo-merges\n"
+	      "\ttest-tool bitmap load-corrupt\n"
 	      "\ttest-tool bitmap dump-pseudo-merge-commits <n>\n"
 	      "\ttest-tool bitmap dump-pseudo-merge-objects <n>");
 
