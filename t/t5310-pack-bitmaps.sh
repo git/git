@@ -486,6 +486,21 @@ test_bitmap_cases () {
 			grep "ignoring extra bitmap" trace2.txt
 		)
 	'
+
+	test_expect_success 'load corrupt bitmap' '
+		git init repo &&
+		test_when_finished "rm -fr repo" && (
+			cd repo &&
+			git config pack.writeBitmapLookupTable '"$writeLookupTable"' &&
+
+			echo "Hello world" > hello_world.txt &&
+			git add hello_world.txt &&
+			git commit -am "add hello_world.txt" &&
+
+			git repack -adb &&
+			test-tool bitmap load-corrupt
+		)
+	'
 }
 
 test_bitmap_cases

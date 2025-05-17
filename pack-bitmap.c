@@ -3022,6 +3022,71 @@ cleanup:
 	return ret;
 }
 
+typedef void(corrupt_fn)(struct bitmap_index *);
+
+static int bitmap_corrupt_then_load(struct repository *r, corrupt_fn *do_corrupt)
+{
+	struct bitmap_index *bitmap_git;
+	unsigned char *map;
+
+	if (!(bitmap_git = prepare_bitmap_git(r)))
+		die(_("failed to prepare bitmap indexes"));
+	/*
+	 * If the table lookup extension is not used,
+	 * prepare_bitmap_git has already called load_bitmap_entries_v1(),
+	 * making it impossible to corrupt the bitmap.
+	 */
+	if (!bitmap_git->table_lookup)
+		return 0;
+
+	/*
+	 * bitmap_git->map is read-only;
+	 * to corrupt it, we need a writable memory block.
+	 */
+	map = bitmap_git->map;
+	bitmap_git->map = xmalloc(bitmap_git->map_size);
+	if (!bitmap_git->map)
+		return 0;
+	memcpy(bitmap_git->map, map, bitmap_git->map_size);
+
+	do_corrupt(bitmap_git);
+	if (!load_bitmap_entries_v1(bitmap_git))
+		die(_("load corrupt bitmap successfully"));
+
+	free(bitmap_git->map);
+	bitmap_git->map = map;
+	free_bitmap_index(bitmap_git);
+
+	return 0;
+}
+
+static void do_corrupt_commit_pos(struct bitmap_index *bitmap_git)
+{
+	uint32_t *commit_pos_ptr;
+
+	commit_pos_ptr = (uint32_t *)(bitmap_git->map + bitmap_git->map_pos);
+	*commit_pos_ptr = (uint32_t)-1;
+}
+
+static void do_corrupt_xor_offset(struct bitmap_index *bitmap_git)
+{
+	uint8_t *xor_offset_ptr;
+
+	xor_offset_ptr = (uint8_t *)(bitmap_git->map + bitmap_git->map_pos +
+				     sizeof(uint32_t));
+	*xor_offset_ptr = MAX_XOR_OFFSET + 1;
+}
+
+int test_bitmap_load_corrupt(struct repository *r)
+{
+	int res = 0;
+	if ((res = bitmap_corrupt_then_load(r, do_corrupt_commit_pos)))
+		return res;
+	if ((res = bitmap_corrupt_then_load(r, do_corrupt_xor_offset)))
+		return res;
+	return res;
+}
+
 int rebuild_bitmap(const uint32_t *reposition,
 		   struct ewah_bitmap *source,
 		   struct bitmap *dest)
