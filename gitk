@@ -44,6 +44,13 @@ if {[package vcompare $::tcl_version 9.0] >= 0} {
         chan configure $f -profile tcl8
         return $f
     }
+    proc convertfrom args {
+        return [encoding convertfrom -profile tcl8 {*}$args]
+    }
+} else {
+    proc convertfrom args {
+        return [encoding convertfrom {*}$args]
+    }
 }
 
 ######################################################################
@@ -7823,7 +7830,7 @@ proc gettreeline {gtf id} {
         if {[string index $fname 0] eq "\""} {
             set fname [lindex $fname 0]
         }
-        set fname [encoding convertfrom utf-8 $fname]
+        set fname [convertfrom utf-8 $fname]
         lappend treefilelist($id) $fname
     }
     if {![eof $gtf]} {
@@ -8083,7 +8090,7 @@ proc gettreediffline {gdtf ids} {
             if {[string index $file 0] eq "\""} {
                 set file [lindex $file 0]
             }
-            set file [encoding convertfrom utf-8 $file]
+            set file [convertfrom utf-8 $file]
             if {$file ne [lindex $treediff end]} {
                 lappend treediff $file
                 lappend sublist $file
@@ -8219,7 +8226,7 @@ proc makediffhdr {fname ids} {
     global ctext curdiffstart treediffs diffencoding
     global ctext_file_names jump_to_here targetline diffline
 
-    set fname [encoding convertfrom utf-8 $fname]
+    set fname [convertfrom utf-8 $fname]
     set diffencoding [get_path_encoding $fname]
     set i [lsearch -exact $treediffs($ids) $fname]
     if {$i >= 0} {
@@ -8281,7 +8288,7 @@ proc parseblobdiffline {ids line} {
 
     if {![string compare -length 5 "diff " $line]} {
         if {![regexp {^diff (--cc|--git) } $line m type]} {
-            set line [encoding convertfrom utf-8 $line]
+            set line [convertfrom utf-8 $line]
             $ctext insert end "$line\n" hunksep
             continue
         }
@@ -8330,7 +8337,7 @@ proc parseblobdiffline {ids line} {
         makediffhdr $fname $ids
 
     } elseif {![string compare -length 16 "* Unmerged path " $line]} {
-        set fname [encoding convertfrom utf-8 [string range $line 16 end]]
+        set fname [convertfrom utf-8 [string range $line 16 end]]
         $ctext insert end "\n"
         set curdiffstart [$ctext index "end - 1c"]
         lappend ctext_file_names $fname
@@ -8343,7 +8350,7 @@ proc parseblobdiffline {ids line} {
 
     } elseif {![string compare -length 2 "@@" $line]} {
         regexp {^@@+} $line ats
-        set line [encoding convertfrom $diffencoding $line]
+        set line [convertfrom $diffencoding $line]
         $ctext insert end "$line\n" hunksep
         if {[regexp { \+(\d+),\d+ @@} $line m nl]} {
             set diffline $nl
@@ -8372,10 +8379,10 @@ proc parseblobdiffline {ids line} {
             $ctext insert end "$line\n" filesep
         }
     } elseif {$currdiffsubmod != "" && ![string compare -length 3 "  >" $line]} {
-        set line [encoding convertfrom $diffencoding $line]
+        set line [convertfrom $diffencoding $line]
         $ctext insert end "$line\n" dresult
     } elseif {$currdiffsubmod != "" && ![string compare -length 3 "  <" $line]} {
-        set line [encoding convertfrom $diffencoding $line]
+        set line [convertfrom $diffencoding $line]
         $ctext insert end "$line\n" d0
     } elseif {$diffinhdr} {
         if {![string compare -length 12 "rename from " $line]} {
@@ -8383,7 +8390,7 @@ proc parseblobdiffline {ids line} {
             if {[string index $fname 0] eq "\""} {
                 set fname [lindex $fname 0]
             }
-            set fname [encoding convertfrom utf-8 $fname]
+            set fname [convertfrom utf-8 $fname]
             set i [lsearch -exact $treediffs($ids) $fname]
             if {$i >= 0} {
                 setinlist difffilestart $i $curdiffstart
@@ -8402,12 +8409,12 @@ proc parseblobdiffline {ids line} {
             set diffinhdr 0
             return
         }
-        set line [encoding convertfrom utf-8 $line]
+        set line [convertfrom utf-8 $line]
         $ctext insert end "$line\n" filesep
 
     } else {
         set line [string map {\x1A ^Z} \
-                      [encoding convertfrom $diffencoding $line]]
+                      [convertfrom $diffencoding $line]]
         # parse the prefix - one ' ', '-' or '+' for each parent
         set prefix [string range $line 0 [expr {$diffnparents - 1}]]
         set tag [expr {$diffnparents > 1? "m": "d"}]
@@ -12279,7 +12286,7 @@ proc cache_gitattr {attr pathlist} {
             foreach row [split $rlist "\n"] {
                 if {[regexp "(.*): $attr: (.*)" $row m path value]} {
                     if {[string index $path 0] eq "\""} {
-                        set path [encoding convertfrom utf-8 [lindex $path 0]]
+                        set path [convertfrom utf-8 [lindex $path 0]]
                     }
                     set path_attr_cache($attr,$path) $value
                 }
