@@ -559,22 +559,13 @@ proc is_shellscript {filename} {
 	return [expr {$magic eq "#!"}]
 }
 
-# Run a command connected via pipes on stdout.
+# Run a shell command connected via pipes on stdout.
 # This is for use with textconv filters and uses sh -c "..." to allow it to
-# contain a command with arguments. On windows we must check for shell
-# scripts specifically otherwise just call the filter command.
+# contain a command with arguments. We presume this
+# to be a shellscript that the configured shell (/bin/sh by default) knows
+# how to run.
 proc open_cmd_pipe {cmd path} {
-	global env
-	if {[is_Windows]} {
-		set exe [auto_execok [lindex $cmd 0]]
-		if {[is_shellscript [lindex $exe 0]]} {
-			set run [linsert [auto_execok sh] end -c "$cmd \"\$0\"" $path]
-		} else {
-			set run [concat $exe [lrange $cmd 1 end] $path]
-		}
-	} else {
-		set run [list [shellpath] -c "$cmd \"\$0\"" $path]
-	}
+	set run [list [shellpath] -c "$cmd \"\$0\"" $path]
 	return [open |$run r]
 }
 
