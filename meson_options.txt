@@ -7,10 +7,10 @@ option('default_pager', type: 'string', value: 'less',
   description: 'Fall-back pager.')
 option('default_editor', type: 'string', value: 'vi',
   description: 'Fall-back editor.')
-option('gitconfig', type: 'string', value: '/etc/gitconfig',
-  description: 'Path to the global git configuration file.')
-option('gitattributes', type: 'string', value: '/etc/gitattributes',
-  description: 'Path to the global git attributes file.')
+option('gitconfig', type: 'string',
+  description: 'Path to the global git configuration file. (default: etc/gitconfig)')
+option('gitattributes', type: 'string',
+  description: 'Path to the global git attributes file. (default: etc/gitattributes)')
 option('pager_environment', type: 'string', value: 'LESS=FRX LV=-c',
   description: 'Environment used when spawning the pager')
 option('perl_cpan_fallback', type: 'boolean', value: true,
