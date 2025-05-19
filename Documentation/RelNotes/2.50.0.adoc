@@ -65,6 +65,13 @@ UI, Workflows & Features
  * Make repository clean-up tasks "gc" can do available to "git
    maintenance" front-end.
 
+ * Bundle-URI feature did not use refs recorded in the bundle other
+   than normal branches as anchoring points to optimize the follow-up
+   fetch during "git clone"; now it is told to utilize all.
+
+ * The `send-email` documentation has been updated with OAuth2.0
+   related examples.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -147,6 +154,8 @@ Performance, Internal Implementation, Development Support etc.
  * Add an equivalent to "make hdr-check" target to meson based builds.
 
  * Further code clean-up in the object-store layer.
+
+ * Build performance fix.
 
 
 Fixes since v2.49
@@ -294,6 +303,9 @@ Fixes since v2.49
    derived systems use different errno, which has been worked around.
    (merge f47bcc3413 cf/wrapper-bsd-eloop later to maint).
 
+ * Use-after-free fix in the sequencer.
+   (merge 5dbaec628d pw/sequencer-reflog-use-after-free later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
    (merge 2bfd3b3685 ab/decorate-code-cleanup later to maint).
@@ -321,3 +333,6 @@ Fixes since v2.49
    (merge 42cf4ac552 ps/ci-resurrect-p4-on-github later to maint).
    (merge 104add8368 js/diff-codeql-false-positive-workaround later to maint).
    (merge f62977b93c en/get-tree-entry-doc later to maint).
+   (merge e5dd0a05ed ly/am-split-stgit-leakfix later to maint).
+   (merge bac220e154 rc/t1001-test-path-is-file later to maint).
+   (merge 91db6c735d ly/reftable-writer-leakfix later to maint).
