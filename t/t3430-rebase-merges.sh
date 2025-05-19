@@ -86,7 +86,7 @@ test_expect_success 'create completely different structure' '
 	test_config sequence.editor \""$PWD"/replace-editor.sh\" &&
 	test_tick &&
 	git rebase -i -r A main &&
-	test_cmp_graph <<-\EOF
+	test_cmp_graph <<-\EOF &&
 	*   Merge the topic branch '\''onebranch'\''
 	|\
 	| * D
@@ -99,6 +99,15 @@ test_expect_success 'create completely different structure' '
 	|/
 	* A
 	EOF
+
+	head="$(git show-ref --verify -s --abbrev HEAD)" &&
+	cat >expect <<-EOF &&
+	$head HEAD@{0}: rebase (finish): returning to refs/heads/main
+	$head HEAD@{1}: rebase (merge): Merge the topic branch ${SQ}onebranch${SQ}
+	EOF
+
+	git reflog -n2 HEAD >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'generate correct todo list' '
