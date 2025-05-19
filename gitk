@@ -2098,14 +2098,6 @@ proc ttk_toplevel {w args} {
 }
 
 proc make_transient {window origin} {
-    global have_tk85
-
-    # In MacOS Tk 8.4 transient appears to work by setting
-    # overrideredirect, which is utterly useless, since the
-    # windows get no border, and are not even kept above
-    # the parent.
-    if {!$have_tk85 && [tk windowingsystem] eq {aqua}} return
-
     wm transient $window $origin
 
     # Windows fails to place transient windows normally, so
@@ -2297,7 +2289,7 @@ proc makewindow {} {
     global headctxmenu progresscanv progressitem progresscoords statusw
     global fprogitem fprogcoord lastprogupdate progupdatepending
     global rprogitem rprogcoord rownumsel numcommits
-    global have_tk85 have_tk86 use_ttk NS
+    global use_ttk NS
     global worddiff
 
     # The "mc" arguments here are purely so that xgettext
@@ -2628,9 +2620,7 @@ proc makewindow {} {
         -state disabled -undo 0 -font textfont \
         -yscrollcommand scrolltext -wrap $wrapdefault \
         -xscrollcommand ".bleft.bottom.sbhorizontal set"
-    if {$have_tk85} {
-        $ctext conf -tabstyle wordprocessor
-    }
+    $ctext conf -tabstyle wordprocessor
     ${NS}::scrollbar .bleft.bottom.sb -command "$ctext yview"
     ${NS}::scrollbar .bleft.bottom.sbhorizontal -command "$ctext xview" -orient h
     pack .bleft.top -side top -fill x
@@ -2792,13 +2782,8 @@ proc makewindow {} {
     bind . <Key-Down> "selnextline 1"
     bind . <Shift-Key-Up> "dofind -1 0"
     bind . <Shift-Key-Down> "dofind 1 0"
-    if {$have_tk86} {
-        bindkey <<NextChar>> "goforw"
-        bindkey <<PrevChar>> "goback"
-    } else {
-        bindkey <Key-Right> "goforw"
-        bindkey <Key-Left> "goback"
-    }
+    bindkey <<NextChar>> "goforw"
+    bindkey <<PrevChar>> "goback"
     bind . <Key-Prior> "selnextpage -1"
     bind . <Key-Next> "selnextpage 1"
     bind . <$M1B-Home> "allcanvs yview moveto 0.0"
@@ -8646,19 +8631,17 @@ proc clear_ctext {{first 1.0}} {
 }
 
 proc settabs {{firstab {}}} {
-    global firsttabstop tabstop ctext have_tk85
+    global firsttabstop tabstop ctext
 
-    if {$firstab ne {} && $have_tk85} {
+    if {$firstab ne {}} {
         set firsttabstop $firstab
     }
     set w [font measure textfont "0"]
     if {$firsttabstop != 0} {
         $ctext conf -tabs [list [expr {($firsttabstop + $tabstop) * $w}] \
                                [expr {($firsttabstop + 2 * $tabstop) * $w}]]
-    } elseif {$have_tk85 || $tabstop != 8} {
-        $ctext conf -tabs [expr {$tabstop * $w}]
     } else {
-        $ctext conf -tabs {}
+        $ctext conf -tabs [expr {$tabstop * $w}]
     }
 }
 
@@ -11609,74 +11592,6 @@ proc mkfontdisp {font top which} {
     grid x $top.${font}but $top.$font -sticky w
 }
 
-proc choosefont {font which} {
-    global fontparam fontlist fonttop fontattr
-    global prefstop NS
-
-    set fontparam(which) $which
-    set fontparam(font) $font
-    set fontparam(family) [font actual $font -family]
-    set fontparam(size) $fontattr($font,size)
-    set fontparam(weight) $fontattr($font,weight)
-    set fontparam(slant) $fontattr($font,slant)
-    set top .gitkfont
-    set fonttop $top
-    if {![winfo exists $top]} {
-        font create sample
-        eval font config sample [font actual $font]
-        ttk_toplevel $top
-        make_transient $top $prefstop
-        wm title $top [mc "Gitk font chooser"]
-        ${NS}::label $top.l -textvariable fontparam(which)
-        pack $top.l -side top
-        set fontlist [lsort [font families]]
-        ${NS}::frame $top.f
-        listbox $top.f.fam -listvariable fontlist \
-            -yscrollcommand [list $top.f.sb set]
-        bind $top.f.fam <<ListboxSelect>> selfontfam
-        ${NS}::scrollbar $top.f.sb -command [list $top.f.fam yview]
-        pack $top.f.sb -side right -fill y
-        pack $top.f.fam -side left -fill both -expand 1
-        pack $top.f -side top -fill both -expand 1
-        ${NS}::frame $top.g
-        spinbox $top.g.size -from 4 -to 40 -width 4 \
-            -textvariable fontparam(size) \
-            -validatecommand {string is integer -strict %s}
-        checkbutton $top.g.bold -padx 5 \
-            -font {{Times New Roman} 12 bold} -text [mc "B"] -indicatoron 0 \
-            -variable fontparam(weight) -onvalue bold -offvalue normal
-        checkbutton $top.g.ital -padx 5 \
-            -font {{Times New Roman} 12 italic} -text [mc "I"] -indicatoron 0  \
-            -variable fontparam(slant) -onvalue italic -offvalue roman
-        pack $top.g.size $top.g.bold $top.g.ital -side left
-        pack $top.g -side top
-        canvas $top.c -width 150 -height 50 -border 2 -relief sunk \
-            -background white
-        $top.c create text 100 25 -anchor center -text $which -font sample \
-            -fill black -tags text
-        bind $top.c <Configure> [list centertext $top.c]
-        pack $top.c -side top -fill x
-        ${NS}::frame $top.buts
-        ${NS}::button $top.buts.ok -text [mc "OK"] -command fontok -default active
-        ${NS}::button $top.buts.can -text [mc "Cancel"] -command fontcan -default normal
-        bind $top <Key-Return> fontok
-        bind $top <Key-Escape> fontcan
-        grid $top.buts.ok $top.buts.can
-        grid columnconfigure $top.buts 0 -weight 1 -uniform a
-        grid columnconfigure $top.buts 1 -weight 1 -uniform a
-        pack $top.buts -side bottom -fill x
-        trace add variable fontparam write chg_fontparam
-    } else {
-        raise $top
-        $top.c itemconf text -text $which
-    }
-    set i [lsearch -exact $fontlist $fontparam(family)]
-    if {$i >= 0} {
-        $top.f.fam selection set $i
-        $top.f.fam see $i
-    }
-}
-
 proc centertext {w} {
     $w coords text [expr {[winfo width $w] / 2}] [expr {[winfo height $w] / 2}]
 }
@@ -11709,26 +11624,22 @@ proc fontcan {} {
     }
 }
 
-if {[package vsatisfies [package provide Tk] 8.6]} {
-    # In Tk 8.6 we have a native font chooser dialog. Overwrite the above
-    # function to make use of it.
-    proc choosefont {font which} {
-        tk fontchooser configure -title $which -font $font \
-            -command [list on_choosefont $font $which]
-        tk fontchooser show
-    }
-    proc on_choosefont {font which newfont} {
-        global fontparam
-        puts stderr "$font $newfont"
-        array set f [font actual $newfont]
-        set fontparam(which) $which
-        set fontparam(font) $font
-        set fontparam(family) $f(-family)
-        set fontparam(size) $f(-size)
-        set fontparam(weight) $f(-weight)
-        set fontparam(slant) $f(-slant)
-        fontok
-    }
+proc choosefont {font which} {
+    tk fontchooser configure -title $which -font $font \
+        -command [list on_choosefont $font $which]
+    tk fontchooser show
+}
+proc on_choosefont {font which newfont} {
+    global fontparam
+    puts stderr "$font $newfont"
+    array set f [font actual $newfont]
+    set fontparam(which) $which
+    set fontparam(font) $font
+    set fontparam(family) $f(-family)
+    set fontparam(size) $f(-size)
+    set fontparam(weight) $f(-weight)
+    set fontparam(slant) $f(-slant)
+    fontok
 }
 
 proc selfontfam {} {
@@ -12801,8 +12712,6 @@ set nullid "0000000000000000000000000000000000000000"
 set nullid2 "0000000000000000000000000000000000000001"
 set nullfile "/dev/null"
 
-set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
-set have_tk86 [expr {[package vcompare $tk_version "8.6"] >= 0}]
 if {![info exists have_ttk]} {
     set have_ttk [llength [info commands ::ttk::style]]
 }
