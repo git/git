@@ -3,6 +3,7 @@
 test_description='git cat-file'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY/lib-loose.sh"
 
 test_cmdmode_usage () {
 	test_expect_code 129 "$@" 2>err &&
@@ -133,18 +134,6 @@ $content"
     test_expect_success "Size of $type is correct" '
 	echo $size >expect &&
 	git cat-file -s $oid >actual &&
-	test_cmp expect actual
-    '
-
-    test_expect_success "Type of $type is correct using --allow-unknown-type" '
-	echo $type >expect &&
-	git cat-file -t --allow-unknown-type $oid >actual &&
-	test_cmp expect actual
-    '
-
-    test_expect_success "Size of $type is correct using --allow-unknown-type" '
-	echo $size >expect &&
-	git cat-file -s --allow-unknown-type $oid >actual &&
 	test_cmp expect actual
     '
 
@@ -669,101 +658,73 @@ test_expect_success 'setup bogus data' '
 	bogus_short_type="bogus" &&
 	bogus_short_content="bogus" &&
 	bogus_short_size=$(strlen "$bogus_short_content") &&
-	bogus_short_oid=$(echo_without_newline "$bogus_short_content" | git hash-object -t $bogus_short_type --literally -w --stdin) &&
+	bogus_short_oid=$(echo_without_newline "$bogus_short_content" | loose_obj .git/objects $bogus_short_type) &&
 
 	bogus_long_type="abcdefghijklmnopqrstuvwxyz1234679" &&
 	bogus_long_content="bogus" &&
 	bogus_long_size=$(strlen "$bogus_long_content") &&
-	bogus_long_oid=$(echo_without_newline "$bogus_long_content" | git hash-object -t $bogus_long_type --literally -w --stdin)
+	bogus_long_oid=$(echo_without_newline "$bogus_long_content" | loose_obj .git/objects $bogus_long_type)
 '
 
-for arg1 in '' --allow-unknown-type
+for arg1 in -s -t -p
 do
-	for arg2 in -s -t -p
-	do
-		if test "$arg1" = "--allow-unknown-type" && test "$arg2" = "-p"
+	test_expect_success "cat-file $arg1 error on bogus short OID" '
+		cat >expect <<-\EOF &&
+		fatal: invalid object type
+		EOF
+
+		test_must_fail git cat-file $arg1 $bogus_short_oid >out 2>actual &&
+		test_must_be_empty out &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "cat-file $arg1 error on bogus full OID" '
+		if test "$arg1" = "-p"
 		then
-			continue
-		fi
-
-
-		test_expect_success "cat-file $arg1 $arg2 error on bogus short OID" '
-			cat >expect <<-\EOF &&
-			fatal: invalid object type
+			cat >expect <<-EOF
+			error: header for $bogus_long_oid too long, exceeds 32 bytes
+			fatal: Not a valid object name $bogus_long_oid
 			EOF
-
-			if test "$arg1" = "--allow-unknown-type"
-			then
-				git cat-file $arg1 $arg2 $bogus_short_oid
-			else
-				test_must_fail git cat-file $arg1 $arg2 $bogus_short_oid >out 2>actual &&
-				test_must_be_empty out &&
-				test_cmp expect actual
-			fi
-		'
-
-		test_expect_success "cat-file $arg1 $arg2 error on bogus full OID" '
-			if test "$arg2" = "-p"
-			then
-				cat >expect <<-EOF
-				error: header for $bogus_long_oid too long, exceeds 32 bytes
-				fatal: Not a valid object name $bogus_long_oid
-				EOF
-			else
-				cat >expect <<-EOF
-				error: header for $bogus_long_oid too long, exceeds 32 bytes
-				fatal: git cat-file: could not get object info
-				EOF
-			fi &&
-
-			if test "$arg1" = "--allow-unknown-type"
-			then
-				git cat-file $arg1 $arg2 $bogus_short_oid
-			else
-				test_must_fail git cat-file $arg1 $arg2 $bogus_long_oid >out 2>actual &&
-				test_must_be_empty out &&
-				test_cmp expect actual
-			fi
-		'
-
-		test_expect_success "cat-file $arg1 $arg2 error on missing short OID" '
-			cat >expect.err <<-EOF &&
-			fatal: Not a valid object name $(test_oid deadbeef_short)
+		else
+			cat >expect <<-EOF
+			error: header for $bogus_long_oid too long, exceeds 32 bytes
+			fatal: git cat-file: could not get object info
 			EOF
-			test_must_fail git cat-file $arg1 $arg2 $(test_oid deadbeef_short) >out 2>err.actual &&
-			test_must_be_empty out &&
-			test_cmp expect.err err.actual
-		'
+		fi &&
 
-		test_expect_success "cat-file $arg1 $arg2 error on missing full OID" '
-			if test "$arg2" = "-p"
-			then
-				cat >expect.err <<-EOF
-				fatal: Not a valid object name $(test_oid deadbeef)
-				EOF
-			else
-				cat >expect.err <<-\EOF
-				fatal: git cat-file: could not get object info
-				EOF
-			fi &&
-			test_must_fail git cat-file $arg1 $arg2 $(test_oid deadbeef) >out 2>err.actual &&
-			test_must_be_empty out &&
-			test_cmp expect.err err.actual
-		'
-	done
+		test_must_fail git cat-file $arg1 $bogus_long_oid >out 2>actual &&
+		test_must_be_empty out &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "cat-file $arg1 error on missing short OID" '
+		cat >expect.err <<-EOF &&
+		fatal: Not a valid object name $(test_oid deadbeef_short)
+		EOF
+		test_must_fail git cat-file $arg1 $(test_oid deadbeef_short) >out 2>err.actual &&
+		test_must_be_empty out &&
+		test_cmp expect.err err.actual
+	'
+
+	test_expect_success "cat-file $arg1 error on missing full OID" '
+		if test "$arg1" = "-p"
+		then
+			cat >expect.err <<-EOF
+			fatal: Not a valid object name $(test_oid deadbeef)
+			EOF
+		else
+			cat >expect.err <<-\EOF
+			fatal: git cat-file: could not get object info
+			EOF
+		fi &&
+		test_must_fail git cat-file $arg1 $(test_oid deadbeef) >out 2>err.actual &&
+		test_must_be_empty out &&
+		test_cmp expect.err err.actual
+	'
 done
 
-test_expect_success '-e is OK with a broken object without --allow-unknown-type' '
+test_expect_success '-e is OK with a broken object' '
 	git cat-file -e $bogus_short_oid
-'
-
-test_expect_success '-e can not be combined with --allow-unknown-type' '
-	test_expect_code 128 git cat-file -e --allow-unknown-type $bogus_short_oid
-'
-
-test_expect_success '-p cannot print a broken object even with --allow-unknown-type' '
-	test_must_fail git cat-file -p $bogus_short_oid &&
-	test_expect_code 128 git cat-file -p --allow-unknown-type $bogus_short_oid
 '
 
 test_expect_success '<type> <hash> does not work with objects of broken types' '
@@ -788,60 +749,8 @@ test_expect_success 'broken types combined with --batch and --batch-check' '
 	test_cmp err.expect err.actual
 '
 
-test_expect_success 'the --batch and --batch-check options do not combine with --allow-unknown-type' '
-	test_expect_code 128 git cat-file --batch --allow-unknown-type <bogus-oid &&
-	test_expect_code 128 git cat-file --batch-check --allow-unknown-type <bogus-oid
-'
-
-test_expect_success 'the --allow-unknown-type option does not consider replacement refs' '
-	cat >expect <<-EOF &&
-	$bogus_short_type
-	EOF
-	git cat-file -t --allow-unknown-type $bogus_short_oid >actual &&
-	test_cmp expect actual &&
-
-	# Create it manually, as "git replace" will die on bogus
-	# types.
-	head=$(git rev-parse --verify HEAD) &&
-	test_when_finished "test-tool ref-store main delete-refs 0 msg refs/replace/$bogus_short_oid" &&
-	test-tool ref-store main update-ref msg "refs/replace/$bogus_short_oid" $head $ZERO_OID REF_SKIP_OID_VERIFICATION &&
-
-	cat >expect <<-EOF &&
-	commit
-	EOF
-	git cat-file -t --allow-unknown-type $bogus_short_oid >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success "Type of broken object is correct" '
-	echo $bogus_short_type >expect &&
-	git cat-file -t --allow-unknown-type $bogus_short_oid >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success "Size of broken object is correct" '
-	echo $bogus_short_size >expect &&
-	git cat-file -s --allow-unknown-type $bogus_short_oid >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success 'clean up broken object' '
-	rm .git/objects/$(test_oid_to_path $bogus_short_oid)
-'
-
-test_expect_success "Type of broken object is correct when type is large" '
-	echo $bogus_long_type >expect &&
-	git cat-file -t --allow-unknown-type $bogus_long_oid >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success "Size of large broken object is correct when type is large" '
-	echo $bogus_long_size >expect &&
-	git cat-file -s --allow-unknown-type $bogus_long_oid >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success 'clean up broken object' '
+test_expect_success 'clean up broken objects' '
+	rm .git/objects/$(test_oid_to_path $bogus_short_oid) &&
 	rm .git/objects/$(test_oid_to_path $bogus_long_oid)
 '
 
@@ -902,25 +811,6 @@ test_expect_success 'cat-file -t and -s on corrupt loose object' '
 		test_cmp expect actual
 	)
 '
-
-test_expect_success 'truncated object with --allow-unknown-type' - <<\EOT
-	objtype='a really long type name that exceeds the 32-byte limit' &&
-	blob=$(git hash-object -w --literally -t "$objtype" /dev/null) &&
-	objpath=.git/objects/$(test_oid_to_path "$blob") &&
-
-	# We want to truncate the object far enough in that we don't hit the
-	# end while inflating the first 32 bytes (since we want to have to dig
-	# for the trailing NUL of the header). But we don't want to go too far,
-	# since our header isn't very big. And of course we are counting
-	# deflated zlib bytes in the on-disk file, so it's a bit of a guess.
-	# Empirically 50 seems to work.
-	mv "$objpath" obj.bak &&
-	test_when_finished 'mv obj.bak "$objpath"' &&
-	test_copy_bytes 50 <obj.bak >"$objpath" &&
-
-	test_must_fail git cat-file --allow-unknown-type -t $blob 2>err &&
-	test_grep "unable to unpack $blob header" err
-EOT
 
 test_expect_success 'object reading handles zlib dictionary' - <<\EOT
 	echo 'content that will be recompressed' >file &&

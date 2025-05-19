@@ -100,8 +100,7 @@ static int stream_blob(const struct object_id *oid)
 	return 0;
 }
 
-static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
-			int unknown_type)
+static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 {
 	int ret;
 	struct object_id oid;
@@ -110,7 +109,6 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	unsigned long size;
 	struct object_context obj_context = {0};
 	struct object_info oi = OBJECT_INFO_INIT;
-	struct strbuf sb = STRBUF_INIT;
 	unsigned flags = OBJECT_INFO_LOOKUP_REPLACE;
 	unsigned get_oid_flags =
 		GET_OID_RECORD_PATH |
@@ -120,9 +118,6 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	const int opt_cw = (opt == 'c' || opt == 'w');
 	if (!path && opt_cw)
 		get_oid_flags |= GET_OID_REQUIRE_PATH;
-
-	if (unknown_type)
-		flags |= OBJECT_INFO_ALLOW_UNKNOWN_TYPE;
 
 	if (get_oid_with_context(the_repository, obj_name, get_oid_flags, &oid,
 				 &obj_context))
@@ -136,16 +131,12 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 	buf = NULL;
 	switch (opt) {
 	case 't':
-		oi.type_name = &sb;
+		oi.typep = &type;
 		if (oid_object_info_extended(the_repository, &oid, &oi, flags) < 0)
 			die("git cat-file: could not get object info");
-		if (sb.len) {
-			printf("%s\n", sb.buf);
-			strbuf_release(&sb);
-			ret = 0;
-			goto cleanup;
-		}
-		break;
+		printf("%s\n", type_name(type));
+		ret = 0;
+		goto cleanup;
 
 	case 's':
 		oi.sizep = &size;
@@ -1038,8 +1029,7 @@ int cmd_cat_file(int argc,
 
 	const char * const builtin_catfile_usage[] = {
 		N_("git cat-file <type> <object>"),
-		N_("git cat-file (-e | -p) <object>"),
-		N_("git cat-file (-t | -s) [--allow-unknown-type] <object>"),
+		N_("git cat-file (-e | -p | -t | -s) <object>"),
 		N_("git cat-file (--textconv | --filters)\n"
 		   "             [<rev>:<path|tree-ish> | --path=<path|tree-ish> <rev>]"),
 		N_("git cat-file (--batch | --batch-check | --batch-command) [--batch-all-objects]\n"
@@ -1057,8 +1047,8 @@ int cmd_cat_file(int argc,
 		OPT_GROUP(N_("Emit [broken] object attributes")),
 		OPT_CMDMODE('t', NULL, &opt, N_("show object type (one of 'blob', 'tree', 'commit', 'tag', ...)"), 't'),
 		OPT_CMDMODE('s', NULL, &opt, N_("show object size"), 's'),
-		OPT_BOOL(0, "allow-unknown-type", &unknown_type,
-			  N_("allow -s and -t to work with broken/corrupt objects")),
+		OPT_HIDDEN_BOOL(0, "allow-unknown-type", &unknown_type,
+			  N_("historical option -- no-op")),
 		OPT_BOOL(0, "use-mailmap", &use_mailmap, N_("use mail map file")),
 		OPT_ALIAS(0, "mailmap", "use-mailmap"),
 		/* Batch mode */
@@ -1209,10 +1199,7 @@ int cmd_cat_file(int argc,
 		obj_name = argv[1];
 	}
 
-	if (unknown_type && opt != 't' && opt != 's')
-		die("git cat-file --allow-unknown-type: use with -s or -t");
-
-	ret = cat_one_file(opt, exp_type, obj_name, unknown_type);
+	ret = cat_one_file(opt, exp_type, obj_name);
 
 out:
 	list_objects_filter_release(&batch.objects_filter);

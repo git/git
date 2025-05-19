@@ -9,8 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git cat-file' <type> <object>
-'git cat-file' (-e | -p) <object>
-'git cat-file' (-t | -s) [--allow-unknown-type] <object>
+'git cat-file' (-e | -p | -t | -s) <object>
 'git cat-file' (--textconv | --filters)
 	     [<rev>:<path|tree-ish> | --path=<path|tree-ish> <rev>]
 'git cat-file' (--batch | --batch-check | --batch-command) [--batch-all-objects]
@@ -201,9 +200,6 @@ flush::
 	`--batch`.  Note that `cat-file` will still show each object
 	only once, even if it is stored multiple times in the
 	repository.
-
---allow-unknown-type::
-	Allow `-s` or `-t` to query broken/corrupt objects of unknown type.
 
 --follow-symlinks::
 	With `--batch` or `--batch-check`, follow symlinks inside the

@@ -91,6 +91,7 @@ static struct test_cmd cmds[] = {
 	{ "windows-named-pipe", cmd__windows_named_pipe },
 #endif
 	{ "write-cache", cmd__write_cache },
+	{ "zlib", cmd__zlib },
 };
 
 static NORETURN void die_usage(void)
