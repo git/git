@@ -56,7 +56,8 @@ struct reftable_block {
 int reftable_block_init(struct reftable_block *b,
 			struct reftable_block_source *source,
 			uint32_t offset, uint32_t header_size,
-			uint32_t table_block_size, uint32_t hash_size);
+			uint32_t table_block_size, uint32_t hash_size,
+			uint8_t want_type);
 
 /* Release resources allocated by the block. */
 void reftable_block_release(struct reftable_block *b);

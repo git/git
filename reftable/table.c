@@ -173,16 +173,7 @@ int table_init_block(struct reftable_table *t, struct reftable_block *block,
 		return 1;
 
 	err = reftable_block_init(block, &t->source, next_off, header_off,
-				  t->block_size, hash_size(t->hash_id));
-	if (err < 0)
-		goto done;
-
-	if (want_typ != REFTABLE_BLOCK_TYPE_ANY && block->block_type != want_typ) {
-		err = 1;
-		goto done;
-	}
-
-done:
+				  t->block_size, hash_size(t->hash_id), want_typ);
 	if (err)
 		reftable_block_release(block);
 	return err;
