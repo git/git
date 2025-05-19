@@ -490,6 +490,9 @@ static int real_merge(struct merge_tree_options *o,
 	if (result.clean < 0)
 		die(_("failure to merge"));
 
+	if (o->merge_options.mergeability_only)
+		goto cleanup;
+
 	if (show_messages == -1)
 		show_messages = !result.clean;
 
@@ -522,6 +525,8 @@ static int real_merge(struct merge_tree_options *o,
 	}
 	if (o->use_stdin)
 		putchar(line_termination);
+
+cleanup:
 	merge_finalize(&opt, &result);
 	clear_merge_options(&opt);
 	return !result.clean; /* result.clean < 0 handled above */
@@ -538,6 +543,7 @@ int cmd_merge_tree(int argc,
 	int original_argc;
 	const char *merge_base = NULL;
 	int ret;
+	int quiet = 0;
 
 	const char * const merge_tree_usage[] = {
 		N_("git merge-tree [--write-tree] [<options>] <branch1> <branch2>"),
@@ -552,6 +558,10 @@ int cmd_merge_tree(int argc,
 			    N_("do a trivial merge only"), MODE_TRIVIAL),
 		OPT_BOOL(0, "messages", &o.show_messages,
 			 N_("also show informational/conflict messages")),
+		OPT_BOOL_F(0, "quiet",
+			   &quiet,
+			   N_("suppress all output; only exit status wanted"),
+			   PARSE_OPT_NONEG),
 		OPT_SET_INT('z', NULL, &line_termination,
 			    N_("separate paths with the NUL character"), '\0'),
 		OPT_BOOL_F(0, "name-only",
@@ -582,6 +592,14 @@ int cmd_merge_tree(int argc,
 	original_argc = argc - 1; /* ignoring argv[0] */
 	argc = parse_options(argc, argv, prefix, mt_options,
 			     merge_tree_usage, PARSE_OPT_STOP_AT_NON_OPTION);
+
+	if (quiet && o.show_messages == -1)
+		o.show_messages = 0;
+	o.merge_options.mergeability_only = quiet;
+	die_for_incompatible_opt2(quiet, "--quiet", o.show_messages, "--messages");
+	die_for_incompatible_opt2(quiet, "--quiet", o.name_only, "--name-only");
+	die_for_incompatible_opt2(quiet, "--quiet", o.use_stdin, "--stdin");
+	die_for_incompatible_opt2(quiet, "--quiet", !line_termination, "-z");
 
 	if (xopts.nr && o.mode == MODE_TRIVIAL)
 		die(_("--trivial-merge is incompatible with all other options"));
