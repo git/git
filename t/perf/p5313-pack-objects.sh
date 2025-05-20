@@ -3,9 +3,6 @@
 test_description='Tests pack performance using bitmaps'
 . ./perf-lib.sh
 
-GIT_TEST_PASSING_SANITIZE_LEAK=0
-export GIT_TEST_PASSING_SANITIZE_LEAK
-
 test_perf_large_repo
 
 test_expect_success 'create rev input' '
