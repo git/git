@@ -62,4 +62,26 @@ test_expect_success 'receive-pack missing objects fails connectivity check' '
 	test_must_fail git -C remote.git cat-file -e $(git -C repo rev-parse HEAD)
 '
 
+test_expect_success 'receive-pack missing objects bypasses connectivity check' '
+	test_when_finished rm -rf repo remote.git setup.git &&
+
+	git init repo &&
+	git -C repo commit --allow-empty -m 1 &&
+	git clone --bare repo setup.git &&
+	git -C repo commit --allow-empty -m 2 &&
+
+	# Capture git-send-pack(1) output sent to git-receive-pack(1).
+	git -C repo send-pack ../setup.git --all \
+		--receive-pack="tee ${SQ}$(pwd)/out${SQ} | git-receive-pack" &&
+
+	# Replay captured git-send-pack(1) output on new empty repository.
+	git init --bare remote.git &&
+	git receive-pack --skip-connectivity-check remote.git <out >actual 2>err &&
+
+	test_grep ! "missing necessary objects" actual &&
+	test_must_be_empty err &&
+	git -C remote.git cat-file -e $(git -C repo rev-parse HEAD) &&
+	test_must_fail git -C remote.git rev-list $(git -C repo rev-parse HEAD)
+'
+
 test_done
