@@ -5009,7 +5009,7 @@ sub escapeRefName
     #   = "_-xx-" Where "xx" is the hexadecimal representation of the
     #     desired ASCII character byte. (for anything else)
 
-    if(! $refName=~/^[1-9][0-9]*(\.[1-9][0-9]*)*$/)
+    if(! ($refName=~/^[1-9][0-9]*(\.[1-9][0-9]*)*$/))
     {
         $refName=~s/_-/_-u--/g;
         $refName=~s/\./_-p-/g;
