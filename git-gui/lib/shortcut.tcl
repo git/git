@@ -12,7 +12,7 @@ proc do_windows_shortcut {} {
 			set fn ${fn}.lnk
 		}
 		# Use git-gui.exe if available (ie: git-for-windows)
-		set cmdLine [auto_execok git-gui.exe]
+		set cmdLine [list [_which git-gui]]
 		if {$cmdLine eq {}} {
 			set cmdLine [list [info nameofexecutable] \
 							 [file normalize $::argv0]]
