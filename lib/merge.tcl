@@ -145,7 +145,7 @@ method _finish {cons ok} {
 
 constructor dialog {} {
 	global current_branch
-	global M1B use_ttk
+	global M1B
 
 	if {![_can_merge $this]} {
 		delete_this

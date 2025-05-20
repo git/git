@@ -16,7 +16,7 @@ field opt_fetch     1; # refetch tracking branch if used?
 field reset_ok      0; # did the user agree to reset?
 
 constructor dialog {} {
-	global repo_config use_ttk
+	global repo_config
 
 	make_dialog top w
 	wm withdraw $w
@@ -44,7 +44,6 @@ constructor dialog {} {
 		-text [mc "Name:"] \
 		-value user \
 		-variable @name_type
-	if {!$use_ttk} {$w.desc.name_r configure -anchor w}
 	set w_name $w.desc.name_t
 	ttk::entry $w_name \
 		-width 40 \
@@ -57,7 +56,6 @@ constructor dialog {} {
 		-text [mc "Match Tracking Branch Name"] \
 		-value match \
 		-variable @name_type
-	if {!$use_ttk} {$w.desc.match_r configure -anchor w}
 	grid $w.desc.match_r -sticky we -padx {0 5} -columnspan 2
 
 	grid columnconfigure $w.desc 1 -weight 1

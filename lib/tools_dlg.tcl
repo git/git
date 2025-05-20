@@ -16,7 +16,7 @@ field ask_branch    0; # ask for a revision
 field ask_args      0; # ask for additional args
 
 constructor dialog {} {
-	global repo_config use_ttk
+	global repo_config
 
 	make_dialog top w
 	wm title $top [mc "%s (%s): Add Tool" [appname] [reponame]]
@@ -179,7 +179,7 @@ field w              ; # widget path
 field w_names        ; # name list
 
 constructor dialog {} {
-	global repo_config global_config system_config use_ttk
+	global repo_config global_config system_config
 
 	load_config 1
 
@@ -272,7 +272,7 @@ field is_ok         0; # ok to start
 field argstr       {}; # arguments
 
 constructor dialog {fullname} {
-	global M1B use_ttk
+	global M1B
 
 	set title [get_config "guitool.$fullname.title"]
 	if {$title eq {}} {

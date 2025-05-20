@@ -22,8 +22,6 @@ proc _close_updateindex {fd} {
 }
 
 proc rescan_on_error {err {after {}}} {
-	global use_ttk
-
 	set w .indexfried
 	Dialog $w
 	wm withdraw $w

@@ -23,7 +23,7 @@ field full_cache
 field cached
 
 constructor dialog {} {
-	global all_remotes M1B use_ttk
+	global all_remotes M1B
 
 	make_dialog top w
 	wm title $top [mc "%s (%s): Delete Branch Remotely" [appname] [reponame]]
@@ -51,12 +51,8 @@ constructor dialog {} {
 			-text [mc "Remote:"] \
 			-value remote \
 			-variable @urltype
-		if {$use_ttk} {
-			ttk::combobox $w.dest.remote_m -textvariable @remote \
-				-values $all_remotes -state readonly
-		} else {
-			eval tk_optionMenu $w.dest.remote_m @remote $all_remotes
-		}
+		ttk::combobox $w.dest.remote_m -textvariable @remote \
+			-values $all_remotes -state readonly
 		grid $w.dest.remote_r $w.dest.remote_m -sticky w
 		if {[lsearch -sorted -exact $all_remotes origin] != -1} {
 			set remote origin

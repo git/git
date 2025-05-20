@@ -27,7 +27,7 @@ constructor embed {path title} {
 }
 
 method _init {} {
-	global M1B use_ttk
+	global M1B
 
 	if {$is_toplevel} {
 		make_dialog top w -autodelete 0

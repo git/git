@@ -35,7 +35,7 @@ field readtree_err        ; # Error output from read-tree (if any)
 field sorted_recent       ; # recent repositories (sorted)
 
 constructor pick {} {
-	global M1T M1B use_ttk
+	global M1T M1B
 
 	if {[set maxrecent [get_config gui.maxrecentrepo]] eq {}} {
 		set maxrecent 10
@@ -378,7 +378,6 @@ proc _objdir {path} {
 ## Create New Repository
 
 method _do_new {} {
-	global use_ttk
 	$w_next conf \
 		-state disabled \
 		-command [cb _do_new2] \
@@ -462,7 +461,6 @@ proc _new_ok {p} {
 ## Clone Existing Repository
 
 method _do_clone {} {
-	global use_ttk
 	$w_next conf \
 		-state disabled \
 		-command [cb _do_clone2] \

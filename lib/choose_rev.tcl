@@ -32,7 +32,7 @@ proc new_unmerged {path {title {}}} {
 }
 
 constructor _new {path unmerged_only title} {
-	global current_branch is_detached use_ttk
+	global current_branch is_detached
 
 	if {![info exists ::all_remotes]} {
 		load_all_remotes
@@ -52,7 +52,6 @@ constructor _new {path unmerged_only title} {
 			-text [mc "This Detached Checkout"] \
 			-value HEAD \
 			-variable @revtype
-		if {!$use_ttk} {$w.detachedhead_r configure -anchor w}
 		grid $w.detachedhead_r -sticky we -padx {0 5} -columnspan 2
 	}
 
@@ -95,11 +94,7 @@ constructor _new {path unmerged_only title} {
 		] -side right
 	grid $w.types -sticky we -padx {0 5} -columnspan 2
 
-	if {$use_ttk} {
-		ttk::frame $w.list -style SListbox.TFrame -padding 2
-	} else {
-		frame $w.list
-	}
+	ttk::frame $w.list -style SListbox.TFrame -padding 2
 	set w_list $w.list.l
 	listbox $w_list \
 		-font font_diff \
@@ -109,9 +104,7 @@ constructor _new {path unmerged_only title} {
 		-exportselection false \
 		-xscrollcommand [cb _sb_set $w.list.sbx h] \
 		-yscrollcommand [cb _sb_set $w.list.sby v]
-	if {$use_ttk} {
-		$w_list configure -relief flat -highlightthickness 0 -borderwidth 0
-	}
+	$w_list configure -relief flat -highlightthickness 0 -borderwidth 0
 	pack $w_list -fill both -expand 1
 	grid $w.list -sticky nswe -padx {20 5} -columnspan 2
 	bind $w_list <Any-Motion>  [cb _show_tooltip @%x,%y]
@@ -238,12 +231,10 @@ constructor _new {path unmerged_only title} {
 }
 
 method none {text} {
-	global use_ttk
 	if {![winfo exists $w.none_r]} {
 		ttk::radiobutton $w.none_r \
 			-value none \
 			-variable @revtype
-		if {!$use_ttk} {$w.none_r configure -anchor w}
 		grid $w.none_r -sticky we -padx {0 5} -columnspan 2
 	}
 	$w.none_r configure -text $text

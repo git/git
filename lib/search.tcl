@@ -21,7 +21,6 @@ field smarktop
 field smarkbot
 
 constructor new {i_w i_text args} {
-	global use_ttk
 	set w      $i_w
 	set ctext  $i_text
 

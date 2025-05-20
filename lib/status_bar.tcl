@@ -39,7 +39,6 @@ field operations ; # list of current ongoing operations
 field completed_operation_count
 
 constructor new {path} {
-	global use_ttk
 	set w $path
 	set w_l $w.l
 	set w_c $w.c
@@ -52,9 +51,6 @@ constructor new {path} {
 	set completed_operation_count 0
 
 	ttk::frame $w
-	if {!$use_ttk} {
-		$w configure -borderwidth 1 -relief sunken
-	}
 	ttk::label $w_l \
 		-textvariable @status_bar_text \
 		-anchor w \

@@ -9,7 +9,7 @@ field w_check         ; # revision picker for merge test
 field w_delete        ; # delete button
 
 constructor dialog {} {
-	global current_branch use_ttk
+	global current_branch
 
 	make_dialog top w
 	wm withdraw $w

@@ -8,7 +8,7 @@ field oldname
 field newname
 
 constructor dialog {} {
-	global current_branch use_ttk
+	global current_branch
 
 	make_dialog top w
 	wm withdraw $w
@@ -36,12 +36,8 @@ constructor dialog {} {
 
 	ttk::frame $w.rename
 	ttk::label $w.rename.oldname_l -text [mc "Branch:"]
-	if {$use_ttk} {
-		ttk::combobox $w.rename.oldname_m -textvariable @oldname \
-			-values [load_all_heads] -state readonly
-	} else {
-		eval tk_optionMenu $w.rename.oldname_m @oldname [load_all_heads]
-	}
+	ttk::combobox $w.rename.oldname_m -textvariable @oldname \
+		-values [load_all_heads] -state readonly
 
 	ttk::label $w.rename.newname_l -text [mc "New Name:"]
 	ttk::entry $w.rename.newname_t \

@@ -91,7 +91,7 @@ proc save_config {} {
 proc do_options {} {
 	global repo_config global_config font_descs
 	global repo_config_new global_config_new
-	global ui_comm_spell use_ttk
+	global ui_comm_spell
 
 	array unset repo_config_new
 	array unset global_config_new
@@ -218,15 +218,9 @@ proc do_options {} {
 				set opts [eval [lindex $option 3]]
 				ttk::frame $w.$f.$optid
 				ttk::label $w.$f.$optid.l -text [mc "%s:" $text]
-				if {$use_ttk} {
-					ttk::combobox $w.$f.$optid.v \
-						-textvariable ${f}_config_new($name) \
-						-values $opts -state readonly
-				} else {
-					eval tk_optionMenu $w.$f.$optid.v \
-						${f}_config_new($name) \
-						$opts
-				}
+				ttk::combobox $w.$f.$optid.v \
+					-textvariable ${f}_config_new($name) \
+					-values $opts -state readonly
 				pack $w.$f.$optid.l -side left -anchor w -fill x
 				pack $w.$f.$optid.v -side right -anchor e -padx 5
 				pack $w.$f.$optid -side top -anchor w -fill x
@@ -252,15 +246,9 @@ proc do_options {} {
 
 		ttk::frame $w.$f.$optid
 		ttk::label $w.$f.$optid.l -text [mc "Spelling Dictionary:"]
-		if {$use_ttk} {
-			ttk::combobox $w.$f.$optid.v \
-				-textvariable ${f}_config_new(gui.spellingdictionary) \
-				-values $all_dicts -state readonly
-		} else {
-			eval tk_optionMenu $w.$f.$optid.v \
-				${f}_config_new(gui.spellingdictionary) \
-				$all_dicts
-		}
+		ttk::combobox $w.$f.$optid.v \
+			-textvariable ${f}_config_new(gui.spellingdictionary) \
+			-values $all_dicts -state readonly
 		pack $w.$f.$optid.l -side left -anchor w -fill x
 		pack $w.$f.$optid.v -side right -anchor e -padx 5
 		pack $w.$f.$optid -side top -anchor w -fill x

@@ -13,7 +13,7 @@ field location     {}; # location of the remote the user has chosen
 field opt_action fetch; # action to do after registering the remote locally
 
 constructor dialog {} {
-	global repo_config use_ttk
+	global repo_config
 
 	make_dialog top w
 	wm withdraw $top

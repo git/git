@@ -120,7 +120,7 @@ trace add variable push_remote write \
 proc do_push_anywhere {} {
 	global all_remotes current_branch
 	global push_urltype push_remote push_url push_thin push_tags
-	global push_force use_ttk
+	global push_force
 
 	set w .push_setup
 	toplevel $w
@@ -165,14 +165,10 @@ proc do_push_anywhere {} {
 			-text [mc "Remote:"] \
 			-value remote \
 			-variable push_urltype
-		if {$use_ttk} {
-			ttk::combobox $w.dest.remote_m -state readonly \
-				-exportselection false \
-				-textvariable push_remote \
-				-values $all_remotes
-		} else {
-			eval tk_optionMenu $w.dest.remote_m push_remote $all_remotes
-		}
+		ttk::combobox $w.dest.remote_m -state readonly \
+			-exportselection false \
+			-textvariable push_remote \
+			-values $all_remotes
 		grid $w.dest.remote_r $w.dest.remote_m -sticky w
 		if {[lsearch -sorted -exact $all_remotes origin] != -1} {
 			set push_remote origin

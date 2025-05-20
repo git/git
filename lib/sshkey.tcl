@@ -18,7 +18,7 @@ proc find_ssh_key {} {
 }
 
 proc do_ssh_key {} {
-	global sshkey_title sshkey_fd use_ttk
+	global sshkey_title sshkey_fd
 
 	set w .sshkey_dialog
 	if {[winfo exists $w]} {
@@ -48,8 +48,7 @@ proc do_ssh_key {} {
 
 	text $w.contents -width 60 -height 10 -wrap char -relief sunken
 	pack $w.contents -fill both -expand 1
-	set clr darkblue
-	if {$use_ttk} { set clr [ttk::style lookup . -selectbackground] }
+	set clr [ttk::style lookup . -selectbackground]
 	$w.contents configure -inactiveselectbackground $clr
 
 	ttk::frame $w.buttons

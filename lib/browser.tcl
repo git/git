@@ -21,7 +21,7 @@ field browser_busy   1
 field ls_buf     {}; # Buffered record output from ls-tree
 
 constructor new {commit {path {}}} {
-	global cursor_ptr M1B use_ttk
+	global cursor_ptr M1B
 	make_dialog top w
 	wm withdraw $top
 	wm title $top [mc "%s (%s): File Browser" [appname] [reponame]]
@@ -40,7 +40,6 @@ constructor new {commit {path {}}} {
 		-anchor w \
 		-justify left \
 		-font font_uibold
-	if {!$use_ttk} { $w.path configure -borderwidth 1 -relief sunken}
 	pack $w.path -anchor w -side top -fill x
 
 	ttk::frame $w.list
@@ -66,7 +65,6 @@ constructor new {commit {path {}}} {
 		-textvariable @browser_status \
 		-anchor w \
 		-justify left
-	if {!$use_ttk} { $w.status configure -borderwidth 1 -relief sunken}
 	pack $w.status -anchor w -side bottom -fill x
 
 	bind $w_list <Button-1>        "[cb _click 0 @%x,%y];break"
@@ -269,7 +267,6 @@ field w              ; # widget path
 field w_rev          ; # mega-widget to pick the initial revision
 
 constructor dialog {} {
-	global use_ttk
 	make_dialog top w
 	wm withdraw $top
 	wm title $top [mc "%s (%s): Browse Branch Files" [appname] [reponame]]

@@ -912,9 +912,6 @@ proc apply_config {} {
 		font configure ${font}italic -slant italic
 	}
 
-	global use_ttk NS
-	set use_ttk 1
-	set NS ttk
 	bind [winfo class .] <<ThemeChanged>> [list InitTheme]
 	pave_toplevel .
 	color::sync_with_theme
@@ -2313,7 +2310,7 @@ proc do_quit {{rc {1}}} {
 	global ui_comm is_quitting repo_config commit_type
 	global GITGUI_BCK_exists GITGUI_BCK_i
 	global ui_comm_spell
-	global ret_code use_ttk
+	global ret_code
 
 	if {$is_quitting} return
 	set is_quitting 1
@@ -2371,13 +2368,8 @@ proc do_quit {{rc {1}}} {
 		}
 		set cfg_geometry [list]
 		lappend cfg_geometry [wm geometry .]
-		if {$use_ttk} {
-			lappend cfg_geometry [.vpane sashpos 0]
-			lappend cfg_geometry [.vpane.files sashpos 0]
-		} else {
-			lappend cfg_geometry [lindex [.vpane sash coord 0] 0]
-			lappend cfg_geometry [lindex [.vpane.files sash coord 0] 1]
-		}
+		lappend cfg_geometry [.vpane sashpos 0]
+		lappend cfg_geometry [.vpane.files sashpos 0]
 		if {[catch {set rc_geometry $repo_config(gui.geometry)}]} {
 			set rc_geometry {}
 		}
@@ -3260,7 +3252,6 @@ default {
 # -- Branch Control
 #
 ttk::frame .branch
-if {!$use_ttk} {.branch configure -borderwidth 1 -relief sunken}
 ttk::label .branch.l1 \
 	-text [mc "Current Branch:"] \
 	-anchor w \
@@ -3277,11 +3268,7 @@ pack .branch -side top -fill x
 #
 ttk::panedwindow .vpane -orient horizontal
 ttk::panedwindow .vpane.files -orient vertical
-if {$use_ttk} {
-	.vpane add .vpane.files
-} else {
-	.vpane add .vpane.files -sticky nsew -height 100 -width 200
-}
+.vpane add .vpane.files
 pack .vpane -anchor n -side top -fill both -expand 1
 
 # -- Working Directory File List
@@ -3331,10 +3318,6 @@ pack $ui_index -side left -fill both -expand 1
 #
 .vpane.files add .vpane.files.workdir
 .vpane.files add .vpane.files.index
-if {!$use_ttk} {
-	.vpane.files paneconfigure .vpane.files.workdir -sticky news
-	.vpane.files paneconfigure .vpane.files.index -sticky news
-}
 
 proc set_selection_colors {w has_focus} {
 	foreach tag [list in_diff in_sel] {
@@ -3361,13 +3344,8 @@ ttk::frame .vpane.lower.diff -relief sunken -borderwidth 1 -height 500
 .vpane.lower add .vpane.lower.diff
 .vpane.lower add .vpane.lower.commarea
 .vpane add .vpane.lower
-if {$use_ttk} {
-	.vpane.lower pane .vpane.lower.diff -weight 1
-	.vpane.lower pane .vpane.lower.commarea -weight 0
-} else {
-	.vpane.lower paneconfigure .vpane.lower.diff -stretch always
-	.vpane.lower paneconfigure .vpane.lower.commarea -stretch never
-}
+.vpane.lower pane .vpane.lower.diff -weight 1
+.vpane.lower pane .vpane.lower.commarea -weight 0
 
 # -- Commit Area Buttons
 #
@@ -3888,29 +3866,14 @@ proc on_ttk_pane_mapped {w pane pos} {
 	bind $w <Map> {}
 	after 0 [list after idle [list $w sashpos $pane $pos]]
 }
-proc on_tk_pane_mapped {w pane x y} {
-	bind $w <Map> {}
-	after 0 [list after idle [list $w sash place $pane $x $y]]
-}
 proc on_application_mapped {} {
-	global repo_config use_ttk
+	global repo_config
 	bind . <Map> {}
 	set gm $repo_config(gui.geometry)
-	if {$use_ttk} {
-		bind .vpane <Map> \
-			[list on_ttk_pane_mapped %W 0 [lindex $gm 1]]
-		bind .vpane.files <Map> \
-			[list on_ttk_pane_mapped %W 0 [lindex $gm 2]]
-	} else {
-		bind .vpane <Map> \
-			[list on_tk_pane_mapped %W 0 \
-			[lindex $gm 1] \
-			[lindex [.vpane sash coord 0] 1]]
-		bind .vpane.files <Map> \
-			[list on_tk_pane_mapped %W 0 \
-			[lindex [.vpane.files sash coord 0] 0] \
-			[lindex $gm 2]]
-	}
+	bind .vpane <Map> \
+		[list on_ttk_pane_mapped %W 0 [lindex $gm 1]]
+	bind .vpane.files <Map> \
+		[list on_ttk_pane_mapped %W 0 [lindex $gm 2]]
 	wm geometry . [lindex $gm 0]
 }
 if {[info exists repo_config(gui.geometry)]} {
