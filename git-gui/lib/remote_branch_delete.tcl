@@ -308,7 +308,7 @@ method _load {cache uri} {
 		set full_list [list]
 		set head_cache($cache) [list]
 		set full_cache($cache) [list]
-		set active_ls [git_read ls-remote $uri]
+		set active_ls [git_read [list ls-remote $uri]]
 		fconfigure $active_ls \
 			-blocking 0 \
 			-translation lf \
