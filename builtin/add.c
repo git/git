@@ -390,6 +390,10 @@ int cmd_add(int argc,
 
 	argc = parse_options(argc, argv, prefix, builtin_add_options,
 			  builtin_add_usage, PARSE_OPT_KEEP_ARGV0);
+
+	prepare_repo_settings(repo);
+	repo->settings.command_requires_full_index = 0;
+
 	if (patch_interactive)
 		add_interactive = 1;
 	if (add_interactive) {
@@ -425,9 +429,6 @@ int cmd_add(int argc,
 
 	add_new_files = !take_worktree_changes && !refresh_only && !add_renormalize;
 	require_pathspec = !(take_worktree_changes || (0 < addremove_explicit));
-
-	prepare_repo_settings(repo);
-	repo->settings.command_requires_full_index = 0;
 
 	repo_hold_locked_index(repo, &lock_file, LOCK_DIE_ON_ERROR);
 
