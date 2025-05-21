@@ -76,6 +76,11 @@ struct pathspec {
  * allowed, then it will automatically set for every pathspec.
  */
 #define PATHSPEC_LITERAL_PATH (1<<6)
+/*
+ * For git diff --no-index, indicate that we are operating without
+ * a repository or index.
+ */
+#define PATHSPEC_NO_REPOSITORY (1<<7)
 
 /**
  * Given command line arguments and a prefix, convert the input to
