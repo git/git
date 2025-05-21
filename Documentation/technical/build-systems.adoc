@@ -32,7 +32,7 @@ that generally have somebody running test pipelines against regularly:
   - OpenBSD
 
 The platforms which must be supported by the tool should be aligned with our
-[platform support policy](platform-support.txt).
+xref:platform-support.adoc[platform support policy].
 
 === Auto-detection of supported features
 

@@ -274,8 +274,8 @@ gen_cmd () {
 	# definition.
 	#
 	# The syntax of the "layout definitions" is explained in "Documentation/
-	# mergetools/vimdiff.txt" but you can already intuitively understand how
-	# it works by knowing that...
+	# mergetools/vimdiff.adoc" but you can already intuitively understand
+	# how it works by knowing that...
 	#
 	#   * "+" means "a new vim tab"
 	#   * "/" means "a new vim horizontal split"
