@@ -191,7 +191,6 @@ proc show_other_diff {path w m cont_info} {
 				file {
 					set fd [safe_open_file $path r]
 					fconfigure $fd \
-						-eofchar {} \
 						-encoding [get_path_encoding $path]
 					set content [read $fd $max_sz]
 					close $fd

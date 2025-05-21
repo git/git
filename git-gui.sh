@@ -183,7 +183,9 @@ if {[is_Windows]} {
 			set command_line [string trim [string range $arg0 1 end]]
 			lset args 0 "| [sanitize_command_line $command_line 0]"
 		}
-		uplevel 1 real_open $args
+		set fd [real_open {*}$args]
+		fconfigure $fd -eofchar {}
+		return $fd
 	}
 
 } else {
@@ -607,7 +609,6 @@ proc safe_open_command {cmd {redir {}}} {
 	} err]} {
 		error $err
 	}
-	fconfigure $fd -eofchar {}
 	return $fd
 }
 
@@ -1427,7 +1428,6 @@ proc load_message {file {encoding {}}} {
 		if {[catch {set fd [safe_open_file $f r]}]} {
 			return 0
 		}
-		fconfigure $fd -eofchar {}
 		if {$encoding ne {}} {
 			fconfigure $fd -encoding $encoding
 		}
@@ -1484,7 +1484,7 @@ proc run_prepare_commit_msg_hook {} {
 	ui_status [mc "Calling prepare-commit-msg hook..."]
 	set pch_error {}
 
-	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+	fconfigure $fd_ph -blocking 0 -translation binary
 	fileevent $fd_ph readable \
 		[list prepare_commit_msg_hook_wait $fd_ph]
 

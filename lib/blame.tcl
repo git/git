@@ -483,7 +483,6 @@ method _load {jump} {
 		} else {
 			set fd [safe_open_file $path r]
 		}
-		fconfigure $fd -eofchar {}
 	} else {
 		if {$do_textconv ne 0} {
 			set fd [git_read [list cat-file --textconv "$commit:$path"]]

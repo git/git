@@ -252,7 +252,7 @@ A good commit message has the following format:
 
 	ui_status [mc "Calling pre-commit hook..."]
 	set pch_error {}
-	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+	fconfigure $fd_ph -blocking 0 -translation binary
 	fileevent $fd_ph readable \
 		[list commit_prehook_wait $fd_ph $curHEAD $msg_p]
 }
@@ -307,7 +307,7 @@ Do you really want to proceed with your Commit?"]
 
 	ui_status [mc "Calling commit-msg hook..."]
 	set pch_error {}
-	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+	fconfigure $fd_ph -blocking 0 -translation binary
 	fileevent $fd_ph readable \
 		[list commit_commitmsg_wait $fd_ph $curHEAD $msg_p]
 }
@@ -460,7 +460,7 @@ A rescan will be automatically started now.
 	if {$fd_ph ne {}} {
 		global pch_error
 		set pch_error {}
-		fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+		fconfigure $fd_ph -blocking 0 -translation binary
 		fileevent $fd_ph readable \
 			[list commit_postcommit_wait $fd_ph $cmt_id]
 	}
