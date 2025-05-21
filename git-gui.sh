@@ -592,7 +592,7 @@ proc git {args} {
 
 proc git_redir {cmd redir} {
 	set fd [git_read $cmd $redir]
-	fconfigure $fd -translation binary -encoding utf-8
+	fconfigure $fd -encoding utf-8
 	set result [string trimright [read $fd] "\n"]
 	close $fd
 	if {$::_trace} {
@@ -1004,7 +1004,7 @@ proc _parse_config {arr_name args} {
 			[concat config \
 			$args \
 			--null --list]]
-		fconfigure $fd_rc -translation binary -encoding utf-8
+		fconfigure $fd_rc -encoding utf-8
 		set buf [read $fd_rc]
 		close $fd_rc
 	}

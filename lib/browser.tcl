@@ -195,7 +195,7 @@ method _ls {tree_id {name {}}} {
 	$w conf -state disabled
 
 	set fd [git_read [list ls-tree -z $tree_id]]
-	fconfigure $fd -blocking 0 -translation binary -encoding utf-8
+	fconfigure $fd -blocking 0 -encoding utf-8
 	fileevent $fd readable [cb _read $fd]
 }
 
