@@ -54,7 +54,7 @@ In general a client can request to speak protocol v2 by sending
 `version=2` through the respective side-channel for the transport being
 used which inevitably sets `GIT_PROTOCOL`.  More information can be
 found in linkgit:gitprotocol-pack[5] and linkgit:gitprotocol-http[5], as well as the
-`GIT_PROTOCOL` definition in `git.txt`. In all cases the
+`GIT_PROTOCOL` definition in linkgit:git[1]. In all cases the
 response from the server is the capability advertisement.
 
 Git Transport
@@ -99,7 +99,7 @@ Uses the `--http-backend-info-refs` option to
 linkgit:git-upload-pack[1].
 
 The server may need to be configured to pass this header's contents via
-the `GIT_PROTOCOL` variable. See the discussion in `git-http-backend.txt`.
+the `GIT_PROTOCOL` variable. See the discussion in linkgit:git-http-backend[1].
 
 Capability Advertisement
 ------------------------
