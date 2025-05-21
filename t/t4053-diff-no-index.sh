@@ -295,4 +295,79 @@ test_expect_success PIPE,SYMLINKS 'diff --no-index reads from pipes' '
 	test_cmp expect actual
 '
 
+test_expect_success 'diff --no-index F F rejects pathspecs' '
+	test_must_fail git diff --no-index -- a/1 a/2 a 2>actual.err &&
+	test_grep "usage: git diff --no-index" actual.err
+'
+
+test_expect_success 'diff --no-index D F rejects pathspecs' '
+	test_must_fail git diff --no-index -- a a/2 a 2>actual.err &&
+	test_grep "usage: git diff --no-index" actual.err
+'
+
+test_expect_success 'diff --no-index F D rejects pathspecs' '
+	test_must_fail git diff --no-index -- a/1 b b 2>actual.err &&
+	test_grep "usage: git diff --no-index" actual.err
+'
+
+test_expect_success 'diff --no-index rejects absolute pathspec' '
+	test_must_fail git diff --no-index -- a b $(pwd)/a/1
+'
+
+test_expect_success 'diff --no-index with pathspec' '
+	test_expect_code 1 git diff --name-status --no-index a b 1 >actual &&
+	cat >expect <<-EOF &&
+	D	a/1
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'diff --no-index with pathspec no matches' '
+	test_expect_code 0 git diff --name-status --no-index a b missing
+'
+
+test_expect_success 'diff --no-index with negative pathspec' '
+	test_expect_code 1 git diff --name-status --no-index a b ":!2" >actual &&
+	cat >expect <<-EOF &&
+	D	a/1
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'setup nested' '
+	mkdir -p c/1/2 &&
+	mkdir -p d/1/2 &&
+	echo 1 >c/1/2/a &&
+	echo 2 >c/1/2/b
+'
+
+test_expect_success 'diff --no-index with pathspec nested negative pathspec' '
+	test_expect_code 0 git diff --no-index c d ":!1"
+'
+
+test_expect_success 'diff --no-index with pathspec nested pathspec' '
+	test_expect_code 1 git diff --name-status --no-index c d 1/2 >actual &&
+	cat >expect <<-EOF &&
+	D	c/1/2/a
+	D	c/1/2/b
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'diff --no-index with pathspec glob' '
+	test_expect_code 1 git diff --name-status --no-index c d ":(glob)**/a" >actual &&
+	cat >expect <<-EOF &&
+	D	c/1/2/a
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'diff --no-index with pathspec glob and exclude' '
+	test_expect_code 1 git diff --name-status --no-index c d ":(glob,exclude)**/a" >actual &&
+	cat >expect <<-EOF &&
+	D	c/1/2/b
+	EOF
+	test_cmp expect actual
+'
+
 test_done

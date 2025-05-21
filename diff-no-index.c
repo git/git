@@ -15,20 +15,45 @@
 #include "gettext.h"
 #include "revision.h"
 #include "parse-options.h"
+#include "pathspec.h"
 #include "string-list.h"
 #include "dir.h"
 
-static int read_directory_contents(const char *path, struct string_list *list)
+static int read_directory_contents(const char *path, struct string_list *list,
+				   const struct pathspec *pathspec,
+				   int skip)
 {
+	struct strbuf match = STRBUF_INIT;
+	int len;
 	DIR *dir;
 	struct dirent *e;
 
 	if (!(dir = opendir(path)))
 		return error("Could not open directory %s", path);
 
-	while ((e = readdir_skip_dot_and_dotdot(dir)))
-		string_list_insert(list, e->d_name);
+	if (pathspec) {
+		strbuf_addstr(&match, path);
+		strbuf_complete(&match, '/');
+		strbuf_remove(&match, 0, skip);
 
+		len = match.len;
+	}
+
+	while ((e = readdir_skip_dot_and_dotdot(dir))) {
+		if (pathspec) {
+			strbuf_setlen(&match, len);
+			strbuf_addstr(&match, e->d_name);
+
+			if (!match_leading_pathspec(NULL, pathspec,
+						    match.buf, match.len,
+						    0, NULL, e->d_type == DT_DIR ? 1 : 0))
+				continue;
+		}
+
+		string_list_insert(list, e->d_name);
+	}
+
+	strbuf_release(&match);
 	closedir(dir);
 	return 0;
 }
@@ -131,7 +156,8 @@ static struct diff_filespec *noindex_filespec(const struct git_hash_algo *algop,
 }
 
 static int queue_diff(struct diff_options *o, const struct git_hash_algo *algop,
-		      const char *name1, const char *name2, int recursing)
+		      const char *name1, const char *name2, int recursing,
+		      const struct pathspec *ps, int skip1, int skip2)
 {
 	int mode1 = 0, mode2 = 0;
 	enum special special1 = SPECIAL_NONE, special2 = SPECIAL_NONE;
@@ -171,9 +197,9 @@ static int queue_diff(struct diff_options *o, const struct git_hash_algo *algop,
 		int i1, i2, ret = 0;
 		size_t len1 = 0, len2 = 0;
 
-		if (name1 && read_directory_contents(name1, &p1))
+		if (name1 && read_directory_contents(name1, &p1, ps, skip1))
 			return -1;
-		if (name2 && read_directory_contents(name2, &p2)) {
+		if (name2 && read_directory_contents(name2, &p2, ps, skip2)) {
 			string_list_clear(&p1, 0);
 			return -1;
 		}
@@ -218,7 +244,7 @@ static int queue_diff(struct diff_options *o, const struct git_hash_algo *algop,
 				n2 = buffer2.buf;
 			}
 
-			ret = queue_diff(o, algop, n1, n2, 1);
+			ret = queue_diff(o, algop, n1, n2, 1, ps, skip1, skip2);
 		}
 		string_list_clear(&p1, 0);
 		string_list_clear(&p2, 0);
@@ -258,8 +284,10 @@ static void append_basename(struct strbuf *path, const char *dir, const char *fi
  * DWIM "diff D F" into "diff D/F F" and "diff F D" into "diff F D/F"
  * Note that we append the basename of F to D/, so "diff a/b/file D"
  * becomes "diff a/b/file D/file", not "diff a/b/file D/a/b/file".
+ *
+ * Return 1 if both paths are directories, 0 otherwise.
  */
-static void fixup_paths(const char **path, struct strbuf *replacement)
+static int fixup_paths(const char **path, struct strbuf *replacement)
 {
 	struct stat st;
 	unsigned int isdir0 = 0, isdir1 = 0;
@@ -282,26 +310,31 @@ static void fixup_paths(const char **path, struct strbuf *replacement)
 	if ((isdir0 && ispipe1) || (ispipe0 && isdir1))
 		die(_("cannot compare a named pipe to a directory"));
 
-	if (isdir0 == isdir1)
-		return;
+	/* if both paths are directories, we will enable pathspecs */
+	if (isdir0 && isdir1)
+		return 1;
+
 	if (isdir0) {
 		append_basename(replacement, path[0], path[1]);
 		path[0] = replacement->buf;
-	} else {
+	} else if (isdir1) {
 		append_basename(replacement, path[1], path[0]);
 		path[1] = replacement->buf;
 	}
+
+	return 0;
 }
 
 static const char * const diff_no_index_usage[] = {
-	N_("git diff --no-index [<options>] <path> <path>"),
+	N_("git diff --no-index [<options>] <path> <path> [<pathspec>...]"),
 	NULL
 };
 
 int diff_no_index(struct rev_info *revs, const struct git_hash_algo *algop,
 		  int implicit_no_index, int argc, const char **argv)
 {
-	int i, no_index;
+	struct pathspec pathspec, *ps = NULL;
+	int i, no_index, skip1 = 0, skip2 = 0;
 	int ret = 1;
 	const char *paths[2];
 	char *to_free[ARRAY_SIZE(paths)] = { 0 };
@@ -317,13 +350,12 @@ int diff_no_index(struct rev_info *revs, const struct git_hash_algo *algop,
 	options = add_diff_options(no_index_options, &revs->diffopt);
 	argc = parse_options(argc, argv, revs->prefix, options,
 			     diff_no_index_usage, 0);
-	if (argc != 2) {
+	if (argc < 2) {
 		if (implicit_no_index)
 			warning(_("Not a git repository. Use --no-index to "
 				  "compare two paths outside a working tree"));
 		usage_with_options(diff_no_index_usage, options);
 	}
-	FREE_AND_NULL(options);
 	for (i = 0; i < 2; i++) {
 		const char *p = argv[i];
 		if (!strcmp(p, "-"))
@@ -337,7 +369,23 @@ int diff_no_index(struct rev_info *revs, const struct git_hash_algo *algop,
 		paths[i] = p;
 	}
 
-	fixup_paths(paths, &replacement);
+	if (fixup_paths(paths, &replacement)) {
+		parse_pathspec(&pathspec, PATHSPEC_FROMTOP | PATHSPEC_ATTR,
+			       PATHSPEC_PREFER_FULL | PATHSPEC_NO_REPOSITORY,
+			       NULL, &argv[2]);
+		if (pathspec.nr)
+			ps = &pathspec;
+
+		skip1 = strlen(paths[0]);
+		skip1 += paths[0][skip1] == '/' ? 0 : 1;
+		skip2 = strlen(paths[1]);
+		skip2 += paths[1][skip2] == '/' ? 0 : 1;
+	} else if (argc > 2) {
+		warning(_("Limiting comparison with pathspecs is only "
+			  "supported if both paths are directories."));
+		usage_with_options(diff_no_index_usage, options);
+	}
+	FREE_AND_NULL(options);
 
 	revs->diffopt.skip_stat_unmatch = 1;
 	if (!revs->diffopt.output_format)
@@ -354,7 +402,8 @@ int diff_no_index(struct rev_info *revs, const struct git_hash_algo *algop,
 	setup_diff_pager(&revs->diffopt);
 	revs->diffopt.flags.exit_with_status = 1;
 
-	if (queue_diff(&revs->diffopt, algop, paths[0], paths[1], 0))
+	if (queue_diff(&revs->diffopt, algop, paths[0], paths[1], 0, ps,
+		       skip1, skip2))
 		goto out;
 	diff_set_mnemonic_prefix(&revs->diffopt, "1/", "2/");
 	diffcore_std(&revs->diffopt);
@@ -370,5 +419,7 @@ out:
 	for (i = 0; i < ARRAY_SIZE(to_free); i++)
 		free(to_free[i]);
 	strbuf_release(&replacement);
+	if (ps)
+		clear_pathspec(ps);
 	return ret;
 }
