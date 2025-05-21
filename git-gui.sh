@@ -913,15 +913,11 @@ proc apply_config {} {
 	}
 
 	global use_ttk NS
-	set use_ttk 0
-	set NS {}
-	if {$repo_config(gui.usettk)} {
-		set use_ttk 1
-		set NS ttk
-		bind [winfo class .] <<ThemeChanged>> [list InitTheme]
-		pave_toplevel .
-		color::sync_with_theme
-	}
+	set use_ttk 1
+	set NS ttk
+	bind [winfo class .] <<ThemeChanged>> [list InitTheme]
+	pave_toplevel .
+	color::sync_with_theme
 
 	global comment_string
 	set comment_string [get_config core.commentstring]
