@@ -114,17 +114,3 @@ graph LR
   F --> | running in| J
   J[[git-for-windows-automation]]
 ```
-
-## Managing Windows/ARM64 builds
-
-The GitForWindowsHelper comes in real handy for Git for Windows' Pacman packages for the `aarch64` architecture, i.e. for Windows/ARM64. These packages cannot be built in regular hosted GitHub Actions runners because there are none of that architecture. To help with that, the respective workflows in `git-for-windows-automation` use the label `runs-on: ["Windows", "ARM64"]` to indicate that they need a self-hosted Windows/ARM64 runner.
-
-It would not be cost-effective to have a VM running permanently, hosting such a self-hosted runner: Git for Windows does not build such packages often enough (usually once or twice per week is more the norm).
-
-Therefore, VMs providing self-hosted GitHub Actions runners are spun up and torn down as needed. This job is done by the GitForWindowsHelper:
-
-- When a job is queued asking for above-mentioned labels, [the `create-self-hosted-runner` workflow](https://github.com/git-for-windows/git-for-windows-automation/blob/09ec165f44a0a3d84d8f0e26a4939667b4522635/.github/workflows/create-azure-self-hosted-runners.yml) is started. This deploys an Azure Resource Management template that creates an ephemeral self-hosted runner (i.e. a runner that will pick up one job and then is immediately unregistered).
-
-- When a job with above-mentioned labels has finished, the GitForWindowsHelper triggers [the `delete-self-hosted-runner` workflow](https://github.com/git-for-windows/git-for-windows-automation/blob/09ec165f44a0a3d84d8f0e26a4939667b4522635/.github/workflows/delete-self-hosted-runner.yml) that tears down the now no longer used VM.
-
-The GitForWindowsHelper GitHub App will also detect when a job is queued for a PR from a forked repository. This is considered unauthorized use, and the job will be canceled immediately by the GitHub App instead of spinning up a self-hosted runner for it.
