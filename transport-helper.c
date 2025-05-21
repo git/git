@@ -1437,7 +1437,7 @@ static int udt_do_read(struct unidirectional_transfer *t)
 		transfer_debug("%s EOF (with %i bytes in buffer)",
 			t->src_name, (int)t->bufuse);
 		t->state = SSTATE_FLUSHING;
-	} else if (bytes > 0) {
+	} else {
 		t->bufuse += bytes;
 		transfer_debug("Read %i bytes from %s (buffer now at %i)",
 			(int)bytes, t->src_name, (int)t->bufuse);

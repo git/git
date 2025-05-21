@@ -1022,7 +1022,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 			for (i = 0; i < the_repository->index->cache_nr; i++)
 				if (ce_intent_to_add(the_repository->index->cache[i]))
 					ita_nr++;
-			committable = the_repository->index->cache_nr - ita_nr > 0;
+			committable = the_repository->index->cache_nr > ita_nr;
 		} else {
 			/*
 			 * Unless the user did explicitly request a submodule
