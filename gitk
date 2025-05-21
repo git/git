@@ -1939,8 +1939,10 @@ proc readrefs {} {
             set tagids($name) $id
             lappend idtags($id) $name
         } else {
-            set otherrefids($name) $id
-            lappend idotherrefs($id) $name
+            if [is_other_ref_visible $name] {
+                set otherrefids($name) $id
+                lappend idotherrefs($id) $name
+            }
         }
     }
     catch {close $refd}
@@ -11696,7 +11698,7 @@ proc prefspage_general {notebook} {
     global NS maxwidth maxgraphpct showneartags showlocalchanges
     global tabstop wrapcomment wrapdefault limitdiffs
     global autocopy autoselect autosellen extdifftool perfile_attrs
-    global hideremotes want_ttk have_ttk maxrefs web_browser
+    global hideremotes refstohide want_ttk have_ttk maxrefs web_browser
 
     set page [create_prefs_page $notebook.general]
 
@@ -11716,6 +11718,13 @@ proc prefspage_general {notebook} {
     ${NS}::checkbutton $page.hideremotes -text [mc "Hide remote refs"] \
         -variable hideremotes
     grid x $page.hideremotes -sticky w
+
+    ${NS}::entry $page.refstohide -textvariable refstohide
+    ${NS}::frame $page.refstohidef
+    ${NS}::label $page.refstohidef.l -text [mc "Refs to hide (space-separated)" ]
+    pack $page.refstohidef.l -side left
+    pack configure $page.refstohidef.l -padx 10
+    grid x $page.refstohidef $page.refstohide -sticky ew
 
     ${NS}::checkbutton $page.autocopy -text [mc "Copy commit ID to clipboard"] \
         -variable autocopy
@@ -11863,7 +11872,7 @@ proc doprefs {} {
     global oldprefs prefstop showneartags showlocalchanges
     global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
     global tabstop limitdiffs autoselect autosellen extdifftool perfile_attrs
-    global hideremotes want_ttk have_ttk wrapcomment wrapdefault
+    global hideremotes refstohide want_ttk have_ttk wrapcomment wrapdefault
 
     set top .gitkprefs
     set prefstop $top
@@ -11872,7 +11881,8 @@ proc doprefs {} {
         return
     }
     foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-                   limitdiffs tabstop perfile_attrs hideremotes want_ttk wrapcomment wrapdefault} {
+                   limitdiffs tabstop perfile_attrs hideremotes refstohide \
+                   want_ttk wrapcomment wrapdefault} {
         set oldprefs($v) [set $v]
     }
     ttk_toplevel $top
@@ -11998,7 +12008,8 @@ proc prefscan {} {
     global oldprefs prefstop
 
     foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-                   limitdiffs tabstop perfile_attrs hideremotes want_ttk wrapcomment wrapdefault} {
+                   limitdiffs tabstop perfile_attrs hideremotes refstohide \
+                   want_ttk wrapcomment wrapdefault} {
         global $v
         set $v $oldprefs($v)
     }
@@ -12012,7 +12023,7 @@ proc prefsok {} {
     global oldprefs prefstop showneartags showlocalchanges
     global fontpref mainfont textfont uifont
     global limitdiffs treediffs perfile_attrs
-    global hideremotes wrapcomment wrapdefault
+    global hideremotes refstohide wrapcomment wrapdefault
     global ctext
 
     catch {destroy $prefstop}
@@ -12059,7 +12070,7 @@ proc prefsok {} {
           $limitdiffs != $oldprefs(limitdiffs)} {
         reselectline
     }
-    if {$hideremotes != $oldprefs(hideremotes)} {
+    if {$hideremotes != $oldprefs(hideremotes) || $refstohide != $oldprefs(refstohide)} {
         rereadrefs
     }
     if {$wrapcomment != $oldprefs(wrapcomment)} {
@@ -12436,6 +12447,23 @@ proc get_path_encoding {path} {
     return $tcl_enc
 }
 
+proc is_other_ref_visible {ref} {
+    global refstohide
+
+    if {$refstohide eq {}} {
+        return 1
+    }
+
+    foreach pat [split $refstohide " "] {
+        if {$pat eq {}} continue
+        if {[string match $pat $ref]} {
+            return 0
+        }
+    }
+
+    return 1
+}
+
 ## For msgcat loading, first locate the installation location.
 if { [info exists ::env(GITK_MSGSDIR)] } {
     ## Msgsdir was manually set in the environment.
@@ -12539,6 +12567,7 @@ set wrapcomment "none"
 set wrapdefault "none"
 set showneartags 1
 set hideremotes 0
+set refstohide ""
 set maxrefs 20
 set visiblerefs {"master"}
 set maxlinelen 200
@@ -12645,7 +12674,7 @@ set config_variables {
     mainfont textfont uifont tabstop findmergefiles maxgraphpct maxwidth
     cmitmode wrapcomment wrapdefault autocopy autoselect autosellen
     showneartags maxrefs visiblerefs
-    hideremotes showlocalchanges datetimeformat limitdiffs uicolor want_ttk
+    hideremotes refstohide showlocalchanges datetimeformat limitdiffs uicolor want_ttk
     bgcolor fgcolor uifgcolor uifgdisabledcolor colors diffcolors mergecolors
     markbgcolor diffcontext selectbgcolor foundbgcolor currentsearchhitbgcolor
     extdifftool perfile_attrs headbgcolor headfgcolor headoutlinecolor
