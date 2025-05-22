@@ -985,7 +985,7 @@ method _showcommit {cur_w lno} {
 			set msg {}
 			catch {
 				set fd [git_read [list cat-file commit $cmit]]
-				fconfigure $fd -encoding binary -translation lf
+				fconfigure $fd -encoding iso8859-1 -translation lf
 				# By default commits are assumed to be in utf-8
 				set enc utf-8
 				while {[gets $fd line] > 0} {
