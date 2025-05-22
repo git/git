@@ -38,10 +38,13 @@ write::
 +
 --
 	--preferred-pack=<pack>::
-		Optionally specify the tie-breaking pack used when
-		multiple packs contain the same object. `<pack>` must
-		contain at least one object. If not given, ties are
-		broken in favor of the pack with the lowest mtime.
+		When specified, break ties in favor of this pack when
+		there are additional copies of its objects in other
+		packs. Ties for objects not found in the preferred
+		pack are always resolved in favor of the copy in the
+		pack with the highest mtime. If unspecified, the pack
+		with the lowest mtime is used by default. The
+		preferred pack must have at least one object.
 
 	--[no-]bitmap::
 		Control whether or not a multi-pack bitmap is written.
