@@ -1142,7 +1142,6 @@ method _blameparent {} {
 
 		fconfigure $fd \
 			-blocking 0 \
-			-encoding binary \
 			-translation binary
 		fileevent $fd readable [cb _read_diff_load_commit \
 			$fd $cparent $new_path $r_orig_line]

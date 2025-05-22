@@ -1406,15 +1406,15 @@ proc rescan_stage2 {fd after} {
 	set fd_di [git_read [list diff-index --cached --ignore-submodules=dirty -z [PARENT]]]
 	set fd_df [git_read [list diff-files -z]]
 
-	fconfigure $fd_di -blocking 0 -translation binary -encoding binary
-	fconfigure $fd_df -blocking 0 -translation binary -encoding binary
+	fconfigure $fd_di -blocking 0 -translation binary
+	fconfigure $fd_df -blocking 0 -translation binary
 
 	fileevent $fd_di readable [list read_diff_index $fd_di $after]
 	fileevent $fd_df readable [list read_diff_files $fd_df $after]
 
 	if {[is_config_true gui.displayuntracked]} {
 		set fd_lo [git_read [concat ls-files --others -z $ls_others]]
-		fconfigure $fd_lo -blocking 0 -translation binary -encoding binary
+		fconfigure $fd_lo -blocking 0 -translation binary
 		fileevent $fd_lo readable [list read_ls_others $fd_lo $after]
 		incr rescan_active
 	}
