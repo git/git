@@ -1704,9 +1704,15 @@ static void fill_included_packs_batch(struct repository *r,
 		if (!want_included_pack(r, m, pack_kept_objects, pack_int_id))
 			continue;
 
-		expected_size = uint64_mult(p->pack_size,
-					    pack_info[i].referenced_objects);
+		/*
+		 * Use shifted integer arithmetic to calculate the
+		 * expected pack size to ~4 significant digits without
+		 * overflow for packsizes less that 1PB.
+		 */
+		expected_size = (uint64_t)pack_info[i].referenced_objects << 14;
 		expected_size /= p->num_objects;
+		expected_size = u64_mult(expected_size, p->pack_size);
+		expected_size = u64_add(expected_size, 1u << 13) >> 14;
 
 		if (expected_size >= batch_size)
 			continue;
