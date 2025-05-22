@@ -45,6 +45,11 @@ fi
 main_repo=main.git
 shared_repo=shared.git
 
+test_expect_success 'pack-redundant needs --i-still-use-this' '
+	test_must_fail git pack-redundant >message 2>&1 &&
+	test_grep "nominated for removal" message
+'
+
 git_pack_redundant='git pack-redundant --i-still-use-this'
 
 # Create commits in <repo> and assign each commit's oid to shell variables

@@ -83,13 +83,13 @@ int cmd_walken(int argc, const char **argv, const char *prefix)
 }
 ----
 
-Also add the relevant line in `builtin.h` near `cmd_whatchanged()`:
+Also add the relevant line in `builtin.h` near `cmd_version()`:
 
 ----
 int cmd_walken(int argc, const char **argv, const char *prefix);
 ----
 
-Include the command in `git.c` in `commands[]` near the entry for `whatchanged`,
+Include the command in `git.c` in `commands[]` near the entry for `version`,
 maintaining alphabetical ordering:
 
 ----
