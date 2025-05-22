@@ -1699,19 +1699,23 @@ static void fill_included_packs_batch(struct repository *r,
 	for (i = 0; total_size < batch_size && i < m->num_packs; i++) {
 		int pack_int_id = pack_info[i].pack_int_id;
 		struct packed_git *p = m->packs[pack_int_id];
-		size_t expected_size;
+		uint64_t expected_size;
 
 		if (!want_included_pack(r, m, pack_kept_objects, pack_int_id))
 			continue;
 
-		expected_size = st_mult(p->pack_size,
-					pack_info[i].referenced_objects);
+		expected_size = uint64_mult(p->pack_size,
+					    pack_info[i].referenced_objects);
 		expected_size /= p->num_objects;
 
 		if (expected_size >= batch_size)
 			continue;
 
-		total_size += expected_size;
+		if (unsigned_add_overflows(total_size, (size_t)expected_size))
+			total_size = SIZE_MAX;
+		else
+			total_size += expected_size;
+
 		include_pack[pack_int_id] = 1;
 	}
 
