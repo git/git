@@ -1,7 +1,5 @@
 #!/bin/sh
 
-TEST_PASSES_SANITIZE_LEAK=true
-
 test_description='direct path-walk API tests'
 
 . ./test-lib.sh
