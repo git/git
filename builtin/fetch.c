@@ -2591,7 +2591,7 @@ int cmd_fetch(int argc,
 			die(_("--stdin can only be used when fetching "
 			      "from one remote"));
 
-		if (max_children < 0)
+		if (max_children <= 0)
 			max_children = config.parallel;
 
 		/* TODO should this also die if we have a previous partial-clone? */
