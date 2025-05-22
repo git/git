@@ -147,7 +147,7 @@ constructor _new {path unmerged_only title} {
 		refs/remotes \
 		refs/tags \
 		]]
-	fconfigure $fr_fd -translation lf -encoding utf-8
+	fconfigure $fr_fd -encoding utf-8
 	while {[gets $fr_fd line] > 0} {
 		set line [eval $line]
 		if {[lindex $line 1 0] eq {tag}} {

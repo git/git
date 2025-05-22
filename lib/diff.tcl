@@ -324,6 +324,8 @@ proc start_show_diff {cont_info {add_opts {}}} {
 	# '++' lines which is not bijective. Thus, we need to maintain a state
 	# across lines.
 	set ::conflict_in_pre_image 0
+
+	# git-diff has eol==\n, \r if present is part of the text
 	fconfigure $fd \
 		-blocking 0 \
 		-encoding [get_path_encoding $path] \

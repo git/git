@@ -492,7 +492,6 @@ method _load {jump} {
 	}
 	fconfigure $fd \
 		-blocking 0 \
-		-translation lf \
 		-encoding [get_path_encoding $path]
 	fileevent $fd readable [cb _read_file $fd $jump]
 	set current_fd $fd
@@ -619,7 +618,7 @@ method _exec_blame {cur_w cur_d options cur_s} {
 
 	lappend options -- $path
 	set fd [git_read_nice [concat blame $options]]
-	fconfigure $fd -blocking 0 -translation lf -encoding utf-8
+	fconfigure $fd -blocking 0 -encoding utf-8
 	fileevent $fd readable [cb _read_blame $fd $cur_w $cur_d]
 	set current_fd $fd
 	set blame_lines 0
@@ -985,7 +984,7 @@ method _showcommit {cur_w lno} {
 			set msg {}
 			catch {
 				set fd [git_read [list cat-file commit $cmit]]
-				fconfigure $fd -encoding iso8859-1 -translation lf
+				fconfigure $fd -encoding iso8859-1
 				# By default commits are assumed to be in utf-8
 				set enc utf-8
 				while {[gets $fd line] > 0} {

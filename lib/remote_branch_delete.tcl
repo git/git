@@ -307,7 +307,6 @@ method _load {cache uri} {
 		set active_ls [git_read [list ls-remote $uri]]
 		fconfigure $active_ls \
 			-blocking 0 \
-			-translation lf \
 			-encoding utf-8
 		fileevent $active_ls readable [cb _read $cache $active_ls]
 	} else {

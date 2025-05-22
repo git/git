@@ -28,7 +28,7 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 			set name ""
 			set email ""
 			set fd [git_read [list cat-file commit $curHEAD]]
-			fconfigure $fd -encoding iso8859-1 -translation lf
+			fconfigure $fd -encoding iso8859-1
 			# By default commits are assumed to be in utf-8
 			set enc utf-8
 			while {[gets $fd line] > 0} {
@@ -361,7 +361,7 @@ proc commit_committree {fd_wt curHEAD msg_p} {
 	#
 	if {$commit_type eq {normal}} {
 		set fd_ot [git_read [list cat-file commit $PARENT]]
-		fconfigure $fd_ot -encoding iso8859-1 -translation lf
+		fconfigure $fd_ot -encoding iso8859-1
 		set old_tree [gets $fd_ot]
 		close $fd_ot
 
