@@ -2591,7 +2591,7 @@ int cmd_fetch(int argc,
 			die(_("--stdin can only be used when fetching "
 			      "from one remote"));
 
-		if (max_children < 0)
+		if (max_children <= 0)
 			max_children = config.parallel;
 
 		/* TODO should this also die if we have a previous partial-clone? */
@@ -2613,9 +2613,9 @@ int cmd_fetch(int argc,
 		struct strvec options = STRVEC_INIT;
 		int max_children = max_jobs;
 
-		if (max_children < 0)
+		if (max_children <= 0)
 			max_children = config.submodule_fetch_jobs;
-		if (max_children < 0)
+		if (max_children <= 0)
 			max_children = config.parallel;
 
 		add_options_to_argv(&options, &config);
