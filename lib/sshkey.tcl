@@ -83,7 +83,8 @@ proc make_ssh_key {w} {
 	set sshkey_title [mc "Generating..."]
 	$w.header.gen configure -state disabled
 
-	set cmdline [list sh -c {echo | ssh-keygen -q -t rsa -f ~/.ssh/id_rsa 2>&1}]
+	set cmdline [list [shellpath] -c \
+		{echo | ssh-keygen -q -t rsa -f ~/.ssh/id_rsa 2>&1}]
 
 	if {[catch { set sshkey_fd [safe_open_command $cmdline] } err]} {
 		error_popup [mc "Could not start ssh-keygen:\n\n%s" $err]

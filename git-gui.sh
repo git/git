@@ -77,97 +77,126 @@ proc is_Cygwin {} {
 
 ######################################################################
 ##
-## PATH lookup
+## PATH lookup. Sanitize $PATH, assure exec/open use only that
 
-set _search_path {}
-proc _which {what args} {
-	global env _search_exe _search_path
-
-	if {$_search_path eq {}} {
-		if {[is_Windows]} {
-			set gitguidir [file dirname [info script]]
-			regsub -all ";" $gitguidir "\\;" gitguidir
-			set env(PATH) "$gitguidir;$env(PATH)"
-			set _search_path [split $env(PATH) {;}]
-			# Skip empty `PATH` elements
-			set _search_path [lsearch -all -inline -not -exact \
-				$_search_path ""]
-			set _search_exe .exe
-		} else {
-			set _search_path [split $env(PATH) :]
-			set _search_exe {}
-		}
-	}
-
-	if {[is_Windows] && [lsearch -exact $args -script] >= 0} {
-		set suffix {}
-	} else {
-		set suffix $_search_exe
-	}
-
-	foreach p $_search_path {
-		set p [file join $p $what$suffix]
-		if {[file exists $p]} {
-			return [file normalize $p]
-		}
-	}
-	return {}
+if {[is_Windows]} {
+	set _path_sep {;}
+	set _search_exe .exe
+} else {
+	set _path_sep {:}
+	set _search_exe {}
 }
 
-proc sanitize_command_line {command_line from_index} {
-	set i $from_index
-	while {$i < [llength $command_line]} {
-		set cmd [lindex $command_line $i]
-		if {[llength [file split $cmd]] < 2} {
-			set fullpath [_which $cmd]
-			if {$fullpath eq ""} {
-				throw {NOT-FOUND} "$cmd not found in PATH"
-			}
-			lset command_line $i $fullpath
+if {[is_Windows]} {
+	set gitguidir [file dirname [info script]]
+	regsub -all ";" $gitguidir "\\;" gitguidir
+	set env(PATH) "$gitguidir;$env(PATH)"
+}
+
+set _search_path {}
+set _path_seen [dict create]
+foreach p [split $env(PATH) $_path_sep] {
+	# Keep only absolute paths, getting rid of ., empty, etc.
+	if {[file pathtype $p] ne {absolute}} {
+		continue
+	}
+	# Keep only the first occurence of any duplicates.
+	set norm_p [file normalize $p]
+	if {[dict exists $_path_seen $norm_p]} {
+		continue
+	}
+	dict set _path_seen $norm_p 1
+	lappend _search_path $norm_p
+}
+unset _path_seen
+
+set env(PATH) [join $_search_path $_path_sep]
+
+if {[is_Windows]} {
+	proc _which {what args} {
+		global _search_exe _search_path
+
+		if {[lsearch -exact $args -script] >= 0} {
+			set suffix {}
+		} elseif {[string match *$_search_exe [string tolower $what]]} {
+			# The search string already has the file extension
+			set suffix {}
+		} else {
+			set suffix $_search_exe
 		}
 
-		# handle piped commands, e.g. `exec A | B`
-		for {incr i} {$i < [llength $command_line]} {incr i} {
-			if {[lindex $command_line $i] eq "|"} {
+		foreach p $_search_path {
+			set p [file join $p $what$suffix]
+			if {[file exists $p]} {
+				return [file normalize $p]
+			}
+		}
+		return {}
+	}
+
+	proc sanitize_command_line {command_line from_index} {
+		set i $from_index
+		while {$i < [llength $command_line]} {
+			set cmd [lindex $command_line $i]
+			if {[llength [file split $cmd]] < 2} {
+				set fullpath [_which $cmd]
+				if {$fullpath eq ""} {
+					throw {NOT-FOUND} "$cmd not found in PATH"
+				}
+				lset command_line $i $fullpath
+			}
+
+			# handle piped commands, e.g. `exec A | B`
+			for {incr i} {$i < [llength $command_line]} {incr i} {
+				if {[lindex $command_line $i] eq "|"} {
+					incr i
+					break
+				}
+			}
+		}
+		return $command_line
+	}
+
+	# Override `exec` to avoid unsafe PATH lookup
+
+	rename exec real_exec
+
+	proc exec {args} {
+		# skip options
+		for {set i 0} {$i < [llength $args]} {incr i} {
+			set arg [lindex $args $i]
+			if {$arg eq "--"} {
 				incr i
 				break
 			}
+			if {[string range $arg 0 0] ne "-"} {
+				break
+			}
 		}
+		set args [sanitize_command_line $args $i]
+		uplevel 1 real_exec $args
 	}
-	return $command_line
-}
 
-# Override `exec` to avoid unsafe PATH lookup
+	# Override `open` to avoid unsafe PATH lookup
 
-rename exec real_exec
+	rename open real_open
 
-proc exec {args} {
-	# skip options
-	for {set i 0} {$i < [llength $args]} {incr i} {
-		set arg [lindex $args $i]
-		if {$arg eq "--"} {
-			incr i
-			break
+	proc open {args} {
+		set arg0 [lindex $args 0]
+		if {[string range $arg0 0 0] eq "|"} {
+			set command_line [string trim [string range $arg0 1 end]]
+			lset args 0 "| [sanitize_command_line $command_line 0]"
 		}
-		if {[string range $arg 0 0] ne "-"} {
-			break
-		}
+		uplevel 1 real_open $args
 	}
-	set args [sanitize_command_line $args $i]
-	uplevel 1 real_exec $args
-}
 
-# Override `open` to avoid unsafe PATH lookup
+} else {
+	# On non-Windows platforms, auto_execok, exec, and open are safe, and will
+	# use the sanitized search path. But, we need _which for these.
 
-rename open real_open
-
-proc open {args} {
-	set arg0 [lindex $args 0]
-	if {[string range $arg0 0 0] eq "|"} {
-		set command_line [string trim [string range $arg0 1 end]]
-		lset args 0 "| [sanitize_command_line $command_line 0]"
+	proc _which {what args} {
+		return [lindex [auto_execok $what] 0]
 	}
-	uplevel 1 real_open $args
 }
 
 # Wrap exec/open to sanitize arguments
@@ -354,15 +383,37 @@ if {$_trace >= 0} {
 # branches).
 set _last_merged_branch {}
 
-proc shellpath {} {
-	global _shellpath env
-	if {[string match @@* $_shellpath]} {
-		if {[info exists env(SHELL)]} {
-			return $env(SHELL)
-		} else {
-			return /bin/sh
-		}
+# for testing, allow unconfigured _shellpath
+if {[string match @@* $_shellpath]} {
+	if {[info exists env(SHELL)]} {
+		set _shellpath $env(SHELL)
+	} else {
+		set _shellpath /bin/sh
 	}
+}
+
+if {[is_Windows]} {
+	set _shellpath [exec cygpath -m $_shellpath]
+}
+
+if {![file executable $_shellpath] || \
+	!([file pathtype $_shellpath] eq {absolute})} {
+	set errmsg "The defined shell ('$_shellpath') is not usable, \
+		it must be an absolute path to an executable."
+	puts stderr $errmsg
+
+	catch {wm withdraw .}
+	tk_messageBox \
+		-icon error \
+		-type ok \
+		-title "git-gui: configuration error" \
+		-message $errmsg
+	exit 1
+}
+
+
+proc shellpath {} {
+	global _shellpath
 	return $_shellpath
 }
 
@@ -574,32 +625,13 @@ proc _git_cmd {name} {
 	return $v
 }
 
-# Test a file for a hashbang to identify executable scripts on Windows.
-proc is_shellscript {filename} {
-	if {![file exists $filename]} {return 0}
-	set f [safe_open_file $filename r]
-	fconfigure $f -encoding binary
-	set magic [read $f 2]
-	close $f
-	return [expr {$magic eq "#!"}]
-}
-
-# Run a command connected via pipes on stdout.
+# Run a shell command connected via pipes on stdout.
 # This is for use with textconv filters and uses sh -c "..." to allow it to
-# contain a command with arguments. On windows we must check for shell
-# scripts specifically otherwise just call the filter command.
+# contain a command with arguments. We presume this
+# to be a shellscript that the configured shell (/bin/sh by default) knows
+# how to run.
 proc open_cmd_pipe {cmd path} {
-	global env
-	if {![file executable [shellpath]]} {
-		set exe [auto_execok [lindex $cmd 0]]
-		if {[is_shellscript [lindex $exe 0]]} {
-			set run [linsert [auto_execok sh] end -c "$cmd \"\$0\"" $path]
-		} else {
-			set run [concat $exe [lrange $cmd 1 end] $path]
-		}
-	} else {
-		set run [list [shellpath] -c "$cmd \"\$0\"" $path]
-	}
+	set run [list [shellpath] -c "$cmd \"\$0\"" $path]
 	set run [make_arglist_safe $run]
 	return [open |$run r]
 }
@@ -2746,17 +2778,16 @@ if {![is_bare]} {
 
 if {[is_Windows]} {
 	# Use /git-bash.exe if available
-	set normalized [file normalize $::argv0]
-	regsub "/mingw../libexec/git-core/git-gui$" \
-		$normalized "/git-bash.exe" cmdLine
-	if {$cmdLine != $normalized && [file exists $cmdLine]} {
-		set cmdLine [list "Git Bash" $cmdLine]
+	set _git_bash [exec cygpath -m /git-bash.exe]
+	if {[file executable $_git_bash]} {
+		set _bash_cmdline [list "Git Bash" $_git_bash]
 	} else {
-		set cmdLine [list "Git Bash" bash --login -l]
+		set _bash_cmdline [list "Git Bash" bash --login -l]
 	}
 	.mbar.repository add command \
 		-label [mc "Git Bash"] \
-		-command {safe_exec_bg [concat [list [auto_execok start]] $cmdLine]}
+		-command {safe_exec_bg [concat [list [_which cmd] /c start] $_bash_cmdline]}
+	unset _git_bash
 }
 
 if {[is_Windows] || ![is_bare]} {
