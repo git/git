@@ -72,6 +72,10 @@ UI, Workflows & Features
  * The `send-email` documentation has been updated with OAuth2.0
    related examples.
 
+ * Two of the "scalar" subcommands that add a repository that hasn't
+   been under "scalar"'s control are taught an option not to enable the
+   scheduled maintenance on it.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -156,6 +160,12 @@ Performance, Internal Implementation, Development Support etc.
  * Further code clean-up in the object-store layer.
 
  * Build performance fix.
+
+ * Teach "git send-email" to also consult `hostname -f` for mail
+   domain to compute the identity given to SMTP servers.
+
+ * The dependency on the_repository variable has been reduced from the
+   code paths in "git replay".
 
 
 Fixes since v2.49
@@ -305,6 +315,15 @@ Fixes since v2.49
 
  * Use-after-free fix in the sequencer.
    (merge 5dbaec628d pw/sequencer-reflog-use-after-free later to maint).
+
+ * win+Meson CI pipeline, unlike other pipelines for Windows,
+   used to build artifacts in develper mode, which has been changed to
+   build them in release mode for consistency.
+   (merge 184abdcf05 js/ci-build-win-in-release-mode later to maint).
+
+ * CI settings at GitLab has been updated to run MSVC based Meson job
+   automatically (as opposed to be done only upon manual request).
+   (merge 6389579b2f ps/ci-gitlab-enable-msvc-meson-job later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
