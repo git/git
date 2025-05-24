@@ -2219,7 +2219,7 @@ static void reverse_patches(struct patch *p)
 		struct fragment *frag = p->fragments;
 
 		SWAP(p->new_name, p->old_name);
-		if (p->new_mode)
+		if (p->new_mode || p->is_delete)
 			SWAP(p->new_mode, p->old_mode);
 		SWAP(p->is_new, p->is_delete);
 		SWAP(p->lines_added, p->lines_deleted);
