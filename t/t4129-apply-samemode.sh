@@ -102,15 +102,23 @@ test_expect_success POSIXPERM 'do not use core.sharedRepository for working tree
 	)
 '
 
+test_file_mode_staged () {
+	git ls-files --stage -- "$2" >ls-files-output &&
+	test_grep "^$1 " ls-files-output
+}
+
+test_file_mode_HEAD () {
+	git ls-tree HEAD -- "$2" >ls-tree-output &&
+	test_grep "^$1 " ls-tree-output
+}
+
 test_expect_success 'git apply respects core.fileMode' '
 	test_config core.fileMode false &&
 	echo true >script.sh &&
 	git add --chmod=+x script.sh &&
-	git ls-files -s script.sh >ls-files-output &&
-	test_grep "^100755" ls-files-output &&
+	test_file_mode_staged 100755 script.sh &&
 	test_tick && git commit -m "Add script" &&
-	git ls-tree -r HEAD script.sh >ls-tree-output &&
-	test_grep "^100755" ls-tree-output &&
+	test_file_mode_HEAD 100755 script.sh &&
 
 	echo true >>script.sh &&
 	test_tick && git commit -m "Modify script" script.sh &&
@@ -126,7 +134,59 @@ test_expect_success 'git apply respects core.fileMode' '
 	test_grep ! "has type 100644, expected 100755" err &&
 
 	git apply --cached patch 2>err &&
-	test_grep ! "has type 100644, expected 100755" err
+	test_grep ! "has type 100644, expected 100755" err &&
+	git reset --hard
+'
+
+test_expect_success 'setup: git apply [--reverse] warns about incorrect file modes' '
+	test_config core.fileMode false &&
+
+	>mode_test &&
+	git add --chmod=-x mode_test &&
+	test_file_mode_staged 100644 mode_test &&
+	test_tick && git commit -m "add mode_test" &&
+	test_file_mode_HEAD 100644 mode_test &&
+	git tag mode_test_forward_initial &&
+
+	echo content >>mode_test &&
+	test_tick && git commit -m "append to mode_test" mode_test &&
+	test_file_mode_HEAD 100644 mode_test &&
+	git tag mode_test_reverse_initial &&
+
+	git format-patch -1 --stdout >patch &&
+	test_grep "^index .* 100644$" patch
+'
+
+test_expect_success 'git apply warns about incorrect file modes' '
+	test_config core.fileMode false &&
+	git reset --hard mode_test_forward_initial &&
+
+	git add --chmod=+x mode_test &&
+	test_file_mode_staged 100755 mode_test &&
+	test_tick && git commit -m "make mode_test executable" &&
+	test_file_mode_HEAD 100755 mode_test &&
+
+	git apply --index patch 2>err &&
+	test_grep "has type 100755, expected 100644" err &&
+	test_file_mode_staged 100755 mode_test &&
+	test_tick && git commit -m "redo: append to mode_test" &&
+	test_file_mode_HEAD 100755 mode_test
+'
+
+test_expect_success 'git apply --reverse warns about incorrect file modes' '
+	test_config core.fileMode false &&
+	git reset --hard mode_test_reverse_initial &&
+
+	git add --chmod=+x mode_test &&
+	test_file_mode_staged 100755 mode_test &&
+	test_tick && git commit -m "make mode_test executable" &&
+	test_file_mode_HEAD 100755 mode_test &&
+
+	git apply --index --reverse patch 2>err &&
+	test_grep "has type 100755, expected 100644" err &&
+	test_file_mode_staged 100755 mode_test &&
+	test_tick && git commit -m "undo: append to mode_test" &&
+	test_file_mode_HEAD 100755 mode_test
 '
 
 test_expect_success POSIXPERM 'patch mode for new file is canonicalized' '
