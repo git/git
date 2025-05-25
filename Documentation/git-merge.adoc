@@ -8,13 +8,13 @@ git-merge - Join two or more development histories together
 
 SYNOPSIS
 --------
-[verse]
-'git merge' [-n] [--stat] [--no-commit] [--squash] [--[no-]edit]
+[synopsis]
+git merge [-n] [--stat] [--no-commit] [--squash] [--[no-]edit]
 	[--no-verify] [-s <strategy>] [-X <strategy-option>] [-S[<keyid>]]
 	[--[no-]allow-unrelated-histories]
 	[--[no-]rerere-autoupdate] [-m <msg>] [-F <file>]
 	[--into-name <branch>] [<commit>...]
-'git merge' (--continue | --abort | --quit)
+git merge (--continue | --abort | --quit)
 
 DESCRIPTION
 -----------
@@ -57,7 +57,7 @@ merge started (and especially if those changes were further modified
 after the merge was started), `git merge --abort` will in some cases be
 unable to reconstruct the original (pre-merge) changes. Therefore:
 
-*Warning*: Running `git merge` with non-trivial uncommitted changes is
+WARNING: Running `git merge` with non-trivial uncommitted changes is
 discouraged: while possible, it may leave you in a state that is hard to
 back out of in the case of a conflict.
 
@@ -67,7 +67,7 @@ OPTIONS
 
 include::merge-options.adoc[]
 
--m <msg>::
+`-m <msg>`::
 	Set the commit message to be used for the merge commit (in
 	case one is created).
 +
@@ -78,13 +78,13 @@ The `git fmt-merge-msg` command can be
 used to give a good default for automated `git merge`
 invocations. The automated message can include the branch description.
 
---into-name <branch>::
+`--into-name <branch>`::
 	Prepare the default merge message as if merging to the branch
-	`<branch>`, instead of the name of the real branch to which
+	_<branch>_, instead of the name of the real branch to which
 	the merge is made.
 
--F <file>::
---file=<file>::
+`-F <file>`::
+`--file=<file>`::
 	Read the commit message to be used for the merge commit (in
 	case one is created).
 +
@@ -93,12 +93,12 @@ will be appended to the specified message.
 
 include::rerere-options.adoc[]
 
---overwrite-ignore::
---no-overwrite-ignore::
+`--overwrite-ignore`::
+`--no-overwrite-ignore`::
 	Silently overwrite ignored files from the merge result. This
 	is the default behavior. Use `--no-overwrite-ignore` to abort.
 
---abort::
+`--abort`::
 	Abort the current conflict resolution process, and
 	try to reconstruct the pre-merge state. If an autostash entry is
 	present, apply it to the worktree.
@@ -114,17 +114,17 @@ which case `git merge --abort` applies the stash entry to the worktree
 whereas `git reset --merge` will save the stashed changes in the stash
 list.
 
---quit::
+`--quit`::
 	Forget about the current merge in progress. Leave the index
 	and the working tree as-is. If `MERGE_AUTOSTASH` is present, the
 	stash entry will be saved to the stash list.
 
---continue::
+`--continue`::
 	After a `git merge` stops due to conflicts you can conclude the
 	merge by running `git merge --continue` (see "HOW TO RESOLVE
 	CONFLICTS" section below).
 
-<commit>...::
+`<commit>...`::
 	Commits, usually other branch heads, to merge into our branch.
 	Specifying more than one commit will create a merge with
 	more than two parents (affectionately called an Octopus merge).
@@ -152,7 +152,7 @@ To avoid recording unrelated changes in the merge commit,
 `git pull` and `git merge` will also abort if there are any changes
 registered in the index relative to the `HEAD` commit.  (Special
 narrow exceptions to this rule may exist depending on which merge
-strategy is in use, but generally, the index must match HEAD.)
+strategy is in use, but generally, the index must match `HEAD`.)
 
 If all named commits are already ancestors of `HEAD`, `git merge`
 will exit early with the message "Already up to date."
@@ -195,11 +195,11 @@ happens:
    stage 2 from `HEAD`, and stage 3 from `MERGE_HEAD` (you
    can inspect the stages with `git ls-files -u`).  The working
    tree files contain the result of the merge operation; i.e. 3-way
-   merge results with familiar conflict markers `<<<` `===` `>>>`.
+   merge results with familiar conflict markers +<<<+ `===` +>>>+.
 5. A ref named `AUTO_MERGE` is written, pointing to a tree
    corresponding to the current content of the working tree (including
    conflict markers for textual conflicts).  Note that this ref is only
-   written when the 'ort' merge strategy is used (the default).
+   written when the `ort` merge strategy is used (the default).
 6. No other changes are made.  In particular, the local
    modifications you had before you started merge will stay the
    same and the index entries for them stay as they were,
@@ -231,7 +231,6 @@ git merge v1.2.3^0
 git merge --ff-only v1.2.3
 ----
 
-
 HOW CONFLICTS ARE PRESENTED
 ---------------------------
 
@@ -260,7 +259,7 @@ And here is another line that is cleanly resolved or unmodified.
 ------------
 
 The area where a pair of conflicting changes happened is marked with markers
-`<<<<<<<`, `=======`, and `>>>>>>>`.  The part before the `=======`
++<<<<<<<+, `=======`, and +>>>>>>>+.  The part before the `=======`
 is typically your side, and the part afterwards is typically their side.
 
 The default format does not show what the original said in the conflicting
@@ -270,7 +269,7 @@ side wants to say it is hard and you'd prefer to go shopping, while the
 other side wants to claim it is easy.
 
 An alternative style can be used by setting the `merge.conflictStyle`
-configuration variable to either "diff3" or "zdiff3".  In "diff3"
+configuration variable to either `diff3` or `zdiff3`.  In `diff3`
 style, the above conflict may look like this:
 
 ------------
@@ -290,7 +289,7 @@ Git makes conflict resolution easy.
 And here is another line that is cleanly resolved or unmodified.
 ------------
 
-while in "zdiff3" style, it may look like this:
+while in `zdiff3` style, it may look like this:
 
 ------------
 Here are lines that are either unchanged from the common
@@ -308,8 +307,8 @@ Git makes conflict resolution easy.
 And here is another line that is cleanly resolved or unmodified.
 ------------
 
-In addition to the `<<<<<<<`, `=======`, and `>>>>>>>` markers, it uses
-another `|||||||` marker that is followed by the original text.  You can
+In addition to the +<<<<<<<+, `=======`, and +>>>>>>>+ markers, it uses
+another +|||||||+ marker that is followed by the original text.  You can
 tell that the original just stated a fact, and your side simply gave in to
 that statement and gave up, while the other side tried to have a more
 positive attitude.  You can sometimes come up with a better resolution by
@@ -390,8 +389,8 @@ include::merge-strategies.adoc[]
 CONFIGURATION
 -------------
 
-branch.<name>.mergeOptions::
-	Sets default options for merging into branch <name>. The syntax and
+`branch.<name>.mergeOptions`::
+	Sets default options for merging into branch _<name>_. The syntax and
 	supported options are the same as those of `git merge`, but option
 	values containing whitespace characters are currently not supported.
 
