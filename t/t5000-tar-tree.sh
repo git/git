@@ -73,7 +73,7 @@ check_tar() {
 			for header in *.paxheader
 			do
 				data=${header%.paxheader}.data &&
-				if test -h $data || test -e $data
+				if test -h $data || test_file_path_exists $data
 				then
 					path=$(get_pax_header $header path) &&
 					if test -n "$path"
