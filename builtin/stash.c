@@ -917,6 +917,9 @@ static int show_stash(int argc, const char **argv, const char *prefix,
 			      UNTRACKED_ONLY, PARSE_OPT_NONEG),
 		OPT_END()
 	};
+	struct setup_revision_opt s_r_opt = {
+		.free_removed_argv_elements = 1,
+	};
 	int do_usage = 0;
 
 	init_diff_ui_defaults();
@@ -955,7 +958,8 @@ static int show_stash(int argc, const char **argv, const char *prefix,
 		}
 	}
 
-	argc = setup_revisions(revision_args.nr, revision_args.v, &rev, NULL);
+	argc = setup_revisions(revision_args.nr, revision_args.v, &rev, &s_r_opt);
+	revision_args.nr = argc;
 	if (argc > 1)
 		goto usage;
 	if (!rev.diffopt.output_format) {
