@@ -184,11 +184,13 @@ OPTIONS
 
 `--stripspace`::
 `--no-stripspace`::
-	Strip leading and trailing whitespace from the note message.
-	Also strip out empty lines other than a single line between
-	paragraphs. Lines starting with `#` will be stripped out
-	in non-editor cases like `-m`, `-F` and `-C`, but not in
-	editor case like `git notes edit`, `-c`, etc.
+	Clean up whitespace. Specifically (see
+	linkgit:git-stripspace[1]):
++
+- remove trailing whitespace from all lines
+- collapse multiple consecutive empty lines into one empty line
+- remove empty lines from the beginning and end of the input
+- add a missing `\n` to the last line if necessary.
 
 `--ref <ref>`::
 	Manipulate the notes tree in _<ref>_.  This overrides
