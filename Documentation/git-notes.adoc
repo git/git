@@ -144,26 +144,18 @@ OPTIONS
 	Use the given note message (instead of prompting).
 	If multiple `-m` options are given, their values
 	are concatenated as separate paragraphs.
-	Lines starting with `#` and empty lines other than a
-	single line between paragraphs will be stripped out.
-	If you wish to keep them verbatim, use `--no-stripspace`.
 
 `-F <file>`::
 `--file=<file>`::
 	Take the note message from the given file.  Use `-` to
 	read the note message from the standard input.
-	Lines starting with `#` and empty lines other than a
-	single line between paragraphs will be stripped out.
-	If you wish to keep them verbatim, use `--no-stripspace`.
 
 `-C <object>`::
 `--reuse-message=<object>`::
 	Take the given blob object (for example, another note) as the
 	note message. (Use `git notes copy <object>` instead to
-	copy notes between objects.).  By default, message will be
-	copied verbatim, but if you wish to strip out the lines
-	starting with `#` and empty lines other than a single line
-	between paragraphs, use with `--stripspace` option.
+	copy notes between objects.)  Implies `--no-stripspace` since
+	the default behavior is to copy the message verbatim.
 
 `-c <object>`::
 `--reedit-message=<object>`::
