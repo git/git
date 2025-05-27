@@ -646,8 +646,6 @@ static int do_oid_object_info_extended(struct repository *r,
 			*(oi->disk_sizep) = 0;
 		if (oi->delta_base_oid)
 			oidclr(oi->delta_base_oid, the_repository->hash_algo);
-		if (oi->type_name)
-			strbuf_addstr(oi->type_name, type_name(co->type));
 		if (oi->contentp)
 			*oi->contentp = xmemdupz(co->buf, co->size);
 		oi->whence = OI_CACHED;
@@ -727,7 +725,7 @@ static int oid_object_info_convert(struct repository *r,
 {
 	const struct git_hash_algo *input_algo = &hash_algos[input_oid->algo];
 	int do_die = flags & OBJECT_INFO_DIE_IF_CORRUPT;
-	struct strbuf type_name = STRBUF_INIT;
+	enum object_type type;
 	struct object_id oid, delta_base_oid;
 	struct object_info new_oi, *oi;
 	unsigned long size;
@@ -753,7 +751,7 @@ static int oid_object_info_convert(struct repository *r,
 		if (input_oi->sizep || input_oi->contentp) {
 			new_oi.contentp = &content;
 			new_oi.sizep = &size;
-			new_oi.type_name = &type_name;
+			new_oi.typep = &type;
 		}
 		oi = &new_oi;
 	}
@@ -766,12 +764,7 @@ static int oid_object_info_convert(struct repository *r,
 
 	if (new_oi.contentp) {
 		struct strbuf outbuf = STRBUF_INIT;
-		enum object_type type;
 
-		type = type_from_string_gently(type_name.buf, type_name.len,
-					       !do_die);
-		if (type == -1)
-			return -1;
 		if (type != OBJ_BLOB) {
 			ret = convert_object_file(the_repository, &outbuf,
 						  the_hash_algo, input_algo,
@@ -788,10 +781,8 @@ static int oid_object_info_convert(struct repository *r,
 			*input_oi->contentp = content;
 		else
 			free(content);
-		if (input_oi->type_name)
-			*input_oi->type_name = type_name;
-		else
-			strbuf_release(&type_name);
+		if (input_oi->typep)
+			*input_oi->typep = type;
 	}
 	if (new_oi.delta_base_oid == &delta_base_oid) {
 		if (repo_oid_to_algop(r, &delta_base_oid, input_algo,

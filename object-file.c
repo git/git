@@ -130,12 +130,6 @@ int has_loose_object(const struct object_id *oid)
 	return check_and_freshen(oid, 0);
 }
 
-static int format_object_header_literally(char *str, size_t size,
-					  const char *type, size_t objsize)
-{
-	return xsnprintf(str, size, "%s %"PRIuMAX, type, (uintmax_t)objsize) + 1;
-}
-
 int format_object_header(char *str, size_t size, enum object_type type,
 			 size_t objsize)
 {
@@ -144,7 +138,7 @@ int format_object_header(char *str, size_t size, enum object_type type,
 	if (!name)
 		BUG("could not get a type name for 'enum object_type' value %d", type);
 
-	return format_object_header_literally(str, size, name, objsize);
+	return xsnprintf(str, size, "%s %"PRIuMAX, name, (uintmax_t)objsize) + 1;
 }
 
 int check_object_signature(struct repository *r, const struct object_id *oid,
@@ -299,8 +293,7 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 						    unsigned char *map,
 						    unsigned long mapsize,
 						    void *buffer,
-						    unsigned long bufsiz,
-						    struct strbuf *header)
+						    unsigned long bufsiz)
 {
 	int status;
 
@@ -325,32 +318,9 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 		return ULHR_OK;
 
 	/*
-	 * We have a header longer than MAX_HEADER_LEN. The "header"
-	 * here is only non-NULL when we run "cat-file
-	 * --allow-unknown-type".
+	 * We have a header longer than MAX_HEADER_LEN.
 	 */
-	if (!header)
-		return ULHR_TOO_LONG;
-
-	/*
-	 * buffer[0..bufsiz] was not large enough.  Copy the partial
-	 * result out to header, and then append the result of further
-	 * reading the stream.
-	 */
-	strbuf_add(header, buffer, stream->next_out - (unsigned char *)buffer);
-
-	do {
-		stream->next_out = buffer;
-		stream->avail_out = bufsiz;
-
-		obj_read_unlock();
-		status = git_inflate(stream, 0);
-		obj_read_lock();
-		strbuf_add(header, buffer, stream->next_out - (unsigned char *)buffer);
-		if (memchr(buffer, '\0', stream->next_out - (unsigned char *)buffer))
-			return 0;
-	} while (status == Z_OK);
-	return ULHR_BAD;
+	return ULHR_TOO_LONG;
 }
 
 static void *unpack_loose_rest(git_zstream *stream,
@@ -427,8 +397,6 @@ int parse_loose_header(const char *hdr, struct object_info *oi)
 	}
 
 	type = type_from_string_gently(type_buf, type_len, 1);
-	if (oi->type_name)
-		strbuf_add(oi->type_name, type_buf, type_len);
 	if (oi->typep)
 		*oi->typep = type;
 
@@ -476,10 +444,8 @@ int loose_object_info(struct repository *r,
 	void *map;
 	git_zstream stream;
 	char hdr[MAX_HEADER_LEN];
-	struct strbuf hdrbuf = STRBUF_INIT;
 	unsigned long size_scratch;
 	enum object_type type_scratch;
-	int allow_unknown = flags & OBJECT_INFO_ALLOW_UNKNOWN_TYPE;
 
 	if (oi->delta_base_oid)
 		oidclr(oi->delta_base_oid, the_repository->hash_algo);
@@ -492,7 +458,7 @@ int loose_object_info(struct repository *r,
 	 * return value implicitly indicates whether the
 	 * object even exists.
 	 */
-	if (!oi->typep && !oi->type_name && !oi->sizep && !oi->contentp) {
+	if (!oi->typep && !oi->sizep && !oi->contentp) {
 		struct stat st;
 		if (!oi->disk_sizep && (flags & OBJECT_INFO_QUICK))
 			return quick_has_loose(r, oid) ? 0 : -1;
@@ -521,18 +487,15 @@ int loose_object_info(struct repository *r,
 	if (oi->disk_sizep)
 		*oi->disk_sizep = mapsize;
 
-	switch (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr),
-				    allow_unknown ? &hdrbuf : NULL)) {
+	switch (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr))) {
 	case ULHR_OK:
-		if (parse_loose_header(hdrbuf.len ? hdrbuf.buf : hdr, oi) < 0)
+		if (parse_loose_header(hdr, oi) < 0)
 			status = error(_("unable to parse %s header"), oid_to_hex(oid));
-		else if (!allow_unknown && *oi->typep < 0)
+		else if (*oi->typep < 0)
 			die(_("invalid object type"));
 
 		if (!oi->contentp)
 			break;
-		if (hdrbuf.len)
-			BUG("unpacking content with unknown types not yet supported");
 		*oi->contentp = unpack_loose_rest(&stream, hdr, *oi->sizep, oid);
 		if (*oi->contentp)
 			goto cleanup;
@@ -558,7 +521,6 @@ cleanup:
 	munmap(map, mapsize);
 	if (oi->sizep == &size_scratch)
 		oi->sizep = NULL;
-	strbuf_release(&hdrbuf);
 	if (oi->typep == &type_scratch)
 		oi->typep = NULL;
 	oi->whence = OI_LOOSE;
@@ -587,17 +549,6 @@ static void write_object_file_prepare(const struct git_hash_algo *algo,
 	*hdrlen = format_object_header(hdr, *hdrlen, type, len);
 
 	/* Sha1.. */
-	hash_object_body(algo, &c, buf, len, oid, hdr, hdrlen);
-}
-
-static void write_object_file_prepare_literally(const struct git_hash_algo *algo,
-				      const void *buf, unsigned long len,
-				      const char *type, struct object_id *oid,
-				      char *hdr, int *hdrlen)
-{
-	struct git_hash_ctx c;
-
-	*hdrlen = format_object_header_literally(hdr, *hdrlen, type, len);
 	hash_object_body(algo, &c, buf, len, oid, hdr, hdrlen);
 }
 
@@ -730,21 +681,14 @@ out:
 	return 0;
 }
 
-static void hash_object_file_literally(const struct git_hash_algo *algo,
-				       const void *buf, unsigned long len,
-				       const char *type, struct object_id *oid)
-{
-	char hdr[MAX_HEADER_LEN];
-	int hdrlen = sizeof(hdr);
-
-	write_object_file_prepare_literally(algo, buf, len, type, oid, hdr, &hdrlen);
-}
-
 void hash_object_file(const struct git_hash_algo *algo, const void *buf,
 		      unsigned long len, enum object_type type,
 		      struct object_id *oid)
 {
-	hash_object_file_literally(algo, buf, len, type_name(type), oid);
+	char hdr[MAX_HEADER_LEN];
+	int hdrlen = sizeof(hdr);
+
+	write_object_file_prepare(algo, buf, len, type, oid, hdr, &hdrlen);
 }
 
 /* Finalize a file on disk, and close it. */
@@ -1144,53 +1088,6 @@ int write_object_file_flags(const void *buf, unsigned long len,
 	if (compat)
 		return repo_add_loose_object_map(repo, oid, &compat_oid);
 	return 0;
-}
-
-int write_object_file_literally(const void *buf, unsigned long len,
-				const char *type, struct object_id *oid,
-				unsigned flags)
-{
-	char *header;
-	struct repository *repo = the_repository;
-	const struct git_hash_algo *algo = repo->hash_algo;
-	const struct git_hash_algo *compat = repo->compat_hash_algo;
-	struct object_id compat_oid;
-	int hdrlen, status = 0;
-	int compat_type = -1;
-
-	if (compat) {
-		compat_type = type_from_string_gently(type, -1, 1);
-		if (compat_type == OBJ_BLOB)
-			hash_object_file(compat, buf, len, compat_type,
-					 &compat_oid);
-		else if (compat_type != -1) {
-			struct strbuf converted = STRBUF_INIT;
-			convert_object_file(the_repository,
-					    &converted, algo, compat,
-					    buf, len, compat_type, 0);
-			hash_object_file(compat, converted.buf, converted.len,
-					 compat_type, &compat_oid);
-			strbuf_release(&converted);
-		}
-	}
-
-	/* type string, SP, %lu of the length plus NUL must fit this */
-	hdrlen = strlen(type) + MAX_HEADER_LEN;
-	header = xmalloc(hdrlen);
-	write_object_file_prepare_literally(the_hash_algo, buf, len, type,
-					    oid, header, &hdrlen);
-
-	if (!(flags & WRITE_OBJECT_FILE_PERSIST))
-		goto cleanup;
-	if (freshen_packed_object(oid) || freshen_loose_object(oid))
-		goto cleanup;
-	status = write_loose_object(oid, header, hdrlen, buf, len, 0, 0);
-	if (compat_type != -1)
-		return repo_add_loose_object_map(repo, oid, &compat_oid);
-
-cleanup:
-	free(header);
-	return status;
 }
 
 int force_object_loose(const struct object_id *oid, time_t mtime)
@@ -1682,14 +1579,19 @@ int read_loose_object(const char *path,
 		goto out;
 	}
 
-	if (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr),
-				NULL) != ULHR_OK) {
+	if (unpack_loose_header(&stream, map, mapsize, hdr, sizeof(hdr)) != ULHR_OK) {
 		error(_("unable to unpack header of %s"), path);
 		goto out_inflate;
 	}
 
 	if (parse_loose_header(hdr, oi) < 0) {
 		error(_("unable to parse header of %s"), path);
+		goto out_inflate;
+	}
+
+	if (*oi->typep < 0) {
+		error(_("unable to parse type from header '%s' of %s"),
+		      hdr, path);
 		goto out_inflate;
 	}
 
@@ -1703,9 +1605,9 @@ int read_loose_object(const char *path,
 			error(_("unable to unpack contents of %s"), path);
 			goto out_inflate;
 		}
-		hash_object_file_literally(the_repository->hash_algo,
-					   *contents, *size,
-					   oi->type_name->buf, real_oid);
+		hash_object_file(the_repository->hash_algo,
+				 *contents, *size,
+				 *oi->typep, real_oid);
 		if (!oideq(expected_oid, real_oid))
 			goto out_inflate;
 	}
