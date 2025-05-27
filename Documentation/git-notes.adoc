@@ -127,6 +127,10 @@ When done, the user can either finalize the merge with
 	giving zero or one object from the command line, this is
 	equivalent to specifying an empty note message to
 	the `edit` subcommand.
++
+In `--stdin` mode, also remove the object names given on standard
+input. In other words, `--stdin` can be combined with object names from
+the command line.
 
 `prune`::
 	Remove all notes for non-existing/unreachable objects.
@@ -208,9 +212,7 @@ future.
 	object that does not have notes attached to it.
 
 `--stdin`::
-	Also read the object names to remove notes from the standard
-	input (there is no reason you cannot combine this with object
-	names from the command line).
+	Only valid for `remove` and `copy`. See the respective subcommands.
 
 `-n`::
 `--dry-run`::
