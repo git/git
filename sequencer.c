@@ -2636,9 +2636,12 @@ static int is_command(enum todo_command command, const char **bol)
 	const char nick = todo_command_info[command].c;
 	const char *p = *bol;
 
-	return (skip_prefix(p, str, &p) || (nick && *p++ == nick)) &&
-		(*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r' || !*p) &&
-		(*bol = p);
+	if ((skip_prefix(p, str, &p) || (nick && *p++ == nick)) &&
+	    (*p == ' ' || *p == '\t' || *p == '\n' || *p == '\r' || !*p)) {
+		*bol = p;
+		return 1;
+	}
+	return 0;
 }
 
 static int check_label_or_ref_arg(enum todo_command command, const char *arg)

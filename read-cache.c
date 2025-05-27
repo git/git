@@ -1117,48 +1117,19 @@ static int has_dir_name(struct index_state *istate,
 	 *
 	 * Compare the entry's full path with the last path in the index.
 	 */
-	if (istate->cache_nr > 0) {
-		cmp_last = strcmp_offset(name,
-			istate->cache[istate->cache_nr - 1]->name,
-			&len_eq_last);
-		if (cmp_last > 0) {
-			if (name[len_eq_last] != '/') {
-				/*
-				 * The entry sorts AFTER the last one in the
-				 * index.
-				 *
-				 * If there were a conflict with "file", then our
-				 * name would start with "file/" and the last index
-				 * entry would start with "file" but not "file/".
-				 *
-				 * The next character after common prefix is
-				 * not '/', so there can be no conflict.
-				 */
-				return retval;
-			} else {
-				/*
-				 * The entry sorts AFTER the last one in the
-				 * index, and the next character after common
-				 * prefix is '/'.
-				 *
-				 * Either the last index entry is a file in
-				 * conflict with this entry, or it has a name
-				 * which sorts between this entry and the
-				 * potential conflicting file.
-				 *
-				 * In both cases, we fall through to the loop
-				 * below and let the regular search code handle it.
-				 */
-			}
-		} else if (cmp_last == 0) {
-			/*
-			 * The entry exactly matches the last one in the
-			 * index, but because of multiple stage and CE_REMOVE
-			 * items, we fall through and let the regular search
-			 * code handle it.
-			 */
-		}
-	}
+	if (!istate->cache_nr)
+		return 0;
+
+	cmp_last = strcmp_offset(name,
+				 istate->cache[istate->cache_nr - 1]->name,
+				 &len_eq_last);
+	if (cmp_last > 0 && name[len_eq_last] != '/')
+		/*
+		 * The entry sorts AFTER the last one in the
+		 * index and their paths have no common prefix,
+		 * so there cannot be a F/D conflict.
+		 */
+		return 0;
 
 	for (;;) {
 		size_t len;

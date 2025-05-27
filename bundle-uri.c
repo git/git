@@ -532,11 +532,13 @@ static int fetch_bundles_by_token(struct repository *r,
 	 */
 	if (!repo_config_get_value(r,
 				   "fetch.bundlecreationtoken",
-				   &creationTokenStr) &&
-	    sscanf(creationTokenStr, "%"PRIu64, &maxCreationToken) == 1 &&
-	    bundles.items[0]->creationToken <= maxCreationToken) {
-		free(bundles.items);
-		return 0;
+				   &creationTokenStr)) {
+		if (sscanf(creationTokenStr, "%"PRIu64, &maxCreationToken) != 1)
+			maxCreationToken = 0;
+		if (bundles.items[0]->creationToken <= maxCreationToken) {
+			free(bundles.items);
+			return 0;
+		}
 	}
 
 	/*

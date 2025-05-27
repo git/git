@@ -1780,16 +1780,16 @@ static void send_shallow_info(struct upload_pack_data *data)
 	packet_delim(1);
 }
 
-enum fetch_state {
-	FETCH_PROCESS_ARGS = 0,
-	FETCH_SEND_ACKS,
-	FETCH_SEND_PACK,
-	FETCH_DONE,
+enum upload_state {
+	UPLOAD_PROCESS_ARGS = 0,
+	UPLOAD_SEND_ACKS,
+	UPLOAD_SEND_PACK,
+	UPLOAD_DONE,
 };
 
 int upload_pack_v2(struct repository *r, struct packet_reader *request)
 {
-	enum fetch_state state = FETCH_PROCESS_ARGS;
+	enum upload_state state = UPLOAD_PROCESS_ARGS;
 	struct upload_pack_data data;
 
 	clear_object_flags(the_repository, ALL_FLAGS);
@@ -1798,9 +1798,9 @@ int upload_pack_v2(struct repository *r, struct packet_reader *request)
 	data.use_sideband = LARGE_PACKET_MAX;
 	get_upload_pack_config(r, &data);
 
-	while (state != FETCH_DONE) {
+	while (state != UPLOAD_DONE) {
 		switch (state) {
-		case FETCH_PROCESS_ARGS:
+		case UPLOAD_PROCESS_ARGS:
 			process_args(request, &data);
 
 			if (!data.want_obj.nr && !data.wait_for_done) {
@@ -1811,27 +1811,27 @@ int upload_pack_v2(struct repository *r, struct packet_reader *request)
 				 * to just send 'have's without 'want's); guess
 				 * they didn't want anything.
 				 */
-				state = FETCH_DONE;
+				state = UPLOAD_DONE;
 			} else if (data.seen_haves) {
 				/*
 				 * Request had 'have' lines, so lets ACK them.
 				 */
-				state = FETCH_SEND_ACKS;
+				state = UPLOAD_SEND_ACKS;
 			} else {
 				/*
 				 * Request had 'want's but no 'have's so we can
 				 * immediately go to construct and send a pack.
 				 */
-				state = FETCH_SEND_PACK;
+				state = UPLOAD_SEND_PACK;
 			}
 			break;
-		case FETCH_SEND_ACKS:
+		case UPLOAD_SEND_ACKS:
 			if (process_haves_and_send_acks(&data))
-				state = FETCH_SEND_PACK;
+				state = UPLOAD_SEND_PACK;
 			else
-				state = FETCH_DONE;
+				state = UPLOAD_DONE;
 			break;
-		case FETCH_SEND_PACK:
+		case UPLOAD_SEND_PACK:
 			send_wanted_ref_info(&data);
 			send_shallow_info(&data);
 
@@ -1841,9 +1841,9 @@ int upload_pack_v2(struct repository *r, struct packet_reader *request)
 				packet_writer_write(&data.writer, "packfile\n");
 				create_pack_file(&data, NULL);
 			}
-			state = FETCH_DONE;
+			state = UPLOAD_DONE;
 			break;
-		case FETCH_DONE:
+		case UPLOAD_DONE:
 			continue;
 		}
 	}
