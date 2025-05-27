@@ -76,6 +76,15 @@ UI, Workflows & Features
    been under "scalar"'s control are taught an option not to enable the
    scheduled maintenance on it.
 
+ * The userdiff pattern for shell scripts has been updated to cope
+   with more bash-isms.
+
+ * "git merge-tree" learned an option to see if it resolves cleanly
+   without actually creating a result.
+
+ * The commit title in the "rebase -i" todo file are now prefixed with
+   '#', just like a merge commit being replayed.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -166,6 +175,15 @@ Performance, Internal Implementation, Development Support etc.
 
  * The dependency on the_repository variable has been reduced from the
    code paths in "git replay".
+
+ * Support to create a loose object file with unknown object type has
+   been dropped.
+
+ * The code path to access the "packed-refs" file while "fsck" is
+   taught to mmap the file, instead of reading the whole file in the
+   memory.
+
+ * Assorted fixes for issues found with CodeQL.
 
 
 Fixes since v2.49
@@ -325,6 +343,10 @@ Fixes since v2.49
    automatically (as opposed to be done only upon manual request).
    (merge 6389579b2f ps/ci-gitlab-enable-msvc-meson-job later to maint).
 
+ * "git apply" and "git add -i/-p" code paths no longer unnecessarily
+   expand sparse-index while working.
+   (merge ecf9ba20e3 ds/sparse-apply-add-p later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
    (merge 2bfd3b3685 ab/decorate-code-cleanup later to maint).
@@ -355,3 +377,5 @@ Fixes since v2.49
    (merge e5dd0a05ed ly/am-split-stgit-leakfix later to maint).
    (merge bac220e154 rc/t1001-test-path-is-file later to maint).
    (merge 91db6c735d ly/reftable-writer-leakfix later to maint).
+   (merge 20e4e9ad0b jc/doc-synopsis-option-markup later to maint).
+   (merge cddcee7f64 es/meson-configure-build-options-fix later to maint).
