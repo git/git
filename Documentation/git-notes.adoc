@@ -87,6 +87,9 @@ In `--stdin` mode, take lines in the format
 on standard input, and copy the notes from each _<from-object>_ to its
 corresponding _<to-object>_.  (The optional _<rest>_ is ignored so that
 the command can read the input given to the `post-rewrite` hook.)
++
+`--stdin` cannot be combined with object names given on the command
+line.
 
 `append`::
 	Append new message(s) given by `-m` or `-F` options to an
