@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (May 2025, #07; Fri, 23)
-X-master-at: 845c48a16a7f7b2c44d8cb137b16a4a1f0140229
-X-next-at: 31b7d2e469bae1b76141d549de1a8d30046d582b
+Subject: What's cooking in git.git (May 2025, #08; Tue, 27)
+X-master-at: 34673cd0e81df9ccc075dd5e25ec92bf3128b3e9
+X-next-at: 18f40f098490df7274eac84a9df73a9b0d5fb848
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (May 2025, #07; Fri, 23)
+What's cooking in git.git (May 2025, #08; Tue, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,103 +46,251 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ag/send-email-hostname-f (2025-05-13) 1 commit
-  (merged to 'next' on 2025-05-16 at d5aa175e7d)
- + send-email: try to get fqdn by running hostname -f on Linux and macOS
-
- Teach "git send-email" to also consult `hostname -f` for mail
- domain to compute the identity given to SMTP servers.
- source: <PN3PR01MB959701F40F805351472EA4CCB897A@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
-
-
-* ds/scalar-no-maintenance (2025-05-14) 5 commits
-  (merged to 'next' on 2025-05-16 at f9364331c0)
- + scalar reconfigure: improve --maintenance docs
-  (merged to 'next' on 2025-05-08 at 1006cdd399)
- + scalar reconfigure: add --maintenance=<mode> option
- + scalar clone: add --no-maintenance option
- + scalar register: add --no-maintenance option
- + scalar: customize register_dir()'s behavior
-
- Two "scalar" subcommands that adds a repository that hasn't been
- under "scalar"'s control are taught an option not to enable the
- scheduled maintenance on it.
- source: <pull.1913.v3.git.1746582637.gitgitgadget@gmail.com>
-
-
-* en/replay-wo-the-repository (2025-05-14) 1 commit
-  (merged to 'next' on 2025-05-16 at 23608dbaab)
- + replay: replace the_repository with repo parameter passed to cmd_replay ()
-
- The dependency on the_repository variable has been reduced from the
- code paths in "git replay".
- source: <pull.1921.git.1747254806067.gitgitgadget@gmail.com>
-
-
-* js/ci-build-win-in-release-mode (2025-05-05) 1 commit
-  (merged to 'next' on 2025-05-22 at 213a3f0262)
- + ci(win+Meson): build in Release mode
-
- win+Meson CI pipeline, unlike other pipelines for Windows,
- used to build artifacts in develper mode, which has been changed to
- build them in release mode for consistency.
- source: <pull.1908.v2.git.1746282346370.gitgitgadget@gmail.com>
-
-
-* lo/json-writer-docs (2025-05-16) 2 commits
-  (merged to 'next' on 2025-05-16 at ab81da1b16)
- + json-writer: describe the usage of jw_* functions
- + json-writer: add docstrings to jw_* functions
-
- In-code docstring updates.
- source: <20250516010159.27042-1-lucasseikioshiro@gmail.com>
-
-
-* ly/pack-bitmap-load-leakfix (2025-05-12) 1 commit
-  (merged to 'next' on 2025-05-14 at 0be31eac6b)
- + pack-bitmap: fix memory leak if `load_bitmap_entries_v1` failed
-
- Leakfix.
- source: <pull.1962.git.git.1747052530271.gitgitgadget@gmail.com>
-
-
-* ps/ci-gitlab-enable-msvc-meson-job (2025-05-13) 1 commit
-  (merged to 'next' on 2025-05-16 at 81da2fbef9)
- + gitlab-ci: always run MSVC-based Meson job
-
- CI settings at GitLab has been updated to run MSVC based Meson job
- automatically (as opposed to be done only upon manual request).
- source: <20250428-pks-gitlab-ci-execute-win-meson-v1-1-f68683552b9e@pks.im>
-
---------------------------------------------------
 [New Topics]
 
-* op/cvsserver-perl-warning (2025-05-22) 1 commit
- - cvsserver: avoid precedence problem between ! and %s
+* ja/doc-synopsis-style (2025-05-27) 9 commits
+ - doc: convert git-switch manpage to new synopsis style
+ - doc: convert git-mergetool options to new synopsis style
+ - doc: convert git-mergetool manpage to new synopsis style
+ - doc: switch merge config description to new synopsis format
+ - doc: convert merge strategies to synopsis format
+ - doc: merge-options.adoc remove a misleading double negation
+ - doc: convert merge options to new synopsis format
+ - doc: convert git-merge manpage to new style
+ - doc: convert git-checkout manpage to new style
+
+ Doc mark-up fixes.
+
+ Will merge to 'next'?
+ source: <pull.1927.git.1748204829.gitgitgadget@gmail.com>
+
+
+* ps/maintenance-ref-lock (2025-05-27) 11 commits
+ - builtin/maintenance: fix locking race when handling "gc" task
+ - builtin/gc: avoid global state in `gc_before_repack()`
+ - builtin/maintenance: fix locking race when packing refs and reflogs
+ - builtin/maintenance: let tasks do maintenance before and after detach
+ - builtin/maintenance: fix typedef for function pointers
+ - builtin/maintenance: extract function to run tasks
+ - builtin/maintenance: stop modifying global array of tasks
+ - builtin/maintenance: mark "--task=" and "--schedule=" as incompatible
+ - builtin/maintenance: centralize configuration of explicit tasks
+ - builtin/gc: drop redundant local variable
+ - builtin/gc: use designated field initializers for maintenance tasks
+
+ "git maintenance" lacked the care "git gc" had to avoid holding
+ onto the repository lock for too long during packing refs, which
+ has been remedied.
+
+ Comments?
+ source: <20250527-b4-pks-maintenance-ref-lock-race-v1-0-e1ceb2dea66e@pks.im>
+
+
+* tb/prepare-midx-pack-cleanup (2025-05-27) 6 commits
+ - midx: return a `packed_git` pointer from `prepare_midx_pack()`
+ - midx-write.c: extract inner loop from fill_packs_from_midx()
+ - midx-write.c: simplify fill_packs_from_midx()
+ - midx-write.c: guard against incremental MIDXs in want_included_pack()
+ - pack-bitmap.c: fix broken warning() when missing MIDX'd pack
+ - Merge branch 'ps/midx-negative-packfile-cache' into tb/prepare-midx-pack-cleanup
+ (this branch uses ps/midx-negative-packfile-cache.)
+
+ Improvement on Multi-pack-index API.
+
+ Comments?
+ source: <cover.1748198489.git.me@ttaylorr.com>
+
+--------------------------------------------------
+[Graduated to 'master']
+
+* ds/sparse-apply-add-p (2025-05-16) 4 commits
+  (merged to 'next' on 2025-05-21 at 933f316786)
+ + p2000: add performance test for patch-mode commands
+ + reset: integrate sparse index with --patch
+ + git add: make -p/-i aware of sparse index
+ + apply: integrate with the sparse index
+
+ "git apply" and "git add -i/-p" code paths no longer unnecessarily
+ expand sparse-index while working.
+ source: <pull.1914.v2.git.1747407330.gitgitgadget@gmail.com>
+
+
+* en/merge-tree-check (2025-05-16) 2 commits
+  (merged to 'next' on 2025-05-19 at c3278b91fa)
+ + merge-tree: add a new --quiet flag
+ + merge-ort: add a new mergeability_only option
+
+ "git merge-tree" learned an option to see if it resolves cleanly
+ without actually creating a result.
+ source: <pull.1920.v4.git.1747425858.gitgitgadget@gmail.com>
+
+
+* en/sequencer-comment-messages (2025-05-16) 1 commit
+  (merged to 'next' on 2025-05-21 at b6516794fb)
+ + sequencer: make it clearer that commit descriptions are just comments
+
+ Prefix '#' to the commit title in the "rebase -i" todo file, just
+ like a merge commit being replayed.
+ source: <pull.1923.v2.git.1747412786573.gitgitgadget@gmail.com>
+
+
+* es/meson-configure-build-options-fix (2025-05-19) 1 commit
+  (merged to 'next' on 2025-05-21 at b468031e13)
+ + meson: reformat default options to workaround bug in `meson configure`
+
+ Build procedure updates.
+ source: <20250519170945.57746-1-eschwartz@gentoo.org>
+
+
+* jc/doc-synopsis-option-markup (2025-05-12) 4 commits
+  (merged to 'next' on 2025-05-21 at cb897d1302)
+ + git-var doc: fix usage of $ENV_VAR vs ENV_VAR
+ + git-verify-* doc: update mark-up of synopsis option descriptions
+ + git-{var,write-tree} docs: update mark-up of synopsis option descriptions
+ + git-daemon doc: update mark-up of synopsis option descriptions
+
+ Doc mark-up fixes.
+ source: <20250510123346.20927-1-jn.avila@free.fr>
+
+
+* jk/no-funny-object-types (2025-05-16) 13 commits
+  (merged to 'next' on 2025-05-19 at 4c995dbd23)
+ + object-file: drop support for writing objects with unknown types
+ + hash-object: handle --literally with OPT_NEGBIT
+ + hash-object: merge HASH_* and INDEX_* flags
+ + hash-object: stop allowing unknown types
+ + t: add lib-loose.sh
+ + t/helper: add zlib test-tool
+ + oid_object_info(): drop type_name strbuf
+ + fsck: stop using object_info->type_name strbuf
+ + oid_object_info_convert(): stop using string for object type
+ + cat-file: use type enum instead of buffer for -t option
+ + object-file: drop OBJECT_INFO_ALLOW_UNKNOWN_TYPE flag
+ + cat-file: make --allow-unknown-type a noop
+ + object-file.h: fix typo in variable declaration
+
+ Support to create a loose object file with unknown object type has
+ been dropped.
+ source: <20250516044916.GA21985@coredump.intra.peff.net>
+
+
+* js/misc-fixes (2025-05-15) 11 commits
+  (merged to 'next' on 2025-05-21 at e803806107)
+ + sequencer: stop pretending that an assignment is a condition
+ + bundle-uri: avoid using undefined output of `sscanf()`
+ + commit-graph: avoid using stale stack addresses
+ + trace2: avoid "futile conditional"
+ + Avoid redundant conditions
+ + fetch: avoid unnecessary work when there is no current branch
+ + has_dir_name(): make code more obvious
+ + upload-pack: rename `enum` to reflect the operation
+ + commit-graph: avoid malloc'ing a local variable
+ + fetch: carefully clear local variable's address after use
+ + commit: simplify code
+
+ Assorted fixes for issues found with CodeQL.
+ source: <pull.1891.git.1747314709.gitgitgadget@gmail.com>
+
+
+* kj/my-first-contribution-updates (2025-05-19) 3 commits
+  (merged to 'next' on 2025-05-21 at f8c92423fb)
+ + docs: replace git_config to repo_config
+ + docs: clarify cmd_psuh signature and explain UNUSED macro
+ + docs: remove unused mentoring mailing list reference
+
+ Doc updates.
+ source: <20250518074317.73367-1-jayatheerthkulkarni2005@gmail.com>
+
+
+* ly/commit-graph-fill-oids-leakfix (2025-05-15) 1 commit
+  (merged to 'next' on 2025-05-19 at 972bbc7c11)
+ + commit-graph: fix memory leak when `fill_oids_from_packs()` fails
+
+ Leakfix.
+ source: <pull.1957.v3.git.git.1746779435536.gitgitgadget@gmail.com>
+
+
+* ly/mailinfo-decode-header-leakfix (2025-05-15) 1 commit
+  (merged to 'next' on 2025-05-19 at 87066488fc)
+ + mailinfo: fix pointential memory leak if `decode_header` failed
+
+ Leakfix.
+ source: <pull.1956.v4.git.git.1747104551204.gitgitgadget@gmail.com>
+
+
+* ly/sequencer-rearrange-leakfix (2025-05-15) 1 commit
+  (merged to 'next' on 2025-05-19 at f0ad6cfe21)
+ + sequencer: fix memory leak if `todo_list_rearrange_squash()` failed
+
+ Leakfix.
+ source: <pull.1965.git.git.1747230808770.gitgitgadget@gmail.com>
+
+
+* md/userdiff-bash-shell-function (2025-05-16) 1 commit
+  (merged to 'next' on 2025-05-16 at 1fe8b68a72)
+ + userdiff: extend Bash pattern to cover more shell function forms
+
+ The userdiff pattern for shell scripts has been updated to cope
+ with more bash-isms.
+ cf. <a72235c1-625a-4b90-8111-629b5a6ee7c2@kdbg.org>
+ source: <20250516144515.49514-2-dhar61595@gmail.com>
+
+
+* rj/build-tweaks-part2 (2025-05-19) 5 commits
+  (merged to 'next' on 2025-05-19 at fea40b8fb1)
+ + configure.ac: upgrade to a compilation check for sysinfo
+ + meson.build: correct setting of GIT_EXEC_PATH
+ + meson: correct path to system config/attribute files
+ + meson: correct install location of YAML.pm
+ + meson.build: quote the GITWEBDIR build configuration
+
+ Updates to meson-based build procedure.
+ source: <20250519162523.1001478-1-ramsay@ramsayjones.plus.com>
+
+
+* sj/use-mmap-to-check-packed-refs (2025-05-14) 3 commits
+  (merged to 'next' on 2025-05-21 at a0ed4fdf95)
+ + packed-backend: mmap large "packed-refs" file during fsck
+ + packed-backend: extract snapshot allocation in `load_contents`
+ + packed-backend: fsck should warn when "packed-refs" file is empty
+
+ The code path to access the "packed-refs" file while "fsck" is
+ taught to mmap the file, instead of reading the whole file in the
+ memory.
+ source: <aCS7O8tNekg_u9Wp@ArchLinux>
+
+--------------------------------------------------
+[Cooking]
+
+* op/cvsserver-perl-warning (2025-05-27) 1 commit
+ - cvsserver: remove unused escapeRefName function
 
  Recent versions of Perl started warning against "! A =~ /pattern/"
- which does not negate the result of the matching.
- source: <pull.1925.v3.git.1747913206622.gitgitgadget@gmail.com>
+ which does not negate the result of the matching.  As it turns out
+ that the problematic function is not even called, it was removed.
+
+ Will merge to 'nexr'.
+ source: <pull.1925.v4.git.1748267305871.gitgitgadget@gmail.com>
 
 
-* ps/meson-tap-parse (2025-05-21) 4 commits
+* ps/meson-tap-parse (2025-05-27) 6 commits
  - meson: parse TAP output generated by our tests
  - meson: introduce kwargs variable for tests
+ - t7815: fix unexpectedly passing test on macOS
+ - t/test-lib: fix TAP format for BASH_XTRACEFD warning
  - t/test-lib: don't print shell traces to stdout
  - t: fix cases where output breaks TAP format
 
  Meson-based build/test framework now understands TAP output
  generated by our tests.
 
- Expecting a reroll.
- cf. <aDCNqRAoGygwnAbq@pks.im>
- source: <20250506-pks-meson-tap-v1-0-5aaab2942a4c@pks.im>
+ Will merge to 'nexr'?
+ source: <20250527-pks-meson-tap-v2-0-ae360f77786e@pks.im>
 
 
 * am/sparse-index-name-hash-fix (2025-05-21) 1 commit
- - name-hash: don't add sparse directories in threaded lazy init
+  (merged to 'next' on 2025-05-27 at 63076a2233)
+ + name-hash: don't add sparse directories in threaded lazy init
 
  Avoid adding directory path to a sparse-index tree entries to the
  name-hash, since they would bloat the hashtable without anybody
@@ -150,7 +298,7 @@ Release tarballs are available at:
  part of the code, but now the multi-threaded code also does the
  same.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1970.v3.git.git.1747862971672.gitgitgadget@gmail.com>
 
 
@@ -179,7 +327,7 @@ Release tarballs are available at:
  source: <20250521232917.2333291-1-jacob.e.keller@intel.com>
 
 
-* mm/apply-reverse-mode-of-deleted-path (2025-05-23) 2 commits
+* mm/apply-reverse-mode-of-deleted-path (2025-05-27) 2 commits
  - apply: set file mode when --reverse creates a deleted file
  - t4129: test that git apply warns for unexpected mode changes
 
@@ -187,11 +335,9 @@ Release tarballs are available at:
  reverse failed to give the mode bits of the path "removed" by the
  patch to the file it creates, which has been corrected.
 
- Will merge to 'next'?
- source: <20250523172154.93810-1-mark@chromium.org>
+ Will merge to 'next'.
+ source: <20250524034046.2619-1-mark@chromium.org>
 
---------------------------------------------------
-[Cooking]
 
 * ag/doc-send-email-update-2 (2025-05-19) 4 commits
  - docs: remove credential helper links for emails from gitcredentials
@@ -204,16 +350,6 @@ Release tarballs are available at:
 
  Comments?
  source: <A84F634C-3423-48E2-B648-068A75423037@live.com>
-
-
-* es/meson-configure-build-options-fix (2025-05-19) 1 commit
-  (merged to 'next' on 2025-05-21 at b468031e13)
- + meson: reformat default options to workaround bug in `meson configure`
-
- Build procedure updates.
-
- Will merge to 'master'.
- source: <20250519170945.57746-1-eschwartz@gentoo.org>
 
 
 * jt/receive-pack-skip-connectivity-check (2025-05-20) 2 commits
@@ -229,7 +365,7 @@ Release tarballs are available at:
  source: <20250520163218.263921-1-jltobler@gmail.com>
 
 
-* kh/notes-doc-fixes (2025-05-23) 9 commits
+* kh/notes-doc-fixes (2025-05-27) 9 commits
  - doc: notes: use stuck form throughout
  - doc: notes: treat --stdin equally between copy/remove
  - doc: notes: point out copy --stdin use with argv
@@ -242,9 +378,8 @@ Release tarballs are available at:
 
  "git notes --help" documentation updates.
 
- Comments?
- Getting much better.
- source: <cover.1748028010.git.code@khaugsbakk.name>
+ Will merge to 'next'.
+ source: <cover.1748380390.git.code@khaugsbakk.name>
 
 
 * kn/passing-leak-tests (2025-05-20) 1 commit
@@ -262,6 +397,7 @@ Release tarballs are available at:
 * ps/midx-negative-packfile-cache (2025-05-20) 2 commits
  - midx: stop repeatedly looking up nonexistent packfiles
  - packfile: explain ordering of how we look up auxiliary pack files
+ (this branch is used by tb/prepare-midx-pack-cleanup.)
 
  When a stale .midx file refers to .pack files that no longer exist,
  we ended up checking for these non-existent files repeatedly, which
@@ -272,14 +408,15 @@ Release tarballs are available at:
 
 
 * pw/midx-repack-overflow-fix (2025-05-22) 4 commits
- - midx docs: clarify tie breaking
- - midx: avoid negative array index
- - midx repack: avoid potential integer overflow on 64 bit systems
- - midx repack: avoid integer overflow on 32 bit systems
+  (merged to 'next' on 2025-05-27 at 52646da108)
+ + midx docs: clarify tie breaking
+ + midx: avoid negative array index
+ + midx repack: avoid potential integer overflow on 64 bit systems
+ + midx repack: avoid integer overflow on 32 bit systems
 
  Integer overflow fix around code paths for "git multi-pack-index repack"..
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <aC/C9oQrcx/RiyP1@nand.local>
  source: <cover.1747929225.git.phillip.wood@dunelm.org.uk>
 
@@ -330,103 +467,8 @@ Release tarballs are available at:
  source: <pull.1890.git.1747313139.gitgitgadget@gmail.com>
 
 
-* js/misc-fixes (2025-05-15) 11 commits
-  (merged to 'next' on 2025-05-21 at e803806107)
- + sequencer: stop pretending that an assignment is a condition
- + bundle-uri: avoid using undefined output of `sscanf()`
- + commit-graph: avoid using stale stack addresses
- + trace2: avoid "futile conditional"
- + Avoid redundant conditions
- + fetch: avoid unnecessary work when there is no current branch
- + has_dir_name(): make code more obvious
- + upload-pack: rename `enum` to reflect the operation
- + commit-graph: avoid malloc'ing a local variable
- + fetch: carefully clear local variable's address after use
- + commit: simplify code
-
- Assorted fixes for issues found with CodeQL.
-
- Will merge to 'master'.
- source: <pull.1891.git.1747314709.gitgitgadget@gmail.com>
-
-
-* ly/commit-graph-fill-oids-leakfix (2025-05-15) 1 commit
-  (merged to 'next' on 2025-05-19 at 972bbc7c11)
- + commit-graph: fix memory leak when `fill_oids_from_packs()` fails
-
- Leakfix.
-
- Will merge to 'master'.
- source: <pull.1957.v3.git.git.1746779435536.gitgitgadget@gmail.com>
-
-
-* ly/mailinfo-decode-header-leakfix (2025-05-15) 1 commit
-  (merged to 'next' on 2025-05-19 at 87066488fc)
- + mailinfo: fix pointential memory leak if `decode_header` failed
-
- Leakfix.
-
- Will merge to 'master'.
- source: <pull.1956.v4.git.git.1747104551204.gitgitgadget@gmail.com>
-
-
-* ly/sequencer-rearrange-leakfix (2025-05-15) 1 commit
-  (merged to 'next' on 2025-05-19 at f0ad6cfe21)
- + sequencer: fix memory leak if `todo_list_rearrange_squash()` failed
-
- Leakfix.
-
- Will merge to 'master'.
- source: <pull.1965.git.git.1747230808770.gitgitgadget@gmail.com>
-
-
-* en/sequencer-comment-messages (2025-05-16) 1 commit
-  (merged to 'next' on 2025-05-21 at b6516794fb)
- + sequencer: make it clearer that commit descriptions are just comments
-
- Prefix '#' to the commit title in the "rebase -i" todo file, just
- like a merge commit being replayed.
-
- Will merge to 'master'.
- source: <pull.1923.v2.git.1747412786573.gitgitgadget@gmail.com>
-
-
-* jk/no-funny-object-types (2025-05-16) 13 commits
-  (merged to 'next' on 2025-05-19 at 4c995dbd23)
- + object-file: drop support for writing objects with unknown types
- + hash-object: handle --literally with OPT_NEGBIT
- + hash-object: merge HASH_* and INDEX_* flags
- + hash-object: stop allowing unknown types
- + t: add lib-loose.sh
- + t/helper: add zlib test-tool
- + oid_object_info(): drop type_name strbuf
- + fsck: stop using object_info->type_name strbuf
- + oid_object_info_convert(): stop using string for object type
- + cat-file: use type enum instead of buffer for -t option
- + object-file: drop OBJECT_INFO_ALLOW_UNKNOWN_TYPE flag
- + cat-file: make --allow-unknown-type a noop
- + object-file.h: fix typo in variable declaration
-
- Support to create a loose object file with unknown object type has
- been dropped.
-
- Will merge to 'master'.
- source: <20250516044916.GA21985@coredump.intra.peff.net>
-
-
-* kj/my-first-contribution-updates (2025-05-19) 3 commits
-  (merged to 'next' on 2025-05-21 at f8c92423fb)
- + docs: replace git_config to repo_config
- + docs: clarify cmd_psuh signature and explain UNUSED macro
- + docs: remove unused mentoring mailing list reference
-
- Doc updates.
-
- Will merge to 'master'.
- source: <20250518074317.73367-1-jayatheerthkulkarni2005@gmail.com>
-
-
-* kj/renamed-submodule (2025-05-16) 1 commit
+* kj/renamed-submodule (2025-05-27) 2 commits
+ - submodule: skip redundant active entries when pattern covers path
  - submodule: prevent overwriting .gitmodules entry on path reuse
 
  The case where a new submodule takes a path where used to be a
@@ -434,7 +476,7 @@ Release tarballs are available at:
  before.
 
  Comments?
- source: <20250516174934.45008-1-jayatheerthkulkarni2005@gmail.com>
+ source: <20250524073628.58944-1-jayatheerthkulkarni2005@gmail.com>
 
 
 * pw/update-thunderbird-patch-inline (2025-05-16) 1 commit
@@ -457,35 +499,9 @@ Release tarballs are available at:
  An interchange format for stash entries is defined, and subcommand
  of "git stash" to import/export has been added.
 
- Will merge to 'next'?
+ Expecting a v7.
+ cf. <aDTJHGmCnvdFkswt@tapette.crustytoothpaste.net>
  source: <20250522185524.18398-1-sandals@crustytoothpaste.net>
-
-
-* ds/sparse-apply-add-p (2025-05-16) 4 commits
-  (merged to 'next' on 2025-05-21 at 933f316786)
- + p2000: add performance test for patch-mode commands
- + reset: integrate sparse index with --patch
- + git add: make -p/-i aware of sparse index
- + apply: integrate with the sparse index
-
- "git apply" and "git add -i/-p" code paths no longer unnecessarily
- expand sparse-index while working.
-
- Will merge to 'master'.
- Kicked out of next and then is about to come back.
- source: <pull.1914.v2.git.1747407330.gitgitgadget@gmail.com>
-
-
-* en/merge-tree-check (2025-05-16) 2 commits
-  (merged to 'next' on 2025-05-19 at c3278b91fa)
- + merge-tree: add a new --quiet flag
- + merge-ort: add a new mergeability_only option
-
- "git merge-tree" learned an option to see if it resolves cleanly
- without actually creating a result.
-
- Will merge to 'master'.
- source: <pull.1920.v4.git.1747425858.gitgitgadget@gmail.com>
 
 
 * lm/add-p-context (2025-05-12) 4 commits
@@ -521,20 +537,6 @@ Release tarballs are available at:
  source: <20250512-pks-contrib-spring-cleanup-v3-0-32e151b0bfb0@pks.im>
 
 
-* rj/build-tweaks-part2 (2025-05-19) 5 commits
-  (merged to 'next' on 2025-05-19 at fea40b8fb1)
- + configure.ac: upgrade to a compilation check for sysinfo
- + meson.build: correct setting of GIT_EXEC_PATH
- + meson: correct path to system config/attribute files
- + meson: correct install location of YAML.pm
- + meson.build: quote the GITWEBDIR build configuration
-
- Updates to meson-based build procedure.
-
- Will merge to 'master'.
- source: <20250519162523.1001478-1-ramsay@ramsayjones.plus.com>
-
-
 * ps/object-store (2025-05-14) 18 commits
  - odb: rename `read_object_with_reference()`
  - odb: rename `pretend_object_file()`
@@ -561,20 +563,6 @@ Release tarballs are available at:
  source: <20250514-pks-object-store-wo-the-repository-v3-0-47df1d4ead22@pks.im>
 
 
-* sj/use-mmap-to-check-packed-refs (2025-05-14) 3 commits
-  (merged to 'next' on 2025-05-21 at a0ed4fdf95)
- + packed-backend: mmap large "packed-refs" file during fsck
- + packed-backend: extract snapshot allocation in `load_contents`
- + packed-backend: fsck should warn when "packed-refs" file is empty
-
- The code path to access the "packed-refs" file while "fsck" is
- taught to mmap the file, instead of reading the whole file in the
- memory.
-
- Will merge to 'master'.
- source: <aCS7O8tNekg_u9Wp@ArchLinux>
-
-
 * cc/promisor-remote-capability (2025-05-19) 5 commits
  - promisor-remote: use string constants for 'name' and 'url' too
  - promisor-remote: allow a client to check fields
@@ -584,19 +572,6 @@ Release tarballs are available at:
 
  Comments?
  source: <20250519141259.3061550-1-christian.couder@gmail.com>
-
-
-* jc/doc-synopsis-option-markup (2025-05-12) 4 commits
-  (merged to 'next' on 2025-05-21 at cb897d1302)
- + git-var doc: fix usage of $ENV_VAR vs ENV_VAR
- + git-verify-* doc: update mark-up of synopsis option descriptions
- + git-{var,write-tree} docs: update mark-up of synopsis option descriptions
- + git-daemon doc: update mark-up of synopsis option descriptions
-
- Doc mark-up fixes.
-
- Will merge to 'master'.
- source: <20250510123346.20927-1-jn.avila@free.fr>
 
 
 * jc/you-still-use-whatchanged (2025-05-12) 6 commits
@@ -687,18 +662,6 @@ Release tarballs are available at:
  cf. <c2f93d99-2f4d-ee6d-7087-42320c6df0f2@gmx.de>
  cf. <e9700234-324d-dc63-d91e-9b8f36fabc79@gmail.com>
  source: <pull.1897.git.1743181401.gitgitgadget@gmail.com>
-
-
-* md/userdiff-bash-shell-function (2025-05-16) 1 commit
-  (merged to 'next' on 2025-05-16 at 1fe8b68a72)
- + userdiff: extend Bash pattern to cover more shell function forms
-
- The userdiff pattern for shell scripts has been updated to cope
- with more bash-isms.
-
- Will merge to 'master'.
- cf. <a72235c1-625a-4b90-8111-629b5a6ee7c2@kdbg.org>
- source: <20250516144515.49514-2-dhar61595@gmail.com>
 
 
 * ds/path-walk-2 (2025-05-16) 13 commits
