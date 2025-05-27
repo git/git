@@ -179,10 +179,19 @@ OPTIONS
 	Clean up whitespace. Specifically (see
 	linkgit:git-stripspace[1]):
 +
+--
 - remove trailing whitespace from all lines
 - collapse multiple consecutive empty lines into one empty line
 - remove empty lines from the beginning and end of the input
 - add a missing `\n` to the last line if necessary.
+--
++
+`--stripspace` is the default except for
+`-C`/`--reuse-message`. However, keep in mind that this depends on the
+order of similar options. For example, for `-C <object> -m<message>`,
+`--stripspace` will be used because the default for `-m` overrides the
+previous `-C`. This is a known limitation that may be fixed in the
+future.
 
 `--ref <ref>`::
 	Manipulate the notes tree in _<ref>_.  This overrides
