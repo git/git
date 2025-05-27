@@ -6594,6 +6594,7 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 	char **subjects;
 	struct commit_todo_item commit_todo;
 	struct todo_item *items = NULL;
+	int ret = 0;
 
 	init_commit_todo_item(&commit_todo);
 	/*
@@ -6624,8 +6625,8 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 		}
 
 		if (is_fixup(item->command)) {
-			clear_commit_todo_item(&commit_todo);
-			return error(_("the script was already rearranged."));
+			ret = error(_("the script was already rearranged."));
+			goto cleanup;
 		}
 
 		repo_parse_commit(the_repository, item->commit);
@@ -6727,6 +6728,7 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 		todo_list->items = items;
 	}
 
+cleanup:
 	free(next);
 	free(tail);
 	for (i = 0; i < todo_list->nr; i++)
@@ -6736,7 +6738,7 @@ int todo_list_rearrange_squash(struct todo_list *todo_list)
 
 	clear_commit_todo_item(&commit_todo);
 
-	return 0;
+	return ret;
 }
 
 int sequencer_determine_whence(struct repository *r, enum commit_whence *whence)
