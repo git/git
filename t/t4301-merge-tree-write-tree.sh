@@ -54,6 +54,25 @@ test_expect_success setup '
 	git commit -m first-commit
 '
 
+test_expect_success '--quiet on clean merge' '
+	# Get rid of loose objects to start with
+	git gc &&
+	echo "0 objects, 0 kilobytes" >expect &&
+	git count-objects >actual &&
+	test_cmp expect actual &&
+
+	# Ensure merge is successful (exit code of 0)
+	git merge-tree --write-tree --quiet side1 side3 >output &&
+
+	# Ensure there is no output
+	test_must_be_empty output &&
+
+	# Ensure no loose objects written (all new objects written would have
+	# been in "outer layer" of the merge)
+	git count-objects >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'Clean merge' '
 	TREE_OID=$(git merge-tree --write-tree side1 side3) &&
 	q_to_tab <<-EOF >expect &&
@@ -70,6 +89,25 @@ test_expect_success 'Clean merge' '
 test_expect_success 'Failed merge without rename detection' '
 	test_must_fail git -c diff.renames=false merge-tree --write-tree side1 side3 >out &&
 	grep "CONFLICT (modify/delete): numbers deleted" out
+'
+
+test_expect_success  '--quiet on conflicted merge' '
+	# Get rid of loose objects to start with
+	git gc &&
+	echo "0 objects, 0 kilobytes" >expect &&
+	git count-objects >actual &&
+	test_cmp expect actual &&
+
+	# Ensure merge has conflict
+	test_expect_code 1 git merge-tree --write-tree --quiet side1 side2 >output &&
+
+	# Ensure there is no output
+	test_must_be_empty output &&
+
+	# Ensure no loose objects written (all new objects written would have
+	# been in "outer layer" of the merge)
+	git count-objects >actual &&
+	test_cmp expect actual
 '
 
 test_expect_success 'Content merge and a few conflicts' '
