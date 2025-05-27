@@ -2272,6 +2272,7 @@ proc bind_mousewheel {} {
     bind $ctext <Shift-MouseWheel> {$ctext xview scroll [scrollval %D 2] units}
     bind $cflist <MouseWheel> {$cflist yview scroll [scrollval %D 2] units}
     bind $cflist <Shift-MouseWheel> break
+    bind $canv <Shift-MouseWheel> {$canv xview scroll [scrollval %D] units}
 }
 
 proc bind_mousewheel_buttons {} {
@@ -2288,6 +2289,8 @@ proc bind_mousewheel_buttons {} {
         bind $cflist <ButtonRelease-5> {$cflist yview scroll  [scrollval -1 2] units}
         bind $cflist <Shift-ButtonRelease-4> break
         bind $cflist <Shift-ButtonRelease-5> break
+        bind $canv <Shift-ButtonRelease-4> {$canv xview scroll [scrollval 1] units}
+        bind $canv <Shift-ButtonRelease-5> {$canv xview scroll [scrollval -1] units}
 }
 
 proc makewindow {} {
@@ -2388,6 +2391,7 @@ proc makewindow {} {
     canvas $canv \
         -selectbackground $selectbgcolor \
         -background $bgcolor -bd 0 \
+        -xscrollincr $linespc \
         -yscrollincr $linespc -yscrollcommand "scrollcanv $cscroll"
     .tf.histframe.pwclist add $canv
     set canv2 .tf.histframe.pwclist.canv2
