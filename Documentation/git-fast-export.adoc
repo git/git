@@ -46,14 +46,12 @@ resulting tag will have an invalid signature.
 
 --signed-commits=(verbatim|warn-verbatim|warn-strip|strip|abort)::
 	Specify how to handle signed commits.  Behaves exactly as
-	'--signed-tags', but for commits.  Default is 'abort'.
+	'--signed-tags', but for commits.  Default is 'strip', which
+	is the same as how earlier versions of this command without
+	this option behaved.
 +
-Earlier versions this command that did not have '--signed-commits'
-behaved as if '--signed-commits=strip'.  As an escape hatch for users
-of tools that call 'git fast-export' but do not yet support
-'--signed-commits', you may set the environment variable
-'FAST_EXPORT_SIGNED_COMMITS_NOABORT=1' in order to change the default
-from 'abort' to 'warn-strip'.
+NOTE: This is highly experimental and the format of the data stream may
+change in the future without compatibility guarantees.
 
 --tag-of-filtered-object=(abort|drop|rewrite)::
 	Specify how to handle tags whose tagged object is filtered out.

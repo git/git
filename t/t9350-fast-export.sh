@@ -299,22 +299,10 @@ test_expect_success GPG 'set up signed commit' '
 
 '
 
-test_expect_success GPG 'signed-commits default' '
-
-	sane_unset FAST_EXPORT_SIGNED_COMMITS_NOABORT &&
-	test_must_fail git fast-export --reencode=no commit-signing &&
-
-	FAST_EXPORT_SIGNED_COMMITS_NOABORT=1 git fast-export --reencode=no commit-signing >output 2>err &&
-	! grep ^gpgsig output &&
-	grep "^encoding ISO-8859-1" output &&
-	test -s err &&
-	sed "s/commit-signing/commit-strip-signing/" output | (
-		cd new &&
-		git fast-import &&
-		STRIPPED=$(git rev-parse --verify refs/heads/commit-strip-signing) &&
-		test $COMMIT_SIGNING != $STRIPPED
-	)
-
+test_expect_success GPG 'signed-commits default is same as strip' '
+	git fast-export --reencode=no commit-signing >out1 2>err &&
+	git fast-export --reencode=no --signed-commits=strip commit-signing >out2 &&
+	test_cmp out1 out2
 '
 
 test_expect_success GPG 'signed-commits=abort' '
