@@ -85,6 +85,10 @@ UI, Workflows & Features
  * The commit title in the "rebase -i" todo file are now prefixed with
    '#', just like a merge commit being replayed.
 
+ * "git receive-pack" optionally learns not to care about connectivity
+   check, which can be useful when the repository arranges to ensure
+   connectivity by some other means.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -184,6 +188,10 @@ Performance, Internal Implementation, Development Support etc.
    memory.
 
  * Assorted fixes for issues found with CodeQL.
+
+ * Remove the leftover hints to the test framework to mark tests that
+   do not pass the leak checker tests, as they should no longer be
+   needed.
 
 
 Fixes since v2.49
