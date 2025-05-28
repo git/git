@@ -93,7 +93,7 @@ method _start {} {
 	set spec [$w_rev get_tracking_branch]
 	set cmit [$w_rev get_commit]
 
-	set fh [open [gitdir FETCH_HEAD] w]
+	set fh [safe_open_file [gitdir FETCH_HEAD] w]
 	fconfigure $fh -translation lf
 	if {$spec eq {}} {
 		set remote .
@@ -118,7 +118,7 @@ method _start {} {
 		set cmd [list git]
 		lappend cmd merge
 		lappend cmd --strategy=recursive
-		lappend cmd [git fmt-merge-msg <[gitdir FETCH_HEAD]]
+		lappend cmd [git_redir [list fmt-merge-msg] [list <[gitdir FETCH_HEAD]]]
 		lappend cmd HEAD
 		lappend cmd $name
 	}
@@ -239,7 +239,7 @@ Continue with resetting the current changes?"]
 	}
 
 	if {[ask_popup $op_question] eq {yes}} {
-		set fd [git_read --stderr read-tree --reset -u -v HEAD]
+		set fd [git_read [list read-tree --reset -u -v HEAD] [list 2>@1]]
 		fconfigure $fd -blocking 0 -translation binary
 		set status_bar_operation [$::main_status \
 			start \
