@@ -629,7 +629,7 @@ integration_tests = [
   't5407-post-rewrite-hook.sh',
   't5408-send-pack-stdin.sh',
   't5409-colorize-remote-messages.sh',
-  't5410-receive-pack-alternates.sh',
+  't5410-receive-pack.sh',
   't5411-proc-receive-hook.sh',
   't5500-fetch-pack.sh',
   't5501-fetch-push-alternates.sh',
