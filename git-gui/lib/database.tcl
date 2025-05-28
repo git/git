@@ -3,7 +3,7 @@
 
 proc do_stats {} {
 	global use_ttk NS
-	set fd [git_read count-objects -v]
+	set fd [git_read [list count-objects -v]]
 	while {[gets $fd line] > 0} {
 		if {[regexp {^([^:]+): (\d+)$} $line _ name value]} {
 			set stats($name) $value
