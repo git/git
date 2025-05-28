@@ -7,7 +7,7 @@ proc find_ssh_key {} {
 		~/.ssh/id_rsa.pub ~/.ssh/identity.pub
 	} {
 		if {[file exists $name]} {
-			set fh    [open $name r]
+			set fh    [safe_open_file $name r]
 			set cont  [read $fh]
 			close $fh
 			return [list $name $cont]
@@ -83,9 +83,10 @@ proc make_ssh_key {w} {
 	set sshkey_title [mc "Generating..."]
 	$w.header.gen configure -state disabled
 
-	set cmdline [list sh -c {echo | ssh-keygen -q -t rsa -f ~/.ssh/id_rsa 2>&1}]
+	set cmdline [list [shellpath] -c \
+		{echo | ssh-keygen -q -t rsa -f ~/.ssh/id_rsa 2>&1}]
 
-	if {[catch { set sshkey_fd [_open_stdout_stderr $cmdline] } err]} {
+	if {[catch { set sshkey_fd [safe_open_command $cmdline] } err]} {
 		error_popup [mc "Could not start ssh-keygen:\n\n%s" $err]
 		return
 	}
