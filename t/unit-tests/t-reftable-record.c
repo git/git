@@ -17,7 +17,7 @@ static void t_copy(struct reftable_record *rec)
 	uint8_t typ;
 
 	typ = reftable_record_type(rec);
-	reftable_record_init(&copy, typ);
+	check(!reftable_record_init(&copy, typ));
 	reftable_record_copy_from(&copy, rec, REFTABLE_HASH_SIZE_SHA1);
 	/* do it twice to catch memory leaks */
 	reftable_record_copy_from(&copy, rec, REFTABLE_HASH_SIZE_SHA1);
@@ -84,32 +84,36 @@ static void t_reftable_ref_record_comparison(void)
 {
 	struct reftable_record in[3] = {
 		{
-			.type = BLOCK_TYPE_REF,
+			.type = REFTABLE_BLOCK_TYPE_REF,
 			.u.ref.refname = (char *) "refs/heads/master",
 			.u.ref.value_type = REFTABLE_REF_VAL1,
 		},
 		{
-			.type = BLOCK_TYPE_REF,
+			.type = REFTABLE_BLOCK_TYPE_REF,
 			.u.ref.refname = (char *) "refs/heads/master",
 			.u.ref.value_type = REFTABLE_REF_DELETION,
 		},
 		{
-			.type = BLOCK_TYPE_REF,
+			.type = REFTABLE_BLOCK_TYPE_REF,
 			.u.ref.refname = (char *) "HEAD",
 			.u.ref.value_type = REFTABLE_REF_SYMREF,
 			.u.ref.value.symref = (char *) "refs/heads/master",
 		},
 	};
+	int cmp;
 
 	check(!reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1));
-	check(!reftable_record_cmp(&in[0], &in[1]));
+	check(!reftable_record_cmp(&in[0], &in[1], &cmp));
+	check(!cmp);
 
 	check(!reftable_record_equal(&in[1], &in[2], REFTABLE_HASH_SIZE_SHA1));
-	check_int(reftable_record_cmp(&in[1], &in[2]), >, 0);
+	check(!reftable_record_cmp(&in[1], &in[2], &cmp));
+	check_int(cmp, >, 0);
 
 	in[1].u.ref.value_type = in[0].u.ref.value_type;
 	check(reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1));
-	check(!reftable_record_cmp(&in[0], &in[1]));
+	check(!reftable_record_cmp(&in[0], &in[1], &cmp));
+	check(!cmp);
 }
 
 static void t_reftable_ref_record_compare_name(void)
@@ -137,10 +141,10 @@ static void t_reftable_ref_record_roundtrip(void)
 
 	for (int i = REFTABLE_REF_DELETION; i < REFTABLE_NR_REF_VALUETYPES; i++) {
 		struct reftable_record in = {
-			.type = BLOCK_TYPE_REF,
+			.type = REFTABLE_BLOCK_TYPE_REF,
 			.u.ref.value_type = i,
 		};
-		struct reftable_record out = { .type = BLOCK_TYPE_REF };
+		struct reftable_record out = { .type = REFTABLE_BLOCK_TYPE_REF };
 		struct reftable_buf key = REFTABLE_BUF_INIT;
 		uint8_t buffer[1024] = { 0 };
 		struct string_view dest = {
@@ -194,32 +198,35 @@ static void t_reftable_log_record_comparison(void)
 {
 	struct reftable_record in[3] = {
 		{
-			.type = BLOCK_TYPE_LOG,
+			.type = REFTABLE_BLOCK_TYPE_LOG,
 			.u.log.refname = (char *) "refs/heads/master",
 			.u.log.update_index = 42,
 		},
 		{
-			.type = BLOCK_TYPE_LOG,
+			.type = REFTABLE_BLOCK_TYPE_LOG,
 			.u.log.refname = (char *) "refs/heads/master",
 			.u.log.update_index = 22,
 		},
 		{
-			.type = BLOCK_TYPE_LOG,
+			.type = REFTABLE_BLOCK_TYPE_LOG,
 			.u.log.refname = (char *) "refs/heads/main",
 			.u.log.update_index = 22,
 		},
 	};
+	int cmp;
 
 	check(!reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1));
 	check(!reftable_record_equal(&in[1], &in[2], REFTABLE_HASH_SIZE_SHA1));
-	check_int(reftable_record_cmp(&in[1], &in[2]), >, 0);
+	check(!reftable_record_cmp(&in[1], &in[2], &cmp));
+	check_int(cmp, >, 0);
 	/* comparison should be reversed for equal keys, because
 	 * comparison is now performed on the basis of update indices */
-	check_int(reftable_record_cmp(&in[0], &in[1]), <, 0);
+	check(!reftable_record_cmp(&in[0], &in[1], &cmp));
+	check_int(cmp, <, 0);
 
 	in[1].u.log.update_index = in[0].u.log.update_index;
 	check(reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1));
-	check(!reftable_record_cmp(&in[0], &in[1]));
+	check(!reftable_record_cmp(&in[0], &in[1], &cmp));
 }
 
 static void t_reftable_log_record_compare_key(void)
@@ -290,7 +297,7 @@ static void t_reftable_log_record_roundtrip(void)
 	check(!reftable_log_record_is_deletion(&in[2]));
 
 	for (size_t i = 0; i < ARRAY_SIZE(in); i++) {
-		struct reftable_record rec = { .type = BLOCK_TYPE_LOG };
+		struct reftable_record rec = { .type = REFTABLE_BLOCK_TYPE_LOG };
 		struct reftable_buf key = REFTABLE_BUF_INIT;
 		uint8_t buffer[1024] = { 0 };
 		struct string_view dest = {
@@ -299,7 +306,7 @@ static void t_reftable_log_record_roundtrip(void)
 		};
 		/* populate out, to check for leaks. */
 		struct reftable_record out = {
-			.type = BLOCK_TYPE_LOG,
+			.type = REFTABLE_BLOCK_TYPE_LOG,
 			.u.log = {
 				.refname = xstrdup("old name"),
 				.value_type = REFTABLE_LOG_UPDATE,
@@ -377,35 +384,39 @@ static void t_reftable_obj_record_comparison(void)
 	uint64_t offsets[] = { 0, 16, 32, 48, 64, 80, 96, 112};
 	struct reftable_record in[3] = {
 		{
-			.type = BLOCK_TYPE_OBJ,
+			.type = REFTABLE_BLOCK_TYPE_OBJ,
 			.u.obj.hash_prefix = id_bytes,
 			.u.obj.hash_prefix_len = 7,
 			.u.obj.offsets = offsets,
 			.u.obj.offset_len = 8,
 		},
 		{
-			.type = BLOCK_TYPE_OBJ,
+			.type = REFTABLE_BLOCK_TYPE_OBJ,
 			.u.obj.hash_prefix = id_bytes,
 			.u.obj.hash_prefix_len = 7,
 			.u.obj.offsets = offsets,
 			.u.obj.offset_len = 5,
 		},
 		{
-			.type = BLOCK_TYPE_OBJ,
+			.type = REFTABLE_BLOCK_TYPE_OBJ,
 			.u.obj.hash_prefix = id_bytes,
 			.u.obj.hash_prefix_len = 5,
 		},
 	};
+	int cmp;
 
 	check(!reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1));
-	check(!reftable_record_cmp(&in[0], &in[1]));
+	check(!reftable_record_cmp(&in[0], &in[1], &cmp));
+	check(!cmp);
 
 	check(!reftable_record_equal(&in[1], &in[2], REFTABLE_HASH_SIZE_SHA1));
-	check_int(reftable_record_cmp(&in[1], &in[2]), >, 0);
+	check(!reftable_record_cmp(&in[1], &in[2], &cmp));
+	check_int(cmp, >, 0);
 
 	in[1].u.obj.offset_len = in[0].u.obj.offset_len;
 	check(reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1));
-	check(!reftable_record_cmp(&in[0], &in[1]));
+	check(!reftable_record_cmp(&in[0], &in[1], &cmp));
+	check(!cmp);
 }
 
 static void t_reftable_obj_record_roundtrip(void)
@@ -439,13 +450,13 @@ static void t_reftable_obj_record_roundtrip(void)
 			.len = sizeof(buffer),
 		};
 		struct reftable_record in = {
-			.type = BLOCK_TYPE_OBJ,
+			.type = REFTABLE_BLOCK_TYPE_OBJ,
 			.u = {
 				.obj = recs[i],
 			},
 		};
 		struct reftable_buf key = REFTABLE_BUF_INIT;
-		struct reftable_record out = { .type = BLOCK_TYPE_OBJ };
+		struct reftable_record out = { .type = REFTABLE_BLOCK_TYPE_OBJ };
 		int n, m;
 		uint8_t extra;
 
@@ -471,34 +482,39 @@ static void t_reftable_index_record_comparison(void)
 {
 	struct reftable_record in[3] = {
 		{
-			.type = BLOCK_TYPE_INDEX,
+			.type = REFTABLE_BLOCK_TYPE_INDEX,
 			.u.idx.offset = 22,
 			.u.idx.last_key = REFTABLE_BUF_INIT,
 		},
 		{
-			.type = BLOCK_TYPE_INDEX,
+			.type = REFTABLE_BLOCK_TYPE_INDEX,
 			.u.idx.offset = 32,
 			.u.idx.last_key = REFTABLE_BUF_INIT,
 		},
 		{
-			.type = BLOCK_TYPE_INDEX,
+			.type = REFTABLE_BLOCK_TYPE_INDEX,
 			.u.idx.offset = 32,
 			.u.idx.last_key = REFTABLE_BUF_INIT,
 		},
 	};
+	int cmp;
+
 	check(!reftable_buf_addstr(&in[0].u.idx.last_key, "refs/heads/master"));
 	check(!reftable_buf_addstr(&in[1].u.idx.last_key, "refs/heads/master"));
 	check(!reftable_buf_addstr(&in[2].u.idx.last_key, "refs/heads/branch"));
 
 	check(!reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1));
-	check(!reftable_record_cmp(&in[0], &in[1]));
+	check(!reftable_record_cmp(&in[0], &in[1], &cmp));
+	check(!cmp);
 
 	check(!reftable_record_equal(&in[1], &in[2], REFTABLE_HASH_SIZE_SHA1));
-	check_int(reftable_record_cmp(&in[1], &in[2]), >, 0);
+	check(!reftable_record_cmp(&in[1], &in[2], &cmp));
+	check_int(cmp, >, 0);
 
 	in[1].u.idx.offset = in[0].u.idx.offset;
 	check(reftable_record_equal(&in[0], &in[1], REFTABLE_HASH_SIZE_SHA1));
-	check(!reftable_record_cmp(&in[0], &in[1]));
+	check(!reftable_record_cmp(&in[0], &in[1], &cmp));
+	check(!cmp);
 
 	for (size_t i = 0; i < ARRAY_SIZE(in); i++)
 		reftable_record_release(&in[i]);
@@ -507,7 +523,7 @@ static void t_reftable_index_record_comparison(void)
 static void t_reftable_index_record_roundtrip(void)
 {
 	struct reftable_record in = {
-		.type = BLOCK_TYPE_INDEX,
+		.type = REFTABLE_BLOCK_TYPE_INDEX,
 		.u.idx = {
 			.offset = 42,
 			.last_key = REFTABLE_BUF_INIT,
@@ -521,7 +537,7 @@ static void t_reftable_index_record_roundtrip(void)
 	struct reftable_buf scratch = REFTABLE_BUF_INIT;
 	struct reftable_buf key = REFTABLE_BUF_INIT;
 	struct reftable_record out = {
-		.type = BLOCK_TYPE_INDEX,
+		.type = REFTABLE_BLOCK_TYPE_INDEX,
 		.u.idx = { .last_key = REFTABLE_BUF_INIT },
 	};
 	int n, m;

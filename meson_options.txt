@@ -1,12 +1,16 @@
+# Configuration for Git installation
+option('perllibdir', type: 'string', value: '',
+  description: 'Directory to install perl lib to. Defaults to <datadir>/perl5')
+
 # Configuration for how Git behaves at runtime.
 option('default_pager', type: 'string', value: 'less',
   description: 'Fall-back pager.')
 option('default_editor', type: 'string', value: 'vi',
   description: 'Fall-back editor.')
-option('gitconfig', type: 'string', value: '/etc/gitconfig',
-  description: 'Path to the global git configuration file.')
-option('gitattributes', type: 'string', value: '/etc/gitattributes',
-  description: 'Path to the global git attributes file.')
+option('gitconfig', type: 'string',
+  description: 'Path to the global git configuration file. (default: etc/gitconfig)')
+option('gitattributes', type: 'string',
+  description: 'Path to the global git attributes file. (default: etc/gitattributes)')
 option('pager_environment', type: 'string', value: 'LESS=FRX LV=-c',
   description: 'Environment used when spawning the pager')
 option('perl_cpan_fallback', type: 'boolean', value: true,
@@ -95,12 +99,20 @@ option('highlight_bin', type: 'string', value: 'highlight')
 # Documentation.
 option('docs', type: 'array', choices: ['man', 'html'], value: [],
   description: 'Which documenattion formats to build and install.')
-option('default_help_format', type: 'combo', choices: ['man', 'html'], value: 'man',
+option('default_help_format', type: 'combo', choices: ['man', 'html', 'platform'], value: 'platform',
   description: 'Default format used when executing git-help(1).')
 option('docs_backend', type: 'combo', choices: ['asciidoc', 'asciidoctor', 'auto'], value: 'auto',
   description: 'Which backend to use to generate documentation.')
 
 # Testing.
+option('benchmarks', type: 'feature', value: 'auto',
+  description: 'Enable benchmarks. This requires Perl and GNU time.')
+option('benchmark_repo', type: 'string', value: '',
+  description: 'Repository to copy for the performance tests. Should be at least the size of the Git repository.')
+option('benchmark_large_repo', type: 'string', value: '',
+  description: 'Large repository to copy for the performance tests. Should be at least the size of the Linux repository.')
+option('benchmark_repeat_count', type: 'integer', value: 3,
+  description: 'Number of times a test should be repeated for best-of-N measurements.')
 option('coccinelle', type: 'feature', value: 'auto',
   description: 'Provide a coccicheck target that generates a Coccinelle patch.')
 option('tests', type: 'boolean', value: true,

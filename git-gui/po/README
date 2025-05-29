@@ -21,8 +21,8 @@ them.
 You would then need to clone the git-gui project repository and create
 a feature branch to begin working:
 
-	$ git clone git://repo.or.cz/git-gui.git
-	$ cd git-gui.git
+	$ git clone https://github.com/j6t/git-gui
+	$ cd git-gui
 	$ git checkout -b my-translation
 
 The "git checkout" command creates a new branch to keep your work
@@ -47,6 +47,10 @@ language, you do not have to perform any step in this section, but keep
 reading, because we are covering the basics.
 
 If you did not find your language, you would need to start one yourself.
+Generate po/git-gui.pot using
+
+	$ make po/git-gui.pot
+
 Copy po/git-gui.pot file to po/af.po (replace "af" with the code for
 your language).  Edit the first several lines to match existing *.po
 files to make it clear this is a translation table for git-gui project,
@@ -153,7 +157,7 @@ your patch series to the maintainer and the Git mailing list:
 	$ git add po/af.po
 	$ git commit -s -m 'git-gui: added Afrikaans translation.'
 	$ git send-email --to 'git@vger.kernel.org' \
-	   --cc 'Pat Thoyts <patthoyts@users.sourceforge.net>' \
+	   --cc 'Johannes Sixt <j6t@kdbg.org>' \
 	   --subject 'git-gui: Afrikaans translation' \
 	   master..
 
@@ -169,18 +173,7 @@ In any case, make sure you are up to date before starting your work:
 
 	$ git checkout master
 	$ git pull
-
-In the former case, you will edit po/af.po (again, replace "af" with
-your language code), and after testing and updating the Last-Translator:
-and PO-Revision-Date: lines, "add/commit/push" as in the previous
-section.
-
-By comparing "POT-Creation-Date:" line in po/git-gui.pot file and
-po/af.po file, you can tell if there are new messages that need to be
-translated.  You would need the GNU gettext package to perform this
-step.
-
-	$ msgmerge -U po/af.po po/git-gui.pot
+	$ make ALL_POFILES=po/af.po update-po
 
 This updates po/af.po (again, replace "af" with your language
 code) so that it contains msgid lines (i.e. the original) that
@@ -200,52 +193,5 @@ watch out for:
  - New messages added to the software will have msgstr lines with empty
    strings.  You would need to translate them.
 
-The po/git-gui.pot file is updated by the internationalization
-coordinator from time to time.  You _could_ update it yourself, but
-translators are discouraged from doing so because we would want all
-language teams to be working off of the same version of git-gui.pot.
-
-****************************************************************
-
-This section is a note to the internationalization coordinator, and
-translators do not have to worry about it too much.
-
-The message template file po/git-gui.pot needs to be kept up to date
-relative to the software the translations apply to, and it is the
-responsibility of the internationalization coordinator.
-
-When updating po/git-gui.pot file, however, _never_ run "msgmerge -U
-po/xx.po" for individual language translations, unless you are absolutely
-sure that there is no outstanding work on translation for language xx.
-Doing so will create unnecessary merge conflicts and force needless
-re-translation on translators.  The translator however may not have access
-to the msgmerge tool, in which case the coordinator may run it for the
-translator as a service.
-
-But mistakes do happen.  Suppose a translation was based on an older
-version X, the POT file was updated at version Y and then msgmerge was run
-at version Z for the language, and the translator sent in a patch based on
-version X:
-
-         ? translated
-        /
-    ---X---Y---Z (master)
-
-The coordinator could recover from such a mistake by first applying the
-patch to X, replace the translated file in Z, and then running msgmerge
-again based on the updated POT file and commit the result.  The sequence
-would look like this:
-
-    $ git checkout X
-    $ git am -s xx.patch
-    $ git checkout master
-    $ git checkout HEAD@{1} po/xx.po
-    $ msgmerge -U po/xx.po po/git-gui.pot
-    $ git commit -c HEAD@{1} po/xx.po
-
-State in the message that the translated messages are based on a slightly
-older version, and msgmerge was run to incorporate changes to message
-templates from the updated POT file.  The result needs to be further
-translated, but at least the messages that were updated by the patch that
-were not changed by the POT update will survive the process and do not
-need to be re-translated.
+After testing and updating the Last-Translator: and PO-Revision-Date:
+lines, "add/commit/push" as in the previous section.

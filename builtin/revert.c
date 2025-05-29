@@ -132,8 +132,16 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 		OPT_STRING(0, "strategy", &strategy, N_("strategy"), N_("merge strategy")),
 		OPT_STRVEC('X', "strategy-option", &opts->xopts, N_("option"),
 			N_("option for merge strategy")),
-		{ OPTION_STRING, 'S', "gpg-sign", &gpg_sign, N_("key-id"),
-		  N_("GPG sign commit"), PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
+		{
+			.type = OPTION_STRING,
+			.short_name = 'S',
+			.long_name = "gpg-sign",
+			.value = &gpg_sign,
+			.argh = N_("key-id"),
+			.help = N_("GPG sign commit"),
+			.flags = PARSE_OPT_OPTARG,
+			.defval = (intptr_t) "",
+		},
 		OPT_END()
 	};
 	struct option *options = base_options;
@@ -252,8 +260,6 @@ static int run_sequencer(int argc, const char **argv, const char *prefix,
 		free(opts->strategy);
 		opts->strategy = xstrdup_or_null(strategy);
 	}
-	if (!opts->strategy && getenv("GIT_TEST_MERGE_ALGORITHM"))
-		opts->strategy = xstrdup(getenv("GIT_TEST_MERGE_ALGORITHM"));
 	free(options);
 
 	if (cmd == 'q') {

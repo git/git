@@ -1,22 +1,12 @@
-spatch = find_program('spatch', required: get_option('coccinelle'))
+coccinelle_opt = get_option('coccinelle').require(
+  fs.exists(meson.project_source_root() / '.git'),
+  error_message: 'coccinelle can only be run from a git checkout',
+)
+
+spatch = find_program('spatch', required: coccinelle_opt)
 if not spatch.found()
   subdir_done()
 endif
-
-third_party_sources = [
-  ':!contrib',
-  ':!compat/inet_ntop.c',
-  ':!compat/inet_pton.c',
-  ':!compat/nedmalloc',
-  ':!compat/obstack.*',
-  ':!compat/poll',
-  ':!compat/regex',
-  ':!sha1collisiondetection',
-  ':!sha1dc',
-  ':!t/unit-tests/clar',
-  ':!t/unit-tests/clar',
-  ':!t/t[0-9][0-9][0-9][0-9]*',
-]
 
 rules = [
   'array.cocci',
@@ -50,18 +40,18 @@ concatenated_rules = custom_target(
   capture: true,
 )
 
-sources = [ ]
-foreach source : run_command(git, '-C', meson.project_source_root(), 'ls-files', '--deduplicate', '*.c', third_party_sources, check: true).stdout().split()
-  sources += source
+coccinelle_sources = []
+foreach source : run_command(git, '-C', meson.project_source_root(), 'ls-files', '--deduplicate', '*.c', third_party_excludes, check: true).stdout().split()
+  coccinelle_sources += source
 endforeach
 
-headers = [ ]
-foreach header : run_command(git, '-C', meson.project_source_root(), 'ls-files', '--deduplicate', '*.h', third_party_sources, check: true).stdout().split()
-  headers += meson.project_source_root() / header
+coccinelle_headers = []
+foreach header : headers_to_check
+  coccinelle_headers += meson.project_source_root() / header
 endforeach
 
 patches = [ ]
-foreach source : sources
+foreach source : coccinelle_sources
   patches += custom_target(
     command: [
       spatch,
@@ -73,7 +63,7 @@ foreach source : sources
     input: meson.project_source_root() / source,
     output: source.underscorify() + '.patch',
     capture: true,
-    depend_files: headers,
+    depend_files: coccinelle_headers,
   )
 endforeach
 

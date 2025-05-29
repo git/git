@@ -109,13 +109,12 @@ check_output () {
 # All alphanums translated into -'s which are then compressed and stripped
 # from front and back.
 name_from_description () {
-	perl -pe '
-		s/[^A-Za-z0-9.]/-/g;
-		s/-+/-/g;
-		s/-$//;
-		s/^-//;
-		y/A-Z/a-z/;
-	'
+	sed \
+		-e 's/[^A-Za-z0-9.]/-/g' \
+		-e 's/--*/-/g' \
+		-e 's/-$//' \
+		-e 's/^-//' \
+		-e 'y/A-Z/a-z/'
 }
 
 

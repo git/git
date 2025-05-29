@@ -49,7 +49,6 @@ int fsync_object_files = -1;
 int use_fsync = -1;
 enum fsync_method fsync_method = FSYNC_METHOD_DEFAULT;
 enum fsync_component fsync_components = FSYNC_COMPONENTS_DEFAULT;
-unsigned long big_file_threshold = 512 * 1024 * 1024;
 char *editor_program;
 char *askpass_program;
 char *excludes_file;
@@ -82,6 +81,16 @@ int max_allowed_tree_depth =
 	 * the stack overflow can occur.
 	 */
 	512;
+#elif defined(GIT_WINDOWS_NATIVE) && defined(__clang__) && defined(__aarch64__)
+	/*
+	 * Similar to Visual C, it seems that on Windows/ARM64 the clang-based
+	 * builds have a smaller stack space available. When running out of
+	 * that stack space, a `STATUS_STACK_OVERFLOW` is produced. When the
+	 * Git command was run from an MSYS2 Bash, this unfortunately results
+	 * in an exit code 127. Let's prevent that by lowering the maximal
+	 * tree depth; This value seems to be low enough.
+	 */
+	1280;
 #else
 	2048;
 #endif
@@ -107,7 +116,7 @@ int auto_comment_line_char;
 /* Parallel index stat data preload? */
 int core_preload_index = 1;
 
-/* This is set by setup_git_dir_gently() and/or git_default_config() */
+/* This is set by setup_git_directory_gently() and/or git_default_config() */
 char *git_work_tree_cfg;
 
 /*

@@ -8,6 +8,12 @@ test_description='Per branch config variables affects "git fetch".
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-bundle.sh
 
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping fetch tests; Perl not available'
+	test_done
+fi
+
 D=$(pwd)
 
 test_expect_success setup '
@@ -119,7 +125,10 @@ test_expect_success "fetch test followRemoteHEAD never" '
 		cd two &&
 		git update-ref --no-deref -d refs/remotes/origin/HEAD &&
 		git config set remote.origin.followRemoteHEAD "never" &&
-		git fetch &&
+		GIT_TRACE_PACKET=$PWD/trace.out git fetch &&
+		# Confirm that we do not even ask for HEAD when we are
+		# not going to act on it.
+		test_grep ! "ref-prefix HEAD" trace.out &&
 		test_must_fail git rev-parse --verify refs/remotes/origin/HEAD
 	)
 '
@@ -247,6 +256,20 @@ test_expect_success "fetch test followRemoteHEAD always" '
 		head=$(git rev-parse refs/remotes/origin/HEAD) &&
 		branch=$(git rev-parse refs/remotes/origin/main) &&
 		test "z$head" = "z$branch"
+	)
+'
+
+test_expect_success 'followRemoteHEAD does not kick in with refspecs' '
+	test_when_finished "git config unset remote.origin.followRemoteHEAD" &&
+	(
+		cd "$D" &&
+		cd two &&
+		git remote set-head origin other &&
+		git config set remote.origin.followRemoteHEAD always &&
+		git fetch origin refs/heads/main:refs/remotes/origin/main &&
+		echo refs/remotes/origin/other >expect &&
+		git symbolic-ref refs/remotes/origin/HEAD >actual &&
+		test_cmp expect actual
 	)
 '
 
@@ -535,6 +558,19 @@ test_expect_success 'fetch --atomic --append appends to FETCH_HEAD' '
 	git branch atomic-fetch-head-3 &&
 	test_must_fail git -C atomic fetch --atomic --append origin atomic-fetch-head-3 &&
 	test_cmp expected atomic/.git/FETCH_HEAD
+'
+
+test_expect_success REFFILES 'fetch --atomic fails transaction if reference locked' '
+	test_when_finished "rm -rf upstream repo" &&
+
+	git init upstream &&
+	git -C upstream commit --allow-empty -m 1 &&
+	git -C upstream switch -c foobar &&
+	git clone --mirror upstream repo &&
+	git -C upstream commit --allow-empty -m 2 &&
+	touch repo/refs/heads/foobar.lock &&
+
+	test_must_fail git -C repo fetch --atomic origin
 '
 
 test_expect_success '--refmap="" ignores configured refspec' '

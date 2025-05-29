@@ -158,6 +158,25 @@ test_expect_success mark_unblamable_lines '
 	test_cmp expect actual
 '
 
+for opt in --porcelain --line-porcelain
+do
+	test_expect_success "mark_unblamable_lines with $opt" "
+		sha=$(git rev-parse Y) &&
+
+		git -c blame.markUnblamableLines=false blame $opt --ignore-rev Y file >raw &&
+		cat > sedscript <<- 'EOF' &&
+		/^	y3/i\\
+		unblamable
+		/^	y4/i\\
+		unblamable
+		EOF
+		sed -f sedscript raw >expect &&
+
+		git -c blame.markUnblamableLines=true blame $opt --ignore-rev Y file >actual &&
+		test_cmp expect actual
+	"
+done
+
 # Commit Z will touch the first two lines.  Y touched all four.
 # 	A--B--X--Y--Z
 # The blame output when ignoring Z should be:
@@ -190,6 +209,25 @@ test_expect_success mark_ignored_lines '
 	sed -n "4p" blame_raw | cut -c1 >actual &&
 	! test_cmp expect actual
 '
+
+for opt in --porcelain --line-porcelain
+do
+	test_expect_success "mark_ignored_lines with $opt" "
+		sha=$(git rev-parse Y) &&
+
+		git -c blame.markIgnoredLines=false blame $opt --ignore-rev Z file >raw &&
+		cat > sedscript <<- 'EOF' &&
+		/^	line-one-Z/i\\
+		ignored
+		/^	line-two-Z/i\\
+		ignored
+		EOF
+		sed -f sedscript raw >expect &&
+
+		git -c blame.markIgnoredLines=true blame $opt --ignore-rev Z file >actual &&
+		test_cmp expect actual
+	"
+done
 
 # For ignored revs that added 'unblamable' lines and more recent commits changed
 # the blamable lines, mark the unblamable lines with a

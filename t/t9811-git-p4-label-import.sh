@@ -95,9 +95,8 @@ test_expect_success 'two labels on the same changelist' '
 		cd "$git" &&
 		git p4 sync --import-labels &&
 
-		git tag | grep TAG_F1 &&
-		git tag | grep -q TAG_F1_1 &&
-		git tag | grep -q TAG_F1_2 &&
+		git show-ref --verify refs/tags/TAG_F1_1 &&
+		git show-ref --verify refs/tags/TAG_F1_2 &&
 
 		cd main &&
 
@@ -207,8 +206,7 @@ test_expect_success 'use git config to enable import/export of tags' '
 		git tag CFG_A_GIT_TAG &&
 		git p4 rebase --verbose &&
 		git p4 submit --verbose &&
-		git tag &&
-		git tag | grep TAG_F1_1
+		git show-ref --verify refs/tags/TAG_F1_1
 	) &&
 	(
 		cd "$cli" &&

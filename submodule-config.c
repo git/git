@@ -13,7 +13,7 @@
 #include "submodule.h"
 #include "strbuf.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "parse-options.h"
 #include "thread-utils.h"
 #include "tree-walk.h"
@@ -831,7 +831,7 @@ static int gitmodules_cb(const char *var, const char *value,
 
 	parameter.cache = repo->submodule_cache;
 	parameter.treeish_name = NULL;
-	parameter.gitmodules_oid = null_oid();
+	parameter.gitmodules_oid = null_oid(the_hash_algo);
 	parameter.overwrite = 1;
 
 	return parse_config(var, value, ctx, &parameter);

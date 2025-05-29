@@ -340,9 +340,6 @@ include shared.mak
 #
 # Define HAVE_SYNC_FILE_RANGE if your platform has sync_file_range.
 #
-# Define NEEDS_LIBRT if your platform requires linking with librt (glibc version
-# before 2.17) for clock_gettime and CLOCK_MONOTONIC.
-#
 # Define HAVE_BSD_SYSCTL if your platform has a BSD-compatible sysctl function.
 #
 # Define HAVE_GETDELIM if your system has the getdelim() function.
@@ -618,6 +615,7 @@ prefix = $(HOME)
 bindir = $(prefix)/bin
 mandir = $(prefix)/share/man
 infodir = $(prefix)/share/info
+bash_completion_dir = $(prefix)/share/bash-completion/completions
 gitexecdir = libexec/git-core
 mergetoolsdir = $(gitexecdir)/mergetools
 sharedir = $(prefix)/share
@@ -821,6 +819,7 @@ TEST_BUILTINS_OBJS += test-mergesort.o
 TEST_BUILTINS_OBJS += test-mktemp.o
 TEST_BUILTINS_OBJS += test-name-hash.o
 TEST_BUILTINS_OBJS += test-online-cpus.o
+TEST_BUILTINS_OBJS += test-pack-deltas.o
 TEST_BUILTINS_OBJS += test-pack-mtimes.o
 TEST_BUILTINS_OBJS += test-parse-options.o
 TEST_BUILTINS_OBJS += test-parse-pathspec-file.o
@@ -860,6 +859,7 @@ TEST_BUILTINS_OBJS += test-wildmatch.o
 TEST_BUILTINS_OBJS += test-windows-named-pipe.o
 TEST_BUILTINS_OBJS += test-write-cache.o
 TEST_BUILTINS_OBJS += test-xml-encode.o
+TEST_BUILTINS_OBJS += test-zlib.o
 
 # Do not add more tests here unless they have extra dependencies. Add
 # them in TEST_BUILTINS_OBJS above.
@@ -955,7 +955,7 @@ FOUND_SOURCE_FILES := $(filter-out $(GENERATED_H),$(shell $(SOURCES_CMD)))
 FOUND_C_SOURCES = $(filter %.c,$(FOUND_SOURCE_FILES))
 FOUND_H_SOURCES = $(filter %.h,$(FOUND_SOURCE_FILES))
 
-COCCI_SOURCES = $(filter-out $(THIRD_PARTY_SOURCES),$(FOUND_C_SOURCES))
+COCCI_SOURCES = $(filter-out $(THIRD_PARTY_SOURCES) reftable/%,$(FOUND_C_SOURCES))
 
 LIB_H = $(FOUND_H_SOURCES)
 
@@ -994,7 +994,9 @@ LIB_OBJS += common-exit.o
 LIB_OBJS += common-init.o
 LIB_OBJS += compat/nonblock.o
 LIB_OBJS += compat/obstack.o
+LIB_OBJS += compat/open.o
 LIB_OBJS += compat/terminal.o
+LIB_OBJS += compiler-tricks/not-constant.o
 LIB_OBJS += config.o
 LIB_OBJS += connect.o
 LIB_OBJS += connected.o
@@ -1041,6 +1043,7 @@ LIB_OBJS += gpg-interface.o
 LIB_OBJS += graph.o
 LIB_OBJS += grep.o
 LIB_OBJS += hash-lookup.o
+LIB_OBJS += hash.o
 LIB_OBJS += hashmap.o
 LIB_OBJS += help.o
 LIB_OBJS += hex.o
@@ -1068,7 +1071,6 @@ LIB_OBJS += merge-blobs.o
 LIB_OBJS += merge-ll.o
 LIB_OBJS += merge-ort.o
 LIB_OBJS += merge-ort-wrappers.o
-LIB_OBJS += merge-recursive.o
 LIB_OBJS += merge.o
 LIB_OBJS += midx.o
 LIB_OBJS += midx-write.o
@@ -1083,6 +1085,7 @@ LIB_OBJS += notes.o
 LIB_OBJS += object-file-convert.o
 LIB_OBJS += object-file.o
 LIB_OBJS += object-name.o
+LIB_OBJS += object-store.o
 LIB_OBJS += object.o
 LIB_OBJS += oid-array.o
 LIB_OBJS += oidmap.o
@@ -1242,6 +1245,7 @@ BUILTIN_OBJS += builtin/describe.o
 BUILTIN_OBJS += builtin/diagnose.o
 BUILTIN_OBJS += builtin/diff-files.o
 BUILTIN_OBJS += builtin/diff-index.o
+BUILTIN_OBJS += builtin/diff-pairs.o
 BUILTIN_OBJS += builtin/diff-tree.o
 BUILTIN_OBJS += builtin/diff.o
 BUILTIN_OBJS += builtin/difftool.o
@@ -1364,6 +1368,8 @@ CLAR_TEST_SUITES += u-reftable-tree
 CLAR_TEST_SUITES += u-strbuf
 CLAR_TEST_SUITES += u-strcmp-offset
 CLAR_TEST_SUITES += u-strvec
+CLAR_TEST_SUITES += u-trailer
+CLAR_TEST_SUITES += u-urlmatch-normalization
 CLAR_TEST_PROG = $(UNIT_TEST_BIN)/unit-tests$(X)
 CLAR_TEST_OBJS = $(patsubst %,$(UNIT_TEST_DIR)/%.o,$(CLAR_TEST_SUITES))
 CLAR_TEST_OBJS += $(UNIT_TEST_DIR)/clar/clar.o
@@ -1374,12 +1380,10 @@ UNIT_TEST_PROGRAMS += t-reftable-basics
 UNIT_TEST_PROGRAMS += t-reftable-block
 UNIT_TEST_PROGRAMS += t-reftable-merged
 UNIT_TEST_PROGRAMS += t-reftable-pq
-UNIT_TEST_PROGRAMS += t-reftable-reader
 UNIT_TEST_PROGRAMS += t-reftable-readwrite
 UNIT_TEST_PROGRAMS += t-reftable-record
 UNIT_TEST_PROGRAMS += t-reftable-stack
-UNIT_TEST_PROGRAMS += t-trailer
-UNIT_TEST_PROGRAMS += t-urlmatch-normalization
+UNIT_TEST_PROGRAMS += t-reftable-table
 UNIT_TEST_PROGS = $(patsubst %,$(UNIT_TEST_BIN)/%$X,$(UNIT_TEST_PROGRAMS))
 UNIT_TEST_OBJS += $(UNIT_TEST_DIR)/test-lib.o
 UNIT_TEST_OBJS += $(UNIT_TEST_DIR)/lib-reftable.o
@@ -1409,7 +1413,7 @@ ARFLAGS = rcs
 PTHREAD_CFLAGS =
 
 # For the 'sparse' target
-SPARSE_FLAGS ?= -std=gnu99
+SPARSE_FLAGS ?= -std=gnu99 -D__STDC_NO_VLA__
 SP_EXTRA_FLAGS =
 
 # For informing GIT-BUILD-OPTIONS of the SANITIZE=leak,address targets
@@ -1809,7 +1813,6 @@ ifdef FREAD_READS_DIRECTORIES
 endif
 ifdef OPEN_RETURNS_EINTR
 	COMPAT_CFLAGS += -DOPEN_RETURNS_EINTR
-	COMPAT_OBJS += compat/open.o
 endif
 ifdef NO_SYMLINK_HEAD
 	BASIC_CFLAGS += -DNO_SYMLINK_HEAD
@@ -2171,16 +2174,12 @@ ifdef HAVE_SYNC_FILE_RANGE
 	BASIC_CFLAGS += -DHAVE_SYNC_FILE_RANGE
 endif
 
-ifdef NEEDS_LIBRT
-	EXTLIBS += -lrt
+ifdef HAVE_SYSINFO
+	BASIC_CFLAGS += -DHAVE_SYSINFO
 endif
 
 ifdef HAVE_BSD_SYSCTL
 	BASIC_CFLAGS += -DHAVE_BSD_SYSCTL
-endif
-
-ifdef HAVE_BSD_KERN_PROC_SYSCTL
-	BASIC_CFLAGS += -DHAVE_BSD_KERN_PROC_SYSCTL
 endif
 
 ifdef HAVE_GETDELIM
@@ -2213,25 +2212,33 @@ ifneq ($(findstring openssl,$(CSPRNG_METHOD)),)
 	EXTLIBS += -lcrypto -lssl
 endif
 
-ifneq ($(PROCFS_EXECUTABLE_PATH),)
-	procfs_executable_path_SQ = $(subst ','\'',$(PROCFS_EXECUTABLE_PATH))
-	BASIC_CFLAGS += '-DPROCFS_EXECUTABLE_PATH="$(procfs_executable_path_SQ)"'
-endif
-
 ifndef HAVE_PLATFORM_PROCINFO
 	COMPAT_OBJS += compat/stub/procinfo.o
 endif
 
-ifdef HAVE_NS_GET_EXECUTABLE_PATH
-	BASIC_CFLAGS += -DHAVE_NS_GET_EXECUTABLE_PATH
-endif
+ifdef RUNTIME_PREFIX
 
-ifdef HAVE_ZOS_GET_EXECUTABLE_PATH
-        BASIC_CFLAGS += -DHAVE_ZOS_GET_EXECUTABLE_PATH
-endif
+        ifdef HAVE_BSD_KERN_PROC_SYSCTL
+		BASIC_CFLAGS += -DHAVE_BSD_KERN_PROC_SYSCTL
+        endif
 
-ifdef HAVE_WPGMPTR
-	BASIC_CFLAGS += -DHAVE_WPGMPTR
+        ifneq ($(PROCFS_EXECUTABLE_PATH),)
+		pep_SQ = $(subst ','\'',$(PROCFS_EXECUTABLE_PATH))
+		BASIC_CFLAGS += '-DPROCFS_EXECUTABLE_PATH="$(pep_SQ)"'
+        endif
+
+        ifdef HAVE_NS_GET_EXECUTABLE_PATH
+		BASIC_CFLAGS += -DHAVE_NS_GET_EXECUTABLE_PATH
+        endif
+
+        ifdef HAVE_ZOS_GET_EXECUTABLE_PATH
+		BASIC_CFLAGS += -DHAVE_ZOS_GET_EXECUTABLE_PATH
+        endif
+
+        ifdef HAVE_WPGMPTR
+		BASIC_CFLAGS += -DHAVE_WPGMPTR
+        endif
+
 endif
 
 ifdef FILENO_IS_A_MACRO
@@ -2259,6 +2266,10 @@ endif
 
 ifdef WITH_BREAKING_CHANGES
 	BASIC_CFLAGS += -DWITH_BREAKING_CHANGES
+endif
+
+ifdef CHECK_ASSERTION_SIDE_EFFECTS
+	BASIC_CFLAGS += -DCHECK_ASSERTION_SIDE_EFFECTS
 endif
 
 ifdef INCLUDE_LIBGIT_RS
@@ -2319,6 +2330,7 @@ bindir_relative_SQ = $(subst ','\'',$(bindir_relative))
 mandir_SQ = $(subst ','\'',$(mandir))
 mandir_relative_SQ = $(subst ','\'',$(mandir_relative))
 infodir_relative_SQ = $(subst ','\'',$(infodir_relative))
+bash_completion_dir_SQ = $(subst ','\'',$(bash_completion_dir))
 perllibdir_SQ = $(subst ','\'',$(perllibdir))
 localedir_SQ = $(subst ','\'',$(localedir))
 localedir_relative_SQ = $(subst ','\'',$(localedir_relative))
@@ -2729,10 +2741,10 @@ REFTABLE_OBJS += reftable/blocksource.o
 REFTABLE_OBJS += reftable/iter.o
 REFTABLE_OBJS += reftable/merged.o
 REFTABLE_OBJS += reftable/pq.o
-REFTABLE_OBJS += reftable/reader.o
 REFTABLE_OBJS += reftable/record.o
 REFTABLE_OBJS += reftable/stack.o
 REFTABLE_OBJS += reftable/system.o
+REFTABLE_OBJS += reftable/table.o
 REFTABLE_OBJS += reftable/tree.o
 REFTABLE_OBJS += reftable/writer.o
 
@@ -2794,7 +2806,7 @@ endif
 compdb_dir = compile_commands
 
 ifeq ($(GENERATE_COMPILATION_DATABASE),yes)
-missing_compdb_dir = $(compdb_dir)
+missing_compdb_dir = $(filter-out $(wildcard $(compdb_dir)), $(compdb_dir))
 $(missing_compdb_dir):
 	@mkdir -p $@
 
@@ -3324,8 +3336,10 @@ HCC = $(HCO:hco=hcc)
 $(HCO): %.hco: %.hcc $(GENERATED_H) FORCE
 	$(QUIET_HDR)$(CC) $(ALL_CFLAGS) -o /dev/null -c -xc $<
 
-.PHONY: hdr-check $(HCO)
+# TODO: deprecate 'hdr-check' in lieu of 'check-headers' in Git 2.51+
+.PHONY: hdr-check check-headers $(HCO)
 hdr-check: $(HCO)
+check-headers: hdr-check
 
 .PHONY: style
 style:
@@ -3562,6 +3576,10 @@ ifndef NO_TCLTK
 endif
 ifneq (,$X)
 	$(foreach p,$(patsubst %$X,%,$(filter %$X,$(ALL_COMMANDS_TO_INSTALL) $(OTHER_PROGRAMS))), test '$(DESTDIR_SQ)$(gitexec_instdir_SQ)/$p' -ef '$(DESTDIR_SQ)$(gitexec_instdir_SQ)/$p$X' || $(RM) '$(DESTDIR_SQ)$(gitexec_instdir_SQ)/$p';)
+endif
+ifndef NO_BASH_COMPLETION
+	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(bash_completion_dir_SQ)' && \
+	$(INSTALL) -m 644 contrib/completion/git-completion.bash '$(DESTDIR_SQ)$(bash_completion_dir_SQ)/git'
 endif
 
 	bindir=$$(cd '$(DESTDIR_SQ)$(bindir_SQ)' && pwd) && \

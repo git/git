@@ -6,8 +6,9 @@
 #include "environment.h"
 #include "hex.h"
 #include "notes.h"
+#include "object-file.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "utf8.h"
 #include "strbuf.h"
 #include "tree-walk.h"
@@ -793,7 +794,8 @@ static int prune_notes_helper(const struct object_id *object_oid,
 	struct note_delete_list **l = (struct note_delete_list **) cb_data;
 	struct note_delete_list *n;
 
-	if (repo_has_object_file(the_repository, object_oid))
+	if (has_object(the_repository, object_oid,
+		       HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
 		return 0; /* nothing to do for this note */
 
 	/* failed to find object => prune this note */
@@ -1353,7 +1355,7 @@ int copy_note(struct notes_tree *t,
 	if (note)
 		return add_note(t, to_obj, note, combine_notes);
 	else if (existing_note)
-		return add_note(t, to_obj, null_oid(), combine_notes);
+		return add_note(t, to_obj, null_oid(the_hash_algo), combine_notes);
 
 	return 0;
 }

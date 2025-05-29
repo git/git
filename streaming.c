@@ -10,7 +10,7 @@
 #include "streaming.h"
 #include "repository.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "replace-object.h"
 #include "packfile.h"
 
@@ -238,7 +238,7 @@ static int open_istream_loose(struct git_istream *st, struct repository *r,
 		return -1;
 	switch (unpack_loose_header(&st->z, st->u.loose.mapped,
 				    st->u.loose.mapsize, st->u.loose.hdr,
-				    sizeof(st->u.loose.hdr), NULL)) {
+				    sizeof(st->u.loose.hdr))) {
 	case ULHR_OK:
 		break;
 	case ULHR_BAD:
@@ -431,7 +431,8 @@ static int istream_source(struct git_istream *st,
 		st->open = open_istream_loose;
 		return 0;
 	case OI_PACKED:
-		if (!oi.u.packed.is_delta && big_file_threshold < size) {
+		if (!oi.u.packed.is_delta &&
+		    repo_settings_get_big_file_threshold(the_repository) < size) {
 			st->u.in_pack.pack = oi.u.packed.pack;
 			st->u.in_pack.pos = oi.u.packed.offset;
 			st->open = open_istream_pack_non_delta;

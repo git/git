@@ -11,7 +11,8 @@
 #include "strbuf.h"
 #include "tree.h"
 #include "parse-options.h"
-#include "object-store-ll.h"
+#include "object-file.h"
+#include "object-store.h"
 
 static struct treeent {
 	unsigned mode;
@@ -66,7 +67,7 @@ static void write_tree(struct object_id *oid)
 	strbuf_release(&buf);
 }
 
-static const char *mktree_usage[] = {
+static const char *const mktree_usage[] = {
 	"git mktree [-z] [--missing] [--batch]",
 	NULL
 };

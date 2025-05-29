@@ -4,7 +4,7 @@
 #include "date.h"
 #include "gettext.h"
 #include "hex.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "pkt-line.h"
 #include "sideband.h"
 #include "run-command.h"
@@ -45,10 +45,7 @@ int option_parse_push_signed(const struct option *opt,
 static void feed_object(struct repository *r,
 			const struct object_id *oid, FILE *fh, int negative)
 {
-	if (negative &&
-	    !repo_has_object_file_with_flags(r, oid,
-					     OBJECT_INFO_SKIP_FETCH_OBJECT |
-					     OBJECT_INFO_QUICK))
+	if (negative && !has_object(r, oid, 0))
 		return;
 
 	if (negative)

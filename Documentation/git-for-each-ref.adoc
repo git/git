@@ -441,6 +441,7 @@ Ref: %(*refname)
 
 A simple example showing the use of shell eval on the output,
 demonstrating the use of --shell.  List the prefixes of all heads:
+
 ------------
 #!/bin/sh
 
@@ -455,6 +456,7 @@ done
 
 A bit more elaborate report on tags, demonstrating that the format
 may be an entire script:
+
 ------------
 #!/bin/sh
 

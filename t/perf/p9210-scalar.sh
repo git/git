@@ -7,7 +7,8 @@ test_perf_large_repo "$TRASH_DIRECTORY/to-clone"
 
 test_expect_success 'enable server-side partial clone' '
 	git -C to-clone config uploadpack.allowFilter true &&
-	git -C to-clone config uploadpack.allowAnySHA1InWant true
+	git -C to-clone config uploadpack.allowAnySHA1InWant true &&
+	git -C to-clone checkout -B test-branch
 '
 
 test_perf 'scalar clone' '

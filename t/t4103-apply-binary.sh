@@ -26,10 +26,10 @@ test_expect_success 'setup' '
 	git commit -m "Initial Version" 2>/dev/null &&
 
 	git checkout -b binary &&
-	perl -pe "y/x/\000/" <file1 >file3 &&
+	tr "x" "\000" <file1 >file3 &&
 	cat file3 >file4 &&
 	git add file2 &&
-	perl -pe "y/\000/v/" <file3 >file1 &&
+	tr "y" "\000" <file3 >file1 &&
 	rm -f file2 &&
 	git update-index --add --remove file1 file2 file3 file4 &&
 	git commit -m "Second Version" &&
@@ -158,7 +158,7 @@ test_expect_success 'apply binary -p0 diff' '
 	test -z "$(git diff --name-status binary -- file3)"
 '
 
-test_expect_success 'reject truncated binary diff' '
+test_expect_success PERL_TEST_HELPERS 'reject truncated binary diff' '
 	do_reset &&
 
 	# this length is calculated to get us very close to

@@ -2,7 +2,8 @@
 
 #include "git-compat-util.h"
 #include "notes-cache.h"
-#include "object-store-ll.h"
+#include "object-file.h"
+#include "object-store.h"
 #include "pretty.h"
 #include "repository.h"
 #include "commit.h"

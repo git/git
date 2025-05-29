@@ -3,6 +3,7 @@
 test_description='git cat-file'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY/lib-loose.sh"
 
 test_cmdmode_usage () {
 	test_expect_code 129 "$@" 2>err &&
@@ -133,18 +134,6 @@ $content"
     test_expect_success "Size of $type is correct" '
 	echo $size >expect &&
 	git cat-file -s $oid >actual &&
-	test_cmp expect actual
-    '
-
-    test_expect_success "Type of $type is correct using --allow-unknown-type" '
-	echo $type >expect &&
-	git cat-file -t --allow-unknown-type $oid >actual &&
-	test_cmp expect actual
-    '
-
-    test_expect_success "Size of $type is correct using --allow-unknown-type" '
-	echo $size >expect &&
-	git cat-file -s --allow-unknown-type $oid >actual &&
 	test_cmp expect actual
     '
 
@@ -669,101 +658,73 @@ test_expect_success 'setup bogus data' '
 	bogus_short_type="bogus" &&
 	bogus_short_content="bogus" &&
 	bogus_short_size=$(strlen "$bogus_short_content") &&
-	bogus_short_oid=$(echo_without_newline "$bogus_short_content" | git hash-object -t $bogus_short_type --literally -w --stdin) &&
+	bogus_short_oid=$(echo_without_newline "$bogus_short_content" | loose_obj .git/objects $bogus_short_type) &&
 
 	bogus_long_type="abcdefghijklmnopqrstuvwxyz1234679" &&
 	bogus_long_content="bogus" &&
 	bogus_long_size=$(strlen "$bogus_long_content") &&
-	bogus_long_oid=$(echo_without_newline "$bogus_long_content" | git hash-object -t $bogus_long_type --literally -w --stdin)
+	bogus_long_oid=$(echo_without_newline "$bogus_long_content" | loose_obj .git/objects $bogus_long_type)
 '
 
-for arg1 in '' --allow-unknown-type
+for arg1 in -s -t -p
 do
-	for arg2 in -s -t -p
-	do
-		if test "$arg1" = "--allow-unknown-type" && test "$arg2" = "-p"
+	test_expect_success "cat-file $arg1 error on bogus short OID" '
+		cat >expect <<-\EOF &&
+		fatal: invalid object type
+		EOF
+
+		test_must_fail git cat-file $arg1 $bogus_short_oid >out 2>actual &&
+		test_must_be_empty out &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "cat-file $arg1 error on bogus full OID" '
+		if test "$arg1" = "-p"
 		then
-			continue
-		fi
-
-
-		test_expect_success "cat-file $arg1 $arg2 error on bogus short OID" '
-			cat >expect <<-\EOF &&
-			fatal: invalid object type
+			cat >expect <<-EOF
+			error: header for $bogus_long_oid too long, exceeds 32 bytes
+			fatal: Not a valid object name $bogus_long_oid
 			EOF
-
-			if test "$arg1" = "--allow-unknown-type"
-			then
-				git cat-file $arg1 $arg2 $bogus_short_oid
-			else
-				test_must_fail git cat-file $arg1 $arg2 $bogus_short_oid >out 2>actual &&
-				test_must_be_empty out &&
-				test_cmp expect actual
-			fi
-		'
-
-		test_expect_success "cat-file $arg1 $arg2 error on bogus full OID" '
-			if test "$arg2" = "-p"
-			then
-				cat >expect <<-EOF
-				error: header for $bogus_long_oid too long, exceeds 32 bytes
-				fatal: Not a valid object name $bogus_long_oid
-				EOF
-			else
-				cat >expect <<-EOF
-				error: header for $bogus_long_oid too long, exceeds 32 bytes
-				fatal: git cat-file: could not get object info
-				EOF
-			fi &&
-
-			if test "$arg1" = "--allow-unknown-type"
-			then
-				git cat-file $arg1 $arg2 $bogus_short_oid
-			else
-				test_must_fail git cat-file $arg1 $arg2 $bogus_long_oid >out 2>actual &&
-				test_must_be_empty out &&
-				test_cmp expect actual
-			fi
-		'
-
-		test_expect_success "cat-file $arg1 $arg2 error on missing short OID" '
-			cat >expect.err <<-EOF &&
-			fatal: Not a valid object name $(test_oid deadbeef_short)
+		else
+			cat >expect <<-EOF
+			error: header for $bogus_long_oid too long, exceeds 32 bytes
+			fatal: git cat-file: could not get object info
 			EOF
-			test_must_fail git cat-file $arg1 $arg2 $(test_oid deadbeef_short) >out 2>err.actual &&
-			test_must_be_empty out &&
-			test_cmp expect.err err.actual
-		'
+		fi &&
 
-		test_expect_success "cat-file $arg1 $arg2 error on missing full OID" '
-			if test "$arg2" = "-p"
-			then
-				cat >expect.err <<-EOF
-				fatal: Not a valid object name $(test_oid deadbeef)
-				EOF
-			else
-				cat >expect.err <<-\EOF
-				fatal: git cat-file: could not get object info
-				EOF
-			fi &&
-			test_must_fail git cat-file $arg1 $arg2 $(test_oid deadbeef) >out 2>err.actual &&
-			test_must_be_empty out &&
-			test_cmp expect.err err.actual
-		'
-	done
+		test_must_fail git cat-file $arg1 $bogus_long_oid >out 2>actual &&
+		test_must_be_empty out &&
+		test_cmp expect actual
+	'
+
+	test_expect_success "cat-file $arg1 error on missing short OID" '
+		cat >expect.err <<-EOF &&
+		fatal: Not a valid object name $(test_oid deadbeef_short)
+		EOF
+		test_must_fail git cat-file $arg1 $(test_oid deadbeef_short) >out 2>err.actual &&
+		test_must_be_empty out &&
+		test_cmp expect.err err.actual
+	'
+
+	test_expect_success "cat-file $arg1 error on missing full OID" '
+		if test "$arg1" = "-p"
+		then
+			cat >expect.err <<-EOF
+			fatal: Not a valid object name $(test_oid deadbeef)
+			EOF
+		else
+			cat >expect.err <<-\EOF
+			fatal: git cat-file: could not get object info
+			EOF
+		fi &&
+		test_must_fail git cat-file $arg1 $(test_oid deadbeef) >out 2>err.actual &&
+		test_must_be_empty out &&
+		test_cmp expect.err err.actual
+	'
 done
 
-test_expect_success '-e is OK with a broken object without --allow-unknown-type' '
+test_expect_success '-e is OK with a broken object' '
 	git cat-file -e $bogus_short_oid
-'
-
-test_expect_success '-e can not be combined with --allow-unknown-type' '
-	test_expect_code 128 git cat-file -e --allow-unknown-type $bogus_short_oid
-'
-
-test_expect_success '-p cannot print a broken object even with --allow-unknown-type' '
-	test_must_fail git cat-file -p $bogus_short_oid &&
-	test_expect_code 128 git cat-file -p --allow-unknown-type $bogus_short_oid
 '
 
 test_expect_success '<type> <hash> does not work with objects of broken types' '
@@ -788,60 +749,8 @@ test_expect_success 'broken types combined with --batch and --batch-check' '
 	test_cmp err.expect err.actual
 '
 
-test_expect_success 'the --batch and --batch-check options do not combine with --allow-unknown-type' '
-	test_expect_code 128 git cat-file --batch --allow-unknown-type <bogus-oid &&
-	test_expect_code 128 git cat-file --batch-check --allow-unknown-type <bogus-oid
-'
-
-test_expect_success 'the --allow-unknown-type option does not consider replacement refs' '
-	cat >expect <<-EOF &&
-	$bogus_short_type
-	EOF
-	git cat-file -t --allow-unknown-type $bogus_short_oid >actual &&
-	test_cmp expect actual &&
-
-	# Create it manually, as "git replace" will die on bogus
-	# types.
-	head=$(git rev-parse --verify HEAD) &&
-	test_when_finished "test-tool ref-store main delete-refs 0 msg refs/replace/$bogus_short_oid" &&
-	test-tool ref-store main update-ref msg "refs/replace/$bogus_short_oid" $head $ZERO_OID REF_SKIP_OID_VERIFICATION &&
-
-	cat >expect <<-EOF &&
-	commit
-	EOF
-	git cat-file -t --allow-unknown-type $bogus_short_oid >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success "Type of broken object is correct" '
-	echo $bogus_short_type >expect &&
-	git cat-file -t --allow-unknown-type $bogus_short_oid >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success "Size of broken object is correct" '
-	echo $bogus_short_size >expect &&
-	git cat-file -s --allow-unknown-type $bogus_short_oid >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success 'clean up broken object' '
-	rm .git/objects/$(test_oid_to_path $bogus_short_oid)
-'
-
-test_expect_success "Type of broken object is correct when type is large" '
-	echo $bogus_long_type >expect &&
-	git cat-file -t --allow-unknown-type $bogus_long_oid >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success "Size of large broken object is correct when type is large" '
-	echo $bogus_long_size >expect &&
-	git cat-file -s --allow-unknown-type $bogus_long_oid >actual &&
-	test_cmp expect actual
-'
-
-test_expect_success 'clean up broken object' '
+test_expect_success 'clean up broken objects' '
+	rm .git/objects/$(test_oid_to_path $bogus_short_oid) &&
 	rm .git/objects/$(test_oid_to_path $bogus_long_oid)
 '
 
@@ -902,6 +811,40 @@ test_expect_success 'cat-file -t and -s on corrupt loose object' '
 		test_cmp expect actual
 	)
 '
+
+test_expect_success 'object reading handles zlib dictionary' - <<\EOT
+	echo 'content that will be recompressed' >file &&
+	blob=$(git hash-object -w file) &&
+	objpath=.git/objects/$(test_oid_to_path "$blob") &&
+
+	# Recompress a loose object using a precomputed zlib dictionary.
+	# This was originally done with:
+	#
+	#  perl -MCompress::Raw::Zlib -e '
+	#    binmode STDIN;
+	#    binmode STDOUT;
+	#    my $data = do { local $/; <STDIN> };
+	#    my $in = new Compress::Raw::Zlib::Inflate;
+	#    my $de = new Compress::Raw::Zlib::Deflate(
+	#      -Dictionary => "anything"
+	#    );
+	#    $in->inflate($data, $raw);
+	#    $de->deflate($raw, $out);
+	#    print $out;
+	#  ' <obj.bak >$objpath
+	#
+	# but we do not want to require the perl module for all test runs (nor
+	# carry a custom t/helper program that uses zlib features we don't
+	# otherwise care about).
+	mv "$objpath" obj.bak &&
+	test_when_finished 'mv obj.bak "$objpath"' &&
+	printf '\170\273\017\112\003\143' >$objpath &&
+
+	test_must_fail git cat-file blob $blob 2>err &&
+	test_grep ! 'too long' err &&
+	test_grep 'error: unable to unpack' err &&
+	test_grep 'error: inflate: needs dictionary' err
+EOT
 
 # Tests for git cat-file --follow-symlinks
 test_expect_success 'prep for symlink tests' '
@@ -1270,7 +1213,7 @@ extract_batch_output () {
     ' "$@"
 }
 
-test_expect_success 'cat-file --batch-all-objects --batch ignores replace' '
+test_expect_success PERL_TEST_HELPERS 'cat-file --batch-all-objects --batch ignores replace' '
 	git cat-file --batch-all-objects --batch >actual.raw &&
 	extract_batch_output $orig <actual.raw >actual &&
 	{
@@ -1323,7 +1266,7 @@ test_expect_success 'batch-command flush without --buffer' '
 	grep "^fatal:.*flush is only for --buffer mode.*" err
 '
 
-script='
+perl_script='
 use warnings;
 use strict;
 use IPC::Open2;
@@ -1345,12 +1288,115 @@ $? == 0 or die "\$?=$?";
 
 expect="$hello_oid blob $hello_size"
 
-test_expect_success PERL '--batch-check is unbuffered by default' '
-	perl -e "$script" -- --batch-check $hello_oid "$expect"
+test_lazy_prereq PERL_IPC_OPEN2 '
+	perl -MIPC::Open2 -e "exit 0"
 '
 
-test_expect_success PERL '--batch-command info is unbuffered by default' '
-	perl -e "$script" -- --batch-command $hello_oid "$expect" "info "
+test_expect_success PERL_IPC_OPEN2 '--batch-check is unbuffered by default' '
+	perl -e "$perl_script" -- --batch-check $hello_oid "$expect"
 '
+
+test_expect_success PERL_IPC_OPEN2 '--batch-command info is unbuffered by default' '
+	perl -e "$perl_script" -- --batch-command $hello_oid "$expect" "info "
+'
+
+test_expect_success 'setup for objects filter' '
+	git init repo &&
+	(
+		# Seed the repository with four different sets of objects:
+		#
+		#   - The first set is fully packed and has a bitmap.
+		#   - The second set is packed, but has no bitmap.
+		#   - The third set is loose.
+		#   - The fourth set is loose and contains big objects.
+		#
+		# This ensures that we cover all these types as expected.
+		cd repo &&
+		test_commit first &&
+		git repack -Adb &&
+		test_commit second &&
+		git repack -d &&
+		test_commit third &&
+
+		for n in 1000 10000
+		do
+			printf "%"$n"s" X >large.$n || return 1
+		done &&
+		git add large.* &&
+		git commit -m fourth
+	)
+'
+
+test_expect_success 'objects filter with unknown option' '
+	cat >expect <<-EOF &&
+	fatal: invalid filter-spec ${SQ}unknown${SQ}
+	EOF
+	test_must_fail git -C repo cat-file --filter=unknown 2>err &&
+	test_cmp expect err
+'
+
+for option in sparse:oid=1234 tree:1 sparse:path=x
+do
+	test_expect_success "objects filter with unsupported option $option" '
+		case "$option" in
+		tree:1)
+			echo "usage: objects filter not supported: ${SQ}tree${SQ}" >expect
+			;;
+		sparse:path=x)
+			echo "fatal: sparse:path filters support has been dropped" >expect
+			;;
+		*)
+			option_name=$(echo "$option" | cut -d= -f1) &&
+			printf "usage: objects filter not supported: ${SQ}%s${SQ}\n" "$option_name" >expect
+			;;
+		esac &&
+		test_must_fail git -C repo cat-file --filter=$option 2>err &&
+		test_cmp expect err
+	'
+done
+
+test_expect_success 'objects filter: disabled' '
+	git -C repo cat-file --batch-check="%(objectname)" --batch-all-objects --no-filter >actual &&
+	sort actual >actual.sorted &&
+	git -C repo rev-list --objects --no-object-names --all >expect &&
+	sort expect >expect.sorted &&
+	test_cmp expect.sorted actual.sorted
+'
+
+test_objects_filter () {
+	filter="$1"
+
+	test_expect_success "objects filter: $filter" '
+		git -C repo cat-file --batch-check="%(objectname)" --batch-all-objects --filter="$filter" >actual &&
+		sort actual >actual.sorted &&
+		git -C repo rev-list --objects --no-object-names --all --filter="$filter" --filter-provided-objects >expect &&
+		sort expect >expect.sorted &&
+		test_cmp expect.sorted actual.sorted
+	'
+
+	test_expect_success "objects filter prints excluded objects: $filter" '
+		# Find all objects that would be excluded by the current filter.
+		git -C repo rev-list --objects --no-object-names --all >all &&
+		git -C repo rev-list --objects --no-object-names --all --filter="$filter" --filter-provided-objects >filtered &&
+		sort all >all.sorted &&
+		sort filtered >filtered.sorted &&
+		comm -23 all.sorted filtered.sorted >expected.excluded &&
+		test_line_count -gt 0 expected.excluded &&
+
+		git -C repo cat-file --batch-check="%(objectname)" --filter="$filter" <expected.excluded >actual &&
+		awk "/excluded/{ print \$1 }" actual | sort >actual.excluded &&
+		test_cmp expected.excluded actual.excluded
+	'
+}
+
+test_objects_filter "blob:none"
+test_objects_filter "blob:limit=1"
+test_objects_filter "blob:limit=500"
+test_objects_filter "blob:limit=1000"
+test_objects_filter "blob:limit=1k"
+test_objects_filter "object:type=blob"
+test_objects_filter "object:type=commit"
+test_objects_filter "object:type=tag"
+test_objects_filter "object:type=tree"
 
 test_done

@@ -348,7 +348,7 @@ static void copy_sparse_checkout(const char *worktree_git_dir)
 	char *to_file = xstrfmt("%s/info/sparse-checkout", worktree_git_dir);
 
 	if (file_exists(from_file)) {
-		if (safe_create_leading_directories(to_file) ||
+		if (safe_create_leading_directories(the_repository, to_file) ||
 			copy_file(to_file, from_file, 0666))
 			error(_("failed to copy '%s' to '%s'; sparse-checkout may not work correctly"),
 				from_file, to_file);
@@ -367,7 +367,7 @@ static void copy_filtered_worktree_config(const char *worktree_git_dir)
 		struct config_set cs = { { 0 } };
 		int bare;
 
-		if (safe_create_leading_directories(to_file) ||
+		if (safe_create_leading_directories(the_repository, to_file) ||
 			copy_file(to_file, from_file, 0666)) {
 			error(_("failed to copy worktree config from '%s' to '%s'"),
 				from_file, to_file);
@@ -466,7 +466,7 @@ static int add_worktree(const char *path, const char *refname,
 	name = sb_name.buf;
 	repo_git_path_replace(the_repository, &sb_repo, "worktrees/%s", name);
 	len = sb_repo.len;
-	if (safe_create_leading_directories_const(sb_repo.buf))
+	if (safe_create_leading_directories_const(the_repository, sb_repo.buf))
 		die_errno(_("could not create leading directories of '%s'"),
 			  sb_repo.buf);
 
@@ -498,7 +498,7 @@ static int add_worktree(const char *path, const char *refname,
 		write_file(sb.buf, _("initializing"));
 
 	strbuf_addf(&sb_git, "%s/.git", path);
-	if (safe_create_leading_directories_const(sb_git.buf))
+	if (safe_create_leading_directories_const(the_repository, sb_git.buf))
 		die_errno(_("could not create leading directories of '%s'"),
 			  sb_git.buf);
 	junk_work_tree = xstrdup(path);
@@ -578,7 +578,7 @@ done:
 
 		strvec_pushl(&opt.env, "GIT_DIR", "GIT_WORK_TREE", NULL);
 		strvec_pushl(&opt.args,
-			     oid_to_hex(null_oid()),
+			     oid_to_hex(null_oid(the_hash_algo)),
 			     oid_to_hex(&commit->object.oid),
 			     "1",
 			     NULL);

@@ -16,6 +16,7 @@ SYNOPSIS
 	[--dry-run | -n] [--verbose] [--all [--single-worktree] | <refs>...]
 'git reflog delete' [--rewrite] [--updateref]
 	[--dry-run | -n] [--verbose] <ref>@{<specifier>}...
+'git reflog drop' [--all [--single-worktree] | <refs>...]
 'git reflog exists' <ref>
 
 DESCRIPTION
@@ -48,10 +49,14 @@ and not reachable from the current tip, are removed from the reflog.
 This is typically not used directly by end users -- instead, see
 linkgit:git-gc[1].
 
-The "delete" subcommand deletes single entries from the reflog. Its
-argument must be an _exact_ entry (e.g. "`git reflog delete
-master@{2}`"). This subcommand is also typically not used directly by
-end users.
+The "delete" subcommand deletes single entries from the reflog, but
+not the reflog itself. Its argument must be an _exact_ entry (e.g. "`git
+reflog delete master@{2}`"). This subcommand is also typically not used
+directly by end users.
+
+The "drop" subcommand completely removes the reflog for the specified
+references. This is in contrast to "expire" and "delete", both of which
+can be used to delete reflog entries, but not the reflog itself.
 
 The "exists" subcommand checks whether a ref has a reflog.  It exits
 with zero status if the reflog exists, and non-zero status if it does
@@ -132,6 +137,16 @@ Options for `delete`
 `--dry-run`, and `--verbose`, with the same meanings as when they are
 used with `expire`.
 
+Options for `drop`
+~~~~~~~~~~~~~~~~~~
+
+--all::
+	Drop the reflogs of all references from all worktrees.
+
+--single-worktree::
+	By default when `--all` is specified, reflogs from all working
+	trees are dropped. This option limits the processing to reflogs
+	from the current working tree only.
 
 GIT
 ---

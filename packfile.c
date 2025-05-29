@@ -19,11 +19,12 @@
 #include "tree-walk.h"
 #include "tree.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "midx.h"
 #include "commit-graph.h"
 #include "pack-revindex.h"
 #include "promisor-remote.h"
+#include "pack-mtimes.h"
 
 char *odb_pack_name(struct repository *r, struct strbuf *buf,
 		    const unsigned char *hash, const char *ext)
@@ -1597,17 +1598,12 @@ int packed_object_info(struct repository *r, struct packed_git *p,
 		*oi->disk_sizep = pack_pos_to_offset(p, pos + 1) - obj_offset;
 	}
 
-	if (oi->typep || oi->type_name) {
+	if (oi->typep) {
 		enum object_type ptot;
 		ptot = packed_to_object_type(r, p, obj_offset,
 					     type, &w_curs, curpos);
 		if (oi->typep)
 			*oi->typep = ptot;
-		if (oi->type_name) {
-			const char *tn = type_name(ptot);
-			if (tn)
-				strbuf_addstr(oi->type_name, tn);
-		}
 		if (ptot < 0) {
 			type = OBJ_BAD;
 			goto out;
@@ -2107,7 +2103,7 @@ static void maybe_invalidate_kept_pack_cache(struct repository *r,
 	r->objects->kept_pack_cache.flags = 0;
 }
 
-static struct packed_git **kept_pack_cache(struct repository *r, unsigned flags)
+struct packed_git **kept_pack_cache(struct repository *r, unsigned flags)
 {
 	maybe_invalidate_kept_pack_cache(r, flags);
 

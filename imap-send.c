@@ -324,6 +324,8 @@ static int ssl_socket_connect(struct imap_socket *sock,
 		cert = SSL_get_peer_certificate(sock->ssl);
 		if (!cert)
 			return error("unable to get peer certificate.");
+		if (SSL_get_verify_result(sock->ssl) != X509_V_OK)
+			return error("unable to verify peer certificate");
 		if (verify_hostname(cert, cfg->host) < 0)
 			return -1;
 	}

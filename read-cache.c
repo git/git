@@ -20,7 +20,7 @@
 #include "refs.h"
 #include "dir.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "oid-array.h"
 #include "tree.h"
 #include "commit.h"
@@ -706,11 +706,11 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	int intent_only = flags & ADD_CACHE_INTENT;
 	int add_option = (ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE|
 			  (intent_only ? ADD_CACHE_NEW_ONLY : 0));
-	unsigned hash_flags = pretend ? 0 : HASH_WRITE_OBJECT;
+	unsigned hash_flags = pretend ? 0 : INDEX_WRITE_OBJECT;
 	struct object_id oid;
 
 	if (flags & ADD_CACHE_RENORMALIZE)
-		hash_flags |= HASH_RENORMALIZE;
+		hash_flags |= INDEX_RENORMALIZE;
 
 	if (!S_ISREG(st_mode) && !S_ISLNK(st_mode) && !S_ISDIR(st_mode))
 		return error(_("%s: can only add regular files, symbolic links or git-directories"), path);
@@ -1117,48 +1117,19 @@ static int has_dir_name(struct index_state *istate,
 	 *
 	 * Compare the entry's full path with the last path in the index.
 	 */
-	if (istate->cache_nr > 0) {
-		cmp_last = strcmp_offset(name,
-			istate->cache[istate->cache_nr - 1]->name,
-			&len_eq_last);
-		if (cmp_last > 0) {
-			if (name[len_eq_last] != '/') {
-				/*
-				 * The entry sorts AFTER the last one in the
-				 * index.
-				 *
-				 * If there were a conflict with "file", then our
-				 * name would start with "file/" and the last index
-				 * entry would start with "file" but not "file/".
-				 *
-				 * The next character after common prefix is
-				 * not '/', so there can be no conflict.
-				 */
-				return retval;
-			} else {
-				/*
-				 * The entry sorts AFTER the last one in the
-				 * index, and the next character after common
-				 * prefix is '/'.
-				 *
-				 * Either the last index entry is a file in
-				 * conflict with this entry, or it has a name
-				 * which sorts between this entry and the
-				 * potential conflicting file.
-				 *
-				 * In both cases, we fall through to the loop
-				 * below and let the regular search code handle it.
-				 */
-			}
-		} else if (cmp_last == 0) {
-			/*
-			 * The entry exactly matches the last one in the
-			 * index, but because of multiple stage and CE_REMOVE
-			 * items, we fall through and let the regular search
-			 * code handle it.
-			 */
-		}
-	}
+	if (!istate->cache_nr)
+		return 0;
+
+	cmp_last = strcmp_offset(name,
+				 istate->cache[istate->cache_nr - 1]->name,
+				 &len_eq_last);
+	if (cmp_last > 0 && name[len_eq_last] != '/')
+		/*
+		 * The entry sorts AFTER the last one in the
+		 * index and their paths have no common prefix,
+		 * so there cannot be a F/D conflict.
+		 */
+		return 0;
 
 	for (;;) {
 		size_t len;
@@ -1735,7 +1706,7 @@ static int verify_hdr(const struct cache_header *hdr, unsigned long size)
 	end = (unsigned char *)hdr + size;
 	start = end - the_hash_algo->rawsz;
 	oidread(&oid, start, the_repository->hash_algo);
-	if (oideq(&oid, null_oid()))
+	if (oideq(&oid, null_oid(the_hash_algo)))
 		return 0;
 
 	the_hash_algo->init_fn(&c);
@@ -2686,8 +2657,8 @@ static int ce_write_entry(struct hashfile *f, struct cache_entry *ce,
 		int common, to_remove, prefix_size;
 		unsigned char to_remove_vi[16];
 		for (common = 0;
-		     (ce->name[common] &&
-		      common < previous_name->len &&
+		     (common < previous_name->len &&
+		      ce->name[common] &&
 		      ce->name[common] == previous_name->buf[common]);
 		     common++)
 			; /* still matching */
@@ -2848,7 +2819,7 @@ static int do_write_index(struct index_state *istate, struct tempfile *tempfile,
 	struct strbuf sb = STRBUF_INIT;
 	int nr, nr_threads, ret;
 
-	f = hashfd(tempfile->fd, tempfile->filename.buf);
+	f = hashfd(the_repository->hash_algo, tempfile->fd, tempfile->filename.buf);
 
 	prepare_repo_settings(r);
 	f->skip_hash = r->settings.index_skip_hash;

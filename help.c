@@ -9,6 +9,7 @@
 #include "run-command.h"
 #include "levenshtein.h"
 #include "gettext.h"
+#include "hash.h"
 #include "help.h"
 #include "command-list.h"
 #include "string-list.h"
@@ -213,7 +214,7 @@ void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes)
 		else if (cmp == 0) {
 			ei++;
 			free(cmds->names[ci++]);
-		} else if (cmp > 0)
+		} else
 			ei++;
 	}
 
@@ -803,6 +804,12 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 #elif defined ZLIB_VERSION
 		strbuf_addf(buf, "zlib: %s\n", ZLIB_VERSION);
 #endif
+		strbuf_addf(buf, "SHA-1: %s\n", SHA1_BACKEND);
+#if defined SHA1_UNSAFE_BACKEND
+		strbuf_addf(buf, "non-collision-detecting-SHA-1: %s\n",
+			    SHA1_UNSAFE_BACKEND);
+#endif
+		strbuf_addf(buf, "SHA-256: %s\n", SHA256_BACKEND);
 	}
 }
 
