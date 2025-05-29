@@ -21,7 +21,7 @@
 #include "packfile.h"
 #include "pack-revindex.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "oid-array.h"
 #include "oidset.h"
 #include "path.h"
@@ -279,14 +279,14 @@ static unsigned check_objects(void)
 {
 	unsigned i, max, foreign_nr = 0;
 
-	max = get_max_object_index();
+	max = get_max_object_index(the_repository);
 
 	if (verbose)
 		progress = start_delayed_progress(the_repository,
 						  _("Checking objects"), max);
 
 	for (i = 0; i < max; i++) {
-		foreign_nr += check_object(get_indexed_object(i));
+		foreign_nr += check_object(get_indexed_object(the_repository, i));
 		display_progress(progress, i + 1);
 	}
 
@@ -485,7 +485,8 @@ static void *unpack_entry_data(off_t offset, unsigned long size,
 		git_hash_update(&c, hdr, hdrlen);
 	} else
 		oid = NULL;
-	if (type == OBJ_BLOB && size > big_file_threshold)
+	if (type == OBJ_BLOB &&
+	    size > repo_settings_get_big_file_threshold(the_repository))
 		buf = fixed_buf;
 	else
 		buf = xmallocz(size);
@@ -799,7 +800,8 @@ static int check_collison(struct object_entry *entry)
 	enum object_type type;
 	unsigned long size;
 
-	if (entry->size <= big_file_threshold || entry->type != OBJ_BLOB)
+	if (entry->size <= repo_settings_get_big_file_threshold(the_repository) ||
+	    entry->type != OBJ_BLOB)
 		return -1;
 
 	memset(&data, 0, sizeof(data));
@@ -890,9 +892,8 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 
 	if (startup_info->have_repository) {
 		read_lock();
-		collision_test_needed =
-			repo_has_object_file_with_flags(the_repository, oid,
-							OBJECT_INFO_QUICK);
+		collision_test_needed = has_object(the_repository, oid,
+						   HAS_OBJECT_FETCH_PROMISOR);
 		read_unlock();
 	}
 
@@ -1107,8 +1108,8 @@ static void *threaded_second_pass(void *data)
 		set_thread_data(data);
 	for (;;) {
 		struct base_data *parent = NULL;
-		struct object_entry *child_obj;
-		struct base_data *child;
+		struct object_entry *child_obj = NULL;
+		struct base_data *child = NULL;
 
 		counter_lock();
 		display_progress(progress, nr_resolved_deltas);
@@ -1135,15 +1136,18 @@ static void *threaded_second_pass(void *data)
 			parent = list_first_entry(&work_head, struct base_data,
 						  list);
 
-			if (parent->ref_first <= parent->ref_last) {
+			while (parent->ref_first <= parent->ref_last) {
 				int offset = ref_deltas[parent->ref_first++].obj_no;
 				child_obj = objects + offset;
-				if (child_obj->real_type != OBJ_REF_DELTA)
-					die("REF_DELTA at offset %"PRIuMAX" already resolved (duplicate base %s?)",
-					    (uintmax_t) child_obj->idx.offset,
-					    oid_to_hex(&parent->obj->idx.oid));
+				if (child_obj->real_type != OBJ_REF_DELTA) {
+					child_obj = NULL;
+					continue;
+				}
 				child_obj->real_type = parent->obj->real_type;
-			} else {
+				break;
+			}
+
+			if (!child_obj && parent->ofs_first <= parent->ofs_last) {
 				child_obj = objects +
 					ofs_deltas[parent->ofs_first++].obj_no;
 				assert(child_obj->real_type == OBJ_OFS_DELTA);
@@ -1176,29 +1180,32 @@ static void *threaded_second_pass(void *data)
 		}
 		work_unlock();
 
-		if (parent) {
-			child = resolve_delta(child_obj, parent);
-			if (!child->children_remaining)
-				FREE_AND_NULL(child->data);
-		} else {
-			child = make_base(child_obj, NULL);
-			if (child->children_remaining) {
-				/*
-				 * Since this child has its own delta children,
-				 * we will need this data in the future.
-				 * Inflate now so that future iterations will
-				 * have access to this object's data while
-				 * outside the work mutex.
-				 */
-				child->data = get_data_from_pack(child_obj);
-				child->size = child_obj->size;
+		if (child_obj) {
+			if (parent) {
+				child = resolve_delta(child_obj, parent);
+				if (!child->children_remaining)
+					FREE_AND_NULL(child->data);
+			} else{
+				child = make_base(child_obj, NULL);
+				if (child->children_remaining) {
+					/*
+					 * Since this child has its own delta children,
+					 * we will need this data in the future.
+					 * Inflate now so that future iterations will
+					 * have access to this object's data while
+					 * outside the work mutex.
+					 */
+					child->data = get_data_from_pack(child_obj);
+					child->size = child_obj->size;
+				}
 			}
 		}
 
 		work_lock();
 		if (parent)
 			parent->retain_data--;
-		if (child->data) {
+
+		if (child && child->data) {
 			/*
 			 * This child has its own children, so add it to
 			 * work_head.
@@ -1207,7 +1214,7 @@ static void *threaded_second_pass(void *data)
 			base_cache_used += child->size;
 			prune_base_data(NULL);
 			free_base_data(child);
-		} else {
+		} else if (child) {
 			/*
 			 * This child does not have its own children. It may be
 			 * the last descendant of its ancestors; free those
@@ -1286,6 +1293,7 @@ static void parse_pack_objects(unsigned char *hash)
 
 	/* Check pack integrity */
 	flush();
+	the_hash_algo->init_fn(&tmp_ctx);
 	git_hash_clone(&tmp_ctx, &input_ctx);
 	git_hash_final(hash, &tmp_ctx);
 	if (!hasheq(fill(the_hash_algo->rawsz), hash, the_repository->hash_algo))
@@ -1381,7 +1389,7 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 		REALLOC_ARRAY(objects, nr_objects + nr_unresolved + 1);
 		memset(objects + nr_objects + 1, 0,
 		       nr_unresolved * sizeof(*objects));
-		f = hashfd(output_fd, curr_pack);
+		f = hashfd(the_repository->hash_algo, output_fd, curr_pack);
 		fix_unresolved_deltas(f);
 		strbuf_addf(&msg, Q_("completed with %d local object",
 				     "completed with %d local objects",
@@ -1562,7 +1570,7 @@ static void write_special_file(const char *suffix, const char *msg,
 	else
 		filename = odb_pack_name(the_repository, &name_buf, hash, suffix);
 
-	fd = odb_pack_keep(filename);
+	fd = safe_create_file_with_leading_directories(the_repository, filename);
 	if (fd < 0) {
 		if (errno != EEXIST)
 			die_errno(_("cannot write %s file '%s'"),
@@ -2088,10 +2096,10 @@ int cmd_index_pack(int argc,
 	ALLOC_ARRAY(idx_objects, nr_objects);
 	for (i = 0; i < nr_objects; i++)
 		idx_objects[i] = &objects[i].idx;
-	curr_index = write_idx_file(the_hash_algo, index_name, idx_objects,
+	curr_index = write_idx_file(the_repository, index_name, idx_objects,
 				    nr_objects, &opts, pack_hash);
 	if (rev_index)
-		curr_rev_index = write_rev_file(the_hash_algo, rev_index_name,
+		curr_rev_index = write_rev_file(the_repository, rev_index_name,
 						idx_objects, nr_objects,
 						pack_hash, opts.flags);
 	free(idx_objects);

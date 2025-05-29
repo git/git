@@ -5,7 +5,7 @@
 #include "refs.h"
 #include "setup.h"
 #include "worktree.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "path.h"
 #include "repository.h"
 #include "strbuf.h"
@@ -179,7 +179,7 @@ static int cmd_for_each_ref__exclude(struct ref_store *refs, const char **argv)
 
 static int cmd_resolve_ref(struct ref_store *refs, const char **argv)
 {
-	struct object_id oid = *null_oid();
+	struct object_id oid = *null_oid(the_hash_algo);
 	const char *refname = notnull(*argv++, "refname");
 	int resolve_flags = arg_flags(*argv++, "resolve-flags", empty_flags);
 	int flags;

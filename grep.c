@@ -5,7 +5,7 @@
 #include "gettext.h"
 #include "grep.h"
 #include "hex.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "pretty.h"
 #include "userdiff.h"
 #include "xdiff-interface.h"
@@ -1517,7 +1517,7 @@ static int fill_textconv_grep(struct repository *r,
 		fill_filespec(df, gs->identifier, 1, 0100644);
 		break;
 	case GREP_SOURCE_FILE:
-		fill_filespec(df, null_oid(), 0, 0100644);
+		fill_filespec(df, null_oid(r->hash_algo), 0, 0100644);
 		break;
 	default:
 		BUG("attempt to textconv something without a path?");

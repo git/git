@@ -14,7 +14,7 @@
 #include "list-objects-filter.h"
 #include "list-objects-filter-options.h"
 #include "packfile.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "trace.h"
 #include "environment.h"
 
@@ -74,7 +74,8 @@ static void process_blob(struct traversal_context *ctx,
 	 * of missing objects.
 	 */
 	if (ctx->revs->exclude_promisor_objects &&
-	    !repo_has_object_file(the_repository, &obj->oid) &&
+	    !has_object(the_repository, &obj->oid,
+			HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR) &&
 	    is_promisor_object(ctx->revs->repo, &obj->oid))
 		return;
 

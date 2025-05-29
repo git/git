@@ -14,7 +14,7 @@
 #include "abspath.h"
 #include "base85.h"
 #include "config.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "delta.h"
 #include "diff.h"
 #include "dir.h"
@@ -5123,8 +5123,8 @@ int apply_parse_options(int argc, const char **argv,
 		/* Think twice before adding "--nul" synonym to this */
 		OPT_SET_INT('z', NULL, &state->line_termination,
 			N_("paths are separated with NUL character"), '\0'),
-		OPT_INTEGER('C', NULL, &state->p_context,
-				N_("ensure at least <n> lines of context match")),
+		OPT_UNSIGNED('C', NULL, &state->p_context,
+			     N_("ensure at least <n> lines of context match")),
 		OPT_CALLBACK(0, "whitespace", state, N_("action"),
 			N_("detect new or modified lines that have whitespace errors"),
 			apply_option_parse_whitespace),

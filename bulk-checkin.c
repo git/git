@@ -3,7 +3,6 @@
  */
 
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "bulk-checkin.h"
@@ -18,7 +17,7 @@
 #include "tmp-objdir.h"
 #include "packfile.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 
 static int odb_transaction_nesting;
 
@@ -44,7 +43,7 @@ static void finish_tmp_packfile(struct strbuf *basename,
 {
 	char *idx_tmp_name = NULL;
 
-	stage_tmp_packfiles(the_hash_algo, basename, pack_tmp_name,
+	stage_tmp_packfiles(the_repository, basename, pack_tmp_name,
 			    written_list, nr_written, NULL, pack_idx_opts, hash,
 			    &idx_tmp_name);
 	rename_tmp_packfile_idx(basename, &idx_tmp_name);
@@ -56,7 +55,6 @@ static void flush_bulk_checkin_packfile(struct bulk_checkin_packfile *state)
 {
 	unsigned char hash[GIT_MAX_RAWSZ];
 	struct strbuf packname = STRBUF_INIT;
-	int i;
 
 	if (!state->f)
 		return;
@@ -82,7 +80,7 @@ static void flush_bulk_checkin_packfile(struct bulk_checkin_packfile *state)
 	finish_tmp_packfile(&packname, state->pack_tmp_name,
 			    state->written, state->nr_written,
 			    &state->pack_idx_opts, hash);
-	for (i = 0; i < state->nr_written; i++)
+	for (uint32_t i = 0; i < state->nr_written; i++)
 		free(state->written[i]);
 
 clear_exit:
@@ -131,14 +129,13 @@ static void flush_batch_fsync(void)
 
 static int already_written(struct bulk_checkin_packfile *state, struct object_id *oid)
 {
-	int i;
-
 	/* The object may already exist in the repository */
-	if (repo_has_object_file(the_repository, oid))
+	if (has_object(the_repository, oid,
+		       HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
 		return 1;
 
 	/* Might want to keep the list sorted */
-	for (i = 0; i < state->nr_written; i++)
+	for (uint32_t i = 0; i < state->nr_written; i++)
 		if (oideq(&state->written[i]->oid, oid))
 			return 1;
 
@@ -171,7 +168,7 @@ static int stream_blob_to_pack(struct bulk_checkin_packfile *state,
 	unsigned char obuf[16384];
 	unsigned hdrlen;
 	int status = Z_OK;
-	int write_object = (flags & HASH_WRITE_OBJECT);
+	int write_object = (flags & INDEX_WRITE_OBJECT);
 	off_t offset = 0;
 
 	git_deflate_init(&s, pack_compression_level);
@@ -182,13 +179,13 @@ static int stream_blob_to_pack(struct bulk_checkin_packfile *state,
 
 	while (status != Z_STREAM_END) {
 		if (size && !s.avail_in) {
-			ssize_t rsize = size < sizeof(ibuf) ? size : sizeof(ibuf);
+			size_t rsize = size < sizeof(ibuf) ? size : sizeof(ibuf);
 			ssize_t read_result = read_in_full(fd, ibuf, rsize);
 			if (read_result < 0)
 				die_errno("failed to read from '%s'", path);
-			if (read_result != rsize)
-				die("failed to read %d bytes from '%s'",
-				    (int)rsize, path);
+			if ((size_t)read_result != rsize)
+				die("failed to read %u bytes from '%s'",
+				    (unsigned)rsize, path);
 			offset += rsize;
 			if (*already_hashed_to < offset) {
 				size_t hsize = offset - *already_hashed_to;
@@ -241,10 +238,10 @@ static int stream_blob_to_pack(struct bulk_checkin_packfile *state,
 static void prepare_to_stream(struct bulk_checkin_packfile *state,
 			      unsigned flags)
 {
-	if (!(flags & HASH_WRITE_OBJECT) || state->f)
+	if (!(flags & INDEX_WRITE_OBJECT) || state->f)
 		return;
 
-	state->f = create_tmp_packfile(&state->pack_tmp_name);
+	state->f = create_tmp_packfile(the_repository, &state->pack_tmp_name);
 	reset_pack_idx_option(&state->pack_idx_opts);
 
 	/* Pretend we are going to write only one object */
@@ -275,7 +272,7 @@ static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
 	git_hash_update(&ctx, obuf, header_len);
 
 	/* Note: idx is non-NULL when we are writing */
-	if ((flags & HASH_WRITE_OBJECT) != 0) {
+	if ((flags & INDEX_WRITE_OBJECT) != 0) {
 		CALLOC_ARRAY(idx, 1);
 
 		prepare_to_stream(state, flags);

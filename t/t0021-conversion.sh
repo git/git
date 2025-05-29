@@ -20,8 +20,7 @@ EOF
 generate_random_characters () {
 	LEN=$1
 	NAME=$2
-	test-tool genrandom some-seed $LEN |
-		perl -pe "s/./chr((ord($&) % 26) + ord('a'))/sge" >"$TEST_ROOT/$NAME"
+	test-tool genrandom some-seed | tr -dc 'a-z' | test_copy_bytes "$LEN" >"$TEST_ROOT/$NAME"
 }
 
 filter_git () {
@@ -841,7 +840,7 @@ test_expect_success 'process filter abort stops processing of all further files'
 	)
 '
 
-test_expect_success PERL 'invalid process filter must fail (and not hang!)' '
+test_expect_success 'invalid process filter must fail (and not hang!)' '
 	test_config_global filter.protocol.process cat &&
 	test_config_global filter.protocol.required true &&
 	rm -rf repo &&
@@ -1111,19 +1110,19 @@ do
 	branch) opt='-f HEAD' ;;
 	esac
 
-	test_expect_success PERL,TTY "delayed checkout shows progress by default on tty ($mode checkout)" '
+	test_expect_success TTY "delayed checkout shows progress by default on tty ($mode checkout)" '
 		test_delayed_checkout_progress test_terminal git checkout $opt
 	'
 
-	test_expect_success PERL "delayed checkout omits progress on non-tty ($mode checkout)" '
+	test_expect_success "delayed checkout omits progress on non-tty ($mode checkout)" '
 		test_delayed_checkout_progress ! git checkout $opt
 	'
 
-	test_expect_success PERL,TTY "delayed checkout omits progress with --quiet ($mode checkout)" '
+	test_expect_success TTY "delayed checkout omits progress with --quiet ($mode checkout)" '
 		test_delayed_checkout_progress ! test_terminal git checkout --quiet $opt
 	'
 
-	test_expect_success PERL,TTY "delayed checkout honors --[no]-progress ($mode checkout)" '
+	test_expect_success TTY "delayed checkout honors --[no]-progress ($mode checkout)" '
 		test_delayed_checkout_progress ! test_terminal git checkout --no-progress $opt &&
 		test_delayed_checkout_progress test_terminal git checkout --quiet --progress $opt
 	'

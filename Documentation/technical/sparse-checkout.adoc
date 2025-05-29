@@ -356,8 +356,6 @@ understanding these differences can be beneficial.
     The behavior for these commands somewhat depends upon the merge
     strategy being used:
       * `ort` behaves as described above
-      * `recursive` tries to not vivify files unnecessarily, but does sometimes
-	vivify files without conflicts.
       * `octopus` and `resolve` will always vivify any file changed in the merge
 	relative to the first parent, which is rather suboptimal.
 

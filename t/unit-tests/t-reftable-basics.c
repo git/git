@@ -128,12 +128,30 @@ int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 		reftable_buf_release(&b);
 	}
 
-	if_test ("put_be24 and get_be24 work") {
+	if_test ("reftable_put_be64 and reftable_get_be64 work") {
+		uint64_t in = 0x1122334455667788;
+		uint8_t dest[8];
+		uint64_t out;
+		reftable_put_be64(dest, in);
+		out = reftable_get_be64(dest);
+		check_int(in, ==, out);
+	}
+
+	if_test ("reftable_put_be32 and reftable_get_be32 work") {
+		uint32_t in = 0x11223344;
+		uint8_t dest[4];
+		uint32_t out;
+		reftable_put_be32(dest, in);
+		out = reftable_get_be32(dest);
+		check_int(in, ==, out);
+	}
+
+	if_test ("reftable_put_be24 and reftable_get_be24 work") {
 		uint32_t in = 0x112233;
 		uint8_t dest[3];
 		uint32_t out;
-		put_be24(dest, in);
-		out = get_be24(dest);
+		reftable_put_be24(dest, in);
+		out = reftable_get_be24(dest);
 		check_int(in, ==, out);
 	}
 
@@ -141,8 +159,8 @@ int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 		uint32_t in = 0xfef1;
 		uint8_t dest[3];
 		uint32_t out;
-		put_be16(dest, in);
-		out = get_be16(dest);
+		reftable_put_be16(dest, in);
+		out = reftable_get_be16(dest);
 		check_int(in, ==, out);
 	}
 

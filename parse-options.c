@@ -73,7 +73,7 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 					  enum opt_parsed flags,
 					  const char **argp)
 {
-	const char *s, *arg;
+	const char *arg;
 	const int unset = flags & OPT_UNSET;
 	int err;
 
@@ -172,41 +172,93 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 			return (*opt->ll_callback)(p, opt, p_arg, p_unset);
 	}
 	case OPTION_INTEGER:
-		if (unset) {
-			*(int *)opt->value = 0;
-			return 0;
-		}
-		if (opt->flags & PARSE_OPT_OPTARG && !p->opt) {
-			*(int *)opt->value = opt->defval;
-			return 0;
-		}
-		if (get_arg(p, opt, flags, &arg))
-			return -1;
-		if (!*arg)
-			return error(_("%s expects a numerical value"),
-				     optname(opt, flags));
-		*(int *)opt->value = strtol(arg, (char **)&s, 10);
-		if (*s)
-			return error(_("%s expects a numerical value"),
-				     optname(opt, flags));
-		return 0;
+	{
+		intmax_t upper_bound = INTMAX_MAX >> (bitsizeof(intmax_t) - CHAR_BIT * opt->precision);
+		intmax_t lower_bound = -upper_bound - 1;
+		intmax_t value;
 
-	case OPTION_MAGNITUDE:
 		if (unset) {
-			*(unsigned long *)opt->value = 0;
-			return 0;
-		}
-		if (opt->flags & PARSE_OPT_OPTARG && !p->opt) {
-			*(unsigned long *)opt->value = opt->defval;
-			return 0;
-		}
-		if (get_arg(p, opt, flags, &arg))
+			value = 0;
+		} else if (opt->flags & PARSE_OPT_OPTARG && !p->opt) {
+			value = opt->defval;
+		} else if (get_arg(p, opt, flags, &arg)) {
 			return -1;
-		if (!git_parse_ulong(arg, opt->value))
+		} else if (!*arg) {
+			return error(_("%s expects a numerical value"),
+				     optname(opt, flags));
+		} else if (!git_parse_signed(arg, &value, upper_bound)) {
+			if (errno == ERANGE)
+				return error(_("value %s for %s not in range [%"PRIdMAX",%"PRIdMAX"]"),
+					     arg, optname(opt, flags), lower_bound, upper_bound);
+
+			return error(_("%s expects an integer value with an optional k/m/g suffix"),
+				     optname(opt, flags));
+		}
+
+		if (value < lower_bound)
+			return error(_("value %s for %s not in range [%"PRIdMAX",%"PRIdMAX"]"),
+				     arg, optname(opt, flags), (intmax_t)lower_bound, (intmax_t)upper_bound);
+
+		switch (opt->precision) {
+		case 1:
+			*(int8_t *)opt->value = value;
+			return 0;
+		case 2:
+			*(int16_t *)opt->value = value;
+			return 0;
+		case 4:
+			*(int32_t *)opt->value = value;
+			return 0;
+		case 8:
+			*(int64_t *)opt->value = value;
+			return 0;
+		default:
+			BUG("invalid precision for option %s",
+			    optname(opt, flags));
+		}
+	}
+	case OPTION_UNSIGNED:
+	{
+		uintmax_t upper_bound = UINTMAX_MAX >> (bitsizeof(uintmax_t) - CHAR_BIT * opt->precision);
+		uintmax_t value;
+
+		if (unset) {
+			value = 0;
+		} else if (opt->flags & PARSE_OPT_OPTARG && !p->opt) {
+			value = opt->defval;
+		} else if (get_arg(p, opt, flags, &arg)) {
+			return -1;
+		} else if (!*arg) {
+			return error(_("%s expects a numerical value"),
+				     optname(opt, flags));
+		} else if (!git_parse_unsigned(arg, &value, upper_bound)) {
+			if (errno == ERANGE)
+				return error(_("value %s for %s not in range [%"PRIdMAX",%"PRIdMAX"]"),
+					     arg, optname(opt, flags), (uintmax_t) 0, upper_bound);
+
 			return error(_("%s expects a non-negative integer value"
 				       " with an optional k/m/g suffix"),
 				     optname(opt, flags));
-		return 0;
+		}
+
+		switch (opt->precision) {
+		case 1:
+			*(uint8_t *)opt->value = value;
+			return 0;
+		case 2:
+			*(uint16_t *)opt->value = value;
+			return 0;
+		case 4:
+			*(uint32_t *)opt->value = value;
+			return 0;
+		case 8:
+			*(uint64_t *)opt->value = value;
+			return 0;
+		default:
+			BUG("invalid precision for option %s",
+			    optname(opt, flags));
+		}
+	}
 
 	default:
 		BUG("opt->type %d should not happen", opt->type);
@@ -656,7 +708,7 @@ static void show_negated_gitcomp(const struct option *opts, int show_all,
 		case OPTION_STRING:
 		case OPTION_FILENAME:
 		case OPTION_INTEGER:
-		case OPTION_MAGNITUDE:
+		case OPTION_UNSIGNED:
 		case OPTION_CALLBACK:
 		case OPTION_BIT:
 		case OPTION_NEGBIT:
@@ -708,7 +760,7 @@ static int show_gitcomp(const struct option *opts, int show_all)
 		case OPTION_STRING:
 		case OPTION_FILENAME:
 		case OPTION_INTEGER:
-		case OPTION_MAGNITUDE:
+		case OPTION_UNSIGNED:
 		case OPTION_CALLBACK:
 			if (opts->flags & PARSE_OPT_NOARG)
 				break;

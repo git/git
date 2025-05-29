@@ -109,6 +109,7 @@ SP_ARTICLES += howto/coordinate-embargoed-releases
 API_DOCS = $(patsubst %.adoc,%,$(filter-out technical/api-index-skel.adoc technical/api-index.adoc, $(wildcard technical/api-*.adoc)))
 SP_ARTICLES += $(API_DOCS)
 
+TECH_DOCS += BreakingChanges
 TECH_DOCS += DecisionMaking
 TECH_DOCS += ReviewingGuidelines
 TECH_DOCS += MyFirstContribution
@@ -316,8 +317,8 @@ cmds_txt = cmds-ancillaryinterrogators.adoc \
 
 $(cmds_txt): cmd-list.made
 
-cmd-list.made: cmd-list.perl ../command-list.txt $(MAN1_TXT)
-	$(QUIET_GEN)$(PERL_PATH) ./cmd-list.perl .. . $(cmds_txt) && \
+cmd-list.made: cmd-list.sh ../command-list.txt $(MAN1_TXT)
+	$(QUIET_GEN)$(SHELL_PATH) ./cmd-list.sh .. . $(cmds_txt) && \
 	date >$@
 
 mergetools-%.adoc: generate-mergetool-list.sh ../git-mergetool--lib.sh $(wildcard ../mergetools/*)
@@ -397,9 +398,9 @@ user-manual.html: user-manual.xml $(XSLT)
 git.info: user-manual.texi
 	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split -o $@ user-manual.texi
 
-user-manual.texi: user-manual.xml
+user-manual.texi: user-manual.xml fix-texi.sh
 	$(QUIET_DB2TEXI)$(DOCBOOK2X_TEXI) user-manual.xml --encoding=UTF-8 --to-stdout >$@+ && \
-	$(PERL_PATH) fix-texi.perl <$@+ >$@ && \
+	$(SHELL_PATH) fix-texi.sh <$@+ >$@ && \
 	$(RM) $@+
 
 user-manual.pdf: user-manual.xml

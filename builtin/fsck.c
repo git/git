@@ -17,7 +17,7 @@
 #include "packfile.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "path.h"
 #include "read-cache-ll.h"
 #include "replace-object.h"
@@ -332,7 +332,7 @@ static void check_unreachable_object(struct object *obj)
 				describe_object(&obj->oid));
 			FILE *f;
 
-			if (safe_create_leading_directories_const(filename)) {
+			if (safe_create_leading_directories_const(the_repository, filename)) {
 				error(_("could not create lost-found"));
 				free(filename);
 				return;
@@ -400,12 +400,12 @@ static void check_connectivity(void)
 	}
 
 	/* Look up all the requirements, warn about missing objects.. */
-	max = get_max_object_index();
+	max = get_max_object_index(the_repository);
 	if (verbose)
 		fprintf_ln(stderr, _("Checking connectivity (%d objects)"), max);
 
 	for (i = 0; i < max; i++) {
-		struct object *obj = get_indexed_object(i);
+		struct object *obj = get_indexed_object(the_repository, i);
 
 		if (obj)
 			check_object(obj);
@@ -614,23 +614,20 @@ static void get_default_heads(void)
 struct for_each_loose_cb
 {
 	struct progress *progress;
-	struct strbuf obj_type;
 };
 
-static int fsck_loose(const struct object_id *oid, const char *path, void *data)
+static int fsck_loose(const struct object_id *oid, const char *path,
+		      void *data UNUSED)
 {
-	struct for_each_loose_cb *cb_data = data;
 	struct object *obj;
 	enum object_type type = OBJ_NONE;
 	unsigned long size;
 	void *contents = NULL;
 	int eaten;
 	struct object_info oi = OBJECT_INFO_INIT;
-	struct object_id real_oid = *null_oid();
+	struct object_id real_oid = *null_oid(the_hash_algo);
 	int err = 0;
 
-	strbuf_reset(&cb_data->obj_type);
-	oi.type_name = &cb_data->obj_type;
 	oi.sizep = &size;
 	oi.typep = &type;
 
@@ -642,10 +639,6 @@ static int fsck_loose(const struct object_id *oid, const char *path, void *data)
 			err = error(_("%s: object corrupt or missing: %s"),
 				    oid_to_hex(oid), path);
 	}
-	if (type != OBJ_NONE && type < 0)
-		err = error(_("%s: object is of unknown type '%s': %s"),
-			    oid_to_hex(&real_oid), cb_data->obj_type.buf,
-			    path);
 	if (err < 0) {
 		errors_found |= ERROR_OBJECT;
 		free(contents);
@@ -697,7 +690,6 @@ static void fsck_object_dir(const char *path)
 {
 	struct progress *progress = NULL;
 	struct for_each_loose_cb cb_data = {
-		.obj_type = STRBUF_INIT,
 		.progress = progress,
 	};
 
@@ -712,7 +704,6 @@ static void fsck_object_dir(const char *path)
 				      &cb_data);
 	display_progress(progress, 256);
 	stop_progress(&progress);
-	strbuf_release(&cb_data.obj_type);
 }
 
 static int fsck_head_link(const char *head_ref_name,

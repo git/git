@@ -1239,7 +1239,7 @@ static int fetch_git(struct discovery *heads,
 	packet_buf_flush(&preamble);
 
 	memset(&rpc, 0, sizeof(rpc));
-	rpc.service_name = "git-upload-pack",
+	rpc.service_name = "git-upload-pack";
 	rpc.gzip_request = 1;
 
 	err = rpc_service(&rpc, heads, args.v, &preamble, &rpc_result);
@@ -1401,7 +1401,7 @@ static int push_git(struct discovery *heads, int nr_spec, const char **specs)
 	packet_buf_flush(&preamble);
 
 	memset(&rpc, 0, sizeof(rpc));
-	rpc.service_name = "git-receive-pack",
+	rpc.service_name = "git-receive-pack";
 
 	err = rpc_service(&rpc, heads, args.v, &preamble, &rpc_result);
 	if (rpc_result.len)

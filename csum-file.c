@@ -8,8 +8,6 @@
  * able to verify hasn't been messed with afterwards.
  */
 
-#define USE_THE_REPOSITORY_VARIABLE
-
 #include "git-compat-util.h"
 #include "csum-file.h"
 #include "git-zlib.h"
@@ -148,21 +146,23 @@ void hashwrite(struct hashfile *f, const void *buf, unsigned int count)
 	}
 }
 
-struct hashfile *hashfd_check(const char *name)
+struct hashfile *hashfd_check(const struct git_hash_algo *algop,
+			      const char *name)
 {
 	int sink, check;
 	struct hashfile *f;
 
 	sink = xopen("/dev/null", O_WRONLY);
 	check = xopen(name, O_RDONLY);
-	f = hashfd(sink, name);
+	f = hashfd(algop, sink, name);
 	f->check_fd = check;
 	f->check_buffer = xmalloc(f->buffer_len);
 
 	return f;
 }
 
-static struct hashfile *hashfd_internal(int fd, const char *name,
+static struct hashfile *hashfd_internal(const struct git_hash_algo *algop,
+					int fd, const char *name,
 					struct progress *tp,
 					size_t buffer_len)
 {
@@ -176,7 +176,7 @@ static struct hashfile *hashfd_internal(int fd, const char *name,
 	f->do_crc = 0;
 	f->skip_hash = 0;
 
-	f->algop = unsafe_hash_algo(the_hash_algo);
+	f->algop = unsafe_hash_algo(algop);
 	f->algop->init_fn(&f->ctx);
 
 	f->buffer_len = buffer_len;
@@ -186,17 +186,19 @@ static struct hashfile *hashfd_internal(int fd, const char *name,
 	return f;
 }
 
-struct hashfile *hashfd(int fd, const char *name)
+struct hashfile *hashfd(const struct git_hash_algo *algop,
+			int fd, const char *name)
 {
 	/*
 	 * Since we are not going to use a progress meter to
 	 * measure the rate of data passing through this hashfile,
 	 * use a larger buffer size to reduce fsync() calls.
 	 */
-	return hashfd_internal(fd, name, NULL, 128 * 1024);
+	return hashfd_internal(algop, fd, name, NULL, 128 * 1024);
 }
 
-struct hashfile *hashfd_throughput(int fd, const char *name, struct progress *tp)
+struct hashfile *hashfd_throughput(const struct git_hash_algo *algop,
+				   int fd, const char *name, struct progress *tp)
 {
 	/*
 	 * Since we are expecting to report progress of the
@@ -204,7 +206,7 @@ struct hashfile *hashfd_throughput(int fd, const char *name, struct progress *tp
 	 * size so the progress indicators arrive at a more
 	 * frequent rate.
 	 */
-	return hashfd_internal(fd, name, tp, 8 * 1024);
+	return hashfd_internal(algop, fd, name, tp, 8 * 1024);
 }
 
 void hashfile_checkpoint_init(struct hashfile *f,
@@ -246,12 +248,14 @@ uint32_t crc32_end(struct hashfile *f)
 	return f->crc32;
 }
 
-int hashfile_checksum_valid(const unsigned char *data, size_t total_len)
+int hashfile_checksum_valid(const struct git_hash_algo *algop,
+			    const unsigned char *data, size_t total_len)
 {
 	unsigned char got[GIT_MAX_RAWSZ];
 	struct git_hash_ctx ctx;
-	const struct git_hash_algo *algop = unsafe_hash_algo(the_hash_algo);
 	size_t data_len = total_len - algop->rawsz;
+
+	algop = unsafe_hash_algo(algop);
 
 	if (total_len < algop->rawsz)
 		return 0; /* say "too short"? */

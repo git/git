@@ -673,6 +673,59 @@ test_expect_success 'bundle progress with --no-quiet' '
 	grep "%" err
 '
 
+test_expect_success 'create bundle with duplicate refnames' '
+	git bundle create out.bdl "main" "main" &&
+
+	git bundle list-heads out.bdl |
+		make_user_friendly_and_stable_output >actual &&
+	cat >expect <<-\EOF &&
+	<COMMIT-P> refs/heads/main
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'create bundle with duplicate refnames and --all' '
+	git bundle create out.bdl --all "main" "main" &&
+
+	git bundle list-heads out.bdl |
+		make_user_friendly_and_stable_output >actual &&
+	cat >expect <<-\EOF &&
+	<COMMIT-P> refs/heads/main
+	<COMMIT-N> refs/heads/release
+	<COMMIT-D> refs/heads/topic/1
+	<COMMIT-H> refs/heads/topic/2
+	<COMMIT-D> refs/pull/1/head
+	<COMMIT-G> refs/pull/2/head
+	<TAG-1> refs/tags/v1
+	<TAG-2> refs/tags/v2
+	<TAG-3> refs/tags/v3
+	<COMMIT-P> HEAD
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'create bundle with duplicate exlusion refnames' '
+	git bundle create out.bdl "main" "main^!" &&
+
+	git bundle list-heads out.bdl |
+		make_user_friendly_and_stable_output >actual &&
+	cat >expect <<-\EOF &&
+	<COMMIT-P> refs/heads/main
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'create bundle with duplicate refname short-form' '
+	git bundle create out.bdl "main" "main" "refs/heads/main" "refs/heads/main" &&
+
+	git bundle list-heads out.bdl |
+		make_user_friendly_and_stable_output >actual &&
+	cat >expect <<-\EOF &&
+	<COMMIT-P> refs/heads/main
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success 'read bundle over stdin' '
 	git bundle create some.bundle HEAD &&
 

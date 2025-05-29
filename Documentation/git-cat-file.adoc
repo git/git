@@ -9,8 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git cat-file' <type> <object>
-'git cat-file' (-e | -p) <object>
-'git cat-file' (-t | -s) [--allow-unknown-type] <object>
+'git cat-file' (-e | -p | -t | -s) <object>
 'git cat-file' (--textconv | --filters)
 	     [<rev>:<path|tree-ish> | --path=<path|tree-ish> <rev>]
 'git cat-file' (--batch | --batch-check | --batch-command) [--batch-all-objects]
@@ -80,6 +79,25 @@ OPTIONS
 	the current working tree for the given `<path>` (i.e. smudge filters,
 	end-of-line conversion, etc). In this case, `<object>` has to be of
 	the form `<tree-ish>:<path>`, or `:<path>`.
+
+--filter=<filter-spec>::
+--no-filter::
+	Omit objects from the list of printed objects. This can only be used in
+	combination with one of the batched modes. Excluded objects that have
+	been explicitly requested via any of the batch modes that read objects
+	via standard input (`--batch`, `--batch-check`) will be reported as
+	"filtered". Excluded objects in `--batch-all-objects` mode will not be
+	printed at all. The '<filter-spec>' may be one of the following:
++
+The form '--filter=blob:none' omits all blobs.
++
+The form '--filter=blob:limit=<n>[kmg]' omits blobs of size at least n
+bytes or units.  n may be zero.  The suffixes k, m, and g can be used to name
+units in KiB, MiB, or GiB.  For example, 'blob:limit=1k' is the same as
+'blob:limit=1024'.
++
+The form '--filter=object:type=(tag|commit|tree|blob)' omits all objects which
+are not of the requested type.
 
 --path=<path>::
 	For use with `--textconv` or `--filters`, to allow specifying an object
@@ -182,9 +200,6 @@ flush::
 	`--batch`.  Note that `cat-file` will still show each object
 	only once, even if it is stored multiple times in the
 	repository.
-
---allow-unknown-type::
-	Allow `-s` or `-t` to query broken/corrupt objects of unknown type.
 
 --follow-symlinks::
 	With `--batch` or `--batch-check`, follow symlinks inside the
@@ -338,6 +353,13 @@ the repository, then `cat-file` will ignore any custom format and print:
 
 ------------
 <object> SP missing LF
+------------
+
+If a name is specified on stdin that is filtered out via `--filter=`,
+then `cat-file` will ignore any custom format and print:
+
+------------
+<object> SP excluded LF
 ------------
 
 If a name is specified that might refer to more than one object (an ambiguous short sha), then `cat-file` will ignore any custom format and print:

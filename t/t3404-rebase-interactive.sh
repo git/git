@@ -1468,7 +1468,7 @@ test_expect_success 'rebase -i respects rebase.missingCommitsCheck = warn' '
 	cat >expect <<-EOF &&
 	Warning: some commits may have been dropped accidentally.
 	Dropped commits (newer to older):
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary)
+	 - $(git log --format="%h # %s" -1 primary)
 	To avoid this message, use "drop" to explicitly remove a commit.
 	EOF
 	test_config rebase.missingCommitsCheck warn &&
@@ -1486,8 +1486,8 @@ test_expect_success 'rebase -i respects rebase.missingCommitsCheck = error' '
 	cat >expect <<-EOF &&
 	Warning: some commits may have been dropped accidentally.
 	Dropped commits (newer to older):
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary)
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary~2)
+	 - $(git log --format="%h # %s" -1 primary)
+	 - $(git log --format="%h # %s" -1 primary~2)
 	To avoid this message, use "drop" to explicitly remove a commit.
 
 	Use '\''git config rebase.missingCommitsCheck'\'' to change the level of warnings.
@@ -1530,11 +1530,11 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = ig
 test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = warn' '
 	cat >expect <<-EOF &&
 	error: invalid command '\''pickled'\''
-	error: invalid line 1: pickled $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
+	error: invalid line 1: pickled $(git log --format="%h # %s" -1 primary~4)
 	Warning: some commits may have been dropped accidentally.
 	Dropped commits (newer to older):
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary)
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
+	 - $(git log --format="%h # %s" -1 primary)
+	 - $(git log --format="%h # %s" -1 primary~4)
 	To avoid this message, use "drop" to explicitly remove a commit.
 	EOF
 	head -n5 expect >expect.2 &&
@@ -1565,11 +1565,11 @@ test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = wa
 test_expect_success 'rebase --edit-todo respects rebase.missingCommitsCheck = error' '
 	cat >expect <<-EOF &&
 	error: invalid command '\''pickled'\''
-	error: invalid line 1: pickled $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
+	error: invalid line 1: pickled $(git log --format="%h # %s" -1 primary~4)
 	Warning: some commits may have been dropped accidentally.
 	Dropped commits (newer to older):
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary)
-	 - $(git rev-list --pretty=oneline --abbrev-commit -1 primary~4)
+	 - $(git log --format="%h # %s" -1 primary)
+	 - $(git log --format="%h # %s" -1 primary~4)
 	To avoid this message, use "drop" to explicitly remove a commit.
 
 	Use '\''git config rebase.missingCommitsCheck'\'' to change the level of warnings.
@@ -1642,11 +1642,11 @@ test_expect_success 'respects rebase.abbreviateCommands with fixup, squash and e
 	test_commit "fixup! first" file2.txt "first line again" first_fixup &&
 	test_commit "squash! second" file1.txt "another line here" second_squash &&
 	cat >expected <<-EOF &&
-	p $(git rev-list --abbrev-commit -1 first) first
-	f $(git rev-list --abbrev-commit -1 first_fixup) fixup! first
+	p $(git rev-list --abbrev-commit -1 first) # first
+	f $(git rev-list --abbrev-commit -1 first_fixup) # fixup! first
 	x git show HEAD
-	p $(git rev-list --abbrev-commit -1 second) second
-	s $(git rev-list --abbrev-commit -1 second_squash) squash! second
+	p $(git rev-list --abbrev-commit -1 second) # second
+	s $(git rev-list --abbrev-commit -1 second_squash) # squash! second
 	x git show HEAD
 	EOF
 	git checkout abbrevcmd &&
@@ -1665,7 +1665,7 @@ test_expect_success 'static check of bad command' '
 		set_fake_editor &&
 		test_must_fail env FAKE_LINES="1 2 3 bad 4 5" \
 		git rebase -i --root 2>actual &&
-		test_grep "pickled $(git rev-list --oneline -1 primary~1)" \
+		test_grep "pickled $(git log --format="%h # %s" -1 primary~1)" \
 				actual &&
 		test_grep "You can fix this with .git rebase --edit-todo.." \
 				actual &&
@@ -1865,15 +1865,15 @@ test_expect_success '--update-refs adds label and update-ref commands' '
 		set_cat_todo_editor &&
 
 		cat >expect <<-EOF &&
-		pick $(git log -1 --format=%h J) J
-		fixup $(git log -1 --format=%h update-refs) fixup! J # empty
+		pick $(git log -1 --format=%h J) # J
+		fixup $(git log -1 --format=%h update-refs) # fixup! J # empty
 		update-ref refs/heads/second
 		update-ref refs/heads/first
-		pick $(git log -1 --format=%h K) K
-		pick $(git log -1 --format=%h L) L
-		fixup $(git log -1 --format=%h is-not-reordered) fixup! L # empty
+		pick $(git log -1 --format=%h K) # K
+		pick $(git log -1 --format=%h L) # L
+		fixup $(git log -1 --format=%h is-not-reordered) # fixup! L # empty
 		update-ref refs/heads/third
-		pick $(git log -1 --format=%h M) M
+		pick $(git log -1 --format=%h M) # M
 		update-ref refs/heads/no-conflict-branch
 		update-ref refs/heads/is-not-reordered
 		update-ref refs/heads/shared-tip
@@ -1905,19 +1905,19 @@ test_expect_success '--update-refs adds commands with --rebase-merges' '
 		cat >expect <<-EOF &&
 		label onto
 		reset onto
-		pick $(git log -1 --format=%h branch2~1) F
-		pick $(git log -1 --format=%h branch2) I
+		pick $(git log -1 --format=%h branch2~1) # F
+		pick $(git log -1 --format=%h branch2) # I
 		update-ref refs/heads/branch2
 		label branch2
 		reset onto
-		pick $(git log -1 --format=%h refs/heads/second) J
+		pick $(git log -1 --format=%h refs/heads/second) # J
 		update-ref refs/heads/second
 		update-ref refs/heads/first
-		pick $(git log -1 --format=%h refs/heads/third~1) K
-		pick $(git log -1 --format=%h refs/heads/third) L
-		fixup $(git log -1 --format=%h update-refs-with-merge) fixup! L # empty
+		pick $(git log -1 --format=%h refs/heads/third~1) # K
+		pick $(git log -1 --format=%h refs/heads/third) # L
+		fixup $(git log -1 --format=%h update-refs-with-merge) # fixup! L # empty
 		update-ref refs/heads/third
-		pick $(git log -1 --format=%h HEAD~2) M
+		pick $(git log -1 --format=%h HEAD~2) # M
 		update-ref refs/heads/no-conflict-branch
 		merge -C $(git log -1 --format=%h HEAD~1) branch2 # merge
 		update-ref refs/heads/merge-branch

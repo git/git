@@ -726,7 +726,7 @@ test_expect_success 'directory becomes symlink'        '
 	(cd result && git show main:foo)
 '
 
-test_expect_success 'fast-export quotes pathnames' '
+test_expect_success PERL_TEST_HELPERS 'fast-export quotes pathnames' '
 	git init crazy-paths &&
 	test_config -C crazy-paths core.protectNTFS false &&
 	(cd crazy-paths &&
