@@ -2,7 +2,7 @@
 config.mak
 Git Gui.app*
 git-gui.tcl
+GIT-GUI-BUILD-OPTIONS
 GIT-VERSION-FILE
-GIT-GUI-VARS
 git-gui
 lib/tclIndex
