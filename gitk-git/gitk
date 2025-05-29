@@ -7108,7 +7108,7 @@ proc findselectline {l} {
 
 # mark the bits of a headline or author that match a find string
 proc markmatches {canv l str tag matches font row} {
-    global selectedline
+    global selectedline foundbgcolor
 
     set bbox [$canv bbox $tag]
     set x0 [lindex $bbox 0]
@@ -7122,7 +7122,7 @@ proc markmatches {canv l str tag matches font row} {
         set xlen [font measure $font [string range $str 0 [expr {$end}]]]
         set t [$canv create rect [expr {$x0+$xoff}] $y0 \
                    [expr {$x0+$xlen+2}] $y1 \
-                   -outline {} -tags [list match$l matches] -fill yellow]
+                   -outline {} -tags [list match$l matches] -fill $foundbgcolor]
         $canv lower $t
         if {$row == $selectedline} {
             $canv raise $t secsel
@@ -11736,13 +11736,11 @@ proc prefspage_general {notebook} {
     grid x $page.tabstopl $page.tabstop -sticky w
 
     ${NS}::label $page.wrapcommentl -text [mc "Wrap comment text"]
-    ${NS}::combobox $page.wrapcomment -values {none char word} -state readonly \
-        -textvariable wrapcomment
+    makedroplist $page.wrapcomment wrapcomment none char word
     grid x $page.wrapcommentl $page.wrapcomment -sticky w
 
     ${NS}::label $page.wrapdefaultl -text [mc "Wrap other text"]
-    ${NS}::combobox $page.wrapdefault -values {none char word} -state readonly \
-        -textvariable wrapdefault
+    makedroplist $page.wrapdefault wrapdefault none char word
     grid x $page.wrapdefaultl $page.wrapdefault -sticky w
 
     ${NS}::checkbutton $page.ntag -text [mc "Display nearby tags/heads"] \
