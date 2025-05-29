@@ -7,7 +7,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "repository.h"
 #include "object.h"
 #include "commit.h"
@@ -384,6 +384,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 {
 	int i;
 	int ref_count = 0;
+	struct strset objects = STRSET_INIT;
 
 	for (i = 0; i < revs->pending.nr; i++) {
 		struct object_array_entry *e = revs->pending.objects + i;
@@ -400,6 +401,9 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		if (refs_read_ref_full(get_main_ref_store(the_repository), e->name, RESOLVE_REF_READING, &oid, &flag))
 			flag = 0;
 		display_ref = (flag & REF_ISSYMREF) ? e->name : ref;
+
+		if (strset_contains(&objects, display_ref))
+			goto skip_write_ref;
 
 		if (e->item->type == OBJ_TAG &&
 				!is_tag_in_date_range(e->item, revs)) {
@@ -423,6 +427,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		}
 
 		ref_count++;
+		strset_add(&objects, display_ref);
 		write_or_die(bundle_fd, oid_to_hex(&e->item->oid), the_hash_algo->hexsz);
 		write_or_die(bundle_fd, " ", 1);
 		write_or_die(bundle_fd, display_ref, strlen(display_ref));
@@ -430,6 +435,8 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
  skip_write_ref:
 		free(ref);
 	}
+
+	strset_clear(&objects);
 
 	/* end header */
 	write_or_die(bundle_fd, "\n", 1);
@@ -566,7 +573,6 @@ int create_bundle(struct repository *r, const char *path,
 	 */
 	revs.blob_objects = revs.tree_objects = 0;
 	traverse_commit_list(&revs, write_bundle_prerequisites, NULL, &bpi);
-	object_array_remove_duplicates(&revs_copy.pending);
 
 	/* write bundle refs */
 	ref_count = write_bundle_refs(bundle_fd, &revs_copy);

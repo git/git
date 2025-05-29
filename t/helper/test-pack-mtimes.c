@@ -3,7 +3,7 @@
 #include "test-tool.h"
 #include "hex.h"
 #include "strbuf.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "packfile.h"
 #include "pack-mtimes.h"
 #include "setup.h"
@@ -24,7 +24,7 @@ static void dump_mtimes(struct packed_git *p)
 	}
 }
 
-static const char *pack_mtimes_usage = "\n"
+static const char *const pack_mtimes_usage = "\n"
 "  test-tool pack-mtimes <pack-name.mtimes>";
 
 int cmd__pack_mtimes(int argc, const char **argv)

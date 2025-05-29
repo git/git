@@ -306,6 +306,34 @@ test_expect_success 'maintenance.loose-objects.auto' '
 	test_subcommand git prune-packed --quiet <trace-loC
 '
 
+test_expect_success 'maintenance.loose-objects.batchSize' '
+	git init loose-batch &&
+
+	# This creates three objects per commit.
+	test_commit_bulk -C loose-batch 34 &&
+	pack=$(ls loose-batch/.git/objects/pack/pack-*.pack) &&
+	index="${pack%pack}idx" &&
+	rm "$index" &&
+	git -C loose-batch unpack-objects <"$pack" &&
+	git -C loose-batch config maintenance.loose-objects.batchSize 50 &&
+
+	GIT_PROGRESS_DELAY=0 \
+	git -C loose-batch maintenance run --no-quiet --task=loose-objects 2>err &&
+	grep "Enumerating objects: 50, done." err &&
+
+	GIT_PROGRESS_DELAY=0 \
+	git -C loose-batch maintenance run --no-quiet --task=loose-objects 2>err &&
+	grep "Enumerating objects: 50, done." err &&
+
+	GIT_PROGRESS_DELAY=0 \
+	git -C loose-batch maintenance run --no-quiet --task=loose-objects 2>err &&
+	grep "Enumerating objects: 2, done." err &&
+
+	GIT_PROGRESS_DELAY=0 \
+	git -C loose-batch maintenance run --no-quiet --task=loose-objects 2>err &&
+	test_must_be_empty err
+'
+
 test_expect_success 'incremental-repack task' '
 	packDir=.git/objects/pack &&
 	for i in $(test_seq 1 5)
@@ -445,6 +473,139 @@ test_expect_success 'pack-refs task' '
 	GIT_TRACE2_EVENT="$(pwd)/pack-refs.txt" \
 		git maintenance run --task=pack-refs &&
 	test_subcommand git pack-refs --all --prune <pack-refs.txt
+'
+
+test_expect_success 'reflog-expire task' '
+	GIT_TRACE2_EVENT="$(pwd)/reflog-expire.txt" \
+		git maintenance run --task=reflog-expire &&
+	test_subcommand git reflog expire --all <reflog-expire.txt
+'
+
+test_expect_success 'reflog-expire task --auto only packs when exceeding limits' '
+	git reflog expire --all --expire=now &&
+	test_commit reflog-one &&
+	test_commit reflog-two &&
+	GIT_TRACE2_EVENT="$(pwd)/reflog-expire-auto.txt" \
+		git -c maintenance.reflog-expire.auto=3 maintenance run --auto --task=reflog-expire &&
+	test_subcommand ! git reflog expire --all <reflog-expire-auto.txt &&
+	GIT_TRACE2_EVENT="$(pwd)/reflog-expire-auto.txt" \
+		git -c maintenance.reflog-expire.auto=2 maintenance run --auto --task=reflog-expire &&
+	test_subcommand git reflog expire --all <reflog-expire-auto.txt
+'
+
+test_expect_worktree_prune () {
+	negate=
+	if test "$1" = "!"
+	then
+		negate="!"
+		shift
+	fi
+
+	rm -f "worktree-prune.txt" &&
+	GIT_TRACE2_EVENT="$(pwd)/worktree-prune.txt" "$@" &&
+	test_subcommand $negate git worktree prune --expire 3.months.ago <worktree-prune.txt
+}
+
+test_expect_success 'worktree-prune task without --auto always prunes' '
+	test_expect_worktree_prune git maintenance run --task=worktree-prune
+'
+
+test_expect_success 'worktree-prune task --auto only prunes with prunable worktree' '
+	test_expect_worktree_prune ! git maintenance run --auto --task=worktree-prune &&
+	mkdir .git/worktrees &&
+	: >.git/worktrees/abc &&
+	test_expect_worktree_prune git maintenance run --auto --task=worktree-prune
+'
+
+test_expect_success 'worktree-prune task with --auto honors maintenance.worktree-prune.auto' '
+	# A negative value should always prune.
+	test_expect_worktree_prune git -c maintenance.worktree-prune.auto=-1 maintenance run --auto --task=worktree-prune &&
+
+	mkdir .git/worktrees &&
+	: >.git/worktrees/first &&
+	: >.git/worktrees/second &&
+	: >.git/worktrees/third &&
+
+	# Zero should never prune.
+	test_expect_worktree_prune ! git -c maintenance.worktree-prune.auto=0 maintenance run --auto --task=worktree-prune &&
+	# A positive value should require at least this many prunable worktrees.
+	test_expect_worktree_prune ! git -c maintenance.worktree-prune.auto=4 maintenance run --auto --task=worktree-prune &&
+	test_expect_worktree_prune git -c maintenance.worktree-prune.auto=3 maintenance run --auto --task=worktree-prune
+'
+
+test_expect_success 'worktree-prune task with --auto honors maintenance.worktree-prune.auto' '
+	# A negative value should always prune.
+	test_expect_worktree_prune git -c maintenance.worktree-prune.auto=-1 maintenance run --auto --task=worktree-prune &&
+
+	mkdir .git/worktrees &&
+	: >.git/worktrees/first &&
+	: >.git/worktrees/second &&
+	: >.git/worktrees/third &&
+
+	# Zero should never prune.
+	test_expect_worktree_prune ! git -c maintenance.worktree-prune.auto=0 maintenance run --auto --task=worktree-prune &&
+	# A positive value should require at least this many prunable worktrees.
+	test_expect_worktree_prune ! git -c maintenance.worktree-prune.auto=4 maintenance run --auto --task=worktree-prune &&
+	test_expect_worktree_prune git -c maintenance.worktree-prune.auto=3 maintenance run --auto --task=worktree-prune
+'
+
+test_expect_success 'worktree-prune task honors gc.worktreePruneExpire' '
+	git worktree add worktree &&
+	rm -rf worktree &&
+
+	rm -f worktree-prune.txt &&
+	GIT_TRACE2_EVENT="$(pwd)/worktree-prune.txt" git -c gc.worktreePruneExpire=1.week.ago maintenance run --auto --task=worktree-prune &&
+	test_subcommand ! git worktree prune --expire 1.week.ago <worktree-prune.txt &&
+	test_path_is_dir .git/worktrees/worktree &&
+
+	rm -f worktree-prune.txt &&
+	GIT_TRACE2_EVENT="$(pwd)/worktree-prune.txt" git -c gc.worktreePruneExpire=now maintenance run --auto --task=worktree-prune &&
+	test_subcommand git worktree prune --expire now <worktree-prune.txt &&
+	test_path_is_missing .git/worktrees/worktree
+'
+
+test_expect_rerere_gc () {
+	negate=
+	if test "$1" = "!"
+	then
+		negate="!"
+		shift
+	fi
+
+	rm -f "rerere-gc.txt" &&
+	GIT_TRACE2_EVENT="$(pwd)/rerere-gc.txt" "$@" &&
+	test_subcommand $negate git rerere gc <rerere-gc.txt
+}
+
+test_expect_success 'rerere-gc task without --auto always collects garbage' '
+	test_expect_rerere_gc git maintenance run --task=rerere-gc
+'
+
+test_expect_success 'rerere-gc task with --auto only prunes with prunable entries' '
+	test_when_finished "rm -rf .git/rr-cache" &&
+	test_expect_rerere_gc ! git maintenance run --auto --task=rerere-gc &&
+	mkdir .git/rr-cache &&
+	test_expect_rerere_gc ! git maintenance run --auto --task=rerere-gc &&
+	: >.git/rr-cache/entry &&
+	test_expect_rerere_gc git maintenance run --auto --task=rerere-gc
+'
+
+test_expect_success 'rerere-gc task with --auto honors maintenance.rerere-gc.auto' '
+	test_when_finished "rm -rf .git/rr-cache" &&
+
+	# A negative value should always prune.
+	test_expect_rerere_gc git -c maintenance.rerere-gc.auto=-1 maintenance run --auto --task=rerere-gc &&
+
+	# A positive value prunes when there is at least one entry.
+	test_expect_rerere_gc ! git -c maintenance.rerere-gc.auto=9000 maintenance run --auto --task=rerere-gc &&
+	mkdir .git/rr-cache &&
+	test_expect_rerere_gc ! git -c maintenance.rerere-gc.auto=9000 maintenance run --auto --task=rerere-gc &&
+	: >.git/rr-cache/entry-1 &&
+	test_expect_rerere_gc git -c maintenance.rerere-gc.auto=9000 maintenance run --auto --task=rerere-gc &&
+
+	# Zero should never prune.
+	: >.git/rr-cache/entry-1 &&
+	test_expect_rerere_gc ! git -c maintenance.rerere-gc.auto=0 maintenance run --auto --task=rerere-gc
 '
 
 test_expect_success '--auto and --schedule incompatible' '

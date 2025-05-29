@@ -31,7 +31,7 @@
 #include "hashmap.h"
 #include "string-list.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "pager.h"
 #include "path.h"
 #include "utf8.h"
@@ -1487,11 +1487,6 @@ static int git_default_core_config(const char *var, const char *value,
 			zlib_compression_level = level;
 		if (!pack_compression_seen)
 			pack_compression_level = level;
-		return 0;
-	}
-
-	if (!strcmp(var, "core.bigfilethreshold")) {
-		big_file_threshold = git_config_ulong(var, value, ctx->kvi);
 		return 0;
 	}
 

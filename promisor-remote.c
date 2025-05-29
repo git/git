@@ -3,7 +3,7 @@
 #include "git-compat-util.h"
 #include "gettext.h"
 #include "hex.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "promisor-remote.h"
 #include "config.h"
 #include "trace2.h"
@@ -323,13 +323,15 @@ static void promisor_info_vecs(struct repository *repo,
 	promisor_remote_init(repo);
 
 	for (r = repo->promisor_remote_config->promisors; r; r = r->next) {
-		char *url;
+		const char *url;
 		char *url_key = xstrfmt("remote.%s.url", r->name);
 
-		strvec_push(names, r->name);
-		strvec_push(urls, git_config_get_string(url_key, &url) ? NULL : url);
+		/* Only add remotes with a non empty URL */
+		if (!git_config_get_string_tmp(url_key, &url) && *url) {
+			strvec_push(names, r->name);
+			strvec_push(urls, url);
+		}
 
-		free(url);
 		free(url_key);
 	}
 }
@@ -356,10 +358,8 @@ char *promisor_remote_info(struct repository *repo)
 			strbuf_addch(&sb, ';');
 		strbuf_addstr(&sb, "name=");
 		strbuf_addstr_urlencode(&sb, names.v[i], allow_unsanitized);
-		if (urls.v[i]) {
-			strbuf_addstr(&sb, ",url=");
-			strbuf_addstr_urlencode(&sb, urls.v[i], allow_unsanitized);
-		}
+		strbuf_addstr(&sb, ",url=");
+		strbuf_addstr_urlencode(&sb, urls.v[i], allow_unsanitized);
 	}
 
 	strvec_clear(&names);
@@ -370,13 +370,13 @@ char *promisor_remote_info(struct repository *repo)
 
 /*
  * Find first index of 'nicks' where there is 'nick'. 'nick' is
- * compared case insensitively to the strings in 'nicks'. If not found
+ * compared case sensitively to the strings in 'nicks'. If not found
  * 'nicks->nr' is returned.
  */
 static size_t remote_nick_find(struct strvec *nicks, const char *nick)
 {
 	for (size_t i = 0; i < nicks->nr; i++)
-		if (!strcasecmp(nicks->v[i], nick))
+		if (!strcmp(nicks->v[i], nick))
 			return i;
 	return nicks->nr;
 }
@@ -409,10 +409,15 @@ static int should_accept_remote(enum accept_promisor accept,
 	if (accept != ACCEPT_KNOWN_URL)
 		BUG("Unhandled 'enum accept_promisor' value '%d'", accept);
 
+	if (!remote_url || !*remote_url) {
+		warning(_("no or empty URL advertised for remote '%s'"), remote_name);
+		return 0;
+	}
+
 	if (!strcmp(urls->v[i], remote_url))
 		return 1;
 
-	warning(_("known remote named '%s' but with url '%s' instead of '%s'"),
+	warning(_("known remote named '%s' but with URL '%s' instead of '%s'"),
 		remote_name, urls->v[i], remote_url);
 
 	return 0;

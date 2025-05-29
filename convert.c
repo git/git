@@ -8,7 +8,7 @@
 #include "copy.h"
 #include "gettext.h"
 #include "hex.h"
-#include "object-store-ll.h"
+#include "object-file.h"
 #include "attr.h"
 #include "run-command.h"
 #include "quote.h"

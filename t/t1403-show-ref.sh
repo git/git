@@ -196,7 +196,7 @@ test_expect_success 'show-ref --verify with dangling ref' '
 
 	remove_object() {
 		file=$(sha1_file "$*") &&
-		test -e "$file" &&
+		test_path_is_file "$file" &&
 		rm -f "$file"
 	} &&
 

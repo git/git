@@ -14,7 +14,7 @@
 #include "fetch-pack.h"
 #include "remote.h"
 #include "trace2.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 
 static struct {
 	enum bundle_list_heuristic heuristic;
@@ -403,7 +403,7 @@ static int unbundle_from_file(struct repository *r, const char *file)
 		const char *branch_name;
 		int has_old;
 
-		if (!skip_prefix(refname->string, "refs/heads/", &branch_name))
+		if (!skip_prefix(refname->string, "refs/", &branch_name))
 			continue;
 
 		strbuf_setlen(&bundle_ref, bundle_prefix_len);
@@ -532,11 +532,13 @@ static int fetch_bundles_by_token(struct repository *r,
 	 */
 	if (!repo_config_get_value(r,
 				   "fetch.bundlecreationtoken",
-				   &creationTokenStr) &&
-	    sscanf(creationTokenStr, "%"PRIu64, &maxCreationToken) == 1 &&
-	    bundles.items[0]->creationToken <= maxCreationToken) {
-		free(bundles.items);
-		return 0;
+				   &creationTokenStr)) {
+		if (sscanf(creationTokenStr, "%"PRIu64, &maxCreationToken) != 1)
+			maxCreationToken = 0;
+		if (bundles.items[0]->creationToken <= maxCreationToken) {
+			free(bundles.items);
+			return 0;
+		}
 	}
 
 	/*

@@ -19,7 +19,7 @@
 #include "setup.h"
 #include "strvec.h"
 #include "run-command.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "list-objects.h"
 #include "commit-slab.h"
 #include "wildmatch.h"
@@ -518,7 +518,7 @@ static void describe_blob(struct object_id oid, struct strbuf *dst)
 {
 	struct rev_info revs;
 	struct strvec args = STRVEC_INIT;
-	struct process_commit_data pcd = { *null_oid(), oid, dst, &revs};
+	struct process_commit_data pcd = { *null_oid(the_hash_algo), oid, dst, &revs};
 
 	strvec_pushl(&args, "internal: The first arg is not parsed",
 		     "--objects", "--in-commit-order", "--reverse", "HEAD",
@@ -601,12 +601,24 @@ int cmd_describe(int argc,
 			   N_("do not consider tags matching <pattern>")),
 		OPT_BOOL(0, "always",        &always,
 			N_("show abbreviated commit object as fallback")),
-		{OPTION_STRING, 0, "dirty",  &dirty, N_("mark"),
-			N_("append <mark> on dirty working tree (default: \"-dirty\")"),
-			PARSE_OPT_OPTARG, NULL, (intptr_t) "-dirty"},
-		{OPTION_STRING, 0, "broken",  &broken, N_("mark"),
-			N_("append <mark> on broken working tree (default: \"-broken\")"),
-			PARSE_OPT_OPTARG, NULL, (intptr_t) "-broken"},
+		{
+			.type = OPTION_STRING,
+			.long_name = "dirty",
+			.value = &dirty,
+			.argh = N_("mark"),
+			.help = N_("append <mark> on dirty working tree (default: \"-dirty\")"),
+			.flags = PARSE_OPT_OPTARG,
+			.defval = (intptr_t) "-dirty",
+		},
+		{
+			.type = OPTION_STRING,
+			.long_name = "broken",
+			.value = &broken,
+			.argh = N_("mark"),
+			.help = N_("append <mark> on broken working tree (default: \"-broken\")"),
+			.flags = PARSE_OPT_OPTARG,
+			.defval = (intptr_t) "-broken",
+		},
 		OPT_END(),
 	};
 

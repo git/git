@@ -7,6 +7,13 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
+
+if ! test_have_prereq PERL_TEST_HELPERS
+then
+	skip_all='skipping http fetch smart tests; Perl not available'
+	test_done
+fi
+
 test "$HTTP_PROTO" = "HTTP/2" && enable_http2
 start_httpd
 

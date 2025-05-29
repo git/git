@@ -8,7 +8,6 @@
 #include "abspath.h"
 #include "environment.h"
 #include "gettext.h"
-#include "object-file.h"
 #include "parse-options.h"
 #include "path.h"
 #include "refs.h"
@@ -93,10 +92,15 @@ int cmd_init_db(int argc,
 				N_("directory from which templates will be used")),
 		OPT_SET_INT(0, "bare", &is_bare_repository_cfg,
 				N_("create a bare repository"), 1),
-		{ OPTION_CALLBACK, 0, "shared", &init_shared_repository,
-			N_("permissions"),
-			N_("specify that the git repository is to be shared amongst several users"),
-			PARSE_OPT_OPTARG | PARSE_OPT_NONEG, shared_callback, 0},
+		{
+			.type = OPTION_CALLBACK,
+			.long_name = "shared",
+			.value = &init_shared_repository,
+			.argh = N_("permissions"),
+			.help = N_("specify that the git repository is to be shared amongst several users"),
+			.flags = PARSE_OPT_OPTARG | PARSE_OPT_NONEG,
+			.callback = shared_callback
+		},
 		OPT_BIT('q', "quiet", &flags, N_("be quiet"), INIT_DB_QUIET),
 		OPT_STRING(0, "separate-git-dir", &real_git_dir, N_("gitdir"),
 			   N_("separate git dir from working tree")),
@@ -134,7 +138,7 @@ int cmd_init_db(int argc,
 				 */
 				saved = repo_settings_get_shared_repository(the_repository);
 				repo_settings_set_shared_repository(the_repository, 0);
-				switch (safe_create_leading_directories_const(argv[0])) {
+				switch (safe_create_leading_directories_const(the_repository, argv[0])) {
 				case SCLD_OK:
 				case SCLD_PERMS:
 					break;

@@ -13,133 +13,102 @@ package require Tk
 ##
 ## Enabling platform-specific code paths
 
-proc is_MacOSX {} {
-	if {[tk windowingsystem] eq {aqua}} {
-		return 1
-	}
-	return 0
-}
-
 proc is_Windows {} {
-	if {$::tcl_platform(platform) eq {windows}} {
-		return 1
-	}
-	return 0
-}
-
-set _iscygwin {}
-proc is_Cygwin {} {
-	global _iscygwin
-	if {$_iscygwin eq {}} {
-		if {[string match "CYGWIN_*" $::tcl_platform(os)]} {
-			set _iscygwin 1
-		} else {
-			set _iscygwin 0
-		}
-	}
-	return $_iscygwin
+    if {$::tcl_platform(platform) eq {windows}} {
+        return 1
+    }
+    return 0
 }
 
 ######################################################################
 ##
 ## PATH lookup
 
-set _search_path {}
-proc _which {what args} {
-	global env _search_exe _search_path
+if {[is_Windows]} {
+    set _search_path {}
+    proc _which {what args} {
+        global env _search_path
 
-	if {$_search_path eq {}} {
-		if {[is_Cygwin] && [regexp {^(/|\.:)} $env(PATH)]} {
-			set _search_path [split [exec cygpath \
-				--windows \
-				--path \
-				--absolute \
-				$env(PATH)] {;}]
-			set _search_exe .exe
-		} elseif {[is_Windows]} {
-			set gitguidir [file dirname [info script]]
-			regsub -all ";" $gitguidir "\\;" gitguidir
-			set env(PATH) "$gitguidir;$env(PATH)"
-			set _search_path [split $env(PATH) {;}]
-			# Skip empty `PATH` elements
-			set _search_path [lsearch -all -inline -not -exact \
-				$_search_path ""]
-			set _search_exe .exe
-		} else {
-			set _search_path [split $env(PATH) :]
-			set _search_exe {}
-		}
-	}
+        if {$_search_path eq {}} {
+            set gitguidir [file dirname [info script]]
+            regsub -all ";" $gitguidir "\\;" gitguidir
+            set env(PATH) "$gitguidir;$env(PATH)"
+            set _search_path [split $env(PATH) {;}]
+            # Skip empty `PATH` elements
+            set _search_path [lsearch -all -inline -not -exact \
+                $_search_path ""]
+        }
 
-	if {[is_Windows] && [lsearch -exact $args -script] >= 0} {
-		set suffix {}
-	} else {
-		set suffix $_search_exe
-	}
+        if {[lsearch -exact $args -script] >= 0} {
+            set suffix {}
+        } else {
+            set suffix .exe
+        }
 
-	foreach p $_search_path {
-		set p [file join $p $what$suffix]
-		if {[file exists $p]} {
-			return [file normalize $p]
-		}
-	}
-	return {}
-}
+        foreach p $_search_path {
+            set p [file join $p $what$suffix]
+            if {[file exists $p]} {
+                return [file normalize $p]
+            }
+        }
+        return {}
+    }
 
-proc sanitize_command_line {command_line from_index} {
-	set i $from_index
-	while {$i < [llength $command_line]} {
-		set cmd [lindex $command_line $i]
-		if {[file pathtype $cmd] ne "absolute"} {
-			set fullpath [_which $cmd]
-			if {$fullpath eq ""} {
-				throw {NOT-FOUND} "$cmd not found in PATH"
-			}
-			lset command_line $i $fullpath
-		}
+    proc sanitize_command_line {command_line from_index} {
+        set i $from_index
+        while {$i < [llength $command_line]} {
+            set cmd [lindex $command_line $i]
+            if {[llength [file split $cmd]] < 2} {
+                set fullpath [_which $cmd]
+                if {$fullpath eq ""} {
+                    throw {NOT-FOUND} "$cmd not found in PATH"
+                }
+                lset command_line $i $fullpath
+            }
 
-		# handle piped commands, e.g. `exec A | B`
-		for {incr i} {$i < [llength $command_line]} {incr i} {
-			if {[lindex $command_line $i] eq "|"} {
-				incr i
-				break
-			}
-		}
-	}
-	return $command_line
-}
+            # handle piped commands, e.g. `exec A | B`
+            for {incr i} {$i < [llength $command_line]} {incr i} {
+                if {[lindex $command_line $i] eq "|"} {
+                    incr i
+                    break
+                }
+            }
+        }
+        return $command_line
+    }
 
-# Override `exec` to avoid unsafe PATH lookup
+    # Override `exec` to avoid unsafe PATH lookup
 
-rename exec real_exec
+    rename exec real_exec
 
-proc exec {args} {
-	# skip options
-	for {set i 0} {$i < [llength $args]} {incr i} {
-		set arg [lindex $args $i]
-		if {$arg eq "--"} {
-			incr i
-			break
-		}
-		if {[string range $arg 0 0] ne "-"} {
-			break
-		}
-	}
-	set args [sanitize_command_line $args $i]
-	uplevel 1 real_exec $args
-}
+    proc exec {args} {
+        # skip options
+        for {set i 0} {$i < [llength $args]} {incr i} {
+            set arg [lindex $args $i]
+            if {$arg eq "--"} {
+                incr i
+                break
+            }
+            if {[string range $arg 0 0] ne "-"} {
+                break
+            }
+        }
+        set args [sanitize_command_line $args $i]
+        uplevel 1 real_exec $args
+    }
 
-# Override `open` to avoid unsafe PATH lookup
+    # Override `open` to avoid unsafe PATH lookup
 
-rename open real_open
+    rename open real_open
 
-proc open {args} {
-	set arg0 [lindex $args 0]
-	if {[string range $arg0 0 0] eq "|"} {
-		set command_line [string trim [string range $arg0 1 end]]
-		lset args 0 "| [sanitize_command_line $command_line 0]"
-	}
-	uplevel 1 real_open $args
+    proc open {args} {
+        set arg0 [lindex $args 0]
+        if {[string range $arg0 0 0] eq "|"} {
+            set command_line [string trim [string range $arg0 1 end]]
+            lset args 0 "| [sanitize_command_line $command_line 0]"
+        }
+        uplevel 1 real_open $args
+    }
 }
 
 # End of safe PATH lookup stuff
@@ -491,11 +460,11 @@ proc parseviewrevs {view revs} {
 # Escapes a list of filter paths to be passed to git log via stdin. Note that
 # paths must not be quoted.
 proc escape_filter_paths {paths} {
-	set escaped [list]
-	foreach path $paths {
-		lappend escaped [string map {\\ \\\\ "\ " "\\\ "} $path]
-	}
-	return $escaped
+    set escaped [list]
+    foreach path $paths {
+        lappend escaped [string map {\\ \\\\ "\ " "\\\ "} $path]
+    }
+    return $escaped
 }
 
 # Start off a git log process and arrange to read its output
@@ -4632,7 +4601,7 @@ proc addviewmenu {n} {
     .bar.view add radiobutton -label $viewname($n) \
         -command [list showview $n] -variable selectedview -value $n
     #$viewhlmenu add radiobutton -label $viewname($n) \
-    #	-command [list addvhighlight $n] -variable selectedhlview
+    #   -command [list addvhighlight $n] -variable selectedhlview
 }
 
 proc showview {n} {
