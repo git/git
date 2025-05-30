@@ -1,21 +1,21 @@
 /*
- * Copyright 2020 Google LLC
- *
- * Use of this source code is governed by a BSD-style
- * license that can be found in the LICENSE file or at
- * https://developers.google.com/open-source/licenses/bsd
- */
+Copyright 2020 Google LLC
+
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file or at
+https://developers.google.com/open-source/licenses/bsd
+*/
 
 #include "merged.h"
 
 #include "constants.h"
 #include "iter.h"
 #include "pq.h"
+#include "reader.h"
 #include "record.h"
 #include "reftable-merged.h"
 #include "reftable-error.h"
 #include "system.h"
-#include "table.h"
 
 struct merged_subiter {
 	struct reftable_iterator iter;
@@ -66,11 +66,6 @@ static int merged_iter_seek(struct merged_iter *mi, struct reftable_record *want
 	int err;
 
 	mi->advance_index = -1;
-	while (!merged_iter_pqueue_is_empty(mi->pq)) {
-		err = merged_iter_pqueue_remove(&mi->pq, NULL);
-		if (err < 0)
-			return err;
-	}
 
 	for (size_t i = 0; i < mi->subiters_len; i++) {
 		err = iterator_seek(&mi->subiters[i].iter, want);
@@ -123,9 +118,7 @@ static int merged_iter_next_entry(struct merged_iter *mi,
 	if (empty)
 		return 1;
 
-	err = merged_iter_pqueue_remove(&mi->pq, &entry);
-	if (err < 0)
-		return err;
+	entry = merged_iter_pqueue_remove(&mi->pq);
 
 	/*
 	  One can also use reftable as datacenter-local storage, where the ref
@@ -139,23 +132,18 @@ static int merged_iter_next_entry(struct merged_iter *mi,
 		struct pq_entry top = merged_iter_pqueue_top(mi->pq);
 		int cmp;
 
-		err = reftable_record_cmp(top.rec, entry.rec, &cmp);
-		if (err < 0)
-			return err;
+		cmp = reftable_record_cmp(top.rec, entry.rec);
 		if (cmp > 0)
 			break;
 
-		err = merged_iter_pqueue_remove(&mi->pq, NULL);
-		if (err < 0)
-			return err;
-
+		merged_iter_pqueue_remove(&mi->pq);
 		err = merged_iter_advance_subiter(mi, top.index);
 		if (err < 0)
 			return err;
 	}
 
 	mi->advance_index = entry.index;
-	REFTABLE_SWAP(*rec, *entry.rec);
+	SWAP(*rec, *entry.rec);
 	return 0;
 }
 
@@ -192,7 +180,7 @@ static void iterator_from_merged_iter(struct reftable_iterator *it,
 }
 
 int reftable_merged_table_new(struct reftable_merged_table **dest,
-			      struct reftable_table **tables, size_t n,
+			      struct reftable_reader **readers, size_t n,
 			      enum reftable_hash hash_id)
 {
 	struct reftable_merged_table *m = NULL;
@@ -200,10 +188,10 @@ int reftable_merged_table_new(struct reftable_merged_table **dest,
 	uint64_t first_min = 0;
 
 	for (size_t i = 0; i < n; i++) {
-		uint64_t min = reftable_table_min_update_index(tables[i]);
-		uint64_t max = reftable_table_max_update_index(tables[i]);
+		uint64_t min = reftable_reader_min_update_index(readers[i]);
+		uint64_t max = reftable_reader_max_update_index(readers[i]);
 
-		if (reftable_table_hash_id(tables[i]) != hash_id) {
+		if (reftable_reader_hash_id(readers[i]) != hash_id) {
 			return REFTABLE_FORMAT_ERROR;
 		}
 		if (i == 0 || min < first_min) {
@@ -218,8 +206,8 @@ int reftable_merged_table_new(struct reftable_merged_table **dest,
 	if (!m)
 		return REFTABLE_OUT_OF_MEMORY_ERROR;
 
-	m->tables = tables;
-	m->tables_len = n;
+	m->readers = readers;
+	m->readers_len = n;
 	m->min = first_min;
 	m->max = last_max;
 	m->hash_id = hash_id;
@@ -250,24 +238,19 @@ int merged_table_init_iter(struct reftable_merged_table *mt,
 			   struct reftable_iterator *it,
 			   uint8_t typ)
 {
-	struct merged_subiter *subiters = NULL;
+	struct merged_subiter *subiters;
 	struct merged_iter *mi = NULL;
 	int ret;
 
-	if (mt->tables_len) {
-		REFTABLE_CALLOC_ARRAY(subiters, mt->tables_len);
-		if (!subiters) {
-			ret = REFTABLE_OUT_OF_MEMORY_ERROR;
-			goto out;
-		}
+	REFTABLE_CALLOC_ARRAY(subiters, mt->readers_len);
+	if (!subiters) {
+		ret = REFTABLE_OUT_OF_MEMORY_ERROR;
+		goto out;
 	}
 
-	for (size_t i = 0; i < mt->tables_len; i++) {
-		ret = reftable_record_init(&subiters[i].rec, typ);
-		if (ret < 0)
-			goto out;
-
-		ret = table_init_iter(mt->tables[i], &subiters[i].iter, typ);
+	for (size_t i = 0; i < mt->readers_len; i++) {
+		reftable_record_init(&subiters[i].rec, typ);
+		ret = reader_init_iter(mt->readers[i], &subiters[i].iter, typ);
 		if (ret < 0)
 			goto out;
 	}
@@ -280,14 +263,14 @@ int merged_table_init_iter(struct reftable_merged_table *mt,
 	mi->advance_index = -1;
 	mi->suppress_deletions = mt->suppress_deletions;
 	mi->subiters = subiters;
-	mi->subiters_len = mt->tables_len;
+	mi->subiters_len = mt->readers_len;
 
 	iterator_from_merged_iter(it, mi);
 	ret = 0;
 
 out:
 	if (ret < 0) {
-		for (size_t i = 0; subiters && i < mt->tables_len; i++) {
+		for (size_t i = 0; subiters && i < mt->readers_len; i++) {
 			reftable_iterator_destroy(&subiters[i].iter);
 			reftable_record_release(&subiters[i].rec);
 		}
@@ -301,13 +284,13 @@ out:
 int reftable_merged_table_init_ref_iterator(struct reftable_merged_table *mt,
 					    struct reftable_iterator *it)
 {
-	return merged_table_init_iter(mt, it, REFTABLE_BLOCK_TYPE_REF);
+	return merged_table_init_iter(mt, it, BLOCK_TYPE_REF);
 }
 
 int reftable_merged_table_init_log_iterator(struct reftable_merged_table *mt,
 					    struct reftable_iterator *it)
 {
-	return merged_table_init_iter(mt, it, REFTABLE_BLOCK_TYPE_LOG);
+	return merged_table_init_iter(mt, it, BLOCK_TYPE_LOG);
 }
 
 enum reftable_hash reftable_merged_table_hash_id(struct reftable_merged_table *mt)

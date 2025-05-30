@@ -1,6 +1,4 @@
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
-
 #include "builtin.h"
 #include "gettext.h"
 #include "hash.h"
@@ -9,7 +7,7 @@
 #include "parse-options.h"
 
 static const char *const show_index_usage[] = {
-	"git show-index [--object-format=<hash-algorithm>] < <pack-idx-file>",
+	"git show-index [--object-format=<hash-algorithm>]",
 	NULL
 };
 
@@ -40,12 +38,6 @@ int cmd_show_index(int argc,
 		repo_set_hash_algo(the_repository, hash_algo);
 	}
 
-	/*
-	 * Fallback to SHA1 if we are running outside of a repository.
-	 *
-	 * TODO: Figure out and implement a way to detect the hash algorithm in use by the
-	 *       the index file passed in and use that instead.
-	 */
 	if (!the_hash_algo)
 		repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
 

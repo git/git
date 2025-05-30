@@ -1566,7 +1566,7 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 					  _("Counting referenced objects"),
 					  m->num_objects);
 	for (i = 0; i < m->num_objects; i++) {
-		int pack_int_id = nth_midxed_pack_int_id(m, i);
+		uint32_t pack_int_id = nth_midxed_pack_int_id(m, i);
 		count[pack_int_id]++;
 		display_progress(progress, i + 1);
 	}
@@ -1697,21 +1697,31 @@ static void fill_included_packs_batch(struct repository *r,
 
 	total_size = 0;
 	for (i = 0; total_size < batch_size && i < m->num_packs; i++) {
-		int pack_int_id = pack_info[i].pack_int_id;
+		uint32_t pack_int_id = pack_info[i].pack_int_id;
 		struct packed_git *p = m->packs[pack_int_id];
-		size_t expected_size;
+		uint64_t expected_size;
 
 		if (!want_included_pack(r, m, pack_kept_objects, pack_int_id))
 			continue;
 
-		expected_size = st_mult(p->pack_size,
-					pack_info[i].referenced_objects);
+		/*
+		 * Use shifted integer arithmetic to calculate the
+		 * expected pack size to ~4 significant digits without
+		 * overflow for packsizes less that 1PB.
+		 */
+		expected_size = (uint64_t)pack_info[i].referenced_objects << 14;
 		expected_size /= p->num_objects;
+		expected_size = u64_mult(expected_size, p->pack_size);
+		expected_size = u64_add(expected_size, 1u << 13) >> 14;
 
 		if (expected_size >= batch_size)
 			continue;
 
-		total_size += expected_size;
+		if (unsigned_add_overflows(total_size, (size_t)expected_size))
+			total_size = SIZE_MAX;
+		else
+			total_size += expected_size;
+
 		include_pack[pack_int_id] = 1;
 	}
 

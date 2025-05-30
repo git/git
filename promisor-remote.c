@@ -3,7 +3,7 @@
 #include "git-compat-util.h"
 #include "gettext.h"
 #include "hex.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "promisor-remote.h"
 #include "config.h"
 #include "trace2.h"
@@ -12,7 +12,6 @@
 #include "packfile.h"
 #include "environment.h"
 #include "url.h"
-#include "version.h"
 
 struct promisor_remote_config {
 	struct promisor_remote *promisors;
@@ -297,7 +296,7 @@ void promisor_remote_get_direct(struct repository *repo,
 	}
 
 	for (i = 0; i < remaining_nr; i++) {
-		if (is_promisor_object(repo, &remaining_oids[i]))
+		if (is_promisor_object(&remaining_oids[i]))
 			die(_("could not fetch %s from promisor remote"),
 			    oid_to_hex(&remaining_oids[i]));
 	}
@@ -323,15 +322,13 @@ static void promisor_info_vecs(struct repository *repo,
 	promisor_remote_init(repo);
 
 	for (r = repo->promisor_remote_config->promisors; r; r = r->next) {
-		const char *url;
+		char *url;
 		char *url_key = xstrfmt("remote.%s.url", r->name);
 
-		/* Only add remotes with a non empty URL */
-		if (!git_config_get_string_tmp(url_key, &url) && *url) {
-			strvec_push(names, r->name);
-			strvec_push(urls, url);
-		}
+		strvec_push(names, r->name);
+		strvec_push(urls, git_config_get_string(url_key, &url) ? NULL : url);
 
+		free(url);
 		free(url_key);
 	}
 }
@@ -358,9 +355,13 @@ char *promisor_remote_info(struct repository *repo)
 			strbuf_addch(&sb, ';');
 		strbuf_addstr(&sb, "name=");
 		strbuf_addstr_urlencode(&sb, names.v[i], allow_unsanitized);
-		strbuf_addstr(&sb, ",url=");
-		strbuf_addstr_urlencode(&sb, urls.v[i], allow_unsanitized);
+		if (urls.v[i]) {
+			strbuf_addstr(&sb, ",url=");
+			strbuf_addstr_urlencode(&sb, urls.v[i], allow_unsanitized);
+		}
 	}
+
+	strbuf_sanitize(&sb);
 
 	strvec_clear(&names);
 	strvec_clear(&urls);
@@ -369,16 +370,16 @@ char *promisor_remote_info(struct repository *repo)
 }
 
 /*
- * Find first index of 'nicks' where there is 'nick'. 'nick' is
- * compared case sensitively to the strings in 'nicks'. If not found
- * 'nicks->nr' is returned.
+ * Find first index of 'vec' where there is 'val'. 'val' is compared
+ * case insensively to the strings in 'vec'. If not found 'vec->nr' is
+ * returned.
  */
-static size_t remote_nick_find(struct strvec *nicks, const char *nick)
+static size_t strvec_find_index(struct strvec *vec, const char *val)
 {
-	for (size_t i = 0; i < nicks->nr; i++)
-		if (!strcmp(nicks->v[i], nick))
+	for (size_t i = 0; i < vec->nr; i++)
+		if (!strcasecmp(vec->v[i], val))
 			return i;
-	return nicks->nr;
+	return vec->nr;
 }
 
 enum accept_promisor {
@@ -397,7 +398,7 @@ static int should_accept_remote(enum accept_promisor accept,
 	if (accept == ACCEPT_ALL)
 		return 1;
 
-	i = remote_nick_find(names, remote_name);
+	i = strvec_find_index(names, remote_name);
 
 	if (i >= names->nr)
 		/* We don't know about that remote */
@@ -409,15 +410,10 @@ static int should_accept_remote(enum accept_promisor accept,
 	if (accept != ACCEPT_KNOWN_URL)
 		BUG("Unhandled 'enum accept_promisor' value '%d'", accept);
 
-	if (!remote_url || !*remote_url) {
-		warning(_("no or empty URL advertised for remote '%s'"), remote_name);
-		return 0;
-	}
-
-	if (!strcmp(urls->v[i], remote_url))
+	if (!strcasecmp(urls->v[i], remote_url))
 		return 1;
 
-	warning(_("known remote named '%s' but with URL '%s' instead of '%s'"),
+	warning(_("known remote named '%s' but with url '%s' instead of '%s'"),
 		remote_name, urls->v[i], remote_url);
 
 	return 0;
@@ -428,13 +424,13 @@ static void filter_promisor_remote(struct repository *repo,
 				   const char *info)
 {
 	struct strbuf **remotes;
-	const char *accept_str;
+	char *accept_str;
 	enum accept_promisor accept = ACCEPT_NONE;
 	struct strvec names = STRVEC_INIT;
 	struct strvec urls = STRVEC_INIT;
 
-	if (!git_config_get_string_tmp("promisor.acceptfromserver", &accept_str)) {
-		if (!*accept_str || !strcasecmp("None", accept_str))
+	if (!git_config_get_string("promisor.acceptfromserver", &accept_str)) {
+		if (!accept_str || !*accept_str || !strcasecmp("None", accept_str))
 			accept = ACCEPT_NONE;
 		else if (!strcasecmp("KnownUrl", accept_str))
 			accept = ACCEPT_KNOWN_URL;
@@ -464,12 +460,12 @@ static void filter_promisor_remote(struct repository *repo,
 		char *decoded_name = NULL;
 		char *decoded_url = NULL;
 
-		strbuf_strip_suffix(remotes[i], ";");
-		elems = strbuf_split(remotes[i], ',');
+		strbuf_trim_trailing_ch(remotes[i], ';');
+		elems = strbuf_split_str(remotes[i]->buf, ',', 0);
 
 		for (size_t j = 0; elems[j]; j++) {
 			int res;
-			strbuf_strip_suffix(elems[j], ",");
+			strbuf_trim_trailing_ch(elems[j], ',');
 			res = skip_prefix(elems[j]->buf, "name=", &remote_name) ||
 				skip_prefix(elems[j]->buf, "url=", &remote_url);
 			if (!res)
@@ -490,6 +486,7 @@ static void filter_promisor_remote(struct repository *repo,
 		free(decoded_url);
 	}
 
+	free(accept_str);
 	strvec_clear(&names);
 	strvec_clear(&urls);
 	strbuf_list_free(remotes);
@@ -524,7 +521,7 @@ void mark_promisor_remotes_as_accepted(struct repository *r, const char *remotes
 		struct promisor_remote *p;
 		char *decoded_remote;
 
-		strbuf_strip_suffix(accepted_remotes[i], ";");
+		strbuf_trim_trailing_ch(accepted_remotes[i], ';');
 		decoded_remote = url_percent_decode(accepted_remotes[i]->buf);
 
 		p = repo_promisor_remote_find(r, decoded_remote);

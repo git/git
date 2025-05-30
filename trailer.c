@@ -254,7 +254,7 @@ static void apply_item_command(struct trailer_item *in_tok, struct arg_item *arg
 		char *arg;
 
 		if (arg_tok->value && arg_tok->value[0]) {
-			arg = arg_tok->value;
+			arg = (char *)arg_tok->value;
 		} else {
 			if (in_tok && in_tok->value)
 				arg = xstrdup(in_tok->value);
@@ -1116,6 +1116,7 @@ void format_trailers(const struct process_trailer_options *opts,
 	size_t origlen = out->len;
 	struct list_head *pos;
 	struct trailer_item *item;
+
 
 	list_for_each(pos, trailers) {
 		item = list_entry(pos, struct trailer_item, list);

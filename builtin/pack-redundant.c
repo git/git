@@ -625,14 +625,8 @@ int cmd_pack_redundant(int argc, const char **argv, const char *prefix UNUSED, s
 			break;
 	}
 
-	if (!i_still_use_this) {
-		fputs(_("'git pack-redundant' is nominated for removal.\n"
-			"If you still use this command, please add an extra\n"
-			"option, '--i-still-use-this', on the command line\n"
-			"and let us know you still use it by sending an e-mail\n"
-			"to <git@vger.kernel.org>.  Thanks.\n"), stderr);
-		die(_("refusing to run without --i-still-use-this"));
-	}
+	if (!i_still_use_this)
+		you_still_use_that("git pack-redundant");
 
 	if (load_all_packs)
 		load_all();

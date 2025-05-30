@@ -1,10 +1,10 @@
 /*
- * Copyright 2020 Google LLC
- *
- * Use of this source code is governed by a BSD-style
- * license that can be found in the LICENSE file or at
- * https://developers.google.com/open-source/licenses/bsd
- */
+Copyright 2020 Google LLC
+
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file or at
+https://developers.google.com/open-source/licenses/bsd
+*/
 
 #ifndef REFTABLE_WRITER_H
 #define REFTABLE_WRITER_H
@@ -68,15 +68,6 @@ struct reftable_write_options {
 	 * fsync(3P) when unset.
 	 */
 	int (*fsync)(int fd);
-
-	/*
-	 * Callback function to execute whenever the stack is being reloaded.
-	 * This can be used e.g. to discard cached information that relies on
-	 * the old stack's data. The payload data will be passed as argument to
-	 * the callback.
-	 */
-	void (*on_reload)(void *payload);
-	void *on_reload_payload;
 };
 
 /* reftable_block_stats holds statistics for a single block type */
@@ -84,7 +75,7 @@ struct reftable_block_stats {
 	/* total number of entries written */
 	int entries;
 	/* total number of key restarts */
-	uint32_t restarts;
+	int restarts;
 	/* total number of blocks */
 	int blocks;
 	/* total number of index blocks */
@@ -124,21 +115,17 @@ int reftable_writer_new(struct reftable_writer **out,
 			int (*flush_func)(void *),
 			void *writer_arg, const struct reftable_write_options *opts);
 
-/*
- * Set the range of update indices for the records we will add. When writing a
- * table into a stack, the min should be at least
- * reftable_stack_next_update_index(), or REFTABLE_API_ERROR is returned.
- *
- * For transactional updates to a stack, typically min==max, and the
- * update_index can be obtained by inspeciting the stack. When converting an
- * existing ref database into a single reftable, this would be a range of
- * update-index timestamps.
- *
- * The function should be called before adding any records to the writer. If not
- * it will fail with REFTABLE_API_ERROR.
+/* Set the range of update indices for the records we will add. When writing a
+   table into a stack, the min should be at least
+   reftable_stack_next_update_index(), or REFTABLE_API_ERROR is returned.
+
+   For transactional updates to a stack, typically min==max, and the
+   update_index can be obtained by inspeciting the stack. When converting an
+   existing ref database into a single reftable, this would be a range of
+   update-index timestamps.
  */
-int reftable_writer_set_limits(struct reftable_writer *w, uint64_t min,
-			       uint64_t max);
+void reftable_writer_set_limits(struct reftable_writer *w, uint64_t min,
+				uint64_t max);
 
 /*
   Add a reftable_ref_record. The record should have names that come after

@@ -3,10 +3,7 @@
  *
  * Copyright (C) Linus Torvalds, 2005
  */
-
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
-
 #include "builtin.h"
 #include "config.h"
 #include "convert.h"
@@ -15,20 +12,21 @@
 #include "gettext.h"
 #include "hex.h"
 #include "ident.h"
-#include "list-objects-filter-options.h"
 #include "parse-options.h"
 #include "userdiff.h"
 #include "streaming.h"
 #include "oid-array.h"
 #include "packfile.h"
-#include "pack-bitmap.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "object-store-ll.h"
 #include "replace-object.h"
 #include "promisor-remote.h"
 #include "mailmap.h"
 #include "write-or-die.h"
+#include "alias.h"
+#include "remote.h"
+#include "transport.h"
 
 enum batch_mode {
 	BATCH_MODE_CONTENTS,
@@ -37,7 +35,6 @@ enum batch_mode {
 };
 
 struct batch_options {
-	struct list_objects_filter_options objects_filter;
 	int enabled;
 	int follow_symlinks;
 	enum batch_mode batch_mode;
@@ -48,9 +45,12 @@ struct batch_options {
 	char input_delim;
 	char output_delim;
 	const char *format;
+	int use_remote_info;
 };
 
 static const char *force_path;
+static struct object_info *remote_object_info;
+static struct oid_array object_info_oids = OID_ARRAY_INIT;
 
 static struct string_list mailmap = STRING_LIST_INIT_NODUP;
 static int use_mailmap;
@@ -100,7 +100,8 @@ static int stream_blob(const struct object_id *oid)
 	return 0;
 }
 
-static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
+static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
+			int unknown_type)
 {
 	int ret;
 	struct object_id oid;
@@ -109,6 +110,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 	unsigned long size;
 	struct object_context obj_context = {0};
 	struct object_info oi = OBJECT_INFO_INIT;
+	struct strbuf sb = STRBUF_INIT;
 	unsigned flags = OBJECT_INFO_LOOKUP_REPLACE;
 	unsigned get_oid_flags =
 		GET_OID_RECORD_PATH |
@@ -118,6 +120,9 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 	const int opt_cw = (opt == 'c' || opt == 'w');
 	if (!path && opt_cw)
 		get_oid_flags |= GET_OID_REQUIRE_PATH;
+
+	if (unknown_type)
+		flags |= OBJECT_INFO_ALLOW_UNKNOWN_TYPE;
 
 	if (get_oid_with_context(the_repository, obj_name, get_oid_flags, &oid,
 				 &obj_context))
@@ -131,12 +136,16 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 	buf = NULL;
 	switch (opt) {
 	case 't':
-		oi.typep = &type;
+		oi.type_name = &sb;
 		if (oid_object_info_extended(the_repository, &oid, &oi, flags) < 0)
 			die("git cat-file: could not get object info");
-		printf("%s\n", type_name(type));
-		ret = 0;
-		goto cleanup;
+		if (sb.len) {
+			printf("%s\n", sb.buf);
+			strbuf_release(&sb);
+			ret = 0;
+			goto cleanup;
+		}
+		break;
 
 	case 's':
 		oi.sizep = &size;
@@ -160,8 +169,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 		goto cleanup;
 
 	case 'e':
-		ret = !has_object(the_repository, &oid,
-				  HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR);
+		ret = !repo_has_object_file(the_repository, &oid);
 		goto cleanup;
 
 	case 'w':
@@ -278,6 +286,7 @@ struct expand_data {
 	off_t disk_size;
 	const char *rest;
 	struct object_id delta_base_oid;
+	struct git_iovec iov[3];
 
 	/*
 	 * If mark_query is true, we do not expand anything, but rather
@@ -366,7 +375,7 @@ static void expand_format(struct strbuf *sb, const char *start,
 	}
 }
 
-static void batch_write(struct batch_options *opt, const void *data, int len)
+static void batch_write(struct batch_options *opt, const void *data, size_t len)
 {
 	if (opt->buffer_output) {
 		if (fwrite(data, 1, len, stdout) != len)
@@ -375,15 +384,72 @@ static void batch_write(struct batch_options *opt, const void *data, int len)
 		write_or_die(1, data, len);
 }
 
-static void print_object_or_die(struct batch_options *opt, struct expand_data *data)
+static void batch_writev(struct batch_options *opt, struct expand_data *data,
+			const struct strbuf *hdr, size_t size)
+{
+	data->iov[0].iov_base = hdr->buf;
+	data->iov[0].iov_len = hdr->len;
+	data->iov[1].iov_len = size;
+
+	/*
+	 * Copying a (8|16)-byte iovec for a single byte is gross, but my
+	 * attempt to stuff output_delim into the trailing NUL byte of
+	 * iov[1].iov_base (and restoring it after writev(2) for the
+	 * OI_DBCACHED case) to drop iovcnt from 3->2 wasn't faster.
+	 */
+	data->iov[2].iov_base = &opt->output_delim;
+	data->iov[2].iov_len = 1;
+
+	if (opt->buffer_output)
+		fwritev_or_die(stdout, data->iov, 3);
+	else
+		writev_or_die(1, data->iov, 3);
+
+	/* writev_or_die may move iov[1].iov_base, so it's invalid */
+	data->iov[1].iov_base = NULL;
+}
+
+static void print_object_or_die(struct batch_options *opt,
+				struct expand_data *data, struct strbuf *hdr)
 {
 	const struct object_id *oid = &data->oid;
 
 	assert(data->info.typep);
 
-	if (data->type == OBJ_BLOB) {
-		if (opt->buffer_output)
-			fflush(stdout);
+	if (data->iov[1].iov_base) {
+		void *content = data->iov[1].iov_base;
+		unsigned long size = data->size;
+
+		if (use_mailmap && (data->type == OBJ_COMMIT ||
+					data->type == OBJ_TAG)) {
+			size_t s = size;
+
+			if (data->info.whence == OI_DBCACHED) {
+				content = xmemdupz(content, s);
+				data->info.whence = OI_PACKED;
+			}
+
+			content = replace_idents_using_mailmap(content, &s);
+			data->iov[1].iov_base = content;
+			size = cast_size_t_to_ulong(s);
+		}
+		batch_writev(opt, data, hdr, size);
+		switch (data->info.whence) {
+		case OI_CACHED:
+			/*
+			 * only blame uses OI_CACHED atm, so it's unlikely
+			 * we'll ever hit this path
+			 */
+			BUG("TODO OI_CACHED support not done");
+		case OI_LOOSE:
+		case OI_PACKED:
+			free(content);
+			break;
+		case OI_DBCACHED:
+			unlock_delta_base_cache();
+		}
+	} else {
+		assert(data->type == OBJ_BLOB);
 		if (opt->transform_mode) {
 			char *contents;
 			unsigned long size;
@@ -410,35 +476,16 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 					    oid_to_hex(oid), data->rest);
 			} else
 				BUG("invalid transform_mode: %c", opt->transform_mode);
-			batch_write(opt, contents, size);
+			data->iov[1].iov_base = contents;
+			batch_writev(opt, data, hdr, size);
 			free(contents);
 		} else {
+			batch_write(opt, hdr->buf, hdr->len);
+			if (opt->buffer_output)
+				fflush(stdout);
 			stream_blob(oid);
+			batch_write(opt, &opt->output_delim, 1);
 		}
-	}
-	else {
-		enum object_type type;
-		unsigned long size;
-		void *contents;
-
-		contents = repo_read_object_file(the_repository, oid, &type,
-						 &size);
-		if (!contents)
-			die("object %s disappeared", oid_to_hex(oid));
-
-		if (use_mailmap) {
-			size_t s = size;
-			contents = replace_idents_using_mailmap(contents, &s);
-			size = cast_size_t_to_ulong(s);
-		}
-
-		if (type != data->type)
-			die("object %s changed type!?", oid_to_hex(oid));
-		if (data->info.sizep && size != data->size && !use_mailmap)
-			die("object %s changed size!?", oid_to_hex(oid));
-
-		batch_write(opt, contents, size);
-		free(contents);
 	}
 }
 
@@ -448,16 +495,6 @@ static void print_default_format(struct strbuf *scratch, struct expand_data *dat
 	strbuf_addf(scratch, "%s %s %"PRIuMAX"%c", oid_to_hex(&data->oid),
 		    type_name(data->type),
 		    (uintmax_t)data->size, opt->output_delim);
-}
-
-static void report_object_status(struct batch_options *opt,
-				 const char *obj_name,
-				 const struct object_id *oid,
-				 const char *status)
-{
-	printf("%s %s%c", obj_name ? obj_name : oid_to_hex(oid),
-	       status, opt->output_delim);
-	fflush(stdout);
 }
 
 /*
@@ -475,13 +512,8 @@ static void batch_object_write(const char *obj_name,
 	if (!data->skip_object_info) {
 		int ret;
 
-		if (use_mailmap ||
-		    opt->objects_filter.choice == LOFC_BLOB_NONE ||
-		    opt->objects_filter.choice == LOFC_BLOB_LIMIT ||
-		    opt->objects_filter.choice == LOFC_OBJECT_TYPE)
+		if (use_mailmap)
 			data->info.typep = &data->type;
-		if (opt->objects_filter.choice == LOFC_BLOB_LIMIT)
-			data->info.sizep = &data->size;
 
 		if (pack)
 			ret = packed_object_info(the_repository, pack, offset,
@@ -491,40 +523,10 @@ static void batch_object_write(const char *obj_name,
 						       &data->oid, &data->info,
 						       OBJECT_INFO_LOOKUP_REPLACE);
 		if (ret < 0) {
-			report_object_status(opt, obj_name, &data->oid, "missing");
+			printf("%s missing%c",
+			       obj_name ? obj_name : oid_to_hex(&data->oid), opt->output_delim);
+			fflush(stdout);
 			return;
-		}
-
-		switch (opt->objects_filter.choice) {
-		case LOFC_DISABLED:
-			break;
-		case LOFC_BLOB_NONE:
-			if (data->type == OBJ_BLOB) {
-				if (!opt->all_objects)
-					report_object_status(opt, obj_name,
-							     &data->oid, "excluded");
-				return;
-			}
-			break;
-		case LOFC_BLOB_LIMIT:
-			if (data->type == OBJ_BLOB &&
-			    data->size >= opt->objects_filter.blob_limit_value) {
-				if (!opt->all_objects)
-					report_object_status(opt, obj_name,
-							     &data->oid, "excluded");
-				return;
-			}
-			break;
-		case LOFC_OBJECT_TYPE:
-			if (data->type != opt->objects_filter.object_type) {
-				if (!opt->all_objects)
-					report_object_status(opt, obj_name,
-							     &data->oid, "excluded");
-				return;
-			}
-			break;
-		default:
-			BUG("unsupported objects filter");
 		}
 
 		if (use_mailmap && (data->type == OBJ_COMMIT || data->type == OBJ_TAG)) {
@@ -551,12 +553,10 @@ static void batch_object_write(const char *obj_name,
 		strbuf_addch(scratch, opt->output_delim);
 	}
 
-	batch_write(opt, scratch->buf, scratch->len);
-
-	if (opt->batch_mode == BATCH_MODE_CONTENTS) {
-		print_object_or_die(opt, data);
-		batch_write(opt, &opt->output_delim, 1);
-	}
+	if (opt->batch_mode == BATCH_MODE_CONTENTS)
+		print_object_or_die(opt, data, scratch);
+	else
+		batch_write(opt, scratch->buf, scratch->len);
 }
 
 static void batch_one_object(const char *obj_name,
@@ -571,14 +571,14 @@ static void batch_one_object(const char *obj_name,
 	enum get_oid_result result;
 
 	result = get_oid_with_context(the_repository, obj_name,
-				      flags, &data->oid, &ctx);
+								  flags, &data->oid, &ctx);
 	if (result != FOUND) {
 		switch (result) {
 		case MISSING_OBJECT:
-			report_object_status(opt, obj_name, &data->oid, "missing");
+			printf("%s missing%c", obj_name, opt->output_delim);
 			break;
 		case SHORT_NAME_AMBIGUOUS:
-			report_object_status(opt, obj_name, &data->oid, "ambiguous");
+			printf("%s ambiguous%c", obj_name, opt->output_delim);
 			break;
 		case DANGLING_SYMLINK:
 			printf("dangling %"PRIuMAX"%c%s%c",
@@ -619,6 +619,59 @@ out:
 	object_context_release(&ctx);
 }
 
+static int get_remote_info(struct batch_options *opt, int argc, const char **argv)
+{
+	int retval = 0;
+	struct remote *remote = NULL;
+	struct object_id oid;
+	struct string_list object_info_options = STRING_LIST_INIT_NODUP;
+	static struct transport *gtransport;
+
+	/*
+	 * Change the format to "%(objectname) %(objectsize)" when
+	 * remote-object-info command is used. Once we start supporting objecttype
+	 * the default format should change to DEFAULT_FORMAT
+	*/
+	if (!opt->format)
+		opt->format = "%(objectname) %(objectsize)";
+
+	remote = remote_get(argv[0]);
+	if (!remote)
+		die(_("must supply valid remote when using remote-object-info"));
+
+	oid_array_clear(&object_info_oids);
+	for (size_t i = 1; i < argc; i++) {
+		if (get_oid_hex(argv[i], &oid))
+			die(_("Not a valid object name %s"), argv[i]);
+		oid_array_append(&object_info_oids, &oid);
+	}
+
+	gtransport = transport_get(remote, NULL);
+	if (gtransport->smart_options) {
+		CALLOC_ARRAY(remote_object_info, object_info_oids.nr);
+		gtransport->smart_options->object_info = 1;
+		gtransport->smart_options->object_info_oids = &object_info_oids;
+
+		/* 'objectsize' is the only option currently supported */
+		if (!strstr(opt->format, "%(objectsize)"))
+			die(_("%s is currently not supported with remote-object-info"), opt->format);
+
+		string_list_append(&object_info_options, "size");
+
+		if (object_info_options.nr > 0) {
+			gtransport->smart_options->object_info_options = &object_info_options;
+			gtransport->smart_options->object_info_data = remote_object_info;
+			retval = transport_fetch_refs(gtransport, NULL);
+		}
+	} else {
+		retval = -1;
+	}
+
+	string_list_clear(&object_info_options, 0);
+	transport_disconnect(gtransport);
+	return retval;
+}
+
 struct object_cb_data {
 	struct batch_options *opt;
 	struct expand_data *expand;
@@ -635,18 +688,25 @@ static int batch_object_cb(const struct object_id *oid, void *vdata)
 	return 0;
 }
 
-static int collect_object(const struct object_id *oid,
-			  struct packed_git *pack UNUSED,
-			  off_t offset UNUSED,
-			  void *data)
+static int collect_loose_object(const struct object_id *oid,
+				const char *path UNUSED,
+				void *data)
+{
+	oid_array_append(data, oid);
+	return 0;
+}
+
+static int collect_packed_object(const struct object_id *oid,
+				 struct packed_git *pack UNUSED,
+				 uint32_t pos UNUSED,
+				 void *data)
 {
 	oid_array_append(data, oid);
 	return 0;
 }
 
 static int batch_unordered_object(const struct object_id *oid,
-				  struct packed_git *pack,
-				  off_t offset,
+				  struct packed_git *pack, off_t offset,
 				  void *vdata)
 {
 	struct object_cb_data *data = vdata;
@@ -658,6 +718,23 @@ static int batch_unordered_object(const struct object_id *oid,
 	batch_object_write(NULL, data->scratch, data->opt, data->expand,
 			   pack, offset);
 	return 0;
+}
+
+static int batch_unordered_loose(const struct object_id *oid,
+				 const char *path UNUSED,
+				 void *data)
+{
+	return batch_unordered_object(oid, NULL, 0, data);
+}
+
+static int batch_unordered_packed(const struct object_id *oid,
+				  struct packed_git *pack,
+				  uint32_t pos,
+				  void *data)
+{
+	return batch_unordered_object(oid, pack,
+				      nth_packed_object_offset(pack, pos),
+				      data);
 }
 
 typedef void (*parse_cmd_fn_t)(struct batch_options *, const char *,
@@ -674,6 +751,7 @@ static void parse_cmd_contents(struct batch_options *opt,
 			     struct expand_data *data)
 {
 	opt->batch_mode = BATCH_MODE_CONTENTS;
+	data->info.contentp = &data->iov[1].iov_base;
 	batch_one_object(line, output, opt, data);
 }
 
@@ -683,7 +761,54 @@ static void parse_cmd_info(struct batch_options *opt,
 			   struct expand_data *data)
 {
 	opt->batch_mode = BATCH_MODE_INFO;
+	data->info.contentp = NULL;
 	batch_one_object(line, output, opt, data);
+}
+
+static void parse_cmd_remote_object_info(struct batch_options *opt,
+			   const char *line,
+			   struct strbuf *output,
+			   struct expand_data *data)
+{
+	int count;
+	const char **argv;
+
+	char *line_to_split = xstrdup_or_null(line);
+	count = split_cmdline(line_to_split, &argv);
+	if (get_remote_info(opt, count, argv))
+		goto cleanup;
+
+	opt->use_remote_info = 1;
+	data->skip_object_info = 1;
+	for (size_t i = 0; i < object_info_oids.nr; i++) {
+
+		data->oid = object_info_oids.oid[i];
+
+		if (remote_object_info[i].sizep) {
+			data->size = *remote_object_info[i].sizep;
+		} else {
+			/*
+			 * When reaching here, it means remote-object-info can't retrieve
+			 * information from server without downloading them, and the objects
+			 * have been fetched to client already.
+			 * Print the information using the logic for local objects.
+			 */
+			data->skip_object_info = 0;
+		}
+
+		opt->batch_mode = BATCH_MODE_INFO;
+		batch_object_write(argv[i+1], output, opt, data, NULL, 0);
+
+	}
+	opt->use_remote_info = 0;
+	data->skip_object_info = 0;
+
+cleanup:
+	for (size_t i = 0; i < object_info_oids.nr; i++)
+		free_object_info_contents(&remote_object_info[i]);
+	free(line_to_split);
+	free(argv);
+	free(remote_object_info);
 }
 
 static void dispatch_calls(struct batch_options *opt,
@@ -692,12 +817,10 @@ static void dispatch_calls(struct batch_options *opt,
 		struct queued_cmd *cmd,
 		int nr)
 {
-	int i;
-
 	if (!opt->buffer_output)
 		die(_("flush is only for --buffer mode"));
 
-	for (i = 0; i < nr; i++)
+	for (size_t i = 0; i < nr; i++)
 		cmd[i].fn(opt, cmd[i].line, output, data);
 
 	fflush(stdout);
@@ -705,9 +828,7 @@ static void dispatch_calls(struct batch_options *opt,
 
 static void free_cmds(struct queued_cmd *cmd, size_t *nr)
 {
-	size_t i;
-
-	for (i = 0; i < *nr; i++)
+	for (size_t i = 0; i < *nr; i++)
 		FREE_AND_NULL(cmd[i].line);
 
 	*nr = 0;
@@ -721,6 +842,7 @@ static const struct parse_cmd {
 } commands[] = {
 	{ "contents", parse_cmd_contents, 1},
 	{ "info", parse_cmd_info, 1},
+	{ "remote-object-info", parse_cmd_remote_object_info, 1},
 	{ "flush", NULL, 0},
 };
 
@@ -733,7 +855,6 @@ static void batch_objects_command(struct batch_options *opt,
 	size_t alloc = 0, nr = 0;
 
 	while (strbuf_getdelim_strip_crlf(&input, stdin, opt->input_delim) != EOF) {
-		int i;
 		const struct parse_cmd *cmd = NULL;
 		const char *p = NULL, *cmd_end;
 		struct queued_cmd call = {0};
@@ -743,7 +864,7 @@ static void batch_objects_command(struct batch_options *opt,
 		if (isspace(*input.buf))
 			die(_("whitespace before command: '%s'"), input.buf);
 
-		for (i = 0; i < ARRAY_SIZE(commands); i++) {
+		for (size_t i = 0; i < ARRAY_SIZE(commands); i++) {
 			if (!skip_prefix(input.buf, commands[i].name, &cmd_end))
 				continue;
 
@@ -792,76 +913,6 @@ static void batch_objects_command(struct batch_options *opt,
 
 #define DEFAULT_FORMAT "%(objectname) %(objecttype) %(objectsize)"
 
-typedef int (*for_each_object_fn)(const struct object_id *oid, struct packed_git *pack,
-				  off_t offset, void *data);
-
-struct for_each_object_payload {
-	for_each_object_fn callback;
-	void *payload;
-};
-
-static int batch_one_object_loose(const struct object_id *oid,
-				  const char *path UNUSED,
-				  void *_payload)
-{
-	struct for_each_object_payload *payload = _payload;
-	return payload->callback(oid, NULL, 0, payload->payload);
-}
-
-static int batch_one_object_packed(const struct object_id *oid,
-				   struct packed_git *pack,
-				   uint32_t pos,
-				   void *_payload)
-{
-	struct for_each_object_payload *payload = _payload;
-	return payload->callback(oid, pack, nth_packed_object_offset(pack, pos),
-				 payload->payload);
-}
-
-static int batch_one_object_bitmapped(const struct object_id *oid,
-				      enum object_type type UNUSED,
-				      int flags UNUSED,
-				      uint32_t hash UNUSED,
-				      struct packed_git *pack,
-				      off_t offset,
-				      void *_payload)
-{
-	struct for_each_object_payload *payload = _payload;
-	return payload->callback(oid, pack, offset, payload->payload);
-}
-
-static void batch_each_object(struct batch_options *opt,
-			      for_each_object_fn callback,
-			      unsigned flags,
-			      void *_payload)
-{
-	struct for_each_object_payload payload = {
-		.callback = callback,
-		.payload = _payload,
-	};
-	struct bitmap_index *bitmap = prepare_bitmap_git(the_repository);
-
-	for_each_loose_object(batch_one_object_loose, &payload, 0);
-
-	if (bitmap && !for_each_bitmapped_object(bitmap, &opt->objects_filter,
-						 batch_one_object_bitmapped, &payload)) {
-		struct packed_git *pack;
-
-		for (pack = get_all_packs(the_repository); pack; pack = pack->next) {
-			if (bitmap_index_contains_pack(bitmap, pack) ||
-			    open_pack_index(pack))
-				continue;
-			for_each_object_in_pack(pack, batch_one_object_packed,
-						&payload, flags);
-		}
-	} else {
-		for_each_packed_object(the_repository, batch_one_object_packed,
-				       &payload, flags);
-	}
-
-	free_bitmap_index(bitmap);
-}
-
 static int batch_objects(struct batch_options *opt)
 {
 	struct strbuf input = STRBUF_INIT;
@@ -890,16 +941,26 @@ static int batch_objects(struct batch_options *opt)
 	/*
 	 * If we are printing out the object, then always fill in the type,
 	 * since we will want to decide whether or not to stream.
+	 *
+	 * Likewise, grab the content in the initial request if it's small
+	 * and we're not planning to filter it.
 	 */
-	if (opt->batch_mode == BATCH_MODE_CONTENTS)
+	if ((opt->batch_mode == BATCH_MODE_CONTENTS) ||
+			(opt->batch_mode == BATCH_MODE_QUEUE_AND_DISPATCH)) {
 		data.info.typep = &data.type;
+		if (!opt->transform_mode) {
+			data.info.sizep = &data.size;
+			data.info.contentp = &data.iov[1].iov_base;
+			data.info.content_limit = big_file_threshold;
+			data.info.direct_cache = 1;
+		}
+	}
 
 	if (opt->all_objects) {
 		struct object_cb_data cb;
 		struct object_info empty = OBJECT_INFO_INIT;
 
-		if (!memcmp(&data.info, &empty, sizeof(empty)) &&
-		    opt->objects_filter.choice == LOFC_DISABLED)
+		if (!memcmp(&data.info, &empty, sizeof(empty)))
 			data.skip_object_info = 1;
 
 		if (repo_has_promisor_remote(the_repository))
@@ -916,14 +977,17 @@ static int batch_objects(struct batch_options *opt)
 
 			cb.seen = &seen;
 
-			batch_each_object(opt, batch_unordered_object,
-					  FOR_EACH_OBJECT_PACK_ORDER, &cb);
+			for_each_loose_object(batch_unordered_loose, &cb, 0);
+			for_each_packed_object(batch_unordered_packed, &cb,
+					       FOR_EACH_OBJECT_PACK_ORDER);
 
 			oidset_clear(&seen);
 		} else {
 			struct oid_array sa = OID_ARRAY_INIT;
 
-			batch_each_object(opt, collect_object, 0, &sa);
+			for_each_loose_object(collect_loose_object, &sa, 0);
+			for_each_packed_object(collect_packed_object, &sa, 0);
+
 			oid_array_for_each_unique(&sa, batch_object_cb, &cb);
 
 			oid_array_clear(&sa);
@@ -1019,17 +1083,15 @@ int cmd_cat_file(int argc,
 	int opt_cw = 0;
 	int opt_epts = 0;
 	const char *exp_type = NULL, *obj_name = NULL;
-	struct batch_options batch = {
-		.objects_filter = LIST_OBJECTS_FILTER_INIT,
-	};
+	struct batch_options batch = {0};
 	int unknown_type = 0;
 	int input_nul_terminated = 0;
 	int nul_terminated = 0;
-	int ret;
 
-	const char * const builtin_catfile_usage[] = {
+	const char * const usage[] = {
 		N_("git cat-file <type> <object>"),
-		N_("git cat-file (-e | -p | -t | -s) <object>"),
+		N_("git cat-file (-e | -p) <object>"),
+		N_("git cat-file (-t | -s) [--allow-unknown-type] <object>"),
 		N_("git cat-file (--textconv | --filters)\n"
 		   "             [<rev>:<path|tree-ish> | --path=<path|tree-ish> <rev>]"),
 		N_("git cat-file (--batch | --batch-check | --batch-command) [--batch-all-objects]\n"
@@ -1047,8 +1109,8 @@ int cmd_cat_file(int argc,
 		OPT_GROUP(N_("Emit [broken] object attributes")),
 		OPT_CMDMODE('t', NULL, &opt, N_("show object type (one of 'blob', 'tree', 'commit', 'tag', ...)"), 't'),
 		OPT_CMDMODE('s', NULL, &opt, N_("show object size"), 's'),
-		OPT_HIDDEN_BOOL(0, "allow-unknown-type", &unknown_type,
-			  N_("historical option -- no-op")),
+		OPT_BOOL(0, "allow-unknown-type", &unknown_type,
+			  N_("allow -s and -t to work with broken/corrupt objects")),
 		OPT_BOOL(0, "use-mailmap", &use_mailmap, N_("use mail map file")),
 		OPT_ALIAS(0, "mailmap", "use-mailmap"),
 		/* Batch mode */
@@ -1085,7 +1147,6 @@ int cmd_cat_file(int argc,
 			    N_("run filters on object's content"), 'w'),
 		OPT_STRING(0, "path", &force_path, N_("blob|tree"),
 			   N_("use a <path> for (--textconv | --filters); Not with 'batch'")),
-		OPT_PARSE_LIST_OBJECTS_FILTER(&batch.objects_filter),
 		OPT_END()
 	};
 
@@ -1093,26 +1154,12 @@ int cmd_cat_file(int argc,
 
 	batch.buffer_output = -1;
 
-	argc = parse_options(argc, argv, prefix, options, builtin_catfile_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, usage, 0);
 	opt_cw = (opt == 'c' || opt == 'w');
 	opt_epts = (opt == 'e' || opt == 'p' || opt == 't' || opt == 's');
 
 	if (use_mailmap)
 		read_mailmap(&mailmap);
-
-	switch (batch.objects_filter.choice) {
-	case LOFC_DISABLED:
-		break;
-	case LOFC_BLOB_NONE:
-	case LOFC_BLOB_LIMIT:
-	case LOFC_OBJECT_TYPE:
-		if (!batch.enabled)
-			usage(_("objects filter only supported in batch mode"));
-		break;
-	default:
-		usagef(_("objects filter not supported: '%s'"),
-		       list_object_filter_config_name(batch.objects_filter.choice));
-	}
 
 	/* --batch-all-objects? */
 	if (opt == 'b')
@@ -1121,7 +1168,7 @@ int cmd_cat_file(int argc,
 	/* Option compatibility */
 	if (force_path && !opt_cw)
 		usage_msg_optf(_("'%s=<%s>' needs '%s' or '%s'"),
-			       builtin_catfile_usage, options,
+			       usage, options,
 			       "--path", _("path|tree-ish"), "--filters",
 			       "--textconv");
 
@@ -1129,20 +1176,20 @@ int cmd_cat_file(int argc,
 	if (batch.enabled)
 		;
 	else if (batch.follow_symlinks)
-		usage_msg_optf(_("'%s' requires a batch mode"), builtin_catfile_usage,
-			       options, "--follow-symlinks");
+		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
+			       "--follow-symlinks");
 	else if (batch.buffer_output >= 0)
-		usage_msg_optf(_("'%s' requires a batch mode"), builtin_catfile_usage,
-			       options, "--buffer");
+		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
+			       "--buffer");
 	else if (batch.all_objects)
-		usage_msg_optf(_("'%s' requires a batch mode"), builtin_catfile_usage,
-			       options, "--batch-all-objects");
+		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
+			       "--batch-all-objects");
 	else if (input_nul_terminated)
-		usage_msg_optf(_("'%s' requires a batch mode"), builtin_catfile_usage,
-			       options, "-z");
+		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
+			       "-z");
 	else if (nul_terminated)
-		usage_msg_optf(_("'%s' requires a batch mode"), builtin_catfile_usage,
-			       options, "-Z");
+		usage_msg_optf(_("'%s' requires a batch mode"), usage, options,
+			       "-Z");
 
 	batch.input_delim = batch.output_delim = '\n';
 	if (input_nul_terminated)
@@ -1163,45 +1210,42 @@ int cmd_cat_file(int argc,
 			batch.transform_mode = opt;
 		else if (opt && opt != 'b')
 			usage_msg_optf(_("'-%c' is incompatible with batch mode"),
-				       builtin_catfile_usage, options, opt);
+				       usage, options, opt);
 		else if (argc)
-			usage_msg_opt(_("batch modes take no arguments"),
-				      builtin_catfile_usage, options);
+			usage_msg_opt(_("batch modes take no arguments"), usage,
+				      options);
 
-		ret = batch_objects(&batch);
-		goto out;
+		return batch_objects(&batch);
 	}
 
 	if (opt) {
 		if (!argc && opt == 'c')
 			usage_msg_optf(_("<rev> required with '%s'"),
-				       builtin_catfile_usage, options,
-				       "--textconv");
+				       usage, options, "--textconv");
 		else if (!argc && opt == 'w')
 			usage_msg_optf(_("<rev> required with '%s'"),
-				       builtin_catfile_usage, options,
-				       "--filters");
+				       usage, options, "--filters");
 		else if (!argc && opt_epts)
 			usage_msg_optf(_("<object> required with '-%c'"),
-				       builtin_catfile_usage, options, opt);
+				       usage, options, opt);
+		else if (!argc)
+			BUG("argc==0 with opt=%c", opt);
 		else if (argc == 1)
 			obj_name = argv[0];
 		else
-			usage_msg_opt(_("too many arguments"), builtin_catfile_usage,
-				      options);
+			usage_msg_optf(_("unexpected argument: '%s'"),
+				       usage, options, argv[1]);
 	} else if (!argc) {
-		usage_with_options(builtin_catfile_usage, options);
+		usage_with_options(usage, options);
 	} else if (argc != 2) {
 		usage_msg_optf(_("only two arguments allowed in <type> <object> mode, not %d"),
-			      builtin_catfile_usage, options, argc);
+			      usage, options, argc);
 	} else if (argc) {
 		exp_type = argv[0];
 		obj_name = argv[1];
 	}
 
-	ret = cat_one_file(opt, exp_type, obj_name);
-
-out:
-	list_objects_filter_release(&batch.objects_filter);
-	return ret;
+	if (unknown_type && opt != 't' && opt != 's')
+		die("git cat-file --allow-unknown-type: use with -s or -t");
+	return cat_one_file(opt, exp_type, obj_name, unknown_type);
 }

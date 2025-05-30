@@ -1,10 +1,10 @@
 /*
- * Copyright 2020 Google LLC
- *
- * Use of this source code is governed by a BSD-style
- * license that can be found in the LICENSE file or at
- * https://developers.google.com/open-source/licenses/bsd
- */
+Copyright 2020 Google LLC
+
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file or at
+https://developers.google.com/open-source/licenses/bsd
+*/
 
 #define REFTABLE_ALLOW_BANNED_ALLOCATORS
 #include "basics.h"
@@ -17,8 +17,6 @@ static void (*reftable_free_ptr)(void *);
 
 void *reftable_malloc(size_t sz)
 {
-	if (!sz)
-		return NULL;
 	if (reftable_malloc_ptr)
 		return (*reftable_malloc_ptr)(sz);
 	return malloc(sz);
@@ -26,11 +24,6 @@ void *reftable_malloc(size_t sz)
 
 void *reftable_realloc(void *p, size_t sz)
 {
-	if (!sz) {
-		reftable_free(p);
-		return NULL;
-	}
-
 	if (reftable_realloc_ptr)
 		return (*reftable_realloc_ptr)(p, sz);
 	return realloc(p, sz);
@@ -124,8 +117,11 @@ int reftable_buf_add(struct reftable_buf *buf, const void *data, size_t len)
 	size_t newlen = buf->len + len;
 
 	if (newlen + 1 > buf->alloc) {
-		if (REFTABLE_ALLOC_GROW(buf->buf, newlen + 1, buf->alloc))
+		char *reallocated = buf->buf;
+		REFTABLE_ALLOC_GROW(reallocated, newlen + 1, buf->alloc);
+		if (!reallocated)
 			return REFTABLE_OUT_OF_MEMORY_ERROR;
+		buf->buf = reallocated;
 	}
 
 	memcpy(buf->buf + buf->len, data, len);
@@ -145,6 +141,25 @@ char *reftable_buf_detach(struct reftable_buf *buf)
 	char *result = buf->buf;
 	reftable_buf_init(buf);
 	return result;
+}
+
+void put_be24(uint8_t *out, uint32_t i)
+{
+	out[0] = (uint8_t)((i >> 16) & 0xff);
+	out[1] = (uint8_t)((i >> 8) & 0xff);
+	out[2] = (uint8_t)(i & 0xff);
+}
+
+uint32_t get_be24(uint8_t *in)
+{
+	return (uint32_t)(in[0]) << 16 | (uint32_t)(in[1]) << 8 |
+	       (uint32_t)(in[2]);
+}
+
+void put_be16(uint8_t *out, uint16_t i)
+{
+	out[0] = (uint8_t)((i >> 8) & 0xff);
+	out[1] = (uint8_t)(i & 0xff);
 }
 
 size_t binsearch(size_t sz, int (*f)(size_t k, void *args), void *args)
@@ -211,9 +226,11 @@ char **parse_names(char *buf, int size)
 			next = end;
 		}
 		if (p < next) {
-			if (REFTABLE_ALLOC_GROW(names, names_len + 1,
-						names_cap))
+			char **names_grown = names;
+			REFTABLE_ALLOC_GROW(names_grown, names_len + 1, names_cap);
+			if (!names_grown)
 				goto err;
+			names = names_grown;
 
 			names[names_len] = reftable_strdup(p);
 			if (!names[names_len++])
@@ -222,8 +239,7 @@ char **parse_names(char *buf, int size)
 		p = next + 1;
 	}
 
-	if (REFTABLE_ALLOC_GROW(names, names_len + 1, names_cap))
-		goto err;
+	REFTABLE_REALLOC_ARRAY(names, names_len + 1);
 	names[names_len] = NULL;
 
 	return names;
@@ -244,16 +260,18 @@ int names_equal(const char **a, const char **b)
 	return a[i] == b[i];
 }
 
-size_t common_prefix_size(struct reftable_buf *a, struct reftable_buf *b)
+int common_prefix_size(struct reftable_buf *a, struct reftable_buf *b)
 {
-	size_t p = 0;
-	for (; p < a->len && p < b->len; p++)
+	int p = 0;
+	for (; p < a->len && p < b->len; p++) {
 		if (a->buf[p] != b->buf[p])
 			break;
+	}
+
 	return p;
 }
 
-uint32_t hash_size(enum reftable_hash id)
+int hash_size(enum reftable_hash id)
 {
 	if (!id)
 		return REFTABLE_HASH_SIZE_SHA1;

@@ -358,7 +358,10 @@ compiled without runtime prefix support, the compiled-in prefix will be
 substituted instead. In the unlikely event that a literal path needs to
 be specified that should _not_ be expanded, it needs to be prefixed by
 `./`, like so: `./%(prefix)/bin`.
-
++
+If prefixed with `:(optional)`, the configuration variable is treated
+as if it does not exist, if the named path does not exist or names an
+empty file.
 
 Variables
 ~~~~~~~~~

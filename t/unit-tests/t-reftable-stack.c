@@ -6,15 +6,13 @@ license that can be found in the LICENSE file or at
 https://developers.google.com/open-source/licenses/bsd
 */
 
-#define DISABLE_SIGN_COMPARE_WARNINGS
-
 #include "test-lib.h"
 #include "lib-reftable.h"
 #include "dir.h"
 #include "reftable/merged.h"
+#include "reftable/reader.h"
 #include "reftable/reftable-error.h"
 #include "reftable/stack.h"
-#include "reftable/table.h"
 #include "strbuf.h"
 #include "tempfile.h"
 #include <dirent.h>
@@ -103,8 +101,7 @@ static void t_read_file(void)
 static int write_test_ref(struct reftable_writer *wr, void *arg)
 {
 	struct reftable_ref_record *ref = arg;
-	check(!reftable_writer_set_limits(wr, ref->update_index,
-					  ref->update_index));
+	reftable_writer_set_limits(wr, ref->update_index, ref->update_index);
 	return reftable_writer_add_ref(wr, ref);
 }
 
@@ -144,8 +141,7 @@ static int write_test_log(struct reftable_writer *wr, void *arg)
 {
 	struct write_log_arg *wla = arg;
 
-	check(!reftable_writer_set_limits(wr, wla->update_index,
-					  wla->update_index));
+	reftable_writer_set_limits(wr, wla->update_index, wla->update_index);
 	return reftable_writer_add_log(wr, wla->log);
 }
 
@@ -176,7 +172,7 @@ static void t_reftable_stack_add_one(void)
 	err = reftable_stack_read_ref(st, ref.refname, &dest);
 	check(!err);
 	check(reftable_ref_record_equal(&ref, &dest, REFTABLE_HASH_SIZE_SHA1));
-	check_int(st->tables_len, >, 0);
+	check_int(st->readers_len, >, 0);
 
 #ifndef GIT_WINDOWS_NATIVE
 	check(!reftable_buf_addstr(&scratch, dir));
@@ -189,7 +185,7 @@ static void t_reftable_stack_add_one(void)
 	check(!reftable_buf_addstr(&scratch, dir));
 	check(!reftable_buf_addstr(&scratch, "/"));
 	/* do not try at home; not an external API for reftable. */
-	check(!reftable_buf_addstr(&scratch, st->tables[0]->name));
+	check(!reftable_buf_addstr(&scratch, st->readers[0]->name));
 	err = stat(scratch.buf, &stat_result);
 	check(!err);
 	check_int((stat_result.st_mode & 0777), ==, opts.default_permissions);
@@ -402,9 +398,9 @@ static void t_reftable_stack_transaction_api_performs_auto_compaction(void)
 		 * all tables in the stack.
 		 */
 		if (i != n)
-			check_int(st->merged->tables_len, ==, i + 1);
+			check_int(st->merged->readers_len, ==, i + 1);
 		else
-			check_int(st->merged->tables_len, ==, 1);
+			check_int(st->merged->readers_len, ==, 1);
 	}
 
 	reftable_stack_destroy(st);
@@ -430,7 +426,7 @@ static void t_reftable_stack_auto_compaction_fails_gracefully(void)
 
 	err = reftable_stack_add(st, write_test_ref, &ref);
 	check(!err);
-	check_int(st->merged->tables_len, ==, 1);
+	check_int(st->merged->readers_len, ==, 1);
 	check_int(st->stats.attempts, ==, 0);
 	check_int(st->stats.failures, ==, 0);
 
@@ -441,14 +437,14 @@ static void t_reftable_stack_auto_compaction_fails_gracefully(void)
 	 */
 	check(!reftable_buf_addstr(&table_path, dir));
 	check(!reftable_buf_addstr(&table_path, "/"));
-	check(!reftable_buf_addstr(&table_path, st->tables[0]->name));
+	check(!reftable_buf_addstr(&table_path, st->readers[0]->name));
 	check(!reftable_buf_addstr(&table_path, ".lock"));
 	write_file_buf(table_path.buf, "", 0);
 
 	ref.update_index = 2;
 	err = reftable_stack_add(st, write_test_ref, &ref);
 	check(!err);
-	check_int(st->merged->tables_len, ==, 2);
+	check_int(st->merged->readers_len, ==, 2);
 	check_int(st->stats.attempts, ==, 1);
 	check_int(st->stats.failures, ==, 1);
 
@@ -592,7 +588,7 @@ static void t_reftable_stack_add(void)
 	check(!reftable_buf_addstr(&path, dir));
 	check(!reftable_buf_addstr(&path, "/"));
 	/* do not try at home; not an external API for reftable. */
-	check(!reftable_buf_addstr(&path, st->tables[0]->name));
+	check(!reftable_buf_addstr(&path, st->readers[0]->name));
 	err = stat(path.buf, &stat_result);
 	check(!err);
 	check_int((stat_result.st_mode & 0777), ==, opts.default_permissions);
@@ -777,12 +773,8 @@ static void t_reftable_stack_tombstone(void)
 		}
 
 		logs[i].refname = xstrdup(buf);
-		/*
-		 * update_index is part of the key so should be constant.
-		 * The value itself should be less than the writer's upper
-		 * limit.
-		 */
-		logs[i].update_index = 1;
+		/* update_index is part of the key. */
+		logs[i].update_index = 42;
 		if (i % 2 == 0) {
 			logs[i].value_type = REFTABLE_LOG_UPDATE;
 			t_reftable_set_hash(logs[i].value.update.new_hash, i,
@@ -963,7 +955,7 @@ static void t_reflog_expire(void)
 
 static int write_nothing(struct reftable_writer *wr, void *arg UNUSED)
 {
-	check(!reftable_writer_set_limits(wr, 1, 1));
+	reftable_writer_set_limits(wr, 1, 1);
 	return 0;
 }
 
@@ -1026,7 +1018,7 @@ static void t_reftable_stack_auto_compaction(void)
 
 		err = reftable_stack_auto_compact(st);
 		check(!err);
-		check(i < 2 || st->merged->tables_len < 2 * fastlogN(i, 2));
+		check(i < 2 || st->merged->readers_len < 2 * fastlogN(i, 2));
 	}
 
 	check_int(reftable_stack_compaction_stats(st)->entries_written, <,
@@ -1061,7 +1053,7 @@ static void t_reftable_stack_auto_compaction_factor(void)
 		err = reftable_stack_add(st, &write_test_ref, &ref);
 		check(!err);
 
-		check(i < 5 || st->merged->tables_len < 5 * fastlogN(i, 5));
+		check(i < 5 || st->merged->readers_len < 5 * fastlogN(i, 5));
 	}
 
 	reftable_stack_destroy(st);
@@ -1082,7 +1074,7 @@ static void t_reftable_stack_auto_compaction_with_locked_tables(void)
 	check(!err);
 
 	write_n_ref_tables(st, 5);
-	check_int(st->merged->tables_len, ==, 5);
+	check_int(st->merged->readers_len, ==, 5);
 
 	/*
 	 * Given that all tables we have written should be roughly the same
@@ -1091,7 +1083,7 @@ static void t_reftable_stack_auto_compaction_with_locked_tables(void)
 	 */
 	check(!reftable_buf_addstr(&buf, dir));
 	check(!reftable_buf_addstr(&buf, "/"));
-	check(!reftable_buf_addstr(&buf, st->tables[2]->name));
+	check(!reftable_buf_addstr(&buf, st->readers[2]->name));
 	check(!reftable_buf_addstr(&buf, ".lock"));
 	write_file_buf(buf.buf, "", 0);
 
@@ -1104,7 +1096,7 @@ static void t_reftable_stack_auto_compaction_with_locked_tables(void)
 	err = reftable_stack_auto_compact(st);
 	check(!err);
 	check_int(st->stats.failures, ==, 0);
-	check_int(st->merged->tables_len, ==, 4);
+	check_int(st->merged->readers_len, ==, 4);
 
 	reftable_stack_destroy(st);
 	reftable_buf_release(&buf);
@@ -1149,9 +1141,9 @@ static void t_reftable_stack_add_performs_auto_compaction(void)
 		 * all tables in the stack.
 		 */
 		if (i != n)
-			check_int(st->merged->tables_len, ==, i + 1);
+			check_int(st->merged->readers_len, ==, i + 1);
 		else
-			check_int(st->merged->tables_len, ==, 1);
+			check_int(st->merged->readers_len, ==, 1);
 	}
 
 	reftable_stack_destroy(st);
@@ -1172,12 +1164,12 @@ static void t_reftable_stack_compaction_with_locked_tables(void)
 	check(!err);
 
 	write_n_ref_tables(st, 3);
-	check_int(st->merged->tables_len, ==, 3);
+	check_int(st->merged->readers_len, ==, 3);
 
 	/* Lock one of the tables that we're about to compact. */
 	check(!reftable_buf_addstr(&buf, dir));
 	check(!reftable_buf_addstr(&buf, "/"));
-	check(!reftable_buf_addstr(&buf, st->tables[1]->name));
+	check(!reftable_buf_addstr(&buf, st->readers[1]->name));
 	check(!reftable_buf_addstr(&buf, ".lock"));
 	write_file_buf(buf.buf, "", 0);
 
@@ -1188,7 +1180,7 @@ static void t_reftable_stack_compaction_with_locked_tables(void)
 	err = reftable_stack_compact_all(st, NULL);
 	check_int(err, ==, REFTABLE_LOCK_ERROR);
 	check_int(st->stats.failures, ==, 1);
-	check_int(st->merged->tables_len, ==, 3);
+	check_int(st->merged->readers_len, ==, 3);
 
 	reftable_stack_destroy(st);
 	reftable_buf_release(&buf);
@@ -1222,10 +1214,10 @@ static void t_reftable_stack_compaction_concurrent(void)
 static void unclean_stack_close(struct reftable_stack *st)
 {
 	/* break abstraction boundary to simulate unclean shutdown. */
-	for (size_t i = 0; i < st->tables_len; i++)
-		reftable_table_decref(st->tables[i]);
-	st->tables_len = 0;
-	REFTABLE_FREE_AND_NULL(st->tables);
+	for (size_t i = 0; i < st->readers_len; i++)
+		reftable_reader_decref(st->readers[i]);
+	st->readers_len = 0;
+	REFTABLE_FREE_AND_NULL(st->readers);
 }
 
 static void t_reftable_stack_compaction_concurrent_clean(void)
@@ -1275,7 +1267,7 @@ static void t_reftable_stack_read_across_reload(void)
 	err = reftable_new_stack(&st1, dir, &opts);
 	check(!err);
 	write_n_ref_tables(st1, 2);
-	check_int(st1->merged->tables_len, ==, 2);
+	check_int(st1->merged->readers_len, ==, 2);
 	reftable_stack_init_ref_iterator(st1, &it);
 	err = reftable_iterator_seek_ref(&it, "");
 	check(!err);
@@ -1283,10 +1275,10 @@ static void t_reftable_stack_read_across_reload(void)
 	/* Set up a second stack for the same directory and compact it. */
 	err = reftable_new_stack(&st2, dir, &opts);
 	check(!err);
-	check_int(st2->merged->tables_len, ==, 2);
+	check_int(st2->merged->readers_len, ==, 2);
 	err = reftable_stack_compact_all(st2, NULL);
 	check(!err);
-	check_int(st2->merged->tables_len, ==, 1);
+	check_int(st2->merged->readers_len, ==, 1);
 
 	/*
 	 * Verify that we can continue to use the old iterator even after we
@@ -1294,7 +1286,7 @@ static void t_reftable_stack_read_across_reload(void)
 	 */
 	err = reftable_stack_reload(st1);
 	check(!err);
-	check_int(st1->merged->tables_len, ==, 1);
+	check_int(st1->merged->readers_len, ==, 1);
 	err = reftable_iterator_next_ref(&it, &rec);
 	check(!err);
 	check_str(rec.refname, "refs/heads/branch-0000");
@@ -1325,19 +1317,19 @@ static void t_reftable_stack_reload_with_missing_table(void)
 	err = reftable_new_stack(&st, dir, &opts);
 	check(!err);
 	write_n_ref_tables(st, 2);
-	check_int(st->merged->tables_len, ==, 2);
+	check_int(st->merged->readers_len, ==, 2);
 	reftable_stack_init_ref_iterator(st, &it);
 	err = reftable_iterator_seek_ref(&it, "");
 	check(!err);
 
 	/*
 	 * Update the tables.list file with some garbage data, while reusing
-	 * our old tables. This should trigger a partial reload of the stack,
-	 * where we try to reuse our old tables.
+	 * our old readers. This should trigger a partial reload of the stack,
+	 * where we try to reuse our old readers.
 	*/
-	check(!reftable_buf_addstr(&content, st->tables[0]->name));
+	check(!reftable_buf_addstr(&content, st->readers[0]->name));
 	check(!reftable_buf_addstr(&content, "\n"));
-	check(!reftable_buf_addstr(&content, st->tables[1]->name));
+	check(!reftable_buf_addstr(&content, st->readers[1]->name));
 	check(!reftable_buf_addstr(&content, "\n"));
 	check(!reftable_buf_addstr(&content, "garbage\n"));
 	check(!reftable_buf_addstr(&table_path, st->list_file));
@@ -1348,7 +1340,7 @@ static void t_reftable_stack_reload_with_missing_table(void)
 
 	err = reftable_stack_reload(st);
 	check_int(err, ==, -4);
-	check_int(st->merged->tables_len, ==, 2);
+	check_int(st->merged->readers_len, ==, 2);
 
 	/*
 	 * Even though the reload has failed, we should be able to continue
@@ -1371,57 +1363,11 @@ static void t_reftable_stack_reload_with_missing_table(void)
 	clear_dir(dir);
 }
 
-static int write_limits_after_ref(struct reftable_writer *wr, void *arg)
-{
-	struct reftable_ref_record *ref = arg;
-	check(!reftable_writer_set_limits(wr, ref->update_index, ref->update_index));
-	check(!reftable_writer_add_ref(wr, ref));
-	return reftable_writer_set_limits(wr, ref->update_index, ref->update_index);
-}
-
-static void t_reftable_invalid_limit_updates(void)
-{
-	struct reftable_ref_record ref = {
-		.refname = (char *) "HEAD",
-		.update_index = 1,
-		.value_type = REFTABLE_REF_SYMREF,
-		.value.symref = (char *) "master",
-	};
-	struct reftable_write_options opts = {
-		.default_permissions = 0660,
-	};
-	struct reftable_addition *add = NULL;
-	char *dir = get_tmp_dir(__LINE__);
-	struct reftable_stack *st = NULL;
-	int err;
-
-	err = reftable_new_stack(&st, dir, &opts);
-	check(!err);
-
-	reftable_addition_destroy(add);
-
-	err = reftable_stack_new_addition(&add, st, 0);
-	check(!err);
-
-	/*
-	 * write_limits_after_ref also updates the update indexes after adding
-	 * the record. This should cause an err to be returned, since the limits
-	 * must be set at the start.
-	 */
-	err = reftable_addition_add(add, write_limits_after_ref, &ref);
-	check_int(err, ==, REFTABLE_API_ERROR);
-
-	reftable_addition_destroy(add);
-	reftable_stack_destroy(st);
-	clear_dir(dir);
-}
-
 int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
 {
 	TEST(t_empty_add(), "empty addition to stack");
 	TEST(t_read_file(), "read_lines works");
 	TEST(t_reflog_expire(), "expire reflog entries");
-	TEST(t_reftable_invalid_limit_updates(), "prevent limit updates after adding records");
 	TEST(t_reftable_stack_add(), "add multiple refs and logs to stack");
 	TEST(t_reftable_stack_add_one(), "add a single ref record to stack");
 	TEST(t_reftable_stack_add_performs_auto_compaction(), "addition to stack triggers auto-compaction");

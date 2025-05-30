@@ -1,25 +1,17 @@
 /*
- * Copyright 2020 Google LLC
- *
- * Use of this source code is governed by a BSD-style
- * license that can be found in the LICENSE file or at
- * https://developers.google.com/open-source/licenses/bsd
- */
+Copyright 2020 Google LLC
+
+Use of this source code is governed by a BSD-style
+license that can be found in the LICENSE file or at
+https://developers.google.com/open-source/licenses/bsd
+*/
 
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
 /* This header glues the reftable library to the rest of Git */
 
-#define MINGW_DONT_HANDLE_IN_USE_ERROR
-#include "compat/posix.h"
-#include "compat/zlib-compat.h"
-
-/*
- * Return a random 32 bit integer. This function is expected to return
- * pre-seeded data.
- */
-uint32_t reftable_rand(void);
+#include "git-compat-util.h"
 
 /*
  * An implementation-specific temporary file. By making this specific to the
@@ -57,8 +49,7 @@ int tmpfile_delete(struct reftable_tmpfile *t);
 
 /*
  * Rename the temporary file to the provided path. The temporary file must be
- * active. Return 0 on success, a reftable error code on error. Deactivates the
- * temporary file.
+ * active. Return 0 on success, a reftable error code on error.
  */
 int tmpfile_rename(struct reftable_tmpfile *t, const char *path);
 
