@@ -89,6 +89,8 @@ UI, Workflows & Features
    check, which can be useful when the repository arranges to ensure
    connectivity by some other means.
 
+ * "git notes --help" documentation updates.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -192,6 +194,10 @@ Performance, Internal Implementation, Development Support etc.
  * Remove the leftover hints to the test framework to mark tests that
    do not pass the leak checker tests, as they should no longer be
    needed.
+
+ * When a stale .midx file refers to .pack files that no longer exist,
+   we ended up checking for these non-existent files repeatedly, which
+   has been optimized by memoizing the non-existence.
 
 
 Fixes since v2.49
@@ -354,6 +360,22 @@ Fixes since v2.49
  * "git apply" and "git add -i/-p" code paths no longer unnecessarily
    expand sparse-index while working.
    (merge ecf9ba20e3 ds/sparse-apply-add-p later to maint).
+
+ * Avoid adding directory path to a sparse-index tree entries to the
+   name-hash, since they would bloat the hashtable without anybody
+   querying for them.  This was done already for a single threaded
+   part of the code, but now the multi-threaded code also does the
+   same.
+   (merge 2e60aabc75 am/sparse-index-name-hash-fix later to maint).
+
+ * Recent versions of Perl started warning against "! A =~ /pattern/"
+   which does not negate the result of the matching.  As it turns out
+   that the problematic function is not even called, it was removed.
+   (merge 67cae845d2 op/cvsserver-perl-warning later to maint).
+
+ * "git apply --index/--cached" when applying a deletion patch in
+   reverse failed to give the mode bits of the path "removed" by the
+   patch to the file it creates, which has been corrected.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
