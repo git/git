@@ -486,6 +486,33 @@ test_bitmap_cases () {
 			grep "ignoring extra bitmap" trace2.txt
 		)
 	'
+
+	test_expect_success 'load corrupt bitmap' '
+		rm -fr repo &&
+		git init repo &&
+		test_when_finished "rm -fr repo" &&
+		(
+			cd repo &&
+			git config pack.writeBitmapLookupTable '"$writeLookupTable"' &&
+
+			test_commit base &&
+
+			git repack -adb &&
+			bitmap="$(ls .git/objects/pack/pack-*.bitmap)" &&
+			chmod +w $bitmap &&
+
+			read oid commit_off xor_off flag_off ewah_off <<-EOF &&
+				$(test-tool bitmap list-commits-offset | head -n 1)
+			EOF
+			printf '\161' |
+				dd of=$bitmap count=1 bs=1 conv=notrunc seek=$xor_off &&
+
+
+			git rev-list --count HEAD > expect &&
+			git rev-list --use-bitmap-index --count HEAD > actual &&
+			test_cmp expect actual
+		)
+	'
 }
 
 test_bitmap_cases
