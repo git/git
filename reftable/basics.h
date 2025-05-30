@@ -16,7 +16,11 @@
 #include "system.h"
 #include "reftable-basics.h"
 
+#ifdef __GNUC__
 #define REFTABLE_UNUSED __attribute__((__unused__))
+#else
+#define REFTABLE_UNUSED
+#endif
 
 /*
  * Initialize the buffer such that it is ready for use. This is equivalent to
