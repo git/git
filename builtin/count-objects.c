@@ -12,7 +12,7 @@
 #include "parse-options.h"
 #include "quote.h"
 #include "packfile.h"
-#include "object-store-ll.h"
+#include "object-file.h"
 
 static unsigned long garbage;
 static off_t size_garbage;

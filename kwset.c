@@ -197,10 +197,13 @@ kwsincr (kwset_t kws, char const *text, size_t len)
       while (link && label != link->label)
 	{
 	  links[depth] = link;
-	  if (label < link->label)
-	    dirs[depth++] = L, link = link->llink;
-	  else
-	    dirs[depth++] = R, link = link->rlink;
+	  if (label < link->label) {
+	    dirs[depth++] = L;
+	    link = link->llink;
+	  } else {
+	    dirs[depth++] = R;
+	    link = link->rlink;
+	  }
 	}
 
       /* The current character doesn't have an outgoing link at
@@ -257,14 +260,14 @@ kwsincr (kwset_t kws, char const *text, size_t len)
 		  switch (dirs[depth + 1])
 		    {
 		    case L:
-		      r = links[depth], t = r->llink, rl = t->rlink;
-		      t->rlink = r, r->llink = rl;
+		      r = links[depth]; t = r->llink; rl = t->rlink;
+		      t->rlink = r; r->llink = rl;
 		      t->balance = r->balance = 0;
 		      break;
 		    case R:
-		      r = links[depth], l = r->llink, t = l->rlink;
-		      rl = t->rlink, lr = t->llink;
-		      t->llink = l, l->rlink = lr, t->rlink = r, r->llink = rl;
+		      r = links[depth]; l = r->llink; t = l->rlink;
+		      rl = t->rlink; lr = t->llink;
+		      t->llink = l; l->rlink = lr; t->rlink = r; r->llink = rl;
 		      l->balance = t->balance != 1 ? 0 : -1;
 		      r->balance = t->balance != (char) -1 ? 0 : 1;
 		      t->balance = 0;
@@ -277,14 +280,14 @@ kwsincr (kwset_t kws, char const *text, size_t len)
 		  switch (dirs[depth + 1])
 		    {
 		    case R:
-		      l = links[depth], t = l->rlink, lr = t->llink;
-		      t->llink = l, l->rlink = lr;
+		      l = links[depth]; t = l->rlink; lr = t->llink;
+		      t->llink = l; l->rlink = lr;
 		      t->balance = l->balance = 0;
 		      break;
 		    case L:
-		      l = links[depth], r = l->rlink, t = r->llink;
-		      lr = t->llink, rl = t->rlink;
-		      t->llink = l, l->rlink = lr, t->rlink = r, r->llink = rl;
+		      l = links[depth]; r = l->rlink; t = r->llink;
+		      lr = t->llink; rl = t->rlink;
+		      t->llink = l; l->rlink = lr; t->rlink = r; r->llink = rl;
 		      l->balance = t->balance != 1 ? 0 : -1;
 		      r->balance = t->balance != (char) -1 ? 0 : 1;
 		      t->balance = 0;
@@ -567,22 +570,22 @@ bmexec (kwset_t kws, char const *text, size_t size)
       {
 	while (tp <= ep)
 	  {
-	    d = d1[U(tp[-1])], tp += d;
-	    d = d1[U(tp[-1])], tp += d;
+	    d = d1[U(tp[-1])]; tp += d;
+	    d = d1[U(tp[-1])]; tp += d;
 	    if (d == 0)
 	      goto found;
-	    d = d1[U(tp[-1])], tp += d;
-	    d = d1[U(tp[-1])], tp += d;
-	    d = d1[U(tp[-1])], tp += d;
+	    d = d1[U(tp[-1])]; tp += d;
+	    d = d1[U(tp[-1])]; tp += d;
+	    d = d1[U(tp[-1])]; tp += d;
 	    if (d == 0)
 	      goto found;
-	    d = d1[U(tp[-1])], tp += d;
-	    d = d1[U(tp[-1])], tp += d;
-	    d = d1[U(tp[-1])], tp += d;
+	    d = d1[U(tp[-1])]; tp += d;
+	    d = d1[U(tp[-1])]; tp += d;
+	    d = d1[U(tp[-1])]; tp += d;
 	    if (d == 0)
 	      goto found;
-	    d = d1[U(tp[-1])], tp += d;
-	    d = d1[U(tp[-1])], tp += d;
+	    d = d1[U(tp[-1])]; tp += d;
+	    d = d1[U(tp[-1])]; tp += d;
 	  }
 	break;
       found:
@@ -649,7 +652,8 @@ cwexec (kwset_t kws, char const *text, size_t len, struct kwsmatch *kwsmatch)
     mch = NULL;
   else
     {
-      mch = text, accept = kwset->trie;
+      mch = text;
+      accept = kwset->trie;
       goto match;
     }
 

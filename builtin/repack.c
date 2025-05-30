@@ -17,7 +17,7 @@
 #include "midx.h"
 #include "packfile.h"
 #include "prune-packed.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "promisor-remote.h"
 #include "shallow.h"
 #include "pack.h"
@@ -1022,28 +1022,12 @@ static int write_filtered_pack(const struct pack_objects_args *args,
 	return finish_pack_objects_cmd(&cmd, names, local);
 }
 
-static int existing_cruft_pack_cmp(const void *va, const void *vb)
+static void combine_small_cruft_packs(FILE *in, size_t combine_cruft_below_size,
+				      struct existing_packs *existing)
 {
-	struct packed_git *a = *(struct packed_git **)va;
-	struct packed_git *b = *(struct packed_git **)vb;
-
-	if (a->pack_size < b->pack_size)
-		return -1;
-	if (a->pack_size > b->pack_size)
-		return 1;
-	return 0;
-}
-
-static void collapse_small_cruft_packs(FILE *in, size_t max_size,
-				       struct existing_packs *existing)
-{
-	struct packed_git **existing_cruft, *p;
+	struct packed_git *p;
 	struct strbuf buf = STRBUF_INIT;
-	size_t total_size = 0;
-	size_t existing_cruft_nr = 0;
 	size_t i;
-
-	ALLOC_ARRAY(existing_cruft, existing->cruft_packs.nr);
 
 	for (p = get_all_packs(the_repository); p; p = p->next) {
 		if (!(p->is_cruft && p->pack_local))
@@ -1056,24 +1040,7 @@ static void collapse_small_cruft_packs(FILE *in, size_t max_size,
 		if (!string_list_has_string(&existing->cruft_packs, buf.buf))
 			continue;
 
-		if (existing_cruft_nr >= existing->cruft_packs.nr)
-			BUG("too many cruft packs (found %"PRIuMAX", but knew "
-			    "of %"PRIuMAX")",
-			    (uintmax_t)existing_cruft_nr + 1,
-			    (uintmax_t)existing->cruft_packs.nr);
-		existing_cruft[existing_cruft_nr++] = p;
-	}
-
-	QSORT(existing_cruft, existing_cruft_nr, existing_cruft_pack_cmp);
-
-	for (i = 0; i < existing_cruft_nr; i++) {
-		size_t proposed;
-
-		p = existing_cruft[i];
-		proposed = st_add(total_size, p->pack_size);
-
-		if (proposed <= max_size) {
-			total_size = proposed;
+		if (p->pack_size < combine_cruft_below_size) {
 			fprintf(in, "-%s\n", pack_basename(p));
 		} else {
 			retain_cruft_pack(existing, p);
@@ -1086,13 +1053,13 @@ static void collapse_small_cruft_packs(FILE *in, size_t max_size,
 			existing->non_kept_packs.items[i].string);
 
 	strbuf_release(&buf);
-	free(existing_cruft);
 }
 
 static int write_cruft_pack(const struct pack_objects_args *args,
 			    const char *destination,
 			    const char *pack_prefix,
 			    const char *cruft_expiration,
+			    unsigned long combine_cruft_below_size,
 			    struct string_list *names,
 			    struct existing_packs *existing)
 {
@@ -1135,8 +1102,9 @@ static int write_cruft_pack(const struct pack_objects_args *args,
 	in = xfdopen(cmd.in, "w");
 	for_each_string_list_item(item, names)
 		fprintf(in, "%s-%s.pack\n", pack_prefix, item->string);
-	if (args->max_pack_size && !cruft_expiration) {
-		collapse_small_cruft_packs(in, args->max_pack_size, existing);
+	if (combine_cruft_below_size && !cruft_expiration) {
+		combine_small_cruft_packs(in, combine_cruft_below_size,
+					  existing);
 	} else {
 		for_each_string_list_item(item, &existing->non_kept_packs)
 			fprintf(in, "-%s.pack\n", item->string);
@@ -1190,6 +1158,7 @@ int cmd_repack(int argc,
 	const char *opt_window_memory = NULL;
 	const char *opt_depth = NULL;
 	const char *opt_threads = NULL;
+	unsigned long combine_cruft_below_size = 0ul;
 
 	struct option builtin_repack_options[] = {
 		OPT_BIT('a', NULL, &pack_everything,
@@ -1202,8 +1171,11 @@ int cmd_repack(int argc,
 				   PACK_CRUFT),
 		OPT_STRING(0, "cruft-expiration", &cruft_expiration, N_("approxidate"),
 				N_("with --cruft, expire objects older than this")),
-		OPT_MAGNITUDE(0, "max-cruft-size", &cruft_po_args.max_pack_size,
-				N_("with --cruft, limit the size of new cruft packs")),
+		OPT_UNSIGNED(0, "combine-cruft-below-size",
+			     &combine_cruft_below_size,
+			     N_("with --cruft, only repack cruft packs smaller than this")),
+		OPT_UNSIGNED(0, "max-cruft-size", &cruft_po_args.max_pack_size,
+			     N_("with --cruft, limit the size of new cruft packs")),
 		OPT_BOOL('d', NULL, &delete_redundant,
 				N_("remove redundant packs, and run git-prune-packed")),
 		OPT_BOOL('f', NULL, &po_args.no_reuse_delta,
@@ -1233,8 +1205,8 @@ int cmd_repack(int argc,
 				N_("limits the maximum delta depth")),
 		OPT_STRING(0, "threads", &opt_threads, N_("n"),
 				N_("limits the maximum number of threads")),
-		OPT_MAGNITUDE(0, "max-pack-size", &po_args.max_pack_size,
-				N_("maximum size of each packfile")),
+		OPT_UNSIGNED(0, "max-pack-size", &po_args.max_pack_size,
+			     N_("maximum size of each packfile")),
 		OPT_PARSE_LIST_OBJECTS_FILTER(&po_args.filter_options),
 		OPT_BOOL(0, "pack-kept-objects", &pack_kept_objects,
 				N_("repack objects in packs marked with .keep")),
@@ -1445,7 +1417,8 @@ int cmd_repack(int argc,
 		cruft_po_args.quiet = po_args.quiet;
 
 		ret = write_cruft_pack(&cruft_po_args, packtmp, pack_prefix,
-				       cruft_expiration, &names,
+				       cruft_expiration,
+				       combine_cruft_below_size, &names,
 				       &existing);
 		if (ret)
 			goto cleanup;
@@ -1472,10 +1445,17 @@ int cmd_repack(int argc,
 			 * generate an empty pack (since every object not in the
 			 * cruft pack generated above will have an mtime older
 			 * than the expiration).
+			 *
+			 * Pretend we don't have a `--combine-cruft-below-size`
+			 * argument, since we're not selectively combining
+			 * anything based on size to generate the limbo cruft
+			 * pack, but rather removing all cruft packs from the
+			 * main repository regardless of size.
 			 */
 			ret = write_cruft_pack(&cruft_po_args, expire_to,
 					       pack_prefix,
 					       NULL,
+					       0ul,
 					       &names,
 					       &existing);
 			if (ret)

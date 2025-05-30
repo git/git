@@ -265,7 +265,7 @@ jobs:
       run: pip install meson ninja
     - name: Setup
       shell: pwsh
-      run: meson setup build -Dperl=disabled -Dcredential_helpers=wincred
+      run: meson setup build --vsenv -Dbuildtype=release -Dperl=disabled -Dcredential_helpers=wincred
     - name: Compile
       shell: pwsh
       run: meson compile -C build
@@ -349,6 +349,7 @@ jobs:
     if: needs.ci-config.outputs.enabled == 'yes'
     env:
       CC: clang
+      CI_JOB_IMAGE: ubuntu-latest
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -407,12 +408,27 @@ jobs:
       jobname: ${{matrix.vector.jobname}}
       CC: ${{matrix.vector.cc}}
       CI_JOB_IMAGE: ${{matrix.vector.image}}
+      CUSTOM_PATH: /custom
     runs-on: ubuntu-latest
     container: ${{matrix.vector.image}}
     steps:
     - name: prepare libc6 for actions
       if: matrix.vector.jobname == 'linux32'
       run: apt -q update && apt -q -y install libc6-amd64 lib64stdc++6
+    - name: install git in container
+      run: |
+        if command -v git
+        then
+          : # nothing to do
+        elif command -v apk
+        then
+          apk add --update git
+        elif command -v dnf
+        then
+          dnf -yq update && dnf -yq install git
+        else
+          apt-get -q update && apt-get -q -y install git
+        fi
     - uses: actions/checkout@v4
     - run: ci/install-dependencies.sh
     - run: useradd builder --create-home
@@ -432,6 +448,7 @@ jobs:
     if: needs.ci-config.outputs.enabled == 'yes'
     env:
       jobname: StaticAnalysis
+      CI_JOB_IMAGE: ubuntu-22.04
     runs-on: ubuntu-22.04
     concurrency:
       group: static-analysis-${{ github.ref }}
@@ -446,20 +463,12 @@ jobs:
     if: needs.ci-config.outputs.enabled == 'yes'
     env:
       jobname: sparse
-    runs-on: ubuntu-20.04
+      CI_JOB_IMAGE: ubuntu-22.04
+    runs-on: ubuntu-22.04
     concurrency:
       group: sparse-${{ github.ref }}
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     steps:
-    - name: Download a current `sparse` package
-      # Ubuntu's `sparse` version is too old for us
-      uses: git-for-windows/get-azure-pipelines-artifact@v0
-      with:
-        repository: git/git
-        definitionId: 10
-        artifact: sparse-20.04
-    - name: Install the current `sparse` package
-      run: sudo dpkg -i sparse-20.04/sparse_*.deb
     - uses: actions/checkout@v4
     - name: Install other dependencies
       run: ci/install-dependencies.sh
@@ -473,6 +482,7 @@ jobs:
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     env:
       jobname: Documentation
+      CI_JOB_IMAGE: ubuntu-latest
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4

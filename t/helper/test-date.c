@@ -2,7 +2,7 @@
 #include "date.h"
 #include "trace.h"
 
-static const char *usage_msg = "\n"
+static const char *const usage_msg = "\n"
 "  test-tool date relative [time_t]...\n"
 "  test-tool date human [time_t]...\n"
 "  test-tool date show:<format> [time_t]...\n"

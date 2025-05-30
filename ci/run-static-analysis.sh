@@ -26,9 +26,11 @@ then
 	exit 1
 fi
 
-make hdr-check ||
+make check-headers ||
 exit 1
 
 make check-pot
+
+${0%/*}/check-unsafe-assertions.sh
 
 save_good_tree

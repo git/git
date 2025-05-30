@@ -221,6 +221,58 @@ char *xdg_cache_home(const char *filename);
  */
 void safe_create_dir(struct repository *repo, const char *dir, int share);
 
+/*
+ * Similar to `safe_create_dir()`, but with two differences:
+ *
+ *   - It knows to resolve gitlink files for symlinked worktrees.
+ *
+ *   - It always adjusts shared permissions.
+ *
+ * Returns a negative erorr code on error, 0 on success.
+ */
+int safe_create_dir_in_gitdir(struct repository *repo, const char *path);
+
+/*
+ * Create the directory containing the named path, using care to be
+ * somewhat safe against races. Return one of the scld_error values to
+ * indicate success/failure. On error, set errno to describe the
+ * problem.
+ *
+ * SCLD_VANISHED indicates that one of the ancestor directories of the
+ * path existed at one point during the function call and then
+ * suddenly vanished, probably because another process pruned the
+ * directory while we were working.  To be robust against this kind of
+ * race, callers might want to try invoking the function again when it
+ * returns SCLD_VANISHED.
+ *
+ * safe_create_leading_directories() temporarily changes path while it
+ * is working but restores it before returning.
+ * safe_create_leading_directories_const() doesn't modify path, even
+ * temporarily. Both these variants adjust the permissions of the
+ * created directories to honor core.sharedRepository, so they are best
+ * suited for files inside the git dir. For working tree files, use
+ * safe_create_leading_directories_no_share() instead, as it ignores
+ * the core.sharedRepository setting.
+ */
+enum scld_error {
+	SCLD_OK = 0,
+	SCLD_FAILED = -1,
+	SCLD_PERMS = -2,
+	SCLD_EXISTS = -3,
+	SCLD_VANISHED = -4
+};
+enum scld_error safe_create_leading_directories(struct repository *repo, char *path);
+enum scld_error safe_create_leading_directories_const(struct repository *repo,
+						      const char *path);
+enum scld_error safe_create_leading_directories_no_share(char *path);
+
+/*
+ * Create a file, potentially creating its leading directories in case they
+ * don't exist. Returns the return value of the open(3p) call.
+ */
+int safe_create_file_with_leading_directories(struct repository *repo,
+					      const char *path);
+
 # ifdef USE_THE_REPOSITORY_VARIABLE
 #  include "strbuf.h"
 #  include "repository.h"

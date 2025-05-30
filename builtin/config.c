@@ -131,9 +131,16 @@ struct config_display_options {
 #define TYPE_COLOR		6
 #define TYPE_BOOL_OR_STR	7
 
-#define OPT_CALLBACK_VALUE(s, l, v, h, i) \
-	{ OPTION_CALLBACK, (s), (l), (v), NULL, (h), PARSE_OPT_NOARG | \
-	PARSE_OPT_NONEG, option_parse_type, (i) }
+#define OPT_CALLBACK_VALUE(s, l, v, h, i) { \
+	.type = OPTION_CALLBACK, \
+	.short_name = (s), \
+	.long_name = (l), \
+	.value = (v), \
+	.help = (h), \
+	.flags = PARSE_OPT_NOARG | PARSE_OPT_NONEG, \
+	.callback = option_parse_type, \
+	.defval = (i), \
+}
 
 static int option_parse_type(const struct option *opt, const char *arg,
 			     int unset)

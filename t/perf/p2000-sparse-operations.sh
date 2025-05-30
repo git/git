@@ -135,5 +135,8 @@ test_perf_on_all git diff-tree HEAD
 test_perf_on_all git diff-tree HEAD -- $SPARSE_CONE/a
 test_perf_on_all "git worktree add ../temp && git worktree remove ../temp"
 test_perf_on_all git check-attr -a -- $SPARSE_CONE/a
+test_perf_on_all 'echo >>a && test_write_lines y | git add -p'
+test_perf_on_all 'test_write_lines y y y | git checkout --patch -'
+test_perf_on_all 'echo >>a && git add a && test_write_lines y | git reset --patch'
 
 test_done

@@ -512,6 +512,11 @@ centrally configure your Git hooks instead of configuring them on a
 per-repository basis, or as a more flexible and centralized
 alternative to having an `init.templateDir` where you've changed
 default hooks.
++
+You can also disable all hooks entirely by setting `core.hooksPath`
+to `/dev/null`. This is usually only advisable for expert users and
+on a per-command basis using configuration parameters of the form
+`git -c core.hooksPath=/dev/null ...`.
 
 core.editor::
 	Commands such as `commit` and `tag` that let you edit

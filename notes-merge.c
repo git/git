@@ -8,7 +8,7 @@
 #include "refs.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "path.h"
 #include "repository.h"
 #include "diff.h"
@@ -296,7 +296,7 @@ static void check_notes_merge_worktree(struct notes_merge_options *o)
 				    "(%s exists)."), repo_git_path_replace(the_repository, &buf, "NOTES_MERGE_*"));
 		}
 
-		if (safe_create_leading_directories_const(repo_git_path_replace(the_repository, &buf,
+		if (safe_create_leading_directories_const(the_repository, repo_git_path_replace(the_repository, &buf,
 				NOTES_MERGE_WORKTREE "/.test")))
 			die_errno("unable to create directory %s",
 				  repo_git_path_replace(the_repository, &buf, NOTES_MERGE_WORKTREE));
@@ -314,7 +314,7 @@ static void write_buf_to_worktree(const struct object_id *obj,
 {
 	int fd;
 	char *path = repo_git_path(the_repository, NOTES_MERGE_WORKTREE "/%s", oid_to_hex(obj));
-	if (safe_create_leading_directories_const(path))
+	if (safe_create_leading_directories_const(the_repository, path))
 		die_errno("unable to create directory for '%s'", path);
 
 	fd = xopen(path, O_WRONLY | O_EXCL | O_CREAT, 0666);
@@ -617,7 +617,7 @@ int notes_merge(struct notes_merge_options *o,
 	if (repo_get_merge_bases(the_repository, local, remote, &bases) < 0)
 		exit(128);
 	if (!bases) {
-		base_oid = null_oid();
+		base_oid = null_oid(the_hash_algo);
 		base_tree_oid = the_hash_algo->empty_tree;
 		if (o->verbosity >= 4)
 			printf("No merge base found; doing history-less merge\n");
@@ -729,7 +729,7 @@ int notes_merge_commit(struct notes_merge_options *o,
 		/* write file as blob, and add to partial_tree */
 		if (stat(path.buf, &st))
 			die_errno("Failed to stat '%s'", path.buf);
-		if (index_path(o->repo->index, &blob_oid, path.buf, &st, HASH_WRITE_OBJECT))
+		if (index_path(o->repo->index, &blob_oid, path.buf, &st, INDEX_WRITE_OBJECT))
 			die("Failed to write blob object from '%s'", path.buf);
 		if (add_note(partial_tree, &obj_oid, &blob_oid, NULL))
 			die("Failed to add resolved note '%s' to notes tree",

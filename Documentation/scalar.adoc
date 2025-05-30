@@ -9,12 +9,12 @@ SYNOPSIS
 --------
 [verse]
 scalar clone [--single-branch] [--branch <main-branch>] [--full-clone]
-	[--[no-]src] <url> [<enlistment>]
+	[--[no-]src] [--[no-]tags] [--[no-]maintenance] <url> [<enlistment>]
 scalar list
-scalar register [<enlistment>]
+scalar register [--[no-]maintenance] [<enlistment>]
 scalar unregister [<enlistment>]
 scalar run ( all | config | commit-graph | fetch | loose-objects | pack-files ) [<enlistment>]
-scalar reconfigure [ --all | <enlistment> ]
+scalar reconfigure [--maintenance=(enable|disable|keep)] [ --all | <enlistment> ]
 scalar diagnose [<enlistment>]
 scalar delete <enlistment>
 
@@ -97,6 +97,11 @@ cloning. If the HEAD at the remote did not point at any branch when
 	A sparse-checkout is initialized by default. This behavior can be
 	turned off via `--full-clone`.
 
+--[no-]maintenance::
+	By default, `scalar clone` configures the enlistment to use Git's
+	background maintenance feature. Use the `--no-maintenance` to skip
+	this configuration.
+
 List
 ~~~~
 
@@ -116,6 +121,12 @@ register [<enlistment>]::
 Note: when this subcommand is called in a worktree that is called `src/`, its
 parent directory is considered to be the Scalar enlistment. If the worktree is
 _not_ called `src/`, it itself will be considered to be the Scalar enlistment.
+
+--[no-]maintenance::
+	By default, `scalar register` configures the enlistment to use Git's
+	background maintenance feature. Use the `--no-maintenance` to skip
+	this configuration. This does not disable any maintenance that may
+	already be enabled in other ways.
 
 Unregister
 ~~~~~~~~~~
@@ -149,8 +160,18 @@ After a Scalar upgrade, or when the configuration of a Scalar enlistment
 was somehow corrupted or changed by mistake, this subcommand allows to
 reconfigure the enlistment.
 
-With the `--all` option, all enlistments currently registered with Scalar
-will be reconfigured. Use this option after each Scalar upgrade.
+--all::
+	When `--all` is specified, reconfigure all enlistments currently
+	registered with Scalar by the `scalar.repo` config key. Use this
+	option after each upgrade to get the latest features.
+
+--maintenance=(enable|disable|keep)::
+	By default, Scalar configures the enlistment to use Git's
+	background maintenance feature; this is the same as using the
+	`enable` value for this option. Use the	`disable` value to
+	remove each considered enlistment from background maintenance.
+	Use `keep' to leave the background maintenance configuration
+	untouched for these repositories.
 
 Diagnose
 ~~~~~~~~

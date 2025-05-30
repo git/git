@@ -813,7 +813,7 @@ test_expect_success 'git pull --rebase does not reapply old patches' '
 		cd dst &&
 		test_must_fail git pull --rebase &&
 		cat .git/rebase-merge/done .git/rebase-merge/git-rebase-todo >work &&
-		grep -v -e \# -e ^$ work >patches &&
+		grep -v -e ^\# -e ^$ work >patches &&
 		test_line_count = 1 patches &&
 		rm -f work
 	)

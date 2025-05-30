@@ -12,7 +12,7 @@ static const char * const apply_usage[] = {
 int cmd_apply(int argc,
 	      const char **argv,
 	      const char *prefix,
-	      struct repository *repo UNUSED)
+	      struct repository *repo)
 {
 	int force_apply = 0;
 	int options = 0;
@@ -34,6 +34,11 @@ int cmd_apply(int argc,
 	argc = apply_parse_options(argc, argv,
 				   &state, &force_apply, &options,
 				   apply_usage);
+
+	if (repo) {
+		prepare_repo_settings(repo);
+		repo->settings.command_requires_full_index = 0;
+	}
 
 	if (check_apply_state(&state, force_apply))
 		exit(128);

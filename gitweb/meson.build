@@ -1,5 +1,5 @@
 gitweb_config = configuration_data()
-gitweb_config.set_quoted('PERL_PATH', perl.full_path())
+gitweb_config.set_quoted('PERL_PATH', target_perl.full_path())
 gitweb_config.set_quoted('CSSMIN', '')
 gitweb_config.set_quoted('JSMIN', '')
 gitweb_config.set_quoted('GIT_BINDIR', get_option('prefix') / get_option('bindir'))

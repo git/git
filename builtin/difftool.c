@@ -22,6 +22,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "parse-options.h"
+#include "path.h"
 #include "read-cache-ll.h"
 #include "repository.h"
 #include "sparse-index.h"
@@ -29,7 +30,7 @@
 #include "strbuf.h"
 #include "lockfile.h"
 #include "object-file.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "dir.h"
 #include "entry.h"
 #include "setup.h"
@@ -271,9 +272,9 @@ static void changed_files(struct repository *repo,
 	strbuf_release(&buf);
 }
 
-static int ensure_leading_directories(char *path)
+static int ensure_leading_directories(struct repository *repo, char *path)
 {
-	switch (safe_create_leading_directories(path)) {
+	switch (safe_create_leading_directories(repo, path)) {
 		case SCLD_OK:
 		case SCLD_EXISTS:
 			return 0;
@@ -341,11 +342,12 @@ static int checkout_path(unsigned mode, struct object_id *oid,
 	return ret;
 }
 
-static void write_file_in_directory(struct strbuf *dir, size_t dir_len,
-			const char *path, const char *content)
+static void write_file_in_directory(struct repository *repo,
+				    struct strbuf *dir, size_t dir_len,
+				    const char *path, const char *content)
 {
 	add_path(dir, dir_len, path);
-	ensure_leading_directories(dir->buf);
+	ensure_leading_directories(repo, dir->buf);
 	unlink(dir->buf);
 	write_file(dir->buf, "%s", content);
 }
@@ -356,14 +358,15 @@ static void write_file_in_directory(struct strbuf *dir, size_t dir_len,
  * as text files, resulting in behavior that is analogous to what "git diff"
  * displays for symlink and submodule diffs.
  */
-static void write_standin_files(struct pair_entry *entry,
-			struct strbuf *ldir, size_t ldir_len,
-			struct strbuf *rdir, size_t rdir_len)
+static void write_standin_files(struct repository *repo,
+				struct pair_entry *entry,
+				struct strbuf *ldir, size_t ldir_len,
+				struct strbuf *rdir, size_t rdir_len)
 {
 	if (*entry->left)
-		write_file_in_directory(ldir, ldir_len, entry->path, entry->left);
+		write_file_in_directory(repo, ldir, ldir_len, entry->path, entry->left);
 	if (*entry->right)
-		write_file_in_directory(rdir, rdir_len, entry->path, entry->right);
+		write_file_in_directory(repo, rdir, rdir_len, entry->path, entry->right);
 }
 
 static int run_dir_diff(struct repository *repo,
@@ -533,7 +536,7 @@ static int run_dir_diff(struct repository *repo,
 						ADD_CACHE_JUST_APPEND);
 
 				add_path(&rdir, rdir_len, dst_path);
-				if (ensure_leading_directories(rdir.buf)) {
+				if (ensure_leading_directories(repo, rdir.buf)) {
 					ret = error("could not create "
 						    "directory for '%s'",
 						    dst_path);
@@ -576,7 +579,7 @@ static int run_dir_diff(struct repository *repo,
 	 */
 	hashmap_for_each_entry(&submodules, &iter, entry,
 				entry /* member name */) {
-		write_standin_files(entry, &ldir, ldir_len, &rdir, rdir_len);
+		write_standin_files(repo, entry, &ldir, ldir_len, &rdir, rdir_len);
 	}
 
 	/*
@@ -587,7 +590,7 @@ static int run_dir_diff(struct repository *repo,
 	hashmap_for_each_entry(&symlinks2, &iter, entry,
 				entry /* member name */) {
 
-		write_standin_files(entry, &ldir, ldir_len, &rdir, rdir_len);
+		write_standin_files(repo, entry, &ldir, ldir_len, &rdir, rdir_len);
 	}
 
 	strbuf_setlen(&ldir, ldir_len);
@@ -750,8 +753,7 @@ int cmd_difftool(int argc,
 	};
 	struct child_process child = CHILD_PROCESS_INIT;
 
-	if (repo)
-		repo_config(repo, difftool_config, &dt_options);
+	repo_config(repo, difftool_config, &dt_options);
 	dt_options.symlinks = dt_options.has_symlinks;
 
 	argc = parse_options(argc, argv, prefix, builtin_difftool_options,
