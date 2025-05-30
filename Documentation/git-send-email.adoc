@@ -543,6 +543,10 @@ settings:
 	smtpAuth = OAUTHBEARER
 ----
 
+Alternatively, you can use a tool developed by Google known as
+https://github.com/google/gmail-oauth2-tools/tree/master/go/sendgmail[sendgmail]
+to send emails using `git send-email`.
+
 Use Microsoft Outlook as the SMTP Server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Unlike Gmail, Microsoft Outlook no longer supports app-specific passwords.
@@ -579,14 +583,16 @@ next time.
 
 If you are using OAuth2.0 authentication, you need to use an access token in
 place of a password when prompted. Various OAuth2.0 token generators are
-available online. Community maintained credential helpers for Gmail and Outlook
-are also available:
+available online. Community maintained credential helpers are also available:
 
 	- https://github.com/AdityaGarg8/git-credential-email[git-credential-gmail]
 	  (cross platform, dedicated helper for authenticating Gmail accounts)
 
 	- https://github.com/AdityaGarg8/git-credential-email[git-credential-outlook]
 	  (cross platform, dedicated helper for authenticating Microsoft Outlook accounts)
+
+	- https://github.com/AdityaGarg8/git-credential-email[git-credential-yahoo]
+	  (cross platform, dedicated helper for authenticating Yahoo accounts)
 
 You can also see linkgit:gitcredentials[7] for more OAuth based authentication
 helpers.
