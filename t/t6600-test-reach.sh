@@ -2,6 +2,7 @@
 
 test_description='basic commit reachability tests'
 
+TEST_PASSES_SANITIZE_LEAK=true
 . ./test-lib.sh
 
 # Construct a grid-like commit graph with points (x,y)

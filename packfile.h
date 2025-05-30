@@ -1,70 +1,12 @@
 #ifndef PACKFILE_H
 #define PACKFILE_H
 
-#include "list.h"
 #include "object.h"
-#include "object-store.h"
 #include "oidset.h"
 
 /* in object-store.h */
+struct packed_git;
 struct object_info;
-
-struct packed_git {
-	struct hashmap_entry packmap_ent;
-	struct packed_git *next;
-	struct list_head mru;
-	struct pack_window *windows;
-	off_t pack_size;
-	const void *index_data;
-	size_t index_size;
-	uint32_t num_objects;
-	size_t crc_offset;
-	struct oidset bad_objects;
-	int index_version;
-	time_t mtime;
-	int pack_fd;
-	int index;              /* for builtin/pack-objects.c */
-	unsigned pack_local:1,
-		 pack_keep:1,
-		 pack_keep_in_core:1,
-		 freshened:1,
-		 do_not_close:1,
-		 pack_promisor:1,
-		 multi_pack_index:1,
-		 is_cruft:1;
-	unsigned char hash[GIT_MAX_RAWSZ];
-	struct revindex_entry *revindex;
-	const uint32_t *revindex_data;
-	const uint32_t *revindex_map;
-	size_t revindex_size;
-	/*
-	 * mtimes_map points at the beginning of the memory mapped region of
-	 * this pack's corresponding .mtimes file, and mtimes_size is the size
-	 * of that .mtimes file
-	 */
-	const uint32_t *mtimes_map;
-	size_t mtimes_size;
-
-	/* repo denotes the repository this packfile belongs to */
-	struct repository *repo;
-
-	/* something like ".git/objects/pack/xxxxx.pack" */
-	char pack_name[FLEX_ARRAY]; /* more */
-};
-
-static inline int pack_map_entry_cmp(const void *cmp_data UNUSED,
-				     const struct hashmap_entry *entry,
-				     const struct hashmap_entry *entry2,
-				     const void *keydata)
-{
-	const char *key = keydata;
-	const struct packed_git *pg1, *pg2;
-
-	pg1 = container_of(entry, const struct packed_git, packmap_ent);
-	pg2 = container_of(entry2, const struct packed_git, packmap_ent);
-
-	return strcmp(pg1->pack_name, key ? key : pg2->pack_name);
-}
 
 struct pack_window {
 	struct pack_window *next;
@@ -87,8 +29,7 @@ struct pack_entry {
  *
  * Example: odb_pack_name(out, sha1, "idx") => ".git/objects/pack/pack-1234..idx"
  */
-char *odb_pack_name(struct repository *r, struct strbuf *buf,
-		    const unsigned char *hash, const char *ext);
+char *odb_pack_name(struct strbuf *buf, const unsigned char *sha1, const char *ext);
 
 /*
  * Return the basename of the packfile, omitting any containing directory
@@ -105,8 +46,7 @@ const char *pack_basename(struct packed_git *p);
  * and does not add the resulting packed_git struct to the internal list of
  * packs. You probably want add_packed_git() instead.
  */
-struct packed_git *parse_pack_index(struct repository *r, unsigned char *sha1,
-				    const char *idx_path);
+struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path);
 
 typedef void each_file_in_pack_dir_fn(const char *full_path, size_t full_path_len,
 				      const char *file_name, void *data);
@@ -117,24 +57,6 @@ void for_each_file_in_pack_subdir(const char *objdir,
 void for_each_file_in_pack_dir(const char *objdir,
 			       each_file_in_pack_dir_fn fn,
 			       void *data);
-
-/*
- * Iterate over all accessible packed objects without respect to reachability.
- * By default, this includes both local and alternate packs.
- *
- * Note that some objects may appear twice if they are found in multiple packs.
- * Each pack is visited in an unspecified order. By default, objects within a
- * pack are visited in pack-idx order (i.e., sorted by oid).
- */
-typedef int each_packed_object_fn(const struct object_id *oid,
-				  struct packed_git *pack,
-				  uint32_t pos,
-				  void *data);
-int for_each_object_in_pack(struct packed_git *p,
-			    each_packed_object_fn, void *data,
-			    enum for_each_object_flags flags);
-int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
-			   void *data, enum for_each_object_flags flags);
 
 /* A hook to report invalid files in pack directory */
 #define PACKDIR_FILE_PACK 1
@@ -165,7 +87,7 @@ unsigned long repo_approximate_object_count(struct repository *r);
 struct packed_git *find_oid_pack(const struct object_id *oid,
 				 struct packed_git *packs);
 
-void pack_report(struct repository *repo);
+void pack_report(void);
 
 /*
  * mmap the index file for the specified packfile (if it is not
@@ -191,8 +113,7 @@ void close_pack(struct packed_git *);
 void close_object_store(struct raw_object_store *o);
 void unuse_pack(struct pack_window **);
 void clear_delta_base_cache(void);
-struct packed_git *add_packed_git(struct repository *r, const char *path,
-				  size_t path_len, int local);
+struct packed_git *add_packed_git(const char *path, size_t path_len, int local);
 
 /*
  * Unlink the .pack and associated extension files.
@@ -269,17 +190,14 @@ const struct packed_git *has_packed_and_bad(struct repository *, const struct ob
 int find_pack_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e);
 int find_kept_pack_entry(struct repository *r, const struct object_id *oid, unsigned flags, struct pack_entry *e);
 
-int has_object_pack(struct repository *r, const struct object_id *oid);
-int has_object_kept_pack(struct repository *r, const struct object_id *oid,
-			 unsigned flags);
-
-struct packed_git **kept_pack_cache(struct repository *r, unsigned flags);
+int has_object_pack(const struct object_id *oid);
+int has_object_kept_pack(const struct object_id *oid, unsigned flags);
 
 /*
  * Return 1 if an object in a promisor packfile is or refers to the given
  * object, 0 otherwise.
  */
-int is_promisor_object(struct repository *r, const struct object_id *oid);
+int is_promisor_object(const struct object_id *oid);
 
 /*
  * Expose a function for fuzz testing.
@@ -295,9 +213,7 @@ int load_idx(const char *path, const unsigned int hashsz, void *idx_map,
 	     size_t idx_size, struct packed_git *p);
 
 /*
- * Parse a --pack_header option as accepted by index-pack and unpack-objects,
- * turning it into the matching bytes we'd find in a pack.
+ * release lock acquired via oi->direct_cache
  */
-int parse_pack_header_option(const char *in, unsigned char *out, unsigned int *len);
-
+void unlock_delta_base_cache(void);
 #endif

@@ -1,5 +1,4 @@
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "../git-compat-util.h"
 #include "win32.h"
@@ -21,9 +20,6 @@
 #include "gettext.h"
 #define SECURITY_WIN32
 #include <sspi.h>
-#include <winternl.h>
-
-#define STATUS_DELETE_PENDING ((NTSTATUS) 0xC0000056)
 
 #define HCAST(type, handle) ((type)(intptr_t)handle)
 
@@ -305,7 +301,7 @@ static wchar_t *normalize_ntpath(wchar_t *wbuf)
 	return wbuf;
 }
 
-int mingw_unlink(const char *pathname, int handle_in_use_error)
+int mingw_unlink(const char *pathname)
 {
 	int ret, tries = 0;
 	wchar_t wpathname[MAX_PATH];
@@ -320,9 +316,6 @@ int mingw_unlink(const char *pathname, int handle_in_use_error)
 	while ((ret = _wunlink(wpathname)) == -1 && tries < ARRAY_SIZE(delay)) {
 		if (!is_file_in_use_error(GetLastError()))
 			break;
-		if (!handle_in_use_error)
-			return ret;
-
 		/*
 		 * We assume that some other process had the source or
 		 * destination file open at the wrong moment and retry.
@@ -627,8 +620,6 @@ int mingw_open (const char *filename, int oflags, ...)
 	wchar_t wfilename[MAX_PATH];
 	open_fn_t open_fn;
 
-	DECLARE_PROC_ADDR(ntdll.dll, NTSTATUS, NTAPI, RtlGetLastNtStatus, void);
-
 	va_start(args, oflags);
 	mode = va_arg(args, int);
 	va_end(args);
@@ -652,21 +643,6 @@ int mingw_open (const char *filename, int oflags, ...)
 
 	fd = open_fn(wfilename, oflags, mode);
 
-	/*
-	 * Internally, `_wopen()` uses the `CreateFile()` API with CREATE_NEW,
-	 * which may error out with ERROR_ACCESS_DENIED and an NtStatus of
-	 * STATUS_DELETE_PENDING when the file is scheduled for deletion via
-	 * `DeleteFileW()`. The file essentially exists, so we map errno to
-	 * EEXIST instead of EACCESS so that callers don't have to special-case
-	 * this.
-	 *
-	 * This fixes issues for example with the lockfile interface when one
-	 * process has a lock that it is about to commit or release while
-	 * another process wants to acquire it.
-	 */
-	if (fd < 0 && create && GetLastError() == ERROR_ACCESS_DENIED &&
-	    INIT_PROC_ADDR(RtlGetLastNtStatus) && RtlGetLastNtStatus() == STATUS_DELETE_PENDING)
-		errno = EEXIST;
 	if (fd < 0 && (oflags & O_ACCMODE) != O_RDONLY && errno == EACCES) {
 		DWORD attrs = GetFileAttributesW(wfilename);
 		if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
@@ -2301,9 +2277,7 @@ repeat:
 
 		old_handle = CreateFileW(wpold, DELETE,
 					 FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE,
-					 NULL, OPEN_EXISTING,
-					 FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
-					 NULL);
+					 NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 		if (old_handle == INVALID_HANDLE_VALUE) {
 			errno = err_win_to_posix(GetLastError());
 			return -1;
@@ -2849,44 +2823,31 @@ static void setup_windows_environment(void)
 	}
 }
 
-static void get_current_user_sid(PSID *sid, HANDLE *linked_token)
+static PSID get_current_user_sid(void)
 {
 	HANDLE token;
 	DWORD len = 0;
-	TOKEN_ELEVATION_TYPE elevationType;
-	DWORD size;
-
-	*sid = NULL;
-	*linked_token = NULL;
+	PSID result = NULL;
 
 	if (!OpenProcessToken(GetCurrentProcess(), TOKEN_QUERY, &token))
-		return;
+		return NULL;
 
 	if (!GetTokenInformation(token, TokenUser, NULL, 0, &len)) {
 		TOKEN_USER *info = xmalloc((size_t)len);
 		if (GetTokenInformation(token, TokenUser, info, len, &len)) {
 			len = GetLengthSid(info->User.Sid);
-			*sid = xmalloc(len);
-			if (!CopySid(len, *sid, info->User.Sid)) {
+			result = xmalloc(len);
+			if (!CopySid(len, result, info->User.Sid)) {
 				error(_("failed to copy SID (%ld)"),
 				      GetLastError());
-				FREE_AND_NULL(*sid);
+				FREE_AND_NULL(result);
 			}
 		}
 		FREE_AND_NULL(info);
 	}
-
-	if (GetTokenInformation(token, TokenElevationType, &elevationType, sizeof(elevationType), &size) &&
-	    elevationType == TokenElevationTypeLimited) {
-		/*
-		 * The current process is run by a member of the Administrators
-		 * group, but is not running elevated.
-		 */
-		if (!GetTokenInformation(token, TokenLinkedToken, linked_token, sizeof(*linked_token), &size))
-			linked_token = NULL; /* there is no linked token */
-	}
-
 	CloseHandle(token);
+
+	return result;
 }
 
 static BOOL user_sid_to_user_name(PSID sid, LPSTR *str)
@@ -2967,22 +2928,18 @@ int is_path_owned_by_current_sid(const char *path, struct strbuf *report)
 	else if (sid && IsValidSid(sid)) {
 		/* Now, verify that the SID matches the current user's */
 		static PSID current_user_sid;
-		static HANDLE linked_token;
 		BOOL is_member;
 
 		if (!current_user_sid)
-			get_current_user_sid(&current_user_sid, &linked_token);
+			current_user_sid = get_current_user_sid();
 
 		if (current_user_sid &&
 		    IsValidSid(current_user_sid) &&
 		    EqualSid(sid, current_user_sid))
 			result = 1;
 		else if (IsWellKnownSid(sid, WinBuiltinAdministratorsSid) &&
-			 ((CheckTokenMembership(NULL, sid, &is_member) &&
-			   is_member) ||
-			  (linked_token &&
-			   CheckTokenMembership(linked_token, sid, &is_member) &&
-			   is_member)))
+			 CheckTokenMembership(NULL, sid, &is_member) &&
+			 is_member)
 			/*
 			 * If owned by the Administrators group, and the
 			 * current user is an administrator, we consider that

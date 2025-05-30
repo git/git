@@ -1,7 +1,6 @@
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "test-tool.h"
-#include "dir.h"
 #include "environment.h"
 #include "hex.h"
 #include "object-name.h"
@@ -10,7 +9,6 @@
 #include "revision.h"
 #include "setup.h"
 #include "parse-options.h"
-#include "strbuf.h"
 #include "path-walk.h"
 #include "oid-array.h"
 
@@ -20,8 +18,6 @@ static const char * const path_walk_usage[] = {
 };
 
 struct path_walk_test_data {
-	uintmax_t batch_nr;
-
 	uintmax_t commit_nr;
 	uintmax_t tree_nr;
 	uintmax_t blob_nr;
@@ -34,40 +30,44 @@ static int emit_block(const char *path, struct oid_array *oids,
 	struct path_walk_test_data *tdata = data;
 	const char *typestr;
 
-	if (type == OBJ_TREE)
-		tdata->tree_nr += oids->nr;
-	else if (type == OBJ_BLOB)
-		tdata->blob_nr += oids->nr;
-	else if (type == OBJ_COMMIT)
+	switch (type) {
+	case OBJ_COMMIT:
+		typestr = "COMMIT";
 		tdata->commit_nr += oids->nr;
-	else if (type == OBJ_TAG)
+		break;
+
+	case OBJ_TREE:
+		typestr = "TREE";
+		tdata->tree_nr += oids->nr;
+		break;
+
+	case OBJ_BLOB:
+		typestr = "BLOB";
+		tdata->blob_nr += oids->nr;
+		break;
+
+	case OBJ_TAG:
+		typestr = "TAG";
 		tdata->tag_nr += oids->nr;
-	else
+		break;
+
+	default:
 		BUG("we do not understand this type");
-
-	typestr = type_name(type);
-
-	/* This should never be output during tests. */
-	if (!oids->nr)
-		printf("%"PRIuMAX":%s:%s:EMPTY\n",
-		       tdata->batch_nr, typestr, path);
+	}
 
 	for (size_t i = 0; i < oids->nr; i++) {
 		struct object *o = lookup_unknown_object(the_repository,
 							 &oids->oid[i]);
-		printf("%"PRIuMAX":%s:%s:%s%s\n",
-		       tdata->batch_nr, typestr, path,
-		       oid_to_hex(&oids->oid[i]),
+		printf("%s:%s:%s%s\n", typestr, path, oid_to_hex(&oids->oid[i]),
 		       o->flags & UNINTERESTING ? ":UNINTERESTING" : "");
 	}
 
-	tdata->batch_nr++;
 	return 0;
 }
 
 int cmd__path_walk(int argc, const char **argv)
 {
-	int res, stdin_pl = 0;
+	int res;
 	struct rev_info revs = REV_INFO_INIT;
 	struct path_walk_info info = PATH_WALK_INFO_INIT;
 	struct path_walk_test_data data = { 0 };
@@ -82,11 +82,10 @@ int cmd__path_walk(int argc, const char **argv)
 			 N_("toggle inclusion of tree objects")),
 		OPT_BOOL(0, "prune", &info.prune_all_uninteresting,
 			 N_("toggle pruning of uninteresting paths")),
-		OPT_BOOL(0, "stdin-pl", &stdin_pl,
-			 N_("read a pattern list over stdin")),
 		OPT_END(),
 	};
 
+	initialize_repository(the_repository);
 	setup_git_directory();
 	revs.repo = the_repository;
 
@@ -103,17 +102,6 @@ int cmd__path_walk(int argc, const char **argv)
 	info.path_fn = emit_block;
 	info.path_fn_data = &data;
 
-	if (stdin_pl) {
-		struct strbuf in = STRBUF_INIT;
-		CALLOC_ARRAY(info.pl, 1);
-
-		info.pl->use_cone_patterns = 1;
-
-		strbuf_fread(&in, 2048, stdin);
-		add_patterns_from_buffer(in.buf, in.len, "", 0, info.pl);
-		strbuf_release(&in);
-	}
-
 	res = walk_objects_by_path(&info);
 
 	printf("commits:%" PRIuMAX "\n"
@@ -122,11 +110,5 @@ int cmd__path_walk(int argc, const char **argv)
 	       "tags:%" PRIuMAX "\n",
 	       data.commit_nr, data.tree_nr, data.blob_nr, data.tag_nr);
 
-	if (info.pl) {
-		clear_pattern_list(info.pl);
-		free(info.pl);
-	}
-
-	release_revisions(&revs);
 	return res;
 }

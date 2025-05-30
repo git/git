@@ -41,7 +41,7 @@ void promisor_remote_get_direct(struct repository *repo,
  * advertisement.
  * Return value is NULL if no promisor remote advertisement should be
  * made. Otherwise it contains the names and urls of the advertised
- * promisor remotes separated by ';'. See gitprotocol-v2(5).
+ * promisor remotes separated by ';'
  */
 char *promisor_remote_info(struct repository *repo);
 
@@ -51,14 +51,13 @@ char *promisor_remote_info(struct repository *repo);
  * configured promisor remotes, if any, to prepare the reply.
  * Return value is NULL if no promisor remote from the server
  * is accepted. Otherwise it contains the names of the accepted promisor
- * remotes separated by ';'. See gitprotocol-v2(5).
+ * remotes separated by ';'.
  */
 char *promisor_remote_reply(const char *info);
 
 /*
- * Set the 'accepted' flag for some promisor remotes. Useful on the
- * server side when some promisor remotes have been accepted by the
- * client.
+ * Set the 'accepted' flag for some promisor remotes. Useful when some
+ * promisor remotes have been accepted by the client.
  */
 void mark_promisor_remotes_as_accepted(struct repository *repo, const char *remotes);
 

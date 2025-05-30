@@ -62,44 +62,44 @@ test_expect_success 'all' '
 	test-tool path-walk -- --all >out &&
 
 	cat >expect <<-EOF &&
-	0:commit::$(git rev-parse topic)
-	0:commit::$(git rev-parse base)
-	0:commit::$(git rev-parse base~1)
-	0:commit::$(git rev-parse base~2)
-	1:tag:/tags:$(git rev-parse refs/tags/first)
-	1:tag:/tags:$(git rev-parse refs/tags/second.1)
-	1:tag:/tags:$(git rev-parse refs/tags/second.2)
-	1:tag:/tags:$(git rev-parse refs/tags/third)
-	1:tag:/tags:$(git rev-parse refs/tags/fourth)
-	1:tag:/tags:$(git rev-parse refs/tags/tree-tag)
-	1:tag:/tags:$(git rev-parse refs/tags/blob-tag)
-	2:blob:/tagged-blobs:$(git rev-parse refs/tags/blob-tag^{})
-	2:blob:/tagged-blobs:$(git rev-parse refs/tags/blob-tag2^{})
-	3:tree::$(git rev-parse topic^{tree})
-	3:tree::$(git rev-parse base^{tree})
-	3:tree::$(git rev-parse base~1^{tree})
-	3:tree::$(git rev-parse base~2^{tree})
-	3:tree::$(git rev-parse refs/tags/tree-tag^{})
-	3:tree::$(git rev-parse refs/tags/tree-tag2^{})
-	4:blob:a:$(git rev-parse base~2:a)
-	5:blob:file2:$(git rev-parse refs/tags/tree-tag2^{}:file2)
-	6:tree:a/:$(git rev-parse base:a)
-	7:tree:child/:$(git rev-parse refs/tags/tree-tag:child)
-	8:blob:child/file:$(git rev-parse refs/tags/tree-tag:child/file)
-	9:tree:left/:$(git rev-parse base:left)
-	9:tree:left/:$(git rev-parse base~2:left)
-	10:blob:left/b:$(git rev-parse base~2:left/b)
-	10:blob:left/b:$(git rev-parse base:left/b)
-	11:tree:right/:$(git rev-parse topic:right)
-	11:tree:right/:$(git rev-parse base~1:right)
-	11:tree:right/:$(git rev-parse base~2:right)
-	12:blob:right/c:$(git rev-parse base~2:right/c)
-	12:blob:right/c:$(git rev-parse topic:right/c)
-	13:blob:right/d:$(git rev-parse base~1:right/d)
-	blobs:10
+	COMMIT::$(git rev-parse topic)
+	COMMIT::$(git rev-parse base)
+	COMMIT::$(git rev-parse base~1)
+	COMMIT::$(git rev-parse base~2)
 	commits:4
-	tags:7
+	TREE::$(git rev-parse topic^{tree})
+	TREE::$(git rev-parse base^{tree})
+	TREE::$(git rev-parse base~1^{tree})
+	TREE::$(git rev-parse base~2^{tree})
+	TREE::$(git rev-parse refs/tags/tree-tag^{})
+	TREE::$(git rev-parse refs/tags/tree-tag2^{})
+	TREE:a/:$(git rev-parse base:a)
+	TREE:left/:$(git rev-parse base:left)
+	TREE:left/:$(git rev-parse base~2:left)
+	TREE:right/:$(git rev-parse topic:right)
+	TREE:right/:$(git rev-parse base~1:right)
+	TREE:right/:$(git rev-parse base~2:right)
+	TREE:child/:$(git rev-parse refs/tags/tree-tag^{}:child)
 	trees:13
+	BLOB:a:$(git rev-parse base~2:a)
+	BLOB:file2:$(git rev-parse refs/tags/tree-tag2^{}:file2)
+	BLOB:left/b:$(git rev-parse base~2:left/b)
+	BLOB:left/b:$(git rev-parse base:left/b)
+	BLOB:right/c:$(git rev-parse base~2:right/c)
+	BLOB:right/c:$(git rev-parse topic:right/c)
+	BLOB:right/d:$(git rev-parse base~1:right/d)
+	BLOB:/tagged-blobs:$(git rev-parse refs/tags/blob-tag^{})
+	BLOB:/tagged-blobs:$(git rev-parse refs/tags/blob-tag2^{})
+	BLOB:child/file:$(git rev-parse refs/tags/tree-tag^{}:child/file)
+	blobs:10
+	TAG:/tags:$(git rev-parse refs/tags/first)
+	TAG:/tags:$(git rev-parse refs/tags/second.1)
+	TAG:/tags:$(git rev-parse refs/tags/second.2)
+	TAG:/tags:$(git rev-parse refs/tags/third)
+	TAG:/tags:$(git rev-parse refs/tags/fourth)
+	TAG:/tags:$(git rev-parse refs/tags/tree-tag)
+	TAG:/tags:$(git rev-parse refs/tags/blob-tag)
+	tags:7
 	EOF
 
 	test_cmp_sorted expect out
@@ -117,16 +117,16 @@ test_expect_success 'indexed objects' '
 	test-tool path-walk -- --indexed-objects >out &&
 
 	cat >expect <<-EOF &&
-	0:blob:a:$(git rev-parse HEAD:a)
-	1:blob:left/b:$(git rev-parse HEAD:left/b)
-	2:blob:left/c:$(git rev-parse :left/c)
-	3:blob:right/c:$(git rev-parse HEAD:right/c)
-	4:blob:right/d:$(git rev-parse HEAD:right/d)
-	5:tree:right/:$(git rev-parse topic:right)
-	blobs:5
 	commits:0
-	tags:0
+	TREE:right/:$(git rev-parse topic:right)
 	trees:1
+	BLOB:a:$(git rev-parse HEAD:a)
+	BLOB:left/b:$(git rev-parse HEAD:left/b)
+	BLOB:left/c:$(git rev-parse :left/c)
+	BLOB:right/c:$(git rev-parse HEAD:right/c)
+	BLOB:right/d:$(git rev-parse HEAD:right/d)
+	blobs:5
+	tags:0
 	EOF
 
 	test_cmp_sorted expect out
@@ -144,63 +144,31 @@ test_expect_success 'branches and indexed objects mix well' '
 	test-tool path-walk -- --indexed-objects --branches >out &&
 
 	cat >expect <<-EOF &&
-	0:commit::$(git rev-parse topic)
-	0:commit::$(git rev-parse base)
-	0:commit::$(git rev-parse base~1)
-	0:commit::$(git rev-parse base~2)
-	1:tree::$(git rev-parse topic^{tree})
-	1:tree::$(git rev-parse base^{tree})
-	1:tree::$(git rev-parse base~1^{tree})
-	1:tree::$(git rev-parse base~2^{tree})
-	2:tree:a/:$(git rev-parse refs/tags/third:a)
-	3:tree:left/:$(git rev-parse base:left)
-	3:tree:left/:$(git rev-parse base~2:left)
-	4:blob:left/b:$(git rev-parse base:left/b)
-	4:blob:left/b:$(git rev-parse base~2:left/b)
-	5:tree:right/:$(git rev-parse topic:right)
-	5:tree:right/:$(git rev-parse base~1:right)
-	5:tree:right/:$(git rev-parse base~2:right)
-	6:blob:right/c:$(git rev-parse base~2:right/c)
-	6:blob:right/c:$(git rev-parse topic:right/c)
-	7:blob:right/d:$(git rev-parse base~1:right/d)
-	7:blob:right/d:$(git rev-parse :right/d)
-	8:blob:a:$(git rev-parse base~2:a)
-	blobs:7
+	COMMIT::$(git rev-parse topic)
+	COMMIT::$(git rev-parse base)
+	COMMIT::$(git rev-parse base~1)
+	COMMIT::$(git rev-parse base~2)
 	commits:4
-	tags:0
+	TREE::$(git rev-parse topic^{tree})
+	TREE::$(git rev-parse base^{tree})
+	TREE::$(git rev-parse base~1^{tree})
+	TREE::$(git rev-parse base~2^{tree})
+	TREE:a/:$(git rev-parse base:a)
+	TREE:left/:$(git rev-parse base:left)
+	TREE:left/:$(git rev-parse base~2:left)
+	TREE:right/:$(git rev-parse topic:right)
+	TREE:right/:$(git rev-parse base~1:right)
+	TREE:right/:$(git rev-parse base~2:right)
 	trees:10
-	EOF
-
-	test_cmp_sorted expect out
-'
-
-test_expect_success 'base & topic, sparse' '
-	cat >patterns <<-EOF &&
-	/*
-	!/*/
-	/left/
-	EOF
-
-	test-tool path-walk --stdin-pl -- base topic <patterns >out &&
-
-	cat >expect <<-EOF &&
-	0:commit::$(git rev-parse topic)
-	0:commit::$(git rev-parse base)
-	0:commit::$(git rev-parse base~1)
-	0:commit::$(git rev-parse base~2)
-	1:tree::$(git rev-parse topic^{tree})
-	1:tree::$(git rev-parse base^{tree})
-	1:tree::$(git rev-parse base~1^{tree})
-	1:tree::$(git rev-parse base~2^{tree})
-	2:blob:a:$(git rev-parse base~2:a)
-	3:tree:left/:$(git rev-parse base:left)
-	3:tree:left/:$(git rev-parse base~2:left)
-	4:blob:left/b:$(git rev-parse base~2:left/b)
-	4:blob:left/b:$(git rev-parse base:left/b)
-	blobs:3
-	commits:4
+	BLOB:a:$(git rev-parse base~2:a)
+	BLOB:left/b:$(git rev-parse base:left/b)
+	BLOB:left/b:$(git rev-parse base~2:left/b)
+	BLOB:right/c:$(git rev-parse base~2:right/c)
+	BLOB:right/c:$(git rev-parse topic:right/c)
+	BLOB:right/d:$(git rev-parse base~1:right/d)
+	BLOB:right/d:$(git rev-parse :right/d)
+	blobs:7
 	tags:0
-	trees:6
 	EOF
 
 	test_cmp_sorted expect out
@@ -210,25 +178,25 @@ test_expect_success 'topic only' '
 	test-tool path-walk -- topic >out &&
 
 	cat >expect <<-EOF &&
-	0:commit::$(git rev-parse topic)
-	0:commit::$(git rev-parse base~1)
-	0:commit::$(git rev-parse base~2)
-	1:tree::$(git rev-parse topic^{tree})
-	1:tree::$(git rev-parse base~1^{tree})
-	1:tree::$(git rev-parse base~2^{tree})
-	2:blob:a:$(git rev-parse base~2:a)
-	3:tree:left/:$(git rev-parse base~2:left)
-	4:blob:left/b:$(git rev-parse base~2:left/b)
-	5:tree:right/:$(git rev-parse topic:right)
-	5:tree:right/:$(git rev-parse base~1:right)
-	5:tree:right/:$(git rev-parse base~2:right)
-	6:blob:right/c:$(git rev-parse base~2:right/c)
-	6:blob:right/c:$(git rev-parse topic:right/c)
-	7:blob:right/d:$(git rev-parse base~1:right/d)
-	blobs:5
+	COMMIT::$(git rev-parse topic)
+	COMMIT::$(git rev-parse base~1)
+	COMMIT::$(git rev-parse base~2)
 	commits:3
-	tags:0
+	TREE::$(git rev-parse topic^{tree})
+	TREE::$(git rev-parse base~1^{tree})
+	TREE::$(git rev-parse base~2^{tree})
+	TREE:left/:$(git rev-parse base~2:left)
+	TREE:right/:$(git rev-parse topic:right)
+	TREE:right/:$(git rev-parse base~1:right)
+	TREE:right/:$(git rev-parse base~2:right)
 	trees:7
+	BLOB:a:$(git rev-parse base~2:a)
+	BLOB:left/b:$(git rev-parse base~2:left/b)
+	BLOB:right/c:$(git rev-parse base~2:right/c)
+	BLOB:right/c:$(git rev-parse topic:right/c)
+	BLOB:right/d:$(git rev-parse base~1:right/d)
+	blobs:5
+	tags:0
 	EOF
 
 	test_cmp_sorted expect out
@@ -238,18 +206,18 @@ test_expect_success 'topic, not base' '
 	test-tool path-walk -- topic --not base >out &&
 
 	cat >expect <<-EOF &&
-	0:commit::$(git rev-parse topic)
-	1:tree::$(git rev-parse topic^{tree})
-	2:blob:a:$(git rev-parse topic:a):UNINTERESTING
-	3:tree:left/:$(git rev-parse topic:left):UNINTERESTING
-	4:blob:left/b:$(git rev-parse topic:left/b):UNINTERESTING
-	5:tree:right/:$(git rev-parse topic:right)
-	6:blob:right/c:$(git rev-parse topic:right/c)
-	7:blob:right/d:$(git rev-parse topic:right/d):UNINTERESTING
-	blobs:4
+	COMMIT::$(git rev-parse topic)
 	commits:1
-	tags:0
+	TREE::$(git rev-parse topic^{tree})
+	TREE:left/:$(git rev-parse base~1:left):UNINTERESTING
+	TREE:right/:$(git rev-parse topic:right)
 	trees:3
+	BLOB:a:$(git rev-parse base~1:a):UNINTERESTING
+	BLOB:left/b:$(git rev-parse base~1:left/b):UNINTERESTING
+	BLOB:right/c:$(git rev-parse topic:right/c)
+	BLOB:right/d:$(git rev-parse base~1:right/d):UNINTERESTING
+	blobs:4
+	tags:0
 	EOF
 
 	test_cmp_sorted expect out
@@ -259,20 +227,20 @@ test_expect_success 'fourth, blob-tag2, not base' '
 	test-tool path-walk -- fourth blob-tag2 --not base >out &&
 
 	cat >expect <<-EOF &&
-	0:commit::$(git rev-parse topic)
-	1:tag:/tags:$(git rev-parse fourth)
-	2:blob:/tagged-blobs:$(git rev-parse refs/tags/blob-tag2^{})
-	3:tree::$(git rev-parse topic^{tree})
-	4:blob:a:$(git rev-parse base~1:a):UNINTERESTING
-	5:tree:left/:$(git rev-parse base~1:left):UNINTERESTING
-	6:blob:left/b:$(git rev-parse base~1:left/b):UNINTERESTING
-	7:tree:right/:$(git rev-parse topic:right)
-	8:blob:right/c:$(git rev-parse topic:right/c)
-	9:blob:right/d:$(git rev-parse base~1:right/d):UNINTERESTING
-	blobs:5
+	COMMIT::$(git rev-parse topic)
 	commits:1
-	tags:1
+	TREE::$(git rev-parse topic^{tree})
+	TREE:left/:$(git rev-parse base~1:left):UNINTERESTING
+	TREE:right/:$(git rev-parse topic:right)
 	trees:3
+	BLOB:a:$(git rev-parse base~1:a):UNINTERESTING
+	BLOB:left/b:$(git rev-parse base~1:left/b):UNINTERESTING
+	BLOB:right/c:$(git rev-parse topic:right/c)
+	BLOB:right/d:$(git rev-parse base~1:right/d):UNINTERESTING
+	BLOB:/tagged-blobs:$(git rev-parse refs/tags/blob-tag2^{})
+	blobs:5
+	TAG:/tags:$(git rev-parse fourth)
+	tags:1
 	EOF
 
 	test_cmp_sorted expect out
@@ -283,14 +251,14 @@ test_expect_success 'topic, not base, only blobs' '
 		-- topic --not base >out &&
 
 	cat >expect <<-EOF &&
-	0:blob:a:$(git rev-parse topic:a):UNINTERESTING
-	1:blob:left/b:$(git rev-parse topic:left/b):UNINTERESTING
-	2:blob:right/c:$(git rev-parse topic:right/c)
-	3:blob:right/d:$(git rev-parse topic:right/d):UNINTERESTING
-	blobs:4
 	commits:0
-	tags:0
 	trees:0
+	BLOB:a:$(git rev-parse base~1:a):UNINTERESTING
+	BLOB:left/b:$(git rev-parse base~1:left/b):UNINTERESTING
+	BLOB:right/c:$(git rev-parse topic:right/c)
+	BLOB:right/d:$(git rev-parse base~1:right/d):UNINTERESTING
+	blobs:4
+	tags:0
 	EOF
 
 	test_cmp_sorted expect out
@@ -303,11 +271,11 @@ test_expect_success 'topic, not base, only commits' '
 		-- topic --not base >out &&
 
 	cat >expect <<-EOF &&
-	0:commit::$(git rev-parse topic)
+	COMMIT::$(git rev-parse topic)
 	commits:1
+	trees:0
 	blobs:0
 	tags:0
-	trees:0
 	EOF
 
 	test_cmp_sorted expect out
@@ -318,13 +286,13 @@ test_expect_success 'topic, not base, only trees' '
 		-- topic --not base >out &&
 
 	cat >expect <<-EOF &&
-	0:tree::$(git rev-parse topic^{tree})
-	1:tree:left/:$(git rev-parse topic:left):UNINTERESTING
-	2:tree:right/:$(git rev-parse topic:right)
 	commits:0
+	TREE::$(git rev-parse topic^{tree})
+	TREE:left/:$(git rev-parse base~1:left):UNINTERESTING
+	TREE:right/:$(git rev-parse topic:right)
+	trees:3
 	blobs:0
 	tags:0
-	trees:3
 	EOF
 
 	test_cmp_sorted expect out
@@ -334,22 +302,22 @@ test_expect_success 'topic, not base, boundary' '
 	test-tool path-walk -- --boundary topic --not base >out &&
 
 	cat >expect <<-EOF &&
-	0:commit::$(git rev-parse topic)
-	0:commit::$(git rev-parse base~1):UNINTERESTING
-	1:tree::$(git rev-parse topic^{tree})
-	1:tree::$(git rev-parse base~1^{tree}):UNINTERESTING
-	2:blob:a:$(git rev-parse base~1:a):UNINTERESTING
-	3:tree:left/:$(git rev-parse base~1:left):UNINTERESTING
-	4:blob:left/b:$(git rev-parse base~1:left/b):UNINTERESTING
-	5:tree:right/:$(git rev-parse topic:right)
-	5:tree:right/:$(git rev-parse base~1:right):UNINTERESTING
-	6:blob:right/c:$(git rev-parse base~1:right/c):UNINTERESTING
-	6:blob:right/c:$(git rev-parse topic:right/c)
-	7:blob:right/d:$(git rev-parse base~1:right/d):UNINTERESTING
-	blobs:5
+	COMMIT::$(git rev-parse topic)
+	COMMIT::$(git rev-parse base~1):UNINTERESTING
 	commits:2
-	tags:0
+	TREE::$(git rev-parse topic^{tree})
+	TREE::$(git rev-parse base~1^{tree}):UNINTERESTING
+	TREE:left/:$(git rev-parse base~1:left):UNINTERESTING
+	TREE:right/:$(git rev-parse topic:right)
+	TREE:right/:$(git rev-parse base~1:right):UNINTERESTING
 	trees:5
+	BLOB:a:$(git rev-parse base~1:a):UNINTERESTING
+	BLOB:left/b:$(git rev-parse base~1:left/b):UNINTERESTING
+	BLOB:right/c:$(git rev-parse base~1:right/c):UNINTERESTING
+	BLOB:right/c:$(git rev-parse topic:right/c)
+	BLOB:right/d:$(git rev-parse base~1:right/d):UNINTERESTING
+	blobs:5
+	tags:0
 	EOF
 
 	test_cmp_sorted expect out
@@ -359,18 +327,18 @@ test_expect_success 'topic, not base, boundary with pruning' '
 	test-tool path-walk --prune -- --boundary topic --not base >out &&
 
 	cat >expect <<-EOF &&
-	0:commit::$(git rev-parse topic)
-	0:commit::$(git rev-parse base~1):UNINTERESTING
-	1:tree::$(git rev-parse topic^{tree})
-	1:tree::$(git rev-parse base~1^{tree}):UNINTERESTING
-	2:tree:right/:$(git rev-parse topic:right)
-	2:tree:right/:$(git rev-parse base~1:right):UNINTERESTING
-	3:blob:right/c:$(git rev-parse base~1:right/c):UNINTERESTING
-	3:blob:right/c:$(git rev-parse topic:right/c)
-	blobs:2
+	COMMIT::$(git rev-parse topic)
+	COMMIT::$(git rev-parse base~1):UNINTERESTING
 	commits:2
-	tags:0
+	TREE::$(git rev-parse topic^{tree})
+	TREE::$(git rev-parse base~1^{tree}):UNINTERESTING
+	TREE:right/:$(git rev-parse topic:right)
+	TREE:right/:$(git rev-parse base~1:right):UNINTERESTING
 	trees:4
+	BLOB:right/c:$(git rev-parse base~1:right/c):UNINTERESTING
+	BLOB:right/c:$(git rev-parse topic:right/c)
+	blobs:2
+	tags:0
 	EOF
 
 	test_cmp_sorted expect out

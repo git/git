@@ -26,9 +26,7 @@ int cmd_prune_packed(int argc,
 			     prune_packed_usage, 0);
 
 	if (argc > 0)
-		usage_msg_opt(_("too many arguments"),
-			      prune_packed_usage,
-			      prune_packed_options);
+		die(_("'git prune-packed' takes no arguments"));
 
 	prune_packed_objects(opts);
 	return 0;
