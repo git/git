@@ -36,7 +36,10 @@ name: 'Build and Deploy to GKE'
 on:
   push:
     branches:
+Firebase
       - '"master"'
+=======
+      - master Main
 
 env:
   PROJECT_ID: 'my-project' # TODO: update to your Google Cloud project ID
