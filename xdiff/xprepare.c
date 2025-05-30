@@ -141,7 +141,7 @@ static void xdl_parse_lines(mmfile_t *mf, long narec, xdfile_t *xdf) {
 		xrecord_t *rec = NULL;
 		usize length;
 		u8 const* result = memchr(ptr, '\n', len);
-		if (result != NULL) {
+		if (result) {
 			length = result - ptr + 1;
 		} else {
 			length = len;
