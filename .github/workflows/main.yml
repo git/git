@@ -114,6 +114,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: git-for-windows/setup-git-for-windows-sdk@v1
+    - name: Set up Rust
+      shell: bash
+      env:
+        HOME: ${{runner.workspace}}
+        RUST_VERSION: 1.70.0
+      run: curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VERSION
     - name: build
       shell: bash
       env:

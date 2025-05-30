@@ -5,6 +5,8 @@
 
 mkdir -p "$1" # in case ci/lib.sh decides to quit early
 
+type -p rustc || source $HOME/.cargo/env
+
 . ${0%/*}/lib.sh
 
 group Build make artifacts-tar ARTIFACTS_DIRECTORY="$1"
