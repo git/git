@@ -36,7 +36,7 @@ name: 'Build and Deploy to GKE'
 on:
   push:
     branches:
-      - '"master"'
+      - master
 
 env:
   PROJECT_ID: 'my-project' # TODO: update to your Google Cloud project ID
