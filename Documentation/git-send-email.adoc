@@ -525,15 +525,18 @@ edit `~/.gitconfig` to specify your account settings:
 	smtpServerPort = 587
 ----
 
+Gmail does not allow using your regular password for `git send-email`.
 If you have multi-factor authentication set up on your Gmail account, you can
 generate an app-specific password for use with `git send-email`. Visit
 https://security.google.com/settings/security/apppasswords to create it.
 
-You can also use OAuth2.0 authentication with Gmail. `OAUTHBEARER` and
-`XOAUTH2` are common methods used for this type of authentication. Gmail
-supports both of them. As an example, if you want to use `OAUTHBEARER`, edit
-your `~/.gitconfig` file and add `smtpAuth = OAUTHBEARER` to your account
-settings:
+Alternatively, instead of using an app-specific password, you can use
+OAuth2.0 authentication with Gmail. OAuth2.0 is more secure than
+app-specific passwords, and works regardless of whether you have multi-factor
+authentication set up. `OAUTHBEARER` and `XOAUTH2` are common mechanisms used
+for this type of authentication. Gmail supports both of them. As an example,
+if you want to use `OAUTHBEARER`, edit your `~/.gitconfig` file and add
+`smtpAuth = OAUTHBEARER` to your account settings:
 
 ----
 [sendemail]
@@ -544,7 +547,7 @@ settings:
 	smtpAuth = OAUTHBEARER
 ----
 
-Alternatively, you can use a tool developed by Google known as
+Another alternative is using a tool developed by Google known as
 https://github.com/google/gmail-oauth2-tools/tree/master/go/sendgmail[sendgmail]
 to send emails using `git send-email`.
 
@@ -552,7 +555,7 @@ Use Microsoft Outlook as the SMTP Server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Unlike Gmail, Microsoft Outlook no longer supports app-specific passwords.
 Therefore, OAuth2.0 authentication must be used for Outlook. Also, it only
-supports `XOAUTH2` authentication method.
+supports `XOAUTH2` authentication mechanism.
 
 Edit `~/.gitconfig` to specify your account settings for Outlook and use its
 SMTP server with `git send-email`:
