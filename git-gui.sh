@@ -74,6 +74,19 @@ proc is_Cygwin {} {
 }
 
 ######################################################################
+## Enable Tcl8 profile in Tcl9, allowing consumption of data that has
+## bytes not conforming to the assumed encoding profile.
+
+if {[package vcompare $::tcl_version 9.0] >= 0} {
+	rename open _strict_open
+	proc open args {
+		set f [_strict_open {*}$args]
+		chan configure $f -profile tcl8
+		return $f
+	}
+}
+
+######################################################################
 ##
 ## PATH lookup. Sanitize $PATH, assure exec/open use only that
 
