@@ -43,9 +43,9 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 
 			set enc [tcl_encoding $enc]
 			if {$enc ne {}} {
-				set msg [encoding convertfrom $enc $msg]
-				set name [encoding convertfrom $enc $name]
-				set email [encoding convertfrom $enc $email]
+				set msg [convertfrom $enc $msg]
+				set name [convertfrom $enc $name]
+				set email [convertfrom $enc $email]
 			}
 			if {$name ne {} && $email ne {}} {
 				set commit_author [list name $name email $email date $time]

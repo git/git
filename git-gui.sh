@@ -84,6 +84,13 @@ if {[package vcompare $::tcl_version 9.0] >= 0} {
 		chan configure $f -profile tcl8
 		return $f
 	}
+	proc convertfrom args {
+		return [encoding convertfrom -profile tcl8 {*}$args]
+	}
+} else {
+	proc convertfrom args {
+		return [encoding convertfrom {*}$args]
+	}
 }
 
 ######################################################################
@@ -1543,7 +1550,7 @@ proc read_diff_index {fd after} {
 		set i [split [string range $buf_rdi $c [expr {$z1 - 2}]] { }]
 		set p [string range $buf_rdi $z1 [expr {$z2 - 1}]]
 		merge_state \
-			[encoding convertfrom utf-8 $p] \
+			[convertfrom utf-8 $p] \
 			[lindex $i 4]? \
 			[list [lindex $i 0] [lindex $i 2]] \
 			[list]
@@ -1576,7 +1583,7 @@ proc read_diff_files {fd after} {
 		set i [split [string range $buf_rdf $c [expr {$z1 - 2}]] { }]
 		set p [string range $buf_rdf $z1 [expr {$z2 - 1}]]
 		merge_state \
-			[encoding convertfrom utf-8 $p] \
+			[convertfrom utf-8 $p] \
 			?[lindex $i 4] \
 			[list] \
 			[list [lindex $i 0] [lindex $i 2]]
@@ -1599,7 +1606,7 @@ proc read_ls_others {fd after} {
 	set pck [split $buf_rlo "\0"]
 	set buf_rlo [lindex $pck end]
 	foreach p [lrange $pck 0 end-1] {
-		set p [encoding convertfrom utf-8 $p]
+		set p [convertfrom utf-8 $p]
 		if {[string index $p end] eq {/}} {
 			set p [string range $p 0 end-1]
 		}

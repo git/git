@@ -997,7 +997,7 @@ method _showcommit {cur_w lno} {
 
 				set enc [tcl_encoding $enc]
 				if {$enc ne {}} {
-					set msg [encoding convertfrom $enc $msg]
+					set msg [convertfrom $enc $msg]
 				}
 				set msg [string trim $msg]
 			}
