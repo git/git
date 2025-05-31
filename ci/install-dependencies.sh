@@ -27,11 +27,12 @@ alpine-*)
 	apk add --update shadow sudo meson ninja-build gcc libc-dev curl-dev openssl-dev expat-dev gettext \
 		zlib-ng-dev pcre2-dev python3 musl-libintl perl-utils ncurses \
 		apache2 apache2-http2 apache2-proxy apache2-ssl apache2-webdav apr-util-dbd_sqlite3 \
-		bash cvs gnupg perl-cgi perl-dbd-sqlite perl-io-tty >/dev/null
+		bash cvs gnupg perl-cgi perl-dbd-sqlite perl-io-tty \
+		rust cargo >/dev/null
 	;;
 fedora-*|almalinux-*)
 	dnf -yq update >/dev/null &&
-	dnf -yq install shadow-utils sudo make gcc findutils diffutils perl python3 gawk gettext zlib-devel expat-devel openssl-devel curl-devel pcre2-devel >/dev/null
+	dnf -yq install shadow-utils sudo make gcc findutils diffutils perl python3 gawk gettext zlib-devel expat-devel openssl-devel curl-devel pcre2-devel rust cargo >/dev/null
 	;;
 ubuntu-*|i386/ubuntu-*|debian-*)
 	# Required so that apt doesn't wait for user input on certain packages.
@@ -59,7 +60,7 @@ ubuntu-*|i386/ubuntu-*|debian-*)
 		tcl tk gettext zlib1g-dev perl-modules liberror-perl libauthen-sasl-perl \
 		libemail-valid-perl libio-pty-perl libio-socket-ssl-perl libnet-smtp-ssl-perl libdbd-sqlite3-perl libcgi-pm-perl \
 		libsecret-1-dev libpcre2-dev meson ninja-build pkg-config \
-		${CC_PACKAGE:-${CC:-gcc}} $PYTHON_PACKAGE
+		${CC_PACKAGE:-${CC:-gcc}} $PYTHON_PACKAGE rustc cargo
 
 	case "$distro" in
 	ubuntu-*)
@@ -98,6 +99,8 @@ macos-*)
 	tar -xf helix-core-server.tgz -C "$CUSTOM_PATH" p4 p4d &&
 	sudo xattr -d com.apple.quarantine "$CUSTOM_PATH/p4" "$CUSTOM_PATH/p4d" 2>/dev/null || true
 	rm helix-core-server.tgz
+
+	brew install rust
 
 	case "$jobname" in
 	osx-meson)
@@ -139,6 +142,9 @@ Documentation)
 	;;
 esac
 
+#RUST_VERSION=1.70.0
+#curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain $RUST_VERSION
+
 if type p4d >/dev/null 2>&1 && type p4 >/dev/null 2>&1
 then
 	echo "$(tput setaf 6)Perforce Server Version$(tput sgr0)"
@@ -163,6 +169,15 @@ then
 	jgit version
 else
 	echo >&2 "::warning:: JGit wasn't installed, see above for clues why"
+fi
+
+if type rustc >/dev/null 2>&1
+then
+	echo "$(tput setaf6)Rust & Cargo Versions$(tput sgr0)"
+	rustc --version
+	cargo --version
+else
+	echo >&2 "WARNING: Rust wasn't installed, see above for clues why"
 fi
 
 end_group "Install dependencies"
