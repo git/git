@@ -411,3 +411,4 @@ Fixes since v2.49
    (merge 91db6c735d ly/reftable-writer-leakfix later to maint).
    (merge 20e4e9ad0b jc/doc-synopsis-option-markup later to maint).
    (merge cddcee7f64 es/meson-configure-build-options-fix later to maint).
+   (merge cea9f55f00 wk/sparse-checkout-doc-fix later to maint).
