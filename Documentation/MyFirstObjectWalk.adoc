@@ -96,10 +96,23 @@ maintaining alphabetical ordering:
 { "walken", cmd_walken, RUN_SETUP },
 ----
 
-Add it to the `Makefile` near the line for `builtin/worktree.o`:
+Add an entry for the new command in the both the Make and Meson build system,
+before the entry for `worktree`:
 
+- In the `Makefile`:
 ----
+...
 BUILTIN_OBJS += builtin/walken.o
+...
+----
+
+- In the `meson.build` file:
+----
+builtin_sources = [
+   ...
+  'builtin/walken.c',
+   ...
+]
 ----
 
 Build and test out your command, without forgetting to ensure the `DEVELOPER`
