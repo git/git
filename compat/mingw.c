@@ -2,25 +2,25 @@
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
-#include "win32.h"
-#include <aclapi.h>
-#include <sddl.h>
-#include <conio.h>
-#include <wchar.h>
-#include "strbuf.h"
-#include "run-command.h"
 #include "abspath.h"
 #include "alloc.h"
-#include "win32/lazyload.h"
 #include "config.h"
-#include "environment.h"
-#include "trace2.h"
-#include "symlinks.h"
-#include "wrapper.h"
 #include "dir.h"
+#include "environment.h"
 #include "gettext.h"
+#include "run-command.h"
+#include "strbuf.h"
+#include "symlinks.h"
+#include "trace2.h"
+#include "win32.h"
+#include "win32/lazyload.h"
+#include "wrapper.h"
+#include <aclapi.h>
+#include <conio.h>
+#include <sddl.h>
 #define SECURITY_WIN32
 #include <sspi.h>
+#include <wchar.h>
 #include <winternl.h>
 
 #define STATUS_DELETE_PENDING ((NTSTATUS) 0xC0000056)
