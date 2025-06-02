@@ -114,10 +114,11 @@ strlen () {
 run_tests () {
     type=$1
     object_name="$2"
-    size=$3
-    content=$4
-    pretty_content=$5
-    oid=${6:-"$object_name"}
+    mode=$3
+    size=$4
+    content=$5
+    pretty_content=$6
+    oid=${7:-"$object_name"}
 
     batch_output="$oid $type $size
 $content"
@@ -209,6 +210,12 @@ $content"
 	test_cmp expect actual
     '
 
+    test_expect_success '--batch-check with %(objectmode)' '
+	echo "$mode $oid" >expect &&
+	echo $object_name | git cat-file --batch-check="%(objectmode) %(objectname)" >actual &&
+	test_cmp expect actual
+    '
+
     test -z "$content" ||
     test_expect_success "--batch without type ($type)" '
 	{
@@ -247,8 +254,7 @@ test_expect_success "setup" '
 
 run_blob_tests () {
     oid=$1
-
-    run_tests 'blob' $oid $hello_size "$hello_content" "$hello_content"
+    run_tests 'blob' $oid "" $hello_size "$hello_content" "$hello_content"
 
     test_expect_success '--batch-command --buffer with flush for blob info' '
 	echo "$oid blob $hello_size" >expect &&
@@ -286,12 +292,12 @@ tree_compat_size=$((2 * $(test_oid --hash=compat rawsz) + 13 + 24))
 tree_pretty_content="100644 blob $hello_oid	hello${LF}100755 blob $hello_oid	path with spaces${LF}"
 tree_compat_pretty_content="100644 blob $hello_compat_oid	hello${LF}100755 blob $hello_compat_oid	path with spaces${LF}"
 
-run_tests 'tree' $tree_oid $tree_size "" "$tree_pretty_content"
-run_tests 'tree' $tree_compat_oid $tree_compat_size "" "$tree_compat_pretty_content"
-run_tests 'blob' "$tree_oid:hello" $hello_size "" "$hello_content" $hello_oid
-run_tests 'blob' "$tree_compat_oid:hello" $hello_size "" "$hello_content" $hello_compat_oid
-run_tests 'blob' "$tree_oid:path with spaces" $hello_size "" "$hello_content" $hello_oid
-run_tests 'blob' "$tree_compat_oid:path with spaces" $hello_size "" "$hello_content" $hello_compat_oid
+run_tests 'tree' $tree_oid "" $tree_size "" "$tree_pretty_content"
+run_tests 'tree' $tree_compat_oid "" $tree_compat_size "" "$tree_compat_pretty_content"
+run_tests 'blob' "$tree_oid:hello" "100644" $hello_size "" "$hello_content" $hello_oid
+run_tests 'blob' "$tree_compat_oid:hello" "100644" $hello_size "" "$hello_content" $hello_compat_oid
+run_tests 'blob' "$tree_oid:path with spaces" "100755" $hello_size "" "$hello_content" $hello_oid
+run_tests 'blob' "$tree_compat_oid:path with spaces" "100755" $hello_size "" "$hello_content" $hello_compat_oid
 
 commit_message="Initial commit"
 commit_oid=$(echo_without_newline "$commit_message" | git commit-tree $tree_oid)
@@ -310,8 +316,8 @@ committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
 
 $commit_message"
 
-run_tests 'commit' $commit_oid $commit_size "$commit_content" "$commit_content"
-run_tests 'commit' $commit_compat_oid $commit_compat_size "$commit_compat_content" "$commit_compat_content"
+run_tests 'commit' $commit_oid "" $commit_size "$commit_content" "$commit_content"
+run_tests 'commit' $commit_compat_oid "" $commit_compat_size "$commit_compat_content" "$commit_compat_content"
 
 tag_header_without_oid="type blob
 tag hellotag
@@ -334,8 +340,8 @@ tag_size=$(strlen "$tag_content")
 tag_compat_oid=$(git rev-parse --output-object-format=$test_compat_hash_algo $tag_oid)
 tag_compat_size=$(strlen "$tag_compat_content")
 
-run_tests 'tag' $tag_oid $tag_size "$tag_content" "$tag_content"
-run_tests 'tag' $tag_compat_oid $tag_compat_size "$tag_compat_content" "$tag_compat_content"
+run_tests 'tag' $tag_oid "" $tag_size "$tag_content" "$tag_content"
+run_tests 'tag' $tag_compat_oid "" $tag_compat_size "$tag_compat_content" "$tag_compat_content"
 
 test_expect_success "Reach a blob from a tag pointing to it" '
 	echo_without_newline "$hello_content" >expect &&
