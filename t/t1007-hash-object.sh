@@ -30,7 +30,7 @@ setup_repo() {
 
 test_repo=test
 push_repo() {
-	test_create_repo $test_repo
+	git init --quiet $test_repo
 	cd $test_repo
 
 	setup_repo
