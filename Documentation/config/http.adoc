@@ -289,7 +289,8 @@ for most push problems, but can increase memory consumption
 significantly since the entire buffer is allocated even for small
 pushes.
 
-http.lowSpeedLimit, http.lowSpeedTime::
+http.lowSpeedLimit::
+http.lowSpeedTime::
 	If the HTTP transfer speed, in bytes per second, is less than
 	'http.lowSpeedLimit' for longer than 'http.lowSpeedTime' seconds,
 	the transfer is aborted.
