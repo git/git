@@ -67,6 +67,7 @@ struct repo_settings {
 	unsigned long big_file_threshold;
 
 	char *hooks_path;
+	int core_apply_sparse_checkout;
 };
 #define REPO_SETTINGS_INIT { \
 	.shared_repository = -1, \
@@ -97,5 +98,9 @@ void repo_settings_set_big_file_threshold(struct repository *repo, unsigned long
 int repo_settings_get_shared_repository(struct repository *repo);
 void repo_settings_set_shared_repository(struct repository *repo, int value);
 void repo_settings_reset_shared_repository(struct repository *repo);
+
+/* Read, set or reset the value for "core.sparsecheckout". */
+int repo_settings_get_apply_sparse_checkout(struct repository *repo);
+void repo_settings_set_apply_sparse_checkout(struct repository *repo, int value);
 
 #endif /* REPO_SETTINGS_H */

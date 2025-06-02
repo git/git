@@ -1503,7 +1503,7 @@ done:
 
 int init_sparse_checkout_patterns(struct index_state *istate)
 {
-	if (!core_apply_sparse_checkout)
+	if (!repo_settings_get_apply_sparse_checkout(the_repository))
 		return 1;
 	if (istate->sparse_checkout_patterns)
 		return 0;
