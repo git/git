@@ -39,7 +39,7 @@ enum sign_mode { SIGN_ABORT, SIGN_VERBATIM, SIGN_STRIP, SIGN_WARN_VERBATIM, SIGN
 
 static int progress;
 static enum sign_mode signed_tag_mode = SIGN_ABORT;
-static enum sign_mode signed_commit_mode = SIGN_ABORT;
+static enum sign_mode signed_commit_mode = SIGN_STRIP;
 static enum tag_of_filtered_mode { TAG_FILTERING_ABORT, DROP, REWRITE } tag_of_filtered_mode = TAG_FILTERING_ABORT;
 static enum reencode_mode { REENCODE_ABORT, REENCODE_YES, REENCODE_NO } reencode_mode = REENCODE_ABORT;
 static int fake_missing_tagger;
@@ -1269,7 +1269,6 @@ int cmd_fast_export(int argc,
 		    const char *prefix,
 		    struct repository *repo UNUSED)
 {
-	const char *env_signed_commits_noabort;
 	struct rev_info revs;
 	struct commit *commit;
 	char *export_filename = NULL,
@@ -1326,10 +1325,6 @@ int cmd_fast_export(int argc,
 
 	if (argc == 1)
 		usage_with_options (fast_export_usage, options);
-
-	env_signed_commits_noabort = getenv("FAST_EXPORT_SIGNED_COMMITS_NOABORT");
-	if (env_signed_commits_noabort && *env_signed_commits_noabort)
-		signed_commit_mode = SIGN_WARN_STRIP;
 
 	/* we handle encodings */
 	git_config(git_default_config, NULL);

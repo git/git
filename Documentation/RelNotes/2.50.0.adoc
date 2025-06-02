@@ -102,7 +102,9 @@ Performance, Internal Implementation, Development Support etc.
  * "git fsck" becomes more careful when checking the refs.
 
  * "git fast-export | git fast-import" learns to deal with commit and
-   tag objects with embedded signatures a bit better.
+   tag objects with embedded signatures a bit better.  This is highly
+   experimental and the format of the data stream may change in the
+   future without compatibility guarantees.
 
  * The code paths to check whether a refname X is available (by seeing
    if another ref X/Y exists, etc.) have been optimized.
