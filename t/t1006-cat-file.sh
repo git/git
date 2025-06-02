@@ -1220,6 +1220,31 @@ test_expect_success 'cat-file --batch-check respects replace objects' '
 	test_cmp expect actual
 '
 
+test_expect_success 'batch-check with a submodule' '
+	# FIXME: this call to mktree is incompatible with compatObjectFormat
+	# because the submodule OID cannot be mapped to the compat hash algo.
+	test_unconfig extensions.compatobjectformat &&
+	printf "160000 commit $(test_oid deadbeef)\tsub\n" >tree-with-sub &&
+	tree=$(git mktree <tree-with-sub) &&
+	test_config extensions.compatobjectformat $test_compat_hash_algo &&
+
+	git cat-file --batch-check >actual <<-EOF &&
+	$tree:sub
+	EOF
+	printf "$(test_oid deadbeef) submodule\n" >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'batch-check with a submodule, object exists' '
+	printf "160000 commit $commit_oid\tsub\n" >tree-with-sub &&
+	tree=$(git mktree <tree-with-sub) &&
+	git cat-file --batch-check >actual <<-EOF &&
+	$tree:sub
+	EOF
+	printf "$commit_oid commit $commit_size\n" >expect &&
+	test_cmp expect actual
+'
+
 # Pull the entry for object with oid "$1" out of the output of
 # "cat-file --batch", including its object content (which requires
 # parsing and reading a set amount of bytes, hence perl).

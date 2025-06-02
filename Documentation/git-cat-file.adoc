@@ -373,6 +373,14 @@ If a name is specified that might refer to more than one object (an ambiguous sh
 <object> SP ambiguous LF
 ------------
 
+If a name is specified that refers to a submodule entry in a tree and the
+target object does not exist in the repository, then `cat-file` will ignore
+any custom format and print (with the object ID of the submodule):
+
+------------
+<oid> SP submodule LF
+------------
+
 If `--follow-symlinks` is used, and a symlink in the repository points
 outside the repository, then `cat-file` will ignore any custom format
 and print:
