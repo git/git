@@ -816,8 +816,8 @@ done:
 	return ret;
 }
 
-static int gc_before_repack(struct maintenance_run_opts *opts,
-			    struct gc_config *cfg)
+static int gc_foreground_tasks(struct maintenance_run_opts *opts,
+			       struct gc_config *cfg)
 {
 	if (cfg->pack_refs && maintenance_task_pack_refs(opts, cfg))
 		return error(FAILED_RUN, "pack-refs");
@@ -837,6 +837,7 @@ int cmd_gc(int argc,
 	pid_t pid;
 	int daemonized = 0;
 	int keep_largest_pack = -1;
+	int skip_foreground_tasks = 0;
 	timestamp_t dummy;
 	struct maintenance_run_opts opts = MAINTENANCE_RUN_OPTS_INIT;
 	struct gc_config cfg = GC_CONFIG_INIT;
@@ -869,6 +870,8 @@ int cmd_gc(int argc,
 			 N_("repack all other packs except the largest pack")),
 		OPT_STRING(0, "expire-to", &cfg.repack_expire_to, N_("dir"),
 			   N_("pack prefix to store a pack containing pruned objects")),
+		OPT_HIDDEN_BOOL(0, "skip-foreground-tasks", &skip_foreground_tasks,
+			   N_("skip maintenance tasks typically done in the foreground")),
 		OPT_END()
 	};
 
@@ -952,14 +955,16 @@ int cmd_gc(int argc,
 			goto out;
 		}
 
-		if (lock_repo_for_gc(force, &pid)) {
-			ret = 0;
-			goto out;
-		}
+		if (!skip_foreground_tasks) {
+			if (lock_repo_for_gc(force, &pid)) {
+				ret = 0;
+				goto out;
+			}
 
-		if (gc_before_repack(&opts, &cfg) < 0)
-			die(NULL);
-		delete_tempfile(&pidfile);
+			if (gc_foreground_tasks(&opts, &cfg) < 0)
+				die(NULL);
+			delete_tempfile(&pidfile);
+		}
 
 		/*
 		 * failure to daemonize is ok, we'll continue
@@ -988,8 +993,8 @@ int cmd_gc(int argc,
 		free(path);
 	}
 
-	if (opts.detach <= 0)
-		gc_before_repack(&opts, &cfg);
+	if (opts.detach <= 0 && !skip_foreground_tasks)
+		gc_foreground_tasks(&opts, &cfg);
 
 	if (!repository_format_precious_objects) {
 		struct child_process repack_cmd = CHILD_PROCESS_INIT;
@@ -1225,8 +1230,14 @@ static int maintenance_task_prefetch(struct maintenance_run_opts *opts,
 	return 0;
 }
 
-static int maintenance_task_gc(struct maintenance_run_opts *opts,
-			       struct gc_config *cfg UNUSED)
+static int maintenance_task_gc_foreground(struct maintenance_run_opts *opts,
+					  struct gc_config *cfg)
+{
+	return gc_foreground_tasks(opts, cfg);
+}
+
+static int maintenance_task_gc_background(struct maintenance_run_opts *opts,
+					  struct gc_config *cfg UNUSED)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 
@@ -1240,6 +1251,7 @@ static int maintenance_task_gc(struct maintenance_run_opts *opts,
 	else
 		strvec_push(&child.args, "--no-quiet");
 	strvec_push(&child.args, "--no-detach");
+	strvec_push(&child.args, "--skip-foreground-tasks");
 
 	return run_command(&child);
 }
@@ -1571,7 +1583,8 @@ static const struct maintenance_task tasks[] = {
 	},
 	[TASK_GC] = {
 		.name = "gc",
-		.background = maintenance_task_gc,
+		.foreground = maintenance_task_gc_foreground,
+		.background = maintenance_task_gc_background,
 		.auto_condition = need_to_gc,
 	},
 	[TASK_COMMIT_GRAPH] = {
