@@ -300,7 +300,7 @@ Fixes since v2.49
    (merge e7ef4be7c2 mh/left-right-limited later to maint).
 
  * Document the convention to disable hooks altogether by setting the
-   hooksPath configuration variable to /dev/nulll
+   hooksPath configuration variable to /dev/null.
    (merge 1b2eee94f1 ds/doc-disable-hooks later to maint).
 
  * Make sure outage of third-party sites that supply P4, Git-LFS, and
@@ -318,6 +318,7 @@ Fixes since v2.49
 
  * Update to arm64 Windows port.
    (merge 436a42215e js/windows-arm64 later to maint).
+
  * hashmap API clean-up to ensure hashmap_clear() leaves a cleared map
    in a reusable state.
    (merge 9481877de3 en/hashmap-clear-fix later to maint).
@@ -351,7 +352,7 @@ Fixes since v2.49
    (merge 5dbaec628d pw/sequencer-reflog-use-after-free later to maint).
 
  * win+Meson CI pipeline, unlike other pipelines for Windows,
-   used to build artifacts in develper mode, which has been changed to
+   used to build artifacts in developer mode, which has been changed to
    build them in release mode for consistency.
    (merge 184abdcf05 js/ci-build-win-in-release-mode later to maint).
 
@@ -378,6 +379,15 @@ Fixes since v2.49
  * "git apply --index/--cached" when applying a deletion patch in
    reverse failed to give the mode bits of the path "removed" by the
    patch to the file it creates, which has been corrected.
+
+ * "git verify-refs" (and hence "git fsck --reference") started
+   erroring out in a repository in which secondary worktrees were
+   prepared with Git 2.43 or lower.
+   (merge d5b3c38b8a sj/ref-contents-check-fix later to maint).
+
+ * Update total_ram() functrion on BSD variants.
+
+ * Update online_cpus() functrion on BSD variants.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).

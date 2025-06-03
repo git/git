@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DEF_VER=v2.50.0-rc0
+DEF_VER=v2.50.0-rc1
 
 LF='
 '
