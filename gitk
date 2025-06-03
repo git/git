@@ -11593,6 +11593,9 @@ proc prefspage_general {notebook} {
     spinbox $page.autosellen -from 1 -to 40 -width 4 -textvariable autosellen
     ttk::label $page.autosellenl -text [mc "Length of commit ID to copy"]
     grid x $page.autosellenl $page.autosellen -sticky w
+    ttk::label $page.kscroll1 -text [mc "Wheel scrolling multiplier"]
+    spinbox $page.kscroll -from 1 -to 20 -width 4 -textvariable kscroll
+    grid x $page.kscroll1 $page.kscroll -sticky w
 
     ttk::label $page.ddisp -text [mc "Diff display options"] -font mainfontbold
     grid $page.ddisp - -sticky w -pady 10
@@ -12369,6 +12372,7 @@ set visiblerefs {"master"}
 set maxlinelen 200
 set showlocalchanges 1
 set limitdiffs 1
+set kscroll 3
 set datetimeformat "%Y-%m-%d %H:%M:%S"
 set autocopy 0
 set autoselect 1
@@ -12490,6 +12494,7 @@ set config_variables {
     headoutlinecolor
     hideremotes
     indexcirclecolor
+    kscroll
     limitdiffs
     linehoverbgcolor
     linehoverfgcolor
