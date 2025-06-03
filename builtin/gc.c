@@ -251,7 +251,24 @@ static enum schedule_priority parse_schedule(const char *value)
 	return SCHEDULE_NONE;
 }
 
+enum maintenance_task_label {
+	TASK_PREFETCH,
+	TASK_LOOSE_OBJECTS,
+	TASK_INCREMENTAL_REPACK,
+	TASK_GC,
+	TASK_COMMIT_GRAPH,
+	TASK_PACK_REFS,
+	TASK_REFLOG_EXPIRE,
+	TASK_WORKTREE_PRUNE,
+	TASK_RERERE_GC,
+
+	/* Leave as final value */
+	TASK__COUNT
+};
+
 struct maintenance_run_opts {
+	enum maintenance_task_label *tasks;
+	size_t tasks_nr, tasks_alloc;
 	int auto_flag;
 	int detach;
 	int quiet;
@@ -259,6 +276,11 @@ struct maintenance_run_opts {
 };
 #define MAINTENANCE_RUN_OPTS_INIT { \
 	.detach = -1, \
+}
+
+static void maintenance_run_opts_release(struct maintenance_run_opts *opts)
+{
+	free(opts->tasks);
 }
 
 static int pack_refs_condition(UNUSED struct gc_config *cfg)
@@ -1032,6 +1054,7 @@ int cmd_gc(int argc,
 	}
 
 out:
+	maintenance_run_opts_release(&opts);
 	gc_config_release(&cfg);
 	return 0;
 }
@@ -1524,30 +1547,9 @@ struct maintenance_task {
 	const char *name;
 	maintenance_task_fn *fn;
 	maintenance_auto_fn *auto_condition;
-	unsigned enabled:1;
-
-	enum schedule_priority schedule;
-
-	/* -1 if not selected. */
-	int selected_order;
 };
 
-enum maintenance_task_label {
-	TASK_PREFETCH,
-	TASK_LOOSE_OBJECTS,
-	TASK_INCREMENTAL_REPACK,
-	TASK_GC,
-	TASK_COMMIT_GRAPH,
-	TASK_PACK_REFS,
-	TASK_REFLOG_EXPIRE,
-	TASK_WORKTREE_PRUNE,
-	TASK_RERERE_GC,
-
-	/* Leave as final value */
-	TASK__COUNT
-};
-
-static struct maintenance_task tasks[] = {
+static const struct maintenance_task tasks[] = {
 	[TASK_PREFETCH] = {
 		.name = "prefetch",
 		.fn = maintenance_task_prefetch,
@@ -1566,7 +1568,6 @@ static struct maintenance_task tasks[] = {
 		.name = "gc",
 		.fn = maintenance_task_gc,
 		.auto_condition = need_to_gc,
-		.enabled = 1,
 	},
 	[TASK_COMMIT_GRAPH] = {
 		.name = "commit-graph",
@@ -1595,18 +1596,9 @@ static struct maintenance_task tasks[] = {
 	},
 };
 
-static int compare_tasks_by_selection(const void *a_, const void *b_)
-{
-	const struct maintenance_task *a = a_;
-	const struct maintenance_task *b = b_;
-
-	return b->selected_order - a->selected_order;
-}
-
 static int maintenance_run_tasks(struct maintenance_run_opts *opts,
 				 struct gc_config *cfg)
 {
-	int i, found_selected = 0;
 	int result = 0;
 	struct lock_file lk;
 	struct repository *r = the_repository;
@@ -1635,95 +1627,120 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts,
 		trace2_region_leave("maintenance", "detach", the_repository);
 	}
 
-	for (i = 0; !found_selected && i < TASK__COUNT; i++)
-		found_selected = tasks[i].selected_order >= 0;
-
-	if (found_selected)
-		QSORT(tasks, TASK__COUNT, compare_tasks_by_selection);
-
-	for (i = 0; i < TASK__COUNT; i++) {
-		if (found_selected && tasks[i].selected_order < 0)
-			continue;
-
-		if (!found_selected && !tasks[i].enabled)
-			continue;
-
+	for (size_t i = 0; i < opts->tasks_nr; i++) {
 		if (opts->auto_flag &&
-		    (!tasks[i].auto_condition ||
-		     !tasks[i].auto_condition(cfg)))
+		    (!tasks[opts->tasks[i]].auto_condition ||
+		     !tasks[opts->tasks[i]].auto_condition(cfg)))
 			continue;
 
-		if (opts->schedule && tasks[i].schedule < opts->schedule)
-			continue;
-
-		trace2_region_enter("maintenance", tasks[i].name, r);
-		if (tasks[i].fn(opts, cfg)) {
-			error(_("task '%s' failed"), tasks[i].name);
+		trace2_region_enter("maintenance", tasks[opts->tasks[i]].name, r);
+		if (tasks[opts->tasks[i]].fn(opts, cfg)) {
+			error(_("task '%s' failed"), tasks[opts->tasks[i]].name);
 			result = 1;
 		}
-		trace2_region_leave("maintenance", tasks[i].name, r);
+		trace2_region_leave("maintenance", tasks[opts->tasks[i]].name, r);
 	}
 
 	rollback_lock_file(&lk);
 	return result;
 }
 
-static void initialize_maintenance_strategy(void)
-{
-	const char *config_str;
+struct maintenance_strategy {
+	struct {
+		int enabled;
+		enum schedule_priority schedule;
+	} tasks[TASK__COUNT];
+};
 
-	if (git_config_get_string_tmp("maintenance.strategy", &config_str))
-		return;
+static const struct maintenance_strategy none_strategy = { 0 };
+static const struct maintenance_strategy default_strategy = {
+	.tasks = {
+		[TASK_GC].enabled = 1,
+	},
+};
+static const struct maintenance_strategy incremental_strategy = {
+	.tasks = {
+		[TASK_COMMIT_GRAPH].enabled = 1,
+		[TASK_COMMIT_GRAPH].schedule = SCHEDULE_HOURLY,
+		[TASK_PREFETCH].enabled = 1,
+		[TASK_PREFETCH].schedule = SCHEDULE_HOURLY,
+		[TASK_INCREMENTAL_REPACK].enabled = 1,
+		[TASK_INCREMENTAL_REPACK].schedule = SCHEDULE_DAILY,
+		[TASK_LOOSE_OBJECTS].enabled = 1,
+		[TASK_LOOSE_OBJECTS].schedule = SCHEDULE_DAILY,
+		[TASK_PACK_REFS].enabled = 1,
+		[TASK_PACK_REFS].schedule = SCHEDULE_WEEKLY,
+	},
+};
 
-	if (!strcasecmp(config_str, "incremental")) {
-		tasks[TASK_GC].schedule = SCHEDULE_NONE;
-		tasks[TASK_COMMIT_GRAPH].enabled = 1;
-		tasks[TASK_COMMIT_GRAPH].schedule = SCHEDULE_HOURLY;
-		tasks[TASK_PREFETCH].enabled = 1;
-		tasks[TASK_PREFETCH].schedule = SCHEDULE_HOURLY;
-		tasks[TASK_INCREMENTAL_REPACK].enabled = 1;
-		tasks[TASK_INCREMENTAL_REPACK].schedule = SCHEDULE_DAILY;
-		tasks[TASK_LOOSE_OBJECTS].enabled = 1;
-		tasks[TASK_LOOSE_OBJECTS].schedule = SCHEDULE_DAILY;
-		tasks[TASK_PACK_REFS].enabled = 1;
-		tasks[TASK_PACK_REFS].schedule = SCHEDULE_WEEKLY;
-	}
-}
-
-static void initialize_task_config(const struct string_list *selected_tasks,
-				   int schedule)
+static void initialize_task_config(struct maintenance_run_opts *opts,
+				   const struct string_list *selected_tasks)
 {
 	struct strbuf config_name = STRBUF_INIT;
+	struct maintenance_strategy strategy;
+	const char *config_str;
 
-	for (size_t i = 0; i < TASK__COUNT; i++)
-		tasks[i].selected_order = -1;
-	for (size_t i = 0; i < selected_tasks->nr; i++) {
-		struct maintenance_task *task = selected_tasks->items[i].util;
-		task->selected_order = i;
+	/*
+	 * In case the user has asked us to run tasks explicitly we only use
+	 * those specified tasks. Specifically, we do _not_ want to consult the
+	 * config or maintenance strategy.
+	 */
+	if (selected_tasks->nr) {
+		for (size_t i = 0; i < selected_tasks->nr; i++) {
+			enum maintenance_task_label label = (intptr_t)selected_tasks->items[i].util;;
+			ALLOC_GROW(opts->tasks, opts->tasks_nr + 1, opts->tasks_alloc);
+			opts->tasks[opts->tasks_nr++] = label;
+		}
+
+		return;
 	}
 
-	if (schedule)
-		initialize_maintenance_strategy();
+	/*
+	 * Otherwise, the strategy depends on whether we run as part of a
+	 * scheduled job or not:
+	 *
+	 *   - Scheduled maintenance does not perform any housekeeping by
+	 *     default, but requires the user to pick a maintenance strategy.
+	 *
+	 *   - Unscheduled maintenance uses our default strategy.
+	 *
+	 * Both of these are affected by the gitconfig though, which may
+	 * override specific aspects of our strategy.
+	 */
+	if (opts->schedule) {
+		strategy = none_strategy;
+
+		if (!git_config_get_string_tmp("maintenance.strategy", &config_str)) {
+			if (!strcasecmp(config_str, "incremental"))
+				strategy = incremental_strategy;
+		}
+	} else {
+		strategy = default_strategy;
+	}
 
 	for (size_t i = 0; i < TASK__COUNT; i++) {
 		int config_value;
-		char *config_str;
 
 		strbuf_reset(&config_name);
 		strbuf_addf(&config_name, "maintenance.%s.enabled",
 			    tasks[i].name);
-
 		if (!git_config_get_bool(config_name.buf, &config_value))
-			tasks[i].enabled = config_value;
+			strategy.tasks[i].enabled = config_value;
+		if (!strategy.tasks[i].enabled)
+			continue;
 
-		strbuf_reset(&config_name);
-		strbuf_addf(&config_name, "maintenance.%s.schedule",
-			    tasks[i].name);
-
-		if (!git_config_get_string(config_name.buf, &config_str)) {
-			tasks[i].schedule = parse_schedule(config_str);
-			free(config_str);
+		if (opts->schedule) {
+			strbuf_reset(&config_name);
+			strbuf_addf(&config_name, "maintenance.%s.schedule",
+				    tasks[i].name);
+			if (!git_config_get_string_tmp(config_name.buf, &config_str))
+				strategy.tasks[i].schedule = parse_schedule(config_str);
+			if (strategy.tasks[i].schedule < opts->schedule)
+				continue;
 		}
+
+		ALLOC_GROW(opts->tasks, opts->tasks_nr + 1, opts->tasks_alloc);
+		opts->tasks[opts->tasks_nr++] = i;
 	}
 
 	strbuf_release(&config_name);
@@ -1750,7 +1767,7 @@ static int task_option_parse(const struct option *opt,
 		return 1;
 	}
 
-	string_list_append(selected_tasks, arg)->util = &tasks[i];
+	string_list_append(selected_tasks, arg)->util = (void *)(intptr_t)i;
 
 	return 0;
 }
@@ -1791,7 +1808,7 @@ static int maintenance_run(int argc, const char **argv, const char *prefix,
 				  opts.schedule, "--schedule=");
 
 	gc_config(&cfg);
-	initialize_task_config(&selected_tasks, opts.schedule);
+	initialize_task_config(&opts, &selected_tasks);
 
 	if (argc != 0)
 		usage_with_options(builtin_maintenance_run_usage,
@@ -1800,6 +1817,7 @@ static int maintenance_run(int argc, const char **argv, const char *prefix,
 	ret = maintenance_run_tasks(&opts, &cfg);
 
 	string_list_clear(&selected_tasks, 0);
+	maintenance_run_opts_release(&opts);
 	gc_config_release(&cfg);
 	return ret;
 }
