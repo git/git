@@ -1596,6 +1596,27 @@ static const struct maintenance_task tasks[] = {
 	},
 };
 
+static int maybe_run_task(const struct maintenance_task *task,
+			  struct repository *repo,
+			  struct maintenance_run_opts *opts,
+			  struct gc_config *cfg)
+{
+	int ret = 0;
+
+	if (opts->auto_flag &&
+	    (!task->auto_condition || !task->auto_condition(cfg)))
+		return 0;
+
+	trace2_region_enter("maintenance", task->name, repo);
+	if (task->fn(opts, cfg)) {
+		error(_("task '%s' failed"), task->name);
+		ret = 1;
+	}
+	trace2_region_leave("maintenance", task->name, repo);
+
+	return ret;
+}
+
 static int maintenance_run_tasks(struct maintenance_run_opts *opts,
 				 struct gc_config *cfg)
 {
@@ -1627,19 +1648,9 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts,
 		trace2_region_leave("maintenance", "detach", the_repository);
 	}
 
-	for (size_t i = 0; i < opts->tasks_nr; i++) {
-		if (opts->auto_flag &&
-		    (!tasks[opts->tasks[i]].auto_condition ||
-		     !tasks[opts->tasks[i]].auto_condition(cfg)))
-			continue;
-
-		trace2_region_enter("maintenance", tasks[opts->tasks[i]].name, r);
-		if (tasks[opts->tasks[i]].fn(opts, cfg)) {
-			error(_("task '%s' failed"), tasks[opts->tasks[i]].name);
+	for (size_t i = 0; i < opts->tasks_nr; i++)
+		if (maybe_run_task(&tasks[opts->tasks[i]], r, opts, cfg))
 			result = 1;
-		}
-		trace2_region_leave("maintenance", tasks[opts->tasks[i]].name, r);
-	}
 
 	rollback_lock_file(&lk);
 	return result;
