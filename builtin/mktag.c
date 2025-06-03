@@ -41,7 +41,7 @@ static int mktag_fsck_error_func(struct fsck_options *o UNUSED,
 		fprintf_ln(stderr, _("error: tag input does not pass fsck: %s"), message);
 		return 1;
 	default:
-		BUG(_("%d (FSCK_IGNORE?) should never trigger this callback"),
+		BUG("%d (FSCK_IGNORE?) should never trigger this callback",
 		    msg_type);
 	}
 }
