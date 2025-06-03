@@ -11669,10 +11669,8 @@ proc create_prefs_page {w} {
 }
 
 proc prefspage_general {notebook} {
-    global NS maxwidth maxgraphpct showneartags showlocalchanges
-    global tabstop wrapcomment wrapdefault limitdiffs
-    global autocopy autoselect autosellen extdifftool perfile_attrs
-    global hideremotes want_ttk have_ttk maxrefs web_browser
+    global NS have_ttk
+    global {*}$::config_variables
 
     set page [create_prefs_page $notebook.general]
 
@@ -11833,11 +11831,8 @@ proc prefspage_fonts {notebook} {
 }
 
 proc doprefs {} {
-    global maxwidth maxgraphpct use_ttk NS
-    global oldprefs prefstop showneartags showlocalchanges
-    global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
-    global tabstop limitdiffs autoselect autosellen extdifftool perfile_attrs
-    global hideremotes want_ttk have_ttk wrapcomment wrapdefault
+    global use_ttk NS oldprefs prefstop
+    global {*}$::config_variables
 
     set top .gitkprefs
     set prefstop $top
@@ -11845,8 +11840,7 @@ proc doprefs {} {
         raise $top
         return
     }
-    foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-                   limitdiffs tabstop perfile_attrs hideremotes want_ttk wrapcomment wrapdefault} {
+    foreach v $::config_variables {
         set oldprefs($v) [set $v]
     }
     ttk_toplevel $top
@@ -11970,10 +11964,9 @@ proc setfg {c} {
 
 proc prefscan {} {
     global oldprefs prefstop
+    global {*}$::config_variables
 
-    foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-                   limitdiffs tabstop perfile_attrs hideremotes want_ttk wrapcomment wrapdefault} {
-        global $v
+    foreach v $::config_variables {
         set $v $oldprefs($v)
     }
     catch {destroy $prefstop}
@@ -11982,11 +11975,8 @@ proc prefscan {} {
 }
 
 proc prefsok {} {
-    global maxwidth maxgraphpct
-    global oldprefs prefstop showneartags showlocalchanges
-    global fontpref mainfont textfont uifont
-    global limitdiffs treediffs perfile_attrs
-    global hideremotes wrapcomment wrapdefault
+    global oldprefs prefstop fontpref treediffs
+    global {*}$::config_variables
     global ctext
 
     catch {destroy $prefstop}
@@ -12609,19 +12599,65 @@ catch {
 config_check_tmp_exists 50
 
 set config_variables {
-    mainfont textfont uifont tabstop findmergefiles maxgraphpct maxwidth
-    cmitmode wrapcomment wrapdefault autocopy autoselect autosellen
-    showneartags maxrefs visiblerefs
-    hideremotes showlocalchanges datetimeformat limitdiffs uicolor want_ttk
-    bgcolor fgcolor uifgcolor uifgdisabledcolor colors diffcolors mergecolors
-    markbgcolor diffcontext selectbgcolor foundbgcolor currentsearchhitbgcolor
-    extdifftool perfile_attrs headbgcolor headfgcolor headoutlinecolor
-    remotebgcolor tagbgcolor tagfgcolor tagoutlinecolor reflinecolor
-    filesepbgcolor filesepfgcolor linehoverbgcolor linehoverfgcolor
-    linehoveroutlinecolor mainheadcirclecolor workingfilescirclecolor
-    indexcirclecolor circlecolors linkfgcolor circleoutlinecolor diffbgcolors
+    autocopy
+    autoselect
+    autosellen
+    bgcolor
+    circlecolors
+    circleoutlinecolor
+    cmitmode
+    colors
+    currentsearchhitbgcolor
+    datetimeformat
+    diffbgcolors
+    diffcolors
+    diffcontext
+    extdifftool
+    fgcolor
+    filesepbgcolor
+    filesepfgcolor
+    findmergefiles
+    foundbgcolor
+    headbgcolor
+    headfgcolor
+    headoutlinecolor
+    hideremotes
+    indexcirclecolor
+    limitdiffs
+    linehoverbgcolor
+    linehoverfgcolor
+    linehoveroutlinecolor
+    linkfgcolor
+    mainfont
+    mainheadcirclecolor
+    markbgcolor
+    maxgraphpct
+    maxrefs
+    maxwidth
+    mergecolors
+    perfile_attrs
+    reflinecolor
+    remotebgcolor
+    selectbgcolor
+    showlocalchanges
+    showneartags
+    tabstop
+    tagbgcolor
+    tagfgcolor
+    tagoutlinecolor
+    textfont
+    uicolor
+    uifgcolor
+    uifgdisabledcolor
+    uifont
+    visiblerefs
+    want_ttk
     web_browser
+    workingfilescirclecolor
+    wrapcomment
+    wrapdefault
 }
+
 foreach var $config_variables {
     config_init_trace $var
     trace add variable $var write config_variable_change_cb
