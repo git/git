@@ -1535,84 +1535,106 @@ static int maintenance_task_incremental_repack(struct maintenance_run_opts *opts
 
 typedef int (*maintenance_task_fn)(struct maintenance_run_opts *opts,
 				   struct gc_config *cfg);
-
-/*
- * An auto condition function returns 1 if the task should run
- * and 0 if the task should NOT run. See needs_to_gc() for an
- * example.
- */
 typedef int (*maintenance_auto_fn)(struct gc_config *cfg);
 
 struct maintenance_task {
 	const char *name;
-	maintenance_task_fn fn;
+
+	/*
+	 * Work that will be executed before detaching. This should not include
+	 * tasks that may run for an extended amount of time as it does cause
+	 * auto-maintenance to block until foreground tasks have been run.
+	 */
+	maintenance_task_fn foreground;
+
+	/*
+	 * Work that will be executed after detaching. When not detaching the
+	 * work will be run in the foreground, as well.
+	 */
+	maintenance_task_fn background;
+
+	/*
+	 * An auto condition function returns 1 if the task should run and 0 if
+	 * the task should NOT run. See needs_to_gc() for an example.
+	 */
 	maintenance_auto_fn auto_condition;
 };
 
 static const struct maintenance_task tasks[] = {
 	[TASK_PREFETCH] = {
 		.name = "prefetch",
-		.fn = maintenance_task_prefetch,
+		.background = maintenance_task_prefetch,
 	},
 	[TASK_LOOSE_OBJECTS] = {
 		.name = "loose-objects",
-		.fn = maintenance_task_loose_objects,
+		.background = maintenance_task_loose_objects,
 		.auto_condition = loose_object_auto_condition,
 	},
 	[TASK_INCREMENTAL_REPACK] = {
 		.name = "incremental-repack",
-		.fn = maintenance_task_incremental_repack,
+		.background = maintenance_task_incremental_repack,
 		.auto_condition = incremental_repack_auto_condition,
 	},
 	[TASK_GC] = {
 		.name = "gc",
-		.fn = maintenance_task_gc,
+		.background = maintenance_task_gc,
 		.auto_condition = need_to_gc,
 	},
 	[TASK_COMMIT_GRAPH] = {
 		.name = "commit-graph",
-		.fn = maintenance_task_commit_graph,
+		.background = maintenance_task_commit_graph,
 		.auto_condition = should_write_commit_graph,
 	},
 	[TASK_PACK_REFS] = {
 		.name = "pack-refs",
-		.fn = maintenance_task_pack_refs,
+		.background = maintenance_task_pack_refs,
 		.auto_condition = pack_refs_condition,
 	},
 	[TASK_REFLOG_EXPIRE] = {
 		.name = "reflog-expire",
-		.fn = maintenance_task_reflog_expire,
+		.background = maintenance_task_reflog_expire,
 		.auto_condition = reflog_expire_condition,
 	},
 	[TASK_WORKTREE_PRUNE] = {
 		.name = "worktree-prune",
-		.fn = maintenance_task_worktree_prune,
+		.background = maintenance_task_worktree_prune,
 		.auto_condition = worktree_prune_condition,
 	},
 	[TASK_RERERE_GC] = {
 		.name = "rerere-gc",
-		.fn = maintenance_task_rerere_gc,
+		.background = maintenance_task_rerere_gc,
 		.auto_condition = rerere_gc_condition,
 	},
+};
+
+enum task_phase {
+	TASK_PHASE_FOREGROUND,
+	TASK_PHASE_BACKGROUND,
 };
 
 static int maybe_run_task(const struct maintenance_task *task,
 			  struct repository *repo,
 			  struct maintenance_run_opts *opts,
-			  struct gc_config *cfg)
+			  struct gc_config *cfg,
+			  enum task_phase phase)
 {
+	int foreground = (phase == TASK_PHASE_FOREGROUND);
+	maintenance_task_fn fn = foreground ? task->foreground : task->background;
+	const char *region = foreground ? "maintenance foreground" : "maintenance";
 	int ret = 0;
 
+	if (!fn)
+		return 0;
 	if (opts->auto_flag &&
 	    (!task->auto_condition || !task->auto_condition(cfg)))
 		return 0;
 
-	trace2_region_enter("maintenance", task->name, repo);
-	if (task->fn(opts, cfg)) {
+	trace2_region_enter(region, task->name, repo);
+	if (fn(opts, cfg)) {
 		error(_("task '%s' failed"), task->name);
 		ret = 1;
 	}
-	trace2_region_leave("maintenance", task->name, repo);
+	trace2_region_leave(region, task->name, repo);
 
 	return ret;
 }
@@ -1641,6 +1663,11 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts,
 	}
 	free(lock_path);
 
+	for (size_t i = 0; i < opts->tasks_nr; i++)
+		if (maybe_run_task(&tasks[opts->tasks[i]], r, opts, cfg,
+				   TASK_PHASE_FOREGROUND))
+			result = 1;
+
 	/* Failure to daemonize is ok, we'll continue in foreground. */
 	if (opts->detach > 0) {
 		trace2_region_enter("maintenance", "detach", the_repository);
@@ -1649,7 +1676,8 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts,
 	}
 
 	for (size_t i = 0; i < opts->tasks_nr; i++)
-		if (maybe_run_task(&tasks[opts->tasks[i]], r, opts, cfg))
+		if (maybe_run_task(&tasks[opts->tasks[i]], r, opts, cfg,
+				   TASK_PHASE_BACKGROUND))
 			result = 1;
 
 	rollback_lock_file(&lk);
