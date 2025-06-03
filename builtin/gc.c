@@ -516,7 +516,7 @@ static uint64_t total_ram(void)
 			total *= (uint64_t)si.mem_unit;
 		return total;
 	}
-#elif defined(HAVE_BSD_SYSCTL) && (defined(HW_MEMSIZE) || defined(HW_PHYSMEM))
+#elif defined(HAVE_BSD_SYSCTL) && (defined(HW_MEMSIZE) || defined(HW_PHYSMEM) || defined(HW_PHYSMEM64))
 	int64_t physical_memory;
 	int mib[2];
 	size_t length;
@@ -524,6 +524,8 @@ static uint64_t total_ram(void)
 	mib[0] = CTL_HW;
 # if defined(HW_MEMSIZE)
 	mib[1] = HW_MEMSIZE;
+# elif defined(HW_PHYSMEM64)
+	mib[1] = HW_PHYSMEM64;
 # else
 	mib[1] = HW_PHYSMEM;
 # endif
