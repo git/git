@@ -19,6 +19,7 @@ problems=()
 commit=
 commitText=
 commitTextmd=
+committerEmail=
 goodParent=
 
 if ! git rev-parse --quiet --verify "${baseCommit}"
@@ -27,7 +28,7 @@ then
     exit 1
 fi
 
-while read dash sha etc
+while read dash email sha etc
 do
 	case "${dash}" in
 	"---") # Line contains commit information.
@@ -40,10 +41,14 @@ do
 		commit="${sha}"
 		commitText="${sha} ${etc}"
 		commitTextmd="[${sha}](${url}/commit/${sha}) ${etc}"
+		committerEmail="${email}"
 		;;
 	"")
 		;;
 	*) # Line contains whitespace error information for current commit.
+		# Quod licet Iovi non licet bovi
+		test gitster@pobox.com != "$committerEmail" || break
+
 		if test -n "${goodParent}"
 		then
 			problems+=("1) --- ${commitTextmd}")
@@ -64,7 +69,7 @@ do
 		echo "${dash} ${sha} ${etc}"
 		;;
 	esac
-done <<< "$(git log --check --pretty=format:"---% h% s" "${baseCommit}"..)"
+done <<< "$(git log --check --pretty=format:"---% ce% h% s" "${baseCommit}"..)"
 
 if test ${#problems[*]} -gt 0
 then
