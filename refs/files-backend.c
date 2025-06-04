@@ -3186,7 +3186,13 @@ static int files_transaction_finish(struct ref_store *ref_store,
 		 * next update. If not, we try and create a regular symref.
 		 */
 		if (update->new_target && refs->prefer_symlink_refs)
-			if (!create_ref_symlink(lock, update->new_target))
+			/*
+			 * By using the `NOT_CONSTANT()` trick, we can avoid
+			 * errors by `clang`'s `-Wunreachable` logic that would
+			 * report that the `continue` statement is not reachable
+			 * when `NO_SYMLINK_HEAD` is `#define`d.
+			 */
+			if (NOT_CONSTANT(!create_ref_symlink(lock, update->new_target)))
 				continue;
 
 		if (update->flags & REF_NEEDS_COMMIT) {
