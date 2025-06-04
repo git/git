@@ -11,6 +11,7 @@ and push subcommands of git subtree.
 
 TEST_DIRECTORY=$(pwd)/../../../t
 . "$TEST_DIRECTORY"/test-lib.sh
+. "$TEST_DIRECTORY"/lib-gpg.sh
 
 # Use our own wrapper around test-lib.sh's test_create_repo, in order
 # to set log.date=relative.  `git subtree` parses the output of `git
@@ -1560,6 +1561,118 @@ test_expect_success 'subtree descendant check' '
 		git subtree split --prefix folder_subtree/ --branch subtree_tip $defaultBranch &&
 		git subtree split --prefix folder_subtree/ --branch subtree_branch branch &&
 		test $(git rev-list --count subtree_tip..subtree_branch) = 0
+	)
+'
+
+test_expect_success GPG 'add subproj with GPG signing using -S flag' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" -S FETCH_HEAD &&
+		git verify-commit HEAD &&
+		test "$(last_commit_subject)" = "Add '\''sub dir/'\'' from commit '\''$(git rev-parse FETCH_HEAD)'\''"
+	)
+'
+
+test_expect_success GPG 'add subproj with GPG signing using --gpg-sign flag' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" --gpg-sign FETCH_HEAD &&
+		git verify-commit HEAD &&
+		test "$(last_commit_subject)" = "Add '\''sub dir/'\'' from commit '\''$(git rev-parse FETCH_HEAD)'\''"
+	)
+'
+
+test_expect_success GPG 'add subproj with GPG signing using specific key ID' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" -S"$GIT_COMMITTER_EMAIL" FETCH_HEAD &&
+		git verify-commit HEAD &&
+		test "$(last_commit_subject)" = "Add '\''sub dir/'\'' from commit '\''$(git rev-parse FETCH_HEAD)'\''"
+	)
+'
+
+test_expect_success GPG 'merge with GPG signing' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree merge --prefix="sub dir" -S FETCH_HEAD &&
+		git verify-commit HEAD
+	)
+'
+
+test_expect_success GPG 'split with GPG signing and --rejoin' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" FETCH_HEAD
+	) &&
+	test_create_commit "$test_count" "sub dir/main-sub1" &&
+	(
+		cd "$test_count" &&
+		git subtree split --prefix="sub dir" --rejoin -S &&
+		git verify-commit HEAD
+	)
+'
+
+test_expect_success GPG 'add with --squash and GPG signing' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git fetch ./"sub proj" HEAD &&
+		git subtree add --prefix="sub dir" --squash -S FETCH_HEAD &&
+		git verify-commit HEAD &&
+		# With --squash, the commit subject should reference the squash commit (first parent of merge)
+		squash_commit=$(git rev-parse HEAD^2) &&
+		test "$(last_commit_subject)" = "Merge commit '\''$squash_commit'\'' as '\''sub dir'\''"
+	)
+'
+
+test_expect_success GPG 'pull with GPG signing' '
+	subtree_test_create_repo "$test_count" &&
+	subtree_test_create_repo "$test_count/sub proj" &&
+	test_create_commit "$test_count" main1 &&
+	test_create_commit "$test_count/sub proj" sub1 &&
+	(
+		cd "$test_count" &&
+		git subtree add --prefix="sub dir" ./"sub proj" HEAD
+	) &&
+	test_create_commit "$test_count/sub proj" sub2 &&
+	(
+		cd "$test_count" &&
+		git subtree pull --prefix="sub dir" -S ./"sub proj" HEAD &&
+		git verify-commit HEAD
 	)
 '
 
