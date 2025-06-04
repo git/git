@@ -274,8 +274,10 @@ int cmd_fetch_pack(int argc,
 	}
 	close(fd[0]);
 	close(fd[1]);
-	if (finish_connect(conn))
-		return 1;
+	if (finish_connect(conn)) {
+		ret = 1;
+		goto cleanup;
+	}
 
 	ret = !fetched_refs;
 
@@ -291,6 +293,7 @@ int cmd_fetch_pack(int argc,
 		printf("%s %s\n",
 		       oid_to_hex(&ref->old_oid), ref->name);
 
+cleanup:
 	for (size_t i = 0; i < nr_sought; i++)
 		free_one_ref(sought_to_free[i]);
 	free(sought_to_free);
