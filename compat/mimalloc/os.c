@@ -166,7 +166,7 @@ static void mi_os_prim_free(void* addr, size_t size, size_t commit_size) {
 void _mi_os_free_ex(void* addr, size_t size, bool still_committed, mi_memid_t memid) {
   if (mi_memkind_is_os(memid.memkind)) {
     size_t csize = memid.mem.os.size;
-    if (csize==0) { _mi_os_good_alloc_size(size); }
+    if (csize==0) { csize = _mi_os_good_alloc_size(size); }
     size_t commit_size = (still_committed ? csize : 0);
     void* base = addr;
     // different base? (due to alignment)
