@@ -311,6 +311,7 @@ static int graph_write(int argc, const char **argv, const char *prefix,
 		while (strbuf_getline(&buf, stdin) != EOF) {
 			if (read_one_commit(&commits, progress, buf.buf)) {
 				result = 1;
+				stop_progress(&progress);
 				goto cleanup;
 			}
 		}
