@@ -2195,6 +2195,7 @@ ifdef USE_MIMALLOC
 $(MIMALLOC_OBJS): COMPAT_CFLAGS += -DBANNED_H
 
 $(MIMALLOC_OBJS): COMPAT_CFLAGS += \
+	-DMI_WIN_USE_FLS \
 	-Wno-attributes \
 	-Wno-unknown-pragmas \
 	-Wno-unused-function \
