@@ -1044,13 +1044,13 @@ static CURL *get_curl_handle(void)
 		die("curl_easy_init failed");
 
 	if (!curl_ssl_verify) {
-		curl_easy_setopt(result, CURLOPT_SSL_VERIFYPEER, 0);
-		curl_easy_setopt(result, CURLOPT_SSL_VERIFYHOST, 0);
+		curl_easy_setopt(result, CURLOPT_SSL_VERIFYPEER, 0l);
+		curl_easy_setopt(result, CURLOPT_SSL_VERIFYHOST, 0l);
 	} else {
 		/* Verify authenticity of the peer's certificate */
-		curl_easy_setopt(result, CURLOPT_SSL_VERIFYPEER, 1);
+		curl_easy_setopt(result, CURLOPT_SSL_VERIFYPEER, 1l);
 		/* The name in the cert must match whom we tried to connect */
-		curl_easy_setopt(result, CURLOPT_SSL_VERIFYHOST, 2);
+		curl_easy_setopt(result, CURLOPT_SSL_VERIFYHOST, 2l);
 	}
 
     if (curl_http_version) {
@@ -1153,8 +1153,8 @@ static CURL *get_curl_handle(void)
 				 curl_low_speed_time);
 	}
 
-	curl_easy_setopt(result, CURLOPT_MAXREDIRS, 20);
-	curl_easy_setopt(result, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
+	curl_easy_setopt(result, CURLOPT_MAXREDIRS, 20l);
+	curl_easy_setopt(result, CURLOPT_POSTREDIR, (long)CURL_REDIR_POST_ALL);
 
 #ifdef GIT_CURL_HAVE_CURLOPT_PROTOCOLS_STR
 	{
@@ -1187,7 +1187,7 @@ static CURL *get_curl_handle(void)
 		user_agent ? user_agent : git_user_agent());
 
 	if (curl_ftp_no_epsv)
-		curl_easy_setopt(result, CURLOPT_FTP_USE_EPSV, 0);
+		curl_easy_setopt(result, CURLOPT_FTP_USE_EPSV, 0l);
 
 	if (curl_ssl_try)
 		curl_easy_setopt(result, CURLOPT_USE_SSL, CURLUSESSL_TRY);
@@ -1229,18 +1229,18 @@ static CURL *get_curl_handle(void)
 
 		if (starts_with(curl_http_proxy, "socks5h"))
 			curl_easy_setopt(result,
-				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
+				CURLOPT_PROXYTYPE, (long)CURLPROXY_SOCKS5_HOSTNAME);
 		else if (starts_with(curl_http_proxy, "socks5"))
 			curl_easy_setopt(result,
-				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
+				CURLOPT_PROXYTYPE, (long)CURLPROXY_SOCKS5);
 		else if (starts_with(curl_http_proxy, "socks4a"))
 			curl_easy_setopt(result,
-				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS4A);
+				CURLOPT_PROXYTYPE, (long)CURLPROXY_SOCKS4A);
 		else if (starts_with(curl_http_proxy, "socks"))
 			curl_easy_setopt(result,
-				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS4);
+				CURLOPT_PROXYTYPE, (long)CURLPROXY_SOCKS4);
 		else if (starts_with(curl_http_proxy, "https")) {
-			curl_easy_setopt(result, CURLOPT_PROXYTYPE, CURLPROXY_HTTPS);
+			curl_easy_setopt(result, CURLOPT_PROXYTYPE, (long)CURLPROXY_HTTPS);
 
 			if (http_proxy_ssl_cert)
 				curl_easy_setopt(result, CURLOPT_PROXY_SSLCERT, http_proxy_ssl_cert);
@@ -1290,7 +1290,7 @@ static CURL *get_curl_handle(void)
 	}
 	init_curl_proxy_auth(result);
 
-	curl_easy_setopt(result, CURLOPT_TCP_KEEPALIVE, 1);
+	curl_easy_setopt(result, CURLOPT_TCP_KEEPALIVE, 1l);
 
 	if (curl_tcp_keepidle > -1)
 		curl_easy_setopt(result, CURLOPT_TCP_KEEPIDLE,
@@ -1576,9 +1576,9 @@ struct active_request_slot *get_active_slot(void)
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, NULL);
 	curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDS, NULL);
 	curl_easy_setopt(slot->curl, CURLOPT_POSTFIELDSIZE, -1L);
-	curl_easy_setopt(slot->curl, CURLOPT_UPLOAD, 0);
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
-	curl_easy_setopt(slot->curl, CURLOPT_FAILONERROR, 1);
+	curl_easy_setopt(slot->curl, CURLOPT_UPLOAD, 0l);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1l);
+	curl_easy_setopt(slot->curl, CURLOPT_FAILONERROR, 1l);
 	curl_easy_setopt(slot->curl, CURLOPT_RANGE, NULL);
 
 	/*
@@ -1587,9 +1587,9 @@ struct active_request_slot *get_active_slot(void)
 	 * HTTP_FOLLOW_* cases themselves.
 	 */
 	if (http_follow_config == HTTP_FOLLOW_ALWAYS)
-		curl_easy_setopt(slot->curl, CURLOPT_FOLLOWLOCATION, 1);
+		curl_easy_setopt(slot->curl, CURLOPT_FOLLOWLOCATION, 1l);
 	else
-		curl_easy_setopt(slot->curl, CURLOPT_FOLLOWLOCATION, 0);
+		curl_easy_setopt(slot->curl, CURLOPT_FOLLOWLOCATION, 0l);
 
 	curl_easy_setopt(slot->curl, CURLOPT_IPRESOLVE, git_curl_ipresolve);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPAUTH, http_auth_methods);
@@ -2156,12 +2156,12 @@ static int http_request(const char *url,
 	int ret;
 
 	slot = get_active_slot();
-	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1l);
 
 	if (!result) {
-		curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 1);
+		curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 1l);
 	} else {
-		curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 0);
+		curl_easy_setopt(slot->curl, CURLOPT_NOBODY, 0l);
 		curl_easy_setopt(slot->curl, CURLOPT_WRITEDATA, result);
 
 		if (target == HTTP_REQUEST_FILE) {
@@ -2187,7 +2187,7 @@ static int http_request(const char *url,
 		strbuf_addstr(&buf, " no-cache");
 	if (options && options->initial_request &&
 	    http_follow_config == HTTP_FOLLOW_INITIAL)
-		curl_easy_setopt(slot->curl, CURLOPT_FOLLOWLOCATION, 1);
+		curl_easy_setopt(slot->curl, CURLOPT_FOLLOWLOCATION, 1l);
 
 	headers = curl_slist_append(headers, buf.buf);
 
@@ -2206,7 +2206,7 @@ static int http_request(const char *url,
 	curl_easy_setopt(slot->curl, CURLOPT_URL, url);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(slot->curl, CURLOPT_ENCODING, "");
-	curl_easy_setopt(slot->curl, CURLOPT_FAILONERROR, 0);
+	curl_easy_setopt(slot->curl, CURLOPT_FAILONERROR, 0l);
 
 	ret = run_one_slot(slot, &results);
 
@@ -2786,7 +2786,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	freq->headers = object_request_headers();
 
 	curl_easy_setopt(freq->slot->curl, CURLOPT_WRITEDATA, freq);
-	curl_easy_setopt(freq->slot->curl, CURLOPT_FAILONERROR, 0);
+	curl_easy_setopt(freq->slot->curl, CURLOPT_FAILONERROR, 0l);
 	curl_easy_setopt(freq->slot->curl, CURLOPT_WRITEFUNCTION, fwrite_sha1_file);
 	curl_easy_setopt(freq->slot->curl, CURLOPT_ERRORBUFFER, freq->errorstr);
 	curl_easy_setopt(freq->slot->curl, CURLOPT_URL, freq->url);

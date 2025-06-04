@@ -195,7 +195,7 @@ static char *xml_entities(const char *s)
 static void curl_setup_http_get(CURL *curl, const char *url,
 		const char *custom_req)
 {
-	curl_easy_setopt(curl, CURLOPT_HTTPGET, 1);
+	curl_easy_setopt(curl, CURLOPT_HTTPGET, 1l);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, custom_req);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, fwrite_null);
@@ -205,7 +205,7 @@ static void curl_setup_http(CURL *curl, const char *url,
 		const char *custom_req, struct buffer *buffer,
 		curl_write_callback write_fn)
 {
-	curl_easy_setopt(curl, CURLOPT_UPLOAD, 1);
+	curl_easy_setopt(curl, CURLOPT_UPLOAD, 1l);
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_INFILE, buffer);
 	curl_easy_setopt(curl, CURLOPT_INFILESIZE, buffer->buf.len);
@@ -213,9 +213,9 @@ static void curl_setup_http(CURL *curl, const char *url,
 	curl_easy_setopt(curl, CURLOPT_SEEKFUNCTION, seek_buffer);
 	curl_easy_setopt(curl, CURLOPT_SEEKDATA, buffer);
 	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_fn);
-	curl_easy_setopt(curl, CURLOPT_NOBODY, 0);
+	curl_easy_setopt(curl, CURLOPT_NOBODY, 0l);
 	curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, custom_req);
-	curl_easy_setopt(curl, CURLOPT_UPLOAD, 1);
+	curl_easy_setopt(curl, CURLOPT_UPLOAD, 1l);
 }
 
 static struct curl_slist *get_dav_token_headers(struct remote_lock *lock, enum dav_header_flag options)
