@@ -2660,8 +2660,10 @@ static int update_submodule(struct update_data *update_data)
 		if (code)
 			return code;
 		code = remote_submodule_branch(update_data->sm_path, &branch);
-		if (code)
+		if (code) {
+			free(remote_name);
 			return code;
+		}
 		remote_ref = xstrfmt("refs/remotes/%s/%s", remote_name, branch);
 
 		free(remote_name);
