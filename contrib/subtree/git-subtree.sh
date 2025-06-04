@@ -115,7 +115,7 @@ main () {
 	then
 		set -- -h
 	fi
-	set_args="$(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
+	set_args="$(echo "$OPTS_SPEC" | git rev-parse --parseopt --stuck-long -- "$@" || echo exit $?)"
 	eval "$set_args"
 	. git-sh-setup
 	require_work_tree
@@ -131,9 +131,6 @@ main () {
 		opt="$1"
 		shift
 		case "$opt" in
-			--annotate|-b|-P|-m|--onto)
-				shift
-				;;
 			--rejoin)
 				arg_split_rejoin=1
 				;;
@@ -177,42 +174,37 @@ main () {
 		shift
 
 		case "$opt" in
-		-q)
+		--quiet)
 			arg_quiet=1
 			;;
-		-d)
+		--debug)
 			arg_debug=1
 			;;
-		--annotate)
+		--annotate=*)
 			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
-			arg_split_annotate="$1"
-			shift
+			arg_split_annotate="${opt#*=}"
 			;;
 		--no-annotate)
 			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
 			arg_split_annotate=
 			;;
-		-b)
+		--branch=*)
 			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
-			arg_split_branch="$1"
-			shift
+			arg_split_branch="${opt#*=}"
 			;;
-		-P)
-			arg_prefix="${1%/}"
-			shift
+		--prefix=*)
+			arg_prefix="${opt#*=}"
 			;;
-		-m)
+		--message=*)
 			test -n "$allow_addmerge" || die_incompatible_opt "$opt" "$arg_command"
-			arg_addmerge_message="$1"
-			shift
+			arg_addmerge_message="${opt#*=}"
 			;;
 		--no-prefix)
 			arg_prefix=
 			;;
-		--onto)
+		--onto=*)
 			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
-			arg_split_onto="$1"
-			shift
+			arg_split_onto="${opt#*=}"
 			;;
 		--no-onto)
 			test -n "$allow_split" || die_incompatible_opt "$opt" "$arg_command"
