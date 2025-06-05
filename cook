@@ -205,7 +205,7 @@ sub get_commit {
 	my $fh;
 	open($fh, '-|',
 	     qw(git for-each-ref),
-	     "--format=%(refname:short) %(committerdate:iso8601)",
+	     "--format=%(refname:short) %(authordate:format-local:%Y-%m-%d)",
 	     "refs/heads/??/*")
 	    or die "$!: open for-each-ref";
 	my @topic;
@@ -840,7 +840,7 @@ sub wildo_queue {
 		for ($in_section) {
 			return if (/^Graduated to/ || /^Discarded$/);
 		}
-		my $action = $topic->[6] || "Under discussion.";
+		my $action = $topic->[6] || "Unclassified.";
 		if (!exists $what->{$action}) {
 			$what->{$action} = [];
 		}
