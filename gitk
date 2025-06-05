@@ -361,7 +361,7 @@ proc unmerged_files {files} {
 proc parseviewargs {n arglist} {
     global vdatemode vmergeonly vflags vdflags vrevs vfiltered vorigargs env
     global vinlinediff
-    global worddiff git_version
+    global worddiff
 
     set vdatemode($n) 0
     set vmergeonly($n) 0
@@ -412,14 +412,10 @@ proc parseviewargs {n arglist} {
             "--color-words*" - "--word-diff=color" {
                 # These trigger a word diff in the console interface,
                 # so help the user by enabling our own support
-                if {[package vcompare $git_version "1.7.2"] >= 0} {
-                    set worddiff [mc "Color words"]
-                }
+                set worddiff [mc "Color words"]
             }
             "--word-diff*" {
-                if {[package vcompare $git_version "1.7.2"] >= 0} {
-                    set worddiff [mc "Markup words"]
-                }
+                set worddiff [mc "Markup words"]
             }
             "--stat=*" - "--numstat" - "--shortstat" - "--summary" -
             "--check" - "--exit-code" - "--quiet" - "--topo-order" -
@@ -567,7 +563,6 @@ proc start_rev_list {view} {
     global viewactive viewinstances vmergeonly
     global mainheadid viewmainheadid viewmainheadid_orig
     global vcanopt vflags vrevs vorigargs
-    global show_notes
 
     set startmsecs [clock clicks -milliseconds]
     set commitidx($view) 0
@@ -617,7 +612,7 @@ proc start_rev_list {view} {
     }
 
     if {[catch {
-        set fd [safe_open_command_redirect [concat git log --no-color -z --pretty=raw $show_notes \
+        set fd [safe_open_command_redirect [concat git log --no-color -z --pretty=raw --show-notes \
                         --parents --boundary $args --stdin] \
                         [list "<<[join [concat $revs "--" $files] "\n"]"]]
     } err]} {
@@ -713,7 +708,6 @@ proc updatecommits {} {
     global mainheadid viewmainheadid viewmainheadid_orig pending_select
     global hasworktree
     global varcid vposids vnegids vflags vrevs
-    global show_notes
 
     set hasworktree [hasworktree]
     rereadrefs
@@ -770,7 +764,7 @@ proc updatecommits {} {
         set args $vorigargs($view)
     }
     if {[catch {
-        set fd [safe_open_command_redirect [concat git log --no-color -z --pretty=raw $show_notes \
+        set fd [safe_open_command_redirect [concat git log --no-color -z --pretty=raw --show-notes \
                         --parents --boundary $args --stdin] \
                         [list "<<[join [concat $revs "--" $vfilelimit($view)] "\n"]"]]
     } err]} {
@@ -2296,7 +2290,6 @@ proc makewindow {} {
     global fprogitem fprogcoord lastprogupdate progupdatepending
     global rprogitem rprogcoord rownumsel numcommits
     global have_tk85 have_tk86 use_ttk NS
-    global git_version
     global worddiff
 
     # The "mc" arguments here are purely so that xgettext
@@ -2617,12 +2610,10 @@ proc makewindow {} {
     pack .bleft.mid.ignspace -side left -padx 5
 
     set worddiff [mc "Line diff"]
-    if {[package vcompare $git_version "1.7.2"] >= 0} {
-        makedroplist .bleft.mid.worddiff worddiff [mc "Line diff"] \
-            [mc "Markup words"] [mc "Color words"]
-        trace add variable worddiff write changeworddiff
-        pack .bleft.mid.worddiff -side left -padx 5
-    }
+    makedroplist .bleft.mid.worddiff worddiff [mc "Line diff"] \
+        [mc "Markup words"] [mc "Color words"]
+    trace add variable worddiff write changeworddiff
+    pack .bleft.mid.worddiff -side left -padx 5
 
     set ctext .bleft.bottom.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
@@ -5539,15 +5530,11 @@ proc dohidelocalchanges {} {
 # spawn off a process to do git diff-index --cached HEAD
 proc dodiffindex {} {
     global lserial showlocalchanges vfilelimit curview
-    global hasworktree git_version
+    global hasworktree
 
     if {!$showlocalchanges || !$hasworktree} return
     incr lserial
-    if {[package vcompare $git_version "1.7.2"] >= 0} {
-        set cmd "git diff-index --cached --ignore-submodules=dirty HEAD"
-    } else {
-        set cmd "git diff-index --cached HEAD"
-    }
+    set cmd "git diff-index --cached --ignore-submodules=dirty HEAD"
     if {$vfilelimit($curview) ne {}} {
         set cmd [concat $cmd -- $vfilelimit($curview)]
     }
@@ -8095,7 +8082,7 @@ proc addtocflist {ids} {
 }
 
 proc diffcmd {ids flags} {
-    global log_showroot nullid nullid2 git_version
+    global log_showroot nullid nullid2
 
     set i [lsearch -exact $ids $nullid]
     set j [lsearch -exact $ids $nullid2]
@@ -8116,9 +8103,7 @@ proc diffcmd {ids flags} {
             }
         }
     } elseif {$j >= 0} {
-        if {[package vcompare $git_version "1.7.2"] >= 0} {
-            set flags "$flags --ignore-submodules=dirty"
-        }
+        set flags "$flags --ignore-submodules=dirty"
         set cmd [concat git diff-index --cached $flags]
         if {[llength $ids] > 1} {
             # comparing index with specific revision
@@ -8247,17 +8232,8 @@ proc getblobdiffs {ids} {
     global ignorespace
     global worddiff
     global limitdiffs vfilelimit curview
-    global git_version
 
-    set textconv {}
-    if {[package vcompare $git_version "1.6.1"] >= 0} {
-        set textconv "--textconv"
-    }
-    set submodule {}
-    if {[package vcompare $git_version "1.6.6"] >= 0} {
-        set submodule "--submodule"
-    }
-    set cmd [diffcmd $ids "-p $textconv $submodule  -C --cc --no-commit-id -U$diffcontext"]
+    set cmd [diffcmd $ids "-p --textconv --submodule -C --cc --no-commit-id -U$diffcontext"]
     if {$ignorespace} {
         append cmd " -w"
     }
@@ -12834,11 +12810,6 @@ set NS [expr {$use_ttk ? "ttk" : ""}]
 
 if {$use_ttk} {
     setttkstyle
-}
-
-set show_notes {}
-if {[package vcompare $git_version "1.6.6.2"] >= 0} {
-    set show_notes "--show-notes"
 }
 
 set appname "gitk"
