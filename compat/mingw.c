@@ -719,8 +719,10 @@ static int mingw_open_append(wchar_t const *wfilename, int oflags, ...)
 	DWORD create = (oflags & O_CREAT) ? OPEN_ALWAYS : OPEN_EXISTING;
 
 	/* only these flags are supported */
-	if ((oflags & ~O_CREAT) != (O_WRONLY | O_APPEND))
-		return errno = ENOSYS, -1;
+	if ((oflags & ~O_CREAT) != (O_WRONLY | O_APPEND)) {
+		errno = ENOSYS;
+		return -1;
+	}
 
 	/*
 	 * FILE_SHARE_WRITE is required to permit child processes
@@ -3096,12 +3098,14 @@ static int start_timer_thread(void)
 	timer_event = CreateEvent(NULL, FALSE, FALSE, NULL);
 	if (timer_event) {
 		timer_thread = (HANDLE) _beginthreadex(NULL, 0, ticktack, NULL, 0, NULL);
-		if (!timer_thread )
-			return errno = ENOMEM,
-				error("cannot start timer thread");
-	} else
-		return errno = ENOMEM,
-			error("cannot allocate resources for timer");
+		if (!timer_thread ) {
+			errno = ENOMEM;
+			return error("cannot start timer thread");
+		}
+	} else {
+		errno = ENOMEM;
+		return error("cannot allocate resources for timer");
+	}
 	return 0;
 }
 
@@ -3134,13 +3138,15 @@ int setitimer(int type UNUSED, struct itimerval *in, struct itimerval *out)
 	static const struct timeval zero;
 	static int atexit_done;
 
-	if (out)
-		return errno = EINVAL,
-			error("setitimer param 3 != NULL not implemented");
+	if (out) {
+		errno = EINVAL;
+		return error("setitimer param 3 != NULL not implemented");
+	}
 	if (!is_timeval_eq(&in->it_interval, &zero) &&
-	    !is_timeval_eq(&in->it_interval, &in->it_value))
-		return errno = EINVAL,
-			error("setitimer: it_interval must be zero or eq it_value");
+	    !is_timeval_eq(&in->it_interval, &in->it_value)) {
+		errno = EINVAL;
+		return error("setitimer: it_interval must be zero or eq it_value");
+	}
 
 	if (timer_thread)
 		stop_timer_thread();
@@ -3160,12 +3166,14 @@ int setitimer(int type UNUSED, struct itimerval *in, struct itimerval *out)
 
 int sigaction(int sig, struct sigaction *in, struct sigaction *out)
 {
-	if (sig != SIGALRM)
-		return errno = EINVAL,
-			error("sigaction only implemented for SIGALRM");
-	if (out)
-		return errno = EINVAL,
-			error("sigaction: param 3 != NULL not implemented");
+	if (sig != SIGALRM) {
+		errno = EINVAL;
+		return error("sigaction only implemented for SIGALRM");
+	}
+	if (out) {
+		errno = EINVAL;
+		return error("sigaction: param 3 != NULL not implemented");
+	}
 
 	timer_fn = in->sa_handler;
 	return 0;
