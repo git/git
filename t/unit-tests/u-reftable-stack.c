@@ -10,7 +10,7 @@ https://developers.google.com/open-source/licenses/bsd
 
 #include "unit-test.h"
 #include "dir.h"
-#include "lib-reftable-clar.h"
+#include "lib-reftable.h"
 #include "reftable/merged.h"
 #include "reftable/reftable-error.h"
 #include "reftable/stack.h"
@@ -497,7 +497,7 @@ void test_reftable_stack__add(void)
 	struct reftable_buf path = REFTABLE_BUF_INIT;
 	struct stat stat_result;
 	size_t i, N = ARRAY_SIZE(refs);
-	int err;
+	int err = 0;
 
 	err = reftable_new_stack(&st, dir, &opts);
 	cl_assert(!err);
