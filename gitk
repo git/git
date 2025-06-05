@@ -9,6 +9,22 @@ exec wish "$0" -- "$@"
 
 package require Tk
 
+set MIN_GIT_VERSION 2.20
+regexp {^git version ([\d.]*\d)} [exec git version] _ git_version
+if {[package vcompare $git_version $MIN_GIT_VERSION] < 0} {
+    set message "The git executable found is too old.
+The minimum required version is $MIN_GIT_VERSION.0.
+The version of git found is $git_version."
+
+    catch {wm withdraw .}
+    tk_messageBox \
+        -icon error \
+        -type ok \
+        -title "gitk: fatal error" \
+        -message $message
+    exit 1
+}
+
 ######################################################################
 ##
 ## Enabling platform-specific code paths
@@ -12819,8 +12835,6 @@ set NS [expr {$use_ttk ? "ttk" : ""}]
 if {$use_ttk} {
     setttkstyle
 }
-
-regexp {^git version ([\d.]*\d)} [exec git version] _ git_version
 
 set show_notes {}
 if {[package vcompare $git_version "1.6.6.2"] >= 0} {
