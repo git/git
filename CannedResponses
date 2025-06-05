@@ -12,7 +12,7 @@ The usual way to compose a log message of this project is to
  - Propose a solution (optional---often, problem description
    trivially leads to an obvious solution in reader's minds).
 
- - Give commands to the codebase to "become like so".
+ - Give commands to somebody editing the codebase to "make it so".
 
 in this order.
 
@@ -107,3 +107,19 @@ entirely and replacing it with the newer one.  In such a case, we do
 revert the earlier and replace it with the newer, in 'next'.
 
 ----------------------------------------------------------------
+[do not iterate too quickly]
+
+After sending your patches out, it would be nice to give potential
+reviewers at least 24 hours to ensure people anywhere on the globe
+have a chance to comment, and a chance for you to respond to them,
+before sending your next iteration.
+
+When responding to a review comment that causes you to drastically
+change the course of the series, it is nice to give potential
+reviewers at least 24 hours to ensure they have a chance to voice
+their opinions, before sending an updated series based on that
+comment, because suggested changes in such a comment may be
+controversial and deserve discussion.  After seeing you spend some
+time already to adjust to one opinion on such a discussion, others may
+feel discouraged to make you redo your series again even whey they
+think the suggested changes are not taking us in the right direction.
