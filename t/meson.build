@@ -19,7 +19,8 @@ clar_test_suites = [
 clar_sources = [
   'unit-tests/clar/clar.c',
   'unit-tests/unit-test.c',
-  'unit-tests/lib-oid.c'
+  'unit-tests/lib-oid.c',
+  'unit-tests/lib-reftable-clar.c'
 ]
 
 clar_decls_h = custom_target(
