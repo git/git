@@ -41,7 +41,19 @@ test_expect_success 'with core.alternateRefsPrefixes' '
 	test_cmp expect actual.haves
 '
 
-test_expect_success 'receive-pack missing objects fails connectivity check' '
+# The `tee.exe` shipped in Git for Windows v2.49.0 is known to hang frequently
+# when spawned from `git.exe` and piping its output to `git.exe`. This seems
+# related to MSYS2 runtime bug fixes regarding the signal handling; Let's just
+# skip the tests that need to exercise this when the faulty MSYS2 runtime is
+# detected; The test cases are exercised enough in other matrix jobs of the CI
+# runs.
+test_lazy_prereq TEE_DOES_NOT_HANG '
+	test_have_prereq !MINGW &&
+	case "$(uname -a)" in *3.5.7-463ebcdc.x86_64*) false;; esac
+'
+
+test_expect_success TEE_DOES_NOT_HANG \
+	'receive-pack missing objects fails connectivity check' '
 	test_when_finished rm -rf repo remote.git setup.git &&
 
 	git init repo &&
@@ -62,7 +74,8 @@ test_expect_success 'receive-pack missing objects fails connectivity check' '
 	test_must_fail git -C remote.git cat-file -e $(git -C repo rev-parse HEAD)
 '
 
-test_expect_success 'receive-pack missing objects bypasses connectivity check' '
+test_expect_success TEE_DOES_NOT_HANG \
+	'receive-pack missing objects bypasses connectivity check' '
 	test_when_finished rm -rf repo remote.git setup.git &&
 
 	git init repo &&
