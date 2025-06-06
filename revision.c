@@ -2060,6 +2060,7 @@ static void prepare_show_merge(struct rev_info *revs)
 	parse_pathspec(&revs->prune_data, PATHSPEC_ALL_MAGIC & ~PATHSPEC_LITERAL,
 		       PATHSPEC_PREFER_FULL | PATHSPEC_LITERAL_PATH, "", prune);
 	revs->limited = 1;
+	free(prune);
 }
 
 static int dotdot_missing(const char *arg, char *dotdot,
