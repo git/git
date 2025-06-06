@@ -1,32 +1,32 @@
 sendemail.identity::
 	A configuration identity. When given, causes values in the
-	'sendemail.<identity>' subsection to take precedence over
-	values in the 'sendemail' section. The default identity is
+	`sendemail.<identity>` subsection to take precedence over
+	values in the `sendemail` section. The default identity is
 	the value of `sendemail.identity`.
 
 sendemail.smtpEncryption::
 	See linkgit:git-send-email[1] for description.  Note that this
-	setting is not subject to the 'identity' mechanism.
+	setting is not subject to the `identity` mechanism.
 
 sendemail.smtpSSLCertPath::
 	Path to ca-certificates (either a directory or a single file).
 	Set it to an empty string to disable certificate verification.
 
 sendemail.<identity>.*::
-	Identity-specific versions of the 'sendemail.*' parameters
+	Identity-specific versions of the `sendemail.*` parameters
 	found below, taking precedence over those when this
 	identity is selected, through either the command-line or
 	`sendemail.identity`.
 
 sendemail.multiEdit::
-	If true (default), a single editor instance will be spawned to edit
+	If `true` (default), a single editor instance will be spawned to edit
 	files you have to edit (patches when `--annotate` is used, and the
-	summary when `--compose` is used). If false, files will be edited one
+	summary when `--compose` is used). If `false`, files will be edited one
 	after the other, spawning a new editor each time.
 
 sendemail.confirm::
 	Sets the default for whether to confirm before sending. Must be
-	one of 'always', 'never', 'cc', 'compose', or 'auto'. See `--confirm`
+	one of `always`, `never`, `cc`, `compose`, or `auto`. See `--confirm`
 	in the linkgit:git-send-email[1] documentation for the meaning of these
 	values.
 
@@ -51,7 +51,7 @@ sendemail.aliasesFile::
 
 sendemail.aliasFileType::
 	Format of the file(s) specified in sendemail.aliasesFile. Must be
-	one of 'mutt', 'mailrc', 'pine', 'elm', 'gnus', or 'sendmail'.
+	one of `mutt`, `mailrc`, `pine`, `elm`, `gnus`, or `sendmail`.
 +
 What an alias file in each format looks like can be found in
 the documentation of the email program of the same name. The
@@ -101,7 +101,7 @@ sendemail.signedOffCc (deprecated)::
 
 sendemail.smtpBatchSize::
 	Number of messages to be sent per connection, after that a relogin
-	will happen.  If the value is 0 or undefined, send all messages in
+	will happen.  If the value is `0` or undefined, send all messages in
 	one connection.
 	See also the `--batch-size` option of linkgit:git-send-email[1].
 
@@ -111,5 +111,5 @@ sendemail.smtpReloginDelay::
 
 sendemail.forbidSendmailVariables::
 	To avoid common misconfiguration mistakes, linkgit:git-send-email[1]
-	will abort with a warning if any configuration options for "sendmail"
+	will abort with a warning if any configuration options for `sendmail`
 	exist. Set this variable to bypass the check.
