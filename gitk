@@ -2274,6 +2274,22 @@ proc bind_mousewheel {} {
     bind $cflist <Shift-MouseWheel> break
 }
 
+proc bind_mousewheel_buttons {} {
+    global canv cflist ctext
+        bindall <ButtonRelease-4> {allcanvs yview scroll [scrollval 1] units}
+        bindall <ButtonRelease-5> {allcanvs yview scroll [scrollval -1] units}
+        bindall <Shift-ButtonRelease-4> break
+        bindall <Shift-ButtonRelease-5> break
+        bind $ctext <ButtonRelease-4> {$ctext yview scroll [scrollval 1 2] units}
+        bind $ctext <ButtonRelease-5> {$ctext yview scroll  [scrollval -1 2] units}
+        bind $ctext <Shift-ButtonRelease-4> {$ctext xview scroll [scrollval 1 2] units}
+        bind $ctext <Shift-ButtonRelease-5> {$ctext xview scroll  [scrollval -1 2] units}
+        bind $cflist <ButtonRelease-4> {$cflist yview scroll [scrollval 1 2] units}
+        bind $cflist <ButtonRelease-5> {$cflist yview scroll  [scrollval -1 2] units}
+        bind $cflist <Shift-ButtonRelease-4> break
+        bind $cflist <Shift-ButtonRelease-5> break
+}
+
 proc makewindow {} {
     global canv canv2 canv3 linespc charspc ctext cflist cscroll
     global tabstop
@@ -2716,15 +2732,8 @@ proc makewindow {} {
         set scroll_D0 120
         bind_mousewheel
     } elseif {[tk windowingsystem] == "x11"} {
-        bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
-        bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
-        bind $ctext <Button> {
-            if {"%b" eq 6} {
-                $ctext xview scroll -5 units
-            } elseif {"%b" eq 7} {
-                $ctext xview scroll 5 units
-            }
-        }
+        set scroll_D0 1
+        bind_mousewheel_buttons
     } elseif {[tk windowingsystem] == "aqua"} {
         bindall <MouseWheel> {
             set delta [expr {- (%D)}]
