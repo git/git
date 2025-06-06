@@ -2273,6 +2273,16 @@ proc bind_mousewheel {} {
     bind $cflist <MouseWheel> {$cflist yview scroll [scrollval %D 2] units}
     bind $cflist <Shift-MouseWheel> break
     bind $canv <Shift-MouseWheel> {$canv xview scroll [scrollval %D] units}
+
+    if {[package vcompare $::tcl_version 8.7] >= 0} {
+        bindall <Alt-MouseWheel> {allcanvs yview scroll [scrollval 5*%D] units}
+        bindall <Alt-Shift-MouseWheel> break
+        bind $ctext <Alt-MouseWheel> {$ctext yview scroll [scrollval 5*%D 2] units}
+        bind $ctext <Alt-Shift-MouseWheel> {$ctext xview scroll [scrollval 5*%D 2] units}
+        bind $cflist <Alt-MouseWheel> {$cflist yview scroll [scrollval 5*%D 2] units}
+        bind $cflist <Alt-Shift-MouseWheel> break
+        bind $canv <Alt-Shift-MouseWheel> {$canv xview scroll [scrollval 5*%D] units}
+    }
 }
 
 proc bind_mousewheel_buttons {} {
@@ -2732,7 +2742,7 @@ proc makewindow {} {
     bindall <1> {selcanvline %W %x %y}
 
     #Mouse / touchpad scrolling
-    if {[tk windowingsystem] == "win32"} {
+    if {[tk windowingsystem] == "win32" || [package vcompare $::tcl_version 8.7] >= 0} {
         set scroll_D0 120
         bind_mousewheel
     } elseif {[tk windowingsystem] == "x11"} {
