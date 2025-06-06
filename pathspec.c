@@ -492,7 +492,7 @@ static void init_pathspec_item(struct pathspec_item *item, unsigned flags,
 		if (!match) {
 			const char *hint_path;
 
-			if (!have_git_dir())
+			if ((flags & PATHSPEC_NO_REPOSITORY) || !have_git_dir())
 				die(_("'%s' is outside the directory tree"),
 				    copyfrom);
 			hint_path = repo_get_work_tree(the_repository);
@@ -613,6 +613,10 @@ void parse_pathspec(struct pathspec *pathspec,
 	if ((flags & PATHSPEC_PREFER_CWD) &&
 	    (flags & PATHSPEC_PREFER_FULL))
 		BUG("PATHSPEC_PREFER_CWD and PATHSPEC_PREFER_FULL are incompatible");
+
+	if ((flags & PATHSPEC_NO_REPOSITORY) &&
+	    (~magic_mask & (PATHSPEC_ATTR | PATHSPEC_FROMTOP)))
+		BUG("PATHSPEC_NO_REPOSITORY is incompatible with PATHSPEC_ATTR and PATHSPEC_FROMTOP");
 
 	/* No arguments with prefix -> prefix pathspec */
 	if (!entry) {

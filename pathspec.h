@@ -76,6 +76,11 @@ struct pathspec {
  * allowed, then it will automatically set for every pathspec.
  */
 #define PATHSPEC_LITERAL_PATH (1<<6)
+/*
+ * For git diff --no-index, indicate that we are operating without
+ * a repository or index.
+ */
+#define PATHSPEC_NO_REPOSITORY (1<<7)
 
 /**
  * Given command line arguments and a prefix, convert the input to
@@ -183,6 +188,12 @@ int match_pathspec(struct index_state *istate,
 		   const struct pathspec *pathspec,
 		   const char *name, int namelen,
 		   int prefix, char *seen, int is_dir);
+
+/* Set both DO_MATCH_DIRECTORY and DO_MATCH_LEADING_PATHSPEC if is_dir true */
+int match_leading_pathspec(struct index_state *istate,
+			   const struct pathspec *ps,
+			   const char *name, int namelen,
+			   int prefix, char *seen, int is_dir);
 
 /*
  * Determine whether a pathspec will match only entire index entries (non-sparse
