@@ -493,9 +493,9 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 	}
 
 	for (i = 0; i < bitmap_git->midx->num_packs + bitmap_git->midx->num_packs_in_base; i++) {
-		if (prepare_midx_pack(bitmap_repo(bitmap_git), bitmap_git->midx, i)) {
+		if (!prepare_midx_pack(bitmap_repo(bitmap_git), bitmap_git->midx, i)) {
 			warning(_("could not open pack %s"),
-				bitmap_git->midx->pack_names[i]);
+				nth_midxed_pack_name(bitmap_git->midx, i));
 			goto cleanup;
 		}
 	}
@@ -2466,7 +2466,7 @@ void reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 			struct bitmapped_pack pack;
 			if (nth_bitmapped_pack(r, bitmap_git->midx, &pack, i) < 0) {
 				warning(_("unable to load pack: '%s', disabling pack-reuse"),
-					bitmap_git->midx->pack_names[i]);
+					nth_midxed_pack_name(bitmap_git->midx, i));
 				free(packs);
 				return;
 			}

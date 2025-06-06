@@ -451,50 +451,48 @@ static uint32_t midx_for_pack(struct multi_pack_index **_m,
 	return pack_int_id - m->num_packs_in_base;
 }
 
-int prepare_midx_pack(struct repository *r, struct multi_pack_index *m,
-		      uint32_t pack_int_id)
+struct packed_git *prepare_midx_pack(struct repository *r,
+				     struct multi_pack_index *m,
+				     uint32_t pack_int_id)
 {
-	struct strbuf pack_name = STRBUF_INIT;
-	struct strbuf key = STRBUF_INIT;
-	struct packed_git *p;
+	uint32_t pack_pos = midx_for_pack(&m, pack_int_id);
 
-	pack_int_id = midx_for_pack(&m, pack_int_id);
+	if (!m->packs[pack_pos]) {
+		struct strbuf pack_name = STRBUF_INIT;
+		struct strbuf key = STRBUF_INIT;
+		struct packed_git *p;
 
-	if (m->packs[pack_int_id] == MIDX_PACK_ERROR)
-		return 1;
-	if (m->packs[pack_int_id])
-		return 0;
+		strbuf_addf(&pack_name, "%s/pack/%s", m->object_dir,
+			    m->pack_names[pack_pos]);
 
-	strbuf_addf(&pack_name, "%s/pack/%s", m->object_dir,
-		    m->pack_names[pack_int_id]);
-
-	/* pack_map holds the ".pack" name, but we have the .idx */
-	strbuf_addbuf(&key, &pack_name);
-	strbuf_strip_suffix(&key, ".idx");
-	strbuf_addstr(&key, ".pack");
-	p = hashmap_get_entry_from_hash(&r->objects->pack_map,
-					strhash(key.buf), key.buf,
-					struct packed_git, packmap_ent);
-	if (!p) {
-		p = add_packed_git(r, pack_name.buf, pack_name.len, m->local);
-		if (p) {
-			install_packed_git(r, p);
-			list_add_tail(&p->mru, &r->objects->packed_git_mru);
+		/* pack_map holds the ".pack" name, but we have the .idx */
+		strbuf_addbuf(&key, &pack_name);
+		strbuf_strip_suffix(&key, ".idx");
+		strbuf_addstr(&key, ".pack");
+		p = hashmap_get_entry_from_hash(&r->objects->pack_map,
+						strhash(key.buf), key.buf,
+						struct packed_git, packmap_ent);
+		if (!p) {
+			p = add_packed_git(r, pack_name.buf, pack_name.len,
+					   m->local);
+			if (p) {
+				install_packed_git(r, p);
+				list_add_tail(&p->mru,
+					      &r->objects->packed_git_mru);
+			}
 		}
+
+		strbuf_release(&pack_name);
+		strbuf_release(&key);
+
+		m->packs[pack_pos] = p ? p : MIDX_PACK_ERROR;
+		if (p)
+			p->multi_pack_index = 1;
 	}
 
-	strbuf_release(&pack_name);
-	strbuf_release(&key);
-
-	if (!p) {
-		m->packs[pack_int_id] = MIDX_PACK_ERROR;
-		return 1;
-	}
-
-	p->multi_pack_index = 1;
-	m->packs[pack_int_id] = p;
-
-	return 0;
+	if (m->packs[pack_pos] == MIDX_PACK_ERROR)
+		return NULL;
+	return m->packs[pack_pos];
 }
 
 struct packed_git *nth_midxed_pack(struct multi_pack_index *m,
@@ -504,6 +502,13 @@ struct packed_git *nth_midxed_pack(struct multi_pack_index *m,
 	if (m->packs[local_pack_int_id] == MIDX_PACK_ERROR)
 		return NULL;
 	return m->packs[local_pack_int_id];
+}
+
+const char *nth_midxed_pack_name(struct multi_pack_index *m,
+				 uint32_t pack_int_id)
+{
+	uint32_t local_pack_int_id = midx_for_pack(&m, pack_int_id);
+	return m->pack_names[local_pack_int_id];
 }
 
 #define MIDX_CHUNK_BITMAPPED_PACKS_WIDTH (2 * sizeof(uint32_t))
@@ -516,10 +521,11 @@ int nth_bitmapped_pack(struct repository *r, struct multi_pack_index *m,
 	if (!m->chunk_bitmapped_packs)
 		return error(_("MIDX does not contain the BTMP chunk"));
 
-	if (prepare_midx_pack(r, m, pack_int_id))
-		return error(_("could not load bitmapped pack %"PRIu32), pack_int_id);
+	bp->p = prepare_midx_pack(r, m, pack_int_id);
+	if (!bp->p)
+		return error(_("could not load bitmapped pack %"PRIu32),
+			     pack_int_id);
 
-	bp->p = m->packs[local_pack_int_id];
 	bp->bitmap_pos = get_be32((char *)m->chunk_bitmapped_packs +
 				  MIDX_CHUNK_BITMAPPED_PACKS_WIDTH * local_pack_int_id);
 	bp->bitmap_nr = get_be32((char *)m->chunk_bitmapped_packs +
@@ -616,9 +622,9 @@ int fill_midx_entry(struct repository *r,
 	midx_for_object(&m, pos);
 	pack_int_id = nth_midxed_pack_int_id(m, pos);
 
-	if (prepare_midx_pack(r, m, pack_int_id))
+	p = prepare_midx_pack(r, m, pack_int_id);
+	if (!p)
 		return 0;
-	p = m->packs[pack_int_id - m->num_packs_in_base];
 
 	/*
 	* We are about to tell the caller where they can locate the
@@ -919,7 +925,7 @@ int verify_midx_file(struct repository *r, const char *object_dir, unsigned flag
 						  _("Looking for referenced packfiles"),
 						  m->num_packs + m->num_packs_in_base);
 	for (i = 0; i < m->num_packs + m->num_packs_in_base; i++) {
-		if (prepare_midx_pack(r, m, i))
+		if (!prepare_midx_pack(r, m, i))
 			midx_report("failed to load pack in position %d", i);
 
 		display_progress(progress, i + 1);
