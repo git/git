@@ -30,7 +30,7 @@
 #include "strbuf.h"
 #include "lockfile.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "dir.h"
 #include "entry.h"
 #include "setup.h"
@@ -320,7 +320,7 @@ static char *get_symlink(struct repository *repo,
 	} else {
 		enum object_type type;
 		unsigned long size;
-		data = repo_read_object_file(repo, oid, &type, &size);
+		data = odb_read_object(repo->objects, oid, &type, &size);
 		if (!data)
 			die(_("could not read object %s for symlink %s"),
 				oid_to_hex(oid), path);

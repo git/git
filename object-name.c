@@ -112,10 +112,10 @@ static enum cb_next match_prefix(const struct object_id *oid, void *arg)
 
 static void find_short_object_filename(struct disambiguate_state *ds)
 {
-	struct object_directory *odb;
+	struct odb_source *source;
 
-	for (odb = ds->repo->objects->odb; odb && !ds->ambiguous; odb = odb->next)
-		oidtree_each(odb_loose_cache(odb, &ds->bin_pfx),
+	for (source = ds->repo->objects->sources; source && !ds->ambiguous; source = source->next)
+		oidtree_each(odb_loose_cache(source, &ds->bin_pfx),
 				&ds->bin_pfx, ds->len, match_prefix, ds);
 }
 
@@ -251,7 +251,7 @@ static int disambiguate_commit_only(struct repository *r,
 				    const struct object_id *oid,
 				    void *cb_data UNUSED)
 {
-	int kind = oid_object_info(r, oid, NULL);
+	int kind = odb_read_object_info(r->objects, oid, NULL);
 	return kind == OBJ_COMMIT;
 }
 
@@ -262,7 +262,7 @@ static int disambiguate_committish_only(struct repository *r,
 	struct object *obj;
 	int kind;
 
-	kind = oid_object_info(r, oid, NULL);
+	kind = odb_read_object_info(r->objects, oid, NULL);
 	if (kind == OBJ_COMMIT)
 		return 1;
 	if (kind != OBJ_TAG)
@@ -279,7 +279,7 @@ static int disambiguate_tree_only(struct repository *r,
 				  const struct object_id *oid,
 				  void *cb_data UNUSED)
 {
-	int kind = oid_object_info(r, oid, NULL);
+	int kind = odb_read_object_info(r->objects, oid, NULL);
 	return kind == OBJ_TREE;
 }
 
@@ -290,7 +290,7 @@ static int disambiguate_treeish_only(struct repository *r,
 	struct object *obj;
 	int kind;
 
-	kind = oid_object_info(r, oid, NULL);
+	kind = odb_read_object_info(r->objects, oid, NULL);
 	if (kind == OBJ_TREE || kind == OBJ_COMMIT)
 		return 1;
 	if (kind != OBJ_TAG)
@@ -307,7 +307,7 @@ static int disambiguate_blob_only(struct repository *r,
 				  const struct object_id *oid,
 				  void *cb_data UNUSED)
 {
-	int kind = oid_object_info(r, oid, NULL);
+	int kind = odb_read_object_info(r->objects, oid, NULL);
 	return kind == OBJ_BLOB;
 }
 
@@ -376,7 +376,7 @@ static int init_object_disambiguation(struct repository *r,
 	ds->hex_pfx[len] = '\0';
 	ds->repo = r;
 	ds->bin_pfx.algo = algo ? hash_algo_by_ptr(algo) : GIT_HASH_UNKNOWN;
-	prepare_alt_odb(r);
+	odb_prepare_alternates(r->objects);
 	return 0;
 }
 
@@ -399,7 +399,7 @@ static int show_ambiguous_object(const struct object_id *oid, void *data)
 		return 0;
 
 	hash = repo_find_unique_abbrev(ds->repo, oid, DEFAULT_ABBREV);
-	type = oid_object_info(ds->repo, oid, NULL);
+	type = odb_read_object_info(ds->repo->objects, oid, NULL);
 
 	if (type < 0) {
 		/*
@@ -514,8 +514,8 @@ static int sort_ambiguous(const void *va, const void *vb, void *ctx)
 {
 	struct repository *sort_ambiguous_repo = ctx;
 	const struct object_id *a = va, *b = vb;
-	int a_type = oid_object_info(sort_ambiguous_repo, a, NULL);
-	int b_type = oid_object_info(sort_ambiguous_repo, b, NULL);
+	int a_type = odb_read_object_info(sort_ambiguous_repo->objects, a, NULL);
+	int b_type = odb_read_object_info(sort_ambiguous_repo->objects, b, NULL);
 	int a_type_sort;
 	int b_type_sort;
 

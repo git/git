@@ -3,7 +3,7 @@
 
 #include "git-compat-util.h"
 #include "refs.h"
-#include "object-store.h"
+#include "odb.h"
 #include "cache-tree.h"
 #include "mergesort.h"
 #include "commit.h"
@@ -116,7 +116,7 @@ static void verify_working_tree_path(struct repository *r,
 		unsigned short mode;
 
 		if (!get_tree_entry(r, commit_oid, path, &blob_oid, &mode) &&
-		    oid_object_info(r, &blob_oid, NULL) == OBJ_BLOB)
+		    odb_read_object_info(r->objects, &blob_oid, NULL) == OBJ_BLOB)
 			return;
 	}
 
@@ -277,7 +277,8 @@ static struct commit *fake_working_tree_commit(struct repository *r,
 	convert_to_git(r->index, path, buf.buf, buf.len, &buf, 0);
 	origin->file.ptr = buf.buf;
 	origin->file.size = buf.len;
-	pretend_object_file(the_repository, buf.buf, buf.len, OBJ_BLOB, &origin->blob_oid);
+	odb_pretend_object(the_repository->objects, buf.buf, buf.len,
+			   OBJ_BLOB, &origin->blob_oid);
 
 	/*
 	 * Read the current index, replace the path entry with
@@ -1041,9 +1042,9 @@ static void fill_origin_blob(struct diff_options *opt,
 				    &o->blob_oid, 1, &file->ptr, &file_size))
 			;
 		else
-			file->ptr = repo_read_object_file(the_repository,
-							  &o->blob_oid, &type,
-							  &file_size);
+			file->ptr = odb_read_object(the_repository->objects,
+						    &o->blob_oid, &type,
+						    &file_size);
 		file->size = file_size;
 
 		if (!file->ptr)
@@ -1245,7 +1246,7 @@ static int fill_blob_sha1_and_mode(struct repository *r,
 		return 0;
 	if (get_tree_entry(r, &origin->commit->object.oid, origin->path, &origin->blob_oid, &origin->mode))
 		goto error_out;
-	if (oid_object_info(r, &origin->blob_oid, NULL) != OBJ_BLOB)
+	if (odb_read_object_info(r->objects, &origin->blob_oid, NULL) != OBJ_BLOB)
 		goto error_out;
 	return 0;
  error_out:
@@ -2869,10 +2870,9 @@ void setup_scoreboard(struct blame_scoreboard *sb,
 				    &sb->final_buf_size))
 			;
 		else
-			sb->final_buf = repo_read_object_file(the_repository,
-							      &o->blob_oid,
-							      &type,
-							      &sb->final_buf_size);
+			sb->final_buf = odb_read_object(the_repository->objects,
+							&o->blob_oid, &type,
+							&sb->final_buf_size);
 
 		if (!sb->final_buf)
 			die(_("cannot read blob %s for path %s"),

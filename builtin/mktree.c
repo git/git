@@ -12,7 +12,7 @@
 #include "tree.h"
 #include "parse-options.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 
 static struct treeent {
 	unsigned mode;
@@ -124,10 +124,10 @@ static void mktree_line(char *buf, int nul_term_line, int allow_missing)
 
 	/* Check the type of object identified by oid without fetching objects */
 	oi.typep = &obj_type;
-	if (oid_object_info_extended(the_repository, &oid, &oi,
-				     OBJECT_INFO_LOOKUP_REPLACE |
-				     OBJECT_INFO_QUICK |
-				     OBJECT_INFO_SKIP_FETCH_OBJECT) < 0)
+	if (odb_read_object_info_extended(the_repository->objects, &oid, &oi,
+					  OBJECT_INFO_LOOKUP_REPLACE |
+					  OBJECT_INFO_QUICK |
+					  OBJECT_INFO_SKIP_FETCH_OBJECT) < 0)
 		obj_type = -1;
 
 	if (obj_type < 0) {

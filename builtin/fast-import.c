@@ -24,7 +24,7 @@
 #include "packfile.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "mem-pool.h"
 #include "commit-reach.h"
 #include "khash.h"
@@ -763,7 +763,8 @@ static void start_packfile(void)
 	struct packed_git *p;
 	int pack_fd;
 
-	pack_fd = odb_mkstemp(&tmp_file, "pack/tmp_pack_XXXXXX");
+	pack_fd = odb_mkstemp(the_repository->objects, &tmp_file,
+			      "pack/tmp_pack_XXXXXX");
 	FLEX_ALLOC_STR(p, pack_name, tmp_file.buf);
 	strbuf_release(&tmp_file);
 
@@ -1264,7 +1265,7 @@ static void load_tree(struct tree_entry *root)
 			die("Can't load tree %s", oid_to_hex(oid));
 	} else {
 		enum object_type type;
-		buf = repo_read_object_file(the_repository, oid, &type, &size);
+		buf = odb_read_object(the_repository->objects, oid, &type, &size);
 		if (!buf || type != OBJ_TREE)
 			die("Can't load tree %s", oid_to_hex(oid));
 	}
@@ -1755,8 +1756,8 @@ static void insert_object_entry(struct mark_set **s, struct object_id *oid, uint
 	struct object_entry *e;
 	e = find_object(oid);
 	if (!e) {
-		enum object_type type = oid_object_info(the_repository,
-							oid, NULL);
+		enum object_type type = odb_read_object_info(the_repository->objects,
+							     oid, NULL);
 		if (type < 0)
 			die("object not found: %s", oid_to_hex(oid));
 		e = insert_object(oid);
@@ -2415,8 +2416,8 @@ static void file_change_m(const char *p, struct branch *b)
 		enum object_type expected = S_ISDIR(mode) ?
 						OBJ_TREE: OBJ_BLOB;
 		enum object_type type = oe ? oe->type :
-					oid_object_info(the_repository, &oid,
-							NULL);
+					odb_read_object_info(the_repository->objects,
+							     &oid, NULL);
 		if (type < 0)
 			die("%s not found: %s",
 					S_ISDIR(mode) ?  "Tree" : "Blob",
@@ -2534,10 +2535,9 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 		oidcpy(&commit_oid, &commit_oe->idx.oid);
 	} else if (!repo_get_oid(the_repository, p, &commit_oid)) {
 		unsigned long size;
-		char *buf = read_object_with_reference(the_repository,
-						       &commit_oid,
-						       OBJ_COMMIT, &size,
-						       &commit_oid);
+		char *buf = odb_read_object_peeled(the_repository->objects,
+						   &commit_oid, OBJ_COMMIT, &size,
+						   &commit_oid);
 		if (!buf || size < the_hash_algo->hexsz + 6)
 			die("Not a valid commit: %s", p);
 		free(buf);
@@ -2552,7 +2552,7 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 			die("Not a blob (actually a %s): %s",
 				type_name(oe->type), command_buf.buf);
 	} else if (!is_null_oid(&oid)) {
-		enum object_type type = oid_object_info(the_repository, &oid,
+		enum object_type type = odb_read_object_info(the_repository->objects, &oid,
 							NULL);
 		if (type < 0)
 			die("Blob not found: %s", command_buf.buf);
@@ -2603,9 +2603,8 @@ static void parse_from_existing(struct branch *b)
 		unsigned long size;
 		char *buf;
 
-		buf = read_object_with_reference(the_repository,
-						 &b->oid, OBJ_COMMIT, &size,
-						 &b->oid);
+		buf = odb_read_object_peeled(the_repository->objects, &b->oid,
+					     OBJ_COMMIT, &size, &b->oid);
 		parse_from_commit(b, buf, size);
 		free(buf);
 	}
@@ -2698,10 +2697,9 @@ static struct hash_list *parse_merge(unsigned int *count)
 			oidcpy(&n->oid, &oe->idx.oid);
 		} else if (!repo_get_oid(the_repository, from, &n->oid)) {
 			unsigned long size;
-			char *buf = read_object_with_reference(the_repository,
-							       &n->oid,
-							       OBJ_COMMIT,
-							       &size, &n->oid);
+			char *buf = odb_read_object_peeled(the_repository->objects,
+							   &n->oid, OBJ_COMMIT,
+							   &size, &n->oid);
 			if (!buf || size < the_hash_algo->hexsz + 6)
 				die("Not a valid commit: %s", from);
 			free(buf);
@@ -2894,7 +2892,8 @@ static void parse_new_tag(const char *arg)
 	} else if (!repo_get_oid(the_repository, from, &oid)) {
 		struct object_entry *oe = find_object(&oid);
 		if (!oe) {
-			type = oid_object_info(the_repository, &oid, NULL);
+			type = odb_read_object_info(the_repository->objects,
+						    &oid, NULL);
 			if (type < 0)
 				die("Not a valid object: %s", from);
 		} else
@@ -3000,7 +2999,7 @@ static void cat_blob(struct object_entry *oe, struct object_id *oid)
 	char *buf;
 
 	if (!oe || oe->pack_id == MAX_PACK_ID) {
-		buf = repo_read_object_file(the_repository, oid, &type, &size);
+		buf = odb_read_object(the_repository->objects, oid, &type, &size);
 	} else {
 		type = oe->type;
 		buf = gfi_unpack_entry(oe, &size);
@@ -3084,8 +3083,8 @@ static struct object_entry *dereference(struct object_entry *oe,
 	const unsigned hexsz = the_hash_algo->hexsz;
 
 	if (!oe) {
-		enum object_type type = oid_object_info(the_repository, oid,
-							NULL);
+		enum object_type type = odb_read_object_info(the_repository->objects,
+							     oid, NULL);
 		if (type < 0)
 			die("object not found: %s", oid_to_hex(oid));
 		/* cache it! */
@@ -3108,8 +3107,8 @@ static struct object_entry *dereference(struct object_entry *oe,
 		buf = gfi_unpack_entry(oe, &size);
 	} else {
 		enum object_type unused;
-		buf = repo_read_object_file(the_repository, oid, &unused,
-					    &size);
+		buf = odb_read_object(the_repository->objects, oid,
+				      &unused, &size);
 	}
 	if (!buf)
 		die("Can't load object %s", oid_to_hex(oid));

@@ -5,7 +5,7 @@
 #include "hex.h"
 #include "refs/refs-internal.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "object.h"
 #include "string-list.h"
 #include "parse-options.h"
@@ -35,8 +35,8 @@ static void show_one(const struct show_one_options *opts,
 	const char *hex;
 	struct object_id peeled;
 
-	if (!has_object(the_repository, oid,
-			HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
+	if (!odb_has_object(the_repository->objects, oid,
+			    HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
 		die("git show-ref: bad ref %s (%s)", refname,
 		    oid_to_hex(oid));
 

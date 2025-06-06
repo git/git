@@ -4,7 +4,7 @@
 #include "hex.h"
 #include "tree.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "commit.h"
 #include "alloc.h"
 #include "tree-walk.h"
@@ -193,8 +193,8 @@ int parse_tree_gently(struct tree *item, int quiet_on_missing)
 
 	if (item->object.parsed)
 		return 0;
-	buffer = repo_read_object_file(the_repository, &item->object.oid,
-				       &type, &size);
+	buffer = odb_read_object(the_repository->objects, &item->object.oid,
+				 &type, &size);
 	if (!buffer)
 		return quiet_on_missing ? -1 :
 			error("Could not read %s",

@@ -1,7 +1,7 @@
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "repository.h"
-#include "object-store.h"
+#include "odb.h"
 #include "config.h"
 #include "object.h"
 #include "lockfile.h"
@@ -52,7 +52,7 @@ static void set_default_hash_algo(struct repository *repo)
 
 void initialize_repository(struct repository *repo)
 {
-	repo->objects = raw_object_store_new();
+	repo->objects = odb_new(repo);
 	repo->remote_state = remote_state_new();
 	repo->parsed_objects = parsed_object_pool_new(repo);
 	ALLOC_ARRAY(repo->index, 1);
@@ -107,9 +107,9 @@ const char *repo_get_common_dir(struct repository *repo)
 
 const char *repo_get_object_directory(struct repository *repo)
 {
-	if (!repo->objects->odb)
+	if (!repo->objects->sources)
 		BUG("repository hasn't been set up");
-	return repo->objects->odb->path;
+	return repo->objects->sources->path;
 }
 
 const char *repo_get_index_file(struct repository *repo)
@@ -165,14 +165,15 @@ void repo_set_gitdir(struct repository *repo,
 
 	repo_set_commondir(repo, o->commondir);
 
-	if (!repo->objects->odb) {
-		CALLOC_ARRAY(repo->objects->odb, 1);
-		repo->objects->odb_tail = &repo->objects->odb->next;
+	if (!repo->objects->sources) {
+		CALLOC_ARRAY(repo->objects->sources, 1);
+		repo->objects->sources->odb = repo->objects;
+		repo->objects->sources_tail = &repo->objects->sources->next;
 	}
-	expand_base_dir(&repo->objects->odb->path, o->object_dir,
+	expand_base_dir(&repo->objects->sources->path, o->object_dir,
 			repo->commondir, "objects");
 
-	repo->objects->odb->disable_ref_updates = o->disable_ref_updates;
+	repo->objects->sources->disable_ref_updates = o->disable_ref_updates;
 
 	free(repo->objects->alternate_db);
 	repo->objects->alternate_db = xstrdup_or_null(o->alternate_db);
@@ -374,7 +375,7 @@ void repo_clear(struct repository *repo)
 	FREE_AND_NULL(repo->worktree);
 	FREE_AND_NULL(repo->submodule_prefix);
 
-	raw_object_store_clear(repo->objects);
+	odb_clear(repo->objects);
 	FREE_AND_NULL(repo->objects);
 
 	parsed_object_pool_clear(repo->parsed_objects);

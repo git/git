@@ -19,7 +19,7 @@
 #include "run-command.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "replace-object.h"
 #include "tag.h"
 #include "wildmatch.h"
@@ -65,8 +65,8 @@ static int show_reference(const char *refname,
 			if (repo_get_oid(data->repo, refname, &object))
 				return error(_("failed to resolve '%s' as a valid ref"), refname);
 
-			obj_type = oid_object_info(data->repo, &object, NULL);
-			repl_type = oid_object_info(data->repo, oid, NULL);
+			obj_type = odb_read_object_info(data->repo->objects, &object, NULL);
+			repl_type = odb_read_object_info(data->repo->objects, oid, NULL);
 
 			printf("%s (%s) -> %s (%s)\n", refname, type_name(obj_type),
 			       oid_to_hex(oid), type_name(repl_type));
@@ -185,8 +185,8 @@ static int replace_object_oid(const char *object_ref,
 	struct strbuf err = STRBUF_INIT;
 	int res = 0;
 
-	obj_type = oid_object_info(the_repository, object, NULL);
-	repl_type = oid_object_info(the_repository, repl, NULL);
+	obj_type = odb_read_object_info(the_repository->objects, object, NULL);
+	repl_type = odb_read_object_info(the_repository->objects, repl, NULL);
 	if (!force && obj_type != repl_type)
 		return error(_("Objects must be of the same type.\n"
 			       "'%s' points to a replaced object of type '%s'\n"
@@ -334,7 +334,7 @@ static int edit_and_replace(const char *object_ref, int force, int raw)
 	if (repo_get_oid(the_repository, object_ref, &old_oid) < 0)
 		return error(_("not a valid object name: '%s'"), object_ref);
 
-	type = oid_object_info(the_repository, &old_oid, NULL);
+	type = odb_read_object_info(the_repository->objects, &old_oid, NULL);
 	if (type < 0)
 		return error(_("unable to get object type for %s"),
 			     oid_to_hex(&old_oid));

@@ -4,7 +4,7 @@
 #include "hex.h"
 #include "midx.h"
 #include "repository.h"
-#include "object-store.h"
+#include "odb.h"
 #include "pack-bitmap.h"
 #include "packfile.h"
 #include "setup.h"

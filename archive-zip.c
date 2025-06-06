@@ -12,7 +12,7 @@
 #include "hex.h"
 #include "streaming.h"
 #include "utf8.h"
-#include "object-store.h"
+#include "odb.h"
 #include "strbuf.h"
 #include "userdiff.h"
 #include "write-or-die.h"

@@ -4,7 +4,7 @@
 #include "date.h"
 #include "dir.h"
 #include "hex.h"
-#include "object-store.h"
+#include "odb.h"
 #include "path.h"
 #include "repository.h"
 #include "object.h"
@@ -1293,7 +1293,7 @@ static int fsck_blobs(struct oidset *blobs_found, struct oidset *blobs_done,
 		if (oidset_contains(blobs_done, oid))
 			continue;
 
-		buf = repo_read_object_file(the_repository, oid, &type, &size);
+		buf = odb_read_object(the_repository->objects, oid, &type, &size);
 		if (!buf) {
 			if (is_promisor_object(the_repository, oid))
 				continue;

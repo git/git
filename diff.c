@@ -23,7 +23,7 @@
 #include "color.h"
 #include "run-command.h"
 #include "utf8.h"
-#include "object-store.h"
+#include "odb.h"
 #include "userdiff.h"
 #include "submodule.h"
 #include "hashmap.h"
@@ -4230,14 +4230,14 @@ int diff_populate_filespec(struct repository *r,
 			info.contentp = &s->data;
 
 		if (options && options->missing_object_cb) {
-			if (!oid_object_info_extended(r, &s->oid, &info,
-						      OBJECT_INFO_LOOKUP_REPLACE |
-						      OBJECT_INFO_SKIP_FETCH_OBJECT))
+			if (!odb_read_object_info_extended(r->objects, &s->oid, &info,
+							   OBJECT_INFO_LOOKUP_REPLACE |
+							   OBJECT_INFO_SKIP_FETCH_OBJECT))
 				goto object_read;
 			options->missing_object_cb(options->missing_object_data);
 		}
-		if (oid_object_info_extended(r, &s->oid, &info,
-					     OBJECT_INFO_LOOKUP_REPLACE))
+		if (odb_read_object_info_extended(r->objects, &s->oid, &info,
+						  OBJECT_INFO_LOOKUP_REPLACE))
 			die("unable to read %s", oid_to_hex(&s->oid));
 
 object_read:
@@ -4252,8 +4252,8 @@ object_read:
 		}
 		if (!info.contentp) {
 			info.contentp = &s->data;
-			if (oid_object_info_extended(r, &s->oid, &info,
-						     OBJECT_INFO_LOOKUP_REPLACE))
+			if (odb_read_object_info_extended(r->objects, &s->oid, &info,
+							  OBJECT_INFO_LOOKUP_REPLACE))
 				die("unable to read %s", oid_to_hex(&s->oid));
 		}
 		s->should_free = 1;
@@ -7019,8 +7019,8 @@ void diff_add_if_missing(struct repository *r,
 {
 	if (filespec && filespec->oid_valid &&
 	    !S_ISGITLINK(filespec->mode) &&
-	    oid_object_info_extended(r, &filespec->oid, NULL,
-				     OBJECT_INFO_FOR_PREFETCH))
+	    odb_read_object_info_extended(r->objects, &filespec->oid, NULL,
+					  OBJECT_INFO_FOR_PREFETCH))
 		oid_array_append(to_fetch, &filespec->oid);
 }
 

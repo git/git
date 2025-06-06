@@ -80,10 +80,10 @@ static int count_cruft(const char *basename UNUSED, const char *path,
 	return 0;
 }
 
-static int print_alternate(struct object_directory *odb, void *data UNUSED)
+static int print_alternate(struct odb_source *alternate, void *data UNUSED)
 {
 	printf("alternate: ");
-	quote_c_style(odb->path, NULL, stdout, 0);
+	quote_c_style(alternate->path, NULL, stdout, 0);
 	putchar('\n');
 	return 0;
 }
@@ -159,7 +159,7 @@ int cmd_count_objects(int argc,
 		printf("prune-packable: %lu\n", packed_loose);
 		printf("garbage: %lu\n", garbage);
 		printf("size-garbage: %s\n", garbage_buf.buf);
-		foreach_alt_odb(print_alternate, NULL);
+		odb_for_each_alternate(the_repository->objects, print_alternate, NULL);
 		strbuf_release(&loose_buf);
 		strbuf_release(&pack_buf);
 		strbuf_release(&garbage_buf);

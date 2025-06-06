@@ -5,7 +5,7 @@
 #include "gettext.h"
 #include "grep.h"
 #include "hex.h"
-#include "object-store.h"
+#include "odb.h"
 #include "pretty.h"
 #include "userdiff.h"
 #include "xdiff-interface.h"
@@ -1931,8 +1931,8 @@ static int grep_source_load_oid(struct grep_source *gs)
 {
 	enum object_type type;
 
-	gs->buf = repo_read_object_file(gs->repo, gs->identifier, &type,
-					&gs->size);
+	gs->buf = odb_read_object(gs->repo->objects, gs->identifier,
+				  &type, &gs->size);
 	if (!gs->buf)
 		return error(_("'%s': unable to read %s"),
 			     gs->name,

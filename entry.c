@@ -1,7 +1,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "git-compat-util.h"
-#include "object-store.h"
+#include "odb.h"
 #include "dir.h"
 #include "environment.h"
 #include "gettext.h"
@@ -93,8 +93,8 @@ void *read_blob_entry(const struct cache_entry *ce, size_t *size)
 {
 	enum object_type type;
 	unsigned long ul;
-	void *blob_data = repo_read_object_file(the_repository, &ce->oid,
-						&type, &ul);
+	void *blob_data = odb_read_object(the_repository->objects, &ce->oid,
+					  &type, &ul);
 
 	*size = ul;
 	if (blob_data) {

@@ -1,7 +1,7 @@
 #ifndef PACK_OBJECTS_H
 #define PACK_OBJECTS_H
 
-#include "object-store.h"
+#include "odb.h"
 #include "thread-utils.h"
 #include "pack.h"
 #include "packfile.h"

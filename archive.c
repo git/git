@@ -14,7 +14,7 @@
 #include "pretty.h"
 #include "setup.h"
 #include "refs.h"
-#include "object-store.h"
+#include "odb.h"
 #include "commit.h"
 #include "tree.h"
 #include "tree-walk.h"
@@ -98,7 +98,7 @@ static void *object_file_to_archive(const struct archiver_args *args,
 			       (args->tree ? &args->tree->object.oid : NULL), oid);
 
 	path += args->baselen;
-	buffer = repo_read_object_file(the_repository, oid, type, sizep);
+	buffer = odb_read_object(the_repository->objects, oid, type, sizep);
 	if (buffer && S_ISREG(mode)) {
 		struct strbuf buf = STRBUF_INIT;
 		size_t size = 0;
@@ -215,7 +215,7 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 
 	/* Stream it? */
 	if (S_ISREG(mode) && !args->convert &&
-	    oid_object_info(args->repo, oid, &size) == OBJ_BLOB &&
+	    odb_read_object_info(args->repo->objects, oid, &size) == OBJ_BLOB &&
 	    size > repo_settings_get_big_file_threshold(the_repository))
 		return write_entry(args, oid, path.buf, path.len, mode, NULL, size);
 
