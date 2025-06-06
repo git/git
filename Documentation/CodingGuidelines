@@ -877,6 +877,17 @@ Characters are also surrounded by underscores:
 As a side effect, backquoted placeholders are correctly typeset, but
 this style is not recommended.
 
+ When documenting multiple related `git config` variables, place them on
+ a separate line instead of separating them by commas.  For example, do
+ not write this:
+   `core.var1`, `core.var2`::
+  	Description common to `core.var1` and `core.var2`.
+
+Instead write this:
+   `core.var1`::
+   `core.var2`::
+  	Description common to `core.var1` and `core.var2`.
+
 Synopsis Syntax
 
  The synopsis (a paragraph with [synopsis] attribute) is automatically
