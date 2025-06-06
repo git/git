@@ -67,6 +67,8 @@ static NORETURN void usage_builtin(const char *err, va_list params)
 
 static void die_message_builtin(const char *err, va_list params)
 {
+	if (!err)
+		return;
 	trace2_cmd_error_va(err, params);
 	vreportf(_("fatal: "), err, params);
 }

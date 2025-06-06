@@ -251,7 +251,24 @@ static enum schedule_priority parse_schedule(const char *value)
 	return SCHEDULE_NONE;
 }
 
+enum maintenance_task_label {
+	TASK_PREFETCH,
+	TASK_LOOSE_OBJECTS,
+	TASK_INCREMENTAL_REPACK,
+	TASK_GC,
+	TASK_COMMIT_GRAPH,
+	TASK_PACK_REFS,
+	TASK_REFLOG_EXPIRE,
+	TASK_WORKTREE_PRUNE,
+	TASK_RERERE_GC,
+
+	/* Leave as final value */
+	TASK__COUNT
+};
+
 struct maintenance_run_opts {
+	enum maintenance_task_label *tasks;
+	size_t tasks_nr, tasks_alloc;
 	int auto_flag;
 	int detach;
 	int quiet;
@@ -259,6 +276,11 @@ struct maintenance_run_opts {
 };
 #define MAINTENANCE_RUN_OPTS_INIT { \
 	.detach = -1, \
+}
+
+static void maintenance_run_opts_release(struct maintenance_run_opts *opts)
+{
+	free(opts->tasks);
 }
 
 static int pack_refs_condition(UNUSED struct gc_config *cfg)
@@ -796,22 +818,14 @@ done:
 	return ret;
 }
 
-static void gc_before_repack(struct maintenance_run_opts *opts,
-			     struct gc_config *cfg)
+static int gc_foreground_tasks(struct maintenance_run_opts *opts,
+			       struct gc_config *cfg)
 {
-	/*
-	 * We may be called twice, as both the pre- and
-	 * post-daemonized phases will call us, but running these
-	 * commands more than once is pointless and wasteful.
-	 */
-	static int done = 0;
-	if (done++)
-		return;
-
 	if (cfg->pack_refs && maintenance_task_pack_refs(opts, cfg))
-		die(FAILED_RUN, "pack-refs");
+		return error(FAILED_RUN, "pack-refs");
 	if (cfg->prune_reflogs && maintenance_task_reflog_expire(opts, cfg))
-		die(FAILED_RUN, "reflog");
+		return error(FAILED_RUN, "reflog");
+	return 0;
 }
 
 int cmd_gc(int argc,
@@ -820,12 +834,12 @@ int cmd_gc(int argc,
 	   struct repository *repo UNUSED)
 {
 	int aggressive = 0;
-	int quiet = 0;
 	int force = 0;
 	const char *name;
 	pid_t pid;
 	int daemonized = 0;
 	int keep_largest_pack = -1;
+	int skip_foreground_tasks = 0;
 	timestamp_t dummy;
 	struct maintenance_run_opts opts = MAINTENANCE_RUN_OPTS_INIT;
 	struct gc_config cfg = GC_CONFIG_INIT;
@@ -833,7 +847,7 @@ int cmd_gc(int argc,
 	const char *prune_expire_arg = prune_expire_sentinel;
 	int ret;
 	struct option builtin_gc_options[] = {
-		OPT__QUIET(&quiet, N_("suppress progress reporting")),
+		OPT__QUIET(&opts.quiet, N_("suppress progress reporting")),
 		{
 			.type = OPTION_STRING,
 			.long_name = "prune",
@@ -858,6 +872,8 @@ int cmd_gc(int argc,
 			 N_("repack all other packs except the largest pack")),
 		OPT_STRING(0, "expire-to", &cfg.repack_expire_to, N_("dir"),
 			   N_("pack prefix to store a pack containing pruned objects")),
+		OPT_HIDDEN_BOOL(0, "skip-foreground-tasks", &skip_foreground_tasks,
+			   N_("skip maintenance tasks typically done in the foreground")),
 		OPT_END()
 	};
 
@@ -893,7 +909,7 @@ int cmd_gc(int argc,
 		if (cfg.aggressive_window > 0)
 			strvec_pushf(&repack, "--window=%d", cfg.aggressive_window);
 	}
-	if (quiet)
+	if (opts.quiet)
 		strvec_push(&repack, "-q");
 
 	if (opts.auto_flag) {
@@ -908,7 +924,7 @@ int cmd_gc(int argc,
 			goto out;
 		}
 
-		if (!quiet) {
+		if (!opts.quiet) {
 			if (opts.detach > 0)
 				fprintf(stderr, _("Auto packing the repository in background for optimum performance.\n"));
 			else
@@ -941,13 +957,16 @@ int cmd_gc(int argc,
 			goto out;
 		}
 
-		if (lock_repo_for_gc(force, &pid)) {
-			ret = 0;
-			goto out;
-		}
+		if (!skip_foreground_tasks) {
+			if (lock_repo_for_gc(force, &pid)) {
+				ret = 0;
+				goto out;
+			}
 
-		gc_before_repack(&opts, &cfg); /* dies on failure */
-		delete_tempfile(&pidfile);
+			if (gc_foreground_tasks(&opts, &cfg) < 0)
+				die(NULL);
+			delete_tempfile(&pidfile);
+		}
 
 		/*
 		 * failure to daemonize is ok, we'll continue
@@ -976,7 +995,8 @@ int cmd_gc(int argc,
 		free(path);
 	}
 
-	gc_before_repack(&opts, &cfg);
+	if (opts.detach <= 0 && !skip_foreground_tasks)
+		gc_foreground_tasks(&opts, &cfg);
 
 	if (!repository_format_precious_objects) {
 		struct child_process repack_cmd = CHILD_PROCESS_INIT;
@@ -993,7 +1013,7 @@ int cmd_gc(int argc,
 			strvec_pushl(&prune_cmd.args, "prune", "--expire", NULL);
 			/* run `git prune` even if using cruft packs */
 			strvec_push(&prune_cmd.args, cfg.prune_expire);
-			if (quiet)
+			if (opts.quiet)
 				strvec_push(&prune_cmd.args, "--no-progress");
 			if (repo_has_promisor_remote(the_repository))
 				strvec_push(&prune_cmd.args,
@@ -1021,7 +1041,7 @@ int cmd_gc(int argc,
 
 	if (the_repository->settings.gc_write_commit_graph == 1)
 		write_commit_graph_reachable(the_repository->objects->odb,
-					     !quiet && !daemonized ? COMMIT_GRAPH_WRITE_PROGRESS : 0,
+					     !opts.quiet && !daemonized ? COMMIT_GRAPH_WRITE_PROGRESS : 0,
 					     NULL);
 
 	if (opts.auto_flag && too_many_loose_objects(&cfg))
@@ -1035,6 +1055,7 @@ int cmd_gc(int argc,
 	}
 
 out:
+	maintenance_run_opts_release(&opts);
 	gc_config_release(&cfg);
 	return 0;
 }
@@ -1211,8 +1232,14 @@ static int maintenance_task_prefetch(struct maintenance_run_opts *opts,
 	return 0;
 }
 
-static int maintenance_task_gc(struct maintenance_run_opts *opts,
-			       struct gc_config *cfg UNUSED)
+static int maintenance_task_gc_foreground(struct maintenance_run_opts *opts,
+					  struct gc_config *cfg)
+{
+	return gc_foreground_tasks(opts, cfg);
+}
+
+static int maintenance_task_gc_background(struct maintenance_run_opts *opts,
+					  struct gc_config *cfg UNUSED)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 
@@ -1226,6 +1253,7 @@ static int maintenance_task_gc(struct maintenance_run_opts *opts,
 	else
 		strvec_push(&child.args, "--no-quiet");
 	strvec_push(&child.args, "--no-detach");
+	strvec_push(&child.args, "--skip-foreground-tasks");
 
 	return run_command(&child);
 }
@@ -1513,103 +1541,116 @@ static int maintenance_task_incremental_repack(struct maintenance_run_opts *opts
 	return 0;
 }
 
-typedef int maintenance_task_fn(struct maintenance_run_opts *opts,
-				struct gc_config *cfg);
-
-/*
- * An auto condition function returns 1 if the task should run
- * and 0 if the task should NOT run. See needs_to_gc() for an
- * example.
- */
-typedef int maintenance_auto_fn(struct gc_config *cfg);
+typedef int (*maintenance_task_fn)(struct maintenance_run_opts *opts,
+				   struct gc_config *cfg);
+typedef int (*maintenance_auto_fn)(struct gc_config *cfg);
 
 struct maintenance_task {
 	const char *name;
-	maintenance_task_fn *fn;
-	maintenance_auto_fn *auto_condition;
-	unsigned enabled:1;
 
-	enum schedule_priority schedule;
+	/*
+	 * Work that will be executed before detaching. This should not include
+	 * tasks that may run for an extended amount of time as it does cause
+	 * auto-maintenance to block until foreground tasks have been run.
+	 */
+	maintenance_task_fn foreground;
 
-	/* -1 if not selected. */
-	int selected_order;
+	/*
+	 * Work that will be executed after detaching. When not detaching the
+	 * work will be run in the foreground, as well.
+	 */
+	maintenance_task_fn background;
+
+	/*
+	 * An auto condition function returns 1 if the task should run and 0 if
+	 * the task should NOT run. See needs_to_gc() for an example.
+	 */
+	maintenance_auto_fn auto_condition;
 };
 
-enum maintenance_task_label {
-	TASK_PREFETCH,
-	TASK_LOOSE_OBJECTS,
-	TASK_INCREMENTAL_REPACK,
-	TASK_GC,
-	TASK_COMMIT_GRAPH,
-	TASK_PACK_REFS,
-	TASK_REFLOG_EXPIRE,
-	TASK_WORKTREE_PRUNE,
-	TASK_RERERE_GC,
-
-	/* Leave as final value */
-	TASK__COUNT
-};
-
-static struct maintenance_task tasks[] = {
+static const struct maintenance_task tasks[] = {
 	[TASK_PREFETCH] = {
-		"prefetch",
-		maintenance_task_prefetch,
+		.name = "prefetch",
+		.background = maintenance_task_prefetch,
 	},
 	[TASK_LOOSE_OBJECTS] = {
-		"loose-objects",
-		maintenance_task_loose_objects,
-		loose_object_auto_condition,
+		.name = "loose-objects",
+		.background = maintenance_task_loose_objects,
+		.auto_condition = loose_object_auto_condition,
 	},
 	[TASK_INCREMENTAL_REPACK] = {
-		"incremental-repack",
-		maintenance_task_incremental_repack,
-		incremental_repack_auto_condition,
+		.name = "incremental-repack",
+		.background = maintenance_task_incremental_repack,
+		.auto_condition = incremental_repack_auto_condition,
 	},
 	[TASK_GC] = {
-		"gc",
-		maintenance_task_gc,
-		need_to_gc,
-		1,
+		.name = "gc",
+		.foreground = maintenance_task_gc_foreground,
+		.background = maintenance_task_gc_background,
+		.auto_condition = need_to_gc,
 	},
 	[TASK_COMMIT_GRAPH] = {
-		"commit-graph",
-		maintenance_task_commit_graph,
-		should_write_commit_graph,
+		.name = "commit-graph",
+		.background = maintenance_task_commit_graph,
+		.auto_condition = should_write_commit_graph,
 	},
 	[TASK_PACK_REFS] = {
-		"pack-refs",
-		maintenance_task_pack_refs,
-		pack_refs_condition,
+		.name = "pack-refs",
+		.foreground = maintenance_task_pack_refs,
+		.auto_condition = pack_refs_condition,
 	},
 	[TASK_REFLOG_EXPIRE] = {
-		"reflog-expire",
-		maintenance_task_reflog_expire,
-		reflog_expire_condition,
+		.name = "reflog-expire",
+		.foreground = maintenance_task_reflog_expire,
+		.auto_condition = reflog_expire_condition,
 	},
 	[TASK_WORKTREE_PRUNE] = {
-		"worktree-prune",
-		maintenance_task_worktree_prune,
-		worktree_prune_condition,
+		.name = "worktree-prune",
+		.background = maintenance_task_worktree_prune,
+		.auto_condition = worktree_prune_condition,
 	},
 	[TASK_RERERE_GC] = {
-		"rerere-gc",
-		maintenance_task_rerere_gc,
-		rerere_gc_condition,
+		.name = "rerere-gc",
+		.background = maintenance_task_rerere_gc,
+		.auto_condition = rerere_gc_condition,
 	},
 };
 
-static int compare_tasks_by_selection(const void *a_, const void *b_)
-{
-	const struct maintenance_task *a = a_;
-	const struct maintenance_task *b = b_;
+enum task_phase {
+	TASK_PHASE_FOREGROUND,
+	TASK_PHASE_BACKGROUND,
+};
 
-	return b->selected_order - a->selected_order;
+static int maybe_run_task(const struct maintenance_task *task,
+			  struct repository *repo,
+			  struct maintenance_run_opts *opts,
+			  struct gc_config *cfg,
+			  enum task_phase phase)
+{
+	int foreground = (phase == TASK_PHASE_FOREGROUND);
+	maintenance_task_fn fn = foreground ? task->foreground : task->background;
+	const char *region = foreground ? "maintenance foreground" : "maintenance";
+	int ret = 0;
+
+	if (!fn)
+		return 0;
+	if (opts->auto_flag &&
+	    (!task->auto_condition || !task->auto_condition(cfg)))
+		return 0;
+
+	trace2_region_enter(region, task->name, repo);
+	if (fn(opts, cfg)) {
+		error(_("task '%s' failed"), task->name);
+		ret = 1;
+	}
+	trace2_region_leave(region, task->name, repo);
+
+	return ret;
 }
 
 static int maintenance_run_tasks(struct maintenance_run_opts *opts,
 				 struct gc_config *cfg)
 {
-	int i, found_selected = 0;
 	int result = 0;
 	struct lock_file lk;
 	struct repository *r = the_repository;
@@ -1631,6 +1672,11 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts,
 	}
 	free(lock_path);
 
+	for (size_t i = 0; i < opts->tasks_nr; i++)
+		if (maybe_run_task(&tasks[opts->tasks[i]], r, opts, cfg,
+				   TASK_PHASE_FOREGROUND))
+			result = 1;
+
 	/* Failure to daemonize is ok, we'll continue in foreground. */
 	if (opts->detach > 0) {
 		trace2_region_enter("maintenance", "detach", the_repository);
@@ -1638,120 +1684,138 @@ static int maintenance_run_tasks(struct maintenance_run_opts *opts,
 		trace2_region_leave("maintenance", "detach", the_repository);
 	}
 
-	for (i = 0; !found_selected && i < TASK__COUNT; i++)
-		found_selected = tasks[i].selected_order >= 0;
-
-	if (found_selected)
-		QSORT(tasks, TASK__COUNT, compare_tasks_by_selection);
-
-	for (i = 0; i < TASK__COUNT; i++) {
-		if (found_selected && tasks[i].selected_order < 0)
-			continue;
-
-		if (!found_selected && !tasks[i].enabled)
-			continue;
-
-		if (opts->auto_flag &&
-		    (!tasks[i].auto_condition ||
-		     !tasks[i].auto_condition(cfg)))
-			continue;
-
-		if (opts->schedule && tasks[i].schedule < opts->schedule)
-			continue;
-
-		trace2_region_enter("maintenance", tasks[i].name, r);
-		if (tasks[i].fn(opts, cfg)) {
-			error(_("task '%s' failed"), tasks[i].name);
+	for (size_t i = 0; i < opts->tasks_nr; i++)
+		if (maybe_run_task(&tasks[opts->tasks[i]], r, opts, cfg,
+				   TASK_PHASE_BACKGROUND))
 			result = 1;
-		}
-		trace2_region_leave("maintenance", tasks[i].name, r);
-	}
 
 	rollback_lock_file(&lk);
 	return result;
 }
 
-static void initialize_maintenance_strategy(void)
+struct maintenance_strategy {
+	struct {
+		int enabled;
+		enum schedule_priority schedule;
+	} tasks[TASK__COUNT];
+};
+
+static const struct maintenance_strategy none_strategy = { 0 };
+static const struct maintenance_strategy default_strategy = {
+	.tasks = {
+		[TASK_GC].enabled = 1,
+	},
+};
+static const struct maintenance_strategy incremental_strategy = {
+	.tasks = {
+		[TASK_COMMIT_GRAPH].enabled = 1,
+		[TASK_COMMIT_GRAPH].schedule = SCHEDULE_HOURLY,
+		[TASK_PREFETCH].enabled = 1,
+		[TASK_PREFETCH].schedule = SCHEDULE_HOURLY,
+		[TASK_INCREMENTAL_REPACK].enabled = 1,
+		[TASK_INCREMENTAL_REPACK].schedule = SCHEDULE_DAILY,
+		[TASK_LOOSE_OBJECTS].enabled = 1,
+		[TASK_LOOSE_OBJECTS].schedule = SCHEDULE_DAILY,
+		[TASK_PACK_REFS].enabled = 1,
+		[TASK_PACK_REFS].schedule = SCHEDULE_WEEKLY,
+	},
+};
+
+static void initialize_task_config(struct maintenance_run_opts *opts,
+				   const struct string_list *selected_tasks)
 {
+	struct strbuf config_name = STRBUF_INIT;
+	struct maintenance_strategy strategy;
 	const char *config_str;
 
-	if (git_config_get_string_tmp("maintenance.strategy", &config_str))
+	/*
+	 * In case the user has asked us to run tasks explicitly we only use
+	 * those specified tasks. Specifically, we do _not_ want to consult the
+	 * config or maintenance strategy.
+	 */
+	if (selected_tasks->nr) {
+		for (size_t i = 0; i < selected_tasks->nr; i++) {
+			enum maintenance_task_label label = (intptr_t)selected_tasks->items[i].util;;
+			ALLOC_GROW(opts->tasks, opts->tasks_nr + 1, opts->tasks_alloc);
+			opts->tasks[opts->tasks_nr++] = label;
+		}
+
 		return;
-
-	if (!strcasecmp(config_str, "incremental")) {
-		tasks[TASK_GC].schedule = SCHEDULE_NONE;
-		tasks[TASK_COMMIT_GRAPH].enabled = 1;
-		tasks[TASK_COMMIT_GRAPH].schedule = SCHEDULE_HOURLY;
-		tasks[TASK_PREFETCH].enabled = 1;
-		tasks[TASK_PREFETCH].schedule = SCHEDULE_HOURLY;
-		tasks[TASK_INCREMENTAL_REPACK].enabled = 1;
-		tasks[TASK_INCREMENTAL_REPACK].schedule = SCHEDULE_DAILY;
-		tasks[TASK_LOOSE_OBJECTS].enabled = 1;
-		tasks[TASK_LOOSE_OBJECTS].schedule = SCHEDULE_DAILY;
-		tasks[TASK_PACK_REFS].enabled = 1;
-		tasks[TASK_PACK_REFS].schedule = SCHEDULE_WEEKLY;
 	}
-}
 
-static void initialize_task_config(int schedule)
-{
-	int i;
-	struct strbuf config_name = STRBUF_INIT;
+	/*
+	 * Otherwise, the strategy depends on whether we run as part of a
+	 * scheduled job or not:
+	 *
+	 *   - Scheduled maintenance does not perform any housekeeping by
+	 *     default, but requires the user to pick a maintenance strategy.
+	 *
+	 *   - Unscheduled maintenance uses our default strategy.
+	 *
+	 * Both of these are affected by the gitconfig though, which may
+	 * override specific aspects of our strategy.
+	 */
+	if (opts->schedule) {
+		strategy = none_strategy;
 
-	if (schedule)
-		initialize_maintenance_strategy();
+		if (!git_config_get_string_tmp("maintenance.strategy", &config_str)) {
+			if (!strcasecmp(config_str, "incremental"))
+				strategy = incremental_strategy;
+		}
+	} else {
+		strategy = default_strategy;
+	}
 
-	for (i = 0; i < TASK__COUNT; i++) {
+	for (size_t i = 0; i < TASK__COUNT; i++) {
 		int config_value;
-		char *config_str;
 
 		strbuf_reset(&config_name);
 		strbuf_addf(&config_name, "maintenance.%s.enabled",
 			    tasks[i].name);
-
 		if (!git_config_get_bool(config_name.buf, &config_value))
-			tasks[i].enabled = config_value;
+			strategy.tasks[i].enabled = config_value;
+		if (!strategy.tasks[i].enabled)
+			continue;
 
-		strbuf_reset(&config_name);
-		strbuf_addf(&config_name, "maintenance.%s.schedule",
-			    tasks[i].name);
-
-		if (!git_config_get_string(config_name.buf, &config_str)) {
-			tasks[i].schedule = parse_schedule(config_str);
-			free(config_str);
+		if (opts->schedule) {
+			strbuf_reset(&config_name);
+			strbuf_addf(&config_name, "maintenance.%s.schedule",
+				    tasks[i].name);
+			if (!git_config_get_string_tmp(config_name.buf, &config_str))
+				strategy.tasks[i].schedule = parse_schedule(config_str);
+			if (strategy.tasks[i].schedule < opts->schedule)
+				continue;
 		}
+
+		ALLOC_GROW(opts->tasks, opts->tasks_nr + 1, opts->tasks_alloc);
+		opts->tasks[opts->tasks_nr++] = i;
 	}
 
 	strbuf_release(&config_name);
 }
 
-static int task_option_parse(const struct option *opt UNUSED,
+static int task_option_parse(const struct option *opt,
 			     const char *arg, int unset)
 {
-	int i, num_selected = 0;
-	struct maintenance_task *task = NULL;
+	struct string_list *selected_tasks = opt->value;
+	size_t i;
 
 	BUG_ON_OPT_NEG(unset);
 
-	for (i = 0; i < TASK__COUNT; i++) {
-		if (tasks[i].selected_order >= 0)
-			num_selected++;
-		if (!strcasecmp(tasks[i].name, arg)) {
-			task = &tasks[i];
-		}
-	}
-
-	if (!task) {
+	for (i = 0; i < TASK__COUNT; i++)
+		if (!strcasecmp(tasks[i].name, arg))
+			break;
+	if (i >= TASK__COUNT) {
 		error(_("'%s' is not a valid task"), arg);
 		return 1;
 	}
 
-	if (task->selected_order >= 0) {
+	if (unsorted_string_list_has_string(selected_tasks, arg)) {
 		error(_("task '%s' cannot be selected multiple times"), arg);
 		return 1;
 	}
 
-	task->selected_order = num_selected + 1;
+	string_list_append(selected_tasks, arg)->util = (void *)(intptr_t)i;
 
 	return 0;
 }
@@ -1759,8 +1823,8 @@ static int task_option_parse(const struct option *opt UNUSED,
 static int maintenance_run(int argc, const char **argv, const char *prefix,
 			   struct repository *repo UNUSED)
 {
-	int i;
 	struct maintenance_run_opts opts = MAINTENANCE_RUN_OPTS_INIT;
+	struct string_list selected_tasks = STRING_LIST_INIT_DUP;
 	struct gc_config cfg = GC_CONFIG_INIT;
 	struct option builtin_maintenance_run_options[] = {
 		OPT_BOOL(0, "auto", &opts.auto_flag,
@@ -1772,7 +1836,7 @@ static int maintenance_run(int argc, const char **argv, const char *prefix,
 			     maintenance_opt_schedule),
 		OPT_BOOL(0, "quiet", &opts.quiet,
 			 N_("do not report progress or other information over stderr")),
-		OPT_CALLBACK_F(0, "task", NULL, N_("task"),
+		OPT_CALLBACK_F(0, "task", &selected_tasks, N_("task"),
 			N_("run a specific task"),
 			PARSE_OPT_NONEG, task_option_parse),
 		OPT_END()
@@ -1781,25 +1845,27 @@ static int maintenance_run(int argc, const char **argv, const char *prefix,
 
 	opts.quiet = !isatty(2);
 
-	for (i = 0; i < TASK__COUNT; i++)
-		tasks[i].selected_order = -1;
-
 	argc = parse_options(argc, argv, prefix,
 			     builtin_maintenance_run_options,
 			     builtin_maintenance_run_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
-	if (opts.auto_flag && opts.schedule)
-		die(_("use at most one of --auto and --schedule=<frequency>"));
+	die_for_incompatible_opt2(opts.auto_flag, "--auto",
+				  opts.schedule, "--schedule=");
+	die_for_incompatible_opt2(selected_tasks.nr, "--task=",
+				  opts.schedule, "--schedule=");
 
 	gc_config(&cfg);
-	initialize_task_config(opts.schedule);
+	initialize_task_config(&opts, &selected_tasks);
 
 	if (argc != 0)
 		usage_with_options(builtin_maintenance_run_usage,
 				   builtin_maintenance_run_options);
 
 	ret = maintenance_run_tasks(&opts, &cfg);
+
+	string_list_clear(&selected_tasks, 0);
+	maintenance_run_opts_release(&opts);
 	gc_config_release(&cfg);
 	return ret;
 }

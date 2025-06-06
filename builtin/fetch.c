@@ -955,7 +955,7 @@ static int update_local_ref(struct ref *ref,
 		fast_forward = repo_in_merge_bases(the_repository, current,
 						   updated);
 		if (fast_forward < 0)
-			exit(128);
+			die(NULL);
 		forced_updates_ms += (getnanotime() - t_before) / 1000000;
 	} else {
 		fast_forward = 1;

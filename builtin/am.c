@@ -1000,7 +1000,7 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 
 	if (!patch_format) {
 		fprintf_ln(stderr, _("Patch format detection failed."));
-		exit(128);
+		die(NULL);
 	}
 
 	if (mkdir(state->dir, 0777) < 0 && errno != EEXIST)
@@ -1178,7 +1178,7 @@ static void NORETURN die_user_resolve(const struct am_state *state)
 		strbuf_release(&sb);
 	}
 
-	exit(128);
+	die(NULL);
 }
 
 /**
