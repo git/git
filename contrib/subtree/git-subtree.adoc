@@ -9,14 +9,14 @@ git-subtree - Merge subtrees together and split repository into subtrees
 SYNOPSIS
 --------
 [verse]
-'git subtree' [<options>] -P <prefix> add <local-commit>
-'git subtree' [<options>] -P <prefix> add <repository> <remote-ref>
-'git subtree' [<options>] -P <prefix> merge <local-commit> [<repository>]
-'git subtree' [<options>] -P <prefix> split [<local-commit>]
+'git subtree' [<options>] -P <prefix> [-S[<keyid>]] add <local-commit>
+'git subtree' [<options>] -P <prefix> [-S[<keyid>]] add <repository> <remote-ref>
+'git subtree' [<options>] -P <prefix> [-S[<keyid>]] merge <local-commit> [<repository>]
+'git subtree' [<options>] -P <prefix> [-S[<keyid>]] split [<local-commit>]
 
 [verse]
-'git subtree' [<options>] -P <prefix> pull <repository> <remote-ref>
-'git subtree' [<options>] -P <prefix> push <repository> <refspec>
+'git subtree' [<options>] -P <prefix> [-S[<keyid>]] pull <repository> <remote-ref>
+'git subtree' [<options>] -P <prefix> [-S[<keyid>]] push <repository> <refspec>
 
 DESCRIPTION
 -----------
@@ -148,6 +148,13 @@ OPTIONS FOR ALL COMMANDS
 	Specify the path in the repository to the subtree you
 	want to manipulate.  This option is mandatory
 	for all commands.
+
+-S[<keyid>]::
+--gpg-sign[=<keyid>]::
+--no-gpg-sign::
+	GPG-sign commits. The `keyid` argument is optional and
+	defaults to the committer identity; `--no-gpg-sign` is useful to
+	countermand a `--gpg-sign` option given earlier on the command line.
 
 OPTIONS FOR 'add' AND 'merge' (ALSO: 'pull', 'split --rejoin', AND 'push --rejoin')
 -----------------------------------------------------------------------------------
