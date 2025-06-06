@@ -224,6 +224,8 @@ static int inherit_tracking(struct tracking *tracking, const char *orig_ref)
 	skip_prefix(orig_ref, "refs/heads/", &bare_ref);
 
 	branch = branch_get(bare_ref);
+	if (!branch)
+		BUG("could not get branch for '%s", bare_ref);
 	if (!branch->remote_name) {
 		warning(_("asked to inherit tracking from '%s', but no remote is set"),
 			bare_ref);

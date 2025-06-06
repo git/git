@@ -1935,6 +1935,9 @@ static int determine_submodule_update_strategy(struct repository *r,
 	const char *val;
 	int ret;
 
+	if (!sub)
+		return error(_("could not retrieve submodule information for path '%s'"), path);
+
 	key = xstrfmt("submodule.%s.update", sub->name);
 
 	if (update) {

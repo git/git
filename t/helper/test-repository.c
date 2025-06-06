@@ -27,6 +27,8 @@ static void test_parse_commit_in_graph(const char *gitdir, const char *worktree,
 	repo_set_hash_algo(the_repository, hash_algo_by_ptr(r.hash_algo));
 
 	c = lookup_commit(&r, commit_oid);
+	if (!c)
+		die("Could not look up %s", oid_to_hex(commit_oid));
 
 	if (!parse_commit_in_graph(&r, c))
 		die("Couldn't parse commit");

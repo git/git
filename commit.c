@@ -188,7 +188,7 @@ void unparse_commit(struct repository *r, const struct object_id *oid)
 {
 	struct commit *c = lookup_commit(r, oid);
 
-	if (!c->object.parsed)
+	if (!c || !c->object.parsed)
 		return;
 	free_commit_list(c->parents);
 	c->parents = NULL;

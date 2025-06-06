@@ -705,7 +705,8 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 	for (i = 0; i < nr_shallow; i++) {
 		struct commit *c = lookup_commit(the_repository,
 						 &oid[shallow[i]]);
-		c->object.flags |= BOTTOM;
+		if (c)
+			c->object.flags |= BOTTOM;
 	}
 
 	for (i = 0; i < ref->nr; i++)

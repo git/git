@@ -156,7 +156,7 @@ static struct commit *deref_without_lazy_fetch(const struct object_id *oid,
 			struct tag *tag = (struct tag *)
 				parse_object(the_repository, oid);
 
-			if (!tag->tagged)
+			if (!tag || !tag->tagged)
 				return NULL;
 			if (mark_tags_complete_and_check_obj_db)
 				tag->object.flags |= COMPLETE;

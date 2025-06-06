@@ -3354,6 +3354,9 @@ static int leave_one_treesame_to_parent(struct rev_info *revs, struct commit *co
 	struct commit_list *p;
 	unsigned n;
 
+	if (!ts)
+		return 0;
+
 	for (p = commit->parents, n = 0; p; p = p->next, n++) {
 		if (ts->treesame[n]) {
 			if (p->item->object.flags & TMP_MARK) {
