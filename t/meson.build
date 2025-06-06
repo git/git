@@ -8,6 +8,14 @@ clar_test_suites = [
   'unit-tests/u-oidmap.c',
   'unit-tests/u-oidtree.c',
   'unit-tests/u-prio-queue.c',
+  'unit-tests/u-reftable-basics.c',
+  'unit-tests/u-reftable-block.c',
+  'unit-tests/u-reftable-merged.c',
+  'unit-tests/u-reftable-pq.c',
+  'unit-tests/u-reftable-readwrite.c',
+  'unit-tests/u-reftable-record.c',
+  'unit-tests/u-reftable-stack.c',
+  'unit-tests/u-reftable-table.c',
   'unit-tests/u-reftable-tree.c',
   'unit-tests/u-strbuf.c',
   'unit-tests/u-strcmp-offset.c',
@@ -19,7 +27,8 @@ clar_test_suites = [
 clar_sources = [
   'unit-tests/clar/clar.c',
   'unit-tests/unit-test.c',
-  'unit-tests/lib-oid.c'
+  'unit-tests/lib-oid.c',
+  'unit-tests/lib-reftable.c'
 ]
 
 clar_decls_h = custom_target(
@@ -52,33 +61,6 @@ clar_unit_tests = executable('unit-tests',
   dependencies: [libgit_commonmain],
 )
 test('unit-tests', clar_unit_tests, kwargs: test_kwargs)
-
-unit_test_programs = [
-  'unit-tests/t-reftable-basics.c',
-  'unit-tests/t-reftable-block.c',
-  'unit-tests/t-reftable-merged.c',
-  'unit-tests/t-reftable-pq.c',
-  'unit-tests/t-reftable-readwrite.c',
-  'unit-tests/t-reftable-record.c',
-  'unit-tests/t-reftable-stack.c',
-  'unit-tests/t-reftable-table.c',
-]
-
-foreach unit_test_program : unit_test_programs
-  unit_test_name = fs.stem(unit_test_program)
-  unit_test = executable(unit_test_name,
-    sources: [
-      'unit-tests/test-lib.c',
-      'unit-tests/lib-reftable.c',
-      unit_test_program,
-    ],
-    dependencies: [libgit_commonmain],
-  )
-  test(unit_test_name, unit_test,
-    workdir: meson.current_source_dir(),
-    kwargs: test_kwargs,
-  )
-endforeach
 
 subdir('helper')
 
@@ -1163,8 +1145,6 @@ benchmarks = [
 # sufficient to catch missing test suites in our CI though.
 foreach glob, tests : {
   't[0-9][0-9][0-9][0-9]-*.sh': integration_tests,
-  'perf/p[0-9][0-9][0-9][0-9]-*.sh': benchmarks,
-  'unit-tests/t-*.c': unit_test_programs,
   'unit-tests/u-*.c': clar_test_suites,
 }
   actual_tests = run_command(shell, '-c', 'ls ' + glob,
