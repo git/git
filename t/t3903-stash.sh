@@ -1177,6 +1177,25 @@ test_expect_success 'stash -- <pathspec> stashes and restores the file' '
 	test_path_is_file bar
 '
 
+test_expect_success 'stash --patch <pathspec> stash and restores the file' '
+	cat file >expect-file &&
+	echo changed-file >file &&
+	echo changed-other-file >other-file &&
+	echo a | git stash -m "stash bar" --patch file &&
+	test_cmp expect-file file &&
+	echo changed-other-file >expect &&
+	test_cmp expect other-file &&
+	git stash pop &&
+	test_cmp expect other-file &&
+	echo changed-file >expect &&
+	test_cmp expect file
+'
+
+test_expect_success 'stash <pathspec> -p is rejected' '
+	test_must_fail git stash file -p 2>err &&
+	test_grep "subcommand wasn${SQ}t specified; ${SQ}push${SQ} can${SQ}t be assumed due to unexpected token ${SQ}file${SQ}" err
+'
+
 test_expect_success 'stash -- <pathspec> stashes in subdirectory' '
 	mkdir sub &&
 	>foo &&

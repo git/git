@@ -1789,11 +1789,15 @@ static int push_stash(int argc, const char **argv, const char *prefix,
 	int ret;
 
 	if (argc) {
-		force_assume = !strcmp(argv[0], "-p");
+		int flags = PARSE_OPT_KEEP_DASHDASH;
+
+		if (push_assumed)
+			flags |= PARSE_OPT_STOP_AT_NON_OPTION;
+
 		argc = parse_options(argc, argv, prefix, options,
 				     push_assumed ? git_stash_usage :
-				     git_stash_push_usage,
-				     PARSE_OPT_KEEP_DASHDASH);
+				     git_stash_push_usage, flags);
+		force_assume |= patch_mode;
 	}
 
 	if (argc) {
