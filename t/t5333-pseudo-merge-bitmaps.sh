@@ -445,4 +445,21 @@ test_expect_success 'pseudo-merge closure' '
 	)
 '
 
+test_expect_success 'use pseudo-merge in boundary traversal' '
+	git init pseudo-merge-boundary-traversal &&
+	(
+		cd pseudo-merge-boundary-traversal &&
+
+		git config bitmapPseudoMerge.test.pattern refs/ &&
+		git config pack.useBitmapBoundaryTraversal true &&
+
+		test_commit A &&
+		git repack -adb &&
+		test_commit B &&
+
+		nr=$(git rev-list --count --use-bitmap-index HEAD~1..HEAD) &&
+		test 1 -eq "$nr"
+	)
+'
+
 test_done
