@@ -307,6 +307,11 @@ newline. The available atoms are:
 `objecttype`::
 	The type of the object (the same as `cat-file -t` reports).
 
+`objectmode`::
+	If the specified object has mode information (such as a tree or
+	index entry), the mode expressed as an octal integer. Otherwise,
+	empty string.
+
 `objectsize`::
 	The size, in bytes, of the object (the same as `cat-file -s`
 	reports).
@@ -366,6 +371,14 @@ If a name is specified that might refer to more than one object (an ambiguous sh
 
 ------------
 <object> SP ambiguous LF
+------------
+
+If a name is specified that refers to a submodule entry in a tree and the
+target object does not exist in the repository, then `cat-file` will ignore
+any custom format and print (with the object ID of the submodule):
+
+------------
+<oid> SP submodule LF
 ------------
 
 If `--follow-symlinks` is used, and a symlink in the repository points
