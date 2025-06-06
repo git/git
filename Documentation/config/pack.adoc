@@ -155,6 +155,10 @@ pack.useSparse::
 	commits contain certain types of direct renames. Default is
 	`true`.
 
+pack.usePathWalk::
+	Enable the `--path-walk` option by default for `git pack-objects`
+	processes. See linkgit:git-pack-objects[1] for full details.
+
 pack.preferBitmapTips::
 	When selecting which commits will receive bitmaps, prefer a
 	commit at the tip of any reference that is a suffix of any value

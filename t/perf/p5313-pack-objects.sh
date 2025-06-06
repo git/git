@@ -22,46 +22,53 @@ test_expect_success 'create rev input' '
 	EOF
 '
 
-for version in 1 2
-do
-	export version
+test_all_with_args () {
+	parameter=$1
+	export parameter
 
-	test_perf "thin pack with version $version" '
+	test_perf "thin pack with $parameter" '
 		git pack-objects --thin --stdout --revs --sparse \
-			--name-hash-version=$version <in-thin >out
+			$parameter <in-thin >out
 	'
 
-	test_size "thin pack size with version $version" '
+	test_size "thin pack size with $parameter" '
 		test_file_size out
 	'
 
-	test_perf "big pack with version $version" '
+	test_perf "big pack with $parameter" '
 		git pack-objects --stdout --revs --sparse \
-			--name-hash-version=$version <in-big >out
+			$parameter <in-big >out
 	'
 
-	test_size "big pack size with version $version" '
+	test_size "big pack size with $parameter" '
 		test_file_size out
 	'
 
-	test_perf "shallow fetch pack with version $version" '
+	test_perf "shallow fetch pack with $parameter" '
 		git pack-objects --stdout --revs --sparse --shallow \
-			--name-hash-version=$version <in-shallow >out
+			$parameter <in-shallow >out
 	'
 
-	test_size "shallow pack size with version $version" '
+	test_size "shallow pack size with $parameter" '
 		test_file_size out
 	'
 
-	test_perf "repack with version $version" '
-		git repack -adf --name-hash-version=$version
+	test_perf "repack with $parameter" '
+		git repack -adf $parameter
 	'
 
-	test_size "repack size with version $version" '
+	test_size "repack size with $parameter" '
 		gitdir=$(git rev-parse --git-dir) &&
 		pack=$(ls $gitdir/objects/pack/pack-*.pack) &&
 		test_file_size "$pack"
 	'
+}
+
+for version in 1 2
+do
+	test_all_with_args --name-hash-version=$version
 done
+
+test_all_with_args --path-walk
 
 test_done

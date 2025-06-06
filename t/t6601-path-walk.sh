@@ -376,6 +376,26 @@ test_expect_success 'topic, not base, boundary with pruning' '
 	test_cmp_sorted expect out
 '
 
+test_expect_success 'topic, not base, --edge-aggressive with pruning' '
+	test-tool path-walk --prune --edge-aggressive -- topic --not base >out &&
+
+	cat >expect <<-EOF &&
+	0:commit::$(git rev-parse topic)
+	1:tree::$(git rev-parse topic^{tree})
+	1:tree::$(git rev-parse base^{tree}):UNINTERESTING
+	2:tree:right/:$(git rev-parse topic:right)
+	2:tree:right/:$(git rev-parse base:right):UNINTERESTING
+	3:blob:right/c:$(git rev-parse base:right/c):UNINTERESTING
+	3:blob:right/c:$(git rev-parse topic:right/c)
+	blobs:2
+	commits:1
+	tags:0
+	trees:4
+	EOF
+
+	test_cmp_sorted expect out
+'
+
 test_expect_success 'trees are reported exactly once' '
 	test_when_finished "rm -rf unique-trees" &&
 	test_create_repo unique-trees &&
