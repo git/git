@@ -2259,6 +2259,21 @@ proc makedroplist {w varname args} {
     return $gm
 }
 
+proc scrollval {D {koff 0}} {
+    global kscroll scroll_D0
+    return [expr int(-($D / $scroll_D0) * max(1, $kscroll-$koff))]
+}
+
+proc bind_mousewheel {} {
+    global canv cflist ctext
+    bindall <MouseWheel> {allcanvs yview scroll [scrollval %D] units}
+    bindall <Shift-MouseWheel> break
+    bind $ctext <MouseWheel> {$ctext yview scroll [scrollval %D] units}
+    bind $ctext <Shift-MouseWheel> {$ctext xview scroll [scrollval %D] units}
+    bind $cflist <MouseWheel> {$cflist yview scroll [scrollval %D] units}
+    bind $cflist <Shift-MouseWheel> break
+}
+
 proc makewindow {} {
     global canv canv2 canv3 linespc charspc ctext cflist cscroll
     global tabstop
