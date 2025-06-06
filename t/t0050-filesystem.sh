@@ -10,53 +10,35 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 auml=$(printf '\303\244')
 aumlcdiar=$(printf '\141\314\210')
 
-if test_have_prereq CASE_INSENSITIVE_FS
-then
-	say "will test on a case insensitive filesystem"
-	test_case=test_expect_failure
-else
-	test_case=test_expect_success
-fi
-
 if test_have_prereq UTF8_NFD_TO_NFC
 then
-	say "will test on a unicode corrupting filesystem"
 	test_unicode=test_expect_failure
 else
 	test_unicode=test_expect_success
 fi
 
-test_have_prereq SYMLINKS ||
-	say "will test on a filesystem lacking symbolic links"
-
-if test_have_prereq CASE_INSENSITIVE_FS
-then
-test_expect_success "detection of case insensitive filesystem during repo init" '
+test_expect_success CASE_INSENSITIVE_FS "detection of case insensitive filesystem during repo init" '
 	test $(git config --bool core.ignorecase) = true
 '
-else
-test_expect_success "detection of case insensitive filesystem during repo init" '
+
+test_expect_success !CASE_INSENSITIVE_FS "detection of case insensitive filesystem during repo init" '
 	{
 		test_must_fail git config --bool core.ignorecase >/dev/null ||
 			test $(git config --bool core.ignorecase) = false
 	}
 '
-fi
 
-if test_have_prereq SYMLINKS
-then
-test_expect_success "detection of filesystem w/o symlink support during repo init" '
+test_expect_success SYMLINKS "detection of filesystem w/o symlink support during repo init" '
 	{
 		test_must_fail git config --bool core.symlinks ||
 		test "$(git config --bool core.symlinks)" = true
 	}
 '
-else
-test_expect_success "detection of filesystem w/o symlink support during repo init" '
+
+test_expect_success !SYMLINKS "detection of filesystem w/o symlink support during repo init" '
 	v=$(git config --bool core.symlinks) &&
 	test "$v" = false
 '
-fi
 
 test_expect_success "setup case tests" '
 	git config core.ignorecase true &&

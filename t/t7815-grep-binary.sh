@@ -63,7 +63,7 @@ test_expect_success 'git grep ile a' '
 	git grep ile a
 '
 
-test_expect_failure !CYGWIN 'git grep .fi a' '
+test_expect_failure !CYGWIN,!MACOS 'git grep .fi a' '
 	git grep .fi a
 '
 

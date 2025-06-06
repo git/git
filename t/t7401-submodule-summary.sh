@@ -38,10 +38,11 @@ commit_file () {
 	git commit "$@" -m "Commit $*" >/dev/null
 }
 
-test_create_repo sm1 &&
-add_file . foo >/dev/null
-
-head1=$(add_file sm1 foo1 foo2)
+test_expect_success 'setup submodule' '
+	git init sm1 &&
+	add_file . foo &&
+	head1=$(add_file sm1 foo1 foo2)
+'
 
 test_expect_success 'added submodule' "
 	git add sm1 &&
@@ -214,9 +215,12 @@ test_expect_success 'typechanged submodule(submodule->blob)' "
 	test_cmp expected actual
 "
 
-rm -f sm1 &&
-test_create_repo sm1 &&
-head6=$(add_file sm1 foo6 foo7)
+test_expect_success 'setup submodule' '
+	rm -f sm1 &&
+	git init sm1 &&
+	head6=$(add_file sm1 foo6 foo7)
+'
+
 test_expect_success 'nonexistent commit' "
 	git submodule summary >actual &&
 	cat >expected <<-EOF &&

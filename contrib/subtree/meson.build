@@ -21,7 +21,7 @@ if get_option('tests')
     env: subtree_test_environment,
     workdir: meson.current_source_dir() / 't',
     depends: test_dependencies + bin_wrappers + [ git_subtree ],
-    timeout: 0,
+    kwargs: test_kwargs,
   )
 endif
 
