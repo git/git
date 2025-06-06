@@ -257,6 +257,13 @@ static int receive_status(struct repository *r,
 				refname);
 			continue;
 		}
+
+		/*
+		 * Clients sending duplicate refs can cause the same value
+		 * to be overridden, causing a memory leak.
+		 */
+		free(hint->remote_status);
+
 		if (!strcmp(head, "ng")) {
 			hint->status = REF_STATUS_REMOTE_REJECT;
 			if (p)

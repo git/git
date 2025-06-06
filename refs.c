@@ -3314,3 +3314,23 @@ int ref_update_expects_existing_old_ref(struct ref_update *update)
 	return (update->flags & REF_HAVE_OLD) &&
 		(!is_null_oid(&update->old_oid) || update->old_target);
 }
+
+const char *ref_transaction_error_msg(enum ref_transaction_error err)
+{
+	switch (err) {
+	case REF_TRANSACTION_ERROR_NAME_CONFLICT:
+		return "refname conflict";
+	case REF_TRANSACTION_ERROR_CREATE_EXISTS:
+		return "reference already exists";
+	case REF_TRANSACTION_ERROR_NONEXISTENT_REF:
+		return "reference does not exist";
+	case REF_TRANSACTION_ERROR_INCORRECT_OLD_VALUE:
+		return "incorrect old value provided";
+	case REF_TRANSACTION_ERROR_INVALID_NEW_VALUE:
+		return "invalid new value provided";
+	case REF_TRANSACTION_ERROR_EXPECTED_SYMREF:
+		return "expected symref but found regular ref";
+	default:
+		return "unknown failure";
+	}
+}

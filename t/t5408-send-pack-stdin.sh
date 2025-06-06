@@ -69,15 +69,24 @@ test_expect_success 'stdin mixed with cmdline' '
 
 test_expect_success 'cmdline refs written in order' '
 	clear_remote &&
-	test_must_fail git send-pack remote.git A:foo B:foo &&
-	verify_push A foo
+	test_must_fail git send-pack remote.git A:foo B:foo 2>err &&
+	test_grep "multiple updates for ref ${SQ}refs/heads/foo${SQ} not allowed" err &&
+	test_must_fail git --git-dir=remote.git rev-parse foo
+'
+
+test_expect_success 'cmdline refs with multiple duplicates' '
+	clear_remote &&
+	test_must_fail git send-pack remote.git A:foo B:foo C:foo 2>err &&
+	test_grep "multiple updates for ref ${SQ}refs/heads/foo${SQ} not allowed" err &&
+	test_must_fail git --git-dir=remote.git rev-parse foo
 '
 
 test_expect_success '--stdin refs come after cmdline' '
 	clear_remote &&
 	echo A:foo >input &&
 	test_must_fail git send-pack remote.git --stdin B:foo <input &&
-	verify_push B foo
+	test_grep "multiple updates for ref ${SQ}refs/heads/foo${SQ} not allowed" err &&
+	test_must_fail git --git-dir=remote.git rev-parse foo
 '
 
 test_expect_success 'refspecs and --mirror do not mix (cmdline)' '
