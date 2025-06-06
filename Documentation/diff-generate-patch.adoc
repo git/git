@@ -138,7 +138,7 @@ or like this (when the `--cc` option is used):
 +
 [synopsis]
 index <hash>,<hash>..<hash>
-mode <mode>,<mode>`..`<mode>
+mode <mode>,<mode>..<mode>
 new file mode <mode>
 deleted file mode <mode>,<mode>
 +
