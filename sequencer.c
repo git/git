@@ -4342,6 +4342,7 @@ static int do_merge(struct repository *r,
 		error(_("could not even attempt to merge '%.*s'"),
 		      merge_arg_len, arg);
 		unlink(git_path_merge_msg(r));
+		unlink(git_path_merge_head(r));
 		goto leave_merge;
 	}
 	/*
@@ -5354,7 +5355,7 @@ static int commit_staged_changes(struct repository *r,
 		flags |= AMEND_MSG;
 	}
 
-	if (is_clean) {
+	if (is_clean && !file_exists(git_path_merge_head(r))) {
 		if (refs_ref_exists(get_main_ref_store(r),
 				    "CHERRY_PICK_HEAD") &&
 		    refs_delete_ref(get_main_ref_store(r), "",
