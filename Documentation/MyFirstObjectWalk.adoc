@@ -43,7 +43,7 @@ Open up a new file `builtin/walken.c` and set up the command handler:
 #include "builtin.h"
 #include "trace.h"
 
-int cmd_walken(int argc, const char **argv, const char *prefix)
+int cmd_walken(int argc, const char **argv, const char *prefix, struct repository *repo)
 {
 	trace_printf(_("cmd_walken incoming...\n"));
 	return 0;
@@ -86,7 +86,7 @@ int cmd_walken(int argc, const char **argv, const char *prefix)
 Also add the relevant line in `builtin.h` near `cmd_version()`:
 
 ----
-int cmd_walken(int argc, const char **argv, const char *prefix);
+int cmd_walken(int argc, const char **argv, const char *prefix, struct repository *repo);
 ----
 
 Include the command in `git.c` in `commands[]` near the entry for `version`,
@@ -96,10 +96,23 @@ maintaining alphabetical ordering:
 { "walken", cmd_walken, RUN_SETUP },
 ----
 
-Add it to the `Makefile` near the line for `builtin/worktree.o`:
+Add an entry for the new command in the both the Make and Meson build system,
+before the entry for `worktree`:
 
+- In the `Makefile`:
 ----
+...
 BUILTIN_OBJS += builtin/walken.o
+...
+----
+
+- In the `meson.build` file:
+----
+builtin_sources = [
+   ...
+  'builtin/walken.c',
+   ...
+]
 ----
 
 Build and test out your command, without forgetting to ensure the `DEVELOPER`
@@ -193,7 +206,7 @@ initialization functions.
 
 Next, we should have a look at any relevant configuration settings (i.e.,
 settings readable and settable from `git config`). This is done by providing a
-callback to `git_config()`; within that callback, you can also invoke methods
+callback to `repo_config()`; within that callback, you can also invoke methods
 from other components you may need that need to intercept these options. Your
 callback will be invoked once per each configuration value which Git knows about
 (global, local, worktree, etc.).
@@ -221,14 +234,14 @@ static int git_walken_config(const char *var, const char *value,
 }
 ----
 
-Make sure to invoke `git_config()` with it in your `cmd_walken()`:
+Make sure to invoke `repo_config()` with it in your `cmd_walken()`:
 
 ----
-int cmd_walken(int argc, const char **argv, const char *prefix)
+int cmd_walken(int argc, const char **argv, const char *prefix, struct repository *repo)
 {
 	...
 
-	git_config(git_walken_config, NULL);
+	repo_config(repo, git_walken_config, NULL);
 
 	...
 }
@@ -250,14 +263,14 @@ We'll also need to include the `revision.h` header:
 
 ...
 
-int cmd_walken(int argc, const char **argv, const char *prefix)
+int cmd_walken(int argc, const char **argv, const char *prefix, struct repository *repo)
 {
 	/* This can go wherever you like in your declarations.*/
 	struct rev_info rev;
 	...
 
-	/* This should go after the git_config() call. */
-	repo_init_revisions(the_repository, &rev, prefix);
+	/* This should go after the repo_config() call. */
+	repo_init_revisions(repo, &rev, prefix);
 
 	...
 }
@@ -305,7 +318,7 @@ Then let's invoke `final_rev_info_setup()` after the call to
 `repo_init_revisions()`:
 
 ----
-int cmd_walken(int argc, const char **argv, const char *prefix)
+int cmd_walken(int argc, const char **argv, const char *prefix, struct repository *repo)
 {
 	...
 
