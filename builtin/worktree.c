@@ -621,7 +621,7 @@ static void print_preparing_worktree_line(int detach,
 		else {
 			struct commit *commit = lookup_commit_reference_by_name(branch);
 			if (!commit)
-				BUG(_("unreachable: invalid reference: %s"), branch);
+				BUG("unreachable: invalid reference: %s", branch);
 			fprintf_ln(stderr, _("Preparing worktree (detached HEAD %s)"),
 				  repo_find_unique_abbrev(the_repository, &commit->object.oid, DEFAULT_ABBREV));
 		}

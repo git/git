@@ -1087,7 +1087,7 @@ void bitmap_writer_finish(struct bitmap_writer *writer,
 					 oid_access);
 
 		if (commit_pos < 0)
-			BUG(_("trying to write commit not in index"));
+			BUG("trying to write commit not in index");
 		stored->commit_pos = commit_pos + base_objects;
 	}
 
