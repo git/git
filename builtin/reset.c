@@ -346,6 +346,7 @@ int cmd_reset(int argc,
 	struct object_id oid;
 	struct pathspec pathspec;
 	int intent_to_add = 0;
+	struct add_p_opt add_p_opt = ADD_P_OPT_INIT;
 	const struct option options[] = {
 		OPT__QUIET(&quiet, N_("be quiet, only report errors")),
 		OPT_BOOL(0, "no-refresh", &no_refresh,
@@ -370,6 +371,8 @@ int cmd_reset(int argc,
 			       PARSE_OPT_OPTARG,
 			       option_parse_recurse_submodules_worktree_updater),
 		OPT_BOOL('p', "patch", &patch_mode, N_("select hunks interactively")),
+		OPT_DIFF_UNIFIED(&add_p_opt.context),
+		OPT_DIFF_INTERHUNK_CONTEXT(&add_p_opt.interhunkcontext),
 		OPT_BOOL('N', "intent-to-add", &intent_to_add,
 				N_("record only the fact that removed paths will be added later")),
 		OPT_PATHSPEC_FROM_FILE(&pathspec_from_file),
@@ -427,9 +430,14 @@ int cmd_reset(int argc,
 		if (reset_type != NONE)
 			die(_("options '%s' and '%s' cannot be used together"), "--patch", "--{hard,mixed,soft}");
 		trace2_cmd_mode("patch-interactive");
-		update_ref_status = !!run_add_p(the_repository, ADD_P_RESET, rev,
-				   &pathspec);
+		update_ref_status = !!run_add_p(the_repository, ADD_P_RESET,
+						&add_p_opt, rev, &pathspec);
 		goto cleanup;
+	} else {
+		if (add_p_opt.context != -1)
+			die(_("the option '%s' requires '%s'"), "--unified", "--patch");
+		if (add_p_opt.interhunkcontext != -1)
+			die(_("the option '%s' requires '%s'"), "--inter-hunk-context", "--patch");
 	}
 
 	/* git reset tree [--] paths... can be used to

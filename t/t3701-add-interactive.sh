@@ -63,7 +63,7 @@ test_expect_success 'setup (initial)' '
 '
 test_expect_success 'status works (initial)' '
 	git add -i </dev/null >output &&
-	grep "+1/-0 *+2/-0 file" output
+	test_grep "+1/-0 *+2/-0 file" output
 '
 
 test_expect_success 'setup expected' '
@@ -86,7 +86,7 @@ test_expect_success 'revert works (initial)' '
 	git add file &&
 	test_write_lines r 1 | git add -i &&
 	git ls-files >output &&
-	! grep . output
+	test_grep ! . output
 '
 
 test_expect_success 'add untracked (multiple)' '
@@ -109,7 +109,7 @@ test_expect_success 'setup (commit)' '
 '
 test_expect_success 'status works (commit)' '
 	git add -i </dev/null >output &&
-	grep "+1/-0 *+2/-0 file" output
+	test_grep "+1/-0 *+2/-0 file" output
 '
 
 test_expect_success 'update can stage deletions' '
@@ -141,7 +141,7 @@ test_expect_success 'revert works (commit)' '
 	git add file &&
 	test_write_lines r 1 | git add -i &&
 	git add -i </dev/null >output &&
-	grep "unchanged *+3/-0 file" output
+	test_grep "unchanged *+3/-0 file" output
 '
 
 test_expect_success 'reject multi-key input' '
@@ -185,7 +185,7 @@ test_expect_success 'setup fake editor' '
 test_expect_success 'bad edit rejected' '
 	git reset &&
 	test_write_lines e n d | git add -p >output &&
-	grep "hunk does not apply" output
+	test_grep "hunk does not apply" output
 '
 
 test_expect_success 'setup patch' '
@@ -198,7 +198,7 @@ test_expect_success 'setup patch' '
 test_expect_success 'garbage edit rejected' '
 	git reset &&
 	test_write_lines e n d | git add -p >output &&
-	grep "hunk does not apply" output
+	test_grep "hunk does not apply" output
 '
 
 test_expect_success 'setup patch' '
@@ -313,8 +313,8 @@ test_expect_success FILEMODE 'stage mode and hunk' '
 	chmod +x file &&
 	printf "y\\ny\\n" | git add -p &&
 	git diff --cached file >out &&
-	grep "new mode" out &&
-	grep "+content" out &&
+	test_grep "new mode" out &&
+	test_grep "+content" out &&
 	git diff file >out &&
 	test_must_be_empty out
 '
@@ -636,7 +636,7 @@ test_expect_success 'split hunk "add -p (edit)"' '
 	printf "%s\n" s e     q n q q |
 	EDITOR=: git add -p &&
 	git diff >actual &&
-	! grep "^+15" actual
+	test_grep ! "^+15" actual
 '
 
 test_expect_success 'split hunk "add -p (no, yes, edit)"' '
@@ -648,7 +648,7 @@ test_expect_success 'split hunk "add -p (no, yes, edit)"' '
 	EDITOR=: git add -p 2>error &&
 	test_must_be_empty error &&
 	git diff >actual &&
-	! grep "^+31" actual
+	test_grep ! "^+31" actual
 '
 
 test_expect_success 'split hunk with incomplete line at end' '
@@ -682,7 +682,7 @@ test_expect_success 'edit, adding lines to the first hunk' '
 	EDITOR=./fake_editor.sh git add -p 2>error &&
 	test_must_be_empty error &&
 	git diff --cached >actual &&
-	grep "^+22" actual
+	test_grep "^+22" actual
 '
 
 test_expect_success 'patch mode ignores unmerged entries' '
@@ -696,7 +696,7 @@ test_expect_success 'patch mode ignores unmerged entries' '
 	test_must_fail git merge side &&
 	echo changed >non-conflict.t &&
 	echo y | git add -p >output &&
-	! grep a/conflict.t output &&
+	test_grep ! a/conflict.t output &&
 	cat >expected <<-\EOF &&
 	* Unmerged path conflict.t
 	diff --git a/non-conflict.t b/non-conflict.t
@@ -728,7 +728,7 @@ test_expect_success 'diffs can be colorized' '
 
 	# We do not want to depend on the exact coloring scheme
 	# git uses for diffs, so just check that we saw some kind of color.
-	grep "$(printf "\\033")" output
+	test_grep "$(printf "\\033")" output
 '
 
 test_expect_success 'colors can be overridden' '
@@ -743,7 +743,7 @@ test_expect_success 'colors can be overridden' '
 		-c color.interactive.error=blue \
 		add -i 2>err.raw <input &&
 	test_decode_color <err.raw >err &&
-	grep "<BLUE>Huh (trigger)?<RESET>" err &&
+	test_grep "<BLUE>Huh (trigger)?<RESET>" err &&
 
 	test_write_lines help quit >input &&
 	force_color git \
@@ -863,7 +863,7 @@ test_expect_success 'colorized diffs respect diff.wsErrorHighlight' '
 	printf y >y &&
 	force_color git -c diff.wsErrorHighlight=all add -p >output.raw 2>&1 <y &&
 	test_decode_color <output.raw >output &&
-	grep "old<" output
+	test_grep "old<" output
 '
 
 test_expect_success 'diffFilter filters diff' '
@@ -876,7 +876,7 @@ test_expect_success 'diffFilter filters diff' '
 
 	# avoid depending on the exact coloring or content of the prompts,
 	# and just make sure we saw our diff prefixed
-	grep foo:.*content output
+	test_grep foo:.*content output
 '
 
 test_expect_success 'detect bogus diffFilter output' '
@@ -886,7 +886,7 @@ test_expect_success 'detect bogus diffFilter output' '
 	test_config interactive.diffFilter "sed 6d" &&
 	printf y >y &&
 	force_color test_must_fail git add -p <y >output 2>&1 &&
-	grep "mismatched output" output
+	test_grep "mismatched output" output
 '
 
 test_expect_success 'handle iffy colored hunk headers' '
@@ -896,7 +896,7 @@ test_expect_success 'handle iffy colored hunk headers' '
 	printf n >n &&
 	force_color git -c interactive.diffFilter="sed s/.*@@.*/XX/" \
 		add -p >output 2>&1 <n &&
-	grep "^XX$" output
+	test_grep "^XX$" output
 '
 
 test_expect_success 'handle very large filtered diff' '
@@ -1002,7 +1002,7 @@ test_expect_success 'add -p does not expand argument lists' '
 	# update it, but we want to be sure that our "." pathspec
 	# was not expanded into the argument list of any command.
 	# So look only for "not-changed".
-	! grep -E "^trace: (built-in|exec|run_command): .*not-changed" trace.out
+	test_grep ! -E "^trace: (built-in|exec|run_command): .*not-changed" trace.out
 '
 
 test_expect_success 'hunk-editing handles custom comment char' '
@@ -1072,21 +1072,21 @@ test_expect_success 'setup different kinds of dirty submodules' '
 
 test_expect_success 'status ignores dirty submodules (except HEAD)' '
 	git -C for-submodules add -i </dev/null >output &&
-	grep dirty-head output &&
-	grep dirty-both-ways output &&
-	! grep dirty-otherwise output
+	test_grep dirty-head output &&
+	test_grep dirty-both-ways output &&
+	test_grep ! dirty-otherwise output
 '
 
 test_expect_success 'handle submodules' '
 	echo 123 >>for-submodules/dirty-otherwise/initial.t &&
 
 	force_color git -C for-submodules add -p dirty-otherwise >output 2>&1 &&
-	grep "No changes" output &&
+	test_grep "No changes" output &&
 
 	force_color git -C for-submodules add -p dirty-head >output 2>&1 <y &&
 	git -C for-submodules ls-files --stage dirty-head >actual &&
 	rev="$(git -C for-submodules/dirty-head rev-parse HEAD)" &&
-	grep "$rev" actual
+	test_grep "$rev" actual
 '
 
 test_expect_success 'set up pathological context' '

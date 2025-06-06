@@ -47,6 +47,31 @@ t() {
 	"
 }
 
+t_patch() {
+	use_config=
+	git config --unset diff.interHunkContext
+
+	case $# in
+	4) hunks=$4; cmd="add -p -U$3";;
+	5) hunks=$5; cmd="add -p -U$3 --inter-hunk-context=$4";;
+	6) hunks=$5; cmd="add -p -U$3"; git config diff.interHunkContext $4; use_config="(diff.interHunkContext=$4) ";;
+	esac
+	label="$use_config$cmd, $1 common $2"
+	file=f$1
+
+	if ! test -f $file
+	then
+		f A $1 B >$file
+		git add $file
+		git commit -q -m. $file
+		f X $1 Y >$file
+	fi
+
+	test_expect_success "$label: count hunks ($hunks)" "
+		test $(test_write_lines q | git $cmd $file | sed -n 's/^([0-9]*\/\([0-9]*\)) Stage this hunk.*/\1/p') = $hunks
+	"
+}
+
 cat <<EOF >expected.f1.0.1 || exit 1
 diff --git a/f1 b/f1
 --- a/f1
@@ -106,6 +131,42 @@ t 3 lines	1	1	1	config
 t 3 lines	1	2	1	config
 t 9 lines	3	2	2	config
 t 9 lines	3	3	1	config
+
+# common lines	ctx	intrctx	hunks
+t_patch 1 line	0		2
+t_patch 1 line	0	0	2
+t_patch 1 line	0	1	1
+t_patch 1 line	0	2	1
+t_patch 1 line	1		1
+
+t_patch 2 lines	0		2
+t_patch 2 lines	0	0	2
+t_patch 2 lines	0	1	2
+t_patch 2 lines	0	2	1
+t_patch 2 lines	1		1
+
+t_patch 3 lines	1		2
+t_patch 3 lines	1	0	2
+t_patch 3 lines	1	1	1
+t_patch 3 lines	1	2	1
+
+t_patch 9 lines	3		2
+t_patch 9 lines	3	2	2
+t_patch 9 lines	3	3	1
+
+#					use diff.interHunkContext?
+t_patch 1 line	0	0	2	config
+t_patch 1 line	0	1	1	config
+t_patch 1 line	0	2	1	config
+t_patch 9 lines	3	3	1	config
+t_patch 2 lines	0	0	2	config
+t_patch 2 lines	0	1	2	config
+t_patch 2 lines	0	2	1	config
+t_patch 3 lines	1	0	2	config
+t_patch 3 lines	1	1	1	config
+t_patch 3 lines	1	2	1	config
+t_patch 9 lines	3	2	2	config
+t_patch 9 lines	3	3	1	config
 
 test_expect_success 'diff.interHunkContext invalid' '
 	git config diff.interHunkContext asdf &&

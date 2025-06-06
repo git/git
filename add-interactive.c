@@ -36,11 +36,16 @@ static void init_color(struct repository *r, struct add_i_state *s,
 	free(key);
 }
 
-void init_add_i_state(struct add_i_state *s, struct repository *r)
+void init_add_i_state(struct add_i_state *s, struct repository *r,
+		      struct add_p_opt *add_p_opt)
 {
 	const char *value;
+	int context;
+	int interhunkcontext;
 
 	s->r = r;
+	s->context = -1;
+	s->interhunkcontext = -1;
 
 	if (repo_config_get_value(r, "color.interactive", &value))
 		s->use_color = -1;
@@ -78,9 +83,33 @@ void init_add_i_state(struct add_i_state *s, struct repository *r)
 	repo_config_get_string(r, "diff.algorithm",
 			       &s->interactive_diff_algorithm);
 
+	if (!repo_config_get_int(r, "diff.context", &context)) {
+		if (context < 0)
+			die(_("%s cannot be negative"), "diff.context");
+		else
+			s->context = context;
+	};
+	if (!repo_config_get_int(r, "diff.interHunkContext", &interhunkcontext)) {
+		if (interhunkcontext < 0)
+			die(_("%s cannot be negative"), "diff.interHunkContext");
+		else
+			s->interhunkcontext = interhunkcontext;
+	};
+
 	repo_config_get_bool(r, "interactive.singlekey", &s->use_single_key);
 	if (s->use_single_key)
 		setbuf(stdin, NULL);
+
+	if (add_p_opt->context != -1) {
+		if (add_p_opt->context < 0)
+			die(_("%s cannot be negative"), "--unified");
+		s->context = add_p_opt->context;
+	}
+	if (add_p_opt->interhunkcontext != -1) {
+		if (add_p_opt->interhunkcontext < 0)
+			die(_("%s cannot be negative"), "--inter-hunk-context");
+		s->interhunkcontext = add_p_opt->interhunkcontext;
+	}
 }
 
 void clear_add_i_state(struct add_i_state *s)
@@ -969,6 +998,10 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 	opts->prompt = N_("Patch update");
 	count = list_and_choose(s, files, opts);
 	if (count > 0) {
+		struct add_p_opt add_p_opt = {
+			.context = s->context,
+			.interhunkcontext = s->interhunkcontext,
+		};
 		struct strvec args = STRVEC_INIT;
 		struct pathspec ps_selected = { 0 };
 
@@ -979,7 +1012,7 @@ static int run_patch(struct add_i_state *s, const struct pathspec *ps,
 		parse_pathspec(&ps_selected,
 			       PATHSPEC_ALL_MAGIC & ~PATHSPEC_LITERAL,
 			       PATHSPEC_LITERAL_PATH, "", args.v);
-		res = run_add_p(s->r, ADD_P_ADD, NULL, &ps_selected);
+		res = run_add_p(s->r, ADD_P_ADD, &add_p_opt, NULL, &ps_selected);
 		strvec_clear(&args);
 		clear_pathspec(&ps_selected);
 	}
@@ -1014,10 +1047,13 @@ static int run_diff(struct add_i_state *s, const struct pathspec *ps,
 	if (count > 0) {
 		struct child_process cmd = CHILD_PROCESS_INIT;
 
-		strvec_pushl(&cmd.args, "git", "diff", "-p", "--cached",
-			     oid_to_hex(!is_initial ? &oid :
-					s->r->hash_algo->empty_tree),
-			     "--", NULL);
+		strvec_pushl(&cmd.args, "git", "diff", "-p", "--cached", NULL);
+		if (s->context != -1)
+			strvec_pushf(&cmd.args, "--unified=%i", s->context);
+		if (s->interhunkcontext != -1)
+			strvec_pushf(&cmd.args, "--inter-hunk-context=%i", s->interhunkcontext);
+		strvec_pushl(&cmd.args, oid_to_hex(!is_initial ? &oid :
+			     s->r->hash_algo->empty_tree), "--", NULL);
 		for (i = 0; i < files->items.nr; i++)
 			if (files->selected[i])
 				strvec_push(&cmd.args,
@@ -1110,7 +1146,8 @@ static void command_prompt_help(struct add_i_state *s)
 			 _("(empty) select nothing"));
 }
 
-int run_add_i(struct repository *r, const struct pathspec *ps)
+int run_add_i(struct repository *r, const struct pathspec *ps,
+	      struct add_p_opt *add_p_opt)
 {
 	struct add_i_state s = { NULL };
 	struct print_command_item_data data = { "[", "]" };
@@ -1153,7 +1190,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps)
 			->util = util;
 	}
 
-	init_add_i_state(&s, r);
+	init_add_i_state(&s, r, add_p_opt);
 
 	/*
 	 * When color was asked for, use the prompt color for

@@ -222,6 +222,8 @@ to learn how to operate the `--patch` mode.
 The `--patch` option implies `--keep-index`.  You can use
 `--no-keep-index` to override this.
 
+include::diff-context-options.adoc[]
+
 -S::
 --staged::
 	This option is only valid for `push` and `save` commands.
