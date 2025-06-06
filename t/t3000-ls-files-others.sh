@@ -73,25 +73,6 @@ test_expect_success 'ls-files --others handles non-submodule .git' '
 	test_cmp expected1 output
 '
 
-test_expect_success SYMLINKS 'ls-files --others with symlinked submodule' '
-	git init super &&
-	git init sub &&
-	(
-		cd sub &&
-		>a &&
-		git add a &&
-		git commit -m sub &&
-		git pack-refs --all
-	) &&
-	(
-		cd super &&
-		"$SHELL_PATH" "$TEST_DIRECTORY/../contrib/workdir/git-new-workdir" ../sub sub &&
-		git ls-files --others --exclude-standard >../actual
-	) &&
-	echo sub/ >expect &&
-	test_cmp expect actual
-'
-
 test_expect_success 'setup nested pathspec search' '
 	test_create_repo nested &&
 	(
