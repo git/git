@@ -62,7 +62,12 @@ ifndef::git-rev-list[]
 --notes[=<ref>]::
 	Show the notes (see linkgit:git-notes[1]) that annotate the
 	commit, when showing the commit log message.  This is the default
+ifndef::with-breaking-changes[]
 	for `git log`, `git show` and `git whatchanged` commands when
+endif::with-breaking-changes[]
+ifdef::with-breaking-changes[]
+	for `git log` and `git show` commands when
+endif::with-breaking-changes[]
 	there is no `--pretty`, `--format`, or `--oneline` option given
 	on the command line.
 +

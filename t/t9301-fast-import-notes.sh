@@ -76,7 +76,7 @@ INPUT_END
 test_expect_success 'set up main branch' '
 
 	git fast-import <input &&
-	git whatchanged main
+	git log --raw main
 '
 
 commit4=$(git rev-parse refs/heads/main)

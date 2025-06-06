@@ -68,9 +68,15 @@ format.encodeEmailHeaders::
 	Defaults to true.
 
 format.pretty::
+ifndef::with-breaking-changes[]
 	The default pretty format for log/show/whatchanged command.
 	See linkgit:git-log[1], linkgit:git-show[1],
 	linkgit:git-whatchanged[1].
+endif::with-breaking-changes[]
+ifdef::with-breaking-changes[]
+	The default pretty format for log/show command.
+	See linkgit:git-log[1], linkgit:git-show[1].
+endif::with-breaking-changes[]
 
 format.thread::
 	The default threading style for 'git format-patch'.  Can be

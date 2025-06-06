@@ -4240,7 +4240,7 @@ command `git`.  The source side of a builtin is
 - an entry in `BUILTIN_OBJECTS` in the `Makefile`.
 
 Sometimes, more than one builtin is contained in one source file.  For
-example, `cmd_whatchanged()` and `cmd_log()` both reside in `builtin/log.c`,
+example, `cmd_show()` and `cmd_log()` both reside in `builtin/log.c`,
 since they share quite a bit of code.  In that case, the commands which are
 _not_ named like the `.c` file in which they live have to be listed in
 `BUILT_INS` in the `Makefile`.

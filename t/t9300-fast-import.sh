@@ -120,7 +120,7 @@ test_expect_success 'A: create pack from stdin' '
 
 	INPUT_END
 	git fast-import --export-marks=marks.out <input &&
-	git whatchanged main
+	git log --raw main
 '
 
 test_expect_success 'A: verify pack' '
@@ -279,7 +279,7 @@ test_expect_success 'A: verify marks import does not crash' '
 	INPUT_END
 
 	git fast-import --import-marks=marks.out <input &&
-	git whatchanged verify--import-marks
+	git log --raw verify--import-marks
 '
 
 test_expect_success 'A: verify pack' '
@@ -652,7 +652,7 @@ test_expect_success 'C: incremental import create pack from stdin' '
 	INPUT_END
 
 	git fast-import <input &&
-	git whatchanged branch
+	git log --raw branch
 '
 
 test_expect_success 'C: verify pack' '
@@ -715,7 +715,7 @@ test_expect_success 'D: inline data in commit' '
 	INPUT_END
 
 	git fast-import <input &&
-	git whatchanged branch
+	git log --raw branch
 '
 
 test_expect_success 'D: verify pack' '
@@ -882,7 +882,7 @@ test_expect_success 'H: deletall, add 1' '
 
 	INPUT_END
 	git fast-import <input &&
-	git whatchanged H
+	git log --raw H
 '
 
 test_expect_success 'H: verify pack' '
@@ -2066,7 +2066,7 @@ test_expect_success 'Q: commit notes' '
 	INPUT_END
 
 	git fast-import <input &&
-	git whatchanged notes-test
+	git log --raw notes-test
 '
 
 test_expect_success 'Q: verify pack' '

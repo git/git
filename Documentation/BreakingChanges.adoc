@@ -183,6 +183,14 @@ These features will be removed.
   timeframe, in preference to its synonym "--annotate-stdin".  Git 3.0
   removes the support for "--stdin" altogether.
 
+* The git-whatchanged(1) command has outlived its usefulness more than
+  10 years ago, and takes more keystrokes to type than its rough
+  equivalent `git log --raw`.  We have nominated the command for
+  removal, have changed the command to refuse to work unless the
+  `--i-still-use-this` option is given, and asked the users to report
+  when they do so.  So far there hasn't been a single complaint.
++
+The command will be removed.
 
 == Superseded features that will not be deprecated
 

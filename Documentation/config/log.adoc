@@ -1,6 +1,13 @@
 log.abbrevCommit::
-	If true, makes linkgit:git-log[1], linkgit:git-show[1], and
-	linkgit:git-whatchanged[1] assume `--abbrev-commit`. You may
+	If true, makes
+ifndef::with-breaking-changes[]
+	linkgit:git-log[1], linkgit:git-show[1], and
+	linkgit:git-whatchanged[1]
+endif::with-breaking-changes[]
+ifdef::with-breaking-changes[]
+	linkgit:git-log[1] and linkgit:git-show[1]
+endif::with-breaking-changes[]
+	assume `--abbrev-commit`. You may
 	override this option with `--no-abbrev-commit`.
 
 log.date::
