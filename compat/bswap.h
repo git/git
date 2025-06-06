@@ -95,24 +95,6 @@ static inline uint64_t git_bswap64(uint64_t x)
 
 #endif
 
-#if defined(bswap32)
-
-#undef ntohl
-#undef htonl
-#define ntohl(x) bswap32(x)
-#define htonl(x) bswap32(x)
-
-#endif
-
-#if defined(bswap64)
-
-#undef ntohll
-#undef htonll
-#define ntohll(x) bswap64(x)
-#define htonll(x) bswap64(x)
-
-#else
-
 #undef ntohll
 #undef htonll
 
@@ -151,10 +133,23 @@ static inline uint64_t git_bswap64(uint64_t x)
 # define ntohll(n) (n)
 # define htonll(n) (n)
 #else
-# define ntohll(n) default_bswap64(n)
-# define htonll(n) default_bswap64(n)
-#endif
 
+# if defined(bswap32)
+#  undef ntohl
+#  undef htonl
+#  define ntohl(x) bswap32(x)
+#  define htonl(x) bswap32(x)
+# endif
+
+# if defined(bswap64)
+#  undef ntohll
+#  undef htonll
+#  define ntohll(x) bswap64(x)
+#  define htonll(x) bswap64(x)
+# else
+#  define ntohll(n) default_bswap64(n)
+#  define htonll(n) default_bswap64(n)
+# endif
 #endif
 
 static inline uint16_t get_be16(const void *ptr)
