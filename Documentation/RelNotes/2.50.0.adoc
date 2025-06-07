@@ -201,6 +201,12 @@ Performance, Internal Implementation, Development Support etc.
    we ended up checking for these non-existent files repeatedly, which
    has been optimized by memoizing the non-existence.
 
+ * Build settings have been improved for BSD based systems.
+
+ * Newer version of libcURL detected curl_easy_setopt() calls we made
+   with platform-natural "int" when we should have used "long", which
+   all have been corrected.
+
 
 Fixes since v2.49
 -----------------
