@@ -1177,13 +1177,13 @@ test_expect_success 'stash -- <pathspec> stashes and restores the file' '
 	test_path_is_file bar
 '
 
-test_expect_success 'stash -p <pathspec> stash and restores the file' '
+test_expect_success 'stash --patch <pathspec> stash and restores the file' '
 	test_write_lines b c >file &&
 	git commit -m "add a few lines" file &&
 	test_write_lines a b c d >file &&
 	test_write_lines b c d >expect-file &&
 	echo changed-other-file >other-file &&
-	test_write_lines s y n | git stash -p file &&
+	test_write_lines s y n | git stash -m "stash bar" --patch file &&
 	test_cmp expect-file file &&
 	echo changed-other-file >expect &&
 	test_cmp expect other-file &&
