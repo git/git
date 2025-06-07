@@ -1019,13 +1019,13 @@ static CURL *get_curl_handle(void)
 		die("curl_easy_init failed");
 
 	if (!curl_ssl_verify) {
-		curl_easy_setopt(result, CURLOPT_SSL_VERIFYPEER, 0);
-		curl_easy_setopt(result, CURLOPT_SSL_VERIFYHOST, 0);
+		curl_easy_setopt(result, CURLOPT_SSL_VERIFYPEER, 0L);
+		curl_easy_setopt(result, CURLOPT_SSL_VERIFYHOST, 0L);
 	} else {
 		/* Verify authenticity of the peer's certificate */
-		curl_easy_setopt(result, CURLOPT_SSL_VERIFYPEER, 1);
+		curl_easy_setopt(result, CURLOPT_SSL_VERIFYPEER, 1L);
 		/* The name in the cert must match whom we tried to connect */
-		curl_easy_setopt(result, CURLOPT_SSL_VERIFYHOST, 2);
+		curl_easy_setopt(result, CURLOPT_SSL_VERIFYHOST, 2L);
 	}
 
     if (curl_http_version) {
@@ -1057,7 +1057,7 @@ static CURL *get_curl_handle(void)
 
 	if (http_ssl_backend && !strcmp("schannel", http_ssl_backend) &&
 	    !http_schannel_check_revoke) {
-		curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, CURLSSLOPT_NO_REVOKE);
+		curl_easy_setopt(result, CURLOPT_SSL_OPTIONS, (long)CURLSSLOPT_NO_REVOKE);
 	}
 
 	if (http_proactive_auth != PROACTIVE_AUTH_NONE)
@@ -1117,8 +1117,8 @@ static CURL *get_curl_handle(void)
 				 curl_low_speed_time);
 	}
 
-	curl_easy_setopt(result, CURLOPT_MAXREDIRS, 20);
-	curl_easy_setopt(result, CURLOPT_POSTREDIR, CURL_REDIR_POST_ALL);
+	curl_easy_setopt(result, CURLOPT_MAXREDIRS, 20L);
+	curl_easy_setopt(result, CURLOPT_POSTREDIR, (long)CURL_REDIR_POST_ALL);
 
 #ifdef GIT_CURL_HAVE_CURLOPT_PROTOCOLS_STR
 	{
@@ -1151,7 +1151,7 @@ static CURL *get_curl_handle(void)
 		user_agent ? user_agent : git_user_agent());
 
 	if (curl_ftp_no_epsv)
-		curl_easy_setopt(result, CURLOPT_FTP_USE_EPSV, 0);
+		curl_easy_setopt(result, CURLOPT_FTP_USE_EPSV, 0L);
 
 	if (curl_ssl_try)
 		curl_easy_setopt(result, CURLOPT_USE_SSL, CURLUSESSL_TRY);
@@ -1193,18 +1193,18 @@ static CURL *get_curl_handle(void)
 
 		if (starts_with(curl_http_proxy, "socks5h"))
 			curl_easy_setopt(result,
-				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
+				CURLOPT_PROXYTYPE, (long)CURLPROXY_SOCKS5_HOSTNAME);
 		else if (starts_with(curl_http_proxy, "socks5"))
 			curl_easy_setopt(result,
-				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
+				CURLOPT_PROXYTYPE, (long)CURLPROXY_SOCKS5);
 		else if (starts_with(curl_http_proxy, "socks4a"))
 			curl_easy_setopt(result,
-				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS4A);
+				CURLOPT_PROXYTYPE, (long)CURLPROXY_SOCKS4A);
 		else if (starts_with(curl_http_proxy, "socks"))
 			curl_easy_setopt(result,
-				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS4);
+				CURLOPT_PROXYTYPE, (long)CURLPROXY_SOCKS4);
 		else if (starts_with(curl_http_proxy, "https")) {
-			curl_easy_setopt(result, CURLOPT_PROXYTYPE, CURLPROXY_HTTPS);
+			curl_easy_setopt(result, CURLOPT_PROXYTYPE, (long)CURLPROXY_HTTPS);
 
 			if (http_proxy_ssl_cert)
 				curl_easy_setopt(result, CURLOPT_PROXY_SSLCERT, http_proxy_ssl_cert);
@@ -1254,7 +1254,7 @@ static CURL *get_curl_handle(void)
 	}
 	init_curl_proxy_auth(result);
 
-	curl_easy_setopt(result, CURLOPT_TCP_KEEPALIVE, 1);
+	curl_easy_setopt(result, CURLOPT_TCP_KEEPALIVE, 1L);
 
 	if (curl_tcp_keepidle > -1)
 		curl_easy_setopt(result, CURLOPT_TCP_KEEPIDLE,
