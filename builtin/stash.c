@@ -1789,7 +1789,7 @@ static int push_stash(int argc, const char **argv, const char *prefix,
 	int ret;
 
 	if (argc) {
-		force_assume = !strcmp(argv[0], "-p");
+		force_assume = argc > 1 && !strcmp(argv[1], "-p");
 		argc = parse_options(argc, argv, prefix, options,
 				     push_assumed ? git_stash_usage :
 				     git_stash_push_usage,
