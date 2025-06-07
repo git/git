@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2025, #01; Thu, 5)
-X-master-at: 14de3eb34435db79c6e7edc8082c302a26a8330a
-X-next-at: fc6ec28a5d7844ff134d388edf5eb272d1cf11e9
+Subject: What's cooking in git.git (Jun 2025, #02; Sat, 7)
+X-master-at: 8db3019401f8093fb895f581be641fe7e05aa755
+X-next-at: 56857d51d7a015fa5707ce6b86b5deb70eecb676
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2025, #01; Thu, 5)
+What's cooking in git.git (Jun 2025, #02; Sat, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,86 +48,83 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* bs/config-mak-openbsd (2025-06-01) 1 commit
-  (merged to 'next' on 2025-06-03 at a577e2761d)
- + config.mak.uname: update settings for OpenBSD
+* bs/bsd-wo-specific-xopen-source (2025-06-02) 1 commit
+  (merged to 'next' on 2025-06-05 at ce6964f985)
+ + compat: fixes for header handling with OpenBSD / NetBSD
 
- Build fix for OpenBSD
- source: <aD0XIxPRQjA5t8oi@humpty.home.comstyle.com>
-
-
-* bs/online-cpus-bsd (2025-06-01) 1 commit
-  (merged to 'next' on 2025-06-02 at a9f28d85b6)
- + thread-utils.c: detect online CPU count on OpenBSD / NetBSD
-
- Update online_cpus() functrion on BSD variants.
- source: <aB2c-W0V83aVDpZr@humpty.home.comstyle.com>
+ Build fix for BSDs.
+ source: <aD1SvlRypkhczxRS@humpty.home.comstyle.com>
 
 
-* bs/total-ram-bsd (2025-06-01) 1 commit
-  (merged to 'next' on 2025-06-02 at e644b57520)
- + builtin/gc: correct physical memory detection for OpenBSD / NetBSD
+* cf/var-completion-obsd-fixes (2025-06-02) 1 commit
+  (merged to 'next' on 2025-06-05 at 0e07c5bcf4)
+ + completion: make sed command that generates config-list.h portable.
 
- Update total_ram() functrion on BSD variants.
- source: <aDwOLPOa8JOgFJZg@humpty.home.comstyle.com>
-
-
-* ja/doc-synopsis-style (2025-05-27) 9 commits
-  (merged to 'next' on 2025-06-01 at 8f6b14e592)
- + doc: convert git-switch manpage to new synopsis style
- + doc: convert git-mergetool options to new synopsis style
- + doc: convert git-mergetool manpage to new synopsis style
- + doc: switch merge config description to new synopsis format
- + doc: convert merge strategies to synopsis format
- + doc: merge-options.adoc remove a misleading double negation
- + doc: convert merge options to new synopsis format
- + doc: convert git-merge manpage to new style
- + doc: convert git-checkout manpage to new style
-
- Doc mark-up fixes.
- source: <pull.1927.git.1748204829.gitgitgadget@gmail.com>
+ Build fix for OpenBSD.
+ source: <59b2a12a3f43cf078fbeaf0271b5a7cfffc9eb8f.1748903426.git.collin.funk1@gmail.com>
 
 
-* jc/signed-fast-export-is-experimental (2025-05-28) 1 commit
-  (merged to 'next' on 2025-06-01 at 54d15b067c)
- + fast-export: --signed-commits is experimental
+* jk/curl-easy-setopt-typefix (2025-06-04) 3 commits
+  (merged to 'next' on 2025-06-06 at b1769b9fb4)
+ + curl: fix symbolic constant typechecks with curl_easy_setopt()
+ + curl: fix integer variable typechecks with curl_easy_setopt()
+ + curl: fix integer constant typechecks with curl_easy_setopt()
+ (this branch is used by js/curl-easy-setopt-typefix.)
 
- Mark a new feature added during this cycle as experimental and fix
- its default so that existing users of the fast-export command is
- not broken.
- cf. <xmqqzfeyqdye.fsf@gitster.g>
- source: <xmqq8qmgsky8.fsf@gitster.g>
-
-
-* kh/doc-column-markup-fix (2025-06-01) 1 commit
-  (merged to 'next' on 2025-06-02 at 96a755b8d2)
- + doc: column: fix blank lines around block delimiters
-
- Doc updates.
- source: <3c6d7b154048ef0053d15b4f86cc241211ef30dc.1748777208.git.code@khaugsbakk.name>
+ Adjust to newer version of libcURL.
+ source: <20250604205505.GA1510724@coredump.intra.peff.net>
 
 
-* sj/ref-contents-check-fix (2025-06-02) 1 commit
-  (merged to 'next' on 2025-06-02 at 6a9b2f5e9d)
- + fsck: ignore missing "refs" directory for linked worktrees
+* js/curl-easy-setopt-typefix (2025-06-06) 2 commits
+  (merged to 'next' on 2025-06-06 at f25aaba642)
+ + curl: pass `long` values where expected
+ + Merge branch 'jk/curl-easy-setopt-typefix' into js/curl-easy-setopt-typefix
+ (this branch uses jk/curl-easy-setopt-typefix.)
 
- "git verify-refs" (and hence "git fsck --reference") started
- erroring out in a repository in which secondary worktrees were
- prepared with Git 2.43 or lower.
- source: <aD24H3nVTwTq8JDq@ArchLinux>
-
-
-* wk/sparse-checkout-doc-fix (2025-05-30) 1 commit
-  (merged to 'next' on 2025-06-01 at 846fc57c9e)
- + doc: sparse-checkout: use consistent inline list style
-
- Doc update.
- source: <pull.1948.v2.git.git.1748589756289.gitgitgadget@gmail.com>
+ Adjust to newer version of libcURL.
+ source: <80de7491d24fb51c6b2c3b2fc1728db30e2477f7.1749202164.git.gitgitgadget@gmail.com> 
 
 --------------------------------------------------
 [New Topics]
 
-* mm/test-in-absolute-home (2025-05-30) 1 commit
+* kn/fetch-push-bulk-ref-update-fixup (2025-06-06) 3 commits
+ - receive-pack: handle reference deletions separately
+ - refs/files: skip updates with errors in batched updates
+ - Merge branch 'kn/fetch-push-bulk-ref-update' into kn/fetch-push-bulk-ref-update-fixup
+ (this branch uses kn/fetch-push-bulk-ref-update.)
+
+ Additional fixes to the base topic.
+ source: <20250606-6769-address-test-failures-in-the-next-branch-caused-by-batched-reference-updates-v3-0-e1c41693bd35@gmail.com>
+
+
+* ma/doc-diff-cc-headers (2025-06-06) 1 commit
+ - diff-generate-patch.adoc: drop spurious backticks
+
+ Doc mark-up update.
+
+ Will merge to 'next'.
+ source: <20250606123138.566178-1-martin.agren@gmail.com>
+
+
+* ss/bswap-ntohll-fix (2025-06-06) 1 commit
+ - bswap.h: Move the overwriting of the ntohl*/ htonl* macros.
+
+ source: <20250606165718.HOiC2U4X@breakpoint.cc>
+
+
+* jc/merge-compact-summary (2025-06-06) 1 commit
+ - merge/pull: --compact-summary
+
+
+* bs/solaris-10-and-11 (2025-06-06) 1 commit
+ - config.mak.uname: update settings for Solaris 11
+
+ source: <aEOlc_PV7ZngUdj0@humpty.home.comstyle.com>
+
+--------------------------------------------------
+[Cooking]
+
+* mm/test-in-absolute-home (2025-05-28) 1 commit
   (merged to 'next' on 2025-06-05 at ae6cc48f8d)
  + t: run tests from a normalized working directory
 
@@ -141,7 +138,7 @@ Release tarballs are available at:
  source: <20250528201737.55268-1-mark@chromium.org>
 
 
-* ag/imap-send-resurrection (2025-06-05) 10 commits
+* ag/imap-send-resurrection (2025-06-06) 10 commits
  - imap-send: add ability to list the available folders
  - imap-send: display the destination mailbox when sending a message
  - imap-send: display port alongwith host when git credential is invoked
@@ -156,8 +153,8 @@ Release tarballs are available at:
  "git imap-send" has been broken for a long time, which has been
  resurrected and then taught to talk OAuth2.0 etc.
 
- Comments?
- source: <cover.1749112640.git.gargaditya08@live.com>
+ Getting there.
+ source: <PN3PR01MB9597BB453E9980CC50AA6703B86EA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
 
 
 * ag/send-email-docs (2025-05-30) 4 commits
@@ -175,11 +172,12 @@ Release tarballs are available at:
 
 
 * ly/pack-bitmap-root-leakfix (2025-06-05) 1 commit
- - pack-bitmap: remove checks before bitmap_free
+  (merged to 'next' on 2025-06-07 at 57cb6791ac)
+ + pack-bitmap: remove checks before bitmap_free
 
  Memleak fix on an error code path.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <pull.1977.v6.git.git.1749138820241.gitgitgadget@gmail.com>
 
 
@@ -214,16 +212,6 @@ Release tarballs are available at:
  source: <20250605140644.239199-1-kuforiji98@gmail.com>
 
 
-* cf/var-completion-obsd-fixes (2025-06-02) 1 commit
-  (merged to 'next' on 2025-06-05 at 0e07c5bcf4)
- + completion: make sed command that generates config-list.h portable.
-
- Build fix for OpenBSD.
-
- Will merge to 'master'.
- source: <59b2a12a3f43cf078fbeaf0271b5a7cfffc9eb8f.1748903426.git.collin.funk1@gmail.com>
-
-
 * lo/my-first-ow-doc-update (2025-06-02) 2 commits
   (merged to 'next' on 2025-06-05 at 576594dbf9)
  + MyFirstContribution: add walken.c to meson.build
@@ -235,7 +223,7 @@ Release tarballs are available at:
  source: <20250602205021.4223-1-lucasseikioshiro@gmail.com>
 
 
-* vd/cat-file-objectmode-update (2025-06-03) 3 commits
+* vd/cat-file-objectmode-update (2025-06-02) 3 commits
   (merged to 'next' on 2025-06-05 at fb997e495f)
  + cat-file.c: add batch handling for submodules
  + cat-file: add %(objectmode) atom
@@ -250,17 +238,7 @@ Release tarballs are available at:
  source: <pull.1929.git.1748890555.gitgitgadget@gmail.com>
 
 
-* bs/bsd-wo-specific-xopen-source (2025-06-03) 1 commit
-  (merged to 'next' on 2025-06-05 at ce6964f985)
- + compat: fixes for header handling with OpenBSD / NetBSD
-
- Build fix for BSDs.
-
- Will merge to 'master'.
- source: <aD1SvlRypkhczxRS@humpty.home.comstyle.com>
-
-
-* ly/do-not-localize-bug-messages (2025-06-03) 1 commit
+* ly/do-not-localize-bug-messages (2025-06-02) 1 commit
   (merged to 'next' on 2025-06-05 at 8fb8d5c0bb)
  + BUG(): remove leading underscore of the format string
 
@@ -270,7 +248,7 @@ Release tarballs are available at:
  source: <9d69c19273be31135eade258b49582bcc6df27c7.1748916074.git.gitgitgadget@gmail.com>
 
 
-* ly/sequencer-update-squash-is-fixup-only (2025-06-03) 1 commit
+* ly/sequencer-update-squash-is-fixup-only (2025-06-02) 1 commit
   (merged to 'next' on 2025-06-05 at 0ac9201fee)
  + sequencer: replace error() with BUG() in update_squash_messages ()
 
@@ -281,24 +259,13 @@ Release tarballs are available at:
 
 
 * cf/guideline-documenting-config-vars (2025-06-03) 1 commit
- - CodingGuidelines: document formatting of similar config variables.
+  (merged to 'next' on 2025-06-06 at 72457f666b)
+ + CodingGuidelines: document formatting of similar config variables.
 
  CodingGuidelines update.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <802402a288f0976765f1ba1c82d14c2289c8cf72.1748990700.git.collin.funk1@gmail.com>
-
-
-* jk/curl-easy-setopt-typefix (2025-06-04) 3 commits
- - curl: fix symbolic constant typechecks with curl_easy_setopt()
- - curl: fix integer variable typechecks with curl_easy_setopt()
- - curl: fix integer constant typechecks with curl_easy_setopt()
- (this branch is used by js/curl-easy-setopt-typefix.)
-
- Adjust to newer version of libcURL.
-
- Will merge to 'next'.
- source: <20250604205505.GA1510724@coredump.intra.peff.net>
 
 
 * jm/bundle-uri-debug-output-to-fp (2025-06-04) 1 commit
@@ -310,7 +277,7 @@ Release tarballs are available at:
  source: <pull.1985.v2.git.git.1749057081918.gitgitgadget@gmail.com>
 
 
-* ly/commit-graph-graph-write-leakfix (2025-06-04) 1 commit
+* ly/commit-graph-graph-write-leakfix (2025-06-03) 1 commit
   (merged to 'next' on 2025-06-05 at ae03e27cc8)
  + commit-graph: fix start_delayed_progress() leak
 
@@ -320,7 +287,7 @@ Release tarballs are available at:
  source: <pull.1986.git.git.1749006675784.gitgitgadget@gmail.com>
 
 
-* ly/fetch-pack-leakfix (2025-06-04) 1 commit
+* ly/fetch-pack-leakfix (2025-06-03) 1 commit
   (merged to 'next' on 2025-06-05 at 560cfcbe51)
  + builtin/fetch-pack: cleanup before return error
 
@@ -330,27 +297,15 @@ Release tarballs are available at:
  source: <pull.1990.git.git.1749006474694.gitgitgadget@gmail.com>
 
 
-* js/curl-easy-setopt-typefix (2025-06-05) 2 commits
- - curl: pass `long` values where expected
- - Merge branch 'jk/curl-easy-setopt-typefix' into js/curl-easy-setopt-typefix
- (this branch uses jk/curl-easy-setopt-typefix.)
-
- Adjust to newer version of libcURL.
-
- Will merge to 'next'.
- source: <xmqqh60u9nuo.fsf@gitster.g>
-
-
-* ly/commit-buffer-reencode-leakfix (2025-06-05) 1 commit
- - repo_logmsg_reencode: fix memory leak when use repo_logmsg_reencode ()
+* ly/commit-buffer-reencode-leakfix (2025-06-04) 1 commit
+  (merged to 'next' on 2025-06-06 at 47b4fdbbf8)
+ + repo_logmsg_reencode: fix memory leak when use repo_logmsg_reencode ()
 
  Leakfix.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <pull.1988.v2.git.git.1749104846531.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * ag/send-email-edit-threading-fix (2025-06-04) 2 commits
  - send-email: show the new message id assigned by outlook in the logs
@@ -364,7 +319,7 @@ Release tarballs are available at:
  source: <PN3PR01MB95979AA8114CA26405BE02CFB86CA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
 
 
-* ly/load-bitmap-leakfix (2025-06-03) 3 commits
+* ly/load-bitmap-leakfix (2025-06-02) 3 commits
  - pack-bitmap: add load corrupt bitmap test
  - pack-bitmap: reword comments in test_bitmap_commits()
  - pack-bitmap: fix memory leak if load_bitmap() failed
@@ -408,7 +363,7 @@ Release tarballs are available at:
  source: <20250603-b4-pks-maintenance-ref-lock-race-v4-0-52f5cf7b7e99@pks.im>
 
 
-* tb/prepare-midx-pack-cleanup (2025-05-29) 5 commits
+* tb/prepare-midx-pack-cleanup (2025-05-28) 5 commits
  - midx: return a `packed_git` pointer from `prepare_midx_pack()`
  - midx-write.c: extract inner loop from fill_packs_from_midx()
  - midx-write.c: guard against incremental MIDXs in want_included_pack()
@@ -422,7 +377,7 @@ Release tarballs are available at:
  source: <cover.1748473122.git.me@ttaylorr.com>
 
 
-* ps/meson-tap-parse (2025-06-02) 10 commits
+* ps/meson-tap-parse (2025-06-01) 10 commits
   (merged to 'next' on 2025-06-03 at 579d19e8ae)
  + meson: parse TAP output generated by our tests
  + meson: introduce kwargs variable for tests
@@ -442,19 +397,18 @@ Release tarballs are available at:
  source: <20250602-pks-meson-tap-v4-0-052dfde0818a@pks.im>
 
 
-* jw/doc-txt-to-adoc-refs (2025-05-21) 2 commits
- - SQUASH???
+* jw/doc-txt-to-adoc-refs (2025-05-21) 1 commit
  - doc: update references to renamed AsciiDoc files
 
  Some leftover references to documentation source files that no
  longer exist, due to recent ".txt" -> ".adoc" renaming, have been
  corrected.
 
- Will squash in the fix-up and merge to 'next'.
+ Will merge to 'next'.
  source: <pull.1971.git.git.1747854310479.gitgitgadget@gmail.com>
 
 
-* jk/diff-no-index-with-pathspec (2025-05-22) 3 commits
+* jk/diff-no-index-with-pathspec (2025-05-21) 3 commits
   (merged to 'next' on 2025-06-05 at b0dee92a43)
  + diff --no-index: support limiting by pathspec
  + pathspec: add flag to indicate operation without repository
@@ -468,14 +422,14 @@ Release tarballs are available at:
  source: <20250521232917.2333291-1-jacob.e.keller@intel.com>
 
 
-* pw/stash-p-pathspec-fixes (2025-05-20) 2 commits
+* pw/stash-p-pathspec-fixes (2025-06-07) 2 commits
  - stash: allow "git stash [<options>] --patch <pathspec>" to assume push
  - stash: allow "git stash -p <pathspec>" to assume push again
 
  "git stash -p <pathspec>" improvements.
 
- Will merge to 'next'?
- source: <cover.1747733203.git.phillip.wood@dunelm.org.uk>
+ Will merge to 'next'.
+ source: <cover.1749289514.git.phillip.wood@dunelm.org.uk>
 
 
 * kn/fetch-push-bulk-ref-update (2025-05-19) 4 commits
@@ -484,6 +438,7 @@ Release tarballs are available at:
  + send-pack: fix memory leak around duplicate refs
  + fetch: use batched reference updates
  + refs: add function to translate errors to strings
+ (this branch is used by kn/fetch-push-bulk-ref-update-fixup.)
 
  "git push" and "git fetch" are taught to update refs in batches to
  gain performance.
@@ -514,7 +469,7 @@ Release tarballs are available at:
  source: <pull.1890.git.1747313139.gitgitgadget@gmail.com>
 
 
-* kj/renamed-submodule (2025-05-27) 2 commits
+* kj/renamed-submodule (2025-05-24) 2 commits
  - submodule: skip redundant active entries when pattern covers path
  - submodule: prevent overwriting .gitmodules entry on path reuse
 
@@ -550,7 +505,7 @@ Release tarballs are available at:
  source: <20250601223225.464076-1-sandals@crustytoothpaste.net>
 
 
-* lm/add-p-context (2025-05-12) 4 commits
+* lm/add-p-context (2025-05-10) 4 commits
  - add-patch: add diff.context command line overrides
  - add-patch: respect diff.context configuration
  - test: refactor to use "test_config"
@@ -584,7 +539,7 @@ Release tarballs are available at:
  source: <20250512-pks-contrib-spring-cleanup-v3-0-32e151b0bfb0@pks.im>
 
 
-* ps/object-store (2025-06-05) 17 commits
+* ps/object-store (2025-06-04) 17 commits
  - odb: rename `read_object_with_reference()`
  - odb: rename `pretend_object_file()`
  - odb: rename `has_object()`
@@ -654,7 +609,7 @@ Release tarballs are available at:
  source: <20250424203904.909777-1-christian.couder@gmail.com>
 
 
-* sj/string-list-typefix (2025-06-03) 8 commits
+* sj/string-list-typefix (2025-05-18) 8 commits
  - u-string-list: move "remove duplicates" test to "u-string-list.c"
  - u-string-list: move "filter string" test to "u-string-list.c"
  - u-string-list: move "test_split_in_place" to "u-string-list.c"
@@ -670,7 +625,7 @@ Release tarballs are available at:
  source: <aCoDB9P5XV1lHMil@ArchLinux>
 
 
-* tb/midx-avoid-cruft-packs (2025-05-29) 9 commits
+* tb/midx-avoid-cruft-packs (2025-05-28) 9 commits
  - repack: exclude cruft pack(s) from the MIDX where possible
  - pack-objects: introduce '--stdin-packs=follow'
  - pack-objects: swap 'show_{object,commit}_pack_hint'
