@@ -190,9 +190,6 @@ ifeq ($(uname_S),SunOS)
 	SHELL_PATH = /bin/bash
 	SANE_TOOL_PATH = /usr/xpg6/bin:/usr/xpg4/bin
 	HAVE_ALLOCA_H = YesPlease
-	NO_STRCASESTR = YesPlease
-	NO_MEMMEM = YesPlease
-	NO_MKDTEMP = YesPlease
 	NO_REGEX = YesPlease
 	NO_MSGFMT_EXTENDED_OPTIONS = YesPlease
 	HAVE_DEV_TTY = YesPlease
@@ -202,7 +199,10 @@ ifeq ($(uname_S),SunOS)
 		NO_IPV6 = YesPlease
 		NO_SOCKADDR_STORAGE = YesPlease
 		NO_UNSETENV = YesPlease
+		NO_MKDTEMP = YesPlease
+		NO_MEMMEM = YesPlease
 		NO_SETENV = YesPlease
+		NO_STRCASESTR = YesPlease
 		NO_STRLCPY = YesPlease
 		NO_STRTOUMAX = YesPlease
 		GIT_TEST_CMP = cmp
@@ -212,21 +212,43 @@ ifeq ($(uname_S),SunOS)
 		NO_IPV6 = YesPlease
 		NO_SOCKADDR_STORAGE = YesPlease
 		NO_UNSETENV = YesPlease
+		NO_MKDTEMP = YesPlease
+		NO_MEMMEM = YesPlease
 		NO_SETENV = YesPlease
+		NO_STRCASESTR = YesPlease
 		NO_STRLCPY = YesPlease
 		NO_STRTOUMAX = YesPlease
 		GIT_TEST_CMP = cmp
         endif
         ifeq ($(uname_R),5.8)
 		NO_UNSETENV = YesPlease
+		NO_MKDTEMP = YesPlease
+		NO_MEMMEM = YesPlease
 		NO_SETENV = YesPlease
+		NO_STRCASESTR = YesPlease
 		NO_STRTOUMAX = YesPlease
 		GIT_TEST_CMP = cmp
         endif
         ifeq ($(uname_R),5.9)
 		NO_UNSETENV = YesPlease
+		NO_MKDTEMP = YesPlease
+		NO_MEMMEM = YesPlease
 		NO_SETENV = YesPlease
+		NO_STRCASESTR = YesPlease
 		NO_STRTOUMAX = YesPlease
+		GIT_TEST_CMP = cmp
+        endif
+        ifeq ($(uname_R),5.10)
+		NO_UNSETENV = YesPlease
+		NO_MKDTEMP = YesPlease
+		NO_MEMMEM = YesPlease
+		NO_SETENV = YesPlease
+		NO_STRCASESTR = YesPlease
+		GIT_TEST_CMP = cmp
+        endif
+        ifeq ($(uname_R),5.11)
+		NO_UNSETENV = YesPlease
+		NO_SETENV = YesPlease
 		GIT_TEST_CMP = cmp
         endif
 	INSTALL = /usr/ucb/install
