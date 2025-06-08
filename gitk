@@ -11669,7 +11669,7 @@ proc create_prefs_page {w} {
 }
 
 proc prefspage_general {notebook} {
-    global NS have_ttk
+    global NS
     global {*}$::config_variables
 
     set page [create_prefs_page $notebook.general]
@@ -11747,14 +11747,6 @@ proc prefspage_general {notebook} {
 
     ${NS}::label $page.lgen -text [mc "General options"] -font mainfontbold
     grid $page.lgen - -sticky w -pady 10
-    ${NS}::checkbutton $page.want_ttk -variable want_ttk \
-        -text [mc "Use themed widgets"]
-    if {$have_ttk} {
-        ${NS}::label $page.ttk_note -text [mc "(change requires restart)"]
-    } else {
-        ${NS}::label $page.ttk_note -text [mc "(currently unavailable)"]
-    }
-    grid x $page.want_ttk $page.ttk_note -sticky w
     return $page
 }
 
@@ -12506,7 +12498,6 @@ set autocopy 0
 set autoselect 1
 set autosellen 40
 set perfile_attrs 0
-set want_ttk 1
 
 if {[tk windowingsystem] eq "aqua"} {
     set extdifftool "opendiff"
@@ -12651,7 +12642,6 @@ set config_variables {
     uifgdisabledcolor
     uifont
     visiblerefs
-    want_ttk
     web_browser
     workingfilescirclecolor
     wrapcomment
@@ -12748,16 +12738,9 @@ set nullid "0000000000000000000000000000000000000000"
 set nullid2 "0000000000000000000000000000000000000001"
 set nullfile "/dev/null"
 
-if {![info exists have_ttk]} {
-    set have_ttk [llength [info commands ::ttk::style]]
-}
-set use_ttk [expr {$have_ttk && $want_ttk}]
-set NS [expr {$use_ttk ? "ttk" : ""}]
-
-if {$use_ttk} {
-    setttkstyle
-}
-
+setttkstyle
+set use_ttk 1
+set NS ttk
 set appname "gitk"
 
 set runq {}
