@@ -2089,11 +2089,8 @@ proc removehead {id name} {
 }
 
 proc ttk_toplevel {w args} {
-    global use_ttk
     eval [linsert $args 0 ::toplevel $w]
-    if {$use_ttk} {
-        place [ttk::frame $w._toplevel_background] -x 0 -y 0 -relwidth 1 -relheight 1
-    }
+    place [ttk::frame $w._toplevel_background] -x 0 -y 0 -relwidth 1 -relheight 1
     return $w
 }
 
@@ -2108,8 +2105,6 @@ proc make_transient {window origin} {
 }
 
 proc show_error {w top msg} {
-    global NS
-    if {![info exists NS]} {set NS ""}
     if {[wm state $top] eq "withdrawn"} { wm deiconify $top }
     message $w.m -text $msg -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
@@ -2135,7 +2130,7 @@ proc error_popup {msg {owner .}} {
 }
 
 proc confirm_popup {msg {owner .}} {
-    global confirm_ok NS
+    global confirm_ok
     set confirm_ok 0
     set w .confirm
     ttk_toplevel $w
@@ -2160,8 +2155,6 @@ proc haveselectionclipboard {} {
 }
 
 proc setoptions {} {
-    global use_ttk
-
     if {[tk windowingsystem] ne "win32"} {
         option add *Panedwindow.showHandle 1 startupFile
         option add *Panedwindow.sashRelief raised startupFile
@@ -2254,20 +2247,15 @@ proc cleardropsel {w} {
     $w selection clear
 }
 proc makedroplist {w varname args} {
-    global use_ttk
-    if {$use_ttk} {
-        set width 0
-        foreach label $args {
-            set cx [string length $label]
-            if {$cx > $width} {set width $cx}
-        }
-        set gm [ttk::combobox $w -width $width -state readonly\
-                    -textvariable $varname -values $args \
-                    -exportselection false]
-        bind $gm <<ComboboxSelected>> [list $gm selection clear]
-    } else {
-        set gm [eval [linsert $args 0 tk_optionMenu $w $varname]]
+    set width 0
+    foreach label $args {
+        set cx [string length $label]
+        if {$cx > $width} {set width $cx}
     }
+    set gm [ttk::combobox $w -width $width -state readonly\
+        -textvariable $varname -values $args \
+        -exportselection false]
+    bind $gm <<ComboboxSelected>> [list $gm selection clear]
     return $gm
 }
 
@@ -2289,7 +2277,6 @@ proc makewindow {} {
     global headctxmenu progresscanv progressitem progresscoords statusw
     global fprogitem fprogcoord lastprogupdate progupdatepending
     global rprogitem rprogcoord rownumsel numcommits
-    global use_ttk NS
     global worddiff
 
     # The "mc" arguments here are purely so that xgettext
@@ -2342,10 +2329,8 @@ proc makewindow {} {
     makemenu .bar $bar
     . configure -menu .bar
 
-    if {$use_ttk} {
-        # cover the non-themed toplevel with a themed frame.
-        place [ttk::frame ._main_background] -x 0 -y 0 -relwidth 1 -relheight 1
-    }
+    # cover the non-themed toplevel with a themed frame.
+    place [ttk::frame ._main_background] -x 0 -y 0 -relwidth 1 -relheight 1
 
     # the gui has upper and lower half, parts of a paned window.
     ttk::panedwindow .ctop -orient vertical
@@ -2364,9 +2349,6 @@ proc makewindow {} {
     ttk::frame .tf -height $geometry(topheight) -width $geometry(topwidth)
     ttk::frame .tf.histframe
     ttk::panedwindow .tf.histframe.pwclist -orient horizontal
-    if {!$use_ttk} {
-        .tf.histframe.pwclist configure -sashpad 0 -handlesize 4
-    }
 
     # create three canvases
     set cscroll .tf.histframe.csb
@@ -2386,20 +2368,14 @@ proc makewindow {} {
         -selectbackground $selectbgcolor \
         -background $bgcolor -bd 0 -yscrollincr $linespc
     .tf.histframe.pwclist add $canv3
-    if {$use_ttk} {
-        bind .tf.histframe.pwclist <Map> {
-            bind %W <Map> {}
-            .tf.histframe.pwclist sashpos 1 [lindex $::geometry(pwsash1) 0]
-            .tf.histframe.pwclist sashpos 0 [lindex $::geometry(pwsash0) 0]
-        }
-    } else {
-        eval .tf.histframe.pwclist sash place 0 $geometry(pwsash0)
-        eval .tf.histframe.pwclist sash place 1 $geometry(pwsash1)
+    bind .tf.histframe.pwclist <Map> {
+        bind %W <Map> {}
+        .tf.histframe.pwclist sashpos 1 [lindex $::geometry(pwsash1) 0]
+        .tf.histframe.pwclist sashpos 0 [lindex $::geometry(pwsash0) 0]
     }
 
     # a scroll bar to rule them
     ttk::scrollbar $cscroll -command {allcanvs yview}
-    if {!$use_ttk} {$cscroll configure -highlightthickness 0}
     pack $cscroll -side right -fill y
     bind .tf.histframe.pwclist <Configure> {resizeclistpanes %W %w}
     lappend bglist $canv $canv2 $canv3
@@ -2442,18 +2418,10 @@ proc makewindow {} {
     image create bitmap bm-right-gray -data $bm_right_data -foreground $uifgdisabledcolor
 
     ttk::button .tf.bar.leftbut -command goback -state disabled -width 26
-    if {$use_ttk} {
-        .tf.bar.leftbut configure -image [list bm-left disabled bm-left-gray]
-    } else {
-        .tf.bar.leftbut configure -image bm-left
-    }
+    .tf.bar.leftbut configure -image [list bm-left disabled bm-left-gray]
     pack .tf.bar.leftbut -side left -fill y
     ttk::button .tf.bar.rightbut -command goforw -state disabled -width 26
-    if {$use_ttk} {
-        .tf.bar.rightbut configure -image [list bm-right disabled bm-right-gray]
-    } else {
-        .tf.bar.rightbut configure -image bm-right
-    }
+    .tf.bar.rightbut configure -image [list bm-right disabled bm-right-gray]
     pack .tf.bar.rightbut -side left -fill y
 
     ttk::label .tf.bar.rowlabel -text [mc "Row"]
@@ -2465,9 +2433,6 @@ proc makewindow {} {
         -relief sunken -anchor e
     pack .tf.bar.rowlabel .tf.bar.rownum .tf.bar.rowlabel2 .tf.bar.numcommits \
         -side left
-    if {!$use_ttk} {
-        foreach w {rownum numcommits} {.tf.bar.$w configure -font textfont}
-    }
     global selectedline
     trace add variable selectedline write selectedline_change
 
@@ -2475,16 +2440,7 @@ proc makewindow {} {
     set statusw .tf.bar.status
     ttk::label $statusw -width 15 -relief sunken
     pack $statusw -side left -padx 5
-    if {$use_ttk} {
-        set progresscanv [ttk::progressbar .tf.bar.progress]
-    } else {
-        set h [expr {[font metrics uifont -linespace] + 2}]
-        set progresscanv .tf.bar.progress
-        canvas $progresscanv -relief sunken -height $h -borderwidth 2
-        set progressitem [$progresscanv create rect -1 0 0 $h -fill "#00ff00"]
-        set fprogitem [$progresscanv create rect -1 0 0 $h -fill yellow]
-        set rprogitem [$progresscanv create rect -1 0 0 $h -fill red]
-    }
+    set progresscanv [ttk::progressbar .tf.bar.progress]
     pack $progresscanv -side right -expand 1 -fill x -padx {0 2}
     set progresscoords {0 0}
     set fprogcoord 0
@@ -2557,10 +2513,6 @@ proc makewindow {} {
     pack .tf.bar -in .tf -side bottom -fill x
     pack .tf.histframe -fill both -side top -expand 1
     .ctop add .tf
-    if {!$use_ttk} {
-        .ctop paneconfigure .tf -height $geometry(topheight)
-        .ctop paneconfigure .tf -width $geometry(topwidth)
-    }
 
     # now build up the bottom
     ttk::panedwindow .pwbottom -orient horizontal
@@ -2673,9 +2625,6 @@ proc makewindow {} {
     $ctext tag lower d0
 
     .pwbottom add .bleft
-    if {!$use_ttk} {
-        .pwbottom paneconfigure .bleft -width $geometry(botwidth)
-    }
 
     # lower right
     ttk::frame .bright
@@ -2733,17 +2682,15 @@ proc makewindow {} {
         set ::BM "2"
     }
 
-    if {$use_ttk} {
-        bind .ctop <Map> {
-            bind %W <Map> {}
-            %W sashpos 0 $::geometry(topheight)
-        }
-        bind .pwbottom <Map> {
-            bind %W <Map> {}
-            %W sashpos 0 $::geometry(botwidth)
-        }
-        bind .pwbottom <Configure> {resizecdetpanes %W %w}
+    bind .ctop <Map> {
+        bind %W <Map> {}
+        %W sashpos 0 $::geometry(topheight)
     }
+    bind .pwbottom <Map> {
+        bind %W <Map> {}
+        %W sashpos 0 $::geometry(botwidth)
+    }
+    bind .pwbottom <Configure> {resizecdetpanes %W %w}
 
     pack .ctop -fill both -expand 1
     bindall <1> {selcanvline %W %x %y}
@@ -2990,30 +2937,10 @@ proc click {w} {
 
 # Adjust the progress bar for a change in requested extent or canvas size
 proc adjustprogress {} {
-    global progresscanv progressitem progresscoords
-    global fprogitem fprogcoord lastprogupdate progupdatepending
-    global rprogitem rprogcoord use_ttk
+    global progresscanv
+    global fprogcoord
 
-    if {$use_ttk} {
-        $progresscanv configure -value [expr {int($fprogcoord * 100)}]
-        return
-    }
-
-    set w [expr {[winfo width $progresscanv] - 4}]
-    set x0 [expr {$w * [lindex $progresscoords 0]}]
-    set x1 [expr {$w * [lindex $progresscoords 1]}]
-    set h [winfo height $progresscanv]
-    $progresscanv coords $progressitem $x0 0 $x1 $h
-    $progresscanv coords $fprogitem 0 0 [expr {$w * $fprogcoord}] $h
-    $progresscanv coords $rprogitem 0 0 [expr {$w * $rprogcoord}] $h
-    set now [clock clicks -milliseconds]
-    if {$now >= $lastprogupdate + 100} {
-        set progupdatepending 0
-        update
-    } elseif {!$progupdatepending} {
-        set progupdatepending 1
-        after [expr {$lastprogupdate + 100 - $now}] doprogupdate
-    }
+    $progresscanv configure -value [expr {int($fprogcoord * 100)}]
 }
 
 proc doprogupdate {} {
@@ -3072,7 +2999,6 @@ proc savestuff {w} {
     upvar #0 viewargscmd current_viewargscmd
     upvar #0 viewperm current_viewperm
     upvar #0 nextviewnum current_nextviewnum
-    upvar #0 use_ttk current_use_ttk
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -3106,13 +3032,8 @@ proc savestuff {w} {
         puts $f "set geometry(state) [wm state .]"
         puts $f "set geometry(topwidth) [winfo width .tf]"
         puts $f "set geometry(topheight) [winfo height .tf]"
-        if {$current_use_ttk} {
-            puts $f "set geometry(pwsash0) \"[.tf.histframe.pwclist sashpos 0] 1\""
-            puts $f "set geometry(pwsash1) \"[.tf.histframe.pwclist sashpos 1] 1\""
-        } else {
-            puts $f "set geometry(pwsash0) \"[.tf.histframe.pwclist sash coord 0]\""
-            puts $f "set geometry(pwsash1) \"[.tf.histframe.pwclist sash coord 1]\""
-        }
+        puts $f "set geometry(pwsash0) \"[.tf.histframe.pwclist sashpos 0] 1\""
+        puts $f "set geometry(pwsash1) \"[.tf.histframe.pwclist sashpos 1] 1\""
         puts $f "set geometry(botwidth) [winfo width .bleft]"
         puts $f "set geometry(botheight) [winfo height .bleft]"
 
@@ -3158,17 +3079,14 @@ proc savestuff {w} {
 }
 
 proc resizeclistpanes {win w} {
-    global oldwidth oldsash use_ttk
+    global oldwidth oldsash
     if {[info exists oldwidth($win)]} {
         if {[info exists oldsash($win)]} {
             set s0 [lindex $oldsash($win) 0]
             set s1 [lindex $oldsash($win) 1]
-        } elseif {$use_ttk} {
+        } else {
             set s0 [$win sashpos 0]
             set s1 [$win sashpos 1]
-        } else {
-            set s0 [$win sash coord 0]
-            set s1 [$win sash coord 1]
         }
         if {$w < 60} {
             set sash0 [expr {int($w/2 - 2)}]
@@ -3190,29 +3108,20 @@ proc resizeclistpanes {win w} {
                 }
             }
         }
-        if {$use_ttk} {
-            $win sashpos 0 $sash0
-            $win sashpos 1 $sash1
-        } else {
-            $win sash place 0 $sash0 [lindex $s0 1]
-            $win sash place 1 $sash1 [lindex $s1 1]
-            set sash0 [list $sash0 [lindex $s0 1]]
-            set sash1 [list $sash1 [lindex $s1 1]]
-        }
+        $win sashpos 0 $sash0
+        $win sashpos 1 $sash1
         set oldsash($win) [list $sash0 $sash1]
     }
     set oldwidth($win) $w
 }
 
 proc resizecdetpanes {win w} {
-    global oldwidth oldsash use_ttk
+    global oldwidth oldsash
     if {[info exists oldwidth($win)]} {
         if {[info exists oldsash($win)]} {
             set s0 $oldsash($win)
-        } elseif {$use_ttk} {
-            set s0 [$win sashpos 0]
         } else {
-            set s0 [$win sash coord 0]
+            set s0 [$win sashpos 0]
         }
         if {$w < 60} {
             set sash0 [expr {int($w*3/4 - 2)}]
@@ -3226,12 +3135,7 @@ proc resizecdetpanes {win w} {
                 set sash0 [expr {$w - 15}]
             }
         }
-        if {$use_ttk} {
-            $win sashpos 0 $sash0
-        } else {
-            $win sash place 0 $sash0 [lindex $s0 1]
-            set sash0 [list $sash0 [lindex $s0 1]]
-        }
+        $win sashpos 0 $sash0
         set oldsash($win) $sash0
     }
     set oldwidth($win) $w
@@ -3252,7 +3156,7 @@ proc bindall {event action} {
 }
 
 proc about {} {
-    global bgcolor NS
+    global bgcolor
     set w .about
     if {[winfo exists $w]} {
         raise $w
@@ -3278,7 +3182,7 @@ Use and redistribute under the terms of the GNU General Public License"] \
 }
 
 proc keys {} {
-    global bgcolor NS
+    global bgcolor
     set w .keys
     if {[winfo exists $w]} {
         raise $w
@@ -4480,7 +4384,7 @@ proc editview {} {
 
 proc vieweditor {top n title} {
     global newviewname newviewopts viewfiles bgcolor
-    global known_view_options NS
+    global known_view_options
 
     ttk_toplevel $top
     wm title $top [concat $title [mc "-- criteria for selecting revisions"]]
@@ -6755,13 +6659,7 @@ proc bindline {t id} {
 }
 
 proc graph_pane_width {} {
-    global use_ttk
-
-    if {$use_ttk} {
-        set g [.tf.histframe.pwclist sashpos 0]
-    } else {
-        set g [.tf.histframe.pwclist sash coord 0]
-    }
+    set g [.tf.histframe.pwclist sashpos 0]
     return [lindex $g 0]
 }
 
@@ -9428,7 +9326,7 @@ proc doseldiff {oldid newid} {
 }
 
 proc mkpatch {} {
-    global rowmenuid currentid commitinfo patchtop patchnum NS
+    global rowmenuid currentid commitinfo patchtop patchnum
 
     if {![info exists currentid]} return
     set oldid $currentid
@@ -9517,7 +9415,7 @@ proc mkpatchcan {} {
 }
 
 proc mktag {} {
-    global rowmenuid mktagtop commitinfo NS
+    global rowmenuid mktagtop commitinfo
 
     set top .maketag
     set mktagtop $top
@@ -9648,7 +9546,7 @@ proc copyreference {} {
 }
 
 proc writecommit {} {
-    global rowmenuid wrcomtop commitinfo wrcomcmd NS
+    global rowmenuid wrcomtop commitinfo wrcomcmd
 
     set top .writecommit
     set wrcomtop $top
@@ -9706,7 +9604,7 @@ proc wrcomcan {} {
 }
 
 proc mkbranch {} {
-    global NS rowmenuid
+    global rowmenuid
 
     set top .branchdialog
 
@@ -9721,7 +9619,6 @@ proc mkbranch {} {
 }
 
 proc mvbranch {} {
-    global NS
     global headmenuid headmenuhead
 
     set top .branchdialog
@@ -9737,7 +9634,7 @@ proc mvbranch {} {
 }
 
 proc branchdia {top valvar uivar} {
-    global NS commitinfo
+    global commitinfo
     upvar $valvar val $uivar ui
 
     catch {destroy $top}
@@ -10008,7 +9905,7 @@ proc revert {} {
 }
 
 proc resethead {} {
-    global mainhead rowmenuid confirm_ok resettype NS
+    global mainhead rowmenuid confirm_ok resettype
 
     set confirm_ok 0
     set w ".confirmreset"
@@ -10209,7 +10106,7 @@ proc rmbranch {} {
 
 # Display a list of tags and heads
 proc showrefs {} {
-    global showrefstop bgcolor fgcolor selectbgcolor NS
+    global showrefstop bgcolor fgcolor selectbgcolor
     global bglist fglist reflistfilter reflist maincursor
 
     set top .showrefs
@@ -11582,7 +11479,7 @@ proc doquit {} {
 }
 
 proc mkfontdisp {font top which} {
-    global fontattr fontpref $font NS use_ttk
+    global fontattr fontpref $font
 
     set fontpref($font) [set $font]
     ttk::button $top.${font}but -text $which \
@@ -11659,17 +11556,10 @@ proc chg_fontparam {v sub op} {
 
 # Create a property sheet tab page
 proc create_prefs_page {w} {
-    global NS
-    set parent [join [lrange [split $w .] 0 end-1] .]
-    if {[winfo class $parent] eq "TNotebook"} {
-        ttk::frame $w
-    } else {
-        ttk::labelframe $w
-    }
+    ttk::frame $w
 }
 
 proc prefspage_general {notebook} {
-    global NS
     global {*}$::config_variables
 
     set page [create_prefs_page $notebook.general]
@@ -11751,7 +11641,7 @@ proc prefspage_general {notebook} {
 }
 
 proc prefspage_colors {notebook} {
-    global NS uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
+    global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
     global diffbgcolors
 
     set page [create_prefs_page $notebook.colors]
@@ -11812,7 +11702,6 @@ proc prefspage_colors {notebook} {
 }
 
 proc prefspage_fonts {notebook} {
-    global NS
     set page [create_prefs_page $notebook.fonts]
     ttk::label $page.cfont -text [mc "Fonts: press to choose"] -font mainfontbold
     grid $page.cfont - -sticky w -pady 10
@@ -11823,7 +11712,7 @@ proc prefspage_fonts {notebook} {
 }
 
 proc doprefs {} {
-    global use_ttk NS oldprefs prefstop
+    global oldprefs prefstop
     global {*}$::config_variables
 
     set top .gitkprefs
@@ -11839,33 +11728,19 @@ proc doprefs {} {
     wm title $top [mc "Gitk preferences"]
     make_transient $top .
 
-    if {[set use_notebook [expr {$use_ttk && [info command ::ttk::notebook] ne ""}]]} {
-        set notebook [ttk::notebook $top.notebook]
-    } else {
-        set notebook [ttk::frame $top.notebook -borderwidth 0 -relief flat]
-    }
+    set notebook [ttk::notebook $top.notebook]
 
     lappend pages [prefspage_general $notebook] [mc "General"]
     lappend pages [prefspage_colors $notebook] [mc "Colors"]
     lappend pages [prefspage_fonts $notebook] [mc "Fonts"]
     set col 0
     foreach {page title} $pages {
-        if {$use_notebook} {
-            $notebook add $page -text $title
-        } else {
-            set btn [ttk::button $notebook.b_[string map {. X} $page] \
-                         -text $title -command [list raise $page]]
-            $page configure -text $title
-            grid $btn -row 0 -column [incr col] -sticky w
-            grid $page -row 1 -column 0 -sticky news -columnspan 100
-        }
+        $notebook add $page -text $title
     }
 
-    if {!$use_notebook} {
-        grid columnconfigure $notebook 0 -weight 1
-        grid rowconfigure $notebook 1 -weight 1
-        raise [lindex $pages 0]
-    }
+    grid columnconfigure $notebook 0 -weight 1
+    grid rowconfigure $notebook 1 -weight 1
+    raise [lindex $pages 0]
 
     grid $notebook -sticky news -padx 2 -pady 2
     grid rowconfigure $top 0 -weight 1
@@ -12739,8 +12614,6 @@ set nullid2 "0000000000000000000000000000000000000001"
 set nullfile "/dev/null"
 
 setttkstyle
-set use_ttk 1
-set NS ttk
 set appname "gitk"
 
 set runq {}
