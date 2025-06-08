@@ -2113,7 +2113,7 @@ proc show_error {w top msg} {
     if {[wm state $top] eq "withdrawn"} { wm deiconify $top }
     message $w.m -text $msg -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
-    ${NS}::button $w.ok -default active -text [mc OK] -command "destroy $top"
+    ttk::button $w.ok -default active -text [mc OK] -command "destroy $top"
     pack $w.ok -side bottom -fill x
     bind $top <Visibility> "grab $top; focus $top"
     bind $top <Key-Return> "destroy $top"
@@ -2142,9 +2142,9 @@ proc confirm_popup {msg {owner .}} {
     make_transient $w $owner
     message $w.m -text $msg -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
-    ${NS}::button $w.ok -text [mc OK] -command "set confirm_ok 1; destroy $w"
+    ttk::button $w.ok -text [mc OK] -command "set confirm_ok 1; destroy $w"
     pack $w.ok -side left -fill x
-    ${NS}::button $w.cancel -text [mc Cancel] -command "destroy $w"
+    ttk::button $w.cancel -text [mc Cancel] -command "destroy $w"
     pack $w.cancel -side right -fill x
     bind $w <Visibility> "grab $w; focus $w"
     bind $w <Key-Return> "set confirm_ok 1; destroy $w"
@@ -2348,7 +2348,7 @@ proc makewindow {} {
     }
 
     # the gui has upper and lower half, parts of a paned window.
-    ${NS}::panedwindow .ctop -orient vertical
+    ttk::panedwindow .ctop -orient vertical
 
     # possibly use assumed geometry
     if {![info exists geometry(pwsash0)]} {
@@ -2361,9 +2361,9 @@ proc makewindow {} {
     }
 
     # the upper half will have a paned window, a scroll bar to the right, and some stuff below
-    ${NS}::frame .tf -height $geometry(topheight) -width $geometry(topwidth)
-    ${NS}::frame .tf.histframe
-    ${NS}::panedwindow .tf.histframe.pwclist -orient horizontal
+    ttk::frame .tf -height $geometry(topheight) -width $geometry(topwidth)
+    ttk::frame .tf.histframe
+    ttk::panedwindow .tf.histframe.pwclist -orient horizontal
     if {!$use_ttk} {
         .tf.histframe.pwclist configure -sashpad 0 -handlesize 4
     }
@@ -2398,7 +2398,7 @@ proc makewindow {} {
     }
 
     # a scroll bar to rule them
-    ${NS}::scrollbar $cscroll -command {allcanvs yview}
+    ttk::scrollbar $cscroll -command {allcanvs yview}
     if {!$use_ttk} {$cscroll configure -highlightthickness 0}
     pack $cscroll -side right -fill y
     bind .tf.histframe.pwclist <Configure> {resizeclistpanes %W %w}
@@ -2406,8 +2406,8 @@ proc makewindow {} {
     pack .tf.histframe.pwclist -fill both -expand 1 -side left
 
     # we have two button bars at bottom of top frame. Bar 1
-    ${NS}::frame .tf.bar
-    ${NS}::frame .tf.lbar -height 15
+    ttk::frame .tf.bar
+    ttk::frame .tf.lbar -height 15
 
     set sha1entry .tf.bar.sha1
     set entries $sha1entry
@@ -2416,7 +2416,7 @@ proc makewindow {} {
         -command gotocommit -width 8
     $sha1but conf -disabledforeground [$sha1but cget -foreground]
     pack .tf.bar.sha1label -side left
-    ${NS}::entry $sha1entry -width 40 -font textfont -textvariable sha1string
+    ttk::entry $sha1entry -width 40 -font textfont -textvariable sha1string
     trace add variable sha1string write sha1change
     pack $sha1entry -side left -pady 2
 
@@ -2441,14 +2441,14 @@ proc makewindow {} {
     image create bitmap bm-right -data $bm_right_data -foreground $uifgcolor
     image create bitmap bm-right-gray -data $bm_right_data -foreground $uifgdisabledcolor
 
-    ${NS}::button .tf.bar.leftbut -command goback -state disabled -width 26
+    ttk::button .tf.bar.leftbut -command goback -state disabled -width 26
     if {$use_ttk} {
         .tf.bar.leftbut configure -image [list bm-left disabled bm-left-gray]
     } else {
         .tf.bar.leftbut configure -image bm-left
     }
     pack .tf.bar.leftbut -side left -fill y
-    ${NS}::button .tf.bar.rightbut -command goforw -state disabled -width 26
+    ttk::button .tf.bar.rightbut -command goforw -state disabled -width 26
     if {$use_ttk} {
         .tf.bar.rightbut configure -image [list bm-right disabled bm-right-gray]
     } else {
@@ -2456,12 +2456,12 @@ proc makewindow {} {
     }
     pack .tf.bar.rightbut -side left -fill y
 
-    ${NS}::label .tf.bar.rowlabel -text [mc "Row"]
+    ttk::label .tf.bar.rowlabel -text [mc "Row"]
     set rownumsel {}
-    ${NS}::label .tf.bar.rownum -width 7 -textvariable rownumsel \
+    ttk::label .tf.bar.rownum -width 7 -textvariable rownumsel \
         -relief sunken -anchor e
-    ${NS}::label .tf.bar.rowlabel2 -text "/"
-    ${NS}::label .tf.bar.numcommits -width 7 -textvariable numcommits \
+    ttk::label .tf.bar.rowlabel2 -text "/"
+    ttk::label .tf.bar.numcommits -width 7 -textvariable numcommits \
         -relief sunken -anchor e
     pack .tf.bar.rowlabel .tf.bar.rownum .tf.bar.rowlabel2 .tf.bar.numcommits \
         -side left
@@ -2473,7 +2473,7 @@ proc makewindow {} {
 
     # Status label and progress bar
     set statusw .tf.bar.status
-    ${NS}::label $statusw -width 15 -relief sunken
+    ttk::label $statusw -width 15 -relief sunken
     pack $statusw -side left -padx 5
     if {$use_ttk} {
         set progresscanv [ttk::progressbar .tf.bar.progress]
@@ -2494,7 +2494,7 @@ proc makewindow {} {
     set progupdatepending 0
 
     # build up the bottom bar of upper window
-    ${NS}::label .tf.lbar.flabel -text "[mc "Find"] "
+    ttk::label .tf.lbar.flabel -text "[mc "Find"] "
 
     set bm_down_data {
         #define down_width 16
@@ -2506,7 +2506,7 @@ proc makewindow {} {
         0xf0, 0x0f, 0xe0, 0x07, 0xc0, 0x03, 0x80, 0x01};
     }
     image create bitmap bm-down -data $bm_down_data -foreground $uifgcolor
-    ${NS}::button .tf.lbar.fnext -width 26 -command {dofind 1 1}
+    ttk::button .tf.lbar.fnext -width 26 -command {dofind 1 1}
     .tf.lbar.fnext configure -image bm-down
 
     set bm_up_data {
@@ -2519,10 +2519,10 @@ proc makewindow {} {
         0x80, 0x01, 0x80, 0x01, 0x80, 0x01, 0x80, 0x01};
     }
     image create bitmap bm-up -data $bm_up_data -foreground $uifgcolor
-    ${NS}::button .tf.lbar.fprev -width 26 -command {dofind -1 1}
+    ttk::button .tf.lbar.fprev -width 26 -command {dofind -1 1}
     .tf.lbar.fprev configure -image bm-up
 
-    ${NS}::label .tf.lbar.flab2 -text " [mc "commit"] "
+    ttk::label .tf.lbar.flab2 -text " [mc "commit"] "
 
     pack .tf.lbar.flabel .tf.lbar.fnext .tf.lbar.fprev .tf.lbar.flab2 \
         -side left -fill y
@@ -2538,7 +2538,7 @@ proc makewindow {} {
     set findstring {}
     set fstring .tf.lbar.findstring
     lappend entries $fstring
-    ${NS}::entry $fstring -width 30 -textvariable findstring
+    ttk::entry $fstring -width 30 -textvariable findstring
     trace add variable findstring write find_change
     set findtype [mc "Exact"]
     set findtypemenu [makedroplist .tf.lbar.findtype \
@@ -2563,39 +2563,39 @@ proc makewindow {} {
     }
 
     # now build up the bottom
-    ${NS}::panedwindow .pwbottom -orient horizontal
+    ttk::panedwindow .pwbottom -orient horizontal
 
     # lower left, a text box over search bar, scroll bar to the right
     # if we know window height, then that will set the lower text height, otherwise
     # we set lower text height which will drive window height
     if {[info exists geometry(main)]} {
-        ${NS}::frame .bleft -width $geometry(botwidth)
+        ttk::frame .bleft -width $geometry(botwidth)
     } else {
-        ${NS}::frame .bleft -width $geometry(botwidth) -height $geometry(botheight)
+        ttk::frame .bleft -width $geometry(botwidth) -height $geometry(botheight)
     }
-    ${NS}::frame .bleft.top
-    ${NS}::frame .bleft.mid
-    ${NS}::frame .bleft.bottom
+    ttk::frame .bleft.top
+    ttk::frame .bleft.mid
+    ttk::frame .bleft.bottom
 
     # gap between sub-widgets
     set wgap [font measure uifont "i"]
 
-    ${NS}::button .bleft.top.search -text [mc "Search"] -command dosearch
+    ttk::button .bleft.top.search -text [mc "Search"] -command dosearch
     pack .bleft.top.search -side left -padx 5
     set sstring .bleft.top.sstring
     set searchstring ""
-    ${NS}::entry $sstring -width 20 -textvariable searchstring
+    ttk::entry $sstring -width 20 -textvariable searchstring
     lappend entries $sstring
     trace add variable searchstring write incrsearch
     pack $sstring -side left -expand 1 -fill x
-    ${NS}::radiobutton .bleft.mid.diff -text [mc "Diff"] \
+    ttk::radiobutton .bleft.mid.diff -text [mc "Diff"] \
         -command changediffdisp -variable diffelide -value {0 0}
-    ${NS}::radiobutton .bleft.mid.old -text [mc "Old version"] \
+    ttk::radiobutton .bleft.mid.old -text [mc "Old version"] \
         -command changediffdisp -variable diffelide -value {0 1}
-    ${NS}::radiobutton .bleft.mid.new -text [mc "New version"] \
+    ttk::radiobutton .bleft.mid.new -text [mc "New version"] \
         -command changediffdisp -variable diffelide -value {1 0}
 
-    ${NS}::label .bleft.mid.labeldiffcontext -text "      [mc "Lines of context"]: "
+    ttk::label .bleft.mid.labeldiffcontext -text "      [mc "Lines of context"]: "
     pack .bleft.mid.diff .bleft.mid.old .bleft.mid.new -side left -ipadx $wgap
     spinbox .bleft.mid.diffcontext -width 5 \
         -from 0 -increment 1 -to 10000000 \
@@ -2605,7 +2605,7 @@ proc makewindow {} {
     trace add variable diffcontextstring write diffcontextchange
     lappend entries .bleft.mid.diffcontext
     pack .bleft.mid.labeldiffcontext .bleft.mid.diffcontext -side left -ipadx $wgap
-    ${NS}::checkbutton .bleft.mid.ignspace -text [mc "Ignore space change"] \
+    ttk::checkbutton .bleft.mid.ignspace -text [mc "Ignore space change"] \
         -command changeignorespace -variable ignorespace
     pack .bleft.mid.ignspace -side left -padx 5
 
@@ -2621,8 +2621,8 @@ proc makewindow {} {
         -yscrollcommand scrolltext -wrap $wrapdefault \
         -xscrollcommand ".bleft.bottom.sbhorizontal set"
     $ctext conf -tabstyle wordprocessor
-    ${NS}::scrollbar .bleft.bottom.sb -command "$ctext yview"
-    ${NS}::scrollbar .bleft.bottom.sbhorizontal -command "$ctext xview" -orient h
+    ttk::scrollbar .bleft.bottom.sb -command "$ctext yview"
+    ttk::scrollbar .bleft.bottom.sbhorizontal -command "$ctext xview" -orient h
     pack .bleft.top -side top -fill x
     pack .bleft.mid -side top -fill x
     grid $ctext .bleft.bottom.sb -sticky nsew
@@ -2678,11 +2678,11 @@ proc makewindow {} {
     }
 
     # lower right
-    ${NS}::frame .bright
-    ${NS}::frame .bright.mode
-    ${NS}::radiobutton .bright.mode.patch -text [mc "Patch"] \
+    ttk::frame .bright
+    ttk::frame .bright.mode
+    ttk::radiobutton .bright.mode.patch -text [mc "Patch"] \
         -command reselectline -variable cmitmode -value "patch"
-    ${NS}::radiobutton .bright.mode.tree -text [mc "Tree"] \
+    ttk::radiobutton .bright.mode.tree -text [mc "Tree"] \
         -command reselectline -variable cmitmode -value "tree"
     grid .bright.mode.patch .bright.mode.tree -sticky ew
     pack .bright.mode -side top -fill x
@@ -2698,7 +2698,7 @@ proc makewindow {} {
         -spacing1 1 -spacing3 1
     lappend bglist $cflist
     lappend fglist $cflist
-    ${NS}::scrollbar .bright.sb -command "$cflist yview"
+    ttk::scrollbar .bright.sb -command "$cflist yview"
     pack .bright.sb -side right -fill y
     pack $cflist -side left -fill both -expand 1
     $cflist tag configure highlight \
@@ -3269,7 +3269,7 @@ Copyright \u00a9 2005-2016 Paul Mackerras
 Use and redistribute under the terms of the GNU General Public License"] \
             -justify center -aspect 400 -border 2 -bg $bgcolor -relief groove
     pack $w.m -side top -fill x -padx 2 -pady 2
-    ${NS}::button $w.ok -text [mc "Close"] -command "destroy $w" -default active
+    ttk::button $w.ok -text [mc "Close"] -command "destroy $w" -default active
     pack $w.ok -side bottom
     bind $w <Visibility> "focus $w.ok"
     bind $w <Key-Escape> "destroy $w"
@@ -3336,7 +3336,7 @@ proc keys {} {
 " \
             -justify left -bg $bgcolor -border 2 -relief groove
     pack $w.m -side top -fill both -padx 2 -pady 2
-    ${NS}::button $w.ok -text [mc "Close"] -command "destroy $w" -default active
+    ttk::button $w.ok -text [mc "Close"] -command "destroy $w" -default active
     bind $w <Key-Escape> [list destroy $w]
     pack $w.ok -side bottom
     bind $w <Visibility> "focus $w.ok"
@@ -4487,9 +4487,9 @@ proc vieweditor {top n title} {
     make_transient $top .
 
     # View name
-    ${NS}::frame $top.nfr
-    ${NS}::label $top.nl -text [mc "View Name"]
-    ${NS}::entry $top.name -width 20 -textvariable newviewname($n)
+    ttk::frame $top.nfr
+    ttk::label $top.nl -text [mc "View Name"]
+    ttk::entry $top.name -width 20 -textvariable newviewname($n)
     pack $top.nfr -in $top -fill x -pady 5 -padx 3
     pack $top.nl -in $top.nfr -side left -padx {0 5}
     pack $top.name -in $top.nfr -side left -padx {0 25}
@@ -4508,13 +4508,13 @@ proc vieweditor {top n title} {
         if {$flags eq "+" || $flags eq "*"} {
             set cframe $top.fr$cnt
             incr cnt
-            ${NS}::frame $cframe
+            ttk::frame $cframe
             pack $cframe -in $top -fill x -pady 3 -padx 3
             set cexpand [expr {$flags eq "*"}]
         } elseif {$flags eq ".." || $flags eq "*."} {
             set cframe $top.fr$cnt
             incr cnt
-            ${NS}::frame $cframe
+            ttk::frame $cframe
             pack $cframe -in $top -fill x -pady 3 -padx [list 15 3]
             set cexpand [expr {$flags eq "*."}]
         } else {
@@ -4522,31 +4522,31 @@ proc vieweditor {top n title} {
         }
 
         if {$type eq "l"} {
-            ${NS}::label $cframe.l_$id -text $title
+            ttk::label $cframe.l_$id -text $title
             pack $cframe.l_$id -in $cframe -side left -pady [list 3 0] -anchor w
         } elseif {$type eq "b"} {
-            ${NS}::checkbutton $cframe.c_$id -text $title -variable newviewopts($n,$id)
+            ttk::checkbutton $cframe.c_$id -text $title -variable newviewopts($n,$id)
             pack $cframe.c_$id -in $cframe -side left \
                 -padx [list $lxpad 0] -expand $cexpand -anchor w
         } elseif {[regexp {^r(\d+)$} $type type sz]} {
             regexp {^(.*_)} $id uselessvar button_id
-            ${NS}::radiobutton $cframe.c_$id -text $title -variable newviewopts($n,$button_id) -value $sz
+            ttk::radiobutton $cframe.c_$id -text $title -variable newviewopts($n,$button_id) -value $sz
             pack $cframe.c_$id -in $cframe -side left \
                 -padx [list $lxpad 0] -expand $cexpand -anchor w
         } elseif {[regexp {^t(\d+)$} $type type sz]} {
-            ${NS}::label $cframe.l_$id -text $title
-            ${NS}::entry $cframe.e_$id -width $sz -background $bgcolor \
+            ttk::label $cframe.l_$id -text $title
+            ttk::entry $cframe.e_$id -width $sz -background $bgcolor \
                 -textvariable newviewopts($n,$id)
             pack $cframe.l_$id -in $cframe -side left -padx [list $lxpad 0]
             pack $cframe.e_$id -in $cframe -side left -expand 1 -fill x
         } elseif {[regexp {^t(\d+)=$} $type type sz]} {
-            ${NS}::label $cframe.l_$id -text $title
-            ${NS}::entry $cframe.e_$id -width $sz -background $bgcolor \
+            ttk::label $cframe.l_$id -text $title
+            ttk::entry $cframe.e_$id -width $sz -background $bgcolor \
                 -textvariable newviewopts($n,$id)
             pack $cframe.l_$id -in $cframe -side top -pady [list 3 0] -anchor w
             pack $cframe.e_$id -in $cframe -side top -fill x
         } elseif {$type eq "path"} {
-            ${NS}::label $top.l -text $title
+            ttk::label $top.l -text $title
             pack $top.l -in $top -side top -pady [list 3 0] -anchor w -padx 3
             text $top.t -width 40 -height 5 -background $bgcolor
             if {[info exists viewfiles($n)]} {
@@ -4561,10 +4561,10 @@ proc vieweditor {top n title} {
         }
     }
 
-    ${NS}::frame $top.buts
-    ${NS}::button $top.buts.ok -text [mc "OK"] -command [list newviewok $top $n]
-    ${NS}::button $top.buts.apply -text [mc "Apply (F5)"] -command [list newviewok $top $n 1]
-    ${NS}::button $top.buts.can -text [mc "Cancel"] -command [list destroy $top]
+    ttk::frame $top.buts
+    ttk::button $top.buts.ok -text [mc "OK"] -command [list newviewok $top $n]
+    ttk::button $top.buts.apply -text [mc "Apply (F5)"] -command [list newviewok $top $n 1]
+    ttk::button $top.buts.can -text [mc "Cancel"] -command [list destroy $top]
     bind $top <Control-Return> [list newviewok $top $n]
     bind $top <F5> [list newviewok $top $n 1]
     bind $top <Escape> [list destroy $top]
@@ -9440,36 +9440,36 @@ proc mkpatch {} {
     catch {destroy $top}
     ttk_toplevel $top
     make_transient $top .
-    ${NS}::label $top.title -text [mc "Generate patch"]
+    ttk::label $top.title -text [mc "Generate patch"]
     grid $top.title - -pady 10
-    ${NS}::label $top.from -text [mc "From:"]
-    ${NS}::entry $top.fromsha1 -width 40
+    ttk::label $top.from -text [mc "From:"]
+    ttk::entry $top.fromsha1 -width 40
     $top.fromsha1 insert 0 $oldid
     $top.fromsha1 conf -state readonly
     grid $top.from $top.fromsha1 -sticky w
-    ${NS}::entry $top.fromhead -width 60
+    ttk::entry $top.fromhead -width 60
     $top.fromhead insert 0 $oldhead
     $top.fromhead conf -state readonly
     grid x $top.fromhead -sticky w
-    ${NS}::label $top.to -text [mc "To:"]
-    ${NS}::entry $top.tosha1 -width 40
+    ttk::label $top.to -text [mc "To:"]
+    ttk::entry $top.tosha1 -width 40
     $top.tosha1 insert 0 $newid
     $top.tosha1 conf -state readonly
     grid $top.to $top.tosha1 -sticky w
-    ${NS}::entry $top.tohead -width 60
+    ttk::entry $top.tohead -width 60
     $top.tohead insert 0 $newhead
     $top.tohead conf -state readonly
     grid x $top.tohead -sticky w
-    ${NS}::button $top.rev -text [mc "Reverse"] -command mkpatchrev
+    ttk::button $top.rev -text [mc "Reverse"] -command mkpatchrev
     grid $top.rev x -pady 10 -padx 5
-    ${NS}::label $top.flab -text [mc "Output file:"]
-    ${NS}::entry $top.fname -width 60
+    ttk::label $top.flab -text [mc "Output file:"]
+    ttk::entry $top.fname -width 60
     $top.fname insert 0 [file normalize "patch$patchnum.patch"]
     incr patchnum
     grid $top.flab $top.fname -sticky w
-    ${NS}::frame $top.buts
-    ${NS}::button $top.buts.gen -text [mc "Generate"] -command mkpatchgo
-    ${NS}::button $top.buts.can -text [mc "Cancel"] -command mkpatchcan
+    ttk::frame $top.buts
+    ttk::button $top.buts.gen -text [mc "Generate"] -command mkpatchgo
+    ttk::button $top.buts.can -text [mc "Cancel"] -command mkpatchcan
     bind $top <Key-Return> mkpatchgo
     bind $top <Key-Escape> mkpatchcan
     grid $top.buts.gen $top.buts.can
@@ -9524,28 +9524,28 @@ proc mktag {} {
     catch {destroy $top}
     ttk_toplevel $top
     make_transient $top .
-    ${NS}::label $top.title -text [mc "Create tag"]
+    ttk::label $top.title -text [mc "Create tag"]
     grid $top.title - -pady 10
-    ${NS}::label $top.id -text [mc "ID:"]
-    ${NS}::entry $top.sha1 -width 40
+    ttk::label $top.id -text [mc "ID:"]
+    ttk::entry $top.sha1 -width 40
     $top.sha1 insert 0 $rowmenuid
     $top.sha1 conf -state readonly
     grid $top.id $top.sha1 -sticky w
-    ${NS}::entry $top.head -width 60
+    ttk::entry $top.head -width 60
     $top.head insert 0 [lindex $commitinfo($rowmenuid) 0]
     $top.head conf -state readonly
     grid x $top.head -sticky w
-    ${NS}::label $top.tlab -text [mc "Tag name:"]
-    ${NS}::entry $top.tag -width 60
+    ttk::label $top.tlab -text [mc "Tag name:"]
+    ttk::entry $top.tag -width 60
     grid $top.tlab $top.tag -sticky w
-    ${NS}::label $top.op -text [mc "Tag message is optional"]
+    ttk::label $top.op -text [mc "Tag message is optional"]
     grid $top.op -columnspan 2 -sticky we
-    ${NS}::label $top.mlab -text [mc "Tag message:"]
-    ${NS}::entry $top.msg -width 60
+    ttk::label $top.mlab -text [mc "Tag message:"]
+    ttk::entry $top.msg -width 60
     grid $top.mlab $top.msg -sticky w
-    ${NS}::frame $top.buts
-    ${NS}::button $top.buts.gen -text [mc "Create"] -command mktaggo
-    ${NS}::button $top.buts.can -text [mc "Cancel"] -command mktagcan
+    ttk::frame $top.buts
+    ttk::button $top.buts.gen -text [mc "Create"] -command mktaggo
+    ttk::button $top.buts.can -text [mc "Cancel"] -command mktagcan
     bind $top <Key-Return> mktaggo
     bind $top <Key-Escape> mktagcan
     grid $top.buts.gen $top.buts.can
@@ -9655,27 +9655,27 @@ proc writecommit {} {
     catch {destroy $top}
     ttk_toplevel $top
     make_transient $top .
-    ${NS}::label $top.title -text [mc "Write commit to file"]
+    ttk::label $top.title -text [mc "Write commit to file"]
     grid $top.title - -pady 10
-    ${NS}::label $top.id -text [mc "ID:"]
-    ${NS}::entry $top.sha1 -width 40
+    ttk::label $top.id -text [mc "ID:"]
+    ttk::entry $top.sha1 -width 40
     $top.sha1 insert 0 $rowmenuid
     $top.sha1 conf -state readonly
     grid $top.id $top.sha1 -sticky w
-    ${NS}::entry $top.head -width 60
+    ttk::entry $top.head -width 60
     $top.head insert 0 [lindex $commitinfo($rowmenuid) 0]
     $top.head conf -state readonly
     grid x $top.head -sticky w
-    ${NS}::label $top.clab -text [mc "Command:"]
-    ${NS}::entry $top.cmd -width 60 -textvariable wrcomcmd
+    ttk::label $top.clab -text [mc "Command:"]
+    ttk::entry $top.cmd -width 60 -textvariable wrcomcmd
     grid $top.clab $top.cmd -sticky w -pady 10
-    ${NS}::label $top.flab -text [mc "Output file:"]
-    ${NS}::entry $top.fname -width 60
+    ttk::label $top.flab -text [mc "Output file:"]
+    ttk::entry $top.fname -width 60
     $top.fname insert 0 [file normalize "commit-[string range $rowmenuid 0 6]"]
     grid $top.flab $top.fname -sticky w
-    ${NS}::frame $top.buts
-    ${NS}::button $top.buts.gen -text [mc "Write"] -command wrcomgo
-    ${NS}::button $top.buts.can -text [mc "Cancel"] -command wrcomcan
+    ttk::frame $top.buts
+    ttk::button $top.buts.gen -text [mc "Write"] -command wrcomgo
+    ttk::button $top.buts.can -text [mc "Cancel"] -command wrcomcan
     bind $top <Key-Return> wrcomgo
     bind $top <Key-Escape> wrcomcan
     grid $top.buts.gen $top.buts.can
@@ -9743,25 +9743,25 @@ proc branchdia {top valvar uivar} {
     catch {destroy $top}
     ttk_toplevel $top
     make_transient $top .
-    ${NS}::label $top.title -text $ui(title)
+    ttk::label $top.title -text $ui(title)
     grid $top.title - -pady 10
-    ${NS}::label $top.id -text [mc "ID:"]
-    ${NS}::entry $top.sha1 -width 40
+    ttk::label $top.id -text [mc "ID:"]
+    ttk::entry $top.sha1 -width 40
     $top.sha1 insert 0 $val(id)
     $top.sha1 conf -state readonly
     grid $top.id $top.sha1 -sticky w
-    ${NS}::entry $top.head -width 60
+    ttk::entry $top.head -width 60
     $top.head insert 0 [lindex $commitinfo($val(id)) 0]
     $top.head conf -state readonly
     grid x $top.head -sticky ew
     grid columnconfigure $top 1 -weight 1
-    ${NS}::label $top.nlab -text [mc "Name:"]
-    ${NS}::entry $top.name -width 40
+    ttk::label $top.nlab -text [mc "Name:"]
+    ttk::entry $top.name -width 40
     $top.name insert 0 $val(name)
     grid $top.nlab $top.name -sticky w
-    ${NS}::frame $top.buts
-    ${NS}::button $top.buts.go -text $ui(accept) -command $val(command)
-    ${NS}::button $top.buts.can -text [mc "Cancel"] -command "catch {destroy $top}"
+    ttk::frame $top.buts
+    ttk::button $top.buts.go -text $ui(accept) -command $val(command)
+    ttk::button $top.buts.can -text [mc "Cancel"] -command "catch {destroy $top}"
     bind $top <Key-Return> $val(command)
     bind $top <Key-Escape> "catch {destroy $top}"
     grid $top.buts.go $top.buts.can
@@ -10015,24 +10015,24 @@ proc resethead {} {
     ttk_toplevel $w
     make_transient $w .
     wm title $w [mc "Confirm reset"]
-    ${NS}::label $w.m -text \
+    ttk::label $w.m -text \
         [mc "Reset branch %s to %s?" $mainhead [string range $rowmenuid 0 7]]
     pack $w.m -side top -fill x -padx 20 -pady 20
-    ${NS}::labelframe $w.f -text [mc "Reset type:"]
+    ttk::labelframe $w.f -text [mc "Reset type:"]
     set resettype mixed
-    ${NS}::radiobutton $w.f.soft -value soft -variable resettype \
+    ttk::radiobutton $w.f.soft -value soft -variable resettype \
         -text [mc "Soft: Leave working tree and index untouched"]
     grid $w.f.soft -sticky w
-    ${NS}::radiobutton $w.f.mixed -value mixed -variable resettype \
+    ttk::radiobutton $w.f.mixed -value mixed -variable resettype \
         -text [mc "Mixed: Leave working tree untouched, reset index"]
     grid $w.f.mixed -sticky w
-    ${NS}::radiobutton $w.f.hard -value hard -variable resettype \
+    ttk::radiobutton $w.f.hard -value hard -variable resettype \
         -text [mc "Hard: Reset working tree and index\n(discard ALL local changes)"]
     grid $w.f.hard -sticky w
     pack $w.f -side top -fill x -padx 4
-    ${NS}::button $w.ok -text [mc OK] -command "set confirm_ok 1; destroy $w"
+    ttk::button $w.ok -text [mc OK] -command "set confirm_ok 1; destroy $w"
     pack $w.ok -side left -fill x -padx 20 -pady 20
-    ${NS}::button $w.cancel -text [mc Cancel] -command "destroy $w"
+    ttk::button $w.cancel -text [mc Cancel] -command "destroy $w"
     bind $w <Key-Escape> [list destroy $w]
     pack $w.cancel -side right -fill x -padx 20 -pady 20
     bind $w <Visibility> "grab $w; focus $w"
@@ -10232,19 +10232,19 @@ proc showrefs {} {
         lappend bglist $top.list
         lappend fglist $top.list
     }
-    ${NS}::scrollbar $top.ysb -command "$top.list yview" -orient vertical
-    ${NS}::scrollbar $top.xsb -command "$top.list xview" -orient horizontal
+    ttk::scrollbar $top.ysb -command "$top.list yview" -orient vertical
+    ttk::scrollbar $top.xsb -command "$top.list xview" -orient horizontal
     grid $top.list $top.ysb -sticky nsew
     grid $top.xsb x -sticky ew
-    ${NS}::frame $top.f
-    ${NS}::label $top.f.l -text "[mc "Filter"]: "
-    ${NS}::entry $top.f.e -width 20 -textvariable reflistfilter
+    ttk::frame $top.f
+    ttk::label $top.f.l -text "[mc "Filter"]: "
+    ttk::entry $top.f.e -width 20 -textvariable reflistfilter
     set reflistfilter "*"
     trace add variable reflistfilter write reflistfilter_change
     pack $top.f.e -side right -fill x -expand 1
     pack $top.f.l -side left
     grid $top.f - -sticky ew -pady 2
-    ${NS}::button $top.close -command [list destroy $top] -text [mc "Close"]
+    ttk::button $top.close -command [list destroy $top] -text [mc "Close"]
     bind $top <Key-Escape> [list destroy $top]
     grid $top.close -
     grid columnconfigure $top 0 -weight 1
@@ -11585,9 +11585,9 @@ proc mkfontdisp {font top which} {
     global fontattr fontpref $font NS use_ttk
 
     set fontpref($font) [set $font]
-    ${NS}::button $top.${font}but -text $which \
+    ttk::button $top.${font}but -text $which \
         -command [list choosefont $font $which]
-    ${NS}::label $top.$font -relief flat -font $font \
+    ttk::label $top.$font -relief flat -font $font \
         -text $fontattr($font,family) -justify left
     grid x $top.${font}but $top.$font -sticky w
 }
@@ -11662,9 +11662,9 @@ proc create_prefs_page {w} {
     global NS
     set parent [join [lrange [split $w .] 0 end-1] .]
     if {[winfo class $parent] eq "TNotebook"} {
-        ${NS}::frame $w
+        ttk::frame $w
     } else {
-        ${NS}::labelframe $w
+        ttk::labelframe $w
     }
 }
 
@@ -11674,78 +11674,78 @@ proc prefspage_general {notebook} {
 
     set page [create_prefs_page $notebook.general]
 
-    ${NS}::label $page.ldisp -text [mc "Commit list display options"] -font mainfontbold
+    ttk::label $page.ldisp -text [mc "Commit list display options"] -font mainfontbold
     grid $page.ldisp - -sticky w -pady 10
-    ${NS}::label $page.spacer -text " "
-    ${NS}::label $page.maxwidthl -text [mc "Maximum graph width (lines)"]
+    ttk::label $page.spacer -text " "
+    ttk::label $page.maxwidthl -text [mc "Maximum graph width (lines)"]
     spinbox $page.maxwidth -from 0 -to 100 -width 4 -textvariable maxwidth
     grid $page.spacer $page.maxwidthl $page.maxwidth -sticky w
                                          #xgettext:no-tcl-format
-    ${NS}::label $page.maxpctl -text [mc "Maximum graph width (% of pane)"]
+    ttk::label $page.maxpctl -text [mc "Maximum graph width (% of pane)"]
     spinbox $page.maxpct -from 1 -to 100 -width 4 -textvariable maxgraphpct
     grid x $page.maxpctl $page.maxpct -sticky w
-    ${NS}::checkbutton $page.showlocal -text [mc "Show local changes"] \
+    ttk::checkbutton $page.showlocal -text [mc "Show local changes"] \
         -variable showlocalchanges
     grid x $page.showlocal -sticky w
-    ${NS}::checkbutton $page.hideremotes -text [mc "Hide remote refs"] \
+    ttk::checkbutton $page.hideremotes -text [mc "Hide remote refs"] \
         -variable hideremotes
     grid x $page.hideremotes -sticky w
 
-    ${NS}::checkbutton $page.autocopy -text [mc "Copy commit ID to clipboard"] \
+    ttk::checkbutton $page.autocopy -text [mc "Copy commit ID to clipboard"] \
         -variable autocopy
     grid x $page.autocopy -sticky w
     if {[haveselectionclipboard]} {
-        ${NS}::checkbutton $page.autoselect -text [mc "Copy commit ID to X11 selection"] \
+        ttk::checkbutton $page.autoselect -text [mc "Copy commit ID to X11 selection"] \
             -variable autoselect
         grid x $page.autoselect -sticky w
     }
     spinbox $page.autosellen -from 1 -to 40 -width 4 -textvariable autosellen
-    ${NS}::label $page.autosellenl -text [mc "Length of commit ID to copy"]
+    ttk::label $page.autosellenl -text [mc "Length of commit ID to copy"]
     grid x $page.autosellenl $page.autosellen -sticky w
 
-    ${NS}::label $page.ddisp -text [mc "Diff display options"] -font mainfontbold
+    ttk::label $page.ddisp -text [mc "Diff display options"] -font mainfontbold
     grid $page.ddisp - -sticky w -pady 10
-    ${NS}::label $page.tabstopl -text [mc "Tab spacing"]
+    ttk::label $page.tabstopl -text [mc "Tab spacing"]
     spinbox $page.tabstop -from 1 -to 20 -width 4 -textvariable tabstop
     grid x $page.tabstopl $page.tabstop -sticky w
 
-    ${NS}::label $page.wrapcommentl -text [mc "Wrap comment text"]
+    ttk::label $page.wrapcommentl -text [mc "Wrap comment text"]
     makedroplist $page.wrapcomment wrapcomment none char word
     grid x $page.wrapcommentl $page.wrapcomment -sticky w
 
-    ${NS}::label $page.wrapdefaultl -text [mc "Wrap other text"]
+    ttk::label $page.wrapdefaultl -text [mc "Wrap other text"]
     makedroplist $page.wrapdefault wrapdefault none char word
     grid x $page.wrapdefaultl $page.wrapdefault -sticky w
 
-    ${NS}::checkbutton $page.ntag -text [mc "Display nearby tags/heads"] \
+    ttk::checkbutton $page.ntag -text [mc "Display nearby tags/heads"] \
         -variable showneartags
     grid x $page.ntag -sticky w
-    ${NS}::label $page.maxrefsl -text [mc "Maximum # tags/heads to show"]
+    ttk::label $page.maxrefsl -text [mc "Maximum # tags/heads to show"]
     spinbox $page.maxrefs -from 1 -to 1000 -width 4 -textvariable maxrefs
     grid x $page.maxrefsl $page.maxrefs -sticky w
-    ${NS}::checkbutton $page.ldiff -text [mc "Limit diffs to listed paths"] \
+    ttk::checkbutton $page.ldiff -text [mc "Limit diffs to listed paths"] \
         -variable limitdiffs
     grid x $page.ldiff -sticky w
-    ${NS}::checkbutton $page.lattr -text [mc "Support per-file encodings"] \
+    ttk::checkbutton $page.lattr -text [mc "Support per-file encodings"] \
         -variable perfile_attrs
     grid x $page.lattr -sticky w
 
-    ${NS}::entry $page.extdifft -textvariable extdifftool
-    ${NS}::frame $page.extdifff
-    ${NS}::label $page.extdifff.l -text [mc "External diff tool" ]
-    ${NS}::button $page.extdifff.b -text [mc "Choose..."] -command choose_extdiff
+    ttk::entry $page.extdifft -textvariable extdifftool
+    ttk::frame $page.extdifff
+    ttk::label $page.extdifff.l -text [mc "External diff tool" ]
+    ttk::button $page.extdifff.b -text [mc "Choose..."] -command choose_extdiff
     pack $page.extdifff.l $page.extdifff.b -side left
     pack configure $page.extdifff.l -padx 10
     grid x $page.extdifff $page.extdifft -sticky ew
 
-    ${NS}::entry $page.webbrowser -textvariable web_browser
-    ${NS}::frame $page.webbrowserf
-    ${NS}::label $page.webbrowserf.l -text [mc "Web browser" ]
+    ttk::entry $page.webbrowser -textvariable web_browser
+    ttk::frame $page.webbrowserf
+    ttk::label $page.webbrowserf.l -text [mc "Web browser" ]
     pack $page.webbrowserf.l -side left
     pack configure $page.webbrowserf.l -padx 10
     grid x $page.webbrowserf $page.webbrowser -sticky ew
 
-    ${NS}::label $page.lgen -text [mc "General options"] -font mainfontbold
+    ttk::label $page.lgen -text [mc "General options"] -font mainfontbold
     grid $page.lgen - -sticky w -pady 10
     return $page
 }
@@ -11756,56 +11756,56 @@ proc prefspage_colors {notebook} {
 
     set page [create_prefs_page $notebook.colors]
 
-    ${NS}::label $page.cdisp -text [mc "Colors: press to choose"] -font mainfontbold
+    ttk::label $page.cdisp -text [mc "Colors: press to choose"] -font mainfontbold
     grid $page.cdisp - -sticky w -pady 10
     label $page.ui -padx 40 -relief sunk -background $uicolor
-    ${NS}::button $page.uibut -text [mc "Interface"] \
+    ttk::button $page.uibut -text [mc "Interface"] \
        -command [list choosecolor uicolor {} $page.ui [mc "interface"] setui]
     grid x $page.uibut $page.ui -sticky w
     label $page.bg -padx 40 -relief sunk -background $bgcolor
-    ${NS}::button $page.bgbut -text [mc "Background"] \
+    ttk::button $page.bgbut -text [mc "Background"] \
         -command [list choosecolor bgcolor {} $page.bg [mc "background"] setbg]
     grid x $page.bgbut $page.bg -sticky w
     label $page.fg -padx 40 -relief sunk -background $fgcolor
-    ${NS}::button $page.fgbut -text [mc "Foreground"] \
+    ttk::button $page.fgbut -text [mc "Foreground"] \
         -command [list choosecolor fgcolor {} $page.fg [mc "foreground"] setfg]
     grid x $page.fgbut $page.fg -sticky w
     label $page.diffold -padx 40 -relief sunk -background [lindex $diffcolors 0]
-    ${NS}::button $page.diffoldbut -text [mc "Diff: old lines"] \
+    ttk::button $page.diffoldbut -text [mc "Diff: old lines"] \
         -command [list choosecolor diffcolors 0 $page.diffold [mc "diff old lines"] \
                       [list $ctext tag conf d0 -foreground]]
     grid x $page.diffoldbut $page.diffold -sticky w
     label $page.diffoldbg -padx 40 -relief sunk -background [lindex $diffbgcolors 0]
-    ${NS}::button $page.diffoldbgbut -text [mc "Diff: old lines bg"] \
+    ttk::button $page.diffoldbgbut -text [mc "Diff: old lines bg"] \
         -command [list choosecolor diffbgcolors 0 $page.diffoldbg \
                       [mc "diff old lines bg"] \
                       [list $ctext tag conf d0 -background]]
     grid x $page.diffoldbgbut $page.diffoldbg -sticky w
     label $page.diffnew -padx 40 -relief sunk -background [lindex $diffcolors 1]
-    ${NS}::button $page.diffnewbut -text [mc "Diff: new lines"] \
+    ttk::button $page.diffnewbut -text [mc "Diff: new lines"] \
         -command [list choosecolor diffcolors 1 $page.diffnew [mc "diff new lines"] \
                       [list $ctext tag conf dresult -foreground]]
     grid x $page.diffnewbut $page.diffnew -sticky w
     label $page.diffnewbg -padx 40 -relief sunk -background [lindex $diffbgcolors 1]
-    ${NS}::button $page.diffnewbgbut -text [mc "Diff: new lines bg"] \
+    ttk::button $page.diffnewbgbut -text [mc "Diff: new lines bg"] \
         -command [list choosecolor diffbgcolors 1 $page.diffnewbg \
                       [mc "diff new lines bg"] \
                       [list $ctext tag conf dresult -background]]
     grid x $page.diffnewbgbut $page.diffnewbg -sticky w
     label $page.hunksep -padx 40 -relief sunk -background [lindex $diffcolors 2]
-    ${NS}::button $page.hunksepbut -text [mc "Diff: hunk header"] \
+    ttk::button $page.hunksepbut -text [mc "Diff: hunk header"] \
         -command [list choosecolor diffcolors 2 $page.hunksep \
                       [mc "diff hunk header"] \
                       [list $ctext tag conf hunksep -foreground]]
     grid x $page.hunksepbut $page.hunksep -sticky w
     label $page.markbgsep -padx 40 -relief sunk -background $markbgcolor
-    ${NS}::button $page.markbgbut -text [mc "Marked line bg"] \
+    ttk::button $page.markbgbut -text [mc "Marked line bg"] \
         -command [list choosecolor markbgcolor {} $page.markbgsep \
                       [mc "marked line background"] \
                       [list $ctext tag conf omark -background]]
     grid x $page.markbgbut $page.markbgsep -sticky w
     label $page.selbgsep -padx 40 -relief sunk -background $selectbgcolor
-    ${NS}::button $page.selbgbut -text [mc "Select bg"] \
+    ttk::button $page.selbgbut -text [mc "Select bg"] \
         -command [list choosecolor selectbgcolor {} $page.selbgsep [mc "background"] setselbg]
     grid x $page.selbgbut $page.selbgsep -sticky w
     return $page
@@ -11814,7 +11814,7 @@ proc prefspage_colors {notebook} {
 proc prefspage_fonts {notebook} {
     global NS
     set page [create_prefs_page $notebook.fonts]
-    ${NS}::label $page.cfont -text [mc "Fonts: press to choose"] -font mainfontbold
+    ttk::label $page.cfont -text [mc "Fonts: press to choose"] -font mainfontbold
     grid $page.cfont - -sticky w -pady 10
     mkfontdisp mainfont $page [mc "Main font"]
     mkfontdisp textfont $page [mc "Diff display font"]
@@ -11842,7 +11842,7 @@ proc doprefs {} {
     if {[set use_notebook [expr {$use_ttk && [info command ::ttk::notebook] ne ""}]]} {
         set notebook [ttk::notebook $top.notebook]
     } else {
-        set notebook [${NS}::frame $top.notebook -borderwidth 0 -relief flat]
+        set notebook [ttk::frame $top.notebook -borderwidth 0 -relief flat]
     }
 
     lappend pages [prefspage_general $notebook] [mc "General"]
@@ -11853,7 +11853,7 @@ proc doprefs {} {
         if {$use_notebook} {
             $notebook add $page -text $title
         } else {
-            set btn [${NS}::button $notebook.b_[string map {. X} $page] \
+            set btn [ttk::button $notebook.b_[string map {. X} $page] \
                          -text $title -command [list raise $page]]
             $page configure -text $title
             grid $btn -row 0 -column [incr col] -sticky w
@@ -11871,9 +11871,9 @@ proc doprefs {} {
     grid rowconfigure $top 0 -weight 1
     grid columnconfigure $top 0 -weight 1
 
-    ${NS}::frame $top.buts
-    ${NS}::button $top.buts.ok -text [mc "OK"] -command prefsok -default active
-    ${NS}::button $top.buts.can -text [mc "Cancel"] -command prefscan -default normal
+    ttk::frame $top.buts
+    ttk::button $top.buts.ok -text [mc "OK"] -command prefsok -default active
+    ttk::button $top.buts.can -text [mc "Cancel"] -command prefscan -default normal
     bind $top <Key-Return> prefsok
     bind $top <Key-Escape> prefscan
     grid $top.buts.ok $top.buts.can
