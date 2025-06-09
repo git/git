@@ -172,7 +172,7 @@ rerere-gc::
 
 worktree-prune::
 	The `worktree-prune` task deletes stale or broken worktrees. See
-	linkit:git-worktree[1] for more information.
+	linkgit:git-worktree[1] for more information.
 
 OPTIONS
 -------
