@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2025-03-05 22:57+0000\n"
-"PO-Revision-Date: 2025-03-09 17:44+0700\n"
+"POT-Creation-Date: 2025-05-27 22:57+0000\n"
+"PO-Revision-Date: 2025-06-07 08:26+0700\n"
 "Last-Translator: Bagas Sanjaya <bagasdotme@gmail.com>\n"
 "Language-Team: Indonesian\n"
 "Language: id\n"
@@ -951,10 +951,9 @@ msgstr "opsi abai spasi putih tidak dikenal '%s'"
 #: builtin/fast-export.c builtin/fetch.c builtin/help.c builtin/index-pack.c
 #: builtin/init-db.c builtin/log.c builtin/ls-files.c builtin/merge-base.c
 #: builtin/merge-tree.c builtin/merge.c builtin/pack-objects.c builtin/rebase.c
-#: builtin/repack.c builtin/replay.c builtin/reset.c builtin/rev-list.c
-#: builtin/rev-parse.c builtin/show-branch.c builtin/stash.c
-#: builtin/submodule--helper.c builtin/tag.c builtin/worktree.c parse-options.c
-#: range-diff.c revision.c
+#: builtin/repack.c builtin/replay.c builtin/reset.c builtin/rev-parse.c
+#: builtin/show-branch.c builtin/stash.c builtin/submodule--helper.c
+#: builtin/tag.c builtin/worktree.c parse-options.c range-diff.c revision.c
 #, c-format
 msgid "options '%s' and '%s' cannot be used together"
 msgstr "Opsi '%s' dan '%s' tidak dapat digunakan bersamaan"
@@ -1857,7 +1856,7 @@ msgstr ""
 msgid "bad --attr-source or GIT_ATTR_SOURCE"
 msgstr "--attr-source atau GIT_ATTR_SOURCE jelek"
 
-#: attr.c read-cache.c
+#: attr.c read-cache.c refs/packed-backend.c
 #, c-format
 msgid "unable to stat '%s'"
 msgstr "tidak dapat men-stat '%s'"
@@ -2703,7 +2702,7 @@ msgstr "jalankan secara interaktif"
 msgid "bypass pre-applypatch and applypatch-msg hooks"
 msgstr "lewati kail pre-applypatch dan applypatch-msg"
 
-#: builtin/am.c
+#: builtin/am.c builtin/cat-file.c
 msgid "historical option -- no-op"
 msgstr "opsi bersejarah -- no-op"
 
@@ -4022,7 +4021,7 @@ msgstr "Perlu sebuah repositori untuk membongkar bundel."
 msgid "Unbundling objects"
 msgstr "Membongkar bundel objek"
 
-#: builtin/cat-file.c merge-recursive.c
+#: builtin/cat-file.c
 #, c-format
 msgid "cannot read object %s '%s'"
 msgstr "tidak dapat membaca objek %s '%s'"
@@ -4059,12 +4058,8 @@ msgid "git cat-file <type> <object>"
 msgstr "git cat-file <tipe> <objek>"
 
 #: builtin/cat-file.c
-msgid "git cat-file (-e | -p) <object>"
-msgstr "git cat-file (-e | -p) <objek>"
-
-#: builtin/cat-file.c
-msgid "git cat-file (-t | -s) [--allow-unknown-type] <object>"
-msgstr "git cat-file (-t | -s) [--allow-unknown-type] <objek>"
+msgid "git cat-file (-e | -p | -t | -s) <object>"
+msgstr "git cat-file (-e | -p | -t | -s) <objek>"
 
 #: builtin/cat-file.c
 msgid ""
@@ -4110,10 +4105,6 @@ msgstr "perlihatkan tipe objek (salah satu dari 'blob', 'commit', 'tag', ...)"
 #: builtin/cat-file.c
 msgid "show object size"
 msgstr "perlihatkan ukuran objek"
-
-#: builtin/cat-file.c
-msgid "allow -s and -t to work with broken/corrupt objects"
-msgstr "perbolehkan -s dan -t bekerja dengan objek rusak"
 
 #: builtin/cat-file.c builtin/log.c
 msgid "use mail map file"
@@ -4188,6 +4179,15 @@ msgstr "blob|tree"
 #: builtin/cat-file.c
 msgid "use a <path> for (--textconv | --filters); Not with 'batch'"
 msgstr "gunakan <jalur> untuk (--textconv | --filters); tidak dengan 'batch'"
+
+#: builtin/cat-file.c
+msgid "objects filter only supported in batch mode"
+msgstr "penyaring objek hanya didukung di mode kelompok"
+
+#: builtin/cat-file.c
+#, c-format
+msgid "objects filter not supported: '%s'"
+msgstr "penyaring objek tidak didukung: '%s'"
 
 #: builtin/cat-file.c
 #, c-format
@@ -7029,6 +7029,64 @@ msgstr "sebutkan akhiran format strftime untuk nama berkas"
 msgid "specify the content of the diagnostic archive"
 msgstr "sebutkan isi arsip diagnostik"
 
+#: builtin/diff-pairs.c
+#, c-format
+msgid "unable to parse mode: %s"
+msgstr "tidak dapat menguraikan mode: %s"
+
+#: builtin/diff-pairs.c
+#, c-format
+msgid "unable to parse object id: %s"
+msgstr "tidak dapat menguraikan id objek: %s"
+
+#: builtin/diff-pairs.c
+msgid "git diff-pairs -z [<diff-options>]"
+msgstr "git diff-pairs -z [<opsi diff>]"
+
+#: builtin/diff-pairs.c builtin/log.c builtin/replay.c builtin/shortlog.c
+#: bundle.c
+#, c-format
+msgid "unrecognized argument: %s"
+msgstr "argumen tidak dikenal: %s"
+
+#: builtin/diff-pairs.c
+msgid "working without -z is not supported"
+msgstr "bekerja tanpa -z tidak didukung"
+
+#: builtin/diff-pairs.c
+msgid "pathspec arguments not supported"
+msgstr "argumen spek jalur tidak didukung"
+
+#: builtin/diff-pairs.c
+msgid "revision arguments not allowed"
+msgstr "argumen revisi tidak diperbolehkan"
+
+#: builtin/diff-pairs.c
+msgid "invalid raw diff input"
+msgstr "masukan diff mentah tidak valid"
+
+#: builtin/diff-pairs.c
+msgid "tree objects not supported"
+msgstr "objek pohon tidak didukung"
+
+#: builtin/diff-pairs.c
+msgid "got EOF while reading path"
+msgstr "dapat EOF ketika membaca jalur"
+
+#: builtin/diff-pairs.c
+msgid "got EOF while reading destination path"
+msgstr "dapat EOF ketika membaca jalur tujuan"
+
+#: builtin/diff-pairs.c
+#, c-format
+msgid "unable to parse rename/copy score: %s"
+msgstr "tidak dapat menguraikan nilai penamaan ulang/salin : %s"
+
+#: builtin/diff-pairs.c
+#, c-format
+msgid "unknown diff status: %c"
+msgstr "status diff tidak dikenal: %c"
+
 #: builtin/diff-tree.c
 msgid "--merge-base only works with two commits"
 msgstr "--merge-base hanya bekerja dengan dua komit"
@@ -7208,6 +7266,10 @@ msgstr "perlihatkan perkembangan setelah <n> objek"
 #: builtin/fast-export.c
 msgid "select handling of signed tags"
 msgstr "pilih penanganan tag bertandatangan"
+
+#: builtin/fast-export.c
+msgid "select handling of signed commits"
+msgstr "pilih penanganan komit bertandatangan"
 
 #: builtin/fast-export.c
 msgid "select handling of tags that tag filtered objects"
@@ -7472,7 +7534,7 @@ msgstr "opsi \"%s\" nilai \"%s\" tidak valid untuk %s"
 msgid "option \"%s\" is ignored for %s"
 msgstr "opsi \"%s\" diabaikan untuk %s"
 
-#: builtin/fetch.c object-file.c
+#: builtin/fetch.c object-store.c
 #, c-format
 msgid "%s is not a valid object"
 msgstr "%s bukan sebuah objek valid"
@@ -8024,11 +8086,6 @@ msgstr "%s: objek rusak atau hilang: %s"
 
 #: builtin/fsck.c
 #, c-format
-msgid "%s: object is of unknown type '%s': %s"
-msgstr "%s: objek bertipe tidak dikenal '%s': %s"
-
-#: builtin/fsck.c
-#, c-format
 msgid "%s: object could not be parsed: %s"
 msgstr "%s: objek tidak dapat diuraikan: %s"
 
@@ -8100,11 +8157,15 @@ msgid "invalid rev-index for pack '%s'"
 msgstr "indeks balik tidak valid untuk pak '%s'"
 
 #: builtin/fsck.c
+msgid "Checking ref database"
+msgstr "Memeriksa basis referensi"
+
+#: builtin/fsck.c
 msgid ""
 "git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
 "         [--[no-]full] [--strict] [--verbose] [--lost-found]\n"
 "         [--[no-]dangling] [--[no-]progress] [--connectivity-only]\n"
-"         [--[no-]name-objects] [<object>...]"
+"         [--[no-]name-objects] [--[no-]references] [<object>...]"
 msgstr ""
 "git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
 "         [--[no-]full] [--strict] [--verbose] [--lost-found]\n"
@@ -8158,6 +8219,10 @@ msgstr "perlihatkan perkembangan"
 #: builtin/fsck.c
 msgid "show verbose names for reachable objects"
 msgstr "perlihatkan nama lantung untuk objek yang dapat dicapai"
+
+#: builtin/fsck.c
+msgid "check reference database consistency"
+msgstr "Memeriksa konsistensi basis data referensi"
 
 #: builtin/fsck.c builtin/index-pack.c
 msgid "Checking objects"
@@ -9612,11 +9677,6 @@ msgstr ""
 "lacak evolusi rentang baris <awal>,<akhir> atau fungsi :<nama fungsi> dalam "
 "<berkas>"
 
-#: builtin/log.c builtin/replay.c builtin/shortlog.c bundle.c
-#, c-format
-msgid "unrecognized argument: %s"
-msgstr "argumen tidak dikenal: %s"
-
 #: builtin/log.c
 msgid "-L<range>:<file> cannot be used with pathspec"
 msgstr "-L<rentang>:<berkas> tidak dapat digunakan dengan spek jalur"
@@ -10464,6 +10524,10 @@ msgid "also show informational/conflict messages"
 msgstr "perlihatkan juga pesan informasi/konflik"
 
 #: builtin/merge-tree.c
+msgid "suppress all output; only exit status wanted"
+msgstr "redam semua keluaran; hanya status keluar yang diinginkan"
+
+#: builtin/merge-tree.c
 msgid "list filenames without modes/oids/stages"
 msgstr "daftar nama berkas tanpa mode/oid/tahap"
 
@@ -10624,7 +10688,7 @@ msgstr "read-tree gagal"
 msgid "Already up to date. (nothing to squash)"
 msgstr "Sudah diperbarui. (tidak ada yang bisa dilumat)"
 
-#: builtin/merge.c merge-ort-wrappers.c merge-recursive.c
+#: builtin/merge.c merge-ort-wrappers.c
 msgid "Already up to date."
 msgstr "Sudah terbaru."
 
@@ -10648,7 +10712,7 @@ msgstr "'%s' tidak menunjuk pada sebuah komit"
 msgid "Bad branch.%s.mergeoptions string: %s"
 msgstr "Untai branch.%s.mergeoptions jelek: %s"
 
-#: builtin/merge.c merge-recursive.c
+#: builtin/merge.c merge-ort-wrappers.c
 msgid "Unable to write index."
 msgstr "Tidak dapat menulis indeks."
 
@@ -10809,7 +10873,7 @@ msgstr "Hanya bisa menggabungkan tepantnya satu komit ke kepala kosong"
 msgid "Updating %s..%s\n"
 msgstr "Memperbarui %s..%s\n"
 
-#: builtin/merge.c merge-ort-wrappers.c merge-recursive.c
+#: builtin/merge.c merge-ort-wrappers.c
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
@@ -10976,8 +11040,12 @@ msgstr ""
 "sebuah batch yang lebih besar dari ukuran ini"
 
 #: builtin/mv.c
-msgid "git mv [<options>] <source>... <destination>"
-msgstr "git mv [<opsi>] <sumber>... <tujuan>"
+msgid "git mv [-v] [-f] [-n] [-k] <source> <destination>"
+msgstr "git mv [-v] [-f] [-n] [-k] <sumber> <tujuan>"
+
+#: builtin/mv.c
+msgid "git mv [-v] [-f] [-n] [-k] <source>... <destination-directory>"
+msgstr "git mv [-v] [-f] [-n] [-k] <sumber> <direktori tujuan>"
 
 #: builtin/mv.c
 #, c-format
@@ -11064,6 +11132,11 @@ msgstr "tujuan ada dalam indeks"
 #, c-format
 msgid "%s, source=%s, destination=%s"
 msgstr "%s, source=%s, destination=%s"
+
+#: builtin/mv.c
+#, c-format
+msgid "cannot move both '%s' and its parent directory '%s'"
+msgstr "tidak dapat memindahkan baik '%s' dan direktori induknya '%s'"
 
 #: builtin/mv.c
 #, c-format
@@ -12241,6 +12314,11 @@ msgstr ""
 msgid "unable to access commit %s"
 msgstr "Tidak dapat mengakses komit %s"
 
+#: builtin/pull.c refspec.c
+#, c-format
+msgid "invalid refspec '%s'"
+msgstr "spek referensi tidak valid '%s'"
+
 #: builtin/pull.c
 msgid "ignoring --verify-signatures for rebase"
 msgstr "mengabaikan --verify-signatures untuk pendasaran ulang"
@@ -13389,6 +13467,10 @@ msgid "git reflog exists <ref>"
 msgstr "git reflog exists <referensi>"
 
 #: builtin/reflog.c
+msgid "git reflog drop [--all [--single-worktree] | <refs>...]"
+msgstr "git reflog drop [--all [--single-worktee] | <referensi>...]"
+
+#: builtin/reflog.c
 #, c-format
 msgid "invalid timestamp '%s' given to '--%s'"
 msgstr "stempel waktu tidak valid '%s' diberikan ke '--%s'"
@@ -13450,8 +13532,8 @@ msgstr "Menandai objek yang bisa dicapai..."
 
 #: builtin/reflog.c
 #, c-format
-msgid "%s points nowhere!"
-msgstr "%s tidak menunjuk ke apapun!"
+msgid "reflog could not be found: '%s'"
+msgstr "tidak dapat menemukan log referensi: '%s'"
 
 #: builtin/reflog.c
 msgid "no reflog specified to delete"
@@ -13461,6 +13543,18 @@ msgstr "tidak ada log referensi yang disebutkan untuk dihapus"
 #, c-format
 msgid "invalid ref format: %s"
 msgstr "format referensi tidak valid: %s"
+
+#: builtin/reflog.c
+msgid "drop the reflogs of all references"
+msgstr "jatuhkan log referensi semua referensi"
+
+#: builtin/reflog.c
+msgid "drop reflogs from the current worktree only"
+msgstr "hanya jatuhkan log referensi dari pohon kerja saat ini"
+
+#: builtin/reflog.c
+msgid "references specified along with --all"
+msgstr "referensi yang dirincikan bersamaan dengan --all"
 
 #: builtin/refs.c
 msgid "git refs migrate --ref-format=<format> [--no-reflog] [--dry-run]"
@@ -14152,6 +14246,10 @@ msgid "with --cruft, expire objects older than this"
 msgstr "dengan --cruft, kadaluarsakan objek yang lebih tua dari ini"
 
 #: builtin/repack.c
+msgid "with --cruft, only repack cruft packs smaller than this"
+msgstr "dengan --cruft, hanya pak ulang pak sampah yang lebih kecil dari ini"
+
+#: builtin/repack.c
 msgid "remove redundant packs, and run git-prune-packed"
 msgstr "hapus pak berlebihan, dan jalankan git-prune-packed"
 
@@ -14757,6 +14855,10 @@ msgstr "tidak dapat mendapatkan penggunaan disk %s"
 msgid "invalid value for '%s': '%s', the only allowed format is '%s'"
 msgstr ""
 "nilai tidak valid untuk '%s': '%s', format yang diperbolehkan hanyalah '%s'"
+
+#: builtin/rev-list.c
+msgid "-z option used with unsupported option"
+msgstr "osi -z digunakan dengan opsi yang tidak didukung"
 
 #: builtin/rev-list.c
 msgid "rev-list does not support display of notes"
@@ -17082,8 +17184,8 @@ msgid "git update-ref [<options>]    <refname> <new-oid> [<old-oid>]"
 msgstr "git update-ref [<options>]    <nama referensi> <oid baru> [<oid lama>]"
 
 #: builtin/update-ref.c
-msgid "git update-ref [<options>] --stdin [-z]"
-msgstr "git update-ref [<opsi>] --stdin [-z]"
+msgid "git update-ref [<options>] --stdin [-z] [--batch-updates]"
+msgstr "git update-ref [<opsi>] --stdin [-z] [--batch-updates]"
 
 #: builtin/update-ref.c
 msgid "delete the reference"
@@ -17100,6 +17202,10 @@ msgstr "stdin punya argumen yang diakhiri dengan NUL"
 #: builtin/update-ref.c
 msgid "read updates from stdin"
 msgstr "baca pembaruan dari masukan standar"
+
+#: builtin/update-ref.c
+msgid "batch reference updates"
+msgstr "kelompokkan pembaruan referensi"
 
 #: builtin/update-server-info.c
 msgid "update the info files from scratch"
@@ -17959,6 +18065,10 @@ msgstr "Bandingkan berkas di dalam pohon kerja dan indeks"
 #: command-list.h
 msgid "Compare a tree to the working tree or index"
 msgstr "Bandingkan pohon kepada pohon kerja atau indeks"
+
+#: command-list.h
+msgid "Compare the content and mode of provided blob pairs"
+msgstr "Bandingkan isi dan mode pasangan blob yang disediakan"
 
 #: command-list.h
 msgid "Compares the content and mode of blobs found via two tree objects"
@@ -20127,7 +20237,7 @@ msgstr ""
 msgid "Unknown value for 'diff.submodule' config variable: '%s'"
 msgstr "Nilai tidak dikenal untuk variabel konfigurasi 'diff.submodule': '%s'"
 
-#: diff.c merge-recursive.c transport.c
+#: diff.c merge-ort.c transport.c
 #, c-format
 msgid "unknown value for config '%s': %s"
 msgstr "nilai tidak dikenal untuk konfigurasi '%s': %s"
@@ -21587,6 +21697,11 @@ msgstr "Kontrol delegasi tidak didukung oleh cURL < 7.22.0"
 msgid "Unknown value for http.proactiveauth"
 msgstr "nilai tidak dikenal untuk http.proactiveauth"
 
+#: http.c parse.c
+#, c-format
+msgid "failed to parse %s"
+msgstr "gagal menguraikan %s"
+
 #: http.c
 #, c-format
 msgid "Unsupported SSL backend '%s'. Supported SSL backends:"
@@ -21814,7 +21929,12 @@ msgstr "tidak dapat memformat pesan: %s"
 msgid "invalid marker-size '%s', expecting an integer"
 msgstr "marker-size '%s' tidak valid, bilangan bulat diharapkan"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort-wrappers.c
+#, c-format
+msgid "Could not parse object '%s'"
+msgstr "Tidak dapat menguraikan objek '%s'"
+
+#: merge-ort.c
 #, c-format
 msgid "Failed to merge submodule %s (not checked out)"
 msgstr "Gagal menggabungkan submodul %s (tidak di-checkout)"
@@ -21824,7 +21944,7 @@ msgstr "Gagal menggabungkan submodul %s (tidak di-checkout)"
 msgid "Failed to merge submodule %s (no merge base)"
 msgstr "Gagal menggabungkan submodul %s (tidak ada dasar penggabungan)"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid "Failed to merge submodule %s (commits not present)"
 msgstr "Gagal menggabungkan submodul %s (komit tidak ada)"
@@ -21834,7 +21954,7 @@ msgstr "Gagal menggabungkan submodul %s (komit tidak ada)"
 msgid "error: failed to merge submodule %s (repository corrupt)"
 msgstr "kesalahan: gagal menggabungkan submodul %s (repositori rusak)"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid "Failed to merge submodule %s (commits don't follow merge-base)"
 msgstr ""
@@ -21878,12 +21998,12 @@ msgstr "kesalahan: gagal menjalankan penggabungan internal untuk %s"
 msgid "error: unable to add %s to database"
 msgstr "kesalahan: tidak dapat menambahkan %s ke basis data"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid "Auto-merging %s"
 msgstr "Menggabungkan otomatis %s"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid ""
 "CONFLICT (implicit dir rename): Existing file/dir at %s in the way of "
@@ -21892,7 +22012,7 @@ msgstr ""
 "KONFLIK (penamaan ulang direktori implisit): Berkas/direktori yang sudah ada "
 "pada %s saat penamaan ulang direktori menempatkan jalur berikut di sana: %s."
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid ""
 "CONFLICT (implicit dir rename): Cannot map more than one path to %s; "
@@ -21913,7 +22033,7 @@ msgstr ""
 "ulang %s; itu dinamai ulang ke banyak direktori lainnya, dengan tiada tujuan "
 "mendapatkan mayoritas berkas."
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid ""
 "WARNING: Avoiding applying %s -> %s rename to %s, because %s itself was "
@@ -21922,7 +22042,7 @@ msgstr ""
 "PERINGATAN: Menghindari menerapkan penamaan ulang %s -> %s ke %s, karena %s-"
 "nya sendiri dinamai ulang."
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid ""
 "Path updated: %s added in %s inside a directory that was renamed in %s; "
@@ -21931,7 +22051,7 @@ msgstr ""
 "Jalur diperbarui: %s menambahkan %s di dalam sebuah direktori yang dinamai "
 "ulang di %s; memindahkan ke %s."
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid ""
 "Path updated: %s renamed to %s in %s, inside a directory that was renamed in "
@@ -21940,7 +22060,7 @@ msgstr ""
 "Jalur diperbarui: %s dinamai ulang ke %s di %s, di dalam sebuah direktori "
 "yang dinamai ulang di %s; memindahkan ke %s."
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid ""
 "CONFLICT (file location): %s added in %s inside a directory that was renamed "
@@ -21949,7 +22069,7 @@ msgstr ""
 "KONFLIK (lokasi berkas): %s menambahkan %s di dalam sebuah direktori yang "
 "dinamai ulang di %s, menyarankan mungkin dipindahkan ke %s."
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid ""
 "CONFLICT (file location): %s renamed to %s in %s, inside a directory that "
@@ -22020,19 +22140,19 @@ msgstr ""
 "KONFLIK (tipe berbeda): %s punya tipe berbeda pada setiap sisi; salah "
 "satunya dinamai ulang sehingga masing-masing dapat direkam di suatu tempat."
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 msgid "content"
 msgstr "konten"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 msgid "add/add"
 msgstr "penambahan/penambahan"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 msgid "submodule"
 msgstr "submodul"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid "CONFLICT (%s): Merge conflict in %s"
 msgstr "KONFLIK (%s): Konflik penggabungan di %s"
@@ -22096,325 +22216,6 @@ msgstr ""
 msgid "collecting merge info failed for trees %s, %s, %s"
 msgstr "pengumpulan info penggabungan gagal untuk pohon %s, %s, dan %s"
 
-#: merge-recursive.c
-msgid "(bad commit)\n"
-msgstr "(komit jelek)\n"
-
-#: merge-recursive.c
-#, c-format
-msgid "add_cacheinfo failed for path '%s'; merge aborting."
-msgstr "add_cacheinfo gagal untuk jalur '%s'; penggabungan dibatalkan."
-
-#: merge-recursive.c
-#, c-format
-msgid "add_cacheinfo failed to refresh for path '%s'; merge aborting."
-msgstr ""
-"add_cacheinfo gagal menyegarkan untuk jalur '%s'; penggabungan dibatalkan."
-
-#: merge-recursive.c
-#, c-format
-msgid "failed to create path '%s'%s"
-msgstr "gagal membuat jalur '%s'%s"
-
-#: merge-recursive.c
-#, c-format
-msgid "Removing %s to make room for subdirectory\n"
-msgstr "Menghapus %s untuk membuat ruang untuk subdirektori\n"
-
-#: merge-recursive.c
-msgid ": perhaps a D/F conflict?"
-msgstr ": mungkin konflik direktori/berkas?"
-
-#: merge-recursive.c
-#, c-format
-msgid "refusing to lose untracked file at '%s'"
-msgstr "menolak menghilangkan berkas tak terlacak pada '%s'"
-
-#: merge-recursive.c
-#, c-format
-msgid "blob expected for %s '%s'"
-msgstr "blob diharapkan untuk %s '%s'"
-
-#: merge-recursive.c
-#, c-format
-msgid "failed to open '%s': %s"
-msgstr "gagal membuka '%s': %s"
-
-#: merge-recursive.c
-#, c-format
-msgid "failed to symlink '%s': %s"
-msgstr "gagal menautkan simbolik '%s': %s"
-
-#: merge-recursive.c
-#, c-format
-msgid "do not know what to do with %06o %s '%s'"
-msgstr "tidak tahu apa yang dilakukan dengan %06o %s '%s'"
-
-#: merge-recursive.c
-#, c-format
-msgid "Failed to merge submodule %s (repository corrupt)"
-msgstr "Gagal menggabungkan submodul %s (repositori rusak)"
-
-#: merge-recursive.c
-#, c-format
-msgid "Fast-forwarding submodule %s to the following commit:"
-msgstr "Memaju-cepat submodul %s ke komit berikut:"
-
-#: merge-recursive.c
-#, c-format
-msgid "Fast-forwarding submodule %s"
-msgstr "Memaju-cepat submodul %s"
-
-#: merge-recursive.c
-#, c-format
-msgid "Failed to merge submodule %s (merge following commits not found)"
-msgstr ""
-"Gagal menggabungkan submodul %s (penggabungan komit berikutnya tidak "
-"ditemukan)"
-
-#: merge-recursive.c
-#, c-format
-msgid "Failed to merge submodule %s (not fast-forward)"
-msgstr "Gagal menggabungkan submodul %s (bukan maju-cepat)"
-
-#: merge-recursive.c
-msgid "Found a possible merge resolution for the submodule:\n"
-msgstr "Sebuah resolusi penggabungan yang mungkin ditemukan untuk submodul:\n"
-
-#: merge-recursive.c
-#, c-format
-msgid ""
-"If this is correct simply add it to the index for example\n"
-"by using:\n"
-"\n"
-"  git update-index --cacheinfo 160000 %s \"%s\"\n"
-"\n"
-"which will accept this suggestion.\n"
-msgstr ""
-"Jika benar, cukup misalkan tambahkan ke indeks dengan menggunakan:\n"
-"\n"
-"  git update-index --cacheinfo 160000 %s \"%s\"\n"
-"\n"
-"yang akan menerima saran ini.\n"
-
-#: merge-recursive.c
-#, c-format
-msgid "Failed to merge submodule %s (multiple merges found)"
-msgstr "Gagal menggabungkan submodul %s (banyak penggabungan ditemukan)"
-
-#: merge-recursive.c
-msgid "failed to execute internal merge"
-msgstr "gagal menjalankan penggabungan internal"
-
-#: merge-recursive.c
-#, c-format
-msgid "unable to add %s to database"
-msgstr "tidak dapat menambahkan %s ke basis data"
-
-#: merge-recursive.c
-#, c-format
-msgid "Error: Refusing to lose untracked file at %s; writing to %s instead."
-msgstr ""
-"Kesalahan: Menolak menghilangkan berkas tak terlacak pada %s; menulis ke %s "
-"sebagai gantinya."
-
-#: merge-recursive.c
-#, c-format
-msgid ""
-"CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left "
-"in tree."
-msgstr ""
-"KONFLIK (%s/penghapusan): %s dihapus di %s dan %s di %s. Versi %s dari %s "
-"ditinggalkan di dalam pohon."
-
-#: merge-recursive.c
-#, c-format
-msgid ""
-"CONFLICT (%s/delete): %s deleted in %s and %s to %s in %s. Version %s of %s "
-"left in tree."
-msgstr ""
-"KONFLIK (%s/penghapusan): %s dihapus di %s dan %s ke %s di %s. Versi %s dari "
-"%s ditinggalkan di dalam pohon."
-
-#: merge-recursive.c
-#, c-format
-msgid ""
-"CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left "
-"in tree at %s."
-msgstr ""
-"KONFLIK (%s/penghapusan): %s dihapus di %s dan %s di %s. Versi %s dari %s "
-"ditinggalkan di dalam pohon pada %s."
-
-#: merge-recursive.c
-#, c-format
-msgid ""
-"CONFLICT (%s/delete): %s deleted in %s and %s to %s in %s. Version %s of %s "
-"left in tree at %s."
-msgstr ""
-"KONFLIK (%s/penghapusan): %s dihapus di %s dan %s ke %s di %s. Versi %s dari "
-"%s ditinggalkan di dalam pohon pada %s."
-
-#: merge-recursive.c
-msgid "rename"
-msgstr "penamaan ulang"
-
-#: merge-recursive.c
-msgid "renamed"
-msgstr "dinamai ulang"
-
-#: merge-recursive.c
-#, c-format
-msgid "Refusing to lose dirty file at %s"
-msgstr "Menolak menghilangkan berkas kotor pada %s"
-
-#: merge-recursive.c
-#, c-format
-msgid "Refusing to lose untracked file at %s, even though it's in the way."
-msgstr ""
-"Menolak menghilangkan berkas tak terlacak pada %s, bahkan jika itu berjalan."
-
-#: merge-recursive.c
-#, c-format
-msgid "CONFLICT (rename/add): Rename %s->%s in %s.  Added %s in %s"
-msgstr ""
-"KONFLIK (penamaan ulang/penambahan): Penamaan ulang %s-%s di %s. %s "
-"ditambahkan di %s"
-
-#: merge-recursive.c
-#, c-format
-msgid "%s is a directory in %s adding as %s instead"
-msgstr ""
-"%s adalah sebuah direktori dalam %s menambahkan sebagai %s sebagai gantinya"
-
-#: merge-recursive.c
-#, c-format
-msgid "Refusing to lose untracked file at %s; adding as %s instead"
-msgstr ""
-"Menolak menghilangkan berkas tak terlacak pada %s; menambahkan sebagai %s "
-"sebagai gantinya"
-
-#: merge-recursive.c
-#, c-format
-msgid ""
-"CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename "
-"\"%s\"->\"%s\" in \"%s\"%s"
-msgstr ""
-"KONFLIK (penamaan ulang/penamaan ulang): Penamaan ulang \"%s\"->\"%s\" di "
-"dalam cabang \"%s\" penamaan ulang \"%s\"->\"%s\" di \"%s\"%s"
-
-#: merge-recursive.c
-msgid " (left unresolved)"
-msgstr " dibiarkan tak diselesaikan"
-
-#: merge-recursive.c
-#, c-format
-msgid "CONFLICT (rename/rename): Rename %s->%s in %s. Rename %s->%s in %s"
-msgstr ""
-"KONFLIK (penamaan ulang/penamaan ulang): Penamaan ulang %s->%s di %s. "
-"Penamaan ulang %s->%s di %s"
-
-#: merge-recursive.c
-#, c-format
-msgid ""
-"CONFLICT (directory rename split): Unclear where to place %s because "
-"directory %s was renamed to multiple other directories, with no destination "
-"getting a majority of the files."
-msgstr ""
-"KONFLIK (pemecahan penamaan ulang direktori): Tidak jelas dimana untuk "
-"menempatkan %s karena direktori %s dinamai ulang ke banyak direktori "
-"lainnya, dengan tidak ada tujuan yang mendapatkan mayoritas berkas."
-
-#: merge-recursive.c
-#, c-format
-msgid ""
-"CONFLICT (rename/rename): Rename directory %s->%s in %s. Rename directory %s-"
-">%s in %s"
-msgstr ""
-"KONFLIK (penamaan ulang/penamaan ulang): Penamaan ulang direktori %s->%s di "
-"%s. Penamaan ulang %s->%s di %s"
-
-#: merge-recursive.c
-#, c-format
-msgid "cannot read object %s"
-msgstr "tidak dapat membaca objek %s"
-
-#: merge-recursive.c
-#, c-format
-msgid "object %s is not a blob"
-msgstr "objek %s bukanlah sebuah blob"
-
-#: merge-recursive.c
-msgid "modify"
-msgstr "ubah"
-
-#: merge-recursive.c
-msgid "modified"
-msgstr "diubah"
-
-#: merge-recursive.c
-#, c-format
-msgid "Skipped %s (merged same as existing)"
-msgstr "%s dilewatkan (digabungkan sama seperti yang ada)"
-
-#: merge-recursive.c
-#, c-format
-msgid "Adding as %s instead"
-msgstr "Menambahkan sebagai %s sebagai gantinya"
-
-#: merge-recursive.c
-#, c-format
-msgid "Removing %s"
-msgstr "Menghapus %s"
-
-#: merge-recursive.c
-msgid "file/directory"
-msgstr "berkas/direktori"
-
-#: merge-recursive.c
-msgid "directory/file"
-msgstr "direktori/berkas"
-
-#: merge-recursive.c
-#, c-format
-msgid "CONFLICT (%s): There is a directory with name %s in %s. Adding %s as %s"
-msgstr ""
-"KONFLIK (%s): Ada direktori dengan nama %s di %s. Menambahakn %s sebagai %s"
-
-#: merge-recursive.c
-#, c-format
-msgid "Adding %s"
-msgstr "Menambahkan %s"
-
-#: merge-recursive.c
-#, c-format
-msgid "CONFLICT (add/add): Merge conflict in %s"
-msgstr "KONFLIK (penambahan/penambahan): Konflik penggabungan di %s"
-
-#: merge-recursive.c
-#, c-format
-msgid "merging of trees %s and %s failed"
-msgstr "penggabungan pohon %s dan %s gagal"
-
-#: merge-recursive.c
-msgid "Merging:"
-msgstr "Menggabungkan:"
-
-#: merge-recursive.c
-#, c-format
-msgid "found %u common ancestor:"
-msgid_plural "found %u common ancestors:"
-msgstr[0] "%u leluhur umum ditemukan:"
-msgstr[1] "%u leluhur umum ditemukan:"
-
-#: merge-recursive.c
-msgid "merge returned no commit"
-msgstr "penggabungan tidak mengembalikan komit"
-
-#: merge-recursive.c
-#, c-format
-msgid "Could not parse object '%s'"
-msgstr "Tidak dapat menguraikan objek '%s'"
-
 #: merge.c
 msgid "failed to read the cache"
 msgstr "gagal membaca tembolok"
@@ -22468,12 +22269,13 @@ msgid "failed to clear multi-pack-index at %s"
 msgstr "gagal membersihkan indeks multipak pada %s"
 
 #: midx-write.c
-msgid "cannot write incremental MIDX with bitmap"
-msgstr "tidak dapat menulis MIDX tambahan dengan bitmap"
-
-#: midx-write.c
 msgid "ignoring existing multi-pack-index; checksum mismatch"
 msgstr "abaikan indeks multipak yang sudah ada; checksum tidak cocok"
+
+#: midx-write.c
+#, c-format
+msgid "could not load reverse index for MIDX %s"
+msgstr "tidak dapat memuat indeks balik untuk MIDX %s"
 
 #: midx-write.c
 msgid "Adding packfiles to multi-pack-index"
@@ -22797,79 +22599,6 @@ msgstr "Gagal mengkonversi objek dari %s ke %s"
 
 #: object-file.c
 #, c-format
-msgid "object directory %s does not exist; check .git/objects/info/alternates"
-msgstr "direktori objek %s tidak ada; periksa .git/objects/info/alternates"
-
-#: object-file.c
-#, c-format
-msgid "unable to normalize alternate object path: %s"
-msgstr "tidak dapat menormalisasikan jalur objek alternatif: %s"
-
-#: object-file.c
-#, c-format
-msgid "%s: ignoring alternate object stores, nesting too deep"
-msgstr "%s: mengabaikan penyimpanan objek alternatif, bersarang terlalu dalam"
-
-#: object-file.c
-msgid "unable to fdopen alternates lockfile"
-msgstr "tidak dapat men-fdopen berkas kunci alternatif"
-
-#: object-file.c
-msgid "unable to read alternates file"
-msgstr "tidak dapat membaca berkas alternatif"
-
-#: object-file.c
-msgid "unable to move new alternates file into place"
-msgstr "tidak dapat memindahkan berkas alternatif baru ke tempatnya"
-
-#: object-file.c
-#, c-format
-msgid "path '%s' does not exist"
-msgstr "jalur '%s' tidak ada"
-
-#: object-file.c
-#, c-format
-msgid "reference repository '%s' as a linked checkout is not supported yet."
-msgstr ""
-"repositori referensi '%s' sebagai sebuah checkout tertaut belum didukung."
-
-#: object-file.c
-#, c-format
-msgid "reference repository '%s' is not a local repository."
-msgstr "repositori referensi '%s' bukan sebuah repositori lokal"
-
-#: object-file.c
-#, c-format
-msgid "reference repository '%s' is shallow"
-msgstr "repositori referensi '%s' dangkal"
-
-#: object-file.c
-#, c-format
-msgid "reference repository '%s' is grafted"
-msgstr "repositori referensi '%s' cangkok"
-
-#: object-file.c
-#, c-format
-msgid "could not find object directory matching %s"
-msgstr "tidak dapat menemukan direktori objek yang cocok dengan %s"
-
-#: object-file.c
-#, c-format
-msgid "invalid line while parsing alternate refs: %s"
-msgstr "baris tidak valid saat menguraikan referensi alternatif: %s"
-
-#: object-file.c
-#, c-format
-msgid "attempting to mmap %<PRIuMAX> over limit %<PRIuMAX>"
-msgstr "mencoba men-mmap %<PRIuMAX> di atas batas %<PRIuMAX>"
-
-#: object-file.c
-#, c-format
-msgid "mmap failed%s"
-msgstr "mmap gagal%s"
-
-#: object-file.c
-#, c-format
 msgid "object file %s is empty"
 msgstr "berkas objek %s kosong"
 
@@ -22911,21 +22640,6 @@ msgstr "kepala untuk %s terlalu panjang, melebihi %d bita"
 #, c-format
 msgid "loose object %s (stored in %s) is corrupt"
 msgstr "objek longgar %s (disimpan di %s) rusak"
-
-#: object-file.c
-#, c-format
-msgid "replacement %s not found for %s"
-msgstr "pengganti %s tidak ditemukan untuk %s"
-
-#: object-file.c
-#, c-format
-msgid "packed object %s (stored in %s) is corrupt"
-msgstr "objek terpak %s (disimpan di %s) rusak"
-
-#: object-file.c
-#, c-format
-msgid "missing mapping of %s to %s"
-msgstr "pemetaan %s ke %s hilang"
 
 #: object-file.c
 #, c-format
@@ -23047,11 +22761,6 @@ msgstr "%s: tipe berkas tidak didukung"
 
 #: object-file.c
 #, c-format
-msgid "%s is not a valid '%s' object"
-msgstr "%s bukan sebuah objek '%s' valid"
-
-#: object-file.c
-#, c-format
 msgid "hash mismatch for %s (expected %s)"
 msgstr "hash tidak cocok untuk %s (diharapkan %s)"
 
@@ -23069,6 +22778,11 @@ msgstr "tidak dapat membongkar kepala %s"
 #, c-format
 msgid "unable to parse header of %s"
 msgstr "tidak dapat menguraikan kepala %s"
+
+#: object-file.c
+#, c-format
+msgid "unable to parse type from header '%s' of %s"
+msgstr "tidak dapat menguraikan tipe dari kepala '%s' dari '%s'"
 
 #: object-file.c
 #, c-format
@@ -23247,6 +22961,89 @@ msgstr "<objek>:<jalur> diperlukan, hanya <objek> '%s' diberikan"
 #, c-format
 msgid "invalid object name '%.*s'."
 msgstr "nama objek tidak valid '%.*s'."
+
+#: object-store.c
+#, c-format
+msgid "object directory %s does not exist; check .git/objects/info/alternates"
+msgstr "direktori objek %s tidak ada; periksa .git/objects/info/alternates"
+
+#: object-store.c
+#, c-format
+msgid "unable to normalize alternate object path: %s"
+msgstr "tidak dapat menormalisasikan jalur objek alternatif: %s"
+
+#: object-store.c
+#, c-format
+msgid "%s: ignoring alternate object stores, nesting too deep"
+msgstr "%s: mengabaikan penyimpanan objek alternatif, bersarang terlalu dalam"
+
+#: object-store.c
+msgid "unable to fdopen alternates lockfile"
+msgstr "tidak dapat men-fdopen berkas kunci alternatif"
+
+#: object-store.c
+msgid "unable to read alternates file"
+msgstr "tidak dapat membaca berkas alternatif"
+
+#: object-store.c
+msgid "unable to move new alternates file into place"
+msgstr "tidak dapat memindahkan berkas alternatif baru ke tempatnya"
+
+#: object-store.c
+#, c-format
+msgid "path '%s' does not exist"
+msgstr "jalur '%s' tidak ada"
+
+#: object-store.c
+#, c-format
+msgid "reference repository '%s' as a linked checkout is not supported yet."
+msgstr ""
+"repositori referensi '%s' sebagai sebuah checkout tertaut belum didukung."
+
+#: object-store.c
+#, c-format
+msgid "reference repository '%s' is not a local repository."
+msgstr "repositori referensi '%s' bukan sebuah repositori lokal"
+
+#: object-store.c
+#, c-format
+msgid "reference repository '%s' is shallow"
+msgstr "repositori referensi '%s' dangkal"
+
+#: object-store.c
+#, c-format
+msgid "reference repository '%s' is grafted"
+msgstr "repositori referensi '%s' cangkok"
+
+#: object-store.c
+#, c-format
+msgid "could not find object directory matching %s"
+msgstr "tidak dapat menemukan direktori objek yang cocok dengan %s"
+
+#: object-store.c
+#, c-format
+msgid "invalid line while parsing alternate refs: %s"
+msgstr "baris tidak valid saat menguraikan referensi alternatif: %s"
+
+#: object-store.c
+#, c-format
+msgid "replacement %s not found for %s"
+msgstr "pengganti %s tidak ditemukan untuk %s"
+
+#: object-store.c
+#, c-format
+msgid "packed object %s (stored in %s) is corrupt"
+msgstr "objek terpak %s (disimpan di %s) rusak"
+
+#: object-store.c
+#, c-format
+msgid "missing mapping of %s to %s"
+msgstr "pemetaan %s ke %s hilang"
+
+#: object-store.c
+#, c-format
+msgid "%s is not a valid '%s' object"
+msgstr "%s bukan sebuah objek '%s' valid"
 
 #: object.c
 #, c-format
@@ -23601,6 +23398,16 @@ msgstr "%s tidak ada"
 
 #: parse-options.c
 #, c-format
+msgid "value %s for %s not in range [%<PRIdMAX>,%<PRIdMAX>]"
+msgstr "nilai %s untuk %s di luar rentang [%<PRIdMAX>,%<PRIdMAX>]"
+
+#: parse-options.c
+#, c-format
+msgid "%s expects an integer value with an optional k/m/g suffix"
+msgstr "%s mengharapkan nilai bilangan bulat dengan akhiran opsional k/m/g"
+
+#: parse-options.c
+#, c-format
 msgid "%s expects a non-negative integer value with an optional k/m/g suffix"
 msgstr ""
 "%s mengharapkan nilai bilangan bulat non negatif dengan akhiran opsional k/m/"
@@ -23786,11 +23593,6 @@ msgstr ""
 #, c-format
 msgid "bad boolean environment value '%s' for '%s'"
 msgstr "nilai lingkungan boolean '%s' jelek untuk '%s'"
-
-#: parse.c
-#, c-format
-msgid "failed to parse %s"
-msgstr "gagal menguraikan %s"
 
 #: path-walk.c
 #, c-format
@@ -23999,8 +23801,13 @@ msgstr "tidak dapat mengambil %s dari remote penjanji"
 
 #: promisor-remote.c
 #, c-format
-msgid "known remote named '%s' but with url '%s' instead of '%s'"
-msgstr "remote yang terkenal bernama '%s' tapi dengan url '%s' daripada '%s'"
+msgid "no or empty URL advertised for remote '%s'"
+msgstr "tidak ada URL atau URL kosong yang diiklankan untuk remote '%s'"
+
+#: promisor-remote.c
+#, c-format
+msgid "known remote named '%s' but with URL '%s' instead of '%s'"
+msgstr "remote yang terkenal bernama '%s' tapi dengan URL '%s' daripada '%s'"
 
 #: promisor-remote.c
 #, c-format
@@ -24931,6 +24738,11 @@ msgstr "tidak dapat membuka direktori %s"
 msgid "Checking references consistency"
 msgstr "Memeriksa konsistensi referensi"
 
+#: refs/packed-backend.c
+#, c-format
+msgid "unable to open '%s'"
+msgstr "tidak dapat membuka '%s'"
+
 #: refs/reftable-backend.c
 #, c-format
 msgid "refname is dangerous: %s"
@@ -25013,11 +24825,6 @@ msgstr "nama referensi %s tidak ditemukan"
 #, c-format
 msgid "refname %s is a symbolic ref, copying it is not supported"
 msgstr "nama referensi %s simbolik, menyalinnya tidak didukung"
-
-#: refspec.c
-#, c-format
-msgid "invalid refspec '%s'"
-msgstr "spek referensi tidak valid '%s'"
 
 #: refspec.c
 #, c-format
@@ -25688,8 +25495,8 @@ msgid "could not set recommended config"
 msgstr "tidak dapat menyetel konfigurasi yang direkomendasikan"
 
 #: scalar.c
-msgid "could not turn on maintenance"
-msgstr "tidak dapat mengaktifkan pemeliharaan"
+msgid "could not toggle maintenance"
+msgstr "tidak dapat mengalihkan pemeliharaan"
 
 #: scalar.c
 msgid "could not start the FSMonitor daemon"
@@ -25747,15 +25554,19 @@ msgstr "salin repositori di dalam direktori 'src'"
 
 #: scalar.c
 msgid "specify if tags should be fetched during clone"
-msgstr "rincikan jikan tag hendak diambil selama kloning"
+msgstr "rincikan jika tag hendak diambil selama kloning"
+
+#: scalar.c
+msgid "specify if background maintenance should be enabled"
+msgstr "rincikan jika pemeliharaan balik layar hendak diaktifkan"
 
 #: scalar.c
 msgid ""
 "scalar clone [--single-branch] [--branch <main-branch>] [--full-clone]\n"
-"\t[--[no-]src] [--[no-]tags] <url> [<enlistment>]"
+"\t[--[no-]src] [--[no-]tags] [--[no-]maintenance] <url> [<enlistment>]"
 msgstr ""
 "scalar clone [--single-branch] [--branch <cabang utama>] [--full-clone]\n"
-"\t[--[-no-]src] [--[no-]tags] <url> [<pendaftaran>]"
+"\t[--[-no-]src] [--[no-]tags] [--[no-]maintenance] <url> [<pendaftaran>]"
 
 #: scalar.c
 #, c-format
@@ -25804,20 +25615,37 @@ msgid "`scalar list` does not take arguments"
 msgstr "`scalar list` tidak mengambil argumen"
 
 #: scalar.c
-msgid "scalar register [<enlistment>]"
-msgstr "scalar register [<pendaftaran>]"
+msgid "scalar register [--[no-]maintenance] [<enlistment>]"
+msgstr "scalar register [--[no-]maintenance] [<pendaftaran>]"
 
 #: scalar.c
 msgid "reconfigure all registered enlistments"
 msgstr "konfigurasi ulang semua pendaftaran yang terdaftar"
 
 #: scalar.c
-msgid "scalar reconfigure [--all | <enlistment>]"
-msgstr "scalar reconfigure [--all | <pendaftaran>]"
+msgid "(enable|disable|keep)"
+msgstr "(enable|disable|keep)"
+
+#: scalar.c
+msgid "signal how to adjust background maintenance"
+msgstr "beri sinyal bagaimana pemeliharaan balik layar diatur"
+
+#: scalar.c
+msgid ""
+"scalar reconfigure [--maintenance=(enable|disable|keep)] [--all | "
+"<enlistment>]"
+msgstr ""
+"scalar reconfigure [--maintenance=(enable|disable|keep)] [--all | "
+"<pendaftaran>]"
 
 #: scalar.c
 msgid "--all or <enlistment>, but not both"
 msgstr "--all atau <pendaftaran>, tetapi bukan kedua-duanya"
+
+#: scalar.c
+#, c-format
+msgid "unknown mode for --maintenance option: %s"
+msgstr "mode untuk --maintenance tidak dikenal: %s"
 
 #: scalar.c
 #, c-format
@@ -27560,6 +27388,10 @@ msgstr "bersihkan pohon tembolok sebelum setiap iterasi"
 msgid "number of entries in the cache tree to invalidate (default 0)"
 msgstr "jumlah entri di dalam pohon tembolok untuk dinirvalidasi (asali 0)"
 
+#: t/helper/test-pack-deltas.c
+msgid "the number of objects to write"
+msgstr "jumlah objek tertulis yang ditulis"
+
 #: t/helper/test-path-walk.c
 msgid "test-tool path-walk <options> -- <revision-options>"
 msgstr "test-tool path-walk <opsi> -- <opsi revisi>"
@@ -28503,6 +28335,16 @@ msgstr "tidak dapat mendapatkan direktori kerja saat ini"
 msgid "unable to get random bytes"
 msgstr "tidak dapat mendapatkan bita acak"
 
+#: wrapper.c
+#, c-format
+msgid "attempting to mmap %<PRIuMAX> over limit %<PRIuMAX>"
+msgstr "mencoba men-mmap %<PRIuMAX> di atas batas %<PRIuMAX>"
+
+#: wrapper.c
+#, c-format
+msgid "mmap failed%s"
+msgstr "mmap gagal%s"
+
 #: wt-status.c
 msgid "Unmerged paths:"
 msgstr "Jalur yang tak tergabung:"
@@ -29418,6 +29260,15 @@ msgid "Unable to initialize SMTP properly. Check config and use --smtp-debug."
 msgstr ""
 "Tidak dapat menginisialisasi SMTP dengan benar. Periksa konfigurasi dan "
 "gunakan --smtp-debug."
+
+#: git-send-email.perl
+#, perl-format
+msgid "Outlook reassigned Message-ID to: %s\n"
+msgstr "Outlook memberikan ulang Message-ID ke: %s\n"
+
+#: git-send-email.perl
+msgid "Warning: Could not retrieve Message-ID from server response.\n"
+msgstr "Peringatan: Tidak dapat mengambil Message-ID dari respons peladen.\n"
 
 #: git-send-email.perl
 #, perl-format
