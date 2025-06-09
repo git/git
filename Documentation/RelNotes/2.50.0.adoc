@@ -207,6 +207,11 @@ Performance, Internal Implementation, Development Support etc.
    with platform-natural "int" when we should have used "long", which
    all have been corrected.
 
+ * Tests that compare $HOME and $(pwd), which should be the same
+   directory unless the tests chdir's around, would fail when the user
+   enters the test directory via symbolic links, which has been
+   corrected.
+
 
 Fixes since v2.49
 -----------------
