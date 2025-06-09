@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2025, #02; Sat, 7)
-X-master-at: 8db3019401f8093fb895f581be641fe7e05aa755
-X-next-at: 56857d51d7a015fa5707ce6b86b5deb70eecb676
+Subject: What's cooking in git.git (Jun 2025, #03; Mon, 9)
+X-master-at: 4c0e625c091d4c648cec7319bafaed3cc81658e5
+X-next-at: 299adb869395ee10d8b4c20bedb588a59fa98455
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2025, #02; Sat, 7)
+What's cooking in git.git (Jun 2025, #03; Mon, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,82 +48,6 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* bs/bsd-wo-specific-xopen-source (2025-06-02) 1 commit
-  (merged to 'next' on 2025-06-05 at ce6964f985)
- + compat: fixes for header handling with OpenBSD / NetBSD
-
- Build fix for BSDs.
- source: <aD1SvlRypkhczxRS@humpty.home.comstyle.com>
-
-
-* cf/var-completion-obsd-fixes (2025-06-02) 1 commit
-  (merged to 'next' on 2025-06-05 at 0e07c5bcf4)
- + completion: make sed command that generates config-list.h portable.
-
- Build fix for OpenBSD.
- source: <59b2a12a3f43cf078fbeaf0271b5a7cfffc9eb8f.1748903426.git.collin.funk1@gmail.com>
-
-
-* jk/curl-easy-setopt-typefix (2025-06-04) 3 commits
-  (merged to 'next' on 2025-06-06 at b1769b9fb4)
- + curl: fix symbolic constant typechecks with curl_easy_setopt()
- + curl: fix integer variable typechecks with curl_easy_setopt()
- + curl: fix integer constant typechecks with curl_easy_setopt()
- (this branch is used by js/curl-easy-setopt-typefix.)
-
- Adjust to newer version of libcURL.
- source: <20250604205505.GA1510724@coredump.intra.peff.net>
-
-
-* js/curl-easy-setopt-typefix (2025-06-06) 2 commits
-  (merged to 'next' on 2025-06-06 at f25aaba642)
- + curl: pass `long` values where expected
- + Merge branch 'jk/curl-easy-setopt-typefix' into js/curl-easy-setopt-typefix
- (this branch uses jk/curl-easy-setopt-typefix.)
-
- Adjust to newer version of libcURL.
- source: <80de7491d24fb51c6b2c3b2fc1728db30e2477f7.1749202164.git.gitgitgadget@gmail.com> 
-
---------------------------------------------------
-[New Topics]
-
-* kn/fetch-push-bulk-ref-update-fixup (2025-06-06) 3 commits
- - receive-pack: handle reference deletions separately
- - refs/files: skip updates with errors in batched updates
- - Merge branch 'kn/fetch-push-bulk-ref-update' into kn/fetch-push-bulk-ref-update-fixup
- (this branch uses kn/fetch-push-bulk-ref-update.)
-
- Additional fixes to the base topic.
- source: <20250606-6769-address-test-failures-in-the-next-branch-caused-by-batched-reference-updates-v3-0-e1c41693bd35@gmail.com>
-
-
-* ma/doc-diff-cc-headers (2025-06-06) 1 commit
- - diff-generate-patch.adoc: drop spurious backticks
-
- Doc mark-up update.
-
- Will merge to 'next'.
- source: <20250606123138.566178-1-martin.agren@gmail.com>
-
-
-* ss/bswap-ntohll-fix (2025-06-06) 1 commit
- - bswap.h: Move the overwriting of the ntohl*/ htonl* macros.
-
- source: <20250606165718.HOiC2U4X@breakpoint.cc>
-
-
-* jc/merge-compact-summary (2025-06-06) 1 commit
- - merge/pull: --compact-summary
-
-
-* bs/solaris-10-and-11 (2025-06-06) 1 commit
- - config.mak.uname: update settings for Solaris 11
-
- source: <aEOlc_PV7ZngUdj0@humpty.home.comstyle.com>
-
---------------------------------------------------
-[Cooking]
-
 * mm/test-in-absolute-home (2025-05-28) 1 commit
   (merged to 'next' on 2025-06-05 at ae6cc48f8d)
  + t: run tests from a normalized working directory
@@ -132,29 +56,106 @@ Release tarballs are available at:
  directory unless the tests chdir's around, would fail when the user
  enters the test directory via symbolic links, which has been
  corrected.
-
- Will cook in 'next'.
- cf. <xmqq4iwwk7mc.fsf@gitster.g>
  source: <20250528201737.55268-1-mark@chromium.org>
 
+--------------------------------------------------
+[New Topics]
 
-* ag/imap-send-resurrection (2025-06-06) 10 commits
- - imap-send: add ability to list the available folders
+* ja/doc-git-log-markup (2025-06-08) 9 commits
+ - doc: git-log: convert log config to new doc format
+ - doc: git-log: convert diff options to new doc format
+ - doc: git-log: convert pretty formats to new doc format
+ - doc: git-log: convert pretty options to new doc format
+ - doc: git-log: convert rev list options to new doc format
+ - doc: git-log: convert line range format to new doc format
+ - doc: git-log: convert line range options to new doc format
+ - doc: git-log convert rev-list-description to new doc format
+ - doc: convert git-log to new documentation format
+
+ Doc mark-up updates.
+ source: <pull.1933.git.1749373787.gitgitgadget@gmail.com>
+
+
+* kj/stash-onbranch-submodule-fix (2025-06-08) 1 commit
+  (merged to 'next' on 2025-06-09 at a5dae097d7)
+ + stash: fix incorrect branch name in stash message
+
+ "git stash" recorded a wrong branch name when submodules are
+ present in the current checkout, which has been corrected.
+
+ Will cook in 'next'.
+ source: <20250608144542.275836-1-jayatheerthkulkarni2005@gmail.com>
+
+
+* ly/submodule-update-failure-leakfix (2025-06-07) 1 commit
+  (merged to 'next' on 2025-06-09 at b28794c576)
+ + builtin/submodule--helper: fix leak when remote_submodule_branch() failed
+
+ A memory leak on an error code path has been plugged.
+
+ Will cook in 'next'.
+ source: <pull.1987.git.git.1749355019495.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* kn/fetch-push-bulk-ref-update-fixup (2025-06-06) 3 commits
+ - receive-pack: handle reference deletions separately
+ - refs/files: skip updates with errors in batched updates
+ - Merge branch 'kn/fetch-push-bulk-ref-update' into kn/fetch-push-bulk-ref-update-fixup
+ (this branch uses kn/fetch-push-bulk-ref-update.)
+
+ Additional fixes to the base topic.
+
+ Comments?
+ source: <20250606-6769-address-test-failures-in-the-next-branch-caused-by-batched-reference-updates-v3-0-e1c41693bd35@gmail.com>
+
+
+* ma/doc-diff-cc-headers (2025-06-06) 1 commit
+  (merged to 'next' on 2025-06-08 at e2072501f7)
+ + diff-generate-patch.adoc: drop spurious backticks
+
+ Doc mark-up update.
+
+ Will cook in 'next'.
+ source: <20250606123138.566178-1-martin.agren@gmail.com>
+
+
+* ss/bswap-ntohll-fix (2025-06-06) 1 commit
+ . bswap.h: Move the overwriting of the ntohl*/ htonl* macros.
+
+ Seems to break Windows rather badly.
+ cf. https://github.com/git/git/actions/runs/15511228119/job/43672455770#step:4:92
+ source: <20250606165718.HOiC2U4X@breakpoint.cc>
+
+
+* bs/solaris-10-and-11 (2025-06-07) 1 commit
+  (merged to 'next' on 2025-06-09 at a6d20b3666)
+ + config.mak.uname: update settings for Solaris 10 and 11
+
+ Add settings for Solaris 10 & 11.
+
+ Will cook in 'next'.
+ source: <aETm3O-FE7EpyoE5@humpty.home.comstyle.com>
+
+
+* ag/imap-send-resurrection (2025-06-09) 10 commits
+ - imap-send: fix minor mistakes in the logs
  - imap-send: display the destination mailbox when sending a message
  - imap-send: display port alongwith host when git credential is invoked
- - imap-send: fix minor mistakes in the logs
+ - imap-send: add ability to list the available folders
  - imap-send: enable specifying the folder using the command line
- - imap-send: gracefully fail if CRAM-MD5 authentication is requested without OpenSSL
- - imap-send: fix memory leak in case auth_cram_md5 fails
  - imap-send: add PLAIN authentication method to OpenSSL
  - imap-send: add support for OAuth2.0 authentication
+ - imap-send: gracefully fail if CRAM-MD5 authentication is requested without OpenSSL
+ - imap-send: fix memory leak in case auth_cram_md5 fails
  - imap-send: fix bug causing cfg->folder being set to NULL
 
  "git imap-send" has been broken for a long time, which has been
  resurrected and then taught to talk OAuth2.0 etc.
 
- Getting there.
- source: <PN3PR01MB9597BB453E9980CC50AA6703B86EA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
+ Ready?
+ source: <PN3PR01MB95976572C3B14C983802ECC1B86BA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
 
 
 * ag/send-email-docs (2025-05-30) 4 commits
@@ -171,14 +172,14 @@ Release tarballs are available at:
  source: <20250530154934.10077-1-gargaditya08@live.com>
 
 
-* ly/pack-bitmap-root-leakfix (2025-06-05) 1 commit
-  (merged to 'next' on 2025-06-07 at 57cb6791ac)
+* ly/pack-bitmap-root-leakfix (2025-06-09) 1 commit
+  (merged to 'next' on 2025-06-09 at 15ff3f5f36)
  + pack-bitmap: remove checks before bitmap_free
 
  Memleak fix on an error code path.
 
  Will cook in 'next'.
- source: <pull.1977.v6.git.git.1749138820241.gitgitgadget@gmail.com>
+ source: <pull.1977.v7.git.git.1749457124804.gitgitgadget@gmail.com>
 
 
 * pw/subtree-gpg-sign (2025-06-04) 2 commits
@@ -269,11 +270,12 @@ Release tarballs are available at:
 
 
 * jm/bundle-uri-debug-output-to-fp (2025-06-04) 1 commit
- - bundle-uri: send debug output to given FILE * stream
+  (merged to 'next' on 2025-06-09 at c58618e2dd)
+ + bundle-uri: send debug output to given FILE * stream
 
  Code clean-up.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <pull.1985.v2.git.git.1749057081918.gitgitgadget@gmail.com>
 
 
@@ -308,14 +310,15 @@ Release tarballs are available at:
 
 
 * ag/send-email-edit-threading-fix (2025-06-04) 2 commits
- - send-email: show the new message id assigned by outlook in the logs
- - send-email: fix bug resulting in broken threads if a message is edited
+  (merged to 'next' on 2025-06-09 at e53466b5aa)
+ + send-email: show the new message id assigned by outlook in the logs
+ + send-email: fix bug resulting in broken threads if a message is edited
 
  "git send-email" incremented its internal message counter when a
  message was edited, which made logic that treats the first message
  specially misbehave, which has been corrected.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <PN3PR01MB95979AA8114CA26405BE02CFB86CA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
 
 
@@ -398,13 +401,14 @@ Release tarballs are available at:
 
 
 * jw/doc-txt-to-adoc-refs (2025-05-21) 1 commit
- - doc: update references to renamed AsciiDoc files
+  (merged to 'next' on 2025-06-08 at 041162a215)
+ + doc: update references to renamed AsciiDoc files
 
  Some leftover references to documentation source files that no
  longer exist, due to recent ".txt" -> ".adoc" renaming, have been
  corrected.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <pull.1971.git.git.1747854310479.gitgitgadget@gmail.com>
 
 
@@ -423,12 +427,13 @@ Release tarballs are available at:
 
 
 * pw/stash-p-pathspec-fixes (2025-06-07) 2 commits
- - stash: allow "git stash [<options>] --patch <pathspec>" to assume push
- - stash: allow "git stash -p <pathspec>" to assume push again
+  (merged to 'next' on 2025-06-08 at 5932e4b43a)
+ + stash: allow "git stash [<options>] --patch <pathspec>" to assume push
+ + stash: allow "git stash -p <pathspec>" to assume push again
 
  "git stash -p <pathspec>" improvements.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <cover.1749289514.git.phillip.wood@dunelm.org.uk>
 
 
@@ -447,29 +452,7 @@ Release tarballs are available at:
  source: <20250519-501-update-git-fetch-1-to-use-partial-transactions-v3-0-6cdfd4f769b9@gmail.com>
 
 
-* js/misc-defensive (2025-05-15) 14 commits
- - shallow: handle missing shallow commits gracefully
- - test-tool repository: check return value of `lookup_commit()`
- - submodule: check return value of `submodule_from_path()`
- - inherit_tracking(): defensive programming
- - describe: defensive programming
- - fetch: defensive programming
- - push: defensive programming
- - stash: defensive programming
- - stash: defensive programming
- - verify_commit_graph(): defensive programming
- - unparse_commit(): defensive programming
- - fetch-pack: defensive programming
- - get_parent(): defensive programming
- - revision: defensive programming
-
- Assorted changes that please CodeQL.
-
- Will discard, as no strong support seems to be there in the thread.
- source: <pull.1890.git.1747313139.gitgitgadget@gmail.com>
-
-
-* kj/renamed-submodule (2025-05-24) 2 commits
+* kj/renamed-submodule (2025-06-07) 2 commits
  - submodule: skip redundant active entries when pattern covers path
  - submodule: prevent overwriting .gitmodules entry on path reuse
 
@@ -478,17 +461,7 @@ Release tarballs are available at:
  before.
 
  Comments?
- source: <20250524073628.58944-1-jayatheerthkulkarni2005@gmail.com>
-
-
-* pw/update-thunderbird-patch-inline (2025-05-16) 1 commit
- - contrib: update thunderbird-patch-inline
-
- Update bitrotten instruction for sending patches via Thunderbird
- (in contrib/).
-
- Will discard, as it was let be bitrotten without bothering any users.
- source: <20250516135540.218937-1-phillip.wood123@gmail.com>
+ source: <20250608032705.11990-1-jayatheerthkulkarni2005@gmail.com>
 
 
 * bc/stash-export-import (2025-06-01) 4 commits
@@ -668,11 +641,43 @@ Release tarballs are available at:
 --------------------------------------------------
 [Discarded]
 
+* pw/update-thunderbird-patch-inline (2025-05-16) 1 commit
+ . contrib: update thunderbird-patch-inline
+
+ Update bitrotten instruction for sending patches via Thunderbird
+ (in contrib/).
+
+ Will discard, as it was let be bitrotten without bothering any users.
+ source: <20250516135540.218937-1-phillip.wood123@gmail.com>
+
+
+* js/misc-defensive (2025-05-15) 14 commits
+ . shallow: handle missing shallow commits gracefully
+ . test-tool repository: check return value of `lookup_commit()`
+ . submodule: check return value of `submodule_from_path()`
+ . inherit_tracking(): defensive programming
+ . describe: defensive programming
+ . fetch: defensive programming
+ . push: defensive programming
+ . stash: defensive programming
+ . stash: defensive programming
+ . verify_commit_graph(): defensive programming
+ . unparse_commit(): defensive programming
+ . fetch-pack: defensive programming
+ . get_parent(): defensive programming
+ . revision: defensive programming
+
+ Assorted changes that please CodeQL.
+
+ Will discard, as no strong support seems to be there in the thread.
+ source: <pull.1890.git.1747313139.gitgitgadget@gmail.com>
+
+
 * pb/status-rebase-fixes (2025-03-28) 4 commits
- - wt-status: suggest 'git rebase --continue' to conclude 'merge' instruction
- - wt-status: also abbreviate 'merge' and 'fixup -C' lines during rebase
- - SQUASH??? - <CAPig+cS92W_gYuNsaTvQxiP3xBK7Wpg0__uVkgAU1x0OFJUZgQ@mail.gmail.com>
- - rebase -r: do create merge commit after empty resolution
+ . wt-status: suggest 'git rebase --continue' to conclude 'merge' instruction
+ . wt-status: also abbreviate 'merge' and 'fixup -C' lines during rebase
+ . SQUASH??? - <CAPig+cS92W_gYuNsaTvQxiP3xBK7Wpg0__uVkgAU1x0OFJUZgQ@mail.gmail.com>
+ . rebase -r: do create merge commit after empty resolution
 
  A few fixes around "git status" while "git rebase" is running,
  plus a corner case bug fix for "git rebase -r".
