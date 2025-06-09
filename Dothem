@@ -269,24 +269,27 @@ do
 		section hdr-check
 		Meta/Make $M $jobs -- hdr-check &&
 
-		# SANITIZE=address,undefined
-		case "$dotest,$san,$with_sha256" in
-		'')
-			;;
-		test,,)
-			section test
-			Meta/Make $M $noprove ${test+"$test"} $jobs $test_long $memtrash \
-			    -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $dotest
-			;;
-		*,t,*)
+		if test -n "$san"
+		then
 			section SANITIZE=address,undefined
 			SANITIZE=address,undefined Meta/Make $M $jobs test &&
 			Meta/Make >/dev/null distclean
-			;;
-		esac &&
-
-		# sha256
-		if test -n "$with_sha256"
+		elif test "$with_leaks$with_sha256$dotest" = test
+		then
+			section test
+			Meta/Make $M $noprove ${test+"$test"} $jobs $test_long \
+				  $memtrash \
+			    -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $dotest
+		elif test -n "$with_leaks"
+		then
+			section leaks
+			(
+				export SANITIZE=leak
+				export GIT_TEST_PASSING_SANITIZE_LEAK=true
+				Meta/Make -j16 $T CC=clang test &&
+				Meta/Make -j16 >/dev/null distclean
+			)
+		elif test -n "$with_sha256"
 		then
 			section sha256
 			(
@@ -309,18 +312,6 @@ do
 				echo >&2 "Head moved--not installing docs"
 			fi
 		} &&
-
-		# leaks
-		if test -n "$with_leaks"
-		then
-			section leaks
-			(
-				export SANITIZE=leak
-				export GIT_TEST_PASSING_SANITIZE_LEAK=true
-				Meta/Make -j16 $T CC=clang test &&
-				Meta/Make -j16 >/dev/null distclean
-			)
-		fi &&
 
 		{
 			test z$install = znoinstall ||
