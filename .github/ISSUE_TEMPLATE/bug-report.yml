@@ -12,7 +12,7 @@ body:
     id: git-for-windows-version
     attributes:
       label: Git for Windows version
-      description: Which version of Git for Windows are you using? Is it 32-bit or 64-bit?
+      description: Which version of Git for Windows are you using?
       placeholder: Please insert the output of `git --version --build-options` here
       render: shell
     validations:
@@ -34,10 +34,11 @@ body:
     id: windows-arch
     attributes:
       label: Windows CPU architecture
-      description: Is your Windows 32-bit or 64-bit?
+      description: What CPU Archtitecture does your Windows target?
       options:
-        - 32-bit
-        - 64-bit
+        - i686 (32-bit)
+        - x86_64 (64-bit)
+        - ARM64
       default: 1
     validations:
       required: true
