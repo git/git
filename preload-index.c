@@ -19,6 +19,7 @@
 #include "repository.h"
 #include "symlinks.h"
 #include "trace2.h"
+#include "config.h"
 
 /*
  * Mostly randomly chosen maximum thread counts: we
@@ -111,6 +112,9 @@ void preload_index(struct index_state *index,
 	struct thread_data data[MAX_PARALLEL];
 	struct progress_data pd;
 	int t2_sum_lstat = 0;
+	int core_preload_index = 1;
+
+	repo_config_get_bool(the_repository, "core.preloadindex", &core_preload_index);
 
 	if (!HAVE_THREADS || !core_preload_index)
 		return;
