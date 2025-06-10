@@ -2,7 +2,6 @@
  * Copyright (C) 2008 Linus Torvalds
  */
 
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -114,7 +113,7 @@ void preload_index(struct index_state *index,
 	int t2_sum_lstat = 0;
 	int core_preload_index = 1;
 
-	repo_config_get_bool(the_repository, "core.preloadindex", &core_preload_index);
+	repo_config_get_bool(index->repo, "core.preloadindex", &core_preload_index);
 
 	if (!HAVE_THREADS || !core_preload_index)
 		return;
@@ -136,7 +135,7 @@ void preload_index(struct index_state *index,
 
 	memset(&pd, 0, sizeof(pd));
 	if (refresh_flags & REFRESH_PROGRESS && isatty(2)) {
-		pd.progress = start_delayed_progress(the_repository,
+		pd.progress = start_delayed_progress(index->repo,
 						     _("Refreshing index"),
 						     index->cache_nr);
 		pthread_mutex_init(&pd.mutex, NULL);
