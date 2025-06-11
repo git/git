@@ -36,7 +36,7 @@ UI, Workflows & Features
  * Auth-related (and unrelated) error handling in send-email has been
    made more robust.
 
- * Updating multiple references have only been possible in all-or-none
+ * Updating multiple references have only been possible in an all-or-nothing
    fashion with transactions, but it can be more efficient to batch
    multiple updates even when some of them are allowed to fail in a
    best-effort manner.  A new "best effort batches of updates" mode
@@ -53,7 +53,7 @@ UI, Workflows & Features
 
  * The build procedure installs bash (but not zsh) completion script.
 
- * send-email has been updated to work better with Outlook's smtp server.
+ * send-email has been updated to work better with Outlook's SMTP server.
 
  * "git diff --minimal" used to give non-minimal output when its
    optimization kicked in, which has been disabled.
@@ -62,7 +62,7 @@ UI, Workflows & Features
    delta chains from forming in a corner case even when there is no
    such cycle.
 
- * Make repository clean-up tasks "gc" can do available to "git
+ * Make repository clean-up tasks that "gc" can do available to "git
    maintenance" front-end.
 
  * Bundle-URI feature did not use refs recorded in the bundle other
@@ -188,7 +188,7 @@ Performance, Internal Implementation, Development Support etc.
    been dropped.
 
  * The code path to access the "packed-refs" file while "fsck" is
-   taught to mmap the file, instead of reading the whole file in the
+   taught to mmap the file, instead of reading the whole file into
    memory.
 
  * Assorted fixes for issues found with CodeQL.
@@ -391,14 +391,13 @@ Fixes since v2.49
    reverse failed to give the mode bits of the path "removed" by the
    patch to the file it creates, which has been corrected.
 
- * "git verify-refs" (and hence "git fsck --reference") started
-   erroring out in a repository in which secondary worktrees were
-   prepared with Git 2.43 or lower.
+ * "git verify-refs" errored out in a repository in which
+   linked worktrees were prepared with Git 2.43 or lower.
    (merge d5b3c38b8a sj/ref-contents-check-fix later to maint).
 
- * Update total_ram() functrion on BSD variants.
+ * Update total_ram() function on BSD variants.
 
- * Update online_cpus() functrion on BSD variants.
+ * Update online_cpus() function on BSD variants.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
