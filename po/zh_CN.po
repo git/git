@@ -155,8 +155,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2025-03-09 20:34+0800\n"
-"PO-Revision-Date: 2025-03-12 14:47+0800\n"
+"POT-Creation-Date: 2025-06-08 20:30+0800\n"
+"PO-Revision-Date: 2025-06-12 14:50+0800\n"
 "Last-Translator: Teng Long <dyroneteng@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/dyrone/git/>\n"
 "Language: zh_CN\n"
@@ -1075,10 +1075,9 @@ msgstr "未能识别的空白字符忽略选项 '%s'"
 #: builtin/fast-export.c builtin/fetch.c builtin/help.c builtin/index-pack.c
 #: builtin/init-db.c builtin/log.c builtin/ls-files.c builtin/merge-base.c
 #: builtin/merge-tree.c builtin/merge.c builtin/pack-objects.c builtin/rebase.c
-#: builtin/repack.c builtin/replay.c builtin/reset.c builtin/rev-list.c
-#: builtin/rev-parse.c builtin/show-branch.c builtin/stash.c
-#: builtin/submodule--helper.c builtin/tag.c builtin/worktree.c parse-options.c
-#: range-diff.c revision.c
+#: builtin/repack.c builtin/replay.c builtin/reset.c builtin/rev-parse.c
+#: builtin/show-branch.c builtin/stash.c builtin/submodule--helper.c
+#: builtin/tag.c builtin/worktree.c parse-options.c range-diff.c revision.c
 #, c-format
 msgid "options '%s' and '%s' cannot be used together"
 msgstr "选项 '%s' 和 '%s' 不能同时使用"
@@ -1965,7 +1964,7 @@ msgstr "无法在没有仓库的情况下使用 --attr-source 或 GIT_ATTR_SOURC
 msgid "bad --attr-source or GIT_ATTR_SOURCE"
 msgstr "错误的 --attr-source 或 GIT_ATTR_SOURCE"
 
-#: attr.c read-cache.c
+#: attr.c read-cache.c refs/packed-backend.c
 #, c-format
 msgid "unable to stat '%s'"
 msgstr "无法对 %s 执行 stat"
@@ -2777,7 +2776,7 @@ msgstr "以交互式方式运行"
 msgid "bypass pre-applypatch and applypatch-msg hooks"
 msgstr "绕过 pre-applypatch 和 applypatch-msg 钩子"
 
-#: builtin/am.c
+#: builtin/am.c builtin/cat-file.c
 msgid "historical option -- no-op"
 msgstr "老的参数 —— 无作用"
 
@@ -4084,7 +4083,7 @@ msgstr "需要一个仓库来解开归档包。"
 msgid "Unbundling objects"
 msgstr "解包对象中"
 
-#: builtin/cat-file.c merge-recursive.c
+#: builtin/cat-file.c
 #, c-format
 msgid "cannot read object %s '%s'"
 msgstr "不能读取对象 %s '%s'"
@@ -4121,12 +4120,8 @@ msgid "git cat-file <type> <object>"
 msgstr "git cat-file <类型> <对象>"
 
 #: builtin/cat-file.c
-msgid "git cat-file (-e | -p) <object>"
-msgstr "git cat-file (-e | -p) <对象>"
-
-#: builtin/cat-file.c
-msgid "git cat-file (-t | -s) [--allow-unknown-type] <object>"
-msgstr "git cat-file (-t | -s) [--allow-unknown-type] <对象>"
+msgid "git cat-file (-e | -p | -t | -s) <object>"
+msgstr "git cat-file (-e | -p | -t | -s) <对象>"
 
 #: builtin/cat-file.c
 msgid ""
@@ -4171,10 +4166,6 @@ msgstr "显示对象的类型（'blob'、'tree'、'commit'、'tag'……其中�
 #: builtin/cat-file.c
 msgid "show object size"
 msgstr "显示对象大小"
-
-#: builtin/cat-file.c
-msgid "allow -s and -t to work with broken/corrupt objects"
-msgstr "允许 -s 和 -t 对损坏的对象生效"
 
 #: builtin/cat-file.c builtin/log.c
 msgid "use mail map file"
@@ -4245,6 +4236,15 @@ msgstr "数据对象|树"
 #: builtin/cat-file.c
 msgid "use a <path> for (--textconv | --filters); Not with 'batch'"
 msgstr "(--textconv | --filters) 使用 <路径>；而不是 'batch'"
+
+#: builtin/cat-file.c
+msgid "objects filter only supported in batch mode"
+msgstr "对象过滤器只支持批处理模式"
+
+#: builtin/cat-file.c
+#, c-format
+msgid "objects filter not supported: '%s'"
+msgstr "不支持对象过滤器：'%s'"
 
 #: builtin/cat-file.c
 #, c-format
@@ -5952,7 +5952,7 @@ msgstr "不能读取 MERGE_MSG"
 #: builtin/commit.c bundle.c rerere.c sequencer.c
 #, c-format
 msgid "could not open '%s'"
-msgstr "不能打开 '%s'"
+msgstr "无法打开 '%s'"
 
 #: builtin/commit.c
 msgid "could not write commit template"
@@ -7038,6 +7038,64 @@ msgstr "指定文件的 strftime 格式后缀"
 msgid "specify the content of the diagnostic archive"
 msgstr "指定诊断信息归档包的内容"
 
+#: builtin/diff-pairs.c
+#, c-format
+msgid "unable to parse mode: %s"
+msgstr "不能解析模式：%s"
+
+#: builtin/diff-pairs.c
+#, c-format
+msgid "unable to parse object id: %s"
+msgstr "不能解析对象ID：%s"
+
+#: builtin/diff-pairs.c
+msgid "git diff-pairs -z [<diff-options>]"
+msgstr "git diff-pairs -z [<差异选项>]"
+
+#: builtin/diff-pairs.c builtin/log.c builtin/replay.c builtin/shortlog.c
+#: bundle.c
+#, c-format
+msgid "unrecognized argument: %s"
+msgstr "未识别的参数：%s"
+
+#: builtin/diff-pairs.c
+msgid "working without -z is not supported"
+msgstr "不支持在不带 -z 参数的情况下工作"
+
+#: builtin/diff-pairs.c
+msgid "pathspec arguments not supported"
+msgstr "不支持路径规格参数"
+
+#: builtin/diff-pairs.c
+msgid "revision arguments not allowed"
+msgstr "不支持版本参数"
+
+#: builtin/diff-pairs.c
+msgid "invalid raw diff input"
+msgstr "无效的原始 diff 输入"
+
+#: builtin/diff-pairs.c
+msgid "tree objects not supported"
+msgstr "不支持树对象"
+
+#: builtin/diff-pairs.c
+msgid "got EOF while reading path"
+msgstr "读取路径时遇到文件结束"
+
+#: builtin/diff-pairs.c
+msgid "got EOF while reading destination path"
+msgstr "读取目标路径时遇到文件结束"
+
+#: builtin/diff-pairs.c
+#, c-format
+msgid "unable to parse rename/copy score: %s"
+msgstr "无法解析重命名/复制分数：%s"
+
+#: builtin/diff-pairs.c
+#, c-format
+msgid "unknown diff status: %c"
+msgstr "未知的差异状态：%c"
+
 #: builtin/diff-tree.c
 msgid "--merge-base only works with two commits"
 msgstr "--merge-base 仅适用于两个提交"
@@ -7213,6 +7271,10 @@ msgstr "在 <n> 个对象之后显示进度"
 #: builtin/fast-export.c
 msgid "select handling of signed tags"
 msgstr "选择如何处理签名标签"
+
+#: builtin/fast-export.c
+msgid "select handling of signed commits"
+msgstr "选择如何处理已签名提交"
 
 #: builtin/fast-export.c
 msgid "select handling of tags that tag filtered objects"
@@ -7474,7 +7536,7 @@ msgstr "选项 \"%s\" 的值 \"%s\" 对于 %s 是无效的"
 msgid "option \"%s\" is ignored for %s"
 msgstr "选项 \"%s\" 为 %s 所忽略"
 
-#: builtin/fetch.c object-file.c
+#: builtin/fetch.c object-store.c
 #, c-format
 msgid "%s is not a valid object"
 msgstr "%s 不是一个有效的对象"
@@ -8013,11 +8075,6 @@ msgstr "%s：对象损坏或丢失：%s"
 
 #: builtin/fsck.c
 #, c-format
-msgid "%s: object is of unknown type '%s': %s"
-msgstr "%s：对象有未知的类型 '%s': %s"
-
-#: builtin/fsck.c
-#, c-format
 msgid "%s: object could not be parsed: %s"
 msgstr "%s：不能解析对象：%s"
 
@@ -8089,16 +8146,20 @@ msgid "invalid rev-index for pack '%s'"
 msgstr "包文件 '%s' 的反向索引文件无效"
 
 #: builtin/fsck.c
+msgid "Checking ref database"
+msgstr "正在检查引用数据库"
+
+#: builtin/fsck.c
 msgid ""
 "git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
 "         [--[no-]full] [--strict] [--verbose] [--lost-found]\n"
 "         [--[no-]dangling] [--[no-]progress] [--connectivity-only]\n"
-"         [--[no-]name-objects] [<object>...]"
+"         [--[no-]name-objects] [--[no-]references] [<object>...]"
 msgstr ""
 "git fsck [--tags] [--root] [--unreachable] [--cache] [--no-reflogs]\n"
 "         [--[no-]full] [--strict] [--verbose] [--lost-found]\n"
 "         [--[no-]dangling] [--[no-]progress] [--connectivity-only]\n"
-"         [--[no-]name-objects] [<对象>...]"
+"         [--[no-]name-objects] [--[no-]references] [<对象>...]"
 
 #: builtin/fsck.c
 msgid "show unreachable objects"
@@ -8147,6 +8208,10 @@ msgstr "显示进度"
 #: builtin/fsck.c
 msgid "show verbose names for reachable objects"
 msgstr "显示可达对象的详细名称"
+
+#: builtin/fsck.c
+msgid "check reference database consistency"
+msgstr "检查引用数据库一致性"
 
 #: builtin/fsck.c builtin/index-pack.c
 msgid "Checking objects"
@@ -9580,11 +9645,6 @@ msgid ""
 "<file>"
 msgstr "跟踪 <文件> 中 <开始>,<结束> 范围内的行或函数 :<函数名> 的演变"
 
-#: builtin/log.c builtin/replay.c builtin/shortlog.c bundle.c
-#, c-format
-msgid "unrecognized argument: %s"
-msgstr "未能识别的参数：%s"
-
 #: builtin/log.c
 msgid "-L<range>:<file> cannot be used with pathspec"
 msgstr "-L<范围>:<文件> 不能和路径表达式共用"
@@ -9602,7 +9662,7 @@ msgstr "git show %s: 损坏的文件"
 #: builtin/log.c
 #, c-format
 msgid "could not read object %s"
-msgstr "不能读取对象 %s"
+msgstr "无法读取对象 %s"
 
 #: builtin/log.c
 #, c-format
@@ -10420,6 +10480,10 @@ msgid "also show informational/conflict messages"
 msgstr "同时显示额外信息/冲突消息"
 
 #: builtin/merge-tree.c
+msgid "suppress all output; only exit status wanted"
+msgstr "抑制所有输出；只保留退出状态"
+
+#: builtin/merge-tree.c
 msgid "list filenames without modes/oids/stages"
 msgstr "列出没有模式/对象 ID/暂存的文件名"
 
@@ -10580,7 +10644,7 @@ msgstr "读取树失败"
 msgid "Already up to date. (nothing to squash)"
 msgstr "已经是最新的。（无可挤压）"
 
-#: builtin/merge.c merge-ort-wrappers.c merge-recursive.c
+#: builtin/merge.c merge-ort-wrappers.c
 msgid "Already up to date."
 msgstr "已经是最新的。"
 
@@ -10604,7 +10668,7 @@ msgstr "'%s' 没有指向一个提交"
 msgid "Bad branch.%s.mergeoptions string: %s"
 msgstr "坏的 branch.%s.mergeoptions 字符串：%s"
 
-#: builtin/merge.c merge-recursive.c
+#: builtin/merge.c merge-ort-wrappers.c
 msgid "Unable to write index."
 msgstr "不能写入索引。"
 
@@ -10760,7 +10824,7 @@ msgstr "只能将一个提交合并到空分支上"
 msgid "Updating %s..%s\n"
 msgstr "更新 %s..%s\n"
 
-#: builtin/merge.c merge-ort-wrappers.c merge-recursive.c
+#: builtin/merge.c merge-ort-wrappers.c
 #, c-format
 msgid ""
 "Your local changes to the following files would be overwritten by merge:\n"
@@ -10922,8 +10986,12 @@ msgid ""
 msgstr "在 repack 期间，将较小尺寸的包文件收集到大于此大小的批次中"
 
 #: builtin/mv.c
-msgid "git mv [<options>] <source>... <destination>"
-msgstr "git mv [<选项>] <源>... <目标>"
+msgid "git mv [-v] [-f] [-n] [-k] <source> <destination>"
+msgstr "git mv [-v] [-f] [-n] [-k] <源> <目标>"
+
+#: builtin/mv.c
+msgid "git mv [-v] [-f] [-n] [-k] <source>... <destination-directory>"
+msgstr "git mv [-v] [-f] [-n] [-k] <源>... <目标目录>"
 
 #: builtin/mv.c
 #, c-format
@@ -11010,6 +11078,11 @@ msgstr "目标在索引中已存在"
 #, c-format
 msgid "%s, source=%s, destination=%s"
 msgstr "%s，源=%s，目标=%s"
+
+#: builtin/mv.c
+#, c-format
+msgid "cannot move both '%s' and its parent directory '%s'"
+msgstr "不能同时移动 '%s' 及其父目录 '%s'"
 
 #: builtin/mv.c
 #, c-format
@@ -12151,6 +12224,11 @@ msgstr ""
 msgid "unable to access commit %s"
 msgstr "无法访问提交 %s"
 
+#: builtin/pull.c refspec.c
+#, c-format
+msgid "invalid refspec '%s'"
+msgstr "无效的引用规格：'%s'"
+
 #: builtin/pull.c
 msgid "ignoring --verify-signatures for rebase"
 msgstr "为变基操作忽略 --verify-signatures"
@@ -13255,6 +13333,10 @@ msgid "git reflog exists <ref>"
 msgstr "git reflog exists <引用>"
 
 #: builtin/reflog.c
+msgid "git reflog drop [--all [--single-worktree] | <refs>...]"
+msgstr "git reflog drop [--all [--single-worktree] | <引用>...]"
+
+#: builtin/reflog.c
 #, c-format
 msgid "invalid timestamp '%s' given to '--%s'"
 msgstr "给 '--%2$s' 的时间戳 '%1$s' 无效"
@@ -13314,8 +13396,8 @@ msgstr "正在标记可达对象..."
 
 #: builtin/reflog.c
 #, c-format
-msgid "%s points nowhere!"
-msgstr "%s 指向不存在！"
+msgid "reflog could not be found: '%s'"
+msgstr "无法找到引用日志：'%s'"
 
 #: builtin/reflog.c
 msgid "no reflog specified to delete"
@@ -13325,6 +13407,18 @@ msgstr "未指定要删除的引用日志"
 #, c-format
 msgid "invalid ref format: %s"
 msgstr "无效的引用格式：%s"
+
+#: builtin/reflog.c
+msgid "drop the reflogs of all references"
+msgstr "丢弃所有引用的引用日志"
+
+#: builtin/reflog.c
+msgid "drop reflogs from the current worktree only"
+msgstr "仅从当前工作区中丢弃引用日志"
+
+#: builtin/reflog.c
+msgid "references specified along with --all"
+msgstr "--all 选项不能与具体引用同时使用"
 
 #: builtin/refs.c
 msgid "git refs migrate --ref-format=<format> [--no-reflog] [--dry-run]"
@@ -14006,6 +14100,10 @@ msgid "with --cruft, expire objects older than this"
 msgstr "使用 --cruft，使早于给定时间的对象过期"
 
 #: builtin/repack.c
+msgid "with --cruft, only repack cruft packs smaller than this"
+msgstr "使用 --cruft 时，仅重新打包小于此大小的废弃包文件"
+
+#: builtin/repack.c
 msgid "remove redundant packs, and run git-prune-packed"
 msgstr "删除多余的包，运行 git-prune-packed"
 
@@ -14595,6 +14693,10 @@ msgstr "无法得到 %s 的磁盘使用量"
 #, c-format
 msgid "invalid value for '%s': '%s', the only allowed format is '%s'"
 msgstr "'%s' 的值无效：'%s'，唯一允许的格式是 '%s'"
+
+#: builtin/rev-list.c
+msgid "-z option used with unsupported option"
+msgstr "-z 选项与不支持的选项同时使用"
 
 #: builtin/rev-list.c
 msgid "rev-list does not support display of notes"
@@ -16865,8 +16967,8 @@ msgid "git update-ref [<options>]    <refname> <new-oid> [<old-oid>]"
 msgstr "git update-ref [<选项>]    <引用名> <新对象> [<旧对象>]"
 
 #: builtin/update-ref.c
-msgid "git update-ref [<options>] --stdin [-z]"
-msgstr "git update-ref [<选项>] --stdin [-z]"
+msgid "git update-ref [<options>] --stdin [-z] [--batch-updates]"
+msgstr "git update-ref [<选项>] --stdin [-z] [--batch-updates]"
 
 #: builtin/update-ref.c
 msgid "delete the reference"
@@ -16883,6 +16985,10 @@ msgstr "标准输入有以 NUL 字符终止的参数"
 #: builtin/update-ref.c
 msgid "read updates from stdin"
 msgstr "从标准输入读取更新"
+
+#: builtin/update-ref.c
+msgid "batch reference updates"
+msgstr "批量引用更新"
 
 #: builtin/update-server-info.c
 msgid "update the info files from scratch"
@@ -17728,6 +17834,10 @@ msgstr "比较工作区和索引区中的文件"
 #: command-list.h
 msgid "Compare a tree to the working tree or index"
 msgstr "将一个树和工作区或索引做比较"
+
+#: command-list.h
+msgid "Compare the content and mode of provided blob pairs"
+msgstr "比较提供的 blob 对的内容和模式"
 
 #: command-list.h
 msgid "Compares the content and mode of blobs found via two tree objects"
@@ -19861,7 +19971,7 @@ msgstr "color-moved-ws：allow-indentation-change 不能与其它空白字符模
 msgid "Unknown value for 'diff.submodule' config variable: '%s'"
 msgstr "配置变量 'diff.submodule' 未知的取值：'%s'"
 
-#: diff.c merge-recursive.c transport.c
+#: diff.c merge-ort.c transport.c
 #, c-format
 msgid "unknown value for config '%s': %s"
 msgstr "配置 '%s' 未知的取值：%s"
@@ -21288,6 +21398,11 @@ msgstr "不支持委托控制，因为 cURL < 7.22.0"
 msgid "Unknown value for http.proactiveauth"
 msgstr "http.proactiveauth 为未知取值"
 
+#: http.c parse.c
+#, c-format
+msgid "failed to parse %s"
+msgstr "无法解析 %s"
+
 #: http.c
 #, c-format
 msgid "Unsupported SSL backend '%s'. Supported SSL backends:"
@@ -21512,7 +21627,12 @@ msgstr "无法格式化消息：%s"
 msgid "invalid marker-size '%s', expecting an integer"
 msgstr "无效的标记大小 '%s'，应为一个整数"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort-wrappers.c
+#, c-format
+msgid "Could not parse object '%s'"
+msgstr "不能解析对象 '%s'"
+
+#: merge-ort.c
 #, c-format
 msgid "Failed to merge submodule %s (not checked out)"
 msgstr "无法合并子模组 %s （没有检出）"
@@ -21522,7 +21642,7 @@ msgstr "无法合并子模组 %s （没有检出）"
 msgid "Failed to merge submodule %s (no merge base)"
 msgstr "无法合并子模组 %s （没有合并基线）"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid "Failed to merge submodule %s (commits not present)"
 msgstr "无法合并子模组 %s（提交不存在）"
@@ -21532,7 +21652,7 @@ msgstr "无法合并子模组 %s（提交不存在）"
 msgid "error: failed to merge submodule %s (repository corrupt)"
 msgstr "错误：无法合并子模组 %s（仓库损坏）"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid "Failed to merge submodule %s (commits don't follow merge-base)"
 msgstr "无法合并子模组 %s （提交未跟随合并基线）"
@@ -21572,12 +21692,12 @@ msgstr "错误：无法为 %s 执行内部合并"
 msgid "error: unable to add %s to database"
 msgstr "错误：不能添加 %s 至对象库"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid "Auto-merging %s"
 msgstr "自动合并 %s"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid ""
 "CONFLICT (implicit dir rename): Existing file/dir at %s in the way of "
@@ -21586,7 +21706,7 @@ msgstr ""
 "冲突（隐式目录重命名）：处于隐式目录重命名的现存文件/目录 %s，将以下路径放"
 "在：%s。"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid ""
 "CONFLICT (implicit dir rename): Cannot map more than one path to %s; "
@@ -21605,14 +21725,14 @@ msgstr ""
 "冲突（分割的目录重命名）：不清楚重命名 %s 到哪里，因为它被重命名到多个其他目"
 "录中，没有一个目标目录中包含多数文件。"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid ""
 "WARNING: Avoiding applying %s -> %s rename to %s, because %s itself was "
 "renamed."
 msgstr "警告：避免应用 %s -> %s 的重命名到 %s，因为 %s 本身已被重命名。"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid ""
 "Path updated: %s added in %s inside a directory that was renamed in %s; "
@@ -21620,7 +21740,7 @@ msgid ""
 msgstr ""
 "路径已更新：%s 添加到 %s，位于一个被重命名到 %s 的目录中，将其移动到 %s。"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid ""
 "Path updated: %s renamed to %s in %s, inside a directory that was renamed in "
@@ -21629,7 +21749,7 @@ msgstr ""
 "路径已更新：%1$s 重命名为 %3$s 中的 %2$s，而该目录被重命名到 %4$s 中，将其移"
 "动到 %5$s。"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid ""
 "CONFLICT (file location): %s added in %s inside a directory that was renamed "
@@ -21638,7 +21758,7 @@ msgstr ""
 "冲突（文件位置）：%s 添加到 %s，位于一个被重命名为 %s 的目录中，建议将其移动"
 "到 %s。"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid ""
 "CONFLICT (file location): %s renamed to %s in %s, inside a directory that "
@@ -21703,19 +21823,19 @@ msgstr ""
 "冲突（不同类型）：%s 在两侧有不同的类型，将其中之一重命名以便它们能记录在不同"
 "位置。"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 msgid "content"
 msgstr "内容"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 msgid "add/add"
 msgstr "添加/添加"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 msgid "submodule"
 msgstr "子模组"
 
-#: merge-ort.c merge-recursive.c
+#: merge-ort.c
 #, c-format
 msgid "CONFLICT (%s): Merge conflict in %s"
 msgstr "冲突（%s）：合并冲突于 %s"
@@ -21777,312 +21897,6 @@ msgstr ""
 msgid "collecting merge info failed for trees %s, %s, %s"
 msgstr "无法收集树 %s、%s、%s 的合并信息"
 
-#: merge-recursive.c
-msgid "(bad commit)\n"
-msgstr "（坏提交）\n"
-
-#: merge-recursive.c
-#, c-format
-msgid "add_cacheinfo failed for path '%s'; merge aborting."
-msgstr "add_cacheinfo 对路径 '%s' 执行失败，合并终止。"
-
-#: merge-recursive.c
-#, c-format
-msgid "add_cacheinfo failed to refresh for path '%s'; merge aborting."
-msgstr "add_cacheinfo 无法刷新路径 '%s'，合并终止。"
-
-#: merge-recursive.c
-#, c-format
-msgid "failed to create path '%s'%s"
-msgstr "无法创建路径 '%s'%s"
-
-#: merge-recursive.c
-#, c-format
-msgid "Removing %s to make room for subdirectory\n"
-msgstr "删除 %s 以便为子目录留出空间\n"
-
-#: merge-recursive.c
-msgid ": perhaps a D/F conflict?"
-msgstr "：可能是一个目录/文件冲突？"
-
-#: merge-recursive.c
-#, c-format
-msgid "refusing to lose untracked file at '%s'"
-msgstr "拒绝丢弃 '%s' 中的未跟踪文件"
-
-#: merge-recursive.c
-#, c-format
-msgid "blob expected for %s '%s'"
-msgstr "%s '%s' 应为数据对象"
-
-#: merge-recursive.c
-#, c-format
-msgid "failed to open '%s': %s"
-msgstr "无法打开 '%s'：%s"
-
-#: merge-recursive.c
-#, c-format
-msgid "failed to symlink '%s': %s"
-msgstr "无法创建符号链接 '%s'：%s"
-
-#: merge-recursive.c
-#, c-format
-msgid "do not know what to do with %06o %s '%s'"
-msgstr "不知道如何处理 %06o %s '%s'"
-
-#: merge-recursive.c
-#, c-format
-msgid "Failed to merge submodule %s (repository corrupt)"
-msgstr "无法合并子模组 %s（仓库损坏）"
-
-#: merge-recursive.c
-#, c-format
-msgid "Fast-forwarding submodule %s to the following commit:"
-msgstr "子模组 %s 快进到如下提交："
-
-#: merge-recursive.c
-#, c-format
-msgid "Fast-forwarding submodule %s"
-msgstr "快进子模组 %s"
-
-#: merge-recursive.c
-#, c-format
-msgid "Failed to merge submodule %s (merge following commits not found)"
-msgstr "无法合并子模组 %s （没发现合并跟随的提交）"
-
-#: merge-recursive.c
-#, c-format
-msgid "Failed to merge submodule %s (not fast-forward)"
-msgstr "无法合并子模组 %s（非快进）"
-
-#: merge-recursive.c
-msgid "Found a possible merge resolution for the submodule:\n"
-msgstr "找到子模组的一个可能的合并方案：\n"
-
-#: merge-recursive.c
-#, c-format
-msgid ""
-"If this is correct simply add it to the index for example\n"
-"by using:\n"
-"\n"
-"  git update-index --cacheinfo 160000 %s \"%s\"\n"
-"\n"
-"which will accept this suggestion.\n"
-msgstr ""
-"如果这个正确，将其添加到索引，例如使用命令：\n"
-"\n"
-"  git update-index --cacheinfo 160000 %s \"%s\"\n"
-"\n"
-"以接受此建议。\n"
-
-#: merge-recursive.c
-#, c-format
-msgid "Failed to merge submodule %s (multiple merges found)"
-msgstr "无法合并子模组 %s （发现多个合并）"
-
-#: merge-recursive.c
-msgid "failed to execute internal merge"
-msgstr "无法执行内部合并"
-
-#: merge-recursive.c
-#, c-format
-msgid "unable to add %s to database"
-msgstr "不能添加 %s 至对象库"
-
-#: merge-recursive.c
-#, c-format
-msgid "Error: Refusing to lose untracked file at %s; writing to %s instead."
-msgstr "错误：拒绝丢失未跟踪文件 '%s'，而是写入 %s。"
-
-#: merge-recursive.c
-#, c-format
-msgid ""
-"CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left "
-"in tree."
-msgstr ""
-"冲突（%1$s/删除）：%2$s 在 %3$s 中被删除，在 %5$s 中被 %4$s。%7$s 的 %6$s 版"
-"本被保留。"
-
-#: merge-recursive.c
-#, c-format
-msgid ""
-"CONFLICT (%s/delete): %s deleted in %s and %s to %s in %s. Version %s of %s "
-"left in tree."
-msgstr ""
-"冲突（%1$s/删除）：%2$s 在 %3$s 中被删除，在 %6$s 中的 %5$s 被 %4$s。%8$s 的 "
-"%7$s 版本被保留。"
-
-#: merge-recursive.c
-#, c-format
-msgid ""
-"CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s left "
-"in tree at %s."
-msgstr ""
-"冲突（%1$s/删除）：%2$s 在 %3$s 中被删除，在 %5$s 中被 %4$s。%7$s 的 %6$s 版"
-"本保留在 %8$s 中。"
-
-#: merge-recursive.c
-#, c-format
-msgid ""
-"CONFLICT (%s/delete): %s deleted in %s and %s to %s in %s. Version %s of %s "
-"left in tree at %s."
-msgstr ""
-"冲突（%1$s/删除）：%2$s 在 %3$s 中被删除，在 %6$s 中的 %5$s 被 %4$s。%8$s 的 "
-"%7$s 版本保留在 %9$s 中。"
-
-#: merge-recursive.c
-msgid "rename"
-msgstr "重命名"
-
-#: merge-recursive.c
-msgid "renamed"
-msgstr "重命名"
-
-#: merge-recursive.c
-#, c-format
-msgid "Refusing to lose dirty file at %s"
-msgstr "拒绝丢失脏文件 '%s'"
-
-#: merge-recursive.c
-#, c-format
-msgid "Refusing to lose untracked file at %s, even though it's in the way."
-msgstr "拒绝在 '%s' 处失去未跟踪文件，即使它存在于重命名中。"
-
-#: merge-recursive.c
-#, c-format
-msgid "CONFLICT (rename/add): Rename %s->%s in %s.  Added %s in %s"
-msgstr "冲突（重命名/添加）：在 %3$s 中重命名 %1$s->%2$s。在 %5$s 中添加 %4$s"
-
-#: merge-recursive.c
-#, c-format
-msgid "%s is a directory in %s adding as %s instead"
-msgstr "%s 是 %s 中的一个目录而以 %s 为名被添加"
-
-#: merge-recursive.c
-#, c-format
-msgid "Refusing to lose untracked file at %s; adding as %s instead"
-msgstr "拒绝丢失未跟踪文件 '%s'，而是添加为 %s"
-
-#: merge-recursive.c
-#, c-format
-msgid ""
-"CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename "
-"\"%s\"->\"%s\" in \"%s\"%s"
-msgstr ""
-"冲突（重命名/重命名）：在分支 \"%3$s\" 中重命名 \"%1$s\"->\"%2$s\"，在分支 "
-"\"%6$s\" 中重命名 \"%4$s\"->\"%5$s\"%7$s"
-
-#: merge-recursive.c
-msgid " (left unresolved)"
-msgstr "（留下未解决）"
-
-#: merge-recursive.c
-#, c-format
-msgid "CONFLICT (rename/rename): Rename %s->%s in %s. Rename %s->%s in %s"
-msgstr ""
-"冲突（重命名/重命名）：在 %3$s 中重命名 %1$s->%2$s，在 %6$s 中重命名 %4$s-"
-">%5$s"
-
-#: merge-recursive.c
-#, c-format
-msgid ""
-"CONFLICT (directory rename split): Unclear where to place %s because "
-"directory %s was renamed to multiple other directories, with no destination "
-"getting a majority of the files."
-msgstr ""
-"冲突（分割的目录重命名）：不清楚 %s 应该放在哪里，因为目录 %s 被重命名到多个"
-"其它目录，没有目录包含大部分文件。"
-
-#: merge-recursive.c
-#, c-format
-msgid ""
-"CONFLICT (rename/rename): Rename directory %s->%s in %s. Rename directory %s-"
-">%s in %s"
-msgstr ""
-"冲突（重命名/重命名）：在 %3$s 中重命名目录 %1$s->%2$s，在 %6$s 中重命名目录 "
-"%4$s->%5$s"
-
-#: merge-recursive.c
-#, c-format
-msgid "cannot read object %s"
-msgstr "不能读取对象 %s"
-
-#: merge-recursive.c
-#, c-format
-msgid "object %s is not a blob"
-msgstr "对象 %s 不是一个数据对象"
-
-#: merge-recursive.c
-msgid "modify"
-msgstr "修改"
-
-#: merge-recursive.c
-msgid "modified"
-msgstr "修改"
-
-#: merge-recursive.c
-#, c-format
-msgid "Skipped %s (merged same as existing)"
-msgstr "略过 %s（已经做过相同合并）"
-
-#: merge-recursive.c
-#, c-format
-msgid "Adding as %s instead"
-msgstr "而是以 %s 为名添加"
-
-#: merge-recursive.c
-#, c-format
-msgid "Removing %s"
-msgstr "删除 %s"
-
-#: merge-recursive.c
-msgid "file/directory"
-msgstr "文件/目录"
-
-#: merge-recursive.c
-msgid "directory/file"
-msgstr "目录/文件"
-
-#: merge-recursive.c
-#, c-format
-msgid "CONFLICT (%s): There is a directory with name %s in %s. Adding %s as %s"
-msgstr "冲突（%1$s）：在 %3$s 中有一个名为 %2$s 的目录。以 %5$s 为名添加 %4$s"
-
-#: merge-recursive.c
-#, c-format
-msgid "Adding %s"
-msgstr "添加 %s"
-
-#: merge-recursive.c
-#, c-format
-msgid "CONFLICT (add/add): Merge conflict in %s"
-msgstr "冲突（add/add）：合并冲突于 %s"
-
-#: merge-recursive.c
-#, c-format
-msgid "merging of trees %s and %s failed"
-msgstr "无法合并树 %s 和 %s"
-
-#: merge-recursive.c
-msgid "Merging:"
-msgstr "合并："
-
-#: merge-recursive.c
-#, c-format
-msgid "found %u common ancestor:"
-msgid_plural "found %u common ancestors:"
-msgstr[0] "发现 %u 个共同祖先："
-msgstr[1] "发现 %u 个共同祖先："
-
-#: merge-recursive.c
-msgid "merge returned no commit"
-msgstr "合并未返回提交"
-
-#: merge-recursive.c
-#, c-format
-msgid "Could not parse object '%s'"
-msgstr "不能解析对象 '%s'"
-
 #: merge.c
 msgid "failed to read the cache"
 msgstr "无法读取缓存"
@@ -22136,12 +21950,13 @@ msgid "failed to clear multi-pack-index at %s"
 msgstr "无法清理位于 %s 的多包索引"
 
 #: midx-write.c
-msgid "cannot write incremental MIDX with bitmap"
-msgstr "无法使用位图写入增量 MIDX"
-
-#: midx-write.c
 msgid "ignoring existing multi-pack-index; checksum mismatch"
 msgstr "忽略已存在的多包索引，校验码不匹配"
+
+#: midx-write.c
+#, c-format
+msgid "could not load reverse index for MIDX %s"
+msgstr "无法加载多包索引 %s 的反向索引"
 
 #: midx-write.c
 msgid "Adding packfiles to multi-pack-index"
@@ -22459,78 +22274,6 @@ msgstr "无法将对象从 %s 转换为 %s"
 
 #: object-file.c
 #, c-format
-msgid "object directory %s does not exist; check .git/objects/info/alternates"
-msgstr "对象目录 %s 不存在，检查 .git/objects/info/alternates"
-
-#: object-file.c
-#, c-format
-msgid "unable to normalize alternate object path: %s"
-msgstr "无法规范化备用对象路径：%s"
-
-#: object-file.c
-#, c-format
-msgid "%s: ignoring alternate object stores, nesting too deep"
-msgstr "%s：忽略备用对象库，嵌套太深"
-
-#: object-file.c
-msgid "unable to fdopen alternates lockfile"
-msgstr "无法 fdopen 替换锁文件"
-
-#: object-file.c
-msgid "unable to read alternates file"
-msgstr "无法读取替代文件"
-
-#: object-file.c
-msgid "unable to move new alternates file into place"
-msgstr "无法将新的备用文件移动到位"
-
-#: object-file.c
-#, c-format
-msgid "path '%s' does not exist"
-msgstr "路径 '%s' 不存在"
-
-#: object-file.c
-#, c-format
-msgid "reference repository '%s' as a linked checkout is not supported yet."
-msgstr "尚不支持将参考仓库 '%s' 作为一个链接检出。"
-
-#: object-file.c
-#, c-format
-msgid "reference repository '%s' is not a local repository."
-msgstr "参考仓库 '%s' 不是一个本地仓库。"
-
-#: object-file.c
-#, c-format
-msgid "reference repository '%s' is shallow"
-msgstr "参考仓库 '%s' 是一个浅克隆"
-
-#: object-file.c
-#, c-format
-msgid "reference repository '%s' is grafted"
-msgstr "参考仓库 '%s' 已被移植"
-
-#: object-file.c
-#, c-format
-msgid "could not find object directory matching %s"
-msgstr "无法找到和 %s 匹配的对象目录"
-
-#: object-file.c
-#, c-format
-msgid "invalid line while parsing alternate refs: %s"
-msgstr "解析备用引用时无效的行：%s"
-
-#: object-file.c
-#, c-format
-msgid "attempting to mmap %<PRIuMAX> over limit %<PRIuMAX>"
-msgstr "尝试 mmap %<PRIuMAX>，超过了最大值 %<PRIuMAX>"
-
-#: object-file.c
-#, c-format
-msgid "mmap failed%s"
-msgstr "mmap 失败%s"
-
-#: object-file.c
-#, c-format
 msgid "object file %s is empty"
 msgstr "对象文件 %s 为空"
 
@@ -22572,21 +22315,6 @@ msgstr "%s 的头部太长，超出了 %d 字节"
 #, c-format
 msgid "loose object %s (stored in %s) is corrupt"
 msgstr "松散对象 %s（保存在 %s）已损坏"
-
-#: object-file.c
-#, c-format
-msgid "replacement %s not found for %s"
-msgstr "找不到 %2$s 的替代 %1$s"
-
-#: object-file.c
-#, c-format
-msgid "packed object %s (stored in %s) is corrupt"
-msgstr "打包对象 %s（保存在 %s）已损坏"
-
-#: object-file.c
-#, c-format
-msgid "missing mapping of %s to %s"
-msgstr "缺少 %s 到 %s 的映射"
 
 #: object-file.c
 #, c-format
@@ -22706,11 +22434,6 @@ msgstr "%s：不支持的文件类型"
 
 #: object-file.c
 #, c-format
-msgid "%s is not a valid '%s' object"
-msgstr "%s 不是一个有效的 '%s' 对象"
-
-#: object-file.c
-#, c-format
 msgid "hash mismatch for %s (expected %s)"
 msgstr "%s 的哈希值不匹配（预期 %s）"
 
@@ -22728,6 +22451,11 @@ msgstr "无法解压缩 %s 的头部"
 #, c-format
 msgid "unable to parse header of %s"
 msgstr "无法解析 %s 的头部"
+
+#: object-file.c
+#, c-format
+msgid "unable to parse type from header '%s' of %s"
+msgstr "无法从 %s 的包头 '%s' 中解析类型"
 
 #: object-file.c
 #, c-format
@@ -22905,6 +22633,88 @@ msgstr "需要 <对象>:<路径>，只给出了 <对象> '%s'"
 #, c-format
 msgid "invalid object name '%.*s'."
 msgstr "无效的对象名 '%.*s'。"
+
+#: object-store.c
+#, c-format
+msgid "object directory %s does not exist; check .git/objects/info/alternates"
+msgstr "对象目录 %s 不存在，检查 .git/objects/info/alternates"
+
+#: object-store.c
+#, c-format
+msgid "unable to normalize alternate object path: %s"
+msgstr "无法规范化备用对象路径：%s"
+
+#: object-store.c
+#, c-format
+msgid "%s: ignoring alternate object stores, nesting too deep"
+msgstr "%s：忽略备用对象库，嵌套太深"
+
+#: object-store.c
+msgid "unable to fdopen alternates lockfile"
+msgstr "无法 fdopen alternates 的锁文件"
+
+#: object-store.c
+msgid "unable to read alternates file"
+msgstr "无法读取 alternates 文件"
+
+#: object-store.c
+msgid "unable to move new alternates file into place"
+msgstr "无法将新的 alternates 文件移动到位"
+
+#: object-store.c
+#, c-format
+msgid "path '%s' does not exist"
+msgstr "路径 '%s' 不存在"
+
+#: object-store.c
+#, c-format
+msgid "reference repository '%s' as a linked checkout is not supported yet."
+msgstr "尚不支持将参考仓库 '%s' 作为链接检出。"
+
+#: object-store.c
+#, c-format
+msgid "reference repository '%s' is not a local repository."
+msgstr "参考仓库 '%s' 不是本地仓库。"
+
+#: object-store.c
+#, c-format
+msgid "reference repository '%s' is shallow"
+msgstr "参考仓库 '%s' 是浅克隆"
+
+#: object-store.c
+#, c-format
+msgid "reference repository '%s' is grafted"
+msgstr "参考仓库 '%s' 已被移植"
+
+#: object-store.c
+#, c-format
+msgid "could not find object directory matching %s"
+msgstr "无法找到和 %s 匹配的对象目录"
+
+#: object-store.c
+#, c-format
+msgid "invalid line while parsing alternate refs: %s"
+msgstr "解析备用引用时遇到无效的行：%s"
+
+#: object-store.c
+#, c-format
+msgid "replacement %s not found for %s"
+msgstr "找不到 %2$s 的替代 %1$s"
+
+#: object-store.c
+#, c-format
+msgid "packed object %s (stored in %s) is corrupt"
+msgstr "打包对象 %s（保存在 %s）已损坏"
+
+#: object-store.c
+#, c-format
+msgid "missing mapping of %s to %s"
+msgstr "缺少 %s 到 %s 的映射"
+
+#: object-store.c
+#, c-format
+msgid "%s is not a valid '%s' object"
+msgstr "%s 不是有效的 '%s' 对象"
 
 #: object.c
 #, c-format
@@ -23253,6 +23063,16 @@ msgstr "%s 不可用"
 
 #: parse-options.c
 #, c-format
+msgid "value %s for %s not in range [%<PRIdMAX>,%<PRIdMAX>]"
+msgstr "%2$s 的值 %1$s 不在范围 [%3$<PRIdMAX>,%4$<PRIdMAX>] 内"
+
+#: parse-options.c
+#, c-format
+msgid "%s expects an integer value with an optional k/m/g suffix"
+msgstr "%s 期望一个带可选 k/m/g 后缀的整数"
+
+#: parse-options.c
+#, c-format
 msgid "%s expects a non-negative integer value with an optional k/m/g suffix"
 msgstr "%s 期望一个非负整数和一个可选的 k/m/g 后缀"
 
@@ -23436,11 +23256,6 @@ msgstr "使用 --pathspec-from-file，路径表达式用空字符分隔"
 #, c-format
 msgid "bad boolean environment value '%s' for '%s'"
 msgstr "对于 '%2$s' 的错误的布尔环境取值 '%1$s'"
-
-#: parse.c
-#, c-format
-msgid "failed to parse %s"
-msgstr "无法解析 %s"
 
 #: path-walk.c
 #, c-format
@@ -23644,8 +23459,13 @@ msgstr "无法从承诺者远程获取 %s"
 
 #: promisor-remote.c
 #, c-format
-msgid "known remote named '%s' but with url '%s' instead of '%s'"
-msgstr "已知远程名称为 '%s'，但 url 为 '%s' 而不是 '%s'"
+msgid "no or empty URL advertised for remote '%s'"
+msgstr "远程 '%s' 的 URL 没有公布或为空"
+
+#: promisor-remote.c
+#, c-format
+msgid "known remote named '%s' but with URL '%s' instead of '%s'"
+msgstr "已知远程名称为 '%s'，但 URL 是 '%s' 而非 '%s'"
 
 #: promisor-remote.c
 #, c-format
@@ -24546,6 +24366,11 @@ msgstr "无法打开目录 %s"
 msgid "Checking references consistency"
 msgstr "正在检查引用一致性"
 
+#: refs/packed-backend.c
+#, c-format
+msgid "unable to open '%s'"
+msgstr "无法打开 '%s'"
+
 #: refs/reftable-backend.c
 #, c-format
 msgid "refname is dangerous: %s"
@@ -24623,11 +24448,6 @@ msgstr "引用名称 %s 未找到"
 #, c-format
 msgid "refname %s is a symbolic ref, copying it is not supported"
 msgstr "引用名 %s 是一个符号引用，不支持复制"
-
-#: refspec.c
-#, c-format
-msgid "invalid refspec '%s'"
-msgstr "无效的引用规格：'%s'"
 
 #: refspec.c
 #, c-format
@@ -25286,8 +25106,8 @@ msgid "could not set recommended config"
 msgstr "无法设置推荐的配置"
 
 #: scalar.c
-msgid "could not turn on maintenance"
-msgstr "无法打开维护模式"
+msgid "could not toggle maintenance"
+msgstr "无法切换维护模式"
 
 #: scalar.c
 msgid "could not start the FSMonitor daemon"
@@ -25347,12 +25167,16 @@ msgid "specify if tags should be fetched during clone"
 msgstr "如若应在克隆期间获取标签则指定"
 
 #: scalar.c
+msgid "specify if background maintenance should be enabled"
+msgstr "指定是否启用后台维护"
+
+#: scalar.c
 msgid ""
 "scalar clone [--single-branch] [--branch <main-branch>] [--full-clone]\n"
-"\t[--[no-]src] [--[no-]tags] <url> [<enlistment>]"
+"\t[--[no-]src] [--[no-]tags] [--[no-]maintenance] <url> [<enlistment>]"
 msgstr ""
 "scalar clone [--single-branch] [--branch <main-branch>] [--full-clone]\n"
-"\t[--[no-]src] [--[no-]tags] <url> [<登记>]"
+"\t[--[no-]src] [--[no-]tags] [--[no-]maintenance] <url> [<登记>]"
 
 #: scalar.c
 #, c-format
@@ -25401,20 +25225,36 @@ msgid "`scalar list` does not take arguments"
 msgstr "`scalar list` 不带参数"
 
 #: scalar.c
-msgid "scalar register [<enlistment>]"
-msgstr "scalar register [<登记>]"
+msgid "scalar register [--[no-]maintenance] [<enlistment>]"
+msgstr "scalar register [--[no-]maintenance] [<登记>]"
 
 #: scalar.c
 msgid "reconfigure all registered enlistments"
 msgstr "重新配置所有注册的登记"
 
 #: scalar.c
-msgid "scalar reconfigure [--all | <enlistment>]"
-msgstr "scalar reconfigure [--all | <登记>]"
+msgid "(enable|disable|keep)"
+msgstr "(enable|disable|keep)"
+
+#: scalar.c
+msgid "signal how to adjust background maintenance"
+msgstr "指定如何调整后台维护"
+
+#: scalar.c
+msgid ""
+"scalar reconfigure [--maintenance=(enable|disable|keep)] [--all | "
+"<enlistment>]"
+msgstr ""
+"scalar reconfigure [--maintenance=(enable|disable|keep)] [--all | <登记>]"
 
 #: scalar.c
 msgid "--all or <enlistment>, but not both"
 msgstr "--all 或者 <登记>，而不是两个一起"
+
+#: scalar.c
+#, c-format
+msgid "unknown mode for --maintenance option: %s"
+msgstr "--maintenance 选项的模式未知：%s"
 
 #: scalar.c
 #, c-format
@@ -27123,6 +26963,10 @@ msgstr "在每次迭代前清除缓存树"
 msgid "number of entries in the cache tree to invalidate (default 0)"
 msgstr "缓存树中无效化的条目数量（默认 0）"
 
+#: t/helper/test-pack-deltas.c
+msgid "the number of objects to write"
+msgstr "写入对象的数量"
+
 #: t/helper/test-path-walk.c
 msgid "test-tool path-walk <options> -- <revision-options>"
 msgstr "test-tool path-walk <选项> -- <版本选项>"
@@ -28051,6 +27895,16 @@ msgstr "不能获取当前工作目录"
 msgid "unable to get random bytes"
 msgstr "无法获取随机字节"
 
+#: wrapper.c
+#, c-format
+msgid "attempting to mmap %<PRIuMAX> over limit %<PRIuMAX>"
+msgstr "尝试内存映射(mmap) %<PRIuMAX>，超过了最大值 %<PRIuMAX>"
+
+#: wrapper.c
+#, c-format
+msgid "mmap failed%s"
+msgstr "mmap 失败%s"
+
 #: wt-status.c
 msgid "Unmerged paths:"
 msgstr "未合并的路径："
@@ -28968,6 +28822,15 @@ msgstr "STARTTLS 失败！%s"
 #: git-send-email.perl
 msgid "Unable to initialize SMTP properly. Check config and use --smtp-debug."
 msgstr "无法正确地初始化 SMTP。检查配置并使用 --smtp-debug。"
+
+#: git-send-email.perl
+#, perl-format
+msgid "Outlook reassigned Message-ID to: %s\n"
+msgstr "Outlook 重新分配了 Message-ID 为：%s\n"
+
+#: git-send-email.perl
+msgid "Warning: Could not retrieve Message-ID from server response.\n"
+msgstr "警告：无法从服务器响应中获取 Message-ID。\n"
 
 #: git-send-email.perl
 #, perl-format
