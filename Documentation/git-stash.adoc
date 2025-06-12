@@ -24,6 +24,7 @@ SYNOPSIS
 'git stash' create [<message>]
 'git stash' store [(-m | --message) <message>] [-q | --quiet] <commit>
 'git stash' export (--print | --to-ref <ref>) [<stash>...]
+'git stash' import <commit>
 
 DESCRIPTION
 -----------
@@ -160,6 +161,12 @@ export ( --print | --to-ref <ref> ) [<stash>...]::
 	Export the specified stashes, or all of them if none are specified, to
 	a chain of commits which can be transferred using the normal fetch and
 	push mechanisms, then imported using the `import` subcommand.
+
+import <commit>::
+
+	Import the specified stashes from the specified commit, which must have been
+	created by `export`, and add them to the list of stashes.  To replace the
+	existing stashes, use `clear` first.
 
 OPTIONS
 -------
