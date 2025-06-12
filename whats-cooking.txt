@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2025, #03; Mon, 9)
-X-master-at: 4c0e625c091d4c648cec7319bafaed3cc81658e5
-X-next-at: 299adb869395ee10d8b4c20bedb588a59fa98455
+Subject: What's cooking in git.git (Jun 2025, #04; Thu, 12)
+X-master-at: 9edff09aec9b5aaa3d5528129bb279a4d34cf5b3
+X-next-at: 9a244e597829f0322c0da9a0f1a15fecc86eae1d
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2025, #03; Mon, 9)
+What's cooking in git.git (Jun 2025, #04; Thu, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,15 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+We are almost done with this cycle.  As we found out a ntohll
+regression that broke big endian boxes with builtin_bswap32/64
+supplied by their compilers way too late in the cycle, I'm planning
+to queue a revert for a single patch, which may or may not break
+Windows ARM64 support that was newly added during this cycle.
+Hopefully it is a better tradeoff for the entire Git community to
+drop support added by an unreleased product than to break a platform
+that has been working OK.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,18 +57,153 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* mm/test-in-absolute-home (2025-05-28) 1 commit
-  (merged to 'next' on 2025-06-05 at ae6cc48f8d)
- + t: run tests from a normalized working directory
+* kh/maintenance-missing-tasks-docfix (2025-06-09) 1 commit
+  (merged to 'next' on 2025-06-10 at 4d6d3d6af8)
+ + doc: maintenance: fix linkgit syntax
 
- Tests that compare $HOME and $(pwd), which should be the same
- directory unless the tests chdir's around, would fail when the user
- enters the test directory via symbolic links, which has been
- corrected.
- source: <20250528201737.55268-1-mark@chromium.org>
+ Doc mark-up fix for a topic that has graduated to 'master'.
+ source: <567195e5577c6c32b46f784a797fbf366873a0f3.1749484736.git.code@khaugsbakk.name>
 
 --------------------------------------------------
 [New Topics]
+
+* ow/rebase-verify-insn-fmt-before-initializing-state (2025-06-09) 1 commit
+ - rebase: write script before initializing state
+
+ "git rebase -i" with bogus rebase.instructionFormat configuration
+ failed to produce the todo file after recording the state files,
+ leading to confused "git status"; this has been corrected.
+
+ Comments?
+ source: <20250609221055.136074-1-oystwa@gmail.com>
+
+
+* rj/meson-tap-parse-fixup (2025-06-09) 1 commit
+  (merged to 'next' on 2025-06-10 at 1fc2a0284f)
+ + test-lib: add missing prerequisites for Darwin
+ (this branch uses ps/meson-tap-parse.)
+
+ An earlier test update incorrectly lost three prerequisites on
+ macOS, which has been corrected.
+
+ Will cook in 'next'.
+ source: <20250602-pks-meson-tap-v4-0-052dfde0818a@pks.im>
+
+
+* ac/preload-index-wo-the-repository (2025-06-10) 2 commits
+ - preload-index: stop depending on 'the_repository'
+ - environment: remove the global variable 'core_preload_index'
+
+ Code clean-up.
+
+ Will merge to 'next'?
+ source: <cover.1749557133.git.ayu.chandekar@gmail.com>
+
+
+* jc/cg-let-bss-do-its-job (2025-06-11) 1 commit
+ - CodingGuidelines: let BSS do its job
+
+ Clarify "do not explicitly initialize to zero" rule in the
+ CodingGuidelines document.
+
+ Will merge to 'next'.
+ source: <xmqqh60mger9.fsf@gitster.g>
+
+
+* jc/merge-compact-summary (2025-06-11) 2 commits
+ - merge/pull: extend merge.stat configuration variable to cover --compact-summary
+ - merge/pull: --compact-summary
+
+
+* js/github-ci-win-coverity-fix (2025-06-11) 2 commits
+ - ci(coverity): output the build log upon error
+ - ci(coverity): fix building on Windows
+
+ Fixes for GitHub Actions Coverity job.
+
+ Will merge to 'next' and then to 'master'.
+ source: <pull.1934.v2.git.1749657278.gitgitgadget@gmail.com>
+
+
+* ly/prepare-show-merge-leakfix (2025-06-09) 1 commit
+ - revision: fix memory leak in prepare_show_merge()
+
+ Leakfix.
+
+ Will merge to 'next'.
+ source: <pull.1989.v3.git.git.1749515879546.gitgitgadget@gmail.com>
+
+
+* sa/multi-mailmap-fix (2025-06-10) 1 commit
+ - cat-file: fix mailmap application for different author and committer
+
+ When asking to apply mailmap to both author and committer field
+ while showing a commit object, the field that appears later was not
+ correctly parsed and replaced, which has been corrected.
+
+ Will merge to 'next'?
+ source: <20250611062643.8639-1-siddharthasthana31@gmail.com>
+
+
+* bs/config-mak-freebsd (2025-06-11) 1 commit
+ - config.mak.uname: update settings for FreeBSD
+
+ Drop FreeBSD 4 support and assume we are at least at FreeBSD 6 with
+ memmem() supported.
+
+ Need to pick up a reroll?
+ source: <aEpZXqTOForaZzbf@humpty.home.comstyle.com>
+
+
+* jc/sed-build-fixes (2025-06-12) 1 commit
+  (merged to 'next' on 2025-06-12 at 4ad86fa8cf)
+ + build: sed portability fixes
+
+ Build fix.
+
+ Will merge to 'master'.
+ source: <xmqqplf8evr9.fsf@gitster.g>
+
+
+* jc/tag-idempotent-no-op (2025-06-10) 1 commit
+ - tag: allow idempotent "git tag" without "--force"
+
+ "git tag T O" when the tag T is already pointing at the object O is
+ a no-op; we used to but no longer error out such a request and
+ require "--force" and instead turn it into a no-op.
+
+ Comments?
+ source: <xmqqzfefodje.fsf@gitster.g>
+
+
+* ss/compat-bswap-revamp (2025-06-11) 6 commits
+ - bswap.h: provide a built-in based version of bswap32/64 if possible
+ - bswap.h: remove optimized x86 version of bswap32/64
+ - bswap.h: always overwrite ntohl/ntohll macros
+ - bswap.h: define GIT_LITTLE_ENDIAN on MSVC as little endian
+ - bswap.h: add support for __BYTE_ORDER__
+ - Merge branch 'ss/revert-builtin-bswap-stuff' into ss/compat-bswap-revamp
+ (this branch uses ss/revert-builtin-bswap-stuff.)
+
+ Clean-up compat/bswap.h mess.
+
+ Comments?
+ source: <20250611221444.1567638-1-sebastian@breakpoint.cc>
+
+
+* ss/revert-builtin-bswap-stuff (2025-06-11) 1 commit
+  (merged to 'next' on 2025-06-12 at fcaad0fe34)
+ + Revert "bswap.h: add support for built-in bswap functions"
+ (this branch is used by ss/compat-bswap-revamp.)
+
+ Revert a botched bswap.h change that broke ntohll() functions on
+ big-endian systems with __builtin_bswap32/64().
+
+ Will merge to 'master'.
+ source: <20250611221444.1567638-2-sebastian@breakpoint.cc>
+
+--------------------------------------------------
+[Cooking]
 
 * ja/doc-git-log-markup (2025-06-08) 9 commits
  - doc: git-log: convert log config to new doc format
@@ -73,18 +217,20 @@ Release tarballs are available at:
  - doc: convert git-log to new documentation format
 
  Doc mark-up updates.
+
+ Review?
  source: <pull.1933.git.1749373787.gitgitgadget@gmail.com>
 
 
-* kj/stash-onbranch-submodule-fix (2025-06-08) 1 commit
-  (merged to 'next' on 2025-06-09 at a5dae097d7)
+* kj/stash-onbranch-submodule-fix (2025-06-10) 1 commit
+  (merged to 'next' on 2025-06-11 at dab89b8040)
  + stash: fix incorrect branch name in stash message
 
  "git stash" recorded a wrong branch name when submodules are
  present in the current checkout, which has been corrected.
 
  Will cook in 'next'.
- source: <20250608144542.275836-1-jayatheerthkulkarni2005@gmail.com>
+ source: <20250611014204.24994-1-jayatheerthkulkarni2005@gmail.com>
 
 
 * ly/submodule-update-failure-leakfix (2025-06-07) 1 commit
@@ -96,8 +242,6 @@ Release tarballs are available at:
  Will cook in 'next'.
  source: <pull.1987.git.git.1749355019495.gitgitgadget@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * kn/fetch-push-bulk-ref-update-fixup (2025-06-06) 3 commits
  - receive-pack: handle reference deletions separately
@@ -119,14 +263,6 @@ Release tarballs are available at:
 
  Will cook in 'next'.
  source: <20250606123138.566178-1-martin.agren@gmail.com>
-
-
-* ss/bswap-ntohll-fix (2025-06-06) 1 commit
- . bswap.h: Move the overwriting of the ntohl*/ htonl* macros.
-
- Seems to break Windows rather badly.
- cf. https://github.com/git/git/actions/runs/15511228119/job/43672455770#step:4:92
- source: <20250606165718.HOiC2U4X@breakpoint.cc>
 
 
 * bs/solaris-10-and-11 (2025-06-07) 1 commit
@@ -154,7 +290,7 @@ Release tarballs are available at:
  "git imap-send" has been broken for a long time, which has been
  resurrected and then taught to talk OAuth2.0 etc.
 
- Ready?
+ Will merge to 'next'?
  source: <PN3PR01MB95976572C3B14C983802ECC1B86BA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
 
 
@@ -392,6 +528,7 @@ Release tarballs are available at:
  + t9822: use prereq to check for ISO-8859-1 support
  + t: silence output from `test_create_repo()`
  + t: stop announcing prereqs
+ (this branch is used by rj/meson-tap-parse-fixup.)
 
  Meson-based build/test framework now understands TAP output
  generated by our tests.
@@ -464,7 +601,7 @@ Release tarballs are available at:
  source: <20250608032705.11990-1-jayatheerthkulkarni2005@gmail.com>
 
 
-* bc/stash-export-import (2025-06-01) 4 commits
+* bc/stash-export-import (2025-06-11) 4 commits
  - builtin/stash: provide a way to import stashes from a ref
  - builtin/stash: provide a way to export stashes to a ref
  - builtin/stash: factor out revision parsing into a function
@@ -473,9 +610,8 @@ Release tarballs are available at:
  An interchange format for stash entries is defined, and subcommand
  of "git stash" to import/export has been added.
 
- Expecting a (hopefully small and final) reroll.
- cf. <127d9d03-e94e-4928-9c6d-07a5396ca325@gmail.com>
- source: <20250601223225.464076-1-sandals@crustytoothpaste.net>
+ Will merge to 'next'?
+ source: <20250612011221.4158484-1-sandals@crustytoothpaste.net>
 
 
 * lm/add-p-context (2025-05-10) 4 commits
@@ -537,7 +673,7 @@ Release tarballs are available at:
  source: <20250605-pks-object-store-wo-the-repository-v5-0-779d1c28774b@pks.im>
 
 
-* cc/promisor-remote-capability (2025-05-19) 5 commits
+* cc/promisor-remote-capability (2025-06-11) 5 commits
  - promisor-remote: use string constants for 'name' and 'url' too
  - promisor-remote: allow a client to check fields
  - promisor-remote: refactor how we parse advertised fields
@@ -548,9 +684,8 @@ Release tarballs are available at:
  allow the "partialCloneFilter" settings and the "token" value to be
  communicated from the server side.
 
- Expecting a reroll.
- cf. <aDVu6O9MUicmd8y4@pks.im>
- source: <20250519141259.3061550-1-christian.couder@gmail.com>
+ Comments?
+ source: <20250611134506.2975856-1-christian.couder@gmail.com>
 
 
 * jc/you-still-use-whatchanged (2025-05-12) 6 commits
@@ -641,50 +776,9 @@ Release tarballs are available at:
 --------------------------------------------------
 [Discarded]
 
-* pw/update-thunderbird-patch-inline (2025-05-16) 1 commit
- . contrib: update thunderbird-patch-inline
+* ss/bswap-ntohll-fix (2025-06-06) 1 commit
+ . bswap.h: Move the overwriting of the ntohl*/ htonl* macros.
 
- Update bitrotten instruction for sending patches via Thunderbird
- (in contrib/).
-
- Will discard, as it was let be bitrotten without bothering any users.
- source: <20250516135540.218937-1-phillip.wood123@gmail.com>
-
-
-* js/misc-defensive (2025-05-15) 14 commits
- . shallow: handle missing shallow commits gracefully
- . test-tool repository: check return value of `lookup_commit()`
- . submodule: check return value of `submodule_from_path()`
- . inherit_tracking(): defensive programming
- . describe: defensive programming
- . fetch: defensive programming
- . push: defensive programming
- . stash: defensive programming
- . stash: defensive programming
- . verify_commit_graph(): defensive programming
- . unparse_commit(): defensive programming
- . fetch-pack: defensive programming
- . get_parent(): defensive programming
- . revision: defensive programming
-
- Assorted changes that please CodeQL.
-
- Will discard, as no strong support seems to be there in the thread.
- source: <pull.1890.git.1747313139.gitgitgadget@gmail.com>
-
-
-* pb/status-rebase-fixes (2025-03-28) 4 commits
- . wt-status: suggest 'git rebase --continue' to conclude 'merge' instruction
- . wt-status: also abbreviate 'merge' and 'fixup -C' lines during rebase
- . SQUASH??? - <CAPig+cS92W_gYuNsaTvQxiP3xBK7Wpg0__uVkgAU1x0OFJUZgQ@mail.gmail.com>
- . rebase -r: do create merge commit after empty resolution
-
- A few fixes around "git status" while "git rebase" is running,
- plus a corner case bug fix for "git rebase -r".
-
- Retracted.
- cf. <642C61F8-FF74-4012-912F-51D364D1B2F6@gmail.com>
- Expecting a (hopefully small and final) reroll.
- cf. <c2f93d99-2f4d-ee6d-7087-42320c6df0f2@gmx.de>
- cf. <e9700234-324d-dc63-d91e-9b8f36fabc79@gmail.com>
- source: <pull.1897.git.1743181401.gitgitgadget@gmail.com>
+ Seems to break Windows rather badly.
+ cf. https://github.com/git/git/actions/runs/15511228119/job/43672455770#step:4:92
+ source: <20250606165718.HOiC2U4X@breakpoint.cc>
