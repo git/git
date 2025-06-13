@@ -13,16 +13,16 @@ print_config_list () {
 	cat <<EOF
 static const char *config_name_list[] = {
 EOF
-	sed -E '
-/^`?[a-zA-Z].*\..*`?::$/ {
+	sed -e '
+	/^`*[a-zA-Z].*\..*`*::$/ {
 	/deprecated/d;
 	s/::$//;
 	s/`//g;
 	s/^.*$/	"&",/;
 	p;};
-d' \
+	d' \
 	    "$SOURCE_DIR"/Documentation/*config.adoc \
-	    "$SOURCE_DIR"/Documentation/config/*.adoc|
+	    "$SOURCE_DIR"/Documentation/config/*.adoc |
 	sort
 	cat <<EOF
 	NULL,
