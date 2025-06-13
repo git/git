@@ -412,6 +412,10 @@ void apply_mailmap_to_header(struct strbuf *buf, const char **header,
 				found_header = 1;
 				buf_offset += endp - line;
 				buf_offset += rewrite_ident_line(person, endp - person, buf, mailmap);
+				/* Recompute endp after potential buffer reallocation */
+				endp = buf->buf + buf_offset;
+				if (*endp == '\n')
+					buf_offset++;
 				break;
 			}
 
