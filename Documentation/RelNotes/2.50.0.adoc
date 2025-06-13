@@ -327,8 +327,9 @@ Fixes since v2.49
  * Fix for scheduled maintenance tasks on platforms using launchctl.
    (merge eb2d7beb0e jh/gc-launchctl-schedule-fix later to maint).
 
- * Update to arm64 Windows port.
-   (merge 436a42215e js/windows-arm64 later to maint).
+ * Update to arm64 Windows port (part of which had been reverted as it
+   broke builds for existing platforms, which may need to be redone in
+   future releases).
 
  * hashmap API clean-up to ensure hashmap_clear() leaves a cleared map
    in a reusable state.
@@ -398,6 +399,12 @@ Fixes since v2.49
  * Update total_ram() function on BSD variants.
 
  * Update online_cpus() function on BSD variants.
+
+ * Revert a botched bswap.h change that broke ntohll() functions on
+   big-endian systems with __builtin_bswap32/64().
+
+ * Fixes for GitHub Actions Coverity job.
+   (merge 3cc4fc1ebd js/github-ci-win-coverity-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
