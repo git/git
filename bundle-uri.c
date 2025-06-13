@@ -297,6 +297,28 @@ static int download_https_uri_to_file(const char *file, const char *uri)
 	struct strbuf line = STRBUF_INIT;
 	int found_get = 0;
 
+	/*
+	 * The protocol we speak with git-remote-https(1) uses a space to
+	 * separate between URI and file, so the URI itself must not contain a
+	 * space. If it did, an adversary could change the location where the
+	 * downloaded file is being written to.
+	 *
+	 * Similarly, we use newlines to separate commands from one another.
+	 * Consequently, neither the URI nor the file must contain a newline or
+	 * otherwise an adversary could inject arbitrary commands.
+	 *
+	 * TODO: Restricting newlines in the target paths may break valid
+	 *       usecases, even if those are a bit more on the esoteric side.
+	 *       If this ever becomes a problem we should probably think about
+	 *       alternatives. One alternative could be to use NUL-delimited
+	 *       requests in git-remote-http(1). Another alternative could be
+	 *       to use URL quoting.
+	 */
+	if (strpbrk(uri, " \n"))
+		return error("bundle-uri: URI is malformed: '%s'", file);
+	if (strchr(file, '\n'))
+		return error("bundle-uri: filename is malformed: '%s'", file);
+
 	strvec_pushl(&cp.args, "git-remote-https", uri, NULL);
 	cp.err = -1;
 	cp.in = -1;
