@@ -187,7 +187,7 @@ static void insert_records_from_trailers(struct shortlog *log,
 					     ctx->output_encoding);
 	body = strstr(commit_buffer, "\n\n");
 	if (!body)
-		return;
+		goto out;
 
 	trailer_iterator_init(&iter, body);
 	while (trailer_iterator_advance(&iter)) {
@@ -206,6 +206,7 @@ static void insert_records_from_trailers(struct shortlog *log,
 	}
 	trailer_iterator_release(&iter);
 
+out:
 	strbuf_release(&ident);
 	repo_unuse_commit_buffer(the_repository, commit, commit_buffer);
 }
