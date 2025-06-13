@@ -167,4 +167,28 @@ test_expect_success 'show --graph is forbidden' '
   test_must_fail git show --graph HEAD
 '
 
+test_expect_success 'show unmerged index' '
+	git reset --hard &&
+
+	git switch -C base &&
+	echo "base" >conflicting &&
+	git add conflicting &&
+	git commit -m "base" &&
+
+	git branch hello &&
+	git branch goodbye &&
+
+	git switch hello &&
+	echo "hello" >conflicting &&
+	git commit -am "hello" &&
+
+	git switch goodbye &&
+	echo "goodbye" >conflicting &&
+	git commit -am "goodbye" &&
+
+	git switch hello &&
+	test_must_fail git merge goodbye &&
+	git show --merge HEAD
+'
+
 test_done
