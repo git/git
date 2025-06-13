@@ -266,6 +266,8 @@ static void handle_content_type(struct mailinfo *mi, struct strbuf *line)
 			error("Too many boundaries to handle");
 			mi->input_error = -1;
 			mi->content_top = &mi->content[MAX_BOUNDARIES] - 1;
+			strbuf_release(boundary);
+			free(boundary);
 			return;
 		}
 		*(mi->content_top) = boundary;
