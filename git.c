@@ -462,12 +462,11 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv, struct
 	precompose_argv_prefix(argc, argv, NULL);
 	if (use_pager == -1 && run_setup &&
 		!(p->option & DELAY_PAGER_CONFIG))
-		use_pager = check_pager_config(the_repository, p->cmd);
+		use_pager = check_pager_config(repo, p->cmd);
 	if (use_pager == -1 && p->option & USE_PAGER)
 		use_pager = 1;
 	if (run_setup && startup_info->have_repository)
-		/* get_git_dir() may set up repo, avoid that */
-		trace_repo_setup(the_repository);
+		trace_repo_setup(repo);
 	commit_pager_choice();
 
 	if (!help && p->option & NEED_WORK_TREE)
@@ -802,47 +801,8 @@ static int run_argv(struct strvec *args)
 		 * If we tried alias and futzed with our environment,
 		 * it no longer is safe to invoke builtins directly in
 		 * general.  We have to spawn them as dashed externals.
-		 *
-		 * NEEDSWORK: if we can figure out cases
-		 * where it is safe to do, we can avoid spawning a new
-		 * process.
 		 */
-		if (!done_alias)
-			handle_builtin(args);
-		else if (get_builtin(args->v[0])) {
-			struct child_process cmd = CHILD_PROCESS_INIT;
-			int err;
-
-			/*
-			 * The current process is committed to launching a
-			 * child process to run the command named in (**argv)
-			 * and exiting.  Log a generic string as the trace2
-			 * command verb to indicate this.  Note that the child
-			 * process will log the actual verb when it runs.
-			 */
-			trace2_cmd_name("_run_git_alias_");
-
-			commit_pager_choice();
-
-			strvec_push(&cmd.args, "git");
-			for (size_t i = 0; i < args->nr; i++)
-				strvec_push(&cmd.args, args->v[i]);
-
-			trace_argv_printf(cmd.args.v, "trace: exec:");
-
-			/*
-			 * if we fail because the command is not found, it is
-			 * OK to return. Otherwise, we just pass along the status code.
-			 */
-			cmd.silent_exec_failure = 1;
-			cmd.clean_on_exit = 1;
-			cmd.wait_after_clean = 1;
-			cmd.trace2_child_class = "git_alias";
-			err = run_command(&cmd);
-			if (err >= 0 || errno != ENOENT)
-				exit(err);
-			die("could not execute builtin %s", args->v[0]);
-		}
+		handle_builtin(args);
 
 		/* .. then try the external ones */
 		execv_dashed_external(args->v);
