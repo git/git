@@ -165,4 +165,18 @@ else
 	echo >&2 "::warning:: JGit wasn't installed, see above for clues why"
 fi
 
+if type rustc >/dev/null 2>&1
+then
+	echo "$(tput setaf6)Rust & Cargo Versions$(tput sgr0)"
+	rustc --version
+	cargo --version
+else
+	echo >&2 "WARNING: Rust wasn't installed, see above for clues why"
+fi
+
+curl https://sh.rustup.rs -sSf | sh -s -- -y --profile default --default-toolchain 1.87.0
+export PATH="$HOME/.cargo/bin:$PATH"
+"$HOME"/.cargo/bin/cargo --version
+echo "cargo installed at: $(command -v cargo)"
+
 end_group "Install dependencies"
