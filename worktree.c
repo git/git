@@ -646,7 +646,7 @@ static void repair_gitfile(struct worktree *wt,
 		}
 	}
 
-	if (err == READ_GITFILE_ERR_NOT_A_FILE)
+	if (READ_GITFILE_ERR_NOT_A_FILE(err))
 		fn(1, wt->path, _(".git is not a file"), cb_data);
 	else if (err)
 		repair = _(".git file broken");
@@ -826,7 +826,7 @@ void repair_worktree_at_path(const char *path,
 			strbuf_addstr(&backlink, dotgit_contents);
 			strbuf_realpath_forgiving(&backlink, backlink.buf, 0);
 		}
-	} else if (err == READ_GITFILE_ERR_NOT_A_FILE) {
+	} else if (READ_GITFILE_ERR_NOT_A_FILE(err)) {
 		fn(1, dotgit.buf, _("unable to locate repository; .git is not a file"), cb_data);
 		goto done;
 	} else if (err == READ_GITFILE_ERR_NOT_A_REPO) {

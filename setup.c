@@ -893,9 +893,11 @@ void read_gitfile_error_die(int error_code, const char *path, const char *dir)
 {
 	switch (error_code) {
 	case READ_GITFILE_ERR_STAT_FAILED:
-	case READ_GITFILE_ERR_NOT_A_FILE:
+	case READ_GITFILE_ERR_IS_DIR:
 		/* non-fatal; follow return path */
 		break;
+	case READ_GITFILE_ERR_NOT_A_FILE_OR_DIR:
+		die(_("'%s' is not a file or directory"), path);
 	case READ_GITFILE_ERR_OPEN_FAILED:
 		die_errno(_("error opening '%s'"), path);
 	case READ_GITFILE_ERR_TOO_LARGE:
@@ -941,7 +943,9 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 		goto cleanup_return;
 	}
 	if (!S_ISREG(st.st_mode)) {
-		error_code = READ_GITFILE_ERR_NOT_A_FILE;
+		error_code = S_ISDIR(st.st_mode) ?
+				     READ_GITFILE_ERR_IS_DIR :
+				     READ_GITFILE_ERR_NOT_A_FILE_OR_DIR;
 		goto cleanup_return;
 	}
 	if (st.st_size > max_file_size) {
@@ -1499,8 +1503,7 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 						NULL : &error_code);
 		if (!gitdirenv) {
 			if (die_on_error ||
-			    error_code == READ_GITFILE_ERR_NOT_A_FILE) {
-				/* NEEDSWORK: fail if .git is not file nor dir */
+			    error_code == READ_GITFILE_ERR_IS_DIR) {
 				if (is_git_directory(dir->buf)) {
 					gitdirenv = DEFAULT_GIT_DIR_ENVIRONMENT;
 					gitdir_path = xstrdup(dir->buf);
