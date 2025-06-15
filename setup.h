@@ -29,13 +29,17 @@ int is_git_directory(const char *path);
 int is_nonbare_repository_dir(struct strbuf *path);
 
 #define READ_GITFILE_ERR_STAT_FAILED 1
-#define READ_GITFILE_ERR_NOT_A_FILE 2
-#define READ_GITFILE_ERR_OPEN_FAILED 3
-#define READ_GITFILE_ERR_READ_FAILED 4
-#define READ_GITFILE_ERR_INVALID_FORMAT 5
-#define READ_GITFILE_ERR_NO_PATH 6
-#define READ_GITFILE_ERR_NOT_A_REPO 7
-#define READ_GITFILE_ERR_TOO_LARGE 8
+#define READ_GITFILE_ERR_IS_DIR		   2
+#define READ_GITFILE_ERR_NOT_A_FILE_OR_DIR 3
+#define READ_GITFILE_ERR_OPEN_FAILED	   4
+#define READ_GITFILE_ERR_READ_FAILED	   5
+#define READ_GITFILE_ERR_INVALID_FORMAT	   6
+#define READ_GITFILE_ERR_NO_PATH	   7
+#define READ_GITFILE_ERR_NOT_A_REPO	   8
+#define READ_GITFILE_ERR_TOO_LARGE	   9
+#define READ_GITFILE_ERR_NOT_A_FILE(x)                \
+	((x) == READ_GITFILE_ERR_NOT_A_FILE_OR_DIR || \
+	 (x) == READ_GITFILE_ERR_IS_DIR)
 void read_gitfile_error_die(int error_code, const char *path, const char *dir);
 const char *read_gitfile_gently(const char *path, int *return_error_code);
 #define read_gitfile(path) read_gitfile_gently((path), NULL)
