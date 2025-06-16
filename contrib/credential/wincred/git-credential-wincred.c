@@ -39,6 +39,14 @@ static void *xmalloc(size_t size)
 static WCHAR *wusername, *password, *protocol, *host, *path, target[1024],
 	*password_expiry_utc, *oauth_refresh_token;
 
+static void target_append(const WCHAR *src)
+{
+	size_t avail = ARRAY_SIZE(target) - wcslen(target) - 1; /* -1 for NUL */
+	if (avail < wcslen(src))
+		die("target buffer overflow");
+	wcsncat(target, src, avail);
+}
+
 static void write_item(const char *what, LPCWSTR wbuf, int wlen)
 {
 	char *buf;
@@ -330,17 +338,17 @@ int main(int argc, char *argv[])
 
 	/* prepare 'target', the unique key for the credential */
 	wcscpy(target, L"git:");
-	wcsncat(target, protocol, ARRAY_SIZE(target));
-	wcsncat(target, L"://", ARRAY_SIZE(target));
+	target_append(protocol);
+	target_append(L"://");
 	if (wusername) {
-		wcsncat(target, wusername, ARRAY_SIZE(target));
-		wcsncat(target, L"@", ARRAY_SIZE(target));
+		target_append(wusername);
+		target_append(L"@");
 	}
 	if (host)
-		wcsncat(target, host, ARRAY_SIZE(target));
+		target_append(host);
 	if (path) {
-		wcsncat(target, L"/", ARRAY_SIZE(target));
-		wcsncat(target, path, ARRAY_SIZE(target));
+		target_append(L"/");
+		target_append(path);
 	}
 
 	if (!strcmp(argv[1], "get"))

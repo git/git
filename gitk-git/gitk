@@ -113,6 +113,91 @@ if {[is_Windows]} {
 
 # End of safe PATH lookup stuff
 
+# Wrap exec/open to sanitize arguments
+
+# unsafe arguments begin with redirections or the pipe or background operators
+proc is_arg_unsafe {arg} {
+    regexp {^([<|>&]|2>)} $arg
+}
+
+proc make_arg_safe {arg} {
+    if {[is_arg_unsafe $arg]} {
+        set arg [file join . $arg]
+    }
+    return $arg
+}
+
+proc make_arglist_safe {arglist} {
+    set res {}
+    foreach arg $arglist {
+        lappend res [make_arg_safe $arg]
+    }
+    return $res
+}
+
+# executes one command
+# no redirections or pipelines are possible
+# cmd is a list that specifies the command and its arguments
+# calls `exec` and returns its value
+proc safe_exec {cmd} {
+    eval exec [make_arglist_safe $cmd]
+}
+
+# executes one command with redirections
+# no pipelines are possible
+# cmd is a list that specifies the command and its arguments
+# redir is a list that specifies redirections (output, background, constant(!) commands)
+# calls `exec` and returns its value
+proc safe_exec_redirect {cmd redir} {
+    eval exec [make_arglist_safe $cmd] $redir
+}
+
+proc safe_open_file {filename flags} {
+    # a file name starting with "|" would attempt to run a process
+    # but such a file name must be treated as a relative path
+    # hide the "|" behind "./"
+    if {[string index $filename 0] eq "|"} {
+        set filename [file join . $filename]
+    }
+    open $filename $flags
+}
+
+# opens a command pipeline for reading
+# cmd is a list that specifies the command and its arguments
+# calls `open` and returns the file id
+proc safe_open_command {cmd} {
+    open |[make_arglist_safe $cmd] r
+}
+
+# opens a command pipeline for reading and writing
+# cmd is a list that specifies the command and its arguments
+# calls `open` and returns the file id
+proc safe_open_command_rw {cmd} {
+    open |[make_arglist_safe $cmd] r+
+}
+
+# opens a command pipeline for reading with redirections
+# cmd is a list that specifies the command and its arguments
+# redir is a list that specifies redirections
+# calls `open` and returns the file id
+proc safe_open_command_redirect {cmd redir} {
+    set cmd [make_arglist_safe $cmd]
+    open |[concat $cmd $redir] r
+}
+
+# opens a pipeline with several commands for reading
+# cmds is a list of lists, each of which specifies a command and its arguments
+# calls `open` and returns the file id
+proc safe_open_pipeline {cmds} {
+    set cmd {}
+    foreach subcmd $cmds {
+        set cmd [concat $cmd | [make_arglist_safe $subcmd]]
+    }
+    open $cmd r
+}
+
+# End exec/open wrappers
+
 proc hasworktree {} {
     return [expr {[exec git rev-parse --is-bare-repository] == "false" &&
                   [exec git rev-parse --is-inside-git-dir] == "false"}]
@@ -238,7 +323,7 @@ proc unmerged_files {files} {
     set mlist {}
     set nr_unmerged 0
     if {[catch {
-        set fd [open "| git ls-files -u" r]
+        set fd [safe_open_command {git ls-files -u}]
     } err]} {
         show_error {} . "[mc "Couldn't get list of unmerged files:"] $err"
         exit 1
@@ -400,7 +485,7 @@ proc parseviewrevs {view revs} {
     } elseif {[lsearch -exact $revs --all] >= 0} {
         lappend revs HEAD
     }
-    if {[catch {set ids [eval exec git rev-parse $revs]} err]} {
+    if {[catch {set ids [safe_exec [concat git rev-parse $revs]]} err]} {
         # we get stdout followed by stderr in $err
         # for an unknown rev, git rev-parse echoes it and then errors out
         set errlines [split $err "\n"]
@@ -457,16 +542,6 @@ proc parseviewrevs {view revs} {
     return $ret
 }
 
-# Escapes a list of filter paths to be passed to git log via stdin. Note that
-# paths must not be quoted.
-proc escape_filter_paths {paths} {
-    set escaped [list]
-    foreach path $paths {
-        lappend escaped [string map {\\ \\\\ "\ " "\\\ "} $path]
-    }
-    return $escaped
-}
-
 # Start off a git log process and arrange to read its output
 proc start_rev_list {view} {
     global startmsecs commitidx viewcomplete curview
@@ -488,7 +563,7 @@ proc start_rev_list {view} {
     set args $viewargs($view)
     if {$viewargscmd($view) ne {}} {
         if {[catch {
-            set str [exec sh -c $viewargscmd($view)]
+            set str [safe_exec [list sh -c $viewargscmd($view)]]
         } err]} {
             error_popup "[mc "Error executing --argscmd command:"] $err"
             return 0
@@ -526,10 +601,9 @@ proc start_rev_list {view} {
     }
 
     if {[catch {
-        set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
-                        --parents --boundary $args --stdin \
-                        "<<[join [concat $revs "--" \
-                                [escape_filter_paths $files]] "\\n"]"] r]
+        set fd [safe_open_command_redirect [concat git log --no-color -z --pretty=raw $show_notes \
+                        --parents --boundary $args --stdin] \
+                        [list "<<[join [concat $revs "--" $files] "\n"]"]]
     } err]} {
         error_popup "[mc "Error executing git log:"] $err"
         return 0
@@ -563,9 +637,9 @@ proc stop_instance {inst} {
         set pid [pid $fd]
 
         if {$::tcl_platform(platform) eq {windows}} {
-            exec taskkill /pid $pid
+            safe_exec [list taskkill /pid $pid]
         } else {
-            exec kill $pid
+            safe_exec [list kill $pid]
         }
     }
     catch {close $fd}
@@ -680,11 +754,9 @@ proc updatecommits {} {
         set args $vorigargs($view)
     }
     if {[catch {
-        set fd [open [concat | git log --no-color -z --pretty=raw $show_notes \
-                        --parents --boundary $args --stdin \
-                        "<<[join [concat $revs "--" \
-                                [escape_filter_paths \
-                                        $vfilelimit($view)]] "\\n"]"] r]
+        set fd [safe_open_command_redirect [concat git log --no-color -z --pretty=raw $show_notes \
+                        --parents --boundary $args --stdin] \
+                        [list "<<[join [concat $revs "--" $vfilelimit($view)] "\n"]"]]
     } err]} {
         error_popup "[mc "Error executing git log:"] $err"
         return
@@ -1651,8 +1723,8 @@ proc getcommitlines {fd inst view updating}  {
             # and if we already know about it, using the rewritten
             # parent as a substitute parent for $id's children.
             if {![catch {
-                set rwid [exec git rev-list --first-parent --max-count=1 \
-                              $id -- $vfilelimit($view)]
+                set rwid [safe_exec [list git rev-list --first-parent --max-count=1 \
+                              $id -- $vfilelimit($view)]]
             }]} {
                 if {$rwid ne {} && [info exists varcid($view,$rwid)]} {
                     # use $rwid in place of $id
@@ -1772,7 +1844,7 @@ proc do_readcommit {id} {
     global tclencoding
 
     # Invoke git-log to handle automatic encoding conversion
-    set fd [open [concat | git log --no-color --pretty=raw -1 $id] r]
+    set fd [safe_open_command [concat git log --no-color --pretty=raw -1 $id]]
     # Read the results using i18n.logoutputencoding
     fconfigure $fd -translation lf -eofchar {}
     if {$tclencoding != {}} {
@@ -1908,7 +1980,7 @@ proc readrefs {} {
     foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
         unset -nocomplain $v
     }
-    set refd [open [list | git show-ref -d] r]
+    set refd [safe_open_command [list git show-ref -d]]
     if {$tclencoding != {}} {
         fconfigure $refd -encoding $tclencoding
     }
@@ -1956,7 +2028,7 @@ proc readrefs {} {
     set selectheadid {}
     if {$selecthead ne {}} {
         catch {
-            set selectheadid [exec git rev-parse --verify $selecthead]
+            set selectheadid [safe_exec [list git rev-parse --verify $selecthead]]
         }
     }
 }
@@ -2220,7 +2292,7 @@ proc makewindow {} {
             {mc "Reread re&ferences" command rereadrefs}
             {mc "&List references" command showrefs -accelerator F2}
             {xx "" separator}
-            {mc "Start git &gui" command {exec git gui &}}
+            {mc "Start git &gui" command {safe_exec_redirect [list git gui] [list &]}}
             {xx "" separator}
             {mc "&Quit" command doquit -accelerator Meta1-Q}
         }}
@@ -3007,7 +3079,7 @@ proc savestuff {w} {
     set remove_tmp 0
     if {[catch {
         set try_count 0
-        while {[catch {set f [open $config_file_tmp {WRONLY CREAT EXCL}]}]} {
+        while {[catch {set f [safe_open_file $config_file_tmp {WRONLY CREAT EXCL}]}]} {
             if {[incr try_count] > 50} {
                 error "Unable to write config file: $config_file_tmp exists"
             }
@@ -3723,7 +3795,7 @@ proc gitknewtmpdir {} {
             set tmpdir $gitdir
         }
         set gitktmpformat [file join $tmpdir ".gitk-tmp.XXXXXX"]
-        if {[catch {set gitktmpdir [exec mktemp -d $gitktmpformat]}]} {
+        if {[catch {set gitktmpdir [safe_exec [list mktemp -d $gitktmpformat]]}]} {
             set gitktmpdir [file join $gitdir [format ".gitk-tmp.%s" [pid]]]
         }
         if {[catch {file mkdir $gitktmpdir} err]} {
@@ -3745,7 +3817,7 @@ proc gitknewtmpdir {} {
 proc save_file_from_commit {filename output what} {
     global nullfile
 
-    if {[catch {exec git show $filename -- > $output} err]} {
+    if {[catch {safe_exec_redirect [list git show $filename --] [list > $output]} err]} {
         if {[string match "fatal: bad revision *" $err]} {
             return $nullfile
         }
@@ -3810,7 +3882,7 @@ proc external_diff {} {
 
     if {$difffromfile ne {} && $difftofile ne {}} {
         set cmd [list [shellsplit $extdifftool] $difffromfile $difftofile]
-        if {[catch {set fl [open |$cmd r]} err]} {
+        if {[catch {set fl [safe_open_command $cmd]} err]} {
             file delete -force $diffdir
             error_popup "$extdifftool: [mc "command failed:"] $err"
         } else {
@@ -3914,7 +3986,7 @@ proc external_blame_diff {} {
 # Find the SHA1 ID of the blob for file $fname in the index
 # at stage 0 or 2
 proc index_sha1 {fname} {
-    set f [open [list | git ls-files -s $fname] r]
+    set f [safe_open_command [list git ls-files -s $fname]]
     while {[gets $f line] >= 0} {
         set info [lindex [split $line "\t"] 0]
         set stage [lindex $info 2]
@@ -3974,7 +4046,7 @@ proc external_blame {parent_idx {line {}}} {
     # being given an absolute path...
     set f [make_relative $f]
     lappend cmdline $base_commit $f
-    if {[catch {eval exec $cmdline &} err]} {
+    if {[catch {safe_exec_redirect $cmdline [list &]} err]} {
         error_popup "[mc "git gui blame: command failed:"] $err"
     }
 }
@@ -4002,7 +4074,7 @@ proc show_line_source {} {
                 # must be a merge in progress...
                 if {[catch {
                     # get the last line from .git/MERGE_HEAD
-                    set f [open [file join $gitdir MERGE_HEAD] r]
+                    set f [safe_open_file [file join $gitdir MERGE_HEAD] r]
                     set id [lindex [split [read $f] "\n"] end-1]
                     close $f
                 } err]} {
@@ -4025,19 +4097,17 @@ proc show_line_source {} {
         }
         set line [lindex $h 1]
     }
-    set blameargs {}
+    set blamefile [file join $cdup $flist_menu_file]
     if {$from_index ne {}} {
-        lappend blameargs | git cat-file blob $from_index
-    }
-    lappend blameargs | git blame -p -L$line,+1
-    if {$from_index ne {}} {
-        lappend blameargs --contents -
+        set blameargs [list \
+            [list git cat-file blob $from_index] \
+            [list git blame -p -L$line,+1 --contents - -- $blamefile]]
     } else {
-        lappend blameargs $id
+        set blameargs [list \
+            [list git blame -p -L$line,+1 $id -- $blamefile]]
     }
-    lappend blameargs -- [file join $cdup $flist_menu_file]
     if {[catch {
-        set f [open $blameargs r]
+        set f [safe_open_pipeline $blameargs]
     } err]} {
         error_popup [mc "Couldn't start git blame: %s" $err]
         return
@@ -4962,8 +5032,8 @@ proc do_file_hl {serial} {
         # must be "containing:", i.e. we're searching commit info
         return
     }
-    set cmd [concat | git diff-tree -r -s --stdin $gdtargs]
-    set filehighlight [open $cmd r+]
+    set cmd [concat git diff-tree -r -s --stdin $gdtargs]
+    set filehighlight [safe_open_command_rw $cmd]
     fconfigure $filehighlight -blocking 0
     filerun $filehighlight readfhighlight
     set fhl_list {}
@@ -5392,8 +5462,8 @@ proc get_viewmainhead {view} {
     global viewmainheadid vfilelimit viewinstances mainheadid
 
     catch {
-        set rfd [open [concat | git rev-list -1 $mainheadid \
-                           -- $vfilelimit($view)] r]
+        set rfd [safe_open_command [concat git rev-list -1 $mainheadid \
+                           -- $vfilelimit($view)]]
         set j [reg_instance $rfd]
         lappend viewinstances($view) $j
         fconfigure $rfd -blocking 0
@@ -5458,14 +5528,14 @@ proc dodiffindex {} {
     if {!$showlocalchanges || !$hasworktree} return
     incr lserial
     if {[package vcompare $git_version "1.7.2"] >= 0} {
-        set cmd "|git diff-index --cached --ignore-submodules=dirty HEAD"
+        set cmd "git diff-index --cached --ignore-submodules=dirty HEAD"
     } else {
-        set cmd "|git diff-index --cached HEAD"
+        set cmd "git diff-index --cached HEAD"
     }
     if {$vfilelimit($curview) ne {}} {
         set cmd [concat $cmd -- $vfilelimit($curview)]
     }
-    set fd [open $cmd r]
+    set fd [safe_open_command $cmd]
     fconfigure $fd -blocking 0
     set i [reg_instance $fd]
     filerun $fd [list readdiffindex $fd $lserial $i]
@@ -5490,11 +5560,11 @@ proc readdiffindex {fd serial inst} {
     }
 
     # now see if there are any local changes not checked in to the index
-    set cmd "|git diff-files"
+    set cmd "git diff-files"
     if {$vfilelimit($curview) ne {}} {
         set cmd [concat $cmd -- $vfilelimit($curview)]
     }
-    set fd [open $cmd r]
+    set fd [safe_open_command $cmd]
     fconfigure $fd -blocking 0
     set i [reg_instance $fd]
     filerun $fd [list readdifffiles $fd $serial $i]
@@ -7283,8 +7353,8 @@ proc browseweb {url} {
     global web_browser
 
     if {$web_browser eq {}} return
-    # Use eval here in case $web_browser is a command plus some arguments
-    if {[catch {eval exec $web_browser [list $url] &} err]} {
+    # Use concat here in case $web_browser is a command plus some arguments
+    if {[catch {safe_exec_redirect [concat $web_browser [list $url]] [list &]} err]} {
         error_popup "[mc "Error starting web browser:"] $err"
     }
 }
@@ -7790,13 +7860,13 @@ proc gettree {id} {
     if {![info exists treefilelist($id)]} {
         if {![info exists treepending]} {
             if {$id eq $nullid} {
-                set cmd [list | git ls-files]
+                set cmd [list git ls-files]
             } elseif {$id eq $nullid2} {
-                set cmd [list | git ls-files --stage -t]
+                set cmd [list git ls-files --stage -t]
             } else {
-                set cmd [list | git ls-tree -r $id]
+                set cmd [list git ls-tree -r $id]
             }
-            if {[catch {set gtf [open $cmd r]}]} {
+            if {[catch {set gtf [safe_open_command $cmd]}]} {
                 return
             }
             set treepending $id
@@ -7860,13 +7930,13 @@ proc showfile {f} {
         return
     }
     if {$diffids eq $nullid} {
-        if {[catch {set bf [open $f r]} err]} {
+        if {[catch {set bf [safe_open_file $f r]} err]} {
             puts "oops, can't read $f: $err"
             return
         }
     } else {
         set blob [lindex $treeidlist($diffids) $i]
-        if {[catch {set bf [open [concat | git cat-file blob $blob] r]} err]} {
+        if {[catch {set bf [safe_open_command [concat git cat-file blob $blob]]} err]} {
             puts "oops, error reading blob $blob: $err"
             return
         }
@@ -8016,7 +8086,7 @@ proc diffcmd {ids flags} {
     if {$i >= 0} {
         if {[llength $ids] > 1 && $j < 0} {
             # comparing working directory with some specific revision
-            set cmd [concat | git diff-index $flags]
+            set cmd [concat git diff-index $flags]
             if {$i == 0} {
                 lappend cmd -R [lindex $ids 1]
             } else {
@@ -8024,7 +8094,7 @@ proc diffcmd {ids flags} {
             }
         } else {
             # comparing working directory with index
-            set cmd [concat | git diff-files $flags]
+            set cmd [concat git diff-files $flags]
             if {$j == 1} {
                 lappend cmd -R
             }
@@ -8033,7 +8103,7 @@ proc diffcmd {ids flags} {
         if {[package vcompare $git_version "1.7.2"] >= 0} {
             set flags "$flags --ignore-submodules=dirty"
         }
-        set cmd [concat | git diff-index --cached $flags]
+        set cmd [concat git diff-index --cached $flags]
         if {[llength $ids] > 1} {
             # comparing index with specific revision
             if {$j == 0} {
@@ -8049,7 +8119,7 @@ proc diffcmd {ids flags} {
         if {$log_showroot} {
             lappend flags --root
         }
-        set cmd [concat | git diff-tree -r $flags $ids]
+        set cmd [concat git diff-tree -r $flags $ids]
     }
     return $cmd
 }
@@ -8061,7 +8131,7 @@ proc gettreediffs {ids} {
     if {$limitdiffs && $vfilelimit($curview) ne {}} {
             set cmd [concat $cmd -- $vfilelimit($curview)]
     }
-    if {[catch {set gdtf [open $cmd r]}]} return
+    if {[catch {set gdtf [safe_open_command $cmd]}]} return
 
     set treepending $ids
     set treediff {}
@@ -8181,7 +8251,7 @@ proc getblobdiffs {ids} {
     if {$limitdiffs && $vfilelimit($curview) ne {}} {
         set cmd [concat $cmd -- $vfilelimit($curview)]
     }
-    if {[catch {set bdf [open $cmd r]} err]} {
+    if {[catch {set bdf [safe_open_command $cmd]} err]} {
         error_popup [mc "Error getting diffs: %s" $err]
         return
     }
@@ -8899,7 +8969,7 @@ proc gotocommit {} {
                 set id [lindex $matches 0]
             }
         } else {
-            if {[catch {set id [exec git rev-parse --verify $sha1string]}]} {
+            if {[catch {set id [safe_exec [list git rev-parse --verify $sha1string]]}]} {
                 error_popup [mc "Revision %s is not known" $sha1string]
                 return
             }
@@ -9205,10 +9275,8 @@ proc getpatchid {id} {
 
     if {![info exists patchids($id)]} {
         set cmd [diffcmd [list $id] {-p --root}]
-        # trim off the initial "|"
-        set cmd [lrange $cmd 1 end]
         if {[catch {
-            set x [eval exec $cmd | git patch-id]
+            set x [safe_exec_redirect $cmd [list | git patch-id]]
             set patchids($id) [lindex $x 0]
         }]} {
             set patchids($id) "error"
@@ -9304,14 +9372,14 @@ proc diffcommits {a b} {
     set fna [file join $tmpdir "commit-[string range $a 0 7]"]
     set fnb [file join $tmpdir "commit-[string range $b 0 7]"]
     if {[catch {
-        exec git diff-tree -p --pretty $a >$fna
-        exec git diff-tree -p --pretty $b >$fnb
+        safe_exec_redirect [list git diff-tree -p --pretty $a] [list >$fna]
+        safe_exec_redirect [list git diff-tree -p --pretty $b] [list >$fnb]
     } err]} {
         error_popup [mc "Error writing commit to file: %s" $err]
         return
     }
     if {[catch {
-        set fd [open "| diff -U$diffcontext $fna $fnb" r]
+        set fd [safe_open_command "diff -U$diffcontext $fna $fnb"]
     } err]} {
         error_popup [mc "Error diffing commits: %s" $err]
         return
@@ -9451,10 +9519,7 @@ proc mkpatchgo {} {
     set newid [$patchtop.tosha1 get]
     set fname [$patchtop.fname get]
     set cmd [diffcmd [list $oldid $newid] -p]
-    # trim off the initial "|"
-    set cmd [lrange $cmd 1 end]
-    lappend cmd >$fname &
-    if {[catch {eval exec $cmd} err]} {
+    if {[catch {safe_exec_redirect $cmd [list >$fname &]} err]} {
         error_popup "[mc "Error creating patch:"] $err" $patchtop
     }
     catch {destroy $patchtop}
@@ -9523,9 +9588,9 @@ proc domktag {} {
     }
     if {[catch {
         if {$msg != {}} {
-            exec git tag -a -m $msg $tag $id
+            safe_exec [list git tag -a -m $msg $tag $id]
         } else {
-            exec git tag $tag $id
+            safe_exec [list git tag $tag $id]
         }
     } err]} {
         error_popup "[mc "Error creating tag:"] $err" $mktagtop
@@ -9593,7 +9658,7 @@ proc copyreference {} {
     if {$autosellen < 40} {
         lappend cmd --abbrev=$autosellen
     }
-    set reference [eval exec $cmd $rowmenuid]
+    set reference [safe_exec [concat $cmd $rowmenuid]]
 
     clipboard clear
     clipboard append $reference
@@ -9643,7 +9708,7 @@ proc wrcomgo {} {
     set id [$wrcomtop.sha1 get]
     set cmd "echo $id | [$wrcomtop.cmd get]"
     set fname [$wrcomtop.fname get]
-    if {[catch {exec sh -c $cmd >$fname &} err]} {
+    if {[catch {safe_exec_redirect [list sh -c $cmd] [list >$fname &]} err]} {
         error_popup "[mc "Error writing commit:"] $err" $wrcomtop
     }
     catch {destroy $wrcomtop}
@@ -9747,7 +9812,7 @@ proc mkbrgo {top} {
     nowbusy newbranch
     update
     if {[catch {
-        eval exec git branch $cmdargs
+        safe_exec [concat git branch $cmdargs]
     } err]} {
         notbusy newbranch
         error_popup $err
@@ -9788,7 +9853,7 @@ proc mvbrgo {top prevname} {
     nowbusy renamebranch
     update
     if {[catch {
-        eval exec git branch $cmdargs
+        safe_exec [concat git branch $cmdargs]
     } err]} {
         notbusy renamebranch
         error_popup $err
@@ -9829,7 +9894,7 @@ proc exec_citool {tool_args {baseid {}}} {
         }
     }
 
-    eval exec git citool $tool_args &
+    safe_exec_redirect [concat git citool $tool_args] [list &]
 
     array unset env GIT_AUTHOR_*
     array set env $save_env
@@ -9852,7 +9917,7 @@ proc cherrypick {} {
     update
     # Unfortunately git-cherry-pick writes stuff to stderr even when
     # no error occurs, and exec takes that as an indication of error...
-    if {[catch {exec sh -c "git cherry-pick -r $rowmenuid 2>&1"} err]} {
+    if {[catch {safe_exec [list sh -c "git cherry-pick -r $rowmenuid 2>&1"]} err]} {
         notbusy cherrypick
         if {[regexp -line \
                  {Entry '(.*)' (would be overwritten by merge|not uptodate)} \
@@ -9914,7 +9979,7 @@ proc revert {} {
     nowbusy revert [mc "Reverting"]
     update
 
-    if [catch {exec git revert --no-edit $rowmenuid} err] {
+    if [catch {safe_exec [list git revert --no-edit $rowmenuid]} err] {
         notbusy revert
         if [regexp {files would be overwritten by merge:(\n(( |\t)+[^\n]+\n)+)}\
                 $err match files] {
@@ -9990,8 +10055,8 @@ proc resethead {} {
     bind $w <Visibility> "grab $w; focus $w"
     tkwait window $w
     if {!$confirm_ok} return
-    if {[catch {set fd [open \
-            [list | git reset --$resettype $rowmenuid 2>@1] r]} err]} {
+    if {[catch {set fd [safe_open_command_redirect \
+            [list git reset --$resettype $rowmenuid] [list 2>@1]]} err]} {
         error_popup $err
     } else {
         dohidelocalchanges
@@ -10062,7 +10127,7 @@ proc cobranch {} {
 
     # check the tree is clean first??
     set newhead $headmenuhead
-    set command [list | git checkout]
+    set command [list git checkout]
     if {[string match "remotes/*" $newhead]} {
         set remote $newhead
         set newhead [string range $newhead [expr [string last / $newhead] + 1] end]
@@ -10076,12 +10141,11 @@ proc cobranch {} {
     } else {
         lappend command $newhead
     }
-    lappend command 2>@1
     nowbusy checkout [mc "Checking out"]
     update
     dohidelocalchanges
     if {[catch {
-        set fd [open $command r]
+        set fd [safe_open_command_redirect $command [list 2>@1]]
     } err]} {
         notbusy checkout
         error_popup $err
@@ -10147,7 +10211,7 @@ proc rmbranch {} {
     }
     nowbusy rmbranch
     update
-    if {[catch {exec git branch -D $head} err]} {
+    if {[catch {safe_exec [list git branch -D $head]} err]} {
         notbusy rmbranch
         error_popup $err
         return
@@ -10338,7 +10402,7 @@ proc getallcommits {} {
         set cachedarcs 0
         set allccache [file join $gitdir "gitk.cache"]
         if {![catch {
-            set f [open $allccache r]
+            set f [safe_open_file $allccache r]
             set allcwait 1
             getcache $f
         }]} return
@@ -10347,7 +10411,7 @@ proc getallcommits {} {
     if {$allcwait} {
         return
     }
-    set cmd [list | git rev-list --parents]
+    set cmd [list git rev-list --parents]
     set allcupdate [expr {$seeds ne {}}]
     if {!$allcupdate} {
         set ids "--all"
@@ -10375,10 +10439,11 @@ proc getallcommits {} {
     if {$ids ne {}} {
         if {$ids eq "--all"} {
             set cmd [concat $cmd "--all"]
+            set fd [safe_open_command $cmd]
         } else {
-            set cmd [concat $cmd --stdin "<<[join $ids "\\n"]"]
+            set cmd [concat $cmd --stdin]
+            set fd [safe_open_command_redirect $cmd [list "<<[join $ids "\n"]"]]
         }
-        set fd [open $cmd r]
         fconfigure $fd -blocking 0
         incr allcommits
         nowbusy allcommits
@@ -10768,7 +10833,7 @@ proc savecache {} {
     set cachearc 0
     set cachedarcs $nextarc
     catch {
-        set f [open $allccache w]
+        set f [safe_open_file $allccache w]
         puts $f [list 1 $cachedarcs]
         run writecache $f
     }
@@ -11471,7 +11536,7 @@ proc add_tag_ctext {tag} {
 
     if {![info exists cached_tagcontent($tag)]} {
         catch {
-            set cached_tagcontent($tag) [exec git cat-file -p $tag]
+            set cached_tagcontent($tag) [safe_exec [list git cat-file -p $tag]]
         }
     }
     $ctext insert end "[mc "Tag"]: $tag\n" bold
@@ -12382,7 +12447,7 @@ proc gitattr {path attr default} {
         set r $path_attr_cache($attr,$path)
     } else {
         set r "unspecified"
-        if {![catch {set line [exec git check-attr $attr -- $path]}]} {
+        if {![catch {set line [safe_exec [list git check-attr $attr -- $path]]}]} {
             regexp "(.*): $attr: (.*)" $line m f r
         }
         set path_attr_cache($attr,$path) $r
@@ -12409,7 +12474,7 @@ proc cache_gitattr {attr pathlist} {
     while {$newlist ne {}} {
         set head [lrange $newlist 0 [expr {$lim - 1}]]
         set newlist [lrange $newlist $lim end]
-        if {![catch {set rlist [eval exec git check-attr $attr -- $head]}]} {
+        if {![catch {set rlist [safe_exec [concat git check-attr $attr -- $head]]}]} {
             foreach row [split $rlist "\n"] {
                 if {[regexp "(.*): $attr: (.*)" $row m path value]} {
                     if {[string index $path 0] eq "\""} {
@@ -12461,11 +12526,11 @@ if {[catch {package require Tk 8.4} err]} {
 
 # on OSX bring the current Wish process window to front
 if {[tk windowingsystem] eq "aqua"} {
-    exec osascript -e [format {
+    safe_exec [list osascript -e [format {
         tell application "System Events"
             set frontmost of processes whose unix id is %d to true
         end tell
-    } [pid] ]
+    } [pid] ]]
 }
 
 # Unset GIT_TRACE var if set
@@ -12713,7 +12778,7 @@ if {$selecthead eq "HEAD"} {
 if {$i >= [llength $argv] && $revtreeargs ne {}} {
     # no -- on command line, but some arguments (other than --argscmd)
     if {[catch {
-        set f [eval exec git rev-parse --no-revs --no-flags $revtreeargs]
+        set f [safe_exec [concat git rev-parse --no-revs --no-flags $revtreeargs]]
         set cmdline_files [split $f "\n"]
         set n [llength $cmdline_files]
         set revtreeargs [lrange $revtreeargs 0 end-$n]
