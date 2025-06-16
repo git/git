@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2025, #04; Thu, 12)
-X-master-at: 9edff09aec9b5aaa3d5528129bb279a4d34cf5b3
-X-next-at: 9a244e597829f0322c0da9a0f1a15fecc86eae1d
+Subject: What's cooking in git.git (Jun 2025, #05; Mon, 16)
+X-master-at: 16bd9f20a403117f2e0d9bcda6c6e621d3763e77
+X-next-at: 196bf9f422f28cd4e7989fb845ea6d2785c9953d
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2025, #04; Thu, 12)
+What's cooking in git.git (Jun 2025, #05; Mon, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,14 +17,16 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-We are almost done with this cycle.  As we found out a ntohll
-regression that broke big endian boxes with builtin_bswap32/64
-supplied by their compilers way too late in the cycle, I'm planning
-to queue a revert for a single patch, which may or may not break
-Windows ARM64 support that was newly added during this cycle.
-Hopefully it is a better tradeoff for the entire Git community to
-drop support added by an unreleased product than to break a platform
-that has been working OK.
+Git 2.50 has been tagged.  As the project usually is slow during
+Summer in Northern hemisphere, I plan to make the next cycle on the
+shorter side to last 8 weeks (usually a typical release cycle lasts
+for 8 to 12 weeks).  Key dates are:
+
+ - Jun 23rd - the 2.51 cycle opens
+ - Aug  4th - 2.51-rc0 (preview)
+ - Aug  7th - 2.51-rc1 (master really freezes)
+ - Aug 13th - 2.51-rc2
+ - Aug 18th - 2.51-final
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -57,15 +59,42 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* kh/maintenance-missing-tasks-docfix (2025-06-09) 1 commit
-  (merged to 'next' on 2025-06-10 at 4d6d3d6af8)
- + doc: maintenance: fix linkgit syntax
+* jc/sed-build-fixes (2025-06-12) 1 commit
+  (merged to 'next' on 2025-06-12 at 4ad86fa8cf)
+ + build: sed portability fixes
 
- Doc mark-up fix for a topic that has graduated to 'master'.
- source: <567195e5577c6c32b46f784a797fbf366873a0f3.1749484736.git.code@khaugsbakk.name>
+ Build fix.
+ source: <xmqqplf8evr9.fsf@gitster.g>
+
+
+* js/github-ci-win-coverity-fix (2025-06-11) 2 commits
+  (merged to 'next' on 2025-06-12 at e0f5ed51f9)
+ + ci(coverity): output the build log upon error
+ + ci(coverity): fix building on Windows
+
+ Fixes for GitHub Actions Coverity job.
+ source: <pull.1934.v2.git.1749657278.gitgitgadget@gmail.com>
+
+
+* ss/revert-builtin-bswap-stuff (2025-06-11) 1 commit
+  (merged to 'next' on 2025-06-12 at fcaad0fe34)
+ + Revert "bswap.h: add support for built-in bswap functions"
+ (this branch is used by ss/compat-bswap-revamp.)
+
+ Revert a botched bswap.h change that broke ntohll() functions on
+ big-endian systems with __builtin_bswap32/64().
+ source: <20250611221444.1567638-2-sebastian@breakpoint.cc>
 
 --------------------------------------------------
 [New Topics]
+
+* jg/mailinfo-leakfix (2025-06-13) 1 commit
+ - mailinfo.c: fix memory leak in function handle_content_type()
+
+ source: <SA1PR22MB399911638F342E1AA20F014AE477A@SA1PR22MB3999.namprd22.prod.outlook.com>
+
+--------------------------------------------------
+[Cooking]
 
 * ow/rebase-verify-insn-fmt-before-initializing-state (2025-06-09) 1 commit
  - rebase: write script before initializing state
@@ -75,6 +104,7 @@ Release tarballs are available at:
  leading to confused "git status"; this has been corrected.
 
  Comments?
+ cf. <20250609221055.136074-1-oystwa@gmail.com>
  source: <20250609221055.136074-1-oystwa@gmail.com>
 
 
@@ -91,78 +121,69 @@ Release tarballs are available at:
 
 
 * ac/preload-index-wo-the-repository (2025-06-10) 2 commits
- - preload-index: stop depending on 'the_repository'
- - environment: remove the global variable 'core_preload_index'
+  (merged to 'next' on 2025-06-12 at c272b52078)
+ + preload-index: stop depending on 'the_repository'
+ + environment: remove the global variable 'core_preload_index'
 
  Code clean-up.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <cover.1749557133.git.ayu.chandekar@gmail.com>
 
 
 * jc/cg-let-bss-do-its-job (2025-06-11) 1 commit
- - CodingGuidelines: let BSS do its job
+  (merged to 'next' on 2025-06-12 at 951bdd6678)
+ + CodingGuidelines: let BSS do its job
 
  Clarify "do not explicitly initialize to zero" rule in the
  CodingGuidelines document.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <xmqqh60mger9.fsf@gitster.g>
 
 
-* jc/merge-compact-summary (2025-06-11) 2 commits
+* jc/merge-compact-summary (2025-06-12) 2 commits
  - merge/pull: extend merge.stat configuration variable to cover --compact-summary
- - merge/pull: --compact-summary
+ - merge/pull: add the "--compact-summary" option
 
+ "git merge/pull" has been taught the "--compact-summary" option to
+ use the compact-summary format, intead of diffstat, when showing
+ the summary of the incoming changes.
 
-* js/github-ci-win-coverity-fix (2025-06-11) 2 commits
- - ci(coverity): output the build log upon error
- - ci(coverity): fix building on Windows
-
- Fixes for GitHub Actions Coverity job.
-
- Will merge to 'next' and then to 'master'.
- source: <pull.1934.v2.git.1749657278.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <20250612222537.2426059-1-gitster@pobox.com>
 
 
 * ly/prepare-show-merge-leakfix (2025-06-09) 1 commit
- - revision: fix memory leak in prepare_show_merge()
+  (merged to 'next' on 2025-06-12 at 518d60458f)
+ + revision: fix memory leak in prepare_show_merge()
 
  Leakfix.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <pull.1989.v3.git.git.1749515879546.gitgitgadget@gmail.com>
 
 
-* sa/multi-mailmap-fix (2025-06-10) 1 commit
- - cat-file: fix mailmap application for different author and committer
+* sa/multi-mailmap-fix (2025-06-13) 1 commit
+  (merged to 'next' on 2025-06-13 at 739626bc46)
+ + cat-file: fix mailmap application for different author and committer
 
  When asking to apply mailmap to both author and committer field
  while showing a commit object, the field that appears later was not
  correctly parsed and replaced, which has been corrected.
 
- Will merge to 'next'?
- source: <20250611062643.8639-1-siddharthasthana31@gmail.com>
+ Will cook in 'next'.
+ source: <20250613115750.41205-1-siddharthasthana31@gmail.com>
 
 
-* bs/config-mak-freebsd (2025-06-11) 1 commit
+* bs/config-mak-freebsd (2025-06-12) 1 commit
  - config.mak.uname: update settings for FreeBSD
 
  Drop FreeBSD 4 support and assume we are at least at FreeBSD 6 with
  memmem() supported.
 
- Need to pick up a reroll?
- source: <aEpZXqTOForaZzbf@humpty.home.comstyle.com>
-
-
-* jc/sed-build-fixes (2025-06-12) 1 commit
-  (merged to 'next' on 2025-06-12 at 4ad86fa8cf)
- + build: sed portability fixes
-
- Build fix.
-
- Will merge to 'master'.
- source: <xmqqplf8evr9.fsf@gitster.g>
+ Expecting a finalized version from Carlo?
+ source: <xmqqv7p0bpdl.fsf_-_@gitster.g>
 
 
 * jc/tag-idempotent-no-op (2025-06-10) 1 commit
@@ -183,27 +204,12 @@ Release tarballs are available at:
  - bswap.h: define GIT_LITTLE_ENDIAN on MSVC as little endian
  - bswap.h: add support for __BYTE_ORDER__
  - Merge branch 'ss/revert-builtin-bswap-stuff' into ss/compat-bswap-revamp
- (this branch uses ss/revert-builtin-bswap-stuff.)
 
  Clean-up compat/bswap.h mess.
 
  Comments?
  source: <20250611221444.1567638-1-sebastian@breakpoint.cc>
 
-
-* ss/revert-builtin-bswap-stuff (2025-06-11) 1 commit
-  (merged to 'next' on 2025-06-12 at fcaad0fe34)
- + Revert "bswap.h: add support for built-in bswap functions"
- (this branch is used by ss/compat-bswap-revamp.)
-
- Revert a botched bswap.h change that broke ntohll() functions on
- big-endian systems with __builtin_bswap32/64().
-
- Will merge to 'master'.
- source: <20250611221444.1567638-2-sebastian@breakpoint.cc>
-
---------------------------------------------------
-[Cooking]
 
 * ja/doc-git-log-markup (2025-06-08) 9 commits
  - doc: git-log: convert log config to new doc format
@@ -243,7 +249,7 @@ Release tarballs are available at:
  source: <pull.1987.git.git.1749355019495.gitgitgadget@gmail.com>
 
 
-* kn/fetch-push-bulk-ref-update-fixup (2025-06-06) 3 commits
+* kn/fetch-push-bulk-ref-update-fixup (2025-06-13) 3 commits
  - receive-pack: handle reference deletions separately
  - refs/files: skip updates with errors in batched updates
  - Merge branch 'kn/fetch-push-bulk-ref-update' into kn/fetch-push-bulk-ref-update-fixup
@@ -252,7 +258,7 @@ Release tarballs are available at:
  Additional fixes to the base topic.
 
  Comments?
- source: <20250606-6769-address-test-failures-in-the-next-branch-caused-by-batched-reference-updates-v3-0-e1c41693bd35@gmail.com>
+ source: <20250613-6769-address-test-failures-in-the-next-branch-caused-by-batched-reference-updates-v4-0-ebf53edb9795@gmail.com>
 
 
 * ma/doc-diff-cc-headers (2025-06-06) 1 commit
