@@ -44,7 +44,7 @@ static void get_bloom_filter_for_commit(const struct object_id *commit_oid)
 	print_bloom_filter(filter);
 }
 
-static const char *bloom_usage = "\n"
+static const char *const bloom_usage = "\n"
 "  test-tool bloom get_murmur3 <string>\n"
 "  test-tool bloom get_murmur3_seven_highbit\n"
 "  test-tool bloom generate_filter <string> [<string>...]\n"

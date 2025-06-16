@@ -86,7 +86,7 @@ command.
 +
 --
 When `MERGED` is not present in the layout, you must "mark" one of the
-buffers with an asterisk. That will become the buffer you need to edit and
+buffers with an arobase (`@`). That will become the buffer you need to edit and
 save after resolving the conflicts.
 ....
 ------------------------------------------
@@ -183,13 +183,13 @@ latter will be used as fallback if the variant-specific one is not set).
 In addition, for backwards compatibility with previous Git versions, you can
 also append `1`, `2` or `3` to either `vimdiff` or any of the variants (ex:
 `vimdiff3`, `nvimdiff1`, etc...) to use a predefined layout.
-In other words, using `--tool=[g,n,]vimdiffx` is the same as using
-`--tool=[g,n,]vimdiff` and setting configuration variable
-`mergetool.[g,n,]vimdiff.layout` to...
+In other words, using `--tool=[g|n]vimdiff<x>` is the same as using
+`--tool=[g|n]vimdiff` and setting configuration variable
+`mergetool.[g|n]vimdiff.layout` to...
 
-  * `x=1`: `"@LOCAL, REMOTE"`
-  * `x=2`: `"LOCAL, MERGED, REMOTE"`
-  * `x=3`: `"MERGED"`
+  * `<x>=1`: `"@LOCAL, REMOTE"`
+  * `<x>=2`: `"LOCAL, MERGED, REMOTE"`
+  * `<x>=3`: `"MERGED"`
 
-Example: using `--tool=gvimdiff2` will open `gvim` with three columns (LOCAL,
-MERGED and REMOTE).
+Example: using `--tool=gvimdiff2` will open `gvim` with three columns (`LOCAL`,
+`MERGED` and `REMOTE`).

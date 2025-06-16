@@ -16,6 +16,7 @@
 #include "builtin.h"
 #include "abspath.h"
 #include "date.h"
+#include "dir.h"
 #include "environment.h"
 #include "hex.h"
 #include "config.h"
@@ -29,10 +30,11 @@
 #include "commit-graph.h"
 #include "packfile.h"
 #include "object-file.h"
-#include "object-store-ll.h"
 #include "pack.h"
 #include "pack-objects.h"
 #include "path.h"
+#include "reflog.h"
+#include "rerere.h"
 #include "blob.h"
 #include "tree.h"
 #include "promisor-remote.h"
@@ -43,6 +45,7 @@
 #include "hook.h"
 #include "setup.h"
 #include "trace2.h"
+#include "worktree.h"
 
 #define FAILED_RUN "failed to run %s"
 
@@ -52,16 +55,9 @@ static const char * const builtin_gc_usage[] = {
 };
 
 static timestamp_t gc_log_expire_time;
-
-static struct strvec reflog = STRVEC_INIT;
 static struct strvec repack = STRVEC_INIT;
-static struct strvec prune = STRVEC_INIT;
-static struct strvec prune_worktrees = STRVEC_INIT;
-static struct strvec rerere = STRVEC_INIT;
-
 static struct tempfile *pidfile;
 static struct lock_file log_lock;
-
 static struct string_list pack_garbage = STRING_LIST_INIT_DUP;
 
 static void clean_pack_garbage(void)
@@ -288,6 +284,146 @@ static int maintenance_task_pack_refs(struct maintenance_run_opts *opts,
 	return run_command(&cmd);
 }
 
+struct count_reflog_entries_data {
+	struct expire_reflog_policy_cb policy;
+	size_t count;
+	size_t limit;
+};
+
+static int count_reflog_entries(struct object_id *old_oid, struct object_id *new_oid,
+				const char *committer, timestamp_t timestamp,
+				int tz, const char *msg, void *cb_data)
+{
+	struct count_reflog_entries_data *data = cb_data;
+	if (should_expire_reflog_ent(old_oid, new_oid, committer, timestamp, tz, msg, &data->policy))
+		data->count++;
+	return data->count >= data->limit;
+}
+
+static int reflog_expire_condition(struct gc_config *cfg UNUSED)
+{
+	timestamp_t now = time(NULL);
+	struct count_reflog_entries_data data = {
+		.policy = {
+			.opts = REFLOG_EXPIRE_OPTIONS_INIT(now),
+		},
+	};
+	int limit = 100;
+
+	git_config_get_int("maintenance.reflog-expire.auto", &limit);
+	if (!limit)
+		return 0;
+	if (limit < 0)
+		return 1;
+	data.limit = limit;
+
+	repo_config(the_repository, reflog_expire_config, &data.policy.opts);
+
+	reflog_expire_options_set_refname(&data.policy.opts, "HEAD");
+	refs_for_each_reflog_ent(get_main_ref_store(the_repository), "HEAD",
+				 count_reflog_entries, &data);
+
+	reflog_expiry_cleanup(&data.policy);
+	return data.count >= data.limit;
+}
+
+static int maintenance_task_reflog_expire(struct maintenance_run_opts *opts UNUSED,
+					  struct gc_config *cfg UNUSED)
+{
+	struct child_process cmd = CHILD_PROCESS_INIT;
+	cmd.git_cmd = 1;
+	strvec_pushl(&cmd.args, "reflog", "expire", "--all", NULL);
+	return run_command(&cmd);
+}
+
+static int maintenance_task_worktree_prune(struct maintenance_run_opts *opts UNUSED,
+					   struct gc_config *cfg)
+{
+	struct child_process prune_worktrees_cmd = CHILD_PROCESS_INIT;
+
+	prune_worktrees_cmd.git_cmd = 1;
+	strvec_pushl(&prune_worktrees_cmd.args, "worktree", "prune", "--expire", NULL);
+	strvec_push(&prune_worktrees_cmd.args, cfg->prune_worktrees_expire);
+
+	return run_command(&prune_worktrees_cmd);
+}
+
+static int worktree_prune_condition(struct gc_config *cfg)
+{
+	struct strbuf buf = STRBUF_INIT;
+	int should_prune = 0, limit = 1;
+	timestamp_t expiry_date;
+	struct dirent *d;
+	DIR *dir = NULL;
+
+	git_config_get_int("maintenance.worktree-prune.auto", &limit);
+	if (limit <= 0) {
+		should_prune = limit < 0;
+		goto out;
+	}
+
+	if (parse_expiry_date(cfg->prune_worktrees_expire, &expiry_date))
+		goto out;
+
+	dir = opendir(repo_git_path_replace(the_repository, &buf, "worktrees"));
+	if (!dir)
+		goto out;
+
+	while (limit && (d = readdir_skip_dot_and_dotdot(dir))) {
+		char *wtpath;
+		strbuf_reset(&buf);
+		if (should_prune_worktree(d->d_name, &buf, &wtpath, expiry_date))
+			limit--;
+		free(wtpath);
+	}
+
+	should_prune = !limit;
+
+out:
+	if (dir)
+		closedir(dir);
+	strbuf_release(&buf);
+	return should_prune;
+}
+
+static int maintenance_task_rerere_gc(struct maintenance_run_opts *opts UNUSED,
+				      struct gc_config *cfg UNUSED)
+{
+	struct child_process rerere_cmd = CHILD_PROCESS_INIT;
+	rerere_cmd.git_cmd = 1;
+	strvec_pushl(&rerere_cmd.args, "rerere", "gc", NULL);
+	return run_command(&rerere_cmd);
+}
+
+static int rerere_gc_condition(struct gc_config *cfg UNUSED)
+{
+	struct strbuf path = STRBUF_INIT;
+	int should_gc = 0, limit = 1;
+	DIR *dir = NULL;
+
+	git_config_get_int("maintenance.rerere-gc.auto", &limit);
+	if (limit <= 0) {
+		should_gc = limit < 0;
+		goto out;
+	}
+
+	/*
+	 * We skip garbage collection in case we either have no "rr-cache"
+	 * directory or when it doesn't contain at least one entry.
+	 */
+	repo_git_path_replace(the_repository, &path, "rr-cache");
+	dir = opendir(path.buf);
+	if (!dir)
+		goto out;
+	should_gc = !!readdir_skip_dot_and_dotdot(dir);
+
+out:
+	strbuf_release(&path);
+	if (dir)
+		closedir(dir);
+	return should_gc;
+}
+
 static int too_many_loose_objects(struct gc_config *cfg)
 {
 	/*
@@ -373,9 +509,14 @@ static uint64_t total_ram(void)
 #if defined(HAVE_SYSINFO)
 	struct sysinfo si;
 
-	if (!sysinfo(&si))
-		return si.totalram;
-#elif defined(HAVE_BSD_SYSCTL) && (defined(HW_MEMSIZE) || defined(HW_PHYSMEM))
+	if (!sysinfo(&si)) {
+		uint64_t total = si.totalram;
+
+		if (si.mem_unit > 1)
+			total *= (uint64_t)si.mem_unit;
+		return total;
+	}
+#elif defined(HAVE_BSD_SYSCTL) && (defined(HW_MEMSIZE) || defined(HW_PHYSMEM) || defined(HW_PHYSMEM64))
 	int64_t physical_memory;
 	int mib[2];
 	size_t length;
@@ -383,6 +524,8 @@ static uint64_t total_ram(void)
 	mib[0] = CTL_HW;
 # if defined(HW_MEMSIZE)
 	mib[1] = HW_MEMSIZE;
+# elif defined(HW_PHYSMEM64)
+	mib[1] = HW_PHYSMEM64;
 # else
 	mib[1] = HW_PHYSMEM;
 # endif
@@ -667,21 +810,14 @@ static void gc_before_repack(struct maintenance_run_opts *opts,
 
 	if (cfg->pack_refs && maintenance_task_pack_refs(opts, cfg))
 		die(FAILED_RUN, "pack-refs");
-
-	if (cfg->prune_reflogs) {
-		struct child_process cmd = CHILD_PROCESS_INIT;
-
-		cmd.git_cmd = 1;
-		strvec_pushv(&cmd.args, reflog.v);
-		if (run_command(&cmd))
-			die(FAILED_RUN, reflog.v[0]);
-	}
+	if (cfg->prune_reflogs && maintenance_task_reflog_expire(opts, cfg))
+		die(FAILED_RUN, "reflog");
 }
 
 int cmd_gc(int argc,
-const char **argv,
-const char *prefix,
-struct repository *repo UNUSED)
+	   const char **argv,
+	   const char *prefix,
+	   struct repository *repo UNUSED)
 {
 	int aggressive = 0;
 	int quiet = 0;
@@ -691,7 +827,6 @@ struct repository *repo UNUSED)
 	int daemonized = 0;
 	int keep_largest_pack = -1;
 	timestamp_t dummy;
-	struct child_process rerere_cmd = CHILD_PROCESS_INIT;
 	struct maintenance_run_opts opts = MAINTENANCE_RUN_OPTS_INIT;
 	struct gc_config cfg = GC_CONFIG_INIT;
 	const char *prune_expire_sentinel = "sentinel";
@@ -699,12 +834,18 @@ struct repository *repo UNUSED)
 	int ret;
 	struct option builtin_gc_options[] = {
 		OPT__QUIET(&quiet, N_("suppress progress reporting")),
-		{ OPTION_STRING, 0, "prune", &prune_expire_arg, N_("date"),
-			N_("prune unreferenced objects"),
-			PARSE_OPT_OPTARG, NULL, (intptr_t)prune_expire_arg },
+		{
+			.type = OPTION_STRING,
+			.long_name = "prune",
+			.value = &prune_expire_arg,
+			.argh = N_("date"),
+			.help = N_("prune unreferenced objects"),
+			.flags = PARSE_OPT_OPTARG,
+			.defval = (intptr_t)prune_expire_arg,
+		},
 		OPT_BOOL(0, "cruft", &cfg.cruft_packs, N_("pack unreferenced objects separately")),
-		OPT_MAGNITUDE(0, "max-cruft-size", &cfg.max_cruft_size,
-			      N_("with --cruft, limit the size of new cruft packs")),
+		OPT_UNSIGNED(0, "max-cruft-size", &cfg.max_cruft_size,
+			     N_("with --cruft, limit the size of new cruft packs")),
 		OPT_BOOL(0, "aggressive", &aggressive, N_("be more thorough (increased runtime)")),
 		OPT_BOOL_F(0, "auto", &opts.auto_flag, N_("enable auto-gc mode"),
 			   PARSE_OPT_NOCOMPLETE),
@@ -723,11 +864,7 @@ struct repository *repo UNUSED)
 	show_usage_with_options_if_asked(argc, argv,
 					 builtin_gc_usage, builtin_gc_options);
 
-	strvec_pushl(&reflog, "reflog", "expire", "--all", NULL);
 	strvec_pushl(&repack, "repack", "-d", "-l", NULL);
-	strvec_pushl(&prune, "prune", "--expire", NULL);
-	strvec_pushl(&prune_worktrees, "worktree", "prune", "--expire", NULL);
-	strvec_pushl(&rerere, "rerere", "gc", NULL);
 
 	gc_config(&cfg);
 
@@ -853,34 +990,27 @@ struct repository *repo UNUSED)
 		if (cfg.prune_expire) {
 			struct child_process prune_cmd = CHILD_PROCESS_INIT;
 
+			strvec_pushl(&prune_cmd.args, "prune", "--expire", NULL);
 			/* run `git prune` even if using cruft packs */
-			strvec_push(&prune, cfg.prune_expire);
+			strvec_push(&prune_cmd.args, cfg.prune_expire);
 			if (quiet)
-				strvec_push(&prune, "--no-progress");
+				strvec_push(&prune_cmd.args, "--no-progress");
 			if (repo_has_promisor_remote(the_repository))
-				strvec_push(&prune,
+				strvec_push(&prune_cmd.args,
 					    "--exclude-promisor-objects");
 			prune_cmd.git_cmd = 1;
-			strvec_pushv(&prune_cmd.args, prune.v);
+
 			if (run_command(&prune_cmd))
-				die(FAILED_RUN, prune.v[0]);
+				die(FAILED_RUN, prune_cmd.args.v[0]);
 		}
 	}
 
-	if (cfg.prune_worktrees_expire) {
-		struct child_process prune_worktrees_cmd = CHILD_PROCESS_INIT;
+	if (cfg.prune_worktrees_expire &&
+	    maintenance_task_worktree_prune(&opts, &cfg))
+		die(FAILED_RUN, "worktree");
 
-		strvec_push(&prune_worktrees, cfg.prune_worktrees_expire);
-		prune_worktrees_cmd.git_cmd = 1;
-		strvec_pushv(&prune_worktrees_cmd.args, prune_worktrees.v);
-		if (run_command(&prune_worktrees_cmd))
-			die(FAILED_RUN, prune_worktrees.v[0]);
-	}
-
-	rerere_cmd.git_cmd = 1;
-	strvec_pushv(&rerere_cmd.args, rerere.v);
-	if (run_command(&rerere_cmd))
-		die(FAILED_RUN, rerere.v[0]);
+	if (maintenance_task_rerere_gc(&opts, &cfg))
+		die(FAILED_RUN, "rerere");
 
 	report_garbage = report_pack_garbage;
 	reprepare_packed_git(the_repository);
@@ -1029,6 +1159,8 @@ static int run_write_commit_graph(struct maintenance_run_opts *opts)
 
 	if (opts->quiet)
 		strvec_push(&child.args, "--no-progress");
+	else
+		strvec_push(&child.args, "--progress");
 
 	return !!run_command(&child);
 }
@@ -1161,6 +1293,7 @@ static int write_loose_object_to_stdin(const struct object_id *oid,
 
 	fprintf(d->in, "%s\n", oid_to_hex(oid));
 
+	/* If batch_size is INT_MAX, then this will return 0 always. */
 	return ++(d->count) > d->batch_size;
 }
 
@@ -1185,6 +1318,8 @@ static int pack_loose(struct maintenance_run_opts *opts)
 	strvec_push(&pack_proc.args, "pack-objects");
 	if (opts->quiet)
 		strvec_push(&pack_proc.args, "--quiet");
+	else
+		strvec_push(&pack_proc.args, "--no-quiet");
 	strvec_pushf(&pack_proc.args, "%s/pack/loose", r->objects->odb->path);
 
 	pack_proc.in = -1;
@@ -1203,6 +1338,15 @@ static int pack_loose(struct maintenance_run_opts *opts)
 	data.in = xfdopen(pack_proc.in, "w");
 	data.count = 0;
 	data.batch_size = 50000;
+
+	repo_config_get_int(r, "maintenance.loose-objects.batchSize",
+			    &data.batch_size);
+
+	/* If configured as 0, then remove limit. */
+	if (!data.batch_size)
+		data.batch_size = INT_MAX;
+	else if (data.batch_size > 0)
+		data.batch_size--; /* Decrease for equality on limit. */
 
 	for_each_loose_file_in_objdir(r->objects->odb->path,
 				      write_loose_object_to_stdin,
@@ -1263,6 +1407,8 @@ static int multi_pack_index_write(struct maintenance_run_opts *opts)
 
 	if (opts->quiet)
 		strvec_push(&child.args, "--no-progress");
+	else
+		strvec_push(&child.args, "--progress");
 
 	if (run_command(&child))
 		return error(_("failed to write multi-pack-index"));
@@ -1279,6 +1425,8 @@ static int multi_pack_index_expire(struct maintenance_run_opts *opts)
 
 	if (opts->quiet)
 		strvec_push(&child.args, "--no-progress");
+	else
+		strvec_push(&child.args, "--progress");
 
 	if (run_command(&child))
 		return error(_("'git multi-pack-index expire' failed"));
@@ -1335,6 +1483,8 @@ static int multi_pack_index_repack(struct maintenance_run_opts *opts)
 
 	if (opts->quiet)
 		strvec_push(&child.args, "--no-progress");
+	else
+		strvec_push(&child.args, "--progress");
 
 	strvec_pushf(&child.args, "--batch-size=%"PRIuMAX,
 				  (uintmax_t)get_auto_pack_size());
@@ -1392,6 +1542,9 @@ enum maintenance_task_label {
 	TASK_GC,
 	TASK_COMMIT_GRAPH,
 	TASK_PACK_REFS,
+	TASK_REFLOG_EXPIRE,
+	TASK_WORKTREE_PRUNE,
+	TASK_RERERE_GC,
 
 	/* Leave as final value */
 	TASK__COUNT
@@ -1427,6 +1580,21 @@ static struct maintenance_task tasks[] = {
 		"pack-refs",
 		maintenance_task_pack_refs,
 		pack_refs_condition,
+	},
+	[TASK_REFLOG_EXPIRE] = {
+		"reflog-expire",
+		maintenance_task_reflog_expire,
+		reflog_expire_condition,
+	},
+	[TASK_WORKTREE_PRUNE] = {
+		"worktree-prune",
+		maintenance_task_worktree_prune,
+		worktree_prune_condition,
+	},
+	[TASK_RERERE_GC] = {
+		"rerere-gc",
+		maintenance_task_rerere_gc,
+		rerere_gc_condition,
 	},
 };
 
@@ -2075,7 +2243,7 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 
 	case SCHEDULE_DAILY:
 		repeat = "<dict>\n"
-			 "<key>Day</key><integer>%d</integer>\n"
+			 "<key>Weekday</key><integer>%d</integer>\n"
 			 "<key>Hour</key><integer>0</integer>\n"
 			 "<key>Minute</key><integer>%d</integer>\n"
 			 "</dict>\n";
@@ -2086,7 +2254,7 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 	case SCHEDULE_WEEKLY:
 		strbuf_addf(&plist,
 			    "<dict>\n"
-			    "<key>Day</key><integer>0</integer>\n"
+			    "<key>Weekday</key><integer>0</integer>\n"
 			    "<key>Hour</key><integer>0</integer>\n"
 			    "<key>Minute</key><integer>%d</integer>\n"
 			    "</dict>\n",
@@ -2099,7 +2267,7 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 	}
 	strbuf_addstr(&plist, "</array>\n</dict>\n</plist>\n");
 
-	if (safe_create_leading_directories(filename))
+	if (safe_create_leading_directories(the_repository, filename))
 		die(_("failed to create directories for '%s'"), filename);
 
 	if ((long)lock_file_timeout_ms < 0 &&
@@ -2565,7 +2733,7 @@ static int systemd_timer_write_timer_file(enum schedule_priority schedule,
 
 	filename = xdg_config_home_systemd(local_timer_name);
 
-	if (safe_create_leading_directories(filename)) {
+	if (safe_create_leading_directories(the_repository, filename)) {
 		error(_("failed to create directories for '%s'"), filename);
 		goto error;
 	}
@@ -2638,7 +2806,7 @@ static int systemd_timer_write_service_template(const char *exec_path)
 	char *local_service_name = xstrfmt(SYSTEMD_UNIT_FORMAT, "", "service");
 
 	filename = xdg_config_home_systemd(local_service_name);
-	if (safe_create_leading_directories(filename)) {
+	if (safe_create_leading_directories(the_repository, filename)) {
 		error(_("failed to create directories for '%s'"), filename);
 		goto error;
 	}

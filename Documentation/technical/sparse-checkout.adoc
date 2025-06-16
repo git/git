@@ -66,7 +66,7 @@ sparsity patterns: patterns from $GIT_DIR/info/sparse-checkout used to
 	reasons: (1) users in cone mode specify directories rather than
 	patterns (their directories are transformed into patterns, but
 	users may think you are talking about non-cone mode if you use the
-	word "patterns"), and (b) the sparse specification might
+	word "patterns"), and (2) the sparse specification might
 	transiently differ in the working tree or index from the sparsity
 	patterns (see "Sparse specification vs. sparsity patterns").
 
@@ -356,8 +356,6 @@ understanding these differences can be beneficial.
     The behavior for these commands somewhat depends upon the merge
     strategy being used:
       * `ort` behaves as described above
-      * `recursive` tries to not vivify files unnecessarily, but does sometimes
-	vivify files without conflicts.
       * `octopus` and `resolve` will always vivify any file changed in the merge
 	relative to the first parent, which is rather suboptimal.
 

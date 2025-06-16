@@ -13,7 +13,7 @@
 #include "tree.h"
 #include "tree-walk.h"
 #include "object.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "oid-array.h"
 #include "oidset.h"
 #include "promisor-remote.h"
@@ -123,8 +123,8 @@ int cmd_backfill(int argc, const char **argv, const char *prefix, struct reposit
 		.sparse = 0,
 	};
 	struct option options[] = {
-		OPT_INTEGER(0, "min-batch-size", &ctx.min_batch_size,
-			    N_("Minimum number of objects to request at a time")),
+		OPT_UNSIGNED(0, "min-batch-size", &ctx.min_batch_size,
+			     N_("Minimum number of objects to request at a time")),
 		OPT_BOOL(0, "sparse", &ctx.sparse,
 			 N_("Restrict the missing objects to the current sparse-checkout")),
 		OPT_END(),

@@ -70,9 +70,15 @@
 #      # Execute single test interactively such that features like `debug ()` work.
 #      $ meson test -i --test-args='-ix' t1400-update-ref
 #
-#   Test execution is parallelized by default and scales with the number of
-#   processor cores available. You can change the number of processes by passing
-#   the `-jN` flag to `meson test`.
+#      # Execute all benchmarks.
+#      $ meson test -i --benchmark
+#
+#      # Execute single benchmark.
+#      $ meson test -i --benchmark p0000-*
+#
+#   Test execution (but not benchmark execution) is parallelized by default and
+#   scales with the number of processor cores available. You can change the
+#   number of processes by passing the `-jN` flag to `meson test`.
 #
 # 4. Install the Git distribution. Again, this can be done via Meson, Ninja or
 #    Samurai:
@@ -155,6 +161,37 @@
 # These machine files can be passed to `meson setup` via the `--native-file`
 # option.
 #
+# Cross compilation
+# =================
+#
+# Machine files can also be used in the context of cross-compilation to
+# describe the target machine as well as the cross-compiler toolchain that
+# shall be used. An example machine file could look like the following:
+#
+#   [binaries]
+#   c = 'x86_64-w64-mingw32-gcc'
+#   cpp = 'x86_64-w64-mingw32-g++'
+#   ar = 'x86_64-w64-mingw32-ar'
+#   windres = 'x86_64-w64-mingw32-windres'
+#   strip = 'x86_64-w64-mingw32-strip'
+#   exe_wrapper = 'wine64'
+#   sh = 'C:/Program Files/Git for Windows/usr/bin/sh.exe'
+#
+#   [host_machine]
+#   system = 'windows'
+#   cpu_family = 'x86_64'
+#   cpu = 'x86_64'
+#   endian = 'little'
+#
+# These machine files can be passed to `meson setup` via the `--cross-file`
+# option.
+#
+# Note that next to the cross-compiler toolchain, the `[binaries]` section is
+# also used to locate a couple of binaries that will be built into Git. This
+# includes `sh`, `python` and `perl`, so when cross-compiling Git you likely
+# want to set these binary paths in addition to the cross-compiler toolchain
+# binaries.
+#
 # Subproject wrappers
 # ===================
 #
@@ -173,19 +210,17 @@ project('git', 'c',
   # The version is only of cosmetic nature, so if we cannot find a shell yet we
   # simply don't set up a version at all. This may be the case for example on
   # Windows systems, where we first have to bootstrap the host environment.
-  version: find_program('sh', required: false).found() ? run_command(
+  version: find_program('sh', native: true, required: false).found() ? run_command(
     'GIT-VERSION-GEN', meson.current_source_dir(), '--format=@GIT_VERSION@',
     capture: true,
     check: true,
   ).stdout().strip() : 'unknown',
-  default_options: [
-    # Git requires C99 with GNU extensions, which of course isn't supported by
-    # MSVC. Funny enough, C99 doesn't work with MSVC either, as it has only
-    # learned to define __STDC_VERSION__ with C11 and later. We thus require
-    # GNU C99 and fall back to C11. Meson only learned to handle the fallback
-    # with version 1.3.0, so on older versions we use GNU C99 unconditionally.
-    'c_std=' + (meson.version().version_compare('>=1.3.0') ? 'gnu99,c11' : 'gnu99'),
-  ],
+  # Git requires C99 with GNU extensions, which of course isn't supported by
+  # MSVC. Funny enough, C99 doesn't work with MSVC either, as it has only
+  # learned to define __STDC_VERSION__ with C11 and later. We thus require
+  # GNU C99 and fall back to C11. Meson only learned to handle the fallback
+  # with version 1.3.0, so on older versions we use GNU C99 unconditionally.
+  default_options: meson.version().version_compare('>=1.3.0') ? ['c_std=gnu99,c11'] : ['c_std=gnu99'],
 )
 
 fs = import('fs')
@@ -198,16 +233,23 @@ elif host_machine.system() == 'windows'
   program_path = [ 'C:/Program Files/Git/bin', 'C:/Program Files/Git/usr/bin' ]
 endif
 
-cygpath = find_program('cygpath', dirs: program_path, required: false)
-diff = find_program('diff', dirs: program_path)
-git = find_program('git', dirs: program_path, required: false)
-sed = find_program('sed', dirs: program_path)
-shell = find_program('sh', dirs: program_path)
-tar = find_program('tar', dirs: program_path)
+cygpath = find_program('cygpath', dirs: program_path, native: true, required: false)
+diff = find_program('diff', dirs: program_path, native: true)
+git = find_program('git', dirs: program_path, native: true, required: false)
+sed = find_program('sed', dirs: program_path, native: true)
+shell = find_program('sh', dirs: program_path, native: true)
+tar = find_program('tar', dirs: program_path, native: true)
+time = find_program('time', dirs: program_path, required: get_option('benchmarks'))
+
+# Detect the target shell that is used by Git at runtime. Note that we prefer
+# "/bin/sh" over a PATH-based lookup, which provides a working shell on most
+# supported systems. This path is also the default shell path used by our
+# Makefile. This lookup can be overridden via `program_path`.
+target_shell = find_program('sh', dirs: program_path + [ '/bin' ], native: false)
 
 # Sanity-check that programs required for the build exist.
 foreach tool : ['cat', 'cut', 'grep', 'sort', 'tr', 'uname']
-  find_program(tool, dirs: program_path)
+  find_program(tool, dirs: program_path, native: true)
 endforeach
 
 script_environment = environment()
@@ -263,7 +305,9 @@ libgit_sources = [
   'common-init.c',
   'compat/nonblock.c',
   'compat/obstack.c',
+  'compat/open.c',
   'compat/terminal.c',
+  'compiler-tricks/not-constant.c',
   'config.c',
   'connect.c',
   'connected.c',
@@ -310,6 +354,7 @@ libgit_sources = [
   'graph.c',
   'grep.c',
   'hash-lookup.c',
+  'hash.c',
   'hashmap.c',
   'help.c',
   'hex.c',
@@ -337,7 +382,6 @@ libgit_sources = [
   'merge-ll.c',
   'merge-ort.c',
   'merge-ort-wrappers.c',
-  'merge-recursive.c',
   'merge.c',
   'midx.c',
   'midx-write.c',
@@ -352,6 +396,7 @@ libgit_sources = [
   'object-file-convert.c',
   'object-file.c',
   'object-name.c',
+  'object-store.c',
   'object.c',
   'oid-array.c',
   'oidmap.c',
@@ -410,10 +455,10 @@ libgit_sources = [
   'reftable/iter.c',
   'reftable/merged.c',
   'reftable/pq.c',
-  'reftable/reader.c',
   'reftable/record.c',
   'reftable/stack.c',
   'reftable/system.c',
+  'reftable/table.c',
   'reftable/tree.c',
   'reftable/writer.c',
   'remote.c',
@@ -540,6 +585,7 @@ builtin_sources = [
   'builtin/diagnose.c',
   'builtin/diff-files.c',
   'builtin/diff-index.c',
+  'builtin/diff-pairs.c',
   'builtin/diff-tree.c',
   'builtin/diff.c',
   'builtin/difftool.c',
@@ -581,7 +627,6 @@ builtin_sources = [
   'builtin/name-rev.c',
   'builtin/notes.c',
   'builtin/pack-objects.c',
-  'builtin/pack-redundant.c',
   'builtin/pack-refs.c',
   'builtin/patch-id.c',
   'builtin/prune-packed.c',
@@ -632,6 +677,32 @@ builtin_sources = [
   'builtin/write-tree.c',
 ]
 
+third_party_excludes = [
+  ':!contrib',
+  ':!compat/inet_ntop.c',
+  ':!compat/inet_pton.c',
+  ':!compat/nedmalloc',
+  ':!compat/obstack.*',
+  ':!compat/poll',
+  ':!compat/regex',
+  ':!sha1collisiondetection',
+  ':!sha1dc',
+  ':!t/unit-tests/clar',
+  ':!t/t[0-9][0-9][0-9][0-9]*',
+  ':!xdiff',
+]
+
+headers_to_check = []
+if git.found() and fs.exists(meson.project_source_root() / '.git')
+  foreach header : run_command(git, '-C', meson.project_source_root(), 'ls-files', '--deduplicate', '*.h', third_party_excludes, check: true).stdout().split()
+    headers_to_check += header
+  endforeach
+endif
+
+if not get_option('breaking_changes')
+  builtin_sources += 'builtin/pack-redundant.c'
+endif
+
 builtin_sources += custom_target(
   output: 'config-list.h',
   command: [
@@ -659,24 +730,18 @@ builtin_sources += custom_target(
 # build options to our tests.
 build_options_config = configuration_data()
 build_options_config.set('GIT_INTEROP_MAKE_OPTS', '')
-build_options_config.set('GIT_PERF_LARGE_REPO', '')
+build_options_config.set_quoted('GIT_PERF_LARGE_REPO', get_option('benchmark_large_repo'))
 build_options_config.set('GIT_PERF_MAKE_COMMAND', '')
 build_options_config.set('GIT_PERF_MAKE_OPTS', '')
-build_options_config.set('GIT_PERF_REPEAT_COUNT', '')
-build_options_config.set('GIT_PERF_REPO', '')
+build_options_config.set_quoted('GIT_PERF_REPEAT_COUNT', get_option('benchmark_repeat_count').to_string())
+build_options_config.set_quoted('GIT_PERF_REPO', get_option('benchmark_repo'))
 build_options_config.set('GIT_TEST_CMP_USE_COPIED_CONTEXT', '')
 build_options_config.set('GIT_TEST_INDEX_VERSION', '')
 build_options_config.set('GIT_TEST_OPTS', '')
 build_options_config.set('GIT_TEST_PERL_FATAL_WARNINGS', '')
 build_options_config.set_quoted('GIT_TEST_UTF8_LOCALE', get_option('test_utf8_locale'))
 build_options_config.set_quoted('LOCALEDIR', fs.as_posix(get_option('prefix') / get_option('localedir')))
-build_options_config.set('GITWEBDIR', fs.as_posix(get_option('prefix') / get_option('datadir') / 'gitweb'))
-
-if get_option('breaking_changes')
-  build_options_config.set('WITH_BREAKING_CHANGES', 'YesPlease')
-else
-  build_options_config.set('WITH_BREAKING_CHANGES', '')
-endif
+build_options_config.set_quoted('GITWEBDIR', fs.as_posix(get_option('prefix') / get_option('datadir') / 'gitweb'))
 
 if get_option('sane_tool_path').length() != 0
   sane_tool_path = (host_machine.system() == 'windows' ? ';' : ':').join(get_option('sane_tool_path'))
@@ -693,12 +758,7 @@ endif
 # These variables are used for building libgit.a.
 libgit_c_args = [
   '-DBINDIR="' + get_option('bindir') + '"',
-  '-DDEFAULT_EDITOR="' + get_option('default_editor') + '"',
   '-DDEFAULT_GIT_TEMPLATE_DIR="' + get_option('datadir') / 'git-core/templates' + '"',
-  '-DDEFAULT_HELP_FORMAT="' + get_option('default_help_format') + '"',
-  '-DDEFAULT_PAGER="' + get_option('default_pager') + '"',
-  '-DETC_GITATTRIBUTES="' + get_option('gitattributes') + '"',
-  '-DETC_GITCONFIG="' + get_option('gitconfig') + '"',
   '-DFALLBACK_RUNTIME_PREFIX="' + get_option('prefix') + '"',
   '-DGIT_HOST_CPU="' + host_machine.cpu_family() + '"',
   '-DGIT_HTML_PATH="' + get_option('datadir') / 'doc/git-doc"',
@@ -706,8 +766,45 @@ libgit_c_args = [
   '-DGIT_LOCALE_PATH="' + get_option('localedir') + '"',
   '-DGIT_MAN_PATH="' + get_option('mandir') + '"',
   '-DPAGER_ENV="' + get_option('pager_environment') + '"',
-  '-DSHELL_PATH="' + fs.as_posix(shell.full_path()) + '"',
+  '-DSHELL_PATH="' + fs.as_posix(target_shell.full_path()) + '"',
 ]
+
+system_attributes = get_option('gitattributes')
+if system_attributes != ''
+  libgit_c_args += '-DETC_GITATTRIBUTES="' + system_attributes + '"'
+else
+  libgit_c_args += '-DETC_GITATTRIBUTES="' + get_option('sysconfdir') / 'gitattributes"'
+endif
+
+system_config = get_option('gitconfig')
+if system_config != ''
+  libgit_c_args += '-DETC_GITCONFIG="' + system_config + '"'
+else
+  libgit_c_args += '-DETC_GITCONFIG="' + get_option('sysconfdir') / 'gitconfig"'
+endif
+
+editor_opt = get_option('default_editor')
+if editor_opt != '' and editor_opt != 'vi'
+  libgit_c_args += '-DDEFAULT_EDITOR="' + editor_opt + '"'
+endif
+
+pager_opt = get_option('default_pager')
+if pager_opt != '' and pager_opt != 'less'
+  libgit_c_args += '-DDEFAULT_PAGER="' + pager_opt + '"'
+endif
+
+help_format_opt = get_option('default_help_format')
+if help_format_opt == 'platform'
+  if host_machine.system() == 'windows'
+    help_format_opt = 'html'
+  else
+    help_format_opt = 'man'
+  endif
+endif
+if help_format_opt != 'man'
+    libgit_c_args += '-DDEFAULT_HELP_FORMAT="' + help_format_opt + '"'
+endif
+
 libgit_include_directories = [ '.' ]
 libgit_dependencies = [ ]
 
@@ -715,12 +812,14 @@ libgit_dependencies = [ ]
 # Makefile.
 if get_option('warning_level') in ['2','3', 'everything'] and compiler.get_argument_syntax() == 'gcc'
   foreach cflag : [
+    '-Wcomma',
     '-Wdeclaration-after-statement',
     '-Wformat-security',
     '-Wold-style-definition',
     '-Woverflow',
     '-Wpointer-arith',
     '-Wstrict-prototypes',
+    '-Wunreachable-code',
     '-Wunused',
     '-Wvla',
     '-Wwrite-strings',
@@ -737,6 +836,13 @@ if get_option('warning_level') in ['2','3', 'everything'] and compiler.get_argum
       libgit_c_args += cflag
     endif
   endforeach
+endif
+
+if get_option('breaking_changes')
+  build_options_config.set('WITH_BREAKING_CHANGES', 'YesPlease')
+  libgit_c_args += '-DWITH_BREAKING_CHANGES'
+else
+  build_options_config.set('WITH_BREAKING_CHANGES', '')
 endif
 
 if get_option('b_sanitize').contains('address')
@@ -761,6 +867,7 @@ endif
 build_options_config.set_quoted('X', executable_suffix)
 
 python = import('python').find_installation('python3', required: get_option('python'))
+target_python = find_program('python3', native: false, required: python.found())
 if python.found()
   build_options_config.set('NO_PYTHON', '')
 else
@@ -772,7 +879,7 @@ endif
 # features. It is optional if you want to neither execute tests nor use any of
 # these optional features.
 perl_required = get_option('perl')
-if get_option('tests') or get_option('gitweb').enabled() or 'netrc' in get_option('credential_helpers')
+if get_option('benchmarks').enabled() or get_option('gitweb').enabled() or 'netrc' in get_option('credential_helpers')
   perl_required = true
 endif
 
@@ -790,9 +897,11 @@ endif
 # which we can do starting with Meson 1.5.0 and newer, or we have to
 # match against the minor version.
 if meson.version().version_compare('>=1.5.0')
-  perl = find_program('perl', dirs: program_path, required: perl_required, version: '>=5.26.0', version_argument: '-V:version')
+  perl = find_program('perl', dirs: program_path, native: true, required: perl_required, version: '>=5.26.0', version_argument: '-V:version')
+  target_perl = find_program('perl', dirs: program_path, native: false, required: perl.found(), version: '>=5.26.0', version_argument: '-V:version')
 else
-  perl = find_program('perl', dirs: program_path, required: perl_required, version: '>=26')
+  perl = find_program('perl', dirs: program_path, native: true, required: perl_required, version: '>=26')
+  target_perl = find_program('perl', dirs: program_path, native: false, required: perl.found(), version: '>=26')
 endif
 perl_features_enabled = perl.found() and get_option('perl').allowed()
 if perl_features_enabled
@@ -843,7 +952,7 @@ else
   build_options_config.set('NO_PTHREADS', '1')
 endif
 
-msgfmt = find_program('msgfmt', dirs: program_path, required: false)
+msgfmt = find_program('msgfmt', dirs: program_path, native: true, required: false)
 gettext_option = get_option('gettext').disable_auto_if(not msgfmt.found())
 if not msgfmt.found() and gettext_option.enabled()
   error('Internationalization via libintl requires msgfmt')
@@ -966,7 +1075,6 @@ if curl.found()
   # Most executables don't have to link against libcurl, but we still need its
   # include directories so that we can resolve LIBCURL_VERSION in "help.c".
   libgit_dependencies += curl.partial_dependency(includes: true)
-  libgit_c_args += '-DCURL_DISABLE_TYPECHECK'
   build_options_config.set('NO_CURL', '')
 else
   libgit_c_args += '-DNO_CURL'
@@ -1014,10 +1122,6 @@ if compiler.has_header('alloca.h')
   libgit_c_args += '-DHAVE_ALLOCA_H'
 endif
 
-if compiler.has_header('sys/sysinfo.h')
-  libgit_c_args += '-DHAVE_SYSINFO'
-endif
-
 # Windows has libgen.h and a basename implementation, but we still need our own
 # implementation to threat things like drive prefixes specially.
 if host_machine.system() == 'windows' or not compiler.has_header('libgen.h')
@@ -1040,18 +1144,22 @@ if host_machine.system() == 'windows'
     networking_dependencies += winsock
   endif
 else
-  libresolv = compiler.find_library('resolv', required: false)
-  if libresolv.found()
-    networking_dependencies += libresolv
-  endif
+  networking_dependencies += [
+    compiler.find_library('nsl', required: false),
+    compiler.find_library('resolv', required: false),
+    compiler.find_library('socket', required: false),
+  ]
 endif
 libgit_dependencies += networking_dependencies
 
-foreach symbol : ['inet_ntop', 'inet_pton', 'strerror']
-  if not compiler.has_function(symbol, dependencies: networking_dependencies)
-    libgit_c_args += '-DNO_' + symbol.to_upper()
-  endif
-endforeach
+if host_machine.system() != 'windows'
+  foreach symbol : ['inet_ntop', 'inet_pton', 'hstrerror']
+    if not compiler.has_function(symbol, dependencies: networking_dependencies)
+      libgit_c_args += '-DNO_' + symbol.to_upper()
+      libgit_sources += 'compat/' + symbol + '.c'
+    endif
+  endforeach
+endif
 
 has_ipv6 = compiler.has_function('getaddrinfo', dependencies: networking_dependencies)
 if not has_ipv6
@@ -1089,11 +1197,6 @@ else
   build_options_config.set('NO_UNIX_SOCKETS', '1')
 endif
 
-if not compiler.has_function('pread')
-  libgit_c_args += '-DNO_PREAD'
-  libgit_sources += 'compat/pread.c'
-endif
-
 if host_machine.system() == 'darwin'
   libgit_sources += 'compat/precompose_utf8.c'
   libgit_c_args += '-DPRECOMPOSE_UNICODE'
@@ -1107,7 +1210,6 @@ if host_machine.system() == 'cygwin'
   ]
 elif host_machine.system() == 'windows'
   libgit_sources += [
-    'compat/mingw.c',
     'compat/winansi.c',
     'compat/win32/dirent.c',
     'compat/win32/flush.c',
@@ -1134,6 +1236,9 @@ elif host_machine.system() == 'windows'
   libgit_include_directories += 'compat/win32'
   if compiler.get_id() == 'msvc'
     libgit_include_directories += 'compat/vcbuild/include'
+    libgit_sources += 'compat/msvc.c'
+  else
+    libgit_sources += 'compat/mingw.c'
   endif
 endif
 
@@ -1226,6 +1331,10 @@ if host_machine.system() != 'windows'
   endif
 endif
 
+if compiler.has_member('struct sysinfo', 'totalram', prefix: '#include <sys/sysinfo.h>')
+  libgit_c_args += '-DHAVE_SYSINFO'
+endif
+
 if compiler.has_member('struct stat', 'st_mtimespec.tv_nsec', prefix: '#include <sys/stat.h>')
   libgit_c_args += '-DUSE_ST_TIMESPEC'
 elif not compiler.has_member('struct stat', 'st_mtim.tv_nsec', prefix: '#include <sys/stat.h>')
@@ -1244,23 +1353,41 @@ if not compiler.has_member('struct passwd', 'pw_gecos', prefix: '#include <pwd.h
   libgit_c_args += '-DNO_GECOS_IN_PWENT'
 endif
 
+checkfuncs = {
+  'strcasestr' : ['strcasestr.c'],
+  'memmem' : ['memmem.c'],
+  'strlcpy' : ['strlcpy.c'],
+  'strtoull' : [],
+  'setenv' : ['setenv.c'],
+  'mkdtemp' : ['mkdtemp.c'],
+  'initgroups' : [],
+  'strtoumax' : ['strtoumax.c', 'strtoimax.c'],
+  'pread' : ['pread.c'],
+}
+
+if host_machine.system() == 'windows'
+  libgit_c_args += '-DUSE_WIN32_MMAP'
+else
+  checkfuncs += {
+    'mmap' : ['mmap.c'],
+    # provided by compat/mingw.c.
+    'unsetenv' : ['unsetenv.c'],
+    # provided by compat/mingw.c.
+    'getpagesize' : [],
+  }
+endif
+
+foreach func, impls : checkfuncs
+  if not compiler.has_function(func)
+    libgit_c_args += '-DNO_' + func.to_upper()
+    foreach impl : impls
+      libgit_sources += 'compat/' + impl
+    endforeach
+  endif
+endforeach
+
 if compiler.has_function('sync_file_range')
   libgit_c_args += '-DHAVE_SYNC_FILE_RANGE'
-endif
-
-if not compiler.has_function('strcasestr')
-  libgit_c_args += '-DNO_STRCASESTR'
-  libgit_sources += 'compat/strcasestr.c'
-endif
-
-if not compiler.has_function('memmem')
-  libgit_c_args += '-DNO_MEMMEM'
-  libgit_sources += 'compat/memmem.c'
-endif
-
-if not compiler.has_function('strlcpy')
-  libgit_c_args += '-DNO_STRLCPY'
-  libgit_sources += 'compat/strlcpy.c'
 endif
 
 if not compiler.has_function('strdup')
@@ -1268,53 +1395,15 @@ if not compiler.has_function('strdup')
   libgit_sources += 'compat/strdup.c'
 endif
 
-if not compiler.has_function('strtoumax')
-  libgit_c_args += '-DNO_STRTOUMAX'
-  libgit_sources += [
-    'compat/strtoumax.c',
-    'compat/strtoimax.c',
-  ]
-endif
-
-if not compiler.has_function('strtoull')
-  libgit_c_args += '-DNO_STRTOULL'
-endif
-
-if not compiler.has_function('setenv')
-  libgit_c_args += '-DNO_SETENV'
-  libgit_sources += 'compat/setenv.c'
-endif
-
 if not compiler.has_function('qsort')
   libgit_c_args += '-DINTERNAL_QSORT'
 endif
 libgit_sources += 'compat/qsort_s.c'
 
-# unsetenv is provided by compat/mingw.c.
-if host_machine.system() != 'windows' and not compiler.has_function('unsetenv')
-  libgit_c_args += '-DNO_UNSETENV'
-  libgit_sources += 'compat/unsetenv.c'
-endif
-
-if not compiler.has_function('mkdtemp')
-  libgit_c_args += '-DNO_MKDTEMP'
-  libgit_sources += 'compat/mkdtemp.c'
-endif
-
-if not compiler.has_function('initgroups')
-  libgit_c_args += '-DNO_INITGROUPS'
-endif
-
 if compiler.has_function('getdelim')
   libgit_c_args += '-DHAVE_GETDELIM'
 endif
 
-if host_machine.system() == 'windows'
-  libgit_c_args += '-DUSE_WIN32_MMAP'
-elif not compiler.has_function('mmap')
-  libgit_c_args += '-DNO_MMAP'
-  libgit_sources += 'compat/mmap.c'
-endif
 
 if compiler.has_function('clock_gettime')
   libgit_c_args += '-DHAVE_CLOCK_GETTIME'
@@ -1505,10 +1594,19 @@ else
   error('Unsupported CSPRNG backend: ' + csprng_backend)
 endif
 
+git_exec_path = 'libexec/git-core'
+libexec = get_option('libexecdir')
+if libexec != 'libexec' and libexec != '.'
+  git_exec_path = libexec
+endif
+
 if get_option('runtime_prefix')
   libgit_c_args += '-DRUNTIME_PREFIX'
   build_options_config.set('RUNTIME_PREFIX', 'true')
-  git_exec_path = get_option('libexecdir') / 'git-core'
+
+  if git_exec_path.startswith('/')
+    error('runtime_prefix requires a relative libexecdir not:', libexec)
+  endif
 
   if compiler.has_header('mach-o/dyld.h')
     libgit_c_args += '-DHAVE_NS_GET_EXECUTABLE_PATH'
@@ -1545,7 +1643,6 @@ if get_option('runtime_prefix')
   endif
 else
   build_options_config.set('RUNTIME_PREFIX', 'false')
-  git_exec_path = get_option('prefix') / get_option('libexecdir') / 'git-core'
 endif
 libgit_c_args += '-DGIT_EXEC_PATH="' + git_exec_path + '"'
 
@@ -1686,7 +1783,7 @@ bin_wrappers += executable('scalar',
   install_dir: get_option('libexecdir') / 'git-core',
 )
 
-if get_option('curl').enabled()
+if curl.found()
   libgit_curl = declare_dependency(
     sources: [
       'http.c',
@@ -1825,14 +1922,19 @@ if perl_features_enabled
     perl_header_template = 'perl/header_templates/runtime_prefix.template.pl'
   endif
 
+  perllibdir = get_option('perllibdir')
+  if perllibdir == ''
+    perllibdir = get_option('datadir') / 'perl5'
+  endif
+
   perl_header = configure_file(
     input: perl_header_template,
     output: 'GIT-PERL-HEADER',
     configuration: {
       'GITEXECDIR_REL': get_option('libexecdir') / 'git-core',
-      'PERLLIBDIR_REL': get_option('datadir') / 'perl5',
+      'PERLLIBDIR_REL': perllibdir,
       'LOCALEDIR_REL': get_option('datadir') / 'locale',
-      'INSTLIBDIR': get_option('datadir') / 'perl5',
+      'INSTLIBDIR': perllibdir,
       'PATHSEP': pathsep,
     },
   )
@@ -1966,6 +2068,70 @@ endif
 
 subdir('contrib')
 
+exclude_from_check_headers = [
+  'compat/',
+  'unicode-width.h',
+]
+
+if sha1_backend != 'openssl'
+  exclude_from_check_headers += 'sha1/openssl.h'
+endif
+if sha256_backend != 'openssl'
+  exclude_from_check_headers += 'sha256/openssl.h'
+endif
+if sha256_backend != 'nettle'
+  exclude_from_check_headers += 'sha256/nettle.h'
+endif
+if sha256_backend != 'gcrypt'
+  exclude_from_check_headers += 'sha256/gcrypt.h'
+endif
+
+if headers_to_check.length() != 0 and compiler.get_argument_syntax() == 'gcc'
+  hco_targets = []
+  foreach h : headers_to_check
+    skip_header = false
+    foreach exclude : exclude_from_check_headers
+      if h.startswith(exclude)
+        skip_header = true
+        break
+      endif
+    endforeach
+
+    if skip_header
+      continue
+    endif
+
+    hcc = custom_target(
+      input: h,
+      output: h.underscorify() + 'cc',
+      command: [
+        shell,
+        '-c',
+        'echo \'#include "git-compat-util.h"\' > @OUTPUT@ && echo \'#include "' + h + '"\' >> @OUTPUT@'
+      ]
+    )
+
+    hco = custom_target(
+      input: hcc,
+      output: fs.replace_suffix(h.underscorify(), '.hco'),
+      command: [
+        compiler.cmd_array(),
+        libgit_c_args,
+        '-I', meson.project_source_root(),
+        '-I', meson.project_source_root() / 't/unit-tests',
+        '-o', '/dev/null',
+        '-c', '-xc',
+        '@INPUT@'
+      ]
+    )
+    hco_targets += hco
+  endforeach
+
+  # TODO: deprecate 'hdr-check' in lieu of 'check-headers' in Git 2.51+
+  hdr_check = alias_target('hdr-check', hco_targets)
+  alias_target('check-headers', hdr_check)
+endif
+
 foreach key, value : {
   'DIFF': diff.full_path(),
   'GIT_SOURCE_DIR': meson.project_source_root(),
@@ -1974,9 +2140,9 @@ foreach key, value : {
   'GIT_TEST_TEMPLATE_DIR': meson.project_build_root() / 'templates',
   'GIT_TEST_TEXTDOMAINDIR': meson.project_build_root() / 'po',
   'PAGER_ENV': get_option('pager_environment'),
-  'PERL_PATH': perl.found() ? perl.full_path() : '',
-  'PYTHON_PATH': python.found () ? python.full_path() : '',
-  'SHELL_PATH': shell.full_path(),
+  'PERL_PATH': target_perl.found() ? target_perl.full_path() : '',
+  'PYTHON_PATH': target_python.found () ? target_python.full_path() : '',
+  'SHELL_PATH': target_shell.full_path(),
   'TAR': tar.full_path(),
   'TEST_OUTPUT_DIRECTORY': test_output_directory,
   'TEST_SHELL_PATH': shell.full_path(),
@@ -2015,6 +2181,7 @@ meson.add_dist_script(
 )
 
 summary({
+  'benchmarks': get_option('tests') and perl.found() and time.found(),
   'curl': curl.found(),
   'expat': expat.found(),
   'gettext': intl.found(),
@@ -2034,3 +2201,9 @@ summary({
   'sha256': sha256_backend,
   'zlib': zlib_backend,
 }, section: 'Backends')
+
+summary({
+  'perl': target_perl,
+  'python': target_python,
+  'shell': target_shell,
+}, section: 'Runtime executable paths')

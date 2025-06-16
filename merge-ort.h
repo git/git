@@ -1,10 +1,11 @@
 #ifndef MERGE_ORT_H
 #define MERGE_ORT_H
 
-#include "merge-recursive.h"
 #include "hash.h"
+#include "strbuf.h"
 
 struct commit;
+struct commit_list;
 struct tree;
 struct strmap;
 
@@ -43,6 +44,57 @@ struct merge_result {
 	/* Also private */
 	unsigned _properly_initialized;
 };
+
+struct merge_options_internal;
+struct merge_options {
+	struct repository *repo;
+
+	/* ref names used in console messages and conflict markers */
+	const char *ancestor;
+	const char *branch1;
+	const char *branch2;
+
+	/* rename related options */
+	int detect_renames;
+	enum {
+		MERGE_DIRECTORY_RENAMES_NONE = 0,
+		MERGE_DIRECTORY_RENAMES_CONFLICT = 1,
+		MERGE_DIRECTORY_RENAMES_TRUE = 2
+	} detect_directory_renames;
+	int rename_limit;
+	int rename_score;
+	int show_rename_progress;
+
+	/* xdiff-related options (patience, ignore whitespace, ours/theirs) */
+	long xdl_opts;
+	int conflict_style;
+	enum {
+		MERGE_VARIANT_NORMAL = 0,
+		MERGE_VARIANT_OURS,
+		MERGE_VARIANT_THEIRS
+	} recursive_variant;
+
+	/* console output related options */
+	int verbosity;
+	unsigned buffer_output; /* 1: output at end, 2: keep buffered */
+	struct strbuf obuf;     /* output buffer; if buffer_output == 2, caller
+				 * must handle and call strbuf_release */
+
+	/* miscellaneous control options */
+	const char *subtree_shift;
+	unsigned renormalize : 1;
+	unsigned mergeability_only : 1; /* exit early, write fewer objects */
+	unsigned record_conflict_msgs_as_headers : 1;
+	const char *msg_header_prefix;
+
+	/* internal fields used by the implementation */
+	struct merge_options_internal *priv;
+};
+
+/* Mostly internal function also used by merge-ort-wrappers.c */
+struct commit *make_virtual_commit(struct repository *repo,
+				   struct tree *tree,
+				   const char *comment);
 
 /*
  * rename-detecting three-way merge with recursive ancestor consolidation.
@@ -113,5 +165,17 @@ void merge_get_conflicted_files(struct merge_result *result,
 /* Do needed cleanup when not calling merge_switch_to_result() */
 void merge_finalize(struct merge_options *opt,
 		    struct merge_result *result);
+
+
+/* for use by porcelain commands */
+void init_ui_merge_options(struct merge_options *opt, struct repository *repo);
+/* for use by plumbing commands */
+void init_basic_merge_options(struct merge_options *opt, struct repository *repo);
+
+void copy_merge_options(struct merge_options *dst, struct merge_options *src);
+void clear_merge_options(struct merge_options *opt);
+
+/* parse the option in s and update the relevant field of opt */
+int parse_merge_opt(struct merge_options *opt, const char *s);
 
 #endif

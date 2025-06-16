@@ -861,6 +861,9 @@ Markup:
    _<git-dir>_
    _<key-id>_
 
+Characters are also surrounded by underscores:
+   _LF_, _CR_, _CR_/_LF_, _NUL_, _EOF_
+
  Git's Asciidoc processor has been tailored to treat backticked text
  as complex synopsis. When literal and placeholders are mixed, you can
  use the backtick notation which will take care of correctly typesetting

@@ -1,5 +1,5 @@
---rerere-autoupdate::
---no-rerere-autoupdate::
+`--rerere-autoupdate`::
+`--no-rerere-autoupdate`::
 	After the rerere mechanism reuses a recorded resolution on
 	the current conflict to update the files in the working
 	tree, allow it to also update the index with the result of

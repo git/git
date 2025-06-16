@@ -2,26 +2,32 @@
 #define HASH_H
 
 #if defined(SHA1_APPLE)
+#define SHA1_BACKEND "SHA1_APPLE (No collision detection)"
 #include <CommonCrypto/CommonDigest.h>
 #elif defined(SHA1_OPENSSL)
+#  define SHA1_BACKEND "SHA1_OPENSSL (No collision detection)"
 #  include <openssl/sha.h>
 #  if defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 3
 #    define SHA1_NEEDS_CLONE_HELPER
 #    include "sha1/openssl.h"
 #  endif
 #elif defined(SHA1_DC)
+#define SHA1_BACKEND "SHA1_DC"
 #include "sha1dc_git.h"
 #else /* SHA1_BLK */
+#define SHA1_BACKEND "SHA1_BLK (No collision detection)"
 #include "block-sha1/sha1.h"
 #endif
 
 #if defined(SHA1_APPLE_UNSAFE)
+#  define SHA1_UNSAFE_BACKEND "SHA1_APPLE_UNSAFE"
 #  include <CommonCrypto/CommonDigest.h>
 #  define platform_SHA_CTX_unsafe CC_SHA1_CTX
 #  define platform_SHA1_Init_unsafe CC_SHA1_Init
 #  define platform_SHA1_Update_unsafe CC_SHA1_Update
 #  define platform_SHA1_Final_unsafe CC_SHA1_Final
 #elif defined(SHA1_OPENSSL_UNSAFE)
+#  define SHA1_UNSAFE_BACKEND "SHA1_OPENSSL_UNSAFE"
 #  include <openssl/sha.h>
 #  if defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 3
 #    define SHA1_NEEDS_CLONE_HELPER_UNSAFE
@@ -38,6 +44,7 @@
 #    define platform_SHA1_Final_unsafe SHA1_Final
 #  endif
 #elif defined(SHA1_BLK_UNSAFE)
+#  define SHA1_UNSAFE_BACKEND "SHA1_BLK_UNSAFE"
 #  include "block-sha1/sha1.h"
 #  define platform_SHA_CTX_unsafe blk_SHA_CTX
 #  define platform_SHA1_Init_unsafe blk_SHA1_Init
@@ -46,17 +53,21 @@
 #endif
 
 #if defined(SHA256_NETTLE)
+#define SHA256_BACKEND "SHA256_NETTLE"
 #include "sha256/nettle.h"
 #elif defined(SHA256_GCRYPT)
+#define SHA256_BACKEND "SHA256_GCRYPT"
 #define SHA256_NEEDS_CLONE_HELPER
 #include "sha256/gcrypt.h"
 #elif defined(SHA256_OPENSSL)
+#  define SHA256_BACKEND "SHA256_OPENSSL"
 #  include <openssl/sha.h>
 #  if defined(OPENSSL_API_LEVEL) && OPENSSL_API_LEVEL >= 3
 #    define SHA256_NEEDS_CLONE_HELPER
 #    include "sha256/openssl.h"
 #  endif
 #else
+#define SHA256_BACKEND "SHA256_BLK"
 #include "sha256/block/sha256.h"
 #endif
 
@@ -193,17 +204,18 @@ struct object_id {
 	int algo;	/* XXX requires 4-byte alignment */
 };
 
-#define GET_OID_QUIETLY           01
-#define GET_OID_COMMIT            02
-#define GET_OID_COMMITTISH        04
-#define GET_OID_TREE             010
-#define GET_OID_TREEISH          020
-#define GET_OID_BLOB             040
-#define GET_OID_FOLLOW_SYMLINKS 0100
-#define GET_OID_RECORD_PATH     0200
-#define GET_OID_ONLY_TO_DIE    04000
-#define GET_OID_REQUIRE_PATH  010000
-#define GET_OID_HASH_ANY      020000
+#define GET_OID_QUIETLY                  01
+#define GET_OID_COMMIT                   02
+#define GET_OID_COMMITTISH               04
+#define GET_OID_TREE                    010
+#define GET_OID_TREEISH                 020
+#define GET_OID_BLOB                    040
+#define GET_OID_FOLLOW_SYMLINKS        0100
+#define GET_OID_RECORD_PATH            0200
+#define GET_OID_ONLY_TO_DIE           04000
+#define GET_OID_REQUIRE_PATH         010000
+#define GET_OID_HASH_ANY             020000
+#define GET_OID_SKIP_AMBIGUITY_CHECK 040000
 
 #define GET_OID_DISAMBIGUATORS \
 	(GET_OID_COMMIT | GET_OID_COMMITTISH | \
@@ -325,7 +337,7 @@ int hash_algo_by_name(const char *name);
 /* Identical, except based on the format ID. */
 int hash_algo_by_id(uint32_t format_id);
 /* Identical, except based on the length. */
-int hash_algo_by_length(int len);
+int hash_algo_by_length(size_t len);
 /* Identical, except for a pointer to struct git_hash_algo. */
 static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
 {
@@ -340,7 +352,7 @@ static inline int hash_algo_by_ptr(const struct git_hash_algo *p)
 
 const struct git_hash_algo *unsafe_hash_algo(const struct git_hash_algo *algop);
 
-const struct object_id *null_oid(void);
+const struct object_id *null_oid(const struct git_hash_algo *algop);
 
 static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2, const struct git_hash_algo *algop)
 {

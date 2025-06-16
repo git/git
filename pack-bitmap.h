@@ -50,7 +50,8 @@ typedef int (*show_reachable_fn)(
 	int flags,
 	uint32_t hash,
 	struct packed_git *found_pack,
-	off_t found_offset);
+	off_t found_offset,
+	void *payload);
 
 struct bitmap_index;
 
@@ -66,6 +67,13 @@ struct bitmapped_pack {
 
 struct bitmap_index *prepare_bitmap_git(struct repository *r);
 struct bitmap_index *prepare_midx_bitmap_git(struct multi_pack_index *midx);
+
+/*
+ * Given a bitmap index, determine whether it contains the pack either directly
+ * or via the multi-pack-index.
+ */
+int bitmap_index_contains_pack(struct bitmap_index *bitmap, struct packed_git *pack);
+
 void count_bitmap_commit_list(struct bitmap_index *, uint32_t *commits,
 			      uint32_t *trees, uint32_t *blobs, uint32_t *tags);
 void traverse_bitmap_commit_list(struct bitmap_index *,
@@ -77,6 +85,18 @@ int test_bitmap_hashes(struct repository *r);
 int test_bitmap_pseudo_merges(struct repository *r);
 int test_bitmap_pseudo_merge_commits(struct repository *r, uint32_t n);
 int test_bitmap_pseudo_merge_objects(struct repository *r, uint32_t n);
+
+struct list_objects_filter_options;
+
+/*
+ * Filter bitmapped objects and iterate through all resulting objects,
+ * executing `show_reach` for each of them. Returns `-1` in case the filter is
+ * not supported, `0` otherwise.
+ */
+int for_each_bitmapped_object(struct bitmap_index *bitmap_git,
+			      struct list_objects_filter_options *filter,
+			      show_reachable_fn show_reach,
+			      void *payload);
 
 #define GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL \
 	"GIT_TEST_PACK_USE_BITMAP_BOUNDARY_TRAVERSAL"
@@ -104,6 +124,7 @@ int bitmap_has_oid_in_uninteresting(struct bitmap_index *, const struct object_i
 off_t get_disk_usage_from_bitmap(struct bitmap_index *, struct rev_info *);
 
 struct bitmap_writer {
+	struct repository *repo;
 	struct ewah_bitmap *commits;
 	struct ewah_bitmap *trees;
 	struct ewah_bitmap *blobs;
@@ -111,6 +132,7 @@ struct bitmap_writer {
 
 	kh_oid_map_t *bitmaps;
 	struct packing_data *to_pack;
+	struct multi_pack_index *midx; /* if appending to a MIDX chain */
 
 	struct bitmapped_commit *selected;
 	unsigned int selected_nr, selected_alloc;
@@ -125,7 +147,8 @@ struct bitmap_writer {
 };
 
 void bitmap_writer_init(struct bitmap_writer *writer, struct repository *r,
-			struct packing_data *pdata);
+			struct packing_data *pdata,
+			struct multi_pack_index *midx);
 void bitmap_writer_show_progress(struct bitmap_writer *writer, int show);
 void bitmap_writer_set_checksum(struct bitmap_writer *writer,
 				const unsigned char *sha1);

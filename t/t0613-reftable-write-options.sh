@@ -93,6 +93,9 @@ test_expect_success 'many refs results in multiple blocks' '
 		    restarts: 3
 		  - length: 3289
 		    restarts: 3
+		idx:
+		  - length: 103
+		    restarts: 1
 		EOF
 		test-tool dump-reftable -b .git/reftable/*.ref >actual &&
 		test_cmp expect actual
@@ -145,7 +148,7 @@ test_expect_success 'small block size fails with large reflog message' '
 	(
 		cd repo &&
 		test_commit A &&
-		perl -e "print \"a\" x 500" >logmsg &&
+		test-tool genzeros 500 | tr "\000" "a" >logmsg &&
 		cat >expect <<-EOF &&
 		fatal: update_ref failed for ref ${SQ}refs/heads/logme${SQ}: reftable: transaction failure: entry too large
 		EOF
@@ -241,6 +244,9 @@ test_expect_success 'object index gets written by default with ref index' '
 		    restarts: 1
 		  - length: 80
 		    restarts: 1
+		idx:
+		  - length: 55
+		    restarts: 2
 		obj:
 		  - length: 11
 		    restarts: 1
@@ -277,6 +283,9 @@ test_expect_success 'object index can be disabled' '
 		    restarts: 1
 		  - length: 80
 		    restarts: 1
+		idx:
+		  - length: 55
+		    restarts: 2
 		EOF
 		test-tool dump-reftable -b .git/reftable/*.ref >actual &&
 		test_cmp expect actual

@@ -7,7 +7,7 @@
 #include "midx.h"
 #include "strbuf.h"
 #include "trace2.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "replace-object.h"
 #include "repository.h"
 
@@ -245,7 +245,7 @@ static int cmd_multi_pack_index_repack(int argc, const char **argv,
 {
 	struct option *options;
 	static struct option builtin_multi_pack_index_repack_options[] = {
-		OPT_MAGNITUDE(0, "batch-size", &opts.batch_size,
+		OPT_UNSIGNED(0, "batch-size", &opts.batch_size,
 		  N_("during repack, collect pack-files of smaller size into a batch that is larger than this size")),
 		OPT_BIT(0, "progress", &opts.flags,
 		  N_("force progress reporting"), MIDX_PROGRESS),

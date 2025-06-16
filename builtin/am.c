@@ -31,7 +31,7 @@
 #include "preload-index.h"
 #include "sequencer.h"
 #include "revision.h"
-#include "merge-recursive.h"
+#include "merge-ort-wrappers.h"
 #include "log-tree.h"
 #include "notes-utils.h"
 #include "rerere.h"
@@ -850,8 +850,10 @@ static int split_mail_stgit_series(struct am_state *state, const char **paths,
 	series_dir = dirname(series_dir_buf);
 
 	fp = fopen(*paths, "r");
-	if (!fp)
+	if (!fp) {
+		free(series_dir_buf);
 		return error_errno(_("could not open '%s' for reading"), *paths);
+	}
 
 	while (!strbuf_getline_lf(&sb, fp)) {
 		if (*sb.buf == '#')
@@ -1638,12 +1640,13 @@ static int fall_back_threeway(const struct am_state *state, const char *index_pa
 	o.branch1 = "HEAD";
 	their_tree_name = xstrfmt("%.*s", linelen(state->msg), state->msg);
 	o.branch2 = their_tree_name;
+	o.ancestor = "constructed fake ancestor";
 	o.detect_directory_renames = MERGE_DIRECTORY_RENAMES_NONE;
 
 	if (state->quiet)
 		o.verbosity = 0;
 
-	if (merge_recursive_generic(&o, &our_tree, &their_tree, 1, bases, &result)) {
+	if (merge_ort_generic(&o, &our_tree, &their_tree, 1, bases, &result)) {
 		repo_rerere(the_repository, state->allow_rerere_autoupdate);
 		free(their_tree_name);
 		return error(_("Failed to merge in the changes."));
@@ -2399,11 +2402,16 @@ int cmd_am(int argc,
 		OPT_CMDMODE(0, "quit", &resume_mode,
 			N_("abort the patching operation but keep HEAD where it is"),
 			RESUME_QUIT),
-		{ OPTION_CALLBACK, 0, "show-current-patch", &resume_mode,
-		  "(diff|raw)",
-		  N_("show the patch being applied"),
-		  PARSE_OPT_CMDMODE | PARSE_OPT_OPTARG | PARSE_OPT_NONEG | PARSE_OPT_LITERAL_ARGHELP,
-		  parse_opt_show_current_patch, RESUME_SHOW_PATCH_RAW },
+		{
+			.type = OPTION_CALLBACK,
+			.long_name = "show-current-patch",
+			.value = &resume_mode,
+			.argh = "(diff|raw)",
+			.help = N_("show the patch being applied"),
+			.flags = PARSE_OPT_CMDMODE | PARSE_OPT_OPTARG | PARSE_OPT_NONEG | PARSE_OPT_LITERAL_ARGHELP,
+			.callback = parse_opt_show_current_patch,
+			.defval = RESUME_SHOW_PATCH_RAW,
+		},
 		OPT_CMDMODE(0, "retry", &resume_mode,
 			N_("try to apply current patch again"),
 			RESUME_APPLY),
@@ -2416,9 +2424,16 @@ int cmd_am(int argc,
 		OPT_BOOL(0, "ignore-date", &state.ignore_date,
 			N_("use current timestamp for author date")),
 		OPT_RERERE_AUTOUPDATE(&state.allow_rerere_autoupdate),
-		{ OPTION_STRING, 'S', "gpg-sign", &state.sign_commit, N_("key-id"),
-		  N_("GPG-sign commits"),
-		  PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
+		{
+			.type = OPTION_STRING,
+			.short_name = 'S',
+			.long_name = "gpg-sign",
+			.value = &state.sign_commit,
+			.argh = N_("key-id"),
+			.help = N_("GPG-sign commits"),
+			.flags = PARSE_OPT_OPTARG,
+			.defval = (intptr_t) "",
+		},
 		OPT_CALLBACK_F(0, "empty", &state.empty_type, "(stop|drop|keep)",
 		  N_("how to handle empty patches"),
 		  PARSE_OPT_NONEG, am_option_parse_empty),

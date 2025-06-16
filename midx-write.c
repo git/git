@@ -647,18 +647,24 @@ static uint32_t *midx_pack_order(struct write_midx_context *ctx)
 	return pack_order;
 }
 
-static void write_midx_reverse_index(char *midx_name, unsigned char *midx_hash,
-				     struct write_midx_context *ctx)
+static void write_midx_reverse_index(struct write_midx_context *ctx,
+				     const char *object_dir,
+				     unsigned char *midx_hash)
 {
 	struct strbuf buf = STRBUF_INIT;
 	char *tmp_file;
 
 	trace2_region_enter("midx", "write_midx_reverse_index", ctx->repo);
 
-	strbuf_addf(&buf, "%s-%s.rev", midx_name, hash_to_hex_algop(midx_hash,
-								    ctx->repo->hash_algo));
+	if (ctx->incremental)
+		get_split_midx_filename_ext(ctx->repo->hash_algo, &buf,
+					    object_dir, midx_hash,
+					    MIDX_EXT_REV);
+	else
+		get_midx_filename_ext(ctx->repo->hash_algo, &buf, object_dir,
+				      midx_hash, MIDX_EXT_REV);
 
-	tmp_file = write_rev_file_order(ctx->repo->hash_algo, NULL, ctx->pack_order,
+	tmp_file = write_rev_file_order(ctx->repo, NULL, ctx->pack_order,
 					ctx->entries_nr, midx_hash, WRITE_REV);
 
 	if (finalize_object_file(tmp_file, buf.buf))
@@ -708,7 +714,7 @@ static int add_ref_to_pending(const char *refname, const char *referent UNUSED,
 	if (!peel_iterated_oid(revs->repo, oid, &peeled))
 		oid = &peeled;
 
-	object = parse_object_or_die(oid, refname);
+	object = parse_object_or_die(revs->repo, oid, refname);
 	if (object->type != OBJ_COMMIT)
 		return 0;
 
@@ -768,7 +774,7 @@ static int read_refs_snapshot(const char *refs_snapshot,
 		if (*end)
 			die(_("malformed line: %s"), buf.buf);
 
-		object = parse_object_or_die(&oid, NULL);
+		object = parse_object_or_die(revs->repo, &oid, NULL);
 		if (preferred)
 			object->flags |= NEEDS_BITMAP;
 
@@ -829,22 +835,29 @@ static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr
 	return cb.commits;
 }
 
-static int write_midx_bitmap(struct repository *r, const char *midx_name,
+static int write_midx_bitmap(struct write_midx_context *ctx,
+			     const char *object_dir,
 			     const unsigned char *midx_hash,
 			     struct packing_data *pdata,
 			     struct commit **commits,
 			     uint32_t commits_nr,
-			     uint32_t *pack_order,
 			     unsigned flags)
 {
 	int ret, i;
 	uint16_t options = 0;
 	struct bitmap_writer writer;
 	struct pack_idx_entry **index;
-	char *bitmap_name = xstrfmt("%s-%s.bitmap", midx_name,
-				    hash_to_hex_algop(midx_hash, r->hash_algo));
+	struct strbuf bitmap_name = STRBUF_INIT;
 
-	trace2_region_enter("midx", "write_midx_bitmap", r);
+	trace2_region_enter("midx", "write_midx_bitmap", ctx->repo);
+
+	if (ctx->incremental)
+		get_split_midx_filename_ext(ctx->repo->hash_algo, &bitmap_name,
+					    object_dir, midx_hash,
+					    MIDX_EXT_BITMAP);
+	else
+		get_midx_filename_ext(ctx->repo->hash_algo, &bitmap_name,
+				      object_dir, midx_hash, MIDX_EXT_BITMAP);
 
 	if (flags & MIDX_WRITE_BITMAP_HASH_CACHE)
 		options |= BITMAP_OPT_HASH_CACHE;
@@ -861,7 +874,8 @@ static int write_midx_bitmap(struct repository *r, const char *midx_name,
 	for (i = 0; i < pdata->nr_objects; i++)
 		index[i] = &pdata->objects[i].idx;
 
-	bitmap_writer_init(&writer, r, pdata);
+	bitmap_writer_init(&writer, ctx->repo, pdata,
+			   ctx->incremental ? ctx->base_midx : NULL);
 	bitmap_writer_show_progress(&writer, flags & MIDX_PROGRESS);
 	bitmap_writer_build_type_index(&writer, index);
 
@@ -879,7 +893,7 @@ static int write_midx_bitmap(struct repository *r, const char *midx_name,
 	 * bitmap_writer_finish().
 	 */
 	for (i = 0; i < pdata->nr_objects; i++)
-		index[pack_order[i]] = &pdata->objects[i].idx;
+		index[ctx->pack_order[i]] = &pdata->objects[i].idx;
 
 	bitmap_writer_select_commits(&writer, commits, commits_nr);
 	ret = bitmap_writer_build(&writer);
@@ -887,14 +901,14 @@ static int write_midx_bitmap(struct repository *r, const char *midx_name,
 		goto cleanup;
 
 	bitmap_writer_set_checksum(&writer, midx_hash);
-	bitmap_writer_finish(&writer, index, bitmap_name, options);
+	bitmap_writer_finish(&writer, index, bitmap_name.buf, options);
 
 cleanup:
 	free(index);
-	free(bitmap_name);
+	strbuf_release(&bitmap_name);
 	bitmap_writer_free(&writer);
 
-	trace2_region_leave("midx", "write_midx_bitmap", r);
+	trace2_region_leave("midx", "write_midx_bitmap", ctx->repo);
 
 	return ret;
 }
@@ -1077,8 +1091,6 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 	ctx.repo = r;
 
 	ctx.incremental = !!(flags & MIDX_WRITE_INCREMENTAL);
-	if (ctx.incremental && (flags & MIDX_WRITE_BITMAP))
-		die(_("cannot write incremental MIDX with bitmap"));
 
 	if (ctx.incremental)
 		strbuf_addf(&midx_name,
@@ -1086,7 +1098,7 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 			    object_dir);
 	else
 		get_midx_filename(r->hash_algo, &midx_name, object_dir);
-	if (safe_create_leading_directories(midx_name.buf))
+	if (safe_create_leading_directories(r, midx_name.buf))
 		die_errno(_("unable to create leading directories of %s"),
 			  midx_name.buf);
 
@@ -1119,6 +1131,13 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 	if (ctx.incremental) {
 		struct multi_pack_index *m = ctx.base_midx;
 		while (m) {
+			if (flags & MIDX_WRITE_BITMAP && load_midx_revindex(m)) {
+				error(_("could not load reverse index for MIDX %s"),
+				      hash_to_hex_algop(get_midx_checksum(m),
+							m->repo->hash_algo));
+				result = 1;
+				goto cleanup;
+			}
 			ctx.num_multi_pack_indexes_before++;
 			m = m->base_midx;
 		}
@@ -1342,10 +1361,12 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 			return -1;
 		}
 
-		f = hashfd(get_tempfile_fd(incr), get_tempfile_path(incr));
+		f = hashfd(r->hash_algo, get_tempfile_fd(incr),
+			   get_tempfile_path(incr));
 	} else {
 		hold_lock_file_for_update(&lk, midx_name.buf, LOCK_DIE_ON_ERROR);
-		f = hashfd(get_lock_file_fd(&lk), get_lock_file_path(&lk));
+		f = hashfd(r->hash_algo, get_lock_file_fd(&lk),
+			   get_lock_file_path(&lk));
 	}
 
 	cf = init_chunkfile(f);
@@ -1387,7 +1408,7 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 
 	if (flags & MIDX_WRITE_REV_INDEX &&
 	    git_env_bool("GIT_TEST_MIDX_WRITE_REV", 0))
-		write_midx_reverse_index(midx_name.buf, midx_hash, &ctx);
+		write_midx_reverse_index(&ctx, object_dir, midx_hash);
 
 	if (flags & MIDX_WRITE_BITMAP) {
 		struct packing_data pdata;
@@ -1410,8 +1431,8 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 		FREE_AND_NULL(ctx.entries);
 		ctx.entries_nr = 0;
 
-		if (write_midx_bitmap(r, midx_name.buf, midx_hash, &pdata,
-				      commits, commits_nr, ctx.pack_order,
+		if (write_midx_bitmap(&ctx, object_dir,
+				      midx_hash, &pdata, commits, commits_nr,
 				      flags) < 0) {
 			error(_("could not write multi-pack bitmap"));
 			result = 1;
@@ -1545,7 +1566,7 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 					  _("Counting referenced objects"),
 					  m->num_objects);
 	for (i = 0; i < m->num_objects; i++) {
-		int pack_int_id = nth_midxed_pack_int_id(m, i);
+		uint32_t pack_int_id = nth_midxed_pack_int_id(m, i);
 		count[pack_int_id]++;
 		display_progress(progress, i + 1);
 	}
@@ -1676,21 +1697,31 @@ static void fill_included_packs_batch(struct repository *r,
 
 	total_size = 0;
 	for (i = 0; total_size < batch_size && i < m->num_packs; i++) {
-		int pack_int_id = pack_info[i].pack_int_id;
+		uint32_t pack_int_id = pack_info[i].pack_int_id;
 		struct packed_git *p = m->packs[pack_int_id];
-		size_t expected_size;
+		uint64_t expected_size;
 
 		if (!want_included_pack(r, m, pack_kept_objects, pack_int_id))
 			continue;
 
-		expected_size = st_mult(p->pack_size,
-					pack_info[i].referenced_objects);
+		/*
+		 * Use shifted integer arithmetic to calculate the
+		 * expected pack size to ~4 significant digits without
+		 * overflow for packsizes less that 1PB.
+		 */
+		expected_size = (uint64_t)pack_info[i].referenced_objects << 14;
 		expected_size /= p->num_objects;
+		expected_size = u64_mult(expected_size, p->pack_size);
+		expected_size = u64_add(expected_size, 1u << 13) >> 14;
 
 		if (expected_size >= batch_size)
 			continue;
 
-		total_size += expected_size;
+		if (unsigned_add_overflows(total_size, (size_t)expected_size))
+			total_size = SIZE_MAX;
+		else
+			total_size += expected_size;
+
 		include_pack[pack_int_id] = 1;
 	}
 

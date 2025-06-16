@@ -324,6 +324,8 @@ static int ssl_socket_connect(struct imap_socket *sock,
 		cert = SSL_get_peer_certificate(sock->ssl);
 		if (!cert)
 			return error("unable to get peer certificate.");
+		if (SSL_get_verify_result(sock->ssl) != X509_V_OK)
+			return error("unable to verify peer certificate");
 		if (verify_hostname(cert, cfg->host) < 0)
 			return -1;
 	}
@@ -1418,7 +1420,7 @@ static CURL *setup_curl(struct imap_server_conf *srvc, struct credential *cred)
 
 	curl_easy_setopt(curl, CURLOPT_URL, path.buf);
 	strbuf_release(&path);
-	curl_easy_setopt(curl, CURLOPT_PORT, srvc->port);
+	curl_easy_setopt(curl, CURLOPT_PORT, (long)srvc->port);
 
 	if (srvc->auth_method) {
 		struct strbuf auth = STRBUF_INIT;
@@ -1431,8 +1433,8 @@ static CURL *setup_curl(struct imap_server_conf *srvc, struct credential *cred)
 	if (!srvc->use_ssl)
 		curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_TRY);
 
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, srvc->ssl_verify);
-	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, srvc->ssl_verify);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, (long)srvc->ssl_verify);
+	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, (long)srvc->ssl_verify);
 
 	curl_easy_setopt(curl, CURLOPT_READFUNCTION, fread_buffer);
 

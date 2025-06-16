@@ -4,12 +4,20 @@
  * Use of this source code is governed by a BSD-style
  * license that can be found in the LICENSE file or at
  * https://developers.google.com/open-source/licenses/bsd
-*/
+ */
 
 #ifndef REFTABLE_BASICS_H
 #define REFTABLE_BASICS_H
 
 #include <stddef.h>
+
+/* A buffer that contains arbitrary byte slices. */
+struct reftable_buf {
+	size_t alloc;
+	size_t len;
+	char *buf;
+};
+#define REFTABLE_BUF_INIT { 0 }
 
 /*
  * Hash functions understood by the reftable library. Note that the values are

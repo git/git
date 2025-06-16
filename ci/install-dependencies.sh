@@ -9,7 +9,7 @@ begin_group "Install dependencies"
 
 P4WHENCE=https://cdist2.perforce.com/perforce/r23.2
 LFSWHENCE=https://github.com/github/git-lfs/releases/download/v$LINUX_GIT_LFS_VERSION
-JGITWHENCE=https://repo.eclipse.org/content/groups/releases//org/eclipse/jgit/org.eclipse.jgit.pgm/6.8.0.202311291450-r/org.eclipse.jgit.pgm-6.8.0.202311291450-r.sh
+JGITWHENCE=https://repo1.maven.org/maven2/org/eclipse/jgit/org.eclipse.jgit.pgm/6.8.0.202311291450-r/org.eclipse.jgit.pgm-6.8.0.202311291450-r.sh
 
 # Make sudo a no-op and execute the command directly when running as root.
 # While using sudo would be fine on most platforms when we are root already,
@@ -31,7 +31,7 @@ alpine-*)
 	;;
 fedora-*|almalinux-*)
 	dnf -yq update >/dev/null &&
-	dnf -yq install shadow-utils sudo make gcc findutils diffutils perl python3 gettext zlib-devel expat-devel openssl-devel curl-devel pcre2-devel >/dev/null
+	dnf -yq install shadow-utils sudo make gcc findutils diffutils perl python3 gawk gettext zlib-devel expat-devel openssl-devel curl-devel pcre2-devel >/dev/null
 	;;
 ubuntu-*|i386/ubuntu-*|debian-*)
 	# Required so that apt doesn't wait for user input on certain packages.
@@ -66,16 +66,24 @@ ubuntu-*|i386/ubuntu-*|debian-*)
 		mkdir --parents "$CUSTOM_PATH"
 
 		wget --quiet --directory-prefix="$CUSTOM_PATH" \
-			"$P4WHENCE/bin.linux26x86_64/p4d" "$P4WHENCE/bin.linux26x86_64/p4"
-		chmod a+x "$CUSTOM_PATH/p4d" "$CUSTOM_PATH/p4"
+			"$P4WHENCE/bin.linux26x86_64/p4d" \
+			"$P4WHENCE/bin.linux26x86_64/p4" &&
+		chmod a+x "$CUSTOM_PATH/p4d" "$CUSTOM_PATH/p4" || {
+			rm -f "$CUSTOM_PATH/p4"
+			rm -f "$CUSTOM_PATH/p4d"
+		}
 
-		wget --quiet "$LFSWHENCE/git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
+		wget --quiet \
+		     "$LFSWHENCE/git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz" &&
 		tar -xzf "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz" \
-			-C "$CUSTOM_PATH" --strip-components=1 "git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs"
-		rm "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz"
+			-C "$CUSTOM_PATH" --strip-components=1 \
+			"git-lfs-$LINUX_GIT_LFS_VERSION/git-lfs" &&
+		rm "git-lfs-linux-amd64-$LINUX_GIT_LFS_VERSION.tar.gz" ||
+		rm -f "$CUSTOM_PATH/git-lfs"
 
-		wget --quiet "$JGITWHENCE" --output-document="$CUSTOM_PATH/jgit"
-		chmod a+x "$CUSTOM_PATH/jgit"
+		wget --quiet "$JGITWHENCE" --output-document="$CUSTOM_PATH/jgit" &&
+		chmod a+x "$CUSTOM_PATH/jgit" ||
+		rm -f "$CUSTOM_PATH/jgit"
 		;;
 	esac
 	;;
@@ -119,7 +127,7 @@ StaticAnalysis)
 sparse)
 	sudo apt-get -q update -q
 	sudo apt-get -q -y install libssl-dev libcurl4-openssl-dev \
-		libexpat-dev gettext zlib1g-dev
+		libexpat-dev gettext zlib1g-dev sparse
 	;;
 Documentation)
 	sudo apt-get -q update
@@ -138,7 +146,7 @@ then
 	echo "$(tput setaf 6)Perforce Client Version$(tput sgr0)"
 	p4 -V
 else
-	echo >&2 "WARNING: perforce wasn't installed, see above for clues why"
+	echo >&2 "::warning:: perforce wasn't installed, see above for clues why"
 fi
 
 if type git-lfs >/dev/null 2>&1
@@ -146,7 +154,7 @@ then
 	echo "$(tput setaf 6)Git-LFS Version$(tput sgr0)"
 	git-lfs version
 else
-	echo >&2 "WARNING: git-lfs wasn't installed, see above for clues why"
+	echo >&2 "::warning:: git-lfs wasn't installed, see above for clues why"
 fi
 
 if type jgit >/dev/null 2>&1
@@ -154,7 +162,7 @@ then
 	echo "$(tput setaf 6)JGit Version$(tput sgr0)"
 	jgit version
 else
-	echo >&2 "WARNING: JGit wasn't installed, see above for clues why"
+	echo >&2 "::warning:: JGit wasn't installed, see above for clues why"
 fi
 
 end_group "Install dependencies"

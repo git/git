@@ -14,9 +14,8 @@
 #include "gettext.h"
 #include "hex.h"
 #include "refs.h"
-#include "object-file.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 #include "pager.h"
 #include "color.h"
 #include "commit.h"
@@ -29,6 +28,7 @@
 #include "tag.h"
 #include "reflog-walk.h"
 #include "patch-ids.h"
+#include "path.h"
 #include "shortlog.h"
 #include "remote.h"
 #include "string-list.h"
@@ -2311,7 +2311,7 @@ int cmd_format_patch(int argc,
 		 */
 		saved = repo_settings_get_shared_repository(the_repository);
 		repo_settings_set_shared_repository(the_repository, 0);
-		switch (safe_create_leading_directories_const(output_directory)) {
+		switch (safe_create_leading_directories_const(the_repository, output_directory)) {
 		case SCLD_OK:
 		case SCLD_EXISTS:
 			break;
@@ -2468,7 +2468,7 @@ int cmd_format_patch(int argc,
 	base = get_base_commit(&cfg, list, nr);
 	if (base) {
 		reset_revision_walk();
-		clear_object_flags(UNINTERESTING);
+		clear_object_flags(the_repository, UNINTERESTING);
 		prepare_bases(&bases, base, list, nr);
 	}
 

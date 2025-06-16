@@ -8,7 +8,8 @@
 #include "gettext.h"
 #include "git-zlib.h"
 #include "hex.h"
-#include "object-store-ll.h"
+#include "object-file.h"
+#include "object-store.h"
 #include "object.h"
 #include "delta.h"
 #include "pack.h"
@@ -448,7 +449,8 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 		delta_data = get_data(delta_size);
 		if (!delta_data)
 			return;
-		if (repo_has_object_file(the_repository, &base_oid))
+		if (has_object(the_repository, &base_oid,
+			       HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
 			; /* Ok we have this one */
 		else if (resolve_against_held(nr, &base_oid,
 					      delta_data, delta_size))
@@ -505,7 +507,7 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 			 * has not been resolved yet.
 			 */
 			oidclr(&obj_list[nr].oid, the_repository->hash_algo);
-			add_delta_to_list(nr, null_oid(), base_offset,
+			add_delta_to_list(nr, null_oid(the_hash_algo), base_offset,
 					  delta_data, delta_size);
 			return;
 		}
@@ -553,7 +555,8 @@ static void unpack_one(unsigned nr)
 
 	switch (type) {
 	case OBJ_BLOB:
-		if (!dry_run && size > big_file_threshold) {
+		if (!dry_run &&
+		    size > repo_settings_get_big_file_threshold(the_repository)) {
 			stream_blob(size, nr);
 			return;
 		}
@@ -668,6 +671,7 @@ int cmd_unpack_objects(int argc,
 	the_hash_algo->init_fn(&ctx);
 	unpack_all();
 	git_hash_update(&ctx, buffer, offset);
+	the_hash_algo->init_fn(&tmp_ctx);
 	git_hash_clone(&tmp_ctx, &ctx);
 	git_hash_final_oid(&oid, &tmp_ctx);
 	if (strict) {

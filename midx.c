@@ -5,7 +5,6 @@
 #include "dir.h"
 #include "hex.h"
 #include "packfile.h"
-#include "object-file.h"
 #include "hash-lookup.h"
 #include "midx.h"
 #include "progress.h"
@@ -13,6 +12,8 @@
 #include "chunk-format.h"
 #include "pack-bitmap.h"
 #include "pack-revindex.h"
+
+#define MIDX_PACK_ERROR ((void *)(intptr_t)-1)
 
 int midx_checksum_valid(struct multi_pack_index *m);
 void clear_midx_files_ext(const char *object_dir, const char *ext,
@@ -406,7 +407,7 @@ void close_midx(struct multi_pack_index *m)
 	munmap((unsigned char *)m->data, m->data_len);
 
 	for (i = 0; i < m->num_packs; i++) {
-		if (m->packs[i])
+		if (m->packs[i] && m->packs[i] != MIDX_PACK_ERROR)
 			m->packs[i]->multi_pack_index = 0;
 	}
 	FREE_AND_NULL(m->packs);
@@ -459,6 +460,8 @@ int prepare_midx_pack(struct repository *r, struct multi_pack_index *m,
 
 	pack_int_id = midx_for_pack(&m, pack_int_id);
 
+	if (m->packs[pack_int_id] == MIDX_PACK_ERROR)
+		return 1;
 	if (m->packs[pack_int_id])
 		return 0;
 
@@ -483,8 +486,10 @@ int prepare_midx_pack(struct repository *r, struct multi_pack_index *m,
 	strbuf_release(&pack_name);
 	strbuf_release(&key);
 
-	if (!p)
+	if (!p) {
+		m->packs[pack_int_id] = MIDX_PACK_ERROR;
 		return 1;
+	}
 
 	p->multi_pack_index = 1;
 	m->packs[pack_int_id] = p;
@@ -496,6 +501,8 @@ struct packed_git *nth_midxed_pack(struct multi_pack_index *m,
 				   uint32_t pack_int_id)
 {
 	uint32_t local_pack_int_id = midx_for_pack(&m, pack_int_id);
+	if (m->packs[local_pack_int_id] == MIDX_PACK_ERROR)
+		return NULL;
 	return m->packs[local_pack_int_id];
 }
 
@@ -747,7 +754,8 @@ int prepare_multi_pack_index_one(struct repository *r, const char *object_dir, i
 
 int midx_checksum_valid(struct multi_pack_index *m)
 {
-	return hashfile_checksum_valid(m->data, m->data_len);
+	return hashfile_checksum_valid(m->repo->hash_algo,
+				       m->data, m->data_len);
 }
 
 struct clear_midx_data {

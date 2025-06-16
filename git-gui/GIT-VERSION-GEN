@@ -1,19 +1,33 @@
 #!/bin/sh
 
-GVF=GIT-VERSION-FILE
 DEF_VER=0.21.GITGUI
 
 LF='
 '
 
+if test "$#" -ne 2
+then
+	echo >&2 "usage: $0 <SOURCE_DIR> <OUTPUT>"
+	exit 1
+fi
+
+SOURCE_DIR="$1"
+OUTPUT="$2"
+
+# Protect us from reading Git version information outside of the Git directory
+# in case it is not a repository itself, but embedded in an unrelated
+# repository.
+GIT_CEILING_DIRECTORIES="$SOURCE_DIR/.."
+export GIT_CEILING_DIRECTORIES
+
 tree_search ()
 {
 	head=$1
 	tree=$2
-	for p in $(git rev-list --parents --max-count=1 $head 2>/dev/null)
+	for p in $(git -C "$SOURCE_DIR" rev-list --parents --max-count=1 $head 2>/dev/null)
 	do
-		test $tree = $(git rev-parse $p^{tree} 2>/dev/null) &&
-		vn=$(git describe --abbrev=4 $p 2>/dev/null) &&
+		test $tree = $(git -C "$SOURCE_DIR" rev-parse $p^{tree} 2>/dev/null) &&
+		vn=$(git -C "$SOURCE_DIR" describe --abbrev=4 $p 2>/dev/null) &&
 		case "$vn" in
 		gitgui-[0-9]*) echo $vn; break;;
 		esac
@@ -34,14 +48,14 @@ tree_search ()
 # If we are at the toplevel or the merge assumption fails
 # try looking for a gitgui-* tag.
 
-if test -f version &&
-   VN=$(cat version)
+if test -f "$SOURCE_DIR"/version &&
+   VN=$(cat "$SOURCE_DIR"/version)
 then
 	: happy
-elif prefix="$(git rev-parse --show-prefix 2>/dev/null)"
+elif prefix="$(git -C "$SOURCE_DIR" rev-parse --show-prefix 2>/dev/null)"
    test -n "$prefix" &&
-   head=$(git rev-list --max-count=1 HEAD -- . 2>/dev/null) &&
-   tree=$(git rev-parse --verify "HEAD:$prefix" 2>/dev/null) &&
+   head=$(git -C "$SOURCE_DIR" rev-list --max-count=1 HEAD -- . 2>/dev/null) &&
+   tree=$(git -C "$SOURCE_DIR" rev-parse --verify "HEAD:$prefix" 2>/dev/null) &&
    VN=$(tree_search $head $tree)
    case "$VN" in
    gitgui-[0-9]*) : happy ;;
@@ -49,7 +63,7 @@ elif prefix="$(git rev-parse --show-prefix 2>/dev/null)"
    esac
 then
 	VN=$(echo "$VN" | sed -e 's/^gitgui-//;s/-/./g');
-elif VN=$(git describe --abbrev=4 HEAD 2>/dev/null) &&
+elif VN=$(git -C "$SOURCE_DIR" describe --abbrev=4 HEAD 2>/dev/null) &&
    case "$VN" in
    gitgui-[0-9]*) : happy ;;
    *) (exit 1) ;;
@@ -60,7 +74,7 @@ else
 	VN="$DEF_VER"
 fi
 
-dirty=$(sh -c 'git diff-index --name-only HEAD' 2>/dev/null) || dirty=
+dirty=$(git -C "$SOURCE_DIR" diff-index --name-only HEAD 2>/dev/null) || dirty=
 case "$dirty" in
 '')
 	;;
@@ -68,13 +82,13 @@ case "$dirty" in
 	VN="$VN-dirty" ;;
 esac
 
-if test -r $GVF
+if test -r "$OUTPUT"
 then
-	VC=$(sed -e 's/^GITGUI_VERSION = //' <$GVF)
+	VC=$(sed -e 's/^GITGUI_VERSION=//' <"$OUTPUT")
 else
 	VC=unset
 fi
 test "$VN" = "$VC" || {
-	echo >&2 "GITGUI_VERSION = $VN"
-	echo "GITGUI_VERSION = $VN" >$GVF
+	echo >&2 "GITGUI_VERSION=$VN"
+	echo "GITGUI_VERSION=$VN" >"$OUTPUT"
 }

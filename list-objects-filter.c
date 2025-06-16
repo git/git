@@ -12,7 +12,7 @@
 #include "oidmap.h"
 #include "oidset.h"
 #include "object-name.h"
-#include "object-store-ll.h"
+#include "object-store.h"
 
 /* Remember to update object flag allocation in object.h */
 /*
@@ -244,7 +244,7 @@ static void filter_trees_free(void *filter_data) {
 	struct filter_trees_depth_data *d = filter_data;
 	if (!d)
 		return;
-	oidmap_free(&d->seen_at_depth, 1);
+	oidmap_clear(&d->seen_at_depth, 1);
 	free(d);
 }
 
