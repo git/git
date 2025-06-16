@@ -2940,7 +2940,7 @@ static ssize_t write_pair(int fd, const char *key, const char *value,
 	if (value[0] == ' ')
 		quote = "\"";
 	for (i = 0; value[i]; i++)
-		if (value[i] == ';' || value[i] == '#')
+		if (value[i] == ';' || value[i] == '#' || value[i] == '\r')
 			quote = "\"";
 	if (i && value[i - 1] == ' ')
 		quote = "\"";

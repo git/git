@@ -75,7 +75,7 @@ proc update_indexinfo {msg path_list after} {
 	if {$batch > 25} {set batch 25}
 
 	set status_bar_operation [$::main_status start $msg [mc "files"]]
-	set fd [git_write update-index -z --index-info]
+	set fd [git_write [list update-index -z --index-info]]
 	fconfigure $fd \
 		-blocking 0 \
 		-buffering full \
@@ -144,7 +144,7 @@ proc update_index {msg path_list after} {
 	if {$batch > 25} {set batch 25}
 
 	set status_bar_operation [$::main_status start $msg [mc "files"]]
-	set fd [git_write update-index --add --remove -z --stdin]
+	set fd [git_write [list update-index --add --remove -z --stdin]]
 	fconfigure $fd \
 		-blocking 0 \
 		-buffering full \
@@ -218,13 +218,13 @@ proc checkout_index {msg path_list after capture_error} {
 	if {$batch > 25} {set batch 25}
 
 	set status_bar_operation [$::main_status start $msg [mc "files"]]
-	set fd [git_write checkout-index \
+	set fd [git_write [list checkout-index \
 		--index \
 		--quiet \
 		--force \
 		-z \
 		--stdin \
-		]
+		]]
 	fconfigure $fd \
 		-blocking 0 \
 		-buffering full \
