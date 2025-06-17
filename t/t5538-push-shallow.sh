@@ -123,4 +123,45 @@ EOF
 	git cat-file blob $(echo 1|git hash-object --stdin) >/dev/null
 	)
 '
+
+test_expect_success 'push new commit from shallow clone has correct object count' '
+	git init origin &&
+	test_commit -C origin a &&
+	test_commit -C origin b &&
+
+	git clone --depth=1 "file://$(pwd)/origin" client &&
+	git -C client checkout -b topic &&
+	git -C client commit --allow-empty -m "empty" &&
+	GIT_PROGRESS_DELAY=0 git -C client push --progress origin topic 2>err &&
+	test_grep "Enumerating objects: 1, done." err
+'
+
+test_expect_success 'push new commit from shallow clone has good deltas' '
+	git init base &&
+	test_seq 1 999 >base/a &&
+	test_commit -C base initial &&
+	git -C base add a &&
+	git -C base commit -m "big a" &&
+
+	git clone --depth=1 "file://$(pwd)/base" deltas &&
+	git -C deltas checkout -b deltas &&
+	test_seq 1 1000 >deltas/a &&
+	git -C deltas commit -a -m "bigger a" &&
+	GIT_PROGRESS_DELAY=0 git -C deltas push --progress origin deltas 2>err &&
+
+	test_grep "Enumerating objects: 5, done" err &&
+
+	# If the delta base is found, then this message uses "bytes".
+	# If the delta base is not found, then this message uses "KiB".
+	test_grep "Writing objects: .* bytes" err &&
+
+	git -C deltas commit --amend -m "changed message" &&
+	GIT_TRACE2_EVENT="$(pwd)/config-push.txt" \
+	GIT_PROGRESS_DELAY=0 git -C deltas -c pack.usePathWalk=true \
+		push --progress -f origin deltas 2>err &&
+
+	test_grep "Enumerating objects: 1, done" err &&
+	test_region pack-objects path-walk config-push.txt
+'
+
 test_done

@@ -1909,4 +1909,14 @@ test_expect_success 'push with config push.useBitmaps' '
 		--thin --delta-base-offset -q --no-use-bitmap-index <false
 '
 
+test_expect_success 'push with config pack.usePathWalk=true' '
+	mk_test testrepo heads/main &&
+	git checkout main &&
+	test_config pack.usePathWalk true &&
+	GIT_TRACE2_EVENT="$(pwd)/path-walk.txt" \
+	git push --quiet testrepo main:test &&
+
+	test_region pack-objects path-walk path-walk.txt
+'
+
 test_done
