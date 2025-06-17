@@ -17,6 +17,6 @@ if get_option('tests')
     workdir: meson.current_source_dir(),
     env: credential_netrc_testenv,
     depends: test_dependencies + bin_wrappers + [credential_netrc],
-    timeout: 0,
+    kwargs: test_kwargs,
   )
 endif

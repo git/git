@@ -51,7 +51,7 @@ clar_unit_tests = executable('unit-tests',
   sources: clar_sources + clar_test_suites,
   dependencies: [libgit_commonmain],
 )
-test('unit-tests', clar_unit_tests)
+test('unit-tests', clar_unit_tests, kwargs: test_kwargs)
 
 unit_test_programs = [
   'unit-tests/t-reftable-basics.c',
@@ -76,7 +76,7 @@ foreach unit_test_program : unit_test_programs
   )
   test(unit_test_name, unit_test,
     workdir: meson.current_source_dir(),
-    timeout: 0,
+    kwargs: test_kwargs,
   )
 endforeach
 
@@ -1212,7 +1212,7 @@ foreach integration_test : integration_tests
     workdir: meson.current_source_dir(),
     env: test_environment,
     depends: test_dependencies + bin_wrappers,
-    timeout: 0,
+    kwargs: test_kwargs,
   )
 endforeach
 

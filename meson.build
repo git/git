@@ -2054,6 +2054,18 @@ subdir('templates')
 # can properly set up test dependencies. The bin-wrappers themselves are set up
 # at configuration time, so these are fine.
 if get_option('tests')
+  test_kwargs = {
+    'timeout': 0,
+  }
+
+  # The TAP protocol was already understood by previous versions of Meson, but
+  # it was incompatible with the `meson test --interactive` flag.
+  if meson.version().version_compare('>=1.8.0')
+    test_kwargs += {
+      'protocol': 'tap',
+    }
+  endif
+
   subdir('t')
 endif
 

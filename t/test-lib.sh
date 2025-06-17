@@ -470,7 +470,7 @@ then
 	then
 		: Executed by a Bash version supporting BASH_XTRACEFD.  Good.
 	else
-		echo >&2 "warning: ignoring -x; '$0' is untraceable without BASH_XTRACEFD"
+		echo >&2 "# warning: ignoring -x; '$0' is untraceable without BASH_XTRACEFD"
 		trace=
 	fi
 fi
@@ -707,7 +707,7 @@ then
 	exec 3>>"$GIT_TEST_TEE_OUTPUT_FILE" 4>&3
 elif test "$verbose" = "t"
 then
-	exec 4>&2 3>&1
+	exec 4>&2 3>&2
 else
 	exec 4>/dev/null 3>/dev/null
 fi
@@ -949,7 +949,7 @@ maybe_setup_verbose () {
 	test -z "$verbose_only" && return
 	if match_pattern_list $test_count "$verbose_only"
 	then
-		exec 4>&2 3>&1
+		exec 4>&2 3>&2
 		# Emit a delimiting blank line when going from
 		# non-verbose to verbose.  Within verbose mode the
 		# delimiter is printed by test_expect_*.  The choice
@@ -1272,7 +1272,14 @@ test_done () {
 
 		check_test_results_san_file_ "$test_failure"
 
-		if test -z "$skip_all" && test -n "$invert_exit_code"
+		if test "$test_fixed" != 0
+		then
+			if test -z "$invert_exit_code"
+			then
+				GIT_EXIT_OK=t
+				exit 1
+			fi
+		elif test -z "$skip_all" && test -n "$invert_exit_code"
 		then
 			say_color warn "# faking up non-zero exit with --invert-exit-code"
 			GIT_EXIT_OK=t
@@ -1638,6 +1645,9 @@ fi
 # Fix some commands on Windows, and other OS-specific things
 uname_s=$(uname -s)
 case $uname_s in
+Darwin)
+	test_set_prereq MACOS
+	;;
 *MINGW*)
 	# Windows has its own (incompatible) sort and find
 	sort () {
