@@ -32,7 +32,10 @@ that generally have somebody running test pipelines against regularly:
   - OpenBSD
 
 The platforms which must be supported by the tool should be aligned with our
-[platform support policy](platform-support.txt).
+platform support policy (see platform-support.adoc).
+// once we lose AsciiDoc compatibility, we can start writing the above as:
+// xref:platform-support.adoc#platform-support-policy[platform support policy]
+// or something like that, but until then....
 
 === Auto-detection of supported features
 
