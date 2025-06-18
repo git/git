@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2025, #05; Mon, 16)
-X-master-at: 16bd9f20a403117f2e0d9bcda6c6e621d3763e77
-X-next-at: 196bf9f422f28cd4e7989fb845ea6d2785c9953d
+Subject: What's cooking in git.git (Jun 2025, #06; Wed, 18)
+X-master-at: cb3b40381e1d5ee32dde96521ad7cfd68eb308a6
+X-next-at: ae732fef4752cc66a4162d6fc9059d9f2028e94b
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2025, #05; Mon, 16)
+What's cooking in git.git (Jun 2025, #06; Wed, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -17,10 +17,13 @@ topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
 
-Git 2.50 has been tagged.  As the project usually is slow during
-Summer in Northern hemisphere, I plan to make the next cycle on the
-shorter side to last 8 weeks (usually a typical release cycle lasts
-for 8 to 12 weeks).  Key dates are:
+A handful of topics that have been cooking in 'next' are now in
+'master'.  I've rewound the tip of 'next' to prepare for this cycle.
+
+As the project usually is slow during Summer in Northern hemisphere,
+I plan to make the next cycle on the shorter side to last 8 weeks
+(usually a typical release cycle lasts for 8 to 12 weeks).  Key
+dates are:
 
  - Jun 23rd - the 2.51 cycle opens
  - Aug  4th - 2.51-rc0 (preview)
@@ -59,42 +62,285 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* jc/sed-build-fixes (2025-06-12) 1 commit
-  (merged to 'next' on 2025-06-12 at 4ad86fa8cf)
- + build: sed portability fixes
+* ag/send-email-docs (2025-05-30) 4 commits
+  (merged to 'next' on 2025-06-05 at d6b5e97d89)
+ + docs: make the purpose of using app password for Gmail more clear in send-email
+ + docs: remove credential helper links for emails from gitcredentials
+ + docs: improve formatting in git-send-email documentation
+ + docs: add credential helper for yahoo and link Google's sendgmail tool
 
- Build fix.
- source: <xmqqplf8evr9.fsf@gitster.g>
-
-
-* js/github-ci-win-coverity-fix (2025-06-11) 2 commits
-  (merged to 'next' on 2025-06-12 at e0f5ed51f9)
- + ci(coverity): output the build log upon error
- + ci(coverity): fix building on Windows
-
- Fixes for GitHub Actions Coverity job.
- source: <pull.1934.v2.git.1749657278.gitgitgadget@gmail.com>
+ Documentation for "git send-email" has been updated with a bit more
+ credential helper and OAuth information.
+ source: <20250530154934.10077-1-gargaditya08@live.com>
 
 
-* ss/revert-builtin-bswap-stuff (2025-06-11) 1 commit
-  (merged to 'next' on 2025-06-12 at fcaad0fe34)
- + Revert "bswap.h: add support for built-in bswap functions"
- (this branch is used by ss/compat-bswap-revamp.)
+* bs/solaris-10-and-11 (2025-06-07) 1 commit
+  (merged to 'next' on 2025-06-09 at a6d20b3666)
+ + config.mak.uname: update settings for Solaris 10 and 11
 
- Revert a botched bswap.h change that broke ntohll() functions on
- big-endian systems with __builtin_bswap32/64().
- source: <20250611221444.1567638-2-sebastian@breakpoint.cc>
+ Add settings for Solaris 10 & 11.
+ 
+ source: <aETm3O-FE7EpyoE5@humpty.home.comstyle.com>
+
+
+* cf/guideline-documenting-config-vars (2025-06-03) 1 commit
+  (merged to 'next' on 2025-06-06 at 72457f666b)
+ + CodingGuidelines: document formatting of similar config variables.
+
+ CodingGuidelines update.
+ 
+ source: <802402a288f0976765f1ba1c82d14c2289c8cf72.1748990700.git.collin.funk1@gmail.com>
+
+
+* ds/path-walk-2 (2025-05-16) 13 commits
+  (merged to 'next' on 2025-06-05 at e59d4b1701)
+ + pack-objects: allow --shallow and --path-walk
+ + path-walk: add new 'edge_aggressive' option
+ + pack-objects: thread the path-based compression
+ + pack-objects: refactor path-walk delta phase
+ + scalar: enable path-walk during push via config
+ + pack-objects: enable --path-walk via config
+ + repack: add --path-walk option
+ + t5538: add tests to confirm deltas in shallow pushes
+ + pack-objects: introduce GIT_TEST_PACK_PATH_WALK
+ + p5313: add performance tests for --path-walk
+ + pack-objects: update usage to match docs
+ + pack-objects: add --path-walk option
+ + pack-objects: extract should_attempt_deltas()
+
+ "git pack-objects" learns to find delta bases from blobs at the
+ same path, using the --path-walk API.
+ source: <pull.1819.v3.git.1747419124.gitgitgadget@gmail.com>
+
+
+* jk/diff-no-index-with-pathspec (2025-05-21) 3 commits
+  (merged to 'next' on 2025-06-05 at b0dee92a43)
+ + diff --no-index: support limiting by pathspec
+ + pathspec: add flag to indicate operation without repository
+ + pathspec: add match_leading_pathspec variant
+
+ "git diff --no-index dirA dirB" can limit the comparison with
+ pathspec at the end of the command line, just like normal "git
+ diff".
+ source: <20250521232917.2333291-1-jacob.e.keller@intel.com>
+
+
+* jm/bundle-uri-debug-output-to-fp (2025-06-04) 1 commit
+  (merged to 'next' on 2025-06-09 at c58618e2dd)
+ + bundle-uri: send debug output to given FILE * stream
+
+ Code clean-up.
+ 
+ source: <pull.1985.v2.git.git.1749057081918.gitgitgadget@gmail.com>
+
+
+* jw/doc-txt-to-adoc-refs (2025-05-21) 1 commit
+  (merged to 'next' on 2025-06-08 at 041162a215)
+ + doc: update references to renamed AsciiDoc files
+
+ Some leftover references to documentation source files that no
+ longer exist, due to recent ".txt" -> ".adoc" renaming, have been
+ corrected.
+ 
+ source: <pull.1971.git.git.1747854310479.gitgitgadget@gmail.com>
+
+
+* lo/my-first-ow-doc-update (2025-06-02) 2 commits
+  (merged to 'next' on 2025-06-05 at 576594dbf9)
+ + MyFirstContribution: add walken.c to meson.build
+ + MyFirstContribution: use struct repository in examples
+
+ Doc update to the more recent world order.
+ source: <20250602205021.4223-1-lucasseikioshiro@gmail.com>
+
+
+* ly/commit-buffer-reencode-leakfix (2025-06-04) 1 commit
+  (merged to 'next' on 2025-06-06 at 47b4fdbbf8)
+ + repo_logmsg_reencode: fix memory leak when use repo_logmsg_reencode ()
+
+ Leakfix.
+ 
+ source: <pull.1988.v2.git.git.1749104846531.gitgitgadget@gmail.com>
+
+
+* ly/commit-graph-graph-write-leakfix (2025-06-03) 1 commit
+  (merged to 'next' on 2025-06-05 at ae03e27cc8)
+ + commit-graph: fix start_delayed_progress() leak
+
+ A memory-leak in an error code path has been plugged.
+ source: <pull.1986.git.git.1749006675784.gitgitgadget@gmail.com>
+
+
+* ly/do-not-localize-bug-messages (2025-06-02) 1 commit
+  (merged to 'next' on 2025-06-05 at 8fb8d5c0bb)
+ + BUG(): remove leading underscore of the format string
+
+ Code clean-up.
+ source: <9d69c19273be31135eade258b49582bcc6df27c7.1748916074.git.gitgitgadget@gmail.com>
+
+
+* ly/fetch-pack-leakfix (2025-06-03) 1 commit
+  (merged to 'next' on 2025-06-05 at 560cfcbe51)
+ + builtin/fetch-pack: cleanup before return error
+
+ A memory-leak in an error code path has been plugged.
+ source: <pull.1990.git.git.1749006474694.gitgitgadget@gmail.com>
+
+
+* ly/pack-bitmap-root-leakfix (2025-06-09) 1 commit
+  (merged to 'next' on 2025-06-09 at 15ff3f5f36)
+ + pack-bitmap: remove checks before bitmap_free
+
+ Memleak fix on an error code path.
+ 
+ source: <pull.1977.v7.git.git.1749457124804.gitgitgadget@gmail.com>
+
+
+* ly/sequencer-update-squash-is-fixup-only (2025-06-02) 1 commit
+  (merged to 'next' on 2025-06-05 at 0ac9201fee)
+ + sequencer: replace error() with BUG() in update_squash_messages ()
+
+ Code clean-up.
+ source: <f2d2cfd6a876daa6019cd82aa6bf1309f29fea83.1748916074.git.gitgitgadget@gmail.com>
+
+
+* ly/submodule-update-failure-leakfix (2025-06-07) 1 commit
+  (merged to 'next' on 2025-06-09 at b28794c576)
+ + builtin/submodule--helper: fix leak when remote_submodule_branch() failed
+
+ A memory leak on an error code path has been plugged.
+ 
+ source: <pull.1987.git.git.1749355019495.gitgitgadget@gmail.com>
+
+
+* ma/doc-diff-cc-headers (2025-06-06) 1 commit
+  (merged to 'next' on 2025-06-08 at e2072501f7)
+ + diff-generate-patch.adoc: drop spurious backticks
+
+ Doc mark-up update.
+ 
+ source: <20250606123138.566178-1-martin.agren@gmail.com>
+
+
+* ps/meson-tap-parse (2025-06-01) 10 commits
+  (merged to 'next' on 2025-06-03 at 579d19e8ae)
+ + meson: parse TAP output generated by our tests
+ + meson: introduce kwargs variable for tests
+ + test-lib: fail on unexpectedly passing tests
+ + t7815: fix unexpectedly passing test on macOS
+ + t/test-lib: fix TAP format for BASH_XTRACEFD warning
+ + t/test-lib: don't print shell traces to stdout
+ + t983*: use prereq to check for Python-specific git-p4(1) support
+ + t9822: use prereq to check for ISO-8859-1 support
+ + t: silence output from `test_create_repo()`
+ + t: stop announcing prereqs
+ (this branch is used by rj/meson-tap-parse-fixup.)
+
+ Meson-based build/test framework now understands TAP output
+ generated by our tests.
+ source: <20250602-pks-meson-tap-v4-0-052dfde0818a@pks.im>
+
+
+* rc/userdiff-r (2025-05-29) 1 commit
+  (merged to 'next' on 2025-06-05 at 28e008821c)
+ + userdiff: add support for R programming language
+
+ Userdiff patterns for the R language.
+ source: <20250529221805.97036-1-rodrigorsdc@gmail.com>
+
+
+* rj/meson-tap-parse-fixup (2025-06-09) 1 commit
+  (merged to 'next' on 2025-06-10 at 1fc2a0284f)
+ + test-lib: add missing prerequisites for Darwin
+
+ An earlier test update incorrectly lost three prerequisites on
+ macOS, which has been corrected.
+ 
+ source: <33de9e5d-24c8-47cf-b858-6d55d26803b0@ramsayjones.plus.com>
+
+
+* vd/cat-file-objectmode-update (2025-06-02) 3 commits
+  (merged to 'next' on 2025-06-05 at fb997e495f)
+ + cat-file.c: add batch handling for submodules
+ + cat-file: add %(objectmode) atom
+ + t1006: update 'run_tests' to test generic object specifiers
+
+ "git cat-file --batch" learns to understand %(objectmode) atom to
+ allow the caller to tell missing objects (due to repository
+ corruption) and submodules (whose commit objects are OK to be
+ missing) apart.
+ source: <pull.1929.git.1748890555.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
 
-* jg/mailinfo-leakfix (2025-06-13) 1 commit
- - mailinfo.c: fix memory leak in function handle_content_type()
+* ac/deglobal-sparse-variables (2025-06-17) 3 commits
+ - environment: remove the global variable 'sparse_expect_files_outside_of_patterns'
+ - environment: move access to "core.sparsecheckoutcone" into repo_settings
+ - environment: move access to "core.sparsecheckout" into repo_settings
 
- source: <SA1PR22MB399911638F342E1AA20F014AE477A@SA1PR22MB3999.namprd22.prod.outlook.com>
+ Two global variables related to sparse checkout have been moved to
+ the repository settings structure.
+
+ Waiting for review responses.
+ source: <cover.1750157825.git.ayu.chandekar@gmail.com>
+
+
+* jk/submodule-remote-lookup-cleanup (2025-06-17) 6 commits
+ - submodule: look up remotes by URL first
+ - submodule: move get_default_remote_submodule()
+ - submodule--helper: improve logic for fallback remote name
+ - remote: remove the_repository from some functions
+ - dir: move starts_with_dot(_dot)_slash to dir.h
+ - remote: fix tear down of struct branch and struct remote
+
+ Updating submodules from the upstream did not work well when
+ submodule's HEAD is detached, which has been improved.
+
+ Comments?
+ source: <20250617-jk-submodule-helper-use-url-v2-0-04cbb003177d@gmail.com>
+
+
+* ly/run-builtin-use-passed-in-repo (2025-06-15) 1 commit
+  (merged to 'next' on 2025-06-18 at ae732fef47)
+ + git.c: remove the_repository dependence in run_builtin()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <20250616062233.1589172-1-502024330056@smail.nju.edu.cn>
+
+
+* rm/t2400-modernize (2025-06-16) 1 commit
+  (merged to 'next' on 2025-06-18 at 58c4f9560c)
+ + t2400: replace 'test -[efd]' with 'test_path_is_*'
+
+ Test clean-up.
+
+ Will merge to 'master'.
+ source: <20250617002939.24478-1-rodmichelassi@gmail.com>
+
+
+* jc/diff-no-index-with-pathspec-fix (2025-06-18) 1 commit
+ - diff-no-index: do not reference .d_type member of struct dirent
+
+ Recent code added a direct access to the d_type member in "struct
+ dirent", but some platforms lack it, which has been corrected.
+
+ Will merge to 'next'.
+ source: <xmqqh60ces03.fsf@gitster.g>
 
 --------------------------------------------------
 [Cooking]
+
+* jg/mailinfo-leakfix (2025-06-13) 1 commit
+ - mailinfo.c: fix memory leak in function handle_content_type()
+
+ Leakfix.
+
+ Will merge to 'next'.
+ source: <SA1PR22MB399911638F342E1AA20F014AE477A@SA1PR22MB3999.namprd22.prod.outlook.com>
+
 
 * ow/rebase-verify-insn-fmt-before-initializing-state (2025-06-09) 1 commit
  - rebase: write script before initializing state
@@ -108,37 +354,25 @@ Release tarballs are available at:
  source: <20250609221055.136074-1-oystwa@gmail.com>
 
 
-* rj/meson-tap-parse-fixup (2025-06-09) 1 commit
-  (merged to 'next' on 2025-06-10 at 1fc2a0284f)
- + test-lib: add missing prerequisites for Darwin
- (this branch uses ps/meson-tap-parse.)
-
- An earlier test update incorrectly lost three prerequisites on
- macOS, which has been corrected.
-
- Will cook in 'next'.
- source: <20250602-pks-meson-tap-v4-0-052dfde0818a@pks.im>
-
-
 * ac/preload-index-wo-the-repository (2025-06-10) 2 commits
-  (merged to 'next' on 2025-06-12 at c272b52078)
+  (merged to 'next' on 2025-06-18 at fe9378f663)
  + preload-index: stop depending on 'the_repository'
  + environment: remove the global variable 'core_preload_index'
 
  Code clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <cover.1749557133.git.ayu.chandekar@gmail.com>
 
 
 * jc/cg-let-bss-do-its-job (2025-06-11) 1 commit
-  (merged to 'next' on 2025-06-12 at 951bdd6678)
+  (merged to 'next' on 2025-06-18 at 5166eea328)
  + CodingGuidelines: let BSS do its job
 
  Clarify "do not explicitly initialize to zero" rule in the
  CodingGuidelines document.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <xmqqh60mger9.fsf@gitster.g>
 
 
@@ -155,24 +389,24 @@ Release tarballs are available at:
 
 
 * ly/prepare-show-merge-leakfix (2025-06-09) 1 commit
-  (merged to 'next' on 2025-06-12 at 518d60458f)
+  (merged to 'next' on 2025-06-18 at 11ab005b9c)
  + revision: fix memory leak in prepare_show_merge()
 
  Leakfix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1989.v3.git.git.1749515879546.gitgitgadget@gmail.com>
 
 
 * sa/multi-mailmap-fix (2025-06-13) 1 commit
-  (merged to 'next' on 2025-06-13 at 739626bc46)
+  (merged to 'next' on 2025-06-18 at c492804406)
  + cat-file: fix mailmap application for different author and committer
 
  When asking to apply mailmap to both author and committer field
  while showing a commit object, the field that appears later was not
  correctly parsed and replaced, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250613115750.41205-1-siddharthasthana31@gmail.com>
 
 
@@ -229,56 +463,14 @@ Release tarballs are available at:
 
 
 * kj/stash-onbranch-submodule-fix (2025-06-10) 1 commit
-  (merged to 'next' on 2025-06-11 at dab89b8040)
+  (merged to 'next' on 2025-06-18 at 1ac7a03f69)
  + stash: fix incorrect branch name in stash message
 
  "git stash" recorded a wrong branch name when submodules are
  present in the current checkout, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250611014204.24994-1-jayatheerthkulkarni2005@gmail.com>
-
-
-* ly/submodule-update-failure-leakfix (2025-06-07) 1 commit
-  (merged to 'next' on 2025-06-09 at b28794c576)
- + builtin/submodule--helper: fix leak when remote_submodule_branch() failed
-
- A memory leak on an error code path has been plugged.
-
- Will cook in 'next'.
- source: <pull.1987.git.git.1749355019495.gitgitgadget@gmail.com>
-
-
-* kn/fetch-push-bulk-ref-update-fixup (2025-06-13) 3 commits
- - receive-pack: handle reference deletions separately
- - refs/files: skip updates with errors in batched updates
- - Merge branch 'kn/fetch-push-bulk-ref-update' into kn/fetch-push-bulk-ref-update-fixup
- (this branch uses kn/fetch-push-bulk-ref-update.)
-
- Additional fixes to the base topic.
-
- Comments?
- source: <20250613-6769-address-test-failures-in-the-next-branch-caused-by-batched-reference-updates-v4-0-ebf53edb9795@gmail.com>
-
-
-* ma/doc-diff-cc-headers (2025-06-06) 1 commit
-  (merged to 'next' on 2025-06-08 at e2072501f7)
- + diff-generate-patch.adoc: drop spurious backticks
-
- Doc mark-up update.
-
- Will cook in 'next'.
- source: <20250606123138.566178-1-martin.agren@gmail.com>
-
-
-* bs/solaris-10-and-11 (2025-06-07) 1 commit
-  (merged to 'next' on 2025-06-09 at a6d20b3666)
- + config.mak.uname: update settings for Solaris 10 and 11
-
- Add settings for Solaris 10 & 11.
-
- Will cook in 'next'.
- source: <aETm3O-FE7EpyoE5@humpty.home.comstyle.com>
 
 
 * ag/imap-send-resurrection (2025-06-09) 10 commits
@@ -296,42 +488,19 @@ Release tarballs are available at:
  "git imap-send" has been broken for a long time, which has been
  resurrected and then taught to talk OAuth2.0 etc.
 
- Will merge to 'next'?
- source: <PN3PR01MB95976572C3B14C983802ECC1B86BA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
-
-
-* ag/send-email-docs (2025-05-30) 4 commits
-  (merged to 'next' on 2025-06-05 at d6b5e97d89)
- + docs: make the purpose of using app password for Gmail more clear in send-email
- + docs: remove credential helper links for emails from gitcredentials
- + docs: improve formatting in git-send-email documentation
- + docs: add credential helper for yahoo and link Google's sendgmail tool
-
- Documentation for "git send-email" has been updated with a bit more
- credential helper and OAuth information.
-
- Will cook in 'next'.
- source: <20250530154934.10077-1-gargaditya08@live.com>
-
-
-* ly/pack-bitmap-root-leakfix (2025-06-09) 1 commit
-  (merged to 'next' on 2025-06-09 at 15ff3f5f36)
- + pack-bitmap: remove checks before bitmap_free
-
- Memleak fix on an error code path.
-
- Will cook in 'next'.
- source: <pull.1977.v7.git.git.1749457124804.gitgitgadget@gmail.com>
+ Expecting review responses
+ cf. <F0A06034-99B8-4BD1-9CDE-515A3EA430DA@gmail.com>
+ source: <PN3PR01MB9597929CF956CBB1B8B7D909B86BA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
 
 
 * pw/subtree-gpg-sign (2025-06-04) 2 commits
-  (merged to 'next' on 2025-06-05 at 5366ac646f)
+  (merged to 'next' on 2025-06-18 at d3c6435b4f)
  + contrib/subtree: add -S/--gpg-sign
  + contrib/subtree: parse using --stuck-long
 
  "git subtree" (in contrib/) learns to grok GPG signing its commits.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1928.v2.git.1749046597.gitgitgadget@gmail.com>
 
 
@@ -355,104 +524,8 @@ Release tarballs are available at:
  source: <20250605140644.239199-1-kuforiji98@gmail.com>
 
 
-* lo/my-first-ow-doc-update (2025-06-02) 2 commits
-  (merged to 'next' on 2025-06-05 at 576594dbf9)
- + MyFirstContribution: add walken.c to meson.build
- + MyFirstContribution: use struct repository in examples
-
- Doc update to the more recent world order.
-
- Will cook in 'next'.
- source: <20250602205021.4223-1-lucasseikioshiro@gmail.com>
-
-
-* vd/cat-file-objectmode-update (2025-06-02) 3 commits
-  (merged to 'next' on 2025-06-05 at fb997e495f)
- + cat-file.c: add batch handling for submodules
- + cat-file: add %(objectmode) atom
- + t1006: update 'run_tests' to test generic object specifiers
-
- "git cat-file --batch" learns to understand %(objectmode) atom to
- allow the caller to tell missing objects (due to repository
- corruption) and submodules (whose commit objects are OK to be
- missing) apart.
-
- Will cook in 'next'.
- source: <pull.1929.git.1748890555.gitgitgadget@gmail.com>
-
-
-* ly/do-not-localize-bug-messages (2025-06-02) 1 commit
-  (merged to 'next' on 2025-06-05 at 8fb8d5c0bb)
- + BUG(): remove leading underscore of the format string
-
- Code clean-up.
-
- Will cook in 'next'.
- source: <9d69c19273be31135eade258b49582bcc6df27c7.1748916074.git.gitgitgadget@gmail.com>
-
-
-* ly/sequencer-update-squash-is-fixup-only (2025-06-02) 1 commit
-  (merged to 'next' on 2025-06-05 at 0ac9201fee)
- + sequencer: replace error() with BUG() in update_squash_messages ()
-
- Code clean-up.
-
- Will cook in 'next'.
- source: <f2d2cfd6a876daa6019cd82aa6bf1309f29fea83.1748916074.git.gitgitgadget@gmail.com>
-
-
-* cf/guideline-documenting-config-vars (2025-06-03) 1 commit
-  (merged to 'next' on 2025-06-06 at 72457f666b)
- + CodingGuidelines: document formatting of similar config variables.
-
- CodingGuidelines update.
-
- Will cook in 'next'.
- source: <802402a288f0976765f1ba1c82d14c2289c8cf72.1748990700.git.collin.funk1@gmail.com>
-
-
-* jm/bundle-uri-debug-output-to-fp (2025-06-04) 1 commit
-  (merged to 'next' on 2025-06-09 at c58618e2dd)
- + bundle-uri: send debug output to given FILE * stream
-
- Code clean-up.
-
- Will cook in 'next'.
- source: <pull.1985.v2.git.git.1749057081918.gitgitgadget@gmail.com>
-
-
-* ly/commit-graph-graph-write-leakfix (2025-06-03) 1 commit
-  (merged to 'next' on 2025-06-05 at ae03e27cc8)
- + commit-graph: fix start_delayed_progress() leak
-
- A memory-leak in an error code path has been plugged.
-
- Will cook in 'next'.
- source: <pull.1986.git.git.1749006675784.gitgitgadget@gmail.com>
-
-
-* ly/fetch-pack-leakfix (2025-06-03) 1 commit
-  (merged to 'next' on 2025-06-05 at 560cfcbe51)
- + builtin/fetch-pack: cleanup before return error
-
- A memory-leak in an error code path has been plugged.
-
- Will cook in 'next'.
- source: <pull.1990.git.git.1749006474694.gitgitgadget@gmail.com>
-
-
-* ly/commit-buffer-reencode-leakfix (2025-06-04) 1 commit
-  (merged to 'next' on 2025-06-06 at 47b4fdbbf8)
- + repo_logmsg_reencode: fix memory leak when use repo_logmsg_reencode ()
-
- Leakfix.
-
- Will cook in 'next'.
- source: <pull.1988.v2.git.git.1749104846531.gitgitgadget@gmail.com>
-
-
 * ag/send-email-edit-threading-fix (2025-06-04) 2 commits
-  (merged to 'next' on 2025-06-09 at e53466b5aa)
+  (merged to 'next' on 2025-06-18 at dfe9cb890c)
  + send-email: show the new message id assigned by outlook in the logs
  + send-email: fix bug resulting in broken threads if a message is edited
 
@@ -460,7 +533,7 @@ Release tarballs are available at:
  message was edited, which made logic that treats the first message
  specially misbehave, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <PN3PR01MB95979AA8114CA26405BE02CFB86CA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
 
 
@@ -475,18 +548,8 @@ Release tarballs are available at:
  source: <pull.1962.v5.git.git.1748920444.gitgitgadget@gmail.com>
 
 
-* rc/userdiff-r (2025-05-29) 1 commit
-  (merged to 'next' on 2025-06-05 at 28e008821c)
- + userdiff: add support for R programming language
-
- Userdiff patterns for the R language.
-
- Will cook in 'next'.
- source: <20250529221805.97036-1-rodrigorsdc@gmail.com>
-
-
 * ps/maintenance-ref-lock (2025-06-03) 12 commits
-  (merged to 'next' on 2025-06-05 at 9790bf814f)
+  (merged to 'next' on 2025-06-18 at 724574661a)
  + builtin/maintenance: fix locking race when handling "gc" task
  + builtin/gc: avoid global state in `gc_before_repack()`
  + usage: allow dying without writing an error message
@@ -504,7 +567,7 @@ Release tarballs are available at:
  onto the repository lock for too long during packing refs, which
  has been remedied.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250603-b4-pks-maintenance-ref-lock-race-v4-0-52f5cf7b7e99@pks.im>
 
 
@@ -522,77 +585,41 @@ Release tarballs are available at:
  source: <cover.1748473122.git.me@ttaylorr.com>
 
 
-* ps/meson-tap-parse (2025-06-01) 10 commits
-  (merged to 'next' on 2025-06-03 at 579d19e8ae)
- + meson: parse TAP output generated by our tests
- + meson: introduce kwargs variable for tests
- + test-lib: fail on unexpectedly passing tests
- + t7815: fix unexpectedly passing test on macOS
- + t/test-lib: fix TAP format for BASH_XTRACEFD warning
- + t/test-lib: don't print shell traces to stdout
- + t983*: use prereq to check for Python-specific git-p4(1) support
- + t9822: use prereq to check for ISO-8859-1 support
- + t: silence output from `test_create_repo()`
- + t: stop announcing prereqs
- (this branch is used by rj/meson-tap-parse-fixup.)
-
- Meson-based build/test framework now understands TAP output
- generated by our tests.
-
- Will cook in 'next'.
- source: <20250602-pks-meson-tap-v4-0-052dfde0818a@pks.im>
-
-
-* jw/doc-txt-to-adoc-refs (2025-05-21) 1 commit
-  (merged to 'next' on 2025-06-08 at 041162a215)
- + doc: update references to renamed AsciiDoc files
-
- Some leftover references to documentation source files that no
- longer exist, due to recent ".txt" -> ".adoc" renaming, have been
- corrected.
-
- Will cook in 'next'.
- source: <pull.1971.git.git.1747854310479.gitgitgadget@gmail.com>
-
-
-* jk/diff-no-index-with-pathspec (2025-05-21) 3 commits
-  (merged to 'next' on 2025-06-05 at b0dee92a43)
- + diff --no-index: support limiting by pathspec
- + pathspec: add flag to indicate operation without repository
- + pathspec: add match_leading_pathspec variant
-
- "git diff --no-index dirA dirB" can limit the comparison with
- pathspec at the end of the command line, just like normal "git
- diff".
-
- Will cook in 'next'.
- source: <20250521232917.2333291-1-jacob.e.keller@intel.com>
-
-
 * pw/stash-p-pathspec-fixes (2025-06-07) 2 commits
-  (merged to 'next' on 2025-06-08 at 5932e4b43a)
+  (merged to 'next' on 2025-06-18 at 10cfc8865f)
  + stash: allow "git stash [<options>] --patch <pathspec>" to assume push
  + stash: allow "git stash -p <pathspec>" to assume push again
 
  "git stash -p <pathspec>" improvements.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <cover.1749289514.git.phillip.wood@dunelm.org.uk>
 
 
 * kn/fetch-push-bulk-ref-update (2025-05-19) 4 commits
-  (merged to 'next' on 2025-05-22 at 7ab014070f)
- + receive-pack: use batched reference updates
- + send-pack: fix memory leak around duplicate refs
- + fetch: use batched reference updates
- + refs: add function to translate errors to strings
+ - receive-pack: use batched reference updates
+ - send-pack: fix memory leak around duplicate refs
+ - fetch: use batched reference updates
+ - refs: add function to translate errors to strings
  (this branch is used by kn/fetch-push-bulk-ref-update-fixup.)
 
  "git push" and "git fetch" are taught to update refs in batches to
  gain performance.
 
- Will cook in 'next'.
+ Tentatively kicked out of 'next' to give its fix-up topic a chance to reboot.
  source: <20250519-501-update-git-fetch-1-to-use-partial-transactions-v3-0-6cdfd4f769b9@gmail.com>
+
+
+* kn/fetch-push-bulk-ref-update-fixup (2025-06-13) 3 commits
+ - receive-pack: handle reference deletions separately
+ - refs/files: skip updates with errors in batched updates
+ - Merge branch 'kn/fetch-push-bulk-ref-update' into kn/fetch-push-bulk-ref-update-fixup
+ (this branch uses kn/fetch-push-bulk-ref-update.)
+
+ Additional fixes to the base topic.
+
+ Comments?
+ source: <20250613-6769-address-test-failures-in-the-next-branch-caused-by-batched-reference-updates-v4-0-ebf53edb9795@gmail.com>
 
 
 * kj/renamed-submodule (2025-06-07) 2 commits
@@ -695,7 +722,7 @@ Release tarballs are available at:
 
 
 * jc/you-still-use-whatchanged (2025-05-12) 6 commits
-  (merged to 'next' on 2025-05-22 at e79dc9090e)
+  (merged to 'next' on 2025-06-18 at b28af0a02c)
  + whatschanged: list it in BreakingChanges document
  + whatchanged: remove when built with WITH_BREAKING_CHANGES
  + whatchanged: require --i-still-use-this
@@ -707,20 +734,8 @@ Release tarballs are available at:
  which is its modern rough equivalent has outlived its usefulness
  more than 10 years ago.  Plan to deprecate and remove it.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250512190311.1451556-1-gitster@pobox.com>
-
-
-* cc/fast-import-export-signature-names (2025-04-24) 1 commit
- . fast-(import|export): improve on the signature algorithm name
-
- Clean up the way how signature on commit objects are exported to
- and imported from fast-import stream.
-
- Expecting a reroll.
- cf. <aAq1nvcPRlIPal5l@tapette.crustytoothpaste.net>
- cf. https://github.com/git/git/actions/runs/14671270673/job/41178138711
- source: <20250424203904.909777-1-christian.couder@gmail.com>
 
 
 * sj/string-list-typefix (2025-05-18) 8 commits
@@ -756,35 +771,16 @@ Release tarballs are available at:
  Ready?
  source: <cover.1748473889.git.me@ttaylorr.com>
 
-
-* ds/path-walk-2 (2025-05-16) 13 commits
-  (merged to 'next' on 2025-06-05 at e59d4b1701)
- + pack-objects: allow --shallow and --path-walk
- + path-walk: add new 'edge_aggressive' option
- + pack-objects: thread the path-based compression
- + pack-objects: refactor path-walk delta phase
- + scalar: enable path-walk during push via config
- + pack-objects: enable --path-walk via config
- + repack: add --path-walk option
- + t5538: add tests to confirm deltas in shallow pushes
- + pack-objects: introduce GIT_TEST_PACK_PATH_WALK
- + p5313: add performance tests for --path-walk
- + pack-objects: update usage to match docs
- + pack-objects: add --path-walk option
- + pack-objects: extract should_attempt_deltas()
-
- "git pack-objects" learns to find delta bases from blobs at the
- same path, using the --path-walk API.
-
- Will cook in 'next'.
- source: <pull.1819.v3.git.1747419124.gitgitgadget@gmail.com>
-
 --------------------------------------------------
 [Discarded]
 
-* ss/bswap-ntohll-fix (2025-06-06) 1 commit
- . bswap.h: Move the overwriting of the ntohl*/ htonl* macros.
+* cc/fast-import-export-signature-names (2025-04-24) 1 commit
+ . fast-(import|export): improve on the signature algorithm name
 
- Seems to break Windows rather badly.
- cf. https://github.com/git/git/actions/runs/15511228119/job/43672455770#step:4:92
- source: <20250606165718.HOiC2U4X@breakpoint.cc>
+ Clean up the way how signature on commit objects are exported to
+ and imported from fast-import stream.
+
+ Has been expecting a reroll for too long.
+ cf. <aAq1nvcPRlIPal5l@tapette.crustytoothpaste.net>
+ cf. https://github.com/git/git/actions/runs/14671270673/job/41178138711
+ source: <20250424203904.909777-1-christian.couder@gmail.com>
