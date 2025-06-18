@@ -158,7 +158,6 @@ manpages = {
   'git-verify-tag.adoc' : 1,
   'git-version.adoc' : 1,
   'git-web--browse.adoc' : 1,
-  'git-whatchanged.adoc' : 1,
   'git-worktree.adoc' : 1,
   'git-write-tree.adoc' : 1,
   'git.adoc' : 1,
@@ -207,6 +206,7 @@ manpages = {
 
 manpages_breaking_changes = {
   'git-pack-redundant.adoc' : 1,
+  'git-whatchanged.adoc' : 1,
 }
 
 if not get_option('breaking_changes')

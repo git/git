@@ -1100,8 +1100,13 @@ Commit Formatting
 
 ifdef::git-rev-list[]
 Using these options, linkgit:git-rev-list[1] will act similar to the
-more specialized family of commit log tools: linkgit:git-log[1],
-linkgit:git-show[1], and linkgit:git-whatchanged[1]
+more specialized family of commit log tools:
+ifndef::with-breaking-changes[]
+linkgit:git-log[1], linkgit:git-show[1], and linkgit:git-whatchanged[1].
+endif::with-breaking-changes[]
+ifdef::with-breaking-changes[]
+linkgit:git-log[1] and linkgit:git-show[1].
+endif::with-breaking-changes[]
 endif::git-rev-list[]
 
 include::pretty-options.adoc[]
