@@ -41,12 +41,24 @@ static int read_directory_contents(const char *path, struct string_list *list,
 
 	while ((e = readdir_skip_dot_and_dotdot(dir))) {
 		if (pathspec) {
+			int is_dir = 0;
+
 			strbuf_setlen(&match, len);
 			strbuf_addstr(&match, e->d_name);
+			if (NOT_CONSTANT(DTYPE(e)) != DT_UNKNOWN) {
+				is_dir = (DTYPE(e) == DT_DIR);
+			} else {
+				struct strbuf pathbuf = STRBUF_INIT;
+
+				strbuf_addstr(&pathbuf, path);
+				strbuf_complete(&pathbuf, '/');
+				is_dir = get_dtype(e, &pathbuf, 0) == DT_DIR;
+				strbuf_release(&pathbuf);
+			}
 
 			if (!match_leading_pathspec(NULL, pathspec,
 						    match.buf, match.len,
-						    0, NULL, e->d_type == DT_DIR ? 1 : 0))
+						    0, NULL, is_dir))
 				continue;
 		}
 
