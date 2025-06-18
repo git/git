@@ -1614,4 +1614,36 @@ test_expect_success 'stash apply reports a locked index' '
 	)
 '
 
+test_expect_success 'submodules does not affect the branch recorded in stash message' '
+	git init sub_project &&
+	(
+		cd sub_project &&
+		echo "Initial content in sub_project" >sub_file.txt &&
+		git add sub_file.txt &&
+		git commit -m "Initial commit in sub_project"
+	) &&
+
+	git init main_project &&
+	(
+		cd main_project &&
+		echo "Initial content in main_project" >main_file.txt &&
+		git add main_file.txt &&
+		git commit -m "Initial commit in main_project" &&
+
+		git -c protocol.file.allow=always submodule add ../sub_project sub &&
+		git commit -m "Added submodule sub_project" &&
+
+		git checkout -b feature_main &&
+		git -C sub checkout -b feature_sub &&
+
+		git checkout -b work_branch &&
+		echo "Important work to be stashed" >work_item.txt &&
+		git add work_item.txt &&
+		git stash push -m "custom stash for work_branch" &&
+
+		git stash list >../actual_stash_list.txt &&
+		grep "On work_branch: custom stash for work_branch" ../actual_stash_list.txt
+	)
+'
+
 test_done
