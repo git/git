@@ -1824,7 +1824,7 @@ int cmd_main(int argc, const char **argv)
 	}
 
 	if (!server.folder) {
-		fprintf(stderr, "no IMAP store specified\n");
+		fprintf(stderr, "no IMAP folder specified\n");
 		ret = 1;
 		goto out;
 	}
