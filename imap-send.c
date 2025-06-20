@@ -25,6 +25,7 @@
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
+#include "advice.h"
 #include "config.h"
 #include "credential.h"
 #include "gettext.h"
@@ -1804,7 +1805,9 @@ int cmd_main(int argc, const char **argv)
 
 	if (!server.host) {
 		if (!server.tunnel) {
-			fprintf(stderr, "no IMAP host specified\n");
+			error(_("no IMAP host specified"));
+			advise(_("set the IMAP host with 'git config imap.host <host>'.\n"
+				 "(e.g., 'git config imap.host imaps://imap.example.com')"));
 			ret = 1;
 			goto out;
 		}
@@ -1824,7 +1827,9 @@ int cmd_main(int argc, const char **argv)
 	}
 
 	if (!server.folder) {
-		fprintf(stderr, "no IMAP folder specified\n");
+		error(_("no IMAP folder specified"));
+		advise(_("set the target folder with 'git config imap.folder <folder>'.\n"
+			 "(e.g., 'git config imap.folder Drafts')"));
 		ret = 1;
 		goto out;
 	}
