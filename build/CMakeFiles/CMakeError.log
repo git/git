@@ -1,0 +1,90 @@
+Determining if the function strlcpy exists failed with the following output:
+Change Dir: /workspaces/git/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_3932a/fast && /usr/bin/make -f CMakeFiles/cmTC_3932a.dir/build.make CMakeFiles/cmTC_3932a.dir/build
+make[1]: Entering directory '/workspaces/git/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_3932a.dir/CheckFunctionExists.c.o
+/usr/bin/gcc   -DCHECK_FUNCTION_EXISTS=strlcpy   -o CMakeFiles/cmTC_3932a.dir/CheckFunctionExists.c.o   -c /usr/share/cmake-3.16/Modules/CheckFunctionExists.c
+Linking C executable cmTC_3932a
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_3932a.dir/link.txt --verbose=1
+/usr/bin/gcc  -DCHECK_FUNCTION_EXISTS=strlcpy    CMakeFiles/cmTC_3932a.dir/CheckFunctionExists.c.o  -o cmTC_3932a 
+/usr/bin/ld: CMakeFiles/cmTC_3932a.dir/CheckFunctionExists.c.o: in function `main':
+CheckFunctionExists.c:(.text+0x14): undefined reference to `strlcpy'
+collect2: error: ld returned 1 exit status
+make[1]: *** [CMakeFiles/cmTC_3932a.dir/build.make:87: cmTC_3932a] Error 1
+make[1]: Leaving directory '/workspaces/git/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_3932a/fast] Error 2
+
+
+
+Performing C SOURCE FILE Test FREAD_READS_DIRECTORIES_NO failed with the following compile output:
+Change Dir: /workspaces/git/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_67fc3/fast && /usr/bin/make -f CMakeFiles/cmTC_67fc3.dir/build.make CMakeFiles/cmTC_67fc3.dir/build
+make[1]: Entering directory '/workspaces/git/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_67fc3.dir/src.c.o
+/usr/bin/gcc   -DFREAD_READS_DIRECTORIES_NO   -o CMakeFiles/cmTC_67fc3.dir/src.c.o   -c /workspaces/git/build/CMakeFiles/CMakeTmp/src.c
+Linking C executable cmTC_67fc3
+/usr/bin/cmake -E cmake_link_script CMakeFiles/cmTC_67fc3.dir/link.txt --verbose=1
+/usr/bin/gcc  -DFREAD_READS_DIRECTORIES_NO    CMakeFiles/cmTC_67fc3.dir/src.c.o  -o cmTC_67fc3 
+make[1]: Leaving directory '/workspaces/git/build/CMakeFiles/CMakeTmp'
+
+
+...and run output:
+
+Return value: 1
+Source file was:
+
+#include<stdio.h>
+
+int main(void)
+{
+	FILE *f = fopen(".", "r");
+
+	return f != NULL;
+}
+Performing C SOURCE FILE Test HAVE_BSD_SYSCTL failed with the following output:
+Change Dir: /workspaces/git/build/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/usr/bin/make cmTC_2d41a/fast && /usr/bin/make -f CMakeFiles/cmTC_2d41a.dir/build.make CMakeFiles/cmTC_2d41a.dir/build
+make[1]: Entering directory '/workspaces/git/build/CMakeFiles/CMakeTmp'
+Building C object CMakeFiles/cmTC_2d41a.dir/src.c.o
+/usr/bin/gcc   -DHAVE_BSD_SYSCTL   -o CMakeFiles/cmTC_2d41a.dir/src.c.o   -c /workspaces/git/build/CMakeFiles/CMakeTmp/src.c
+In file included from /workspaces/git/build/CMakeFiles/CMakeTmp/src.c:4:
+/usr/include/x86_64-linux-gnu/sys/sysctl.h:21:2: warning: #warning "The <sys/sysctl.h> header is deprecated and will be removed." [-Wcpp]
+   21 | #warning "The <sys/sysctl.h> header is deprecated and will be removed."
+      |  ^~~~~~~
+/workspaces/git/build/CMakeFiles/CMakeTmp/src.c: In function ‘main’:
+/workspaces/git/build/CMakeFiles/CMakeTmp/src.c:11:11: error: ‘CTL_HW’ undeclared (first use in this function); did you mean ‘CTL_PM’?
+   11 |  mib[0] = CTL_HW;
+      |           ^~~~~~
+      |           CTL_PM
+/workspaces/git/build/CMakeFiles/CMakeTmp/src.c:11:11: note: each undeclared identifier is reported only once for each function it appears in
+/workspaces/git/build/CMakeFiles/CMakeTmp/src.c:14:2: warning: ‘sysctl’ is deprecated [-Wdeprecated-declarations]
+   14 |  return sysctl(mib, 2, &val, &len, NULL, 0) ? 1 : 0;
+      |  ^~~~~~
+In file included from /workspaces/git/build/CMakeFiles/CMakeTmp/src.c:4:
+/usr/include/x86_64-linux-gnu/sys/sysctl.h:70:12: note: declared here
+   70 | extern int sysctl (int *__name, int __nlen, void *__oldval,
+      |            ^~~~~~
+make[1]: *** [CMakeFiles/cmTC_2d41a.dir/build.make:66: CMakeFiles/cmTC_2d41a.dir/src.c.o] Error 1
+make[1]: Leaving directory '/workspaces/git/build/CMakeFiles/CMakeTmp'
+make: *** [Makefile:121: cmTC_2d41a/fast] Error 2
+
+
+Source file was:
+
+#include <stddef.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
+
+int main(void)
+{
+	int val, mib[2];
+	size_t len;
+
+	mib[0] = CTL_HW;
+	mib[1] = 1;
+	len = sizeof(val);
+	return sysctl(mib, 2, &val, &len, NULL, 0) ? 1 : 0;
+}

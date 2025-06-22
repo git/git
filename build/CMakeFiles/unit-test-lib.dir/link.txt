@@ -1,0 +1,2 @@
+/usr/bin/ar qc libunit-test-lib.a  CMakeFiles/unit-test-lib.dir/workspaces/git/t/unit-tests/test-lib.c.o CMakeFiles/unit-test-lib.dir/workspaces/git/t/unit-tests/lib-reftable.c.o
+/usr/bin/ranlib libunit-test-lib.a

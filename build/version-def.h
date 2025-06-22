@@ -1,0 +1,8 @@
+#ifndef VERSION_DEF_H
+#define VERSION_DEF_H
+
+#define GIT_VERSION "2.50.0-rc0"
+#define GIT_BUILT_FROM_COMMIT "03436396d2c1315a812885190e9f4d0fb2411b03"
+#define GIT_USER_AGENT "git/2.50.0-rc0"
+
+#endif /* VERSION_DEF_H */
