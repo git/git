@@ -1,0 +1,1 @@
+/usr/bin/gcc -g   CMakeFiles/test-fake-ssh.dir/workspaces/git/t/helper/test-fake-ssh.c.o CMakeFiles/common-main.dir/workspaces/git/common-main.c.o  -o t/helper/test-fake-ssh  liblibgit.a libxdiff.a libreftable.a /usr/lib/x86_64-linux-gnu/libz.so -lc -lpcre2-8 -lpthread -lrt 

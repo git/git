@@ -1,0 +1,1 @@
+/usr/bin/gcc -g   CMakeFiles/git-shell.dir/workspaces/git/shell.c.o CMakeFiles/common-main.dir/workspaces/git/common-main.c.o  -o git-shell  liblibgit.a libxdiff.a libreftable.a /usr/lib/x86_64-linux-gnu/libz.so -lc -lpcre2-8 -lpthread -lrt 

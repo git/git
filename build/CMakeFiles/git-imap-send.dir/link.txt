@@ -1,0 +1,1 @@
+/usr/bin/gcc -g   CMakeFiles/git-imap-send.dir/workspaces/git/imap-send.c.o CMakeFiles/http_obj.dir/workspaces/git/http.c.o CMakeFiles/common-main.dir/workspaces/git/common-main.c.o  -o git-imap-send  /usr/lib/x86_64-linux-gnu/libcurl.so liblibgit.a libxdiff.a libreftable.a /usr/lib/x86_64-linux-gnu/libz.so -lc -lpcre2-8 -lpthread -lrt 

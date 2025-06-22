@@ -1,0 +1,44 @@
+diff_cmd () {
+	empty_file=
+
+	# p4merge does not like /dev/null
+	if test "/dev/null" = "$LOCAL"
+	then
+		LOCAL="$(create_empty_file)"
+	fi
+	if test "/dev/null" = "$REMOTE"
+	then
+		REMOTE="$(create_empty_file)"
+	fi
+
+	"$merge_tool_path" "$LOCAL" "$REMOTE"
+
+	if test -n "$empty_file"
+	then
+		rm -f "$empty_file"
+	fi
+}
+
+diff_cmd_help () {
+	echo "Use HelixCore P4Merge (requires a graphical session)"
+}
+
+merge_cmd () {
+	if ! $base_present
+	then
+		cp -- "$LOCAL" "$BASE"
+		create_virtual_base "$BASE" "$REMOTE"
+	fi
+	"$merge_tool_path" "$BASE" "$REMOTE" "$LOCAL" "$MERGED"
+}
+
+create_empty_file () {
+	empty_file="${TMPDIR:-/tmp}/git-difftool-p4merge-empty-file.$$"
+	>"$empty_file"
+
+	printf "%s" "$empty_file"
+}
+
+merge_cmd_help () {
+	echo "Use HelixCore P4Merge (requires a graphical session)"
+}

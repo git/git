@@ -1,0 +1,1 @@
+/usr/bin/gcc -g   CMakeFiles/git-http-backend.dir/workspaces/git/http-backend.c.o CMakeFiles/common-main.dir/workspaces/git/common-main.c.o  -o git-http-backend  liblibgit.a libxdiff.a libreftable.a /usr/lib/x86_64-linux-gnu/libz.so -lc -lpcre2-8 -lpthread -lrt 
