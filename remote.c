@@ -334,11 +334,10 @@ static void warn_about_deprecated_remote_type(const char *type,
 		type, remote->name, remote->name, remote->name);
 }
 
-static void read_remotes_file(struct remote_state *remote_state,
-			      struct remote *remote)
+static void read_remotes_file(struct repository *repo, struct remote *remote)
 {
 	struct strbuf buf = STRBUF_INIT;
-	FILE *f = fopen_or_warn(repo_git_path_append(the_repository, &buf,
+	FILE *f = fopen_or_warn(repo_git_path_append(repo, &buf,
 						     "remotes/%s", remote->name), "r");
 
 	if (!f)
@@ -354,7 +353,7 @@ static void read_remotes_file(struct remote_state *remote_state,
 		strbuf_rtrim(&buf);
 
 		if (skip_prefix(buf.buf, "URL:", &v))
-			add_url_alias(remote_state, remote,
+			add_url_alias(repo->remote_state, remote,
 				      skip_spaces(v));
 		else if (skip_prefix(buf.buf, "Push:", &v))
 			refspec_append(&remote->push, skip_spaces(v));
@@ -367,12 +366,11 @@ out:
 	strbuf_release(&buf);
 }
 
-static void read_branches_file(struct remote_state *remote_state,
-			       struct remote *remote)
+static void read_branches_file(struct repository *repo, struct remote *remote)
 {
 	char *frag, *to_free = NULL;
 	struct strbuf buf = STRBUF_INIT;
-	FILE *f = fopen_or_warn(repo_git_path_append(the_repository, &buf,
+	FILE *f = fopen_or_warn(repo_git_path_append(repo, &buf,
 						     "branches/%s", remote->name), "r");
 
 	if (!f)
@@ -399,9 +397,9 @@ static void read_branches_file(struct remote_state *remote_state,
 	if (frag)
 		*(frag++) = '\0';
 	else
-		frag = to_free = repo_default_branch_name(the_repository, 0);
+		frag = to_free = repo_default_branch_name(repo, 0);
 
-	add_url_alias(remote_state, remote, buf.buf);
+	add_url_alias(repo->remote_state, remote, buf.buf);
 	refspec_appendf(&remote->fetch, "refs/heads/%s:refs/heads/%s",
 			frag, remote->name);
 
@@ -698,7 +696,7 @@ const char *pushremote_for_branch(struct branch *branch, int *explicit)
 					     branch, explicit);
 }
 
-static struct remote *remotes_remote_get(struct remote_state *remote_state,
+static struct remote *remotes_remote_get(struct repository *repo,
 					 const char *name);
 
 char *remote_ref_for_branch(struct branch *branch, int for_push)
@@ -717,7 +715,7 @@ char *remote_ref_for_branch(struct branch *branch, int for_push)
 					the_repository->remote_state, branch,
 					NULL);
 			struct remote *remote = remotes_remote_get(
-				the_repository->remote_state, remote_name);
+				the_repository, remote_name);
 
 			if (remote && remote->push.nr &&
 			    (dst = apply_refspecs(&remote->push,
@@ -774,10 +772,11 @@ loop_cleanup:
 }
 
 static struct remote *
-remotes_remote_get_1(struct remote_state *remote_state, const char *name,
+remotes_remote_get_1(struct repository *repo, const char *name,
 		     const char *(*get_default)(struct remote_state *,
 						struct branch *, int *))
 {
+	struct remote_state *remote_state = repo->remote_state;
 	struct remote *ret;
 	int name_given = 0;
 
@@ -791,9 +790,9 @@ remotes_remote_get_1(struct remote_state *remote_state, const char *name,
 #ifndef WITH_BREAKING_CHANGES
 	if (valid_remote_nick(name) && have_git_dir()) {
 		if (!valid_remote(ret))
-			read_remotes_file(remote_state, ret);
+			read_remotes_file(repo, ret);
 		if (!valid_remote(ret))
-			read_branches_file(remote_state, ret);
+			read_branches_file(repo, ret);
 	}
 #endif /* WITH_BREAKING_CHANGES */
 	if (name_given && !valid_remote(ret))
@@ -807,35 +806,33 @@ remotes_remote_get_1(struct remote_state *remote_state, const char *name,
 }
 
 static inline struct remote *
-remotes_remote_get(struct remote_state *remote_state, const char *name)
+remotes_remote_get(struct repository *repo, const char *name)
 {
-	return remotes_remote_get_1(remote_state, name,
-				    remotes_remote_for_branch);
+	return remotes_remote_get_1(repo, name, remotes_remote_for_branch);
 }
 
 struct remote *remote_get(const char *name)
 {
 	read_config(the_repository, 0);
-	return remotes_remote_get(the_repository->remote_state, name);
+	return remotes_remote_get(the_repository, name);
 }
 
 struct remote *remote_get_early(const char *name)
 {
 	read_config(the_repository, 1);
-	return remotes_remote_get(the_repository->remote_state, name);
+	return remotes_remote_get(the_repository, name);
 }
 
 static inline struct remote *
-remotes_pushremote_get(struct remote_state *remote_state, const char *name)
+remotes_pushremote_get(struct repository *repo, const char *name)
 {
-	return remotes_remote_get_1(remote_state, name,
-				    remotes_pushremote_for_branch);
+	return remotes_remote_get_1(repo, name, remotes_pushremote_for_branch);
 }
 
 struct remote *pushremote_get(const char *name)
 {
 	read_config(the_repository, 0);
-	return remotes_pushremote_get(the_repository->remote_state, name);
+	return remotes_pushremote_get(the_repository, name);
 }
 
 int remote_is_configured(struct remote *remote, int in_repo)
@@ -1739,7 +1736,7 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 	}
 }
 
-static void set_merge(struct remote_state *remote_state, struct branch *ret)
+static void set_merge(struct repository *repo, struct branch *ret)
 {
 	struct remote *remote;
 	char *ref;
@@ -1760,13 +1757,13 @@ static void set_merge(struct remote_state *remote_state, struct branch *ret)
 	}
 	ret->set_merge = 1;
 
-	remote = remotes_remote_get(remote_state, ret->remote_name);
+	remote = remotes_remote_get(repo, ret->remote_name);
 
 	for (i = 0; i < ret->merge_nr; i++) {
 		if (!remote_find_tracking(remote, ret->merge[i]) ||
 		    strcmp(ret->remote_name, "."))
 			continue;
-		if (repo_dwim_ref(the_repository, ret->merge[i]->src,
+		if (repo_dwim_ref(repo, ret->merge[i]->src,
 				  strlen(ret->merge[i]->src), &oid, &ref,
 				  0) == 1)
 			ret->merge[i]->dst = ref;
@@ -1785,7 +1782,7 @@ struct branch *branch_get(const char *name)
 	else
 		ret = make_branch(the_repository->remote_state, name,
 				  strlen(name));
-	set_merge(the_repository->remote_state, ret);
+	set_merge(the_repository, ret);
 	return ret;
 }
 
@@ -1856,13 +1853,14 @@ static const char *tracking_for_push_dest(struct remote *remote,
 	return ret;
 }
 
-static const char *branch_get_push_1(struct remote_state *remote_state,
+static const char *branch_get_push_1(struct repository *repo,
 				     struct branch *branch, struct strbuf *err)
 {
+	struct remote_state *remote_state = repo->remote_state;
 	struct remote *remote;
 
 	remote = remotes_remote_get(
-		remote_state,
+		repo,
 		remotes_pushremote_for_branch(remote_state, branch, NULL));
 	if (!remote)
 		return error_buf(err,
@@ -1929,7 +1927,7 @@ const char *branch_get_push(struct branch *branch, struct strbuf *err)
 
 	if (!branch->push_tracking_ref)
 		branch->push_tracking_ref = branch_get_push_1(
-			the_repository->remote_state, branch, err);
+			the_repository, branch, err);
 	return branch->push_tracking_ref;
 }
 
