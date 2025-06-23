@@ -112,14 +112,11 @@ test_expect_success 'JGit can read multi-level index' '
 		cd repo &&
 
 		test_commit A &&
-		awk "
-		    BEGIN {
-			print \"start\";
-			for (i = 0; i < 10000; i++)
-			    printf \"create refs/heads/branch-%d HEAD\n\", i;
-			print \"commit\";
-		    }
-		" >input &&
+		{
+			echo start &&
+			test_seq -f "create refs/heads/branch-%d HEAD" 10000 &&
+			echo commit
+		} >input &&
 		git update-ref --stdin <input &&
 
 		test_same_refs &&

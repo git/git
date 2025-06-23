@@ -1146,10 +1146,7 @@ test_conflicts_with_adds_and_renames() {
 			cd simple_${sideL}_${sideR} &&
 
 			# Create some related files now
-			for i in $(test_seq 1 10)
-			do
-				echo Random base content line $i
-			done >file_v1 &&
+			test_seq -f "Random base content line %d" 1 10 >file_v1 &&
 			cp file_v1 file_v2 &&
 			echo modification >>file_v2 &&
 
@@ -1293,10 +1290,7 @@ test_setup_nested_conflicts_from_rename_rename () {
 		cd nested_conflicts_from_rename_rename &&
 
 		# Create some related files now
-		for i in $(test_seq 1 10)
-		do
-			echo Random base content line $i
-		done >file_v1 &&
+		test_seq -f "Random base content line %d" 1 10 >file_v1 &&
 
 		cp file_v1 file_v2 &&
 		cp file_v1 file_v3 &&
