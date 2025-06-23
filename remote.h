@@ -315,8 +315,8 @@ struct branch {
 
 	char *pushremote_name;
 
-	/* An array of the "merge" lines in the configuration. */
-	const char **merge_name;
+	/* True if set_merge() has been called to finalize the merge array */
+	int set_merge;
 
 	/**
 	 * An array of the struct refspecs used for the merge lines. That is,

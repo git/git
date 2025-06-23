@@ -487,7 +487,7 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
 	} else
 		fprintf_ln(stderr, _("Your configuration specifies to merge with the ref '%s'\n"
 			"from the remote, but no such ref was fetched."),
-			*curr_branch->merge_name);
+			curr_branch->merge[0]->src);
 	exit(1);
 }
 

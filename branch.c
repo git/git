@@ -230,7 +230,7 @@ static int inherit_tracking(struct tracking *tracking, const char *orig_ref)
 		return -1;
 	}
 
-	if (branch->merge_nr < 1 || !branch->merge_name || !branch->merge_name[0]) {
+	if (branch->merge_nr < 1 || !branch->merge || !branch->merge[0] || !branch->merge[0]->src) {
 		warning(_("asked to inherit tracking from '%s', but no merge configuration is set"),
 			bare_ref);
 		return -1;
@@ -238,7 +238,7 @@ static int inherit_tracking(struct tracking *tracking, const char *orig_ref)
 
 	tracking->remote = branch->remote_name;
 	for (i = 0; i < branch->merge_nr; i++)
-		string_list_append(tracking->srcs, branch->merge_name[i]);
+		string_list_append(tracking->srcs, branch->merge[i]->src);
 	return 0;
 }
 

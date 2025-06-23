@@ -174,9 +174,15 @@ static void remote_clear(struct remote *remote)
 
 static void add_merge(struct branch *branch, const char *name)
 {
-	ALLOC_GROW(branch->merge_name, branch->merge_nr + 1,
+	struct refspec_item *merge;
+
+	ALLOC_GROW(branch->merge, branch->merge_nr + 1,
 		   branch->merge_alloc);
-	branch->merge_name[branch->merge_nr++] = name;
+
+	merge = xcalloc(1, sizeof(*merge));
+	merge->src = xstrdup(name);
+
+	branch->merge[branch->merge_nr++] = merge;
 }
 
 struct branches_hash_key {
@@ -247,15 +253,23 @@ static struct branch *make_branch(struct remote_state *remote_state,
 	return ret;
 }
 
+static void merge_clear(struct branch *branch)
+{
+	for (int i = 0; i < branch->merge_nr; i++) {
+		refspec_item_clear(branch->merge[i]);
+		free(branch->merge[i]);
+	}
+	FREE_AND_NULL(branch->merge);
+	branch->merge_nr = 0;
+}
+
 static void branch_release(struct branch *branch)
 {
 	free((char *)branch->name);
 	free((char *)branch->refname);
 	free(branch->remote_name);
 	free(branch->pushremote_name);
-	for (int i = 0; i < branch->merge_nr; i++)
-		refspec_item_clear(branch->merge[i]);
-	free(branch->merge);
+	merge_clear(branch);
 }
 
 static struct rewrite *make_rewrite(struct rewrites *r,
@@ -429,7 +443,7 @@ static int handle_config(const char *key, const char *value,
 		} else if (!strcmp(subkey, "merge")) {
 			if (!value)
 				return config_error_nonbool(key);
-			add_merge(branch, xstrdup(value));
+			add_merge(branch, value);
 		}
 		return 0;
 	}
@@ -692,7 +706,7 @@ char *remote_ref_for_branch(struct branch *branch, int for_push)
 	if (branch) {
 		if (!for_push) {
 			if (branch->merge_nr) {
-				return xstrdup(branch->merge_name[0]);
+				return xstrdup(branch->merge[0]->src);
 			}
 		} else {
 			char *dst;
@@ -1731,32 +1745,30 @@ static void set_merge(struct remote_state *remote_state, struct branch *ret)
 
 	if (!ret)
 		return; /* no branch */
-	if (ret->merge)
+	if (ret->set_merge)
 		return; /* already run */
 	if (!ret->remote_name || !ret->merge_nr) {
 		/*
 		 * no merge config; let's make sure we don't confuse callers
 		 * with a non-zero merge_nr but a NULL merge
 		 */
-		ret->merge_nr = 0;
+		merge_clear(ret);
 		return;
 	}
+	ret->set_merge = 1;
 
 	remote = remotes_remote_get(remote_state, ret->remote_name);
 
-	CALLOC_ARRAY(ret->merge, ret->merge_nr);
 	for (i = 0; i < ret->merge_nr; i++) {
-		ret->merge[i] = xcalloc(1, sizeof(**ret->merge));
-		ret->merge[i]->src = xstrdup(ret->merge_name[i]);
 		if (!remote_find_tracking(remote, ret->merge[i]) ||
 		    strcmp(ret->remote_name, "."))
 			continue;
-		if (repo_dwim_ref(the_repository, ret->merge_name[i],
-				  strlen(ret->merge_name[i]), &oid, &ref,
+		if (repo_dwim_ref(the_repository, ret->merge[i]->src,
+				  strlen(ret->merge[i]->src), &oid, &ref,
 				  0) == 1)
 			ret->merge[i]->dst = ref;
 		else
-			ret->merge[i]->dst = xstrdup(ret->merge_name[i]);
+			ret->merge[i]->dst = xstrdup(ret->merge[i]->src);
 	}
 }
 
@@ -1776,7 +1788,7 @@ struct branch *branch_get(const char *name)
 
 int branch_has_merge_config(struct branch *branch)
 {
-	return branch && !!branch->merge;
+	return branch && branch->set_merge;
 }
 
 int branch_merge_matches(struct branch *branch,
