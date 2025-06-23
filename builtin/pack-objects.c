@@ -3767,7 +3767,7 @@ static void show_object_pack_hint(struct object *object, const char *name,
 	 * would typically pick up during a reachability traversal.
 	 *
 	 * Make a best-effort attempt to fill in the ->hash and ->no_try_delta
-	 * here using a now in order to perhaps improve the delta selection
+	 * fields here in order to perhaps improve the delta selection
 	 * process.
 	 */
 	oe->hash = pack_name_hash_fn(name);
