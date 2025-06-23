@@ -41,22 +41,6 @@
 typedef void (*each_submodule_fn)(const struct cache_entry *list_item,
 				  void *cb_data);
 
-static int get_default_remote_submodule(const char *module_path, char **default_remote)
-{
-	struct repository subrepo;
-
-	if (repo_submodule_init(&subrepo, the_repository, module_path,
-				null_oid(the_hash_algo)) < 0)
-		return die_message(_("could not get a repository handle for submodule '%s'"),
-				   module_path);
-
-	*default_remote = xstrdup(repo_default_remote(&subrepo));
-
-	repo_clear(&subrepo);
-
-	return 0;
-}
-
 static char *get_default_remote(void)
 {
 	return xstrdup(repo_default_remote(the_repository));
@@ -84,6 +68,22 @@ static char *resolve_relative_url(const char *rel_url, const char *up_path, int 
 	strbuf_release(&remotesb);
 
 	return resolved_url;
+}
+
+static int get_default_remote_submodule(const char *module_path, char **default_remote)
+{
+	struct repository subrepo;
+
+	if (repo_submodule_init(&subrepo, the_repository, module_path,
+				null_oid(the_hash_algo)) < 0)
+		return die_message(_("could not get a repository handle for submodule '%s'"),
+				   module_path);
+
+	*default_remote = xstrdup(repo_default_remote(&subrepo));
+
+	repo_clear(&subrepo);
+
+	return 0;
 }
 
 /* the result should be freed by the caller. */
