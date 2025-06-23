@@ -1801,6 +1801,21 @@ const char *repo_default_remote(struct repository *repo)
 	return remotes_remote_for_branch(repo->remote_state, branch, NULL);
 }
 
+const char *repo_remote_from_url(struct repository *repo, const char *url)
+{
+	read_config(repo, 0);
+
+	for (int i = 0; i < repo->remote_state->remotes_nr; i++) {
+		struct remote *remote = repo->remote_state->remotes[i];
+		if (!remote)
+			continue;
+
+		if (remote_has_url(remote, url))
+			return remote->name;
+	}
+	return NULL;
+}
+
 int branch_has_merge_config(struct branch *branch)
 {
 	return branch && branch->set_merge;

@@ -72,16 +72,40 @@ static char *resolve_relative_url(const char *rel_url, const char *up_path, int 
 
 static int get_default_remote_submodule(const char *module_path, char **default_remote)
 {
+	const struct submodule *sub;
 	struct repository subrepo;
+	const char *remote_name = NULL;
+	char *url = NULL;
+
+	sub = submodule_from_path(the_repository, null_oid(the_hash_algo), module_path);
+	if (sub && sub->url) {
+		url = xstrdup(sub->url);
+
+		/* Possibly a url relative to parent */
+		if (starts_with_dot_dot_slash(url) ||
+		    starts_with_dot_slash(url)) {
+			char *oldurl = url;
+
+			url = resolve_relative_url(oldurl, NULL, 1);
+			free(oldurl);
+		}
+	}
 
 	if (repo_submodule_init(&subrepo, the_repository, module_path,
 				null_oid(the_hash_algo)) < 0)
 		return die_message(_("could not get a repository handle for submodule '%s'"),
 				   module_path);
 
-	*default_remote = xstrdup(repo_default_remote(&subrepo));
+	/* Look up by URL first */
+	if (url)
+		remote_name = repo_remote_from_url(&subrepo, url);
+	if (!remote_name)
+		remote_name = repo_default_remote(&subrepo);
+
+	*default_remote = xstrdup(remote_name);
 
 	repo_clear(&subrepo);
+	free(url);
 
 	return 0;
 }
