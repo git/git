@@ -41,61 +41,25 @@
 typedef void (*each_submodule_fn)(const struct cache_entry *list_item,
 				  void *cb_data);
 
-static int repo_get_default_remote(struct repository *repo, char **default_remote)
-{
-	char *dest = NULL;
-	struct strbuf sb = STRBUF_INIT;
-	struct ref_store *store = get_main_ref_store(repo);
-	const char *refname = refs_resolve_ref_unsafe(store, "HEAD", 0, NULL,
-						      NULL);
-
-	if (!refname)
-		return die_message(_("No such ref: %s"), "HEAD");
-
-	/* detached HEAD */
-	if (!strcmp(refname, "HEAD")) {
-		*default_remote = xstrdup("origin");
-		return 0;
-	}
-
-	if (!skip_prefix(refname, "refs/heads/", &refname))
-		return die_message(_("Expecting a full ref name, got %s"),
-				   refname);
-
-	strbuf_addf(&sb, "branch.%s.remote", refname);
-	if (repo_config_get_string(repo, sb.buf, &dest))
-		*default_remote = xstrdup("origin");
-	else
-		*default_remote = dest;
-
-	strbuf_release(&sb);
-	return 0;
-}
-
 static int get_default_remote_submodule(const char *module_path, char **default_remote)
 {
 	struct repository subrepo;
-	int ret;
 
 	if (repo_submodule_init(&subrepo, the_repository, module_path,
 				null_oid(the_hash_algo)) < 0)
 		return die_message(_("could not get a repository handle for submodule '%s'"),
 				   module_path);
-	ret = repo_get_default_remote(&subrepo, default_remote);
+
+	*default_remote = xstrdup(repo_default_remote(&subrepo));
+
 	repo_clear(&subrepo);
 
-	return ret;
+	return 0;
 }
 
 static char *get_default_remote(void)
 {
-	char *default_remote;
-	int code = repo_get_default_remote(the_repository, &default_remote);
-
-	if (code)
-		exit(code);
-
-	return default_remote;
+	return xstrdup(repo_default_remote(the_repository));
 }
 
 static char *resolve_relative_url(const char *rel_url, const char *up_path, int quiet)

@@ -1772,18 +1772,33 @@ static void set_merge(struct repository *repo, struct branch *ret)
 	}
 }
 
-struct branch *branch_get(const char *name)
+static struct branch *repo_branch_get(struct repository *repo, const char *name)
 {
 	struct branch *ret;
 
-	read_config(the_repository, 0);
+	read_config(repo, 0);
 	if (!name || !*name || !strcmp(name, "HEAD"))
-		ret = the_repository->remote_state->current_branch;
+		ret = repo->remote_state->current_branch;
 	else
-		ret = make_branch(the_repository->remote_state, name,
+		ret = make_branch(repo->remote_state, name,
 				  strlen(name));
-	set_merge(the_repository, ret);
+	set_merge(repo, ret);
 	return ret;
+}
+
+struct branch *branch_get(const char *name)
+{
+	return repo_branch_get(the_repository, name);
+}
+
+const char *repo_default_remote(struct repository *repo)
+{
+	struct branch *branch;
+
+	read_config(repo, 0);
+	branch = repo_branch_get(repo, "HEAD");
+
+	return remotes_remote_for_branch(repo->remote_state, branch, NULL);
 }
 
 int branch_has_merge_config(struct branch *branch)
