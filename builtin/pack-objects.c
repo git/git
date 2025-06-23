@@ -3748,12 +3748,6 @@ static int add_object_entry_from_pack(const struct object_id *oid,
 	return 0;
 }
 
-static void show_commit_pack_hint(struct commit *commit UNUSED,
-				  void *data UNUSED)
-{
-	/* nothing to do; commits don't have a namehash */
-}
-
 static void show_object_pack_hint(struct object *object, const char *name,
 				  void *data UNUSED)
 {
@@ -3774,6 +3768,12 @@ static void show_object_pack_hint(struct object *object, const char *name,
 	oe->no_try_delta = name && no_try_delta(name);
 
 	stdin_packs_hints_nr++;
+}
+
+static void show_commit_pack_hint(struct commit *commit UNUSED,
+				  void *data UNUSED)
+{
+	/* nothing to do; commits don't have a namehash */
 }
 
 static int pack_mtime_cmp(const void *_a, const void *_b)
