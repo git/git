@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2025, #07; Fri, 20)
+Subject: What's cooking in git.git (Jun 2025, #08; Mon, 23)
 X-master-at: cb3b40381e1d5ee32dde96521ad7cfd68eb308a6
-X-next-at: 3ef4f7f41c906aed207d7dc8fda2df876ddb3c83
+X-next-at: 7c2003159bacce310b20a522e641b9749eb67935
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2025, #07; Fri, 20)
+What's cooking in git.git (Jun 2025, #08; Mon, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,20 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-A handful of topics that have been cooking in 'next' are now in
-'master'.  I've rewound the tip of 'next' to prepare for this cycle.
-
-As the project usually is slow during Summer in Northern hemisphere,
-I plan to make the next cycle on the shorter side to last 8 weeks
-(usually a typical release cycle lasts for 8 to 12 weeks).  Key
-dates are:
-
- - Jun 23rd - the 2.51 cycle opens
- - Aug  4th - 2.51-rc0 (preview)
- - Aug  7th - 2.51-rc1 (master really freezes)
- - Aug 13th - 2.51-rc2
- - Aug 18th - 2.51-final
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -62,6 +48,39 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
+* jk/test-seq-format (2025-06-23) 2 commits
+ - test-lib: teach test_seq the -f option
+ - t7422: replace confusing printf with echo
+
+ A test helper "test_seq" function learned the "-f <fmt>" option,
+ which allowed us to simplify a lot of test scripts.
+
+ Will merge to 'next'.
+ source: <20250623105516.GA654296@coredump.intra.peff.net>
+
+
+* mc/netrc-service-names (2025-06-22) 3 commits
+ - contrib: better support symbolic port names in git-credential-netrc
+ - contrib: warn for invalid netrc file ports in git-credential-netrc
+ - contrib: use a more portable shebang for git-credential-netrc
+
+ "netrc" credential helper has been improved to understand textual
+ service names (like smtp) in addition to the numeric port numbers
+ (like 25).
+
+ Comments.
+ source: <20250620041239.27839-1-maxim@guixotic.coop>
+
+
+* ph/fetch-prune-optim (2025-06-23) 2 commits
+ - refs: remove old refs_warn_dangling_symref
+ - fetch-prune: optimize dangling-ref reporting
+
+ source: <20250623234327.335490-1-phil.hord@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
 * bc/use-sha256-by-default-in-3.0 (2025-06-19) 10 commits
  - Enable SHA-256 by default in breaking changes mode
  - t5300: choose the built-in hash outside of a repo
@@ -81,13 +100,14 @@ Release tarballs are available at:
 
 
 * jc/cocci-avoid-regexp-constraint (2025-06-18) 1 commit
- - cocci: matching (multiple) identifiers
+  (merged to 'next' on 2025-06-23 at 9ca93f0bac)
+ + cocci: matching (multiple) identifiers
 
  Avoid regexp_constraint and instead use comparison_constraint when
  listing functions to exclude from application of coccinelle rules,
  as spatch can be built with different regexp engine X-<.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqbjqlexzd.fsf@gitster.g>
 
 
@@ -102,14 +122,14 @@ Release tarballs are available at:
  source: <xmqq4iwcgbzb.fsf@gitster.g>
 
 
-* jc/coccicheck-fails-make-when-it-fails (2025-06-19) 1 commit
+* jc/coccicheck-fails-make-when-it-fails (2025-06-23) 1 commit
  - coccicheck: fail "make" when it fails
 
  "make coccicheck" succeeds even when spatch made suggestions, which
  has been updated to fail in such a case.
 
  Needs review.
- source: <xmqqwm97bv7c.fsf@gitster.g>
+ source: <xmqqbjqe77vw.fsf@gitster.g>
 
 
 * jt/imap-send-message-fix (2025-06-20) 3 commits
@@ -120,18 +140,18 @@ Release tarballs are available at:
 
  Update some error messages from "git imap-send".
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20250620155614.901816-1-joerg@thalheim.io>
 
 
 * lo/repo-info (2025-06-19) 7 commits
- - repo-info: add field layout.shallow
- - repo-info: add field layout.bare
- - repo-info: add the field references.format
- - repo-info: add the --allow-empty flag
- - repo-info: add plaintext as an output format
- - repo-info: add the --format flag
- - repo-info: declare the repo-info command
+ . repo-info: add field layout.shallow
+ . repo-info: add field layout.bare
+ . repo-info: add the field references.format
+ . repo-info: add the --allow-empty flag
+ . repo-info: add plaintext as an output format
+ . repo-info: add the --format flag
+ . repo-info: declare the repo-info command
 
  A new subcommand "git repo-info" gives users a way to grab various
  repository characteristics.
@@ -139,8 +159,6 @@ Release tarballs are available at:
  Needs review.
  source: <20250619225751.99699-1-lucasseikioshiro@gmail.com>
 
---------------------------------------------------
-[Cooking]
 
 * cc/fast-import-export-signature-names (2025-06-19) 1 commit
  - fast-(import|export): improve on commit signature output format
@@ -164,21 +182,20 @@ Release tarballs are available at:
  source: <cover.1750157825.git.ayu.chandekar@gmail.com>
 
 
-* jk/submodule-remote-lookup-cleanup (2025-06-18) 7 commits
- . submodule: look up remotes by URL first
- . submodule: move get_default_remote_submodule()
- . submodule--helper: improve logic for fallback remote name
- . remote: remove the_repository from some functions
- . dir: move starts_with_dot(_dot)_slash to dir.h
- . remote: fix tear down of struct remote
- . remote: remove branch->merge_name and fix branch_release()
+* jk/submodule-remote-lookup-cleanup (2025-06-23) 7 commits
+ - submodule: look up remotes by URL first
+ - submodule: move get_default_remote_submodule()
+ - submodule--helper: improve logic for fallback remote name
+ - remote: remove the_repository from some functions
+ - dir: move starts_with_dot(_dot)_slash to dir.h
+ - remote: fix tear down of struct remote
+ - remote: remove branch->merge_name and fix branch_release()
 
  Updating submodules from the upstream did not work well when
  submodule's HEAD is detached, which has been improved.
 
- Kicked out of 'seen' as it seems to fail the test suite.
- cf. <xmqqecve0yvz.fsf@gitster.g>
- source: <20250618-jk-submodule-helper-use-url-v3-0-7c60f2679271@gmail.com>
+ Will merge to 'next'.
+ source: <20250623-jk-submodule-helper-use-url-v4-0-133ef3d89569@gmail.com>
 
 
 * ly/run-builtin-use-passed-in-repo (2025-06-15) 1 commit
@@ -264,7 +281,7 @@ Release tarballs are available at:
  use the compact-summary format, intead of diffstat, when showing
  the summary of the incoming changes.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20250612222537.2426059-1-gitster@pobox.com>
 
 
@@ -354,22 +371,23 @@ Release tarballs are available at:
 
 
 * ag/imap-send-resurrection (2025-06-19) 10 commits
- - imap-send: fix minor mistakes in the logs
- - imap-send: display the destination mailbox when sending a message
- - imap-send: display port alongwith host when git credential is invoked
- - imap-send: add ability to list the available folders
- - imap-send: enable specifying the folder using the command line
- - imap-send: add PLAIN authentication method to OpenSSL
- - imap-send: add support for OAuth2.0 authentication
- - imap-send: gracefully fail if CRAM-MD5 authentication is requested without OpenSSL
- - imap-send: fix memory leak in case auth_cram_md5 fails
- - imap-send: fix bug causing cfg->folder being set to NULL
+  (merged to 'next' on 2025-06-23 at 7c2003159b)
+ + imap-send: fix minor mistakes in the logs
+ + imap-send: display the destination mailbox when sending a message
+ + imap-send: display port alongwith host when git credential is invoked
+ + imap-send: add ability to list the available folders
+ + imap-send: enable specifying the folder using the command line
+ + imap-send: add PLAIN authentication method to OpenSSL
+ + imap-send: add support for OAuth2.0 authentication
+ + imap-send: gracefully fail if CRAM-MD5 authentication is requested without OpenSSL
+ + imap-send: fix memory leak in case auth_cram_md5 fails
+ + imap-send: fix bug causing cfg->folder being set to NULL
  (this branch is used by jt/imap-send-message-fix.)
 
  "git imap-send" has been broken for a long time, which has been
  resurrected and then taught to talk OAuth2.0 etc.
 
- Ready?
+ Will merge to 'master'.
  source: <PN3PR01MB9597F9CAD0DA83152E651194B87CA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
 
 
@@ -523,7 +541,7 @@ Release tarballs are available at:
  An interchange format for stash entries is defined, and subcommand
  of "git stash" to import/export has been added.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20250612011221.4158484-1-sandals@crustytoothpaste.net>
 
 
@@ -541,8 +559,7 @@ Release tarballs are available at:
  source: <pull.1915.v2.git.1746884789.gitgitgadget@gmail.com>
 
 
-* ps/contrib-sweep (2025-05-16) 12 commits
- - Revert "contrib: remove "thunderbird-patch-inline""
+* ps/contrib-sweep (2025-05-12) 11 commits
  - contrib: remove some scripts in "stats" directory
  - contrib: remove "git-new-workdir"
  - contrib: remove "emacs" directory
@@ -557,7 +574,7 @@ Release tarballs are available at:
 
  Remove bunch of stuff from contrib/ hierarchy.
 
- I've reverted the thunderbird thing for now.
+ Will merge to 'next'.
  source: <20250512-pks-contrib-spring-cleanup-v3-0-32e151b0bfb0@pks.im>
 
 
@@ -634,7 +651,7 @@ Release tarballs are available at:
  source: <aCoDB9P5XV1lHMil@ArchLinux>
 
 
-* tb/midx-avoid-cruft-packs (2025-06-19) 9 commits
+* tb/midx-avoid-cruft-packs (2025-06-23) 9 commits
  - repack: exclude cruft pack(s) from the MIDX where possible
  - pack-objects: introduce '--stdin-packs=follow'
  - pack-objects: swap 'show_{object,commit}_pack_hint'
@@ -649,4 +666,4 @@ Release tarballs are available at:
  cruft packs from midx.
 
  Ready?
- source: <cover.1750375803.git.me@ttaylorr.com>
+ source: <cover.1750717921.git.me@ttaylorr.com>
