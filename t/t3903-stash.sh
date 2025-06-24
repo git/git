@@ -11,6 +11,13 @@ export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-unique-files.sh
 
+test_expect_success 'setup' '
+	test_oid_cache <<-EOF
+	export_base sha1:73c9bab443d1f88ac61aa533d2eeaaa15451239c
+	export_base sha256:f210fa6346e3e2ce047bdb570426b17075980c1ac01fec8fc4b75bd3ab4bcfe4
+	EOF
+'
+
 test_expect_success 'usage on cmd and subcommand invalid option' '
 	test_expect_code 129 git stash --invalid-option 2>usage &&
 	grep "or: git stash" usage &&
@@ -1432,6 +1439,100 @@ test_expect_success 'stash --keep-index --include-untracked with empty tree' '
 		echo content >expect &&
 		test_cmp expect file
 	)
+'
+
+test_expect_success 'stash export and import round-trip stashes' '
+	git reset &&
+	>untracked &&
+	>tracked1 &&
+	>tracked2 &&
+	git add tracked* &&
+	git stash -- &&
+	>subdir/untracked &&
+	>subdir/tracked1 &&
+	>subdir/tracked2 &&
+	git add subdir/tracked* &&
+	git stash --include-untracked -- subdir/ &&
+	git tag t-stash0 stash@{0} &&
+	git tag t-stash1 stash@{1} &&
+	simple=$(git stash export --print) &&
+	git stash clear &&
+	git stash import "$simple" &&
+	test_cmp_rev stash@{0} t-stash0 &&
+	test_cmp_rev stash@{1} t-stash1 &&
+	git stash export --to-ref refs/heads/foo &&
+	test_cmp_rev "$(test_oid empty_tree)" foo: &&
+	test_cmp_rev "$(test_oid empty_tree)" foo^: &&
+	test_cmp_rev t-stash0 foo^2 &&
+	test_cmp_rev t-stash1 foo^^2 &&
+	git log --first-parent --format="%s" refs/heads/foo >log &&
+	grep "^git stash: " log >log2 &&
+	test_line_count = 13 log2 &&
+	git stash clear &&
+	git stash import foo &&
+	test_cmp_rev stash@{0} t-stash0 &&
+	test_cmp_rev stash@{1} t-stash1
+'
+
+test_expect_success 'stash import appends commits' '
+	git log --format=oneline -g refs/stash >out &&
+	cat out out >out2 &&
+	git stash import refs/heads/foo &&
+	git log --format=oneline -g refs/stash >actual &&
+	test_line_count = $(wc -l <out2) actual
+'
+
+test_expect_success 'stash export can accept specified stashes' '
+	git stash clear &&
+	git stash import foo &&
+	git stash export --to-ref refs/heads/bar stash@{1} stash@{0} &&
+	git stash clear &&
+	git stash import refs/heads/bar &&
+	test_cmp_rev stash@{1} t-stash0 &&
+	test_cmp_rev stash@{0} t-stash1 &&
+	git log --format=oneline -g refs/stash >actual &&
+	test_line_count = 2 actual
+'
+
+test_expect_success 'stash export rejects invalid arguments' '
+	test_must_fail git stash export --print --to-ref refs/heads/invalid 2>err &&
+	grep "exactly one of --print and --to-ref is required" err &&
+	test_must_fail git stash export 2>err2 &&
+	grep "exactly one of --print and --to-ref is required" err2
+'
+
+test_expect_success 'stash can import and export zero stashes' '
+	git stash clear &&
+	git stash export --to-ref refs/heads/baz &&
+	test_cmp_rev "$(test_oid empty_tree)" baz: &&
+	test_cmp_rev "$(test_oid export_base)" baz &&
+	test_must_fail git rev-parse baz^1 &&
+	git stash import baz &&
+	test_must_fail git rev-parse refs/stash
+'
+
+test_expect_success 'stash rejects invalid attempts to import commits' '
+	git stash import foo &&
+	test_must_fail git stash import HEAD 2>output &&
+	oid=$(git rev-parse HEAD) &&
+	grep "$oid is not a valid exported stash commit" output &&
+	test_cmp_rev stash@{0} t-stash0 &&
+
+	git checkout --orphan orphan &&
+	git commit-tree $(test_oid empty_tree) -p "$oid" -p "$oid^" -m "" >fake-commit &&
+	git update-ref refs/heads/orphan "$(cat fake-commit)" &&
+	oid=$(git rev-parse HEAD) &&
+	test_must_fail git stash import orphan 2>output &&
+	grep "found stash commit $oid without expected prefix" output &&
+	test_cmp_rev stash@{0} t-stash0 &&
+
+	git checkout --orphan orphan2 &&
+	git commit-tree $(test_oid empty_tree) -m "" >fake-commit &&
+	git update-ref refs/heads/orphan2 "$(cat fake-commit)" &&
+	oid=$(git rev-parse HEAD) &&
+	test_must_fail git stash import orphan2 2>output &&
+	grep "found root commit $oid with invalid data" output &&
+	test_cmp_rev stash@{0} t-stash0
 '
 
 test_expect_success 'stash apply should succeed with unmodified file' '
