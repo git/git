@@ -1127,7 +1127,7 @@ static int push_submodule(const char *path,
 			  int dry_run)
 {
 	if (validate_submodule_path(path) < 0)
-		exit(128);
+		return 0;
 
 	if (for_each_remote_ref_submodule(path, has_remote, NULL) > 0) {
 		struct child_process cp = CHILD_PROCESS_INIT;
@@ -1514,10 +1514,19 @@ static struct fetch_task *fetch_task_create(struct submodule_parallel_fetch *spf
 {
 	struct fetch_task *task;
 
-	CALLOC_ARRAY(task, 1);
+	if (validate_submodule_path(path) < 0) {
+		// Add submodule path to the list of submodules with errors.
+		// validate_submodule_path already printed an error message, but
+		// it would be confusing if the submodule wouldn't be listed
+		// together with other erroneous modules at the end.
+		//
+		// NEEDSWORK: name instead of path would be nice
+		spf->result = 1;
+		strbuf_addf(&spf->submodules_with_errors, "\t%s\n", path);
+		return NULL;
+	}
 
-	if (validate_submodule_path(path) < 0)
-		exit(128);
+	CALLOC_ARRAY(task, 1);
 
 	task->sub = submodule_from_path(spf->r, treeish_name, path);
 
@@ -1999,8 +2008,12 @@ int bad_to_remove_submodule(const char *path, unsigned flags)
 	struct strbuf buf = STRBUF_INIT;
 	int ret = 0;
 
-	if (validate_submodule_path(path) < 0)
-		exit(128);
+	if (validate_submodule_path(path) < 0) {
+		if (flags & SUBMODULE_REMOVAL_DIE_ON_ERROR)
+			die(NULL);
+		ret = -1;
+		goto out;
+	}
 
 	if (!file_exists(path) || is_empty_dir(path))
 		return 0;
@@ -2555,7 +2568,7 @@ int submodule_to_gitdir(struct repository *repo,
 	int ret = 0;
 
 	if (validate_submodule_path(submodule) < 0)
-		exit(128);
+		return -1;
 
 	strbuf_reset(buf);
 	strbuf_addstr(buf, submodule);
