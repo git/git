@@ -69,7 +69,10 @@ static const char * const builtin_merge_usage[] = {
 	NULL
 };
 
-static int show_diffstat = 1, shortlog_len = -1, squash;
+#define MERGE_SHOW_DIFFSTAT 1
+#define MERGE_SHOW_COMPACTSUMMARY 2
+
+static int show_diffstat = MERGE_SHOW_DIFFSTAT, shortlog_len = -1, squash;
 static int option_commit = -1;
 static int option_edit = -1;
 static int allow_trivial = 1, have_message, verify_signatures;
@@ -243,12 +246,28 @@ static int option_parse_strategy(const struct option *opt UNUSED,
 	return 0;
 }
 
+static int option_parse_compact_summary(const struct option *opt,
+					const char *name UNUSED, int unset)
+{
+	int *setting = opt->value;
+
+	if (unset)
+		*setting = 0;
+	else
+		*setting = MERGE_SHOW_COMPACTSUMMARY;
+	return 0;
+}
+
 static struct option builtin_merge_options[] = {
 	OPT_SET_INT('n', NULL, &show_diffstat,
 		N_("do not show a diffstat at the end of the merge"), 0),
 	OPT_BOOL(0, "stat", &show_diffstat,
 		N_("show a diffstat at the end of the merge")),
 	OPT_BOOL(0, "summary", &show_diffstat, N_("(synonym to --stat)")),
+	OPT_CALLBACK_F(0, "compact-summary", &show_diffstat, N_("compact-summary"),
+		       N_("show a compact-summary at the end of the merge"),
+		       PARSE_OPT_NOARG,
+		       option_parse_compact_summary),
 	{
 		.type = OPTION_INTEGER,
 		.long_name = "log",
@@ -494,8 +513,19 @@ static void finish(struct commit *head_commit,
 		struct diff_options opts;
 		repo_diff_setup(the_repository, &opts);
 		init_diffstat_widths(&opts);
-		opts.output_format |=
-			DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
+
+		switch (show_diffstat) {
+		case MERGE_SHOW_DIFFSTAT: /* 1 */
+			opts.output_format |=
+				DIFF_FORMAT_SUMMARY | DIFF_FORMAT_DIFFSTAT;
+			break;
+		case MERGE_SHOW_COMPACTSUMMARY: /* 2 */
+			opts.output_format |= DIFF_FORMAT_DIFFSTAT;
+			opts.flags.stat_with_summary = 1;
+			break;
+		default:
+			break;
+		}
 		opts.detect_rename = DIFF_DETECT_RENAME;
 		diff_setup_done(&opts);
 		diff_tree_oid(head, new_head, "", &opts);
@@ -643,7 +673,35 @@ static int git_merge_config(const char *k, const char *v,
 	}
 
 	if (!strcmp(k, "merge.diffstat") || !strcmp(k, "merge.stat")) {
-		show_diffstat = git_config_bool(k, v);
+		int val = git_parse_maybe_bool_text(v);
+		switch (val) {
+		case 0:
+			show_diffstat = 0;
+			break;
+		case 1:
+			show_diffstat = MERGE_SHOW_DIFFSTAT;
+			break;
+		default:
+			if (!strcmp(v, "compact"))
+				show_diffstat = MERGE_SHOW_COMPACTSUMMARY;
+			/*
+			 * We do not need to have an explicit
+			 *
+			 * else if (!strcmp(v, "diffstat"))
+			 *	show_diffstat = MERGE_SHOW_DIFFSTAT;
+			 *
+			 * here, because the catch-all uses the
+			 * diffstat style anyway.
+			 */
+			else
+				/*
+				 * A setting from a future?  It is not an
+				 * error grave enough to fail the command.
+				 * proceed using the default one.
+				 */
+				show_diffstat = MERGE_SHOW_DIFFSTAT;
+			break;
+		}
 	} else if (!strcmp(k, "merge.verifysignatures")) {
 		verify_signatures = git_config_bool(k, v);
 	} else if (!strcmp(k, "pull.twohead")) {

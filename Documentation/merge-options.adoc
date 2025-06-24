@@ -113,6 +113,9 @@ include::signoff-option.adoc[]
 With `-n` or `--no-stat` do not show a diffstat at the end of the
 merge.
 
+`--compact-summary`::
+	Show a compact-summary at the end of the merge.
+
 `--squash`::
 `--no-squash`::
 	Produce the working tree and index state as if a real merge
