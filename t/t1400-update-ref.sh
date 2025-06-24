@@ -1380,10 +1380,7 @@ test_expect_success 'fails with duplicate ref update via symref' '
 
 test_expect_success ULIMIT_FILE_DESCRIPTORS 'large transaction creating branches does not burst open file limit' '
 (
-	for i in $(test_seq 33)
-	do
-		echo "create refs/heads/$i HEAD" || exit 1
-	done >large_input &&
+	test_seq -f "create refs/heads/%d HEAD" 33 >large_input &&
 	run_with_limited_open_files git update-ref --stdin <large_input &&
 	git rev-parse --verify -q refs/heads/33
 )
@@ -1391,10 +1388,7 @@ test_expect_success ULIMIT_FILE_DESCRIPTORS 'large transaction creating branches
 
 test_expect_success ULIMIT_FILE_DESCRIPTORS 'large transaction deleting branches does not burst open file limit' '
 (
-	for i in $(test_seq 33)
-	do
-		echo "delete refs/heads/$i HEAD" || exit 1
-	done >large_input &&
+	test_seq -f "delete refs/heads/%d HEAD" 33 >large_input &&
 	run_with_limited_open_files git update-ref --stdin <large_input &&
 	test_must_fail git rev-parse --verify -q refs/heads/33
 )
