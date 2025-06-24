@@ -315,6 +315,9 @@ For C programs:
    encouraged to have a blank line between the end of the declarations
    and the first statement in the block.
 
+ - Do not explicitly initialize global variables to 0 or NULL;
+   instead, let BSS take care of the zero initialization.
+
  - NULL pointers shall be written as NULL, not as 0.
 
  - When declaring pointers, the star sides with the variable
