@@ -699,6 +699,17 @@ test_expect_success 'stash show - stashes on stack, stash-like argument' '
 	test_cmp expected actual
 '
 
+test_expect_success 'stash show -p - stashes on stack, unknown argument shows usage' '
+	git stash clear &&
+	test_when_finished "git reset --hard HEAD" &&
+	git reset --hard &&
+	echo foo >>file &&
+	git stash &&
+	test_when_finished "git stash drop" &&
+	test_expect_code 129 git stash show -p --unknown 2>usage &&
+	grep -F "usage: git stash show" usage
+'
+
 test_expect_success 'stash show -p - stashes on stack, stash-like argument' '
 	git stash clear &&
 	test_when_finished "git reset --hard HEAD" &&
