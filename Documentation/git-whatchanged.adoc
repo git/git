@@ -8,8 +8,14 @@ git-whatchanged - Show logs with differences each commit introduces
 
 SYNOPSIS
 --------
-[verse]
-'git whatchanged' <option>...
+[synopsis]
+git whatchanged <option>...
+
+WARNING
+-------
+`git whatchanged` has been deprecated and is scheduled for removal in
+a future version of Git, as it is merely `git log` with different
+default; `whatchanged` is not even shorter to type than `log --raw`.
 
 DESCRIPTION
 -----------
