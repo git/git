@@ -838,7 +838,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		init_tree_desc(&trees[0], &tree->object.oid,
 			       tree->buffer, tree->size);
 		if (parse_tree(new_tree) < 0)
-			exit(128);
+			die(NULL);
 		tree = new_tree;
 		init_tree_desc(&trees[1], &tree->object.oid,
 			       tree->buffer, tree->size);
@@ -913,7 +913,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 						     work,
 						     old_tree);
 			if (ret < 0)
-				exit(128);
+				die(NULL);
 			ret = reset_tree(new_tree,
 					 opts, 0,
 					 writeout_error, new_branch_info);
