@@ -20,6 +20,10 @@ UI, Workflows & Features
 
  * "git subtree" (in contrib/) learned to grok GPG signing its commits.
 
+ * "git whatchanged" that is longer to type than "git log --raw"
+   which is its modern rough equivalent has outlived its usefulness
+   more than 10 years ago.  Plan to deprecate and remove it.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -69,6 +73,11 @@ Fixes since v2.50
    correctly parsed and replaced, which has been corrected.
    (merge abf94a283f sa/multi-mailmap-fix later to maint).
 
+ * "git maintenance" lacked the care "git gc" had to avoid holding
+   onto the repository lock for too long during packing refs, which
+   has been remedied.
+   (merge 1b5074e614 ps/maintenance-ref-lock later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge b257adb571 lo/my-first-ow-doc-update later to maint).
    (merge 8b34b6a220 ly/sequencer-update-squash-is-fixup-only later to maint).
@@ -82,3 +91,4 @@ Fixes since v2.50
    (merge 1fde1c5daf ac/preload-index-wo-the-repository later to maint).
    (merge 855cfc65ae rm/t2400-modernize later to maint).
    (merge 2939494284 ly/run-builtin-use-passed-in-repo later to maint).
+   (merge ff73f375bb jg/mailinfo-leakfix later to maint).
