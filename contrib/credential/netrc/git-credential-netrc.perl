@@ -268,13 +268,16 @@ sub load_netrc {
 			next;
 		}
 		if (defined $nentry->{port}) {
-			if ($nentry->{port} =~ m/^\d+$/) {
-				$num_port = $nentry->{port};
-				delete $nentry->{port};
-			} else {
+			$num_port = Git::port_num($nentry->{port});
+			unless ($num_port) {
 				printf(STDERR "ignoring invalid port `%s' " .
 				       "from netrc file\n", $nentry->{port});
 			}
+			# Since we've already validated and converted
+			# the port to its numerical value, do not
+			# capture it as the `protocol' value, as used
+			# to be the case for symbolic port names.
+			delete $nentry->{port};
 		}
 
 		# create the new entry for the credential helper protocol

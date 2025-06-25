@@ -45,7 +45,7 @@ chmod 0600, $netrc;
 diag "Testing with invalid data\n";
 $cred = run_credential(['-f', $netrc, 'get'],
 		       "bad data");
-ok(scalar keys %$cred == 4, "Got first found keys with bad data");
+ok(scalar keys %$cred == 3, "Got first found keys with bad data");
 
 diag "Testing netrc file for a missing corovamilkbar entry\n";
 $cred = run_credential(['-f', $netrc, 'get'],
@@ -64,12 +64,12 @@ is($cred->{username}, 'carol', "Got correct Github username");
 
 diag "Testing netrc file for a username-specific entry\n";
 $cred = run_credential(['-f', $netrc, 'get'],
-		       { host => 'imap', username => 'bob' });
+		       { host => 'imap:993', username => 'bob' });
 
-ok(scalar keys %$cred == 2, "Got 2 username-specific keys");
+# Only the password field gets returned.
+ok(scalar keys %$cred == 1, "Got 1 username-specific keys");
 
 is($cred->{password}, 'bobwillknow', "Got correct user-specific password");
-is($cred->{protocol}, 'imaps', "Got correct user-specific protocol");
 
 diag "Testing netrc file for a host:port-specific entry\n";
 $cred = run_credential(['-f', $netrc, 'get'],
