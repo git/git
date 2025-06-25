@@ -267,9 +267,14 @@ sub load_netrc {
 		if (!defined $nentry->{machine}) {
 			next;
 		}
-		if (defined $nentry->{port} && $nentry->{port} =~ m/^\d+$/) {
-			$num_port = $nentry->{port};
-			delete $nentry->{port};
+		if (defined $nentry->{port}) {
+			if ($nentry->{port} =~ m/^\d+$/) {
+				$num_port = $nentry->{port};
+				delete $nentry->{port};
+			} else {
+				printf(STDERR "ignoring invalid port `%s' " .
+				       "from netrc file\n", $nentry->{port});
+			}
 		}
 
 		# create the new entry for the credential helper protocol
