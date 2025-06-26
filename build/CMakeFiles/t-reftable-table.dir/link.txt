@@ -1,0 +1,1 @@
+/usr/bin/gcc -g   CMakeFiles/t-reftable-table.dir/workspaces/git/t/unit-tests/t-reftable-table.c.o CMakeFiles/common-main.dir/workspaces/git/common-main.c.o  -o t/unit-tests/bin/t-reftable-table  libunit-test-lib.a libclar-test-lib.a liblibgit.a libxdiff.a libreftable.a /usr/lib/x86_64-linux-gnu/libz.so -lc -lpcre2-8 -lpthread -lrt 

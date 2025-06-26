@@ -1,0 +1,34 @@
+# Ignore common vulnerability directories and files
+# Add any additional patterns that match your specific project structure
+
+# Ignore dependency directories
+node_modules/
+vendor/
+.bundler/
+.cache/
+build/
+dist/
+
+# Ignore specific files
+*.env
+*.secret
+*.key
+*.pem
+*.p12
+*.crt
+*.cer
+
+# Ignore specific configuration files that might contain sensitive information
+config/database.yml
+config/secrets.yml
+config/credentials.yml.enc
+config/master.key
+
+# Ignore log files
+*.log
+
+# Ignore any other files or directories containing sensitive information
+secrets/
+private/
+keys/
+certs/
