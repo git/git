@@ -37,6 +37,8 @@ include shared.mak
 # when attempting to read from an fopen'ed directory (or even to fopen
 # it at all).
 #
+# Define NO_RESTARTABLE_SIGNALS if don't have support for SA_RESTART
+#
 # Define OPEN_RETURNS_EINTR if your open() system call may return EINTR
 # when a signal is received (as opposed to restarting).
 #
@@ -1810,6 +1812,9 @@ endif
 ifdef FREAD_READS_DIRECTORIES
 	COMPAT_CFLAGS += -DFREAD_READS_DIRECTORIES
 	COMPAT_OBJS += compat/fopen.o
+endif
+ifdef NO_RESTARTABLE_SIGNALS
+	COMPAT_CFLAGS += -DNO_RESTARTABLE_SIGNALS
 endif
 ifdef OPEN_RETURNS_EINTR
 	COMPAT_CFLAGS += -DOPEN_RETURNS_EINTR
