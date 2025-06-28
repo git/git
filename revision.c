@@ -688,6 +688,7 @@ static int forbid_bloom_filters(struct pathspec *spec)
 static void prepare_to_use_bloom_filter(struct rev_info *revs)
 {
 	struct pathspec_item *pi;
+	struct bloom_keyvec *bloom_keyvec;
 	char *path_alloc = NULL;
 	const char *path, *p;
 	size_t len;
@@ -736,19 +737,21 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 		p++;
 	}
 
-	revs->bloom_keys_nr = path_component_nr;
-	ALLOC_ARRAY(revs->bloom_keys, revs->bloom_keys_nr);
+	revs->bloom_keyvecs_nr = 1;
+	CALLOC_ARRAY(revs->bloom_keyvecs, 1);
+	bloom_keyvec = create_bloom_keyvec(path_component_nr);
+	revs->bloom_keyvecs[0] = bloom_keyvec;
 
-	fill_bloom_key(path, len, &revs->bloom_keys[0],
-		       revs->bloom_filter_settings);
+	fill_bloom_keyvec_key(path, len, bloom_keyvec, 0,
+			      revs->bloom_filter_settings);
 	path_component_nr = 1;
 
 	p = path + len - 1;
 	while (p > path) {
 		if (*p == '/')
-			fill_bloom_key(path, p - path,
-				       &revs->bloom_keys[path_component_nr++],
-				       revs->bloom_filter_settings);
+			fill_bloom_keyvec_key(path, p - path, bloom_keyvec,
+					      path_component_nr++,
+					      revs->bloom_filter_settings);
 		p--;
 	}
 
@@ -779,11 +782,8 @@ static int check_maybe_different_in_bloom_filter(struct rev_info *revs,
 		return -1;
 	}
 
-	for (j = 0; result && j < revs->bloom_keys_nr; j++) {
-		result = bloom_filter_contains(filter,
-					       &revs->bloom_keys[j],
-					       revs->bloom_filter_settings);
-	}
+	result = bloom_filter_contains_vec(filter, revs->bloom_keyvecs[0],
+					   revs->bloom_filter_settings);
 
 	if (result)
 		count_bloom_filter_maybe++;
@@ -823,7 +823,7 @@ static int rev_compare_tree(struct rev_info *revs,
 			return REV_TREE_SAME;
 	}
 
-	if (revs->bloom_keys_nr && !nth_parent) {
+	if (revs->bloom_keyvecs_nr && !nth_parent) {
 		bloom_ret = check_maybe_different_in_bloom_filter(revs, commit);
 
 		if (bloom_ret == 0)
@@ -850,7 +850,7 @@ static int rev_same_tree_as_empty(struct rev_info *revs, struct commit *commit,
 	if (!t1)
 		return 0;
 
-	if (!nth_parent && revs->bloom_keys_nr) {
+	if (!nth_parent && revs->bloom_keyvecs_nr) {
 		bloom_ret = check_maybe_different_in_bloom_filter(revs, commit);
 		if (!bloom_ret)
 			return 1;
@@ -3229,10 +3229,10 @@ void release_revisions(struct rev_info *revs)
 	line_log_free(revs);
 	oidset_clear(&revs->missing_commits);
 
-	for (int i = 0; i < revs->bloom_keys_nr; i++)
-		clear_bloom_key(&revs->bloom_keys[i]);
-	FREE_AND_NULL(revs->bloom_keys);
-	revs->bloom_keys_nr = 0;
+	for (int i = 0; i < revs->bloom_keyvecs_nr; i++)
+		destroy_bloom_keyvec(revs->bloom_keyvecs[i]);
+	FREE_AND_NULL(revs->bloom_keyvecs);
+	revs->bloom_keyvecs_nr = 0;
 }
 
 static void add_child(struct rev_info *revs, struct commit *parent, struct commit *child)
