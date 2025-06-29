@@ -18,13 +18,6 @@ static void parse_string_list(struct string_list *list, const char *arg)
 	(void)string_list_split(list, arg, ':', -1);
 }
 
-static void write_list(const struct string_list *list)
-{
-	int i;
-	for (i = 0; i < list->nr; i++)
-		printf("[%d]: \"%s\"\n", i, list->items[i].string);
-}
-
 static void write_list_compact(const struct string_list *list)
 {
 	int i;
@@ -46,21 +39,6 @@ static int prefix_cb(struct string_list_item *item, void *cb_data)
 
 int cmd__string_list(int argc, const char **argv)
 {
-	if (argc == 5 && !strcmp(argv[1], "split_in_place")) {
-		struct string_list list = STRING_LIST_INIT_NODUP;
-		int i;
-		char *s = xstrdup(argv[2]);
-		const char *delim = argv[3];
-		int maxsplit = atoi(argv[4]);
-
-		i = string_list_split_in_place(&list, s, delim, maxsplit);
-		printf("%d\n", i);
-		write_list(&list);
-		string_list_clear(&list, 0);
-		free(s);
-		return 0;
-	}
-
 	if (argc == 4 && !strcmp(argv[1], "filter")) {
 		/*
 		 * Retain only the items that have the specified prefix.
