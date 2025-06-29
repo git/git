@@ -41,10 +41,10 @@ static int get_entry_index(const struct string_list *list, const char *string,
 }
 
 /* returns -1-index if already exists */
-static int add_entry(int insert_at, struct string_list *list, const char *string)
+static int add_entry(struct string_list *list, const char *string)
 {
 	int exact_match = 0;
-	int index = insert_at != -1 ? insert_at : get_entry_index(list, string, &exact_match);
+	int index = get_entry_index(list, string, &exact_match);
 
 	if (exact_match)
 		return -1 - index;
@@ -63,7 +63,7 @@ static int add_entry(int insert_at, struct string_list *list, const char *string
 
 struct string_list_item *string_list_insert(struct string_list *list, const char *string)
 {
-	int index = add_entry(-1, list, string);
+	int index = add_entry(list, string);
 
 	if (index < 0)
 		index = -1 - index;
