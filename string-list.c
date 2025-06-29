@@ -116,9 +116,9 @@ struct string_list_item *string_list_lookup(struct string_list *list, const char
 void string_list_remove_duplicates(struct string_list *list, int free_util)
 {
 	if (list->nr > 1) {
-		int src, dst;
+		size_t dst = 1;
 		compare_strings_fn cmp = list->cmp ? list->cmp : strcmp;
-		for (src = dst = 1; src < list->nr; src++) {
+		for (size_t src = 1; src < list->nr; src++) {
 			if (!cmp(list->items[dst - 1].string, list->items[src].string)) {
 				if (list->strdup_strings)
 					free(list->items[src].string);
@@ -134,8 +134,8 @@ void string_list_remove_duplicates(struct string_list *list, int free_util)
 int for_each_string_list(struct string_list *list,
 			 string_list_each_func_t fn, void *cb_data)
 {
-	int i, ret = 0;
-	for (i = 0; i < list->nr; i++)
+	int ret = 0;
+	for (size_t i = 0; i < list->nr; i++)
 		if ((ret = fn(&list->items[i], cb_data)))
 			break;
 	return ret;
@@ -144,8 +144,8 @@ int for_each_string_list(struct string_list *list,
 void filter_string_list(struct string_list *list, int free_util,
 			string_list_each_func_t want, void *cb_data)
 {
-	int src, dst = 0;
-	for (src = 0; src < list->nr; src++) {
+	size_t dst = 0;
+	for (size_t src = 0; src < list->nr; src++) {
 		if (want(&list->items[src], cb_data)) {
 			list->items[dst++] = list->items[src];
 		} else {
@@ -171,13 +171,12 @@ void string_list_remove_empty_items(struct string_list *list, int free_util)
 void string_list_clear(struct string_list *list, int free_util)
 {
 	if (list->items) {
-		int i;
 		if (list->strdup_strings) {
-			for (i = 0; i < list->nr; i++)
+			for (size_t i = 0; i < list->nr; i++)
 				free(list->items[i].string);
 		}
 		if (free_util) {
-			for (i = 0; i < list->nr; i++)
+			for (size_t i = 0; i < list->nr; i++)
 				free(list->items[i].util);
 		}
 		free(list->items);
@@ -189,13 +188,12 @@ void string_list_clear(struct string_list *list, int free_util)
 void string_list_clear_func(struct string_list *list, string_list_clear_func_t clearfunc)
 {
 	if (list->items) {
-		int i;
 		if (clearfunc) {
-			for (i = 0; i < list->nr; i++)
+			for (size_t i = 0; i < list->nr; i++)
 				clearfunc(list->items[i].util, list->items[i].string);
 		}
 		if (list->strdup_strings) {
-			for (i = 0; i < list->nr; i++)
+			for (size_t i = 0; i < list->nr; i++)
 				free(list->items[i].string);
 		}
 		free(list->items);
