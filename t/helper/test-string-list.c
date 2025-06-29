@@ -31,29 +31,8 @@ static void write_list_compact(const struct string_list *list)
 	}
 }
 
-static int prefix_cb(struct string_list_item *item, void *cb_data)
-{
-	const char *prefix = (const char *)cb_data;
-	return starts_with(item->string, prefix);
-}
-
 int cmd__string_list(int argc, const char **argv)
 {
-	if (argc == 4 && !strcmp(argv[1], "filter")) {
-		/*
-		 * Retain only the items that have the specified prefix.
-		 * Arguments: list|- prefix
-		 */
-		struct string_list list = STRING_LIST_INIT_DUP;
-		const char *prefix = argv[3];
-
-		parse_string_list(&list, argv[2]);
-		filter_string_list(&list, 0, prefix_cb, (void *)prefix);
-		write_list_compact(&list);
-		string_list_clear(&list, 0);
-		return 0;
-	}
-
 	if (argc == 3 && !strcmp(argv[1], "remove_duplicates")) {
 		struct string_list list = STRING_LIST_INIT_DUP;
 
