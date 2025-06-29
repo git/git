@@ -1,5 +1,3 @@
-#define DISABLE_SIGN_COMPARE_WARNINGS
-
 #include "git-compat-util.h"
 #include "string-list.h"
 
@@ -17,19 +15,19 @@ void string_list_init_dup(struct string_list *list)
 
 /* if there is no exact match, point to the index where the entry could be
  * inserted */
-static int get_entry_index(const struct string_list *list, const char *string,
-		int *exact_match)
+static size_t get_entry_index(const struct string_list *list, const char *string,
+			      int *exact_match)
 {
-	int left = -1, right = list->nr;
+	size_t left = 0, right = list->nr;
 	compare_strings_fn cmp = list->cmp ? list->cmp : strcmp;
 
-	while (left + 1 < right) {
-		int middle = left + (right - left) / 2;
+	while (left < right) {
+		size_t middle = left + (right - left) / 2;
 		int compare = cmp(string, list->items[middle].string);
 		if (compare < 0)
 			right = middle;
 		else if (compare > 0)
-			left = middle;
+			left = middle + 1;
 		else {
 			*exact_match = 1;
 			return middle;
@@ -40,10 +38,10 @@ static int get_entry_index(const struct string_list *list, const char *string,
 	return right;
 }
 
-static int add_entry(struct string_list *list, const char *string)
+static size_t add_entry(struct string_list *list, const char *string)
 {
 	int exact_match = 0;
-	int index = get_entry_index(list, string, &exact_match);
+	size_t index = get_entry_index(list, string, &exact_match);
 
 	if (exact_match)
 		return index;
@@ -62,7 +60,7 @@ static int add_entry(struct string_list *list, const char *string)
 
 struct string_list_item *string_list_insert(struct string_list *list, const char *string)
 {
-	int index = add_entry(list, string);
+	size_t index = add_entry(list, string);
 
 	return list->items + index;
 }
