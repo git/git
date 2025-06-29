@@ -124,7 +124,6 @@ integration_tests = [
   't0060-path-utils.sh',
   't0061-run-command.sh',
   't0062-revision-walking.sh',
-  't0063-string-list.sh',
   't0066-dir-iterator.sh',
   't0067-parse_pathspec_file.sh',
   't0068-for-each-repo.sh',

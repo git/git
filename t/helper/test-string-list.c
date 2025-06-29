@@ -1,48 +1,9 @@
-#define DISABLE_SIGN_COMPARE_WARNINGS
-
 #include "test-tool.h"
 #include "strbuf.h"
 #include "string-list.h"
 
-/*
- * Parse an argument into a string list.  arg should either be a
- * ':'-separated list of strings, or "-" to indicate an empty string
- * list (as opposed to "", which indicates a string list containing a
- * single empty string).  list->strdup_strings must be set.
- */
-static void parse_string_list(struct string_list *list, const char *arg)
-{
-	if (!strcmp(arg, "-"))
-		return;
-
-	(void)string_list_split(list, arg, ':', -1);
-}
-
-static void write_list_compact(const struct string_list *list)
-{
-	int i;
-	if (!list->nr)
-		printf("-\n");
-	else {
-		printf("%s", list->items[0].string);
-		for (i = 1; i < list->nr; i++)
-			printf(":%s", list->items[i].string);
-		printf("\n");
-	}
-}
-
 int cmd__string_list(int argc, const char **argv)
 {
-	if (argc == 3 && !strcmp(argv[1], "remove_duplicates")) {
-		struct string_list list = STRING_LIST_INIT_DUP;
-
-		parse_string_list(&list, argv[2]);
-		string_list_remove_duplicates(&list, 0);
-		write_list_compact(&list);
-		string_list_clear(&list, 0);
-		return 0;
-	}
-
 	if (argc == 2 && !strcmp(argv[1], "sort")) {
 		struct string_list list = STRING_LIST_INIT_NODUP;
 		struct strbuf sb = STRBUF_INIT;
