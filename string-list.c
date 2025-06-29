@@ -40,14 +40,13 @@ static int get_entry_index(const struct string_list *list, const char *string,
 	return right;
 }
 
-/* returns -1-index if already exists */
 static int add_entry(struct string_list *list, const char *string)
 {
 	int exact_match = 0;
 	int index = get_entry_index(list, string, &exact_match);
 
 	if (exact_match)
-		return -1 - index;
+		return index;
 
 	ALLOC_GROW(list->items, list->nr+1, list->alloc);
 	if (index < list->nr)
@@ -64,9 +63,6 @@ static int add_entry(struct string_list *list, const char *string)
 struct string_list_item *string_list_insert(struct string_list *list, const char *string)
 {
 	int index = add_entry(list, string);
-
-	if (index < 0)
-		index = -1 - index;
 
 	return list->items + index;
 }
