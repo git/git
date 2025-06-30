@@ -606,6 +606,14 @@ available online. Community maintained credential helpers are also available:
 You can also see linkgit:gitcredentials[7] for more OAuth based authentication
 helpers.
 
+Proton Mail does not provide an SMTP server to send emails. If you are a paid
+customer of Proton Mail, you can use
+https://proton.me/mail/bridge[Proton Mail Bridge]
+officially provided by Proton Mail to create a local SMTP server for sending
+emails. For both free and paid users, community maintained projects like
+https://github.com/AdityaGarg8/git-credential-email[git-protonmail] can be
+used.
+
 Note: the following core Perl modules that may be installed with your
 distribution of Perl are required:
 
