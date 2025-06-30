@@ -151,6 +151,7 @@ struct repository {
 	/* Configurations */
 	int repository_format_worktree_config;
 	int repository_format_relative_worktrees;
+	int repository_format_precious_objects;
 
 	/* Indicate if a repository has a different 'commondir' from 'gitdir' */
 	unsigned different_commondir:1;
