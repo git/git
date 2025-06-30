@@ -619,6 +619,35 @@ These additional Perl modules are also required:
 https://metacpan.org/pod/Authen::SASL[Authen::SASL] and
 https://metacpan.org/pod/Mail::Address[Mail::Address].
 
+Exploiting the `sendmailCmd` option of `git send-email`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Apart from sending emails via an SMTP server, `git send-email` can also send
+emails through any application that supports sendmail-like commands. You can
+read documentation of `--sendmail-cmd=<command>` above for more information.
+This ability can be very useful if you want to use another application as an
+SMTP client for `git send-email`, or if your email provider uses proprietary
+APIs instead of SMTP to send emails.
+
+As an example, lets see how to configure https://marlam.de/msmtp/[msmtp], a
+popular SMTP client found in many Linux distributions. Edit `~/.gitconfig`
+to instruct `git-send-email` to use it for sending emails.
+
+----
+[sendemail]
+	sendmailCmd = /usr/bin/msmtp # Change this to the path where msmtp is installed
+----
+
+Links of a few such community maintained helpers are:
+
+	- https://marlam.de/msmtp/[msmtp]
+	  (popular SMTP client with many features, available for Linux and macOS)
+
+	- https://github.com/AdityaGarg8/git-credential-email[git-protonmail]
+	  (cross platform client that can send emails using the ProtonMail API)
+
+	- https://github.com/AdityaGarg8/git-credential-email[git-msgraph]
+	  (cross platform client that can send emails using the Microsoft Graph API)
 
 SEE ALSO
 --------
