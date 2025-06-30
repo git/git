@@ -600,6 +600,9 @@ available online. Community maintained credential helpers are also available:
 	- https://github.com/AdityaGarg8/git-credential-email[git-credential-yahoo]
 	  (cross platform, dedicated helper for authenticating Yahoo accounts)
 
+	- https://github.com/AdityaGarg8/git-credential-email[git-credential-aol]
+	  (cross platform, dedicated helper for authenticating AOL accounts)
+
 You can also see linkgit:gitcredentials[7] for more OAuth based authentication
 helpers.
 
