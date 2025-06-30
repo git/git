@@ -24,6 +24,13 @@ UI, Workflows & Features
    which is its modern rough equivalent has outlived its usefulness
    more than 10 years ago.  Plan to deprecate and remove it.
 
+ * An interchange format for stash entries is defined, and subcommand
+   of "git stash" to import/export has been added.
+
+ * "git merge/pull" has been taught the "--compact-summary" option to
+   use the compact-summary format, intead of diffstat, when showing
+   the summary of the incoming changes.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -40,6 +47,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * "Do not explicitly initialize to zero" rule has been clarified in
    the CodingGuidelines document.
+
+ * A test helper "test_seq" function learned the "-f <fmt>" option,
+   which allowed us to simplify a lot of test scripts.
 
 
 Fixes since v2.50
@@ -77,6 +87,11 @@ Fixes since v2.50
    onto the repository lock for too long during packing refs, which
    has been remedied.
    (merge 1b5074e614 ps/maintenance-ref-lock later to maint).
+
+ * Avoid regexp_constraint and instead use comparison_constraint when
+   listing functions to exclude from application of coccinelle rules,
+   as spatch can be built with different regexp engine X-<.
+   (merge f2ad545813 jc/cocci-avoid-regexp-constraint later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge b257adb571 lo/my-first-ow-doc-update later to maint).
