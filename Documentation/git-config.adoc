@@ -259,6 +259,12 @@ Valid `<type>`'s include:
 	Output only the names of config variables for `list` or
 	`get`.
 
+`--show-names`::
+`--no-show-names`::
+	With `get`, show config keys in addition to their values. The
+	default is `--no-show-names` unless `--url` is given and there
+	are no subsections in _<name>_.
+
 --show-origin::
 	Augment the output of all queried config options with the
 	origin type (file, standard input, blob, command line) and
