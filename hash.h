@@ -174,6 +174,8 @@ static inline void git_SHA256_Clone(git_SHA256_CTX *dst, const git_SHA256_CTX *s
 #define GIT_HASH_SHA256 2
 /* Number of algorithms supported (including unknown). */
 #define GIT_HASH_NALGOS (GIT_HASH_SHA256 + 1)
+/* Default hash algorithm if unspecified. */
+#define GIT_HASH_DEFAULT GIT_HASH_SHA1
 
 /* "sha1", big-endian */
 #define GIT_SHA1_FORMAT_ID 0x73686131
