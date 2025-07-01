@@ -305,9 +305,10 @@ int cmd_send_pack(int argc,
 		flags |= MATCH_REFS_MIRROR;
 
 	/* match them up */
-	if (match_push_refs(local_refs, &remote_refs, &rs, flags))
-		return -1;
-
+	if (match_push_refs(local_refs, &remote_refs, &rs, flags)) {
+		ret = -1;
+		goto cleanup;
+	}
 	if (!is_empty_cas(&cas))
 		apply_push_cas(&cas, remote, remote_refs);
 
@@ -340,6 +341,7 @@ int cmd_send_pack(int argc,
 		/* stable plumbing output; do not modify or localize */
 		fprintf(stderr, "Everything up-to-date\n");
 
+cleanup:
 	string_list_clear(&push_options, 0);
 	free_refs(remote_refs);
 	free_refs(local_refs);
