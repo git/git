@@ -138,8 +138,8 @@ static int fill_active_slot(void *data UNUSED)
 	list_for_each_safe(pos, tmp, head) {
 		obj_req = list_entry(pos, struct object_request, node);
 		if (obj_req->state == WAITING) {
-			if (has_object(the_repository, &obj_req->oid,
-				       HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
+			if (odb_has_object(the_repository->objects, &obj_req->oid,
+					   HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
 				obj_req->state = COMPLETE;
 			else {
 				start_object_request(obj_req);
@@ -497,8 +497,8 @@ static int fetch_object(struct walker *walker, const struct object_id *oid)
 	if (!obj_req)
 		return error("Couldn't find request for %s in the queue", hex);
 
-	if (has_object(the_repository, &obj_req->oid,
-		       HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR)) {
+	if (odb_has_object(the_repository->objects, &obj_req->oid,
+			   HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR)) {
 		if (obj_req->req)
 			abort_http_object_request(&obj_req->req);
 		abort_object_request(obj_req);

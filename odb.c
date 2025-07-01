@@ -871,7 +871,7 @@ int pretend_object_file(struct repository *repo,
 	char *co_buf;
 
 	hash_object_file(repo->hash_algo, buf, len, type, oid);
-	if (has_object(repo, oid, 0) ||
+	if (odb_has_object(repo->objects, oid, 0) ||
 	    find_cached_object(repo->objects, oid))
 		return 0;
 
@@ -953,7 +953,7 @@ void *read_object_with_reference(struct repository *r,
 	}
 }
 
-int has_object(struct repository *r, const struct object_id *oid,
+int odb_has_object(struct object_database *odb, const struct object_id *oid,
 	       unsigned flags)
 {
 	unsigned object_info_flags = 0;
@@ -965,7 +965,7 @@ int has_object(struct repository *r, const struct object_id *oid,
 	if (!(flags & HAS_OBJECT_FETCH_PROMISOR))
 		object_info_flags |= OBJECT_INFO_SKIP_FETCH_OBJECT;
 
-	return odb_read_object_info_extended(r->objects, oid, NULL, object_info_flags) >= 0;
+	return odb_read_object_info_extended(odb, oid, NULL, object_info_flags) >= 0;
 }
 
 void odb_assert_oid_type(struct object_database *odb,

@@ -893,8 +893,8 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 
 	if (startup_info->have_repository) {
 		read_lock();
-		collision_test_needed = has_object(the_repository, oid,
-						   HAS_OBJECT_FETCH_PROMISOR);
+		collision_test_needed = odb_has_object(the_repository->objects, oid,
+						       HAS_OBJECT_FETCH_PROMISOR);
 		read_unlock();
 	}
 

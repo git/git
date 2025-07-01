@@ -575,7 +575,7 @@ int repo_parse_commit_internal(struct repository *r,
 		if (commit_graph_paranoia == -1)
 			commit_graph_paranoia = git_env_bool(GIT_COMMIT_GRAPH_PARANOIA, 0);
 
-		if (commit_graph_paranoia && !has_object(r, &item->object.oid, 0)) {
+		if (commit_graph_paranoia && !odb_has_object(r->objects, &item->object.oid, 0)) {
 			unparse_commit(r, &item->object.oid);
 			return quiet_on_missing ? -1 :
 				error(_("commit %s exists in commit-graph but not in the object database"),

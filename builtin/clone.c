@@ -506,7 +506,7 @@ static void write_followtags(const struct ref *refs, const char *msg)
 			continue;
 		if (ends_with(ref->name, "^{}"))
 			continue;
-		if (!has_object(the_repository, &ref->old_oid, 0))
+		if (!odb_has_object(the_repository->objects, &ref->old_oid, 0))
 			continue;
 		refs_update_ref(get_main_ref_store(the_repository), msg,
 				ref->name, &ref->old_oid, NULL, 0,

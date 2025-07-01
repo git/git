@@ -372,8 +372,9 @@ enum {
  * Returns 1 if the object exists. This function will not lazily fetch objects
  * in a partial clone by default.
  */
-int has_object(struct repository *r, const struct object_id *oid,
-	       unsigned flags);
+int odb_has_object(struct object_database *odb,
+		   const struct object_id *oid,
+		   unsigned flags);
 
 void odb_assert_oid_type(struct object_database *odb,
 			 const struct object_id *oid, enum object_type expect);
@@ -461,6 +462,13 @@ static inline void *repo_read_object_file(struct repository *r,
 					  unsigned long *size)
 {
 	return odb_read_object(r->objects, oid, type, size);
+}
+
+static inline int has_object(struct repository *r,
+			     const struct object_id *oid,
+			     unsigned flags)
+{
+	return odb_has_object(r->objects, oid, flags);
 }
 
 #endif /* ODB_H */

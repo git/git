@@ -1040,7 +1040,7 @@ struct commit *lookup_commit_in_graph(struct repository *repo, const struct obje
 		return NULL;
 	if (!search_commit_pos_in_graph(id, repo->objects->commit_graph, &pos))
 		return NULL;
-	if (commit_graph_paranoia && !has_object(repo, id, 0))
+	if (commit_graph_paranoia && !odb_has_object(repo->objects, id, 0))
 		return NULL;
 
 	commit = lookup_commit(repo, id);
