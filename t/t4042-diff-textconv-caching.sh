@@ -120,6 +120,14 @@ test_expect_success 'log notes cache and still use cache for -p' '
 '
 
 test_expect_success 'caching is silently ignored outside repo' '
+	test_oid_cache <<-\EOM &&
+	oid1 sha1:5626abf
+	oid1 sha256:a4ed1f3
+	oid2 sha1:f719efd
+	oid2 sha256:aa9e7dc
+	EOM
+	oid1=$(test_oid --hash=builtin oid1) &&
+	oid2=$(test_oid --hash=builtin oid2) &&
 	mkdir -p non-repo &&
 	echo one >non-repo/one &&
 	echo two >non-repo/two &&
@@ -129,9 +137,9 @@ test_expect_success 'caching is silently ignored outside repo' '
 		   -c diff.test.textconv="tr a-z A-Z <" \
 		   -c diff.test.cachetextconv=true \
 		   diff --no-index one two >actual &&
-	cat >expect <<-\EOF &&
+	cat >expect <<-EOF &&
 	diff --git a/one b/two
-	index 5626abf..f719efd 100644
+	index $oid1..$oid2 100644
 	--- a/one
 	+++ b/two
 	@@ -1 +1 @@
