@@ -47,7 +47,7 @@ int tmp_objdir_destroy(struct tmp_objdir *t)
 		the_tmp_objdir = NULL;
 
 	if (t->prev_source)
-		restore_primary_odb(t->prev_source, t->path.buf);
+		odb_restore_primary_source(t->repo->objects, t->prev_source, t->path.buf);
 
 	err = remove_dir_recursively(&t->path, 0);
 
@@ -279,7 +279,7 @@ int tmp_objdir_migrate(struct tmp_objdir *t)
 	if (t->prev_source) {
 		if (t->repo->objects->sources->will_destroy)
 			BUG("migrating an ODB that was marked for destruction");
-		restore_primary_odb(t->prev_source, t->path.buf);
+		odb_restore_primary_source(t->repo->objects, t->prev_source, t->path.buf);
 		t->prev_source = NULL;
 	}
 
@@ -311,7 +311,8 @@ void tmp_objdir_replace_primary_odb(struct tmp_objdir *t, int will_destroy)
 {
 	if (t->prev_source)
 		BUG("the primary object database is already replaced");
-	t->prev_source = set_temporary_primary_odb(t->path.buf, will_destroy);
+	t->prev_source = odb_set_temporary_primary_source(t->repo->objects,
+							  t->path.buf, will_destroy);
 	t->will_destroy = will_destroy;
 }
 
@@ -320,7 +321,8 @@ struct tmp_objdir *tmp_objdir_unapply_primary_odb(void)
 	if (!the_tmp_objdir || !the_tmp_objdir->prev_source)
 		return NULL;
 
-	restore_primary_odb(the_tmp_objdir->prev_source, the_tmp_objdir->path.buf);
+	odb_restore_primary_source(the_tmp_objdir->repo->objects,
+				   the_tmp_objdir->prev_source, the_tmp_objdir->path.buf);
 	the_tmp_objdir->prev_source = NULL;
 	return the_tmp_objdir;
 }

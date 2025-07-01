@@ -73,17 +73,6 @@ struct odb_source {
 	char *path;
 };
 
-/*
- * Replace the current writable object directory with the specified temporary
- * object directory; returns the former primary object directory.
- */
-struct odb_source *set_temporary_primary_odb(const char *dir, int will_destroy);
-
-/*
- * Restore a previous ODB replaced by set_temporary_main_odb.
- */
-void restore_primary_odb(struct odb_source *restore_alternate, const char *old_path);
-
 struct packed_git;
 struct multi_pack_index;
 struct cached_object_entry;
@@ -186,6 +175,21 @@ void odb_clear(struct object_database *o);
  * be found.
  */
 struct odb_source *odb_find_source(struct object_database *odb, const char *obj_dir);
+
+/*
+ * Replace the current writable object directory with the specified temporary
+ * object directory; returns the former primary source.
+ */
+struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
+						    const char *dir, int will_destroy);
+
+/*
+ * Restore the primary source that was previously replaced by
+ * `odb_set_temporary_primary_source()`.
+ */
+void odb_restore_primary_source(struct object_database *odb,
+				struct odb_source *restore_source,
+				const char *old_path);
 
 /*
  * Iterate through all alternates of the database and execute the provided

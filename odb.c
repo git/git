@@ -329,7 +329,8 @@ void odb_add_to_alternates_memory(struct object_database *odb,
 			     '\n', NULL, 0);
 }
 
-struct odb_source *set_temporary_primary_odb(const char *dir, int will_destroy)
+struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
+						    const char *dir, int will_destroy)
 {
 	struct odb_source *source;
 
@@ -337,14 +338,14 @@ struct odb_source *set_temporary_primary_odb(const char *dir, int will_destroy)
 	 * Make sure alternates are initialized, or else our entry may be
 	 * overwritten when they are.
 	 */
-	odb_prepare_alternates(the_repository->objects);
+	odb_prepare_alternates(odb);
 
 	/*
 	 * Make a new primary odb and link the old primary ODB in as an
 	 * alternate
 	 */
 	source = xcalloc(1, sizeof(*source));
-	source->odb = the_repository->objects;
+	source->odb = odb;
 	source->path = xstrdup(dir);
 
 	/*
@@ -353,8 +354,8 @@ struct odb_source *set_temporary_primary_odb(const char *dir, int will_destroy)
 	 */
 	source->disable_ref_updates = 1;
 	source->will_destroy = will_destroy;
-	source->next = the_repository->objects->sources;
-	the_repository->objects->sources = source;
+	source->next = odb->sources;
+	odb->sources = source;
 	return source->next;
 }
 
@@ -366,19 +367,21 @@ static void free_object_directory(struct odb_source *source)
 	free(source);
 }
 
-void restore_primary_odb(struct odb_source *restore_alt, const char *old_path)
+void odb_restore_primary_source(struct object_database *odb,
+				struct odb_source *restore_source,
+				const char *old_path)
 {
-	struct odb_source *cur_alt = the_repository->objects->sources;
+	struct odb_source *cur_source = odb->sources;
 
-	if (strcmp(old_path, cur_alt->path))
+	if (strcmp(old_path, cur_source->path))
 		BUG("expected %s as primary object store; found %s",
-		    old_path, cur_alt->path);
+		    old_path, cur_source->path);
 
-	if (cur_alt->next != restore_alt)
+	if (cur_source->next != restore_source)
 		BUG("we expect the old primary object store to be the first alternate");
 
-	the_repository->objects->sources = restore_alt;
-	free_object_directory(cur_alt);
+	odb->sources = restore_source;
+	free_object_directory(cur_source);
 }
 
 char *compute_alternate_path(const char *path, struct strbuf *err)
