@@ -2669,7 +2669,7 @@ enum ref_transaction_error refs_verify_refnames_available(struct ref_store *refs
 			if (!iter) {
 				iter = refs_ref_iterator_begin(refs, dirname.buf, NULL, 0,
 							       DO_FOR_EACH_INCLUDE_BROKEN);
-			} else if (ref_iterator_seek(iter, dirname.buf) < 0) {
+			} else if (ref_iterator_seek(iter, dirname.buf, 1) < 0) {
 				goto cleanup;
 			}
 
