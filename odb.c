@@ -135,11 +135,15 @@ static int alt_odb_usable(struct object_database *o,
  * of the object ID, an extra slash for the first level indirection, and
  * the terminating NUL.
  */
-static void read_info_alternates(struct repository *r,
+static void read_info_alternates(struct object_database *odb,
 				 const char *relative_base,
 				 int depth);
-static int link_alt_odb_entry(struct repository *r, const struct strbuf *entry,
-	const char *relative_base, int depth, const char *normalized_objdir)
+
+static int link_alt_odb_entry(struct object_database *odb,
+			      const struct strbuf *entry,
+			      const char *relative_base,
+			      int depth,
+			      const char *normalized_objdir)
 {
 	struct odb_source *alternate;
 	struct strbuf pathbuf = STRBUF_INIT;
@@ -167,22 +171,23 @@ static int link_alt_odb_entry(struct repository *r, const struct strbuf *entry,
 	while (pathbuf.len && pathbuf.buf[pathbuf.len - 1] == '/')
 		strbuf_setlen(&pathbuf, pathbuf.len - 1);
 
-	if (!alt_odb_usable(r->objects, &pathbuf, normalized_objdir, &pos))
+	if (!alt_odb_usable(odb, &pathbuf, normalized_objdir, &pos))
 		goto error;
 
 	CALLOC_ARRAY(alternate, 1);
+	alternate->odb = odb;
 	/* pathbuf.buf is already in r->objects->source_by_path */
 	alternate->path = strbuf_detach(&pathbuf, NULL);
 
 	/* add the alternate entry */
-	*r->objects->sources_tail = alternate;
-	r->objects->sources_tail = &(alternate->next);
+	*odb->sources_tail = alternate;
+	odb->sources_tail = &(alternate->next);
 	alternate->next = NULL;
-	assert(r->objects->source_by_path);
-	kh_value(r->objects->source_by_path, pos) = alternate;
+	assert(odb->source_by_path);
+	kh_value(odb->source_by_path, pos) = alternate;
 
 	/* recursively add alternates */
-	read_info_alternates(r, alternate->path, depth + 1);
+	read_info_alternates(odb, alternate->path, depth + 1);
 	ret = 0;
  error:
 	strbuf_release(&tmp);
@@ -219,7 +224,7 @@ static const char *parse_alt_odb_entry(const char *string,
 	return end;
 }
 
-static void link_alt_odb_entries(struct repository *r, const char *alt,
+static void link_alt_odb_entries(struct object_database *odb, const char *alt,
 				 int sep, const char *relative_base, int depth)
 {
 	struct strbuf objdirbuf = STRBUF_INIT;
@@ -234,20 +239,20 @@ static void link_alt_odb_entries(struct repository *r, const char *alt,
 		return;
 	}
 
-	strbuf_realpath(&objdirbuf, r->objects->sources->path, 1);
+	strbuf_realpath(&objdirbuf, odb->sources->path, 1);
 
 	while (*alt) {
 		alt = parse_alt_odb_entry(alt, sep, &entry);
 		if (!entry.len)
 			continue;
-		link_alt_odb_entry(r, &entry,
+		link_alt_odb_entry(odb, &entry,
 				   relative_base, depth, objdirbuf.buf);
 	}
 	strbuf_release(&entry);
 	strbuf_release(&objdirbuf);
 }
 
-static void read_info_alternates(struct repository *r,
+static void read_info_alternates(struct object_database *odb,
 				 const char *relative_base,
 				 int depth)
 {
@@ -261,7 +266,7 @@ static void read_info_alternates(struct repository *r,
 		return;
 	}
 
-	link_alt_odb_entries(r, buf.buf, '\n', relative_base, depth);
+	link_alt_odb_entries(odb, buf.buf, '\n', relative_base, depth);
 	strbuf_release(&buf);
 	free(path);
 }
@@ -303,7 +308,7 @@ void add_to_alternates_file(const char *reference)
 		if (commit_lock_file(&lock))
 			die_errno(_("unable to move new alternates file into place"));
 		if (the_repository->objects->loaded_alternates)
-			link_alt_odb_entries(the_repository, reference,
+			link_alt_odb_entries(the_repository->objects, reference,
 					     '\n', NULL, 0);
 	}
 	free(alts);
@@ -317,7 +322,7 @@ void add_to_alternates_memory(const char *reference)
 	 */
 	prepare_alt_odb(the_repository);
 
-	link_alt_odb_entries(the_repository, reference,
+	link_alt_odb_entries(the_repository->objects, reference,
 			     '\n', NULL, 0);
 }
 
@@ -336,6 +341,7 @@ struct odb_source *set_temporary_primary_odb(const char *dir, int will_destroy)
 	 * alternate
 	 */
 	source = xcalloc(1, sizeof(*source));
+	source->odb = the_repository->objects;
 	source->path = xstrdup(dir);
 
 	/*
@@ -580,9 +586,9 @@ void prepare_alt_odb(struct repository *r)
 	if (r->objects->loaded_alternates)
 		return;
 
-	link_alt_odb_entries(r, r->objects->alternate_db, PATH_SEP, NULL, 0);
+	link_alt_odb_entries(r->objects, r->objects->alternate_db, PATH_SEP, NULL, 0);
 
-	read_info_alternates(r, r->objects->sources->path, 0);
+	read_info_alternates(r->objects, r->objects->sources->path, 0);
 	r->objects->loaded_alternates = 1;
 }
 
@@ -950,11 +956,12 @@ void assert_oid_type(const struct object_id *oid, enum object_type expect)
 		    type_name(expect));
 }
 
-struct object_database *odb_new(void)
+struct object_database *odb_new(struct repository *repo)
 {
 	struct object_database *o = xmalloc(sizeof(*o));
 
 	memset(o, 0, sizeof(*o));
+	o->repo = repo;
 	INIT_LIST_HEAD(&o->packed_git_mru);
 	hashmap_init(&o->pack_map, pack_map_entry_cmp, NULL, 0);
 	pthread_mutex_init(&o->replace_mutex, NULL);
