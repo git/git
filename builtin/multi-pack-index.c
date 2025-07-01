@@ -7,7 +7,7 @@
 #include "midx.h"
 #include "strbuf.h"
 #include "trace2.h"
-#include "object-store.h"
+#include "odb.h"
 #include "replace-object.h"
 #include "repository.h"
 

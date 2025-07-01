@@ -5,7 +5,7 @@
 #include "hex.h"
 #include "walker.h"
 #include "repository.h"
-#include "object-store.h"
+#include "odb.h"
 #include "commit.h"
 #include "strbuf.h"
 #include "tree.h"

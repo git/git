@@ -12,7 +12,7 @@
 #include "oidmap.h"
 #include "oidset.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 
 /* Remember to update object flag allocation in object.h */
 /*

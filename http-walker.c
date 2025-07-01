@@ -10,7 +10,7 @@
 #include "transport.h"
 #include "packfile.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 
 struct alt_base {
 	char *base;

@@ -7,7 +7,7 @@
 #include "tree.h"
 #include "tree-walk.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "repository.h"
 
 static int score_missing(unsigned mode)

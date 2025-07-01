@@ -6,7 +6,7 @@
 #include "strbuf.h"
 #include "replace-object.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "fsck.h"
 #include "config.h"
 

@@ -1,7 +1,7 @@
 #include "git-compat-util.h"
 #include "hash.h"
 #include "path.h"
-#include "object-store.h"
+#include "odb.h"
 #include "hex.h"
 #include "repository.h"
 #include "wrapper.h"

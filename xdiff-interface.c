@@ -5,7 +5,7 @@
 #include "gettext.h"
 #include "config.h"
 #include "hex.h"
-#include "object-store.h"
+#include "odb.h"
 #include "strbuf.h"
 #include "xdiff-interface.h"
 #include "xdiff/xtypes.h"

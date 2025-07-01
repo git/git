@@ -3,7 +3,7 @@
 
 #include "git-zlib.h"
 #include "object.h"
-#include "object-store.h"
+#include "odb.h"
 
 struct index_state;
 

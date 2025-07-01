@@ -1,7 +1,7 @@
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "repository.h"
-#include "object-store.h"
+#include "odb.h"
 #include "config.h"
 #include "object.h"
 #include "lockfile.h"

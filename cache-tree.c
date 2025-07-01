@@ -10,7 +10,7 @@
 #include "cache-tree.h"
 #include "bulk-checkin.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "read-cache-ll.h"
 #include "replace-object.h"
 #include "repository.h"

@@ -13,7 +13,7 @@
 #include "tree.h"
 #include "tree-walk.h"
 #include "object.h"
-#include "object-store.h"
+#include "odb.h"
 #include "oid-array.h"
 #include "oidset.h"
 #include "promisor-remote.h"

@@ -4,7 +4,7 @@
 #include "hex.h"
 #include "tree.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "commit.h"
 #include "alloc.h"
 #include "tree-walk.h"

@@ -21,7 +21,7 @@
 #include "loose.h"
 #include "object-file-convert.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "oidtree.h"
 #include "pack.h"
 #include "packfile.h"

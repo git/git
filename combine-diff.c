@@ -2,7 +2,7 @@
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
-#include "object-store.h"
+#include "odb.h"
 #include "commit.h"
 #include "convert.h"
 #include "diff.h"

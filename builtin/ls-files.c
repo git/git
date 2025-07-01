@@ -25,7 +25,7 @@
 #include "setup.h"
 #include "sparse-index.h"
 #include "submodule.h"
-#include "object-store.h"
+#include "odb.h"
 #include "hex.h"
 
 

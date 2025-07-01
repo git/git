@@ -6,7 +6,7 @@
 #include "hash.h"
 #include "hex.h"
 #include "object.h"
-#include "object-store.h"
+#include "odb.h"
 #include "repository.h"
 #include "string-list.h"
 #include "strbuf.h"

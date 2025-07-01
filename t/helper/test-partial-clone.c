@@ -1,7 +1,7 @@
 #include "test-tool.h"
 #include "hex.h"
 #include "repository.h"
-#include "object-store.h"
+#include "odb.h"
 #include "setup.h"
 
 /*

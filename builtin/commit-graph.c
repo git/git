@@ -6,7 +6,7 @@
 #include "hex.h"
 #include "parse-options.h"
 #include "commit-graph.h"
-#include "object-store.h"
+#include "odb.h"
 #include "progress.h"
 #include "replace-object.h"
 #include "strbuf.h"

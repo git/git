@@ -19,7 +19,7 @@
 #include "run-command.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "replace-object.h"
 #include "tag.h"
 #include "wildmatch.h"

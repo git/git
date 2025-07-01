@@ -3,10 +3,10 @@
 
 #include "list.h"
 #include "object.h"
-#include "object-store.h"
+#include "odb.h"
 #include "oidset.h"
 
-/* in object-store.h */
+/* in odb.h */
 struct object_info;
 
 struct packed_git {

@@ -18,7 +18,7 @@
 #include "path.h"
 #include "pathspec.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "strmap.h"
 
 #define RESOLVED 0

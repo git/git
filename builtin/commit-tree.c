@@ -9,7 +9,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 
 #include "commit.h"
 #include "parse-options.h"

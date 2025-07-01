@@ -3,7 +3,7 @@
 
 #include "git-compat-util.h"
 #include "refs.h"
-#include "object-store.h"
+#include "odb.h"
 #include "cache-tree.h"
 #include "mergesort.h"
 #include "commit.h"

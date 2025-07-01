@@ -14,7 +14,7 @@
 #include "pretty.h"
 #include "setup.h"
 #include "refs.h"
-#include "object-store.h"
+#include "odb.h"
 #include "commit.h"
 #include "tree.h"
 #include "tree-walk.h"

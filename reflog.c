@@ -5,7 +5,7 @@
 #include "config.h"
 #include "gettext.h"
 #include "parse-options.h"
-#include "object-store.h"
+#include "odb.h"
 #include "reflog.h"
 #include "refs.h"
 #include "revision.h"

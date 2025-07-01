@@ -4,7 +4,7 @@
 #include "date.h"
 #include "gettext.h"
 #include "hex.h"
-#include "object-store.h"
+#include "odb.h"
 #include "pkt-line.h"
 #include "sideband.h"
 #include "run-command.h"

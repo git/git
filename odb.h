@@ -1,5 +1,5 @@
-#ifndef OBJECT_STORE_H
-#define OBJECT_STORE_H
+#ifndef ODB_H
+#define ODB_H
 
 #include "hashmap.h"
 #include "object.h"
@@ -352,4 +352,4 @@ void *read_object_with_reference(struct repository *r,
 				 unsigned long *size,
 				 struct object_id *oid_ret);
 
-#endif /* OBJECT_STORE_H */
+#endif /* ODB_H */

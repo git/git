@@ -22,7 +22,7 @@
 #include "read-cache-ll.h"
 #include "refs.h"
 #include "revision.h"
-#include "object-store.h"
+#include "odb.h"
 #include "setup.h"
 #include "thread-utils.h"
 #include "tree-walk.h"

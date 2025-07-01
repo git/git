@@ -14,7 +14,7 @@
 #include "abspath.h"
 #include "base85.h"
 #include "config.h"
-#include "object-store.h"
+#include "odb.h"
 #include "delta.h"
 #include "diff.h"
 #include "dir.h"

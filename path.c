@@ -15,7 +15,7 @@
 #include "submodule-config.h"
 #include "path.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "odb.h"
 #include "lockfile.h"
 #include "exec-cmd.h"
 

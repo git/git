@@ -9,7 +9,7 @@
 #include "git-zlib.h"
 #include "hex.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "object.h"
 #include "delta.h"
 #include "pack.h"

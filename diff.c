@@ -23,7 +23,7 @@
 #include "color.h"
 #include "run-command.h"
 #include "utf8.h"
-#include "object-store.h"
+#include "odb.h"
 #include "userdiff.h"
 #include "submodule.h"
 #include "hashmap.h"

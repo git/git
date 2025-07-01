@@ -24,7 +24,7 @@
 #include "pack-bitmap.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "replace-object.h"
 #include "promisor-remote.h"
 #include "mailmap.h"

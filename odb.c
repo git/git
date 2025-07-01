@@ -13,7 +13,7 @@
 #include "loose.h"
 #include "object-file-convert.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "packfile.h"
 #include "path.h"
 #include "promisor-remote.h"
