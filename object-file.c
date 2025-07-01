@@ -106,7 +106,7 @@ static int check_and_freshen_nonlocal(const struct object_id *oid, int freshen)
 {
 	struct odb_source *source;
 
-	prepare_alt_odb(the_repository);
+	odb_prepare_alternates(the_repository->objects);
 	for (source = the_repository->objects->sources->next; source; source = source->next) {
 		if (check_and_freshen_odb(source, oid, freshen))
 			return 1;
@@ -205,7 +205,7 @@ static int stat_loose_object(struct repository *r, const struct object_id *oid,
 	struct odb_source *source;
 	static struct strbuf buf = STRBUF_INIT;
 
-	prepare_alt_odb(r);
+	odb_prepare_alternates(r->objects);
 	for (source = r->objects->sources; source; source = source->next) {
 		*path = odb_loose_path(source, &buf, oid);
 		if (!lstat(*path, st))
@@ -227,7 +227,7 @@ static int open_loose_object(struct repository *r,
 	int most_interesting_errno = ENOENT;
 	static struct strbuf buf = STRBUF_INIT;
 
-	prepare_alt_odb(r);
+	odb_prepare_alternates(r->objects);
 	for (source = r->objects->sources; source; source = source->next) {
 		*path = odb_loose_path(source, &buf, oid);
 		fd = git_open(*path);
@@ -246,7 +246,7 @@ static int quick_has_loose(struct repository *r,
 {
 	struct odb_source *source;
 
-	prepare_alt_odb(r);
+	odb_prepare_alternates(r->objects);
 	for (source = r->objects->sources; source; source = source->next) {
 		if (oidtree_contains(odb_loose_cache(source, oid), oid))
 			return 1;
@@ -1439,7 +1439,7 @@ int for_each_loose_object(each_loose_object_fn cb, void *data,
 {
 	struct odb_source *source;
 
-	prepare_alt_odb(the_repository);
+	odb_prepare_alternates(the_repository->objects);
 	for (source = the_repository->objects->sources; source; source = source->next) {
 		int r = for_each_loose_file_in_objdir(source->path, cb, NULL,
 						      NULL, data);

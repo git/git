@@ -112,7 +112,7 @@ int repo_read_loose_object_map(struct repository *repo)
 	if (!should_use_loose_object_map(repo))
 		return 0;
 
-	prepare_alt_odb(repo);
+	odb_prepare_alternates(repo->objects);
 
 	for (source = repo->objects->sources; source; source = source->next) {
 		if (load_one_loose_object_map(repo, source) < 0) {
