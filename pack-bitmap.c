@@ -2839,8 +2839,9 @@ int test_bitmap_commits(struct repository *r)
 		die(_("failed to load bitmap indexes"));
 
 	/*
-	 * As this function is only used to print bitmap selected
-	 * commits, we don't have to read the commit table.
+	 * Since this function needs to print the bitmapped
+	 * commits, bypass the commit lookup table (if one exists)
+	 * by forcing the bitmap to eagerly load its entries.
 	 */
 	if (bitmap_git->table_lookup) {
 		if (load_bitmap_entries_v1(bitmap_git) < 0)
