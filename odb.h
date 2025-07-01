@@ -6,6 +6,7 @@
 #include "list.h"
 #include "oidset.h"
 #include "oidmap.h"
+#include "string-list.h"
 #include "thread-utils.h"
 
 struct oidmap;
@@ -165,6 +166,12 @@ struct object_database {
 	 * packs.
 	 */
 	unsigned packed_git_initialized : 1;
+
+	/*
+	 * Submodule source paths that will be added as additional sources to
+	 * allow lookup of submodule objects via the main object database.
+	 */
+	struct string_list submodule_source_paths;
 };
 
 struct object_database *odb_new(struct repository *repo);
@@ -190,6 +197,14 @@ struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
 void odb_restore_primary_source(struct object_database *odb,
 				struct odb_source *restore_source,
 				const char *old_path);
+
+/*
+ * Call odb_add_submodule_source_by_path() to add the submodule at the given
+ * path to a list. The object stores of all submodules in that list will be
+ * added as additional sources in the object store when looking up objects.
+ */
+void odb_add_submodule_source_by_path(struct object_database *odb,
+				      const char *path);
 
 /*
  * Iterate through all alternates of the database and execute the provided

@@ -24,6 +24,7 @@
 #include "strbuf.h"
 #include "strvec.h"
 #include "submodule.h"
+#include "trace2.h"
 #include "write-or-die.h"
 
 KHASH_INIT(odb_path_map, const char * /* key: odb_path */,
@@ -469,6 +470,12 @@ struct odb_source *odb_find_source(struct object_database *odb, const char *obj_
 	return source;
 }
 
+void odb_add_submodule_source_by_path(struct object_database *odb,
+				      const char *path)
+{
+	string_list_insert(&odb->submodule_source_paths, path);
+}
+
 static void fill_alternate_refs_command(struct child_process *cmd,
 					const char *repo_path)
 {
@@ -623,6 +630,23 @@ void disable_obj_read_lock(void)
 
 int fetch_if_missing = 1;
 
+static int register_all_submodule_sources(struct object_database *odb)
+{
+	int ret = odb->submodule_source_paths.nr;
+
+	for (size_t i = 0; i < odb->submodule_source_paths.nr; i++)
+		odb_add_to_alternates_memory(odb,
+					     odb->submodule_source_paths.items[i].string);
+	if (ret) {
+		string_list_clear(&odb->submodule_source_paths, 0);
+		trace2_data_intmax("submodule", odb->repo,
+				   "register_all_submodule_sources/registered", ret);
+		if (git_env_bool("GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB", 0))
+			BUG("register_all_submodule_sources() called");
+	}
+	return ret;
+}
+
 static int do_oid_object_info_extended(struct repository *r,
 				       const struct object_id *oid,
 				       struct object_info *oi, unsigned flags)
@@ -676,13 +700,12 @@ static int do_oid_object_info_extended(struct repository *r,
 		}
 
 		/*
-		 * If r is the_repository, this might be an attempt at
-		 * accessing a submodule object as if it were in the_repository
-		 * (having called add_submodule_odb() on that submodule's ODB).
-		 * If any such ODBs exist, register them and try again.
+		 * This might be an attempt at accessing a submodule object as
+		 * if it were in main object store (having called
+		 * `odb_add_submodule_source_by_path()` on that submodule's
+		 * ODB). If any such ODBs exist, register them and try again.
 		 */
-		if (r == the_repository &&
-		    register_all_submodule_odb_as_alternates())
+		if (register_all_submodule_sources(r->objects))
 			/* We added some alternates; retry */
 			continue;
 
@@ -968,6 +991,7 @@ struct object_database *odb_new(struct repository *repo)
 	INIT_LIST_HEAD(&o->packed_git_mru);
 	hashmap_init(&o->pack_map, pack_map_entry_cmp, NULL, 0);
 	pthread_mutex_init(&o->replace_mutex, NULL);
+	string_list_init_dup(&o->submodule_source_paths);
 	return o;
 }
 
@@ -1017,4 +1041,5 @@ void odb_clear(struct object_database *o)
 	o->packed_git = NULL;
 
 	hashmap_clear(&o->pack_map);
+	string_list_clear(&o->submodule_source_paths, 0);
 }
