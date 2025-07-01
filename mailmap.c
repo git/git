@@ -196,7 +196,7 @@ int read_mailmap_blob(struct string_list *map, const char *name)
 	if (repo_get_oid(the_repository, name, &oid) < 0)
 		return 0;
 
-	buf = repo_read_object_file(the_repository, &oid, &type, &size);
+	buf = odb_read_object(the_repository->objects, &oid, &type, &size);
 	if (!buf)
 		return error("unable to read mailmap object at %s", name);
 	if (type != OBJ_BLOB) {

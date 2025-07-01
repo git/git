@@ -914,8 +914,8 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			die(_("cannot read existing object info %s"), oid_to_hex(oid));
 		if (has_type != type || has_size != size)
 			die(_("SHA1 COLLISION FOUND WITH %s !"), oid_to_hex(oid));
-		has_data = repo_read_object_file(the_repository, oid,
-						 &has_type, &has_size);
+		has_data = odb_read_object(the_repository->objects, oid,
+					   &has_type, &has_size);
 		read_unlock();
 		if (!data)
 			data = new_data = get_data_from_pack(obj_entry);
@@ -1521,8 +1521,8 @@ static void fix_unresolved_deltas(struct hashfile *f)
 
 		if (objects[d->obj_no].real_type != OBJ_REF_DELTA)
 			continue;
-		data = repo_read_object_file(the_repository, &d->oid, &type,
-					     &size);
+		data = odb_read_object(the_repository->objects, &d->oid,
+				       &type, &size);
 		if (!data)
 			continue;
 

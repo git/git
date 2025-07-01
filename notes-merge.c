@@ -340,7 +340,7 @@ static void write_note_to_worktree(const struct object_id *obj,
 {
 	enum object_type type;
 	unsigned long size;
-	void *buf = repo_read_object_file(the_repository, note, &type, &size);
+	void *buf = odb_read_object(the_repository->objects, note, &type, &size);
 
 	if (!buf)
 		die("cannot read note %s for object %s",

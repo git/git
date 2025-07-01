@@ -779,7 +779,7 @@ static struct attr_stack *read_attr_from_blob(struct index_state *istate,
 	if (get_tree_entry(istate->repo, tree_oid, path, &oid, &mode))
 		return NULL;
 
-	buf = repo_read_object_file(istate->repo, &oid, &type, &sz);
+	buf = odb_read_object(istate->repo->objects, &oid, &type, &sz);
 	if (!buf || type != OBJ_BLOB) {
 		free(buf);
 		return NULL;

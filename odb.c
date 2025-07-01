@@ -30,7 +30,7 @@ KHASH_INIT(odb_path_map, const char * /* key: odb_path */,
 
 /*
  * This is meant to hold a *small* number of objects that you would
- * want repo_read_object_file() to be able to return, but yet you do not want
+ * want odb_read_object() to be able to return, but yet you do not want
  * to write them into the object store (e.g. a browse-only
  * application).
  */
@@ -887,15 +887,10 @@ int pretend_object_file(struct repository *repo,
 	return 0;
 }
 
-/*
- * This function dies on corrupt objects; the callers who want to
- * deal with them should arrange to call odb_read_object_info_extended() and give
- * error messages themselves.
- */
-void *repo_read_object_file(struct repository *r,
-			    const struct object_id *oid,
-			    enum object_type *type,
-			    unsigned long *size)
+void *odb_read_object(struct object_database *odb,
+		      const struct object_id *oid,
+		      enum object_type *type,
+		      unsigned long *size)
 {
 	struct object_info oi = OBJECT_INFO_INIT;
 	unsigned flags = OBJECT_INFO_DIE_IF_CORRUPT | OBJECT_INFO_LOOKUP_REPLACE;
@@ -904,7 +899,7 @@ void *repo_read_object_file(struct repository *r,
 	oi.typep = type;
 	oi.sizep = size;
 	oi.contentp = &data;
-	if (odb_read_object_info_extended(r->objects, oid, &oi, flags))
+	if (odb_read_object_info_extended(odb, oid, &oi, flags))
 		return NULL;
 
 	return data;
@@ -926,7 +921,7 @@ void *read_object_with_reference(struct repository *r,
 		int ref_length = -1;
 		const char *ref_type = NULL;
 
-		buffer = repo_read_object_file(r, &actual_oid, &type, &isize);
+		buffer = odb_read_object(r->objects, &actual_oid, &type, &isize);
 		if (!buffer)
 			return NULL;
 		if (type == required_type) {

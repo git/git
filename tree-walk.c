@@ -795,9 +795,9 @@ enum get_oid_result get_tree_entry_follow_symlinks(struct repository *r,
 			 */
 			retval = DANGLING_SYMLINK;
 
-			contents = repo_read_object_file(r,
-						    &current_tree_oid, &type,
-						    &link_len);
+			contents = odb_read_object(r->objects,
+						   &current_tree_oid, &type,
+						   &link_len);
 
 			if (!contents)
 				goto done;

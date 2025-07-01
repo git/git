@@ -374,7 +374,7 @@ const void *repo_get_commit_buffer(struct repository *r,
 	if (!ret) {
 		enum object_type type;
 		unsigned long size;
-		ret = repo_read_object_file(r, &commit->object.oid, &type, &size);
+		ret = odb_read_object(r->objects, &commit->object.oid, &type, &size);
 		if (!ret)
 			die("cannot read commit object %s",
 			    oid_to_hex(&commit->object.oid));
@@ -1275,8 +1275,8 @@ static void handle_signed_tag(const struct commit *parent, struct commit_extra_h
 	desc = merge_remote_util(parent);
 	if (!desc || !desc->obj)
 		return;
-	buf = repo_read_object_file(the_repository, &desc->obj->oid, &type,
-				    &size);
+	buf = odb_read_object(the_repository->objects, &desc->obj->oid,
+			      &type, &size);
 	if (!buf || type != OBJ_TAG)
 		goto free_return;
 	if (!parse_signature(buf, size, &payload, &signature))

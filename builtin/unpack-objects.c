@@ -516,8 +516,8 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	if (resolve_against_held(nr, &base_oid, delta_data, delta_size))
 		return;
 
-	base = repo_read_object_file(the_repository, &base_oid, &type,
-				     &base_size);
+	base = odb_read_object(the_repository->objects, &base_oid,
+			       &type, &base_size);
 	if (!base) {
 		error("failed to read delta-pack base object %s",
 		      oid_to_hex(&base_oid));

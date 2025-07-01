@@ -74,7 +74,7 @@ static int filter_object(const char *path, unsigned mode,
 {
 	enum object_type type;
 
-	*buf = repo_read_object_file(the_repository, oid, &type, size);
+	*buf = odb_read_object(the_repository->objects, oid, &type, size);
 	if (!*buf)
 		return error(_("cannot read object %s '%s'"),
 			     oid_to_hex(oid), path);
@@ -197,8 +197,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 			ret = stream_blob(&oid);
 			goto cleanup;
 		}
-		buf = repo_read_object_file(the_repository, &oid, &type,
-					    &size);
+		buf = odb_read_object(the_repository->objects, &oid,
+				      &type, &size);
 		if (!buf)
 			die("Cannot read object %s", obj_name);
 
@@ -219,10 +219,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 			struct object_id blob_oid;
 			if (odb_read_object_info(the_repository->objects,
 						 &oid, NULL) == OBJ_TAG) {
-				char *buffer = repo_read_object_file(the_repository,
-								     &oid,
-								     &type,
-								     &size);
+				char *buffer = odb_read_object(the_repository->objects,
+							       &oid, &type, &size);
 				const char *target;
 
 				if (!buffer)
@@ -403,10 +401,8 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 				if (!textconv_object(the_repository,
 						     data->rest, 0100644, oid,
 						     1, &contents, &size))
-					contents = repo_read_object_file(the_repository,
-									 oid,
-									 &type,
-									 &size);
+					contents = odb_read_object(the_repository->objects,
+								   oid, &type, &size);
 				if (!contents)
 					die("could not convert '%s' %s",
 					    oid_to_hex(oid), data->rest);
@@ -423,8 +419,8 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 		unsigned long size;
 		void *contents;
 
-		contents = repo_read_object_file(the_repository, oid, &type,
-						 &size);
+		contents = odb_read_object(the_repository->objects, oid,
+					   &type, &size);
 		if (!contents)
 			die("object %s disappeared", oid_to_hex(oid));
 
@@ -533,8 +529,8 @@ static void batch_object_write(const char *obj_name,
 			size_t s = data->size;
 			char *buf = NULL;
 
-			buf = repo_read_object_file(the_repository, &data->oid, &data->type,
-						    &data->size);
+			buf = odb_read_object(the_repository->objects, &data->oid,
+					      &data->type, &data->size);
 			if (!buf)
 				die(_("unable to read %s"), oid_to_hex(&data->oid));
 			buf = replace_idents_using_mailmap(buf, &s);

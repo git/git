@@ -743,8 +743,8 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 	if (submodule)
 		goto out;
 
-	config = repo_read_object_file(the_repository, &oid, &type,
-				       &config_size);
+	config = odb_read_object(the_repository->objects, &oid,
+				 &type, &config_size);
 	if (!config || type != OBJ_BLOB)
 		goto out;
 

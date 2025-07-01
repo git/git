@@ -140,8 +140,8 @@ static int tree_is_complete(const struct object_id *oid)
 	if (!tree->buffer) {
 		enum object_type type;
 		unsigned long size;
-		void *data = repo_read_object_file(the_repository, oid, &type,
-						   &size);
+		void *data = odb_read_object(the_repository->objects, oid,
+					     &type, &size);
 		if (!data) {
 			tree->object.flags |= INCOMPLETE;
 			return 0;

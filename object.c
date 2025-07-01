@@ -335,7 +335,7 @@ struct object *parse_object_with_flags(struct repository *r,
 		return &lookup_tree(r, oid)->object;
 	}
 
-	buffer = repo_read_object_file(r, oid, &type, &size);
+	buffer = odb_read_object(r->objects, oid, &type, &size);
 	if (buffer) {
 		if (!skip_hash &&
 		    check_object_signature(r, repl, buffer, size, type) < 0) {

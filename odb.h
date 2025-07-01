@@ -140,7 +140,7 @@ struct object_database {
 
 	/*
 	 * This is meant to hold a *small* number of objects that you would
-	 * want repo_read_object_file() to be able to return, but yet you do not want
+	 * want odb_read_object() to be able to return, but yet you do not want
 	 * to write them into the object store (e.g. a browse-only
 	 * application).
 	 */
@@ -260,10 +260,19 @@ void odb_add_to_alternates_file(struct object_database *odb,
 void odb_add_to_alternates_memory(struct object_database *odb,
 				  const char *dir);
 
-void *repo_read_object_file(struct repository *r,
-			    const struct object_id *oid,
-			    enum object_type *type,
-			    unsigned long *size);
+/*
+ * Read an object from the database. Returns the object data and assigns object
+ * type and size to the `type` and `size` pointers, if these pointers are
+ * non-NULL. Returns a `NULL` pointer in case the object does not exist.
+ *
+ * This function dies on corrupt objects; the callers who want to deal with
+ * them should arrange to call odb_read_object_info_extended() and give error
+ * messages themselves.
+ */
+void *odb_read_object(struct object_database *odb,
+		      const struct object_id *oid,
+		      enum object_type *type,
+		      unsigned long *size);
 
 /*
  * Add an object file to the in-memory object store, without writing it
@@ -371,7 +380,7 @@ void odb_assert_oid_type(struct object_database *odb,
 
 /*
  * Enabling the object read lock allows multiple threads to safely call the
- * following functions in parallel: repo_read_object_file(),
+ * following functions in parallel: odb_read_object(),
  * read_object_with_reference(), odb_read_object_info() and odb().
  *
  * obj_read_lock() and obj_read_unlock() may also be used to protect other
@@ -444,6 +453,14 @@ static inline int oid_object_info(struct repository *r,
 				  unsigned long *sizep)
 {
 	return odb_read_object_info(r->objects, oid, sizep);
+}
+
+static inline void *repo_read_object_file(struct repository *r,
+					  const struct object_id *oid,
+					  enum object_type *type,
+					  unsigned long *size)
+{
+	return odb_read_object(r->objects, oid, type, size);
 }
 
 #endif /* ODB_H */

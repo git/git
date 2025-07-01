@@ -325,7 +325,7 @@ static char *grab_blob(struct repository *r,
 		*size = fill_textconv(r, textconv, df, &blob);
 		free_filespec(df);
 	} else {
-		blob = repo_read_object_file(r, oid, &type, size);
+		blob = odb_read_object(r->objects, oid, &type, size);
 		if (!blob)
 			die(_("unable to read %s"), oid_to_hex(oid));
 		if (type != OBJ_BLOB)

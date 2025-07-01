@@ -369,8 +369,8 @@ static void start_put(struct transfer_request *request)
 	ssize_t size;
 	git_zstream stream;
 
-	unpacked = repo_read_object_file(the_repository, &request->obj->oid,
-					 &type, &len);
+	unpacked = odb_read_object(the_repository->objects, &request->obj->oid,
+				   &type, &len);
 	hdrlen = format_object_header(hdr, sizeof(hdr), type, len);
 
 	/* Set it up */

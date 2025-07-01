@@ -155,9 +155,9 @@ static void show_list(const char *debug, int counted, int nr,
 		unsigned commit_flags = commit->object.flags;
 		enum object_type type;
 		unsigned long size;
-		char *buf = repo_read_object_file(the_repository,
-						  &commit->object.oid, &type,
-						  &size);
+		char *buf = odb_read_object(the_repository->objects,
+					    &commit->object.oid, &type,
+					    &size);
 		const char *subject_start;
 		int subject_len;
 
