@@ -200,6 +200,14 @@ See also <<FILES>>.
 	section in linkgit:gitrevisions[7] for a more complete list of
 	ways to spell blob names.
 
+`--value=<pattern>`::
+`--no-value`::
+	With `get`, `set`, and `unset`, match only against
+	_<pattern>_. The pattern is an extended regular expression unless
+	`--fixed-value` is given.
++
+Use `--no-value` to unset _<pattern>_.
+
 --fixed-value::
 	When used with the `value-pattern` argument, treat `value-pattern` as
 	an exact string instead of a regular expression. This will restrict
