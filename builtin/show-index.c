@@ -47,7 +47,7 @@ int cmd_show_index(int argc,
 	 *       the index file passed in and use that instead.
 	 */
 	if (!the_hash_algo)
-		repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
+		repo_set_hash_algo(the_repository, GIT_HASH_DEFAULT);
 
 	hashsz = the_hash_algo->rawsz;
 
