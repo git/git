@@ -8,7 +8,7 @@
 struct index_state;
 
 /*
- * Set this to 0 to prevent oid_object_info_extended() from fetching missing
+ * Set this to 0 to prevent odb_read_object_info_extended() from fetching missing
  * blobs. This has a difference only if extensions.partialClone is set.
  *
  * Its default value is 1.

@@ -968,7 +968,7 @@ static int check_has_commit(const struct object_id *oid, void *data)
 		return 0;
 	}
 
-	type = oid_object_info(&subrepo, oid, NULL);
+	type = odb_read_object_info(subrepo.objects, oid, NULL);
 
 	switch (type) {
 	case OBJ_COMMIT:
@@ -1752,8 +1752,7 @@ static int fetch_start_failure(struct strbuf *err UNUSED,
 static int commit_missing_in_sub(const struct object_id *oid, void *data)
 {
 	struct repository *subrepo = data;
-
-	enum object_type type = oid_object_info(subrepo, oid, NULL);
+	enum object_type type = odb_read_object_info(subrepo->objects, oid, NULL);
 
 	return type != OBJ_COMMIT;
 }

@@ -52,7 +52,7 @@ int gpg_verify_tag(const struct object_id *oid, const char *name_to_report,
 	unsigned long size;
 	int ret;
 
-	type = oid_object_info(the_repository, oid, NULL);
+	type = odb_read_object_info(the_repository->objects, oid, NULL);
 	if (type != OBJ_TAG)
 		return error("%s: cannot verify a non-tag object of type %s.",
 				name_to_report ?

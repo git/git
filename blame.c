@@ -116,7 +116,7 @@ static void verify_working_tree_path(struct repository *r,
 		unsigned short mode;
 
 		if (!get_tree_entry(r, commit_oid, path, &blob_oid, &mode) &&
-		    oid_object_info(r, &blob_oid, NULL) == OBJ_BLOB)
+		    odb_read_object_info(r->objects, &blob_oid, NULL) == OBJ_BLOB)
 			return;
 	}
 
@@ -1245,7 +1245,7 @@ static int fill_blob_sha1_and_mode(struct repository *r,
 		return 0;
 	if (get_tree_entry(r, &origin->commit->object.oid, origin->path, &origin->blob_oid, &origin->mode))
 		goto error_out;
-	if (oid_object_info(r, &origin->blob_oid, NULL) != OBJ_BLOB)
+	if (odb_read_object_info(r->objects, &origin->blob_oid, NULL) != OBJ_BLOB)
 		goto error_out;
 	return 0;
  error_out:

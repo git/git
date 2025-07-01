@@ -232,7 +232,7 @@ static int check_object(struct object *obj, enum object_type type,
 
 	if (!(obj->flags & FLAG_OPEN)) {
 		unsigned long size;
-		int type = oid_object_info(the_repository, &obj->oid, &size);
+		int type = odb_read_object_info(the_repository->objects, &obj->oid, &size);
 		if (type != obj->type || type <= 0)
 			die("object of unexpected type");
 		obj->flags |= FLAG_WRITTEN;

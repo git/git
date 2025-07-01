@@ -71,7 +71,8 @@ static const char *printable_type(const struct object_id *oid,
 	const char *ret;
 
 	if (type == OBJ_NONE)
-		type = oid_object_info(the_repository, oid, NULL);
+		type = odb_read_object_info(the_repository->objects,
+					    oid, NULL);
 
 	ret = type_name(type);
 	if (!ret)
@@ -232,8 +233,8 @@ static void mark_unreachable_referents(const struct object_id *oid)
 	 * (and we want to avoid parsing blobs).
 	 */
 	if (obj->type == OBJ_NONE) {
-		enum object_type type = oid_object_info(the_repository,
-							&obj->oid, NULL);
+		enum object_type type = odb_read_object_info(the_repository->objects,
+							     &obj->oid, NULL);
 		if (type > 0)
 			object_as_type(obj, type, 0);
 	}

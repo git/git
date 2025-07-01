@@ -251,7 +251,7 @@ static void expand_objectsize(struct repository *repo, struct strbuf *line,
 {
 	if (type == OBJ_BLOB) {
 		unsigned long size;
-		if (oid_object_info(repo, oid, &size) < 0)
+		if (odb_read_object_info(repo->objects, oid, &size) < 0)
 			die(_("could not get object info about '%s'"),
 			    oid_to_hex(oid));
 		if (padded)

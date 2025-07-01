@@ -1182,7 +1182,7 @@ static void show_push_unqualified_ref_name_error(const char *dst_value,
 		BUG("'%s' is not a valid object, "
 		    "match_explicit_lhs() should catch this!",
 		    matched_src_name);
-	type = oid_object_info(the_repository, &oid, NULL);
+	type = odb_read_object_info(the_repository->objects, &oid, NULL);
 	if (type == OBJ_COMMIT) {
 		advise(_("The <src> part of the refspec is a commit object.\n"
 			 "Did you mean to create a new branch by pushing to\n"
@@ -1412,7 +1412,8 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 			continue; /* not a tag */
 		if (string_list_has_string(&dst_tag, ref->name))
 			continue; /* they already have it */
-		if (oid_object_info(the_repository, &ref->new_oid, NULL) != OBJ_TAG)
+		if (odb_read_object_info(the_repository->objects,
+					 &ref->new_oid, NULL) != OBJ_TAG)
 			continue; /* be conservative */
 		item = string_list_append(&src_tag, ref->name);
 		item->util = ref;

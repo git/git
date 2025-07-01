@@ -520,7 +520,7 @@ static int grep_submodule(struct grep_opt *opt,
 		struct strbuf base = STRBUF_INIT;
 
 		obj_read_lock();
-		object_type = oid_object_info(subrepo, oid, NULL);
+		object_type = odb_read_object_info(subrepo->objects, oid, NULL);
 		obj_read_unlock();
 		data = read_object_with_reference(subrepo,
 						  oid, OBJ_TREE,

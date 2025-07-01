@@ -1321,7 +1321,7 @@ static int retry_bad_packed_offset(struct repository *r,
 		return OBJ_BAD;
 	nth_packed_object_id(&oid, p, pack_pos_to_index(p, pos));
 	mark_bad_packed_object(p, &oid);
-	type = oid_object_info(r, &oid, NULL);
+	type = odb_read_object_info(r->objects, &oid, NULL);
 	if (type <= OBJ_NONE)
 		return OBJ_BAD;
 	return type;
@@ -1849,7 +1849,8 @@ void *unpack_entry(struct repository *r, struct packed_git *p, off_t obj_offset,
 				oi.typep = &type;
 				oi.sizep = &base_size;
 				oi.contentp = &base;
-				if (oid_object_info_extended(r, &base_oid, &oi, 0) < 0)
+				if (odb_read_object_info_extended(r->objects, &base_oid,
+								  &oi, 0) < 0)
 					base = NULL;
 
 				external_base = base;

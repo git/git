@@ -144,8 +144,8 @@ void bitmap_writer_build_type_index(struct bitmap_writer *writer,
 			break;
 
 		default:
-			real_type = oid_object_info(writer->to_pack->repo,
-						    &entry->idx.oid, NULL);
+			real_type = odb_read_object_info(writer->to_pack->repo->objects,
+							 &entry->idx.oid, NULL);
 			break;
 		}
 

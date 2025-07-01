@@ -304,7 +304,7 @@ static void create_tag(const struct object_id *object, const char *object_ref,
 	struct strbuf header = STRBUF_INIT;
 	int should_edit;
 
-	type = oid_object_info(the_repository, object, NULL);
+	type = odb_read_object_info(the_repository->objects, object, NULL);
 	if (type <= OBJ_NONE)
 		die(_("bad object type."));
 
@@ -401,7 +401,7 @@ static void create_reflog_msg(const struct object_id *oid, struct strbuf *sb)
 	}
 
 	strbuf_addstr(sb, " (");
-	type = oid_object_info(the_repository, oid, NULL);
+	type = odb_read_object_info(the_repository->objects, oid, NULL);
 	switch (type) {
 	default:
 		strbuf_addstr(sb, "object of unknown type");

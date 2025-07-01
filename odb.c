@@ -647,7 +647,7 @@ static int register_all_submodule_sources(struct object_database *odb)
 	return ret;
 }
 
-static int do_oid_object_info_extended(struct repository *r,
+static int do_oid_object_info_extended(struct object_database *odb,
 				       const struct object_id *oid,
 				       struct object_info *oi, unsigned flags)
 {
@@ -660,7 +660,7 @@ static int do_oid_object_info_extended(struct repository *r,
 
 
 	if (flags & OBJECT_INFO_LOOKUP_REPLACE)
-		real = lookup_replace_object(r, oid);
+		real = lookup_replace_object(odb->repo, oid);
 
 	if (is_null_oid(real))
 		return -1;
@@ -668,7 +668,7 @@ static int do_oid_object_info_extended(struct repository *r,
 	if (!oi)
 		oi = &blank_oi;
 
-	co = find_cached_object(r->objects, real);
+	co = find_cached_object(odb, real);
 	if (co) {
 		if (oi->typep)
 			*(oi->typep) = co->type;
@@ -677,7 +677,7 @@ static int do_oid_object_info_extended(struct repository *r,
 		if (oi->disk_sizep)
 			*(oi->disk_sizep) = 0;
 		if (oi->delta_base_oid)
-			oidclr(oi->delta_base_oid, r->hash_algo);
+			oidclr(oi->delta_base_oid, odb->repo->hash_algo);
 		if (oi->contentp)
 			*oi->contentp = xmemdupz(co->buf, co->size);
 		oi->whence = OI_CACHED;
@@ -685,17 +685,17 @@ static int do_oid_object_info_extended(struct repository *r,
 	}
 
 	while (1) {
-		if (find_pack_entry(r, real, &e))
+		if (find_pack_entry(odb->repo, real, &e))
 			break;
 
 		/* Most likely it's a loose object. */
-		if (!loose_object_info(r, real, oi, flags))
+		if (!loose_object_info(odb->repo, real, oi, flags))
 			return 0;
 
 		/* Not a loose object; someone else may have just packed it. */
 		if (!(flags & OBJECT_INFO_QUICK)) {
-			reprepare_packed_git(r);
-			if (find_pack_entry(r, real, &e))
+			reprepare_packed_git(odb->repo);
+			if (find_pack_entry(odb->repo, real, &e))
 				break;
 		}
 
@@ -705,15 +705,15 @@ static int do_oid_object_info_extended(struct repository *r,
 		 * `odb_add_submodule_source_by_path()` on that submodule's
 		 * ODB). If any such ODBs exist, register them and try again.
 		 */
-		if (register_all_submodule_sources(r->objects))
+		if (register_all_submodule_sources(odb))
 			/* We added some alternates; retry */
 			continue;
 
 		/* Check if it is a missing object */
-		if (fetch_if_missing && repo_has_promisor_remote(r) &&
+		if (fetch_if_missing && repo_has_promisor_remote(odb->repo) &&
 		    !already_retried &&
 		    !(flags & OBJECT_INFO_SKIP_FETCH_OBJECT)) {
-			promisor_remote_get_direct(r, real, 1);
+			promisor_remote_get_direct(odb->repo, real, 1);
 			already_retried = 1;
 			continue;
 		}
@@ -723,7 +723,7 @@ static int do_oid_object_info_extended(struct repository *r,
 			if ((flags & OBJECT_INFO_LOOKUP_REPLACE) && !oideq(real, oid))
 				die(_("replacement %s not found for %s"),
 				    oid_to_hex(real), oid_to_hex(oid));
-			if ((p = has_packed_and_bad(r, real)))
+			if ((p = has_packed_and_bad(odb->repo, real)))
 				die(_("packed object %s (stored in %s) is corrupt"),
 				    oid_to_hex(real), p->pack_name);
 		}
@@ -736,10 +736,10 @@ static int do_oid_object_info_extended(struct repository *r,
 		 * information below, so return early.
 		 */
 		return 0;
-	rtype = packed_object_info(r, e.p, e.offset, oi);
+	rtype = packed_object_info(odb->repo, e.p, e.offset, oi);
 	if (rtype < 0) {
 		mark_bad_packed_object(e.p, real);
-		return do_oid_object_info_extended(r, real, oi, 0);
+		return do_oid_object_info_extended(odb, real, oi, 0);
 	} else if (oi->whence == OI_PACKED) {
 		oi->u.packed.offset = e.offset;
 		oi->u.packed.pack = e.p;
@@ -787,7 +787,7 @@ static int oid_object_info_convert(struct repository *r,
 		oi = &new_oi;
 	}
 
-	ret = oid_object_info_extended(r, &oid, oi, flags);
+	ret = odb_read_object_info_extended(r->objects, &oid, oi, flags);
 	if (ret)
 		return -1;
 	if (oi == input_oi)
@@ -830,33 +830,35 @@ static int oid_object_info_convert(struct repository *r,
 	return ret;
 }
 
-int oid_object_info_extended(struct repository *r, const struct object_id *oid,
-			     struct object_info *oi, unsigned flags)
+int odb_read_object_info_extended(struct object_database *odb,
+				  const struct object_id *oid,
+				  struct object_info *oi,
+				  unsigned flags)
 {
 	int ret;
 
-	if (oid->algo && (hash_algo_by_ptr(r->hash_algo) != oid->algo))
-		return oid_object_info_convert(r, oid, oi, flags);
+	if (oid->algo && (hash_algo_by_ptr(odb->repo->hash_algo) != oid->algo))
+		return oid_object_info_convert(odb->repo, oid, oi, flags);
 
 	obj_read_lock();
-	ret = do_oid_object_info_extended(r, oid, oi, flags);
+	ret = do_oid_object_info_extended(odb, oid, oi, flags);
 	obj_read_unlock();
 	return ret;
 }
 
 
 /* returns enum object_type or negative */
-int oid_object_info(struct repository *r,
-		    const struct object_id *oid,
-		    unsigned long *sizep)
+int odb_read_object_info(struct object_database *odb,
+			 const struct object_id *oid,
+			 unsigned long *sizep)
 {
 	enum object_type type;
 	struct object_info oi = OBJECT_INFO_INIT;
 
 	oi.typep = &type;
 	oi.sizep = sizep;
-	if (oid_object_info_extended(r, oid, &oi,
-				      OBJECT_INFO_LOOKUP_REPLACE) < 0)
+	if (odb_read_object_info_extended(odb, oid, &oi,
+					  OBJECT_INFO_LOOKUP_REPLACE) < 0)
 		return -1;
 	return type;
 }
@@ -887,7 +889,7 @@ int pretend_object_file(struct repository *repo,
 
 /*
  * This function dies on corrupt objects; the callers who want to
- * deal with them should arrange to call oid_object_info_extended() and give
+ * deal with them should arrange to call odb_read_object_info_extended() and give
  * error messages themselves.
  */
 void *repo_read_object_file(struct repository *r,
@@ -902,7 +904,7 @@ void *repo_read_object_file(struct repository *r,
 	oi.typep = type;
 	oi.sizep = size;
 	oi.contentp = &data;
-	if (oid_object_info_extended(r, oid, &oi, flags))
+	if (odb_read_object_info_extended(r->objects, oid, &oi, flags))
 		return NULL;
 
 	return data;
@@ -968,13 +970,13 @@ int has_object(struct repository *r, const struct object_id *oid,
 	if (!(flags & HAS_OBJECT_FETCH_PROMISOR))
 		object_info_flags |= OBJECT_INFO_SKIP_FETCH_OBJECT;
 
-	return oid_object_info_extended(r, oid, NULL, object_info_flags) >= 0;
+	return odb_read_object_info_extended(r->objects, oid, NULL, object_info_flags) >= 0;
 }
 
 void odb_assert_oid_type(struct object_database *odb,
 			 const struct object_id *oid, enum object_type expect)
 {
-	enum object_type type = oid_object_info(odb->repo, oid, NULL);
+	enum object_type type = odb_read_object_info(odb, oid, NULL);
 	if (type < 0)
 		die(_("%s is not a valid object"), oid_to_hex(oid));
 	if (type != expect)

@@ -265,9 +265,6 @@ void *repo_read_object_file(struct repository *r,
 			    enum object_type *type,
 			    unsigned long *size);
 
-/* Read and unpack an object file into memory, write memory to an object file */
-int oid_object_info(struct repository *r, const struct object_id *, unsigned long *);
-
 /*
  * Add an object file to the in-memory object store, without writing it
  * to disk.
@@ -336,9 +333,24 @@ struct object_info {
 /* Die if object corruption (not just an object being missing) was detected. */
 #define OBJECT_INFO_DIE_IF_CORRUPT 32
 
-int oid_object_info_extended(struct repository *r,
-			     const struct object_id *,
-			     struct object_info *, unsigned flags);
+/*
+ * Read object info from the object database and populate the `object_info`
+ * structure. Returns 0 on success, a negative error code otherwise.
+ */
+int odb_read_object_info_extended(struct object_database *odb,
+				  const struct object_id *oid,
+				  struct object_info *oi,
+				  unsigned flags);
+
+/*
+ * Read a subset of object info for the given object ID. Returns an `enum
+ * object_type` on success, a negative error code otherwise. If successful and
+ * `sizep` is non-NULL, then the size of the object will be written to the
+ * pointer.
+ */
+int odb_read_object_info(struct object_database *odb,
+			 const struct object_id *oid,
+			 unsigned long *sizep);
 
 enum {
 	/* Retry packed storage after checking packed and loose storage */
@@ -360,7 +372,7 @@ void odb_assert_oid_type(struct object_database *odb,
 /*
  * Enabling the object read lock allows multiple threads to safely call the
  * following functions in parallel: repo_read_object_file(),
- * read_object_with_reference(), oid_object_info() and oid_object_info_extended().
+ * read_object_with_reference(), odb_read_object_info() and odb().
  *
  * obj_read_lock() and obj_read_unlock() may also be used to protect other
  * section which cannot execute in parallel with object reading. Since the used
@@ -368,7 +380,7 @@ void odb_assert_oid_type(struct object_database *odb,
  * reading functions. However, beware that in these cases zlib inflation won't
  * be performed in parallel, losing performance.
  *
- * TODO: oid_object_info_extended()'s call stack has a recursive behavior. If
+ * TODO: odb_read_object_info_extended()'s call stack has a recursive behavior. If
  * any of its callees end up calling it, this recursive call won't benefit from
  * parallel inflation.
  */
@@ -415,5 +427,23 @@ void *read_object_with_reference(struct repository *r,
 				 enum object_type required_type,
 				 unsigned long *size,
 				 struct object_id *oid_ret);
+
+/* Compatibility wrappers, to be removed once Git 2.51 has been released. */
+#include "repository.h"
+
+static inline int oid_object_info_extended(struct repository *r,
+					   const struct object_id *oid,
+					   struct object_info *oi,
+					   unsigned flags)
+{
+	return odb_read_object_info_extended(r->objects, oid, oi, flags);
+}
+
+static inline int oid_object_info(struct repository *r,
+				  const struct object_id *oid,
+				  unsigned long *sizep)
+{
+	return odb_read_object_info(r->objects, oid, sizep);
+}
 
 #endif /* ODB_H */

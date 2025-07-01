@@ -2154,10 +2154,10 @@ static void prefetch_to_pack(uint32_t object_index_start) {
 	for (i = object_index_start; i < to_pack.nr_objects; i++) {
 		struct object_entry *entry = to_pack.objects + i;
 
-		if (!oid_object_info_extended(the_repository,
-					      &entry->idx.oid,
-					      NULL,
-					      OBJECT_INFO_FOR_PREFETCH))
+		if (!odb_read_object_info_extended(the_repository->objects,
+						   &entry->idx.oid,
+						   NULL,
+						   OBJECT_INFO_FOR_PREFETCH))
 			continue;
 		oid_array_append(&to_fetch, &entry->idx.oid);
 	}
@@ -2298,19 +2298,19 @@ static void check_object(struct object_entry *entry, uint32_t object_index)
 
 		/*
 		 * No choice but to fall back to the recursive delta walk
-		 * with oid_object_info() to find about the object type
+		 * with odb_read_object_info() to find about the object type
 		 * at this point...
 		 */
 		give_up:
 		unuse_pack(&w_curs);
 	}
 
-	if (oid_object_info_extended(the_repository, &entry->idx.oid, &oi,
-				     OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_LOOKUP_REPLACE) < 0) {
+	if (odb_read_object_info_extended(the_repository->objects, &entry->idx.oid, &oi,
+					  OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_LOOKUP_REPLACE) < 0) {
 		if (repo_has_promisor_remote(the_repository)) {
 			prefetch_to_pack(object_index);
-			if (oid_object_info_extended(the_repository, &entry->idx.oid, &oi,
-						     OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_LOOKUP_REPLACE) < 0)
+			if (odb_read_object_info_extended(the_repository->objects, &entry->idx.oid, &oi,
+							  OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_LOOKUP_REPLACE) < 0)
 				type = -1;
 		} else {
 			type = -1;
@@ -2384,12 +2384,13 @@ static void drop_reused_delta(struct object_entry *entry)
 	if (packed_object_info(the_repository, IN_PACK(entry), entry->in_pack_offset, &oi) < 0) {
 		/*
 		 * We failed to get the info from this pack for some reason;
-		 * fall back to oid_object_info, which may find another copy.
+		 * fall back to odb_read_object_info, which may find another copy.
 		 * And if that fails, the error will be recorded in oe_type(entry)
 		 * and dealt with in prepare_pack().
 		 */
 		oe_set_type(entry,
-			    oid_object_info(the_repository, &entry->idx.oid, &size));
+			    odb_read_object_info(the_repository->objects,
+						 &entry->idx.oid, &size));
 	} else {
 		oe_set_type(entry, type);
 	}
@@ -2677,7 +2678,8 @@ unsigned long oe_get_size_slow(struct packing_data *pack,
 
 	if (e->type_ != OBJ_OFS_DELTA && e->type_ != OBJ_REF_DELTA) {
 		packing_data_lock(&to_pack);
-		if (oid_object_info(the_repository, &e->idx.oid, &size) < 0)
+		if (odb_read_object_info(the_repository->objects,
+					 &e->idx.oid, &size) < 0)
 			die(_("unable to get size of %s"),
 			    oid_to_hex(&e->idx.oid));
 		packing_data_unlock(&to_pack);
@@ -4063,7 +4065,7 @@ static void add_objects_in_unpacked_packs(void)
 static int add_loose_object(const struct object_id *oid, const char *path,
 			    void *data UNUSED)
 {
-	enum object_type type = oid_object_info(the_repository, oid, NULL);
+	enum object_type type = odb_read_object_info(the_repository->objects, oid, NULL);
 
 	if (type < 0) {
 		warning(_("loose object at %s could not be examined"), path);
@@ -4449,7 +4451,7 @@ static int option_parse_cruft_expiration(const struct option *opt UNUSED,
 static int is_not_in_promisor_pack_obj(struct object *obj, void *data UNUSED)
 {
 	struct object_info info = OBJECT_INFO_INIT;
-	if (oid_object_info_extended(the_repository, &obj->oid, &info, 0))
+	if (odb_read_object_info_extended(the_repository->objects, &obj->oid, &info, 0))
 		BUG("should_include_obj should only be called on existing objects");
 	return info.whence != OI_PACKED || !info.u.packed.pack->pack_promisor;
 }

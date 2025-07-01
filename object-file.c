@@ -1108,7 +1108,7 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 	oi.typep = &type;
 	oi.sizep = &len;
 	oi.contentp = &buf;
-	if (oid_object_info_extended(the_repository, oid, &oi, 0))
+	if (odb_read_object_info_extended(the_repository->objects, oid, &oi, 0))
 		return error(_("cannot read object for %s"), oid_to_hex(oid));
 	if (compat) {
 		if (repo_oid_to_algop(repo, oid, compat, &compat_oid))

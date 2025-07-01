@@ -3729,9 +3729,9 @@ void prefetch_cache_entries(const struct index_state *istate,
 
 		if (S_ISGITLINK(ce->ce_mode) || !must_prefetch(ce))
 			continue;
-		if (!oid_object_info_extended(the_repository, &ce->oid,
-					      NULL,
-					      OBJECT_INFO_FOR_PREFETCH))
+		if (!odb_read_object_info_extended(the_repository->objects,
+						   &ce->oid, NULL,
+						   OBJECT_INFO_FOR_PREFETCH))
 			continue;
 		oid_array_append(&to_fetch, &ce->oid);
 	}

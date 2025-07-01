@@ -176,7 +176,7 @@ static int add_ref_decoration(const char *refname, const char *referent UNUSED, 
 		return 0;
 	}
 
-	objtype = oid_object_info(the_repository, oid, NULL);
+	objtype = odb_read_object_info(the_repository->objects, oid, NULL);
 	if (objtype < 0)
 		return 0;
 	obj = lookup_object_by_type(the_repository, oid, objtype);

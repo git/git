@@ -260,7 +260,8 @@ static unsigned check_object(struct object *obj)
 
 	if (!(obj->flags & FLAG_CHECKED)) {
 		unsigned long size;
-		int type = oid_object_info(the_repository, &obj->oid, &size);
+		int type = odb_read_object_info(the_repository->objects,
+						&obj->oid, &size);
 		if (type <= 0)
 			die(_("did not receive expected object %s"),
 			      oid_to_hex(&obj->oid));
@@ -908,7 +909,7 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 		enum object_type has_type;
 		unsigned long has_size;
 		read_lock();
-		has_type = oid_object_info(the_repository, oid, &has_size);
+		has_type = odb_read_object_info(the_repository->objects, oid, &has_size);
 		if (has_type < 0)
 			die(_("cannot read existing object info %s"), oid_to_hex(oid));
 		if (has_type != type || has_size != size)
@@ -1501,9 +1502,9 @@ static void fix_unresolved_deltas(struct hashfile *f)
 		struct oid_array to_fetch = OID_ARRAY_INIT;
 		for (i = 0; i < nr_ref_deltas; i++) {
 			struct ref_delta_entry *d = sorted_by_pos[i];
-			if (!oid_object_info_extended(the_repository, &d->oid,
-						      NULL,
-						      OBJECT_INFO_FOR_PREFETCH))
+			if (!odb_read_object_info_extended(the_repository->objects,
+							   &d->oid, NULL,
+							   OBJECT_INFO_FOR_PREFETCH))
 				continue;
 			oid_array_append(&to_fetch, &d->oid);
 		}
@@ -1829,7 +1830,7 @@ static void repack_local_links(void)
 	oidset_iter_init(&outgoing_links, &iter);
 	while ((oid = oidset_iter_next(&iter))) {
 		struct object_info info = OBJECT_INFO_INIT;
-		if (oid_object_info_extended(the_repository, oid, &info, 0))
+		if (odb_read_object_info_extended(the_repository->objects, oid, &info, 0))
 			/* Missing; assume it is a promisor object */
 			continue;
 		if (info.whence == OI_PACKED && info.u.packed.pack->pack_promisor)

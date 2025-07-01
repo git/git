@@ -4385,8 +4385,8 @@ static void prefetch_for_content_merges(struct merge_options *opt,
 
 			if ((ci->filemask & side_mask) &&
 			    S_ISREG(vi->mode) &&
-			    oid_object_info_extended(opt->repo, &vi->oid, NULL,
-						     OBJECT_INFO_FOR_PREFETCH))
+			    odb_read_object_info_extended(opt->repo->objects, &vi->oid, NULL,
+							  OBJECT_INFO_FOR_PREFETCH))
 				oid_array_append(&to_fetch, &vi->oid);
 		}
 	}

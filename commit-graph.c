@@ -1862,7 +1862,7 @@ static int add_ref_to_set(const char *refname UNUSED,
 
 	if (!peel_iterated_oid(the_repository, oid, &peeled))
 		oid = &peeled;
-	if (oid_object_info(the_repository, oid, NULL) == OBJ_COMMIT)
+	if (odb_read_object_info(the_repository->objects, oid, NULL) == OBJ_COMMIT)
 		oidset_insert(data->commits, oid);
 
 	display_progress(data->progress, oidset_size(data->commits));

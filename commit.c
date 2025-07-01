@@ -585,7 +585,8 @@ int repo_parse_commit_internal(struct repository *r,
 		return 0;
 	}
 
-	if (oid_object_info_extended(r, &item->object.oid, &oi, flags) < 0)
+	if (odb_read_object_info_extended(r->objects, &item->object.oid,
+					  &oi, flags) < 0)
 		return quiet_on_missing ? -1 :
 			error("Could not read %s",
 			     oid_to_hex(&item->object.oid));

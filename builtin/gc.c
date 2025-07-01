@@ -1080,7 +1080,7 @@ static int dfs_on_ref(const char *refname UNUSED,
 
 	if (!peel_iterated_oid(the_repository, oid, &peeled))
 		oid = &peeled;
-	if (oid_object_info(the_repository, oid, NULL) != OBJ_COMMIT)
+	if (odb_read_object_info(the_repository->objects, oid, NULL) != OBJ_COMMIT)
 		return 0;
 
 	commit = lookup_commit(the_repository, oid);

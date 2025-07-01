@@ -149,8 +149,8 @@ static struct commit *deref_without_lazy_fetch(const struct object_id *oid,
 	}
 
 	while (1) {
-		if (oid_object_info_extended(the_repository, oid, &info,
-					     OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_QUICK))
+		if (odb_read_object_info_extended(the_repository->objects, oid, &info,
+						  OBJECT_INFO_SKIP_FETCH_OBJECT | OBJECT_INFO_QUICK))
 			return NULL;
 		if (type == OBJ_TAG) {
 			struct tag *tag = (struct tag *)

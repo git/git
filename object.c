@@ -214,7 +214,7 @@ enum peel_status peel_object(struct repository *r,
 	struct object *o = lookup_unknown_object(r, name);
 
 	if (o->type == OBJ_NONE) {
-		int type = oid_object_info(r, name, NULL);
+		int type = odb_read_object_info(r->objects, name, NULL);
 		if (type < 0 || !object_as_type(o, type, 0))
 			return PEEL_INVALID;
 	}
@@ -315,7 +315,7 @@ struct object *parse_object_with_flags(struct repository *r,
 	}
 
 	if ((!obj || obj->type == OBJ_BLOB) &&
-	    oid_object_info(r, oid, NULL) == OBJ_BLOB) {
+	    odb_read_object_info(r->objects, oid, NULL) == OBJ_BLOB) {
 		if (!skip_hash && stream_object_signature(r, repl) < 0) {
 			error(_("hash mismatch %s"), oid_to_hex(oid));
 			return NULL;
@@ -331,7 +331,7 @@ struct object *parse_object_with_flags(struct repository *r,
 	 */
 	if (skip_hash && discard_tree &&
 	    (!obj || obj->type == OBJ_TREE) &&
-	    oid_object_info(r, oid, NULL) == OBJ_TREE) {
+	    odb_read_object_info(r->objects, oid, NULL) == OBJ_TREE) {
 		return &lookup_tree(r, oid)->object;
 	}
 

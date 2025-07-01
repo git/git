@@ -215,7 +215,7 @@ static int write_archive_entry(const struct object_id *oid, const char *base,
 
 	/* Stream it? */
 	if (S_ISREG(mode) && !args->convert &&
-	    oid_object_info(args->repo, oid, &size) == OBJ_BLOB &&
+	    odb_read_object_info(args->repo->objects, oid, &size) == OBJ_BLOB &&
 	    size > repo_settings_get_big_file_threshold(the_repository))
 		return write_entry(args, oid, path.buf, path.len, mode, NULL, size);
 
