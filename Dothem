@@ -102,7 +102,7 @@ then
 	fi
 fi
 test -n "$branches" || branches="next $MASTER maint jch seen"
-test -n "$jobs" || jobs=-j2
+test -n "$jobs" || jobs=-j32
 
 find_installed () {
 	branch=$1
