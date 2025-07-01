@@ -1596,7 +1596,7 @@ endif
 git_exec_path = 'libexec/git-core'
 libexec = get_option('libexecdir')
 if libexec != 'libexec' and libexec != '.'
-  git_exec_path = libexec
+  git_exec_path = libexec / 'git-core'
 endif
 
 if get_option('runtime_prefix')
