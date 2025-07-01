@@ -835,9 +835,12 @@ static void init_repository_format(struct repository_format *format)
 int read_repository_format(struct repository_format *format, const char *path)
 {
 	clear_repository_format(format);
+	format->hash_algo = GIT_HASH_SHA1_LEGACY;
 	git_config_from_file(check_repo_format, path, format);
-	if (format->version == -1)
+	if (format->version == -1) {
 		clear_repository_format(format);
+		format->hash_algo = GIT_HASH_SHA1_LEGACY;
+	}
 	return format->version;
 }
 
