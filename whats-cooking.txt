@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jun 2025, #09; Fri, 27)
-X-master-at: cf6f63ea6bf35173e02e18bdc6a4ba41288acff9
-X-next-at: 74e6fc65d04915ff3f8c8a5d11580286182b8854
+Subject: What's cooking in git.git (Jul 2025, #01; Tue, 1)
+X-master-at: 83014dc05f6fc9275c0a02886cb428805abaf9e5
+X-next-at: 83e99ddf4094f2c040378c609fcafe6bcce232da
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jun 2025, #09; Fri, 27)
+What's cooking in git.git (Jul 2025, #01; Tue, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,150 +48,158 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ac/preload-index-wo-the-repository (2025-06-10) 2 commits
-  (merged to 'next' on 2025-06-18 at fe9378f663)
- + preload-index: stop depending on 'the_repository'
- + environment: remove the global variable 'core_preload_index'
+* bc/stash-export-import (2025-06-11) 4 commits
+  (merged to 'next' on 2025-06-24 at 3dfd301fa1)
+ + builtin/stash: provide a way to import stashes from a ref
+ + builtin/stash: provide a way to export stashes to a ref
+ + builtin/stash: factor out revision parsing into a function
+ + object-name: make get_oid quietly return an error
 
- Code clean-up.
- source: <cover.1749557133.git.ayu.chandekar@gmail.com>
-
-
-* ag/send-email-edit-threading-fix (2025-06-04) 2 commits
-  (merged to 'next' on 2025-06-18 at dfe9cb890c)
- + send-email: show the new message id assigned by outlook in the logs
- + send-email: fix bug resulting in broken threads if a message is edited
-
- "git send-email" incremented its internal message counter when a
- message was edited, which made logic that treats the first message
- specially misbehave, which has been corrected.
- source: <PN3PR01MB95979AA8114CA26405BE02CFB86CA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
+ An interchange format for stash entries is defined, and subcommand
+ of "git stash" to import/export has been added.
+ source: <20250612011221.4158484-1-sandals@crustytoothpaste.net>
 
 
-* jc/cg-let-bss-do-its-job (2025-06-11) 1 commit
-  (merged to 'next' on 2025-06-18 at 5166eea328)
- + CodingGuidelines: let BSS do its job
+* jc/cocci-avoid-regexp-constraint (2025-06-18) 1 commit
+  (merged to 'next' on 2025-06-23 at 9ca93f0bac)
+ + cocci: matching (multiple) identifiers
 
- Clarify "do not explicitly initialize to zero" rule in the
- CodingGuidelines document.
- source: <xmqqh60mger9.fsf@gitster.g>
-
-
-* jc/diff-no-index-with-pathspec-fix (2025-06-18) 1 commit
-  (merged to 'next' on 2025-06-20 at 936407d5ef)
- + diff-no-index: do not reference .d_type member of struct dirent
-
- Recent code added a direct access to the d_type member in "struct
- dirent", but some platforms lack it, which has been corrected.
- source: <xmqqh60ces03.fsf@gitster.g>
+ Avoid regexp_constraint and instead use comparison_constraint when
+ listing functions to exclude from application of coccinelle rules,
+ as spatch can be built with different regexp engine X-<.
+ source: <xmqqbjqlexzd.fsf@gitster.g>
 
 
-* jc/you-still-use-whatchanged (2025-05-12) 6 commits
-  (merged to 'next' on 2025-06-18 at b28af0a02c)
- + whatschanged: list it in BreakingChanges document
- + whatchanged: remove when built with WITH_BREAKING_CHANGES
- + whatchanged: require --i-still-use-this
- + tests: prepare for a world without whatchanged
- + doc: prepare for a world without whatchanged
- + you-still-use-that??: help deprecating commands for removal
+* jc/merge-compact-summary (2025-06-12) 2 commits
+  (merged to 'next' on 2025-06-24 at 29893fdca6)
+ + merge/pull: extend merge.stat configuration variable to cover --compact-summary
+ + merge/pull: add the "--compact-summary" option
 
- "git whatchanged" that is longer to type than "git log --raw"
- which is its modern rough equivalent has outlived its usefulness
- more than 10 years ago.  Plan to deprecate and remove it.
- source: <20250512190311.1451556-1-gitster@pobox.com>
+ "git merge/pull" has been taught the "--compact-summary" option to
+ use the compact-summary format, intead of diffstat, when showing
+ the summary of the incoming changes.
+ source: <20250612222537.2426059-1-gitster@pobox.com>
 
 
-* jg/mailinfo-leakfix (2025-06-13) 1 commit
-  (merged to 'next' on 2025-06-20 at 3ef4f7f41c)
- + mailinfo.c: fix memory leak in function handle_content_type()
+* jk/test-seq-format (2025-06-23) 2 commits
+  (merged to 'next' on 2025-06-24 at 6726b890cb)
+ + test-lib: teach test_seq the -f option
+ + t7422: replace confusing printf with echo
 
- Leakfix.
- source: <SA1PR22MB399911638F342E1AA20F014AE477A@SA1PR22MB3999.namprd22.prod.outlook.com>
-
-
-* kj/stash-onbranch-submodule-fix (2025-06-10) 1 commit
-  (merged to 'next' on 2025-06-18 at 1ac7a03f69)
- + stash: fix incorrect branch name in stash message
-
- "git stash" recorded a wrong branch name when submodules are
- present in the current checkout, which has been corrected.
- source: <20250611014204.24994-1-jayatheerthkulkarni2005@gmail.com>
-
-
-* ly/prepare-show-merge-leakfix (2025-06-09) 1 commit
-  (merged to 'next' on 2025-06-18 at 11ab005b9c)
- + revision: fix memory leak in prepare_show_merge()
-
- Leakfix.
- source: <pull.1989.v3.git.git.1749515879546.gitgitgadget@gmail.com>
-
-
-* ly/run-builtin-use-passed-in-repo (2025-06-15) 1 commit
-  (merged to 'next' on 2025-06-18 at ae732fef47)
- + git.c: remove the_repository dependence in run_builtin()
-
- Code clean-up.
- source: <20250616062233.1589172-1-502024330056@smail.nju.edu.cn>
-
-
-* ps/maintenance-ref-lock (2025-06-03) 12 commits
-  (merged to 'next' on 2025-06-18 at 724574661a)
- + builtin/maintenance: fix locking race when handling "gc" task
- + builtin/gc: avoid global state in `gc_before_repack()`
- + usage: allow dying without writing an error message
- + builtin/maintenance: fix locking race with refs and reflogs tasks
- + builtin/maintenance: split into foreground and background tasks
- + builtin/maintenance: fix typedef for function pointers
- + builtin/maintenance: extract function to run tasks
- + builtin/maintenance: stop modifying global array of tasks
- + builtin/maintenance: mark "--task=" and "--schedule=" as incompatible
- + builtin/maintenance: centralize configuration of explicit tasks
- + builtin/gc: drop redundant local variable
- + builtin/gc: use designated field initializers for maintenance tasks
-
- "git maintenance" lacked the care "git gc" had to avoid holding
- onto the repository lock for too long during packing refs, which
- has been remedied.
- source: <20250603-b4-pks-maintenance-ref-lock-race-v4-0-52f5cf7b7e99@pks.im>
-
-
-* pw/stash-p-pathspec-fixes (2025-06-07) 2 commits
-  (merged to 'next' on 2025-06-18 at 10cfc8865f)
- + stash: allow "git stash [<options>] --patch <pathspec>" to assume push
- + stash: allow "git stash -p <pathspec>" to assume push again
-
- "git stash -p <pathspec>" improvements.
- source: <cover.1749289514.git.phillip.wood@dunelm.org.uk>
-
-
-* pw/subtree-gpg-sign (2025-06-04) 2 commits
-  (merged to 'next' on 2025-06-18 at d3c6435b4f)
- + contrib/subtree: add -S/--gpg-sign
- + contrib/subtree: parse using --stuck-long
-
- "git subtree" (in contrib/) learns to grok GPG signing its commits.
- source: <pull.1928.v2.git.1749046597.gitgitgadget@gmail.com>
-
-
-* rm/t2400-modernize (2025-06-16) 1 commit
-  (merged to 'next' on 2025-06-18 at 58c4f9560c)
- + t2400: replace 'test -[efd]' with 'test_path_is_*'
-
- Test clean-up.
- source: <20250617002939.24478-1-rodmichelassi@gmail.com>
-
-
-* sa/multi-mailmap-fix (2025-06-13) 1 commit
-  (merged to 'next' on 2025-06-18 at c492804406)
- + cat-file: fix mailmap application for different author and committer
-
- When asking to apply mailmap to both author and committer field
- while showing a commit object, the field that appears later was not
- correctly parsed and replaced, which has been corrected.
- source: <20250613115750.41205-1-siddharthasthana31@gmail.com>
+ A test helper "test_seq" function learned the "-f <fmt>" option,
+ which allowed us to simplify a lot of test scripts.
+ source: <20250623105516.GA654296@coredump.intra.peff.net>
 
 --------------------------------------------------
 [New Topics]
+
+* jk/fix-leak-send-pack (2025-07-01) 2 commits
+ - send-pack: clean-up even when taking an early exit
+ - send-pack: clean up extra_have oid array
+
+ Leakfix.
+
+ Will merge to 'next'.
+ source: <20250627-jk-fix-leak-send-pack-v1-1-aadcf0ed8a4b@gmail.com>
+
+
+* ac/prune-wo-the-repository (2025-06-30) 2 commits
+ - builtin/prune: stop depending on 'the_repository'
+ - repository: move 'repository_format_precious_objects' to repo scope
+
+ Expecting a reroll.
+ cf. <aGPcKgR0G72JRSlM@pks.im>
+ source: <cover.1751296633.git.ayu.chandekar@gmail.com>
+
+
+* ag/doc-send-email (2025-06-30) 5 commits
+ - docs: mention possible options for Proton Mail users
+ - docs: add a paragraph explaining the `sendmailCmd` option of sendemail
+ - docs: add an OAuth2.0 credential helper for AOL accounts
+ - docs: add outlookidfix config option to sendemail documentation
+ - docs: link OpenSSL's verify(1) manual page to know about -CAfile and -CApath options
+
+ Documentation updates for "git send-email".
+
+ Comments?
+ source: <20250630180511.499-1-gargaditya08@proton.me>
+
+
+* jj/doc-branch-markup-fix (2025-06-29) 1 commit
+ - doc: improve formatting in branch section
+
+ Doc markup fix.
+
+ Will merge to 'next'.
+ source: <20250629190445.10185-1-kuba@kubajecminek.cz>
+
+
+* rs/parse-options-precision (2025-06-29) 6 commits
+ - parse-options: add precision handling for OPTION_COUNTUP
+ - parse-options: add precision handling for OPTION_BITOP
+ - parse-options: add precision handling for OPTION_NEGBIT
+ - parse-options: add precision handling for OPTION_BIT
+ - parse-options: add precision handling for OPTION_SET_INT
+ - parse-options: add precision handling for PARSE_OPT_CMDMODE
+
+ Define .precision to more canned parse-options type to avoid bugs
+ coming from using a variable with a wrong type to capture the
+ parsed values.
+
+ Comments?
+ source: <cf5cd57d-733f-4239-80f8-23bdc1523ab2@web.de>
+
+
+* cb/ci-freebsd-update-to-14.3 (2025-06-30) 1 commit
+ - ci: update FreeBSD image to 14.3
+
+ CI updates.
+
+ Will merge to 'next'.
+ source: <pull.2006.git.git.1751345578742.gitgitgadget@gmail.com>
+
+
+* kh/doc-config-subcommands (2025-07-01) 5 commits
+ - config: mention --url in the synopsis
+ - config: use --value instead of value-pattern
+ - config: document --[no-]value
+ - config: use --value=<pattern> consistently
+ - config: document --[no-]show-names
+
+ Documentation updates.
+
+ Will merge to 'next'?
+ source: <cover.1751382830.git.code@khaugsbakk.name>
+
+
+* kn/for-each-ref-skip (2025-07-01) 4 commits
+ - for-each-ref: introduce a '--skip-until' option
+ - refs: selectively set prefix in the seek functions
+ - ref-cache: remove unused function 'find_ref_entry()'
+ - refs: expose `ref_iterator` via 'refs.h'
+
+ "git for-each-ref" learns "--skip-until" option to help
+ applications that want to page its output.
+
+ Comments?
+ source: <20250701-306-git-for-each-ref-pagination-v1-0-4f0ae7c0688f@gmail.com>
+
+
+* tc/last-modified (2025-07-01) 5 commits
+ . (style) fix bad changes suggested by clang-format
+ . (style) clang-format suggested changes
+ . last-modified: use Bloom filters when available
+ . t/perf: add last-modified perf script
+ . last-modified: new subcommand to show when files were last modified
+
+ A new command "git last-modified" is proposed to show the closest
+ ancestor commit that touched each path.
+
+ Comments?
+ source: <20250630-toon-new-blame-tree-v3-0-3516025dc3bc@iotcl.com>
+
+--------------------------------------------------
+[Cooking]
 
 * cb/daemon-reap-children (2025-06-26) 4 commits
  - daemon: explicitly allow EINTR during poll()
@@ -205,7 +213,7 @@ Release tarballs are available at:
  source: <pull.2002.v3.git.git.1750927988.gitgitgadget@gmail.com>
 
 
-* ac/auto-comment-char-fix (2025-06-26) 1 commit
+* ac/auto-comment-char-fix (2025-06-30) 1 commit
  - commit: avoid scanning trailing comments when 'core.commentChar' is "auto"
 
  "git commit" that concludes a conflicted merge failed to notice and remove
@@ -213,70 +221,53 @@ Release tarballs are available at:
  core.commentstring is set to 'auto'.
 
  Expecting a reroll.
- cf. <91982162-b138-4bb1-81fd-6f9185801c99@gmail.com>
- source: <20250626221631.457725-1-ayu.chandekar@gmail.com>
+ cf. <f22e864e-669d-457c-838e-961bbc977c4b@gmail.com>
+ source: <20250630182527.69167-1-ayu.chandekar@gmail.com>
 
 
 * cb/daemon-fd-check-fix (2025-06-26) 1 commit
- - daemon: remove unnecesary restriction for listener fd
+  (merged to 'next' on 2025-06-30 at 7a88e3eff9)
+ + daemon: remove unnecesary restriction for listener fd
 
  Remove unnecessary check from "git daemon" code.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250626095139.70751-1-carenas@gmail.com>
 
 
-* cb/daemon-retry-interrupted-accept (2025-06-26) 1 commit
+* cb/daemon-retry-interrupted-accept (2025-06-27) 1 commit
  - daemon: correctly handle soft accept() errors in service_loop
 
  When "git daemon" sees a signal while attempting to accept() a new
  client, instead of retrying, it skipped it by mistake, which has
  been corrected.
 
- Expecting a reroll, separating out the unrelated change.
- cf. <08804dbe-56dd-4c0e-b36b-a82768b0aa29@gmail.com>
- source: <20250626172159.87204-1-carenas@gmail.com>
+ Will merge to 'next'.
+ cf. <xmqqv7od452s.fsf@gitster.g>
+ source: <20250627231404.27100-1-carenas@gmail.com>
 
 
-* kn/clang-format-updates (2025-06-25) 4 commits
+* kn/clang-format-updates (2025-06-30) 3 commits
  - meson: add rule to run 'git clang-format'
  - clang-format: add 'RemoveBracesLLVM' to the main config
  - clang-format: set 'ColumnLimit' to 0
- - editorconfig: set maximum line length to 120 characters
 
  Update ".clang-format" and ".editorconfig" to match our style guide
  a bit better.
 
- Expecting a (small and hopefully final) reroll.
- cf. <iutm4xxkhchcpfygtqo2s4nit42sclzen63465ljtovzgdsebr@okpj5jtw62r6>
- source: <20250625-525-make-clang-format-more-robust-v1-0-67a49ecc2fd5@gmail.com>
+ Will merge to 'next'.
+ source: <20250630-525-make-clang-format-more-robust-v2-0-05cbcdbf7817@gmail.com>
 
 
-* ly/changed-paths-traversal (2025-06-27) 3 commits
- - fixup?
+* ly/changed-paths-traversal (2025-06-27) 2 commits
  - bloom: optimize multiple pathspec items in revision traversal
  - bloom: replace struct bloom_key * with struct bloom_keyvec
 
  Lift the limitation to use changed-path filter in "git log" so that
  it can be used for a pathspec with multiple literal paths.
 
- Expecting a reroll.
- cf. <4A56A595-55B1-4EEB-9B9E-3E9F7A9A74D4@smail.nju.edu.cn>
- source: <20250625125541.3048632-1-502024330056@smail.nju.edu.cn>
-
---------------------------------------------------
-[Cooking]
-
-* jk/test-seq-format (2025-06-23) 2 commits
-  (merged to 'next' on 2025-06-24 at 6726b890cb)
- + test-lib: teach test_seq the -f option
- + t7422: replace confusing printf with echo
-
- A test helper "test_seq" function learned the "-f <fmt>" option,
- which allowed us to simplify a lot of test scripts.
-
- Will merge to 'master'.
- source: <20250623105516.GA654296@coredump.intra.peff.net>
+ Will merge to 'next'?
+ source: <20250627062154.1121530-1-502024330056@smail.nju.edu.cn>
 
 
 * mc/netrc-service-names (2025-06-25) 3 commits
@@ -303,34 +294,23 @@ Release tarballs are available at:
  source: <20250623234327.335490-1-phil.hord@gmail.com>
 
 
-* bc/use-sha256-by-default-in-3.0 (2025-06-19) 10 commits
+* bc/use-sha256-by-default-in-3.0 (2025-07-01) 11 commits
  - Enable SHA-256 by default in breaking changes mode
+ - help: add a build option for default hash
  - t5300: choose the built-in hash outside of a repo
  - t4042: choose the built-in hash outside of a repo
  - t1007: choose the built-in hash outside of a repo
  - t: default to compile-time default hash if not set
  - setup: use the default algorithm to initialize repo format
- - Use original hash for legacy formats
+ - Use legacy hash for legacy formats
  - builtin: use default hash when outside a repository
- - hash: add a constant for the original hash algorithm
+ - hash: add a constant for the legacy hash algorithm
  - hash: add a constant for the default hash algorithm
 
  Prepare to flip the default hash function to SHA-256.
 
- Needs review.
- source: <20250620011943.586596-1-sandals@crustytoothpaste.net>
-
-
-* jc/cocci-avoid-regexp-constraint (2025-06-18) 1 commit
-  (merged to 'next' on 2025-06-23 at 9ca93f0bac)
- + cocci: matching (multiple) identifiers
-
- Avoid regexp_constraint and instead use comparison_constraint when
- listing functions to exclude from application of coccinelle rules,
- as spatch can be built with different regexp engine X-<.
-
- Will merge to 'master'.
- source: <xmqqbjqlexzd.fsf@gitster.g>
+ Comments?
+ source: <20250701212237.766774-1-sandals@crustytoothpaste.net>
 
 
 * jc/cocci-dtype (2025-06-18) 1 commit
@@ -393,7 +373,7 @@ Release tarballs are available at:
  source: <20250619133630.727274-1-christian.couder@gmail.com>
 
 
-* ac/deglobal-sparse-variables (2025-06-17) 3 commits
+* ac/deglobal-sparse-variables (2025-06-30) 3 commits
  - environment: remove the global variable 'sparse_expect_files_outside_of_patterns'
  - environment: move access to "core.sparsecheckoutcone" into repo_settings
  - environment: move access to "core.sparsecheckout" into repo_settings
@@ -401,8 +381,9 @@ Release tarballs are available at:
  Two global variables related to sparse checkout have been moved to
  the repository settings structure.
 
- Waiting for review responses.
- source: <cover.1750157825.git.ayu.chandekar@gmail.com>
+ Breaks end-uesr facing behaviour.
+ cf. <17b7f51c-0c3d-4d63-a501-47ce829f7345@gmail.com>
+ source: <cover.1751309770.git.ayu.chandekar@gmail.com>
 
 
 * jk/submodule-remote-lookup-cleanup (2025-06-23) 7 commits
@@ -432,19 +413,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <7e796844-97e2-4b45-a76e-4c1fcb1da3ae@gmail.com>
  source: <20250609221055.136074-1-oystwa@gmail.com>
-
-
-* jc/merge-compact-summary (2025-06-12) 2 commits
-  (merged to 'next' on 2025-06-24 at 29893fdca6)
- + merge/pull: extend merge.stat configuration variable to cover --compact-summary
- + merge/pull: add the "--compact-summary" option
-
- "git merge/pull" has been taught the "--compact-summary" option to
- use the compact-summary format, intead of diffstat, when showing
- the summary of the incoming changes.
-
- Will merge to 'master'.
- source: <20250612222537.2426059-1-gitster@pobox.com>
 
 
 * bs/config-mak-freebsd (2025-06-12) 1 commit
@@ -482,7 +450,7 @@ Release tarballs are available at:
  source: <20250611221444.1567638-1-sebastian@breakpoint.cc>
 
 
-* ja/doc-git-log-markup (2025-06-08) 9 commits
+* ja/doc-git-log-markup (2025-06-29) 9 commits
  - doc: git-log: convert log config to new doc format
  - doc: git-log: convert diff options to new doc format
  - doc: git-log: convert pretty formats to new doc format
@@ -495,8 +463,8 @@ Release tarballs are available at:
 
  Doc mark-up updates.
 
- Review?
- source: <pull.1933.git.1749373787.gitgitgadget@gmail.com>
+ Comments?
+ source: <pull.1933.v2.git.1751203241.gitgitgadget@gmail.com>
 
 
 * ag/imap-send-resurrection (2025-06-19) 10 commits
@@ -540,7 +508,7 @@ Release tarballs are available at:
  source: <20250605140644.239199-1-kuforiji98@gmail.com>
 
 
-* ly/load-bitmap-leakfix (2025-06-02) 3 commits
+* ly/load-bitmap-leakfix (2025-06-30) 3 commits
  - pack-bitmap: add load corrupt bitmap test
  - pack-bitmap: reword comments in test_bitmap_commits()
  - pack-bitmap: fix memory leak if load_bitmap() failed
@@ -548,7 +516,7 @@ Release tarballs are available at:
  Leakfix with a new and a bit invasive test.
 
  Comments?
- source: <pull.1962.v5.git.git.1748920444.gitgitgadget@gmail.com>
+ source: <pull.1962.v6.git.git.1751347929.gitgitgadget@gmail.com>
 
 
 * tb/prepare-midx-pack-cleanup (2025-05-28) 5 commits
@@ -593,32 +561,17 @@ Release tarballs are available at:
  source: <20250608032705.11990-1-jayatheerthkulkarni2005@gmail.com>
 
 
-* bc/stash-export-import (2025-06-11) 4 commits
-  (merged to 'next' on 2025-06-24 at 3dfd301fa1)
- + builtin/stash: provide a way to import stashes from a ref
- + builtin/stash: provide a way to export stashes to a ref
- + builtin/stash: factor out revision parsing into a function
- + object-name: make get_oid quietly return an error
-
- An interchange format for stash entries is defined, and subcommand
- of "git stash" to import/export has been added.
-
- Will merge to 'master'.
- source: <20250612011221.4158484-1-sandals@crustytoothpaste.net>
-
-
-* lm/add-p-context (2025-05-10) 4 commits
+* lm/add-p-context (2025-06-28) 4 commits
  - add-patch: add diff.context command line overrides
  - add-patch: respect diff.context configuration
- - test: refactor to use "test_config"
- - test: refactor to use "test_grep"
+ - test: use "test_config"
+ - test: use "test_grep"
 
  "git add/etc -p" now honors diff.context configuration variable,
  and learns to honor -U<n> option.
 
- Expecting a reroll.
- cf. <CAP9jKjEYgEBBGrPnJ8fkaWuS8RPzBeBqFLE7aTJd5x9PcWu=7Q@mail.gmail.com>
- source: <pull.1915.v2.git.1746884789.gitgitgadget@gmail.com>
+ Ready?
+ source: <pull.1915.v3.git.1751128486.gitgitgadget@gmail.com>
 
 
 * ps/contrib-sweep (2025-05-12) 11 commits
@@ -641,7 +594,7 @@ Release tarballs are available at:
  source: <20250512-pks-contrib-spring-cleanup-v3-0-32e151b0bfb0@pks.im>
 
 
-* ps/object-store (2025-06-04) 17 commits
+* ps/object-store (2025-07-01) 17 commits
  - odb: rename `read_object_with_reference()`
  - odb: rename `pretend_object_file()`
  - odb: rename `has_object()`
@@ -663,7 +616,7 @@ Release tarballs are available at:
  Code clean-up around object access API.
 
  Comments?
- source: <20250605-pks-object-store-wo-the-repository-v5-0-779d1c28774b@pks.im>
+ source: <20250701-pks-object-store-wo-the-repository-v6-0-dbf3894ab4e2@pks.im>
 
 
 * cc/promisor-remote-capability (2025-06-25) 5 commits
