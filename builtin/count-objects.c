@@ -80,10 +80,10 @@ static int count_cruft(const char *basename UNUSED, const char *path,
 	return 0;
 }
 
-static int print_alternate(struct object_directory *odb, void *data UNUSED)
+static int print_alternate(struct odb_source *alternate, void *data UNUSED)
 {
 	printf("alternate: ");
-	quote_c_style(odb->path, NULL, stdout, 0);
+	quote_c_style(alternate->path, NULL, stdout, 0);
 	putchar('\n');
 	return 0;
 }

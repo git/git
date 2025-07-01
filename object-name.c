@@ -112,10 +112,10 @@ static enum cb_next match_prefix(const struct object_id *oid, void *arg)
 
 static void find_short_object_filename(struct disambiguate_state *ds)
 {
-	struct object_directory *odb;
+	struct odb_source *source;
 
-	for (odb = ds->repo->objects->odb; odb && !ds->ambiguous; odb = odb->next)
-		oidtree_each(odb_loose_cache(odb, &ds->bin_pfx),
+	for (source = ds->repo->objects->sources; source && !ds->ambiguous; source = source->next)
+		oidtree_each(odb_loose_cache(source, &ds->bin_pfx),
 				&ds->bin_pfx, ds->len, match_prefix, ds);
 }
 

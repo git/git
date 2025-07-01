@@ -27,7 +27,7 @@
 #include "write-or-die.h"
 
 KHASH_INIT(odb_path_map, const char * /* key: odb_path */,
-	struct object_directory *, 1, fspathhash, fspatheq)
+	struct odb_source *, 1, fspathhash, fspatheq)
 
 /*
  * This is meant to hold a *small* number of objects that you would
@@ -104,18 +104,18 @@ static int alt_odb_usable(struct object_database *o,
 	 * Prevent the common mistake of listing the same
 	 * thing twice, or object directory itself.
 	 */
-	if (!o->odb_by_path) {
+	if (!o->source_by_path) {
 		khiter_t p;
 
-		o->odb_by_path = kh_init_odb_path_map();
-		assert(!o->odb->next);
-		p = kh_put_odb_path_map(o->odb_by_path, o->odb->path, &r);
+		o->source_by_path = kh_init_odb_path_map();
+		assert(!o->sources->next);
+		p = kh_put_odb_path_map(o->source_by_path, o->sources->path, &r);
 		assert(r == 1); /* never used */
-		kh_value(o->odb_by_path, p) = o->odb;
+		kh_value(o->source_by_path, p) = o->sources;
 	}
 	if (fspatheq(path->buf, normalized_objdir))
 		return 0;
-	*pos = kh_put_odb_path_map(o->odb_by_path, path->buf, &r);
+	*pos = kh_put_odb_path_map(o->source_by_path, path->buf, &r);
 	/* r: 0 = exists, 1 = never used, 2 = deleted */
 	return r == 0 ? 0 : 1;
 }
@@ -124,7 +124,7 @@ static int alt_odb_usable(struct object_database *o,
  * Prepare alternate object database registry.
  *
  * The variable alt_odb_list points at the list of struct
- * object_directory.  The elements on this list come from
+ * odb_source.  The elements on this list come from
  * non-empty elements from colon separated ALTERNATE_DB_ENVIRONMENT
  * environment variable, and $GIT_OBJECT_DIRECTORY/info/alternates,
  * whose contents is similar to that environment variable but can be
@@ -141,7 +141,7 @@ static void read_info_alternates(struct repository *r,
 static int link_alt_odb_entry(struct repository *r, const struct strbuf *entry,
 	const char *relative_base, int depth, const char *normalized_objdir)
 {
-	struct object_directory *ent;
+	struct odb_source *alternate;
 	struct strbuf pathbuf = STRBUF_INIT;
 	struct strbuf tmp = STRBUF_INIT;
 	khiter_t pos;
@@ -170,19 +170,19 @@ static int link_alt_odb_entry(struct repository *r, const struct strbuf *entry,
 	if (!alt_odb_usable(r->objects, &pathbuf, normalized_objdir, &pos))
 		goto error;
 
-	CALLOC_ARRAY(ent, 1);
-	/* pathbuf.buf is already in r->objects->odb_by_path */
-	ent->path = strbuf_detach(&pathbuf, NULL);
+	CALLOC_ARRAY(alternate, 1);
+	/* pathbuf.buf is already in r->objects->source_by_path */
+	alternate->path = strbuf_detach(&pathbuf, NULL);
 
 	/* add the alternate entry */
-	*r->objects->odb_tail = ent;
-	r->objects->odb_tail = &(ent->next);
-	ent->next = NULL;
-	assert(r->objects->odb_by_path);
-	kh_value(r->objects->odb_by_path, pos) = ent;
+	*r->objects->sources_tail = alternate;
+	r->objects->sources_tail = &(alternate->next);
+	alternate->next = NULL;
+	assert(r->objects->source_by_path);
+	kh_value(r->objects->source_by_path, pos) = alternate;
 
 	/* recursively add alternates */
-	read_info_alternates(r, ent->path, depth + 1);
+	read_info_alternates(r, alternate->path, depth + 1);
 	ret = 0;
  error:
 	strbuf_release(&tmp);
@@ -234,7 +234,7 @@ static void link_alt_odb_entries(struct repository *r, const char *alt,
 		return;
 	}
 
-	strbuf_realpath(&objdirbuf, r->objects->odb->path, 1);
+	strbuf_realpath(&objdirbuf, r->objects->sources->path, 1);
 
 	while (*alt) {
 		alt = parse_alt_odb_entry(alt, sep, &entry);
@@ -321,9 +321,9 @@ void add_to_alternates_memory(const char *reference)
 			     '\n', NULL, 0);
 }
 
-struct object_directory *set_temporary_primary_odb(const char *dir, int will_destroy)
+struct odb_source *set_temporary_primary_odb(const char *dir, int will_destroy)
 {
-	struct object_directory *new_odb;
+	struct odb_source *source;
 
 	/*
 	 * Make sure alternates are initialized, or else our entry may be
@@ -335,41 +335,41 @@ struct object_directory *set_temporary_primary_odb(const char *dir, int will_des
 	 * Make a new primary odb and link the old primary ODB in as an
 	 * alternate
 	 */
-	new_odb = xcalloc(1, sizeof(*new_odb));
-	new_odb->path = xstrdup(dir);
+	source = xcalloc(1, sizeof(*source));
+	source->path = xstrdup(dir);
 
 	/*
 	 * Disable ref updates while a temporary odb is active, since
 	 * the objects in the database may roll back.
 	 */
-	new_odb->disable_ref_updates = 1;
-	new_odb->will_destroy = will_destroy;
-	new_odb->next = the_repository->objects->odb;
-	the_repository->objects->odb = new_odb;
-	return new_odb->next;
+	source->disable_ref_updates = 1;
+	source->will_destroy = will_destroy;
+	source->next = the_repository->objects->sources;
+	the_repository->objects->sources = source;
+	return source->next;
 }
 
-static void free_object_directory(struct object_directory *odb)
+static void free_object_directory(struct odb_source *source)
 {
-	free(odb->path);
-	odb_clear_loose_cache(odb);
-	loose_object_map_clear(&odb->loose_map);
-	free(odb);
+	free(source->path);
+	odb_clear_loose_cache(source);
+	loose_object_map_clear(&source->loose_map);
+	free(source);
 }
 
-void restore_primary_odb(struct object_directory *restore_odb, const char *old_path)
+void restore_primary_odb(struct odb_source *restore_alt, const char *old_path)
 {
-	struct object_directory *cur_odb = the_repository->objects->odb;
+	struct odb_source *cur_alt = the_repository->objects->sources;
 
-	if (strcmp(old_path, cur_odb->path))
+	if (strcmp(old_path, cur_alt->path))
 		BUG("expected %s as primary object store; found %s",
-		    old_path, cur_odb->path);
+		    old_path, cur_alt->path);
 
-	if (cur_odb->next != restore_odb)
+	if (cur_alt->next != restore_alt)
 		BUG("we expect the old primary object store to be the first alternate");
 
-	the_repository->objects->odb = restore_odb;
-	free_object_directory(cur_odb);
+	the_repository->objects->sources = restore_alt;
+	free_object_directory(cur_alt);
 }
 
 /*
@@ -442,15 +442,15 @@ out:
 	return ref_git;
 }
 
-struct object_directory *find_odb(struct repository *r, const char *obj_dir)
+struct odb_source *find_odb(struct repository *r, const char *obj_dir)
 {
-	struct object_directory *odb;
+	struct odb_source *source;
 	char *obj_dir_real = real_pathdup(obj_dir, 1);
 	struct strbuf odb_path_real = STRBUF_INIT;
 
 	prepare_alt_odb(r);
-	for (odb = r->objects->odb; odb; odb = odb->next) {
-		strbuf_realpath(&odb_path_real, odb->path, 1);
+	for (source = r->objects->sources; source; source = source->next) {
+		strbuf_realpath(&odb_path_real, source->path, 1);
 		if (!strcmp(obj_dir_real, odb_path_real.buf))
 			break;
 	}
@@ -458,9 +458,9 @@ struct object_directory *find_odb(struct repository *r, const char *obj_dir)
 	free(obj_dir_real);
 	strbuf_release(&odb_path_real);
 
-	if (!odb)
+	if (!source)
 		die(_("could not find object directory matching %s"), obj_dir);
-	return odb;
+	return source;
 }
 
 static void fill_alternate_refs_command(struct child_process *cmd,
@@ -527,14 +527,14 @@ struct alternate_refs_data {
 	void *data;
 };
 
-static int refs_from_alternate_cb(struct object_directory *e,
+static int refs_from_alternate_cb(struct odb_source *alternate,
 				  void *data)
 {
 	struct strbuf path = STRBUF_INIT;
 	size_t base_len;
 	struct alternate_refs_data *cb = data;
 
-	if (!strbuf_realpath(&path, e->path, 0))
+	if (!strbuf_realpath(&path, alternate->path, 0))
 		goto out;
 	if (!strbuf_strip_suffix(&path, "/objects"))
 		goto out;
@@ -563,12 +563,12 @@ void for_each_alternate_ref(alternate_ref_fn fn, void *data)
 
 int foreach_alt_odb(alt_odb_fn fn, void *cb)
 {
-	struct object_directory *ent;
+	struct odb_source *alternate;
 	int r = 0;
 
 	prepare_alt_odb(the_repository);
-	for (ent = the_repository->objects->odb->next; ent; ent = ent->next) {
-		r = fn(ent, cb);
+	for (alternate = the_repository->objects->sources->next; alternate; alternate = alternate->next) {
+		r = fn(alternate, cb);
 		if (r)
 			break;
 	}
@@ -582,14 +582,14 @@ void prepare_alt_odb(struct repository *r)
 
 	link_alt_odb_entries(r, r->objects->alternate_db, PATH_SEP, NULL, 0);
 
-	read_info_alternates(r, r->objects->odb->path, 0);
+	read_info_alternates(r, r->objects->sources->path, 0);
 	r->objects->loaded_alternates = 1;
 }
 
 int has_alt_odb(struct repository *r)
 {
 	prepare_alt_odb(r);
-	return !!r->objects->odb->next;
+	return !!r->objects->sources->next;
 }
 
 int obj_read_use_lock = 0;
@@ -963,15 +963,15 @@ struct object_database *odb_new(void)
 
 static void free_object_directories(struct object_database *o)
 {
-	while (o->odb) {
-		struct object_directory *next;
+	while (o->sources) {
+		struct odb_source *next;
 
-		next = o->odb->next;
-		free_object_directory(o->odb);
-		o->odb = next;
+		next = o->sources->next;
+		free_object_directory(o->sources);
+		o->sources = next;
 	}
-	kh_destroy_odb_path_map(o->odb_by_path);
-	o->odb_by_path = NULL;
+	kh_destroy_odb_path_map(o->source_by_path);
+	o->source_by_path = NULL;
 }
 
 void odb_clear(struct object_database *o)
@@ -986,7 +986,7 @@ void odb_clear(struct object_database *o)
 	o->commit_graph_attempted = 0;
 
 	free_object_directories(o);
-	o->odb_tail = NULL;
+	o->sources_tail = NULL;
 	o->loaded_alternates = 0;
 
 	for (size_t i = 0; i < o->cached_object_nr; i++)

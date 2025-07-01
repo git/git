@@ -294,8 +294,8 @@ int cmd_multi_pack_index(int argc,
 
 	if (the_repository &&
 	    the_repository->objects &&
-	    the_repository->objects->odb)
-		opts.object_dir = xstrdup(the_repository->objects->odb->path);
+	    the_repository->objects->sources)
+		opts.object_dir = xstrdup(the_repository->objects->sources->path);
 
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_multi_pack_index_usage, 0);

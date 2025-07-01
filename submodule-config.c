@@ -810,7 +810,7 @@ static void config_from_gitmodules(config_fn_t fn, struct repository *repo, void
 			   repo_get_oid(repo, GITMODULES_HEAD, &oid) >= 0) {
 			config_source.blob = oidstr = xstrdup(oid_to_hex(&oid));
 			if (repo != the_repository)
-				add_submodule_odb_by_path(repo->objects->odb->path);
+				add_submodule_odb_by_path(repo->objects->sources->path);
 		} else {
 			goto out;
 		}

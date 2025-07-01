@@ -29,8 +29,8 @@ struct repository;
 struct object_database;
 struct string_list;
 
-char *get_commit_graph_filename(struct object_directory *odb);
-char *get_commit_graph_chain_filename(struct object_directory *odb);
+char *get_commit_graph_filename(struct odb_source *source);
+char *get_commit_graph_chain_filename(struct odb_source *source);
 int open_commit_graph(const char *graph_file, int *fd, struct stat *st);
 int open_commit_graph_chain(const char *chain_file, int *fd, struct stat *st);
 
@@ -89,7 +89,7 @@ struct commit_graph {
 	uint32_t num_commits;
 	struct object_id oid;
 	char *filename;
-	struct object_directory *odb;
+	struct odb_source *odb_source;
 
 	uint32_t num_commits_in_base;
 	unsigned int read_generation_data;
@@ -115,12 +115,12 @@ struct commit_graph {
 
 struct commit_graph *load_commit_graph_one_fd_st(struct repository *r,
 						 int fd, struct stat *st,
-						 struct object_directory *odb);
+						 struct odb_source *source);
 struct commit_graph *load_commit_graph_chain_fd_st(struct repository *r,
 						   int fd, struct stat *st,
 						   int *incomplete_chain);
 struct commit_graph *read_commit_graph_one(struct repository *r,
-					   struct object_directory *odb);
+					   struct odb_source *source);
 
 struct repo_settings;
 
@@ -173,10 +173,10 @@ struct commit_graph_opts {
  * is not compatible with the commit-graph feature, then the
  * methods will return 0 without writing a commit-graph.
  */
-int write_commit_graph_reachable(struct object_directory *odb,
+int write_commit_graph_reachable(struct odb_source *source,
 				 enum commit_graph_write_flags flags,
 				 const struct commit_graph_opts *opts);
-int write_commit_graph(struct object_directory *odb,
+int write_commit_graph(struct odb_source *source,
 		       const struct string_list *pack_indexes,
 		       struct oidset *commits,
 		       enum commit_graph_write_flags flags,
