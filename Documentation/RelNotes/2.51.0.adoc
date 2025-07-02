@@ -31,6 +31,11 @@ UI, Workflows & Features
    use the compact-summary format, intead of diffstat, when showing
    the summary of the incoming changes.
 
+ * "git imap-send" has been broken for a long time, which has been
+   resurrected and then taught to talk OAuth2.0 etc.
+
+ * Some error messages from "git imap-send" has been updated.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -50,6 +55,8 @@ Performance, Internal Implementation, Development Support etc.
 
  * A test helper "test_seq" function learned the "-f <fmt>" option,
    which allowed us to simplify a lot of test scripts.
+
+ * A lot of stale stuff has been removed from the contrib/ hierarchy.
 
 
 Fixes since v2.50
