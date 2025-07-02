@@ -1516,8 +1516,8 @@ static int prune_remote(const char *remote, int dry_run)
 	struct string_list refs_to_prune = STRING_LIST_INIT_NODUP;
 	struct string_list_item *item;
 	const char *dangling_msg = dry_run
-		? _(" %s will become dangling!")
-		: _(" %s has become dangling!");
+		? _(" %s will become dangling after %s is deleted!")
+		: _(" %s has become dangling after %s was deleted!");
 
 	get_remote_ref_states(remote, &states, GET_REF_STATES);
 

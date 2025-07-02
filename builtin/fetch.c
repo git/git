@@ -1384,9 +1384,13 @@ static int prune_refs(struct display_state *display_state,
 	int result = 0;
 	struct ref *ref, *stale_refs = get_stale_heads(rs, ref_map);
 	struct strbuf err = STRBUF_INIT;
+	struct string_list refnames = STRING_LIST_INIT_NODUP;
 	const char *dangling_msg = dry_run
-		? _("   (%s will become dangling)")
-		: _("   (%s has become dangling)");
+		? _("   %s will become dangling after %s is deleted")
+		: _("   %s has become dangling after %s was deleted");
+
+	for (ref = stale_refs; ref; ref = ref->next)
+		string_list_append(&refnames, ref->name);
 
 	if (!dry_run) {
 		if (transaction) {
@@ -1397,15 +1401,9 @@ static int prune_refs(struct display_state *display_state,
 					goto cleanup;
 			}
 		} else {
-			struct string_list refnames = STRING_LIST_INIT_NODUP;
-
-			for (ref = stale_refs; ref; ref = ref->next)
-				string_list_append(&refnames, ref->name);
-
 			result = refs_delete_refs(get_main_ref_store(the_repository),
 						  "fetch: prune", &refnames,
 						  0);
-			string_list_clear(&refnames, 0);
 		}
 	}
 
@@ -1417,12 +1415,14 @@ static int prune_refs(struct display_state *display_state,
 					   _("(none)"), ref->name,
 					   &ref->new_oid, &ref->old_oid,
 					   summary_width);
-			refs_warn_dangling_symref(get_main_ref_store(the_repository),
-						  stderr, dangling_msg, ref->name);
 		}
+		string_list_sort(&refnames);
+		refs_warn_dangling_symrefs(get_main_ref_store(the_repository),
+					   stderr, dangling_msg, &refnames);
 	}
 
 cleanup:
+	string_list_clear(&refnames, 0);
 	strbuf_release(&err);
 	free_refs(stale_refs);
 	return result;

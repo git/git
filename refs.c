@@ -461,7 +461,7 @@ static int warn_if_dangling_symref(const char *refname, const char *referent UNU
 		return 0;
 	}
 
-	fprintf(d->fp, d->msg_fmt, refname);
+	fprintf(d->fp, d->msg_fmt, refname, resolves_to);
 	fputc('\n', d->fp);
 	return 0;
 }
