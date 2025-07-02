@@ -52,6 +52,8 @@ leave out at most one of _<rev-A>__ and _<rev-B>_, in which case it defaults to 
 	Mode" section of linkgit:git-add[1] to learn how to operate
 	the `--patch` mode.
 
+include::diff-context-options.adoc[]
+
 `-W`::
 `--worktree`::
 `-S`::
