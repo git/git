@@ -438,7 +438,6 @@ static int for_each_filter_refs(const char *refname, const char *referent,
 struct warn_if_dangling_data {
 	struct ref_store *refs;
 	FILE *fp;
-	const char *refname;
 	const struct string_list *refnames;
 	const char *msg_fmt;
 };
@@ -455,27 +454,13 @@ static int warn_if_dangling_symref(const char *refname, const char *referent UNU
 
 	resolves_to = refs_resolve_ref_unsafe(d->refs, refname, 0, NULL, NULL);
 	if (!resolves_to
-	    || (d->refname
-		? strcmp(resolves_to, d->refname)
-		: !string_list_has_string(d->refnames, resolves_to))) {
+	    || !string_list_has_string(d->refnames, resolves_to)) {
 		return 0;
 	}
 
 	fprintf(d->fp, d->msg_fmt, refname, resolves_to);
 	fputc('\n', d->fp);
 	return 0;
-}
-
-void refs_warn_dangling_symref(struct ref_store *refs, FILE *fp,
-			       const char *msg_fmt, const char *refname)
-{
-	struct warn_if_dangling_data data = {
-		.refs = refs,
-		.fp = fp,
-		.refname = refname,
-		.msg_fmt = msg_fmt,
-	};
-	refs_for_each_rawref(refs, warn_if_dangling_symref, &data);
 }
 
 void refs_warn_dangling_symrefs(struct ref_store *refs, FILE *fp,
