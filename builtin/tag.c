@@ -660,6 +660,8 @@ int cmd_tag(int argc,
 
 	if (refs_read_ref(get_main_ref_store(the_repository), ref.buf, &prev))
 		oidclr(&prev, the_repository->hash_algo);
+	else if (!create_tag_object && oideq(&object, &prev))
+		exit(0);
 	else if (!force)
 		die(_("tag '%s' already exists"), tag);
 

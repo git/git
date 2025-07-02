@@ -126,7 +126,7 @@ test_expect_success 'annotated tag with --create-reflog has correct message' '
 '
 
 test_expect_success '--create-reflog does not create reflog on failure' '
-	test_must_fail git tag --create-reflog mytag &&
+	test_must_fail git tag --create-reflog mytag no-such-object &&
 	test_must_fail git reflog exists refs/tags/mytag
 '
 
@@ -183,8 +183,14 @@ test_expect_success 'listing tags using a non-matching pattern should output not
 
 # special cases for creating tags:
 
-test_expect_success 'trying to create a tag with the name of one existing should fail' '
-	test_must_fail git tag mytag
+test_expect_success 'recreating a tag without --force' '
+	# light-weight tag pointing at the same thing
+	# now succeeds
+	git tag mytag HEAD &&
+	# light-weight tag pointing at a different thing
+	test_must_fail git tag mytag HEAD: &&
+	# creating annotated tag, pointing at the same object.
+	test_must_fail git tag -a -m anno mytag $taggedobject
 '
 
 test_expect_success 'trying to create a tag with a non-valid name should fail' '
