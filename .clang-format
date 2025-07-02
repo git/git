@@ -12,7 +12,15 @@ UseTab: Always
 TabWidth: 8
 IndentWidth: 8
 ContinuationIndentWidth: 8
-ColumnLimit: 80
+
+# While we do want to enforce a character limit of 80 characters, we often
+# allow lines to overflow that limit to prioritize readability. Setting a
+# character limit here with penalties has been finicky and creates too many
+# false positives.
+#
+# NEEDSWORK: It would be nice if we can find optimal settings to ensure we
+# can re-enable the limit here.
+ColumnLimit: 0
 
 # C Language specifics
 Language: Cpp
@@ -210,16 +218,11 @@ MaxEmptyLinesToKeep: 1
 # No empty line at the start of a block.
 KeepEmptyLinesAtTheStartOfBlocks: false
 
-# Penalties
-# This decides what order things should be done if a line is too long
-PenaltyBreakAssignment: 5
-PenaltyBreakBeforeFirstCallParameter: 5
-PenaltyBreakComment: 5
-PenaltyBreakFirstLessLess: 0
-PenaltyBreakOpenParenthesis: 300
-PenaltyBreakString: 5
-PenaltyExcessCharacter: 10
-PenaltyReturnTypeOnItsOwnLine: 300
-
 # Don't sort #include's
 SortIncludes: false
+
+# Remove optional braces of control statements (if, else, for, and while)
+# according to the LLVM coding style. This avoids braces on simple
+# single-statement bodies of statements but keeps braces if one side of
+# if/else if/.../else cascade has multi-statement body.
+RemoveBracesLLVM: true
