@@ -486,6 +486,7 @@ ifeq ($(uname_S),Windows)
 	NO_STRTOUMAX = YesPlease
 	NO_MKDTEMP = YesPlease
 	NO_INTTYPES_H = YesPlease
+	NO_RESTARTABLE_SIGNALS = YesPlease
 	CSPRNG_METHOD = rtlgenrandom
 	# VS2015 with UCRT claims that snprintf and friends are C99 compliant,
 	# so we don't need this:
@@ -654,8 +655,6 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	FREAD_READS_DIRECTORIES = UnfortunatelyYes
 
 	# Not detected (nor checked for) by './configure'.
-	# We don't have SA_RESTART on NonStop, unfortunalety.
-	COMPAT_CFLAGS += -DSA_RESTART=0
 	# Apparently needed in compat/fnmatch/fnmatch.c.
 	COMPAT_CFLAGS += -DHAVE_STRING_H=1
 	NO_ST_BLOCKS_IN_STRUCT_STAT = YesPlease
@@ -664,6 +663,7 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	NO_MMAP = YesPlease
 	NO_POLL = YesPlease
 	NO_INTPTR_T = UnfortunatelyYes
+	NO_RESTARTABLE_SIGNALS = UnfortunatelyYes
 	CSPRNG_METHOD = openssl
 	SANE_TOOL_PATH = /usr/coreutils/bin:/usr/local/bin
 	SHELL_PATH = /usr/coreutils/bin/bash
@@ -699,6 +699,7 @@ ifeq ($(uname_S),MINGW)
 	NEEDS_LIBICONV = YesPlease
 	NO_STRTOUMAX = YesPlease
 	NO_MKDTEMP = YesPlease
+	NO_RESTARTABLE_SIGNALS = YesPlease
 	NO_SVN_TESTS = YesPlease
 
 	# The builtin FSMonitor requires Named Pipes and Threads on Windows.
@@ -782,7 +783,6 @@ ifeq ($(uname_S),MINGW)
         endif
 endif
 ifeq ($(uname_S),QNX)
-	COMPAT_CFLAGS += -DSA_RESTART=0
 	EXPAT_NEEDS_XMLPARSE_H = YesPlease
 	HAVE_STRINGS_H = YesPlease
 	NEEDS_SOCKET = YesPlease
@@ -794,4 +794,5 @@ ifeq ($(uname_S),QNX)
 	NO_PTHREADS = YesPlease
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease
+	NO_RESTARTABLE_SIGNALS = UnfortunatelyYes
 endif

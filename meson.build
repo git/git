@@ -1094,6 +1094,10 @@ else
   build_options_config.set('NO_EXPAT', '1')
 endif
 
+if compiler.get_define('SA_RESTART', prefix: '#include <signal.h>') == ''
+  libgit_c_args += '-DNO_RESTARTABLE_SIGNALS'
+endif
+
 if not compiler.has_header('sys/select.h')
   libgit_c_args += '-DNO_SYS_SELECT_H'
 endif

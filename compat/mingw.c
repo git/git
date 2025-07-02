@@ -2561,7 +2561,9 @@ int setitimer(int type UNUSED, struct itimerval *in, struct itimerval *out)
 
 int sigaction(int sig, struct sigaction *in, struct sigaction *out)
 {
-	if (sig != SIGALRM)
+	if (sig == SIGCHLD)
+		return -1;
+	else if (sig != SIGALRM)
 		return errno = EINVAL,
 			error("sigaction only implemented for SIGALRM");
 	if (out)
