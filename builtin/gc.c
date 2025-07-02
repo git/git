@@ -539,7 +539,7 @@ static uint64_t total_ram(void)
 		return total;
 	}
 #elif defined(HAVE_BSD_SYSCTL) && (defined(HW_MEMSIZE) || defined(HW_PHYSMEM) || defined(HW_PHYSMEM64))
-	int64_t physical_memory;
+	int64_t physical_memory = 0;
 	int mib[2];
 	size_t length;
 
@@ -552,8 +552,9 @@ static uint64_t total_ram(void)
 	mib[1] = HW_PHYSMEM;
 # endif
 	length = sizeof(int64_t);
-	if (!sysctl(mib, 2, &physical_memory, &length, NULL, 0))
-		return physical_memory;
+	if (!sysctl(mib, 2, &physical_memory, &length, NULL, 0) &&
+	    length == sizeof(int64_t))
+		return (uint64_t)physical_memory;
 #elif defined(GIT_WINDOWS_NATIVE)
 	MEMORYSTATUSEX memInfo;
 
