@@ -220,3 +220,9 @@ KeepEmptyLinesAtTheStartOfBlocks: false
 
 # Don't sort #include's
 SortIncludes: false
+
+# Remove optional braces of control statements (if, else, for, and while)
+# according to the LLVM coding style. This avoids braces on simple
+# single-statement bodies of statements but keeps braces if one side of
+# if/else if/.../else cascade has multi-statement body.
+RemoveBracesLLVM: true
