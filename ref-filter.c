@@ -2692,10 +2692,13 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 				       each_ref_fn cb,
 				       void *cb_data)
 {
+	struct ref_iterator *iter;
+	int flags = 0, ret = 0;
+
 	if (filter->kind & FILTER_REFS_ROOT_REFS) {
 		/* In this case, we want to print all refs including root refs. */
-		return refs_for_each_include_root_refs(get_main_ref_store(the_repository),
-						       cb, cb_data);
+		flags |= DO_FOR_EACH_INCLUDE_ROOT_REFS;
+		goto non_prefix_iter;
 	}
 
 	if (!filter->match_as_path) {
@@ -2704,8 +2707,7 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 		 * prefixes like "refs/heads/" etc. are stripped off,
 		 * so we have to look at everything:
 		 */
-		return refs_for_each_fullref_in(get_main_ref_store(the_repository),
-						"", NULL, cb, cb_data);
+		goto non_prefix_iter;
 	}
 
 	if (filter->ignore_case) {
@@ -2714,20 +2716,28 @@ static int for_each_fullref_in_pattern(struct ref_filter *filter,
 		 * so just return everything and let the caller
 		 * sort it out.
 		 */
-		return refs_for_each_fullref_in(get_main_ref_store(the_repository),
-						"", NULL, cb, cb_data);
+		goto non_prefix_iter;
 	}
 
 	if (!filter->name_patterns[0]) {
 		/* no patterns; we have to look at everything */
-		return refs_for_each_fullref_in(get_main_ref_store(the_repository),
-						 "", filter->exclude.v, cb, cb_data);
+		goto non_prefix_iter;
 	}
 
 	return refs_for_each_fullref_in_prefixes(get_main_ref_store(the_repository),
 						 NULL, filter->name_patterns,
 						 filter->exclude.v,
 						 cb, cb_data);
+
+non_prefix_iter:
+	iter = refs_ref_iterator_begin(get_main_ref_store(the_repository), "",
+				       NULL, 0, flags);
+	if (filter->seek)
+		ret = ref_iterator_seek(iter, filter->seek, 0);
+	if (ret)
+		return ret;
+
+	return do_for_each_ref_iterator(iter, cb, cb_data);
 }
 
 /*
@@ -3200,6 +3210,8 @@ static int do_filter_refs(struct ref_filter *filter, unsigned int type, each_ref
 	if (!filter->kind)
 		die("filter_refs: invalid type");
 	else {
+		const char *prefix = NULL;
+
 		/*
 		 * For common cases where we need only branches or remotes or tags,
 		 * we only iterate through those refs. If a mix of refs is needed,
@@ -3207,19 +3219,28 @@ static int do_filter_refs(struct ref_filter *filter, unsigned int type, each_ref
 		 * of filter_ref_kind().
 		 */
 		if (filter->kind == FILTER_REFS_BRANCHES)
-			ret = refs_for_each_fullref_in(get_main_ref_store(the_repository),
-						       "refs/heads/", NULL,
-						       fn, cb_data);
+			prefix = "refs/heads/";
 		else if (filter->kind == FILTER_REFS_REMOTES)
-			ret = refs_for_each_fullref_in(get_main_ref_store(the_repository),
-						       "refs/remotes/", NULL,
-						       fn, cb_data);
+			prefix = "refs/remotes/";
 		else if (filter->kind == FILTER_REFS_TAGS)
-			ret = refs_for_each_fullref_in(get_main_ref_store(the_repository),
-						       "refs/tags/", NULL, fn,
-						       cb_data);
-		else if (filter->kind & FILTER_REFS_REGULAR)
+			prefix = "refs/tags/";
+
+		if (prefix) {
+			struct ref_iterator *iter;
+
+			iter = refs_ref_iterator_begin(get_main_ref_store(the_repository),
+						       "", NULL, 0, 0);
+
+			if (filter->seek)
+				ret = ref_iterator_seek(iter, filter->seek, 0);
+			else if (prefix)
+				ret = ref_iterator_seek(iter, prefix, 1);
+
+			if (!ret)
+				ret = do_for_each_ref_iterator(iter, fn, cb_data);
+		} else if (filter->kind & FILTER_REFS_REGULAR) {
 			ret = for_each_fullref_in_pattern(filter, fn, cb_data);
+		}
 
 		/*
 		 * When printing all ref types, HEAD is already included,

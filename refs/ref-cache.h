@@ -202,13 +202,6 @@ void free_ref_cache(struct ref_cache *cache);
 void add_entry_to_dir(struct ref_dir *dir, struct ref_entry *entry);
 
 /*
- * Find the value entry with the given name in dir, sorting ref_dirs
- * and recursing into subdirectories as necessary.  If the name is not
- * found or it corresponds to a directory entry, return NULL.
- */
-struct ref_entry *find_ref_entry(struct ref_dir *dir, const char *refname);
-
-/*
  * Start iterating over references in `cache`. If `prefix` is
  * specified, only include references whose names start with that
  * prefix. If `prime_dir` is true, then fill any incomplete

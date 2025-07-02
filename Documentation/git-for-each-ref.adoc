@@ -14,7 +14,7 @@ SYNOPSIS
 		   [--points-at=<object>]
 		   [--merged[=<object>]] [--no-merged[=<object>]]
 		   [--contains[=<object>]] [--no-contains[=<object>]]
-		   [--exclude=<pattern> ...]
+		   [--exclude=<pattern> ...] [--skip-until=<pattern>]
 
 DESCRIPTION
 -----------
@@ -107,6 +107,10 @@ TAB %(refname)`.
 
 --include-root-refs::
 	List root refs (HEAD and pseudorefs) apart from regular refs.
+
+--skip-until::
+    Skip references up to the specified pattern. Cannot be used with
+    general pattern matching.
 
 FIELD NAMES
 -----------
