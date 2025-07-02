@@ -436,7 +436,8 @@ static inline const char *has_glob_specials(const char *pattern)
 }
 
 void refs_warn_dangling_symrefs(struct ref_store *refs, FILE *fp,
-				const char *msg_fmt, const struct string_list *refnames);
+				const char *indent, int dry_run,
+				const struct string_list *refnames);
 
 /*
  * Flags for controlling behaviour of pack_refs()

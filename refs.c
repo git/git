@@ -439,7 +439,8 @@ struct warn_if_dangling_data {
 	struct ref_store *refs;
 	FILE *fp;
 	const struct string_list *refnames;
-	const char *msg_fmt;
+	const char *indent;
+	int dry_run;
 };
 
 static int warn_if_dangling_symref(const char *refname, const char *referent UNUSED,
@@ -447,7 +448,7 @@ static int warn_if_dangling_symref(const char *refname, const char *referent UNU
 				   int flags, void *cb_data)
 {
 	struct warn_if_dangling_data *d = cb_data;
-	const char *resolves_to;
+	const char *resolves_to, *msg;
 
 	if (!(flags & REF_ISSYMREF))
 		return 0;
@@ -458,19 +459,23 @@ static int warn_if_dangling_symref(const char *refname, const char *referent UNU
 		return 0;
 	}
 
-	fprintf(d->fp, d->msg_fmt, refname, resolves_to);
-	fputc('\n', d->fp);
+	msg = d->dry_run
+		? _("%s%s will become dangling after %s is deleted\n")
+		: _("%s%s has become dangling after %s was deleted\n");
+	fprintf(d->fp, msg, d->indent, refname, resolves_to);
 	return 0;
 }
 
 void refs_warn_dangling_symrefs(struct ref_store *refs, FILE *fp,
-				const char *msg_fmt, const struct string_list *refnames)
+				const char *indent, int dry_run,
+				const struct string_list *refnames)
 {
 	struct warn_if_dangling_data data = {
 		.refs = refs,
 		.fp = fp,
 		.refnames = refnames,
-		.msg_fmt = msg_fmt,
+		.indent = indent,
+		.dry_run = dry_run,
 	};
 	refs_for_each_rawref(refs, warn_if_dangling_symref, &data);
 }

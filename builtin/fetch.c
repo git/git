@@ -1385,9 +1385,6 @@ static int prune_refs(struct display_state *display_state,
 	struct ref *ref, *stale_refs = get_stale_heads(rs, ref_map);
 	struct strbuf err = STRBUF_INIT;
 	struct string_list refnames = STRING_LIST_INIT_NODUP;
-	const char *dangling_msg = dry_run
-		? _("   %s will become dangling after %s is deleted")
-		: _("   %s has become dangling after %s was deleted");
 
 	for (ref = stale_refs; ref; ref = ref->next)
 		string_list_append(&refnames, ref->name);
@@ -1418,7 +1415,7 @@ static int prune_refs(struct display_state *display_state,
 		}
 		string_list_sort(&refnames);
 		refs_warn_dangling_symrefs(get_main_ref_store(the_repository),
-					   stderr, dangling_msg, &refnames);
+					   stderr, "   ", dry_run, &refnames);
 	}
 
 cleanup:
