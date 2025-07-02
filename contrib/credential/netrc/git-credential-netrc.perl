@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
@@ -267,8 +267,16 @@ sub load_netrc {
 		if (!defined $nentry->{machine}) {
 			next;
 		}
-		if (defined $nentry->{port} && $nentry->{port} =~ m/^\d+$/) {
-			$num_port = $nentry->{port};
+		if (defined $nentry->{port}) {
+			$num_port = Git::port_num($nentry->{port});
+			unless ($num_port) {
+				printf(STDERR "ignoring invalid port `%s' " .
+				       "from netrc file\n", $nentry->{port});
+			}
+			# Since we've already validated and converted
+			# the port to its numerical value, do not
+			# capture it as the `protocol' value, as used
+			# to be the case for symbolic port names.
 			delete $nentry->{port};
 		}
 

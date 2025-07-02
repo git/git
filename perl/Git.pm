@@ -1061,6 +1061,19 @@ sub _close_cat_blob {
 	delete @$self{@vars};
 }
 
+# Given PORT, a port number or service name, return its numerical
+# value else undef.
+sub port_num {
+    my ($port) = @_;
+
+    # Port can be either a positive integer within the 16-bit range...
+    if ($port =~ /^\d+$/ && $port > 0 && $port <= (2**16 - 1)) {
+        return $port;
+    }
+
+    # ... or a symbolic port (service name).
+    return scalar getservbyname($port, '');
+}
 
 =item credential_read( FILEHANDLE )
 
