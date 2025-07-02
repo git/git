@@ -2481,6 +2481,18 @@ static int read_default_format_config(const char *key, const char *value,
 		goto out;
 	}
 
+	/*
+	 * Enable the reftable format when "features.experimental" is enabled.
+	 * "init.defaultRefFormat" takes precedence over this setting.
+	 */
+	if (!strcmp(key, "feature.experimental") &&
+	    cfg->ref_format == REF_STORAGE_FORMAT_UNKNOWN &&
+	    git_config_bool(key, value)) {
+		cfg->ref_format = REF_STORAGE_FORMAT_REFTABLE;
+		ret = 0;
+		goto out;
+	}
+
 	ret = 0;
 out:
 	free(str);
