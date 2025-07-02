@@ -68,6 +68,9 @@ struct repo_settings {
 	unsigned long big_file_threshold;
 
 	char *hooks_path;
+
+	int sparse_checkout;
+	int sparse_checkout_cone;
 };
 #define REPO_SETTINGS_INIT { \
 	.shared_repository = -1, \
