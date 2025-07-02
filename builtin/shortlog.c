@@ -419,7 +419,7 @@ int cmd_shortlog(int argc,
 	 * git/nongit so that we do not have to do this.
 	 */
 	if (nongit && !the_hash_algo)
-		repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
+		repo_set_hash_algo(the_repository, GIT_HASH_DEFAULT);
 
 	git_config(git_default_config, NULL);
 	shortlog_init(&log);
