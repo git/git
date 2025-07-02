@@ -2487,6 +2487,18 @@ static int read_default_format_config(const char *key, const char *value,
 		goto out;
 	}
 
+	/*
+	 * Enable the reftable format when "features.experimental" is enabled.
+	 * "init.defaultRefFormat" takes precedence over this setting.
+	 */
+	if (!strcmp(key, "feature.experimental") &&
+	    cfg->ref_format == REF_STORAGE_FORMAT_UNKNOWN &&
+	    git_config_bool(key, value)) {
+		cfg->ref_format = REF_STORAGE_FORMAT_REFTABLE;
+		ret = 0;
+		goto out;
+	}
+
 	ret = 0;
 out:
 	free(str);
@@ -2547,6 +2559,12 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 			repo_fmt->ref_storage_format = ref_format;
 	} else if (cfg.ref_format != REF_STORAGE_FORMAT_UNKNOWN) {
 		repo_fmt->ref_storage_format = cfg.ref_format;
+	} else {
+#ifdef WITH_BREAKING_CHANGES
+		repo_fmt->ref_storage_format = REF_STORAGE_FORMAT_REFTABLE;
+#else
+		repo_fmt->ref_storage_format = REF_STORAGE_FORMAT_FILES;
+#endif
 	}
 	repo_set_ref_storage_format(the_repository, repo_fmt->ref_storage_format);
 }

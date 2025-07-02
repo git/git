@@ -24,6 +24,12 @@ reusing objects from multiple packs instead of just one.
 * `pack.usePathWalk` may speed up packfile creation and make the packfiles be
 significantly smaller in the presence of certain filename collisions with Git's
 default name-hash.
++
+* `init.defaultRefFormat=reftable` causes newly initialized repositories to use
+the reftable format for storing references. This new format solves issues with
+case-insensitive filesystems, compresses better and performs significantly
+better with many use cases. Refer to Documentation/technical/reftable.adoc for
+more information on this new storage format.
 
 feature.manyFiles::
 	Enable config options that optimize for repos with many files in the
