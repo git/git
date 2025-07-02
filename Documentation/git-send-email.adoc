@@ -280,12 +280,14 @@ must be used for each option.
 	Path to a store of trusted CA certificates for SMTP SSL/TLS
 	certificate validation (either a directory that has been processed
 	by `c_rehash`, or a single file containing one or more PEM format
-	certificates concatenated together: see verify(1) -CAfile and
-	-CApath for more information on these). Set it to an empty string
-	to disable certificate verification. Defaults to the value of the
-	`sendemail.smtpSSLCertPath` configuration variable, if set, or the
-	backing SSL library's compiled-in default otherwise (which should
-	be the best choice on most platforms).
+	certificates concatenated together: see the description of the
+	`-CAfile` _<file>_ and the `-CApath` _<dir>_ options of
+	https://docs.openssl.org/master/man1/openssl-verify/
+	[OpenSSL's verify(1) manual page] for more information on these).
+	Set it to an empty string to disable certificate verification.
+	Defaults to the value of the `sendemail.smtpSSLCertPath` configuration
+	variable, if set, or the backing SSL library's compiled-in default
+	otherwise (which should be the best choice on most platforms).
 
 --smtp-user=<user>::
 	Username for SMTP-AUTH. Default is the value of `sendemail.smtpUser`;
@@ -598,8 +600,19 @@ available online. Community maintained credential helpers are also available:
 	- https://github.com/AdityaGarg8/git-credential-email[git-credential-yahoo]
 	  (cross platform, dedicated helper for authenticating Yahoo accounts)
 
+	- https://github.com/AdityaGarg8/git-credential-email[git-credential-aol]
+	  (cross platform, dedicated helper for authenticating AOL accounts)
+
 You can also see linkgit:gitcredentials[7] for more OAuth based authentication
 helpers.
+
+Proton Mail does not provide an SMTP server to send emails. If you are a paid
+customer of Proton Mail, you can use
+https://proton.me/mail/bridge[Proton Mail Bridge]
+officially provided by Proton Mail to create a local SMTP server for sending
+emails. For both free and paid users, community maintained projects like
+https://github.com/AdityaGarg8/git-credential-email[git-protonmail] can be
+used.
 
 Note: the following core Perl modules that may be installed with your
 distribution of Perl are required:
@@ -614,6 +627,35 @@ These additional Perl modules are also required:
 https://metacpan.org/pod/Authen::SASL[Authen::SASL] and
 https://metacpan.org/pod/Mail::Address[Mail::Address].
 
+Exploiting the `sendmailCmd` option of `git send-email`
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Apart from sending emails via an SMTP server, `git send-email` can also send
+emails through any application that supports sendmail-like commands. You can
+read documentation of `--sendmail-cmd=<command>` above for more information.
+This ability can be very useful if you want to use another application as an
+SMTP client for `git send-email`, or if your email provider uses proprietary
+APIs instead of SMTP to send emails.
+
+As an example, lets see how to configure https://marlam.de/msmtp/[msmtp], a
+popular SMTP client found in many Linux distributions. Edit `~/.gitconfig`
+to instruct `git-send-email` to use it for sending emails.
+
+----
+[sendemail]
+	sendmailCmd = /usr/bin/msmtp # Change this to the path where msmtp is installed
+----
+
+Links of a few such community maintained helpers are:
+
+	- https://marlam.de/msmtp/[msmtp]
+	  (popular SMTP client with many features, available for Linux and macOS)
+
+	- https://github.com/AdityaGarg8/git-credential-email[git-protonmail]
+	  (cross platform client that can send emails using the ProtonMail API)
+
+	- https://github.com/AdityaGarg8/git-credential-email[git-msgraph]
+	  (cross platform client that can send emails using the Microsoft Graph API)
 
 SEE ALSO
 --------

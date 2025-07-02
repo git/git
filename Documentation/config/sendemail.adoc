@@ -31,8 +31,8 @@ sendemail.confirm::
 	values.
 
 sendemail.mailmap::
-	If true, makes linkgit:git-send-email[1] assume `--mailmap`,
-	otherwise assume `--no-mailmap`. False by default.
+	If `true`, makes linkgit:git-send-email[1] assume `--mailmap`,
+	otherwise assume `--no-mailmap`. `False` by default.
 
 sendemail.mailmap.file::
 	The location of a linkgit:git-send-email[1] specific augmenting
@@ -95,6 +95,11 @@ sendemail.xmailer::
 	These configuration variables all provide a default for
 	linkgit:git-send-email[1] command-line options. See its
 	documentation for details.
+
+sendemail.outlookidfix::
+	If `true`, makes linkgit:git-send-email[1] assume `--outlook-id-fix`,
+	and if `false` assume `--no-outlook-id-fix`. If not specified, it will
+	behave the same way as if `--outlook-id-fix` is not specified.
 
 sendemail.signedOffCc (deprecated)::
 	Deprecated alias for `sendemail.signedOffByCc`.
