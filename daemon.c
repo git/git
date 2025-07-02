@@ -990,11 +990,6 @@ static int setup_named_sock(char *listen_addr, int listen_port, struct socketlis
 		sockfd = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 		if (sockfd < 0)
 			continue;
-		if (sockfd >= FD_SETSIZE) {
-			logerror("Socket descriptor too large");
-			close(sockfd);
-			continue;
-		}
 
 #ifdef IPV6_V6ONLY
 		if (ai->ai_family == AF_INET6) {
