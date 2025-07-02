@@ -235,18 +235,6 @@ in_component:
 	return 0;
 }
 
-static int starts_with_dot_slash(const char *const path)
-{
-	return path_match_flags(path, PATH_MATCH_STARTS_WITH_DOT_SLASH |
-				PATH_MATCH_XPLATFORM);
-}
-
-static int starts_with_dot_dot_slash(const char *const path)
-{
-	return path_match_flags(path, PATH_MATCH_STARTS_WITH_DOT_DOT_SLASH |
-				PATH_MATCH_XPLATFORM);
-}
-
 static int submodule_url_is_relative(const char *url)
 {
 	return starts_with_dot_slash(url) || starts_with_dot_dot_slash(url);
