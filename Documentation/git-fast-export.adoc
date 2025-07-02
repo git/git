@@ -50,6 +50,23 @@ resulting tag will have an invalid signature.
 	is the same as how earlier versions of this command without
 	this option behaved.
 +
+When exported, a signature starts with:
++
+gpgsig <git-hash-algo> <signature-format>
++
+where <git-hash-algo> is the Git object hash so either "sha1" or
+"sha256", and <signature-format> is the signature type, so "openpgp",
+"x509", "ssh" or "unknown".
++
+For example, an OpenPGP signature on a SHA-1 commit starts with
+`gpgsig sha1 openpgp`, while an SSH signature on a SHA-256 commit
+starts with `gpgsig sha256 ssh`.
++
+Currently for a given commit, at most one signature for the SHA-1
+object and one signature for the SHA-256 object are exported, each
+with their respective <git-hash-algo> identifier. A warning is
+emitted for each additional signature found.
++
 NOTE: This is highly experimental and the format of the data stream may
 change in the future without compatibility guarantees.
 

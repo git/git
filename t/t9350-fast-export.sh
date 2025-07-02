@@ -314,7 +314,7 @@ test_expect_success GPG 'signed-commits=abort' '
 test_expect_success GPG 'signed-commits=verbatim' '
 
 	git fast-export --signed-commits=verbatim --reencode=no commit-signing >output &&
-	grep "^gpgsig sha" output &&
+	test_grep -E "^gpgsig sha(1|256) openpgp" output &&
 	grep "encoding ISO-8859-1" output &&
 	(
 		cd new &&
@@ -328,7 +328,7 @@ test_expect_success GPG 'signed-commits=verbatim' '
 test_expect_success GPG 'signed-commits=warn-verbatim' '
 
 	git fast-export --signed-commits=warn-verbatim --reencode=no commit-signing >output 2>err &&
-	grep "^gpgsig sha" output &&
+	test_grep -E "^gpgsig sha(1|256) openpgp" output &&
 	grep "encoding ISO-8859-1" output &&
 	test -s err &&
 	(
@@ -366,6 +366,62 @@ test_expect_success GPG 'signed-commits=warn-strip' '
 		STRIPPED=$(git rev-parse --verify refs/heads/commit-strip-signing) &&
 		test $COMMIT_SIGNING != $STRIPPED
 	)
+
+'
+
+test_expect_success GPGSM 'setup X.509 signed commit' '
+
+	git checkout -b x509-signing main &&
+	test_config gpg.format x509 &&
+	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	echo "X.509 content" >file &&
+	git add file &&
+	git commit -S -m "X.509 signed commit" &&
+	X509_COMMIT=$(git rev-parse HEAD) &&
+	git checkout main
+
+'
+
+test_expect_success GPGSM 'round-trip X.509 signed commit' '
+
+	git fast-export --signed-commits=verbatim x509-signing >output &&
+	test_grep -E "^gpgsig sha(1|256) x509" output &&
+	(
+		cd new &&
+		git fast-import &&
+		git cat-file commit refs/heads/x509-signing >actual &&
+		grep "^gpgsig" actual &&
+		IMPORTED=$(git rev-parse refs/heads/x509-signing) &&
+		test $X509_COMMIT = $IMPORTED
+	) <output
+
+'
+
+test_expect_success GPGSSH 'setup SSH signed commit' '
+
+	git checkout -b ssh-signing main &&
+	test_config gpg.format ssh &&
+	test_config user.signingkey "${GPGSSH_KEY_PRIMARY}" &&
+	echo "SSH content" >file &&
+	git add file &&
+	git commit -S -m "SSH signed commit" &&
+	SSH_COMMIT=$(git rev-parse HEAD) &&
+	git checkout main
+
+'
+
+test_expect_success GPGSSH 'round-trip SSH signed commit' '
+
+	git fast-export --signed-commits=verbatim ssh-signing >output &&
+	test_grep -E "^gpgsig sha(1|256) ssh" output &&
+	(
+		cd new &&
+		git fast-import &&
+		git cat-file commit refs/heads/ssh-signing >actual &&
+		grep "^gpgsig" actual &&
+		IMPORTED=$(git rev-parse refs/heads/ssh-signing) &&
+		test $SSH_COMMIT = $IMPORTED
+	) <output
 
 '
 

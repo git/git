@@ -445,7 +445,7 @@ one).
 	original-oid?
 	('author' (SP <name>)? SP LT <email> GT SP <when> LF)?
 	'committer' (SP <name>)? SP LT <email> GT SP <when> LF
-	('gpgsig' SP <alg> LF data)?
+	('gpgsig' SP <algo> SP <format> LF data)?
 	('encoding' SP <encoding> LF)?
 	data
 	('from' SP <commit-ish> LF)?
@@ -518,13 +518,32 @@ their syntax.
 ^^^^^^^^
 
 The optional `gpgsig` command is used to include a PGP/GPG signature
-that signs the commit data.
+or other cryptographic signature that signs the commit data.
 
-Here <alg> specifies which hashing algorithm is used for this
-signature, either `sha1` or `sha256`.
+....
+	'gpgsig' SP <git-hash-algo> SP <signature-format> LF
+	data
+....
 
-NOTE: This is highly experimental and the format of the data stream may
-change in the future without compatibility guarantees.
+The `gpgsig` command takes two arguments:
+
+* `<git-hash-algo>` specifies which Git object format this signature
+  applies to, either `sha1` or `sha256`.
+
+* `<signature-format>` specifies the type of signature, such as
+  `openpgp`, `x509`, `ssh`, or `unknown`.
+
+A commit may have at most one signature for the SHA-1 object format
+(stored in the "gpgsig" header) and one for the SHA-256 object format
+(stored in the "gpgsig-sha256" header).
+
+See below for a detailed description of the `data` command which
+contains the raw signature data.
+
+Signatures are not yet checked in the current implementation though.
+
+NOTE: This is highly experimental and the format of the `gpgsig`
+command may change in the future without compatibility guarantees.
 
 `encoding`
 ^^^^^^^^^^

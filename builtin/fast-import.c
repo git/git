@@ -29,6 +29,7 @@
 #include "commit-reach.h"
 #include "khash.h"
 #include "date.h"
+#include "gpg-interface.h"
 
 #define PACK_ID_BITS 16
 #define MAX_PACK_ID ((1<<PACK_ID_BITS)-1)
@@ -2716,15 +2717,86 @@ static struct hash_list *parse_merge(unsigned int *count)
 	return list;
 }
 
+struct signature_data {
+	char *hash_algo;      /* "sha1" or "sha256" */
+	char *sig_format;     /* "openpgp", "x509", "ssh", "unknown" */
+	struct strbuf data;   /* The actual signature data */
+};
+
+static void parse_one_signature(struct signature_data *sig, const char *v)
+{
+	char *args = xstrdup(v); /* Will be freed when sig->hash_algo is freed */
+	char *space = strchr(args, ' ');
+
+	if (!space)
+		die("Expected gpgsig format: 'gpgsig <hash-algo> <signature-format>', "
+		    "got 'gpgsig %s'", args);
+	*space++ = '\0';
+
+	sig->hash_algo = args;
+	sig->sig_format = space;
+
+	/* Remove any trailing newline from format */
+	space = strchr(sig->sig_format, '\n');
+	if (space)
+		*space = '\0';
+
+	/* Validate hash algorithm */
+	if (strcmp(sig->hash_algo, "sha1") &&
+	    strcmp(sig->hash_algo, "sha256"))
+		die("Unknown git hash algorithm in gpgsig: '%s'", sig->hash_algo);
+
+	/* Validate signature format */
+	if (!valid_signature_format(sig->sig_format))
+		die("Invalid signature format in gpgsig: '%s'", sig->sig_format);
+	if (!strcmp(sig->sig_format, "unknown"))
+		warning("'unknown' signature format in gpgsig");
+
+	/* Read signature data */
+	read_next_command();
+	parse_data(&sig->data, 0, NULL);
+}
+
+static void add_gpgsig_to_commit(struct strbuf *commit_data,
+				 const char *header,
+				 struct signature_data *sig)
+{
+	struct string_list siglines = STRING_LIST_INIT_NODUP;
+
+	if (!sig->hash_algo)
+		return;
+
+	strbuf_addstr(commit_data, header);
+	string_list_split_in_place(&siglines, sig->data.buf, "\n", -1);
+	strbuf_add_separated_string_list(commit_data, "\n ", &siglines);
+	strbuf_addch(commit_data, '\n');
+	string_list_clear(&siglines, 1);
+	strbuf_release(&sig->data);
+	free(sig->hash_algo);
+}
+
+static void store_signature(struct signature_data *stored_sig,
+			    struct signature_data *new_sig,
+			    const char *hash_type)
+{
+	if (stored_sig->hash_algo) {
+		warning("Multiple %s signatures found, ignoring additional signature",
+			hash_type);
+		strbuf_release(&new_sig->data);
+		free(new_sig->hash_algo);
+	} else {
+		*stored_sig = *new_sig;
+	}
+}
+
 static void parse_new_commit(const char *arg)
 {
-	static struct strbuf sig = STRBUF_INIT;
 	static struct strbuf msg = STRBUF_INIT;
-	struct string_list siglines = STRING_LIST_INIT_NODUP;
+	struct signature_data sig_sha1 = { NULL, NULL, STRBUF_INIT };
+	struct signature_data sig_sha256 = { NULL, NULL, STRBUF_INIT };
 	struct branch *b;
 	char *author = NULL;
 	char *committer = NULL;
-	char *sig_alg = NULL;
 	char *encoding = NULL;
 	struct hash_list *merge_list = NULL;
 	unsigned int merge_count;
@@ -2748,13 +2820,23 @@ static void parse_new_commit(const char *arg)
 	}
 	if (!committer)
 		die("Expected committer but didn't get one");
-	if (skip_prefix(command_buf.buf, "gpgsig ", &v)) {
-		sig_alg = xstrdup(v);
+
+	/* Process signatures (up to 2: one "sha1" and one "sha256") */
+	while (skip_prefix(command_buf.buf, "gpgsig ", &v)) {
+		struct signature_data sig = { NULL, NULL, STRBUF_INIT };
+
+		parse_one_signature(&sig, v);
+
+		if (!strcmp(sig.hash_algo, "sha1"))
+			store_signature(&sig_sha1, &sig, "SHA-1");
+		else if (!strcmp(sig.hash_algo, "sha256"))
+			store_signature(&sig_sha256, &sig, "SHA-256");
+		else
+			BUG("parse_one_signature() returned unknown hash algo");
+
 		read_next_command();
-		parse_data(&sig, 0, NULL);
-		read_next_command();
-	} else
-		strbuf_setlen(&sig, 0);
+	}
+
 	if (skip_prefix(command_buf.buf, "encoding ", &v)) {
 		encoding = xstrdup(v);
 		read_next_command();
@@ -2828,23 +2910,14 @@ static void parse_new_commit(const char *arg)
 		strbuf_addf(&new_data,
 			"encoding %s\n",
 			encoding);
-	if (sig_alg) {
-		if (!strcmp(sig_alg, "sha1"))
-			strbuf_addstr(&new_data, "gpgsig ");
-		else if (!strcmp(sig_alg, "sha256"))
-			strbuf_addstr(&new_data, "gpgsig-sha256 ");
-		else
-			die("Expected gpgsig algorithm sha1 or sha256, got %s", sig_alg);
-		string_list_split_in_place(&siglines, sig.buf, "\n", -1);
-		strbuf_add_separated_string_list(&new_data, "\n ", &siglines);
-		strbuf_addch(&new_data, '\n');
-	}
+
+	add_gpgsig_to_commit(&new_data, "gpgsig ", &sig_sha1);
+	add_gpgsig_to_commit(&new_data, "gpgsig-sha256 ", &sig_sha256);
+
 	strbuf_addch(&new_data, '\n');
 	strbuf_addbuf(&new_data, &msg);
-	string_list_clear(&siglines, 1);
 	free(author);
 	free(committer);
-	free(sig_alg);
 	free(encoding);
 
 	if (!store_object(OBJ_COMMIT, &new_data, NULL, &b->oid, next_mark))
