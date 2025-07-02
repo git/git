@@ -575,30 +575,7 @@ static void print_rejected_refs(const char *refname,
 				void *cb_data UNUSED)
 {
 	struct strbuf sb = STRBUF_INIT;
-	const char *reason = "";
-
-	switch (err) {
-	case REF_TRANSACTION_ERROR_NAME_CONFLICT:
-		reason = "refname conflict";
-		break;
-	case REF_TRANSACTION_ERROR_CREATE_EXISTS:
-		reason = "reference already exists";
-		break;
-	case REF_TRANSACTION_ERROR_NONEXISTENT_REF:
-		reason = "reference does not exist";
-		break;
-	case REF_TRANSACTION_ERROR_INCORRECT_OLD_VALUE:
-		reason = "incorrect old value provided";
-		break;
-	case REF_TRANSACTION_ERROR_INVALID_NEW_VALUE:
-		reason = "invalid new value provided";
-		break;
-	case REF_TRANSACTION_ERROR_EXPECTED_SYMREF:
-		reason = "expected symref but found regular ref";
-		break;
-	default:
-		reason = "unkown failure";
-	}
+	const char *reason = ref_transaction_error_msg(err);
 
 	strbuf_addf(&sb, "rejected %s %s %s %s\n", refname,
 		    new_oid ? oid_to_hex(new_oid) : new_target,
