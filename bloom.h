@@ -74,6 +74,11 @@ struct bloom_key {
 	uint32_t *hashes;
 };
 
+struct bloom_keyvec {
+	size_t count;
+	struct bloom_key key[FLEX_ARRAY];
+};
+
 int load_bloom_filter_from_graph(struct commit_graph *g,
 				 struct bloom_filter *filter,
 				 uint32_t graph_pos);
@@ -99,6 +104,17 @@ void add_key_to_filter(const struct bloom_key *key,
 
 void init_bloom_filters(void);
 void deinit_bloom_filters(void);
+
+struct bloom_keyvec *create_bloom_keyvec(size_t count);
+void destroy_bloom_keyvec(struct bloom_keyvec *vec);
+
+static inline void fill_bloom_keyvec_key(const char *data, size_t len,
+					 struct bloom_keyvec *vec, size_t nr,
+					 const struct bloom_filter_settings *settings)
+{
+	assert(nr < vec->count);
+	fill_bloom_key(data, len, &vec->key[nr], settings);
+}
 
 enum bloom_filter_computed {
 	BLOOM_NOT_COMPUTED = (1 << 0),
@@ -136,5 +152,9 @@ struct bloom_filter *get_bloom_filter(struct repository *r, struct commit *c);
 int bloom_filter_contains(const struct bloom_filter *filter,
 			  const struct bloom_key *key,
 			  const struct bloom_filter_settings *settings);
+
+int bloom_filter_contains_vec(const struct bloom_filter *filter,
+			      const struct bloom_keyvec *v,
+			      const struct bloom_filter_settings *settings);
 
 #endif
