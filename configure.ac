@@ -1148,14 +1148,6 @@ GIT_CHECK_FUNC(strlcpy,
 [NO_STRLCPY=YesPlease])
 GIT_CONF_SUBST([NO_STRLCPY])
 #
-# Define NO_UINTMAX_T if your platform does not have uintmax_t
-AC_CHECK_TYPE(uintmax_t,
-[NO_UINTMAX_T=],
-[NO_UINTMAX_T=YesPlease],[
-#include <inttypes.h>
-])
-GIT_CONF_SUBST([NO_UINTMAX_T])
-#
 # Define NO_STRTOUMAX if you don't have strtoumax in the C library.
 GIT_CHECK_FUNC(strtoumax,
 [NO_STRTOUMAX=],

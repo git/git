@@ -1420,17 +1420,6 @@ if compiler.compiles('''
   libgit_c_args += '-DHAVE_CLOCK_MONOTONIC'
 endif
 
-if not compiler.compiles('''
-  #include <inttypes.h>
-
-  void func(void)
-  {
-    uintmax_t x = 0;
-  }
-''', name: 'uintmax_t')
-  libgit_c_args += '-DNO_UINTMAX_T'
-endif
-
 has_bsd_sysctl = false
 if compiler.has_header('sys/sysctl.h')
   if compiler.compiles('''
