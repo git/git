@@ -14,7 +14,7 @@
 #include "refs.h"
 #include "refspec.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "commit.h"
 #include "object.h"
 #include "tag.h"
@@ -323,7 +323,7 @@ static void export_blob(const struct object_id *oid)
 		object = (struct object *)lookup_blob(the_repository, oid);
 		eaten = 0;
 	} else {
-		buf = repo_read_object_file(the_repository, oid, &type, &size);
+		buf = odb_read_object(the_repository->objects, oid, &type, &size);
 		if (!buf)
 			die("could not read blob %s", oid_to_hex(oid));
 		if (check_object_signature(the_repository, oid, buf, size,
@@ -869,8 +869,8 @@ static void handle_tag(const char *name, struct tag *tag)
 		return;
 	}
 
-	buf = repo_read_object_file(the_repository, &tag->object.oid, &type,
-				    &size);
+	buf = odb_read_object(the_repository->objects, &tag->object.oid,
+			      &type, &size);
 	if (!buf)
 		die("could not read tag %s", oid_to_hex(&tag->object.oid));
 	message = memmem(buf, size, "\n\n", 2);
@@ -1200,7 +1200,7 @@ static void import_marks(char *input_file, int check_exists)
 		if (last_idnum < mark)
 			last_idnum = mark;
 
-		type = oid_object_info(the_repository, &oid, NULL);
+		type = odb_read_object_info(the_repository->objects, &oid, NULL);
 		if (type < 0)
 			die("object not found: %s", oid_to_hex(&oid));
 

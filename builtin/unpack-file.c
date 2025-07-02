@@ -4,7 +4,7 @@
 #include "hex.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 
 static char *create_temp_file(struct object_id *oid)
 {
@@ -14,7 +14,7 @@ static char *create_temp_file(struct object_id *oid)
 	unsigned long size;
 	int fd;
 
-	buf = repo_read_object_file(the_repository, oid, &type, &size);
+	buf = odb_read_object(the_repository->objects, oid, &type, &size);
 	if (!buf || type != OBJ_BLOB)
 		die("unable to read blob object %s", oid_to_hex(oid));
 

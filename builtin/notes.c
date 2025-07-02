@@ -16,7 +16,7 @@
 #include "notes.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "path.h"
 
 #include "pretty.h"
@@ -152,7 +152,7 @@ static void copy_obj_to_fd(int fd, const struct object_id *oid)
 {
 	unsigned long size;
 	enum object_type type;
-	char *buf = repo_read_object_file(the_repository, oid, &type, &size);
+	char *buf = odb_read_object(the_repository->objects, oid, &type, &size);
 	if (buf) {
 		if (size)
 			write_or_die(fd, buf, size);
@@ -319,7 +319,7 @@ static int parse_reuse_arg(const struct option *opt, const char *arg, int unset)
 	strbuf_init(&msg->buf, 0);
 	if (repo_get_oid(the_repository, arg, &object))
 		die(_("failed to resolve '%s' as a valid ref."), arg);
-	if (!(value = repo_read_object_file(the_repository, &object, &type, &len)))
+	if (!(value = odb_read_object(the_repository->objects, &object, &type, &len)))
 		die(_("failed to read object '%s'."), arg);
 	if (type != OBJ_BLOB) {
 		strbuf_release(&msg->buf);
@@ -722,7 +722,7 @@ static int append_edit(int argc, const char **argv, const char *prefix,
 		unsigned long size;
 		enum object_type type;
 		struct strbuf buf = STRBUF_INIT;
-		char *prev_buf = repo_read_object_file(the_repository, note, &type, &size);
+		char *prev_buf = odb_read_object(the_repository->objects, note, &type, &size);
 
 		if (!prev_buf)
 			die(_("unable to read %s"), oid_to_hex(note));

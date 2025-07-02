@@ -17,7 +17,7 @@
 #include "packfile.h"
 #include "repository.h"
 #include "trace2.h"
-#include "object-store.h"
+#include "odb.h"
 #include "list-objects-filter-options.h"
 #include "midx.h"
 #include "config.h"
@@ -1868,8 +1868,8 @@ static unsigned long get_size_by_pos(struct bitmap_index *bitmap_git,
 		size_t eindex_pos = pos - bitmap_num_objects_total(bitmap_git);
 		struct eindex *eindex = &bitmap_git->ext_index;
 		struct object *obj = eindex->objects[eindex_pos];
-		if (oid_object_info_extended(bitmap_repo(bitmap_git), &obj->oid,
-					     &oi, 0) < 0)
+		if (odb_read_object_info_extended(bitmap_repo(bitmap_git)->objects, &obj->oid,
+						  &oi, 0) < 0)
 			die(_("unable to get size of %s"), oid_to_hex(&obj->oid));
 	}
 
@@ -3220,8 +3220,8 @@ static off_t get_disk_usage_for_extended(struct bitmap_index *bitmap_git)
 				       i)))
 			continue;
 
-		if (oid_object_info_extended(bitmap_repo(bitmap_git), &obj->oid,
-					     &oi, 0) < 0)
+		if (odb_read_object_info_extended(bitmap_repo(bitmap_git)->objects,
+						  &obj->oid, &oi, 0) < 0)
 			die(_("unable to get disk usage of '%s'"),
 			    oid_to_hex(&obj->oid));
 

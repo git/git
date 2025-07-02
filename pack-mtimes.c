@@ -1,7 +1,7 @@
 #include "git-compat-util.h"
 #include "gettext.h"
 #include "pack-mtimes.h"
-#include "object-store.h"
+#include "odb.h"
 #include "packfile.h"
 #include "strbuf.h"
 

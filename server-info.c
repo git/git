@@ -11,7 +11,7 @@
 #include "packfile.h"
 #include "path.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "server-info.h"
 #include "strbuf.h"
 #include "tempfile.h"

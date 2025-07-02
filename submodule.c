@@ -27,11 +27,10 @@
 #include "parse-options.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "commit-reach.h"
 #include "read-cache-ll.h"
 #include "setup.h"
-#include "trace2.h"
 
 static int config_update_recurse_submodules = RECURSE_SUBMODULES_OFF;
 static int initialized_fetch_ref_tips;
@@ -174,30 +173,6 @@ void stage_updated_gitmodules(struct index_state *istate)
 {
 	if (add_file_to_index(istate, GITMODULES_FILE, 0))
 		die(_("staging updated .gitmodules failed"));
-}
-
-static struct string_list added_submodule_odb_paths = STRING_LIST_INIT_DUP;
-
-void add_submodule_odb_by_path(const char *path)
-{
-	string_list_insert(&added_submodule_odb_paths, path);
-}
-
-int register_all_submodule_odb_as_alternates(void)
-{
-	int i;
-	int ret = added_submodule_odb_paths.nr;
-
-	for (i = 0; i < added_submodule_odb_paths.nr; i++)
-		add_to_alternates_memory(added_submodule_odb_paths.items[i].string);
-	if (ret) {
-		string_list_clear(&added_submodule_odb_paths, 0);
-		trace2_data_intmax("submodule", the_repository,
-				   "register_all_submodule_odb_as_alternates/registered", ret);
-		if (git_env_bool("GIT_TEST_FATAL_REGISTER_SUBMODULE_ODB", 0))
-			BUG("register_all_submodule_odb_as_alternates() called");
-	}
-	return ret;
 }
 
 void set_diffopt_flags_from_submodule_config(struct diff_options *diffopt,
@@ -993,7 +968,7 @@ static int check_has_commit(const struct object_id *oid, void *data)
 		return 0;
 	}
 
-	type = oid_object_info(&subrepo, oid, NULL);
+	type = odb_read_object_info(subrepo.objects, oid, NULL);
 
 	switch (type) {
 	case OBJ_COMMIT:
@@ -1777,8 +1752,7 @@ static int fetch_start_failure(struct strbuf *err UNUSED,
 static int commit_missing_in_sub(const struct object_id *oid, void *data)
 {
 	struct repository *subrepo = data;
-
-	enum object_type type = oid_object_info(subrepo, oid, NULL);
+	enum object_type type = odb_read_object_info(subrepo->objects, oid, NULL);
 
 	return type != OBJ_COMMIT;
 }

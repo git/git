@@ -9,7 +9,7 @@
 #include "git-zlib.h"
 #include "hex.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "object.h"
 #include "delta.h"
 #include "pack.h"
@@ -232,7 +232,7 @@ static int check_object(struct object *obj, enum object_type type,
 
 	if (!(obj->flags & FLAG_OPEN)) {
 		unsigned long size;
-		int type = oid_object_info(the_repository, &obj->oid, &size);
+		int type = odb_read_object_info(the_repository->objects, &obj->oid, &size);
 		if (type != obj->type || type <= 0)
 			die("object of unexpected type");
 		obj->flags |= FLAG_WRITTEN;
@@ -449,8 +449,8 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 		delta_data = get_data(delta_size);
 		if (!delta_data)
 			return;
-		if (has_object(the_repository, &base_oid,
-			       HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
+		if (odb_has_object(the_repository->objects, &base_oid,
+				   HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
 			; /* Ok we have this one */
 		else if (resolve_against_held(nr, &base_oid,
 					      delta_data, delta_size))
@@ -516,8 +516,8 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	if (resolve_against_held(nr, &base_oid, delta_data, delta_size))
 		return;
 
-	base = repo_read_object_file(the_repository, &base_oid, &type,
-				     &base_size);
+	base = odb_read_object(the_repository->objects, &base_oid,
+			       &type, &base_size);
 	if (!base) {
 		error("failed to read delta-pack base object %s",
 		      oid_to_hex(&base_oid));

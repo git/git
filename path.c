@@ -15,7 +15,7 @@
 #include "submodule-config.h"
 #include "path.h"
 #include "packfile.h"
-#include "object-store.h"
+#include "odb.h"
 #include "lockfile.h"
 #include "exec-cmd.h"
 
@@ -397,7 +397,7 @@ static void adjust_git_path(struct repository *repo,
 		strbuf_splice(buf, 0, buf->len,
 			      repo->index_file, strlen(repo->index_file));
 	else if (dir_prefix(base, "objects"))
-		replace_dir(buf, git_dir_len + 7, repo->objects->odb->path);
+		replace_dir(buf, git_dir_len + 7, repo->objects->sources->path);
 	else if (repo_settings_get_hooks_path(repo) && dir_prefix(base, "hooks"))
 		replace_dir(buf, git_dir_len + 5, repo_settings_get_hooks_path(repo));
 	else if (repo->different_commondir)

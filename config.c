@@ -31,7 +31,7 @@
 #include "hashmap.h"
 #include "string-list.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "pager.h"
 #include "path.h"
 #include "utf8.h"
@@ -1937,7 +1937,7 @@ int git_config_from_blob_oid(config_fn_t fn,
 	unsigned long size;
 	int ret;
 
-	buf = repo_read_object_file(repo, oid, &type, &size);
+	buf = odb_read_object(repo->objects, oid, &type, &size);
 	if (!buf)
 		return error(_("unable to load config blob object '%s'"), name);
 	if (type != OBJ_BLOB) {

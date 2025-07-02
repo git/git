@@ -2,7 +2,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "oidmap.h"
-#include "object-store.h"
+#include "odb.h"
 #include "replace-object.h"
 #include "refs.h"
 #include "repository.h"

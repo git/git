@@ -4,7 +4,7 @@
 #include "merge-ll.h"
 #include "blob.h"
 #include "merge-blobs.h"
-#include "object-store.h"
+#include "odb.h"
 
 static int fill_mmfile_blob(mmfile_t *f, struct blob *obj)
 {
@@ -12,8 +12,8 @@ static int fill_mmfile_blob(mmfile_t *f, struct blob *obj)
 	unsigned long size;
 	enum object_type type;
 
-	buf = repo_read_object_file(the_repository, &obj->object.oid, &type,
-				    &size);
+	buf = odb_read_object(the_repository->objects, &obj->object.oid,
+			      &type, &size);
 	if (!buf)
 		return -1;
 	if (type != OBJ_BLOB) {
@@ -79,8 +79,8 @@ void *merge_blobs(struct index_state *istate, const char *path,
 			return NULL;
 		if (!our)
 			our = their;
-		return repo_read_object_file(the_repository, &our->object.oid,
-					     &type, size);
+		return odb_read_object(the_repository->objects, &our->object.oid,
+				       &type, size);
 	}
 
 	if (fill_mmfile_blob(&f1, our) < 0)

@@ -832,7 +832,7 @@ void clear_midx_file(struct repository *r)
 {
 	struct strbuf midx = STRBUF_INIT;
 
-	get_midx_filename(r->hash_algo, &midx, r->objects->odb->path);
+	get_midx_filename(r->hash_algo, &midx, r->objects->sources->path);
 
 	if (r->objects && r->objects->multi_pack_index) {
 		close_midx(r->objects->multi_pack_index);
@@ -842,8 +842,8 @@ void clear_midx_file(struct repository *r)
 	if (remove_path(midx.buf))
 		die(_("failed to clear multi-pack-index at %s"), midx.buf);
 
-	clear_midx_files_ext(r->objects->odb->path, MIDX_EXT_BITMAP, NULL);
-	clear_midx_files_ext(r->objects->odb->path, MIDX_EXT_REV, NULL);
+	clear_midx_files_ext(r->objects->sources->path, MIDX_EXT_BITMAP, NULL);
+	clear_midx_files_ext(r->objects->sources->path, MIDX_EXT_REV, NULL);
 
 	strbuf_release(&midx);
 }

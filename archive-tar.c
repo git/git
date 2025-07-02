@@ -11,7 +11,7 @@
 #include "hex.h"
 #include "tar.h"
 #include "archive.h"
-#include "object-store.h"
+#include "odb.h"
 #include "strbuf.h"
 #include "streaming.h"
 #include "run-command.h"

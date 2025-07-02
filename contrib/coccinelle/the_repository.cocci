@@ -77,7 +77,7 @@
 |
 - diff_setup
 + repo_diff_setup
-// object-store.h
+// odb.h
 |
 - read_object_file
 + repo_read_object_file

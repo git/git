@@ -13,7 +13,7 @@
 #include "tree.h"
 #include "tree-walk.h"
 #include "object.h"
-#include "object-store.h"
+#include "odb.h"
 #include "oid-array.h"
 #include "oidset.h"
 #include "promisor-remote.h"
@@ -67,8 +67,8 @@ static int fill_missing_blobs(const char *path UNUSED,
 		return 0;
 
 	for (size_t i = 0; i < list->nr; i++) {
-		if (!has_object(ctx->repo, &list->oid[i],
-				OBJECT_INFO_FOR_PREFETCH))
+		if (!odb_has_object(ctx->repo->objects, &list->oid[i],
+				    OBJECT_INFO_FOR_PREFETCH))
 			oid_array_append(&ctx->current_batch, &list->oid[i]);
 	}
 

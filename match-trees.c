@@ -7,7 +7,7 @@
 #include "tree.h"
 #include "tree-walk.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "repository.h"
 
 static int score_missing(unsigned mode)
@@ -63,7 +63,7 @@ static void *fill_tree_desc_strict(struct repository *r,
 	enum object_type type;
 	unsigned long size;
 
-	buffer = repo_read_object_file(r, hash, &type, &size);
+	buffer = odb_read_object(r->objects, hash, &type, &size);
 	if (!buffer)
 		die("unable to read tree (%s)", oid_to_hex(hash));
 	if (type != OBJ_TREE)
@@ -199,7 +199,7 @@ static int splice_tree(struct repository *r,
 	if (*subpath)
 		subpath++;
 
-	buf = repo_read_object_file(r, oid1, &type, &sz);
+	buf = odb_read_object(r->objects, oid1, &type, &sz);
 	if (!buf)
 		die("cannot read tree %s", oid_to_hex(oid1));
 	init_tree_desc(&desc, oid1, buf, sz);
