@@ -862,6 +862,22 @@ fi
 GIT_CONF_SUBST([ICONV_OMITS_BOM])
 fi
 
+# Define NO_RESTARTABLE_SIGNALS if don't have support for SA_RESTART
+
+AC_CACHE_CHECK([whether SA_RESTART is supported], [ac_cv_siginterrupt], [
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM([#include <signal.h>], [[
+			#ifdef SA_RESTART
+			restartable signals supported
+			#endif
+		]])],[
+			ac_cv_siginterrupt=no
+			NO_RESTARTABLE_SIGNALS=UnfortunatelyYes
+		], [ac_cv_siginterrupt=yes]
+	)
+])
+GIT_CONF_SUBST([NO_RESTARTABLE_SIGNALS])
+
 ## Checks for typedefs, structures, and compiler characteristics.
 AC_MSG_NOTICE([CHECKS for typedefs, structures, and compiler characteristics])
 #

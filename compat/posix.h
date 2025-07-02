@@ -250,6 +250,14 @@ char *gitdirname(char *);
 #define NAME_MAX 255
 #endif
 
+/*
+ * On most systems <signal.h> would have given us this, but
+ * not on some systems (e.g. NonStop, QNX).
+ */
+#ifndef SA_RESTART
+# define SA_RESTART 0 /* disabled for sigaction() */
+#endif
+
 typedef uintmax_t timestamp_t;
 #define PRItime PRIuMAX
 #define parse_timestamp strtoumax
