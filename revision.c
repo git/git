@@ -3112,7 +3112,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 	/* Pickaxe, diff-filter and rename following need diffs */
 	if ((revs->diffopt.pickaxe_opts & DIFF_PICKAXE_KINDS_MASK) ||
-	    revs->diffopt.filter ||
+	    revs->diffopt.filter || revs->diffopt.filter_not ||
 	    revs->diffopt.flags.follow_renames)
 		revs->diff = 1;
 

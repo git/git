@@ -134,6 +134,12 @@ test_expect_success 'diff-filter=D' '
 
 '
 
+test_expect_success 'all-negative filter' '
+	git log --no-renames --format=%s --diff-filter=d HEAD >actual &&
+	printf "%s\n" fifth fourth third second initial >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'diff-filter=R' '
 
 	git log -M --pretty="format:%s" --diff-filter=R HEAD >actual &&
