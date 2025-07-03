@@ -1,0 +1,451 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "t/unit-tests/bin/t-reftable-table"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_executable",
+			"target_link_libraries",
+			"add_compile_definitions",
+			"include_directories"
+		],
+		"files" : 
+		[
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 1010,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 1011,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 224,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 242,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 503,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 215,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 341,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 444,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 447,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 275,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 438,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 371,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 346,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 325,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 216,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 217,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 388,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 287,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 612,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 155,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 214,
+				"parent" : 0
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 661,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-g  "
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 3,
+					"define" : "BINDIR=\"bin\""
+				},
+				{
+					"backtrace" : 3,
+					"define" : "DEFAULT_GIT_TEMPLATE_DIR=\"share/git-core/templates\""
+				},
+				{
+					"backtrace" : 3,
+					"define" : "DEFAULT_HELP_FORMAT=\"html\""
+				},
+				{
+					"backtrace" : 4,
+					"define" : "ETC_GITATTRIBUTES=\"etc/gitattributes\""
+				},
+				{
+					"backtrace" : 4,
+					"define" : "ETC_GITCONFIG=\"etc/gitconfig\""
+				},
+				{
+					"backtrace" : 4,
+					"define" : "FALLBACK_RUNTIME_PREFIX=\"/home/codespace\""
+				},
+				{
+					"backtrace" : 5,
+					"define" : "FREAD_READS_DIRECTORIES"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "GIT_EXEC_PATH=\"libexec/git-core\""
+				},
+				{
+					"backtrace" : 6,
+					"define" : "GIT_HOST_CPU=\"x86_64\""
+				},
+				{
+					"backtrace" : 3,
+					"define" : "GIT_HTML_PATH=\"share/doc/git-doc\""
+				},
+				{
+					"backtrace" : 3,
+					"define" : "GIT_INFO_PATH=\"share/info\""
+				},
+				{
+					"backtrace" : 3,
+					"define" : "GIT_LOCALE_PATH=\"share/locale\""
+				},
+				{
+					"backtrace" : 3,
+					"define" : "GIT_MAN_PATH=\"share/man\""
+				},
+				{
+					"backtrace" : 7,
+					"define" : "HAVE_ALLOCA_H"
+				},
+				{
+					"backtrace" : 8,
+					"define" : "HAVE_CLOCK_GETTIME"
+				},
+				{
+					"backtrace" : 9,
+					"define" : "HAVE_CLOCK_MONOTONIC"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "HAVE_DEV_TTY"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "HAVE_GETDELIM"
+				},
+				{
+					"backtrace" : 12,
+					"define" : "HAVE_PATHS_H"
+				},
+				{
+					"backtrace" : 13,
+					"define" : "HAVE_STRINGS_H"
+				},
+				{
+					"backtrace" : 14,
+					"define" : "HAVE_SYSINFO"
+				},
+				{
+					"backtrace" : 15,
+					"define" : "INTERNAL_QSORT"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "NO_OPENSSL"
+				},
+				{
+					"backtrace" : 17,
+					"define" : "NO_STRLCPY"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "PAGER_ENV=\"LESS=FRX LV=-c\""
+				},
+				{
+					"backtrace" : 10,
+					"define" : "PROCFS_EXECUTABLE_PATH=\"/proc/self/exe\""
+				},
+				{
+					"backtrace" : 15,
+					"define" : "RUNTIME_PREFIX"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "SHA1DC_CUSTOM_INCLUDE_SHA1_C=\"git-compat-util.h\""
+				},
+				{
+					"backtrace" : 16,
+					"define" : "SHA1DC_CUSTOM_INCLUDE_UBC_CHECK_C=\"git-compat-util.h\""
+				},
+				{
+					"backtrace" : 16,
+					"define" : "SHA1DC_INIT_SAFE_HASH_DEFAULT=0"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "SHA1DC_NO_STANDARD_INCLUDES"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "SHA1_DC"
+				},
+				{
+					"backtrace" : 15,
+					"define" : "SHA256_BLK"
+				},
+				{
+					"backtrace" : 18,
+					"define" : "SUPPORTS_SIMPLE_IPC"
+				},
+				{
+					"backtrace" : 19,
+					"define" : "USE_CURL_FOR_IMAP_SEND"
+				},
+				{
+					"backtrace" : 20,
+					"define" : "USE_LIBPCRE2"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 21,
+					"path" : "/workspaces/git/contrib/buildsystems/../.."
+				},
+				{
+					"backtrace" : 22,
+					"path" : "/workspaces/git/build"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/workspaces/git/build/t/unit-tests"
+				}
+			],
+			"language" : "C",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"id" : "common-main::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "clar-test-lib::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "unit-test-lib::@6890427a1f51a3e7e1df"
+		}
+	],
+	"id" : "t-reftable-table::@6890427a1f51a3e7e1df",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-g",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "libunit-test-lib.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "libclar-test-lib.a",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "liblibgit.a",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "libxdiff.a",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "libreftable.a",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "/usr/lib/x86_64-linux-gnu/libz.so",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lc",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lpcre2-8",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lpthread",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lrt",
+				"role" : "libraries"
+			}
+		],
+		"language" : "C"
+	},
+	"name" : "t-reftable-table",
+	"nameOnDisk" : "t-reftable-table",
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"name" : "Object Libraries",
+			"sourceIndexes" : 
+			[
+				1
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "/workspaces/git/t/unit-tests/t-reftable-table.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 2,
+			"isGenerated" : true,
+			"path" : "/workspaces/git/build/CMakeFiles/common-main.dir/workspaces/git/common-main.c.o",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "EXECUTABLE"
+}

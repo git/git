@@ -1,0 +1,98 @@
+make[4]: warning: jobserver unavailable: using -j1.  Add '+' to parent make rule.
+[  2%] Built target reftable
+[ 45%] Built target libgit
+[ 47%] Built target xdiff
+[ 47%] Built target common-main
+Scanning dependencies of target test-lib
+[ 47%] Building C object CMakeFiles/test-lib.dir/workspaces/git/t/unit-tests/test-lib.c.o
+[ 47%] Built target test-lib
+Scanning dependencies of target test-tool
+[ 47%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-tool.c.o
+[ 47%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-advise.c.o
+[ 47%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-bitmap.c.o
+[ 48%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-bloom.c.o
+[ 48%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-bundle-uri.c.o
+[ 48%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-cache-tree.c.o
+[ 48%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-chmtime.c.o
+[ 48%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-config.c.o
+[ 48%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-crontab.c.o
+[ 49%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-csprng.c.o
+[ 49%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-date.c.o
+[ 49%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-delete-gpgsig.c.o
+[ 49%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-delta.c.o
+[ 49%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-dir-iterator.c.o
+[ 49%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-drop-caches.c.o
+[ 50%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-dump-cache-tree.c.o
+[ 50%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-dump-fsmonitor.c.o
+[ 50%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-dump-split-index.c.o
+[ 50%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-dump-untracked-cache.c.o
+[ 50%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-env-helper.c.o
+[ 50%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-example-tap.c.o
+[ 51%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-find-pack.c.o
+[ 51%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-fsmonitor-client.c.o
+[ 51%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-genrandom.c.o
+[ 51%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-genzeros.c.o
+[ 51%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-getcwd.c.o
+[ 51%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-hash-speed.c.o
+[ 51%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-hash.c.o
+[ 52%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-hashmap.c.o
+[ 52%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-hexdump.c.o
+[ 52%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-json-writer.c.o
+[ 52%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-lazy-init-name-hash.c.o
+[ 52%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-match-trees.c.o
+[ 52%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-mergesort.c.o
+[ 53%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-mktemp.c.o
+[ 53%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-name-hash.c.o
+[ 53%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-online-cpus.c.o
+[ 53%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-pack-deltas.c.o
+[ 53%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-pack-mtimes.c.o
+[ 53%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-parse-options.c.o
+[ 54%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-parse-pathspec-file.c.o
+[ 54%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-partial-clone.c.o
+[ 54%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-path-utils.c.o
+[ 54%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-path-walk.c.o
+[ 54%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-pcre2-config.c.o
+[ 54%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-pkt-line.c.o
+[ 55%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-proc-receive.c.o
+[ 55%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-progress.c.o
+[ 55%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-reach.c.o
+[ 55%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-read-cache.c.o
+[ 55%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-read-graph.c.o
+[ 55%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-read-midx.c.o
+[ 55%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-ref-store.c.o
+[ 56%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-reftable.c.o
+[ 56%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-regex.c.o
+[ 56%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-rot13-filter.c.o
+[ 56%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-repository.c.o
+[ 56%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-revision-walking.c.o
+[ 56%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-run-command.c.o
+[ 57%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-scrap-cache-tree.c.o
+[ 57%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-serve-v2.c.o
+[ 57%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-sha1.c.o
+[ 57%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-sha256.c.o
+[ 57%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-sigchain.c.o
+[ 57%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-simple-ipc.c.o
+[ 58%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-string-list.c.o
+[ 58%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-submodule-config.c.o
+[ 58%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-submodule-nested-repo-config.c.o
+[ 58%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-submodule.c.o
+[ 58%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-subprocess.c.o
+[ 58%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-trace2.c.o
+[ 59%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-truncate.c.o
+[ 59%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-userdiff.c.o
+[ 59%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-wildmatch.c.o
+[ 59%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-windows-named-pipe.c.o
+[ 59%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-write-cache.c.o
+[ 59%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-xml-encode.c.o
+[ 60%] Building C object CMakeFiles/test-tool.dir/workspaces/git/t/helper/test-zlib.c.o
+[ 60%] Linking C executable t/helper/test-tool
+[ 60%] Built target test-tool
+Scanning dependencies of target clar-test-lib
+[ 60%] Building C object CMakeFiles/clar-test-lib.dir/workspaces/git/t/unit-tests/clar/clar.c.o
+/workspaces/git/t/unit-tests/clar/clar.c:210:10: fatal error: clar.suite: No such file or directory
+  210 | #include "clar.suite"
+      |          ^~~~~~~~~~~~
+compilation terminated.
+make[6]: *** [CMakeFiles/clar-test-lib.dir/build.make:63: CMakeFiles/clar-test-lib.dir/workspaces/git/t/unit-tests/clar/clar.c.o] Error 1
+make[5]: *** [CMakeFiles/Makefile2:1258: CMakeFiles/clar-test-lib.dir/all] Error 2
+make[4]: *** [Makefile:141: all] Error 2
