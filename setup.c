@@ -2541,6 +2541,8 @@ static void repository_format_configure(struct repository_format *repo_fmt,
 			repo_fmt->ref_storage_format = ref_format;
 	} else if (cfg.ref_format != REF_STORAGE_FORMAT_UNKNOWN) {
 		repo_fmt->ref_storage_format = cfg.ref_format;
+	} else {
+		repo_fmt->ref_storage_format = REF_STORAGE_FORMAT_DEFAULT;
 	}
 	repo_set_ref_storage_format(the_repository, repo_fmt->ref_storage_format);
 }
