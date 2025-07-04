@@ -177,7 +177,7 @@ int cmd_prune(int argc,
 
 	argc = parse_options(argc, argv, prefix, options, prune_usage, 0);
 
-	if (repository_format_precious_objects)
+	if (the_repository->repository_format_precious_objects)
 		die(_("cannot prune in a precious-objects repo"));
 
 	while (argc--) {
