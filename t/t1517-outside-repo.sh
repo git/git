@@ -114,4 +114,11 @@ test_expect_success 'update-server-info does not crash with -h' '
 	test_grep "[Uu]sage: git update-server-info " usage
 '
 
+test_expect_success 'prune does not crash with -h' '
+	test_expect_code 129 git prune -h >usage &&
+	test_grep "[Uu]sage: git prune " usage &&
+	test_expect_code 129 nongit git prune -h >usage &&
+	test_grep "[Uu]sage: git prune " usage
+'
+
 test_done
