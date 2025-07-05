@@ -28,8 +28,8 @@ Assume the following history exists and the current branch is
 `master`:
 
 ------------
-	  A---B---C topic
-	 /
+          A---B---C topic
+         /
     D---E---F---G master
 ------------
 
@@ -38,11 +38,11 @@ Then `git merge topic` will replay the changes made on the
 its current commit (`C`) on top of `master`, and record the result
 in a new commit along with the names of the two parent commits and
 a log message from the user describing the changes. Before the operation,
-`ORIG_HEAD` is set to the tip of the current branch (`C`).
+`ORIG_HEAD` is set to the tip of the current branch (`G`).
 
 ------------
-	  A---B---C topic
-	 /         \
+          A---B---C topic
+         /         \
     D---E---F---G---H master
 ------------
 
