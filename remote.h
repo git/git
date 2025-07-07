@@ -9,6 +9,7 @@
 
 struct option;
 struct transport_ls_refs_options;
+struct repository;
 
 /**
  * The API gives access to the configuration related to remotes. It handles
@@ -315,8 +316,8 @@ struct branch {
 
 	char *pushremote_name;
 
-	/* An array of the "merge" lines in the configuration. */
-	const char **merge_name;
+	/* True if set_merge() has been called to finalize the merge array */
+	int set_merge;
 
 	/**
 	 * An array of the struct refspecs used for the merge lines. That is,
@@ -337,6 +338,9 @@ struct branch *branch_get(const char *name);
 const char *remote_for_branch(struct branch *branch, int *explicit);
 const char *pushremote_for_branch(struct branch *branch, int *explicit);
 char *remote_ref_for_branch(struct branch *branch, int for_push);
+
+const char *repo_default_remote(struct repository *repo);
+const char *repo_remote_from_url(struct repository *repo, const char *url);
 
 /* returns true if the given branch has merge configuration given. */
 int branch_has_merge_config(struct branch *branch);
