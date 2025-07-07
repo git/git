@@ -146,14 +146,14 @@ constructor _new {path unmerged_only title} {
 	append fmt { %(*subject)}
 	append fmt {]}
 	set all_refn [list]
-	set fr_fd [git_read for-each-ref \
+	set fr_fd [git_read [list for-each-ref \
 		--tcl \
 		--sort=-taggerdate \
 		--format=$fmt \
 		refs/heads \
 		refs/remotes \
 		refs/tags \
-		]
+		]]
 	fconfigure $fr_fd -translation lf -encoding utf-8
 	while {[gets $fr_fd line] > 0} {
 		set line [eval $line]
@@ -176,7 +176,7 @@ constructor _new {path unmerged_only title} {
 	close $fr_fd
 
 	if {$unmerged_only} {
-		set fr_fd [git_read rev-list --all ^$::HEAD]
+		set fr_fd [git_read [list rev-list --all ^$::HEAD]]
 		while {[gets $fr_fd sha1] > 0} {
 			if {[catch {set rlst $cmt_refn($sha1)}]} continue
 			foreach refn $rlst {
@@ -579,7 +579,7 @@ method _reflog_last {name} {
 
 	set last {}
 	if {[catch {set last [file mtime [gitdir $name]]}]
-	&& ![catch {set g [open [gitdir logs $name] r]}]} {
+	&& ![catch {set g [safe_open_file [gitdir logs $name] r]}]} {
 		fconfigure $g -translation binary
 		while {[gets $g line] >= 0} {
 			if {[regexp {> ([1-9][0-9]*) } $line line when]} {

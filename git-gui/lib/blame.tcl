@@ -481,14 +481,14 @@ method _load {jump} {
 		if {$do_textconv ne 0} {
 			set fd [open_cmd_pipe $textconv $path]
 		} else {
-			set fd [open $path r]
+			set fd [safe_open_file $path r]
 		}
 		fconfigure $fd -eofchar {}
 	} else {
 		if {$do_textconv ne 0} {
-			set fd [git_read cat-file --textconv "$commit:$path"]
+			set fd [git_read [list cat-file --textconv "$commit:$path"]]
 		} else {
-			set fd [git_read cat-file blob "$commit:$path"]
+			set fd [git_read [list cat-file blob "$commit:$path"]]
 		}
 	}
 	fconfigure $fd \
@@ -617,7 +617,7 @@ method _exec_blame {cur_w cur_d options cur_s} {
 	}
 
 	lappend options -- $path
-	set fd [eval git_read --nice blame $options]
+	set fd [git_read_nice [concat blame $options]]
 	fconfigure $fd -blocking 0 -translation lf -encoding utf-8
 	fileevent $fd readable [cb _read_blame $fd $cur_w $cur_d]
 	set current_fd $fd
@@ -986,7 +986,7 @@ method _showcommit {cur_w lno} {
 		if {[catch {set msg $header($cmit,message)}]} {
 			set msg {}
 			catch {
-				set fd [git_read cat-file commit $cmit]
+				set fd [git_read [list cat-file commit $cmit]]
 				fconfigure $fd -encoding binary -translation lf
 				# By default commits are assumed to be in utf-8
 				set enc utf-8
@@ -1134,7 +1134,7 @@ method _blameparent {} {
 		} else {
 			set diffcmd [list diff-tree --unified=0 $cparent $cmit -- $new_path]
 		}
-		if {[catch {set fd [eval git_read $diffcmd]} err]} {
+		if {[catch {set fd [git_read $diffcmd]} err]} {
 			$status_operation stop [mc "Unable to display parent"]
 			error_popup [strcat [mc "Error loading diff:"] "\n\n$err"]
 			return
