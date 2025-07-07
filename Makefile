@@ -114,8 +114,6 @@ include shared.mak
 #
 # Define NO_INTPTR_T if you don't have intptr_t or uintptr_t.
 #
-# Define NO_UINTMAX_T if you don't have uintmax_t.
-#
 # Define NEEDS_SOCKET if linking with libc is not enough (SunOS,
 # Patrick Mauritz).
 #
@@ -1917,9 +1915,6 @@ ifdef NO_IPV6
 endif
 ifdef NO_INTPTR_T
 	COMPAT_CFLAGS += -DNO_INTPTR_T
-endif
-ifdef NO_UINTMAX_T
-	BASIC_CFLAGS += -Duintmax_t=uint32_t
 endif
 ifdef NO_SOCKADDR_STORAGE
 ifdef NO_IPV6

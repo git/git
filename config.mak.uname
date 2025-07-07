@@ -302,16 +302,13 @@ ifeq ($(uname_S),FreeBSD)
         ifeq ($(firstword $(subst -, ,$(uname_R))),10.1)
 		OLD_ICONV = YesPlease
         endif
-	NO_MEMMEM = YesPlease
+        ifeq ($(shell v=$(uname_R) && test $${v%%.*} -lt 12 && echo 1),1)
+		NO_MEMMEM = UnfortunatelyYes
+        endif
 	BASIC_CFLAGS += -I/usr/local/include
 	BASIC_LDFLAGS += -L/usr/local/lib
 	DIR_HAS_BSD_GROUP_SEMANTICS = YesPlease
 	USE_ST_TIMESPEC = YesPlease
-        ifeq ($(shell expr "$(uname_R)" : '4\.'),2)
-		PTHREAD_LIBS = -pthread
-		NO_UINTMAX_T = YesPlease
-		NO_STRTOUMAX = YesPlease
-        endif
 	PYTHON_PATH = /usr/local/bin/python
 	PERL_PATH = /usr/local/bin/perl
 	HAVE_PATHS_H = YesPlease
