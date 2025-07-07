@@ -4565,7 +4565,7 @@ static int create_file(struct apply_state *state, struct patch *patch)
 
 	if (patch->conflicted_threeway)
 		return add_conflicted_stages_file(state, patch);
-	else if (state->update_index)
+	else if (state->check_index || (state->ita_only && patch->is_new > 0))
 		return add_index_file(state, path, mode, buf, size);
 	return 0;
 }
@@ -4833,7 +4833,7 @@ static int apply_patch(struct apply_state *state,
 					       LOCK_DIE_ON_ERROR);
 	}
 
-	if (state->check_index && read_apply_cache(state) < 0) {
+	if ((state->check_index || state->update_index) && read_apply_cache(state) < 0) {
 		error(_("unable to read index file"));
 		res = -128;
 		goto end;
