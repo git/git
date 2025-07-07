@@ -7,7 +7,7 @@
 #include "hex.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "config.h"
 #include "gettext.h"
 #include "setup.h"

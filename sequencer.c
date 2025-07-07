@@ -13,7 +13,7 @@
 #include "dir.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "object.h"
 #include "pager.h"
 #include "commit.h"
@@ -5505,9 +5505,8 @@ int sequencer_pick_revisions(struct repository *r,
 
 		if (!repo_get_oid(r, name, &oid)) {
 			if (!lookup_commit_reference_gently(r, &oid, 1)) {
-				enum object_type type = oid_object_info(r,
-									&oid,
-									NULL);
+				enum object_type type = odb_read_object_info(r->objects,
+									     &oid, NULL);
 				res = error(_("%s: can't cherry-pick a %s"),
 					    name, type_name(type));
 				goto out;

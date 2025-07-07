@@ -2,7 +2,7 @@
 
 #include "test-tool.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "packfile.h"
 #include "parse-options.h"
 #include "setup.h"

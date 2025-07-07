@@ -14,7 +14,7 @@
 #include "refs.h"
 #include "refspec.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "oidset.h"
 #include "oid-array.h"
 #include "commit.h"
@@ -366,9 +366,9 @@ static void find_non_local_tags(const struct ref *refs,
 		 */
 		if (ends_with(ref->name, "^{}")) {
 			if (item &&
-			    !has_object(the_repository, &ref->old_oid, 0) &&
+			    !odb_has_object(the_repository->objects, &ref->old_oid, 0) &&
 			    !oidset_contains(&fetch_oids, &ref->old_oid) &&
-			    !has_object(the_repository, &item->oid, 0) &&
+			    !odb_has_object(the_repository->objects, &item->oid, 0) &&
 			    !oidset_contains(&fetch_oids, &item->oid))
 				clear_item(item);
 			item = NULL;
@@ -382,7 +382,7 @@ static void find_non_local_tags(const struct ref *refs,
 		 * fetch.
 		 */
 		if (item &&
-		    !has_object(the_repository, &item->oid, 0) &&
+		    !odb_has_object(the_repository->objects, &item->oid, 0) &&
 		    !oidset_contains(&fetch_oids, &item->oid))
 			clear_item(item);
 
@@ -403,7 +403,7 @@ static void find_non_local_tags(const struct ref *refs,
 	 * checked to see if it needs fetching.
 	 */
 	if (item &&
-	    !has_object(the_repository, &item->oid, 0) &&
+	    !odb_has_object(the_repository->objects, &item->oid, 0) &&
 	    !oidset_contains(&fetch_oids, &item->oid))
 		clear_item(item);
 
@@ -873,8 +873,8 @@ static int update_local_ref(struct ref *ref,
 	struct commit *current = NULL, *updated;
 	int fast_forward = 0;
 
-	if (!has_object(the_repository, &ref->new_oid,
-			HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
+	if (!odb_has_object(the_repository->objects, &ref->new_oid,
+			    HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR))
 		die(_("object %s not found"), oid_to_hex(&ref->new_oid));
 
 	if (oideq(&ref->old_oid, &ref->new_oid)) {
@@ -1287,7 +1287,8 @@ static int check_exist_and_connected(struct ref *ref_map)
 	 * we need all direct targets to exist.
 	 */
 	for (r = rm; r; r = r->next) {
-		if (!has_object(the_repository, &r->old_oid, HAS_OBJECT_RECHECK_PACKED))
+		if (!odb_has_object(the_repository->objects, &r->old_oid,
+				    HAS_OBJECT_RECHECK_PACKED))
 			return -1;
 	}
 
@@ -1441,7 +1442,7 @@ static void add_negotiation_tips(struct git_transport_options *smart_options)
 			struct object_id oid;
 			if (repo_get_oid(the_repository, s, &oid))
 				die(_("%s is not a valid object"), s);
-			if (!has_object(the_repository, &oid, 0))
+			if (!odb_has_object(the_repository->objects, &oid, 0))
 				die(_("the object %s does not exist"), s);
 			oid_array_append(oids, &oid);
 			continue;
@@ -2672,7 +2673,7 @@ int cmd_fetch(int argc,
 			commit_graph_flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 
 		trace2_region_enter("fetch", "write-commit-graph", the_repository);
-		write_commit_graph_reachable(the_repository->objects->odb,
+		write_commit_graph_reachable(the_repository->objects->sources,
 					     commit_graph_flags,
 					     NULL);
 		trace2_region_leave("fetch", "write-commit-graph", the_repository);

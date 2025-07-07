@@ -3,7 +3,7 @@
 #include "test-tool.h"
 #include "commit-graph.h"
 #include "repository.h"
-#include "object-store.h"
+#include "odb.h"
 #include "bloom.h"
 #include "setup.h"
 
@@ -73,15 +73,15 @@ static void dump_graph_bloom_filters(struct commit_graph *graph)
 int cmd__read_graph(int argc, const char **argv)
 {
 	struct commit_graph *graph = NULL;
-	struct object_directory *odb;
+	struct odb_source *source;
 	int ret = 0;
 
 	setup_git_directory();
-	odb = the_repository->objects->odb;
+	source = the_repository->objects->sources;
 
 	prepare_repo_settings(the_repository);
 
-	graph = read_commit_graph_one(the_repository, odb);
+	graph = read_commit_graph_one(the_repository, source);
 	if (!graph) {
 		ret = 1;
 		goto done;
