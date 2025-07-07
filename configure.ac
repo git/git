@@ -1068,32 +1068,6 @@ AC_CHECK_LIB([iconv], [locale_charset],
 GIT_CONF_SUBST([CHARSET_LIB])
 
 #
-# Define HAVE_SYSINFO=YesPlease if sysinfo is available.
-#
-AC_DEFUN([HAVE_SYSINFO_SRC], [
-AC_LANG_PROGRAM([[
-#include <stdint.h>
-#include <sys/sysinfo.h>
-]], [[
-struct sysinfo si;
-uint64_t t = 0;
-if (!sysinfo(&si)) {
-	t = si.totalram;
-	if (si.mem_unit > 1)
-		t *= (uint64_t)si.mem_unit;
-}
-return t;
-]])])
-
-AC_MSG_CHECKING([for sysinfo])
-AC_COMPILE_IFELSE([HAVE_SYSINFO_SRC],
-	[AC_MSG_RESULT([yes])
-	HAVE_SYSINFO=YesPlease],
-	[AC_MSG_RESULT([no])
-	HAVE_SYSINFO=])
-GIT_CONF_SUBST([HAVE_SYSINFO])
-
-#
 # Define HAVE_CLOCK_GETTIME=YesPlease if clock_gettime is available.
 GIT_CHECK_FUNC(clock_gettime,
 	[HAVE_CLOCK_GETTIME=YesPlease],
@@ -1212,6 +1186,41 @@ AC_COMPILE_IFELSE([BSD_SYSCTL_SRC],
 	[AC_MSG_RESULT([no])
 	HAVE_BSD_SYSCTL=])
 GIT_CONF_SUBST([HAVE_BSD_SYSCTL])
+
+#
+# Define HAVE_SYSINFO=YesPlease if sysinfo is available.
+#
+
+HAVE_SYSINFO=
+# on a *BSD system, sysctl() takes precedence over the
+# sysinfo() compatibility library (if installed).
+
+if test -z "$HAVE_BSD_SYSCTL"; then
+
+  AC_DEFUN([HAVE_SYSINFO_SRC], [
+  AC_LANG_PROGRAM([[
+  #include <stdint.h>
+  #include <sys/sysinfo.h>
+  ]], [[
+  struct sysinfo si;
+  uint64_t t = 0;
+  if (!sysinfo(&si)) {
+	t = si.totalram;
+	if (si.mem_unit > 1)
+		t *= (uint64_t)si.mem_unit;
+  }
+  return t;
+  ]])])
+
+  AC_MSG_CHECKING([for sysinfo])
+  AC_COMPILE_IFELSE([HAVE_SYSINFO_SRC],
+	[AC_MSG_RESULT([yes])
+	HAVE_SYSINFO=YesPlease],
+	[AC_MSG_RESULT([no])
+	HAVE_SYSINFO=])
+  GIT_CONF_SUBST([HAVE_SYSINFO])
+
+fi
 
 ## Other checks.
 # Define NO_SYMLINK_HEAD if you never want .git/HEAD to be a symbolic link.

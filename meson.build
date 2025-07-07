@@ -1331,10 +1331,6 @@ if host_machine.system() != 'windows'
   endif
 endif
 
-if compiler.has_member('struct sysinfo', 'totalram', prefix: '#include <sys/sysinfo.h>')
-  libgit_c_args += '-DHAVE_SYSINFO'
-endif
-
 if compiler.has_member('struct stat', 'st_mtimespec.tv_nsec', prefix: '#include <sys/stat.h>')
   libgit_c_args += '-DUSE_ST_TIMESPEC'
 elif not compiler.has_member('struct stat', 'st_mtim.tv_nsec', prefix: '#include <sys/stat.h>')
@@ -1435,6 +1431,12 @@ if compiler.has_header('sys/sysctl.h')
   ''', name: 'BSD sysctl')
     libgit_c_args += '-DHAVE_BSD_SYSCTL'
     has_bsd_sysctl = true
+  endif
+endif
+
+if not has_bsd_sysctl
+  if compiler.has_member('struct sysinfo', 'totalram', prefix: '#include <sys/sysinfo.h>')
+    libgit_c_args += '-DHAVE_SYSINFO'
   endif
 endif
 
