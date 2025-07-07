@@ -3468,11 +3468,14 @@ endif
 coccicheck-test: $(COCCI_TEST_RES_GEN)
 
 coccicheck: coccicheck-test
+
 ifdef SPATCH_CONCAT_COCCI
-coccicheck: contrib/coccinelle/ALL.cocci.patch
+COCCICHECK_PATCH_MUST_BE_EMPTY_FILES = contrib/coccinelle/ALL.cocci.patch
 else
-coccicheck: $(COCCICHECK_PATCHES_INTREE)
+COCCICHECK_PATCH_MUST_BE_EMPTY_FILES = $(COCCICHECK_PATCHES_INTREE)
 endif
+coccicheck: $(COCCICHECK_PATCH_MUST_BE_EMPTY_FILES)
+	! grep -q ^ $(COCCICHECK_PATCH_MUST_BE_EMPTY_FILES) /dev/null
 
 # See contrib/coccinelle/README
 coccicheck-pending: coccicheck-test
