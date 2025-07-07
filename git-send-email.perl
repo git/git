@@ -2112,6 +2112,17 @@ if ($validate) {
 		}
 	}
 
+	# Validate the SMTP server port, if provided.
+	if (defined $smtp_server_port) {
+		my $port = Git::port_num($smtp_server_port);
+		if ($port) {
+			$smtp_server_port = $port;
+		} else  {
+			die sprintf(__("error: invalid SMTP port '%s'\n"),
+				    $smtp_server_port);
+		}
+	}
+
 	# Run the loop once again to avoid gaps in the counter due to FIFO
 	# arguments provided by the user.
 	my $num = 1;
