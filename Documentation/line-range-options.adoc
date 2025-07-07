@@ -1,12 +1,12 @@
--L<start>,<end>:<file>::
--L:<funcname>:<file>::
+`-L<start>,<end>:<file>`::
+`-L:<funcname>:<file>`::
 
-	Trace the evolution of the line range given by '<start>,<end>',
-	or by the function name regex '<funcname>', within the '<file>'. You may
+	Trace the evolution of the line range given by `<start>,<end>`,
+	or by the function name regex _<funcname>_, within the _<file>_. You may
 	not give any pathspec limiters.  This is currently limited to
 	a walk starting from a single revision, i.e., you may only
 	give zero or one positive revision arguments, and
-	'<start>' and '<end>' (or '<funcname>') must exist in the starting revision.
+	_<start>_ and _<end>_ (or _<funcname>_) must exist in the starting revision.
 	You can specify this option more than once. Implies `--patch`.
 	Patch output can be suppressed using `--no-patch`, but other diff formats
 	(namely `--raw`, `--numstat`, `--shortstat`, `--dirstat`, `--summary`,
