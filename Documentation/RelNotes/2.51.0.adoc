@@ -36,6 +36,10 @@ UI, Workflows & Features
 
  * Some error messages from "git imap-send" has been updated.
 
+ * When "git daemon" sees a signal while attempting to accept() a new
+   client, instead of retrying, it skipped it by mistake, which has
+   been corrected.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -100,6 +104,16 @@ Fixes since v2.50
    as spatch can be built with different regexp engine X-<.
    (merge f2ad545813 jc/cocci-avoid-regexp-constraint later to maint).
 
+ * Updating submodules from the upstream did not work well when
+   submodule's HEAD is detached, which has been improved.
+   (merge ca62f524c1 jk/submodule-remote-lookup-cleanup later to maint).
+
+ * Remove unnecessary check from "git daemon" code.
+   (merge 0c856224d2 cb/daemon-fd-check-fix later to maint).
+
+ * Leakfix.
+   (merge b0e9d25865 jk/fix-leak-send-pack later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge b257adb571 lo/my-first-ow-doc-update later to maint).
    (merge 8b34b6a220 ly/sequencer-update-squash-is-fixup-only later to maint).
@@ -114,3 +128,5 @@ Fixes since v2.50
    (merge 855cfc65ae rm/t2400-modernize later to maint).
    (merge 2939494284 ly/run-builtin-use-passed-in-repo later to maint).
    (merge ff73f375bb jg/mailinfo-leakfix later to maint).
+   (merge 996f14c02b jj/doc-branch-markup-fix later to maint).
+   (merge 1e77de1864 cb/ci-freebsd-update-to-14.3 later to maint).
