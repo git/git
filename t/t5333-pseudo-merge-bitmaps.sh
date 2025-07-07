@@ -234,8 +234,8 @@ test_expect_success 'pseudo-merge pattern with capture groups' '
 			test_commit_bulk 16 &&
 
 			git rev-list HEAD~16.. >in &&
-			sed "s|\(.*\)|create refs/remotes/$r/tags/\1 \1" in |
-			git update-ref --stdin || return 1
+			sed "s|\(.*\)|create refs/remotes/$r/tags/\1 \1|" in >refs &&
+			git update-ref --stdin <refs || return 1
 		done &&
 
 		git \
