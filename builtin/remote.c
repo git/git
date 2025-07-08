@@ -157,6 +157,21 @@ static int parse_mirror_opt(const struct option *opt, const char *arg, int not)
 	return 0;
 }
 
+static int check_remote_collision(struct remote *remote, void *data)
+{
+	const char *name = data;
+	const char *p;
+
+	if (skip_prefix(name, remote->name, &p) && *p == '/')
+		die(_("remote name '%s' is a subset of existing remote '%s'"),
+		    name, remote->name);
+	if (skip_prefix(remote->name, name, &p) && *p == '/')
+		die(_("remote name '%s' is a superset of existing remote '%s'"),
+		    name, remote->name);
+
+	return 0;
+}
+
 static int add(int argc, const char **argv, const char *prefix,
 	       struct repository *repo UNUSED)
 {
@@ -207,6 +222,8 @@ static int add(int argc, const char **argv, const char *prefix,
 
 	if (!valid_remote_name(name))
 		die(_("'%s' is not a valid remote name"), name);
+
+	for_each_remote(check_remote_collision, (void *)name);
 
 	strbuf_addf(&buf, "remote.%s.url", name);
 	git_config_set(buf.buf, url);
