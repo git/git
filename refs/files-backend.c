@@ -2760,6 +2760,8 @@ static void files_transaction_cleanup(struct files_ref_store *refs,
 
 		if (lock) {
 			unlock_ref(lock);
+			try_remove_empty_parents(refs, update->refname,
+						 REMOVE_EMPTY_PARENTS_REF);
 			update->backend_data = NULL;
 		}
 	}
