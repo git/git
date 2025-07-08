@@ -62,9 +62,15 @@ Performance, Internal Implementation, Development Support etc.
 
  * A lot of stale stuff has been removed from the contrib/ hierarchy.
 
+ * "git push" and "git fetch" are taught to update refs in batches to
+   gain performance.
+
 
 Fixes since v2.50
 -----------------
+
+Unless otherwise noted, all the changes in 2.50.X maintenance track,
+including security updates, are included in this release.
 
  * A memory-leak in an error code path has been plugged.
    (merge 7082da85cb ly/commit-graph-graph-write-leakfix later to maint).
