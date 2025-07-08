@@ -908,6 +908,11 @@ void ref_transaction_for_each_rejected_update(struct ref_transaction *transactio
 					      void *cb_data);
 
 /*
+ * Translate errors to human readable error messages.
+ */
+const char *ref_transaction_error_msg(enum ref_transaction_error err);
+
+/*
  * Free `*transaction` and all associated data.
  */
 void ref_transaction_free(struct ref_transaction *transaction);
