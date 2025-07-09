@@ -167,11 +167,14 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 	}
 
 	case OPTION_BITOP:
+	{
+		intmax_t value = get_int_value(opt, flags);
 		if (unset)
 			BUG("BITOP can't have unset form");
-		*(int *)opt->value &= ~opt->extra;
-		*(int *)opt->value |= opt->defval;
-		return 0;
+		value &= ~opt->extra;
+		value |= opt->defval;
+		return set_int_value(opt, flags, value);
+	}
 
 	case OPTION_COUNTUP:
 		if (*(int *)opt->value < 0)
@@ -647,12 +650,12 @@ static void parse_options_check(const struct option *opts)
 		case OPTION_SET_INT:
 		case OPTION_BIT:
 		case OPTION_NEGBIT:
+		case OPTION_BITOP:
 			if (!signed_int_fits(opts->defval, opts->precision))
 				optbug(opts, "has invalid defval");
 			/* fallthru */
 		case OPTION_COUNTUP:
 		case OPTION_NUMBER:
-		case OPTION_BITOP:
 			if ((opts->flags & PARSE_OPT_OPTARG) ||
 			    !(opts->flags & PARSE_OPT_NOARG))
 				optbug(opts, "should not accept an argument");
