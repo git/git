@@ -131,6 +131,7 @@ int cmd__parse_options(int argc, const char **argv)
 			.short_name = 'B',
 			.long_name = "no-fear",
 			.value = &boolean,
+			.precision = sizeof(boolean),
 			.help = "be brave",
 			.flags = PARSE_OPT_NOARG | PARSE_OPT_NONEG,
 			.defval = 1,

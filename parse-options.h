@@ -190,6 +190,7 @@ struct option {
 	.short_name = (s), \
 	.long_name = (l), \
 	.value = (v), \
+	.precision = sizeof(*v), \
 	.help = (h), \
 	.flags = PARSE_OPT_NOARG | (f), \
 	.defval = (i), \
@@ -260,6 +261,7 @@ struct option {
 	.short_name = (s), \
 	.long_name = (l), \
 	.value = (v), \
+	.precision = sizeof(*v), \
 	.help = (h), \
 	.flags = PARSE_OPT_NOARG | PARSE_OPT_HIDDEN, \
 	.defval = 1, \
