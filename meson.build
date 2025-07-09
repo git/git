@@ -2188,7 +2188,6 @@ summary({
   'expat': expat.found(),
   'gettext': intl.found(),
   'gitweb': gitweb_option.allowed(),
-  'https': https_backend,
   'iconv': iconv.found(),
   'pcre2': pcre2.found(),
   'perl': perl_features_enabled,
