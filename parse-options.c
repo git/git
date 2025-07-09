@@ -177,10 +177,22 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 	}
 
 	case OPTION_COUNTUP:
-		if (*(int *)opt->value < 0)
-			*(int *)opt->value = 0;
-		*(int *)opt->value = unset ? 0 : *(int *)opt->value + 1;
-		return 0;
+	{
+		size_t bits = CHAR_BIT * opt->precision;
+		intmax_t upper_bound = INTMAX_MAX >> (bitsizeof(intmax_t) - bits);
+		intmax_t value = get_int_value(opt, flags);
+
+		if (value < 0)
+			value = 0;
+		if (unset)
+			value = 0;
+		else if (value < upper_bound)
+			value++;
+		else
+			return error(_("value for %s exceeds %"PRIdMAX),
+				     optname(opt, flags), upper_bound);
+		return set_int_value(opt, flags, value);
+	}
 
 	case OPTION_SET_INT:
 		return set_int_value(opt, flags, unset ? 0 : opt->defval);
@@ -651,10 +663,10 @@ static void parse_options_check(const struct option *opts)
 		case OPTION_BIT:
 		case OPTION_NEGBIT:
 		case OPTION_BITOP:
+		case OPTION_COUNTUP:
 			if (!signed_int_fits(opts->defval, opts->precision))
 				optbug(opts, "has invalid defval");
 			/* fallthru */
-		case OPTION_COUNTUP:
 		case OPTION_NUMBER:
 			if ((opts->flags & PARSE_OPT_OPTARG) ||
 			    !(opts->flags & PARSE_OPT_NOARG))
