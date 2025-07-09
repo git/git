@@ -88,6 +88,14 @@ static int do_get_int_value(const void *value, size_t precision, intmax_t *ret)
 	}
 }
 
+static intmax_t get_int_value(const struct option *opt, enum opt_parsed flags)
+{
+	intmax_t ret;
+	if (do_get_int_value(opt->value, opt->precision, &ret))
+		BUG("invalid precision for option %s", optname(opt, flags));
+	return ret;
+}
+
 static enum parse_opt_result set_int_value(const struct option *opt,
 					   enum opt_parsed flags,
 					   intmax_t value)
@@ -139,11 +147,14 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 		return opt->ll_callback(p, opt, NULL, unset);
 
 	case OPTION_BIT:
+	{
+		intmax_t value = get_int_value(opt, flags);
 		if (unset)
-			*(int *)opt->value &= ~opt->defval;
+			value &= ~opt->defval;
 		else
-			*(int *)opt->value |= opt->defval;
-		return 0;
+			value |= opt->defval;
+		return set_int_value(opt, flags, value);
+	}
 
 	case OPTION_NEGBIT:
 		if (unset)
@@ -631,11 +642,11 @@ static void parse_options_check(const struct option *opts)
 			optbug(opts, "OPTION_SET_INT 0 should not be negatable");
 		switch (opts->type) {
 		case OPTION_SET_INT:
+		case OPTION_BIT:
 			if (!signed_int_fits(opts->defval, opts->precision))
 				optbug(opts, "has invalid defval");
 			/* fallthru */
 		case OPTION_COUNTUP:
-		case OPTION_BIT:
 		case OPTION_NEGBIT:
 		case OPTION_NUMBER:
 		case OPTION_BITOP:
