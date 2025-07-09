@@ -17,7 +17,7 @@
 #include "packfile.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "path.h"
 #include "read-cache-ll.h"
 #include "replace-object.h"
@@ -71,7 +71,8 @@ static const char *printable_type(const struct object_id *oid,
 	const char *ret;
 
 	if (type == OBJ_NONE)
-		type = oid_object_info(the_repository, oid, NULL);
+		type = odb_read_object_info(the_repository->objects,
+					    oid, NULL);
 
 	ret = type_name(type);
 	if (!ret)
@@ -160,7 +161,7 @@ static int mark_object(struct object *obj, enum object_type type,
 		return 0;
 
 	if (!(obj->flags & HAS_OBJ)) {
-		if (parent && !has_object(the_repository, &obj->oid, 1)) {
+		if (parent && !odb_has_object(the_repository->objects, &obj->oid, 1)) {
 			printf_ln(_("broken link from %7s %s\n"
 				    "              to %7s %s"),
 				  printable_type(&parent->oid, parent->type),
@@ -232,8 +233,8 @@ static void mark_unreachable_referents(const struct object_id *oid)
 	 * (and we want to avoid parsing blobs).
 	 */
 	if (obj->type == OBJ_NONE) {
-		enum object_type type = oid_object_info(the_repository,
-							&obj->oid, NULL);
+		enum object_type type = odb_read_object_info(the_repository->objects,
+							     &obj->oid, NULL);
 		if (type > 0)
 			object_as_type(obj, type, 0);
 	}
@@ -956,7 +957,7 @@ int cmd_fsck(int argc,
 	     struct repository *repo UNUSED)
 {
 	int i;
-	struct object_directory *odb;
+	struct odb_source *source;
 
 	/* fsck knows how to handle missing promisor objects */
 	fetch_if_missing = 0;
@@ -997,9 +998,9 @@ int cmd_fsck(int argc,
 		for_each_packed_object(the_repository,
 				       mark_packed_for_connectivity, NULL, 0);
 	} else {
-		prepare_alt_odb(the_repository);
-		for (odb = the_repository->objects->odb; odb; odb = odb->next)
-			fsck_object_dir(odb->path);
+		odb_prepare_alternates(the_repository->objects);
+		for (source = the_repository->objects->sources; source; source = source->next)
+			fsck_object_dir(source->path);
 
 		if (check_full) {
 			struct packed_git *p;
@@ -1108,12 +1109,12 @@ int cmd_fsck(int argc,
 	if (the_repository->settings.core_commit_graph) {
 		struct child_process commit_graph_verify = CHILD_PROCESS_INIT;
 
-		prepare_alt_odb(the_repository);
-		for (odb = the_repository->objects->odb; odb; odb = odb->next) {
+		odb_prepare_alternates(the_repository->objects);
+		for (source = the_repository->objects->sources; source; source = source->next) {
 			child_process_init(&commit_graph_verify);
 			commit_graph_verify.git_cmd = 1;
 			strvec_pushl(&commit_graph_verify.args, "commit-graph",
-				     "verify", "--object-dir", odb->path, NULL);
+				     "verify", "--object-dir", source->path, NULL);
 			if (show_progress)
 				strvec_push(&commit_graph_verify.args, "--progress");
 			else
@@ -1126,12 +1127,12 @@ int cmd_fsck(int argc,
 	if (the_repository->settings.core_multi_pack_index) {
 		struct child_process midx_verify = CHILD_PROCESS_INIT;
 
-		prepare_alt_odb(the_repository);
-		for (odb = the_repository->objects->odb; odb; odb = odb->next) {
+		odb_prepare_alternates(the_repository->objects);
+		for (source = the_repository->objects->sources; source; source = source->next) {
 			child_process_init(&midx_verify);
 			midx_verify.git_cmd = 1;
 			strvec_pushl(&midx_verify.args, "multi-pack-index",
-				     "verify", "--object-dir", odb->path, NULL);
+				     "verify", "--object-dir", source->path, NULL);
 			if (show_progress)
 				strvec_push(&midx_verify.args, "--progress");
 			else

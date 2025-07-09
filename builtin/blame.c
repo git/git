@@ -28,7 +28,7 @@
 #include "line-log.h"
 #include "progress.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "pager.h"
 #include "blame.h"
 #include "refs.h"
@@ -837,7 +837,7 @@ static int is_a_rev(const char *name)
 
 	if (repo_get_oid(the_repository, name, &oid))
 		return 0;
-	return OBJ_NONE < oid_object_info(the_repository, &oid, NULL);
+	return OBJ_NONE < odb_read_object_info(the_repository->objects, &oid, NULL);
 }
 
 static int peel_to_commit_oid(struct object_id *oid_ret, void *cbdata)
@@ -848,7 +848,7 @@ static int peel_to_commit_oid(struct object_id *oid_ret, void *cbdata)
 	oidcpy(&oid, oid_ret);
 	while (1) {
 		struct object *obj;
-		int kind = oid_object_info(r, &oid, NULL);
+		int kind = odb_read_object_info(r->objects, &oid, NULL);
 		if (kind == OBJ_COMMIT) {
 			oidcpy(oid_ret, &oid);
 			return 0;

@@ -19,7 +19,7 @@
 #include "refs.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "path.h"
 #include "tag.h"
 #include "parse-options.h"
@@ -244,7 +244,7 @@ static void write_tag_body(int fd, const struct object_id *oid)
 	struct strbuf payload = STRBUF_INIT;
 	struct strbuf signature = STRBUF_INIT;
 
-	orig = buf = repo_read_object_file(the_repository, oid, &type, &size);
+	orig = buf = odb_read_object(the_repository->objects, oid, &type, &size);
 	if (!buf)
 		return;
 	if (parse_signature(buf, size, &payload, &signature)) {
@@ -304,7 +304,7 @@ static void create_tag(const struct object_id *object, const char *object_ref,
 	struct strbuf header = STRBUF_INIT;
 	int should_edit;
 
-	type = oid_object_info(the_repository, object, NULL);
+	type = odb_read_object_info(the_repository->objects, object, NULL);
 	if (type <= OBJ_NONE)
 		die(_("bad object type."));
 
@@ -401,13 +401,13 @@ static void create_reflog_msg(const struct object_id *oid, struct strbuf *sb)
 	}
 
 	strbuf_addstr(sb, " (");
-	type = oid_object_info(the_repository, oid, NULL);
+	type = odb_read_object_info(the_repository->objects, oid, NULL);
 	switch (type) {
 	default:
 		strbuf_addstr(sb, "object of unknown type");
 		break;
 	case OBJ_COMMIT:
-		if ((buf = repo_read_object_file(the_repository, oid, &type, &size))) {
+		if ((buf = odb_read_object(the_repository->objects, oid, &type, &size))) {
 			subject_len = find_commit_subject(buf, &subject_start);
 			strbuf_insert(sb, sb->len, subject_start, subject_len);
 		} else {

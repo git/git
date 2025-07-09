@@ -21,7 +21,7 @@
 #include "packfile.h"
 #include "pack-revindex.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "oid-array.h"
 #include "oidset.h"
 #include "path.h"
@@ -260,7 +260,8 @@ static unsigned check_object(struct object *obj)
 
 	if (!(obj->flags & FLAG_CHECKED)) {
 		unsigned long size;
-		int type = oid_object_info(the_repository, &obj->oid, &size);
+		int type = odb_read_object_info(the_repository->objects,
+						&obj->oid, &size);
 		if (type <= 0)
 			die(_("did not receive expected object %s"),
 			      oid_to_hex(&obj->oid));
@@ -362,7 +363,7 @@ static const char *open_pack_file(const char *pack_name)
 		input_fd = 0;
 		if (!pack_name) {
 			struct strbuf tmp_file = STRBUF_INIT;
-			output_fd = odb_mkstemp(&tmp_file,
+			output_fd = odb_mkstemp(the_repository->objects, &tmp_file,
 						"pack/tmp_pack_XXXXXX");
 			pack_name = strbuf_detach(&tmp_file, NULL);
 		} else {
@@ -892,8 +893,8 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 
 	if (startup_info->have_repository) {
 		read_lock();
-		collision_test_needed = has_object(the_repository, oid,
-						   HAS_OBJECT_FETCH_PROMISOR);
+		collision_test_needed = odb_has_object(the_repository->objects, oid,
+						       HAS_OBJECT_FETCH_PROMISOR);
 		read_unlock();
 	}
 
@@ -908,13 +909,13 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 		enum object_type has_type;
 		unsigned long has_size;
 		read_lock();
-		has_type = oid_object_info(the_repository, oid, &has_size);
+		has_type = odb_read_object_info(the_repository->objects, oid, &has_size);
 		if (has_type < 0)
 			die(_("cannot read existing object info %s"), oid_to_hex(oid));
 		if (has_type != type || has_size != size)
 			die(_("SHA1 COLLISION FOUND WITH %s !"), oid_to_hex(oid));
-		has_data = repo_read_object_file(the_repository, oid,
-						 &has_type, &has_size);
+		has_data = odb_read_object(the_repository->objects, oid,
+					   &has_type, &has_size);
 		read_unlock();
 		if (!data)
 			data = new_data = get_data_from_pack(obj_entry);
@@ -1501,9 +1502,9 @@ static void fix_unresolved_deltas(struct hashfile *f)
 		struct oid_array to_fetch = OID_ARRAY_INIT;
 		for (i = 0; i < nr_ref_deltas; i++) {
 			struct ref_delta_entry *d = sorted_by_pos[i];
-			if (!oid_object_info_extended(the_repository, &d->oid,
-						      NULL,
-						      OBJECT_INFO_FOR_PREFETCH))
+			if (!odb_read_object_info_extended(the_repository->objects,
+							   &d->oid, NULL,
+							   OBJECT_INFO_FOR_PREFETCH))
 				continue;
 			oid_array_append(&to_fetch, &d->oid);
 		}
@@ -1520,8 +1521,8 @@ static void fix_unresolved_deltas(struct hashfile *f)
 
 		if (objects[d->obj_no].real_type != OBJ_REF_DELTA)
 			continue;
-		data = repo_read_object_file(the_repository, &d->oid, &type,
-					     &size);
+		data = odb_read_object(the_repository->objects, &d->oid,
+				       &type, &size);
 		if (!data)
 			continue;
 
@@ -1829,7 +1830,7 @@ static void repack_local_links(void)
 	oidset_iter_init(&outgoing_links, &iter);
 	while ((oid = oidset_iter_next(&iter))) {
 		struct object_info info = OBJECT_INFO_INIT;
-		if (oid_object_info_extended(the_repository, oid, &info, 0))
+		if (odb_read_object_info_extended(the_repository->objects, oid, &info, 0))
 			/* Missing; assume it is a promisor object */
 			continue;
 		if (info.whence == OI_PACKED && info.u.packed.pack->pack_promisor)

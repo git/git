@@ -3,7 +3,7 @@
 #include "git-compat-util.h"
 #include "gettext.h"
 #include "hex.h"
-#include "object-store.h"
+#include "odb.h"
 #include "promisor-remote.h"
 #include "config.h"
 #include "trace2.h"
@@ -245,8 +245,8 @@ static int remove_fetched_oids(struct repository *repo,
 	struct object_id *new_oids;
 
 	for (i = 0; i < oid_nr; i++)
-		if (oid_object_info_extended(repo, &old_oids[i], NULL,
-					     OBJECT_INFO_SKIP_FETCH_OBJECT)) {
+		if (odb_read_object_info_extended(repo->objects, &old_oids[i], NULL,
+						  OBJECT_INFO_SKIP_FETCH_OBJECT)) {
 			remaining[i] = 1;
 			remaining_nr++;
 		}

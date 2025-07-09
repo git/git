@@ -5,7 +5,7 @@
 #include "environment.h"
 #include "tag.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "commit.h"
 #include "tree.h"
 #include "blob.h"
@@ -52,7 +52,7 @@ int gpg_verify_tag(const struct object_id *oid, const char *name_to_report,
 	unsigned long size;
 	int ret;
 
-	type = oid_object_info(the_repository, oid, NULL);
+	type = odb_read_object_info(the_repository->objects, oid, NULL);
 	if (type != OBJ_TAG)
 		return error("%s: cannot verify a non-tag object of type %s.",
 				name_to_report ?
@@ -60,7 +60,7 @@ int gpg_verify_tag(const struct object_id *oid, const char *name_to_report,
 				repo_find_unique_abbrev(the_repository, oid, DEFAULT_ABBREV),
 				type_name(type));
 
-	buf = repo_read_object_file(the_repository, oid, &type, &size);
+	buf = odb_read_object(the_repository->objects, oid, &type, &size);
 	if (!buf)
 		return error("%s: unable to read file.",
 				name_to_report ?
@@ -222,8 +222,8 @@ int parse_tag(struct tag *item)
 
 	if (item->object.parsed)
 		return 0;
-	data = repo_read_object_file(the_repository, &item->object.oid, &type,
-				     &size);
+	data = odb_read_object(the_repository->objects, &item->object.oid,
+			       &type, &size);
 	if (!data)
 		return error("Could not read %s",
 			     oid_to_hex(&item->object.oid));

@@ -10,7 +10,7 @@
 #include "commit-reach.h"
 #include "merge-ort.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "parse-options.h"
 #include "blob.h"
 #include "merge-blobs.h"
@@ -75,9 +75,9 @@ static void *result(struct merge_list *entry, unsigned long *size)
 	const char *path = entry->path;
 
 	if (!entry->stage)
-		return repo_read_object_file(the_repository,
-					     &entry->blob->object.oid, &type,
-					     size);
+		return odb_read_object(the_repository->objects,
+				       &entry->blob->object.oid, &type,
+				       size);
 	base = NULL;
 	if (entry->stage == 1) {
 		base = entry->blob;
@@ -100,9 +100,9 @@ static void *origin(struct merge_list *entry, unsigned long *size)
 	enum object_type type;
 	while (entry) {
 		if (entry->stage == 2)
-			return repo_read_object_file(the_repository,
-						     &entry->blob->object.oid,
-						     &type, size);
+			return odb_read_object(the_repository->objects,
+					       &entry->blob->object.oid,
+					       &type, size);
 		entry = entry->link;
 	}
 	return NULL;
