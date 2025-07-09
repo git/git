@@ -525,8 +525,8 @@ names.  For example:
 $ git diff v2.5 HEAD	 # compare the current HEAD to v2.5
 $ git branch stable v2.5 # start a new branch named "stable" based
 			 # at v2.5
-$ git reset --hard HEAD^ # reset your current branch and working
-			 # directory to its state at HEAD^
+$ git reset --hard v2.5  # reset your current branch and working
+			 # directory to v2.5
 -------------------------------------
 
 Be careful with that last command: in addition to losing any changes
