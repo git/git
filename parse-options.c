@@ -591,6 +591,7 @@ static void parse_options_check(const struct option *opts)
 		case OPTION_NEGBIT:
 		case OPTION_SET_INT:
 		case OPTION_NUMBER:
+		case OPTION_BITOP:
 			if ((opts->flags & PARSE_OPT_OPTARG) ||
 			    !(opts->flags & PARSE_OPT_NOARG))
 				optbug(opts, "should not accept an argument");
