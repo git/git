@@ -250,6 +250,7 @@ struct option {
 	.short_name = (s), \
 	.long_name = (l), \
 	.value = (v), \
+	.precision = sizeof(*v), \
 	.help = (h), \
 	.flags = PARSE_OPT_NOARG, \
 	.defval = (b), \
