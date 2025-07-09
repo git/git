@@ -68,6 +68,26 @@ static char *fix_filename(const char *prefix, const char *file)
 		return prefix_filename_except_for_dash(prefix, file);
 }
 
+static int do_get_int_value(const void *value, size_t precision, intmax_t *ret)
+{
+	switch (precision) {
+	case sizeof(int8_t):
+		*ret = *(int8_t *)value;
+		return 0;
+	case sizeof(int16_t):
+		*ret = *(int16_t *)value;
+		return 0;
+	case sizeof(int32_t):
+		*ret = *(int32_t *)value;
+		return 0;
+	case sizeof(int64_t):
+		*ret = *(int64_t *)value;
+		return 0;
+	default:
+		return -1;
+	}
+}
+
 static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 					  const struct option *opt,
 					  enum opt_parsed flags,
@@ -266,7 +286,9 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 }
 
 struct parse_opt_cmdmode_list {
-	int value, *value_ptr;
+	intmax_t value;
+	void *value_ptr;
+	size_t precision;
 	const struct option *opt;
 	const char *arg;
 	enum opt_parsed flags;
@@ -280,7 +302,7 @@ static void build_cmdmode_list(struct parse_opt_ctx_t *ctx,
 
 	for (; opts->type != OPTION_END; opts++) {
 		struct parse_opt_cmdmode_list *elem = ctx->cmdmode_list;
-		int *value_ptr = opts->value;
+		void *value_ptr = opts->value;
 
 		if (!(opts->flags & PARSE_OPT_CMDMODE) || !value_ptr)
 			continue;
@@ -292,10 +314,13 @@ static void build_cmdmode_list(struct parse_opt_ctx_t *ctx,
 
 		CALLOC_ARRAY(elem, 1);
 		elem->value_ptr = value_ptr;
-		elem->value = *value_ptr;
+		elem->precision = opts->precision;
+		if (do_get_int_value(value_ptr, opts->precision, &elem->value))
+			optbug(opts, "has invalid precision");
 		elem->next = ctx->cmdmode_list;
 		ctx->cmdmode_list = elem;
 	}
+	BUG_if_bug("invalid 'struct option'");
 }
 
 static char *optnamearg(const struct option *opt, const char *arg,
@@ -317,7 +342,13 @@ static enum parse_opt_result get_value(struct parse_opt_ctx_t *p,
 	char *opt_name, *other_opt_name;
 
 	for (; elem; elem = elem->next) {
-		if (*elem->value_ptr == elem->value)
+		intmax_t new_value;
+
+		if (do_get_int_value(elem->value_ptr, elem->precision,
+				     &new_value))
+			BUG("impossible: invalid precision");
+
+		if (new_value == elem->value)
 			continue;
 
 		if (elem->opt &&
@@ -327,7 +358,7 @@ static enum parse_opt_result get_value(struct parse_opt_ctx_t *p,
 		elem->opt = opt;
 		elem->arg = arg;
 		elem->flags = flags;
-		elem->value = *elem->value_ptr;
+		elem->value = new_value;
 	}
 
 	if (result || !elem)
