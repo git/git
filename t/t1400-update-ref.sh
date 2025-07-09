@@ -2349,4 +2349,23 @@ test_expect_success 'update-ref should also create reflog for HEAD' '
 	test_cmp expect actual
 '
 
+test_expect_success REFFILES 'empty directories are pruned when aborting a transaction' '
+	test_path_is_missing .git/refs/heads/nested &&
+	git update-ref --stdin <<-EOF &&
+	create refs/heads/nested/something HEAD
+	prepare
+	abort
+	EOF
+	test_path_is_missing .git/refs/heads/nested
+'
+
+test_expect_success REFFILES 'empty directories are pruned when not committing' '
+	test_path_is_missing .git/refs/heads/nested &&
+	git update-ref --stdin <<-EOF &&
+	create refs/heads/nested/something HEAD
+	prepare
+	EOF
+	test_path_is_missing .git/refs/heads/nested
+'
+
 test_done
