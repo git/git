@@ -1,0 +1,2 @@
+/usr/bin/ar qc libclar-test-lib.a  CMakeFiles/clar-test-lib.dir/workspaces/git/t/unit-tests/clar/clar.c.o CMakeFiles/clar-test-lib.dir/workspaces/git/t/unit-tests/unit-test.c.o CMakeFiles/clar-test-lib.dir/workspaces/git/t/unit-tests/lib-oid.c.o
+/usr/bin/ranlib libclar-test-lib.a

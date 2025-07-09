@@ -1,0 +1,44 @@
+diff_cmd () {
+	"$merge_tool_path" \
+		--L1 "$MERGED (A)" --L2 "$MERGED (B)" \
+		"$LOCAL" "$REMOTE" >/dev/null 2>&1
+}
+
+diff_cmd_help () {
+	echo "Use KDiff3 (requires a graphical session)"
+}
+
+merge_cmd () {
+	if $base_present
+	then
+		"$merge_tool_path" --auto \
+			--L1 "$MERGED (Base)" \
+			--L2 "$MERGED (Local)" \
+			--L3 "$MERGED (Remote)" \
+			-o "$MERGED" "$BASE" "$LOCAL" "$REMOTE" \
+		>/dev/null 2>&1
+	else
+		"$merge_tool_path" --auto \
+			--L1 "$MERGED (Local)" \
+			--L2 "$MERGED (Remote)" \
+			-o "$MERGED" "$LOCAL" "$REMOTE" \
+		>/dev/null 2>&1
+	fi
+}
+
+merge_cmd_help () {
+	echo "Use KDiff3 (requires a graphical session)"
+}
+
+exit_code_trustable () {
+	true
+}
+
+translate_merge_tool_path() {
+	if type kdiff3 >/dev/null 2>/dev/null
+	then
+		echo kdiff3
+	else
+		mergetool_find_win32_cmd "kdiff3.exe" "Kdiff3"
+	fi
+}
