@@ -68,6 +68,64 @@ static char *fix_filename(const char *prefix, const char *file)
 		return prefix_filename_except_for_dash(prefix, file);
 }
 
+static int do_get_int_value(const void *value, size_t precision, intmax_t *ret)
+{
+	switch (precision) {
+	case sizeof(int8_t):
+		*ret = *(int8_t *)value;
+		return 0;
+	case sizeof(int16_t):
+		*ret = *(int16_t *)value;
+		return 0;
+	case sizeof(int32_t):
+		*ret = *(int32_t *)value;
+		return 0;
+	case sizeof(int64_t):
+		*ret = *(int64_t *)value;
+		return 0;
+	default:
+		return -1;
+	}
+}
+
+static intmax_t get_int_value(const struct option *opt, enum opt_parsed flags)
+{
+	intmax_t ret;
+	if (do_get_int_value(opt->value, opt->precision, &ret))
+		BUG("invalid precision for option %s", optname(opt, flags));
+	return ret;
+}
+
+static enum parse_opt_result set_int_value(const struct option *opt,
+					   enum opt_parsed flags,
+					   intmax_t value)
+{
+	switch (opt->precision) {
+	case sizeof(int8_t):
+		*(int8_t *)opt->value = value;
+		return 0;
+	case sizeof(int16_t):
+		*(int16_t *)opt->value = value;
+		return 0;
+	case sizeof(int32_t):
+		*(int32_t *)opt->value = value;
+		return 0;
+	case sizeof(int64_t):
+		*(int64_t *)opt->value = value;
+		return 0;
+	default:
+		BUG("invalid precision for option %s", optname(opt, flags));
+	}
+}
+
+static int signed_int_fits(intmax_t value, size_t precision)
+{
+	size_t bits = precision * CHAR_BIT;
+	intmax_t upper_bound = INTMAX_MAX >> (bitsizeof(intmax_t) - bits);
+	intmax_t lower_bound = -upper_bound - 1;
+	return lower_bound <= value && value <= upper_bound;
+}
+
 static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 					  const struct option *opt,
 					  enum opt_parsed flags,
@@ -89,35 +147,55 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 		return opt->ll_callback(p, opt, NULL, unset);
 
 	case OPTION_BIT:
+	{
+		intmax_t value = get_int_value(opt, flags);
 		if (unset)
-			*(int *)opt->value &= ~opt->defval;
+			value &= ~opt->defval;
 		else
-			*(int *)opt->value |= opt->defval;
-		return 0;
+			value |= opt->defval;
+		return set_int_value(opt, flags, value);
+	}
 
 	case OPTION_NEGBIT:
+	{
+		intmax_t value = get_int_value(opt, flags);
 		if (unset)
-			*(int *)opt->value |= opt->defval;
+			value |= opt->defval;
 		else
-			*(int *)opt->value &= ~opt->defval;
-		return 0;
+			value &= ~opt->defval;
+		return set_int_value(opt, flags, value);
+	}
 
 	case OPTION_BITOP:
+	{
+		intmax_t value = get_int_value(opt, flags);
 		if (unset)
 			BUG("BITOP can't have unset form");
-		*(int *)opt->value &= ~opt->extra;
-		*(int *)opt->value |= opt->defval;
-		return 0;
+		value &= ~opt->extra;
+		value |= opt->defval;
+		return set_int_value(opt, flags, value);
+	}
 
 	case OPTION_COUNTUP:
-		if (*(int *)opt->value < 0)
-			*(int *)opt->value = 0;
-		*(int *)opt->value = unset ? 0 : *(int *)opt->value + 1;
-		return 0;
+	{
+		size_t bits = CHAR_BIT * opt->precision;
+		intmax_t upper_bound = INTMAX_MAX >> (bitsizeof(intmax_t) - bits);
+		intmax_t value = get_int_value(opt, flags);
+
+		if (value < 0)
+			value = 0;
+		if (unset)
+			value = 0;
+		else if (value < upper_bound)
+			value++;
+		else
+			return error(_("value for %s exceeds %"PRIdMAX),
+				     optname(opt, flags), upper_bound);
+		return set_int_value(opt, flags, value);
+	}
 
 	case OPTION_SET_INT:
-		*(int *)opt->value = unset ? 0 : opt->defval;
-		return 0;
+		return set_int_value(opt, flags, unset ? 0 : opt->defval);
 
 	case OPTION_STRING:
 		if (unset)
@@ -199,23 +277,7 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 			return error(_("value %s for %s not in range [%"PRIdMAX",%"PRIdMAX"]"),
 				     arg, optname(opt, flags), (intmax_t)lower_bound, (intmax_t)upper_bound);
 
-		switch (opt->precision) {
-		case 1:
-			*(int8_t *)opt->value = value;
-			return 0;
-		case 2:
-			*(int16_t *)opt->value = value;
-			return 0;
-		case 4:
-			*(int32_t *)opt->value = value;
-			return 0;
-		case 8:
-			*(int64_t *)opt->value = value;
-			return 0;
-		default:
-			BUG("invalid precision for option %s",
-			    optname(opt, flags));
-		}
+		return set_int_value(opt, flags, value);
 	}
 	case OPTION_UNSIGNED:
 	{
@@ -266,7 +328,9 @@ static enum parse_opt_result do_get_value(struct parse_opt_ctx_t *p,
 }
 
 struct parse_opt_cmdmode_list {
-	int value, *value_ptr;
+	intmax_t value;
+	void *value_ptr;
+	size_t precision;
 	const struct option *opt;
 	const char *arg;
 	enum opt_parsed flags;
@@ -280,7 +344,7 @@ static void build_cmdmode_list(struct parse_opt_ctx_t *ctx,
 
 	for (; opts->type != OPTION_END; opts++) {
 		struct parse_opt_cmdmode_list *elem = ctx->cmdmode_list;
-		int *value_ptr = opts->value;
+		void *value_ptr = opts->value;
 
 		if (!(opts->flags & PARSE_OPT_CMDMODE) || !value_ptr)
 			continue;
@@ -292,10 +356,13 @@ static void build_cmdmode_list(struct parse_opt_ctx_t *ctx,
 
 		CALLOC_ARRAY(elem, 1);
 		elem->value_ptr = value_ptr;
-		elem->value = *value_ptr;
+		elem->precision = opts->precision;
+		if (do_get_int_value(value_ptr, opts->precision, &elem->value))
+			optbug(opts, "has invalid precision");
 		elem->next = ctx->cmdmode_list;
 		ctx->cmdmode_list = elem;
 	}
+	BUG_if_bug("invalid 'struct option'");
 }
 
 static char *optnamearg(const struct option *opt, const char *arg,
@@ -317,7 +384,13 @@ static enum parse_opt_result get_value(struct parse_opt_ctx_t *p,
 	char *opt_name, *other_opt_name;
 
 	for (; elem; elem = elem->next) {
-		if (*elem->value_ptr == elem->value)
+		intmax_t new_value;
+
+		if (do_get_int_value(elem->value_ptr, elem->precision,
+				     &new_value))
+			BUG("impossible: invalid precision");
+
+		if (new_value == elem->value)
 			continue;
 
 		if (elem->opt &&
@@ -327,7 +400,7 @@ static enum parse_opt_result get_value(struct parse_opt_ctx_t *p,
 		elem->opt = opt;
 		elem->arg = arg;
 		elem->flags = flags;
-		elem->value = *elem->value_ptr;
+		elem->value = new_value;
 	}
 
 	if (result || !elem)
@@ -586,10 +659,14 @@ static void parse_options_check(const struct option *opts)
 		    opts->long_name && !(opts->flags & PARSE_OPT_NONEG))
 			optbug(opts, "OPTION_SET_INT 0 should not be negatable");
 		switch (opts->type) {
-		case OPTION_COUNTUP:
+		case OPTION_SET_INT:
 		case OPTION_BIT:
 		case OPTION_NEGBIT:
-		case OPTION_SET_INT:
+		case OPTION_BITOP:
+		case OPTION_COUNTUP:
+			if (!signed_int_fits(opts->defval, opts->precision))
+				optbug(opts, "has invalid defval");
+			/* fallthru */
 		case OPTION_NUMBER:
 			if ((opts->flags & PARSE_OPT_OPTARG) ||
 			    !(opts->flags & PARSE_OPT_NOARG))
