@@ -156,12 +156,8 @@ pack.useSparse::
 	`true`.
 
 pack.usePathWalk::
-	When true, git will default to using the '--path-walk' option in
-	'git pack-objects' when the '--revs' option is present. This
-	algorithm groups objects by path to maximize the ability to
-	compute delta chains across historical versions of the same
-	object. This may disable other options, such as using bitmaps to
-	enumerate objects.
+	Enable the `--path-walk` option by default for `git pack-objects`
+	processes. See linkgit:git-pack-objects[1] for full details.
 
 pack.preferBitmapTips::
 	When selecting which commits will receive bitmaps, prefer a

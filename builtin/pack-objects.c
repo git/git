@@ -44,6 +44,7 @@
 #include "blob.h"
 #include "tree.h"
 #include "path-walk.h"
+#include "trace2.h"
 
 /*
  * Objects we are going to pack are collected in the `to_pack` structure.
@@ -187,8 +188,14 @@ static inline void oe_set_delta_size(struct packing_data *pack,
 #define SET_DELTA_SIBLING(obj, val) oe_set_delta_sibling(&to_pack, obj, val)
 
 static const char *const pack_usage[] = {
-	N_("git pack-objects --stdout [<options>] [< <ref-list> | < <object-list>]"),
-	N_("git pack-objects [<options>] <base-name> [< <ref-list> | < <object-list>]"),
+	N_("git pack-objects [-q | --progress | --all-progress] [--all-progress-implied]\n"
+	   "                 [--no-reuse-delta] [--delta-base-offset] [--non-empty]\n"
+	   "                 [--local] [--incremental] [--window=<n>] [--depth=<n>]\n"
+	   "                 [--revs [--unpacked | --all]] [--keep-pack=<pack-name>]\n"
+	   "                 [--cruft] [--cruft-expiration=<time>]\n"
+	   "                 [--stdout [--filter=<filter-spec>] | <base-name>]\n"
+	   "                 [--shallow] [--keep-true-parents] [--[no-]sparse]\n"
+	   "                 [--name-hash-version=<n>] [--path-walk] < <object-list>"),
 	NULL
 };
 
@@ -203,6 +210,7 @@ static int keep_unreachable, unpack_unreachable, include_tag;
 static timestamp_t unpack_unreachable_expiration;
 static int pack_loose_unreachable;
 static int cruft;
+static int shallow = 0;
 static timestamp_t cruft_expiration;
 static int local;
 static int have_non_local_packs;
@@ -3291,6 +3299,9 @@ static int add_ref_tag(const char *tag UNUSED, const char *referent UNUSED, cons
 static int should_attempt_deltas(struct object_entry *entry)
 {
 	if (DELTA(entry))
+		/* This happens if we decided to reuse existing
+		 * delta from a pack. "reuse_delta &&" is implied.
+		 */
 		return 0;
 
 	if (!entry->type_valid ||
@@ -3315,16 +3326,16 @@ static int should_attempt_deltas(struct object_entry *entry)
 	return 1;
 }
 
-static void find_deltas_for_region(struct object_entry *list UNUSED,
+static void find_deltas_for_region(struct object_entry *list,
 				   struct packing_region *region,
 				   unsigned int *processed)
 {
 	struct object_entry **delta_list;
-	uint32_t delta_list_nr = 0;
+	unsigned int delta_list_nr = 0;
 
 	ALLOC_ARRAY(delta_list, region->nr);
-	for (uint32_t i = 0; i < region->nr; i++) {
-		struct object_entry *entry = to_pack.objects + region->start + i;
+	for (size_t i = 0; i < region->nr; i++) {
+		struct object_entry *entry = list + region->start + i;
 		if (should_attempt_deltas(entry))
 			delta_list[delta_list_nr++] = entry;
 	}
@@ -3336,10 +3347,10 @@ static void find_deltas_for_region(struct object_entry *list UNUSED,
 
 static void find_deltas_by_region(struct object_entry *list,
 				  struct packing_region *regions,
-				  uint32_t start, uint32_t nr)
+				  size_t start, size_t nr)
 {
 	unsigned int processed = 0;
-	uint32_t progress_nr;
+	size_t progress_nr;
 
 	if (!nr)
 		return;
@@ -3422,7 +3433,10 @@ static void ll_find_deltas_by_region(struct object_entry *list,
 	}
 
 	if (progress > pack_to_stdout)
-		fprintf_ln(stderr, _("Path-based delta compression using up to %d threads"),
+		fprintf_ln(stderr,
+			   Q_("Path-based delta compression using up to %d thread",
+			      "Path-based delta compression using up to %d threads",
+			      delta_search_threads),
 			   delta_search_threads);
 	CALLOC_ARRAY(p, delta_search_threads);
 
@@ -4489,11 +4503,11 @@ static void mark_bitmap_preferred_tips(void)
 	}
 }
 
-static inline int is_oid_interesting(struct repository *repo,
-				     struct object_id *oid)
+static inline int is_oid_uninteresting(struct repository *repo,
+				       struct object_id *oid)
 {
 	struct object *o = lookup_object(repo, oid);
-	return o && !(o->flags & UNINTERESTING);
+	return !o || (o->flags & UNINTERESTING);
 }
 
 static int add_objects_by_path(const char *path,
@@ -4521,7 +4535,7 @@ static int add_objects_by_path(const char *path,
 					     OBJECT_INFO_FOR_PREFETCH) < 0)
 			continue;
 
-		exclude = !is_oid_interesting(the_repository, oid);
+		exclude = is_oid_uninteresting(the_repository, oid);
 
 		if (exclude && !thin)
 			continue;
@@ -4553,11 +4567,11 @@ static void get_object_list_path_walk(struct rev_info *revs)
 {
 	struct path_walk_info info = PATH_WALK_INFO_INIT;
 	unsigned int processed = 0;
+	int result;
 
 	info.revs = revs;
 	info.path_fn = add_objects_by_path;
 	info.path_fn_data = &processed;
-	revs->tag_objects = 1;
 
 	/*
 	 * Allow the --[no-]sparse option to be interesting here, if only
@@ -4566,8 +4580,13 @@ static void get_object_list_path_walk(struct rev_info *revs)
 	 * base objects.
 	 */
 	info.prune_all_uninteresting = sparse;
+	info.edge_aggressive = shallow;
 
-	if (walk_objects_by_path(&info))
+	trace2_region_enter("pack-objects", "path-walk", revs->repo);
+	result = walk_objects_by_path(&info);
+	trace2_region_leave("pack-objects", "path-walk", revs->repo);
+
+	if (result)
 		die(_("failed to pack objects via path-walk"));
 }
 
@@ -4617,7 +4636,7 @@ static void get_object_list(struct rev_info *revs, int ac, const char **av)
 
 	warn_on_object_refname_ambiguity = save_warning;
 
-	if (use_bitmap_index && !path_walk && !get_object_list_from_bitmap(revs))
+	if (use_bitmap_index && !get_object_list_from_bitmap(revs))
 		return;
 
 	if (use_delta_islands)
@@ -4767,7 +4786,6 @@ int cmd_pack_objects(int argc,
 		     struct repository *repo UNUSED)
 {
 	int use_internal_rev_list = 0;
-	int shallow = 0;
 	int all_progress_implied = 0;
 	struct strvec rp = STRVEC_INIT;
 	int rev_list_unpacked = 0, rev_list_all = 0, rev_list_reflog = 0;
@@ -4947,17 +4965,18 @@ int cmd_pack_objects(int argc,
 
 	strvec_push(&rp, "pack-objects");
 
-	if (path_walk && filter_options.choice) {
-		warning(_("cannot use --filter with --path-walk"));
-		path_walk = 0;
-	}
-	if (path_walk && use_delta_islands) {
-		warning(_("cannot use delta islands with --path-walk"));
-		path_walk = 0;
-	}
-	if (path_walk && shallow) {
-		warning(_("cannot use --shallow with --path-walk"));
-		path_walk = 0;
+	if (path_walk) {
+		const char *option = NULL;
+		if (filter_options.choice)
+			option = "--filter";
+		else if (use_delta_islands)
+			option = "--delta-islands";
+
+		if (option) {
+			warning(_("cannot use %s with %s"),
+				option, "--path-walk");
+			path_walk = 0;
+		}
 	}
 	if (path_walk) {
 		strvec_push(&rp, "--boundary");

@@ -723,7 +723,6 @@ test_expect_success '--name-hash-version=2 and --write-bitmap-index are incompat
 	! test_grep "currently, --write-bitmap-index requires --name-hash-version=1" err
 '
 
-# Basic "repack everything" test
 test_expect_success '--path-walk pack everything' '
 	git -C server rev-parse HEAD >in &&
 	GIT_PROGRESS_DELAY=0 git -C server pack-objects \
@@ -732,7 +731,6 @@ test_expect_success '--path-walk pack everything' '
 	git -C server index-pack --stdin <out.pack
 '
 
-# Basic "thin pack" test
 test_expect_success '--path-walk thin pack' '
 	cat >in <<-EOF &&
 	$(git -C server rev-parse HEAD)

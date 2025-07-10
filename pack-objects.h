@@ -125,8 +125,8 @@ struct object_entry {
  * as given by a starting index and a number of elements.
  */
 struct packing_region {
-	uint32_t start;
-	uint32_t nr;
+	size_t start;
+	size_t nr;
 };
 
 struct packing_data {
@@ -135,7 +135,7 @@ struct packing_data {
 	uint32_t nr_objects, nr_alloc;
 
 	struct packing_region *regions;
-	uint32_t nr_regions, nr_regions_alloc;
+	size_t nr_regions, nr_regions_alloc;
 
 	int32_t *index;
 	uint32_t index_size;
