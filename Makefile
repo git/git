@@ -919,6 +919,11 @@ TEST_SHELL_PATH = $(SHELL_PATH)
 
 LIB_FILE = libgit.a
 XDIFF_LIB = xdiff/lib.a
+ifeq ($(DEBUG), 1)
+RUST_LIB = rust/target/debug/libxdiff.a
+else
+RUST_LIB = rust/target/release/libxdiff.a
+endif
 REFTABLE_LIB = reftable/libreftable.a
 
 GENERATED_H += command-list.h
@@ -1391,6 +1396,8 @@ UNIT_TEST_OBJS += $(UNIT_TEST_DIR)/lib-reftable.o
 # xdiff and reftable libs may in turn depend on what is in libgit.a
 GITLIBS = common-main.o $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(LIB_FILE)
 EXTLIBS =
+
+GITLIBS += $(RUST_LIB)
 
 GIT_USER_AGENT = git/$(GIT_VERSION)
 
@@ -2925,6 +2932,14 @@ $(LIB_FILE): $(LIB_OBJS)
 $(XDIFF_LIB): $(XDIFF_OBJS)
 	$(QUIET_AR)$(RM) $@ && $(AR) $(ARFLAGS) $@ $^
 
+.PHONY: $(RUST_LIB)
+$(RUST_LIB):
+ifeq ($(DEBUG), 1)
+	cd rust && RUSTFLAGS="-Aunused_imports -Adead_code" cargo build --verbose
+else
+	cd rust && RUSTFLAGS="-Aunused_imports -Adead_code" cargo build --verbose --release
+endif
+
 $(REFTABLE_LIB): $(REFTABLE_OBJS)
 	$(QUIET_AR)$(RM) $@ && $(AR) $(ARFLAGS) $@ $^
 
@@ -3756,7 +3771,10 @@ cocciclean:
 	$(RM) -r .build/contrib/coccinelle
 	$(RM) contrib/coccinelle/*.cocci.patch
 
-clean: profile-clean coverage-clean cocciclean
+rustclean:
+	cd rust && cargo clean
+
+clean: profile-clean coverage-clean cocciclean rustclean
 	$(RM) -r .build $(UNIT_TEST_BIN)
 	$(RM) GIT-TEST-SUITES
 	$(RM) po/git.pot po/git-core.pot
