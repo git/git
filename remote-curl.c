@@ -285,7 +285,7 @@ static const struct git_hash_algo *detect_hash_algo(struct discovery *heads)
 	 * back to SHA1, which may or may not be correct.
 	 */
 	if (!p)
-		return &hash_algos[GIT_HASH_SHA1];
+		return &hash_algos[GIT_HASH_SHA1_LEGACY];
 
 	algo = hash_algo_by_length((p - heads->buf) / 2);
 	if (algo == GIT_HASH_UNKNOWN)

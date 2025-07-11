@@ -252,9 +252,9 @@ test_expect_success '--literally complains about non-standard types' '
 	test_must_fail git hash-object -t bogus --literally --stdin
 '
 
-test_expect_success '--stdin outside of repository (uses SHA-1)' '
+test_expect_success '--stdin outside of repository (uses default hash)' '
 	nongit git hash-object --stdin <hello >actual &&
-	echo "$(test_oid --hash=sha1 hello)" >expect &&
+	echo "$(test_oid --hash=builtin hello)" >expect &&
 	test_cmp expect actual
 '
 
