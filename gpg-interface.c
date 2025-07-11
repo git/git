@@ -783,7 +783,7 @@ static int git_gpg_config(const char *var, const char *value,
 
 	if (fmtname) {
 		fmt = get_format_by_name(fmtname);
-		return git_config_string((char **) &fmt->program, var, value);
+		return git_config_pathname((char **) &fmt->program, var, value);
 	}
 
 	return 0;
