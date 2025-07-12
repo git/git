@@ -221,9 +221,7 @@ static uint32_t murmur3_seeded_v1(uint32_t seed, const char *data, size_t len)
 	return seed;
 }
 
-void fill_bloom_key(const char *data,
-		    size_t len,
-		    struct bloom_key *key,
+void bloom_key_fill(struct bloom_key *key, const char *data, size_t len,
 		    const struct bloom_filter_settings *settings)
 {
 	int i;
@@ -243,7 +241,7 @@ void fill_bloom_key(const char *data,
 		key->hashes[i] = hash0 + i * hash1;
 }
 
-void clear_bloom_key(struct bloom_key *key)
+void bloom_key_clear(struct bloom_key *key)
 {
 	FREE_AND_NULL(key->hashes);
 }
@@ -500,9 +498,9 @@ struct bloom_filter *get_or_compute_bloom_filter(struct repository *r,
 
 		hashmap_for_each_entry(&pathmap, &iter, e, entry) {
 			struct bloom_key key;
-			fill_bloom_key(e->path, strlen(e->path), &key, settings);
+			bloom_key_fill(&key, e->path, strlen(e->path), settings);
 			add_key_to_filter(&key, filter, settings);
-			clear_bloom_key(&key);
+			bloom_key_clear(&key);
 		}
 
 	cleanup:

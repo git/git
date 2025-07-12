@@ -78,11 +78,9 @@ int load_bloom_filter_from_graph(struct commit_graph *g,
 				 struct bloom_filter *filter,
 				 uint32_t graph_pos);
 
-void fill_bloom_key(const char *data,
-		    size_t len,
-		    struct bloom_key *key,
+void bloom_key_fill(struct bloom_key *key, const char *data, size_t len,
 		    const struct bloom_filter_settings *settings);
-void clear_bloom_key(struct bloom_key *key);
+void bloom_key_clear(struct bloom_key *key);
 
 void add_key_to_filter(const struct bloom_key *key,
 		       struct bloom_filter *filter,

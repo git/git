@@ -12,13 +12,13 @@ static struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
 static void add_string_to_filter(const char *data, struct bloom_filter *filter) {
 		struct bloom_key key;
 
-		fill_bloom_key(data, strlen(data), &key, &settings);
+		bloom_key_fill(&key, data, strlen(data), &settings);
 		printf("Hashes:");
 		for (size_t i = 0; i < settings.num_hashes; i++)
 			printf("0x%08x|", key.hashes[i]);
 		printf("\n");
 		add_key_to_filter(&key, filter, &settings);
-		clear_bloom_key(&key);
+		bloom_key_clear(&key);
 }
 
 static void print_bloom_filter(struct bloom_filter *filter) {

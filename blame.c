@@ -1310,7 +1310,7 @@ static void add_bloom_key(struct blame_bloom_data *bd,
 	}
 
 	bd->keys[bd->nr] = xmalloc(sizeof(struct bloom_key));
-	fill_bloom_key(path, strlen(path), bd->keys[bd->nr], bd->settings);
+	bloom_key_fill(bd->keys[bd->nr], path, strlen(path), bd->settings);
 	bd->nr++;
 }
 

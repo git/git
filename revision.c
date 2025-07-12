@@ -739,15 +739,15 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 	revs->bloom_keys_nr = path_component_nr;
 	ALLOC_ARRAY(revs->bloom_keys, revs->bloom_keys_nr);
 
-	fill_bloom_key(path, len, &revs->bloom_keys[0],
+	bloom_key_fill(&revs->bloom_keys[0], path, len,
 		       revs->bloom_filter_settings);
 	path_component_nr = 1;
 
 	p = path + len - 1;
 	while (p > path) {
 		if (*p == '/')
-			fill_bloom_key(path, p - path,
-				       &revs->bloom_keys[path_component_nr++],
+			bloom_key_fill(&revs->bloom_keys[path_component_nr++],
+				       path, p - path,
 				       revs->bloom_filter_settings);
 		p--;
 	}
@@ -3230,7 +3230,7 @@ void release_revisions(struct rev_info *revs)
 	oidset_clear(&revs->missing_commits);
 
 	for (int i = 0; i < revs->bloom_keys_nr; i++)
-		clear_bloom_key(&revs->bloom_keys[i]);
+		bloom_key_clear(&revs->bloom_keys[i]);
 	FREE_AND_NULL(revs->bloom_keys);
 	revs->bloom_keys_nr = 0;
 }

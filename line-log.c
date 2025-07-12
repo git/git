@@ -1172,12 +1172,13 @@ static int bloom_filter_check(struct rev_info *rev,
 		return 0;
 
 	while (!result && range) {
-		fill_bloom_key(range->path, strlen(range->path), &key, rev->bloom_filter_settings);
+		bloom_key_fill(&key, range->path, strlen(range->path),
+			       rev->bloom_filter_settings);
 
 		if (bloom_filter_contains(filter, &key, rev->bloom_filter_settings))
 			result = 1;
 
-		clear_bloom_key(&key);
+		bloom_key_clear(&key);
 		range = range->next;
 	}
 
