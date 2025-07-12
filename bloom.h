@@ -78,15 +78,6 @@ int load_bloom_filter_from_graph(struct commit_graph *g,
 				 struct bloom_filter *filter,
 				 uint32_t graph_pos);
 
-/*
- * Calculate the murmur3 32-bit hash value for the given data
- * using the given seed.
- * Produces a uniformly distributed hash value.
- * Not considered to be cryptographically secure.
- * Implemented as described in https://en.wikipedia.org/wiki/MurmurHash#Algorithm
- */
-uint32_t murmur3_seeded_v2(uint32_t seed, const char *data, size_t len);
-
 void fill_bloom_key(const char *data,
 		    size_t len,
 		    struct bloom_key *key,
@@ -136,5 +127,8 @@ struct bloom_filter *get_bloom_filter(struct repository *r, struct commit *c);
 int bloom_filter_contains(const struct bloom_filter *filter,
 			  const struct bloom_key *key,
 			  const struct bloom_filter_settings *settings);
+
+uint32_t test_bloom_murmur3_seeded(uint32_t seed, const char *data, size_t len,
+				   int version);
 
 #endif

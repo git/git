@@ -107,7 +107,7 @@ int load_bloom_filter_from_graph(struct commit_graph *g,
  * Not considered to be cryptographically secure.
  * Implemented as described in https://en.wikipedia.org/wiki/MurmurHash#Algorithm
  */
-uint32_t murmur3_seeded_v2(uint32_t seed, const char *data, size_t len)
+static uint32_t murmur3_seeded_v2(uint32_t seed, const char *data, size_t len)
 {
 	const uint32_t c1 = 0xcc9e2d51;
 	const uint32_t c2 = 0x1b873593;
@@ -539,4 +539,15 @@ int bloom_filter_contains(const struct bloom_filter *filter,
 	}
 
 	return 1;
+}
+
+uint32_t test_bloom_murmur3_seeded(uint32_t seed, const char *data, size_t len,
+				   int version)
+{
+	assert(version == 1 || version == 2);
+
+	if (version == 2)
+		return murmur3_seeded_v2(seed, data, len);
+	else
+		return murmur3_seeded_v1(seed, data, len);
 }

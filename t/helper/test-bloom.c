@@ -61,13 +61,13 @@ int cmd__bloom(int argc, const char **argv)
 		uint32_t hashed;
 		if (argc < 3)
 			usage(bloom_usage);
-		hashed = murmur3_seeded_v2(0, argv[2], strlen(argv[2]));
+		hashed = test_bloom_murmur3_seeded(0, argv[2], strlen(argv[2]), 2);
 		printf("Murmur3 Hash with seed=0:0x%08x\n", hashed);
 	}
 
 	if (!strcmp(argv[1], "get_murmur3_seven_highbit")) {
 		uint32_t hashed;
-		hashed = murmur3_seeded_v2(0, "\x99\xaa\xbb\xcc\xdd\xee\xff", 7);
+		hashed = test_bloom_murmur3_seeded(0, "\x99\xaa\xbb\xcc\xdd\xee\xff", 7, 2);
 		printf("Murmur3 Hash with seed=0:0x%08x\n", hashed);
 	}
 
