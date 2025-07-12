@@ -687,13 +687,37 @@ static int forbid_bloom_filters(struct pathspec *spec)
 
 static void release_revisions_bloom_keyvecs(struct rev_info *revs);
 
-static void prepare_to_use_bloom_filter(struct rev_info *revs)
+static int convert_pathspec_to_bloom_keyvec(struct bloom_keyvec **out,
+					    const struct pathspec_item *pi,
+					    const struct bloom_filter_settings *settings)
 {
-	struct pathspec_item *pi;
 	char *path_alloc = NULL;
 	const char *path;
 	size_t len;
+	int res = 0;
 
+	/* remove single trailing slash from path, if needed */
+	if (pi->len > 0 && pi->match[pi->len - 1] == '/') {
+		path_alloc = xmemdupz(pi->match, pi->len - 1);
+		path = path_alloc;
+	} else
+		path = pi->match;
+
+	len = strlen(path);
+	if (!len) {
+		res = -1;
+		goto cleanup;
+	}
+
+	*out = bloom_keyvec_new(path, len, settings);
+
+cleanup:
+	free(path_alloc);
+	return res;
+}
+
+static void prepare_to_use_bloom_filter(struct rev_info *revs)
+{
 	if (!revs->commits)
 		return;
 
@@ -711,21 +735,11 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 
 	revs->bloom_keyvecs_nr = 1;
 	CALLOC_ARRAY(revs->bloom_keyvecs, 1);
-	pi = &revs->pruning.pathspec.items[0];
 
-	/* remove single trailing slash from path, if needed */
-	if (pi->len > 0 && pi->match[pi->len - 1] == '/') {
-		path_alloc = xmemdupz(pi->match, pi->len - 1);
-		path = path_alloc;
-	} else
-		path = pi->match;
-
-	len = strlen(path);
-	if (!len)
+	if (convert_pathspec_to_bloom_keyvec(&revs->bloom_keyvecs[0],
+					     &revs->pruning.pathspec.items[0],
+					     revs->bloom_filter_settings))
 		goto fail;
-
-	revs->bloom_keyvecs[0] =
-		bloom_keyvec_new(path, len, revs->bloom_filter_settings);
 
 	if (trace2_is_enabled() && !bloom_filter_atexit_registered) {
 		atexit(trace2_bloom_filter_statistics_atexit);
@@ -736,7 +750,6 @@ static void prepare_to_use_bloom_filter(struct rev_info *revs)
 
 fail:
 	revs->bloom_filter_settings = NULL;
-	free(path_alloc);
 	release_revisions_bloom_keyvecs(revs);
 }
 
