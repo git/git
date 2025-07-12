@@ -278,6 +278,55 @@ void deinit_bloom_filters(void)
 	deep_clear_bloom_filter_slab(&bloom_filters, free_one_bloom_filter);
 }
 
+struct bloom_keyvec *bloom_keyvec_new(const char *path, size_t len,
+				      const struct bloom_filter_settings *settings)
+{
+	struct bloom_keyvec *vec;
+	const char *p;
+	size_t sz;
+	size_t nr = 1;
+
+	p = path;
+	while (*p) {
+		/*
+		 * At this point, the path is normalized to use Unix-style
+		 * path separators. This is required due to how the
+		 * changed-path Bloom filters store the paths.
+		 */
+		if (*p == '/')
+			nr++;
+		p++;
+	}
+
+	sz = sizeof(struct bloom_keyvec);
+	sz += nr * sizeof(struct bloom_key);
+	vec = (struct bloom_keyvec *)xcalloc(1, sz);
+	if (!vec)
+		return NULL;
+	vec->count = nr;
+
+	bloom_key_fill(&vec->key[0], path, len, settings);
+	nr = 1;
+	p = path + len - 1;
+	while (p > path) {
+		if (*p == '/') {
+			bloom_key_fill(&vec->key[nr++], path, p - path, settings);
+		}
+		p--;
+	}
+	assert(nr == vec->count);
+	return vec;
+}
+
+void bloom_keyvec_free(struct bloom_keyvec *vec)
+{
+	if (!vec)
+		return;
+	for (size_t nr = 0; nr < vec->count; nr++)
+		bloom_key_clear(&vec->key[nr]);
+	free(vec);
+}
+
 static int pathmap_cmp(const void *hashmap_cmp_fn_data UNUSED,
 		       const struct hashmap_entry *eptr,
 		       const struct hashmap_entry *entry_or_key,
@@ -537,6 +586,18 @@ int bloom_filter_contains(const struct bloom_filter *filter,
 	}
 
 	return 1;
+}
+
+int bloom_filter_contains_vec(const struct bloom_filter *filter,
+			      const struct bloom_keyvec *vec,
+			      const struct bloom_filter_settings *settings)
+{
+	int ret = 1;
+
+	for (size_t nr = 0; ret > 0 && nr < vec->count; nr++)
+		ret = bloom_filter_contains(filter, &vec->key[nr], settings);
+
+	return ret;
 }
 
 uint32_t test_bloom_murmur3_seeded(uint32_t seed, const char *data, size_t len,
