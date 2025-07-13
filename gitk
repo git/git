@@ -7,7 +7,15 @@ exec wish "$0" -- "$@"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-package require Tk
+if {[catch {package require Tcl 8.6-8.8} err]} {
+    catch {wm withdraw .}
+    tk_messageBox \
+        -icon error \
+        -type ok \
+        -title "gitk: fatal error" \
+        -message $err
+    exit 1
+}
 
 set MIN_GIT_VERSION 2.20
 regexp {^git version ([\d.]*\d)} [exec git version] _ git_version
@@ -12508,13 +12516,6 @@ package require msgcat
 namespace import ::msgcat::mc
 ## And eventually load the actual message catalog
 ::msgcat::mcload $gitk_msgsdir
-
-# First check that Tcl/Tk is recent enough
-if {[catch {package require Tk 8.4} err]} {
-    show_error {} . [mc "Sorry, gitk cannot run with this version of Tcl/Tk.\n\
-                         Gitk requires at least Tcl/Tk 8.4."]
-    exit 1
-}
 
 # on OSX bring the current Wish process window to front
 if {[tk windowingsystem] eq "aqua"} {
