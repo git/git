@@ -208,28 +208,6 @@ You must stage at least 1 file before you can commit.
 	# -- A message is required.
 	#
 	set msg [$ui_comm get 1.0 end]
-	# Strip trailing whitespace
-	regsub -all -line {[ \t\r]+$} $msg {} msg
-	# Strip comment lines
-	global comment_string
-	set cmt_rx [strcat {(^|\n)} [regsub -all {\W} $comment_string {\\&}] {[^\n]*}]
-	regsub -all $cmt_rx $msg {\1} msg
-	# Strip leading and trailing empty lines (puts adds one \n)
-	set msg [string trim $msg \n]
-	# Compress consecutive empty lines
-	regsub -all {\n{3,}} $msg "\n\n" msg
-	if {$msg eq {}} {
-		error_popup [mc "Please supply a commit message.
-
-A good commit message has the following format:
-
-- First line: Describe in one sentence what you did.
-- Second line: Blank
-- Remaining lines: Describe why this change is good.
-"]
-		unlock_index
-		return
-	}
 
 	# -- Build the message file.
 	#
@@ -332,7 +310,52 @@ proc commit_commitmsg_wait {fd_ph curHEAD msg_p} {
 	fconfigure $fd_ph -blocking 0
 }
 
+proc wash_commit_message {msg} {
+	# Strip trailing whitespace
+	regsub -all -line {[ \t\r]+$} $msg {} msg
+	# Strip comment lines
+	global comment_string
+	set cmt_rx [strcat {(^|\n)} [regsub -all {\W} $comment_string {\\&}] {[^\n]*}]
+	regsub -all $cmt_rx $msg {\1} msg
+	# Strip leading and trailing empty lines (puts adds one \n)
+	set msg [string trim $msg \n]
+	# Compress consecutive empty lines
+	regsub -all {\n{3,}} $msg \n\n msg
+
+	return $msg
+}
+
 proc commit_writetree {curHEAD msg_p} {
+	# -- Process the commit message after hooks have run.
+	#
+	set msg_fd [safe_open_file $msg_p r]
+	setup_commit_encoding $msg_fd 1
+	set msg [read $msg_fd]
+	close $msg_fd
+
+	# Process the message (strip whitespace, comments, etc.)
+	set msg [wash_commit_message $msg]
+
+	if {$msg eq {}} {
+		error_popup [mc "Please supply a commit message.
+
+A good commit message has the following format:
+
+- First line: Describe in one sentence what you did.
+- Second line: Blank
+- Remaining lines: Describe why this change is good.
+"]
+		unlock_index
+		return
+	}
+
+	# Write the processed message back to the file
+	set msg_wt [safe_open_file $msg_p w]
+	fconfigure $msg_wt -translation lf
+	setup_commit_encoding $msg_wt
+	puts $msg_wt $msg
+	close $msg_wt
+
 	ui_status [mc "Committing changes..."]
 	set fd_wt [git_read [list write-tree]]
 	fileevent $fd_wt readable \
