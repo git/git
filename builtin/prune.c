@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "builtin.h"
@@ -64,7 +63,7 @@ static void perform_reachability_traversal(struct rev_info *revs)
 		return;
 
 	if (show_progress)
-		progress = start_delayed_progress(the_repository,
+		progress = start_delayed_progress(revs->repo,
 						  _("Checking connectivity"), 0);
 	mark_reachable_objects(revs, 1, expire, progress);
 	stop_progress(&progress);
@@ -78,7 +77,7 @@ static int is_object_reachable(const struct object_id *oid,
 
 	perform_reachability_traversal(revs);
 
-	obj = lookup_object(the_repository, oid);
+	obj = lookup_object(revs->repo, oid);
 	return obj && (obj->flags & SEEN);
 }
 
@@ -99,8 +98,7 @@ static int prune_object(const struct object_id *oid, const char *fullpath,
 	if (st.st_mtime > expire)
 		return 0;
 	if (show_only || verbose) {
-		enum object_type type = oid_object_info(the_repository, oid,
-							NULL);
+		enum object_type type = oid_object_info(revs->repo, oid, NULL);
 		printf("%s %s\n", oid_to_hex(oid),
 		       (type > 0) ? type_name(type) : "unknown");
 	}
@@ -154,7 +152,7 @@ static void remove_temporary_files(const char *path)
 int cmd_prune(int argc,
 	      const char **argv,
 	      const char *prefix,
-	      struct repository *repo UNUSED)
+	      struct repository *repo)
 {
 	struct rev_info revs;
 	int exclude_promisor_objects = 0;
@@ -173,20 +171,19 @@ int cmd_prune(int argc,
 	expire = TIME_MAX;
 	save_commit_buffer = 0;
 	disable_replace_refs();
-	repo_init_revisions(the_repository, &revs, prefix);
 
 	argc = parse_options(argc, argv, prefix, options, prune_usage, 0);
 
-	if (repository_format_precious_objects)
+	repo_init_revisions(repo, &revs, prefix);
+	if (repo->repository_format_precious_objects)
 		die(_("cannot prune in a precious-objects repo"));
 
 	while (argc--) {
 		struct object_id oid;
 		const char *name = *argv++;
 
-		if (!repo_get_oid(the_repository, name, &oid)) {
-			struct object *object = parse_object_or_die(the_repository, &oid,
-								    name);
+		if (!repo_get_oid(repo, name, &oid)) {
+			struct object *object = parse_object_or_die(repo, &oid, name);
 			add_pending_object(&revs, object, "");
 		}
 		else
@@ -200,16 +197,16 @@ int cmd_prune(int argc,
 		revs.exclude_promisor_objects = 1;
 	}
 
-	for_each_loose_file_in_objdir(repo_get_object_directory(the_repository),
+	for_each_loose_file_in_objdir(repo_get_object_directory(repo),
 				      prune_object, prune_cruft, prune_subdir, &revs);
 
 	prune_packed_objects(show_only ? PRUNE_PACKED_DRY_RUN : 0);
-	remove_temporary_files(repo_get_object_directory(the_repository));
-	s = mkpathdup("%s/pack", repo_get_object_directory(the_repository));
+	remove_temporary_files(repo_get_object_directory(repo));
+	s = mkpathdup("%s/pack", repo_get_object_directory(repo));
 	remove_temporary_files(s);
 	free(s);
 
-	if (is_repository_shallow(the_repository)) {
+	if (is_repository_shallow(repo)) {
 		perform_reachability_traversal(&revs);
 		prune_shallow(show_only ? PRUNE_SHOW_ONLY : 0);
 	}

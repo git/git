@@ -189,8 +189,6 @@ extern enum object_creation_mode object_creation_mode;
 
 extern int grafts_keep_true_parents;
 
-extern int repository_format_precious_objects;
-
 const char *get_log_output_encoding(void);
 const char *get_commit_output_encoding(void);
 
