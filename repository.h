@@ -20,6 +20,12 @@ enum ref_storage_format {
 	REF_STORAGE_FORMAT_REFTABLE,
 };
 
+#ifdef WITH_BREAKING_CHANGES /* Git 3.0 */
+# define REF_STORAGE_FORMAT_DEFAULT REF_STORAGE_FORMAT_REFTABLE
+#else
+# define REF_STORAGE_FORMAT_DEFAULT REF_STORAGE_FORMAT_FILES
+#endif
+
 struct repo_path_cache {
 	char *squash_msg;
 	char *merge_msg;
