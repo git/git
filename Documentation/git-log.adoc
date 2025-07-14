@@ -8,8 +8,8 @@ git-log - Show commit logs
 
 SYNOPSIS
 --------
-[verse]
-'git log' [<options>] [<revision-range>] [[--] <path>...]
+[synopsis]
+git log [<options>] [<revision-range>] [[--] <path>...]
 
 DESCRIPTION
 -----------
@@ -27,28 +27,34 @@ each commit introduces are shown.
 OPTIONS
 -------
 
---follow::
+`--follow`::
 	Continue listing the history of a file beyond renames
 	(works only for a single file).
 
---no-decorate::
---decorate[=short|full|auto|no]::
-	Print out the ref names of any commits that are shown. If 'short' is
-	specified, the ref name prefixes 'refs/heads/', 'refs/tags/' and
-	'refs/remotes/' will not be printed. If 'full' is specified, the
-	full ref name (including prefix) will be printed. If 'auto' is
-	specified, then if the output is going to a terminal, the ref names
-	are shown as if 'short' were given, otherwise no ref names are
-	shown. The option `--decorate` is short-hand for `--decorate=short`.
-	Default to configuration value of `log.decorate` if configured,
-	otherwise, `auto`.
+`--no-decorate`::
+`--decorate[=(short|full|auto|no)]`::
+	Print out the ref names of any commits that are shown. Possible values
+	are:
++
+----
+`short`;; the ref name prefixes `refs/heads/`, `refs/tags/` and
+	`refs/remotes/` are not printed.
+`full`;; the full ref name (including prefix) is printed.
+`auto`:: if the output is going to a terminal, the ref names
+	are shown as if `short` were given, otherwise no ref names are
+	shown.
+----
++
+The option `--decorate` is short-hand for `--decorate=short`. Default to
+configuration value of `log.decorate` if configured, otherwise, `auto`.
 
---decorate-refs=<pattern>::
---decorate-refs-exclude=<pattern>::
+`--decorate-refs=<pattern>`::
+`--decorate-refs-exclude=<pattern>`::
 	For each candidate reference, do not use it for decoration if it
-	matches any patterns given to `--decorate-refs-exclude` or if it
-	doesn't match any of the patterns given to `--decorate-refs`. The
-	`log.excludeDecoration` config option allows excluding refs from
+	matches any of the _<pattern>_ parameters given to
+	`--decorate-refs-exclude` or if it doesn't match any of the
+	_<pattern>_ parameters given to `--decorate-refs`.
+	The `log.excludeDecoration` config option allows excluding refs from
 	the decorations, but an explicit `--decorate-refs` pattern will
 	override a match in `log.excludeDecoration`.
 +
@@ -56,51 +62,51 @@ If none of these options or config settings are given, then references are
 used as decoration if they match `HEAD`, `refs/heads/`, `refs/remotes/`,
 `refs/stash/`, or `refs/tags/`.
 
---clear-decorations::
+`--clear-decorations`::
 	When specified, this option clears all previous `--decorate-refs`
 	or `--decorate-refs-exclude` options and relaxes the default
 	decoration filter to include all references. This option is
 	assumed if the config value `log.initialDecorationSet` is set to
 	`all`.
 
---source::
+`--source`::
 	Print out the ref name given on the command line by which each
 	commit was reached.
 
---[no-]mailmap::
---[no-]use-mailmap::
+`--[no-]mailmap`::
+`--[no-]use-mailmap`::
 	Use mailmap file to map author and committer names and email
 	addresses to canonical real names and email addresses. See
 	linkgit:git-shortlog[1].
 
---full-diff::
+`--full-diff`::
 	Without this flag, `git log -p <path>...` shows commits that
 	touch the specified paths, and diffs about the same specified
 	paths.  With this, the full diff is shown for commits that touch
-	the specified paths; this means that "<path>..." limits only
+	the specified paths; this means that "`<path>...`" limits only
 	commits, and doesn't limit diff for those commits.
 +
 Note that this affects all diff-based output types, e.g. those
 produced by `--stat`, etc.
 
---log-size::
-	Include a line ``log size <number>'' in the output for each commit,
-	where <number> is the length of that commit's message in bytes.
+`--log-size`::
+	Include a line `log size <number>` in the output for each commit,
+	where _<number>_ is the length of that commit's message in bytes.
 	Intended to speed up tools that read log messages from `git log`
 	output by allowing them to allocate space in advance.
 
 include::line-range-options.adoc[]
 
-<revision-range>::
+_<revision-range>_::
 	Show only commits in the specified revision range.  When no
-	<revision-range> is specified, it defaults to `HEAD` (i.e. the
+	_<revision-range>_ is specified, it defaults to `HEAD` (i.e. the
 	whole history leading to the current commit).  `origin..HEAD`
 	specifies all the commits reachable from the current commit
 	(i.e. `HEAD`), but not from `origin`. For a complete list of
-	ways to spell <revision-range>, see the 'Specifying Ranges'
+	ways to spell _<revision-range>_, see the 'Specifying Ranges'
 	section of linkgit:gitrevisions[7].
 
-[--] <path>...::
+`[--] <path>...`::
 	Show only commits that are enough to explain how the files
 	that match the specified paths came to be.  See 'History
 	Simplification' below for details and other simplification
@@ -145,14 +151,14 @@ EXAMPLES
 
 `git log --since="2 weeks ago" -- gitk`::
 
-	Show the changes during the last two weeks to the file 'gitk'.
+	Show the changes during the last two weeks to the file `gitk`.
 	The `--` is necessary to avoid confusion with the *branch* named
-	'gitk'
+	`gitk`
 
 `git log --name-status release..test`::
 
-	Show the commits that are in the "test" branch but not yet
-	in the "release" branch, along with the list of paths
+	Show the commits that are in the "`test`" branch but not yet
+	in the "`release`" branch, along with the list of paths
 	each commit modifies.
 
 `git log --follow builtin/rev-list.c`::
@@ -164,7 +170,7 @@ EXAMPLES
 `git log --branches --not --remotes=origin`::
 
 	Shows all commits that are in any of local branches but not in
-	any of remote-tracking branches for 'origin' (what you have that
+	any of remote-tracking branches for `origin` (what you have that
 	origin doesn't).
 
 `git log master --not --remotes=*/master`::
@@ -200,11 +206,11 @@ CONFIGURATION
 See linkgit:git-config[1] for core variables and linkgit:git-diff[1]
 for settings related to diff generation.
 
-format.pretty::
+`format.pretty`::
 	Default for the `--format` option.  (See 'Pretty Formats' above.)
 	Defaults to `medium`.
 
-i18n.logOutputEncoding::
+`i18n.logOutputEncoding`::
 	Encoding to use when displaying logs.  (See 'Discussion' above.)
 	Defaults to the value of `i18n.commitEncoding` if set, and UTF-8
 	otherwise.
