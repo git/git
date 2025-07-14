@@ -68,8 +68,7 @@ char strbuf_slopbuf[1];
 
 void strbuf_init(struct strbuf *sb, size_t hint)
 {
-	struct strbuf blank = STRBUF_INIT;
-	memcpy(sb, &blank, sizeof(*sb));
+	*sb = (struct strbuf) STRBUF_INIT;
 	if (hint)
 		strbuf_grow(sb, hint);
 }
