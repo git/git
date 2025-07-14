@@ -1672,11 +1672,9 @@ test_expect_success 'stash create reports a locked index' '
 		echo change >A.file &&
 		touch .git/index.lock &&
 
-		cat >expect <<-EOF &&
-		error: could not write index
-		EOF
 		test_must_fail git stash create 2>err &&
-		test_cmp expect err
+		test_grep "error: could not write index" err &&
+		test_grep "error: Unable to create '.*index.lock'" err
 	)
 '
 
@@ -1689,11 +1687,9 @@ test_expect_success 'stash push reports a locked index' '
 		echo change >A.file &&
 		touch .git/index.lock &&
 
-		cat >expect <<-EOF &&
-		error: could not write index
-		EOF
 		test_must_fail git stash push 2>err &&
-		test_cmp expect err
+		test_grep "error: could not write index" err &&
+		test_grep "error: Unable to create '.*index.lock'" err
 	)
 '
 
@@ -1707,11 +1703,9 @@ test_expect_success 'stash apply reports a locked index' '
 		git stash push &&
 		touch .git/index.lock &&
 
-		cat >expect <<-EOF &&
-		error: could not write index
-		EOF
 		test_must_fail git stash apply 2>err &&
-		test_cmp expect err
+		test_grep "error: could not write index" err &&
+		test_grep "error: Unable to create '.*index.lock'" err
 	)
 '
 
