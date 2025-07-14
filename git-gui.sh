@@ -3259,13 +3259,13 @@ default {
 
 # -- Branch Control
 #
-${NS}::frame .branch
+ttk::frame .branch
 if {!$use_ttk} {.branch configure -borderwidth 1 -relief sunken}
-${NS}::label .branch.l1 \
+ttk::label .branch.l1 \
 	-text [mc "Current Branch:"] \
 	-anchor w \
 	-justify left
-${NS}::label .branch.cb \
+ttk::label .branch.cb \
 	-textvariable current_branch \
 	-anchor w \
 	-justify left
@@ -3275,8 +3275,8 @@ pack .branch -side top -fill x
 
 # -- Main Window Layout
 #
-${NS}::panedwindow .vpane -orient horizontal
-${NS}::panedwindow .vpane.files -orient vertical
+ttk::panedwindow .vpane -orient horizontal
+ttk::panedwindow .vpane.files -orient vertical
 if {$use_ttk} {
 	.vpane add .vpane.files
 } else {
@@ -3298,8 +3298,8 @@ ttext $ui_workdir \
 	-xscrollcommand {.vpane.files.workdir.sx set} \
 	-yscrollcommand {.vpane.files.workdir.sy set} \
 	-state disabled
-${NS}::scrollbar .vpane.files.workdir.sx -orient h -command [list $ui_workdir xview]
-${NS}::scrollbar .vpane.files.workdir.sy -orient v -command [list $ui_workdir yview]
+ttk::scrollbar .vpane.files.workdir.sx -orient h -command [list $ui_workdir xview]
+ttk::scrollbar .vpane.files.workdir.sy -orient v -command [list $ui_workdir yview]
 pack .vpane.files.workdir.title -side top -fill x
 pack .vpane.files.workdir.sx -side bottom -fill x
 pack .vpane.files.workdir.sy -side right -fill y
@@ -3320,8 +3320,8 @@ ttext $ui_index \
 	-xscrollcommand {.vpane.files.index.sx set} \
 	-yscrollcommand {.vpane.files.index.sy set} \
 	-state disabled
-${NS}::scrollbar .vpane.files.index.sx -orient h -command [list $ui_index xview]
-${NS}::scrollbar .vpane.files.index.sy -orient v -command [list $ui_index yview]
+ttk::scrollbar .vpane.files.index.sx -orient h -command [list $ui_index xview]
+ttk::scrollbar .vpane.files.index.sy -orient v -command [list $ui_index yview]
 pack .vpane.files.index.title -side top -fill x
 pack .vpane.files.index.sx -side bottom -fill x
 pack .vpane.files.index.sy -side right -fill y
@@ -3355,9 +3355,9 @@ unset i
 
 # -- Diff and Commit Area
 #
-${NS}::panedwindow .vpane.lower -orient vertical
-${NS}::frame .vpane.lower.commarea
-${NS}::frame .vpane.lower.diff -relief sunken -borderwidth 1 -height 500
+ttk::panedwindow .vpane.lower -orient vertical
+ttk::frame .vpane.lower.commarea
+ttk::frame .vpane.lower.diff -relief sunken -borderwidth 1 -height 500
 .vpane.lower add .vpane.lower.diff
 .vpane.lower add .vpane.lower.commarea
 .vpane add .vpane.lower
@@ -3371,52 +3371,52 @@ if {$use_ttk} {
 
 # -- Commit Area Buttons
 #
-${NS}::frame .vpane.lower.commarea.buttons
-${NS}::label .vpane.lower.commarea.buttons.l -text {} \
+ttk::frame .vpane.lower.commarea.buttons
+ttk::label .vpane.lower.commarea.buttons.l -text {} \
 	-anchor w \
 	-justify left
 pack .vpane.lower.commarea.buttons.l -side top -fill x
 pack .vpane.lower.commarea.buttons -side left -fill y
 
-${NS}::button .vpane.lower.commarea.buttons.rescan -text [mc Rescan] \
+ttk::button .vpane.lower.commarea.buttons.rescan -text [mc Rescan] \
 	-command ui_do_rescan
 pack .vpane.lower.commarea.buttons.rescan -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.rescan conf -state}
 
-${NS}::button .vpane.lower.commarea.buttons.incall -text [mc "Stage Changed"] \
+ttk::button .vpane.lower.commarea.buttons.incall -text [mc "Stage Changed"] \
 	-command do_add_all
 pack .vpane.lower.commarea.buttons.incall -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.incall conf -state}
 
 if {![is_enabled nocommitmsg]} {
-	${NS}::button .vpane.lower.commarea.buttons.signoff -text [mc "Sign Off"] \
+	ttk::button .vpane.lower.commarea.buttons.signoff -text [mc "Sign Off"] \
 		-command do_signoff
 	pack .vpane.lower.commarea.buttons.signoff -side top -fill x
 }
 
-${NS}::button .vpane.lower.commarea.buttons.commit -text [commit_btn_caption] \
+ttk::button .vpane.lower.commarea.buttons.commit -text [commit_btn_caption] \
 	-command do_commit
 pack .vpane.lower.commarea.buttons.commit -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.commit conf -state}
 
 if {![is_enabled nocommit]} {
-	${NS}::button .vpane.lower.commarea.buttons.push -text [mc Push] \
+	ttk::button .vpane.lower.commarea.buttons.push -text [mc Push] \
 		-command do_push_anywhere
 	pack .vpane.lower.commarea.buttons.push -side top -fill x
 }
 
 # -- Commit Message Buffer
 #
-${NS}::frame .vpane.lower.commarea.buffer
-${NS}::frame .vpane.lower.commarea.buffer.header
+ttk::frame .vpane.lower.commarea.buffer
+ttk::frame .vpane.lower.commarea.buffer.header
 set ui_comm .vpane.lower.commarea.buffer.frame.t
 set ui_coml .vpane.lower.commarea.buffer.header.l
 
 if {![is_enabled nocommit]} {
-	${NS}::checkbutton .vpane.lower.commarea.buffer.header.amend \
+	ttk::checkbutton .vpane.lower.commarea.buffer.header.amend \
 		-text [mc "Amend Last Commit"] \
 		-variable commit_type_is_amend \
 		-command do_select_commit_type
@@ -3424,7 +3424,7 @@ if {![is_enabled nocommit]} {
 		[list .vpane.lower.commarea.buffer.header.amend conf -state]
 }
 
-${NS}::label $ui_coml \
+ttk::label $ui_coml \
 	-anchor w \
 	-justify left
 proc trace_commit_type {varname args} {
@@ -3459,10 +3459,10 @@ ttext $ui_comm \
 	-font font_diff \
 	-xscrollcommand {.vpane.lower.commarea.buffer.frame.sbx set} \
 	-yscrollcommand {.vpane.lower.commarea.buffer.frame.sby set}
-${NS}::scrollbar .vpane.lower.commarea.buffer.frame.sbx \
+ttk::scrollbar .vpane.lower.commarea.buffer.frame.sbx \
 	-orient horizontal \
 	-command [list $ui_comm xview]
-${NS}::scrollbar .vpane.lower.commarea.buffer.frame.sby \
+ttk::scrollbar .vpane.lower.commarea.buffer.frame.sby \
 	-orient vertical \
 	-command [list $ui_comm yview]
 
@@ -3585,9 +3585,9 @@ ttext $ui_diff \
 	-yscrollcommand {.vpane.lower.diff.body.sby set} \
 	-state disabled
 catch {$ui_diff configure -tabstyle wordprocessor}
-${NS}::scrollbar .vpane.lower.diff.body.sbx -orient horizontal \
+ttk::scrollbar .vpane.lower.diff.body.sbx -orient horizontal \
 	-command [list $ui_diff xview]
-${NS}::scrollbar .vpane.lower.diff.body.sby -orient vertical \
+ttk::scrollbar .vpane.lower.diff.body.sby -orient vertical \
 	-command [list $ui_diff yview]
 pack .vpane.lower.diff.body.sbx -side bottom -fill x
 pack .vpane.lower.diff.body.sby -side right -fill y

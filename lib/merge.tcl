@@ -145,7 +145,7 @@ method _finish {cons ok} {
 
 constructor dialog {} {
 	global current_branch
-	global M1B use_ttk NS
+	global M1B use_ttk
 
 	if {![_can_merge $this]} {
 		delete_this
@@ -160,21 +160,21 @@ constructor dialog {} {
 
 	set _start [cb _start]
 
-	${NS}::label $w.header \
+	ttk::label $w.header \
 		-text [mc "Merge Into %s" $current_branch] \
 		-font font_uibold
 	pack $w.header -side top -fill x
 
-	${NS}::frame $w.buttons
-	${NS}::button $w.buttons.visualize \
+	ttk::frame $w.buttons
+	ttk::button $w.buttons.visualize \
 		-text [mc Visualize] \
 		-command [cb _visualize]
 	pack $w.buttons.visualize -side left
-	${NS}::button $w.buttons.merge \
+	ttk::button $w.buttons.merge \
 		-text [mc Merge] \
 		-command $_start
 	pack $w.buttons.merge -side right
-	${NS}::button $w.buttons.cancel \
+	ttk::button $w.buttons.cancel \
 		-text [mc "Cancel"] \
 		-command [cb _cancel]
 	pack $w.buttons.cancel -side right -padx 5

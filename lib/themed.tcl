@@ -254,7 +254,7 @@ proc pave_toplevel {w} {
 # On many themes the border for a scrolled listbox needs to go around the
 # listbox and the scrollbar.
 proc slistbox {w args} {
-	global use_ttk NS
+	global use_ttk
 	if {$use_ttk} {
 		set f [ttk::frame $w -style SListbox.TFrame -padding 2]
 	} else {
@@ -267,7 +267,7 @@ proc slistbox {w args} {
 		} else {
 			eval [linsert $args 0 listbox $f.list]
 		}
-        ${NS}::scrollbar $f.vs -command [list $f.list yview]
+        ttk::scrollbar $f.vs -command [list $f.list yview]
         $f.list configure -yscrollcommand [list $f.vs set]
         grid $f.list $f.vs -sticky news
         grid rowconfigure $f 0 -weight 1
