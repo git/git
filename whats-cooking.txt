@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2025, #03; Wed, 9)
-X-master-at: a30f80fde927d70950b3b4d1820813480968fb0d
-X-next-at: 200b4b24a8ac9854c1ce0ce9b5a71154ac03e9dc
+Subject: What's cooking in git.git (Jul 2025, #04; Mon, 14)
+X-master-at: d30e120486c5e0632d97f3cba79c03efb6dbb3cb
+X-next-at: e9779f64349fbcc8d177d055208039877316e652
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jul 2025, #03; Wed, 9)
+What's cooking in git.git (Jul 2025, #04; Mon, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,22 +48,262 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* kn/fetch-push-bulk-ref-update (2025-06-20) 6 commits
-  (merged to 'next' on 2025-07-02 at db06df3871)
- + receive-pack: handle reference deletions separately
- + refs/files: skip updates with errors in batched updates
- + receive-pack: use batched reference updates
- + send-pack: fix memory leak around duplicate refs
- + fetch: use batched reference updates
- + refs: add function to translate errors to strings
+* ac/prune-wo-the-repository (2025-07-04) 2 commits
+  (merged to 'next' on 2025-07-07 at 3dd296a911)
+ + builtin/prune: stop depending on 'the_repository'
+ + repository: move 'repository_format_precious_objects' to repo scope
 
- "git push" and "git fetch" are taught to update refs in batches to
- gain performance.
- source: <20250519-501-update-git-fetch-1-to-use-partial-transactions-v3-0-6cdfd4f769b9@gmail.com>
- source: <20250620-6769-address-test-failures-in-the-next-branch-caused-by-batched-reference-updates-v5-0-f35ee6b59a82@gmail.com>
+ Some code paths in the "git prune" used to ignore passed in
+ repository object and used the_repository singleton instance
+ instead, which has been corrected.
+ 
+ source: <cover.1751630981.git.ayu.chandekar@gmail.com>
+
+
+* bs/config-mak-freebsd (2025-07-02) 2 commits
+  (merged to 'next' on 2025-07-07 at d6761aa225)
+ + build: retire NO_UINTMAX_T
+ + config.mak.uname: set NO_MEMMEM only for functional version
+
+ Drop FreeBSD 4 support and assume we are at least at FreeBSD 6 with
+ memmem() supported.
+ 
+ source: <20250702093736.36074-1-carenas@gmail.com>
+
+
+* bs/remote-helpers-doc-markup-fix (2025-07-02) 1 commit
+  (merged to 'next' on 2025-07-07 at 60c2a47d1b)
+ + gitremote-helpers.adoc: fix formatting
+
+ Docfix.
+ 
+ source: <20250702161951.22908-2-bacs@librecast.net>
+
+
+* cb/total-ram-bsd-fix (2025-07-07) 1 commit
+  (merged to 'next' on 2025-07-07 at d9a7ca747c)
+ + builtin/gc: correct total_ram calculation with HAVE_BSD_SYSCTL
+
+ Use of sysctl() system call to learn the total RAM size used on
+ BSDs has been corrected.
+ 
+ source: <20250707164518.6600-1-carenas@gmail.com>
+
+
+* hy/read-cache-lock-error-fix (2025-07-03) 1 commit
+  (merged to 'next' on 2025-07-07 at a97a188a9e)
+ + read-cache: report lock error when refreshing index
+
+ A failure to open the index file for writing due to conflicting
+ access did not state what went wrong, which has been corrected.
+ 
+ source: <20250703074502.45593-1-hanyang.tony@bytedance.com>
+
+
+* jc/coccicheck-fails-make-when-it-fails (2025-06-23) 1 commit
+  (merged to 'next' on 2025-07-07 at 0b7affe7cd)
+ + coccicheck: fail "make" when it fails
+
+ "make coccicheck" succeeds even when spatch made suggestions, which
+ has been updated to fail in such a case.
+ 
+ source: <xmqqbjqe77vw.fsf@gitster.g>
+
+
+* jk/all-negative-diff-filter-fix (2025-07-03) 1 commit
+  (merged to 'next' on 2025-07-07 at 139dd3db75)
+ + setup_revisions(): turn on diffs for all-negative diff filter
+
+ A diff-filter with negative-only specification like "git log
+ --diff-filter=d" did not trigger correctly, which has been fixed.
+ 
+ source: <20250703224428.GB1909836@coredump.intra.peff.net>
+
+
+* kh/doc-config-subcommands (2025-07-01) 5 commits
+  (merged to 'next' on 2025-07-07 at b0db48b397)
+ + config: mention --url in the synopsis
+ + config: use --value instead of value-pattern
+ + config: document --[no-]value
+ + config: use --value=<pattern> consistently
+ + config: document --[no-]show-names
+
+ Documentation updates.
+ 
+ source: <cover.1751382830.git.code@khaugsbakk.name>
+
+
+* kn/clang-format-updates (2025-07-02) 3 commits
+  (merged to 'next' on 2025-07-07 at 0b0770e97a)
+ + meson: add rule to run 'git clang-format'
+ + clang-format: add 'RemoveBracesLLVM' to the main config
+ + clang-format: set 'ColumnLimit' to 0
+
+ Update ".clang-format" and ".editorconfig" to match our style guide
+ a bit better.
+ 
+ source: <20250702-525-make-clang-format-more-robust-v3-0-705344f30580@gmail.com>
+
+
+* mc/netrc-service-names (2025-06-25) 3 commits
+  (merged to 'next' on 2025-07-07 at e98100afdd)
+ + contrib: better support symbolic port names in git-credential-netrc
+ + contrib: warn for invalid netrc file ports in git-credential-netrc
+ + contrib: use a more portable shebang for git-credential-netrc
+
+ "netrc" credential helper has been improved to understand textual
+ service names (like smtp) in addition to the numeric port numbers
+ (like 25).
+ 
+ source: <20250625142511.28857-1-maxim@guixotic.coop>
+
+
+* ps/perlless-test-fixes (2025-07-07) 2 commits
+  (merged to 'next' on 2025-07-07 at 2c56966ff8)
+ + t5333: fix missing terminator for sed(1) 's' command
+ + t4150: fix warning printed by awk due to escaped '\@'
+
+ Test fixes.
+ 
+ source: <20250707-b4-pks-t-perlless-fixes-v1-0-92b2de1c3dd0@pks.im>
+
+
+* ps/use-reftable-as-default-in-3.0 (2025-07-04) 2 commits
+  (merged to 'next' on 2025-07-07 at 3f3402f221)
+ + setup: use "reftable" format when experimental features are enabled
+ + BreakingChanges: announce switch to "reftable" format
+
+ The reftable ref backend has matured enough; Git 3.0 will make it
+ the default format in a newly created repositories by default.
+ 
+ source: <20250704-pks-reftable-default-backend-v3-0-a1eb63e8442a@pks.im>
+
+
+* re/ssh-sign-buffer-fix (2025-07-07) 1 commit
+  (merged to 'next' on 2025-07-07 at 36dad3e4dc)
+ + ssh signing: don't detach the filename strbuf from key_file tempfile
+
+ Tempfile removal fix in the codepath to sign commits with SSH keys.
+ 
+ source: <20250707184852.16010-1-redoste@redoste.xyz>
+
+
+* rj/freebsd-sysinfo-build-fix (2025-07-04) 1 commit
+  (merged to 'next' on 2025-07-07 at bc4cbfd76d)
+ + build: fix FreeBSD build when sysinfo compat library installed
+
+ Build fix for FreeBSD.
+ 
+ source: <e6a80163-47ef-436b-98a6-2ac39c477080@ramsayjones.plus.com>
+
+
+* rp/apply-intent-to-add-fix (2025-07-07) 4 commits
+  (merged to 'next' on 2025-07-07 at 957e3fd081)
+ + apply docs: clarify wording for --intent-to-add
+ + t4140: test apply --intent-to-add interactions
+ + apply: only write intents to add for new files
+ + apply: read in the index in --intent-to-add mode
+
+ "git apply -N" should start from the current index and register
+ only new files, but it instead started from an empty index, which
+ has been corrected.
+ 
+ source: <20250707121534.2933349-1-ray@ameretat.dev>
+
+
+* sj/string-list (2025-06-28) 8 commits
+  (merged to 'next' on 2025-07-07 at 5a95dc8007)
+ + u-string-list: move "remove duplicates" test to "u-string-list.c"
+ + u-string-list: move "filter string" test to "u-string-list.c"
+ + u-string-list: move "test_split_in_place" to "u-string-list.c"
+ + u-string-list: move "test_split" into "u-string-list.c"
+ + string-list: enable sign compare warnings check
+ + string-list: return index directly when inserting an existing element
+ + string-list: remove unused "insert_at" parameter from add_entry
+ + string-list: fix sign compare warnings for loop iterator
+
+ Code and test clean-up around string-list API.
+ 
+ source: <aGDAZ6a0-PyXXGmK@ArchLinux>
+
+
+* ts/merge-orig-head-doc-fix (2025-07-05) 1 commit
+  (merged to 'next' on 2025-07-07 at 08f4a573e5)
+ + docs: correct ORIG_HEAD example in "git merge" documentation
+
+ Doc fix.
+ 
+ source: <pull.1940.git.1751737158670.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [New Topics]
+
+* ps/sane-ctype-workaround (2025-07-09) 1 commit
+ - sane-ctype: fix compiler error on Amazon Linux 2
+
+ Our <sane-ctype.h> header file relied on that the system-supplied
+ <ctype.h> header is not later included, which would override our
+ macro definitions, but "amazon linux" broke this assumption.  Fix
+ this by preemptively including <ctype.h> near the beginning of
+ <sane-ctype.h> ourselves.
+
+ Will merge to 'next'.
+ source: <fabacc9bc7ef7d462d1c7198d5edc18c76b82270.1752139420.git.ps@pks.im>
+
+
+* rh/doc-glob-pathspec-fix (2025-07-07) 1 commit
+  (merged to 'next' on 2025-07-14 at 1561f0726d)
+ + doc: correct doc for glob pathspec
+
+ Docfix.
+
+ Will merge to 'master'.
+ source: <20250708024507.62386-2-rhanneken@pobox.com>
+
+
+* cb/meson-avoid-broken-macos-pcre2 (2025-07-13) 1 commit
+ - meson: disable PCRE2 dependency by default in macOS
+
+ Build fix for macOS.
+
+ Will merge to 'next'.
+ source: <20250713174807.32444-1-carenas@gmail.com>
+
+
+* jb/gpg-program-variable-is-a-pathname (2025-07-11) 1 commit
+ - gpg-interface: expand gpg.program as a path
+
+ The gpg.program configuration variable, which names a pathname to
+ the (custom) GPG compatible program, can now be spelled with ~tilde
+ expansion.
+
+ Will merge to 'next'.
+ source: <20250711232348.460804-1-jonas.brandstoetter@gmx.at>
+
+
+* pw/adopt-c99-bool-officially (2025-07-14) 3 commits
+ - strbuf: convert predicates to return bool
+ - git-compat-util: convert string predicates to return bool
+ - CodingGuildlines: allow the use of bool
+
+ Declare weather-balloon we raised for "bool" type 18 months ago a
+ success and officially allow using the type in our codebase.
+
+ Comments?
+ source: <cover.1752499610.git.phillip.wood@dunelm.org.uk>
+
+
+* pw/compound-literal-test-balloon (2025-07-14) 1 commit
+ - strbuf: add compound literal test balloon
+
+ Gauge if the world is ready for compound literal that can make the
+ resulting code clearer in some places.
+
+ Comments?
+ source: <7ac55a5096c261b706f47ca239c381f71db2b67a.1752499653.git.phillip.wood@dunelm.org.uk>
+
+--------------------------------------------------
+[Cooking]
 
 * ps/doc-pack-refs-auto-with-files-backend-fix (2025-07-08) 1 commit
   (merged to 'next' on 2025-07-09 at 200b4b24a8)
@@ -104,7 +344,8 @@ Release tarballs are available at:
  dynamically pick a suitable comment character, as it is too much
  trouble to support for little benefit.
 
- Comments?
+ Expecting a reroll.
+ cf. <b811a0dc-fb49-4f66-a9ae-89a45d7ff104@gmail.com>
  source: <cover.1751983009.git.phillip.wood@dunelm.org.uk>
 
 
@@ -125,7 +366,7 @@ Release tarballs are available at:
  support a single object source that belongs to one repository.  A
  midx does span mulitple "object sources".
 
- Comments?
+ Expecting responses.
  source: <20250709-b4-pks-midx-via-odb-alternate-v1-0-f31150d21331@pks.im>
 
 
@@ -155,149 +396,39 @@ Release tarballs are available at:
  Reduce implicit assumption and dependence on the_repository in the
  object-file subsystem.
 
- Comments?
+ Needs a bit of redoing around the configuration reading.
+ cf. <32fceddc-c867-4a47-bde8-c873279edbc1@gmail.com>
  source: <20250709-pks-object-file-wo-the-repository-v1-0-62627b55707f@pks.im>
-
---------------------------------------------------
-[Cooking]
-
-* bs/remote-helpers-doc-markup-fix (2025-07-02) 1 commit
-  (merged to 'next' on 2025-07-07 at 60c2a47d1b)
- + gitremote-helpers.adoc: fix formatting
-
- Docfix.
-
- Will merge to 'master'.
- source: <20250702161951.22908-2-bacs@librecast.net>
-
-
-* cb/total-ram-bsd-fix (2025-07-07) 1 commit
-  (merged to 'next' on 2025-07-07 at d9a7ca747c)
- + builtin/gc: correct total_ram calculation with HAVE_BSD_SYSCTL
-
- Use of sysctl() system call to learn the total RAM size used on
- BSDs has been corrected.
-
- Will merge to 'master'.
- source: <20250707164518.6600-1-carenas@gmail.com>
-
-
-* ps/use-reftable-as-default-in-3.0 (2025-07-04) 2 commits
-  (merged to 'next' on 2025-07-07 at 3f3402f221)
- + setup: use "reftable" format when experimental features are enabled
- + BreakingChanges: announce switch to "reftable" format
-
- The reftable ref backend has matured enough; Git 3.0 will make it
- the default format in a newly created repositories by default.
-
- Will merge to 'master'.
- source: <20250704-pks-reftable-default-backend-v3-0-a1eb63e8442a@pks.im>
-
-
-* hy/read-cache-lock-error-fix (2025-07-03) 1 commit
-  (merged to 'next' on 2025-07-07 at a97a188a9e)
- + read-cache: report lock error when refreshing index
-
- A failure to open the index file for writing due to conflicting
- access did not state what went wrong, which has been corrected.
-
- Will merge to 'master'.
- source: <20250703074502.45593-1-hanyang.tony@bytedance.com>
-
-
-* jk/all-negative-diff-filter-fix (2025-07-03) 1 commit
-  (merged to 'next' on 2025-07-07 at 139dd3db75)
- + setup_revisions(): turn on diffs for all-negative diff filter
-
- A diff-filter with negative-only specification like "git log
- --diff-filter=d" did not trigger correctly, which has been fixed.
-
- Will merge to 'master'.
- source: <20250703224428.GB1909836@coredump.intra.peff.net>
 
 
 * jk/remote-avoid-overlapping-names (2025-07-08) 1 commit
- - remote: detect collisions in remote names
+  (merged to 'next' on 2025-07-11 at 097c87760a)
+ + remote: detect collisions in remote names
 
  "git remote" now detects remote names that overlap with each other
  (e.g., remote nickname "outer" and "outer/inner" are used at the
  same time), as it will lead to overlapping remote-tracking
  branches.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250708225946.GC1180568@coredump.intra.peff.net>
 
 
-* ps/meson-cleanups (2025-07-08) 8 commits
- - ci: use Meson's new `--slice` option
- - meson: update subproject wrappers
- - meson: fix GIT_EXEC_PATH with overridden -Dlibexecdir=
- - meson: fix lookup of shell on MINGW64
- - meson: clean up unnecessary variables
- - meson: improve summary of auto-detected features
- - meson: stop printing 'https' option twice in our summaries
- - meson: stop discovering native version of Python
+* ps/meson-cleanups (2025-07-08) 7 commits
+  (merged to 'next' on 2025-07-14 at 5fb402f51a)
+ + ci: use Meson's new `--slice` option
+ + meson: update subproject wrappers
+ + meson: fix lookup of shell on MINGW64
+ + meson: clean up unnecessary variables
+ + meson: improve summary of auto-detected features
+ + meson: stop printing 'https' option twice in our summaries
+ + meson: stop discovering native version of Python
 
  Meson-based build update.
 
- Will merge to 'next'?
- source: <20250708-b4-pks-meson-cleanups-v2-0-94ac53cd4b95@pks.im>
-
-
-* ps/perlless-test-fixes (2025-07-07) 2 commits
-  (merged to 'next' on 2025-07-07 at 2c56966ff8)
- + t5333: fix missing terminator for sed(1) 's' command
- + t4150: fix warning printed by awk due to escaped '\@'
-
- Test fixes.
-
  Will merge to 'master'.
- source: <20250707-b4-pks-t-perlless-fixes-v1-0-92b2de1c3dd0@pks.im>
-
-
-* re/ssh-sign-buffer-fix (2025-07-07) 1 commit
-  (merged to 'next' on 2025-07-07 at 36dad3e4dc)
- + ssh signing: don't detach the filename strbuf from key_file tempfile
-
- Tempfile removal fix in the codepath to sign commits with SSH keys.
-
- Will merge to 'master'.
- source: <20250707184852.16010-1-redoste@redoste.xyz>
-
-
-* rj/freebsd-sysinfo-build-fix (2025-07-04) 1 commit
-  (merged to 'next' on 2025-07-07 at bc4cbfd76d)
- + build: fix FreeBSD build when sysinfo compat library installed
-
- Build fix for FreeBSD.
-
- Will merge to 'master'.
- source: <e6a80163-47ef-436b-98a6-2ac39c477080@ramsayjones.plus.com>
-
-
-* rp/apply-intent-to-add-fix (2025-07-07) 4 commits
-  (merged to 'next' on 2025-07-07 at 957e3fd081)
- + apply docs: clarify wording for --intent-to-add
- + t4140: test apply --intent-to-add interactions
- + apply: only write intents to add for new files
- + apply: read in the index in --intent-to-add mode
-
- "git apply -N" should start from the current index and register
- only new files, but it instead started from an empty index, which
- has been corrected.
-
- Will merge to 'master'.
- source: <20250707121534.2933349-1-ray@ameretat.dev>
-
-
-* ts/merge-orig-head-doc-fix (2025-07-05) 1 commit
-  (merged to 'next' on 2025-07-07 at 08f4a573e5)
- + docs: correct ORIG_HEAD example in "git merge" documentation
-
- Doc fix.
-
- Will merge to 'master'.
- source: <pull.1940.git.1751737158670.gitgitgadget@gmail.com>
+ cf. <87h5zkcbk2.fsf@iotcl.com>
+ source: <20250709-b4-pks-meson-cleanups-v3-0-29ab15b9ab85@pks.im>
 
 
 * ua/t1517-short-help-tests (2025-07-06) 7 commits
@@ -311,68 +442,44 @@ Release tarballs are available at:
 
  Test shuffling.
 
- Comments?
+ Expecting a reroll.
+ cf. <CAPSxiM_ZZrbFpgvxqYgZ8oeTbRs+HW=rM+9Dud0G_Qr7eq3=FA@mail.gmail.com>
  source: <20250706215039.715732-1-usmanakinyemi202@gmail.com>
 
 
-* ac/prune-wo-the-repository (2025-07-04) 2 commits
-  (merged to 'next' on 2025-07-07 at 3dd296a911)
- + builtin/prune: stop depending on 'the_repository'
- + repository: move 'repository_format_precious_objects' to repo scope
-
- Some code paths in the "git prune" used to ignore passed in
- repository object and used the_repository singleton instance
- instead, which has been corrected.
-
- Will merge to 'master'.
- source: <cover.1751630981.git.ayu.chandekar@gmail.com>
-
-
 * ag/doc-send-email (2025-06-30) 5 commits
- - docs: mention possible options for Proton Mail users
- - docs: add a paragraph explaining the `sendmailCmd` option of sendemail
- - docs: add an OAuth2.0 credential helper for AOL accounts
- - docs: add outlookidfix config option to sendemail documentation
- - docs: link OpenSSL's verify(1) manual page to know about -CAfile and -CApath options
+  (merged to 'next' on 2025-07-09 at cf940e82a1)
+ + docs: mention possible options for Proton Mail users
+ + docs: add a paragraph explaining the `sendmailCmd` option of sendemail
+ + docs: add an OAuth2.0 credential helper for AOL accounts
+ + docs: add outlookidfix config option to sendemail documentation
+ + docs: link OpenSSL's verify(1) manual page to know about -CAfile and -CApath options
 
  Documentation updates for "git send-email".
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250630180511.499-1-gargaditya08@proton.me>
 
 
 * rs/parse-options-precision (2025-07-09) 7 commits
- - parse-options: add precision handling for OPTION_COUNTUP
- - parse-options: add precision handling for OPTION_BITOP
- - parse-options: add precision handling for OPTION_NEGBIT
- - parse-options: add precision handling for OPTION_BIT
- - parse-options: add precision handling for OPTION_SET_INT
- - parse-options: add precision handling for PARSE_OPT_CMDMODE
- - parse-options: require PARSE_OPT_NOARG for OPTION_BITOP
+  (merged to 'next' on 2025-07-09 at aefffa21b7)
+ + parse-options: add precision handling for OPTION_COUNTUP
+ + parse-options: add precision handling for OPTION_BITOP
+ + parse-options: add precision handling for OPTION_NEGBIT
+ + parse-options: add precision handling for OPTION_BIT
+ + parse-options: add precision handling for OPTION_SET_INT
+ + parse-options: add precision handling for PARSE_OPT_CMDMODE
+ + parse-options: require PARSE_OPT_NOARG for OPTION_BITOP
 
  Define .precision to more canned parse-options type to avoid bugs
  coming from using a variable with a wrong type to capture the
  parsed values.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <802eba72-c100-429a-80b7-7a0e8b6559ed@web.de>
 
 
-* kh/doc-config-subcommands (2025-07-01) 5 commits
-  (merged to 'next' on 2025-07-07 at b0db48b397)
- + config: mention --url in the synopsis
- + config: use --value instead of value-pattern
- + config: document --[no-]value
- + config: use --value=<pattern> consistently
- + config: document --[no-]show-names
-
- Documentation updates.
-
- Will merge to 'master'.
- source: <cover.1751382830.git.code@khaugsbakk.name>
-
-
-* kn/for-each-ref-skip (2025-07-08) 4 commits
+* kn/for-each-ref-skip (2025-07-11) 4 commits
  - for-each-ref: introduce a '--start-after' option
  - refs: selectively set prefix in the seek functions
  - ref-cache: remove unused function 'find_ref_entry()'
@@ -381,8 +488,9 @@ Release tarballs are available at:
  "git for-each-ref" learns "--skip-until" option to help
  applications that want to page its output.
 
- Will merge to 'next'?
- source: <20250708-306-git-for-each-ref-pagination-v3-0-8cfba1080be4@gmail.com>
+ Will merge to 'next'.
+ cf. <CAP8UFD06KKF0A0WjBSw77A7fKp_pGJGVyw-OPd8-X92h=RSF+w@mail.gmail.com>
+ source: <20250711-306-git-for-each-ref-pagination-v4-0-ed3303ad5b89@gmail.com>
 
 
 * tc/last-modified (2025-07-09) 3 commits
@@ -397,17 +505,14 @@ Release tarballs are available at:
  source: <20250630-toon-new-blame-tree-v3-0-3516025dc3bc@iotcl.com>
 
 
-* cb/daemon-reap-children (2025-06-26) 4 commits
- - daemon: explicitly allow EINTR during poll()
+* cb/daemon-reap-children (2025-07-10) 2 commits
  - daemon: use sigaction() to install child_handler()
  - compat/mingw: allow sigaction(SIGCHLD)
- - compat/posix.h: track SA_RESTART fallback
 
  Futz with SIGCHLD handling in "git daemon".
 
- Stalled?
- cf. <dba9ae0d-1e43-4345-a7ec-b57a07d45a07@gmail.com>
- source: <pull.2002.v3.git.git.1750927988.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.2002.v4.git.git.1752176743.gitgitgadget@gmail.com>
 
 
 * ac/auto-comment-char-fix (2025-06-30) 1 commit
@@ -422,21 +527,9 @@ Release tarballs are available at:
  source: <20250630182527.69167-1-ayu.chandekar@gmail.com>
 
 
-* kn/clang-format-updates (2025-07-02) 3 commits
-  (merged to 'next' on 2025-07-07 at 0b0770e97a)
- + meson: add rule to run 'git clang-format'
- + clang-format: add 'RemoveBracesLLVM' to the main config
- + clang-format: set 'ColumnLimit' to 0
-
- Update ".clang-format" and ".editorconfig" to match our style guide
- a bit better.
-
- Will merge to 'master'.
- source: <20250702-525-make-clang-format-more-robust-v3-0-705344f30580@gmail.com>
-
-
-* ly/changed-paths-traversal (2025-07-04) 4 commits
- - bloom: optimize multiple pathspec items in revision traversal
+* ly/changed-paths-traversal (2025-07-12) 5 commits
+ - bloom: optimize multiple pathspec items in revision
+ - revision: make helper for pathspec to bloom keyvec
  - bloom: replace struct bloom_key * with struct bloom_keyvec
  - bloom: rename function operates on bloom_key
  - bloom: add test helper to return murmur3 hash
@@ -444,23 +537,8 @@ Release tarballs are available at:
  Lift the limitation to use changed-path filter in "git log" so that
  it can be used for a pathspec with multiple literal paths.
 
- Expecting a reroll.
- cf. <5DB7714D-4009-47C4-A8F7-1C375C6D29AF@smail.nju.edu.cn>
- source: <20250704111437.2660251-1-502024330056@smail.nju.edu.cn>
-
-
-* mc/netrc-service-names (2025-06-25) 3 commits
-  (merged to 'next' on 2025-07-07 at e98100afdd)
- + contrib: better support symbolic port names in git-credential-netrc
- + contrib: warn for invalid netrc file ports in git-credential-netrc
- + contrib: use a more portable shebang for git-credential-netrc
-
- "netrc" credential helper has been improved to understand textual
- service names (like smtp) in addition to the numeric port numbers
- (like 25).
-
- Will merge to 'master'.
- source: <20250625142511.28857-1-maxim@guixotic.coop>
+ Will merge to 'next'?
+ source: <20250712093517.17907-1-yldhome2d2@gmail.com>
 
 
 * ph/fetch-prune-optim (2025-07-01) 3 commits
@@ -478,33 +556,23 @@ Release tarballs are available at:
 
 
 * bc/use-sha256-by-default-in-3.0 (2025-07-01) 11 commits
- - Enable SHA-256 by default in breaking changes mode
- - help: add a build option for default hash
- - t5300: choose the built-in hash outside of a repo
- - t4042: choose the built-in hash outside of a repo
- - t1007: choose the built-in hash outside of a repo
- - t: default to compile-time default hash if not set
- - setup: use the default algorithm to initialize repo format
- - Use legacy hash for legacy formats
- - builtin: use default hash when outside a repository
- - hash: add a constant for the legacy hash algorithm
- - hash: add a constant for the default hash algorithm
+  (merged to 'next' on 2025-07-11 at 893c183a5f)
+ + Enable SHA-256 by default in breaking changes mode
+ + help: add a build option for default hash
+ + t5300: choose the built-in hash outside of a repo
+ + t4042: choose the built-in hash outside of a repo
+ + t1007: choose the built-in hash outside of a repo
+ + t: default to compile-time default hash if not set
+ + setup: use the default algorithm to initialize repo format
+ + Use legacy hash for legacy formats
+ + builtin: use default hash when outside a repository
+ + hash: add a constant for the legacy hash algorithm
+ + hash: add a constant for the default hash algorithm
 
  Prepare to flip the default hash function to SHA-256.
 
- Will merge to 'next'.
- source: <20250701212237.766774-1-sandals@crustytoothpaste.net>
-
-
-* jc/coccicheck-fails-make-when-it-fails (2025-06-23) 1 commit
-  (merged to 'next' on 2025-07-07 at 0b7affe7cd)
- + coccicheck: fail "make" when it fails
-
- "make coccicheck" succeeds even when spatch made suggestions, which
- has been updated to fail in such a case.
-
  Will merge to 'master'.
- source: <xmqqbjqe77vw.fsf@gitster.g>
+ source: <20250701212237.766774-1-sandals@crustytoothpaste.net>
 
 
 * lo/repo-info (2025-06-19) 7 commits
@@ -519,7 +587,8 @@ Release tarballs are available at:
  A new subcommand "git repo-info" gives users a way to grab various
  repository characteristics.
 
- Expecting a reroll, if only to fix "make check-docs".
+ Expecting a reroll.
+ cf. <0FEC4502-867F-4B9C-B752-376EF9464983@gmail.com>
  source: <20250619225751.99699-1-lucasseikioshiro@gmail.com>
 
 
@@ -541,7 +610,7 @@ Release tarballs are available at:
  Two global variables related to sparse checkout have been moved to
  the repository settings structure.
 
- Expecting a response.
+ Needs a bit of redoing around the configuration reading.
  cf. <17b7f51c-0c3d-4d63-a501-47ce829f7345@gmail.com>
  cf. <xmqqbjpuqkrj.fsf@gitster.g>
  source: <cover.1751309770.git.ayu.chandekar@gmail.com>
@@ -559,19 +628,7 @@ Release tarballs are available at:
  source: <20250609221055.136074-1-oystwa@gmail.com>
 
 
-* bs/config-mak-freebsd (2025-07-02) 2 commits
-  (merged to 'next' on 2025-07-07 at d6761aa225)
- + build: retire NO_UINTMAX_T
- + config.mak.uname: set NO_MEMMEM only for functional version
-
- Drop FreeBSD 4 support and assume we are at least at FreeBSD 6 with
- memmem() supported.
-
- Will merge to 'master'.
- source: <20250702093736.36074-1-carenas@gmail.com>
-
-
-* jc/tag-idempotent-no-op (2025-06-10) 1 commit
+* jc/tag-idempotent-no-op (2025-07-11) 1 commit
  - tag: allow idempotent "git tag" without "--force"
 
  "git tag T O" when the tag T is already pointing at the object O is
@@ -579,8 +636,8 @@ Release tarballs are available at:
  require "--force" and instead turn it into a no-op.
 
  Will discard.
- cf. <xmqqfrf73ahu.fsf@gitster.g>
- source: <xmqqzfefodje.fsf@gitster.g>
+ cf. <dt5ruadvr7lmhsbypmb6yili5cookfx5btw4gzfeui7ehxxajv@ziael4udbbcy>
+ source: <xmqqv7nyzgp7.fsf@gitster.g>
 
 
 * ss/compat-bswap-revamp (2025-06-11) 6 commits
@@ -611,7 +668,7 @@ Release tarballs are available at:
 
  Doc mark-up updates.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.1933.v3.git.1751914412.gitgitgadget@gmail.com>
 
 
@@ -684,7 +741,7 @@ Release tarballs are available at:
  "git add/etc -p" now honors diff.context configuration variable,
  and learns to honor -U<n> option.
 
- Expecting a response.
+ Expecting responses.
  cf. <xmqqms9eql73.fsf@gitster.g>
  source: <pull.1915.v3.git.1751128486.gitgitgadget@gmail.com>
 
@@ -732,60 +789,20 @@ Release tarballs are available at:
  source: <20250625125055.1375596-1-christian.couder@gmail.com>
 
 
-* sj/string-list (2025-06-28) 8 commits
-  (merged to 'next' on 2025-07-07 at 5a95dc8007)
- + u-string-list: move "remove duplicates" test to "u-string-list.c"
- + u-string-list: move "filter string" test to "u-string-list.c"
- + u-string-list: move "test_split_in_place" to "u-string-list.c"
- + u-string-list: move "test_split" into "u-string-list.c"
- + string-list: enable sign compare warnings check
- + string-list: return index directly when inserting an existing element
- + string-list: remove unused "insert_at" parameter from add_entry
- + string-list: fix sign compare warnings for loop iterator
-
- Code and test clean-up around string-list API.
-
- Will merge to 'master'.
- source: <aGDAZ6a0-PyXXGmK@ArchLinux>
-
-
 * tb/midx-avoid-cruft-packs (2025-06-23) 9 commits
- - repack: exclude cruft pack(s) from the MIDX where possible
- - pack-objects: introduce '--stdin-packs=follow'
- - pack-objects: swap 'show_{object,commit}_pack_hint'
- - pack-objects: fix typo in 'show_object_pack_hint()'
- - pack-objects: perform name-hash traversal for unpacked objects
- - pack-objects: declare 'rev_info' for '--stdin-packs' earlier
- - pack-objects: factor out handling '--stdin-packs'
- - pack-objects: limit scope in 'add_object_entry_from_pack()'
- - pack-objects: use standard option incompatibility functions
+  (merged to 'next' on 2025-07-11 at 3fc02a8a1a)
+ + repack: exclude cruft pack(s) from the MIDX where possible
+ + pack-objects: introduce '--stdin-packs=follow'
+ + pack-objects: swap 'show_{object,commit}_pack_hint'
+ + pack-objects: fix typo in 'show_object_pack_hint()'
+ + pack-objects: perform name-hash traversal for unpacked objects
+ + pack-objects: declare 'rev_info' for '--stdin-packs' earlier
+ + pack-objects: factor out handling '--stdin-packs'
+ + pack-objects: limit scope in 'add_object_entry_from_pack()'
+ + pack-objects: use standard option incompatibility functions
 
  "pack-objects" has been taught to avoid pointing into objects in
  cruft packs from midx.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1750717921.git.me@ttaylorr.com>
-
---------------------------------------------------
-[Discarded]
-
-* kn/fetch-push-bulk-ref-update-fixup (2025-06-20) 7 commits
- . receive-pack: handle reference deletions separately
- . refs/files: skip updates with errors in batched updates
- . Merge branch 'kn/fetch-push-bulk-ref-update' into kn/fetch-push-bulk-ref-update-fixup
-
- Follow-up fixes to the base topic.
-
- Superseded--folded into the base topic.
- source: <20250620-6769-address-test-failures-in-the-next-branch-caused-by-batched-reference-updates-v5-0-f35ee6b59a82@gmail.com>
-
-
-* jc/cocci-dtype (2025-06-18) 1 commit
- . cocci: do not directly access the .d_type member in struct dirent
-
- Catch direct access to .d_type member of struct dirent, as some
- non-POSIX compliant systems we support lack it, and rewrite to use
- DTYPE() macro, which is not quite the right thing to do.
-
- Would silently convert a broken code with code with another breakage.
- source: <xmqq4iwcgbzb.fsf@gitster.g>
