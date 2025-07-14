@@ -40,6 +40,13 @@ UI, Workflows & Features
    client, instead of retrying, it skipped it by mistake, which has
    been corrected.
 
+ * The reftable ref backend has matured enough; Git 3.0 will make it
+   the default format in a newly created repositories by default.
+
+ * "netrc" credential helper has been improved to understand textual
+   service names (like smtp) in addition to the numeric port numbers
+   (like 25).
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -64,6 +71,16 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git push" and "git fetch" are taught to update refs in batches to
    gain performance.
+
+ * Some code paths in the "git prune" used to ignore passed in
+   repository object and used the_repository singleton instance
+   instead, which has been corrected.
+
+ * Update ".clang-format" and ".editorconfig" to match our style guide
+   a bit better.
+
+ * "make coccicheck" succeeds even when spatch made suggestions, which
+   has been updated to fail in such a case.
 
 
 Fixes since v2.50
@@ -117,8 +134,32 @@ including security updates, are included in this release.
  * Remove unnecessary check from "git daemon" code.
    (merge 0c856224d2 cb/daemon-fd-check-fix later to maint).
 
- * Leakfix.
-   (merge b0e9d25865 jk/fix-leak-send-pack later to maint).
+ * Use of sysctl() system call to learn the total RAM size used on
+   BSDs has been corrected.
+   (merge 781c1cf571 cb/total-ram-bsd-fix later to maint).
+
+ * Drop FreeBSD 4 support and declare that we support only FreeBSD 12
+   or later, which has memmem() supported.
+   (merge 0392f976a7 bs/config-mak-freebsd later to maint).
+
+ * A diff-filter with negative-only specification like "git log
+   --diff-filter=d" did not trigger correctly, which has been fixed.
+   (merge 375ac087c5 jk/all-negative-diff-filter-fix later to maint).
+
+ * A failure to open the index file for writing due to conflicting
+   access did not state what went wrong, which has been corrected.
+   (merge 9455397a5c hy/read-cache-lock-error-fix later to maint).
+
+ * Tempfile removal fix in the codepath to sign commits with SSH keys.
+   (merge 4498127b04 re/ssh-sign-buffer-fix later to maint).
+
+ * Code and test clean-up around string-list API.
+   (merge 6e5b26c3ff sj/string-list later to maint).
+
+ * "git apply -N" should start from the current index and register
+   only new files, but it instead started from an empty index, which
+   has been corrected.
+   (merge 2b49d97fcb rp/apply-intent-to-add-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge b257adb571 lo/my-first-ow-doc-update later to maint).
@@ -136,3 +177,9 @@ including security updates, are included in this release.
    (merge ff73f375bb jg/mailinfo-leakfix later to maint).
    (merge 996f14c02b jj/doc-branch-markup-fix later to maint).
    (merge 1e77de1864 cb/ci-freebsd-update-to-14.3 later to maint).
+   (merge b0e9d25865 jk/fix-leak-send-pack later to maint).
+   (merge f3a9558c8c bs/remote-helpers-doc-markup-fix later to maint).
+   (merge c4e9775c60 kh/doc-config-subcommands later to maint).
+   (merge de404249ab ps/perlless-test-fixes later to maint).
+   (merge 953049eed8 ts/merge-orig-head-doc-fix later to maint).
+   (merge 0c83bbc704 rj/freebsd-sysinfo-build-fix later to maint).
