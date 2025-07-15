@@ -116,6 +116,12 @@ static inline uint64_t git_bswap64(uint64_t x)
 # define GIT_LITTLE_ENDIAN LITTLE_ENDIAN
 # define GIT_BIG_ENDIAN BIG_ENDIAN
 
+#elif defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && defined(__ORDER_BIG_ENDIAN__)
+
+# define GIT_BYTE_ORDER __BYTE_ORDER__
+# define GIT_LITTLE_ENDIAN __ORDER_LITTLE_ENDIAN__
+# define GIT_BIG_ENDIAN __ORDER_BIG_ENDIAN__
+
 #else
 
 # define GIT_BIG_ENDIAN 4321
