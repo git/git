@@ -1,7 +1,7 @@
 #include "test-tool.h"
 #include "hex.h"
 #include "repository.h"
-#include "object-store.h"
+#include "odb.h"
 #include "setup.h"
 
 /*
@@ -23,7 +23,7 @@ static void object_info(const char *gitdir, const char *oid_hex)
 		die("could not init repo");
 	if (parse_oid_hex_algop(oid_hex, &oid, &p, r.hash_algo))
 		die("could not parse oid");
-	if (oid_object_info_extended(&r, &oid, &oi, 0))
+	if (odb_read_object_info_extended(r.objects, &oid, &oi, 0))
 		die("could not obtain object info");
 	printf("%d\n", (int) size);
 

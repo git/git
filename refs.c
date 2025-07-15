@@ -19,7 +19,7 @@
 #include "run-command.h"
 #include "hook.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "object.h"
 #include "path.h"
 #include "submodule.h"
@@ -376,7 +376,8 @@ int ref_resolves_to_object(const char *refname,
 {
 	if (flags & REF_ISBROKEN)
 		return 0;
-	if (!has_object(repo, oid, HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR)) {
+	if (!odb_has_object(repo->objects, oid,
+			    HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR)) {
 		error(_("%s does not point to a valid object!"), refname);
 		return 0;
 	}
@@ -2477,7 +2478,7 @@ int ref_transaction_prepare(struct ref_transaction *transaction,
 		break;
 	}
 
-	if (refs->repo->objects->odb->disable_ref_updates) {
+	if (refs->repo->objects->sources->disable_ref_updates) {
 		strbuf_addstr(err,
 			      _("ref updates forbidden inside quarantine environment"));
 		return -1;

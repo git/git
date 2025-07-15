@@ -6,7 +6,7 @@
 #include "hex.h"
 #include "parse-options.h"
 #include "commit-graph.h"
-#include "object-store.h"
+#include "odb.h"
 #include "progress.h"
 #include "replace-object.h"
 #include "strbuf.h"
@@ -66,7 +66,7 @@ static int graph_verify(int argc, const char **argv, const char *prefix,
 			struct repository *repo UNUSED)
 {
 	struct commit_graph *graph = NULL;
-	struct object_directory *odb = NULL;
+	struct odb_source *source = NULL;
 	char *graph_name;
 	char *chain_name;
 	enum { OPENED_NONE, OPENED_GRAPH, OPENED_CHAIN } opened = OPENED_NONE;
@@ -101,9 +101,9 @@ static int graph_verify(int argc, const char **argv, const char *prefix,
 	if (opts.progress)
 		flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 
-	odb = find_odb(the_repository, opts.obj_dir);
-	graph_name = get_commit_graph_filename(odb);
-	chain_name = get_commit_graph_chain_filename(odb);
+	source = odb_find_source(the_repository->objects, opts.obj_dir);
+	graph_name = get_commit_graph_filename(source);
+	chain_name = get_commit_graph_chain_filename(source);
 	if (open_commit_graph(graph_name, &fd, &st))
 		opened = OPENED_GRAPH;
 	else if (errno != ENOENT)
@@ -120,7 +120,7 @@ static int graph_verify(int argc, const char **argv, const char *prefix,
 	if (opened == OPENED_NONE)
 		return 0;
 	else if (opened == OPENED_GRAPH)
-		graph = load_commit_graph_one_fd_st(the_repository, fd, &st, odb);
+		graph = load_commit_graph_one_fd_st(the_repository, fd, &st, source);
 	else
 		graph = load_commit_graph_chain_fd_st(the_repository, fd, &st,
 						      &incomplete_chain);
@@ -221,7 +221,7 @@ static int graph_write(int argc, const char **argv, const char *prefix,
 	struct string_list pack_indexes = STRING_LIST_INIT_DUP;
 	struct strbuf buf = STRBUF_INIT;
 	struct oidset commits = OIDSET_INIT;
-	struct object_directory *odb = NULL;
+	struct odb_source *source = NULL;
 	int result = 0;
 	enum commit_graph_write_flags flags = 0;
 	struct progress *progress = NULL;
@@ -289,10 +289,10 @@ static int graph_write(int argc, const char **argv, const char *prefix,
 	    git_env_bool(GIT_TEST_COMMIT_GRAPH_CHANGED_PATHS, 0))
 		flags |= COMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
-	odb = find_odb(the_repository, opts.obj_dir);
+	source = odb_find_source(the_repository->objects, opts.obj_dir);
 
 	if (opts.reachable) {
-		if (write_commit_graph_reachable(odb, flags, &write_opts))
+		if (write_commit_graph_reachable(source, flags, &write_opts))
 			result = 1;
 		goto cleanup;
 	}
@@ -319,7 +319,7 @@ static int graph_write(int argc, const char **argv, const char *prefix,
 		stop_progress(&progress);
 	}
 
-	if (write_commit_graph(odb,
+	if (write_commit_graph(source,
 			       opts.stdin_packs ? &pack_indexes : NULL,
 			       opts.stdin_commits ? &commits : NULL,
 			       flags,
