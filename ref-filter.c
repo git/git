@@ -3199,37 +3199,37 @@ static int do_filter_refs(struct ref_filter *filter, unsigned int type, each_ref
 	/*  Simple per-ref filtering */
 	if (!filter->kind)
 		die("filter_refs: invalid type");
-	else {
-		/*
-		 * For common cases where we need only branches or remotes or tags,
-		 * we only iterate through those refs. If a mix of refs is needed,
-		 * we iterate over all refs and filter out required refs with the help
-		 * of filter_ref_kind().
-		 */
-		if (filter->kind == FILTER_REFS_BRANCHES)
-			ret = refs_for_each_fullref_in(get_main_ref_store(the_repository),
-						       "refs/heads/", NULL,
-						       fn, cb_data);
-		else if (filter->kind == FILTER_REFS_REMOTES)
-			ret = refs_for_each_fullref_in(get_main_ref_store(the_repository),
-						       "refs/remotes/", NULL,
-						       fn, cb_data);
-		else if (filter->kind == FILTER_REFS_TAGS)
-			ret = refs_for_each_fullref_in(get_main_ref_store(the_repository),
-						       "refs/tags/", NULL, fn,
-						       cb_data);
-		else if (filter->kind & FILTER_REFS_REGULAR)
-			ret = for_each_fullref_in_pattern(filter, fn, cb_data);
 
-		/*
-		 * When printing all ref types, HEAD is already included,
-		 * so we don't want to print HEAD again.
-		 */
-		if (!ret && !(filter->kind & FILTER_REFS_ROOT_REFS) &&
-		    (filter->kind & FILTER_REFS_DETACHED_HEAD))
-			refs_head_ref(get_main_ref_store(the_repository), fn,
-				      cb_data);
-	}
+	/*
+	 * For common cases where we need only branches or remotes or tags,
+	 * we only iterate through those refs. If a mix of refs is needed,
+	 * we iterate over all refs and filter out required refs with the help
+	 * of filter_ref_kind().
+	 */
+	if (filter->kind == FILTER_REFS_BRANCHES)
+		ret = refs_for_each_fullref_in(get_main_ref_store(the_repository),
+					       "refs/heads/", NULL,
+					       fn, cb_data);
+	else if (filter->kind == FILTER_REFS_REMOTES)
+		ret = refs_for_each_fullref_in(get_main_ref_store(the_repository),
+					       "refs/remotes/", NULL,
+					       fn, cb_data);
+	else if (filter->kind == FILTER_REFS_TAGS)
+		ret = refs_for_each_fullref_in(get_main_ref_store(the_repository),
+					       "refs/tags/", NULL, fn,
+					       cb_data);
+	else if (filter->kind & FILTER_REFS_REGULAR)
+		ret = for_each_fullref_in_pattern(filter, fn, cb_data);
+
+	/*
+	 * When printing all ref types, HEAD is already included,
+	 * so we don't want to print HEAD again.
+	 */
+	if (!ret && !(filter->kind & FILTER_REFS_ROOT_REFS) &&
+	    (filter->kind & FILTER_REFS_DETACHED_HEAD))
+		refs_head_ref(get_main_ref_store(the_repository), fn,
+			      cb_data);
+
 
 	clear_contains_cache(&filter->internal.contains_cache);
 	clear_contains_cache(&filter->internal.no_contains_cache);
