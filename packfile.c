@@ -372,6 +372,8 @@ void close_object_store(struct object_database *o)
 	if (o->multi_pack_index) {
 		close_midx(o->multi_pack_index);
 		o->multi_pack_index = NULL;
+		for (struct odb_source *source = o->sources; source; source = source->next)
+			source->midx = NULL;
 	}
 
 	close_commit_graph(o);
@@ -1037,7 +1039,7 @@ static void prepare_packed_git(struct repository *r)
 	odb_prepare_alternates(r->objects);
 	for (source = r->objects->sources; source; source = source->next) {
 		int local = (source == r->objects->sources);
-		prepare_multi_pack_index_one(r, source->path, local);
+		prepare_multi_pack_index_one(source, local);
 		prepare_packed_git_one(r, source->path, local);
 	}
 	rearrange_packed_git(r);

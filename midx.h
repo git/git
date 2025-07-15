@@ -8,6 +8,7 @@ struct pack_entry;
 struct repository;
 struct bitmapped_pack;
 struct git_hash_algo;
+struct odb_source;
 
 #define MIDX_SIGNATURE 0x4d494458 /* "MIDX" */
 #define MIDX_VERSION 1
@@ -123,7 +124,7 @@ int fill_midx_entry(struct repository *r, const struct object_id *oid, struct pa
 int midx_contains_pack(struct multi_pack_index *m,
 		       const char *idx_or_pack_name);
 int midx_preferred_pack(struct multi_pack_index *m, uint32_t *pack_int_id);
-int prepare_multi_pack_index_one(struct repository *r, const char *object_dir, int local);
+int prepare_multi_pack_index_one(struct odb_source *source, int local);
 
 /*
  * Variant of write_midx_file which writes a MIDX containing only the packs
