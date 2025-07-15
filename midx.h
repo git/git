@@ -35,8 +35,6 @@ struct odb_source;
 	"GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL"
 
 struct multi_pack_index {
-	struct multi_pack_index *next;
-
 	const unsigned char *data;
 	size_t data_len;
 

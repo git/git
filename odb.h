@@ -126,13 +126,6 @@ struct object_database {
 	/*
 	 * private data
 	 *
-	 * should only be accessed directly by packfile.c and midx.c
-	 */
-	struct multi_pack_index *multi_pack_index;
-
-	/*
-	 * private data
-	 *
 	 * should only be accessed directly by packfile.c
 	 */
 
