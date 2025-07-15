@@ -87,27 +87,6 @@ static inline uint64_t git_bswap64(uint64_t x)
 
 #endif
 
-#if defined(bswap32)
-
-#undef ntohl
-#undef htonl
-#define ntohl(x) bswap32(x)
-#define htonl(x) bswap32(x)
-
-#endif
-
-#if defined(bswap64)
-
-#undef ntohll
-#undef htonll
-#define ntohll(x) bswap64(x)
-#define htonll(x) bswap64(x)
-
-#else
-
-#undef ntohll
-#undef htonll
-
 #if defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && defined(__BIG_ENDIAN)
 
 # define GIT_BYTE_ORDER __BYTE_ORDER
@@ -145,14 +124,33 @@ static inline uint64_t git_bswap64(uint64_t x)
 
 #endif
 
-#if GIT_BYTE_ORDER == GIT_BIG_ENDIAN
-# define ntohll(n) (n)
-# define htonll(n) (n)
-#else
-# define ntohll(n) default_bswap64(n)
-# define htonll(n) default_bswap64(n)
-#endif
+#undef ntohl
+#undef htonl
+#undef ntohll
+#undef htonll
 
+#if GIT_BYTE_ORDER == GIT_BIG_ENDIAN
+# define ntohl(x) (x)
+# define htonl(x) (x)
+# define ntohll(x) (x)
+# define htonll(x) (x)
+#else
+
+# if defined(bswap32)
+#  define ntohl(x) bswap32(x)
+#  define htonl(x) bswap32(x)
+# else
+#  define ntohl(x) default_swab32(x)
+#  define htonl(x) default_swab32(x)
+# endif
+
+# if defined(bswap64)
+#  define ntohll(x) bswap64(x)
+#  define htonll(x) bswap64(x)
+# else
+#  define ntohll(x) default_bswap64(x)
+#  define htonll(x) default_bswap64(x)
+# endif
 #endif
 
 static inline uint16_t get_be16(const void *ptr)
