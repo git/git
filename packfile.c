@@ -963,14 +963,18 @@ static void prepare_packed_git(struct repository *r);
 unsigned long repo_approximate_object_count(struct repository *r)
 {
 	if (!r->objects->approximate_object_count_valid) {
-		unsigned long count;
-		struct multi_pack_index *m;
+		struct odb_source *source;
+		unsigned long count = 0;
 		struct packed_git *p;
 
 		prepare_packed_git(r);
-		count = 0;
-		for (m = get_multi_pack_index(r); m; m = m->next)
-			count += m->num_objects;
+
+		for (source = r->objects->sources; source; source = source->next) {
+			struct multi_pack_index *m = get_multi_pack_index(source);
+			if (m)
+				count += m->num_objects;
+		}
+
 		for (p = r->objects->packed_git; p; p = p->next) {
 			if (open_pack_index(p))
 				continue;
@@ -1074,21 +1078,10 @@ struct packed_git *get_packed_git(struct repository *r)
 	return r->objects->packed_git;
 }
 
-struct multi_pack_index *get_multi_pack_index(struct repository *r)
+struct multi_pack_index *get_multi_pack_index(struct odb_source *source)
 {
-	prepare_packed_git(r);
-	return r->objects->multi_pack_index;
-}
-
-struct multi_pack_index *get_local_multi_pack_index(struct repository *r)
-{
-	struct multi_pack_index *m = get_multi_pack_index(r);
-
-	/* no need to iterate; we always put the local one first (if any) */
-	if (m && m->local)
-		return m;
-
-	return NULL;
+	prepare_packed_git(source->odb->repo);
+	return source->midx;
 }
 
 struct packed_git *get_all_packs(struct repository *r)

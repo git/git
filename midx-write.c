@@ -916,26 +916,8 @@ cleanup:
 static struct multi_pack_index *lookup_multi_pack_index(struct repository *r,
 							const char *object_dir)
 {
-	struct multi_pack_index *result = NULL;
-	struct multi_pack_index *cur;
-	char *obj_dir_real = real_pathdup(object_dir, 1);
-	struct strbuf cur_path_real = STRBUF_INIT;
-
-	/* Ensure the given object_dir is local, or a known alternate. */
-	odb_find_source(r->objects, obj_dir_real);
-
-	for (cur = get_multi_pack_index(r); cur; cur = cur->next) {
-		strbuf_realpath(&cur_path_real, cur->object_dir, 1);
-		if (!strcmp(obj_dir_real, cur_path_real.buf)) {
-			result = cur;
-			goto cleanup;
-		}
-	}
-
-cleanup:
-	free(obj_dir_real);
-	strbuf_release(&cur_path_real);
-	return result;
+	struct odb_source *source = odb_find_source(r->objects, object_dir);
+	return get_multi_pack_index(source);
 }
 
 static int fill_packs_from_midx(struct write_midx_context *ctx,
