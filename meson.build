@@ -1744,7 +1744,7 @@ git_builtin = executable('git',
   sources: builtin_sources + 'git.c',
   dependencies: [libgit_commonmain],
   install: true,
-  install_dir: get_option('libexecdir') / 'git-core',
+  install_dir: git_exec_path,
 )
 bin_wrappers += git_builtin
 
@@ -1752,35 +1752,35 @@ test_dependencies += executable('git-daemon',
   sources: 'daemon.c',
   dependencies: [libgit_commonmain],
   install: true,
-  install_dir: get_option('libexecdir') / 'git-core',
+  install_dir: git_exec_path,
 )
 
 test_dependencies += executable('git-sh-i18n--envsubst',
   sources: 'sh-i18n--envsubst.c',
   dependencies: [libgit_commonmain],
   install: true,
-  install_dir: get_option('libexecdir') / 'git-core',
+  install_dir: git_exec_path,
 )
 
 bin_wrappers += executable('git-shell',
   sources: 'shell.c',
   dependencies: [libgit_commonmain],
   install: true,
-  install_dir: get_option('libexecdir') / 'git-core',
+  install_dir: git_exec_path,
 )
 
 test_dependencies += executable('git-http-backend',
   sources: 'http-backend.c',
   dependencies: [libgit_commonmain],
   install: true,
-  install_dir: get_option('libexecdir') / 'git-core',
+  install_dir: git_exec_path,
 )
 
 bin_wrappers += executable('scalar',
   sources: 'scalar.c',
   dependencies: [libgit_commonmain],
   install: true,
-  install_dir: get_option('libexecdir') / 'git-core',
+  install_dir: git_exec_path,
 )
 
 if curl.found()
@@ -1796,14 +1796,14 @@ if curl.found()
     sources: 'remote-curl.c',
     dependencies: [libgit_curl],
     install: true,
-    install_dir: get_option('libexecdir') / 'git-core',
+    install_dir: git_exec_path,
   )
 
   test_dependencies += executable('git-http-fetch',
     sources: 'http-fetch.c',
     dependencies: [libgit_curl],
     install: true,
-    install_dir: get_option('libexecdir') / 'git-core',
+    install_dir: git_exec_path,
   )
 
   if expat.found()
@@ -1811,7 +1811,7 @@ if curl.found()
       sources: 'http-push.c',
       dependencies: [libgit_curl],
       install: true,
-      install_dir: get_option('libexecdir') / 'git-core',
+      install_dir: git_exec_path,
     )
   endif
 
@@ -1822,7 +1822,7 @@ if curl.found()
     )
 
     install_symlink(alias + executable_suffix,
-      install_dir: get_option('libexecdir') / 'git-core',
+      install_dir: git_exec_path,
       pointing_to: 'git-remote-http',
     )
   endforeach
@@ -1832,7 +1832,7 @@ test_dependencies += executable('git-imap-send',
   sources: 'imap-send.c',
   dependencies: [ use_curl_for_imap_send ? libgit_curl : libgit_commonmain ],
   install: true,
-  install_dir: get_option('libexecdir') / 'git-core',
+  install_dir: git_exec_path,
 )
 
 foreach alias : [ 'git-receive-pack', 'git-upload-archive', 'git-upload-pack' ]
@@ -1842,7 +1842,7 @@ foreach alias : [ 'git-receive-pack', 'git-upload-archive', 'git-upload-pack' ]
   )
 
   install_symlink(alias + executable_suffix,
-    install_dir: get_option('libexecdir') / 'git-core',
+    install_dir: git_exec_path,
     pointing_to: 'git',
   )
 endforeach
@@ -1856,9 +1856,9 @@ foreach symlink : [
   'scalar',
 ]
   if meson.version().version_compare('>=1.3.0')
-    pointing_to = fs.relative_to(get_option('libexecdir') / 'git-core' / symlink, get_option('bindir'))
+    pointing_to = fs.relative_to(git_exec_path / symlink, get_option('bindir'))
   else
-    pointing_to = '../libexec/git-core' / symlink
+    pointing_to = '..' / git_exec_path / symlink
   endif
 
   install_symlink(symlink,
@@ -1898,7 +1898,7 @@ foreach script : scripts_sh
       meson.project_build_root() / 'GIT-BUILD-OPTIONS',
     ],
     install: true,
-    install_dir: get_option('libexecdir') / 'git-core',
+    install_dir: git_exec_path,
   )
 endforeach
 
@@ -1931,7 +1931,7 @@ if perl_features_enabled
     input: perl_header_template,
     output: 'GIT-PERL-HEADER',
     configuration: {
-      'GITEXECDIR_REL': get_option('libexecdir') / 'git-core',
+      'GITEXECDIR_REL': git_exec_path,
       'PERLLIBDIR_REL': perllibdir,
       'LOCALEDIR_REL': get_option('datadir') / 'locale',
       'INSTLIBDIR': perllibdir,
@@ -1955,7 +1955,7 @@ if perl_features_enabled
       output: fs.stem(script),
       command: generate_perl_command,
       install: true,
-      install_dir: get_option('libexecdir') / 'git-core',
+      install_dir: git_exec_path,
       depends: [git_version_file],
     )
     test_dependencies += generated_script
@@ -1964,9 +1964,9 @@ if perl_features_enabled
       bin_wrappers += generated_script
 
       if meson.version().version_compare('>=1.3.0')
-        pointing_to = fs.relative_to(get_option('libexecdir') / 'git-core' / fs.stem(script), get_option('bindir'))
+        pointing_to = fs.relative_to(git_exec_path / fs.stem(script), get_option('bindir'))
       else
-        pointing_to = '../libexec/git-core' / fs.stem(script)
+        pointing_to = '..' / git_exec_path / fs.stem(script)
       endif
 
       install_symlink(fs.stem(script),
@@ -1996,7 +1996,7 @@ if python.found()
         '@OUTPUT@',
       ],
       install: true,
-      install_dir: get_option('libexecdir') / 'git-core',
+      install_dir: git_exec_path,
     )
     test_dependencies += generated_python
   endforeach
@@ -2030,7 +2030,7 @@ mergetools = [
 ]
 
 foreach mergetool : mergetools
-  install_data(mergetool, install_dir: get_option('libexecdir') / 'git-core' / 'mergetools')
+  install_data(mergetool, install_dir: git_exec_path / 'mergetools')
 endforeach
 
 if intl.found()
