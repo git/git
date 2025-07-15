@@ -353,11 +353,12 @@ void base_ref_iterator_init(struct ref_iterator *iter,
 typedef int ref_iterator_advance_fn(struct ref_iterator *ref_iterator);
 
 /*
- * Seek the iterator to the first reference matching the given prefix. Should
- * behave the same as if a new iterator was created with the same prefix.
+ * Seek the iterator to the first matching reference. If the
+ * REF_ITERATOR_SEEK_SET_PREFIX flag is set, it would behave the same as if a
+ * new iterator was created with the provided refname as prefix.
  */
 typedef int ref_iterator_seek_fn(struct ref_iterator *ref_iterator,
-				 const char *prefix);
+				 const char *refname, unsigned int flags);
 
 /*
  * Peels the current ref, returning 0 for success or -1 for failure.
