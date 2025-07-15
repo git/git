@@ -401,7 +401,6 @@ void close_midx(struct multi_pack_index *m)
 	if (!m)
 		return;
 
-	close_midx(m->next);
 	close_midx(m->base_midx);
 
 	munmap((unsigned char *)m->data, m->data_len);
@@ -835,11 +834,15 @@ void clear_midx_file(struct repository *r)
 
 	get_midx_filename(r->hash_algo, &midx, r->objects->sources->path);
 
-	if (r->objects && r->objects->multi_pack_index) {
-		close_midx(r->objects->multi_pack_index);
-		r->objects->multi_pack_index = NULL;
-		for (struct odb_source *source = r->objects->sources; source; source = source->next)
+	if (r->objects) {
+		struct odb_source *source;
+
+		for (source = r->objects->sources; source; source = source->next) {
+			if (source->midx)
+				close_midx(source->midx);
 			source->midx = NULL;
+		}
+		r->objects->multi_pack_index = NULL;
 	}
 
 	if (remove_path(midx.buf))

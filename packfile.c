@@ -361,6 +361,7 @@ void close_pack(struct packed_git *p)
 
 void close_object_store(struct object_database *o)
 {
+	struct odb_source *source;
 	struct packed_git *p;
 
 	for (p = o->packed_git; p; p = p->next)
@@ -369,12 +370,12 @@ void close_object_store(struct object_database *o)
 		else
 			close_pack(p);
 
-	if (o->multi_pack_index) {
-		close_midx(o->multi_pack_index);
-		o->multi_pack_index = NULL;
-		for (struct odb_source *source = o->sources; source; source = source->next)
-			source->midx = NULL;
+	for (source = o->sources; source; source = source->next) {
+		if (source->midx)
+			close_midx(source->midx);
+		source->midx = NULL;
 	}
+	o->multi_pack_index = NULL;
 
 	close_commit_graph(o);
 }
