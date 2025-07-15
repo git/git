@@ -81,6 +81,10 @@ static inline uint64_t git_bswap64(uint64_t x)
 #define bswap32(x) _byteswap_ulong(x)
 #define bswap64(x) _byteswap_uint64(x)
 
+#define GIT_LITTLE_ENDIAN 1234
+#define GIT_BIG_ENDIAN 4321
+#define GIT_BYTE_ORDER GIT_LITTLE_ENDIAN
+
 #endif
 
 #if defined(bswap32)
@@ -122,7 +126,7 @@ static inline uint64_t git_bswap64(uint64_t x)
 # define GIT_LITTLE_ENDIAN __ORDER_LITTLE_ENDIAN__
 # define GIT_BIG_ENDIAN __ORDER_BIG_ENDIAN__
 
-#else
+#elif !defined(GIT_BYTE_ORDER)
 
 # define GIT_BIG_ENDIAN 4321
 # define GIT_LITTLE_ENDIAN 1234
