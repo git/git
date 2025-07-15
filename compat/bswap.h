@@ -35,46 +35,7 @@ static inline uint64_t default_bswap64(uint64_t val)
 #undef bswap32
 #undef bswap64
 
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
-
-#define bswap32 git_bswap32
-static inline uint32_t git_bswap32(uint32_t x)
-{
-	uint32_t result;
-	if (__builtin_constant_p(x))
-		result = default_swab32(x);
-	else
-		__asm__("bswap %0" : "=r" (result) : "0" (x));
-	return result;
-}
-
-#define bswap64 git_bswap64
-#if defined(__x86_64__)
-static inline uint64_t git_bswap64(uint64_t x)
-{
-	uint64_t result;
-	if (__builtin_constant_p(x))
-		result = default_bswap64(x);
-	else
-		__asm__("bswap %q0" : "=r" (result) : "0" (x));
-	return result;
-}
-#else
-static inline uint64_t git_bswap64(uint64_t x)
-{
-	union { uint64_t i64; uint32_t i32[2]; } tmp, result;
-	if (__builtin_constant_p(x))
-		result.i64 = default_bswap64(x);
-	else {
-		tmp.i64 = x;
-		result.i32[0] = git_bswap32(tmp.i32[1]);
-		result.i32[1] = git_bswap32(tmp.i32[0]);
-	}
-	return result.i64;
-}
-#endif
-
-#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64) || defined(_M_ARM64))
+#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64) || defined(_M_ARM64))
 
 #include <stdlib.h>
 
