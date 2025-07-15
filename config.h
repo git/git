@@ -122,14 +122,12 @@ struct key_value_info {
 	int linenr;
 	enum config_origin_type origin_type;
 	enum config_scope scope;
-	const char *path;
 };
 #define KVI_INIT { \
 	.filename = NULL, \
 	.linenr = -1, \
 	.origin_type = CONFIG_ORIGIN_UNKNOWN, \
 	.scope = CONFIG_SCOPE_UNKNOWN, \
-	.path = NULL, \
 }
 
 /* Captures additional information that a config callback can use. */
