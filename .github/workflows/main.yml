@@ -26,6 +26,13 @@ jobs:
     outputs:
       enabled: ${{ steps.check-ref.outputs.enabled }}${{ steps.skip-if-redundant.outputs.enabled }}
       skip_concurrent: ${{ steps.check-ref.outputs.skip_concurrent }}
+      rust_version_minimum: 1.61.0
+      rust_version_windows: 1.78.0
+      rust_version_musl: 1.72.0
+      ## the rust target is inferred by rustup unless specified
+      rust_target_windows_make: x86_64-pc-windows-gnu
+      rust_target_windows_meson: x86_64-pc-windows-msvc
+      rust_target_32bit_linux: i686-unknown-linux-gnu
     steps:
       - name: try to clone ci-config branch
         run: |
@@ -108,12 +115,26 @@ jobs:
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
     runs-on: windows-latest
+    env:
+      CARGO_HOME: "/c/Users/runneradmin/.cargo"
     concurrency:
       group: windows-build-${{ github.ref }}
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     steps:
     - uses: actions/checkout@v4
     - uses: git-for-windows/setup-git-for-windows-sdk@v1
+    - name: Install rustup via github actions
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: false
+    - name: Install Rust toolchain
+      shell: bash
+      env:
+        RUST_VERSION: ${{ needs.ci-config.outputs.rust_version_windows }}
+        RUST_TARGET: ${{ needs.ci-config.outputs.rust_target_windows_make }}
+      run: ci/install-rust-toolchain.sh
     - name: build
       shell: bash
       env:
@@ -254,12 +275,26 @@ jobs:
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
     runs-on: windows-latest
+    env:
+      CARGO_HOME: "/c/Users/runneradmin/.cargo"
     concurrency:
       group: windows-meson-build-${{ github.ref }}
       cancel-in-progress: ${{ needs.ci-config.outputs.skip_concurrent == 'yes' }}
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v5
+    - name: Install rustup via github actions
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: false
+    - name: Install Rust toolchain
+      shell: bash
+      env:
+        RUST_VERSION: ${{ needs.ci-config.outputs.rust_version_windows }}
+        RUST_TARGET: ${{ needs.ci-config.outputs.rust_target_windows_meson }}
+      run: ci/install-rust-toolchain.sh
     - name: Set up dependencies
       shell: pwsh
       run: pip install meson ninja
@@ -329,11 +364,24 @@ jobs:
       jobname: ${{matrix.vector.jobname}}
       CI_JOB_IMAGE: ${{matrix.vector.pool}}
       TEST_OUTPUT_DIRECTORY: ${{github.workspace}}/t
+      CARGO_HOME: "/Users/runner/.cargo"
     runs-on: ${{matrix.vector.pool}}
     steps:
     - uses: actions/checkout@v4
     - run: ci/install-dependencies.sh
-    - run: ci/run-build-and-tests.sh
+    - name: Install rustup via github actions
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: false
+    - name: Install Rust toolchain
+      shell: bash
+      env:
+        RUST_VERSION: ${{ needs.ci-config.outputs.rust_version_minimum }}
+      run: ci/install-rust-toolchain.sh
+    - name: Run build and tests
+      run: ci/run-build-and-tests.sh
     - name: print test failures
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
       run: ci/print-test-failures.sh
@@ -393,9 +441,11 @@ jobs:
           cc: gcc
         - jobname: linux-musl-meson
           image: alpine:latest
+          rust_version_override: ${{ needs.ci-config.outputs.rust_version_musl }}
         # Supported until 2025-04-02.
         - jobname: linux32
           image: i386/ubuntu:focal
+          rust_target_override: ${{ needs.ci-config.outputs.rust_target_32bit_linux }}
         - jobname: pedantic
           image: fedora:latest
         # A RHEL 8 compatible distro.  Supported until 2029-05-31.
@@ -408,7 +458,9 @@ jobs:
       jobname: ${{matrix.vector.jobname}}
       CC: ${{matrix.vector.cc}}
       CI_JOB_IMAGE: ${{matrix.vector.image}}
+      CI_IS_DOCKER: "true"
       CUSTOM_PATH: /custom
+      CARGO_HOME: /home/builder/.cargo
     runs-on: ubuntu-latest
     container: ${{matrix.vector.image}}
     steps:
@@ -433,6 +485,13 @@ jobs:
     - run: ci/install-dependencies.sh
     - run: useradd builder --create-home
     - run: chown -R builder .
+    - name: Install rustup via script
+      run: sudo --preserve-env --set-home --user=builder ci/install-rustup.sh
+    - name: Install Rust toolchain
+      env:
+        RUST_VERSION: ${{ matrix.vector.rust_version_override || needs.ci-config.outputs.rust_version_minimum }}
+        RUST_TARGET: ${{ matrix.vector.rust_target_override || '' }}
+      run: sudo --preserve-env --set-home --user=builder ci/install-rust-toolchain.sh
     - run: sudo --preserve-env --set-home --user=builder ci/run-build-and-tests.sh
     - name: print test failures
       if: failure() && env.FAILED_TEST_ARTIFACTS != ''
