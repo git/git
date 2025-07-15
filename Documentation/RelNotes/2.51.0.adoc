@@ -82,6 +82,8 @@ Performance, Internal Implementation, Development Support etc.
  * "make coccicheck" succeeds even when spatch made suggestions, which
    has been updated to fail in such a case.
 
+ * Code clean-up around object access API.
+
 
 Fixes since v2.50
 -----------------
@@ -160,6 +162,9 @@ including security updates, are included in this release.
    only new files, but it instead started from an empty index, which
    has been corrected.
    (merge 2b49d97fcb rp/apply-intent-to-add-fix later to maint).
+
+ * Leakfix with a new and a bit invasive test on pack-bitmap files.
+   (merge bfd5522e98 ly/load-bitmap-leakfix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge b257adb571 lo/my-first-ow-doc-update later to maint).
