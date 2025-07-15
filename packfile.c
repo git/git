@@ -935,22 +935,17 @@ static void prepare_pack(const char *full_name, size_t full_name_len,
 		report_garbage(PACKDIR_FILE_GARBAGE, full_name);
 }
 
-static void prepare_packed_git_one(struct repository *r, char *objdir, int local)
+static void prepare_packed_git_one(struct odb_source *source, int local)
 {
-	struct prepare_pack_data data;
 	struct string_list garbage = STRING_LIST_INIT_DUP;
+	struct prepare_pack_data data = {
+		.m = source->midx,
+		.r = source->odb->repo,
+		.garbage = &garbage,
+		.local = local,
+	};
 
-	data.m = r->objects->multi_pack_index;
-
-	/* look for the multi-pack-index for this object directory */
-	while (data.m && strcmp(data.m->object_dir, objdir))
-		data.m = data.m->next;
-
-	data.r = r;
-	data.garbage = &garbage;
-	data.local = local;
-
-	for_each_file_in_pack_dir(objdir, prepare_pack, &data);
+	for_each_file_in_pack_dir(source->path, prepare_pack, &data);
 
 	report_pack_garbage(data.garbage);
 	string_list_clear(data.garbage, 0);
@@ -1040,7 +1035,7 @@ static void prepare_packed_git(struct repository *r)
 	for (source = r->objects->sources; source; source = source->next) {
 		int local = (source == r->objects->sources);
 		prepare_multi_pack_index_one(source, local);
-		prepare_packed_git_one(r, source->path, local);
+		prepare_packed_git_one(source, local);
 	}
 	rearrange_packed_git(r);
 
