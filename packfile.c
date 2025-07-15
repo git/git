@@ -1086,12 +1086,13 @@ struct multi_pack_index *get_multi_pack_index(struct odb_source *source)
 
 struct packed_git *get_all_packs(struct repository *r)
 {
-	struct multi_pack_index *m;
-
 	prepare_packed_git(r);
-	for (m = r->objects->multi_pack_index; m; m = m->next) {
-		uint32_t i;
-		for (i = 0; i < m->num_packs + m->num_packs_in_base; i++)
+
+	for (struct odb_source *source = r->objects->sources; source; source = source->next) {
+		struct multi_pack_index *m = source->midx;
+		if (!m)
+			continue;
+		for (uint32_t i = 0; i < m->num_packs + m->num_packs_in_base; i++)
 			prepare_midx_pack(r, m, i);
 	}
 
