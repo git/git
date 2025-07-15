@@ -314,7 +314,7 @@ test_expect_success GPG 'signed-commits=abort' '
 test_expect_success GPG 'signed-commits=verbatim' '
 
 	git fast-export --signed-commits=verbatim --reencode=no commit-signing >output &&
-	grep "^gpgsig sha" output &&
+	test_grep -E "^gpgsig $GIT_DEFAULT_HASH openpgp" output &&
 	grep "encoding ISO-8859-1" output &&
 	(
 		cd new &&
@@ -328,7 +328,7 @@ test_expect_success GPG 'signed-commits=verbatim' '
 test_expect_success GPG 'signed-commits=warn-verbatim' '
 
 	git fast-export --signed-commits=warn-verbatim --reencode=no commit-signing >output 2>err &&
-	grep "^gpgsig sha" output &&
+	test_grep -E "^gpgsig $GIT_DEFAULT_HASH openpgp" output &&
 	grep "encoding ISO-8859-1" output &&
 	test -s err &&
 	(
@@ -366,6 +366,62 @@ test_expect_success GPG 'signed-commits=warn-strip' '
 		STRIPPED=$(git rev-parse --verify refs/heads/commit-strip-signing) &&
 		test $COMMIT_SIGNING != $STRIPPED
 	)
+
+'
+
+test_expect_success GPGSM 'setup X.509 signed commit' '
+
+	git checkout -b x509-signing main &&
+	test_config gpg.format x509 &&
+	test_config user.signingkey $GIT_COMMITTER_EMAIL &&
+	echo "X.509 content" >file &&
+	git add file &&
+	git commit -S -m "X.509 signed commit" &&
+	X509_COMMIT=$(git rev-parse HEAD) &&
+	git checkout main
+
+'
+
+test_expect_success GPGSM 'round-trip X.509 signed commit' '
+
+	git fast-export --signed-commits=verbatim x509-signing >output &&
+	test_grep -E "^gpgsig $GIT_DEFAULT_HASH x509" output &&
+	(
+		cd new &&
+		git fast-import &&
+		git cat-file commit refs/heads/x509-signing >actual &&
+		grep "^gpgsig" actual &&
+		IMPORTED=$(git rev-parse refs/heads/x509-signing) &&
+		test $X509_COMMIT = $IMPORTED
+	) <output
+
+'
+
+test_expect_success GPGSSH 'setup SSH signed commit' '
+
+	git checkout -b ssh-signing main &&
+	test_config gpg.format ssh &&
+	test_config user.signingkey "${GPGSSH_KEY_PRIMARY}" &&
+	echo "SSH content" >file &&
+	git add file &&
+	git commit -S -m "SSH signed commit" &&
+	SSH_COMMIT=$(git rev-parse HEAD) &&
+	git checkout main
+
+'
+
+test_expect_success GPGSSH 'round-trip SSH signed commit' '
+
+	git fast-export --signed-commits=verbatim ssh-signing >output &&
+	test_grep -E "^gpgsig $GIT_DEFAULT_HASH ssh" output &&
+	(
+		cd new &&
+		git fast-import &&
+		git cat-file commit refs/heads/ssh-signing >actual &&
+		grep "^gpgsig" actual &&
+		IMPORTED=$(git rev-parse refs/heads/ssh-signing) &&
+		test $SSH_COMMIT = $IMPORTED
+	) <output
 
 '
 
@@ -903,6 +959,48 @@ test_expect_success 'fast-export handles --end-of-options' '
 	# fix up lines which mention the ref for comparison
 	sed s/--dashes/nodash/ <actual.raw >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success GPG 'setup a commit with dual signatures on its SHA-1 and SHA-256 formats' '
+	# Create a signed SHA-256 commit
+	git init --object-format=sha256 explicit-sha256 &&
+	git -C explicit-sha256 config extensions.compatObjectFormat sha1 &&
+	git -C explicit-sha256 checkout -b dual-signed &&
+	test_commit -C explicit-sha256 A &&
+	echo B >explicit-sha256/B &&
+	git -C explicit-sha256 add B &&
+	test_tick &&
+	git -C explicit-sha256 commit -S -m "signed" B &&
+	SHA256_B=$(git -C explicit-sha256 rev-parse dual-signed) &&
+
+	# Create the corresponding SHA-1 commit
+	SHA1_B=$(git -C explicit-sha256 rev-parse --output-object-format=sha1 dual-signed) &&
+
+	# Check that the resulting SHA-1 commit has both signatures
+	echo $SHA1_B | git -C explicit-sha256 cat-file --batch >out &&
+	test_grep -E "^gpgsig " out &&
+	test_grep -E "^gpgsig-sha256 " out
+'
+
+test_expect_success GPG 'export and import of doubly signed commit' '
+	git -C explicit-sha256 fast-export --signed-commits=verbatim dual-signed >output &&
+	test_grep -E "^gpgsig sha1 openpgp" output &&
+	test_grep -E "^gpgsig sha256 openpgp" output &&
+
+	(
+		cd new &&
+		git fast-import &&
+		git cat-file commit refs/heads/dual-signed >actual &&
+		test_grep -E "^gpgsig " actual &&
+		test_grep -E "^gpgsig-sha256 " actual &&
+		IMPORTED=$(git rev-parse refs/heads/dual-signed) &&
+		if test "$GIT_DEFAULT_HASH" = "sha1"
+		then
+			test $SHA1_B = $IMPORTED
+		else
+			test $SHA256_B = $IMPORTED
+		fi
+	) <output
 '
 
 test_done
