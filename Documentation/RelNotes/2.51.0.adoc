@@ -84,6 +84,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * Code clean-up around object access API.
 
+ * Define .precision to more canned parse-options type to avoid bugs
+   coming from using a variable with a wrong type to capture the
+   parsed values.
+
 
 Fixes since v2.50
 -----------------
@@ -166,6 +170,14 @@ including security updates, are included in this release.
  * Leakfix with a new and a bit invasive test on pack-bitmap files.
    (merge bfd5522e98 ly/load-bitmap-leakfix later to maint).
 
+ * "git fetch --prune" used to be O(n^2) expensive when there are many
+   refs, which has been corrected.
+   (merge 87d8d8c5d0 ph/fetch-prune-optim later to maint).
+
+ * When a ref creation at refs/heads/foo/bar fails, the files backend
+   now removes refs/heads/foo/ if the directory is otherwise not used.
+   (merge a3a7f20516 ps/refs-files-remove-empty-parent later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge b257adb571 lo/my-first-ow-doc-update later to maint).
    (merge 8b34b6a220 ly/sequencer-update-squash-is-fixup-only later to maint).
@@ -188,3 +200,4 @@ including security updates, are included in this release.
    (merge de404249ab ps/perlless-test-fixes later to maint).
    (merge 953049eed8 ts/merge-orig-head-doc-fix later to maint).
    (merge 0c83bbc704 rj/freebsd-sysinfo-build-fix later to maint).
+   (merge ad7780b38f ps/doc-pack-refs-auto-with-files-backend-fix later to maint).
