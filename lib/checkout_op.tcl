@@ -151,7 +151,7 @@ method _finish_fetch {ok} {
 }
 
 method _update_ref {} {
-	global null_sha1 current_branch repo_config
+	global nullid current_branch repo_config
 
 	set ref $new_ref
 	set new $new_hash
@@ -177,7 +177,7 @@ method _update_ref {} {
 		}
 
 		set reflog_msg "branch: Created from $new_expr"
-		set cur $null_sha1
+		set cur $nullid
 
 		if {($repo_config(branch.autosetupmerge) eq {true}
 			|| $repo_config(branch.autosetupmerge) eq {always})
