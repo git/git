@@ -1521,9 +1521,6 @@ static int prune_remote(const char *remote, int dry_run)
 	struct ref_states states = REF_STATES_INIT;
 	struct string_list refs_to_prune = STRING_LIST_INIT_NODUP;
 	struct string_list_item *item;
-	const char *dangling_msg = dry_run
-		? _(" %s will become dangling!")
-		: _(" %s has become dangling!");
 
 	get_remote_ref_states(remote, &states, GET_REF_STATES);
 
@@ -1555,7 +1552,7 @@ static int prune_remote(const char *remote, int dry_run)
 	}
 
 	refs_warn_dangling_symrefs(get_main_ref_store(the_repository),
-				   stdout, dangling_msg, &refs_to_prune);
+				   stdout, " ", dry_run, &refs_to_prune);
 
 	string_list_clear(&refs_to_prune, 0);
 	free_remote_ref_states(&states);
