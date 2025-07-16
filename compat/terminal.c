@@ -279,8 +279,7 @@ void restore_term(void)
 
 	SetConsoleMode(hconin, cmode_in);
 	CloseHandle(hconin);
-	if (cmode_out) {
-		assert(hconout != INVALID_HANDLE_VALUE);
+	if (hconout != INVALID_HANDLE_VALUE) {
 		SetConsoleMode(hconout, cmode_out);
 		CloseHandle(hconout);
 	}
