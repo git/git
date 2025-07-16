@@ -10,9 +10,9 @@ SYNOPSIS
 --------
 [verse]
 'git config list' [<file-option>] [<display-option>] [--includes]
-'git config get' [<file-option>] [<display-option>] [--includes] [--all] [--regexp] [--value=<value>] [--fixed-value] [--default=<default>] <name>
-'git config set' [<file-option>] [--type=<type>] [--all] [--value=<value>] [--fixed-value] <name> <value>
-'git config unset' [<file-option>] [--all] [--value=<value>] [--fixed-value] <name>
+'git config get' [<file-option>] [<display-option>] [--includes] [--all] [--regexp] [--value=<pattern>] [--fixed-value] [--default=<default>] [--url=<url>] <name>
+'git config set' [<file-option>] [--type=<type>] [--all] [--value=<pattern>] [--fixed-value] <name> <value>
+'git config unset' [<file-option>] [--all] [--value=<pattern>] [--fixed-value] <name>
 'git config rename-section' [<file-option>] <old-name> <new-name>
 'git config remove-section' [<file-option>] <name>
 'git config edit' [<file-option>]
@@ -26,7 +26,7 @@ escaped.
 
 Multiple lines can be added to an option by using the `--append` option.
 If you want to update or unset an option which can occur on multiple
-lines, a `value-pattern` (which is an extended regular expression,
+lines, `--value=<pattern>` (which is an extended regular expression,
 unless the `--fixed-value` option is given) needs to be given.  Only the
 existing values that match the pattern are updated or unset.  If
 you want to handle the lines that do *not* match the pattern, just
@@ -109,7 +109,7 @@ OPTIONS
 
 --replace-all::
 	Default behavior is to replace at most one line. This replaces
-	all lines matching the key (and optionally the `value-pattern`).
+	all lines matching the key (and optionally `--value=<pattern>`).
 
 --append::
 	Adds a new line to the option without altering any existing
@@ -200,11 +200,19 @@ See also <<FILES>>.
 	section in linkgit:gitrevisions[7] for a more complete list of
 	ways to spell blob names.
 
+`--value=<pattern>`::
+`--no-value`::
+	With `get`, `set`, and `unset`, match only against
+	_<pattern>_. The pattern is an extended regular expression unless
+	`--fixed-value` is given.
++
+Use `--no-value` to unset _<pattern>_.
+
 --fixed-value::
-	When used with the `value-pattern` argument, treat `value-pattern` as
+	When used with `--value=<pattern>`, treat _<pattern>_ as
 	an exact string instead of a regular expression. This will restrict
 	the name/value pairs that are matched to only those where the value
-	is exactly equal to the `value-pattern`.
+	is exactly equal to _<pattern>_.
 
 --type <type>::
   'git config' will ensure that any input or output is valid under the given
@@ -258,6 +266,12 @@ Valid `<type>`'s include:
 --name-only::
 	Output only the names of config variables for `list` or
 	`get`.
+
+`--show-names`::
+`--no-show-names`::
+	With `get`, show config keys in addition to their values. The
+	default is `--no-show-names` unless `--url` is given and there
+	are no subsections in _<name>_.
 
 --show-origin::
 	Augment the output of all queried config options with the

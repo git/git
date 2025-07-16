@@ -13,7 +13,7 @@
 #include "dir.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "object.h"
 #include "pager.h"
 #include "commit.h"
@@ -2067,6 +2067,9 @@ static int update_squash_messages(struct repository *r,
 	const char *message, *body;
 	const char *encoding = get_commit_output_encoding();
 
+	if (!is_fixup(command))
+		BUG("not a FIXUP or SQUASH %d", command);
+
 	if (ctx->current_fixup_count > 0) {
 		struct strbuf header = STRBUF_INIT;
 		char *eol;
@@ -2134,8 +2137,7 @@ static int update_squash_messages(struct repository *r,
 		strbuf_addstr(&buf, "\n\n");
 		strbuf_add_commented_lines(&buf, body, strlen(body),
 					   comment_line_str);
-	} else
-		return error(_("unknown command: %d"), command);
+	}
 	repo_unuse_commit_buffer(r, commit, message);
 
 	if (!res)
@@ -5503,9 +5505,8 @@ int sequencer_pick_revisions(struct repository *r,
 
 		if (!repo_get_oid(r, name, &oid)) {
 			if (!lookup_commit_reference_gently(r, &oid, 1)) {
-				enum object_type type = oid_object_info(r,
-									&oid,
-									NULL);
+				enum object_type type = odb_read_object_info(r->objects,
+									     &oid, NULL);
 				res = error(_("%s: can't cherry-pick a %s"),
 					    name, type_name(type));
 				goto out;

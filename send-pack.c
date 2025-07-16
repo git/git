@@ -4,7 +4,7 @@
 #include "date.h"
 #include "gettext.h"
 #include "hex.h"
-#include "object-store.h"
+#include "odb.h"
 #include "pkt-line.h"
 #include "sideband.h"
 #include "run-command.h"
@@ -45,7 +45,7 @@ int option_parse_push_signed(const struct option *opt,
 static void feed_object(struct repository *r,
 			const struct object_id *oid, FILE *fh, int negative)
 {
-	if (negative && !has_object(r, oid, 0))
+	if (negative && !odb_has_object(r->objects, oid, 0))
 		return;
 
 	if (negative)
@@ -257,6 +257,13 @@ static int receive_status(struct repository *r,
 				refname);
 			continue;
 		}
+
+		/*
+		 * Clients sending duplicate refs can cause the same value
+		 * to be overridden, causing a memory leak.
+		 */
+		free(hint->remote_status);
+
 		if (!strcmp(head, "ng")) {
 			hint->status = REF_STATUS_REMOTE_REJECT;
 			if (p)

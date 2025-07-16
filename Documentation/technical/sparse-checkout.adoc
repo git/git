@@ -440,7 +440,7 @@ understanding these differences can be beneficial.
       * blame (only matters when one or more -C flags are passed)
 	* and annotate
       * log
-      * whatchanged
+      * whatchanged (may not exist anymore)
       * ls-files
       * diff-index
       * diff-tree

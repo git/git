@@ -14,7 +14,7 @@ git diff [<options>] --cached [--merge-base] [<commit>] [--] [<path>...]
 git diff [<options>] [--merge-base] <commit> [<commit>...] <commit> [--] [<path>...]
 git diff [<options>] <commit>...<commit> [--] [<path>...]
 git diff [<options>] <blob> <blob>
-git diff [<options>] --no-index [--] <path> <path>
+git diff [<options>] --no-index [--] <path> <path> [<pathspec>...]
 
 DESCRIPTION
 -----------
@@ -31,14 +31,18 @@ files on disk.
 	further add to the index but you still haven't.  You can
 	stage these changes by using linkgit:git-add[1].
 
-`git diff [<options>] --no-index [--] <path> <path>`::
+`git diff [<options>] --no-index [--] <path> <path> [<pathspec>...]`::
 
 	This form is to compare the given two paths on the
 	filesystem.  You can omit the `--no-index` option when
 	running the command in a working tree controlled by Git and
 	at least one of the paths points outside the working tree,
 	or when running the command outside a working tree
-	controlled by Git. This form implies `--exit-code`.
+	controlled by Git. This form implies `--exit-code`. If both
+	paths point to directories, additional pathspecs may be
+	provided. These will limit the files included in the
+	difference. All such pathspecs must be relative as they
+	apply to both sides of the diff.
 
 `git diff [<options>] --cached [--merge-base] [<commit>] [--] [<path>...]`::
 

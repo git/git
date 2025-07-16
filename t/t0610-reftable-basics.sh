@@ -477,11 +477,7 @@ test_expect_success !CYGWIN 'ref transaction: many concurrent writers' '
 		test_commit --no-tag initial &&
 
 		head=$(git rev-parse HEAD) &&
-		for i in $(test_seq 100)
-		do
-			printf "%s commit\trefs/heads/branch-%s\n" "$head" "$i" ||
-			return 1
-		done >expect &&
+		test_seq -f "$head commit\trefs/heads/branch-%d" 100 >expect &&
 		printf "%s commit\trefs/heads/main\n" "$head" >>expect &&
 
 		for i in $(test_seq 100)

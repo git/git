@@ -49,9 +49,9 @@ test_expect_success 'run [--auto|--quiet]' '
 		git maintenance run --auto 2>/dev/null &&
 	GIT_TRACE2_EVENT="$(pwd)/run-no-quiet.txt" \
 		git maintenance run --no-quiet 2>/dev/null &&
-	test_subcommand git gc --quiet --no-detach <run-no-auto.txt &&
-	test_subcommand ! git gc --auto --quiet --no-detach <run-auto.txt &&
-	test_subcommand git gc --no-quiet --no-detach <run-no-quiet.txt
+	test_subcommand git gc --quiet --no-detach --skip-foreground-tasks <run-no-auto.txt &&
+	test_subcommand ! git gc --auto --quiet --no-detach --skip-foreground-tasks <run-auto.txt &&
+	test_subcommand git gc --no-quiet --no-detach --skip-foreground-tasks <run-no-quiet.txt
 '
 
 test_expect_success 'maintenance.auto config option' '
@@ -154,9 +154,9 @@ test_expect_success 'run --task=<task>' '
 		git maintenance run --task=commit-graph 2>/dev/null &&
 	GIT_TRACE2_EVENT="$(pwd)/run-both.txt" \
 		git maintenance run --task=commit-graph --task=gc 2>/dev/null &&
-	test_subcommand ! git gc --quiet --no-detach <run-commit-graph.txt &&
-	test_subcommand git gc --quiet --no-detach <run-gc.txt &&
-	test_subcommand git gc --quiet --no-detach <run-both.txt &&
+	test_subcommand ! git gc --quiet --no-detach --skip-foreground-tasks <run-commit-graph.txt &&
+	test_subcommand git gc --quiet --no-detach --skip-foreground-tasks <run-gc.txt &&
+	test_subcommand git gc --quiet --no-detach --skip-foreground-tasks <run-both.txt &&
 	test_subcommand git commit-graph write --split --reachable --no-progress <run-commit-graph.txt &&
 	test_subcommand ! git commit-graph write --split --reachable --no-progress <run-gc.txt &&
 	test_subcommand git commit-graph write --split --reachable --no-progress <run-both.txt
@@ -610,7 +610,12 @@ test_expect_success 'rerere-gc task with --auto honors maintenance.rerere-gc.aut
 
 test_expect_success '--auto and --schedule incompatible' '
 	test_must_fail git maintenance run --auto --schedule=daily 2>err &&
-	test_grep "at most one" err
+	test_grep "cannot be used together" err
+'
+
+test_expect_success '--task and --schedule incompatible' '
+	test_must_fail git maintenance run --task=pack-refs --schedule=daily 2>err &&
+	test_grep "cannot be used together" err
 '
 
 test_expect_success 'invalid --schedule value' '

@@ -31,7 +31,7 @@
 #include "hashmap.h"
 #include "string-list.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "pager.h"
 #include "path.h"
 #include "utf8.h"
@@ -1595,11 +1595,6 @@ static int git_default_core_config(const char *var, const char *value,
 		return 0;
 	}
 
-	if (!strcmp(var, "core.preloadindex")) {
-		core_preload_index = git_config_bool(var, value);
-		return 0;
-	}
-
 	if (!strcmp(var, "core.createobject")) {
 		if (!value)
 			return config_error_nonbool(var);
@@ -1942,7 +1937,7 @@ int git_config_from_blob_oid(config_fn_t fn,
 	unsigned long size;
 	int ret;
 
-	buf = repo_read_object_file(repo, oid, &type, &size);
+	buf = odb_read_object(repo->objects, oid, &type, &size);
 	if (!buf)
 		return error(_("unable to load config blob object '%s'"), name);
 	if (type != OBJ_BLOB) {
@@ -2940,7 +2935,7 @@ static ssize_t write_pair(int fd, const char *key, const char *value,
 	if (value[0] == ' ')
 		quote = "\"";
 	for (i = 0; value[i]; i++)
-		if (value[i] == ';' || value[i] == '#')
+		if (value[i] == ';' || value[i] == '#' || value[i] == '\r')
 			quote = "\"";
 	if (i && value[i - 1] == ' ')
 		quote = "\"";

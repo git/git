@@ -21,7 +21,7 @@ Takes the patches given on the command line and emails them out.
 Patches can be specified as files, directories (which will send all
 files in the directory), or directly as a revision list.  In the
 last case, any format accepted by linkgit:git-format-patch[1] can
-be passed to git send-email, as well as options understood by
+be passed to `git send-email`, as well as options understood by
 linkgit:git-format-patch[1].
 
 The header of the email is configurable via command-line options.  If not
@@ -35,11 +35,11 @@ There are two formats accepted for patch files:
 This is what linkgit:git-format-patch[1] generates.  Most headers and MIME
 formatting are ignored.
 
-2. The original format used by Greg Kroah-Hartman's 'send_lots_of_email.pl'
+2. The original format used by Greg Kroah-Hartman's `send_lots_of_email.pl`
    script
 +
-This format expects the first line of the file to contain the "Cc:" value
-and the "Subject:" of the message as the second line.
+This format expects the first line of the file to contain the `Cc:` value
+and the `Subject:` of the message as the second line.
 
 
 OPTIONS
@@ -54,13 +54,13 @@ Composing
 	`sendemail.multiEdit`.
 
 --bcc=<address>,...::
-	Specify a "Bcc:" value for each email. Default is the value of
+	Specify a `Bcc:` value for each email. Default is the value of
 	`sendemail.bcc`.
 +
 This option may be specified multiple times.
 
 --cc=<address>,...::
-	Specify a starting "Cc:" value for each email.
+	Specify a starting `Cc:` value for each email.
 	Default is the value of `sendemail.cc`.
 +
 This option may be specified multiple times.
@@ -69,14 +69,14 @@ This option may be specified multiple times.
 	Invoke a text editor (see GIT_EDITOR in linkgit:git-var[1])
 	to edit an introductory message for the patch series.
 +
-When `--compose` is used, git send-email will use the From, To, Cc, Bcc,
-Subject, Reply-To, and In-Reply-To headers specified in the message. If
-the body of the message (what you type after the headers and a blank
-line) only contains blank (or Git: prefixed) lines, the summary won't be
+When `--compose` is used, `git send-email` will use the `From`, `To`, `Cc`,
+`Bcc`, `Subject`, `Reply-To`, and `In-Reply-To` headers specified in the
+message. If the body of the message (what you type after the headers and a
+blank line) only contains blank (or `Git:` prefixed) lines, the summary won't be
 sent, but the headers mentioned above will be used unless they are
 removed.
 +
-Missing From or In-Reply-To headers will be prompted for.
+Missing `From` or `In-Reply-To` headers will be prompted for.
 +
 See the CONFIGURATION section for `sendemail.multiEdit`.
 
@@ -85,13 +85,13 @@ See the CONFIGURATION section for `sendemail.multiEdit`.
 	the value of the `sendemail.from` configuration option is used.  If
 	neither the command-line option nor `sendemail.from` are set, then the
 	user will be prompted for the value.  The default for the prompt will be
-	the value of GIT_AUTHOR_IDENT, or GIT_COMMITTER_IDENT if that is not
-	set, as returned by "git var -l".
+	the value of `GIT_AUTHOR_IDENT`, or `GIT_COMMITTER_IDENT` if that is not
+	set, as returned by `git var -l`.
 
 --reply-to=<address>::
 	Specify the address where replies from recipients should go to.
 	Use this if replies to messages should go to another address than what
-	is specified with the --from parameter.
+	is specified with the `--from` parameter.
 
 --in-reply-to=<identifier>::
 	Make the first mail (or all the mails with `--no-thread`) appear as a
@@ -112,14 +112,14 @@ illustration below where `[PATCH v2 0/3]` is in reply to `[PATCH 0/2]`:
       [PATCH v2 2/3] New tests
       [PATCH v2 3/3] Implementation
 +
-Only necessary if --compose is also set.  If --compose
+Only necessary if `--compose` is also set.  If `--compose`
 is not set, this will be prompted for.
 
 --[no-]outlook-id-fix::
 	Microsoft Outlook SMTP servers discard the Message-ID sent via email and
 	assign a new random Message-ID, thus breaking threads.
 +
-With `--outlook-id-fix`, 'git send-email' uses a mechanism specific to
+With `--outlook-id-fix`, `git send-email` uses a mechanism specific to
 Outlook servers to learn the Message-ID the server assigned to fix the
 threading. Use it only when you know that the server reports the
 rewritten Message-ID the same way as Outlook servers do.
@@ -130,14 +130,14 @@ to 'smtp.office365.com' or 'smtp-mail.outlook.com'. Use
 
 --subject=<string>::
 	Specify the initial subject of the email thread.
-	Only necessary if --compose is also set.  If --compose
+	Only necessary if `--compose` is also set.  If `--compose`
 	is not set, this will be prompted for.
 
 --to=<address>,...::
 	Specify the primary recipient of the emails generated. Generally, this
 	will be the upstream maintainer of the project involved. Default is the
 	value of the `sendemail.to` configuration value; if that is unspecified,
-	and --to-cmd is not specified, this will be prompted for.
+	and `--to-cmd` is not specified, this will be prompted for.
 +
 This option may be specified multiple times.
 
@@ -145,30 +145,30 @@ This option may be specified multiple times.
 	When encountering a non-ASCII message or subject that does not
 	declare its encoding, add headers/quoting to indicate it is
 	encoded in <encoding>.  Default is the value of the
-	'sendemail.assume8bitEncoding'; if that is unspecified, this
+	`sendemail.assume8bitEncoding`; if that is unspecified, this
 	will be prompted for if any non-ASCII files are encountered.
 +
 Note that no attempts whatsoever are made to validate the encoding.
 
 --compose-encoding=<encoding>::
 	Specify encoding of compose message. Default is the value of the
-	'sendemail.composeEncoding'; if that is unspecified, UTF-8 is assumed.
+	`sendemail.composeEncoding`; if that is unspecified, UTF-8 is assumed.
 
 --transfer-encoding=(7bit|8bit|quoted-printable|base64|auto)::
 	Specify the transfer encoding to be used to send the message over SMTP.
-	7bit will fail upon encountering a non-ASCII message.  quoted-printable
+	`7bit` will fail upon encountering a non-ASCII message. `quoted-printable`
 	can be useful when the repository contains files that contain carriage
-	returns, but makes the raw patch email file (as saved from a MUA) much
-	harder to inspect manually.  base64 is even more fool proof, but also
-	even more opaque.  auto will use 8bit when possible, and quoted-printable
-	otherwise.
+	returns, but makes the raw patch email file (as saved from an MUA) much
+	harder to inspect manually. `base64` is even more fool proof, but also
+	even more opaque. `auto` will use `8bit` when possible, and
+	`quoted-printable` otherwise.
 +
 Default is the value of the `sendemail.transferEncoding` configuration
 value; if that is unspecified, default to `auto`.
 
 --xmailer::
 --no-xmailer::
-	Add (or prevent adding) the "X-Mailer:" header.  By default,
+	Add (or prevent adding) the `X-Mailer:` header.  By default,
 	the header is added, but it can be turned off by setting the
 	`sendemail.xmailer` configuration variable to `false`.
 
@@ -178,9 +178,9 @@ Sending
 --envelope-sender=<address>::
 	Specify the envelope sender used to send the emails.
 	This is useful if your default address is not the address that is
-	subscribed to a list. In order to use the 'From' address, set the
-	value to "auto". If you use the sendmail binary, you must have
-	suitable privileges for the -f parameter.  Default is the value of the
+	subscribed to a list. In order to use the `From` address, set the
+	value to `auto`. If you use the `sendmail` binary, you must have
+	suitable privileges for the `-f` parameter.  Default is the value of the
 	`sendemail.envelopeSender` configuration variable; if that is
 	unspecified, choosing the envelope sender is left to your MTA.
 
@@ -189,27 +189,27 @@ Sending
 	be sendmail-like; specifically, it must support the `-i` option.
 	The command will be executed in the shell if necessary.  Default
 	is the value of `sendemail.sendmailCmd`.  If unspecified, and if
-	--smtp-server is also unspecified, git-send-email will search
-	for `sendmail` in `/usr/sbin`, `/usr/lib` and $PATH.
+	`--smtp-server` is also unspecified, `git send-email` will search
+	for `sendmail` in `/usr/sbin`, `/usr/lib` and `$PATH`.
 
 --smtp-encryption=<encryption>::
 	Specify in what way encrypting begins for the SMTP connection.
-	Valid values are 'ssl' and 'tls'. Any other value reverts to plain
+	Valid values are `ssl` and `tls`. Any other value reverts to plain
 	(unencrypted) SMTP, which defaults to port 25.
 	Despite the names, both values will use the same newer version of TLS,
-	but for historic reasons have these names. 'ssl' refers to "implicit"
+	but for historic reasons have these names. `ssl` refers to "implicit"
 	encryption (sometimes called SMTPS), that uses port 465 by default.
-	'tls' refers to "explicit" encryption (often known as STARTTLS),
+	`tls` refers to "explicit" encryption (often known as STARTTLS),
 	that uses port 25 by default. Other ports might be used by the SMTP
 	server, which are not the default. Commonly found alternative port for
-	'tls' and unencrypted is 587. You need to check your provider's
+	`tls` and unencrypted is 587. You need to check your provider's
 	documentation or your server configuration to make sure
 	for your own case. Default is the value of `sendemail.smtpEncryption`.
 
 --smtp-domain=<FQDN>::
 	Specifies the Fully Qualified Domain Name (FQDN) used in the
 	HELO/EHLO command to the SMTP server.  Some servers require the
-	FQDN to match your IP address.  If not set, git send-email attempts
+	FQDN to match your IP address.  If not set, `git send-email` attempts
 	to determine your FQDN automatically.  Default is the value of
 	`sendemail.smtpDomain`.
 
@@ -223,10 +223,10 @@ $ git send-email --smtp-auth="PLAIN LOGIN GSSAPI" ...
 +
 If at least one of the specified mechanisms matches the ones advertised by the
 SMTP server and if it is supported by the utilized SASL library, the mechanism
-is used for authentication. If neither 'sendemail.smtpAuth' nor `--smtp-auth`
+is used for authentication. If neither `sendemail.smtpAuth` nor `--smtp-auth`
 is specified, all mechanisms supported by the SASL library can be used. The
-special value 'none' maybe specified to completely disable authentication
-independently of `--smtp-user`
+special value `none` maybe specified to completely disable authentication
+independently of `--smtp-user`.
 
 --smtp-pass[=<password>]::
 	Password for SMTP-AUTH. The argument is optional: If no
@@ -238,16 +238,16 @@ Furthermore, passwords need not be specified in configuration files
 or on the command line. If a username has been specified (with
 `--smtp-user` or a `sendemail.smtpUser`), but no password has been
 specified (with `--smtp-pass` or `sendemail.smtpPass`), then
-a password is obtained using 'git-credential'.
+a password is obtained using linkgit:git-credential[1].
 
 --no-smtp-auth::
-	Disable SMTP authentication. Short hand for `--smtp-auth=none`
+	Disable SMTP authentication. Short hand for `--smtp-auth=none`.
 
 --smtp-server=<host>::
 	If set, specifies the outgoing SMTP server to use (e.g.
 	`smtp.example.com` or a raw IP address).  If unspecified, and if
 	`--sendmail-cmd` is also unspecified, the default is to search
-	for `sendmail` in `/usr/sbin`, `/usr/lib` and $PATH if such a
+	for `sendmail` in `/usr/sbin`, `/usr/lib` and `$PATH` if such a
 	program is available, falling back to `localhost` otherwise.
 +
 For backward compatibility, this option can also specify a full pathname
@@ -260,7 +260,7 @@ instead.
 	Specifies a port different from the default port (SMTP
 	servers typically listen to smtp port 25, but may also listen to
 	submission port 587, or the common SSL smtp port 465);
-	symbolic port names (e.g. "submission" instead of 587)
+	symbolic port names (e.g. `submission` instead of 587)
 	are also accepted. The port can also be set with the
 	`sendemail.smtpServerPort` configuration variable.
 
@@ -269,17 +269,17 @@ instead.
 	Default value can be specified by the `sendemail.smtpServerOption`
 	configuration option.
 +
-The --smtp-server-option option must be repeated for each option you want
+The `--smtp-server-option` option must be repeated for each option you want
 to pass to the server. Likewise, different lines in the configuration files
 must be used for each option.
 
 --smtp-ssl::
-	Legacy alias for '--smtp-encryption ssl'.
+	Legacy alias for `--smtp-encryption ssl`.
 
 --smtp-ssl-cert-path::
 	Path to a store of trusted CA certificates for SMTP SSL/TLS
 	certificate validation (either a directory that has been processed
-	by 'c_rehash', or a single file containing one or more PEM format
+	by `c_rehash`, or a single file containing one or more PEM format
 	certificates concatenated together: see verify(1) -CAfile and
 	-CApath for more information on these). Set it to an empty string
 	to disable certificate verification. Defaults to the value of the
@@ -298,18 +298,18 @@ must be used for each option.
 	connection and authentication problems.
 
 --batch-size=<num>::
-	Some email servers (e.g. smtp.163.com) limit the number emails to be
+	Some email servers (e.g. 'smtp.163.com') limit the number of emails to be
 	sent per session (connection) and this will lead to a failure when
 	sending many messages.  With this option, send-email will disconnect after
-	sending $<num> messages and wait for a few seconds (see --relogin-delay)
-	and reconnect, to work around such a limit.  You may want to
-	use some form of credential helper to avoid having to retype
-	your password every time this happens.  Defaults to the
+	sending _<num>_ messages and wait for a few seconds
+	(see `--relogin-delay`) and reconnect, to work around such a limit.
+	You may want to use some form of credential helper to avoid having to
+	retype your password every time this happens.  Defaults to the
 	`sendemail.smtpBatchSize` configuration variable.
 
 --relogin-delay=<int>::
-	Waiting $<int> seconds before reconnecting to SMTP server. Used together
-	with --batch-size option.  Defaults to the `sendemail.smtpReloginDelay`
+	Waiting _<int>_ seconds before reconnecting to SMTP server. Used together
+	with `--batch-size` option.  Defaults to the `sendemail.smtpReloginDelay`
 	configuration variable.
 
 Automating
@@ -318,7 +318,7 @@ Automating
 --no-to::
 --no-cc::
 --no-bcc::
-	Clears any list of "To:", "Cc:", "Bcc:" addresses previously
+	Clears any list of `To:`, `Cc:`, `Bcc:` addresses previously
 	set via config.
 
 --no-identity::
@@ -327,13 +327,13 @@ Automating
 
 --to-cmd=<command>::
 	Specify a command to execute once per patch file which
-	should generate patch file specific "To:" entries.
+	should generate patch file specific `To:` entries.
 	Output of this command must be single email address per line.
-	Default is the value of 'sendemail.toCmd' configuration value.
+	Default is the value of `sendemail.toCmd` configuration value.
 
 --cc-cmd=<command>::
 	Specify a command to execute once per patch file which
-	should generate patch file specific "Cc:" entries.
+	should generate patch file specific `Cc:` entries.
 	Output of this command must be single email address per line.
 	Default is the value of `sendemail.ccCmd` configuration value.
 
@@ -341,7 +341,7 @@ Automating
 	Specify a command that is executed once per outgoing message
 	and output RFC 2822 style header lines to be inserted into
 	them. When the `sendemail.headerCmd` configuration variable is
-	set, its value is always used. When --header-cmd is provided
+	set, its value is always used. When `--header-cmd` is provided
 	at the command line, its value takes precedence over the
 	`sendemail.headerCmd` configuration variable.
 
@@ -350,7 +350,7 @@ Automating
 
 --[no-]chain-reply-to::
 	If this is set, each email will be sent as a reply to the previous
-	email sent.  If disabled with "--no-chain-reply-to", all emails after
+	email sent.  If disabled with `--no-chain-reply-to`, all emails after
 	the first will be sent as replies to the first email sent.  When using
 	this, it is recommended that the first file given be an overview of the
 	entire patch series. Disabled by default, but the `sendemail.chainReplyTo`
@@ -358,79 +358,80 @@ Automating
 
 --identity=<identity>::
 	A configuration identity. When given, causes values in the
-	'sendemail.<identity>' subsection to take precedence over
-	values in the 'sendemail' section. The default identity is
+	`sendemail.<identity>` subsection to take precedence over
+	values in the `sendemail` section. The default identity is
 	the value of `sendemail.identity`.
 
 --[no-]signed-off-by-cc::
-	If this is set, add emails found in the `Signed-off-by` trailer or Cc: lines to the
-	cc list. Default is the value of `sendemail.signedOffByCc` configuration
-	value; if that is unspecified, default to --signed-off-by-cc.
+	If this is set, add emails found in the `Signed-off-by` trailer or `Cc:`
+	lines to the cc list. Default is the value of `sendemail.signedOffByCc`
+	configuration value; if that is unspecified, default to
+	`--signed-off-by-cc`.
 
 --[no-]cc-cover::
-	If this is set, emails found in Cc: headers in the first patch of
+	If this is set, emails found in `Cc:` headers in the first patch of
 	the series (typically the cover letter) are added to the cc list
-	for each email set. Default is the value of 'sendemail.ccCover'
-	configuration value; if that is unspecified, default to --no-cc-cover.
+	for each email set. Default is the value of `sendemail.ccCover`
+	configuration value; if that is unspecified, default to `--no-cc-cover`.
 
 --[no-]to-cover::
-	If this is set, emails found in To: headers in the first patch of
+	If this is set, emails found in `To:` headers in the first patch of
 	the series (typically the cover letter) are added to the to list
-	for each email set. Default is the value of 'sendemail.toCover'
-	configuration value; if that is unspecified, default to --no-to-cover.
+	for each email set. Default is the value of `sendemail.toCover`
+	configuration value; if that is unspecified, default to `--no-to-cover`.
 
 --suppress-cc=<category>::
 	Specify an additional category of recipients to suppress the
 	auto-cc of:
 +
 --
-- 'author' will avoid including the patch author.
-- 'self' will avoid including the sender.
-- 'cc' will avoid including anyone mentioned in Cc lines in the patch header
-  except for self (use 'self' for that).
-- 'bodycc' will avoid including anyone mentioned in Cc lines in the
-  patch body (commit message) except for self (use 'self' for that).
-- 'sob' will avoid including anyone mentioned in the Signed-off-by trailers except
-  for self (use 'self' for that).
-- 'misc-by' will avoid including anyone mentioned in Acked-by,
+- `author` will avoid including the patch author.
+- `self` will avoid including the sender.
+- `cc` will avoid including anyone mentioned in Cc lines in the patch header
+  except for self (use `self` for that).
+- `bodycc` will avoid including anyone mentioned in Cc lines in the
+  patch body (commit message) except for self (use `self` for that).
+- `sob` will avoid including anyone mentioned in the Signed-off-by trailers except
+  for self (use `self` for that).
+- `misc-by` will avoid including anyone mentioned in Acked-by,
   Reviewed-by, Tested-by and other "-by" lines in the patch body,
-  except Signed-off-by (use 'sob' for that).
-- 'cccmd' will avoid running the --cc-cmd.
-- 'body' is equivalent to 'sob' + 'bodycc' + 'misc-by'.
-- 'all' will suppress all auto cc values.
+  except Signed-off-by (use `sob` for that).
+- `cccmd` will avoid running the --cc-cmd.
+- `body` is equivalent to `sob` + `bodycc` + `misc-by`.
+- `all` will suppress all auto cc values.
 --
 +
 Default is the value of `sendemail.suppressCc` configuration value; if
-that is unspecified, default to 'self' if --suppress-from is
-specified, as well as 'body' if --no-signed-off-cc is specified.
+that is unspecified, default to `self` if `--suppress-from` is
+specified, as well as `body` if `--no-signed-off-cc` is specified.
 
 --[no-]suppress-from::
-	If this is set, do not add the From: address to the cc: list.
+	If this is set, do not add the `From:` address to the `Cc:` list.
 	Default is the value of `sendemail.suppressFrom` configuration
-	value; if that is unspecified, default to --no-suppress-from.
+	value; if that is unspecified, default to `--no-suppress-from`.
 
 --[no-]thread::
-	If this is set, the In-Reply-To and References headers will be
+	If this is set, the `In-Reply-To` and `References` headers will be
 	added to each email sent.  Whether each mail refers to the
-	previous email (`deep` threading per 'git format-patch'
+	previous email (`deep` threading per `git format-patch`
 	wording) or to the first email (`shallow` threading) is
-	governed by "--[no-]chain-reply-to".
+	governed by `--[no-]chain-reply-to`.
 +
-If disabled with "--no-thread", those headers will not be added
-(unless specified with --in-reply-to).  Default is the value of the
+If disabled with `--no-thread`, those headers will not be added
+(unless specified with `--in-reply-to`).  Default is the value of the
 `sendemail.thread` configuration value; if that is unspecified,
-default to --thread.
+default to `--thread`.
 +
 It is up to the user to ensure that no In-Reply-To header already
-exists when 'git send-email' is asked to add it (especially note that
-'git format-patch' can be configured to do the threading itself).
+exists when `git send-email` is asked to add it (especially note that
+`git format-patch` can be configured to do the threading itself).
 Failure to do so may not produce the expected result in the
 recipient's MUA.
 
 --[no-]mailmap::
 	Use the mailmap file (see linkgit:gitmailmap[5]) to map all
 	addresses to their canonical real name and email address. Additional
-	mailmap data specific to git-send-email may be provided using the
+	mailmap data specific to `git send-email` may be provided using the
 	`sendemail.mailmap.file` or `sendemail.mailmap.blob` configuration
 	values. Defaults to `sendemail.mailmap`.
 
@@ -441,17 +442,17 @@ Administering
 	Confirm just before sending:
 +
 --
-- 'always' will always confirm before sending
-- 'never' will never confirm before sending
-- 'cc' will confirm before sending when send-email has automatically
-  added addresses from the patch to the Cc list
-- 'compose' will confirm before sending the first message when using --compose.
-- 'auto' is equivalent to 'cc' + 'compose'
+- `always` will always confirm before sending.
+- `never` will never confirm before sending.
+- `cc` will confirm before sending when send-email has automatically
+  added addresses from the patch to the Cc list.
+- `compose` will confirm before sending the first message when using --compose.
+- `auto` is equivalent to `cc` + `compose`.
 --
 +
 Default is the value of `sendemail.confirm` configuration value; if that
-is unspecified, default to 'auto' unless any of the suppress options
-have been specified, in which case default to 'compose'.
+is unspecified, default to `auto` unless any of the suppress options
+have been specified, in which case default to `compose`.
 
 --dry-run::
 	Do everything except actually send the emails.
@@ -460,10 +461,10 @@ have been specified, in which case default to 'compose'.
 	When an argument may be understood either as a reference or as a file name,
 	choose to understand it as a format-patch argument (`--format-patch`)
 	or as a file name (`--no-format-patch`). By default, when such a conflict
-	occurs, git send-email will fail.
+	occurs, `git send-email` will fail.
 
 --quiet::
-	Make git-send-email less verbose.  One line per email should be
+	Make `git send-email` less verbose.  One line per email should be
 	all that is output.
 
 --[no-]validate::
@@ -474,7 +475,7 @@ have been specified, in which case default to 'compose'.
 		*	Invoke the sendemail-validate hook if present (see linkgit:githooks[5]).
 		*	Warn of patches that contain lines longer than
 			998 characters unless a suitable transfer encoding
-			('auto', 'base64', or 'quoted-printable') is used;
+			(`auto`, `base64`, or `quoted-printable`) is used;
 			this is due to SMTP limits as described by
 			https://www.ietf.org/rfc/rfc5322.txt.
 --
@@ -493,13 +494,13 @@ Information
 	Instead of the normal operation, dump the shorthand alias names from
 	the configured alias file(s), one per line in alphabetical order. Note
 	that this only includes the alias name and not its expanded email addresses.
-	See 'sendemail.aliasesFile' for more information about aliases.
+	See `sendemail.aliasesFile` for more information about aliases.
 
 --translate-aliases::
 	Instead of the normal operation, read from standard input and
 	interpret each line as an email alias. Translate it according to the
 	configured alias file(s). Output each translated name and email
-	address to standard output, one per line. See 'sendemail.aliasFile'
+	address to standard output, one per line. See `sendemail.aliasFile`
 	for more information about aliases.
 
 CONFIGURATION
@@ -524,15 +525,18 @@ edit `~/.gitconfig` to specify your account settings:
 	smtpServerPort = 587
 ----
 
+Gmail does not allow using your regular password for `git send-email`.
 If you have multi-factor authentication set up on your Gmail account, you can
-generate an app-specific password for use with 'git send-email'. Visit
+generate an app-specific password for use with `git send-email`. Visit
 https://security.google.com/settings/security/apppasswords to create it.
 
-You can also use OAuth2.0 authentication with Gmail. `OAUTHBEARER` and
-`XOAUTH2` are common methods used for this type of authentication. Gmail
-supports both of them. As an example, if you want to use `OAUTHBEARER`, edit
-your `~/.gitconfig` file and add `smtpAuth = OAUTHBEARER` to your account
-settings:
+Alternatively, instead of using an app-specific password, you can use
+OAuth2.0 authentication with Gmail. OAuth2.0 is more secure than
+app-specific passwords, and works regardless of whether you have multi-factor
+authentication set up. `OAUTHBEARER` and `XOAUTH2` are common mechanisms used
+for this type of authentication. Gmail supports both of them. As an example,
+if you want to use `OAUTHBEARER`, edit your `~/.gitconfig` file and add
+`smtpAuth = OAUTHBEARER` to your account settings:
 
 ----
 [sendemail]
@@ -543,11 +547,15 @@ settings:
 	smtpAuth = OAUTHBEARER
 ----
 
+Another alternative is using a tool developed by Google known as
+https://github.com/google/gmail-oauth2-tools/tree/master/go/sendgmail[sendgmail]
+to send emails using `git send-email`.
+
 Use Microsoft Outlook as the SMTP Server
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Unlike Gmail, Microsoft Outlook no longer supports app-specific passwords.
 Therefore, OAuth2.0 authentication must be used for Outlook. Also, it only
-supports `XOAUTH2` authentication method.
+supports `XOAUTH2` authentication mechanism.
 
 Edit `~/.gitconfig` to specify your account settings for Outlook and use its
 SMTP server with `git send-email`:
@@ -579,8 +587,7 @@ next time.
 
 If you are using OAuth2.0 authentication, you need to use an access token in
 place of a password when prompted. Various OAuth2.0 token generators are
-available online. Community maintained credential helpers for Gmail and Outlook
-are also available:
+available online. Community maintained credential helpers are also available:
 
 	- https://github.com/AdityaGarg8/git-credential-email[git-credential-gmail]
 	  (cross platform, dedicated helper for authenticating Gmail accounts)
@@ -588,14 +595,24 @@ are also available:
 	- https://github.com/AdityaGarg8/git-credential-email[git-credential-outlook]
 	  (cross platform, dedicated helper for authenticating Microsoft Outlook accounts)
 
+	- https://github.com/AdityaGarg8/git-credential-email[git-credential-yahoo]
+	  (cross platform, dedicated helper for authenticating Yahoo accounts)
+
 You can also see linkgit:gitcredentials[7] for more OAuth based authentication
 helpers.
 
 Note: the following core Perl modules that may be installed with your
 distribution of Perl are required:
-MIME::Base64, MIME::QuotedPrint, Net::Domain and Net::SMTP.
+
+https://metacpan.org/pod/MIME::Base64[MIME::Base64],
+https://metacpan.org/pod/MIME::QuotedPrint[MIME::QuotedPrint],
+https://metacpan.org/pod/Net::Domain[Net::Domain] and
+https://metacpan.org/pod/Net::SMTP[Net::SMTP].
+
 These additional Perl modules are also required:
-Authen::SASL and Mail::Address.
+
+https://metacpan.org/pod/Authen::SASL[Authen::SASL] and
+https://metacpan.org/pod/Mail::Address[Mail::Address].
 
 
 SEE ALSO

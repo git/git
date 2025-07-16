@@ -14,7 +14,7 @@
 #include "object.h"
 #include "object-name.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "pack-bitmap.h"
 #include "parse-options.h"
 #include "log-tree.h"
@@ -110,7 +110,8 @@ static off_t get_object_disk_usage(struct object *obj)
 	off_t size;
 	struct object_info oi = OBJECT_INFO_INIT;
 	oi.disk_sizep = &size;
-	if (oid_object_info_extended(the_repository, &obj->oid, &oi, 0) < 0)
+	if (odb_read_object_info_extended(the_repository->objects,
+					  &obj->oid, &oi, 0) < 0)
 		die(_("unable to get disk usage of %s"), oid_to_hex(&obj->oid));
 	return size;
 }
@@ -346,7 +347,8 @@ static void show_commit(struct commit *commit, void *data)
 static int finish_object(struct object *obj, const char *name, void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
-	if (oid_object_info_extended(the_repository, &obj->oid, NULL, 0) < 0) {
+	if (odb_read_object_info_extended(the_repository->objects,
+					  &obj->oid, NULL, 0) < 0) {
 		finish_object__ma(obj, name);
 		return 1;
 	}

@@ -143,6 +143,9 @@ static struct option pull_options[] = {
 	OPT_PASSTHRU(0, "summary", &opt_diffstat, NULL,
 		N_("(synonym to --stat)"),
 		PARSE_OPT_NOARG | PARSE_OPT_HIDDEN),
+	OPT_PASSTHRU(0, "compact-summary", &opt_diffstat, NULL,
+		N_("show a compact-summary at the end of the merge"),
+		PARSE_OPT_NOARG),
 	OPT_PASSTHRU(0, "log", &opt_log, N_("n"),
 		N_("add (at most <n>) entries from shortlog to merge commit message"),
 		PARSE_OPT_OPTARG),
@@ -487,7 +490,7 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
 	} else
 		fprintf_ln(stderr, _("Your configuration specifies to merge with the ref '%s'\n"
 			"from the remote, but no such ref was fetched."),
-			*curr_branch->merge_name);
+			curr_branch->merge[0]->src);
 	exit(1);
 }
 

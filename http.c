@@ -19,7 +19,7 @@
 #include "packfile.h"
 #include "string-list.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "tempfile.h"
 
 static struct trace_key trace_curl = TRACE_KEY_INIT(CURL);
@@ -2662,7 +2662,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	oidcpy(&freq->oid, oid);
 	freq->localfile = -1;
 
-	odb_loose_path(the_repository->objects->odb, &filename, oid);
+	odb_loose_path(the_repository->objects->sources, &filename, oid);
 	strbuf_addf(&freq->tmpfile, "%s.temp", filename.buf);
 
 	strbuf_addf(&prevfile, "%s.prev", filename.buf);
@@ -2814,7 +2814,7 @@ int finish_http_object_request(struct http_object_request *freq)
 		unlink_or_warn(freq->tmpfile.buf);
 		return -1;
 	}
-	odb_loose_path(the_repository->objects->odb, &filename, &freq->oid);
+	odb_loose_path(the_repository->objects->sources, &filename, &freq->oid);
 	freq->rename = finalize_object_file(freq->tmpfile.buf, filename.buf);
 	strbuf_release(&filename);
 

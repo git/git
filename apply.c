@@ -14,7 +14,7 @@
 #include "abspath.h"
 #include "base85.h"
 #include "config.h"
-#include "object-store.h"
+#include "odb.h"
 #include "delta.h"
 #include "diff.h"
 #include "dir.h"
@@ -3204,14 +3204,14 @@ static int apply_binary(struct apply_state *state,
 		return 0; /* deletion patch */
 	}
 
-	if (has_object(the_repository, &oid, 0)) {
+	if (odb_has_object(the_repository->objects, &oid, 0)) {
 		/* We already have the postimage */
 		enum object_type type;
 		unsigned long size;
 		char *result;
 
-		result = repo_read_object_file(the_repository, &oid, &type,
-					       &size);
+		result = odb_read_object(the_repository->objects, &oid,
+					 &type, &size);
 		if (!result)
 			return error(_("the necessary postimage %s for "
 				       "'%s' cannot be read"),
@@ -3273,8 +3273,8 @@ static int read_blob_object(struct strbuf *buf, const struct object_id *oid, uns
 		unsigned long sz;
 		char *result;
 
-		result = repo_read_object_file(the_repository, oid, &type,
-					       &sz);
+		result = odb_read_object(the_repository->objects, oid,
+					 &type, &sz);
 		if (!result)
 			return -1;
 		/* XXX read_sha1_file NUL-terminates */
@@ -3503,7 +3503,7 @@ static int resolve_to(struct image *image, const struct object_id *result_id)
 
 	image_clear(image);
 
-	data = repo_read_object_file(the_repository, result_id, &type, &size);
+	data = odb_read_object(the_repository->objects, result_id, &type, &size);
 	if (!data || type != OBJ_BLOB)
 		die("unable to read blob object %s", oid_to_hex(result_id));
 	strbuf_attach(&image->buf, data, size, size + 1);
@@ -4565,7 +4565,7 @@ static int create_file(struct apply_state *state, struct patch *patch)
 
 	if (patch->conflicted_threeway)
 		return add_conflicted_stages_file(state, patch);
-	else if (state->update_index)
+	else if (state->check_index || (state->ita_only && patch->is_new > 0))
 		return add_index_file(state, path, mode, buf, size);
 	return 0;
 }
@@ -4833,7 +4833,7 @@ static int apply_patch(struct apply_state *state,
 					       LOCK_DIE_ON_ERROR);
 	}
 
-	if (state->check_index && read_apply_cache(state) < 0) {
+	if ((state->check_index || state->update_index) && read_apply_cache(state) < 0) {
 		error(_("unable to read index file"));
 		res = -128;
 		goto end;

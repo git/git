@@ -234,8 +234,8 @@ test_expect_success 'pseudo-merge pattern with capture groups' '
 			test_commit_bulk 16 &&
 
 			git rev-list HEAD~16.. >in &&
-			sed "s|\(.*\)|create refs/remotes/$r/tags/\1 \1" in |
-			git update-ref --stdin || return 1
+			sed "s|\(.*\)|create refs/remotes/$r/tags/\1 \1|" in >refs &&
+			git update-ref --stdin <refs || return 1
 		done &&
 
 		git \
@@ -442,6 +442,23 @@ test_expect_success 'pseudo-merge closure' '
 		test_cmp expect actual &&
 		test-tool bitmap dump-pseudo-merge-commits 0 >actual &&
 		test_cmp expect actual
+	)
+'
+
+test_expect_success 'use pseudo-merge in boundary traversal' '
+	git init pseudo-merge-boundary-traversal &&
+	(
+		cd pseudo-merge-boundary-traversal &&
+
+		git config bitmapPseudoMerge.test.pattern refs/ &&
+		git config pack.useBitmapBoundaryTraversal true &&
+
+		test_commit A &&
+		git repack -adb &&
+		test_commit B &&
+
+		nr=$(git rev-list --count --use-bitmap-index HEAD~1..HEAD) &&
+		test 1 -eq "$nr"
 	)
 '
 

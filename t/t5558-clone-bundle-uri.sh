@@ -1279,6 +1279,29 @@ test_expect_success 'bundles are downloaded once during fetch --all' '
 		trace-mult.txt >bundle-fetches &&
 	test_line_count = 1 bundle-fetches
 '
+
+test_expect_success 'bundles with space in URI are rejected' '
+	test_when_finished "rm -rf busted repo" &&
+	mkdir -p "$HOME/busted/ /$HOME/repo/.git/objects/bundles" &&
+	git clone --bundle-uri="$HTTPD_URL/bogus $HOME/busted/" "$HTTPD_URL/smart/fetch.git" repo 2>err &&
+	test_grep "error: bundle-uri: URI is malformed: " err &&
+	find busted -type f >files &&
+	test_must_be_empty files
+'
+
+test_expect_success 'bundles with newline in URI are rejected' '
+	test_when_finished "rm -rf busted repo" &&
+	git clone --bundle-uri="$HTTPD_URL/bogus\nget $HTTPD_URL/bogus $HOME/busted" "$HTTPD_URL/smart/fetch.git" repo 2>err &&
+	test_grep "error: bundle-uri: URI is malformed: " err &&
+	test_path_is_missing "$HOME/busted"
+'
+
+test_expect_success 'bundles with newline in target path are rejected' '
+	git clone --bundle-uri="$HTTPD_URL/bogus" "$HTTPD_URL/smart/fetch.git" "$(printf "escape\nget $HTTPD_URL/bogus .")" 2>err &&
+	test_grep "error: bundle-uri: filename is malformed: " err &&
+	test_path_is_missing escape
+'
+
 # Do not add tests here unless they use the HTTP server, as they will
 # not run unless the HTTP dependencies exist.
 
