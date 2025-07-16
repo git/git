@@ -1298,6 +1298,17 @@ if {[catch {
 	set picked 1
 }
 
+# Use object format as hash algorithm (either "sha1" or "sha256")
+set hashalgorithm [git rev-parse --show-object-format]
+if {$hashalgorithm eq "sha1"} {
+	set hashlength 40
+} elseif {$hashalgorithm eq "sha256"} {
+	set hashlength 64
+} else {
+	puts stderr "Unknown hash algorithm: $hashalgorithm"
+	exit 1
+}
+
 # we expand the _gitdir when it's just a single dot (i.e. when we're being
 # run from the .git dir itself) lest the routines to find the worktree
 # get confused
@@ -1391,8 +1402,8 @@ set is_conflict_diff 0
 set last_revert {}
 set last_revert_enc {}
 
-set nullid "0000000000000000000000000000000000000000"
-set nullid2 "0000000000000000000000000000000000000001"
+set nullid [string repeat 0 $hashlength]
+set nullid2 "[string repeat 0 [expr $hashlength - 1]]1"
 
 ######################################################################
 ##
@@ -3202,7 +3213,7 @@ blame {
 	if {$head eq {}} {
 		load_current_branch
 	} else {
-		if {[regexp {^[0-9a-f]{1,39}$} $head]} {
+		if {[regexp [string map "@@ [expr $hashlength - 1]" {^[0-9a-f]{1,@@}$}] $head]} {
 			if {[catch {
 					set head [git rev-parse --verify $head]
 				} err]} {

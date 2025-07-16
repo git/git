@@ -346,6 +346,7 @@ proc commit_committree {fd_wt curHEAD msg_p} {
 	global file_states selected_paths rescan_active
 	global repo_config
 	global env
+	global hashlength
 
 	gets $fd_wt tree_id
 	if {[catch {close $fd_wt} err]} {
@@ -365,7 +366,7 @@ proc commit_committree {fd_wt curHEAD msg_p} {
 		close $fd_ot
 
 		if {[string equal -length 5 {tree } $old_tree]
-			&& [string length $old_tree] == 45} {
+			&& [string length $old_tree] == [expr {$hashlength + 5}]} {
 			set old_tree [string range $old_tree 5 end]
 		} else {
 			error [mc "Commit %s appears to be corrupt" $PARENT]

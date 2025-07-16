@@ -323,6 +323,8 @@ method _load {cache uri} {
 }
 
 method _read {cache fd} {
+	global hashlength
+
 	if {$fd ne $active_ls} {
 		catch {close $fd}
 		return
@@ -330,7 +332,7 @@ method _read {cache fd} {
 
 	while {[gets $fd line] >= 0} {
 		if {[string match {*^{}} $line]} continue
-		if {[regexp {^([0-9a-f]{40})	(.*)$} $line _junk obj ref]} {
+		if {[regexp [string map "@@ $hashlength" {^([0-9a-f]{@@})	(.*)$}] $line _junk obj ref]} {
 			if {[regsub ^refs/heads/ $ref {} abr]} {
 				lappend head_list $abr
 				lappend head_cache($cache) $abr

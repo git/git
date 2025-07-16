@@ -879,7 +879,7 @@ method _do_clone_full_end {ok} {
 		if {[file exists [gitdir FETCH_HEAD]]} {
 			set fd [safe_open_file [gitdir FETCH_HEAD] r]
 			while {[gets $fd line] >= 0} {
-				if {[regexp "^(.{40})\t\t" $line line HEAD]} {
+				if {[regexp "^(.{40,64})\t\t" $line line HEAD]} {
 					break
 				}
 			}
@@ -987,8 +987,9 @@ method _readtree_wait {fd} {
 
 	# -- Run the post-checkout hook.
 	#
-	set fd_ph [githook_read post-checkout [string repeat 0 40] \
-		[git rev-parse HEAD] 1]
+	set head_id [git rev-parse HEAD]
+	set fd_ph [githook_read post-checkout \
+		[string repeat 0 [string length $head_id]] $head_id 1]
 	if {$fd_ph ne {}} {
 		global pch_error
 		set pch_error {}
