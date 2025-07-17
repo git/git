@@ -1,5 +1,13 @@
 # Library of functions shared by all CI scripts
 
+
+export BITNESS="64"
+if command -v getconf >/dev/null && [ "$(getconf LONG_BIT 2>/dev/null)" = "32" ]; then
+  export BITNESS="32"
+fi
+echo "BITNESS=$BITNESS"
+
+
 if test true = "$GITHUB_ACTIONS"
 then
 	begin_group () {
