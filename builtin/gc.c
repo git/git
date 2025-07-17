@@ -1916,7 +1916,7 @@ static int maintenance_register(int argc, const char **argv, const char *prefix,
 	git_config_set("maintenance.auto", "false");
 
 	/* Set maintenance strategy, if unset */
-	if (git_config_get("maintenance.strategy"))
+	if (repo_config_get(the_repository, "maintenance.strategy"))
 		git_config_set("maintenance.strategy", "incremental");
 
 	if (!git_config_get_string_multi(key, &list)) {

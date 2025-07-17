@@ -137,7 +137,7 @@ int cmd__config(int argc, const char **argv)
 	} else if (argc == 3 && !strcmp(argv[1], "get")) {
 		int ret;
 
-		if (!(ret = git_config_get(argv[2])))
+		if (!(ret = repo_config_get(the_repository, argv[2])))
 			goto exit0;
 		else if (ret == 1)
 			printf("Value not found for \"%s\"\n", argv[2]);
