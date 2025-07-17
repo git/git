@@ -1104,6 +1104,7 @@ test_expect_success 'clean with staged sparse change' '
 
 	cat >expect <<-\EOF &&
 	Would remove deep/deeper2/
+	Would remove folder1/
 	EOF
 
 	git -C repo sparse-checkout clean --dry-run >out &&
@@ -1115,6 +1116,7 @@ test_expect_success 'clean with staged sparse change' '
 	# deletes deep/deeper2/ but leaves folder1/ and folder2/
 	cat >expect <<-\EOF &&
 	Removing deep/deeper2/
+	Removing folder1/
 	EOF
 
 	# The previous test case checked the -f option, so
@@ -1124,7 +1126,7 @@ test_expect_success 'clean with staged sparse change' '
 	test_cmp expect out &&
 
 	test_path_is_missing repo/deep/deeper2 &&
-	test_path_exists repo/folder1 &&
+	test_path_is_missing repo/folder1 &&
 	test_path_exists repo/folder2
 '
 
@@ -1147,7 +1149,11 @@ test_expect_success 'sparse-checkout operations with merge conflicts' '
 		git commit -a -m "left" &&
 
 		git checkout -b merge &&
-		git sparse-checkout set deep/deeper1 &&
+
+		touch deep/deeper2/extra &&
+		git sparse-checkout set deep/deeper1 2>err &&
+		grep "contains untracked files" err &&
+		test_path_exists deep/deeper2/extra &&
 
 		test_must_fail git merge -m "will-conflict" right &&
 
@@ -1159,15 +1165,19 @@ test_expect_success 'sparse-checkout operations with merge conflicts' '
 		git merge --continue &&
 
 		test_path_exists folder1/even/more/dirs/file &&
+		test_path_exists deep/deeper2/extra &&
+
+		cat >expect <<-\EOF &&
+		Removing deep/deeper2/
+		Removing folder1/
+		EOF
 
 		# clean does not remove the file, because the
 		# SKIP_WORKTREE bit was not cleared by the merge command.
 		git sparse-checkout clean -f >out &&
-		test_line_count = 0 out &&
-		test_path_exists folder1/even/more/dirs/file &&
-
-		git sparse-checkout reapply &&
-		test_path_is_missing folder1
+		test_cmp expect out &&
+		test_path_is_missing folder1 &&
+		test_path_is_missing deep/deeper2
 	)
 '
 

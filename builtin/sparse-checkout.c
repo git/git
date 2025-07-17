@@ -962,6 +962,7 @@ static int sparse_checkout_clean(int argc, const char **argv,
 	size_t worktree_len;
 	int force = 0, dry_run = 0, verbose = 0;
 	int require_force = 1;
+	struct unpack_trees_options o = { 0 };
 
 	struct option builtin_sparse_checkout_clean_options[] = {
 		OPT__DRY_RUN(&dry_run, N_("dry run")),
@@ -989,6 +990,13 @@ static int sparse_checkout_clean(int argc, const char **argv,
 
 	if (repo_read_index(repo) < 0)
 		die(_("failed to read index"));
+
+	o.verbose_update = verbose;
+	o.update = 0; /* skip modifying the worktree here. */
+	o.head_idx = -1;
+	o.src_index = o.dst_index = repo->index;
+	if (update_sparsity(&o, NULL))
+		warning(_("failed to reapply sparse-checkout patterns"));
 
 	if (convert_to_sparse(repo->index, SPARSE_INDEX_MEMORY_ONLY) ||
 	    repo->index->sparse_index == INDEX_EXPANDED)

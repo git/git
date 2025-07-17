@@ -2138,7 +2138,7 @@ enum update_sparsity_result update_sparsity(struct unpack_trees_options *o,
 	index_state_init(&o->internal.result, o->src_index->repo);
 
 	/* Sanity checks */
-	if (!o->update || o->index_only || o->skip_sparse_checkout)
+	if (o->index_only || o->skip_sparse_checkout)
 		BUG("update_sparsity() is for reflecting sparsity patterns in working directory");
 	if (o->src_index != o->dst_index || o->fn)
 		BUG("update_sparsity() called wrong");
