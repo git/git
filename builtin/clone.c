@@ -1467,7 +1467,7 @@ int cmd_clone(int argc,
 			warning(_("failed to fetch objects from bundle URI '%s'"),
 				bundle_uri);
 		else if (has_heuristic)
-			git_config_set_gently("fetch.bundleuri", bundle_uri);
+			repo_config_set_gently(the_repository, "fetch.bundleuri", bundle_uri);
 
 		remote_state_clear(the_repository->remote_state);
 		free(the_repository->remote_state);

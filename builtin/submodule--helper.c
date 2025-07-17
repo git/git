@@ -458,7 +458,7 @@ static void init_submodule(const char *path, const char *prefix,
 	 */
 	if (!is_submodule_active(the_repository, path)) {
 		strbuf_addf(&sb, "submodule.%s.active", sub->name);
-		git_config_set_gently(sb.buf, "true");
+		repo_config_set_gently(the_repository, sb.buf, "true");
 		strbuf_reset(&sb);
 	}
 
@@ -484,7 +484,7 @@ static void init_submodule(const char *path, const char *prefix,
 			free(oldurl);
 		}
 
-		if (git_config_set_gently(sb.buf, url))
+		if (repo_config_set_gently(the_repository, sb.buf, url))
 			die(_("Failed to register url for submodule path '%s'"),
 			    displaypath);
 		if (!(flags & OPT_QUIET))
@@ -506,7 +506,7 @@ static void init_submodule(const char *path, const char *prefix,
 			upd = submodule_update_type_to_string(sub->update_strategy.type);
 		}
 
-		if (git_config_set_gently(sb.buf, upd))
+		if (repo_config_set_gently(the_repository, sb.buf, upd))
 			die(_("Failed to register update mode for submodule path '%s'"), displaypath);
 	}
 	strbuf_release(&sb);
@@ -1262,7 +1262,7 @@ static void sync_submodule(const char *path, const char *prefix,
 
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "submodule.%s.url", sub->name);
-	if (git_config_set_gently(sb.buf, super_config_url))
+	if (repo_config_set_gently(the_repository, sb.buf, super_config_url))
 		die(_("failed to register url for submodule path '%s'"),
 		      displaypath);
 
@@ -3309,7 +3309,7 @@ static void configure_added_submodule(struct add_data *add_data)
 	struct child_process add_gitmodules = CHILD_PROCESS_INIT;
 
 	key = xstrfmt("submodule.%s.url", add_data->sm_name);
-	git_config_set_gently(key, add_data->realrepo);
+	repo_config_set_gently(the_repository, key, add_data->realrepo);
 	free(key);
 
 	add_submod.git_cmd = 1;
@@ -3356,12 +3356,12 @@ static void configure_added_submodule(struct add_data *add_data)
 		 */
 		if (!is_submodule_active(the_repository, add_data->sm_path)) {
 			key = xstrfmt("submodule.%s.active", add_data->sm_name);
-			git_config_set_gently(key, "true");
+			repo_config_set_gently(the_repository, key, "true");
 			free(key);
 		}
 	} else {
 		key = xstrfmt("submodule.%s.active", add_data->sm_name);
-		git_config_set_gently(key, "true");
+		repo_config_set_gently(the_repository, key, "true");
 		free(key);
 	}
 }

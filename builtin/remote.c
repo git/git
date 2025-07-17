@@ -694,8 +694,8 @@ static void handle_push_default(const char* old_name, const char* new_name)
 	if (push_default.scope >= CONFIG_SCOPE_COMMAND)
 		; /* pass */
 	else if (push_default.scope >= CONFIG_SCOPE_LOCAL) {
-		int result = git_config_set_gently("remote.pushDefault",
-						   new_name);
+		int result = repo_config_set_gently(the_repository, "remote.pushDefault",
+						    new_name);
 		if (new_name && result && result != CONFIG_NOTHING_SET)
 			die(_("could not set '%s'"), "remote.pushDefault");
 		else if (!new_name && result && result != CONFIG_NOTHING_SET)
@@ -934,7 +934,7 @@ static int rm(int argc, const char **argv, const char *prefix,
 				strbuf_reset(&buf);
 				strbuf_addf(&buf, "branch.%s.%s",
 						item->string, *k);
-				result = git_config_set_gently(buf.buf, NULL);
+				result = repo_config_set_gently(the_repository, buf.buf, NULL);
 				if (result && result != CONFIG_NOTHING_SET)
 					die(_("could not unset '%s'"), buf.buf);
 			}
@@ -942,7 +942,7 @@ static int rm(int argc, const char **argv, const char *prefix,
 		if (info->push_remote_name && !strcmp(info->push_remote_name, remote->name)) {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "branch.%s.pushremote", item->string);
-			result = git_config_set_gently(buf.buf, NULL);
+			result = repo_config_set_gently(the_repository, buf.buf, NULL);
 			if (result && result != CONFIG_NOTHING_SET)
 				die(_("could not unset '%s'"), buf.buf);
 		}

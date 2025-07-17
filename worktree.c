@@ -1013,7 +1013,7 @@ int init_worktree_config(struct repository *r)
 	 */
 	if (r->repository_format_worktree_config)
 		return 0;
-	if ((res = git_config_set_gently("extensions.worktreeConfig", "true")))
+	if ((res = repo_config_set_gently(the_repository, "extensions.worktreeConfig", "true")))
 		return error(_("failed to set extensions.worktreeConfig setting"));
 
 	common_config_file = xstrfmt("%s/config", r->commondir);
@@ -1077,7 +1077,7 @@ void write_worktree_linking_files(struct strbuf dotgit, struct strbuf gitdir,
 	if (use_relative_paths && !the_repository->repository_format_relative_worktrees) {
 		if (upgrade_repository_format(1) < 0)
 			die(_("unable to upgrade repository format to support relative worktrees"));
-		if (git_config_set_gently("extensions.relativeWorktrees", "true"))
+		if (repo_config_set_gently(the_repository, "extensions.relativeWorktrees", "true"))
 			die(_("unable to set extensions.relativeWorktrees setting"));
 		the_repository->repository_format_relative_worktrees = 1;
 	}
