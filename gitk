@@ -11719,7 +11719,6 @@ if {[package vsatisfies [package provide Tk] 8.6]} {
     }
     proc on_choosefont {font which newfont} {
         global fontparam
-        puts stderr "$font $newfont"
         array set f [font actual $newfont]
         set fontparam(which) $which
         set fontparam(font) $font
