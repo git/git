@@ -25,6 +25,7 @@
 #include "pack.h"
 #include "packfile.h"
 #include "path.h"
+#include "read-cache-ll.h"
 #include "setup.h"
 #include "streaming.h"
 
@@ -41,9 +42,11 @@ static int get_conv_flags(unsigned flags)
 		return 0;
 }
 
-static void fill_loose_path(struct strbuf *buf, const struct object_id *oid)
+static void fill_loose_path(struct strbuf *buf,
+			    const struct object_id *oid,
+			    const struct git_hash_algo *algop)
 {
-	for (size_t i = 0; i < the_hash_algo->rawsz; i++) {
+	for (size_t i = 0; i < algop->rawsz; i++) {
 		static char hex[] = "0123456789abcdef";
 		unsigned int val = oid->hash[i];
 		strbuf_addch(buf, hex[val >> 4]);
@@ -60,7 +63,7 @@ const char *odb_loose_path(struct odb_source *source,
 	strbuf_reset(buf);
 	strbuf_addstr(buf, source->path);
 	strbuf_addch(buf, '/');
-	fill_loose_path(buf, oid);
+	fill_loose_path(buf, oid, source->odb->repo->hash_algo);
 	return buf->buf;
 }
 
@@ -1165,7 +1168,7 @@ static int index_mem(struct index_state *istate,
 
 		opts.strict = 1;
 		opts.error_func = hash_format_check_report;
-		if (fsck_buffer(null_oid(the_hash_algo), type, buf, size, &opts))
+		if (fsck_buffer(null_oid(istate->repo->hash_algo), type, buf, size, &opts))
 			die(_("refusing to create malformed object"));
 		fsck_finish(&opts);
 	}
@@ -1173,7 +1176,7 @@ static int index_mem(struct index_state *istate,
 	if (write_object)
 		ret = write_object_file(buf, size, type, oid);
 	else
-		hash_object_file(the_hash_algo, buf, size, type, oid);
+		hash_object_file(istate->repo->hash_algo, buf, size, type, oid);
 
 	strbuf_release(&nbuf);
 	return ret;
@@ -1199,7 +1202,7 @@ static int index_stream_convert_blob(struct index_state *istate,
 		ret = write_object_file(sbuf.buf, sbuf.len, OBJ_BLOB,
 					oid);
 	else
-		hash_object_file(the_hash_algo, sbuf.buf, sbuf.len, OBJ_BLOB,
+		hash_object_file(istate->repo->hash_algo, sbuf.buf, sbuf.len, OBJ_BLOB,
 				 oid);
 	strbuf_release(&sbuf);
 	return ret;
@@ -1297,7 +1300,7 @@ int index_path(struct index_state *istate, struct object_id *oid,
 		if (strbuf_readlink(&sb, path, st->st_size))
 			return error_errno("readlink(\"%s\")", path);
 		if (!(flags & INDEX_WRITE_OBJECT))
-			hash_object_file(the_hash_algo, sb.buf, sb.len,
+			hash_object_file(istate->repo->hash_algo, sb.buf, sb.len,
 					 OBJ_BLOB, oid);
 		else if (write_object_file(sb.buf, sb.len, OBJ_BLOB, oid))
 			rc = error(_("%s: failed to insert into database"), path);
@@ -1328,6 +1331,7 @@ int read_pack_header(int fd, struct pack_header *header)
 
 int for_each_file_in_obj_subdir(unsigned int subdir_nr,
 				struct strbuf *path,
+				const struct git_hash_algo *algop,
 				each_loose_object_fn obj_cb,
 				each_loose_cruft_fn cruft_cb,
 				each_loose_subdir_fn subdir_cb,
@@ -1364,12 +1368,12 @@ int for_each_file_in_obj_subdir(unsigned int subdir_nr,
 		namelen = strlen(de->d_name);
 		strbuf_setlen(path, baselen);
 		strbuf_add(path, de->d_name, namelen);
-		if (namelen == the_hash_algo->hexsz - 2 &&
+		if (namelen == algop->hexsz - 2 &&
 		    !hex_to_bytes(oid.hash + 1, de->d_name,
-				  the_hash_algo->rawsz - 1)) {
-			oid_set_algo(&oid, the_hash_algo);
-			memset(oid.hash + the_hash_algo->rawsz, 0,
-			       GIT_MAX_RAWSZ - the_hash_algo->rawsz);
+				  algop->rawsz - 1)) {
+			oid_set_algo(&oid, algop);
+			memset(oid.hash + algop->rawsz, 0,
+			       GIT_MAX_RAWSZ - algop->rawsz);
 			if (obj_cb) {
 				r = obj_cb(&oid, path->buf, data);
 				if (r)
@@ -1405,7 +1409,8 @@ int for_each_loose_file_in_objdir_buf(struct strbuf *path,
 	int i;
 
 	for (i = 0; i < 256; i++) {
-		r = for_each_file_in_obj_subdir(i, path, obj_cb, cruft_cb,
+		r = for_each_file_in_obj_subdir(i, path, the_repository->hash_algo,
+						obj_cb, cruft_cb,
 						subdir_cb, data);
 		if (r)
 			break;
@@ -1481,6 +1486,7 @@ struct oidtree *odb_loose_cache(struct odb_source *source,
 	}
 	strbuf_addstr(&buf, source->path);
 	for_each_file_in_obj_subdir(subdir_nr, &buf,
+				    source->odb->repo->hash_algo,
 				    append_loose_object,
 				    NULL, NULL,
 				    source->loose_objects_cache);
@@ -1501,7 +1507,8 @@ static int check_stream_oid(git_zstream *stream,
 			    const char *hdr,
 			    unsigned long size,
 			    const char *path,
-			    const struct object_id *expected_oid)
+			    const struct object_id *expected_oid,
+			    const struct git_hash_algo *algop)
 {
 	struct git_hash_ctx c;
 	struct object_id real_oid;
@@ -1509,7 +1516,7 @@ static int check_stream_oid(git_zstream *stream,
 	unsigned long total_read;
 	int status = Z_OK;
 
-	the_hash_algo->init_fn(&c);
+	algop->init_fn(&c);
 	git_hash_update(&c, hdr, stream->total_out);
 
 	/*
@@ -1594,7 +1601,8 @@ int read_loose_object(const char *path,
 
 	if (*oi->typep == OBJ_BLOB &&
 	    *size > repo_settings_get_big_file_threshold(the_repository)) {
-		if (check_stream_oid(&stream, hdr, *size, path, expected_oid) < 0)
+		if (check_stream_oid(&stream, hdr, *size, path, expected_oid,
+				     the_repository->hash_algo) < 0)
 			goto out_inflate;
 	} else {
 		*contents = unpack_loose_rest(&stream, hdr, *size, expected_oid);

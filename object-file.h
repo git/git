@@ -89,6 +89,7 @@ typedef int each_loose_subdir_fn(unsigned int nr,
 				 void *data);
 int for_each_file_in_obj_subdir(unsigned int subdir_nr,
 				struct strbuf *path,
+				const struct git_hash_algo *algo,
 				each_loose_object_fn obj_cb,
 				each_loose_cruft_fn cruft_cb,
 				each_loose_subdir_fn subdir_cb,
