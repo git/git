@@ -2748,7 +2748,7 @@ void git_die_config(struct repository *r, const char *key, const char *err, ...)
 }
 
 /*
- * Find all the stuff for git_config_set() below.
+ * Find all the stuff for repo_config_set() below.
  */
 
 struct config_store_data {

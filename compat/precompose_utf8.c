@@ -56,8 +56,8 @@ void probe_utf8_pathname_composition(void)
 		close(output_fd);
 		repo_git_path_replace(the_repository, &path, "%s", auml_nfd);
 		precomposed_unicode = access(path.buf, R_OK) ? 0 : 1;
-		git_config_set("core.precomposeunicode",
-			       precomposed_unicode ? "true" : "false");
+		repo_config_set(the_repository, "core.precomposeunicode",
+				precomposed_unicode ? "true" : "false");
 		repo_git_path_replace(the_repository, &path, "%s", auml_nfc);
 		if (unlink(path.buf))
 			die_errno(_("failed to unlink '%s'"), path.buf);

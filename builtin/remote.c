@@ -209,7 +209,7 @@ static int add(int argc, const char **argv, const char *prefix,
 		die(_("'%s' is not a valid remote name"), name);
 
 	strbuf_addf(&buf, "remote.%s.url", name);
-	git_config_set(buf.buf, url);
+	repo_config_set(the_repository, buf.buf, url);
 
 	if (!mirror || mirror & MIRROR_FETCH) {
 		strbuf_reset(&buf);
@@ -225,14 +225,14 @@ static int add(int argc, const char **argv, const char *prefix,
 	if (mirror & MIRROR_PUSH) {
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "remote.%s.mirror", name);
-		git_config_set(buf.buf, "true");
+		repo_config_set(the_repository, buf.buf, "true");
 	}
 
 	if (fetch_tags != TAGS_DEFAULT) {
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "remote.%s.tagOpt", name);
-		git_config_set(buf.buf,
-			       fetch_tags == TAGS_SET ? "--tags" : "--no-tags");
+		repo_config_set(the_repository, buf.buf,
+				fetch_tags == TAGS_SET ? "--tags" : "--no-tags");
 	}
 
 	if (fetch && fetch_remote(name)) {
@@ -802,12 +802,12 @@ static int mv(int argc, const char **argv, const char *prefix,
 		if (info->remote_name && !strcmp(info->remote_name, rename.old_name)) {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "branch.%s.remote", item->string);
-			git_config_set(buf.buf, rename.new_name);
+			repo_config_set(the_repository, buf.buf, rename.new_name);
 		}
 		if (info->push_remote_name && !strcmp(info->push_remote_name, rename.old_name)) {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "branch.%s.pushRemote", item->string);
-			git_config_set(buf.buf, rename.new_name);
+			repo_config_set(the_repository, buf.buf, rename.new_name);
 		}
 	}
 
@@ -1503,7 +1503,7 @@ static int set_head(int argc, const char **argv, const char *prefix,
 		struct strbuf config_name = STRBUF_INIT;
 		strbuf_addf(&config_name,
 			"remote.%s.followremotehead", remote->name);
-		git_config_set(config_name.buf, "warn");
+		repo_config_set(the_repository, config_name.buf, "warn");
 		strbuf_release(&config_name);
 	}
 
@@ -1793,7 +1793,7 @@ static int set_url(int argc, const char **argv, const char *prefix,
 			git_config_set_multivar(name_buf.buf, newurl,
 						       "^$", 0);
 		else
-			git_config_set(name_buf.buf, newurl);
+			repo_config_set(the_repository, name_buf.buf, newurl);
 		goto out;
 	}
 

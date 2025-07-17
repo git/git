@@ -734,11 +734,6 @@ static inline int git_config_get_pathname(const char *key, char **dest)
 	return repo_config_get_pathname(the_repository, key, dest);
 }
 
-static inline void git_config_set(const char *key, const char *value)
-{
-	repo_config_set(the_repository, key, value);
-}
-
 static inline int git_config_set_in_file_gently(
 	const char *config_filename,
 	const char *key,

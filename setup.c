@@ -815,7 +815,7 @@ int upgrade_repository_format(int target_version)
 	}
 
 	strbuf_addf(&repo_version, "%d", target_version);
-	git_config_set("core.repositoryformatversion", repo_version.buf);
+	repo_config_set(the_repository, "core.repositoryformatversion", repo_version.buf);
 
 	ret = 1;
 
@@ -2233,14 +2233,14 @@ void initialize_repository_version(int hash_algo,
 		target_version = GIT_REPO_VERSION_READ;
 
 	if (hash_algo != GIT_HASH_SHA1_LEGACY && hash_algo != GIT_HASH_UNKNOWN)
-		git_config_set("extensions.objectformat",
-			       hash_algos[hash_algo].name);
+		repo_config_set(the_repository, "extensions.objectformat",
+				hash_algos[hash_algo].name);
 	else if (reinit)
 		repo_config_set_gently(the_repository, "extensions.objectformat", NULL);
 
 	if (ref_storage_format != REF_STORAGE_FORMAT_FILES)
-		git_config_set("extensions.refstorage",
-			       ref_storage_format_to_name(ref_storage_format));
+		repo_config_set(the_repository, "extensions.refstorage",
+				ref_storage_format_to_name(ref_storage_format));
 	else if (reinit)
 		repo_config_set_gently(the_repository, "extensions.refstorage", NULL);
 
@@ -2259,7 +2259,7 @@ void initialize_repository_version(int hash_algo,
 	}
 
 	strbuf_addf(&repo_version, "%d", target_version);
-	git_config_set("core.repositoryformatversion", repo_version.buf);
+	repo_config_set(the_repository, "core.repositoryformatversion", repo_version.buf);
 
 	strbuf_release(&repo_version);
 }
@@ -2375,17 +2375,17 @@ static int create_default_files(const char *template_path,
 		if (filemode && !reinit && (st1.st_mode & S_IXUSR))
 			filemode = 0;
 	}
-	git_config_set("core.filemode", filemode ? "true" : "false");
+	repo_config_set(the_repository, "core.filemode", filemode ? "true" : "false");
 
 	if (is_bare_repository())
-		git_config_set("core.bare", "true");
+		repo_config_set(the_repository, "core.bare", "true");
 	else {
-		git_config_set("core.bare", "false");
+		repo_config_set(the_repository, "core.bare", "false");
 		/* allow template config file to override the default */
 		if (repo_settings_get_log_all_ref_updates(the_repository) == LOG_REFS_UNSET)
-			git_config_set("core.logallrefupdates", "true");
+			repo_config_set(the_repository, "core.logallrefupdates", "true");
 		if (needs_work_tree_config(original_git_dir, work_tree))
-			git_config_set("core.worktree", work_tree);
+			repo_config_set(the_repository, "core.worktree", work_tree);
 	}
 
 	if (!reinit) {
@@ -2398,12 +2398,12 @@ static int create_default_files(const char *template_path,
 		    S_ISLNK(st1.st_mode))
 			unlink(path.buf); /* good */
 		else
-			git_config_set("core.symlinks", "false");
+			repo_config_set(the_repository, "core.symlinks", "false");
 
 		/* Check if the filesystem is case-insensitive */
 		repo_git_path_replace(the_repository, &path, "CoNfIg");
 		if (!access(path.buf, F_OK))
-			git_config_set("core.ignorecase", "true");
+			repo_config_set(the_repository, "core.ignorecase", "true");
 		probe_utf8_pathname_composition();
 	}
 
@@ -2639,8 +2639,8 @@ int init_db(const char *git_dir, const char *real_git_dir,
 			xsnprintf(buf, sizeof(buf), "%d", OLD_PERM_EVERYBODY);
 		else
 			BUG("invalid value for shared_repository");
-		git_config_set("core.sharedrepository", buf);
-		git_config_set("receive.denyNonFastforwards", "true");
+		repo_config_set(the_repository, "core.sharedrepository", buf);
+		repo_config_set(the_repository, "receive.denyNonFastforwards", "true");
 	}
 
 	if (!(flags & INIT_DB_QUIET)) {

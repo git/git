@@ -1913,11 +1913,11 @@ static int maintenance_register(int argc, const char **argv, const char *prefix,
 				   options);
 
 	/* Disable foreground maintenance */
-	git_config_set("maintenance.auto", "false");
+	repo_config_set(the_repository, "maintenance.auto", "false");
 
 	/* Set maintenance strategy, if unset */
 	if (repo_config_get(the_repository, "maintenance.strategy"))
-		git_config_set("maintenance.strategy", "incremental");
+		repo_config_set(the_repository, "maintenance.strategy", "incremental");
 
 	if (!repo_config_get_string_multi(the_repository, key, &list)) {
 		for_each_string_list_item(item, list) {
