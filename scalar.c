@@ -196,9 +196,9 @@ static int set_recommended_config(int reconfigure)
 	if (repo_config_get_string(the_repository, "log.excludeDecoration", &value)) {
 		trace2_data_string("scalar", the_repository,
 				   "log.excludeDecoration", "created");
-		if (git_config_set_multivar_gently("log.excludeDecoration",
-						   "refs/prefetch/*",
-						   CONFIG_REGEX_NONE, 0))
+		if (repo_config_set_multivar_gently(the_repository, "log.excludeDecoration",
+						    "refs/prefetch/*",
+						    CONFIG_REGEX_NONE, 0))
 			return error(_("could not configure "
 				       "log.excludeDecoration"));
 	} else {

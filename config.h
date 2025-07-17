@@ -745,13 +745,6 @@ static inline void git_config_set_multivar_in_file(
 					 key, value, value_pattern, flags);
 }
 
-static inline int git_config_set_multivar_gently(const char *key, const char *value,
-				   const char *value_pattern, unsigned flags)
-{
-	return repo_config_set_multivar_gently(the_repository, key, value,
-					       value_pattern, flags);
-}
-
 static inline void git_config_set_multivar(const char *key, const char *value,
 			     const char *value_pattern, unsigned flags)
 {
