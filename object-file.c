@@ -893,23 +893,21 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 					  FOF_SKIP_COLLISION_CHECK);
 }
 
-static int freshen_loose_object(const struct object_id *oid)
+static int freshen_loose_object(struct object_database *odb,
+				const struct object_id *oid)
 {
-	struct odb_source *source;
-
-	odb_prepare_alternates(the_repository->objects);
-	for (source = the_repository->objects->sources; source; source = source->next) {
+	odb_prepare_alternates(odb);
+	for (struct odb_source *source = odb->sources; source; source = source->next)
 		if (check_and_freshen_source(source, oid, 1))
 			return 1;
-	}
-
 	return 0;
 }
 
-static int freshen_packed_object(const struct object_id *oid)
+static int freshen_packed_object(struct object_database *odb,
+				 const struct object_id *oid)
 {
 	struct pack_entry e;
-	if (!find_pack_entry(the_repository, oid, &e))
+	if (!find_pack_entry(odb->repo, oid, &e))
 		return 0;
 	if (e.p->is_cruft)
 		return 0;
@@ -999,7 +997,8 @@ int stream_loose_object(struct input_stream *in_stream, size_t len,
 		die(_("deflateEnd on stream object failed (%d)"), ret);
 	close_loose_object(fd, tmp_file.buf);
 
-	if (freshen_packed_object(oid) || freshen_loose_object(oid)) {
+	if (freshen_packed_object(the_repository->objects, oid) ||
+	    freshen_loose_object(the_repository->objects, oid)) {
 		unlink_or_warn(tmp_file.buf);
 		goto cleanup;
 	}
@@ -1062,7 +1061,8 @@ int write_object_file_flags(const void *buf, unsigned long len,
 	 * it out into .git/objects/??/?{38} file.
 	 */
 	write_object_file_prepare(algo, buf, len, type, oid, hdr, &hdrlen);
-	if (freshen_packed_object(oid) || freshen_loose_object(oid))
+	if (freshen_packed_object(repo->objects, oid) ||
+	    freshen_loose_object(repo->objects, oid))
 		return 0;
 	if (write_loose_object(oid, hdr, hdrlen, buf, len, 0, flags))
 		return -1;
