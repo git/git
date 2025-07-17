@@ -89,42 +89,19 @@ int check_and_freshen_file(const char *fn, int freshen)
 	return 1;
 }
 
-static int check_and_freshen_odb(struct odb_source *source,
-				 const struct object_id *oid,
-				 int freshen)
+static int check_and_freshen_source(struct odb_source *source,
+				    const struct object_id *oid,
+				    int freshen)
 {
 	static struct strbuf path = STRBUF_INIT;
 	odb_loose_path(source, &path, oid);
 	return check_and_freshen_file(path.buf, freshen);
 }
 
-static int check_and_freshen_local(const struct object_id *oid, int freshen)
-{
-	return check_and_freshen_odb(the_repository->objects->sources, oid, freshen);
-}
-
-static int check_and_freshen_nonlocal(const struct object_id *oid, int freshen)
-{
-	struct odb_source *source;
-
-	odb_prepare_alternates(the_repository->objects);
-	for (source = the_repository->objects->sources->next; source; source = source->next) {
-		if (check_and_freshen_odb(source, oid, freshen))
-			return 1;
-	}
-	return 0;
-}
-
-static int check_and_freshen(const struct object_id *oid, int freshen)
-{
-	return check_and_freshen_local(oid, freshen) ||
-	       check_and_freshen_nonlocal(oid, freshen);
-}
-
 int has_loose_object(struct odb_source *source,
 		     const struct object_id *oid)
 {
-	return check_and_freshen_odb(source, oid, 0);
+	return check_and_freshen_source(source, oid, 0);
 }
 
 int format_object_header(char *str, size_t size, enum object_type type,
@@ -918,7 +895,15 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 
 static int freshen_loose_object(const struct object_id *oid)
 {
-	return check_and_freshen(oid, 1);
+	struct odb_source *source;
+
+	odb_prepare_alternates(the_repository->objects);
+	for (source = the_repository->objects->sources; source; source = source->next) {
+		if (check_and_freshen_source(source, oid, 1))
+			return 1;
+	}
+
+	return 0;
 }
 
 static int freshen_packed_object(const struct object_id *oid)
