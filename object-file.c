@@ -421,7 +421,7 @@ int loose_object_info(struct repository *r,
 	enum object_type type_scratch;
 
 	if (oi->delta_base_oid)
-		oidclr(oi->delta_base_oid, the_repository->hash_algo);
+		oidclr(oi->delta_base_oid, r->hash_algo);
 
 	/*
 	 * If we don't care about type or size, then we don't
