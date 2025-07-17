@@ -245,7 +245,7 @@ time = find_program('time', dirs: program_path, required: get_option('benchmarks
 # "/bin/sh" over a PATH-based lookup, which provides a working shell on most
 # supported systems. This path is also the default shell path used by our
 # Makefile. This lookup can be overridden via `program_path`.
-target_shell = find_program('sh', dirs: program_path + [ '/bin' ], native: false)
+target_shell = find_program('/bin/sh', 'sh', dirs: program_path, native: false)
 
 # Sanity-check that programs required for the build exist.
 foreach tool : ['cat', 'cut', 'grep', 'sort', 'tr', 'uname']
@@ -866,9 +866,8 @@ if host_machine.system() == 'cygwin' or host_machine.system() == 'windows'
 endif
 build_options_config.set_quoted('X', executable_suffix)
 
-python = import('python').find_installation('python3', required: get_option('python'))
-target_python = find_program('python3', native: false, required: python.found())
-if python.found()
+target_python = find_program('python3', native: false, required: get_option('python'))
+if target_python.found()
   build_options_config.set('NO_PYTHON', '')
 else
   libgit_c_args += '-DNO_PYTHON'
@@ -1588,7 +1587,7 @@ endif
 git_exec_path = 'libexec/git-core'
 libexec = get_option('libexecdir')
 if libexec != 'libexec' and libexec != '.'
-  git_exec_path = libexec
+  git_exec_path = libexec / 'git-core'
 endif
 
 if get_option('runtime_prefix')
@@ -1970,7 +1969,7 @@ if perl_features_enabled
   subdir('perl')
 endif
 
-if python.found()
+if target_python.found()
   scripts_python = [
     'git-p4.py'
   ]
@@ -2197,16 +2196,15 @@ meson.add_dist_script(
 
 summary({
   'benchmarks': get_option('tests') and perl.found() and time.found(),
-  'curl': curl.found(),
-  'expat': expat.found(),
-  'gettext': intl.found(),
+  'curl': curl,
+  'expat': expat,
+  'gettext': intl,
   'gitweb': gitweb_option.allowed(),
-  'https': https_backend,
-  'iconv': iconv.found(),
-  'pcre2': pcre2.found(),
+  'iconv': iconv,
+  'pcre2': pcre2,
   'perl': perl_features_enabled,
-  'python': python.found(),
-}, section: 'Auto-detected features')
+  'python': target_python.found(),
+}, section: 'Auto-detected features', bool_yn: true)
 
 summary({
   'csprng': csprng_backend,

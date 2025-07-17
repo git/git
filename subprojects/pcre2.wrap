@@ -1,13 +1,13 @@
 [wrap-file]
-directory = pcre2-10.44
-source_url = https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.44/pcre2-10.44.tar.bz2
-source_filename = pcre2-10.44.tar.bz2
-source_hash = d34f02e113cf7193a1ebf2770d3ac527088d485d4e047ed10e5d217c6ef5de96
-patch_filename = pcre2_10.44-2_patch.zip
-patch_url = https://wrapdb.mesonbuild.com/v2/pcre2_10.44-2/get_patch
-patch_hash = 4336d422ee9043847e5e10dbbbd01940d4c9e5027f31ccdc33a7898a1ca94009
-source_fallback_url = https://github.com/mesonbuild/wrapdb/releases/download/pcre2_10.44-2/pcre2-10.44.tar.bz2
-wrapdb_version = 10.44-2
+directory = pcre2-10.45
+source_url = https://github.com/PCRE2Project/pcre2/releases/download/pcre2-10.45/pcre2-10.45.tar.bz2
+source_filename = pcre2-10.45.tar.bz2
+source_hash = 21547f3516120c75597e5b30a992e27a592a31950b5140e7b8bfde3f192033c4
+patch_filename = pcre2_10.45-2_patch.zip
+patch_url = https://wrapdb.mesonbuild.com/v2/pcre2_10.45-2/get_patch
+patch_hash = 7c6f34b703708652a404f9dc2769c67658c437b6043573295fa3428a9b7a6807
+source_fallback_url = https://github.com/mesonbuild/wrapdb/releases/download/pcre2_10.45-2/pcre2-10.45.tar.bz2
+wrapdb_version = 10.45-2
 
 [provide]
 libpcre2-8 = libpcre2_8
