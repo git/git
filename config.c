@@ -1612,16 +1612,6 @@ static int git_default_core_config(const char *var, const char *value,
 		return 0;
 	}
 
-	if (!strcmp(var, "core.sparsecheckout")) {
-		core_apply_sparse_checkout = git_config_bool(var, value);
-		return 0;
-	}
-
-	if (!strcmp(var, "core.sparsecheckoutcone")) {
-		core_sparse_checkout_cone = git_config_bool(var, value);
-		return 0;
-	}
-
 	if (!strcmp(var, "core.precomposeunicode")) {
 		precomposed_unicode = git_config_bool(var, value);
 		return 0;
@@ -1644,17 +1634,6 @@ static int git_default_core_config(const char *var, const char *value,
 
 	/* Add other config variables here and to Documentation/config.adoc. */
 	return platform_core_config(var, value, ctx, cb);
-}
-
-static int git_default_sparse_config(const char *var, const char *value)
-{
-	if (!strcmp(var, "sparse.expectfilesoutsideofpatterns")) {
-		sparse_expect_files_outside_of_patterns = git_config_bool(var, value);
-		return 0;
-	}
-
-	/* Add other config variables here and to Documentation/config/sparse.adoc. */
-	return 0;
 }
 
 static int git_default_i18n_config(const char *var, const char *value)
@@ -1817,9 +1796,6 @@ int git_default_config(const char *var, const char *value,
 		pack_compression_seen = 1;
 		return 0;
 	}
-
-	if (starts_with(var, "sparse."))
-		return git_default_sparse_config(var, value);
 
 	/* Add other config variables here and to Documentation/config.adoc. */
 	return 0;

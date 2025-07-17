@@ -1924,7 +1924,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	if (o->prefix)
 		update_sparsity_for_prefix(o->prefix, o->src_index);
 
-	if (!core_apply_sparse_checkout || !o->update)
+	if (!repo->settings.sparse_checkout || !o->update)
 		o->skip_sparse_checkout = 1;
 	if (!o->skip_sparse_checkout) {
 		memset(&pl, 0, sizeof(pl));
@@ -2144,6 +2144,7 @@ enum update_sparsity_result update_sparsity(struct unpack_trees_options *o,
 		BUG("update_sparsity() called wrong");
 
 	trace_performance_enter();
+	prepare_repo_settings(the_repository);
 
 	/* If we weren't given patterns, use the recorded ones */
 	if (!pl) {
