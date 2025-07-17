@@ -121,14 +121,10 @@ static int check_and_freshen(const struct object_id *oid, int freshen)
 	       check_and_freshen_nonlocal(oid, freshen);
 }
 
-int has_loose_object_nonlocal(const struct object_id *oid)
+int has_loose_object(struct odb_source *source,
+		     const struct object_id *oid)
 {
-	return check_and_freshen_nonlocal(oid, 0);
-}
-
-int has_loose_object(const struct object_id *oid)
-{
-	return check_and_freshen(oid, 0);
+	return check_and_freshen_odb(source, oid, 0);
 }
 
 int format_object_header(char *str, size_t size, enum object_type type,
@@ -1103,8 +1099,10 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 	int hdrlen;
 	int ret;
 
-	if (has_loose_object(oid))
-		return 0;
+	for (struct odb_source *source = repo->objects->sources; source; source = source->next)
+		if (has_loose_object(source, oid))
+			return 0;
+
 	oi.typep = &type;
 	oi.sizep = &len;
 	oi.contentp = &buf;

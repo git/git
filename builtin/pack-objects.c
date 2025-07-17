@@ -1703,8 +1703,16 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 	struct list_head *pos;
 	struct multi_pack_index *m;
 
-	if (!exclude && local && has_loose_object_nonlocal(oid))
-		return 0;
+	if (!exclude && local) {
+		/*
+		 * Note that we start iterating at `sources->next` so that we
+		 * skip the local object source.
+		 */
+		struct odb_source *source = the_repository->objects->sources->next;
+		for (; source; source = source->next)
+			if (has_loose_object(source, oid))
+				return 0;
+	}
 
 	/*
 	 * If we already know the pack object lives in, start checks from that
@@ -3928,7 +3936,14 @@ static void add_cruft_object_entry(const struct object_id *oid, enum object_type
 	} else {
 		if (!want_object_in_pack_mtime(oid, 0, &pack, &offset, mtime))
 			return;
-		if (!pack && type == OBJ_BLOB && !has_loose_object(oid)) {
+		if (!pack && type == OBJ_BLOB) {
+			struct odb_source *source = the_repository->objects->sources;
+			int found = 0;
+
+			for (; !found && source; source = source->next)
+				if (has_loose_object(source, oid))
+					found = 1;
+
 			/*
 			 * If a traversed tree has a missing blob then we want
 			 * to avoid adding that missing object to our pack.
@@ -3942,7 +3957,8 @@ static void add_cruft_object_entry(const struct object_id *oid, enum object_type
 			 * limited to "ensure non-tip blobs which don't exist in
 			 * packs do exist via loose objects". Confused?
 			 */
-			return;
+			if (!found)
+				return;
 		}
 
 		entry = create_object_entry(oid, type, pack_name_hash_fn(name),

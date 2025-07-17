@@ -45,13 +45,12 @@ const char *odb_loose_path(struct odb_source *source,
 			   const struct object_id *oid);
 
 /*
- * Return true iff an alternate object database has a loose object
+ * Return true iff an object database source has a loose object
  * with the specified name.  This function does not respect replace
  * references.
  */
-int has_loose_object_nonlocal(const struct object_id *);
-
-int has_loose_object(const struct object_id *);
+int has_loose_object(struct odb_source *source,
+		     const struct object_id *oid);
 
 void *map_loose_object(struct repository *r, const struct object_id *oid,
 		       unsigned long *size);
