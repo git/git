@@ -537,6 +537,20 @@ int get_sparse_checkout_patterns(struct pattern_list *pl);
 int remove_dir_recursively(struct strbuf *path, int flag);
 
 /*
+ * This function pointer type is called on each file discovered in
+ * for_each_file_in_dir. The iteration stops if this method returns
+ * non-zero.
+ */
+typedef int (*file_iterator)(const char *path, const void *data);
+
+struct strbuf;
+/*
+ * Given a directory path, recursively visit each file within, including
+ * within subdirectories.
+ */
+int for_each_file_in_dir(struct strbuf *path, file_iterator fn, const void *data);
+
+/*
  * Tries to remove the path, along with leading empty directories so long as
  * those empty directories are not startup_info->original_cwd.  Ignores
  * ENOENT.
