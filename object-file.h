@@ -157,29 +157,9 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 struct object_info;
 int parse_loose_header(const char *hdr, struct object_info *oi);
 
-enum {
-	/*
-	 * By default, `write_object_file()` does not actually write
-	 * anything into the object store, but only computes the object ID.
-	 * This flag changes that so that the object will be written as a loose
-	 * object and persisted.
-	 */
-	WRITE_OBJECT_FILE_PERSIST = (1 << 0),
-
-	/*
-	 * Do not print an error in case something gose wrong.
-	 */
-	WRITE_OBJECT_FILE_SILENT = (1 << 1),
-};
-
-int write_object_file_flags(const void *buf, unsigned long len,
-			    enum object_type type, struct object_id *oid,
-			    struct object_id *compat_oid_in, unsigned flags);
-static inline int write_object_file(const void *buf, unsigned long len,
-				    enum object_type type, struct object_id *oid)
-{
-	return write_object_file_flags(buf, len, type, oid, NULL, 0);
-}
+int write_object_file(const void *buf, unsigned long len,
+		      enum object_type type, struct object_id *oid,
+		      struct object_id *compat_oid_in, unsigned flags);
 
 struct input_stream {
 	const void *(*read)(struct input_stream *, unsigned long *len);

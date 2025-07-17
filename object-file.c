@@ -755,7 +755,7 @@ static int start_loose_object_common(struct strbuf *tmp_file,
 
 	fd = create_tmpfile(tmp_file, filename);
 	if (fd < 0) {
-		if (flags & WRITE_OBJECT_FILE_SILENT)
+		if (flags & WRITE_OBJECT_SILENT)
 			return -1;
 		else if (errno == EACCES)
 			return error(_("insufficient permission for adding "
@@ -887,7 +887,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 		utb.actime = mtime;
 		utb.modtime = mtime;
 		if (utime(tmp_file.buf, &utb) < 0 &&
-		    !(flags & WRITE_OBJECT_FILE_SILENT))
+		    !(flags & WRITE_OBJECT_SILENT))
 			warning_errno(_("failed utime() on %s"), tmp_file.buf);
 	}
 
@@ -1032,9 +1032,9 @@ cleanup:
 	return err;
 }
 
-int write_object_file_flags(const void *buf, unsigned long len,
-			    enum object_type type, struct object_id *oid,
-			    struct object_id *compat_oid_in, unsigned flags)
+int write_object_file(const void *buf, unsigned long len,
+		      enum object_type type, struct object_id *oid,
+		      struct object_id *compat_oid_in, unsigned flags)
 {
 	struct repository *repo = the_repository;
 	const struct git_hash_algo *algo = repo->hash_algo;
@@ -1159,7 +1159,7 @@ static int index_mem(struct index_state *istate,
 	}
 
 	if (write_object)
-		ret = write_object_file(buf, size, type, oid);
+		ret = odb_write_object(istate->repo->objects, buf, size, type, oid);
 	else
 		hash_object_file(istate->repo->hash_algo, buf, size, type, oid);
 
@@ -1184,8 +1184,8 @@ static int index_stream_convert_blob(struct index_state *istate,
 				 get_conv_flags(flags));
 
 	if (write_object)
-		ret = write_object_file(sbuf.buf, sbuf.len, OBJ_BLOB,
-					oid);
+		ret = odb_write_object(istate->repo->objects, sbuf.buf, sbuf.len, OBJ_BLOB,
+				       oid);
 	else
 		hash_object_file(istate->repo->hash_algo, sbuf.buf, sbuf.len, OBJ_BLOB,
 				 oid);
@@ -1287,7 +1287,7 @@ int index_path(struct index_state *istate, struct object_id *oid,
 		if (!(flags & INDEX_WRITE_OBJECT))
 			hash_object_file(istate->repo->hash_algo, sb.buf, sb.len,
 					 OBJ_BLOB, oid);
-		else if (write_object_file(sb.buf, sb.len, OBJ_BLOB, oid))
+		else if (odb_write_object(the_repository->objects, sb.buf, sb.len, OBJ_BLOB, oid))
 			rc = error(_("%s: failed to insert into database"), path);
 		strbuf_release(&sb);
 		break;
