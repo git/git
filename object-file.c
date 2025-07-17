@@ -8,7 +8,6 @@
  */
 
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
 #include "bulk-checkin.h"
@@ -44,8 +43,7 @@ static int get_conv_flags(unsigned flags)
 
 static void fill_loose_path(struct strbuf *buf, const struct object_id *oid)
 {
-	int i;
-	for (i = 0; i < the_hash_algo->rawsz; i++) {
+	for (size_t i = 0; i < the_hash_algo->rawsz; i++) {
 		static char hex[] = "0123456789abcdef";
 		unsigned int val = oid->hash[i];
 		strbuf_addch(buf, hex[val >> 4]);
@@ -327,9 +325,8 @@ static void *unpack_loose_rest(git_zstream *stream,
 			       void *buffer, unsigned long size,
 			       const struct object_id *oid)
 {
-	int bytes = strlen(buffer) + 1;
+	size_t bytes = strlen(buffer) + 1, n;
 	unsigned char *buf = xmallocz(size);
-	unsigned long n;
 	int status = Z_OK;
 
 	n = stream->total_out - bytes;
@@ -596,7 +593,7 @@ static int check_collision(const char *source, const char *dest)
 			goto out;
 		}
 
-		if (sz_a < sizeof(buf_source))
+		if ((size_t) sz_a < sizeof(buf_source))
 			break;
 	}
 
@@ -1240,7 +1237,7 @@ static int index_core(struct index_state *istate,
 		if (read_result < 0)
 			ret = error_errno(_("read error while indexing %s"),
 					  path ? path : "<unknown>");
-		else if (read_result != size)
+		else if ((size_t) read_result != size)
 			ret = error(_("short read while indexing %s"),
 				    path ? path : "<unknown>");
 		else
@@ -1268,7 +1265,7 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 		ret = index_stream_convert_blob(istate, oid, fd, path, flags);
 	else if (!S_ISREG(st->st_mode))
 		ret = index_pipe(istate, oid, fd, type, path, flags);
-	else if (st->st_size <= repo_settings_get_big_file_threshold(the_repository) ||
+	else if ((st->st_size >= 0 && (size_t) st->st_size <= repo_settings_get_big_file_threshold(the_repository)) ||
 		 type != OBJ_BLOB ||
 		 (path && would_convert_to_git(istate, path)))
 		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
@@ -1472,7 +1469,7 @@ struct oidtree *odb_loose_cache(struct odb_source *source,
 	uint32_t *bitmap;
 
 	if (subdir_nr < 0 ||
-	    subdir_nr >= bitsizeof(source->loose_objects_subdir_seen))
+	    (size_t) subdir_nr >= bitsizeof(source->loose_objects_subdir_seen))
 		BUG("subdir_nr out of range");
 
 	bitmap = &source->loose_objects_subdir_seen[word_index];
