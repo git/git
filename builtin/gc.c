@@ -1938,7 +1938,7 @@ static int maintenance_register(int argc, const char **argv, const char *prefix,
 		}
 		if (!config_file)
 			die(_("$HOME not set"));
-		rc = git_config_set_multivar_in_file_gently(
+		rc = repo_config_set_multivar_in_file_gently(the_repository,
 			config_file, "maintenance.repo", maintpath,
 			CONFIG_REGEX_NONE, NULL, 0);
 		free(global_config_file);
@@ -2007,7 +2007,7 @@ static int maintenance_unregister(int argc, const char **argv, const char *prefi
 		}
 		if (!config_file)
 			die(_("$HOME not set"));
-		rc = git_config_set_multivar_in_file_gently(
+		rc = repo_config_set_multivar_in_file_gently(the_repository,
 			config_file, key, NULL, maintpath, NULL,
 			CONFIG_FLAGS_MULTI_REPLACE | CONFIG_FLAGS_FIXED_VALUE);
 		free(global_config_file);
