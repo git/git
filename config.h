@@ -744,13 +744,6 @@ static inline void git_config_set_multivar_in_file(
 	repo_config_set_multivar_in_file(the_repository, config_filename,
 					 key, value, value_pattern, flags);
 }
-
-static inline void git_config_set_multivar(const char *key, const char *value,
-			     const char *value_pattern, unsigned flags)
-{
-	repo_config_set_multivar(the_repository, key, value,
-				 value_pattern, flags);
-}
 # endif /* USE_THE_REPOSITORY_VARIABLE */
 
 #endif /* CONFIG_H */
