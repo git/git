@@ -1903,10 +1903,10 @@ static void fetch_pack_config(void)
 {
 	repo_config_get_int(the_repository, "fetch.unpacklimit", &fetch_unpack_limit);
 	repo_config_get_int(the_repository, "transfer.unpacklimit", &transfer_unpack_limit);
-	git_config_get_bool("repack.usedeltabaseoffset", &prefer_ofs_delta);
-	git_config_get_bool("fetch.fsckobjects", &fetch_fsck_objects);
-	git_config_get_bool("transfer.fsckobjects", &transfer_fsck_objects);
-	git_config_get_bool("transfer.advertisesid", &advertise_sid);
+	repo_config_get_bool(the_repository, "repack.usedeltabaseoffset", &prefer_ofs_delta);
+	repo_config_get_bool(the_repository, "fetch.fsckobjects", &fetch_fsck_objects);
+	repo_config_get_bool(the_repository, "transfer.fsckobjects", &transfer_fsck_objects);
+	repo_config_get_bool(the_repository, "transfer.advertisesid", &advertise_sid);
 	if (!uri_protocols.nr) {
 		char *str;
 

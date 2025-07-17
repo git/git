@@ -877,8 +877,8 @@ static int do_plain_rerere(struct repository *r,
 
 static void git_rerere_config(void)
 {
-	git_config_get_bool("rerere.enabled", &rerere_enabled);
-	git_config_get_bool("rerere.autoupdate", &rerere_autoupdate);
+	repo_config_get_bool(the_repository, "rerere.enabled", &rerere_enabled);
+	repo_config_get_bool(the_repository, "rerere.autoupdate", &rerere_autoupdate);
 	repo_config(the_repository, git_default_config, NULL);
 }
 

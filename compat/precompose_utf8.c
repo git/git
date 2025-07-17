@@ -75,7 +75,7 @@ const char *precompose_string_if_needed(const char *in)
 		iconv_t ic_prec;
 		char *out;
 		if (precomposed_unicode < 0)
-			git_config_get_bool("core.precomposeunicode", &precomposed_unicode);
+			repo_config_get_bool(the_repository, "core.precomposeunicode", &precomposed_unicode);
 		if (precomposed_unicode != 1)
 			return in;
 		ic_prec = iconv_open(repo_encoding, path_encoding);

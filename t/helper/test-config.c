@@ -163,7 +163,7 @@ int cmd__config(int argc, const char **argv)
 			goto exit1;
 		}
 	} else if (argc == 3 && !strcmp(argv[1], "get_bool")) {
-		if (!git_config_get_bool(argv[2], &val)) {
+		if (!repo_config_get_bool(the_repository, argv[2], &val)) {
 			printf("%d\n", val);
 			goto exit0;
 		} else {

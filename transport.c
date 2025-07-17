@@ -1602,7 +1602,7 @@ int transport_get_remote_bundle_uri(struct transport *transport)
 	 * Don't request bundle-uri from the server unless configured to
 	 * do so by the transfer.bundleURI=true config option.
 	 */
-	if (git_config_get_bool("transfer.bundleuri", &value) || !value)
+	if (repo_config_get_bool(the_repository, "transfer.bundleuri", &value) || !value)
 		return 0;
 
 	if (!transport->bundles->baseURI)

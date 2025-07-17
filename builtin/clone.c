@@ -1150,7 +1150,7 @@ int cmd_clone(int argc,
 			strbuf_reset(&sb);
 		}
 
-		if (!git_config_get_bool("submodule.stickyRecursiveClone", &val) &&
+		if (!repo_config_get_bool(the_repository, "submodule.stickyRecursiveClone", &val) &&
 		    val)
 			string_list_append(&option_config, "submodule.recurse=true");
 

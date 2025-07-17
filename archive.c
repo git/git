@@ -760,7 +760,7 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	const char **argv_copy;
 	int rc;
 
-	git_config_get_bool("uploadarchive.allowunreachable", &remote_allow_unreachable);
+	repo_config_get_bool(the_repository, "uploadarchive.allowunreachable", &remote_allow_unreachable);
 	repo_config(the_repository, git_default_config, NULL);
 
 	describe_status.max_invocations = 1;

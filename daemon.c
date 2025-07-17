@@ -402,7 +402,7 @@ static int run_service(const char *dir, struct daemon_service *service,
 
 	if (service->overridable) {
 		strbuf_addf(&var, "daemon.%s", service->config_name);
-		git_config_get_bool(var.buf, &enabled);
+		repo_config_get_bool(the_repository, var.buf, &enabled);
 		strbuf_release(&var);
 	}
 	if (!enabled) {
