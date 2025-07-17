@@ -1056,12 +1056,29 @@ test_expect_success 'clean' '
 	touch repo/deep/deeper2/file &&
 	touch repo/folder1/file &&
 
+	test_must_fail git -C repo sparse-checkout clean 2>err &&
+	grep "refusing to clean" err &&
+
+	git -C repo config clean.requireForce true &&
+	test_must_fail git -C repo sparse-checkout clean 2>err &&
+	grep "refusing to clean" err &&
+
+	cat >expect <<-\EOF &&
+	Would remove deep/deeper2/
+	Would remove folder1/
+	EOF
+
+	git -C repo sparse-checkout clean --dry-run >out &&
+	test_cmp expect out &&
+	test_path_exists repo/deep/deeper2 &&
+	test_path_exists repo/folder1 &&
+
 	cat >expect <<-\EOF &&
 	Removing deep/deeper2/
 	Removing folder1/
 	EOF
 
-	git -C repo sparse-checkout clean >out &&
+	git -C repo sparse-checkout clean -f >out &&
 	test_cmp expect out &&
 
 	test_path_is_missing repo/deep/deeper2 &&
@@ -1077,16 +1094,61 @@ test_expect_success 'clean with staged sparse change' '
 
 	git -C repo add --sparse folder1/file &&
 
+	cat >expect <<-\EOF &&
+	Would remove deep/deeper2/
+	EOF
+
+	git -C repo sparse-checkout clean --dry-run >out &&
+	test_cmp expect out &&
+	test_path_exists repo/deep/deeper2 &&
+	test_path_exists repo/folder1 &&
+	test_path_exists repo/folder2 &&
+
 	# deletes deep/deeper2/ but leaves folder1/ and folder2/
 	cat >expect <<-\EOF &&
 	Removing deep/deeper2/
 	EOF
 
+	# The previous test case checked the -f option, so
+	# test the config option in this one.
+	git -C repo config clean.requireForce false &&
 	git -C repo sparse-checkout clean >out &&
 	test_cmp expect out &&
 
 	test_path_is_missing repo/deep/deeper2 &&
-	test_path_exists repo/folder1
+	test_path_exists repo/folder1 &&
+	test_path_exists repo/folder2
+'
+
+test_expect_success 'clean with merge conflict status' '
+	git clone repo clean-merge &&
+
+	echo dirty >clean-merge/deep/deeper2/a &&
+	touch clean-merge/folder2/extra &&
+
+	cat >input <<-EOF &&
+	0 $ZERO_OID	folder1/a
+	100644 $(git -C clean-merge rev-parse HEAD:folder1/a) 1	folder1/a
+	EOF
+	git -C clean-merge update-index --index-info <input &&
+
+	git -C clean-merge sparse-checkout set deep/deeper1 &&
+
+	test_must_fail git -C clean-merge sparse-checkout clean -f 2>err &&
+	grep "failed to convert index to a sparse index" err &&
+
+	mkdir -p clean-merge/folder1/ &&
+	echo merged >clean-merge/folder1/a &&
+	git -C clean-merge add --sparse folder1/a &&
+
+	# deletes folder2/ but leaves staged change in folder1
+	# and dirty change in deep/deeper2/
+	cat >expect <<-\EOF &&
+	Removing folder2/
+	EOF
+
+	git -C clean-merge sparse-checkout clean -f >out &&
+	test_cmp expect out
 '
 
 test_done
