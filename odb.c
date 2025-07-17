@@ -980,14 +980,14 @@ void odb_assert_oid_type(struct object_database *odb,
 		    type_name(expect));
 }
 
-int odb_write_object_ext(struct object_database *odb UNUSED,
+int odb_write_object_ext(struct object_database *odb,
 			 const void *buf, unsigned long len,
 			 enum object_type type,
 			 struct object_id *oid,
 			 struct object_id *compat_oid,
 			 unsigned flags)
 {
-	return write_object_file(buf, len, type, oid, compat_oid, flags);
+	return write_object_file(odb->sources, buf, len, type, oid, compat_oid, flags);
 }
 
 struct object_database *odb_new(struct repository *repo)

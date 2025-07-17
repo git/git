@@ -157,7 +157,8 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 struct object_info;
 int parse_loose_header(const char *hdr, struct object_info *oi);
 
-int write_object_file(const void *buf, unsigned long len,
+int write_object_file(struct odb_source *source,
+		      const void *buf, unsigned long len,
 		      enum object_type type, struct object_id *oid,
 		      struct object_id *compat_oid_in, unsigned flags);
 
@@ -167,7 +168,8 @@ struct input_stream {
 	int is_finished;
 };
 
-int stream_loose_object(struct input_stream *in_stream, size_t len,
+int stream_loose_object(struct odb_source *source,
+			struct input_stream *in_stream, size_t len,
 			struct object_id *oid);
 
 int force_object_loose(const struct object_id *oid, time_t mtime);
