@@ -132,7 +132,7 @@ int cmd_checkout__worker(int argc,
 					 checkout_worker_usage,
 					 checkout_worker_options);
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, checkout_worker_options,
 			     checkout_worker_usage, 0);
 	if (argc > 0)

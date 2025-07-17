@@ -1123,7 +1123,7 @@ void load_display_notes(struct display_notes_opt *opt)
 			load_config_refs = 1;
 	}
 
-	git_config(notes_display_config, &load_config_refs);
+	repo_config(the_repository, notes_display_config, &load_config_refs);
 
 	if (opt) {
 		struct string_list_item *item;

@@ -659,10 +659,10 @@ int cmd_whatchanged(int argc,
 
 	log_config_init(&cfg);
 	init_diff_ui_defaults();
-	git_config(git_log_config, &cfg);
+	repo_config(the_repository, git_log_config, &cfg);
 
 	repo_init_revisions(the_repository, &rev, prefix);
-	git_config(grep_config, &rev.grep_filter);
+	repo_config(the_repository, grep_config, &rev.grep_filter);
 
 	rev.diff = 1;
 	rev.simplify_history = 0;
@@ -790,7 +790,7 @@ int cmd_show(int argc,
 
 	log_config_init(&cfg);
 	init_diff_ui_defaults();
-	git_config(git_log_config, &cfg);
+	repo_config(the_repository, git_log_config, &cfg);
 
 	if (the_repository->gitdir) {
 		prepare_repo_settings(the_repository);
@@ -799,7 +799,7 @@ int cmd_show(int argc,
 
 	memset(&match_all, 0, sizeof(match_all));
 	repo_init_revisions(the_repository, &rev, prefix);
-	git_config(grep_config, &rev.grep_filter);
+	repo_config(the_repository, grep_config, &rev.grep_filter);
 
 	rev.diff = 1;
 	rev.always_show_header = 1;
@@ -907,11 +907,11 @@ int cmd_log_reflog(int argc,
 
 	log_config_init(&cfg);
 	init_diff_ui_defaults();
-	git_config(git_log_config, &cfg);
+	repo_config(the_repository, git_log_config, &cfg);
 
 	repo_init_revisions(the_repository, &rev, prefix);
 	init_reflog_walk(&rev.reflog_info);
-	git_config(grep_config, &rev.grep_filter);
+	repo_config(the_repository, grep_config, &rev.grep_filter);
 
 	rev.verbose_header = 1;
 	memset(&opt, 0, sizeof(opt));
@@ -952,10 +952,10 @@ int cmd_log(int argc,
 
 	log_config_init(&cfg);
 	init_diff_ui_defaults();
-	git_config(git_log_config, &cfg);
+	repo_config(the_repository, git_log_config, &cfg);
 
 	repo_init_revisions(the_repository, &rev, prefix);
-	git_config(grep_config, &rev.grep_filter);
+	repo_config(the_repository, grep_config, &rev.grep_filter);
 
 	rev.always_show_header = 1;
 	memset(&opt, 0, sizeof(opt));
@@ -2158,9 +2158,9 @@ int cmd_format_patch(int argc,
 	format_config_init(&cfg);
 	init_diff_ui_defaults();
 	init_display_notes(&cfg.notes_opt);
-	git_config(git_format_config, &cfg);
+	repo_config(the_repository, git_format_config, &cfg);
 	repo_init_revisions(the_repository, &rev, prefix);
-	git_config(grep_config, &rev.grep_filter);
+	repo_config(the_repository, grep_config, &rev.grep_filter);
 
 	rev.show_notes = cfg.show_notes;
 	memcpy(&rev.notes_opt, &cfg.notes_opt, sizeof(cfg.notes_opt));

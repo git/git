@@ -55,7 +55,7 @@ static int run(int argc, const char **argv, const char *prefix,
 		strvec_push(&opt.args, argv[i]);
 
 	/* Need to take into account core.hooksPath */
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	hook_name = argv[0];
 	if (!ignore_missing)

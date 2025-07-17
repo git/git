@@ -111,7 +111,7 @@ int cmd_hash_object(int argc,
 		vpath = vpath_free;
 	}
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	if (stdin_paths) {
 		if (hashstdin)

@@ -271,7 +271,7 @@ int cmd_rm(int argc,
 	struct pathspec pathspec;
 	char *seen;
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, builtin_rm_options,
 			     builtin_rm_usage, 0);

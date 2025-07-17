@@ -649,7 +649,7 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 		     "--ignore-submodules=dirty", "--quiet", "--",
 		     path, NULL);
 
-	git_config(git_diff_basic_config, NULL);
+	repo_config(the_repository, git_diff_basic_config, NULL);
 
 	repo_init_revisions(the_repository, &rev, NULL);
 	rev.abbrev = 0;
@@ -1108,7 +1108,7 @@ static int compute_summary_module_list(struct object_id *head_oid,
 	if (info->argc)
 		strvec_pushv(&diff_args, info->argv);
 
-	git_config(git_diff_basic_config, NULL);
+	repo_config(the_repository, git_diff_basic_config, NULL);
 	repo_init_revisions(the_repository, &rev, info->prefix);
 	rev.abbrev = 0;
 	precompose_argv_prefix(diff_args.nr, diff_args.v, NULL);
@@ -2830,7 +2830,7 @@ static int module_update(int argc, const char **argv, const char *prefix,
 	};
 
 	update_clone_config_from_gitmodules(&opt.max_jobs);
-	git_config(git_update_clone_config, &opt.max_jobs);
+	repo_config(the_repository, git_update_clone_config, &opt.max_jobs);
 
 	argc = parse_options(argc, argv, prefix, module_update_options,
 			     git_submodule_helper_usage, 0);
@@ -3128,7 +3128,7 @@ static int module_create_branch(int argc, const char **argv, const char *prefix,
 		NULL
 	};
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	track = git_branch_track;
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
 

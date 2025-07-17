@@ -159,7 +159,7 @@ int cmd_check_ignore(int argc,
 	int num_ignored;
 	struct dir_struct dir = DIR_INIT;
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, check_ignore_options,
 			     check_ignore_usage, 0);

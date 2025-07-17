@@ -210,7 +210,7 @@ static enum help_format parse_help_format(const char *format)
 	if (!strcmp(format, "web") || !strcmp(format, "html"))
 		return HELP_FORMAT_WEB;
 	/*
-	 * Please update _git_config() in git-completion.bash when you
+	 * Please update _repo_config() in git-completion.bash when you
 	 * add new help formats.
 	 */
 	die(_("unrecognized help format '%s'"), format);
@@ -706,7 +706,7 @@ int cmd_help(int argc,
 	}
 
 	setup_git_directory_gently(&nongit);
-	git_config(git_help_config, NULL);
+	repo_config(the_repository, git_help_config, NULL);
 
 	if (parsed_help_format != HELP_FORMAT_NONE)
 		help_format = parsed_help_format;

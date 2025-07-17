@@ -235,7 +235,7 @@ int cmd_patch_id(int argc,
 		OPT_END()
 	};
 
-	git_config(git_patch_id_config, &config);
+	repo_config(the_repository, git_patch_id_config, &config);
 
 	/* verbatim implies stable */
 	if (config.verbatim)

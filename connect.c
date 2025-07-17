@@ -1028,7 +1028,7 @@ static int git_proxy_command_options(const char *var, const char *value,
 static int git_use_proxy(const char *host)
 {
 	git_proxy_command = getenv("GIT_PROXY_COMMAND");
-	git_config(git_proxy_command_options, (void*)host);
+	repo_config(the_repository, git_proxy_command_options, (void*)host);
 	return (git_proxy_command && *git_proxy_command);
 }
 

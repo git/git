@@ -1995,7 +1995,7 @@ static int add_remote_or_group(const char *name, struct string_list *list)
 	struct remote_group_data g;
 	g.name = name; g.list = list;
 
-	git_config(get_remote_group, &g);
+	repo_config(the_repository, get_remote_group, &g);
 	if (list->nr == prev_nr) {
 		struct remote *remote = remote_get(name);
 		if (!remote_is_configured(remote, 0))
@@ -2417,7 +2417,7 @@ int cmd_fetch(int argc,
 		free(anon);
 	}
 
-	git_config(git_fetch_config, &config);
+	repo_config(the_repository, git_fetch_config, &config);
 	if (the_repository->gitdir) {
 		prepare_repo_settings(the_repository);
 		the_repository->settings.command_requires_full_index = 0;

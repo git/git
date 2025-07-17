@@ -25,7 +25,7 @@ static void gpg_interface_lazy_init(void)
 	if (done)
 		return;
 	done = 1;
-	git_config(git_gpg_config, NULL);
+	repo_config(the_repository, git_gpg_config, NULL);
 }
 
 static char *configured_signing_key;

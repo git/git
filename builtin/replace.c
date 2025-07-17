@@ -574,7 +574,7 @@ int cmd_replace(int argc,
 	};
 
 	disable_replace_refs();
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, options, git_replace_usage, 0);
 

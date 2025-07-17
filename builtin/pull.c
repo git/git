@@ -999,7 +999,7 @@ int cmd_pull(int argc,
 	if (!getenv("GIT_REFLOG_ACTION"))
 		set_reflog_message(argc, argv);
 
-	git_config(git_pull_config, NULL);
+	repo_config(the_repository, git_pull_config, NULL);
 	if (the_repository->gitdir) {
 		prepare_repo_settings(the_repository);
 		the_repository->settings.command_requires_full_index = 0;

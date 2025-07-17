@@ -5387,7 +5387,7 @@ static void merge_recursive_config(struct merge_options *opt, int ui)
 			free(value);
 		}
 	}
-	git_config(git_xmerge_config, NULL);
+	repo_config(the_repository, git_xmerge_config, NULL);
 }
 
 static void init_merge_options(struct merge_options *opt,

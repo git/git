@@ -327,7 +327,7 @@ static int git_sequencer_config(const char *k, const char *v,
 void sequencer_init_config(struct replay_opts *opts)
 {
 	opts->default_msg_cleanup = COMMIT_MSG_CLEANUP_NONE;
-	git_config(git_sequencer_config, opts);
+	repo_config(the_repository, git_sequencer_config, opts);
 }
 
 static inline int is_rebase_i(const struct replay_opts *opts)

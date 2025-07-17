@@ -168,7 +168,7 @@ int cmd_read_tree(int argc,
 	opts.src_index = the_repository->index;
 	opts.dst_index = the_repository->index;
 
-	git_config(git_read_tree_config, NULL);
+	repo_config(the_repository, git_read_tree_config, NULL);
 
 	argc = parse_options(argc, argv, cmd_prefix, read_tree_options,
 			     read_tree_usage, 0);

@@ -1448,7 +1448,7 @@ int cmd_worktree(int ac,
 		OPT_END()
 	};
 
-	git_config(git_worktree_config, NULL);
+	repo_config(the_repository, git_worktree_config, NULL);
 
 	if (!prefix)
 		prefix = "";

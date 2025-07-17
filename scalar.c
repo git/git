@@ -713,7 +713,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 			    maintenance_str);
 	}
 
-	git_config(get_scalar_repos, &scalar_repos);
+	repo_config(the_repository, get_scalar_repos, &scalar_repos);
 
 	for (size_t i = 0; i < scalar_repos.nr; i++) {
 		int succeeded = 0;

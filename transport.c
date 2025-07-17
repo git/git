@@ -202,7 +202,7 @@ static int fetch_refs_from_bundle(struct transport *transport,
 	if (!data->get_refs_from_bundle_called)
 		get_refs_from_bundle_inner(transport);
 
-	git_config(fetch_fsck_config_cb, &msg_types);
+	repo_config(the_repository, fetch_fsck_config_cb, &msg_types);
 	opts.fsck_msg_types = msg_types.buf;
 
 	ret = unbundle(the_repository, &data->header, data->fd,
