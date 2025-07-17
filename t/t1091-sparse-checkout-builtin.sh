@@ -1050,5 +1050,43 @@ test_expect_success 'check-rules null termination' '
 	test_cmp expect actual
 '
 
+test_expect_success 'clean' '
+	git -C repo sparse-checkout set --cone deep/deeper1 &&
+	mkdir repo/deep/deeper2 repo/folder1 &&
+	touch repo/deep/deeper2/file &&
+	touch repo/folder1/file &&
+
+	cat >expect <<-\EOF &&
+	Removing deep/deeper2/
+	Removing folder1/
+	EOF
+
+	git -C repo sparse-checkout clean >out &&
+	test_cmp expect out &&
+
+	test_path_is_missing repo/deep/deeper2 &&
+	test_path_is_missing repo/folder1
+'
+
+test_expect_success 'clean with staged sparse change' '
+	git -C repo sparse-checkout set --cone deep/deeper1 &&
+	mkdir repo/deep/deeper2 repo/folder1 repo/folder2 &&
+	touch repo/deep/deeper2/file &&
+	touch repo/folder1/file &&
+	echo dirty >repo/folder2/a &&
+
+	git -C repo add --sparse folder1/file &&
+
+	# deletes deep/deeper2/ but leaves folder1/ and folder2/
+	cat >expect <<-\EOF &&
+	Removing deep/deeper2/
+	EOF
+
+	git -C repo sparse-checkout clean >out &&
+	test_cmp expect out &&
+
+	test_path_is_missing repo/deep/deeper2 &&
+	test_path_exists repo/folder1
+'
 
 test_done
