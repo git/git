@@ -1318,13 +1318,13 @@ int read_pack_header(int fd, struct pack_header *header)
 	return 0;
 }
 
-int for_each_file_in_obj_subdir(unsigned int subdir_nr,
-				struct strbuf *path,
-				const struct git_hash_algo *algop,
-				each_loose_object_fn obj_cb,
-				each_loose_cruft_fn cruft_cb,
-				each_loose_subdir_fn subdir_cb,
-				void *data)
+static int for_each_file_in_obj_subdir(unsigned int subdir_nr,
+				       struct strbuf *path,
+				       const struct git_hash_algo *algop,
+				       each_loose_object_fn obj_cb,
+				       each_loose_cruft_fn cruft_cb,
+				       each_loose_subdir_fn subdir_cb,
+				       void *data)
 {
 	size_t origlen, baselen;
 	DIR *dir;
