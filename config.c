@@ -6,8 +6,6 @@
  *
  */
 
-#define DISABLE_SIGN_COMPARE_WARNINGS
-
 #include "git-compat-util.h"
 #include "abspath.h"
 #include "date.h"
@@ -197,12 +195,12 @@ static void add_trailing_starstar_for_dir(struct strbuf *pat)
 		strbuf_addstr(pat, "**");
 }
 
-static int prepare_include_condition_pattern(const struct key_value_info *kvi,
-					     struct strbuf *pat)
+static size_t prepare_include_condition_pattern(const struct key_value_info *kvi,
+						struct strbuf *pat)
 {
 	struct strbuf path = STRBUF_INIT;
 	char *expanded;
-	int prefix = 0;
+	size_t prefix = 0;
 
 	expanded = interpolate_path(pat->buf, 1);
 	if (expanded) {
@@ -239,7 +237,8 @@ static int include_by_gitdir(const struct key_value_info *kvi,
 {
 	struct strbuf text = STRBUF_INIT;
 	struct strbuf pattern = STRBUF_INIT;
-	int ret = 0, prefix;
+	size_t prefix;
+	int ret = 0;
 	const char *git_dir;
 	int already_tried_absolute = 0;
 
@@ -253,9 +252,6 @@ static int include_by_gitdir(const struct key_value_info *kvi,
 	prefix = prepare_include_condition_pattern(kvi, &pattern);
 
 again:
-	if (prefix < 0)
-		goto done;
-
 	if (prefix > 0) {
 		/*
 		 * perform literal matching on the prefix part so that
@@ -724,7 +720,6 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 	if (env) {
 		unsigned long count;
 		char *endp;
-		int i;
 
 		count = strtoul(env, &endp, 10);
 		if (*endp) {
@@ -736,10 +731,10 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 			goto out;
 		}
 
-		for (i = 0; i < count; i++) {
+		for (unsigned long i = 0; i < count; i++) {
 			const char *key, *value;
 
-			strbuf_addf(&envvar, "GIT_CONFIG_KEY_%d", i);
+			strbuf_addf(&envvar, "GIT_CONFIG_KEY_%lu", i);
 			key = getenv_safe(&to_free, envvar.buf);
 			if (!key) {
 				ret = error(_("missing config key %s"), envvar.buf);
@@ -747,7 +742,7 @@ int git_config_from_parameters(config_fn_t fn, void *data)
 			}
 			strbuf_reset(&envvar);
 
-			strbuf_addf(&envvar, "GIT_CONFIG_VALUE_%d", i);
+			strbuf_addf(&envvar, "GIT_CONFIG_VALUE_%lu", i);
 			value = getenv_safe(&to_free, envvar.buf);
 			if (!value) {
 				ret = error(_("missing config value %s"), envvar.buf);
@@ -1614,13 +1609,13 @@ int config_with_options(config_fn_t fn, void *data,
 
 static void configset_iter(struct config_set *set, config_fn_t fn, void *data)
 {
-	int i, value_index;
+	int value_index;
 	struct string_list *values;
 	struct config_set_element *entry;
 	struct configset_list *list = &set->list;
 	struct config_context ctx = CONFIG_CONTEXT_INIT;
 
-	for (i = 0; i < list->nr; i++) {
+	for (size_t i = 0; i < list->nr; i++) {
 		entry = list->items[i].e;
 		value_index = list->items[i].value_index;
 		values = &entry->value_list;
@@ -2470,10 +2465,11 @@ static ssize_t write_pair(int fd, const char *key, const char *value,
  */
 static void maybe_remove_section(struct config_store_data *store,
 				 size_t *begin_offset, size_t *end_offset,
-				 int *seen_ptr)
+				 unsigned *seen_ptr)
 {
 	size_t begin;
-	int i, seen, section_seen = 0;
+	int section_seen = 0;
+	unsigned int i, seen;
 
 	/*
 	 * First, ensure that this is the first key, and that there are no
@@ -2716,7 +2712,8 @@ int repo_config_set_multivar_in_file_gently(struct repository *r,
 	} else {
 		struct stat st;
 		size_t copy_begin, copy_end;
-		int i, new_line = 0;
+		unsigned i;
+		int new_line = 0;
 		struct config_options opts;
 
 		if (!value_pattern)
