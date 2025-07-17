@@ -86,7 +86,7 @@ typedef int each_loose_cruft_fn(const char *basename,
 typedef int each_loose_subdir_fn(unsigned int nr,
 				 const char *path,
 				 void *data);
-int for_each_loose_file_in_objdir(const char *path,
+int for_each_loose_file_in_source(struct odb_source *source,
 				  each_loose_object_fn obj_cb,
 				  each_loose_cruft_fn cruft_cb,
 				  each_loose_subdir_fn subdir_cb,
@@ -99,7 +99,8 @@ int for_each_loose_file_in_objdir(const char *path,
  *
  * Any flags specific to packs are ignored.
  */
-int for_each_loose_object(each_loose_object_fn, void *,
+int for_each_loose_object(struct object_database *odb,
+			  each_loose_object_fn, void *,
 			  enum for_each_object_flags flags);
 
 

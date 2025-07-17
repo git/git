@@ -848,7 +848,7 @@ static void batch_each_object(struct batch_options *opt,
 	};
 	struct bitmap_index *bitmap = prepare_bitmap_git(the_repository);
 
-	for_each_loose_object(batch_one_object_loose, &payload, 0);
+	for_each_loose_object(the_repository->objects, batch_one_object_loose, &payload, 0);
 
 	if (bitmap && !for_each_bitmapped_object(bitmap, &opt->objects_filter,
 						 batch_one_object_bitmapped, &payload)) {

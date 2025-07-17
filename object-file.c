@@ -1388,7 +1388,7 @@ static int for_each_file_in_obj_subdir(unsigned int subdir_nr,
 	return r;
 }
 
-int for_each_loose_file_in_objdir(const char *path,
+int for_each_loose_file_in_source(struct odb_source *source,
 				  each_loose_object_fn obj_cb,
 				  each_loose_cruft_fn cruft_cb,
 				  each_loose_subdir_fn subdir_cb,
@@ -1397,11 +1397,10 @@ int for_each_loose_file_in_objdir(const char *path,
 	struct strbuf buf = STRBUF_INIT;
 	int r;
 
-	strbuf_addstr(&buf, path);
+	strbuf_addstr(&buf, source->path);
 	for (int i = 0; i < 256; i++) {
-		r = for_each_file_in_obj_subdir(i, &buf, the_repository->hash_algo,
-						obj_cb, cruft_cb,
-						subdir_cb, data);
+		r = for_each_file_in_obj_subdir(i, &buf, source->odb->repo->hash_algo,
+						obj_cb, cruft_cb, subdir_cb, data);
 		if (r)
 			break;
 	}
@@ -1410,14 +1409,15 @@ int for_each_loose_file_in_objdir(const char *path,
 	return r;
 }
 
-int for_each_loose_object(each_loose_object_fn cb, void *data,
+int for_each_loose_object(struct object_database *odb,
+			  each_loose_object_fn cb, void *data,
 			  enum for_each_object_flags flags)
 {
 	struct odb_source *source;
 
-	odb_prepare_alternates(the_repository->objects);
-	for (source = the_repository->objects->sources; source; source = source->next) {
-		int r = for_each_loose_file_in_objdir(source->path, cb, NULL,
+	odb_prepare_alternates(odb);
+	for (source = odb->sources; source; source = source->next) {
+		int r = for_each_loose_file_in_source(source, cb, NULL,
 						      NULL, data);
 		if (r)
 			return r;
