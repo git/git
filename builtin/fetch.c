@@ -2683,12 +2683,12 @@ int cmd_fetch(int argc,
 			 * but respect config settings disabling it.
 			 */
 			int opt_val;
-			if (git_config_get_int("gc.autopacklimit", &opt_val))
+			if (repo_config_get_int(the_repository, "gc.autopacklimit", &opt_val))
 				opt_val = -1;
 			if (opt_val != 0)
 				git_config_push_parameter("gc.autoPackLimit=1");
 
-			if (git_config_get_int("maintenance.incremental-repack.auto", &opt_val))
+			if (repo_config_get_int(the_repository, "maintenance.incremental-repack.auto", &opt_val))
 				opt_val = -1;
 			if (opt_val != 0)
 				git_config_push_parameter("maintenance.incremental-repack.auto=-1");
