@@ -171,7 +171,7 @@ int cmd__config(int argc, const char **argv)
 			goto exit1;
 		}
 	} else if (argc == 3 && !strcmp(argv[1], "get_string")) {
-		if (!git_config_get_string_tmp(argv[2], &v)) {
+		if (!repo_config_get_string_tmp(the_repository, argv[2], &v)) {
 			printf("%s\n", v);
 			goto exit0;
 		} else {

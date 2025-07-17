@@ -24,7 +24,7 @@ enum protocol_version get_protocol_version_config(void)
 	const char *git_test_k = "GIT_TEST_PROTOCOL_VERSION";
 	const char *git_test_v;
 
-	if (!git_config_get_string_tmp("protocol.version", &value)) {
+	if (!repo_config_get_string_tmp(the_repository, "protocol.version", &value)) {
 		enum protocol_version version = parse_protocol_version(value);
 
 		if (version == protocol_unknown_version)

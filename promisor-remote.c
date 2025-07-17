@@ -327,7 +327,7 @@ static void promisor_info_vecs(struct repository *repo,
 		char *url_key = xstrfmt("remote.%s.url", r->name);
 
 		/* Only add remotes with a non empty URL */
-		if (!git_config_get_string_tmp(url_key, &url) && *url) {
+		if (!repo_config_get_string_tmp(the_repository, url_key, &url) && *url) {
 			strvec_push(names, r->name);
 			strvec_push(urls, url);
 		}
@@ -433,7 +433,7 @@ static void filter_promisor_remote(struct repository *repo,
 	struct strvec names = STRVEC_INIT;
 	struct strvec urls = STRVEC_INIT;
 
-	if (!git_config_get_string_tmp("promisor.acceptfromserver", &accept_str)) {
+	if (!repo_config_get_string_tmp(the_repository, "promisor.acceptfromserver", &accept_str)) {
 		if (!*accept_str || !strcasecmp("None", accept_str))
 			accept = ACCEPT_NONE;
 		else if (!strcasecmp("KnownUrl", accept_str))

@@ -496,7 +496,7 @@ static void init_submodule(const char *path, const char *prefix,
 
 	/* Copy "update" setting when it is not set yet */
 	strbuf_addf(&sb, "submodule.%s.update", sub->name);
-	if (git_config_get_string_tmp(sb.buf, &upd) &&
+	if (repo_config_get_string_tmp(the_repository, sb.buf, &upd) &&
 	    sub->update_strategy.type != SM_UPDATE_UNSPECIFIED) {
 		if (sub->update_strategy.type == SM_UPDATE_COMMAND) {
 			fprintf(stderr, _("warning: command update mode suggested for submodule '%s'\n"),
@@ -1034,7 +1034,7 @@ static void prepare_submodule_summary(struct summary_cb *info,
 
 			config_key = xstrfmt("submodule.%s.ignore",
 					     sub->name);
-			if (!git_config_get_string_tmp(config_key, &value))
+			if (!repo_config_get_string_tmp(the_repository, config_key, &value))
 				ignore_all = !strcmp(value, "all");
 			else if (sub->ignore)
 				ignore_all = !strcmp(sub->ignore, "all");
