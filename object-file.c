@@ -1257,7 +1257,7 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 		ret = index_stream_convert_blob(istate, oid, fd, path, flags);
 	else if (!S_ISREG(st->st_mode))
 		ret = index_pipe(istate, oid, fd, type, path, flags);
-	else if ((st->st_size >= 0 && (size_t) st->st_size <= repo_settings_get_big_file_threshold(the_repository)) ||
+	else if ((st->st_size >= 0 && (size_t) st->st_size <= repo_settings_get_big_file_threshold(istate->repo)) ||
 		 type != OBJ_BLOB ||
 		 (path && would_convert_to_git(istate, path)))
 		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
@@ -1291,12 +1291,12 @@ int index_path(struct index_state *istate, struct object_id *oid,
 		if (!(flags & INDEX_WRITE_OBJECT))
 			hash_object_file(istate->repo->hash_algo, sb.buf, sb.len,
 					 OBJ_BLOB, oid);
-		else if (odb_write_object(the_repository->objects, sb.buf, sb.len, OBJ_BLOB, oid))
+		else if (odb_write_object(istate->repo->objects, sb.buf, sb.len, OBJ_BLOB, oid))
 			rc = error(_("%s: failed to insert into database"), path);
 		strbuf_release(&sb);
 		break;
 	case S_IFDIR:
-		return repo_resolve_gitlink_ref(the_repository, path, "HEAD", oid);
+		return repo_resolve_gitlink_ref(istate->repo, path, "HEAD", oid);
 	default:
 		return error(_("%s: unsupported file type"), path);
 	}
