@@ -218,8 +218,10 @@ enum finalize_object_file_flags {
 	FOF_SKIP_COLLISION_CHECK = 1,
 };
 
-int finalize_object_file(const char *tmpfile, const char *filename);
-int finalize_object_file_flags(const char *tmpfile, const char *filename,
+int finalize_object_file(struct repository *repo,
+			 const char *tmpfile, const char *filename);
+int finalize_object_file_flags(struct repository *repo,
+			       const char *tmpfile, const char *filename,
 			       enum finalize_object_file_flags flags);
 
 void hash_object_file(const struct git_hash_algo *algo, const void *buf,

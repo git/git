@@ -584,12 +584,14 @@ out:
 /*
  * Move the just written object into its final resting place.
  */
-int finalize_object_file(const char *tmpfile, const char *filename)
+int finalize_object_file(struct repository *repo,
+			 const char *tmpfile, const char *filename)
 {
-	return finalize_object_file_flags(tmpfile, filename, 0);
+	return finalize_object_file_flags(repo, tmpfile, filename, 0);
 }
 
-int finalize_object_file_flags(const char *tmpfile, const char *filename,
+int finalize_object_file_flags(struct repository *repo,
+			       const char *tmpfile, const char *filename,
 			       enum finalize_object_file_flags flags)
 {
 	unsigned retries = 0;
@@ -649,7 +651,7 @@ retry:
 	}
 
 out:
-	if (adjust_shared_perm(the_repository, filename))
+	if (adjust_shared_perm(repo, filename))
 		return error(_("unable to set permission to '%s'"), filename);
 	return 0;
 }
@@ -889,7 +891,7 @@ static int write_loose_object(const struct object_id *oid, char *hdr,
 			warning_errno(_("failed utime() on %s"), tmp_file.buf);
 	}
 
-	return finalize_object_file_flags(tmp_file.buf, filename.buf,
+	return finalize_object_file_flags(the_repository, tmp_file.buf, filename.buf,
 					  FOF_SKIP_COLLISION_CHECK);
 }
 
@@ -1020,7 +1022,7 @@ int stream_loose_object(struct input_stream *in_stream, size_t len,
 		strbuf_release(&dir);
 	}
 
-	err = finalize_object_file_flags(tmp_file.buf, filename.buf,
+	err = finalize_object_file_flags(the_repository, tmp_file.buf, filename.buf,
 					 FOF_SKIP_COLLISION_CHECK);
 	if (!err && compat)
 		err = repo_add_loose_object_map(the_repository, oid, &compat_oid);
