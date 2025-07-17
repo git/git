@@ -128,6 +128,11 @@ The `--dry-run` option will list the directories that would be removed
 without deleting them. Running in this mode can be helpful to predict the
 behavior of the clean comand or to determine which kinds of files are left
 in the sparse directories.
++
+The `--verbose` option will list every file within the directories that
+are considered for removal. This option is helpful to determine if those
+files are actually important or perhaps to explain why the directory is
+still present despite the current sparse-checkout.
 
 'disable'::
 	Disable the `core.sparseCheckout` config setting, and restore the
