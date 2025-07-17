@@ -4,6 +4,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "entry.h"
+#include "environment.h"
 #include "gettext.h"
 #include "parallel-checkout.h"
 #include "parse-options.h"

@@ -3,6 +3,7 @@
 #include "git-compat-util.h"
 #include "credential.h"
 #include "builtin.h"
+#include "environment.h"
 #include "config.h"
 
 static const char usage_msg[] =

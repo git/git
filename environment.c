@@ -12,21 +12,33 @@
 
 #include "git-compat-util.h"
 #include "abspath.h"
+#include "advice.h"
+#include "attr.h"
 #include "branch.h"
+#include "color.h"
 #include "convert.h"
 #include "environment.h"
 #include "gettext.h"
 #include "git-zlib.h"
+#include "ident.h"
+#include "mailmap.h"
+#include "object-name.h"
 #include "repository.h"
 #include "config.h"
 #include "refs.h"
 #include "fmt-merge-msg.h"
 #include "commit.h"
 #include "strvec.h"
+#include "pager.h"
 #include "path.h"
+#include "quote.h"
 #include "chdir-notify.h"
 #include "setup.h"
+#include "ws.h"
 #include "write-or-die.h"
+
+static int pack_compression_seen;
+static int zlib_compression_seen;
 
 int trust_executable_bit = 1;
 int trust_ctime = 1;
@@ -230,4 +242,504 @@ int print_sha1_ellipsis(void)
 		cached_result = (v && !strcasecmp(v, "yes"));
 	}
 	return cached_result;
+}
+
+static const struct fsync_component_name {
+	const char *name;
+	enum fsync_component component_bits;
+} fsync_component_names[] = {
+	{ "loose-object", FSYNC_COMPONENT_LOOSE_OBJECT },
+	{ "pack", FSYNC_COMPONENT_PACK },
+	{ "pack-metadata", FSYNC_COMPONENT_PACK_METADATA },
+	{ "commit-graph", FSYNC_COMPONENT_COMMIT_GRAPH },
+	{ "index", FSYNC_COMPONENT_INDEX },
+	{ "objects", FSYNC_COMPONENTS_OBJECTS },
+	{ "reference", FSYNC_COMPONENT_REFERENCE },
+	{ "derived-metadata", FSYNC_COMPONENTS_DERIVED_METADATA },
+	{ "committed", FSYNC_COMPONENTS_COMMITTED },
+	{ "added", FSYNC_COMPONENTS_ADDED },
+	{ "all", FSYNC_COMPONENTS_ALL },
+};
+
+static enum fsync_component parse_fsync_components(const char *var, const char *string)
+{
+	enum fsync_component current = FSYNC_COMPONENTS_PLATFORM_DEFAULT;
+	enum fsync_component positive = 0, negative = 0;
+
+	while (string) {
+		size_t len;
+		const char *ep;
+		int negated = 0;
+		int found = 0;
+
+		string = string + strspn(string, ", \t\n\r");
+		ep = strchrnul(string, ',');
+		len = ep - string;
+		if (!strcmp(string, "none")) {
+			current = FSYNC_COMPONENT_NONE;
+			goto next_name;
+		}
+
+		if (*string == '-') {
+			negated = 1;
+			string++;
+			len--;
+			if (!len)
+				warning(_("invalid value for variable %s"), var);
+		}
+
+		if (!len)
+			break;
+
+		for (size_t i = 0; i < ARRAY_SIZE(fsync_component_names); ++i) {
+			const struct fsync_component_name *n = &fsync_component_names[i];
+
+			if (strncmp(n->name, string, len))
+				continue;
+
+			found = 1;
+			if (negated)
+				negative |= n->component_bits;
+			else
+				positive |= n->component_bits;
+		}
+
+		if (!found) {
+			char *component = xstrndup(string, len);
+			warning(_("ignoring unknown core.fsync component '%s'"), component);
+			free(component);
+		}
+
+next_name:
+		string = ep;
+	}
+
+	return (current & ~negative) | positive;
+}
+
+static int git_default_core_config(const char *var, const char *value,
+				   const struct config_context *ctx, void *cb)
+{
+	/* This needs a better name */
+	if (!strcmp(var, "core.filemode")) {
+		trust_executable_bit = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "core.trustctime")) {
+		trust_ctime = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "core.checkstat")) {
+		if (!value)
+			return config_error_nonbool(var);
+		if (!strcasecmp(value, "default"))
+			check_stat = 1;
+		else if (!strcasecmp(value, "minimal"))
+			check_stat = 0;
+		else
+			return error(_("invalid value for '%s': '%s'"),
+				     var, value);
+	}
+
+	if (!strcmp(var, "core.quotepath")) {
+		quote_path_fully = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.symlinks")) {
+		has_symlinks = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.ignorecase")) {
+		ignore_case = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.attributesfile")) {
+		FREE_AND_NULL(git_attributes_file);
+		return git_config_pathname(&git_attributes_file, var, value);
+	}
+
+	if (!strcmp(var, "core.bare")) {
+		is_bare_repository_cfg = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.ignorestat")) {
+		assume_unchanged = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.abbrev")) {
+		if (!value)
+			return config_error_nonbool(var);
+		if (!strcasecmp(value, "auto"))
+			default_abbrev = -1;
+		else if (!git_parse_maybe_bool_text(value))
+			default_abbrev = GIT_MAX_HEXSZ;
+		else {
+			int abbrev = git_config_int(var, value, ctx->kvi);
+			if (abbrev < minimum_abbrev)
+				return error(_("abbrev length out of range: %d"), abbrev);
+			default_abbrev = abbrev;
+		}
+		return 0;
+	}
+
+	if (!strcmp(var, "core.disambiguate"))
+		return set_disambiguate_hint_config(var, value);
+
+	if (!strcmp(var, "core.loosecompression")) {
+		int level = git_config_int(var, value, ctx->kvi);
+		if (level == -1)
+			level = Z_DEFAULT_COMPRESSION;
+		else if (level < 0 || level > Z_BEST_COMPRESSION)
+			die(_("bad zlib compression level %d"), level);
+		zlib_compression_level = level;
+		zlib_compression_seen = 1;
+		return 0;
+	}
+
+	if (!strcmp(var, "core.compression")) {
+		int level = git_config_int(var, value, ctx->kvi);
+		if (level == -1)
+			level = Z_DEFAULT_COMPRESSION;
+		else if (level < 0 || level > Z_BEST_COMPRESSION)
+			die(_("bad zlib compression level %d"), level);
+		if (!zlib_compression_seen)
+			zlib_compression_level = level;
+		if (!pack_compression_seen)
+			pack_compression_level = level;
+		return 0;
+	}
+
+	if (!strcmp(var, "core.autocrlf")) {
+		if (value && !strcasecmp(value, "input")) {
+			auto_crlf = AUTO_CRLF_INPUT;
+			return 0;
+		}
+		auto_crlf = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.safecrlf")) {
+		int eol_rndtrp_die;
+		if (value && !strcasecmp(value, "warn")) {
+			global_conv_flags_eol = CONV_EOL_RNDTRP_WARN;
+			return 0;
+		}
+		eol_rndtrp_die = git_config_bool(var, value);
+		global_conv_flags_eol = eol_rndtrp_die ?
+			CONV_EOL_RNDTRP_DIE : 0;
+		return 0;
+	}
+
+	if (!strcmp(var, "core.eol")) {
+		if (value && !strcasecmp(value, "lf"))
+			core_eol = EOL_LF;
+		else if (value && !strcasecmp(value, "crlf"))
+			core_eol = EOL_CRLF;
+		else if (value && !strcasecmp(value, "native"))
+			core_eol = EOL_NATIVE;
+		else
+			core_eol = EOL_UNSET;
+		return 0;
+	}
+
+	if (!strcmp(var, "core.checkroundtripencoding")) {
+		FREE_AND_NULL(check_roundtrip_encoding);
+		return git_config_string(&check_roundtrip_encoding, var, value);
+	}
+
+	if (!strcmp(var, "core.editor")) {
+		FREE_AND_NULL(editor_program);
+		return git_config_string(&editor_program, var, value);
+	}
+
+	if (!strcmp(var, "core.commentchar") ||
+	    !strcmp(var, "core.commentstring")) {
+		if (!value)
+			return config_error_nonbool(var);
+		else if (!strcasecmp(value, "auto"))
+			auto_comment_line_char = 1;
+		else if (value[0]) {
+			if (strchr(value, '\n'))
+				return error(_("%s cannot contain newline"), var);
+			comment_line_str = value;
+			FREE_AND_NULL(comment_line_str_to_free);
+			auto_comment_line_char = 0;
+		} else
+			return error(_("%s must have at least one character"), var);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.askpass")) {
+		FREE_AND_NULL(askpass_program);
+		return git_config_string(&askpass_program, var, value);
+	}
+
+	if (!strcmp(var, "core.excludesfile")) {
+		FREE_AND_NULL(excludes_file);
+		return git_config_pathname(&excludes_file, var, value);
+	}
+
+	if (!strcmp(var, "core.whitespace")) {
+		if (!value)
+			return config_error_nonbool(var);
+		whitespace_rule_cfg = parse_whitespace_rule(value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.fsync")) {
+		if (!value)
+			return config_error_nonbool(var);
+		fsync_components = parse_fsync_components(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.fsyncmethod")) {
+		if (!value)
+			return config_error_nonbool(var);
+		if (!strcmp(value, "fsync"))
+			fsync_method = FSYNC_METHOD_FSYNC;
+		else if (!strcmp(value, "writeout-only"))
+			fsync_method = FSYNC_METHOD_WRITEOUT_ONLY;
+		else if (!strcmp(value, "batch"))
+			fsync_method = FSYNC_METHOD_BATCH;
+		else
+			warning(_("ignoring unknown core.fsyncMethod value '%s'"), value);
+
+	}
+
+	if (!strcmp(var, "core.fsyncobjectfiles")) {
+		if (fsync_object_files < 0)
+			warning(_("core.fsyncObjectFiles is deprecated; use core.fsync instead"));
+		fsync_object_files = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.createobject")) {
+		if (!value)
+			return config_error_nonbool(var);
+		if (!strcmp(value, "rename"))
+			object_creation_mode = OBJECT_CREATION_USES_RENAMES;
+		else if (!strcmp(value, "link"))
+			object_creation_mode = OBJECT_CREATION_USES_HARDLINKS;
+		else
+			die(_("invalid mode for object creation: %s"), value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.sparsecheckout")) {
+		core_apply_sparse_checkout = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.sparsecheckoutcone")) {
+		core_sparse_checkout_cone = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.precomposeunicode")) {
+		precomposed_unicode = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.protecthfs")) {
+		protect_hfs = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.protectntfs")) {
+		protect_ntfs = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (!strcmp(var, "core.maxtreedepth")) {
+		max_allowed_tree_depth = git_config_int(var, value, ctx->kvi);
+		return 0;
+	}
+
+	/* Add other config variables here and to Documentation/config.adoc. */
+	return platform_core_config(var, value, ctx, cb);
+}
+
+static int git_default_sparse_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "sparse.expectfilesoutsideofpatterns")) {
+		sparse_expect_files_outside_of_patterns = git_config_bool(var, value);
+		return 0;
+	}
+
+	/* Add other config variables here and to Documentation/config/sparse.adoc. */
+	return 0;
+}
+
+static int git_default_i18n_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "i18n.commitencoding")) {
+		FREE_AND_NULL(git_commit_encoding);
+		return git_config_string(&git_commit_encoding, var, value);
+	}
+
+	if (!strcmp(var, "i18n.logoutputencoding")) {
+		FREE_AND_NULL(git_log_output_encoding);
+		return git_config_string(&git_log_output_encoding, var, value);
+	}
+
+	/* Add other config variables here and to Documentation/config.adoc. */
+	return 0;
+}
+
+static int git_default_branch_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "branch.autosetupmerge")) {
+		if (value && !strcmp(value, "always")) {
+			git_branch_track = BRANCH_TRACK_ALWAYS;
+			return 0;
+		} else if (value && !strcmp(value, "inherit")) {
+			git_branch_track = BRANCH_TRACK_INHERIT;
+			return 0;
+		} else if (value && !strcmp(value, "simple")) {
+			git_branch_track = BRANCH_TRACK_SIMPLE;
+			return 0;
+		}
+		git_branch_track = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "branch.autosetuprebase")) {
+		if (!value)
+			return config_error_nonbool(var);
+		else if (!strcmp(value, "never"))
+			autorebase = AUTOREBASE_NEVER;
+		else if (!strcmp(value, "local"))
+			autorebase = AUTOREBASE_LOCAL;
+		else if (!strcmp(value, "remote"))
+			autorebase = AUTOREBASE_REMOTE;
+		else if (!strcmp(value, "always"))
+			autorebase = AUTOREBASE_ALWAYS;
+		else
+			return error(_("malformed value for %s"), var);
+		return 0;
+	}
+
+	/* Add other config variables here and to Documentation/config.adoc. */
+	return 0;
+}
+
+static int git_default_push_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "push.default")) {
+		if (!value)
+			return config_error_nonbool(var);
+		else if (!strcmp(value, "nothing"))
+			push_default = PUSH_DEFAULT_NOTHING;
+		else if (!strcmp(value, "matching"))
+			push_default = PUSH_DEFAULT_MATCHING;
+		else if (!strcmp(value, "simple"))
+			push_default = PUSH_DEFAULT_SIMPLE;
+		else if (!strcmp(value, "upstream"))
+			push_default = PUSH_DEFAULT_UPSTREAM;
+		else if (!strcmp(value, "tracking")) /* deprecated */
+			push_default = PUSH_DEFAULT_UPSTREAM;
+		else if (!strcmp(value, "current"))
+			push_default = PUSH_DEFAULT_CURRENT;
+		else {
+			error(_("malformed value for %s: %s"), var, value);
+			return error(_("must be one of nothing, matching, simple, "
+				       "upstream or current"));
+		}
+		return 0;
+	}
+
+	/* Add other config variables here and to Documentation/config.adoc. */
+	return 0;
+}
+
+static int git_default_mailmap_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "mailmap.file")) {
+		FREE_AND_NULL(git_mailmap_file);
+		return git_config_pathname(&git_mailmap_file, var, value);
+	}
+
+	if (!strcmp(var, "mailmap.blob")) {
+		FREE_AND_NULL(git_mailmap_blob);
+		return git_config_string(&git_mailmap_blob, var, value);
+	}
+
+	/* Add other config variables here and to Documentation/config.adoc. */
+	return 0;
+}
+
+static int git_default_attr_config(const char *var, const char *value)
+{
+	if (!strcmp(var, "attr.tree")) {
+		FREE_AND_NULL(git_attr_tree);
+		return git_config_string(&git_attr_tree, var, value);
+	}
+
+	/*
+	 * Add other attribute related config variables here and to
+	 * Documentation/config/attr.adoc.
+	 */
+	return 0;
+}
+
+int git_default_config(const char *var, const char *value,
+		       const struct config_context *ctx, void *cb)
+{
+	if (starts_with(var, "core."))
+		return git_default_core_config(var, value, ctx, cb);
+
+	if (starts_with(var, "user.") ||
+	    starts_with(var, "author.") ||
+	    starts_with(var, "committer."))
+		return git_ident_config(var, value, ctx, cb);
+
+	if (starts_with(var, "i18n."))
+		return git_default_i18n_config(var, value);
+
+	if (starts_with(var, "branch."))
+		return git_default_branch_config(var, value);
+
+	if (starts_with(var, "push."))
+		return git_default_push_config(var, value);
+
+	if (starts_with(var, "mailmap."))
+		return git_default_mailmap_config(var, value);
+
+	if (starts_with(var, "attr."))
+		return git_default_attr_config(var, value);
+
+	if (starts_with(var, "advice.") || starts_with(var, "color.advice"))
+		return git_default_advice_config(var, value);
+
+	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
+		pager_use_color = git_config_bool(var,value);
+		return 0;
+	}
+
+	if (!strcmp(var, "pack.packsizelimit")) {
+		pack_size_limit_cfg = git_config_ulong(var, value, ctx->kvi);
+		return 0;
+	}
+
+	if (!strcmp(var, "pack.compression")) {
+		int level = git_config_int(var, value, ctx->kvi);
+		if (level == -1)
+			level = Z_DEFAULT_COMPRESSION;
+		else if (level < 0 || level > Z_BEST_COMPRESSION)
+			die(_("bad pack compression level %d"), level);
+		pack_compression_level = level;
+		pack_compression_seen = 1;
+		return 0;
+	}
+
+	if (starts_with(var, "sparse."))
+		return git_default_sparse_config(var, value);
+
+	/* Add other config variables here and to Documentation/config.adoc. */
+	return 0;
 }

@@ -9,6 +9,7 @@
 #include "builtin.h"
 #include "advice.h"
 #include "config.h"
+#include "environment.h"
 #include "lockfile.h"
 #include "dir.h"
 #include "gettext.h"
