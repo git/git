@@ -1077,10 +1077,10 @@ int write_object_file(struct odb_source *source,
 	return 0;
 }
 
-int force_object_loose(const struct object_id *oid, time_t mtime)
+int force_object_loose(struct odb_source *source,
+		       const struct object_id *oid, time_t mtime)
 {
-	struct repository *repo = the_repository;
-	const struct git_hash_algo *compat = repo->compat_hash_algo;
+	const struct git_hash_algo *compat = source->odb->repo->compat_hash_algo;
 	void *buf;
 	unsigned long len;
 	struct object_info oi = OBJECT_INFO_INIT;
@@ -1090,24 +1090,24 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 	int hdrlen;
 	int ret;
 
-	for (struct odb_source *source = repo->objects->sources; source; source = source->next)
-		if (has_loose_object(source, oid))
+	for (struct odb_source *s = source->odb->sources; s; s = s->next)
+		if (has_loose_object(s, oid))
 			return 0;
 
 	oi.typep = &type;
 	oi.sizep = &len;
 	oi.contentp = &buf;
-	if (odb_read_object_info_extended(the_repository->objects, oid, &oi, 0))
+	if (odb_read_object_info_extended(source->odb, oid, &oi, 0))
 		return error(_("cannot read object for %s"), oid_to_hex(oid));
 	if (compat) {
-		if (repo_oid_to_algop(repo, oid, compat, &compat_oid))
+		if (repo_oid_to_algop(source->odb->repo, oid, compat, &compat_oid))
 			return error(_("cannot map object %s to %s"),
 				     oid_to_hex(oid), compat->name);
 	}
 	hdrlen = format_object_header(hdr, sizeof(hdr), type, len);
-	ret = write_loose_object(repo->objects->sources, oid, hdr, hdrlen, buf, len, mtime, 0);
+	ret = write_loose_object(source, oid, hdr, hdrlen, buf, len, mtime, 0);
 	if (!ret && compat)
-		ret = repo_add_loose_object_map(the_repository->objects->sources, oid, &compat_oid);
+		ret = repo_add_loose_object_map(source, oid, &compat_oid);
 	free(buf);
 
 	return ret;

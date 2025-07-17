@@ -161,7 +161,8 @@ int stream_loose_object(struct odb_source *source,
 			struct input_stream *in_stream, size_t len,
 			struct object_id *oid);
 
-int force_object_loose(const struct object_id *oid, time_t mtime);
+int force_object_loose(struct odb_source *source,
+		       const struct object_id *oid, time_t mtime);
 
 /**
  * With in-core object data in "buf", rehash it to make sure the
