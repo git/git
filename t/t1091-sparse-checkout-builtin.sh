@@ -1128,35 +1128,47 @@ test_expect_success 'clean with staged sparse change' '
 	test_path_exists repo/folder2
 '
 
-test_expect_success 'clean with merge conflict status' '
-	git clone repo clean-merge &&
+test_expect_success 'sparse-checkout operations with merge conflicts' '
+	git clone repo merge &&
 
-	echo dirty >clean-merge/deep/deeper2/a &&
-	touch clean-merge/folder2/extra &&
+	(
+		cd merge &&
+		mkdir -p folder1/even/more/dirs &&
+		echo base >folder1/even/more/dirs/file &&
+		git add folder1 &&
+		git commit -m "base" &&
 
-	cat >input <<-EOF &&
-	0 $ZERO_OID	folder1/a
-	100644 $(git -C clean-merge rev-parse HEAD:folder1/a) 1	folder1/a
-	EOF
-	git -C clean-merge update-index --index-info <input &&
+		git checkout -b right&&
+		echo right >folder1/even/more/dirs/file &&
+		git commit -a -m "right" &&
 
-	git -C clean-merge sparse-checkout set deep/deeper1 &&
+		git checkout -b left HEAD~1 &&
+		echo left >folder1/even/more/dirs/file &&
+		git commit -a -m "left" &&
 
-	test_must_fail git -C clean-merge sparse-checkout clean -f 2>err &&
-	grep "failed to convert index to a sparse index" err &&
+		git checkout -b merge &&
+		git sparse-checkout set deep/deeper1 &&
 
-	mkdir -p clean-merge/folder1/ &&
-	echo merged >clean-merge/folder1/a &&
-	git -C clean-merge add --sparse folder1/a &&
+		test_must_fail git merge -m "will-conflict" right &&
 
-	# deletes folder2/ but leaves staged change in folder1
-	# and dirty change in deep/deeper2/
-	cat >expect <<-\EOF &&
-	Removing folder2/
-	EOF
+		test_must_fail git sparse-checkout clean -f 2>err &&
+		grep "failed to convert index to a sparse index" err &&
 
-	git -C clean-merge sparse-checkout clean -f >out &&
-	test_cmp expect out
+		echo merged >folder1/even/more/dirs/file &&
+		git add --sparse folder1 &&
+		git merge --continue &&
+
+		test_path_exists folder1/even/more/dirs/file &&
+
+		# clean does not remove the file, because the
+		# SKIP_WORKTREE bit was not cleared by the merge command.
+		git sparse-checkout clean -f >out &&
+		test_line_count = 0 out &&
+		test_path_exists folder1/even/more/dirs/file &&
+
+		git sparse-checkout reapply &&
+		test_path_is_missing folder1
+	)
 '
 
 test_done
