@@ -1025,7 +1025,7 @@ int stream_loose_object(struct input_stream *in_stream, size_t len,
 	err = finalize_object_file_flags(the_repository, tmp_file.buf, filename.buf,
 					 FOF_SKIP_COLLISION_CHECK);
 	if (!err && compat)
-		err = repo_add_loose_object_map(the_repository, oid, &compat_oid);
+		err = repo_add_loose_object_map(the_repository->objects->sources, oid, &compat_oid);
 cleanup:
 	strbuf_release(&tmp_file);
 	strbuf_release(&filename);
@@ -1069,7 +1069,7 @@ int write_object_file_flags(const void *buf, unsigned long len,
 	if (write_loose_object(oid, hdr, hdrlen, buf, len, 0, flags))
 		return -1;
 	if (compat)
-		return repo_add_loose_object_map(repo, oid, &compat_oid);
+		return repo_add_loose_object_map(repo->objects->sources, oid, &compat_oid);
 	return 0;
 }
 
@@ -1103,7 +1103,7 @@ int force_object_loose(const struct object_id *oid, time_t mtime)
 	hdrlen = format_object_header(hdr, sizeof(hdr), type, len);
 	ret = write_loose_object(oid, hdr, hdrlen, buf, len, mtime, 0);
 	if (!ret && compat)
-		ret = repo_add_loose_object_map(the_repository, oid, &compat_oid);
+		ret = repo_add_loose_object_map(the_repository->objects->sources, oid, &compat_oid);
 	free(buf);
 
 	return ret;
