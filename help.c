@@ -812,6 +812,7 @@ void get_version_info(struct strbuf *buf, int show_build_options)
 		strbuf_addf(buf, "SHA-256: %s\n", SHA256_BACKEND);
 		strbuf_addf(buf, "default-ref-format: %s\n",
 			    ref_storage_format_to_name(REF_STORAGE_FORMAT_DEFAULT));
+		strbuf_addf(buf, "default-hash: %s\n", hash_algos[GIT_HASH_DEFAULT].name);
 	}
 }
 
