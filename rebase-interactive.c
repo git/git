@@ -30,7 +30,7 @@ static enum missing_commit_check_level get_missing_commit_check_level(void)
 {
 	const char *value;
 
-	if (git_config_get_value("rebase.missingcommitscheck", &value) ||
+	if (repo_config_get_value(the_repository, "rebase.missingcommitscheck", &value) ||
 			!strcasecmp("ignore", value))
 		return MISSING_COMMIT_CHECK_IGNORE;
 	if (!strcasecmp("warn", value))
