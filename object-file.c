@@ -1535,7 +1535,8 @@ static int check_stream_oid(git_zstream *stream,
 	return 0;
 }
 
-int read_loose_object(const char *path,
+int read_loose_object(struct repository *repo,
+		      const char *path,
 		      const struct object_id *expected_oid,
 		      struct object_id *real_oid,
 		      void **contents,
@@ -1574,9 +1575,9 @@ int read_loose_object(const char *path,
 	}
 
 	if (*oi->typep == OBJ_BLOB &&
-	    *size > repo_settings_get_big_file_threshold(the_repository)) {
+	    *size > repo_settings_get_big_file_threshold(repo)) {
 		if (check_stream_oid(&stream, hdr, *size, path, expected_oid,
-				     the_repository->hash_algo) < 0)
+				     repo->hash_algo) < 0)
 			goto out_inflate;
 	} else {
 		*contents = unpack_loose_rest(&stream, hdr, *size, expected_oid);
@@ -1584,7 +1585,7 @@ int read_loose_object(const char *path,
 			error(_("unable to unpack contents of %s"), path);
 			goto out_inflate;
 		}
-		hash_object_file(the_repository->hash_algo,
+		hash_object_file(repo->hash_algo,
 				 *contents, *size,
 				 *oi->typep, real_oid);
 		if (!oideq(expected_oid, real_oid))
