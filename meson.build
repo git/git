@@ -1057,7 +1057,33 @@ else
   build_options_config.set('NO_ICONV', '1')
 endif
 
-pcre2 = dependency('libpcre2-8', required: get_option('pcre2'), default_options: ['default_library=static', 'test=false'])
+# can't use enable_auto_if() because it is only available in meson 1.1
+if host_machine.system() == 'windows' and get_option('pcre2').allowed()
+  pcre2_feature = true
+else
+  pcre2_feature = get_option('pcre2')
+endif
+pcre2 = dependency('libpcre2-8', required: pcre2_feature, default_options: ['default_library=static', 'test=false'])
+if pcre2.found() and pcre2.type_name() != 'internal' and host_machine.system() == 'darwin'
+  # macOS installs a broken system package, double check
+  if not compiler.has_header('pcre2.h', dependencies: pcre2)
+    if pcre2_feature.enabled()
+      pcre2_fallback = ['pcre2', 'libpcre2_8']
+    else
+      pcre2_fallback = []
+    endif
+    # Attempt to fallback or replace with not-found-dependency
+    pcre2 = dependency('', required: false, fallback: pcre2_fallback, default_options: ['default_library=static', 'test=false'])
+    if not pcre2.found()
+      if pcre2_feature.enabled()
+        error('only a broken pcre2 install found and pcre2 is required')
+      else
+        warning('broken pcre2 install found, disabling pcre2 feature')
+      endif
+    endif
+  endif
+endif
+
 if pcre2.found()
   libgit_dependencies += pcre2
   libgit_c_args += '-DUSE_LIBPCRE2'
