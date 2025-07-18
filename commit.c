@@ -742,17 +742,24 @@ void commit_list_sort_by_date(struct commit_list **list)
 struct commit *pop_most_recent_commit(struct prio_queue *queue,
 				      unsigned int mark)
 {
-	struct commit *ret = prio_queue_get(queue);
+	struct commit *ret = prio_queue_peek(queue);
+	int get_pending = 1;
 	struct commit_list *parents = ret->parents;
 
 	while (parents) {
 		struct commit *commit = parents->item;
 		if (!repo_parse_commit(the_repository, commit) && !(commit->object.flags & mark)) {
 			commit->object.flags |= mark;
-			prio_queue_put(queue, commit);
+			if (get_pending)
+				prio_queue_replace(queue, commit);
+			else
+				prio_queue_put(queue, commit);
+			get_pending = 0;
 		}
 		parents = parents->next;
 	}
+	if (get_pending)
+		prio_queue_get(queue);
 	return ret;
 }
 
