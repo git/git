@@ -527,6 +527,7 @@ static int cache_ref_iterator_seek(struct ref_iterator *ref_iterator,
 				level = &iter->levels[iter->levels_nr++];
 				level->dir = dir;
 				level->index = -1;
+				level->prefix_state = PREFIX_CONTAINS_DIR;
 			} else {
 				/* reduce the index so the leaf node is iterated over */
 				if (cmp <= 0 && !slash)
