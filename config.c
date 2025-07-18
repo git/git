@@ -56,7 +56,6 @@ struct config_source {
 	} u;
 	enum config_origin_type origin_type;
 	const char *name;
-	const char *path;
 	enum config_error_action default_error_action;
 	int linenr;
 	int eof;
@@ -173,14 +172,14 @@ static int handle_path_include(const struct key_value_info *kvi,
 	if (!is_absolute_path(path)) {
 		char *slash;
 
-		if (!kvi || !kvi->path) {
+		if (!kvi || kvi->origin_type != CONFIG_ORIGIN_FILE) {
 			ret = error(_("relative config includes must come from files"));
 			goto cleanup;
 		}
 
-		slash = find_last_dir_sep(kvi->path);
+		slash = find_last_dir_sep(kvi->filename);
 		if (slash)
-			strbuf_add(&buf, kvi->path, slash - kvi->path + 1);
+			strbuf_add(&buf, kvi->filename, slash - kvi->filename + 1);
 		strbuf_addstr(&buf, path);
 		path = buf.buf;
 	}
@@ -224,11 +223,11 @@ static int prepare_include_condition_pattern(const struct key_value_info *kvi,
 	if (pat->buf[0] == '.' && is_dir_sep(pat->buf[1])) {
 		const char *slash;
 
-		if (!kvi || !kvi->path)
+		if (!kvi || kvi->origin_type != CONFIG_ORIGIN_FILE)
 			return error(_("relative config include "
 				       "conditionals must come from files"));
 
-		strbuf_realpath(&path, kvi->path, 1);
+		strbuf_realpath(&path, kvi->filename, 1);
 		slash = find_last_dir_sep(path.buf);
 		if (!slash)
 			BUG("how is this possible?");
@@ -633,7 +632,6 @@ void kvi_from_param(struct key_value_info *out)
 	out->linenr = -1;
 	out->origin_type = CONFIG_ORIGIN_CMDLINE;
 	out->scope = CONFIG_SCOPE_COMMAND;
-	out->path = NULL;
 }
 
 int git_config_parse_parameter(const char *text,
@@ -1036,7 +1034,6 @@ static void kvi_from_source(struct config_source *cs,
 	out->origin_type = cs->origin_type;
 	out->linenr = cs->linenr;
 	out->scope = scope;
-	out->path = cs->path;
 }
 
 static int git_parse_source(struct config_source *cs, config_fn_t fn,
@@ -1850,17 +1847,19 @@ static int do_config_from(struct config_source *top, config_fn_t fn,
 
 static int do_config_from_file(config_fn_t fn,
 			       const enum config_origin_type origin_type,
-			       const char *name, const char *path, FILE *f,
-			       void *data, enum config_scope scope,
+			       const char *name, FILE *f, void *data,
+			       enum config_scope scope,
 			       const struct config_options *opts)
 {
 	struct config_source top = CONFIG_SOURCE_INIT;
 	int ret;
 
+	if (origin_type == CONFIG_ORIGIN_FILE && (!name || !*name))
+		BUG("missing filename for CONFIG_ORIGIN_FILE");
+
 	top.u.file = f;
 	top.origin_type = origin_type;
 	top.name = name;
-	top.path = path;
 	top.default_error_action = CONFIG_ERROR_DIE;
 	top.do_fgetc = config_file_fgetc;
 	top.do_ungetc = config_file_ungetc;
@@ -1875,8 +1874,8 @@ static int do_config_from_file(config_fn_t fn,
 static int git_config_from_stdin(config_fn_t fn, void *data,
 				 enum config_scope scope)
 {
-	return do_config_from_file(fn, CONFIG_ORIGIN_STDIN, "", NULL, stdin,
-				   data, scope, NULL);
+	return do_config_from_file(fn, CONFIG_ORIGIN_STDIN, "", stdin, data,
+				   scope, NULL);
 }
 
 int git_config_from_file_with_options(config_fn_t fn, const char *filename,
@@ -1891,7 +1890,7 @@ int git_config_from_file_with_options(config_fn_t fn, const char *filename,
 	f = fopen_or_warn(filename, "r");
 	if (f) {
 		ret = do_config_from_file(fn, CONFIG_ORIGIN_FILE, filename,
-					  filename, f, data, scope, opts);
+					  f, data, scope, opts);
 		fclose(f);
 	}
 	return ret;
@@ -1916,7 +1915,6 @@ int git_config_from_mem(config_fn_t fn,
 	top.u.buf.pos = 0;
 	top.origin_type = origin_type;
 	top.name = name;
-	top.path = NULL;
 	top.default_error_action = CONFIG_ERROR_ERROR;
 	top.do_fgetc = config_buf_fgetc;
 	top.do_ungetc = config_buf_ungetc;
