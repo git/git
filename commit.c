@@ -1805,8 +1805,8 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 		compat_oid = &compat_oid_buf;
 	}
 
-	result = write_object_file_flags(buffer.buf, buffer.len, OBJ_COMMIT,
-					 ret, compat_oid, 0);
+	result = odb_write_object_ext(the_repository->objects, buffer.buf, buffer.len,
+				      OBJ_COMMIT, ret, compat_oid, 0);
 out:
 	free(parent_buf);
 	strbuf_release(&buffer);

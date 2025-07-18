@@ -227,7 +227,7 @@ static int migrate_one(struct tmp_objdir *t,
 			return -1;
 		return migrate_paths(t, src, dst, flags);
 	}
-	return finalize_object_file_flags(src->buf, dst->buf, flags);
+	return finalize_object_file_flags(t->repo, src->buf, dst->buf, flags);
 }
 
 static int is_loose_object_shard(const char *name)

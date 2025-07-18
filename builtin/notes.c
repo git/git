@@ -229,7 +229,8 @@ static void prepare_note_data(const struct object_id *object, struct note_data *
 
 static void write_note_data(struct note_data *d, struct object_id *oid)
 {
-	if (write_object_file(d->buf.buf, d->buf.len, OBJ_BLOB, oid)) {
+	if (odb_write_object(the_repository->objects, d->buf.buf,
+			     d->buf.len, OBJ_BLOB, oid)) {
 		int status = die_message(_("unable to write note object"));
 
 		if (d->edit_path)

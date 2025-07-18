@@ -271,8 +271,8 @@ static int build_tag_object(struct strbuf *buf, int sign, struct object_id *resu
 	struct object_id *compat_oid = NULL, compat_oid_buf;
 	if (sign && do_sign(buf, &compat_oid, &compat_oid_buf) < 0)
 		return error(_("unable to sign the tag"));
-	if (write_object_file_flags(buf->buf, buf->len, OBJ_TAG, result,
-				    compat_oid, 0) < 0)
+	if (odb_write_object_ext(the_repository->objects, buf->buf,
+				 buf->len, OBJ_TAG, result, compat_oid, 0) < 0)
 		return error(_("unable to write tag file"));
 	return 0;
 }

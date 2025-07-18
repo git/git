@@ -166,7 +166,8 @@ errout:
 	return -1;
 }
 
-static int write_one_object(struct repository *repo, const struct object_id *oid,
+static int write_one_object(struct odb_source *source,
+			    const struct object_id *oid,
 			    const struct object_id *compat_oid)
 {
 	struct lock_file lock;
@@ -174,7 +175,7 @@ static int write_one_object(struct repository *repo, const struct object_id *oid
 	struct stat st;
 	struct strbuf buf = STRBUF_INIT, path = STRBUF_INIT;
 
-	repo_common_path_replace(repo, &path, "objects/loose-object-idx");
+	strbuf_addf(&path, "%s/loose-object-idx", source->path);
 	hold_lock_file_for_update_timeout(&lock, path.buf, LOCK_DIE_ON_ERROR, -1);
 
 	fd = open(path.buf, O_WRONLY | O_CREAT | O_APPEND, 0666);
@@ -190,7 +191,7 @@ static int write_one_object(struct repository *repo, const struct object_id *oid
 		goto errout;
 	if (close(fd))
 		goto errout;
-	adjust_shared_perm(repo, path.buf);
+	adjust_shared_perm(source->odb->repo, path.buf);
 	rollback_lock_file(&lock);
 	strbuf_release(&buf);
 	strbuf_release(&path);
@@ -204,17 +205,18 @@ errout:
 	return -1;
 }
 
-int repo_add_loose_object_map(struct repository *repo, const struct object_id *oid,
+int repo_add_loose_object_map(struct odb_source *source,
+			      const struct object_id *oid,
 			      const struct object_id *compat_oid)
 {
 	int inserted = 0;
 
-	if (!should_use_loose_object_map(repo))
+	if (!should_use_loose_object_map(source->odb->repo))
 		return 0;
 
-	inserted = insert_loose_map(repo->objects->sources, oid, compat_oid);
+	inserted = insert_loose_map(source, oid, compat_oid);
 	if (inserted)
-		return write_one_object(repo, oid, compat_oid);
+		return write_one_object(source, oid, compat_oid);
 	return 0;
 }
 

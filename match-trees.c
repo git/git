@@ -246,7 +246,7 @@ static int splice_tree(struct repository *r,
 		rewrite_with = oid2;
 	}
 	hashcpy(rewrite_here, rewrite_with->hash, r->hash_algo);
-	status = write_object_file(buf, sz, OBJ_TREE, result);
+	status = odb_write_object(r->objects, buf, sz, OBJ_TREE, result);
 	free(buf);
 	return status;
 }
