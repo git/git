@@ -42,6 +42,8 @@
 #include "commit-reach.h"
 #include "commit-graph.h"
 #include "pretty.h"
+#include "quote.h"
+#include "strmap.h"
 #include "trailer.h"
 
 static const char * const builtin_commit_usage[] = {
@@ -695,6 +697,191 @@ static int author_date_is_interesting(void)
 	return author_message || force_date;
 }
 
+#ifndef WITH_BREAKING_CHANGES
+struct comment_char_cfg {
+	unsigned last_key_id;
+	int auto_set_in_file;
+	struct strintmap key_flags;
+	size_t alloc, nr;
+	struct comment_char_cfg_item {
+		unsigned key_id;
+		char *path;
+		enum config_scope scope;
+	} *item;
+};
+
+#define COMMENT_CHAR_CFG_INIT { .key_flags = STRINTMAP_INIT }
+
+static void comment_char_cfg_release(struct comment_char_cfg *cfg)
+{
+	strintmap_clear(&cfg->key_flags);
+	for (size_t i = 0; i < cfg->nr; i++)
+		free(cfg->item[i].path);
+	free(cfg->item);
+}
+
+/* Used to track whether the key occurs more than once in a given file */
+#define KEY_SEEN_ONCE 1u
+#define KEY_SEEN_TWICE 2u
+#define COMMENT_KEY_SHIFT(id) (2 * (id))
+#define COMMENT_KEY_MASK(id) (3u << COMMENT_KEY_SHIFT(id))
+
+static void set_comment_key_flags(struct comment_char_cfg *cfg,
+				  const char *path, unsigned id, unsigned value)
+{
+	unsigned old = strintmap_get(&cfg->key_flags, path);
+	unsigned new = (old & ~COMMENT_KEY_MASK(id)) |
+				value << COMMENT_KEY_SHIFT(id);
+
+	strintmap_set(&cfg->key_flags, path, new);
+}
+
+static unsigned get_comment_key_flags(struct comment_char_cfg *cfg,
+				      const char *path, unsigned id)
+{
+	unsigned value = strintmap_get(&cfg->key_flags, path);
+
+	return (value & COMMENT_KEY_MASK(id)) >> COMMENT_KEY_SHIFT(id);
+}
+
+static const char* comment_key_name(unsigned id)
+{
+	static const char *name[] = {
+		"core.commentChar", "core.commentString",
+	};
+
+	if (id >= ARRAY_SIZE(name))
+		BUG("invalid comment key id");
+
+	return name[id];
+}
+
+static int comment_char_config_cb(const char *key, const char *value,
+				  const struct config_context *ctx, void *data)
+{
+	struct comment_char_cfg *cfg = data;
+	const struct key_value_info *kvi = ctx->kvi;
+	unsigned key_id;
+
+	if (!strcmp(key, "core.commentchar"))
+		key_id = 0;
+	else if (!strcmp(key, "core.commentstring"))
+		key_id = 1;
+	else
+		return 0;
+
+	cfg->last_key_id = key_id;
+	if (kvi->origin_type != CONFIG_ORIGIN_FILE) {
+		return 0;
+	} else if (get_comment_key_flags(cfg, kvi->filename, key_id)) {
+		set_comment_key_flags(cfg, kvi->filename, key_id, KEY_SEEN_TWICE);
+	} else {
+		struct comment_char_cfg_item *item;
+
+		ALLOC_GROW_BY(cfg->item, cfg->nr, 1, cfg->alloc);
+		item = &cfg->item[cfg->nr - 1];
+		item->key_id = key_id;
+		item->scope = kvi->scope;
+		item->path = xstrdup(kvi->filename);
+		set_comment_key_flags(cfg, kvi->filename, key_id, KEY_SEEN_ONCE);
+	}
+	cfg->auto_set_in_file =	value && !strcmp(value, "auto");
+
+	return 0;
+}
+
+static void add_config_scope_arg(struct strbuf *buf,
+				 struct comment_char_cfg_item *item)
+{
+	char *global_config = git_global_config();
+	char *system_config = git_system_config();
+
+	if (fspatheq(item->path, system_config)) {
+		strbuf_addstr(buf, "--system ");
+	} else if (fspatheq(item->path, global_config)) {
+		strbuf_addstr(buf, "--global ");
+	} else if (fspatheq(item->path,
+			    mkpath("%s/config",
+				   repo_get_git_dir(the_repository)))) {
+		; /* --local is the default */
+	} else if (fspatheq(item->path,
+			    mkpath("%s/config.worktree",
+				   repo_get_common_dir(the_repository)))) {
+		strbuf_addstr(buf, "--worktree ");
+	} else {
+		const char *path = item->path;
+		const char *home = getenv("HOME");
+
+		strbuf_addstr(buf, "--file ");
+		if (home && !fspathncmp(path, home, strlen(home))) {
+			path += strlen(home);
+			if (!fspathncmp(path, "/", 1))
+				path++;
+			strbuf_addstr(buf, "~/");
+		}
+		sq_quote_buf_pretty(buf, path);
+		strbuf_addch(buf, ' ');
+	}
+
+	free(global_config);
+	free(system_config);
+}
+
+static void add_optional_comment_char_advice(struct comment_char_cfg *cfg)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct comment_char_cfg_item *item;
+	/* TRANSLATORS this is a place holder for the value of core.commentString */
+	const char *placeholder = _("<comment string>");
+
+	/*
+	 * If auto is set in the last file that we saw advise the user how to
+	 * update their config.
+	 */
+	if (!cfg->auto_set_in_file)
+		return;
+
+	for (size_t i = 0; i < cfg->nr; i++) {
+		item = &cfg->item[i];
+
+		strbuf_addstr(&buf, "    git config unset ");
+		add_config_scope_arg(&buf, item);
+		if (get_comment_key_flags(cfg, item->path, item->key_id) == KEY_SEEN_TWICE)
+			strbuf_addstr(&buf, "--all ");
+		strbuf_addf(&buf, "%s\n", comment_key_name(item->key_id));
+	}
+	advise(_("\nTo use the default comment string (#) please run\n\n%s"),
+	       buf.buf);
+
+	item = &cfg->item[cfg->nr - 1];
+	strbuf_reset(&buf);
+	strbuf_addstr(&buf, "    git config set ");
+	add_config_scope_arg(&buf, item);
+	strbuf_addf(&buf, "%s %s\n", comment_key_name(item->key_id),
+		    placeholder);
+	advise(_("\nTo set a custom comment string please run\n\n"
+		 "%s\nwhere '%s' is the string you wish to use.\n"),
+	       buf.buf, placeholder);
+	strbuf_release(&buf);
+}
+
+static void advise_auto_comment_char(void)
+{
+	struct comment_char_cfg cfg = COMMENT_CHAR_CFG_INIT;
+	struct config_options opts = {
+		.commondir = repo_get_common_dir(the_repository),
+		.git_dir = repo_get_git_dir(the_repository),
+		.respect_includes = 1,
+	};
+
+	config_with_options(comment_char_config_cb, &cfg, NULL, the_repository,
+			    &opts);
+	advise(_("Support for '%s=auto' is deprecated and will be removed in "
+		 "git 3.0\n"), comment_key_name(cfg.last_key_id));
+	add_optional_comment_char_advice(&cfg);
+	comment_char_cfg_release(&cfg);
+}
+
 static void adjust_comment_line_char(const struct strbuf *sb)
 {
 	char candidates[] = "#;@!$%^&|:";
@@ -704,6 +891,8 @@ static void adjust_comment_line_char(const struct strbuf *sb)
 
 	/* Ignore comment chars in trailing comments (e.g., Conflicts:) */
 	cutoff = sb->len - ignored_log_message_bytes(sb->buf, sb->len);
+
+	advise_auto_comment_char();
 
 	if (!memchr(sb->buf, candidates[0], sb->len)) {
 		free(comment_line_str_to_free);
@@ -732,6 +921,7 @@ static void adjust_comment_line_char(const struct strbuf *sb)
 	free(comment_line_str_to_free);
 	comment_line_str = comment_line_str_to_free = xstrfmt("%c", *p);
 }
+#endif /* WITH_BREAKING_CHANGES */
 
 static void prepare_amend_commit(struct commit *commit, struct strbuf *sb,
 				struct pretty_print_context *ctx)
@@ -928,8 +1118,10 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	if (fwrite(sb.buf, 1, sb.len, s->fp) < sb.len)
 		die_errno(_("could not write commit template"));
 
+#ifndef WITH_BREAKING_CHANGES
 	if (auto_comment_line_char)
 		adjust_comment_line_char(&sb);
+#endif /* WITH_BREAKING_CHANGES */
 	strbuf_release(&sb);
 
 	/* This checks if committer ident is explicitly given */
