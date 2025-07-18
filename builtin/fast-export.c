@@ -29,6 +29,7 @@
 #include "quote.h"
 #include "remote.h"
 #include "blob.h"
+#include "gpg-interface.h"
 
 static const char *const fast_export_usage[] = {
 	N_("git fast-export [<rev-list-opts>]"),
@@ -652,6 +653,38 @@ static const char *find_commit_multiline_header(const char *msg,
 	return strbuf_detach(&val, NULL);
 }
 
+static void print_signature(const char *signature, const char *object_hash)
+{
+	if (!signature)
+		return;
+
+	printf("gpgsig %s %s\ndata %u\n%s\n",
+	       object_hash,
+	       get_signature_format(signature),
+	       (unsigned)strlen(signature),
+	       signature);
+}
+
+static const char *append_signatures_for_header(struct string_list *signatures,
+						const char *pos,
+						const char *header,
+						const char *object_hash)
+{
+	const char *signature;
+	const char *start = pos;
+	const char *end = pos;
+
+	while ((signature = find_commit_multiline_header(start + 1,
+							 header,
+							 &end))) {
+		string_list_append(signatures, signature)->util = (void *)object_hash;
+		free((char *)signature);
+		start = end;
+	}
+
+	return end;
+}
+
 static void handle_commit(struct commit *commit, struct rev_info *rev,
 			  struct string_list *paths_of_changed_objects)
 {
@@ -660,7 +693,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	const char *author, *author_end, *committer, *committer_end;
 	const char *encoding = NULL;
 	size_t encoding_len;
-	const char *signature_alg = NULL, *signature = NULL;
+	struct string_list signatures = STRING_LIST_INIT_DUP;
 	const char *message;
 	char *reencoded = NULL;
 	struct commit_list *p;
@@ -700,10 +733,11 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	}
 
 	if (*commit_buffer_cursor == '\n') {
-		if ((signature = find_commit_multiline_header(commit_buffer_cursor + 1, "gpgsig", &commit_buffer_cursor)))
-			signature_alg = "sha1";
-		else if ((signature = find_commit_multiline_header(commit_buffer_cursor + 1, "gpgsig-sha256", &commit_buffer_cursor)))
-			signature_alg = "sha256";
+		const char *after_sha1 = append_signatures_for_header(&signatures, commit_buffer_cursor,
+								      "gpgsig", "sha1");
+		const char *after_sha256 = append_signatures_for_header(&signatures, commit_buffer_cursor,
+									"gpgsig-sha256", "sha256");
+		commit_buffer_cursor = (after_sha1 > after_sha256) ? after_sha1 : after_sha256;
 	}
 
 	message = strstr(commit_buffer_cursor, "\n\n");
@@ -769,30 +803,30 @@ static void handle_commit(struct commit *commit, struct rev_info *rev,
 	printf("%.*s\n%.*s\n",
 	       (int)(author_end - author), author,
 	       (int)(committer_end - committer), committer);
-	if (signature) {
+	if (signatures.nr) {
 		switch (signed_commit_mode) {
 		case SIGN_ABORT:
 			die("encountered signed commit %s; use "
 			    "--signed-commits=<mode> to handle it",
 			    oid_to_hex(&commit->object.oid));
 		case SIGN_WARN_VERBATIM:
-			warning("exporting signed commit %s",
-				oid_to_hex(&commit->object.oid));
+			warning("exporting %"PRIuMAX" signature(s) for commit %s",
+				(uintmax_t)signatures.nr, oid_to_hex(&commit->object.oid));
 			/* fallthru */
 		case SIGN_VERBATIM:
-			printf("gpgsig %s\ndata %u\n%s",
-			       signature_alg,
-			       (unsigned)strlen(signature),
-			       signature);
+			for (size_t i = 0; i < signatures.nr; i++) {
+				struct string_list_item *item = &signatures.items[i];
+				print_signature(item->string, item->util);
+			}
 			break;
 		case SIGN_WARN_STRIP:
-			warning("stripping signature from commit %s",
+			warning("stripping signature(s) from commit %s",
 				oid_to_hex(&commit->object.oid));
 			/* fallthru */
 		case SIGN_STRIP:
 			break;
 		}
-		free((char *)signature);
+		string_list_clear(&signatures, 0);
 	}
 	if (!reencoded && encoding)
 		printf("encoding %.*s\n", (int)encoding_len, encoding);
