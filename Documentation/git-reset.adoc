@@ -125,6 +125,8 @@ OPTIONS
 	separated with _NUL_ character and all other characters are taken
 	literally (including newlines and quotes).
 
+include::diff-context-options.adoc[]
+
 `--`::
 	Do not interpret any more arguments as options.
 
