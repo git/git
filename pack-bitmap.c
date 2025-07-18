@@ -683,13 +683,15 @@ static int open_pack_bitmap(struct repository *r,
 static int open_midx_bitmap(struct repository *r,
 			    struct bitmap_index *bitmap_git)
 {
+	struct odb_source *source;
 	int ret = -1;
-	struct multi_pack_index *midx;
 
 	assert(!bitmap_git->map);
 
-	for (midx = get_multi_pack_index(r); midx; midx = midx->next) {
-		if (!open_midx_bitmap_1(bitmap_git, midx))
+	odb_prepare_alternates(r->objects);
+	for (source = r->objects->sources; source; source = source->next) {
+		struct multi_pack_index *midx = get_multi_pack_index(source);
+		if (midx && !open_midx_bitmap_1(bitmap_git, midx))
 			ret = 0;
 	}
 	return ret;
@@ -3345,11 +3347,18 @@ static int verify_bitmap_file(const struct git_hash_algo *algop,
 
 int verify_bitmap_files(struct repository *r)
 {
+	struct odb_source *source;
 	int res = 0;
 
-	for (struct multi_pack_index *m = get_multi_pack_index(r);
-	     m; m = m->next) {
-		char *midx_bitmap_name = midx_bitmap_filename(m);
+	odb_prepare_alternates(r->objects);
+	for (source = r->objects->sources; source; source = source->next) {
+		struct multi_pack_index *m = get_multi_pack_index(source);
+		char *midx_bitmap_name;
+
+		if (!m)
+			continue;
+
+		midx_bitmap_name = midx_bitmap_filename(m);
 		res |= verify_bitmap_file(r->hash_algo, midx_bitmap_name);
 		free(midx_bitmap_name);
 	}
