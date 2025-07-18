@@ -938,44 +938,52 @@ cleanup:
 	return result;
 }
 
+static int fill_packs_from_midx_1(struct write_midx_context *ctx,
+				  struct multi_pack_index *m,
+				  int prepare_packs)
+{
+	for (uint32_t i = 0; i < m->num_packs; i++) {
+		struct packed_git *p = NULL;
+
+		ALLOC_GROW(ctx->info, ctx->nr + 1, ctx->alloc);
+		if (prepare_packs) {
+			p = prepare_midx_pack(ctx->repo, m,
+					      m->num_packs_in_base + i);
+			if (!p) {
+				error(_("could not load pack"));
+				return 1;
+			}
+
+			if (open_pack_index(p))
+				die(_("could not open index for %s"),
+				    p->pack_name);
+		}
+
+		fill_pack_info(&ctx->info[ctx->nr++], p, m->pack_names[i],
+			       m->num_packs_in_base + i);
+	}
+
+	return 0;
+}
+
 static int fill_packs_from_midx(struct write_midx_context *ctx,
 				const char *preferred_pack_name, uint32_t flags)
 {
 	struct multi_pack_index *m;
+	int prepare_packs;
+
+	/*
+	 * If generating a reverse index, need to have packed_git's
+	 * loaded to compare their mtimes and object count.
+	 */
+	prepare_packs = !!(flags & MIDX_WRITE_REV_INDEX || preferred_pack_name);
 
 	for (m = ctx->m; m; m = m->base_midx) {
-		uint32_t i;
-
-		for (i = 0; i < m->num_packs; i++) {
-			ALLOC_GROW(ctx->info, ctx->nr + 1, ctx->alloc);
-
-			/*
-			 * If generating a reverse index, need to have
-			 * packed_git's loaded to compare their
-			 * mtimes and object count.
-			 *
-			 * If a preferred pack is specified, need to
-			 * have packed_git's loaded to ensure the chosen
-			 * preferred pack has a non-zero object count.
-			 */
-			if (flags & MIDX_WRITE_REV_INDEX ||
-			    preferred_pack_name) {
-				if (prepare_midx_pack(ctx->repo, m,
-						      m->num_packs_in_base + i)) {
-					error(_("could not load pack"));
-					return 1;
-				}
-
-				if (open_pack_index(m->packs[i]))
-					die(_("could not open index for %s"),
-					    m->packs[i]->pack_name);
-			}
-
-			fill_pack_info(&ctx->info[ctx->nr++], m->packs[i],
-				       m->pack_names[i],
-				       m->num_packs_in_base + i);
-		}
+		int ret = fill_packs_from_midx_1(ctx, m, prepare_packs);
+		if (ret)
+			return ret;
 	}
+
 	return 0;
 }
 
@@ -1578,20 +1586,19 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 					  _("Finding and deleting unreferenced packfiles"),
 					  m->num_packs);
 	for (i = 0; i < m->num_packs; i++) {
+		struct packed_git *p;
 		char *pack_name;
 		display_progress(progress, i + 1);
 
 		if (count[i])
 			continue;
 
-		if (prepare_midx_pack(r, m, i))
+		p = prepare_midx_pack(r, m, i);
+		if (!p || p->pack_keep || p->is_cruft)
 			continue;
 
-		if (m->packs[i]->pack_keep || m->packs[i]->is_cruft)
-			continue;
-
-		pack_name = xstrdup(m->packs[i]->pack_name);
-		close_pack(m->packs[i]);
+		pack_name = xstrdup(p->pack_name);
+		close_pack(p);
 
 		string_list_insert(&packs_to_drop, m->pack_names[i]);
 		unlink_pack_path(pack_name, 0);
@@ -1636,9 +1643,12 @@ static int want_included_pack(struct repository *r,
 			      uint32_t pack_int_id)
 {
 	struct packed_git *p;
-	if (prepare_midx_pack(r, m, pack_int_id))
+
+	ASSERT(m && !m->base_midx);
+
+	p = prepare_midx_pack(r, m, pack_int_id);
+	if (!p)
 		return 0;
-	p = m->packs[pack_int_id];
 	if (!pack_kept_objects && p->pack_keep)
 		return 0;
 	if (p->is_cruft)
@@ -1654,6 +1664,8 @@ static void fill_included_packs_all(struct repository *r,
 {
 	uint32_t i;
 	int pack_kept_objects = 0;
+
+	ASSERT(m && !m->base_midx);
 
 	repo_config_get_bool(r, "repack.packkeptobjects", &pack_kept_objects);
 
@@ -1675,17 +1687,18 @@ static void fill_included_packs_batch(struct repository *r,
 	struct repack_info *pack_info;
 	int pack_kept_objects = 0;
 
+	ASSERT(m && !m->base_midx);
+
 	CALLOC_ARRAY(pack_info, m->num_packs);
 
 	repo_config_get_bool(r, "repack.packkeptobjects", &pack_kept_objects);
 
 	for (i = 0; i < m->num_packs; i++) {
+		struct packed_git *p = prepare_midx_pack(r, m, i);
+
 		pack_info[i].pack_int_id = i;
-
-		if (prepare_midx_pack(r, m, i))
-			continue;
-
-		pack_info[i].mtime = m->packs[i]->mtime;
+		if (p)
+			pack_info[i].mtime = p->mtime;
 	}
 
 	for (i = 0; i < m->num_objects; i++) {
