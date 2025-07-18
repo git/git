@@ -2,6 +2,7 @@
 #include "builtin.h"
 #include "abspath.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "midx.h"
@@ -143,7 +144,7 @@ static int cmd_multi_pack_index_write(int argc, const char **argv,
 
 	opts.flags |= MIDX_WRITE_BITMAP_HASH_CACHE;
 
-	git_config(git_multi_pack_index_write_config, NULL);
+	repo_config(the_repository, git_multi_pack_index_write_config, NULL);
 
 	options = add_common_options(builtin_multi_pack_index_write_options);
 
@@ -290,7 +291,7 @@ int cmd_multi_pack_index(int argc,
 
 	disable_replace_refs();
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	if (the_repository &&
 	    the_repository->objects &&

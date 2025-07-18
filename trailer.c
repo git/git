@@ -595,8 +595,8 @@ void trailer_config_init(void)
 	default_conf_info.where = WHERE_END;
 	default_conf_info.if_exists = EXISTS_ADD_IF_DIFFERENT_NEIGHBOR;
 	default_conf_info.if_missing = MISSING_ADD;
-	git_config(git_trailer_default_config, NULL);
-	git_config(git_trailer_config, NULL);
+	repo_config(the_repository, git_trailer_default_config, NULL);
+	repo_config(the_repository, git_trailer_config, NULL);
 	configured = 1;
 }
 

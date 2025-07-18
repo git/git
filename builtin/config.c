@@ -966,12 +966,12 @@ static int cmd_config_set(int argc, const char **argv, const char *prefix,
 	value = normalize_value(argv[0], argv[1], type, &default_kvi);
 
 	if ((flags & CONFIG_FLAGS_MULTI_REPLACE) || value_pattern) {
-		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
-							     argv[0], value, value_pattern,
-							     comment, flags);
+		ret = repo_config_set_multivar_in_file_gently(the_repository, location_opts.source.file,
+							      argv[0], value, value_pattern,
+							      comment, flags);
 	} else {
-		ret = git_config_set_in_file_gently(location_opts.source.file,
-						    argv[0], comment, value);
+		ret = repo_config_set_in_file_gently(the_repository, location_opts.source.file,
+						     argv[0], comment, value);
 		if (ret == CONFIG_NOTHING_SET)
 			error(_("cannot overwrite multiple values with a single value\n"
 			"       Use a regexp, --add or --replace-all to change %s."), argv[0]);
@@ -1010,12 +1010,12 @@ static int cmd_config_unset(int argc, const char **argv, const char *prefix,
 	check_write(&location_opts.source);
 
 	if ((flags & CONFIG_FLAGS_MULTI_REPLACE) || value_pattern)
-		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
-							     argv[0], NULL, value_pattern,
-							     NULL, flags);
+		ret = repo_config_set_multivar_in_file_gently(the_repository, location_opts.source.file,
+							      argv[0], NULL, value_pattern,
+							      NULL, flags);
 	else
-		ret = git_config_set_in_file_gently(location_opts.source.file, argv[0],
-						    NULL, NULL);
+		ret = repo_config_set_in_file_gently(the_repository, location_opts.source.file, argv[0],
+						     NULL, NULL);
 
 	location_options_release(&location_opts);
 	return ret;
@@ -1091,7 +1091,7 @@ static int show_editor(struct config_location_options *opts)
 		die(_("editing stdin is not supported"));
 	if (opts->source.blob)
 		die(_("editing blobs is not supported"));
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	config_file = opts->source.file ?
 			xstrdup(opts->source.file) :
 			repo_git_path(the_repository, "config");
@@ -1296,7 +1296,7 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 		check_write(&location_opts.source);
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1], display_opts.type, &default_kvi);
-		ret = git_config_set_in_file_gently(location_opts.source.file, argv[0], comment, value);
+		ret = repo_config_set_in_file_gently(the_repository, location_opts.source.file, argv[0], comment, value);
 		if (ret == CONFIG_NOTHING_SET)
 			error(_("cannot overwrite multiple values with a single value\n"
 			"       Use a regexp, --add or --replace-all to change %s."), argv[0]);
@@ -1305,26 +1305,26 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 		check_write(&location_opts.source);
 		check_argc(argc, 2, 3);
 		value = normalize_value(argv[0], argv[1], display_opts.type, &default_kvi);
-		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
-							     argv[0], value, argv[2],
-							     comment, flags);
+		ret = repo_config_set_multivar_in_file_gently(the_repository, location_opts.source.file,
+							      argv[0], value, argv[2],
+							      comment, flags);
 	}
 	else if (actions == ACTION_ADD) {
 		check_write(&location_opts.source);
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1], display_opts.type, &default_kvi);
-		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
-							     argv[0], value,
-							     CONFIG_REGEX_NONE,
-							     comment, flags);
+		ret = repo_config_set_multivar_in_file_gently(the_repository, location_opts.source.file,
+							      argv[0], value,
+							      CONFIG_REGEX_NONE,
+							      comment, flags);
 	}
 	else if (actions == ACTION_REPLACE_ALL) {
 		check_write(&location_opts.source);
 		check_argc(argc, 2, 3);
 		value = normalize_value(argv[0], argv[1], display_opts.type, &default_kvi);
-		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
-							     argv[0], value, argv[2],
-							     comment, flags | CONFIG_FLAGS_MULTI_REPLACE);
+		ret = repo_config_set_multivar_in_file_gently(the_repository, location_opts.source.file,
+							      argv[0], value, argv[2],
+							      comment, flags | CONFIG_FLAGS_MULTI_REPLACE);
 	}
 	else if (actions == ACTION_GET) {
 		check_argc(argc, 1, 2);
@@ -1350,19 +1350,19 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 		check_write(&location_opts.source);
 		check_argc(argc, 1, 2);
 		if (argc == 2)
-			ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
-								     argv[0], NULL, argv[1],
-								     NULL, flags);
+			ret = repo_config_set_multivar_in_file_gently(the_repository, location_opts.source.file,
+								      argv[0], NULL, argv[1],
+								      NULL, flags);
 		else
-			ret = git_config_set_in_file_gently(location_opts.source.file,
-							    argv[0], NULL, NULL);
+			ret = repo_config_set_in_file_gently(the_repository, location_opts.source.file,
+							     argv[0], NULL, NULL);
 	}
 	else if (actions == ACTION_UNSET_ALL) {
 		check_write(&location_opts.source);
 		check_argc(argc, 1, 2);
-		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
-							     argv[0], NULL, argv[1],
-							     NULL, flags | CONFIG_FLAGS_MULTI_REPLACE);
+		ret = repo_config_set_multivar_in_file_gently(the_repository, location_opts.source.file,
+							      argv[0], NULL, argv[1],
+							      NULL, flags | CONFIG_FLAGS_MULTI_REPLACE);
 	}
 	else if (actions == ACTION_RENAME_SECTION) {
 		check_write(&location_opts.source);

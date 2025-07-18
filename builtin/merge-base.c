@@ -2,6 +2,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "commit.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "object-name.h"
@@ -167,7 +168,7 @@ int cmd_merge_base(int argc,
 		OPT_END()
 	};
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, merge_base_usage, 0);
 
 	if (cmdmode == 'a') {

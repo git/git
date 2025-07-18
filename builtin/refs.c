@@ -88,7 +88,7 @@ static int cmd_refs_verify(int argc, const char **argv, const char *prefix,
 	if (argc)
 		usage(_("'git refs verify' takes no arguments"));
 
-	git_config(git_fsck_config, &fsck_refs_options);
+	repo_config(the_repository, git_fsck_config, &fsck_refs_options);
 	prepare_repo_settings(the_repository);
 
 	worktrees = get_worktrees_without_reading_head();

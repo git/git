@@ -32,10 +32,10 @@
  * 				ascending order of priority from a config_set
  * 				constructed from files entered as arguments.
  *
- * iterate -> iterate over all values using git_config(), and print some
+ * iterate -> iterate over all values using repo_config(), and print some
  *            data for each
  *
- * git_config_int -> iterate over all values using git_config() and print the
+ * git_config_int -> iterate over all values using repo_config() and print the
  *                   integer value for the entered key or die
  *
  * Examples:
@@ -110,7 +110,7 @@ int cmd__config(int argc, const char **argv)
 		fprintf(stderr, "Please, provide a command name on the command-line\n");
 		goto exit1;
 	} else if (argc == 3 && !strcmp(argv[1], "get_value")) {
-		if (!git_config_get_value(argv[2], &v)) {
+		if (!repo_config_get_value(the_repository, argv[2], &v)) {
 			if (!v)
 				printf("(NULL)\n");
 			else
@@ -121,7 +121,7 @@ int cmd__config(int argc, const char **argv)
 			goto exit1;
 		}
 	} else if (argc == 3 && !strcmp(argv[1], "get_value_multi")) {
-		if (!git_config_get_value_multi(argv[2], &strptr)) {
+		if (!repo_config_get_value_multi(the_repository, argv[2], &strptr)) {
 			for (i = 0; i < strptr->nr; i++) {
 				v = strptr->items[i].string;
 				if (!v)
@@ -137,7 +137,7 @@ int cmd__config(int argc, const char **argv)
 	} else if (argc == 3 && !strcmp(argv[1], "get")) {
 		int ret;
 
-		if (!(ret = git_config_get(argv[2])))
+		if (!(ret = repo_config_get(the_repository, argv[2])))
 			goto exit0;
 		else if (ret == 1)
 			printf("Value not found for \"%s\"\n", argv[2]);
@@ -155,7 +155,7 @@ int cmd__config(int argc, const char **argv)
 			BUG("Key \"%s\" has unknown return %d", argv[2], ret);
 		goto exit1;
 	} else if (argc == 3 && !strcmp(argv[1], "get_int")) {
-		if (!git_config_get_int(argv[2], &val)) {
+		if (!repo_config_get_int(the_repository, argv[2], &val)) {
 			printf("%d\n", val);
 			goto exit0;
 		} else {
@@ -163,7 +163,7 @@ int cmd__config(int argc, const char **argv)
 			goto exit1;
 		}
 	} else if (argc == 3 && !strcmp(argv[1], "get_bool")) {
-		if (!git_config_get_bool(argv[2], &val)) {
+		if (!repo_config_get_bool(the_repository, argv[2], &val)) {
 			printf("%d\n", val);
 			goto exit0;
 		} else {
@@ -171,7 +171,7 @@ int cmd__config(int argc, const char **argv)
 			goto exit1;
 		}
 	} else if (argc == 3 && !strcmp(argv[1], "get_string")) {
-		if (!git_config_get_string_tmp(argv[2], &v)) {
+		if (!repo_config_get_string_tmp(the_repository, argv[2], &v)) {
 			printf("%s\n", v);
 			goto exit0;
 		} else {
@@ -218,10 +218,10 @@ int cmd__config(int argc, const char **argv)
 			goto exit1;
 		}
 	} else if (!strcmp(argv[1], "iterate")) {
-		git_config(iterate_cb, NULL);
+		repo_config(the_repository, iterate_cb, NULL);
 		goto exit0;
 	} else if (argc == 3 && !strcmp(argv[1], "git_config_int")) {
-		git_config(parse_int_cb, (void *) argv[2]);
+		repo_config(the_repository, parse_int_cb, (void *) argv[2]);
 		goto exit0;
 	}
 

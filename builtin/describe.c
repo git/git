@@ -623,7 +623,7 @@ int cmd_describe(int argc,
 		OPT_END(),
 	};
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, describe_usage, 0);
 	if (abbrev < 0)
 		abbrev = DEFAULT_ABBREV;

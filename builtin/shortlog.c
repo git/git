@@ -421,7 +421,7 @@ int cmd_shortlog(int argc,
 	if (nongit && !the_hash_algo)
 		repo_set_hash_algo(the_repository, GIT_HASH_DEFAULT);
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	shortlog_init(&log);
 	repo_init_revisions(the_repository, &rev, prefix);
 	parse_options_start(&ctx, argc, argv, prefix, options,

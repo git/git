@@ -710,7 +710,7 @@ int cmd_show_branch(int ac,
 
 	init_commit_name_slab(&name_slab);
 
-	git_config(git_show_branch_config, NULL);
+	repo_config(the_repository, git_show_branch_config, NULL);
 
 	/* If nothing is specified, try the default first */
 	if (ac == 1 && default_args.nr) {

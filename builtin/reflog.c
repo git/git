@@ -202,7 +202,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 		OPT_END()
 	};
 
-	git_config(reflog_expire_config, &opts);
+	repo_config(the_repository, reflog_expire_config, &opts);
 
 	save_commit_buffer = 0;
 	do_all = status = 0;

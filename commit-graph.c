@@ -4,6 +4,7 @@
 #include "git-compat-util.h"
 #include "config.h"
 #include "csum-file.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"

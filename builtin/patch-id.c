@@ -3,6 +3,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "diff.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hash.h"
 #include "hex.h"
@@ -235,7 +236,7 @@ int cmd_patch_id(int argc,
 		OPT_END()
 	};
 
-	git_config(git_patch_id_config, &config);
+	repo_config(the_repository, git_patch_id_config, &config);
 
 	/* verbatim implies stable */
 	if (config.verbatim)

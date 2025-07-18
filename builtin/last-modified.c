@@ -4,6 +4,7 @@
 #include "commit-graph.h"
 #include "commit.h"
 #include "config.h"
+#include "environment.h"
 #include "diff.h"
 #include "diffcore.h"
 #include "hashmap.h"

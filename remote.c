@@ -734,7 +734,7 @@ static void validate_remote_url(struct remote *remote)
 	struct strbuf redacted = STRBUF_INIT;
 	int warn_not_die;
 
-	if (git_config_get_string_tmp("transfer.credentialsinurl", &value))
+	if (repo_config_get_string_tmp(the_repository, "transfer.credentialsinurl", &value))
 		return;
 
 	if (!strcmp("warn", value))

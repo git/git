@@ -2,6 +2,7 @@
 #include "builtin.h"
 #include "commit.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "parse-options.h"
@@ -265,7 +266,7 @@ static int graph_write(int argc, const char **argv, const char *prefix,
 
 	trace2_cmd_mode("write");
 
-	git_config(git_commit_graph_write_config, &opts);
+	repo_config(the_repository, git_commit_graph_write_config, &opts);
 
 	argc = parse_options(argc, argv, prefix,
 			     options,
@@ -347,7 +348,7 @@ int cmd_commit_graph(int argc,
 	};
 	struct option *options = parse_options_concat(builtin_commit_graph_options, common_opts);
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	disable_replace_refs();
 	save_commit_buffer = 0;

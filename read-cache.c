@@ -2755,7 +2755,7 @@ static int record_eoie(void)
 {
 	int val;
 
-	if (!git_config_get_bool("index.recordendofindexentries", &val))
+	if (!repo_config_get_bool(the_repository, "index.recordendofindexentries", &val))
 		return val;
 
 	/*
@@ -2770,7 +2770,7 @@ static int record_ieot(void)
 {
 	int val;
 
-	if (!git_config_get_bool("index.recordoffsettable", &val))
+	if (!repo_config_get_bool(the_repository, "index.recordoffsettable", &val))
 		return val;
 
 	/*

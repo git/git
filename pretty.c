@@ -141,7 +141,7 @@ static void setup_commit_formats(void)
 	COPY_ARRAY(commit_formats, builtin_formats,
 		   ARRAY_SIZE(builtin_formats));
 
-	git_config(git_pretty_formats_config, NULL);
+	repo_config(the_repository, git_pretty_formats_config, NULL);
 }
 
 static struct cmt_fmt_map *find_commit_format_recursive(const char *sought,

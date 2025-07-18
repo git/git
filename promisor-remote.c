@@ -46,7 +46,7 @@ static int fetch_objects(struct repository *repo,
 		     "fetch", remote_name, "--no-tags",
 		     "--no-write-fetch-head", "--recurse-submodules=no",
 		     "--filter=blob:none", "--stdin", NULL);
-	if (!git_config_get_bool("promisor.quiet", &quiet) && quiet)
+	if (!repo_config_get_bool(the_repository, "promisor.quiet", &quiet) && quiet)
 		strvec_push(&child.args, "--quiet");
 	if (start_command(&child))
 		die(_("promisor-remote: unable to fork off fetch subprocess"));
@@ -365,7 +365,7 @@ static char *fields_from_config(struct string_list *fields_list, const char *con
 {
 	char *fields = NULL;
 
-	if (!git_config_get_string(config_key, &fields) && *fields) {
+	if (!repo_config_get_string(the_repository, config_key, &fields) && *fields) {
 		/* Split on any comma or space character */
 		string_list_split_in_place(fields_list, fields, ", ", -1);
 		/*
@@ -459,7 +459,7 @@ static void set_fields(struct promisor_info *p,
 	for_each_string_list_item(item, field_names) {
 		char *key = xstrfmt("remote.%s.%s", p->name, item->string);
 		const char *val;
-		if (!git_config_get_string_tmp(key, &val) && *val)
+		if (!repo_config_get_string_tmp(the_repository, key, &val) && *val)
 			set_one_field(p, item->string, val);
 		free(key);
 	}
@@ -485,7 +485,7 @@ static void promisor_config_info_list(struct repository *repo,
 		char *url_key = xstrfmt("remote.%s.url", r->name);
 
 		/* Only add remotes with a non empty URL */
-		if (!git_config_get_string_tmp(url_key, &url) && *url) {
+		if (!repo_config_get_string_tmp(the_repository, url_key, &url) && *url) {
 			struct promisor_info *new_info = xcalloc(1, sizeof(*new_info));
 			struct string_list_item *item;
 
@@ -510,7 +510,7 @@ char *promisor_remote_info(struct repository *repo)
 	struct string_list config_info = STRING_LIST_INIT_NODUP;
 	struct string_list_item *item;
 
-	git_config_get_bool("promisor.advertise", &advertise_promisors);
+	repo_config_get_bool(the_repository, "promisor.advertise", &advertise_promisors);
 
 	if (!advertise_promisors)
 		return NULL;
@@ -706,7 +706,7 @@ static void filter_promisor_remote(struct repository *repo,
 	enum accept_promisor accept = ACCEPT_NONE;
 	struct string_list config_info = STRING_LIST_INIT_NODUP;
 
-	if (!git_config_get_string_tmp("promisor.acceptfromserver", &accept_str)) {
+	if (!repo_config_get_string_tmp(the_repository, "promisor.acceptfromserver", &accept_str)) {
 		if (!*accept_str || !strcasecmp("None", accept_str))
 			accept = ACCEPT_NONE;
 		else if (!strcasecmp("KnownUrl", accept_str))

@@ -9,6 +9,7 @@
 
 #include "builtin.h"
 #include "abspath.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "config.h"
@@ -1035,7 +1036,7 @@ int cmd_grep(int argc,
 	grep_prefix = prefix;
 
 	grep_init(&opt, the_repository);
-	git_config(grep_cmd_config, &opt);
+	repo_config(the_repository, grep_cmd_config, &opt);
 
 	/*
 	 * If there is no -- then the paths must exist in the working
@@ -1058,7 +1059,7 @@ int cmd_grep(int argc,
 
 	if (use_index && !startup_info->have_repository) {
 		int fallback = 0;
-		git_config_get_bool("grep.fallbacktonoindex", &fallback);
+		repo_config_get_bool(the_repository, "grep.fallbacktonoindex", &fallback);
 		if (fallback)
 			use_index = 0;
 		else

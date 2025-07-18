@@ -48,9 +48,9 @@ struct gitdiff_data {
 
 static void git_apply_config(void)
 {
-	git_config_get_string("apply.whitespace", &apply_default_whitespace);
-	git_config_get_string("apply.ignorewhitespace", &apply_default_ignorewhitespace);
-	git_config(git_xmerge_config, NULL);
+	repo_config_get_string(the_repository, "apply.whitespace", &apply_default_whitespace);
+	repo_config_get_string(the_repository, "apply.ignorewhitespace", &apply_default_ignorewhitespace);
+	repo_config(the_repository, git_xmerge_config, NULL);
 }
 
 static int parse_whitespace_option(struct apply_state *state, const char *option)

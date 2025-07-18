@@ -28,6 +28,7 @@
 #include "advice.h"
 #include "config.h"
 #include "credential.h"
+#include "environment.h"
 #include "gettext.h"
 #include "run-command.h"
 #include "parse-options.h"
@@ -1776,7 +1777,7 @@ int cmd_main(int argc, const char **argv)
 	int ret;
 
 	setup_git_directory_gently(&nongit_ok);
-	git_config(git_imap_config, &server);
+	repo_config(the_repository, git_imap_config, &server);
 
 	argc = parse_options(argc, (const char **)argv, "", imap_send_options, imap_send_usage, 0);
 
