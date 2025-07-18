@@ -73,7 +73,7 @@ module Git
         elsif type == :monospaced
           node.text.gsub(/(\.\.\.?)([^\]$\.])/, '<literal>\1</literal>\2')
               .gsub(/^\.\.\.?$/, '<literal>\0</literal>')
-              .gsub(%r{([\[\s|()>.]|^|\]|&gt;)(\.?([-a-zA-Z0-9:+=~@/_^\$\\\*]+\.{0,2})+|,)}, '\1<literal>\2</literal>')
+              .gsub(%r{([\[\s|()>.]|^|\]|&gt;)(\.?([-a-zA-Z0-9:+=~@/_^\$\\\*%]+\.{0,2})+|,)}, '\1<literal>\2</literal>')
               .gsub(/(&lt;[-a-zA-Z0-9.]+&gt;)/, '<emphasis>\1</emphasis>')
         else
           open, close, supports_phrase = QUOTE_TAGS[type]
@@ -102,7 +102,7 @@ module Git
         if node.type == :monospaced
           node.text.gsub(/(\.\.\.?)([^\]$.])/, '<code>\1</code>\2')
               .gsub(/^\.\.\.?$/, '<code>\0</code>')
-              .gsub(%r{([\[\s|()>.]|^|\]|&gt;)(\.?([-a-zA-Z0-9:+=~@,/_^\$\\\*]+\.{0,2})+)}, '\1<code>\2</code>')
+              .gsub(%r{([\[\s|()>.]|^|\]|&gt;)(\.?([-a-zA-Z0-9:+=~@,/_^\$\\\*%]+\.{0,2})+)}, '\1<code>\2</code>')
               .gsub(/(&lt;[-a-zA-Z0-9.]+&gt;)/, '<em>\1</em>')
 
         else
