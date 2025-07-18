@@ -25,6 +25,17 @@ mode.
 it unless you understand the implications (see linkgit:git-rebase[1]
 for details).
 
+pull.autoStash::
+	When true, Git will automatically perform a `git stash` before the
+	operation and then restore the local changes with `git stash pop`
+	after the pull is complete. This means that you can run pull on a
+	dirty worktree. If `pull.autostash` is set, it takes precedence over
+	`rebase.autostash` and `merge.autostash`. If `pull.autostash` is not
+	set, it falls back to `rebase.autostash` or `merge.autostash`,
+	depending on the value of `pull.rebase`. This option can be
+	overridden by the `--no-autostash` and `--autostash` options of
+	linkgit:git-pull[1]. Defaults to false.
+
 pull.octopus::
 	The default merge strategy to use when pulling multiple branches
 	at once.
