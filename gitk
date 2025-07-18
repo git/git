@@ -11707,8 +11707,6 @@ proc prefspage_general {notebook} {
     pack configure $page.webbrowserf.l -padx 10
     grid x $page.webbrowserf $page.webbrowser -sticky ew
 
-    ttk::label $page.lgen -text [mc "General options"] -font mainfontbold
-    grid $page.lgen - -sticky w -pady 10
     return $page
 }
 
