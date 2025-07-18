@@ -112,7 +112,7 @@ int cmd_ls_remote(int argc,
 	 * depending on what object hash the remote uses.
 	 */
 	if (!the_repository->hash_algo)
-		repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
+		repo_set_hash_algo(the_repository, GIT_HASH_DEFAULT);
 
 	packet_trace_identity("ls-remote");
 

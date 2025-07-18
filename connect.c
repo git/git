@@ -251,7 +251,7 @@ static void process_capabilities(struct packet_reader *reader, size_t *linelen)
 			reader->hash_algo = &hash_algos[hash_algo];
 		free(hash_name);
 	} else {
-		reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
+		reader->hash_algo = &hash_algos[GIT_HASH_SHA1_LEGACY];
 	}
 }
 
@@ -500,7 +500,7 @@ static void send_capabilities(int fd_out, struct packet_reader *reader)
 		reader->hash_algo = &hash_algos[hash_algo];
 		packet_write_fmt(fd_out, "object-format=%s", reader->hash_algo->name);
 	} else {
-		reader->hash_algo = &hash_algos[GIT_HASH_SHA1];
+		reader->hash_algo = &hash_algos[GIT_HASH_SHA1_LEGACY];
 	}
 	if (server_feature_v2("promisor-remote", &promisor_remote_info)) {
 		char *reply = promisor_remote_reply(promisor_remote_info);
@@ -665,7 +665,7 @@ int server_supports_hash(const char *desired, int *feature_supported)
 	if (feature_supported)
 		*feature_supported = !!hash;
 	if (!hash) {
-		hash = hash_algos[GIT_HASH_SHA1].name;
+		hash = hash_algos[GIT_HASH_SHA1_LEGACY].name;
 		len = strlen(hash);
 	}
 	while (hash) {
