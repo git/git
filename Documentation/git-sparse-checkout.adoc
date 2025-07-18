@@ -9,7 +9,7 @@ git-sparse-checkout - Reduce your working tree to a subset of tracked files
 SYNOPSIS
 --------
 [verse]
-'git sparse-checkout' (init | list | set | add | reapply | disable | check-rules) [<options>]
+'git sparse-checkout' (init | list | set | add | reapply | disable | check-rules | clean) [<options>]
 
 
 DESCRIPTION
@@ -110,6 +110,29 @@ The `reapply` command can also take `--[no-]cone` and `--[no-]sparse-index`
 flags, with the same meaning as the flags from the `set` command, in order
 to change which sparsity mode you are using without needing to also respecify
 all sparsity paths.
+
+'clean'::
+	Remove all files in tracked directories that are outside of the
+	sparse-checkout definition. This subcommand requires cone-mode
+	sparse-checkout to be sure that we know which directories are
+	both tracked and all contained paths are not in the sparse-checkout.
+	This command can be used to be sure the sparse index works
+	efficiently, though it does not require enabling the sparse index
+  feature via the `index.sparse=true` configuration.
++
+To prevent accidental deletion of worktree files, the `clean` subcommand
+will not delete any files without the `-f` or `--force` option, unless
+the `clean.requireForce` config option is set to `false`.
++
+The `--dry-run` option will list the directories that would be removed
+without deleting them. Running in this mode can be helpful to predict the
+behavior of the clean comand or to determine which kinds of files are left
+in the sparse directories.
++
+The `--verbose` option will list every file within the directories that
+are considered for removal. This option is helpful to determine if those
+files are actually important or perhaps to explain why the directory is
+still present despite the current sparse-checkout.
 
 'disable'::
 	Disable the `core.sparseCheckout` config setting, and restore the
