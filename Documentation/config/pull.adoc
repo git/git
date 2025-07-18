@@ -13,6 +13,17 @@ pull.rebase::
 	of merging the default branch from the default remote when "git
 	pull" is run. See "branch.<name>.rebase" for setting this on a
 	per-branch basis.
+
+pull.autoStash::
+	When true, Git will automatically perform a `git stash` before the
+	operation and then restore the local changes with `git stash pop`
+	after the pull is complete. This means that you can run pull on a
+	dirty worktree. If `pull.autostash` is set, it takes precedence over
+	`rebase.autostash` and `merge.autostash`. If `pull.autostash` is not
+	set, it falls back to `rebase.autostash` or `merge.autostash`,
+	depending on the value of `pull.rebase`. This option can be
+	overridden by the `--no-autostash` and `--autostash` options of
+	linkgit:git-pull[1]. Defaults to false.
 +
 When `merges` (or just 'm'), pass the `--rebase-merges` option to 'git rebase'
 so that the local merge commits are included in the rebase (see

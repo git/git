@@ -472,6 +472,96 @@ test_expect_success 'pull --no-autostash & merge.autostash unset' '
 	test_pull_autostash_fail --no-autostash --no-rebase
 '
 
+test_expect_success 'pull succeeds with dirty working directory and pull.autostash set' '
+	test_config pull.autostash true &&
+	test_pull_autostash 1 --rebase &&
+	test_pull_autostash 2 --no-rebase
+'
+
+test_expect_success 'pull --autostash & pull.autostash=true' '
+	test_config pull.autostash true &&
+	test_pull_autostash 1 --autostash --rebase &&
+	test_pull_autostash 2 --autostash --no-rebase
+'
+
+test_expect_success 'pull --autostash & pull.autostash=false' '
+	test_config pull.autostash false &&
+	test_pull_autostash 1 --autostash --rebase &&
+	test_pull_autostash 2 --autostash --no-rebase
+'
+
+test_expect_success 'pull --autostash & pull.autostash unset' '
+	test_unconfig pull.autostash &&
+	test_pull_autostash 1 --autostash --rebase &&
+	test_pull_autostash 2 --autostash --no-rebase
+'
+
+test_expect_success 'pull --no-autostash & pull.autostash=true' '
+	test_config pull.autostash true &&
+	test_pull_autostash_fail --no-autostash --rebase &&
+	test_pull_autostash_fail --no-autostash --no-rebase
+'
+
+test_expect_success 'pull --no-autostash & pull.autostash=false' '
+	test_config pull.autostash false &&
+	test_pull_autostash_fail --no-autostash --rebase &&
+	test_pull_autostash_fail --no-autostash --no-rebase
+'
+
+test_expect_success 'pull --no-autostash & pull.autostash unset' '
+	test_unconfig pull.autostash &&
+	test_pull_autostash_fail --no-autostash --rebase &&
+	test_pull_autostash_fail --no-autostash --no-rebase
+'
+
+test_expect_success 'pull.autostash=true & rebase.autostash=true' '
+	test_config pull.autostash true &&
+	test_config rebase.autostash true &&
+	test_pull_autostash 1 --rebase
+'
+
+test_expect_success 'pull.autostash=true & rebase.autostash=false' '
+	test_config pull.autostash true &&
+	test_config rebase.autostash false &&
+	test_pull_autostash 1 --rebase
+'
+
+test_expect_success 'pull.autostash=false & rebase.autostash=true' '
+	test_config pull.autostash false &&
+	test_config rebase.autostash true &&
+	test_pull_autostash_fail --rebase
+'
+
+test_expect_success 'pull.autostash=false & rebase.autostash=false' '
+	test_config pull.autostash false &&
+	test_config rebase.autostash false &&
+	test_pull_autostash_fail --rebase
+'
+
+test_expect_success 'pull.autostash=true & merge.autostash=true' '
+	test_config pull.autostash true &&
+	test_config merge.autostash true &&
+	test_pull_autostash 2 --no-rebase
+'
+
+test_expect_success 'pull.autostash=true & merge.autostash=false' '
+	test_config pull.autostash true &&
+	test_config merge.autostash false &&
+	test_pull_autostash 2 --no-rebase
+'
+
+test_expect_success 'pull.autostash=false & merge.autostash=true' '
+	test_config pull.autostash false &&
+	test_config merge.autostash true &&
+	test_pull_autostash_fail --no-rebase
+'
+
+test_expect_success 'pull.autostash=false & merge.autostash=false' '
+	test_config pull.autostash false &&
+	test_config merge.autostash false &&
+	test_pull_autostash_fail --no-rebase
+'
+
 test_expect_success 'pull.rebase' '
 	git reset --hard before-rebase &&
 	test_config pull.rebase true &&
