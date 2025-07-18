@@ -27,14 +27,6 @@ struct commit_list *filter_skipped(struct commit_list *list,
 #define FIND_BISECTION_ALL			(1u<<0)
 #define FIND_BISECTION_FIRST_PARENT_ONLY	(1u<<1)
 
-struct rev_list_info {
-	struct rev_info *revs;
-	int flags;
-	int show_timestamp;
-	int hdr_termination;
-	const char *header_prefix;
-};
-
 /*
  * enum bisect_error represents the following return codes:
  * BISECT_OK: success code. Internally, it means that next
