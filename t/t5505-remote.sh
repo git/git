@@ -1644,4 +1644,18 @@ test_expect_success 'empty config clears remote.*.pushurl list' '
 	test_cmp expect actual
 '
 
+test_expect_success 'forbid adding subset of existing remote' '
+	test_when_finished "git remote rm outer" &&
+	git remote add outer url &&
+	test_must_fail git remote add outer/inner url 2>err &&
+	test_grep ".outer/inner. is a subset of existing remote .outer." err
+'
+
+test_expect_success 'forbid adding superset of existing remote' '
+	test_when_finished "git remote rm outer/inner" &&
+	git remote add outer/inner url &&
+	test_must_fail git remote add outer url 2>err &&
+	test_grep ".outer. is a superset of existing remote .outer/inner." err
+'
+
 test_done
