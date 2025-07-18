@@ -724,4 +724,149 @@ test_expect_success 'cruft repack respects --quiet' '
 	)
 '
 
+setup_cruft_exclude_tests() {
+	git init "$1" &&
+	(
+		cd "$1" &&
+
+		git config repack.midxMustContainCruft false &&
+
+		test_commit one &&
+
+		test_commit --no-tag two &&
+		two="$(git rev-parse HEAD)" &&
+		test_commit --no-tag three &&
+		three="$(git rev-parse HEAD)" &&
+		git reset --hard one &&
+		git reflog expire --all --expire=all &&
+
+		GIT_TEST_MULTI_PACK_INDEX=0 git repack --cruft -d &&
+
+		git merge $two &&
+		test_commit four
+	)
+}
+
+test_expect_success 'repack --write-midx excludes cruft where possible' '
+	setup_cruft_exclude_tests exclude-cruft-when-possible &&
+	(
+		cd exclude-cruft-when-possible &&
+
+		GIT_TEST_MULTI_PACK_INDEX=0 \
+		git repack -d --geometric=2 --write-midx --write-bitmap-index &&
+
+		test-tool read-midx --show-objects $objdir >midx &&
+		cruft="$(ls $packdir/*.mtimes)" &&
+		test_grep ! "$(basename "$cruft" .mtimes).idx" midx &&
+
+		git rev-list --all --objects --no-object-names >reachable.raw &&
+		sort reachable.raw >reachable.objects &&
+		awk "/\.pack$/ { print \$1 }" <midx | sort >midx.objects &&
+
+		test_cmp reachable.objects midx.objects
+	)
+'
+
+test_expect_success 'repack --write-midx includes cruft when instructed' '
+	setup_cruft_exclude_tests exclude-cruft-when-instructed &&
+	(
+		cd exclude-cruft-when-instructed &&
+
+		GIT_TEST_MULTI_PACK_INDEX=0 \
+		git -c repack.midxMustContainCruft=true repack \
+			-d --geometric=2 --write-midx --write-bitmap-index &&
+
+		test-tool read-midx --show-objects $objdir >midx &&
+		cruft="$(ls $packdir/*.mtimes)" &&
+		test_grep "$(basename "$cruft" .mtimes).idx" midx &&
+
+		git cat-file --batch-check="%(objectname)" --batch-all-objects \
+			>all.objects &&
+		awk "/\.pack$/ { print \$1 }" <midx | sort >midx.objects &&
+
+		test_cmp all.objects midx.objects
+	)
+'
+
+test_expect_success 'repack --write-midx includes cruft when necessary' '
+	setup_cruft_exclude_tests exclude-cruft-when-necessary &&
+	(
+		cd exclude-cruft-when-necessary &&
+
+		test_path_is_file $(ls $packdir/pack-*.mtimes) &&
+		( cd $packdir && ls pack-*.idx ) | sort >packs.all &&
+		git multi-pack-index write --stdin-packs --bitmap <packs.all &&
+
+		test_commit five &&
+		GIT_TEST_MULTI_PACK_INDEX=0 \
+		git repack -d --geometric=2 --write-midx --write-bitmap-index &&
+
+		test-tool read-midx --show-objects $objdir >midx &&
+		awk "/\.pack$/ { print \$1 }" <midx | sort >midx.objects &&
+		git cat-file --batch-all-objects --batch-check="%(objectname)" \
+			>expect.objects &&
+		test_cmp expect.objects midx.objects &&
+
+		grep "^pack-" midx >midx.packs &&
+		test_line_count = "$(($(wc -l <packs.all) + 1))" midx.packs
+	)
+'
+
+test_expect_success 'repack --write-midx includes cruft when already geometric' '
+	git init repack--write-midx-geometric-noop &&
+	(
+		cd repack--write-midx-geometric-noop &&
+
+		git branch -M main &&
+		test_commit A &&
+		test_commit B &&
+
+		git checkout -B side &&
+		test_commit --no-tag C &&
+		C="$(git rev-parse HEAD)" &&
+
+		git checkout main &&
+		git branch -D side &&
+		git reflog expire --all --expire=all &&
+
+		# At this point we have two packs: one containing the
+		# objects belonging to commits A and B, and another
+		# (cruft) pack containing the objects belonging to
+		# commit C.
+		git repack --cruft -d &&
+
+		# Create a third pack which contains a merge commit
+		# making commit C reachable again.
+		#
+		# --no-ff is important here, as it ensures that we
+		# actually write a new object and subsequently a new
+		# pack to contain it.
+		git merge --no-ff $C &&
+		git repack -d &&
+
+		ls $packdir/pack-*.idx | sort >packs.all &&
+		cruft="$(ls $packdir/pack-*.mtimes)" &&
+		cruft="${cruft%.mtimes}.idx" &&
+
+		for idx in $(grep -v $cruft <packs.all)
+		do
+			git show-index <$idx >out &&
+			wc -l <out || return 1
+		done >sizes.raw &&
+
+		# Make sure that there are two non-cruft packs, and
+		# that one of them contains at least twice as many
+		# objects as the other, ensuring that they are already
+		# in a geometric progression.
+		sort -n sizes.raw >sizes &&
+		test_line_count = 2 sizes &&
+		s1=$(head -n 1 sizes) &&
+		s2=$(tail -n 1 sizes) &&
+		test "$s2" -gt "$((2 * $s1))" &&
+
+		git -c repack.midxMustContainCruft=false repack --geometric=2 \
+			--write-midx --write-bitmap-index
+	)
+'
+
 test_done
