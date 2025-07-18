@@ -14,6 +14,7 @@
 #include "blob.h"
 #include "refs.h"
 #include "progress.h"
+#include "prio-queue.h"
 
 static struct object_id current_commit_oid;
 
@@ -78,7 +79,7 @@ static int process_tree(struct walker *walker, struct tree *tree)
 #define SEEN		(1U << 1)
 #define TO_SCAN		(1U << 2)
 
-static struct commit_list *complete = NULL;
+static struct prio_queue complete = { compare_commits_by_commit_date };
 
 static int process_commit(struct walker *walker, struct commit *commit)
 {
@@ -87,7 +88,10 @@ static int process_commit(struct walker *walker, struct commit *commit)
 	if (repo_parse_commit(the_repository, commit))
 		return -1;
 
-	while (complete && complete->item->date >= commit->date) {
+	while (complete.nr) {
+		struct commit *item = prio_queue_peek(&complete);
+		if (item->date < commit->date)
+			break;
 		pop_most_recent_commit(&complete, COMPLETE);
 	}
 
@@ -233,7 +237,7 @@ static int mark_complete(const char *path UNUSED,
 
 	if (commit) {
 		commit->object.flags |= COMPLETE;
-		commit_list_insert(commit, &complete);
+		prio_queue_put(&complete, commit);
 	}
 	return 0;
 }
@@ -302,7 +306,6 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 	if (!walker->get_recover) {
 		refs_for_each_ref(get_main_ref_store(the_repository),
 				  mark_complete, NULL);
-		commit_list_sort_by_date(&complete);
 	}
 
 	for (i = 0; i < targets; i++) {

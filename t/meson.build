@@ -1116,6 +1116,7 @@ benchmarks = [
   'perf/p1450-fsck.sh',
   'perf/p1451-fsck-skip-list.sh',
   'perf/p1500-graph-walks.sh',
+  'perf/p1501-rev-parse-oneline.sh',
   'perf/p2000-sparse-operations.sh',
   'perf/p3400-rebase.sh',
   'perf/p3404-rebase-interactive.sh',
