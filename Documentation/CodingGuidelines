@@ -298,6 +298,9 @@ For C programs:
    . since late 2021 with 44ba10d6, we have had variables declared in
      the for loop "for (int i = 0; i < 10; i++)".
 
+   . since late 2023 with 8277dbe987 we have been using the bool type
+     from <stdbool.h>.
+
    New C99 features that we cannot use yet:
 
    . %z and %zu as a printf() argument for a size_t (the %z being for
