@@ -1,6 +1,15 @@
 #ifndef SANE_CTYPE_H
 #define SANE_CTYPE_H
 
+/*
+ * Explicitly include <ctype.h> so that its header guards kick in from here on.
+ * This ensures that the file won't get included after "sane-ctype.h", as that
+ * would otherwise lead to a compiler error because the function declarations
+ * for `int isascii(int c)` et al would be mangled by our macros with the same
+ * name.
+ */
+#include <ctype.h>
+
 /* Sane ctype - no locale, and works with signed chars */
 #undef isascii
 #undef isspace
