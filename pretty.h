@@ -50,6 +50,7 @@ struct pretty_print_context {
 	struct ident_split *from_ident;
 	unsigned encode_email_headers:1;
 	struct pretty_print_describe_status *describe_status;
+	int no_indent;
 
 	/*
 	 * Fields below here are manipulated internally by pp_* functions and

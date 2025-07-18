@@ -1,0 +1,95 @@
+git-last-modified(1)
+====================
+
+NAME
+----
+git-last-modified - EXPERIMENTAL: Show when files were last modified
+
+
+SYNOPSIS
+--------
+[synopsis]
+git last-modified [-r] [-t] [<revision-range>] [[--] <path>...]
+
+DESCRIPTION
+-----------
+
+Shows which commit last modified each of the relevant files and subdirectories.
+
+THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
+
+OPTIONS
+-------
+
+-r::
+	Recurse into subtrees.
+
+-t::
+	Show tree entry itself as well as subtrees.  Implies `-r`.
+
+-z::
+
+	Instead of separating output entries with newlines, use a NUL byte to
+	delimit them. See 'OUTPUT' for more details.
+
+--extended::
+	Show output in extended format. See 'OUTPUT' below.
+
+<revision-range>::
+	Only traverse commits in the specified revision range. When no
+	`<revision-range>` is specified, it defaults to `HEAD` (i.e. the whole
+	history leading to the current commit). For a complete list of ways to
+	spell `<revision-range>`, see the 'Specifying Ranges' section of
+	linkgit:gitrevisions[7].
+
+[--] <path>...::
+	For each _<path>_ given, the commit which last modified it is returned.
+	Without an optional path parameter, all files and subdirectories
+	in path traversal the are included in the output.
+
+OUTPUT
+------
+
+The default format prints for each path:
+
+	<oid> TAB <path> LF
+
+When the commit is at boundary, it's prefixed with a caret `^`.
+
+Or when option `-z` is given:
+
+	<oid> TAB <path> NUL
+
+When `--extended` is provided, the output will be in the format:
+
+	path SP <path> LF
+	commit SP <oid> LF
+	tree SP <tree> LF
+	parent SP <parent> LF
+	author SP <author> LF
+	    <message>
+
+Each line of the commit message is indented with four spaces.
+
+Unless together with `--extended` option `-z` is given, then the output is:
+
+	path SP <path> NUL
+	commit SP <oid> LF
+	tree SP <tree> LF
+	parent SP <parent> LF
+	author SP <author> LF
+	<message>
+
+In this situation the commit message is not indented.
+
+A path containing SP or special characters is enclosed in double-quotes in the C
+style as needed, unless option `-z` is provided.
+
+SEE ALSO
+--------
+linkgit:git-blame[1],
+linkgit:git-log[1].
+
+GIT
+---
+Part of the linkgit:git[1] suite

@@ -2286,7 +2286,7 @@ void pretty_print_commit(struct pretty_print_context *pp,
 			 struct strbuf *sb)
 {
 	unsigned long beginning_of_body;
-	int indent = 4;
+	int indent = pp->no_indent ? 0 : 4;
 	const char *msg;
 	const char *reencoded;
 	const char *encoding;
