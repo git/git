@@ -1971,13 +1971,13 @@ proc longid {prefix} {
 }
 
 proc readrefs {} {
-    global tagids idtags headids idheads tagobjid
+    global tagids idtags headids idheads tagobjid upstreamofref
     global otherrefids idotherrefs mainhead mainheadid
     global selecthead selectheadid
     global hideremotes
     global tclencoding
 
-    foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
+    foreach v {tagids idtags headids idheads otherrefids idotherrefs upstreamofref} {
         unset -nocomplain $v
     }
     set refd [safe_open_command [list git show-ref -d]]
@@ -2031,6 +2031,17 @@ proc readrefs {} {
             set selectheadid [safe_exec [list git rev-parse --verify $selecthead]]
         }
     }
+    #load the local_branch->upstream mapping
+    # the result of the for-each-ref command produces: local_branch NUL upstream
+    set refd [safe_open_command [list git for-each-ref {--format=%(refname:short)%00%(upstream)} refs/heads/]]
+    while {[gets $refd local_tracking] >= 0} {
+        set line [split $local_tracking \0]
+        if {[lindex $line 1] ne {}} {
+            set upstream_ref [string map {"refs/" ""} [lindex $line 1]]
+            set upstreamofref([lindex $line 0]) $upstream_ref
+        }
+    }
+    catch {close $refd}
 }
 
 # skip over fake commits
@@ -10308,11 +10319,12 @@ proc reflistfilter_change {n1 n2 op} {
 
 proc refill_reflist {} {
     global reflist reflistfilter showrefstop headids tagids otherrefids sortrefsbytype
-    global curview
+    global curview upstreamofref
 
     if {![info exists showrefstop] || ![winfo exists $showrefstop]} return
     set localrefs {}
     set remoterefs {}
+    set trackedremoterefs {}
     set tagrefs {}
     set otherrefs {}
 
@@ -10320,17 +10332,23 @@ proc refill_reflist {} {
         if {![string match "remotes/*" $n] && [string match $reflistfilter $n]} {
             if {[commitinview $headids($n) $curview]} {
                 lappend localrefs [list $n H]
+                if {[info exists upstreamofref($n)]} {
+                    lappend trackedremoterefs [list $upstreamofref($n) R]
+                }
             } else {
                 interestedin $headids($n) {run refill_reflist}
             }
         }
     }
+    set trackedremoterefs [lsort -index 0 $trackedremoterefs]
     set localrefs [lsort -index 0 $localrefs]
 
     foreach n [array names headids] {
         if {[string match "remotes/*" $n] && [string match $reflistfilter $n]} {
             if {[commitinview $headids($n) $curview]} {
-                lappend remoterefs [list $n R]
+                if {[lsearch -exact $trackedremoterefs [list $n R]] < 0} {
+                    lappend remoterefs [list $n R]
+                }
             } else {
                 interestedin $headids($n) {run refill_reflist}
             }
@@ -10360,7 +10378,7 @@ proc refill_reflist {} {
     }
     set otherrefs [lsort -index 0 $otherrefs]
 
-    set refs [concat $localrefs $remoterefs $tagrefs $otherrefs]
+    set refs [concat $localrefs $trackedremoterefs $remoterefs $tagrefs $otherrefs]
     if {!$sortrefsbytype} {
         set refs [lsort -index 0 $refs]
     }
