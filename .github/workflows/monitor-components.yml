@@ -88,6 +88,9 @@ jobs:
             feed: https://github.com/msys2/MINGW-packages/commits/master/mingw-w64-llvm.atom
           - label: innosetup
             feed: https://github.com/jrsoftware/issrc/tags.atom
+          - label: mimalloc
+            feed: https://github.com/microsoft/mimalloc/tags.atom
+            title-pattern: ^(?!v1\.)
       fail-fast: false
     steps:
       - uses: git-for-windows/rss-to-issues@v0
