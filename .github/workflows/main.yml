@@ -123,6 +123,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: git-for-windows/setup-git-for-windows-sdk@v1
+    - name: ensure that libuserenv.a is present
+      shell: bash
+      run: |
+        cd /mingw64/lib && {
+          test -f libuserenv.a ||
+          /c/Program\ Files/Git/mingw64/bin/curl -Lo libuserenv.a \
+            https://github.com/git-for-windows/git-sdk-64/raw/HEAD/mingw64/lib/libuserenv.a
+        }
     - name: Install rustup via github actions
       uses: actions-rs/toolchain@v1
       with:
