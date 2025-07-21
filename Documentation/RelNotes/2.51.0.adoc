@@ -88,6 +88,9 @@ Performance, Internal Implementation, Development Support etc.
    coming from using a variable with a wrong type to capture the
    parsed values.
 
+ * Flipping the default hash function to SHA-256 at Git 3.0 boundary
+   is planned.
+
 
 Fixes since v2.50
 -----------------
@@ -178,6 +181,20 @@ including security updates, are included in this release.
    now removes refs/heads/foo/ if the directory is otherwise not used.
    (merge a3a7f20516 ps/refs-files-remove-empty-parent later to maint).
 
+ * "pack-objects" has been taught to avoid pointing into objects in
+   cruft packs from midx.
+
+ * "git remote" now detects remote names that overlap with each other
+   (e.g., remote nickname "outer" and "outer/inner" are used at the
+   same time), as it will lead to overlapping remote-tracking
+   branches.
+   (merge a5a727c448 jk/remote-avoid-overlapping-names later to maint).
+
+ * The gpg.program configuration variable, which names a pathname to
+   the (custom) GPG compatible program, can now be spelled with ~tilde
+   expansion.
+   (merge 7d275cd5c0 jb/gpg-program-variable-is-a-pathname later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge b257adb571 lo/my-first-ow-doc-update later to maint).
    (merge 8b34b6a220 ly/sequencer-update-squash-is-fixup-only later to maint).
@@ -201,3 +218,5 @@ including security updates, are included in this release.
    (merge 953049eed8 ts/merge-orig-head-doc-fix later to maint).
    (merge 0c83bbc704 rj/freebsd-sysinfo-build-fix later to maint).
    (merge ad7780b38f ps/doc-pack-refs-auto-with-files-backend-fix later to maint).
+   (merge f4fa8a3687 rh/doc-glob-pathspec-fix later to maint).
+   (merge b27be108c8 ja/doc-git-log-markup later to maint).
