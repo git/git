@@ -525,7 +525,7 @@ test_expect_success 'index-pack --strict <pack> works in non-repo' '
 	test_path_is_file foo.idx
 '
 
-test_expect_success SHA1 'show-index works OK outside a repository' '
+test_expect_success DEFAULT_HASH_ALGORITHM 'show-index works OK outside a repository' '
 	nongit git show-index <foo.idx
 '
 
@@ -658,7 +658,7 @@ do
 		test_commit -C repo initial &&
 		git -C repo repack -ad &&
 		git -C repo verify-pack "$(pwd)"/repo/.git/objects/pack/*.idx &&
-		if test $hash = sha1
+		if test $hash = $GIT_TEST_BUILTIN_HASH
 		then
 			nongit git verify-pack "$(pwd)"/repo/.git/objects/pack/*.idx
 		else
@@ -676,7 +676,7 @@ do
 		test_commit -C repo initial &&
 		git -C repo repack -ad &&
 		git -C repo index-pack --verify "$(pwd)"/repo/.git/objects/pack/*.pack &&
-		if test $hash = sha1
+		if test $hash = $GIT_TEST_BUILTIN_HASH
 		then
 			nongit git index-pack --verify "$(pwd)"/repo/.git/objects/pack/*.pack
 		else
