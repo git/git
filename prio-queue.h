@@ -52,6 +52,14 @@ void *prio_queue_get(struct prio_queue *);
  */
 void *prio_queue_peek(struct prio_queue *);
 
+/*
+ * Replace the "thing" that compares the smallest with a new "thing",
+ * like prio_queue_get()+prio_queue_put() would do, but in a more
+ * efficient way.  Does the same as prio_queue_put() if the queue is
+ * empty.
+ */
+void prio_queue_replace(struct prio_queue *queue, void *thing);
+
 void clear_prio_queue(struct prio_queue *);
 
 /* Reverse the LIFO elements */

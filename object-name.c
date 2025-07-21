@@ -28,6 +28,7 @@
 #include "commit-reach.h"
 #include "date.h"
 #include "object-file-convert.h"
+#include "prio-queue.h"
 
 static int get_oid_oneline(struct repository *r, const char *, struct object_id *,
 			   const struct commit_list *);
@@ -1461,7 +1462,7 @@ static int get_oid_oneline(struct repository *r,
 			   const char *prefix, struct object_id *oid,
 			   const struct commit_list *list)
 {
-	struct commit_list *copy = NULL, **copy_tail = &copy;
+	struct prio_queue copy = { compare_commits_by_commit_date };
 	const struct commit_list *l;
 	int found = 0;
 	int negative = 0;
@@ -1483,9 +1484,9 @@ static int get_oid_oneline(struct repository *r,
 
 	for (l = list; l; l = l->next) {
 		l->item->object.flags |= ONELINE_SEEN;
-		copy_tail = &commit_list_insert(l->item, copy_tail)->next;
+		prio_queue_put(&copy, l->item);
 	}
-	while (copy) {
+	while (copy.nr) {
 		const char *p, *buf;
 		struct commit *commit;
 		int matches;
@@ -1507,7 +1508,7 @@ static int get_oid_oneline(struct repository *r,
 	regfree(&regex);
 	for (l = list; l; l = l->next)
 		clear_commit_marks(l->item, ONELINE_SEEN);
-	free_commit_list(copy);
+	clear_prio_queue(&copy);
 	return found ? 0 : -1;
 }
 
@@ -2061,7 +2062,6 @@ static enum get_oid_result get_oid_with_context_1(struct repository *repo,
 			cb.list = &list;
 			refs_for_each_ref(get_main_ref_store(repo), handle_one_ref, &cb);
 			refs_head_ref(get_main_ref_store(repo), handle_one_ref, &cb);
-			commit_list_sort_by_date(&list);
 			ret = get_oid_oneline(repo, name + 2, oid, list);
 
 			free_commit_list(list);
