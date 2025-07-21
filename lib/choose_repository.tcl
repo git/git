@@ -557,6 +557,25 @@ method _update_clone {args} {
 method _do_clone2 {} {
 	if {[file isdirectory $origin_url]} {
 		set origin_url [file normalize $origin_url]
+		if {$clone_type eq {hardlink}} {
+			# cannot use hardlinks if this is a linked worktree (.gitfile or git-new-workdir)
+			if {[git -C $origin_url rev-parse --is-inside-work-tree] == {true}} {
+				set islink 0
+				set dotgit [file join $origin_url .git]
+				if {[file isfile $dotgit]} {
+					set islink 1
+				} else {
+					set objdir [file join $dotgit objects]
+					if {[file exists $objdir] && [file type $objdir] == {link}} {
+						set islink 1
+					}
+				}
+				if {$islink} {
+					info_popup [mc "Hardlinks are unavailable.  Falling back to copying."]
+					set clone_type full
+				}
+			}
+		}
 	}
 
 	if {$clone_type eq {hardlink} && ![file isdirectory $origin_url]} {
