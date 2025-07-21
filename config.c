@@ -1534,9 +1534,11 @@ static int git_default_core_config(const char *var, const char *value,
 	    !strcmp(var, "core.commentstring")) {
 		if (!value)
 			return config_error_nonbool(var);
-		else if (!strcasecmp(value, "auto"))
+		else if (!strcasecmp(value, "auto")) {
 			auto_comment_line_char = 1;
-		else if (value[0]) {
+			FREE_AND_NULL(comment_line_str_to_free);
+			comment_line_str = "#";
+		} else if (value[0]) {
 			if (strchr(value, '\n'))
 				return error(_("%s cannot contain newline"), var);
 			comment_line_str = value;
