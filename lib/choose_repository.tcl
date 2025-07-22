@@ -10,22 +10,12 @@ field w_next      ; # Next button
 field w_quit      ; # Quit button
 field o_cons      ; # Console object (if active)
 
-# Status mega-widget instance during _do_clone2 (used by _copy_files and
-# _link_files). Widget is destroyed before _do_clone2 calls
-# _do_clone_checkout
-field o_status
-
-# Operation displayed by status mega-widget during _do_clone_checkout =>
-# _readtree_wait => _postcheckout_wait => _do_clone_submodules =>
-# _do_validate_submodule_cloning. The status mega-widget is a different
-# instance than that stored in $o_status in earlier operations.
-field o_status_op
-
 field w_types     ; # List of type buttons in clone
 field w_recentlist ; # Listbox containing recent repositories
 field w_localpath  ; # Entry widget bound to local_path
 
 field done              0 ; # Finished picking the repository?
+field clone_ok      false ; # clone succeeeded
 field local_path       {} ; # Where this repository is locally
 field origin_url       {} ; # Where we are cloning from
 field origin_name  origin ; # What we shall call 'origin'
@@ -322,7 +312,7 @@ method _write_local_path {args} {
 }
 
 method _git_init {} {
-	if {[catch {file mkdir $local_path} err]} {
+	if {[catch {git init $local_path} err]} {
 		error_popup [strcat \
 			[mc "Failed to create repository %s:" $local_path] \
 			"\n\n$err"]
@@ -330,13 +320,6 @@ method _git_init {} {
 	}
 
 	if {[catch {cd $local_path} err]} {
-		error_popup [strcat \
-			[mc "Failed to create repository %s:" $local_path] \
-			"\n\n$err"]
-		return 0
-	}
-
-	if {[catch {git init} err]} {
 		error_popup [strcat \
 			[mc "Failed to create repository %s:" $local_path] \
 			"\n\n$err"]
@@ -357,20 +340,6 @@ proc _is_git {path {outdir_var ""}} {
 		return 0
 	}
 	return 1
-}
-
-proc _objdir {path} {
-	set objdir [file join $path .git objects]
-	if {[file isdirectory $objdir]} {
-		return $objdir
-	}
-
-	set objdir [file join $path objects]
-	if {[file isdirectory $objdir]} {
-		return $objdir
-	}
-
-	return {}
 }
 
 ######################################################################
@@ -585,6 +554,25 @@ method _update_clone {args} {
 method _do_clone2 {} {
 	if {[file isdirectory $origin_url]} {
 		set origin_url [file normalize $origin_url]
+		if {$clone_type eq {hardlink}} {
+			# cannot use hardlinks if this is a linked worktree (.gitfile or git-new-workdir)
+			if {[git -C $origin_url rev-parse --is-inside-work-tree] == {true}} {
+				set islink 0
+				set dotgit [file join $origin_url .git]
+				if {[file isfile $dotgit]} {
+					set islink 1
+				} else {
+					set objdir [file join $dotgit objects]
+					if {[file exists $objdir] && [file type $objdir] == {link}} {
+						set islink 1
+					}
+				}
+				if {$islink} {
+					info_popup [mc "Hardlinks are unavailable.  Falling back to copying."]
+					set clone_type full
+				}
+			}
+		}
 	}
 
 	if {$clone_type eq {hardlink} && ![file isdirectory $origin_url]} {
@@ -596,14 +584,6 @@ method _do_clone2 {} {
 		return
 	}
 
-	if {$clone_type eq {hardlink} || $clone_type eq {shared}} {
-		set objdir [_objdir $origin_url]
-		if {$objdir eq {}} {
-			error_popup [mc "Not a Git repository: %s" [file tail $origin_url]]
-			return
-		}
-	}
-
 	set giturl $origin_url
 
 	if {[file exists $local_path]} {
@@ -611,435 +591,62 @@ method _do_clone2 {} {
 		return
 	}
 
-	if {![_git_init $this]} return
-	set local_path [pwd]
-
-	if {[catch {
-			git config remote.$origin_name.url $giturl
-			git config remote.$origin_name.fetch +refs/heads/*:refs/remotes/$origin_name/*
-		} err]} {
-		error_popup [strcat [mc "Failed to configure origin"] "\n\n$err"]
-		return
+	set clone_options {--progress}
+	if {$recursive} {
+		append clone_options { --recurse-submodules}
 	}
 
 	destroy $w_body $w_next
 
 	switch -exact -- $clone_type {
-	hardlink {
-		set o_status [status_bar::two_line $w_body]
-		pack $w_body -fill x -padx 10 -pady 10
-
-		set status_op [$o_status start \
-			[mc "Counting objects"] \
-			[mc "buckets"]]
-		update
-
-		if {[file exists [file join $objdir info alternates]]} {
-			set pwd [pwd]
-			if {[catch {
-				file mkdir [gitdir objects info]
-				set f_in [safe_open_file [file join $objdir info alternates] r]
-				set f_cp [safe_open_file [gitdir objects info alternates] w]
-				fconfigure $f_in -translation binary -encoding binary
-				fconfigure $f_cp -translation binary -encoding binary
-				cd $objdir
-				while {[gets $f_in line] >= 0} {
-					puts $f_cp [file normalize $line]
-				}
-				close $f_in
-				close $f_cp
-				cd $pwd
-			} err]} {
-				catch {cd $pwd}
-				_clone_failed $this [mc "Unable to copy objects/info/alternates: %s" $err]
-				$status_op stop
-				return
-			}
+		full {
+			append clone_options { --no-hardlinks --no-local}
 		}
-
-		set tolink  [list]
-		set buckets [glob \
-			-tails \
-			-nocomplain \
-			-directory [file join $objdir] ??]
-		set bcnt [expr {[llength $buckets] + 2}]
-		set bcur 1
-		$status_op update $bcur $bcnt
-		update
-
-		file mkdir [file join .git objects pack]
-		foreach i [glob -tails -nocomplain \
-			-directory [file join $objdir pack] *] {
-			lappend tolink [file join pack $i]
+		shared {
+			append clone_options { --shared}
 		}
-		$status_op update [incr bcur] $bcnt
-		update
-
-		foreach i $buckets {
-			file mkdir [file join .git objects $i]
-			foreach j [glob -tails -nocomplain \
-				-directory [file join $objdir $i] *] {
-				lappend tolink [file join $i $j]
-			}
-			$status_op update [incr bcur] $bcnt
-			update
-		}
-		$status_op stop
-
-		if {$tolink eq {}} {
-			info_popup [strcat \
-				[mc "Nothing to clone from %s." $origin_url] \
-				"\n" \
-				[mc "The 'master' branch has not been initialized."] \
-				]
-			destroy $w_body
-			set done 1
-			return
-		}
-
-		set i [lindex $tolink 0]
-		if {[catch {
-				file link -hard \
-					[file join .git objects $i] \
-					[file join $objdir $i]
-			} err]} {
-			info_popup [mc "Hardlinks are unavailable.  Falling back to copying."]
-			set i [_copy_files $this $objdir $tolink]
-		} else {
-			set i [_link_files $this $objdir [lrange $tolink 1 end]]
-		}
-		if {!$i} return
-
-		destroy $w_body
-
-		set o_status {}
 	}
-	full {
+
+	if {[catch {
 		set o_cons [console::embed \
 			$w_body \
 			[mc "Cloning from %s" $origin_url]]
 		pack $w_body -fill both -expand 1 -padx 10
 		$o_cons exec \
-			[list git fetch --no-tags -k $origin_name] \
-			[cb _do_clone_tags]
-	}
-	shared {
-		set fd [safe_open_file [gitdir objects info alternates] w]
-		fconfigure $fd -translation binary
-		puts $fd $objdir
-		close $fd
-	}
+			[list git clone {*}$clone_options $origin_url $local_path] \
+			[cb _do_clone2_done]
+	} err]} {
+		error_popup [strcat [mc "Clone failed."] "\n" $err]
+		return
 	}
 
-	if {$clone_type eq {hardlink} || $clone_type eq {shared}} {
-		if {![_clone_refs $this]} return
-		set pwd [pwd]
-		if {[catch {
-				cd $origin_url
-				set HEAD [git rev-parse --verify HEAD^0]
-			} err]} {
-			_clone_failed $this [mc "Not a Git repository: %s" [file tail $origin_url]]
-			return 0
-		}
-		cd $pwd
-		_do_clone_checkout $this $HEAD
+	tkwait variable @done
+	if {!$clone_ok} {
+		error_popup [mc "Clone failed."]
+		return
 	}
 }
 
-method _copy_files {objdir tocopy} {
-	set status_op [$o_status start \
-		[mc "Copying objects"] \
-		[mc "KiB"]]
-	set tot 0
-	set cmp 0
-	foreach p $tocopy {
-		incr tot [file size [file join $objdir $p]]
-	}
-	foreach p $tocopy {
-		if {[catch {
-				set f_in [safe_open_file [file join $objdir $p] r]
-				set f_cp [safe_open_file [file join .git objects $p] w]
-				fconfigure $f_in -translation binary -encoding binary
-				fconfigure $f_cp -translation binary -encoding binary
-
-				while {![eof $f_in]} {
-					incr cmp [fcopy $f_in $f_cp -size 16384]
-					$status_op update \
-						[expr {$cmp / 1024}] \
-						[expr {$tot / 1024}]
-					update
-				}
-
-				close $f_in
-				close $f_cp
-			} err]} {
-			_clone_failed $this [mc "Unable to copy object: %s" $err]
-			$status_op stop
-			return 0
-		}
-	}
-	$status_op stop
-	return 1
-}
-
-method _link_files {objdir tolink} {
-	set total [llength $tolink]
-	set status_op [$o_status start \
-		[mc "Linking objects"] \
-		[mc "objects"]]
-	for {set i 0} {$i < $total} {} {
-		set p [lindex $tolink $i]
-		if {[catch {
-				file link -hard \
-					[file join .git objects $p] \
-					[file join $objdir $p]
-			} err]} {
-			_clone_failed $this [mc "Unable to hardlink object: %s" $err]
-			$status_op stop
-			return 0
-		}
-
-		incr i
-		if {$i % 5 == 0} {
-			$status_op update $i $total
-			update
-		}
-	}
-	$status_op stop
-	return 1
-}
-
-method _clone_refs {} {
-	set pwd [pwd]
-	if {[catch {cd $origin_url} err]} {
-		error_popup [mc "Not a Git repository: %s" [file tail $origin_url]]
-		return 0
-	}
-	set fd_in [git_read [list for-each-ref \
-		--tcl \
-		{--format=list %(refname) %(objectname) %(*objectname)}]]
-	cd $pwd
-
-	set fd [safe_open_file [gitdir packed-refs] w]
-	fconfigure $fd -translation binary
-	puts $fd "# pack-refs with: peeled"
-	while {[gets $fd_in line] >= 0} {
-		set line [eval $line]
-		set refn [lindex $line 0]
-		set robj [lindex $line 1]
-		set tobj [lindex $line 2]
-
-		if {[regsub ^refs/heads/ $refn \
-			"refs/remotes/$origin_name/" refn]} {
-			puts $fd "$robj $refn"
-		} elseif {[string match refs/tags/* $refn]} {
-			puts $fd "$robj $refn"
-			if {$tobj ne {}} {
-				puts $fd "^$tobj"
-			}
-		}
-	}
-	close $fd_in
-	close $fd
-	return 1
-}
-
-method _do_clone_tags {ok} {
-	if {$ok} {
-		$o_cons exec \
-			[list git fetch --tags -k $origin_name] \
-			[cb _do_clone_HEAD]
-	} else {
-		$o_cons done $ok
-		_clone_failed $this [mc "Cannot fetch branches and objects.  See console output for details."]
-	}
-}
-
-method _do_clone_HEAD {ok} {
-	if {$ok} {
-		$o_cons exec \
-			[list git fetch $origin_name HEAD] \
-			[cb _do_clone_full_end]
-	} else {
-		$o_cons done $ok
-		_clone_failed $this [mc "Cannot fetch tags.  See console output for details."]
-	}
-}
-
-method _do_clone_full_end {ok} {
+method _do_clone2_done {ok} {
 	$o_cons done $ok
-
 	if {$ok} {
-		destroy $w_body
-
-		set HEAD {}
-		if {[file exists [gitdir FETCH_HEAD]]} {
-			set fd [safe_open_file [gitdir FETCH_HEAD] r]
-			while {[gets $fd line] >= 0} {
-				if {[regexp "^(.{40,64})\t\t" $line line HEAD]} {
-					break
-				}
-			}
-			close $fd
-		}
-
-		catch {git pack-refs}
-		_do_clone_checkout $this $HEAD
-	} else {
-		_clone_failed $this [mc "Cannot determine HEAD.  See console output for details."]
-	}
-}
-
-method _clone_failed {{why {}}} {
-	if {[catch {file delete -force $local_path} err]} {
-		set why [strcat \
-			$why \
-			"\n\n" \
-			[mc "Unable to cleanup %s" $local_path] \
-			"\n\n" \
-			$err]
-	}
-	if {$why ne {}} {
-		update
-		error_popup [strcat [mc "Clone failed."] "\n" $why]
-	}
-}
-
-method _do_clone_checkout {HEAD} {
-	if {$HEAD eq {}} {
-		info_popup [strcat \
-			[mc "No default branch obtained."] \
-			"\n" \
-			[mc "The 'master' branch has not been initialized."] \
-			]
-		set done 1
-		return
-	}
-	if {[catch {
-			git update-ref HEAD $HEAD^0
+		if {[catch {
+			cd $local_path
+			set ::_gitdir .git
+			set ::_prefix {}
+			_append_recentrepos [pwd]
 		} err]} {
-		info_popup [strcat \
-			[mc "Cannot resolve %s as a commit." $HEAD^0] \
-			"\n  $err" \
-			"\n" \
-			[mc "The 'master' branch has not been initialized."] \
-			]
-		set done 1
-		return
-	}
-
-	set status [status_bar::two_line $w_body]
-	pack $w_body -fill x -padx 10 -pady 10
-
-	# We start the status operation here.
-	#
-	# This function calls _readtree_wait as a callback.
-	#
-	# _readtree_wait in turn either calls _do_clone_submodules directly,
-	# or calls _postcheckout_wait as a callback which then calls
-	# _do_clone_submodules.
-	#
-	# _do_clone_submodules calls _do_validate_submodule_cloning.
-	#
-	# _do_validate_submodule_cloning stops the status operation.
-	#
-	# There are no other calls into this chain from other code.
-
-	set o_status_op [$status start \
-		[mc "Creating working directory"] \
-		[mc "files"]]
-
-	set readtree_err {}
-	set fd [git_read [list read-tree \
-		-m \
-		-u \
-		-v \
-		HEAD \
-		HEAD \
-		] \
-		[list 2>@1]]
-	fconfigure $fd -blocking 0 -translation binary
-	fileevent $fd readable [cb _readtree_wait $fd]
-}
-
-method _readtree_wait {fd} {
-	set buf [read $fd]
-	$o_status_op update_meter $buf
-	append readtree_err $buf
-
-	fconfigure $fd -blocking 1
-	if {![eof $fd]} {
-		fconfigure $fd -blocking 0
-		return
-	}
-
-	if {[catch {close $fd}]} {
-		set err $readtree_err
-		regsub {^fatal: } $err {} err
-		error_popup [strcat \
-			[mc "Initial file checkout failed."] \
-			"\n\n$err"]
-		return
-	}
-
-	# -- Run the post-checkout hook.
-	#
-	set head_id [git rev-parse HEAD]
-	set fd_ph [githook_read post-checkout \
-		[string repeat 0 [string length $head_id]] $head_id 1]
-	if {$fd_ph ne {}} {
-		global pch_error
-		set pch_error {}
-		fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
-		fileevent $fd_ph readable [cb _postcheckout_wait $fd_ph]
-	} else {
-		_do_clone_submodules $this
-	}
-}
-
-method _postcheckout_wait {fd_ph} {
-	global pch_error
-
-	append pch_error [read $fd_ph]
-	fconfigure $fd_ph -blocking 1
-	if {[eof $fd_ph]} {
-		if {[catch {close $fd_ph}]} {
-			hook_failed_popup post-checkout $pch_error 0
+			set ok 0
 		}
-		unset pch_error
-		_do_clone_submodules $this
-		return
 	}
-	fconfigure $fd_ph -blocking 0
+	if {!$ok} {
+		set ::_gitdir {}
+		set ::_prefix {}
+	}
+	set clone_ok $ok
+	set done 1
 }
 
-method _do_clone_submodules {} {
-	if {$recursive eq {true}} {
-		$o_status_op stop
-		set o_status_op {}
-
-		destroy $w_body
-
-		set o_cons [console::embed \
-			$w_body \
-			[mc "Cloning submodules"]]
-		pack $w_body -fill both -expand 1 -padx 10
-		$o_cons exec \
-			[list git submodule update --init --recursive] \
-			[cb _do_validate_submodule_cloning]
-	} else {
-		set done 1
-	}
-}
-
-method _do_validate_submodule_cloning {ok} {
-	if {$ok} {
-		$o_cons done $ok
-		set done 1
-	} else {
-		_clone_failed $this [mc "Cannot clone submodules."]
-	}
-}
 
 ######################################################################
 ##

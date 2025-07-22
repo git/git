@@ -44,7 +44,7 @@ proc do_about {} {
 
 	set d {}
 	append d "git wrapper: $::_git\n"
-	append d "git exec dir: [gitexec]\n"
+	append d "git exec dir: [git --exec-path]\n"
 	append d "git-gui lib: $oguilib"
 
 	paddedlabel $w.vers -text $v

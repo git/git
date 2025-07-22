@@ -79,10 +79,8 @@ proc is_Cygwin {} {
 
 if {[is_Windows]} {
 	set _path_sep {;}
-	set _search_exe .exe
 } else {
 	set _path_sep {:}
-	set _search_exe {}
 }
 
 if {[is_Windows]} {
@@ -112,15 +110,15 @@ set env(PATH) [join $_search_path $_path_sep]
 
 if {[is_Windows]} {
 	proc _which {what args} {
-		global _search_exe _search_path
+		global _search_path
 
 		if {[lsearch -exact $args -script] >= 0} {
 			set suffix {}
-		} elseif {[string match *$_search_exe [string tolower $what]]} {
+		} elseif {[string match *.exe [string tolower $what]]} {
 			# The search string already has the file extension
 			set suffix {}
 		} else {
-			set suffix $_search_exe
+			set suffix .exe
 		}
 
 		foreach p $_search_path {
@@ -363,7 +361,6 @@ set _appname {Git Gui}
 set _gitdir {}
 set _gitworktree {}
 set _isbare {}
-set _gitexec {}
 set _githtmldir {}
 set _reponame {}
 set _shellpath {@@SHELL_PATH@@}
@@ -426,20 +423,6 @@ proc gitdir {args} {
 		return $_gitdir
 	}
 	return [eval [list file join $_gitdir] $args]
-}
-
-proc gitexec {args} {
-	global _gitexec
-	if {$_gitexec eq {}} {
-		if {[catch {set _gitexec [git --exec-path]} err]} {
-			error "Git not installed?\n\n$err"
-		}
-		set _gitexec [file normalize $_gitexec]
-	}
-	if {$args eq {}} {
-		return $_gitexec
-	}
-	return [eval [list file join $_gitexec] $args]
 }
 
 proc githtmldir {args} {
@@ -574,56 +557,6 @@ proc _trace_exec {cmd} {
 
 #'"  fix poor old emacs font-lock mode
 
-proc _git_cmd {name} {
-	global _git_cmd_path
-
-	if {[catch {set v $_git_cmd_path($name)}]} {
-		switch -- $name {
-		  version   -
-		--version   -
-		--exec-path { return [list $::_git $name] }
-		}
-
-		set p [gitexec git-$name$::_search_exe]
-		if {[file exists $p]} {
-			set v [list $p]
-		} elseif {[is_Windows] && [file exists [gitexec git-$name]]} {
-			# Try to determine what sort of magic will make
-			# git-$name go and do its thing, because native
-			# Tcl on Windows doesn't know it.
-			#
-			set p [gitexec git-$name]
-			set f [safe_open_file $p r]
-			set s [gets $f]
-			close $f
-
-			switch -glob -- [lindex $s 0] {
-			#!*sh     { set i sh     }
-			#!*perl   { set i perl   }
-			#!*python { set i python }
-			default   { error "git-$name is not supported: $s" }
-			}
-
-			upvar #0 _$i interp
-			if {![info exists interp]} {
-				set interp [_which $i]
-			}
-			if {$interp eq {}} {
-				error "git-$name requires $i (not in PATH)"
-			}
-			set v [concat [list $interp] [lrange $s 1 end] [list $p]]
-		} else {
-			# Assume it is builtin to git somehow and we
-			# aren't actually able to see a file for it.
-			#
-			set v [list $::_git $name]
-		}
-		set _git_cmd_path($name) $v
-	}
-	return $v
-}
-
-# Run a shell command connected via pipes on stdout.
 # This is for use with textconv filters and uses sh -c "..." to allow it to
 # contain a command with arguments. We presume this
 # to be a shellscript that the configured shell (/bin/sh by default) knows
@@ -679,30 +612,30 @@ proc safe_open_command {cmd {redir {}}} {
 }
 
 proc git_read {cmd {redir {}}} {
-	set cmdp [_git_cmd [lindex $cmd 0]]
-	set cmd [lrange $cmd 1 end]
+	global _git
+	set cmdp [concat [list $_git] $cmd]
 
-	return [safe_open_command [concat $cmdp $cmd] $redir]
+	return [safe_open_command $cmdp $redir]
 }
 
 proc git_read_nice {cmd} {
+	global _git
 	set opt [list]
 
 	_lappend_nice opt
 
-	set cmdp [_git_cmd [lindex $cmd 0]]
-	set cmd [lrange $cmd 1 end]
+	set cmdp [concat [list $_git] $cmd]
 
-	return [safe_open_command [concat $opt $cmdp $cmd]]
+	return [safe_open_command [concat $opt $cmdp]]
 }
 
 proc git_write {cmd} {
+	global _git
 	set cmd [make_arglist_safe $cmd]
-	set cmdp [_git_cmd [lindex $cmd 0]]
-	set cmd [lrange $cmd 1 end]
+	set cmdp [concat [list $_git] $cmd]
 
-	_trace_exec [concat $cmdp $cmd]
-	return [open [concat [list | ] $cmdp $cmd] w]
+	_trace_exec $cmdp
+	return [open [concat [list | ] $cmdp] w]
 }
 
 proc githook_read {hook_name args} {
@@ -742,27 +675,8 @@ proc sq {value} {
 proc load_current_branch {} {
 	global current_branch is_detached
 
-	set fd [safe_open_file [gitdir HEAD] r]
-	fconfigure $fd -translation binary -encoding utf-8
-	if {[gets $fd ref] < 1} {
-		set ref {}
-	}
-	close $fd
-
-	set pfx {ref: refs/heads/}
-	set len [string length $pfx]
-	if {[string equal -length $len $pfx $ref]} {
-		# We're on a branch.  It might not exist.  But
-		# HEAD looks good enough to be a branch.
-		#
-		set current_branch [string range $ref $len end]
-		set is_detached 0
-	} else {
-		# Assume this is a detached head.
-		#
-		set current_branch HEAD
-		set is_detached 1
-	}
+	set current_branch [git branch --show-current]
+	set is_detached [expr [string length $current_branch] == 0]
 }
 
 auto_load tk_optionMenu
@@ -981,6 +895,8 @@ if {$_git eq {}} {
 ##
 ## version check
 
+set MIN_GIT_VERSION 2.36
+
 if {[catch {set _git_version [git --version]} err]} {
 	catch {wm withdraw .}
 	tk_messageBox \
@@ -991,9 +907,10 @@ if {[catch {set _git_version [git --version]} err]} {
 
 $err
 
-[appname] requires Git 1.5.0 or later."
+[appname] requires Git $MIN_GIT_VERSION or later."
 	exit 1
 }
+
 if {![regsub {^git version } $_git_version {} _git_version]} {
 	catch {wm withdraw .}
 	tk_messageBox \
@@ -1018,85 +935,21 @@ proc get_trimmed_version {s} {
 set _real_git_version $_git_version
 set _git_version [get_trimmed_version $_git_version]
 
-if {![regexp {^[1-9]+(\.[0-9]+)+$} $_git_version]} {
-	catch {wm withdraw .}
-	if {[tk_messageBox \
-		-icon warning \
-		-type yesno \
-		-default no \
-		-title "[appname]: warning" \
-		-message [mc "Git version cannot be determined.
+if {[catch {set vcheck [package vcompare $_git_version $MIN_GIT_VERSION]}] ||
+	[expr $vcheck < 0] } {
 
-%s claims it is version '%s'.
-
-%s requires at least Git 1.5.0 or later.
-
-Assume '%s' is version 1.5.0?
-" $_git $_real_git_version [appname] $_real_git_version]] eq {yes}} {
-		set _git_version 1.5.0
-	} else {
-		exit 1
-	}
-}
-unset _real_git_version
-
-proc git-version {args} {
-	global _git_version
-
-	switch [llength $args] {
-	0 {
-		return $_git_version
-	}
-
-	2 {
-		set op [lindex $args 0]
-		set vr [lindex $args 1]
-		set cm [package vcompare $_git_version $vr]
-		return [expr $cm $op 0]
-	}
-
-	4 {
-		set type [lindex $args 0]
-		set name [lindex $args 1]
-		set parm [lindex $args 2]
-		set body [lindex $args 3]
-
-		if {($type ne {proc} && $type ne {method})} {
-			error "Invalid arguments to git-version"
-		}
-		if {[llength $body] < 2 || [lindex $body end-1] ne {default}} {
-			error "Last arm of $type $name must be default"
-		}
-
-		foreach {op vr cb} [lrange $body 0 end-2] {
-			if {[git-version $op $vr]} {
-				return [uplevel [list $type $name $parm $cb]]
-			}
-		}
-
-		return [uplevel [list $type $name $parm [lindex $body end]]]
-	}
-
-	default {
-		error "git-version >= x"
-	}
-
-	}
-}
-
-if {[git-version < 1.5]} {
+	set msg1 [mc "Insufficient git version, require: "]
+	set msg2 [mc "git returned:"]
+	set message "$msg1 $MIN_GIT_VERSION\n$msg2 $_real_git_version"
 	catch {wm withdraw .}
 	tk_messageBox \
 		-icon error \
 		-type ok \
 		-title [mc "git-gui: fatal error"] \
-		-message "[appname] requires Git 1.5.0 or later.
-
-You are using [git-version]:
-
-[git --version]"
+		-message $message
 	exit 1
 }
+unset _real_git_version
 
 ######################################################################
 ##
@@ -1261,7 +1114,7 @@ citool {
 
 # Suggest our implementation of askpass, if none is set
 if {![info exists env(SSH_ASKPASS)]} {
-	set env(SSH_ASKPASS) [gitexec git-gui--askpass]
+	set env(SSH_ASKPASS) [file join [git --exec-path] git-gui--askpass]
 }
 
 ######################################################################
@@ -1282,6 +1135,9 @@ if {[catch {
 	load_config 1
 	apply_config
 	choose_repository::pick
+	if {![file isdirectory $_gitdir]} {
+		exit 1
+	}
 	set picked 1
 }
 
@@ -1312,20 +1168,7 @@ if {![file isdirectory $_gitdir]} {
 load_config 0
 apply_config
 
-# v1.7.0 introduced --show-toplevel to return the canonical work-tree
-if {[package vcompare $_git_version 1.7.0] >= 0} {
-	set _gitworktree [git rev-parse --show-toplevel]
-} else {
-	# try to set work tree from environment, core.worktree or use
-	# cdup to obtain a relative path to the top of the worktree. If
-	# run from the top, the ./ prefix ensures normalize expands pwd.
-	if {[catch { set _gitworktree $env(GIT_WORK_TREE) }]} {
-		set _gitworktree [get_config core.worktree]
-		if {$_gitworktree eq ""} {
-			set _gitworktree [file normalize ./[git rev-parse --show-cdup]]
-		}
-	}
-}
+set _gitworktree [git rev-parse --show-toplevel]
 
 if {$_prefix ne {}} {
 	if {$_gitworktree eq {}} {
@@ -1551,18 +1394,7 @@ proc rescan_stage2 {fd after} {
 		close $fd
 	}
 
-	if {[package vcompare $::_git_version 1.6.3] >= 0} {
-		set ls_others [list --exclude-standard]
-	} else {
-		set ls_others [list --exclude-per-directory=.gitignore]
-		if {[have_info_exclude]} {
-			lappend ls_others "--exclude-from=[gitdir info exclude]"
-		}
-		set user_exclude [get_config core.excludesfile]
-		if {$user_exclude ne {} && [file readable $user_exclude]} {
-			lappend ls_others "--exclude-from=[file normalize $user_exclude]"
-		}
-	}
+	set ls_others [list --exclude-standard]
 
 	set buf_rdi {}
 	set buf_rdf {}
@@ -1570,11 +1402,7 @@ proc rescan_stage2 {fd after} {
 
 	set rescan_active 2
 	ui_status [mc "Scanning for modified files ..."]
-	if {[git-version >= "1.7.2"]} {
-		set fd_di [git_read [list diff-index --cached --ignore-submodules=dirty -z [PARENT]]]
-	} else {
-		set fd_di [git_read [list diff-index --cached -z [PARENT]]]
-	}
+	set fd_di [git_read [list diff-index --cached --ignore-submodules=dirty -z [PARENT]]]
 	set fd_df [git_read [list diff-files -z]]
 
 	fconfigure $fd_di -blocking 0 -translation binary -encoding binary

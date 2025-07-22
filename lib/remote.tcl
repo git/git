@@ -233,8 +233,6 @@ proc make_sure_remote_submenues_exist {remote_m} {
 proc update_all_remotes_menu_entry {} {
 	global all_remotes
 
-	if {[git-version < 1.6.6]} { return }
-
 	set have_remote 0
 	foreach r $all_remotes {
 		incr have_remote
