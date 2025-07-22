@@ -81,6 +81,20 @@ int reflog_expire_config(const char *var, const char *value,
 	return 0;
 }
 
+void reflog_clear_expire_config(struct reflog_expire_options *opts)
+{
+	struct reflog_expire_entry_option *ent = opts->entries, *tmp;
+
+	while (ent) {
+		tmp = ent;
+		ent = ent->next;
+		free(tmp);
+	}
+
+	opts->entries = NULL;
+	opts->entries_tail = NULL;
+}
+
 void reflog_expire_options_set_refname(struct reflog_expire_options *cb,
 				       const char *ref)
 {

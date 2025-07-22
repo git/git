@@ -673,4 +673,32 @@ test_expect_success 'reflog drop --all with reference' '
 	)
 '
 
+test_expect_success 'expire with pattern config' '
+	# Split refs/heads/ into two roots so we can apply config to each. Make
+	# two branches per root to verify that config is applied correctly
+	# multiple times.
+	git branch root1/branch1 &&
+	git branch root1/branch2 &&
+	git branch root2/branch1 &&
+	git branch root2/branch2 &&
+
+	test_config "gc.reflogexpire" "never" &&
+	test_config "gc.refs/heads/root2/*.reflogExpire" "now" &&
+	git reflog expire \
+		root1/branch1 root1/branch2 \
+		root2/branch1 root2/branch2 &&
+
+	cat >expect <<-\EOF &&
+	root1/branch1@{0}
+	root1/branch2@{0}
+	EOF
+	git log -g --branches="root*" --format=%gD >actual.raw &&
+	# The sole reflog entry of each branch points to the same commit, so
+	# the order in which they are shown is nondeterministic. We just care
+	# about the what was expired (and what was not), so sort to get a known
+	# order.
+	sort <actual.raw >actual.sorted &&
+	test_cmp expect actual.sorted
+'
+
 test_done
