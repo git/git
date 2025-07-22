@@ -112,16 +112,7 @@ method _start {} {
 	close $fh
 	set _last_merged_branch $branch
 
-	if {[git-version >= "2.5.0"]} {
-		set cmd [list git merge --strategy=recursive FETCH_HEAD]
-	} else {
-		set cmd [list git]
-		lappend cmd merge
-		lappend cmd --strategy=recursive
-		lappend cmd [git_redir [list fmt-merge-msg] [list <[gitdir FETCH_HEAD]]]
-		lappend cmd HEAD
-		lappend cmd $name
-	}
+	set cmd [list git merge --strategy=recursive FETCH_HEAD]
 
 	ui_status [mc "Merging %s and %s..." $current_branch $stitle]
 	set cons [console::new [mc "Merge"] "merge $stitle"]
@@ -145,7 +136,7 @@ method _finish {cons ok} {
 
 constructor dialog {} {
 	global current_branch
-	global M1B use_ttk NS
+	global M1B
 
 	if {![_can_merge $this]} {
 		delete_this
@@ -160,21 +151,21 @@ constructor dialog {} {
 
 	set _start [cb _start]
 
-	${NS}::label $w.header \
+	ttk::label $w.header \
 		-text [mc "Merge Into %s" $current_branch] \
 		-font font_uibold
 	pack $w.header -side top -fill x
 
-	${NS}::frame $w.buttons
-	${NS}::button $w.buttons.visualize \
+	ttk::frame $w.buttons
+	ttk::button $w.buttons.visualize \
 		-text [mc Visualize] \
 		-command [cb _visualize]
 	pack $w.buttons.visualize -side left
-	${NS}::button $w.buttons.merge \
+	ttk::button $w.buttons.merge \
 		-text [mc Merge] \
 		-command $_start
 	pack $w.buttons.merge -side right
-	${NS}::button $w.buttons.cancel \
+	ttk::button $w.buttons.cancel \
 		-text [mc "Cancel"] \
 		-command [cb _cancel]
 	pack $w.buttons.cancel -side right -padx 5

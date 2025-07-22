@@ -9,18 +9,17 @@ field ctext
 field linenum   {}
 
 constructor new {i_w i_text args} {
-	global use_ttk NS
 	set w      $i_w
 	set ctext  $i_text
 
-	${NS}::frame  $w
-	${NS}::label  $w.l       -text [mc "Goto Line:"]
+	ttk::frame  $w
+	ttk::label  $w.l       -text [mc "Goto Line:"]
 	tentry  $w.ent \
 		-textvariable ${__this}::linenum \
 		-background lightgreen \
 		-validate key \
 		-validatecommand [cb _validate %P]
-	${NS}::button $w.bn      -text [mc Go] -command [cb _goto]
+	ttk::button $w.bn      -text [mc Go] -command [cb _goto]
 
 	pack   $w.l   -side left
 	pack   $w.bn  -side right
