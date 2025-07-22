@@ -7,7 +7,31 @@ exec wish "$0" -- "$@"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-package require Tk
+if {[catch {package require Tcl 8.6-8.8} err]} {
+    catch {wm withdraw .}
+    tk_messageBox \
+        -icon error \
+        -type ok \
+        -title "gitk: fatal error" \
+        -message $err
+    exit 1
+}
+
+set MIN_GIT_VERSION 2.20
+regexp {^git version ([\d.]*\d)} [exec git version] _ git_version
+if {[package vcompare $git_version $MIN_GIT_VERSION] < 0} {
+    set message "The git executable found is too old.
+The minimum required version is $MIN_GIT_VERSION.0.
+The version of git found is $git_version."
+
+    catch {wm withdraw .}
+    tk_messageBox \
+        -icon error \
+        -type ok \
+        -title "gitk: fatal error" \
+        -message $message
+    exit 1
+}
 
 ######################################################################
 ##
@@ -345,7 +369,7 @@ proc unmerged_files {files} {
 proc parseviewargs {n arglist} {
     global vdatemode vmergeonly vflags vdflags vrevs vfiltered vorigargs env
     global vinlinediff
-    global worddiff git_version
+    global worddiff
 
     set vdatemode($n) 0
     set vmergeonly($n) 0
@@ -396,14 +420,10 @@ proc parseviewargs {n arglist} {
             "--color-words*" - "--word-diff=color" {
                 # These trigger a word diff in the console interface,
                 # so help the user by enabling our own support
-                if {[package vcompare $git_version "1.7.2"] >= 0} {
-                    set worddiff [mc "Color words"]
-                }
+                set worddiff [mc "Color words"]
             }
             "--word-diff*" {
-                if {[package vcompare $git_version "1.7.2"] >= 0} {
-                    set worddiff [mc "Markup words"]
-                }
+                set worddiff [mc "Markup words"]
             }
             "--stat=*" - "--numstat" - "--shortstat" - "--summary" -
             "--check" - "--exit-code" - "--quiet" - "--topo-order" -
@@ -479,6 +499,7 @@ proc parseviewargs {n arglist} {
 
 proc parseviewrevs {view revs} {
     global vposids vnegids
+    global hashlength
 
     if {$revs eq {}} {
         set revs HEAD
@@ -492,7 +513,7 @@ proc parseviewrevs {view revs} {
         set badrev {}
         for {set l 0} {$l < [llength $errlines]} {incr l} {
             set line [lindex $errlines $l]
-            if {!([string length $line] == 40 && [string is xdigit $line])} {
+            if {!([string length $line] == $hashlength && [string is xdigit $line])} {
                 if {[string match "fatal:*" $line]} {
                     if {[string match "fatal: ambiguous argument*" $line]
                         && $badrev ne {}} {
@@ -551,7 +572,6 @@ proc start_rev_list {view} {
     global viewactive viewinstances vmergeonly
     global mainheadid viewmainheadid viewmainheadid_orig
     global vcanopt vflags vrevs vorigargs
-    global show_notes
 
     set startmsecs [clock clicks -milliseconds]
     set commitidx($view) 0
@@ -601,7 +621,7 @@ proc start_rev_list {view} {
     }
 
     if {[catch {
-        set fd [safe_open_command_redirect [concat git log --no-color -z --pretty=raw $show_notes \
+        set fd [safe_open_command_redirect [concat git log --no-color -z --pretty=raw --show-notes \
                         --parents --boundary $args --stdin] \
                         [list "<<[join [concat $revs "--" $files] "\n"]"]]
     } err]} {
@@ -697,7 +717,7 @@ proc updatecommits {} {
     global mainheadid viewmainheadid viewmainheadid_orig pending_select
     global hasworktree
     global varcid vposids vnegids vflags vrevs
-    global show_notes
+    global hashlength
 
     set hasworktree [hasworktree]
     rereadrefs
@@ -731,7 +751,7 @@ proc updatecommits {} {
             # take out positive refs that we asked for before or
             # that we have already seen
             foreach rev $revs {
-                if {[string length $rev] == 40} {
+                if {[string length $rev] == $hashlength} {
                     if {[lsearch -exact $oldpos $rev] < 0
                         && ![info exists varcid($view,$rev)]} {
                         lappend newrevs $rev
@@ -754,7 +774,7 @@ proc updatecommits {} {
         set args $vorigargs($view)
     }
     if {[catch {
-        set fd [safe_open_command_redirect [concat git log --no-color -z --pretty=raw $show_notes \
+        set fd [safe_open_command_redirect [concat git log --no-color -z --pretty=raw --show-notes \
                         --parents --boundary $args --stdin] \
                         [list "<<[join [concat $revs "--" $vfilelimit($view)] "\n"]"]]
     } err]} {
@@ -1614,6 +1634,7 @@ proc getcommitlines {fd inst view updating}  {
     global parents children curview hlview
     global idpending ordertok
     global varccommits varcid varctok vtokmod vfilelimit vshortids
+    global hashlength
 
     set stuff [read $fd 500000]
     # git log doesn't terminate the last commit with a null...
@@ -1696,7 +1717,7 @@ proc getcommitlines {fd inst view updating}  {
             }
             set ok 1
             foreach id $ids {
-                if {[string length $id] != 40} {
+                if {[string length $id] != $hashlength} {
                     set ok 0
                     break
                 }
@@ -1942,8 +1963,8 @@ proc getcommit {id} {
     return 1
 }
 
-# Expand an abbreviated commit ID to a list of full 40-char IDs that match
-# and are present in the current view.
+# Expand an abbreviated commit ID to a list of full 40-char (or 64-char
+# for SHA256 repo) IDs that match and are present in the current view.
 # This is fairly slow...
 proc longid {prefix} {
     global varcid curview vshortids
@@ -1971,13 +1992,14 @@ proc longid {prefix} {
 }
 
 proc readrefs {} {
-    global tagids idtags headids idheads tagobjid
+    global tagids idtags headids idheads tagobjid upstreamofref
     global otherrefids idotherrefs mainhead mainheadid
     global selecthead selectheadid
     global hideremotes
     global tclencoding
+    global hashlength
 
-    foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
+    foreach v {tagids idtags headids idheads otherrefids idotherrefs upstreamofref} {
         unset -nocomplain $v
     }
     set refd [safe_open_command [list git show-ref -d]]
@@ -1985,9 +2007,9 @@ proc readrefs {} {
         fconfigure $refd -encoding $tclencoding
     }
     while {[gets $refd line] >= 0} {
-        if {[string index $line 40] ne " "} continue
-        set id [string range $line 0 39]
-        set ref [string range $line 41 end]
+        if {[string index $line $hashlength] ne " "} continue
+        set id [string range $line 0 [expr {$hashlength - 1}]]
+        set ref [string range $line [expr {$hashlength + 1}] end]
         if {![string match "refs/*" $ref]} continue
         set name [string range $ref 5 end]
         if {[string match "remotes/*" $name]} {
@@ -2031,6 +2053,17 @@ proc readrefs {} {
             set selectheadid [safe_exec [list git rev-parse --verify $selecthead]]
         }
     }
+    #load the local_branch->upstream mapping
+    # the result of the for-each-ref command produces: local_branch NUL upstream
+    set refd [safe_open_command [list git for-each-ref {--format=%(refname:short)%00%(upstream)} refs/heads/]]
+    while {[gets $refd local_tracking] >= 0} {
+        set line [split $local_tracking \0]
+        if {[lindex $line 1] ne {}} {
+            set upstream_ref [string map {"refs/" ""} [lindex $line 1]]
+            set upstreamofref([lindex $line 0]) $upstream_ref
+        }
+    }
+    catch {close $refd}
 }
 
 # skip over fake commits
@@ -2071,23 +2104,12 @@ proc removehead {id name} {
 }
 
 proc ttk_toplevel {w args} {
-    global use_ttk
     eval [linsert $args 0 ::toplevel $w]
-    if {$use_ttk} {
-        place [ttk::frame $w._toplevel_background] -x 0 -y 0 -relwidth 1 -relheight 1
-    }
+    place [ttk::frame $w._toplevel_background] -x 0 -y 0 -relwidth 1 -relheight 1
     return $w
 }
 
 proc make_transient {window origin} {
-    global have_tk85
-
-    # In MacOS Tk 8.4 transient appears to work by setting
-    # overrideredirect, which is utterly useless, since the
-    # windows get no border, and are not even kept above
-    # the parent.
-    if {!$have_tk85 && [tk windowingsystem] eq {aqua}} return
-
     wm transient $window $origin
 
     # Windows fails to place transient windows normally, so
@@ -2098,12 +2120,10 @@ proc make_transient {window origin} {
 }
 
 proc show_error {w top msg} {
-    global NS
-    if {![info exists NS]} {set NS ""}
     if {[wm state $top] eq "withdrawn"} { wm deiconify $top }
     message $w.m -text $msg -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
-    ${NS}::button $w.ok -default active -text [mc OK] -command "destroy $top"
+    ttk::button $w.ok -default active -text [mc OK] -command "destroy $top"
     pack $w.ok -side bottom -fill x
     bind $top <Visibility> "grab $top; focus $top"
     bind $top <Key-Return> "destroy $top"
@@ -2125,16 +2145,16 @@ proc error_popup {msg {owner .}} {
 }
 
 proc confirm_popup {msg {owner .}} {
-    global confirm_ok NS
+    global confirm_ok
     set confirm_ok 0
     set w .confirm
     ttk_toplevel $w
     make_transient $w $owner
     message $w.m -text $msg -justify center -aspect 400
     pack $w.m -side top -fill x -padx 20 -pady 20
-    ${NS}::button $w.ok -text [mc OK] -command "set confirm_ok 1; destroy $w"
+    ttk::button $w.ok -text [mc OK] -command "set confirm_ok 1; destroy $w"
     pack $w.ok -side left -fill x
-    ${NS}::button $w.cancel -text [mc Cancel] -command "destroy $w"
+    ttk::button $w.cancel -text [mc Cancel] -command "destroy $w"
     pack $w.cancel -side right -fill x
     bind $w <Visibility> "grab $w; focus $w"
     bind $w <Key-Return> "set confirm_ok 1; destroy $w"
@@ -2150,8 +2170,6 @@ proc haveselectionclipboard {} {
 }
 
 proc setoptions {} {
-    global use_ttk
-
     if {[tk windowingsystem] ne "win32"} {
         option add *Panedwindow.showHandle 1 startupFile
         option add *Panedwindow.sashRelief raised startupFile
@@ -2244,21 +2262,50 @@ proc cleardropsel {w} {
     $w selection clear
 }
 proc makedroplist {w varname args} {
-    global use_ttk
-    if {$use_ttk} {
-        set width 0
-        foreach label $args {
-            set cx [string length $label]
-            if {$cx > $width} {set width $cx}
-        }
-        set gm [ttk::combobox $w -width $width -state readonly\
-                    -textvariable $varname -values $args \
-                    -exportselection false]
-        bind $gm <<ComboboxSelected>> [list $gm selection clear]
-    } else {
-        set gm [eval [linsert $args 0 tk_optionMenu $w $varname]]
+    set width 0
+    foreach label $args {
+        set cx [string length $label]
+        if {$cx > $width} {set width $cx}
     }
+    set gm [ttk::combobox $w -width $width -state readonly\
+        -textvariable $varname -values $args \
+        -exportselection false]
+    bind $gm <<ComboboxSelected>> [list $gm selection clear]
     return $gm
+}
+
+proc scrollval {D {koff 0}} {
+    global kscroll scroll_D0
+    return [expr int(-($D / $scroll_D0) * max(1, $kscroll-$koff))]
+}
+
+proc bind_mousewheel {} {
+    global canv cflist ctext
+    bindall <MouseWheel> {allcanvs yview scroll [scrollval %D] units}
+    bindall <Shift-MouseWheel> break
+    bind $ctext <MouseWheel> {$ctext yview scroll [scrollval %D 2] units}
+    bind $ctext <Shift-MouseWheel> {$ctext xview scroll [scrollval %D 2] units}
+    bind $cflist <MouseWheel> {$cflist yview scroll [scrollval %D 2] units}
+    bind $cflist <Shift-MouseWheel> break
+    bind $canv <Shift-MouseWheel> {$canv xview scroll [scrollval %D] units}
+}
+
+proc bind_mousewheel_buttons {} {
+    global canv cflist ctext
+        bindall <ButtonRelease-4> {allcanvs yview scroll [scrollval 1] units}
+        bindall <ButtonRelease-5> {allcanvs yview scroll [scrollval -1] units}
+        bindall <Shift-ButtonRelease-4> break
+        bindall <Shift-ButtonRelease-5> break
+        bind $ctext <ButtonRelease-4> {$ctext yview scroll [scrollval 1 2] units}
+        bind $ctext <ButtonRelease-5> {$ctext yview scroll  [scrollval -1 2] units}
+        bind $ctext <Shift-ButtonRelease-4> {$ctext xview scroll [scrollval 1 2] units}
+        bind $ctext <Shift-ButtonRelease-5> {$ctext xview scroll  [scrollval -1 2] units}
+        bind $cflist <ButtonRelease-4> {$cflist yview scroll [scrollval 1 2] units}
+        bind $cflist <ButtonRelease-5> {$cflist yview scroll  [scrollval -1 2] units}
+        bind $cflist <Shift-ButtonRelease-4> break
+        bind $cflist <Shift-ButtonRelease-5> break
+        bind $canv <Shift-ButtonRelease-4> {$canv xview scroll [scrollval 1] units}
+        bind $canv <Shift-ButtonRelease-5> {$canv xview scroll [scrollval -1] units}
 }
 
 proc makewindow {} {
@@ -2279,9 +2326,8 @@ proc makewindow {} {
     global headctxmenu progresscanv progressitem progresscoords statusw
     global fprogitem fprogcoord lastprogupdate progupdatepending
     global rprogitem rprogcoord rownumsel numcommits
-    global have_tk85 have_tk86 use_ttk NS
-    global git_version
     global worddiff
+    global hashlength scroll_D0
 
     # The "mc" arguments here are purely so that xgettext
     # sees the following string as needing to be translated
@@ -2333,13 +2379,11 @@ proc makewindow {} {
     makemenu .bar $bar
     . configure -menu .bar
 
-    if {$use_ttk} {
-        # cover the non-themed toplevel with a themed frame.
-        place [ttk::frame ._main_background] -x 0 -y 0 -relwidth 1 -relheight 1
-    }
+    # cover the non-themed toplevel with a themed frame.
+    place [ttk::frame ._main_background] -x 0 -y 0 -relwidth 1 -relheight 1
 
     # the gui has upper and lower half, parts of a paned window.
-    ${NS}::panedwindow .ctop -orient vertical
+    ttk::panedwindow .ctop -orient vertical
 
     # possibly use assumed geometry
     if {![info exists geometry(pwsash0)]} {
@@ -2352,12 +2396,9 @@ proc makewindow {} {
     }
 
     # the upper half will have a paned window, a scroll bar to the right, and some stuff below
-    ${NS}::frame .tf -height $geometry(topheight) -width $geometry(topwidth)
-    ${NS}::frame .tf.histframe
-    ${NS}::panedwindow .tf.histframe.pwclist -orient horizontal
-    if {!$use_ttk} {
-        .tf.histframe.pwclist configure -sashpad 0 -handlesize 4
-    }
+    ttk::frame .tf -height $geometry(topheight) -width $geometry(topwidth)
+    ttk::frame .tf.histframe
+    ttk::panedwindow .tf.histframe.pwclist -orient horizontal
 
     # create three canvases
     set cscroll .tf.histframe.csb
@@ -2365,6 +2406,7 @@ proc makewindow {} {
     canvas $canv \
         -selectbackground $selectbgcolor \
         -background $bgcolor -bd 0 \
+        -xscrollincr $linespc \
         -yscrollincr $linespc -yscrollcommand "scrollcanv $cscroll"
     .tf.histframe.pwclist add $canv
     set canv2 .tf.histframe.pwclist.canv2
@@ -2377,28 +2419,22 @@ proc makewindow {} {
         -selectbackground $selectbgcolor \
         -background $bgcolor -bd 0 -yscrollincr $linespc
     .tf.histframe.pwclist add $canv3
-    if {$use_ttk} {
-        bind .tf.histframe.pwclist <Map> {
-            bind %W <Map> {}
-            .tf.histframe.pwclist sashpos 1 [lindex $::geometry(pwsash1) 0]
-            .tf.histframe.pwclist sashpos 0 [lindex $::geometry(pwsash0) 0]
-        }
-    } else {
-        eval .tf.histframe.pwclist sash place 0 $geometry(pwsash0)
-        eval .tf.histframe.pwclist sash place 1 $geometry(pwsash1)
+    bind .tf.histframe.pwclist <Map> {
+        bind %W <Map> {}
+        .tf.histframe.pwclist sashpos 1 [lindex $::geometry(pwsash1) 0]
+        .tf.histframe.pwclist sashpos 0 [lindex $::geometry(pwsash0) 0]
     }
 
     # a scroll bar to rule them
-    ${NS}::scrollbar $cscroll -command {allcanvs yview}
-    if {!$use_ttk} {$cscroll configure -highlightthickness 0}
+    ttk::scrollbar $cscroll -command {allcanvs yview}
     pack $cscroll -side right -fill y
     bind .tf.histframe.pwclist <Configure> {resizeclistpanes %W %w}
     lappend bglist $canv $canv2 $canv3
     pack .tf.histframe.pwclist -fill both -expand 1 -side left
 
     # we have two button bars at bottom of top frame. Bar 1
-    ${NS}::frame .tf.bar
-    ${NS}::frame .tf.lbar -height 15
+    ttk::frame .tf.bar
+    ttk::frame .tf.lbar -height 15
 
     set sha1entry .tf.bar.sha1
     set entries $sha1entry
@@ -2407,7 +2443,7 @@ proc makewindow {} {
         -command gotocommit -width 8
     $sha1but conf -disabledforeground [$sha1but cget -foreground]
     pack .tf.bar.sha1label -side left
-    ${NS}::entry $sha1entry -width 40 -font textfont -textvariable sha1string
+    ttk::entry $sha1entry -width $hashlength -font textfont -textvariable sha1string
     trace add variable sha1string write sha1change
     pack $sha1entry -side left -pady 2
 
@@ -2432,50 +2468,30 @@ proc makewindow {} {
     image create bitmap bm-right -data $bm_right_data -foreground $uifgcolor
     image create bitmap bm-right-gray -data $bm_right_data -foreground $uifgdisabledcolor
 
-    ${NS}::button .tf.bar.leftbut -command goback -state disabled -width 26
-    if {$use_ttk} {
-        .tf.bar.leftbut configure -image [list bm-left disabled bm-left-gray]
-    } else {
-        .tf.bar.leftbut configure -image bm-left
-    }
+    ttk::button .tf.bar.leftbut -command goback -state disabled -width 26
+    .tf.bar.leftbut configure -image [list bm-left disabled bm-left-gray]
     pack .tf.bar.leftbut -side left -fill y
-    ${NS}::button .tf.bar.rightbut -command goforw -state disabled -width 26
-    if {$use_ttk} {
-        .tf.bar.rightbut configure -image [list bm-right disabled bm-right-gray]
-    } else {
-        .tf.bar.rightbut configure -image bm-right
-    }
+    ttk::button .tf.bar.rightbut -command goforw -state disabled -width 26
+    .tf.bar.rightbut configure -image [list bm-right disabled bm-right-gray]
     pack .tf.bar.rightbut -side left -fill y
 
-    ${NS}::label .tf.bar.rowlabel -text [mc "Row"]
+    ttk::label .tf.bar.rowlabel -text [mc "Row"]
     set rownumsel {}
-    ${NS}::label .tf.bar.rownum -width 7 -textvariable rownumsel \
+    ttk::label .tf.bar.rownum -width 7 -textvariable rownumsel \
         -relief sunken -anchor e
-    ${NS}::label .tf.bar.rowlabel2 -text "/"
-    ${NS}::label .tf.bar.numcommits -width 7 -textvariable numcommits \
+    ttk::label .tf.bar.rowlabel2 -text "/"
+    ttk::label .tf.bar.numcommits -width 7 -textvariable numcommits \
         -relief sunken -anchor e
     pack .tf.bar.rowlabel .tf.bar.rownum .tf.bar.rowlabel2 .tf.bar.numcommits \
         -side left
-    if {!$use_ttk} {
-        foreach w {rownum numcommits} {.tf.bar.$w configure -font textfont}
-    }
     global selectedline
     trace add variable selectedline write selectedline_change
 
     # Status label and progress bar
     set statusw .tf.bar.status
-    ${NS}::label $statusw -width 15 -relief sunken
+    ttk::label $statusw -width 15 -relief sunken
     pack $statusw -side left -padx 5
-    if {$use_ttk} {
-        set progresscanv [ttk::progressbar .tf.bar.progress]
-    } else {
-        set h [expr {[font metrics uifont -linespace] + 2}]
-        set progresscanv .tf.bar.progress
-        canvas $progresscanv -relief sunken -height $h -borderwidth 2
-        set progressitem [$progresscanv create rect -1 0 0 $h -fill "#00ff00"]
-        set fprogitem [$progresscanv create rect -1 0 0 $h -fill yellow]
-        set rprogitem [$progresscanv create rect -1 0 0 $h -fill red]
-    }
+    set progresscanv [ttk::progressbar .tf.bar.progress]
     pack $progresscanv -side right -expand 1 -fill x -padx {0 2}
     set progresscoords {0 0}
     set fprogcoord 0
@@ -2485,7 +2501,7 @@ proc makewindow {} {
     set progupdatepending 0
 
     # build up the bottom bar of upper window
-    ${NS}::label .tf.lbar.flabel -text "[mc "Find"] "
+    ttk::label .tf.lbar.flabel -text "[mc "Find"] "
 
     set bm_down_data {
         #define down_width 16
@@ -2497,7 +2513,7 @@ proc makewindow {} {
         0xf0, 0x0f, 0xe0, 0x07, 0xc0, 0x03, 0x80, 0x01};
     }
     image create bitmap bm-down -data $bm_down_data -foreground $uifgcolor
-    ${NS}::button .tf.lbar.fnext -width 26 -command {dofind 1 1}
+    ttk::button .tf.lbar.fnext -width 26 -command {dofind 1 1}
     .tf.lbar.fnext configure -image bm-down
 
     set bm_up_data {
@@ -2510,10 +2526,10 @@ proc makewindow {} {
         0x80, 0x01, 0x80, 0x01, 0x80, 0x01, 0x80, 0x01};
     }
     image create bitmap bm-up -data $bm_up_data -foreground $uifgcolor
-    ${NS}::button .tf.lbar.fprev -width 26 -command {dofind -1 1}
+    ttk::button .tf.lbar.fprev -width 26 -command {dofind -1 1}
     .tf.lbar.fprev configure -image bm-up
 
-    ${NS}::label .tf.lbar.flab2 -text " [mc "commit"] "
+    ttk::label .tf.lbar.flab2 -text " [mc "commit"] "
 
     pack .tf.lbar.flabel .tf.lbar.fnext .tf.lbar.fprev .tf.lbar.flab2 \
         -side left -fill y
@@ -2529,7 +2545,7 @@ proc makewindow {} {
     set findstring {}
     set fstring .tf.lbar.findstring
     lappend entries $fstring
-    ${NS}::entry $fstring -width 30 -textvariable findstring
+    ttk::entry $fstring -width 30 -textvariable findstring
     trace add variable findstring write find_change
     set findtype [mc "Exact"]
     set findtypemenu [makedroplist .tf.lbar.findtype \
@@ -2548,45 +2564,41 @@ proc makewindow {} {
     pack .tf.bar -in .tf -side bottom -fill x
     pack .tf.histframe -fill both -side top -expand 1
     .ctop add .tf
-    if {!$use_ttk} {
-        .ctop paneconfigure .tf -height $geometry(topheight)
-        .ctop paneconfigure .tf -width $geometry(topwidth)
-    }
 
     # now build up the bottom
-    ${NS}::panedwindow .pwbottom -orient horizontal
+    ttk::panedwindow .pwbottom -orient horizontal
 
     # lower left, a text box over search bar, scroll bar to the right
     # if we know window height, then that will set the lower text height, otherwise
     # we set lower text height which will drive window height
     if {[info exists geometry(main)]} {
-        ${NS}::frame .bleft -width $geometry(botwidth)
+        ttk::frame .bleft -width $geometry(botwidth)
     } else {
-        ${NS}::frame .bleft -width $geometry(botwidth) -height $geometry(botheight)
+        ttk::frame .bleft -width $geometry(botwidth) -height $geometry(botheight)
     }
-    ${NS}::frame .bleft.top
-    ${NS}::frame .bleft.mid
-    ${NS}::frame .bleft.bottom
+    ttk::frame .bleft.top
+    ttk::frame .bleft.mid
+    ttk::frame .bleft.bottom
 
     # gap between sub-widgets
     set wgap [font measure uifont "i"]
 
-    ${NS}::button .bleft.top.search -text [mc "Search"] -command dosearch
+    ttk::button .bleft.top.search -text [mc "Search"] -command dosearch
     pack .bleft.top.search -side left -padx 5
     set sstring .bleft.top.sstring
     set searchstring ""
-    ${NS}::entry $sstring -width 20 -textvariable searchstring
+    ttk::entry $sstring -width 20 -textvariable searchstring
     lappend entries $sstring
     trace add variable searchstring write incrsearch
     pack $sstring -side left -expand 1 -fill x
-    ${NS}::radiobutton .bleft.mid.diff -text [mc "Diff"] \
+    ttk::radiobutton .bleft.mid.diff -text [mc "Diff"] \
         -command changediffdisp -variable diffelide -value {0 0}
-    ${NS}::radiobutton .bleft.mid.old -text [mc "Old version"] \
+    ttk::radiobutton .bleft.mid.old -text [mc "Old version"] \
         -command changediffdisp -variable diffelide -value {0 1}
-    ${NS}::radiobutton .bleft.mid.new -text [mc "New version"] \
+    ttk::radiobutton .bleft.mid.new -text [mc "New version"] \
         -command changediffdisp -variable diffelide -value {1 0}
 
-    ${NS}::label .bleft.mid.labeldiffcontext -text "      [mc "Lines of context"]: "
+    ttk::label .bleft.mid.labeldiffcontext -text "      [mc "Lines of context"]: "
     pack .bleft.mid.diff .bleft.mid.old .bleft.mid.new -side left -ipadx $wgap
     spinbox .bleft.mid.diffcontext -width 5 \
         -from 0 -increment 1 -to 10000000 \
@@ -2596,28 +2608,24 @@ proc makewindow {} {
     trace add variable diffcontextstring write diffcontextchange
     lappend entries .bleft.mid.diffcontext
     pack .bleft.mid.labeldiffcontext .bleft.mid.diffcontext -side left -ipadx $wgap
-    ${NS}::checkbutton .bleft.mid.ignspace -text [mc "Ignore space change"] \
+    ttk::checkbutton .bleft.mid.ignspace -text [mc "Ignore space change"] \
         -command changeignorespace -variable ignorespace
     pack .bleft.mid.ignspace -side left -padx 5
 
     set worddiff [mc "Line diff"]
-    if {[package vcompare $git_version "1.7.2"] >= 0} {
-        makedroplist .bleft.mid.worddiff worddiff [mc "Line diff"] \
-            [mc "Markup words"] [mc "Color words"]
-        trace add variable worddiff write changeworddiff
-        pack .bleft.mid.worddiff -side left -padx 5
-    }
+    makedroplist .bleft.mid.worddiff worddiff [mc "Line diff"] \
+        [mc "Markup words"] [mc "Color words"]
+    trace add variable worddiff write changeworddiff
+    pack .bleft.mid.worddiff -side left -padx 5
 
     set ctext .bleft.bottom.ctext
     text $ctext -background $bgcolor -foreground $fgcolor \
         -state disabled -undo 0 -font textfont \
         -yscrollcommand scrolltext -wrap $wrapdefault \
         -xscrollcommand ".bleft.bottom.sbhorizontal set"
-    if {$have_tk85} {
-        $ctext conf -tabstyle wordprocessor
-    }
-    ${NS}::scrollbar .bleft.bottom.sb -command "$ctext yview"
-    ${NS}::scrollbar .bleft.bottom.sbhorizontal -command "$ctext xview" -orient h
+    $ctext conf -tabstyle wordprocessor
+    ttk::scrollbar .bleft.bottom.sb -command "$ctext yview"
+    ttk::scrollbar .bleft.bottom.sbhorizontal -command "$ctext xview" -orient h
     pack .bleft.top -side top -fill x
     pack .bleft.mid -side top -fill x
     grid $ctext .bleft.bottom.sb -sticky nsew
@@ -2668,16 +2676,13 @@ proc makewindow {} {
     $ctext tag lower d0
 
     .pwbottom add .bleft
-    if {!$use_ttk} {
-        .pwbottom paneconfigure .bleft -width $geometry(botwidth)
-    }
 
     # lower right
-    ${NS}::frame .bright
-    ${NS}::frame .bright.mode
-    ${NS}::radiobutton .bright.mode.patch -text [mc "Patch"] \
+    ttk::frame .bright
+    ttk::frame .bright.mode
+    ttk::radiobutton .bright.mode.patch -text [mc "Patch"] \
         -command reselectline -variable cmitmode -value "patch"
-    ${NS}::radiobutton .bright.mode.tree -text [mc "Tree"] \
+    ttk::radiobutton .bright.mode.tree -text [mc "Tree"] \
         -command reselectline -variable cmitmode -value "tree"
     grid .bright.mode.patch .bright.mode.tree -sticky ew
     pack .bright.mode -side top -fill x
@@ -2693,7 +2698,7 @@ proc makewindow {} {
         -spacing1 1 -spacing3 1
     lappend bglist $cflist
     lappend fglist $cflist
-    ${NS}::scrollbar .bright.sb -command "$cflist yview"
+    ttk::scrollbar .bright.sb -command "$cflist yview"
     pack .bright.sb -side right -fill y
     pack $cflist -side left -fill both -expand 1
     $cflist tag configure highlight \
@@ -2728,44 +2733,31 @@ proc makewindow {} {
         set ::BM "2"
     }
 
-    if {$use_ttk} {
-        bind .ctop <Map> {
-            bind %W <Map> {}
-            %W sashpos 0 $::geometry(topheight)
-        }
-        bind .pwbottom <Map> {
-            bind %W <Map> {}
-            %W sashpos 0 $::geometry(botwidth)
-        }
-        bind .pwbottom <Configure> {resizecdetpanes %W %w}
+    bind .ctop <Map> {
+        bind %W <Map> {}
+        %W sashpos 0 $::geometry(topheight)
     }
+    bind .pwbottom <Map> {
+        bind %W <Map> {}
+        %W sashpos 0 $::geometry(botwidth)
+    }
+    bind .pwbottom <Configure> {resizecdetpanes %W %w}
 
     pack .ctop -fill both -expand 1
     bindall <1> {selcanvline %W %x %y}
-    #bindall <B1-Motion> {selcanvline %W %x %y}
+
+    #Mouse / touchpad scrolling
     if {[tk windowingsystem] == "win32"} {
-        bind . <MouseWheel> { windows_mousewheel_redirector %W %X %Y %D }
-        bind $ctext <MouseWheel> { windows_mousewheel_redirector %W %X %Y %D ; break }
+        set scroll_D0 120
+        bind_mousewheel
+    } elseif {[tk windowingsystem] == "x11"} {
+        set scroll_D0 1
+        bind_mousewheel_buttons
+    } elseif {[tk windowingsystem] == "aqua"} {
+        set scroll_D0 1
+        bind_mousewheel
     } else {
-        bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
-        bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
-        bind $ctext <Button> {
-            if {"%b" eq 6} {
-                $ctext xview scroll -5 units
-            } elseif {"%b" eq 7} {
-                $ctext xview scroll 5 units
-            }
-        }
-        if {[tk windowingsystem] eq "aqua"} {
-            bindall <MouseWheel> {
-                set delta [expr {- (%D)}]
-                allcanvs yview scroll $delta units
-            }
-            bindall <Shift-MouseWheel> {
-                set delta [expr {- (%D)}]
-                $canv xview scroll $delta units
-            }
-        }
+        puts stderr [mc "Unknown windowing system, cannot bind mouse"]
     }
     bindall <$::BM> "canvscan mark %W %x %y"
     bindall <B$::BM-Motion> "canvscan dragto %W %x %y"
@@ -2777,13 +2769,8 @@ proc makewindow {} {
     bind . <Key-Down> "selnextline 1"
     bind . <Shift-Key-Up> "dofind -1 0"
     bind . <Shift-Key-Down> "dofind 1 0"
-    if {$have_tk86} {
-        bindkey <<NextChar>> "goforw"
-        bindkey <<PrevChar>> "goback"
-    } else {
-        bindkey <Key-Right> "goforw"
-        bindkey <Key-Left> "goback"
-    }
+    bindkey <<NextChar>> "goforw"
+    bindkey <<PrevChar>> "goback"
     bind . <Key-Prior> "selnextpage -1"
     bind . <Key-Next> "selnextpage 1"
     bind . <$M1B-Home> "allcanvs yview moveto 0.0"
@@ -2910,24 +2897,6 @@ proc makewindow {} {
     $diff_menu configure -tearoff 0
 }
 
-# Windows sends all mouse wheel events to the current focused window, not
-# the one where the mouse hovers, so bind those events here and redirect
-# to the correct window
-proc windows_mousewheel_redirector {W X Y D} {
-    global canv canv2 canv3
-    set w [winfo containing -displayof $W $X $Y]
-    if {$w ne ""} {
-        set u [expr {$D < 0 ? 5 : -5}]
-        if {$w == $canv || $w == $canv2 || $w == $canv3} {
-            allcanvs yview scroll $u units
-        } else {
-            catch {
-                $w yview scroll $u units
-            }
-        }
-    }
-}
-
 # Update row number label when selectedline changes
 proc selectedline_change {n1 n2 op} {
     global selectedline rownumsel
@@ -2990,30 +2959,10 @@ proc click {w} {
 
 # Adjust the progress bar for a change in requested extent or canvas size
 proc adjustprogress {} {
-    global progresscanv progressitem progresscoords
-    global fprogitem fprogcoord lastprogupdate progupdatepending
-    global rprogitem rprogcoord use_ttk
+    global progresscanv
+    global fprogcoord
 
-    if {$use_ttk} {
-        $progresscanv configure -value [expr {int($fprogcoord * 100)}]
-        return
-    }
-
-    set w [expr {[winfo width $progresscanv] - 4}]
-    set x0 [expr {$w * [lindex $progresscoords 0]}]
-    set x1 [expr {$w * [lindex $progresscoords 1]}]
-    set h [winfo height $progresscanv]
-    $progresscanv coords $progressitem $x0 0 $x1 $h
-    $progresscanv coords $fprogitem 0 0 [expr {$w * $fprogcoord}] $h
-    $progresscanv coords $rprogitem 0 0 [expr {$w * $rprogcoord}] $h
-    set now [clock clicks -milliseconds]
-    if {$now >= $lastprogupdate + 100} {
-        set progupdatepending 0
-        update
-    } elseif {!$progupdatepending} {
-        set progupdatepending 1
-        after [expr {$lastprogupdate + 100 - $now}] doprogupdate
-    }
+    $progresscanv configure -value [expr {int($fprogcoord * 100)}]
 }
 
 proc doprogupdate {} {
@@ -3072,7 +3021,6 @@ proc savestuff {w} {
     upvar #0 viewargscmd current_viewargscmd
     upvar #0 viewperm current_viewperm
     upvar #0 nextviewnum current_nextviewnum
-    upvar #0 use_ttk current_use_ttk
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
@@ -3106,13 +3054,8 @@ proc savestuff {w} {
         puts $f "set geometry(state) [wm state .]"
         puts $f "set geometry(topwidth) [winfo width .tf]"
         puts $f "set geometry(topheight) [winfo height .tf]"
-        if {$current_use_ttk} {
-            puts $f "set geometry(pwsash0) \"[.tf.histframe.pwclist sashpos 0] 1\""
-            puts $f "set geometry(pwsash1) \"[.tf.histframe.pwclist sashpos 1] 1\""
-        } else {
-            puts $f "set geometry(pwsash0) \"[.tf.histframe.pwclist sash coord 0]\""
-            puts $f "set geometry(pwsash1) \"[.tf.histframe.pwclist sash coord 1]\""
-        }
+        puts $f "set geometry(pwsash0) \"[.tf.histframe.pwclist sashpos 0] 1\""
+        puts $f "set geometry(pwsash1) \"[.tf.histframe.pwclist sashpos 1] 1\""
         puts $f "set geometry(botwidth) [winfo width .bleft]"
         puts $f "set geometry(botheight) [winfo height .bleft]"
 
@@ -3158,17 +3101,14 @@ proc savestuff {w} {
 }
 
 proc resizeclistpanes {win w} {
-    global oldwidth oldsash use_ttk
+    global oldwidth oldsash
     if {[info exists oldwidth($win)]} {
         if {[info exists oldsash($win)]} {
             set s0 [lindex $oldsash($win) 0]
             set s1 [lindex $oldsash($win) 1]
-        } elseif {$use_ttk} {
+        } else {
             set s0 [$win sashpos 0]
             set s1 [$win sashpos 1]
-        } else {
-            set s0 [$win sash coord 0]
-            set s1 [$win sash coord 1]
         }
         if {$w < 60} {
             set sash0 [expr {int($w/2 - 2)}]
@@ -3190,29 +3130,20 @@ proc resizeclistpanes {win w} {
                 }
             }
         }
-        if {$use_ttk} {
-            $win sashpos 0 $sash0
-            $win sashpos 1 $sash1
-        } else {
-            $win sash place 0 $sash0 [lindex $s0 1]
-            $win sash place 1 $sash1 [lindex $s1 1]
-            set sash0 [list $sash0 [lindex $s0 1]]
-            set sash1 [list $sash1 [lindex $s1 1]]
-        }
+        $win sashpos 0 $sash0
+        $win sashpos 1 $sash1
         set oldsash($win) [list $sash0 $sash1]
     }
     set oldwidth($win) $w
 }
 
 proc resizecdetpanes {win w} {
-    global oldwidth oldsash use_ttk
+    global oldwidth oldsash
     if {[info exists oldwidth($win)]} {
         if {[info exists oldsash($win)]} {
             set s0 $oldsash($win)
-        } elseif {$use_ttk} {
-            set s0 [$win sashpos 0]
         } else {
-            set s0 [$win sash coord 0]
+            set s0 [$win sashpos 0]
         }
         if {$w < 60} {
             set sash0 [expr {int($w*3/4 - 2)}]
@@ -3226,12 +3157,7 @@ proc resizecdetpanes {win w} {
                 set sash0 [expr {$w - 15}]
             }
         }
-        if {$use_ttk} {
-            $win sashpos 0 $sash0
-        } else {
-            $win sash place 0 $sash0 [lindex $s0 1]
-            set sash0 [list $sash0 [lindex $s0 1]]
-        }
+        $win sashpos 0 $sash0
         set oldsash($win) $sash0
     }
     set oldwidth($win) $w
@@ -3252,7 +3178,7 @@ proc bindall {event action} {
 }
 
 proc about {} {
-    global bgcolor NS
+    global bgcolor
     set w .about
     if {[winfo exists $w]} {
         raise $w
@@ -3269,7 +3195,7 @@ Copyright \u00a9 2005-2016 Paul Mackerras
 Use and redistribute under the terms of the GNU General Public License"] \
             -justify center -aspect 400 -border 2 -bg $bgcolor -relief groove
     pack $w.m -side top -fill x -padx 2 -pady 2
-    ${NS}::button $w.ok -text [mc "Close"] -command "destroy $w" -default active
+    ttk::button $w.ok -text [mc "Close"] -command "destroy $w" -default active
     pack $w.ok -side bottom
     bind $w <Visibility> "focus $w.ok"
     bind $w <Key-Escape> "destroy $w"
@@ -3278,7 +3204,7 @@ Use and redistribute under the terms of the GNU General Public License"] \
 }
 
 proc keys {} {
-    global bgcolor NS
+    global bgcolor
     set w .keys
     if {[winfo exists $w]} {
         raise $w
@@ -3336,7 +3262,7 @@ proc keys {} {
 " \
             -justify left -bg $bgcolor -border 2 -relief groove
     pack $w.m -side top -fill both -padx 2 -pady 2
-    ${NS}::button $w.ok -text [mc "Close"] -command "destroy $w" -default active
+    ttk::button $w.ok -text [mc "Close"] -command "destroy $w" -default active
     bind $w <Key-Escape> [list destroy $w]
     pack $w.ok -side bottom
     bind $w <Visibility> "focus $w.ok"
@@ -4132,6 +4058,7 @@ proc stopblaming {} {
 
 proc read_line_source {fd inst} {
     global blamestuff curview commfd blameinst nullid nullid2
+    global hashlength
 
     while {[gets $fd line] >= 0} {
         lappend blamestuff($inst) $line
@@ -4152,7 +4079,7 @@ proc read_line_source {fd inst} {
     set line [split [lindex $blamestuff($inst) 0] " "]
     set id [lindex $line 0]
     set lnum [lindex $line 1]
-    if {[string length $id] == 40 && [string is xdigit $id] &&
+    if {[string length $id] == $hashlength && [string is xdigit $id] &&
         [string is digit -strict $lnum]} {
         # look for "filename" line
         foreach l $blamestuff($inst) {
@@ -4480,16 +4407,16 @@ proc editview {} {
 
 proc vieweditor {top n title} {
     global newviewname newviewopts viewfiles bgcolor
-    global known_view_options NS
+    global known_view_options
 
     ttk_toplevel $top
     wm title $top [concat $title [mc "-- criteria for selecting revisions"]]
     make_transient $top .
 
     # View name
-    ${NS}::frame $top.nfr
-    ${NS}::label $top.nl -text [mc "View Name"]
-    ${NS}::entry $top.name -width 20 -textvariable newviewname($n)
+    ttk::frame $top.nfr
+    ttk::label $top.nl -text [mc "View Name"]
+    ttk::entry $top.name -width 20 -textvariable newviewname($n)
     pack $top.nfr -in $top -fill x -pady 5 -padx 3
     pack $top.nl -in $top.nfr -side left -padx {0 5}
     pack $top.name -in $top.nfr -side left -padx {0 25}
@@ -4508,13 +4435,13 @@ proc vieweditor {top n title} {
         if {$flags eq "+" || $flags eq "*"} {
             set cframe $top.fr$cnt
             incr cnt
-            ${NS}::frame $cframe
+            ttk::frame $cframe
             pack $cframe -in $top -fill x -pady 3 -padx 3
             set cexpand [expr {$flags eq "*"}]
         } elseif {$flags eq ".." || $flags eq "*."} {
             set cframe $top.fr$cnt
             incr cnt
-            ${NS}::frame $cframe
+            ttk::frame $cframe
             pack $cframe -in $top -fill x -pady 3 -padx [list 15 3]
             set cexpand [expr {$flags eq "*."}]
         } else {
@@ -4522,31 +4449,31 @@ proc vieweditor {top n title} {
         }
 
         if {$type eq "l"} {
-            ${NS}::label $cframe.l_$id -text $title
+            ttk::label $cframe.l_$id -text $title
             pack $cframe.l_$id -in $cframe -side left -pady [list 3 0] -anchor w
         } elseif {$type eq "b"} {
-            ${NS}::checkbutton $cframe.c_$id -text $title -variable newviewopts($n,$id)
+            ttk::checkbutton $cframe.c_$id -text $title -variable newviewopts($n,$id)
             pack $cframe.c_$id -in $cframe -side left \
                 -padx [list $lxpad 0] -expand $cexpand -anchor w
         } elseif {[regexp {^r(\d+)$} $type type sz]} {
             regexp {^(.*_)} $id uselessvar button_id
-            ${NS}::radiobutton $cframe.c_$id -text $title -variable newviewopts($n,$button_id) -value $sz
+            ttk::radiobutton $cframe.c_$id -text $title -variable newviewopts($n,$button_id) -value $sz
             pack $cframe.c_$id -in $cframe -side left \
                 -padx [list $lxpad 0] -expand $cexpand -anchor w
         } elseif {[regexp {^t(\d+)$} $type type sz]} {
-            ${NS}::label $cframe.l_$id -text $title
-            ${NS}::entry $cframe.e_$id -width $sz -background $bgcolor \
+            ttk::label $cframe.l_$id -text $title
+            ttk::entry $cframe.e_$id -width $sz -background $bgcolor \
                 -textvariable newviewopts($n,$id)
             pack $cframe.l_$id -in $cframe -side left -padx [list $lxpad 0]
             pack $cframe.e_$id -in $cframe -side left -expand 1 -fill x
         } elseif {[regexp {^t(\d+)=$} $type type sz]} {
-            ${NS}::label $cframe.l_$id -text $title
-            ${NS}::entry $cframe.e_$id -width $sz -background $bgcolor \
+            ttk::label $cframe.l_$id -text $title
+            ttk::entry $cframe.e_$id -width $sz -background $bgcolor \
                 -textvariable newviewopts($n,$id)
             pack $cframe.l_$id -in $cframe -side top -pady [list 3 0] -anchor w
             pack $cframe.e_$id -in $cframe -side top -fill x
         } elseif {$type eq "path"} {
-            ${NS}::label $top.l -text $title
+            ttk::label $top.l -text $title
             pack $top.l -in $top -side top -pady [list 3 0] -anchor w -padx 3
             text $top.t -width 40 -height 5 -background $bgcolor
             if {[info exists viewfiles($n)]} {
@@ -4561,10 +4488,10 @@ proc vieweditor {top n title} {
         }
     }
 
-    ${NS}::frame $top.buts
-    ${NS}::button $top.buts.ok -text [mc "OK"] -command [list newviewok $top $n]
-    ${NS}::button $top.buts.apply -text [mc "Apply (F5)"] -command [list newviewok $top $n 1]
-    ${NS}::button $top.buts.can -text [mc "Cancel"] -command [list destroy $top]
+    ttk::frame $top.buts
+    ttk::button $top.buts.ok -text [mc "OK"] -command [list newviewok $top $n]
+    ttk::button $top.buts.apply -text [mc "Apply (F5)"] -command [list newviewok $top $n 1]
+    ttk::button $top.buts.can -text [mc "Cancel"] -command [list destroy $top]
     bind $top <Control-Return> [list newviewok $top $n]
     bind $top <F5> [list newviewok $top $n 1]
     bind $top <Escape> [list destroy $top]
@@ -5296,11 +5223,13 @@ proc askrelhighlight {row id} {
 # Graph layout functions
 
 proc shortids {ids} {
+    global hashlength
+
     set res {}
     foreach id $ids {
         if {[llength $id] > 1} {
             lappend res [shortids $id]
-        } elseif {[regexp {^[0-9a-f]{40}$} $id]} {
+        } elseif {[regexp [string map "@@ $hashlength" {^[0-9a-f]{@@}$}] $id]} {
             lappend res [string range $id 0 7]
         } else {
             lappend res $id
@@ -5475,13 +5404,14 @@ proc get_viewmainhead {view} {
 # git rev-list should give us just 1 line to use as viewmainheadid($view)
 proc getviewhead {fd inst view} {
     global viewmainheadid commfd curview viewinstances showlocalchanges
+    global hashlength
 
     set id {}
     if {[gets $fd line] < 0} {
         if {![eof $fd]} {
             return 1
         }
-    } elseif {[string length $line] == 40 && [string is xdigit $line]} {
+    } elseif {[string length $line] == $hashlength && [string is xdigit $line]} {
         set id $line
     }
     set viewmainheadid($view) $id
@@ -5523,15 +5453,11 @@ proc dohidelocalchanges {} {
 # spawn off a process to do git diff-index --cached HEAD
 proc dodiffindex {} {
     global lserial showlocalchanges vfilelimit curview
-    global hasworktree git_version
+    global hasworktree
 
     if {!$showlocalchanges || !$hasworktree} return
     incr lserial
-    if {[package vcompare $git_version "1.7.2"] >= 0} {
-        set cmd "git diff-index --cached --ignore-submodules=dirty HEAD"
-    } else {
-        set cmd "git diff-index --cached HEAD"
-    }
+    set cmd "git diff-index --cached --ignore-submodules=dirty HEAD"
     if {$vfilelimit($curview) ne {}} {
         set cmd [concat $cmd -- $vfilelimit($curview)]
     }
@@ -6759,13 +6685,7 @@ proc bindline {t id} {
 }
 
 proc graph_pane_width {} {
-    global use_ttk
-
-    if {$use_ttk} {
-        set g [.tf.histframe.pwclist sashpos 0]
-    } else {
-        set g [.tf.histframe.pwclist sash coord 0]
-    }
+    set g [.tf.histframe.pwclist sashpos 0]
     return [lindex $g 0]
 }
 
@@ -7245,10 +7165,11 @@ proc commit_descriptor {p} {
 # Also look for URLs of the form "http[s]://..." and make them web links.
 proc appendwithlinks {text tags} {
     global ctext linknum curview
+    global hashlength
 
     set start [$ctext index "end - 1c"]
     $ctext insert end $text $tags
-    set links [regexp -indices -all -inline {(?:\m|-g)[0-9a-f]{6,40}\M} $text]
+    set links [regexp -indices -all -inline [string map "@@ $hashlength" {(?:\m|-g)[0-9a-f]{6,@@}\M}] $text]
     foreach l $links {
         set s [lindex $l 0]
         set e [lindex $l 1]
@@ -7276,13 +7197,14 @@ proc appendwithlinks {text tags} {
 proc setlink {id lk} {
     global curview ctext pendinglinks
     global linkfgcolor
+    global hashlength
 
     if {[string range $id 0 1] eq "-g"} {
       set id [string range $id 2 end]
     }
 
     set known 0
-    if {[string length $id] < 40} {
+    if {[string length $id] < $hashlength} {
         set matches [longid $id]
         if {[llength $matches] > 0} {
             if {[llength $matches] > 1} return
@@ -8079,7 +8001,7 @@ proc addtocflist {ids} {
 }
 
 proc diffcmd {ids flags} {
-    global log_showroot nullid nullid2 git_version
+    global log_showroot nullid nullid2
 
     set i [lsearch -exact $ids $nullid]
     set j [lsearch -exact $ids $nullid2]
@@ -8100,9 +8022,7 @@ proc diffcmd {ids flags} {
             }
         }
     } elseif {$j >= 0} {
-        if {[package vcompare $git_version "1.7.2"] >= 0} {
-            set flags "$flags --ignore-submodules=dirty"
-        }
+        set flags "$flags --ignore-submodules=dirty"
         set cmd [concat git diff-index --cached $flags]
         if {[llength $ids] > 1} {
             # comparing index with specific revision
@@ -8231,17 +8151,8 @@ proc getblobdiffs {ids} {
     global ignorespace
     global worddiff
     global limitdiffs vfilelimit curview
-    global git_version
 
-    set textconv {}
-    if {[package vcompare $git_version "1.6.1"] >= 0} {
-        set textconv "--textconv"
-    }
-    set submodule {}
-    if {[package vcompare $git_version "1.6.6"] >= 0} {
-        set submodule "--submodule"
-    }
-    set cmd [diffcmd $ids "-p $textconv $submodule  -C --cc --no-commit-id -U$diffcontext"]
+    set cmd [diffcmd $ids "-p --textconv --submodule -C --cc --no-commit-id -U$diffcontext"]
     if {$ignorespace} {
         append cmd " -w"
     }
@@ -8646,19 +8557,17 @@ proc clear_ctext {{first 1.0}} {
 }
 
 proc settabs {{firstab {}}} {
-    global firsttabstop tabstop ctext have_tk85
+    global firsttabstop tabstop ctext
 
-    if {$firstab ne {} && $have_tk85} {
+    if {$firstab ne {}} {
         set firsttabstop $firstab
     }
     set w [font measure textfont "0"]
     if {$firsttabstop != 0} {
         $ctext conf -tabs [list [expr {($firsttabstop + $tabstop) * $w}] \
                                [expr {($firsttabstop + 2 * $tabstop) * $w}]]
-    } elseif {$have_tk85 || $tabstop != 8} {
-        $ctext conf -tabs [expr {$tabstop * $w}]
     } else {
-        $ctext conf -tabs {}
+        $ctext conf -tabs [expr {$tabstop * $w}]
     }
 }
 
@@ -8927,13 +8836,16 @@ proc incrfont {inc} {
 
 proc clearsha1 {} {
     global sha1entry sha1string
-    if {[string length $sha1string] == 40} {
+    global hashlength
+
+    if {[string length $sha1string] == $hashlength} {
         $sha1entry delete 0 end
     }
 }
 
 proc sha1change {n1 n2 op} {
     global sha1string currentid sha1but
+
     if {$sha1string == {}
         || ([info exists currentid] && $sha1string == $currentid)} {
         set state disabled
@@ -8950,6 +8862,7 @@ proc sha1change {n1 n2 op} {
 
 proc gotocommit {} {
     global sha1string tagids headids curview varcid
+    global hashlength
 
     if {$sha1string == {}
         || ([info exists currentid] && $sha1string == $currentid)} return
@@ -8959,7 +8872,7 @@ proc gotocommit {} {
         set id $headids($sha1string)
     } else {
         set id [string tolower $sha1string]
-        if {[regexp {^[0-9a-f]{4,39}$} $id]} {
+        if {[regexp {^[0-9a-f]{4,63}$} $id]} {
             set matches [longid $id]
             if {$matches ne {}} {
                 if {[llength $matches] > 1} {
@@ -9445,7 +9358,8 @@ proc doseldiff {oldid newid} {
 }
 
 proc mkpatch {} {
-    global rowmenuid currentid commitinfo patchtop patchnum NS
+    global rowmenuid currentid commitinfo patchtop patchnum
+    global hashlength
 
     if {![info exists currentid]} return
     set oldid $currentid
@@ -9457,36 +9371,36 @@ proc mkpatch {} {
     catch {destroy $top}
     ttk_toplevel $top
     make_transient $top .
-    ${NS}::label $top.title -text [mc "Generate patch"]
+    ttk::label $top.title -text [mc "Generate patch"]
     grid $top.title - -pady 10
-    ${NS}::label $top.from -text [mc "From:"]
-    ${NS}::entry $top.fromsha1 -width 40
+    ttk::label $top.from -text [mc "From:"]
+    ttk::entry $top.fromsha1 -width $hashlength
     $top.fromsha1 insert 0 $oldid
     $top.fromsha1 conf -state readonly
     grid $top.from $top.fromsha1 -sticky w
-    ${NS}::entry $top.fromhead -width 60
+    ttk::entry $top.fromhead -width 60
     $top.fromhead insert 0 $oldhead
     $top.fromhead conf -state readonly
     grid x $top.fromhead -sticky w
-    ${NS}::label $top.to -text [mc "To:"]
-    ${NS}::entry $top.tosha1 -width 40
+    ttk::label $top.to -text [mc "To:"]
+    ttk::entry $top.tosha1 -width $hashlength
     $top.tosha1 insert 0 $newid
     $top.tosha1 conf -state readonly
     grid $top.to $top.tosha1 -sticky w
-    ${NS}::entry $top.tohead -width 60
+    ttk::entry $top.tohead -width 60
     $top.tohead insert 0 $newhead
     $top.tohead conf -state readonly
     grid x $top.tohead -sticky w
-    ${NS}::button $top.rev -text [mc "Reverse"] -command mkpatchrev
+    ttk::button $top.rev -text [mc "Reverse"] -command mkpatchrev
     grid $top.rev x -pady 10 -padx 5
-    ${NS}::label $top.flab -text [mc "Output file:"]
-    ${NS}::entry $top.fname -width 60
+    ttk::label $top.flab -text [mc "Output file:"]
+    ttk::entry $top.fname -width 60
     $top.fname insert 0 [file normalize "patch$patchnum.patch"]
     incr patchnum
     grid $top.flab $top.fname -sticky w
-    ${NS}::frame $top.buts
-    ${NS}::button $top.buts.gen -text [mc "Generate"] -command mkpatchgo
-    ${NS}::button $top.buts.can -text [mc "Cancel"] -command mkpatchcan
+    ttk::frame $top.buts
+    ttk::button $top.buts.gen -text [mc "Generate"] -command mkpatchgo
+    ttk::button $top.buts.can -text [mc "Cancel"] -command mkpatchcan
     bind $top <Key-Return> mkpatchgo
     bind $top <Key-Escape> mkpatchcan
     grid $top.buts.gen $top.buts.can
@@ -9534,35 +9448,36 @@ proc mkpatchcan {} {
 }
 
 proc mktag {} {
-    global rowmenuid mktagtop commitinfo NS
+    global rowmenuid mktagtop commitinfo
+    global hashlength
 
     set top .maketag
     set mktagtop $top
     catch {destroy $top}
     ttk_toplevel $top
     make_transient $top .
-    ${NS}::label $top.title -text [mc "Create tag"]
+    ttk::label $top.title -text [mc "Create tag"]
     grid $top.title - -pady 10
-    ${NS}::label $top.id -text [mc "ID:"]
-    ${NS}::entry $top.sha1 -width 40
+    ttk::label $top.id -text [mc "ID:"]
+    ttk::entry $top.sha1 -width $hashlength
     $top.sha1 insert 0 $rowmenuid
     $top.sha1 conf -state readonly
     grid $top.id $top.sha1 -sticky w
-    ${NS}::entry $top.head -width 60
+    ttk::entry $top.head -width 60
     $top.head insert 0 [lindex $commitinfo($rowmenuid) 0]
     $top.head conf -state readonly
     grid x $top.head -sticky w
-    ${NS}::label $top.tlab -text [mc "Tag name:"]
-    ${NS}::entry $top.tag -width 60
+    ttk::label $top.tlab -text [mc "Tag name:"]
+    ttk::entry $top.tag -width 60
     grid $top.tlab $top.tag -sticky w
-    ${NS}::label $top.op -text [mc "Tag message is optional"]
+    ttk::label $top.op -text [mc "Tag message is optional"]
     grid $top.op -columnspan 2 -sticky we
-    ${NS}::label $top.mlab -text [mc "Tag message:"]
-    ${NS}::entry $top.msg -width 60
+    ttk::label $top.mlab -text [mc "Tag message:"]
+    ttk::entry $top.msg -width 60
     grid $top.mlab $top.msg -sticky w
-    ${NS}::frame $top.buts
-    ${NS}::button $top.buts.gen -text [mc "Create"] -command mktaggo
-    ${NS}::button $top.buts.can -text [mc "Cancel"] -command mktagcan
+    ttk::frame $top.buts
+    ttk::button $top.buts.gen -text [mc "Create"] -command mktaggo
+    ttk::button $top.buts.can -text [mc "Cancel"] -command mktagcan
     bind $top <Key-Return> mktaggo
     bind $top <Key-Escape> mktagcan
     grid $top.buts.gen $top.buts.can
@@ -9652,10 +9567,11 @@ proc mktaggo {} {
 
 proc copyreference {} {
     global rowmenuid autosellen
+    global hashlength
 
     set format "%h (\"%s\", %ad)"
     set cmd [list git show -s --pretty=format:$format --date=short]
-    if {$autosellen < 40} {
+    if {$autosellen < $hashlength} {
         lappend cmd --abbrev=$autosellen
     }
     set reference [safe_exec [concat $cmd $rowmenuid]]
@@ -9665,34 +9581,35 @@ proc copyreference {} {
 }
 
 proc writecommit {} {
-    global rowmenuid wrcomtop commitinfo wrcomcmd NS
+    global rowmenuid wrcomtop commitinfo wrcomcmd
+    global hashlength
 
     set top .writecommit
     set wrcomtop $top
     catch {destroy $top}
     ttk_toplevel $top
     make_transient $top .
-    ${NS}::label $top.title -text [mc "Write commit to file"]
+    ttk::label $top.title -text [mc "Write commit to file"]
     grid $top.title - -pady 10
-    ${NS}::label $top.id -text [mc "ID:"]
-    ${NS}::entry $top.sha1 -width 40
+    ttk::label $top.id -text [mc "ID:"]
+    ttk::entry $top.sha1 -width $hashlength
     $top.sha1 insert 0 $rowmenuid
     $top.sha1 conf -state readonly
     grid $top.id $top.sha1 -sticky w
-    ${NS}::entry $top.head -width 60
+    ttk::entry $top.head -width 60
     $top.head insert 0 [lindex $commitinfo($rowmenuid) 0]
     $top.head conf -state readonly
     grid x $top.head -sticky w
-    ${NS}::label $top.clab -text [mc "Command:"]
-    ${NS}::entry $top.cmd -width 60 -textvariable wrcomcmd
+    ttk::label $top.clab -text [mc "Command:"]
+    ttk::entry $top.cmd -width 60 -textvariable wrcomcmd
     grid $top.clab $top.cmd -sticky w -pady 10
-    ${NS}::label $top.flab -text [mc "Output file:"]
-    ${NS}::entry $top.fname -width 60
+    ttk::label $top.flab -text [mc "Output file:"]
+    ttk::entry $top.fname -width 60
     $top.fname insert 0 [file normalize "commit-[string range $rowmenuid 0 6]"]
     grid $top.flab $top.fname -sticky w
-    ${NS}::frame $top.buts
-    ${NS}::button $top.buts.gen -text [mc "Write"] -command wrcomgo
-    ${NS}::button $top.buts.can -text [mc "Cancel"] -command wrcomcan
+    ttk::frame $top.buts
+    ttk::button $top.buts.gen -text [mc "Write"] -command wrcomgo
+    ttk::button $top.buts.can -text [mc "Cancel"] -command wrcomcan
     bind $top <Key-Return> wrcomgo
     bind $top <Key-Escape> wrcomcan
     grid $top.buts.gen $top.buts.can
@@ -9723,7 +9640,7 @@ proc wrcomcan {} {
 }
 
 proc mkbranch {} {
-    global NS rowmenuid
+    global rowmenuid
 
     set top .branchdialog
 
@@ -9738,7 +9655,6 @@ proc mkbranch {} {
 }
 
 proc mvbranch {} {
-    global NS
     global headmenuid headmenuhead
 
     set top .branchdialog
@@ -9754,31 +9670,32 @@ proc mvbranch {} {
 }
 
 proc branchdia {top valvar uivar} {
-    global NS commitinfo
+    global commitinfo
+    global hashlength
     upvar $valvar val $uivar ui
 
     catch {destroy $top}
     ttk_toplevel $top
     make_transient $top .
-    ${NS}::label $top.title -text $ui(title)
+    ttk::label $top.title -text $ui(title)
     grid $top.title - -pady 10
-    ${NS}::label $top.id -text [mc "ID:"]
-    ${NS}::entry $top.sha1 -width 40
+    ttk::label $top.id -text [mc "ID:"]
+    ttk::entry $top.sha1 -width $hashlength
     $top.sha1 insert 0 $val(id)
     $top.sha1 conf -state readonly
     grid $top.id $top.sha1 -sticky w
-    ${NS}::entry $top.head -width 60
+    ttk::entry $top.head -width 60
     $top.head insert 0 [lindex $commitinfo($val(id)) 0]
     $top.head conf -state readonly
     grid x $top.head -sticky ew
     grid columnconfigure $top 1 -weight 1
-    ${NS}::label $top.nlab -text [mc "Name:"]
-    ${NS}::entry $top.name -width 40
+    ttk::label $top.nlab -text [mc "Name:"]
+    ttk::entry $top.name -width $hashlength
     $top.name insert 0 $val(name)
     grid $top.nlab $top.name -sticky w
-    ${NS}::frame $top.buts
-    ${NS}::button $top.buts.go -text $ui(accept) -command $val(command)
-    ${NS}::button $top.buts.can -text [mc "Cancel"] -command "catch {destroy $top}"
+    ttk::frame $top.buts
+    ttk::button $top.buts.go -text $ui(accept) -command $val(command)
+    ttk::button $top.buts.can -text [mc "Cancel"] -command "catch {destroy $top}"
     bind $top <Key-Return> $val(command)
     bind $top <Key-Escape> "catch {destroy $top}"
     grid $top.buts.go $top.buts.can
@@ -10025,31 +9942,31 @@ proc revert {} {
 }
 
 proc resethead {} {
-    global mainhead rowmenuid confirm_ok resettype NS
+    global mainhead rowmenuid confirm_ok resettype
 
     set confirm_ok 0
     set w ".confirmreset"
     ttk_toplevel $w
     make_transient $w .
     wm title $w [mc "Confirm reset"]
-    ${NS}::label $w.m -text \
+    ttk::label $w.m -text \
         [mc "Reset branch %s to %s?" $mainhead [string range $rowmenuid 0 7]]
     pack $w.m -side top -fill x -padx 20 -pady 20
-    ${NS}::labelframe $w.f -text [mc "Reset type:"]
+    ttk::labelframe $w.f -text [mc "Reset type:"]
     set resettype mixed
-    ${NS}::radiobutton $w.f.soft -value soft -variable resettype \
+    ttk::radiobutton $w.f.soft -value soft -variable resettype \
         -text [mc "Soft: Leave working tree and index untouched"]
     grid $w.f.soft -sticky w
-    ${NS}::radiobutton $w.f.mixed -value mixed -variable resettype \
+    ttk::radiobutton $w.f.mixed -value mixed -variable resettype \
         -text [mc "Mixed: Leave working tree untouched, reset index"]
     grid $w.f.mixed -sticky w
-    ${NS}::radiobutton $w.f.hard -value hard -variable resettype \
+    ttk::radiobutton $w.f.hard -value hard -variable resettype \
         -text [mc "Hard: Reset working tree and index\n(discard ALL local changes)"]
     grid $w.f.hard -sticky w
     pack $w.f -side top -fill x -padx 4
-    ${NS}::button $w.ok -text [mc OK] -command "set confirm_ok 1; destroy $w"
+    ttk::button $w.ok -text [mc OK] -command "set confirm_ok 1; destroy $w"
     pack $w.ok -side left -fill x -padx 20 -pady 20
-    ${NS}::button $w.cancel -text [mc Cancel] -command "destroy $w"
+    ttk::button $w.cancel -text [mc Cancel] -command "destroy $w"
     bind $w <Key-Escape> [list destroy $w]
     pack $w.cancel -side right -fill x -padx 20 -pady 20
     bind $w <Visibility> "grab $w; focus $w"
@@ -10226,7 +10143,7 @@ proc rmbranch {} {
 
 # Display a list of tags and heads
 proc showrefs {} {
-    global showrefstop bgcolor fgcolor selectbgcolor NS
+    global showrefstop bgcolor fgcolor selectbgcolor
     global bglist fglist reflistfilter reflist maincursor
 
     set top .showrefs
@@ -10249,19 +10166,22 @@ proc showrefs {} {
         lappend bglist $top.list
         lappend fglist $top.list
     }
-    ${NS}::scrollbar $top.ysb -command "$top.list yview" -orient vertical
-    ${NS}::scrollbar $top.xsb -command "$top.list xview" -orient horizontal
+    ttk::scrollbar $top.ysb -command "$top.list yview" -orient vertical
+    ttk::scrollbar $top.xsb -command "$top.list xview" -orient horizontal
     grid $top.list $top.ysb -sticky nsew
     grid $top.xsb x -sticky ew
-    ${NS}::frame $top.f
-    ${NS}::label $top.f.l -text "[mc "Filter"]: "
-    ${NS}::entry $top.f.e -width 20 -textvariable reflistfilter
+    ttk::frame $top.f
+    ttk::label $top.f.l -text "[mc "Filter"]: "
+    ttk::entry $top.f.e -width 20 -textvariable reflistfilter
     set reflistfilter "*"
     trace add variable reflistfilter write reflistfilter_change
     pack $top.f.e -side right -fill x -expand 1
     pack $top.f.l -side left
     grid $top.f - -sticky ew -pady 2
-    ${NS}::button $top.close -command [list destroy $top] -text [mc "Close"]
+    ttk::checkbutton $top.sort -text [mc "Sort refs by type"] \
+        -variable sortrefsbytype -command {refill_reflist}
+    grid $top.sort - -sticky w -pady 2
+    ttk::button $top.close -command [list destroy $top] -text [mc "Close"]
     bind $top <Key-Escape> [list destroy $top]
     grid $top.close -
     grid columnconfigure $top 0 -weight 1
@@ -10304,43 +10224,71 @@ proc reflistfilter_change {n1 n2 op} {
 }
 
 proc refill_reflist {} {
-    global reflist reflistfilter showrefstop headids tagids otherrefids
-    global curview
+    global reflist reflistfilter showrefstop headids tagids otherrefids sortrefsbytype
+    global curview upstreamofref
 
     if {![info exists showrefstop] || ![winfo exists $showrefstop]} return
-    set refs {}
+    set localrefs {}
+    set remoterefs {}
+    set trackedremoterefs {}
+    set tagrefs {}
+    set otherrefs {}
+
     foreach n [array names headids] {
-        if {[string match $reflistfilter $n]} {
+        if {![string match "remotes/*" $n] && [string match $reflistfilter $n]} {
             if {[commitinview $headids($n) $curview]} {
-                if {[string match "remotes/*" $n]} {
-                    lappend refs [list $n R]
-                } else {
-                    lappend refs [list $n H]
+                lappend localrefs [list $n H]
+                if {[info exists upstreamofref($n)]} {
+                    lappend trackedremoterefs [list $upstreamofref($n) R]
                 }
             } else {
                 interestedin $headids($n) {run refill_reflist}
             }
         }
     }
+    set trackedremoterefs [lsort -index 0 $trackedremoterefs]
+    set localrefs [lsort -index 0 $localrefs]
+
+    foreach n [array names headids] {
+        if {[string match "remotes/*" $n] && [string match $reflistfilter $n]} {
+            if {[commitinview $headids($n) $curview]} {
+                if {[lsearch -exact $trackedremoterefs [list $n R]] < 0} {
+                    lappend remoterefs [list $n R]
+                }
+            } else {
+                interestedin $headids($n) {run refill_reflist}
+            }
+        }
+    }
+    set remoterefs [lsort -index 0 $remoterefs]
+
     foreach n [array names tagids] {
         if {[string match $reflistfilter $n]} {
             if {[commitinview $tagids($n) $curview]} {
-                lappend refs [list $n T]
+                lappend tagrefs [list $n T]
             } else {
                 interestedin $tagids($n) {run refill_reflist}
             }
         }
     }
+    set tagrefs [lsort -index 0 $tagrefs]
+
     foreach n [array names otherrefids] {
         if {[string match $reflistfilter $n]} {
             if {[commitinview $otherrefids($n) $curview]} {
-                lappend refs [list $n o]
+                lappend otherrefs [list "$n" o]
             } else {
                 interestedin $otherrefids($n) {run refill_reflist}
             }
         }
     }
-    set refs [lsort -index 0 $refs]
+    set otherrefs [lsort -index 0 $otherrefs]
+
+    set refs [concat $localrefs $trackedremoterefs $remoterefs $tagrefs $otherrefs]
+    if {!$sortrefsbytype} {
+        set refs [lsort -index 0 $refs]
+    }
+
     if {$refs eq $reflist} return
 
     # Update the contents of $showrefstop.list according to the
@@ -11599,82 +11547,14 @@ proc doquit {} {
 }
 
 proc mkfontdisp {font top which} {
-    global fontattr fontpref $font NS use_ttk
+    global fontattr fontpref $font
 
     set fontpref($font) [set $font]
-    ${NS}::button $top.${font}but -text $which \
+    ttk::button $top.${font}but -text $which \
         -command [list choosefont $font $which]
-    ${NS}::label $top.$font -relief flat -font $font \
+    ttk::label $top.$font -relief flat -font $font \
         -text $fontattr($font,family) -justify left
     grid x $top.${font}but $top.$font -sticky w
-}
-
-proc choosefont {font which} {
-    global fontparam fontlist fonttop fontattr
-    global prefstop NS
-
-    set fontparam(which) $which
-    set fontparam(font) $font
-    set fontparam(family) [font actual $font -family]
-    set fontparam(size) $fontattr($font,size)
-    set fontparam(weight) $fontattr($font,weight)
-    set fontparam(slant) $fontattr($font,slant)
-    set top .gitkfont
-    set fonttop $top
-    if {![winfo exists $top]} {
-        font create sample
-        eval font config sample [font actual $font]
-        ttk_toplevel $top
-        make_transient $top $prefstop
-        wm title $top [mc "Gitk font chooser"]
-        ${NS}::label $top.l -textvariable fontparam(which)
-        pack $top.l -side top
-        set fontlist [lsort [font families]]
-        ${NS}::frame $top.f
-        listbox $top.f.fam -listvariable fontlist \
-            -yscrollcommand [list $top.f.sb set]
-        bind $top.f.fam <<ListboxSelect>> selfontfam
-        ${NS}::scrollbar $top.f.sb -command [list $top.f.fam yview]
-        pack $top.f.sb -side right -fill y
-        pack $top.f.fam -side left -fill both -expand 1
-        pack $top.f -side top -fill both -expand 1
-        ${NS}::frame $top.g
-        spinbox $top.g.size -from 4 -to 40 -width 4 \
-            -textvariable fontparam(size) \
-            -validatecommand {string is integer -strict %s}
-        checkbutton $top.g.bold -padx 5 \
-            -font {{Times New Roman} 12 bold} -text [mc "B"] -indicatoron 0 \
-            -variable fontparam(weight) -onvalue bold -offvalue normal
-        checkbutton $top.g.ital -padx 5 \
-            -font {{Times New Roman} 12 italic} -text [mc "I"] -indicatoron 0  \
-            -variable fontparam(slant) -onvalue italic -offvalue roman
-        pack $top.g.size $top.g.bold $top.g.ital -side left
-        pack $top.g -side top
-        canvas $top.c -width 150 -height 50 -border 2 -relief sunk \
-            -background white
-        $top.c create text 100 25 -anchor center -text $which -font sample \
-            -fill black -tags text
-        bind $top.c <Configure> [list centertext $top.c]
-        pack $top.c -side top -fill x
-        ${NS}::frame $top.buts
-        ${NS}::button $top.buts.ok -text [mc "OK"] -command fontok -default active
-        ${NS}::button $top.buts.can -text [mc "Cancel"] -command fontcan -default normal
-        bind $top <Key-Return> fontok
-        bind $top <Key-Escape> fontcan
-        grid $top.buts.ok $top.buts.can
-        grid columnconfigure $top.buts 0 -weight 1 -uniform a
-        grid columnconfigure $top.buts 1 -weight 1 -uniform a
-        pack $top.buts -side bottom -fill x
-        trace add variable fontparam write chg_fontparam
-    } else {
-        raise $top
-        $top.c itemconf text -text $which
-    }
-    set i [lsearch -exact $fontlist $fontparam(family)]
-    if {$i >= 0} {
-        $top.f.fam selection set $i
-        $top.f.fam see $i
-    }
 }
 
 proc centertext {w} {
@@ -11709,26 +11589,21 @@ proc fontcan {} {
     }
 }
 
-if {[package vsatisfies [package provide Tk] 8.6]} {
-    # In Tk 8.6 we have a native font chooser dialog. Overwrite the above
-    # function to make use of it.
-    proc choosefont {font which} {
-        tk fontchooser configure -title $which -font $font \
-            -command [list on_choosefont $font $which]
-        tk fontchooser show
-    }
-    proc on_choosefont {font which newfont} {
-        global fontparam
-        puts stderr "$font $newfont"
-        array set f [font actual $newfont]
-        set fontparam(which) $which
-        set fontparam(font) $font
-        set fontparam(family) $f(-family)
-        set fontparam(size) $f(-size)
-        set fontparam(weight) $f(-weight)
-        set fontparam(slant) $f(-slant)
-        fontok
-    }
+proc choosefont {font which} {
+    tk fontchooser configure -title $which -font $font \
+        -command [list on_choosefont $font $which]
+    tk fontchooser show
+}
+proc on_choosefont {font which newfont} {
+    global fontparam
+    array set f [font actual $newfont]
+    set fontparam(which) $which
+    set fontparam(font) $font
+    set fontparam(family) $f(-family)
+    set fontparam(size) $f(-size)
+    set fontparam(weight) $f(-weight)
+    set fontparam(slant) $f(-slant)
+    fontok
 }
 
 proc selfontfam {} {
@@ -11748,172 +11623,157 @@ proc chg_fontparam {v sub op} {
 
 # Create a property sheet tab page
 proc create_prefs_page {w} {
-    global NS
-    set parent [join [lrange [split $w .] 0 end-1] .]
-    if {[winfo class $parent] eq "TNotebook"} {
-        ${NS}::frame $w
-    } else {
-        ${NS}::labelframe $w
-    }
+    ttk::frame $w
 }
 
 proc prefspage_general {notebook} {
-    global NS maxwidth maxgraphpct showneartags showlocalchanges
-    global tabstop wrapcomment wrapdefault limitdiffs
-    global autocopy autoselect autosellen extdifftool perfile_attrs
-    global hideremotes want_ttk have_ttk maxrefs web_browser
+    global {*}$::config_variables
+    global hashlength
 
     set page [create_prefs_page $notebook.general]
 
-    ${NS}::label $page.ldisp -text [mc "Commit list display options"] -font mainfontbold
+    ttk::label $page.ldisp -text [mc "Commit list display options"] -font mainfontbold
     grid $page.ldisp - -sticky w -pady 10
-    ${NS}::label $page.spacer -text " "
-    ${NS}::label $page.maxwidthl -text [mc "Maximum graph width (lines)"]
+    ttk::label $page.spacer -text " "
+    ttk::label $page.maxwidthl -text [mc "Maximum graph width (lines)"]
     spinbox $page.maxwidth -from 0 -to 100 -width 4 -textvariable maxwidth
     grid $page.spacer $page.maxwidthl $page.maxwidth -sticky w
                                          #xgettext:no-tcl-format
-    ${NS}::label $page.maxpctl -text [mc "Maximum graph width (% of pane)"]
+    ttk::label $page.maxpctl -text [mc "Maximum graph width (% of pane)"]
     spinbox $page.maxpct -from 1 -to 100 -width 4 -textvariable maxgraphpct
     grid x $page.maxpctl $page.maxpct -sticky w
-    ${NS}::checkbutton $page.showlocal -text [mc "Show local changes"] \
+    ttk::checkbutton $page.showlocal -text [mc "Show local changes"] \
         -variable showlocalchanges
     grid x $page.showlocal -sticky w
-    ${NS}::checkbutton $page.hideremotes -text [mc "Hide remote refs"] \
+    ttk::checkbutton $page.hideremotes -text [mc "Hide remote refs"] \
         -variable hideremotes
     grid x $page.hideremotes -sticky w
 
-    ${NS}::checkbutton $page.autocopy -text [mc "Copy commit ID to clipboard"] \
+    ttk::checkbutton $page.autocopy -text [mc "Copy commit ID to clipboard"] \
         -variable autocopy
     grid x $page.autocopy -sticky w
     if {[haveselectionclipboard]} {
-        ${NS}::checkbutton $page.autoselect -text [mc "Copy commit ID to X11 selection"] \
+        ttk::checkbutton $page.autoselect -text [mc "Copy commit ID to X11 selection"] \
             -variable autoselect
         grid x $page.autoselect -sticky w
     }
-    spinbox $page.autosellen -from 1 -to 40 -width 4 -textvariable autosellen
-    ${NS}::label $page.autosellenl -text [mc "Length of commit ID to copy"]
-    grid x $page.autosellenl $page.autosellen -sticky w
 
-    ${NS}::label $page.ddisp -text [mc "Diff display options"] -font mainfontbold
+    spinbox $page.autosellen -from 1 -to $hashlength -width 4 -textvariable autosellen
+    ttk::label $page.autosellenl -text [mc "Length of commit ID to copy"]
+    grid x $page.autosellenl $page.autosellen -sticky w
+    ttk::label $page.kscroll1 -text [mc "Wheel scrolling multiplier"]
+    spinbox $page.kscroll -from 1 -to 20 -width 4 -textvariable kscroll
+    grid x $page.kscroll1 $page.kscroll -sticky w
+
+    ttk::label $page.ddisp -text [mc "Diff display options"] -font mainfontbold
     grid $page.ddisp - -sticky w -pady 10
-    ${NS}::label $page.tabstopl -text [mc "Tab spacing"]
+    ttk::label $page.tabstopl -text [mc "Tab spacing"]
     spinbox $page.tabstop -from 1 -to 20 -width 4 -textvariable tabstop
     grid x $page.tabstopl $page.tabstop -sticky w
 
-    ${NS}::label $page.wrapcommentl -text [mc "Wrap comment text"]
+    ttk::label $page.wrapcommentl -text [mc "Wrap comment text"]
     makedroplist $page.wrapcomment wrapcomment none char word
     grid x $page.wrapcommentl $page.wrapcomment -sticky w
 
-    ${NS}::label $page.wrapdefaultl -text [mc "Wrap other text"]
+    ttk::label $page.wrapdefaultl -text [mc "Wrap other text"]
     makedroplist $page.wrapdefault wrapdefault none char word
     grid x $page.wrapdefaultl $page.wrapdefault -sticky w
 
-    ${NS}::checkbutton $page.ntag -text [mc "Display nearby tags/heads"] \
+    ttk::checkbutton $page.ntag -text [mc "Display nearby tags/heads"] \
         -variable showneartags
     grid x $page.ntag -sticky w
-    ${NS}::label $page.maxrefsl -text [mc "Maximum # tags/heads to show"]
+    ttk::label $page.maxrefsl -text [mc "Maximum # tags/heads to show"]
     spinbox $page.maxrefs -from 1 -to 1000 -width 4 -textvariable maxrefs
     grid x $page.maxrefsl $page.maxrefs -sticky w
-    ${NS}::checkbutton $page.ldiff -text [mc "Limit diffs to listed paths"] \
+    ttk::checkbutton $page.ldiff -text [mc "Limit diffs to listed paths"] \
         -variable limitdiffs
     grid x $page.ldiff -sticky w
-    ${NS}::checkbutton $page.lattr -text [mc "Support per-file encodings"] \
+    ttk::checkbutton $page.lattr -text [mc "Support per-file encodings"] \
         -variable perfile_attrs
     grid x $page.lattr -sticky w
 
-    ${NS}::entry $page.extdifft -textvariable extdifftool
-    ${NS}::frame $page.extdifff
-    ${NS}::label $page.extdifff.l -text [mc "External diff tool" ]
-    ${NS}::button $page.extdifff.b -text [mc "Choose..."] -command choose_extdiff
+    ttk::entry $page.extdifft -textvariable extdifftool
+    ttk::frame $page.extdifff
+    ttk::label $page.extdifff.l -text [mc "External diff tool" ]
+    ttk::button $page.extdifff.b -text [mc "Choose..."] -command choose_extdiff
     pack $page.extdifff.l $page.extdifff.b -side left
     pack configure $page.extdifff.l -padx 10
     grid x $page.extdifff $page.extdifft -sticky ew
 
-    ${NS}::entry $page.webbrowser -textvariable web_browser
-    ${NS}::frame $page.webbrowserf
-    ${NS}::label $page.webbrowserf.l -text [mc "Web browser" ]
+    ttk::entry $page.webbrowser -textvariable web_browser
+    ttk::frame $page.webbrowserf
+    ttk::label $page.webbrowserf.l -text [mc "Web browser" ]
     pack $page.webbrowserf.l -side left
     pack configure $page.webbrowserf.l -padx 10
     grid x $page.webbrowserf $page.webbrowser -sticky ew
 
-    ${NS}::label $page.lgen -text [mc "General options"] -font mainfontbold
-    grid $page.lgen - -sticky w -pady 10
-    ${NS}::checkbutton $page.want_ttk -variable want_ttk \
-        -text [mc "Use themed widgets"]
-    if {$have_ttk} {
-        ${NS}::label $page.ttk_note -text [mc "(change requires restart)"]
-    } else {
-        ${NS}::label $page.ttk_note -text [mc "(currently unavailable)"]
-    }
-    grid x $page.want_ttk $page.ttk_note -sticky w
     return $page
 }
 
 proc prefspage_colors {notebook} {
-    global NS uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
+    global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
     global diffbgcolors
 
     set page [create_prefs_page $notebook.colors]
 
-    ${NS}::label $page.cdisp -text [mc "Colors: press to choose"] -font mainfontbold
+    ttk::label $page.cdisp -text [mc "Colors: press to choose"] -font mainfontbold
     grid $page.cdisp - -sticky w -pady 10
     label $page.ui -padx 40 -relief sunk -background $uicolor
-    ${NS}::button $page.uibut -text [mc "Interface"] \
+    ttk::button $page.uibut -text [mc "Interface"] \
        -command [list choosecolor uicolor {} $page.ui [mc "interface"] setui]
     grid x $page.uibut $page.ui -sticky w
     label $page.bg -padx 40 -relief sunk -background $bgcolor
-    ${NS}::button $page.bgbut -text [mc "Background"] \
+    ttk::button $page.bgbut -text [mc "Background"] \
         -command [list choosecolor bgcolor {} $page.bg [mc "background"] setbg]
     grid x $page.bgbut $page.bg -sticky w
     label $page.fg -padx 40 -relief sunk -background $fgcolor
-    ${NS}::button $page.fgbut -text [mc "Foreground"] \
+    ttk::button $page.fgbut -text [mc "Foreground"] \
         -command [list choosecolor fgcolor {} $page.fg [mc "foreground"] setfg]
     grid x $page.fgbut $page.fg -sticky w
     label $page.diffold -padx 40 -relief sunk -background [lindex $diffcolors 0]
-    ${NS}::button $page.diffoldbut -text [mc "Diff: old lines"] \
+    ttk::button $page.diffoldbut -text [mc "Diff: old lines"] \
         -command [list choosecolor diffcolors 0 $page.diffold [mc "diff old lines"] \
                       [list $ctext tag conf d0 -foreground]]
     grid x $page.diffoldbut $page.diffold -sticky w
     label $page.diffoldbg -padx 40 -relief sunk -background [lindex $diffbgcolors 0]
-    ${NS}::button $page.diffoldbgbut -text [mc "Diff: old lines bg"] \
+    ttk::button $page.diffoldbgbut -text [mc "Diff: old lines bg"] \
         -command [list choosecolor diffbgcolors 0 $page.diffoldbg \
                       [mc "diff old lines bg"] \
                       [list $ctext tag conf d0 -background]]
     grid x $page.diffoldbgbut $page.diffoldbg -sticky w
     label $page.diffnew -padx 40 -relief sunk -background [lindex $diffcolors 1]
-    ${NS}::button $page.diffnewbut -text [mc "Diff: new lines"] \
+    ttk::button $page.diffnewbut -text [mc "Diff: new lines"] \
         -command [list choosecolor diffcolors 1 $page.diffnew [mc "diff new lines"] \
                       [list $ctext tag conf dresult -foreground]]
     grid x $page.diffnewbut $page.diffnew -sticky w
     label $page.diffnewbg -padx 40 -relief sunk -background [lindex $diffbgcolors 1]
-    ${NS}::button $page.diffnewbgbut -text [mc "Diff: new lines bg"] \
+    ttk::button $page.diffnewbgbut -text [mc "Diff: new lines bg"] \
         -command [list choosecolor diffbgcolors 1 $page.diffnewbg \
                       [mc "diff new lines bg"] \
                       [list $ctext tag conf dresult -background]]
     grid x $page.diffnewbgbut $page.diffnewbg -sticky w
     label $page.hunksep -padx 40 -relief sunk -background [lindex $diffcolors 2]
-    ${NS}::button $page.hunksepbut -text [mc "Diff: hunk header"] \
+    ttk::button $page.hunksepbut -text [mc "Diff: hunk header"] \
         -command [list choosecolor diffcolors 2 $page.hunksep \
                       [mc "diff hunk header"] \
                       [list $ctext tag conf hunksep -foreground]]
     grid x $page.hunksepbut $page.hunksep -sticky w
     label $page.markbgsep -padx 40 -relief sunk -background $markbgcolor
-    ${NS}::button $page.markbgbut -text [mc "Marked line bg"] \
+    ttk::button $page.markbgbut -text [mc "Marked line bg"] \
         -command [list choosecolor markbgcolor {} $page.markbgsep \
                       [mc "marked line background"] \
                       [list $ctext tag conf omark -background]]
     grid x $page.markbgbut $page.markbgsep -sticky w
     label $page.selbgsep -padx 40 -relief sunk -background $selectbgcolor
-    ${NS}::button $page.selbgbut -text [mc "Select bg"] \
+    ttk::button $page.selbgbut -text [mc "Select bg"] \
         -command [list choosecolor selectbgcolor {} $page.selbgsep [mc "background"] setselbg]
     grid x $page.selbgbut $page.selbgsep -sticky w
     return $page
 }
 
 proc prefspage_fonts {notebook} {
-    global NS
     set page [create_prefs_page $notebook.fonts]
-    ${NS}::label $page.cfont -text [mc "Fonts: press to choose"] -font mainfontbold
+    ttk::label $page.cfont -text [mc "Fonts: press to choose"] -font mainfontbold
     grid $page.cfont - -sticky w -pady 10
     mkfontdisp mainfont $page [mc "Main font"]
     mkfontdisp textfont $page [mc "Diff display font"]
@@ -11922,11 +11782,8 @@ proc prefspage_fonts {notebook} {
 }
 
 proc doprefs {} {
-    global maxwidth maxgraphpct use_ttk NS
-    global oldprefs prefstop showneartags showlocalchanges
-    global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
-    global tabstop limitdiffs autoselect autosellen extdifftool perfile_attrs
-    global hideremotes want_ttk have_ttk wrapcomment wrapdefault
+    global oldprefs prefstop
+    global {*}$::config_variables
 
     set top .gitkprefs
     set prefstop $top
@@ -11934,49 +11791,34 @@ proc doprefs {} {
         raise $top
         return
     }
-    foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-                   limitdiffs tabstop perfile_attrs hideremotes want_ttk wrapcomment wrapdefault} {
+    foreach v $::config_variables {
         set oldprefs($v) [set $v]
     }
     ttk_toplevel $top
     wm title $top [mc "Gitk preferences"]
     make_transient $top .
 
-    if {[set use_notebook [expr {$use_ttk && [info command ::ttk::notebook] ne ""}]]} {
-        set notebook [ttk::notebook $top.notebook]
-    } else {
-        set notebook [${NS}::frame $top.notebook -borderwidth 0 -relief flat]
-    }
+    set notebook [ttk::notebook $top.notebook]
 
     lappend pages [prefspage_general $notebook] [mc "General"]
     lappend pages [prefspage_colors $notebook] [mc "Colors"]
     lappend pages [prefspage_fonts $notebook] [mc "Fonts"]
     set col 0
     foreach {page title} $pages {
-        if {$use_notebook} {
-            $notebook add $page -text $title
-        } else {
-            set btn [${NS}::button $notebook.b_[string map {. X} $page] \
-                         -text $title -command [list raise $page]]
-            $page configure -text $title
-            grid $btn -row 0 -column [incr col] -sticky w
-            grid $page -row 1 -column 0 -sticky news -columnspan 100
-        }
+        $notebook add $page -text $title
     }
 
-    if {!$use_notebook} {
-        grid columnconfigure $notebook 0 -weight 1
-        grid rowconfigure $notebook 1 -weight 1
-        raise [lindex $pages 0]
-    }
+    grid columnconfigure $notebook 0 -weight 1
+    grid rowconfigure $notebook 1 -weight 1
+    raise [lindex $pages 0]
 
     grid $notebook -sticky news -padx 2 -pady 2
     grid rowconfigure $top 0 -weight 1
     grid columnconfigure $top 0 -weight 1
 
-    ${NS}::frame $top.buts
-    ${NS}::button $top.buts.ok -text [mc "OK"] -command prefsok -default active
-    ${NS}::button $top.buts.can -text [mc "Cancel"] -command prefscan -default normal
+    ttk::frame $top.buts
+    ttk::button $top.buts.ok -text [mc "OK"] -command prefsok -default active
+    ttk::button $top.buts.can -text [mc "Cancel"] -command prefscan -default normal
     bind $top <Key-Return> prefsok
     bind $top <Key-Escape> prefscan
     grid $top.buts.ok $top.buts.can
@@ -12059,10 +11901,9 @@ proc setfg {c} {
 
 proc prefscan {} {
     global oldprefs prefstop
+    global {*}$::config_variables
 
-    foreach v {maxwidth maxgraphpct showneartags showlocalchanges \
-                   limitdiffs tabstop perfile_attrs hideremotes want_ttk wrapcomment wrapdefault} {
-        global $v
+    foreach v $::config_variables {
         set $v $oldprefs($v)
     }
     catch {destroy $prefstop}
@@ -12071,11 +11912,8 @@ proc prefscan {} {
 }
 
 proc prefsok {} {
-    global maxwidth maxgraphpct
-    global oldprefs prefstop showneartags showlocalchanges
-    global fontpref mainfont textfont uifont
-    global limitdiffs treediffs perfile_attrs
-    global hideremotes wrapcomment wrapdefault
+    global oldprefs prefstop fontpref treediffs
+    global {*}$::config_variables
     global ctext
 
     catch {destroy $prefstop}
@@ -12517,13 +12355,6 @@ namespace import ::msgcat::mc
 ## And eventually load the actual message catalog
 ::msgcat::mcload $gitk_msgsdir
 
-# First check that Tcl/Tk is recent enough
-if {[catch {package require Tk 8.4} err]} {
-    show_error {} . [mc "Sorry, gitk cannot run with this version of Tcl/Tk.\n\
-                         Gitk requires at least Tcl/Tk 8.4."]
-    exit 1
-}
-
 # on OSX bring the current Wish process window to front
 if {[tk windowingsystem] eq "aqua"} {
     safe_exec [list osascript -e [format {
@@ -12569,6 +12400,17 @@ catch {
     }
 }
 
+# Use object format as hash algorightm (either "sha1" or "sha256")
+set hashalgorithm [exec git rev-parse --show-object-format]
+if {$hashalgorithm eq "sha1"} {
+    set hashlength 40
+} elseif {$hashalgorithm eq "sha256"} {
+    set hashlength 64
+} else {
+    puts stderr "Unknown hash algorithm: $hashalgorithm"
+    exit 1
+}
+
 set log_showroot true
 catch {
     set log_showroot [exec git config --bool --get log.showroot]
@@ -12602,17 +12444,18 @@ set wrapcomment "none"
 set wrapdefault "none"
 set showneartags 1
 set hideremotes 0
+set sortrefsbytype 1
 set maxrefs 20
 set visiblerefs {"master"}
 set maxlinelen 200
 set showlocalchanges 1
 set limitdiffs 1
+set kscroll 3
 set datetimeformat "%Y-%m-%d %H:%M:%S"
 set autocopy 0
 set autoselect 1
-set autosellen 40
+set autosellen $hashlength
 set perfile_attrs 0
-set want_ttk 1
 
 if {[tk windowingsystem] eq "aqua"} {
     set extdifftool "opendiff"
@@ -12705,19 +12548,66 @@ catch {
 config_check_tmp_exists 50
 
 set config_variables {
-    mainfont textfont uifont tabstop findmergefiles maxgraphpct maxwidth
-    cmitmode wrapcomment wrapdefault autocopy autoselect autosellen
-    showneartags maxrefs visiblerefs
-    hideremotes showlocalchanges datetimeformat limitdiffs uicolor want_ttk
-    bgcolor fgcolor uifgcolor uifgdisabledcolor colors diffcolors mergecolors
-    markbgcolor diffcontext selectbgcolor foundbgcolor currentsearchhitbgcolor
-    extdifftool perfile_attrs headbgcolor headfgcolor headoutlinecolor
-    remotebgcolor tagbgcolor tagfgcolor tagoutlinecolor reflinecolor
-    filesepbgcolor filesepfgcolor linehoverbgcolor linehoverfgcolor
-    linehoveroutlinecolor mainheadcirclecolor workingfilescirclecolor
-    indexcirclecolor circlecolors linkfgcolor circleoutlinecolor diffbgcolors
+    autocopy
+    autoselect
+    autosellen
+    bgcolor
+    circlecolors
+    circleoutlinecolor
+    cmitmode
+    colors
+    currentsearchhitbgcolor
+    datetimeformat
+    diffbgcolors
+    diffcolors
+    diffcontext
+    extdifftool
+    fgcolor
+    filesepbgcolor
+    filesepfgcolor
+    findmergefiles
+    foundbgcolor
+    headbgcolor
+    headfgcolor
+    headoutlinecolor
+    hideremotes
+    indexcirclecolor
+    kscroll
+    limitdiffs
+    linehoverbgcolor
+    linehoverfgcolor
+    linehoveroutlinecolor
+    linkfgcolor
+    mainfont
+    mainheadcirclecolor
+    markbgcolor
+    maxgraphpct
+    maxrefs
+    maxwidth
+    mergecolors
+    perfile_attrs
+    reflinecolor
+    remotebgcolor
+    selectbgcolor
+    showlocalchanges
+    showneartags
+    sortrefsbytype
+    tabstop
+    tagbgcolor
+    tagfgcolor
+    tagoutlinecolor
+    textfont
+    uicolor
+    uifgcolor
+    uifgdisabledcolor
+    uifont
+    visiblerefs
     web_browser
+    workingfilescirclecolor
+    wrapcomment
+    wrapdefault
 }
+
 foreach var $config_variables {
     config_init_trace $var
     trace add variable $var write config_variable_change_cb
@@ -12808,25 +12698,7 @@ set nullid "0000000000000000000000000000000000000000"
 set nullid2 "0000000000000000000000000000000000000001"
 set nullfile "/dev/null"
 
-set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
-set have_tk86 [expr {[package vcompare $tk_version "8.6"] >= 0}]
-if {![info exists have_ttk]} {
-    set have_ttk [llength [info commands ::ttk::style]]
-}
-set use_ttk [expr {$have_ttk && $want_ttk}]
-set NS [expr {$use_ttk ? "ttk" : ""}]
-
-if {$use_ttk} {
-    setttkstyle
-}
-
-regexp {^git version ([\d.]*\d)} [exec git version] _ git_version
-
-set show_notes {}
-if {[package vcompare $git_version "1.6.6.2"] >= 0} {
-    set show_notes "--show-notes"
-}
-
+setttkstyle
 set appname "gitk"
 
 set runq {}
