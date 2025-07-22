@@ -479,6 +479,7 @@ proc parseviewargs {n arglist} {
 
 proc parseviewrevs {view revs} {
     global vposids vnegids
+    global hashlength
 
     if {$revs eq {}} {
         set revs HEAD
@@ -492,7 +493,7 @@ proc parseviewrevs {view revs} {
         set badrev {}
         for {set l 0} {$l < [llength $errlines]} {incr l} {
             set line [lindex $errlines $l]
-            if {!([string length $line] == 40 && [string is xdigit $line])} {
+            if {!([string length $line] == $hashlength && [string is xdigit $line])} {
                 if {[string match "fatal:*" $line]} {
                     if {[string match "fatal: ambiguous argument*" $line]
                         && $badrev ne {}} {
@@ -698,6 +699,7 @@ proc updatecommits {} {
     global hasworktree
     global varcid vposids vnegids vflags vrevs
     global show_notes
+    global hashlength
 
     set hasworktree [hasworktree]
     rereadrefs
@@ -731,7 +733,7 @@ proc updatecommits {} {
             # take out positive refs that we asked for before or
             # that we have already seen
             foreach rev $revs {
-                if {[string length $rev] == 40} {
+                if {[string length $rev] == $hashlength} {
                     if {[lsearch -exact $oldpos $rev] < 0
                         && ![info exists varcid($view,$rev)]} {
                         lappend newrevs $rev
@@ -1614,6 +1616,7 @@ proc getcommitlines {fd inst view updating}  {
     global parents children curview hlview
     global idpending ordertok
     global varccommits varcid varctok vtokmod vfilelimit vshortids
+    global hashlength
 
     set stuff [read $fd 500000]
     # git log doesn't terminate the last commit with a null...
@@ -1696,7 +1699,7 @@ proc getcommitlines {fd inst view updating}  {
             }
             set ok 1
             foreach id $ids {
-                if {[string length $id] != 40} {
+                if {[string length $id] != $hashlength} {
                     set ok 0
                     break
                 }
@@ -1942,8 +1945,8 @@ proc getcommit {id} {
     return 1
 }
 
-# Expand an abbreviated commit ID to a list of full 40-char IDs that match
-# and are present in the current view.
+# Expand an abbreviated commit ID to a list of full 40-char (or 64-char
+# for SHA256 repo) IDs that match and are present in the current view.
 # This is fairly slow...
 proc longid {prefix} {
     global varcid curview vshortids
@@ -1976,6 +1979,7 @@ proc readrefs {} {
     global selecthead selectheadid
     global hideremotes
     global tclencoding
+    global hashlength
 
     foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
         unset -nocomplain $v
@@ -1985,9 +1989,9 @@ proc readrefs {} {
         fconfigure $refd -encoding $tclencoding
     }
     while {[gets $refd line] >= 0} {
-        if {[string index $line 40] ne " "} continue
-        set id [string range $line 0 39]
-        set ref [string range $line 41 end]
+        if {[string index $line $hashlength] ne " "} continue
+        set id [string range $line 0 [expr {$hashlength - 1}]]
+        set ref [string range $line [expr {$hashlength + 1}] end]
         if {![string match "refs/*" $ref]} continue
         set name [string range $ref 5 end]
         if {[string match "remotes/*" $name]} {
@@ -2282,6 +2286,7 @@ proc makewindow {} {
     global have_tk85 have_tk86 use_ttk NS
     global git_version
     global worddiff
+    global hashlength
 
     # The "mc" arguments here are purely so that xgettext
     # sees the following string as needing to be translated
@@ -2407,7 +2412,7 @@ proc makewindow {} {
         -command gotocommit -width 8
     $sha1but conf -disabledforeground [$sha1but cget -foreground]
     pack .tf.bar.sha1label -side left
-    ${NS}::entry $sha1entry -width 40 -font textfont -textvariable sha1string
+    ${NS}::entry $sha1entry -width $hashlength -font textfont -textvariable sha1string
     trace add variable sha1string write sha1change
     pack $sha1entry -side left -pady 2
 
@@ -4132,6 +4137,7 @@ proc stopblaming {} {
 
 proc read_line_source {fd inst} {
     global blamestuff curview commfd blameinst nullid nullid2
+    global hashlength
 
     while {[gets $fd line] >= 0} {
         lappend blamestuff($inst) $line
@@ -4152,7 +4158,7 @@ proc read_line_source {fd inst} {
     set line [split [lindex $blamestuff($inst) 0] " "]
     set id [lindex $line 0]
     set lnum [lindex $line 1]
-    if {[string length $id] == 40 && [string is xdigit $id] &&
+    if {[string length $id] == $hashlength && [string is xdigit $id] &&
         [string is digit -strict $lnum]} {
         # look for "filename" line
         foreach l $blamestuff($inst) {
@@ -5296,11 +5302,13 @@ proc askrelhighlight {row id} {
 # Graph layout functions
 
 proc shortids {ids} {
+    global hashlength
+
     set res {}
     foreach id $ids {
         if {[llength $id] > 1} {
             lappend res [shortids $id]
-        } elseif {[regexp {^[0-9a-f]{40}$} $id]} {
+        } elseif {[regexp [string map "@@ $hashlength" {^[0-9a-f]{@@}$}] $id]} {
             lappend res [string range $id 0 7]
         } else {
             lappend res $id
@@ -5475,13 +5483,14 @@ proc get_viewmainhead {view} {
 # git rev-list should give us just 1 line to use as viewmainheadid($view)
 proc getviewhead {fd inst view} {
     global viewmainheadid commfd curview viewinstances showlocalchanges
+    global hashlength
 
     set id {}
     if {[gets $fd line] < 0} {
         if {![eof $fd]} {
             return 1
         }
-    } elseif {[string length $line] == 40 && [string is xdigit $line]} {
+    } elseif {[string length $line] == $hashlength && [string is xdigit $line]} {
         set id $line
     }
     set viewmainheadid($view) $id
@@ -7245,10 +7254,11 @@ proc commit_descriptor {p} {
 # Also look for URLs of the form "http[s]://..." and make them web links.
 proc appendwithlinks {text tags} {
     global ctext linknum curview
+    global hashlength
 
     set start [$ctext index "end - 1c"]
     $ctext insert end $text $tags
-    set links [regexp -indices -all -inline {(?:\m|-g)[0-9a-f]{6,40}\M} $text]
+    set links [regexp -indices -all -inline [string map "@@ $hashlength" {(?:\m|-g)[0-9a-f]{6,@@}\M}] $text]
     foreach l $links {
         set s [lindex $l 0]
         set e [lindex $l 1]
@@ -7276,13 +7286,14 @@ proc appendwithlinks {text tags} {
 proc setlink {id lk} {
     global curview ctext pendinglinks
     global linkfgcolor
+    global hashlength
 
     if {[string range $id 0 1] eq "-g"} {
       set id [string range $id 2 end]
     }
 
     set known 0
-    if {[string length $id] < 40} {
+    if {[string length $id] < $hashlength} {
         set matches [longid $id]
         if {[llength $matches] > 0} {
             if {[llength $matches] > 1} return
@@ -8927,13 +8938,16 @@ proc incrfont {inc} {
 
 proc clearsha1 {} {
     global sha1entry sha1string
-    if {[string length $sha1string] == 40} {
+    global hashlength
+
+    if {[string length $sha1string] == $hashlength} {
         $sha1entry delete 0 end
     }
 }
 
 proc sha1change {n1 n2 op} {
     global sha1string currentid sha1but
+
     if {$sha1string == {}
         || ([info exists currentid] && $sha1string == $currentid)} {
         set state disabled
@@ -8950,6 +8964,7 @@ proc sha1change {n1 n2 op} {
 
 proc gotocommit {} {
     global sha1string tagids headids curview varcid
+    global hashlength
 
     if {$sha1string == {}
         || ([info exists currentid] && $sha1string == $currentid)} return
@@ -8959,7 +8974,7 @@ proc gotocommit {} {
         set id $headids($sha1string)
     } else {
         set id [string tolower $sha1string]
-        if {[regexp {^[0-9a-f]{4,39}$} $id]} {
+        if {[regexp {^[0-9a-f]{4,63}$} $id]} {
             set matches [longid $id]
             if {$matches ne {}} {
                 if {[llength $matches] > 1} {
@@ -9446,6 +9461,7 @@ proc doseldiff {oldid newid} {
 
 proc mkpatch {} {
     global rowmenuid currentid commitinfo patchtop patchnum NS
+    global hashlength
 
     if {![info exists currentid]} return
     set oldid $currentid
@@ -9460,7 +9476,7 @@ proc mkpatch {} {
     ${NS}::label $top.title -text [mc "Generate patch"]
     grid $top.title - -pady 10
     ${NS}::label $top.from -text [mc "From:"]
-    ${NS}::entry $top.fromsha1 -width 40
+    ${NS}::entry $top.fromsha1 -width $hashlength
     $top.fromsha1 insert 0 $oldid
     $top.fromsha1 conf -state readonly
     grid $top.from $top.fromsha1 -sticky w
@@ -9469,7 +9485,7 @@ proc mkpatch {} {
     $top.fromhead conf -state readonly
     grid x $top.fromhead -sticky w
     ${NS}::label $top.to -text [mc "To:"]
-    ${NS}::entry $top.tosha1 -width 40
+    ${NS}::entry $top.tosha1 -width $hashlength
     $top.tosha1 insert 0 $newid
     $top.tosha1 conf -state readonly
     grid $top.to $top.tosha1 -sticky w
@@ -9535,6 +9551,7 @@ proc mkpatchcan {} {
 
 proc mktag {} {
     global rowmenuid mktagtop commitinfo NS
+    global hashlength
 
     set top .maketag
     set mktagtop $top
@@ -9544,7 +9561,7 @@ proc mktag {} {
     ${NS}::label $top.title -text [mc "Create tag"]
     grid $top.title - -pady 10
     ${NS}::label $top.id -text [mc "ID:"]
-    ${NS}::entry $top.sha1 -width 40
+    ${NS}::entry $top.sha1 -width $hashlength
     $top.sha1 insert 0 $rowmenuid
     $top.sha1 conf -state readonly
     grid $top.id $top.sha1 -sticky w
@@ -9652,10 +9669,11 @@ proc mktaggo {} {
 
 proc copyreference {} {
     global rowmenuid autosellen
+    global hashlength
 
     set format "%h (\"%s\", %ad)"
     set cmd [list git show -s --pretty=format:$format --date=short]
-    if {$autosellen < 40} {
+    if {$autosellen < $hashlength} {
         lappend cmd --abbrev=$autosellen
     }
     set reference [safe_exec [concat $cmd $rowmenuid]]
@@ -9666,6 +9684,7 @@ proc copyreference {} {
 
 proc writecommit {} {
     global rowmenuid wrcomtop commitinfo wrcomcmd NS
+    global hashlength
 
     set top .writecommit
     set wrcomtop $top
@@ -9675,7 +9694,7 @@ proc writecommit {} {
     ${NS}::label $top.title -text [mc "Write commit to file"]
     grid $top.title - -pady 10
     ${NS}::label $top.id -text [mc "ID:"]
-    ${NS}::entry $top.sha1 -width 40
+    ${NS}::entry $top.sha1 -width $hashlength
     $top.sha1 insert 0 $rowmenuid
     $top.sha1 conf -state readonly
     grid $top.id $top.sha1 -sticky w
@@ -9755,6 +9774,7 @@ proc mvbranch {} {
 
 proc branchdia {top valvar uivar} {
     global NS commitinfo
+    global hashlength
     upvar $valvar val $uivar ui
 
     catch {destroy $top}
@@ -9763,7 +9783,7 @@ proc branchdia {top valvar uivar} {
     ${NS}::label $top.title -text $ui(title)
     grid $top.title - -pady 10
     ${NS}::label $top.id -text [mc "ID:"]
-    ${NS}::entry $top.sha1 -width 40
+    ${NS}::entry $top.sha1 -width $hashlength
     $top.sha1 insert 0 $val(id)
     $top.sha1 conf -state readonly
     grid $top.id $top.sha1 -sticky w
@@ -9773,7 +9793,7 @@ proc branchdia {top valvar uivar} {
     grid x $top.head -sticky ew
     grid columnconfigure $top 1 -weight 1
     ${NS}::label $top.nlab -text [mc "Name:"]
-    ${NS}::entry $top.name -width 40
+    ${NS}::entry $top.name -width $hashlength
     $top.name insert 0 $val(name)
     grid $top.nlab $top.name -sticky w
     ${NS}::frame $top.buts
@@ -11761,6 +11781,7 @@ proc prefspage_general {notebook} {
     global tabstop wrapcomment wrapdefault limitdiffs
     global autocopy autoselect autosellen extdifftool perfile_attrs
     global hideremotes want_ttk have_ttk maxrefs web_browser
+    global hashlength
 
     set page [create_prefs_page $notebook.general]
 
@@ -11789,7 +11810,8 @@ proc prefspage_general {notebook} {
             -variable autoselect
         grid x $page.autoselect -sticky w
     }
-    spinbox $page.autosellen -from 1 -to 40 -width 4 -textvariable autosellen
+
+    spinbox $page.autosellen -from 1 -to $hashlength -width 4 -textvariable autosellen
     ${NS}::label $page.autosellenl -text [mc "Length of commit ID to copy"]
     grid x $page.autosellenl $page.autosellen -sticky w
 
@@ -12568,6 +12590,17 @@ catch {
     }
 }
 
+# Use object format as hash algorightm (either "sha1" or "sha256")
+set hashalgorithm [exec git rev-parse --show-object-format]
+if {$hashalgorithm eq "sha1"} {
+    set hashlength 40
+} elseif {$hashalgorithm eq "sha256"} {
+    set hashlength 64
+} else {
+    puts stderr "Unknown hash algorithm: $hashalgorithm"
+    exit 1
+}
+
 set log_showroot true
 catch {
     set log_showroot [exec git config --bool --get log.showroot]
@@ -12609,7 +12642,7 @@ set limitdiffs 1
 set datetimeformat "%Y-%m-%d %H:%M:%S"
 set autocopy 0
 set autoselect 1
-set autosellen 40
+set autosellen $hashlength
 set perfile_attrs 0
 set want_ttk 1
 
