@@ -214,12 +214,10 @@ You must stage at least 1 file before you can commit.
 	global comment_string
 	set cmt_rx [strcat {(^|\n)} [regsub -all {\W} $comment_string {\\&}] {[^\n]*}]
 	regsub -all $cmt_rx $msg {\1} msg
-	# Strip leading empty lines
-	regsub {^\n*} $msg {} msg
+	# Strip leading and trailing empty lines (puts adds one \n)
+	set msg [string trim $msg \n]
 	# Compress consecutive empty lines
 	regsub -all {\n{3,}} $msg "\n\n" msg
-	# Strip trailing empty line
-	regsub {\n\n$} $msg "\n" msg
 	if {$msg eq {}} {
 		error_popup [mc "Please supply a commit message.
 
@@ -348,6 +346,7 @@ proc commit_committree {fd_wt curHEAD msg_p} {
 	global file_states selected_paths rescan_active
 	global repo_config
 	global env
+	global hashlength
 
 	gets $fd_wt tree_id
 	if {[catch {close $fd_wt} err]} {
@@ -367,7 +366,7 @@ proc commit_committree {fd_wt curHEAD msg_p} {
 		close $fd_ot
 
 		if {[string equal -length 5 {tree } $old_tree]
-			&& [string length $old_tree] == 45} {
+			&& [string length $old_tree] == [expr {$hashlength + 5}]} {
 			set old_tree [string range $old_tree 5 end]
 		} else {
 			error [mc "Commit %s appears to be corrupt" $PARENT]

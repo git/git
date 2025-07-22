@@ -13,7 +13,7 @@ field location     {}; # location of the remote the user has chosen
 field opt_action fetch; # action to do after registering the remote locally
 
 constructor dialog {} {
-	global repo_config use_ttk NS
+	global repo_config
 
 	make_dialog top w
 	wm withdraw $top
@@ -22,34 +22,34 @@ constructor dialog {} {
 		wm geometry $top "+[winfo rootx .]+[winfo rooty .]"
 	}
 
-	${NS}::label $w.header -text [mc "Add New Remote"] \
+	ttk::label $w.header -text [mc "Add New Remote"] \
 		-font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
-	${NS}::frame $w.buttons
-	${NS}::button $w.buttons.create -text [mc Add] \
+	ttk::frame $w.buttons
+	ttk::button $w.buttons.create -text [mc Add] \
 		-default active \
 		-command [cb _add]
 	pack $w.buttons.create -side right
-	${NS}::button $w.buttons.cancel -text [mc Cancel] \
+	ttk::button $w.buttons.cancel -text [mc Cancel] \
 		-command [list destroy $w]
 	pack $w.buttons.cancel -side right -padx 5
 	pack $w.buttons -side bottom -fill x -pady 10 -padx 10
 
-	${NS}::labelframe $w.desc -text [mc "Remote Details"]
+	ttk::labelframe $w.desc -text [mc "Remote Details"]
 
-	${NS}::label $w.desc.name_l -text [mc "Name:"]
+	ttk::label $w.desc.name_l -text [mc "Name:"]
 	set w_name $w.desc.name_t
-	${NS}::entry $w_name \
+	ttk::entry $w_name \
 		-width 40 \
 		-textvariable @name \
 		-validate key \
 		-validatecommand [cb _validate_name %d %S]
 	grid $w.desc.name_l $w_name -sticky we -padx {0 5}
 
-	${NS}::label $w.desc.loc_l -text [mc "Location:"]
+	ttk::label $w.desc.loc_l -text [mc "Location:"]
 	set w_loc $w.desc.loc_t
-	${NS}::entry $w_loc \
+	ttk::entry $w_loc \
 		-width 40 \
 		-textvariable @location
 	grid $w.desc.loc_l $w_loc -sticky we -padx {0 5}
@@ -57,21 +57,21 @@ constructor dialog {} {
 	grid columnconfigure $w.desc 1 -weight 1
 	pack $w.desc -anchor nw -fill x -pady 5 -padx 5
 
-	${NS}::labelframe $w.action -text [mc "Further Action"]
+	ttk::labelframe $w.action -text [mc "Further Action"]
 
-	${NS}::radiobutton $w.action.fetch \
+	ttk::radiobutton $w.action.fetch \
 		-text [mc "Fetch Immediately"] \
 		-value fetch \
 		-variable @opt_action
 	pack $w.action.fetch -anchor nw
 
-	${NS}::radiobutton $w.action.push \
+	ttk::radiobutton $w.action.push \
 		-text [mc "Initialize Remote Repository and Push"] \
 		-value push \
 		-variable @opt_action
 	pack $w.action.push -anchor nw
 
-	${NS}::radiobutton $w.action.none \
+	ttk::radiobutton $w.action.none \
 		-text [mc "Do Nothing Else Now"] \
 		-value none \
 		-variable @opt_action
