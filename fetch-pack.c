@@ -34,7 +34,6 @@
 #include "commit-graph.h"
 #include "sigchain.h"
 #include "mergesort.h"
-#include "prio-queue.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
@@ -602,7 +601,7 @@ done:
 	return count ? retval : 0;
 }
 
-static struct prio_queue complete = { compare_commits_by_commit_date };
+static struct commit_list *complete;
 
 static int mark_complete(const struct object_id *oid)
 {
@@ -610,7 +609,7 @@ static int mark_complete(const struct object_id *oid)
 
 	if (commit && !(commit->object.flags & COMPLETE)) {
 		commit->object.flags |= COMPLETE;
-		prio_queue_put(&complete, commit);
+		commit_list_insert(commit, &complete);
 	}
 	return 0;
 }
@@ -627,12 +626,9 @@ static int mark_complete_oid(const char *refname UNUSED,
 static void mark_recent_complete_commits(struct fetch_pack_args *args,
 					 timestamp_t cutoff)
 {
-	while (complete.nr) {
-		struct commit *item = prio_queue_peek(&complete);
-		if (item->date < cutoff)
-			break;
+	while (complete && cutoff <= complete->item->date) {
 		print_verbose(args, _("Marking %s as complete"),
-			      oid_to_hex(&item->object.oid));
+			      oid_to_hex(&complete->item->object.oid));
 		pop_most_recent_commit(&complete, COMPLETE);
 	}
 }
@@ -802,6 +798,7 @@ static void mark_complete_and_common_ref(struct fetch_negotiator *negotiator,
 		refs_for_each_rawref(get_main_ref_store(the_repository),
 				     mark_complete_oid, NULL);
 		for_each_cached_alternate(NULL, mark_alternate_complete);
+		commit_list_sort_by_date(&complete);
 		if (cutoff)
 			mark_recent_complete_commits(args, cutoff);
 	}

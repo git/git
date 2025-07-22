@@ -31,7 +31,6 @@
 #include "parse.h"
 #include "object-file.h"
 #include "object-file-convert.h"
-#include "prio-queue.h"
 
 static struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);
 
@@ -740,27 +739,20 @@ void commit_list_sort_by_date(struct commit_list **list)
 	commit_list_sort(list, commit_list_compare_by_date);
 }
 
-struct commit *pop_most_recent_commit(struct prio_queue *queue,
+struct commit *pop_most_recent_commit(struct commit_list **list,
 				      unsigned int mark)
 {
-	struct commit *ret = prio_queue_peek(queue);
-	int get_pending = 1;
+	struct commit *ret = pop_commit(list);
 	struct commit_list *parents = ret->parents;
 
 	while (parents) {
 		struct commit *commit = parents->item;
 		if (!repo_parse_commit(the_repository, commit) && !(commit->object.flags & mark)) {
 			commit->object.flags |= mark;
-			if (get_pending)
-				prio_queue_replace(queue, commit);
-			else
-				prio_queue_put(queue, commit);
-			get_pending = 0;
+			commit_list_insert_by_date(commit, list);
 		}
 		parents = parents->next;
 	}
-	if (get_pending)
-		prio_queue_get(queue);
 	return ret;
 }
 
