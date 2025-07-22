@@ -35,7 +35,7 @@ field readtree_err        ; # Error output from read-tree (if any)
 field sorted_recent       ; # recent repositories (sorted)
 
 constructor pick {} {
-	global M1T M1B use_ttk NS
+	global M1T M1B
 
 	if {[set maxrecent [get_config gui.maxrecentrepo]] eq {}} {
 		set maxrecent 10
@@ -88,7 +88,7 @@ constructor pick {} {
 
 	set w_body $w.body
 	set opts $w_body.options
-	${NS}::frame $w_body
+	ttk::frame $w_body
 	text $opts \
 		-cursor $::cursor_ptr \
 		-relief flat \
@@ -158,8 +158,8 @@ constructor pick {} {
 		set lenrecent $maxrecent
 	}
 
-		${NS}::label $w_body.space
-		${NS}::label $w_body.recentlabel \
+		ttk::label $w_body.space
+		ttk::label $w_body.recentlabel \
 			-anchor w \
 			-text [mc "Open Recent Repository:"]
 		set w_recentlist $w_body.recentlist
@@ -199,10 +199,10 @@ constructor pick {} {
 	}
 	pack $w_body -fill x -padx 10 -pady 10
 
-	${NS}::frame $w.buttons
+	ttk::frame $w.buttons
 	set w_next $w.buttons.next
 	set w_quit $w.buttons.quit
-	${NS}::button $w_quit \
+	ttk::button $w_quit \
 		-text [mc "Quit"] \
 		-command exit
 	pack $w_quit -side right -padx 5
@@ -303,10 +303,9 @@ method _open_recent_path {p} {
 }
 
 method _next {action} {
-	global NS
 	destroy $w_body
 	if {![winfo exists $w_next]} {
-		${NS}::button $w_next -default active
+		ttk::button $w_next -default active
 		set pos -before
 		if {[tk windowingsystem] eq "win32"} { set pos -after }
 		pack $w_next -side right -padx 5 $pos $w_quit
@@ -379,25 +378,24 @@ proc _objdir {path} {
 ## Create New Repository
 
 method _do_new {} {
-	global use_ttk NS
 	$w_next conf \
 		-state disabled \
 		-command [cb _do_new2] \
 		-text [mc "Create"]
 
-	${NS}::frame $w_body
-	${NS}::label $w_body.h \
+	ttk::frame $w_body
+	ttk::label $w_body.h \
 		-font font_uibold -anchor center \
 		-text [mc "Create New Repository"]
 	pack $w_body.h -side top -fill x -pady 10
 	pack $w_body -fill x -padx 10
 
-	${NS}::frame $w_body.where
-	${NS}::label $w_body.where.l -text [mc "Directory:"]
-	${NS}::entry $w_body.where.t \
+	ttk::frame $w_body.where
+	ttk::label $w_body.where.l -text [mc "Directory:"]
+	ttk::entry $w_body.where.t \
 		-textvariable @local_path \
 		-width 50
-	${NS}::button $w_body.where.b \
+	ttk::button $w_body.where.b \
 		-text [mc "Browse"] \
 		-command [cb _new_local_path]
 	set w_localpath $w_body.where.t
@@ -463,56 +461,55 @@ proc _new_ok {p} {
 ## Clone Existing Repository
 
 method _do_clone {} {
-	global use_ttk NS
 	$w_next conf \
 		-state disabled \
 		-command [cb _do_clone2] \
 		-text [mc "Clone"]
 
-	${NS}::frame $w_body
-	${NS}::label $w_body.h \
+	ttk::frame $w_body
+	ttk::label $w_body.h \
 		-font font_uibold -anchor center \
 		-text [mc "Clone Existing Repository"]
 	pack $w_body.h -side top -fill x -pady 10
 	pack $w_body -fill x -padx 10
 
 	set args $w_body.args
-	${NS}::frame $w_body.args
+	ttk::frame $w_body.args
 	pack $args -fill both
 
-	${NS}::label $args.origin_l -text [mc "Source Location:"]
-	${NS}::entry $args.origin_t \
+	ttk::label $args.origin_l -text [mc "Source Location:"]
+	ttk::entry $args.origin_t \
 		-textvariable @origin_url \
 		-width 50
-	${NS}::button $args.origin_b \
+	ttk::button $args.origin_b \
 		-text [mc "Browse"] \
 		-command [cb _open_origin]
 	grid $args.origin_l $args.origin_t $args.origin_b -sticky ew
 
-	${NS}::label $args.where_l -text [mc "Target Directory:"]
-	${NS}::entry $args.where_t \
+	ttk::label $args.where_l -text [mc "Target Directory:"]
+	ttk::entry $args.where_t \
 		-textvariable @local_path \
 		-width 50
-	${NS}::button $args.where_b \
+	ttk::button $args.where_b \
 		-text [mc "Browse"] \
 		-command [cb _new_local_path]
 	grid $args.where_l $args.where_t $args.where_b -sticky ew
 	set w_localpath $args.where_t
 
-	${NS}::label $args.type_l -text [mc "Clone Type:"]
-	${NS}::frame $args.type_f
+	ttk::label $args.type_l -text [mc "Clone Type:"]
+	ttk::frame $args.type_f
 	set w_types [list]
-	lappend w_types [${NS}::radiobutton $args.type_f.hardlink \
+	lappend w_types [ttk::radiobutton $args.type_f.hardlink \
 		-state disabled \
 		-text [mc "Standard (Fast, Semi-Redundant, Hardlinks)"] \
 		-variable @clone_type \
 		-value hardlink]
-	lappend w_types [${NS}::radiobutton $args.type_f.full \
+	lappend w_types [ttk::radiobutton $args.type_f.full \
 		-state disabled \
 		-text [mc "Full Copy (Slower, Redundant Backup)"] \
 		-variable @clone_type \
 		-value full]
-	lappend w_types [${NS}::radiobutton $args.type_f.shared \
+	lappend w_types [ttk::radiobutton $args.type_f.shared \
 		-state disabled \
 		-text [mc "Shared (Fastest, Not Recommended, No Backup)"] \
 		-variable @clone_type \
@@ -520,7 +517,7 @@ method _do_clone {} {
 	foreach r $w_types {
 		pack $r -anchor w
 	}
-	${NS}::checkbutton $args.type_f.recursive \
+	ttk::checkbutton $args.type_f.recursive \
 		-text [mc "Recursively clone submodules too"] \
 		-variable @recursive \
 		-onvalue true -offvalue false
@@ -1049,25 +1046,24 @@ method _do_validate_submodule_cloning {ok} {
 ## Open Existing Repository
 
 method _do_open {} {
-	global NS
 	$w_next conf \
 		-state disabled \
 		-command [cb _do_open2] \
 		-text [mc "Open"]
 
-	${NS}::frame $w_body
-	${NS}::label $w_body.h \
+	ttk::frame $w_body
+	ttk::label $w_body.h \
 		-font font_uibold -anchor center \
 		-text [mc "Open Existing Repository"]
 	pack $w_body.h -side top -fill x -pady 10
 	pack $w_body -fill x -padx 10
 
-	${NS}::frame $w_body.where
-	${NS}::label $w_body.where.l -text [mc "Repository:"]
-	${NS}::entry $w_body.where.t \
+	ttk::frame $w_body.where
+	ttk::label $w_body.where.l -text [mc "Repository:"]
+	ttk::entry $w_body.where.t \
 		-textvariable @local_path \
 		-width 50
-	${NS}::button $w_body.where.b \
+	ttk::button $w_body.where.b \
 		-text [mc "Browse"] \
 		-command [cb _open_local_path]
 

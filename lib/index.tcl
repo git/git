@@ -22,8 +22,6 @@ proc _close_updateindex {fd} {
 }
 
 proc rescan_on_error {err {after {}}} {
-	global use_ttk NS
-
 	set w .indexfried
 	Dialog $w
 	wm withdraw $w
@@ -35,14 +33,14 @@ proc rescan_on_error {err {after {}}} {
 		-borderwidth 0 -highlightthickness 0 \
 		-background [get_bg_color $w]
 	$w.msg tag configure bold -font font_uibold -justify center
-	${NS}::scrollbar $w.vs -command [list $w.msg yview]
+	ttk::scrollbar $w.vs -command [list $w.msg yview]
 	$w.msg insert end $s bold \n\n$err {}
 	$w.msg configure -state disabled
 
-	${NS}::button $w.continue \
+	ttk::button $w.continue \
 		-text [mc "Continue"] \
 		-command [list destroy $w]
-	${NS}::button $w.unlock \
+	ttk::button $w.unlock \
 		-text [mc "Unlock Index"] \
 		-command "destroy $w; _delete_indexlock"
 	grid $w.msg - $w.vs -sticky news

@@ -4,19 +4,19 @@
 proc do_about {} {
 	global appvers copyright oguilib
 	global tcl_patchLevel tk_patchLevel
-	global ui_comm_spell NS use_ttk
+	global ui_comm_spell
 
 	set w .about_dialog
 	Dialog $w
 	wm geometry $w "+[winfo rootx .]+[winfo rooty .]"
 
 	pack [git_logo $w.git_logo] -side left -fill y -padx 10 -pady 10
-	${NS}::label $w.header -text [mc "About %s" [appname]] \
+	ttk::label $w.header -text [mc "About %s" [appname]] \
 		-font font_uibold -anchor center
 	pack $w.header -side top -fill x
 
-	${NS}::frame $w.buttons
-	${NS}::button $w.buttons.close -text {Close} \
+	ttk::frame $w.buttons
+	ttk::button $w.buttons.close -text {Close} \
 		-default active \
 		-command [list destroy $w]
 	pack $w.buttons.close -side right

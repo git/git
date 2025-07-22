@@ -30,9 +30,7 @@ along with this program; if not, see <https://www.gnu.org/licenses/>.}]
 ##
 ## Tcl/Tk sanity check
 
-if {[catch {package require Tcl 8.5} err]
- || [catch {package require Tk  8.5} err]
-} {
+if {[catch {package require Tcl 8.6-8.8} err]} {
 	catch {wm withdraw .}
 	tk_messageBox \
 		-icon error \
@@ -914,18 +912,9 @@ proc apply_config {} {
 		font configure ${font}italic -slant italic
 	}
 
-	global use_ttk NS
-	set use_ttk 0
-	set NS {}
-	if {$repo_config(gui.usettk)} {
-		set use_ttk [package vsatisfies [package provide Tk] 8.5]
-		if {$use_ttk} {
-			set NS ttk
-			bind [winfo class .] <<ThemeChanged>> [list InitTheme]
-			pave_toplevel .
-			color::sync_with_theme
-		}
-	}
+	bind [winfo class .] <<ThemeChanged>> [list InitTheme]
+	pave_toplevel .
+	color::sync_with_theme
 
 	global comment_string
 	set comment_string [get_config core.commentstring]
@@ -1269,8 +1258,6 @@ citool {
 ######################################################################
 ##
 ## execution environment
-
-set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
 
 # Suggest our implementation of askpass, if none is set
 if {![info exists env(SSH_ASKPASS)]} {
@@ -2333,7 +2320,7 @@ proc do_quit {{rc {1}}} {
 	global ui_comm is_quitting repo_config commit_type
 	global GITGUI_BCK_exists GITGUI_BCK_i
 	global ui_comm_spell
-	global ret_code use_ttk
+	global ret_code
 
 	if {$is_quitting} return
 	set is_quitting 1
@@ -2391,13 +2378,8 @@ proc do_quit {{rc {1}}} {
 		}
 		set cfg_geometry [list]
 		lappend cfg_geometry [wm geometry .]
-		if {$use_ttk} {
-			lappend cfg_geometry [.vpane sashpos 0]
-			lappend cfg_geometry [.vpane.files sashpos 0]
-		} else {
-			lappend cfg_geometry [lindex [.vpane sash coord 0] 0]
-			lappend cfg_geometry [lindex [.vpane.files sash coord 0] 1]
-		}
+		lappend cfg_geometry [.vpane sashpos 0]
+		lappend cfg_geometry [.vpane.files sashpos 0]
 		if {[catch {set rc_geometry $repo_config(gui.geometry)}]} {
 			set rc_geometry {}
 		}
@@ -3279,13 +3261,12 @@ default {
 
 # -- Branch Control
 #
-${NS}::frame .branch
-if {!$use_ttk} {.branch configure -borderwidth 1 -relief sunken}
-${NS}::label .branch.l1 \
+ttk::frame .branch
+ttk::label .branch.l1 \
 	-text [mc "Current Branch:"] \
 	-anchor w \
 	-justify left
-${NS}::label .branch.cb \
+ttk::label .branch.cb \
 	-textvariable current_branch \
 	-anchor w \
 	-justify left
@@ -3295,13 +3276,9 @@ pack .branch -side top -fill x
 
 # -- Main Window Layout
 #
-${NS}::panedwindow .vpane -orient horizontal
-${NS}::panedwindow .vpane.files -orient vertical
-if {$use_ttk} {
-	.vpane add .vpane.files
-} else {
-	.vpane add .vpane.files -sticky nsew -height 100 -width 200
-}
+ttk::panedwindow .vpane -orient horizontal
+ttk::panedwindow .vpane.files -orient vertical
+.vpane add .vpane.files
 pack .vpane -anchor n -side top -fill both -expand 1
 
 # -- Working Directory File List
@@ -3318,8 +3295,8 @@ ttext $ui_workdir \
 	-xscrollcommand {.vpane.files.workdir.sx set} \
 	-yscrollcommand {.vpane.files.workdir.sy set} \
 	-state disabled
-${NS}::scrollbar .vpane.files.workdir.sx -orient h -command [list $ui_workdir xview]
-${NS}::scrollbar .vpane.files.workdir.sy -orient v -command [list $ui_workdir yview]
+ttk::scrollbar .vpane.files.workdir.sx -orient h -command [list $ui_workdir xview]
+ttk::scrollbar .vpane.files.workdir.sy -orient v -command [list $ui_workdir yview]
 pack .vpane.files.workdir.title -side top -fill x
 pack .vpane.files.workdir.sx -side bottom -fill x
 pack .vpane.files.workdir.sy -side right -fill y
@@ -3340,8 +3317,8 @@ ttext $ui_index \
 	-xscrollcommand {.vpane.files.index.sx set} \
 	-yscrollcommand {.vpane.files.index.sy set} \
 	-state disabled
-${NS}::scrollbar .vpane.files.index.sx -orient h -command [list $ui_index xview]
-${NS}::scrollbar .vpane.files.index.sy -orient v -command [list $ui_index yview]
+ttk::scrollbar .vpane.files.index.sx -orient h -command [list $ui_index xview]
+ttk::scrollbar .vpane.files.index.sy -orient v -command [list $ui_index yview]
 pack .vpane.files.index.title -side top -fill x
 pack .vpane.files.index.sx -side bottom -fill x
 pack .vpane.files.index.sy -side right -fill y
@@ -3351,10 +3328,6 @@ pack $ui_index -side left -fill both -expand 1
 #
 .vpane.files add .vpane.files.workdir
 .vpane.files add .vpane.files.index
-if {!$use_ttk} {
-	.vpane.files paneconfigure .vpane.files.workdir -sticky news
-	.vpane.files paneconfigure .vpane.files.index -sticky news
-}
 
 proc set_selection_colors {w has_focus} {
 	foreach tag [list in_diff in_sel] {
@@ -3375,78 +3348,63 @@ unset i
 
 # -- Diff and Commit Area
 #
-if {$have_tk85} {
-	${NS}::panedwindow .vpane.lower -orient vertical
-	${NS}::frame .vpane.lower.commarea
-	${NS}::frame .vpane.lower.diff -relief sunken -borderwidth 1 -height 500
-	.vpane.lower add .vpane.lower.diff
-	.vpane.lower add .vpane.lower.commarea
-	.vpane add .vpane.lower
-	if {$use_ttk} {
-		.vpane.lower pane .vpane.lower.diff -weight 1
-		.vpane.lower pane .vpane.lower.commarea -weight 0
-	} else {
-		.vpane.lower paneconfigure .vpane.lower.diff -stretch always
-		.vpane.lower paneconfigure .vpane.lower.commarea -stretch never
-	}
-} else {
-	frame .vpane.lower -height 300 -width 400
-	frame .vpane.lower.commarea
-	frame .vpane.lower.diff -relief sunken -borderwidth 1
-	pack .vpane.lower.diff -fill both -expand 1
-	pack .vpane.lower.commarea -side bottom -fill x
-	.vpane add .vpane.lower
-	.vpane paneconfigure .vpane.lower -sticky nsew
-}
+ttk::panedwindow .vpane.lower -orient vertical
+ttk::frame .vpane.lower.commarea
+ttk::frame .vpane.lower.diff -relief sunken -borderwidth 1 -height 500
+.vpane.lower add .vpane.lower.diff
+.vpane.lower add .vpane.lower.commarea
+.vpane add .vpane.lower
+.vpane.lower pane .vpane.lower.diff -weight 1
+.vpane.lower pane .vpane.lower.commarea -weight 0
 
 # -- Commit Area Buttons
 #
-${NS}::frame .vpane.lower.commarea.buttons
-${NS}::label .vpane.lower.commarea.buttons.l -text {} \
+ttk::frame .vpane.lower.commarea.buttons
+ttk::label .vpane.lower.commarea.buttons.l -text {} \
 	-anchor w \
 	-justify left
 pack .vpane.lower.commarea.buttons.l -side top -fill x
 pack .vpane.lower.commarea.buttons -side left -fill y
 
-${NS}::button .vpane.lower.commarea.buttons.rescan -text [mc Rescan] \
+ttk::button .vpane.lower.commarea.buttons.rescan -text [mc Rescan] \
 	-command ui_do_rescan
 pack .vpane.lower.commarea.buttons.rescan -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.rescan conf -state}
 
-${NS}::button .vpane.lower.commarea.buttons.incall -text [mc "Stage Changed"] \
+ttk::button .vpane.lower.commarea.buttons.incall -text [mc "Stage Changed"] \
 	-command do_add_all
 pack .vpane.lower.commarea.buttons.incall -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.incall conf -state}
 
 if {![is_enabled nocommitmsg]} {
-	${NS}::button .vpane.lower.commarea.buttons.signoff -text [mc "Sign Off"] \
+	ttk::button .vpane.lower.commarea.buttons.signoff -text [mc "Sign Off"] \
 		-command do_signoff
 	pack .vpane.lower.commarea.buttons.signoff -side top -fill x
 }
 
-${NS}::button .vpane.lower.commarea.buttons.commit -text [commit_btn_caption] \
+ttk::button .vpane.lower.commarea.buttons.commit -text [commit_btn_caption] \
 	-command do_commit
 pack .vpane.lower.commarea.buttons.commit -side top -fill x
 lappend disable_on_lock \
 	{.vpane.lower.commarea.buttons.commit conf -state}
 
 if {![is_enabled nocommit]} {
-	${NS}::button .vpane.lower.commarea.buttons.push -text [mc Push] \
+	ttk::button .vpane.lower.commarea.buttons.push -text [mc Push] \
 		-command do_push_anywhere
 	pack .vpane.lower.commarea.buttons.push -side top -fill x
 }
 
 # -- Commit Message Buffer
 #
-${NS}::frame .vpane.lower.commarea.buffer
-${NS}::frame .vpane.lower.commarea.buffer.header
+ttk::frame .vpane.lower.commarea.buffer
+ttk::frame .vpane.lower.commarea.buffer.header
 set ui_comm .vpane.lower.commarea.buffer.frame.t
 set ui_coml .vpane.lower.commarea.buffer.header.l
 
 if {![is_enabled nocommit]} {
-	${NS}::checkbutton .vpane.lower.commarea.buffer.header.amend \
+	ttk::checkbutton .vpane.lower.commarea.buffer.header.amend \
 		-text [mc "Amend Last Commit"] \
 		-variable commit_type_is_amend \
 		-command do_select_commit_type
@@ -3454,7 +3412,7 @@ if {![is_enabled nocommit]} {
 		[list .vpane.lower.commarea.buffer.header.amend conf -state]
 }
 
-${NS}::label $ui_coml \
+ttk::label $ui_coml \
 	-anchor w \
 	-justify left
 proc trace_commit_type {varname args} {
@@ -3489,10 +3447,10 @@ ttext $ui_comm \
 	-font font_diff \
 	-xscrollcommand {.vpane.lower.commarea.buffer.frame.sbx set} \
 	-yscrollcommand {.vpane.lower.commarea.buffer.frame.sby set}
-${NS}::scrollbar .vpane.lower.commarea.buffer.frame.sbx \
+ttk::scrollbar .vpane.lower.commarea.buffer.frame.sbx \
 	-orient horizontal \
 	-command [list $ui_comm xview]
-${NS}::scrollbar .vpane.lower.commarea.buffer.frame.sby \
+ttk::scrollbar .vpane.lower.commarea.buffer.frame.sby \
 	-orient vertical \
 	-command [list $ui_comm yview]
 
@@ -3615,9 +3573,9 @@ ttext $ui_diff \
 	-yscrollcommand {.vpane.lower.diff.body.sby set} \
 	-state disabled
 catch {$ui_diff configure -tabstyle wordprocessor}
-${NS}::scrollbar .vpane.lower.diff.body.sbx -orient horizontal \
+ttk::scrollbar .vpane.lower.diff.body.sbx -orient horizontal \
 	-command [list $ui_diff xview]
-${NS}::scrollbar .vpane.lower.diff.body.sby -orient vertical \
+ttk::scrollbar .vpane.lower.diff.body.sby -orient vertical \
 	-command [list $ui_diff yview]
 pack .vpane.lower.diff.body.sbx -side bottom -fill x
 pack .vpane.lower.diff.body.sby -side right -fill y
@@ -3918,29 +3876,14 @@ proc on_ttk_pane_mapped {w pane pos} {
 	bind $w <Map> {}
 	after 0 [list after idle [list $w sashpos $pane $pos]]
 }
-proc on_tk_pane_mapped {w pane x y} {
-	bind $w <Map> {}
-	after 0 [list after idle [list $w sash place $pane $x $y]]
-}
 proc on_application_mapped {} {
-	global repo_config use_ttk
+	global repo_config
 	bind . <Map> {}
 	set gm $repo_config(gui.geometry)
-	if {$use_ttk} {
-		bind .vpane <Map> \
-			[list on_ttk_pane_mapped %W 0 [lindex $gm 1]]
-		bind .vpane.files <Map> \
-			[list on_ttk_pane_mapped %W 0 [lindex $gm 2]]
-	} else {
-		bind .vpane <Map> \
-			[list on_tk_pane_mapped %W 0 \
-			[lindex $gm 1] \
-			[lindex [.vpane sash coord 0] 1]]
-		bind .vpane.files <Map> \
-			[list on_tk_pane_mapped %W 0 \
-			[lindex [.vpane.files sash coord 0] 0] \
-			[lindex $gm 2]]
-	}
+	bind .vpane <Map> \
+		[list on_ttk_pane_mapped %W 0 [lindex $gm 1]]
+	bind .vpane.files <Map> \
+		[list on_ttk_pane_mapped %W 0 [lindex $gm 2]]
 	wm geometry . [lindex $gm 0]
 }
 if {[info exists repo_config(gui.geometry)]} {

@@ -2,15 +2,13 @@
 # Copyright (C) 2006, 2007 Shawn Pearce
 
 proc apply_tab_size {{firsttab {}}} {
-	global have_tk85 repo_config ui_diff
+	global repo_config ui_diff
 
 	set w [font measure font_diff "0"]
-	if {$have_tk85 && $firsttab != 0} {
+	if {$firsttab != 0} {
 		$ui_diff configure -tabs [list [expr {$firsttab * $w}] [expr {($firsttab + $repo_config(gui.tabsize)) * $w}]]
-	} elseif {$have_tk85 || $repo_config(gui.tabsize) != 8} {
-		$ui_diff configure -tabs [expr {$repo_config(gui.tabsize) * $w}]
 	} else {
-		$ui_diff configure -tabs {}
+		$ui_diff configure -tabs [expr {$repo_config(gui.tabsize) * $w}]
 	}
 }
 
