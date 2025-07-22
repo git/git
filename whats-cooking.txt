@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2025, #05; Thu, 17)
-X-master-at: 90c0775e972847832ac8dfa6a14bc4c3abacd914
-X-next-at: 6ba607880dc2bbf7e13e5734880ce0f9b87d2670
+Subject: What's cooking in git.git (Jul 2025, #06; Tue, 22)
+X-master-at: 0e8243a355a69035dac269528b49dc8c9bc81f8a
+X-next-at: 942d659e1bbc2e578fba7d9b4087112004142e34
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jul 2025, #05; Thu, 17)
+What's cooking in git.git (Jul 2025, #06; Tue, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,114 +48,252 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ag/doc-send-email (2025-06-30) 5 commits
-  (merged to 'next' on 2025-07-09 at cf940e82a1)
- + docs: mention possible options for Proton Mail users
- + docs: add a paragraph explaining the `sendmailCmd` option of sendemail
- + docs: add an OAuth2.0 credential helper for AOL accounts
- + docs: add outlookidfix config option to sendemail documentation
- + docs: link OpenSSL's verify(1) manual page to know about -CAfile and -CApath options
+* bc/use-sha256-by-default-in-3.0 (2025-07-01) 11 commits
+  (merged to 'next' on 2025-07-11 at 893c183a5f)
+ + Enable SHA-256 by default in breaking changes mode
+ + help: add a build option for default hash
+ + t5300: choose the built-in hash outside of a repo
+ + t4042: choose the built-in hash outside of a repo
+ + t1007: choose the built-in hash outside of a repo
+ + t: default to compile-time default hash if not set
+ + setup: use the default algorithm to initialize repo format
+ + Use legacy hash for legacy formats
+ + builtin: use default hash when outside a repository
+ + hash: add a constant for the legacy hash algorithm
+ + hash: add a constant for the default hash algorithm
+ (this branch is used by kl/test-installed-fix and ps/config-wo-the-repository.)
 
- Documentation updates for "git send-email".
- source: <20250630180511.499-1-gargaditya08@proton.me>
-
-
-* ly/load-bitmap-leakfix (2025-06-30) 3 commits
-  (merged to 'next' on 2025-07-08 at 6e6d182a8c)
- + pack-bitmap: add load corrupt bitmap test
- + pack-bitmap: reword comments in test_bitmap_commits()
- + pack-bitmap: fix memory leak if load_bitmap() failed
-
- Leakfix with a new and a bit invasive test.
- cf. <aG2XZYamUv5FWq/W@nand.local>
- source: <pull.1962.v6.git.git.1751347929.gitgitgadget@gmail.com>
+ Prepare to flip the default hash function to SHA-256.
+ source: <20250701212237.766774-1-sandals@crustytoothpaste.net>
 
 
-* ph/fetch-prune-optim (2025-07-01) 3 commits
-  (merged to 'next' on 2025-07-09 at f0a1daff6a)
- + clean up interface for refs_warn_dangling_symrefs
- + refs: remove old refs_warn_dangling_symref
- + fetch-prune: optimize dangling-ref reporting
+* cb/daemon-reap-children (2025-07-10) 2 commits
+  (merged to 'next' on 2025-07-14 at a3574350ff)
+ + daemon: use sigaction() to install child_handler()
+ + compat/mingw: allow sigaction(SIGCHLD)
 
- "git fetch --prune" used to be O(n^2) expensive when there are many
- refs, which has been corrected.
- cf. <20250708013612.GB549007@coredump.intra.peff.net>
- source: <20250702011214.2835529-2-phil.hord@gmail.com>
+ Futz with SIGCHLD handling in "git daemon".
+ source: <pull.2002.v4.git.git.1752176743.gitgitgadget@gmail.com>
 
 
-* ps/doc-pack-refs-auto-with-files-backend-fix (2025-07-08) 1 commit
-  (merged to 'next' on 2025-07-09 at 200b4b24a8)
- + docs/git-pack-refs: document heuristic used for packing loose refs
+* ja/doc-git-log-markup (2025-07-07) 9 commits
+  (merged to 'next' on 2025-07-14 at 8eb14e9306)
+ + doc: git-log: convert log config to new doc format
+ + doc: git-log: convert diff options to new doc format
+ + doc: git-log: convert pretty formats to new doc format
+ + doc: git-log: convert pretty options to new doc format
+ + doc: git-log: convert rev list options to new doc format
+ + doc: git-log: convert line range format to new doc format
+ + doc: git-log: convert line range options to new doc format
+ + doc: git-log convert rev-list-description to new doc format
+ + doc: convert git-log to new documentation format
 
- Doc update.
- source: <20250708-b4-pks-pack-refs-document-files-heuristic-v1-1-e28d65a94573@pks.im>
-
-
-* ps/object-store (2025-07-01) 17 commits
-  (merged to 'next' on 2025-07-07 at e19db55858)
- + odb: rename `read_object_with_reference()`
- + odb: rename `pretend_object_file()`
- + odb: rename `has_object()`
- + odb: rename `repo_read_object_file()`
- + odb: rename `oid_object_info()`
- + odb: trivial refactorings to get rid of `the_repository`
- + odb: get rid of `the_repository` when handling submodule sources
- + odb: get rid of `the_repository` when handling the primary source
- + odb: get rid of `the_repository` in `for_each()` functions
- + odb: get rid of `the_repository` when handling alternates
- + odb: get rid of `the_repository` in `odb_mkstemp()`
- + odb: get rid of `the_repository` in `assert_oid_type()`
- + odb: get rid of `the_repository` in `find_odb()`
- + odb: introduce parent pointers
- + object-store: rename files to "odb.{c,h}"
- + object-store: rename `object_directory` to `odb_source`
- + object-store: rename `raw_object_store` to `object_database`
- (this branch is used by ps/object-file-wo-the-repository and ps/object-store-midx.)
-
- Code clean-up around object access API.
- source: <20250701-pks-object-store-wo-the-repository-v6-0-dbf3894ab4e2@pks.im>
+ Doc mark-up updates.
+ source: <pull.1933.v3.git.1751914412.gitgitgadget@gmail.com>
 
 
-* ps/refs-files-remove-empty-parent (2025-07-08) 1 commit
-  (merged to 'next' on 2025-07-09 at f726af7117)
- + refs/files: remove empty parent dirs when ref creation fails
+* jb/gpg-program-variable-is-a-pathname (2025-07-11) 1 commit
+  (merged to 'next' on 2025-07-14 at b23aee3cb1)
+ + gpg-interface: expand gpg.program as a path
 
- When a ref creation at refs/heads/foo/bar fails, the files backend
- now removes refs/heads/foo/ if the directory is otherwise not used.
- source: <20250708-b4-pks-reffiles-prune-empty-dirs-on-abort-v1-1-3bae02e4f034@pks.im>
-
-
-* ps/t1006-tap-fix (2025-07-08) 1 commit
-  (merged to 'next' on 2025-07-09 at bbed1acc2a)
- + t1006: fix broken TAP format
-
- Test fix.
- source: <20250708-b4-pks-t1006-fix-tap-format-v1-1-c3f837448364@pks.im>
+ The gpg.program configuration variable, which names a pathname to
+ the (custom) GPG compatible program, can now be spelled with ~tilde
+ expansion.
+ source: <20250711232348.460804-1-jonas.brandstoetter@gmx.at>
 
 
-* rs/parse-options-precision (2025-07-09) 7 commits
-  (merged to 'next' on 2025-07-09 at aefffa21b7)
- + parse-options: add precision handling for OPTION_COUNTUP
- + parse-options: add precision handling for OPTION_BITOP
- + parse-options: add precision handling for OPTION_NEGBIT
- + parse-options: add precision handling for OPTION_BIT
- + parse-options: add precision handling for OPTION_SET_INT
- + parse-options: add precision handling for PARSE_OPT_CMDMODE
- + parse-options: require PARSE_OPT_NOARG for OPTION_BITOP
+* jk/remote-avoid-overlapping-names (2025-07-08) 1 commit
+  (merged to 'next' on 2025-07-11 at 097c87760a)
+ + remote: detect collisions in remote names
 
- Define .precision to more canned parse-options type to avoid bugs
- coming from using a variable with a wrong type to capture the
- parsed values.
- source: <802eba72-c100-429a-80b7-7a0e8b6559ed@web.de>
+ "git remote" now detects remote names that overlap with each other
+ (e.g., remote nickname "outer" and "outer/inner" are used at the
+ same time), as it will lead to overlapping remote-tracking
+ branches.
+ source: <20250708225946.GC1180568@coredump.intra.peff.net>
+
+
+* ps/meson-cleanups (2025-07-08) 7 commits
+  (merged to 'next' on 2025-07-14 at 5fb402f51a)
+ + ci: use Meson's new `--slice` option
+ + meson: update subproject wrappers
+ + meson: fix lookup of shell on MINGW64
+ + meson: clean up unnecessary variables
+ + meson: improve summary of auto-detected features
+ + meson: stop printing 'https' option twice in our summaries
+ + meson: stop discovering native version of Python
+
+ Meson-based build update.
+ cf. <87h5zkcbk2.fsf@iotcl.com>
+ source: <20250709-b4-pks-meson-cleanups-v3-0-29ab15b9ab85@pks.im>
+
+
+* rh/doc-glob-pathspec-fix (2025-07-07) 1 commit
+  (merged to 'next' on 2025-07-14 at 1561f0726d)
+ + doc: correct doc for glob pathspec
+
+ Docfix.
+ source: <20250708024507.62386-2-rhanneken@pobox.com>
+
+
+* tb/midx-avoid-cruft-packs (2025-06-23) 9 commits
+  (merged to 'next' on 2025-07-11 at 3fc02a8a1a)
+ + repack: exclude cruft pack(s) from the MIDX where possible
+ + pack-objects: introduce '--stdin-packs=follow'
+ + pack-objects: swap 'show_{object,commit}_pack_hint'
+ + pack-objects: fix typo in 'show_object_pack_hint()'
+ + pack-objects: perform name-hash traversal for unpacked objects
+ + pack-objects: declare 'rev_info' for '--stdin-packs' earlier
+ + pack-objects: factor out handling '--stdin-packs'
+ + pack-objects: limit scope in 'add_object_entry_from_pack()'
+ + pack-objects: use standard option incompatibility functions
+ (this branch is used by ps/object-store-midx.)
+
+ "pack-objects" has been taught to avoid pointing into objects in
+ cruft packs from midx.
+ source: <cover.1750717921.git.me@ttaylorr.com>
 
 --------------------------------------------------
 [New Topics]
+
+* ly/pull-autostash (2025-07-20) 1 commit
+ - pull: add pull.autoStash config option
+
+ "git pull" learned to pay attention to pull.autostash configuration
+ variable, which is officially documented.
+
+ Will merge to 'next'?
+ source: <20250720124334.12045-1-yldhome2d2@gmail.com>
+
+
+* jk/revision-no-early-output (2025-07-19) 1 commit
+ - revision: drop early output option
+
+ Remove unsupported, unused, and unsupportable old option from "git
+ log".
+
+ Will merge to 'next'.
+ source: <20250719070813.GA706382@coredump.intra.peff.net>
+
+
+* ag/imap-send-list-folders-doc (2025-07-22) 1 commit
+ - docs: explain how to use `git imap-send --list` command to get a list of available folders
+
+ Document recently added "git imap-send --list" with an example.
+
+ Will merge to 'next'?
+ source: <20250722114827.22493-1-gargaditya08@live.com>
+
+
+* ag/send-email-imap-sent (2025-07-22) 1 commit
+ - send-email: add ability to send a copy of sent emails to an IMAP folder
+
+ "git send-email" learned to drive "git imap-send" to store already
+ sent e-mails in an IMAP folder.
+
+ Will merge to 'next'.
+ source: <da7cee769f25871ed3f934e3ec7f2cccf0a0420c.1753182534.git.gargaditya08@live.com>
+
+
+* en/ort-rename-fixes (2025-07-22) 6 commits
+ - merge-ort: fix directory rename on top of source of other rename/delete
+ - merge-ort: fix incorrect file handling
+ - t6423: fix missed staging of file in testcases 12i,12j,12k
+ - t6423: document two bugs with rename-to-self testcases
+ - merge-ort: drop unnecessary temporary in check_for_directory_rename()
+ - merge-ort: update comments to modern testfile location
+
+ Various bugs about rename handling in "ort" merge strategy have
+ been fixed.
+
+ Comments?
+ source: <pull.1943.git.1753197791.gitgitgadget@gmail.com>
+
+
+* hl/test-helper-fd-close (2025-07-22) 2 commits
+ - t/helper/test-delta: fix possible resource leak and ensure safe cleanup
+ - t/helper/test-truncate: close file descriptor after truncation
+
+ A few file descriptors left unclosed upon program completion in a
+ few test helper programs are now closed.
+
+ Comments?
+ source: <20250722174102.1876197-1-lhywkd22@gmail.com>
+
+
+* jb/t7510-gpg-program-path (2025-07-22) 1 commit
+ - t7510: add test cases for non-absolute gpg program
+
+ A new test to ensure that a recent change will keep working.
+
+ Will merge to 'next'.
+ source: <20250722190922.51183-3-jonas.brandstoetter@gmx.at>
+
+
+* jc/do-not-scan-argv-without-parsing (2025-07-21) 1 commit
+ - rev-list: update a NEEDSWORK comment
+
+ Update a hard-to-read in-code NEEDSWORK comment.
+
+ Will merge to 'next'.
+ source: <xmqqecu9w4a5.fsf@gitster.g>
+
+
+* jc/rev-list-info-cleanup (2025-07-18) 1 commit
+ - rev-list: make "struct rev_list_info" static to the only user
+
+ Move structure definition from unrelated header file to where it
+ belongs.
+
+ Will merge to 'next'.
+ source: <xmqqa551127o.fsf@gitster.g>
+
+
+* jk/unleak-reflog-expire-entry (2025-07-22) 3 commits
+ - fixup! reflog: close leak of reflog expire entry
+ - t1410: add test of gc.<pattern>.reflogExpire config
+ - reflog: close leak of reflog expire entry
+
+ Leakfix.
+
+ Expecting a reroll?
+ source: <20250722045456.GA824456@coredump.intra.peff.net>
+
+
+* jt/switch-restore-no-longer-experimental (2025-07-22) 2 commits
+ - builtin: unmark git-switch and git-restore as experimental
+ - builtin: remove merge short flag for switch and restore
+
+ Declare that "git switch" and "git restore" are no longer
+ experimental.
+
+ Expecting a reroll. 
+ source: <20250722180818.1043014-1-jltobler@gmail.com>
+
+
+* ps/reflog-migrate-fixes (2025-07-22) 8 commits
+ - refs: fix invalid old object IDs when migrating reflogs
+ - refs: stop unsetting REF_HAVE_OLD for log-only updates
+ - refs: fix identity for migrated reflogs
+ - ident: fix type of string length parameter
+ - builtin/reflog: implement subcommand to write new entries
+ - refs: export `ref_transaction_update_reflog()`
+ - builtin/reflog: improve grouping of subcommands
+ - Documentation/git-reflog: convert to use synopsis type
+
+ "git refs migrate" to migrate the reflog entries from a refs
+ backend to another had a handful of bugs squashed.
+
+ Comments?
+ source: <20250722-pks-reflog-append-v1-0-183e5949de16@pks.im>
+
+--------------------------------------------------
+[Cooking]
 
 * kl/test-installed-fix (2025-07-15) 2 commits
   (merged to 'next' on 2025-07-16 at 512176f26c)
  + test-lib: respect GIT_TEST_INSTALLED when querying default hash
  + Merge branch 'bc/use-sha256-by-default-in-3.0' into kl/test-installed-fix
- (this branch uses bc/use-sha256-by-default-in-3.0.)
 
  GIT_TEST_INSTALLED was not honored in the recent topic related to
  SHA256 hashes, which has been corrected.
@@ -174,18 +312,18 @@ Release tarballs are available at:
  source: <31724ce432b19088b7c7643654788d8e712b3193.1752588042.git.phillip.wood@dunelm.org.uk>
 
 
-* rs/pop-recent-commit-with-prio-queue (2025-07-16) 4 commits
- - fixup! commit: convert pop_most_recent_commit() to prio_queue
- - commit: use prio_queue_replace() in pop_most_recent_commit()
- - prio-queue: add prio_queue_replace()
- - commit: convert pop_most_recent_commit() to prio_queue
+* rs/pop-recent-commit-with-prio-queue (2025-07-18) 3 commits
+  (merged to 'next' on 2025-07-22 at b859ed88ed)
+ + commit: use prio_queue_replace() in pop_most_recent_commit()
+ + prio-queue: add prio_queue_replace()
+ + commit: convert pop_most_recent_commit() to prio_queue
 
  The pop_most_recent_commit() function can have quite expensive
  worst case performance characteristics, which has been optimized by
  using prio-queue data structure.
 
- Will merge to 'next', after squashing the fixup in?
- source: <bc079b3c-a472-4f5d-95ca-390f9de25196@web.de>
+ Will merge to 'master'.
+ source: <8ff40c56-368a-4347-aeae-2aca2cb6a5b2@web.de>
 
 
 * bc/contribution-under-non-real-names (2025-07-15) 1 commit
@@ -236,6 +374,7 @@ Release tarballs are available at:
  prune otherwise unused working-tree files that are outside the
  areas of interest.
 
+ Needs to wait for the base topic to solidify.
  source: <pull.1941.v2.git.1752716054.gitgitgadget@gmail.com>
 
 
@@ -262,7 +401,6 @@ Release tarballs are available at:
  - config: drop `git_config_clear()` wrapper
  - config: drop `git_config()` wrapper
  - Merge branch 'bc/use-sha256-by-default-in-3.0' into ps/config-wo-the-repository
- (this branch uses bc/use-sha256-by-default-in-3.0.)
 
  The config API had a set of convenience wrapper functions that
  implicitly use the_repository instance; they have been removed and
@@ -271,8 +409,6 @@ Release tarballs are available at:
  Will merge to 'next'?
  source: <20250717-pks-config-wo-the-repository-v1-0-d888e4a17de1@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * ps/sane-ctype-workaround (2025-07-09) 1 commit
   (merged to 'next' on 2025-07-15 at 21b79228e3)
@@ -288,35 +424,13 @@ Release tarballs are available at:
  source: <fabacc9bc7ef7d462d1c7198d5edc18c76b82270.1752139420.git.ps@pks.im>
 
 
-* rh/doc-glob-pathspec-fix (2025-07-07) 1 commit
-  (merged to 'next' on 2025-07-14 at 1561f0726d)
- + doc: correct doc for glob pathspec
-
- Docfix.
-
- Will merge to 'master'.
- source: <20250708024507.62386-2-rhanneken@pobox.com>
-
-
-* cb/meson-avoid-broken-macos-pcre2 (2025-07-16) 1 commit
+* cb/meson-avoid-broken-macos-pcre2 (2025-07-18) 1 commit
  - meson: work around broken system PCRE2 dependency in macOS
 
  Build fix for macOS.
 
- Still in flux.
- source: <20250716193000.44673-1-carenas@gmail.com>
-
-
-* jb/gpg-program-variable-is-a-pathname (2025-07-11) 1 commit
-  (merged to 'next' on 2025-07-14 at b23aee3cb1)
- + gpg-interface: expand gpg.program as a path
-
- The gpg.program configuration variable, which names a pathname to
- the (custom) GPG compatible program, can now be spelled with ~tilde
- expansion.
-
- Will merge to 'master'.
- source: <20250711232348.460804-1-jonas.brandstoetter@gmx.at>
+ Still in flux?
+ source: <20250718170225.6063-1-carenas@gmail.com>
 
 
 * pw/adopt-c99-bool-officially (2025-07-16) 3 commits
@@ -365,7 +479,6 @@ Release tarballs are available at:
  - midx: start tracking per object database source
  - Merge branch 'tb/midx-avoid-cruft-packs' into ps/object-store-midx
  - Merge branch 'ps/object-store' into ps/object-store-midx
- (this branch uses tb/midx-avoid-cruft-packs.)
 
  Redefine where the multi-pack-index sits in the object subsystem,
  which recently was restructured to allow multiple backends that
@@ -397,57 +510,21 @@ Release tarballs are available at:
 
  Reduce implicit assumption and dependence on the_repository in the
  object-file subsystem.
-
  source: <20250717-pks-object-file-wo-the-repository-v2-0-36d2cd6c700e@pks.im>
 
 
-* jk/remote-avoid-overlapping-names (2025-07-08) 1 commit
-  (merged to 'next' on 2025-07-11 at 097c87760a)
- + remote: detect collisions in remote names
-
- "git remote" now detects remote names that overlap with each other
- (e.g., remote nickname "outer" and "outer/inner" are used at the
- same time), as it will lead to overlapping remote-tracking
- branches.
-
- Will merge to 'master'.
- source: <20250708225946.GC1180568@coredump.intra.peff.net>
-
-
-* ps/meson-cleanups (2025-07-08) 7 commits
-  (merged to 'next' on 2025-07-14 at 5fb402f51a)
- + ci: use Meson's new `--slice` option
- + meson: update subproject wrappers
- + meson: fix lookup of shell on MINGW64
- + meson: clean up unnecessary variables
- + meson: improve summary of auto-detected features
- + meson: stop printing 'https' option twice in our summaries
- + meson: stop discovering native version of Python
-
- Meson-based build update.
-
- Will merge to 'master'.
- cf. <87h5zkcbk2.fsf@iotcl.com>
- source: <20250709-b4-pks-meson-cleanups-v3-0-29ab15b9ab85@pks.im>
-
-
-* ua/t1517-short-help-tests (2025-07-06) 7 commits
- - t/t1517: move verify-tag -h test to t1517
- - t/t1517: move verify-commit -h test to t1517
- - t/t1517: move send-pack -h test to t1517
- - t/t1517: move pack-refs -h test to t1517
- - t/t1517: move ls-files -h test to t1517
- - t/t1517: move for-each-ref -h test to t1517
- - t/t1517: move checkout-index -h test to t1517
+* ua/t1517-short-help-tests (2025-07-21) 2 commits
+ . t5200: move `update-server-info -h` test from t1517
+ . t/t1517: automate `git subcmd -h` tests outside a repository
 
  Test shuffling.
 
- Expecting a reroll.
- cf. <CAPSxiM_ZZrbFpgvxqYgZ8oeTbRs+HW=rM+9Dud0G_Qr7eq3=FA@mail.gmail.com>
- source: <20250706215039.715732-1-usmanakinyemi202@gmail.com>
+ Introduces a few "todo passed".
+ source: <20250721115519.140361-1-usmanakinyemi202@gmail.com>
 
 
-* kn/for-each-ref-skip (2025-07-15) 5 commits
+* kn/for-each-ref-skip (2025-07-17) 6 commits
+ - fixup! refs: selectively set prefix in the seek functions
   (merged to 'next' on 2025-07-15 at 4ea3c74afd)
  + for-each-ref: introduce a '--start-after' option
  + ref-filter: remove unnecessary else clause
@@ -458,12 +535,13 @@ Release tarballs are available at:
  "git for-each-ref" learns "--skip-until" option to help
  applications that want to page its output.
 
- Will merge to 'master'.
+ Needs fix-up.
  cf. <CAP8UFD06KKF0A0WjBSw77A7fKp_pGJGVyw-OPd8-X92h=RSF+w@mail.gmail.com>
  source: <20250715-306-git-for-each-ref-pagination-v5-0-852d5a2f56e1@gmail.com>
 
 
-* tc/last-modified (2025-07-16) 5 commits
+* tc/last-modified (2025-07-18) 6 commits
+ - fixup! last-modified: support --extended format
  - last-modified: support --extended format
  - pretty: allow caller to disable indentation
  - last-modified: use Bloom filters when available
@@ -473,30 +551,20 @@ Release tarballs are available at:
  A new command "git last-modified" is proposed to show the closest
  ancestor commit that touched each path.
 
- Comments?
+ Still in flux.
  source: <20250716133206.1787549-1-toon@iotcl.com>
 
 
-* cb/daemon-reap-children (2025-07-10) 2 commits
-  (merged to 'next' on 2025-07-14 at a3574350ff)
- + daemon: use sigaction() to install child_handler()
- + compat/mingw: allow sigaction(SIGCHLD)
-
- Futz with SIGCHLD handling in "git daemon".
-
- Will merge to 'master'.
- source: <pull.2002.v4.git.git.1752176743.gitgitgadget@gmail.com>
-
-
 * ac/auto-comment-char-fix (2025-07-16) 2 commits
- - config: set comment_line_str to "#" when core.commentChar=auto
- - commit: avoid scanning trailing comments when 'core.commentChar' is "auto"
+  (merged to 'next' on 2025-07-21 at be3e6c3480)
+ + config: set comment_line_str to "#" when core.commentChar=auto
+ + commit: avoid scanning trailing comments when 'core.commentChar' is "auto"
 
  "git commit" that concludes a conflicted merge failed to notice and remove
  existing comment added automatically (like "# Conflicts:") when the
  core.commentstring is set to 'auto'.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1752665506.git.ayu.chandekar@gmail.com>
 
 
@@ -515,28 +583,8 @@ Release tarballs are available at:
  source: <20250712093517.17907-1-yldhome2d2@gmail.com>
 
 
-* bc/use-sha256-by-default-in-3.0 (2025-07-01) 11 commits
-  (merged to 'next' on 2025-07-11 at 893c183a5f)
- + Enable SHA-256 by default in breaking changes mode
- + help: add a build option for default hash
- + t5300: choose the built-in hash outside of a repo
- + t4042: choose the built-in hash outside of a repo
- + t1007: choose the built-in hash outside of a repo
- + t: default to compile-time default hash if not set
- + setup: use the default algorithm to initialize repo format
- + Use legacy hash for legacy formats
- + builtin: use default hash when outside a repository
- + hash: add a constant for the legacy hash algorithm
- + hash: add a constant for the default hash algorithm
- (this branch is used by kl/test-installed-fix and ps/config-wo-the-repository.)
-
- Prepare to flip the default hash function to SHA-256.
-
- Will merge to 'master'.
- source: <20250701212237.766774-1-sandals@crustytoothpaste.net>
-
-
-* lo/repo-info (2025-07-14) 4 commits
+* lo/repo-info (2025-07-21) 5 commits
+ - repo: add the --format flag
  - repo: add field layout.shallow
  - repo: add field layout.bare
  - repo: add the field references.format
@@ -544,7 +592,8 @@ Release tarballs are available at:
 
  A new subcommand "git repo" gives users a way to grab various
  repository characteristics.
- source: <20250714235231.10137-1-lucasseikioshiro@gmail.com>
+
+ source: <20250722002835.33428-1-lucasseikioshiro@gmail.com>
 
 
 * cc/fast-import-export-signature-names (2025-07-09) 1 commit
@@ -559,7 +608,7 @@ Release tarballs are available at:
  source: <20250709141253.623563-1-christian.couder@gmail.com>
 
 
-* ac/deglobal-sparse-variables (2025-06-30) 3 commits
+* ac/deglobal-sparse-variables (2025-07-18) 3 commits
  - environment: remove the global variable 'sparse_expect_files_outside_of_patterns'
  - environment: move access to "core.sparsecheckoutcone" into repo_settings
  - environment: move access to "core.sparsecheckout" into repo_settings
@@ -568,10 +617,8 @@ Release tarballs are available at:
  Two global variables related to sparse checkout have been moved to
  the repository settings structure.
 
- Needs a bit of redoing around the configuration reading.
- cf. <17b7f51c-0c3d-4d63-a501-47ce829f7345@gmail.com>
- cf. <xmqqbjpuqkrj.fsf@gitster.g>
- source: <cover.1751309770.git.ayu.chandekar@gmail.com>
+ Ready?
+ source: <cover.1752882401.git.ayu.chandekar@gmail.com>
 
 
 * ow/rebase-verify-insn-fmt-before-initializing-state (2025-06-09) 1 commit
@@ -612,24 +659,6 @@ Release tarballs are available at:
  Will merge to 'master'.
  cf. <aHbX4hIKbjO6h1R5@fruit.crustytoothpaste.net>
  source: <20250715191230.12081-1-sebastian@breakpoint.cc>
-
-
-* ja/doc-git-log-markup (2025-07-07) 9 commits
-  (merged to 'next' on 2025-07-14 at 8eb14e9306)
- + doc: git-log: convert log config to new doc format
- + doc: git-log: convert diff options to new doc format
- + doc: git-log: convert pretty formats to new doc format
- + doc: git-log: convert pretty options to new doc format
- + doc: git-log: convert rev list options to new doc format
- + doc: git-log: convert line range format to new doc format
- + doc: git-log: convert line range options to new doc format
- + doc: git-log convert rev-list-description to new doc format
- + doc: convert git-log to new documentation format
-
- Doc mark-up updates.
-
- Will merge to 'master'.
- source: <pull.1933.v3.git.1751914412.gitgitgadget@gmail.com>
 
 
 * sk/reftable-clarify-tests (2025-06-05) 10 commits
@@ -679,21 +708,20 @@ Release tarballs are available at:
  source: <20250608032705.11990-1-jayatheerthkulkarni2005@gmail.com>
 
 
-* lm/add-p-context (2025-06-28) 4 commits
+* lm/add-p-context (2025-07-19) 4 commits
  - add-patch: add diff.context command line overrides
  - add-patch: respect diff.context configuration
- - test: use "test_config"
- - test: use "test_grep"
+ - t: use test_config in t4055
+ - t: use test_grep in t3701 and t4055
 
  "git add/etc -p" now honors diff.context configuration variable,
  and learns to honor -U<n> option.
 
- Expecting responses.
- cf. <xmqqms9eql73.fsf@gitster.g>
- source: <pull.1915.v3.git.1751128486.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1915.v4.git.1752928113.gitgitgadget@gmail.com>
 
 
-* cc/promisor-remote-capability (2025-06-25) 5 commits
+* cc/promisor-remote-capability (2025-07-21) 5 commits
  - promisor-remote: use string constants for 'name' and 'url' too
  - promisor-remote: allow a client to check fields
  - promisor-remote: refactor how we parse advertised fields
@@ -704,26 +732,5 @@ Release tarballs are available at:
  allow the "partialCloneFilter" settings and the "token" value to be
  communicated from the server side.
 
- What's the status of this one?
- cf. <xmqqzfdf1ve9.fsf@gitster.g>
- source: <20250625125055.1375596-1-christian.couder@gmail.com>
-
-
-* tb/midx-avoid-cruft-packs (2025-06-23) 9 commits
-  (merged to 'next' on 2025-07-11 at 3fc02a8a1a)
- + repack: exclude cruft pack(s) from the MIDX where possible
- + pack-objects: introduce '--stdin-packs=follow'
- + pack-objects: swap 'show_{object,commit}_pack_hint'
- + pack-objects: fix typo in 'show_object_pack_hint()'
- + pack-objects: perform name-hash traversal for unpacked objects
- + pack-objects: declare 'rev_info' for '--stdin-packs' earlier
- + pack-objects: factor out handling '--stdin-packs'
- + pack-objects: limit scope in 'add_object_entry_from_pack()'
- + pack-objects: use standard option incompatibility functions
- (this branch is used by ps/object-store-midx.)
-
- "pack-objects" has been taught to avoid pointing into objects in
- cruft packs from midx.
-
- Will merge to 'master'.
- source: <cover.1750717921.git.me@ttaylorr.com>
+ Comments?
+ source: <20250721141056.2283349-1-christian.couder@gmail.com>
