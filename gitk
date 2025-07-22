@@ -1974,14 +1974,14 @@ proc longid {prefix} {
 }
 
 proc readrefs {} {
-    global tagids idtags headids idheads tagobjid
+    global tagids idtags headids idheads tagobjid upstreamofref
     global otherrefids idotherrefs mainhead mainheadid
     global selecthead selectheadid
     global hideremotes
     global tclencoding
     global hashlength
 
-    foreach v {tagids idtags headids idheads otherrefids idotherrefs} {
+    foreach v {tagids idtags headids idheads otherrefids idotherrefs upstreamofref} {
         unset -nocomplain $v
     }
     set refd [safe_open_command [list git show-ref -d]]
@@ -2035,6 +2035,17 @@ proc readrefs {} {
             set selectheadid [safe_exec [list git rev-parse --verify $selecthead]]
         }
     }
+    #load the local_branch->upstream mapping
+    # the result of the for-each-ref command produces: local_branch NUL upstream
+    set refd [safe_open_command [list git for-each-ref {--format=%(refname:short)%00%(upstream)} refs/heads/]]
+    while {[gets $refd local_tracking] >= 0} {
+        set line [split $local_tracking \0]
+        if {[lindex $line 1] ne {}} {
+            set upstream_ref [string map {"refs/" ""} [lindex $line 1]]
+            set upstreamofref([lindex $line 0]) $upstream_ref
+        }
+    }
+    catch {close $refd}
 }
 
 # skip over fake commits
@@ -10281,6 +10292,9 @@ proc showrefs {} {
     pack $top.f.e -side right -fill x -expand 1
     pack $top.f.l -side left
     grid $top.f - -sticky ew -pady 2
+    ${NS}::checkbutton $top.sort -text [mc "Sort refs by type"] \
+        -variable sortrefsbytype -command {refill_reflist}
+    grid $top.sort - -sticky w -pady 2
     ${NS}::button $top.close -command [list destroy $top] -text [mc "Close"]
     bind $top <Key-Escape> [list destroy $top]
     grid $top.close -
@@ -10324,43 +10338,71 @@ proc reflistfilter_change {n1 n2 op} {
 }
 
 proc refill_reflist {} {
-    global reflist reflistfilter showrefstop headids tagids otherrefids
-    global curview
+    global reflist reflistfilter showrefstop headids tagids otherrefids sortrefsbytype
+    global curview upstreamofref
 
     if {![info exists showrefstop] || ![winfo exists $showrefstop]} return
-    set refs {}
+    set localrefs {}
+    set remoterefs {}
+    set trackedremoterefs {}
+    set tagrefs {}
+    set otherrefs {}
+
     foreach n [array names headids] {
-        if {[string match $reflistfilter $n]} {
+        if {![string match "remotes/*" $n] && [string match $reflistfilter $n]} {
             if {[commitinview $headids($n) $curview]} {
-                if {[string match "remotes/*" $n]} {
-                    lappend refs [list $n R]
-                } else {
-                    lappend refs [list $n H]
+                lappend localrefs [list $n H]
+                if {[info exists upstreamofref($n)]} {
+                    lappend trackedremoterefs [list $upstreamofref($n) R]
                 }
             } else {
                 interestedin $headids($n) {run refill_reflist}
             }
         }
     }
+    set trackedremoterefs [lsort -index 0 $trackedremoterefs]
+    set localrefs [lsort -index 0 $localrefs]
+
+    foreach n [array names headids] {
+        if {[string match "remotes/*" $n] && [string match $reflistfilter $n]} {
+            if {[commitinview $headids($n) $curview]} {
+                if {[lsearch -exact $trackedremoterefs [list $n R]] < 0} {
+                    lappend remoterefs [list $n R]
+                }
+            } else {
+                interestedin $headids($n) {run refill_reflist}
+            }
+        }
+    }
+    set remoterefs [lsort -index 0 $remoterefs]
+
     foreach n [array names tagids] {
         if {[string match $reflistfilter $n]} {
             if {[commitinview $tagids($n) $curview]} {
-                lappend refs [list $n T]
+                lappend tagrefs [list $n T]
             } else {
                 interestedin $tagids($n) {run refill_reflist}
             }
         }
     }
+    set tagrefs [lsort -index 0 $tagrefs]
+
     foreach n [array names otherrefids] {
         if {[string match $reflistfilter $n]} {
             if {[commitinview $otherrefids($n) $curview]} {
-                lappend refs [list $n o]
+                lappend otherrefs [list "$n" o]
             } else {
                 interestedin $otherrefids($n) {run refill_reflist}
             }
         }
     }
-    set refs [lsort -index 0 $refs]
+    set otherrefs [lsort -index 0 $otherrefs]
+
+    set refs [concat $localrefs $trackedremoterefs $remoterefs $tagrefs $otherrefs]
+    if {!$sortrefsbytype} {
+        set refs [lsort -index 0 $refs]
+    }
+
     if {$refs eq $reflist} return
 
     # Update the contents of $showrefstop.list according to the
@@ -12634,6 +12676,7 @@ set wrapcomment "none"
 set wrapdefault "none"
 set showneartags 1
 set hideremotes 0
+set sortrefsbytype 1
 set maxrefs 20
 set visiblerefs {"master"}
 set maxlinelen 200
@@ -12748,7 +12791,7 @@ set config_variables {
     filesepbgcolor filesepfgcolor linehoverbgcolor linehoverfgcolor
     linehoveroutlinecolor mainheadcirclecolor workingfilescirclecolor
     indexcirclecolor circlecolors linkfgcolor circleoutlinecolor diffbgcolors
-    web_browser
+    sortrefsbytype web_browser
 }
 foreach var $config_variables {
     config_init_trace $var
