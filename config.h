@@ -718,32 +718,4 @@ NORETURN void git_die_config_linenr(const char *key, const char *filename, int l
 	lookup_config(mapping, ARRAY_SIZE(mapping), var)
 int lookup_config(const char **mapping, int nr_mapping, const char *var);
 
-# ifdef USE_THE_REPOSITORY_VARIABLE
-static inline int git_config_get_bool_or_int(const char *key, int *is_bool, int *dest)
-{
-	return repo_config_get_bool_or_int(the_repository, key, is_bool, dest);
-}
-
-static inline int git_config_get_maybe_bool(const char *key, int *dest)
-{
-	return repo_config_get_maybe_bool(the_repository, key, dest);
-}
-
-static inline int git_config_get_pathname(const char *key, char **dest)
-{
-	return repo_config_get_pathname(the_repository, key, dest);
-}
-
-static inline void git_config_set_multivar_in_file(
-	const char *config_filename,
-	const char *key,
-	const char *value,
-	const char *value_pattern,
-	unsigned flags)
-{
-	repo_config_set_multivar_in_file(the_repository, config_filename,
-					 key, value, value_pattern, flags);
-}
-# endif /* USE_THE_REPOSITORY_VARIABLE */
-
 #endif /* CONFIG_H */
