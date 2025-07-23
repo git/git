@@ -12,13 +12,13 @@ static struct bloom_filter_settings settings = DEFAULT_BLOOM_FILTER_SETTINGS;
 static void add_string_to_filter(const char *data, struct bloom_filter *filter) {
 		struct bloom_key key;
 
-		fill_bloom_key(data, strlen(data), &key, &settings);
+		bloom_key_fill(&key, data, strlen(data), &settings);
 		printf("Hashes:");
 		for (size_t i = 0; i < settings.num_hashes; i++)
 			printf("0x%08x|", key.hashes[i]);
 		printf("\n");
 		add_key_to_filter(&key, filter, &settings);
-		clear_bloom_key(&key);
+		bloom_key_clear(&key);
 }
 
 static void print_bloom_filter(struct bloom_filter *filter) {
@@ -61,13 +61,13 @@ int cmd__bloom(int argc, const char **argv)
 		uint32_t hashed;
 		if (argc < 3)
 			usage(bloom_usage);
-		hashed = murmur3_seeded_v2(0, argv[2], strlen(argv[2]));
+		hashed = test_bloom_murmur3_seeded(0, argv[2], strlen(argv[2]), 2);
 		printf("Murmur3 Hash with seed=0:0x%08x\n", hashed);
 	}
 
 	if (!strcmp(argv[1], "get_murmur3_seven_highbit")) {
 		uint32_t hashed;
-		hashed = murmur3_seeded_v2(0, "\x99\xaa\xbb\xcc\xdd\xee\xff", 7);
+		hashed = test_bloom_murmur3_seeded(0, "\x99\xaa\xbb\xcc\xdd\xee\xff", 7, 2);
 		printf("Murmur3 Hash with seed=0:0x%08x\n", hashed);
 	}
 
