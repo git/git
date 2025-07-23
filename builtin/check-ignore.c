@@ -2,6 +2,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "dir.h"
+#include "environment.h"
 #include "gettext.h"
 #include "quote.h"
 #include "pathspec.h"

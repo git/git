@@ -28,6 +28,7 @@
 #include "advice.h"
 #include "config.h"
 #include "credential.h"
+#include "environment.h"
 #include "gettext.h"
 #include "run-command.h"
 #include "parse-options.h"

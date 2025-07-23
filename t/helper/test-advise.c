@@ -3,6 +3,7 @@
 #include "test-tool.h"
 #include "advice.h"
 #include "config.h"
+#include "environment.h"
 #include "setup.h"
 
 int cmd__advise_if_enabled(int argc, const char **argv)

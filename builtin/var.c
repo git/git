@@ -11,6 +11,7 @@
 #include "attr.h"
 #include "config.h"
 #include "editor.h"
+#include "environment.h"
 #include "ident.h"
 #include "pager.h"
 #include "refs.h"

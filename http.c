@@ -3,6 +3,7 @@
 
 #include "git-compat-util.h"
 #include "git-curl-compat.h"
+#include "environment.h"
 #include "hex.h"
 #include "http.h"
 #include "config.h"

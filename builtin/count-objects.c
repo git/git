@@ -7,6 +7,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "dir.h"
+#include "environment.h"
 #include "gettext.h"
 #include "path.h"
 #include "parse-options.h"
