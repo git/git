@@ -1765,7 +1765,7 @@ static void initialize_task_config(struct maintenance_run_opts *opts,
 	if (opts->schedule) {
 		strategy = none_strategy;
 
-		if (!git_config_get_string_tmp("maintenance.strategy", &config_str)) {
+		if (!repo_config_get_string_tmp(the_repository, "maintenance.strategy", &config_str)) {
 			if (!strcasecmp(config_str, "incremental"))
 				strategy = incremental_strategy;
 		}
@@ -1788,7 +1788,7 @@ static void initialize_task_config(struct maintenance_run_opts *opts,
 			strbuf_reset(&config_name);
 			strbuf_addf(&config_name, "maintenance.%s.schedule",
 				    tasks[i].name);
-			if (!git_config_get_string_tmp(config_name.buf, &config_str))
+			if (!repo_config_get_string_tmp(the_repository, config_name.buf, &config_str))
 				strategy.tasks[i].schedule = parse_schedule(config_str);
 			if (strategy.tasks[i].schedule < opts->schedule)
 				continue;
