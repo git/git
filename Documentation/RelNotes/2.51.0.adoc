@@ -47,6 +47,12 @@ UI, Workflows & Features
    service names (like smtp) in addition to the numeric port numbers
    (like 25).
 
+ * Lift the limitation to use changed-path filter in "git log" so that
+   it can be used for a pathspec with multiple literal paths.
+
+ * Clean up the way how signature on commit objects are exported to
+   and imported from fast-import stream.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -194,6 +200,13 @@ including security updates, are included in this release.
    the (custom) GPG compatible program, can now be spelled with ~tilde
    expansion.
    (merge 7d275cd5c0 jb/gpg-program-variable-is-a-pathname later to maint).
+
+ * Our <sane-ctype.h> header file relied on that the system-supplied
+   <ctype.h> header is not later included, which would override our
+   macro definitions, but "amazon linux" broke this assumption.  Fix
+   this by preemptively including <ctype.h> near the beginning of
+   <sane-ctype.h> ourselves.
+   (merge 9d3b33125f ps/sane-ctype-workaround later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge b257adb571 lo/my-first-ow-doc-update later to maint).
