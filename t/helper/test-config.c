@@ -121,7 +121,7 @@ int cmd__config(int argc, const char **argv)
 			goto exit1;
 		}
 	} else if (argc == 3 && !strcmp(argv[1], "get_value_multi")) {
-		if (!git_config_get_value_multi(argv[2], &strptr)) {
+		if (!repo_config_get_value_multi(the_repository, argv[2], &strptr)) {
 			for (i = 0; i < strptr->nr; i++) {
 				v = strptr->items[i].string;
 				if (!v)
