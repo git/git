@@ -298,6 +298,14 @@ For C programs:
    . since late 2021 with 44ba10d6, we have had variables declared in
      the for loop "for (int i = 0; i < 10; i++)".
 
+   C99 features we have test balloons for:
+
+   . since late 2024 with v2.48.0-rc0~20, we have test balloons for
+     compound literal syntax, e.g., (struct foo){ .member = value };
+     our hope is that no platforms we care about have trouble using
+     them, and officially adopt its wider use in mid 2026.  Do not add
+     more use of the syntax until that happens.
+
    New C99 features that we cannot use yet:
 
    . %z and %zu as a printf() argument for a size_t (the %z being for
