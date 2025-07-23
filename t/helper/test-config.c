@@ -110,7 +110,7 @@ int cmd__config(int argc, const char **argv)
 		fprintf(stderr, "Please, provide a command name on the command-line\n");
 		goto exit1;
 	} else if (argc == 3 && !strcmp(argv[1], "get_value")) {
-		if (!git_config_get_value(argv[2], &v)) {
+		if (!repo_config_get_value(the_repository, argv[2], &v)) {
 			if (!v)
 				printf("(NULL)\n");
 			else
