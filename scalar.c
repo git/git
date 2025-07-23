@@ -103,7 +103,7 @@ static int set_scalar_config(const struct scalar_config *config, int reconfigure
 	if ((reconfigure && config->overwrite_on_reconfigure) ||
 	    repo_config_get_string(the_repository, config->key, &value)) {
 		trace2_data_string("scalar", the_repository, config->key, "created");
-		res = git_config_set_gently(config->key, config->value);
+		res = repo_config_set_gently(the_repository, config->key, config->value);
 	} else {
 		trace2_data_string("scalar", the_repository, config->key, "exists");
 		res = 0;
@@ -322,7 +322,7 @@ static int set_config(const char *fmt, ...)
 	value = strchr(buf.buf, '=');
 	if (value)
 		*(value++) = '\0';
-	res = git_config_set_gently(buf.buf, value);
+	res = repo_config_set_gently(the_repository, buf.buf, value);
 	strbuf_release(&buf);
 
 	return res;

@@ -2236,13 +2236,13 @@ void initialize_repository_version(int hash_algo,
 		git_config_set("extensions.objectformat",
 			       hash_algos[hash_algo].name);
 	else if (reinit)
-		git_config_set_gently("extensions.objectformat", NULL);
+		repo_config_set_gently(the_repository, "extensions.objectformat", NULL);
 
 	if (ref_storage_format != REF_STORAGE_FORMAT_FILES)
 		git_config_set("extensions.refstorage",
 			       ref_storage_format_to_name(ref_storage_format));
 	else if (reinit)
-		git_config_set_gently("extensions.refstorage", NULL);
+		repo_config_set_gently(the_repository, "extensions.refstorage", NULL);
 
 	if (reinit) {
 		struct strbuf config = STRBUF_INIT;
