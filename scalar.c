@@ -763,7 +763,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 			break;
 		}
 
-		git_config_clear();
+		repo_config_clear(the_repository);
 
 		if (repo_init(&r, gitdir.buf, commondir.buf))
 			goto loop_end;

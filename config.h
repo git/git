@@ -719,11 +719,6 @@ NORETURN void git_die_config_linenr(const char *key, const char *filename, int l
 int lookup_config(const char **mapping, int nr_mapping, const char *var);
 
 # ifdef USE_THE_REPOSITORY_VARIABLE
-static inline void git_config_clear(void)
-{
-	repo_config_clear(the_repository);
-}
-
 static inline int git_config_get(const char *key)
 {
 	return repo_config_get(the_repository, key);

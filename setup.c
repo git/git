@@ -1741,7 +1741,7 @@ const char *setup_git_directory_gently(int *nongit_ok)
 	 * configuration (including the per-repo config file that we
 	 * ignored previously).
 	 */
-	git_config_clear();
+	repo_config_clear(the_repository);
 
 	/*
 	 * Let's assume that we are in a git repository.
@@ -2337,7 +2337,7 @@ static int create_default_files(const char *template_path,
 	 * disk).
 	 */
 	copy_templates(template_path);
-	git_config_clear();
+	repo_config_clear(the_repository);
 	repo_settings_reset_shared_repository(the_repository);
 	repo_config(the_repository, git_default_config, NULL);
 
