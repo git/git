@@ -189,10 +189,10 @@ static void gc_config(struct gc_config *cfg)
 	    gc_config_is_timestamp_never("gc.reflogexpireunreachable"))
 		cfg->prune_reflogs = 0;
 
-	git_config_get_int("gc.aggressivewindow", &cfg->aggressive_window);
-	git_config_get_int("gc.aggressivedepth", &cfg->aggressive_depth);
-	git_config_get_int("gc.auto", &cfg->gc_auto_threshold);
-	git_config_get_int("gc.autopacklimit", &cfg->gc_auto_pack_limit);
+	repo_config_get_int(the_repository, "gc.aggressivewindow", &cfg->aggressive_window);
+	repo_config_get_int(the_repository, "gc.aggressivedepth", &cfg->aggressive_depth);
+	repo_config_get_int(the_repository, "gc.auto", &cfg->gc_auto_threshold);
+	repo_config_get_int(the_repository, "gc.autopacklimit", &cfg->gc_auto_pack_limit);
 	git_config_get_bool("gc.autodetach", &cfg->detach_auto);
 	git_config_get_bool("gc.cruftpacks", &cfg->cruft_packs);
 	git_config_get_ulong("gc.maxcruftsize", &cfg->max_cruft_size);
@@ -332,7 +332,7 @@ static int reflog_expire_condition(struct gc_config *cfg UNUSED)
 	};
 	int limit = 100;
 
-	git_config_get_int("maintenance.reflog-expire.auto", &limit);
+	repo_config_get_int(the_repository, "maintenance.reflog-expire.auto", &limit);
 	if (!limit)
 		return 0;
 	if (limit < 0)
@@ -378,7 +378,7 @@ static int worktree_prune_condition(struct gc_config *cfg)
 	struct dirent *d;
 	DIR *dir = NULL;
 
-	git_config_get_int("maintenance.worktree-prune.auto", &limit);
+	repo_config_get_int(the_repository, "maintenance.worktree-prune.auto", &limit);
 	if (limit <= 0) {
 		should_prune = limit < 0;
 		goto out;
@@ -423,7 +423,7 @@ static int rerere_gc_condition(struct gc_config *cfg UNUSED)
 	int should_gc = 0, limit = 1;
 	DIR *dir = NULL;
 
-	git_config_get_int("maintenance.rerere-gc.auto", &limit);
+	repo_config_get_int(the_repository, "maintenance.rerere-gc.auto", &limit);
 	if (limit <= 0) {
 		should_gc = limit < 0;
 		goto out;
@@ -1161,8 +1161,8 @@ static int should_write_commit_graph(struct gc_config *cfg UNUSED)
 
 	data.num_not_in_graph = 0;
 	data.limit = 100;
-	git_config_get_int("maintenance.commit-graph.auto",
-			   &data.limit);
+	repo_config_get_int(the_repository, "maintenance.commit-graph.auto",
+			    &data.limit);
 
 	if (!data.limit)
 		return 0;
@@ -1300,8 +1300,8 @@ static int loose_object_auto_condition(struct gc_config *cfg UNUSED)
 {
 	int count = 0;
 
-	git_config_get_int("maintenance.loose-objects.auto",
-			   &loose_object_auto_limit);
+	repo_config_get_int(the_repository, "maintenance.loose-objects.auto",
+			    &loose_object_auto_limit);
 
 	if (!loose_object_auto_limit)
 		return 0;
@@ -1415,8 +1415,8 @@ static int incremental_repack_auto_condition(struct gc_config *cfg UNUSED)
 	if (!the_repository->settings.core_multi_pack_index)
 		return 0;
 
-	git_config_get_int("maintenance.incremental-repack.auto",
-			   &incremental_repack_auto_limit);
+	repo_config_get_int(the_repository, "maintenance.incremental-repack.auto",
+			    &incremental_repack_auto_limit);
 
 	if (!incremental_repack_auto_limit)
 		return 0;

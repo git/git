@@ -155,7 +155,7 @@ int cmd__config(int argc, const char **argv)
 			BUG("Key \"%s\" has unknown return %d", argv[2], ret);
 		goto exit1;
 	} else if (argc == 3 && !strcmp(argv[1], "get_int")) {
-		if (!git_config_get_int(argv[2], &val)) {
+		if (!repo_config_get_int(the_repository, argv[2], &val)) {
 			printf("%d\n", val);
 			goto exit0;
 		} else {

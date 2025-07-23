@@ -945,7 +945,7 @@ long get_files_ref_lock_timeout_ms(void)
 	static int timeout_ms = 100;
 
 	if (!configured) {
-		git_config_get_int("core.filesreflocktimeout", &timeout_ms);
+		repo_config_get_int(the_repository, "core.filesreflocktimeout", &timeout_ms);
 		configured = 1;
 	}
 
