@@ -966,9 +966,9 @@ static int cmd_config_set(int argc, const char **argv, const char *prefix,
 	value = normalize_value(argv[0], argv[1], type, &default_kvi);
 
 	if ((flags & CONFIG_FLAGS_MULTI_REPLACE) || value_pattern) {
-		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
-							     argv[0], value, value_pattern,
-							     comment, flags);
+		ret = repo_config_set_multivar_in_file_gently(the_repository, location_opts.source.file,
+							      argv[0], value, value_pattern,
+							      comment, flags);
 	} else {
 		ret = repo_config_set_in_file_gently(the_repository, location_opts.source.file,
 						     argv[0], comment, value);
@@ -1010,9 +1010,9 @@ static int cmd_config_unset(int argc, const char **argv, const char *prefix,
 	check_write(&location_opts.source);
 
 	if ((flags & CONFIG_FLAGS_MULTI_REPLACE) || value_pattern)
-		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
-							     argv[0], NULL, value_pattern,
-							     NULL, flags);
+		ret = repo_config_set_multivar_in_file_gently(the_repository, location_opts.source.file,
+							      argv[0], NULL, value_pattern,
+							      NULL, flags);
 	else
 		ret = repo_config_set_in_file_gently(the_repository, location_opts.source.file, argv[0],
 						     NULL, NULL);
@@ -1305,26 +1305,26 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 		check_write(&location_opts.source);
 		check_argc(argc, 2, 3);
 		value = normalize_value(argv[0], argv[1], display_opts.type, &default_kvi);
-		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
-							     argv[0], value, argv[2],
-							     comment, flags);
+		ret = repo_config_set_multivar_in_file_gently(the_repository, location_opts.source.file,
+							      argv[0], value, argv[2],
+							      comment, flags);
 	}
 	else if (actions == ACTION_ADD) {
 		check_write(&location_opts.source);
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1], display_opts.type, &default_kvi);
-		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
-							     argv[0], value,
-							     CONFIG_REGEX_NONE,
-							     comment, flags);
+		ret = repo_config_set_multivar_in_file_gently(the_repository, location_opts.source.file,
+							      argv[0], value,
+							      CONFIG_REGEX_NONE,
+							      comment, flags);
 	}
 	else if (actions == ACTION_REPLACE_ALL) {
 		check_write(&location_opts.source);
 		check_argc(argc, 2, 3);
 		value = normalize_value(argv[0], argv[1], display_opts.type, &default_kvi);
-		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
-							     argv[0], value, argv[2],
-							     comment, flags | CONFIG_FLAGS_MULTI_REPLACE);
+		ret = repo_config_set_multivar_in_file_gently(the_repository, location_opts.source.file,
+							      argv[0], value, argv[2],
+							      comment, flags | CONFIG_FLAGS_MULTI_REPLACE);
 	}
 	else if (actions == ACTION_GET) {
 		check_argc(argc, 1, 2);
@@ -1350,9 +1350,9 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 		check_write(&location_opts.source);
 		check_argc(argc, 1, 2);
 		if (argc == 2)
-			ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
-								     argv[0], NULL, argv[1],
-								     NULL, flags);
+			ret = repo_config_set_multivar_in_file_gently(the_repository, location_opts.source.file,
+								      argv[0], NULL, argv[1],
+								      NULL, flags);
 		else
 			ret = repo_config_set_in_file_gently(the_repository, location_opts.source.file,
 							     argv[0], NULL, NULL);
@@ -1360,9 +1360,9 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 	else if (actions == ACTION_UNSET_ALL) {
 		check_write(&location_opts.source);
 		check_argc(argc, 1, 2);
-		ret = git_config_set_multivar_in_file_gently(location_opts.source.file,
-							     argv[0], NULL, argv[1],
-							     NULL, flags | CONFIG_FLAGS_MULTI_REPLACE);
+		ret = repo_config_set_multivar_in_file_gently(the_repository, location_opts.source.file,
+							      argv[0], NULL, argv[1],
+							      NULL, flags | CONFIG_FLAGS_MULTI_REPLACE);
 	}
 	else if (actions == ACTION_RENAME_SECTION) {
 		check_write(&location_opts.source);

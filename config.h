@@ -734,18 +734,6 @@ static inline int git_config_get_pathname(const char *key, char **dest)
 	return repo_config_get_pathname(the_repository, key, dest);
 }
 
-static inline int git_config_set_multivar_in_file_gently(
-	const char *config_filename,
-	const char *key, const char *value,
-	const char *value_pattern,
-	const char *comment,
-	unsigned flags)
-{
-	return repo_config_set_multivar_in_file_gently(the_repository, config_filename,
-						       key, value, value_pattern,
-						       comment, flags);
-}
-
 static inline void git_config_set_multivar_in_file(
 	const char *config_filename,
 	const char *key,
