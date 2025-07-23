@@ -1817,7 +1817,7 @@ int prepare_auto_maintenance(int quiet, struct child_process *maint)
 {
 	int enabled, auto_detach;
 
-	if (!git_config_get_bool("maintenance.auto", &enabled) &&
+	if (!repo_config_get_bool(the_repository, "maintenance.auto", &enabled) &&
 	    !enabled)
 		return 0;
 
@@ -1826,8 +1826,8 @@ int prepare_auto_maintenance(int quiet, struct child_process *maint)
 	 * honoring `gc.autoDetach`. This is somewhat weird, but required to
 	 * retain behaviour from when we used to run git-gc(1) here.
 	 */
-	if (git_config_get_bool("maintenance.autodetach", &auto_detach) &&
-	    git_config_get_bool("gc.autodetach", &auto_detach))
+	if (repo_config_get_bool(the_repository, "maintenance.autodetach", &auto_detach) &&
+	    repo_config_get_bool(the_repository, "gc.autodetach", &auto_detach))
 		auto_detach = 1;
 
 	maint->git_cmd = 1;

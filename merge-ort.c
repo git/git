@@ -5356,7 +5356,7 @@ static void merge_recursive_config(struct merge_options *opt, int ui)
 	repo_config_get_int(the_repository, "merge.verbosity", &opt->verbosity);
 	repo_config_get_int(the_repository, "diff.renamelimit", &opt->rename_limit);
 	repo_config_get_int(the_repository, "merge.renamelimit", &opt->rename_limit);
-	git_config_get_bool("merge.renormalize", &renormalize);
+	repo_config_get_bool(the_repository, "merge.renormalize", &renormalize);
 	opt->renormalize = renormalize;
 	if (!repo_config_get_string(the_repository, "diff.renames", &value)) {
 		opt->detect_renames = git_config_rename("diff.renames", value);

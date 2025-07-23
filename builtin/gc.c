@@ -193,8 +193,8 @@ static void gc_config(struct gc_config *cfg)
 	repo_config_get_int(the_repository, "gc.aggressivedepth", &cfg->aggressive_depth);
 	repo_config_get_int(the_repository, "gc.auto", &cfg->gc_auto_threshold);
 	repo_config_get_int(the_repository, "gc.autopacklimit", &cfg->gc_auto_pack_limit);
-	git_config_get_bool("gc.autodetach", &cfg->detach_auto);
-	git_config_get_bool("gc.cruftpacks", &cfg->cruft_packs);
+	repo_config_get_bool(the_repository, "gc.autodetach", &cfg->detach_auto);
+	repo_config_get_bool(the_repository, "gc.cruftpacks", &cfg->cruft_packs);
 	repo_config_get_ulong(the_repository, "gc.maxcruftsize", &cfg->max_cruft_size);
 
 	if (!repo_config_get_expiry(the_repository, "gc.pruneexpire", &owned)) {
@@ -1779,7 +1779,7 @@ static void initialize_task_config(struct maintenance_run_opts *opts,
 		strbuf_reset(&config_name);
 		strbuf_addf(&config_name, "maintenance.%s.enabled",
 			    tasks[i].name);
-		if (!git_config_get_bool(config_name.buf, &config_value))
+		if (!repo_config_get_bool(the_repository, config_name.buf, &config_value))
 			strategy.tasks[i].enabled = config_value;
 		if (!strategy.tasks[i].enabled)
 			continue;
