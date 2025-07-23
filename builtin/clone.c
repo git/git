@@ -762,16 +762,16 @@ static int write_one_config(const char *key, const char *value,
 {
 	/*
 	 * give git_clone_config a chance to write config values back to the
-	 * environment, since git_config_set_multivar_gently only deals with
+	 * environment, since repo_config_set_multivar_gently only deals with
 	 * config-file writes
 	 */
 	int apply_failed = git_clone_config(key, value, ctx, data);
 	if (apply_failed)
 		return apply_failed;
 
-	return git_config_set_multivar_gently(key,
-					      value ? value : "true",
-					      CONFIG_REGEX_NONE, 0);
+	return repo_config_set_multivar_gently(the_repository, key,
+					       value ? value : "true",
+					       CONFIG_REGEX_NONE, 0);
 }
 
 static void write_config(struct string_list *config)
