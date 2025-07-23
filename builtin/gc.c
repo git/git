@@ -218,12 +218,12 @@ static void gc_config(struct gc_config *cfg)
 	if (!git_config_get_ulong("core.deltabasecachelimit", &ulongval))
 		cfg->delta_base_cache_limit = ulongval;
 
-	if (!git_config_get_string("gc.repackfilter", &owned)) {
+	if (!repo_config_get_string(the_repository, "gc.repackfilter", &owned)) {
 		free(cfg->repack_filter);
 		cfg->repack_filter = owned;
 	}
 
-	if (!git_config_get_string("gc.repackfilterto", &owned)) {
+	if (!repo_config_get_string(the_repository, "gc.repackfilterto", &owned)) {
 		free(cfg->repack_filter_to);
 		cfg->repack_filter_to = owned;
 	}

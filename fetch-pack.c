@@ -1910,7 +1910,7 @@ static void fetch_pack_config(void)
 	if (!uri_protocols.nr) {
 		char *str;
 
-		if (!git_config_get_string("fetch.uriprotocols", &str) && str) {
+		if (!repo_config_get_string(the_repository, "fetch.uriprotocols", &str) && str) {
 			string_list_split(&uri_protocols, str, ',', -1);
 			free(str);
 		}
