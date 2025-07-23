@@ -1810,12 +1810,12 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 	/* setup alternateLocation and alternateErrorStrategy in the cloned submodule if needed */
 	repo_config_get_string(the_repository, "submodule.alternateLocation", &sm_alternate);
 	if (sm_alternate)
-		git_config_set_in_file(p, "submodule.alternateLocation",
-				       sm_alternate);
+		repo_config_set_in_file(the_repository, p, "submodule.alternateLocation",
+					sm_alternate);
 	repo_config_get_string(the_repository, "submodule.alternateErrorStrategy", &error_strategy);
 	if (error_strategy)
-		git_config_set_in_file(p, "submodule.alternateErrorStrategy",
-				       error_strategy);
+		repo_config_set_in_file(the_repository, p, "submodule.alternateErrorStrategy",
+					error_strategy);
 
 	free(sm_alternate);
 	free(error_strategy);
@@ -2522,7 +2522,7 @@ static int ensure_core_worktree(const char *path)
 		abs_path = absolute_pathdup(path);
 		rel_path = relative_path(abs_path, subrepo.gitdir, &sb);
 
-		git_config_set_in_file(cfg_file, "core.worktree", rel_path);
+		repo_config_set_in_file(the_repository, cfg_file, "core.worktree", rel_path);
 
 		free(cfg_file);
 		free(abs_path);
