@@ -195,7 +195,7 @@ static void gc_config(struct gc_config *cfg)
 	repo_config_get_int(the_repository, "gc.autopacklimit", &cfg->gc_auto_pack_limit);
 	git_config_get_bool("gc.autodetach", &cfg->detach_auto);
 	git_config_get_bool("gc.cruftpacks", &cfg->cruft_packs);
-	git_config_get_ulong("gc.maxcruftsize", &cfg->max_cruft_size);
+	repo_config_get_ulong(the_repository, "gc.maxcruftsize", &cfg->max_cruft_size);
 
 	if (!repo_config_get_expiry(the_repository, "gc.pruneexpire", &owned)) {
 		free(cfg->prune_expire);
@@ -212,10 +212,10 @@ static void gc_config(struct gc_config *cfg)
 		cfg->gc_log_expire = owned;
 	}
 
-	git_config_get_ulong("gc.bigpackthreshold", &cfg->big_pack_threshold);
-	git_config_get_ulong("pack.deltacachesize", &cfg->max_delta_cache_size);
+	repo_config_get_ulong(the_repository, "gc.bigpackthreshold", &cfg->big_pack_threshold);
+	repo_config_get_ulong(the_repository, "pack.deltacachesize", &cfg->max_delta_cache_size);
 
-	if (!git_config_get_ulong("core.deltabasecachelimit", &ulongval))
+	if (!repo_config_get_ulong(the_repository, "core.deltabasecachelimit", &ulongval))
 		cfg->delta_base_cache_limit = ulongval;
 
 	if (!repo_config_get_string(the_repository, "gc.repackfilter", &owned)) {
@@ -2344,7 +2344,7 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 		die(_("failed to create directories for '%s'"), filename);
 
 	if ((long)lock_file_timeout_ms < 0 &&
-	    git_config_get_ulong("gc.launchctlplistlocktimeoutms",
+	    repo_config_get_ulong(the_repository, "gc.launchctlplistlocktimeoutms",
 				 &lock_file_timeout_ms))
 		lock_file_timeout_ms = 150;
 

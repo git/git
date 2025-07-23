@@ -3523,7 +3523,7 @@ static void git_pack_config(void)
 	int limit;
 	unsigned long packsizelimit_value;
 
-	if (!git_config_get_ulong("pack.depth", &max_depth)) {
+	if (!repo_config_get_ulong(the_repository, "pack.depth", &max_depth)) {
 		if (max_depth > MAX_DEPTH)
 			max_depth = MAX_DEPTH;
 	}
@@ -3533,7 +3533,7 @@ static void git_pack_config(void)
 			git_die_config(the_repository, "pack.indexversion",
 				       "bad pack.indexVersion=%"PRIu32, pack_idx_opts.version);
 	}
-	if (!git_config_get_ulong("pack.packsizelimit", &packsizelimit_value))
+	if (!repo_config_get_ulong(the_repository, "pack.packsizelimit", &packsizelimit_value))
 		max_packsize = packsizelimit_value;
 
 	if (!repo_config_get_int(the_repository, "fastimport.unpacklimit", &limit))
