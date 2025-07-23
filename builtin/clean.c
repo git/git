@@ -949,7 +949,7 @@ int cmd_clean(int argc,
 		OPT_END()
 	};
 
-	git_config(git_clean_config, NULL);
+	repo_config(the_repository, git_clean_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, options, builtin_clean_usage,
 			     0);

@@ -621,7 +621,7 @@ int cmd_unpack_objects(int argc,
 
 	disable_replace_refs();
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	quiet = !isatty(2);
 

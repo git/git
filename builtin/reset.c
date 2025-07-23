@@ -377,7 +377,7 @@ int cmd_reset(int argc,
 		OPT_END()
 	};
 
-	git_config(git_reset_config, NULL);
+	repo_config(the_repository, git_reset_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, options, git_reset_usage,
 						PARSE_OPT_KEEP_DASHDASH);

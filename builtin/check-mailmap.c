@@ -56,7 +56,7 @@ int cmd_check_mailmap(int argc,
 	int i;
 	struct string_list mailmap = STRING_LIST_INIT_NODUP;
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, check_mailmap_options,
 			     check_mailmap_usage, 0);
 	if (argc == 0 && !use_stdin)

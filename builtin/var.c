@@ -226,11 +226,11 @@ int cmd_var(int argc,
 		usage(var_usage);
 
 	if (strcmp(argv[1], "-l") == 0) {
-		git_config(show_config, NULL);
+		repo_config(the_repository, show_config, NULL);
 		list_vars();
 		return 0;
 	}
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	git_var = get_git_var(argv[1]);
 	if (!git_var)

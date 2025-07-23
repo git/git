@@ -353,7 +353,7 @@ static void read_branches(void)
 {
 	if (branch_list.nr)
 		return;
-	git_config(config_read_branches, NULL);
+	repo_config(the_repository, config_read_branches, NULL);
 }
 
 struct ref_states {
@@ -690,7 +690,7 @@ static void handle_push_default(const char* old_name, const char* new_name)
 		.origin = STRBUF_INIT,
 		.linenr = -1,
 	};
-	git_config(config_read_push_default, &push_default);
+	repo_config(the_repository, config_read_push_default, &push_default);
 	if (push_default.scope >= CONFIG_SCOPE_COMMAND)
 		; /* pass */
 	else if (push_default.scope >= CONFIG_SCOPE_LOCAL) {
@@ -1620,7 +1620,7 @@ static int update(int argc, const char **argv, const char *prefix,
 		strvec_push(&cmd.args, argv[i]);
 
 	if (strcmp(cmd.args.v[cmd.args.nr-1], "default") == 0) {
-		git_config(get_remote_default, &default_defined);
+		repo_config(the_repository, get_remote_default, &default_defined);
 		if (!default_defined) {
 			strvec_pop(&cmd.args);
 			strvec_push(&cmd.args, "--all");

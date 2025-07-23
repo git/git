@@ -2339,7 +2339,7 @@ static int create_default_files(const char *template_path,
 	copy_templates(template_path);
 	git_config_clear();
 	repo_settings_reset_shared_repository(the_repository);
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	reinit = is_reinit();
 
@@ -2610,7 +2610,7 @@ int init_db(const char *git_dir, const char *real_git_dir,
 	 * have set up the repository format such that we can evaluate
 	 * includeIf conditions correctly in the case of re-initialization.
 	 */
-	git_config(platform_core_config, NULL);
+	repo_config(the_repository, platform_core_config, NULL);
 
 	safe_create_dir(the_repository, git_dir, 0);
 

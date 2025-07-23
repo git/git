@@ -1001,7 +1001,7 @@ int cmd_clone(int argc,
 
 	packet_trace_identity("clone");
 
-	git_config(git_clone_config, NULL);
+	repo_config(the_repository, git_clone_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, builtin_clone_options,
 			     builtin_clone_usage, 0);
@@ -1242,7 +1242,7 @@ int cmd_clone(int argc,
 	 * re-read config after init_db and write_config to pick up any config
 	 * injected by --template and --config, respectively.
 	 */
-	git_config(git_clone_config, NULL);
+	repo_config(the_repository, git_clone_config, NULL);
 
 	/*
 	 * If option_reject_shallow is specified from CLI option,

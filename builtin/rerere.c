@@ -66,7 +66,7 @@ int cmd_rerere(int argc,
 
 	argc = parse_options(argc, argv, prefix, options, rerere_usage, 0);
 
-	git_config(git_xmerge_config, NULL);
+	repo_config(the_repository, git_xmerge_config, NULL);
 
 	if (autoupdate == 1)
 		flags = RERERE_AUTOUPDATE;

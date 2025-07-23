@@ -1091,7 +1091,7 @@ static int show_editor(struct config_location_options *opts)
 		die(_("editing stdin is not supported"));
 	if (opts->source.blob)
 		die(_("editing blobs is not supported"));
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	config_file = opts->source.file ?
 			xstrdup(opts->source.file) :
 			repo_git_path(the_repository, "config");

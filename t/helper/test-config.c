@@ -32,10 +32,10 @@
  * 				ascending order of priority from a config_set
  * 				constructed from files entered as arguments.
  *
- * iterate -> iterate over all values using git_config(), and print some
+ * iterate -> iterate over all values using repo_config(), and print some
  *            data for each
  *
- * git_config_int -> iterate over all values using git_config() and print the
+ * git_config_int -> iterate over all values using repo_config() and print the
  *                   integer value for the entered key or die
  *
  * Examples:
@@ -218,10 +218,10 @@ int cmd__config(int argc, const char **argv)
 			goto exit1;
 		}
 	} else if (!strcmp(argv[1], "iterate")) {
-		git_config(iterate_cb, NULL);
+		repo_config(the_repository, iterate_cb, NULL);
 		goto exit0;
 	} else if (argc == 3 && !strcmp(argv[1], "git_config_int")) {
-		git_config(parse_int_cb, (void *) argv[2]);
+		repo_config(the_repository, parse_int_cb, (void *) argv[2]);
 		goto exit0;
 	}
 

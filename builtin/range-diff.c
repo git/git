@@ -54,7 +54,7 @@ int cmd_range_diff(int argc,
 	struct object_id oid;
 	const char *three_dots = NULL;
 
-	git_config(git_diff_ui_config, NULL);
+	repo_config(the_repository, git_diff_ui_config, NULL);
 
 	repo_diff_setup(the_repository, &diffopt);
 

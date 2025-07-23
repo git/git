@@ -228,7 +228,7 @@ static void gc_config(struct gc_config *cfg)
 		cfg->repack_filter_to = owned;
 	}
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 }
 
 enum schedule_priority {
