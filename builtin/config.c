@@ -970,8 +970,8 @@ static int cmd_config_set(int argc, const char **argv, const char *prefix,
 							     argv[0], value, value_pattern,
 							     comment, flags);
 	} else {
-		ret = git_config_set_in_file_gently(location_opts.source.file,
-						    argv[0], comment, value);
+		ret = repo_config_set_in_file_gently(the_repository, location_opts.source.file,
+						     argv[0], comment, value);
 		if (ret == CONFIG_NOTHING_SET)
 			error(_("cannot overwrite multiple values with a single value\n"
 			"       Use a regexp, --add or --replace-all to change %s."), argv[0]);
@@ -1014,8 +1014,8 @@ static int cmd_config_unset(int argc, const char **argv, const char *prefix,
 							     argv[0], NULL, value_pattern,
 							     NULL, flags);
 	else
-		ret = git_config_set_in_file_gently(location_opts.source.file, argv[0],
-						    NULL, NULL);
+		ret = repo_config_set_in_file_gently(the_repository, location_opts.source.file, argv[0],
+						     NULL, NULL);
 
 	location_options_release(&location_opts);
 	return ret;
@@ -1296,7 +1296,7 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 		check_write(&location_opts.source);
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1], display_opts.type, &default_kvi);
-		ret = git_config_set_in_file_gently(location_opts.source.file, argv[0], comment, value);
+		ret = repo_config_set_in_file_gently(the_repository, location_opts.source.file, argv[0], comment, value);
 		if (ret == CONFIG_NOTHING_SET)
 			error(_("cannot overwrite multiple values with a single value\n"
 			"       Use a regexp, --add or --replace-all to change %s."), argv[0]);
@@ -1354,8 +1354,8 @@ static int cmd_config_actions(int argc, const char **argv, const char *prefix)
 								     argv[0], NULL, argv[1],
 								     NULL, flags);
 		else
-			ret = git_config_set_in_file_gently(location_opts.source.file,
-							    argv[0], NULL, NULL);
+			ret = repo_config_set_in_file_gently(the_repository, location_opts.source.file,
+							     argv[0], NULL, NULL);
 	}
 	else if (actions == ACTION_UNSET_ALL) {
 		check_write(&location_opts.source);

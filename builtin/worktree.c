@@ -384,8 +384,8 @@ static void copy_filtered_worktree_config(const char *worktree_git_dir)
 			error(_("failed to unset '%s' in '%s'"),
 				"core.bare", to_file);
 		if (!git_configset_get(&cs, "core.worktree") &&
-			git_config_set_in_file_gently(to_file,
-							"core.worktree", NULL, NULL))
+			repo_config_set_in_file_gently(the_repository, to_file,
+						       "core.worktree", NULL, NULL))
 			error(_("failed to unset '%s' in '%s'"),
 				"core.worktree", to_file);
 

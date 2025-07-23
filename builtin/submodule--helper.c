@@ -1280,7 +1280,7 @@ static void sync_submodule(const char *path, const char *prefix,
 	submodule_to_gitdir(the_repository, &sb, path);
 	strbuf_addstr(&sb, "/config");
 
-	if (git_config_set_in_file_gently(sb.buf, remote_key, NULL, sub_origin_url))
+	if (repo_config_set_in_file_gently(the_repository, sb.buf, remote_key, NULL, sub_origin_url))
 		die(_("failed to update remote for submodule '%s'"),
 		      path);
 
