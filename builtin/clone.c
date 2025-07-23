@@ -827,7 +827,7 @@ static void write_refspec_config(const char *src_ref_prefix,
 
 			if (option_mirror) {
 				strbuf_addf(&key, "remote.%s.mirror", remote_name);
-				git_config_set(key.buf, "true");
+				repo_config_set(the_repository, key.buf, "true");
 				strbuf_reset(&key);
 			}
 		}
@@ -1294,18 +1294,18 @@ int cmd_clone(int argc,
 			src_ref_prefix = "refs/";
 		strbuf_addstr(&branch_top, src_ref_prefix);
 
-		git_config_set("core.bare", "true");
+		repo_config_set(the_repository, "core.bare", "true");
 	} else if (!option_rev) {
 		strbuf_addf(&branch_top, "refs/remotes/%s/", remote_name);
 	}
 
 	strbuf_addf(&key, "remote.%s.url", remote_name);
-	git_config_set(key.buf, repo);
+	repo_config_set(the_repository, key.buf, repo);
 	strbuf_reset(&key);
 
 	if (!option_tags) {
 		strbuf_addf(&key, "remote.%s.tagOpt", remote_name);
-		git_config_set(key.buf, "--no-tags");
+		repo_config_set(the_repository, key.buf, "--no-tags");
 		strbuf_reset(&key);
 	}
 
