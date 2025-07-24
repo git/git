@@ -3330,10 +3330,9 @@ static void configure_added_submodule(struct add_data *add_data)
 	char *key;
 	struct child_process add_submod = CHILD_PROCESS_INIT;
 	struct child_process add_gitmodules = CHILD_PROCESS_INIT;
-
 	const struct string_list *values;
-	size_t i;
 	int matched = 0;
+
 	key = xstrfmt("submodule.%s.url", add_data->sm_name);
 	git_config_set_gently(key, add_data->realrepo);
 	free(key);
@@ -3385,7 +3384,7 @@ static void configure_added_submodule(struct add_data *add_data)
 		git_config_set_gently(key, "true");
 		free(key);
 	} else {
-		for (i = 0; i < values->nr; i++) {
+		for (size_t i = 0; i < values->nr; i++) {
 			const char *pat = values->items[i].string;
 			if (!wildmatch(pat, add_data->sm_path, 0)) { /* match found */
 				matched = 1;
