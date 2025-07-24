@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2025, #06; Tue, 22)
-X-master-at: 0e8243a355a69035dac269528b49dc8c9bc81f8a
-X-next-at: 942d659e1bbc2e578fba7d9b4087112004142e34
+Subject: What's cooking in git.git (Jul 2025, #07; Thu, 24)
+X-master-at: 97e14d99f6def189b0f786ac6207b792ca3197b1
+X-next-at: c32cd1483be90fa6182845f8d9c0c74dc287cc37
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jul 2025, #06; Tue, 22)
+What's cooking in git.git (Jul 2025, #07; Thu, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,131 +48,74 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* bc/use-sha256-by-default-in-3.0 (2025-07-01) 11 commits
-  (merged to 'next' on 2025-07-11 at 893c183a5f)
- + Enable SHA-256 by default in breaking changes mode
- + help: add a build option for default hash
- + t5300: choose the built-in hash outside of a repo
- + t4042: choose the built-in hash outside of a repo
- + t1007: choose the built-in hash outside of a repo
- + t: default to compile-time default hash if not set
- + setup: use the default algorithm to initialize repo format
- + Use legacy hash for legacy formats
- + builtin: use default hash when outside a repository
- + hash: add a constant for the legacy hash algorithm
- + hash: add a constant for the default hash algorithm
- (this branch is used by kl/test-installed-fix and ps/config-wo-the-repository.)
+* cc/fast-import-export-signature-names (2025-07-09) 1 commit
+  (merged to 'next' on 2025-07-15 at a6a173da68)
+ + fast-(import|export): improve on commit signature output format
 
- Prepare to flip the default hash function to SHA-256.
- source: <20250701212237.766774-1-sandals@crustytoothpaste.net>
+ Clean up the way how signature on commit objects are exported to
+ and imported from fast-import stream.
+ cf. <CABPp-BHM5afgiUf7GsTPWmrf_tm6mWnvHWMKiZPxApJzN-U8gg@mail.gmail.com>
+ source: <20250709141253.623563-1-christian.couder@gmail.com>
 
 
-* cb/daemon-reap-children (2025-07-10) 2 commits
-  (merged to 'next' on 2025-07-14 at a3574350ff)
- + daemon: use sigaction() to install child_handler()
- + compat/mingw: allow sigaction(SIGCHLD)
+* ly/changed-paths-traversal (2025-07-14) 5 commits
+  (merged to 'next' on 2025-07-15 at 45fdb67b92)
+ + bloom: optimize multiple pathspec items in revision
+ + revision: make helper for pathspec to bloom keyvec
+ + bloom: replace struct bloom_key * with struct bloom_keyvec
+ + bloom: rename function operates on bloom_key
+ + bloom: add test helper to return murmur3 hash
 
- Futz with SIGCHLD handling in "git daemon".
- source: <pull.2002.v4.git.git.1752176743.gitgitgadget@gmail.com>
-
-
-* ja/doc-git-log-markup (2025-07-07) 9 commits
-  (merged to 'next' on 2025-07-14 at 8eb14e9306)
- + doc: git-log: convert log config to new doc format
- + doc: git-log: convert diff options to new doc format
- + doc: git-log: convert pretty formats to new doc format
- + doc: git-log: convert pretty options to new doc format
- + doc: git-log: convert rev list options to new doc format
- + doc: git-log: convert line range format to new doc format
- + doc: git-log: convert line range options to new doc format
- + doc: git-log convert rev-list-description to new doc format
- + doc: convert git-log to new documentation format
-
- Doc mark-up updates.
- source: <pull.1933.v3.git.1751914412.gitgitgadget@gmail.com>
+ Lift the limitation to use changed-path filter in "git log" so that
+ it can be used for a pathspec with multiple literal paths.
+ source: <20250712093517.17907-1-yldhome2d2@gmail.com>
 
 
-* jb/gpg-program-variable-is-a-pathname (2025-07-11) 1 commit
-  (merged to 'next' on 2025-07-14 at b23aee3cb1)
- + gpg-interface: expand gpg.program as a path
+* ps/sane-ctype-workaround (2025-07-09) 1 commit
+  (merged to 'next' on 2025-07-15 at 21b79228e3)
+ + sane-ctype: fix compiler error on Amazon Linux 2
 
- The gpg.program configuration variable, which names a pathname to
- the (custom) GPG compatible program, can now be spelled with ~tilde
- expansion.
- source: <20250711232348.460804-1-jonas.brandstoetter@gmx.at>
-
-
-* jk/remote-avoid-overlapping-names (2025-07-08) 1 commit
-  (merged to 'next' on 2025-07-11 at 097c87760a)
- + remote: detect collisions in remote names
-
- "git remote" now detects remote names that overlap with each other
- (e.g., remote nickname "outer" and "outer/inner" are used at the
- same time), as it will lead to overlapping remote-tracking
- branches.
- source: <20250708225946.GC1180568@coredump.intra.peff.net>
-
-
-* ps/meson-cleanups (2025-07-08) 7 commits
-  (merged to 'next' on 2025-07-14 at 5fb402f51a)
- + ci: use Meson's new `--slice` option
- + meson: update subproject wrappers
- + meson: fix lookup of shell on MINGW64
- + meson: clean up unnecessary variables
- + meson: improve summary of auto-detected features
- + meson: stop printing 'https' option twice in our summaries
- + meson: stop discovering native version of Python
-
- Meson-based build update.
- cf. <87h5zkcbk2.fsf@iotcl.com>
- source: <20250709-b4-pks-meson-cleanups-v3-0-29ab15b9ab85@pks.im>
-
-
-* rh/doc-glob-pathspec-fix (2025-07-07) 1 commit
-  (merged to 'next' on 2025-07-14 at 1561f0726d)
- + doc: correct doc for glob pathspec
-
- Docfix.
- source: <20250708024507.62386-2-rhanneken@pobox.com>
-
-
-* tb/midx-avoid-cruft-packs (2025-06-23) 9 commits
-  (merged to 'next' on 2025-07-11 at 3fc02a8a1a)
- + repack: exclude cruft pack(s) from the MIDX where possible
- + pack-objects: introduce '--stdin-packs=follow'
- + pack-objects: swap 'show_{object,commit}_pack_hint'
- + pack-objects: fix typo in 'show_object_pack_hint()'
- + pack-objects: perform name-hash traversal for unpacked objects
- + pack-objects: declare 'rev_info' for '--stdin-packs' earlier
- + pack-objects: factor out handling '--stdin-packs'
- + pack-objects: limit scope in 'add_object_entry_from_pack()'
- + pack-objects: use standard option incompatibility functions
- (this branch is used by ps/object-store-midx.)
-
- "pack-objects" has been taught to avoid pointing into objects in
- cruft packs from midx.
- source: <cover.1750717921.git.me@ttaylorr.com>
+ Our <sane-ctype.h> header file relied on that the system-supplied
+ <ctype.h> header is not later included, which would override our
+ macro definitions, but "amazon linux" broke this assumption.  Fix
+ this by preemptively including <ctype.h> near the beginning of
+ <sane-ctype.h> ourselves.
+ source: <fabacc9bc7ef7d462d1c7198d5edc18c76b82270.1752139420.git.ps@pks.im>
 
 --------------------------------------------------
 [New Topics]
+
+* jc/document-test-balloons-in-flight (2025-07-23) 1 commit
+ - CodingGuidelines: document test balloons in flight
+
+ To help our developers, document what C99 language features are
+ being considered for adoption, in addition to what past experiments
+ have already decided.
+
+ Will merge to 'next'.
+ source: <xmqqecu6n1pt.fsf@gitster.g>
+
+--------------------------------------------------
+[Cooking]
 
 * ly/pull-autostash (2025-07-20) 1 commit
  - pull: add pull.autoStash config option
 
  "git pull" learned to pay attention to pull.autostash configuration
- variable, which is officially documented.
+ variable, which overrides rebase/merge.autostash.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20250720124334.12045-1-yldhome2d2@gmail.com>
 
 
 * jk/revision-no-early-output (2025-07-19) 1 commit
- - revision: drop early output option
+  (merged to 'next' on 2025-07-23 at cfc20b3eb9)
+ + revision: drop early output option
 
  Remove unsupported, unused, and unsupportable old option from "git
  log".
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250719070813.GA706382@coredump.intra.peff.net>
 
 
@@ -181,7 +124,7 @@ Release tarballs are available at:
 
  Document recently added "git imap-send --list" with an example.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20250722114827.22493-1-gargaditya08@live.com>
 
 
@@ -191,7 +134,8 @@ Release tarballs are available at:
  "git send-email" learned to drive "git imap-send" to store already
  sent e-mails in an IMAP folder.
 
- Will merge to 'next'.
+ A reroll (v4) exists.
+ cf. <PN3PR01MB9597EC4C5DF97943587AEEB4B85FA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
  source: <da7cee769f25871ed3f934e3ec7f2cccf0a0420c.1753182534.git.gargaditya08@live.com>
 
 
@@ -217,7 +161,8 @@ Release tarballs are available at:
  A few file descriptors left unclosed upon program completion in a
  few test helper programs are now closed.
 
- Comments?
+ Expecting a reroll.
+ cf. <CAPig+cR-r=CeEaSTeWsX00MLCSRJUUVXMUWS6Ui-HQcR_qMGJA@mail.gmail.com>
  source: <20250722174102.1876197-1-lhywkd22@gmail.com>
 
 
@@ -231,33 +176,34 @@ Release tarballs are available at:
 
 
 * jc/do-not-scan-argv-without-parsing (2025-07-21) 1 commit
- - rev-list: update a NEEDSWORK comment
+  (merged to 'next' on 2025-07-23 at 8e3db5dcca)
+ + rev-list: update a NEEDSWORK comment
 
  Update a hard-to-read in-code NEEDSWORK comment.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqecu9w4a5.fsf@gitster.g>
 
 
 * jc/rev-list-info-cleanup (2025-07-18) 1 commit
- - rev-list: make "struct rev_list_info" static to the only user
+  (merged to 'next' on 2025-07-23 at 09282d051a)
+ + rev-list: make "struct rev_list_info" static to the only user
 
  Move structure definition from unrelated header file to where it
  belongs.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqa551127o.fsf@gitster.g>
 
 
-* jk/unleak-reflog-expire-entry (2025-07-22) 3 commits
- - fixup! reflog: close leak of reflog expire entry
- - t1410: add test of gc.<pattern>.reflogExpire config
- - reflog: close leak of reflog expire entry
+* jk/unleak-reflog-expire-entry (2025-07-22) 1 commit
+  (merged to 'next' on 2025-07-23 at 1663299f09)
+ + reflog: close leak of reflog expire entry
 
  Leakfix.
 
- Expecting a reroll?
- source: <20250722045456.GA824456@coredump.intra.peff.net>
+ Will merge to 'master'.
+ source: <20250722-jk-fix-leak-reflog-expire-config-v4-1-b65a83551020@gmail.com>
 
 
 * jt/switch-restore-no-longer-experimental (2025-07-22) 2 commits
@@ -267,7 +213,7 @@ Release tarballs are available at:
  Declare that "git switch" and "git restore" are no longer
  experimental.
 
- Expecting a reroll. 
+ Expecting a reroll.
  source: <20250722180818.1043014-1-jltobler@gmail.com>
 
 
@@ -284,11 +230,10 @@ Release tarballs are available at:
  "git refs migrate" to migrate the reflog entries from a refs
  backend to another had a handful of bugs squashed.
 
- Comments?
+ Expecting a reroll.
+ cf. <j52ugdtik25i6dqgqafchvy5an3o7qbdfeavtqg6bcr2ouxvyv@qwtqzf7xk4hi>
  source: <20250722-pks-reflog-append-v1-0-183e5949de16@pks.im>
 
---------------------------------------------------
-[Cooking]
 
 * kl/test-installed-fix (2025-07-15) 2 commits
   (merged to 'next' on 2025-07-16 at 512176f26c)
@@ -342,7 +287,7 @@ Release tarballs are available at:
 
  CI fix.
 
- Comments?
+ Will merge to 'next'.
  source: <xmqqa553alp1.fsf_-_@gitster.g>
 
 
@@ -378,7 +323,7 @@ Release tarballs are available at:
  source: <pull.1941.v2.git.1752716054.gitgitgadget@gmail.com>
 
 
-* ps/config-wo-the-repository (2025-07-17) 22 commits
+* ps/config-wo-the-repository (2025-07-23) 22 commits
  - config: fix sign comparison warnings
  - config: move Git config parsing into "environment.c"
  - config: remove unused `the_repository` wrappers
@@ -407,21 +352,7 @@ Release tarballs are available at:
  inlined at the calling sites.
 
  Will merge to 'next'?
- source: <20250717-pks-config-wo-the-repository-v1-0-d888e4a17de1@pks.im>
-
-
-* ps/sane-ctype-workaround (2025-07-09) 1 commit
-  (merged to 'next' on 2025-07-15 at 21b79228e3)
- + sane-ctype: fix compiler error on Amazon Linux 2
-
- Our <sane-ctype.h> header file relied on that the system-supplied
- <ctype.h> header is not later included, which would override our
- macro definitions, but "amazon linux" broke this assumption.  Fix
- this by preemptively including <ctype.h> near the beginning of
- <sane-ctype.h> ourselves.
-
- Will merge to 'master'.
- source: <fabacc9bc7ef7d462d1c7198d5edc18c76b82270.1752139420.git.ps@pks.im>
+ source: <20250723-pks-config-wo-the-repository-v2-0-1502d60d3867@pks.im>
 
 
 * cb/meson-avoid-broken-macos-pcre2 (2025-07-18) 1 commit
@@ -429,7 +360,7 @@ Release tarballs are available at:
 
  Build fix for macOS.
 
- Still in flux?
+ Will merge to 'next'.
  source: <20250718170225.6063-1-carenas@gmail.com>
 
 
@@ -444,16 +375,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <cover.1752658700.git.phillip.wood@dunelm.org.uk>
-
-
-* pw/compound-literal-test-balloon (2025-07-14) 1 commit
- - strbuf: add compound literal test balloon
-
- Gauge if the world is ready for compound literal that can make the
- resulting code clearer in some places.
-
- Comments?
- source: <7ac55a5096c261b706f47ca239c381f71db2b67a.1752499653.git.phillip.wood@dunelm.org.uk>
 
 
 * pw/3.0-commentchar-auto-deprecation (2025-07-08) 2 commits
@@ -485,7 +406,8 @@ Release tarballs are available at:
  support a single object source that belongs to one repository.  A
  midx does span mulitple "object sources".
 
- Comments?
+ Will merge to 'next'.
+ cf. <aIHoAiakZr5i2psM@pks.im>
  source: <20250715-b4-pks-midx-via-odb-alternate-v2-0-b0ca0b4b516e@pks.im>
 
 
@@ -510,6 +432,8 @@ Release tarballs are available at:
 
  Reduce implicit assumption and dependence on the_repository in the
  object-file subsystem.
+
+ Comments?
  source: <20250717-pks-object-file-wo-the-repository-v2-0-36d2cd6c700e@pks.im>
 
 
@@ -519,12 +443,12 @@ Release tarballs are available at:
 
  Test shuffling.
 
- Introduces a few "todo passed".
+ Seems to introduce a few "todo passed" when merged to 'seen'.
  source: <20250721115519.140361-1-usmanakinyemi202@gmail.com>
 
 
-* kn/for-each-ref-skip (2025-07-17) 6 commits
- - fixup! refs: selectively set prefix in the seek functions
+* kn/for-each-ref-skip (2025-07-23) 6 commits
+ - ref-iterator-seek: correctly initialize the prefix_state for a new level
   (merged to 'next' on 2025-07-15 at 4ea3c74afd)
  + for-each-ref: introduce a '--start-after' option
  + ref-filter: remove unnecessary else clause
@@ -535,8 +459,7 @@ Release tarballs are available at:
  "git for-each-ref" learns "--skip-until" option to help
  applications that want to page its output.
 
- Needs fix-up.
- cf. <CAP8UFD06KKF0A0WjBSw77A7fKp_pGJGVyw-OPd8-X92h=RSF+w@mail.gmail.com>
+ Will merge to 'next' and then to 'master'.
  source: <20250715-306-git-for-each-ref-pagination-v5-0-852d5a2f56e1@gmail.com>
 
 
@@ -568,21 +491,6 @@ Release tarballs are available at:
  source: <cover.1752665506.git.ayu.chandekar@gmail.com>
 
 
-* ly/changed-paths-traversal (2025-07-14) 5 commits
-  (merged to 'next' on 2025-07-15 at 45fdb67b92)
- + bloom: optimize multiple pathspec items in revision
- + revision: make helper for pathspec to bloom keyvec
- + bloom: replace struct bloom_key * with struct bloom_keyvec
- + bloom: rename function operates on bloom_key
- + bloom: add test helper to return murmur3 hash
-
- Lift the limitation to use changed-path filter in "git log" so that
- it can be used for a pathspec with multiple literal paths.
-
- Will merge to 'master'.
- source: <20250712093517.17907-1-yldhome2d2@gmail.com>
-
-
 * lo/repo-info (2025-07-21) 5 commits
  - repo: add the --format flag
  - repo: add field layout.shallow
@@ -593,19 +501,8 @@ Release tarballs are available at:
  A new subcommand "git repo" gives users a way to grab various
  repository characteristics.
 
+ Expecting a reroll.
  source: <20250722002835.33428-1-lucasseikioshiro@gmail.com>
-
-
-* cc/fast-import-export-signature-names (2025-07-09) 1 commit
-  (merged to 'next' on 2025-07-15 at a6a173da68)
- + fast-(import|export): improve on commit signature output format
-
- Clean up the way how signature on commit objects are exported to
- and imported from fast-import stream.
-
- Will merge to 'master'.
- cf. <CABPp-BHM5afgiUf7GsTPWmrf_tm6mWnvHWMKiZPxApJzN-U8gg@mail.gmail.com>
- source: <20250709141253.623563-1-christian.couder@gmail.com>
 
 
 * ac/deglobal-sparse-variables (2025-07-18) 3 commits
@@ -628,21 +525,8 @@ Release tarballs are available at:
  failed to produce the todo file after recording the state files,
  leading to confused "git status"; this has been corrected.
 
- Expecting a reroll.
- cf. <7e796844-97e2-4b45-a76e-4c1fcb1da3ae@gmail.com>
+ Will merge to 'next'.
  source: <20250609221055.136074-1-oystwa@gmail.com>
-
-
-* jc/tag-idempotent-no-op (2025-07-11) 1 commit
- - tag: allow idempotent "git tag" without "--force"
-
- "git tag T O" when the tag T is already pointing at the object O is
- a no-op; we used to but no longer error out such a request and
- require "--force" and instead turn it into a no-op.
-
- Will discard.
- cf. <dt5ruadvr7lmhsbypmb6yili5cookfx5btw4gzfeui7ehxxajv@ziael4udbbcy>
- source: <xmqqv7nyzgp7.fsf@gitster.g>
 
 
 * ss/compat-bswap-revamp (2025-07-15) 6 commits
@@ -676,8 +560,8 @@ Release tarballs are available at:
  The reftable unit tests are now ported to the "clar" unit testing
  framework.
 
- Expecting a reroll.
- cf. <xmqqikla86id.fsf@gitster.g>
+ Reroll (v5) exists.
+ cf. <20250724142837.67149-1-kuforiji98@gmail.com>
  source: <20250605140644.239199-1-kuforiji98@gmail.com>
 
 
@@ -703,12 +587,13 @@ Release tarballs are available at:
  completely different subproject is now dealt a bit better than
  before.
 
- What's the status of this one?
- cf. <xmqq4ivn3a1w.fsf@gitster.g>
+ Expecting a reroll.
+ cf. <CA+rGoLfygOAxXNxn_TComuef6q+=v1wOoUSfKh4M6Ywk-0McHQ@mail.gmail.com>
  source: <20250608032705.11990-1-jayatheerthkulkarni2005@gmail.com>
 
 
-* lm/add-p-context (2025-07-19) 4 commits
+* lm/add-p-context (2025-07-23) 5 commits
+ - fixup! add-patch: add diff.context command line overrides
  - add-patch: add diff.context command line overrides
  - add-patch: respect diff.context configuration
  - t: use test_config in t4055
@@ -717,7 +602,8 @@ Release tarballs are available at:
  "git add/etc -p" now honors diff.context configuration variable,
  and learns to honor -U<n> option.
 
- Will merge to 'next'?
+ Expecting a reroll.
+ cf. <49703ba5-5f2a-4e91-b9c7-5500720d5d3d@gmail.com>
  source: <pull.1915.v4.git.1752928113.gitgitgadget@gmail.com>
 
 
@@ -732,5 +618,30 @@ Release tarballs are available at:
  allow the "partialCloneFilter" settings and the "token" value to be
  communicated from the server side.
 
- Comments?
+ Will merge to 'next'?
  source: <20250721141056.2283349-1-christian.couder@gmail.com>
+
+--------------------------------------------------
+[Discarded]
+
+* pw/compound-literal-test-balloon (2025-07-14) 1 commit
+ . strbuf: add compound literal test balloon
+
+ Gauge if the world is ready for compound literal that can make the
+ resulting code clearer in some places.
+
+ Discarded; it turns out that we already have a test balloon on this.
+ source: <7ac55a5096c261b706f47ca239c381f71db2b67a.1752499653.git.phillip.wood@dunelm.org.uk>
+
+
+* jc/tag-idempotent-no-op (2025-07-11) 1 commit
+ - tag: allow idempotent "git tag" without "--force"
+
+ "git tag T O" when the tag T is already pointing at the object O is
+ a no-op; we used to but no longer error out such a request and
+ require "--force" and instead turn it into a no-op.
+
+ Will discard.
+ cf. <dt5ruadvr7lmhsbypmb6yili5cookfx5btw4gzfeui7ehxxajv@ziael4udbbcy>
+ source: <xmqqv7nyzgp7.fsf@gitster.g>
+
