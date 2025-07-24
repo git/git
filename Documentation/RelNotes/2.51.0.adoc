@@ -97,6 +97,12 @@ Performance, Internal Implementation, Development Support etc.
  * Flipping the default hash function to SHA-256 at Git 3.0 boundary
    is planned.
 
+ * Declare weather-balloon we raised for "bool" type 18 months ago a
+   success and officially allow using the type in our codebase.
+
+ * GIT_TEST_INSTALLED was not honored in the recent topic related to
+   SHA256 hashes, which has been corrected.
+
 
 Fixes since v2.50
 -----------------
@@ -208,6 +214,17 @@ including security updates, are included in this release.
    <sane-ctype.h> ourselves.
    (merge 9d3b33125f ps/sane-ctype-workaround later to maint).
 
+ * Clean-up compat/bswap.h mess.
+   (merge f4ac32c03a ss/compat-bswap-revamp later to maint).
+
+ * Meson-based build did not handle libexecdir setting correctly,
+   which has been corrected.
+   (merge 056dbe8612 rj/meson-libexecdir-fix later to maint).
+
+ * Document that we do not require "real" name when signing your
+   patches off.
+   (merge 1f0fed312a bc/contribution-under-non-real-names later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge b257adb571 lo/my-first-ow-doc-update later to maint).
    (merge 8b34b6a220 ly/sequencer-update-squash-is-fixup-only later to maint).
@@ -233,3 +250,4 @@ including security updates, are included in this release.
    (merge ad7780b38f ps/doc-pack-refs-auto-with-files-backend-fix later to maint).
    (merge f4fa8a3687 rh/doc-glob-pathspec-fix later to maint).
    (merge b27be108c8 ja/doc-git-log-markup later to maint).
+   (merge 14d7583beb pw/config-kvi-remove-path later to maint).
