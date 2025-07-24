@@ -45,6 +45,8 @@ int cmd__delta(int argc, const char **argv)
 	fd = xopen(argv[4], O_WRONLY|O_CREAT|O_TRUNC, 0666);
 	if (write_in_full(fd, out_buf, out_size) < 0)
 		die_errno("write(%s)", argv[4]);
+	if (close(fd) < 0)
+		die_errno("close(%s)", argv[4]);
 
 	strbuf_release(&from);
 	strbuf_release(&data);
