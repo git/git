@@ -19,7 +19,7 @@
 #include "run-command.h"
 #include "hook.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "object.h"
 #include "path.h"
 #include "submodule.h"
@@ -376,7 +376,8 @@ int ref_resolves_to_object(const char *refname,
 {
 	if (flags & REF_ISBROKEN)
 		return 0;
-	if (!has_object(repo, oid, HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR)) {
+	if (!odb_has_object(repo->objects, oid,
+			    HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR)) {
 		error(_("%s does not point to a valid object!"), refname);
 		return 0;
 	}
@@ -438,9 +439,9 @@ static int for_each_filter_refs(const char *refname, const char *referent,
 struct warn_if_dangling_data {
 	struct ref_store *refs;
 	FILE *fp;
-	const char *refname;
 	const struct string_list *refnames;
-	const char *msg_fmt;
+	const char *indent;
+	int dry_run;
 };
 
 static int warn_if_dangling_symref(const char *refname, const char *referent UNUSED,
@@ -448,44 +449,34 @@ static int warn_if_dangling_symref(const char *refname, const char *referent UNU
 				   int flags, void *cb_data)
 {
 	struct warn_if_dangling_data *d = cb_data;
-	const char *resolves_to;
+	const char *resolves_to, *msg;
 
 	if (!(flags & REF_ISSYMREF))
 		return 0;
 
 	resolves_to = refs_resolve_ref_unsafe(d->refs, refname, 0, NULL, NULL);
 	if (!resolves_to
-	    || (d->refname
-		? strcmp(resolves_to, d->refname)
-		: !string_list_has_string(d->refnames, resolves_to))) {
+	    || !string_list_has_string(d->refnames, resolves_to)) {
 		return 0;
 	}
 
-	fprintf(d->fp, d->msg_fmt, refname);
-	fputc('\n', d->fp);
+	msg = d->dry_run
+		? _("%s%s will become dangling after %s is deleted\n")
+		: _("%s%s has become dangling after %s was deleted\n");
+	fprintf(d->fp, msg, d->indent, refname, resolves_to);
 	return 0;
 }
 
-void refs_warn_dangling_symref(struct ref_store *refs, FILE *fp,
-			       const char *msg_fmt, const char *refname)
-{
-	struct warn_if_dangling_data data = {
-		.refs = refs,
-		.fp = fp,
-		.refname = refname,
-		.msg_fmt = msg_fmt,
-	};
-	refs_for_each_rawref(refs, warn_if_dangling_symref, &data);
-}
-
 void refs_warn_dangling_symrefs(struct ref_store *refs, FILE *fp,
-				const char *msg_fmt, const struct string_list *refnames)
+				const char *indent, int dry_run,
+				const struct string_list *refnames)
 {
 	struct warn_if_dangling_data data = {
 		.refs = refs,
 		.fp = fp,
 		.refnames = refnames,
-		.msg_fmt = msg_fmt,
+		.indent = indent,
+		.dry_run = dry_run,
 	};
 	refs_for_each_rawref(refs, warn_if_dangling_symref, &data);
 }
@@ -2477,7 +2468,7 @@ int ref_transaction_prepare(struct ref_transaction *transaction,
 		break;
 	}
 
-	if (refs->repo->objects->odb->disable_ref_updates) {
+	if (refs->repo->objects->sources->disable_ref_updates) {
 		strbuf_addstr(err,
 			      _("ref updates forbidden inside quarantine environment"));
 		return -1;
@@ -3313,4 +3304,24 @@ int ref_update_expects_existing_old_ref(struct ref_update *update)
 {
 	return (update->flags & REF_HAVE_OLD) &&
 		(!is_null_oid(&update->old_oid) || update->old_target);
+}
+
+const char *ref_transaction_error_msg(enum ref_transaction_error err)
+{
+	switch (err) {
+	case REF_TRANSACTION_ERROR_NAME_CONFLICT:
+		return "refname conflict";
+	case REF_TRANSACTION_ERROR_CREATE_EXISTS:
+		return "reference already exists";
+	case REF_TRANSACTION_ERROR_NONEXISTENT_REF:
+		return "reference does not exist";
+	case REF_TRANSACTION_ERROR_INCORRECT_OLD_VALUE:
+		return "incorrect old value provided";
+	case REF_TRANSACTION_ERROR_INVALID_NEW_VALUE:
+		return "invalid new value provided";
+	case REF_TRANSACTION_ERROR_EXPECTED_SYMREF:
+		return "expected symref but found regular ref";
+	default:
+		return "unknown failure";
+	}
 }

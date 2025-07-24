@@ -7,7 +7,7 @@
 #include "environment.h"
 #include "gettext.h"
 #include "hex.h"
-#include "object-store.h"
+#include "odb.h"
 #include "repository.h"
 #include "object.h"
 #include "commit.h"
@@ -95,7 +95,7 @@ int read_bundle_header_fd(int fd, struct bundle_header *header,
 	 * by an "object-format=" capability, which is being handled in
 	 * `parse_capability()`.
 	 */
-	header->hash_algo = &hash_algos[GIT_HASH_SHA1];
+	header->hash_algo = &hash_algos[GIT_HASH_SHA1_LEGACY];
 
 	/* The bundle header ends with an empty line */
 	while (!strbuf_getwholeline_fd(&buf, fd, '\n') &&
@@ -233,7 +233,7 @@ int verify_bundle(struct repository *r,
 		.quiet = 1,
 	};
 
-	if (!r || !r->objects || !r->objects->odb)
+	if (!r || !r->objects || !r->objects->sources)
 		return error(_("need a repository to verify a bundle"));
 
 	for (i = 0; i < p->nr; i++) {
@@ -305,7 +305,7 @@ static int is_tag_in_date_range(struct object *tag, struct rev_info *revs)
 	if (revs->max_age == -1 && revs->min_age == -1)
 		goto out;
 
-	buf = repo_read_object_file(the_repository, &tag->oid, &type, &size);
+	buf = odb_read_object(the_repository->objects, &tag->oid, &type, &size);
 	if (!buf)
 		goto out;
 	line = memmem(buf, size, "\ntagger ", 8);
@@ -507,7 +507,7 @@ int create_bundle(struct repository *r, const char *path,
 	 *    SHA1.
 	 * 2. @filter is required because we parsed an object filter.
 	 */
-	if (the_hash_algo != &hash_algos[GIT_HASH_SHA1] || revs.filter.choice)
+	if (the_hash_algo != &hash_algos[GIT_HASH_SHA1_LEGACY] || revs.filter.choice)
 		min_version = 3;
 
 	if (argc > 1) {

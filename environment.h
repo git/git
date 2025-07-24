@@ -155,7 +155,6 @@ extern int pack_compression_level;
 extern unsigned long pack_size_limit_cfg;
 extern int max_allowed_tree_depth;
 
-extern int core_preload_index;
 extern int precomposed_unicode;
 extern int protect_hfs;
 extern int protect_ntfs;
@@ -189,8 +188,6 @@ enum object_creation_mode {
 extern enum object_creation_mode object_creation_mode;
 
 extern int grafts_keep_true_parents;
-
-extern int repository_format_precious_objects;
 
 const char *get_log_output_encoding(void);
 const char *get_commit_output_encoding(void);

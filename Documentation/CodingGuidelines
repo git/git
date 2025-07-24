@@ -315,6 +315,9 @@ For C programs:
    encouraged to have a blank line between the end of the declarations
    and the first statement in the block.
 
+ - Do not explicitly initialize global variables to 0 or NULL;
+   instead, let BSS take care of the zero initialization.
+
  - NULL pointers shall be written as NULL, not as 0.
 
  - When declaring pointers, the star sides with the variable
@@ -876,6 +879,17 @@ Characters are also surrounded by underscores:
 
 As a side effect, backquoted placeholders are correctly typeset, but
 this style is not recommended.
+
+ When documenting multiple related `git config` variables, place them on
+ a separate line instead of separating them by commas.  For example, do
+ not write this:
+   `core.var1`, `core.var2`::
+	Description common to `core.var1` and `core.var2`.
+
+Instead write this:
+   `core.var1`::
+   `core.var2`::
+	Description common to `core.var1` and `core.var2`.
 
 Synopsis Syntax
 

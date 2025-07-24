@@ -783,7 +783,7 @@ static int git_gpg_config(const char *var, const char *value,
 
 	if (fmtname) {
 		fmt = get_format_by_name(fmtname);
-		return git_config_string((char **) &fmt->program, var, value);
+		return git_config_pathname((char **) &fmt->program, var, value);
 	}
 
 	return 0;
@@ -1048,7 +1048,7 @@ static int sign_buffer_ssh(struct strbuf *buffer, struct strbuf *signature,
 				    key_file->filename.buf);
 			goto out;
 		}
-		ssh_signing_key_file = strbuf_detach(&key_file->filename, NULL);
+		ssh_signing_key_file = xstrdup(key_file->filename.buf);
 	} else {
 		/* We assume a file */
 		ssh_signing_key_file = interpolate_path(signing_key, 1);

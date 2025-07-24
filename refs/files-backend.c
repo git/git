@@ -2760,6 +2760,8 @@ static void files_transaction_cleanup(struct files_ref_store *refs,
 
 		if (lock) {
 			unlock_ref(lock);
+			try_remove_empty_parents(refs, update->refname,
+						 REMOVE_EMPTY_PARENTS_REF);
 			update->backend_data = NULL;
 		}
 	}
@@ -3208,6 +3210,10 @@ static int files_transaction_finish(struct ref_store *ref_store,
 	 */
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
+
+		if (update->rejection_err)
+			continue;
+
 		if (update->flags & REF_DELETING &&
 		    !(update->flags & REF_LOG_ONLY) &&
 		    !(update->flags & REF_IS_PRUNING)) {
@@ -3238,6 +3244,9 @@ static int files_transaction_finish(struct ref_store *ref_store,
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
 		struct ref_lock *lock = update->backend_data;
+
+		if (update->rejection_err)
+			continue;
 
 		if (update->flags & REF_DELETING &&
 		    !(update->flags & REF_LOG_ONLY)) {
@@ -3762,6 +3771,9 @@ static int files_fsck_refs_dir(struct ref_store *ref_store,
 
 	iter = dir_iterator_begin(sb.buf, 0);
 	if (!iter) {
+		if (errno == ENOENT && !is_main_worktree(wt))
+			goto out;
+
 		ret = error_errno(_("cannot open directory %s"), sb.buf);
 		goto out;
 	}

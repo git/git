@@ -10,6 +10,11 @@ static int bitmap_list_commits(void)
 	return test_bitmap_commits(the_repository);
 }
 
+static int bitmap_list_commits_with_offset(void)
+{
+	return test_bitmap_commits_with_offset(the_repository);
+}
+
 static int bitmap_dump_hashes(void)
 {
 	return test_bitmap_hashes(the_repository);
@@ -36,6 +41,8 @@ int cmd__bitmap(int argc, const char **argv)
 
 	if (argc == 2 && !strcmp(argv[1], "list-commits"))
 		return bitmap_list_commits();
+	if (argc == 2 && !strcmp(argv[1], "list-commits-with-offset"))
+		return bitmap_list_commits_with_offset();
 	if (argc == 2 && !strcmp(argv[1], "dump-hashes"))
 		return bitmap_dump_hashes();
 	if (argc == 2 && !strcmp(argv[1], "dump-pseudo-merges"))
@@ -46,6 +53,7 @@ int cmd__bitmap(int argc, const char **argv)
 		return bitmap_dump_pseudo_merge_objects(atoi(argv[2]));
 
 	usage("\ttest-tool bitmap list-commits\n"
+	      "\ttest-tool bitmap list-commits-with-offset\n"
 	      "\ttest-tool bitmap dump-hashes\n"
 	      "\ttest-tool bitmap dump-pseudo-merges\n"
 	      "\ttest-tool bitmap dump-pseudo-merge-commits <n>\n"

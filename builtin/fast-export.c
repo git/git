@@ -14,7 +14,7 @@
 #include "refs.h"
 #include "refspec.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "commit.h"
 #include "object.h"
 #include "tag.h"
@@ -39,7 +39,7 @@ enum sign_mode { SIGN_ABORT, SIGN_VERBATIM, SIGN_STRIP, SIGN_WARN_VERBATIM, SIGN
 
 static int progress;
 static enum sign_mode signed_tag_mode = SIGN_ABORT;
-static enum sign_mode signed_commit_mode = SIGN_ABORT;
+static enum sign_mode signed_commit_mode = SIGN_STRIP;
 static enum tag_of_filtered_mode { TAG_FILTERING_ABORT, DROP, REWRITE } tag_of_filtered_mode = TAG_FILTERING_ABORT;
 static enum reencode_mode { REENCODE_ABORT, REENCODE_YES, REENCODE_NO } reencode_mode = REENCODE_ABORT;
 static int fake_missing_tagger;
@@ -323,7 +323,7 @@ static void export_blob(const struct object_id *oid)
 		object = (struct object *)lookup_blob(the_repository, oid);
 		eaten = 0;
 	} else {
-		buf = repo_read_object_file(the_repository, oid, &type, &size);
+		buf = odb_read_object(the_repository->objects, oid, &type, &size);
 		if (!buf)
 			die("could not read blob %s", oid_to_hex(oid));
 		if (check_object_signature(the_repository, oid, buf, size,
@@ -869,8 +869,8 @@ static void handle_tag(const char *name, struct tag *tag)
 		return;
 	}
 
-	buf = repo_read_object_file(the_repository, &tag->object.oid, &type,
-				    &size);
+	buf = odb_read_object(the_repository->objects, &tag->object.oid,
+			      &type, &size);
 	if (!buf)
 		die("could not read tag %s", oid_to_hex(&tag->object.oid));
 	message = memmem(buf, size, "\n\n", 2);
@@ -1200,7 +1200,7 @@ static void import_marks(char *input_file, int check_exists)
 		if (last_idnum < mark)
 			last_idnum = mark;
 
-		type = oid_object_info(the_repository, &oid, NULL);
+		type = odb_read_object_info(the_repository->objects, &oid, NULL);
 		if (type < 0)
 			die("object not found: %s", oid_to_hex(&oid));
 
@@ -1269,7 +1269,6 @@ int cmd_fast_export(int argc,
 		    const char *prefix,
 		    struct repository *repo UNUSED)
 {
-	const char *env_signed_commits_noabort;
 	struct rev_info revs;
 	struct commit *commit;
 	char *export_filename = NULL,
@@ -1326,10 +1325,6 @@ int cmd_fast_export(int argc,
 
 	if (argc == 1)
 		usage_with_options (fast_export_usage, options);
-
-	env_signed_commits_noabort = getenv("FAST_EXPORT_SIGNED_COMMITS_NOABORT");
-	if (env_signed_commits_noabort && *env_signed_commits_noabort)
-		signed_commit_mode = SIGN_WARN_STRIP;
 
 	/* we handle encodings */
 	git_config(git_default_config, NULL);

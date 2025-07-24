@@ -12,7 +12,7 @@
 #include "refs.h"
 #include "wildmatch.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "oid-array.h"
 #include "repo-settings.h"
 #include "repository.h"
@@ -2302,8 +2302,8 @@ static int get_object(struct ref_array_item *ref, int deref, struct object **obj
 		oi->info.sizep = &oi->size;
 		oi->info.typep = &oi->type;
 	}
-	if (oid_object_info_extended(the_repository, &oi->oid, &oi->info,
-				     OBJECT_INFO_LOOKUP_REPLACE))
+	if (odb_read_object_info_extended(the_repository->objects, &oi->oid, &oi->info,
+					  OBJECT_INFO_LOOKUP_REPLACE))
 		return strbuf_addf_ret(err, -1, _("missing object %s for %s"),
 				       oid_to_hex(&oi->oid), ref->refname);
 	if (oi->info.disk_sizep && oi->disk_size < 0)

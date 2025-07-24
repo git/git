@@ -658,6 +658,17 @@ test_expect_success 'init warns about invalid init.defaultRefFormat' '
 	test_cmp expected actual
 '
 
+test_expect_success 'default ref format' '
+	test_when_finished "rm -rf refformat" &&
+	(
+		sane_unset GIT_DEFAULT_REF_FORMAT &&
+		git init refformat
+	) &&
+	git version --build-options | sed -ne "s/^default-ref-format: //p" >expect &&
+	git -C refformat rev-parse --show-ref-format >actual &&
+	test_cmp expect actual
+'
+
 backends="files reftable"
 for format in $backends
 do
@@ -734,6 +745,40 @@ test_expect_success "GIT_DEFAULT_REF_FORMAT= overrides init.defaultRefFormat" '
 
 	GIT_DEFAULT_REF_FORMAT=reftable git init refformat &&
 	echo reftable >expect &&
+	git -C refformat rev-parse --show-ref-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success "init with feature.experimental=true" '
+	test_when_finished "rm -rf refformat" &&
+	test_config_global feature.experimental true &&
+	(
+		sane_unset GIT_DEFAULT_REF_FORMAT &&
+		git init refformat
+	) &&
+	echo reftable >expect &&
+	git -C refformat rev-parse --show-ref-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success "init.defaultRefFormat overrides feature.experimental=true" '
+	test_when_finished "rm -rf refformat" &&
+	test_config_global feature.experimental true &&
+	test_config_global init.defaultRefFormat files &&
+	(
+		sane_unset GIT_DEFAULT_REF_FORMAT &&
+		git init refformat
+	) &&
+	echo files >expect &&
+	git -C refformat rev-parse --show-ref-format >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success "GIT_DEFAULT_REF_FORMAT= overrides feature.experimental=true" '
+	test_when_finished "rm -rf refformat" &&
+	test_config_global feature.experimental true &&
+	GIT_DEFAULT_REF_FORMAT=files git init refformat &&
+	echo files >expect &&
 	git -C refformat rev-parse --show-ref-format >actual &&
 	test_cmp expect actual
 '

@@ -298,7 +298,7 @@ jobs:
         path: build
     - name: Test
       shell: pwsh
-      run: meson test -C build --list | Select-Object -Skip 1 | Select-String .* | Group-Object -Property { $_.LineNumber % 10 } | Where-Object Name -EQ ${{ matrix.nr }} | ForEach-Object { meson test -C build --no-rebuild --print-errorlogs $_.Group }
+      run: meson test -C build --no-rebuild --print-errorlogs --slice "$(1+${{ matrix.nr }})/10"
 
   regular:
     name: ${{matrix.vector.jobname}} (${{matrix.vector.pool}})

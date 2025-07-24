@@ -8,7 +8,7 @@
 #include "hex.h"
 #include "object-name.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "oidset.h"
 #include "tag.h"
 #include "blob.h"
@@ -1907,7 +1907,8 @@ static void add_alternate_refs_to_pending(struct rev_info *revs,
 	struct add_alternate_refs_data data;
 	data.revs = revs;
 	data.flags = flags;
-	for_each_alternate_ref(add_one_alternate_ref, &data);
+	odb_for_each_alternate_ref(the_repository->objects,
+				   add_one_alternate_ref, &data);
 }
 
 static int add_parents_only(struct rev_info *revs, const char *arg_, int flags,
@@ -2060,6 +2061,7 @@ static void prepare_show_merge(struct rev_info *revs)
 	parse_pathspec(&revs->prune_data, PATHSPEC_ALL_MAGIC & ~PATHSPEC_LITERAL,
 		       PATHSPEC_PREFER_FULL | PATHSPEC_LITERAL_PATH, "", prune);
 	revs->limited = 1;
+	free(prune);
 }
 
 static int dotdot_missing(const char *arg, char *dotdot,
@@ -3111,7 +3113,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 	/* Pickaxe, diff-filter and rename following need diffs */
 	if ((revs->diffopt.pickaxe_opts & DIFF_PICKAXE_KINDS_MASK) ||
-	    revs->diffopt.filter ||
+	    revs->diffopt.filter || revs->diffopt.filter_not ||
 	    revs->diffopt.flags.follow_renames)
 		revs->diff = 1;
 

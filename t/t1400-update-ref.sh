@@ -1380,10 +1380,7 @@ test_expect_success 'fails with duplicate ref update via symref' '
 
 test_expect_success ULIMIT_FILE_DESCRIPTORS 'large transaction creating branches does not burst open file limit' '
 (
-	for i in $(test_seq 33)
-	do
-		echo "create refs/heads/$i HEAD" || exit 1
-	done >large_input &&
+	test_seq -f "create refs/heads/%d HEAD" 33 >large_input &&
 	run_with_limited_open_files git update-ref --stdin <large_input &&
 	git rev-parse --verify -q refs/heads/33
 )
@@ -1391,10 +1388,7 @@ test_expect_success ULIMIT_FILE_DESCRIPTORS 'large transaction creating branches
 
 test_expect_success ULIMIT_FILE_DESCRIPTORS 'large transaction deleting branches does not burst open file limit' '
 (
-	for i in $(test_seq 33)
-	do
-		echo "delete refs/heads/$i HEAD" || exit 1
-	done >large_input &&
+	test_seq -f "delete refs/heads/%d HEAD" 33 >large_input &&
 	run_with_limited_open_files git update-ref --stdin <large_input &&
 	test_must_fail git rev-parse --verify -q refs/heads/33
 )
@@ -2299,6 +2293,51 @@ do
 			test_grep -q "refname conflict" stdout
 		)
 	'
+
+	test_expect_success "stdin $type batch-updates delete incorrect symbolic ref" '
+		git init repo &&
+		test_when_finished "rm -fr repo" &&
+		(
+			cd repo &&
+			test_commit c1 &&
+			head=$(git rev-parse HEAD) &&
+			git symbolic-ref refs/heads/symbolic refs/heads/non-existent &&
+
+			format_command $type "delete refs/heads/symbolic" "$head" >stdin &&
+			git update-ref $type --stdin --batch-updates <stdin >stdout &&
+			test_grep "reference does not exist" stdout
+		)
+	'
+
+	test_expect_success "stdin $type batch-updates delete with incorrect old_oid" '
+		git init repo &&
+		test_when_finished "rm -fr repo" &&
+		(
+			cd repo &&
+			test_commit c1 &&
+			git branch new-branch &&
+			test_commit c2 &&
+			head=$(git rev-parse HEAD) &&
+
+			format_command $type "delete refs/heads/new-branch" "$head" >stdin &&
+			git update-ref $type --stdin --batch-updates <stdin >stdout &&
+			test_grep "incorrect old value provided" stdout
+		)
+	'
+
+	test_expect_success "stdin $type batch-updates delete non-existent ref" '
+		git init repo &&
+		test_when_finished "rm -fr repo" &&
+		(
+			cd repo &&
+			test_commit commit &&
+			head=$(git rev-parse HEAD) &&
+
+			format_command $type "delete refs/heads/non-existent" "$head" >stdin &&
+			git update-ref $type --stdin --batch-updates <stdin >stdout &&
+			test_grep "reference does not exist" stdout
+		)
+	'
 done
 
 test_expect_success 'update-ref should also create reflog for HEAD' '
@@ -2308,6 +2347,25 @@ test_expect_success 'update-ref should also create reflog for HEAD' '
 	git update-ref --create-reflog "$head" HEAD~ &&
 	git rev-parse HEAD@{1} >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success REFFILES 'empty directories are pruned when aborting a transaction' '
+	test_path_is_missing .git/refs/heads/nested &&
+	git update-ref --stdin <<-EOF &&
+	create refs/heads/nested/something HEAD
+	prepare
+	abort
+	EOF
+	test_path_is_missing .git/refs/heads/nested
+'
+
+test_expect_success REFFILES 'empty directories are pruned when not committing' '
+	test_path_is_missing .git/refs/heads/nested &&
+	git update-ref --stdin <<-EOF &&
+	create refs/heads/nested/something HEAD
+	prepare
+	EOF
+	test_path_is_missing .git/refs/heads/nested
 '
 
 test_done

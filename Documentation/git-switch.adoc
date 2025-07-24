@@ -7,11 +7,11 @@ git-switch - Switch branches
 
 SYNOPSIS
 --------
-[verse]
-'git switch' [<options>] [--no-guess] <branch>
-'git switch' [<options>] --detach [<start-point>]
-'git switch' [<options>] (-c|-C) <new-branch> [<start-point>]
-'git switch' [<options>] --orphan <new-branch>
+[synopsis]
+git switch [<options>] [--no-guess] <branch>
+git switch [<options>] --detach [<start-point>]
+git switch [<options>] (-c|-C) <new-branch> [<start-point>]
+git switch [<options>] --orphan <new-branch>
 
 DESCRIPTION
 -----------
@@ -33,33 +33,33 @@ THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
 
 OPTIONS
 -------
-<branch>::
+_<branch>_::
 	Branch to switch to.
 
-<new-branch>::
+_<new-branch>_::
 	Name for the new branch.
 
-<start-point>::
+_<start-point>_::
 	The starting point for the new branch. Specifying a
-	`<start-point>` allows you to create a branch based on some
-	other point in history than where HEAD currently points. (Or,
+	_<start-point>_ allows you to create a branch based on some
+	other point in history than where `HEAD` currently points. (Or,
 	in the case of `--detach`, allows you to inspect and detach
 	from some other point.)
 +
-You can use the `@{-N}` syntax to refer to the N-th last
-branch/commit switched to using "git switch" or "git checkout"
+You can use the `@{-<N>}` syntax to refer to the _<N>_-th last
+branch/commit switched to using `git switch` or `git checkout`
 operation. You may also specify `-` which is synonymous to `@{-1}`.
 This is often used to switch quickly between two branches, or to undo
 a branch switch by mistake.
 +
-As a special case, you may use `A...B` as a shortcut for the merge
-base of `A` and `B` if there is exactly one merge base. You can leave
-out at most one of `A` and `B`, in which case it defaults to `HEAD`.
+As a special case, you may use `<rev-a>...<rev-b>` as a shortcut for the merge
+base of _<rev-a>_ and _<rev-b>_ if there is exactly one merge base. You can leave
+out at most one of _<rev-a>_ and _<rev-b>_, in which case it defaults to `HEAD`.
 
--c <new-branch>::
---create <new-branch>::
-	Create a new branch named `<new-branch>` starting at
-	`<start-point>` before switching to the branch. This is the
+`-c <new-branch>`::
+`--create <new-branch>`::
+	Create a new branch named _<new-branch>_ starting at
+	_<start-point>_ before switching to the branch. This is the
 	transactional equivalent of
 +
 ------------
@@ -67,32 +67,32 @@ $ git branch <new-branch>
 $ git switch <new-branch>
 ------------
 +
-that is to say, the branch is not reset/created unless "git switch" is
+that is to say, the branch is not reset/created unless `git switch` is
 successful (e.g., when the branch is in use in another worktree, not
 just the current branch stays the same, but the branch is not reset to
 the start-point, either).
 
--C <new-branch>::
---force-create <new-branch>::
-	Similar to `--create` except that if `<new-branch>` already
-	exists, it will be reset to `<start-point>`. This is a
+`-C <new-branch>`::
+`--force-create <new-branch>`::
+	Similar to `--create` except that if _<new-branch>_ already
+	exists, it will be reset to _<start-point>_. This is a
 	convenient shortcut for:
 +
 ------------
-$ git branch -f <new-branch>
-$ git switch <new-branch>
+$ git branch -f _<new-branch>_
+$ git switch _<new-branch>_
 ------------
 
--d::
---detach::
+`-d`::
+`--detach`::
 	Switch to a commit for inspection and discardable
 	experiments. See the "DETACHED HEAD" section in
 	linkgit:git-checkout[1] for details.
 
---guess::
---no-guess::
-	If `<branch>` is not found but there does exist a tracking
-	branch in exactly one remote (call it `<remote>`) with a
+`--guess`::
+`--no-guess`::
+	If _<branch>_ is not found but there does exist a tracking
+	branch in exactly one remote (call it _<remote>_) with a
 	matching name, treat as equivalent to
 +
 ------------
@@ -101,9 +101,9 @@ $ git switch -c <branch> --track <remote>/<branch>
 +
 If the branch exists in multiple remotes and one of them is named by
 the `checkout.defaultRemote` configuration variable, we'll use that
-one for the purposes of disambiguation, even if the `<branch>` isn't
+one for the purposes of disambiguation, even if the _<branch>_ isn't
 unique across all remotes. Set it to e.g. `checkout.defaultRemote=origin`
-to always checkout remote branches from there if `<branch>` is
+to always checkout remote branches from there if _<branch>_ is
 ambiguous but exists on the 'origin' remote. See also
 `checkout.defaultRemote` in linkgit:git-config[1].
 +
@@ -112,19 +112,19 @@ ambiguous but exists on the 'origin' remote. See also
 The default behavior can be set via the `checkout.guess` configuration
 variable.
 
--f::
---force::
+`-f`::
+`--force`::
 	An alias for `--discard-changes`.
 
---discard-changes::
+`--discard-changes`::
 	Proceed even if the index or the working tree differs from
 	`HEAD`. Both the index and working tree are restored to match
 	the switching target. If `--recurse-submodules` is specified,
 	submodule content is also restored to match the switching
 	target. This is used to throw away local changes.
 
--m::
---merge::
+`-m`::
+`--merge`::
 	If you have local modifications to one or more files that are
 	different between the current branch and the branch to which
 	you are switching, the command refuses to switch branches in
@@ -138,25 +138,25 @@ paths are left unmerged, and you need to resolve the conflicts
 and mark the resolved paths with `git add` (or `git rm` if the merge
 should result in deletion of the path).
 
---conflict=<style>::
+`--conflict=<style>`::
 	The same as `--merge` option above, but changes the way the
 	conflicting hunks are presented, overriding the
 	`merge.conflictStyle` configuration variable.  Possible values are
-	"merge" (default), "diff3", and "zdiff3".
+	`merge` (default), `diff3`, and `zdiff3`.
 
--q::
---quiet::
+`-q`::
+`--quiet`::
 	Quiet, suppress feedback messages.
 
---progress::
---no-progress::
+`--progress`::
+`--no-progress`::
 	Progress status is reported on the standard error stream
 	by default when it is attached to a terminal, unless `--quiet`
 	is specified. This flag enables progress reporting even if not
 	attached to a terminal, regardless of `--quiet`.
 
--t::
---track [direct|inherit]::
+`-t`::
+`--track[ (direct|inherit)]`::
 	When creating a new branch, set up "upstream" configuration.
 	`-c` is implied. See `--track` in linkgit:git-branch[1] for
 	details.
@@ -171,22 +171,22 @@ given name has no slash, or the above guessing results in an empty
 name, the guessing is aborted.  You can explicitly give a name with
 `-c` in such a case.
 
---no-track::
+`--no-track`::
 	Do not set up "upstream" configuration, even if the
 	`branch.autoSetupMerge` configuration variable is true.
 
---orphan <new-branch>::
-	Create a new unborn branch, named `<new-branch>`. All
+`--orphan <new-branch>`::
+	Create a new unborn branch, named _<new-branch>_. All
 	tracked files are removed.
 
---ignore-other-worktrees::
+`--ignore-other-worktrees`::
 	`git switch` refuses when the wanted ref is already
 	checked out by another worktree. This option makes it check
 	the ref out anyway. In other words, the ref can be held by
 	more than one worktree.
 
---recurse-submodules::
---no-recurse-submodules::
+`--recurse-submodules`::
+`--no-recurse-submodules`::
 	Using `--recurse-submodules` will update the content of all
 	active submodules according to the commit recorded in the
 	superproject. If nothing (or `--no-recurse-submodules`) is
@@ -239,7 +239,7 @@ $ git switch -
 ------------
 
 You can grow a new branch from any commit. For example, switch to
-"HEAD~3" and create branch "fixup":
+"`HEAD~3`" and create branch "`fixup`":
 
 ------------
 $ git switch -c fixup HEAD~3
@@ -251,8 +251,8 @@ name:
 
 ------------
 $ git switch new-topic
-Branch 'new-topic' set up to track remote branch 'new-topic' from 'origin'
-Switched to a new branch 'new-topic'
+Branch `new-topic` set up to track remote branch `new-topic` from `origin`
+Switched to a new branch `new-topic`
 ------------
 
 To check out commit `HEAD~3` for temporary inspection or experiment

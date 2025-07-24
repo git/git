@@ -1243,7 +1243,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 			ret->smart_options->receivepack = remote->receivepack;
 	}
 
-	ret->hash_algo = &hash_algos[GIT_HASH_SHA1];
+	ret->hash_algo = &hash_algos[GIT_HASH_SHA1_LEGACY];
 
 	return ret;
 }

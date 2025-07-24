@@ -14,7 +14,7 @@
 #include "rebase.h"
 #include "refs.h"
 #include "refspec.h"
-#include "object-store.h"
+#include "odb.h"
 #include "strvec.h"
 #include "commit-reach.h"
 #include "progress.h"
@@ -157,6 +157,21 @@ static int parse_mirror_opt(const struct option *opt, const char *arg, int not)
 	return 0;
 }
 
+static int check_remote_collision(struct remote *remote, void *data)
+{
+	const char *name = data;
+	const char *p;
+
+	if (skip_prefix(name, remote->name, &p) && *p == '/')
+		die(_("remote name '%s' is a subset of existing remote '%s'"),
+		    name, remote->name);
+	if (skip_prefix(remote->name, name, &p) && *p == '/')
+		die(_("remote name '%s' is a superset of existing remote '%s'"),
+		    name, remote->name);
+
+	return 0;
+}
+
 static int add(int argc, const char **argv, const char *prefix,
 	       struct repository *repo UNUSED)
 {
@@ -207,6 +222,8 @@ static int add(int argc, const char **argv, const char *prefix,
 
 	if (!valid_remote_name(name))
 		die(_("'%s' is not a valid remote name"), name);
+
+	for_each_remote(check_remote_collision, (void *)name);
 
 	strbuf_addf(&buf, "remote.%s.url", name);
 	git_config_set(buf.buf, url);
@@ -454,8 +471,8 @@ static int get_push_ref_states(const struct ref *remote_refs,
 			info->status = PUSH_STATUS_UPTODATE;
 		else if (is_null_oid(&ref->old_oid))
 			info->status = PUSH_STATUS_CREATE;
-		else if (has_object(the_repository, &ref->old_oid,
-				    HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR) &&
+		else if (odb_has_object(the_repository->objects, &ref->old_oid,
+					HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR) &&
 			 ref_newer(&ref->new_oid, &ref->old_oid))
 			info->status = PUSH_STATUS_FASTFORWARD;
 		else
@@ -1521,9 +1538,6 @@ static int prune_remote(const char *remote, int dry_run)
 	struct ref_states states = REF_STATES_INIT;
 	struct string_list refs_to_prune = STRING_LIST_INIT_NODUP;
 	struct string_list_item *item;
-	const char *dangling_msg = dry_run
-		? _(" %s will become dangling!")
-		: _(" %s has become dangling!");
 
 	get_remote_ref_states(remote, &states, GET_REF_STATES);
 
@@ -1555,7 +1569,7 @@ static int prune_remote(const char *remote, int dry_run)
 	}
 
 	refs_warn_dangling_symrefs(get_main_ref_store(the_repository),
-				   stdout, dangling_msg, &refs_to_prune);
+				   stdout, " ", dry_run, &refs_to_prune);
 
 	string_list_clear(&refs_to_prune, 0);
 	free_remote_ref_states(&states);

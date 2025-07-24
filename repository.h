@@ -9,7 +9,7 @@ struct git_hash_algo;
 struct index_state;
 struct lock_file;
 struct pathspec;
-struct raw_object_store;
+struct object_database;
 struct submodule_cache;
 struct promisor_remote_config;
 struct remote_state;
@@ -19,6 +19,12 @@ enum ref_storage_format {
 	REF_STORAGE_FORMAT_FILES,
 	REF_STORAGE_FORMAT_REFTABLE,
 };
+
+#ifdef WITH_BREAKING_CHANGES /* Git 3.0 */
+# define REF_STORAGE_FORMAT_DEFAULT REF_STORAGE_FORMAT_REFTABLE
+#else
+# define REF_STORAGE_FORMAT_DEFAULT REF_STORAGE_FORMAT_FILES
+#endif
 
 struct repo_path_cache {
 	char *squash_msg;
@@ -47,7 +53,7 @@ struct repository {
 	/*
 	 * Holds any information related to accessing the raw object content.
 	 */
-	struct raw_object_store *objects;
+	struct object_database *objects;
 
 	/*
 	 * All objects in this repository that have been parsed. This structure
@@ -151,6 +157,7 @@ struct repository {
 	/* Configurations */
 	int repository_format_worktree_config;
 	int repository_format_relative_worktrees;
+	int repository_format_precious_objects;
 
 	/* Indicate if a repository has a different 'commondir' from 'gitdir' */
 	unsigned different_commondir:1;

@@ -1451,9 +1451,21 @@ test_cmp_fspath () {
 #     test_seq 1 5 -- outputs 1 2 3 4 5 one line at a time
 #
 # or with one argument (end), in which case it starts counting
-# from 1.
+# from 1. In addition to the start/end arguments, you can pass an optional
+# printf format. For example:
+#
+#     test_seq -f "line %d" 1 5
+#
+# would print 5 lines, "line 1" through "line 5".
 
 test_seq () {
+	local fmt="%d"
+	case "$1" in
+	-f)
+		fmt="$2"
+		shift 2
+		;;
+	esac
 	case $# in
 	1)	set 1 "$@" ;;
 	2)	;;
@@ -1462,7 +1474,7 @@ test_seq () {
 	test_seq_counter__=$1
 	while test "$test_seq_counter__" -le "$2"
 	do
-		echo "$test_seq_counter__"
+		printf "$fmt\n" "$test_seq_counter__"
 		test_seq_counter__=$(( $test_seq_counter__ + 1 ))
 	done
 }
@@ -1695,7 +1707,7 @@ test_set_hash () {
 
 # Detect the hash algorithm in use.
 test_detect_hash () {
-	case "$GIT_TEST_DEFAULT_HASH" in
+	case "${GIT_TEST_DEFAULT_HASH:-$GIT_TEST_BUILTIN_HASH}" in
 	"sha256")
 	    test_hash_algo=sha256
 	    test_compat_hash_algo=sha1
@@ -1766,6 +1778,9 @@ test_oid () {
 		shift;;
 	--hash=compat)
 		algo="$test_compat_hash_algo" &&
+		shift;;
+	--hash=builtin)
+		algo="$GIT_TEST_BUILTIN_HASH" &&
 		shift;;
 	--hash=*)
 		algo="${1#--hash=}" &&

@@ -10,7 +10,7 @@
 #include "pkt-line.h"
 #include "sideband.h"
 #include "repository.h"
-#include "object-store.h"
+#include "odb.h"
 #include "oid-array.h"
 #include "object.h"
 #include "commit.h"
@@ -509,7 +509,7 @@ static int got_oid(struct upload_pack_data *data,
 {
 	if (get_oid_hex(hex, oid))
 		die("git upload-pack: expected SHA1 object, got '%s'", hex);
-	if (!has_object(the_repository, oid, 0))
+	if (!odb_has_object(the_repository->objects, oid, 0))
 		return -1;
 	return do_got_oid(data, oid);
 }

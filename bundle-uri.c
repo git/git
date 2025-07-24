@@ -14,7 +14,7 @@
 #include "fetch-pack.h"
 #include "remote.h"
 #include "trace2.h"
-#include "object-store.h"
+#include "odb.h"
 
 static struct {
 	enum bundle_list_heuristic heuristic;
@@ -122,7 +122,7 @@ void print_bundle_list(FILE *fp, struct bundle_list *list)
 		int i;
 		for (i = 0; i < BUNDLE_HEURISTIC__COUNT; i++) {
 			if (heuristics[i].heuristic == list->heuristic) {
-				printf("\theuristic = %s\n",
+				fprintf(fp, "\theuristic = %s\n",
 				       heuristics[list->heuristic].name);
 				break;
 			}
@@ -278,7 +278,8 @@ static char *find_temp_filename(void)
 	 * Find a temporary filename that is available. This is briefly
 	 * racy, but unlikely to collide.
 	 */
-	fd = odb_mkstemp(&name, "bundles/tmp_uri_XXXXXX");
+	fd = odb_mkstemp(the_repository->objects, &name,
+			 "bundles/tmp_uri_XXXXXX");
 	if (fd < 0) {
 		warning(_("failed to create temporary file"));
 		return NULL;
@@ -296,6 +297,28 @@ static int download_https_uri_to_file(const char *file, const char *uri)
 	FILE *child_in = NULL, *child_out = NULL;
 	struct strbuf line = STRBUF_INIT;
 	int found_get = 0;
+
+	/*
+	 * The protocol we speak with git-remote-https(1) uses a space to
+	 * separate between URI and file, so the URI itself must not contain a
+	 * space. If it did, an adversary could change the location where the
+	 * downloaded file is being written to.
+	 *
+	 * Similarly, we use newlines to separate commands from one another.
+	 * Consequently, neither the URI nor the file must contain a newline or
+	 * otherwise an adversary could inject arbitrary commands.
+	 *
+	 * TODO: Restricting newlines in the target paths may break valid
+	 *       usecases, even if those are a bit more on the esoteric side.
+	 *       If this ever becomes a problem we should probably think about
+	 *       alternatives. One alternative could be to use NUL-delimited
+	 *       requests in git-remote-http(1). Another alternative could be
+	 *       to use URL quoting.
+	 */
+	if (strpbrk(uri, " \n"))
+		return error("bundle-uri: URI is malformed: '%s'", file);
+	if (strchr(file, '\n'))
+		return error("bundle-uri: filename is malformed: '%s'", file);
 
 	strvec_pushl(&cp.args, "git-remote-https", uri, NULL);
 	cp.err = -1;

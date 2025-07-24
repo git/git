@@ -1653,8 +1653,18 @@ EOF
 		         default => $ask_default);
 		die __("Send this email reply required") unless defined $_;
 		if (/^n/i) {
+			# If we are skipping a message, we should make sure that
+			# the next message is treated as the successor to the
+			# previously sent message, and not the skipped message.
+			$message_num--;
 			return 0;
 		} elsif (/^e/i) {
+			# Since the same message will be sent again, we need to
+			# decrement the message number to the previous message.
+			# Otherwise, the edited message will be treated as a
+			# different message sent after the original non-edited
+			# message.
+			$message_num--;
 			return -1;
 		} elsif (/^q/i) {
 			cleanup_compose_files();
@@ -1778,7 +1788,8 @@ EOF
 		if (is_outlook($smtp_server)) {
 			if ($smtp->message =~ /<([^>]+)>/) {
 				$message_id = "<$1>";
-				printf __("Outlook reassigned Message-ID to: %s\n"), $message_id;
+				$header =~ s/^(Message-ID:\s*).*\n/${1}$message_id\n/m;
+				printf __("Outlook reassigned Message-ID to: %s\n"), $message_id if $smtp->debug;
 			} else {
 				warn __("Warning: Could not retrieve Message-ID from server response.\n");
 			}
@@ -2098,6 +2109,17 @@ if ($validate) {
 	foreach my $f (@files) {
 		unless (-p $f) {
 			push(@real_files, $f);
+		}
+	}
+
+	# Validate the SMTP server port, if provided.
+	if (defined $smtp_server_port) {
+		my $port = Git::port_num($smtp_server_port);
+		if ($port) {
+			$smtp_server_port = $port;
+		} else  {
+			die sprintf(__("error: invalid SMTP port '%s'\n"),
+				    $smtp_server_port);
 		}
 	}
 

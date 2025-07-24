@@ -24,7 +24,7 @@
 #include "pack-bitmap.h"
 #include "object-file.h"
 #include "object-name.h"
-#include "object-store.h"
+#include "odb.h"
 #include "replace-object.h"
 #include "promisor-remote.h"
 #include "mailmap.h"
@@ -74,7 +74,7 @@ static int filter_object(const char *path, unsigned mode,
 {
 	enum object_type type;
 
-	*buf = repo_read_object_file(the_repository, oid, &type, size);
+	*buf = odb_read_object(the_repository->objects, oid, &type, size);
 	if (!*buf)
 		return error(_("cannot read object %s '%s'"),
 			     oid_to_hex(oid), path);
@@ -132,7 +132,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 	switch (opt) {
 	case 't':
 		oi.typep = &type;
-		if (oid_object_info_extended(the_repository, &oid, &oi, flags) < 0)
+		if (odb_read_object_info_extended(the_repository->objects, &oid, &oi, flags) < 0)
 			die("git cat-file: could not get object info");
 		printf("%s\n", type_name(type));
 		ret = 0;
@@ -146,7 +146,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 			oi.contentp = (void**)&buf;
 		}
 
-		if (oid_object_info_extended(the_repository, &oid, &oi, flags) < 0)
+		if (odb_read_object_info_extended(the_repository->objects, &oid, &oi, flags) < 0)
 			die("git cat-file: could not get object info");
 
 		if (use_mailmap && (type == OBJ_COMMIT || type == OBJ_TAG)) {
@@ -160,8 +160,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 		goto cleanup;
 
 	case 'e':
-		ret = !has_object(the_repository, &oid,
-				  HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR);
+		ret = !odb_has_object(the_repository->objects, &oid,
+				      HAS_OBJECT_RECHECK_PACKED | HAS_OBJECT_FETCH_PROMISOR);
 		goto cleanup;
 
 	case 'w':
@@ -180,7 +180,7 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 		/* else fallthrough */
 
 	case 'p':
-		type = oid_object_info(the_repository, &oid, NULL);
+		type = odb_read_object_info(the_repository->objects, &oid, NULL);
 		if (type < 0)
 			die("Not a valid object name %s", obj_name);
 
@@ -197,8 +197,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 			ret = stream_blob(&oid);
 			goto cleanup;
 		}
-		buf = repo_read_object_file(the_repository, &oid, &type,
-					    &size);
+		buf = odb_read_object(the_repository->objects, &oid,
+				      &type, &size);
 		if (!buf)
 			die("Cannot read object %s", obj_name);
 
@@ -217,11 +217,10 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 
 		if (exp_type_id == OBJ_BLOB) {
 			struct object_id blob_oid;
-			if (oid_object_info(the_repository, &oid, NULL) == OBJ_TAG) {
-				char *buffer = repo_read_object_file(the_repository,
-								     &oid,
-								     &type,
-								     &size);
+			if (odb_read_object_info(the_repository->objects,
+						 &oid, NULL) == OBJ_TAG) {
+				char *buffer = odb_read_object(the_repository->objects,
+							       &oid, &type, &size);
 				const char *target;
 
 				if (!buffer)
@@ -235,7 +234,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 			} else
 				oidcpy(&blob_oid, &oid);
 
-			if (oid_object_info(the_repository, &blob_oid, NULL) == OBJ_BLOB) {
+			if (odb_read_object_info(the_repository->objects,
+						 &blob_oid, NULL) == OBJ_BLOB) {
 				ret = stream_blob(&blob_oid);
 				goto cleanup;
 			}
@@ -246,8 +246,8 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 			 * fall-back to the usual case.
 			 */
 		}
-		buf = read_object_with_reference(the_repository, &oid,
-						 exp_type_id, &size, NULL);
+		buf = odb_read_object_peeled(the_repository->objects, &oid,
+					     exp_type_id, &size, NULL);
 
 		if (use_mailmap) {
 			size_t s = size;
@@ -275,6 +275,7 @@ struct expand_data {
 	struct object_id oid;
 	enum object_type type;
 	unsigned long size;
+	unsigned short mode;
 	off_t disk_size;
 	const char *rest;
 	struct object_id delta_base_oid;
@@ -294,7 +295,7 @@ struct expand_data {
 
 	/*
 	 * After a mark_query run, this object_info is set up to be
-	 * passed to oid_object_info_extended. It will point to the data
+	 * passed to odb_read_object_info_extended. It will point to the data
 	 * elements above, so you can retrieve the response from there.
 	 */
 	struct object_info info;
@@ -306,6 +307,7 @@ struct expand_data {
 	 */
 	unsigned skip_object_info : 1;
 };
+#define EXPAND_DATA_INIT  { .mode = S_IFINVALID }
 
 static int is_atom(const char *atom, const char *s, int slen)
 {
@@ -345,6 +347,9 @@ static int expand_atom(struct strbuf *sb, const char *atom, int len,
 		else
 			strbuf_addstr(sb,
 				      oid_to_hex(&data->delta_base_oid));
+	} else if (is_atom("objectmode", atom, len)) {
+		if (!data->mark_query && !(S_IFINVALID == data->mode))
+			strbuf_addf(sb, "%06o", data->mode);
 	} else
 		return 0;
 	return 1;
@@ -401,10 +406,8 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 				if (!textconv_object(the_repository,
 						     data->rest, 0100644, oid,
 						     1, &contents, &size))
-					contents = repo_read_object_file(the_repository,
-									 oid,
-									 &type,
-									 &size);
+					contents = odb_read_object(the_repository->objects,
+								   oid, &type, &size);
 				if (!contents)
 					die("could not convert '%s' %s",
 					    oid_to_hex(oid), data->rest);
@@ -421,8 +424,8 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 		unsigned long size;
 		void *contents;
 
-		contents = repo_read_object_file(the_repository, oid, &type,
-						 &size);
+		contents = odb_read_object(the_repository->objects, oid,
+					   &type, &size);
 		if (!contents)
 			die("object %s disappeared", oid_to_hex(oid));
 
@@ -484,14 +487,17 @@ static void batch_object_write(const char *obj_name,
 			data->info.sizep = &data->size;
 
 		if (pack)
-			ret = packed_object_info(the_repository, pack, offset,
-						 &data->info);
+			ret = packed_object_info(the_repository, pack,
+						 offset, &data->info);
 		else
-			ret = oid_object_info_extended(the_repository,
-						       &data->oid, &data->info,
-						       OBJECT_INFO_LOOKUP_REPLACE);
+			ret = odb_read_object_info_extended(the_repository->objects,
+							    &data->oid, &data->info,
+							    OBJECT_INFO_LOOKUP_REPLACE);
 		if (ret < 0) {
-			report_object_status(opt, obj_name, &data->oid, "missing");
+			if (data->mode == S_IFGITLINK)
+				report_object_status(opt, oid_to_hex(&data->oid), &data->oid, "submodule");
+			else
+				report_object_status(opt, obj_name, &data->oid, "missing");
 			return;
 		}
 
@@ -531,8 +537,8 @@ static void batch_object_write(const char *obj_name,
 			size_t s = data->size;
 			char *buf = NULL;
 
-			buf = repo_read_object_file(the_repository, &data->oid, &data->type,
-						    &data->size);
+			buf = odb_read_object(the_repository->objects, &data->oid,
+					      &data->type, &data->size);
 			if (!buf)
 				die(_("unable to read %s"), oid_to_hex(&data->oid));
 			buf = replace_idents_using_mailmap(buf, &s);
@@ -613,6 +619,7 @@ static void batch_one_object(const char *obj_name,
 		goto out;
 	}
 
+	data->mode = ctx.mode;
 	batch_object_write(obj_name, scratch, opt, data, NULL, 0);
 
 out:
@@ -866,16 +873,15 @@ static int batch_objects(struct batch_options *opt)
 {
 	struct strbuf input = STRBUF_INIT;
 	struct strbuf output = STRBUF_INIT;
-	struct expand_data data;
+	struct expand_data data = EXPAND_DATA_INIT;
 	int save_warning;
 	int retval = 0;
 
 	/*
 	 * Expand once with our special mark_query flag, which will prime the
-	 * object_info to be handed to oid_object_info_extended for each
+	 * object_info to be handed to odb_read_object_info_extended for each
 	 * object.
 	 */
-	memset(&data, 0, sizeof(data));
 	data.mark_query = 1;
 	expand_format(&output,
 		      opt->format ? opt->format : DEFAULT_FORMAT,

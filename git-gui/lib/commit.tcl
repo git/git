@@ -27,7 +27,7 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 	if {[catch {
 			set name ""
 			set email ""
-			set fd [git_read cat-file commit $curHEAD]
+			set fd [git_read [list cat-file commit $curHEAD]]
 			fconfigure $fd -encoding binary -translation lf
 			# By default commits are assumed to be in utf-8
 			set enc utf-8
@@ -214,12 +214,10 @@ You must stage at least 1 file before you can commit.
 	global comment_string
 	set cmt_rx [strcat {(^|\n)} [regsub -all {\W} $comment_string {\\&}] {[^\n]*}]
 	regsub -all $cmt_rx $msg {\1} msg
-	# Strip leading empty lines
-	regsub {^\n*} $msg {} msg
+	# Strip leading and trailing empty lines (puts adds one \n)
+	set msg [string trim $msg \n]
 	# Compress consecutive empty lines
 	regsub -all {\n{3,}} $msg "\n\n" msg
-	# Strip trailing empty line
-	regsub {\n\n$} $msg "\n" msg
 	if {$msg eq {}} {
 		error_popup [mc "Please supply a commit message.
 
@@ -236,7 +234,7 @@ A good commit message has the following format:
 	# -- Build the message file.
 	#
 	set msg_p [gitdir GITGUI_EDITMSG]
-	set msg_wt [open $msg_p w]
+	set msg_wt [safe_open_file $msg_p w]
 	fconfigure $msg_wt -translation lf
 	setup_commit_encoding $msg_wt
 	puts $msg_wt $msg
@@ -336,7 +334,7 @@ proc commit_commitmsg_wait {fd_ph curHEAD msg_p} {
 
 proc commit_writetree {curHEAD msg_p} {
 	ui_status [mc "Committing changes..."]
-	set fd_wt [git_read write-tree]
+	set fd_wt [git_read [list write-tree]]
 	fileevent $fd_wt readable \
 		[list commit_committree $fd_wt $curHEAD $msg_p]
 }
@@ -348,6 +346,7 @@ proc commit_committree {fd_wt curHEAD msg_p} {
 	global file_states selected_paths rescan_active
 	global repo_config
 	global env
+	global hashlength
 
 	gets $fd_wt tree_id
 	if {[catch {close $fd_wt} err]} {
@@ -361,13 +360,13 @@ proc commit_committree {fd_wt curHEAD msg_p} {
 	# -- Verify this wasn't an empty change.
 	#
 	if {$commit_type eq {normal}} {
-		set fd_ot [git_read cat-file commit $PARENT]
+		set fd_ot [git_read [list cat-file commit $PARENT]]
 		fconfigure $fd_ot -encoding binary -translation lf
 		set old_tree [gets $fd_ot]
 		close $fd_ot
 
 		if {[string equal -length 5 {tree } $old_tree]
-			&& [string length $old_tree] == 45} {
+			&& [string length $old_tree] == [expr {$hashlength + 5}]} {
 			set old_tree [string range $old_tree 5 end]
 		} else {
 			error [mc "Commit %s appears to be corrupt" $PARENT]
@@ -399,8 +398,8 @@ A rescan will be automatically started now.
 	foreach p [concat $PARENT $MERGE_HEAD] {
 		lappend cmd -p $p
 	}
-	lappend cmd <$msg_p
-	if {[catch {set cmt_id [eval git $cmd]} err]} {
+	set msgtxt [list <$msg_p]
+	if {[catch {set cmt_id [git_redir $cmd $msgtxt]} err]} {
 		catch {file delete $msg_p}
 		error_popup [strcat [mc "commit-tree failed:"] "\n\n$err"]
 		ui_status [mc "Commit failed."]
@@ -420,7 +419,7 @@ A rescan will be automatically started now.
 	if {$commit_type ne {normal}} {
 		append reflogm " ($commit_type)"
 	}
-	set msg_fd [open $msg_p r]
+	set msg_fd [safe_open_file $msg_p r]
 	setup_commit_encoding $msg_fd 1
 	gets $msg_fd subject
 	close $msg_fd

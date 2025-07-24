@@ -11,7 +11,7 @@
 #include "gettext.h"
 #include "hex.h"
 #include "object-file.h"
-#include "object-store.h"
+#include "odb.h"
 #include "blob.h"
 #include "quote.h"
 #include "parse-options.h"
@@ -104,7 +104,7 @@ int cmd_hash_object(int argc,
 		prefix = setup_git_directory_gently(&nongit);
 
 	if (nongit && !the_hash_algo)
-		repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
+		repo_set_hash_algo(the_repository, GIT_HASH_DEFAULT);
 
 	if (vpath && prefix) {
 		vpath_free = prefix_filename(prefix, vpath);

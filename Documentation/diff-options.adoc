@@ -37,32 +37,32 @@ endif::git-diff[]
 endif::git-format-patch[]
 
 ifdef::git-log[]
--m::
+`-m`::
 	Show diffs for merge commits in the default format. This is
 	similar to `--diff-merges=on`, except `-m` will
 	produce no output unless `-p` is given as well.
 
--c::
+`-c`::
 	Produce combined diff output for merge commits.
 	Shortcut for `--diff-merges=combined -p`.
 
---cc::
+`--cc`::
 	Produce dense combined diff output for merge commits.
 	Shortcut for `--diff-merges=dense-combined -p`.
 
---dd::
+`--dd`::
 	Produce diff with respect to first parent for both merge and
 	regular commits.
 	Shortcut for `--diff-merges=first-parent -p`.
 
---remerge-diff::
+`--remerge-diff`::
 	Produce remerge-diff output for merge commits.
 	Shortcut for `--diff-merges=remerge -p`.
 
---no-diff-merges::
+`--no-diff-merges`::
 	Synonym for `--diff-merges=off`.
 
---diff-merges=<format>::
+`--diff-merges=<format>`::
 	Specify diff format to be used for merge commits. Default is
 	{diff-merges-default} unless `--first-parent` is in use, in
 	which case `first-parent` is the default.
@@ -70,48 +70,54 @@ ifdef::git-log[]
 The following formats are supported:
 +
 --
-off, none::
+`off`::
+`none`::
 	Disable output of diffs for merge commits. Useful to override
 	implied value.
 
-on, m::
+`on`::
+`m`::
 	Make diff output for merge commits to be shown in the default
 	format. The default format can be changed using
 	`log.diffMerges` configuration variable, whose default value
 	is `separate`.
 
-first-parent, 1::
+`first-parent`::
+`1`::
 	Show full diff with respect to first parent. This is the same
 	format as `--patch` produces for non-merge commits.
 
-separate::
+`separate`::
 	Show full diff with respect to each of parents.
 	Separate log entry and diff is generated for each parent.
 
-combined, c::
+`combined`::
+`c`::
 	Show differences from each of the parents to the merge
 	result simultaneously instead of showing pairwise diff between
 	a parent and the result one at a time. Furthermore, it lists
 	only files which were modified from all parents.
 
-dense-combined, cc::
+`dense-combined`::
+`cc`::
 	Further compress output produced by `--diff-merges=combined`
 	by omitting uninteresting hunks whose contents in the parents
 	have only two variants and the merge result picks one of them
 	without modification.
 
-remerge, r::
-	Remerge two-parent merge commits to create a temporary tree
+`remerge`::
+`r`:: Remerge two-parent merge commits to create a temporary tree
 	object--potentially containing files with conflict markers
 	and such.  A diff is then shown between that temporary tree
 	and the actual merge commit.
+--
 +
 The output emitted when this option is used is subject to change, and
 so is its interaction with other options (unless explicitly
 documented).
---
 
---combined-all-paths::
+
+`--combined-all-paths`::
 	Cause combined diffs (used for merge commits) to
 	list the name of the file from all parents.  It thus only has
 	effect when `--diff-merges=[dense-]combined` is in use, and

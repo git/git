@@ -525,7 +525,7 @@ test_expect_success 'index-pack --strict <pack> works in non-repo' '
 	test_path_is_file foo.idx
 '
 
-test_expect_success SHA1 'show-index works OK outside a repository' '
+test_expect_success DEFAULT_HASH_ALGORITHM 'show-index works OK outside a repository' '
 	nongit git show-index <foo.idx
 '
 
@@ -658,7 +658,7 @@ do
 		test_commit -C repo initial &&
 		git -C repo repack -ad &&
 		git -C repo verify-pack "$(pwd)"/repo/.git/objects/pack/*.idx &&
-		if test $hash = sha1
+		if test $hash = $GIT_TEST_BUILTIN_HASH
 		then
 			nongit git verify-pack "$(pwd)"/repo/.git/objects/pack/*.idx
 		else
@@ -676,7 +676,7 @@ do
 		test_commit -C repo initial &&
 		git -C repo repack -ad &&
 		git -C repo index-pack --verify "$(pwd)"/repo/.git/objects/pack/*.pack &&
-		if test $hash = sha1
+		if test $hash = $GIT_TEST_BUILTIN_HASH
 		then
 			nongit git index-pack --verify "$(pwd)"/repo/.git/objects/pack/*.pack
 		else
@@ -721,6 +721,25 @@ test_expect_success '--name-hash-version=2 and --write-bitmap-index are incompat
 	# --stdout option silently removes --write-bitmap-index
 	git pack-objects --stdout --all --name-hash-version=2 --write-bitmap-index >out 2>err &&
 	! test_grep "currently, --write-bitmap-index requires --name-hash-version=1" err
+'
+
+test_expect_success '--path-walk pack everything' '
+	git -C server rev-parse HEAD >in &&
+	GIT_PROGRESS_DELAY=0 git -C server pack-objects \
+		--stdout --revs --path-walk --progress <in >out.pack 2>err &&
+	grep "Compressing objects by path" err &&
+	git -C server index-pack --stdin <out.pack
+'
+
+test_expect_success '--path-walk thin pack' '
+	cat >in <<-EOF &&
+	$(git -C server rev-parse HEAD)
+	^$(git -C server rev-parse HEAD~2)
+	EOF
+	GIT_PROGRESS_DELAY=0 git -C server pack-objects \
+		--thin --stdout --revs --path-walk --progress <in >out.pack 2>err &&
+	grep "Compressing objects by path" err &&
+	git -C server index-pack --fix-thin --stdin <out.pack
 '
 
 test_done

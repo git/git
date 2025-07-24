@@ -158,7 +158,6 @@ manpages = {
   'git-verify-tag.adoc' : 1,
   'git-version.adoc' : 1,
   'git-web--browse.adoc' : 1,
-  'git-whatchanged.adoc' : 1,
   'git-worktree.adoc' : 1,
   'git-write-tree.adoc' : 1,
   'git.adoc' : 1,
@@ -207,6 +206,7 @@ manpages = {
 
 manpages_breaking_changes = {
   'git-pack-redundant.adoc' : 1,
+  'git-whatchanged.adoc' : 1,
 }
 
 if not get_option('breaking_changes')
@@ -375,8 +375,7 @@ foreach manpage, category : manpages
       output: fs.stem(manpage) + '.xml',
     )
 
-    manpage_path = fs.stem(manpage) + '.' + category.to_string()
-    manpage_target = custom_target(
+    custom_target(
       command: [
         xmlto,
         '-m', '@INPUT0@',
@@ -392,7 +391,7 @@ foreach manpage, category : manpages
         'manpage-normal.xsl',
         'manpage-bold-literal.xsl',
       ],
-      output: manpage_path,
+      output: fs.stem(manpage) + '.' + category.to_string(),
       install: true,
       install_dir: get_option('mandir') / 'man' + category.to_string(),
     )

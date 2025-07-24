@@ -26,7 +26,7 @@
 #include "symlinks.h"
 #include "trace2.h"
 #include "fsmonitor.h"
-#include "object-store.h"
+#include "odb.h"
 #include "promisor-remote.h"
 #include "entry.h"
 #include "parallel-checkout.h"

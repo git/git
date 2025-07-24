@@ -175,6 +175,16 @@ static inline void git_SHA256_Clone(git_SHA256_CTX *dst, const git_SHA256_CTX *s
 /* Number of algorithms supported (including unknown). */
 #define GIT_HASH_NALGOS (GIT_HASH_SHA256 + 1)
 
+/* Default hash algorithm if unspecified. */
+#ifdef WITH_BREAKING_CHANGES
+# define GIT_HASH_DEFAULT GIT_HASH_SHA256
+#else
+# define GIT_HASH_DEFAULT GIT_HASH_SHA1
+#endif
+
+/* Legacy hash algorithm. Implied for older data formats which don't specify. */
+#define GIT_HASH_SHA1_LEGACY GIT_HASH_SHA1
+
 /* "sha1", big-endian */
 #define GIT_SHA1_FORMAT_ID 0x73686131
 
@@ -216,6 +226,7 @@ struct object_id {
 #define GET_OID_REQUIRE_PATH         010000
 #define GET_OID_HASH_ANY             020000
 #define GET_OID_SKIP_AMBIGUITY_CHECK 040000
+#define GET_OID_GENTLY              0100000
 
 #define GET_OID_DISAMBIGUATORS \
 	(GET_OID_COMMIT | GET_OID_COMMITTISH | \

@@ -185,8 +185,19 @@ test_expect_success 'reject non-strategy with a git-merge-foo name' '
 test_expect_success 'merge c0 with c1' '
 	echo "OBJID HEAD@{0}: merge c1: Fast-forward" >reflog.expected &&
 
+	cat >expect <<-\EOF &&
+	Updating FROM..TO
+	Fast-forward
+	 file  | 2 +-
+	 other | 9 +++++++++
+	 2 files changed, 10 insertions(+), 1 deletion(-)
+	 create mode 100644 other
+	EOF
+
 	git reset --hard c0 &&
-	git merge c1 &&
+	git merge c1 >out &&
+	sed -e "1s/^Updating [0-9a-f.]*/Updating FROM..TO/" out >actual &&
+	test_cmp expect actual &&
 	verify_merge file result.1 &&
 	verify_head "$c1" &&
 
@@ -203,6 +214,67 @@ test_expect_success 'merge c0 with c1 with --ff-only' '
 	git merge --ff-only HEAD c0 c1 &&
 	verify_merge file result.1 &&
 	verify_head "$c1"
+'
+
+test_expect_success 'the same merge with merge.stat=diffstat' '
+	cat >expect <<-\EOF &&
+	Updating FROM..TO
+	Fast-forward
+	 file  | 2 +-
+	 other | 9 +++++++++
+	 2 files changed, 10 insertions(+), 1 deletion(-)
+	 create mode 100644 other
+	EOF
+
+	git reset --hard c0 &&
+	git -c merge.stat=diffstat merge c1 >out &&
+	sed -e "1s/^Updating [0-9a-f.]*/Updating FROM..TO/" out >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'the same merge with compact summary' '
+	cat >expect <<-\EOF &&
+	Updating FROM..TO
+	Fast-forward
+	 file        | 2 +-
+	 other (new) | 9 +++++++++
+	 2 files changed, 10 insertions(+), 1 deletion(-)
+	EOF
+
+	git reset --hard c0 &&
+	git merge --compact-summary c1 >out &&
+	sed -e "1s/^Updating [0-9a-f.]*/Updating FROM..TO/" out >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'the same merge with compact summary' '
+	cat >expect <<-\EOF &&
+	Updating FROM..TO
+	Fast-forward
+	 file        | 2 +-
+	 other (new) | 9 +++++++++
+	 2 files changed, 10 insertions(+), 1 deletion(-)
+	EOF
+
+	git reset --hard c0 &&
+	git merge --compact-summary c1 >out &&
+	sed -e "1s/^Updating [0-9a-f.]*/Updating FROM..TO/" out >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'the same merge with merge.stat=compact' '
+	cat >expect <<-\EOF &&
+	Updating FROM..TO
+	Fast-forward
+	 file        | 2 +-
+	 other (new) | 9 +++++++++
+	 2 files changed, 10 insertions(+), 1 deletion(-)
+	EOF
+
+	git reset --hard c0 &&
+	git -c merge.stat=compact merge c1 >out &&
+	sed -e "1s/^Updating [0-9a-f.]*/Updating FROM..TO/" out >actual &&
+	test_cmp expect actual
 '
 
 test_debug 'git log --graph --decorate --oneline --all'

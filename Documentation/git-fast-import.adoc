@@ -523,6 +523,9 @@ that signs the commit data.
 Here <alg> specifies which hashing algorithm is used for this
 signature, either `sha1` or `sha256`.
 
+NOTE: This is highly experimental and the format of the data stream may
+change in the future without compatibility guarantees.
+
 `encoding`
 ^^^^^^^^^^
 The optional `encoding` command indicates the encoding of the commit

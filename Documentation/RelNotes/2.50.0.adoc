@@ -36,7 +36,7 @@ UI, Workflows & Features
  * Auth-related (and unrelated) error handling in send-email has been
    made more robust.
 
- * Updating multiple references have only been possible in all-or-none
+ * Updating multiple references have only been possible in an all-or-nothing
    fashion with transactions, but it can be more efficient to batch
    multiple updates even when some of them are allowed to fail in a
    best-effort manner.  A new "best effort batches of updates" mode
@@ -53,7 +53,7 @@ UI, Workflows & Features
 
  * The build procedure installs bash (but not zsh) completion script.
 
- * send-email has been updated to work better with Outlook's smtp server.
+ * send-email has been updated to work better with Outlook's SMTP server.
 
  * "git diff --minimal" used to give non-minimal output when its
    optimization kicked in, which has been disabled.
@@ -62,7 +62,7 @@ UI, Workflows & Features
    delta chains from forming in a corner case even when there is no
    such cycle.
 
- * Make repository clean-up tasks "gc" can do available to "git
+ * Make repository clean-up tasks that "gc" can do available to "git
    maintenance" front-end.
 
  * Bundle-URI feature did not use refs recorded in the bundle other
@@ -102,7 +102,9 @@ Performance, Internal Implementation, Development Support etc.
  * "git fsck" becomes more careful when checking the refs.
 
  * "git fast-export | git fast-import" learns to deal with commit and
-   tag objects with embedded signatures a bit better.
+   tag objects with embedded signatures a bit better.  This is highly
+   experimental and the format of the data stream may change in the
+   future without compatibility guarantees.
 
  * The code paths to check whether a refname X is available (by seeing
    if another ref X/Y exists, etc.) have been optimized.
@@ -186,7 +188,7 @@ Performance, Internal Implementation, Development Support etc.
    been dropped.
 
  * The code path to access the "packed-refs" file while "fsck" is
-   taught to mmap the file, instead of reading the whole file in the
+   taught to mmap the file, instead of reading the whole file into
    memory.
 
  * Assorted fixes for issues found with CodeQL.
@@ -198,6 +200,17 @@ Performance, Internal Implementation, Development Support etc.
  * When a stale .midx file refers to .pack files that no longer exist,
    we ended up checking for these non-existent files repeatedly, which
    has been optimized by memoizing the non-existence.
+
+ * Build settings have been improved for BSD based systems.
+
+ * Newer version of libcURL detected curl_easy_setopt() calls we made
+   with platform-natural "int" when we should have used "long", which
+   all have been corrected.
+
+ * Tests that compare $HOME and $(pwd), which should be the same
+   directory unless the tests chdir's around, would fail when the user
+   enters the test directory via symbolic links, which has been
+   corrected.
 
 
 Fixes since v2.49
@@ -298,7 +311,7 @@ Fixes since v2.49
    (merge e7ef4be7c2 mh/left-right-limited later to maint).
 
  * Document the convention to disable hooks altogether by setting the
-   hooksPath configuration variable to /dev/nulll
+   hooksPath configuration variable to /dev/null.
    (merge 1b2eee94f1 ds/doc-disable-hooks later to maint).
 
  * Make sure outage of third-party sites that supply P4, Git-LFS, and
@@ -314,8 +327,10 @@ Fixes since v2.49
  * Fix for scheduled maintenance tasks on platforms using launchctl.
    (merge eb2d7beb0e jh/gc-launchctl-schedule-fix later to maint).
 
- * Update to arm64 Windows port.
-   (merge 436a42215e js/windows-arm64 later to maint).
+ * Update to arm64 Windows port (part of which had been reverted as it
+   broke builds for existing platforms, which may need to be redone in
+   future releases).
+
  * hashmap API clean-up to ensure hashmap_clear() leaves a cleared map
    in a reusable state.
    (merge 9481877de3 en/hashmap-clear-fix later to maint).
@@ -349,7 +364,7 @@ Fixes since v2.49
    (merge 5dbaec628d pw/sequencer-reflog-use-after-free later to maint).
 
  * win+Meson CI pipeline, unlike other pipelines for Windows,
-   used to build artifacts in develper mode, which has been changed to
+   used to build artifacts in developer mode, which has been changed to
    build them in release mode for consistency.
    (merge 184abdcf05 js/ci-build-win-in-release-mode later to maint).
 
@@ -376,6 +391,20 @@ Fixes since v2.49
  * "git apply --index/--cached" when applying a deletion patch in
    reverse failed to give the mode bits of the path "removed" by the
    patch to the file it creates, which has been corrected.
+
+ * "git verify-refs" errored out in a repository in which
+   linked worktrees were prepared with Git 2.43 or lower.
+   (merge d5b3c38b8a sj/ref-contents-check-fix later to maint).
+
+ * Update total_ram() function on BSD variants.
+
+ * Update online_cpus() function on BSD variants.
+
+ * Revert a botched bswap.h change that broke ntohll() functions on
+   big-endian systems with __builtin_bswap32/64().
+
+ * Fixes for GitHub Actions Coverity job.
+   (merge 3cc4fc1ebd js/github-ci-win-coverity-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 227c4f33a0 ja/doc-block-delimiter-markup-fix later to maint).
@@ -409,3 +438,4 @@ Fixes since v2.49
    (merge 91db6c735d ly/reftable-writer-leakfix later to maint).
    (merge 20e4e9ad0b jc/doc-synopsis-option-markup later to maint).
    (merge cddcee7f64 es/meson-configure-build-options-fix later to maint).
+   (merge cea9f55f00 wk/sparse-checkout-doc-fix later to maint).

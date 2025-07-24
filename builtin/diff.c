@@ -35,7 +35,7 @@ static const char builtin_diff_usage[] =
 "   or: git diff [<options>] [--merge-base] <commit> [<commit>...] <commit> [--] [<path>...]\n"
 "   or: git diff [<options>] <commit>...<commit> [--] [<path>...]\n"
 "   or: git diff [<options>] <blob> <blob>\n"
-"   or: git diff [<options>] --no-index [--] <path> <path>"
+"   or: git diff [<options>] --no-index [--] <path> <path> [<pathspec>...]"
 "\n"
 COMMON_DIFF_OPTIONS_HELP;
 
@@ -483,7 +483,7 @@ int cmd_diff(int argc,
 	 * configurable via a command line option.
 	 */
 	if (nongit)
-		repo_set_hash_algo(the_repository, GIT_HASH_SHA1);
+		repo_set_hash_algo(the_repository, GIT_HASH_DEFAULT);
 
 	init_diff_ui_defaults();
 	git_config(git_diff_ui_config, NULL);
