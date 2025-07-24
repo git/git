@@ -21,39 +21,26 @@ int cmd__delta(int argc, const char **argv)
 	struct stat st;
 	void *from_buf = NULL, *data_buf = NULL, *out_buf = NULL;
 	unsigned long from_size, data_size, out_size;
-	int ret = 1;
 
-	if (argc != 5 || (strcmp(argv[1], "-d") && strcmp(argv[1], "-p"))) {
-		fprintf(stderr, "usage: %s\n", usage_str);
-		return 1;
-	}
+	if (argc != 5 || (strcmp(argv[1], "-d") && strcmp(argv[1], "-p")))
+		usage(usage_str);
 
-	fd = open(argv[2], O_RDONLY);
-	if (fd < 0 || fstat(fd, &st)) {
-		perror(argv[2]);
-		return 1;
-	}
+	fd = xopen(argv[2], O_RDONLY);
+	if (fstat(fd, &st) < 0)
+		die_errno("fstat(%s)", argv[2]);
 	from_size = st.st_size;
 	from_buf = xmalloc(from_size);
-	if (read_in_full(fd, from_buf, from_size) < 0) {
-		perror(argv[2]);
-		close(fd);
-		goto cleanup;
-	}
+	if (read_in_full(fd, from_buf, from_size) < 0)
+		die_errno("read(%s)", argv[2]);
 	close(fd);
 
-	fd = open(argv[3], O_RDONLY);
-	if (fd < 0 || fstat(fd, &st)) {
-		perror(argv[3]);
-		goto cleanup;
-	}
+	fd = xopen(argv[3], O_RDONLY);
+	if (fstat(fd, &st) < 0)
+		die_errno("fstat(%s)", argv[3]);
 	data_size = st.st_size;
 	data_buf = xmalloc(data_size);
-	if (read_in_full(fd, data_buf, data_size) < 0) {
-		perror(argv[3]);
-		close(fd);
-		goto cleanup;
-	}
+	if (read_in_full(fd, data_buf, data_size) < 0)
+		die_errno("read(%s)", argv[3]);
 	close(fd);
 
 	if (argv[1][1] == 'd')
@@ -64,22 +51,16 @@ int cmd__delta(int argc, const char **argv)
 		out_buf = patch_delta(from_buf, from_size,
 				      data_buf, data_size,
 				      &out_size);
-	if (!out_buf) {
-		fprintf(stderr, "delta operation failed (returned NULL)\n");
-		goto cleanup;
-	}
+	if (!out_buf)
+		die("delta operation failed (returned NULL)");
 
-	fd = open (argv[4], O_WRONLY|O_CREAT|O_TRUNC, 0666);
-	if (fd < 0 || write_in_full(fd, out_buf, out_size) < 0) {
-		perror(argv[4]);
-		goto cleanup;
-	}
+	fd = xopen(argv[4], O_WRONLY|O_CREAT|O_TRUNC, 0666);
+	if (write_in_full(fd, out_buf, out_size) < 0)
+		die_errno("write(%s)", argv[4]);
 
-	ret = 0;
-cleanup:
 	free(from_buf);
 	free(data_buf);
 	free(out_buf);
 
-	return ret;
+	return 0;
 }
