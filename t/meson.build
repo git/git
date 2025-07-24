@@ -28,7 +28,7 @@ clar_sources = [
   'unit-tests/clar/clar.c',
   'unit-tests/unit-test.c',
   'unit-tests/lib-oid.c',
-  'unit-tests/lib-reftable-clar.c'
+  'unit-tests/lib-reftable.c'
 ]
 
 clar_decls_h = custom_target(
@@ -61,25 +61,6 @@ clar_unit_tests = executable('unit-tests',
   dependencies: [libgit_commonmain],
 )
 test('unit-tests', clar_unit_tests)
-
-unit_test_programs = [
-]
-
-foreach unit_test_program : unit_test_programs
-  unit_test_name = fs.stem(unit_test_program)
-  unit_test = executable(unit_test_name,
-    sources: [
-      'unit-tests/test-lib.c',
-      'unit-tests/lib-reftable.c',
-      unit_test_program,
-    ],
-    dependencies: [libgit_commonmain],
-  )
-  test(unit_test_name, unit_test,
-    workdir: meson.current_source_dir(),
-    timeout: 0,
-  )
-endforeach
 
 subdir('helper')
 
