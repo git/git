@@ -90,7 +90,8 @@ static char *opt_ff;
 static const char *opt_verify_signatures;
 static const char *opt_verify;
 static int opt_autostash = -1;
-static int config_autostash;
+static int config_rebase_autostash;
+static int config_pull_autostash = -1;
 static int check_trust_level = 1;
 static struct strvec opt_strategies = STRVEC_INIT;
 static struct strvec opt_strategy_opts = STRVEC_INIT;
@@ -367,7 +368,18 @@ static int git_pull_config(const char *var, const char *value,
 			   const struct config_context *ctx, void *cb)
 {
 	if (!strcmp(var, "rebase.autostash")) {
-		config_autostash = git_config_bool(var, value);
+		/*
+		 * run_rebase() also reads this option. The reason we handle it here is
+		 * that when pull.rebase is true, a fast-forward may occur without
+		 * invoking run_rebase(). We need to ensure that autostash is set even
+		 * in the fast-forward case.
+		 *
+		 * run_merge() handles merge.autostash, so we don't handle it here.
+		 */
+		config_rebase_autostash = git_config_bool(var, value);
+		return 0;
+	} else if (!strcmp(var, "pull.autostash")) {
+		config_pull_autostash = git_config_bool(var, value);
 		return 0;
 	} else if (!strcmp(var, "submodule.recurse")) {
 		recurse_submodules = git_config_bool(var, value) ?
@@ -1006,6 +1018,8 @@ int cmd_pull(int argc,
 	}
 
 	argc = parse_options(argc, argv, prefix, pull_options, pull_usage, 0);
+	if (opt_autostash == -1)
+		opt_autostash = config_pull_autostash;
 
 	if (recurse_submodules_cli != RECURSE_SUBMODULES_DEFAULT)
 		recurse_submodules = recurse_submodules_cli;
@@ -1052,7 +1066,7 @@ int cmd_pull(int argc,
 
 	if (opt_rebase) {
 		if (opt_autostash == -1)
-			opt_autostash = config_autostash;
+			opt_autostash = config_rebase_autostash;
 
 		if (is_null_oid(&orig_head) && !is_index_unborn(the_repository->index))
 			die(_("Updating an unborn branch with changes added to the index."));
