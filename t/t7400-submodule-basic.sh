@@ -1500,7 +1500,8 @@ test_expect_success 'submodule add fails when name is reused' '
 		# Now adding a *new* repo at the old name must fail
 		git init ../child2-origin &&
 		git -C ../child2-origin commit --allow-empty -m init &&
-		test_must_fail git submodule add ../child2-origin child
+		test_must_fail git submodule add ../child2-origin child 2>err &&
+		test_grep "already used for" err
 	)
 '
 

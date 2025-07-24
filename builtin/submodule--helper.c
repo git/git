@@ -3459,7 +3459,6 @@ static int module_add(int argc, const char **argv, const char *prefix,
 	char *to_free = NULL;
 	const struct submodule *existing;
 	struct strbuf buf = STRBUF_INIT;
-	int i;
 	char *sm_name_to_free = NULL;
 	struct option options[] = {
 		OPT_STRING('b', "branch", &add_data.branch, N_("branch"),
@@ -3570,10 +3569,10 @@ static int module_add(int argc, const char **argv, const char *prefix,
 	if (existing && strcmp(existing->path, add_data.sm_path)) {
 		if (!force) {
 			die(_("submodule name '%s' already used for path '%s'"),
-			add_data.sm_name, existing->path);
+			    add_data.sm_name, existing->path);
 		}
 		/* --force: build <name><n> until unique */
-		for (i = 1; ; i++) {
+		for (int i = 1; ; i++) {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "%s%d", add_data.sm_name, i);
 			if (!submodule_from_name(the_repository,
