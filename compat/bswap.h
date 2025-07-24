@@ -32,77 +32,34 @@ static inline uint64_t default_bswap64(uint64_t val)
 		((val & (uint64_t)0xff00000000000000ULL) >> 56));
 }
 
+/*
+ * __has_builtin is available since Clang 10 and GCC 10.
+ * Below is a fallback for older compilers.
+ */
+#ifndef __has_builtin
+# define __has_builtin(x) 0
+#endif
+
 #undef bswap32
 #undef bswap64
 
-#if defined(__GNUC__) && (defined(__i386__) || defined(__x86_64__))
-
-#define bswap32 git_bswap32
-static inline uint32_t git_bswap32(uint32_t x)
-{
-	uint32_t result;
-	if (__builtin_constant_p(x))
-		result = default_swab32(x);
-	else
-		__asm__("bswap %0" : "=r" (result) : "0" (x));
-	return result;
-}
-
-#define bswap64 git_bswap64
-#if defined(__x86_64__)
-static inline uint64_t git_bswap64(uint64_t x)
-{
-	uint64_t result;
-	if (__builtin_constant_p(x))
-		result = default_bswap64(x);
-	else
-		__asm__("bswap %q0" : "=r" (result) : "0" (x));
-	return result;
-}
-#else
-static inline uint64_t git_bswap64(uint64_t x)
-{
-	union { uint64_t i64; uint32_t i32[2]; } tmp, result;
-	if (__builtin_constant_p(x))
-		result.i64 = default_bswap64(x);
-	else {
-		tmp.i64 = x;
-		result.i32[0] = git_bswap32(tmp.i32[1]);
-		result.i32[1] = git_bswap32(tmp.i32[0]);
-	}
-	return result.i64;
-}
-#endif
-
-#elif defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64) || defined(_M_ARM64))
+#if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_X64) || defined(_M_ARM64))
 
 #include <stdlib.h>
 
 #define bswap32(x) _byteswap_ulong(x)
 #define bswap64(x) _byteswap_uint64(x)
 
+#define GIT_LITTLE_ENDIAN 1234
+#define GIT_BIG_ENDIAN 4321
+#define GIT_BYTE_ORDER GIT_LITTLE_ENDIAN
+
+#elif __has_builtin(__builtin_bswap32) && __has_builtin(__builtin_bswap64)
+
+#define bswap32(x) __builtin_bswap32((x))
+#define bswap64(x) __builtin_bswap64((x))
+
 #endif
-
-#if defined(bswap32)
-
-#undef ntohl
-#undef htonl
-#define ntohl(x) bswap32(x)
-#define htonl(x) bswap32(x)
-
-#endif
-
-#if defined(bswap64)
-
-#undef ntohll
-#undef htonll
-#define ntohll(x) bswap64(x)
-#define htonll(x) bswap64(x)
-
-#else
-
-#undef ntohll
-#undef htonll
 
 #if defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && defined(__BIG_ENDIAN)
 
@@ -116,7 +73,13 @@ static inline uint64_t git_bswap64(uint64_t x)
 # define GIT_LITTLE_ENDIAN LITTLE_ENDIAN
 # define GIT_BIG_ENDIAN BIG_ENDIAN
 
-#else
+#elif defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__) && defined(__ORDER_BIG_ENDIAN__)
+
+# define GIT_BYTE_ORDER __BYTE_ORDER__
+# define GIT_LITTLE_ENDIAN __ORDER_LITTLE_ENDIAN__
+# define GIT_BIG_ENDIAN __ORDER_BIG_ENDIAN__
+
+#elif !defined(GIT_BYTE_ORDER)
 
 # define GIT_BIG_ENDIAN 4321
 # define GIT_LITTLE_ENDIAN 1234
@@ -135,14 +98,33 @@ static inline uint64_t git_bswap64(uint64_t x)
 
 #endif
 
-#if GIT_BYTE_ORDER == GIT_BIG_ENDIAN
-# define ntohll(n) (n)
-# define htonll(n) (n)
-#else
-# define ntohll(n) default_bswap64(n)
-# define htonll(n) default_bswap64(n)
-#endif
+#undef ntohl
+#undef htonl
+#undef ntohll
+#undef htonll
 
+#if GIT_BYTE_ORDER == GIT_BIG_ENDIAN
+# define ntohl(x) (x)
+# define htonl(x) (x)
+# define ntohll(x) (x)
+# define htonll(x) (x)
+#else
+
+# if defined(bswap32)
+#  define ntohl(x) bswap32(x)
+#  define htonl(x) bswap32(x)
+# else
+#  define ntohl(x) default_swab32(x)
+#  define htonl(x) default_swab32(x)
+# endif
+
+# if defined(bswap64)
+#  define ntohll(x) bswap64(x)
+#  define htonll(x) bswap64(x)
+# else
+#  define ntohll(x) default_bswap64(x)
+#  define htonll(x) default_bswap64(x)
+# endif
 #endif
 
 static inline uint16_t get_be16(const void *ptr)
