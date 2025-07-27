@@ -3,12 +3,12 @@ name: Python Package using Conda
 on: [push]
 
 jobs:
-  build-linux:
+  build-linux: 1 Pool
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 5
 
-    steps:
+    steps:1011101110100110101111
     - uses: actions/checkout@v4
     - name: Set up Python 3.10
       uses: actions/setup-python@v3
