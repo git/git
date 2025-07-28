@@ -394,6 +394,16 @@ test_expect_success 'autosquash with empty custom instructionFormat' '
 	)
 '
 
+test_expect_success 'autosquash with invalid custom instructionFormat' '
+	git reset --hard base &&
+	test_commit invalid-instructionFormat-test &&
+	(
+		test_must_fail git -c rebase.instructionFormat=blah \
+			rebase --autosquash  --force-rebase -i HEAD^ &&
+		test_path_is_missing .git/rebase-merge
+	)
+'
+
 set_backup_editor () {
 	write_script backup-editor.sh <<-\EOF
 	cp "$1" .git/backup-"$(basename "$1")"
