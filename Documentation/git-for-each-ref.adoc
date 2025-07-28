@@ -114,7 +114,8 @@ TAB %(refname)`.
     deleted, modified or added between invocations. Output will only yield those
     references which follow the marker lexicographically. Output begins from the
     first reference that would come after the marker alphabetically. Cannot be
-    used with general pattern matching or custom sort options.
+    used with `--sort=<key>` or `--stdin` options, or the _<pattern>_ argument(s)
+    to limit the refs.
 
 FIELD NAMES
 -----------
