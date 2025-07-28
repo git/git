@@ -29,8 +29,6 @@ Switching branches does not require a clean index and working tree
 however if the operation leads to loss of local changes, unless told
 otherwise with `--discard-changes` or `--merge`.
 
-THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
-
 OPTIONS
 -------
 _<branch>_::
