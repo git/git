@@ -401,7 +401,6 @@ void close_midx(struct multi_pack_index *m)
 	if (!m)
 		return;
 
-	close_midx(m->next);
 	close_midx(m->base_midx);
 
 	munmap((unsigned char *)m->data, m->data_len);
@@ -724,32 +723,20 @@ int midx_preferred_pack(struct multi_pack_index *m, uint32_t *pack_int_id)
 	return 0;
 }
 
-int prepare_multi_pack_index_one(struct repository *r, const char *object_dir, int local)
+int prepare_multi_pack_index_one(struct odb_source *source, int local)
 {
-	struct multi_pack_index *m;
-	struct multi_pack_index *m_search;
+	struct repository *r = source->odb->repo;
 
 	prepare_repo_settings(r);
 	if (!r->settings.core_multi_pack_index)
 		return 0;
 
-	for (m_search = r->objects->multi_pack_index; m_search; m_search = m_search->next)
-		if (!strcmp(object_dir, m_search->object_dir))
-			return 1;
-
-	m = load_multi_pack_index(r, object_dir, local);
-
-	if (m) {
-		struct multi_pack_index *mp = r->objects->multi_pack_index;
-		if (mp) {
-			m->next = mp->next;
-			mp->next = m;
-		} else
-			r->objects->multi_pack_index = m;
+	if (source->midx)
 		return 1;
-	}
 
-	return 0;
+	source->midx = load_multi_pack_index(r, source->path, local);
+
+	return !!source->midx;
 }
 
 int midx_checksum_valid(struct multi_pack_index *m)
@@ -834,9 +821,14 @@ void clear_midx_file(struct repository *r)
 
 	get_midx_filename(r->hash_algo, &midx, r->objects->sources->path);
 
-	if (r->objects && r->objects->multi_pack_index) {
-		close_midx(r->objects->multi_pack_index);
-		r->objects->multi_pack_index = NULL;
+	if (r->objects) {
+		struct odb_source *source;
+
+		for (source = r->objects->sources; source; source = source->next) {
+			if (source->midx)
+				close_midx(source->midx);
+			source->midx = NULL;
+		}
 	}
 
 	if (remove_path(midx.buf))

@@ -361,6 +361,7 @@ void close_pack(struct packed_git *p)
 
 void close_object_store(struct object_database *o)
 {
+	struct odb_source *source;
 	struct packed_git *p;
 
 	for (p = o->packed_git; p; p = p->next)
@@ -369,9 +370,10 @@ void close_object_store(struct object_database *o)
 		else
 			close_pack(p);
 
-	if (o->multi_pack_index) {
-		close_midx(o->multi_pack_index);
-		o->multi_pack_index = NULL;
+	for (source = o->sources; source; source = source->next) {
+		if (source->midx)
+			close_midx(source->midx);
+		source->midx = NULL;
 	}
 
 	close_commit_graph(o);
@@ -933,22 +935,17 @@ static void prepare_pack(const char *full_name, size_t full_name_len,
 		report_garbage(PACKDIR_FILE_GARBAGE, full_name);
 }
 
-static void prepare_packed_git_one(struct repository *r, char *objdir, int local)
+static void prepare_packed_git_one(struct odb_source *source, int local)
 {
-	struct prepare_pack_data data;
 	struct string_list garbage = STRING_LIST_INIT_DUP;
+	struct prepare_pack_data data = {
+		.m = source->midx,
+		.r = source->odb->repo,
+		.garbage = &garbage,
+		.local = local,
+	};
 
-	data.m = r->objects->multi_pack_index;
-
-	/* look for the multi-pack-index for this object directory */
-	while (data.m && strcmp(data.m->object_dir, objdir))
-		data.m = data.m->next;
-
-	data.r = r;
-	data.garbage = &garbage;
-	data.local = local;
-
-	for_each_file_in_pack_dir(objdir, prepare_pack, &data);
+	for_each_file_in_pack_dir(source->path, prepare_pack, &data);
 
 	report_pack_garbage(data.garbage);
 	string_list_clear(data.garbage, 0);
@@ -965,14 +962,18 @@ static void prepare_packed_git(struct repository *r);
 unsigned long repo_approximate_object_count(struct repository *r)
 {
 	if (!r->objects->approximate_object_count_valid) {
-		unsigned long count;
-		struct multi_pack_index *m;
+		struct odb_source *source;
+		unsigned long count = 0;
 		struct packed_git *p;
 
 		prepare_packed_git(r);
-		count = 0;
-		for (m = get_multi_pack_index(r); m; m = m->next)
-			count += m->num_objects;
+
+		for (source = r->objects->sources; source; source = source->next) {
+			struct multi_pack_index *m = get_multi_pack_index(source);
+			if (m)
+				count += m->num_objects;
+		}
+
 		for (p = r->objects->packed_git; p; p = p->next) {
 			if (open_pack_index(p))
 				continue;
@@ -1037,8 +1038,8 @@ static void prepare_packed_git(struct repository *r)
 	odb_prepare_alternates(r->objects);
 	for (source = r->objects->sources; source; source = source->next) {
 		int local = (source == r->objects->sources);
-		prepare_multi_pack_index_one(r, source->path, local);
-		prepare_packed_git_one(r, source->path, local);
+		prepare_multi_pack_index_one(source, local);
+		prepare_packed_git_one(source, local);
 	}
 	rearrange_packed_git(r);
 
@@ -1076,31 +1077,21 @@ struct packed_git *get_packed_git(struct repository *r)
 	return r->objects->packed_git;
 }
 
-struct multi_pack_index *get_multi_pack_index(struct repository *r)
+struct multi_pack_index *get_multi_pack_index(struct odb_source *source)
 {
-	prepare_packed_git(r);
-	return r->objects->multi_pack_index;
-}
-
-struct multi_pack_index *get_local_multi_pack_index(struct repository *r)
-{
-	struct multi_pack_index *m = get_multi_pack_index(r);
-
-	/* no need to iterate; we always put the local one first (if any) */
-	if (m && m->local)
-		return m;
-
-	return NULL;
+	prepare_packed_git(source->odb->repo);
+	return source->midx;
 }
 
 struct packed_git *get_all_packs(struct repository *r)
 {
-	struct multi_pack_index *m;
-
 	prepare_packed_git(r);
-	for (m = r->objects->multi_pack_index; m; m = m->next) {
-		uint32_t i;
-		for (i = 0; i < m->num_packs + m->num_packs_in_base; i++)
+
+	for (struct odb_source *source = r->objects->sources; source; source = source->next) {
+		struct multi_pack_index *m = source->midx;
+		if (!m)
+			continue;
+		for (uint32_t i = 0; i < m->num_packs + m->num_packs_in_base; i++)
 			prepare_midx_pack(r, m, i);
 	}
 
@@ -2083,16 +2074,15 @@ static int fill_pack_entry(const struct object_id *oid,
 int find_pack_entry(struct repository *r, const struct object_id *oid, struct pack_entry *e)
 {
 	struct list_head *pos;
-	struct multi_pack_index *m;
 
 	prepare_packed_git(r);
-	if (!r->objects->packed_git && !r->objects->multi_pack_index)
-		return 0;
 
-	for (m = r->objects->multi_pack_index; m; m = m->next) {
-		if (fill_midx_entry(r, oid, e, m))
+	for (struct odb_source *source = r->objects->sources; source; source = source->next)
+		if (source->midx && fill_midx_entry(r, oid, e, source->midx))
 			return 1;
-	}
+
+	if (!r->objects->packed_git)
+		return 0;
 
 	list_for_each(pos, &r->objects->packed_git_mru) {
 		struct packed_git *p = list_entry(pos, struct packed_git, mru);

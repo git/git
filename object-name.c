@@ -199,16 +199,20 @@ static void unique_in_pack(struct packed_git *p,
 
 static void find_short_packed_object(struct disambiguate_state *ds)
 {
-	struct multi_pack_index *m;
+	struct odb_source *source;
 	struct packed_git *p;
 
 	/* Skip, unless oids from the storage hash algorithm are wanted */
 	if (ds->bin_pfx.algo && (&hash_algos[ds->bin_pfx.algo] != ds->repo->hash_algo))
 		return;
 
-	for (m = get_multi_pack_index(ds->repo); m && !ds->ambiguous;
-	     m = m->next)
-		unique_in_midx(m, ds);
+	odb_prepare_alternates(ds->repo->objects);
+	for (source = ds->repo->objects->sources; source && !ds->ambiguous; source = source->next) {
+		struct multi_pack_index *m = get_multi_pack_index(source);
+		if (m)
+			unique_in_midx(m, ds);
+	}
+
 	for (p = get_packed_git(ds->repo); p && !ds->ambiguous;
 	     p = p->next)
 		unique_in_pack(p, ds);
@@ -793,11 +797,15 @@ static void find_abbrev_len_for_pack(struct packed_git *p,
 
 static void find_abbrev_len_packed(struct min_abbrev_data *mad)
 {
-	struct multi_pack_index *m;
 	struct packed_git *p;
 
-	for (m = get_multi_pack_index(mad->repo); m; m = m->next)
-		find_abbrev_len_for_midx(m, mad);
+	odb_prepare_alternates(mad->repo->objects);
+	for (struct odb_source *source = mad->repo->objects->sources; source; source = source->next) {
+		struct multi_pack_index *m = get_multi_pack_index(source);
+		if (m)
+			find_abbrev_len_for_midx(m, mad);
+	}
+
 	for (p = get_packed_git(mad->repo); p; p = p->next)
 		find_abbrev_len_for_pack(p, mad);
 }
