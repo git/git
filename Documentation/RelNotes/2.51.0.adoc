@@ -103,6 +103,10 @@ Performance, Internal Implementation, Development Support etc.
  * GIT_TEST_INSTALLED was not honored in the recent topic related to
    SHA256 hashes, which has been corrected.
 
+ * The pop_most_recent_commit() function can have quite expensive
+   worst case performance characteristics, which has been optimized by
+   using prio-queue data structure.
+
 
 Fixes since v2.50
 -----------------
@@ -224,6 +228,11 @@ including security updates, are included in this release.
  * Document that we do not require "real" name when signing your
    patches off.
    (merge 1f0fed312a bc/contribution-under-non-real-names later to maint).
+
+ * "git commit" that concludes a conflicted merge failed to notice and remove
+   existing comment added automatically (like "# Conflicts:") when the
+   core.commentstring is set to 'auto'.
+   (merge 92b7c7c9f5 ac/auto-comment-char-fix later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge b257adb571 lo/my-first-ow-doc-update later to maint).
