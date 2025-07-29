@@ -39,9 +39,9 @@ static int use_sideband_colors(void)
 	if (use_sideband_colors_cached >= 0)
 		return use_sideband_colors_cached;
 
-	if (!git_config_get_string_tmp(key, &value))
+	if (!repo_config_get_string_tmp(the_repository, key, &value))
 		use_sideband_colors_cached = git_config_colorbool(key, value);
-	else if (!git_config_get_string_tmp("color.ui", &value))
+	else if (!repo_config_get_string_tmp(the_repository, "color.ui", &value))
 		use_sideband_colors_cached = git_config_colorbool("color.ui", value);
 	else
 		use_sideband_colors_cached = GIT_COLOR_AUTO;
@@ -49,7 +49,7 @@ static int use_sideband_colors(void)
 	for (i = 0; i < ARRAY_SIZE(keywords); i++) {
 		strbuf_reset(&sb);
 		strbuf_addf(&sb, "%s.%s", key, keywords[i].keyword);
-		if (git_config_get_string_tmp(sb.buf, &value))
+		if (repo_config_get_string_tmp(the_repository, sb.buf, &value))
 			continue;
 		color_parse(value, keywords[i].color);
 	}

@@ -5,6 +5,7 @@
 #include "abspath.h"
 #include "config.h"
 #include "copy.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "lockfile.h"
@@ -877,9 +878,9 @@ static int do_plain_rerere(struct repository *r,
 
 static void git_rerere_config(void)
 {
-	git_config_get_bool("rerere.enabled", &rerere_enabled);
-	git_config_get_bool("rerere.autoupdate", &rerere_autoupdate);
-	git_config(git_default_config, NULL);
+	repo_config_get_bool(the_repository, "rerere.enabled", &rerere_enabled);
+	repo_config_get_bool(the_repository, "rerere.autoupdate", &rerere_autoupdate);
+	repo_config(the_repository, git_default_config, NULL);
 }
 
 static GIT_PATH_FUNC(git_path_rr_cache, "rr-cache")
@@ -1247,7 +1248,7 @@ void rerere_gc(struct repository *r, struct string_list *rr)
 				       &cutoff_resolve, now);
 	repo_config_get_expiry_in_days(the_repository, "gc.rerereunresolved",
 				       &cutoff_noresolve, now);
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	dir = opendir(repo_git_path_replace(the_repository, &buf, "rr-cache"));
 	if (!dir)
 		die_errno(_("unable to open rr-cache directory"));

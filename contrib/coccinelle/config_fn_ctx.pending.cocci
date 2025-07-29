@@ -83,7 +83,7 @@ int fn(const char *C1, const char *C2,
 
 
 // The previous rules don't catch all callbacks, especially if they're defined
-// in a separate file from the git_config() call. Fix these manually.
+// in a separate file from the repo_config() call. Fix these manually.
 @@
 identifier C1, C2, D;
 attribute name UNUSED;

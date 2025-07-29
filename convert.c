@@ -1326,7 +1326,7 @@ void convert_attrs(struct index_state *istate,
 					 "eol", "text", "working-tree-encoding",
 					 NULL);
 		user_convert_tail = &user_convert;
-		git_config(read_convert_config, NULL);
+		repo_config(the_repository, read_convert_config, NULL);
 	}
 
 	git_check_attr(istate, path, check);

@@ -1620,7 +1620,7 @@ void exclude_hidden_refs(struct ref_exclusions *exclusions, const char *section)
 	cb.exclusions = exclusions;
 	cb.section = section;
 
-	git_config(hide_refs_config, &cb);
+	repo_config(the_repository, hide_refs_config, &cb);
 }
 
 struct all_refs_cb {

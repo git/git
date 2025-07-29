@@ -9,6 +9,7 @@
 
 #include "builtin.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "refs.h"
@@ -1361,7 +1362,7 @@ int cmd_fast_export(int argc,
 		usage_with_options (fast_export_usage, options);
 
 	/* we handle encodings */
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	repo_init_revisions(the_repository, &revs, prefix);
 	init_revision_sources(&revision_sources);

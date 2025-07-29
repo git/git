@@ -7,6 +7,7 @@
 #include "builtin.h"
 
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "object-name.h"
@@ -375,7 +376,7 @@ int cmd_ls_tree(int argc,
 	struct object_context obj_context = {0};
 	int ret;
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, ls_tree_options,
 			     ls_tree_usage, 0);

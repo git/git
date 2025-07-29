@@ -11,6 +11,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "convert.h"
+#include "environment.h"
 #include "quote.h"
 #include "dir.h"
 #include "gettext.h"

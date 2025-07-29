@@ -221,7 +221,7 @@ static void set_default_decoration_filter(struct decoration_filter *decoration_f
 	struct string_list *include = decoration_filter->include_ref_pattern;
 	const struct string_list *config_exclude;
 
-	if (!git_config_get_string_multi("log.excludeDecoration",
+	if (!repo_config_get_string_multi(the_repository, "log.excludeDecoration",
 					 &config_exclude)) {
 		struct string_list_item *item;
 		for_each_string_list_item(item, config_exclude)
@@ -235,7 +235,7 @@ static void set_default_decoration_filter(struct decoration_filter *decoration_f
 	 * since the command-line takes precedent.
 	 */
 	if (use_default_decoration_filter &&
-	    !git_config_get_string("log.initialdecorationset", &value) &&
+	    !repo_config_get_string(the_repository, "log.initialdecorationset", &value) &&
 	    !strcmp("all", value))
 		use_default_decoration_filter = 0;
 	free(value);
@@ -530,10 +530,10 @@ int cmd_whatchanged(int argc,
 
 	log_config_init(&cfg);
 	init_diff_ui_defaults();
-	git_config(git_log_config, &cfg);
+	repo_config(the_repository, git_log_config, &cfg);
 
 	repo_init_revisions(the_repository, &rev, prefix);
-	git_config(grep_config, &rev.grep_filter);
+	repo_config(the_repository, grep_config, &rev.grep_filter);
 
 	rev.diff = 1;
 	rev.simplify_history = 0;
@@ -661,7 +661,7 @@ int cmd_show(int argc,
 
 	log_config_init(&cfg);
 	init_diff_ui_defaults();
-	git_config(git_log_config, &cfg);
+	repo_config(the_repository, git_log_config, &cfg);
 
 	if (the_repository->gitdir) {
 		prepare_repo_settings(the_repository);
@@ -670,7 +670,7 @@ int cmd_show(int argc,
 
 	memset(&match_all, 0, sizeof(match_all));
 	repo_init_revisions(the_repository, &rev, prefix);
-	git_config(grep_config, &rev.grep_filter);
+	repo_config(the_repository, grep_config, &rev.grep_filter);
 
 	rev.diff = 1;
 	rev.always_show_header = 1;
@@ -778,11 +778,11 @@ int cmd_log_reflog(int argc,
 
 	log_config_init(&cfg);
 	init_diff_ui_defaults();
-	git_config(git_log_config, &cfg);
+	repo_config(the_repository, git_log_config, &cfg);
 
 	repo_init_revisions(the_repository, &rev, prefix);
 	init_reflog_walk(&rev.reflog_info);
-	git_config(grep_config, &rev.grep_filter);
+	repo_config(the_repository, grep_config, &rev.grep_filter);
 
 	rev.verbose_header = 1;
 	memset(&opt, 0, sizeof(opt));
@@ -823,10 +823,10 @@ int cmd_log(int argc,
 
 	log_config_init(&cfg);
 	init_diff_ui_defaults();
-	git_config(git_log_config, &cfg);
+	repo_config(the_repository, git_log_config, &cfg);
 
 	repo_init_revisions(the_repository, &rev, prefix);
-	git_config(grep_config, &rev.grep_filter);
+	repo_config(the_repository, grep_config, &rev.grep_filter);
 
 	rev.always_show_header = 1;
 	memset(&opt, 0, sizeof(opt));
@@ -2029,9 +2029,9 @@ int cmd_format_patch(int argc,
 	format_config_init(&cfg);
 	init_diff_ui_defaults();
 	init_display_notes(&cfg.notes_opt);
-	git_config(git_format_config, &cfg);
+	repo_config(the_repository, git_format_config, &cfg);
 	repo_init_revisions(the_repository, &rev, prefix);
-	git_config(grep_config, &rev.grep_filter);
+	repo_config(the_repository, grep_config, &rev.grep_filter);
 
 	rev.show_notes = cfg.show_notes;
 	memcpy(&rev.notes_opt, &cfg.notes_opt, sizeof(cfg.notes_opt));
