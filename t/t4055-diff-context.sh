@@ -47,43 +47,43 @@ test_expect_success 'the default number of context lines is 3' '
 test_expect_success 'diff.context honored by "log"' '
 	git log -1 -p >output &&
 	test_grep ! firstline output &&
-	git config diff.context 8 &&
+	test_config diff.context 8 &&
 	git log -1 -p >output &&
 	test_grep "^ firstline" output
 '
 
 test_expect_success 'The -U option overrides diff.context' '
-	git config diff.context 8 &&
+	test_config diff.context 8 &&
 	git log -U4 -1 >output &&
 	test_grep ! "^ firstline" output
 '
 
 test_expect_success 'diff.context honored by "diff"' '
-	git config diff.context 8 &&
+	test_config diff.context 8 &&
 	git diff >output &&
 	test_grep "^ firstline" output
 '
 
 test_expect_success 'plumbing not affected' '
-	git config diff.context 8 &&
+	test_config diff.context 8 &&
 	git diff-files -p >output &&
 	test_grep ! "^ firstline" output
 '
 
 test_expect_success 'non-integer config parsing' '
-	git config diff.context no &&
+	test_config diff.context no &&
 	test_must_fail git diff 2>output &&
 	test_grep "bad numeric config value" output
 '
 
 test_expect_success 'negative integer config parsing' '
-	git config diff.context -1 &&
+	test_config diff.context -1 &&
 	test_must_fail git diff 2>output &&
 	test_grep "bad config variable" output
 '
 
 test_expect_success '-U0 is valid, so is diff.context=0' '
-	git config diff.context 0 &&
+	test_config diff.context 0 &&
 	git diff >output &&
 	test_grep "^-ADDED" output &&
 	test_grep "^+MODIFIED" output
