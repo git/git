@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2025, #07; Thu, 24)
-X-master-at: 97e14d99f6def189b0f786ac6207b792ca3197b1
-X-next-at: c32cd1483be90fa6182845f8d9c0c74dc287cc37
+Subject: What's cooking in git.git (Jul 2025, #08; Mon, 28)
+X-master-at: e813a0200a7121b97fec535f0d0b460b0a33356c
+X-next-at: 074bbf1d35d2c7b5734afbda4e3d569305a93f57
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jul 2025, #07; Thu, 24)
+What's cooking in git.git (Jul 2025, #08; Mon, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,65 +46,185 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* cc/fast-import-export-signature-names (2025-07-09) 1 commit
-  (merged to 'next' on 2025-07-15 at a6a173da68)
- + fast-(import|export): improve on commit signature output format
-
- Clean up the way how signature on commit objects are exported to
- and imported from fast-import stream.
- cf. <CABPp-BHM5afgiUf7GsTPWmrf_tm6mWnvHWMKiZPxApJzN-U8gg@mail.gmail.com>
- source: <20250709141253.623563-1-christian.couder@gmail.com>
-
-
-* ly/changed-paths-traversal (2025-07-14) 5 commits
-  (merged to 'next' on 2025-07-15 at 45fdb67b92)
- + bloom: optimize multiple pathspec items in revision
- + revision: make helper for pathspec to bloom keyvec
- + bloom: replace struct bloom_key * with struct bloom_keyvec
- + bloom: rename function operates on bloom_key
- + bloom: add test helper to return murmur3 hash
-
- Lift the limitation to use changed-path filter in "git log" so that
- it can be used for a pathspec with multiple literal paths.
- source: <20250712093517.17907-1-yldhome2d2@gmail.com>
-
-
-* ps/sane-ctype-workaround (2025-07-09) 1 commit
-  (merged to 'next' on 2025-07-15 at 21b79228e3)
- + sane-ctype: fix compiler error on Amazon Linux 2
-
- Our <sane-ctype.h> header file relied on that the system-supplied
- <ctype.h> header is not later included, which would override our
- macro definitions, but "amazon linux" broke this assumption.  Fix
- this by preemptively including <ctype.h> near the beginning of
- <sane-ctype.h> ourselves.
- source: <fabacc9bc7ef7d462d1c7198d5edc18c76b82270.1752139420.git.ps@pks.im>
-
---------------------------------------------------
 [New Topics]
 
+* am/xdiff-hash-tweak (2025-07-28) 3 commits
+ - fixup! xdiff: optimize xdl_hash_record_verbatim
+ - xdiff: optimize xdl_hash_record_verbatim
+ - xdiff: refactor xdl_hash_record()
+
+ source: <20250728190520.10962-1-amonakov@ispras.ru>
+
+
+* cc/t9350-cleanup (2025-07-25) 1 commit
+ - t9350: redirect input to only fast-import
+
+ Test clean-up.
+
+ Will merge to 'next'.
+ source: <20250725160536.2909011-1-christian.couder@gmail.com>
+
+
+* hy/blame-simplify-get-commit-info (2025-07-27) 1 commit
+ - blame: remove parameter detailed in get_commit_info()
+
+ Code simplification.
+
+ Will merge to 'next'.
+ source: <20250728035548.94277-1-hanyang.tony@bytedance.com>
+
+
+* kn/for-each-ref-skip-updates (2025-07-28) 5 commits
+ - ref-filter: use REF_ITERATOR_SEEK_SET_PREFIX instead of '1'
+ - t6302: add test combining '--start-after' with '--exclude'
+ - for-each-ref: reword the documentation for '--start-after'
+ - for-each-ref: fix documentation argument ordering
+ - ref-cache: use 'size_t' instead of int for length
+ (this branch uses kn/for-each-ref-skip.)
+
+ Code clean-up.
+
+ Will merge to 'next'?
+ source: <20250728-kn-small-cleanups-v2-0-d3021c8bf471@gmail.com>
+
+
+* ps/remote-rename-fix (2025-07-28) 5 commits
+ - builtin/remote: only iterate through refs that are to be renamed
+ - builtin/remote: rework how remote refs get renamed
+ - refs: simplify logic when migrating reflog entries
+ - refs: pass refname when invoking reflog entry callback
+ - Merge branch 'ps/reflog-migrate-fixes' into ps/remote-rename-fix
+ (this branch uses ps/reflog-migrate-fixes.)
+
+ "git remote rename origin upstream" failed to move origin/HEAD to
+ upstream/HEAD when origin/HEAD is unborn and performed other
+ renames extremely inefficiently, which has been corrected.
+
+ Will merge to 'next'?
+ source: <20250728-pks-remote-rename-improvements-v1-0-f654f2b5c5ae@pks.im>
+
+
+* rs/tighten-alias-help (2025-07-25) 1 commit
+ - git: show alias info only with lone -h
+
+ "git -c alias.foo=bar foo -h baz" reported "'foo' is aliased to
+ 'bar'" and then went on to do "git foo -h baz", which was
+ unexpected.  Tighten the rule so that alias expansion is reported
+ only when "-h" is the sole option.
+
+ Will merge to 'next'?
+ source: <a35dc2bf-015c-472d-9528-6763f7aac180@web.de>
+
+--------------------------------------------------
+[Graduated to 'master']
+
+* ac/auto-comment-char-fix (2025-07-16) 2 commits
+  (merged to 'next' on 2025-07-21 at be3e6c3480)
+ + config: set comment_line_str to "#" when core.commentChar=auto
+ + commit: avoid scanning trailing comments when 'core.commentChar' is "auto"
+
+ "git commit" that concludes a conflicted merge failed to notice and remove
+ existing comment added automatically (like "# Conflicts:") when the
+ core.commentstring is set to 'auto'.
+ source: <cover.1752665506.git.ayu.chandekar@gmail.com>
+
+
+* bc/contribution-under-non-real-names (2025-07-15) 1 commit
+  (merged to 'next' on 2025-07-16 at 6ba607880d)
+ + SubmittingPatches: allow non-real name contributions
+
+ Document that we do not require "real" name when signing your
+ patches off.
+ source: <20250716002523.1392423-1-sandals@crustytoothpaste.net>
+
+
+* kl/test-installed-fix (2025-07-15) 2 commits
+  (merged to 'next' on 2025-07-16 at 512176f26c)
+ + test-lib: respect GIT_TEST_INSTALLED when querying default hash
+ + Merge branch 'bc/use-sha256-by-default-in-3.0' into kl/test-installed-fix
+
+ GIT_TEST_INSTALLED was not honored in the recent topic related to
+ SHA256 hashes, which has been corrected.
+ source: <pull.2011.git.git.1752605874596.gitgitgadget@gmail.com>
+
+
+* pw/adopt-c99-bool-officially (2025-07-16) 3 commits
+  (merged to 'next' on 2025-07-16 at 62afce02b7)
+ + strbuf: convert predicates to return bool
+ + git-compat-util: convert string predicates to return bool
+ + CodingGuidelines: allow the use of bool
+
+ Declare weather-balloon we raised for "bool" type 18 months ago a
+ success and officially allow using the type in our codebase.
+ source: <cover.1752658700.git.phillip.wood@dunelm.org.uk>
+
+
+* pw/config-kvi-remove-path (2025-07-15) 1 commit
+  (merged to 'next' on 2025-07-16 at 3203507b49)
+ + config: remove unneeded struct field
+
+ Remove a redundant member from kvi struct.
+ source: <31724ce432b19088b7c7643654788d8e712b3193.1752588042.git.phillip.wood@dunelm.org.uk>
+
+
+* rj/meson-libexecdir-fix (2025-07-15) 2 commits
+  (merged to 'next' on 2025-07-16 at 36c2be9510)
+ + po/meson.build: add missing 'ga' language code
+ + meson: fix installation when -Dlibexexdir is set
+
+ Meson-based build did not handle libexecdir setting correctly,
+ which has been corrected.
+ source: <20250715233239.1539780-1-ramsay@ramsayjones.plus.com>
+
+
+* rs/pop-recent-commit-with-prio-queue (2025-07-18) 3 commits
+  (merged to 'next' on 2025-07-22 at b859ed88ed)
+ + commit: use prio_queue_replace() in pop_most_recent_commit()
+ + prio-queue: add prio_queue_replace()
+ + commit: convert pop_most_recent_commit() to prio_queue
+
+ The pop_most_recent_commit() function can have quite expensive
+ worst case performance characteristics, which has been optimized by
+ using prio-queue data structure.
+ source: <8ff40c56-368a-4347-aeae-2aca2cb6a5b2@web.de>
+
+
+* ss/compat-bswap-revamp (2025-07-15) 6 commits
+  (merged to 'next' on 2025-07-16 at c8713eca28)
+ + bswap.h: provide a built-in based version of bswap32/64 if possible
+ + bswap.h: remove optimized x86 version of bswap32/64
+ + bswap.h: always overwrite ntohl/ ntohll macros
+ + bswap.h: define GIT_LITTLE_ENDIAN on msvc as little endian
+ + bswap.h: add support for __BYTE_ORDER__
+ + Merge branch 'ss/revert-builtin-bswap-stuff' into ss/compat-bswap-revamp
+
+ Clean-up compat/bswap.h mess.
+ cf. <aHbX4hIKbjO6h1R5@fruit.crustytoothpaste.net>
+ source: <20250715191230.12081-1-sebastian@breakpoint.cc>
+
+--------------------------------------------------
+[Cooking]
+
 * jc/document-test-balloons-in-flight (2025-07-23) 1 commit
- - CodingGuidelines: document test balloons in flight
+  (merged to 'next' on 2025-07-24 at c239410df9)
+ + CodingGuidelines: document test balloons in flight
 
  To help our developers, document what C99 language features are
  being considered for adoption, in addition to what past experiments
  have already decided.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqecu6n1pt.fsf@gitster.g>
 
---------------------------------------------------
-[Cooking]
 
 * ly/pull-autostash (2025-07-20) 1 commit
- - pull: add pull.autoStash config option
+  (merged to 'next' on 2025-07-24 at dd85f09d69)
+ + pull: add pull.autoStash config option
 
  "git pull" learned to pay attention to pull.autostash configuration
  variable, which overrides rebase/merge.autostash.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250720124334.12045-1-yldhome2d2@gmail.com>
 
 
@@ -120,11 +240,12 @@ Release tarballs are available at:
 
 
 * ag/imap-send-list-folders-doc (2025-07-22) 1 commit
- - docs: explain how to use `git imap-send --list` command to get a list of available folders
+  (merged to 'next' on 2025-07-24 at d7db48890b)
+ + docs: explain how to use `git imap-send --list` command to get a list of available folders
 
  Document recently added "git imap-send --list" with an example.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250722114827.22493-1-gargaditya08@live.com>
 
 
@@ -154,24 +275,30 @@ Release tarballs are available at:
  source: <pull.1943.git.1753197791.gitgitgadget@gmail.com>
 
 
-* hl/test-helper-fd-close (2025-07-22) 2 commits
- - t/helper/test-delta: fix possible resource leak and ensure safe cleanup
- - t/helper/test-truncate: close file descriptor after truncation
+* hl/test-helper-fd-close (2025-07-23) 4 commits
+  (merged to 'next' on 2025-07-28 at 1e63fd84fe)
+ + test-delta: close output descriptor after use
+ + test-delta: use strbufs to hold input files
+ + test-delta: handle errors with die()
+ + t/helper/test-truncate: close file descriptor after truncation
 
  A few file descriptors left unclosed upon program completion in a
  few test helper programs are now closed.
 
- Expecting a reroll.
- cf. <CAPig+cR-r=CeEaSTeWsX00MLCSRJUUVXMUWS6Ui-HQcR_qMGJA@mail.gmail.com>
+ Will merge to 'master'.
  source: <20250722174102.1876197-1-lhywkd22@gmail.com>
+ source: <20250723235929.GB592873@coredump.intra.peff.net>
 
 
-* jb/t7510-gpg-program-path (2025-07-22) 1 commit
- - t7510: add test cases for non-absolute gpg program
+* jb/t7510-gpg-program-path (2025-07-28) 2 commits
+ - t7510: Windows fix
+  (merged to 'next' on 2025-07-24 at eb8bc447f9)
+ + t7510: add test cases for non-absolute gpg program
 
  A new test to ensure that a recent change will keep working.
 
- Will merge to 'next'.
+ Broken on Windows.
+ cf. <20250725043043.GA3002998@coredump.intra.peff.net>
  source: <20250722190922.51183-3-jonas.brandstoetter@gmx.at>
 
 
@@ -206,18 +333,17 @@ Release tarballs are available at:
  source: <20250722-jk-fix-leak-reflog-expire-config-v4-1-b65a83551020@gmail.com>
 
 
-* jt/switch-restore-no-longer-experimental (2025-07-22) 2 commits
+* jt/switch-restore-no-longer-experimental (2025-07-28) 1 commit
  - builtin: unmark git-switch and git-restore as experimental
- - builtin: remove merge short flag for switch and restore
 
  Declare that "git switch" and "git restore" are no longer
  experimental.
 
- Expecting a reroll.
- source: <20250722180818.1043014-1-jltobler@gmail.com>
+ Will merge to 'next'.
+ source: <20250728194218.2379432-1-jltobler@gmail.com>
 
 
-* ps/reflog-migrate-fixes (2025-07-22) 8 commits
+* ps/reflog-migrate-fixes (2025-07-24) 8 commits
  - refs: fix invalid old object IDs when migrating reflogs
  - refs: stop unsetting REF_HAVE_OLD for log-only updates
  - refs: fix identity for migrated reflogs
@@ -226,81 +352,23 @@ Release tarballs are available at:
  - refs: export `ref_transaction_update_reflog()`
  - builtin/reflog: improve grouping of subcommands
  - Documentation/git-reflog: convert to use synopsis type
+ (this branch is used by ps/remote-rename-fix.)
 
  "git refs migrate" to migrate the reflog entries from a refs
  backend to another had a handful of bugs squashed.
 
- Expecting a reroll.
- cf. <j52ugdtik25i6dqgqafchvy5an3o7qbdfeavtqg6bcr2ouxvyv@qwtqzf7xk4hi>
- source: <20250722-pks-reflog-append-v1-0-183e5949de16@pks.im>
-
-
-* kl/test-installed-fix (2025-07-15) 2 commits
-  (merged to 'next' on 2025-07-16 at 512176f26c)
- + test-lib: respect GIT_TEST_INSTALLED when querying default hash
- + Merge branch 'bc/use-sha256-by-default-in-3.0' into kl/test-installed-fix
-
- GIT_TEST_INSTALLED was not honored in the recent topic related to
- SHA256 hashes, which has been corrected.
-
- Will merge to 'master'.
- source: <pull.2011.git.git.1752605874596.gitgitgadget@gmail.com>
-
-
-* pw/config-kvi-remove-path (2025-07-15) 1 commit
-  (merged to 'next' on 2025-07-16 at 3203507b49)
- + config: remove unneeded struct field
-
- Remove a redundant member from kvi struct.
-
- Will merge to 'master'.
- source: <31724ce432b19088b7c7643654788d8e712b3193.1752588042.git.phillip.wood@dunelm.org.uk>
-
-
-* rs/pop-recent-commit-with-prio-queue (2025-07-18) 3 commits
-  (merged to 'next' on 2025-07-22 at b859ed88ed)
- + commit: use prio_queue_replace() in pop_most_recent_commit()
- + prio-queue: add prio_queue_replace()
- + commit: convert pop_most_recent_commit() to prio_queue
-
- The pop_most_recent_commit() function can have quite expensive
- worst case performance characteristics, which has been optimized by
- using prio-queue data structure.
-
- Will merge to 'master'.
- source: <8ff40c56-368a-4347-aeae-2aca2cb6a5b2@web.de>
-
-
-* bc/contribution-under-non-real-names (2025-07-15) 1 commit
-  (merged to 'next' on 2025-07-16 at 6ba607880d)
- + SubmittingPatches: allow non-real name contributions
-
- Document that we do not require "real" name when signing your
- patches off.
-
- Will merge to 'master'.
- source: <20250716002523.1392423-1-sandals@crustytoothpaste.net>
+ Will merge to 'next'.
+ source: <20250725-pks-reflog-append-v2-0-e4e7cbe3f578@pks.im>
 
 
 * jc/ci-print-test-failures-fix (2025-07-16) 1 commit
- - ci: allow github-actions print test failures again
+  (merged to 'next' on 2025-07-24 at a1924c981b)
+ + ci: allow github-actions print test failures again
 
  CI fix.
 
- Will merge to 'next'.
- source: <xmqqa553alp1.fsf_-_@gitster.g>
-
-
-* rj/meson-libexecdir-fix (2025-07-15) 2 commits
-  (merged to 'next' on 2025-07-16 at 36c2be9510)
- + po/meson.build: add missing 'ga' language code
- + meson: fix installation when -Dlibexexdir is set
-
- Meson-based build did not handle libexecdir setting correctly,
- which has been corrected.
-
  Will merge to 'master'.
- source: <20250715233239.1539780-1-ramsay@ramsayjones.plus.com>
+ source: <xmqqa553alp1.fsf_-_@gitster.g>
 
 
 * ds/sparse-checkout-clean (2025-07-16) 9 commits
@@ -356,25 +424,13 @@ Release tarballs are available at:
 
 
 * cb/meson-avoid-broken-macos-pcre2 (2025-07-18) 1 commit
- - meson: work around broken system PCRE2 dependency in macOS
+  (merged to 'next' on 2025-07-24 at b8cea692a4)
+ + meson: work around broken system PCRE2 dependency in macOS
 
  Build fix for macOS.
 
- Will merge to 'next'.
- source: <20250718170225.6063-1-carenas@gmail.com>
-
-
-* pw/adopt-c99-bool-officially (2025-07-16) 3 commits
-  (merged to 'next' on 2025-07-16 at 62afce02b7)
- + strbuf: convert predicates to return bool
- + git-compat-util: convert string predicates to return bool
- + CodingGuidelines: allow the use of bool
-
- Declare weather-balloon we raised for "bool" type 18 months ago a
- success and officially allow using the type in our codebase.
-
  Will merge to 'master'.
- source: <cover.1752658700.git.phillip.wood@dunelm.org.uk>
+ source: <20250718170225.6063-1-carenas@gmail.com>
 
 
 * pw/3.0-commentchar-auto-deprecation (2025-07-08) 2 commits
@@ -391,22 +447,23 @@ Release tarballs are available at:
 
 
 * ps/object-store-midx (2025-07-15) 9 commits
- - midx: remove now-unused linked list of multi-pack indices
- - packfile: stop using linked MIDX list in `get_all_packs()`
- - packfile: stop using linked MIDX list in `find_pack_entry()`
- - packfile: refactor `get_multi_pack_index()` to work on sources
- - midx: stop using linked list when closing MIDX
- - packfile: refactor `prepare_packed_git_one()` to work on sources
- - midx: start tracking per object database source
- - Merge branch 'tb/midx-avoid-cruft-packs' into ps/object-store-midx
- - Merge branch 'ps/object-store' into ps/object-store-midx
+  (merged to 'next' on 2025-07-28 at a6727995ac)
+ + midx: remove now-unused linked list of multi-pack indices
+ + packfile: stop using linked MIDX list in `get_all_packs()`
+ + packfile: stop using linked MIDX list in `find_pack_entry()`
+ + packfile: refactor `get_multi_pack_index()` to work on sources
+ + midx: stop using linked list when closing MIDX
+ + packfile: refactor `prepare_packed_git_one()` to work on sources
+ + midx: start tracking per object database source
+ + Merge branch 'tb/midx-avoid-cruft-packs' into ps/object-store-midx
+ + Merge branch 'ps/object-store' into ps/object-store-midx
 
  Redefine where the multi-pack-index sits in the object subsystem,
  which recently was restructured to allow multiple backends that
  support a single object source that belongs to one repository.  A
  midx does span mulitple "object sources".
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <aIHoAiakZr5i2psM@pks.im>
  source: <20250715-b4-pks-midx-via-odb-alternate-v2-0-b0ca0b4b516e@pks.im>
 
@@ -447,19 +504,21 @@ Release tarballs are available at:
  source: <20250721115519.140361-1-usmanakinyemi202@gmail.com>
 
 
-* kn/for-each-ref-skip (2025-07-23) 6 commits
- - ref-iterator-seek: correctly initialize the prefix_state for a new level
+* kn/for-each-ref-skip (2025-07-24) 6 commits
+  (merged to 'next' on 2025-07-28 at c721b90bdc)
+ + ref-cache: set prefix_state when seeking
   (merged to 'next' on 2025-07-15 at 4ea3c74afd)
  + for-each-ref: introduce a '--start-after' option
  + ref-filter: remove unnecessary else clause
  + refs: selectively set prefix in the seek functions
  + ref-cache: remove unused function 'find_ref_entry()'
  + refs: expose `ref_iterator` via 'refs.h'
+ (this branch is used by kn/for-each-ref-skip-updates.)
 
  "git for-each-ref" learns "--skip-until" option to help
  applications that want to page its output.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
  source: <20250715-306-git-for-each-ref-pagination-v5-0-852d5a2f56e1@gmail.com>
 
 
@@ -478,30 +537,18 @@ Release tarballs are available at:
  source: <20250716133206.1787549-1-toon@iotcl.com>
 
 
-* ac/auto-comment-char-fix (2025-07-16) 2 commits
-  (merged to 'next' on 2025-07-21 at be3e6c3480)
- + config: set comment_line_str to "#" when core.commentChar=auto
- + commit: avoid scanning trailing comments when 'core.commentChar' is "auto"
-
- "git commit" that concludes a conflicted merge failed to notice and remove
- existing comment added automatically (like "# Conflicts:") when the
- core.commentstring is set to 'auto'.
-
- Will merge to 'master'.
- source: <cover.1752665506.git.ayu.chandekar@gmail.com>
-
-
 * lo/repo-info (2025-07-21) 5 commits
- - repo: add the --format flag
- - repo: add field layout.shallow
- - repo: add field layout.bare
- - repo: add the field references.format
- - repo: declare the repo command
+ . repo: add the --format flag
+ . repo: add field layout.shallow
+ . repo: add field layout.bare
+ . repo: add the field references.format
+ . repo: declare the repo command
 
  A new subcommand "git repo" gives users a way to grab various
  repository characteristics.
 
  Expecting a reroll.
+ Ejected as it seems to break CI when merged to 'seen'.
  source: <20250722002835.33428-1-lucasseikioshiro@gmail.com>
 
 
@@ -519,50 +566,36 @@ Release tarballs are available at:
 
 
 * ow/rebase-verify-insn-fmt-before-initializing-state (2025-06-09) 1 commit
- - rebase: write script before initializing state
+  (merged to 'next' on 2025-07-28 at 561f172338)
+ + rebase: write script before initializing state
 
  "git rebase -i" with bogus rebase.instructionFormat configuration
  failed to produce the todo file after recording the state files,
  leading to confused "git status"; this has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250609221055.136074-1-oystwa@gmail.com>
 
 
-* ss/compat-bswap-revamp (2025-07-15) 6 commits
-  (merged to 'next' on 2025-07-16 at c8713eca28)
- + bswap.h: provide a built-in based version of bswap32/64 if possible
- + bswap.h: remove optimized x86 version of bswap32/64
- + bswap.h: always overwrite ntohl/ ntohll macros
- + bswap.h: define GIT_LITTLE_ENDIAN on msvc as little endian
- + bswap.h: add support for __BYTE_ORDER__
- + Merge branch 'ss/revert-builtin-bswap-stuff' into ss/compat-bswap-revamp
-
- Clean-up compat/bswap.h mess.
-
- Will merge to 'master'.
- cf. <aHbX4hIKbjO6h1R5@fruit.crustytoothpaste.net>
- source: <20250715191230.12081-1-sebastian@breakpoint.cc>
-
-
-* sk/reftable-clarify-tests (2025-06-05) 10 commits
- - t/unit-tests: finalize migration of reftable-related tests
- - t/unit-tests: convert reftable stack test to use clar
- - t/unit-tests: convert reftable record test to use clar
- - t/unit-tests: convert reftable readwrite test to use clar
- - t/unit-tests: convert reftable table test to use clar
- - t/unit-tests: convert reftable pq test to use clar
- - t/unit-tests: convert reftable merged test to use clar
- - t/unit-tests: convert reftable block test to use clar
- - t/unit-tests: convert reftable basics test to use clar test framework
- - t/unit-tests: implement clar specific reftable test helper functions
+* sk/reftable-clarify-tests (2025-07-24) 10 commits
+  (merged to 'next' on 2025-07-24 at b3930223b7)
+ + t/unit-tests: finalize migration of reftable-related tests
+ + t/unit-tests: convert reftable stack test to use clar
+ + t/unit-tests: convert reftable record test to use clar
+ + t/unit-tests: convert reftable readwrite test to use clar
+ + t/unit-tests: convert reftable table test to use clar
+ + t/unit-tests: convert reftable pq test to use clar
+ + t/unit-tests: convert reftable merged test to use clar
+ + t/unit-tests: convert reftable block test to use clar
+ + t/unit-tests: convert reftable basics test to use clar test framework
+ + t/unit-tests: implement clar specific reftable test helper functions
 
  The reftable unit tests are now ported to the "clar" unit testing
  framework.
 
- Reroll (v5) exists.
- cf. <20250724142837.67149-1-kuforiji98@gmail.com>
- source: <20250605140644.239199-1-kuforiji98@gmail.com>
+ Will merge to 'master'.
+ cf. <aIJGNGxhkz9CESFu@pks.im>
+ source: <20250724142837.67149-1-kuforiji98@gmail.com>
 
 
 * tb/prepare-midx-pack-cleanup (2025-05-28) 5 commits
@@ -579,17 +612,18 @@ Release tarballs are available at:
  source: <cover.1748473122.git.me@ttaylorr.com>
 
 
-* kj/renamed-submodule (2025-06-07) 2 commits
+* kj/renamed-submodule (2025-07-24) 4 commits
+ - fixup! submodule: skip redundant active entries when pattern covers path
+ - fixup! submodule: prevent overwriting .gitmodules on path reuse
  - submodule: skip redundant active entries when pattern covers path
- - submodule: prevent overwriting .gitmodules entry on path reuse
+ - submodule: prevent overwriting .gitmodules on path reuse
 
  The case where a new submodule takes a path where used to be a
  completely different subproject is now dealt a bit better than
  before.
 
- Expecting a reroll.
- cf. <CA+rGoLfygOAxXNxn_TComuef6q+=v1wOoUSfKh4M6Ywk-0McHQ@mail.gmail.com>
- source: <20250608032705.11990-1-jayatheerthkulkarni2005@gmail.com>
+ Looking good.
+ source: <20250724152418.45226-1-jayatheerthkulkarni2005@gmail.com>
 
 
 * lm/add-p-context (2025-07-23) 5 commits
@@ -635,7 +669,7 @@ Release tarballs are available at:
 
 
 * jc/tag-idempotent-no-op (2025-07-11) 1 commit
- - tag: allow idempotent "git tag" without "--force"
+ . tag: allow idempotent "git tag" without "--force"
 
  "git tag T O" when the tag T is already pointing at the object O is
  a no-op; we used to but no longer error out such a request and
@@ -644,4 +678,3 @@ Release tarballs are available at:
  Will discard.
  cf. <dt5ruadvr7lmhsbypmb6yili5cookfx5btw4gzfeui7ehxxajv@ziael4udbbcy>
  source: <xmqqv7nyzgp7.fsf@gitster.g>
-
