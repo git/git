@@ -1252,4 +1252,53 @@ test_expect_success 'add -p rejects negative diff.context' '
 	test_grep "diff.context cannot be negative" output
 '
 
+for cmd in add checkout restore 'commit -m file'
+do
+	test_expect_success "${cmd%% *} accepts -U and --inter-hunk-context" '
+		test_write_lines a b c d e f g h i j k l m n o p q r s t u v >file &&
+		git add file &&
+		test_write_lines a b c d e F g h i j k l m n o p Q r s t u v >file &&
+		echo y | git -c diff.context=5 -c diff.interhunkcontext=1 \
+			$cmd -p -U 4 --inter-hunk-context 2 >actual &&
+		test_grep "@@ -2,20 +2,20 @@" actual
+	'
+done
+
+test_expect_success 'reset accepts -U and --inter-hunk-context' '
+	test_write_lines a b c d e f g h i j k l m n o p q r s t u v >file &&
+	git commit -m file file &&
+	test_write_lines a b c d e F g h i j k l m n o p Q r s t u v >file &&
+	git add file &&
+	echo y | git -c diff.context=5 -c diff.interhunkcontext=1 \
+		reset -p -U 4 --inter-hunk-context 2 >actual &&
+	test_grep "@@ -2,20 +2,20 @@" actual
+'
+
+test_expect_success 'stash accepts -U and --inter-hunk-context' '
+	test_write_lines a b c d e F g h i j k l m n o p Q r s t u v >file &&
+	git commit -m file file &&
+	test_write_lines a b c d e f g h i j k l m n o p q r s t u v >file &&
+	echo y | git -c diff.context=5 -c diff.interhunkcontext=1 \
+		stash -p -U 4 --inter-hunk-context 2 >actual &&
+	test_grep "@@ -2,20 +2,20 @@" actual
+'
+
+for cmd in add checkout commit reset restore "stash save" "stash push"
+do
+	test_expect_success "$cmd rejects invalid context options" '
+		test_must_fail git $cmd -p -U -3 2>actual &&
+		cat actual | echo &&
+		test_grep -e ".--unified. cannot be negative" actual &&
+
+		test_must_fail git $cmd -p --inter-hunk-context -3 2>actual &&
+		test_grep -e ".--inter-hunk-context. cannot be negative" actual &&
+
+		test_must_fail git $cmd -U 7 2>actual &&
+		test_grep -E ".--unified. requires .(--interactive/)?--patch." actual &&
+
+		test_must_fail git $cmd --inter-hunk-context 2 2>actual &&
+		test_grep -E ".--inter-hunk-context. requires .(--interactive/)?--patch." actual
+	'
+done
+
 test_done

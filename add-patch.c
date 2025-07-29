@@ -1763,14 +1763,15 @@ soft_increment:
 }
 
 int run_add_p(struct repository *r, enum add_p_mode mode,
-	      const char *revision, const struct pathspec *ps)
+	      struct add_p_opt *o, const char *revision,
+	      const struct pathspec *ps)
 {
 	struct add_p_state s = {
 		{ r }, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT
 	};
 	size_t i, binary_count = 0;
 
-	init_add_i_state(&s.s, r);
+	init_add_i_state(&s.s, r, o);
 
 	if (mode == ADD_P_STASH)
 		s.mode = &patch_mode_stash;
