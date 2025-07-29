@@ -2,6 +2,7 @@
 #define COMMIT_H
 
 #include "object.h"
+#include "add-interactive.h"
 
 struct signature_check;
 struct strbuf;
@@ -257,7 +258,7 @@ int for_each_commit_graft(each_commit_graft_fn, void *);
 int interactive_add(struct repository *repo,
 		    const char **argv,
 		    const char *prefix,
-		    int patch);
+		    int patch, struct add_p_opt *add_p_opt);
 
 struct commit_extra_header {
 	struct commit_extra_header *next;

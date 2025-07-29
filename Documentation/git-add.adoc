@@ -104,6 +104,8 @@ This effectively runs `add --interactive`, but bypasses the
 initial command menu and directly jumps to the `patch` subcommand.
 See ``Interactive mode'' for details.
 
+include::diff-context-options.adoc[]
+
 `-e`::
 `--edit`::
 	Open the diff vs. the index in an editor and let the user
