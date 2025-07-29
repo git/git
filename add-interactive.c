@@ -41,6 +41,8 @@ void init_add_i_state(struct add_i_state *s, struct repository *r)
 	const char *value;
 
 	s->r = r;
+	s->context = -1;
+	s->interhunkcontext = -1;
 
 	if (repo_config_get_value(r, "color.interactive", &value))
 		s->use_color = -1;
@@ -77,6 +79,13 @@ void init_add_i_state(struct add_i_state *s, struct repository *r)
 	FREE_AND_NULL(s->interactive_diff_algorithm);
 	repo_config_get_string(r, "diff.algorithm",
 			       &s->interactive_diff_algorithm);
+
+	if (!repo_config_get_int(r, "diff.context", &s->context))
+		if (s->context < 0)
+			die(_("%s cannot be negative"), "diff.context");
+	if (!repo_config_get_int(r, "diff.interHunkContext", &s->interhunkcontext))
+		if (s->interhunkcontext < 0)
+			die(_("%s cannot be negative"), "diff.interHunkContext");
 
 	repo_config_get_bool(r, "interactive.singlekey", &s->use_single_key);
 	if (s->use_single_key)

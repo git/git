@@ -414,7 +414,6 @@ static int normalize_marker(const char *p)
 static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 {
 	struct strvec args = STRVEC_INIT;
-	const char *diff_algorithm = s->s.interactive_diff_algorithm;
 	struct strbuf *plain = &s->plain, *colored = NULL;
 	struct child_process cp = CHILD_PROCESS_INIT;
 	char *p, *pend, *colored_p = NULL, *colored_pend = NULL, marker = '\0';
@@ -424,8 +423,12 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 	int res;
 
 	strvec_pushv(&args, s->mode->diff_cmd);
-	if (diff_algorithm)
-		strvec_pushf(&args, "--diff-algorithm=%s", diff_algorithm);
+	if (s->s.context != -1)
+		strvec_pushf(&args, "--unified=%i", s->s.context);
+	if (s->s.interhunkcontext != -1)
+		strvec_pushf(&args, "--inter-hunk-context=%i", s->s.interhunkcontext);
+	if (s->s.interactive_diff_algorithm)
+		strvec_pushf(&args, "--diff-algorithm=%s", s->s.interactive_diff_algorithm);
 	if (s->revision) {
 		struct object_id oid;
 		strvec_push(&args,

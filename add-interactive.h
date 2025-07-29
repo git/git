@@ -18,6 +18,7 @@ struct add_i_state {
 
 	int use_single_key;
 	char *interactive_diff_filter, *interactive_diff_algorithm;
+	int context, interhunkcontext;
 };
 
 void init_add_i_state(struct add_i_state *s, struct repository *r);
