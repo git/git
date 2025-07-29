@@ -7,14 +7,14 @@ git-for-each-ref - Output information on each ref
 
 SYNOPSIS
 --------
-[verse]
-'git for-each-ref' [--count=<count>] [--shell|--perl|--python|--tcl]
+[synopsis]
+git for-each-ref [--count=<count>] [--shell|--perl|--python|--tcl]
 		   [(--sort=<key>)...] [--format=<format>]
-		   [--include-root-refs] [ --stdin | <pattern>... ]
-		   [--points-at=<object>]
+		   [--include-root-refs] [--points-at=<object>]
 		   [--merged[=<object>]] [--no-merged[=<object>]]
 		   [--contains[=<object>]] [--no-contains[=<object>]]
-		   [--exclude=<pattern> ...] [--start-after=<marker>]
+		   [(--exclude=<pattern>)...] [--start-after=<marker>]
+		   [ --stdin | <pattern>... ]
 
 DESCRIPTION
 -----------
@@ -114,7 +114,8 @@ TAB %(refname)`.
     deleted, modified or added between invocations. Output will only yield those
     references which follow the marker lexicographically. Output begins from the
     first reference that would come after the marker alphabetically. Cannot be
-    used with general pattern matching or custom sort options.
+    used with `--sort=<key>` or `--stdin` options, or the _<pattern>_ argument(s)
+    to limit the refs.
 
 FIELD NAMES
 -----------

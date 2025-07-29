@@ -712,6 +712,25 @@ test_expect_success 'start after, overflow specific reference path' '
 	test_cmp expect actual
 '
 
+test_expect_success 'start after, with exclude pattern' '
+	cat >expect <<-\EOF &&
+	refs/tags/annotated-tag
+	refs/tags/doubly-annotated-tag
+	refs/tags/doubly-signed-tag
+	refs/tags/foo1.10
+	refs/tags/foo1.3
+	refs/tags/foo1.6
+	refs/tags/four
+	refs/tags/one
+	refs/tags/signed-tag
+	refs/tags/three
+	refs/tags/two
+	EOF
+	git for-each-ref --format="%(refname)" --start-after=refs/odd/spot \
+		--exclude=refs/tags/foo >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'start after, last reference' '
 	cat >expect <<-\EOF &&
 	EOF

@@ -498,13 +498,14 @@ static int cache_ref_iterator_seek(struct ref_iterator *ref_iterator,
 		 * indexing to each level as needed.
 		 */
 		do {
-			int len, idx;
+			int idx;
+			size_t len;
 			int cmp = 0;
 
 			sort_ref_dir(dir);
 
 			slash = strchr(slash, '/');
-			len = slash ? slash - refname : (int)strlen(refname);
+			len = slash ? (size_t)(slash - refname) : strlen(refname);
 
 			for (idx = 0; idx < dir->nr; idx++) {
 				cmp = strncmp(refname, dir->entries[idx]->name, len);
