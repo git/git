@@ -401,7 +401,7 @@ test_expect_success SYMLINKS,!WINDOWS,!MINGW 'submodule must not checkout into d
 	git -C repo commit -m submodule &&
 
 	git -c protocol.file.allow=always clone --recurse-submodules repo bad-clone &&
-	! test -f "$PWD/foo" &&
+	! test -f "$PWD/bad-clone/sub/foo" &&
 	test -f $(printf "bad-clone/sub\r/post-checkout")
 '
 
