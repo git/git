@@ -720,15 +720,7 @@ static int rename_one_ref(const char *old_refname, const char *referent,
 	struct strbuf new_referent = STRBUF_INIT;
 	struct strbuf new_refname = STRBUF_INIT;
 	struct rename_info *rename = cb_data;
-	const char *ptr = old_refname;
 	int error;
-
-	if (!skip_prefix(ptr, "refs/remotes/", &ptr) ||
-	    !skip_prefix(ptr, rename->old_name, &ptr) ||
-	    !skip_prefix(ptr, "/", &ptr)) {
-		error = 0;
-		goto out;
-	}
 
 	compute_renamed_ref(rename, old_refname, &new_refname);
 
@@ -932,7 +924,10 @@ static int mv(int argc, const char **argv, const char *prefix,
 			rename.progress = start_delayed_progress(the_repository,
 								 _("Renaming remote references"), 0);
 
-		result = refs_for_each_rawref(get_main_ref_store(the_repository),
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "refs/remotes/%s/", rename.old_name);
+
+		result = refs_for_each_rawref_in(get_main_ref_store(the_repository), buf.buf,
 				rename_one_ref, &rename);
 		if (result < 0)
 			die(_("queueing remote ref renames failed: %s"), rename.err->buf);

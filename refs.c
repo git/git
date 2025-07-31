@@ -1839,7 +1839,13 @@ int refs_for_each_namespaced_ref(struct ref_store *refs,
 
 int refs_for_each_rawref(struct ref_store *refs, each_ref_fn fn, void *cb_data)
 {
-	return do_for_each_ref(refs, "", NULL, fn, 0,
+	return refs_for_each_rawref_in(refs, "", fn, cb_data);
+}
+
+int refs_for_each_rawref_in(struct ref_store *refs, const char *prefix,
+			    each_ref_fn fn, void *cb_data)
+{
+	return do_for_each_ref(refs, prefix, NULL, fn, 0,
 			       DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
 }
 
