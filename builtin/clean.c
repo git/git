@@ -674,12 +674,13 @@ static int filter_by_patterns_cmd(void)
 {
 	struct dir_struct dir = DIR_INIT;
 	struct strbuf confirm = STRBUF_INIT;
-	struct strbuf **ignore_list;
-	struct string_list_item *item;
 	struct pattern_list *pl;
 	int changed = -1, i;
 
 	for (;;) {
+		struct string_list ignore_list = STRING_LIST_INIT_NODUP;
+		struct string_list_item *item;
+
 		if (!del_list.nr)
 			break;
 
@@ -697,14 +698,15 @@ static int filter_by_patterns_cmd(void)
 			break;
 
 		pl = add_pattern_list(&dir, EXC_CMDL, "manual exclude");
-		ignore_list = strbuf_split_max(&confirm, ' ', 0);
 
-		for (i = 0; ignore_list[i]; i++) {
-			strbuf_trim(ignore_list[i]);
-			if (!ignore_list[i]->len)
+		string_list_split_in_place_f(&ignore_list, confirm.buf, " ", -1,
+					     STRING_LIST_SPLIT_TRIM);
+
+		for (i = 0; i < ignore_list.nr; i++) {
+			item = &ignore_list.items[i];
+			if (!*item->string)
 				continue;
-
-			add_pattern(ignore_list[i]->buf, "", 0, pl, -(i+1));
+			add_pattern(item->string, "", 0, pl, -(i+1));
 		}
 
 		changed = 0;
@@ -725,7 +727,7 @@ static int filter_by_patterns_cmd(void)
 			clean_print_color(CLEAN_COLOR_RESET);
 		}
 
-		strbuf_list_free(ignore_list);
+		string_list_clear(&ignore_list, 0);
 		dir_clear(&dir);
 	}
 
