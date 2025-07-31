@@ -52,8 +52,6 @@ INSTALL_R0 = $(INSTALL) -m 644 # space is required here
 INSTALL_R1 =
 INSTALL_X0 = $(INSTALL) -m 755 # space is required here
 INSTALL_X1 =
-INSTALL_A0 = find # space is required here
-INSTALL_A1 = | cpio -pud
 INSTALL_L0 = rm -f # space is required here
 INSTALL_L1 = && ln # space is required here
 INSTALL_L2 =
@@ -78,8 +76,6 @@ ifndef V
 	INSTALL_R1 = && echo '   ' INSTALL 644 `basename $$src` && $(INSTALL) -m 644 $$src
 	INSTALL_X0 = src=
 	INSTALL_X1 = && echo '   ' INSTALL 755 `basename $$src` && $(INSTALL) -m 755 $$src
-	INSTALL_A0 = src=
-	INSTALL_A1 = && echo '   ' INSTALL '   ' `basename "$$src"` && find "$$src" | cpio -pud
 
 	INSTALL_L0 = dst=
 	INSTALL_L1 = && src=
@@ -100,18 +96,6 @@ else
 	TCL_PATH ?= $(dir $(TCLTK_PATH))$(notdir $(subst wish,tclsh,$(TCLTK_PATH)))
 endif
 
-ifeq ($(uname_S),Darwin)
-	TKFRAMEWORK = /Library/Frameworks/Tk.framework/Resources/Wish.app
-        ifeq ($(shell echo "$(uname_R)" | awk -F. '{if ($$1 >= 9) print "y"}')_$(shell test -d $(TKFRAMEWORK) || echo n),y_n)
-		TKFRAMEWORK = /System/Library/Frameworks/Tk.framework/Resources/Wish.app
-                ifeq ($(shell test -d $(TKFRAMEWORK) || echo n),n)
-			TKFRAMEWORK = /System/Library/Frameworks/Tk.framework/Resources/Wish\ Shell.app
-                endif
-        endif
-	TKEXECUTABLE = $(TKFRAMEWORK)/Contents/MacOS/$(shell basename "$(TKFRAMEWORK)" .app)
-	TKEXECUTABLE_SQ = $(subst ','\'',$(TKEXECUTABLE))
-endif
-
 ifeq ($(findstring $(firstword -$(MAKEFLAGS)),s),s)
 QUIET_GEN =
 endif
@@ -129,15 +113,9 @@ libdir_SQ  = $(subst ','\'',$(gg_libdir))
 exedir     = $(dir $(gitexecdir))share/git-gui/lib
 
 GITGUI_RELATIVE :=
-GITGUI_MACOSXAPP :=
 
 ifeq ($(exedir),$(gg_libdir))
 	GITGUI_RELATIVE := 1
-endif
-ifeq ($(uname_S),Darwin)
-        ifeq ($(shell test -d $(TKFRAMEWORK) && echo y),y)
-		GITGUI_MACOSXAPP := YesPlease
-        endif
 endif
 ifneq (,$(findstring MINGW,$(uname_S)))
 ifeq ($(shell expr "$(uname_R)" : '1\.'),2)
@@ -145,20 +123,6 @@ ifeq ($(shell expr "$(uname_R)" : '1\.'),2)
 endif
 	GITGUI_WINDOWS_WRAPPER := YesPlease
 	GITGUI_RELATIVE := 1
-endif
-
-ifdef GITGUI_MACOSXAPP
-GITGUI_MAIN := git-gui.tcl
-
-git-gui: generate-macos-wrapper.sh GIT-VERSION-FILE GIT-GUI-BUILD-OPTIONS
-	$(QUIET_GEN)$(SHELL_PATH) generate-macos-wrapper.sh "$@" ./GIT-GUI-BUILD-OPTIONS ./GIT-VERSION-FILE
-
-Git\ Gui.app: GIT-VERSION-FILE GIT-GUI-BUILD-OPTIONS \
-		macosx/Info.plist \
-		macosx/git-gui.icns \
-		macosx/AppMain.tcl \
-		$(TKEXECUTABLE)
-	$(QUIET_GEN)$(SHELL_PATH) generate-macos-app.sh . "$@" ./GIT-GUI-BUILD-OPTIONS ./GIT-VERSION-FILE
 endif
 
 ifdef GITGUI_WINDOWS_WRAPPER
@@ -205,14 +169,10 @@ GIT-GUI-BUILD-OPTIONS: FORCE
 		-e 's|@SHELL_PATH@|$(SHELL_PATH_SQ)|' \
 		-e 's|@TCLTK_PATH@|$(TCLTK_PATH_SQ)|' \
 		-e 's|@TCL_PATH@|$(TCL_PATH_SQ)|' \
-		-e 's|@TKEXECUTABLE@|$(TKEXECUTABLE_SQ)|' \
 		$@.in >$@+
 	@if grep -q '^[A-Z][A-Z_]*=@.*@$$' $@+; then echo "Unsubstituted build options in $@" >&2 && exit 1; fi
 	@if cmp $@+ $@ >/dev/null 2>&1; then $(RM) $@+; else mv $@+ $@; fi
 
-ifdef GITGUI_MACOSXAPP
-all:: git-gui Git\ Gui.app
-endif
 ifdef GITGUI_WINDOWS_WRAPPER
 all:: git-gui
 endif
@@ -228,10 +188,6 @@ ifdef GITGUI_WINDOWS_WRAPPER
 endif
 	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(libdir_SQ)' $(INSTALL_D1)
 	$(QUIET)$(INSTALL_R0)lib/tclIndex $(INSTALL_R1) '$(DESTDIR_SQ)$(libdir_SQ)'
-ifdef GITGUI_MACOSXAPP
-	$(QUIET)$(INSTALL_A0)'Git Gui.app' $(INSTALL_A1) '$(DESTDIR_SQ)$(libdir_SQ)'
-	$(QUIET)$(INSTALL_X0)git-gui.tcl $(INSTALL_X1) '$(DESTDIR_SQ)$(libdir_SQ)'
-endif
 	$(QUIET)$(foreach p,$(ALL_LIBFILES) $(NONTCL_LIBFILES), $(INSTALL_R0)$p $(INSTALL_R1) '$(DESTDIR_SQ)$(libdir_SQ)' &&) true
 	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(msgsdir_SQ)' $(INSTALL_D1)
 	$(QUIET)$(foreach p,$(ALL_MSGFILES), $(INSTALL_R0)$p $(INSTALL_R1) '$(DESTDIR_SQ)$(msgsdir_SQ)' &&) true
@@ -246,10 +202,6 @@ ifdef GITGUI_WINDOWS_WRAPPER
 endif
 	$(QUIET)$(CLEAN_DST) '$(DESTDIR_SQ)$(libdir_SQ)'
 	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(libdir_SQ)'/tclIndex $(REMOVE_F1)
-ifdef GITGUI_MACOSXAPP
-	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(libdir_SQ)/Git Gui.app' $(REMOVE_F1)
-	$(QUIET)$(REMOVE_F0)'$(DESTDIR_SQ)$(libdir_SQ)'/git-gui.tcl $(REMOVE_F1)
-endif
 	$(QUIET)$(foreach p,$(ALL_LIBFILES) $(NONTCL_LIBFILES), $(REMOVE_F0)'$(DESTDIR_SQ)$(libdir_SQ)'/$(notdir $p) $(REMOVE_F1) &&) true
 	$(QUIET)$(CLEAN_DST) '$(DESTDIR_SQ)$(msgsdir_SQ)'
 	$(QUIET)$(foreach p,$(ALL_MSGFILES), $(REMOVE_F0)'$(DESTDIR_SQ)$(msgsdir_SQ)'/$(notdir $p) $(REMOVE_F1) &&) true
@@ -265,9 +217,6 @@ dist-version: GIT-VERSION-FILE
 clean::
 	$(RM_RF) $(GITGUI_MAIN) lib/tclIndex po/*.msg $(PO_TEMPLATE)
 	$(RM_RF) GIT-VERSION-FILE GIT-GUI-BUILD-OPTIONS
-ifdef GITGUI_MACOSXAPP
-	$(RM_RF) 'Git Gui.app'* git-gui
-endif
 ifdef GITGUI_WINDOWS_WRAPPER
 	$(RM_RF) git-gui
 endif
