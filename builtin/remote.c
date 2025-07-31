@@ -741,7 +741,7 @@ static int mv(int argc, const char **argv, const char *prefix,
 		old_remote_context = STRBUF_INIT;
 	struct string_list remote_branches = STRING_LIST_INIT_DUP;
 	struct rename_info rename;
-	int refs_renamed_nr = 0, refspec_updated = 0;
+	int refs_renamed_nr = 0, refspecs_need_update = 0;
 	struct progress *progress = NULL;
 	int result = 0;
 
@@ -782,11 +782,16 @@ static int mv(int argc, const char **argv, const char *prefix,
 		goto out;
 	}
 
+	strbuf_addf(&old_remote_context, ":refs/remotes/%s/", rename.old_name);
+
+	for (int i = 0; i < oldremote->fetch.nr && !refspecs_need_update; i++)
+		refspecs_need_update = !!strstr(oldremote->fetch.items[i].raw,
+						old_remote_context.buf);
+
 	if (oldremote->fetch.nr) {
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "remote.%s.fetch", rename.new_name);
 		git_config_set_multivar(buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
-		strbuf_addf(&old_remote_context, ":refs/remotes/%s/", rename.old_name);
 		for (int i = 0; i < oldremote->fetch.nr; i++) {
 			char *ptr;
 
@@ -794,7 +799,6 @@ static int mv(int argc, const char **argv, const char *prefix,
 			strbuf_addstr(&buf2, oldremote->fetch.items[i].raw);
 			ptr = strstr(buf2.buf, old_remote_context.buf);
 			if (ptr) {
-				refspec_updated = 1;
 				strbuf_splice(&buf2,
 					      ptr-buf2.buf + strlen(":refs/remotes/"),
 					      strlen(rename.old_name), rename.new_name,
@@ -825,7 +829,7 @@ static int mv(int argc, const char **argv, const char *prefix,
 		}
 	}
 
-	if (!refspec_updated)
+	if (!refspecs_need_update)
 		goto out;
 
 	/*
