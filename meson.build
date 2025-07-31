@@ -38,14 +38,6 @@ version_file = custom_target(
   build_always_stale: true,
 )
 
-configure_file(
-  input: 'git-gui--askpass',
-  output: 'git-gui--askpass',
-  copy: true,
-  install: true,
-  install_dir: get_option('libexecdir') / 'git-core',
-)
-
 gitgui_main = 'git-gui'
 gitgui_main_install_dir = get_option('libexecdir') / 'git-core'
 
@@ -60,6 +52,20 @@ if target_machine.system() == 'windows'
     install_dir: get_option('libexecdir') / 'git-core',
   )
 endif
+
+custom_target(
+  output: 'git-gui--askpass',
+  input: 'git-gui--askpass.sh',
+  command: [
+    shell,
+    meson.current_source_dir() / 'generate-script.sh',
+    '@OUTPUT@',
+    '@INPUT@',
+    meson.current_build_dir() / 'GIT-GUI-BUILD-OPTIONS',
+  ],
+  install: true,
+  install_dir: get_option('libexecdir') / 'git-core',
+)
 
 custom_target(
   input: 'git-gui.sh',

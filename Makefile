@@ -173,10 +173,13 @@ GIT-GUI-BUILD-OPTIONS: FORCE
 	@if grep -q '^[A-Z][A-Z_]*=@.*@$$' $@+; then echo "Unsubstituted build options in $@" >&2 && exit 1; fi
 	@if cmp $@+ $@ >/dev/null 2>&1; then $(RM) $@+; else mv $@+ $@; fi
 
+git-gui--askpass: git-gui--askpass.sh GIT-GUI-BUILD-OPTIONS generate-script.sh
+	$(QUIET_GEN)$(SHELL_PATH) generate-script.sh $@ $< ./GIT-GUI-BUILD-OPTIONS
+
 ifdef GITGUI_WINDOWS_WRAPPER
 all:: git-gui
 endif
-all:: $(GITGUI_MAIN) lib/tclIndex $(ALL_MSGFILES)
+all:: $(GITGUI_MAIN) git-gui--askpass lib/tclIndex $(ALL_MSGFILES)
 
 install: all
 	$(QUIET)$(INSTALL_D0)'$(DESTDIR_SQ)$(gitexecdir_SQ)' $(INSTALL_D1)
@@ -215,7 +218,7 @@ dist-version: GIT-VERSION-FILE
 	@sed 's|^GITGUI_VERSION=||' <GIT-VERSION-FILE  >$(TARDIR)/version
 
 clean::
-	$(RM_RF) $(GITGUI_MAIN) lib/tclIndex po/*.msg $(PO_TEMPLATE)
+	$(RM_RF) $(GITGUI_MAIN) git-gui--askpass lib/tclIndex po/*.msg $(PO_TEMPLATE)
 	$(RM_RF) GIT-VERSION-FILE GIT-GUI-BUILD-OPTIONS
 ifdef GITGUI_WINDOWS_WRAPPER
 	$(RM_RF) git-gui
