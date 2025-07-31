@@ -1,5 +1,4 @@
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "builtin.h"
 #include "config.h"
@@ -182,7 +181,6 @@ static int add(int argc, const char **argv, const char *prefix,
 	struct remote *remote;
 	struct strbuf buf = STRBUF_INIT, buf2 = STRBUF_INIT;
 	const char *name, *url;
-	int i;
 	int result = 0;
 
 	struct option options[] = {
@@ -233,7 +231,7 @@ static int add(int argc, const char **argv, const char *prefix,
 		strbuf_addf(&buf, "remote.%s.fetch", name);
 		if (track.nr == 0)
 			string_list_append(&track, "*");
-		for (i = 0; i < track.nr; i++) {
+		for (size_t i = 0; i < track.nr; i++) {
 			add_branch(buf.buf, track.items[i].string,
 				   name, mirror, &buf2);
 		}
@@ -647,18 +645,17 @@ static int read_remote_branches(const char *refname, const char *referent UNUSED
 static int migrate_file(struct remote *remote)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int i;
 
 	strbuf_addf(&buf, "remote.%s.url", remote->name);
-	for (i = 0; i < remote->url.nr; i++)
+	for (size_t i = 0; i < remote->url.nr; i++)
 		git_config_set_multivar(buf.buf, remote->url.v[i], "^$", 0);
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.push", remote->name);
-	for (i = 0; i < remote->push.nr; i++)
+	for (int i = 0; i < remote->push.nr; i++)
 		git_config_set_multivar(buf.buf, remote->push.items[i].raw, "^$", 0);
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.fetch", remote->name);
-	for (i = 0; i < remote->fetch.nr; i++)
+	for (int i = 0; i < remote->fetch.nr; i++)
 		git_config_set_multivar(buf.buf, remote->fetch.items[i].raw, "^$", 0);
 #ifndef WITH_BREAKING_CHANGES
 	if (remote->origin == REMOTE_REMOTES)
@@ -744,7 +741,7 @@ static int mv(int argc, const char **argv, const char *prefix,
 		old_remote_context = STRBUF_INIT;
 	struct string_list remote_branches = STRING_LIST_INIT_DUP;
 	struct rename_info rename;
-	int i, refs_renamed_nr = 0, refspec_updated = 0;
+	int refs_renamed_nr = 0, refspec_updated = 0;
 	struct progress *progress = NULL;
 	int result = 0;
 
@@ -790,7 +787,7 @@ static int mv(int argc, const char **argv, const char *prefix,
 		strbuf_addf(&buf, "remote.%s.fetch", rename.new_name);
 		git_config_set_multivar(buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
 		strbuf_addf(&old_remote_context, ":refs/remotes/%s/", rename.old_name);
-		for (i = 0; i < oldremote->fetch.nr; i++) {
+		for (int i = 0; i < oldremote->fetch.nr; i++) {
 			char *ptr;
 
 			strbuf_reset(&buf2);
@@ -813,7 +810,7 @@ static int mv(int argc, const char **argv, const char *prefix,
 	}
 
 	read_branches();
-	for (i = 0; i < branch_list.nr; i++) {
+	for (size_t i = 0; i < branch_list.nr; i++) {
 		struct string_list_item *item = branch_list.items + i;
 		struct branch_info *info = item->util;
 		if (info->remote_name && !strcmp(info->remote_name, rename.old_name)) {
@@ -846,7 +843,7 @@ static int mv(int argc, const char **argv, const char *prefix,
 					  _("Renaming remote references"),
 					  rename.remote_branches->nr + rename.symrefs_nr);
 	}
-	for (i = 0; i < remote_branches.nr; i++) {
+	for (size_t i = 0; i < remote_branches.nr; i++) {
 		struct string_list_item *item = remote_branches.items + i;
 		struct strbuf referent = STRBUF_INIT;
 
@@ -859,7 +856,7 @@ static int mv(int argc, const char **argv, const char *prefix,
 		strbuf_release(&referent);
 		display_progress(progress, ++refs_renamed_nr);
 	}
-	for (i = 0; i < remote_branches.nr; i++) {
+	for (size_t i = 0; i < remote_branches.nr; i++) {
 		struct string_list_item *item = remote_branches.items + i;
 
 		if (item->util)
@@ -875,7 +872,7 @@ static int mv(int argc, const char **argv, const char *prefix,
 			die(_("renaming '%s' failed"), item->string);
 		display_progress(progress, ++refs_renamed_nr);
 	}
-	for (i = 0; i < remote_branches.nr; i++) {
+	for (size_t i = 0; i < remote_branches.nr; i++) {
 		struct string_list_item *item = remote_branches.items + i;
 
 		if (!item->util)
@@ -920,7 +917,7 @@ static int rm(int argc, const char **argv, const char *prefix,
 	struct string_list branches = STRING_LIST_INIT_DUP;
 	struct string_list skipped = STRING_LIST_INIT_DUP;
 	struct branches_for_remote cb_data;
-	int i, result;
+	int result;
 
 	memset(&cb_data, 0, sizeof(cb_data));
 	cb_data.branches = &branches;
@@ -942,7 +939,7 @@ static int rm(int argc, const char **argv, const char *prefix,
 	for_each_remote(add_known_remote, &known_remotes);
 
 	read_branches();
-	for (i = 0; i < branch_list.nr; i++) {
+	for (size_t i = 0; i < branch_list.nr; i++) {
 		struct string_list_item *item = branch_list.items + i;
 		struct branch_info *info = item->util;
 		if (info->remote_name && !strcmp(info->remote_name, remote->name)) {
@@ -988,7 +985,7 @@ static int rm(int argc, const char **argv, const char *prefix,
 			      "Note: Some branches outside the refs/remotes/ hierarchy were not removed;\n"
 			      "to delete them, use:",
 			      skipped.nr));
-		for (i = 0; i < skipped.nr; i++)
+		for (size_t i = 0; i < skipped.nr; i++)
 			fprintf(stderr, "  git branch -d %s\n",
 				skipped.items[i].string);
 	}
@@ -1166,7 +1163,6 @@ static int show_local_info_item(struct string_list_item *item, void *cb_data)
 	struct branch_info *branch_info = item->util;
 	struct string_list *merge = &branch_info->merge;
 	int width = show_info->width + 4;
-	int i;
 
 	if (branch_info->rebase >= REBASE_TRUE && branch_info->merge.nr > 1) {
 		error(_("invalid branch.%s.merge; cannot rebase onto > 1 branch"),
@@ -1192,7 +1188,7 @@ static int show_local_info_item(struct string_list_item *item, void *cb_data)
 	} else {
 		printf_ln(_("merges with remote %s"), merge->items[0].string);
 	}
-	for (i = 1; i < merge->nr; i++)
+	for (size_t i = 1; i < merge->nr; i++)
 		printf(_("%-*s    and with remote %s\n"), width, "",
 		       merge->items[i].string);
 
@@ -1277,7 +1273,6 @@ static int get_one_entry(struct remote *remote, void *priv)
 	struct string_list *list = priv;
 	struct strbuf remote_info_buf = STRBUF_INIT;
 	struct strvec *url;
-	int i;
 
 	if (remote->url.nr > 0) {
 		struct strbuf promisor_config = STRBUF_INIT;
@@ -1294,8 +1289,7 @@ static int get_one_entry(struct remote *remote, void *priv)
 	} else
 		string_list_append(list, remote->name)->util = NULL;
 	url = push_url_of_remote(remote);
-	for (i = 0; i < url->nr; i++)
-	{
+	for (size_t i = 0; i < url->nr; i++) {
 		strbuf_addf(&remote_info_buf, "%s (push)", url->v[i]);
 		string_list_append(list, remote->name)->util =
 				strbuf_detach(&remote_info_buf, NULL);
@@ -1312,10 +1306,8 @@ static int show_all(void)
 	result = for_each_remote(get_one_entry, &list);
 
 	if (!result) {
-		int i;
-
 		string_list_sort(&list);
-		for (i = 0; i < list.nr; i++) {
+		for (size_t i = 0; i < list.nr; i++) {
 			struct string_list_item *item = list.items + i;
 			if (verbose)
 				printf("%s\t%s\n", item->string,
@@ -1352,7 +1344,7 @@ static int show(int argc, const char **argv, const char *prefix,
 		query_flag = (GET_REF_STATES | GET_HEAD_NAMES | GET_PUSH_REF_STATES);
 
 	for (; argc; argc--, argv++) {
-		int i;
+		size_t i;
 		struct strvec *url;
 
 		get_remote_ref_states(*argv, &info.states, query_flag);
@@ -1458,7 +1450,7 @@ static void report_set_head_auto(const char *remote, const char *head_name,
 static int set_head(int argc, const char **argv, const char *prefix,
 		    struct repository *repo UNUSED)
 {
-	int i, opt_a = 0, opt_d = 0, result = 0, was_detached;
+	int opt_a = 0, opt_d = 0, result = 0, was_detached;
 	struct strbuf b_head = STRBUF_INIT, b_remote_head = STRBUF_INIT,
 		b_local_head = STRBUF_INIT;
 	char *head_name = NULL;
@@ -1489,7 +1481,7 @@ static int set_head(int argc, const char **argv, const char *prefix,
 		else if (states.heads.nr > 1) {
 			result |= error(_("Multiple remote HEAD branches. "
 					  "Please choose one explicitly with:"));
-			for (i = 0; i < states.heads.nr; i++)
+			for (size_t i = 0; i < states.heads.nr; i++)
 				fprintf(stderr, "  git remote set-head %s %s\n",
 					argv[0], states.heads.items[i].string);
 		} else
@@ -1714,7 +1706,7 @@ static int set_branches(int argc, const char **argv, const char *prefix,
 static int get_url(int argc, const char **argv, const char *prefix,
 		   struct repository *repo UNUSED)
 {
-	int i, push_mode = 0, all_mode = 0;
+	int push_mode = 0, all_mode = 0;
 	const char *remotename = NULL;
 	struct remote *remote;
 	struct strvec *url;
@@ -1742,7 +1734,7 @@ static int get_url(int argc, const char **argv, const char *prefix,
 	url = push_mode ? push_url_of_remote(remote) : &remote->url;
 
 	if (all_mode) {
-		for (i = 0; i < url->nr; i++)
+		for (size_t i = 0; i < url->nr; i++)
 			printf_ln("%s", url->v[i]);
 	} else {
 		printf_ln("%s", url->v[0]);
@@ -1754,7 +1746,7 @@ static int get_url(int argc, const char **argv, const char *prefix,
 static int set_url(int argc, const char **argv, const char *prefix,
 		   struct repository *repo UNUSED)
 {
-	int i, push_mode = 0, add_mode = 0, delete_mode = 0;
+	int push_mode = 0, add_mode = 0, delete_mode = 0;
 	int matches = 0, negative_matches = 0;
 	const char *remotename = NULL;
 	const char *newurl = NULL;
@@ -1818,7 +1810,7 @@ static int set_url(int argc, const char **argv, const char *prefix,
 	if (regcomp(&old_regex, oldurl, REG_EXTENDED))
 		die(_("Invalid old URL pattern: %s"), oldurl);
 
-	for (i = 0; i < urlset->nr; i++)
+	for (size_t i = 0; i < urlset->nr; i++)
 		if (!regexec(&old_regex, urlset->v[i], 0, NULL, 0))
 			matches++;
 		else
