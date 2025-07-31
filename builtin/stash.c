@@ -979,7 +979,7 @@ static int show_stash(int argc, const char **argv, const char *prefix,
 	int do_usage = 0;
 
 	init_diff_ui_defaults();
-	git_config(git_diff_ui_config, NULL);
+	repo_config(the_repository, git_diff_ui_config, NULL);
 	repo_init_revisions(the_repository, &rev, prefix);
 
 	argc = parse_options(argc, argv, prefix, options, git_stash_show_usage,
@@ -2358,7 +2358,7 @@ int cmd_stash(int argc,
 	const char **args_copy;
 	int ret;
 
-	git_config(git_stash_config, NULL);
+	repo_config(the_repository, git_stash_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, options, git_stash_usage,
 			     PARSE_OPT_SUBCOMMAND_OPTIONAL |

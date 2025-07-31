@@ -632,7 +632,7 @@ static int write_zip_archive(const struct archiver *ar UNUSED,
 {
 	int err;
 
-	git_config(archive_zip_config, NULL);
+	repo_config(the_repository, archive_zip_config, NULL);
 
 	dos_time(&args->time, &zip_date, &zip_time);
 

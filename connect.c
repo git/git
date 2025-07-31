@@ -1028,7 +1028,7 @@ static int git_proxy_command_options(const char *var, const char *value,
 static int git_use_proxy(const char *host)
 {
 	git_proxy_command = getenv("GIT_PROXY_COMMAND");
-	git_config(git_proxy_command_options, (void*)host);
+	repo_config(the_repository, git_proxy_command_options, (void*)host);
 	return (git_proxy_command && *git_proxy_command);
 }
 
@@ -1154,7 +1154,7 @@ static const char *get_ssh_command(void)
 	if ((ssh = getenv("GIT_SSH_COMMAND")))
 		return ssh;
 
-	if (!git_config_get_string_tmp("core.sshcommand", &ssh))
+	if (!repo_config_get_string_tmp(the_repository, "core.sshcommand", &ssh))
 		return ssh;
 
 	return NULL;
@@ -1173,7 +1173,7 @@ static void override_ssh_variant(enum ssh_variant *ssh_variant)
 {
 	const char *variant = getenv("GIT_SSH_VARIANT");
 
-	if (!variant && git_config_get_string_tmp("ssh.variant", &variant))
+	if (!variant && repo_config_get_string_tmp(the_repository, "ssh.variant", &variant))
 		return;
 
 	if (!strcmp(variant, "auto"))

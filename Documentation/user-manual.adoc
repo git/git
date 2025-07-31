@@ -4270,7 +4270,7 @@ So, look into `builtin/cat-file.c`, search for `cmd_cat_file()` and look what
 it does.
 
 ------------------------------------------------------------------
-        git_config(git_default_config);
+        repo_config(the_repository, git_default_config);
         if (argc != 3)
 		usage("git cat-file [-t|-s|-e|-p|<type>] <sha1>");
         if (get_sha1(argv[2], sha1))

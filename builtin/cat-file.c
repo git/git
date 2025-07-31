@@ -1095,7 +1095,7 @@ int cmd_cat_file(int argc,
 		OPT_END()
 	};
 
-	git_config(git_cat_file_config, NULL);
+	repo_config(the_repository, git_cat_file_config, NULL);
 
 	batch.buffer_output = -1;
 

@@ -132,7 +132,7 @@ static void add_branch(const char *key, const char *branchname,
 	else
 		strbuf_addf(tmp, "refs/heads/%s:refs/remotes/%s/%s",
 				branchname, remotename, branchname);
-	git_config_set_multivar(key, tmp->buf, "^$", 0);
+	repo_config_set_multivar(the_repository, key, tmp->buf, "^$", 0);
 }
 
 static const char mirror_advice[] =
@@ -226,7 +226,7 @@ static int add(int argc, const char **argv, const char *prefix,
 	for_each_remote(check_remote_collision, (void *)name);
 
 	strbuf_addf(&buf, "remote.%s.url", name);
-	git_config_set(buf.buf, url);
+	repo_config_set(the_repository, buf.buf, url);
 
 	if (!mirror || mirror & MIRROR_FETCH) {
 		strbuf_reset(&buf);
@@ -242,14 +242,14 @@ static int add(int argc, const char **argv, const char *prefix,
 	if (mirror & MIRROR_PUSH) {
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "remote.%s.mirror", name);
-		git_config_set(buf.buf, "true");
+		repo_config_set(the_repository, buf.buf, "true");
 	}
 
 	if (fetch_tags != TAGS_DEFAULT) {
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "remote.%s.tagOpt", name);
-		git_config_set(buf.buf,
-			       fetch_tags == TAGS_SET ? "--tags" : "--no-tags");
+		repo_config_set(the_repository, buf.buf,
+				fetch_tags == TAGS_SET ? "--tags" : "--no-tags");
 	}
 
 	if (fetch && fetch_remote(name)) {
@@ -370,7 +370,7 @@ static void read_branches(void)
 {
 	if (branch_list.nr)
 		return;
-	git_config(config_read_branches, NULL);
+	repo_config(the_repository, config_read_branches, NULL);
 }
 
 struct ref_states {
@@ -651,15 +651,15 @@ static int migrate_file(struct remote *remote)
 
 	strbuf_addf(&buf, "remote.%s.url", remote->name);
 	for (i = 0; i < remote->url.nr; i++)
-		git_config_set_multivar(buf.buf, remote->url.v[i], "^$", 0);
+		repo_config_set_multivar(the_repository, buf.buf, remote->url.v[i], "^$", 0);
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.push", remote->name);
 	for (i = 0; i < remote->push.nr; i++)
-		git_config_set_multivar(buf.buf, remote->push.items[i].raw, "^$", 0);
+		repo_config_set_multivar(the_repository, buf.buf, remote->push.items[i].raw, "^$", 0);
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.fetch", remote->name);
 	for (i = 0; i < remote->fetch.nr; i++)
-		git_config_set_multivar(buf.buf, remote->fetch.items[i].raw, "^$", 0);
+		repo_config_set_multivar(the_repository, buf.buf, remote->fetch.items[i].raw, "^$", 0);
 #ifndef WITH_BREAKING_CHANGES
 	if (remote->origin == REMOTE_REMOTES)
 		unlink_or_warn(repo_git_path_replace(the_repository, &buf,
@@ -707,12 +707,12 @@ static void handle_push_default(const char* old_name, const char* new_name)
 		.origin = STRBUF_INIT,
 		.linenr = -1,
 	};
-	git_config(config_read_push_default, &push_default);
+	repo_config(the_repository, config_read_push_default, &push_default);
 	if (push_default.scope >= CONFIG_SCOPE_COMMAND)
 		; /* pass */
 	else if (push_default.scope >= CONFIG_SCOPE_LOCAL) {
-		int result = git_config_set_gently("remote.pushDefault",
-						   new_name);
+		int result = repo_config_set_gently(the_repository, "remote.pushDefault",
+						    new_name);
 		if (new_name && result && result != CONFIG_NOTHING_SET)
 			die(_("could not set '%s'"), "remote.pushDefault");
 		else if (!new_name && result && result != CONFIG_NOTHING_SET)
@@ -788,7 +788,7 @@ static int mv(int argc, const char **argv, const char *prefix,
 	if (oldremote->fetch.nr) {
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "remote.%s.fetch", rename.new_name);
-		git_config_set_multivar(buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
+		repo_config_set_multivar(the_repository, buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
 		strbuf_addf(&old_remote_context, ":refs/remotes/%s/", rename.old_name);
 		for (i = 0; i < oldremote->fetch.nr; i++) {
 			char *ptr;
@@ -808,7 +808,7 @@ static int mv(int argc, const char **argv, const char *prefix,
 					  "\tPlease update the configuration manually if necessary."),
 					buf2.buf);
 
-			git_config_set_multivar(buf.buf, buf2.buf, "^$", 0);
+			repo_config_set_multivar(the_repository, buf.buf, buf2.buf, "^$", 0);
 		}
 	}
 
@@ -819,12 +819,12 @@ static int mv(int argc, const char **argv, const char *prefix,
 		if (info->remote_name && !strcmp(info->remote_name, rename.old_name)) {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "branch.%s.remote", item->string);
-			git_config_set(buf.buf, rename.new_name);
+			repo_config_set(the_repository, buf.buf, rename.new_name);
 		}
 		if (info->push_remote_name && !strcmp(info->push_remote_name, rename.old_name)) {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "branch.%s.pushRemote", item->string);
-			git_config_set(buf.buf, rename.new_name);
+			repo_config_set(the_repository, buf.buf, rename.new_name);
 		}
 	}
 
@@ -951,7 +951,7 @@ static int rm(int argc, const char **argv, const char *prefix,
 				strbuf_reset(&buf);
 				strbuf_addf(&buf, "branch.%s.%s",
 						item->string, *k);
-				result = git_config_set_gently(buf.buf, NULL);
+				result = repo_config_set_gently(the_repository, buf.buf, NULL);
 				if (result && result != CONFIG_NOTHING_SET)
 					die(_("could not unset '%s'"), buf.buf);
 			}
@@ -959,7 +959,7 @@ static int rm(int argc, const char **argv, const char *prefix,
 		if (info->push_remote_name && !strcmp(info->push_remote_name, remote->name)) {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "branch.%s.pushremote", item->string);
-			result = git_config_set_gently(buf.buf, NULL);
+			result = repo_config_set_gently(the_repository, buf.buf, NULL);
 			if (result && result != CONFIG_NOTHING_SET)
 				die(_("could not unset '%s'"), buf.buf);
 		}
@@ -1285,7 +1285,7 @@ static int get_one_entry(struct remote *remote, void *priv)
 
 		strbuf_addf(&promisor_config, "remote.%s.partialclonefilter", remote->name);
 		strbuf_addf(&remote_info_buf, "%s (fetch)", remote->url.v[0]);
-		if (!git_config_get_string_tmp(promisor_config.buf, &partial_clone_filter))
+		if (!repo_config_get_string_tmp(the_repository, promisor_config.buf, &partial_clone_filter))
 			strbuf_addf(&remote_info_buf, " [%s]", partial_clone_filter);
 
 		strbuf_release(&promisor_config);
@@ -1520,7 +1520,7 @@ static int set_head(int argc, const char **argv, const char *prefix,
 		struct strbuf config_name = STRBUF_INIT;
 		strbuf_addf(&config_name,
 			"remote.%s.followremotehead", remote->name);
-		git_config_set(config_name.buf, "warn");
+		repo_config_set(the_repository, config_name.buf, "warn");
 		strbuf_release(&config_name);
 	}
 
@@ -1637,7 +1637,7 @@ static int update(int argc, const char **argv, const char *prefix,
 		strvec_push(&cmd.args, argv[i]);
 
 	if (strcmp(cmd.args.v[cmd.args.nr-1], "default") == 0) {
-		git_config(get_remote_default, &default_defined);
+		repo_config(the_repository, get_remote_default, &default_defined);
 		if (!default_defined) {
 			strvec_pop(&cmd.args);
 			strvec_push(&cmd.args, "--all");
@@ -1650,8 +1650,8 @@ static int update(int argc, const char **argv, const char *prefix,
 
 static int remove_all_fetch_refspecs(const char *key)
 {
-	return git_config_set_multivar_gently(key, NULL, NULL,
-					      CONFIG_FLAGS_MULTI_REPLACE);
+	return repo_config_set_multivar_gently(the_repository, key, NULL, NULL,
+					       CONFIG_FLAGS_MULTI_REPLACE);
 }
 
 static void add_branches(struct remote *remote, const char **branches,
@@ -1807,10 +1807,10 @@ static int set_url(int argc, const char **argv, const char *prefix,
 	/* Special cases that add new entry. */
 	if ((!oldurl && !delete_mode) || add_mode) {
 		if (add_mode)
-			git_config_set_multivar(name_buf.buf, newurl,
+			repo_config_set_multivar(the_repository, name_buf.buf, newurl,
 						       "^$", 0);
 		else
-			git_config_set(name_buf.buf, newurl);
+			repo_config_set(the_repository, name_buf.buf, newurl);
 		goto out;
 	}
 
@@ -1831,10 +1831,10 @@ static int set_url(int argc, const char **argv, const char *prefix,
 	regfree(&old_regex);
 
 	if (!delete_mode)
-		git_config_set_multivar(name_buf.buf, newurl, oldurl, 0);
+		repo_config_set_multivar(the_repository, name_buf.buf, newurl, oldurl, 0);
 	else
-		git_config_set_multivar(name_buf.buf, NULL, oldurl,
-					CONFIG_FLAGS_MULTI_REPLACE);
+		repo_config_set_multivar(the_repository, name_buf.buf, NULL, oldurl,
+					 CONFIG_FLAGS_MULTI_REPLACE);
 out:
 	strbuf_release(&name_buf);
 	return 0;

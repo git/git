@@ -5,6 +5,7 @@
 #include "abspath.h"
 #include "config.h"
 #include "dir.h"
+#include "environment.h"
 #include "gettext.h"
 #include "parse-options.h"
 #include "fsmonitor-ll.h"
@@ -1547,7 +1548,7 @@ int cmd_fsmonitor__daemon(int argc,
 		OPT_END()
 	};
 
-	git_config(fsmonitor_config, NULL);
+	repo_config(the_repository, fsmonitor_config, NULL);
 
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_fsmonitor__daemon_usage, 0);
