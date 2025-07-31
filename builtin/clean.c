@@ -477,7 +477,7 @@ static int find_unique(const char *choice, struct menu_stuff *menu_stuff)
  */
 static int parse_choice(struct menu_stuff *menu_stuff,
 			int is_single,
-			struct strbuf input,
+			struct strbuf *input,
 			int **chosen)
 {
 	struct strbuf **choice_list, **ptr;
@@ -485,14 +485,14 @@ static int parse_choice(struct menu_stuff *menu_stuff,
 	int i;
 
 	if (is_single) {
-		choice_list = strbuf_split_max(&input, '\n', 0);
+		choice_list = strbuf_split_max(input, '\n', 0);
 	} else {
-		char *p = input.buf;
+		char *p = input->buf;
 		do {
 			if (*p == ',')
 				*p = ' ';
 		} while (*p++);
-		choice_list = strbuf_split_max(&input, ' ', 0);
+		choice_list = strbuf_split_max(input, ' ', 0);
 	}
 
 	for (ptr = choice_list; *ptr; ptr++) {
@@ -630,7 +630,7 @@ static int *list_and_choose(struct menu_opts *opts, struct menu_stuff *stuff)
 
 		nr = parse_choice(stuff,
 				  opts->flags & MENU_OPTS_SINGLETON,
-				  choice,
+				  &choice,
 				  &chosen);
 
 		if (opts->flags & MENU_OPTS_SINGLETON) {
