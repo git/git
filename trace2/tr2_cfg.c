@@ -39,7 +39,6 @@ static int tr2_cfg_load_patterns(void)
 
 		if (buf->len && buf->buf[buf->len - 1] == ',')
 			strbuf_setlen(buf, buf->len - 1);
-		strbuf_trim_trailing_newline(*s);
 		strbuf_trim(*s);
 	}
 
@@ -78,7 +77,6 @@ static int tr2_load_env_vars(void)
 
 		if (buf->len && buf->buf[buf->len - 1] == ',')
 			strbuf_setlen(buf, buf->len - 1);
-		strbuf_trim_trailing_newline(*s);
 		strbuf_trim(*s);
 	}
 
