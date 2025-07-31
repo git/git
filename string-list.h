@@ -286,6 +286,8 @@ int string_list_split_in_place(struct string_list *list, char *string,
 enum {
 	/* trim() resulting string piece before adding it to the list */
 	STRING_LIST_SPLIT_TRIM = (1 << 0),
+	/* omit adding empty string piece to the resulting list */
+	STRING_LIST_SPLIT_NONEMPTY = (1 << 1),
 };
 
 int string_list_split_f(struct string_list *, const char *string,
