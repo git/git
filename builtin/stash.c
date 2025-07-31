@@ -738,7 +738,8 @@ cleanup:
 	return ret;
 }
 
-static int reject_reflog_ent(struct object_id *ooid UNUSED,
+static int reject_reflog_ent(const char *refname UNUSED,
+			     struct object_id *ooid UNUSED,
 			     struct object_id *noid UNUSED,
 			     const char *email UNUSED,
 			     timestamp_t timestamp UNUSED,
@@ -2173,7 +2174,8 @@ struct stash_entry_data {
 	size_t count;
 };
 
-static int collect_stash_entries(struct object_id *old_oid UNUSED,
+static int collect_stash_entries(const char *refname UNUSED,
+				 struct object_id *old_oid UNUSED,
 				 struct object_id *new_oid,
 				 const char *committer UNUSED,
 				 timestamp_t timestamp UNUSED,

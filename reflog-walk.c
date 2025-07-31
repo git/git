@@ -22,9 +22,10 @@ struct complete_reflogs {
 	int nr, alloc;
 };
 
-static int read_one_reflog(struct object_id *ooid, struct object_id *noid,
-		const char *email, timestamp_t timestamp, int tz,
-		const char *message, void *cb_data)
+static int read_one_reflog(const char *refname UNUSED,
+			   struct object_id *ooid, struct object_id *noid,
+			   const char *email, timestamp_t timestamp, int tz,
+			   const char *message, void *cb_data)
 {
 	struct complete_reflogs *array = cb_data;
 	struct reflog_info *item;

@@ -1699,7 +1699,8 @@ static void handle_one_reflog_commit(struct object_id *oid, void *cb_data)
 	}
 }
 
-static int handle_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
+static int handle_one_reflog_ent(const char *refname UNUSED,
+				 struct object_id *ooid, struct object_id *noid,
 				 const char *email UNUSED,
 				 timestamp_t timestamp UNUSED,
 				 int tz UNUSED,

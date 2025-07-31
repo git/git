@@ -276,7 +276,8 @@ struct debug_reflog {
 	void *cb_data;
 };
 
-static int debug_print_reflog_ent(struct object_id *old_oid,
+static int debug_print_reflog_ent(const char *refname,
+				  struct object_id *old_oid,
 				  struct object_id *new_oid,
 				  const char *committer, timestamp_t timestamp,
 				  int tz, const char *msg, void *cb_data)
@@ -291,7 +292,7 @@ static int debug_print_reflog_ent(struct object_id *old_oid,
 	if (new_oid)
 		oid_to_hex_r(n, new_oid);
 
-	ret = dbg->fn(old_oid, new_oid, committer, timestamp, tz, msg,
+	ret = dbg->fn(refname, old_oid, new_oid, committer, timestamp, tz, msg,
 		      dbg->cb_data);
 	trace_printf_key(&trace_refs,
 			 "reflog_ent %s (ret %d): %s -> %s, %s %ld \"%.*s\"\n",

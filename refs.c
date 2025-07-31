@@ -1022,7 +1022,6 @@ int is_branch(const char *refname)
 }
 
 struct read_ref_at_cb {
-	const char *refname;
 	timestamp_t at_time;
 	int cnt;
 	int reccnt;
@@ -1052,7 +1051,8 @@ static void set_read_ref_cutoffs(struct read_ref_at_cb *cb,
 		*cb->cutoff_cnt = cb->reccnt;
 }
 
-static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
+static int read_ref_at_ent(const char *refname,
+			   struct object_id *ooid, struct object_id *noid,
 			   const char *email UNUSED,
 			   timestamp_t timestamp, int tz,
 			   const char *message, void *cb_data)
@@ -1072,14 +1072,13 @@ static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
 			oidcpy(cb->oid, noid);
 			if (!oideq(&cb->ooid, noid))
 				warning(_("log for ref %s has gap after %s"),
-					cb->refname, show_date(cb->date, cb->tz, DATE_MODE(RFC2822)));
+					refname, show_date(cb->date, cb->tz, DATE_MODE(RFC2822)));
 		}
 		else if (cb->date == cb->at_time)
 			oidcpy(cb->oid, noid);
 		else if (!oideq(noid, cb->oid))
 			warning(_("log for ref %s unexpectedly ended on %s"),
-				cb->refname, show_date(cb->date, cb->tz,
-						       DATE_MODE(RFC2822)));
+				refname, show_date(cb->date, cb->tz, DATE_MODE(RFC2822)));
 		cb->reccnt++;
 		oidcpy(&cb->ooid, ooid);
 		oidcpy(&cb->noid, noid);
@@ -1094,7 +1093,8 @@ static int read_ref_at_ent(struct object_id *ooid, struct object_id *noid,
 	return 0;
 }
 
-static int read_ref_at_ent_oldest(struct object_id *ooid, struct object_id *noid,
+static int read_ref_at_ent_oldest(const char *refname UNUSED,
+				  struct object_id *ooid, struct object_id *noid,
 				  const char *email UNUSED,
 				  timestamp_t timestamp, int tz,
 				  const char *message, void *cb_data)
@@ -1117,7 +1117,6 @@ int read_ref_at(struct ref_store *refs, const char *refname,
 	struct read_ref_at_cb cb;
 
 	memset(&cb, 0, sizeof(cb));
-	cb.refname = refname;
 	cb.at_time = at_time;
 	cb.cnt = cnt;
 	cb.msg = msg;
@@ -2976,14 +2975,14 @@ done:
 
 struct reflog_migration_data {
 	uint64_t index;
-	const char *refname;
 	struct ref_store *old_refs;
 	struct ref_transaction *transaction;
 	struct strbuf *errbuf;
 	struct strbuf *sb, *name, *mail;
 };
 
-static int migrate_one_reflog_entry(struct object_id *old_oid,
+static int migrate_one_reflog_entry(const char *refname,
+				    struct object_id *old_oid,
 				    struct object_id *new_oid,
 				    const char *committer,
 				    timestamp_t timestamp, int tz,
@@ -3006,7 +3005,7 @@ static int migrate_one_reflog_entry(struct object_id *old_oid,
 	strbuf_reset(data->sb);
 	strbuf_addstr(data->sb, fmt_ident(data->name->buf, data->mail->buf, WANT_BLANK_IDENT, date, 0));
 
-	ret = ref_transaction_update_reflog(data->transaction, data->refname,
+	ret = ref_transaction_update_reflog(data->transaction, refname,
 					    new_oid, old_oid, data->sb->buf,
 					    msg, data->index++, data->errbuf);
 	return ret;
@@ -3016,7 +3015,6 @@ static int migrate_one_reflog(const char *refname, void *cb_data)
 {
 	struct migration_data *migration_data = cb_data;
 	struct reflog_migration_data data = {
-		.refname = refname,
 		.old_refs = migration_data->old_refs,
 		.transaction = migration_data->transaction,
 		.errbuf = migration_data->errbuf,

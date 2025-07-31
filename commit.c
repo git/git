@@ -1031,7 +1031,8 @@ static void add_one_commit(struct object_id *oid, struct rev_collect *revs)
 	commit->object.flags |= TMP_MARK;
 }
 
-static int collect_one_reflog_ent(struct object_id *ooid, struct object_id *noid,
+static int collect_one_reflog_ent(const char *refname UNUSED,
+				  struct object_id *ooid, struct object_id *noid,
 				  const char *ident UNUSED,
 				  timestamp_t timestamp UNUSED, int tz UNUSED,
 				  const char *message UNUSED, void *cbdata)

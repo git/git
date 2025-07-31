@@ -558,10 +558,13 @@ int refs_delete_reflog(struct ref_store *refs, const char *refname);
  * The cb_data is a caller-supplied pointer given to the iterator
  * functions.
  */
-typedef int each_reflog_ent_fn(
-		struct object_id *old_oid, struct object_id *new_oid,
-		const char *committer, timestamp_t timestamp,
-		int tz, const char *msg, void *cb_data);
+typedef int each_reflog_ent_fn(const char *refname,
+			       struct object_id *old_oid,
+			       struct object_id *new_oid,
+			       const char *committer,
+			       timestamp_t timestamp,
+			       int tz, const char *msg,
+			       void *cb_data);
 
 /* Iterate over reflog entries in the log for `refname`. */
 

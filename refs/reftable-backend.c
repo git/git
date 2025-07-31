@@ -2148,7 +2148,7 @@ static int yield_log_record(struct reftable_ref_store *refs,
 
 	full_committer = fmt_ident(log->value.update.name, log->value.update.email,
 				   WANT_COMMITTER_IDENT, NULL, IDENT_NO_DATE);
-	return fn(&old_oid, &new_oid, full_committer,
+	return fn(log->refname, &old_oid, &new_oid, full_committer,
 		  log->value.update.time, log->value.update.tz_offset,
 		  log->value.update.message, cb_data);
 }
