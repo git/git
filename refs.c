@@ -2941,6 +2941,7 @@ struct migration_data {
 	struct ref_transaction *transaction;
 	struct strbuf *errbuf;
 	struct strbuf sb, name, mail;
+	uint64_t index;
 };
 
 static int migrate_one_ref(const char *refname, const char *referent UNUSED, const struct object_id *oid,
@@ -2973,14 +2974,6 @@ done:
 	return ret;
 }
 
-struct reflog_migration_data {
-	uint64_t index;
-	struct ref_store *old_refs;
-	struct ref_transaction *transaction;
-	struct strbuf *errbuf;
-	struct strbuf *sb, *name, *mail;
-};
-
 static int migrate_one_reflog_entry(const char *refname,
 				    struct object_id *old_oid,
 				    struct object_id *new_oid,
@@ -2988,7 +2981,7 @@ static int migrate_one_reflog_entry(const char *refname,
 				    timestamp_t timestamp, int tz,
 				    const char *msg, void *cb_data)
 {
-	struct reflog_migration_data *data = cb_data;
+	struct migration_data *data = cb_data;
 	struct ident_split ident;
 	const char *date;
 	int ret;
@@ -2996,17 +2989,17 @@ static int migrate_one_reflog_entry(const char *refname,
 	if (split_ident_line(&ident, committer, strlen(committer)) < 0)
 		return -1;
 
-	strbuf_reset(data->name);
-	strbuf_add(data->name, ident.name_begin, ident.name_end - ident.name_begin);
-	strbuf_reset(data->mail);
-	strbuf_add(data->mail, ident.mail_begin, ident.mail_end - ident.mail_begin);
+	strbuf_reset(&data->name);
+	strbuf_add(&data->name, ident.name_begin, ident.name_end - ident.name_begin);
+	strbuf_reset(&data->mail);
+	strbuf_add(&data->mail, ident.mail_begin, ident.mail_end - ident.mail_begin);
 
 	date = show_date(timestamp, tz, DATE_MODE(NORMAL));
-	strbuf_reset(data->sb);
-	strbuf_addstr(data->sb, fmt_ident(data->name->buf, data->mail->buf, WANT_BLANK_IDENT, date, 0));
+	strbuf_reset(&data->sb);
+	strbuf_addstr(&data->sb, fmt_ident(data->name.buf, data->mail.buf, WANT_BLANK_IDENT, date, 0));
 
 	ret = ref_transaction_update_reflog(data->transaction, refname,
-					    new_oid, old_oid, data->sb->buf,
+					    new_oid, old_oid, data->sb.buf,
 					    msg, data->index++, data->errbuf);
 	return ret;
 }
@@ -3014,17 +3007,8 @@ static int migrate_one_reflog_entry(const char *refname,
 static int migrate_one_reflog(const char *refname, void *cb_data)
 {
 	struct migration_data *migration_data = cb_data;
-	struct reflog_migration_data data = {
-		.old_refs = migration_data->old_refs,
-		.transaction = migration_data->transaction,
-		.errbuf = migration_data->errbuf,
-		.sb = &migration_data->sb,
-		.name = &migration_data->name,
-		.mail = &migration_data->mail,
-	};
-
 	return refs_for_each_reflog_ent(migration_data->old_refs, refname,
-					migrate_one_reflog_entry, &data);
+					migrate_one_reflog_entry, migration_data);
 }
 
 static int move_files(const char *from_path, const char *to_path, struct strbuf *errbuf)
