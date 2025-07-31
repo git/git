@@ -1,16 +1,17 @@
 # French translation of the gitk package
-# Copyright (C) 2005-2008 Paul Mackerras.  All rights reserved.
+# Copyright (C) 2005-2025 Paul Mackerras.  All rights reserved.
 # This file is distributed under the same license as the gitk package.
 # Translators:
 # Emmanuel Trillaud <etrillaud@gmail.com>
 # Jean-Noël Avila <jn.avila@free.fr>
+# Christian Wiat <w9204-rs@yahoo.com>
 msgid ""
 msgstr ""
 "Project-Id-Version: gitk\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-01-22 22:04+0100\n"
-"PO-Revision-Date: 2016-01-22 23:28+0100\n"
-"Last-Translator: Jean-Noël Avila <jn.avila@free.fr>\n"
+"PO-Revision-Date: 2025-07-31 06:00+0200\n"
+"Last-Translator: Christian Wiat <w9204-rs@yahoo.com>\n"
 "Language-Team: git@vger.kernel.org\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
@@ -119,7 +120,7 @@ msgstr "&Fichier"
 
 #: gitk:2094
 msgid "&Preferences"
-msgstr "Préférences"
+msgstr "&Préférences"
 
 #: gitk:2093
 msgid "&Edit"
@@ -147,7 +148,7 @@ msgstr "&Vue"
 
 #: gitk:2107 gitk:2117
 msgid "&About gitk"
-msgstr "À propos de gitk"
+msgstr "&A propos de gitk"
 
 #: gitk:2108 gitk:2122
 msgid "&Key bindings"
@@ -163,7 +164,7 @@ msgstr "Id SHA1 :"
 
 #: gitk:2243
 msgid "Row"
-msgstr "Colonne"
+msgstr "Ligne"
 
 #: gitk:2281
 msgid "Find"
@@ -221,7 +222,7 @@ msgstr "Auteur"
 
 #: gitk:2333 gitk:4890 gitk:6805 gitk:7345
 msgid "Committer"
-msgstr "Validateur"
+msgstr "Valideur"
 
 #: gitk:2367
 msgid "Search"
@@ -269,15 +270,15 @@ msgstr "Diff sélection -> ceci"
 
 #: gitk:2637 gitk:2658
 msgid "Make patch"
-msgstr "Créer patch"
+msgstr "Créer un patch"
 
 #: gitk:2638 gitk:9273
 msgid "Create tag"
-msgstr "Créer étiquette"
+msgstr "Créer une étiquette"
 
 #: gitk:2639
 msgid "Copy commit summary"
-msgstr "Copié le résumé du commit"
+msgstr "Copier le résumé du commit"
 
 #: gitk:2640 gitk:9404
 msgid "Write commit to file"
@@ -301,7 +302,7 @@ msgstr "Marquer ce commit"
 
 #: gitk:2645
 msgid "Return to mark"
-msgstr "Retourner à la marque"
+msgstr "Revenir à la marque"
 
 #: gitk:2646
 msgid "Find descendant of this and mark"
@@ -377,7 +378,7 @@ msgid ""
 "Use and redistribute under the terms of the GNU General Public License"
 msgstr ""
 "\n"
-"Gitk - visualisateur de commit pour git\n"
+"Gitk - visualiseur de commit pour git\n"
 "\n"
 "Copyright \\u00a9 2005-2016 Paul Mackerras\n"
 "\n"
@@ -671,7 +672,7 @@ msgstr "Auteur :"
 
 #: gitk:4102
 msgid "Committer:"
-msgstr "Validateur :"
+msgstr "Valideur :"
 
 #: gitk:4103
 msgid "Commit Message:"
@@ -858,7 +859,7 @@ msgstr "L'id SHA1 court %s est ambigu"
 #: gitk:8697
 #, tcl-format
 msgid "Revision %s is not known"
-msgstr "La révision %s est inconnu"
+msgstr "La révision %s est inconnue"
 
 #: gitk:8707
 #, tcl-format
@@ -908,7 +909,7 @@ msgid ""
 " is the same patch as\n"
 "       "
 msgstr ""
-"est le même patch que \n"
+" est le même patch que \n"
 "       "
 
 #: gitk:9062
@@ -1036,14 +1037,14 @@ msgstr "Veuillez spécifier un nom pour la nouvelle branche"
 #: gitk:9496
 #, tcl-format
 msgid "Branch '%s' already exists. Overwrite?"
-msgstr "La branche '%s' existe déjà. Écraser?"
+msgstr "La branche '%s' existe déjà. Écraser ?"
 
 #: gitk:9563
 #, tcl-format
 msgid "Commit %s is already included in branch %s -- really re-apply it?"
 msgstr ""
 "Le Commit %s est déjà inclus dans la branche %s -- le ré-appliquer malgré "
-"tout?"
+"tout ?"
 
 #: gitk:9568
 msgid "Cherry-picking"
@@ -1055,7 +1056,7 @@ msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
 "Please commit, reset or stash your changes and try again."
 msgstr ""
-"Le picorage (cherry-pick) a échouée à cause de modifications locales du fichier '%s'.\n"
+"Le picorage (cherry-pick) a échoué à cause de modifications locales du fichier '%s'.\n"
 "Veuillez commiter, réinitialiser ou stasher vos changements et essayer de nouveau."
 
 #: gitk:9583
@@ -1063,7 +1064,7 @@ msgid ""
 "Cherry-pick failed because of merge conflict.\n"
 "Do you wish to run git citool to resolve it?"
 msgstr ""
-"Le picorage (cherry-pick) a échouée à cause d'un conflit lors d'une fusion.\n"
+"Le picorage (cherry-pick) a échoué à cause d'un conflit lors de la fusion.\n"
 "Souhaitez-vous exécuter git citool pour le résoudre ?"
 
 #: gitk:9599 gitk:9657
@@ -1073,7 +1074,7 @@ msgstr "Aucune modification validée"
 #: gitk:9626
 #, tcl-format
 msgid "Commit %s is not included in branch %s -- really revert it?"
-msgstr "Le Commit %s n'est pas inclus dans la branche %s -- le défaire malgré tout?"
+msgstr "Le Commit %s n'est pas inclus dans la branche %s -- le défaire malgré tout ?"
 
 #: gitk:9631
 msgid "Reverting"
@@ -1092,7 +1093,7 @@ msgid ""
 " Do you wish to run git citool to resolve it?"
 msgstr ""
 "Échec en tentant de défaire à cause d'un conflit de fusion.\n"
-"Souhaitez-vous exécuter git citool pour le résoudre ?"
+" Souhaitez-vous exécuter git citool pour le résoudre ?"
 
 #: gitk:9686
 msgid "Confirm reset"
@@ -1101,7 +1102,7 @@ msgstr "Confirmer la réinitialisation"
 #: gitk:9688
 #, tcl-format
 msgid "Reset branch %s to %s?"
-msgstr "Réinitialiser la branche %s à %s?"
+msgstr "Réinitialiser la branche %s à %s ?"
 
 #: gitk:9690
 msgid "Reset type:"
@@ -1123,7 +1124,7 @@ msgid ""
 "(discard ALL local changes)"
 msgstr ""
 "Dure : Réinitialise le répertoire de travail et l'index\n"
-"(abandonne TOUTES les modifications locale)"
+"(abandonne TOUTES les modifications locales)"
 
 #: gitk:9716
 msgid "Resetting"
@@ -1145,7 +1146,7 @@ msgid ""
 "Really delete branch %s?"
 msgstr ""
 "Les commits de la branche %s ne sont dans aucune autre branche.\n"
-"Voulez-vous vraiment supprimer cette branche %s ?"
+"Voulez-vous vraiment supprimer la branche %s ?"
 
 #: gitk:9866
 #, tcl-format
@@ -1205,7 +1206,7 @@ msgstr "Montrer les modifications locales"
 
 #: gitk:11394
 msgid "Auto-select SHA1 (length)"
-msgstr "Sélection auto. du SHA1 (longueur)"
+msgstr "Sélection automatique du SHA1 (longueur)"
 
 #: gitk:11398
 msgid "Hide remote refs"
@@ -1221,7 +1222,7 @@ msgstr "Taille des tabulations"
 
 #: gitk:11407
 msgid "Display nearby tags/heads"
-msgstr "Afficher les tags les plus proches"
+msgstr "Afficher les étiquettes/heads les plus proches"
 
 #: gitk:11410
 msgid "Maximum # tags/heads to show"
@@ -1379,7 +1380,7 @@ msgstr "Argument '%s' ambigu : à la fois une révision et un nom de fichier"
 
 #: gitk:12361
 msgid "Bad arguments to gitk:"
-msgstr "Arguments invalides pour gitk :"
+msgstr "Arguments non valides pour gitk :"
 
 #~ msgid "SHA1 ID: "
 #~ msgstr "ID SHA1 :"
