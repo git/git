@@ -53,6 +53,14 @@ UI, Workflows & Features
  * Clean up the way how signature on commit objects are exported to
    and imported from fast-import stream.
 
+ * Remove unsupported, unused, and unsupportable old option from "git
+   log".
+
+ * Document recently added "git imap-send --list" with an example.
+
+ * "git pull" learned to pay attention to pull.autostash configuration
+   variable, which overrides rebase/merge.autostash.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -106,6 +114,16 @@ Performance, Internal Implementation, Development Support etc.
  * The pop_most_recent_commit() function can have quite expensive
    worst case performance characteristics, which has been optimized by
    using prio-queue data structure.
+
+ * Move structure definition from unrelated header file to where it
+   belongs.
+
+ * To help our developers, document what C99 language features are
+   being considered for adoption, in addition to what past experiments
+   have already decided.
+
+ * The reftable unit tests are now ported to the "clar" unit testing
+   framework.
 
 
 Fixes since v2.50
@@ -260,3 +278,7 @@ including security updates, are included in this release.
    (merge f4fa8a3687 rh/doc-glob-pathspec-fix later to maint).
    (merge b27be108c8 ja/doc-git-log-markup later to maint).
    (merge 14d7583beb pw/config-kvi-remove-path later to maint).
+   (merge f31abb421d jc/do-not-scan-argv-without-parsing later to maint).
+   (merge 26552cb62a jk/unleak-reflog-expire-entry later to maint).
+   (merge 339d95fda9 jc/ci-print-test-failures-fix later to maint).
+   (merge 8c3add51a8 cb/meson-avoid-broken-macos-pcre2 later to maint).
