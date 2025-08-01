@@ -14,7 +14,7 @@ SYNOPSIS
 		   [--points-at=<object>]
 		   [--merged[=<object>]] [--no-merged[=<object>]]
 		   [--contains[=<object>]] [--no-contains[=<object>]]
-		   [--exclude=<pattern> ...]
+		   [--exclude=<pattern> ...] [--start-after=<marker>]
 
 DESCRIPTION
 -----------
@@ -107,6 +107,14 @@ TAB %(refname)`.
 
 --include-root-refs::
 	List root refs (HEAD and pseudorefs) apart from regular refs.
+
+--start-after=<marker>::
+    Allows paginating the output by skipping references up to and including the
+    specified marker. When paging, it should be noted that references may be
+    deleted, modified or added between invocations. Output will only yield those
+    references which follow the marker lexicographically. Output begins from the
+    first reference that would come after the marker alphabetically. Cannot be
+    used with general pattern matching or custom sort options.
 
 FIELD NAMES
 -----------
