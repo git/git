@@ -404,6 +404,15 @@ struct diff_options {
 	struct strmap *additional_path_headers;
 
 	int no_free;
+
+	/*
+	 * The extra "valid" flag is a slight hack. The value "0" is perfectly
+	 * valid for max-depth. We would normally use -1 to indicate "not set",
+	 * but there are many code paths which assume that assume that just
+	 * zero-ing out a diff_options is enough to initialize it.
+	 */
+	int max_depth;
+	int max_depth_valid;
 };
 
 unsigned diff_filter_bit(char status);
