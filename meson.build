@@ -694,9 +694,14 @@ third_party_excludes = [
 
 headers_to_check = []
 if git.found() and fs.exists(meson.project_source_root() / '.git')
-  foreach header : run_command(git, '-C', meson.project_source_root(), 'ls-files', '--deduplicate', '*.h', third_party_excludes, check: true).stdout().split()
-    headers_to_check += header
-  endforeach
+  ls_headers = run_command(git, '-C', meson.project_source_root(), 'ls-files', '--deduplicate', '*.h', third_party_excludes, check: false)
+  if ls_headers.returncode() == 0
+    foreach header : ls_headers.stdout().split()
+      headers_to_check += header
+    endforeach
+  else
+    warning('could not list headers, disabling static analysis targets')
+  endif
 endif
 
 if not get_option('breaking_changes')
