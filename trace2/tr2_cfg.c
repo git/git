@@ -8,89 +8,65 @@
 #include "trace2/tr2_sysenv.h"
 #include "wildmatch.h"
 
-static struct strbuf **tr2_cfg_patterns;
-static int tr2_cfg_count_patterns;
+static struct string_list tr2_cfg_patterns = STRING_LIST_INIT_DUP;
 static int tr2_cfg_loaded;
 
-static struct strbuf **tr2_cfg_env_vars;
-static int tr2_cfg_env_vars_count;
+static struct string_list tr2_cfg_env_vars = STRING_LIST_INIT_DUP;
 static int tr2_cfg_env_vars_loaded;
 
 /*
  * Parse a string containing a comma-delimited list of config keys
- * or wildcard patterns into a list of strbufs.
+ * or wildcard patterns into a string list.
  */
-static int tr2_cfg_load_patterns(void)
+static size_t tr2_cfg_load_patterns(void)
 {
-	struct strbuf **s;
 	const char *envvar;
 
 	if (tr2_cfg_loaded)
-		return tr2_cfg_count_patterns;
+		return tr2_cfg_patterns.nr;
 	tr2_cfg_loaded = 1;
 
 	envvar = tr2_sysenv_get(TR2_SYSENV_CFG_PARAM);
 	if (!envvar || !*envvar)
-		return tr2_cfg_count_patterns;
+		return tr2_cfg_patterns.nr;
 
-	tr2_cfg_patterns = strbuf_split_buf(envvar, strlen(envvar), ',', -1);
-	for (s = tr2_cfg_patterns; *s; s++) {
-		struct strbuf *buf = *s;
-
-		if (buf->len && buf->buf[buf->len - 1] == ',')
-			strbuf_setlen(buf, buf->len - 1);
-		strbuf_trim_trailing_newline(*s);
-		strbuf_trim(*s);
-	}
-
-	tr2_cfg_count_patterns = s - tr2_cfg_patterns;
-	return tr2_cfg_count_patterns;
+	string_list_split_f(&tr2_cfg_patterns, envvar, ",", -1,
+			    STRING_LIST_SPLIT_TRIM);
+	return tr2_cfg_patterns.nr;
 }
 
 void tr2_cfg_free_patterns(void)
 {
-	if (tr2_cfg_patterns)
-		strbuf_list_free(tr2_cfg_patterns);
-	tr2_cfg_count_patterns = 0;
+	if (tr2_cfg_patterns.nr)
+		string_list_clear(&tr2_cfg_patterns, 0);
 	tr2_cfg_loaded = 0;
 }
 
 /*
  * Parse a string containing a comma-delimited list of environment variable
- * names into a list of strbufs.
+ * names into a string list.
  */
-static int tr2_load_env_vars(void)
+static size_t tr2_load_env_vars(void)
 {
-	struct strbuf **s;
 	const char *varlist;
 
 	if (tr2_cfg_env_vars_loaded)
-		return tr2_cfg_env_vars_count;
+		return tr2_cfg_env_vars.nr;
 	tr2_cfg_env_vars_loaded = 1;
 
 	varlist = tr2_sysenv_get(TR2_SYSENV_ENV_VARS);
 	if (!varlist || !*varlist)
-		return tr2_cfg_env_vars_count;
+		return tr2_cfg_env_vars.nr;
 
-	tr2_cfg_env_vars = strbuf_split_buf(varlist, strlen(varlist), ',', -1);
-	for (s = tr2_cfg_env_vars; *s; s++) {
-		struct strbuf *buf = *s;
-
-		if (buf->len && buf->buf[buf->len - 1] == ',')
-			strbuf_setlen(buf, buf->len - 1);
-		strbuf_trim_trailing_newline(*s);
-		strbuf_trim(*s);
-	}
-
-	tr2_cfg_env_vars_count = s - tr2_cfg_env_vars;
-	return tr2_cfg_env_vars_count;
+	string_list_split_f(&tr2_cfg_env_vars, varlist, ",", -1,
+			    STRING_LIST_SPLIT_TRIM);
+	return tr2_cfg_env_vars.nr;
 }
 
 void tr2_cfg_free_env_vars(void)
 {
-	if (tr2_cfg_env_vars)
-		strbuf_list_free(tr2_cfg_env_vars);
-	tr2_cfg_env_vars_count = 0;
+	if (tr2_cfg_env_vars.nr)
+		string_list_clear(&tr2_cfg_env_vars, 0);
 	tr2_cfg_env_vars_loaded = 0;
 }
 
@@ -105,12 +81,11 @@ struct tr2_cfg_data {
 static int tr2_cfg_cb(const char *key, const char *value,
 		      const struct config_context *ctx, void *d)
 {
-	struct strbuf **s;
+	struct string_list_item *item;
 	struct tr2_cfg_data *data = (struct tr2_cfg_data *)d;
 
-	for (s = tr2_cfg_patterns; *s; s++) {
-		struct strbuf *buf = *s;
-		int wm = wildmatch(buf->buf, key, WM_CASEFOLD);
+	for_each_string_list_item(item, &tr2_cfg_patterns) {
+		int wm = wildmatch(item->string, key, WM_CASEFOLD);
 		if (wm == WM_MATCH) {
 			trace2_def_param_fl(data->file, data->line, key, value,
 					    ctx->kvi);
@@ -132,17 +107,16 @@ void tr2_cfg_list_config_fl(const char *file, int line)
 void tr2_list_env_vars_fl(const char *file, int line)
 {
 	struct key_value_info kvi = KVI_INIT;
-	struct strbuf **s;
+	struct string_list_item *item;
 
 	kvi_from_param(&kvi);
 	if (tr2_load_env_vars() <= 0)
 		return;
 
-	for (s = tr2_cfg_env_vars; *s; s++) {
-		struct strbuf *buf = *s;
-		const char *val = getenv(buf->buf);
+	for_each_string_list_item(item, &tr2_cfg_env_vars) {
+		const char *val = getenv(item->string);
 		if (val && *val)
-			trace2_def_param_fl(file, line, buf->buf, val, &kvi);
+			trace2_def_param_fl(file, line, item->string, val, &kvi);
 	}
 }
 
