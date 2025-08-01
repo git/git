@@ -11,6 +11,7 @@
 #include "test-tool.h"
 #include "git-compat-util.h"
 #include "delta.h"
+#include "strbuf.h"
 
 static const char usage_str[] =
 	"test-tool delta (-d|-p) <from_file> <data_file> <out_file>";
@@ -18,68 +19,38 @@ static const char usage_str[] =
 int cmd__delta(int argc, const char **argv)
 {
 	int fd;
-	struct stat st;
-	void *from_buf = NULL, *data_buf = NULL, *out_buf = NULL;
-	unsigned long from_size, data_size, out_size;
-	int ret = 1;
+	struct strbuf from = STRBUF_INIT, data = STRBUF_INIT;
+	char *out_buf;
+	unsigned long out_size;
 
-	if (argc != 5 || (strcmp(argv[1], "-d") && strcmp(argv[1], "-p"))) {
-		fprintf(stderr, "usage: %s\n", usage_str);
-		return 1;
-	}
+	if (argc != 5 || (strcmp(argv[1], "-d") && strcmp(argv[1], "-p")))
+		usage(usage_str);
 
-	fd = open(argv[2], O_RDONLY);
-	if (fd < 0 || fstat(fd, &st)) {
-		perror(argv[2]);
-		return 1;
-	}
-	from_size = st.st_size;
-	from_buf = xmalloc(from_size);
-	if (read_in_full(fd, from_buf, from_size) < 0) {
-		perror(argv[2]);
-		close(fd);
-		goto cleanup;
-	}
-	close(fd);
-
-	fd = open(argv[3], O_RDONLY);
-	if (fd < 0 || fstat(fd, &st)) {
-		perror(argv[3]);
-		goto cleanup;
-	}
-	data_size = st.st_size;
-	data_buf = xmalloc(data_size);
-	if (read_in_full(fd, data_buf, data_size) < 0) {
-		perror(argv[3]);
-		close(fd);
-		goto cleanup;
-	}
-	close(fd);
+	if (strbuf_read_file(&from, argv[2], 0) < 0)
+		die_errno("unable to read '%s'", argv[2]);
+	if (strbuf_read_file(&data, argv[3], 0) < 0)
+		die_errno("unable to read '%s'", argv[3]);
 
 	if (argv[1][1] == 'd')
-		out_buf = diff_delta(from_buf, from_size,
-				     data_buf, data_size,
+		out_buf = diff_delta(from.buf, from.len,
+				     data.buf, data.len,
 				     &out_size, 0);
 	else
-		out_buf = patch_delta(from_buf, from_size,
-				      data_buf, data_size,
+		out_buf = patch_delta(from.buf, from.len,
+				      data.buf, data.len,
 				      &out_size);
-	if (!out_buf) {
-		fprintf(stderr, "delta operation failed (returned NULL)\n");
-		goto cleanup;
-	}
+	if (!out_buf)
+		die("delta operation failed (returned NULL)");
 
-	fd = open (argv[4], O_WRONLY|O_CREAT|O_TRUNC, 0666);
-	if (fd < 0 || write_in_full(fd, out_buf, out_size) < 0) {
-		perror(argv[4]);
-		goto cleanup;
-	}
+	fd = xopen(argv[4], O_WRONLY|O_CREAT|O_TRUNC, 0666);
+	if (write_in_full(fd, out_buf, out_size) < 0)
+		die_errno("write(%s)", argv[4]);
+	if (close(fd) < 0)
+		die_errno("close(%s)", argv[4]);
 
-	ret = 0;
-cleanup:
-	free(from_buf);
-	free(data_buf);
+	strbuf_release(&from);
+	strbuf_release(&data);
 	free(out_buf);
 
-	return ret;
+	return 0;
 }
