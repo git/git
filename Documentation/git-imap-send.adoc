@@ -68,6 +68,34 @@ include::includes/cmd-config-section-rest.adoc[]
 
 include::config/imap.adoc[]
 
+GETTING A LIST OF AVAILABLE FOLDERS
+-----------------------------------
+
+In order to send an email to a specific folder, you need to know the correct name of
+intended folder in your mailbox. The names like "Junk", "Trash" etc. displayed by
+various email clients need not be the actual names of the folders stored in the mail
+server of your email provider.
+
+In order to get the correct folder name to be used with `git imap-send`, you can run
+`git imap-send --list`. This will display a list of valid folder names. An example
+of such an output when run on a Gmail account is:
+
+.........................
+* LIST (\HasNoChildren) "/" "INBOX"
+* LIST (\HasChildren \Noselect) "/" "[Gmail]"
+* LIST (\All \HasNoChildren) "/" "[Gmail]/All Mail"
+* LIST (\Drafts \HasNoChildren) "/" "[Gmail]/Drafts"
+* LIST (\HasNoChildren \Important) "/" "[Gmail]/Important"
+* LIST (\HasNoChildren \Sent) "/" "[Gmail]/Sent Mail"
+* LIST (\HasNoChildren \Junk) "/" "[Gmail]/Spam"
+* LIST (\Flagged \HasNoChildren) "/" "[Gmail]/Starred"
+* LIST (\HasNoChildren \Trash) "/" "[Gmail]/Trash"
+.........................
+
+Here, you can observe that the correct name for the "Junk" folder is `[Gmail]/Spam`
+and for the "Trash" folder is `[Gmail]/Trash`. Similar logic can be used to determine
+other folders as well.
+
 EXAMPLES
 --------
 Using tunnel mode:
