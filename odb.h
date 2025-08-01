@@ -13,6 +13,7 @@ struct oidmap;
 struct oidtree;
 struct strbuf;
 struct repository;
+struct multi_pack_index;
 
 /*
  * Compute the exact path an alternate is at and returns it. In case of
@@ -56,6 +57,13 @@ struct odb_source {
 	struct loose_object_map *loose_map;
 
 	/*
+	 * private data
+	 *
+	 * should only be accessed directly by packfile.c and midx.c
+	 */
+	struct multi_pack_index *midx;
+
+	/*
 	 * This is a temporary object store created by the tmp_objdir
 	 * facility. Disable ref updates since the objects in the store
 	 * might be discarded on rollback.
@@ -75,7 +83,6 @@ struct odb_source {
 };
 
 struct packed_git;
-struct multi_pack_index;
 struct cached_object_entry;
 
 /*
@@ -115,13 +122,6 @@ struct object_database {
 
 	struct commit_graph *commit_graph;
 	unsigned commit_graph_attempted : 1; /* if loading has been attempted */
-
-	/*
-	 * private data
-	 *
-	 * should only be accessed directly by packfile.c and midx.c
-	 */
-	struct multi_pack_index *multi_pack_index;
 
 	/*
 	 * private data
