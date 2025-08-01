@@ -624,8 +624,9 @@ For C programs:
     - `S_init()` initializes a structure without allocating the
       structure itself.
 
-    - `S_release()` releases a structure's contents without freeing the
-      structure.
+    - `S_release()` releases a structure's contents without reinitializing
+      the structure for immediate reuse, and without freeing the structure
+      itself.
 
     - `S_clear()` is equivalent to `S_release()` followed by `S_init()`
       such that the structure is directly usable after clearing it. When
