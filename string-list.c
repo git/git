@@ -282,10 +282,17 @@ void unsorted_string_list_delete_item(struct string_list *list, int i, int free_
  */
 static int append_one(struct string_list *list,
 		      const char *p, const char *end,
-		      int in_place)
+		      int in_place, unsigned flags)
 {
 	if (!end)
 		end = p + strlen(p);
+
+	if ((flags & STRING_LIST_SPLIT_TRIM)) {
+		/* rtrim */
+		for (; p < end; end--)
+			if (!isspace(end[-1]))
+				break;
+	}
 
 	if (in_place) {
 		*((char *)end) = '\0';
@@ -307,7 +314,7 @@ static int append_one(struct string_list *list,
  * returns "char *" pointer into that const string.  Yucky but works ;-).
  */
 static int split_string(struct string_list *list, const char *string, const char *delim,
-			int maxsplit, int in_place)
+			int maxsplit, int in_place, unsigned flags)
 {
 	int count = 0;
 	const char *p = string;
@@ -320,12 +327,18 @@ static int split_string(struct string_list *list, const char *string, const char
 	for (;;) {
 		char *end;
 
+		if (flags & STRING_LIST_SPLIT_TRIM) {
+			/* ltrim */
+			while (*p && isspace(*p))
+				p++;
+		}
+
 		if (0 <= maxsplit && maxsplit <= count)
 			end = NULL;
 		else
 			end = strpbrk(p, delim);
 
-		count += append_one(list, p, end, in_place);
+		count += append_one(list, p, end, in_place, flags);
 
 		if (!end)
 			return count;
@@ -336,11 +349,23 @@ static int split_string(struct string_list *list, const char *string, const char
 int string_list_split(struct string_list *list, const char *string,
 		      const char *delim, int maxsplit)
 {
-	return split_string(list, string, delim, maxsplit, 0);
+	return split_string(list, string, delim, maxsplit, 0, 0);
 }
 
 int string_list_split_in_place(struct string_list *list, char *string,
 			       const char *delim, int maxsplit)
 {
-	return split_string(list, string, delim, maxsplit, 1);
+	return split_string(list, string, delim, maxsplit, 1, 0);
+}
+
+int string_list_split_f(struct string_list *list, const char *string,
+			const char *delim, int maxsplit, unsigned flags)
+{
+	return split_string(list, string, delim, maxsplit, 0, flags);
+}
+
+int string_list_split_in_place_f(struct string_list *list, char *string,
+			       const char *delim, int maxsplit, unsigned flags)
+{
+	return split_string(list, string, delim, maxsplit, 1, flags);
 }
