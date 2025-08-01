@@ -391,129 +391,6 @@ static void cmd_log_init(int argc, const char **argv, const char *prefix,
 	cmd_log_init_finish(argc, argv, prefix, rev, opt, cfg);
 }
 
-/*
- * This gives a rough estimate for how many commits we
- * will print out in the list.
- */
-static int estimate_commit_count(struct commit_list *list)
-{
-	int n = 0;
-
-	while (list) {
-		struct commit *commit = list->item;
-		unsigned int flags = commit->object.flags;
-		list = list->next;
-		if (!(flags & (TREESAME | UNINTERESTING)))
-			n++;
-	}
-	return n;
-}
-
-static void show_early_header(struct rev_info *rev, const char *stage, int nr)
-{
-	if (rev->shown_one) {
-		rev->shown_one = 0;
-		if (rev->commit_format != CMIT_FMT_ONELINE)
-			putchar(rev->diffopt.line_termination);
-	}
-	fprintf(rev->diffopt.file, _("Final output: %d %s\n"), nr, stage);
-}
-
-static struct itimerval early_output_timer;
-
-static void log_show_early(struct rev_info *revs, struct commit_list *list)
-{
-	int i = revs->early_output;
-	int show_header = 1;
-	int no_free = revs->diffopt.no_free;
-
-	revs->diffopt.no_free = 0;
-	sort_in_topological_order(&list, revs->sort_order);
-	while (list && i) {
-		struct commit *commit = list->item;
-		switch (simplify_commit(revs, commit)) {
-		case commit_show:
-			if (show_header) {
-				int n = estimate_commit_count(list);
-				show_early_header(revs, "incomplete", n);
-				show_header = 0;
-			}
-			log_tree_commit(revs, commit);
-			i--;
-			break;
-		case commit_ignore:
-			break;
-		case commit_error:
-			revs->diffopt.no_free = no_free;
-			diff_free(&revs->diffopt);
-			return;
-		}
-		list = list->next;
-	}
-
-	/* Did we already get enough commits for the early output? */
-	if (!i) {
-		revs->diffopt.no_free = 0;
-		diff_free(&revs->diffopt);
-		return;
-	}
-
-	/*
-	 * ..if no, then repeat it twice a second until we
-	 * do.
-	 *
-	 * NOTE! We don't use "it_interval", because if the
-	 * reader isn't listening, we want our output to be
-	 * throttled by the writing, and not have the timer
-	 * trigger every second even if we're blocked on a
-	 * reader!
-	 */
-	early_output_timer.it_value.tv_sec = 0;
-	early_output_timer.it_value.tv_usec = 500000;
-	setitimer(ITIMER_REAL, &early_output_timer, NULL);
-}
-
-static void early_output(int signal UNUSED)
-{
-	show_early_output = log_show_early;
-}
-
-static void setup_early_output(void)
-{
-	struct sigaction sa;
-
-	/*
-	 * Set up the signal handler, minimally intrusively:
-	 * we only set a single volatile integer word (not
-	 * using sigatomic_t - trying to avoid unnecessary
-	 * system dependencies and headers), and using
-	 * SA_RESTART.
-	 */
-	memset(&sa, 0, sizeof(sa));
-	sa.sa_handler = early_output;
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	sigaction(SIGALRM, &sa, NULL);
-
-	/*
-	 * If we can get the whole output in less than a
-	 * tenth of a second, don't even bother doing the
-	 * early-output thing..
-	 *
-	 * This is a one-time-only trigger.
-	 */
-	early_output_timer.it_value.tv_sec = 0;
-	early_output_timer.it_value.tv_usec = 100000;
-	setitimer(ITIMER_REAL, &early_output_timer, NULL);
-}
-
-static void finish_early_output(struct rev_info *rev)
-{
-	int n = estimate_commit_count(rev->commits);
-	signal(SIGALRM, SIG_IGN);
-	show_early_header(rev, "done", n);
-}
-
 static int cmd_log_walk_no_free(struct rev_info *rev)
 {
 	struct commit *commit;
@@ -521,14 +398,8 @@ static int cmd_log_walk_no_free(struct rev_info *rev)
 	int saved_dcctc = 0;
 	int result;
 
-	if (rev->early_output)
-		setup_early_output();
-
 	if (prepare_revision_walk(rev))
 		die(_("revision walk setup failed"));
-
-	if (rev->early_output)
-		finish_early_output(rev);
 
 	/*
 	 * For --check and --exit-code, the exit code is based on CHECK_FAILED
