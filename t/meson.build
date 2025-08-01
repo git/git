@@ -59,6 +59,9 @@ clar_sources += custom_target(
 
 clar_unit_tests = executable('unit-tests',
   sources: clar_sources + clar_test_suites,
+  c_args: [
+    '-DGIT_CLAR_DECLS_H="' + clar_decls_h.full_path() + '"',
+  ],
   dependencies: [libgit_commonmain],
 )
 test('unit-tests', clar_unit_tests, kwargs: test_kwargs)
