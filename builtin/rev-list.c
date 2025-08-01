@@ -28,6 +28,14 @@
 #include "quote.h"
 #include "strbuf.h"
 
+struct rev_list_info {
+	struct rev_info *revs;
+	int flags;
+	int show_timestamp;
+	int hdr_termination;
+	const char *header_prefix;
+};
+
 static const char rev_list_usage[] =
 "git rev-list [<options>] <commit>... [--] [<path>...]\n"
 "\n"
