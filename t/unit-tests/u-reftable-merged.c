@@ -6,7 +6,7 @@ license that can be found in the LICENSE file or at
 https://developers.google.com/open-source/licenses/bsd
 */
 
-#include "test-lib.h"
+#include "unit-test.h"
 #include "lib-reftable.h"
 #include "reftable/blocksource.h"
 #include "reftable/constants.h"
@@ -29,21 +29,21 @@ merged_table_from_records(struct reftable_ref_record **refs,
 	int err;
 
 	REFTABLE_CALLOC_ARRAY(*tables, n);
-	check(*tables != NULL);
+	cl_assert(*tables != NULL);
 	REFTABLE_CALLOC_ARRAY(*source, n);
-	check(*source != NULL);
+	cl_assert(*source != NULL);
 
 	for (size_t i = 0; i < n; i++) {
-		t_reftable_write_to_buf(&buf[i], refs[i], sizes[i], NULL, 0, &opts);
+		cl_reftable_write_to_buf(&buf[i], refs[i], sizes[i], NULL, 0, &opts);
 		block_source_from_buf(&(*source)[i], &buf[i]);
 
 		err = reftable_table_new(&(*tables)[i], &(*source)[i],
 					 "name");
-		check(!err);
+		cl_assert(!err);
 	}
 
 	err = reftable_merged_table_new(&mt, *tables, n, REFTABLE_HASH_SHA1);
-	check(!err);
+	cl_assert(!err);
 	return mt;
 }
 
@@ -54,7 +54,7 @@ static void tables_destroy(struct reftable_table **tables, const size_t n)
 	reftable_free(tables);
 }
 
-static void t_merged_single_record(void)
+void test_reftable_merged__single_record(void)
 {
 	struct reftable_ref_record r1[] = { {
 		.refname = (char *) "b",
@@ -85,13 +85,14 @@ static void t_merged_single_record(void)
 	int err;
 
 	err = merged_table_init_iter(mt, &it, REFTABLE_BLOCK_TYPE_REF);
-	check(!err);
+	cl_assert(!err);
 	err = reftable_iterator_seek_ref(&it, "a");
-	check(!err);
+	cl_assert(!err);
 
 	err = reftable_iterator_next_ref(&it, &ref);
-	check(!err);
-	check(reftable_ref_record_equal(&r2[0], &ref, REFTABLE_HASH_SIZE_SHA1));
+	cl_assert(!err);
+	cl_assert(reftable_ref_record_equal(&r2[0], &ref,
+					    REFTABLE_HASH_SIZE_SHA1) != 0);
 	reftable_ref_record_release(&ref);
 	reftable_iterator_destroy(&it);
 	tables_destroy(tables, 3);
@@ -101,7 +102,7 @@ static void t_merged_single_record(void)
 	reftable_free(bs);
 }
 
-static void t_merged_refs(void)
+void test_reftable_merged__refs(void)
 {
 	struct reftable_ref_record r1[] = {
 		{
@@ -165,12 +166,12 @@ static void t_merged_refs(void)
 	size_t i;
 
 	err = merged_table_init_iter(mt, &it, REFTABLE_BLOCK_TYPE_REF);
-	check(!err);
+	cl_assert(!err);
 	err = reftable_iterator_seek_ref(&it, "a");
-	check(!err);
-	check_int(reftable_merged_table_hash_id(mt), ==, REFTABLE_HASH_SHA1);
-	check_int(reftable_merged_table_min_update_index(mt), ==, 1);
-	check_int(reftable_merged_table_max_update_index(mt), ==, 3);
+	cl_assert(err == 0);
+	cl_assert_equal_i(reftable_merged_table_hash_id(mt), REFTABLE_HASH_SHA1);
+	cl_assert_equal_i(reftable_merged_table_min_update_index(mt), 1);
+	cl_assert_equal_i(reftable_merged_table_max_update_index(mt), 3);
 
 	while (len < 100) { /* cap loops/recursion. */
 		struct reftable_ref_record ref = { 0 };
@@ -178,15 +179,15 @@ static void t_merged_refs(void)
 		if (err > 0)
 			break;
 
-		check(!REFTABLE_ALLOC_GROW(out, len + 1, cap));
+		cl_assert(REFTABLE_ALLOC_GROW(out, len + 1, cap) == 0);
 		out[len++] = ref;
 	}
 	reftable_iterator_destroy(&it);
 
-	check_int(ARRAY_SIZE(want), ==, len);
+	cl_assert_equal_i(ARRAY_SIZE(want), len);
 	for (i = 0; i < len; i++)
-		check(reftable_ref_record_equal(want[i], &out[i],
-						 REFTABLE_HASH_SIZE_SHA1));
+		cl_assert(reftable_ref_record_equal(want[i], &out[i],
+						    REFTABLE_HASH_SIZE_SHA1) != 0);
 	for (i = 0; i < len; i++)
 		reftable_ref_record_release(&out[i]);
 	reftable_free(out);
@@ -198,7 +199,7 @@ static void t_merged_refs(void)
 	reftable_free(bs);
 }
 
-static void t_merged_seek_multiple_times(void)
+void test_reftable_merged__seek_multiple_times(void)
 {
 	struct reftable_ref_record r1[] = {
 		{
@@ -248,20 +249,17 @@ static void t_merged_seek_multiple_times(void)
 
 	for (size_t i = 0; i < 5; i++) {
 		int err = reftable_iterator_seek_ref(&it, "c");
-		check(!err);
+		cl_assert(!err);
 
-		err = reftable_iterator_next_ref(&it, &rec);
-		check(!err);
-		err = reftable_ref_record_equal(&rec, &r1[1], REFTABLE_HASH_SIZE_SHA1);
-		check(err == 1);
+		cl_assert(reftable_iterator_next_ref(&it, &rec) == 0);
+		cl_assert_equal_i(reftable_ref_record_equal(&rec, &r1[1],
+							    REFTABLE_HASH_SIZE_SHA1), 1);
 
-		err = reftable_iterator_next_ref(&it, &rec);
-		check(!err);
-		err = reftable_ref_record_equal(&rec, &r2[1], REFTABLE_HASH_SIZE_SHA1);
-		check(err == 1);
+		cl_assert(reftable_iterator_next_ref(&it, &rec) == 0);
+		cl_assert_equal_i(reftable_ref_record_equal(&rec, &r2[1],
+							    REFTABLE_HASH_SIZE_SHA1), 1);
 
-		err = reftable_iterator_next_ref(&it, &rec);
-		check(err > 0);
+		cl_assert(reftable_iterator_next_ref(&it, &rec) > 0);
 	}
 
 	for (size_t i = 0; i < ARRAY_SIZE(bufs); i++)
@@ -273,7 +271,7 @@ static void t_merged_seek_multiple_times(void)
 	reftable_free(sources);
 }
 
-static void t_merged_seek_multiple_times_without_draining(void)
+void test_reftable_merged__seek_multiple_times_no_drain(void)
 {
 	struct reftable_ref_record r1[] = {
 		{
@@ -317,24 +315,19 @@ static void t_merged_seek_multiple_times_without_draining(void)
 	struct reftable_ref_record rec = { 0 };
 	struct reftable_iterator it = { 0 };
 	struct reftable_merged_table *mt;
-	int err;
 
 	mt = merged_table_from_records(refs, &sources, &tables, sizes, bufs, 2);
 	merged_table_init_iter(mt, &it, REFTABLE_BLOCK_TYPE_REF);
 
-	err = reftable_iterator_seek_ref(&it, "b");
-	check(!err);
-	err = reftable_iterator_next_ref(&it, &rec);
-	check(!err);
-	err = reftable_ref_record_equal(&rec, &r2[0], REFTABLE_HASH_SIZE_SHA1);
-	check(err == 1);
+	cl_assert(reftable_iterator_seek_ref(&it, "b") == 0);
+	cl_assert(reftable_iterator_next_ref(&it, &rec) == 0);
+	cl_assert_equal_i(reftable_ref_record_equal(&rec, &r2[0],
+						    REFTABLE_HASH_SIZE_SHA1), 1);
 
-	err = reftable_iterator_seek_ref(&it, "a");
-	check(!err);
-	err = reftable_iterator_next_ref(&it, &rec);
-	check(!err);
-	err = reftable_ref_record_equal(&rec, &r1[0], REFTABLE_HASH_SIZE_SHA1);
-	check(err == 1);
+	cl_assert(reftable_iterator_seek_ref(&it, "a") == 0);
+	cl_assert(reftable_iterator_next_ref(&it, &rec) == 0);
+	cl_assert_equal_i(reftable_ref_record_equal(&rec, &r1[0],
+						    REFTABLE_HASH_SIZE_SHA1), 1);
 
 	for (size_t i = 0; i < ARRAY_SIZE(bufs); i++)
 		reftable_buf_release(&bufs[i]);
@@ -359,25 +352,25 @@ merged_table_from_log_records(struct reftable_log_record **logs,
 	int err;
 
 	REFTABLE_CALLOC_ARRAY(*tables, n);
-	check(*tables != NULL);
+	cl_assert(*tables != NULL);
 	REFTABLE_CALLOC_ARRAY(*source, n);
-	check(*source != NULL);
+	cl_assert(*source != NULL);
 
 	for (size_t i = 0; i < n; i++) {
-		t_reftable_write_to_buf(&buf[i], NULL, 0, logs[i], sizes[i], &opts);
+		cl_reftable_write_to_buf(&buf[i], NULL, 0, logs[i], sizes[i], &opts);
 		block_source_from_buf(&(*source)[i], &buf[i]);
 
 		err = reftable_table_new(&(*tables)[i], &(*source)[i],
 					 "name");
-		check(!err);
+		cl_assert(!err);
 	}
 
 	err = reftable_merged_table_new(&mt, *tables, n, REFTABLE_HASH_SHA1);
-	check(!err);
+	cl_assert(!err);
 	return mt;
 }
 
-static void t_merged_logs(void)
+void test_reftable_merged__logs(void)
 {
 	struct reftable_log_record r1[] = {
 		{
@@ -439,19 +432,19 @@ static void t_merged_logs(void)
 	struct reftable_merged_table *mt = merged_table_from_log_records(
 		logs, &bs, &tables, sizes, bufs, 3);
 	struct reftable_iterator it = { 0 };
-	int err;
 	struct reftable_log_record *out = NULL;
 	size_t len = 0;
 	size_t cap = 0;
 	size_t i;
+	int err;
 
 	err = merged_table_init_iter(mt, &it, REFTABLE_BLOCK_TYPE_LOG);
-	check(!err);
+	cl_assert(!err);
 	err = reftable_iterator_seek_log(&it, "a");
-	check(!err);
-	check_int(reftable_merged_table_hash_id(mt), ==, REFTABLE_HASH_SHA1);
-	check_int(reftable_merged_table_min_update_index(mt), ==, 1);
-	check_int(reftable_merged_table_max_update_index(mt), ==, 3);
+	cl_assert(!err);
+	cl_assert_equal_i(reftable_merged_table_hash_id(mt), REFTABLE_HASH_SHA1);
+	cl_assert_equal_i(reftable_merged_table_min_update_index(mt), 1);
+	cl_assert_equal_i(reftable_merged_table_max_update_index(mt), 3);
 
 	while (len < 100) { /* cap loops/recursion. */
 		struct reftable_log_record log = { 0 };
@@ -459,24 +452,24 @@ static void t_merged_logs(void)
 		if (err > 0)
 			break;
 
-		check(!REFTABLE_ALLOC_GROW(out, len + 1, cap));
+		cl_assert(REFTABLE_ALLOC_GROW(out, len + 1, cap) == 0);
 		out[len++] = log;
 	}
 	reftable_iterator_destroy(&it);
 
-	check_int(ARRAY_SIZE(want), ==, len);
+	cl_assert_equal_i(ARRAY_SIZE(want), len);
 	for (i = 0; i < len; i++)
-		check(reftable_log_record_equal(want[i], &out[i],
-						 REFTABLE_HASH_SIZE_SHA1));
+		cl_assert(reftable_log_record_equal(want[i], &out[i],
+						    REFTABLE_HASH_SIZE_SHA1) != 0);
 
 	err = merged_table_init_iter(mt, &it, REFTABLE_BLOCK_TYPE_LOG);
-	check(!err);
+	cl_assert(!err);
 	err = reftable_iterator_seek_log_at(&it, "a", 2);
-	check(!err);
+	cl_assert(!err);
 	reftable_log_record_release(&out[0]);
-	err = reftable_iterator_next_log(&it, &out[0]);
-	check(!err);
-	check(reftable_log_record_equal(&out[0], &r3[0], REFTABLE_HASH_SIZE_SHA1));
+	cl_assert(reftable_iterator_next_log(&it, &out[0]) == 0);
+	cl_assert(reftable_log_record_equal(&out[0], &r3[0],
+					    REFTABLE_HASH_SIZE_SHA1) != 0);
 	reftable_iterator_destroy(&it);
 
 	for (i = 0; i < len; i++)
@@ -490,11 +483,11 @@ static void t_merged_logs(void)
 	reftable_free(bs);
 }
 
-static void t_default_write_opts(void)
+void test_reftable_merged__default_write_opts(void)
 {
 	struct reftable_write_options opts = { 0 };
 	struct reftable_buf buf = REFTABLE_BUF_INIT;
-	struct reftable_writer *w = t_reftable_strbuf_writer(&buf, &opts);
+	struct reftable_writer *w = cl_reftable_strbuf_writer(&buf, &opts);
 	struct reftable_ref_record rec = {
 		.refname = (char *) "master",
 		.update_index = 1,
@@ -507,40 +500,25 @@ static void t_default_write_opts(void)
 
 	reftable_writer_set_limits(w, 1, 1);
 
-	err = reftable_writer_add_ref(w, &rec);
-	check(!err);
+	cl_assert_equal_i(reftable_writer_add_ref(w, &rec), 0);
 
-	err = reftable_writer_close(w);
-	check(!err);
+	cl_assert_equal_i(reftable_writer_close(w), 0);
 	reftable_writer_free(w);
 
 	block_source_from_buf(&source, &buf);
 
 	err = reftable_table_new(&table, &source, "filename");
-	check(!err);
+	cl_assert(!err);
 
 	hash_id = reftable_table_hash_id(table);
-	check_int(hash_id, ==, REFTABLE_HASH_SHA1);
+	cl_assert_equal_i(hash_id, REFTABLE_HASH_SHA1);
 
 	err = reftable_merged_table_new(&merged, &table, 1, REFTABLE_HASH_SHA256);
-	check_int(err, ==, REFTABLE_FORMAT_ERROR);
+	cl_assert_equal_i(err, REFTABLE_FORMAT_ERROR);
 	err = reftable_merged_table_new(&merged, &table, 1, REFTABLE_HASH_SHA1);
-	check(!err);
+	cl_assert(!err);
 
 	reftable_table_decref(table);
 	reftable_merged_table_free(merged);
 	reftable_buf_release(&buf);
-}
-
-
-int cmd_main(int argc UNUSED, const char *argv[] UNUSED)
-{
-	TEST(t_default_write_opts(), "merged table with default write opts");
-	TEST(t_merged_logs(), "merged table with multiple log updates for same ref");
-	TEST(t_merged_refs(), "merged table with multiple updates to same ref");
-	TEST(t_merged_seek_multiple_times(), "merged table can seek multiple times");
-	TEST(t_merged_seek_multiple_times_without_draining(), "merged table can seek multiple times without draining");
-	TEST(t_merged_single_record(), "ref occurring in only one record can be fetched");
-
-	return test_done();
 }
