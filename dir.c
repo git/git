@@ -1516,7 +1516,7 @@ done:
 
 int init_sparse_checkout_patterns(struct index_state *istate)
 {
-	if (!core_apply_sparse_checkout)
+	if (!istate->repo->settings.sparse_checkout)
 		return 1;
 	if (istate->sparse_checkout_patterns)
 		return 0;
@@ -1539,6 +1539,7 @@ static int path_in_sparse_checkout_1(const char *path,
 	enum pattern_match_result match = UNDECIDED;
 	const char *end, *slash;
 
+	prepare_repo_settings(istate->repo);
 	/*
 	 * We default to accepting a path if the path is empty, there are no
 	 * patterns, or the patterns are of the wrong type.
@@ -3472,7 +3473,7 @@ int get_sparse_checkout_patterns(struct pattern_list *pl)
 	int res;
 	char *sparse_filename = get_sparse_checkout_filename();
 
-	pl->use_cone_patterns = core_sparse_checkout_cone;
+	pl->use_cone_patterns = the_repository->settings.sparse_checkout_cone;
 	res = add_patterns_from_file_to_list(sparse_filename, "", 0, pl, NULL, 0);
 
 	free(sparse_filename);
