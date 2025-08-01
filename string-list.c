@@ -277,7 +277,7 @@ void unsorted_string_list_delete_item(struct string_list *list, int i, int free_
 }
 
 int string_list_split(struct string_list *list, const char *string,
-		      int delim, int maxsplit)
+		      const char *delim, int maxsplit)
 {
 	int count = 0;
 	const char *p = string, *end;
@@ -291,7 +291,7 @@ int string_list_split(struct string_list *list, const char *string,
 			string_list_append(list, p);
 			return count;
 		}
-		end = strchr(p, delim);
+		end = strpbrk(p, delim);
 		if (end) {
 			string_list_append_nodup(list, xmemdupz(p, end - p));
 			p = end + 1;

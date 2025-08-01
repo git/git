@@ -327,7 +327,7 @@ static unsigned parse_color_moved_ws(const char *arg)
 	struct string_list l = STRING_LIST_INIT_DUP;
 	struct string_list_item *i;
 
-	string_list_split(&l, arg, ',', -1);
+	string_list_split(&l, arg, ",", -1);
 
 	for_each_string_list_item(i, &l) {
 		struct strbuf sb = STRBUF_INIT;

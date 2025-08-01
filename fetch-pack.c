@@ -1914,7 +1914,7 @@ static void fetch_pack_config(void)
 		char *str;
 
 		if (!git_config_get_string("fetch.uriprotocols", &str) && str) {
-			string_list_split(&uri_protocols, str, ',', -1);
+			string_list_split(&uri_protocols, str, ",", -1);
 			free(str);
 		}
 	}

@@ -201,7 +201,7 @@ static void parse_pathspec_attr_match(struct pathspec_item *item, const char *va
 	if (!value || !*value)
 		die(_("attr spec must not be empty"));
 
-	string_list_split(&list, value, ' ', -1);
+	string_list_split(&list, value, " ", -1);
 	string_list_remove_empty_items(&list, 0);
 
 	item->attr_check = attr_check_alloc();
