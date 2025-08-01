@@ -92,6 +92,13 @@ void test_string_list__split_f(void)
 			      "foo", "bar", "baz", NULL);
 	t_string_list_split_f("  a  b c  ", " ", 1, STRING_LIST_SPLIT_TRIM,
 			      "a", "b c", NULL);
+	t_string_list_split_f("::foo::bar:baz:", ":", -1, STRING_LIST_SPLIT_NONEMPTY,
+			      "foo", "bar", "baz", NULL);
+	t_string_list_split_f("foo:baz", ":", -1, STRING_LIST_SPLIT_NONEMPTY,
+			      "foo", "baz", NULL);
+	t_string_list_split_f("foo :: : baz", ":", -1,
+			      STRING_LIST_SPLIT_NONEMPTY | STRING_LIST_SPLIT_TRIM,
+			      "foo", "baz", NULL);
 }
 
 static void t_string_list_split_in_place_f(const char *data_, const char *delim,
@@ -125,6 +132,14 @@ void test_string_list__split_in_place_f(void)
 				       "foo", "bar", "baz", NULL);
 	t_string_list_split_in_place_f("  a  b c  ", " ", 1, STRING_LIST_SPLIT_TRIM,
 				       "a", "b c", NULL);
+	t_string_list_split_in_place_f("::foo::bar:baz:", ":", -1,
+				       STRING_LIST_SPLIT_NONEMPTY,
+				       "foo", "bar", "baz", NULL);
+	t_string_list_split_in_place_f("foo:baz", ":", -1, STRING_LIST_SPLIT_NONEMPTY,
+				       "foo", "baz", NULL);
+	t_string_list_split_in_place_f("foo :: : baz", ":", -1,
+				       STRING_LIST_SPLIT_NONEMPTY | STRING_LIST_SPLIT_TRIM,
+				       "foo", "baz", NULL);
 }
 
 void test_string_list__split(void)

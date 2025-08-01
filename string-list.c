@@ -294,6 +294,9 @@ static int append_one(struct string_list *list,
 				break;
 	}
 
+	if ((flags & STRING_LIST_SPLIT_NONEMPTY) && (end <= p))
+		return 0;
+
 	if (in_place) {
 		*((char *)end) = '\0';
 		string_list_append(list, p);
