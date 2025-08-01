@@ -137,6 +137,11 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
  * Read stdin line by line and print result of commands to stdout:
  *
  * perfhashmap method rounds -> test hashmap.[ch] performance
+ *
+ * NOTE: this is not used by any of our mechanized build & test
+ * procedure, after 3469a236 (t: port helper/test-hashmap.c to
+ * unit-tests/t-hashmap.c, 2024-08-03).  See the log message of that
+ * commit for the reason why this is still here.
  */
 int cmd__hashmap(int argc UNUSED, const char **argv UNUSED)
 {
