@@ -76,6 +76,8 @@ OPTIONS
 	which changes to commit. See linkgit:git-add[1] for
 	details.
 
+include::diff-context-options.adoc[]
+
 `-C <commit>`::
 `--reuse-message=<commit>`::
 	Take an existing _<commit>_ object, and reuse the log message
