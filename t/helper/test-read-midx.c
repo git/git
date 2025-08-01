@@ -11,14 +11,24 @@
 #include "gettext.h"
 #include "pack-revindex.h"
 
+static struct multi_pack_index *setup_midx(const char *object_dir)
+{
+	struct odb_source *source;
+	setup_git_directory();
+	source = odb_find_source(the_repository->objects, object_dir);
+	if (!source)
+		source = odb_add_to_alternates_memory(the_repository->objects,
+						      object_dir);
+	return load_multi_pack_index(source);
+}
+
 static int read_midx_file(const char *object_dir, const char *checksum,
 			  int show_objects)
 {
 	uint32_t i;
 	struct multi_pack_index *m;
 
-	setup_git_directory();
-	m = load_multi_pack_index(the_repository, object_dir, 1);
+	m = setup_midx(object_dir);
 
 	if (!m)
 		return 1;
@@ -57,7 +67,7 @@ static int read_midx_file(const char *object_dir, const char *checksum,
 	     i++)
 		printf("%s\n", nth_midxed_pack_name(m, i));
 
-	printf("object-dir: %s\n", m->object_dir);
+	printf("object-dir: %s\n", m->source->path);
 
 	if (show_objects) {
 		struct object_id oid;
@@ -66,7 +76,7 @@ static int read_midx_file(const char *object_dir, const char *checksum,
 		for (i = 0; i < m->num_objects; i++) {
 			nth_midxed_object_oid(&oid, m,
 					      i + m->num_objects_in_base);
-			fill_midx_entry(the_repository, &oid, &e, m);
+			fill_midx_entry(m, &oid, &e);
 
 			printf("%s %"PRIu64"\t%s\n",
 			       oid_to_hex(&oid), e.offset, e.p->pack_name);
@@ -82,8 +92,7 @@ static int read_midx_checksum(const char *object_dir)
 {
 	struct multi_pack_index *m;
 
-	setup_git_directory();
-	m = load_multi_pack_index(the_repository, object_dir, 1);
+	m = setup_midx(object_dir);
 	if (!m)
 		return 1;
 	printf("%s\n", hash_to_hex(get_midx_checksum(m)));
@@ -97,9 +106,7 @@ static int read_midx_preferred_pack(const char *object_dir)
 	struct multi_pack_index *midx = NULL;
 	uint32_t preferred_pack;
 
-	setup_git_directory();
-
-	midx = load_multi_pack_index(the_repository, object_dir, 1);
+	midx = setup_midx(object_dir);
 	if (!midx)
 		return 1;
 
@@ -120,14 +127,12 @@ static int read_midx_bitmapped_packs(const char *object_dir)
 	struct bitmapped_pack pack;
 	uint32_t i;
 
-	setup_git_directory();
-
-	midx = load_multi_pack_index(the_repository, object_dir, 1);
+	midx = setup_midx(object_dir);
 	if (!midx)
 		return 1;
 
 	for (i = 0; i < midx->num_packs + midx->num_packs_in_base; i++) {
-		if (nth_bitmapped_pack(the_repository, midx, &pack, i) < 0) {
+		if (nth_bitmapped_pack(midx, &pack, i) < 0) {
 			close_midx(midx);
 			return 1;
 		}

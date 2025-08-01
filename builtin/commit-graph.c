@@ -103,6 +103,8 @@ static int graph_verify(int argc, const char **argv, const char *prefix,
 		flags |= COMMIT_GRAPH_WRITE_PROGRESS;
 
 	source = odb_find_source(the_repository->objects, opts.obj_dir);
+	if (!source)
+		die(_("could not find object directory matching %s"), opts.obj_dir);
 	graph_name = get_commit_graph_filename(source);
 	chain_name = get_commit_graph_chain_filename(source);
 	if (open_commit_graph(graph_name, &fd, &st))
@@ -291,6 +293,8 @@ static int graph_write(int argc, const char **argv, const char *prefix,
 		flags |= COMMIT_GRAPH_WRITE_BLOOM_FILTERS;
 
 	source = odb_find_source(the_repository->objects, opts.obj_dir);
+	if (!source)
+		die(_("could not find object directory matching %s"), opts.obj_dir);
 
 	if (opts.reachable) {
 		if (write_commit_graph_reachable(source, flags, &write_opts))

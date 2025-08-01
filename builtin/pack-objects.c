@@ -1741,7 +1741,7 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 		struct multi_pack_index *m = get_multi_pack_index(source);
 		struct pack_entry e;
 
-		if (m && fill_midx_entry(the_repository, oid, &e, m)) {
+		if (m && fill_midx_entry(m, oid, &e)) {
 			want = want_object_in_pack_one(e.p, oid, exclude, found_pack, found_offset, found_mtime);
 			if (want != -1)
 				return want;
