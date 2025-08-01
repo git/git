@@ -7,7 +7,7 @@ exec wish "$0" -- "$@"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-if {[catch {package require Tcl 8.6-8.8} err]} {
+if {[catch {package require Tcl 8.6-} err]} {
     catch {wm withdraw .}
     tk_messageBox \
         -icon error \
@@ -31,6 +31,26 @@ The version of git found is $git_version."
         -title "gitk: fatal error" \
         -message $message
     exit 1
+}
+
+######################################################################
+## Enable Tcl8 profile in Tcl9, allowing consumption of data that has
+## bytes not conforming to the assumed encoding profile.
+
+if {[package vcompare $::tcl_version 9.0] >= 0} {
+    rename open _strict_open
+    proc open args {
+        set f [_strict_open {*}$args]
+        chan configure $f -profile tcl8
+        return $f
+    }
+    proc convertfrom args {
+        return [encoding convertfrom -profile tcl8 {*}$args]
+    }
+} else {
+    proc convertfrom args {
+        return [encoding convertfrom {*}$args]
+    }
 }
 
 ######################################################################
@@ -2290,6 +2310,16 @@ proc bind_mousewheel {} {
     bind $cflist <MouseWheel> {$cflist yview scroll [scrollval %D 2] units}
     bind $cflist <Shift-MouseWheel> break
     bind $canv <Shift-MouseWheel> {$canv xview scroll [scrollval %D] units}
+
+    if {[package vcompare $::tcl_version 8.7] >= 0} {
+        bindall <Alt-MouseWheel> {allcanvs yview scroll [scrollval 5*%D] units}
+        bindall <Alt-Shift-MouseWheel> break
+        bind $ctext <Alt-MouseWheel> {$ctext yview scroll [scrollval 5*%D 2] units}
+        bind $ctext <Alt-Shift-MouseWheel> {$ctext xview scroll [scrollval 5*%D 2] units}
+        bind $cflist <Alt-MouseWheel> {$cflist yview scroll [scrollval 5*%D 2] units}
+        bind $cflist <Alt-Shift-MouseWheel> break
+        bind $canv <Alt-Shift-MouseWheel> {$canv xview scroll [scrollval 5*%D] units}
+    }
 }
 
 proc bind_mousewheel_buttons {} {
@@ -2749,7 +2779,7 @@ proc makewindow {} {
     bindall <1> {selcanvline %W %x %y}
 
     #Mouse / touchpad scrolling
-    if {[tk windowingsystem] == "win32"} {
+    if {[tk windowingsystem] == "win32" || [package vcompare $::tcl_version 8.7] >= 0} {
         set scroll_D0 120
         bind_mousewheel
     } elseif {[tk windowingsystem] == "x11"} {
@@ -7796,7 +7826,7 @@ proc gettree {id} {
             set treepending $id
             set treefilelist($id) {}
             set treeidlist($id) {}
-            fconfigure $gtf -blocking 0 -encoding binary
+            fconfigure $gtf -blocking 0 -translation binary
             filerun $gtf [list gettreeline $gtf $id]
         }
     } else {
@@ -7823,7 +7853,7 @@ proc gettreeline {gtf id} {
         if {[string index $fname 0] eq "\""} {
             set fname [lindex $fname 0]
         }
-        set fname [encoding convertfrom utf-8 $fname]
+        set fname [convertfrom utf-8 $fname]
         lappend treefilelist($id) $fname
     }
     if {![eof $gtf]} {
@@ -8057,7 +8087,7 @@ proc gettreediffs {ids} {
 
     set treepending $ids
     set treediff {}
-    fconfigure $gdtf -blocking 0 -encoding binary
+    fconfigure $gdtf -blocking 0 -translation binary
     filerun $gdtf [list gettreediffline $gdtf $ids]
 }
 
@@ -8083,7 +8113,7 @@ proc gettreediffline {gdtf ids} {
             if {[string index $file 0] eq "\""} {
                 set file [lindex $file 0]
             }
-            set file [encoding convertfrom utf-8 $file]
+            set file [convertfrom utf-8 $file]
             if {$file ne [lindex $treediff end]} {
                 lappend treediff $file
                 lappend sublist $file
@@ -8168,7 +8198,7 @@ proc getblobdiffs {ids} {
         error_popup [mc "Error getting diffs: %s" $err]
         return
     }
-    fconfigure $bdf -blocking 0 -encoding binary -eofchar {}
+    fconfigure $bdf -blocking 0 -translation binary
     set blobdifffd($ids) $bdf
     initblobdiffvars
     filerun $bdf [list getblobdiffline $bdf $diffids]
@@ -8219,7 +8249,7 @@ proc makediffhdr {fname ids} {
     global ctext curdiffstart treediffs diffencoding
     global ctext_file_names jump_to_here targetline diffline
 
-    set fname [encoding convertfrom utf-8 $fname]
+    set fname [convertfrom utf-8 $fname]
     set diffencoding [get_path_encoding $fname]
     set i [lsearch -exact $treediffs($ids) $fname]
     if {$i >= 0} {
@@ -8281,7 +8311,7 @@ proc parseblobdiffline {ids line} {
 
     if {![string compare -length 5 "diff " $line]} {
         if {![regexp {^diff (--cc|--git) } $line m type]} {
-            set line [encoding convertfrom utf-8 $line]
+            set line [convertfrom utf-8 $line]
             $ctext insert end "$line\n" hunksep
             continue
         }
@@ -8330,7 +8360,7 @@ proc parseblobdiffline {ids line} {
         makediffhdr $fname $ids
 
     } elseif {![string compare -length 16 "* Unmerged path " $line]} {
-        set fname [encoding convertfrom utf-8 [string range $line 16 end]]
+        set fname [convertfrom utf-8 [string range $line 16 end]]
         $ctext insert end "\n"
         set curdiffstart [$ctext index "end - 1c"]
         lappend ctext_file_names $fname
@@ -8343,7 +8373,7 @@ proc parseblobdiffline {ids line} {
 
     } elseif {![string compare -length 2 "@@" $line]} {
         regexp {^@@+} $line ats
-        set line [encoding convertfrom $diffencoding $line]
+        set line [convertfrom $diffencoding $line]
         $ctext insert end "$line\n" hunksep
         if {[regexp { \+(\d+),\d+ @@} $line m nl]} {
             set diffline $nl
@@ -8372,10 +8402,10 @@ proc parseblobdiffline {ids line} {
             $ctext insert end "$line\n" filesep
         }
     } elseif {$currdiffsubmod != "" && ![string compare -length 3 "  >" $line]} {
-        set line [encoding convertfrom $diffencoding $line]
+        set line [convertfrom $diffencoding $line]
         $ctext insert end "$line\n" dresult
     } elseif {$currdiffsubmod != "" && ![string compare -length 3 "  <" $line]} {
-        set line [encoding convertfrom $diffencoding $line]
+        set line [convertfrom $diffencoding $line]
         $ctext insert end "$line\n" d0
     } elseif {$diffinhdr} {
         if {![string compare -length 12 "rename from " $line]} {
@@ -8383,7 +8413,7 @@ proc parseblobdiffline {ids line} {
             if {[string index $fname 0] eq "\""} {
                 set fname [lindex $fname 0]
             }
-            set fname [encoding convertfrom utf-8 $fname]
+            set fname [convertfrom utf-8 $fname]
             set i [lsearch -exact $treediffs($ids) $fname]
             if {$i >= 0} {
                 setinlist difffilestart $i $curdiffstart
@@ -8402,12 +8432,12 @@ proc parseblobdiffline {ids line} {
             set diffinhdr 0
             return
         }
-        set line [encoding convertfrom utf-8 $line]
+        set line [convertfrom utf-8 $line]
         $ctext insert end "$line\n" filesep
 
     } else {
         set line [string map {\x1A ^Z} \
-                      [encoding convertfrom $diffencoding $line]]
+                      [convertfrom $diffencoding $line]]
         # parse the prefix - one ' ', '-' or '+' for each parent
         set prefix [string range $line 0 [expr {$diffnparents - 1}]]
         set tag [expr {$diffnparents > 1? "m": "d"}]
@@ -12348,7 +12378,7 @@ proc cache_gitattr {attr pathlist} {
             foreach row [split $rlist "\n"] {
                 if {[regexp "(.*): $attr: (.*)" $row m path value]} {
                     if {[string index $path 0] eq "\""} {
-                        set path [encoding convertfrom utf-8 [lindex $path 0]]
+                        set path [convertfrom utf-8 [lindex $path 0]]
                     }
                     set path_attr_cache($attr,$path) $value
                 }
@@ -12581,14 +12611,14 @@ catch {
         set config_file_tmp [file join $env(XDG_CONFIG_HOME) git gitk-tmp]
     } else {
         # default XDG_CONFIG_HOME
-        set config_file "~/.config/git/gitk"
-        set config_file_tmp "~/.config/git/gitk-tmp"
+        set config_file "$env(HOME)/.config/git/gitk"
+        set config_file_tmp "$env(HOME)/.config/git/gitk-tmp"
     }
     if {![file exists $config_file]} {
         # for backward compatibility use the old config file if it exists
-        if {[file exists "~/.gitk"]} {
-            set config_file "~/.gitk"
-            set config_file_tmp "~/.gitk-tmp"
+        if {[file exists "$env(HOME)/.gitk"]} {
+            set config_file "$env(HOME)/.gitk"
+            set config_file_tmp "$env(HOME)/.gitk-tmp"
         } elseif {![file exists [file dirname $config_file]]} {
             file mkdir [file dirname $config_file]
         }
