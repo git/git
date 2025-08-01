@@ -283,6 +283,9 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix,
 					     &cb);
 		free(ref);
 	}
+
+	reflog_clear_expire_config(&opts);
+
 	return status;
 }
 

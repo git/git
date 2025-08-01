@@ -34,6 +34,8 @@ struct reflog_expire_options {
 int reflog_expire_config(const char *var, const char *value,
 			 const struct config_context *ctx, void *cb);
 
+void reflog_clear_expire_config(struct reflog_expire_options *opts);
+
 /*
  * Adapt the options so that they apply to the given refname. This applies any
  * per-reference reflog expiry configuration that may exist to the options.

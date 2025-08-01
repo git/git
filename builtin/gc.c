@@ -346,6 +346,7 @@ static int reflog_expire_condition(struct gc_config *cfg UNUSED)
 				 count_reflog_entries, &data);
 
 	reflog_expiry_cleanup(&data.policy);
+	reflog_clear_expire_config(&data.policy.opts);
 	return data.count >= data.limit;
 }
 
