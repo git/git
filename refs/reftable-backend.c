@@ -386,7 +386,7 @@ static struct ref_store *reftable_be_init(struct repository *repo,
 	refs->write_options.lock_timeout_ms = 100;
 	refs->write_options.fsync = reftable_be_fsync;
 
-	git_config(reftable_be_config, &refs->write_options);
+	repo_config(the_repository, reftable_be_config, &refs->write_options);
 
 	/*
 	 * It is somewhat unfortunate that we have to mirror the default block

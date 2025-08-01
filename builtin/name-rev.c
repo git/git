@@ -600,7 +600,7 @@ int cmd_name_rev(int argc,
 
 	mem_pool_init(&string_pool, 0);
 	init_commit_rev_name(&rev_names);
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, opts, name_rev_usage, 0);
 
 #ifndef WITH_BREAKING_CHANGES

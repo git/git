@@ -170,7 +170,7 @@ static void load_gc_recent_objects(struct recent_data *data)
 
 	data->extra_recent_oids_loaded = 1;
 
-	if (git_config_get_string_multi("gc.recentobjectshook", &programs))
+	if (repo_config_get_string_multi(the_repository, "gc.recentobjectshook", &programs))
 		return;
 
 	for (i = 0; i < programs->nr; i++) {

@@ -101,9 +101,9 @@ static int set_scalar_config(const struct scalar_config *config, int reconfigure
 	int res;
 
 	if ((reconfigure && config->overwrite_on_reconfigure) ||
-	    git_config_get_string(config->key, &value)) {
+	    repo_config_get_string(the_repository, config->key, &value)) {
 		trace2_data_string("scalar", the_repository, config->key, "created");
-		res = git_config_set_gently(config->key, config->value);
+		res = repo_config_set_gently(the_repository, config->key, config->value);
 	} else {
 		trace2_data_string("scalar", the_repository, config->key, "exists");
 		res = 0;
@@ -193,12 +193,12 @@ static int set_recommended_config(int reconfigure)
 	 * The `log.excludeDecoration` setting is special because it allows
 	 * for multiple values.
 	 */
-	if (git_config_get_string("log.excludeDecoration", &value)) {
+	if (repo_config_get_string(the_repository, "log.excludeDecoration", &value)) {
 		trace2_data_string("scalar", the_repository,
 				   "log.excludeDecoration", "created");
-		if (git_config_set_multivar_gently("log.excludeDecoration",
-						   "refs/prefetch/*",
-						   CONFIG_REGEX_NONE, 0))
+		if (repo_config_set_multivar_gently(the_repository, "log.excludeDecoration",
+						    "refs/prefetch/*",
+						    CONFIG_REGEX_NONE, 0))
 			return error(_("could not configure "
 				       "log.excludeDecoration"));
 	} else {
@@ -322,7 +322,7 @@ static int set_config(const char *fmt, ...)
 	value = strchr(buf.buf, '=');
 	if (value)
 		*(value++) = '\0';
-	res = git_config_set_gently(buf.buf, value);
+	res = repo_config_set_gently(the_repository, buf.buf, value);
 	strbuf_release(&buf);
 
 	return res;
@@ -713,7 +713,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 			    maintenance_str);
 	}
 
-	git_config(get_scalar_repos, &scalar_repos);
+	repo_config(the_repository, get_scalar_repos, &scalar_repos);
 
 	for (size_t i = 0; i < scalar_repos.nr; i++) {
 		int succeeded = 0;
@@ -763,7 +763,7 @@ static int cmd_reconfigure(int argc, const char **argv)
 			break;
 		}
 
-		git_config_clear();
+		repo_config_clear(the_repository);
 
 		if (repo_init(&r, gitdir.buf, commondir.buf))
 			goto loop_end;

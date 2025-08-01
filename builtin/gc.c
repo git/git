@@ -114,7 +114,7 @@ static int gc_config_is_timestamp_never(const char *var)
 	const char *value;
 	timestamp_t expire;
 
-	if (!git_config_get_value(var, &value) && value) {
+	if (!repo_config_get_value(the_repository, var, &value) && value) {
 		if (parse_expiry_date(value, &expire))
 			die(_("failed to parse '%s' value '%s'"), var, value);
 		return expire == 0;
@@ -178,7 +178,7 @@ static void gc_config(struct gc_config *cfg)
 	char *owned = NULL;
 	unsigned long ulongval;
 
-	if (!git_config_get_value("gc.packrefs", &value)) {
+	if (!repo_config_get_value(the_repository, "gc.packrefs", &value)) {
 		if (value && !strcmp(value, "notbare"))
 			cfg->pack_refs = -1;
 		else
@@ -189,13 +189,13 @@ static void gc_config(struct gc_config *cfg)
 	    gc_config_is_timestamp_never("gc.reflogexpireunreachable"))
 		cfg->prune_reflogs = 0;
 
-	git_config_get_int("gc.aggressivewindow", &cfg->aggressive_window);
-	git_config_get_int("gc.aggressivedepth", &cfg->aggressive_depth);
-	git_config_get_int("gc.auto", &cfg->gc_auto_threshold);
-	git_config_get_int("gc.autopacklimit", &cfg->gc_auto_pack_limit);
-	git_config_get_bool("gc.autodetach", &cfg->detach_auto);
-	git_config_get_bool("gc.cruftpacks", &cfg->cruft_packs);
-	git_config_get_ulong("gc.maxcruftsize", &cfg->max_cruft_size);
+	repo_config_get_int(the_repository, "gc.aggressivewindow", &cfg->aggressive_window);
+	repo_config_get_int(the_repository, "gc.aggressivedepth", &cfg->aggressive_depth);
+	repo_config_get_int(the_repository, "gc.auto", &cfg->gc_auto_threshold);
+	repo_config_get_int(the_repository, "gc.autopacklimit", &cfg->gc_auto_pack_limit);
+	repo_config_get_bool(the_repository, "gc.autodetach", &cfg->detach_auto);
+	repo_config_get_bool(the_repository, "gc.cruftpacks", &cfg->cruft_packs);
+	repo_config_get_ulong(the_repository, "gc.maxcruftsize", &cfg->max_cruft_size);
 
 	if (!repo_config_get_expiry(the_repository, "gc.pruneexpire", &owned)) {
 		free(cfg->prune_expire);
@@ -212,23 +212,23 @@ static void gc_config(struct gc_config *cfg)
 		cfg->gc_log_expire = owned;
 	}
 
-	git_config_get_ulong("gc.bigpackthreshold", &cfg->big_pack_threshold);
-	git_config_get_ulong("pack.deltacachesize", &cfg->max_delta_cache_size);
+	repo_config_get_ulong(the_repository, "gc.bigpackthreshold", &cfg->big_pack_threshold);
+	repo_config_get_ulong(the_repository, "pack.deltacachesize", &cfg->max_delta_cache_size);
 
-	if (!git_config_get_ulong("core.deltabasecachelimit", &ulongval))
+	if (!repo_config_get_ulong(the_repository, "core.deltabasecachelimit", &ulongval))
 		cfg->delta_base_cache_limit = ulongval;
 
-	if (!git_config_get_string("gc.repackfilter", &owned)) {
+	if (!repo_config_get_string(the_repository, "gc.repackfilter", &owned)) {
 		free(cfg->repack_filter);
 		cfg->repack_filter = owned;
 	}
 
-	if (!git_config_get_string("gc.repackfilterto", &owned)) {
+	if (!repo_config_get_string(the_repository, "gc.repackfilterto", &owned)) {
 		free(cfg->repack_filter_to);
 		cfg->repack_filter_to = owned;
 	}
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 }
 
 enum schedule_priority {
@@ -332,7 +332,7 @@ static int reflog_expire_condition(struct gc_config *cfg UNUSED)
 	};
 	int limit = 100;
 
-	git_config_get_int("maintenance.reflog-expire.auto", &limit);
+	repo_config_get_int(the_repository, "maintenance.reflog-expire.auto", &limit);
 	if (!limit)
 		return 0;
 	if (limit < 0)
@@ -379,7 +379,7 @@ static int worktree_prune_condition(struct gc_config *cfg)
 	struct dirent *d;
 	DIR *dir = NULL;
 
-	git_config_get_int("maintenance.worktree-prune.auto", &limit);
+	repo_config_get_int(the_repository, "maintenance.worktree-prune.auto", &limit);
 	if (limit <= 0) {
 		should_prune = limit < 0;
 		goto out;
@@ -424,7 +424,7 @@ static int rerere_gc_condition(struct gc_config *cfg UNUSED)
 	int should_gc = 0, limit = 1;
 	DIR *dir = NULL;
 
-	git_config_get_int("maintenance.rerere-gc.auto", &limit);
+	repo_config_get_int(the_repository, "maintenance.rerere-gc.auto", &limit);
 	if (limit <= 0) {
 		should_gc = limit < 0;
 		goto out;
@@ -1162,8 +1162,8 @@ static int should_write_commit_graph(struct gc_config *cfg UNUSED)
 
 	data.num_not_in_graph = 0;
 	data.limit = 100;
-	git_config_get_int("maintenance.commit-graph.auto",
-			   &data.limit);
+	repo_config_get_int(the_repository, "maintenance.commit-graph.auto",
+			    &data.limit);
 
 	if (!data.limit)
 		return 0;
@@ -1301,8 +1301,8 @@ static int loose_object_auto_condition(struct gc_config *cfg UNUSED)
 {
 	int count = 0;
 
-	git_config_get_int("maintenance.loose-objects.auto",
-			   &loose_object_auto_limit);
+	repo_config_get_int(the_repository, "maintenance.loose-objects.auto",
+			    &loose_object_auto_limit);
 
 	if (!loose_object_auto_limit)
 		return 0;
@@ -1416,8 +1416,8 @@ static int incremental_repack_auto_condition(struct gc_config *cfg UNUSED)
 	if (!the_repository->settings.core_multi_pack_index)
 		return 0;
 
-	git_config_get_int("maintenance.incremental-repack.auto",
-			   &incremental_repack_auto_limit);
+	repo_config_get_int(the_repository, "maintenance.incremental-repack.auto",
+			    &incremental_repack_auto_limit);
 
 	if (!incremental_repack_auto_limit)
 		return 0;
@@ -1766,7 +1766,7 @@ static void initialize_task_config(struct maintenance_run_opts *opts,
 	if (opts->schedule) {
 		strategy = none_strategy;
 
-		if (!git_config_get_string_tmp("maintenance.strategy", &config_str)) {
+		if (!repo_config_get_string_tmp(the_repository, "maintenance.strategy", &config_str)) {
 			if (!strcasecmp(config_str, "incremental"))
 				strategy = incremental_strategy;
 		}
@@ -1780,7 +1780,7 @@ static void initialize_task_config(struct maintenance_run_opts *opts,
 		strbuf_reset(&config_name);
 		strbuf_addf(&config_name, "maintenance.%s.enabled",
 			    tasks[i].name);
-		if (!git_config_get_bool(config_name.buf, &config_value))
+		if (!repo_config_get_bool(the_repository, config_name.buf, &config_value))
 			strategy.tasks[i].enabled = config_value;
 		if (!strategy.tasks[i].enabled)
 			continue;
@@ -1789,7 +1789,7 @@ static void initialize_task_config(struct maintenance_run_opts *opts,
 			strbuf_reset(&config_name);
 			strbuf_addf(&config_name, "maintenance.%s.schedule",
 				    tasks[i].name);
-			if (!git_config_get_string_tmp(config_name.buf, &config_str))
+			if (!repo_config_get_string_tmp(the_repository, config_name.buf, &config_str))
 				strategy.tasks[i].schedule = parse_schedule(config_str);
 			if (strategy.tasks[i].schedule < opts->schedule)
 				continue;
@@ -1914,13 +1914,13 @@ static int maintenance_register(int argc, const char **argv, const char *prefix,
 				   options);
 
 	/* Disable foreground maintenance */
-	git_config_set("maintenance.auto", "false");
+	repo_config_set(the_repository, "maintenance.auto", "false");
 
 	/* Set maintenance strategy, if unset */
-	if (git_config_get("maintenance.strategy"))
-		git_config_set("maintenance.strategy", "incremental");
+	if (repo_config_get(the_repository, "maintenance.strategy"))
+		repo_config_set(the_repository, "maintenance.strategy", "incremental");
 
-	if (!git_config_get_string_multi(key, &list)) {
+	if (!repo_config_get_string_multi(the_repository, key, &list)) {
 		for_each_string_list_item(item, list) {
 			if (!strcmp(maintpath, item->string)) {
 				found = 1;
@@ -1939,7 +1939,7 @@ static int maintenance_register(int argc, const char **argv, const char *prefix,
 		}
 		if (!config_file)
 			die(_("$HOME not set"));
-		rc = git_config_set_multivar_in_file_gently(
+		rc = repo_config_set_multivar_in_file_gently(the_repository,
 			config_file, "maintenance.repo", maintpath,
 			CONFIG_REGEX_NONE, NULL, 0);
 		free(global_config_file);
@@ -1989,7 +1989,7 @@ static int maintenance_unregister(int argc, const char **argv, const char *prefi
 	}
 	if (!(config_file
 	      ? git_configset_get_string_multi(&cs, key, &list)
-	      : git_config_get_string_multi(key, &list))) {
+	      : repo_config_get_string_multi(the_repository, key, &list))) {
 		for_each_string_list_item(item, list) {
 			if (!strcmp(maintpath, item->string)) {
 				found = 1;
@@ -2008,7 +2008,7 @@ static int maintenance_unregister(int argc, const char **argv, const char *prefi
 		}
 		if (!config_file)
 			die(_("$HOME not set"));
-		rc = git_config_set_multivar_in_file_gently(
+		rc = repo_config_set_multivar_in_file_gently(the_repository,
 			config_file, key, NULL, maintpath, NULL,
 			CONFIG_FLAGS_MULTI_REPLACE | CONFIG_FLAGS_FIXED_VALUE);
 		free(global_config_file);
@@ -2345,7 +2345,7 @@ static int launchctl_schedule_plist(const char *exec_path, enum schedule_priorit
 		die(_("failed to create directories for '%s'"), filename);
 
 	if ((long)lock_file_timeout_ms < 0 &&
-	    git_config_get_ulong("gc.launchctlplistlocktimeoutms",
+	    repo_config_get_ulong(the_repository, "gc.launchctlplistlocktimeoutms",
 				 &lock_file_timeout_ms))
 		lock_file_timeout_ms = 150;
 

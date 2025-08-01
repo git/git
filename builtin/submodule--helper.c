@@ -53,7 +53,7 @@ static char *resolve_relative_url(const char *rel_url, const char *up_path, int 
 	struct strbuf remotesb = STRBUF_INIT;
 
 	strbuf_addf(&remotesb, "remote.%s.url", remote);
-	if (git_config_get_string(remotesb.buf, &remoteurl)) {
+	if (repo_config_get_string(the_repository, remotesb.buf, &remoteurl)) {
 		if (!quiet)
 			warning(_("could not look up configuration '%s'. "
 				  "Assuming this repository is its own "
@@ -458,7 +458,7 @@ static void init_submodule(const char *path, const char *prefix,
 	 */
 	if (!is_submodule_active(the_repository, path)) {
 		strbuf_addf(&sb, "submodule.%s.active", sub->name);
-		git_config_set_gently(sb.buf, "true");
+		repo_config_set_gently(the_repository, sb.buf, "true");
 		strbuf_reset(&sb);
 	}
 
@@ -468,7 +468,7 @@ static void init_submodule(const char *path, const char *prefix,
 	 * .gitmodules, so look it up directly.
 	 */
 	strbuf_addf(&sb, "submodule.%s.url", sub->name);
-	if (git_config_get_string(sb.buf, &url)) {
+	if (repo_config_get_string(the_repository, sb.buf, &url)) {
 		if (!sub->url)
 			die(_("No url found for submodule path '%s' in .gitmodules"),
 				displaypath);
@@ -484,7 +484,7 @@ static void init_submodule(const char *path, const char *prefix,
 			free(oldurl);
 		}
 
-		if (git_config_set_gently(sb.buf, url))
+		if (repo_config_set_gently(the_repository, sb.buf, url))
 			die(_("Failed to register url for submodule path '%s'"),
 			    displaypath);
 		if (!(flags & OPT_QUIET))
@@ -496,7 +496,7 @@ static void init_submodule(const char *path, const char *prefix,
 
 	/* Copy "update" setting when it is not set yet */
 	strbuf_addf(&sb, "submodule.%s.update", sub->name);
-	if (git_config_get_string_tmp(sb.buf, &upd) &&
+	if (repo_config_get_string_tmp(the_repository, sb.buf, &upd) &&
 	    sub->update_strategy.type != SM_UPDATE_UNSPECIFIED) {
 		if (sub->update_strategy.type == SM_UPDATE_COMMAND) {
 			fprintf(stderr, _("warning: command update mode suggested for submodule '%s'\n"),
@@ -506,7 +506,7 @@ static void init_submodule(const char *path, const char *prefix,
 			upd = submodule_update_type_to_string(sub->update_strategy.type);
 		}
 
-		if (git_config_set_gently(sb.buf, upd))
+		if (repo_config_set_gently(the_repository, sb.buf, upd))
 			die(_("Failed to register update mode for submodule path '%s'"), displaypath);
 	}
 	strbuf_release(&sb);
@@ -549,7 +549,7 @@ static int module_init(int argc, const char **argv, const char *prefix,
 	 * If there are no path args and submodule.active is set then,
 	 * by default, only initialize 'active' modules.
 	 */
-	if (!argc && !git_config_get("submodule.active"))
+	if (!argc && !repo_config_get(the_repository, "submodule.active"))
 		module_list_active(&list);
 
 	info.prefix = prefix;
@@ -649,7 +649,7 @@ static void status_submodule(const char *path, const struct object_id *ce_oid,
 		     "--ignore-submodules=dirty", "--quiet", "--",
 		     path, NULL);
 
-	git_config(git_diff_basic_config, NULL);
+	repo_config(the_repository, git_diff_basic_config, NULL);
 
 	repo_init_revisions(the_repository, &rev, NULL);
 	rev.abbrev = 0;
@@ -1034,7 +1034,7 @@ static void prepare_submodule_summary(struct summary_cb *info,
 
 			config_key = xstrfmt("submodule.%s.ignore",
 					     sub->name);
-			if (!git_config_get_string_tmp(config_key, &value))
+			if (!repo_config_get_string_tmp(the_repository, config_key, &value))
 				ignore_all = !strcmp(value, "all");
 			else if (sub->ignore)
 				ignore_all = !strcmp(sub->ignore, "all");
@@ -1108,7 +1108,7 @@ static int compute_summary_module_list(struct object_id *head_oid,
 	if (info->argc)
 		strvec_pushv(&diff_args, info->argv);
 
-	git_config(git_diff_basic_config, NULL);
+	repo_config(the_repository, git_diff_basic_config, NULL);
 	repo_init_revisions(the_repository, &rev, info->prefix);
 	rev.abbrev = 0;
 	precompose_argv_prefix(diff_args.nr, diff_args.v, NULL);
@@ -1262,7 +1262,7 @@ static void sync_submodule(const char *path, const char *prefix,
 
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "submodule.%s.url", sub->name);
-	if (git_config_set_gently(sb.buf, super_config_url))
+	if (repo_config_set_gently(the_repository, sb.buf, super_config_url))
 		die(_("failed to register url for submodule path '%s'"),
 		      displaypath);
 
@@ -1280,7 +1280,7 @@ static void sync_submodule(const char *path, const char *prefix,
 	submodule_to_gitdir(the_repository, &sb, path);
 	strbuf_addstr(&sb, "/config");
 
-	if (git_config_set_in_file_gently(sb.buf, remote_key, NULL, sub_origin_url))
+	if (repo_config_set_in_file_gently(the_repository, sb.buf, remote_key, NULL, sub_origin_url))
 		die(_("failed to update remote for submodule '%s'"),
 		      path);
 
@@ -1623,11 +1623,11 @@ static void prepare_possible_alternates(const char *sm_name,
 	char *sm_alternate = NULL, *error_strategy = NULL;
 	struct submodule_alternate_setup sas = SUBMODULE_ALTERNATE_SETUP_INIT;
 
-	git_config_get_string("submodule.alternateLocation", &sm_alternate);
+	repo_config_get_string(the_repository, "submodule.alternateLocation", &sm_alternate);
 	if (!sm_alternate)
 		return;
 
-	git_config_get_string("submodule.alternateErrorStrategy", &error_strategy);
+	repo_config_get_string(the_repository, "submodule.alternateErrorStrategy", &error_strategy);
 
 	if (!error_strategy)
 		error_strategy = xstrdup("die");
@@ -1808,14 +1808,14 @@ static int clone_submodule(const struct module_clone_data *clone_data,
 		die(_("could not get submodule directory for '%s'"), clone_data_path);
 
 	/* setup alternateLocation and alternateErrorStrategy in the cloned submodule if needed */
-	git_config_get_string("submodule.alternateLocation", &sm_alternate);
+	repo_config_get_string(the_repository, "submodule.alternateLocation", &sm_alternate);
 	if (sm_alternate)
-		git_config_set_in_file(p, "submodule.alternateLocation",
-				       sm_alternate);
-	git_config_get_string("submodule.alternateErrorStrategy", &error_strategy);
+		repo_config_set_in_file(the_repository, p, "submodule.alternateLocation",
+					sm_alternate);
+	repo_config_get_string(the_repository, "submodule.alternateErrorStrategy", &error_strategy);
 	if (error_strategy)
-		git_config_set_in_file(p, "submodule.alternateErrorStrategy",
-				       error_strategy);
+		repo_config_set_in_file(the_repository, p, "submodule.alternateErrorStrategy",
+					error_strategy);
 
 	free(sm_alternate);
 	free(error_strategy);
@@ -2522,7 +2522,7 @@ static int ensure_core_worktree(const char *path)
 		abs_path = absolute_pathdup(path);
 		rel_path = relative_path(abs_path, subrepo.gitdir, &sb);
 
-		git_config_set_in_file(cfg_file, "core.worktree", rel_path);
+		repo_config_set_in_file(the_repository, cfg_file, "core.worktree", rel_path);
 
 		free(cfg_file);
 		free(abs_path);
@@ -2830,7 +2830,7 @@ static int module_update(int argc, const char **argv, const char *prefix,
 	};
 
 	update_clone_config_from_gitmodules(&opt.max_jobs);
-	git_config(git_update_clone_config, &opt.max_jobs);
+	repo_config(the_repository, git_update_clone_config, &opt.max_jobs);
 
 	argc = parse_options(argc, argv, prefix, module_update_options,
 			     git_submodule_helper_usage, 0);
@@ -2878,7 +2878,7 @@ static int module_update(int argc, const char **argv, const char *prefix,
 		 * If there are no path args and submodule.active is set then,
 		 * by default, only initialize 'active' modules.
 		 */
-		if (!argc && !git_config_get("submodule.active"))
+		if (!argc && !repo_config_get(the_repository, "submodule.active"))
 			module_list_active(&list);
 
 		info.prefix = opt.prefix;
@@ -3128,7 +3128,7 @@ static int module_create_branch(int argc, const char **argv, const char *prefix,
 		NULL
 	};
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	track = git_branch_track;
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
 
@@ -3309,7 +3309,7 @@ static void configure_added_submodule(struct add_data *add_data)
 	struct child_process add_gitmodules = CHILD_PROCESS_INIT;
 
 	key = xstrfmt("submodule.%s.url", add_data->sm_name);
-	git_config_set_gently(key, add_data->realrepo);
+	repo_config_set_gently(the_repository, key, add_data->realrepo);
 	free(key);
 
 	add_submod.git_cmd = 1;
@@ -3349,19 +3349,19 @@ static void configure_added_submodule(struct add_data *add_data)
 	 * is_submodule_active(), since that function needs to find
 	 * out the value of "submodule.active" again anyway.
 	 */
-	if (!git_config_get("submodule.active")) {
+	if (!repo_config_get(the_repository, "submodule.active")) {
 		/*
 		 * If the submodule being added isn't already covered by the
 		 * current configured pathspec, set the submodule's active flag
 		 */
 		if (!is_submodule_active(the_repository, add_data->sm_path)) {
 			key = xstrfmt("submodule.%s.active", add_data->sm_name);
-			git_config_set_gently(key, "true");
+			repo_config_set_gently(the_repository, key, "true");
 			free(key);
 		}
 	} else {
 		key = xstrfmt("submodule.%s.active", add_data->sm_name);
-		git_config_set_gently(key, "true");
+		repo_config_set_gently(the_repository, key, "true");
 		free(key);
 	}
 }

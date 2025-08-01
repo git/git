@@ -1995,7 +1995,7 @@ static int add_remote_or_group(const char *name, struct string_list *list)
 	struct remote_group_data g;
 	g.name = name; g.list = list;
 
-	git_config(get_remote_group, &g);
+	repo_config(the_repository, get_remote_group, &g);
 	if (list->nr == prev_nr) {
 		struct remote *remote = remote_get(name);
 		if (!remote_is_configured(remote, 0))
@@ -2417,7 +2417,7 @@ int cmd_fetch(int argc,
 		free(anon);
 	}
 
-	git_config(git_fetch_config, &config);
+	repo_config(the_repository, git_fetch_config, &config);
 	if (the_repository->gitdir) {
 		prepare_repo_settings(the_repository);
 		the_repository->settings.command_requires_full_index = 0;
@@ -2508,7 +2508,7 @@ int cmd_fetch(int argc,
 	if (!max_jobs)
 		max_jobs = online_cpus();
 
-	if (!git_config_get_string_tmp("fetch.bundleuri", &bundle_uri) &&
+	if (!repo_config_get_string_tmp(the_repository, "fetch.bundleuri", &bundle_uri) &&
 	    fetch_bundle_uri(the_repository, bundle_uri, NULL))
 		warning(_("failed to fetch bundles from '%s'"), bundle_uri);
 
@@ -2683,12 +2683,12 @@ int cmd_fetch(int argc,
 			 * but respect config settings disabling it.
 			 */
 			int opt_val;
-			if (git_config_get_int("gc.autopacklimit", &opt_val))
+			if (repo_config_get_int(the_repository, "gc.autopacklimit", &opt_val))
 				opt_val = -1;
 			if (opt_val != 0)
 				git_config_push_parameter("gc.autoPackLimit=1");
 
-			if (git_config_get_int("maintenance.incremental-repack.auto", &opt_val))
+			if (repo_config_get_int(the_repository, "maintenance.incremental-repack.auto", &opt_val))
 				opt_val = -1;
 			if (opt_val != 0)
 				git_config_push_parameter("maintenance.incremental-repack.auto=-1");

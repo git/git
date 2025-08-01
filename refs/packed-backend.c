@@ -1233,7 +1233,7 @@ int packed_refs_lock(struct ref_store *ref_store, int flags, struct strbuf *err)
 	static int timeout_value = 1000;
 
 	if (!timeout_configured) {
-		git_config_get_int("core.packedrefstimeout", &timeout_value);
+		repo_config_get_int(the_repository, "core.packedrefstimeout", &timeout_value);
 		timeout_configured = 1;
 	}
 

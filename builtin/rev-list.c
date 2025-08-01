@@ -644,7 +644,7 @@ int cmd_rev_list(int argc,
 
 	show_usage_if_asked(argc, argv, rev_list_usage);
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 	repo_init_revisions(the_repository, &revs, prefix);
 	revs.abbrev = DEFAULT_ABBREV;
 	revs.commit_format = CMIT_FMT_UNSPECIFIED;

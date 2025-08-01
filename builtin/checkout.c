@@ -291,7 +291,7 @@ static int checkout_merged(int pos, const struct checkout *state,
 	read_mmblob(&ours, &threeway[1]);
 	read_mmblob(&theirs, &threeway[2]);
 
-	git_config_get_bool("merge.renormalize", &renormalize);
+	repo_config_get_bool(the_repository, "merge.renormalize", &renormalize);
 	ll_opts.renormalize = renormalize;
 	ll_opts.conflict_style = conflict_style;
 	merge_status = ll_merge(&result_buf, path, &ancestor, "base",
@@ -1764,7 +1764,7 @@ static int checkout_main(int argc, const char **argv, const char *prefix,
 	opts->prefix = prefix;
 	opts->show_progress = -1;
 
-	git_config(git_checkout_config, opts);
+	repo_config(the_repository, git_checkout_config, opts);
 	if (the_repository->gitdir) {
 		prepare_repo_settings(the_repository);
 		the_repository->settings.command_requires_full_index = 0;
