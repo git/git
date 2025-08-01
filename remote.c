@@ -2578,7 +2578,8 @@ struct check_and_collect_until_cb_data {
 };
 
 /* Get the timestamp of the latest entry. */
-static int peek_reflog(struct object_id *o_oid UNUSED,
+static int peek_reflog(const char *refname UNUSED,
+		       struct object_id *o_oid UNUSED,
 		       struct object_id *n_oid UNUSED,
 		       const char *ident UNUSED,
 		       timestamp_t timestamp, int tz UNUSED,
@@ -2589,7 +2590,8 @@ static int peek_reflog(struct object_id *o_oid UNUSED,
 	return 1;
 }
 
-static int check_and_collect_until(struct object_id *o_oid UNUSED,
+static int check_and_collect_until(const char *refname UNUSED,
+				   struct object_id *o_oid UNUSED,
 				   struct object_id *n_oid,
 				   const char *ident UNUSED,
 				   timestamp_t timestamp, int tz UNUSED,

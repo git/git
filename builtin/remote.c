@@ -1,9 +1,11 @@
 #define USE_THE_REPOSITORY_VARIABLE
-#define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "builtin.h"
+#include "advice.h"
 #include "config.h"
+#include "date.h"
 #include "gettext.h"
+#include "ident.h"
 #include "parse-options.h"
 #include "path.h"
 #include "transport.h"
@@ -182,7 +184,6 @@ static int add(int argc, const char **argv, const char *prefix,
 	struct remote *remote;
 	struct strbuf buf = STRBUF_INIT, buf2 = STRBUF_INIT;
 	const char *name, *url;
-	int i;
 	int result = 0;
 
 	struct option options[] = {
@@ -233,7 +234,7 @@ static int add(int argc, const char **argv, const char *prefix,
 		strbuf_addf(&buf, "remote.%s.fetch", name);
 		if (track.nr == 0)
 			string_list_append(&track, "*");
-		for (i = 0; i < track.nr; i++) {
+		for (size_t i = 0; i < track.nr; i++) {
 			add_branch(buf.buf, track.items[i].string,
 				   name, mirror, &buf2);
 		}
@@ -612,53 +613,169 @@ static int add_branch_for_removal(const char *refname,
 struct rename_info {
 	const char *old_name;
 	const char *new_name;
-	struct string_list *remote_branches;
-	uint32_t symrefs_nr;
+	struct ref_transaction *transaction;
+	struct progress *progress;
+	struct strbuf *err;
+	uint32_t progress_nr;
+	uint64_t index;
 };
 
-static int read_remote_branches(const char *refname, const char *referent UNUSED,
-				const struct object_id *oid UNUSED,
-				int flags UNUSED, void *cb_data)
+static void compute_renamed_ref(struct rename_info *rename,
+				const char *refname,
+				struct strbuf *out)
+{
+	strbuf_reset(out);
+	strbuf_addstr(out, refname);
+	strbuf_splice(out, strlen("refs/remotes/"), strlen(rename->old_name),
+		      rename->new_name, strlen(rename->new_name));
+}
+
+static int rename_one_reflog_entry(const char *old_refname,
+				   struct object_id *old_oid,
+				   struct object_id *new_oid,
+				   const char *committer,
+				   timestamp_t timestamp, int tz,
+				   const char *msg, void *cb_data)
 {
 	struct rename_info *rename = cb_data;
-	struct strbuf buf = STRBUF_INIT;
-	struct string_list_item *item;
-	int flag;
-	const char *symref;
+	struct strbuf new_refname = STRBUF_INIT;
+	struct strbuf identity = STRBUF_INIT;
+	struct strbuf name = STRBUF_INIT;
+	struct strbuf mail = STRBUF_INIT;
+	struct ident_split ident;
+	const char *date;
+	int error;
 
-	strbuf_addf(&buf, "refs/remotes/%s/", rename->old_name);
-	if (starts_with(refname, buf.buf)) {
-		item = string_list_append(rename->remote_branches, refname);
-		symref = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
-						 refname, RESOLVE_REF_READING,
-						 NULL, &flag);
-		if (symref && (flag & REF_ISSYMREF)) {
-			item->util = xstrdup(symref);
-			rename->symrefs_nr++;
-		} else {
-			item->util = NULL;
-		}
+	compute_renamed_ref(rename, old_refname, &new_refname);
+
+	if (split_ident_line(&ident, committer, strlen(committer)) < 0) {
+		error = -1;
+		goto out;
 	}
-	strbuf_release(&buf);
 
-	return 0;
+	strbuf_add(&name, ident.name_begin, ident.name_end - ident.name_begin);
+	strbuf_add(&mail, ident.mail_begin, ident.mail_end - ident.mail_begin);
+
+	date = show_date(timestamp, tz, DATE_MODE(NORMAL));
+	strbuf_addstr(&identity, fmt_ident(name.buf, mail.buf,
+					  WANT_BLANK_IDENT, date, 0));
+
+	error = ref_transaction_update_reflog(rename->transaction, new_refname.buf,
+					      new_oid, old_oid, identity.buf, msg,
+					      rename->index++, rename->err);
+
+out:
+	strbuf_release(&new_refname);
+	strbuf_release(&identity);
+	strbuf_release(&name);
+	strbuf_release(&mail);
+	return error;
+}
+
+static int rename_one_reflog(const char *old_refname,
+			     const struct object_id *old_oid,
+			     struct rename_info *rename)
+{
+	struct strbuf new_refname = STRBUF_INIT;
+	struct strbuf message = STRBUF_INIT;
+	int error;
+
+	if (!refs_reflog_exists(get_main_ref_store(the_repository), old_refname))
+		return 0;
+
+	error = refs_for_each_reflog_ent(get_main_ref_store(the_repository),
+					 old_refname, rename_one_reflog_entry, rename);
+	if (error < 0)
+		goto out;
+
+	compute_renamed_ref(rename, old_refname, &new_refname);
+
+	/*
+	 * Manually write the reflog entry for the now-renamed ref. We cannot
+	 * rely on `rename_one_ref()` to do this for us as that would screw
+	 * over order in which reflog entries are being written.
+	 *
+	 * Furthermore, we only append the entry in case the reference
+	 * resolves. Missing references shouldn't have reflogs anyway.
+	 */
+	strbuf_addf(&message, "remote: renamed %s to %s", old_refname,
+		    new_refname.buf);
+
+	error = ref_transaction_update_reflog(rename->transaction, new_refname.buf,
+					      old_oid, old_oid, git_committer_info(0),
+					      message.buf, rename->index++, rename->err);
+	if (error < 0)
+		return error;
+
+out:
+	strbuf_release(&new_refname);
+	strbuf_release(&message);
+	return error;
+}
+
+static int rename_one_ref(const char *old_refname, const char *referent,
+			  const struct object_id *oid,
+			  int flags, void *cb_data)
+{
+	struct strbuf new_referent = STRBUF_INIT;
+	struct strbuf new_refname = STRBUF_INIT;
+	struct rename_info *rename = cb_data;
+	int error;
+
+	compute_renamed_ref(rename, old_refname, &new_refname);
+
+	if (flags & REF_ISSYMREF) {
+		/*
+		 * Stupidly enough `referent` is not pointing to the immediate
+		 * target of a symref, but it's the recursively resolved value.
+		 * So symrefs pointing to symrefs would be misresolved, and
+		 * unborn symrefs don't have any value for the `referent` at all.
+		 */
+		referent = refs_resolve_ref_unsafe(get_main_ref_store(the_repository),
+						   old_refname, RESOLVE_REF_NO_RECURSE,
+						   NULL, NULL);
+		compute_renamed_ref(rename, referent, &new_referent);
+		oid = NULL;
+	}
+
+	error = ref_transaction_delete(rename->transaction, old_refname,
+				       oid, referent, REF_NO_DEREF, NULL, rename->err);
+	if (error < 0)
+		goto out;
+
+	error = ref_transaction_update(rename->transaction, new_refname.buf, oid, null_oid(the_hash_algo),
+				       (flags & REF_ISSYMREF) ? new_referent.buf : NULL, NULL,
+				       REF_SKIP_CREATE_REFLOG | REF_NO_DEREF | REF_SKIP_OID_VERIFICATION,
+				       NULL, rename->err);
+	if (error < 0)
+		goto out;
+
+	error = rename_one_reflog(old_refname, oid, rename);
+	if (error < 0)
+		goto out;
+
+	display_progress(rename->progress, ++rename->progress_nr);
+
+out:
+	strbuf_release(&new_referent);
+	strbuf_release(&new_refname);
+	return error;
 }
 
 static int migrate_file(struct remote *remote)
 {
 	struct strbuf buf = STRBUF_INIT;
-	int i;
 
 	strbuf_addf(&buf, "remote.%s.url", remote->name);
-	for (i = 0; i < remote->url.nr; i++)
+	for (size_t i = 0; i < remote->url.nr; i++)
 		repo_config_set_multivar(the_repository, buf.buf, remote->url.v[i], "^$", 0);
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.push", remote->name);
-	for (i = 0; i < remote->push.nr; i++)
+	for (int i = 0; i < remote->push.nr; i++)
 		repo_config_set_multivar(the_repository, buf.buf, remote->push.items[i].raw, "^$", 0);
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.fetch", remote->name);
-	for (i = 0; i < remote->fetch.nr; i++)
+	for (int i = 0; i < remote->fetch.nr; i++)
 		repo_config_set_multivar(the_repository, buf.buf, remote->fetch.items[i].raw, "^$", 0);
 #ifndef WITH_BREAKING_CHANGES
 	if (remote->origin == REMOTE_REMOTES)
@@ -730,6 +847,14 @@ static void handle_push_default(const char* old_name, const char* new_name)
 	strbuf_release(&push_default.origin);
 }
 
+static const char conflicting_remote_refs_advice[] = N_(
+	"The remote you are trying to rename has conflicting references in the\n"
+	"new target refspec. This is most likely caused by you trying to nest\n"
+	"a remote into itself, e.g. by renaming 'parent' into 'parent/child'\n"
+	"or by unnesting a remote, e.g. the other way round.\n"
+	"\n"
+	"If that is the case, you can address this by first renaming the\n"
+	"remote to a different name.\n");
 
 static int mv(int argc, const char **argv, const char *prefix,
 	      struct repository *repo UNUSED)
@@ -741,11 +866,11 @@ static int mv(int argc, const char **argv, const char *prefix,
 	};
 	struct remote *oldremote, *newremote;
 	struct strbuf buf = STRBUF_INIT, buf2 = STRBUF_INIT, buf3 = STRBUF_INIT,
-		old_remote_context = STRBUF_INIT;
-	struct string_list remote_branches = STRING_LIST_INIT_DUP;
-	struct rename_info rename;
-	int i, refs_renamed_nr = 0, refspec_updated = 0;
-	struct progress *progress = NULL;
+		old_remote_context = STRBUF_INIT, err = STRBUF_INIT;
+	struct rename_info rename = {
+		.err = &err,
+	};
+	int refspecs_need_update = 0;
 	int result = 0;
 
 	argc = parse_options(argc, argv, prefix, options,
@@ -756,8 +881,6 @@ static int mv(int argc, const char **argv, const char *prefix,
 
 	rename.old_name = argv[0];
 	rename.new_name = argv[1];
-	rename.remote_branches = &remote_branches;
-	rename.symrefs_nr = 0;
 
 	oldremote = remote_get(rename.old_name);
 	if (!remote_is_configured(oldremote, 1)) {
@@ -785,19 +908,50 @@ static int mv(int argc, const char **argv, const char *prefix,
 		goto out;
 	}
 
+	strbuf_addf(&old_remote_context, ":refs/remotes/%s/", rename.old_name);
+
+	for (int i = 0; i < oldremote->fetch.nr && !refspecs_need_update; i++)
+		refspecs_need_update = !!strstr(oldremote->fetch.items[i].raw,
+						old_remote_context.buf);
+
+	if (refspecs_need_update) {
+		rename.transaction = ref_store_transaction_begin(get_main_ref_store(the_repository),
+							       0, &err);
+		if (!rename.transaction)
+			goto out;
+
+		if (show_progress)
+			rename.progress = start_delayed_progress(the_repository,
+								 _("Renaming remote references"), 0);
+
+		strbuf_reset(&buf);
+		strbuf_addf(&buf, "refs/remotes/%s/", rename.old_name);
+
+		result = refs_for_each_rawref_in(get_main_ref_store(the_repository), buf.buf,
+				rename_one_ref, &rename);
+		if (result < 0)
+			die(_("queueing remote ref renames failed: %s"), rename.err->buf);
+
+		result = ref_transaction_prepare(rename.transaction, &err);
+		if (result < 0) {
+			error("renaming remote references failed: %s", err.buf);
+			if (result == REF_TRANSACTION_ERROR_NAME_CONFLICT)
+				advise(conflicting_remote_refs_advice);
+			die(NULL);
+		}
+	}
+
 	if (oldremote->fetch.nr) {
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "remote.%s.fetch", rename.new_name);
 		repo_config_set_multivar(the_repository, buf.buf, NULL, NULL, CONFIG_FLAGS_MULTI_REPLACE);
-		strbuf_addf(&old_remote_context, ":refs/remotes/%s/", rename.old_name);
-		for (i = 0; i < oldremote->fetch.nr; i++) {
+		for (int i = 0; i < oldremote->fetch.nr; i++) {
 			char *ptr;
 
 			strbuf_reset(&buf2);
 			strbuf_addstr(&buf2, oldremote->fetch.items[i].raw);
 			ptr = strstr(buf2.buf, old_remote_context.buf);
 			if (ptr) {
-				refspec_updated = 1;
 				strbuf_splice(&buf2,
 					      ptr-buf2.buf + strlen(":refs/remotes/"),
 					      strlen(rename.old_name), rename.new_name,
@@ -813,7 +967,7 @@ static int mv(int argc, const char **argv, const char *prefix,
 	}
 
 	read_branches();
-	for (i = 0; i < branch_list.nr; i++) {
+	for (size_t i = 0; i < branch_list.nr; i++) {
 		struct string_list_item *item = branch_list.items + i;
 		struct branch_info *info = item->util;
 		if (info->remote_name && !strcmp(info->remote_name, rename.old_name)) {
@@ -828,83 +982,23 @@ static int mv(int argc, const char **argv, const char *prefix,
 		}
 	}
 
-	if (!refspec_updated)
-		goto out;
+	if (refspecs_need_update) {
+		result = ref_transaction_commit(rename.transaction, &err);
+		if (result < 0)
+			die(_("renaming remote refs failed: %s"), rename.err->buf);
 
-	/*
-	 * First remove symrefs, then rename the rest, finally create
-	 * the new symrefs.
-	 */
-	refs_for_each_ref(get_main_ref_store(the_repository),
-			  read_remote_branches, &rename);
-	if (show_progress) {
-		/*
-		 * Count symrefs twice, since "renaming" them is done by
-		 * deleting and recreating them in two separate passes.
-		 */
-		progress = start_progress(the_repository,
-					  _("Renaming remote references"),
-					  rename.remote_branches->nr + rename.symrefs_nr);
+		stop_progress(&rename.progress);
+
+		handle_push_default(rename.old_name, rename.new_name);
 	}
-	for (i = 0; i < remote_branches.nr; i++) {
-		struct string_list_item *item = remote_branches.items + i;
-		struct strbuf referent = STRBUF_INIT;
-
-		if (refs_read_symbolic_ref(get_main_ref_store(the_repository), item->string,
-					   &referent))
-			continue;
-		if (refs_delete_ref(get_main_ref_store(the_repository), NULL, item->string, NULL, REF_NO_DEREF))
-			die(_("deleting '%s' failed"), item->string);
-
-		strbuf_release(&referent);
-		display_progress(progress, ++refs_renamed_nr);
-	}
-	for (i = 0; i < remote_branches.nr; i++) {
-		struct string_list_item *item = remote_branches.items + i;
-
-		if (item->util)
-			continue;
-		strbuf_reset(&buf);
-		strbuf_addstr(&buf, item->string);
-		strbuf_splice(&buf, strlen("refs/remotes/"), strlen(rename.old_name),
-				rename.new_name, strlen(rename.new_name));
-		strbuf_reset(&buf2);
-		strbuf_addf(&buf2, "remote: renamed %s to %s",
-				item->string, buf.buf);
-		if (refs_rename_ref(get_main_ref_store(the_repository), item->string, buf.buf, buf2.buf))
-			die(_("renaming '%s' failed"), item->string);
-		display_progress(progress, ++refs_renamed_nr);
-	}
-	for (i = 0; i < remote_branches.nr; i++) {
-		struct string_list_item *item = remote_branches.items + i;
-
-		if (!item->util)
-			continue;
-		strbuf_reset(&buf);
-		strbuf_addstr(&buf, item->string);
-		strbuf_splice(&buf, strlen("refs/remotes/"), strlen(rename.old_name),
-				rename.new_name, strlen(rename.new_name));
-		strbuf_reset(&buf2);
-		strbuf_addstr(&buf2, item->util);
-		strbuf_splice(&buf2, strlen("refs/remotes/"), strlen(rename.old_name),
-				rename.new_name, strlen(rename.new_name));
-		strbuf_reset(&buf3);
-		strbuf_addf(&buf3, "remote: renamed %s to %s",
-				item->string, buf.buf);
-		if (refs_update_symref(get_main_ref_store(the_repository), buf.buf, buf2.buf, buf3.buf))
-			die(_("creating '%s' failed"), buf.buf);
-		display_progress(progress, ++refs_renamed_nr);
-	}
-	stop_progress(&progress);
-
-	handle_push_default(rename.old_name, rename.new_name);
 
 out:
-	string_list_clear(&remote_branches, 1);
+	ref_transaction_free(rename.transaction);
 	strbuf_release(&old_remote_context);
 	strbuf_release(&buf);
 	strbuf_release(&buf2);
 	strbuf_release(&buf3);
+	strbuf_release(&err);
 	return result;
 }
 
@@ -920,7 +1014,7 @@ static int rm(int argc, const char **argv, const char *prefix,
 	struct string_list branches = STRING_LIST_INIT_DUP;
 	struct string_list skipped = STRING_LIST_INIT_DUP;
 	struct branches_for_remote cb_data;
-	int i, result;
+	int result;
 
 	memset(&cb_data, 0, sizeof(cb_data));
 	cb_data.branches = &branches;
@@ -942,7 +1036,7 @@ static int rm(int argc, const char **argv, const char *prefix,
 	for_each_remote(add_known_remote, &known_remotes);
 
 	read_branches();
-	for (i = 0; i < branch_list.nr; i++) {
+	for (size_t i = 0; i < branch_list.nr; i++) {
 		struct string_list_item *item = branch_list.items + i;
 		struct branch_info *info = item->util;
 		if (info->remote_name && !strcmp(info->remote_name, remote->name)) {
@@ -988,7 +1082,7 @@ static int rm(int argc, const char **argv, const char *prefix,
 			      "Note: Some branches outside the refs/remotes/ hierarchy were not removed;\n"
 			      "to delete them, use:",
 			      skipped.nr));
-		for (i = 0; i < skipped.nr; i++)
+		for (size_t i = 0; i < skipped.nr; i++)
 			fprintf(stderr, "  git branch -d %s\n",
 				skipped.items[i].string);
 	}
@@ -1166,7 +1260,6 @@ static int show_local_info_item(struct string_list_item *item, void *cb_data)
 	struct branch_info *branch_info = item->util;
 	struct string_list *merge = &branch_info->merge;
 	int width = show_info->width + 4;
-	int i;
 
 	if (branch_info->rebase >= REBASE_TRUE && branch_info->merge.nr > 1) {
 		error(_("invalid branch.%s.merge; cannot rebase onto > 1 branch"),
@@ -1192,7 +1285,7 @@ static int show_local_info_item(struct string_list_item *item, void *cb_data)
 	} else {
 		printf_ln(_("merges with remote %s"), merge->items[0].string);
 	}
-	for (i = 1; i < merge->nr; i++)
+	for (size_t i = 1; i < merge->nr; i++)
 		printf(_("%-*s    and with remote %s\n"), width, "",
 		       merge->items[i].string);
 
@@ -1277,7 +1370,6 @@ static int get_one_entry(struct remote *remote, void *priv)
 	struct string_list *list = priv;
 	struct strbuf remote_info_buf = STRBUF_INIT;
 	struct strvec *url;
-	int i;
 
 	if (remote->url.nr > 0) {
 		struct strbuf promisor_config = STRBUF_INIT;
@@ -1294,8 +1386,7 @@ static int get_one_entry(struct remote *remote, void *priv)
 	} else
 		string_list_append(list, remote->name)->util = NULL;
 	url = push_url_of_remote(remote);
-	for (i = 0; i < url->nr; i++)
-	{
+	for (size_t i = 0; i < url->nr; i++) {
 		strbuf_addf(&remote_info_buf, "%s (push)", url->v[i]);
 		string_list_append(list, remote->name)->util =
 				strbuf_detach(&remote_info_buf, NULL);
@@ -1312,10 +1403,8 @@ static int show_all(void)
 	result = for_each_remote(get_one_entry, &list);
 
 	if (!result) {
-		int i;
-
 		string_list_sort(&list);
-		for (i = 0; i < list.nr; i++) {
+		for (size_t i = 0; i < list.nr; i++) {
 			struct string_list_item *item = list.items + i;
 			if (verbose)
 				printf("%s\t%s\n", item->string,
@@ -1352,7 +1441,7 @@ static int show(int argc, const char **argv, const char *prefix,
 		query_flag = (GET_REF_STATES | GET_HEAD_NAMES | GET_PUSH_REF_STATES);
 
 	for (; argc; argc--, argv++) {
-		int i;
+		size_t i;
 		struct strvec *url;
 
 		get_remote_ref_states(*argv, &info.states, query_flag);
@@ -1458,7 +1547,7 @@ static void report_set_head_auto(const char *remote, const char *head_name,
 static int set_head(int argc, const char **argv, const char *prefix,
 		    struct repository *repo UNUSED)
 {
-	int i, opt_a = 0, opt_d = 0, result = 0, was_detached;
+	int opt_a = 0, opt_d = 0, result = 0, was_detached;
 	struct strbuf b_head = STRBUF_INIT, b_remote_head = STRBUF_INIT,
 		b_local_head = STRBUF_INIT;
 	char *head_name = NULL;
@@ -1489,7 +1578,7 @@ static int set_head(int argc, const char **argv, const char *prefix,
 		else if (states.heads.nr > 1) {
 			result |= error(_("Multiple remote HEAD branches. "
 					  "Please choose one explicitly with:"));
-			for (i = 0; i < states.heads.nr; i++)
+			for (size_t i = 0; i < states.heads.nr; i++)
 				fprintf(stderr, "  git remote set-head %s %s\n",
 					argv[0], states.heads.items[i].string);
 		} else
@@ -1714,7 +1803,7 @@ static int set_branches(int argc, const char **argv, const char *prefix,
 static int get_url(int argc, const char **argv, const char *prefix,
 		   struct repository *repo UNUSED)
 {
-	int i, push_mode = 0, all_mode = 0;
+	int push_mode = 0, all_mode = 0;
 	const char *remotename = NULL;
 	struct remote *remote;
 	struct strvec *url;
@@ -1742,7 +1831,7 @@ static int get_url(int argc, const char **argv, const char *prefix,
 	url = push_mode ? push_url_of_remote(remote) : &remote->url;
 
 	if (all_mode) {
-		for (i = 0; i < url->nr; i++)
+		for (size_t i = 0; i < url->nr; i++)
 			printf_ln("%s", url->v[i]);
 	} else {
 		printf_ln("%s", url->v[0]);
@@ -1754,7 +1843,7 @@ static int get_url(int argc, const char **argv, const char *prefix,
 static int set_url(int argc, const char **argv, const char *prefix,
 		   struct repository *repo UNUSED)
 {
-	int i, push_mode = 0, add_mode = 0, delete_mode = 0;
+	int push_mode = 0, add_mode = 0, delete_mode = 0;
 	int matches = 0, negative_matches = 0;
 	const char *remotename = NULL;
 	const char *newurl = NULL;
@@ -1818,7 +1907,7 @@ static int set_url(int argc, const char **argv, const char *prefix,
 	if (regcomp(&old_regex, oldurl, REG_EXTENDED))
 		die(_("Invalid old URL pattern: %s"), oldurl);
 
-	for (i = 0; i < urlset->nr; i++)
+	for (size_t i = 0; i < urlset->nr; i++)
 		if (!regexec(&old_regex, urlset->v[i], 0, NULL, 0))
 			matches++;
 		else

@@ -215,7 +215,8 @@ static int cmd_for_each_reflog(struct ref_store *refs,
 	return refs_for_each_reflog(refs, each_reflog, NULL);
 }
 
-static int each_reflog_ent(struct object_id *old_oid, struct object_id *new_oid,
+static int each_reflog_ent(const char *refname UNUSED,
+			   struct object_id *old_oid, struct object_id *new_oid,
 			   const char *committer, timestamp_t timestamp,
 			   int tz, const char *msg, void *cb_data UNUSED)
 {

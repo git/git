@@ -503,13 +503,12 @@ static void fsck_handle_reflog_oid(const char *refname, struct object_id *oid,
 	}
 }
 
-static int fsck_handle_reflog_ent(struct object_id *ooid, struct object_id *noid,
+static int fsck_handle_reflog_ent(const char *refname,
+				  struct object_id *ooid, struct object_id *noid,
 				  const char *email UNUSED,
 				  timestamp_t timestamp, int tz UNUSED,
-				  const char *message UNUSED, void *cb_data)
+				  const char *message UNUSED, void *cb_data UNUSED)
 {
-	const char *refname = cb_data;
-
 	if (verbose)
 		fprintf_ln(stderr, _("Checking reflog %s->%s"),
 			   oid_to_hex(ooid), oid_to_hex(noid));
@@ -526,7 +525,7 @@ static int fsck_handle_reflog(const char *logname, void *cb_data)
 	strbuf_worktree_ref(cb_data, &refname, logname);
 	refs_for_each_reflog_ent(get_main_ref_store(the_repository),
 				 refname.buf, fsck_handle_reflog_ent,
-				 refname.buf);
+				 NULL);
 	strbuf_release(&refname);
 	return 0;
 }
