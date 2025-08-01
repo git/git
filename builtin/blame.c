@@ -197,9 +197,7 @@ static void commit_info_destroy(struct commit_info *ci)
 	strbuf_release(&ci->summary);
 }
 
-static void get_commit_info(struct commit *commit,
-			    struct commit_info *ret,
-			    int detailed)
+static void get_commit_info(struct commit *commit, struct commit_info *ret)
 {
 	int len;
 	const char *subject, *encoding;
@@ -210,11 +208,6 @@ static void get_commit_info(struct commit *commit,
 	get_ac_line(message, "\nauthor ",
 		    &ret->author, &ret->author_mail,
 		    &ret->author_time, &ret->author_tz);
-
-	if (!detailed) {
-		repo_unuse_commit_buffer(the_repository, commit, message);
-		return;
-	}
 
 	get_ac_line(message, "\ncommitter ",
 		    &ret->committer, &ret->committer_mail,
@@ -263,7 +256,7 @@ static int emit_one_suspect_detail(struct blame_origin *suspect, int repeat)
 		return 0;
 
 	suspect->commit->object.flags |= METAINFO_SHOWN;
-	get_commit_info(suspect->commit, &ci, 1);
+	get_commit_info(suspect->commit, &ci);
 	printf("author %s\n", ci.author.buf);
 	printf("author-mail %s\n", ci.author_mail.buf);
 	printf("author-time %"PRItime"\n", ci.author_time);
@@ -471,7 +464,7 @@ static void emit_other(struct blame_scoreboard *sb, struct blame_entry *ent, int
 	int show_raw_time = !!(opt & OUTPUT_RAW_TIMESTAMP);
 	const char *default_color = NULL, *color = NULL, *reset = NULL;
 
-	get_commit_info(suspect->commit, &ci, 1);
+	get_commit_info(suspect->commit, &ci);
 	oid_to_hex_r(hex, &suspect->commit->object.oid);
 
 	cp = blame_nth_line(sb, ent->lno);
@@ -665,7 +658,7 @@ static void find_alignment(struct blame_scoreboard *sb, int *option)
 		if (!(suspect->commit->object.flags & METAINFO_SHOWN)) {
 			struct commit_info ci = COMMIT_INFO_INIT;
 			suspect->commit->object.flags |= METAINFO_SHOWN;
-			get_commit_info(suspect->commit, &ci, 1);
+			get_commit_info(suspect->commit, &ci);
 			if (*option & OUTPUT_SHOW_EMAIL)
 				num = utf8_strwidth(ci.author_mail.buf);
 			else
