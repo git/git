@@ -88,6 +88,7 @@ sendemail.smtpServer::
 sendemail.smtpServerPort::
 sendemail.smtpServerOption::
 sendemail.smtpUser::
+sendemail.imapSentFolder::
 sendemail.thread::
 sendemail.transferEncoding::
 sendemail.validate::

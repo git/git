@@ -73,6 +73,8 @@ git send-email --translate-aliases
     --no-smtp-auth                 * Disable SMTP authentication. Shorthand for
                                      `--smtp-auth=none`
     --smtp-debug            <0|1>  * Disable, enable Net::SMTP debug.
+    --imap-sent-folder      <str>  * IMAP folder where a copy of the emails should be sent.
+                                     Make sure `git imap-send` is setup to use this feature.
 
     --batch-size            <int>  * send max <int> message per connection.
     --relogin-delay         <int>  * delay <int> seconds between two successive login.
@@ -200,7 +202,7 @@ my $re_encoded_word = qr/=\?($re_token)\?($re_token)\?($re_encoded_text)\?=/;
 
 # Variables we fill in automatically, or via prompting:
 my (@to,@cc,@xh,$envelope_sender,
-	$initial_in_reply_to,$reply_to,$initial_subject,@files,
+	$initial_in_reply_to,$reply_to,$initial_subject,@files,@imap_copy,
 	$author,$sender,$smtp_authpass,$annotate,$compose,$time);
 # Things we either get from config, *or* are overridden on the
 # command-line.
@@ -277,6 +279,7 @@ my ($smtp_server, $smtp_server_port, @smtp_server_options);
 my ($smtp_authuser, $smtp_encryption, $smtp_ssl_cert_path);
 my ($batch_size, $relogin_delay);
 my ($identity, $aliasfiletype, @alias_files, $smtp_domain, $smtp_auth);
+my ($imap_sent_folder);
 my ($confirm);
 my (@suppress_cc);
 my ($auto_8bit_encoding);
@@ -322,6 +325,7 @@ my %config_settings = (
     "smtpauth" => \$smtp_auth,
     "smtpbatchsize" => \$batch_size,
     "smtprelogindelay" => \$relogin_delay,
+    "imapsentfolder" => \$imap_sent_folder,
     "to" => \@config_to,
     "tocmd" => \$to_cmd,
     "cc" => \@config_cc,
@@ -527,6 +531,7 @@ my %options = (
 		    "smtp-domain:s" => \$smtp_domain,
 		    "smtp-auth=s" => \$smtp_auth,
 		    "no-smtp-auth" => sub {$smtp_auth = 'none'},
+		    "imap-sent-folder=s" => \$imap_sent_folder,
 		    "annotate!" => \$annotate,
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
@@ -1829,6 +1834,17 @@ EOF
 		print "\n";
 	}
 
+	if ($imap_sent_folder) {
+		my $imap_header = $header;
+		if (@initial_bcc) {
+			# Bcc is not a part of $header, so we add it here.
+			# This is only for the IMAP copy, not for the actual email
+			# sent to the recipients.
+			$imap_header .= "Bcc: " . join(", ", @initial_bcc) . "\n";
+		}
+		push @imap_copy, "From git-send-email\n$imap_header\n$message";
+	}
+
 	return 1;
 }
 
@@ -2222,6 +2238,19 @@ sub cleanup_compose_files {
 }
 
 $smtp->quit if $smtp;
+
+if ($imap_sent_folder && @imap_copy) {
+	my $imap_input = join("\n", @imap_copy);
+	eval {
+		print "\nStarting git imap-send...\n";
+		my ($fh, $ctx) = Git::command_input_pipe(['imap-send', '-f', $imap_sent_folder]);
+		print $fh $imap_input;
+		Git::command_close_pipe($fh, $ctx);
+		1;
+	} or do {
+		warn "Warning: failed to send messages to IMAP folder $imap_sent_folder: $@";
+	};
+}
 
 sub apply_transfer_encoding {
 	my $message = shift;
