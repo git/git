@@ -53,8 +53,9 @@ static int read_midx_file(const char *object_dir, const char *checksum,
 	printf("\nnum_objects: %d\n", m->num_objects);
 
 	printf("packs:\n");
-	for (i = 0; i < m->num_packs; i++)
-		printf("%s\n", m->pack_names[i]);
+	for (i = m->num_packs_in_base; i < m->num_packs + m->num_packs_in_base;
+	     i++)
+		printf("%s\n", nth_midxed_pack_name(m, i));
 
 	printf("object-dir: %s\n", m->object_dir);
 
@@ -108,7 +109,7 @@ static int read_midx_preferred_pack(const char *object_dir)
 		return 1;
 	}
 
-	printf("%s\n", midx->pack_names[preferred_pack]);
+	printf("%s\n", nth_midxed_pack_name(midx, preferred_pack));
 	close_midx(midx);
 	return 0;
 }
