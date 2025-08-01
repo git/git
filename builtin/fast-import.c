@@ -822,11 +822,11 @@ static char *keep_pack(const char *curr_index_name)
 		die_errno("failed to write keep file");
 
 	odb_pack_name(pack_data->repo, &name, pack_data->hash, "pack");
-	if (finalize_object_file(pack_data->pack_name, name.buf))
+	if (finalize_object_file(pack_data->repo, pack_data->pack_name, name.buf))
 		die("cannot store pack file");
 
 	odb_pack_name(pack_data->repo, &name, pack_data->hash, "idx");
-	if (finalize_object_file(curr_index_name, name.buf))
+	if (finalize_object_file(pack_data->repo, curr_index_name, name.buf))
 		die("cannot store index file");
 	free((void *)curr_index_name);
 	return strbuf_detach(&name, NULL);

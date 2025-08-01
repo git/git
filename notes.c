@@ -682,7 +682,8 @@ static int tree_write_stack_finish_subtree(struct tree_write_stack *tws)
 		ret = tree_write_stack_finish_subtree(n);
 		if (ret)
 			return ret;
-		ret = write_object_file(n->buf.buf, n->buf.len, OBJ_TREE, &s);
+		ret = odb_write_object(the_repository->objects, n->buf.buf,
+				       n->buf.len, OBJ_TREE, &s);
 		if (ret)
 			return ret;
 		strbuf_release(&n->buf);
@@ -847,7 +848,8 @@ int combine_notes_concatenate(struct object_id *cur_oid,
 	free(new_msg);
 
 	/* create a new blob object from buf */
-	ret = write_object_file(buf, buf_len, OBJ_BLOB, cur_oid);
+	ret = odb_write_object(the_repository->objects, buf,
+			       buf_len, OBJ_BLOB, cur_oid);
 	free(buf);
 	return ret;
 }
@@ -927,7 +929,8 @@ int combine_notes_cat_sort_uniq(struct object_id *cur_oid,
 				 string_list_join_lines_helper, &buf))
 		goto out;
 
-	ret = write_object_file(buf.buf, buf.len, OBJ_BLOB, cur_oid);
+	ret = odb_write_object(the_repository->objects, buf.buf,
+			       buf.len, OBJ_BLOB, cur_oid);
 
 out:
 	strbuf_release(&buf);
@@ -1215,7 +1218,8 @@ int write_notes_tree(struct notes_tree *t, struct object_id *result)
 	ret = for_each_note(t, flags, write_each_note, &cb_data) ||
 	      write_each_non_note_until(NULL, &cb_data) ||
 	      tree_write_stack_finish_subtree(&root) ||
-	      write_object_file(root.buf.buf, root.buf.len, OBJ_TREE, result);
+	      odb_write_object(the_repository->objects, root.buf.buf,
+			       root.buf.len, OBJ_TREE, result);
 	strbuf_release(&root.buf);
 	return ret;
 }

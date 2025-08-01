@@ -63,7 +63,7 @@ static void write_tree(struct object_id *oid)
 		strbuf_add(&buf, ent->oid.hash, the_hash_algo->rawsz);
 	}
 
-	write_object_file(buf.buf, buf.len, OBJ_TREE, oid);
+	odb_write_object(the_repository->objects, buf.buf, buf.len, OBJ_TREE, oid);
 	strbuf_release(&buf);
 }
 

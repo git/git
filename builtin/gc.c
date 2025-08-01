@@ -1309,7 +1309,7 @@ static int loose_object_auto_condition(struct gc_config *cfg UNUSED)
 	if (loose_object_auto_limit < 0)
 		return 1;
 
-	return for_each_loose_file_in_objdir(the_repository->objects->sources->path,
+	return for_each_loose_file_in_source(the_repository->objects->sources,
 					     loose_object_count,
 					     NULL, NULL, &count);
 }
@@ -1344,7 +1344,7 @@ static int pack_loose(struct maintenance_run_opts *opts)
 	 * Do not start pack-objects process
 	 * if there are no loose objects.
 	 */
-	if (!for_each_loose_file_in_objdir(r->objects->sources->path,
+	if (!for_each_loose_file_in_source(r->objects->sources,
 					   bail_on_loose,
 					   NULL, NULL, NULL))
 		return 0;
@@ -1384,11 +1384,9 @@ static int pack_loose(struct maintenance_run_opts *opts)
 	else if (data.batch_size > 0)
 		data.batch_size--; /* Decrease for equality on limit. */
 
-	for_each_loose_file_in_objdir(r->objects->sources->path,
+	for_each_loose_file_in_source(r->objects->sources,
 				      write_loose_object_to_stdin,
-				      NULL,
-				      NULL,
-				      &data);
+				      NULL, NULL, &data);
 
 	fclose(data.in);
 

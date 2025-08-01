@@ -2216,8 +2216,8 @@ static int handle_content_merge(struct merge_options *opt,
 		}
 
 		if (!ret && record_object &&
-		    write_object_file(result_buf.ptr, result_buf.size,
-				      OBJ_BLOB, &result->oid)) {
+		    odb_write_object(the_repository->objects, result_buf.ptr, result_buf.size,
+				     OBJ_BLOB, &result->oid)) {
 			path_msg(opt, ERROR_OBJECT_WRITE_FAILED, 0,
 				 pathnames[0], pathnames[1], pathnames[2], NULL,
 				 _("error: unable to add %s to database"), path);
@@ -3772,7 +3772,8 @@ static int write_tree(struct object_id *result_oid,
 	}
 
 	/* Write this object file out, and record in result_oid */
-	if (write_object_file(buf.buf, buf.len, OBJ_TREE, result_oid))
+	if (odb_write_object(the_repository->objects, buf.buf,
+			     buf.len, OBJ_TREE, result_oid))
 		ret = -1;
 	strbuf_release(&buf);
 	return ret;

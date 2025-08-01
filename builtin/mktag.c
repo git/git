@@ -106,7 +106,7 @@ int cmd_mktag(int argc,
 	if (verify_object_in_tag(&tagged_oid, &tagged_type) < 0)
 		die(_("tag on stdin did not refer to a valid object"));
 
-	if (write_object_file(buf.buf, buf.len, OBJ_TAG, &result) < 0)
+	if (odb_write_object(the_repository->objects, buf.buf, buf.len, OBJ_TAG, &result) < 0)
 		die(_("unable to write tag file"));
 
 	strbuf_release(&buf);

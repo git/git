@@ -1455,7 +1455,7 @@ static void write_pack_file(void)
 				strbuf_setlen(&tmpname, tmpname_len);
 			}
 
-			rename_tmp_packfile_idx(&tmpname, &idx_tmp_name);
+			rename_tmp_packfile_idx(the_repository, &tmpname, &idx_tmp_name);
 
 			free(idx_tmp_name);
 			strbuf_release(&tmpname);
@@ -1709,8 +1709,16 @@ static int want_object_in_pack_mtime(const struct object_id *oid,
 	struct odb_source *source;
 	struct list_head *pos;
 
-	if (!exclude && local && has_loose_object_nonlocal(oid))
-		return 0;
+	if (!exclude && local) {
+		/*
+		 * Note that we start iterating at `sources->next` so that we
+		 * skip the local object source.
+		 */
+		struct odb_source *source = the_repository->objects->sources->next;
+		for (; source; source = source->next)
+			if (has_loose_object(source, oid))
+				return 0;
+	}
 
 	/*
 	 * If we already know the pack object lives in, start checks from that
@@ -3966,7 +3974,14 @@ static void add_cruft_object_entry(const struct object_id *oid, enum object_type
 	} else {
 		if (!want_object_in_pack_mtime(oid, 0, &pack, &offset, mtime))
 			return;
-		if (!pack && type == OBJ_BLOB && !has_loose_object(oid)) {
+		if (!pack && type == OBJ_BLOB) {
+			struct odb_source *source = the_repository->objects->sources;
+			int found = 0;
+
+			for (; !found && source; source = source->next)
+				if (has_loose_object(source, oid))
+					found = 1;
+
 			/*
 			 * If a traversed tree has a missing blob then we want
 			 * to avoid adding that missing object to our pack.
@@ -3980,7 +3995,8 @@ static void add_cruft_object_entry(const struct object_id *oid, enum object_type
 			 * limited to "ensure non-tip blobs which don't exist in
 			 * packs do exist via loose objects". Confused?
 			 */
-			return;
+			if (!found)
+				return;
 		}
 
 		entry = create_object_entry(oid, type, pack_name_hash_fn(name),
@@ -4368,7 +4384,7 @@ static int add_loose_object(const struct object_id *oid, const char *path,
  */
 static void add_unreachable_loose_objects(struct rev_info *revs)
 {
-	for_each_loose_file_in_objdir(repo_get_object_directory(the_repository),
+	for_each_loose_file_in_source(the_repository->objects->sources,
 				      add_loose_object, NULL, NULL, revs);
 }
 
@@ -4437,7 +4453,8 @@ static void loosen_unused_packed_objects(void)
 			if (!packlist_find(&to_pack, &oid) &&
 			    !has_sha1_pack_kept_or_nonlocal(&oid) &&
 			    !loosened_object_can_be_discarded(&oid, p->mtime)) {
-				if (force_object_loose(&oid, p->mtime))
+				if (force_object_loose(the_repository->objects->sources,
+						       &oid, p->mtime))
 					die(_("unable to force loose object"));
 				loosened_objects_nr++;
 			}

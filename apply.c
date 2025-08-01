@@ -3621,7 +3621,7 @@ static int try_threeway(struct apply_state *state,
 
 	/* Preimage the patch was prepared for */
 	if (patch->is_new)
-		write_object_file("", 0, OBJ_BLOB, &pre_oid);
+		odb_write_object(the_repository->objects, "", 0, OBJ_BLOB, &pre_oid);
 	else if (repo_get_oid(the_repository, patch->old_oid_prefix, &pre_oid) ||
 		 read_blob_object(&buf, &pre_oid, patch->old_mode))
 		return error(_("repository lacks the necessary blob to perform 3-way merge."));
@@ -3637,7 +3637,8 @@ static int try_threeway(struct apply_state *state,
 		return -1;
 	}
 	/* post_oid is theirs */
-	write_object_file(tmp_image.buf.buf, tmp_image.buf.len, OBJ_BLOB, &post_oid);
+	odb_write_object(the_repository->objects, tmp_image.buf.buf,
+			 tmp_image.buf.len, OBJ_BLOB, &post_oid);
 	image_clear(&tmp_image);
 
 	/* our_oid is ours */
@@ -3650,7 +3651,8 @@ static int try_threeway(struct apply_state *state,
 			return error(_("cannot read the current contents of '%s'"),
 				     patch->old_name);
 	}
-	write_object_file(tmp_image.buf.buf, tmp_image.buf.len, OBJ_BLOB, &our_oid);
+	odb_write_object(the_repository->objects, tmp_image.buf.buf,
+			 tmp_image.buf.len, OBJ_BLOB, &our_oid);
 	image_clear(&tmp_image);
 
 	/* in-core three-way merge between post and our using pre as base */
@@ -4360,7 +4362,8 @@ static int add_index_file(struct apply_state *state,
 			}
 			fill_stat_cache_info(state->repo->index, ce, &st);
 		}
-		if (write_object_file(buf, size, OBJ_BLOB, &ce->oid) < 0) {
+		if (odb_write_object(the_repository->objects, buf, size,
+				     OBJ_BLOB, &ce->oid) < 0) {
 			discard_cache_entry(ce);
 			return error(_("unable to create backing store "
 				       "for newly created file %s"), path);

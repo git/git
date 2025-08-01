@@ -204,8 +204,8 @@ static void write_cached_object(struct object *obj, struct obj_buffer *obj_buf)
 {
 	struct object_id oid;
 
-	if (write_object_file(obj_buf->buffer, obj_buf->size,
-			      obj->type, &oid) < 0)
+	if (odb_write_object(the_repository->objects, obj_buf->buffer, obj_buf->size,
+			     obj->type, &oid) < 0)
 		die("failed to write object %s", oid_to_hex(&obj->oid));
 	obj->flags |= FLAG_WRITTEN;
 }
@@ -272,16 +272,16 @@ static void write_object(unsigned nr, enum object_type type,
 			 void *buf, unsigned long size)
 {
 	if (!strict) {
-		if (write_object_file(buf, size, type,
-				      &obj_list[nr].oid) < 0)
+		if (odb_write_object(the_repository->objects, buf, size, type,
+				     &obj_list[nr].oid) < 0)
 			die("failed to write object");
 		added_object(nr, type, buf, size);
 		free(buf);
 		obj_list[nr].obj = NULL;
 	} else if (type == OBJ_BLOB) {
 		struct blob *blob;
-		if (write_object_file(buf, size, type,
-				      &obj_list[nr].oid) < 0)
+		if (odb_write_object(the_repository->objects, buf, size, type,
+				     &obj_list[nr].oid) < 0)
 			die("failed to write object");
 		added_object(nr, type, buf, size);
 		free(buf);
@@ -403,7 +403,8 @@ static void stream_blob(unsigned long size, unsigned nr)
 	data.zstream = &zstream;
 	git_inflate_init(&zstream);
 
-	if (stream_loose_object(&in_stream, size, &info->oid))
+	if (stream_loose_object(the_repository->objects->sources,
+				&in_stream, size, &info->oid))
 		die(_("failed to write object in stream"));
 
 	if (data.status != Z_STREAM_END)
