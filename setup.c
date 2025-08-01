@@ -1460,8 +1460,9 @@ static enum discovery_result setup_git_directory_gently_1(struct strbuf *dir,
 
 	if (env_ceiling_dirs) {
 		int empty_entry_found = 0;
+		static const char path_sep[] = { PATH_SEP, '\0' };
 
-		string_list_split(&ceiling_dirs, env_ceiling_dirs, PATH_SEP, -1);
+		string_list_split(&ceiling_dirs, env_ceiling_dirs, path_sep, -1);
 		filter_string_list(&ceiling_dirs, 0,
 				   canonicalize_ceiling_entry, &empty_entry_found);
 		ceil_offset = longest_ancestor_length(dir->buf, &ceiling_dirs);
