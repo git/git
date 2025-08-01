@@ -704,7 +704,7 @@ struct reftable_addition {
 	uint64_t next_update_index;
 };
 
-#define REFTABLE_ADDITION_INIT {0}
+#define REFTABLE_ADDITION_INIT {{0}}
 
 static int reftable_stack_init_addition(struct reftable_addition *add,
 					struct reftable_stack *st,
