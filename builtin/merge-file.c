@@ -155,7 +155,8 @@ int cmd_merge_file(int argc,
 		if (object_id && !to_stdout) {
 			struct object_id oid;
 			if (result.size) {
-				if (write_object_file(result.ptr, result.size, OBJ_BLOB, &oid) < 0)
+				if (odb_write_object(the_repository->objects, result.ptr,
+						     result.size, OBJ_BLOB, &oid) < 0)
 					ret = error(_("Could not write object file"));
 			} else {
 				oidcpy(&oid, the_hash_algo->empty_blob);

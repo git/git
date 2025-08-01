@@ -690,7 +690,7 @@ static struct cache_entry *create_alias_ce(struct index_state *istate,
 void set_object_name_for_intent_to_add_entry(struct cache_entry *ce)
 {
 	struct object_id oid;
-	if (write_object_file("", 0, OBJ_BLOB, &oid))
+	if (odb_write_object(the_repository->objects, "", 0, OBJ_BLOB, &oid))
 		die(_("cannot create an empty blob in the object database"));
 	oidcpy(&ce->oid, &oid);
 }

@@ -118,7 +118,7 @@ int cmd_count_objects(int argc,
 		report_linked_checkout_garbage(the_repository);
 	}
 
-	for_each_loose_file_in_objdir(repo_get_object_directory(the_repository),
+	for_each_loose_file_in_source(the_repository->objects->sources,
 				      count_loose, count_cruft, NULL, NULL);
 
 	if (verbose) {

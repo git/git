@@ -393,7 +393,8 @@ static void check_connectivity(void)
 		 * and ignore any that weren't present in our earlier
 		 * traversal.
 		 */
-		for_each_loose_object(mark_loose_unreachable_referents, NULL, 0);
+		for_each_loose_object(the_repository->objects,
+				      mark_loose_unreachable_referents, NULL, 0);
 		for_each_packed_object(the_repository,
 				       mark_packed_unreachable_referents,
 				       NULL,
@@ -632,7 +633,7 @@ static int fsck_loose(const struct object_id *oid, const char *path,
 	oi.sizep = &size;
 	oi.typep = &type;
 
-	if (read_loose_object(path, oid, &real_oid, &contents, &oi) < 0) {
+	if (read_loose_object(the_repository, path, oid, &real_oid, &contents, &oi) < 0) {
 		if (contents && !oideq(&real_oid, oid))
 			err = error(_("%s: hash-path mismatch, found at: %s"),
 				    oid_to_hex(&real_oid), path);
@@ -687,7 +688,7 @@ static int fsck_subdir(unsigned int nr, const char *path UNUSED, void *data)
 	return 0;
 }
 
-static void fsck_object_dir(const char *path)
+static void fsck_source(struct odb_source *source)
 {
 	struct progress *progress = NULL;
 	struct for_each_loose_cb cb_data = {
@@ -701,8 +702,8 @@ static void fsck_object_dir(const char *path)
 		progress = start_progress(the_repository,
 					  _("Checking object directories"), 256);
 
-	for_each_loose_file_in_objdir(path, fsck_loose, fsck_cruft, fsck_subdir,
-				      &cb_data);
+	for_each_loose_file_in_source(source, fsck_loose,
+				      fsck_cruft, fsck_subdir, &cb_data);
 	display_progress(progress, 256);
 	stop_progress(&progress);
 }
@@ -994,13 +995,14 @@ int cmd_fsck(int argc,
 		fsck_refs(the_repository);
 
 	if (connectivity_only) {
-		for_each_loose_object(mark_loose_for_connectivity, NULL, 0);
+		for_each_loose_object(the_repository->objects,
+				      mark_loose_for_connectivity, NULL, 0);
 		for_each_packed_object(the_repository,
 				       mark_packed_for_connectivity, NULL, 0);
 	} else {
 		odb_prepare_alternates(the_repository->objects);
 		for (source = the_repository->objects->sources; source; source = source->next)
-			fsck_object_dir(source->path);
+			fsck_source(source);
 
 		if (check_full) {
 			struct packed_git *p;

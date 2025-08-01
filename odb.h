@@ -437,6 +437,44 @@ enum for_each_object_flags {
 	FOR_EACH_OBJECT_SKIP_ON_DISK_KEPT_PACKS = (1<<4),
 };
 
+enum {
+	/*
+	 * By default, `odb_write_object()` does not actually write anything
+	 * into the object store, but only computes the object ID. This flag
+	 * changes that so that the object will be written as a loose object
+	 * and persisted.
+	 */
+	WRITE_OBJECT_PERSIST = (1 << 0),
+
+	/*
+	 * Do not print an error in case something goes wrong.
+	 */
+	WRITE_OBJECT_SILENT = (1 << 1),
+};
+
+/*
+ * Write an object into the object database. The object is being written into
+ * the local alternate of the repository. If provided, the converted object ID
+ * as well as the compatibility object ID are written to the respective
+ * pointers.
+ *
+ * Returns 0 on success, a negative error code otherwise.
+ */
+int odb_write_object_ext(struct object_database *odb,
+			 const void *buf, unsigned long len,
+			 enum object_type type,
+			 struct object_id *oid,
+			 struct object_id *compat_oid,
+			 unsigned flags);
+
+static inline int odb_write_object(struct object_database *odb,
+				   const void *buf, unsigned long len,
+				   enum object_type type,
+				   struct object_id *oid)
+{
+	return odb_write_object_ext(odb, buf, len, type, oid, NULL, 0);
+}
+
 /* Compatibility wrappers, to be removed once Git 2.51 has been released. */
 #include "repository.h"
 

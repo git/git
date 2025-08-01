@@ -45,13 +45,12 @@ const char *odb_loose_path(struct odb_source *source,
 			   const struct object_id *oid);
 
 /*
- * Return true iff an alternate object database has a loose object
+ * Return true iff an object database source has a loose object
  * with the specified name.  This function does not respect replace
  * references.
  */
-int has_loose_object_nonlocal(const struct object_id *);
-
-int has_loose_object(const struct object_id *);
+int has_loose_object(struct odb_source *source,
+		     const struct object_id *oid);
 
 void *map_loose_object(struct repository *r, const struct object_id *oid,
 		       unsigned long *size);
@@ -87,22 +86,11 @@ typedef int each_loose_cruft_fn(const char *basename,
 typedef int each_loose_subdir_fn(unsigned int nr,
 				 const char *path,
 				 void *data);
-int for_each_file_in_obj_subdir(unsigned int subdir_nr,
-				struct strbuf *path,
-				each_loose_object_fn obj_cb,
-				each_loose_cruft_fn cruft_cb,
-				each_loose_subdir_fn subdir_cb,
-				void *data);
-int for_each_loose_file_in_objdir(const char *path,
+int for_each_loose_file_in_source(struct odb_source *source,
 				  each_loose_object_fn obj_cb,
 				  each_loose_cruft_fn cruft_cb,
 				  each_loose_subdir_fn subdir_cb,
 				  void *data);
-int for_each_loose_file_in_objdir_buf(struct strbuf *path,
-				      each_loose_object_fn obj_cb,
-				      each_loose_cruft_fn cruft_cb,
-				      each_loose_subdir_fn subdir_cb,
-				      void *data);
 
 /*
  * Iterate over all accessible loose objects without respect to
@@ -111,7 +99,8 @@ int for_each_loose_file_in_objdir_buf(struct strbuf *path,
  *
  * Any flags specific to packs are ignored.
  */
-int for_each_loose_object(each_loose_object_fn, void *,
+int for_each_loose_object(struct object_database *odb,
+			  each_loose_object_fn, void *,
 			  enum for_each_object_flags flags);
 
 
@@ -157,29 +146,10 @@ enum unpack_loose_header_result unpack_loose_header(git_zstream *stream,
 struct object_info;
 int parse_loose_header(const char *hdr, struct object_info *oi);
 
-enum {
-	/*
-	 * By default, `write_object_file()` does not actually write
-	 * anything into the object store, but only computes the object ID.
-	 * This flag changes that so that the object will be written as a loose
-	 * object and persisted.
-	 */
-	WRITE_OBJECT_FILE_PERSIST = (1 << 0),
-
-	/*
-	 * Do not print an error in case something gose wrong.
-	 */
-	WRITE_OBJECT_FILE_SILENT = (1 << 1),
-};
-
-int write_object_file_flags(const void *buf, unsigned long len,
-			    enum object_type type, struct object_id *oid,
-			    struct object_id *compat_oid_in, unsigned flags);
-static inline int write_object_file(const void *buf, unsigned long len,
-				    enum object_type type, struct object_id *oid)
-{
-	return write_object_file_flags(buf, len, type, oid, NULL, 0);
-}
+int write_object_file(struct odb_source *source,
+		      const void *buf, unsigned long len,
+		      enum object_type type, struct object_id *oid,
+		      struct object_id *compat_oid_in, unsigned flags);
 
 struct input_stream {
 	const void *(*read)(struct input_stream *, unsigned long *len);
@@ -187,10 +157,12 @@ struct input_stream {
 	int is_finished;
 };
 
-int stream_loose_object(struct input_stream *in_stream, size_t len,
+int stream_loose_object(struct odb_source *source,
+			struct input_stream *in_stream, size_t len,
 			struct object_id *oid);
 
-int force_object_loose(const struct object_id *oid, time_t mtime);
+int force_object_loose(struct odb_source *source,
+		       const struct object_id *oid, time_t mtime);
 
 /**
  * With in-core object data in "buf", rehash it to make sure the
@@ -218,8 +190,10 @@ enum finalize_object_file_flags {
 	FOF_SKIP_COLLISION_CHECK = 1,
 };
 
-int finalize_object_file(const char *tmpfile, const char *filename);
-int finalize_object_file_flags(const char *tmpfile, const char *filename,
+int finalize_object_file(struct repository *repo,
+			 const char *tmpfile, const char *filename);
+int finalize_object_file_flags(struct repository *repo,
+			       const char *tmpfile, const char *filename,
 			       enum finalize_object_file_flags flags);
 
 void hash_object_file(const struct git_hash_algo *algo, const void *buf,
@@ -237,7 +211,8 @@ int check_and_freshen_file(const char *fn, int freshen);
  *
  * Returns 0 on success, negative on error (details may be written to stderr).
  */
-int read_loose_object(const char *path,
+int read_loose_object(struct repository *repo,
+		      const char *path,
 		      const struct object_id *expected_oid,
 		      struct object_id *real_oid,
 		      void **contents,
