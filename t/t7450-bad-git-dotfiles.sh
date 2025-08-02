@@ -387,10 +387,10 @@ test_expect_success SYMLINKS,!WINDOWS,!MINGW 'submodule must not checkout into d
 	git -C repo mv sub $(printf "sub\r") &&
 
 	# Ensure config values containing CR are wrapped in quotes.
-	git config unset -f repo/.gitmodules submodule.sub.path &&
+	git config --unset -f repo/.gitmodules submodule.sub.path &&
 	printf "\tpath = \"sub\r\"\n" >>repo/.gitmodules &&
 
-	git config unset -f repo/.git/modules/sub/config core.worktree &&
+	git config --unset -f repo/.git/modules/sub/config core.worktree &&
 	{
 		printf "[core]\n" &&
 		printf "\tworktree = \"../../../sub\r\"\n"
