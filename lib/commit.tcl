@@ -28,7 +28,7 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 			set name ""
 			set email ""
 			set fd [git_read [list cat-file commit $curHEAD]]
-			fconfigure $fd -encoding binary -translation lf
+			fconfigure $fd -encoding iso8859-1
 			# By default commits are assumed to be in utf-8
 			set enc utf-8
 			while {[gets $fd line] > 0} {
@@ -43,9 +43,9 @@ You are currently in the middle of a merge that has not been fully completed.  Y
 
 			set enc [tcl_encoding $enc]
 			if {$enc ne {}} {
-				set msg [encoding convertfrom $enc $msg]
-				set name [encoding convertfrom $enc $name]
-				set email [encoding convertfrom $enc $email]
+				set msg [convertfrom $enc $msg]
+				set name [convertfrom $enc $name]
+				set email [convertfrom $enc $email]
 			}
 			if {$name ne {} && $email ne {}} {
 				set commit_author [list name $name email $email date $time]
@@ -252,7 +252,7 @@ A good commit message has the following format:
 
 	ui_status [mc "Calling pre-commit hook..."]
 	set pch_error {}
-	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+	fconfigure $fd_ph -blocking 0 -translation binary
 	fileevent $fd_ph readable \
 		[list commit_prehook_wait $fd_ph $curHEAD $msg_p]
 }
@@ -307,7 +307,7 @@ Do you really want to proceed with your Commit?"]
 
 	ui_status [mc "Calling commit-msg hook..."]
 	set pch_error {}
-	fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+	fconfigure $fd_ph -blocking 0 -translation binary
 	fileevent $fd_ph readable \
 		[list commit_commitmsg_wait $fd_ph $curHEAD $msg_p]
 }
@@ -361,7 +361,7 @@ proc commit_committree {fd_wt curHEAD msg_p} {
 	#
 	if {$commit_type eq {normal}} {
 		set fd_ot [git_read [list cat-file commit $PARENT]]
-		fconfigure $fd_ot -encoding binary -translation lf
+		fconfigure $fd_ot -encoding iso8859-1
 		set old_tree [gets $fd_ot]
 		close $fd_ot
 
@@ -460,7 +460,7 @@ A rescan will be automatically started now.
 	if {$fd_ph ne {}} {
 		global pch_error
 		set pch_error {}
-		fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+		fconfigure $fd_ph -blocking 0 -translation binary
 		fileevent $fd_ph readable \
 			[list commit_postcommit_wait $fd_ph $cmt_id]
 	}

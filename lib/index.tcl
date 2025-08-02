@@ -78,7 +78,6 @@ proc update_indexinfo {msg path_list after} {
 		-blocking 0 \
 		-buffering full \
 		-buffersize 512 \
-		-encoding binary \
 		-translation binary
 	fileevent $fd writable [list \
 		write_update_indexinfo \
@@ -147,7 +146,6 @@ proc update_index {msg path_list after} {
 		-blocking 0 \
 		-buffering full \
 		-buffersize 512 \
-		-encoding binary \
 		-translation binary
 	fileevent $fd writable [list \
 		write_update_index \
@@ -227,7 +225,6 @@ proc checkout_index {msg path_list after capture_error} {
 		-blocking 0 \
 		-buffering full \
 		-buffersize 512 \
-		-encoding binary \
 		-translation binary
 	fileevent $fd writable [list \
 		write_checkout_index \

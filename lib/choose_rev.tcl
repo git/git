@@ -147,7 +147,7 @@ constructor _new {path unmerged_only title} {
 		refs/remotes \
 		refs/tags \
 		]]
-	fconfigure $fr_fd -translation lf -encoding utf-8
+	fconfigure $fr_fd -encoding utf-8
 	while {[gets $fr_fd line] > 0} {
 		set line [eval $line]
 		if {[lindex $line 1 0] eq {tag}} {
@@ -570,7 +570,7 @@ method _reflog_last {name} {
 	set last {}
 	if {[catch {set last [file mtime [gitdir $name]]}]
 	&& ![catch {set g [safe_open_file [gitdir logs $name] r]}]} {
-		fconfigure $g -translation binary
+		fconfigure $g -encoding iso8859-1
 		while {[gets $g line] >= 0} {
 			if {[regexp {> ([1-9][0-9]*) } $line line when]} {
 				set last $when

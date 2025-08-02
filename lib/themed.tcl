@@ -21,10 +21,10 @@ namespace eval color {
 		set inactive_select_bg	[convert_rgb_to_gray $select_bg]
 		set inactive_select_fg	$select_fg
 
-		set color::select_bg $select_bg
-		set color::select_fg $select_fg
-		set color::inactive_select_bg $inactive_select_bg
-		set color::inactive_select_fg $inactive_select_fg
+		set ::color::select_bg $select_bg
+		set ::color::select_fg $select_fg
+		set ::color::inactive_select_bg $inactive_select_bg
+		set ::color::inactive_select_fg $inactive_select_fg
 
 		proc add_option {key val} {
 			option add $key $val widgetDefault
