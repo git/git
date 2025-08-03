@@ -1005,7 +1005,9 @@ parse_makefile_for_sources(clar-test_SOURCES ${CMAKE_SOURCE_DIR}/Makefile "CLAR_
 list(TRANSFORM clar-test_SOURCES REPLACE "\\$\\(UNIT_TEST_DIR\\)/" "${CMAKE_SOURCE_DIR}/t/unit-tests/")
 add_library(clar-test-lib STATIC ${clar-test_SOURCES})
 
-parse_makefile_for_scripts(unit_test_PROGRAMS "UNIT_TEST_PROGRAMS" "")
+file(GLOB unit_test_PROGRAMS "${CMAKE_SOURCE_DIR}/t/unit-tests/t-*.c")
+list(TRANSFORM unit_test_PROGRAMS REPLACE "${CMAKE_SOURCE_DIR}/" "")
+list(TRANSFORM unit_test_PROGRAMS REPLACE ".c" "")
 foreach(unit_test ${unit_test_PROGRAMS})
 	add_executable("${unit_test}" "${CMAKE_SOURCE_DIR}/t/unit-tests/${unit_test}.c")
 	target_link_libraries("${unit_test}" unit-test-lib clar-test-lib common-main)
