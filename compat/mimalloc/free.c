@@ -348,7 +348,10 @@ mi_decl_nodiscard size_t mi_usable_size(const void* p) mi_attr_noexcept {
 
 void mi_free_size(void* p, size_t size) mi_attr_noexcept {
   MI_UNUSED_RELEASE(size);
-  mi_assert(p == NULL || size <= _mi_usable_size(p,"mi_free_size"));
+  #if MI_DEBUG
+  const size_t available = _mi_usable_size(p,"mi_free_size");
+  mi_assert(p == NULL || size <= available || available == 0 /* invalid pointer */ );
+  #endif
   mi_free(p);
 }
 

@@ -61,7 +61,7 @@ static mi_segmap_part_t* mi_segment_map_index_of(const mi_segment_t* segment, bo
   if mi_unlikely(part == NULL) {
     if (!create_on_demand) return NULL;
     mi_memid_t memid;
-    part = (mi_segmap_part_t*)_mi_os_alloc(sizeof(mi_segmap_part_t), &memid);
+    part = (mi_segmap_part_t*)_mi_os_zalloc(sizeof(mi_segmap_part_t), &memid);
     if (part == NULL) return NULL;
     part->memid = memid;
     mi_segmap_part_t* expected = NULL;

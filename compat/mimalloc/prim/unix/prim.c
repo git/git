@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
-Copyright (c) 2018-2023, Microsoft Research, Daan Leijen
+Copyright (c) 2018-2025, Microsoft Research, Daan Leijen
 This is free software; you can redistribute it and/or modify it under the
 terms of the MIT license. A copy of the license can be found in the file
 "LICENSE" at the root of this distribution.
@@ -31,10 +31,10 @@ terms of the MIT license. A copy of the license can be found in the file
 
 #if defined(__linux__)
   #include <features.h>
-  #include <linux/prctl.h>  // PR_SET_VMA
-  //#if defined(MI_NO_THP)
-  #include <sys/prctl.h>    // THP disable
-  //#endif
+  #include <sys/prctl.h>    // THP disable, PR_SET_VMA
+  #if defined(__GLIBC__) && !defined(PR_SET_VMA)
+  #include <linux/prctl.h>
+  #endif
   #if defined(__GLIBC__)
   #include <linux/mman.h>   // linux mmap flags
   #else
@@ -70,7 +70,8 @@ terms of the MIT license. A copy of the license can be found in the file
 #define MADV_FREE  POSIX_MADV_FREE
 #endif
 
-  
+#define MI_UNIX_LARGE_PAGE_SIZE (2*MI_MiB) // TODO: can we query the OS for this?
+
 //------------------------------------------------------------------------------------
 // Use syscalls for some primitives to allow for libraries that override open/read/close etc.
 // and do allocation themselves; using syscalls prevents recursion when mimalloc is
@@ -156,7 +157,7 @@ void _mi_prim_mem_init( mi_os_mem_config_t* config )
     }
     #endif
   }
-  config->large_page_size = 2*MI_MiB; // TODO: can we query the OS for this?
+  config->large_page_size = MI_UNIX_LARGE_PAGE_SIZE;
   config->has_overcommit = unix_detect_overcommit();
   config->has_partial_free = true;    // mmap can free in parts
   config->has_virtual_reserve = true; // todo: check if this true for NetBSD?  (for anonymous mmap with PROT_NONE)
@@ -186,6 +187,7 @@ void _mi_prim_mem_init( mi_os_mem_config_t* config )
 //---------------------------------------------
 
 int _mi_prim_free(void* addr, size_t size ) {
+  if (size==0) return 0;
   bool err = (munmap(addr, size) == -1);
   return (err ? errno : 0);
 }
@@ -208,7 +210,7 @@ static int unix_madvise(void* addr, size_t size, int advice) {
 
 static void* unix_mmap_prim(void* addr, size_t size, int protect_flags, int flags, int fd) {
   void* p = mmap(addr, size, protect_flags, flags, fd, 0 /* offset */);
-  #if (defined(__linux__) && defined(PR_SET_VMA))
+  #if defined(__linux__) && defined(PR_SET_VMA)
   if (p!=MAP_FAILED && p!=NULL) {
     prctl(PR_SET_VMA, PR_SET_VMA_ANON_NAME, p, size, "mimalloc");
   }
@@ -385,6 +387,9 @@ int _mi_prim_alloc(void* hint_addr, size_t size, size_t try_alignment, bool comm
   mi_assert_internal(size > 0 && (size % _mi_os_page_size()) == 0);
   mi_assert_internal(commit || !allow_large);
   mi_assert_internal(try_alignment > 0);
+  if (hint_addr == NULL && size >= 8*MI_UNIX_LARGE_PAGE_SIZE && try_alignment > 1 && _mi_is_power_of_two(try_alignment) && try_alignment < MI_UNIX_LARGE_PAGE_SIZE) {
+    try_alignment = MI_UNIX_LARGE_PAGE_SIZE; // try to align along large page size for larger allocations
+  }
 
   *is_zero = true;
   int protect_flags = (commit ? (PROT_WRITE | PROT_READ) : PROT_NONE);
@@ -424,11 +429,25 @@ int _mi_prim_commit(void* start, size_t size, bool* is_zero) {
   return err;
 }
 
+int _mi_prim_reuse(void* start, size_t size) {
+  MI_UNUSED(start); MI_UNUSED(size);
+  #if defined(__APPLE__) && defined(MADV_FREE_REUSE)
+  return unix_madvise(start, size, MADV_FREE_REUSE);
+  #endif
+  return 0;
+}
+
 int _mi_prim_decommit(void* start, size_t size, bool* needs_recommit) {
   int err = 0;
-  // decommit: use MADV_DONTNEED as it decreases rss immediately (unlike MADV_FREE)
-  err = unix_madvise(start, size, MADV_DONTNEED);
-  #if !MI_DEBUG && !MI_SECURE
+  #if defined(__APPLE__) && defined(MADV_FREE_REUSABLE)
+    // decommit on macOS: use MADV_FREE_REUSABLE as it does immediate rss accounting (issue #1097)
+    err = unix_madvise(start, size, MADV_FREE_REUSABLE);
+    if (err) { err = unix_madvise(start, size, MADV_DONTNEED); }
+  #else
+    // decommit: use MADV_DONTNEED as it decreases rss immediately (unlike MADV_FREE)
+    err = unix_madvise(start, size, MADV_DONTNEED);
+  #endif  
+  #if !MI_DEBUG && MI_SECURE<=2
     *needs_recommit = false;
   #else
     *needs_recommit = true;
@@ -445,14 +464,22 @@ int _mi_prim_decommit(void* start, size_t size, bool* needs_recommit) {
 }
 
 int _mi_prim_reset(void* start, size_t size) {
-  // We try to use `MADV_FREE` as that is the fastest. A drawback though is that it
+  int err = 0;
+
+  // on macOS can use MADV_FREE_REUSABLE (but we disable this for now as it seems slower)
+  #if 0 && defined(__APPLE__) && defined(MADV_FREE_REUSABLE) 
+  err = unix_madvise(start, size, MADV_FREE_REUSABLE);  
+  if (err==0) return 0;
+  // fall through
+  #endif
+
+  #if defined(MADV_FREE)
+  // Otherwise, we try to use `MADV_FREE` as that is the fastest. A drawback though is that it
   // will not reduce the `rss` stats in tools like `top` even though the memory is available
   // to other processes. With the default `MIMALLOC_PURGE_DECOMMITS=1` we ensure that by
   // default `MADV_DONTNEED` is used though.
-  #if defined(MADV_FREE)
   static _Atomic(size_t) advice = MI_ATOMIC_VAR_INIT(MADV_FREE);
   int oadvice = (int)mi_atomic_load_relaxed(&advice);
-  int err;
   while ((err = unix_madvise(start, size, oadvice)) != 0 && errno == EAGAIN) { errno = 0;  };
   if (err != 0 && errno == EINVAL && oadvice == MADV_FREE) {
     // if MADV_FREE is not supported, fall back to MADV_DONTNEED from now on
@@ -460,7 +487,7 @@ int _mi_prim_reset(void* start, size_t size) {
     err = unix_madvise(start, size, MADV_DONTNEED);
   }
   #else
-  int err = unix_madvise(start, size, MADV_DONTNEED);
+  err = unix_madvise(start, size, MADV_DONTNEED);
   #endif
   return err;
 }

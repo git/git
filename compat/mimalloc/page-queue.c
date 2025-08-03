@@ -140,7 +140,7 @@ static inline bool mi_page_is_large_or_huge(const mi_page_t* page) {
   return (mi_page_block_size(page) > MI_MEDIUM_OBJ_SIZE_MAX || mi_page_is_huge(page));
 }
 
-static size_t mi_page_bin(const mi_page_t* page) {
+size_t _mi_page_bin(const mi_page_t* page) {
   const size_t bin = (mi_page_is_in_full(page) ? MI_BIN_FULL : (mi_page_is_huge(page) ? MI_BIN_HUGE : mi_bin(mi_page_block_size(page))));
   mi_assert_internal(bin <= MI_BIN_FULL);
   return bin;
@@ -148,7 +148,7 @@ static size_t mi_page_bin(const mi_page_t* page) {
 
 static mi_page_queue_t* mi_heap_page_queue_of(mi_heap_t* heap, const mi_page_t* page) {
   mi_assert_internal(heap!=NULL);
-  const size_t bin = mi_page_bin(page);
+  const size_t bin = _mi_page_bin(page);
   mi_page_queue_t* pq = &heap->pages[bin];
   mi_assert_internal((mi_page_block_size(page) == pq->block_size) ||
                        (mi_page_is_large_or_huge(page) && mi_page_queue_is_huge(pq)) ||

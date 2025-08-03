@@ -176,9 +176,7 @@ static void mi_heap_collect_ex(mi_heap_t* heap, mi_collect_t collect)
   _mi_arenas_collect(collect == MI_FORCE /* force purge? */);
 
   // merge statistics
-  if (collect <= MI_FORCE) {
-    mi_stats_merge();
-  }
+  if (collect <= MI_FORCE) { _mi_stats_merge_thread(heap->tld); }
 }
 
 void _mi_heap_collect_abandon(mi_heap_t* heap) {
