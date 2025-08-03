@@ -23,6 +23,7 @@
 #include "list-objects.h"
 #include "commit-slab.h"
 #include "wildmatch.h"
+#include "prio-queue.h"
 
 #define MAX_TAGS	(FLAG_BITS - 1)
 #define DEFAULT_CANDIDATES 10
@@ -249,24 +250,26 @@ static int compare_pt(const void *a_, const void *b_)
 	return 0;
 }
 
-static unsigned long finish_depth_computation(
-	struct commit_list **list,
-	struct possible_tag *best)
+static bool all_have_flag(const struct prio_queue *queue, unsigned flag)
+{
+	for (size_t i = 0; i < queue->nr; i++) {
+		struct commit *commit = queue->array[i].data;
+		if (!(commit->object.flags & flag))
+			return false;
+	}
+	return true;
+}
+
+static unsigned long finish_depth_computation(struct prio_queue *queue,
+					      struct possible_tag *best)
 {
 	unsigned long seen_commits = 0;
-	while (*list) {
-		struct commit *c = pop_commit(list);
+	while (queue->nr) {
+		struct commit *c = prio_queue_get(queue);
 		struct commit_list *parents = c->parents;
 		seen_commits++;
 		if (c->object.flags & best->flag_within) {
-			struct commit_list *a = *list;
-			while (a) {
-				struct commit *i = a->item;
-				if (!(i->object.flags & best->flag_within))
-					break;
-				a = a->next;
-			}
-			if (!a)
+			if (all_have_flag(queue, best->flag_within))
 				break;
 		} else
 			best->depth++;
@@ -274,7 +277,7 @@ static unsigned long finish_depth_computation(
 			struct commit *p = parents->item;
 			repo_parse_commit(the_repository, p);
 			if (!(p->object.flags & SEEN))
-				commit_list_insert_by_date(p, list);
+				prio_queue_put(queue, p);
 			p->object.flags |= c->object.flags;
 			parents = parents->next;
 		}
@@ -316,7 +319,7 @@ static void append_suffix(int depth, const struct object_id *oid, struct strbuf 
 static void describe_commit(struct object_id *oid, struct strbuf *dst)
 {
 	struct commit *cmit, *gave_up_on = NULL;
-	struct commit_list *list;
+	struct prio_queue queue = { compare_commits_by_commit_date };
 	struct commit_name *n;
 	struct possible_tag all_matches[MAX_TAGS];
 	unsigned int match_cnt = 0, annotated_cnt = 0, cur_match;
@@ -359,11 +362,10 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 		have_util = 1;
 	}
 
-	list = NULL;
 	cmit->object.flags = SEEN;
-	commit_list_insert(cmit, &list);
-	while (list) {
-		struct commit *c = pop_commit(&list);
+	prio_queue_put(&queue, cmit);
+	while (queue.nr) {
+		struct commit *c = prio_queue_get(&queue);
 		struct commit_list *parents = c->parents;
 		struct commit_name **slot;
 
@@ -397,7 +399,7 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 				t->depth++;
 		}
 		/* Stop if last remaining path already covered by best candidate(s) */
-		if (annotated_cnt && !list) {
+		if (annotated_cnt && !queue.nr) {
 			int best_depth = INT_MAX;
 			unsigned best_within = 0;
 			for (cur_match = 0; cur_match < match_cnt; cur_match++) {
@@ -420,7 +422,7 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 			struct commit *p = parents->item;
 			repo_parse_commit(the_repository, p);
 			if (!(p->object.flags & SEEN))
-				commit_list_insert_by_date(p, &list);
+				prio_queue_put(&queue, p);
 			p->object.flags |= c->object.flags;
 			parents = parents->next;
 
@@ -435,6 +437,7 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 			strbuf_add_unique_abbrev(dst, cmit_oid, abbrev);
 			if (suffix)
 				strbuf_addstr(dst, suffix);
+			clear_prio_queue(&queue);
 			return;
 		}
 		if (unannotated_cnt)
@@ -450,11 +453,11 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 	QSORT(all_matches, match_cnt, compare_pt);
 
 	if (gave_up_on) {
-		commit_list_insert_by_date(gave_up_on, &list);
+		prio_queue_put(&queue, gave_up_on);
 		seen_commits--;
 	}
-	seen_commits += finish_depth_computation(&list, &all_matches[0]);
-	free_commit_list(list);
+	seen_commits += finish_depth_computation(&queue, &all_matches[0]);
+	clear_prio_queue(&queue);
 
 	if (debug) {
 		static int label_width = -1;
