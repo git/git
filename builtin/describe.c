@@ -250,22 +250,58 @@ static int compare_pt(const void *a_, const void *b_)
 	return 0;
 }
 
-static bool all_have_flag(const struct prio_queue *queue, unsigned flag)
+struct lazy_queue {
+	struct prio_queue queue;
+	bool get_pending;
+};
+
+#define LAZY_QUEUE_INIT { { compare_commits_by_commit_date }, false }
+
+static void *lazy_queue_get(struct lazy_queue *queue)
 {
-	for (size_t i = 0; i < queue->nr; i++) {
-		struct commit *commit = queue->array[i].data;
+	if (queue->get_pending)
+		prio_queue_get(&queue->queue);
+	else
+		queue->get_pending = true;
+	return prio_queue_peek(&queue->queue);
+}
+
+static void lazy_queue_put(struct lazy_queue *queue, void *thing)
+{
+	if (queue->get_pending)
+		prio_queue_replace(&queue->queue, thing);
+	else
+		prio_queue_put(&queue->queue, thing);
+	queue->get_pending = false;
+}
+
+static bool lazy_queue_empty(const struct lazy_queue *queue)
+{
+	return queue->queue.nr == (queue->get_pending ? 1 : 0);
+}
+
+static void lazy_queue_clear(struct lazy_queue *queue)
+{
+	clear_prio_queue(&queue->queue);
+	queue->get_pending = false;
+}
+
+static bool all_have_flag(const struct lazy_queue *queue, unsigned flag)
+{
+	for (size_t i = queue->get_pending ? 1 : 0; i < queue->queue.nr; i++) {
+		struct commit *commit = queue->queue.array[i].data;
 		if (!(commit->object.flags & flag))
 			return false;
 	}
 	return true;
 }
 
-static unsigned long finish_depth_computation(struct prio_queue *queue,
+static unsigned long finish_depth_computation(struct lazy_queue *queue,
 					      struct possible_tag *best)
 {
 	unsigned long seen_commits = 0;
-	while (queue->nr) {
-		struct commit *c = prio_queue_get(queue);
+	while (!lazy_queue_empty(queue)) {
+		struct commit *c = lazy_queue_get(queue);
 		struct commit_list *parents = c->parents;
 		seen_commits++;
 		if (c->object.flags & best->flag_within) {
@@ -277,7 +313,7 @@ static unsigned long finish_depth_computation(struct prio_queue *queue,
 			struct commit *p = parents->item;
 			repo_parse_commit(the_repository, p);
 			if (!(p->object.flags & SEEN))
-				prio_queue_put(queue, p);
+				lazy_queue_put(queue, p);
 			p->object.flags |= c->object.flags;
 			parents = parents->next;
 		}
@@ -319,7 +355,7 @@ static void append_suffix(int depth, const struct object_id *oid, struct strbuf 
 static void describe_commit(struct object_id *oid, struct strbuf *dst)
 {
 	struct commit *cmit, *gave_up_on = NULL;
-	struct prio_queue queue = { compare_commits_by_commit_date };
+	struct lazy_queue queue = LAZY_QUEUE_INIT;
 	struct commit_name *n;
 	struct possible_tag all_matches[MAX_TAGS];
 	unsigned int match_cnt = 0, annotated_cnt = 0, cur_match;
@@ -363,9 +399,9 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 	}
 
 	cmit->object.flags = SEEN;
-	prio_queue_put(&queue, cmit);
-	while (queue.nr) {
-		struct commit *c = prio_queue_get(&queue);
+	lazy_queue_put(&queue, cmit);
+	while (!lazy_queue_empty(&queue)) {
+		struct commit *c = lazy_queue_get(&queue);
 		struct commit_list *parents = c->parents;
 		struct commit_name **slot;
 
@@ -399,7 +435,7 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 				t->depth++;
 		}
 		/* Stop if last remaining path already covered by best candidate(s) */
-		if (annotated_cnt && !queue.nr) {
+		if (annotated_cnt && lazy_queue_empty(&queue)) {
 			int best_depth = INT_MAX;
 			unsigned best_within = 0;
 			for (cur_match = 0; cur_match < match_cnt; cur_match++) {
@@ -422,7 +458,7 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 			struct commit *p = parents->item;
 			repo_parse_commit(the_repository, p);
 			if (!(p->object.flags & SEEN))
-				prio_queue_put(&queue, p);
+				lazy_queue_put(&queue, p);
 			p->object.flags |= c->object.flags;
 			parents = parents->next;
 
@@ -437,7 +473,7 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 			strbuf_add_unique_abbrev(dst, cmit_oid, abbrev);
 			if (suffix)
 				strbuf_addstr(dst, suffix);
-			clear_prio_queue(&queue);
+			lazy_queue_clear(&queue);
 			return;
 		}
 		if (unannotated_cnt)
@@ -453,11 +489,11 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 	QSORT(all_matches, match_cnt, compare_pt);
 
 	if (gave_up_on) {
-		prio_queue_put(&queue, gave_up_on);
+		lazy_queue_put(&queue, gave_up_on);
 		seen_commits--;
 	}
 	seen_commits += finish_depth_computation(&queue, &all_matches[0]);
-	clear_prio_queue(&queue);
+	lazy_queue_clear(&queue);
 
 	if (debug) {
 		static int label_width = -1;
