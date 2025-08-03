@@ -1461,10 +1461,16 @@ void show_usage_with_options_if_asked(int ac, const char **av,
 				      const char * const *usagestr,
 				      const struct option *opts)
 {
-	if (ac == 2 && !strcmp(av[1], "-h")) {
-		usage_with_options_internal(NULL, usagestr, opts,
-					    USAGE_NORMAL, USAGE_TO_STDOUT);
-		exit(129);
+	if (ac == 2) {
+		if (!strcmp(av[1], "-h")) {
+			usage_with_options_internal(NULL, usagestr, opts,
+						    USAGE_NORMAL, USAGE_TO_STDOUT);
+			exit(129);
+		} else if (!strcmp(av[1], "--help-all")) {
+			usage_with_options_internal(NULL, usagestr, opts,
+						    USAGE_FULL, USAGE_TO_STDOUT);
+			exit(129);
+		}
 	}
 }
 

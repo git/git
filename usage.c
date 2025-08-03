@@ -192,7 +192,8 @@ static void show_usage_if_asked_helper(const char *err, ...)
 
 void show_usage_if_asked(int ac, const char **av, const char *err)
 {
-	if (ac == 2 && !strcmp(av[1], "-h"))
+	if (ac == 2 && (!strcmp(av[1], "-h") ||
+			!strcmp(av[1], "--help-all")))
 		show_usage_if_asked_helper(err);
 }
 
