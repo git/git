@@ -11683,7 +11683,7 @@ proc prefspage_general {notebook} {
 
     ttk::entry $page.refstohide -textvariable refstohide
     ttk::frame $page.refstohidef
-    ttk::label $page.refstohidef.l -text [mc "Refs to hide (space-separated)" ]
+    ttk::label $page.refstohidef.l -text [mc "Refs to hide (space-separated globs)" ]
     pack $page.refstohidef.l -side left
     pack configure $page.refstohidef.l -padx 10
     grid x $page.refstohidef $page.refstohide -sticky ew
