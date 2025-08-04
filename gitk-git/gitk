@@ -7,7 +7,7 @@ exec wish "$0" -- "$@"
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
 
-if {[catch {package require Tcl 8.6-8.8} err]} {
+if {[catch {package require Tcl 8.6-} err]} {
     catch {wm withdraw .}
     tk_messageBox \
         -icon error \
@@ -31,6 +31,26 @@ The version of git found is $git_version."
         -title "gitk: fatal error" \
         -message $message
     exit 1
+}
+
+######################################################################
+## Enable Tcl8 profile in Tcl9, allowing consumption of data that has
+## bytes not conforming to the assumed encoding profile.
+
+if {[package vcompare $::tcl_version 9.0] >= 0} {
+    rename open _strict_open
+    proc open args {
+        set f [_strict_open {*}$args]
+        chan configure $f -profile tcl8
+        return $f
+    }
+    proc convertfrom args {
+        return [encoding convertfrom -profile tcl8 {*}$args]
+    }
+} else {
+    proc convertfrom args {
+        return [encoding convertfrom {*}$args]
+    }
 }
 
 ######################################################################
@@ -2033,8 +2053,10 @@ proc readrefs {} {
             set tagids($name) $id
             lappend idtags($id) $name
         } else {
-            set otherrefids($name) $id
-            lappend idotherrefs($id) $name
+            if [is_other_ref_visible $name] {
+                set otherrefids($name) $id
+                lappend idotherrefs($id) $name
+            }
         }
     }
     catch {close $refd}
@@ -2288,6 +2310,16 @@ proc bind_mousewheel {} {
     bind $cflist <MouseWheel> {$cflist yview scroll [scrollval %D 2] units}
     bind $cflist <Shift-MouseWheel> break
     bind $canv <Shift-MouseWheel> {$canv xview scroll [scrollval %D] units}
+
+    if {[package vcompare $::tcl_version 8.7] >= 0} {
+        bindall <Alt-MouseWheel> {allcanvs yview scroll [scrollval 5*%D] units}
+        bindall <Alt-Shift-MouseWheel> break
+        bind $ctext <Alt-MouseWheel> {$ctext yview scroll [scrollval 5*%D 2] units}
+        bind $ctext <Alt-Shift-MouseWheel> {$ctext xview scroll [scrollval 5*%D 2] units}
+        bind $cflist <Alt-MouseWheel> {$cflist yview scroll [scrollval 5*%D 2] units}
+        bind $cflist <Alt-Shift-MouseWheel> break
+        bind $canv <Alt-Shift-MouseWheel> {$canv xview scroll [scrollval 5*%D] units}
+    }
 }
 
 proc bind_mousewheel_buttons {} {
@@ -2747,7 +2779,7 @@ proc makewindow {} {
     bindall <1> {selcanvline %W %x %y}
 
     #Mouse / touchpad scrolling
-    if {[tk windowingsystem] == "win32"} {
+    if {[tk windowingsystem] == "win32" || [package vcompare $::tcl_version 8.7] >= 0} {
         set scroll_D0 120
         bind_mousewheel
     } elseif {[tk windowingsystem] == "x11"} {
@@ -7794,7 +7826,7 @@ proc gettree {id} {
             set treepending $id
             set treefilelist($id) {}
             set treeidlist($id) {}
-            fconfigure $gtf -blocking 0 -encoding binary
+            fconfigure $gtf -blocking 0 -translation binary
             filerun $gtf [list gettreeline $gtf $id]
         }
     } else {
@@ -7821,7 +7853,7 @@ proc gettreeline {gtf id} {
         if {[string index $fname 0] eq "\""} {
             set fname [lindex $fname 0]
         }
-        set fname [encoding convertfrom utf-8 $fname]
+        set fname [convertfrom utf-8 $fname]
         lappend treefilelist($id) $fname
     }
     if {![eof $gtf]} {
@@ -8055,7 +8087,7 @@ proc gettreediffs {ids} {
 
     set treepending $ids
     set treediff {}
-    fconfigure $gdtf -blocking 0 -encoding binary
+    fconfigure $gdtf -blocking 0 -translation binary
     filerun $gdtf [list gettreediffline $gdtf $ids]
 }
 
@@ -8081,7 +8113,7 @@ proc gettreediffline {gdtf ids} {
             if {[string index $file 0] eq "\""} {
                 set file [lindex $file 0]
             }
-            set file [encoding convertfrom utf-8 $file]
+            set file [convertfrom utf-8 $file]
             if {$file ne [lindex $treediff end]} {
                 lappend treediff $file
                 lappend sublist $file
@@ -8166,7 +8198,7 @@ proc getblobdiffs {ids} {
         error_popup [mc "Error getting diffs: %s" $err]
         return
     }
-    fconfigure $bdf -blocking 0 -encoding binary -eofchar {}
+    fconfigure $bdf -blocking 0 -translation binary
     set blobdifffd($ids) $bdf
     initblobdiffvars
     filerun $bdf [list getblobdiffline $bdf $diffids]
@@ -8217,7 +8249,7 @@ proc makediffhdr {fname ids} {
     global ctext curdiffstart treediffs diffencoding
     global ctext_file_names jump_to_here targetline diffline
 
-    set fname [encoding convertfrom utf-8 $fname]
+    set fname [convertfrom utf-8 $fname]
     set diffencoding [get_path_encoding $fname]
     set i [lsearch -exact $treediffs($ids) $fname]
     if {$i >= 0} {
@@ -8279,7 +8311,7 @@ proc parseblobdiffline {ids line} {
 
     if {![string compare -length 5 "diff " $line]} {
         if {![regexp {^diff (--cc|--git) } $line m type]} {
-            set line [encoding convertfrom utf-8 $line]
+            set line [convertfrom utf-8 $line]
             $ctext insert end "$line\n" hunksep
             continue
         }
@@ -8328,7 +8360,7 @@ proc parseblobdiffline {ids line} {
         makediffhdr $fname $ids
 
     } elseif {![string compare -length 16 "* Unmerged path " $line]} {
-        set fname [encoding convertfrom utf-8 [string range $line 16 end]]
+        set fname [convertfrom utf-8 [string range $line 16 end]]
         $ctext insert end "\n"
         set curdiffstart [$ctext index "end - 1c"]
         lappend ctext_file_names $fname
@@ -8341,7 +8373,7 @@ proc parseblobdiffline {ids line} {
 
     } elseif {![string compare -length 2 "@@" $line]} {
         regexp {^@@+} $line ats
-        set line [encoding convertfrom $diffencoding $line]
+        set line [convertfrom $diffencoding $line]
         $ctext insert end "$line\n" hunksep
         if {[regexp { \+(\d+),\d+ @@} $line m nl]} {
             set diffline $nl
@@ -8370,10 +8402,10 @@ proc parseblobdiffline {ids line} {
             $ctext insert end "$line\n" filesep
         }
     } elseif {$currdiffsubmod != "" && ![string compare -length 3 "  >" $line]} {
-        set line [encoding convertfrom $diffencoding $line]
+        set line [convertfrom $diffencoding $line]
         $ctext insert end "$line\n" dresult
     } elseif {$currdiffsubmod != "" && ![string compare -length 3 "  <" $line]} {
-        set line [encoding convertfrom $diffencoding $line]
+        set line [convertfrom $diffencoding $line]
         $ctext insert end "$line\n" d0
     } elseif {$diffinhdr} {
         if {![string compare -length 12 "rename from " $line]} {
@@ -8381,7 +8413,7 @@ proc parseblobdiffline {ids line} {
             if {[string index $fname 0] eq "\""} {
                 set fname [lindex $fname 0]
             }
-            set fname [encoding convertfrom utf-8 $fname]
+            set fname [convertfrom utf-8 $fname]
             set i [lsearch -exact $treediffs($ids) $fname]
             if {$i >= 0} {
                 setinlist difffilestart $i $curdiffstart
@@ -8400,12 +8432,12 @@ proc parseblobdiffline {ids line} {
             set diffinhdr 0
             return
         }
-        set line [encoding convertfrom utf-8 $line]
+        set line [convertfrom utf-8 $line]
         $ctext insert end "$line\n" filesep
 
     } else {
         set line [string map {\x1A ^Z} \
-                      [encoding convertfrom $diffencoding $line]]
+                      [convertfrom $diffencoding $line]]
         # parse the prefix - one ' ', '-' or '+' for each parent
         set prefix [string range $line 0 [expr {$diffnparents - 1}]]
         set tag [expr {$diffnparents > 1? "m": "d"}]
@@ -10238,7 +10270,7 @@ proc refill_reflist {} {
         if {![string match "remotes/*" $n] && [string match $reflistfilter $n]} {
             if {[commitinview $headids($n) $curview]} {
                 lappend localrefs [list $n H]
-                if {[info exists upstreamofref($n)]} {
+                if {[info exists upstreamofref($n)] && [commitinview $headids($upstreamofref($n)) $curview]} {
                     lappend trackedremoterefs [list $upstreamofref($n) R]
                 }
             } else {
@@ -10246,7 +10278,7 @@ proc refill_reflist {} {
             }
         }
     }
-    set trackedremoterefs [lsort -index 0 $trackedremoterefs]
+    set trackedremoterefs [lsort -index 0 -unique $trackedremoterefs]
     set localrefs [lsort -index 0 $localrefs]
 
     foreach n [array names headids] {
@@ -11649,6 +11681,13 @@ proc prefspage_general {notebook} {
         -variable hideremotes
     grid x $page.hideremotes -sticky w
 
+    ttk::entry $page.refstohide -textvariable refstohide
+    ttk::frame $page.refstohidef
+    ttk::label $page.refstohidef.l -text [mc "Refs to hide (space-separated globs)" ]
+    pack $page.refstohidef.l -side left
+    pack configure $page.refstohidef.l -padx 10
+    grid x $page.refstohidef $page.refstohide -sticky ew
+
     ttk::checkbutton $page.autocopy -text [mc "Copy commit ID to clipboard"] \
         -variable autocopy
     grid x $page.autocopy -sticky w
@@ -11720,55 +11759,61 @@ proc prefspage_colors {notebook} {
     grid $page.cdisp - -sticky w -pady 10
     label $page.ui -padx 40 -relief sunk -background $uicolor
     ttk::button $page.uibut -text [mc "Interface"] \
-       -command [list choosecolor uicolor {} $page.ui [mc "interface"] setui]
+       -command [list choosecolor uicolor {} $page [mc "interface"]]
     grid x $page.uibut $page.ui -sticky w
     label $page.bg -padx 40 -relief sunk -background $bgcolor
     ttk::button $page.bgbut -text [mc "Background"] \
-        -command [list choosecolor bgcolor {} $page.bg [mc "background"] setbg]
+        -command [list choosecolor bgcolor {} $page [mc "background"]]
     grid x $page.bgbut $page.bg -sticky w
     label $page.fg -padx 40 -relief sunk -background $fgcolor
     ttk::button $page.fgbut -text [mc "Foreground"] \
-        -command [list choosecolor fgcolor {} $page.fg [mc "foreground"] setfg]
+        -command [list choosecolor fgcolor {} $page [mc "foreground"]]
     grid x $page.fgbut $page.fg -sticky w
     label $page.diffold -padx 40 -relief sunk -background [lindex $diffcolors 0]
     ttk::button $page.diffoldbut -text [mc "Diff: old lines"] \
-        -command [list choosecolor diffcolors 0 $page.diffold [mc "diff old lines"] \
-                      [list $ctext tag conf d0 -foreground]]
+        -command [list choosecolor diffcolors 0 $page [mc "diff old lines"]]
     grid x $page.diffoldbut $page.diffold -sticky w
     label $page.diffoldbg -padx 40 -relief sunk -background [lindex $diffbgcolors 0]
     ttk::button $page.diffoldbgbut -text [mc "Diff: old lines bg"] \
-        -command [list choosecolor diffbgcolors 0 $page.diffoldbg \
-                      [mc "diff old lines bg"] \
-                      [list $ctext tag conf d0 -background]]
+        -command [list choosecolor diffbgcolors 0 $page [mc "diff old lines bg"]]
     grid x $page.diffoldbgbut $page.diffoldbg -sticky w
     label $page.diffnew -padx 40 -relief sunk -background [lindex $diffcolors 1]
     ttk::button $page.diffnewbut -text [mc "Diff: new lines"] \
-        -command [list choosecolor diffcolors 1 $page.diffnew [mc "diff new lines"] \
-                      [list $ctext tag conf dresult -foreground]]
+        -command [list choosecolor diffcolors 1 $page [mc "diff new lines"]]
     grid x $page.diffnewbut $page.diffnew -sticky w
     label $page.diffnewbg -padx 40 -relief sunk -background [lindex $diffbgcolors 1]
     ttk::button $page.diffnewbgbut -text [mc "Diff: new lines bg"] \
-        -command [list choosecolor diffbgcolors 1 $page.diffnewbg \
-                      [mc "diff new lines bg"] \
-                      [list $ctext tag conf dresult -background]]
+        -command [list choosecolor diffbgcolors 1 $page [mc "diff new lines bg"]]
     grid x $page.diffnewbgbut $page.diffnewbg -sticky w
     label $page.hunksep -padx 40 -relief sunk -background [lindex $diffcolors 2]
     ttk::button $page.hunksepbut -text [mc "Diff: hunk header"] \
-        -command [list choosecolor diffcolors 2 $page.hunksep \
-                      [mc "diff hunk header"] \
-                      [list $ctext tag conf hunksep -foreground]]
+        -command [list choosecolor diffcolors 2 $page [mc "diff hunk header"]]
     grid x $page.hunksepbut $page.hunksep -sticky w
     label $page.markbgsep -padx 40 -relief sunk -background $markbgcolor
     ttk::button $page.markbgbut -text [mc "Marked line bg"] \
-        -command [list choosecolor markbgcolor {} $page.markbgsep \
-                      [mc "marked line background"] \
-                      [list $ctext tag conf omark -background]]
+        -command [list choosecolor markbgcolor {} $page [mc "marked line background"]]
     grid x $page.markbgbut $page.markbgsep -sticky w
     label $page.selbgsep -padx 40 -relief sunk -background $selectbgcolor
     ttk::button $page.selbgbut -text [mc "Select bg"] \
-        -command [list choosecolor selectbgcolor {} $page.selbgsep [mc "background"] setselbg]
+        -command [list choosecolor selectbgcolor {} $page [mc "background"]]
     grid x $page.selbgbut $page.selbgsep -sticky w
     return $page
+}
+
+proc prefspage_set_colorswatches {page} {
+    global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
+    global diffbgcolors
+
+    $page.ui configure -background $uicolor
+    $page.bg configure -background $bgcolor
+    $page.fg configure -background $fgcolor
+    $page.diffold configure -background [lindex $diffcolors 0]
+    $page.diffoldbg configure -background [lindex $diffbgcolors 0]
+    $page.diffnew configure -background [lindex $diffcolors 1]
+    $page.diffnewbg configure -background [lindex $diffbgcolors 1]
+    $page.hunksep configure -background [lindex $diffcolors 2]
+    $page.markbgsep configure -background $markbgcolor
+    $page.selbgsep configure -background $selectbgcolor
 }
 
 proc prefspage_fonts {notebook} {
@@ -11838,15 +11883,15 @@ proc choose_extdiff {} {
     }
 }
 
-proc choosecolor {v vi w x cmd} {
+proc choosecolor {v vi prefspage x} {
     global $v
 
     set c [tk_chooseColor -initialcolor [lindex [set $v] $vi] \
                -title [mc "Gitk: choose color for %s" $x]]
     if {$c eq {}} return
-    $w conf -background $c
     lset $v $vi $c
-    eval $cmd $c
+    set_gui_colors
+    prefspage_set_colorswatches $prefspage
 }
 
 proc setselbg {c} {
@@ -11899,6 +11944,22 @@ proc setfg {c} {
     $canv itemconf markid -outline $c
 }
 
+proc set_gui_colors {} {
+    global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
+    global diffbgcolors
+
+    setui $uicolor
+    setbg $bgcolor
+    setfg $fgcolor
+    $ctext tag conf d0 -foreground [lindex $diffcolors   0]
+    $ctext tag conf d0 -background [lindex $diffbgcolors 0]
+    $ctext tag conf dresult -foreground [lindex $diffcolors   1]
+    $ctext tag conf dresult -background [lindex $diffbgcolors 1]
+    $ctext tag conf hunksep -foreground [lindex $diffcolors   2]
+    $ctext tag conf omark -background $markbgcolor
+    setselbg $selectbgcolor
+}
+
 proc prefscan {} {
     global oldprefs prefstop
     global {*}$::config_variables
@@ -11909,6 +11970,7 @@ proc prefscan {} {
     catch {destroy $prefstop}
     unset prefstop
     fontcan
+    set_gui_colors
 }
 
 proc prefsok {} {
@@ -11960,7 +12022,7 @@ proc prefsok {} {
           $limitdiffs != $oldprefs(limitdiffs)} {
         reselectline
     }
-    if {$hideremotes != $oldprefs(hideremotes)} {
+    if {$hideremotes != $oldprefs(hideremotes) || $refstohide != $oldprefs(refstohide)} {
         rereadrefs
     }
     if {$wrapcomment != $oldprefs(wrapcomment)} {
@@ -12316,7 +12378,7 @@ proc cache_gitattr {attr pathlist} {
             foreach row [split $rlist "\n"] {
                 if {[regexp "(.*): $attr: (.*)" $row m path value]} {
                     if {[string index $path 0] eq "\""} {
-                        set path [encoding convertfrom utf-8 [lindex $path 0]]
+                        set path [convertfrom utf-8 [lindex $path 0]]
                     }
                     set path_attr_cache($attr,$path) $value
                 }
@@ -12335,6 +12397,23 @@ proc get_path_encoding {path} {
         }
     }
     return $tcl_enc
+}
+
+proc is_other_ref_visible {ref} {
+    global refstohide
+
+    if {$refstohide eq {}} {
+        return 1
+    }
+
+    foreach pat [split $refstohide " "] {
+        if {$pat eq {}} continue
+        if {[string match $pat $ref]} {
+            return 0
+        }
+    }
+
+    return 1
 }
 
 ## For msgcat loading, first locate the installation location.
@@ -12444,6 +12523,7 @@ set wrapcomment "none"
 set wrapdefault "none"
 set showneartags 1
 set hideremotes 0
+set refstohide ""
 set sortrefsbytype 1
 set maxrefs 20
 set visiblerefs {"master"}
@@ -12531,14 +12611,14 @@ catch {
         set config_file_tmp [file join $env(XDG_CONFIG_HOME) git gitk-tmp]
     } else {
         # default XDG_CONFIG_HOME
-        set config_file "~/.config/git/gitk"
-        set config_file_tmp "~/.config/git/gitk-tmp"
+        set config_file "$env(HOME)/.config/git/gitk"
+        set config_file_tmp "$env(HOME)/.config/git/gitk-tmp"
     }
     if {![file exists $config_file]} {
         # for backward compatibility use the old config file if it exists
-        if {[file exists "~/.gitk"]} {
-            set config_file "~/.gitk"
-            set config_file_tmp "~/.gitk-tmp"
+        if {[file exists "$env(HOME)/.gitk"]} {
+            set config_file "$env(HOME)/.gitk"
+            set config_file_tmp "$env(HOME)/.gitk-tmp"
         } elseif {![file exists [file dirname $config_file]]} {
             file mkdir [file dirname $config_file]
         }
@@ -12587,6 +12667,7 @@ set config_variables {
     mergecolors
     perfile_attrs
     reflinecolor
+    refstohide
     remotebgcolor
     selectbgcolor
     showlocalchanges
@@ -12623,8 +12704,6 @@ eval font create textfontbold [fontflags textfont 1]
 
 parsefont uifont $uifont
 eval font create uifont [fontflags uifont]
-
-setui $uicolor
 
 setoptions
 
@@ -12813,6 +12892,8 @@ if {[info exists permviews]} {
 if {[tk windowingsystem] eq "win32"} {
     focus -force .
 }
+
+set_gui_colors
 
 getcommits {}
 
