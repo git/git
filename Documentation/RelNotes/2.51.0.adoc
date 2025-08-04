@@ -64,6 +64,9 @@ UI, Workflows & Features
  * "git for-each-ref" learns "--start-after" option to help
    applications that want to page its output.
 
+ * "git switch" and "git restore" are declared to be no longer
+   experimental.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -269,6 +272,18 @@ including security updates, are included in this release.
    few test helper programs are now closed.
    (merge 0f1b33815b hl/test-helper-fd-close later to maint).
 
+ * Interactive prompt code did not correctly strip CRLF from the end
+   of line on Windows.
+   (merge 711a20827b js/prompt-crlf-fix later to maint).
+
+ * The config API had a set of convenience wrapper functions that
+   implicitly use the_repository instance; they have been removed and
+   inlined at the calling sites.
+
+ * "git add/etc -p" now honor the diff.context configuration variable,
+   and also they learn to honor the -U<n> command-line option.
+   (merge 2b3ae04011 lm/add-p-context later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge b257adb571 lo/my-first-ow-doc-update later to maint).
    (merge 8b34b6a220 ly/sequencer-update-squash-is-fixup-only later to maint).
@@ -299,3 +314,9 @@ including security updates, are included in this release.
    (merge 26552cb62a jk/unleak-reflog-expire-entry later to maint).
    (merge 339d95fda9 jc/ci-print-test-failures-fix later to maint).
    (merge 8c3add51a8 cb/meson-avoid-broken-macos-pcre2 later to maint).
+   (merge 5247da07b8 ps/meson-clar-decls-fix later to maint).
+   (merge f3ef347bb2 ch/t7450-recursive-clone-test-fix later to maint).
+   (merge 4ac3302a1a jc/doc-release-vs-clear later to maint).
+   (merge 3bdd897413 ms/meson-with-ancient-git-wo-ls-files-dedup later to maint).
+   (merge cca758d324 kh/doc-fast-import-historical later to maint).
+   (merge 9b0781196a jc/test-hashmap-is-still-here later to maint).
