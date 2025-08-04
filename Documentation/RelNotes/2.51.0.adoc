@@ -61,6 +61,9 @@ UI, Workflows & Features
  * "git pull" learned to pay attention to pull.autostash configuration
    variable, which overrides rebase/merge.autostash.
 
+ * "git for-each-ref" learns "--start-after" option to help
+   applications that want to page its output.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -124,6 +127,11 @@ Performance, Internal Implementation, Development Support etc.
 
  * The reftable unit tests are now ported to the "clar" unit testing
    framework.
+
+ * Redefine where the multi-pack-index sits in the object subsystem,
+   which recently was restructured to allow multiple backends that
+   support a single object source that belongs to one repository.  A
+   midx does span mulitple "object sources".
 
 
 Fixes since v2.50
@@ -251,6 +259,15 @@ including security updates, are included in this release.
    existing comment added automatically (like "# Conflicts:") when the
    core.commentstring is set to 'auto'.
    (merge 92b7c7c9f5 ac/auto-comment-char-fix later to maint).
+
+ * "git rebase -i" with bogus rebase.instructionFormat configuration
+   failed to produce the todo file after recording the state files,
+   leading to confused "git status"; this has been corrected.
+   (merge ade14bffd7 ow/rebase-verify-insn-fmt-before-initializing-state later to maint).
+
+ * A few file descriptors left unclosed upon program completion in a
+   few test helper programs are now closed.
+   (merge 0f1b33815b hl/test-helper-fd-close later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge b257adb571 lo/my-first-ow-doc-update later to maint).
