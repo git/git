@@ -462,7 +462,7 @@ If you wanted to be on a branch, create one now starting from 'This Detached Che
 	if {$fd_ph ne {}} {
 		global pch_error
 		set pch_error {}
-		fconfigure $fd_ph -blocking 0 -translation binary -eofchar {}
+		fconfigure $fd_ph -blocking 0 -translation binary
 		fileevent $fd_ph readable [cb _postcheckout_wait $fd_ph]
 	} else {
 		_update_repo_state $this

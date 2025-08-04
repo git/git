@@ -19,17 +19,6 @@ build_options_config.set_quoted('GITGUI_LIBDIR', get_option('prefix') / get_opti
 build_options_config.set_quoted('SHELL_PATH', fs.as_posix(shell.full_path()))
 build_options_config.set_quoted('TCLTK_PATH', fs.as_posix(wish.full_path()))
 build_options_config.set_quoted('TCL_PATH', fs.as_posix(tclsh.full_path()))
-if target_machine.system() == 'darwin'
-  tkexecutables = [
-    '/Library/Frameworks/Tk.framework/Resources/Wish.app/Contents/MacOS/Wish',
-    '/System/Library/Frameworks/Tk.framework/Resources/Wish.app/Contents/MacOS/Wish',
-    '/System/Library/Frameworks/Tk.framework/Resources/Wish Shell.app/Contents/MacOS/Wish Shell',
-  ]
-  tkexecutable = find_program(tkexecutables)
-  build_options_config.set_quoted('TKEXECUTABLE', tkexecutable.full_path())
-else
-  build_options_config.set('TKEXECUTABLE', '')
-endif
 
 build_options = configure_file(
   input: 'GIT-GUI-BUILD-OPTIONS.in',
@@ -49,14 +38,6 @@ version_file = custom_target(
   build_always_stale: true,
 )
 
-configure_file(
-  input: 'git-gui--askpass',
-  output: 'git-gui--askpass',
-  copy: true,
-  install: true,
-  install_dir: get_option('libexecdir') / 'git-core',
-)
-
 gitgui_main = 'git-gui'
 gitgui_main_install_dir = get_option('libexecdir') / 'git-core'
 
@@ -70,53 +51,21 @@ if target_machine.system() == 'windows'
     install: true,
     install_dir: get_option('libexecdir') / 'git-core',
   )
-elif target_machine.system() == 'darwin'
-  gitgui_main = 'git-gui.tcl'
-  gitgui_main_install_dir = get_option('datadir') / 'git-gui/lib'
-
-  custom_target(
-    output: 'git-gui',
-    command: [
-      shell,
-      meson.current_source_dir() / 'generate-macos-wrapper.sh',
-      '@OUTPUT@',
-      meson.current_build_dir() / 'GIT-GUI-BUILD-OPTIONS',
-      meson.current_build_dir() / 'GIT-VERSION-FILE',
-    ],
-    depends: [
-      version_file,
-    ],
-    depend_files: [
-      build_options,
-    ],
-    install: true,
-    install_dir: get_option('libexecdir') / 'git-core',
-  )
-
-  custom_target(
-    output: 'Git Gui.app',
-    command: [
-      shell,
-      meson.current_source_dir() / 'generate-macos-app.sh',
-      meson.current_source_dir(),
-      meson.current_build_dir() / 'Git Gui.app',
-      meson.current_build_dir() / 'GIT-GUI-BUILD-OPTIONS',
-      meson.current_build_dir() / 'GIT-VERSION-FILE',
-    ],
-    depends: [
-      version_file,
-    ],
-    depend_files: [
-      build_options,
-      'macosx/AppMain.tcl',
-      'macosx/Info.plist',
-      'macosx/git-gui.icns',
-    ],
-    build_by_default: true,
-    install: true,
-    install_dir: get_option('datadir') / 'git-gui/lib',
-  )
 endif
+
+custom_target(
+  output: 'git-gui--askpass',
+  input: 'git-gui--askpass.sh',
+  command: [
+    shell,
+    meson.current_source_dir() / 'generate-script.sh',
+    '@OUTPUT@',
+    '@INPUT@',
+    meson.current_build_dir() / 'GIT-GUI-BUILD-OPTIONS',
+  ],
+  install: true,
+  install_dir: get_option('libexecdir') / 'git-core',
+)
 
 custom_target(
   input: 'git-gui.sh',
