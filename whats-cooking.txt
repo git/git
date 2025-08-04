@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2025, #01; Sun, 3)
-X-master-at: e0753259271b76f6e53b3b170b4bc08cca793bca
-X-next-at: 3e08bea96f415556e219a4557eec4b445ad5bb66
+Subject: What's cooking in git.git (Aug 2025, #02; Mon, 4)
+X-master-at: 721c9e5ce7c6fa4e1a33490f5e5a81eeee814021
+X-next-at: 4a0f42376bc3acae592fbb921bd8940291ad0735
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2025, #01; Sun, 3)
+What's cooking in git.git (Aug 2025, #02; Mon, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,14 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+As Git 2.51-rc0 was just tagged, I'd break my promise to avoid
+sending a new issue of this "What's cooking" report with just a day
+apart.  This cycle is shorter than usual and will last only 8 weeks,
+so we may leave many topics in flight for the next cycle, many of
+them even outside 'next', and that is perfectly OK.  Let's make sure
+there aren't too many regressions in the tip of 'master' from now on
+for a couple weeks.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -46,174 +54,107 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* ag/imap-send-list-folders-doc (2025-07-22) 1 commit
-  (merged to 'next' on 2025-07-24 at d7db48890b)
- + docs: explain how to use `git imap-send --list` command to get a list of available folders
+* dl/squelch-maybe-uninitialized (2025-08-04) 1 commit
+ - fix -Wmaybe-uninitialized with -Og
 
- Document recently added "git imap-send --list" with an example.
- source: <20250722114827.22493-1-gargaditya08@live.com>
+ Squelch false-positive compiler warning.
 
-
-* cb/meson-avoid-broken-macos-pcre2 (2025-07-18) 1 commit
-  (merged to 'next' on 2025-07-24 at b8cea692a4)
- + meson: work around broken system PCRE2 dependency in macOS
-
- Build fix for macOS.
- source: <20250718170225.6063-1-carenas@gmail.com>
+ Will merge to 'next'.
+ source: <d03308e9474f5e26fd4a5494ec243a278e971443.1754302009.git.liu.denton@gmail.com>
 
 
-* hl/test-helper-fd-close (2025-07-23) 4 commits
-  (merged to 'next' on 2025-07-28 at 1e63fd84fe)
- + test-delta: close output descriptor after use
- + test-delta: use strbufs to hold input files
- + test-delta: handle errors with die()
- + t/helper/test-truncate: close file descriptor after truncation
+* jk/revert-squelch-compiler-warning (2025-08-04) 1 commit
+ - revert: initialize const value
 
- A few file descriptors left unclosed upon program completion in a
- few test helper programs are now closed.
- source: <20250722174102.1876197-1-lhywkd22@gmail.com>
- source: <20250723235929.GB592873@coredump.intra.peff.net>
+ Squelch false-positive compiler warning.
 
-
-* jc/ci-print-test-failures-fix (2025-07-16) 1 commit
-  (merged to 'next' on 2025-07-24 at a1924c981b)
- + ci: allow github-actions print test failures again
-
- CI fix.
- source: <xmqqa553alp1.fsf_-_@gitster.g>
-
-
-* jc/do-not-scan-argv-without-parsing (2025-07-21) 1 commit
-  (merged to 'next' on 2025-07-23 at 8e3db5dcca)
- + rev-list: update a NEEDSWORK comment
-
- Update a hard-to-read in-code NEEDSWORK comment.
- source: <xmqqecu9w4a5.fsf@gitster.g>
-
-
-* jc/document-test-balloons-in-flight (2025-07-23) 1 commit
-  (merged to 'next' on 2025-07-24 at c239410df9)
- + CodingGuidelines: document test balloons in flight
-
- To help our developers, document what C99 language features are
- being considered for adoption, in addition to what past experiments
- have already decided.
- source: <xmqqecu6n1pt.fsf@gitster.g>
-
-
-* jc/rev-list-info-cleanup (2025-07-18) 1 commit
-  (merged to 'next' on 2025-07-23 at 09282d051a)
- + rev-list: make "struct rev_list_info" static to the only user
-
- Move structure definition from unrelated header file to where it
- belongs.
- source: <xmqqa551127o.fsf@gitster.g>
-
-
-* jk/revision-no-early-output (2025-07-19) 1 commit
-  (merged to 'next' on 2025-07-23 at cfc20b3eb9)
- + revision: drop early output option
-
- Remove unsupported, unused, and unsupportable old option from "git
- log".
- source: <20250719070813.GA706382@coredump.intra.peff.net>
-
-
-* jk/unleak-reflog-expire-entry (2025-07-22) 1 commit
-  (merged to 'next' on 2025-07-23 at 1663299f09)
- + reflog: close leak of reflog expire entry
-
- Leakfix.
- source: <20250722-jk-fix-leak-reflog-expire-config-v4-1-b65a83551020@gmail.com>
-
-
-* kn/for-each-ref-skip (2025-07-24) 6 commits
-  (merged to 'next' on 2025-07-28 at c721b90bdc)
- + ref-cache: set prefix_state when seeking
-  (merged to 'next' on 2025-07-15 at 4ea3c74afd)
- + for-each-ref: introduce a '--start-after' option
- + ref-filter: remove unnecessary else clause
- + refs: selectively set prefix in the seek functions
- + ref-cache: remove unused function 'find_ref_entry()'
- + refs: expose `ref_iterator` via 'refs.h'
- (this branch is used by kn/for-each-ref-skip-updates.)
-
- "git for-each-ref" learns "--start-after" option to help
- applications that want to page its output.
- source: <20250715-306-git-for-each-ref-pagination-v5-0-852d5a2f56e1@gmail.com>
-
-
-* ly/pull-autostash (2025-07-20) 1 commit
-  (merged to 'next' on 2025-07-24 at dd85f09d69)
- + pull: add pull.autoStash config option
-
- "git pull" learned to pay attention to pull.autostash configuration
- variable, which overrides rebase/merge.autostash.
- source: <20250720124334.12045-1-yldhome2d2@gmail.com>
-
-
-* ow/rebase-verify-insn-fmt-before-initializing-state (2025-06-09) 1 commit
-  (merged to 'next' on 2025-07-28 at 561f172338)
- + rebase: write script before initializing state
-
- "git rebase -i" with bogus rebase.instructionFormat configuration
- failed to produce the todo file after recording the state files,
- leading to confused "git status"; this has been corrected.
- source: <20250609221055.136074-1-oystwa@gmail.com>
-
-
-* ps/object-store-midx (2025-07-15) 9 commits
-  (merged to 'next' on 2025-07-28 at a6727995ac)
- + midx: remove now-unused linked list of multi-pack indices
- + packfile: stop using linked MIDX list in `get_all_packs()`
- + packfile: stop using linked MIDX list in `find_pack_entry()`
- + packfile: refactor `get_multi_pack_index()` to work on sources
- + midx: stop using linked list when closing MIDX
- + packfile: refactor `prepare_packed_git_one()` to work on sources
- + midx: start tracking per object database source
- + Merge branch 'tb/midx-avoid-cruft-packs' into ps/object-store-midx
- + Merge branch 'ps/object-store' into ps/object-store-midx
- (this branch is used by ps/object-store-midx-dedup-info.)
-
- Redefine where the multi-pack-index sits in the object subsystem,
- which recently was restructured to allow multiple backends that
- support a single object source that belongs to one repository.  A
- midx does span mulitple "object sources".
- cf. <aIHoAiakZr5i2psM@pks.im>
- source: <20250715-b4-pks-midx-via-odb-alternate-v2-0-b0ca0b4b516e@pks.im>
-
-
-* sk/reftable-clarify-tests (2025-07-24) 10 commits
-  (merged to 'next' on 2025-07-24 at b3930223b7)
- + t/unit-tests: finalize migration of reftable-related tests
- + t/unit-tests: convert reftable stack test to use clar
- + t/unit-tests: convert reftable record test to use clar
- + t/unit-tests: convert reftable readwrite test to use clar
- + t/unit-tests: convert reftable table test to use clar
- + t/unit-tests: convert reftable pq test to use clar
- + t/unit-tests: convert reftable merged test to use clar
- + t/unit-tests: convert reftable block test to use clar
- + t/unit-tests: convert reftable basics test to use clar test framework
- + t/unit-tests: implement clar specific reftable test helper functions
-
- The reftable unit tests are now ported to the "clar" unit testing
- framework.
- cf. <aIJGNGxhkz9CESFu@pks.im>
- source: <20250724142837.67149-1-kuforiji98@gmail.com>
+ Will merge to 'next'.
+ source: <20250804130011.GA93475@coredump.intra.peff.net>
 
 --------------------------------------------------
-[New Topics]
+[Graduated to 'master']
+
+* cc/t9350-cleanup (2025-07-25) 1 commit
+  (merged to 'next' on 2025-07-29 at 3d39401b01)
+ + t9350: redirect input to only fast-import
+
+ Test clean-up.
+ source: <20250725160536.2909011-1-christian.couder@gmail.com>
+
+
+* ch/t7450-recursive-clone-test-fix (2025-07-30) 1 commit
+  (merged to 'next' on 2025-08-01 at 478a84a4a9)
+ + t7450: inspect the correct path a broken code would write to
+
+ Test fix.
+ source: <pull.2022.v2.git.git.1753933780883.gitgitgadget@gmail.com>
+
+
+* hy/blame-simplify-get-commit-info (2025-07-27) 1 commit
+  (merged to 'next' on 2025-07-29 at aa7b9a8ab6)
+ + blame: remove parameter detailed in get_commit_info()
+
+ Code simplification.
+ source: <20250728035548.94277-1-hanyang.tony@bytedance.com>
+
+
+* jb/t7510-gpg-program-path (2025-07-24) 2 commits
+  (merged to 'next' on 2025-07-29 at f5dc13f52d)
+ + t7510: use $PWD instead of $(pwd) inside PATH
+  (merged to 'next' on 2025-07-24 at eb8bc447f9)
+ + t7510: add test cases for non-absolute gpg program
+
+ A new test to ensure that a recent change will keep working.
+ cf. <20250725043043.GA3002998@coredump.intra.peff.net>
+ source: <20250722190922.51183-3-jonas.brandstoetter@gmx.at>
+ source: <20250725051309.GA3003751@coredump.intra.peff.net>
+
 
 * jc/doc-release-vs-clear (2025-08-01) 1 commit
   (merged to 'next' on 2025-08-01 at dd9490d97e)
  + CodingGuidelines: clarify that S_release() does not reinitialize
 
  Doc update.
-
- Will merge to 'master'.
  source: <xmqq7bznm0nk.fsf@gitster.g>
+
+
+* jc/test-hashmap-is-still-here (2025-07-30) 1 commit
+  (merged to 'next' on 2025-08-01 at 0d766613fc)
+ + test-hashmap: document why it is no longer used but still there
+
+ Comment fix.
+ source: <xmqqwm7ptghz.fsf@gitster.g>
+
+
+* js/mingw-fixes (2025-08-03) 4 commits
+  (merged to 'next' on 2025-08-03 at a222fda8c6)
+ + mingw: support Windows Server 2016 again
+ + mingw_rename: support ReFS on Windows 2022
+ + mingw: drop Windows 7-specific work-around
+ + mingw_open_existing: handle directories better
+
+ Windows fixes.
+ source: <pull.1948.git.1754256318.gitgitgadget@gmail.com>
+
+
+* js/prompt-crlf-fix (2025-07-31) 1 commit
+  (merged to 'next' on 2025-08-01 at 365b52c100)
+ + interactive: do strip trailing CRLF from input
+
+ Interactive prompt code did not correctly strip CRLF from the end
+ of line on Windows.
+ source: <2295f183-038c-4751-b04d-0f1819b67b3a@kdbg.org>
+
+
+* jt/switch-restore-no-longer-experimental (2025-07-28) 1 commit
+  (merged to 'next' on 2025-07-29 at 3c2cf5ab46)
+ + builtin: unmark git-switch and git-restore as experimental
+
+ "git switch" and "git restore" are declared to be no longer
+ experimental.
+ source: <20250728194218.2379432-1-jltobler@gmail.com>
 
 
 * kh/doc-fast-import-historical (2025-08-01) 1 commit
@@ -221,9 +162,32 @@ Release tarballs are available at:
  + doc: fast-import: contextualize the hardware cost
 
  Doc update.
-
- Will merge to 'master'.
  source: <a9bc7547a27aab8bc2404caeb821b7f5c4c10d14.1754055658.git.code@khaugsbakk.name>
+
+
+* kn/for-each-ref-skip-updates (2025-07-28) 5 commits
+  (merged to 'next' on 2025-07-29 at 6e97c528ef)
+ + ref-filter: use REF_ITERATOR_SEEK_SET_PREFIX instead of '1'
+ + t6302: add test combining '--start-after' with '--exclude'
+ + for-each-ref: reword the documentation for '--start-after'
+ + for-each-ref: fix documentation argument ordering
+ + ref-cache: use 'size_t' instead of int for length
+
+ Code clean-up.
+ cf. <aIiAj8COJOAXv-xe@pks.im>
+ source: <20250728-kn-small-cleanups-v2-0-d3021c8bf471@gmail.com>
+
+
+* lm/add-p-context (2025-07-29) 4 commits
+  (merged to 'next' on 2025-07-29 at 393fa4b64b)
+ + add-patch: add diff.context command line overrides
+ + add-patch: respect diff.context configuration
+ + t: use test_config in t4055
+ + t: use test_grep in t3701 and t4055
+
+ "git add/etc -p" now honor the diff.context configuration variable,
+ and also they learn to honor the -U<n> command-line option.
+ source: <pull.1915.v5.git.1753772511.gitgitgadget@gmail.com>
 
 
 * ms/meson-with-ancient-git-wo-ls-files-dedup (2025-08-01) 1 commit
@@ -231,12 +195,53 @@ Release tarballs are available at:
  + meson: tolerate errors from git ls-files --deduplicate
 
  Build fix.
-
- Will merge to 'master'.
  source: <20250801162834.1923702-1-martin@martin.st>
 
 
-* pw/reftable-libgit2-cleanup (2025-08-01) 5 commits
+* ps/config-wo-the-repository (2025-07-23) 22 commits
+  (merged to 'next' on 2025-07-29 at 13da88e8fb)
+ + config: fix sign comparison warnings
+ + config: move Git config parsing into "environment.c"
+ + config: remove unused `the_repository` wrappers
+ + config: drop `git_config_set_multivar()` wrapper
+ + config: drop `git_config_get_multivar_gently()` wrapper
+ + config: drop `git_config_set_multivar_in_file_gently()` wrapper
+ + config: drop `git_config_set_in_file_gently()` wrapper
+ + config: drop `git_config_set()` wrapper
+ + config: drop `git_config_set_gently()` wrapper
+ + config: drop `git_config_set_in_file()` wrapper
+ + config: drop `git_config_get_bool()` wrapper
+ + config: drop `git_config_get_ulong()` wrapper
+ + config: drop `git_config_get_int()` wrapper
+ + config: drop `git_config_get_string()` wrapper
+ + config: drop `git_config_get_string()` wrapper
+ + config: drop `git_config_get_string_multi()` wrapper
+ + config: drop `git_config_get_value()` wrapper
+ + config: drop `git_config_get_value()` wrapper
+ + config: drop `git_config_get()` wrapper
+ + config: drop `git_config_clear()` wrapper
+ + config: drop `git_config()` wrapper
+ + Merge branch 'bc/use-sha256-by-default-in-3.0' into ps/config-wo-the-repository
+ (this branch is used by pw/3.0-commentchar-auto-deprecation.)
+
+ The config API had a set of convenience wrapper functions that
+ implicitly use the_repository instance; they have been removed and
+ inlined at the calling sites.
+ source: <20250723-pks-config-wo-the-repository-v2-0-1502d60d3867@pks.im>
+
+
+* ps/meson-clar-decls-fix (2025-07-29) 1 commit
+  (merged to 'next' on 2025-08-01 at 627c189731)
+ + meson: ensure correct "clar-decls.h" header is used
+
+ Build fix.
+ source: <20250729-b4-pks-meson-unit-tests-stale-decls-v1-1-4a7770c84307@pks.im>
+
+--------------------------------------------------
+[Cooking]
+
+* ps/reftable-libgit2-cleanup (2025-08-04) 6 commits
+ - reftable/stack: handle outdated stacks when compacting
  - reftable/stack: allow passing flags to `reftable_stack_add()`
  - reftable/stack: reorder code to avoid forward declarations
  - reftable/stack: fix compiler warning due to missing braces
@@ -246,7 +251,7 @@ Release tarballs are available at:
  Code clean-ups.
 
  Comments?
- source: <20250801-pks-reftable-fixes-for-libgit2-v1-0-f446e1c33cb9@pks.im>
+ source: <20250804-pks-reftable-fixes-for-libgit2-v2-0-fef06209a984@pks.im>
 
 
 * tc/diff-tree-max-depth (2025-07-29) 3 commits
@@ -273,27 +278,15 @@ Release tarballs are available at:
  source: <20250803012613.54086-1-ben.knoble+github@gmail.com>
 
 
-* js/mingw-fixes (2025-08-03) 4 commits
-  (merged to 'next' on 2025-08-03 at a222fda8c6)
- + mingw: support Windows Server 2016 again
- + mingw_rename: support ReFS on Windows 2022
- + mingw: drop Windows 7-specific work-around
- + mingw_open_existing: handle directories better
-
- Windows fixes.
-
- Will merge to 'master'.
- source: <pull.1948.git.1754256318.gitgitgadget@gmail.com>
-
-
 * jt/archive-zip-deflate-fix (2025-08-02) 1 commit
- - archive: flush deflate stream until Z_STREAM_END
+  (merged to 'next' on 2025-08-04 at 4444b611dc)
+ + archive: flush deflate stream until Z_STREAM_END
 
  The deflate codepath in "git archive --format=zip" had a
  longstanding bug coming from misuse of zlib API, which has been
  corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250802220803.95137-1-jltobler@gmail.com>
 
 
@@ -325,18 +318,6 @@ Release tarballs are available at:
  Will merge to 'next'?
  source: <36d5b59a-a99a-4a6f-b637-dfb0b760660f@web.de>
 
---------------------------------------------------
-[Cooking]
-
-* ps/meson-clar-decls-fix (2025-07-29) 1 commit
-  (merged to 'next' on 2025-08-01 at 627c189731)
- + meson: ensure correct "clar-decls.h" header is used
-
- Build fix.
-
- Will merge to 'master'.
- source: <20250729-b4-pks-meson-unit-tests-stale-decls-v1-1-4a7770c84307@pks.im>
-
 
 * ps/object-store-midx-dedup-info (2025-07-29) 9 commits
  - midx: compute paths via their source
@@ -353,16 +334,6 @@ Release tarballs are available at:
 
  Comments?
  source: <20250729-b4-pks-midx-deduplicate-source-info-v1-0-748db2eda3b5@pks.im>
-
-
-* ch/t7450-recursive-clone-test-fix (2025-07-30) 1 commit
-  (merged to 'next' on 2025-08-01 at 478a84a4a9)
- + t7450: inspect the correct path a broken code would write to
-
- Test fix.
-
- Will merge to 'master'.
- source: <pull.2022.v2.git.git.1753933780883.gitgitgadget@gmail.com>
 
 
 * jc/strbuf-split (2025-07-31) 13 commits
@@ -408,27 +379,6 @@ Release tarballs are available at:
  source: <20250801220423.1230969-1-gitster@pobox.com>
 
 
-* jc/test-hashmap-is-still-here (2025-07-30) 1 commit
-  (merged to 'next' on 2025-08-01 at 0d766613fc)
- + test-hashmap: document why it is no longer used but still there
-
- Comment fix.
-
- Will merge to 'master'.
- source: <xmqqwm7ptghz.fsf@gitster.g>
-
-
-* js/prompt-crlf-fix (2025-07-31) 1 commit
-  (merged to 'next' on 2025-08-01 at 365b52c100)
- + interactive: do strip trailing CRLF from input
-
- Interactive prompt code did not correctly strip CRLF from the end
- of line on Windows.
-
- Will merge to 'master'.
- source: <2295f183-038c-4751-b04d-0f1819b67b3a@kdbg.org>
-
-
 * am/xdiff-hash-tweak (2025-07-28) 3 commits
  - fixup! xdiff: optimize xdl_hash_record_verbatim
  - xdiff: optimize xdl_hash_record_verbatim
@@ -440,41 +390,6 @@ Release tarballs are available at:
 
  Comments?
  source: <20250728190520.10962-1-amonakov@ispras.ru>
-
-
-* cc/t9350-cleanup (2025-07-25) 1 commit
-  (merged to 'next' on 2025-07-29 at 3d39401b01)
- + t9350: redirect input to only fast-import
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <20250725160536.2909011-1-christian.couder@gmail.com>
-
-
-* hy/blame-simplify-get-commit-info (2025-07-27) 1 commit
-  (merged to 'next' on 2025-07-29 at aa7b9a8ab6)
- + blame: remove parameter detailed in get_commit_info()
-
- Code simplification.
-
- Will merge to 'master'.
- source: <20250728035548.94277-1-hanyang.tony@bytedance.com>
-
-
-* kn/for-each-ref-skip-updates (2025-07-28) 5 commits
-  (merged to 'next' on 2025-07-29 at 6e97c528ef)
- + ref-filter: use REF_ITERATOR_SEEK_SET_PREFIX instead of '1'
- + t6302: add test combining '--start-after' with '--exclude'
- + for-each-ref: reword the documentation for '--start-after'
- + for-each-ref: fix documentation argument ordering
- + ref-cache: use 'size_t' instead of int for length
-
- Code clean-up.
-
- Will merge to 'master'.
- cf. <aIiAj8COJOAXv-xe@pks.im>
- source: <20250728-kn-small-cleanups-v2-0-d3021c8bf471@gmail.com>
 
 
 * ps/remote-rename-fix (2025-07-31) 7 commits
@@ -535,32 +450,7 @@ Release tarballs are available at:
  source: <pull.1943.git.1753197791.gitgitgadget@gmail.com>
 
 
-* jb/t7510-gpg-program-path (2025-07-24) 2 commits
-  (merged to 'next' on 2025-07-29 at f5dc13f52d)
- + t7510: use $PWD instead of $(pwd) inside PATH
-  (merged to 'next' on 2025-07-24 at eb8bc447f9)
- + t7510: add test cases for non-absolute gpg program
-
- A new test to ensure that a recent change will keep working.
-
- Will merge to 'master'.
- cf. <20250725043043.GA3002998@coredump.intra.peff.net>
- source: <20250722190922.51183-3-jonas.brandstoetter@gmx.at>
- source: <20250725051309.GA3003751@coredump.intra.peff.net>
-
-
-* jt/switch-restore-no-longer-experimental (2025-07-28) 1 commit
-  (merged to 'next' on 2025-07-29 at 3c2cf5ab46)
- + builtin: unmark git-switch and git-restore as experimental
-
- Declare that "git switch" and "git restore" are no longer
- experimental.
-
- Will merge to 'master'.
- source: <20250728194218.2379432-1-jltobler@gmail.com>
-
-
-* ps/reflog-migrate-fixes (2025-07-29) 9 commits
+* ps/reflog-migrate-fixes (2025-08-04) 9 commits
  - refs: fix invalid old object IDs when migrating reflogs
  - refs: stop unsetting REF_HAVE_OLD for log-only updates
  - refs/files: detect race when generating reflog entry for HEAD
@@ -575,8 +465,8 @@ Release tarballs are available at:
  "git refs migrate" to migrate the reflog entries from a refs
  backend to another had a handful of bugs squashed.
 
- Will merge to 'next'?
- source: <20250729-pks-reflog-append-v3-0-9614d310f073@pks.im>
+ Will merge to 'next'.
+ source: <20250804-pks-reflog-append-v4-0-13213fef7200@pks.im>
 
 
 * ds/sparse-checkout-clean (2025-07-16) 9 commits
@@ -599,46 +489,11 @@ Release tarballs are available at:
  source: <pull.1941.v2.git.1752716054.gitgitgadget@gmail.com>
 
 
-* ps/config-wo-the-repository (2025-07-23) 22 commits
-  (merged to 'next' on 2025-07-29 at 13da88e8fb)
- + config: fix sign comparison warnings
- + config: move Git config parsing into "environment.c"
- + config: remove unused `the_repository` wrappers
- + config: drop `git_config_set_multivar()` wrapper
- + config: drop `git_config_get_multivar_gently()` wrapper
- + config: drop `git_config_set_multivar_in_file_gently()` wrapper
- + config: drop `git_config_set_in_file_gently()` wrapper
- + config: drop `git_config_set()` wrapper
- + config: drop `git_config_set_gently()` wrapper
- + config: drop `git_config_set_in_file()` wrapper
- + config: drop `git_config_get_bool()` wrapper
- + config: drop `git_config_get_ulong()` wrapper
- + config: drop `git_config_get_int()` wrapper
- + config: drop `git_config_get_string()` wrapper
- + config: drop `git_config_get_string()` wrapper
- + config: drop `git_config_get_string_multi()` wrapper
- + config: drop `git_config_get_value()` wrapper
- + config: drop `git_config_get_value()` wrapper
- + config: drop `git_config_get()` wrapper
- + config: drop `git_config_clear()` wrapper
- + config: drop `git_config()` wrapper
- + Merge branch 'bc/use-sha256-by-default-in-3.0' into ps/config-wo-the-repository
- (this branch is used by pw/3.0-commentchar-auto-deprecation.)
-
- The config API had a set of convenience wrapper functions that
- implicitly use the_repository instance; they have been removed and
- inlined at the calling sites.
-
- Will merge to 'master'.
- source: <20250723-pks-config-wo-the-repository-v2-0-1502d60d3867@pks.im>
-
-
 * pw/3.0-commentchar-auto-deprecation (2025-07-31) 4 commits
  - commit: print advice when core.commentString=auto
  - config: warn on core.commentString=auto
  - breaking-changes: deprecate support for core.commentString=auto
  - Merge branch 'ps/config-wo-the-repository' into pw/3.0-commentchar-auto-deprecation
- (this branch uses ps/config-wo-the-repository.)
 
  Proposes to deprecate "core.commentChar=auto" that attempts to
  dynamically pick a suitable comment character, as it is too much
@@ -690,10 +545,10 @@ Release tarballs are available at:
 
 
 * tc/last-modified (2025-07-30) 4 commits
- - last-modified: use Bloom filters when available
- - commit-graph: export prepare_commit_graph()
- - t/perf: add last-modified perf script
- - last-modified: new subcommand to show when files were last modified
+ . last-modified: use Bloom filters when available
+ . commit-graph: export prepare_commit_graph()
+ . t/perf: add last-modified perf script
+ . last-modified: new subcommand to show when files were last modified
 
  A new command "git last-modified" is proposed to show the closest
  ancestor commit that touched each path.
@@ -758,20 +613,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20250724152418.45226-1-jayatheerthkulkarni2005@gmail.com>
-
-
-* lm/add-p-context (2025-07-29) 4 commits
-  (merged to 'next' on 2025-07-29 at 393fa4b64b)
- + add-patch: add diff.context command line overrides
- + add-patch: respect diff.context configuration
- + t: use test_config in t4055
- + t: use test_grep in t3701 and t4055
-
- "git add/etc -p" now honors diff.context configuration variable,
- and learns to honor -U<n> option.
-
- Will merge to 'master'.
- source: <pull.1915.v5.git.1753772511.gitgitgadget@gmail.com>
 
 
 * cc/promisor-remote-capability (2025-07-31) 5 commits
