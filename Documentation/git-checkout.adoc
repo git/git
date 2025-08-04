@@ -289,6 +289,8 @@ section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 Note that this option uses the no overlay mode by default (see also
 `--overlay`), and currently doesn't support overlay mode.
 
+include::diff-context-options.adoc[]
+
 `--ignore-other-worktrees`::
 	`git checkout` refuses when the wanted branch is already checked
 	out or otherwise in use by another worktree. This option makes
