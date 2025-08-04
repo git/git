@@ -3254,8 +3254,9 @@ static int do_filter_refs(struct ref_filter *filter, unsigned int type, each_ref
 
 		if (filter->start_after)
 			ret = start_ref_iterator_after(iter, filter->start_after);
-		else if (prefix)
-			ret = ref_iterator_seek(iter, prefix, 1);
+		else
+			ret = ref_iterator_seek(iter, prefix,
+						REF_ITERATOR_SEEK_SET_PREFIX);
 
 		if (!ret)
 			ret = do_for_each_ref_iterator(iter, fn, cb_data);
