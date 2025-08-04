@@ -244,7 +244,6 @@ enum hide_dotfiles_type {
 	HIDE_DOTFILES_DOTGITONLY
 };
 
-static int core_restrict_inherited_handles = -1;
 static enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
 static char *unset_environment_variables;
 
@@ -265,15 +264,6 @@ int mingw_core_config(const char *var, const char *value,
 			return config_error_nonbool(var);
 		free(unset_environment_variables);
 		unset_environment_variables = xstrdup(value);
-		return 0;
-	}
-
-	if (!strcmp(var, "core.restrictinheritedhandles")) {
-		if (value && !strcasecmp(value, "auto"))
-			core_restrict_inherited_handles = -1;
-		else
-			core_restrict_inherited_handles =
-				git_config_bool(var, value);
 		return 0;
 	}
 
@@ -588,13 +578,24 @@ static int mingw_open_existing(const wchar_t *filename, int oflags, ...)
 			     &security_attributes, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
 	if (handle == INVALID_HANDLE_VALUE) {
 		DWORD err = GetLastError();
+		if (err == ERROR_ACCESS_DENIED) {
+			DWORD attrs = GetFileAttributesW(filename);
+			if (attrs != INVALID_FILE_ATTRIBUTES && (attrs & FILE_ATTRIBUTE_DIRECTORY))
+				handle = CreateFileW(filename, access,
+							FILE_SHARE_WRITE | FILE_SHARE_READ | FILE_SHARE_DELETE,
+							&security_attributes, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL| FILE_FLAG_BACKUP_SEMANTICS, NULL);
+		}
 
-		/* See `mingw_open_append()` for why we have this conversion. */
-		if (err == ERROR_INVALID_PARAMETER)
-			err = ERROR_PATH_NOT_FOUND;
+		if (handle == INVALID_HANDLE_VALUE) {
+			err = GetLastError();
 
-		errno = err_win_to_posix(err);
-		return -1;
+			/* See `mingw_open_append()` for why we have this conversion. */
+			if (err == ERROR_INVALID_PARAMETER)
+				err = ERROR_PATH_NOT_FOUND;
+
+			errno = err_win_to_posix(err);
+			return -1;
+		}
 	}
 
 	fd = _open_osfhandle((intptr_t)handle, oflags | O_BINARY);
@@ -1656,7 +1657,6 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 			      const char *dir,
 			      int prepend_cmd, int fhin, int fhout, int fherr)
 {
-	static int restrict_handle_inheritance = -1;
 	STARTUPINFOEXW si;
 	PROCESS_INFORMATION pi;
 	LPPROC_THREAD_ATTRIBUTE_LIST attr_list = NULL;
@@ -1675,16 +1675,6 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 
 	/* Make sure to override previous errors, if any */
 	errno = 0;
-
-	if (restrict_handle_inheritance < 0)
-		restrict_handle_inheritance = core_restrict_inherited_handles;
-	/*
-	 * The following code to restrict which handles are inherited seems
-	 * to work properly only on Windows 7 and later, so let's disable it
-	 * on Windows Vista and 2008.
-	 */
-	if (restrict_handle_inheritance < 0)
-		restrict_handle_inheritance = GetVersion() >> 16 >= 7601;
 
 	do_unset_environment_variables();
 
@@ -1787,7 +1777,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	wenvblk = make_environment_block(deltaenv);
 
 	memset(&pi, 0, sizeof(pi));
-	if (restrict_handle_inheritance && stdhandles_count &&
+	if (stdhandles_count &&
 	    (InitializeProcThreadAttributeList(NULL, 1, 0, &size) ||
 	     GetLastError() == ERROR_INSUFFICIENT_BUFFER) &&
 	    (attr_list = (LPPROC_THREAD_ATTRIBUTE_LIST)
@@ -1808,52 +1798,13 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 			     &si.StartupInfo, &pi);
 
 	/*
-	 * On Windows 2008 R2, it seems that specifying certain types of handles
-	 * (such as FILE_TYPE_CHAR or FILE_TYPE_PIPE) will always produce an
-	 * error. Rather than playing finicky and fragile games, let's just try
-	 * to detect this situation and simply try again without restricting any
-	 * handle inheritance. This is still better than failing to create
-	 * processes.
+	 * On the off-chance that something with the file handle restriction
+	 * went wrong, silently fall back to trying without it.
 	 */
-	if (!ret && restrict_handle_inheritance && stdhandles_count) {
+	if (!ret && stdhandles_count) {
 		DWORD err = GetLastError();
 		struct strbuf buf = STRBUF_INIT;
 
-		if (err != ERROR_NO_SYSTEM_RESOURCES &&
-		    /*
-		     * On Windows 7 and earlier, handles on pipes and character
-		     * devices are inherited automatically, and cannot be
-		     * specified in the thread handle list. Rather than trying
-		     * to catch each and every corner case (and running the
-		     * chance of *still* forgetting a few), let's just fall
-		     * back to creating the process without trying to limit the
-		     * handle inheritance.
-		     */
-		    !(err == ERROR_INVALID_PARAMETER &&
-		      GetVersion() >> 16 < 9200) &&
-		    !getenv("SUPPRESS_HANDLE_INHERITANCE_WARNING")) {
-			DWORD fl = 0;
-			int i;
-
-			setenv("SUPPRESS_HANDLE_INHERITANCE_WARNING", "1", 1);
-
-			for (i = 0; i < stdhandles_count; i++) {
-				HANDLE h = stdhandles[i];
-				strbuf_addf(&buf, "handle #%d: %p (type %lx, "
-					    "handle info (%d) %lx\n", i, h,
-					    GetFileType(h),
-					    GetHandleInformation(h, &fl),
-					    fl);
-			}
-			strbuf_addstr(&buf, "\nThis is a bug; please report it "
-				      "at\nhttps://github.com/git-for-windows/"
-				      "git/issues/new\n\n"
-				      "To suppress this warning, please set "
-				      "the environment variable\n\n"
-				      "\tSUPPRESS_HANDLE_INHERITANCE_WARNING=1"
-				      "\n");
-		}
-		restrict_handle_inheritance = 0;
 		flags &= ~EXTENDED_STARTUPINFO_PRESENT;
 		ret = CreateProcessW(*wcmd ? wcmd : NULL, wargs, NULL, NULL,
 				     TRUE, flags, wenvblk, dir ? wdir : NULL,
@@ -2326,7 +2277,9 @@ repeat:
 		 * current system doesn't support FileRenameInfoEx. Keep us
 		 * from using it in future calls and retry.
 		 */
-		if (gle == ERROR_INVALID_PARAMETER) {
+		if (gle == ERROR_INVALID_PARAMETER ||
+		    gle == ERROR_NOT_SUPPORTED ||
+		    gle == ERROR_INVALID_FUNCTION) {
 			supports_file_rename_info_ex = 0;
 			goto repeat;
 		}
