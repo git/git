@@ -90,7 +90,7 @@ proc merge_load_stages {path cont} {
 
 	set merge_stages_fd [git_read [list ls-files -u -z -- $path]]
 
-	fconfigure $merge_stages_fd -blocking 0 -translation binary -encoding binary
+	fconfigure $merge_stages_fd -blocking 0 -translation binary
 	fileevent $merge_stages_fd readable [list read_merge_stages $merge_stages_fd $cont]
 }
 
@@ -370,7 +370,7 @@ proc merge_tool_start {cmdline target backup stages} {
 
 	ui_status [mc "Running merge tool..."]
 
-	fconfigure $mtool_fd -blocking 0 -translation binary -encoding binary
+	fconfigure $mtool_fd -blocking 0 -translation binary
 	fileevent $mtool_fd readable [list read_mtool_output $mtool_fd]
 }
 
