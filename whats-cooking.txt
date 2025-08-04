@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Jul 2025, #09; Thu, 31)
-X-master-at: e813a0200a7121b97fec535f0d0b460b0a33356c
-X-next-at: 393fa4b64b12da3d3fdcefb02739bb1e82291dcc
+Subject: What's cooking in git.git (Aug 2025, #01; Sun, 3)
+X-master-at: e0753259271b76f6e53b3b170b4bc08cca793bca
+X-next-at: 3e08bea96f415556e219a4557eec4b445ad5bb66
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Jul 2025, #09; Thu, 31)
+What's cooking in git.git (Aug 2025, #01; Sun, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,14 +46,295 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ag/imap-send-list-folders-doc (2025-07-22) 1 commit
+  (merged to 'next' on 2025-07-24 at d7db48890b)
+ + docs: explain how to use `git imap-send --list` command to get a list of available folders
+
+ Document recently added "git imap-send --list" with an example.
+ source: <20250722114827.22493-1-gargaditya08@live.com>
+
+
+* cb/meson-avoid-broken-macos-pcre2 (2025-07-18) 1 commit
+  (merged to 'next' on 2025-07-24 at b8cea692a4)
+ + meson: work around broken system PCRE2 dependency in macOS
+
+ Build fix for macOS.
+ source: <20250718170225.6063-1-carenas@gmail.com>
+
+
+* hl/test-helper-fd-close (2025-07-23) 4 commits
+  (merged to 'next' on 2025-07-28 at 1e63fd84fe)
+ + test-delta: close output descriptor after use
+ + test-delta: use strbufs to hold input files
+ + test-delta: handle errors with die()
+ + t/helper/test-truncate: close file descriptor after truncation
+
+ A few file descriptors left unclosed upon program completion in a
+ few test helper programs are now closed.
+ source: <20250722174102.1876197-1-lhywkd22@gmail.com>
+ source: <20250723235929.GB592873@coredump.intra.peff.net>
+
+
+* jc/ci-print-test-failures-fix (2025-07-16) 1 commit
+  (merged to 'next' on 2025-07-24 at a1924c981b)
+ + ci: allow github-actions print test failures again
+
+ CI fix.
+ source: <xmqqa553alp1.fsf_-_@gitster.g>
+
+
+* jc/do-not-scan-argv-without-parsing (2025-07-21) 1 commit
+  (merged to 'next' on 2025-07-23 at 8e3db5dcca)
+ + rev-list: update a NEEDSWORK comment
+
+ Update a hard-to-read in-code NEEDSWORK comment.
+ source: <xmqqecu9w4a5.fsf@gitster.g>
+
+
+* jc/document-test-balloons-in-flight (2025-07-23) 1 commit
+  (merged to 'next' on 2025-07-24 at c239410df9)
+ + CodingGuidelines: document test balloons in flight
+
+ To help our developers, document what C99 language features are
+ being considered for adoption, in addition to what past experiments
+ have already decided.
+ source: <xmqqecu6n1pt.fsf@gitster.g>
+
+
+* jc/rev-list-info-cleanup (2025-07-18) 1 commit
+  (merged to 'next' on 2025-07-23 at 09282d051a)
+ + rev-list: make "struct rev_list_info" static to the only user
+
+ Move structure definition from unrelated header file to where it
+ belongs.
+ source: <xmqqa551127o.fsf@gitster.g>
+
+
+* jk/revision-no-early-output (2025-07-19) 1 commit
+  (merged to 'next' on 2025-07-23 at cfc20b3eb9)
+ + revision: drop early output option
+
+ Remove unsupported, unused, and unsupportable old option from "git
+ log".
+ source: <20250719070813.GA706382@coredump.intra.peff.net>
+
+
+* jk/unleak-reflog-expire-entry (2025-07-22) 1 commit
+  (merged to 'next' on 2025-07-23 at 1663299f09)
+ + reflog: close leak of reflog expire entry
+
+ Leakfix.
+ source: <20250722-jk-fix-leak-reflog-expire-config-v4-1-b65a83551020@gmail.com>
+
+
+* kn/for-each-ref-skip (2025-07-24) 6 commits
+  (merged to 'next' on 2025-07-28 at c721b90bdc)
+ + ref-cache: set prefix_state when seeking
+  (merged to 'next' on 2025-07-15 at 4ea3c74afd)
+ + for-each-ref: introduce a '--start-after' option
+ + ref-filter: remove unnecessary else clause
+ + refs: selectively set prefix in the seek functions
+ + ref-cache: remove unused function 'find_ref_entry()'
+ + refs: expose `ref_iterator` via 'refs.h'
+ (this branch is used by kn/for-each-ref-skip-updates.)
+
+ "git for-each-ref" learns "--start-after" option to help
+ applications that want to page its output.
+ source: <20250715-306-git-for-each-ref-pagination-v5-0-852d5a2f56e1@gmail.com>
+
+
+* ly/pull-autostash (2025-07-20) 1 commit
+  (merged to 'next' on 2025-07-24 at dd85f09d69)
+ + pull: add pull.autoStash config option
+
+ "git pull" learned to pay attention to pull.autostash configuration
+ variable, which overrides rebase/merge.autostash.
+ source: <20250720124334.12045-1-yldhome2d2@gmail.com>
+
+
+* ow/rebase-verify-insn-fmt-before-initializing-state (2025-06-09) 1 commit
+  (merged to 'next' on 2025-07-28 at 561f172338)
+ + rebase: write script before initializing state
+
+ "git rebase -i" with bogus rebase.instructionFormat configuration
+ failed to produce the todo file after recording the state files,
+ leading to confused "git status"; this has been corrected.
+ source: <20250609221055.136074-1-oystwa@gmail.com>
+
+
+* ps/object-store-midx (2025-07-15) 9 commits
+  (merged to 'next' on 2025-07-28 at a6727995ac)
+ + midx: remove now-unused linked list of multi-pack indices
+ + packfile: stop using linked MIDX list in `get_all_packs()`
+ + packfile: stop using linked MIDX list in `find_pack_entry()`
+ + packfile: refactor `get_multi_pack_index()` to work on sources
+ + midx: stop using linked list when closing MIDX
+ + packfile: refactor `prepare_packed_git_one()` to work on sources
+ + midx: start tracking per object database source
+ + Merge branch 'tb/midx-avoid-cruft-packs' into ps/object-store-midx
+ + Merge branch 'ps/object-store' into ps/object-store-midx
+ (this branch is used by ps/object-store-midx-dedup-info.)
+
+ Redefine where the multi-pack-index sits in the object subsystem,
+ which recently was restructured to allow multiple backends that
+ support a single object source that belongs to one repository.  A
+ midx does span mulitple "object sources".
+ cf. <aIHoAiakZr5i2psM@pks.im>
+ source: <20250715-b4-pks-midx-via-odb-alternate-v2-0-b0ca0b4b516e@pks.im>
+
+
+* sk/reftable-clarify-tests (2025-07-24) 10 commits
+  (merged to 'next' on 2025-07-24 at b3930223b7)
+ + t/unit-tests: finalize migration of reftable-related tests
+ + t/unit-tests: convert reftable stack test to use clar
+ + t/unit-tests: convert reftable record test to use clar
+ + t/unit-tests: convert reftable readwrite test to use clar
+ + t/unit-tests: convert reftable table test to use clar
+ + t/unit-tests: convert reftable pq test to use clar
+ + t/unit-tests: convert reftable merged test to use clar
+ + t/unit-tests: convert reftable block test to use clar
+ + t/unit-tests: convert reftable basics test to use clar test framework
+ + t/unit-tests: implement clar specific reftable test helper functions
+
+ The reftable unit tests are now ported to the "clar" unit testing
+ framework.
+ cf. <aIJGNGxhkz9CESFu@pks.im>
+ source: <20250724142837.67149-1-kuforiji98@gmail.com>
+
+--------------------------------------------------
 [New Topics]
 
-* ps/meson-clar-decls-fix (2025-07-29) 1 commit
- - meson: ensure correct "clar-decls.h" header is used
+* jc/doc-release-vs-clear (2025-08-01) 1 commit
+  (merged to 'next' on 2025-08-01 at dd9490d97e)
+ + CodingGuidelines: clarify that S_release() does not reinitialize
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <xmqq7bznm0nk.fsf@gitster.g>
+
+
+* kh/doc-fast-import-historical (2025-08-01) 1 commit
+  (merged to 'next' on 2025-08-01 at 111a582ca4)
+ + doc: fast-import: contextualize the hardware cost
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <a9bc7547a27aab8bc2404caeb821b7f5c4c10d14.1754055658.git.code@khaugsbakk.name>
+
+
+* ms/meson-with-ancient-git-wo-ls-files-dedup (2025-08-01) 1 commit
+  (merged to 'next' on 2025-08-01 at f2b8c802ec)
+ + meson: tolerate errors from git ls-files --deduplicate
 
  Build fix.
 
+ Will merge to 'master'.
+ source: <20250801162834.1923702-1-martin@martin.st>
+
+
+* pw/reftable-libgit2-cleanup (2025-08-01) 5 commits
+ - reftable/stack: allow passing flags to `reftable_stack_add()`
+ - reftable/stack: reorder code to avoid forward declarations
+ - reftable/stack: fix compiler warning due to missing braces
+ - reftable/writer: drop Git-specific `QSORT()` macro
+ - reftable/writer: fix type used for number of records
+
+ Code clean-ups.
+
+ Comments?
+ source: <20250801-pks-reftable-fixes-for-libgit2-v1-0-f446e1c33cb9@pks.im>
+
+
+* tc/diff-tree-max-depth (2025-07-29) 3 commits
+ - diff: teach tree-diff a max-depth parameter
+ - within_depth: fix return for empty path
+ - combine-diff: zero memory used for callback filepairs
+
+ "git diff-tree" learned "--max-depth" option.
+
+ Comments?
+ source: <20250729-toon-max-depth-v1-0-c177e39c40fb@iotcl.com>
+
+
+* dk/help-all (2025-08-03) 4 commits
+ - builtin: also setup gently for --help-all
+ - parse-options: refactor flags for usage_with_options_internal
+ - t1517: fixup for ua/t1517-short-help-tests
+ - Merge branch 'ua/t1517-short-help-tests' into dk/help-all
+ (this branch uses ua/t1517-short-help-tests.)
+
+ "git cmd --help-all" outside repository.
+
+ Comments?
+ source: <20250803012613.54086-1-ben.knoble+github@gmail.com>
+
+
+* js/mingw-fixes (2025-08-03) 4 commits
+  (merged to 'next' on 2025-08-03 at a222fda8c6)
+ + mingw: support Windows Server 2016 again
+ + mingw_rename: support ReFS on Windows 2022
+ + mingw: drop Windows 7-specific work-around
+ + mingw_open_existing: handle directories better
+
+ Windows fixes.
+
+ Will merge to 'master'.
+ source: <pull.1948.git.1754256318.gitgitgadget@gmail.com>
+
+
+* jt/archive-zip-deflate-fix (2025-08-02) 1 commit
+ - archive: flush deflate stream until Z_STREAM_END
+
+ The deflate codepath in "git archive --format=zip" had a
+ longstanding bug coming from misuse of zlib API, which has been
+ corrected.
+
  Will merge to 'next'.
+ source: <20250802220803.95137-1-jltobler@gmail.com>
+
+
+* lc/rebase-trailer (2025-08-03) 2 commits
+ - rebase: support --trailer
+ - trailer: append trailers in-process and drop the fork to `interpret-trailers`
+
+ source: <20250803150059.402017-1-me@linux.beauty>
+
+
+* ly/diff-name-only-with-diff-from-content (2025-08-03) 1 commit
+ . diff: ensure consistent diff behavior with -I<regex> across output formats
+
+ Various options to "git diff" that makes comparison ignore certain
+ aspects of the differences (like "space changes are ignored",
+ "differences in lines that match these regular expressions are
+ ignored") did not work well with "--name-only" and friends.
+
+ Breaks t3040 when merged to 'seen'.
+ source: <20250803145155.57894-1-yldhome2d2@gmail.com>
+
+
+* rs/describe-with-prio-queue (2025-08-03) 2 commits
+ - describe: use prio_queue_replace()
+ - describe: use prio_queue
+
+ "git describe" has been optimized by using better data structure.
+
+ Will merge to 'next'?
+ source: <36d5b59a-a99a-4a6f-b637-dfb0b760660f@web.de>
+
+--------------------------------------------------
+[Cooking]
+
+* ps/meson-clar-decls-fix (2025-07-29) 1 commit
+  (merged to 'next' on 2025-08-01 at 627c189731)
+ + meson: ensure correct "clar-decls.h" header is used
+
+ Build fix.
+
+ Will merge to 'master'.
  source: <20250729-b4-pks-meson-unit-tests-stale-decls-v1-1-4a7770c84307@pks.im>
 
 
@@ -67,23 +348,24 @@ Release tarballs are available at:
  - odb: allow `odb_find_source()` to fail
  - odb: store locality in object database sources
  - Merge branch 'ps/object-store-midx' into ps/object-store-midx-dedup-info
- (this branch uses ps/object-store-midx.)
 
  Further code clean-up for multi-pack-index code paths.
 
+ Comments?
  source: <20250729-b4-pks-midx-deduplicate-source-info-v1-0-748db2eda3b5@pks.im>
 
 
 * ch/t7450-recursive-clone-test-fix (2025-07-30) 1 commit
- - t7450: inspect the correct path a broken code would write to
+  (merged to 'next' on 2025-08-01 at 478a84a4a9)
+ + t7450: inspect the correct path a broken code would write to
 
  Test fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.2022.v2.git.git.1753933780883.gitgitgadget@gmail.com>
 
 
-* jc/strbuf-split (2025-07-31) 12 commits
+* jc/strbuf-split (2025-07-31) 13 commits
  - trace2: do not use strbuf_split*()
  - trace2: trim_trailing_newline followed by trim is a no-op
  - sub-process: do not use strbuf_split*()
@@ -92,6 +374,7 @@ Release tarballs are available at:
  - notes: do not use strbuf_split*()
  - merge-tree: do not use strbuf_split*()
  - clean: do not use strbuf_split*() [part 2]
+ - clean: do not pass the whole structure when it is not necessary
  - clean: do not use strbuf_split*() [part 1]
  - clean: do not pass strbuf by value
  - wt-status: avoid strbuf_split*()
@@ -104,10 +387,11 @@ Release tarballs are available at:
 
  Update several code paths and replace strbuf_split*().
 
- Comments?
+ Will merge to 'next'?
  source: <20250731225433.4028872-1-gitster@pobox.com>
 
-* jc/string-list-split (2025-07-31) 7 commits
+
+* jc/string-list-split (2025-08-01) 7 commits
  - string-list: split-then-remove-empty can be done while splitting
  - string-list: optionally omit empty string pieces in string_list_split*()
  - diff: simplify parsing of diff.colormovedws
@@ -120,29 +404,30 @@ Release tarballs are available at:
  string_list_split*() family of functions have been extended to
  simplify common use cases.
 
- Comments?
- source: <20250731224607.3942417-1-gitster@pobox.com>
+ Will merge to 'next'?
+ source: <20250801220423.1230969-1-gitster@pobox.com>
+
 
 * jc/test-hashmap-is-still-here (2025-07-30) 1 commit
- - test-hashmap: document why it is no longer used but still there
+  (merged to 'next' on 2025-08-01 at 0d766613fc)
+ + test-hashmap: document why it is no longer used but still there
 
  Comment fix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <xmqqwm7ptghz.fsf@gitster.g>
 
 
 * js/prompt-crlf-fix (2025-07-31) 1 commit
- - interactive: do strip trailing CRLF from input
+  (merged to 'next' on 2025-08-01 at 365b52c100)
+ + interactive: do strip trailing CRLF from input
 
  Interactive prompt code did not correctly strip CRLF from the end
- of line on Windows. 
+ of line on Windows.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <2295f183-038c-4751-b04d-0f1819b67b3a@kdbg.org>
 
---------------------------------------------------
-[Cooking]
 
 * am/xdiff-hash-tweak (2025-07-28) 3 commits
  - fixup! xdiff: optimize xdl_hash_record_verbatim
@@ -184,7 +469,6 @@ Release tarballs are available at:
  + for-each-ref: reword the documentation for '--start-after'
  + for-each-ref: fix documentation argument ordering
  + ref-cache: use 'size_t' instead of int for length
- (this branch uses kn/for-each-ref-skip.)
 
  Code clean-up.
 
@@ -207,63 +491,21 @@ Release tarballs are available at:
  upstream/HEAD when origin/HEAD is unborn and performed other
  renames extremely inefficiently, which has been corrected.
 
+ Will merge to 'next'?
  source: <20250731-pks-remote-rename-improvements-v2-0-dda6f083674d@pks.im>
 
 
 * rs/tighten-alias-help (2025-07-25) 1 commit
- - git: show alias info only with lone -h
+  (merged to 'next' on 2025-08-01 at a0fb0696cd)
+ + git: show alias info only with lone -h
 
  "git -c alias.foo=bar foo -h baz" reported "'foo' is aliased to
  'bar'" and then went on to do "git foo -h baz", which was
  unexpected.  Tighten the rule so that alias expansion is reported
  only when "-h" is the sole option.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <a35dc2bf-015c-472d-9528-6763f7aac180@web.de>
-
-
-* jc/document-test-balloons-in-flight (2025-07-23) 1 commit
-  (merged to 'next' on 2025-07-24 at c239410df9)
- + CodingGuidelines: document test balloons in flight
-
- To help our developers, document what C99 language features are
- being considered for adoption, in addition to what past experiments
- have already decided.
-
- Will merge to 'master'.
- source: <xmqqecu6n1pt.fsf@gitster.g>
-
-
-* ly/pull-autostash (2025-07-20) 1 commit
-  (merged to 'next' on 2025-07-24 at dd85f09d69)
- + pull: add pull.autoStash config option
-
- "git pull" learned to pay attention to pull.autostash configuration
- variable, which overrides rebase/merge.autostash.
-
- Will merge to 'master'.
- source: <20250720124334.12045-1-yldhome2d2@gmail.com>
-
-
-* jk/revision-no-early-output (2025-07-19) 1 commit
-  (merged to 'next' on 2025-07-23 at cfc20b3eb9)
- + revision: drop early output option
-
- Remove unsupported, unused, and unsupportable old option from "git
- log".
-
- Will merge to 'master'.
- source: <20250719070813.GA706382@coredump.intra.peff.net>
-
-
-* ag/imap-send-list-folders-doc (2025-07-22) 1 commit
-  (merged to 'next' on 2025-07-24 at d7db48890b)
- + docs: explain how to use `git imap-send --list` command to get a list of available folders
-
- Document recently added "git imap-send --list" with an example.
-
- Will merge to 'master'.
- source: <20250722114827.22493-1-gargaditya08@live.com>
 
 
 * ag/send-email-imap-sent (2025-07-22) 1 commit
@@ -288,23 +530,9 @@ Release tarballs are available at:
  Various bugs about rename handling in "ort" merge strategy have
  been fixed.
 
- Comments?
+ Expecting a reroll?
+ cf. <aIx7SXfRabJWpa0D@pks.im>
  source: <pull.1943.git.1753197791.gitgitgadget@gmail.com>
-
-
-* hl/test-helper-fd-close (2025-07-23) 4 commits
-  (merged to 'next' on 2025-07-28 at 1e63fd84fe)
- + test-delta: close output descriptor after use
- + test-delta: use strbufs to hold input files
- + test-delta: handle errors with die()
- + t/helper/test-truncate: close file descriptor after truncation
-
- A few file descriptors left unclosed upon program completion in a
- few test helper programs are now closed.
-
- Will merge to 'master'.
- source: <20250722174102.1876197-1-lhywkd22@gmail.com>
- source: <20250723235929.GB592873@coredump.intra.peff.net>
 
 
 * jb/t7510-gpg-program-path (2025-07-24) 2 commits
@@ -319,37 +547,6 @@ Release tarballs are available at:
  cf. <20250725043043.GA3002998@coredump.intra.peff.net>
  source: <20250722190922.51183-3-jonas.brandstoetter@gmx.at>
  source: <20250725051309.GA3003751@coredump.intra.peff.net>
-
-
-* jc/do-not-scan-argv-without-parsing (2025-07-21) 1 commit
-  (merged to 'next' on 2025-07-23 at 8e3db5dcca)
- + rev-list: update a NEEDSWORK comment
-
- Update a hard-to-read in-code NEEDSWORK comment.
-
- Will merge to 'master'.
- source: <xmqqecu9w4a5.fsf@gitster.g>
-
-
-* jc/rev-list-info-cleanup (2025-07-18) 1 commit
-  (merged to 'next' on 2025-07-23 at 09282d051a)
- + rev-list: make "struct rev_list_info" static to the only user
-
- Move structure definition from unrelated header file to where it
- belongs.
-
- Will merge to 'master'.
- source: <xmqqa551127o.fsf@gitster.g>
-
-
-* jk/unleak-reflog-expire-entry (2025-07-22) 1 commit
-  (merged to 'next' on 2025-07-23 at 1663299f09)
- + reflog: close leak of reflog expire entry
-
- Leakfix.
-
- Will merge to 'master'.
- source: <20250722-jk-fix-leak-reflog-expire-config-v4-1-b65a83551020@gmail.com>
 
 
 * jt/switch-restore-no-longer-experimental (2025-07-28) 1 commit
@@ -380,16 +577,6 @@ Release tarballs are available at:
 
  Will merge to 'next'?
  source: <20250729-pks-reflog-append-v3-0-9614d310f073@pks.im>
-
-
-* jc/ci-print-test-failures-fix (2025-07-16) 1 commit
-  (merged to 'next' on 2025-07-24 at a1924c981b)
- + ci: allow github-actions print test failures again
-
- CI fix.
-
- Will merge to 'master'.
- source: <xmqqa553alp1.fsf_-_@gitster.g>
 
 
 * ds/sparse-checkout-clean (2025-07-16) 9 commits
@@ -446,16 +633,6 @@ Release tarballs are available at:
  source: <20250723-pks-config-wo-the-repository-v2-0-1502d60d3867@pks.im>
 
 
-* cb/meson-avoid-broken-macos-pcre2 (2025-07-18) 1 commit
-  (merged to 'next' on 2025-07-24 at b8cea692a4)
- + meson: work around broken system PCRE2 dependency in macOS
-
- Build fix for macOS.
-
- Will merge to 'master'.
- source: <20250718170225.6063-1-carenas@gmail.com>
-
-
 * pw/3.0-commentchar-auto-deprecation (2025-07-31) 4 commits
  - commit: print advice when core.commentString=auto
  - config: warn on core.commentString=auto
@@ -467,113 +644,77 @@ Release tarballs are available at:
  dynamically pick a suitable comment character, as it is too much
  trouble to support for little benefit.
 
+ Comments?
  source: <cover.1753975294.git.phillip.wood@dunelm.org.uk>
 
 
-* ps/object-store-midx (2025-07-15) 9 commits
-  (merged to 'next' on 2025-07-28 at a6727995ac)
- + midx: remove now-unused linked list of multi-pack indices
- + packfile: stop using linked MIDX list in `get_all_packs()`
- + packfile: stop using linked MIDX list in `find_pack_entry()`
- + packfile: refactor `get_multi_pack_index()` to work on sources
- + midx: stop using linked list when closing MIDX
- + packfile: refactor `prepare_packed_git_one()` to work on sources
- + midx: start tracking per object database source
- + Merge branch 'tb/midx-avoid-cruft-packs' into ps/object-store-midx
- + Merge branch 'ps/object-store' into ps/object-store-midx
- (this branch is used by ps/object-store-midx-dedup-info.)
-
- Redefine where the multi-pack-index sits in the object subsystem,
- which recently was restructured to allow multiple backends that
- support a single object source that belongs to one repository.  A
- midx does span mulitple "object sources".
-
- Will merge to 'master'.
- cf. <aIHoAiakZr5i2psM@pks.im>
- source: <20250715-b4-pks-midx-via-odb-alternate-v2-0-b0ca0b4b516e@pks.im>
-
-
 * ps/object-file-wo-the-repository (2025-07-16) 17 commits
- - object-file: get rid of `the_repository` in index-related functions
- - object-file: get rid of `the_repository` in `force_object_loose()`
- - object-file: get rid of `the_repository` in `read_loose_object()`
- - object-file: get rid of `the_repository` in loose object iterators
- - object-file: remove declaration for `for_each_file_in_obj_subdir()`
- - object-file: inline `for_each_loose_file_in_objdir_buf()`
- - object-file: get rid of `the_repository` when writing objects
- - odb: introduce `odb_write_object()`
- - loose: write loose objects map via their source
- - object-file: get rid of `the_repository` in `finalize_object_file()`
- - object-file: get rid of `the_repository` in `loose_object_info()`
- - object-file: get rid of `the_repository` when freshening objects
- - object-file: inline `check_and_freshen()` functions
- - object-file: get rid of `the_repository` in `has_loose_object()`
- - object-file: stop using `the_hash_algo`
- - object-file: fix -Wsign-compare warnings
- - Merge branch 'ps/object-store' into ps/object-file-wo-the-repository
+  (merged to 'next' on 2025-08-01 at 0c1253014e)
+ + object-file: get rid of `the_repository` in index-related functions
+ + object-file: get rid of `the_repository` in `force_object_loose()`
+ + object-file: get rid of `the_repository` in `read_loose_object()`
+ + object-file: get rid of `the_repository` in loose object iterators
+ + object-file: remove declaration for `for_each_file_in_obj_subdir()`
+ + object-file: inline `for_each_loose_file_in_objdir_buf()`
+ + object-file: get rid of `the_repository` when writing objects
+ + odb: introduce `odb_write_object()`
+ + loose: write loose objects map via their source
+ + object-file: get rid of `the_repository` in `finalize_object_file()`
+ + object-file: get rid of `the_repository` in `loose_object_info()`
+ + object-file: get rid of `the_repository` when freshening objects
+ + object-file: inline `check_and_freshen()` functions
+ + object-file: get rid of `the_repository` in `has_loose_object()`
+ + object-file: stop using `the_hash_algo`
+ + object-file: fix -Wsign-compare warnings
+ + Merge branch 'ps/object-store' into ps/object-file-wo-the-repository
 
  Reduce implicit assumption and dependence on the_repository in the
  object-file subsystem.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  cf. <87ms8na1mc.fsf@iotcl.com>
  cf. <aIhm_nqiH8Sci12i@pks.im>
  source: <20250717-pks-object-file-wo-the-repository-v2-0-36d2cd6c700e@pks.im>
 
 
-* ua/t1517-short-help-tests (2025-07-21) 2 commits
- . t5200: move `update-server-info -h` test from t1517
- . t/t1517: automate `git subcmd -h` tests outside a repository
+* ua/t1517-short-help-tests (2025-08-02) 3 commits
+ - t5304: move `prune -h` test from t1517
+ - t5200: move `update-server-info -h` test from t1517
+ - t/t1517: automate `git subcmd -h` tests outside a repository
+ (this branch is used by dk/help-all.)
 
  Test shuffling.
 
- Seems to introduce a few "todo passed" when merged to 'seen'.
- source: <20250721115519.140361-1-usmanakinyemi202@gmail.com>
-
-
-* kn/for-each-ref-skip (2025-07-24) 6 commits
-  (merged to 'next' on 2025-07-28 at c721b90bdc)
- + ref-cache: set prefix_state when seeking
-  (merged to 'next' on 2025-07-15 at 4ea3c74afd)
- + for-each-ref: introduce a '--start-after' option
- + ref-filter: remove unnecessary else clause
- + refs: selectively set prefix in the seek functions
- + ref-cache: remove unused function 'find_ref_entry()'
- + refs: expose `ref_iterator` via 'refs.h'
- (this branch is used by kn/for-each-ref-skip-updates.)
-
- "git for-each-ref" learns "--skip-until" option to help
- applications that want to page its output.
-
- Will merge to 'master'.
- source: <20250715-306-git-for-each-ref-pagination-v5-0-852d5a2f56e1@gmail.com>
+ Needs the perl-prereq touch-up squashed in from dk/help-all topic.
+ source: <20250803020744.1037392-1-usmanakinyemi202@gmail.com>
 
 
 * tc/last-modified (2025-07-30) 4 commits
- . last-modified: use Bloom filters when available
- . commit-graph: export prepare_commit_graph()
- . t/perf: add last-modified perf script
- . last-modified: new subcommand to show when files were last modified
+ - last-modified: use Bloom filters when available
+ - commit-graph: export prepare_commit_graph()
+ - t/perf: add last-modified perf script
+ - last-modified: new subcommand to show when files were last modified
 
  A new command "git last-modified" is proposed to show the closest
  ancestor commit that touched each path.
 
- Comments?
+ Seems to break a CI job when merged to 'seen'.
+ cf. <xmqqpldfoqvz.fsf@gitster.g>
  source: <20250716133206.1787549-1-toon@iotcl.com>
 
 
-* lo/repo-info (2025-07-21) 5 commits
- - repo: add the --format flag
- - repo: add field layout.shallow
- - repo: add field layout.bare
- - repo: add the field references.format
- - repo: declare the repo command
+* lo/repo-info (2025-08-01) 5 commits
+ . repo: add the --format flag
+ . repo: add the field layout.shallow
+ . repo: add the field layout.bare
+ . repo: add the field references.format
+ . repo: declare the repo command
 
  A new subcommand "git repo" gives users a way to grab various
  repository characteristics.
 
- Still in flux.
- source: <20250722002835.33428-1-lucasseikioshiro@gmail.com>
+ Breaks 0450 when merged to 'seen'.
+ source: <20250801131111.8115-1-lucasseikioshiro@gmail.com>
 
 
 * ac/deglobal-sparse-variables (2025-07-18) 3 commits
@@ -585,41 +726,9 @@ Release tarballs are available at:
  Two global variables related to sparse checkout have been moved to
  the repository settings structure.
 
- Ready?
+ Expecting a reroll.
+ cf. <CAE7as+bnG6KgA8X_n36pqP15bmyM6re+xEb1MOXKvZSUdJ8Arg@mail.gmail.com>
  source: <cover.1752882401.git.ayu.chandekar@gmail.com>
-
-
-* ow/rebase-verify-insn-fmt-before-initializing-state (2025-06-09) 1 commit
-  (merged to 'next' on 2025-07-28 at 561f172338)
- + rebase: write script before initializing state
-
- "git rebase -i" with bogus rebase.instructionFormat configuration
- failed to produce the todo file after recording the state files,
- leading to confused "git status"; this has been corrected.
-
- Will merge to 'master'.
- source: <20250609221055.136074-1-oystwa@gmail.com>
-
-
-* sk/reftable-clarify-tests (2025-07-24) 10 commits
-  (merged to 'next' on 2025-07-24 at b3930223b7)
- + t/unit-tests: finalize migration of reftable-related tests
- + t/unit-tests: convert reftable stack test to use clar
- + t/unit-tests: convert reftable record test to use clar
- + t/unit-tests: convert reftable readwrite test to use clar
- + t/unit-tests: convert reftable table test to use clar
- + t/unit-tests: convert reftable pq test to use clar
- + t/unit-tests: convert reftable merged test to use clar
- + t/unit-tests: convert reftable block test to use clar
- + t/unit-tests: convert reftable basics test to use clar test framework
- + t/unit-tests: implement clar specific reftable test helper functions
-
- The reftable unit tests are now ported to the "clar" unit testing
- framework.
-
- Will merge to 'master'.
- cf. <aIJGNGxhkz9CESFu@pks.im>
- source: <20250724142837.67149-1-kuforiji98@gmail.com>
 
 
 * tb/prepare-midx-pack-cleanup (2025-05-28) 5 commits
@@ -637,16 +746,17 @@ Release tarballs are available at:
 
 
 * kj/renamed-submodule (2025-07-24) 4 commits
- - fixup! submodule: skip redundant active entries when pattern covers path
- - fixup! submodule: prevent overwriting .gitmodules on path reuse
- - submodule: skip redundant active entries when pattern covers path
- - submodule: prevent overwriting .gitmodules on path reuse
+  (merged to 'next' on 2025-08-03 at c341b36545)
+ + fixup! submodule: skip redundant active entries when pattern covers path
+ + fixup! submodule: prevent overwriting .gitmodules on path reuse
+ + submodule: skip redundant active entries when pattern covers path
+ + submodule: prevent overwriting .gitmodules on path reuse
 
  The case where a new submodule takes a path where used to be a
  completely different subproject is now dealt a bit better than
  before.
 
- Looking good.
+ Will merge to 'master'.
  source: <20250724152418.45226-1-jayatheerthkulkarni2005@gmail.com>
 
 
@@ -675,7 +785,7 @@ Release tarballs are available at:
  allow the "partialCloneFilter" settings and the "token" value to be
  communicated from the server side.
 
- Will merge to 'next'?
+ Expecting a reroll.
  source: <20250731072401.3817074-1-christian.couder@gmail.com>
 
 --------------------------------------------------
