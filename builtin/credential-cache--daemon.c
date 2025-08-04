@@ -307,7 +307,7 @@ int cmd_credential_cache_daemon(int argc,
 		OPT_END()
 	};
 
-	git_config_get_bool("credentialcache.ignoresighup", &ignore_sighup);
+	repo_config_get_bool(the_repository, "credentialcache.ignoresighup", &ignore_sighup);
 
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
 	socket_path = argv[0];

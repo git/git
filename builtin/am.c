@@ -162,18 +162,18 @@ static void am_state_init(struct am_state *state)
 
 	state->prec = 4;
 
-	git_config_get_bool("am.threeway", &state->threeway);
+	repo_config_get_bool(the_repository, "am.threeway", &state->threeway);
 
 	state->utf8 = 1;
 
-	git_config_get_bool("am.messageid", &state->message_id);
+	repo_config_get_bool(the_repository, "am.messageid", &state->message_id);
 
 	state->scissors = SCISSORS_UNSET;
 	state->quoted_cr = quoted_cr_unset;
 
 	strvec_init(&state->git_apply_opts);
 
-	if (!git_config_get_bool("commit.gpgsign", &gpgsign))
+	if (!repo_config_get_bool(the_repository, "commit.gpgsign", &gpgsign))
 		state->sign_commit = gpgsign ? "" : NULL;
 }
 
@@ -965,7 +965,7 @@ static int split_mail(struct am_state *state, enum patch_format patch_format,
 {
 	if (keep_cr < 0) {
 		keep_cr = 0;
-		git_config_get_bool("am.keepcr", &keep_cr);
+		repo_config_get_bool(the_repository, "am.keepcr", &keep_cr);
 	}
 
 	switch (patch_format) {
@@ -2445,7 +2445,7 @@ int cmd_am(int argc,
 
 	show_usage_with_options_if_asked(argc, argv, usage, options);
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	am_state_init(&state);
 

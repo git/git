@@ -1917,7 +1917,7 @@ int cmd_index_pack(int argc,
 
 	reset_pack_idx_option(&opts);
 	opts.flags |= WRITE_REV;
-	git_config(git_index_pack_config, &opts);
+	repo_config(the_repository, git_index_pack_config, &opts);
 	if (prefix && chdir(prefix))
 		die(_("Cannot come back to cwd"));
 

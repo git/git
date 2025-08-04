@@ -1,6 +1,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
+#include "environment.h"
 #include "hex.h"
 #include "object-file.h"
 #include "object-name.h"
@@ -43,7 +44,7 @@ int cmd_unpack_file(int argc,
 	if (repo_get_oid(the_repository, argv[1], &oid))
 		die("Not a valid object name %s", argv[1]);
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	puts(create_temp_file(&oid));
 	return 0;

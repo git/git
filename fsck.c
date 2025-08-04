@@ -3,6 +3,7 @@
 #include "git-compat-util.h"
 #include "date.h"
 #include "dir.h"
+#include "environment.h"
 #include "hex.h"
 #include "odb.h"
 #include "path.h"

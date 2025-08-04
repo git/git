@@ -2,6 +2,7 @@
 
 #include "git-compat-util.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex-ll.h"
 #include "utf8.h"

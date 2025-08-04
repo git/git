@@ -6,6 +6,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
+#include "environment.h"
 #include "gettext.h"
 #include "hex.h"
 #include "object-name.h"
@@ -125,7 +126,7 @@ int cmd_commit_tree(int argc,
 	};
 	int ret;
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	show_usage_with_options_if_asked(argc, argv,
 					 commit_tree_usage, options);

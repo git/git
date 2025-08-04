@@ -287,7 +287,7 @@ const char *fsck_describe_object(struct fsck_options *options,
 
 struct key_value_info;
 /*
- * git_config() callback for use by fsck-y tools that want to support
+ * repo_config() callback for use by fsck-y tools that want to support
  * fsck.<msg> fsck.skipList etc.
  */
 int git_fsck_config(const char *var, const char *value,

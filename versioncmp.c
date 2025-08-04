@@ -167,8 +167,8 @@ int versioncmp(const char *s1, const char *s2)
 		const char *const oldk = "versionsort.prereleasesuffix";
 		const struct string_list *newl;
 		const struct string_list *oldl;
-		int new = git_config_get_string_multi(newk, &newl);
-		int old = git_config_get_string_multi(oldk, &oldl);
+		int new = repo_config_get_string_multi(the_repository, newk, &newl);
+		int old = repo_config_get_string_multi(the_repository, oldk, &oldl);
 
 		if (!new && !old)
 			warning("ignoring %s because %s is set", oldk, newk);

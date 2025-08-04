@@ -1,6 +1,7 @@
 #define USE_THE_REPOSITORY_VARIABLE
 
 #include "builtin.h"
+#include "environment.h"
 #include "tree-walk.h"
 #include "xdiff-interface.h"
 #include "help.h"
@@ -683,7 +684,7 @@ int cmd_merge_tree(int argc,
 	if (argc != expected_remaining_argc)
 		usage_with_options(merge_tree_usage, mt_options);
 
-	git_config(git_default_config, NULL);
+	repo_config(the_repository, git_default_config, NULL);
 
 	/* Do the relevant type of merge */
 	if (o.mode == MODE_REAL)

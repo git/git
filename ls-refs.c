@@ -159,7 +159,7 @@ int ls_refs(struct repository *r, struct packet_reader *request)
 	strbuf_init(&data.buf, 0);
 	strvec_init(&data.hidden_refs);
 
-	git_config(ls_refs_config, &data);
+	repo_config(the_repository, ls_refs_config, &data);
 
 	while (packet_reader_read(request) == PACKET_READ_NORMAL) {
 		const char *arg = request->line;
