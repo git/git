@@ -9,12 +9,17 @@
 #include "strbuf.h"
 #include "strvec.h"
 
+#define COMMON_USAGE_FOR_EACH_REF \
+	"[--count=<count>] [--shell|--perl|--python|--tcl]\n" \
+	"                         [(--sort=<key>)...] [--format=<format>]\n" \
+	"                         [--include-root-refs] [--points-at=<object>]\n" \
+	"                         [--merged[=<object>]] [--no-merged[=<object>]]\n" \
+	"                         [--contains[=<object>]] [--no-contains[=<object>]]\n" \
+	"                         [(--exclude=<pattern>)...] [--start-after=<marker>]\n" \
+	"                         [ --stdin | <pattern>... ]"
+
 static char const * const for_each_ref_usage[] = {
-	N_("git for-each-ref [<options>] [<pattern>]"),
-	N_("git for-each-ref [--points-at <object>]"),
-	N_("git for-each-ref [--merged [<commit>]] [--no-merged [<commit>]]"),
-	N_("git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"),
-	N_("git for-each-ref [--start-after <marker>]"),
+	"git for-each-ref " COMMON_USAGE_FOR_EACH_REF,
 	NULL
 };
 
