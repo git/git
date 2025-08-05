@@ -1474,10 +1474,13 @@ static int set_head(int argc, const char **argv, const char *prefix,
 	};
 	argc = parse_options(argc, argv, prefix, options,
 			     builtin_remote_sethead_usage, 0);
-	if (argc) {
-		strbuf_addf(&b_head, "refs/remotes/%s/HEAD", argv[0]);
-		remote = remote_get(argv[0]);
-	}
+
+	/* All modes require at least a remote name. */
+	if (!argc)
+		usage_with_options(builtin_remote_sethead_usage, options);
+
+	strbuf_addf(&b_head, "refs/remotes/%s/HEAD", argv[0]);
+	remote = remote_get(argv[0]);
 
 	if (!opt_a && !opt_d && argc == 2) {
 		head_name = xstrdup(argv[1]);
