@@ -2332,7 +2332,7 @@ int http_get_file(const char *url, const char *filename,
 	ret = http_request_reauth(url, result, HTTP_REQUEST_FILE, options);
 	fclose(result);
 
-	if (ret == HTTP_OK && finalize_object_file(tmpfile.buf, filename))
+	if (ret == HTTP_OK && finalize_object_file(the_repository, tmpfile.buf, filename))
 		ret = HTTP_ERROR;
 cleanup:
 	strbuf_release(&tmpfile);
@@ -2816,7 +2816,7 @@ int finish_http_object_request(struct http_object_request *freq)
 		return -1;
 	}
 	odb_loose_path(the_repository->objects->sources, &filename, &freq->oid);
-	freq->rename = finalize_object_file(freq->tmpfile.buf, filename.buf);
+	freq->rename = finalize_object_file(the_repository, freq->tmpfile.buf, filename.buf);
 	strbuf_release(&filename);
 
 	return freq->rename;

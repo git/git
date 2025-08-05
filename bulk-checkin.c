@@ -46,7 +46,7 @@ static void finish_tmp_packfile(struct strbuf *basename,
 	stage_tmp_packfiles(the_repository, basename, pack_tmp_name,
 			    written_list, nr_written, NULL, pack_idx_opts, hash,
 			    &idx_tmp_name);
-	rename_tmp_packfile_idx(basename, &idx_tmp_name);
+	rename_tmp_packfile_idx(the_repository, basename, &idx_tmp_name);
 
 	free(idx_tmp_name);
 }

@@ -40,7 +40,7 @@ void prune_packed_objects(int opts)
 		progress = start_delayed_progress(the_repository,
 						  _("Removing duplicate objects"), 256);
 
-	for_each_loose_file_in_objdir(repo_get_object_directory(the_repository),
+	for_each_loose_file_in_source(the_repository->objects->sources,
 				      prune_object, NULL, prune_subdir, &opts);
 
 	/* Ensure we show 100% before finishing progress */
