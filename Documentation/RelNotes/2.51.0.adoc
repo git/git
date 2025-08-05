@@ -67,6 +67,11 @@ UI, Workflows & Features
  * "git switch" and "git restore" are declared to be no longer
    experimental.
 
+ * "git -c alias.foo=bar foo -h baz" reported "'foo' is aliased to
+   'bar'" and then went on to run "git foo -h baz", which was
+   unexpected.  Tighten the rule so that alias expansion is reported
+   only when "-h" is the sole option.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -135,6 +140,9 @@ Performance, Internal Implementation, Development Support etc.
    which recently was restructured to allow multiple backends that
    support a single object source that belongs to one repository.  A
    midx does span mulitple "object sources".
+
+ * Reduce implicit assumption and dependence on the_repository in the
+   object-file subsystem.
 
 
 Fixes since v2.50
@@ -283,6 +291,11 @@ including security updates, are included in this release.
  * "git add/etc -p" now honor the diff.context configuration variable,
    and also they learn to honor the -U<n> command-line option.
    (merge 2b3ae04011 lm/add-p-context later to maint).
+
+ * The case where a new submodule takes a path where used to be a
+   completely different subproject is now dealt a bit better than
+   before.
+   (merge 5ed8c5b465 kj/renamed-submodule later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge b257adb571 lo/my-first-ow-doc-update later to maint).
