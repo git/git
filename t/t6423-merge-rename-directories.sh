@@ -5056,6 +5056,25 @@ test_expect_success '12m: Change parent of renamed-dir to symlink on other side'
 	)
 '
 
+# Testcase 12n, Directory rename transitively makes rename back to self
+#
+# (Since this is a cherry-pick instead of merge, the labels are a bit weird.
+#  O, the original commit, is A~1 rather than what branch O points to.)
+#
+#   Commit O:  tools/hello
+#              world
+#   Commit A:  tools/hello
+#              tools/world
+#   Commit B:  hello
+#   In words:
+#     A: world -> tools/world
+#     B: tools/ -> /, i.e. rename all of tools to toplevel directory
+#        delete world
+#
+#   Expected:
+#             CONFLICT (file location): tools/world vs. world
+#
+
 test_setup_12n () {
 	git init 12n &&
 	(
@@ -5084,7 +5103,7 @@ test_setup_12n () {
 	)
 }
 
-test_expect_success '12n: Directory rename transitively makes rename back to self' '
+test_expect_failure '12n: Directory rename transitively makes rename back to self' '
 	test_setup_12n &&
 	(
 		cd 12n &&
@@ -5092,7 +5111,84 @@ test_expect_success '12n: Directory rename transitively makes rename back to sel
 		git checkout -q B^0 &&
 
 		test_must_fail git cherry-pick A^0 >out &&
-		grep "CONFLICT (file location).*should perhaps be moved" out
+		test_grep "CONFLICT (file location).*should perhaps be moved" out &&
+
+		# Should have 1 entry for hello, and 2 for world
+		test_stdout_line_count = 3 git ls-files -s &&
+		test_stdout_line_count = 1 git ls-files -s hello &&
+		test_stdout_line_count = 2 git ls-files -s world
+	)
+'
+
+# Testcase 12n2, Directory rename transitively makes rename back to self
+#
+#   Commit O:  tools/hello
+#              world
+#   Commit A:  tools/hello
+#              tools/world
+#   Commit B:  hello
+#   In words:
+#     A: world -> tools/world
+#     B: tools/ -> /, i.e. rename all of tools to toplevel directory
+#        delete world
+#
+#   Expected:
+#             CONFLICT (file location): tools/world vs. world
+#
+
+test_setup_12n2 () {
+	git init 12n2 &&
+	(
+		cd 12n2 &&
+
+		mkdir tools &&
+		echo hello >tools/hello &&
+		git add tools/hello &&
+		echo world >world &&
+		git add world &&
+		git commit -m "O" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git switch A &&
+		git mv world tools/world &&
+		git commit -m "Move world into tools/" &&
+
+		git switch B &&
+		git mv tools/hello hello &&
+		git rm world &&
+		git commit -m "Move hello from tools/ to toplevel"
+	)
+}
+
+test_expect_failure '12n2: Directory rename transitively makes rename back to self' '
+	test_setup_12n2 &&
+	(
+		cd 12n2 &&
+
+		git checkout -q B^0 &&
+
+		test_might_fail git -c merge.directoryRenames=true merge A^0 >out &&
+
+		# Should have 1 entry for hello, and either 0 or 2 for world
+		#
+		# NOTE: Since merge.directoryRenames=true, there is no path
+		# conflict for world vs. tools/world; it should end up at
+		# world.  The fact that world was unmodified on side A, means
+		# there was no content conflict; we should just take the
+		# content from side B -- i.e. delete the file.  So merging
+		# could just delete world.
+		#
+		# However, rename-to-self-via-directory-rename is a bit more
+		# challenging.  Relax this test to allow world to be treated
+		# as a modify/delete conflict as well, meaning it will have
+		# two higher order stages, that just so happen to match.
+		#
+		test_stdout_line_count = 1 git ls-files -s hello &&
+		test_stdout_line_count = 2 git ls-files -s world &&
+		test_grep "CONFLICT (modify/delete).*world deleted in HEAD" out
 	)
 '
 
