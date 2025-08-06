@@ -2163,7 +2163,7 @@ static int handle_content_merge(struct merge_options *opt,
 		/*
 		 * FIXME: If opt->priv->call_depth && !clean, then we really
 		 * should not make result->mode match either a->mode or
-		 * b->mode; that causes t6036 "check conflicting mode for
+		 * b->mode; that causes t6416 "check conflicting mode for
 		 * regular file" to fail.  It would be best to use some other
 		 * mode, but we'll confuse all kinds of stuff if we use one
 		 * where S_ISREG(result->mode) isn't true, and if we use
@@ -2520,7 +2520,7 @@ static void compute_collisions(struct strmap *collisions,
 	 * happening, and fall back to no-directory-rename detection
 	 * behavior for those paths.
 	 *
-	 * See testcases 9e and all of section 5 from t6043 for examples.
+	 * See testcases 9e and all of section 5 from t6423 for examples.
 	 */
 	for (i = 0; i < pairs->nr; ++i) {
 		struct strmap_entry *rename_info;
@@ -2618,7 +2618,7 @@ static char *check_for_directory_rename(struct merge_options *opt,
 	 * That's why otherinfo and dir_rename_exclusions is here.
 	 *
 	 * As it turns out, this also prevents N-way transient rename
-	 * confusion; See testcases 9c and 9d of t6043.
+	 * confusion; See testcases 9c and 9d of t6423.
 	 */
 	new_dir = rename_info->value; /* old_dir = rename_info->key; */
 	otherinfo = strmap_get_entry(dir_rename_exclusions, new_dir);
