@@ -316,9 +316,14 @@ struct merge_options_internal {
 	 *     (e.g. "drivers/firmware/raspberrypi.c").
 	 *   * store all relevant paths in the repo, both directories and
 	 *     files (e.g. drivers, drivers/firmware would also be included)
-	 *   * these keys serve to intern all the path strings, which allows
-	 *     us to do pointer comparison on directory names instead of
-	 *     strcmp; we just have to be careful to use the interned strings.
+	 *   * these keys serve to intern *all* path strings, which allows us
+	 *     to do pointer comparisons on file & directory names instead of
+	 *     using strcmp; however, for this pointer-comparison optimization
+	 *     to work, any code path that independently computes a path needs
+	 *     to check for it existing in this strmap, and if so, point to
+	 *     the path in this strmap instead of their computed copy.  See
+	 *     the "reuse known pointer" comment in
+	 *     apply_directory_rename_modifications() for an example.
 	 *
 	 * The values of paths:
 	 *   * either a pointer to a merged_info, or a conflict_info struct
