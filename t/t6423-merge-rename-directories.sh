@@ -4747,6 +4747,7 @@ test_setup_12i () {
 		git switch B &&
 		git mv source/bar source/subdir/bar &&
 		echo more baz >>source/baz &&
+		git add source/baz &&
 		git commit -m B
 	)
 }
@@ -4771,7 +4772,7 @@ test_expect_success '12i: Directory rename causes rename-to-self' '
 		git status --porcelain -uno >actual &&
 		cat >expect <<-\EOF &&
 		UU source/bar
-		 M source/baz
+		M  source/baz
 		EOF
 		test_cmp expect actual
 	)
@@ -4806,6 +4807,7 @@ test_setup_12j () {
 		git switch B &&
 		git mv bar subdir/bar &&
 		echo more baz >>baz &&
+		git add baz &&
 		git commit -m B
 	)
 }
@@ -4830,7 +4832,7 @@ test_expect_success '12j: Directory rename to root causes rename-to-self' '
 		git status --porcelain -uno >actual &&
 		cat >expect <<-\EOF &&
 		UU bar
-		 M baz
+		M  baz
 		EOF
 		test_cmp expect actual
 	)
@@ -4865,6 +4867,7 @@ test_setup_12k () {
 		git switch B &&
 		git mv dirA/bar dirB/bar &&
 		echo more baz >>dirA/baz &&
+		git add dirA/baz &&
 		git commit -m B
 	)
 }
@@ -4889,7 +4892,7 @@ test_expect_success '12k: Directory rename with sibling causes rename-to-self' '
 		git status --porcelain -uno >actual &&
 		cat >expect <<-\EOF &&
 		UU dirA/bar
-		 M dirA/baz
+		M  dirA/baz
 		EOF
 		test_cmp expect actual
 	)
