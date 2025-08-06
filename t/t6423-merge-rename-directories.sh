@@ -4759,10 +4759,29 @@ test_expect_success '12i: Directory rename causes rename-to-self' '
 
 		git checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 &&
+		# NOTE: A potentially better resolution would be for
+		#     source/bar -> source/subdir/bar
+		# to use the directory rename to become
+		#     source/bar -> source/bar
+		# (a rename to self), and thus we end up with bar with
+		# a path conflict (given merge.directoryRenames=conflict).
+		# However, since the relevant renames optimization
+		# prevents us from noticing
+		#     source/bar -> source/subdir/bar
+		# as a rename and looking at it just as
+		#     delete source/bar
+		#     add source/subdir/bar
+		# the directory rename of source/subdir/bar -> source/bar does
+		# not look like a rename-to-self situation but a
+		# rename-on-top-of-other-file situation.  We do not want
+		# stage 1 entries from an unrelated file, so we expect an
+		# error about there being a file in the way.
 
-		test_path_is_missing source/subdir &&
-		test_path_is_file source/bar &&
+		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 >out &&
+
+		grep "CONFLICT (implicit dir rename).*source/bar in the way" out &&
+		test_path_is_missing source/bar &&
+		test_path_is_file source/subdir/bar &&
 		test_path_is_file source/baz &&
 
 		git ls-files >actual &&
@@ -4771,8 +4790,8 @@ test_expect_success '12i: Directory rename causes rename-to-self' '
 
 		git status --porcelain -uno >actual &&
 		cat >expect <<-\EOF &&
-		UU source/bar
 		M  source/baz
+		R  source/bar -> source/subdir/bar
 		EOF
 		test_cmp expect actual
 	)
@@ -4882,10 +4901,29 @@ test_expect_success '12j: Directory rename to root causes rename-to-self' '
 
 		git checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 &&
+		# NOTE: A potentially better resolution would be for
+		#     bar -> subdir/bar
+		# to use the directory rename to become
+		#     bar -> bar
+		# (a rename to self), and thus we end up with bar with
+		# a path conflict (given merge.directoryRenames=conflict).
+		# However, since the relevant renames optimization
+		# prevents us from noticing
+		#     bar -> subdir/bar
+		# as a rename and looking at it just as
+		#     delete bar
+		#     add subdir/bar
+		# the directory rename of subdir/bar -> bar does not look
+		# like a rename-to-self situation but a
+		# rename-on-top-of-other-file situation.  We do not want
+		# stage 1 entries from an unrelated file, so we expect an
+		# error about there being a file in the way.
 
-		test_path_is_missing subdir &&
-		test_path_is_file bar &&
+		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 >out &&
+		grep "CONFLICT (implicit dir rename).*bar in the way" out &&
+
+		test_path_is_missing bar &&
+		test_path_is_file subdir/bar &&
 		test_path_is_file baz &&
 
 		git ls-files >actual &&
@@ -4894,8 +4932,8 @@ test_expect_success '12j: Directory rename to root causes rename-to-self' '
 
 		git status --porcelain -uno >actual &&
 		cat >expect <<-\EOF &&
-		UU bar
 		M  baz
+		R  bar -> subdir/bar
 		EOF
 		test_cmp expect actual
 	)
@@ -4942,10 +4980,29 @@ test_expect_success '12k: Directory rename with sibling causes rename-to-self' '
 
 		git checkout A^0 &&
 
-		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 &&
+		# NOTE: A potentially better resolution would be for
+		#     dirA/bar -> dirB/bar
+		# to use the directory rename (dirB/ -> dirA/) to become
+		#     dirA/bar -> dirA/bar
+		# (a rename to self), and thus we end up with bar with
+		# a path conflict (given merge.directoryRenames=conflict).
+		# However, since the relevant renames optimization
+		# prevents us from noticing
+		#     dirA/bar -> dirB/bar
+		# as a rename and looking at it just as
+		#     delete dirA/bar
+		#     add dirB/bar
+		# the directory rename of dirA/bar -> dirB/bar does
+		# not look like a rename-to-self situation but a
+		# rename-on-top-of-other-file situation.  We do not want
+		# stage 1 entries from an unrelated file, so we expect an
+		# error about there being a file in the way.
 
-		test_path_is_missing dirB &&
-		test_path_is_file dirA/bar &&
+		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 >out &&
+		grep "CONFLICT (implicit dir rename).*dirA/bar in the way" out &&
+
+		test_path_is_missing dirA/bar &&
+		test_path_is_file dirB/bar &&
 		test_path_is_file dirA/baz &&
 
 		git ls-files >actual &&
@@ -4954,8 +5011,8 @@ test_expect_success '12k: Directory rename with sibling causes rename-to-self' '
 
 		git status --porcelain -uno >actual &&
 		cat >expect <<-\EOF &&
-		UU dirA/bar
 		M  dirA/baz
+		R  dirA/bar -> dirB/bar
 		EOF
 		test_cmp expect actual
 	)
@@ -5258,6 +5315,276 @@ test_expect_success '12n2: Directory rename transitively makes rename back to se
 	)
 '
 
+# Testcase 12o, Directory rename hits other rename source; file still in way on same side
+#   Commit O:  A/file1_1
+#              A/stuff
+#              B/file1_2
+#              B/stuff
+#              C/other
+#   Commit A:  A/file1_1
+#              A/stuff
+#              B/stuff
+#              C/file1_2
+#              C/other
+#   Commit B:  D/file2_1
+#              A/stuff
+#              B/file1_2
+#              B/stuff
+#              A/other
+#   In words:
+#     A: rename B/file1_2 -> C/file1_2
+#     B: rename C/ -> A/
+#        rename A/file1_1 -> D/file2_1
+#   Rationale:
+#       A/stuff is unmodified, it shows up in final output
+#       B/stuff is unmodified, it shows up in final output
+#       C/other touched on one side (rename to A), so A/other shows up in output
+#       A/file1 is renamed to D/file2
+#       B/file1 -> C/file1 and even though C/ -> A/, A/file1 is
+#               "in the way" so we don't do the directory rename
+#   Expected:  A/stuff
+#              B/stuff
+#              A/other
+#              D/file2
+#              C/file1
+#              + CONFLICT (implicit dir rename): A/file1 in way of C/file1
+#
+
+test_setup_12o () {
+	git init 12o &&
+	(
+		cd 12o &&
+
+		mkdir -p A B C &&
+		echo 1 >A/file1 &&
+		echo 2 >B/file1 &&
+		echo other >C/other &&
+		echo Astuff >A/stuff &&
+		echo Bstuff >B/stuff &&
+		git add . &&
+		git commit -m "O" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git switch A &&
+		git mv B/file1 C/ &&
+		git add . &&
+		git commit -m "A" &&
+
+		git switch B &&
+		mkdir -p D &&
+		git mv A/file1 D/file2 &&
+		git mv C/other A/other &&
+		git add . &&
+		git commit -m "B"
+	)
+}
+
+test_expect_success '12o: Directory rename hits other rename source; file still in way on same side' '
+	test_setup_12o &&
+	(
+		cd 12o &&
+
+		git checkout -q A^0 &&
+
+		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 >out &&
+
+		test_stdout_line_count = 5 git ls-files -s &&
+		test_stdout_line_count = 1 git ls-files -s A/other &&
+		test_stdout_line_count = 1 git ls-files -s A/stuff &&
+		test_stdout_line_count = 1 git ls-files -s B/stuff &&
+		test_stdout_line_count = 1 git ls-files -s D/file2 &&
+
+		grep "CONFLICT (implicit dir rename).*Existing file/dir at A/file1 in the way" out &&
+		test_stdout_line_count = 1 git ls-files -s C/file1
+	)
+'
+
+# Testcase 12p, Directory rename hits other rename source; file still in way on other side
+#   Commit O:  A/file1_1
+#              A/stuff
+#              B/file1_2
+#              B/stuff
+#              C/other
+#   Commit A:  D/file2_1
+#              A/stuff
+#              B/stuff
+#              C/file1_2
+#              C/other
+#   Commit B:  A/file1_1
+#              A/stuff
+#              B/file1_2
+#              B/stuff
+#              A/other
+#   Short version:
+#     A: rename A/file1_1 -> D/file2_1
+#        rename B/file1_2 -> C/file1_2
+#     B: Rename C/ -> A/
+#   Rationale:
+#       A/stuff is unmodified, it shows up in final output
+#       B/stuff is unmodified, it shows up in final output
+#       C/other touched on one side (rename to A), so A/other shows up in output
+#       A/file1 is renamed to D/file2
+#       B/file1 -> C/file1 and even though C/ -> A/, A/file1 is
+#               "in the way" so we don't do the directory rename
+#   Expected:  A/stuff
+#              B/stuff
+#              A/other
+#              D/file2
+#              C/file1
+#              + CONFLICT (implicit dir rename): A/file1 in way of C/file1
+#
+
+test_setup_12p () {
+	git init 12p &&
+	(
+		cd 12p &&
+
+		mkdir -p A B C &&
+		echo 1 >A/file1 &&
+		echo 2 >B/file1 &&
+		echo other >C/other &&
+		echo Astuff >A/stuff &&
+		echo Bstuff >B/stuff &&
+		git add . &&
+		git commit -m "O" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git switch A &&
+		mkdir -p D &&
+		git mv A/file1 D/file2 &&
+		git mv B/file1 C/ &&
+		git add . &&
+		git commit -m "A" &&
+
+		git switch B &&
+		git mv C/other A/other &&
+		git add . &&
+		git commit -m "B"
+	)
+}
+
+test_expect_success '12p: Directory rename hits other rename source; file still in way on other side' '
+	test_setup_12p &&
+	(
+		cd 12p &&
+
+		git checkout -q A^0 &&
+
+		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 >out &&
+
+		test_stdout_line_count = 5 git ls-files -s &&
+		test_stdout_line_count = 1 git ls-files -s A/other &&
+		test_stdout_line_count = 1 git ls-files -s A/stuff &&
+		test_stdout_line_count = 1 git ls-files -s B/stuff &&
+		test_stdout_line_count = 1 git ls-files -s D/file2 &&
+
+		grep "CONFLICT (implicit dir rename).*Existing file/dir at A/file1 in the way" out &&
+		test_stdout_line_count = 1 git ls-files -s C/file1
+	)
+'
+
+# Testcase 12q, Directory rename hits other rename source; file removed though
+#   Commit O:  A/file1_1
+#              A/stuff
+#              B/file1_2
+#              B/stuff
+#              C/other
+#   Commit A:  A/stuff
+#              B/stuff
+#              C/file1_2
+#              C/other
+#   Commit B:  D/file2_1
+#              A/stuff
+#              B/file1_2
+#              B/stuff
+#              A/other
+#   In words:
+#     A: delete A/file1_1, rename B/file1_2 -> C/file1_2
+#     B: Rename C/ -> A/, rename A/file1_1 -> D/file2_1
+#   Rationale:
+#       A/stuff is unmodified, it shows up in final output
+#       B/stuff is unmodified, it shows up in final output
+#       C/other touched on one side (rename to A), so A/other shows up in output
+#       A/file1 is rename/delete to D/file2, so two stages for D/file2
+#       B/file1 -> C/file1 and even though C/ -> A/, A/file1 as a source was
+#               "in the way" (ish) so we don't do the directory rename
+#   Expected:  A/stuff
+#              B/stuff
+#              A/other
+#              D/file2 (two stages)
+#              C/file1
+#              + CONFLICT (implicit dir rename): A/file1 in way of C/file1
+#              + CONFLICT (rename/delete): D/file2
+#
+
+test_setup_12q () {
+	git init 12q &&
+	(
+		cd 12q &&
+
+		mkdir -p A B C &&
+		echo 1 >A/file1 &&
+		echo 2 >B/file1 &&
+		echo other >C/other &&
+		echo Astuff >A/stuff &&
+		echo Bstuff >B/stuff &&
+		git add . &&
+		git commit -m "O" &&
+
+		git branch O &&
+		git branch A &&
+		git branch B &&
+
+		git switch A &&
+		git rm A/file1 &&
+		git mv B/file1 C/ &&
+		git add . &&
+		git commit -m "A" &&
+
+		git switch B &&
+		mkdir -p D &&
+		git mv A/file1 D/file2 &&
+		git mv C/other A/other &&
+		git add . &&
+		git commit -m "B"
+	)
+}
+
+test_expect_success '12q: Directory rename hits other rename source; file removed though' '
+	test_setup_12q &&
+	(
+		cd 12q &&
+
+		git checkout -q A^0 &&
+
+		test_must_fail git -c merge.directoryRenames=conflict merge -s recursive B^0 >out &&
+
+		grep "CONFLICT (rename/delete).*A/file1.*D/file2" out &&
+		grep "CONFLICT (implicit dir rename).*Existing file/dir at A/file1 in the way" out &&
+
+		test_stdout_line_count = 6 git ls-files -s &&
+		test_stdout_line_count = 1 git ls-files -s A/other &&
+		test_stdout_line_count = 1 git ls-files -s A/stuff &&
+		test_stdout_line_count = 1 git ls-files -s B/stuff &&
+		test_stdout_line_count = 2 git ls-files -s D/file2 &&
+
+		# This is a slightly suboptimal resolution; allowing the
+		# rename of C/ -> A/ to affect C/file1 and further rename
+		# it to A/file1 would probably be preferable, but since
+		# A/file1 existed as the source of another rename, allowing
+		# the dir rename of C/file1 -> A/file1 would mean modifying
+		# the code so that renames do not adjust both their source
+		# and target paths in all cases.
+		! grep "CONFLICT (file location)" out &&
+		test_stdout_line_count = 1 git ls-files -s C/file1
+	)
+'
 
 ###########################################################################
 # SECTION 13: Checking informational and conflict messages

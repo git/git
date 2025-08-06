@@ -2318,14 +2318,20 @@ static char *apply_dir_rename(struct strmap_entry *rename_info,
 	return strbuf_detach(&new_path, NULL);
 }
 
-static int path_in_way(struct strmap *paths, const char *path, unsigned side_mask)
+static int path_in_way(struct strmap *paths,
+		       const char *path,
+		       unsigned side_mask,
+		       struct diff_filepair *p)
 {
 	struct merged_info *mi = strmap_get(paths, path);
 	struct conflict_info *ci;
 	if (!mi)
 		return 0;
 	INITIALIZE_CI(ci, mi);
-	return mi->clean || (side_mask & (ci->filemask | ci->dirmask));
+	return mi->clean || (side_mask & (ci->filemask | ci->dirmask))
+	  /* See testcases 12[npq] of t6423 for this next condition */
+			 || ((ci->filemask & 0x01) &&
+			     strcmp(p->one->path, path));
 }
 
 /*
@@ -2337,6 +2343,7 @@ static int path_in_way(struct strmap *paths, const char *path, unsigned side_mas
 static char *handle_path_level_conflicts(struct merge_options *opt,
 					 const char *path,
 					 unsigned side_index,
+					 struct diff_filepair *p,
 					 struct strmap_entry *rename_info,
 					 struct strmap *collisions)
 {
@@ -2371,7 +2378,7 @@ static char *handle_path_level_conflicts(struct merge_options *opt,
 	 */
 	if (c_info->reported_already) {
 		clean = 0;
-	} else if (path_in_way(&opt->priv->paths, new_path, 1 << side_index)) {
+	} else if (path_in_way(&opt->priv->paths, new_path, 1 << side_index, p)) {
 		c_info->reported_already = 1;
 		strbuf_add_separated_string_list(&collision_paths, ", ",
 						 &c_info->source_files);
@@ -2578,6 +2585,7 @@ static void free_collisions(struct strmap *collisions)
 static char *check_for_directory_rename(struct merge_options *opt,
 					const char *path,
 					unsigned side_index,
+					struct diff_filepair *p,
 					struct strmap *dir_renames,
 					struct strmap *dir_rename_exclusions,
 					struct strmap *collisions,
@@ -2634,7 +2642,7 @@ static char *check_for_directory_rename(struct merge_options *opt,
 		return NULL;
 	}
 
-	new_path = handle_path_level_conflicts(opt, path, side_index,
+	new_path = handle_path_level_conflicts(opt, path, side_index, p,
 					       rename_info,
 					       &collisions[side_index]);
 	*clean_merge &= (new_path != NULL);
@@ -3436,7 +3444,7 @@ static int collect_renames(struct merge_options *opt,
 		}
 
 		new_path = check_for_directory_rename(opt, p->two->path,
-						      side_index,
+						      side_index, p,
 						      dir_renames_for_side,
 						      rename_exclusions,
 						      collisions,
