@@ -265,8 +265,8 @@ void odb_add_to_alternates_file(struct object_database *odb,
  * recursive alternates it points to), but do not modify the on-disk alternates
  * file.
  */
-void odb_add_to_alternates_memory(struct object_database *odb,
-				  const char *dir);
+struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
+						const char *dir);
 
 /*
  * Read an object from the database. Returns the object data and assigns object
