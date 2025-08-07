@@ -723,7 +723,7 @@ int midx_preferred_pack(struct multi_pack_index *m, uint32_t *pack_int_id)
 	return 0;
 }
 
-int prepare_multi_pack_index_one(struct odb_source *source, int local)
+int prepare_multi_pack_index_one(struct odb_source *source)
 {
 	struct repository *r = source->odb->repo;
 
@@ -734,7 +734,8 @@ int prepare_multi_pack_index_one(struct odb_source *source, int local)
 	if (source->midx)
 		return 1;
 
-	source->midx = load_multi_pack_index(r, source->path, local);
+	source->midx = load_multi_pack_index(r, source->path,
+					     source->local);
 
 	return !!source->midx;
 }

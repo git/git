@@ -122,7 +122,7 @@ int fill_midx_entry(struct repository *r, const struct object_id *oid, struct pa
 int midx_contains_pack(struct multi_pack_index *m,
 		       const char *idx_or_pack_name);
 int midx_preferred_pack(struct multi_pack_index *m, uint32_t *pack_int_id);
-int prepare_multi_pack_index_one(struct odb_source *source, int local);
+int prepare_multi_pack_index_one(struct odb_source *source);
 
 /*
  * Variant of write_midx_file which writes a MIDX containing only the packs

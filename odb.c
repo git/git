@@ -176,6 +176,7 @@ static int link_alt_odb_entry(struct object_database *odb,
 
 	CALLOC_ARRAY(alternate, 1);
 	alternate->odb = odb;
+	alternate->local = false;
 	/* pathbuf.buf is already in r->objects->source_by_path */
 	alternate->path = strbuf_detach(&pathbuf, NULL);
 
