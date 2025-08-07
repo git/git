@@ -186,8 +186,8 @@ struct object_database *odb_new(struct repository *repo);
 void odb_clear(struct object_database *o);
 
 /*
- * Find source by its object directory path. Dies in case the source couldn't
- * be found.
+ * Find source by its object directory path. Returns a `NULL` pointer in case
+ * the source could not be found.
  */
 struct odb_source *odb_find_source(struct object_database *odb, const char *obj_dir);
 

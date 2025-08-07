@@ -917,6 +917,8 @@ static struct multi_pack_index *lookup_multi_pack_index(struct repository *r,
 							const char *object_dir)
 {
 	struct odb_source *source = odb_find_source(r->objects, object_dir);
+	if (!source)
+		die(_("could not find object directory matching %s"), object_dir);
 	return get_multi_pack_index(source);
 }
 
