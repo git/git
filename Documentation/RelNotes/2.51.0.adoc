@@ -297,6 +297,10 @@ including security updates, are included in this release.
    before.
    (merge 5ed8c5b465 kj/renamed-submodule later to maint).
 
+ * The deflate codepath in "git archive --format=zip" had a
+   longstanding bug coming from misuse of zlib API, which has been
+   corrected.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge b257adb571 lo/my-first-ow-doc-update later to maint).
    (merge 8b34b6a220 ly/sequencer-update-squash-is-fixup-only later to maint).
@@ -333,3 +337,5 @@ including security updates, are included in this release.
    (merge 3bdd897413 ms/meson-with-ancient-git-wo-ls-files-dedup later to maint).
    (merge cca758d324 kh/doc-fast-import-historical later to maint).
    (merge 9b0781196a jc/test-hashmap-is-still-here later to maint).
+   (merge 1bad05bacc jk/revert-squelch-compiler-warning later to maint).
+   (merge 3a7e783d9c dl/squelch-maybe-uninitialized later to maint).
