@@ -26,9 +26,9 @@
 #define MIDX_CHUNK_LARGE_OFFSET_WIDTH (sizeof(uint64_t))
 
 extern int midx_checksum_valid(struct multi_pack_index *m);
-extern void clear_midx_files_ext(const char *object_dir, const char *ext,
+extern void clear_midx_files_ext(struct odb_source *source, const char *ext,
 				 const char *keep_hash);
-extern void clear_incremental_midx_files_ext(const char *object_dir,
+extern void clear_incremental_midx_files_ext(struct odb_source *source,
 					     const char *ext,
 					     const char **keep_hashes,
 					     uint32_t hashes_nr);
@@ -112,6 +112,7 @@ struct write_midx_context {
 	struct string_list *to_include;
 
 	struct repository *repo;
+	struct odb_source *source;
 };
 
 static int should_include_pack(const struct write_midx_context *ctx,
@@ -648,7 +649,6 @@ static uint32_t *midx_pack_order(struct write_midx_context *ctx)
 }
 
 static void write_midx_reverse_index(struct write_midx_context *ctx,
-				     const char *object_dir,
 				     unsigned char *midx_hash)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -657,11 +657,10 @@ static void write_midx_reverse_index(struct write_midx_context *ctx,
 	trace2_region_enter("midx", "write_midx_reverse_index", ctx->repo);
 
 	if (ctx->incremental)
-		get_split_midx_filename_ext(ctx->repo->hash_algo, &buf,
-					    object_dir, midx_hash,
-					    MIDX_EXT_REV);
+		get_split_midx_filename_ext(ctx->source, &buf,
+					    midx_hash, MIDX_EXT_REV);
 	else
-		get_midx_filename_ext(ctx->repo->hash_algo, &buf, object_dir,
+		get_midx_filename_ext(ctx->source, &buf,
 				      midx_hash, MIDX_EXT_REV);
 
 	tmp_file = write_rev_file_order(ctx->repo, NULL, ctx->pack_order,
@@ -836,7 +835,6 @@ static struct commit **find_commits_for_midx_bitmap(uint32_t *indexed_commits_nr
 }
 
 static int write_midx_bitmap(struct write_midx_context *ctx,
-			     const char *object_dir,
 			     const unsigned char *midx_hash,
 			     struct packing_data *pdata,
 			     struct commit **commits,
@@ -852,12 +850,11 @@ static int write_midx_bitmap(struct write_midx_context *ctx,
 	trace2_region_enter("midx", "write_midx_bitmap", ctx->repo);
 
 	if (ctx->incremental)
-		get_split_midx_filename_ext(ctx->repo->hash_algo, &bitmap_name,
-					    object_dir, midx_hash,
-					    MIDX_EXT_BITMAP);
+		get_split_midx_filename_ext(ctx->source, &bitmap_name,
+					    midx_hash, MIDX_EXT_BITMAP);
 	else
-		get_midx_filename_ext(ctx->repo->hash_algo, &bitmap_name,
-				      object_dir, midx_hash, MIDX_EXT_BITMAP);
+		get_midx_filename_ext(ctx->source, &bitmap_name,
+				      midx_hash, MIDX_EXT_BITMAP);
 
 	if (flags & MIDX_WRITE_BITMAP_HASH_CACHE)
 		options |= BITMAP_OPT_HASH_CACHE;
@@ -981,11 +978,9 @@ static int link_midx_to_chain(struct multi_pack_index *m)
 	for (i = 0; i < ARRAY_SIZE(midx_exts); i++) {
 		const unsigned char *hash = get_midx_checksum(m);
 
-		get_midx_filename_ext(m->source->odb->repo->hash_algo, &from,
-				      m->source->path,
+		get_midx_filename_ext(m->source, &from,
 				      hash, midx_exts[i].non_split);
-		get_split_midx_filename_ext(m->source->odb->repo->hash_algo, &to,
-					    m->source->path, hash,
+		get_split_midx_filename_ext(m->source, &to, hash,
 					    midx_exts[i].split);
 
 		if (link(from.buf, to.buf) < 0 && errno != ENOENT) {
@@ -1023,16 +1018,16 @@ static void clear_midx_files(struct odb_source *source,
 	uint32_t i, j;
 
 	for (i = 0; i < ARRAY_SIZE(exts); i++) {
-		clear_incremental_midx_files_ext(source->path, exts[i],
+		clear_incremental_midx_files_ext(source, exts[i],
 						 hashes, hashes_nr);
 		for (j = 0; j < hashes_nr; j++)
-			clear_midx_files_ext(source->path, exts[i], hashes[j]);
+			clear_midx_files_ext(source, exts[i], hashes[j]);
 	}
 
 	if (incremental)
-		get_midx_filename(source->odb->repo->hash_algo, &buf, source->path);
+		get_midx_filename(source, &buf);
 	else
-		get_midx_chain_filename(&buf, source->path);
+		get_midx_chain_filename(source, &buf);
 
 	if (unlink(buf.buf) && errno != ENOENT)
 		die_errno(_("failed to clear multi-pack-index at %s"), buf.buf);
@@ -1065,6 +1060,7 @@ static int write_midx_internal(struct odb_source *source,
 	trace2_region_enter("midx", "write_midx_internal", r);
 
 	ctx.repo = r;
+	ctx.source = source;
 
 	ctx.incremental = !!(flags & MIDX_WRITE_INCREMENTAL);
 
@@ -1073,7 +1069,7 @@ static int write_midx_internal(struct odb_source *source,
 			    "%s/pack/multi-pack-index.d/tmp_midx_XXXXXX",
 			    source->path);
 	else
-		get_midx_filename(r->hash_algo, &midx_name, source->path);
+		get_midx_filename(source, &midx_name);
 	if (safe_create_leading_directories(r, midx_name.buf))
 		die_errno(_("unable to create leading directories of %s"),
 			  midx_name.buf);
@@ -1153,7 +1149,7 @@ static int write_midx_internal(struct odb_source *source,
 			 * corresponding bitmap (or one wasn't requested).
 			 */
 			if (!want_bitmap)
-				clear_midx_files_ext(source->path, "bitmap", NULL);
+				clear_midx_files_ext(source, "bitmap", NULL);
 			goto cleanup;
 		}
 	}
@@ -1321,7 +1317,7 @@ static int write_midx_internal(struct odb_source *source,
 	if (ctx.incremental) {
 		struct strbuf lock_name = STRBUF_INIT;
 
-		get_midx_chain_filename(&lock_name, source->path);
+		get_midx_chain_filename(source, &lock_name);
 		hold_lock_file_for_update(&lk, lock_name.buf, LOCK_DIE_ON_ERROR);
 		strbuf_release(&lock_name);
 
@@ -1384,7 +1380,7 @@ static int write_midx_internal(struct odb_source *source,
 
 	if (flags & MIDX_WRITE_REV_INDEX &&
 	    git_env_bool("GIT_TEST_MIDX_WRITE_REV", 0))
-		write_midx_reverse_index(&ctx, source->path, midx_hash);
+		write_midx_reverse_index(&ctx, midx_hash);
 
 	if (flags & MIDX_WRITE_BITMAP) {
 		struct packing_data pdata;
@@ -1407,7 +1403,7 @@ static int write_midx_internal(struct odb_source *source,
 		FREE_AND_NULL(ctx.entries);
 		ctx.entries_nr = 0;
 
-		if (write_midx_bitmap(&ctx, source->path,
+		if (write_midx_bitmap(&ctx,
 				      midx_hash, &pdata, commits, commits_nr,
 				      flags) < 0) {
 			error(_("could not write multi-pack bitmap"));
@@ -1440,8 +1436,8 @@ static int write_midx_internal(struct odb_source *source,
 		if (link_midx_to_chain(ctx.base_midx) < 0)
 			return -1;
 
-		get_split_midx_filename_ext(r->hash_algo, &final_midx_name,
-					    source->path, midx_hash, MIDX_EXT_MIDX);
+		get_split_midx_filename_ext(source, &final_midx_name,
+					    midx_hash, MIDX_EXT_MIDX);
 
 		if (rename_tempfile(&incr, final_midx_name.buf) < 0) {
 			error_errno(_("unable to rename new multi-pack-index layer"));

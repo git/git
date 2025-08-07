@@ -389,12 +389,12 @@ int load_midx_revindex(struct multi_pack_index *m)
 			   "source", "rev");
 
 	if (m->has_chain)
-		get_split_midx_filename_ext(m->source->odb->repo->hash_algo, &revindex_name,
-					    m->source->path, get_midx_checksum(m),
+		get_split_midx_filename_ext(m->source, &revindex_name,
+					    get_midx_checksum(m),
 					    MIDX_EXT_REV);
 	else
-		get_midx_filename_ext(m->source->odb->repo->hash_algo, &revindex_name,
-				      m->source->path, get_midx_checksum(m),
+		get_midx_filename_ext(m->source, &revindex_name,
+				      get_midx_checksum(m),
 				      MIDX_EXT_REV);
 
 	ret = load_revindex_from_disk(m->source->odb->repo->hash_algo,
