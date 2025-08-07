@@ -944,8 +944,7 @@ static int fill_packs_from_midx(struct write_midx_context *ctx,
 			 */
 			if (flags & MIDX_WRITE_REV_INDEX ||
 			    preferred_pack_name) {
-				if (prepare_midx_pack(ctx->repo, m,
-						      m->num_packs_in_base + i)) {
+				if (prepare_midx_pack(m, m->num_packs_in_base + i)) {
 					error(_("could not load pack"));
 					return 1;
 				}
@@ -1568,7 +1567,7 @@ int expire_midx_packs(struct repository *r, const char *object_dir, unsigned fla
 		if (count[i])
 			continue;
 
-		if (prepare_midx_pack(r, m, i))
+		if (prepare_midx_pack(m, i))
 			continue;
 
 		if (m->packs[i]->pack_keep || m->packs[i]->is_cruft)
@@ -1614,13 +1613,12 @@ static int compare_by_mtime(const void *a_, const void *b_)
 	return 0;
 }
 
-static int want_included_pack(struct repository *r,
-			      struct multi_pack_index *m,
+static int want_included_pack(struct multi_pack_index *m,
 			      int pack_kept_objects,
 			      uint32_t pack_int_id)
 {
 	struct packed_git *p;
-	if (prepare_midx_pack(r, m, pack_int_id))
+	if (prepare_midx_pack(m, pack_int_id))
 		return 0;
 	p = m->packs[pack_int_id];
 	if (!pack_kept_objects && p->pack_keep)
@@ -1642,7 +1640,7 @@ static void fill_included_packs_all(struct repository *r,
 	repo_config_get_bool(r, "repack.packkeptobjects", &pack_kept_objects);
 
 	for (i = 0; i < m->num_packs; i++) {
-		if (!want_included_pack(r, m, pack_kept_objects, i))
+		if (!want_included_pack(m, pack_kept_objects, i))
 			continue;
 
 		include_pack[i] = 1;
@@ -1666,7 +1664,7 @@ static void fill_included_packs_batch(struct repository *r,
 	for (i = 0; i < m->num_packs; i++) {
 		pack_info[i].pack_int_id = i;
 
-		if (prepare_midx_pack(r, m, i))
+		if (prepare_midx_pack(m, i))
 			continue;
 
 		pack_info[i].mtime = m->packs[i]->mtime;
@@ -1685,7 +1683,7 @@ static void fill_included_packs_batch(struct repository *r,
 		struct packed_git *p = m->packs[pack_int_id];
 		uint64_t expected_size;
 
-		if (!want_included_pack(r, m, pack_kept_objects, pack_int_id))
+		if (!want_included_pack(m, pack_kept_objects, pack_int_id))
 			continue;
 
 		/*

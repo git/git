@@ -1091,7 +1091,7 @@ struct packed_git *get_all_packs(struct repository *r)
 		if (!m)
 			continue;
 		for (uint32_t i = 0; i < m->num_packs + m->num_packs_in_base; i++)
-			prepare_midx_pack(r, m, i);
+			prepare_midx_pack(m, i);
 	}
 
 	return r->objects->packed_git;
@@ -2077,7 +2077,7 @@ int find_pack_entry(struct repository *r, const struct object_id *oid, struct pa
 	prepare_packed_git(r);
 
 	for (struct odb_source *source = r->objects->sources; source; source = source->next)
-		if (source->midx && fill_midx_entry(r, oid, e, source->midx))
+		if (source->midx && fill_midx_entry(source->midx, oid, e))
 			return 1;
 
 	if (!r->objects->packed_git)
