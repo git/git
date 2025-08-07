@@ -97,8 +97,8 @@ Performance, Internal Implementation, Development Support etc.
  * "git push" and "git fetch" are taught to update refs in batches to
    gain performance.
 
- * Some code paths in the "git prune" used to ignore passed in
-   repository object and used the_repository singleton instance
+ * Some code paths in "git prune" used to ignore the passed-in
+   repository object and used the `the_repository` singleton instance
    instead, which has been corrected.
 
  * Update ".clang-format" and ".editorconfig" to match our style guide
@@ -139,7 +139,7 @@ Performance, Internal Implementation, Development Support etc.
  * Redefine where the multi-pack-index sits in the object subsystem,
    which recently was restructured to allow multiple backends that
    support a single object source that belongs to one repository.  A
-   midx does span mulitple "object sources".
+   MIDX does span multiple "object sources".
 
  * Reduce implicit assumption and dependence on the_repository in the
    object-file subsystem.
@@ -292,10 +292,14 @@ including security updates, are included in this release.
    and also they learn to honor the -U<n> command-line option.
    (merge 2b3ae04011 lm/add-p-context later to maint).
 
- * The case where a new submodule takes a path where used to be a
-   completely different subproject is now dealt a bit better than
+ * The case where a new submodule takes a path where there used to be a
+   completely different subproject is now dealt with a bit better than
    before.
    (merge 5ed8c5b465 kj/renamed-submodule later to maint).
+
+ * The deflate codepath in "git archive --format=zip" had a
+   longstanding bug coming from misuse of zlib API, which has been
+   corrected.
 
  * Other code cleanup, docfix, build fix, etc.
    (merge b257adb571 lo/my-first-ow-doc-update later to maint).
@@ -333,3 +337,5 @@ including security updates, are included in this release.
    (merge 3bdd897413 ms/meson-with-ancient-git-wo-ls-files-dedup later to maint).
    (merge cca758d324 kh/doc-fast-import-historical later to maint).
    (merge 9b0781196a jc/test-hashmap-is-still-here later to maint).
+   (merge 1bad05bacc jk/revert-squelch-compiler-warning later to maint).
+   (merge 3a7e783d9c dl/squelch-maybe-uninitialized later to maint).
