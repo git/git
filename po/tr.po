@@ -96,8 +96,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git Turkish Localization Project\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2025-05-29 11:02+0300\n"
-"PO-Revision-Date: 2025-05-29 12:00+0300\n"
+"POT-Creation-Date: 2025-08-14 16:38+0300\n"
+"PO-Revision-Date: 2025-08-14 16:45+0300\n"
 "Last-Translator: Emir SARI <emir_sari@icloud.com>\n"
 "Language-Team: Turkish (https://github.com/bitigchi/git-po/)\n"
 "Language: tr\n"
@@ -105,6 +105,10 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#, c-format
+msgid "%s cannot be negative"
+msgstr "%s negatif olamaz"
 
 #, c-format
 msgid "Huh (%s)?"
@@ -2009,6 +2013,10 @@ msgstr "Onları eklemeyi gerçekten istiyorsanız -f kullanın."
 
 msgid "adding files failed"
 msgstr "dosya ekleme başarısız"
+
+#, c-format
+msgid "'%s' cannot be negative"
+msgstr "'%s' negatif olamaz"
 
 #, c-format
 msgid "--chmod param '%s' must be either -x or +x"
@@ -5163,23 +5171,25 @@ msgstr ""
 
 msgid ""
 "git config get [<file-option>] [<display-option>] [--includes] [--all] [--"
-"regexp] [--value=<value>] [--fixed-value] [--default=<default>] <name>"
+"regexp] [--value=<pattern>] [--fixed-value] [--default=<default>] [--"
+"url=<url>] <name>"
 msgstr ""
-"git config get [<dosya-sçnği>] [<görüntü-sçnği>] [--includes] [--all] [--"
-"regexp] [--value=<değer>] [--fixed-value] [--default=<öntanımlı>] <ad>"
+"git config get [<dosya-seçeneği>] [<display-option>] [--includes] [--all] [--"
+"regexp] [--value=<dizgi>] [--fixed-value] [--default=<öntanımlı>] [--"
+"url=<url>] <ad>"
 
 msgid ""
-"git config set [<file-option>] [--type=<type>] [--all] [--value=<value>] [--"
-"fixed-value] <name> <value>"
+"git config set [<file-option>] [--type=<type>] [--all] [--value=<pattern>] "
+"[--fixed-value] <name> <value>"
 msgstr ""
-"git config set [<dosya-seçeneği>] [--type=<tür>] [--all] [--value=<değer>] "
+"git config set [<dosya-seçeneği>] [--type=<tür>] [--all] [--value=<dizgi>] "
 "[--fixed-value] <ad> <değer>"
 
 msgid ""
-"git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] "
+"git config unset [<file-option>] [--all] [--value=<pattern>] [--fixed-value] "
 "<name>"
 msgstr ""
-"git config unset [<dosya-seçeneği>] [--all] [--value=<değer>] [--fixed-"
+"git config unset [<dosya-seçeneği>] [--all] [--value=<dizgi>] [--fixed-"
 "value] <ad>"
 
 msgid "git config rename-section [<file-option>] <old-name> <new-name>"
@@ -5196,19 +5206,19 @@ msgstr "git config [<dosya-seçeneği>] --get-colorbool <ad> [<stdout-tty>]"
 
 msgid ""
 "git config get [<file-option>] [<display-option>] [--includes] [--all] [--"
-"regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] "
+"regexp=<regexp>] [--value=<pattern>] [--fixed-value] [--default=<default>] "
 "<name>"
 msgstr ""
-"git config get [<dosya-seçeneği>] [<görüntüleme-seçeneği>] [--includes] [--"
-"all] [--regexp=<düzenli-ifade>] [--value=<değer>] [--fixed-value] [--"
+"git config get [<dosya-seçeneği>] [<görüntü-seçeneği>] [--includes] [--all] "
+"[--regexp=<düzenli-ifade>] [--value=<dizgi>] [--fixed-value] [--"
 "default=<öntanımlı>] <ad>"
 
 msgid ""
 "git config set [<file-option>] [--type=<type>] [--comment=<message>] [--all] "
-"[--value=<value>] [--fixed-value] <name> <value>"
+"[--value=<pattern>] [--fixed-value] <name> <value>"
 msgstr ""
 "git config set [<dosya-seçeneği>] [--type=<tür>] [--comment=<ileti>] [--all] "
-"[--value=<değer>] [--fixed-value] <ad> <değer>"
+"[--value=<dizgi>] [--fixed-value] <ad> <değer>"
 
 msgid "Config file location"
 msgstr "Yapılandırma dosyası konumu"
@@ -6055,22 +6065,6 @@ msgstr "%s tüm gerekli nesneleri göndermedi"
 msgid "rejected %s because shallow roots are not allowed to be updated"
 msgstr "%s reddedildi; çünkü sığ köklerin güncellenmesine izin verilmiyor"
 
-#, c-format
-msgid ""
-"some local refs could not be updated; try running\n"
-" 'git remote prune %s' to remove any old, conflicting branches"
-msgstr ""
-"bazı yerel başvurular güncellenemedi; 'git remote prune %s'\n"
-"kullanarak eski ve çakışan dalları kaldırmayı deneyin"
-
-#, c-format
-msgid "   (%s will become dangling)"
-msgstr "   (%s sarkacak)"
-
-#, c-format
-msgid "   (%s has become dangling)"
-msgstr "   (%s sarkmaya başladı)"
-
 msgid "[deleted]"
 msgstr "[silindi]"
 
@@ -6111,6 +6105,18 @@ msgstr ""
 "'git config set remote.%s.followRemoteHEAD warn-if-not-branch-%s'\n"
 "komutunu çalıştırmak, uyarıyı HEAD'e veya başka bir şeye uzaktan\n"
 "değişiklik olana dek devre dışı bırakır."
+
+#, c-format
+msgid ""
+"some local refs could not be updated; try running\n"
+" 'git remote prune %s' to remove any old, conflicting branches"
+msgstr ""
+"bazı yerel başvurular güncellenemedi; 'git remote prune %s'\n"
+"kullanarak eski ve çakışan dalları kaldırmayı deneyin"
+
+#, c-format
+msgid "fetching ref %s failed: %s"
+msgstr "%s başvurusu getirilemedi: %s"
 
 msgid "multiple branches detected, incompatible with --set-upstream"
 msgstr "birden çok dal algılandı, --set-upstream ile uyumsuz"
@@ -6355,6 +6361,9 @@ msgstr "git for-each-ref [--merged [<işleme>]] [--no-merged [<işleme>]]"
 msgid "git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"
 msgstr "git for-each-ref [--contains [<işleme>]] [--no-contains [<işleme>]]"
 
+msgid "git for-each-ref [--start-after <marker>]"
+msgstr "git for-each-ref [--start-after <imleyici>]"
+
 msgid "quote placeholders suitably for shells"
 msgstr "yer tutucuları kabuğun anlayabileceği biçimde tırnak içine al"
 
@@ -6369,6 +6378,12 @@ msgstr "yer tutucuları Tcl'nin anlayabileceği biçimde tırnak içine al"
 
 msgid "show only <n> matched refs"
 msgstr "yalnızca <n> eşleşen başvuruyu göster"
+
+msgid "marker"
+msgstr "imleyici"
+
+msgid "start iteration after the provided marker"
+msgstr "yinelemeyi belirtilen imleyiciden sonra başlat"
 
 msgid "respect format colors"
 msgstr "biçim renklerine uy"
@@ -6394,8 +6409,14 @@ msgstr "başvuru dizgilerini stdin'den oku"
 msgid "also include HEAD ref and pseudorefs"
 msgstr "ayrıca HEAD ve yalancı başvuruları içer"
 
+msgid "cannot use --start-after with custom sort options"
+msgstr "özel sıralama seçenekleriyle --start-after kullanılamıyor"
+
 msgid "unknown arguments supplied with --stdin"
 msgstr "--stdin ile bilinmeyen argümanlar verilmiş"
+
+msgid "cannot use --start-after with patterns"
+msgstr "dizgilerle --start-after kullanılamıyor"
 
 msgid "git for-each-repo --config=<config> [--] <arguments>"
 msgstr "git for-each-repo --config=<yapılandırma> [--] <argümanlar>"
@@ -6792,6 +6813,9 @@ msgstr "en büyük paket dışındaki diğer tüm paketleri yeniden paketle"
 msgid "pack prefix to store a pack containing pruned objects"
 msgstr "budanan nesneler içeren paketi depolamak için paket öneki"
 
+msgid "skip maintenance tasks typically done in the foreground"
+msgstr "genelde ön planda yapılan bakım görevlerini atla"
+
 #, c-format
 msgid "failed to parse gc.logExpiry value %s"
 msgstr "gc.logExpiry değeri %s ayrıştırılamadı"
@@ -6863,12 +6887,12 @@ msgstr ""
 "incremental-repack görevi atlanıyor; çünkü core.multiPackIndex devre dışı"
 
 #, c-format
-msgid "lock file '%s' exists, skipping maintenance"
-msgstr "kilit dosyası '%s' var, bakım atlanıyor"
-
-#, c-format
 msgid "task '%s' failed"
 msgstr "'%s' görevi başarısız oldu"
+
+#, c-format
+msgid "lock file '%s' exists, skipping maintenance"
+msgstr "kilit dosyası '%s' var, bakım atlanıyor"
 
 #, c-format
 msgid "'%s' is not a valid task"
@@ -6898,9 +6922,6 @@ msgstr "görev"
 
 msgid "run a specific task"
 msgstr "belirli bir görevi çalıştır"
-
-msgid "use at most one of --auto and --schedule=<frequency>"
-msgstr "tek kezde --auto ve --schedule=<sıklık>'tan birini kullan"
 
 #, c-format
 msgid "unable to add '%s' value of '%s'"
@@ -7779,10 +7800,6 @@ msgid "-L<range>:<file> cannot be used with pathspec"
 msgstr "-L<erim>:<dosya>, yol belirteci ile kullanılamıyor"
 
 #, c-format
-msgid "Final output: %d %s\n"
-msgstr "Son çıktı: %d %s\n"
-
-#, c-format
 msgid "git show %s: bad file"
 msgstr "git show %s: hatalı dosya"
 
@@ -8481,6 +8498,9 @@ msgstr "birleştirmenin sonunda bir diffstat göster"
 msgid "(synonym to --stat)"
 msgstr "(--stat eşanlamlısı)"
 
+msgid "show a compact-summary at the end of the merge"
+msgstr "birleştirmenin sonunda ufak bir özet göster"
+
 msgid "add (at most <n>) entries from shortlog to merge commit message"
 msgstr ""
 "kısa günlükten birleştirme işlemesi iletisine girdiler (en çok <n>) ekle"
@@ -8742,10 +8762,6 @@ msgstr "uyarı: etiket girdisi fsck'den geçemiyor: %s"
 #, c-format
 msgid "error: tag input does not pass fsck: %s"
 msgstr "hata: etiket girdisi fsck'den geçemiyor: %s"
-
-#, c-format
-msgid "%d (FSCK_IGNORE?) should never trigger this callback"
-msgstr "%d (FSCK_IGNORE?) hiçbir zaman bu geri çağırmayı tetiklememeli"
 
 #, c-format
 msgid "could not read tagged object '%s'"
@@ -9259,16 +9275,26 @@ msgstr "notları <not-bşvr>'ndan kullan"
 msgid "unknown subcommand: `%s'"
 msgstr "bilinmeyen altkomut: '%s'"
 
-msgid "git pack-objects --stdout [<options>] [< <ref-list> | < <object-list>]"
-msgstr ""
-"git pack-objects --stdout [<sçnklr>] [< <başvuru-listesi> | < <nesne-"
-"listesi>]"
-
 msgid ""
-"git pack-objects [<options>] <base-name> [< <ref-list> | < <object-list>]"
+"git pack-objects [-q | --progress | --all-progress] [--all-progress-"
+"implied]\n"
+"                 [--no-reuse-delta] [--delta-base-offset] [--non-empty]\n"
+"                 [--local] [--incremental] [--window=<n>] [--depth=<n>]\n"
+"                 [--revs [--unpacked | --all]] [--keep-pack=<pack-name>]\n"
+"                 [--cruft] [--cruft-expiration=<time>]\n"
+"                 [--stdout [--filter=<filter-spec>] | <base-name>]\n"
+"                 [--shallow] [--keep-true-parents] [--[no-]sparse]\n"
+"                 [--name-hash-version=<n>] [--path-walk] < <object-list>"
 msgstr ""
-"git pack-objects [<sçnklr>] <temel-ad> [< <bşvru-listesi> | < <nesne-"
-"listesi>]"
+"git pack-objects [-q | --progress | --all-progress]\n"
+"                 [--all-progress-implied] [--no-reuse-delta]\n"
+"                 [--delta-base-offset] [--non-empty]\n"
+"                 [--local] [--incremental] [--window=<n>] [--depth=<n>]\n"
+"                 [--revs [--unpacked | --all]] [--keep-pack=<paket-adı>]\n"
+"                 [--cruft] [--cruft-expiration=<zaman>]\n"
+"                 [--stdout [--filter=<süzgeç-belirtimi>] | <taban-adı>]\n"
+"                 [--shallow] [--keep-true-parents] [--[no-]sparse]\n"
+"                 [--name-hash-version=<n>] [--path-walk] < <nesne-listesi>"
 
 #, c-format
 msgid "invalid --name-hash-version option: %d"
@@ -9373,6 +9399,15 @@ msgstr "%s etiketinden ulaşılabilir nesneler paketlenemiyor"
 msgid "unable to get type of object %s"
 msgstr "%s nesnesinin türü alınamıyor"
 
+msgid "Compressing objects by path"
+msgstr "Nesneler yola göre sıkıştırılıyor"
+
+#, c-format
+msgid "Path-based delta compression using up to %d thread"
+msgid_plural "Path-based delta compression using up to %d threads"
+msgstr[0] "Yol tabanlı delta sıkıştırması %d iş parçacığı kullanıyor"
+msgstr[1] "Yol tabanlı delta sıkıştırması %d iş parçacığı kullanıyor"
+
 msgid "Compressing objects"
 msgstr "Nesneler sıkıştırılıyor"
 
@@ -9447,6 +9482,9 @@ msgstr "%s konumundaki gevşek nesne incelenemedi"
 
 msgid "unable to force loose object"
 msgstr "gevşek nesne zorlanamıyor"
+
+msgid "failed to pack objects via path-walk"
+msgstr "path-walk ile nesneler paketlenemedi"
 
 #, c-format
 msgid "not a rev '%s'"
@@ -9557,6 +9595,9 @@ msgstr "aralıklı ulaşılabilirlik algoritmasını kullan"
 msgid "create thin packs"
 msgstr "ince paketler oluştur"
 
+msgid "use the path-walk API to walk objects when possible"
+msgstr "olursa nesneleri yürütmek için path-walk API'sini kullan"
+
 msgid "create packs suitable for shallow fetches"
 msgstr "sığ getirmelere uygun paketler oluştur"
 
@@ -9614,6 +9655,10 @@ msgid "pack.deltaCacheLimit is too high, forcing %d"
 msgstr "pack.deltaCacheLimit çok yüksek, %d zorlanıyor"
 
 #, c-format
+msgid "cannot use %s with %s"
+msgstr "%s, %s ile kullanılamıyor"
+
+#, c-format
 msgid "bad pack compression level %d"
 msgstr "hatalı paket sıkıştırma düzeyi %d"
 
@@ -9626,17 +9671,11 @@ msgstr "olabilecek en küçük paket boyutu limiti 1 MiB'dır"
 msgid "--thin cannot be used to build an indexable pack"
 msgstr "--thin bir indekslenebilir paket yapımında kullanılamaz"
 
-msgid "cannot use --filter with --stdin-packs"
-msgstr "--filter, --stdin-packs ile birlikte kullanılamıyor"
-
 msgid "cannot use internal rev list with --stdin-packs"
 msgstr "iç revizyon listeleri, --stdin-packs ile birlikte kullanılamıyor"
 
 msgid "cannot use internal rev list with --cruft"
 msgstr "iç revizyon listeleri, --cruft ile birlikte kullanılamıyor"
-
-msgid "cannot use --stdin-packs with --cruft"
-msgstr "--stdin-packs, --cruft ile birlikte kullanılamıyor"
 
 msgid "Enumerating objects"
 msgstr "Nesneler ortaya dökülüyor"
@@ -9648,23 +9687,6 @@ msgid ""
 msgstr ""
 "Toplam %<PRIu32> (delta %<PRIu32>), yeniden kullanılan %<PRIu32> (delta "
 "%<PRIu32>), yeniden kullanılan paket %<PRIu32> (%<PRIuMAX> konumundan)"
-
-msgid ""
-"'git pack-redundant' is nominated for removal.\n"
-"If you still use this command, please add an extra\n"
-"option, '--i-still-use-this', on the command line\n"
-"and let us know you still use it by sending an e-mail\n"
-"to <git@vger.kernel.org>.  Thanks.\n"
-msgstr ""
-"'git pack-redundant' komutu kaldırma için aday\n"
-"gösterildi. Bu komutu hâlâ kullanıyorsanız lütfen\n"
-"komut satırında '--i-still-use-this' ek seçeneğini\n"
-"kullanın ve bunu hâlâ kullandığınızı\n"
-"<git@vger.kernel.org> adresine bir e-posta atarak\n"
-"bize haber verin. Sağ olun.\n"
-
-msgid "refusing to run without --i-still-use-this"
-msgstr "--i-still-use-this olmadan çalıştırma reddediliyor"
 
 msgid ""
 "git pack-refs [--all] [--no-prune] [--auto] [--include <pattern>] [--exclude "
@@ -10958,6 +10980,14 @@ msgstr ""
 msgid "unknown --mirror argument: %s"
 msgstr "bilinmeyen --mirror argümanı: %s"
 
+#, c-format
+msgid "remote name '%s' is a subset of existing remote '%s'"
+msgstr "uzak konum adı '%s', var olan '%s' uzak konumunun bir alt kümesi"
+
+#, c-format
+msgid "remote name '%s' is a superset of existing remote '%s'"
+msgstr "uzak konum adı '%s', var olan '%s' uzak konumunun bir üst kümesi"
+
 msgid "fetch the remote branches"
 msgstr "uzak konum dallarını getir"
 
@@ -11264,14 +11294,6 @@ msgid "Could not set up %s"
 msgstr "%s ayarlanamadı"
 
 #, c-format
-msgid " %s will become dangling!"
-msgstr " %s sarkacak!"
-
-#, c-format
-msgid " %s has become dangling!"
-msgstr " %s sarkmaya başladı!"
-
-#, c-format
 msgid "Pruning %s"
 msgstr "%s budanıyor"
 
@@ -11335,11 +11357,11 @@ msgstr "ayrıntılı anlat; bir altkomuttan önce yerleştirilmelidir"
 msgid ""
 "git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
 "[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>]\n"
-"[--write-midx] [--name-hash-version=<n>]"
+"[--write-midx] [--name-hash-version=<n>] [--path-walk]"
 msgstr ""
 "git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
 "[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<paket-adı>]\n"
-"[--write-midx] [--name-hash-version=<n>]"
+"[--write-midx] [--name-hash-version=<n>] [--path-walk]"
 
 msgid ""
 "Incremental repacks are incompatible with bitmap indexes.  Use\n"
@@ -11420,6 +11442,9 @@ msgid ""
 "specify the name hash version to use for grouping similar objects by path"
 msgstr ""
 "benzer nesneleri yola göre gruplamada kullanılacak name-hash sürümünü belirt"
+
+msgid "pass --path-walk to git-pack-objects"
+msgstr "--path-walk'ı 'git-pack-objects'e geçir"
 
 msgid "do not run git-update-server-info"
 msgstr "'git-update-server-info' çalıştırma"
@@ -12571,16 +12596,22 @@ msgstr ""
 msgid "git stash create [<message>]"
 msgstr "git stash create [<ileti>]"
 
+msgid "git stash export (--print | --to-ref <ref>) [<stash>...]"
+msgstr "git stash export (--print | --to-ref <başvuru>) [<zula>...]"
+
+msgid "git stash import <commit>"
+msgstr "git stash import [<işleme>]"
+
 #, c-format
 msgid "'%s' is not a stash-like commit"
 msgstr "'%s' zulaya benzer bir işleme değil"
 
+msgid "No stash entries found."
+msgstr "Zula girdisi bulunamadı."
+
 #, c-format
 msgid "Too many revisions specified:%s"
 msgstr "Çok fazla revizyon belirtildi:%s"
-
-msgid "No stash entries found."
-msgstr "Zula girdisi bulunamadı."
 
 #, c-format
 msgid "%s is not a valid reference"
@@ -12733,19 +12764,74 @@ msgstr "zulada izlenmeyen dosyaları içer"
 msgid "include ignore files"
 msgstr "yok sayma dosyalarını içer"
 
+#, c-format
+msgid "cannot parse commit %s"
+msgstr "%s işlemesi ayrıştırılamıyor"
+
+#, c-format
+msgid "invalid author or committer for %s"
+msgstr "%s için geçersiz yazar veya işleyici"
+
+msgid "could not write commit"
+msgstr "işleme yazılamadı"
+
+#, c-format
+msgid "not a valid revision: %s"
+msgstr "geçerli bir revizyon değil: %s"
+
+#, c-format
+msgid "not a commit: %s"
+msgstr "bir işleme değil: %s"
+
+#, c-format
+msgid "%s is not a valid exported stash commit"
+msgstr "%s, geçerli bir dışa aktarılmış zula işlemesi değil"
+
+#, c-format
+msgid "found root commit %s with invalid data"
+msgstr "geçersiz veriyle %s kök işlemesi bulundu"
+
+#, c-format
+msgid "found stash commit %s without expected prefix"
+msgstr "beklenen öneksiz %s zula işlemesi bulundu"
+
+#, c-format
+msgid "cannot parse parents of commit: %s"
+msgstr "işlemenin üst ögesi ayrıştırılamıyor: %s"
+
+#, c-format
+msgid "%s does not look like a stash commit"
+msgstr "%s, bir zula işlemesi gibi görünmüyor"
+
+#, c-format
+msgid "cannot read commit buffer for %s"
+msgstr "%s için işleme arabelleği okunamıyor"
+
+#, c-format
+msgid "cannot save the stash for %s"
+msgstr "%s için zula kaydedilemiyor"
+
+msgid "unable to write base commit"
+msgstr "taban işleme yazılamıyor"
+
+#, c-format
+msgid "unable to find stash entry %s"
+msgstr "zula girdisi %s bulunamıyor"
+
+msgid "print the object ID instead of writing it to a ref"
+msgstr "başvuruya yazmak yerine nesne kimliğini yazdır"
+
+msgid "save the data to the given ref"
+msgstr "veriyi verilen başvuruya kaydet"
+
+msgid "exactly one of --print and --to-ref is required"
+msgstr "tam olarak --print veya --to-ref arasından biri gerekiyor"
+
 msgid "skip and remove all lines starting with comment character"
 msgstr "yorum karakteri ile başlayan tüm satırları atla ve kaldır"
 
 msgid "prepend comment character and space to each line"
 msgstr "her satırın başına yorum karakteri ve boşluk koy"
-
-#, c-format
-msgid "Expecting a full ref name, got %s"
-msgstr "Tam bir başvuru adı bekleniyordu, %s alındı"
-
-#, c-format
-msgid "could not get a repository handle for submodule '%s'"
-msgstr "'%s' altmodülü için depo tutacağı alınamadı"
 
 #, c-format
 msgid ""
@@ -12754,6 +12840,10 @@ msgid ""
 msgstr ""
 "'%s' yapılandırması aranamadı. Bu deponun kendi yetkili üstkaynağı olduğu "
 "varsayılıyor."
+
+#, c-format
+msgid "could not get a repository handle for submodule '%s'"
+msgstr "'%s' altmodülü için depo tutacağı alınamadı"
 
 #, c-format
 msgid "No url found for submodule path '%s' in .gitmodules"
@@ -13104,6 +13194,10 @@ msgstr ""
 "ancak üst proje, herhangi bir dalda değil"
 
 #, c-format
+msgid "Expecting a full ref name, got %s"
+msgstr "Tam bir başvuru adı bekleniyordu, %s alındı"
+
+#, c-format
 msgid "Unable to find current revision in submodule path '%s'"
 msgstr "'%s' altmodül yolunda geçerli revizyon bulunamadı"
 
@@ -13300,6 +13394,10 @@ msgstr ""
 #, c-format
 msgid "repo URL: '%s' must be absolute or begin with ./|../"
 msgstr "depo URL'si: '%s' mutlak olmalı veya ./|../ ile başlamalıdır"
+
+#, c-format
+msgid "submodule name '%s' already used for path '%s'"
+msgstr "altmodül adı '%s', halihazırda '%s' yolu için kullanılıyor"
 
 #, c-format
 msgid "'%s' is not a valid submodule name"
@@ -13922,10 +14020,6 @@ msgstr "Çalışma ağacı hazırlanıyor ('%s' dalı sıfırlanıyor; %s konumu
 #, c-format
 msgid "Preparing worktree (checking out '%s')"
 msgstr "Çalışma ağacı hazırlanıyor ('%s' çıkış yapılıyor)"
-
-#, c-format
-msgid "unreachable: invalid reference: %s"
-msgstr "erişilemiyor: geçersiz başvuru: %s"
 
 #, c-format
 msgid "Preparing worktree (detached HEAD %s)"
@@ -15524,14 +15618,6 @@ msgid "bad numeric config value '%s' for '%s' in %s: %s"
 msgstr "hatalı sayısal yapılandırma değeri '%s', '%s' için (%s içinde): %s"
 
 #, c-format
-msgid "invalid value for variable %s"
-msgstr "%s değişkeni için geçersiz değer"
-
-#, c-format
-msgid "ignoring unknown core.fsync component '%s'"
-msgstr "bilinmeyen core.fsync bileşeni '%s' yok sayılıyor"
-
-#, c-format
 msgid "bad boolean config value '%s' for '%s'"
 msgstr "hatalı Boole yapılandırma değeri '%s', '%s' için"
 
@@ -15542,44 +15628,6 @@ msgstr "şuradaki kullanıcı dizini genişletilemedi: '%s'"
 #, c-format
 msgid "'%s' for '%s' is not a valid timestamp"
 msgstr "%s', '%s' için geçerli bir zaman damgası değil"
-
-#, c-format
-msgid "abbrev length out of range: %d"
-msgstr "kısaltma uzunluğu erim dışında: %d"
-
-#, c-format
-msgid "bad zlib compression level %d"
-msgstr "hatalı zlib sıkıştırma düzeyi %d"
-
-#, c-format
-msgid "%s cannot contain newline"
-msgstr "%s yenisatır içeremez"
-
-#, c-format
-msgid "%s must have at least one character"
-msgstr "%s, en az bir karaktere iye olmalı"
-
-#, c-format
-msgid "ignoring unknown core.fsyncMethod value '%s'"
-msgstr "bilinmeyen core.fsyncMethod değeri '%s' yok sayılıyor"
-
-msgid "core.fsyncObjectFiles is deprecated; use core.fsync instead"
-msgstr "core.fsyncObjectFiles artık kullanılmıyor; yerine core.fsync kullanın"
-
-#, c-format
-msgid "invalid mode for object creation: %s"
-msgstr "nesne oluşturma için geçersiz kip: %s"
-
-#, c-format
-msgid "malformed value for %s"
-msgstr "%s için hatalı oluşturulmuş değer"
-
-#, c-format
-msgid "malformed value for %s: %s"
-msgstr "%s için hatalı oluşturulmuş değer: %s"
-
-msgid "must be one of nothing, matching, simple, upstream or current"
-msgstr "nothing, matching, simple, upstream veya current içinden biri olmalı"
 
 #, c-format
 msgid "unable to load config blob object '%s'"
@@ -16092,8 +16140,8 @@ msgstr "stdin, bir dizinle karşılaştırılamıyor"
 msgid "cannot compare a named pipe to a directory"
 msgstr "adlandırılmış bir veriyolu bir dizinle karşılaştırılamıyor"
 
-msgid "git diff --no-index [<options>] <path> <path>"
-msgstr "git diff --no-index [<seçenekler>] <yol> <yol>"
+msgid "git diff --no-index [<options>] <path> <path> [<pathspec>...]"
+msgstr "git diff --no-index [<seçenekler>] <yol> <yol> [<yol-belirteci>...]"
 
 msgid ""
 "Not a git repository. Use --no-index to compare two paths outside a working "
@@ -16101,6 +16149,13 @@ msgid ""
 msgstr ""
 "Bir git deposu değil. Bir çalışma ağacının dışındaki iki yolu karşılaştırmak "
 "için --no-index kullanın"
+
+msgid ""
+"Limiting comparison with pathspecs is only supported if both paths are "
+"directories."
+msgstr ""
+"Karşılaştırmayı yol belirteçleriyle sınırlamak yalnızca her iki yol da "
+"dizinse desteklenir."
 
 #, c-format
 msgid "  Failed to parse dirstat cut-off percentage '%s'\n"
@@ -16676,6 +16731,52 @@ msgstr "'%s' dosyasının bilgileri alınamadı"
 #, c-format
 msgid "bad git namespace path \"%s\""
 msgstr "hatalı git ad alanı yolu \"%s\""
+
+#, c-format
+msgid "invalid value for variable %s"
+msgstr "%s değişkeni için geçersiz değer"
+
+#, c-format
+msgid "ignoring unknown core.fsync component '%s'"
+msgstr "bilinmeyen core.fsync bileşeni '%s' yok sayılıyor"
+
+#, c-format
+msgid "abbrev length out of range: %d"
+msgstr "kısaltma uzunluğu erim dışında: %d"
+
+#, c-format
+msgid "bad zlib compression level %d"
+msgstr "hatalı zlib sıkıştırma düzeyi %d"
+
+#, c-format
+msgid "%s cannot contain newline"
+msgstr "%s yenisatır içeremez"
+
+#, c-format
+msgid "%s must have at least one character"
+msgstr "%s, en az bir karaktere iye olmalı"
+
+#, c-format
+msgid "ignoring unknown core.fsyncMethod value '%s'"
+msgstr "bilinmeyen core.fsyncMethod değeri '%s' yok sayılıyor"
+
+msgid "core.fsyncObjectFiles is deprecated; use core.fsync instead"
+msgstr "core.fsyncObjectFiles artık kullanılmıyor; yerine core.fsync kullanın"
+
+#, c-format
+msgid "invalid mode for object creation: %s"
+msgstr "nesne oluşturma için geçersiz kip: %s"
+
+#, c-format
+msgid "malformed value for %s"
+msgstr "%s için hatalı oluşturulmuş değer"
+
+#, c-format
+msgid "malformed value for %s: %s"
+msgstr "%s için hatalı oluşturulmuş değer: %s"
+
+msgid "must be one of nothing, matching, simple, upstream or current"
+msgstr "nothing, matching, simple, upstream veya current içinden biri olmalı"
 
 #, c-format
 msgid "too many args to run %s"
@@ -17386,6 +17487,30 @@ msgstr "boş tanımlayıcı adına (<%s> için) izin verilmiyor"
 #, c-format
 msgid "name consists only of disallowed characters: %s"
 msgstr "ad yalnızca izin verilmeyen karakterlerden oluşuyor: %s"
+
+msgid "git imap-send [-v] [-q] [--[no-]curl] [(--folder|-f) <folder>] < <mbox>"
+msgstr ""
+"git imap-send [-v] [-q] [--[no-]curl] [(--folder|-f) <klasör>] < <mbox>"
+
+msgid "no IMAP host specified"
+msgstr "belirtilmiş IMAP makinesi yok"
+
+msgid ""
+"set the IMAP host with 'git config imap.host <host>'.\n"
+"(e.g., 'git config imap.host imaps://imap.example.com')"
+msgstr ""
+"IMAP makinesini 'git config imap.host <makine>' ile ayarlayın.\n"
+"Örneğin, 'git config imap.host imaps://imap.example.com'."
+
+msgid "no IMAP folder specified"
+msgstr "belirtilmiş IMAP klasörü yok"
+
+msgid ""
+"set the target folder with 'git config imap.folder <folder>'.\n"
+"(e.g., 'git config imap.folder Drafts')"
+msgstr ""
+"Hedef klasörü 'git config imap.folder <klasör>' ile ayarlayın.\n"
+"Örneğin, 'git config imap.folder Taslaklar'."
 
 msgid "expected 'tree:<depth>'"
 msgstr "'tree:<derinlik>' bekleniyordu"
@@ -18345,6 +18470,26 @@ msgid "invalid object name '%.*s'."
 msgstr "geçersiz nesne adı: '%.*s'."
 
 #, c-format
+msgid "invalid object type \"%s\""
+msgstr "geçersiz nesne türü \"%s\""
+
+#, c-format
+msgid "object %s is a %s, not a %s"
+msgstr "%s nesnesi bir %s, %s değil"
+
+#, c-format
+msgid "object %s has unknown type id %d"
+msgstr "%s nesnesi %d bilinmeyen tür numarasına iye"
+
+#, c-format
+msgid "unable to parse object: %s"
+msgstr "nesne ayrıştırılamıyor: %s"
+
+#, c-format
+msgid "hash mismatch %s"
+msgstr "sağlama uyuşmazlığı %s"
+
+#, c-format
 msgid "object directory %s does not exist; check .git/objects/info/alternates"
 msgstr "nesne dizini %s yok; şurayı denetleyin: .git/objects/info/alternates"
 
@@ -18411,26 +18556,6 @@ msgid "%s is not a valid '%s' object"
 msgstr "%s geçerli bir '%s' nesnesi değil"
 
 #, c-format
-msgid "invalid object type \"%s\""
-msgstr "geçersiz nesne türü \"%s\""
-
-#, c-format
-msgid "object %s is a %s, not a %s"
-msgstr "%s nesnesi bir %s, %s değil"
-
-#, c-format
-msgid "object %s has unknown type id %d"
-msgstr "%s nesnesi %d bilinmeyen tür numarasına iye"
-
-#, c-format
-msgid "unable to parse object: %s"
-msgstr "nesne ayrıştırılamıyor: %s"
-
-#, c-format
-msgid "hash mismatch %s"
-msgstr "sağlama uyuşmazlığı %s"
-
-#, c-format
 msgid "duplicate entry when writing bitmap index: %s"
 msgstr "biteşlem indeksi yazılırken yinelenen girdi: %s"
 
@@ -18440,9 +18565,6 @@ msgstr "seçili olmayan işleme yazılmaya çalışıldı: '%s'"
 
 msgid "too many pseudo-merges"
 msgstr "pek çok yalancı birleştirme"
-
-msgid "trying to write commit not in index"
-msgstr "indekste olmayan işleme yazılmaya çalışılıyor"
 
 msgid "failed to load bitmap index (corrupted?)"
 msgstr "biteşlem indeksi yüklenemedi (hasarlı mı?)"
@@ -18687,6 +18809,10 @@ msgstr "%s bir değer almıyor"
 #, c-format
 msgid "%s isn't available"
 msgstr "%s kullanılabilir değil"
+
+#, c-format
+msgid "value for %s exceeds %<PRIdMAX>"
+msgstr "%s için olan değer, %<PRIdMAX> değerini aşıyor"
 
 #, c-format
 msgid "value %s for %s not in range [%<PRIdMAX>,%<PRIdMAX>]"
@@ -19652,6 +19778,14 @@ msgstr "'%s' için başvuru günlüğü yok"
 #, c-format
 msgid "%s does not point to a valid object!"
 msgstr "%s geçerli bir nesneye işaret etmiyor!"
+
+#, c-format
+msgid "%s%s will become dangling after %s is deleted\n"
+msgstr "%s%s, %s silindikten sonra sarkacak\n"
+
+#, c-format
+msgid "%s%s has become dangling after %s was deleted\n"
+msgstr "%s%s, %s silindikten sonra sarkmaya başladı\n"
 
 #, c-format
 msgid ""
@@ -21964,6 +22098,9 @@ msgstr "ağaç nesnelerinin içerilmesini aç/kapat"
 msgid "toggle pruning of uninteresting paths"
 msgstr "ilgisiz yolların budanmasını aç/kapat"
 
+msgid "toggle aggressive edge walk"
+msgstr "agresif kenar yürüyüşünü aç/kapat"
+
 msgid "read a pattern list over stdin"
 msgstr "stdin'den bir dizgi listesi oku"
 
@@ -22593,6 +22730,24 @@ msgstr "hata: "
 
 msgid "warning: "
 msgstr "uyarı: "
+
+#, c-format
+msgid ""
+"'%s' is nominated for removal.\n"
+"If you still use this command, please add an extra\n"
+"option, '--i-still-use-this', on the command line\n"
+"and let us know you still use it by sending an e-mail\n"
+"to <git@vger.kernel.org>.  Thanks.\n"
+msgstr ""
+"'%s' komutu, kaldırma için aday\n"
+"gösterildi. Bu komutu hâlâ kullanıyorsanız lütfen\n"
+"komut satırında '--i-still-use-this' ek seçeneğini\n"
+"kullanın ve bunu hâlâ kullandığınızı\n"
+"<git@vger.kernel.org> adresine bir e-posta atarak\n"
+"bize haber verin. Sağ olun.\n"
+
+msgid "refusing to run without --i-still-use-this"
+msgstr "--i-still-use-this olmadan çalıştırma reddediliyor"
 
 #, c-format
 msgid "uname() failed with error '%s' (%d)\n"
@@ -23504,6 +23659,10 @@ msgstr "(non-mbox) Cc: %s, '%s' satırından ekleniyor\n"
 #, perl-format
 msgid "(body) Adding cc: %s from line '%s'\n"
 msgstr "(body) Cc: %s, '%s' satırından ekleniyor\n"
+
+#, perl-format
+msgid "error: invalid SMTP port '%s'\n"
+msgstr "hata: geçersiz SMTP kapısı '%s'\n"
 
 #, perl-format
 msgid "(%s) Could not execute '%s'"
