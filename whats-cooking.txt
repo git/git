@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2025, #02; Mon, 4)
-X-master-at: 721c9e5ce7c6fa4e1a33490f5e5a81eeee814021
-X-next-at: 4a0f42376bc3acae592fbb921bd8940291ad0735
+Subject: What's cooking in git.git (Aug 2025, #03; Thu, 7)
+X-master-at: 2c2ba49d55ff26c1082b8137b1ec5eeccb4337d1
+X-next-at: 2494970778f053be8e9f6fac27ec13d4d9dbf65d
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2025, #02; Mon, 4)
+What's cooking in git.git (Aug 2025, #03; Thu, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -54,188 +54,140 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[New Topics]
+[Graduated to 'master']
 
-* dl/squelch-maybe-uninitialized (2025-08-04) 1 commit
- - fix -Wmaybe-uninitialized with -Og
+* dl/squelch-maybe-uninitialized (2025-08-04) 2 commits
+  (merged to 'next' on 2025-08-05 at fa3c3830ee)
+ + t/unit-tests/clar: fix -Wmaybe-uninitialized with -Og
+ + remote: bail early from set_head() if missing remote name
 
  Squelch false-positive compiler warning.
-
- Will merge to 'next'.
- source: <d03308e9474f5e26fd4a5494ec243a278e971443.1754302009.git.liu.denton@gmail.com>
+ source: <cover.1754371649.git.liu.denton@gmail.com>
 
 
 * jk/revert-squelch-compiler-warning (2025-08-04) 1 commit
- - revert: initialize const value
+  (merged to 'next' on 2025-08-05 at 344a6a715b)
+ + revert: initialize const value
 
  Squelch false-positive compiler warning.
-
- Will merge to 'next'.
  source: <20250804130011.GA93475@coredump.intra.peff.net>
 
+
+* jt/archive-zip-deflate-fix (2025-08-02) 1 commit
+  (merged to 'next' on 2025-08-06 at 1a5c1ccec3)
+ + archive: flush deflate stream until Z_STREAM_END
+
+ The deflate codepath in "git archive --format=zip" had a
+ longstanding bug coming from misuse of zlib API, which has been
+ corrected.
+ source: <20250802220803.95137-1-jltobler@gmail.com>
+
+
+* kj/renamed-submodule (2025-07-24) 4 commits
+  (merged to 'next' on 2025-08-03 at c341b36545)
+ + fixup! submodule: skip redundant active entries when pattern covers path
+ + fixup! submodule: prevent overwriting .gitmodules on path reuse
+ + submodule: skip redundant active entries when pattern covers path
+ + submodule: prevent overwriting .gitmodules on path reuse
+
+ The case where a new submodule takes a path where used to be a
+ completely different subproject is now dealt a bit better than
+ before.
+ source: <20250724152418.45226-1-jayatheerthkulkarni2005@gmail.com>
+
+
+* ps/object-file-wo-the-repository (2025-07-16) 17 commits
+  (merged to 'next' on 2025-08-01 at 0c1253014e)
+ + object-file: get rid of `the_repository` in index-related functions
+ + object-file: get rid of `the_repository` in `force_object_loose()`
+ + object-file: get rid of `the_repository` in `read_loose_object()`
+ + object-file: get rid of `the_repository` in loose object iterators
+ + object-file: remove declaration for `for_each_file_in_obj_subdir()`
+ + object-file: inline `for_each_loose_file_in_objdir_buf()`
+ + object-file: get rid of `the_repository` when writing objects
+ + odb: introduce `odb_write_object()`
+ + loose: write loose objects map via their source
+ + object-file: get rid of `the_repository` in `finalize_object_file()`
+ + object-file: get rid of `the_repository` in `loose_object_info()`
+ + object-file: get rid of `the_repository` when freshening objects
+ + object-file: inline `check_and_freshen()` functions
+ + object-file: get rid of `the_repository` in `has_loose_object()`
+ + object-file: stop using `the_hash_algo`
+ + object-file: fix -Wsign-compare warnings
+ + Merge branch 'ps/object-store' into ps/object-file-wo-the-repository
+
+ Reduce implicit assumption and dependence on the_repository in the
+ object-file subsystem.
+ cf. <87ms8na1mc.fsf@iotcl.com>
+ cf. <aIhm_nqiH8Sci12i@pks.im>
+ source: <20250717-pks-object-file-wo-the-repository-v2-0-36d2cd6c700e@pks.im>
+
+
+* rs/tighten-alias-help (2025-07-25) 1 commit
+  (merged to 'next' on 2025-08-01 at a0fb0696cd)
+ + git: show alias info only with lone -h
+
+ "git -c alias.foo=bar foo -h baz" reported "'foo' is aliased to
+ 'bar'" and then went on to run "git foo -h baz", which was
+ unexpected.  Tighten the rule so that alias expansion is reported
+ only when "-h" is the sole option.
+ source: <a35dc2bf-015c-472d-9528-6763f7aac180@web.de>
+
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* cc/t9350-cleanup (2025-07-25) 1 commit
-  (merged to 'next' on 2025-07-29 at 3d39401b01)
- + t9350: redirect input to only fast-import
+* dl/push-missing-object-error (2025-08-04) 2 commits
+ - remote.c: remove BUG in show_push_unqualified_ref_name_error()
+ - t5516: introduce 'push ref expression with non-existent oid src'
 
- Test clean-up.
- source: <20250725160536.2909011-1-christian.couder@gmail.com>
+ "git push" had a code path that led to BUG() but it should have
+ been a die(), as it is a response to a usual but invalid end-user
+ action to attempt pushing an object that does not exist.
 
-
-* ch/t7450-recursive-clone-test-fix (2025-07-30) 1 commit
-  (merged to 'next' on 2025-08-01 at 478a84a4a9)
- + t7450: inspect the correct path a broken code would write to
-
- Test fix.
- source: <pull.2022.v2.git.git.1753933780883.gitgitgadget@gmail.com>
+ Expecting a reroll to correct an overlong line.
+ source: <cover.1754375026.git.liu.denton@gmail.com>
 
 
-* hy/blame-simplify-get-commit-info (2025-07-27) 1 commit
-  (merged to 'next' on 2025-07-29 at aa7b9a8ab6)
- + blame: remove parameter detailed in get_commit_info()
+* ja/doc-lint-sections-and-synopsis (2025-08-05) 7 commits
+ - fixup! doc: check for absence of multiple terms in each entry of desc list
+ - doc lint: check that synopsis manpages have synopsis inlines
+ - doc:git-for-each-ref: fix styling and typos
+ - doc: check for absence of the form --[no-]parameter
+ - doc: check for absence of multiple terms in each entry of desc list
+ - doc: check well-formedness of delimited sections
+ - doc: test linkgit macros for well-formedness
 
- Code simplification.
- source: <20250728035548.94277-1-hanyang.tony@bytedance.com>
+ Doc lint updates to encourage the newer and easier-to-use
+ `synopsis` format, with fixes to a handful of existing uses.
 
-
-* jb/t7510-gpg-program-path (2025-07-24) 2 commits
-  (merged to 'next' on 2025-07-29 at f5dc13f52d)
- + t7510: use $PWD instead of $(pwd) inside PATH
-  (merged to 'next' on 2025-07-24 at eb8bc447f9)
- + t7510: add test cases for non-absolute gpg program
-
- A new test to ensure that a recent change will keep working.
- cf. <20250725043043.GA3002998@coredump.intra.peff.net>
- source: <20250722190922.51183-3-jonas.brandstoetter@gmx.at>
- source: <20250725051309.GA3003751@coredump.intra.peff.net>
+ Comments?
+ source: <pull.1945.v2.git.1754421045.gitgitgadget@gmail.com>
 
 
-* jc/doc-release-vs-clear (2025-08-01) 1 commit
-  (merged to 'next' on 2025-08-01 at dd9490d97e)
- + CodingGuidelines: clarify that S_release() does not reinitialize
+* js/rebase-i-allow-drop-on-a-merge (2025-08-06) 1 commit
+  (merged to 'next' on 2025-08-07 at bc44e9dc1b)
+ + rebase -i: permit 'drop' of a merge commit
 
- Doc update.
- source: <xmqq7bznm0nk.fsf@gitster.g>
+ During interactive rebase, using 'drop' on a merge commit lead to
+ an error, which was incorrect.
 
-
-* jc/test-hashmap-is-still-here (2025-07-30) 1 commit
-  (merged to 'next' on 2025-08-01 at 0d766613fc)
- + test-hashmap: document why it is no longer used but still there
-
- Comment fix.
- source: <xmqqwm7ptghz.fsf@gitster.g>
+ Will cook in 'next'.
+ source: <37f6e34c-91aa-4e55-88e1-019d2e042df3@kdbg.org>
 
 
-* js/mingw-fixes (2025-08-03) 4 commits
-  (merged to 'next' on 2025-08-03 at a222fda8c6)
- + mingw: support Windows Server 2016 again
- + mingw_rename: support ReFS on Windows 2022
- + mingw: drop Windows 7-specific work-around
- + mingw_open_existing: handle directories better
+* ms/refs-list (2025-08-05) 6 commits
+ - t: add test for git refs list subcommand
+ - t6300: refactor tests to be shareable
+ - builtin/refs: add list subcommand
+ - builtin/for-each-ref: factor out core logic into a helper
+ - builtin/for-each-ref: align usage string with the man page
+ - doc: factor out common option
 
- Windows fixes.
- source: <pull.1948.git.1754256318.gitgitgadget@gmail.com>
+ The "list" subcommand of "git refs" acts as a front-end for
+ "git for-each-ref".
 
-
-* js/prompt-crlf-fix (2025-07-31) 1 commit
-  (merged to 'next' on 2025-08-01 at 365b52c100)
- + interactive: do strip trailing CRLF from input
-
- Interactive prompt code did not correctly strip CRLF from the end
- of line on Windows.
- source: <2295f183-038c-4751-b04d-0f1819b67b3a@kdbg.org>
-
-
-* jt/switch-restore-no-longer-experimental (2025-07-28) 1 commit
-  (merged to 'next' on 2025-07-29 at 3c2cf5ab46)
- + builtin: unmark git-switch and git-restore as experimental
-
- "git switch" and "git restore" are declared to be no longer
- experimental.
- source: <20250728194218.2379432-1-jltobler@gmail.com>
-
-
-* kh/doc-fast-import-historical (2025-08-01) 1 commit
-  (merged to 'next' on 2025-08-01 at 111a582ca4)
- + doc: fast-import: contextualize the hardware cost
-
- Doc update.
- source: <a9bc7547a27aab8bc2404caeb821b7f5c4c10d14.1754055658.git.code@khaugsbakk.name>
-
-
-* kn/for-each-ref-skip-updates (2025-07-28) 5 commits
-  (merged to 'next' on 2025-07-29 at 6e97c528ef)
- + ref-filter: use REF_ITERATOR_SEEK_SET_PREFIX instead of '1'
- + t6302: add test combining '--start-after' with '--exclude'
- + for-each-ref: reword the documentation for '--start-after'
- + for-each-ref: fix documentation argument ordering
- + ref-cache: use 'size_t' instead of int for length
-
- Code clean-up.
- cf. <aIiAj8COJOAXv-xe@pks.im>
- source: <20250728-kn-small-cleanups-v2-0-d3021c8bf471@gmail.com>
-
-
-* lm/add-p-context (2025-07-29) 4 commits
-  (merged to 'next' on 2025-07-29 at 393fa4b64b)
- + add-patch: add diff.context command line overrides
- + add-patch: respect diff.context configuration
- + t: use test_config in t4055
- + t: use test_grep in t3701 and t4055
-
- "git add/etc -p" now honor the diff.context configuration variable,
- and also they learn to honor the -U<n> command-line option.
- source: <pull.1915.v5.git.1753772511.gitgitgadget@gmail.com>
-
-
-* ms/meson-with-ancient-git-wo-ls-files-dedup (2025-08-01) 1 commit
-  (merged to 'next' on 2025-08-01 at f2b8c802ec)
- + meson: tolerate errors from git ls-files --deduplicate
-
- Build fix.
- source: <20250801162834.1923702-1-martin@martin.st>
-
-
-* ps/config-wo-the-repository (2025-07-23) 22 commits
-  (merged to 'next' on 2025-07-29 at 13da88e8fb)
- + config: fix sign comparison warnings
- + config: move Git config parsing into "environment.c"
- + config: remove unused `the_repository` wrappers
- + config: drop `git_config_set_multivar()` wrapper
- + config: drop `git_config_get_multivar_gently()` wrapper
- + config: drop `git_config_set_multivar_in_file_gently()` wrapper
- + config: drop `git_config_set_in_file_gently()` wrapper
- + config: drop `git_config_set()` wrapper
- + config: drop `git_config_set_gently()` wrapper
- + config: drop `git_config_set_in_file()` wrapper
- + config: drop `git_config_get_bool()` wrapper
- + config: drop `git_config_get_ulong()` wrapper
- + config: drop `git_config_get_int()` wrapper
- + config: drop `git_config_get_string()` wrapper
- + config: drop `git_config_get_string()` wrapper
- + config: drop `git_config_get_string_multi()` wrapper
- + config: drop `git_config_get_value()` wrapper
- + config: drop `git_config_get_value()` wrapper
- + config: drop `git_config_get()` wrapper
- + config: drop `git_config_clear()` wrapper
- + config: drop `git_config()` wrapper
- + Merge branch 'bc/use-sha256-by-default-in-3.0' into ps/config-wo-the-repository
- (this branch is used by pw/3.0-commentchar-auto-deprecation.)
-
- The config API had a set of convenience wrapper functions that
- implicitly use the_repository instance; they have been removed and
- inlined at the calling sites.
- source: <20250723-pks-config-wo-the-repository-v2-0-1502d60d3867@pks.im>
-
-
-* ps/meson-clar-decls-fix (2025-07-29) 1 commit
-  (merged to 'next' on 2025-08-01 at 627c189731)
- + meson: ensure correct "clar-decls.h" header is used
-
- Build fix.
- source: <20250729-b4-pks-meson-unit-tests-stale-decls-v1-1-4a7770c84307@pks.im>
+ Comments?
+ source: <20250805092758.5321-1-meetsoni3017@gmail.com>
 
 --------------------------------------------------
 [Cooking]
@@ -278,44 +230,36 @@ Release tarballs are available at:
  source: <20250803012613.54086-1-ben.knoble+github@gmail.com>
 
 
-* jt/archive-zip-deflate-fix (2025-08-02) 1 commit
-  (merged to 'next' on 2025-08-04 at 4444b611dc)
- + archive: flush deflate stream until Z_STREAM_END
-
- The deflate codepath in "git archive --format=zip" had a
- longstanding bug coming from misuse of zlib API, which has been
- corrected.
-
- Will merge to 'master'.
- source: <20250802220803.95137-1-jltobler@gmail.com>
-
-
 * lc/rebase-trailer (2025-08-03) 2 commits
  - rebase: support --trailer
  - trailer: append trailers in-process and drop the fork to `interpret-trailers`
 
+ Expecting a reroll.
+ cf. <198826af571.62b85cb31711042.2415806544948206668@linux.beauty>
  source: <20250803150059.402017-1-me@linux.beauty>
 
 
-* ly/diff-name-only-with-diff-from-content (2025-08-03) 1 commit
- . diff: ensure consistent diff behavior with -I<regex> across output formats
+* ly/diff-name-only-with-diff-from-content (2025-08-06) 2 commits
+ - fixup! diff: ensure consistent diff behavior with ignore options
+ - diff: ensure consistent diff behavior with ignore options
 
  Various options to "git diff" that makes comparison ignore certain
  aspects of the differences (like "space changes are ignored",
  "differences in lines that match these regular expressions are
  ignored") did not work well with "--name-only" and friends.
 
- Breaks t3040 when merged to 'seen'.
- source: <20250803145155.57894-1-yldhome2d2@gmail.com>
+ Looking better.
+ source: <20250806123306.25532-1-yldhome2d2@gmail.com>
 
 
 * rs/describe-with-prio-queue (2025-08-03) 2 commits
- - describe: use prio_queue_replace()
- - describe: use prio_queue
+  (merged to 'next' on 2025-08-07 at 5ebcaaf8b8)
+ + describe: use prio_queue_replace()
+ + describe: use prio_queue
 
  "git describe" has been optimized by using better data structure.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <36d5b59a-a99a-4a6f-b637-dfb0b760660f@web.de>
 
 
@@ -358,7 +302,7 @@ Release tarballs are available at:
 
  Update several code paths and replace strbuf_split*().
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20250731225433.4028872-1-gitster@pobox.com>
 
 
@@ -375,7 +319,7 @@ Release tarballs are available at:
  string_list_split*() family of functions have been extended to
  simplify common use cases.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20250801220423.1230969-1-gitster@pobox.com>
 
 
@@ -393,34 +337,22 @@ Release tarballs are available at:
 
 
 * ps/remote-rename-fix (2025-07-31) 7 commits
- - builtin/remote: only iterate through refs that are to be renamed
- - builtin/remote: rework how remote refs get renamed
- - builtin/remote: determine whether refs need renaming early on
- - builtin/remote: fix sign comparison warnings
- - refs: simplify logic when migrating reflog entries
- - refs: pass refname when invoking reflog entry callback
- - Merge branch 'ps/reflog-migrate-fixes' into ps/remote-rename-fix
+  (merged to 'next' on 2025-08-07 at 227d2faf29)
+ + builtin/remote: only iterate through refs that are to be renamed
+ + builtin/remote: rework how remote refs get renamed
+ + builtin/remote: determine whether refs need renaming early on
+ + builtin/remote: fix sign comparison warnings
+ + refs: simplify logic when migrating reflog entries
+ + refs: pass refname when invoking reflog entry callback
+ + Merge branch 'ps/reflog-migrate-fixes' into ps/remote-rename-fix
  (this branch uses ps/reflog-migrate-fixes.)
 
  "git remote rename origin upstream" failed to move origin/HEAD to
  upstream/HEAD when origin/HEAD is unborn and performed other
  renames extremely inefficiently, which has been corrected.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <20250731-pks-remote-rename-improvements-v2-0-dda6f083674d@pks.im>
-
-
-* rs/tighten-alias-help (2025-07-25) 1 commit
-  (merged to 'next' on 2025-08-01 at a0fb0696cd)
- + git: show alias info only with lone -h
-
- "git -c alias.foo=bar foo -h baz" reported "'foo' is aliased to
- 'bar'" and then went on to do "git foo -h baz", which was
- unexpected.  Tighten the rule so that alias expansion is reported
- only when "-h" is the sole option.
-
- Will merge to 'master'.
- source: <a35dc2bf-015c-472d-9528-6763f7aac180@web.de>
 
 
 * ag/send-email-imap-sent (2025-07-22) 1 commit
@@ -434,7 +366,7 @@ Release tarballs are available at:
  source: <da7cee769f25871ed3f934e3ec7f2cccf0a0420c.1753182534.git.gargaditya08@live.com>
 
 
-* en/ort-rename-fixes (2025-07-22) 6 commits
+* en/ort-rename-fixes (2025-08-05) 6 commits
  - merge-ort: fix directory rename on top of source of other rename/delete
  - merge-ort: fix incorrect file handling
  - t6423: fix missed staging of file in testcases 12i,12j,12k
@@ -445,28 +377,28 @@ Release tarballs are available at:
  Various bugs about rename handling in "ort" merge strategy have
  been fixed.
 
- Expecting a reroll?
- cf. <aIx7SXfRabJWpa0D@pks.im>
- source: <pull.1943.git.1753197791.gitgitgadget@gmail.com>
+ Looking good.
+ source: <pull.1943.v2.git.1754422546.gitgitgadget@gmail.com>
 
 
-* ps/reflog-migrate-fixes (2025-08-04) 9 commits
- - refs: fix invalid old object IDs when migrating reflogs
- - refs: stop unsetting REF_HAVE_OLD for log-only updates
- - refs/files: detect race when generating reflog entry for HEAD
- - refs: fix identity for migrated reflogs
- - ident: fix type of string length parameter
- - builtin/reflog: implement subcommand to write new entries
- - refs: export `ref_transaction_update_reflog()`
- - builtin/reflog: improve grouping of subcommands
- - Documentation/git-reflog: convert to use synopsis type
+* ps/reflog-migrate-fixes (2025-08-05) 9 commits
+  (merged to 'next' on 2025-08-07 at 8068e2ad68)
+ + refs: fix invalid old object IDs when migrating reflogs
+ + refs: stop unsetting REF_HAVE_OLD for log-only updates
+ + refs/files: detect race when generating reflog entry for HEAD
+ + refs: fix identity for migrated reflogs
+ + ident: fix type of string length parameter
+ + builtin/reflog: implement subcommand to write new entries
+ + refs: export `ref_transaction_update_reflog()`
+ + builtin/reflog: improve grouping of subcommands
+ + Documentation/git-reflog: convert to use synopsis type
  (this branch is used by ps/remote-rename-fix.)
 
  "git refs migrate" to migrate the reflog entries from a refs
  backend to another had a handful of bugs squashed.
 
- Will merge to 'next'.
- source: <20250804-pks-reflog-append-v4-0-13213fef7200@pks.im>
+ Will cook in 'next'.
+ source: <20250806-pks-reflog-append-v6-0-a50839653766@pks.im>
 
 
 * ds/sparse-checkout-clean (2025-07-16) 9 commits
@@ -503,35 +435,6 @@ Release tarballs are available at:
  source: <cover.1753975294.git.phillip.wood@dunelm.org.uk>
 
 
-* ps/object-file-wo-the-repository (2025-07-16) 17 commits
-  (merged to 'next' on 2025-08-01 at 0c1253014e)
- + object-file: get rid of `the_repository` in index-related functions
- + object-file: get rid of `the_repository` in `force_object_loose()`
- + object-file: get rid of `the_repository` in `read_loose_object()`
- + object-file: get rid of `the_repository` in loose object iterators
- + object-file: remove declaration for `for_each_file_in_obj_subdir()`
- + object-file: inline `for_each_loose_file_in_objdir_buf()`
- + object-file: get rid of `the_repository` when writing objects
- + odb: introduce `odb_write_object()`
- + loose: write loose objects map via their source
- + object-file: get rid of `the_repository` in `finalize_object_file()`
- + object-file: get rid of `the_repository` in `loose_object_info()`
- + object-file: get rid of `the_repository` when freshening objects
- + object-file: inline `check_and_freshen()` functions
- + object-file: get rid of `the_repository` in `has_loose_object()`
- + object-file: stop using `the_hash_algo`
- + object-file: fix -Wsign-compare warnings
- + Merge branch 'ps/object-store' into ps/object-file-wo-the-repository
-
- Reduce implicit assumption and dependence on the_repository in the
- object-file subsystem.
-
- Will merge to 'master'.
- cf. <87ms8na1mc.fsf@iotcl.com>
- cf. <aIhm_nqiH8Sci12i@pks.im>
- source: <20250717-pks-object-file-wo-the-repository-v2-0-36d2cd6c700e@pks.im>
-
-
 * ua/t1517-short-help-tests (2025-08-02) 3 commits
  - t5304: move `prune -h` test from t1517
  - t5200: move `update-server-info -h` test from t1517
@@ -544,32 +447,29 @@ Release tarballs are available at:
  source: <20250803020744.1037392-1-usmanakinyemi202@gmail.com>
 
 
-* tc/last-modified (2025-07-30) 4 commits
- . last-modified: use Bloom filters when available
- . commit-graph: export prepare_commit_graph()
- . t/perf: add last-modified perf script
- . last-modified: new subcommand to show when files were last modified
+* tc/last-modified (2025-08-05) 4 commits
+ - fixup! last-modified: new subcommand to show when files were last modified
+ - last-modified: use Bloom filters when available
+ - t/perf: add last-modified perf script
+ - last-modified: new subcommand to show when files were last modified
 
  A new command "git last-modified" is proposed to show the closest
  ancestor commit that touched each path.
-
- Seems to break a CI job when merged to 'seen'.
- cf. <xmqqpldfoqvz.fsf@gitster.g>
- source: <20250716133206.1787549-1-toon@iotcl.com>
+ source: <20250730175510.987383-1-toon@iotcl.com>
 
 
-* lo/repo-info (2025-08-01) 5 commits
- . repo: add the --format flag
- . repo: add the field layout.shallow
- . repo: add the field layout.bare
- . repo: add the field references.format
- . repo: declare the repo command
+* lo/repo-info (2025-08-06) 5 commits
+ - repo: add the --format flag
+ - repo: add the field layout.shallow
+ - repo: add the field layout.bare
+ - repo: add the field references.format
+ - repo: declare the repo command
 
  A new subcommand "git repo" gives users a way to grab various
  repository characteristics.
 
- Breaks 0450 when merged to 'seen'.
- source: <20250801131111.8115-1-lucasseikioshiro@gmail.com>
+ Comments?
+ source: <20250806195537.93302-1-lucasseikioshiro@gmail.com>
 
 
 * ac/deglobal-sparse-variables (2025-07-18) 3 commits
@@ -598,21 +498,6 @@ Release tarballs are available at:
  Expecting a reroll.
  cf. <20250530065034.GC1321283@coredump.intra.peff.net>
  source: <cover.1748473122.git.me@ttaylorr.com>
-
-
-* kj/renamed-submodule (2025-07-24) 4 commits
-  (merged to 'next' on 2025-08-03 at c341b36545)
- + fixup! submodule: skip redundant active entries when pattern covers path
- + fixup! submodule: prevent overwriting .gitmodules on path reuse
- + submodule: skip redundant active entries when pattern covers path
- + submodule: prevent overwriting .gitmodules on path reuse
-
- The case where a new submodule takes a path where used to be a
- completely different subproject is now dealt a bit better than
- before.
-
- Will merge to 'master'.
- source: <20250724152418.45226-1-jayatheerthkulkarni2005@gmail.com>
 
 
 * cc/promisor-remote-capability (2025-07-31) 5 commits
