@@ -11,14 +11,24 @@
 #include "gettext.h"
 #include "pack-revindex.h"
 
+static struct multi_pack_index *setup_midx(const char *object_dir)
+{
+	struct odb_source *source;
+	setup_git_directory();
+	source = odb_find_source(the_repository->objects, object_dir);
+	if (!source)
+		source = odb_add_to_alternates_memory(the_repository->objects,
+						      object_dir);
+	return load_multi_pack_index(source);
+}
+
 static int read_midx_file(const char *object_dir, const char *checksum,
 			  int show_objects)
 {
 	uint32_t i;
 	struct multi_pack_index *m;
 
-	setup_git_directory();
-	m = load_multi_pack_index(the_repository, object_dir, 1);
+	m = setup_midx(object_dir);
 
 	if (!m)
 		return 1;
@@ -81,8 +91,7 @@ static int read_midx_checksum(const char *object_dir)
 {
 	struct multi_pack_index *m;
 
-	setup_git_directory();
-	m = load_multi_pack_index(the_repository, object_dir, 1);
+	m = setup_midx(object_dir);
 	if (!m)
 		return 1;
 	printf("%s\n", hash_to_hex(get_midx_checksum(m)));
@@ -96,9 +105,7 @@ static int read_midx_preferred_pack(const char *object_dir)
 	struct multi_pack_index *midx = NULL;
 	uint32_t preferred_pack;
 
-	setup_git_directory();
-
-	midx = load_multi_pack_index(the_repository, object_dir, 1);
+	midx = setup_midx(object_dir);
 	if (!midx)
 		return 1;
 
@@ -119,9 +126,7 @@ static int read_midx_bitmapped_packs(const char *object_dir)
 	struct bitmapped_pack pack;
 	uint32_t i;
 
-	setup_git_directory();
-
-	midx = load_multi_pack_index(the_repository, object_dir, 1);
+	midx = setup_midx(object_dir);
 	if (!midx)
 		return 1;
 

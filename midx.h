@@ -100,9 +100,7 @@ void get_split_midx_filename_ext(const struct git_hash_algo *hash_algo,
 				 struct strbuf *buf, const char *object_dir,
 				 const unsigned char *hash, const char *ext);
 
-struct multi_pack_index *load_multi_pack_index(struct repository *r,
-					       const char *object_dir,
-					       int local);
+struct multi_pack_index *load_multi_pack_index(struct odb_source *source);
 int prepare_midx_pack(struct multi_pack_index *m, uint32_t pack_int_id);
 struct packed_git *nth_midxed_pack(struct multi_pack_index *m,
 				   uint32_t pack_int_id);
@@ -136,7 +134,7 @@ int write_midx_file_only(struct repository *r, const char *object_dir,
 			 const char *preferred_pack_name,
 			 const char *refs_snapshot, unsigned flags);
 void clear_midx_file(struct repository *r);
-int verify_midx_file(struct repository *r, const char *object_dir, unsigned flags);
+int verify_midx_file(struct odb_source *source, unsigned flags);
 int expire_midx_packs(struct repository *r, const char *object_dir, unsigned flags);
 int midx_repack(struct repository *r, const char *object_dir, size_t batch_size, unsigned flags);
 
