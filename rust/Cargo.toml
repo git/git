@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "xdiff",
+    "interop",
+]
+resolver = "2"

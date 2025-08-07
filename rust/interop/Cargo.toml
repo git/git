@@ -1,0 +1,14 @@
+[package]
+name = "interop"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "interop"
+path = "src/lib.rs"
+## staticlib to generate xdiff.a for use by gcc
+## cdylib (optional) to generate xdiff.so for use by gcc
+## rlib is required by the rust unit tests
+crate-type = ["staticlib", "rlib"]
+
+[dependencies]
