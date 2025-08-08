@@ -629,31 +629,28 @@ int git_config_parse_parameter(const char *text,
 			       config_fn_t fn, void *data)
 {
 	const char *value;
-	struct strbuf **pair;
+	struct string_list pair = STRING_LIST_INIT_DUP;
 	int ret;
 	struct key_value_info kvi = KVI_INIT;
 
 	kvi_from_param(&kvi);
 
-	pair = strbuf_split_str(text, '=', 2);
-	if (!pair[0])
+	string_list_split(&pair, text, "=", 1);
+	if (!pair.nr)
 		return error(_("bogus config parameter: %s"), text);
 
-	if (pair[0]->len && pair[0]->buf[pair[0]->len - 1] == '=') {
-		strbuf_setlen(pair[0], pair[0]->len - 1);
-		value = pair[1] ? pair[1]->buf : "";
-	} else {
+	if (pair.nr == 1)
 		value = NULL;
-	}
+	else
+		value = pair.items[1].string;
 
-	strbuf_trim(pair[0]);
-	if (!pair[0]->len) {
-		strbuf_list_free(pair);
+	if (!*pair.items[0].string) {
+		string_list_clear(&pair, 0);
 		return error(_("bogus config parameter: %s"), text);
 	}
 
-	ret = config_parse_pair(pair[0]->buf, value, &kvi, fn, data);
-	strbuf_list_free(pair);
+	ret = config_parse_pair(pair.items[0].string, value, &kvi, fn, data);
+	string_list_clear(&pair, 0);
 	return ret;
 }
 
