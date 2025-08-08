@@ -1,5 +1,6 @@
 clar_test_suites = [
   'unit-tests/u-ctype.c',
+  'unit-tests/u-dir.c',
   'unit-tests/u-example-decorate.c',
   'unit-tests/u-hash.c',
   'unit-tests/u-hashmap.c',
@@ -487,6 +488,7 @@ integration_tests = [
   't4069-remerge-diff.sh',
   't4070-diff-pairs.sh',
   't4071-diff-minimal.sh',
+  't4072-diff-max-depth.sh',
   't4100-apply-stat.sh',
   't4101-apply-nonl.sh',
   't4102-apply-rename.sh',
