@@ -1204,8 +1204,9 @@ static void show_push_unqualified_ref_name_error(const char *dst_value,
 			 "'%s:refs/tags/%s'?"),
 		       matched_src_name, dst_value);
 	} else {
-		BUG("'%s' should be commit/tag/tree/blob, is '%d'",
-		    matched_src_name, type);
+		advise(_("The <src> part of the refspec ('%s') "
+			 "is an object ID that doesn't exist.\n"),
+		       matched_src_name);
 	}
 }
 
