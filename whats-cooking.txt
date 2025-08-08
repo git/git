@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2025, #03; Thu, 7)
+Subject: What's cooking in git.git (Aug 2025, #03; Fri, 8)
 X-master-at: 2c2ba49d55ff26c1082b8137b1ec5eeccb4337d1
 X-next-at: 2494970778f053be8e9f6fac27ec13d4d9dbf65d
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2025, #03; Thu, 7)
+What's cooking in git.git (Aug 2025, #03; Fri, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,14 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-As Git 2.51-rc0 was just tagged, I'd break my promise to avoid
-sending a new issue of this "What's cooking" report with just a day
-apart.  This cycle is shorter than usual and will last only 8 weeks,
-so we may leave many topics in flight for the next cycle, many of
-them even outside 'next', and that is perfectly OK.  Let's make sure
-there aren't too many regressions in the tip of 'master' from now on
-for a couple weeks.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -136,26 +128,28 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
-* dl/push-missing-object-error (2025-08-04) 2 commits
+* dl/push-missing-object-error (2025-08-08) 3 commits
+ - remote.c: convert if-else ladder to switch
  - remote.c: remove BUG in show_push_unqualified_ref_name_error()
- - t5516: introduce 'push ref expression with non-existent oid src'
+ - t5516: remove surrounding empty lines in test bodies
 
  "git push" had a code path that led to BUG() but it should have
  been a die(), as it is a response to a usual but invalid end-user
  action to attempt pushing an object that does not exist.
 
- Expecting a reroll to correct an overlong line.
- source: <cover.1754375026.git.liu.denton@gmail.com>
+ Will merge to 'next'.
+ cf. <xmqqo6spiyqp.fsf@gitster.g>
+ source: <cover.1754637849.git.liu.denton@gmail.com>
 
 
 * ja/doc-lint-sections-and-synopsis (2025-08-05) 7 commits
- - fixup! doc: check for absence of multiple terms in each entry of desc list
- - doc lint: check that synopsis manpages have synopsis inlines
- - doc:git-for-each-ref: fix styling and typos
- - doc: check for absence of the form --[no-]parameter
- - doc: check for absence of multiple terms in each entry of desc list
- - doc: check well-formedness of delimited sections
- - doc: test linkgit macros for well-formedness
+ . fixup! doc: check for absence of multiple terms in each entry of desc list
+ . doc lint: check that synopsis manpages have synopsis inlines
+ . doc:git-for-each-ref: fix styling and typos
+ . doc: check for absence of the form --[no-]parameter
+ . doc: check for absence of multiple terms in each entry of desc list
+ . doc: check well-formedness of delimited sections
+ . doc: test linkgit macros for well-formedness
 
  Doc lint updates to encourage the newer and easier-to-use
  `synopsis` format, with fixes to a handful of existing uses.
@@ -189,6 +183,86 @@ Release tarballs are available at:
  Comments?
  source: <20250805092758.5321-1-meetsoni3017@gmail.com>
 
+
+* kh/doc-git-log-markup-fix (2025-08-08) 1 commit
+ - doc: git-log: fix description list
+
+ Doc update.
+
+ Will merge to 'next'.
+ source: <aaa1734189ec8bab7cfa0965132e3d8e5909b1af.1754660514.git.code@khaugsbakk.name>
+
+
+* ly/changed-path-traversal-with-magic-pathspec (2025-08-08) 2 commits
+ - fixup! bloom: enable bloom filter with wildcard pathspec in revision traversal
+ - bloom: enable bloom filter with wildcard pathspec in revision traversal
+
+ Revision traversal limited with pathspec, like "git log dir/*",
+ used to ignore changed-paths Bloom filter when the pathspec
+ contained wildcards; now they take advantage of the filter when
+ they can.
+
+ Will merge to 'next'?
+ source: <20250808065834.22743-1-yldhome2d2@gmail.com>
+
+
+* ps/commit-graph-wo-globals (2025-08-07) 10 commits
+ - commit-graph: stop passing in redundant repository
+ - commit-graph: stop using `the_repository`
+ - commit-graph: stop using `the_hash_algo`
+ - commit-graph: refactor `parse_commit_graph()` to take a repository
+ - commit-graph: store the hash algorithm instead of its length
+ - commit-graph: stop using `the_hash_algo` via macros
+ - commit-graph: fix sign comparison warnings
+ - commit-graph: fix type for some write options
+ - commit-graph: stop using signed integers to count Bloom filters
+ - trace2: introduce function to trace unsigned integers
+
+ Remove dependency on the_repository and other globals from the
+ commit-graph code, and other changes unrelated to de-globaling.
+
+ Will merge to 'next'?
+ source: <20250807-b4-pks-commit-graph-wo-the-repository-v3-0-82edef830a1e@pks.im>
+
+
+* tc/t0450-harden (2025-08-08) 2 commits
+ . t0450: add allowlist for builtins with missing .adoc
+ . t0450: fix test for out-of-tree builds
+
+ Test updates.
+
+ Will merge to 'next'.
+ source: <20250804073002.1586332-1-toon@iotcl.com>
+
+
+* gh/git-jump-pathname-with-sp (2025-08-08) 1 commit
+ - git-jump: make `diff` work with filenames containing spaces
+
+ source: <pull.1950.git.1754674979929.gitgitgadget@gmail.com>
+
+
+* jc/diff-no-index-in-subdir (2025-08-07) 1 commit
+ - diff: --no-index should ignore the worktree
+
+ source: <xmqqtt2jm118.fsf@gitster.g>
+
+
+* je/doc-rebase (2025-08-08) 5 commits
+ - doc: git-rebase: update discussion of internals
+ - doc: git-rebase: move --onto explanation down
+ - doc: git rebase: clarify arguments syntax
+ - doc: git rebase: dedup merge conflict discussion
+ - doc: git-rebase: start with an example
+
+ source: <pull.1949.v2.git.1754680525.gitgitgadget@gmail.com>
+
+
+* rj/t6137-cygwin-fix (2025-08-08) 2 commits
+ - git-jump: make `diff` work with filenames containing spaces
+ - t6137-*.sh: fix test failure on cygwin
+
+ source: <pull.1950.git.1754674979929.gitgitgadget@gmail.com>
+
 --------------------------------------------------
 [Cooking]
 
@@ -206,7 +280,7 @@ Release tarballs are available at:
  source: <20250804-pks-reftable-fixes-for-libgit2-v2-0-fef06209a984@pks.im>
 
 
-* tc/diff-tree-max-depth (2025-07-29) 3 commits
+* tc/diff-tree-max-depth (2025-08-07) 3 commits
  - diff: teach tree-diff a max-depth parameter
  - within_depth: fix return for empty path
  - combine-diff: zero memory used for callback filepairs
@@ -214,13 +288,12 @@ Release tarballs are available at:
  "git diff-tree" learned "--max-depth" option.
 
  Comments?
- source: <20250729-toon-max-depth-v1-0-c177e39c40fb@iotcl.com>
+ source: <20250807-toon-max-depth-v2-0-50b7e5c81665@iotcl.com>
 
 
-* dk/help-all (2025-08-03) 4 commits
+* dk/help-all (2025-08-03) 3 commits
  - builtin: also setup gently for --help-all
  - parse-options: refactor flags for usage_with_options_internal
- - t1517: fixup for ua/t1517-short-help-tests
  - Merge branch 'ua/t1517-short-help-tests' into dk/help-all
  (this branch uses ua/t1517-short-help-tests.)
 
@@ -239,8 +312,7 @@ Release tarballs are available at:
  source: <20250803150059.402017-1-me@linux.beauty>
 
 
-* ly/diff-name-only-with-diff-from-content (2025-08-06) 2 commits
- - fixup! diff: ensure consistent diff behavior with ignore options
+* ly/diff-name-only-with-diff-from-content (2025-08-07) 1 commit
  - diff: ensure consistent diff behavior with ignore options
 
  Various options to "git diff" that makes comparison ignore certain
@@ -248,8 +320,8 @@ Release tarballs are available at:
  "differences in lines that match these regular expressions are
  ignored") did not work well with "--name-only" and friends.
 
- Looking better.
- source: <20250806123306.25532-1-yldhome2d2@gmail.com>
+ Will merge to 'next'?
+ source: <20250808033019.78817-1-yldhome2d2@gmail.com>
 
 
 * rs/describe-with-prio-queue (2025-08-03) 2 commits
@@ -263,12 +335,13 @@ Release tarballs are available at:
  source: <36d5b59a-a99a-4a6f-b637-dfb0b760660f@web.de>
 
 
-* ps/object-store-midx-dedup-info (2025-07-29) 9 commits
+* ps/object-store-midx-dedup-info (2025-08-07) 10 commits
  - midx: compute paths via their source
  - midx: stop duplicating info redundant with its owning source
  - midx: write multi-pack indices via their source
  - midx: load multi-pack indices via their source
  - midx: drop redundant `struct repository` parameter
+ - odb: simplify calling `link_alt_odb_entry()`
  - odb: return newly created in-memory sources
  - odb: allow `odb_find_source()` to fail
  - odb: store locality in object database sources
@@ -277,7 +350,7 @@ Release tarballs are available at:
  Further code clean-up for multi-pack-index code paths.
 
  Comments?
- source: <20250729-b4-pks-midx-deduplicate-source-info-v1-0-748db2eda3b5@pks.im>
+ source: <20250807-b4-pks-midx-deduplicate-source-info-v2-0-bcffb8fc119c@pks.im>
 
 
 * jc/strbuf-split (2025-07-31) 13 commits
@@ -355,20 +428,21 @@ Release tarballs are available at:
  source: <20250731-pks-remote-rename-improvements-v2-0-dda6f083674d@pks.im>
 
 
-* ag/send-email-imap-sent (2025-07-22) 1 commit
+* ag/send-email-imap-sent (2025-07-23) 2 commits
+ - send-email: enable copying emails to IMAP folder without actually sending them
  - send-email: add ability to send a copy of sent emails to an IMAP folder
 
  "git send-email" learned to drive "git imap-send" to store already
  sent e-mails in an IMAP folder.
 
- A reroll (v4) exists.
- cf. <PN3PR01MB9597EC4C5DF97943587AEEB4B85FA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
- source: <da7cee769f25871ed3f934e3ec7f2cccf0a0420c.1753182534.git.gargaditya08@live.com>
+ Comments?
+ source: <PN3PR01MB9597EC4C5DF97943587AEEB4B85FA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
 
 
-* en/ort-rename-fixes (2025-08-05) 6 commits
+* en/ort-rename-fixes (2025-08-06) 7 commits
  - merge-ort: fix directory rename on top of source of other rename/delete
  - merge-ort: fix incorrect file handling
+ - merge-ort: clarify the interning of strings in opt->priv->path
  - t6423: fix missed staging of file in testcases 12i,12j,12k
  - t6423: document two bugs with rename-to-self testcases
  - merge-ort: drop unnecessary temporary in check_for_directory_rename()
@@ -377,8 +451,8 @@ Release tarballs are available at:
  Various bugs about rename handling in "ort" merge strategy have
  been fixed.
 
- Looking good.
- source: <pull.1943.v2.git.1754422546.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1943.v3.git.1754522122.gitgitgadget@gmail.com>
 
 
 * ps/reflog-migrate-fixes (2025-08-05) 9 commits
@@ -435,7 +509,7 @@ Release tarballs are available at:
  source: <cover.1753975294.git.phillip.wood@dunelm.org.uk>
 
 
-* ua/t1517-short-help-tests (2025-08-02) 3 commits
+* ua/t1517-short-help-tests (2025-08-07) 3 commits
  - t5304: move `prune -h` test from t1517
  - t5200: move `update-server-info -h` test from t1517
  - t/t1517: automate `git subcmd -h` tests outside a repository
@@ -443,8 +517,8 @@ Release tarballs are available at:
 
  Test shuffling.
 
- Needs the perl-prereq touch-up squashed in from dk/help-all topic.
- source: <20250803020744.1037392-1-usmanakinyemi202@gmail.com>
+ Will merge to 'next'.
+ source: <20250808010651.591906-1-usmanakinyemi202@gmail.com>
 
 
 * tc/last-modified (2025-08-05) 4 commits
@@ -458,7 +532,7 @@ Release tarballs are available at:
  source: <20250730175510.987383-1-toon@iotcl.com>
 
 
-* lo/repo-info (2025-08-06) 5 commits
+* lo/repo-info (2025-08-07) 5 commits
  - repo: add the --format flag
  - repo: add the field layout.shallow
  - repo: add the field layout.bare
@@ -468,8 +542,8 @@ Release tarballs are available at:
  A new subcommand "git repo" gives users a way to grab various
  repository characteristics.
 
- Comments?
- source: <20250806195537.93302-1-lucasseikioshiro@gmail.com>
+ Will merge to 'next'.
+ source: <20250807150239.6987-1-lucasseikioshiro@gmail.com>
 
 
 * ac/deglobal-sparse-variables (2025-07-18) 3 commits
@@ -513,27 +587,3 @@ Release tarballs are available at:
 
  Expecting a reroll.
  source: <20250731072401.3817074-1-christian.couder@gmail.com>
-
---------------------------------------------------
-[Discarded]
-
-* pw/compound-literal-test-balloon (2025-07-14) 1 commit
- . strbuf: add compound literal test balloon
-
- Gauge if the world is ready for compound literal that can make the
- resulting code clearer in some places.
-
- Discarded; it turns out that we already have a test balloon on this.
- source: <7ac55a5096c261b706f47ca239c381f71db2b67a.1752499653.git.phillip.wood@dunelm.org.uk>
-
-
-* jc/tag-idempotent-no-op (2025-07-11) 1 commit
- . tag: allow idempotent "git tag" without "--force"
-
- "git tag T O" when the tag T is already pointing at the object O is
- a no-op; we used to but no longer error out such a request and
- require "--force" and instead turn it into a no-op.
-
- Will discard.
- cf. <dt5ruadvr7lmhsbypmb6yili5cookfx5btw4gzfeui7ehxxajv@ziael4udbbcy>
- source: <xmqqv7nyzgp7.fsf@gitster.g>
