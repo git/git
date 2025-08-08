@@ -17,7 +17,6 @@ fast-export
 fast-import
 fetch-pack
 fmt-merge-msg
-for-each-ref
 format-patch
 fsck-objects
 fsmonitor--daemon
