@@ -328,7 +328,7 @@ test_expect_success 'there is no --no-reschedule-failed-exec in an ongoing rebas
 	test_expect_code 129 git rebase --edit-todo --no-reschedule-failed-exec
 '
 
-test_expect_success 'no change in comment character due to conflicts markers with core.commentChar=auto' '
+test_expect_success !WITH_BREAKING_CHANGES 'no change in comment character due to conflicts markers with core.commentChar=auto' '
 	git checkout -b branch-a &&
 	test_commit A F1 &&
 	git checkout -b branch-b HEAD^ &&
