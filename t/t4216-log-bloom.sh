@@ -154,11 +154,34 @@ test_expect_success 'git log with multiple literal paths uses Bloom filter' '
 	test_bloom_filters_used "-- file*"
 '
 
-test_expect_success 'git log with path contains a wildcard does not use Bloom filter' '
+test_expect_success 'git log with paths all contain non-wildcard part uses Bloom filter' '
+	test_bloom_filters_used "-- A/\* file4" &&
+	test_bloom_filters_used "-- A/file\*" &&
+	test_bloom_filters_used "-- * A/\*"
+'
+
+test_expect_success 'git log with path only contains wildcard part does not use Bloom filter' '
 	test_bloom_filters_not_used "-- file\*" &&
-	test_bloom_filters_not_used "-- A/\* file4" &&
-	test_bloom_filters_not_used "-- file4 A/\*" &&
-	test_bloom_filters_not_used "-- * A/\*"
+	test_bloom_filters_not_used "-- file\* A/\*" &&
+	test_bloom_filters_not_used "-- file\* *" &&
+	test_bloom_filters_not_used "-- \*"
+'
+
+test_expect_success 'git log with path contains various magic signatures' '
+	cd A &&
+	test_bloom_filters_used "-- \:\(top\)B" &&
+	cd .. &&
+
+	test_bloom_filters_used "-- \:\(glob\)A/\*\*/C" &&
+	test_bloom_filters_not_used "-- \:\(icase\)FILE4" &&
+	test_bloom_filters_not_used "-- \:\(exclude\)A/B/C" &&
+
+	test_when_finished "rm -f .gitattributes" &&
+	cat >.gitattributes <<-EOF &&
+	A/file1 text
+	A/B/file2 -text
+	EOF
+	test_bloom_filters_used "-- \:\(attr\:text\)A"
 '
 
 test_expect_success 'setup - add commit-graph to the chain without Bloom filters' '
