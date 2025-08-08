@@ -696,14 +696,14 @@ static int convert_pathspec_to_bloom_keyvec(struct bloom_keyvec **out,
 	char *path_alloc = NULL;
 	const char *path;
 	size_t len;
-	int res = 0;
+	int res = -1; /* be pessimistic */
 
 	len = pi->nowildcard_len;
 	if (len != pi->len) {
 		/*
-		 * for path like "/dir/file*", nowildcard part would be
-		 * "/dir/file", but only "/dir" should be used for the
-		 * bloom filter
+		 * for path like "dir/file*", nowildcard part would be
+		 * "dir/file", but only "dir" should be used for the
+		 * bloom filter.
 		 */
 		while (len > 0 && pi->match[len - 1] != '/')
 			len--;
@@ -712,19 +712,17 @@ static int convert_pathspec_to_bloom_keyvec(struct bloom_keyvec **out,
 	if (len > 0 && pi->match[len - 1] == '/')
 		len--;
 
+	if (!len)
+		goto cleanup;
+
 	if (len != pi->len) {
 		path_alloc = xmemdupz(pi->match, len);
 		path = path_alloc;
 	} else
 		path = pi->match;
 
-	len = strlen(path);
-	if (!len) {
-		res = -1;
-		goto cleanup;
-	}
-
 	*out = bloom_keyvec_new(path, len, settings);
+	res = 0;
 
 cleanup:
 	free(path_alloc);
