@@ -1,0 +1,54 @@
+git-last-modified(1)
+====================
+
+NAME
+----
+git-last-modified - EXPERIMENTAL: Show when files were last modified
+
+
+SYNOPSIS
+--------
+[synopsis]
+git last-modified [--recursive] [--show-trees] [<revision-range>] [[--] <path>...]
+
+DESCRIPTION
+-----------
+
+Shows which commit last modified each of the relevant files and subdirectories.
+A commit renaming a path, or changing it's mode is also taken into account.
+
+THIS COMMAND IS EXPERIMENTAL. THE BEHAVIOR MAY CHANGE.
+
+OPTIONS
+-------
+
+`-r`::
+`--recursive`::
+	Instead of showing tree entries, step into subtrees and show all entries
+	inside them recursively.
+
+`-t`::
+`--show-trees`::
+	Show tree entries even when recursing into them. It has no effect
+	without `--recursive`.
+
+`<revision-range>`::
+	Only traverse commits in the specified revision range. When no
+	`<revision-range>` is specified, it defaults to `HEAD` (i.e. the whole
+	history leading to the current commit). For a complete list of ways to
+	spell `<revision-range>`, see the 'Specifying Ranges' section of
+	linkgit:gitrevisions[7].
+
+`[--] <path>...`::
+	For each _<path>_ given, the commit which last modified it is returned.
+	Without an optional path parameter, all files and subdirectories
+	in path traversal the are included in the output.
+
+SEE ALSO
+--------
+linkgit:git-blame[1],
+linkgit:git-log[1].
+
+GIT
+---
+Part of the linkgit:git[1] suite
