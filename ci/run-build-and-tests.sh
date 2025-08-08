@@ -5,6 +5,12 @@
 
 . ${0%/*}/lib.sh
 
+## install rust per user rather than system wide
+. ${0%/*}/install-rust.sh
+
+rustc -vV
+cargo --version || exit $?
+
 run_tests=t
 
 case "$jobname" in
@@ -71,6 +77,10 @@ case "$jobname" in
 	fi
 	;;
 esac
+
+if [ -d "$CARGO_HOME" ]; then
+  rm -rf $CARGO_HOME
+fi
 
 check_unignored_build_artifacts
 save_good_tree

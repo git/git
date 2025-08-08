@@ -267,6 +267,27 @@ version_gen_environment.set('GIT_DATE', get_option('build_date'))
 version_gen_environment.set('GIT_USER_AGENT', get_option('user_agent'))
 version_gen_environment.set('GIT_VERSION', get_option('version'))
 
+if get_option('optimization') in ['2', '3', 's', 'z']
+  rust_target = 'release'
+  rust_args = ['--release']
+  rustflags = '-Aunused_imports -Adead_code'
+else
+  rust_target = 'debug'
+  rust_args = []
+  rustflags = '-Aunused_imports -Adead_code -C debuginfo=2 -C opt-level=1 -C force-frame-pointers=yes'
+endif
+
+rust_build_xdiff = custom_target('rust_build_xdiff',
+  output: 'libxdiff.a',
+  build_by_default: true,
+  build_always_stale: true,
+  command: [
+    meson.project_source_root() / 'build_rust.sh',
+    meson.current_build_dir(), rust_target, 'xdiff',
+  ],
+  install: false,
+)
+
 compiler = meson.get_compiler('c')
 
 libgit_sources = [
@@ -1702,14 +1723,17 @@ version_def_h = custom_target(
 libgit_sources += version_def_h
 
 libgit = declare_dependency(
-  link_with: static_library('git',
-    sources: libgit_sources,
-    c_args: libgit_c_args + [
-      '-DGIT_VERSION_H="' + version_def_h.full_path() + '"',
-    ],
-    dependencies: libgit_dependencies,
-    include_directories: libgit_include_directories,
-  ),
+  link_with: [
+    static_library('git',
+      sources: libgit_sources,
+      c_args: libgit_c_args + [
+        '-DGIT_VERSION_H="' + version_def_h.full_path() + '"',
+      ],
+      dependencies: libgit_dependencies,
+      include_directories: libgit_include_directories,
+    ),
+    rust_build_xdiff,
+  ],
   compile_args: libgit_c_args,
   dependencies: libgit_dependencies,
   include_directories: libgit_include_directories,
