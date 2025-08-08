@@ -1224,14 +1224,121 @@ void trailer_iterator_release(struct trailer_iterator *iter)
 	strbuf_release(&iter->key);
 }
 
-int amend_file_with_trailers(const char *path, const struct strvec *trailer_args)
+static int amend_strbuf_with_trailers(struct strbuf *buf,
+				   const struct strvec *trailer_args)
 {
-	struct child_process run_trailer = CHILD_PROCESS_INIT;
+	struct process_trailer_options opts = PROCESS_TRAILER_OPTIONS_INIT;
+	LIST_HEAD(new_trailer_head);
+	struct strbuf out = STRBUF_INIT;
+	size_t i;
 
-	run_trailer.git_cmd = 1;
-	strvec_pushl(&run_trailer.args, "interpret-trailers",
-		     "--in-place", "--no-divider",
-		     path, NULL);
-	strvec_pushv(&run_trailer.args, trailer_args->v);
-	return run_command(&run_trailer);
+	opts.no_divider = 1;
+
+	for (i = 0; i < trailer_args->nr; i++) {
+		const char *arg = trailer_args->v[i];
+		const char *text;
+		struct new_trailer_item *item;
+		if (!skip_prefix(arg, "--trailer=", &text))
+			text = arg;
+		if (!*text)
+			continue;
+		item = xcalloc(1, sizeof(*item));
+		INIT_LIST_HEAD(&item->list);
+		item->text = text;
+		list_add_tail(&item->list, &new_trailer_head);
+	}
+	if (trailer_process(&opts, buf->buf, &new_trailer_head, &out) < 0)
+		die("failed to process trailers");
+	strbuf_swap(buf, &out);
+	strbuf_release(&out);
+	while (!list_empty(&new_trailer_head)) {
+		struct new_trailer_item *item =
+			list_first_entry(&new_trailer_head, struct new_trailer_item, list);
+		list_del(&item->list);
+		free(item);
+	}
+	return 0;
 }
+
+int trailer_process(const struct process_trailer_options *opts,
+				   const char *msg,
+				   struct list_head *new_trailer_head,
+				   struct strbuf *out)
+{
+		struct trailer_block *blk;
+		LIST_HEAD(orig_head);
+		LIST_HEAD(config_head);
+		LIST_HEAD(arg_head);
+		struct strbuf trailers_sb = STRBUF_INIT;
+		int had_trailer_before;
+
+		blk = parse_trailers(opts, msg, &orig_head);
+		had_trailer_before = !list_empty(&orig_head);
+		if (!opts->only_input) {
+			parse_trailers_from_config(&config_head);
+			parse_trailers_from_command_line_args(&arg_head, new_trailer_head);
+			list_splice(&config_head, &arg_head);
+			process_trailers_lists(&orig_head, &arg_head);
+		}
+		format_trailers(opts, &orig_head, &trailers_sb);
+		if (!opts->only_trailers && !opts->only_input && !opts->unfold &&
+			!opts->trim_empty && list_empty(&orig_head) &&
+			(list_empty(new_trailer_head) || opts->only_input)) {
+			size_t split = trailer_block_start(blk); /* end-of-log-msg */
+			if (!blank_line_before_trailer_block(blk)) {
+				strbuf_add(out, msg, split);
+				strbuf_addch(out, '\n');
+				strbuf_addstr(out, msg + split);
+			} else
+				strbuf_addstr(out, msg);
+
+			strbuf_release(&trailers_sb);
+			trailer_block_release(blk);
+			return 0;
+		}
+		if (opts->only_trailers) {
+			strbuf_addbuf(out, &trailers_sb);
+		} else if (had_trailer_before) {
+			strbuf_add(out, msg, trailer_block_start(blk));
+			if (!blank_line_before_trailer_block(blk))
+				strbuf_addch(out, '\n');
+			strbuf_addbuf(out, &trailers_sb);
+			strbuf_add(out, msg + trailer_block_end(blk),
+						strlen(msg) - trailer_block_end(blk));
+		}
+		else {
+			size_t cpos = trailer_block_start(blk);
+			strbuf_add(out, msg, cpos);
+			if (cpos == 0)                     /* empty body → just one \n */
+				strbuf_addch(out, '\n');
+			else if (!blank_line_before_trailer_block(blk))
+				strbuf_addch(out, '\n');   /* body without trailing blank */
+
+			strbuf_addbuf(out, &trailers_sb);
+			strbuf_add(out, msg + cpos, strlen(msg) - cpos);
+	   }
+		strbuf_release(&trailers_sb);
+		free_trailers(&orig_head);
+		trailer_block_release(blk);
+		return 0;
+}
+
+int amend_file_with_trailers(const char *path,
+							 const struct strvec *trailer_args)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	if (!trailer_args || !trailer_args->nr)
+		return 0;
+
+	if (strbuf_read_file(&buf, path, 0) < 0)
+		return error_errno("could not read '%s'", path);
+
+	if (amend_strbuf_with_trailers(&buf, trailer_args))
+		die("failed to append trailers");
+
+	/* `write_file_buf()` aborts on error internally */
+	write_file_buf(path, buf.buf, buf.len);
+	strbuf_release(&buf);
+	return 0;
+ }
