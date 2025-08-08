@@ -107,13 +107,6 @@ test_expect_success LIBCURL 'remote-http outside repository' '
 	test_grep "^error: remote-curl" actual
 '
 
-test_expect_success 'prune does not crash with -h' '
-	test_expect_code 129 git prune -h >usage &&
-	test_grep "[Uu]sage: git prune " usage &&
-	test_expect_code 129 nongit git prune -h >usage &&
-	test_grep "[Uu]sage: git prune " usage
-'
-
 for cmd in $(git --list-cmds=main)
 do
 	cmd=${cmd%.*} # strip .sh, .perl, etc.
