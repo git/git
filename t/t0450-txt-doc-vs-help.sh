@@ -41,7 +41,7 @@ help_to_synopsis () {
 }
 
 builtin_to_adoc () {
-       echo "$GIT_BUILD_DIR/Documentation/git-$1.adoc"
+       echo "$GIT_SOURCE_DIR/Documentation/git-$1.adoc"
 }
 
 adoc_to_synopsis () {
