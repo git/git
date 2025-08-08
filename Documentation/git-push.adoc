@@ -166,9 +166,10 @@ already exists on the remote side.
 	be mirrored to the remote repository.  Newly created local
 	refs will be pushed to the remote end, locally updated refs
 	will be force updated on the remote end, and deleted refs
-	will be removed from the remote end.  This is the default
-	if the configuration option `remote.<remote>.mirror` is
-	set.
+	will be removed from the remote end. Any ref existing
+	in the remote end, but not locally, will be removed too.
+	This is the default if the configuration option
+	`remote.<remote>.mirror` is set.
 
 -n::
 --dry-run::
