@@ -23,14 +23,14 @@ be used.
 	Print out the ref names of any commits that are shown by the log
 	command. Possible values are:
 +
-----
+--
 `short`;; the ref name prefixes `refs/heads/`, `refs/tags/` and
 	`refs/remotes/` are not printed.
 `full`;; the full ref name (including prefix) are printed.
 `auto`;; if the output is going to a terminal,
 	the ref names are shown as if `short` were given, otherwise no ref
 	names are shown.
-----
+--
 +
 This is the same as the `--decorate` option of the `git log`.
 
