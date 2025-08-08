@@ -156,6 +156,11 @@ jobs:
       with:
         name: windows-artifacts
         path: artifacts
+    - name: upload Cargo.lock
+      uses: actions/upload-artifact@v4
+      with:
+        name: cargo-lock-windows
+        path: rust/Cargo.lock
   windows-test:
     name: win test
     runs-on: windows-latest
@@ -317,6 +322,11 @@ jobs:
       with:
         name: windows-meson-artifacts
         path: build
+    - name: Upload Cargo.lock
+      uses: actions/upload-artifact@v4
+      with:
+        name: cargo-lock-windows-meson
+        path: rust/Cargo.lock
   windows-meson-test:
     name: win+Meson test
     runs-on: windows-latest
@@ -399,6 +409,11 @@ jobs:
       with:
         name: failed-tests-${{matrix.vector.jobname}}
         path: ${{env.FAILED_TEST_ARTIFACTS}}
+    - name: Upload Cargo.lock
+      uses: actions/upload-artifact@v4
+      with:
+        name: cargo-lock-${{matrix.vector.jobname}}
+        path: rust/Cargo.lock
   fuzz-smoke-test:
     name: fuzz smoke test
     needs: ci-config
@@ -510,6 +525,11 @@ jobs:
       with:
         name: failed-tests-${{matrix.vector.jobname}}
         path: ${{env.FAILED_TEST_ARTIFACTS}}
+    - name: Upload Cargo.lock
+      uses: actions/upload-artifact@v4
+      with:
+        name: cargo-lock-${{matrix.vector.jobname}}
+        path: rust/Cargo.lock
   static-analysis:
     needs: ci-config
     if: needs.ci-config.outputs.enabled == 'yes'
