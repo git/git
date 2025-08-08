@@ -2263,6 +2263,7 @@ test_expect_success 'non-merge commands reject merge commits' '
 	edit $oid
 	fixup $oid
 	squash $oid
+	drop $oid # acceptable, no advice
 	EOF
 	(
 		set_replace_editor todo &&
