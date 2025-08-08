@@ -65,7 +65,8 @@ void reflog_expiry_prepare(const char *refname, const struct object_id *oid,
 int should_expire_reflog_ent(struct object_id *ooid, struct object_id *noid,
 			     const char *email, timestamp_t timestamp, int tz,
 			     const char *message, void *cb_data);
-int count_reflog_ent(struct object_id *ooid, struct object_id *noid,
+int count_reflog_ent(const char *refname,
+		     struct object_id *ooid, struct object_id *noid,
 		     const char *email, timestamp_t timestamp, int tz,
 		     const char *message, void *cb_data);
 int should_expire_reflog_ent_verbose(struct object_id *ooid,
