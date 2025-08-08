@@ -463,6 +463,15 @@ void trace2_data_intmax_fl(const char *file, int line, const char *category,
 	trace2_data_intmax_fl(__FILE__, __LINE__, (category), (repo), (key), \
 			      (value))
 
+void trace2_data_uintmax_fl(const char *file, int line, const char *category,
+			    const struct repository *repo, const char *key,
+			    uintmax_t value);
+
+#define trace2_data_uintmax(category, repo, key, value)                       \
+	trace2_data_uintmax_fl(__FILE__, __LINE__, (category), (repo), (key), \
+			      (value))
+
+
 void trace2_data_json_fl(const char *file, int line, const char *category,
 			 const struct repository *repo, const char *key,
 			 const struct json_writer *jw);

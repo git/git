@@ -948,6 +948,20 @@ void trace2_data_intmax_fl(const char *file, int line, const char *category,
 	strbuf_release(&buf_string);
 }
 
+void trace2_data_uintmax_fl(const char *file, int line, const char *category,
+			    const struct repository *repo, const char *key,
+			    uintmax_t value)
+{
+	struct strbuf buf_string = STRBUF_INIT;
+
+	if (!trace2_enabled)
+		return;
+
+	strbuf_addf(&buf_string, "%" PRIuMAX, value);
+	trace2_data_string_fl(file, line, category, repo, key, buf_string.buf);
+	strbuf_release(&buf_string);
+}
+
 void trace2_data_json_fl(const char *file, int line, const char *category,
 			 const struct repository *repo, const char *key,
 			 const struct json_writer *value)
