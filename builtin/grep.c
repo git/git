@@ -482,7 +482,7 @@ static int grep_submodule(struct grep_opt *opt,
 	 *	"forget" the sparse-index feature switch. As a result, the index
 	 *	of these submodules are expanded unexpectedly.
 	 *
-	 * 2. "core_apply_sparse_checkout"
+	 * 2. "settings.sparse_checkout"
 	 *	When running `grep` in the superproject, this setting is
 	 *	populated using the superproject's configs. However, once
 	 *	initialized, this config is globally accessible and is read by
@@ -492,7 +492,7 @@ static int grep_submodule(struct grep_opt *opt,
 	 *	dictate the behavior for the submodule, making it "forget" its
 	 *	sparse-checkout state.
 	 *
-	 * 3. "core_sparse_checkout_cone"
+	 * 3. "settings.sparse_checkout_cone"
 	 *	ditto.
 	 *
 	 * Note that this list is not exhaustive.

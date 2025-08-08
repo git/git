@@ -619,11 +619,12 @@ static int git_sparse_checkout_init(const char *repo)
 	int result = 0;
 	strvec_pushl(&cmd.args, "-C", repo, "sparse-checkout", "set", NULL);
 
+	prepare_repo_settings(the_repository);
 	/*
 	 * We must apply the setting in the current process
 	 * for the later checkout to use the sparse-checkout file.
 	 */
-	core_apply_sparse_checkout = 1;
+	the_repository->settings.sparse_checkout = 1;
 
 	cmd.git_cmd = 1;
 	if (run_command(&cmd)) {
