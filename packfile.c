@@ -935,14 +935,14 @@ static void prepare_pack(const char *full_name, size_t full_name_len,
 		report_garbage(PACKDIR_FILE_GARBAGE, full_name);
 }
 
-static void prepare_packed_git_one(struct odb_source *source, int local)
+static void prepare_packed_git_one(struct odb_source *source)
 {
 	struct string_list garbage = STRING_LIST_INIT_DUP;
 	struct prepare_pack_data data = {
 		.m = source->midx,
 		.r = source->odb->repo,
 		.garbage = &garbage,
-		.local = local,
+		.local = source->local,
 	};
 
 	for_each_file_in_pack_dir(source->path, prepare_pack, &data);
@@ -1037,9 +1037,8 @@ static void prepare_packed_git(struct repository *r)
 
 	odb_prepare_alternates(r->objects);
 	for (source = r->objects->sources; source; source = source->next) {
-		int local = (source == r->objects->sources);
-		prepare_multi_pack_index_one(source, local);
-		prepare_packed_git_one(source, local);
+		prepare_multi_pack_index_one(source);
+		prepare_packed_git_one(source);
 	}
 	rearrange_packed_git(r);
 
@@ -1092,7 +1091,7 @@ struct packed_git *get_all_packs(struct repository *r)
 		if (!m)
 			continue;
 		for (uint32_t i = 0; i < m->num_packs + m->num_packs_in_base; i++)
-			prepare_midx_pack(r, m, i);
+			prepare_midx_pack(m, i);
 	}
 
 	return r->objects->packed_git;
@@ -2078,7 +2077,7 @@ int find_pack_entry(struct repository *r, const struct object_id *oid, struct pa
 	prepare_packed_git(r);
 
 	for (struct odb_source *source = r->objects->sources; source; source = source->next)
-		if (source->midx && fill_midx_entry(r, oid, e, source->midx))
+		if (source->midx && fill_midx_entry(source->midx, oid, e))
 			return 1;
 
 	if (!r->objects->packed_git)
