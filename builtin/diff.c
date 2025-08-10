@@ -487,6 +487,21 @@ int cmd_diff(int argc,
 
 	init_diff_ui_defaults();
 	repo_config(the_repository, git_diff_ui_config, NULL);
+
+	/*
+	 * If we are ignoring the fact that our current directory may
+	 * be part of a working tree controlled by a Git repository to
+	 * pretend to be a "better GNU diff", we should undo the
+	 * effect of the setup code that did a chdir() to the top of
+	 * the working tree.  Where we came from is recorded in the
+	 * prefix.
+	 */
+	if (no_index && prefix) {
+		if (chdir(prefix))
+			die(_("cannot come back to cwd"));
+		prefix = NULL;
+	}
+
 	prefix = precompose_argv_prefix(argc, argv, prefix);
 
 	repo_init_revisions(the_repository, &rev, prefix);
