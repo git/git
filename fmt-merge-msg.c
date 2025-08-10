@@ -26,13 +26,15 @@ static struct string_list suppress_dest_patterns = STRING_LIST_INIT_DUP;
 int fmt_merge_msg_config(const char *key, const char *value,
 			 const struct config_context *ctx, void *cb)
 {
+	int *merge_log_config = cb;
+
 	if (!strcmp(key, "merge.log") || !strcmp(key, "merge.summary")) {
 		int is_bool;
-		merge_log_config = git_config_bool_or_int(key, value, ctx->kvi, &is_bool);
-		if (!is_bool && merge_log_config < 0)
+		*merge_log_config = git_config_bool_or_int(key, value, ctx->kvi, &is_bool);
+		if (!is_bool && *merge_log_config < 0)
 			return error("%s: negative length %s", key, value);
-		if (is_bool && merge_log_config)
-			merge_log_config = DEFAULT_MERGE_LOG_LEN;
+		if (is_bool && *merge_log_config)
+			*merge_log_config = DEFAULT_MERGE_LOG_LEN;
 	} else if (!strcmp(key, "merge.branchdesc")) {
 		use_branch_desc = git_config_bool(key, value);
 	} else if (!strcmp(key, "merge.suppressdest")) {

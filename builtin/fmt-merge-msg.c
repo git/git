@@ -19,6 +19,7 @@ int cmd_fmt_merge_msg(int argc,
 	const char *message = NULL;
 	char *into_name = NULL;
 	int shortlog_len = -1;
+	int merge_log_config = -1;
 	struct option options[] = {
 		{
 			.type = OPTION_INTEGER,
@@ -53,7 +54,7 @@ int cmd_fmt_merge_msg(int argc,
 	int ret;
 	struct fmt_merge_msg_opts opts;
 
-	git_config(fmt_merge_msg_config, NULL);
+	git_config(fmt_merge_msg_config, &merge_log_config);
 	argc = parse_options(argc, argv, prefix, options, fmt_merge_msg_usage,
 			     0);
 	if (argc > 0)
