@@ -64,6 +64,14 @@ struct odb_source {
 	struct multi_pack_index *midx;
 
 	/*
+	 * Figure out whether this is the local source of the owning
+	 * repository, which would typically be its ".git/objects" directory.
+	 * This local object directory is usually where objects would be
+	 * written to.
+	 */
+	bool local;
+
+	/*
 	 * This is a temporary object store created by the tmp_objdir
 	 * facility. Disable ref updates since the objects in the store
 	 * might be discarded on rollback.

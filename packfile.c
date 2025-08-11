@@ -935,14 +935,14 @@ static void prepare_pack(const char *full_name, size_t full_name_len,
 		report_garbage(PACKDIR_FILE_GARBAGE, full_name);
 }
 
-static void prepare_packed_git_one(struct odb_source *source, int local)
+static void prepare_packed_git_one(struct odb_source *source)
 {
 	struct string_list garbage = STRING_LIST_INIT_DUP;
 	struct prepare_pack_data data = {
 		.m = source->midx,
 		.r = source->odb->repo,
 		.garbage = &garbage,
-		.local = local,
+		.local = source->local,
 	};
 
 	for_each_file_in_pack_dir(source->path, prepare_pack, &data);
@@ -1037,9 +1037,8 @@ static void prepare_packed_git(struct repository *r)
 
 	odb_prepare_alternates(r->objects);
 	for (source = r->objects->sources; source; source = source->next) {
-		int local = (source == r->objects->sources);
-		prepare_multi_pack_index_one(source, local);
-		prepare_packed_git_one(source, local);
+		prepare_multi_pack_index_one(source);
+		prepare_packed_git_one(source);
 	}
 	rearrange_packed_git(r);
 
