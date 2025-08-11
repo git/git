@@ -140,7 +140,7 @@ static void read_info_alternates(struct object_database *odb,
 				 int depth);
 
 static int link_alt_odb_entry(struct object_database *odb,
-			      const struct strbuf *entry,
+			      const char *dir,
 			      const char *relative_base,
 			      int depth,
 			      const char *normalized_objdir)
@@ -151,11 +151,11 @@ static int link_alt_odb_entry(struct object_database *odb,
 	khiter_t pos;
 	int ret = -1;
 
-	if (!is_absolute_path(entry->buf) && relative_base) {
+	if (!is_absolute_path(dir) && relative_base) {
 		strbuf_realpath(&pathbuf, relative_base, 1);
 		strbuf_addch(&pathbuf, '/');
 	}
-	strbuf_addbuf(&pathbuf, entry);
+	strbuf_addstr(&pathbuf, dir);
 
 	if (!strbuf_realpath(&tmp, pathbuf.buf, 0)) {
 		error(_("unable to normalize alternate object path: %s"),
@@ -229,7 +229,7 @@ static void link_alt_odb_entries(struct object_database *odb, const char *alt,
 				 int sep, const char *relative_base, int depth)
 {
 	struct strbuf objdirbuf = STRBUF_INIT;
-	struct strbuf entry = STRBUF_INIT;
+	struct strbuf dir = STRBUF_INIT;
 
 	if (!alt || !*alt)
 		return;
@@ -243,13 +243,13 @@ static void link_alt_odb_entries(struct object_database *odb, const char *alt,
 	strbuf_realpath(&objdirbuf, odb->sources->path, 1);
 
 	while (*alt) {
-		alt = parse_alt_odb_entry(alt, sep, &entry);
-		if (!entry.len)
+		alt = parse_alt_odb_entry(alt, sep, &dir);
+		if (!dir.len)
 			continue;
-		link_alt_odb_entry(odb, &entry,
+		link_alt_odb_entry(odb, dir.buf,
 				   relative_base, depth, objdirbuf.buf);
 	}
-	strbuf_release(&entry);
+	strbuf_release(&dir);
 	strbuf_release(&objdirbuf);
 }
 
@@ -273,7 +273,7 @@ static void read_info_alternates(struct object_database *odb,
 }
 
 void odb_add_to_alternates_file(struct object_database *odb,
-				const char *reference)
+				const char *dir)
 {
 	struct lock_file lock = LOCK_INIT;
 	char *alts = repo_git_path(odb->repo, "objects/info/alternates");
@@ -290,7 +290,7 @@ void odb_add_to_alternates_file(struct object_database *odb,
 		struct strbuf line = STRBUF_INIT;
 
 		while (strbuf_getline(&line, in) != EOF) {
-			if (!strcmp(reference, line.buf)) {
+			if (!strcmp(dir, line.buf)) {
 				found = 1;
 				break;
 			}
@@ -306,18 +306,17 @@ void odb_add_to_alternates_file(struct object_database *odb,
 	if (found) {
 		rollback_lock_file(&lock);
 	} else {
-		fprintf_or_die(out, "%s\n", reference);
+		fprintf_or_die(out, "%s\n", dir);
 		if (commit_lock_file(&lock))
 			die_errno(_("unable to move new alternates file into place"));
 		if (odb->loaded_alternates)
-			link_alt_odb_entries(odb, reference,
-					     '\n', NULL, 0);
+			link_alt_odb_entries(odb, dir, '\n', NULL, 0);
 	}
 	free(alts);
 }
 
 void odb_add_to_alternates_memory(struct object_database *odb,
-				  const char *reference)
+				  const char *dir)
 {
 	/*
 	 * Make sure alternates are initialized, or else our entry may be
@@ -325,8 +324,7 @@ void odb_add_to_alternates_memory(struct object_database *odb,
 	 */
 	odb_prepare_alternates(odb);
 
-	link_alt_odb_entries(odb, reference,
-			     '\n', NULL, 0);
+	link_alt_odb_entries(odb, dir, '\n', NULL, 0);
 }
 
 struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
