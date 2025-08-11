@@ -139,17 +139,16 @@ static void read_info_alternates(struct object_database *odb,
 				 const char *relative_base,
 				 int depth);
 
-static int link_alt_odb_entry(struct object_database *odb,
-			      const char *dir,
-			      const char *relative_base,
-			      int depth,
-			      const char *normalized_objdir)
+static struct odb_source *link_alt_odb_entry(struct object_database *odb,
+					     const char *dir,
+					     const char *relative_base,
+					     int depth,
+					     const char *normalized_objdir)
 {
-	struct odb_source *alternate;
+	struct odb_source *alternate = NULL;
 	struct strbuf pathbuf = STRBUF_INIT;
 	struct strbuf tmp = STRBUF_INIT;
 	khiter_t pos;
-	int ret = -1;
 
 	if (!is_absolute_path(dir) && relative_base) {
 		strbuf_realpath(&pathbuf, relative_base, 1);
@@ -189,11 +188,11 @@ static int link_alt_odb_entry(struct object_database *odb,
 
 	/* recursively add alternates */
 	read_info_alternates(odb, alternate->path, depth + 1);
-	ret = 0;
+
  error:
 	strbuf_release(&tmp);
 	strbuf_release(&pathbuf);
-	return ret;
+	return alternate;
 }
 
 static const char *parse_alt_odb_entry(const char *string,
@@ -315,16 +314,23 @@ void odb_add_to_alternates_file(struct object_database *odb,
 	free(alts);
 }
 
-void odb_add_to_alternates_memory(struct object_database *odb,
-				  const char *dir)
+struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
+						const char *dir)
 {
+	struct odb_source *alternate;
+	char *objdir;
+
 	/*
 	 * Make sure alternates are initialized, or else our entry may be
 	 * overwritten when they are.
 	 */
 	odb_prepare_alternates(odb);
 
-	link_alt_odb_entries(odb, dir, '\n', NULL, 0);
+	objdir = real_pathdup(odb->sources->path, 1);
+	alternate = link_alt_odb_entry(odb, dir, NULL, 0, objdir);
+
+	free(objdir);
+	return alternate;
 }
 
 struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
