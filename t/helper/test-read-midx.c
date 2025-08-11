@@ -66,7 +66,7 @@ static int read_midx_file(const char *object_dir, const char *checksum,
 	for (i = 0; i < m->num_packs; i++)
 		printf("%s\n", m->pack_names[i]);
 
-	printf("object-dir: %s\n", m->object_dir);
+	printf("object-dir: %s\n", m->source->path);
 
 	if (show_objects) {
 		struct object_id oid;

@@ -35,6 +35,8 @@ struct odb_source;
 	"GIT_TEST_MULTI_PACK_INDEX_WRITE_INCREMENTAL"
 
 struct multi_pack_index {
+	struct odb_source *source;
+
 	const unsigned char *data;
 	size_t data_len;
 
@@ -50,7 +52,6 @@ struct multi_pack_index {
 	uint32_t num_objects;
 	int preferred_pack_idx;
 
-	int local;
 	int has_chain;
 
 	const unsigned char *chunk_pack_names;
@@ -71,10 +72,6 @@ struct multi_pack_index {
 
 	const char **pack_names;
 	struct packed_git **packs;
-
-	struct repository *repo;
-
-	char object_dir[FLEX_ARRAY];
 };
 
 #define MIDX_PROGRESS     (1 << 0)
