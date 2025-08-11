@@ -126,17 +126,17 @@ int prepare_multi_pack_index_one(struct odb_source *source);
  * Variant of write_midx_file which writes a MIDX containing only the packs
  * specified in packs_to_include.
  */
-int write_midx_file(struct repository *r, const char *object_dir,
+int write_midx_file(struct odb_source *source,
 		    const char *preferred_pack_name, const char *refs_snapshot,
 		    unsigned flags);
-int write_midx_file_only(struct repository *r, const char *object_dir,
+int write_midx_file_only(struct odb_source *source,
 			 struct string_list *packs_to_include,
 			 const char *preferred_pack_name,
 			 const char *refs_snapshot, unsigned flags);
 void clear_midx_file(struct repository *r);
 int verify_midx_file(struct odb_source *source, unsigned flags);
-int expire_midx_packs(struct repository *r, const char *object_dir, unsigned flags);
-int midx_repack(struct repository *r, const char *object_dir, size_t batch_size, unsigned flags);
+int expire_midx_packs(struct odb_source *source, unsigned flags);
+int midx_repack(struct odb_source *source, size_t batch_size, unsigned flags);
 
 void close_midx(struct multi_pack_index *m);
 
