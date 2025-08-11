@@ -243,7 +243,8 @@ depth is 4095.
 	Add --no-reuse-object if you want to force a uniform compression
 	level on all data no matter the source.
 
---[no-]sparse::
+--sparse::
+--no-sparse::
 	Toggle the "sparse" algorithm to determine which objects to include in
 	the pack, when combined with the "--revs" option. This algorithm
 	only walks trees that appear in paths that introduce new objects.

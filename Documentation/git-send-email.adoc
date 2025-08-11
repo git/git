@@ -115,7 +115,8 @@ illustration below where `[PATCH v2 0/3]` is in reply to `[PATCH 0/2]`:
 Only necessary if `--compose` is also set.  If `--compose`
 is not set, this will be prompted for.
 
---[no-]outlook-id-fix::
+--outlook-id-fix::
+--no-outlook-id-fix::
 	Microsoft Outlook SMTP servers discard the Message-ID sent via email and
 	assign a new random Message-ID, thus breaking threads.
 +
@@ -350,7 +351,8 @@ Automating
 --no-header-cmd::
 	Disable any header command in use.
 
---[no-]chain-reply-to::
+--chain-reply-to::
+--no-chain-reply-to::
 	If this is set, each email will be sent as a reply to the previous
 	email sent.  If disabled with `--no-chain-reply-to`, all emails after
 	the first will be sent as replies to the first email sent.  When using
@@ -364,19 +366,22 @@ Automating
 	values in the `sendemail` section. The default identity is
 	the value of `sendemail.identity`.
 
---[no-]signed-off-by-cc::
+--signed-off-by-cc::
+--no-signed-off-by-cc::
 	If this is set, add emails found in the `Signed-off-by` trailer or `Cc:`
 	lines to the cc list. Default is the value of `sendemail.signedOffByCc`
 	configuration value; if that is unspecified, default to
 	`--signed-off-by-cc`.
 
---[no-]cc-cover::
+--cc-cover::
+--no-cc-cover::
 	If this is set, emails found in `Cc:` headers in the first patch of
 	the series (typically the cover letter) are added to the cc list
 	for each email set. Default is the value of `sendemail.ccCover`
 	configuration value; if that is unspecified, default to `--no-cc-cover`.
 
---[no-]to-cover::
+--to-cover::
+--no-to-cover::
 	If this is set, emails found in `To:` headers in the first patch of
 	the series (typically the cover letter) are added to the to list
 	for each email set. Default is the value of `sendemail.toCover`
@@ -407,12 +412,14 @@ Default is the value of `sendemail.suppressCc` configuration value; if
 that is unspecified, default to `self` if `--suppress-from` is
 specified, as well as `body` if `--no-signed-off-cc` is specified.
 
---[no-]suppress-from::
+--suppress-from::
+--no-suppress-from::
 	If this is set, do not add the `From:` address to the `Cc:` list.
 	Default is the value of `sendemail.suppressFrom` configuration
 	value; if that is unspecified, default to `--no-suppress-from`.
 
---[no-]thread::
+--thread::
+--no-thread::
 	If this is set, the `In-Reply-To` and `References` headers will be
 	added to each email sent.  Whether each mail refers to the
 	previous email (`deep` threading per `git format-patch`
@@ -430,7 +437,8 @@ exists when `git send-email` is asked to add it (especially note that
 Failure to do so may not produce the expected result in the
 recipient's MUA.
 
---[no-]mailmap::
+--mailmap::
+--no-mailmap::
 	Use the mailmap file (see linkgit:gitmailmap[5]) to map all
 	addresses to their canonical real name and email address. Additional
 	mailmap data specific to `git send-email` may be provided using the
@@ -459,7 +467,8 @@ have been specified, in which case default to `compose`.
 --dry-run::
 	Do everything except actually send the emails.
 
---[no-]format-patch::
+--format-patch::
+--no-format-patch::
 	When an argument may be understood either as a reference or as a file name,
 	choose to understand it as a format-patch argument (`--format-patch`)
 	or as a file name (`--no-format-patch`). By default, when such a conflict
@@ -469,7 +478,8 @@ have been specified, in which case default to `compose`.
 	Make `git send-email` less verbose.  One line per email should be
 	all that is output.
 
---[no-]validate::
+--validate::
+--no-validate::
 	Perform sanity checks on patches.
 	Currently, validation means the following:
 +

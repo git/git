@@ -86,7 +86,8 @@ OPTIONS
 --chmod=(+|-)x::
         Set the execute permissions on the updated files.
 
---[no-]assume-unchanged::
+--assume-unchanged::
+--no-assume-unchanged::
 	When this flag is specified, the object names recorded
 	for the paths are not updated.  Instead, this option
 	sets/unsets the "assume unchanged" bit for the
@@ -108,18 +109,21 @@ you will need to handle the situation manually.
 	Like `--refresh`, but checks stat information unconditionally,
 	without regard to the "assume unchanged" setting.
 
---[no-]skip-worktree::
+--skip-worktree::
+--no-skip-worktree::
 	When one of these flags is specified, the object names recorded
 	for the paths are not updated. Instead, these options
 	set and unset the "skip-worktree" bit for the paths. See
 	section "Skip-worktree bit" below for more information.
 
 
---[no-]ignore-skip-worktree-entries::
+--ignore-skip-worktree-entries::
+--no-ignore-skip-worktree-entries::
 	Do not remove skip-worktree (AKA "index-only") entries even when
 	the `--remove` option was specified.
 
---[no-]fsmonitor-valid::
+--fsmonitor-valid::
+--no-fsmonitor-valid::
 	When one of these flags is specified, the object names recorded
 	for the paths are not updated. Instead, these options
 	set and unset the "fsmonitor valid" bit for the paths. See

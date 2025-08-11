@@ -197,7 +197,8 @@ already exists on the remote side.
 	with configuration variable `push.followTags`.  For more
 	information, see `push.followTags` in linkgit:git-config[1].
 
---[no-]signed::
+--signed::
+--no-signed::
 --signed=(true|false|if-asked)::
 	GPG-sign the push request to update refs on the receiving
 	side, to allow it to be checked by the hooks and/or be
@@ -208,7 +209,8 @@ already exists on the remote side.
 	will also fail if the actual call to `gpg --sign` fails.  See
 	linkgit:git-receive-pack[1] for the details on the receiving end.
 
---[no-]atomic::
+--atomic::
+--no-atomic::
 	Use an atomic transaction on the remote side if available.
 	Either all refs are updated, or on error, no refs are updated.
 	If the server does not support atomic pushes the push will fail.
@@ -232,7 +234,8 @@ already exists on the remote side.
 	repository over ssh, and you do not have the program in
 	a directory on the default $PATH.
 
---[no-]force-with-lease::
+--force-with-lease::
+--no-force-with-lease::
 --force-with-lease=<refname>::
 --force-with-lease=<refname>:<expect>::
 	Usually, "git push" refuses to update a remote ref that is
@@ -350,7 +353,8 @@ one branch, use a `+` in front of the refspec to push (e.g `git push
 origin +master` to force a push to the `master` branch). See the
 `<refspec>...` section above for details.
 
---[no-]force-if-includes::
+--force-if-includes::
+--no-force-if-includes::
 	Force an update only if the tip of the remote-tracking ref
 	has been integrated locally.
 +
@@ -377,7 +381,8 @@ Specifying `--no-force-if-includes` disables this behavior.
 	linkgit:git-pull[1] and other commands. For more information,
 	see `branch.<name>.merge` in linkgit:git-config[1].
 
---[no-]thin::
+--thin::
+--no-thin::
 	These options are passed to linkgit:git-send-pack[1]. A thin transfer
 	significantly reduces the amount of sent data when the sender and
 	receiver share many of the same objects in common. The default is
@@ -419,7 +424,8 @@ When using 'on-demand' or 'only', if a submodule has a
 "push.recurseSubmodules={on-demand,only}" or "submodule.recurse" configuration,
 further recursion will occur. In this case, "only" is treated as "on-demand".
 
---[no-]verify::
+--verify::
+--no-verify::
 	Toggle the pre-push hook (see linkgit:githooks[5]).  The
 	default is --verify, giving the hook a chance to prevent the
 	push.  With --no-verify, the hook is bypassed completely.

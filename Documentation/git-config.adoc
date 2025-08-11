@@ -295,7 +295,8 @@ Valid `<type>`'s include:
 	When the color setting for `name` is undefined, the command uses
 	`color.ui` as fallback.
 
---[no-]includes::
+--includes::
+--no-includes::
 	Respect `include.*` directives in config files when looking up
 	values. Defaults to `off` when a specific file is given (e.g.,
 	using `--file`, `--global`, etc) and `on` when searching all

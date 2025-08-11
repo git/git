@@ -75,7 +75,8 @@ include::line-range-format.adoc[]
 	iso format is used. For supported values, see the discussion
 	of the --date option at linkgit:git-log[1].
 
---[no-]progress::
+--progress::
+--no-progress::
 	Progress status is reported on the standard error stream
 	by default when it is attached to a terminal. This flag
 	enables progress reporting even if not attached to a

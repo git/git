@@ -1,4 +1,5 @@
---[no-]all::
+--all::
+--no-all::
 	Fetch all remotes, except for the ones that has the
 	`remote.<name>.skipFetchAll` configuration variable set.
 	This overrides the configuration variable fetch.all`.
@@ -88,7 +89,8 @@ This is incompatible with `--recurse-submodules=[yes|on-demand]` and takes
 precedence over the `fetch.output` config option.
 
 ifndef::git-pull[]
---[no-]write-fetch-head::
+--write-fetch-head::
+--no-write-fetch-head::
 	Write the list of remote refs fetched in the `FETCH_HEAD`
 	file directly under `$GIT_DIR`.  This is the default.
 	Passing `--no-write-fetch-head` from the command line tells
@@ -118,13 +120,16 @@ ifndef::git-pull[]
 	Allow several <repository> and <group> arguments to be
 	specified. No <refspec>s may be specified.
 
---[no-]auto-maintenance::
---[no-]auto-gc::
+--auto-maintenance::
+--no-auto-maintenance::
+--auto-gc::
+--no-auto-gc::
 	Run `git maintenance run --auto` at the end to perform automatic
 	repository maintenance if needed. (`--[no-]auto-gc` is a synonym.)
 	This is enabled by default.
 
---[no-]write-commit-graph::
+--write-commit-graph::
+--no-write-commit-graph::
 	Write a commit-graph after fetching. This overrides the config
 	setting `fetch.writeCommitGraph`.
 endif::git-pull[]

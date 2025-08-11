@@ -71,7 +71,8 @@ be in a separate packet, and the list must end with a flush packet.
 	fails to update then the entire push will fail without changing any
 	refs.
 
---[no-]signed::
+--signed::
+--no-signed::
 --signed=(true|false|if-asked)::
 	GPG-sign the push request to update refs on the receiving
 	side, to allow it to be checked by the hooks and/or be

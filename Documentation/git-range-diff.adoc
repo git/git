@@ -96,7 +96,8 @@ diff.
 --remerge-diff::
 	Convenience option, equivalent to `--diff-merges=remerge`.
 
---[no-]notes[=<ref>]::
+--notes[=<ref>]::
+--no-notes::
 	This flag is passed to the `git log` program
 	(see linkgit:git-log[1]) that generates the patches.
 

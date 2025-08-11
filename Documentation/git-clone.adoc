@@ -272,7 +272,8 @@ corresponding `--mirror` and `--no-tags` options instead.
 	reachable from a specified remote branch or tag.  This option
 	can be specified multiple times.
 
-`--[no-]single-branch`::
+`--single-branch`::
+`--no-single-branch`::
 	Clone only the history leading to the tip of a single branch,
 	either specified by the `--branch` option or the primary
 	branch remote's `HEAD` points at.
@@ -282,7 +283,8 @@ corresponding `--mirror` and `--no-tags` options instead.
 	branch when `--single-branch` clone was made, no remote-tracking
 	branch is created.
 
-`--[no-]tags`::
+`--tags`::
+`--no-tags`::
 	Control whether or not tags will be cloned. When `--no-tags` is
 	given, the option will be become permanent by setting the
 	`remote.<remote>.tagOpt=--no-tags` configuration. This ensures that
@@ -313,10 +315,12 @@ the clone is finished. This option is ignored if the cloned repository does
 not have a worktree/checkout (i.e. if any of `--no-checkout`/`-n`, `--bare`,
 or `--mirror` is given)
 
-`--[no-]shallow-submodules`::
+`--shallow-submodules`::
+`--no-shallow-submodules`::
 	All submodules which are cloned will be shallow with a depth of 1.
 
-`--[no-]remote-submodules`::
+`--remote-submodules`::
+`--no-remote-submodules`::
 	All submodules which are cloned will use the status of the submodule's
 	remote-tracking branch to update the submodule, rather than the
 	superproject's recorded SHA-1. Equivalent to passing `--remote` to

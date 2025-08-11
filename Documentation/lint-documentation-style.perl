@@ -18,6 +18,9 @@ while (my $line = <>) {
 
 		report($line, "multiple parameters in a definition list item");
 	}
+	if ($line =~ /^`?--\[no-\][a-z0-9-]+.*(::|;;)$/) {
+		report($line, "definition list item with a `--[no-]` parameter");
+	}
 }
 
 

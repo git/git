@@ -77,7 +77,8 @@ with custom merge tool commands and has the same value as `$MERGED`.
 --tool-help::
 	Print a list of diff tools that may be used with `--tool`.
 
---[no-]symlinks::
+--symlinks::
+--no-symlinks::
 	'git difftool''s default behavior is to create symlinks to the
 	working tree when run in `--dir-diff` mode and the right-hand
 	side of the comparison yields the same content as the file in
@@ -94,7 +95,8 @@ instead.  `--no-symlinks` is the default on Windows.
 	Additionally, `$BASE` is set in the environment.
 
 -g::
---[no-]gui::
+--gui::
+--no-gui::
 	When 'git-difftool' is invoked with the `-g` or `--gui` option
 	the default diff tool will be read from the configured
 	`diff.guitool` variable instead of `diff.tool`. This may be
@@ -104,7 +106,8 @@ instead.  `--no-symlinks` is the default on Windows.
 	fallback in the order of `merge.guitool`, `diff.tool`,
 	`merge.tool` until a tool is found.
 
---[no-]trust-exit-code::
+--trust-exit-code::
+--no-trust-exit-code::
 	Errors reported by the diff tool are ignored by default.
 	Use `--trust-exit-code` to make 'git-difftool' exit when an
 	invoked diff tool returns a non-zero exit code.
