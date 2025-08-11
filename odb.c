@@ -142,8 +142,7 @@ static void read_info_alternates(struct object_database *odb,
 static struct odb_source *link_alt_odb_entry(struct object_database *odb,
 					     const char *dir,
 					     const char *relative_base,
-					     int depth,
-					     const char *normalized_objdir)
+					     int depth)
 {
 	struct odb_source *alternate = NULL;
 	struct strbuf pathbuf = STRBUF_INIT;
@@ -170,7 +169,10 @@ static struct odb_source *link_alt_odb_entry(struct object_database *odb,
 	while (pathbuf.len && pathbuf.buf[pathbuf.len - 1] == '/')
 		strbuf_setlen(&pathbuf, pathbuf.len - 1);
 
-	if (!alt_odb_usable(odb, &pathbuf, normalized_objdir, &pos))
+	strbuf_reset(&tmp);
+	strbuf_realpath(&tmp, odb->sources->path, 1);
+
+	if (!alt_odb_usable(odb, &pathbuf, tmp.buf, &pos))
 		goto error;
 
 	CALLOC_ARRAY(alternate, 1);
@@ -227,7 +229,6 @@ static const char *parse_alt_odb_entry(const char *string,
 static void link_alt_odb_entries(struct object_database *odb, const char *alt,
 				 int sep, const char *relative_base, int depth)
 {
-	struct strbuf objdirbuf = STRBUF_INIT;
 	struct strbuf dir = STRBUF_INIT;
 
 	if (!alt || !*alt)
@@ -239,17 +240,13 @@ static void link_alt_odb_entries(struct object_database *odb, const char *alt,
 		return;
 	}
 
-	strbuf_realpath(&objdirbuf, odb->sources->path, 1);
-
 	while (*alt) {
 		alt = parse_alt_odb_entry(alt, sep, &dir);
 		if (!dir.len)
 			continue;
-		link_alt_odb_entry(odb, dir.buf,
-				   relative_base, depth, objdirbuf.buf);
+		link_alt_odb_entry(odb, dir.buf, relative_base, depth);
 	}
 	strbuf_release(&dir);
-	strbuf_release(&objdirbuf);
 }
 
 static void read_info_alternates(struct object_database *odb,
@@ -317,20 +314,12 @@ void odb_add_to_alternates_file(struct object_database *odb,
 struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
 						const char *dir)
 {
-	struct odb_source *alternate;
-	char *objdir;
-
 	/*
 	 * Make sure alternates are initialized, or else our entry may be
 	 * overwritten when they are.
 	 */
 	odb_prepare_alternates(odb);
-
-	objdir = real_pathdup(odb->sources->path, 1);
-	alternate = link_alt_odb_entry(odb, dir, NULL, 0, objdir);
-
-	free(objdir);
-	return alternate;
+	return link_alt_odb_entry(odb, dir, NULL, 0);
 }
 
 struct odb_source *odb_set_temporary_primary_source(struct object_database *odb,
