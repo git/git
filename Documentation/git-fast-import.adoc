@@ -605,9 +605,11 @@ Marks must be declared (via `mark`) before they can be used.
 
 The special case of restarting an incremental import from the
 current branch value should be written as:
+
 ----
 	from refs/heads/branch^0
 ----
+
 The `^0` suffix is necessary as fast-import does not permit a branch to
 start from itself, and the branch is created in memory before the
 `from` command is even read from the input.  Adding `^0` will force

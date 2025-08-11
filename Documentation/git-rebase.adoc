@@ -687,7 +687,7 @@ In addition, the following pairs of options are incompatible:
  * --fork-point and --root
 
 BEHAVIORAL DIFFERENCES
------------------------
+----------------------
 
 `git rebase` has two primary backends: 'apply' and 'merge'.  (The 'apply'
 backend used to be known as the 'am' backend, but the name led to
