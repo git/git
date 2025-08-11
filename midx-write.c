@@ -916,7 +916,7 @@ cleanup:
 static struct multi_pack_index *lookup_multi_pack_index(struct repository *r,
 							const char *object_dir)
 {
-	struct odb_source *source = odb_find_source(r->objects, object_dir);
+	struct odb_source *source = odb_find_source_or_die(r->objects, object_dir);
 	return get_multi_pack_index(source);
 }
 

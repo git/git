@@ -464,6 +464,12 @@ struct odb_source *odb_find_source(struct object_database *odb, const char *obj_
 	free(obj_dir_real);
 	strbuf_release(&odb_path_real);
 
+	return source;
+}
+
+struct odb_source *odb_find_source_or_die(struct object_database *odb, const char *obj_dir)
+{
+	struct odb_source *source = odb_find_source(odb, obj_dir);
 	if (!source)
 		die(_("could not find object directory matching %s"), obj_dir);
 	return source;
