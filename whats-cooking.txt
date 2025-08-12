@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2025, #03; Fri, 8)
+Subject: What's cooking in git.git (Aug 2025, #05; Mon, 11)
 X-master-at: 2c2ba49d55ff26c1082b8137b1ec5eeccb4337d1
-X-next-at: 2494970778f053be8e9f6fac27ec13d4d9dbf65d
+X-next-at: 924127e9c014b3ea7c2d50fa2a4da7e6f0b155c5
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2025, #03; Fri, 8)
+What's cooking in git.git (Aug 2025, #05; Mon, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,87 +46,42 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* dl/squelch-maybe-uninitialized (2025-08-04) 2 commits
-  (merged to 'next' on 2025-08-05 at fa3c3830ee)
- + t/unit-tests/clar: fix -Wmaybe-uninitialized with -Og
- + remote: bail early from set_head() if missing remote name
+* rs/for-each-ref-start-after-marker-fix (2025-08-09) 1 commit
+  (merged to 'next' on 2025-08-09 at 44788822b0)
+ + for-each-ref: call --start-after argument "marker"
 
- Squelch false-positive compiler warning.
- source: <cover.1754371649.git.liu.denton@gmail.com>
+ Hotfix.
 
-
-* jk/revert-squelch-compiler-warning (2025-08-04) 1 commit
-  (merged to 'next' on 2025-08-05 at 344a6a715b)
- + revert: initialize const value
-
- Squelch false-positive compiler warning.
- source: <20250804130011.GA93475@coredump.intra.peff.net>
+ Will merge to 'master'.
+ source: <1a32a666-fcf4-4f05-a468-2afa07fa0e2d@web.de>
 
 
-* jt/archive-zip-deflate-fix (2025-08-02) 1 commit
-  (merged to 'next' on 2025-08-06 at 1a5c1ccec3)
- + archive: flush deflate stream until Z_STREAM_END
+* rs/merge-compact-summary (2025-08-09) 1 commit
+  (merged to 'next' on 2025-08-09 at 924127e9c0)
+ + merge: don't document non-existing --compact-summary argument
 
- The deflate codepath in "git archive --format=zip" had a
- longstanding bug coming from misuse of zlib API, which has been
- corrected.
- source: <20250802220803.95137-1-jltobler@gmail.com>
+ Hotfix.
 
-
-* kj/renamed-submodule (2025-07-24) 4 commits
-  (merged to 'next' on 2025-08-03 at c341b36545)
- + fixup! submodule: skip redundant active entries when pattern covers path
- + fixup! submodule: prevent overwriting .gitmodules on path reuse
- + submodule: skip redundant active entries when pattern covers path
- + submodule: prevent overwriting .gitmodules on path reuse
-
- The case where a new submodule takes a path where used to be a
- completely different subproject is now dealt a bit better than
- before.
- source: <20250724152418.45226-1-jayatheerthkulkarni2005@gmail.com>
+ Will merge to 'master'.
+ source: <890631d1-4e3e-4ea5-8f58-371fadf2b1b3@web.de>
 
 
-* ps/object-file-wo-the-repository (2025-07-16) 17 commits
-  (merged to 'next' on 2025-08-01 at 0c1253014e)
- + object-file: get rid of `the_repository` in index-related functions
- + object-file: get rid of `the_repository` in `force_object_loose()`
- + object-file: get rid of `the_repository` in `read_loose_object()`
- + object-file: get rid of `the_repository` in loose object iterators
- + object-file: remove declaration for `for_each_file_in_obj_subdir()`
- + object-file: inline `for_each_loose_file_in_objdir_buf()`
- + object-file: get rid of `the_repository` when writing objects
- + odb: introduce `odb_write_object()`
- + loose: write loose objects map via their source
- + object-file: get rid of `the_repository` in `finalize_object_file()`
- + object-file: get rid of `the_repository` in `loose_object_info()`
- + object-file: get rid of `the_repository` when freshening objects
- + object-file: inline `check_and_freshen()` functions
- + object-file: get rid of `the_repository` in `has_loose_object()`
- + object-file: stop using `the_hash_algo`
- + object-file: fix -Wsign-compare warnings
- + Merge branch 'ps/object-store' into ps/object-file-wo-the-repository
+* ac/deglobal-fmt-merge-log-config (2025-08-10) 2 commits
+ - builtin/fmt-merge-msg: stop depending on 'the_repository'
+ - environment: remove the global variable 'merge_log_config'
 
- Reduce implicit assumption and dependence on the_repository in the
- object-file subsystem.
- cf. <87ms8na1mc.fsf@iotcl.com>
- cf. <aIhm_nqiH8Sci12i@pks.im>
- source: <20250717-pks-object-file-wo-the-repository-v2-0-36d2cd6c700e@pks.im>
+ source: <cover.1754868681.git.ayu.chandekar@gmail.com>
 
 
-* rs/tighten-alias-help (2025-07-25) 1 commit
-  (merged to 'next' on 2025-08-01 at a0fb0696cd)
- + git: show alias info only with lone -h
+* jc/longer-disambiguation-fix (2025-08-11) 1 commit
+ - abbrev: allow extending beyond 20 chars to disambiguate
 
- "git -c alias.foo=bar foo -h baz" reported "'foo' is aliased to
- 'bar'" and then went on to run "git foo -h baz", which was
- unexpected.  Tighten the rule so that alias expansion is reported
- only when "-h" is the sole option.
- source: <a35dc2bf-015c-472d-9528-6763f7aac180@web.de>
+ source: <xmqqzfc51xvk.fsf@gitster.g>
 
 --------------------------------------------------
-[New Topics]
+[Cooking]
 
 * dl/push-missing-object-error (2025-08-08) 3 commits
  - remote.c: convert if-else ladder to switch
@@ -142,20 +97,19 @@ Release tarballs are available at:
  source: <cover.1754637849.git.liu.denton@gmail.com>
 
 
-* ja/doc-lint-sections-and-synopsis (2025-08-05) 7 commits
- . fixup! doc: check for absence of multiple terms in each entry of desc list
- . doc lint: check that synopsis manpages have synopsis inlines
- . doc:git-for-each-ref: fix styling and typos
- . doc: check for absence of the form --[no-]parameter
- . doc: check for absence of multiple terms in each entry of desc list
- . doc: check well-formedness of delimited sections
- . doc: test linkgit macros for well-formedness
+* ja/doc-lint-sections-and-synopsis (2025-08-11) 6 commits
+ - doc lint: check that synopsis manpages have synopsis inlines
+ - doc:git-for-each-ref: fix styling and typos
+ - doc: check for absence of the form --[no-]parameter
+ - doc: check for absence of multiple terms in each entry of desc list
+ - doc: check well-formedness of delimited sections
+ - doc: test linkgit macros for well-formedness
 
  Doc lint updates to encourage the newer and easier-to-use
  `synopsis` format, with fixes to a handful of existing uses.
 
- Comments?
- source: <pull.1945.v2.git.1754421045.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1945.v3.git.1754945600.gitgitgadget@gmail.com>
 
 
 * js/rebase-i-allow-drop-on-a-merge (2025-08-06) 1 commit
@@ -193,8 +147,7 @@ Release tarballs are available at:
  source: <aaa1734189ec8bab7cfa0965132e3d8e5909b1af.1754660514.git.code@khaugsbakk.name>
 
 
-* ly/changed-path-traversal-with-magic-pathspec (2025-08-08) 2 commits
- - fixup! bloom: enable bloom filter with wildcard pathspec in revision traversal
+* ly/changed-path-traversal-with-magic-pathspec (2025-08-10) 1 commit
  - bloom: enable bloom filter with wildcard pathspec in revision traversal
 
  Revision traversal limited with pathspec, like "git log dir/*",
@@ -203,7 +156,7 @@ Release tarballs are available at:
  they can.
 
  Will merge to 'next'?
- source: <20250808065834.22743-1-yldhome2d2@gmail.com>
+ source: <20250811060137.75135-1-yldhome2d2@gmail.com>
 
 
 * ps/commit-graph-wo-globals (2025-08-07) 10 commits
@@ -231,40 +184,56 @@ Release tarballs are available at:
 
  Test updates.
 
- Will merge to 'next'.
- source: <20250804073002.1586332-1-toon@iotcl.com>
+ Expecting a reroll?
+ cf. <xmqq7bzdfoxe.fsf@gitster.g>
+ source: <20250808095943.3312265-1-toon@iotcl.com>
 
 
-* gh/git-jump-pathname-with-sp (2025-08-08) 1 commit
+* gh/git-jump-pathname-with-sp (2025-08-11) 1 commit
  - git-jump: make `diff` work with filenames containing spaces
 
- source: <pull.1950.git.1754674979929.gitgitgadget@gmail.com>
+ "git jump" (in contrib/) fails to parse the diff header correctly
+ when a file has a space in its name, which has been corrected.
+
+ Will merge to 'next'?
+ source: <pull.1950.v2.git.1754913323810.gitgitgadget@gmail.com>
 
 
-* jc/diff-no-index-in-subdir (2025-08-07) 1 commit
+* jc/diff-no-index-in-subdir (2025-08-09) 1 commit
  - diff: --no-index should ignore the worktree
 
- source: <xmqqtt2jm118.fsf@gitster.g>
+ "git diff --no-index" run inside a subdirectory under control of a
+ Git repository operated at the top of the working tree and stripped
+ the prefix from the output, and oddballs like "-" (stdin) did not
+ work correctly because of it.  Correct the set-up by undoing what
+ the set-up sequence did to cwd and prefix.
+
+ Will merge to 'next'?
+ source: <xmqq1ppk58ob.fsf@gitster.g>
 
 
-* je/doc-rebase (2025-08-08) 5 commits
+* je/doc-rebase (2025-08-11) 6 commits
+ - fixup! doc: git-rebase: update discussion of internals
  - doc: git-rebase: update discussion of internals
  - doc: git-rebase: move --onto explanation down
  - doc: git rebase: clarify arguments syntax
  - doc: git rebase: dedup merge conflict discussion
  - doc: git-rebase: start with an example
 
- source: <pull.1949.v2.git.1754680525.gitgitgadget@gmail.com>
+ Documentation for "git rebase" has been updated.
+
+ Comments?
+ source: <pull.1949.v6.git.1754949075.gitgitgadget@gmail.com>
 
 
-* rj/t6137-cygwin-fix (2025-08-08) 2 commits
- - git-jump: make `diff` work with filenames containing spaces
+* rj/t6137-cygwin-fix (2025-08-08) 1 commit
  - t6137-*.sh: fix test failure on cygwin
 
- source: <pull.1950.git.1754674979929.gitgitgadget@gmail.com>
+ Test fix for breakage introduced in Git 2.50.
 
---------------------------------------------------
-[Cooking]
+ Will merge to 'next'.
+ source: <5514f2fd-3307-42c8-97ac-bc2147a7ba41@ramsayjones.plus.com>
+
 
 * ps/reftable-libgit2-cleanup (2025-08-04) 6 commits
  - reftable/stack: handle outdated stacks when compacting
@@ -335,7 +304,7 @@ Release tarballs are available at:
  source: <36d5b59a-a99a-4a6f-b637-dfb0b760660f@web.de>
 
 
-* ps/object-store-midx-dedup-info (2025-08-07) 10 commits
+* ps/object-store-midx-dedup-info (2025-08-11) 11 commits
  - midx: compute paths via their source
  - midx: stop duplicating info redundant with its owning source
  - midx: write multi-pack indices via their source
@@ -343,6 +312,7 @@ Release tarballs are available at:
  - midx: drop redundant `struct repository` parameter
  - odb: simplify calling `link_alt_odb_entry()`
  - odb: return newly created in-memory sources
+ - odb: consistently use "dir" to refer to alternate's directory
  - odb: allow `odb_find_source()` to fail
  - odb: store locality in object database sources
  - Merge branch 'ps/object-store-midx' into ps/object-store-midx-dedup-info
@@ -350,7 +320,7 @@ Release tarballs are available at:
  Further code clean-up for multi-pack-index code paths.
 
  Comments?
- source: <20250807-b4-pks-midx-deduplicate-source-info-v2-0-bcffb8fc119c@pks.im>
+ source: <20250811-b4-pks-midx-deduplicate-source-info-v3-0-e442bdf2b4ad@pks.im>
 
 
 * jc/strbuf-split (2025-07-31) 13 commits
@@ -428,7 +398,8 @@ Release tarballs are available at:
  source: <20250731-pks-remote-rename-improvements-v2-0-dda6f083674d@pks.im>
 
 
-* ag/send-email-imap-sent (2025-07-23) 2 commits
+* ag/send-email-imap-sent (2025-08-11) 3 commits
+ - fixup! send-email: enable copying emails to IMAP folder without actually sending them
  - send-email: enable copying emails to IMAP folder without actually sending them
  - send-email: add ability to send a copy of sent emails to an IMAP folder
 
@@ -542,7 +513,7 @@ Release tarballs are available at:
  A new subcommand "git repo" gives users a way to grab various
  repository characteristics.
 
- Will merge to 'next'.
+ Expecting a reroll?
  source: <20250807150239.6987-1-lucasseikioshiro@gmail.com>
 
 
