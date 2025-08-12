@@ -128,7 +128,7 @@ static void write_n_ref_tables(struct reftable_stack *st,
 		ref.refname = buf;
 		t_reftable_set_hash(ref.value.val1, i, REFTABLE_HASH_SHA1);
 
-		err = reftable_stack_add(st, &write_test_ref, &ref);
+		err = reftable_stack_add(st, &write_test_ref, &ref, 0);
 		check(!err);
 	}
 
@@ -170,7 +170,7 @@ static void t_reftable_stack_add_one(void)
 	err = reftable_new_stack(&st, dir, &opts);
 	check(!err);
 
-	err = reftable_stack_add(st, write_test_ref, &ref);
+	err = reftable_stack_add(st, write_test_ref, &ref, 0);
 	check(!err);
 
 	err = reftable_stack_read_ref(st, ref.refname, &dest);
@@ -235,16 +235,16 @@ static void t_reftable_stack_uptodate(void)
 	err = reftable_new_stack(&st2, dir, &opts);
 	check(!err);
 
-	err = reftable_stack_add(st1, write_test_ref, &ref1);
+	err = reftable_stack_add(st1, write_test_ref, &ref1, 0);
 	check(!err);
 
-	err = reftable_stack_add(st2, write_test_ref, &ref2);
+	err = reftable_stack_add(st2, write_test_ref, &ref2, 0);
 	check_int(err, ==, REFTABLE_OUTDATED_ERROR);
 
 	err = reftable_stack_reload(st2);
 	check(!err);
 
-	err = reftable_stack_add(st2, write_test_ref, &ref2);
+	err = reftable_stack_add(st2, write_test_ref, &ref2, 0);
 	check(!err);
 	reftable_stack_destroy(st1);
 	reftable_stack_destroy(st2);
@@ -428,7 +428,7 @@ static void t_reftable_stack_auto_compaction_fails_gracefully(void)
 	err = reftable_new_stack(&st, dir, &opts);
 	check(!err);
 
-	err = reftable_stack_add(st, write_test_ref, &ref);
+	err = reftable_stack_add(st, write_test_ref, &ref, 0);
 	check(!err);
 	check_int(st->merged->tables_len, ==, 1);
 	check_int(st->stats.attempts, ==, 0);
@@ -446,7 +446,7 @@ static void t_reftable_stack_auto_compaction_fails_gracefully(void)
 	write_file_buf(table_path.buf, "", 0);
 
 	ref.update_index = 2;
-	err = reftable_stack_add(st, write_test_ref, &ref);
+	err = reftable_stack_add(st, write_test_ref, &ref, 0);
 	check(!err);
 	check_int(st->merged->tables_len, ==, 2);
 	check_int(st->stats.attempts, ==, 1);
@@ -484,10 +484,10 @@ static void t_reftable_stack_update_index_check(void)
 	err = reftable_new_stack(&st, dir, &opts);
 	check(!err);
 
-	err = reftable_stack_add(st, write_test_ref, &ref1);
+	err = reftable_stack_add(st, write_test_ref, &ref1, 0);
 	check(!err);
 
-	err = reftable_stack_add(st, write_test_ref, &ref2);
+	err = reftable_stack_add(st, write_test_ref, &ref2, 0);
 	check_int(err, ==, REFTABLE_API_ERROR);
 	reftable_stack_destroy(st);
 	clear_dir(dir);
@@ -503,7 +503,7 @@ static void t_reftable_stack_lock_failure(void)
 	err = reftable_new_stack(&st, dir, &opts);
 	check(!err);
 	for (i = -1; i != REFTABLE_EMPTY_TABLE_ERROR; i--) {
-		err = reftable_stack_add(st, write_error, &i);
+		err = reftable_stack_add(st, write_error, &i, 0);
 		check_int(err, ==, i);
 	}
 
@@ -546,7 +546,7 @@ static void t_reftable_stack_add(void)
 	}
 
 	for (i = 0; i < N; i++) {
-		int err = reftable_stack_add(st, write_test_ref, &refs[i]);
+		int err = reftable_stack_add(st, write_test_ref, &refs[i], 0);
 		check(!err);
 	}
 
@@ -555,7 +555,7 @@ static void t_reftable_stack_add(void)
 			.log = &logs[i],
 			.update_index = reftable_stack_next_update_index(st),
 		};
-		int err = reftable_stack_add(st, write_test_log, &arg);
+		int err = reftable_stack_add(st, write_test_log, &arg, 0);
 		check(!err);
 	}
 
@@ -639,7 +639,7 @@ static void t_reftable_stack_iterator(void)
 	}
 
 	for (i = 0; i < N; i++) {
-		err = reftable_stack_add(st, write_test_ref, &refs[i]);
+		err = reftable_stack_add(st, write_test_ref, &refs[i], 0);
 		check(!err);
 	}
 
@@ -649,7 +649,7 @@ static void t_reftable_stack_iterator(void)
 			.update_index = reftable_stack_next_update_index(st),
 		};
 
-		err = reftable_stack_add(st, write_test_log, &arg);
+		err = reftable_stack_add(st, write_test_log, &arg, 0);
 		check(!err);
 	}
 
@@ -725,11 +725,11 @@ static void t_reftable_stack_log_normalize(void)
 	check(!err);
 
 	input.value.update.message = (char *) "one\ntwo";
-	err = reftable_stack_add(st, write_test_log, &arg);
+	err = reftable_stack_add(st, write_test_log, &arg, 0);
 	check_int(err, ==, REFTABLE_API_ERROR);
 
 	input.value.update.message = (char *) "one";
-	err = reftable_stack_add(st, write_test_log, &arg);
+	err = reftable_stack_add(st, write_test_log, &arg, 0);
 	check(!err);
 
 	err = reftable_stack_read_log(st, input.refname, &dest);
@@ -738,7 +738,7 @@ static void t_reftable_stack_log_normalize(void)
 
 	input.value.update.message = (char *) "two\n";
 	arg.update_index = 2;
-	err = reftable_stack_add(st, write_test_log, &arg);
+	err = reftable_stack_add(st, write_test_log, &arg, 0);
 	check(!err);
 	err = reftable_stack_read_log(st, input.refname, &dest);
 	check(!err);
@@ -792,7 +792,7 @@ static void t_reftable_stack_tombstone(void)
 		}
 	}
 	for (i = 0; i < N; i++) {
-		int err = reftable_stack_add(st, write_test_ref, &refs[i]);
+		int err = reftable_stack_add(st, write_test_ref, &refs[i], 0);
 		check(!err);
 	}
 
@@ -801,7 +801,7 @@ static void t_reftable_stack_tombstone(void)
 			.log = &logs[i],
 			.update_index = reftable_stack_next_update_index(st),
 		};
-		int err = reftable_stack_add(st, write_test_log, &arg);
+		int err = reftable_stack_add(st, write_test_log, &arg, 0);
 		check(!err);
 	}
 
@@ -855,7 +855,7 @@ static void t_reftable_stack_hash_id(void)
 	err = reftable_new_stack(&st, dir, &opts);
 	check(!err);
 
-	err = reftable_stack_add(st, write_test_ref, &ref);
+	err = reftable_stack_add(st, write_test_ref, &ref, 0);
 	check(!err);
 
 	/* can't read it with the wrong hash ID. */
@@ -927,7 +927,7 @@ static void t_reflog_expire(void)
 			.log = &logs[i],
 			.update_index = reftable_stack_next_update_index(st),
 		};
-		int err = reftable_stack_add(st, write_test_log, &arg);
+		int err = reftable_stack_add(st, write_test_log, &arg, 0);
 		check(!err);
 	}
 
@@ -978,7 +978,7 @@ static void t_empty_add(void)
 	err = reftable_new_stack(&st, dir, &opts);
 	check(!err);
 
-	err = reftable_stack_add(st, write_nothing, NULL);
+	err = reftable_stack_add(st, write_nothing, NULL, 0);
 	check(!err);
 
 	err = reftable_new_stack(&st2, dir, &opts);
@@ -1021,7 +1021,7 @@ static void t_reftable_stack_auto_compaction(void)
 		};
 		snprintf(name, sizeof(name), "branch%04"PRIuMAX, (uintmax_t)i);
 
-		err = reftable_stack_add(st, write_test_ref, &ref);
+		err = reftable_stack_add(st, write_test_ref, &ref, 0);
 		check(!err);
 
 		err = reftable_stack_auto_compact(st);
@@ -1058,7 +1058,7 @@ static void t_reftable_stack_auto_compaction_factor(void)
 		};
 		xsnprintf(name, sizeof(name), "branch%04"PRIuMAX, (uintmax_t)i);
 
-		err = reftable_stack_add(st, &write_test_ref, &ref);
+		err = reftable_stack_add(st, &write_test_ref, &ref, 0);
 		check(!err);
 
 		check(i < 5 || st->merged->tables_len < 5 * fastlogN(i, 5));
@@ -1140,7 +1140,7 @@ static void t_reftable_stack_add_performs_auto_compaction(void)
 		snprintf(buf, sizeof(buf), "branch-%04"PRIuMAX, (uintmax_t)i);
 		ref.refname = buf;
 
-		err = reftable_stack_add(st, write_test_ref, &ref);
+		err = reftable_stack_add(st, write_test_ref, &ref, 0);
 		check(!err);
 
 		/*
