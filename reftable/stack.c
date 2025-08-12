@@ -664,8 +664,6 @@ struct reftable_addition {
 	uint64_t next_update_index;
 };
 
-#define REFTABLE_ADDITION_INIT {0}
-
 static void reftable_addition_close(struct reftable_addition *add)
 {
 	struct reftable_buf nm = REFTABLE_BUF_INIT;
@@ -693,6 +691,7 @@ static int reftable_stack_init_addition(struct reftable_addition *add,
 	struct reftable_buf lock_file_name = REFTABLE_BUF_INIT;
 	int err;
 
+	memset(add, 0, sizeof(*add));
 	add->stack = st;
 
 	err = flock_acquire(&add->tables_list_lock, st->list_file,
@@ -739,8 +738,10 @@ static int stack_try_add(struct reftable_stack *st,
 					    void *arg),
 			 void *arg)
 {
-	struct reftable_addition add = REFTABLE_ADDITION_INIT;
-	int err = reftable_stack_init_addition(&add, st, 0);
+	struct reftable_addition add;
+	int err;
+
+	err = reftable_stack_init_addition(&add, st, 0);
 	if (err < 0)
 		goto done;
 
@@ -866,19 +867,18 @@ int reftable_stack_new_addition(struct reftable_addition **dest,
 				struct reftable_stack *st,
 				unsigned int flags)
 {
-	int err = 0;
-	struct reftable_addition empty = REFTABLE_ADDITION_INIT;
+	int err;
 
 	REFTABLE_CALLOC_ARRAY(*dest, 1);
 	if (!*dest)
 		return REFTABLE_OUT_OF_MEMORY_ERROR;
 
-	**dest = empty;
 	err = reftable_stack_init_addition(*dest, st, flags);
 	if (err) {
 		reftable_free(*dest);
 		*dest = NULL;
 	}
+
 	return err;
 }
 
