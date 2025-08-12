@@ -1352,8 +1352,8 @@ static int split_commit_in_progress(struct wt_status *s)
  */
 static void abbrev_oid_in_line(struct strbuf *line)
 {
-	struct strbuf **split;
-	int i;
+	struct string_list split = STRING_LIST_INIT_DUP;
+	struct object_id oid;
 
 	if (starts_with(line->buf, "exec ") ||
 	    starts_with(line->buf, "x ") ||
@@ -1361,26 +1361,15 @@ static void abbrev_oid_in_line(struct strbuf *line)
 	    starts_with(line->buf, "l "))
 		return;
 
-	split = strbuf_split_max(line, ' ', 3);
-	if (split[0] && split[1]) {
-		struct object_id oid;
-
-		/*
-		 * strbuf_split_max left a space. Trim it and re-add
-		 * it after abbreviation.
-		 */
-		strbuf_trim(split[1]);
-		if (!repo_get_oid(the_repository, split[1]->buf, &oid)) {
-			strbuf_reset(split[1]);
-			strbuf_add_unique_abbrev(split[1], &oid,
-						 DEFAULT_ABBREV);
-			strbuf_addch(split[1], ' ');
-			strbuf_reset(line);
-			for (i = 0; split[i]; i++)
-				strbuf_addbuf(line, split[i]);
-		}
+	if ((2 <= string_list_split(&split, line->buf, " ", 2)) &&
+	    !repo_get_oid(the_repository, split.items[1].string, &oid)) {
+		strbuf_reset(line);
+		strbuf_addf(line, "%s ", split.items[0].string);
+		strbuf_add_unique_abbrev(line, &oid, DEFAULT_ABBREV);
+		for (size_t i = 2; i < split.nr; i++)
+			strbuf_addf(line, " %s", split.items[i].string);
 	}
-	strbuf_list_free(split);
+	string_list_clear(&split, 0);
 }
 
 static int read_rebase_todolist(const char *fname, struct string_list *lines)
