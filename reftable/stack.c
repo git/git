@@ -698,14 +698,9 @@ static int reftable_stack_init_addition(struct reftable_addition *add,
 
 	err = flock_acquire(&add->tables_list_lock, st->list_file,
 			    st->opts.lock_timeout_ms);
-	if (err < 0) {
-		if (errno == EEXIST) {
-			err = REFTABLE_LOCK_ERROR;
-		} else {
-			err = REFTABLE_IO_ERROR;
-		}
+	if (err < 0)
 		goto done;
-	}
+
 	if (st->opts.default_permissions) {
 		if (chmod(add->tables_list_lock.path,
 			  st->opts.default_permissions) < 0) {
@@ -1212,13 +1207,8 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * which are part of the user-specified range.
 	 */
 	err = flock_acquire(&tables_list_lock, st->list_file, st->opts.lock_timeout_ms);
-	if (err < 0) {
-		if (errno == EEXIST)
-			err = REFTABLE_LOCK_ERROR;
-		else
-			err = REFTABLE_IO_ERROR;
+	if (err < 0)
 		goto done;
-	}
 
 	/*
 	 * Check whether the stack is up-to-date. We unfortunately cannot
@@ -1272,7 +1262,7 @@ static int stack_compact_range(struct reftable_stack *st,
 			 * tables, otherwise there would be nothing to compact.
 			 * In that case, we return a lock error to our caller.
 			 */
-			if (errno == EEXIST && last - (i - 1) >= 2 &&
+			if (err == REFTABLE_LOCK_ERROR && last - (i - 1) >= 2 &&
 			    flags & STACK_COMPACT_RANGE_BEST_EFFORT) {
 				err = 0;
 				/*
@@ -1284,13 +1274,9 @@ static int stack_compact_range(struct reftable_stack *st,
 				 */
 				first = (i - 1) + 1;
 				break;
-			} else if (errno == EEXIST) {
-				err = REFTABLE_LOCK_ERROR;
-				goto done;
-			} else {
-				err = REFTABLE_IO_ERROR;
-				goto done;
 			}
+
+			goto done;
 		}
 
 		/*
@@ -1299,10 +1285,8 @@ static int stack_compact_range(struct reftable_stack *st,
 		 * of tables.
 		 */
 		err = flock_close(&table_locks[nlocks++]);
-		if (err < 0) {
-			err = REFTABLE_IO_ERROR;
+		if (err < 0)
 			goto done;
-		}
 	}
 
 	/*
@@ -1334,13 +1318,8 @@ static int stack_compact_range(struct reftable_stack *st,
 	 * the new table.
 	 */
 	err = flock_acquire(&tables_list_lock, st->list_file, st->opts.lock_timeout_ms);
-	if (err < 0) {
-		if (errno == EEXIST)
-			err = REFTABLE_LOCK_ERROR;
-		else
-			err = REFTABLE_IO_ERROR;
+	if (err < 0)
 		goto done;
-	}
 
 	if (st->opts.default_permissions) {
 		if (chmod(tables_list_lock.path,
