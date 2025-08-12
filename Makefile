@@ -672,6 +672,7 @@ BUILTIN_OBJS =
 BUILT_INS =
 COMPAT_CFLAGS =
 COMPAT_OBJS =
+INTEROP_OBJS =
 XDIFF_OBJS =
 GENERATED_H =
 EXTRA_CPPFLAGS =
@@ -918,6 +919,7 @@ export PYTHON_PATH
 TEST_SHELL_PATH = $(SHELL_PATH)
 
 LIB_FILE = libgit.a
+INTEROP_LIB = interop/lib.a
 XDIFF_LIB = xdiff/lib.a
 
 EXTLIBS =
@@ -1412,7 +1414,7 @@ UNIT_TEST_OBJS += $(UNIT_TEST_DIR)/test-lib.o
 UNIT_TEST_OBJS += $(UNIT_TEST_DIR)/lib-reftable.o
 
 # xdiff and reftable libs may in turn depend on what is in libgit.a
-GITLIBS = common-main.o $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB) $(LIB_FILE)
+GITLIBS = common-main.o $(LIB_FILE) $(INTEROP_LIB) $(XDIFF_LIB) $(REFTABLE_LIB) $(LIB_FILE)
 
 
 GIT_USER_AGENT = git/$(GIT_VERSION)
@@ -2747,6 +2749,10 @@ reconfigure config.mak.autogen: config.status
 .PHONY: reconfigure # This is a convenience target.
 endif
 
+INTEROP_OBJS += interop/ivec.o
+.PHONY: interop-objs
+interop-objs: $(INTEROP_OBJS)
+
 XDIFF_OBJS += xdiff/xdiffi.o
 XDIFF_OBJS += xdiff/xemit.o
 XDIFF_OBJS += xdiff/xhistogram.o
@@ -2791,6 +2797,7 @@ OBJECTS += $(GIT_OBJS)
 OBJECTS += $(SCALAR_OBJS)
 OBJECTS += $(PROGRAM_OBJS)
 OBJECTS += $(TEST_OBJS)
+OBJECTS += $(INTEROP_OBJS)
 OBJECTS += $(XDIFF_OBJS)
 OBJECTS += $(FUZZ_OBJS)
 OBJECTS += $(REFTABLE_OBJS) $(REFTABLE_TEST_OBJS)
@@ -2945,7 +2952,10 @@ scalar$X: scalar.o GIT-LDFLAGS $(GITLIBS) compile_rust
 $(LIB_FILE): $(LIB_OBJS)
 	$(QUIET_AR)$(RM) $@ && $(AR) $(ARFLAGS) $@ $^
 
-$(XDIFF_LIB): $(XDIFF_OBJS)
+$(INTEROP_LIB): $(INTEROP_OBJS)
+	$(QUIET_AR)$(RM) $@ && $(AR) $(ARFLAGS) $@ $^
+
+$(XDIFF_LIB): $(INTEROP_OBJS) $(XDIFF_OBJS)
 	$(QUIET_AR)$(RM) $@ && $(AR) $(ARFLAGS) $@ $^
 
 
@@ -3790,7 +3800,7 @@ clean: profile-clean coverage-clean cocciclean rustclean
 	$(RM) git.rc git.res
 	$(RM) $(OBJECTS)
 	$(RM) headless-git.o
-	$(RM) $(LIB_FILE) $(XDIFF_LIB) $(REFTABLE_LIB)
+	$(RM) $(LIB_FILE) $(INTEROP_LIB) $(XDIFF_LIB) $(REFTABLE_LIB)
 	$(RM) $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) $(OTHER_PROGRAMS)
 	$(RM) $(TEST_PROGRAMS)
 	$(RM) $(FUZZ_PROGRAMS)

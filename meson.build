@@ -395,6 +395,7 @@ libgit_sources = [
   'hex-ll.c',
   'hook.c',
   'ident.c',
+  'interop/ivec.c',
   'json-writer.c',
   'kwset.c',
   'levenshtein.c',
