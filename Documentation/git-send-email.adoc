@@ -311,6 +311,20 @@ must be used for each option.
 This feature requires setting up `git imap-send`. See linkgit:git-imap-send[1]
 for instructions.
 
+--use-imap-only::
+--no-use-imap-only::
+	If this is set, all emails will only be copied to the IMAP folder specified
+	with `--imap-sent-folder` or `sendemail.imapSentFolder` and will not be sent
+	to the recipients. Useful if you just want to create a draft of the emails
+	and use another email client to send them.
+	If disabled with `--no-use-imap-only`, the emails will be sent like usual.
+	Disabled by default, but the `sendemail.useImapOnly` configuration
+	variable can be used to enable it.
+
++
+This feature requires setting up `git imap-send`. See linkgit:git-imap-send[1]
+for instructions.
+
 --batch-size=<num>::
 	Some email servers (e.g. 'smtp.163.com') limit the number of emails to be
 	sent per session (connection) and this will lead to a failure when

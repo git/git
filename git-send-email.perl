@@ -62,7 +62,7 @@ git send-email --translate-aliases
     --smtp-user             <str>  * Username for SMTP-AUTH.
     --smtp-pass             <str>  * Password for SMTP-AUTH; not necessary.
     --smtp-encryption       <str>  * tls or ssl; anything else disables.
-    --smtp-ssl                     * Deprecated. Use '--smtp-encryption ssl'.
+    --smtp-ssl                     * Deprecated. Use `--smtp-encryption ssl`.
     --smtp-ssl-cert-path    <str>  * Path to ca-certificates (either directory or file).
                                      Pass an empty string to disable certificate
                                      verification.
@@ -75,6 +75,8 @@ git send-email --translate-aliases
     --smtp-debug            <0|1>  * Disable, enable Net::SMTP debug.
     --imap-sent-folder      <str>  * IMAP folder where a copy of the emails should be sent.
                                      Make sure `git imap-send` is set up to use this feature.
+    --[no-]use-imap-only           * Only copy emails to the IMAP folder specified by
+                                     `--imap-sent-folder` instead of actually sending them.
 
     --batch-size            <int>  * send max <int> message per connection.
     --relogin-delay         <int>  * delay <int> seconds between two successive login.
@@ -296,6 +298,7 @@ my $mailmap = 0;
 my $target_xfer_encoding = 'auto';
 my $forbid_sendmail_variables = 1;
 my $outlook_id_fix = 'auto';
+my $use_imap_only = 0;
 
 my %config_bool_settings = (
     "thread" => \$thread,
@@ -312,6 +315,7 @@ my %config_bool_settings = (
     "forbidsendmailvariables" => \$forbid_sendmail_variables,
     "mailmap" => \$mailmap,
     "outlookidfix" => \$outlook_id_fix,
+    "useimaponly" => \$use_imap_only,
 );
 
 my %config_settings = (
@@ -532,6 +536,7 @@ my %options = (
 		    "smtp-auth=s" => \$smtp_auth,
 		    "no-smtp-auth" => sub {$smtp_auth = 'none'},
 		    "imap-sent-folder=s" => \$imap_sent_folder,
+		    "use-imap-only!" => \$use_imap_only,
 		    "annotate!" => \$annotate,
 		    "compose" => \$compose,
 		    "quiet" => \$quiet,
@@ -1683,6 +1688,8 @@ EOF
 
 	if ($dry_run) {
 		# We don't want to send the email.
+	} elsif ($use_imap_only) {
+		die __("The destination IMAP folder is not properly defined.") if !defined $imap_sent_folder;
 	} elsif (defined $sendmail_cmd || file_name_is_absolute($smtp_server)) {
 		my $pid = open my $sm, '|-';
 		defined $pid or die $!;
