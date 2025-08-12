@@ -154,8 +154,8 @@ int cmd__hashmap(int argc UNUSED, const char **argv UNUSED)
 
 		/* break line into command and up to two parameters */
 		string_list_setlen(&parts, 0);
-		string_list_split_in_place(&parts, line.buf, DELIM, 2);
-		string_list_remove_empty_items(&parts, 0);
+		string_list_split_in_place_f(&parts, line.buf, DELIM, 2,
+					     STRING_LIST_SPLIT_NONEMPTY);
 
 		/* ignore empty lines */
 		if (!parts.nr)
