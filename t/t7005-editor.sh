@@ -65,7 +65,7 @@ do
 		;;
 	esac
 	test_expect_success "Using $i" '
-		git --exec-path=. commit --amend &&
+		PATH="$PWD:$PATH" git commit --amend &&
 		test_commit_message HEAD expect
 	'
 done
@@ -85,7 +85,7 @@ do
 		;;
 	esac
 	test_expect_success "Using $i (override)" '
-		git --exec-path=. commit --amend &&
+		PATH="$PWD:$PATH" git commit --amend &&
 		test_commit_message HEAD expect
 	'
 done
