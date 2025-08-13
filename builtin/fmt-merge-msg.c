@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #include "builtin.h"
 #include "config.h"
 #include "fmt-merge-msg.h"
@@ -13,12 +12,13 @@ static const char * const fmt_merge_msg_usage[] = {
 int cmd_fmt_merge_msg(int argc,
 		      const char **argv,
 		      const char *prefix,
-		      struct repository *repo UNUSED)
+		      struct repository *repo)
 {
 	char *inpath = NULL;
 	const char *message = NULL;
 	char *into_name = NULL;
 	int shortlog_len = -1;
+	int merge_log_config = -1;
 	struct option options[] = {
 		{
 			.type = OPTION_INTEGER,
@@ -53,7 +53,7 @@ int cmd_fmt_merge_msg(int argc,
 	int ret;
 	struct fmt_merge_msg_opts opts;
 
-	repo_config(the_repository, fmt_merge_msg_config, NULL);
+	repo_config(repo, fmt_merge_msg_config, &merge_log_config);
 	argc = parse_options(argc, argv, prefix, options, fmt_merge_msg_usage,
 			     0);
 	if (argc > 0)
