@@ -133,6 +133,10 @@ do
 		test_expect_code 129 nongit git $cmd -h >usage &&
 		test_grep "[Uu]sage: git $cmd " usage
 	'
+	test_$expect_outcome $prereq "'git $cmd --help-all' outside a repository" '
+		test_expect_code 129 nongit git $cmd --help-all >usage &&
+		test_grep "[Uu]sage: git $cmd " usage
+	'
 done
 
 test_expect_success 'fmt-merge-msg does not crash with -h' '

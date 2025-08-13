@@ -38,7 +38,8 @@ int cmd_merge_recursive(int argc,
 	if (argv[0] && ends_with(argv[0], "-subtree"))
 		o.subtree_shift = "";
 
-	if (argc == 2 && !strcmp(argv[1], "-h")) {
+	if (argc == 2 && (!strcmp(argv[1], "-h") ||
+			  !strcmp(argv[1], "--help-all"))) {
 		struct strbuf msg = STRBUF_INIT;
 		strbuf_addf(&msg, builtin_merge_recursive_usage, argv[0]);
 		show_usage_if_asked(argc, argv, msg.buf);
