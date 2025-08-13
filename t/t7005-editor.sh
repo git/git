@@ -34,61 +34,57 @@ test_expect_success setup '
 	test_commit_message HEAD -m "$msg"
 '
 
-TERM=dumb
-export TERM
 test_expect_success 'dumb should error out when falling back on vi' '
-	test_must_fail git commit --amend
+	test_must_fail env TERM=dumb git commit --amend
 '
 
 test_expect_success 'dumb should prefer EDITOR to VISUAL' '
-	EDITOR=./e-EDITOR.sh &&
-	VISUAL=./e-VISUAL.sh &&
-	export EDITOR VISUAL &&
-	git commit --amend &&
+	TERM=dumb EDITOR=./e-EDITOR.sh VISUAL=./e-VISUAL.sh \
+		git commit --amend &&
 	test_commit_message HEAD -m "Edited by EDITOR"
 '
 
-TERM=vt100
-export TERM
 for i in $vi EDITOR VISUAL core_editor GIT_EDITOR
 do
-	echo "Edited by $i" >expect
-	unset EDITOR VISUAL GIT_EDITOR
-	git config --unset-all core.editor
-	case "$i" in
-	core_editor)
-		git config core.editor ./e-core_editor.sh
-		;;
-	[A-Z]*)
-		eval "$i=./e-$i.sh"
-		export $i
-		;;
-	esac
 	test_expect_success "Using $i" '
-		PATH="$PWD:$PATH" git commit --amend &&
-		test_commit_message HEAD expect
+		if test "$i" = core_editor
+		then
+			test_config core.editor ./e-core_editor.sh
+		fi &&
+		(
+			case "$i" in
+			[A-Z]*)
+				eval "$i=./e-$i.sh" &&
+				export $i
+				;;
+			esac &&
+			PATH="$PWD:$PATH" TERM=vt100 git commit --amend
+		) &&
+		test_commit_message HEAD -m "Edited by $i"
 	'
 done
 
-unset EDITOR VISUAL GIT_EDITOR
-git config --unset-all core.editor
-for i in $vi EDITOR VISUAL core_editor GIT_EDITOR
-do
-	echo "Edited by $i" >expect
-	case "$i" in
-	core_editor)
-		git config core.editor ./e-core_editor.sh
-		;;
-	[A-Z]*)
-		eval "$i=./e-$i.sh"
-		export $i
-		;;
-	esac
-	test_expect_success "Using $i (override)" '
-		PATH="$PWD:$PATH" git commit --amend &&
-		test_commit_message HEAD expect
-	'
-done
+test_expect_success 'Using editors with overrides' '
+	(
+		TERM=vt100 &&
+		export TERM &&
+		for i in $vi EDITOR VISUAL core_editor GIT_EDITOR
+		do
+			echo "Edited by $i" >expect &&
+			case "$i" in
+			core_editor)
+				git config core.editor ./e-core_editor.sh
+				;;
+			[A-Z]*)
+				eval "$i=./e-$i.sh" &&
+				export $i
+				;;
+			esac &&
+			PATH="$PWD:$PATH" git commit --amend &&
+			test_commit_message HEAD expect || exit 1
+		done
+	)
+'
 
 test_expect_success 'editor with a space' '
 	echo "echo space >\"\$1\"" >"e space.sh" &&
@@ -97,9 +93,8 @@ test_expect_success 'editor with a space' '
 	test_commit_message HEAD -m space
 '
 
-unset GIT_EDITOR
 test_expect_success 'core.editor with a space' '
-	git config core.editor \"./e\ space.sh\" &&
+	test_config core.editor \"./e\ space.sh\" &&
 	git commit --amend &&
 	test_commit_message HEAD -m space
 '
