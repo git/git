@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2025, #05; Mon, 11)
-X-master-at: 2c2ba49d55ff26c1082b8137b1ec5eeccb4337d1
-X-next-at: 924127e9c014b3ea7c2d50fa2a4da7e6f0b155c5
+Subject: What's cooking in git.git (Aug 2025, #06; Wed, 13)
+X-master-at: 724518f3884d8707c5f51428ba98c115818229b8
+X-next-at: cf9b8df8b4cc4af8ab40a5811e344fde74771729
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2025, #05; Mon, 11)
+What's cooking in git.git (Aug 2025, #06; Wed, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,11 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+Git 2.51-rc2 has been tagged.  We have a few more working days
+until the final.  Let's hope we will find and fix all regressions
+introduced during this cycle before then; if the number of them
+turns out to be 0, that would be even better ;-).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -48,13 +53,35 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
+* kr/clone-synopsis-fix (2025-08-11) 1 commit
+  (merged to 'next' on 2025-08-13 at b0d634ef29)
+ + docs: remove stray bracket from git-clone synopsis
+
+ Doc fix.
+
+ Will cook in 'next'.
+ source: <pull.2023.v3.git.git.1754949872593.gitgitgadget@gmail.com>
+
+
+* dk/t7500-editor-updates (2025-08-12) 3 commits
+ - t7005: sanitize test environment for subsequent tests
+ - t7005: stop abusing --exec-path
+ - t7005: use modern test style
+
+ Test updates.
+
+ Expecting a reroll.
+ cf. <2250a8fd-62b8-4218-9858-23032d9c807d@gmail.com>
+ source: <20250812170256.71751-1-ben.knoble+github@gmail.com>
+
+--------------------------------------------------
+[Graduated to 'master']
+
 * rs/for-each-ref-start-after-marker-fix (2025-08-09) 1 commit
   (merged to 'next' on 2025-08-09 at 44788822b0)
  + for-each-ref: call --start-after argument "marker"
 
  Hotfix.
-
- Will merge to 'master'.
  source: <1a32a666-fcf4-4f05-a468-2afa07fa0e2d@web.de>
 
 
@@ -63,36 +90,44 @@ Release tarballs are available at:
  + merge: don't document non-existing --compact-summary argument
 
  Hotfix.
-
- Will merge to 'master'.
  source: <890631d1-4e3e-4ea5-8f58-371fadf2b1b3@web.de>
-
-
-* ac/deglobal-fmt-merge-log-config (2025-08-10) 2 commits
- - builtin/fmt-merge-msg: stop depending on 'the_repository'
- - environment: remove the global variable 'merge_log_config'
-
- source: <cover.1754868681.git.ayu.chandekar@gmail.com>
-
-
-* jc/longer-disambiguation-fix (2025-08-11) 1 commit
- - abbrev: allow extending beyond 20 chars to disambiguate
-
- source: <xmqqzfc51xvk.fsf@gitster.g>
 
 --------------------------------------------------
 [Cooking]
 
+* ac/deglobal-fmt-merge-log-config (2025-08-10) 2 commits
+  (merged to 'next' on 2025-08-13 at c6c74fb8f0)
+ + builtin/fmt-merge-msg: stop depending on 'the_repository'
+ + environment: remove the global variable 'merge_log_config'
+
+ Code clean-up.
+
+ Will cook in 'next'.
+ source: <cover.1754868681.git.ayu.chandekar@gmail.com>
+
+
+* jc/longer-disambiguation-fix (2025-08-11) 1 commit
+ - abbrev: allow extending beyond 32 chars to disambiguate
+
+ "git rev-parse --short" and friends failed to disambiguate two
+ objects with object names that share common prefix longer than 32
+ characters.
+
+ Comments?
+ source: <xmqqzfc51xvk.fsf@gitster.g>
+
+
 * dl/push-missing-object-error (2025-08-08) 3 commits
- - remote.c: convert if-else ladder to switch
- - remote.c: remove BUG in show_push_unqualified_ref_name_error()
- - t5516: remove surrounding empty lines in test bodies
+  (merged to 'next' on 2025-08-11 at ad69d77794)
+ + remote.c: convert if-else ladder to switch
+ + remote.c: remove BUG in show_push_unqualified_ref_name_error()
+ + t5516: remove surrounding empty lines in test bodies
 
  "git push" had a code path that led to BUG() but it should have
  been a die(), as it is a response to a usual but invalid end-user
  action to attempt pushing an object that does not exist.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  cf. <xmqqo6spiyqp.fsf@gitster.g>
  source: <cover.1754637849.git.liu.denton@gmail.com>
 
@@ -124,38 +159,41 @@ Release tarballs are available at:
 
 
 * ms/refs-list (2025-08-05) 6 commits
- - t: add test for git refs list subcommand
- - t6300: refactor tests to be shareable
- - builtin/refs: add list subcommand
- - builtin/for-each-ref: factor out core logic into a helper
- - builtin/for-each-ref: align usage string with the man page
- - doc: factor out common option
+  (merged to 'next' on 2025-08-13 at 3f0791145b)
+ + t: add test for git refs list subcommand
+ + t6300: refactor tests to be shareable
+ + builtin/refs: add list subcommand
+ + builtin/for-each-ref: factor out core logic into a helper
+ + builtin/for-each-ref: align usage string with the man page
+ + doc: factor out common option
 
  The "list" subcommand of "git refs" acts as a front-end for
  "git for-each-ref".
 
- Comments?
+ Will cook in 'next'.
  source: <20250805092758.5321-1-meetsoni3017@gmail.com>
 
 
 * kh/doc-git-log-markup-fix (2025-08-08) 1 commit
- - doc: git-log: fix description list
+  (merged to 'next' on 2025-08-12 at 1336146ed4)
+ + doc: git-log: fix description list
 
  Doc update.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <aaa1734189ec8bab7cfa0965132e3d8e5909b1af.1754660514.git.code@khaugsbakk.name>
 
 
 * ly/changed-path-traversal-with-magic-pathspec (2025-08-10) 1 commit
- - bloom: enable bloom filter with wildcard pathspec in revision traversal
+  (merged to 'next' on 2025-08-12 at 0f929dcec7)
+ + bloom: enable bloom filter with wildcard pathspec in revision traversal
 
  Revision traversal limited with pathspec, like "git log dir/*",
  used to ignore changed-paths Bloom filter when the pathspec
  contained wildcards; now they take advantage of the filter when
  they can.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <20250811060137.75135-1-yldhome2d2@gmail.com>
 
 
@@ -178,29 +216,31 @@ Release tarballs are available at:
  source: <20250807-b4-pks-commit-graph-wo-the-repository-v3-0-82edef830a1e@pks.im>
 
 
-* tc/t0450-harden (2025-08-08) 2 commits
- . t0450: add allowlist for builtins with missing .adoc
- . t0450: fix test for out-of-tree builds
+* tc/t0450-harden (2025-08-12) 3 commits
+ - fixup! t0450: add allowlist for builtins with missing .adoc
+ - t0450: add allowlist for builtins with missing .adoc
+ - t0450: fix test for out-of-tree builds
 
  Test updates.
 
- Expecting a reroll?
- cf. <xmqq7bzdfoxe.fsf@gitster.g>
- source: <20250808095943.3312265-1-toon@iotcl.com>
+ Expecting a final reroll after 2.51 final.
+ source: <20250804073002.1586332-1-toon@iotcl.com>
 
 
 * gh/git-jump-pathname-with-sp (2025-08-11) 1 commit
- - git-jump: make `diff` work with filenames containing spaces
+  (merged to 'next' on 2025-08-13 at a99311e231)
+ + git-jump: make `diff` work with filenames containing spaces
 
  "git jump" (in contrib/) fails to parse the diff header correctly
  when a file has a space in its name, which has been corrected.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <pull.1950.v2.git.1754913323810.gitgitgadget@gmail.com>
 
 
 * jc/diff-no-index-in-subdir (2025-08-09) 1 commit
- - diff: --no-index should ignore the worktree
+  (merged to 'next' on 2025-08-13 at 956899dc16)
+ + diff: --no-index should ignore the worktree
 
  "git diff --no-index" run inside a subdirectory under control of a
  Git repository operated at the top of the working tree and stripped
@@ -208,12 +248,11 @@ Release tarballs are available at:
  work correctly because of it.  Correct the set-up by undoing what
  the set-up sequence did to cwd and prefix.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <xmqq1ppk58ob.fsf@gitster.g>
 
 
-* je/doc-rebase (2025-08-11) 6 commits
- - fixup! doc: git-rebase: update discussion of internals
+* je/doc-rebase (2025-08-12) 5 commits
  - doc: git-rebase: update discussion of internals
  - doc: git-rebase: move --onto explanation down
  - doc: git rebase: clarify arguments syntax
@@ -222,31 +261,34 @@ Release tarballs are available at:
 
  Documentation for "git rebase" has been updated.
 
- Comments?
- source: <pull.1949.v6.git.1754949075.gitgitgadget@gmail.com>
+ Will merge to 'next'?
+ source: <pull.1949.v7.git.1755006568.gitgitgadget@gmail.com>
 
 
 * rj/t6137-cygwin-fix (2025-08-08) 1 commit
- - t6137-*.sh: fix test failure on cygwin
+  (merged to 'next' on 2025-08-12 at f5acbbb35a)
+ + t6137-*.sh: fix test failure on cygwin
 
  Test fix for breakage introduced in Git 2.50.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <5514f2fd-3307-42c8-97ac-bc2147a7ba41@ramsayjones.plus.com>
 
 
-* ps/reftable-libgit2-cleanup (2025-08-04) 6 commits
+* ps/reftable-libgit2-cleanup (2025-08-12) 8 commits
+ - refs/reftable: always reload stacks when creating lock
+ - reftable: don't second-guess errors from flock interface
  - reftable/stack: handle outdated stacks when compacting
  - reftable/stack: allow passing flags to `reftable_stack_add()`
- - reftable/stack: reorder code to avoid forward declarations
  - reftable/stack: fix compiler warning due to missing braces
+ - reftable/stack: reorder code to avoid forward declarations
  - reftable/writer: drop Git-specific `QSORT()` macro
  - reftable/writer: fix type used for number of records
 
  Code clean-ups.
 
- Comments?
- source: <20250804-pks-reftable-fixes-for-libgit2-v2-0-fef06209a984@pks.im>
+ Will merge to 'next'?
+ source: <20250812-pks-reftable-fixes-for-libgit2-v3-0-cf3b2267867e@pks.im>
 
 
 * tc/diff-tree-max-depth (2025-08-07) 3 commits
@@ -268,7 +310,7 @@ Release tarballs are available at:
 
  "git cmd --help-all" outside repository.
 
- Comments?
+ Will merge to 'next'.
  source: <20250803012613.54086-1-ben.knoble+github@gmail.com>
 
 
@@ -289,7 +331,7 @@ Release tarballs are available at:
  "differences in lines that match these regular expressions are
  ignored") did not work well with "--name-only" and friends.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20250808033019.78817-1-yldhome2d2@gmail.com>
 
 
@@ -319,24 +361,25 @@ Release tarballs are available at:
 
  Further code clean-up for multi-pack-index code paths.
 
- Comments?
+ Will merge to 'next'?
  source: <20250811-b4-pks-midx-deduplicate-source-info-v3-0-e442bdf2b4ad@pks.im>
 
 
 * jc/strbuf-split (2025-07-31) 13 commits
- - trace2: do not use strbuf_split*()
- - trace2: trim_trailing_newline followed by trim is a no-op
- - sub-process: do not use strbuf_split*()
- - environment: do not use strbuf_split*()
- - config: do not use strbuf_split()
- - notes: do not use strbuf_split*()
- - merge-tree: do not use strbuf_split*()
- - clean: do not use strbuf_split*() [part 2]
- - clean: do not pass the whole structure when it is not necessary
- - clean: do not use strbuf_split*() [part 1]
- - clean: do not pass strbuf by value
- - wt-status: avoid strbuf_split*()
- - Merge branch 'jc/string-list-split' into jc/strbuf-split
+  (merged to 'next' on 2025-08-11 at ddf662f7e9)
+ + trace2: do not use strbuf_split*()
+ + trace2: trim_trailing_newline followed by trim is a no-op
+ + sub-process: do not use strbuf_split*()
+ + environment: do not use strbuf_split*()
+ + config: do not use strbuf_split()
+ + notes: do not use strbuf_split*()
+ + merge-tree: do not use strbuf_split*()
+ + clean: do not use strbuf_split*() [part 2]
+ + clean: do not pass the whole structure when it is not necessary
+ + clean: do not use strbuf_split*() [part 1]
+ + clean: do not pass strbuf by value
+ + wt-status: avoid strbuf_split*()
+ + Merge branch 'jc/string-list-split' into jc/strbuf-split
  (this branch uses jc/string-list-split.)
 
  Arrays of strbuf is often a wrong data structure to use, and
@@ -345,24 +388,25 @@ Release tarballs are available at:
 
  Update several code paths and replace strbuf_split*().
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20250731225433.4028872-1-gitster@pobox.com>
 
 
 * jc/string-list-split (2025-08-01) 7 commits
- - string-list: split-then-remove-empty can be done while splitting
- - string-list: optionally omit empty string pieces in string_list_split*()
- - diff: simplify parsing of diff.colormovedws
- - string-list: optionally trim string pieces split by string_list_split*()
- - string-list: unify string_list_split* functions
- - string-list: align string_list_split() with its _in_place() counterpart
- - string-list: report programming error with BUG
+  (merged to 'next' on 2025-08-11 at 160ff9d174)
+ + string-list: split-then-remove-empty can be done while splitting
+ + string-list: optionally omit empty string pieces in string_list_split*()
+ + diff: simplify parsing of diff.colormovedws
+ + string-list: optionally trim string pieces split by string_list_split*()
+ + string-list: unify string_list_split* functions
+ + string-list: align string_list_split() with its _in_place() counterpart
+ + string-list: report programming error with BUG
  (this branch is used by jc/strbuf-split.)
 
  string_list_split*() family of functions have been extended to
  simplify common use cases.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20250801220423.1230969-1-gitster@pobox.com>
 
 
@@ -398,31 +442,31 @@ Release tarballs are available at:
  source: <20250731-pks-remote-rename-improvements-v2-0-dda6f083674d@pks.im>
 
 
-* ag/send-email-imap-sent (2025-08-11) 3 commits
- - fixup! send-email: enable copying emails to IMAP folder without actually sending them
- - send-email: enable copying emails to IMAP folder without actually sending them
+* ag/send-email-imap-sent (2025-08-11) 2 commits
+ - send-email: enable copying emails to an IMAP folder without actually sending them
  - send-email: add ability to send a copy of sent emails to an IMAP folder
 
  "git send-email" learned to drive "git imap-send" to store already
  sent e-mails in an IMAP folder.
 
- Comments?
- source: <PN3PR01MB9597EC4C5DF97943587AEEB4B85FA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
+ Will merge to 'next'?
+ source: <PN3PR01MB9597E8E33868386C997D2563B82BA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
 
 
 * en/ort-rename-fixes (2025-08-06) 7 commits
- - merge-ort: fix directory rename on top of source of other rename/delete
- - merge-ort: fix incorrect file handling
- - merge-ort: clarify the interning of strings in opt->priv->path
- - t6423: fix missed staging of file in testcases 12i,12j,12k
- - t6423: document two bugs with rename-to-self testcases
- - merge-ort: drop unnecessary temporary in check_for_directory_rename()
- - merge-ort: update comments to modern testfile location
+  (merged to 'next' on 2025-08-12 at 02536ed675)
+ + merge-ort: fix directory rename on top of source of other rename/delete
+ + merge-ort: fix incorrect file handling
+ + merge-ort: clarify the interning of strings in opt->priv->path
+ + t6423: fix missed staging of file in testcases 12i,12j,12k
+ + t6423: document two bugs with rename-to-self testcases
+ + merge-ort: drop unnecessary temporary in check_for_directory_rename()
+ + merge-ort: update comments to modern testfile location
 
  Various bugs about rename handling in "ort" merge strategy have
  been fixed.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <pull.1943.v3.git.1754522122.gitgitgadget@gmail.com>
 
 
@@ -476,19 +520,20 @@ Release tarballs are available at:
  dynamically pick a suitable comment character, as it is too much
  trouble to support for little benefit.
 
- Comments?
+ Will merge to 'next'?
  source: <cover.1753975294.git.phillip.wood@dunelm.org.uk>
 
 
 * ua/t1517-short-help-tests (2025-08-07) 3 commits
- - t5304: move `prune -h` test from t1517
- - t5200: move `update-server-info -h` test from t1517
- - t/t1517: automate `git subcmd -h` tests outside a repository
+  (merged to 'next' on 2025-08-12 at 55d20e1985)
+ + t5304: move `prune -h` test from t1517
+ + t5200: move `update-server-info -h` test from t1517
+ + t/t1517: automate `git subcmd -h` tests outside a repository
  (this branch is used by dk/help-all.)
 
  Test shuffling.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20250808010651.591906-1-usmanakinyemi202@gmail.com>
 
 
