@@ -300,13 +300,13 @@ void xdiff_clear_find_func(xdemitconf_t *xecfg)
 
 unsigned long xdiff_hash_string(const char *s, size_t len, long flags)
 {
-	return xdl_hash_record(&s, s + len, flags);
+	return xdl_line_hash((u8 const*) s, len, flags);
 }
 
 int xdiff_compare_lines(const char *l1, long s1,
 			const char *l2, long s2, long flags)
 {
-	return xdl_recmatch(l1, s1, l2, s2, flags);
+	return xdl_line_equal((u8 const*) l1, s1, (u8 const*) l2, s2, flags);
 }
 
 int parse_conflict_style_name(const char *value)

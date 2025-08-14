@@ -746,19 +746,28 @@ ifeq ($(uname_S),MINGW)
 		prefix = /mingw32
 		HOST_CPU = i686
 		BASIC_LDFLAGS += -Wl,--pic-executable,-e,_mainCRTStartup
+		CARGO_BUILD_TARGET = i686-pc-windows-gnu
         endif
         ifeq (MINGW64,$(MSYSTEM))
 		prefix = /mingw64
 		HOST_CPU = x86_64
 		BASIC_LDFLAGS += -Wl,--pic-executable,-e,mainCRTStartup
+		CARGO_BUILD_TARGET = x86_64-pc-windows-gnu
         else ifeq (CLANGARM64,$(MSYSTEM))
 		prefix = /clangarm64
 		HOST_CPU = aarch64
 		BASIC_LDFLAGS += -Wl,--pic-executable,-e,mainCRTStartup
+		CARGO_BUILD_TARGET = aarch64-pc-windows-gnu
         else
 		COMPAT_CFLAGS += -D_USE_32BIT_TIME_T
 		BASIC_LDFLAGS += -Wl,--large-address-aware
         endif
+
+	export CARGO_BUILD_TARGET
+	RUST_TARGET_DIR = rust/target/$(CARGO_BUILD_TARGET)/$(RUST_BUILD_MODE)
+	# Unfortunately now needed because of Rust
+	EXTLIBS += -luserenv
+
 	CC = gcc
 	COMPAT_CFLAGS += -D__USE_MINGW_ANSI_STDIO=0 -DDETECT_MSYS_TTY \
 		-fstack-protector-strong

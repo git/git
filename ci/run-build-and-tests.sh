@@ -5,6 +5,14 @@
 
 . ${0%/*}/lib.sh
 
+## actions-rs/toolchain@v1 doesn't work for docker targets.
+if [ "$CI_IS_DOCKER" = "true" ]; then
+  . ${0%/*}/install-rust.sh
+fi
+
+rustc -vV || exit $?
+cargo --version || exit $?
+
 run_tests=t
 
 case "$jobname" in
@@ -71,6 +79,10 @@ case "$jobname" in
 	fi
 	;;
 esac
+
+if [ -d "$CARGO_HOME" ]; then
+  rm -rf $CARGO_HOME
+fi
 
 check_unignored_build_artifacts
 save_good_tree

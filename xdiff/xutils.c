@@ -152,164 +152,6 @@ int xdl_blankline(const char *line, long size, long flags)
 	return (i == size);
 }
 
-/*
- * Have we eaten everything on the line, except for an optional
- * CR at the very end?
- */
-static int ends_with_optional_cr(const char *l, long s, long i)
-{
-	int complete = s && l[s-1] == '\n';
-
-	if (complete)
-		s--;
-	if (s == i)
-		return 1;
-	/* do not ignore CR at the end of an incomplete line */
-	if (complete && s == i + 1 && l[i] == '\r')
-		return 1;
-	return 0;
-}
-
-int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
-{
-	int i1, i2;
-
-	if (s1 == s2 && !memcmp(l1, l2, s1))
-		return 1;
-	if (!(flags & XDF_WHITESPACE_FLAGS))
-		return 0;
-
-	i1 = 0;
-	i2 = 0;
-
-	/*
-	 * -w matches everything that matches with -b, and -b in turn
-	 * matches everything that matches with --ignore-space-at-eol,
-	 * which in turn matches everything that matches with --ignore-cr-at-eol.
-	 *
-	 * Each flavor of ignoring needs different logic to skip whitespaces
-	 * while we have both sides to compare.
-	 */
-	if (flags & XDF_IGNORE_WHITESPACE) {
-		goto skip_ws;
-		while (i1 < s1 && i2 < s2) {
-			if (l1[i1++] != l2[i2++])
-				return 0;
-		skip_ws:
-			while (i1 < s1 && XDL_ISSPACE(l1[i1]))
-				i1++;
-			while (i2 < s2 && XDL_ISSPACE(l2[i2]))
-				i2++;
-		}
-	} else if (flags & XDF_IGNORE_WHITESPACE_CHANGE) {
-		while (i1 < s1 && i2 < s2) {
-			if (XDL_ISSPACE(l1[i1]) && XDL_ISSPACE(l2[i2])) {
-				/* Skip matching spaces and try again */
-				while (i1 < s1 && XDL_ISSPACE(l1[i1]))
-					i1++;
-				while (i2 < s2 && XDL_ISSPACE(l2[i2]))
-					i2++;
-				continue;
-			}
-			if (l1[i1++] != l2[i2++])
-				return 0;
-		}
-	} else if (flags & XDF_IGNORE_WHITESPACE_AT_EOL) {
-		while (i1 < s1 && i2 < s2 && l1[i1] == l2[i2]) {
-			i1++;
-			i2++;
-		}
-	} else if (flags & XDF_IGNORE_CR_AT_EOL) {
-		/* Find the first difference and see how the line ends */
-		while (i1 < s1 && i2 < s2 && l1[i1] == l2[i2]) {
-			i1++;
-			i2++;
-		}
-		return (ends_with_optional_cr(l1, s1, i1) &&
-			ends_with_optional_cr(l2, s2, i2));
-	}
-
-	/*
-	 * After running out of one side, the remaining side must have
-	 * nothing but whitespace for the lines to match.  Note that
-	 * ignore-whitespace-at-eol case may break out of the loop
-	 * while there still are characters remaining on both lines.
-	 */
-	if (i1 < s1) {
-		while (i1 < s1 && XDL_ISSPACE(l1[i1]))
-			i1++;
-		if (s1 != i1)
-			return 0;
-	}
-	if (i2 < s2) {
-		while (i2 < s2 && XDL_ISSPACE(l2[i2]))
-			i2++;
-		return (s2 == i2);
-	}
-	return 1;
-}
-
-static unsigned long xdl_hash_record_with_whitespace(char const **data,
-		char const *top, long flags) {
-	unsigned long ha = 5381;
-	char const *ptr = *data;
-	int cr_at_eol_only = (flags & XDF_WHITESPACE_FLAGS) == XDF_IGNORE_CR_AT_EOL;
-
-	for (; ptr < top && *ptr != '\n'; ptr++) {
-		if (cr_at_eol_only) {
-			/* do not ignore CR at the end of an incomplete line */
-			if (*ptr == '\r' &&
-			    (ptr + 1 < top && ptr[1] == '\n'))
-				continue;
-		}
-		else if (XDL_ISSPACE(*ptr)) {
-			const char *ptr2 = ptr;
-			int at_eol;
-			while (ptr + 1 < top && XDL_ISSPACE(ptr[1])
-					&& ptr[1] != '\n')
-				ptr++;
-			at_eol = (top <= ptr + 1 || ptr[1] == '\n');
-			if (flags & XDF_IGNORE_WHITESPACE)
-				; /* already handled */
-			else if (flags & XDF_IGNORE_WHITESPACE_CHANGE
-				 && !at_eol) {
-				ha += (ha << 5);
-				ha ^= (unsigned long) ' ';
-			}
-			else if (flags & XDF_IGNORE_WHITESPACE_AT_EOL
-				 && !at_eol) {
-				while (ptr2 != ptr + 1) {
-					ha += (ha << 5);
-					ha ^= (unsigned long) *ptr2;
-					ptr2++;
-				}
-			}
-			continue;
-		}
-		ha += (ha << 5);
-		ha ^= (unsigned long) *ptr;
-	}
-	*data = ptr < top ? ptr + 1: ptr;
-
-	return ha;
-}
-
-unsigned long xdl_hash_record(char const **data, char const *top, long flags) {
-	unsigned long ha = 5381;
-	char const *ptr = *data;
-
-	if (flags & XDF_WHITESPACE_FLAGS)
-		return xdl_hash_record_with_whitespace(data, top, flags);
-
-	for (; ptr < top && *ptr != '\n'; ptr++) {
-		ha += (ha << 5);
-		ha ^= (unsigned long) *ptr;
-	}
-	*data = ptr < top ? ptr + 1: ptr;
-
-	return ha;
-}
-
 unsigned int xdl_hashbits(unsigned int size) {
 	unsigned int val = 1, bits = 0;
 
@@ -418,10 +260,10 @@ int xdl_fall_back_diff(xdfenv_t *diff_env, xpparam_t const *xpp,
 
 	subfile1.ptr = (char *)diff_env->xdf1.recs[line1 - 1]->ptr;
 	subfile1.size = diff_env->xdf1.recs[line1 + count1 - 2]->ptr +
-		diff_env->xdf1.recs[line1 + count1 - 2]->size - subfile1.ptr;
+		diff_env->xdf1.recs[line1 + count1 - 2]->size - (u8 const*) subfile1.ptr;
 	subfile2.ptr = (char *)diff_env->xdf2.recs[line2 - 1]->ptr;
 	subfile2.size = diff_env->xdf2.recs[line2 + count2 - 2]->ptr +
-		diff_env->xdf2.recs[line2 + count2 - 2]->size - subfile2.ptr;
+		diff_env->xdf2.recs[line2 + count2 - 2]->size - (u8 const*) subfile2.ptr;
 	if (xdl_do_diff(&subfile1, &subfile2, xpp, &env) < 0)
 		return -1;
 

@@ -33,8 +33,8 @@ void xdl_cha_free(chastore_t *cha);
 void *xdl_cha_alloc(chastore_t *cha);
 long xdl_guess_lines(mmfile_t *mf, long sample);
 int xdl_blankline(const char *line, long size, long flags);
-int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags);
-unsigned long xdl_hash_record(char const **data, char const *top, long flags);
+u64 xdl_line_hash(u8 const* ptr, usize size, u64 flags);
+bool xdl_line_equal(u8 const* lhs, usize lhs_len, u8 const* rhs, usize rhs_len, u64 flags);
 unsigned int xdl_hashbits(unsigned int size);
 int xdl_num_out(char *out, long val);
 int xdl_emit_hunk_hdr(long s1, long c1, long s2, long c2,
