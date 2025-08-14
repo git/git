@@ -647,12 +647,18 @@ rebase --continue` is invoked. Currently, you cannot pass
 
 --update-refs::
 --no-update-refs::
+--update-refs=interactive::
 	Automatically force-update any branches that point to commits that
 	are being rebased. Any branches that are checked out in a worktree
 	are not updated in this way.
 +
+If `--update-refs=interactive` is specified, the behavior is equivalent to
+`--update-refs` if the rebase is interactive and `--no-update-refs` otherwise.
+(This is mainly useful as a configuration setting, although it might also be
+of use in aliases.)
++
 If the configuration variable `rebase.updateRefs` is set, then this option
-can be used to override and disable this setting.
+can be used to override or disable the configuration.
 +
 See also INCOMPATIBLE OPTIONS below.
 
