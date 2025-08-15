@@ -54,8 +54,6 @@ void git_test_write_commit_graph_or_die(void)
 #define GRAPH_CHUNKID_BLOOMDATA 0x42444154 /* "BDAT" */
 #define GRAPH_CHUNKID_BASE 0x42415345 /* "BASE" */
 
-#define GRAPH_DATA_WIDTH (the_hash_algo->rawsz + 16)
-
 #define GRAPH_VERSION_1 0x1
 #define GRAPH_VERSION GRAPH_VERSION_1
 
@@ -67,8 +65,6 @@ void git_test_write_commit_graph_or_die(void)
 
 #define GRAPH_HEADER_SIZE 8
 #define GRAPH_FANOUT_SIZE (4 * 256)
-#define GRAPH_MIN_SIZE (GRAPH_HEADER_SIZE + 4 * CHUNK_TOC_ENTRY_SIZE \
-			+ GRAPH_FANOUT_SIZE + the_hash_algo->rawsz)
 
 #define CORRECTED_COMMIT_DATE_OFFSET_OVERFLOW (1ULL << 31)
 
@@ -80,6 +76,16 @@ define_commit_slab(topo_level_slab, uint32_t);
 /* Keep track of the order in which commits are added to our list. */
 define_commit_slab(commit_pos, int);
 static struct commit_pos commit_pos = COMMIT_SLAB_INIT(1, commit_pos);
+
+static size_t graph_data_width(const struct git_hash_algo *algop)
+{
+	return algop->rawsz + 16;
+}
+
+static size_t graph_min_size(const struct git_hash_algo *algop)
+{
+	return GRAPH_HEADER_SIZE + 4 * CHUNK_TOC_ENTRY_SIZE + GRAPH_FANOUT_SIZE + algop->rawsz;
+}
 
 static void set_commit_pos(struct repository *r, const struct object_id *oid)
 {
@@ -259,7 +265,7 @@ struct commit_graph *load_commit_graph_one_fd_st(struct repository *r,
 
 	graph_size = xsize_t(st->st_size);
 
-	if (graph_size < GRAPH_MIN_SIZE) {
+	if (graph_size < graph_min_size(the_hash_algo)) {
 		close(fd);
 		error(_("commit-graph file is too small"));
 		return NULL;
@@ -315,7 +321,7 @@ static int graph_read_commit_data(const unsigned char *chunk_start,
 				  size_t chunk_size, void *data)
 {
 	struct commit_graph *g = data;
-	if (chunk_size / GRAPH_DATA_WIDTH != g->num_commits)
+	if (chunk_size / graph_data_width(the_hash_algo) != g->num_commits)
 		return error(_("commit-graph commit data chunk is wrong size"));
 	g->chunk_commit_data = chunk_start;
 	return 0;
@@ -380,7 +386,7 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 	if (!graph_map)
 		return NULL;
 
-	if (graph_size < GRAPH_MIN_SIZE)
+	if (graph_size < graph_min_size(the_hash_algo))
 		return NULL;
 
 	data = (const unsigned char *)graph_map;
@@ -901,7 +907,7 @@ static void fill_commit_graph_info(struct commit *item, struct commit_graph *g, 
 		die(_("invalid commit position. commit-graph is likely corrupt"));
 
 	lex_index = pos - g->num_commits_in_base;
-	commit_data = g->chunk_commit_data + st_mult(GRAPH_DATA_WIDTH, lex_index);
+	commit_data = g->chunk_commit_data + st_mult(graph_data_width(the_hash_algo), lex_index);
 
 	graph_data = commit_graph_data_at(item);
 	graph_data->graph_pos = pos;
@@ -1105,7 +1111,8 @@ static struct tree *load_tree_for_commit(struct repository *r,
 		g = g->base_graph;
 
 	commit_data = g->chunk_commit_data +
-			st_mult(GRAPH_DATA_WIDTH, graph_pos - g->num_commits_in_base);
+			st_mult(graph_data_width(the_hash_algo),
+				graph_pos - g->num_commits_in_base);
 
 	oidread(&oid, commit_data, the_repository->hash_algo);
 	set_commit_tree(c, lookup_tree(r, &oid));
