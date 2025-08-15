@@ -272,9 +272,8 @@ struct commit_graph *load_commit_graph_one_fd_st(struct repository *r,
 	}
 	graph_map = xmmap(NULL, graph_size, PROT_READ, MAP_PRIVATE, fd, 0);
 	close(fd);
-	prepare_repo_settings(r);
-	ret = parse_commit_graph(&r->settings, graph_map, graph_size);
 
+	ret = parse_commit_graph(r, graph_map, graph_size);
 	if (ret)
 		ret->odb_source = source;
 	else
@@ -374,7 +373,7 @@ static int graph_read_bloom_data(const unsigned char *chunk_start,
 	return 0;
 }
 
-struct commit_graph *parse_commit_graph(struct repo_settings *s,
+struct commit_graph *parse_commit_graph(struct repository *r,
 					void *graph_map, size_t graph_size)
 {
 	const unsigned char *data;
@@ -386,7 +385,7 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 	if (!graph_map)
 		return NULL;
 
-	if (graph_size < graph_min_size(the_hash_algo))
+	if (graph_size < graph_min_size(r->hash_algo))
 		return NULL;
 
 	data = (const unsigned char *)graph_map;
@@ -406,22 +405,22 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 	}
 
 	hash_version = *(unsigned char*)(data + 5);
-	if (hash_version != oid_version(the_hash_algo)) {
+	if (hash_version != oid_version(r->hash_algo)) {
 		error(_("commit-graph hash version %X does not match version %X"),
-		      hash_version, oid_version(the_hash_algo));
+		      hash_version, oid_version(r->hash_algo));
 		return NULL;
 	}
 
 	graph = alloc_commit_graph();
 
-	graph->hash_algo = the_hash_algo;
+	graph->hash_algo = r->hash_algo;
 	graph->num_chunks = *(unsigned char*)(data + 6);
 	graph->data = graph_map;
 	graph->data_len = graph_size;
 
 	if (graph_size < GRAPH_HEADER_SIZE +
 			 (graph->num_chunks + 1) * CHUNK_TOC_ENTRY_SIZE +
-			 GRAPH_FANOUT_SIZE + the_hash_algo->rawsz) {
+			 GRAPH_FANOUT_SIZE + r->hash_algo->rawsz) {
 		error(_("commit-graph file is too small to hold %u chunks"),
 		      graph->num_chunks);
 		free(graph);
@@ -452,7 +451,9 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 	pair_chunk(cf, GRAPH_CHUNKID_BASE, &graph->chunk_base_graphs,
 		   &graph->chunk_base_graphs_size);
 
-	if (s->commit_graph_generation_version >= 2) {
+	prepare_repo_settings(r);
+
+	if (r->settings.commit_graph_generation_version >= 2) {
 		read_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA,
 			   graph_read_generation_data, graph);
 		pair_chunk(cf, GRAPH_CHUNKID_GENERATION_DATA_OVERFLOW,
@@ -463,7 +464,7 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 			graph->read_generation_data = 1;
 	}
 
-	if (s->commit_graph_changed_paths_version) {
+	if (r->settings.commit_graph_changed_paths_version) {
 		read_chunk(cf, GRAPH_CHUNKID_BLOOMINDEXES,
 			   graph_read_bloom_index, graph);
 		read_chunk(cf, GRAPH_CHUNKID_BLOOMDATA,
@@ -480,7 +481,7 @@ struct commit_graph *parse_commit_graph(struct repo_settings *s,
 	}
 
 	oidread(&graph->oid, graph->data + graph->data_len - graph->hash_algo->rawsz,
-		the_repository->hash_algo);
+		r->hash_algo);
 
 	free_chunkfile(cf);
 	return graph;

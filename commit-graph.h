@@ -128,7 +128,7 @@ struct repo_settings;
  * Callers should initialize the repo_settings with prepare_repo_settings()
  * prior to calling parse_commit_graph().
  */
-struct commit_graph *parse_commit_graph(struct repo_settings *s,
+struct commit_graph *parse_commit_graph(struct repository *r,
 					void *graph_map, size_t graph_size);
 
 /*
