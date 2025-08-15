@@ -2721,6 +2721,7 @@ static int check_merge_commit_insn(enum todo_command command)
 		return error(_("cannot squash merge commit into another commit"));
 
 	case TODO_MERGE:
+	case TODO_DROP:
 		return 0;
 
 	default:
