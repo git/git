@@ -4,6 +4,7 @@
 #include "builtin.h"
 #include "parse-options.h"
 #include "diff.h"
+#include "environment.h"
 #include "gettext.h"
 #include "revision.h"
 #include "rerere.h"
@@ -285,6 +286,9 @@ int cmd_revert(int argc,
 	struct replay_opts opts = REPLAY_OPTS_INIT;
 	int res;
 
+#ifndef WITH_BREAKING_CHANGES
+	warn_on_auto_comment_char = true;
+#endif /* !WITH_BREAKING_CHANGES */
 	opts.action = REPLAY_REVERT;
 	sequencer_init_config(&opts);
 	res = run_sequencer(argc, argv, prefix, &opts);
@@ -302,6 +306,9 @@ struct repository *repo UNUSED)
 	struct replay_opts opts = REPLAY_OPTS_INIT;
 	int res;
 
+#ifndef WITH_BREAKING_CHANGES
+	warn_on_auto_comment_char = true;
+#endif /* !WITH_BREAKING_CHANGES */
 	opts.action = REPLAY_PICK;
 	sequencer_init_config(&opts);
 	res = run_sequencer(argc, argv, prefix, &opts);
