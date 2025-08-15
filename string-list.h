@@ -254,7 +254,7 @@ struct string_list_item *unsorted_string_list_lookup(struct string_list *list,
 void unsorted_string_list_delete_item(struct string_list *list, int i, int free_util);
 
 /**
- * Split string into substrings on character `delim` and append the
+ * Split string into substrings on characters in `delim` and append the
  * substrings to `list`.  The input string is not modified.
  * list->strdup_strings must be set, as new memory needs to be
  * allocated to hold the substrings.  If maxsplit is non-negative,
@@ -262,15 +262,15 @@ void unsorted_string_list_delete_item(struct string_list *list, int i, int free_
  * appended to list.
  *
  * Examples:
- *   string_list_split(l, "foo:bar:baz", ':', -1) -> ["foo", "bar", "baz"]
- *   string_list_split(l, "foo:bar:baz", ':', 0) -> ["foo:bar:baz"]
- *   string_list_split(l, "foo:bar:baz", ':', 1) -> ["foo", "bar:baz"]
- *   string_list_split(l, "foo:bar:", ':', -1) -> ["foo", "bar", ""]
- *   string_list_split(l, "", ':', -1) -> [""]
- *   string_list_split(l, ":", ':', -1) -> ["", ""]
+ *   string_list_split(l, "foo:bar:baz", ":", -1) -> ["foo", "bar", "baz"]
+ *   string_list_split(l, "foo:bar:baz", ":", 0) -> ["foo:bar:baz"]
+ *   string_list_split(l, "foo:bar:baz", ":", 1) -> ["foo", "bar:baz"]
+ *   string_list_split(l, "foo:bar:", ":", -1) -> ["foo", "bar", ""]
+ *   string_list_split(l, "", ":", -1) -> [""]
+ *   string_list_split(l, ":", ":", -1) -> ["", ""]
  */
 int string_list_split(struct string_list *list, const char *string,
-		      int delim, int maxsplit);
+		      const char *delim, int maxsplit);
 
 /*
  * Like string_list_split(), except that string is split in-place: the
@@ -281,4 +281,21 @@ int string_list_split(struct string_list *list, const char *string,
  */
 int string_list_split_in_place(struct string_list *list, char *string,
 			       const char *delim, int maxsplit);
+
+/* Flag bits for split_f and split_in_place_f functions */
+enum {
+	/*
+	 * trim whitespaces around resulting string piece before adding
+	 * it to the list
+	 */
+	STRING_LIST_SPLIT_TRIM = (1 << 0),
+	/* omit adding empty string piece to the resulting list */
+	STRING_LIST_SPLIT_NONEMPTY = (1 << 1),
+};
+
+int string_list_split_f(struct string_list *, const char *string,
+			const char *delim, int maxsplit, unsigned flags);
+
+int string_list_split_in_place_f(struct string_list *, char *string,
+				 const char *delim, int maxsplit, unsigned flags);
 #endif /* STRING_LIST_H */

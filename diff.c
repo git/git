@@ -327,29 +327,23 @@ static unsigned parse_color_moved_ws(const char *arg)
 	struct string_list l = STRING_LIST_INIT_DUP;
 	struct string_list_item *i;
 
-	string_list_split(&l, arg, ',', -1);
+	string_list_split_f(&l, arg, ",", -1, STRING_LIST_SPLIT_TRIM);
 
 	for_each_string_list_item(i, &l) {
-		struct strbuf sb = STRBUF_INIT;
-		strbuf_addstr(&sb, i->string);
-		strbuf_trim(&sb);
-
-		if (!strcmp(sb.buf, "no"))
+		if (!strcmp(i->string, "no"))
 			ret = 0;
-		else if (!strcmp(sb.buf, "ignore-space-change"))
+		else if (!strcmp(i->string, "ignore-space-change"))
 			ret |= XDF_IGNORE_WHITESPACE_CHANGE;
-		else if (!strcmp(sb.buf, "ignore-space-at-eol"))
+		else if (!strcmp(i->string, "ignore-space-at-eol"))
 			ret |= XDF_IGNORE_WHITESPACE_AT_EOL;
-		else if (!strcmp(sb.buf, "ignore-all-space"))
+		else if (!strcmp(i->string, "ignore-all-space"))
 			ret |= XDF_IGNORE_WHITESPACE;
-		else if (!strcmp(sb.buf, "allow-indentation-change"))
+		else if (!strcmp(i->string, "allow-indentation-change"))
 			ret |= COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE;
 		else {
 			ret |= COLOR_MOVED_WS_ERROR;
-			error(_("unknown color-moved-ws mode '%s', possible values are 'ignore-space-change', 'ignore-space-at-eol', 'ignore-all-space', 'allow-indentation-change'"), sb.buf);
+			error(_("unknown color-moved-ws mode '%s', possible values are 'ignore-space-change', 'ignore-space-at-eol', 'ignore-all-space', 'allow-indentation-change'"), i->string);
 		}
-
-		strbuf_release(&sb);
 	}
 
 	if ((ret & COLOR_MOVED_WS_ALLOW_INDENTATION_CHANGE) &&

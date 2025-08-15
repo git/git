@@ -276,55 +276,99 @@ void unsorted_string_list_delete_item(struct string_list *list, int i, int free_
 	list->nr--;
 }
 
-int string_list_split(struct string_list *list, const char *string,
-		      int delim, int maxsplit)
+/*
+ * append a substring [p..end] to list; return number of things it
+ * appended to the list.
+ */
+static int append_one(struct string_list *list,
+		      const char *p, const char *end,
+		      int in_place, unsigned flags)
+{
+	if (!end)
+		end = p + strlen(p);
+
+	if ((flags & STRING_LIST_SPLIT_TRIM)) {
+		/* rtrim */
+		for (; p < end; end--)
+			if (!isspace(end[-1]))
+				break;
+	}
+
+	if ((flags & STRING_LIST_SPLIT_NONEMPTY) && (end <= p))
+		return 0;
+
+	if (in_place) {
+		*((char *)end) = '\0';
+		string_list_append(list, p);
+	} else {
+		string_list_append_nodup(list, xmemdupz(p, end - p));
+	}
+	return 1;
+}
+
+/*
+ * Unfortunately this cannot become a public interface, as _in_place()
+ * wants to have "const char *string" while the other variant wants to
+ * have "char *string" for type safety.
+ *
+ * This accepts "const char *string" to allow both wrappers to use it;
+ * it internally casts away the constness when in_place is true by
+ * taking advantage of strpbrk() that takes a "const char *" arg and
+ * returns "char *" pointer into that const string.  Yucky but works ;-).
+ */
+static int split_string(struct string_list *list, const char *string, const char *delim,
+			int maxsplit, int in_place, unsigned flags)
 {
 	int count = 0;
-	const char *p = string, *end;
+	const char *p = string;
 
-	if (!list->strdup_strings)
-		die("internal error in string_list_split(): "
-		    "list->strdup_strings must be set");
+	if (in_place && list->strdup_strings)
+		BUG("string_list_split_in_place() called with strdup_strings");
+	else if (!in_place && !list->strdup_strings)
+		BUG("string_list_split() called without strdup_strings");
+
 	for (;;) {
-		count++;
-		if (maxsplit >= 0 && count > maxsplit) {
-			string_list_append(list, p);
-			return count;
+		char *end;
+
+		if (flags & STRING_LIST_SPLIT_TRIM) {
+			/* ltrim */
+			while (*p && isspace(*p))
+				p++;
 		}
-		end = strchr(p, delim);
-		if (end) {
-			string_list_append_nodup(list, xmemdupz(p, end - p));
-			p = end + 1;
-		} else {
-			string_list_append(list, p);
+
+		if (0 <= maxsplit && maxsplit <= count)
+			end = NULL;
+		else
+			end = strpbrk(p, delim);
+
+		count += append_one(list, p, end, in_place, flags);
+
+		if (!end)
 			return count;
-		}
+		p = end + 1;
 	}
+}
+
+int string_list_split(struct string_list *list, const char *string,
+		      const char *delim, int maxsplit)
+{
+	return split_string(list, string, delim, maxsplit, 0, 0);
 }
 
 int string_list_split_in_place(struct string_list *list, char *string,
 			       const char *delim, int maxsplit)
 {
-	int count = 0;
-	char *p = string, *end;
+	return split_string(list, string, delim, maxsplit, 1, 0);
+}
 
-	if (list->strdup_strings)
-		die("internal error in string_list_split_in_place(): "
-		    "list->strdup_strings must not be set");
-	for (;;) {
-		count++;
-		if (maxsplit >= 0 && count > maxsplit) {
-			string_list_append(list, p);
-			return count;
-		}
-		end = strpbrk(p, delim);
-		if (end) {
-			*end = '\0';
-			string_list_append(list, p);
-			p = end + 1;
-		} else {
-			string_list_append(list, p);
-			return count;
-		}
-	}
+int string_list_split_f(struct string_list *list, const char *string,
+			const char *delim, int maxsplit, unsigned flags)
+{
+	return split_string(list, string, delim, maxsplit, 0, flags);
+}
+
+int string_list_split_in_place_f(struct string_list *list, char *string,
+			       const char *delim, int maxsplit, unsigned flags)
+{
+	return split_string(list, string, delim, maxsplit, 1, flags);
 }

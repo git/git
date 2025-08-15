@@ -492,8 +492,8 @@ static int scripted(void)
 
 		/* break line into command and zero or more tokens */
 		string_list_setlen(&parts, 0);
-		string_list_split_in_place(&parts, line, " ", -1);
-		string_list_remove_empty_items(&parts, 0);
+		string_list_split_in_place_f(&parts, line, " ", -1,
+					     STRING_LIST_SPLIT_NONEMPTY);
 
 		/* ignore empty lines */
 		if (!parts.nr || !*parts.items[0].string)

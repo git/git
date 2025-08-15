@@ -348,6 +348,7 @@ int cmd__path_utils(int argc, const char **argv)
 	if (argc == 4 && !strcmp(argv[1], "longest_ancestor_length")) {
 		int len;
 		struct string_list ceiling_dirs = STRING_LIST_INIT_DUP;
+		const char path_sep[] = { PATH_SEP, '\0' };
 		char *path = xstrdup(argv[2]);
 
 		/*
@@ -362,7 +363,7 @@ int cmd__path_utils(int argc, const char **argv)
 		 */
 		if (normalize_path_copy(path, path))
 			die("Path \"%s\" could not be normalized", argv[2]);
-		string_list_split(&ceiling_dirs, argv[3], PATH_SEP, -1);
+		string_list_split(&ceiling_dirs, argv[3], path_sep, -1);
 		filter_string_list(&ceiling_dirs, 0,
 				   normalize_ceiling_entry, NULL);
 		len = longest_ancestor_length(path, &ceiling_dirs);

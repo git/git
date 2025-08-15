@@ -413,7 +413,7 @@ static void parse_color_fields(const char *s)
 	colorfield_nr = 0;
 
 	/* Ideally this would be stripped and split at the same time? */
-	string_list_split(&l, s, ',', -1);
+	string_list_split(&l, s, ",", -1);
 	ALLOC_GROW(colorfield, colorfield_nr + 1, colorfield_alloc);
 
 	for_each_string_list_item(item, &l) {
