@@ -648,6 +648,19 @@ test_expect_success 'diff -I<regex>: detect malformed regex' '
 	test_grep "invalid regex given to -I: " error
 '
 
+test_expect_success 'diff -I<regex>: ignore matching file' '
+	test_when_finished "git rm -f file1" &&
+	test_seq 50 >file1 &&
+	git add file1 &&
+	test_seq 50 | sed -e "s/13/ten and three/" -e "s/^[124-9].*/& /" >file1 &&
+
+	: >actual &&
+	git diff --raw --ignore-blank-lines -I"ten.*e" -I"^[124-9]" >>actual &&
+	git diff --name-only --ignore-blank-lines -I"ten.*e" -I"^[124-9]" >>actual &&
+	git diff --name-status --ignore-blank-lines -I"ten.*e" -I"^[124-9]" >>actual &&
+	test_grep ! "file1" actual
+'
+
 # check_prefix <patch> <src> <dst>
 # check only lines with paths to avoid dependency on exact oid/contents
 check_prefix () {
