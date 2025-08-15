@@ -16,7 +16,7 @@ git clone [--template=<template-directory>]
 	  [--depth <depth>] [--[no-]single-branch] [--[no-]tags]
 	  [--recurse-submodules[=<pathspec>]] [--[no-]shallow-submodules]
 	  [--[no-]remote-submodules] [--jobs <n>] [--sparse] [--[no-]reject-shallow]
-	  [--filter=<filter-spec>] [--also-filter-submodules]] [--] <repository>
+	  [--filter=<filter-spec> [--also-filter-submodules]] [--] <repository>
 	  [<directory>]
 
 DESCRIPTION
