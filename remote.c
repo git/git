@@ -1171,7 +1171,6 @@ static void show_push_unqualified_ref_name_error(const char *dst_value,
 						 const char *matched_src_name)
 {
 	struct object_id oid;
-	enum object_type type;
 
 	/*
 	 * TRANSLATORS: "matches '%s'%" is the <dst> part of "git push
@@ -1196,30 +1195,37 @@ static void show_push_unqualified_ref_name_error(const char *dst_value,
 		BUG("'%s' is not a valid object, "
 		    "match_explicit_lhs() should catch this!",
 		    matched_src_name);
-	type = odb_read_object_info(the_repository->objects, &oid, NULL);
-	if (type == OBJ_COMMIT) {
+
+	switch (odb_read_object_info(the_repository->objects, &oid, NULL)) {
+	case OBJ_COMMIT:
 		advise(_("The <src> part of the refspec is a commit object.\n"
 			 "Did you mean to create a new branch by pushing to\n"
 			 "'%s:refs/heads/%s'?"),
 		       matched_src_name, dst_value);
-	} else if (type == OBJ_TAG) {
+		break;
+	case OBJ_TAG:
 		advise(_("The <src> part of the refspec is a tag object.\n"
 			 "Did you mean to create a new tag by pushing to\n"
 			 "'%s:refs/tags/%s'?"),
 		       matched_src_name, dst_value);
-	} else if (type == OBJ_TREE) {
+		break;
+	case OBJ_TREE:
 		advise(_("The <src> part of the refspec is a tree object.\n"
 			 "Did you mean to tag a new tree by pushing to\n"
 			 "'%s:refs/tags/%s'?"),
 		       matched_src_name, dst_value);
-	} else if (type == OBJ_BLOB) {
+		break;
+	case OBJ_BLOB:
 		advise(_("The <src> part of the refspec is a blob object.\n"
 			 "Did you mean to tag a new blob by pushing to\n"
 			 "'%s:refs/tags/%s'?"),
 		       matched_src_name, dst_value);
-	} else {
-		BUG("'%s' should be commit/tag/tree/blob, is '%d'",
-		    matched_src_name, type);
+		break;
+	default:
+		advise(_("The <src> part of the refspec ('%s') "
+			 "is an object ID that doesn't exist.\n"),
+		       matched_src_name);
+		break;
 	}
 }
 
