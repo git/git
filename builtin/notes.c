@@ -376,18 +376,19 @@ static int notes_copy_from_stdin(int force, const char *rewrite_cmd)
 
 	while (strbuf_getline_lf(&buf, stdin) != EOF) {
 		struct object_id from_obj, to_obj;
-		struct strbuf **split;
+		struct string_list split = STRING_LIST_INIT_NODUP;
 		int err;
 
-		split = strbuf_split(&buf, ' ');
-		if (!split[0] || !split[1])
+		string_list_split_in_place_f(&split, buf.buf, " ", -1,
+					     STRING_LIST_SPLIT_TRIM);
+		if (split.nr < 2)
 			die(_("malformed input line: '%s'."), buf.buf);
-		strbuf_rtrim(split[0]);
-		strbuf_rtrim(split[1]);
-		if (repo_get_oid(the_repository, split[0]->buf, &from_obj))
-			die(_("failed to resolve '%s' as a valid ref."), split[0]->buf);
-		if (repo_get_oid(the_repository, split[1]->buf, &to_obj))
-			die(_("failed to resolve '%s' as a valid ref."), split[1]->buf);
+		if (repo_get_oid(the_repository, split.items[0].string, &from_obj))
+			die(_("failed to resolve '%s' as a valid ref."),
+			    split.items[0].string);
+		if (repo_get_oid(the_repository, split.items[1].string, &to_obj))
+			die(_("failed to resolve '%s' as a valid ref."),
+			    split.items[1].string);
 
 		if (rewrite_cmd)
 			err = copy_note_for_rewrite(c, &from_obj, &to_obj);
@@ -397,11 +398,11 @@ static int notes_copy_from_stdin(int force, const char *rewrite_cmd)
 
 		if (err) {
 			error(_("failed to copy notes from '%s' to '%s'"),
-			      split[0]->buf, split[1]->buf);
+			      split.items[0].string, split.items[1].string);
 			ret = 1;
 		}
 
-		strbuf_list_free(split);
+		string_list_clear(&split, 0);
 	}
 
 	if (!rewrite_cmd) {

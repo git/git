@@ -619,32 +619,34 @@ int cmd_merge_tree(int argc,
 			    "--merge-base", "--stdin");
 		line_termination = '\0';
 		while (strbuf_getline_lf(&buf, stdin) != EOF) {
-			struct strbuf **split;
+			struct string_list split = STRING_LIST_INIT_NODUP;
 			const char *input_merge_base = NULL;
 
-			split = strbuf_split(&buf, ' ');
-			if (!split[0] || !split[1])
+			string_list_split_in_place_f(&split, buf.buf, " ", -1,
+						     STRING_LIST_SPLIT_TRIM);
+
+			if (split.nr < 2)
 				die(_("malformed input line: '%s'."), buf.buf);
-			strbuf_rtrim(split[0]);
-			strbuf_rtrim(split[1]);
 
 			/* parse the merge-base */
-			if (!strcmp(split[1]->buf, "--")) {
-				input_merge_base = split[0]->buf;
+			if (!strcmp(split.items[1].string, "--")) {
+				input_merge_base = split.items[0].string;
 			}
 
-			if (input_merge_base && split[2] && split[3] && !split[4]) {
-				strbuf_rtrim(split[2]);
-				strbuf_rtrim(split[3]);
-				real_merge(&o, input_merge_base, split[2]->buf, split[3]->buf, prefix);
-			} else if (!input_merge_base && !split[2]) {
-				real_merge(&o, NULL, split[0]->buf, split[1]->buf, prefix);
+			if (input_merge_base && split.nr == 4) {
+				real_merge(&o, input_merge_base,
+					   split.items[2].string, split.items[3].string,
+					   prefix);
+			} else if (!input_merge_base && split.nr == 2) {
+				real_merge(&o, NULL,
+					   split.items[0].string, split.items[1].string,
+					   prefix);
 			} else {
 				die(_("malformed input line: '%s'."), buf.buf);
 			}
 			maybe_flush_or_die(stdout, "stdout");
 
-			strbuf_list_free(split);
+			string_list_clear(&split, 0);
 		}
 		strbuf_release(&buf);
 
