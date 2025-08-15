@@ -41,6 +41,9 @@ values that they return:
 `layout.bare`::
 `true` if this is a bare repository, otherwise `false`.
 
+`layout.shallow`::
+`true` if this is a shallow repository, otherwise `false`.
+
 `references.format`::
 The reference storage format. The valid values are:
 +
