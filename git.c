@@ -445,7 +445,7 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv, struct
 	const char *prefix;
 	int run_setup = (p->option & (RUN_SETUP | RUN_SETUP_GENTLY));
 
-	help = argc == 2 && !strcmp(argv[1], "-h");
+	help = argc == 2 && (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help-all"));
 	if (help && (run_setup & RUN_SETUP))
 		/* demote to GENTLY to allow 'git cmd -h' outside repo */
 		run_setup = RUN_SETUP_GENTLY;
