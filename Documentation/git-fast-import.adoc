@@ -111,7 +111,8 @@ Locations of Marks Files
 	Like --import-marks but instead of erroring out, silently
 	skips the file if it does not exist.
 
---[no-]relative-marks::
+--relative-marks::
+--no-relative-marks::
 	After specifying --relative-marks the paths specified
 	with --import-marks= and --export-marks= are relative
 	to an internal directory in the current repository.
@@ -605,9 +606,11 @@ Marks must be declared (via `mark`) before they can be used.
 
 The special case of restarting an incremental import from the
 current branch value should be written as:
+
 ----
 	from refs/heads/branch^0
 ----
+
 The `^0` suffix is necessary as fast-import does not permit a branch to
 start from itself, and the branch is created in memory before the
 `from` command is even read from the input.  Adding `^0` will force

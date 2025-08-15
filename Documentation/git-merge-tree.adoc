@@ -59,7 +59,8 @@ OPTIONS
 	do not list filenames multiple times if they have multiple
 	conflicting stages).
 
---[no-]messages::
+--messages::
+--no-messages::
 	Write any informational messages such as "Auto-merging <path>"
 	or CONFLICT notices to the end of stdout.  If unspecified, the
 	default is to include these messages if there are merge

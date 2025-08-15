@@ -442,7 +442,8 @@ options carefully.
 	clone with a history truncated to the specified number of revisions.
 	See linkgit:git-clone[1]
 
---[no-]recommend-shallow::
+--recommend-shallow::
+--no-recommend-shallow::
 	This option is only valid for the update command.
 	The initial clone of a submodule will use the recommended
 	`submodule.<name>.shallow` as provided by the `.gitmodules` file
@@ -454,7 +455,8 @@ options carefully.
 	Clone new submodules in parallel with as many jobs.
 	Defaults to the `submodule.fetchJobs` option.
 
---[no-]single-branch::
+--single-branch::
+--no-single-branch::
 	This option is only valid for the update command.
 	Clone only one branch during update: HEAD or one specified by --branch.
 

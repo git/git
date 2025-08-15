@@ -25,11 +25,13 @@ subject to exclude rules; but see `--no-index'.
 
 OPTIONS
 -------
--q, --quiet::
+-q::
+--quiet::
 	Don't output anything, just set exit status.  This is only
 	valid with a single pathname.
 
--v, --verbose::
+-v::
+--verbose::
 	Instead of printing the paths that are excluded, for each path
 	that matches an exclude pattern, print the exclude pattern
 	together with the path.  (Matching an exclude pattern usually
@@ -49,7 +51,8 @@ linkgit:gitignore[5].
 	below).  If `--stdin` is also given, input paths are separated
 	with a NUL character instead of a linefeed character.
 
--n, --non-matching::
+-n::
+--non-matching::
 	Show given paths which don't match any pattern.  This only
 	makes sense when `--verbose` is enabled, otherwise it would
 	not be possible to distinguish between paths which match a

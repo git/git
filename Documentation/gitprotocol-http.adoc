@@ -318,7 +318,7 @@ Extra Parameter.
 
 
 Smart Service git-upload-pack
-------------------------------
+-----------------------------
 This service reads from the repository pointed to by `$GIT_URL`.
 
 Clients MUST first perform ref discovery with

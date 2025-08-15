@@ -1,84 +1,81 @@
-<pattern>...::
-	If one or more patterns are given, only refs are shown that
-	match against at least one pattern, either using fnmatch(3) or
+`<pattern>...`::
+	If one or more _<pattern>_ parameters are given, only refs are shown that
+	match against at least one pattern, either using `fnmatch`(3) or
 	literally, in the latter case matching completely or from the
 	beginning up to a slash.
 
---stdin::
-	If `--stdin` is supplied, then the list of patterns is read from
-	standard input instead of from the argument list.
+`--stdin`::
+	The list of patterns is read from standard input instead of from
+	the argument list.
 
---count=<count>::
-	By default the command shows all refs that match
-	`<pattern>`.  This option makes it stop after showing
-	that many refs.
+`--count=<count>`::
+	Stop after showing _<count>_ refs.
 
---sort=<key>::
-	A field name to sort on.  Prefix `-` to sort in
+`--sort=<key>`::
+	Sort on the field name _<key>_.  Prefix `-` to sort in
 	descending order of the value.  When unspecified,
-	`refname` is used.  You may use the --sort=<key> option
+	`refname` is used.  You may use the `--sort=<key>` option
 	multiple times, in which case the last key becomes the primary
 	key.
 
---format=<format>::
+`--format[=<format>]`::
 	A string that interpolates `%(fieldname)` from a ref being shown and
 	the object it points at. In addition, the string literal `%%`
 	renders as `%` and `%xx` - where `xx` are hex digits - renders as
 	the character with hex code `xx`. For example, `%00` interpolates to
-	`\0` (NUL), `%09` to `\t` (TAB), and `%0a` to `\n` (LF).
-+
-When unspecified, `<format>` defaults to `%(objectname) SPC %(objecttype)
+	`\0` (_NUL_), `%09` to `\t` (_TAB_), and `%0a` to `\n` (_LF_).
+
+When unspecified, _<format>_ defaults to `%(objectname) SPC %(objecttype)
 TAB %(refname)`.
 
---color[=<when>]::
+`--color[=<when>]`::
 	Respect any colors specified in the `--format` option. The
-	`<when>` field must be one of `always`, `never`, or `auto` (if
+	_<when__ field must be one of `always`, `never`, or `auto` (if
 	`<when>` is absent, behave as if `always` was given).
 
---shell::
---perl::
---python::
---tcl::
+`--shell`::
+`--perl`::
+`--python`::
+`--tcl`::
 	If given, strings that substitute `%(fieldname)`
 	placeholders are quoted as string literals suitable for
 	the specified host language.  This is meant to produce
-	a scriptlet that can directly be `eval`ed.
+	a scriptlet that can directly be "eval"ed.
 
---points-at=<object>::
+`--points-at=<object>`::
 	Only list refs which points at the given object.
 
---merged[=<object>]::
+`--merged[=<object>]`::
 	Only list refs whose tips are reachable from the
-	specified commit (HEAD if not specified).
+	specified commit (`HEAD` if not specified).
 
---no-merged[=<object>]::
-	Only list refs whose tips are not reachable from the
-	specified commit (HEAD if not specified).
-
---contains[=<object>]::
-	Only list refs which contain the specified commit (HEAD if not
+`--no-merged[=<object>]`::
+	Only list refs whose tips are not reachable from _<object>_(`HEAD` if not
 	specified).
 
---no-contains[=<object>]::
-	Only list refs which don't contain the specified commit (HEAD
+`--contains[=<object>]`::
+	Only list refs which contain _<object>_(`HEAD` if not specified).
+
+`--no-contains[=<object>]`::
+	Only list refs which don't contain _<object>_ (`HEAD`
 	if not specified).
 
---ignore-case::
+`--ignore-case`::
 	Sorting and filtering refs are case insensitive.
 
---omit-empty::
+`--omit-empty`::
 	Do not print a newline after formatted refs where the format expands
 	to the empty string.
 
---exclude=<pattern>::
-	If one or more patterns are given, only refs which do not match
-	any excluded pattern(s) are shown. Matching is done using the
-	same rules as `<pattern>` above.
+`--exclude=<excluded-pattern>`::
+	If one or more `--exclude` options are given, only refs which do not
+	match any _<excluded-pattern>_ parameters are shown. Matching is done
+	using the same rules as _<pattern>_ above.
 
---include-root-refs::
-	List root refs (HEAD and pseudorefs) apart from regular refs.
+`--include-root-refs`::
+	List root refs (`HEAD` and pseudorefs) apart from regular refs.
 
---start-after=<marker>::
+`--start-after=<marker>`::
     Allows paginating the output by skipping references up to and including the
     specified marker. When paging, it should be noted that references may be
     deleted, modified or added between invocations. Output will only yield those
