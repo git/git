@@ -21,7 +21,7 @@
  * call this method oustide of a builtin, and only if you know what
  * you are doing!
  */
-void git_test_write_commit_graph_or_die(void);
+void git_test_write_commit_graph_or_die(struct odb_source *source);
 
 struct commit;
 struct bloom_filter_settings;
