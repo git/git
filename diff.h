@@ -406,6 +406,14 @@ struct diff_options {
 	struct strmap *additional_path_headers;
 
 	int no_free;
+
+	/*
+	 * The value '0' is a valid max-depth (for no recursion), and value '-1'
+	 * also (for unlimited recursion), so the extra "valid" flag is used to
+	 * determined whether the user specified option --max-depth.
+	 */
+	int max_depth;
+	int max_depth_valid;
 };
 
 unsigned diff_filter_bit(char status);

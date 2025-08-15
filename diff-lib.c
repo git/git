@@ -115,6 +115,9 @@ void run_diff_files(struct rev_info *revs, unsigned int option)
 	uint64_t start = getnanotime();
 	struct index_state *istate = revs->diffopt.repo->index;
 
+	if (revs->diffopt.max_depth_valid)
+		die(_("max-depth is not supported for worktree diffs"));
+
 	diff_set_mnemonic_prefix(&revs->diffopt, "i/", "w/");
 
 	refresh_fsmonitor(istate);
@@ -560,6 +563,8 @@ static int diff_cache(struct rev_info *revs,
 	opts.dst_index = NULL;
 	opts.pathspec = &revs->diffopt.pathspec;
 	opts.pathspec->recursive = 1;
+	if (revs->diffopt.max_depth_valid)
+		die(_("max-depth is not supported for index diffs"));
 
 	init_tree_desc(&t, &tree->object.oid, tree->buffer, tree->size);
 	return unpack_trees(1, &t, &opts);
