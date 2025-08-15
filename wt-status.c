@@ -972,7 +972,8 @@ static void wt_longstatus_print_changed(struct wt_status *s)
 	wt_longstatus_print_trailer(s);
 }
 
-static int stash_count_refs(struct object_id *ooid UNUSED,
+static int stash_count_refs(const char *refname UNUSED,
+			    struct object_id *ooid UNUSED,
 			    struct object_id *noid UNUSED,
 			    const char *email UNUSED,
 			    timestamp_t timestamp UNUSED, int tz UNUSED,
@@ -1664,7 +1665,8 @@ struct grab_1st_switch_cbdata {
 	struct object_id noid;
 };
 
-static int grab_1st_switch(struct object_id *ooid UNUSED,
+static int grab_1st_switch(const char *refname UNUSED,
+			   struct object_id *ooid UNUSED,
 			   struct object_id *noid,
 			   const char *email UNUSED,
 			   timestamp_t timestamp UNUSED, int tz UNUSED,
