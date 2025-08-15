@@ -1050,5 +1050,135 @@ test_expect_success 'check-rules null termination' '
 	test_cmp expect actual
 '
 
+test_expect_success 'clean' '
+	git -C repo sparse-checkout set --cone deep/deeper1 &&
+	mkdir -p repo/deep/deeper2 repo/folder1/extra/inside &&
+	touch repo/deep/deeper2/file &&
+	touch repo/folder1/extra/inside/file &&
+
+	test_must_fail git -C repo sparse-checkout clean 2>err &&
+	grep "refusing to clean" err &&
+
+	git -C repo config clean.requireForce true &&
+	test_must_fail git -C repo sparse-checkout clean 2>err &&
+	grep "refusing to clean" err &&
+
+	cat >expect <<-\EOF &&
+	Would remove deep/deeper2/
+	Would remove folder1/
+	EOF
+
+	git -C repo sparse-checkout clean --dry-run >out &&
+	test_cmp expect out &&
+	test_path_exists repo/deep/deeper2 &&
+	test_path_exists repo/folder1/extra/inside/file &&
+
+	cat >expect <<-\EOF &&
+	Would remove deep/deeper2/file
+	Would remove folder1/extra/inside/file
+	EOF
+
+	git -C repo sparse-checkout clean --dry-run --verbose >out &&
+	test_cmp expect out &&
+
+	cat >expect <<-\EOF &&
+	Removing deep/deeper2/
+	Removing folder1/
+	EOF
+
+	git -C repo sparse-checkout clean -f >out &&
+	test_cmp expect out &&
+
+	test_path_is_missing repo/deep/deeper2 &&
+	test_path_is_missing repo/folder1
+'
+
+test_expect_success 'clean with staged sparse change' '
+	git -C repo sparse-checkout set --cone deep/deeper1 &&
+	mkdir repo/deep/deeper2 repo/folder1 repo/folder2 &&
+	touch repo/deep/deeper2/file &&
+	touch repo/folder1/file &&
+	echo dirty >repo/folder2/a &&
+
+	git -C repo add --sparse folder1/file &&
+
+	cat >expect <<-\EOF &&
+	Would remove deep/deeper2/
+	Would remove folder1/
+	EOF
+
+	git -C repo sparse-checkout clean --dry-run >out &&
+	test_cmp expect out &&
+	test_path_exists repo/deep/deeper2 &&
+	test_path_exists repo/folder1 &&
+	test_path_exists repo/folder2 &&
+
+	# deletes deep/deeper2/ but leaves folder1/ and folder2/
+	cat >expect <<-\EOF &&
+	Removing deep/deeper2/
+	Removing folder1/
+	EOF
+
+	# The previous test case checked the -f option, so
+	# test the config option in this one.
+	git -C repo config clean.requireForce false &&
+	git -C repo sparse-checkout clean >out &&
+	test_cmp expect out &&
+
+	test_path_is_missing repo/deep/deeper2 &&
+	test_path_is_missing repo/folder1 &&
+	test_path_exists repo/folder2
+'
+
+test_expect_success 'sparse-checkout operations with merge conflicts' '
+	git clone repo merge &&
+
+	(
+		cd merge &&
+		mkdir -p folder1/even/more/dirs &&
+		echo base >folder1/even/more/dirs/file &&
+		git add folder1 &&
+		git commit -m "base" &&
+
+		git checkout -b right&&
+		echo right >folder1/even/more/dirs/file &&
+		git commit -a -m "right" &&
+
+		git checkout -b left HEAD~1 &&
+		echo left >folder1/even/more/dirs/file &&
+		git commit -a -m "left" &&
+
+		git checkout -b merge &&
+
+		touch deep/deeper2/extra &&
+		git sparse-checkout set deep/deeper1 2>err &&
+		grep "contains untracked files" err &&
+		test_path_exists deep/deeper2/extra &&
+
+		test_must_fail git merge -m "will-conflict" right &&
+
+		test_must_fail git sparse-checkout clean -f 2>err &&
+		grep "failed to convert index to a sparse index" err &&
+
+		echo merged >folder1/even/more/dirs/file &&
+		git add --sparse folder1 &&
+		git merge --continue &&
+
+		test_path_exists folder1/even/more/dirs/file &&
+		test_path_exists deep/deeper2/extra &&
+
+		cat >expect <<-\EOF &&
+		Removing deep/deeper2/
+		Removing folder1/
+		EOF
+
+		# clean does not remove the file, because the
+		# SKIP_WORKTREE bit was not cleared by the merge command.
+		git sparse-checkout clean -f >out &&
+		test_cmp expect out &&
+		test_path_is_missing folder1 &&
+		test_path_is_missing deep/deeper2
+	)
+'
 
 test_done
