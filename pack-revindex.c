@@ -379,25 +379,25 @@ int load_midx_revindex(struct multi_pack_index *m)
 		 * not want to accidentally call munmap() in the middle of the
 		 * MIDX.
 		 */
-		trace2_data_string("load_midx_revindex", m->repo,
+		trace2_data_string("load_midx_revindex", m->source->odb->repo,
 				   "source", "midx");
 		m->revindex_data = (const uint32_t *)m->chunk_revindex;
 		return 0;
 	}
 
-	trace2_data_string("load_midx_revindex", m->repo,
+	trace2_data_string("load_midx_revindex", m->source->odb->repo,
 			   "source", "rev");
 
 	if (m->has_chain)
-		get_split_midx_filename_ext(m->repo->hash_algo, &revindex_name,
-					    m->object_dir, get_midx_checksum(m),
+		get_split_midx_filename_ext(m->source, &revindex_name,
+					    get_midx_checksum(m),
 					    MIDX_EXT_REV);
 	else
-		get_midx_filename_ext(m->repo->hash_algo, &revindex_name,
-				      m->object_dir, get_midx_checksum(m),
+		get_midx_filename_ext(m->source, &revindex_name,
+				      get_midx_checksum(m),
 				      MIDX_EXT_REV);
 
-	ret = load_revindex_from_disk(m->repo->hash_algo,
+	ret = load_revindex_from_disk(m->source->odb->repo->hash_algo,
 				      revindex_name.buf,
 				      m->num_objects,
 				      &m->revindex_map,

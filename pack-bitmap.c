@@ -216,7 +216,7 @@ static uint32_t bitmap_num_objects(struct bitmap_index *index)
 static struct repository *bitmap_repo(struct bitmap_index *bitmap_git)
 {
 	if (bitmap_is_midx(bitmap_git))
-		return bitmap_git->midx->repo;
+		return bitmap_git->midx->source->odb->repo;
 	return bitmap_git->pack->repo;
 }
 
@@ -418,13 +418,12 @@ char *midx_bitmap_filename(struct multi_pack_index *midx)
 {
 	struct strbuf buf = STRBUF_INIT;
 	if (midx->has_chain)
-		get_split_midx_filename_ext(midx->repo->hash_algo, &buf,
-					    midx->object_dir,
+		get_split_midx_filename_ext(midx->source, &buf,
 					    get_midx_checksum(midx),
 					    MIDX_EXT_BITMAP);
 	else
-		get_midx_filename_ext(midx->repo->hash_algo, &buf,
-				      midx->object_dir, get_midx_checksum(midx),
+		get_midx_filename_ext(midx->source, &buf,
+				      get_midx_checksum(midx),
 				      MIDX_EXT_BITMAP);
 
 	return strbuf_detach(&buf, NULL);
@@ -463,7 +462,7 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 
 	if (bitmap_git->pack || bitmap_git->midx) {
 		struct strbuf buf = STRBUF_INIT;
-		get_midx_filename(midx->repo->hash_algo, &buf, midx->object_dir);
+		get_midx_filename(midx->source, &buf);
 		trace2_data_string("bitmap", bitmap_repo(bitmap_git),
 				   "ignoring extra midx bitmap file", buf.buf);
 		close(fd);
@@ -493,7 +492,7 @@ static int open_midx_bitmap_1(struct bitmap_index *bitmap_git,
 	}
 
 	for (i = 0; i < bitmap_git->midx->num_packs + bitmap_git->midx->num_packs_in_base; i++) {
-		if (!prepare_midx_pack(bitmap_repo(bitmap_git), bitmap_git->midx, i)) {
+		if (!prepare_midx_pack(bitmap_git->midx, i)) {
 			warning(_("could not open pack %s"),
 				nth_midxed_pack_name(bitmap_git->midx, i));
 			goto cleanup;
@@ -2466,7 +2465,7 @@ void reuse_partial_packfile_from_bitmap(struct bitmap_index *bitmap_git,
 		struct multi_pack_index *m = bitmap_git->midx;
 		for (i = 0; i < m->num_packs + m->num_packs_in_base; i++) {
 			struct bitmapped_pack pack;
-			if (nth_bitmapped_pack(r, bitmap_git->midx, &pack, i) < 0) {
+			if (nth_bitmapped_pack(bitmap_git->midx, &pack, i) < 0) {
 				warning(_("unable to load pack: '%s', disabling pack-reuse"),
 					nth_midxed_pack_name(bitmap_git->midx, i));
 				free(packs);
