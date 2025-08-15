@@ -10,7 +10,6 @@
 #include "gettext.h"
 #include "parse-options.h"
 #include "string-list.h"
-#include "tempfile.h"
 #include "trailer.h"
 #include "config.h"
 
@@ -85,43 +84,13 @@ static int parse_opt_parse(const struct option *opt, const char *arg,
 			   int unset)
 {
 	struct process_trailer_options *v = opt->value;
+
 	v->only_trailers = 1;
 	v->only_input = 1;
 	v->unfold = 1;
 	BUG_ON_OPT_NEG(unset);
 	BUG_ON_OPT_ARG(arg);
 	return 0;
-}
-
-static struct tempfile *trailers_tempfile;
-
-static FILE *create_in_place_tempfile(const char *file)
-{
-	struct stat st;
-	struct strbuf filename_template = STRBUF_INIT;
-	const char *tail;
-	FILE *outfile;
-
-	if (stat(file, &st))
-		die_errno(_("could not stat %s"), file);
-	if (!S_ISREG(st.st_mode))
-		die(_("file %s is not a regular file"), file);
-	if (!(st.st_mode & S_IWUSR))
-		die(_("file %s is not writable by user"), file);
-
-	/* Create temporary file in the same directory as the original */
-	tail = strrchr(file, '/');
-	if (tail)
-		strbuf_add(&filename_template, file, tail - file + 1);
-	strbuf_addstr(&filename_template, "git-interpret-trailers-XXXXXX");
-
-	trailers_tempfile = xmks_tempfile_m(filename_template.buf, st.st_mode);
-	strbuf_release(&filename_template);
-	outfile = fdopen_tempfile(trailers_tempfile, "w");
-	if (!outfile)
-		die_errno(_("could not open temporary file"));
-
-	return outfile;
 }
 
 static void read_input_file(struct strbuf *sb, const char *file)
@@ -134,61 +103,6 @@ static void read_input_file(struct strbuf *sb, const char *file)
 			die_errno(_("could not read from stdin"));
 	}
 	strbuf_complete_line(sb);
-}
-
-static void interpret_trailers(const struct process_trailer_options *opts,
-			       struct list_head *new_trailer_head,
-			       const char *file)
-{
-	LIST_HEAD(head);
-	struct strbuf sb = STRBUF_INIT;
-	struct strbuf trailer_block_sb = STRBUF_INIT;
-	struct trailer_block *trailer_block;
-	FILE *outfile = stdout;
-
-	trailer_config_init();
-
-	read_input_file(&sb, file);
-
-	if (opts->in_place)
-		outfile = create_in_place_tempfile(file);
-
-	trailer_block = parse_trailers(opts, sb.buf, &head);
-
-	/* Print the lines before the trailer block */
-	if (!opts->only_trailers)
-		fwrite(sb.buf, 1, trailer_block_start(trailer_block), outfile);
-
-	if (!opts->only_trailers && !blank_line_before_trailer_block(trailer_block))
-		fprintf(outfile, "\n");
-
-
-	if (!opts->only_input) {
-		LIST_HEAD(config_head);
-		LIST_HEAD(arg_head);
-		parse_trailers_from_config(&config_head);
-		parse_trailers_from_command_line_args(&arg_head, new_trailer_head);
-		list_splice(&config_head, &arg_head);
-		process_trailers_lists(&head, &arg_head);
-	}
-
-	/* Print trailer block. */
-	format_trailers(opts, &head, &trailer_block_sb);
-	free_trailers(&head);
-	fwrite(trailer_block_sb.buf, 1, trailer_block_sb.len, outfile);
-	strbuf_release(&trailer_block_sb);
-
-	/* Print the lines after the trailer block as is. */
-	if (!opts->only_trailers)
-		fwrite(sb.buf + trailer_block_end(trailer_block), 1,
-		       sb.len - trailer_block_end(trailer_block), outfile);
-	trailer_block_release(trailer_block);
-
-	if (opts->in_place)
-		if (rename_tempfile(&trailers_tempfile, file))
-			die_errno(_("could not rename temporary file to %s"), file);
-
-	strbuf_release(&sb);
 }
 
 int cmd_interpret_trailers(int argc,
@@ -232,14 +146,37 @@ int cmd_interpret_trailers(int argc,
 			git_interpret_trailers_usage,
 			options);
 
+	trailer_config_init();
+
 	if (argc) {
 		int i;
-		for (i = 0; i < argc; i++)
-			interpret_trailers(&opts, &trailers, argv[i]);
+		for (i = 0; i < argc; i++) {
+			struct strbuf in_buf = STRBUF_INIT;
+			struct strbuf out_buf = STRBUF_INIT;
+
+			read_input_file(&in_buf, argv[i]);
+			if (trailer_process(&opts, in_buf.buf, &trailers, &out_buf) < 0)
+				die(_("failed to process trailers for %s"), argv[i]);
+			if (opts.in_place)
+				write_file_buf(argv[i], out_buf.buf, out_buf.len);
+			else
+				fwrite(out_buf.buf, 1, out_buf.len, stdout);
+			strbuf_release(&in_buf);
+			strbuf_release(&out_buf);
+		}
 	} else {
+		struct strbuf in_buf = STRBUF_INIT;
+		struct strbuf out_buf = STRBUF_INIT;
+
 		if (opts.in_place)
 			die(_("no input file given for in-place editing"));
-		interpret_trailers(&opts, &trailers, NULL);
+
+		read_input_file(&in_buf, NULL);
+		if (trailer_process(&opts, in_buf.buf, &trailers, &out_buf) < 0)
+			die(_("failed to process trailers"));
+		fwrite(out_buf.buf, 1, out_buf.len, stdout);
+		strbuf_release(&in_buf);
+		strbuf_release(&out_buf);
 	}
 
 	new_trailers_clear(&trailers);
