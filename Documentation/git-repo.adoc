@@ -22,6 +22,26 @@ COMMANDS
 	Retrieve metadata-related information about the current repository. Only
 	the requested data will be returned based on their keys (see "INFO KEYS"
 	section below).
++
+The values are returned in the same order in which their respective keys were
+requested.
++
+The output format consists of key-value pairs one per line using the `=`
+character as the delimiter between the key and the value. Values containing
+"unusual" characters are quoted as explained for the configuration variable
+`core.quotePath` (see linkgit:git-config[1]).
+
+INFO KEYS
+---------
+
+In order to obtain a set of values from `git repo info`, you should provide
+the keys that identify them. Here's a list of the available keys and the
+values that they return:
+
+`references.format`::
+	The reference storage format. The valid values are:
++
+include::ref-storage-format.adoc[]
 
 SEE ALSO
 --------
