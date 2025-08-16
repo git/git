@@ -38,6 +38,23 @@ test_repo_info 'ref format files is retrieved correctly' \
 test_repo_info 'ref format reftable is retrieved correctly' \
 	'git init --ref-format=reftable' 'format-reftable' 'references.format' 'reftable'
 
+test_repo_info 'bare repository = false is retrieved correctly' \
+	'git init' 'nonbare' 'layout.bare' 'false'
+
+test_repo_info 'bare repository = true is retrieved correctly' \
+	'git init --bare' 'bare' 'layout.bare' 'true'
+
+test_expect_success 'values returned in order requested' '
+	cat >expect <<-\EOF &&
+	layout.bare=false
+	references.format=files
+	layout.bare=false
+	EOF
+	git init --ref-format=files ordered &&
+	git -C ordered repo info layout.bare references.format layout.bare >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'git-repo-info fails if an invalid key is requested' '
 	echo "error: key ${SQ}foo${SQ} not found" >expect &&
 	test_must_fail git repo info foo 2>actual &&
