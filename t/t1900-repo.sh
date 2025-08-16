@@ -44,6 +44,19 @@ test_repo_info 'bare repository = false is retrieved correctly' \
 test_repo_info 'bare repository = true is retrieved correctly' \
 	'git init --bare' 'bare' 'layout.bare' 'true'
 
+test_repo_info 'shallow repository = false is retrieved correctly' \
+	'git init' 'nonshallow' 'layout.shallow' 'false'
+
+test_expect_success 'setup remote' '
+	git init remote &&
+	echo x >remote/x &&
+	git -C remote add x &&
+	git -C remote commit -m x
+'
+
+test_repo_info 'shallow repository = true is retrieved correctly' \
+	'git clone --depth 1 "file://$PWD/remote"' 'shallow' 'layout.shallow' 'true'
+
 test_expect_success 'values returned in order requested' '
 	cat >expect <<-\EOF &&
 	layout.bare=false
