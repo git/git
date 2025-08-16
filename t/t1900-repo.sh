@@ -25,10 +25,16 @@ test_repo_info () {
 		eval "$init_command $repo_name"
 	'
 
-	test_expect_success "$label" '
-		echo "$key=$expected_value" >expect &&
-		git -C $repo_name repo info "$key" >actual &&
+	test_expect_success "keyvalue: $label" '
+		echo "$key=$expected_value" > expect &&
+		git -C "$repo_name" repo info "$key" >actual &&
 		test_cmp expect actual
+	'
+
+	test_expect_success "nul: $label" '
+		printf "%s\n%s\0" "$key" "$expected_value" >expect &&
+		git -C "$repo_name" repo info --format=nul "$key" >actual &&
+		test_cmp_bin expect actual
 	'
 }
 
@@ -77,6 +83,12 @@ test_expect_success 'git-repo-info fails if an invalid key is requested' '
 test_expect_success 'git-repo-info outputs data even if there is an invalid field' '
 	echo "references.format=$(test_detect_ref_format)" >expect &&
 	test_must_fail git repo info foo references.format bar >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'git-repo-info aborts when requesting an invalid format' '
+	echo "fatal: invalid format ${SQ}foo${SQ}" >expect &&
+	test_must_fail git repo info --format=foo 2>actual &&
 	test_cmp expect actual
 '
 
