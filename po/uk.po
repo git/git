@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git v2.46\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2025-06-07 16:24-0700\n"
-"PO-Revision-Date: 2025-06-03 18:43-0700\n"
+"POT-Creation-Date: 2025-08-14 15:16-0700\n"
+"PO-Revision-Date: 2025-08-14 17:33-0700\n"
 "Last-Translator: Kateryna Golovanova <kate@kgthreads.com>\n"
 "Language-Team: Ukrainian <https://github.com/arkid15r/git-uk-l10n/>\n"
 "Language: uk\n"
@@ -19,6 +19,10 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<12 || n%100>14) ? 1 : 2);\n"
 "X-Generator: Poedit 3.6\n"
+
+#, c-format
+msgid "%s cannot be negative"
+msgstr "%s не може бути відʼємним"
 
 #, c-format
 msgid "Huh (%s)?"
@@ -1955,6 +1959,10 @@ msgstr "Скористайтесь -f, якщо ви дійсно хочете �
 
 msgid "adding files failed"
 msgstr "додавання файлів завершилося невдало"
+
+#, c-format
+msgid "'%s' cannot be negative"
+msgstr "\"%s\" не може бути відʼємним"
 
 #, c-format
 msgid "--chmod param '%s' must be either -x or +x"
@@ -5155,25 +5163,26 @@ msgstr "git config list [<опція-файлу>] [<опція-відображ�
 
 msgid ""
 "git config get [<file-option>] [<display-option>] [--includes] [--all] [--"
-"regexp] [--value=<value>] [--fixed-value] [--default=<default>] <name>"
+"regexp] [--value=<pattern>] [--fixed-value] [--default=<default>] [--"
+"url=<url>] <name>"
 msgstr ""
 "git config get [<опція-файлу>] [<опція-відображення>] [--includes] [--all] "
-"[--regexp] [--value=<значення>] [--fixed-value] [--default=<за "
-"замовчуванням>] <назва>"
+"[--regexp] [--value=<шаблон>] [--fixed-value] [--default=<значення за "
+"замовчуванням>] [--url=<URL-адреса>] <назва>"
 
 msgid ""
-"git config set [<file-option>] [--type=<type>] [--all] [--value=<value>] [--"
-"fixed-value] <name> <value>"
+"git config set [<file-option>] [--type=<type>] [--all] [--value=<pattern>] "
+"[--fixed-value] <name> <value>"
 msgstr ""
-"git config set [<опція-файлу>] [--type=<тип>] [--all] [--value=<значення>] "
-"[--fixed-value] <назва> <значення>"
+"git config set [<опція-файлу>] [--type=<тип>] [--all] [--value=<шаблон>] [--"
+"fixed-value] <назва> <значення>"
 
 msgid ""
-"git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] "
+"git config unset [<file-option>] [--all] [--value=<pattern>] [--fixed-value] "
 "<name>"
 msgstr ""
-"git config unset [<опція-файлу>] [--all] [--value=<значення>] [--fixed-"
-"value] <назва>"
+"git config unset [<опція-файлу>] [--all] [--value=<шаблон>] [--fixed-value] "
+"<назва>"
 
 msgid "git config rename-section [<file-option>] <old-name> <new-name>"
 msgstr "git config rename-section [<опція-файлу>] <стара-назва> <нова-назва>"
@@ -5189,19 +5198,19 @@ msgstr "git config [<опція-файлу>] --get-colorbool <назва> [<stdo
 
 msgid ""
 "git config get [<file-option>] [<display-option>] [--includes] [--all] [--"
-"regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] "
+"regexp=<regexp>] [--value=<pattern>] [--fixed-value] [--default=<default>] "
 "<name>"
 msgstr ""
 "git config get [<опція-файлу>] [<опція-відображення>] [--includes] [--all] "
-"[--regexp=<регвир>] [--value=<значення>] [--fixed-value] [--default=<за-"
-"замовчуванням>] <назва>"
+"[--regexp=<регвир>] [--value=<шаблон>] [--fixed-value] [--default=<значення "
+"за замовчуванням>] <назва>"
 
 msgid ""
 "git config set [<file-option>] [--type=<type>] [--comment=<message>] [--all] "
-"[--value=<value>] [--fixed-value] <name> <value>"
+"[--value=<pattern>] [--fixed-value] <name> <value>"
 msgstr ""
-"git config set [<опція-файлу>] [--type=<тип>] [--comment=<допис>] [--all][--"
-"value=<значення>] [--fixed-value] <назва> <значення>"
+"git config set [<опція-файлу>] [--type=<тип>] [--comment=<допис>] [--all] [--"
+"value=<шаблон>] [--fixed-value] <назва> <значення>"
 
 msgid "Config file location"
 msgstr "Розташування файлу конфігурації"
@@ -6061,22 +6070,6 @@ msgstr "%s не надіслав усі необхідні обʼєкти"
 msgid "rejected %s because shallow roots are not allowed to be updated"
 msgstr "відхилено %s, оскільки неглибокі корені не можна оновлювати"
 
-#, c-format
-msgid ""
-"some local refs could not be updated; try running\n"
-" 'git remote prune %s' to remove any old, conflicting branches"
-msgstr ""
-"не вдалося оновити деякі локальні посилання; спробуйте виконати\n"
-" \"git remote prune %s\", щоб видалити всі старі конфліктні гілки"
-
-#, c-format
-msgid "   (%s will become dangling)"
-msgstr "   (%s стануть висячими)"
-
-#, c-format
-msgid "   (%s has become dangling)"
-msgstr "   (%s став висячим)"
-
 msgid "[deleted]"
 msgstr "[видалено]"
 
@@ -6117,6 +6110,18 @@ msgstr ""
 "якщо ви не хочете бачити це повідомлення. Зокрема, виконання\n"
 "\"git config set remote.%s.followRemoteHEAD warn-if-not-branch-%s\"\n"
 "вимкне попередження, доки віддалене призначення не змінить HEAD на щось інше."
+
+#, c-format
+msgid ""
+"some local refs could not be updated; try running\n"
+" 'git remote prune %s' to remove any old, conflicting branches"
+msgstr ""
+"не вдалося оновити деякі локальні посилання; спробуйте виконати\n"
+" \"git remote prune %s\", щоб видалити всі старі конфліктні гілки"
+
+#, c-format
+msgid "fetching ref %s failed: %s"
+msgstr "не вдалося отримати посилання %s: %s"
 
 msgid "multiple branches detected, incompatible with --set-upstream"
 msgstr "виявлено кілька гілок, несумісних з --set-upstream"
@@ -6365,6 +6370,9 @@ msgstr "git for-each-ref [--merged [<коміт>]] [--no-merged [<коміт>]]"
 msgid "git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"
 msgstr "git for-each-ref [--contains [<коміт>]] [--no-contains [<коміт>]]"
 
+msgid "git for-each-ref [--start-after <marker>]"
+msgstr "git for-each-ref [--start-after <маркер>]"
+
 msgid "quote placeholders suitably for shells"
 msgstr "заповнювачі лапок для shell"
 
@@ -6379,6 +6387,12 @@ msgstr "заповнювачі лапок для Tcl"
 
 msgid "show only <n> matched refs"
 msgstr "показати тільки <н> відповідних посилань"
+
+msgid "marker"
+msgstr "маркер"
+
+msgid "start iteration after the provided marker"
+msgstr "почати ітерацію після вказаного маркера"
 
 msgid "respect format colors"
 msgstr "дотримуватися кольорів формату"
@@ -6404,8 +6418,15 @@ msgstr "читати шаблони посилань з stdin"
 msgid "also include HEAD ref and pseudorefs"
 msgstr "також включити HEAD та псевдопосилання"
 
+msgid "cannot use --start-after with custom sort options"
+msgstr ""
+"неможливо використовувати --start-after із власними параметрами сортування"
+
 msgid "unknown arguments supplied with --stdin"
 msgstr "невідомі аргументи надані через --stdin"
+
+msgid "cannot use --start-after with patterns"
+msgstr "неможливо використовувати --start-after із шаблонами"
 
 msgid "git for-each-repo --config=<config> [--] <arguments>"
 msgstr "git for-each-repo --config=<конфіг> [--] <аргументи>"
@@ -6803,6 +6824,11 @@ msgstr "перепакувати всі пакунки, крім найбіль�
 msgid "pack prefix to store a pack containing pruned objects"
 msgstr "префікс для зберігання пакунка з обрізаними обʼєктами"
 
+msgid "skip maintenance tasks typically done in the foreground"
+msgstr ""
+"пропустити завдання обслуговування, які зазвичай виконуються у фоновому "
+"режимі"
+
 #, c-format
 msgid "failed to parse gc.logExpiry value %s"
 msgstr "не вдалося розібрати gc.logExpiry значення %s"
@@ -6879,12 +6905,12 @@ msgstr ""
 "пропуск incremental-repack завдання, оскільки core.multiPackIndex вимкнено"
 
 #, c-format
-msgid "lock file '%s' exists, skipping maintenance"
-msgstr "файл блокування \"%s\" існує, пропуск обслуговування"
-
-#, c-format
 msgid "task '%s' failed"
 msgstr "завдання \"%s\" завершилося невдало"
+
+#, c-format
+msgid "lock file '%s' exists, skipping maintenance"
+msgstr "файл блокування \"%s\" існує, пропуск обслуговування"
 
 #, c-format
 msgid "'%s' is not a valid task"
@@ -6914,9 +6940,6 @@ msgstr "завдання"
 
 msgid "run a specific task"
 msgstr "запустити певне завдання"
-
-msgid "use at most one of --auto and --schedule=<frequency>"
-msgstr "використовуйте щонайбільше одну з опцій --auto та --schedule=<частота>"
 
 #, c-format
 msgid "unable to add '%s' value of '%s'"
@@ -7802,10 +7825,6 @@ msgid "-L<range>:<file> cannot be used with pathspec"
 msgstr "-L<діапазон>:<файл> не можна використовувати з визначником шляху"
 
 #, c-format
-msgid "Final output: %d %s\n"
-msgstr "Кінцевий результат: %d %s\n"
-
-#, c-format
 msgid "git show %s: bad file"
 msgstr "git show %s: невірний файл"
 
@@ -8517,6 +8536,9 @@ msgstr "показувати diffstat наприкінці злиття"
 msgid "(synonym to --stat)"
 msgstr "(синонім до --stat)"
 
+msgid "show a compact-summary at the end of the merge"
+msgstr "показати стислий підсумок наприкінці злиття"
+
 msgid "add (at most <n>) entries from shortlog to merge commit message"
 msgstr ""
 "додати (не більше <н>) записів з короткого журналу у допис до коміту злиття"
@@ -8782,10 +8804,6 @@ msgstr "попередження: вхідний тег не пройшов fsck
 #, c-format
 msgid "error: tag input does not pass fsck: %s"
 msgstr "помилка: вхідний тег не пройшов fsck: %s"
-
-#, c-format
-msgid "%d (FSCK_IGNORE?) should never trigger this callback"
-msgstr "%d (FSCK_IGNORE?) ніколи не мав спричинити цей зворотній виклик"
 
 #, c-format
 msgid "could not read tagged object '%s'"
@@ -9304,16 +9322,27 @@ msgstr "використовувати нотатки з <посилання-н�
 msgid "unknown subcommand: `%s'"
 msgstr "невідома підкоманда: \"%s\""
 
-msgid "git pack-objects --stdout [<options>] [< <ref-list> | < <object-list>]"
-msgstr ""
-"git pack-objects --stdout [<опції>] [< <список-посилань> | < <список-"
-"обʼєктів>]"
-
 msgid ""
-"git pack-objects [<options>] <base-name> [< <ref-list> | < <object-list>]"
+"git pack-objects [-q | --progress | --all-progress] [--all-progress-"
+"implied]\n"
+"                 [--no-reuse-delta] [--delta-base-offset] [--non-empty]\n"
+"                 [--local] [--incremental] [--window=<n>] [--depth=<n>]\n"
+"                 [--revs [--unpacked | --all]] [--keep-pack=<pack-name>]\n"
+"                 [--cruft] [--cruft-expiration=<time>]\n"
+"                 [--stdout [--filter=<filter-spec>] | <base-name>]\n"
+"                 [--shallow] [--keep-true-parents] [--[no-]sparse]\n"
+"                 [--name-hash-version=<n>] [--path-walk] < <object-list>"
 msgstr ""
-"git pack-objects [<опції>] <базова-назва> [< <список-посилань> | < <список-"
-"обʼєктів>]"
+"git pack-objects [-q | --progress | --all-progress] [--all-progress-"
+"implied]\n"
+"                 [--no-reuse-delta] [--delta-base-offset] [--non-empty]\n"
+"                 [--local] [--incremental] [--window=<н>] [--depth=<н>]\n"
+"                 [--revs [--unpacked | --all]] [--keep-pack=<назва-"
+"пакунка>]\n"
+"                 [--cruft] [--cruft-expiration=<час>]\n"
+"                 [--stdout [--filter=<визначник-фільтру>] | <базова-назва>]\n"
+"                 [--shallow] [--keep-true-parents] [--[no-]sparse]\n"
+"                 [--name-hash-version=<н>] [--path-walk] < <список-обʼєктів>"
 
 #, c-format
 msgid "invalid --name-hash-version option: %d"
@@ -9418,6 +9447,16 @@ msgstr "не вдалося запакувати обʼєкти, доступн�
 msgid "unable to get type of object %s"
 msgstr "не вдалося отримати тип обʼєкта %s"
 
+msgid "Compressing objects by path"
+msgstr "Стиснення обʼєктів за шляхом"
+
+#, c-format
+msgid "Path-based delta compression using up to %d thread"
+msgid_plural "Path-based delta compression using up to %d threads"
+msgstr[0] "Дельта-стиснення на основі шляху з використанням до %d потоку"
+msgstr[1] "Дельта-стиснення на основі шляху з використанням до %d потоків"
+msgstr[2] "Дельта-стиснення на основі шляху з використанням до %d потоків"
+
 msgid "Compressing objects"
 msgstr "Компресія обʼєктів"
 
@@ -9492,6 +9531,9 @@ msgstr "не вдалося розглянути вільний обʼєкт у 
 
 msgid "unable to force loose object"
 msgstr "не вдалося примусово вивільнити обʼєкт"
+
+msgid "failed to pack objects via path-walk"
+msgstr "не вдалося запакувати обʼєкти за допомогою path-walk"
 
 #, c-format
 msgid "not a rev '%s'"
@@ -9603,6 +9645,10 @@ msgstr "використовувати алгоритм розрідженої �
 msgid "create thin packs"
 msgstr "створити тонкі пакунки"
 
+msgid "use the path-walk API to walk objects when possible"
+msgstr ""
+"використовувати API path-walk для проходження обʼєктів, коли це можливо"
+
 msgid "create packs suitable for shallow fetches"
 msgstr "створювати пакунки, придатні для неглибокого отримання"
 
@@ -9660,6 +9706,10 @@ msgid "pack.deltaCacheLimit is too high, forcing %d"
 msgstr "pack.deltaCacheLimit занадто великий, примусове %d"
 
 #, c-format
+msgid "cannot use %s with %s"
+msgstr "неможливо використовувати %s з %s"
+
+#, c-format
 msgid "bad pack compression level %d"
 msgstr "невірний рівень стиснення пакунка %d"
 
@@ -9673,17 +9723,11 @@ msgstr "мінімальний розмір пакунка - 1 МіБ"
 msgid "--thin cannot be used to build an indexable pack"
 msgstr "--thin не можна використовувати для створення індексованого пакунка"
 
-msgid "cannot use --filter with --stdin-packs"
-msgstr "неможливо використовувати --filter з --stdin-packs"
-
 msgid "cannot use internal rev list with --stdin-packs"
 msgstr "неможливо використовувати внутрішній список ревізій з --stdin-packs"
 
 msgid "cannot use internal rev list with --cruft"
 msgstr "неможливо використовувати внутрішній список ревізій з --cruft"
-
-msgid "cannot use --stdin-packs with --cruft"
-msgstr "неможливо використовувати --stdin-packs з --cruft"
 
 msgid "Enumerating objects"
 msgstr "Перерахування обʼєктів"
@@ -9695,23 +9739,6 @@ msgid ""
 msgstr ""
 "Всього %<PRIu32> (дельта %<PRIu32>), повторно використано %<PRIu32> (дельта "
 "%<PRIu32>), повторно використано пакунків %<PRIu32> (з %<PRIuMAX>)"
-
-msgid ""
-"'git pack-redundant' is nominated for removal.\n"
-"If you still use this command, please add an extra\n"
-"option, '--i-still-use-this', on the command line\n"
-"and let us know you still use it by sending an e-mail\n"
-"to <git@vger.kernel.org>.  Thanks.\n"
-msgstr ""
-"Команду \"git pack-redundant\" номіновано на вилучення.\n"
-"Якщо ви все ще використовуєте цю команду, будь ласка, додайте додатковий "
-"параметр\n"
-"\"--i-still-use-this\" у командному рядку\n"
-"і повідомте нам, що ви все ще використовуєте її, надіславши листа\n"
-"на адресу <git@vger.kernel.org>.  Дякуємо.\n"
-
-msgid "refusing to run without --i-still-use-this"
-msgstr "відмовлено в запуску без --i-still-use-this"
 
 msgid ""
 "git pack-refs [--all] [--no-prune] [--auto] [--include <pattern>] [--exclude "
@@ -11032,6 +11059,14 @@ msgstr ""
 msgid "unknown --mirror argument: %s"
 msgstr "невідомий --mirror аргумент: %s"
 
+#, c-format
+msgid "remote name '%s' is a subset of existing remote '%s'"
+msgstr "віддалена назва \"%s\" є підмножиною існуючого віддаленого \"%s\""
+
+#, c-format
+msgid "remote name '%s' is a superset of existing remote '%s'"
+msgstr "віддалена назва \"%s\" є надмножиною існуючого віддаленого \"%s\""
+
 msgid "fetch the remote branches"
 msgstr "отримати віддалені гілки"
 
@@ -11344,14 +11379,6 @@ msgid "Could not set up %s"
 msgstr "Не вдалося налаштувати %s"
 
 #, c-format
-msgid " %s will become dangling!"
-msgstr " %s стануть висячими!"
-
-#, c-format
-msgid " %s has become dangling!"
-msgstr " %s став висячим!"
-
-#, c-format
 msgid "Pruning %s"
 msgstr "Видалення %s"
 
@@ -11415,11 +11442,11 @@ msgstr "розгорнутий вивід; має стояти перед під
 msgid ""
 "git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
 "[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>]\n"
-"[--write-midx] [--name-hash-version=<n>]"
+"[--write-midx] [--name-hash-version=<n>] [--path-walk]"
 msgstr ""
 "git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
 "[--window=<н>] [--depth=<н>] [--threads=<н>] [--keep-pack=<назва-пакунка>]\n"
-"[--write-midx] [--name-hash-version=<н>]"
+"[--write-midx] [--name-hash-version=<н>] [--path-walk]"
 
 msgid ""
 "Incremental repacks are incompatible with bitmap indexes.  Use\n"
@@ -11486,7 +11513,8 @@ msgid "with --cruft, expire objects older than this"
 msgstr "з --cruft видалити обʼєкти, старіші за цей термін"
 
 msgid "with --cruft, only repack cruft packs smaller than this"
-msgstr "з параметром --cruft, перепакувати лише марні пакунки, менші за цей розмір"
+msgstr ""
+"з параметром --cruft, перепакувати лише марні пакунки, менші за цей розмір"
 
 msgid "remove redundant packs, and run git-prune-packed"
 msgstr "видалити зайві пакунки і запустити git-prune-packed"
@@ -11500,6 +11528,9 @@ msgstr "передати --no-reuse-object до git-pack-objects"
 msgid ""
 "specify the name hash version to use for grouping similar objects by path"
 msgstr "вказати версію назви хешу для групування схожих обʼєктів за шляхом"
+
+msgid "pass --path-walk to git-pack-objects"
+msgstr "передати --path-walk до git-pack-objects"
 
 msgid "do not run git-update-server-info"
 msgstr "не запускати git-update-server-info"
@@ -12669,16 +12700,22 @@ msgstr ""
 msgid "git stash create [<message>]"
 msgstr "git stash create [<допис>]"
 
+msgid "git stash export (--print | --to-ref <ref>) [<stash>...]"
+msgstr "git stash export (--print | --to-ref <посилання>) [<схов>...]"
+
+msgid "git stash import <commit>"
+msgstr "git stash import <коміт>"
+
 #, c-format
 msgid "'%s' is not a stash-like commit"
 msgstr "\"%s\" не є сховоподібним комітом"
 
+msgid "No stash entries found."
+msgstr "Записи схову не знайдені."
+
 #, c-format
 msgid "Too many revisions specified:%s"
 msgstr "Вказано забагато ревізій:%s"
-
-msgid "No stash entries found."
-msgstr "Записи схова не знайдені."
 
 #, c-format
 msgid "%s is not a valid reference"
@@ -12832,19 +12869,74 @@ msgstr "в тому числі невідстежувані файли схов�
 msgid "include ignore files"
 msgstr "в тому числи файли ігнорування"
 
+#, c-format
+msgid "cannot parse commit %s"
+msgstr "неможливо розібрати коміт %s"
+
+#, c-format
+msgid "invalid author or committer for %s"
+msgstr "неприпустимий автор або комітер для %s"
+
+msgid "could not write commit"
+msgstr "не вдалося записати коміт"
+
+#, c-format
+msgid "not a valid revision: %s"
+msgstr "неприпустима редакція: %s"
+
+#, c-format
+msgid "not a commit: %s"
+msgstr "не є комітом: %s"
+
+#, c-format
+msgid "%s is not a valid exported stash commit"
+msgstr "%s не є припустимим експортованим комітом схову"
+
+#, c-format
+msgid "found root commit %s with invalid data"
+msgstr "знайдено кореневий коміт %s з неприпустими даними"
+
+#, c-format
+msgid "found stash commit %s without expected prefix"
+msgstr "знайдено коміт схову %s без очікуваного префікса"
+
+#, c-format
+msgid "cannot parse parents of commit: %s"
+msgstr "неможливо розібрати батьків коміту: %s"
+
+#, c-format
+msgid "%s does not look like a stash commit"
+msgstr "%s не схожий на коміт схову"
+
+#, c-format
+msgid "cannot read commit buffer for %s"
+msgstr "неможливо прочитати буфер комітів для %s"
+
+#, c-format
+msgid "cannot save the stash for %s"
+msgstr "неможливо зберегти схов для %s"
+
+msgid "unable to write base commit"
+msgstr "не вдалося записати базовий коміт"
+
+#, c-format
+msgid "unable to find stash entry %s"
+msgstr "не вдалося знайти запис схову %s"
+
+msgid "print the object ID instead of writing it to a ref"
+msgstr "виводити ідентифікатор обʼєкта замість записування його в посилання"
+
+msgid "save the data to the given ref"
+msgstr "зберегти дані у вказаному посиланні"
+
+msgid "exactly one of --print and --to-ref is required"
+msgstr "потрібно вказати лише один з параметрів --print та --to-ref"
+
 msgid "skip and remove all lines starting with comment character"
 msgstr "пропустити та видалити всі рядки, що починаються з символу коментаря"
 
 msgid "prepend comment character and space to each line"
 msgstr "додати символ коментаря та пробіл до кожного рядка"
-
-#, c-format
-msgid "Expecting a full ref name, got %s"
-msgstr "Очікувалась повна назва посилання, отримано %s"
-
-#, c-format
-msgid "could not get a repository handle for submodule '%s'"
-msgstr "не вдалося отримати обʼєкт сховища для підмодуля \"%s\""
 
 #, c-format
 msgid ""
@@ -12853,6 +12945,10 @@ msgid ""
 msgstr ""
 "не вдалося знайти конфігурацію \"%s\". Мабуть, це сховище має власне "
 "першоджерельне сховище."
+
+#, c-format
+msgid "could not get a repository handle for submodule '%s'"
+msgstr "не вдалося отримати обʼєкт сховища для підмодуля \"%s\""
 
 #, c-format
 msgid "No url found for submodule path '%s' in .gitmodules"
@@ -13213,6 +13309,10 @@ msgstr ""
 "суперпроект не знаходиться у жодній гілці"
 
 #, c-format
+msgid "Expecting a full ref name, got %s"
+msgstr "Очікувалась повна назва посилання, отримано %s"
+
+#, c-format
 msgid "Unable to find current revision in submodule path '%s'"
 msgstr "Не вдалося знайти поточну ревізію у шляху підмодуля \"%s\""
 
@@ -13414,6 +13514,10 @@ msgstr ""
 #, c-format
 msgid "repo URL: '%s' must be absolute or begin with ./|../"
 msgstr "URL сховища: \"%s\" має бути абсолютним або починатися з ./|../."
+
+#, c-format
+msgid "submodule name '%s' already used for path '%s'"
+msgstr "назва підмодуля \"%s\" вже використовується для шляху \"%s\""
 
 #, c-format
 msgid "'%s' is not a valid submodule name"
@@ -14047,10 +14151,6 @@ msgstr "Підготовка робочого дерева (скидання г�
 #, c-format
 msgid "Preparing worktree (checking out '%s')"
 msgstr "Підготовка робочого дерева (перехід до \"%s\")"
-
-#, c-format
-msgid "unreachable: invalid reference: %s"
-msgstr "недосяжне: неприпустиме посилання: %s"
 
 #, c-format
 msgid "Preparing worktree (detached HEAD %s)"
@@ -15660,14 +15760,6 @@ msgid "bad numeric config value '%s' for '%s' in %s: %s"
 msgstr "невірне числове значення конфігурації \"%s\" для \"%s\" у \"%s\": %s"
 
 #, c-format
-msgid "invalid value for variable %s"
-msgstr "неприпустиме значення для змінної %s"
-
-#, c-format
-msgid "ignoring unknown core.fsync component '%s'"
-msgstr "ігнорування невідомого компонента core.fsync \"%s\""
-
-#, c-format
 msgid "bad boolean config value '%s' for '%s'"
 msgstr "невірне булеве значення конфігурації \"%s\" для \"%s\""
 
@@ -15678,44 +15770,6 @@ msgstr "не вдалося визначити директорію корист
 #, c-format
 msgid "'%s' for '%s' is not a valid timestamp"
 msgstr "\"%s\" для \"%s\" не є припустимою міткою часу"
-
-#, c-format
-msgid "abbrev length out of range: %d"
-msgstr "довжина скорочення поза діапазоном: %d"
-
-#, c-format
-msgid "bad zlib compression level %d"
-msgstr "невірний рівень zlib компресії %d"
-
-#, c-format
-msgid "%s cannot contain newline"
-msgstr "%s не може містити символи нового рядка"
-
-#, c-format
-msgid "%s must have at least one character"
-msgstr "%s повинен мати принаймні один символ"
-
-#, c-format
-msgid "ignoring unknown core.fsyncMethod value '%s'"
-msgstr "ігнорування невідомого значення core.fsyncMethod \"%s\""
-
-msgid "core.fsyncObjectFiles is deprecated; use core.fsync instead"
-msgstr "core.fsyncObjectFiles застаріла; натомість використовуйте core.fsync"
-
-#, c-format
-msgid "invalid mode for object creation: %s"
-msgstr "неприпустимий режим створення обʼєкта: %s"
-
-#, c-format
-msgid "malformed value for %s"
-msgstr "невірно сформоване значення для %s"
-
-#, c-format
-msgid "malformed value for %s: %s"
-msgstr "невірно сформоване значення для %s: %s"
-
-msgid "must be one of nothing, matching, simple, upstream or current"
-msgstr "має бути одним з nothing, matching, simple, upstream або current"
 
 #, c-format
 msgid "unable to load config blob object '%s'"
@@ -16238,8 +16292,8 @@ msgstr "неможливо порівняти stdin з директорією"
 msgid "cannot compare a named pipe to a directory"
 msgstr "неможливо порівняти іменований канал з директорією"
 
-msgid "git diff --no-index [<options>] <path> <path>"
-msgstr "git diff --no-index [<опції>] <шлях> <шлях>"
+msgid "git diff --no-index [<options>] <path> <path> [<pathspec>...]"
+msgstr "git diff --no-index [<опції>] <шлях> <шлях> [<визначник шляху>...]"
 
 msgid ""
 "Not a git repository. Use --no-index to compare two paths outside a working "
@@ -16247,6 +16301,13 @@ msgid ""
 msgstr ""
 "Це не git сховище. Скористайтесь --no-index для порівняння двох шляхів поза "
 "робочим деревом"
+
+msgid ""
+"Limiting comparison with pathspecs is only supported if both paths are "
+"directories."
+msgstr ""
+"Обмеження порівняння з pathspecs підтримується тільки в тому випадку, якщо "
+"обидва шляхи є директоріями."
 
 #, c-format
 msgid "  Failed to parse dirstat cut-off percentage '%s'\n"
@@ -16827,6 +16888,52 @@ msgstr "не вдалося виконати stat для %s"
 #, c-format
 msgid "bad git namespace path \"%s\""
 msgstr "невірний шлях до простору імен git \"%s\""
+
+#, c-format
+msgid "invalid value for variable %s"
+msgstr "неприпустиме значення для змінної %s"
+
+#, c-format
+msgid "ignoring unknown core.fsync component '%s'"
+msgstr "ігнорування невідомого компонента core.fsync \"%s\""
+
+#, c-format
+msgid "abbrev length out of range: %d"
+msgstr "довжина скорочення поза діапазоном: %d"
+
+#, c-format
+msgid "bad zlib compression level %d"
+msgstr "невірний рівень zlib компресії %d"
+
+#, c-format
+msgid "%s cannot contain newline"
+msgstr "%s не може містити символи нового рядка"
+
+#, c-format
+msgid "%s must have at least one character"
+msgstr "%s повинен мати принаймні один символ"
+
+#, c-format
+msgid "ignoring unknown core.fsyncMethod value '%s'"
+msgstr "ігнорування невідомого значення core.fsyncMethod \"%s\""
+
+msgid "core.fsyncObjectFiles is deprecated; use core.fsync instead"
+msgstr "core.fsyncObjectFiles застаріла; натомість використовуйте core.fsync"
+
+#, c-format
+msgid "invalid mode for object creation: %s"
+msgstr "неприпустимий режим створення обʼєкта: %s"
+
+#, c-format
+msgid "malformed value for %s"
+msgstr "невірно сформоване значення для %s"
+
+#, c-format
+msgid "malformed value for %s: %s"
+msgstr "невірно сформоване значення для %s: %s"
+
+msgid "must be one of nothing, matching, simple, upstream or current"
+msgstr "має бути одним з nothing, matching, simple, upstream або current"
 
 #, c-format
 msgid "too many args to run %s"
@@ -17546,6 +17653,31 @@ msgstr "порожнє імʼя особистості (для <%s>) забор�
 #, c-format
 msgid "name consists only of disallowed characters: %s"
 msgstr "імʼя складається лише з заборонених символів: %s"
+
+msgid "git imap-send [-v] [-q] [--[no-]curl] [(--folder|-f) <folder>] < <mbox>"
+msgstr ""
+"git imap-send [-v] [-q] [--[no-]curl] [(--folder|-f) <директорія>] < <mbox>"
+
+msgid "no IMAP host specified"
+msgstr "не вказано хост IMAP"
+
+msgid ""
+"set the IMAP host with 'git config imap.host <host>'.\n"
+"(e.g., 'git config imap.host imaps://imap.example.com')"
+msgstr ""
+"встановіть хост IMAP за допомогою команди \"git config imap.host <хост>\".\n"
+"(наприклад, \"git config imap.host imaps://imap.example.com\")"
+
+msgid "no IMAP folder specified"
+msgstr "не вказано директорію IMAP"
+
+msgid ""
+"set the target folder with 'git config imap.folder <folder>'.\n"
+"(e.g., 'git config imap.folder Drafts')"
+msgstr ""
+"встановіть цільову директорію за допомогою команди \"git config imap.folder "
+"<директорія>\".\n"
+"(наприклад, \"git config imap.folder Drafts\")"
 
 msgid "expected 'tree:<depth>'"
 msgstr "очікувалось \"tree:<глибина>\""
@@ -18510,6 +18642,26 @@ msgid "invalid object name '%.*s'."
 msgstr "неприпустима назва обʼєкта \"%.*s\"."
 
 #, c-format
+msgid "invalid object type \"%s\""
+msgstr "неприпустимий тип обʼєкту \"%s\""
+
+#, c-format
+msgid "object %s is a %s, not a %s"
+msgstr "обʼєкт %s є %s, а не %s"
+
+#, c-format
+msgid "object %s has unknown type id %d"
+msgstr "обʼєкт %s має невідомий тип ідентифікатора %d"
+
+#, c-format
+msgid "unable to parse object: %s"
+msgstr "не вдалося розібрати обʼєкт: %s"
+
+#, c-format
+msgid "hash mismatch %s"
+msgstr "невідповідність хешу %s"
+
+#, c-format
 msgid "object directory %s does not exist; check .git/objects/info/alternates"
 msgstr "директорія об’єкта %s не існує; перевірте .git/objects/info/alternates"
 
@@ -18577,26 +18729,6 @@ msgid "%s is not a valid '%s' object"
 msgstr "%s не є допустимим \"%s\" обʼєктом"
 
 #, c-format
-msgid "invalid object type \"%s\""
-msgstr "неприпустимий тип обʼєкту \"%s\""
-
-#, c-format
-msgid "object %s is a %s, not a %s"
-msgstr "обʼєкт %s є %s, а не %s"
-
-#, c-format
-msgid "object %s has unknown type id %d"
-msgstr "обʼєкт %s має невідомий тип ідентифікатора %d"
-
-#, c-format
-msgid "unable to parse object: %s"
-msgstr "не вдалося розібрати обʼєкт: %s"
-
-#, c-format
-msgid "hash mismatch %s"
-msgstr "невідповідність хешу %s"
-
-#, c-format
 msgid "duplicate entry when writing bitmap index: %s"
 msgstr "дубльований елемент під час запису bitmap індексу: \"%s\""
 
@@ -18606,9 +18738,6 @@ msgstr "спроба зберегти невибраний коміт: \"%s\""
 
 msgid "too many pseudo-merges"
 msgstr "занадто багато псевдозлиття"
-
-msgid "trying to write commit not in index"
-msgstr "спроба записати коміт, якого немає в індексі"
 
 msgid "failed to load bitmap index (corrupted?)"
 msgstr "не вдалося завантажити bitmap індекс (пошкоджено?)"
@@ -18861,6 +18990,10 @@ msgstr "%s не приймає значення"
 #, c-format
 msgid "%s isn't available"
 msgstr "%s недоступний"
+
+#, c-format
+msgid "value for %s exceeds %<PRIdMAX>"
+msgstr "значення для %s перевищує %<PRIdMAX>"
 
 #, c-format
 msgid "value %s for %s not in range [%<PRIdMAX>,%<PRIdMAX>]"
@@ -19835,6 +19968,14 @@ msgstr "немає журналу посилань для \"%s\""
 #, c-format
 msgid "%s does not point to a valid object!"
 msgstr "%s не вказує на допустимий обʼєкт!"
+
+#, c-format
+msgid "%s%s will become dangling after %s is deleted\n"
+msgstr "%s%s стане висячим після видалення %s\n"
+
+#, c-format
+msgid "%s%s has become dangling after %s was deleted\n"
+msgstr "%s%s став висячим після видалення %s\n"
 
 #, c-format
 msgid ""
@@ -22201,6 +22342,9 @@ msgstr "перемикач включення обʼєктів дерева"
 msgid "toggle pruning of uninteresting paths"
 msgstr "перемикач обрізання нецікавих шляхів"
 
+msgid "toggle aggressive edge walk"
+msgstr "перемикач агресивного ходіння по краю"
+
 msgid "read a pattern list over stdin"
 msgstr "читати список шаблонів через stdin"
 
@@ -22845,6 +22989,24 @@ msgid "warning: "
 msgstr "попередження: "
 
 #, c-format
+msgid ""
+"'%s' is nominated for removal.\n"
+"If you still use this command, please add an extra\n"
+"option, '--i-still-use-this', on the command line\n"
+"and let us know you still use it by sending an e-mail\n"
+"to <git@vger.kernel.org>.  Thanks.\n"
+msgstr ""
+"\"%s\" запропоновано для видалення.\n"
+"Якщо ви все ще використовуєте цю команду, додайте додаткову\n"
+"опцію \"--i-still-use-this\" у командний рядок\n"
+"і повідомте нас про те, що ви все ще її використовуєте, надіславши "
+"електронного листа\n"
+"на адресу <git@vger.kernel.org>.  Дякуємо.\n"
+
+msgid "refusing to run without --i-still-use-this"
+msgstr "відмовлено в запуску без --i-still-use-this"
+
+#, c-format
 msgid "uname() failed with error '%s' (%d)\n"
 msgstr "uname() завершився невдало з помилкою \"%s\" (%d)\n"
 
@@ -23087,9 +23249,9 @@ msgstr "невідстежуваний контент, "
 #, c-format
 msgid "Your stash currently has %d entry"
 msgid_plural "Your stash currently has %d entries"
-msgstr[0] "У вашій схованці наразі є %d запис"
-msgstr[1] "У вашій схованці наразі є %d записи"
-msgstr[2] "У вашій схованці наразі є %d записів"
+msgstr[0] "У вашому схові наразі є %d запис"
+msgstr[1] "У вашому схові наразі є %d записи"
+msgstr[2] "У вашому схові наразі є %d записів"
 
 msgid "Submodules changed but not updated:"
 msgstr "Підмодулі змінено, але не оновлено:"
@@ -23778,6 +23940,10 @@ msgstr "(non-mbox) Додавання cc: %s з рядка \"%s\"\n"
 #, perl-format
 msgid "(body) Adding cc: %s from line '%s'\n"
 msgstr "(тіло) Додавання cc: %s з рядка \"%s\"\n"
+
+#, perl-format
+msgid "error: invalid SMTP port '%s'\n"
+msgstr "помилка: неприпустимий порт SMTP \"%s\"\n"
 
 #, perl-format
 msgid "(%s) Could not execute '%s'"
