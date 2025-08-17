@@ -269,6 +269,10 @@ do
 		section hdr-check
 		Meta/Make $M $jobs -- hdr-check &&
 
+		# test-lint
+		section test-lint
+		Meta/Make -- -C t test-lint &&
+
 		if test -n "$san"
 		then
 			section SANITIZE=address,undefined
