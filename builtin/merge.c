@@ -1863,7 +1863,7 @@ int cmd_merge(int argc,
 	if (squash) {
 		finish(head_commit, remoteheads, NULL, NULL);
 
-		git_test_write_commit_graph_or_die();
+		git_test_write_commit_graph_or_die(the_repository->objects->sources);
 	} else
 		write_merge_state(remoteheads);
 
