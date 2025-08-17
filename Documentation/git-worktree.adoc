@@ -200,13 +200,15 @@ To remove a locked worktree, specify `--force` twice.
 	With `add`, detach `HEAD` in the new worktree. See "DETACHED HEAD"
 	in linkgit:git-checkout[1].
 
---[no-]checkout::
+--checkout::
+--no-checkout::
 	By default, `add` checks out `<commit-ish>`, however, `--no-checkout` can
 	be used to suppress checkout in order to make customizations,
 	such as configuring sparse-checkout. See "Sparse checkout"
 	in linkgit:git-read-tree[1].
 
---[no-]guess-remote::
+--guess-remote::
+--no-guess-remote::
 	With `worktree add <path>`, without `<commit-ish>`, instead
 	of creating a new branch from `HEAD`, if there exists a tracking
 	branch in exactly one remote matching the basename of `<path>`,
@@ -216,7 +218,8 @@ To remove a locked worktree, specify `--force` twice.
 This can also be set up as the default behaviour by using the
 `worktree.guessRemote` config option.
 
---[no-]relative-paths::
+--relative-paths::
+--no-relative-paths::
 	Link worktrees using relative paths or absolute paths (default).
 	Overrides the `worktree.useRelativePaths` config option, see
 	linkgit:git-config[1].
@@ -224,7 +227,8 @@ This can also be set up as the default behaviour by using the
 With `repair`, the linking files will be updated if there's an absolute/relative
 mismatch, even if the links are correct.
 
---[no-]track::
+--track::
+--no-track::
 	When creating a new branch, if `<commit-ish>` is a branch,
 	mark it as "upstream" from the new branch.  This is the
 	default if `<commit-ish>` is a remote-tracking branch.  See

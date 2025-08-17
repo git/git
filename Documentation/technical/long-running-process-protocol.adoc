@@ -24,6 +24,7 @@ After the version negotiation Git sends a list of all capabilities that
 it supports and a flush packet. Git expects to read a list of desired
 capabilities, which must be a subset of the supported capabilities list,
 and a flush packet as response:
+
 ------------------------
 packet:          git> git-filter-client
 packet:          git> version=2

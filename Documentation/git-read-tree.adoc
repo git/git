@@ -100,7 +100,8 @@ OPTIONS
 	directories the index file and index output file are
 	located in.
 
---[no-]recurse-submodules::
+--recurse-submodules::
+--no-recurse-submodules::
 	Using --recurse-submodules will update the content of all active
 	submodules according to the commit recorded in the superproject by
 	calling read-tree recursively, also setting the submodules' HEAD to be

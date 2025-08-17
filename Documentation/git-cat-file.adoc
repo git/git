@@ -62,8 +62,10 @@ OPTIONS
 	or to ask for a "blob" with `<object>` being a tag object that
 	points at it.
 
---[no-]mailmap::
---[no-]use-mailmap::
+--mailmap::
+--no-mailmap::
+--use-mailmap::
+--no-use-mailmap::
        Use mailmap file to map author, committer and tagger names
        and email addresses to canonical real names and email addresses.
        See linkgit:git-shortlog[1].

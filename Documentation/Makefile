@@ -497,8 +497,25 @@ $(LINT_DOCS_FSCK_MSGIDS): ../fsck.h fsck-msgids.adoc
 	$(call mkdir_p_parent_template)
 	$(QUIET_GEN)$(PERL_PATH) lint-fsck-msgids.perl \
 		../fsck.h fsck-msgids.adoc $@
-
 lint-docs-fsck-msgids: $(LINT_DOCS_FSCK_MSGIDS)
+
+## Lint: delimited sections
+LINT_DOCS_DELIMITED_SECTIONS = $(patsubst %.adoc,.build/lint-docs/delimited-sections/%.ok,$(MAN_TXT))
+$(LINT_DOCS_DELIMITED_SECTIONS): lint-delimited-sections.perl
+$(LINT_DOCS_DELIMITED_SECTIONS): .build/lint-docs/delimited-sections/%.ok: %.adoc
+	$(call mkdir_p_parent_template)
+	$(QUIET_LINT_DELIMSEC)$(PERL_PATH) lint-delimited-sections.perl $< >$@
+.PHONY: lint-docs-delimited-sections
+lint-docs-delimited-sections: $(LINT_DOCS_DELIMITED_SECTIONS)
+
+## Lint: Documentation style
+LINT_DOCS_DOC_STYLE = $(patsubst %.adoc,.build/lint-docs/doc-style/%.ok,$(DOC_DEP_TXT))
+$(LINT_DOCS_DOC_STYLE): lint-documentation-style.perl
+$(LINT_DOCS_DOC_STYLE): .build/lint-docs/doc-style/%.ok: %.adoc
+	$(call mkdir_p_parent_template)
+	$(QUIET_LINT_DOCSTYLE)$(PERL_PATH) lint-documentation-style.perl $< >$@
+.PHONY: lint-docs-doc-style
+lint-docs-doc-style: $(LINT_DOCS_DOC_STYLE)
 
 lint-docs-manpages:
 	$(QUIET_GEN)./lint-manpages.sh
@@ -528,6 +545,8 @@ lint-docs: lint-docs-fsck-msgids
 lint-docs: lint-docs-gitlink
 lint-docs: lint-docs-man-end-blurb
 lint-docs: lint-docs-man-section-order
+lint-docs: lint-docs-delimited-sections
+lint-docs: lint-docs-doc-style
 lint-docs: lint-docs-manpages
 lint-docs: lint-docs-meson
 

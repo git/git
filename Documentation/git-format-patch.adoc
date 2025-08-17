@@ -295,7 +295,8 @@ header). Note also that `git send-email` already handles this
 transformation for you, and this option should not be used if you are
 feeding the result to `git send-email`.
 
---[no-]force-in-body-from::
+--force-in-body-from::
+--no-force-in-body-from::
 	With the e-mail sender specified via the `--from` option, by
 	default, an in-body "From:" to identify the real author of
 	the commit is added at the top of the commit log message if
@@ -314,7 +315,8 @@ feeding the result to `git send-email`.
 	`Cc:`, and custom) headers added so far from config or command
 	line.
 
---[no-]cover-letter::
+--cover-letter::
+--no-cover-letter::
 	In addition to the patches, generate a cover letter file
 	containing the branch description, shortlog and the overall diffstat.  You can
 	fill in a description in the file before sending it out.
@@ -379,7 +381,8 @@ configuration options in linkgit:git-notes[1] to use this workflow).
 The default is `--no-notes`, unless the `format.notes` configuration is
 set.
 
---[no-]signature=<signature>::
+--signature=<signature>::
+--no-signature::
 	Add a signature to each message produced. Per RFC 3676 the signature
 	is separated from the body by a line with '-- ' on it. If the
 	signature option is omitted the signature defaults to the Git version
@@ -411,7 +414,8 @@ you can use `--suffix=-patch` to get `0001-description-of-my-change-patch`.
   Output an all-zero hash in each patch's From header instead
   of the hash of the commit.
 
---[no-]base[=<commit>]::
+--no-base::
+--base[=<commit>]::
 	Record the base tree information to identify the state the
 	patch series applies to.  See the BASE TREE INFORMATION section
 	below for details. If <commit> is "auto", a base commit is

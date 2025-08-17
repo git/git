@@ -214,7 +214,8 @@ include::signoff-option.adoc[]
 	each trailer would appear, and other details.
 
 `-n`::
-`--[no-]verify`::
+`--verify`::
+`--no-verify`::
 	Bypass the `pre-commit` and `commit-msg` hooks.
 	See also linkgit:githooks[5].
 
@@ -281,6 +282,7 @@ variable (see linkgit:git-config[1]).
 +
 --
 It is a rough equivalent for:
+
 ------
 	$ git reset --soft HEAD^
 	$ ... do something else to come up with the right tree ...
