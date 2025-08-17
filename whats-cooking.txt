@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2025, #06; Wed, 13)
-X-master-at: 724518f3884d8707c5f51428ba98c115818229b8
-X-next-at: cf9b8df8b4cc4af8ab40a5811e344fde74771729
+Subject: What's cooking in git.git (Aug 2025, #07; Sun, 17)
+X-master-at: e5ab6b3e5a3f0a94a429526e0fe6f491955ac053
+X-next-at: 8c5e2ae05d41c0752c436e7e1fc78ff5fcd3ab81
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2025, #06; Wed, 13)
+What's cooking in git.git (Aug 2025, #07; Sun, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,11 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-Git 2.51-rc2 has been tagged.  We have a few more working days
-until the final.  Let's hope we will find and fix all regressions
-introduced during this cycle before then; if the number of them
-turns out to be 0, that would be even better ;-).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -53,6 +48,41 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
+* ds/doc-count-objects-fix (2025-08-14) 1 commit
+  (merged to 'next' on 2025-08-17 at 1740ef34dd)
+ + count-objects: document count-objects pack
+
+ Docfix.
+
+ Will cook in 'next'.
+ source: <pull.2031.v3.git.git.1755182034719.gitgitgadget@gmail.com>
+
+
+* ad/t1517-short-help-tests-fix (2025-08-16) 1 commit
+  (merged to 'next' on 2025-08-17 at b38fb9afd3)
+ + t/t1517: mark tests that fail with GIT_TEST_INSTALLED
+ (this branch uses ua/t1517-short-help-tests.)
+
+ Test fix.
+
+ Will merge to 'next'?
+ source: <20250808010651.591906-1-usmanakinyemi202@gmail.com>
+
+--------------------------------------------------
+[Cooking]
+
+* dk/t7005-editor-updates (2025-08-13) 3 commits
+  (merged to 'next' on 2025-08-17 at ad0ab2e2a9)
+ + t7005: sanitize test environment for subsequent tests
+ + t7005: stop abusing --exec-path
+ + t7005: use modern test style
+
+ Test clean-up.
+
+ Will cook in 'next'.
+ source: <20250812170256.71751-1-ben.knoble+github@gmail.com>
+
+
 * kr/clone-synopsis-fix (2025-08-11) 1 commit
   (merged to 'next' on 2025-08-13 at b0d634ef29)
  + docs: remove stray bracket from git-clone synopsis
@@ -62,38 +92,6 @@ Release tarballs are available at:
  Will cook in 'next'.
  source: <pull.2023.v3.git.git.1754949872593.gitgitgadget@gmail.com>
 
-
-* dk/t7500-editor-updates (2025-08-12) 3 commits
- - t7005: sanitize test environment for subsequent tests
- - t7005: stop abusing --exec-path
- - t7005: use modern test style
-
- Test updates.
-
- Expecting a reroll.
- cf. <2250a8fd-62b8-4218-9858-23032d9c807d@gmail.com>
- source: <20250812170256.71751-1-ben.knoble+github@gmail.com>
-
---------------------------------------------------
-[Graduated to 'master']
-
-* rs/for-each-ref-start-after-marker-fix (2025-08-09) 1 commit
-  (merged to 'next' on 2025-08-09 at 44788822b0)
- + for-each-ref: call --start-after argument "marker"
-
- Hotfix.
- source: <1a32a666-fcf4-4f05-a468-2afa07fa0e2d@web.de>
-
-
-* rs/merge-compact-summary (2025-08-09) 1 commit
-  (merged to 'next' on 2025-08-09 at 924127e9c0)
- + merge: don't document non-existing --compact-summary argument
-
- Hotfix.
- source: <890631d1-4e3e-4ea5-8f58-371fadf2b1b3@web.de>
-
---------------------------------------------------
-[Cooking]
 
 * ac/deglobal-fmt-merge-log-config (2025-08-10) 2 commits
   (merged to 'next' on 2025-08-13 at c6c74fb8f0)
@@ -106,15 +104,15 @@ Release tarballs are available at:
  source: <cover.1754868681.git.ayu.chandekar@gmail.com>
 
 
-* jc/longer-disambiguation-fix (2025-08-11) 1 commit
+* jc/longer-disambiguation-fix (2025-08-14) 1 commit
  - abbrev: allow extending beyond 32 chars to disambiguate
 
  "git rev-parse --short" and friends failed to disambiguate two
  objects with object names that share common prefix longer than 32
  characters.
 
- Comments?
- source: <xmqqzfc51xvk.fsf@gitster.g>
+ Will merge to 'next'?
+ source: <xmqqh5ya6iua.fsf_-_@gitster.g>
 
 
 * dl/push-missing-object-error (2025-08-08) 3 commits
@@ -133,17 +131,18 @@ Release tarballs are available at:
 
 
 * ja/doc-lint-sections-and-synopsis (2025-08-11) 6 commits
- - doc lint: check that synopsis manpages have synopsis inlines
- - doc:git-for-each-ref: fix styling and typos
- - doc: check for absence of the form --[no-]parameter
- - doc: check for absence of multiple terms in each entry of desc list
- - doc: check well-formedness of delimited sections
- - doc: test linkgit macros for well-formedness
+  (merged to 'next' on 2025-08-17 at 413ff100cd)
+ + doc lint: check that synopsis manpages have synopsis inlines
+ + doc:git-for-each-ref: fix styling and typos
+ + doc: check for absence of the form --[no-]parameter
+ + doc: check for absence of multiple terms in each entry of desc list
+ + doc: check well-formedness of delimited sections
+ + doc: test linkgit macros for well-formedness
 
  Doc lint updates to encourage the newer and easier-to-use
  `synopsis` format, with fixes to a handful of existing uses.
 
- Will merge to 'next'?
+ Will cook in 'next'.
  source: <pull.1945.v3.git.1754945600.gitgitgadget@gmail.com>
 
 
@@ -197,23 +196,20 @@ Release tarballs are available at:
  source: <20250811060137.75135-1-yldhome2d2@gmail.com>
 
 
-* ps/commit-graph-wo-globals (2025-08-07) 10 commits
- - commit-graph: stop passing in redundant repository
- - commit-graph: stop using `the_repository`
- - commit-graph: stop using `the_hash_algo`
- - commit-graph: refactor `parse_commit_graph()` to take a repository
- - commit-graph: store the hash algorithm instead of its length
- - commit-graph: stop using `the_hash_algo` via macros
- - commit-graph: fix sign comparison warnings
- - commit-graph: fix type for some write options
- - commit-graph: stop using signed integers to count Bloom filters
- - trace2: introduce function to trace unsigned integers
+* ps/commit-graph-wo-globals (2025-08-14) 6 commits
+  (merged to 'next' on 2025-08-17 at e2889596be)
+ + commit-graph: stop passing in redundant repository
+ + commit-graph: stop using `the_repository`
+ + commit-graph: stop using `the_hash_algo`
+ + commit-graph: refactor `parse_commit_graph()` to take a repository
+ + commit-graph: store the hash algorithm instead of its length
+ + commit-graph: stop using `the_hash_algo` via macros
 
  Remove dependency on the_repository and other globals from the
  commit-graph code, and other changes unrelated to de-globaling.
 
- Will merge to 'next'?
- source: <20250807-b4-pks-commit-graph-wo-the-repository-v3-0-82edef830a1e@pks.im>
+ Will cook in 'next'.
+ source: <20250815-b4-pks-commit-graph-wo-the-repository-v4-0-b6b651178cce@pks.im>
 
 
 * tc/t0450-harden (2025-08-12) 3 commits
@@ -223,7 +219,7 @@ Release tarballs are available at:
 
  Test updates.
 
- Expecting a final reroll after 2.51 final.
+ Expecting a reroll after 2.51 final.
  source: <20250804073002.1586332-1-toon@iotcl.com>
 
 
@@ -252,7 +248,7 @@ Release tarballs are available at:
  source: <xmqq1ppk58ob.fsf@gitster.g>
 
 
-* je/doc-rebase (2025-08-12) 5 commits
+* je/doc-rebase (2025-08-15) 5 commits
  - doc: git-rebase: update discussion of internals
  - doc: git-rebase: move --onto explanation down
  - doc: git rebase: clarify arguments syntax
@@ -262,7 +258,7 @@ Release tarballs are available at:
  Documentation for "git rebase" has been updated.
 
  Will merge to 'next'?
- source: <pull.1949.v7.git.1755006568.gitgitgadget@gmail.com>
+ source: <pull.1949.v8.git.1755276750.gitgitgadget@gmail.com>
 
 
 * rj/t6137-cygwin-fix (2025-08-08) 1 commit
@@ -292,25 +288,27 @@ Release tarballs are available at:
 
 
 * tc/diff-tree-max-depth (2025-08-07) 3 commits
- - diff: teach tree-diff a max-depth parameter
- - within_depth: fix return for empty path
- - combine-diff: zero memory used for callback filepairs
+  (merged to 'next' on 2025-08-15 at dddb2275d4)
+ + diff: teach tree-diff a max-depth parameter
+ + within_depth: fix return for empty path
+ + combine-diff: zero memory used for callback filepairs
 
  "git diff-tree" learned "--max-depth" option.
 
- Comments?
+ Will cook in 'next'.
  source: <20250807-toon-max-depth-v2-0-50b7e5c81665@iotcl.com>
 
 
 * dk/help-all (2025-08-03) 3 commits
- - builtin: also setup gently for --help-all
- - parse-options: refactor flags for usage_with_options_internal
- - Merge branch 'ua/t1517-short-help-tests' into dk/help-all
+  (merged to 'next' on 2025-08-13 at 6dce87c0b5)
+ + builtin: also setup gently for --help-all
+ + parse-options: refactor flags for usage_with_options_internal
+ + Merge branch 'ua/t1517-short-help-tests' into dk/help-all
  (this branch uses ua/t1517-short-help-tests.)
 
  "git cmd --help-all" outside repository.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20250803012613.54086-1-ben.knoble+github@gmail.com>
 
 
@@ -324,14 +322,15 @@ Release tarballs are available at:
 
 
 * ly/diff-name-only-with-diff-from-content (2025-08-07) 1 commit
- - diff: ensure consistent diff behavior with ignore options
+  (merged to 'next' on 2025-08-13 at 662b1ed5c5)
+ + diff: ensure consistent diff behavior with ignore options
 
  Various options to "git diff" that makes comparison ignore certain
  aspects of the differences (like "space changes are ignored",
  "differences in lines that match these regular expressions are
  ignored") did not work well with "--name-only" and friends.
 
- Will merge to 'next'.
+ Will cook in 'next'.
  source: <20250808033019.78817-1-yldhome2d2@gmail.com>
 
 
@@ -419,7 +418,8 @@ Release tarballs are available at:
  hash function implementation used to hash lines have been updated
  to the one used for ELF symbol lookup by Glibc.
 
- Comments?
+ Still being discussed (AUG13)
+ cf. <b118903c-a50a-4ae4-b41e-1c47c37218c4@gmail.com>
  source: <20250728190520.10962-1-amonakov@ispras.ru>
 
 
@@ -529,7 +529,7 @@ Release tarballs are available at:
  + t5304: move `prune -h` test from t1517
  + t5200: move `update-server-info -h` test from t1517
  + t/t1517: automate `git subcmd -h` tests outside a repository
- (this branch is used by dk/help-all.)
+ (this branch is used by ad/t1517-short-help-tests-fix and dk/help-all.)
 
  Test shuffling.
 
@@ -548,7 +548,7 @@ Release tarballs are available at:
  source: <20250730175510.987383-1-toon@iotcl.com>
 
 
-* lo/repo-info (2025-08-07) 5 commits
+* lo/repo-info (2025-08-16) 5 commits
  - repo: add the --format flag
  - repo: add the field layout.shallow
  - repo: add the field layout.bare
@@ -558,8 +558,8 @@ Release tarballs are available at:
  A new subcommand "git repo" gives users a way to grab various
  repository characteristics.
 
- Expecting a reroll?
- source: <20250807150239.6987-1-lucasseikioshiro@gmail.com>
+ Will merge to 'next'?
+ source: <20250816224603.3307-1-lucasseikioshiro@gmail.com>
 
 
 * ac/deglobal-sparse-variables (2025-07-18) 3 commits
