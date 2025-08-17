@@ -87,8 +87,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2025-05-27 22:57+0000\n"
-"PO-Revision-Date: 2025-05-29 12:54+0200\n"
+"POT-Creation-Date: 2025-08-12 17:01+0000\n"
+"PO-Revision-Date: 2025-08-14 19:13+0200\n"
 "Last-Translator: Cédric Malard <c.malard-git@valdun.net>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -97,6 +97,10 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n<=1 ?0 : 1;\n"
 "X-Generator: Poedit 3.0.1\n"
+
+#, c-format
+msgid "%s cannot be negative"
+msgstr "%s doit être non négatif"
 
 #, c-format
 msgid "Huh (%s)?"
@@ -2045,6 +2049,10 @@ msgstr "Utilisez -f si vous voulez vraiment les ajouter."
 
 msgid "adding files failed"
 msgstr "échec de l'ajout de fichiers"
+
+#, c-format
+msgid "'%s' cannot be negative"
+msgstr "'%s' doit être non négatif"
 
 #, c-format
 msgid "--chmod param '%s' must be either -x or +x"
@@ -5265,24 +5273,25 @@ msgstr ""
 
 msgid ""
 "git config get [<file-option>] [<display-option>] [--includes] [--all] [--"
-"regexp] [--value=<value>] [--fixed-value] [--default=<default>] <name>"
+"regexp] [--value=<pattern>] [--fixed-value] [--default=<default>] [--"
+"url=<url>] <name>"
 msgstr ""
 "git config get [<option-de-fichier>] [<option-d-affichage>] [--includes] [--"
-"all] [--regexp] [--value=<valeur>] [--fixed-value] [--default=<défaut>] "
-"<name>"
+"all] [--regexp] [--value=<motif>] [--fixed-value] [--default=<défaut>] [--"
+"url=<url>] <nom>"
 
 msgid ""
-"git config set [<file-option>] [--type=<type>] [--all] [--value=<value>] [--"
-"fixed-value] <name> <value>"
+"git config set [<file-option>] [--type=<type>] [--all] [--value=<pattern>] "
+"[--fixed-value] <name> <value>"
 msgstr ""
 "git config set [<option-de-fichier>] [--type=<type>] [--all] [--"
-"value=<valeur>] [--fixed-value] <nom> <valeur>"
+"value=<motif>] [--fixed-value] <nom> <valeur>"
 
 msgid ""
-"git config unset [<file-option>] [--all] [--value=<value>] [--fixed-value] "
+"git config unset [<file-option>] [--all] [--value=<pattern>] [--fixed-value] "
 "<name>"
 msgstr ""
-"git config unset [<option-de-fichier>] [--all] [--value=<valeur>] [--fixed-"
+"git config unset [<option-de-fichier>] [--all] [--value=<motif>] [--fixed-"
 "value] <nom>"
 
 msgid "git config rename-section [<file-option>] <old-name> <new-name>"
@@ -5301,19 +5310,19 @@ msgstr ""
 
 msgid ""
 "git config get [<file-option>] [<display-option>] [--includes] [--all] [--"
-"regexp=<regexp>] [--value=<value>] [--fixed-value] [--default=<default>] "
+"regexp=<regexp>] [--value=<pattern>] [--fixed-value] [--default=<default>] "
 "<name>"
 msgstr ""
 "git config get [<option-de-fichier>] [<option-d-affichage>] [--includes] [--"
-"all] [--regexp=<regexp>] [--value=<valeur>] [--fixed-value] [--"
-"default=<défaut>] <name>"
+"all] [--regexp=<regexp>] [--value=<motif>] [--fixed-value] [--"
+"default=<défaut>] <nom>"
 
 msgid ""
 "git config set [<file-option>] [--type=<type>] [--comment=<message>] [--all] "
-"[--value=<value>] [--fixed-value] <name> <value>"
+"[--value=<pattern>] [--fixed-value] <name> <value>"
 msgstr ""
 "git config set [<option-de-fichier>] [--type=<type>] [--comment=<message>] "
-"[--all] [--value=<valeur>] [--fixed-value] <nom> <valeur>"
+"[--all] [--value=<motif>] [--fixed-value] <nom> <valeur>"
 
 msgid "Config file location"
 msgstr "Emplacement du fichier de configuration"
@@ -6179,22 +6188,6 @@ msgstr ""
 "%s rejeté parce que les  mises à jour de racines superficielles ne sont pas "
 "permises"
 
-#, c-format
-msgid ""
-"some local refs could not be updated; try running\n"
-" 'git remote prune %s' to remove any old, conflicting branches"
-msgstr ""
-"des références locales n'ont pas pu être mises à jour ; essayez de lancer\n"
-" 'git remote prune %s' pour supprimer des branches anciennes en conflit"
-
-#, c-format
-msgid "   (%s will become dangling)"
-msgstr "   (%s sera en suspens)"
-
-#, c-format
-msgid "   (%s has become dangling)"
-msgstr "   (%s est devenu en suspens)"
-
 msgid "[deleted]"
 msgstr "[supprimé]"
 
@@ -6235,6 +6228,18 @@ msgstr ""
 "spécifiquement 'git config set remote.%s.followRemoteHEAD warn-if-not-branch-"
 "%s'\n"
 "va désactiver l'alerte jusqu'à ce que le distant change HEAD."
+
+#, c-format
+msgid ""
+"some local refs could not be updated; try running\n"
+" 'git remote prune %s' to remove any old, conflicting branches"
+msgstr ""
+"des références locales n'ont pas pu être mises à jour ; essayez de lancer\n"
+" 'git remote prune %s' pour supprimer des branches anciennes en conflit"
+
+#, c-format
+msgid "fetching ref %s failed: %s"
+msgstr "échec de la récupération de %s : %s"
 
 msgid "multiple branches detected, incompatible with --set-upstream"
 msgstr "branches multiples détectées, imcompatible avec --set-upstream"
@@ -6483,6 +6488,9 @@ msgstr "git for-each-ref [--merged [<commit>]] [--no-merged [<commit>]]"
 msgid "git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"
 msgstr "git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"
 
+msgid "git for-each-ref [--start-after <marker>]"
+msgstr "git for-each-ref [--start-after <marqueur>]"
+
 msgid "quote placeholders suitably for shells"
 msgstr "échapper les champs réservés pour les interpréteurs de commandes"
 
@@ -6497,6 +6505,12 @@ msgstr "échapper les champs réservés pour compatibilité avec Tcl"
 
 msgid "show only <n> matched refs"
 msgstr "n'afficher que <n> références correspondant"
+
+msgid "marker"
+msgstr "marqueur"
+
+msgid "start iteration after the provided marker"
+msgstr "commencer l'itération après le marqueur indiqué"
 
 msgid "respect format colors"
 msgstr "respecter les couleurs de formatage"
@@ -6522,8 +6536,15 @@ msgstr "lire les motifs de références depuis l'entrée standard"
 msgid "also include HEAD ref and pseudorefs"
 msgstr "inclure aussi la référence HEAD et les pseudo-réfs"
 
+msgid "cannot use --start-after with custom sort options"
+msgstr ""
+"impossible d'utiliser --start-after avec des options de tri personnalisé"
+
 msgid "unknown arguments supplied with --stdin"
 msgstr "arguments inconnus fournis avec l'option --stdin"
+
+msgid "cannot use --start-after with patterns"
+msgstr "impossible d'utiliser --start-after avec des motifs"
 
 msgid "git for-each-repo --config=<config> [--] <arguments>"
 msgstr "git for-each-repo --config=<config> [--] <arguments>"
@@ -6924,6 +6945,9 @@ msgstr "recompacter tous les autres paquets excepté le plus gros paquet"
 msgid "pack prefix to store a pack containing pruned objects"
 msgstr "préfixe de paquet pour stocker un paquet contenant les objets élagués"
 
+msgid "skip maintenance tasks typically done in the foreground"
+msgstr "passer les tâches de maintenance typiquement lancées en premier plan"
+
 #, c-format
 msgid "failed to parse gc.logExpiry value %s"
 msgstr "impossible d'analyser gc.logExpiry %s"
@@ -6998,12 +7022,12 @@ msgstr ""
 "tâche incremental-repack ignorée parce que core.multiPackIndex est désactivé"
 
 #, c-format
-msgid "lock file '%s' exists, skipping maintenance"
-msgstr "le fichier verrou '%s' existe, pas de maintenance"
-
-#, c-format
 msgid "task '%s' failed"
 msgstr "échec de la tâche '%s'"
+
+#, c-format
+msgid "lock file '%s' exists, skipping maintenance"
+msgstr "le fichier verrou '%s' existe, pas de maintenance"
 
 #, c-format
 msgid "'%s' is not a valid task"
@@ -7033,9 +7057,6 @@ msgstr "tâche"
 
 msgid "run a specific task"
 msgstr "lancer une tâche spécifique"
-
-msgid "use at most one of --auto and --schedule=<frequency>"
-msgstr "--auto et --schedule=<fréquence> sont mutuellement exclusifs"
 
 #, c-format
 msgid "unable to add '%s' value of '%s'"
@@ -7932,10 +7953,6 @@ msgstr ""
 "-L<plage>:<fichier> ne peut pas être utilisé avec une spécificateur de chemin"
 
 #, c-format
-msgid "Final output: %d %s\n"
-msgstr "Sortie finale : %d %s\n"
-
-#, c-format
 msgid "git show %s: bad file"
 msgstr "git show %s : fichier incorrect"
 
@@ -8659,6 +8676,9 @@ msgstr "afficher un diffstat à la fin de la fusion"
 msgid "(synonym to --stat)"
 msgstr "(synonyme de --stat)"
 
+msgid "show a compact-summary at the end of the merge"
+msgstr "afficher un résumé rapide à la fin de la fusion"
+
 msgid "add (at most <n>) entries from shortlog to merge commit message"
 msgstr ""
 "ajouter (au plus <n>) éléments du journal court au message de validation de "
@@ -8930,10 +8950,6 @@ msgstr "attention : l'entrée d'étiquette ne passe pas fsck : %s"
 #, c-format
 msgid "error: tag input does not pass fsck: %s"
 msgstr "erreur : l'entrée d'étiquette ne passe pas fsck : %s"
-
-#, c-format
-msgid "%d (FSCK_IGNORE?) should never trigger this callback"
-msgstr "%d (FSCK_IGNORE?) ne devrait jamais rappeler cette fonction"
 
 #, c-format
 msgid "could not read tagged object '%s'"
@@ -9456,16 +9472,27 @@ msgstr "utiliser les notes depuis <références-notes>"
 msgid "unknown subcommand: `%s'"
 msgstr "sous-commande inconnue : `%s'"
 
-msgid "git pack-objects --stdout [<options>] [< <ref-list> | < <object-list>]"
-msgstr ""
-"git pack-objects --stdout [<options>] [< <liste-références> | < <liste-"
-"objets>]"
-
 msgid ""
-"git pack-objects [<options>] <base-name> [< <ref-list> | < <object-list>]"
+"git pack-objects [-q | --progress | --all-progress] [--all-progress-"
+"implied]\n"
+"                 [--no-reuse-delta] [--delta-base-offset] [--non-empty]\n"
+"                 [--local] [--incremental] [--window=<n>] [--depth=<n>]\n"
+"                 [--revs [--unpacked | --all]] [--keep-pack=<pack-name>]\n"
+"                 [--cruft] [--cruft-expiration=<time>]\n"
+"                 [--stdout [--filter=<filter-spec>] | <base-name>]\n"
+"                 [--shallow] [--keep-true-parents] [--[no-]sparse]\n"
+"                 [--name-hash-version=<n>] [--path-walk] < <object-list>"
 msgstr ""
-"git pack-objects [<options>] <nom-de-base> [< <liste-références> | < <liste-"
-"objets>]"
+"git pack-objects [-q | --progress | --all-progress] [--all-progress-"
+"implied]\n"
+"                 [--no-reuse-delta] [--delta-base-offset] [--non-empty]\n"
+"                 [--local] [--incremental] [--window=<n>] [--depth=<n>]\n"
+"                 [--revs [--unpacked | --all]] [--keep-pack=<nom-de-"
+"paquet>]\n"
+"                 [--cruft] [--cruft-expiration=<date>]\n"
+"                 [--stdout [--filter=<spéc-de-filtre>] | <nom-de-base>]\n"
+"                 [--shallow] [--keep-true-parents] [--[no-]sparse]\n"
+"                 [--name-hash-version=<n>] [--path-walk] < <liste-d-objets>"
 
 #, c-format
 msgid "invalid --name-hash-version option: %d"
@@ -9573,6 +9600,19 @@ msgstr "impossible d'empaqueter les objets joignables depuis l'étiquette %s"
 msgid "unable to get type of object %s"
 msgstr "impossible d'obtenir le type de l'objet %s"
 
+msgid "Compressing objects by path"
+msgstr "Compression des objets par chemin"
+
+#, c-format
+msgid "Path-based delta compression using up to %d thread"
+msgid_plural "Path-based delta compression using up to %d threads"
+msgstr[0] ""
+"Compression par delta basé sur les chemins en utilisant jusqu'à %d fil "
+"d'exécution"
+msgstr[1] ""
+"Compression par delta basé sur les chemins en utilisant jusqu'à %d fils "
+"d'exécution"
+
 msgid "Compressing objects"
 msgstr "Compression des objets"
 
@@ -9647,6 +9687,9 @@ msgstr "l'objet libre à %s n'a pas pu être examiné"
 
 msgid "unable to force loose object"
 msgstr "impossible de forcer l'objet libre"
+
+msgid "failed to pack objects via path-walk"
+msgstr "échec du paquetage des objets par parcours de chemin"
 
 #, c-format
 msgid "not a rev '%s'"
@@ -9763,6 +9806,11 @@ msgstr "utiliser l'algorithme de joignabilité creuse"
 msgid "create thin packs"
 msgstr "créer des paquets légers"
 
+msgid "use the path-walk API to walk objects when possible"
+msgstr ""
+"utiliser l'API de parcours de chemin pour parcourir les objets quand c'est "
+"possible"
+
 msgid "create packs suitable for shallow fetches"
 msgstr "créer des paquets permettant des récupérations superficielles"
 
@@ -9821,6 +9869,10 @@ msgid "pack.deltaCacheLimit is too high, forcing %d"
 msgstr "pack.deltaCacheLimit est trop grand, forcé à %d"
 
 #, c-format
+msgid "cannot use %s with %s"
+msgstr "impossible d'utiliser %s avec %s"
+
+#, c-format
 msgid "bad pack compression level %d"
 msgstr "niveau de compression du paquet %d"
 
@@ -9835,18 +9887,12 @@ msgstr "la taille limite minimale d'un paquet est 1 MiB"
 msgid "--thin cannot be used to build an indexable pack"
 msgstr "--thin ne peut pas être utilisé pour construire un paquet indexable"
 
-msgid "cannot use --filter with --stdin-packs"
-msgstr "impossible d'utiliser --filter avec --stdin-packs"
-
 msgid "cannot use internal rev list with --stdin-packs"
 msgstr ""
 "impossible d'utiliser une liste interne de révisions avec --stdin-packs"
 
 msgid "cannot use internal rev list with --cruft"
 msgstr "impossible d'utiliser une liste interne de révisions avec --cruft"
-
-msgid "cannot use --stdin-packs with --cruft"
-msgstr "impossible d'utiliser --stdin-packs avec --cruft"
 
 msgid "Enumerating objects"
 msgstr "Énumération des objets"
@@ -9858,22 +9904,6 @@ msgid ""
 msgstr ""
 "Total %<PRIu32> (delta %<PRIu32>), réutilisés %<PRIu32> (delta %<PRIu32>), "
 "réutilisés du paquet %<PRIu32> (depuis %<PRIuMAX>)"
-
-msgid ""
-"'git pack-redundant' is nominated for removal.\n"
-"If you still use this command, please add an extra\n"
-"option, '--i-still-use-this', on the command line\n"
-"and let us know you still use it by sending an e-mail\n"
-"to <git@vger.kernel.org>.  Thanks.\n"
-msgstr ""
-"La suppression  de 'git pack-redundant' est prévue.\n"
-"Si vous utilisez cette commande, veuillez ajouter\n"
-"une option supplémentaire, '--i-still-use-this',\n"
-"sur la ligne de commande pour nous avertir par\n"
-"un courriel à <git@vger.kernel.org>. Merci.\n"
-
-msgid "refusing to run without --i-still-use-this"
-msgstr "refus de lancer sans --i-still-use-this"
 
 msgid ""
 "git pack-refs [--all] [--no-prune] [--auto] [--include <pattern>] [--exclude "
@@ -11198,6 +11228,14 @@ msgstr ""
 msgid "unknown --mirror argument: %s"
 msgstr "argument de --mirror inconnu : %s"
 
+#, c-format
+msgid "remote name '%s' is a subset of existing remote '%s'"
+msgstr "le nom distance '%s' est un sous-ensemble du distant existant '%s'"
+
+#, c-format
+msgid "remote name '%s' is a superset of existing remote '%s'"
+msgstr "les nom distant '%s' est un sur-ensemble du distant existant '%s'"
+
 msgid "fetch the remote branches"
 msgstr "rapatrier les branches distantes"
 
@@ -11508,14 +11546,6 @@ msgid "Could not set up %s"
 msgstr "Impossible de paramétrer %s"
 
 #, c-format
-msgid " %s will become dangling!"
-msgstr " %s se retrouvera en suspens !"
-
-#, c-format
-msgid " %s has become dangling!"
-msgstr " %s se retrouve en suspens !"
-
-#, c-format
 msgid "Pruning %s"
 msgstr "Élimination de %s"
 
@@ -11579,11 +11609,11 @@ msgstr "être verbeux : doit être placé avant une sous-commande"
 msgid ""
 "git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
 "[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<pack-name>]\n"
-"[--write-midx] [--name-hash-version=<n>]"
+"[--write-midx] [--name-hash-version=<n>] [--path-walk]"
 msgstr ""
 "git repack [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [-m]\n"
 "[--window=<n>] [--depth=<n>] [--threads=<n>] [--keep-pack=<nom-de-paquet>]\n"
-"[--write-midx] [--name-hash-version=<n>]"
+"[--write-midx] [--name-hash-version=<n>] [--path-walk]"
 
 msgid ""
 "Incremental repacks are incompatible with bitmap indexes.  Use\n"
@@ -11672,6 +11702,9 @@ msgid ""
 msgstr ""
 "spécifier la verison d'empreinte de nom à utiliser pour grouper les objets "
 "similaires par chemin"
+
+msgid "pass --path-walk to git-pack-objects"
+msgstr "passer --path-walk à git-pack-objects"
 
 msgid "do not run git-update-server-info"
 msgstr "ne pas lancer git-update-server-info"
@@ -12849,16 +12882,22 @@ msgstr ""
 msgid "git stash create [<message>]"
 msgstr "git stash create [<message>]"
 
+msgid "git stash export (--print | --to-ref <ref>) [<stash>...]"
+msgstr "git stash export (--print | --to-ref <réf>) [<remise>...]"
+
+msgid "git stash import <commit>"
+msgstr "git stash import <commit>"
+
 #, c-format
 msgid "'%s' is not a stash-like commit"
 msgstr "'%s' n'est pas une validation de type remisage"
 
+msgid "No stash entries found."
+msgstr "Aucune entrée de remisage trouvée."
+
 #, c-format
 msgid "Too many revisions specified:%s"
 msgstr "Trop de révisions spécifiées : %s"
-
-msgid "No stash entries found."
-msgstr "Aucune entrée de remisage trouvée."
 
 #, c-format
 msgid "%s is not a valid reference"
@@ -13014,6 +13053,69 @@ msgstr "inclure les fichiers non suivis dans la remise"
 msgid "include ignore files"
 msgstr "inclure les fichiers ignorés"
 
+#, c-format
+msgid "cannot parse commit %s"
+msgstr "impossible d'analyser le commit %s"
+
+#, c-format
+msgid "invalid author or committer for %s"
+msgstr "identité d'auteur ou de valideur invalide pour %s"
+
+msgid "could not write commit"
+msgstr "impossible d'écrire le commit"
+
+#, c-format
+msgid "not a valid revision: %s"
+msgstr "révision invalide : %s"
+
+#, c-format
+msgid "not a commit: %s"
+msgstr "pas un commit : %s"
+
+#, c-format
+msgid "%s is not a valid exported stash commit"
+msgstr "%s n'est pas un commit de remisage exporté valide"
+
+#, c-format
+msgid "found root commit %s with invalid data"
+msgstr "commit racine %s trouvé avec des données invalides"
+
+#, c-format
+msgid "found stash commit %s without expected prefix"
+msgstr "commit de remisage %s trouvé sans le préfixe attendu"
+
+#, c-format
+msgid "cannot parse parents of commit: %s"
+msgstr "impossible d'analyser les parents du commit : %s"
+
+#, c-format
+msgid "%s does not look like a stash commit"
+msgstr "%s ne ressemble pas à un commit de remisage"
+
+#, c-format
+msgid "cannot read commit buffer for %s"
+msgstr "impossible de lire le tampon de commit pour %s"
+
+#, c-format
+msgid "cannot save the stash for %s"
+msgstr "impossible de sauvegarder le remisage pour %s"
+
+msgid "unable to write base commit"
+msgstr "impossible d'écrire le commit de base"
+
+#, c-format
+msgid "unable to find stash entry %s"
+msgstr "impossible de trouver l'entrée de remisage %s"
+
+msgid "print the object ID instead of writing it to a ref"
+msgstr "afficher l'ID d'objet au lieu de l'écrire sur une réf"
+
+msgid "save the data to the given ref"
+msgstr "sauvegarder la donnée sur la réf donnée"
+
+msgid "exactly one of --print and --to-ref is required"
+msgstr "un seul des deux paramètres --print et --to-ref est requis"
+
 msgid "skip and remove all lines starting with comment character"
 msgstr ""
 "sauter et supprimer toutes les lignes commençant par le caractère de "
@@ -13023,20 +13125,16 @@ msgid "prepend comment character and space to each line"
 msgstr "ajouter devant chaque ligne le caractère de commentaire et un espace"
 
 #, c-format
-msgid "Expecting a full ref name, got %s"
-msgstr "Nom de référence complet attendu, %s obtenu"
-
-#, c-format
-msgid "could not get a repository handle for submodule '%s'"
-msgstr "impossible de trouver une poignée de dépôt pour le sous-module '%s'"
-
-#, c-format
 msgid ""
 "could not look up configuration '%s'. Assuming this repository is its own "
 "authoritative upstream."
 msgstr ""
 "impossible de trouver la configuration '%s'. Ce dépôt est considéré comme "
 "son propre amont d'autorité."
+
+#, c-format
+msgid "could not get a repository handle for submodule '%s'"
+msgstr "impossible de trouver une poignée de dépôt pour le sous-module '%s'"
 
 #, c-format
 msgid "No url found for submodule path '%s' in .gitmodules"
@@ -13400,6 +13498,10 @@ msgstr ""
 "super-projet, mais le super-projet n'est sur aucune branche"
 
 #, c-format
+msgid "Expecting a full ref name, got %s"
+msgstr "Nom de référence complet attendu, %s obtenu"
+
+#, c-format
 msgid "Unable to find current revision in submodule path '%s'"
 msgstr ""
 "Impossible de trouver la révision actuelle dans le chemin de sous-module '%s'"
@@ -13603,6 +13705,10 @@ msgstr ""
 #, c-format
 msgid "repo URL: '%s' must be absolute or begin with ./|../"
 msgstr "l'URL de dépôt : '%s' doit être absolu ou commencer par ./|../"
+
+#, c-format
+msgid "submodule name '%s' already used for path '%s'"
+msgstr "Sous-module '%s' déjà utilisé pour le chemin '%s'"
 
 #, c-format
 msgid "'%s' is not a valid submodule name"
@@ -14249,10 +14355,6 @@ msgstr ""
 #, c-format
 msgid "Preparing worktree (checking out '%s')"
 msgstr "Préparation de l'arbre de travail (extraction de '%s')"
-
-#, c-format
-msgid "unreachable: invalid reference: %s"
-msgstr "non joignable : référence invalide : %s"
 
 #, c-format
 msgid "Preparing worktree (detached HEAD %s)"
@@ -15930,14 +16032,6 @@ msgstr ""
 "valeur numérique de configuration incorrecte '%s' pour '%s' dans %s : %s"
 
 #, c-format
-msgid "invalid value for variable %s"
-msgstr "valeur invalide pour la variable %s"
-
-#, c-format
-msgid "ignoring unknown core.fsync component '%s'"
-msgstr "ignore le composant core.fsync inconne '%s'"
-
-#, c-format
 msgid "bad boolean config value '%s' for '%s'"
 msgstr "valeur booléenne de configuration invalide '%s' pour '%s'"
 
@@ -15948,44 +16042,6 @@ msgstr "impossible d'étendre le répertoire utilisateur dans : '%s'"
 #, c-format
 msgid "'%s' for '%s' is not a valid timestamp"
 msgstr "'%s' pour '%s' n'est pas un horodatage valide"
-
-#, c-format
-msgid "abbrev length out of range: %d"
-msgstr "longueur d'abbrev hors plage : %d"
-
-#, c-format
-msgid "bad zlib compression level %d"
-msgstr "niveau de compression zlib incorrect %d"
-
-#, c-format
-msgid "%s cannot contain newline"
-msgstr "%s ne peut pas contenir de retour à la ligne"
-
-#, c-format
-msgid "%s must have at least one character"
-msgstr "%s doit contenir au moins un caractère"
-
-#, c-format
-msgid "ignoring unknown core.fsyncMethod value '%s'"
-msgstr "valeur inconnue '%s' de core.fsyncMethod"
-
-msgid "core.fsyncObjectFiles is deprecated; use core.fsync instead"
-msgstr "core.fsyncObjectFiles est obsolète ; utilisez core.fsync à la place"
-
-#, c-format
-msgid "invalid mode for object creation: %s"
-msgstr "mode invalide pour la création d'objet : %s"
-
-#, c-format
-msgid "malformed value for %s"
-msgstr "valeur mal formée pour %s"
-
-#, c-format
-msgid "malformed value for %s: %s"
-msgstr "valeur mal formée pour %s : %s"
-
-msgid "must be one of nothing, matching, simple, upstream or current"
-msgstr "doit être parmi nothing, matching, simple, upstream ou current"
 
 #, c-format
 msgid "unable to load config blob object '%s'"
@@ -16512,8 +16568,9 @@ msgstr "impossible de comparer stdin à un répertoire"
 msgid "cannot compare a named pipe to a directory"
 msgstr "impossible de réparer un tuyau nommé à un répertoire"
 
-msgid "git diff --no-index [<options>] <path> <path>"
-msgstr "git diff --no-index [<options>] <chemin> <chemin>"
+msgid "git diff --no-index [<options>] <path> <path> [<pathspec>...]"
+msgstr ""
+"git diff --no-index [<options>] <chemin> <chemin> [<spéc-de-chemin>...]"
 
 msgid ""
 "Not a git repository. Use --no-index to compare two paths outside a working "
@@ -16521,6 +16578,13 @@ msgid ""
 msgstr ""
 "Pas un dépôt git. Utilisez --no-index pour comparer deux chemins hors d'un "
 "arbre de travail"
+
+msgid ""
+"Limiting comparison with pathspecs is only supported if both paths are "
+"directories."
+msgstr ""
+"La limitation de comparaison entre spécificateurs de chemins n'est prise en "
+"charge que si les deux chemins sont des répertoires."
 
 #, c-format
 msgid "  Failed to parse dirstat cut-off percentage '%s'\n"
@@ -17130,6 +17194,52 @@ msgstr "impossible de stat le fichier '%s'"
 #, c-format
 msgid "bad git namespace path \"%s\""
 msgstr "espaces de nom de Git \"%s\""
+
+#, c-format
+msgid "invalid value for variable %s"
+msgstr "valeur invalide pour la variable %s"
+
+#, c-format
+msgid "ignoring unknown core.fsync component '%s'"
+msgstr "ignore le composant core.fsync inconne '%s'"
+
+#, c-format
+msgid "abbrev length out of range: %d"
+msgstr "longueur d'abbrev hors plage : %d"
+
+#, c-format
+msgid "bad zlib compression level %d"
+msgstr "niveau de compression zlib incorrect %d"
+
+#, c-format
+msgid "%s cannot contain newline"
+msgstr "%s ne peut pas contenir de retour à la ligne"
+
+#, c-format
+msgid "%s must have at least one character"
+msgstr "%s doit contenir au moins un caractère"
+
+#, c-format
+msgid "ignoring unknown core.fsyncMethod value '%s'"
+msgstr "valeur inconnue '%s' de core.fsyncMethod"
+
+msgid "core.fsyncObjectFiles is deprecated; use core.fsync instead"
+msgstr "core.fsyncObjectFiles est obsolète ; utilisez core.fsync à la place"
+
+#, c-format
+msgid "invalid mode for object creation: %s"
+msgstr "mode invalide pour la création d'objet : %s"
+
+#, c-format
+msgid "malformed value for %s"
+msgstr "valeur mal formée pour %s"
+
+#, c-format
+msgid "malformed value for %s: %s"
+msgstr "valeur mal formée pour %s : %s"
+
+msgid "must be one of nothing, matching, simple, upstream or current"
+msgstr "doit être parmi nothing, matching, simple, upstream ou current"
 
 #, c-format
 msgid "too many args to run %s"
@@ -17848,6 +17958,30 @@ msgstr "nom d'identifiant vide (pour <%s>) non permis"
 #, c-format
 msgid "name consists only of disallowed characters: %s"
 msgstr "le nom n'est constitué que de caractères interdits : %s"
+
+msgid "git imap-send [-v] [-q] [--[no-]curl] [(--folder|-f) <folder>] < <mbox>"
+msgstr ""
+"git imap-send [-v] [-q] [--[no-]curl] [(--folder|-f) <répertoire>] < <mbox>"
+
+msgid "no IMAP host specified"
+msgstr "serveur IMAP non spécifié"
+
+msgid ""
+"set the IMAP host with 'git config imap.host <host>'.\n"
+"(e.g., 'git config imap.host imaps://imap.example.com')"
+msgstr ""
+"régler l'hôte IMAP avec 'git config imap.host <hôte>'\n"
+"(par ex., 'git config imap.host imaps://imap.example.com')"
+
+msgid "no IMAP folder specified"
+msgstr "dossier IMAP non spécifié"
+
+msgid ""
+"set the target folder with 'git config imap.folder <folder>'.\n"
+"(e.g., 'git config imap.folder Drafts')"
+msgstr ""
+"régler le dossier cible avec 'git config imap.folder <dossier>'\"\n"
+"(par ex., 'git config imap.folder Drafts')"
 
 msgid "expected 'tree:<depth>'"
 msgstr "attendu : 'tree:<profondeur>'"
@@ -18656,7 +18790,7 @@ msgstr "%s : type de fichier non supporté"
 
 #, c-format
 msgid "hash mismatch for %s (expected %s)"
-msgstr "incohérence de hachage pour %s (%s attendu)"
+msgstr "incohérence d'empreinte pour %s (%s attendu)"
 
 #, c-format
 msgid "unable to mmap %s"
@@ -18835,6 +18969,26 @@ msgid "invalid object name '%.*s'."
 msgstr "nom d'objet invalide : '%.*s'."
 
 #, c-format
+msgid "invalid object type \"%s\""
+msgstr "type d'objet invalide \"%s\""
+
+#, c-format
+msgid "object %s is a %s, not a %s"
+msgstr "l'objet %s est de type %s, pas de type %s"
+
+#, c-format
+msgid "object %s has unknown type id %d"
+msgstr "l'objet %s a un id de type inconnu %d"
+
+#, c-format
+msgid "unable to parse object: %s"
+msgstr "impossible d'analyser l'objet : %s"
+
+#, c-format
+msgid "hash mismatch %s"
+msgstr "incohérence d'empreinte %s"
+
+#, c-format
 msgid "object directory %s does not exist; check .git/objects/info/alternates"
 msgstr ""
 "le répertoire objet %s n'existe pas ; vérifiez .git/objects/info/alternates"
@@ -18903,26 +19057,6 @@ msgid "%s is not a valid '%s' object"
 msgstr "%s n'est pas un objet '%s' valide"
 
 #, c-format
-msgid "invalid object type \"%s\""
-msgstr "type d'objet invalide \"%s\""
-
-#, c-format
-msgid "object %s is a %s, not a %s"
-msgstr "l'objet %s est de type %s, pas de type %s"
-
-#, c-format
-msgid "object %s has unknown type id %d"
-msgstr "l'objet %s a un id de type inconnu %d"
-
-#, c-format
-msgid "unable to parse object: %s"
-msgstr "impossible d'analyser l'objet : %s"
-
-#, c-format
-msgid "hash mismatch %s"
-msgstr "incohérence de hachage %s"
-
-#, c-format
 msgid "duplicate entry when writing bitmap index: %s"
 msgstr "entrée dupliquée dans l'index en bitmap : '%s'"
 
@@ -18932,9 +19066,6 @@ msgstr "essai de stockage d'un commit non-sélectionné : '%s'"
 
 msgid "too many pseudo-merges"
 msgstr "trop de pseudo-fusions"
-
-msgid "trying to write commit not in index"
-msgstr "échec de l'écriture de l'objet commit absent de l'index"
 
 msgid "failed to load bitmap index (corrupted?)"
 msgstr "échec du chargement de l'index en bitmap (corruption ?)"
@@ -19185,6 +19316,10 @@ msgstr "%s n'accepte aucune valeur"
 #, c-format
 msgid "%s isn't available"
 msgstr "%s n'est pas disponible"
+
+#, c-format
+msgid "value for %s exceeds %<PRIdMAX>"
+msgstr "la valeur pour %s est supérieure à %<PRIdMAX>"
 
 #, c-format
 msgid "value %s for %s not in range [%<PRIdMAX>,%<PRIdMAX>]"
@@ -20176,6 +20311,14 @@ msgstr "pas de journal de références pour '%s'"
 #, c-format
 msgid "%s does not point to a valid object!"
 msgstr "%s ne pointe pas sur un objet valide!"
+
+#, c-format
+msgid "%s%s will become dangling after %s is deleted\n"
+msgstr "%s%s se retrouvera en suspens après que %s est effacé\n"
+
+#, c-format
+msgid "%s%s has become dangling after %s was deleted\n"
+msgstr "%s%s est en suspens depuis que %s a été effacé\n"
 
 #, c-format
 msgid ""
@@ -22530,6 +22673,9 @@ msgstr "activer l'inclusion des objets arbre"
 msgid "toggle pruning of uninteresting paths"
 msgstr "activer l'élagage des chemins inintéressants"
 
+msgid "toggle aggressive edge walk"
+msgstr "activer le parcours agressif des arêtes"
+
 msgid "read a pattern list over stdin"
 msgstr "lire les motifs depuis stdin"
 
@@ -23178,6 +23324,23 @@ msgstr "erreur : "
 
 msgid "warning: "
 msgstr "avertissement : "
+
+#, c-format
+msgid ""
+"'%s' is nominated for removal.\n"
+"If you still use this command, please add an extra\n"
+"option, '--i-still-use-this', on the command line\n"
+"and let us know you still use it by sending an e-mail\n"
+"to <git@vger.kernel.org>.  Thanks.\n"
+msgstr ""
+"La suppression  de '%s' est prévue.\n"
+"Si vous utilisez cette commande, veuillez ajouter\n"
+"une option supplémentaire, '--i-still-use-this',\n"
+"sur la ligne de commande pour nous avertir par\n"
+"un courriel à <git@vger.kernel.org>. Merci.\n"
+
+msgid "refusing to run without --i-still-use-this"
+msgstr "refus de lancer sans --i-still-use-this"
 
 #, c-format
 msgid "uname() failed with error '%s' (%d)\n"
@@ -24124,6 +24287,10 @@ msgid "(body) Adding cc: %s from line '%s'\n"
 msgstr "(corps) Ajout de cc: %s depuis la ligne '%s'\n"
 
 #, perl-format
+msgid "error: invalid SMTP port '%s'\n"
+msgstr "erreur : port SMTP invalide '%s'\n"
+
+#, perl-format
 msgid "(%s) Could not execute '%s'"
 msgstr "(%s) Impossible d'exécuter '%s'"
 
@@ -24176,293 +24343,8 @@ msgstr "%s sauté avec un suffix de sauvegarde '%s'.\n"
 msgid "Do you really want to send %s? [y|N]: "
 msgstr "Souhaitez-vous réellement envoyer %s ?[y|N] : "
 
-#~ msgid "git cat-file (-t | -s) [--allow-unknown-type] <object>"
-#~ msgstr "git cat-file (-t | -s) [--allow-unknown-type] <objet>"
+#~ msgid "start-after"
+#~ msgstr "start-after"
 
-#~ msgid "allow -s and -t to work with broken/corrupt objects"
-#~ msgstr "autoriser -s et -t à travailler sur des objets cassés/corrompus"
-
-#, c-format
-#~ msgid "%s: object is of unknown type '%s': %s"
-#~ msgstr "%s : l'objet a un type '%s' inconnu : %s"
-
-#, c-format
-#~ msgid "%s points nowhere!"
-#~ msgstr "%s ne pointe nulle part !"
-
-#~ msgid "(bad commit)\n"
-#~ msgstr "(mauvais commit)\n"
-
-#, c-format
-#~ msgid "add_cacheinfo failed for path '%s'; merge aborting."
-#~ msgstr "échec de add_cacheinfo pour le chemin '%s' ; abandon de la fusion."
-
-#, c-format
-#~ msgid "add_cacheinfo failed to refresh for path '%s'; merge aborting."
-#~ msgstr "échec de add_cacheinfo pour le chemin '%s' ; abandon de la fusion."
-
-#, c-format
-#~ msgid "failed to create path '%s'%s"
-#~ msgstr "impossible de créer le chemin '%s' %s"
-
-#, c-format
-#~ msgid "Removing %s to make room for subdirectory\n"
-#~ msgstr "Suppression de %s pour faire de la place pour le sous-répertoire\n"
-
-#~ msgid ": perhaps a D/F conflict?"
-#~ msgstr ": peut-être un conflit D/F ?"
-
-#, c-format
-#~ msgid "refusing to lose untracked file at '%s'"
-#~ msgstr "refus de perdre le fichier non suivi '%s'"
-
-#, c-format
-#~ msgid "blob expected for %s '%s'"
-#~ msgstr "blob attendu pour %s '%s'"
-
-#, c-format
-#~ msgid "failed to open '%s': %s"
-#~ msgstr "échec à l'ouverture de '%s' : %s"
-
-#, c-format
-#~ msgid "failed to symlink '%s': %s"
-#~ msgstr "échec à la création du lien symbolique '%s' : %s"
-
-#, c-format
-#~ msgid "do not know what to do with %06o %s '%s'"
-#~ msgstr "ne sait pas traiter %06o %s '%s'"
-
-#, c-format
-#~ msgid "Failed to merge submodule %s (repository corrupt)"
-#~ msgstr "Échec de la fusion du sous-module %s (dépôt corrompu)"
-
-#, c-format
-#~ msgid "Fast-forwarding submodule %s to the following commit:"
-#~ msgstr "Avance rapide du sous-module %s au commit suivant :"
-
-#, c-format
-#~ msgid "Fast-forwarding submodule %s"
-#~ msgstr "Avance rapide du sous-module %s"
-
-#, c-format
-#~ msgid "Failed to merge submodule %s (merge following commits not found)"
-#~ msgstr ""
-#~ "Échec de fusion du sous-module %s (fusion suivant les commits non trouvée)"
-
-#, c-format
-#~ msgid "Failed to merge submodule %s (not fast-forward)"
-#~ msgstr "Échec de fusion du sous-module %s (pas en avance rapide)"
-
-#~ msgid "Found a possible merge resolution for the submodule:\n"
-#~ msgstr "Résolution possible de fusion trouvée pour le sous-module :\n"
-
-#, c-format
-#~ msgid ""
-#~ "If this is correct simply add it to the index for example\n"
-#~ "by using:\n"
-#~ "\n"
-#~ "  git update-index --cacheinfo 160000 %s \"%s\"\n"
-#~ "\n"
-#~ "which will accept this suggestion.\n"
-#~ msgstr ""
-#~ "Si c'est correct, ajoutez le simplement à l'index\n"
-#~ "en utilisant par exemple :\n"
-#~ "\n"
-#~ "  git update-index --cacheinfo 160000 %s \"%s\"\n"
-#~ "\n"
-#~ "qui acceptera cette suggestion.\n"
-
-#, c-format
-#~ msgid "Failed to merge submodule %s (multiple merges found)"
-#~ msgstr "Échec de fusion du sous-module %s (plusieurs fusions trouvées)"
-
-#~ msgid "failed to execute internal merge"
-#~ msgstr "échec à l'exécution de la fusion interne"
-
-#, c-format
-#~ msgid "unable to add %s to database"
-#~ msgstr "impossible d'ajouter %s à la base de données"
-
-#, c-format
-#~ msgid "Error: Refusing to lose untracked file at %s; writing to %s instead."
-#~ msgstr ""
-#~ "Erreur : refus de perdre le fichier non suivi %s ; écriture dans %s à la "
-#~ "place."
-
-#, c-format
-#~ msgid ""
-#~ "CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s "
-#~ "left in tree."
-#~ msgstr ""
-#~ "CONFLIT (%s/suppression) : %s supprimé dans %s et %s dans %s. Version %s "
-#~ "de %s laissée dans l'arbre."
-
-#, c-format
-#~ msgid ""
-#~ "CONFLICT (%s/delete): %s deleted in %s and %s to %s in %s. Version %s of "
-#~ "%s left in tree."
-#~ msgstr ""
-#~ "CONFLIT (%s/suppression) : %s supprimé dans %s et %s à %s dans %s. "
-#~ "Version %s de %s laissée dans l'arbre."
-
-#, c-format
-#~ msgid ""
-#~ "CONFLICT (%s/delete): %s deleted in %s and %s in %s. Version %s of %s "
-#~ "left in tree at %s."
-#~ msgstr ""
-#~ "CONFLIT (%s/suppression) : %s supprimé dans %s et %s dans %s. Version %s "
-#~ "de %s laissée dans l'arbre dans le fichier %s."
-
-#, c-format
-#~ msgid ""
-#~ "CONFLICT (%s/delete): %s deleted in %s and %s to %s in %s. Version %s of "
-#~ "%s left in tree at %s."
-#~ msgstr ""
-#~ "CONFLIT (%s/suppression) : %s supprimé dans %s et %s à %s dans %s. "
-#~ "Version %s de %s laissée dans l'arbre dans le fichier %s."
-
-#~ msgid "rename"
-#~ msgstr "renommage"
-
-#~ msgid "renamed"
-#~ msgstr "renommé"
-
-#, c-format
-#~ msgid "Refusing to lose dirty file at %s"
-#~ msgstr "Refus de perdre le fichier modifié %s"
-
-#, c-format
-#~ msgid "Refusing to lose untracked file at %s, even though it's in the way."
-#~ msgstr "Refus de perdre le fichier non suivi %s, même s'il gêne."
-
-#, c-format
-#~ msgid "CONFLICT (rename/add): Rename %s->%s in %s.  Added %s in %s"
-#~ msgstr ""
-#~ "CONFLIT (renommage/ajout) : Renommage de %s->%s dans %s. %s ajouté dans %s"
-
-#, c-format
-#~ msgid "%s is a directory in %s adding as %s instead"
-#~ msgstr "%s est un répertoire dans %s ajouté plutôt comme %s"
-
-#, c-format
-#~ msgid "Refusing to lose untracked file at %s; adding as %s instead"
-#~ msgstr "Refus de perdre le fichier non suivi %s ; ajout comme %s à la place"
-
-#, c-format
-#~ msgid ""
-#~ "CONFLICT (rename/rename): Rename \"%s\"->\"%s\" in branch \"%s\" rename "
-#~ "\"%s\"->\"%s\" in \"%s\"%s"
-#~ msgstr ""
-#~ "CONFLIT (renommage/renommage) : Renommage de \"%s\"->\"%s\" dans la "
-#~ "branche \"%s\" et renommage \"%s\"->\"%s\" dans \"%s\"%s"
-
-#~ msgid " (left unresolved)"
-#~ msgstr " (laissé non résolu)"
-
-#, c-format
-#~ msgid "CONFLICT (rename/rename): Rename %s->%s in %s. Rename %s->%s in %s"
-#~ msgstr ""
-#~ "CONFLIT (renommage/renommage) : renommage '%s'->'%s' dans %s. Renommage "
-#~ "'%s'->'%s' dans %s"
-
-#, c-format
-#~ msgid ""
-#~ "CONFLICT (directory rename split): Unclear where to place %s because "
-#~ "directory %s was renamed to multiple other directories, with no "
-#~ "destination getting a majority of the files."
-#~ msgstr ""
-#~ "CONFLIT (renommage de répertoire coupé) : la place de %s n'est pas claire "
-#~ "parce que le répertoire %s a été renommé en plusieurs autres répertoires, "
-#~ "sans aucune destination récupérant la majorité des fichiers."
-
-#, c-format
-#~ msgid ""
-#~ "CONFLICT (rename/rename): Rename directory %s->%s in %s. Rename directory "
-#~ "%s->%s in %s"
-#~ msgstr ""
-#~ "CONFLIT (renommage/renommage) : renommage du répertoire %s->%s dans %s. "
-#~ "Renommage de répertoire %s->%s dans %s"
-
-#, c-format
-#~ msgid "cannot read object %s"
-#~ msgstr "impossible de lire l'objet %s"
-
-#, c-format
-#~ msgid "object %s is not a blob"
-#~ msgstr "l'objet %s n'est pas un blob"
-
-#~ msgid "modify"
-#~ msgstr "modification"
-
-#~ msgid "modified"
-#~ msgstr "modifié"
-
-#, c-format
-#~ msgid "Skipped %s (merged same as existing)"
-#~ msgstr "%s sauté (fusion identique à l'existant)"
-
-#, c-format
-#~ msgid "Adding as %s instead"
-#~ msgstr "Ajout plutôt comme %s"
-
-#, c-format
-#~ msgid "Removing %s"
-#~ msgstr "Suppression de %s"
-
-#~ msgid "file/directory"
-#~ msgstr "fichier/répertoire"
-
-#~ msgid "directory/file"
-#~ msgstr "répertoire/fichier"
-
-#, c-format
-#~ msgid ""
-#~ "CONFLICT (%s): There is a directory with name %s in %s. Adding %s as %s"
-#~ msgstr ""
-#~ "CONFLIT (%s) : Il y a un répertoire nommé %s dans %s. Ajout de %s comme %s"
-
-#, c-format
-#~ msgid "Adding %s"
-#~ msgstr "Ajout de %s"
-
-#, c-format
-#~ msgid "CONFLICT (add/add): Merge conflict in %s"
-#~ msgstr "CONFLIT (ajout/ajout) : Conflit de fusion dans %s"
-
-#, c-format
-#~ msgid "merging of trees %s and %s failed"
-#~ msgstr "échec de fusion des arbres %s et %s"
-
-#~ msgid "Merging:"
-#~ msgstr "Fusion :"
-
-#, c-format
-#~ msgid "found %u common ancestor:"
-#~ msgid_plural "found %u common ancestors:"
-#~ msgstr[0] "%u ancêtre commun trouvé :"
-#~ msgstr[1] "%u ancêtres communs trouvés :"
-
-#~ msgid "merge returned no commit"
-#~ msgstr "la fusion n'a pas retourné de commit"
-
-#~ msgid "cannot write incremental MIDX with bitmap"
-#~ msgstr "impossible d'écrire un MIDX incrémental avec des bitmap"
-
-#, c-format
-#~ msgid "Could not find remote branch %s to clone."
-#~ msgstr "Impossible de trouver la branche distante '%s' à cloner."
-
-#, c-format
-#~ msgid "merging cannot continue; got unclean result of %d"
-#~ msgstr "la fusion ne peut pas continuer ; résultat non propre retourné %d"
-
-#~ msgid "--onto and --advance are incompatible"
-#~ msgstr "--onto et --advance sont incompatibles"
-
-#, c-format
-#~ msgid "key '%s' of pattern had no '*'"
-#~ msgstr "la clé '%s' du modèle n'a pas de '*'"
-
-#, c-format
-#~ msgid "preferred pack (%s) is invalid"
-#~ msgstr "le paquet préféré (%s) est invalide"
+#~ msgid "compact-summary"
+#~ msgstr "résumé-compact"
