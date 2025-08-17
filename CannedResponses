@@ -12,7 +12,8 @@ The usual way to compose a log message of this project is to
  - Propose a solution (optional---often, problem description
    trivially leads to an obvious solution in reader's minds).
 
- - Give commands to somebody editing the codebase to "make it so".
+ - Give commands to somebody editing the codebase to "make it so",
+   instead of saying "This commit does X".
 
 in this order.
 
