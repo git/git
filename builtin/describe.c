@@ -518,10 +518,16 @@ static void describe_blob(const struct object_id *oid, struct strbuf *dst)
 {
 	struct rev_info revs;
 	struct strvec args = STRVEC_INIT;
+	struct object_id head_oid;
 	struct process_commit_data pcd = { *null_oid(the_hash_algo), oid, dst, &revs};
 
+	if (repo_get_oid(the_repository, "HEAD", &head_oid))
+		die(_("cannot search for blob '%s' on an unborn branch"),
+		    oid_to_hex(oid));
+
 	strvec_pushl(&args, "internal: The first arg is not parsed",
-		     "--objects", "--in-commit-order", "--reverse", "HEAD",
+		     "--objects", "--in-commit-order", "--reverse",
+		     oid_to_hex(&head_oid),
 		     NULL);
 
 	repo_init_revisions(the_repository, &revs, NULL);

@@ -415,6 +415,14 @@ test_expect_success 'describe an unreachable blob' '
 	test_grep "blob .$blob. not reachable from HEAD" actual
 '
 
+test_expect_success 'describe blob on an unborn branch' '
+	oldbranch=$(git symbolic-ref HEAD) &&
+	test_when_finished "git symbolic-ref HEAD $oldbranch" &&
+	git symbolic-ref HEAD refs/heads/does-not-exist &&
+	test_must_fail git describe test-blob 2>actual &&
+	test_grep "cannot search .* on an unborn branch" actual
+'
+
 test_expect_success ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '
 	i=1 &&
 	while test $i -lt 8000
