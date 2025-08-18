@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2025, #07; Sun, 17)
-X-master-at: e5ab6b3e5a3f0a94a429526e0fe6f491955ac053
-X-next-at: 8c5e2ae05d41c0752c436e7e1fc78ff5fcd3ab81
+Subject: What's cooking in git.git (Aug 2025, #08; Mon, 18)
+X-master-at: c44beea485f0f2feaf460e2ac87fdd5608d63cf0
+X-next-at: 7ce5a0a67ee2fce1fa86eaa2cdf5d7d51f7185c7
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2025, #07; Sun, 17)
+What's cooking in git.git (Aug 2025, #08; Mon, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,10 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+Git 2.51 has been tagged.  Let's see if there is any unexpected
+fallout for the rest of this week, and then start merging down what
+has been cooking in 'next' (and rewind 'next' while doing so).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -409,8 +413,7 @@ Release tarballs are available at:
  source: <20250801220423.1230969-1-gitster@pobox.com>
 
 
-* am/xdiff-hash-tweak (2025-07-28) 3 commits
- - fixup! xdiff: optimize xdl_hash_record_verbatim
+* am/xdiff-hash-tweak (2025-07-28) 2 commits
  - xdiff: optimize xdl_hash_record_verbatim
  - xdiff: refactor xdl_hash_record()
 
