@@ -265,7 +265,7 @@ static int find_lcs(xpparam_t const *xpp, xdfenv_t *env,
 	index.rcha.head = NULL;
 
 	index.table_bits = xdl_hashbits(count1);
-	index.records_size = 1 << index.table_bits;
+	index.records_size = 1U << index.table_bits;
 	if (!XDL_CALLOC_ARRAY(index.records, index.records_size))
 		goto cleanup;
 
