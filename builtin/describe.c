@@ -490,7 +490,7 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 
 struct process_commit_data {
 	struct object_id current_commit;
-	struct object_id looking_for;
+	const struct object_id *looking_for;
 	struct strbuf *dst;
 	struct rev_info *revs;
 };
@@ -505,7 +505,7 @@ static void process_object(struct object *obj, const char *path, void *data)
 {
 	struct process_commit_data *pcd = data;
 
-	if (oideq(&pcd->looking_for, &obj->oid) && !pcd->dst->len) {
+	if (oideq(pcd->looking_for, &obj->oid) && !pcd->dst->len) {
 		reset_revision_walk();
 		describe_commit(&pcd->current_commit, pcd->dst);
 		strbuf_addf(pcd->dst, ":%s", path);
@@ -514,7 +514,7 @@ static void process_object(struct object *obj, const char *path, void *data)
 	}
 }
 
-static void describe_blob(struct object_id oid, struct strbuf *dst)
+static void describe_blob(const struct object_id *oid, struct strbuf *dst)
 {
 	struct rev_info revs;
 	struct strvec args = STRVEC_INIT;
@@ -554,7 +554,7 @@ static void describe(const char *arg, int last_one)
 		describe_commit(&oid, &sb);
 	else if (odb_read_object_info(the_repository->objects,
 				      &oid, NULL) == OBJ_BLOB)
-		describe_blob(oid, &sb);
+		describe_blob(&oid, &sb);
 	else
 		die(_("%s is neither a commit nor blob"), arg);
 
