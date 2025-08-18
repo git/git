@@ -409,6 +409,12 @@ test_expect_success 'describe tag object' '
 	test_grep "fatal: test-blob-1 is neither a commit nor blob" actual
 '
 
+test_expect_success 'describe an unreachable blob' '
+	blob=$(echo not-found-anywhere | git hash-object -w --stdin) &&
+	test_must_fail git describe $blob 2>actual &&
+	test_grep "blob .$blob. not reachable from HEAD" actual
+'
+
 test_expect_success ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '
 	i=1 &&
 	while test $i -lt 8000

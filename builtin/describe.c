@@ -535,6 +535,9 @@ static void describe_blob(const struct object_id *oid, struct strbuf *dst)
 	reset_revision_walk();
 	release_revisions(&revs);
 	strvec_clear(&args);
+
+	if (!dst->len)
+		die(_("blob '%s' not reachable from HEAD"), oid_to_hex(oid));
 }
 
 static void describe(const char *arg, int last_one)
