@@ -939,6 +939,15 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
 		long t_cur = t_start;
 		unsigned int j_last;
 
+		/*
+		 * If a diff range touches multiple line ranges, then all
+		 * those line ranges should be shown, so take a step back if
+		 * the current line range is still in the previous diff range
+		 * (even if only partially).
+		 */
+		if (j > 0 && diff->target.ranges[j-1].end > t_start)
+			j--;
+
 		while (j < diff->target.nr && diff->target.ranges[j].end < t_start)
 			j++;
 		if (j == diff->target.nr || diff->target.ranges[j].start >= t_end)
