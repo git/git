@@ -119,7 +119,7 @@ test_expect_success "fetch test remote HEAD change" '
 	test "z$head" = "z$branch"'
 
 test_expect_success "fetch test followRemoteHEAD never" '
-	test_when_finished "git config unset remote.origin.followRemoteHEAD" &&
+	test_when_finished "git -C \"$D/two\" config unset remote.origin.followRemoteHEAD" &&
 	(
 		cd "$D" &&
 		cd two &&
@@ -134,7 +134,7 @@ test_expect_success "fetch test followRemoteHEAD never" '
 '
 
 test_expect_success "fetch test followRemoteHEAD warn no change" '
-	test_when_finished "git config unset remote.origin.followRemoteHEAD" &&
+	test_when_finished "git -C \"$D/two\" config unset remote.origin.followRemoteHEAD" &&
 	(
 		cd "$D" &&
 		cd two &&
@@ -154,7 +154,7 @@ test_expect_success "fetch test followRemoteHEAD warn no change" '
 '
 
 test_expect_success "fetch test followRemoteHEAD warn create" '
-	test_when_finished "git config unset remote.origin.followRemoteHEAD" &&
+	test_when_finished "git -C \"$D/two\" config unset remote.origin.followRemoteHEAD" &&
 	(
 		cd "$D" &&
 		cd two &&
@@ -170,7 +170,7 @@ test_expect_success "fetch test followRemoteHEAD warn create" '
 '
 
 test_expect_success "fetch test followRemoteHEAD warn detached" '
-	test_when_finished "git config unset remote.origin.followRemoteHEAD" &&
+	test_when_finished "git -C \"$D/two\" config unset remote.origin.followRemoteHEAD" &&
 	(
 		cd "$D" &&
 		cd two &&
@@ -187,7 +187,7 @@ test_expect_success "fetch test followRemoteHEAD warn detached" '
 '
 
 test_expect_success "fetch test followRemoteHEAD warn quiet" '
-	test_when_finished "git config unset remote.origin.followRemoteHEAD" &&
+	test_when_finished "git -C \"$D/two\" config unset remote.origin.followRemoteHEAD" &&
 	(
 		cd "$D" &&
 		cd two &&
@@ -205,7 +205,7 @@ test_expect_success "fetch test followRemoteHEAD warn quiet" '
 '
 
 test_expect_success "fetch test followRemoteHEAD warn-if-not-branch branch is same" '
-	test_when_finished "git config unset remote.origin.followRemoteHEAD" &&
+	test_when_finished "git -C \"$D/two\" config unset remote.origin.followRemoteHEAD" &&
 	(
 		cd "$D" &&
 		cd two &&
@@ -223,7 +223,7 @@ test_expect_success "fetch test followRemoteHEAD warn-if-not-branch branch is sa
 '
 
 test_expect_success "fetch test followRemoteHEAD warn-if-not-branch branch is different" '
-	test_when_finished "git config unset remote.origin.followRemoteHEAD" &&
+	test_when_finished "git -C \"$D/two\" config unset remote.origin.followRemoteHEAD" &&
 	(
 		cd "$D" &&
 		cd two &&
@@ -243,7 +243,7 @@ test_expect_success "fetch test followRemoteHEAD warn-if-not-branch branch is di
 '
 
 test_expect_success "fetch test followRemoteHEAD always" '
-	test_when_finished "git config unset remote.origin.followRemoteHEAD" &&
+	test_when_finished "git -C \"$D/two\" config unset remote.origin.followRemoteHEAD" &&
 	(
 		cd "$D" &&
 		cd two &&
@@ -260,7 +260,7 @@ test_expect_success "fetch test followRemoteHEAD always" '
 '
 
 test_expect_success 'followRemoteHEAD does not kick in with refspecs' '
-	test_when_finished "git config unset remote.origin.followRemoteHEAD" &&
+	test_when_finished "git -C \"$D/two\" config unset remote.origin.followRemoteHEAD" &&
 	(
 		cd "$D" &&
 		cd two &&
