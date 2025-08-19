@@ -130,11 +130,11 @@ static int xdl_classify_record(unsigned int pass, xdlclassifier_t *cf, xrecord_t
 
 
 static void xdl_free_ctx(xdfile_t *xdf) {
+	ivec_free(&xdf->record);
 	xdl_free(xdf->rindex);
 	xdl_free(xdf->rchg - 1);
 	xdl_free(xdf->ha);
 	xdl_free(xdf->recs);
-	xdl_cha_free(&xdf->rcha);
 }
 
 
@@ -143,34 +143,34 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 	long bsize;
 	unsigned long hav;
 	char const *blk, *cur, *top, *prev;
-	xrecord_t *crec;
 
 	xdf->ha = NULL;
 	xdf->rindex = NULL;
 	xdf->rchg = NULL;
 	xdf->recs = NULL;
 	xdf->nrec = 0;
-
-	if (xdl_cha_init(&xdf->rcha, sizeof(xrecord_t), narec / 4 + 1) < 0)
-		goto abort;
-	if (!XDL_ALLOC_ARRAY(xdf->recs, narec))
-		goto abort;
+	IVEC_INIT(xdf->record);
 
 	if ((cur = blk = xdl_mmfile_first(mf, &bsize))) {
 		for (top = blk + bsize; cur < top; ) {
+			xrecord_t crec;
 			prev = cur;
 			hav = xdl_hash_record(&cur, top, xpp->flags);
-			if (XDL_ALLOC_GROW(xdf->recs, xdf->nrec + 1, narec))
-				goto abort;
-			if (!(crec = xdl_cha_alloc(&xdf->rcha)))
-				goto abort;
-			crec->ptr = (u8 const*) prev;
-			crec->size = (long) (cur - prev);
-			crec->ha = hav;
-			xdf->recs[xdf->nrec++] = crec;
-			if (xdl_classify_record(pass, cf, crec) < 0)
-				goto abort;
+			crec.ptr = (u8 const*) prev;
+			crec.size = cur - prev;
+			crec.ha = hav;
+			ivec_push(&xdf->record, &crec);
 		}
+	}
+	ivec_shrink_to_fit(&xdf->record);
+
+	xdf->nrec = (long) xdf->record.length;
+	if (!XDL_ALLOC_ARRAY(xdf->recs, xdf->record.length))
+		goto abort;
+	for (usize i = 0; i < xdf->record.length; i++) {
+		if (xdl_classify_record(pass, cf, &xdf->record.ptr[i]) < 0)
+			goto abort;
+		xdf->recs[i] = &xdf->record.ptr[i];
 	}
 
 	if (!XDL_CALLOC_ARRAY(xdf->rchg, xdf->nrec + 2))

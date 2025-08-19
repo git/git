@@ -23,7 +23,7 @@
 #if !defined(XTYPES_H)
 #define XTYPES_H
 
-
+#include "../interop/ivec.h"
 
 typedef struct s_chanode {
 	struct s_chanode *next;
@@ -44,8 +44,10 @@ typedef struct s_xrecord {
 	u64 ha;
 } xrecord_t;
 
+DEFINE_IVEC_TYPE(xrecord_t, xrecord);
+
 typedef struct s_xdfile {
-	chastore_t rcha;
+	struct ivec_xrecord record;
 	long nrec;
 	long dstart, dend;
 	xrecord_t **recs;
