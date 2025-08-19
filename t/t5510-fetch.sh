@@ -232,6 +232,15 @@ test_expect_success 'followRemoteHEAD does not kick in with refspecs' '
 	test_cmp expect actual
 '
 
+test_expect_success 'followRemoteHEAD create does not overwrite dangling symref' '
+	git -C two remote add -m does-not-exist custom-head ../one &&
+	test_config -C two remote.custom-head.followRemoteHEAD create &&
+	git -C two fetch custom-head &&
+	echo refs/remotes/custom-head/does-not-exist >expect &&
+	git -C two symbolic-ref refs/remotes/custom-head/HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'fetch --prune on its own works as expected' '
 	git clone . prune &&
 	(
