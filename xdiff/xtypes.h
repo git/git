@@ -48,7 +48,6 @@ DEFINE_IVEC_TYPE(xrecord_t, xrecord);
 
 typedef struct s_xdfile {
 	struct ivec_xrecord record;
-	long nrec;
 	long dstart, dend;
 	xrecord_t **recs;
 	char *rchg;
