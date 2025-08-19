@@ -305,10 +305,12 @@ have to say "Currently"---the status quo in the problem statement is
 about the code _without_ your change, by project convention.
 
 [[imperative-mood]]
-Describe your changes in imperative mood, e.g. "make xyzzy do frotz"
-instead of "[This patch] makes xyzzy do frotz" or "[I] changed xyzzy
-to do frotz", as if you are giving orders to the codebase to change
-its behavior.  Try to make sure your explanation can be understood
+Describe your changes in imperative mood, e.g. "make xyzzy do frotz", 
+as if you are giving orders to the codebase to change its behavior.
+Do not describe you changes in present or past tense, 
+e.g. "[This patch] makes xyzzy do frotz" or "[I] changed xyzzy to 
+do frotz".
+Try to make sure your explanation can be understood
 without external resources. Instead of giving a URL to a mailing list
 archive, summarize the relevant points of the discussion.
 
