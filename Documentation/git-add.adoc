@@ -37,12 +37,10 @@ you must run `git add` again to add the new content to the index.
 The `git status` command can be used to obtain a summary of which
 files have changes that are staged for the next commit.
 
-The `git add` command will not add ignored files by default.  If any
-ignored files were explicitly specified on the command line, `git add`
-will fail with a list of ignored files.  Ignored files reached by
-directory recursion or filename globbing performed by Git (quote your
-globs before the shell) will be silently ignored.  The `git add` command can
-be used to add ignored files with the `-f` (force) option.
+The `git add` command will not add ignored files by default. You can
+use the `--force` option to add ignored files. If you specify the exact
+filename of an ignored file, `git add` will fail with a list of ignored
+files. Otherwise it will silently ignore the file.
 
 Please see linkgit:git-commit[1] for alternative ways to add content to a
 commit.
