@@ -9,7 +9,7 @@
 #include "shallow.h"
 
 static const char *const repo_usage[] = {
-	"git repo info [--format=(keyvalue|nul)] [<key>...]",
+	"git repo info [--format=(keyvalue|nul)|-z] [<key>...]",
 	NULL
 };
 
@@ -115,20 +115,27 @@ static int print_fields(int argc, const char **argv,
 static int repo_info(int argc, const char **argv, const char *prefix,
 		     struct repository *repo)
 {
-	const char *format_str = "keyvalue";
+	const char *format_str = NULL;
 	enum output_format format;
+	int format_nul = 0;
 	struct option options[] = {
 		OPT_STRING(0, "format", &format_str, N_("format"),
 			   N_("output format")),
+		OPT_BOOL('z', NULL, &format_nul, N_("alias for --format=nul")),
 		OPT_END()
 	};
 
 	argc = parse_options(argc, argv, prefix, options, repo_usage, 0);
 
-	if (!strcmp(format_str, "keyvalue"))
-		format = FORMAT_KEYVALUE;
-	else if (!strcmp(format_str, "nul"))
+	die_for_incompatible_opt2(!!format_nul, "-z",
+				  !!format_str, "--format");
+
+	format_str = format_str ? format_str : "keyvalue";
+
+	if (format_nul || !strcmp(format_str, "nul"))
 		format = FORMAT_NUL_TERMINATED;
+	else if (!strcmp(format_str, "keyvalue"))
+		format = FORMAT_KEYVALUE;
 	else
 		die(_("invalid format '%s'"), format_str);
 

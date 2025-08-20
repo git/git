@@ -92,4 +92,16 @@ test_expect_success 'git-repo-info aborts when requesting an invalid format' '
 	test_cmp expect actual
 '
 
+test_expect_success '-z uses nul-terminated format' '
+	printf "layout.bare\nfalse\0layout.shallow\nfalse\0" >expected &&
+	git repo info -z layout.bare layout.shallow >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'git repo info fails when using --format and -z' '
+	echo "fatal: options ${SQ}-z${SQ} and ${SQ}--format${SQ} cannot be used together" >expected &&
+	test_must_fail git repo info -z --format=keyvalue 2>actual &&
+	test_cmp expected actual
+'
+
 test_done
