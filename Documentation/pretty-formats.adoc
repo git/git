@@ -233,11 +233,11 @@ colon and zero or more comma-separated options. Option values may contain
 literal formatting codes. These must be used for commas (`%x2C`) and closing
 parentheses (`%x29`), due to their role in the option syntax.
 +
-** `prefix=<value>`: Shown before the list of ref names.  Defaults to "{nbsp}+(+".
+** `prefix=<value>`: Shown before the list of ref names.  Defaults to "{nbsp}++(++".
 ** `suffix=<value>`: Shown after the list of ref names.  Defaults to "+)+".
 ** `separator=<value>`: Shown between ref names.  Defaults to "+,+{nbsp}".
 ** `pointer=<value>`: Shown between HEAD and the branch it points to, if any.
-		      Defaults to "{nbsp}+->+{nbsp}".
+		      Defaults to "{nbsp}++->++{nbsp}".
 ** `tag=<value>`: Shown before tag names. Defaults to "`tag:`{nbsp}".
 
 +
