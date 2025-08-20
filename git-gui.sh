@@ -103,7 +103,6 @@ if {[is_Windows]} {
 	set _path_sep {:}
 }
 
-set _search_path {}
 set _path_seen [dict create]
 foreach p [split $env(PATH) $_path_sep] {
 	# Keep only absolute paths, getting rid of ., empty, etc.
@@ -112,12 +111,9 @@ foreach p [split $env(PATH) $_path_sep] {
 	}
 	# Keep only the first occurence of any duplicates.
 	set norm_p [file normalize $p]
-	if {[dict exists $_path_seen $norm_p]} {
-		continue
-	}
 	dict set _path_seen $norm_p 1
-	lappend _search_path $norm_p
 }
+set _search_path [dict keys $_path_seen]
 unset _path_seen
 
 set env(PATH) [join $_search_path $_path_sep]
