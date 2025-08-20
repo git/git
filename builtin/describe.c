@@ -507,8 +507,10 @@ static void process_object(struct object *obj, const char *path, void *data)
 
 	if (oideq(pcd->looking_for, &obj->oid) && !pcd->dst->len) {
 		reset_revision_walk();
-		describe_commit(&pcd->current_commit, pcd->dst);
-		strbuf_addf(pcd->dst, ":%s", path);
+		if (!is_null_oid(&pcd->current_commit)) {
+			describe_commit(&pcd->current_commit, pcd->dst);
+			strbuf_addf(pcd->dst, ":%s", path);
+		}
 		free_commit_list(pcd->revs->commits);
 		pcd->revs->commits = NULL;
 	}

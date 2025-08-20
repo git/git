@@ -423,6 +423,22 @@ test_expect_success 'describe blob on an unborn branch' '
 	test_grep "cannot search .* on an unborn branch" actual
 '
 
+# This test creates a repository state that we generally try to disallow: HEAD
+# is pointing to an object that is not a commit. The ref update code forbids
+# non-commit writes directly to HEAD or to any branch in refs/heads/.  But we
+# can use the loophole of pointing HEAD to another non-branch ref (something we
+# should forbid, but don't for historical reasons).
+#
+# Do not take this test as an endorsement of the loophole! If we ever tighten
+# it, it is reasonable to just drop this test entirely.
+test_expect_success 'describe blob on a non-commit HEAD' '
+	oldbranch=$(git symbolic-ref HEAD) &&
+	test_when_finished "git symbolic-ref HEAD $oldbranch" &&
+	git symbolic-ref HEAD refs/tags/test-blob &&
+	test_must_fail git describe test-blob 2>actual &&
+	test_grep "blob .* not reachable from HEAD" actual
+'
+
 test_expect_success ULIMIT_STACK_SIZE 'name-rev works in a deep repo' '
 	i=1 &&
 	while test $i -lt 8000
