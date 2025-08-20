@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2025, #08; Mon, 18)
+Subject: What's cooking in git.git (Aug 2025, #09; Wed, 20)
 X-master-at: c44beea485f0f2feaf460e2ac87fdd5608d63cf0
-X-next-at: 7ce5a0a67ee2fce1fa86eaa2cdf5d7d51f7185c7
+X-next-at: 9569e192d092ed4656ac7048d8d835ab1ca97d2c
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2025, #08; Mon, 18)
+What's cooking in git.git (Aug 2025, #09; Wed, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -52,28 +52,137 @@ Release tarballs are available at:
 --------------------------------------------------
 [New Topics]
 
+* ar/submodule-gitdir-tweak (2025-08-18) 10 commits
+ - fixup! t: add gitdir encoding tests
+ - t: add gitdir encoding tests
+ - t: move nested gitdir tests to proper location
+ - submodule: remove validate_submodule_git_dir()
+ - submodule: encode gitdir paths to avoid conflicts
+ - strbuf: bring back is_rfc3986_unreserved
+ - t: submodules: add basic mixed gitdir path tests
+ - submodule: add gitdir path config override
+ - submodule: create new gitdirs under submodules path
+ - submodule--helper: use submodule_name_to_gitdir in add_submodule
+
+ Avoid local submodule repository directory paths overlapping with
+ each other by encoding submodule names before using them as path
+ components.
+
+ Expecting a reroll.
+ source: <20250816213642.3517822-1-adrian.ratiu@collabora.com>
+
+
+* jk/describe-blob (2025-08-18) 5 commits
+ - describe: pass commit to describe_commit()
+ - describe: handle blob traversal with no commits
+ - describe: catch unborn branch in describe_blob()
+ - describe: error if blob not found
+ - describe: pass oid struct by const pointer
+
+ "git describe <blob>" misbehaves and/or crashes in some corner
+ cases, which has been taught to exit with failure gracefully.
+
+ Will merge to 'next'.
+ source: <20250818205812.GA1018043@coredump.intra.peff.net>
+
+
+* ds/doc-community-discord (2025-08-20) 1 commit
+ - doc: add discord to ways of getting help
+
+ Discord has been added to the first contribution documentation as
+ another way to ask for help.
+
+ Will merge to 'next'.
+ source: <pull.2033.v3.git.git.1755679018997.gitgitgadget@gmail.com>
+
+
+* je/doc-add (2025-08-19) 2 commits
+ - doc: git-add: simplify discussion of ignored files
+ - doc: git-add: clarify intro & add an example
+
+ Documentation for "git add" has been updated.
+
+ Comments?
+ source: <pull.1952.v3.git.1755636370.gitgitgadget@gmail.com>
+
+
+* jk/no-clobber-dangling-symref-with-fetch (2025-08-19) 4 commits
+ - refs: do not clobber dangling symrefs
+ - t5510: prefer "git -C" to subshell for followRemoteHEAD tests
+ - t5510: stop changing top-level working directory
+ - t5510: make confusing config cleanup more explicit
+ (this branch uses ps/reflog-migrate-fixes.)
+
+ "git fetch" can clobber a symref that is dangling when the
+ remote-tracking HEAD is set to auto update, which has been
+ corrected.
+
+ Will merge to 'next'.
+ source: <20250819192004.GA1058857@coredump.intra.peff.net>
+
+
+* ds/path-walk-repack-fix (2025-08-20) 3 commits
+ - path-walk: create initializer for path lists
+ - path-walk: fix setup of pending objects
+ - t7700: add failing --path-walk test
+
+ "git repack --path-walk" lost objects in some corner cases, which
+ has been corrected.
+
+ Comments?
+ source: <pull.1956.git.1755715196.gitgitgadget@gmail.com>
+
+
+* js/doc-gitk-history (2025-08-19) 1 commit
+ - doc/gitk: update reference to the external project
+
+ Manual page for "gitk" is updated with the current maintainer's
+ name.
+
+ Will merge to 'next'.
+ source: <249056e7-1332-4e6f-8d07-16c80fd4913e@kdbg.org>
+
+
+* sg/line-log-boundary-fixes (2025-08-18) 2 commits
+ - line-log: show all line ranges touched by the same diff range
+ - line-log: fix assertion error
+
+ Fix for a corner case bug in "git log -L...".
+
+ Will merge to 'next'?
+ source: <20250818111310.1283932-1-szeder.dev@gmail.com>
+
+
+* ja/asciidoc-doctor-verbatim-fixes (2025-08-20) 1 commit
+ - doc: fix asciidoc format compatibility in pretty-formats.adoc
+
+ Doc mark-up fix.
+
+ Will merge to 'next'.
+ source: <20250820212319.41044-1-jn.avila@free.fr>
+
+--------------------------------------------------
+[Cooking]
+
 * ds/doc-count-objects-fix (2025-08-14) 1 commit
   (merged to 'next' on 2025-08-17 at 1740ef34dd)
  + count-objects: document count-objects pack
 
  Docfix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.2031.v3.git.git.1755182034719.gitgitgadget@gmail.com>
 
 
-* ad/t1517-short-help-tests-fix (2025-08-16) 1 commit
-  (merged to 'next' on 2025-08-17 at b38fb9afd3)
- + t/t1517: mark tests that fail with GIT_TEST_INSTALLED
+* ad/t1517-short-help-tests-fix (2025-08-19) 1 commit
+ - t/t1517: mark tests that fail with GIT_TEST_INSTALLED
  (this branch uses ua/t1517-short-help-tests.)
 
  Test fix.
 
  Will merge to 'next'?
- source: <20250808010651.591906-1-usmanakinyemi202@gmail.com>
+ source: <20250816103656.1693607-1-adam@dinwoodie.org>
 
---------------------------------------------------
-[Cooking]
 
 * dk/t7005-editor-updates (2025-08-13) 3 commits
   (merged to 'next' on 2025-08-17 at ad0ab2e2a9)
@@ -83,7 +192,7 @@ Release tarballs are available at:
 
  Test clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250812170256.71751-1-ben.knoble+github@gmail.com>
 
 
@@ -93,7 +202,7 @@ Release tarballs are available at:
 
  Doc fix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.2023.v3.git.git.1754949872593.gitgitgadget@gmail.com>
 
 
@@ -104,7 +213,7 @@ Release tarballs are available at:
 
  Code clean-up.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <cover.1754868681.git.ayu.chandekar@gmail.com>
 
 
@@ -129,7 +238,7 @@ Release tarballs are available at:
  been a die(), as it is a response to a usual but invalid end-user
  action to attempt pushing an object that does not exist.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  cf. <xmqqo6spiyqp.fsf@gitster.g>
  source: <cover.1754637849.git.liu.denton@gmail.com>
 
@@ -146,7 +255,7 @@ Release tarballs are available at:
  Doc lint updates to encourage the newer and easier-to-use
  `synopsis` format, with fixes to a handful of existing uses.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1945.v3.git.1754945600.gitgitgadget@gmail.com>
 
 
@@ -157,7 +266,7 @@ Release tarballs are available at:
  During interactive rebase, using 'drop' on a merge commit lead to
  an error, which was incorrect.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <37f6e34c-91aa-4e55-88e1-019d2e042df3@kdbg.org>
 
 
@@ -173,7 +282,7 @@ Release tarballs are available at:
  The "list" subcommand of "git refs" acts as a front-end for
  "git for-each-ref".
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250805092758.5321-1-meetsoni3017@gmail.com>
 
 
@@ -183,7 +292,7 @@ Release tarballs are available at:
 
  Doc update.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <aaa1734189ec8bab7cfa0965132e3d8e5909b1af.1754660514.git.code@khaugsbakk.name>
 
 
@@ -196,7 +305,7 @@ Release tarballs are available at:
  contained wildcards; now they take advantage of the filter when
  they can.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250811060137.75135-1-yldhome2d2@gmail.com>
 
 
@@ -212,7 +321,7 @@ Release tarballs are available at:
  Remove dependency on the_repository and other globals from the
  commit-graph code, and other changes unrelated to de-globaling.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250815-b4-pks-commit-graph-wo-the-repository-v4-0-b6b651178cce@pks.im>
 
 
@@ -234,7 +343,7 @@ Release tarballs are available at:
  "git jump" (in contrib/) fails to parse the diff header correctly
  when a file has a space in its name, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1950.v2.git.1754913323810.gitgitgadget@gmail.com>
 
 
@@ -248,7 +357,7 @@ Release tarballs are available at:
  work correctly because of it.  Correct the set-up by undoing what
  the set-up sequence did to cwd and prefix.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <xmqq1ppk58ob.fsf@gitster.g>
 
 
@@ -271,7 +380,7 @@ Release tarballs are available at:
 
  Test fix for breakage introduced in Git 2.50.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <5514f2fd-3307-42c8-97ac-bc2147a7ba41@ramsayjones.plus.com>
 
 
@@ -299,7 +408,7 @@ Release tarballs are available at:
 
  "git diff-tree" learned "--max-depth" option.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250807-toon-max-depth-v2-0-50b7e5c81665@iotcl.com>
 
 
@@ -312,7 +421,7 @@ Release tarballs are available at:
 
  "git cmd --help-all" outside repository.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250803012613.54086-1-ben.knoble+github@gmail.com>
 
 
@@ -334,7 +443,7 @@ Release tarballs are available at:
  "differences in lines that match these regular expressions are
  ignored") did not work well with "--name-only" and friends.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250808033019.78817-1-yldhome2d2@gmail.com>
 
 
@@ -345,7 +454,7 @@ Release tarballs are available at:
 
  "git describe" has been optimized by using better data structure.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <36d5b59a-a99a-4a6f-b637-dfb0b760660f@web.de>
 
 
@@ -391,7 +500,7 @@ Release tarballs are available at:
 
  Update several code paths and replace strbuf_split*().
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250731225433.4028872-1-gitster@pobox.com>
 
 
@@ -409,7 +518,7 @@ Release tarballs are available at:
  string_list_split*() family of functions have been extended to
  simplify common use cases.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250801220423.1230969-1-gitster@pobox.com>
 
 
@@ -441,7 +550,7 @@ Release tarballs are available at:
  upstream/HEAD when origin/HEAD is unborn and performed other
  renames extremely inefficiently, which has been corrected.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250731-pks-remote-rename-improvements-v2-0-dda6f083674d@pks.im>
 
 
@@ -469,7 +578,7 @@ Release tarballs are available at:
  Various bugs about rename handling in "ort" merge strategy have
  been fixed.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <pull.1943.v3.git.1754522122.gitgitgadget@gmail.com>
 
 
@@ -484,12 +593,12 @@ Release tarballs are available at:
  + refs: export `ref_transaction_update_reflog()`
  + builtin/reflog: improve grouping of subcommands
  + Documentation/git-reflog: convert to use synopsis type
- (this branch is used by ps/remote-rename-fix.)
+ (this branch is used by jk/no-clobber-dangling-symref-with-fetch and ps/remote-rename-fix.)
 
  "git refs migrate" to migrate the reflog entries from a refs
  backend to another had a handful of bugs squashed.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250806-pks-reflog-append-v6-0-a50839653766@pks.im>
 
 
@@ -536,7 +645,7 @@ Release tarballs are available at:
 
  Test shuffling.
 
- Will cook in 'next'.
+ Will merge to 'master'.
  source: <20250808010651.591906-1-usmanakinyemi202@gmail.com>
 
 
@@ -552,16 +661,17 @@ Release tarballs are available at:
 
 
 * lo/repo-info (2025-08-16) 5 commits
- - repo: add the --format flag
- - repo: add the field layout.shallow
- - repo: add the field layout.bare
- - repo: add the field references.format
- - repo: declare the repo command
+  (merged to 'next' on 2025-08-19 at 9569e192d0)
+ + repo: add the --format flag
+ + repo: add the field layout.shallow
+ + repo: add the field layout.bare
+ + repo: add the field references.format
+ + repo: declare the repo command
 
  A new subcommand "git repo" gives users a way to grab various
  repository characteristics.
 
- Will merge to 'next'?
+ Will merge to 'master'.
  source: <20250816224603.3307-1-lucasseikioshiro@gmail.com>
 
 
