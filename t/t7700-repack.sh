@@ -838,4 +838,47 @@ test_expect_success '-n overrides repack.updateServerInfo=true' '
 	test_server_info_missing
 '
 
+test_expect_failure 'pending objects are repacked appropriately' '
+	git init pending &&
+
+	(
+		cd pending &&
+
+		mkdir -p a/b &&
+		echo singleton >file &&
+		echo stuff >a/b/c &&
+		echo more >a/d &&
+		git add file a &&
+		git commit -m "single blobs" &&
+
+		echo d >a/d &&
+		echo e >a/e &&
+		git add a &&
+		git commit -m "more blobs" &&
+
+		# This use of a sparse index helps to force
+		# test that the cache-tree is walked, too.
+		git sparse-checkout set --sparse-index a x &&
+
+		# Just _stage_ the changes.
+		echo f >a/d &&
+		echo h >a/e &&
+		echo i >a/i &&
+		mkdir x &&
+		echo y >x/y &&
+		git add a x &&
+
+		# Bring the loose objects into a packfile to avoid
+		# leftovers in next test. Without this, the loose
+		# objects persist and the test succeeds for other
+		# reasons.
+		git repack -adf &&
+		git fsck &&
+
+		# Test path walk version with pack.useSparse.
+		git -c pack.useSparse=true repack -adf --path-walk &&
+		git fsck
+	)
+'
+
 test_done
