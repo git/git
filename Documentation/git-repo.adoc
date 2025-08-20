@@ -55,6 +55,9 @@ values that they return:
 `layout.shallow`::
 	`true` if this is a shallow repository, otherwise `false`.
 
+`objects.format`::
+	The object format (hash algorithm) used in the repository.
+
 `references.format`::
 	The reference storage format. The valid values are:
 +
