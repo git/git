@@ -579,21 +579,6 @@ proc open_cmd_pipe {cmd path} {
 	return [open |$run r]
 }
 
-proc _lappend_nice {cmd_var} {
-	global _nice
-	upvar $cmd_var cmd
-
-	if {![info exists _nice]} {
-		set _nice [_which nice]
-		if {[catch {safe_exec [list $_nice git version]}]} {
-			set _nice {}
-		}
-	}
-	if {$_nice ne {}} {
-		lappend cmd $_nice
-	}
-}
-
 proc git {args} {
 	git_redir $args {}
 }
@@ -627,15 +612,14 @@ proc git_read {cmd {redir {}}} {
 	return [safe_open_command $cmdp $redir]
 }
 
+set _nice [list [_which nice]]
+if {[catch {safe_exec [list {*}$_nice git version]}]} {
+	set _nice {}
+}
+
 proc git_read_nice {cmd} {
-	global _git
-	set opt [list]
-
-	_lappend_nice opt
-
-	set cmdp [concat [list $_git] $cmd]
-
-	return [safe_open_command [concat $opt $cmdp]]
+	set cmdp [list {*}$::_nice $::_git {*}$cmd]
+	return [safe_open_command $cmdp]
 }
 
 proc git_write {cmd} {
