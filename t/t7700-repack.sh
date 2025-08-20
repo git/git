@@ -838,7 +838,7 @@ test_expect_success '-n overrides repack.updateServerInfo=true' '
 	test_server_info_missing
 '
 
-test_expect_failure 'pending objects are repacked appropriately' '
+test_expect_success 'pending objects are repacked appropriately' '
 	git init pending &&
 
 	(
