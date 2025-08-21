@@ -107,18 +107,32 @@ test_expect_success LIBCURL 'remote-http outside repository' '
 	test_grep "^error: remote-curl" actual
 '
 
-test_expect_success 'update-server-info does not crash with -h' '
-	test_expect_code 129 git update-server-info -h >usage &&
-	test_grep "[Uu]sage: git update-server-info " usage &&
-	test_expect_code 129 nongit git update-server-info -h >usage &&
-	test_grep "[Uu]sage: git update-server-info " usage
-'
-
-test_expect_success 'prune does not crash with -h' '
-	test_expect_code 129 git prune -h >usage &&
-	test_grep "[Uu]sage: git prune " usage &&
-	test_expect_code 129 nongit git prune -h >usage &&
-	test_grep "[Uu]sage: git prune " usage
-'
+for cmd in $(git --list-cmds=main)
+do
+	cmd=${cmd%.*} # strip .sh, .perl, etc.
+	case "$cmd" in
+	archimport | cvsexportcommit | cvsimport | cvsserver | daemon | \
+	difftool--helper | filter-branch | fsck-objects | get-tar-commit-id | \
+	http-backend | http-fetch | http-push | init-db | \
+	merge-octopus | merge-one-file | merge-resolve | mergetool | \
+	mktag | p4 | p4.py | pickaxe | remote-ftp | remote-ftps | \
+	remote-http | remote-https | replay | send-email | \
+	sh-i18n--envsubst | shell | show | stage | submodule | svn | \
+	upload-archive--writer | upload-pack | web--browse | whatchanged)
+		expect_outcome=expect_failure ;;
+	*)
+		expect_outcome=expect_success ;;
+	esac
+	case "$cmd" in
+	instaweb)
+		prereq=PERL ;;
+	*)
+		prereq= ;;
+	esac
+	test_$expect_outcome $prereq "'git $cmd -h' outside a repository" '
+		test_expect_code 129 nongit git $cmd -h >usage &&
+		test_grep "[Uu]sage: git $cmd " usage
+	'
+done
 
 test_done
