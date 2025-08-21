@@ -3,8 +3,8 @@ test_description='test wildcards and literals with git add/commit (subshell styl
 
 . ./test-lib.sh
 
-test_have_prereq FUNNYNAMES || {
-	skip_all='skipping: needs FUNNYNAMES (non-Windows only)'
+test_have_prereq BSLASHPSPEC || {
+	skip_all='skipping: needs BSLASHPSPEC (backslashes in pathspecs)'
 	test_done
 }
 
@@ -184,7 +184,7 @@ test_expect_success 'add wildcard f?z' '
 	)
 '
 
-test_expect_success 'add literal \? literal' '
+test_expect_success 'add literal \?' '
 	git init test-q-lit &&
 	(
 		cd test-q-lit &&
@@ -241,7 +241,7 @@ test_expect_success 'add literal hello\?world' '
 	)
 '
 
-test_expect_success 'add literal [abc]' '
+test_expect_success 'add literal \[abc\]' '
 	git init test-brackets-lit &&
 	(
 		cd test-brackets-lit &&
@@ -280,7 +280,7 @@ test_expect_success 'commit: wildcard *' '
 	)
 '
 
-test_expect_success 'commit: literal *' '
+test_expect_success 'commit: literal \*' '
 	git init test-c-asterisk-lit &&
 	(
 		cd test-c-asterisk-lit &&
@@ -328,7 +328,7 @@ test_expect_success 'commit: literal f\*' '
 	)
 '
 
-test_expect_success 'commit: wildcard pathspec limits commit' '
+test_expect_success 'commit: wildcard f**' '
 	git init test-c-pathlimit &&
 	(
 		cd test-c-pathlimit &&
