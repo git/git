@@ -318,33 +318,7 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 }
 
 
-/*
- * Early trim initial and terminal matching records.
- */
-static int xdl_trim_ends(xdfile_t *xdf1, xdfile_t *xdf2) {
-	long i, lim;
-	xrecord_t *recs1, *recs2;
-
-	recs1 = xdf1->record.ptr;
-	recs2 = xdf2->record.ptr;
-	for (i = 0, lim = XDL_MIN(xdf1->record.length, xdf2->record.length); i < lim;
-	     i++, recs1++, recs2++)
-		if (recs1->ha != recs2->ha)
-			break;
-
-	xdf1->dstart = xdf2->dstart = i;
-
-	recs1 = xdf1->record.ptr + xdf1->record.length - 1;
-	recs2 = xdf2->record.ptr + xdf2->record.length - 1;
-	for (lim -= i, i = 0; i < lim; i++, recs1--, recs2--)
-		if (recs1->ha != recs2->ha)
-			break;
-
-	xdf1->dend = xdf1->record.length - i - 1;
-	xdf2->dend = xdf2->record.length - i - 1;
-
-	return 0;
-}
+extern i32 xdl_trim_ends(xdfile_t *xdf1, xdfile_t *xdf2);
 
 
 static int xdl_optimize_ctxs(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xdf2) {
