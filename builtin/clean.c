@@ -478,43 +478,39 @@ static int find_unique(const char *choice, struct menu_stuff *menu_stuff)
  */
 static int parse_choice(struct menu_stuff *menu_stuff,
 			int is_single,
-			struct strbuf input,
+			char *input,
 			int **chosen)
 {
-	struct strbuf **choice_list, **ptr;
+	struct string_list choice = STRING_LIST_INIT_NODUP;
+	struct string_list_item *item;
 	int nr = 0;
 	int i;
 
-	if (is_single) {
-		choice_list = strbuf_split_max(&input, '\n', 0);
-	} else {
-		char *p = input.buf;
-		do {
-			if (*p == ',')
-				*p = ' ';
-		} while (*p++);
-		choice_list = strbuf_split_max(&input, ' ', 0);
-	}
+	string_list_split_in_place_f(&choice, input,
+				     is_single ? "\n" : ", ", -1,
+				     STRING_LIST_SPLIT_TRIM);
 
-	for (ptr = choice_list; *ptr; ptr++) {
-		char *p;
-		int choose = 1;
+	for_each_string_list_item(item, &choice) {
+		const char *string;
+		int choose;
 		int bottom = 0, top = 0;
 		int is_range, is_number;
 
-		strbuf_trim(*ptr);
-		if (!(*ptr)->len)
+		string = item->string;
+		if (!*string)
 			continue;
 
 		/* Input that begins with '-'; unchoose */
-		if (*(*ptr)->buf == '-') {
+		if (string[0] == '-') {
 			choose = 0;
-			strbuf_remove((*ptr), 0, 1);
+			string++;
+		} else {
+			choose = 1;
 		}
 
 		is_range = 0;
 		is_number = 1;
-		for (p = (*ptr)->buf; *p; p++) {
+		for (const char *p = string; *p; p++) {
 			if ('-' == *p) {
 				if (!is_range) {
 					is_range = 1;
@@ -532,27 +528,27 @@ static int parse_choice(struct menu_stuff *menu_stuff,
 		}
 
 		if (is_number) {
-			bottom = atoi((*ptr)->buf);
+			bottom = atoi(string);
 			top = bottom;
 		} else if (is_range) {
-			bottom = atoi((*ptr)->buf);
+			bottom = atoi(string);
 			/* a range can be specified like 5-7 or 5- */
-			if (!*(strchr((*ptr)->buf, '-') + 1))
+			if (!*(strchr(string, '-') + 1))
 				top = menu_stuff->nr;
 			else
-				top = atoi(strchr((*ptr)->buf, '-') + 1);
-		} else if (!strcmp((*ptr)->buf, "*")) {
+				top = atoi(strchr(string, '-') + 1);
+		} else if (!strcmp(string, "*")) {
 			bottom = 1;
 			top = menu_stuff->nr;
 		} else {
-			bottom = find_unique((*ptr)->buf, menu_stuff);
+			bottom = find_unique(string, menu_stuff);
 			top = bottom;
 		}
 
 		if (top <= 0 || bottom <= 0 || top > menu_stuff->nr || bottom > top ||
 		    (is_single && bottom != top)) {
 			clean_print_color(CLEAN_COLOR_ERROR);
-			printf(_("Huh (%s)?\n"), (*ptr)->buf);
+			printf(_("Huh (%s)?\n"), string);
 			clean_print_color(CLEAN_COLOR_RESET);
 			continue;
 		}
@@ -561,7 +557,7 @@ static int parse_choice(struct menu_stuff *menu_stuff,
 			(*chosen)[i-1] = choose;
 	}
 
-	strbuf_list_free(choice_list);
+	string_list_clear(&choice, 0);
 
 	for (i = 0; i < menu_stuff->nr; i++)
 		nr += (*chosen)[i];
@@ -631,7 +627,7 @@ static int *list_and_choose(struct menu_opts *opts, struct menu_stuff *stuff)
 
 		nr = parse_choice(stuff,
 				  opts->flags & MENU_OPTS_SINGLETON,
-				  choice,
+				  choice.buf,
 				  &chosen);
 
 		if (opts->flags & MENU_OPTS_SINGLETON) {
@@ -679,12 +675,13 @@ static int filter_by_patterns_cmd(void)
 {
 	struct dir_struct dir = DIR_INIT;
 	struct strbuf confirm = STRBUF_INIT;
-	struct strbuf **ignore_list;
-	struct string_list_item *item;
 	struct pattern_list *pl;
 	int changed = -1, i;
 
 	for (;;) {
+		struct string_list ignore_list = STRING_LIST_INIT_NODUP;
+		struct string_list_item *item;
+
 		if (!del_list.nr)
 			break;
 
@@ -702,14 +699,15 @@ static int filter_by_patterns_cmd(void)
 			break;
 
 		pl = add_pattern_list(&dir, EXC_CMDL, "manual exclude");
-		ignore_list = strbuf_split_max(&confirm, ' ', 0);
 
-		for (i = 0; ignore_list[i]; i++) {
-			strbuf_trim(ignore_list[i]);
-			if (!ignore_list[i]->len)
+		string_list_split_in_place_f(&ignore_list, confirm.buf, " ", -1,
+					     STRING_LIST_SPLIT_TRIM);
+
+		for (i = 0; i < ignore_list.nr; i++) {
+			item = &ignore_list.items[i];
+			if (!*item->string)
 				continue;
-
-			add_pattern(ignore_list[i]->buf, "", 0, pl, -(i+1));
+			add_pattern(item->string, "", 0, pl, -(i+1));
 		}
 
 		changed = 0;
@@ -730,7 +728,7 @@ static int filter_by_patterns_cmd(void)
 			clean_print_color(CLEAN_COLOR_RESET);
 		}
 
-		strbuf_list_free(ignore_list);
+		string_list_clear(&ignore_list, 0);
 		dir_clear(&dir);
 	}
 
