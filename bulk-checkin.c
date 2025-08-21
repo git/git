@@ -19,11 +19,7 @@
 #include "object-file.h"
 #include "odb.h"
 
-static int odb_transaction_nesting;
-
-static struct tmp_objdir *bulk_fsync_objdir;
-
-static struct bulk_checkin_packfile {
+struct bulk_checkin_packfile {
 	char *pack_tmp_name;
 	struct hashfile *f;
 	off_t offset;
@@ -32,7 +28,13 @@ static struct bulk_checkin_packfile {
 	struct pack_idx_entry **written;
 	uint32_t alloc_written;
 	uint32_t nr_written;
-} bulk_checkin_packfile;
+};
+
+static struct odb_transaction {
+	int nesting;
+	struct tmp_objdir *objdir;
+	struct bulk_checkin_packfile packfile;
+} transaction;
 
 static void finish_tmp_packfile(struct strbuf *basename,
 				const char *pack_tmp_name,
@@ -101,7 +103,7 @@ static void flush_batch_fsync(void)
 	struct strbuf temp_path = STRBUF_INIT;
 	struct tempfile *temp;
 
-	if (!bulk_fsync_objdir)
+	if (!transaction.objdir)
 		return;
 
 	/*
@@ -123,8 +125,8 @@ static void flush_batch_fsync(void)
 	 * Make the object files visible in the primary ODB after their data is
 	 * fully durable.
 	 */
-	tmp_objdir_migrate(bulk_fsync_objdir);
-	bulk_fsync_objdir = NULL;
+	tmp_objdir_migrate(transaction.objdir);
+	transaction.objdir = NULL;
 }
 
 static int already_written(struct bulk_checkin_packfile *state, struct object_id *oid)
@@ -331,12 +333,12 @@ void prepare_loose_object_bulk_checkin(void)
 	 * callers may not know whether any objects will be
 	 * added at the time they call begin_odb_transaction.
 	 */
-	if (!odb_transaction_nesting || bulk_fsync_objdir)
+	if (!transaction.nesting || transaction.objdir)
 		return;
 
-	bulk_fsync_objdir = tmp_objdir_create(the_repository, "bulk-fsync");
-	if (bulk_fsync_objdir)
-		tmp_objdir_replace_primary_odb(bulk_fsync_objdir, 0);
+	transaction.objdir = tmp_objdir_create(the_repository, "bulk-fsync");
+	if (transaction.objdir)
+		tmp_objdir_replace_primary_odb(transaction.objdir, 0);
 }
 
 void fsync_loose_object_bulk_checkin(int fd, const char *filename)
@@ -348,7 +350,7 @@ void fsync_loose_object_bulk_checkin(int fd, const char *filename)
 	 * before renaming the objects to their final names as part of
 	 * flush_batch_fsync.
 	 */
-	if (!bulk_fsync_objdir ||
+	if (!transaction.objdir ||
 	    git_fsync(fd, FSYNC_WRITEOUT_ONLY) < 0) {
 		if (errno == ENOSYS)
 			warning(_("core.fsyncMethod = batch is unsupported on this platform"));
@@ -360,31 +362,31 @@ int index_blob_bulk_checkin(struct object_id *oid,
 			    int fd, size_t size,
 			    const char *path, unsigned flags)
 {
-	int status = deflate_blob_to_pack(&bulk_checkin_packfile, oid, fd, size,
+	int status = deflate_blob_to_pack(&transaction.packfile, oid, fd, size,
 					  path, flags);
-	if (!odb_transaction_nesting)
-		flush_bulk_checkin_packfile(&bulk_checkin_packfile);
+	if (!transaction.nesting)
+		flush_bulk_checkin_packfile(&transaction.packfile);
 	return status;
 }
 
 void begin_odb_transaction(void)
 {
-	odb_transaction_nesting += 1;
+	transaction.nesting += 1;
 }
 
 void flush_odb_transaction(void)
 {
 	flush_batch_fsync();
-	flush_bulk_checkin_packfile(&bulk_checkin_packfile);
+	flush_bulk_checkin_packfile(&transaction.packfile);
 }
 
 void end_odb_transaction(void)
 {
-	odb_transaction_nesting -= 1;
-	if (odb_transaction_nesting < 0)
+	transaction.nesting -= 1;
+	if (transaction.nesting < 0)
 		BUG("Unbalanced ODB transaction nesting");
 
-	if (odb_transaction_nesting)
+	if (transaction.nesting)
 		return;
 
 	flush_odb_transaction();
