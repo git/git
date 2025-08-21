@@ -30,11 +30,13 @@ struct bulk_checkin_packfile {
 	uint32_t nr_written;
 };
 
-static struct odb_transaction {
+struct odb_transaction {
+	struct object_database *odb;
+
 	int nesting;
 	struct tmp_objdir *objdir;
 	struct bulk_checkin_packfile packfile;
-} transaction;
+};
 
 static void finish_tmp_packfile(struct strbuf *basename,
 				const char *pack_tmp_name,
@@ -98,12 +100,12 @@ clear_exit:
 /*
  * Cleanup after batch-mode fsync_object_files.
  */
-static void flush_batch_fsync(void)
+static void flush_batch_fsync(struct odb_transaction *transaction)
 {
 	struct strbuf temp_path = STRBUF_INIT;
 	struct tempfile *temp;
 
-	if (!transaction.objdir)
+	if (!transaction->objdir)
 		return;
 
 	/*
@@ -125,8 +127,8 @@ static void flush_batch_fsync(void)
 	 * Make the object files visible in the primary ODB after their data is
 	 * fully durable.
 	 */
-	tmp_objdir_migrate(transaction.objdir);
-	transaction.objdir = NULL;
+	tmp_objdir_migrate(transaction->objdir);
+	transaction->objdir = NULL;
 }
 
 static int already_written(struct bulk_checkin_packfile *state, struct object_id *oid)
@@ -325,7 +327,7 @@ static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
 	return 0;
 }
 
-void prepare_loose_object_bulk_checkin(void)
+void prepare_loose_object_bulk_checkin(struct odb_transaction *transaction)
 {
 	/*
 	 * We lazily create the temporary object directory
@@ -333,15 +335,16 @@ void prepare_loose_object_bulk_checkin(void)
 	 * callers may not know whether any objects will be
 	 * added at the time they call begin_odb_transaction.
 	 */
-	if (!transaction.nesting || transaction.objdir)
+	if (!transaction || transaction->objdir)
 		return;
 
-	transaction.objdir = tmp_objdir_create(the_repository, "bulk-fsync");
-	if (transaction.objdir)
-		tmp_objdir_replace_primary_odb(transaction.objdir, 0);
+	transaction->objdir = tmp_objdir_create(the_repository, "bulk-fsync");
+	if (transaction->objdir)
+		tmp_objdir_replace_primary_odb(transaction->objdir, 0);
 }
 
-void fsync_loose_object_bulk_checkin(int fd, const char *filename)
+void fsync_loose_object_bulk_checkin(struct odb_transaction *transaction,
+				     int fd, const char *filename)
 {
 	/*
 	 * If we have an active ODB transaction, we issue a call that
@@ -350,7 +353,7 @@ void fsync_loose_object_bulk_checkin(int fd, const char *filename)
 	 * before renaming the objects to their final names as part of
 	 * flush_batch_fsync.
 	 */
-	if (!transaction.objdir ||
+	if (!transaction || !transaction->objdir ||
 	    git_fsync(fd, FSYNC_WRITEOUT_ONLY) < 0) {
 		if (errno == ENOSYS)
 			warning(_("core.fsyncMethod = batch is unsupported on this platform"));
@@ -358,36 +361,57 @@ void fsync_loose_object_bulk_checkin(int fd, const char *filename)
 	}
 }
 
-int index_blob_bulk_checkin(struct object_id *oid,
-			    int fd, size_t size,
+int index_blob_bulk_checkin(struct odb_transaction *transaction,
+			    struct object_id *oid, int fd, size_t size,
 			    const char *path, unsigned flags)
 {
-	int status = deflate_blob_to_pack(&transaction.packfile, oid, fd, size,
-					  path, flags);
-	if (!transaction.nesting)
-		flush_bulk_checkin_packfile(&transaction.packfile);
+	int status;
+
+	if (transaction) {
+		status = deflate_blob_to_pack(&transaction->packfile, oid, fd,
+					      size, path, flags);
+	} else {
+		struct bulk_checkin_packfile state = { 0 };
+
+		status = deflate_blob_to_pack(&state, oid, fd, size, path, flags);
+		flush_bulk_checkin_packfile(&state);
+	}
+
 	return status;
 }
 
-void begin_odb_transaction(void)
+struct odb_transaction *begin_odb_transaction(struct object_database *odb)
 {
-	transaction.nesting += 1;
+	if (!odb->transaction) {
+		CALLOC_ARRAY(odb->transaction, 1);
+		odb->transaction->odb = odb;
+	}
+
+	odb->transaction->nesting += 1;
+
+	return odb->transaction;
 }
 
-void flush_odb_transaction(void)
+void flush_odb_transaction(struct odb_transaction *transaction)
 {
-	flush_batch_fsync();
-	flush_bulk_checkin_packfile(&transaction.packfile);
-}
-
-void end_odb_transaction(void)
-{
-	transaction.nesting -= 1;
-	if (transaction.nesting < 0)
-		BUG("Unbalanced ODB transaction nesting");
-
-	if (transaction.nesting)
+	if (!transaction)
 		return;
 
-	flush_odb_transaction();
+	flush_batch_fsync(transaction);
+	flush_bulk_checkin_packfile(&transaction->packfile);
+}
+
+void end_odb_transaction(struct odb_transaction *transaction)
+{
+	if (!transaction || transaction->nesting == 0)
+		BUG("Unbalanced ODB transaction nesting");
+
+	transaction->nesting -= 1;
+
+	if (transaction->nesting)
+		return;
+
+	flush_odb_transaction(transaction);
+	transaction->odb->transaction = NULL;
+	free(transaction);
 }
