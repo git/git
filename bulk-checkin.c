@@ -365,19 +365,8 @@ int index_blob_bulk_checkin(struct odb_transaction *transaction,
 			    struct object_id *oid, int fd, size_t size,
 			    const char *path, unsigned flags)
 {
-	int status;
-
-	if (transaction) {
-		status = deflate_blob_to_pack(&transaction->packfile, oid, fd,
-					      size, path, flags);
-	} else {
-		struct bulk_checkin_packfile state = { 0 };
-
-		status = deflate_blob_to_pack(&state, oid, fd, size, path, flags);
-		flush_bulk_checkin_packfile(&state);
-	}
-
-	return status;
+	return deflate_blob_to_pack(&transaction->packfile, oid, fd, size, path,
+				    flags);
 }
 
 struct odb_transaction *begin_odb_transaction(struct object_database *odb)

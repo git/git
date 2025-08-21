@@ -14,8 +14,11 @@ void fsync_loose_object_bulk_checkin(struct odb_transaction *transaction,
 				     int fd, const char *filename);
 
 /*
- * This creates one packfile per large blob unless bulk-checkin
- * machinery is "plugged".
+ * This writes the specified object to a packfile. Objects written here
+ * during the same transaction are written to the same packfile. The
+ * packfile is not flushed until the transaction is flushed. The caller
+ * is expected to ensure a valid transaction is setup for objects to be
+ * recorded to.
  *
  * This also bypasses the usual "convert-to-git" dance, and that is on
  * purpose. We could write a streaming version of the converting
