@@ -61,7 +61,7 @@ enum protocol_version determine_protocol_version_server(void)
 	if (git_protocol) {
 		struct string_list list = STRING_LIST_INIT_DUP;
 		const struct string_list_item *item;
-		string_list_split(&list, git_protocol, ':', -1);
+		string_list_split(&list, git_protocol, ":", -1);
 
 		for_each_string_list_item(item, &list) {
 			const char *value;

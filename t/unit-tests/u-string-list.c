@@ -43,7 +43,7 @@ static void t_string_list_equal(struct string_list *list,
 				  expected_strings->items[i].string);
 }
 
-static void t_string_list_split(const char *data, int delim, int maxsplit, ...)
+static void t_string_list_split(const char *data, const char *delim, int maxsplit, ...)
 {
 	struct string_list expected_strings = STRING_LIST_INIT_DUP;
 	struct string_list list = STRING_LIST_INIT_DUP;
@@ -63,15 +63,94 @@ static void t_string_list_split(const char *data, int delim, int maxsplit, ...)
 	string_list_clear(&list, 0);
 }
 
+static void t_string_list_split_f(const char *data, const char *delim,
+				  int maxsplit, unsigned flags, ...)
+{
+	struct string_list expected_strings = STRING_LIST_INIT_DUP;
+	struct string_list list = STRING_LIST_INIT_DUP;
+	va_list ap;
+	int len;
+
+	va_start(ap, flags);
+	t_vcreate_string_list_dup(&expected_strings, 0, ap);
+	va_end(ap);
+
+	string_list_clear(&list, 0);
+	len = string_list_split_f(&list, data, delim, maxsplit, flags);
+	cl_assert_equal_i(len, expected_strings.nr);
+	t_string_list_equal(&list, &expected_strings);
+
+	string_list_clear(&expected_strings, 0);
+	string_list_clear(&list, 0);
+}
+
+void test_string_list__split_f(void)
+{
+	t_string_list_split_f("::foo:bar:baz:", ":", -1, 0,
+			      "", "", "foo", "bar", "baz", "", NULL);
+	t_string_list_split_f(" foo:bar : baz", ":", -1, STRING_LIST_SPLIT_TRIM,
+			      "foo", "bar", "baz", NULL);
+	t_string_list_split_f("  a  b c  ", " ", 1, STRING_LIST_SPLIT_TRIM,
+			      "a", "b c", NULL);
+	t_string_list_split_f("::foo::bar:baz:", ":", -1, STRING_LIST_SPLIT_NONEMPTY,
+			      "foo", "bar", "baz", NULL);
+	t_string_list_split_f("foo:baz", ":", -1, STRING_LIST_SPLIT_NONEMPTY,
+			      "foo", "baz", NULL);
+	t_string_list_split_f("foo :: : baz", ":", -1,
+			      STRING_LIST_SPLIT_NONEMPTY | STRING_LIST_SPLIT_TRIM,
+			      "foo", "baz", NULL);
+}
+
+static void t_string_list_split_in_place_f(const char *data_, const char *delim,
+					   int maxsplit, unsigned flags, ...)
+{
+	struct string_list expected_strings = STRING_LIST_INIT_DUP;
+	struct string_list list = STRING_LIST_INIT_NODUP;
+	char *data = xstrdup(data_);
+	va_list ap;
+	int len;
+
+	va_start(ap, flags);
+	t_vcreate_string_list_dup(&expected_strings, 0, ap);
+	va_end(ap);
+
+	string_list_clear(&list, 0);
+	len = string_list_split_in_place_f(&list, data, delim, maxsplit, flags);
+	cl_assert_equal_i(len, expected_strings.nr);
+	t_string_list_equal(&list, &expected_strings);
+
+	free(data);
+	string_list_clear(&expected_strings, 0);
+	string_list_clear(&list, 0);
+}
+
+void test_string_list__split_in_place_f(void)
+{
+	t_string_list_split_in_place_f("::foo:bar:baz:", ":", -1, 0,
+				       "", "", "foo", "bar", "baz", "", NULL);
+	t_string_list_split_in_place_f(" foo:bar : baz", ":", -1, STRING_LIST_SPLIT_TRIM,
+				       "foo", "bar", "baz", NULL);
+	t_string_list_split_in_place_f("  a  b c  ", " ", 1, STRING_LIST_SPLIT_TRIM,
+				       "a", "b c", NULL);
+	t_string_list_split_in_place_f("::foo::bar:baz:", ":", -1,
+				       STRING_LIST_SPLIT_NONEMPTY,
+				       "foo", "bar", "baz", NULL);
+	t_string_list_split_in_place_f("foo:baz", ":", -1, STRING_LIST_SPLIT_NONEMPTY,
+				       "foo", "baz", NULL);
+	t_string_list_split_in_place_f("foo :: : baz", ":", -1,
+				       STRING_LIST_SPLIT_NONEMPTY | STRING_LIST_SPLIT_TRIM,
+				       "foo", "baz", NULL);
+}
+
 void test_string_list__split(void)
 {
-	t_string_list_split("foo:bar:baz", ':', -1, "foo", "bar", "baz", NULL);
-	t_string_list_split("foo:bar:baz", ':', 0, "foo:bar:baz", NULL);
-	t_string_list_split("foo:bar:baz", ':', 1, "foo", "bar:baz", NULL);
-	t_string_list_split("foo:bar:baz", ':', 2, "foo", "bar", "baz", NULL);
-	t_string_list_split("foo:bar:", ':', -1, "foo", "bar", "", NULL);
-	t_string_list_split("", ':', -1, "", NULL);
-	t_string_list_split(":", ':', -1, "", "", NULL);
+	t_string_list_split("foo:bar:baz", ":", -1, "foo", "bar", "baz", NULL);
+	t_string_list_split("foo:bar:baz", ":", 0, "foo:bar:baz", NULL);
+	t_string_list_split("foo:bar:baz", ":", 1, "foo", "bar:baz", NULL);
+	t_string_list_split("foo:bar:baz", ":", 2, "foo", "bar", "baz", NULL);
+	t_string_list_split("foo:bar:", ":", -1, "foo", "bar", "", NULL);
+	t_string_list_split("", ":", -1, "", NULL);
+	t_string_list_split(":", ":", -1, "", "", NULL);
 }
 
 static void t_string_list_split_in_place(const char *data, const char *delim,

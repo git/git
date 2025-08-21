@@ -407,7 +407,7 @@ static int process_ref_v2(struct packet_reader *reader, struct ref ***list,
 	 * name.  Subsequent fields (symref-target and peeled) are optional and
 	 * don't have a particular order.
 	 */
-	if (string_list_split(&line_sections, line, ' ', -1) < 2) {
+	if (string_list_split(&line_sections, line, " ", -1) < 2) {
 		ret = 0;
 		goto out;
 	}

@@ -1338,7 +1338,7 @@ static enum parse_opt_result usage_with_options_internal(struct parse_opt_ctx_t 
 		if (!saw_empty_line && !*str)
 			saw_empty_line = 1;
 
-		string_list_split(&list, str, '\n', -1);
+		string_list_split(&list, str, "\n", -1);
 		for (j = 0; j < list.nr; j++) {
 			const char *line = list.items[j].string;
 
