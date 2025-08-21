@@ -1012,10 +1012,6 @@ static int prepare_transaction_update(struct write_transaction_table_arg **out,
 	if (!arg) {
 		struct reftable_addition *addition;
 
-		ret = reftable_stack_reload(be->stack);
-		if (ret)
-			return ret;
-
 		ret = reftable_stack_new_addition(&addition, be->stack,
 						  REFTABLE_STACK_NEW_ADDITION_RELOAD);
 		if (ret) {
@@ -1974,7 +1970,8 @@ static int reftable_be_rename_ref(struct ref_store *ref_store,
 	ret = backend_for(&arg.be, refs, newrefname, &newrefname, 1);
 	if (ret)
 		goto done;
-	ret = reftable_stack_add(arg.be->stack, &write_copy_table, &arg);
+	ret = reftable_stack_add(arg.be->stack, &write_copy_table, &arg,
+				 REFTABLE_STACK_NEW_ADDITION_RELOAD);
 
 done:
 	assert(ret != REFTABLE_API_ERROR);
@@ -2003,7 +2000,8 @@ static int reftable_be_copy_ref(struct ref_store *ref_store,
 	ret = backend_for(&arg.be, refs, newrefname, &newrefname, 1);
 	if (ret)
 		goto done;
-	ret = reftable_stack_add(arg.be->stack, &write_copy_table, &arg);
+	ret = reftable_stack_add(arg.be->stack, &write_copy_table, &arg,
+				 REFTABLE_STACK_NEW_ADDITION_RELOAD);
 
 done:
 	assert(ret != REFTABLE_API_ERROR);
@@ -2375,7 +2373,8 @@ static int reftable_be_create_reflog(struct ref_store *ref_store,
 		goto done;
 	arg.stack = be->stack;
 
-	ret = reftable_stack_add(be->stack, &write_reflog_existence_table, &arg);
+	ret = reftable_stack_add(be->stack, &write_reflog_existence_table, &arg,
+				 REFTABLE_STACK_NEW_ADDITION_RELOAD);
 
 done:
 	return ret;
@@ -2446,7 +2445,8 @@ static int reftable_be_delete_reflog(struct ref_store *ref_store,
 		return ret;
 	arg.stack = be->stack;
 
-	ret = reftable_stack_add(be->stack, &write_reflog_delete_table, &arg);
+	ret = reftable_stack_add(be->stack, &write_reflog_delete_table, &arg,
+				 REFTABLE_STACK_NEW_ADDITION_RELOAD);
 
 	assert(ret != REFTABLE_API_ERROR);
 	return ret;
@@ -2567,15 +2567,16 @@ static int reftable_be_reflog_expire(struct ref_store *ref_store,
 	if (ret < 0)
 		goto done;
 
+	ret = reftable_stack_new_addition(&add, be->stack,
+					  REFTABLE_STACK_NEW_ADDITION_RELOAD);
+	if (ret < 0)
+		goto done;
+
 	ret = reftable_stack_init_log_iterator(be->stack, &it);
 	if (ret < 0)
 		goto done;
 
 	ret = reftable_iterator_seek_log(&it, refname);
-	if (ret < 0)
-		goto done;
-
-	ret = reftable_stack_new_addition(&add, be->stack, 0);
 	if (ret < 0)
 		goto done;
 

@@ -72,7 +72,7 @@ int flock_acquire(struct reftable_flock *l, const char *target_path,
 		reftable_free(lockfile);
 		if (errno == EEXIST)
 			return REFTABLE_LOCK_ERROR;
-		return -1;
+		return REFTABLE_IO_ERROR;
 	}
 
 	l->fd = get_lock_file_fd(lockfile);
