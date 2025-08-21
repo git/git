@@ -1,0 +1,58 @@
+Git v2.52 Release Notes
+=======================
+
+UI, Workflows & Features
+------------------------
+
+
+Performance, Internal Implementation, Development Support etc.
+--------------------------------------------------------------
+
+ * string_list_split*() family of functions have been extended to
+   simplify common use cases.
+
+ * Arrays of strbuf is often a wrong data structure to use, and
+   strbuf_split*() family of functions that create them often have
+   better alternatives.  Update several code paths and replace
+   strbuf_split*().
+
+ * Revision traversal limited with pathspec, like "git log dir/*",
+   used to ignore changed-paths Bloom filter when the pathspec
+   contained wildcards; now they take advantage of the filter when
+   they can.
+
+Fixes since v2.51
+-----------------
+
+Unless otherwise noted, all the changes in 2.51.X maintenance track,
+including security updates, are included in this release.
+
+ * During interactive rebase, using 'drop' on a merge commit lead to
+   an error, which was incorrect.
+   (merge 4d491ade8f js/rebase-i-allow-drop-on-a-merge later to maint).
+
+ * "git refs migrate" to migrate the reflog entries from a refs
+   backend to another had a handful of bugs squashed.
+   (merge 465eff81de ps/reflog-migrate-fixes later to maint).
+
+ * "git remote rename origin upstream" failed to move origin/HEAD to
+   upstream/HEAD when origin/HEAD is unborn and performed other
+   renames extremely inefficiently, which has been corrected.
+   (merge 16c4fa26b9 ps/remote-rename-fix later to maint).
+
+ * "git describe" has been optimized by using better data structure.
+   (merge 08bb69d70f rs/describe-with-prio-queue later to maint).
+
+ * "git push" had a code path that led to BUG() but it should have
+   been a die(), as it is a response to a usual but invalid end-user
+   action to attempt pushing an object that does not exist.
+   (merge dfbfc2221b dl/push-missing-object-error later to maint).
+
+ * Various bugs about rename handling in "ort" merge strategy have
+   been fixed.
+   (merge f6ecb603ff en/ort-rename-fixes later to maint).
+
+ * Other code cleanup, docfix, build fix, etc.
+   (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
+   (merge cf7efa4f33 rj/t6137-cygwin-fix later to maint).
+   (merge 529a60a885 ua/t1517-short-help-tests later to maint).

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-DEF_VER=v2.51.0
+DEF_VER=v2.51.GIT
 
 LF='
 '
