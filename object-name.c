@@ -1525,7 +1525,8 @@ struct grab_nth_branch_switch_cbdata {
 	struct strbuf *sb;
 };
 
-static int grab_nth_branch_switch(struct object_id *ooid UNUSED,
+static int grab_nth_branch_switch(const char *refname UNUSED,
+				  struct object_id *ooid UNUSED,
 				  struct object_id *noid UNUSED,
 				  const char *email UNUSED,
 				  timestamp_t timestamp UNUSED,

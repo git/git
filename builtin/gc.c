@@ -312,7 +312,8 @@ struct count_reflog_entries_data {
 	size_t limit;
 };
 
-static int count_reflog_entries(struct object_id *old_oid, struct object_id *new_oid,
+static int count_reflog_entries(const char *refname UNUSED,
+				struct object_id *old_oid, struct object_id *new_oid,
 				const char *committer, timestamp_t timestamp,
 				int tz, const char *msg, void *cb_data)
 {
