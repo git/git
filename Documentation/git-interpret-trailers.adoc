@@ -142,8 +142,8 @@ OPTIONS
 	provided with '--if-exists' overrides the `trailer.ifExists` and any
 	applicable `trailer.<keyAlias>.ifExists` configuration variables
 	and applies to all '--trailer' options until the next occurrence of
-	'--if-exists' or '--no-if-exists'. Upon encountering '--no-if-exists, clear the
-	effect of any previous use of '--if-exists, such that the relevant configuration
+	'--if-exists' or '--no-if-exists'. Upon encountering '--no-if-exists', clear the
+	effect of any previous use of '--if-exists', such that the relevant configuration
 	variables are no longer overridden. Possible actions are `addIfDifferent`,
 	`addIfDifferentNeighbor`, `add`, `replace` and `doNothing`.
 
@@ -154,8 +154,8 @@ OPTIONS
 	provided with '--if-missing' overrides the `trailer.ifMissing` and any
 	applicable `trailer.<keyAlias>.ifMissing` configuration variables
 	and applies to all '--trailer' options until the next occurrence of
-	'--if-missing' or '--no-if-missing'. Upon encountering '--no-if-missing,
-	clear the effect of any previous use of '--if-missing, such that the relevant
+	'--if-missing' or '--no-if-missing'. Upon encountering '--no-if-missing',
+	clear the effect of any previous use of '--if-missing', such that the relevant
 	configuration variables are no longer overridden. Possible actions are `doNothing`
 	or `add`.
 
