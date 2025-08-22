@@ -352,17 +352,15 @@ static void append_suffix(int depth, const struct object_id *oid, struct strbuf 
 		    repo_find_unique_abbrev(the_repository, oid, abbrev));
 }
 
-static void describe_commit(struct object_id *oid, struct strbuf *dst)
+static void describe_commit(struct commit *cmit, struct strbuf *dst)
 {
-	struct commit *cmit, *gave_up_on = NULL;
+	struct commit *gave_up_on = NULL;
 	struct lazy_queue queue = LAZY_QUEUE_INIT;
 	struct commit_name *n;
 	struct possible_tag all_matches[MAX_TAGS];
 	unsigned int match_cnt = 0, annotated_cnt = 0, cur_match;
 	unsigned long seen_commits = 0;
 	unsigned int unannotated_cnt = 0;
-
-	cmit = lookup_commit_reference(the_repository, oid);
 
 	n = find_commit_name(&cmit->object.oid);
 	if (n && (tags || all || n->prio == 2)) {
@@ -371,7 +369,7 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 		 */
 		append_name(n, dst);
 		if (n->misnamed || longformat)
-			append_suffix(0, n->tag ? get_tagged_oid(n->tag) : oid, dst);
+			append_suffix(0, n->tag ? get_tagged_oid(n->tag) : &cmit->object.oid, dst);
 		if (suffix)
 			strbuf_addstr(dst, suffix);
 		return;
@@ -528,8 +526,8 @@ static void describe_commit(struct object_id *oid, struct strbuf *dst)
 }
 
 struct process_commit_data {
-	struct object_id current_commit;
-	struct object_id looking_for;
+	struct commit *current_commit;
+	const struct object_id *looking_for;
 	struct strbuf *dst;
 	struct rev_info *revs;
 };
@@ -537,30 +535,38 @@ struct process_commit_data {
 static void process_commit(struct commit *commit, void *data)
 {
 	struct process_commit_data *pcd = data;
-	pcd->current_commit = commit->object.oid;
+	pcd->current_commit = commit;
 }
 
 static void process_object(struct object *obj, const char *path, void *data)
 {
 	struct process_commit_data *pcd = data;
 
-	if (oideq(&pcd->looking_for, &obj->oid) && !pcd->dst->len) {
+	if (oideq(pcd->looking_for, &obj->oid) && !pcd->dst->len) {
 		reset_revision_walk();
-		describe_commit(&pcd->current_commit, pcd->dst);
-		strbuf_addf(pcd->dst, ":%s", path);
+		if (pcd->current_commit) {
+			describe_commit(pcd->current_commit, pcd->dst);
+			strbuf_addf(pcd->dst, ":%s", path);
+		}
 		free_commit_list(pcd->revs->commits);
 		pcd->revs->commits = NULL;
 	}
 }
 
-static void describe_blob(struct object_id oid, struct strbuf *dst)
+static void describe_blob(const struct object_id *oid, struct strbuf *dst)
 {
 	struct rev_info revs;
 	struct strvec args = STRVEC_INIT;
-	struct process_commit_data pcd = { *null_oid(the_hash_algo), oid, dst, &revs};
+	struct object_id head_oid;
+	struct process_commit_data pcd = { NULL, oid, dst, &revs};
+
+	if (repo_get_oid(the_repository, "HEAD", &head_oid))
+		die(_("cannot search for blob '%s' on an unborn branch"),
+		    oid_to_hex(oid));
 
 	strvec_pushl(&args, "internal: The first arg is not parsed",
-		     "--objects", "--in-commit-order", "--reverse", "HEAD",
+		     "--objects", "--in-commit-order", "--reverse",
+		     oid_to_hex(&head_oid),
 		     NULL);
 
 	repo_init_revisions(the_repository, &revs, NULL);
@@ -574,6 +580,9 @@ static void describe_blob(struct object_id oid, struct strbuf *dst)
 	reset_revision_walk();
 	release_revisions(&revs);
 	strvec_clear(&args);
+
+	if (!dst->len)
+		die(_("blob '%s' not reachable from HEAD"), oid_to_hex(oid));
 }
 
 static void describe(const char *arg, int last_one)
@@ -590,10 +599,10 @@ static void describe(const char *arg, int last_one)
 	cmit = lookup_commit_reference_gently(the_repository, &oid, 1);
 
 	if (cmit)
-		describe_commit(&oid, &sb);
+		describe_commit(cmit, &sb);
 	else if (odb_read_object_info(the_repository->objects,
 				      &oid, NULL) == OBJ_BLOB)
-		describe_blob(oid, &sb);
+		describe_blob(&oid, &sb);
 	else
 		die(_("%s is neither a commit nor blob"), arg);
 
