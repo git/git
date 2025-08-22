@@ -63,6 +63,12 @@ test_expect_success 'setup remote' '
 test_repo_info 'shallow repository = true is retrieved correctly' \
 	'git clone --depth 1 "file://$PWD/remote"' 'shallow' 'layout.shallow' 'true'
 
+test_repo_info 'objects.format = sha1 is retrieved correctly' \
+	'git init --object-format=sha1' 'sha1' 'objects.format' 'sha1'
+
+test_repo_info 'objects.format = sha256 is retrieved correctly' \
+	'git init --object-format=sha256' 'sha256' 'objects.format' 'sha256'
+
 test_expect_success 'values returned in order requested' '
 	cat >expect <<-\EOF &&
 	layout.bare=false
@@ -90,6 +96,18 @@ test_expect_success 'git-repo-info aborts when requesting an invalid format' '
 	echo "fatal: invalid format ${SQ}foo${SQ}" >expect &&
 	test_must_fail git repo info --format=foo 2>actual &&
 	test_cmp expect actual
+'
+
+test_expect_success '-z uses nul-terminated format' '
+	printf "layout.bare\nfalse\0layout.shallow\nfalse\0" >expected &&
+	git repo info -z layout.bare layout.shallow >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'git repo info fails when using --format and -z' '
+	echo "fatal: options ${SQ}-z${SQ} and ${SQ}--format${SQ} cannot be used together" >expected &&
+	test_must_fail git repo info -z --format=keyvalue 2>actual &&
+	test_cmp expected actual
 '
 
 test_done
