@@ -87,7 +87,8 @@ OPTIONS
 --verbose::
 	Pass --verbose to git-fetch and git-merge.
 
---[no-]recurse-submodules[=(yes|on-demand|no)]::
+--recurse-submodules[=(yes|on-demand|no)]::
+--no-recurse-submodules::
 	This option controls if new commits of populated submodules should
 	be fetched, and if the working trees of active submodules should be
 	updated, too (see linkgit:git-fetch[1], linkgit:git-config[1] and

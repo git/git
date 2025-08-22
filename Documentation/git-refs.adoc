@@ -17,7 +17,7 @@ git refs list [--count=<count>] [--shell|--perl|--python|--tcl]
 		   [--merged[=<object>]] [--no-merged[=<object>]]
 		   [--contains[=<object>]] [--no-contains[=<object>]]
 		   [(--exclude=<pattern>)...] [--start-after=<marker>]
-		   [ --stdin | <pattern>... ]
+		   [ --stdin | (<pattern>...)]
 
 DESCRIPTION
 -----------
@@ -27,10 +27,10 @@ This command provides low-level access to refs.
 COMMANDS
 --------
 
-migrate::
+`migrate`::
 	Migrate ref store between different formats.
 
-verify::
+`verify`::
 	Verify reference database consistency.
 
 list::
@@ -41,32 +41,32 @@ list::
 OPTIONS
 -------
 
-The following options are specific to 'git refs migrate':
+The following options are specific to `git refs migrate`:
 
---ref-format=<format>::
+`--ref-format=<format>`::
 	The ref format to migrate the ref store to. Can be one of:
 +
 include::ref-storage-format.adoc[]
 
---dry-run::
+`--dry-run`::
 	Perform the migration, but do not modify the repository. The migrated
 	refs will be written into a separate directory that can be inspected
 	separately. The name of the directory will be reported on stdout. This
 	can be used to double check that the migration works as expected before
 	performing the actual migration.
 
---reflog::
---no-reflog::
+`--reflog`::
+`--no-reflog`::
 	Choose between migrating the reflog data to the new backend,
 	and discarding them.  The default is "--reflog", to migrate.
 
-The following options are specific to 'git refs verify':
+The following options are specific to `git refs verify`:
 
---strict::
+`--strict`::
 	Enable stricter error checking. This will cause warnings to be
 	reported as errors. See linkgit:git-fsck[1].
 
---verbose::
+`--verbose`::
 	When verifying the reference database consistency, be chatty.
 
 The following options are specific to 'git refs list':

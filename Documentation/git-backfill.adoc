@@ -57,7 +57,8 @@ OPTIONS
 	blobs seen at a given path. The default minimum batch size is
 	50,000.
 
-`--[no-]sparse`::
+`--sparse`::
+`--no-sparse`::
 	Only download objects if they appear at a path that matches the
 	current sparse-checkout. If the sparse-checkout feature is enabled,
 	then `--sparse` is assumed and can be disabled with `--no-sparse`.

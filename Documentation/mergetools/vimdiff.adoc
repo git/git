@@ -3,6 +3,7 @@ Description
 
 When specifying `--tool=vimdiff` in `git mergetool` Git will open Vim with a 4
 windows layout distributed in the following way:
+
 ....
 ------------------------------------------
 |             |           |              |
@@ -56,6 +57,7 @@ needed in this case. The next layout definition is equivalent:
 +
 --
 If, for some reason, we are not interested in the `BASE` buffer.
+
 ....
 ------------------------------------------
 |             |           |              |
@@ -72,6 +74,7 @@ If, for some reason, we are not interested in the `BASE` buffer.
 Only the `MERGED` buffer will be shown. Note, however, that all the other
 ones are still loaded in vim, and you can access them with the "buffers"
 command.
+
 ....
 ------------------------------------------
 |                                        |
@@ -88,6 +91,7 @@ command.
 When `MERGED` is not present in the layout, you must "mark" one of the
 buffers with an arobase (`@`). That will become the buffer you need to edit and
 save after resolving the conflicts.
+
 ....
 ------------------------------------------
 |                   |                    |
@@ -106,6 +110,7 @@ save after resolving the conflicts.
 Three tabs will open: the first one is a copy of the default layout, while
 the other two only show the differences between (`BASE` and `LOCAL`) and
 (`BASE` and `REMOTE`) respectively.
+
 ....
 ------------------------------------------
 | <TAB #1> |  TAB #2  |  TAB #3  |       |
@@ -119,6 +124,7 @@ the other two only show the differences between (`BASE` and `LOCAL`) and
 |                                        |
 ------------------------------------------
 ....
+
 ....
 ------------------------------------------
 |  TAB #1  | <TAB #2> |  TAB #3  |       |
@@ -132,6 +138,7 @@ the other two only show the differences between (`BASE` and `LOCAL`) and
 |                   |                    |
 ------------------------------------------
 ....
+
 ....
 ------------------------------------------
 |  TAB #1  |  TAB #2  | <TAB #3> |       |
@@ -151,6 +158,7 @@ the other two only show the differences between (`BASE` and `LOCAL`) and
 --
 Same as the previous example, but adds a fourth tab with the same
 information as the first tab, with a different layout.
+
 ....
 ---------------------------------------------
 |  TAB #1  |  TAB #2  |  TAB #3  | <TAB #4> |

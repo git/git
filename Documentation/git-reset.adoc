@@ -90,7 +90,8 @@ but carries forward unmerged index entries.
 	If a file that is different between _<commit>_ and `HEAD` has local
 	changes, reset is aborted.
 
-`--[no-]recurse-submodules`::
+`--recurse-submodules`::
+`--no-recurse-submodules`::
 	When the working tree is updated, using `--recurse-submodules` will
 	also recursively reset the working tree of all active submodules
 	according to the commit recorded in the superproject, also setting

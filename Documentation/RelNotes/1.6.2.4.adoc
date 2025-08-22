@@ -37,3 +37,4 @@ exec >/var/tmp/1
 echo O=$(git describe maint)
 O=v1.6.2.3-38-g318b847
 git shortlog --no-merges $O..maint
+---

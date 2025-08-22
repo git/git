@@ -53,11 +53,13 @@ configuration options such as `gc.auto` and `gc.autoPackLimit`, all
 other housekeeping tasks (e.g. rerere, working trees, reflog...) will
 be performed as well.
 
---[no-]detach::
+--detach::
+--no-detach::
 	Run in the background if the system supports it. This option overrides
 	the `gc.autoDetach` config.
 
---[no-]cruft::
+--cruft::
+--no-cruft::
 	When expiring unreachable objects, pack them separately into a
 	cruft pack instead of storing them as loose objects. `--cruft`
 	is on by default.

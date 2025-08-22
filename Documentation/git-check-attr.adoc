@@ -19,7 +19,8 @@ For every pathname, this command will list if each attribute is 'unspecified',
 
 OPTIONS
 -------
--a, --all::
+-a::
+--all::
 	List all attributes that are associated with the specified
 	paths.  If this option is used, then 'unspecified' attributes
 	will not be included in the output.
