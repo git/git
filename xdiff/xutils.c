@@ -249,7 +249,7 @@ int xdl_recmatch(const char *l1, long s1, const char *l2, long s2, long flags)
 	return 1;
 }
 
-static unsigned long xdl_hash_record_with_whitespace(char const **data,
+unsigned long xdl_hash_record_with_whitespace(char const **data,
 		char const *top, long flags) {
 	unsigned long ha = 5381;
 	char const *ptr = *data;
@@ -294,19 +294,67 @@ static unsigned long xdl_hash_record_with_whitespace(char const **data,
 	return ha;
 }
 
-unsigned long xdl_hash_record(char const **data, char const *top, long flags) {
-	unsigned long ha = 5381;
+/*
+ * Compiler reassociation barrier: pretend to modify X and Y to disallow
+ * changing evaluation order with respect to following uses of X and Y.
+ */
+#ifdef __GNUC__
+#define REASSOC_FENCE(x, y) __asm__("" : "+r"(x), "+r"(y))
+#else
+#define REASSOC_FENCE(x, y)
+#endif
+
+unsigned long xdl_hash_record_verbatim(char const **data, char const *top) {
+	unsigned long ha = 5381, c0, c1;
 	char const *ptr = *data;
-
-	if (flags & XDF_WHITESPACE_FLAGS)
-		return xdl_hash_record_with_whitespace(data, top, flags);
-
+#if 0
+	/*
+	 * The baseline form of the optimized loop below. This is the djb2
+	 * hash (the above function uses a variant with XOR instead of ADD).
+	 */
 	for (; ptr < top && *ptr != '\n'; ptr++) {
 		ha += (ha << 5);
-		ha ^= (unsigned long) *ptr;
+		ha += (unsigned long) *ptr;
 	}
 	*data = ptr < top ? ptr + 1: ptr;
+#else
+	/* Process two characters per iteration. */
+	if (top - ptr >= 2) do {
+		if ((c0 = ptr[0]) == '\n') {
+			*data = ptr + 1;
+			return ha;
+		}
+		if ((c1 = ptr[1]) == '\n') {
+			*data = ptr + 2;
+			c0 += ha;
+			REASSOC_FENCE(c0, ha);
+			ha = ha * 32 + c0;
+			return ha;
+		}
+		/*
+		 * Combine characters C0 and C1 into the hash HA. We have
+		 * HA = (HA * 33 + C0) * 33 + C1, and we want to ensure
+		 * that dependency chain over HA is just one multiplication
+		 * and one addition, i.e. we want to evaluate this as
+		 * HA = HA * 33 * 33 + (C0 * 33 + C1), and likewise prefer
+		 * (C0 * 32 + (C0 + C1)) for the expression in parenthesis.
+		 */
+		ha *= 33 * 33;
+		c1 += c0;
+		REASSOC_FENCE(c1, c0);
+		c1 += c0 * 32;
+		REASSOC_FENCE(c1, ha);
+		ha += c1;
 
+		ptr += 2;
+	} while (ptr < top - 1);
+	*data = top;
+	if (ptr < top && (c0 = ptr[0]) != '\n') {
+		c0 += ha;
+		REASSOC_FENCE(c0, ha);
+		ha = ha * 32 + c0;
+	}
+#endif
 	return ha;
 }
 
