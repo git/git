@@ -4,6 +4,9 @@ Git v2.52 Release Notes
 UI, Workflows & Features
 ------------------------
 
+ * The "list" subcommand of "git refs" acts as a front-end for
+   "git for-each-ref".
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -20,6 +23,7 @@ Performance, Internal Implementation, Development Support etc.
    used to ignore changed-paths Bloom filter when the pathspec
    contained wildcards; now they take advantage of the filter when
    they can.
+
 
 Fixes since v2.51
 -----------------
@@ -52,7 +56,26 @@ including security updates, are included in this release.
    been fixed.
    (merge f6ecb603ff en/ort-rename-fixes later to maint).
 
+ * "git jump" (in contrib/) fails to parse the diff header correctly
+   when a file has a space in its name, which has been corrected.
+   (merge 621ce9c1c6 gh/git-jump-pathname-with-sp later to maint).
+
+ * "git diff --no-index" run inside a subdirectory under control of a
+   Git repository operated at the top of the working tree and stripped
+   the prefix from the output, and oddballs like "-" (stdin) did not
+   work correctly because of it.  Correct the set-up by undoing what
+   the set-up sequence did to cwd and prefix.
+   (merge e1d3d61a45 jc/diff-no-index-in-subdir later to maint).
+
+ * Various options to "git diff" that makes comparison ignore certain
+   aspects of the differences (like "space changes are ignored",
+   "differences in lines that match these regular expressions are
+   ignored") did not work well with "--name-only" and friends.
+   (merge b55e6d36eb ly/diff-name-only-with-diff-from-content later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
    (merge cf7efa4f33 rj/t6137-cygwin-fix later to maint).
    (merge 529a60a885 ua/t1517-short-help-tests later to maint).
+   (merge 22d421fed9 ac/deglobal-fmt-merge-log-config later to maint).
+   (merge 741f36c7d9 kr/clone-synopsis-fix later to maint).
