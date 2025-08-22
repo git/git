@@ -105,6 +105,24 @@ static void push_to_stack(struct path_walk_context *ctx,
 	prio_queue_put(&ctx->path_stack, xstrdup(path));
 }
 
+static void add_path_to_list(struct path_walk_context *ctx,
+			     const char *path,
+			     enum object_type type,
+			     struct object_id *oid,
+			     int interesting)
+{
+	struct type_and_oid_list *list = strmap_get(&ctx->paths_to_lists, path);
+
+	if (!list) {
+		CALLOC_ARRAY(list, 1);
+		list->type = type;
+		strmap_put(&ctx->paths_to_lists, path, list);
+	}
+
+	list->maybe_interesting |= interesting;
+	oid_array_append(&list->oids, oid);
+}
+
 static int add_tree_entries(struct path_walk_context *ctx,
 			    const char *base_path,
 			    struct object_id *oid)
@@ -129,7 +147,6 @@ static int add_tree_entries(struct path_walk_context *ctx,
 
 	init_tree_desc(&desc, &tree->object.oid, tree->buffer, tree->size);
 	while (tree_entry(&desc, &entry)) {
-		struct type_and_oid_list *list;
 		struct object *o;
 		/* Not actually true, but we will ignore submodules later. */
 		enum object_type type = S_ISDIR(entry.mode) ? OBJ_TREE : OBJ_BLOB;
@@ -190,17 +207,10 @@ static int add_tree_entries(struct path_walk_context *ctx,
 				continue;
 		}
 
-		if (!(list = strmap_get(&ctx->paths_to_lists, path.buf))) {
-			CALLOC_ARRAY(list, 1);
-			list->type = type;
-			strmap_put(&ctx->paths_to_lists, path.buf, list);
-		}
+		add_path_to_list(ctx, path.buf, type, &entry.oid,
+				 !(o->flags & UNINTERESTING));
+
 		push_to_stack(ctx, path.buf);
-
-		if (!(o->flags & UNINTERESTING))
-			list->maybe_interesting = 1;
-
-		oid_array_append(&list->oids, &entry.oid);
 	}
 
 	free_tree_buffer(tree);
@@ -377,15 +387,9 @@ static int setup_pending_objects(struct path_walk_info *info,
 			if (!info->trees)
 				continue;
 			if (pending->path) {
-				struct type_and_oid_list *list;
 				char *path = *pending->path ? xstrfmt("%s/", pending->path)
 							    : xstrdup("");
-				if (!(list = strmap_get(&ctx->paths_to_lists, path))) {
-					CALLOC_ARRAY(list, 1);
-					list->type = OBJ_TREE;
-					strmap_put(&ctx->paths_to_lists, path, list);
-				}
-				oid_array_append(&list->oids, &obj->oid);
+				add_path_to_list(ctx, path, OBJ_TREE, &obj->oid, 1);
 				free(path);
 			} else {
 				/* assume a root tree, such as a lightweight tag. */
@@ -396,19 +400,10 @@ static int setup_pending_objects(struct path_walk_info *info,
 		case OBJ_BLOB:
 			if (!info->blobs)
 				continue;
-			if (pending->path) {
-				struct type_and_oid_list *list;
-				char *path = pending->path;
-				if (!(list = strmap_get(&ctx->paths_to_lists, path))) {
-					CALLOC_ARRAY(list, 1);
-					list->type = OBJ_BLOB;
-					strmap_put(&ctx->paths_to_lists, path, list);
-				}
-				oid_array_append(&list->oids, &obj->oid);
-			} else {
-				/* assume a root tree, such as a lightweight tag. */
+			if (pending->path)
+				add_path_to_list(ctx, pending->path, OBJ_BLOB, &obj->oid, 1);
+			else
 				oid_array_append(&tagged_blobs->oids, &obj->oid);
-			}
 			break;
 
 		case OBJ_COMMIT:
