@@ -2,6 +2,7 @@
 #include "commit.h"
 #include "config.h"
 #include "environment.h"
+#include "for-each-ref.h"
 #include "gettext.h"
 #include "object.h"
 #include "parse-options.h"
@@ -9,19 +10,7 @@
 #include "strbuf.h"
 #include "strvec.h"
 
-static char const * const for_each_ref_usage[] = {
-	N_("git for-each-ref [<options>] [<pattern>]"),
-	N_("git for-each-ref [--points-at <object>]"),
-	N_("git for-each-ref [--merged [<commit>]] [--no-merged [<commit>]]"),
-	N_("git for-each-ref [--contains [<commit>]] [--no-contains [<commit>]]"),
-	N_("git for-each-ref [--start-after <marker>]"),
-	NULL
-};
-
-int cmd_for_each_ref(int argc,
-		     const char **argv,
-		     const char *prefix,
-		     struct repository *repo)
+int for_each_ref_core(int argc, const char **argv, const char *prefix, struct repository *repo, const char *const *usage)
 {
 	struct ref_sorting *sorting;
 	struct string_list sorting_options = STRING_LIST_INIT_DUP;
@@ -70,17 +59,17 @@ int cmd_for_each_ref(int argc,
 	/* Set default (refname) sorting */
 	string_list_append(&sorting_options, "refname");
 
-	parse_options(argc, argv, prefix, opts, for_each_ref_usage, 0);
+	parse_options(argc, argv, prefix, opts, usage, 0);
 	if (format.array_opts.max_count < 0) {
 		error("invalid --count argument: `%d'", format.array_opts.max_count);
-		usage_with_options(for_each_ref_usage, opts);
+		usage_with_options(usage, opts);
 	}
 	if (HAS_MULTI_BITS(format.quote_style)) {
 		error("more than one quoting style?");
-		usage_with_options(for_each_ref_usage, opts);
+		usage_with_options(usage, opts);
 	}
 	if (verify_ref_format(&format))
-		usage_with_options(for_each_ref_usage, opts);
+		usage_with_options(usage, opts);
 
 	if (filter.start_after && sorting_options.nr > 1)
 		die(_("cannot use --start-after with custom sort options"));
@@ -119,4 +108,17 @@ int cmd_for_each_ref(int argc,
 	ref_sorting_release(sorting);
 	strvec_clear(&vec);
 	return 0;
+}
+
+int cmd_for_each_ref(int argc,
+		     const char **argv,
+		     const char *prefix,
+		     struct repository *repo)
+{
+	static char const * const for_each_ref_usage[] = {
+		N_("git for-each-ref " COMMON_USAGE_FOR_EACH_REF),
+		NULL
+	};
+
+	return for_each_ref_core(argc, argv, prefix, repo, for_each_ref_usage);
 }

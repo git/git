@@ -11,6 +11,13 @@ SYNOPSIS
 [synopsis]
 git refs migrate --ref-format=<format> [--no-reflog] [--dry-run]
 git refs verify [--strict] [--verbose]
+git refs list [--count=<count>] [--shell|--perl|--python|--tcl]
+		   [(--sort=<key>)...] [--format=<format>]
+		   [--include-root-refs] [--points-at=<object>]
+		   [--merged[=<object>]] [--no-merged[=<object>]]
+		   [--contains[=<object>]] [--no-contains[=<object>]]
+		   [(--exclude=<pattern>)...] [--start-after=<marker>]
+		   [ --stdin | <pattern>... ]
 
 DESCRIPTION
 -----------
@@ -25,6 +32,11 @@ migrate::
 
 verify::
 	Verify reference database consistency.
+
+list::
+	List references in the repository with support for filtering,
+	formatting, and sorting. This subcommand is an alias for
+	linkgit:git-for-each-ref[1] and offers identical functionality.
 
 OPTIONS
 -------
@@ -56,6 +68,10 @@ The following options are specific to 'git refs verify':
 
 --verbose::
 	When verifying the reference database consistency, be chatty.
+
+The following options are specific to 'git refs list':
+
+include::for-each-ref-options.adoc[]
 
 KNOWN LIMITATIONS
 -----------------
