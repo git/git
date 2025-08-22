@@ -84,6 +84,7 @@ struct odb_source {
 
 struct packed_git;
 struct cached_object_entry;
+struct odb_transaction;
 
 /*
  * The object database encapsulates access to objects in a repository. It
@@ -93,6 +94,13 @@ struct cached_object_entry;
 struct object_database {
 	/* Repository that owns this database. */
 	struct repository *repo;
+
+	/*
+	 * State of current current object database transaction. Only one
+	 * transaction may be pending at a time. Is NULL when no transaction is
+	 * configured.
+	 */
+	struct odb_transaction *transaction;
 
 	/*
 	 * Set of all object directories; the main directory is first (and
