@@ -866,6 +866,42 @@ test_expect_success 'colorized diffs respect diff.wsErrorHighlight' '
 	test_grep "old<" output
 '
 
+test_expect_success 'diff color respects color.diff' '
+	git reset --hard &&
+
+	echo old >test &&
+	git add test &&
+	echo new >test &&
+
+	printf n >n &&
+	force_color git \
+		-c color.interactive=auto \
+		-c color.interactive.prompt=blue \
+		-c color.diff=false \
+		-c color.diff.old=red \
+		add -p >output.raw 2>&1 <n &&
+	test_decode_color <output.raw >output &&
+	test_grep "BLUE.*Stage this hunk" output &&
+	test_grep ! "RED" output
+'
+
+test_expect_success 're-coloring diff without color.interactive' '
+	git reset --hard &&
+
+	test_write_lines 1 2 3 >test &&
+	git add test &&
+	test_write_lines one 2 three >test &&
+
+	test_write_lines s n n |
+	force_color git \
+		-c color.interactive=false \
+		-c color.diff=true \
+		-c color.diff.frag="bold magenta" \
+		add -p >output.raw 2>&1 &&
+	test_decode_color <output.raw >output &&
+	test_grep "<BOLD;MAGENTA>@@" output
+'
+
 test_expect_success 'diffFilter filters diff' '
 	git reset --hard &&
 
@@ -1283,6 +1319,12 @@ test_expect_success 'stash accepts -U and --inter-hunk-context' '
 	test_grep "@@ -2,20 +2,20 @@" actual
 '
 
+test_expect_success 'set up base for -p color tests' '
+	echo commit >file &&
+	git commit -am "commit state" &&
+	git tag patch-base
+'
+
 for cmd in add checkout commit reset restore "stash save" "stash push"
 do
 	test_expect_success "$cmd rejects invalid context options" '
@@ -1298,6 +1340,15 @@ do
 
 		test_must_fail git $cmd --inter-hunk-context 2 2>actual &&
 		test_grep -E ".--inter-hunk-context. requires .(--interactive/)?--patch." actual
+	'
+
+	test_expect_success "$cmd falls back to color.ui" '
+		git reset --hard patch-base &&
+		echo working-tree >file &&
+		test_write_lines y |
+		force_color git -c color.ui=false $cmd -p >output.raw 2>&1 &&
+		test_decode_color <output.raw >output &&
+		test_cmp output.raw output
 	'
 done
 

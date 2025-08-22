@@ -377,7 +377,7 @@ static int diff_tree_binary(struct strbuf *out, struct object_id *w_commit)
 	 * however it should be done together with apply_cached.
 	 */
 	cp.git_cmd = 1;
-	strvec_pushl(&cp.args, "diff-tree", "--binary", NULL);
+	strvec_pushl(&cp.args, "diff-tree", "--binary", "--no-color", NULL);
 	strvec_pushf(&cp.args, "%s^2^..%s^2", w_commit_hex, w_commit_hex);
 
 	return pipe_command(&cp, NULL, 0, out, 0, NULL, 0);
@@ -1284,6 +1284,7 @@ static int stash_staged(struct stash_info *info, struct strbuf *out_patch,
 
 	cp_diff_tree.git_cmd = 1;
 	strvec_pushl(&cp_diff_tree.args, "diff-tree", "-p", "--binary",
+		     "--no-color",
 		     "-U1", "HEAD", oid_to_hex(&info->w_tree), "--", NULL);
 	if (pipe_command(&cp_diff_tree, NULL, 0, out_patch, 0, NULL, 0)) {
 		ret = -1;
@@ -1346,6 +1347,7 @@ static int stash_patch(struct stash_info *info, const struct pathspec *ps,
 
 	cp_diff_tree.git_cmd = 1;
 	strvec_pushl(&cp_diff_tree.args, "diff-tree", "-p", "-U1", "HEAD",
+		     "--no-color",
 		     oid_to_hex(&info->w_tree), "--", NULL);
 	if (pipe_command(&cp_diff_tree, NULL, 0, out_patch, 0, NULL, 0)) {
 		ret = -1;
