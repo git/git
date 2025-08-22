@@ -13,6 +13,7 @@
 #include "tree-walk.h"
 #include "environment.h"
 #include "repository.h"
+#include "dir.h"
 
 /*
  * Some mode bits are also used internally for computations.
@@ -47,6 +48,73 @@
 	else \
 		free((x)); \
 } while(0)
+
+/* Returns true if and only if "dir" is a leading directory of "path" */
+static int is_dir_prefix(const char *path, const char *dir, int dirlen)
+{
+	return !strncmp(path, dir, dirlen) &&
+		(!path[dirlen] || path[dirlen] == '/');
+}
+
+static int check_recursion_depth(const struct strbuf *name,
+				 const struct pathspec *ps,
+				 int max_depth)
+{
+	int i;
+
+	if (!ps->nr)
+		return within_depth(name->buf, name->len, 1, max_depth);
+
+	/*
+	 * We look through the pathspecs in reverse-sorted order, because we
+	 * want to find the longest match first (e.g., "a/b" is better for
+	 * checking depth than "a/b/c").
+	 */
+	for (i = ps->nr - 1; i >= 0; i--) {
+		const struct pathspec_item *item = ps->items+i;
+
+		/*
+		 * If the name to match is longer than the pathspec, then we
+		 * are only interested if the pathspec matches and we are
+		 * within the allowed depth.
+		 */
+		if (name->len >= item->len) {
+			if (!is_dir_prefix(name->buf, item->match, item->len))
+				continue;
+			return within_depth(name->buf + item->len,
+					    name->len - item->len,
+					    1, max_depth);
+		}
+
+		/*
+		 * Otherwise, our name is shorter than the pathspec. We need to
+		 * check if it is a prefix of the pathspec; if so, we must
+		 * always recurse in order to process further (the resulting
+		 * paths we find might or might not match our pathspec, but we
+		 * cannot know until we recurse).
+		 */
+		if (is_dir_prefix(item->match, name->buf, name->len))
+			return 1;
+	}
+	return 0;
+}
+
+static int should_recurse(const struct strbuf *name, struct diff_options *opt)
+{
+	if (!opt->flags.recursive)
+		return 0;
+	if (!opt->max_depth_valid)
+		return 1;
+
+	/*
+	 * We catch this during diff_setup_done, but let's double-check
+	 * against any internal munging.
+	 */
+	if (opt->pathspec.has_wildcard)
+		BUG("wildcard pathspecs are incompatible with max-depth");
+
+	return check_recursion_depth(name, &opt->pathspec, opt->max_depth);
+}
 
 static void ll_diff_tree_paths(
 	struct combine_diff_path ***tail, const struct object_id *oid,
@@ -170,9 +238,13 @@ static void emit_path(struct combine_diff_path ***tail,
 		mode = 0;
 	}
 
-	if (opt->flags.recursive && isdir) {
-		recurse = 1;
-		emitthis = opt->flags.tree_in_recursive;
+	if (isdir) {
+		strbuf_add(base, path, pathlen);
+		if (should_recurse(base, opt)) {
+			recurse = 1;
+			emitthis = opt->flags.tree_in_recursive;
+		}
+		strbuf_setlen(base, old_baselen);
 	}
 
 	if (emitthis) {
