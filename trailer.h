@@ -196,10 +196,22 @@ int trailer_iterator_advance(struct trailer_iterator *iter);
 void trailer_iterator_release(struct trailer_iterator *iter);
 
 /*
- * Augment a file to add trailers to it by running git-interpret-trailers.
- * This calls run_command() and its return value is the same (i.e. 0 for
- * success, various non-zero for other errors). See run-command.h.
+ * Augment a file to add trailers to it (similar to 'git interpret-trailers').
+ * Returns 0 on success or a non-zero error code on failure.
  */
 int amend_file_with_trailers(const char *path, const struct strvec *trailer_args);
 
+/*
+ * Process trailer lines for a commit message in-memory.
+ * @opts: trailer processing options (e.g. from parse-options)
+ * @msg: the input message string
+ * @new_trailer_head: list of new trailers to add (struct new_trailer_item)
+ * @out: strbuf to store the resulting message (must be initialized)
+ *
+ * Returns 0 on success, <0 on error.
+ */
+int trailer_process(const struct process_trailer_options *opts,
+			const char *msg,
+			struct list_head *new_trailer_head,
+			struct strbuf *out);
 #endif /* TRAILER_H */

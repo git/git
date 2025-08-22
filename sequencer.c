@@ -422,6 +422,7 @@ void replay_opts_release(struct replay_opts *opts)
 	free(opts->revs);
 	replay_ctx_release(ctx);
 	free(opts->ctx);
+	strvec_clear(&opts->trailer_args);
 }
 
 int sequencer_remove_state(struct replay_opts *opts)
@@ -2529,6 +2530,18 @@ static int do_pick_commit(struct repository *r,
 			_("dropping %s %s -- patch contents already upstream\n"),
 			oid_to_hex(&commit->object.oid), msg.subject);
 	} /* else allow == 0 and there's nothing special to do */
+
+    if (!res && opts->trailer_args.nr && !drop_commit) {
+	    const char *trailer_file =
+		    msg_file ? msg_file : git_path_merge_msg(r);
+
+	    if (amend_file_with_trailers(trailer_file,
+					 &opts->trailer_args)) {
+		    res = error(_("unable to add trailers to commit message"));
+		    goto leave;
+	    }
+    }
+
 	if (!opts->no_commit && !drop_commit) {
 		if (author || command == TODO_REVERT || (flags & AMEND_MSG))
 			res = do_commit(r, msg_file, author, reflog_action,
