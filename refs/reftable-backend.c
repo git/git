@@ -1274,9 +1274,33 @@ static enum ref_transaction_error prepare_single_update(struct reftable_ref_stor
 		ret = ref_update_check_old_target(referent->buf, u, err);
 		if (ret)
 			return ret;
-	} else if ((u->flags & (REF_LOG_ONLY | REF_HAVE_OLD)) == REF_HAVE_OLD &&
-		   !oideq(&current_oid, &u->old_oid)) {
-		if (is_null_oid(&u->old_oid)) {
+	} else if ((u->flags & (REF_LOG_ONLY | REF_HAVE_OLD)) == REF_HAVE_OLD) {
+		if (oideq(&current_oid, &u->old_oid)) {
+			/*
+			 * Normally matching the expected old oid is enough. Either we
+			 * found the ref at the expected state, or we are creating and
+			 * expect the null oid (and likewise found nothing).
+			 *
+			 * But there is one exception for the null oid: if we found a
+			 * symref pointing to nothing we'll also get the null oid. In
+			 * regular recursive mode, that's good (we'll write to what the
+			 * symref points to, which doesn't exist). But in no-deref
+			 * mode, it means we'll clobber the symref, even though the
+			 * caller asked for this to be a creation event. So flag
+			 * that case to preserve the dangling symref.
+			 *
+			 * Everything else is OK and we can fall through to the
+			 * end of the conditional chain.
+			 */
+			if ((u->flags & REF_NO_DEREF) &&
+			    referent->len &&
+			    is_null_oid(&u->old_oid)) {
+				strbuf_addf(err, _("cannot lock ref '%s': "
+					    "dangling symref already exists"),
+					    ref_update_original_update_refname(u));
+				return REF_TRANSACTION_ERROR_CREATE_EXISTS;
+			}
+		} else if (is_null_oid(&u->old_oid)) {
 			strbuf_addf(err, _("cannot lock ref '%s': "
 					   "reference already exists"),
 				    ref_update_original_update_refname(u));

@@ -2515,12 +2515,36 @@ static enum ref_transaction_error split_symref_update(struct ref_update *update,
  */
 static enum ref_transaction_error check_old_oid(struct ref_update *update,
 						struct object_id *oid,
+						struct strbuf *referent,
 						struct strbuf *err)
 {
 	if (update->flags & REF_LOG_ONLY ||
-	    !(update->flags & REF_HAVE_OLD) ||
-	    oideq(oid, &update->old_oid))
+	    !(update->flags & REF_HAVE_OLD))
 		return 0;
+
+	if (oideq(oid, &update->old_oid)) {
+		/*
+		 * Normally matching the expected old oid is enough. Either we
+		 * found the ref at the expected state, or we are creating and
+		 * expect the null oid (and likewise found nothing).
+		 *
+		 * But there is one exception for the null oid: if we found a
+		 * symref pointing to nothing we'll also get the null oid. In
+		 * regular recursive mode, that's good (we'll write to what the
+		 * symref points to, which doesn't exist). But in no-deref
+		 * mode, it means we'll clobber the symref, even though the
+		 * caller asked for this to be a creation event. So flag
+		 * that case to preserve the dangling symref.
+		 */
+		if ((update->flags & REF_NO_DEREF) && referent->len &&
+		    is_null_oid(oid)) {
+			strbuf_addf(err, "cannot lock ref '%s': "
+				    "dangling symref already exists",
+				    ref_update_original_update_refname(update));
+			return REF_TRANSACTION_ERROR_CREATE_EXISTS;
+		}
+		return 0;
+	}
 
 	if (is_null_oid(&update->old_oid)) {
 		strbuf_addf(err, "cannot lock ref '%s': "
@@ -2661,7 +2685,8 @@ static enum ref_transaction_error lock_ref_for_update(struct files_ref_store *re
 			if (update->old_target)
 				ret = ref_update_check_old_target(referent.buf, update, err);
 			else
-				ret = check_old_oid(update, &lock->old_oid, err);
+				ret = check_old_oid(update, &lock->old_oid,
+						    &referent, err);
 			if (ret)
 				goto out;
 		} else {
@@ -2693,7 +2718,8 @@ static enum ref_transaction_error lock_ref_for_update(struct files_ref_store *re
 			ret = REF_TRANSACTION_ERROR_EXPECTED_SYMREF;
 			goto out;
 		} else {
-			ret = check_old_oid(update, &lock->old_oid, err);
+			ret = check_old_oid(update, &lock->old_oid,
+					    &referent, err);
 			if  (ret) {
 				goto out;
 			}
