@@ -163,16 +163,16 @@ used by default. If '$XDG_CONFIG_HOME' is not set it defaults to
 
 History
 -------
-Gitk was the first graphical repository browser. It's written in
-tcl/tk.
+Gitk was the first graphical repository browser, written by
+Paul Mackerras in Tcl/Tk.
 
 'gitk' is actually maintained as an independent project, but stable
 versions are distributed as part of the Git suite for the convenience
 of end users.
 
-gitk-git/ comes from Paul Mackerras's gitk project:
+`gitk-git/` comes from Johannes Sixt's gitk project:
 
-	git://ozlabs.org/~paulus/gitk
+	https://github.com/j6t/gitk
 
 SEE ALSO
 --------
