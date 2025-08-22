@@ -254,11 +254,11 @@ static void prepare_to_stream(struct bulk_checkin_packfile *state,
 		die_errno("unable to write pack header");
 }
 
-static int deflate_blob_to_pack(struct bulk_checkin_packfile *state,
-				struct object_id *result_oid,
-				int fd, size_t size,
-				const char *path, unsigned flags)
+int index_blob_bulk_checkin(struct odb_transaction *transaction,
+			    struct object_id *result_oid, int fd, size_t size,
+			    const char *path, unsigned flags)
 {
+	struct bulk_checkin_packfile *state = &transaction->packfile;
 	off_t seekback, already_hashed_to;
 	struct git_hash_ctx ctx;
 	unsigned char obuf[16384];
@@ -359,25 +359,6 @@ void fsync_loose_object_bulk_checkin(struct odb_transaction *transaction,
 			warning(_("core.fsyncMethod = batch is unsupported on this platform"));
 		fsync_or_die(fd, filename);
 	}
-}
-
-int index_blob_bulk_checkin(struct odb_transaction *transaction,
-			    struct object_id *oid, int fd, size_t size,
-			    const char *path, unsigned flags)
-{
-	int status;
-
-	if (transaction) {
-		status = deflate_blob_to_pack(&transaction->packfile, oid, fd,
-					      size, path, flags);
-	} else {
-		struct bulk_checkin_packfile state = { 0 };
-
-		status = deflate_blob_to_pack(&state, oid, fd, size, path, flags);
-		flush_bulk_checkin_packfile(&state);
-	}
-
-	return status;
 }
 
 struct odb_transaction *begin_odb_transaction(struct object_database *odb)
