@@ -52,6 +52,15 @@ respond to you. It's better to ask your questions in the channel so that you
 can be answered if you disconnect and so that others can learn from the
 conversation.
 
+==== https://discord.gg/GRFVkzgxRd[#discord] on Discord
+This is an unofficial Git Discord server for everyone, from people just
+starting out with Git to those who develop it. It's a great place to ask
+questions, share tips, and connect with the broader Git community in real time.
+
+The server has channels for general discussions and specific channels for those
+who use Git and those who develop it. The server's search functionality also
+allows you to find previous conversations and answers to common questions.
+
 [[getting-started]]
 == Getting Started
 
