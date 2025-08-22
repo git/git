@@ -1,4 +1,3 @@
-#define USE_THE_REPOSITORY_VARIABLE
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
@@ -150,7 +149,7 @@ static int index_has_unmerged_entries(struct index_state *istate)
 
 int is_sparse_index_allowed(struct index_state *istate, int flags)
 {
-	if (!core_apply_sparse_checkout || !core_sparse_checkout_cone)
+	if (!istate->repo->settings.sparse_checkout || !istate->repo->settings.sparse_checkout_cone)
 		return 0;
 
 	if (!(flags & SPARSE_INDEX_MEMORY_ONLY)) {
@@ -172,7 +171,6 @@ int is_sparse_index_allowed(struct index_state *istate, int flags)
 		/*
 		 * Only convert to sparse if index.sparse is set.
 		 */
-		prepare_repo_settings(istate->repo);
 		if (!istate->repo->settings.sparse_index)
 			return 0;
 	}
@@ -196,6 +194,7 @@ int is_sparse_index_allowed(struct index_state *istate, int flags)
 
 int convert_to_sparse(struct index_state *istate, int flags)
 {
+	prepare_repo_settings(istate->repo);
 	/*
 	 * If the index is already sparse, empty, or otherwise
 	 * cannot be converted to sparse, do not convert.
@@ -668,8 +667,8 @@ static void clear_skip_worktree_from_present_files_full(struct index_state *ista
 
 void clear_skip_worktree_from_present_files(struct index_state *istate)
 {
-	if (!core_apply_sparse_checkout ||
-	    sparse_expect_files_outside_of_patterns)
+	if (!istate->repo->settings.sparse_checkout ||
+	    istate->repo->settings.sparse_expect_files_outside_of_patterns)
 		return;
 
 	if (clear_skip_worktree_from_present_files_sparse(istate)) {
