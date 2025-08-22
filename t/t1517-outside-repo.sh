@@ -111,8 +111,11 @@ for cmd in $(git --list-cmds=main)
 do
 	cmd=${cmd%.*} # strip .sh, .perl, etc.
 	case "$cmd" in
-	archimport | cvsexportcommit | cvsimport | cvsserver | daemon | \
+	archimport | citool | credential-netrc | credential-libsecret | \
+	credential-osxkeychain | cvsexportcommit | cvsimport | cvsserver | \
+	daemon | \
 	difftool--helper | filter-branch | fsck-objects | get-tar-commit-id | \
+	gui | gui--askpass | \
 	http-backend | http-fetch | http-push | init-db | \
 	merge-octopus | merge-one-file | merge-resolve | mergetool | \
 	mktag | p4 | p4.py | pickaxe | remote-ftp | remote-ftps | \
