@@ -5,13 +5,20 @@
 #define BULK_CHECKIN_H
 
 #include "object.h"
+#include "odb.h"
 
-void prepare_loose_object_bulk_checkin(void);
-void fsync_loose_object_bulk_checkin(int fd, const char *filename);
+struct odb_transaction;
+
+void prepare_loose_object_bulk_checkin(struct odb_transaction *transaction);
+void fsync_loose_object_bulk_checkin(struct odb_transaction *transaction,
+				     int fd, const char *filename);
 
 /*
- * This creates one packfile per large blob unless bulk-checkin
- * machinery is "plugged".
+ * This writes the specified object to a packfile. Objects written here
+ * during the same transaction are written to the same packfile. The
+ * packfile is not flushed until the transaction is flushed. The caller
+ * is expected to ensure a valid transaction is setup for objects to be
+ * recorded to.
  *
  * This also bypasses the usual "convert-to-git" dance, and that is on
  * purpose. We could write a streaming version of the converting
@@ -24,8 +31,8 @@ void fsync_loose_object_bulk_checkin(int fd, const char *filename);
  * binary blobs, they generally do not want to get any conversion, and
  * callers should avoid this code path when filters are requested.
  */
-int index_blob_bulk_checkin(struct object_id *oid,
-			    int fd, size_t size,
+int index_blob_bulk_checkin(struct odb_transaction *transaction,
+			    struct object_id *oid, int fd, size_t size,
 			    const char *path, unsigned flags);
 
 /*
@@ -35,20 +42,20 @@ int index_blob_bulk_checkin(struct object_id *oid,
  * and objects are only visible after the outermost transaction
  * is complete or the transaction is flushed.
  */
-void begin_odb_transaction(void);
+struct odb_transaction *begin_odb_transaction(struct object_database *odb);
 
 /*
  * Make any objects that are currently part of a pending object
  * database transaction visible. It is valid to call this function
  * even if no transaction is active.
  */
-void flush_odb_transaction(void);
+void flush_odb_transaction(struct odb_transaction *transaction);
 
 /*
  * Tell the object database to make any objects from the
  * current transaction visible if this is the final nested
  * transaction.
  */
-void end_odb_transaction(void);
+void end_odb_transaction(struct odb_transaction *transaction);
 
 #endif
