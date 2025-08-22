@@ -135,4 +135,11 @@ do
 	'
 done
 
+test_expect_success 'fmt-merge-msg does not crash with -h' '
+	test_expect_code 129 git fmt-merge-msg -h >usage &&
+	test_grep "[Uu]sage: git fmt-merge-msg " usage &&
+	test_expect_code 129 nongit git fmt-merge-msg -h >usage &&
+	test_grep "[Uu]sage: git fmt-merge-msg " usage
+'
+
 test_done
