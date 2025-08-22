@@ -28,11 +28,11 @@ midx_read_expect () {
 		EOF
 		if test $NUM_PACKS -ge 1
 		then
-			ls $OBJECT_DIR/pack/ | grep idx | sort
+			ls "$OBJECT_DIR"/pack/ | grep idx | sort
 		fi &&
 		printf "object-dir: $OBJECT_DIR\n"
 	} >expect &&
-	test-tool read-midx $OBJECT_DIR >actual &&
+	test-tool read-midx "$OBJECT_DIR" >actual &&
 	test_cmp expect actual
 }
 
@@ -305,7 +305,7 @@ test_expect_success 'midx picks objects from preferred pack' '
 
 		ofs=$(git show-index <objects/pack/test-BC-$bc.idx | grep $b |
 			cut -d" " -f1) &&
-		printf "%s %s\tobjects/pack/test-BC-%s.pack\n" \
+		printf "%s %s\t./objects/pack/test-BC-%s.pack\n" \
 			"$b" "$ofs" "$bc" >expect &&
 		grep ^$b out >actual &&
 
@@ -639,7 +639,7 @@ test_expect_success 'force some 64-bit offsets with pack-objects' '
 		( cd ../objects64 && pwd ) >.git/objects/info/alternates &&
 		midx64=$(git multi-pack-index --object-dir=../objects64 write)
 	) &&
-	midx_read_expect 1 63 5 objects64 " large-offsets"
+	midx_read_expect 1 63 5 "$(pwd)/objects64" " large-offsets"
 '
 
 test_expect_success 'verify multi-pack-index with 64-bit offsets' '

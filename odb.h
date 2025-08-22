@@ -64,6 +64,14 @@ struct odb_source {
 	struct multi_pack_index *midx;
 
 	/*
+	 * Figure out whether this is the local source of the owning
+	 * repository, which would typically be its ".git/objects" directory.
+	 * This local object directory is usually where objects would be
+	 * written to.
+	 */
+	bool local;
+
+	/*
 	 * This is a temporary object store created by the tmp_objdir
 	 * facility. Disable ref updates since the objects in the store
 	 * might be discarded on rollback.
@@ -178,10 +186,13 @@ struct object_database *odb_new(struct repository *repo);
 void odb_clear(struct object_database *o);
 
 /*
- * Find source by its object directory path. Dies in case the source couldn't
- * be found.
+ * Find source by its object directory path. Returns a `NULL` pointer in case
+ * the source could not be found.
  */
 struct odb_source *odb_find_source(struct object_database *odb, const char *obj_dir);
+
+/* Same as `odb_find_source()`, but dies in case the source doesn't exist. */
+struct odb_source *odb_find_source_or_die(struct object_database *odb, const char *obj_dir);
 
 /*
  * Replace the current writable object directory with the specified temporary
@@ -257,8 +268,8 @@ void odb_add_to_alternates_file(struct object_database *odb,
  * recursive alternates it points to), but do not modify the on-disk alternates
  * file.
  */
-void odb_add_to_alternates_memory(struct object_database *odb,
-				  const char *dir);
+struct odb_source *odb_add_to_alternates_memory(struct object_database *odb,
+						const char *dir);
 
 /*
  * Read an object from the database. Returns the object data and assigns object
