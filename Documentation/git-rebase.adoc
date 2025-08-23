@@ -114,6 +114,9 @@ will result in:
     D---E---A'---F master
 ------------
 
+TRANSPLANTING A TOPIC BRANCH WITH --ONTO
+----------------------------------------
+
 Here is how you would transplant a topic branch based on one
 branch to another, to pretend that you forked the topic branch
 from the latter branch, using `rebase --onto`.
@@ -239,6 +242,8 @@ OPTIONS
 As a special case, you may use "A\...B" as a shortcut for the
 merge base of A and B if there is exactly one merge base. You can
 leave out at most one of A and B, in which case it defaults to HEAD.
+
+See TRANSPLANTING A TOPIC BRANCH WITH --ONTO above for examples.
 
 --keep-base::
 	Set the starting point at which to create the new commits to the
