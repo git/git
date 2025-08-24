@@ -1182,7 +1182,7 @@ static int process_ranges_ordinary_commit(struct rev_info *rev, struct commit *c
 					  struct line_log_data *range)
 {
 	struct commit *parent = NULL;
-	struct diff_queue_struct queue;
+	struct diff_queue_struct queue = DIFF_QUEUE_INIT;
 	struct line_log_data *parent_range;
 	int changed;
 
