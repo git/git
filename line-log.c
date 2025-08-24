@@ -1273,10 +1273,10 @@ int line_log_process_ranges_arbitrary_commit(struct rev_info *rev, struct commit
 			struct line_log_data *prange = line_log_data_copy(range);
 			add_line_range(rev, commit->parents->item, prange);
 			clear_commit_line_range(rev, commit);
-		} else if (!commit->parents || !commit->parents->next)
-			changed = process_ranges_ordinary_commit(rev, commit, range);
-		else
+		} else if (commit->parents && commit->parents->next)
 			changed = process_ranges_merge_commit(rev, commit, range);
+		else
+			changed = process_ranges_ordinary_commit(rev, commit, range);
 	}
 
 	if (!changed)
