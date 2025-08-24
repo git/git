@@ -12596,7 +12596,7 @@ set foundbgcolor yellow
 set currentsearchhitbgcolor orange
 
 # button for popping up context menus
-if {[tk windowingsystem] eq "aqua"} {
+if {[tk windowingsystem] eq "aqua" && [package vcompare $::tcl_version 8.7] < 0} {
     set ctxbut <Button-2>
 } else {
     set ctxbut <Button-3>
