@@ -1087,13 +1087,6 @@ static struct diff_filepair *diff_filepair_dup(struct diff_filepair *pair)
 	return new_filepair;
 }
 
-static void free_diffqueues(int n, struct diff_queue_struct *dq)
-{
-	for (int i = 0; i < n; i++)
-		diff_queue_clear(&dq[i]);
-	free(dq);
-}
-
 static int process_all_files(struct line_log_data **range_out,
 			     struct rev_info *rev,
 			     struct diff_queue_struct *queue,
@@ -1209,7 +1202,6 @@ static int process_ranges_ordinary_commit(struct rev_info *rev, struct commit *c
 static int process_ranges_merge_commit(struct rev_info *rev, struct commit *commit,
 				       struct line_log_data *range)
 {
-	struct diff_queue_struct *diffqueues;
 	struct line_log_data **cand;
 	struct commit **parents;
 	struct commit_list *p;
@@ -1220,20 +1212,19 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 	if (nparents > 1 && rev->first_parent_only)
 		nparents = 1;
 
-	ALLOC_ARRAY(diffqueues, nparents);
 	CALLOC_ARRAY(cand, nparents);
 	ALLOC_ARRAY(parents, nparents);
 
 	p = commit->parents;
 	for (i = 0; i < nparents; i++) {
+		struct diff_queue_struct diffqueue = DIFF_QUEUE_INIT;
+		int changed;
 		parents[i] = p->item;
 		p = p->next;
-		queue_diffs(range, &rev->diffopt, &diffqueues[i], commit, parents[i]);
-	}
+		queue_diffs(range, &rev->diffopt, &diffqueue, commit, parents[i]);
 
-	for (i = 0; i < nparents; i++) {
-		int changed;
-		changed = process_all_files(&cand[i], rev, &diffqueues[i], range);
+		changed = process_all_files(&cand[i], rev, &diffqueue, range);
+		diff_queue_clear(&diffqueue);
 		if (!changed) {
 			/*
 			 * This parent can take all the blame, so we
@@ -1267,7 +1258,6 @@ out:
 		free(cand[i]);
 	}
 	free(cand);
-	free_diffqueues(nparents, diffqueues);
 	return ret;
 
 	/* NEEDSWORK evil merge detection stuff */
