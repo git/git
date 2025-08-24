@@ -254,7 +254,7 @@ static struct option pull_options[] = {
 		0),
 	OPT_BOOL(0, "show-forced-updates", &opt_show_forced_updates,
 		 N_("check for forced-updates on all updated branches")),
-	OPT_PASSTHRU(0, "set-upstream", &set_upstream, NULL,
+	OPT_PASSTHRU('u', "set-upstream", &set_upstream, NULL,
 		N_("set upstream for git pull/fetch"),
 		PARSE_OPT_NOARG),
 
