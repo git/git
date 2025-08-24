@@ -1203,7 +1203,6 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 				       struct line_log_data *range)
 {
 	struct line_log_data **cand;
-	struct commit **parents;
 	struct commit_list *p;
 	int i;
 	int nparents = commit_list_count(commit->parents);
@@ -1213,15 +1212,15 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 		nparents = 1;
 
 	CALLOC_ARRAY(cand, nparents);
-	ALLOC_ARRAY(parents, nparents);
 
-	p = commit->parents;
-	for (i = 0; i < nparents; i++) {
+	for (p = commit->parents, i = 0;
+	     p && i < nparents;
+	     p = p->next, i++) {
+		struct commit *parent = p->item;
 		struct diff_queue_struct diffqueue = DIFF_QUEUE_INIT;
 		int changed;
-		parents[i] = p->item;
-		p = p->next;
-		queue_diffs(range, &rev->diffopt, &diffqueue, commit, parents[i]);
+
+		queue_diffs(range, &rev->diffopt, &diffqueue, commit, parent);
 
 		changed = process_all_files(&cand[i], rev, &diffqueue, range);
 		diff_queue_clear(&diffqueue);
@@ -1230,9 +1229,9 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 			 * This parent can take all the blame, so we
 			 * don't follow any other path in history
 			 */
-			add_line_range(rev, parents[i], cand[i]);
+			add_line_range(rev, parent, cand[i]);
 			free_commit_list(commit->parents);
-			commit_list_append(parents[i], &commit->parents);
+			commit_list_append(parent, &commit->parents);
 
 			ret = 0;
 			goto out;
@@ -1243,14 +1242,15 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 	 * No single parent took the blame.  We add the candidates
 	 * from the above loop to the parents.
 	 */
-	for (i = 0; i < nparents; i++)
-		add_line_range(rev, parents[i], cand[i]);
+	for (p = commit->parents, i = 0;
+	     p && i < nparents;
+	     p = p->next, i++)
+		add_line_range(rev, p->item, cand[i]);
 
 	ret = 1;
 
 out:
 	clear_commit_line_range(rev, commit);
-	free(parents);
 	for (i = 0; i < nparents; i++) {
 		if (!cand[i])
 			continue;
