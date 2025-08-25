@@ -1663,8 +1663,7 @@ test_expect_success 'signoff: not really a signoff' '
 	4:Subject: [PATCH] subject
 	8:
 	9:I want to mention about Signed-off-by: here.
-	10:
-	11:Signed-off-by: C O Mitter <committer@example.com>
+	10:Signed-off-by: C O Mitter <committer@example.com>
 	EOF
 	test_cmp expect actual
 '
