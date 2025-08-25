@@ -17,7 +17,7 @@ git branch [--color[=<when>] | --no-color] [--show-current]
 	   [(-r|--remotes) | (-a|--all)]
 	   [--list] [<pattern>...]
 git branch [--track[=(direct|inherit)] | --no-track] [-f]
-	   [--recurse-submodules] <branch-name> [<start-point>]
+	   [--recurse-submodules] <branch-name>... [<start-point>]
 git branch (--set-upstream-to=<upstream>|-u <upstream>) [<branch-name>]
 git branch --unset-upstream [<branch-name>]
 git branch (-m|-M) [<old-branch>] <new-branch>
