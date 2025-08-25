@@ -591,12 +591,18 @@ an external editor to keep Thunderbird from mangling the patches.
 Approach #1 (add-on)
 ^^^^^^^^^^^^^^^^^^^^
 
-Install the Toggle Word Wrap add-on that is available from
-https://addons.mozilla.org/thunderbird/addon/toggle-word-wrap/
-It adds a menu entry "Enable Word Wrap" in the composer's "Options" menu
+Install the Toggle Line Wrap add-on that is available from
+https://addons.thunderbird.net/thunderbird/addon/toggle-line-wrap
+It adds a button "Line Wrap" to the composer's toolbar
 that you can tick off. Now you can compose the message as you otherwise do
 (cut + paste, 'git format-patch' | 'git imap-send', etc), but you have to
 insert line breaks manually in any text that you type.
+
+As a bonus feature, the add-on can detect patch text in the composer
+and warns when line wrapping has not yet been turned off.
+
+The add-on requires a few tweaks of the advanced configuration
+(about:config). These are listed on the download page.
 
 Approach #2 (configuration)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
