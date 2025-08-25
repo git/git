@@ -385,6 +385,7 @@ static int setup_pending_objects(struct path_walk_info *info,
 					list->type = OBJ_TREE;
 					strmap_put(&ctx->paths_to_lists, path, list);
 				}
+				list->maybe_interesting = 1;
 				oid_array_append(&list->oids, &obj->oid);
 				free(path);
 			} else {
@@ -404,6 +405,7 @@ static int setup_pending_objects(struct path_walk_info *info,
 					list->type = OBJ_BLOB;
 					strmap_put(&ctx->paths_to_lists, path, list);
 				}
+				list->maybe_interesting = 1;
 				oid_array_append(&list->oids, &obj->oid);
 			} else {
 				/* assume a root tree, such as a lightweight tag. */
