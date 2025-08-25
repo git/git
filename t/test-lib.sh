@@ -129,7 +129,7 @@ fi
 
 # Explicitly set the default branch name for testing, to avoid the
 # transitory "git init" warning under --verbose.
-: ${GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME:=master}
+: ${GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME:=main}
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 ################################################################

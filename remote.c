@@ -2379,7 +2379,7 @@ struct ref *guess_remote_head(const struct ref *head,
 			return copy_ref(r);
 
 		/* Fall back to the hard-coded historical default */
-		r = find_ref_by_name(refs, "refs/heads/master");
+		r = find_ref_by_name(refs, "refs/heads/main");
 		if (r && oideq(&r->old_oid, &head->old_oid))
 			return copy_ref(r);
 	}
