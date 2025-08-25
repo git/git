@@ -66,6 +66,7 @@ Clone
 ~~~~~
 Generally, 'git p4 clone' is used to create a new Git directory
 from an existing p4 repository:
+
 ------------
 $ git p4 clone //depot/path/project
 ------------

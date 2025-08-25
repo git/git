@@ -334,7 +334,7 @@ include::diff-context-options.adoc[]
 	separated with _NUL_ character and all other characters are taken
 	literally (including newlines and quotes).
 
-<branch>::
+`<branch>`::
 	Branch to checkout; if it refers to a branch (i.e., a name that,
 	when prepended with "refs/heads/", is a valid ref), then that
 	branch is checked out. Otherwise, if it refers to a valid

@@ -15,7 +15,7 @@ struct repository;
 	"                         [--merged[=<object>]] [--no-merged[=<object>]]\n" \
 	"                         [--contains[=<object>]] [--no-contains[=<object>]]\n" \
 	"                         [(--exclude=<pattern>)...] [--start-after=<marker>]\n" \
-	"                         [ --stdin | <pattern>... ]"
+	"                         [ --stdin | (<pattern>...)]"
 
 /*
  * The core logic for for-each-ref and its clones.
