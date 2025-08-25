@@ -14,6 +14,10 @@ compatObjectFormat::
 	compatObjectFormat.  As well as being able to use oids encoded in
 	compatObjectFormat in addition to oids encoded with objectFormat to
 	locally specify objects.
++
+Note that the functionality enabled by this extension is incomplete and subject
+to change.  It currently exists only to allow development and testing of
+the underlying feature and is not designed to be enabled by end users.
 
 noop::
 	This extension does not change git's behavior at all. It is useful only
