@@ -7,6 +7,13 @@ UI, Workflows & Features
  * The "list" subcommand of "git refs" acts as a front-end for
    "git for-each-ref".
 
+ * "git cmd --help-all" now works outside repositories.
+
+ * "git diff-tree" learned "--max-depth" option.
+
+ * A new subcommand "git repo" gives users a way to grab various
+   repository characteristics.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -23,6 +30,12 @@ Performance, Internal Implementation, Development Support etc.
    used to ignore changed-paths Bloom filter when the pathspec
    contained wildcards; now they take advantage of the filter when
    they can.
+
+ * Doc lint updates to encourage the newer and easier-to-use
+   `synopsis` format, with fixes to a handful of existing uses.
+
+ * Remove dependency on the_repository and other globals from the
+   commit-graph code, and other changes unrelated to de-globaling.
 
 
 Fixes since v2.51
@@ -79,3 +92,5 @@ including security updates, are included in this release.
    (merge 529a60a885 ua/t1517-short-help-tests later to maint).
    (merge 22d421fed9 ac/deglobal-fmt-merge-log-config later to maint).
    (merge 741f36c7d9 kr/clone-synopsis-fix later to maint).
+   (merge a60203a015 dk/t7005-editor-updates later to maint).
+   (merge 7d4a5fef7d ds/doc-count-objects-fix later to maint).
