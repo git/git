@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2025, #10; Fri, 22)
-X-master-at: 1fa68948c3d76328236cac73d2adf33c905bd8e3
-X-next-at: d7df087d1abd30a578bb11da1d7fcc5f9bee7521
+Subject: What's cooking in git.git (Aug 2025, #11; Mon, 25)
+X-master-at: f814da676ae46aac5be0a98b99373a76dee6cedb
+X-next-at: d7d06c2dae85021966c6d9224e6b2efb4454bd77
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2025, #10; Fri, 22)
+What's cooking in git.git (Aug 2025, #11; Mon, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,10 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-Git 2.51 has been tagged.  Let's see if there is any unexpected
-fallout for the rest of this week, and then start merging down what
-has been cooking in 'next' (and rewind 'next' while doing so).
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -52,236 +48,189 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* ac/deglobal-fmt-merge-log-config (2025-08-10) 2 commits
-  (merged to 'next' on 2025-08-13 at c6c74fb8f0)
- + builtin/fmt-merge-msg: stop depending on 'the_repository'
- + environment: remove the global variable 'merge_log_config'
+* dk/help-all (2025-08-03) 3 commits
+  (merged to 'next' on 2025-08-13 at 6dce87c0b5)
+ + builtin: also setup gently for --help-all
+ + parse-options: refactor flags for usage_with_options_internal
+ + Merge branch 'ua/t1517-short-help-tests' into dk/help-all
 
- Code clean-up.
- source: <cover.1754868681.git.ayu.chandekar@gmail.com>
-
-
-* dl/push-missing-object-error (2025-08-08) 3 commits
-  (merged to 'next' on 2025-08-11 at ad69d77794)
- + remote.c: convert if-else ladder to switch
- + remote.c: remove BUG in show_push_unqualified_ref_name_error()
- + t5516: remove surrounding empty lines in test bodies
-
- "git push" had a code path that led to BUG() but it should have
- been a die(), as it is a response to a usual but invalid end-user
- action to attempt pushing an object that does not exist.
- cf. <xmqqo6spiyqp.fsf@gitster.g>
- source: <cover.1754637849.git.liu.denton@gmail.com>
+ "git cmd --help-all" now works outside repositories.
+ source: <20250803012613.54086-1-ben.knoble+github@gmail.com>
 
 
-* en/ort-rename-fixes (2025-08-06) 7 commits
-  (merged to 'next' on 2025-08-12 at 02536ed675)
- + merge-ort: fix directory rename on top of source of other rename/delete
- + merge-ort: fix incorrect file handling
- + merge-ort: clarify the interning of strings in opt->priv->path
- + t6423: fix missed staging of file in testcases 12i,12j,12k
- + t6423: document two bugs with rename-to-self testcases
- + merge-ort: drop unnecessary temporary in check_for_directory_rename()
- + merge-ort: update comments to modern testfile location
+* dk/t7005-editor-updates (2025-08-13) 3 commits
+  (merged to 'next' on 2025-08-17 at ad0ab2e2a9)
+ + t7005: sanitize test environment for subsequent tests
+ + t7005: stop abusing --exec-path
+ + t7005: use modern test style
 
- Various bugs about rename handling in "ort" merge strategy have
- been fixed.
- source: <pull.1943.v3.git.1754522122.gitgitgadget@gmail.com>
+ Test clean-up.
+ source: <20250812170256.71751-1-ben.knoble+github@gmail.com>
 
 
-* gh/git-jump-pathname-with-sp (2025-08-11) 1 commit
-  (merged to 'next' on 2025-08-13 at a99311e231)
- + git-jump: make `diff` work with filenames containing spaces
+* ds/doc-count-objects-fix (2025-08-14) 1 commit
+  (merged to 'next' on 2025-08-17 at 1740ef34dd)
+ + count-objects: document count-objects pack
 
- "git jump" (in contrib/) fails to parse the diff header correctly
- when a file has a space in its name, which has been corrected.
- source: <pull.1950.v2.git.1754913323810.gitgitgadget@gmail.com>
-
-
-* jc/diff-no-index-in-subdir (2025-08-09) 1 commit
-  (merged to 'next' on 2025-08-13 at 956899dc16)
- + diff: --no-index should ignore the worktree
-
- "git diff --no-index" run inside a subdirectory under control of a
- Git repository operated at the top of the working tree and stripped
- the prefix from the output, and oddballs like "-" (stdin) did not
- work correctly because of it.  Correct the set-up by undoing what
- the set-up sequence did to cwd and prefix.
- source: <xmqq1ppk58ob.fsf@gitster.g>
+ Docfix.
+ source: <pull.2031.v3.git.git.1755182034719.gitgitgadget@gmail.com>
 
 
-* jc/strbuf-split (2025-07-31) 13 commits
-  (merged to 'next' on 2025-08-11 at ddf662f7e9)
- + trace2: do not use strbuf_split*()
- + trace2: trim_trailing_newline followed by trim is a no-op
- + sub-process: do not use strbuf_split*()
- + environment: do not use strbuf_split*()
- + config: do not use strbuf_split()
- + notes: do not use strbuf_split*()
- + merge-tree: do not use strbuf_split*()
- + clean: do not use strbuf_split*() [part 2]
- + clean: do not pass the whole structure when it is not necessary
- + clean: do not use strbuf_split*() [part 1]
- + clean: do not pass strbuf by value
- + wt-status: avoid strbuf_split*()
- + Merge branch 'jc/string-list-split' into jc/strbuf-split
- (this branch uses jc/string-list-split.)
+* ja/doc-lint-sections-and-synopsis (2025-08-11) 6 commits
+  (merged to 'next' on 2025-08-17 at 413ff100cd)
+ + doc lint: check that synopsis manpages have synopsis inlines
+ + doc:git-for-each-ref: fix styling and typos
+ + doc: check for absence of the form --[no-]parameter
+ + doc: check for absence of multiple terms in each entry of desc list
+ + doc: check well-formedness of delimited sections
+ + doc: test linkgit macros for well-formedness
 
- Arrays of strbuf is often a wrong data structure to use, and
- strbuf_split*() family of functions that create them often have
- better alternatives.
-
- Update several code paths and replace strbuf_split*().
- source: <20250731225433.4028872-1-gitster@pobox.com>
+ Doc lint updates to encourage the newer and easier-to-use
+ `synopsis` format, with fixes to a handful of existing uses.
+ source: <pull.1945.v3.git.1754945600.gitgitgadget@gmail.com>
 
 
-* jc/string-list-split (2025-08-01) 7 commits
-  (merged to 'next' on 2025-08-11 at 160ff9d174)
- + string-list: split-then-remove-empty can be done while splitting
- + string-list: optionally omit empty string pieces in string_list_split*()
- + diff: simplify parsing of diff.colormovedws
- + string-list: optionally trim string pieces split by string_list_split*()
- + string-list: unify string_list_split* functions
- + string-list: align string_list_split() with its _in_place() counterpart
- + string-list: report programming error with BUG
- (this branch is used by jc/strbuf-split.)
+* lo/repo-info (2025-08-16) 5 commits
+  (merged to 'next' on 2025-08-19 at 9569e192d0)
+ + repo: add the --format flag
+ + repo: add the field layout.shallow
+ + repo: add the field layout.bare
+ + repo: add the field references.format
+ + repo: declare the repo command
+ (this branch is used by lo/repo-info-step-2.)
 
- string_list_split*() family of functions have been extended to
- simplify common use cases.
- source: <20250801220423.1230969-1-gitster@pobox.com>
+ A new subcommand "git repo" gives users a way to grab various
+ repository characteristics.
+ source: <20250816224603.3307-1-lucasseikioshiro@gmail.com>
 
 
-* js/rebase-i-allow-drop-on-a-merge (2025-08-06) 1 commit
-  (merged to 'next' on 2025-08-07 at bc44e9dc1b)
- + rebase -i: permit 'drop' of a merge commit
+* ps/commit-graph-wo-globals (2025-08-14) 6 commits
+  (merged to 'next' on 2025-08-17 at e2889596be)
+ + commit-graph: stop passing in redundant repository
+ + commit-graph: stop using `the_repository`
+ + commit-graph: stop using `the_hash_algo`
+ + commit-graph: refactor `parse_commit_graph()` to take a repository
+ + commit-graph: store the hash algorithm instead of its length
+ + commit-graph: stop using `the_hash_algo` via macros
 
- During interactive rebase, using 'drop' on a merge commit lead to
- an error, which was incorrect.
- source: <37f6e34c-91aa-4e55-88e1-019d2e042df3@kdbg.org>
-
-
-* kh/doc-git-log-markup-fix (2025-08-08) 1 commit
-  (merged to 'next' on 2025-08-12 at 1336146ed4)
- + doc: git-log: fix description list
-
- Doc update.
- source: <aaa1734189ec8bab7cfa0965132e3d8e5909b1af.1754660514.git.code@khaugsbakk.name>
+ Remove dependency on the_repository and other globals from the
+ commit-graph code, and other changes unrelated to de-globaling.
+ source: <20250815-b4-pks-commit-graph-wo-the-repository-v4-0-b6b651178cce@pks.im>
 
 
-* kr/clone-synopsis-fix (2025-08-11) 1 commit
-  (merged to 'next' on 2025-08-13 at b0d634ef29)
- + docs: remove stray bracket from git-clone synopsis
+* tc/diff-tree-max-depth (2025-08-07) 3 commits
+  (merged to 'next' on 2025-08-15 at dddb2275d4)
+ + diff: teach tree-diff a max-depth parameter
+ + within_depth: fix return for empty path
+ + combine-diff: zero memory used for callback filepairs
 
- Doc fix.
- source: <pull.2023.v3.git.git.1754949872593.gitgitgadget@gmail.com>
-
-
-* ly/changed-path-traversal-with-magic-pathspec (2025-08-10) 1 commit
-  (merged to 'next' on 2025-08-12 at 0f929dcec7)
- + bloom: enable bloom filter with wildcard pathspec in revision traversal
-
- Revision traversal limited with pathspec, like "git log dir/*",
- used to ignore changed-paths Bloom filter when the pathspec
- contained wildcards; now they take advantage of the filter when
- they can.
- source: <20250811060137.75135-1-yldhome2d2@gmail.com>
-
-
-* ly/diff-name-only-with-diff-from-content (2025-08-07) 1 commit
-  (merged to 'next' on 2025-08-13 at 662b1ed5c5)
- + diff: ensure consistent diff behavior with ignore options
-
- Various options to "git diff" that makes comparison ignore certain
- aspects of the differences (like "space changes are ignored",
- "differences in lines that match these regular expressions are
- ignored") did not work well with "--name-only" and friends.
- source: <20250808033019.78817-1-yldhome2d2@gmail.com>
-
-
-* ms/refs-list (2025-08-05) 6 commits
-  (merged to 'next' on 2025-08-13 at 3f0791145b)
- + t: add test for git refs list subcommand
- + t6300: refactor tests to be shareable
- + builtin/refs: add list subcommand
- + builtin/for-each-ref: factor out core logic into a helper
- + builtin/for-each-ref: align usage string with the man page
- + doc: factor out common option
-
- The "list" subcommand of "git refs" acts as a front-end for
- "git for-each-ref".
- source: <20250805092758.5321-1-meetsoni3017@gmail.com>
-
-
-* ps/reflog-migrate-fixes (2025-08-05) 9 commits
-  (merged to 'next' on 2025-08-07 at 8068e2ad68)
- + refs: fix invalid old object IDs when migrating reflogs
- + refs: stop unsetting REF_HAVE_OLD for log-only updates
- + refs/files: detect race when generating reflog entry for HEAD
- + refs: fix identity for migrated reflogs
- + ident: fix type of string length parameter
- + builtin/reflog: implement subcommand to write new entries
- + refs: export `ref_transaction_update_reflog()`
- + builtin/reflog: improve grouping of subcommands
- + Documentation/git-reflog: convert to use synopsis type
- (this branch is used by jk/no-clobber-dangling-symref-with-fetch and ps/remote-rename-fix.)
-
- "git refs migrate" to migrate the reflog entries from a refs
- backend to another had a handful of bugs squashed.
- source: <20250806-pks-reflog-append-v6-0-a50839653766@pks.im>
-
-
-* ps/remote-rename-fix (2025-07-31) 7 commits
-  (merged to 'next' on 2025-08-07 at 227d2faf29)
- + builtin/remote: only iterate through refs that are to be renamed
- + builtin/remote: rework how remote refs get renamed
- + builtin/remote: determine whether refs need renaming early on
- + builtin/remote: fix sign comparison warnings
- + refs: simplify logic when migrating reflog entries
- + refs: pass refname when invoking reflog entry callback
- + Merge branch 'ps/reflog-migrate-fixes' into ps/remote-rename-fix
- (this branch uses ps/reflog-migrate-fixes.)
-
- "git remote rename origin upstream" failed to move origin/HEAD to
- upstream/HEAD when origin/HEAD is unborn and performed other
- renames extremely inefficiently, which has been corrected.
- source: <20250731-pks-remote-rename-improvements-v2-0-dda6f083674d@pks.im>
-
-
-* rj/t6137-cygwin-fix (2025-08-08) 1 commit
-  (merged to 'next' on 2025-08-12 at f5acbbb35a)
- + t6137-*.sh: fix test failure on cygwin
-
- Test fix for breakage introduced in Git 2.50.
- source: <5514f2fd-3307-42c8-97ac-bc2147a7ba41@ramsayjones.plus.com>
-
-
-* rs/describe-with-prio-queue (2025-08-03) 2 commits
-  (merged to 'next' on 2025-08-07 at 5ebcaaf8b8)
- + describe: use prio_queue_replace()
- + describe: use prio_queue
-
- "git describe" has been optimized by using better data structure.
- source: <36d5b59a-a99a-4a6f-b637-dfb0b760660f@web.de>
-
-
-* ua/t1517-short-help-tests (2025-08-07) 3 commits
-  (merged to 'next' on 2025-08-12 at 55d20e1985)
- + t5304: move `prune -h` test from t1517
- + t5200: move `update-server-info -h` test from t1517
- + t/t1517: automate `git subcmd -h` tests outside a repository
- (this branch is used by ad/t1517-short-help-tests-fix and dk/help-all.)
-
- Test shuffling.
- source: <20250808010651.591906-1-usmanakinyemi202@gmail.com>
+ "git diff-tree" learned "--max-depth" option.
+ source: <20250807-toon-max-depth-v2-0-50b7e5c81665@iotcl.com>
 
 --------------------------------------------------
 [New Topics]
+
+* bc/doc-compat-object-format-not-working (2025-08-26) 1 commit
+ - docs: note that extensions.compatobjectformat is incomplete
+
+ The compatObjectFormat extension is used to hide an incomplete
+ feature that is not yet usable for any purpose other than
+ developing the feature further.  Document it as such to discourage
+ its use by mere mortals.
+
+ Will merge to 'next'.
+ source: <20250825221101.611876-1-sandals@crustytoothpaste.net>
+
+
+* ds/doc-ggg-pr-fork-clarify (2025-08-23) 1 commit
+  (merged to 'next' on 2025-08-25 at 71aea64ee4)
+ + doc: clarify which remotes can be used with GitGitGadget
+
+ Update the instruction to use of GGG in the MyFirstContribution
+ document to say that a GitHub PR could be made against `git/git`
+ instead of `gitgitgadget/git`.
+
+ Will merge to 'master'.
+ cf. <xmqqtt1vs77x.fsf@gitster.g>
+ source: <pull.2034.v2.git.git.1755940331248.gitgitgadget@gmail.com>
+
+
+* jk/fetch-check-graph-objects-fix (2025-08-23) 1 commit
+ - fetch-pack: re-scan when double-checking graph objects
+
+ Under a race against another process that is repacking the
+ repository, especially a partially cloned one, "git fetch" may have
+ mistakenly think some objects we do have are missing, which has
+ been corrected.
+
+ Will merge to 'next'.
+ source: <20250824050040.GA228050@coredump.intra.peff.net>
+
+
+* js/doc-sending-patch-via-thunderbird (2025-08-22) 1 commit
+  (merged to 'next' on 2025-08-25 at 1e63ebff8c)
+ + doc/format-patch: adjust Thunderbird MUA hint to new add-on
+
+ Doc update.
+
+ Will merge to 'master'.
+ source: <6ec34bbc-6811-41fa-aa06-1d54fd2acb0c@kdbg.org>
+
+
+* js/progress-delay-fix (2025-08-25) 1 commit
+ - progress: pay attention to (customized) delay time
+
+ The start_delayed-Progress() function in the progress eye-candy API
+ did not clear its internal state, making an initial delay value
+ larger than 1 second ineffective, which has been corrected.
+
+ Will merge to 'next'.
+ cf. <xmqq349fs5ee.fsf@gitster.g>
+ source: <7b848623-ce64-4679-9b5e-9d91d947b269@kdbg.org>
+
+
+* kh/doc-config-typofix (2025-08-24) 1 commit
+  (merged to 'next' on 2025-08-25 at f82e0a4c9b)
+ + doc: config: replace backtick with apostrophe for possessive
+
+ Documentation typofix.
+
+ Will merge to 'master'.
+ cf. <xmqqwm6rp2y4.fsf@gitster.g>
+ source: <3ec6a00e3046166c7adb593f38c4099921d8ada3.1756064760.git.code@khaugsbakk.name>
+
+
+* rs/describe-with-lazy-queue-and-khash (2025-08-24) 1 commit
+ - describe: use khash in finish_depth_computation()
+
+ Instead of scanning for the remaining items to see if there are
+ still commits to be explored in the queue, use khash to remember
+ which items are still on the queue (an unacceptable alternative is
+ to reserve one object flag bits).
+
+ Will merge to 'next'?
+ source: <9110f085-aec0-42e9-9774-b153ece6284f@web.de>
+
+
+* sg/line-log-merge-optim (2025-08-24) 4 commits
+ - line-log: simplify condition checking for merge commits
+ - line-log: initialize diff queue in process_ranges_ordinary_commit()
+ - line-log: get rid of the parents array in process_ranges_merge_commit()
+ - line-log: avoid unnecessary tree diffs when processing merge commits
+
+ "git log -L..." compared trees of multiple parents with the tree of the
+ merge result in an unnecessarily inefficient way.
+
+ Will merge to 'next'.
+ source: <20250824190644.2573279-1-szeder.dev@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * lo/repo-info-step-2 (2025-08-20) 3 commits
  - repo: add the field objects.format
  - repo: add the flag -z as an alias for --format=nul
  - Merge branch 'lo/repo-info' into lo/repo-info-step-2
- (this branch uses lo/repo-info.)
 
  "repo info" learns a short-hand option "-z" that is the same as
  "--format=nul", and learns to report the objects format used in the
@@ -315,7 +264,7 @@ Release tarballs are available at:
  source: <20250821070740.GA3356411@coredump.intra.peff.net>
 
 
-* jt/de-global-bulk-checkin (2025-08-21) 4 commits
+* jt/de-global-bulk-checkin (2025-08-22) 4 commits
  - bulk-checkin: use repository variable from transaction
  - bulk-checkin: require transaction for index_blob_bulk_checkin()
  - bulk-checkin: remove global transaction state
@@ -326,19 +275,18 @@ Release tarballs are available at:
  throughout the callchain.
 
  Will merge to 'next'?
- source: <20250821232249.319427-1-jltobler@gmail.com>
+ source: <20250822213500.1488064-1-jltobler@gmail.com>
 
 
 * kh/doc-interpret-trailers-markup-fix (2025-08-22) 1 commit
- - doc: interpret-trailers: close all pairs of single quotes
+  (merged to 'next' on 2025-08-25 at 9bee54a64d)
+ + doc: interpret-trailers: close all pairs of single quotes
 
  Fix missing single-quote pairs in a documentation page.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <4eac944102a846695a9f61ead39a5a86361a0532.1755875970.git.code@khaugsbakk.name>
 
---------------------------------------------------
-[Cooking]
 
 * ar/submodule-gitdir-tweak (2025-08-18) 10 commits
  . fixup! t: add gitdir encoding tests
@@ -388,12 +336,13 @@ Release tarballs are available at:
 
 
 * je/doc-add (2025-08-19) 2 commits
- - doc: git-add: simplify discussion of ignored files
- - doc: git-add: clarify intro & add an example
+  (merged to 'next' on 2025-08-25 at 0c84501ed2)
+ + doc: git-add: simplify discussion of ignored files
+ + doc: git-add: clarify intro & add an example
 
  Documentation for "git add" has been updated.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1952.v3.git.1755636370.gitgitgadget@gmail.com>
 
 
@@ -412,16 +361,15 @@ Release tarballs are available at:
  source: <20250819192004.GA1058857@coredump.intra.peff.net>
 
 
-* ds/path-walk-repack-fix (2025-08-20) 3 commits
+* ds/path-walk-repack-fix (2025-08-25) 2 commits
  - path-walk: create initializer for path lists
  - path-walk: fix setup of pending objects
- - t7700: add failing --path-walk test
 
  "git repack --path-walk" lost objects in some corner cases, which
  has been corrected.
 
- Comments?
- source: <pull.1956.git.1755715196.gitgitgadget@gmail.com>
+ Will merge 'next'.
+ source: <pull.1956.v2.git.1756126197.gitgitgadget@gmail.com>
 
 
 * js/doc-gitk-history (2025-08-19) 1 commit
@@ -455,16 +403,6 @@ Release tarballs are available at:
  source: <20250820212319.41044-1-jn.avila@free.fr>
 
 
-* ds/doc-count-objects-fix (2025-08-14) 1 commit
-  (merged to 'next' on 2025-08-17 at 1740ef34dd)
- + count-objects: document count-objects pack
-
- Docfix.
-
- Will merge to 'master'.
- source: <pull.2031.v3.git.git.1755182034719.gitgitgadget@gmail.com>
-
-
 * ad/t1517-short-help-tests-fix (2025-08-19) 1 commit
   (merged to 'next' on 2025-08-21 at f686ad352a)
  + t/t1517: mark tests that fail with GIT_TEST_INSTALLED
@@ -473,18 +411,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20250819074631.3303-1-adam@dinwoodie.org>
-
-
-* dk/t7005-editor-updates (2025-08-13) 3 commits
-  (merged to 'next' on 2025-08-17 at ad0ab2e2a9)
- + t7005: sanitize test environment for subsequent tests
- + t7005: stop abusing --exec-path
- + t7005: use modern test style
-
- Test clean-up.
-
- Will merge to 'master'.
- source: <20250812170256.71751-1-ben.knoble+github@gmail.com>
 
 
 * jc/longer-disambiguation-fix (2025-08-14) 1 commit
@@ -498,38 +424,6 @@ Release tarballs are available at:
  source: <xmqqh5ya6iua.fsf_-_@gitster.g>
 
 
-* ja/doc-lint-sections-and-synopsis (2025-08-11) 6 commits
-  (merged to 'next' on 2025-08-17 at 413ff100cd)
- + doc lint: check that synopsis manpages have synopsis inlines
- + doc:git-for-each-ref: fix styling and typos
- + doc: check for absence of the form --[no-]parameter
- + doc: check for absence of multiple terms in each entry of desc list
- + doc: check well-formedness of delimited sections
- + doc: test linkgit macros for well-formedness
-
- Doc lint updates to encourage the newer and easier-to-use
- `synopsis` format, with fixes to a handful of existing uses.
-
- Will merge to 'master'.
- source: <pull.1945.v3.git.1754945600.gitgitgadget@gmail.com>
-
-
-* ps/commit-graph-wo-globals (2025-08-14) 6 commits
-  (merged to 'next' on 2025-08-17 at e2889596be)
- + commit-graph: stop passing in redundant repository
- + commit-graph: stop using `the_repository`
- + commit-graph: stop using `the_hash_algo`
- + commit-graph: refactor `parse_commit_graph()` to take a repository
- + commit-graph: store the hash algorithm instead of its length
- + commit-graph: stop using `the_hash_algo` via macros
-
- Remove dependency on the_repository and other globals from the
- commit-graph code, and other changes unrelated to de-globaling.
-
- Will merge to 'master'.
- source: <20250815-b4-pks-commit-graph-wo-the-repository-v4-0-b6b651178cce@pks.im>
-
-
 * tc/t0450-harden (2025-08-12) 3 commits
  - fixup! t0450: add allowlist for builtins with missing .adoc
  - t0450: add allowlist for builtins with missing .adoc
@@ -541,7 +435,7 @@ Release tarballs are available at:
  source: <20250804073002.1586332-1-toon@iotcl.com>
 
 
-* je/doc-rebase (2025-08-15) 5 commits
+* je/doc-rebase (2025-08-22) 5 commits
  - doc: git-rebase: update discussion of internals
  - doc: git-rebase: move --onto explanation down
  - doc: git rebase: clarify arguments syntax
@@ -550,9 +444,8 @@ Release tarballs are available at:
 
  Documentation for "git rebase" has been updated.
 
- Expecting a reroll.
- cf. <106c4a6c-9239-4c67-8bed-5ec2c0987f21@app.fastmail.com>
- source: <pull.1949.v8.git.1755276750.gitgitgadget@gmail.com>
+ Will merge to 'next'.
+ source: <pull.1949.v9.git.1755909782.gitgitgadget@gmail.com>
 
 
 * ps/reftable-libgit2-cleanup (2025-08-12) 8 commits
@@ -570,30 +463,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20250812-pks-reftable-fixes-for-libgit2-v3-0-cf3b2267867e@pks.im>
-
-
-* tc/diff-tree-max-depth (2025-08-07) 3 commits
-  (merged to 'next' on 2025-08-15 at dddb2275d4)
- + diff: teach tree-diff a max-depth parameter
- + within_depth: fix return for empty path
- + combine-diff: zero memory used for callback filepairs
-
- "git diff-tree" learned "--max-depth" option.
-
- Will merge to 'master'.
- source: <20250807-toon-max-depth-v2-0-50b7e5c81665@iotcl.com>
-
-
-* dk/help-all (2025-08-03) 3 commits
-  (merged to 'next' on 2025-08-13 at 6dce87c0b5)
- + builtin: also setup gently for --help-all
- + parse-options: refactor flags for usage_with_options_internal
- + Merge branch 'ua/t1517-short-help-tests' into dk/help-all
-
- "git cmd --help-all" outside repository.
-
- Will merge to 'master'.
- source: <20250803012613.54086-1-ben.knoble+github@gmail.com>
 
 
 * lc/rebase-trailer (2025-08-03) 2 commits
@@ -692,22 +561,6 @@ Release tarballs are available at:
  A new command "git last-modified" is proposed to show the closest
  ancestor commit that touched each path.
  source: <20250730175510.987383-1-toon@iotcl.com>
-
-
-* lo/repo-info (2025-08-16) 5 commits
-  (merged to 'next' on 2025-08-19 at 9569e192d0)
- + repo: add the --format flag
- + repo: add the field layout.shallow
- + repo: add the field layout.bare
- + repo: add the field references.format
- + repo: declare the repo command
- (this branch is used by lo/repo-info-step-2.)
-
- A new subcommand "git repo" gives users a way to grab various
- repository characteristics.
-
- Will merge to 'master'.
- source: <20250816224603.3307-1-lucasseikioshiro@gmail.com>
 
 
 * ac/deglobal-sparse-variables (2025-07-18) 3 commits
