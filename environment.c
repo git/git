@@ -124,6 +124,7 @@ const char *comment_line_str = "#";
 char *comment_line_str_to_free;
 #ifndef WITH_BREAKING_CHANGES
 int auto_comment_line_char;
+bool warn_on_auto_comment_char;
 #endif /* !WITH_BREAKING_CHANGES */
 
 /* This is set by setup_git_directory_gently() and/or git_default_config() */

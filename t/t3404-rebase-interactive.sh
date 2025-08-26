@@ -1184,8 +1184,13 @@ test_expect_success !WITH_BREAKING_CHANGES 'rebase -i respects core.commentchar=
 	test_when_finished "git rebase --abort || :" &&
 	(
 		test_set_editor "$(pwd)/copy-edit-script.sh" &&
-		git rebase -i HEAD^
+		git rebase -i HEAD^ 2>err
 	) &&
+	sed -n "s/^warning: //p" err >actual &&
+	cat >expect <<-EOF &&
+	Support for ${SQ}core.commentChar=auto${SQ} is deprecated and will be removed in Git 3.0
+	EOF
+	test_cmp expect actual &&
 	test -z "$(grep -ve "^#" -e "^\$" -e "^pick" edit-script)"
 '
 
