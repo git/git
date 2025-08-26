@@ -122,7 +122,9 @@ int protect_ntfs = PROTECT_NTFS_DEFAULT;
  */
 const char *comment_line_str = "#";
 char *comment_line_str_to_free;
+#ifndef WITH_BREAKING_CHANGES
 int auto_comment_line_char;
+#endif /* !WITH_BREAKING_CHANGES */
 
 /* This is set by setup_git_directory_gently() and/or git_default_config() */
 char *git_work_tree_cfg;
@@ -459,18 +461,22 @@ static int git_default_core_config(const char *var, const char *value,
 
 	if (!strcmp(var, "core.commentchar") ||
 	    !strcmp(var, "core.commentstring")) {
-		if (!value)
+		if (!value) {
 			return config_error_nonbool(var);
-		else if (!strcasecmp(value, "auto")) {
+#ifndef WITH_BREAKING_CHANGES
+		} else if (!strcasecmp(value, "auto")) {
 			auto_comment_line_char = 1;
 			FREE_AND_NULL(comment_line_str_to_free);
 			comment_line_str = "#";
+#endif /* !WITH_BREAKING_CHANGES */
 		} else if (value[0]) {
 			if (strchr(value, '\n'))
 				return error(_("%s cannot contain newline"), var);
 			comment_line_str = value;
 			FREE_AND_NULL(comment_line_str_to_free);
+#ifndef WITH_BREAKING_CHANGES
 			auto_comment_line_char = 0;
+#endif /* !WITH_BREAKING_CHANGES */
 		} else
 			return error(_("%s must have at least one character"), var);
 		return 0;

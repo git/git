@@ -239,6 +239,11 @@ These features will be removed.
 +
 The command will be removed.
 
+* Support for `core.commentString=auto` has been deprecated and will
+  be removed in Git 3.0.
++
+cf. <xmqqa59i45wc.fsf@gitster.g>
+
 == Superseded features that will not be deprecated
 
 Some features have gained newer replacements that aim to improve the design in
