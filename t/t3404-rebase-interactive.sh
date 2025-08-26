@@ -1186,9 +1186,19 @@ test_expect_success !WITH_BREAKING_CHANGES 'rebase -i respects core.commentchar=
 		test_set_editor "$(pwd)/copy-edit-script.sh" &&
 		git rebase -i HEAD^ 2>err
 	) &&
-	sed -n "s/^warning: //p" err >actual &&
+	sed -n "s/^hint: *\$//p; s/^hint: //p; s/^warning: //p" err >actual &&
 	cat >expect <<-EOF &&
 	Support for ${SQ}core.commentChar=auto${SQ} is deprecated and will be removed in Git 3.0
+
+	To use the default comment string (#) please run
+
+	    git config unset core.commentChar
+
+	To set a custom comment string please run
+
+	    git config set core.commentChar <comment string>
+
+	where ${SQ}<comment string>${SQ} is the string you wish to use.
 	EOF
 	test_cmp expect actual &&
 	test -z "$(grep -ve "^#" -e "^\$" -e "^pick" edit-script)"

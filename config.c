@@ -8,6 +8,7 @@
 
 #include "git-compat-util.h"
 #include "abspath.h"
+#include "advice.h"
 #include "date.h"
 #include "branch.h"
 #include "config.h"
@@ -1955,9 +1956,51 @@ int git_configset_get_pathname(struct config_set *set, const char *key, char **d
 struct comment_char_config {
 	unsigned last_key_id;
 	bool auto_set;
+	bool auto_set_in_file;
+	struct strintmap key_flags;
+	size_t alloc, nr;
+	struct comment_char_config_item {
+		unsigned key_id;
+		char *path;
+		enum config_scope scope;
+	} *item;
 };
 
-#define COMMENT_CHAR_CFG_INIT { 0 }
+#define COMMENT_CHAR_CFG_INIT {			\
+		.key_flags = STRINTMAP_INIT,	\
+	}
+
+static void comment_char_config_release(struct comment_char_config *config)
+{
+	strintmap_clear(&config->key_flags);
+	for (size_t i = 0; i < config->nr; i++)
+		free(config->item[i].path);
+	free(config->item);
+}
+
+/* Used to track whether the key occurs more than once in a given file */
+#define KEY_SEEN_ONCE 1u
+#define KEY_SEEN_TWICE 2u
+#define COMMENT_KEY_SHIFT(id) (2 * (id))
+#define COMMENT_KEY_MASK(id) (3u << COMMENT_KEY_SHIFT(id))
+
+static void set_comment_key_flags(struct comment_char_config *config,
+				  const char *path, unsigned id, unsigned value)
+{
+	unsigned old = strintmap_get(&config->key_flags, path);
+	unsigned new = (old & ~COMMENT_KEY_MASK(id)) |
+				value << COMMENT_KEY_SHIFT(id);
+
+	strintmap_set(&config->key_flags, path, new);
+}
+
+static unsigned get_comment_key_flags(struct comment_char_config *config,
+				      const char *path, unsigned id)
+{
+	unsigned value = strintmap_get(&config->key_flags, path);
+
+	return (value & COMMENT_KEY_MASK(id)) >> COMMENT_KEY_SHIFT(id);
+}
 
 static const char *comment_key_name(unsigned id)
 {
@@ -1973,10 +2016,10 @@ static const char *comment_key_name(unsigned id)
 }
 
 static void comment_char_callback(const char *key, const char *value,
-				  const struct config_context *ctx UNUSED,
-				  void *data)
+				  const struct config_context *ctx, void *data)
 {
 	struct comment_char_config *config = data;
+	const struct key_value_info *kvi = ctx->kvi;
 	unsigned key_id;
 
 	if (!strcmp(key, "core.commentchar"))
@@ -1988,7 +2031,135 @@ static void comment_char_callback(const char *key, const char *value,
 
 	config->last_key_id = key_id;
 	config->auto_set = value && !strcmp(value, "auto");
+	if (kvi->origin_type != CONFIG_ORIGIN_FILE) {
+		return;
+	} else if (get_comment_key_flags(config, kvi->filename, key_id)) {
+		set_comment_key_flags(config, kvi->filename, key_id,
+				      KEY_SEEN_TWICE);
+	} else {
+		struct comment_char_config_item *item;
+
+		ALLOC_GROW_BY(config->item, config->nr, 1, config->alloc);
+		item = &config->item[config->nr - 1];
+		item->key_id = key_id;
+		item->scope = kvi->scope;
+		item->path = xstrdup(kvi->filename);
+		set_comment_key_flags(config, kvi->filename, key_id,
+				      KEY_SEEN_ONCE);
+	}
+	config->auto_set_in_file = config->auto_set;
 }
+
+static void add_config_scope_arg(struct repository *repo, struct strbuf *buf,
+				 struct comment_char_config_item *item)
+{
+	char *global_config = git_global_config();
+	char *system_config = git_system_config();
+
+	if (item->scope == CONFIG_SCOPE_SYSTEM && access(item->path, W_OK)) {
+		/*
+		 * If the user cannot write to the system config recommend
+		 * setting the global config instead.
+		 */
+		strbuf_addstr(buf, "--global ");
+	} else if (fspatheq(item->path, system_config)) {
+		strbuf_addstr(buf, "--system ");
+	} else if (fspatheq(item->path, global_config)) {
+		strbuf_addstr(buf, "--global ");
+	} else if (fspatheq(item->path,
+			    mkpath("%s/config",
+				   repo_get_git_dir(repo)))) {
+		; /* --local is the default */
+	} else if (fspatheq(item->path,
+			    mkpath("%s/config.worktree",
+				   repo_get_common_dir(repo)))) {
+		strbuf_addstr(buf, "--worktree ");
+	} else {
+		const char *path = item->path;
+		const char *home = getenv("HOME");
+
+		strbuf_addstr(buf, "--file ");
+		if (home && !fspathncmp(path, home, strlen(home))) {
+			path += strlen(home);
+			if (!fspathncmp(path, "/", 1))
+				path++;
+			strbuf_addstr(buf, "~/");
+		}
+		sq_quote_buf_pretty(buf, path);
+		strbuf_addch(buf, ' ');
+	}
+
+	free(global_config);
+	free(system_config);
+}
+
+static bool can_unset_comment_char_config(struct comment_char_config *config)
+{
+	for (size_t i = 0; i < config->nr; i++) {
+		struct comment_char_config_item *item = &config->item[i];
+
+		if (item->scope == CONFIG_SCOPE_SYSTEM &&
+		    access(item->path, W_OK))
+			return false;
+	}
+
+	return true;
+}
+
+static void add_unset_auto_comment_char_advice(struct repository *repo,
+					       struct comment_char_config *config)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	if (!can_unset_comment_char_config(config))
+		return;
+
+	for (size_t i = 0; i < config->nr; i++) {
+		struct comment_char_config_item *item = &config->item[i];
+
+		strbuf_addstr(&buf, "    git config unset ");
+		add_config_scope_arg(repo, &buf, item);
+		if (get_comment_key_flags(config, item->path, item->key_id) == KEY_SEEN_TWICE)
+			strbuf_addstr(&buf, "--all ");
+		strbuf_addf(&buf, "%s\n", comment_key_name(item->key_id));
+	}
+	advise(_("\nTo use the default comment string (#) please run\n\n%s"),
+	       buf.buf);
+	strbuf_release(&buf);
+}
+
+static void add_comment_char_advice(struct repository *repo,
+				    struct comment_char_config *config)
+{
+	struct strbuf buf = STRBUF_INIT;
+	struct comment_char_config_item *item;
+	/* TRANSLATORS this is a place holder for the value of core.commentString */
+	const char *placeholder = _("<comment string>");
+
+	/*
+	 * If auto is set in the last file that we saw advise the user how to
+	 * update their config.
+	 */
+	if (!config->auto_set_in_file)
+		return;
+
+	add_unset_auto_comment_char_advice(repo, config);
+	item = &config->item[config->nr - 1];
+	strbuf_reset(&buf);
+	strbuf_addstr(&buf, "    git config set ");
+	add_config_scope_arg(repo, &buf, item);
+	strbuf_addf(&buf, "%s %s\n", comment_key_name(item->key_id),
+		    placeholder);
+	advise(_("\nTo set a custom comment string please run\n\n"
+		 "%s\nwhere '%s' is the string you wish to use.\n"),
+	       buf.buf, placeholder);
+	strbuf_release(&buf);
+}
+
+#undef KEY_SEEN_ONCE
+#undef KEY_SEEN_TWICE
+#undef COMMENT_KEY_SHIFT
+#undef COMMENT_KEY_MASK
 
 struct repo_config {
 	struct repository *repo;
@@ -2000,18 +2171,26 @@ struct repo_config {
 		.repo = repo_,					\
 	};
 
+static void repo_config_release(struct repo_config *config)
+{
+	comment_char_config_release(&config->comment_char_config);
+}
+
 #ifdef WITH_BREAKING_CHANGES
-static void check_auto_comment_char_config(struct comment_char_config *config)
+static void check_auto_comment_char_config(struct repository *repo,
+					   struct comment_char_config *config)
 {
 	if (!config->auto_set)
 		return;
 
 	die_message(_("Support for '%s=auto' has been removed in Git 3.0"),
 		    comment_key_name(config->last_key_id));
+	add_comment_char_advice(repo, config);
 	die(NULL);
 }
 #else
-static void check_auto_comment_char_config(struct comment_char_config *config)
+static void check_auto_comment_char_config(struct repository *repo,
+					   struct comment_char_config *config)
 {
 	extern bool warn_on_auto_comment_char;
 	const char *DEPRECATED_CONFIG_ENV =
@@ -2031,6 +2210,7 @@ static void check_auto_comment_char_config(struct comment_char_config *config)
 
 	warning(_("Support for '%s=auto' is deprecated and will be removed in "
 		  "Git 3.0"), comment_key_name(config->last_key_id));
+	add_comment_char_advice(repo, config);
 }
 #endif /* WITH_BREAKING_CHANGES */
 
@@ -2039,7 +2219,8 @@ static void check_deprecated_config(struct repo_config *config)
 	if (!config->repo->check_deprecated_config)
 			return;
 
-	check_auto_comment_char_config(&config->comment_char_config);
+	check_auto_comment_char_config(config->repo,
+				       &config->comment_char_config);
 }
 
 static int repo_config_callback(const char *key, const char *value,
@@ -2082,6 +2263,7 @@ static void repo_read_config(struct repository *repo)
 		 */
 		die(_("unknown error occurred while reading the configuration files"));
 	check_deprecated_config(&config);
+	repo_config_release(&config);
 }
 
 static void git_config_check_init(struct repository *repo)
