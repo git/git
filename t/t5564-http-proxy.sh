@@ -72,7 +72,9 @@ test_expect_success SOCKS_PROXY 'clone via Unix socket' '
 	test_when_finished "rm -rf clone" &&
 	test_config_global http.proxy "socks4://localhost$PWD/%2530.sock" && {
 		{
-			GIT_TRACE_CURL=$PWD/trace git clone "$HTTPD_URL/smart/repo.git" clone 2>err &&
+			GIT_TRACE_CURL=$PWD/trace \
+			GIT_TRACE_CURL_COMPONENTS=socks \
+			git clone "$HTTPD_URL/smart/repo.git" clone 2>err &&
 			grep -i "SOCKS4 request granted" trace
 		} ||
 		old_libcurl_error err
