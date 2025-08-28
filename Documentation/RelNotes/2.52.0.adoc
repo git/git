@@ -86,6 +86,30 @@ including security updates, are included in this release.
    ignored") did not work well with "--name-only" and friends.
    (merge b55e6d36eb ly/diff-name-only-with-diff-from-content later to maint).
 
+ * Documentation for "git rebase" has been updated.
+   (merge 3f7f2b0359 je/doc-rebase later to maint).
+
+ * The start_delayed_progress() function in the progress eye-candy API
+   did not clear its internal state, making an initial delay value
+   larger than 1 second ineffective, which has been corrected.
+   (merge 457534d041 js/progress-delay-fix later to maint).
+
+ * The compatObjectFormat extension is used to hide an incomplete
+   feature that is not yet usable for any purpose other than
+   developing the feature further.  Document it as such to discourage
+   its use by mere mortals.
+   (merge 716d905792 bc/doc-compat-object-format-not-working later to maint).
+
+ * "git log -L..." compared trees of multiple parents with the tree of the
+   merge result in an unnecessarily inefficient way.
+   (merge 0a15bb634c sg/line-log-merge-optim later to maint).
+
+ * Under a race against another process that is repacking the
+   repository, especially a partially cloned one, "git fetch" may
+   mistakenly think some objects we do have are missing, which has
+   been corrected.
+   (merge 8f32a5a6c0 jk/fetch-check-graph-objects-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
    (merge cf7efa4f33 rj/t6137-cygwin-fix later to maint).
