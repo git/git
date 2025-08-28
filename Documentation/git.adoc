@@ -684,7 +684,7 @@ other
 
 `GIT_PROGRESS_DELAY`::
 	A number controlling how many seconds to delay before showing
-	optional progress indicators. Defaults to 2.
+	optional progress indicators. Defaults to 1.
 
 `GIT_EDITOR`::
 	This environment variable overrides `$EDITOR` and `$VISUAL`.
