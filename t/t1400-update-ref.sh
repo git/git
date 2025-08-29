@@ -2368,4 +2368,25 @@ test_expect_success REFFILES 'empty directories are pruned when not committing' 
 	test_path_is_missing .git/refs/heads/nested
 '
 
+test_expect_success 'dangling symref not overwritten by creation' '
+	test_when_finished "git update-ref -d refs/heads/dangling" &&
+	git symbolic-ref refs/heads/dangling refs/heads/does-not-exist &&
+	test_must_fail git update-ref --no-deref --stdin 2>err <<-\EOF &&
+	create refs/heads/dangling HEAD
+	EOF
+	test_grep "cannot lock.*dangling symref already exists" err &&
+	test_must_fail git rev-parse --verify refs/heads/dangling &&
+	test_must_fail git rev-parse --verify refs/heads/does-not-exist
+'
+
+test_expect_success 'dangling symref overwritten without old oid' '
+	test_when_finished "git update-ref -d refs/heads/dangling" &&
+	git symbolic-ref refs/heads/dangling refs/heads/does-not-exist &&
+	git update-ref --no-deref --stdin <<-\EOF &&
+	update refs/heads/dangling HEAD
+	EOF
+	git rev-parse --verify refs/heads/dangling &&
+	test_must_fail git rev-parse --verify refs/heads/does-not-exist
+'
+
 test_done
