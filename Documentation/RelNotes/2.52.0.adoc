@@ -37,6 +37,9 @@ Performance, Internal Implementation, Development Support etc.
  * Remove dependency on the_repository and other globals from the
    commit-graph code, and other changes unrelated to de-globaling.
 
+ * Discord has been added to the first contribution documentation as
+   another way to ask for help.
+
 
 Fixes since v2.51
 -----------------
@@ -110,6 +113,18 @@ including security updates, are included in this release.
    been corrected.
    (merge 8f32a5a6c0 jk/fetch-check-graph-objects-fix later to maint).
 
+ * "git fetch" can clobber a symref that is dangling when the
+   remote-tracking HEAD is set to auto update, which has been
+   corrected.
+
+ * "git describe <blob>" misbehaves and/or crashes in some corner
+   cases, which has been taught to exit with failure gracefully.
+   (merge 7c10e48e81 jk/describe-blob later to maint).
+
+ * Manual page for "gitk" is updated with the current maintainer's
+   name.
+   (merge bcb20dda83 js/doc-gitk-history later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
    (merge cf7efa4f33 rj/t6137-cygwin-fix later to maint).
@@ -118,3 +133,4 @@ including security updates, are included in this release.
    (merge 741f36c7d9 kr/clone-synopsis-fix later to maint).
    (merge a60203a015 dk/t7005-editor-updates later to maint).
    (merge 7d4a5fef7d ds/doc-count-objects-fix later to maint).
+   (merge 16684b6fae ps/reftable-libgit2-cleanup later to maint).
