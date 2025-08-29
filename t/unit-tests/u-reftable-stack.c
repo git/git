@@ -128,7 +128,7 @@ static void write_n_ref_tables(struct reftable_stack *st,
 		cl_reftable_set_hash(ref.value.val1, i, REFTABLE_HASH_SHA1);
 
 		cl_assert_equal_i(reftable_stack_add(st,
-						     &write_test_ref, &ref), 0);
+						     &write_test_ref, &ref, 0), 0);
 	}
 
 	st->opts.disable_auto_compact = disable_auto_compact;
@@ -171,7 +171,7 @@ void test_reftable_stack__add_one(void)
 	err = reftable_new_stack(&st, dir, &opts);
 	cl_assert(!err);
 
-	err = reftable_stack_add(st, write_test_ref, &ref);
+	err = reftable_stack_add(st, write_test_ref, &ref, 0);
 	cl_assert(!err);
 
 	err = reftable_stack_read_ref(st, ref.refname, &dest);
@@ -235,12 +235,12 @@ void test_reftable_stack__uptodate(void)
 	cl_assert_equal_i(reftable_new_stack(&st1, dir, &opts), 0);
 	cl_assert_equal_i(reftable_new_stack(&st2, dir, &opts), 0);
 	cl_assert_equal_i(reftable_stack_add(st1, write_test_ref,
-					     &ref1), 0);
+					     &ref1, 0), 0);
 	cl_assert_equal_i(reftable_stack_add(st2, write_test_ref,
-					     &ref2), REFTABLE_OUTDATED_ERROR);
+					     &ref2, 0), REFTABLE_OUTDATED_ERROR);
 	cl_assert_equal_i(reftable_stack_reload(st2), 0);
 	cl_assert_equal_i(reftable_stack_add(st2, write_test_ref,
-					     &ref2), 0);
+					     &ref2, 0), 0);
 	reftable_stack_destroy(st1);
 	reftable_stack_destroy(st2);
 	clear_dir(dir);
@@ -406,7 +406,7 @@ void test_reftable_stack__auto_compaction_fails_gracefully(void)
 
 	cl_assert_equal_i(reftable_new_stack(&st, dir, &opts), 0);
 	cl_assert_equal_i(reftable_stack_add(st, write_test_ref,
-					     &ref), 0);
+					     &ref, 0), 0);
 	cl_assert_equal_i(st->merged->tables_len, 1);
 	cl_assert_equal_i(st->stats.attempts, 0);
 	cl_assert_equal_i(st->stats.failures, 0);
@@ -424,7 +424,7 @@ void test_reftable_stack__auto_compaction_fails_gracefully(void)
 	write_file_buf(table_path.buf, "", 0);
 
 	ref.update_index = 2;
-	err = reftable_stack_add(st, write_test_ref, &ref);
+	err = reftable_stack_add(st, write_test_ref, &ref, 0);
 	cl_assert(!err);
 	cl_assert_equal_i(st->merged->tables_len, 2);
 	cl_assert_equal_i(st->stats.attempts, 1);
@@ -460,9 +460,9 @@ void test_reftable_stack__update_index_check(void)
 
 	cl_assert_equal_i(reftable_new_stack(&st, dir, &opts), 0);
 	cl_assert_equal_i(reftable_stack_add(st, write_test_ref,
-					     &ref1), 0);
+					     &ref1, 0), 0);
 	cl_assert_equal_i(reftable_stack_add(st, write_test_ref,
-					     &ref2), REFTABLE_API_ERROR);
+					     &ref2, 0), REFTABLE_API_ERROR);
 	reftable_stack_destroy(st);
 	clear_dir(dir);
 }
@@ -477,7 +477,7 @@ void test_reftable_stack__lock_failure(void)
 	cl_assert_equal_i(reftable_new_stack(&st, dir, &opts), 0);
 	for (i = -1; i != REFTABLE_EMPTY_TABLE_ERROR; i--)
 		cl_assert_equal_i(reftable_stack_add(st, write_error,
-						     &i), i);
+						     &i, 0), i);
 
 	reftable_stack_destroy(st);
 	clear_dir(dir);
@@ -521,7 +521,7 @@ void test_reftable_stack__add(void)
 
 	for (i = 0; i < N; i++)
 		cl_assert_equal_i(reftable_stack_add(st, write_test_ref,
-					     &refs[i]), 0);
+						     &refs[i], 0), 0);
 
 	for (i = 0; i < N; i++) {
 		struct write_log_arg arg = {
@@ -529,7 +529,7 @@ void test_reftable_stack__add(void)
 			.update_index = reftable_stack_next_update_index(st),
 		};
 		cl_assert_equal_i(reftable_stack_add(st, write_test_log,
-						     &arg), 0);
+						     &arg, 0), 0);
 	}
 
 	cl_assert_equal_i(reftable_stack_compact_all(st, NULL), 0);
@@ -612,8 +612,8 @@ void test_reftable_stack__iterator(void)
 	}
 
 	for (i = 0; i < N; i++)
-		cl_assert_equal_i(reftable_stack_add(st,
-						     write_test_ref, &refs[i]), 0);
+		cl_assert_equal_i(reftable_stack_add(st, write_test_ref,
+						     &refs[i], 0), 0);
 
 	for (i = 0; i < N; i++) {
 		struct write_log_arg arg = {
@@ -621,8 +621,8 @@ void test_reftable_stack__iterator(void)
 			.update_index = reftable_stack_next_update_index(st),
 		};
 
-		cl_assert_equal_i(reftable_stack_add(st,
-						     write_test_log, &arg), 0);
+		cl_assert_equal_i(reftable_stack_add(st, write_test_log,
+						     &arg, 0), 0);
 	}
 
 	reftable_stack_init_ref_iterator(st, &it);
@@ -697,11 +697,11 @@ void test_reftable_stack__log_normalize(void)
 
 	input.value.update.message = (char *) "one\ntwo";
 	cl_assert_equal_i(reftable_stack_add(st, write_test_log,
-					     &arg), REFTABLE_API_ERROR);
+					     &arg, 0), REFTABLE_API_ERROR);
 
 	input.value.update.message = (char *) "one";
 	cl_assert_equal_i(reftable_stack_add(st, write_test_log,
-					     &arg), 0);
+					     &arg, 0), 0);
 	cl_assert_equal_i(reftable_stack_read_log(st, input.refname,
 						  &dest), 0);
 	cl_assert_equal_s(dest.value.update.message, "one\n");
@@ -709,7 +709,7 @@ void test_reftable_stack__log_normalize(void)
 	input.value.update.message = (char *) "two\n";
 	arg.update_index = 2;
 	cl_assert_equal_i(reftable_stack_add(st, write_test_log,
-					     &arg), 0);
+					     &arg, 0), 0);
 	cl_assert_equal_i(reftable_stack_read_log(st, input.refname,
 						  &dest), 0);
 	cl_assert_equal_s(dest.value.update.message, "two\n");
@@ -759,15 +759,16 @@ void test_reftable_stack__tombstone(void)
 		}
 	}
 	for (i = 0; i < N; i++)
-		cl_assert_equal_i(reftable_stack_add(st, write_test_ref, &refs[i]), 0);
+		cl_assert_equal_i(reftable_stack_add(st, write_test_ref,
+						     &refs[i], 0), 0);
 
 	for (i = 0; i < N; i++) {
 		struct write_log_arg arg = {
 			.log = &logs[i],
 			.update_index = reftable_stack_next_update_index(st),
 		};
-		cl_assert_equal_i(reftable_stack_add(st,
-						     write_test_log, &arg), 0);
+		cl_assert_equal_i(reftable_stack_add(st, write_test_log,
+						     &arg, 0), 0);
 	}
 
 	cl_assert_equal_i(reftable_stack_read_ref(st, "branch",
@@ -815,7 +816,7 @@ void test_reftable_stack__hash_id(void)
 
 	cl_assert_equal_i(reftable_new_stack(&st, dir, &opts), 0);
 	cl_assert_equal_i(reftable_stack_add(st, write_test_ref,
-					     &ref), 0);
+					     &ref, 0), 0);
 
 	/* can't read it with the wrong hash ID. */
 	cl_assert_equal_i(reftable_new_stack(&st32, dir,
@@ -884,7 +885,7 @@ void test_reftable_stack__reflog_expire(void)
 			.update_index = reftable_stack_next_update_index(st),
 		};
 		cl_assert_equal_i(reftable_stack_add(st, write_test_log,
-						     &arg), 0);
+						     &arg, 0), 0);
 	}
 
 	cl_assert_equal_i(reftable_stack_compact_all(st, NULL), 0);
@@ -924,7 +925,7 @@ void test_reftable_stack__empty_add(void)
 
 	cl_assert_equal_i(reftable_new_stack(&st, dir, &opts), 0);
 	cl_assert_equal_i(reftable_stack_add(st, write_nothing,
-					     NULL), 0);
+					     NULL, 0), 0);
 	cl_assert_equal_i(reftable_new_stack(&st2, dir, &opts), 0);
 	clear_dir(dir);
 	reftable_stack_destroy(st);
@@ -963,7 +964,7 @@ void test_reftable_stack__auto_compaction(void)
 		};
 		snprintf(name, sizeof(name), "branch%04"PRIuMAX, (uintmax_t)i);
 
-		err = reftable_stack_add(st, write_test_ref, &ref);
+		err = reftable_stack_add(st, write_test_ref, &ref, 0);
 		cl_assert(!err);
 
 		err = reftable_stack_auto_compact(st);
@@ -999,7 +1000,7 @@ void test_reftable_stack__auto_compaction_factor(void)
 		};
 		xsnprintf(name, sizeof(name), "branch%04"PRIuMAX, (uintmax_t)i);
 
-		err = reftable_stack_add(st, &write_test_ref, &ref);
+		err = reftable_stack_add(st, &write_test_ref, &ref, 0);
 		cl_assert(!err);
 
 		cl_assert(i < 5 || st->merged->tables_len < 5 * fastlogN(i, 5));
@@ -1078,8 +1079,8 @@ void test_reftable_stack__add_performs_auto_compaction(void)
 		snprintf(buf, sizeof(buf), "branch-%04"PRIuMAX, (uintmax_t)i);
 		ref.refname = buf;
 
-		cl_assert_equal_i(reftable_stack_add(st,
-						     write_test_ref, &ref), 0);
+		cl_assert_equal_i(reftable_stack_add(st, write_test_ref,
+						     &ref, 0), 0);
 
 		/*
 		 * The stack length should grow continuously for all runs where
