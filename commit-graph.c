@@ -812,7 +812,12 @@ int corrected_commit_dates_enabled(struct repository *r)
 
 struct bloom_filter_settings *get_bloom_filter_settings(struct repository *r)
 {
-	struct commit_graph *g = r->objects->commit_graph;
+	struct commit_graph *g;
+
+	if (!prepare_commit_graph(r))
+	       return NULL;
+
+	g = r->objects->commit_graph;
 	while (g) {
 		if (g->bloom_filter_settings)
 			return g->bloom_filter_settings;
