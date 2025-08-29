@@ -917,10 +917,13 @@ Now you should be able to go and check out your newly created branch on GitHub.
 === Sending a PR to GitGitGadget
 
 In order to have your code tested and formatted for review, you need to start by
-opening a Pull Request against `gitgitgadget/git`. Head to
-https://github.com/gitgitgadget/git and open a PR either with the "New pull
-request" button or the convenient "Compare & pull request" button that may
-appear with the name of your newly pushed branch.
+opening a Pull Request against either `gitgitgadget/git` or `git/git`. Head to
+https://github.com/gitgitgadget/git or https://github.com/git/git and open a PR
+either with the "New pull request" button or the convenient "Compare & pull
+request" button that may appear with the name of your newly pushed branch.
+
+The differences between using `gitgitgadget/git` and `git/git` as your base can
+be found [here](https://gitgitgadget.github.io/#should-i-use-gitgitgadget-on-gitgitgadgets-git-fork-or-on-gits-github-mirror)
 
 Review the PR's title and description, as they're used by GitGitGadget
 respectively as the subject and body of the cover letter for your change. Refer
