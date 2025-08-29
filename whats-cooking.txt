@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Aug 2025, #11; Mon, 25)
-X-master-at: f814da676ae46aac5be0a98b99373a76dee6cedb
-X-next-at: d7d06c2dae85021966c6d9224e6b2efb4454bd77
+Subject: What's cooking in git.git (Aug 2025, #12; Fri, 29)
+X-master-at: 6ad802182101d622e6a4132f48292ddfa79e2024
+X-next-at: 3baa7cb742e267e07c93c00c15fa04107b8e9fab
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Aug 2025, #11; Mon, 25)
+What's cooking in git.git (Aug 2025, #12; Fri, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -48,99 +48,241 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* dk/help-all (2025-08-03) 3 commits
-  (merged to 'next' on 2025-08-13 at 6dce87c0b5)
- + builtin: also setup gently for --help-all
- + parse-options: refactor flags for usage_with_options_internal
- + Merge branch 'ua/t1517-short-help-tests' into dk/help-all
+* ad/t1517-short-help-tests-fix (2025-08-19) 1 commit
+  (merged to 'next' on 2025-08-21 at f686ad352a)
+ + t/t1517: mark tests that fail with GIT_TEST_INSTALLED
 
- "git cmd --help-all" now works outside repositories.
- source: <20250803012613.54086-1-ben.knoble+github@gmail.com>
+ Test fix.
+ source: <20250819074631.3303-1-adam@dinwoodie.org>
 
 
-* dk/t7005-editor-updates (2025-08-13) 3 commits
-  (merged to 'next' on 2025-08-17 at ad0ab2e2a9)
- + t7005: sanitize test environment for subsequent tests
- + t7005: stop abusing --exec-path
- + t7005: use modern test style
-
- Test clean-up.
- source: <20250812170256.71751-1-ben.knoble+github@gmail.com>
-
-
-* ds/doc-count-objects-fix (2025-08-14) 1 commit
-  (merged to 'next' on 2025-08-17 at 1740ef34dd)
- + count-objects: document count-objects pack
-
- Docfix.
- source: <pull.2031.v3.git.git.1755182034719.gitgitgadget@gmail.com>
-
-
-* ja/doc-lint-sections-and-synopsis (2025-08-11) 6 commits
-  (merged to 'next' on 2025-08-17 at 413ff100cd)
- + doc lint: check that synopsis manpages have synopsis inlines
- + doc:git-for-each-ref: fix styling and typos
- + doc: check for absence of the form --[no-]parameter
- + doc: check for absence of multiple terms in each entry of desc list
- + doc: check well-formedness of delimited sections
- + doc: test linkgit macros for well-formedness
-
- Doc lint updates to encourage the newer and easier-to-use
- `synopsis` format, with fixes to a handful of existing uses.
- source: <pull.1945.v3.git.1754945600.gitgitgadget@gmail.com>
-
-
-* lo/repo-info (2025-08-16) 5 commits
-  (merged to 'next' on 2025-08-19 at 9569e192d0)
- + repo: add the --format flag
- + repo: add the field layout.shallow
- + repo: add the field layout.bare
- + repo: add the field references.format
- + repo: declare the repo command
- (this branch is used by lo/repo-info-step-2.)
-
- A new subcommand "git repo" gives users a way to grab various
- repository characteristics.
- source: <20250816224603.3307-1-lucasseikioshiro@gmail.com>
-
-
-* ps/commit-graph-wo-globals (2025-08-14) 6 commits
-  (merged to 'next' on 2025-08-17 at e2889596be)
- + commit-graph: stop passing in redundant repository
- + commit-graph: stop using `the_repository`
- + commit-graph: stop using `the_hash_algo`
- + commit-graph: refactor `parse_commit_graph()` to take a repository
- + commit-graph: store the hash algorithm instead of its length
- + commit-graph: stop using `the_hash_algo` via macros
-
- Remove dependency on the_repository and other globals from the
- commit-graph code, and other changes unrelated to de-globaling.
- source: <20250815-b4-pks-commit-graph-wo-the-repository-v4-0-b6b651178cce@pks.im>
-
-
-* tc/diff-tree-max-depth (2025-08-07) 3 commits
-  (merged to 'next' on 2025-08-15 at dddb2275d4)
- + diff: teach tree-diff a max-depth parameter
- + within_depth: fix return for empty path
- + combine-diff: zero memory used for callback filepairs
-
- "git diff-tree" learned "--max-depth" option.
- source: <20250807-toon-max-depth-v2-0-50b7e5c81665@iotcl.com>
-
---------------------------------------------------
-[New Topics]
-
-* bc/doc-compat-object-format-not-working (2025-08-26) 1 commit
- - docs: note that extensions.compatobjectformat is incomplete
+* bc/doc-compat-object-format-not-working (2025-08-25) 1 commit
+  (merged to 'next' on 2025-08-26 at 5224444f11)
+ + docs: note that extensions.compatobjectformat is incomplete
 
  The compatObjectFormat extension is used to hide an incomplete
  feature that is not yet usable for any purpose other than
  developing the feature further.  Document it as such to discourage
  its use by mere mortals.
-
- Will merge to 'next'.
  source: <20250825221101.611876-1-sandals@crustytoothpaste.net>
 
+
+* ds/doc-community-discord (2025-08-20) 1 commit
+  (merged to 'next' on 2025-08-21 at 7f9aa8da4e)
+ + doc: add discord to ways of getting help
+
+ Discord has been added to the first contribution documentation as
+ another way to ask for help.
+ source: <pull.2033.v3.git.git.1755679018997.gitgitgadget@gmail.com>
+
+
+* je/doc-rebase (2025-08-22) 5 commits
+  (merged to 'next' on 2025-08-26 at 0d9a1d75d5)
+ + doc: git-rebase: update discussion of internals
+ + doc: git-rebase: move --onto explanation down
+ + doc: git rebase: clarify arguments syntax
+ + doc: git rebase: dedup merge conflict discussion
+ + doc: git-rebase: start with an example
+
+ Documentation for "git rebase" has been updated.
+ source: <pull.1949.v9.git.1755909782.gitgitgadget@gmail.com>
+
+
+* jk/describe-blob (2025-08-18) 5 commits
+  (merged to 'next' on 2025-08-21 at 671998ff24)
+ + describe: pass commit to describe_commit()
+ + describe: handle blob traversal with no commits
+ + describe: catch unborn branch in describe_blob()
+ + describe: error if blob not found
+ + describe: pass oid struct by const pointer
+
+ "git describe <blob>" misbehaves and/or crashes in some corner
+ cases, which has been taught to exit with failure gracefully.
+ source: <20250818205812.GA1018043@coredump.intra.peff.net>
+
+
+* jk/fetch-check-graph-objects-fix (2025-08-23) 1 commit
+  (merged to 'next' on 2025-08-26 at 51a561116f)
+ + fetch-pack: re-scan when double-checking graph objects
+
+ Under a race against another process that is repacking the
+ repository, especially a partially cloned one, "git fetch" may
+ mistakenly think some objects we do have are missing, which has
+ been corrected.
+ source: <20250824050040.GA228050@coredump.intra.peff.net>
+
+
+* jk/no-clobber-dangling-symref-with-fetch (2025-08-19) 4 commits
+  (merged to 'next' on 2025-08-21 at 29b96663c0)
+ + refs: do not clobber dangling symrefs
+ + t5510: prefer "git -C" to subshell for followRemoteHEAD tests
+ + t5510: stop changing top-level working directory
+ + t5510: make confusing config cleanup more explicit
+
+ "git fetch" can clobber a symref that is dangling when the
+ remote-tracking HEAD is set to auto update, which has been
+ corrected.
+ source: <20250819192004.GA1058857@coredump.intra.peff.net>
+
+
+* js/doc-gitk-history (2025-08-19) 1 commit
+  (merged to 'next' on 2025-08-21 at e7e1a08f82)
+ + doc/gitk: update reference to the external project
+
+ Manual page for "gitk" is updated with the current maintainer's
+ name.
+ source: <249056e7-1332-4e6f-8d07-16c80fd4913e@kdbg.org>
+
+
+* js/progress-delay-fix (2025-08-25) 1 commit
+  (merged to 'next' on 2025-08-26 at 4e832eb295)
+ + progress: pay attention to (customized) delay time
+
+ The start_delayed_progress() function in the progress eye-candy API
+ did not clear its internal state, making an initial delay value
+ larger than 1 second ineffective, which has been corrected.
+ source: <7b848623-ce64-4679-9b5e-9d91d947b269@kdbg.org>
+
+
+* ps/reftable-libgit2-cleanup (2025-08-12) 8 commits
+  (merged to 'next' on 2025-08-21 at ff82e3fa11)
+ + refs/reftable: always reload stacks when creating lock
+ + reftable: don't second-guess errors from flock interface
+ + reftable/stack: handle outdated stacks when compacting
+ + reftable/stack: allow passing flags to `reftable_stack_add()`
+ + reftable/stack: fix compiler warning due to missing braces
+ + reftable/stack: reorder code to avoid forward declarations
+ + reftable/writer: drop Git-specific `QSORT()` macro
+ + reftable/writer: fix type used for number of records
+
+ Code clean-ups.
+ source: <20250812-pks-reftable-fixes-for-libgit2-v3-0-cf3b2267867e@pks.im>
+
+
+* sg/line-log-merge-optim (2025-08-24) 4 commits
+  (merged to 'next' on 2025-08-26 at e110ef974a)
+ + line-log: simplify condition checking for merge commits
+ + line-log: initialize diff queue in process_ranges_ordinary_commit()
+ + line-log: get rid of the parents array in process_ranges_merge_commit()
+ + line-log: avoid unnecessary tree diffs when processing merge commits
+
+ "git log -L..." compared trees of multiple parents with the tree of the
+ merge result in an unnecessarily inefficient way.
+ source: <20250824190644.2573279-1-szeder.dev@gmail.com>
+
+--------------------------------------------------
+[New Topics]
+
+* ag/doc-sendmail-gmail-example-update (2025-08-26) 1 commit
+ - docs: update sendmail docs to use more secure SMTP server for Gmail
+
+ Doc update.
+
+ Will merge to 'next'?
+ source: <20250826150919.5239-1-gargaditya08@live.com>
+
+
+* da/cargo-serialize (2025-08-26) 1 commit
+ - Makefile: build libgit-rs and libgit-sys serially
+
+ Makefile tried to run multiple "cargo build" which would not work
+ very well; serialize their execution to work it around.
+
+ Will merge to 'next'.
+ source: <20250826233525.2635432-1-davvid@gmail.com>
+
+
+* en/rust-xdiff (2025-08-22) 6 commits
+ - ivec: create a vector type that is interoperable between C and Rust
+ - github workflows: upload Cargo.lock
+ - win+Meson: do allow linking with the Rust-built xdiff
+ - github workflows: install rust
+ - xdiff: introduce rust
+ - doc: add a policy for using Rust
+
+ Rust!
+
+ Comments?
+ source: <pull.1980.v3.git.git.1755921356.gitgitgadget@gmail.com>
+
+
+* je/doc-checkout (2025-08-29) 5 commits
+ - doc: git-checkout: clarify restoring files section
+ - doc: git-checkout: deduplicate --detach explanation
+ - doc: git-checkout: don't use "reset"
+ - doc: git-checkout: clarify `git checkout <branch>`
+ - doc: git-checkout: clarify intro
+
+ Doc updates.
+ source: <pull.1962.v2.git.1756467934.gitgitgadget@gmail.com>
+
+
+* kn/clang-format-bitfields (2025-08-26) 1 commit
+ - Documentation: note styling for bit fields
+
+ CodingGuidelines now spells out how bitfields are to be written.
+
+ Will merge to 'next'?
+ source: <20250826121928.22317-1-karthik.188@gmail.com>
+
+
+* jk/curl-global-trace-components (2025-08-27) 1 commit
+ - curl: add support for curl_global_trace() components
+
+ Adjust to the way newer versions of cURL selectivel enables tracing
+ options, so that our tests can continue to work.
+
+ Will merge to 'next'?
+ source: <20250827080702.GA3572995@coredump.intra.peff.net>
+
+
+* kh/you-still-use-whatchanged-fix (2025-08-29) 4 commits
+ - BreakingChanges: remove claim about whatchanged reports
+ - whatchanged: remove not-even-shorter clause
+ - whatchanged: tell users the git-log(1) equivalent
+ - you-still-use-that??: help the user help themselves
+
+ Update "do you still use it?" message given by a command that is
+ deeply deprecated and allow us to suggest alternatives.
+
+ Will merge to 'next'?
+ source: <cover.1756480827.git.code@khaugsbakk.name>
+
+
+* ds/ls-files-lazy-unsparse (2025-08-15) 1 commit
+ - ls-files: conditionally leave index sparse
+
+ "git ls-files <pathspec>..." should not necessarily have to expand
+ the index fully if a sparsified directory is excluded by the
+ pathspec; the code is taught to expand the index on demand to avoid
+ this.
+
+ Will merge to 'next'.
+ source: <pull.1955.git.1755274373717.gitgitgadget@gmail.com>
+
+
+* pc/range-diff-memory-limit (2025-08-29) 1 commit
+ - range-diff: add configurable memory limit for cost matrix
+
+ "git range-diff" learned a way to limit the memory consumed by
+ O(N*N) cost matrix.
+
+ Will merge to 'next'?
+ source: <pull.1958.v4.git.1756483374980.gitgitgadget@gmail.com>
+
+
+* ne/alloc-free-and-null (2025-08-29) 1 commit
+ - alloc: fix dangling pointer in alloc_state cleanup
+
+ The clear_alloc_state() API function was not fully clearing the
+ structure for reuse, but since nobody reuses it, replace it with a
+ variant that frees the structure as well, making the callers simpler.
+
+ Will merge to 'next'?
+ source: <pull.2040.v3.git.git.1756472406487.gitgitgadget@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * ds/doc-ggg-pr-fork-clarify (2025-08-23) 1 commit
   (merged to 'next' on 2025-08-25 at 71aea64ee4)
@@ -155,18 +297,6 @@ Release tarballs are available at:
  source: <pull.2034.v2.git.git.1755940331248.gitgitgadget@gmail.com>
 
 
-* jk/fetch-check-graph-objects-fix (2025-08-23) 1 commit
- - fetch-pack: re-scan when double-checking graph objects
-
- Under a race against another process that is repacking the
- repository, especially a partially cloned one, "git fetch" may have
- mistakenly think some objects we do have are missing, which has
- been corrected.
-
- Will merge to 'next'.
- source: <20250824050040.GA228050@coredump.intra.peff.net>
-
-
 * js/doc-sending-patch-via-thunderbird (2025-08-22) 1 commit
   (merged to 'next' on 2025-08-25 at 1e63ebff8c)
  + doc/format-patch: adjust Thunderbird MUA hint to new add-on
@@ -175,18 +305,6 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <6ec34bbc-6811-41fa-aa06-1d54fd2acb0c@kdbg.org>
-
-
-* js/progress-delay-fix (2025-08-25) 1 commit
- - progress: pay attention to (customized) delay time
-
- The start_delayed-Progress() function in the progress eye-candy API
- did not clear its internal state, making an initial delay value
- larger than 1 second ineffective, which has been corrected.
-
- Will merge to 'next'.
- cf. <xmqq349fs5ee.fsf@gitster.g>
- source: <7b848623-ce64-4679-9b5e-9d91d947b269@kdbg.org>
 
 
 * kh/doc-config-typofix (2025-08-24) 1 commit
@@ -212,22 +330,7 @@ Release tarballs are available at:
  source: <9110f085-aec0-42e9-9774-b153ece6284f@web.de>
 
 
-* sg/line-log-merge-optim (2025-08-24) 4 commits
- - line-log: simplify condition checking for merge commits
- - line-log: initialize diff queue in process_ranges_ordinary_commit()
- - line-log: get rid of the parents array in process_ranges_merge_commit()
- - line-log: avoid unnecessary tree diffs when processing merge commits
-
- "git log -L..." compared trees of multiple parents with the tree of the
- merge result in an unnecessarily inefficient way.
-
- Will merge to 'next'.
- source: <20250824190644.2573279-1-szeder.dev@gmail.com>
-
---------------------------------------------------
-[Cooking]
-
-* lo/repo-info-step-2 (2025-08-20) 3 commits
+* lo/repo-info-step-2 (2025-08-26) 3 commits
  - repo: add the field objects.format
  - repo: add the flag -z as an alias for --format=nul
  - Merge branch 'lo/repo-info' into lo/repo-info-step-2
@@ -236,9 +339,9 @@ Release tarballs are available at:
  "--format=nul", and learns to report the objects format used in the
  repository.
 
- Expecting a reroll.
- cf. <6186055.lOV4Wx5bFT@cayenne>
- source: <20250820144247.79197-1-lucasseikioshiro@gmail.com>
+ Waiting for review responses.
+ cf. <xmqqcy8frqn2.fsf@gitster.g>
+ source: <20250826183205.19566-1-lucasseikioshiro@gmail.com>
 
 
 * jc/doc-includeif-hasconfig-remote-url-fix (2025-08-21) 1 commit
@@ -309,32 +412,6 @@ Release tarballs are available at:
  source: <20250816213642.3517822-1-adrian.ratiu@collabora.com>
 
 
-* jk/describe-blob (2025-08-18) 5 commits
-  (merged to 'next' on 2025-08-21 at 671998ff24)
- + describe: pass commit to describe_commit()
- + describe: handle blob traversal with no commits
- + describe: catch unborn branch in describe_blob()
- + describe: error if blob not found
- + describe: pass oid struct by const pointer
-
- "git describe <blob>" misbehaves and/or crashes in some corner
- cases, which has been taught to exit with failure gracefully.
-
- Will merge to 'master'.
- source: <20250818205812.GA1018043@coredump.intra.peff.net>
-
-
-* ds/doc-community-discord (2025-08-20) 1 commit
-  (merged to 'next' on 2025-08-21 at 7f9aa8da4e)
- + doc: add discord to ways of getting help
-
- Discord has been added to the first contribution documentation as
- another way to ask for help.
-
- Will merge to 'master'.
- source: <pull.2033.v3.git.git.1755679018997.gitgitgadget@gmail.com>
-
-
 * je/doc-add (2025-08-19) 2 commits
   (merged to 'next' on 2025-08-25 at 0c84501ed2)
  + doc: git-add: simplify discussion of ignored files
@@ -346,21 +423,6 @@ Release tarballs are available at:
  source: <pull.1952.v3.git.1755636370.gitgitgadget@gmail.com>
 
 
-* jk/no-clobber-dangling-symref-with-fetch (2025-08-19) 4 commits
-  (merged to 'next' on 2025-08-21 at 29b96663c0)
- + refs: do not clobber dangling symrefs
- + t5510: prefer "git -C" to subshell for followRemoteHEAD tests
- + t5510: stop changing top-level working directory
- + t5510: make confusing config cleanup more explicit
-
- "git fetch" can clobber a symref that is dangling when the
- remote-tracking HEAD is set to auto update, which has been
- corrected.
-
- Will merge to 'master'.
- source: <20250819192004.GA1058857@coredump.intra.peff.net>
-
-
 * ds/path-walk-repack-fix (2025-08-25) 2 commits
  - path-walk: create initializer for path lists
  - path-walk: fix setup of pending objects
@@ -368,19 +430,9 @@ Release tarballs are available at:
  "git repack --path-walk" lost objects in some corner cases, which
  has been corrected.
 
- Will merge 'next'.
+ Will merge to 'next'.
+ cf. <CABPp-BHFxxGrqKc0m==TjQNjDGdO=H5Rf6EFsf2nfE1=TuraOQ@mail.gmail.com>
  source: <pull.1956.v2.git.1756126197.gitgitgadget@gmail.com>
-
-
-* js/doc-gitk-history (2025-08-19) 1 commit
-  (merged to 'next' on 2025-08-21 at e7e1a08f82)
- + doc/gitk: update reference to the external project
-
- Manual page for "gitk" is updated with the current maintainer's
- name.
-
- Will merge to 'master'.
- source: <249056e7-1332-4e6f-8d07-16c80fd4913e@kdbg.org>
 
 
 * sg/line-log-boundary-fixes (2025-08-18) 2 commits
@@ -403,16 +455,6 @@ Release tarballs are available at:
  source: <20250820212319.41044-1-jn.avila@free.fr>
 
 
-* ad/t1517-short-help-tests-fix (2025-08-19) 1 commit
-  (merged to 'next' on 2025-08-21 at f686ad352a)
- + t/t1517: mark tests that fail with GIT_TEST_INSTALLED
-
- Test fix.
-
- Will merge to 'master'.
- source: <20250819074631.3303-1-adam@dinwoodie.org>
-
-
 * jc/longer-disambiguation-fix (2025-08-14) 1 commit
  - abbrev: allow extending beyond 32 chars to disambiguate
 
@@ -431,38 +473,9 @@ Release tarballs are available at:
 
  Test updates.
 
- Expecting a reroll after 2.51 final.
+ Expecting a reroll.
+ cf. <xmqq8qj3rqgn.fsf@gitster.g>
  source: <20250804073002.1586332-1-toon@iotcl.com>
-
-
-* je/doc-rebase (2025-08-22) 5 commits
- - doc: git-rebase: update discussion of internals
- - doc: git-rebase: move --onto explanation down
- - doc: git rebase: clarify arguments syntax
- - doc: git rebase: dedup merge conflict discussion
- - doc: git-rebase: start with an example
-
- Documentation for "git rebase" has been updated.
-
- Will merge to 'next'.
- source: <pull.1949.v9.git.1755909782.gitgitgadget@gmail.com>
-
-
-* ps/reftable-libgit2-cleanup (2025-08-12) 8 commits
-  (merged to 'next' on 2025-08-21 at ff82e3fa11)
- + refs/reftable: always reload stacks when creating lock
- + reftable: don't second-guess errors from flock interface
- + reftable/stack: handle outdated stacks when compacting
- + reftable/stack: allow passing flags to `reftable_stack_add()`
- + reftable/stack: fix compiler warning due to missing braces
- + reftable/stack: reorder code to avoid forward declarations
- + reftable/writer: drop Git-specific `QSORT()` macro
- + reftable/writer: fix type used for number of records
-
- Code clean-ups.
-
- Will merge to 'master'.
- source: <20250812-pks-reftable-fixes-for-libgit2-v3-0-cf3b2267867e@pks.im>
 
 
 * lc/rebase-trailer (2025-08-03) 2 commits
@@ -471,6 +484,7 @@ Release tarballs are available at:
 
  Expecting a reroll.
  cf. <198826af571.62b85cb31711042.2415806544948206668@linux.beauty>
+ cf. <xmqqiki7qasu.fsf@gitster.g>
  source: <20250803150059.402017-1-me@linux.beauty>
 
 
@@ -489,8 +503,9 @@ Release tarballs are available at:
 
  Further code clean-up for multi-pack-index code paths.
 
- Comments?
+ Will merge to 'next'?
  cf. <aKbFNq_pLasQGjbc@pks.im>
+ cf. <xmqq4itrrqcg.fsf@gitster.g>
  source: <20250811-b4-pks-midx-deduplicate-source-info-v3-0-e442bdf2b4ad@pks.im>
 
 
@@ -502,8 +517,8 @@ Release tarballs are available at:
  hash function implementation used to hash lines have been updated
  to the one used for ELF symbol lookup by Glibc.
 
- Still being discussed (AUG13)
- cf. <b118903c-a50a-4ae4-b41e-1c47c37218c4@gmail.com>
+ Will merge to 'next'.
+ cf. <xmqqecsvqal6.fsf@gitster.g>
  source: <20250728190520.10962-1-amonakov@ispras.ru>
 
 
@@ -535,10 +550,12 @@ Release tarballs are available at:
  areas of interest.
 
  Needs to wait for the base topic to solidify.
+ Waiting for review responses.
+ cf. <xmqqzfbjqbfo.fsf@gitster.g>
  source: <pull.1941.v2.git.1752716054.gitgitgadget@gmail.com>
 
 
-* pw/3.0-commentchar-auto-deprecation (2025-07-31) 4 commits
+* pw/3.0-commentchar-auto-deprecation (2025-08-26) 4 commits
  - commit: print advice when core.commentString=auto
  - config: warn on core.commentString=auto
  - breaking-changes: deprecate support for core.commentString=auto
@@ -549,17 +566,18 @@ Release tarballs are available at:
  trouble to support for little benefit.
 
  Will merge to 'next'?
- source: <cover.1753975294.git.phillip.wood@dunelm.org.uk>
+ source: <cover.1756215326.git.phillip.wood@dunelm.org.uk>
 
 
-* tc/last-modified (2025-08-05) 4 commits
- - fixup! last-modified: new subcommand to show when files were last modified
+* tc/last-modified (2025-08-05) 3 commits
  - last-modified: use Bloom filters when available
  - t/perf: add last-modified perf script
  - last-modified: new subcommand to show when files were last modified
 
  A new command "git last-modified" is proposed to show the closest
  ancestor commit that touched each path.
+
+ Will merge to 'next'.
  source: <20250730175510.987383-1-toon@iotcl.com>
 
 
@@ -603,4 +621,5 @@ Release tarballs are available at:
  communicated from the server side.
 
  Expecting a reroll.
+ cf. <xmqqqzwvqay9.fsf@gitster.g>
  source: <20250731072401.3817074-1-christian.couder@gmail.com>
