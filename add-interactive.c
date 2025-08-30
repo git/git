@@ -396,6 +396,8 @@ static ssize_t list_and_choose(struct add_i_state *s,
 					if (endp != p + sep)
 						from = -1;
 				}
+				else
+					from = -1;
 			}
 
 			if (p[sep])
