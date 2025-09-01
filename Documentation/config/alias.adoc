@@ -38,6 +38,6 @@ it will be treated as a shell command.  For example, defining
 ** A convenient way to deal with this is to write your script
    operations in an inline function that is then called with any
    arguments from the command-line.  For example `alias.cmd = "!c() {
-   echo $1 | grep $2 ; }; c" will correctly execute the prior example.
+   echo $1 | grep $2 ; }; c"` will correctly execute the prior example.
 ** Setting `GIT_TRACE=1` can help you debug the command being run for
    your alias.
