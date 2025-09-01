@@ -425,6 +425,11 @@ proc revert_helper {txt paths} {
 
 	if {![lock_index begin-update]} return
 
+	# Workaround for Tcl < 9.0: chord namespaces are not obeyed and
+	# operated in the global namespace. This clears an error that could
+	# have been left over from a previous operation.
+	set ::err {}
+
 	# Common "after" functionality that waits until multiple asynchronous
 	# operations are complete (by waiting for them to activate their notes
 	# on the chord).
@@ -432,7 +437,7 @@ proc revert_helper {txt paths} {
 	# The asynchronous operations are each indicated below by a comment
 	# before the code block that starts the async operation.
 	set after_chord [SimpleChord::new {
-		if {[string trim $err] != ""} {
+		if {[info exists err] && [string trim $err] ne ""} {
 			rescan_on_error $err
 		} else {
 			unlock_index
