@@ -125,6 +125,11 @@ including security updates, are included in this release.
    name.
    (merge bcb20dda83 js/doc-gitk-history later to maint).
 
+ * Update the instruction to use of GGG in the MyFirstContribution
+   document to say that a GitHub PR could be made against `git/git`
+   instead of `gitgitgadget/git`.
+   (merge 37001cdbc4 ds/doc-ggg-pr-fork-clarify later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
    (merge cf7efa4f33 rj/t6137-cygwin-fix later to maint).
@@ -134,3 +139,7 @@ including security updates, are included in this release.
    (merge a60203a015 dk/t7005-editor-updates later to maint).
    (merge 7d4a5fef7d ds/doc-count-objects-fix later to maint).
    (merge 16684b6fae ps/reftable-libgit2-cleanup later to maint).
+   (merge f38786baa7 ja/asciidoc-doctor-verbatim-fixes later to maint).
+   (merge 374579c6d4 kh/doc-interpret-trailers-markup-fix later to maint).
+   (merge 44dce6541c kh/doc-config-typofix later to maint).
+   (merge 785628b173 js/doc-sending-patch-via-thunderbird later to maint).
