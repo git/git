@@ -17,8 +17,8 @@ git add [--verbose | -v] [--dry-run | -n] [--force | -f] [--interactive | -i] [-
 DESCRIPTION
 -----------
 Add contents of new or changed files to the index. The "index" (also
-known as "staging area") is where Git stores the contents of the next
-commit.
+known as the "staging area") is what you use to prepare the contents of
+the next commit.
 
 When you run `git commit` without any other arguments, it will only
 commit staged changes. For example, if you've edited `file.c` and want
