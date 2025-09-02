@@ -168,6 +168,7 @@ void repo_set_gitdir(struct repository *repo,
 	if (!repo->objects->sources) {
 		CALLOC_ARRAY(repo->objects->sources, 1);
 		repo->objects->sources->odb = repo->objects;
+		repo->objects->sources->local = true;
 		repo->objects->sources_tail = &repo->objects->sources->next;
 	}
 	expand_base_dir(&repo->objects->sources->path, o->object_dir,
