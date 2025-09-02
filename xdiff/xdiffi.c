@@ -42,8 +42,8 @@ typedef struct s_xdpsplit {
  * using this algorithm, so a little bit of heuristic is needed to cut the
  * search and to return a suboptimal point.
  */
-static long xdl_split(unsigned long const *ha1, long off1, long lim1,
-		      unsigned long const *ha2, long off2, long lim2,
+static long xdl_split(u64 const *ha1, long off1, long lim1,
+		      u64 const *ha2, long off2, long lim2,
 		      long *kvdf, long *kvdb, int need_min, xdpsplit_t *spl,
 		      xdalgoenv_t *xenv) {
 	long dmin = off1 - lim2, dmax = lim1 - off2;
@@ -260,7 +260,7 @@ static long xdl_split(unsigned long const *ha1, long off1, long lim1,
 int xdl_recs_cmp(diffdata_t *dd1, long off1, long lim1,
 		 diffdata_t *dd2, long off2, long lim2,
 		 long *kvdf, long *kvdb, int need_min, xdalgoenv_t *xenv) {
-	unsigned long const *ha1 = dd1->ha, *ha2 = dd2->ha;
+	u64 const *ha1 = dd1->ha, *ha2 = dd2->ha;
 
 	/*
 	 * Shrink the box by walking through each diagonal snake (SW and NE).
@@ -273,14 +273,14 @@ int xdl_recs_cmp(diffdata_t *dd1, long off1, long lim1,
 	 * be obviously changed.
 	 */
 	if (off1 == lim1) {
-		char *rchg2 = dd2->rchg;
-		long *rindex2 = dd2->rindex;
+		u8 *rchg2 = dd2->rchg;
+		usize *rindex2 = dd2->rindex;
 
 		for (; off2 < lim2; off2++)
 			rchg2[rindex2[off2]] = 1;
 	} else if (off2 == lim2) {
-		char *rchg1 = dd1->rchg;
-		long *rindex1 = dd1->rindex;
+		u8 *rchg1 = dd1->rchg;
+		usize *rindex1 = dd1->rindex;
 
 		for (; off1 < lim1; off1++)
 			rchg1[rindex1[off1]] = 1;
@@ -418,7 +418,7 @@ static int get_indent(xrecord_t *rec)
 	long i;
 	int ret = 0;
 
-	for (i = 0; i < rec->size; i++) {
+	for (i = 0; i < (long) rec->size; i++) {
 		char c = rec->ptr[i];
 
 		if (!XDL_ISSPACE(c))
@@ -496,18 +496,18 @@ static void measure_split(const xdfile_t *xdf, long split,
 {
 	long i;
 
-	if (split >= xdf->nrec) {
+	if (split >= (long) xdf->record.length) {
 		m->end_of_file = 1;
 		m->indent = -1;
 	} else {
 		m->end_of_file = 0;
-		m->indent = get_indent(xdf->recs[split]);
+		m->indent = get_indent(&xdf->record.ptr[split]);
 	}
 
 	m->pre_blank = 0;
 	m->pre_indent = -1;
 	for (i = split - 1; i >= 0; i--) {
-		m->pre_indent = get_indent(xdf->recs[i]);
+		m->pre_indent = get_indent(&xdf->record.ptr[i]);
 		if (m->pre_indent != -1)
 			break;
 		m->pre_blank += 1;
@@ -519,8 +519,8 @@ static void measure_split(const xdfile_t *xdf, long split,
 
 	m->post_blank = 0;
 	m->post_indent = -1;
-	for (i = split + 1; i < xdf->nrec; i++) {
-		m->post_indent = get_indent(xdf->recs[i]);
+	for (i = split + 1; i < (long) xdf->record.length; i++) {
+		m->post_indent = get_indent(&xdf->record.ptr[i]);
 		if (m->post_indent != -1)
 			break;
 		m->post_blank += 1;
@@ -730,7 +730,7 @@ static void group_init(xdfile_t *xdf, struct xdlgroup *g)
  */
 static inline int group_next(xdfile_t *xdf, struct xdlgroup *g)
 {
-	if (g->end == xdf->nrec)
+	if (g->end == (long) xdf->record.length)
 		return -1;
 
 	g->start = g->end + 1;
@@ -763,8 +763,8 @@ static inline int group_previous(xdfile_t *xdf, struct xdlgroup *g)
  */
 static int group_slide_down(xdfile_t *xdf, struct xdlgroup *g)
 {
-	if (g->end < xdf->nrec &&
-	    recs_match(xdf->recs[g->start], xdf->recs[g->end])) {
+	if (g->end < (long) xdf->record.length &&
+	    recs_match(&xdf->record.ptr[g->start], &xdf->record.ptr[g->end])) {
 		xdf->rchg[g->start++] = 0;
 		xdf->rchg[g->end++] = 1;
 
@@ -785,7 +785,7 @@ static int group_slide_down(xdfile_t *xdf, struct xdlgroup *g)
 static int group_slide_up(xdfile_t *xdf, struct xdlgroup *g)
 {
 	if (g->start > 0 &&
-	    recs_match(xdf->recs[g->start - 1], xdf->recs[g->end - 1])) {
+	    recs_match(&xdf->record.ptr[g->start - 1], &xdf->record.ptr[g->end - 1])) {
 		xdf->rchg[--g->start] = 1;
 		xdf->rchg[--g->end] = 0;
 
@@ -944,13 +944,13 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 
 int xdl_build_script(xdfenv_t *xe, xdchange_t **xscr) {
 	xdchange_t *cscr = NULL, *xch;
-	char *rchg1 = xe->xdf1.rchg, *rchg2 = xe->xdf2.rchg;
+	u8 *rchg1 = xe->xdf1.rchg, *rchg2 = xe->xdf2.rchg;
 	long i1, i2, l1, l2;
 
 	/*
 	 * Trivial. Collects "groups" of changes and creates an edit script.
 	 */
-	for (i1 = xe->xdf1.nrec, i2 = xe->xdf2.nrec; i1 >= 0 || i2 >= 0; i1--, i2--)
+	for (i1 = xe->xdf1.record.length, i2 = xe->xdf2.record.length; i1 >= 0 || i2 >= 0; i1--, i2--)
 		if (rchg1[i1 - 1] || rchg2[i2 - 1]) {
 			for (l1 = i1; rchg1[i1 - 1]; i1--);
 			for (l2 = i2; rchg2[i2 - 1]; i2--);
@@ -1000,16 +1000,16 @@ static void xdl_mark_ignorable_lines(xdchange_t *xscr, xdfenv_t *xe, long flags)
 
 	for (xch = xscr; xch; xch = xch->next) {
 		int ignore = 1;
-		xrecord_t **rec;
+		xrecord_t *rec;
 		long i;
 
-		rec = &xe->xdf1.recs[xch->i1];
+		rec = &xe->xdf1.record.ptr[xch->i1];
 		for (i = 0; i < xch->chg1 && ignore; i++)
-			ignore = xdl_blankline(rec[i]->ptr, rec[i]->size, flags);
+			ignore = xdl_blankline((const char*) rec[i].ptr, rec[i].size, flags);
 
-		rec = &xe->xdf2.recs[xch->i2];
+		rec = &xe->xdf2.record.ptr[xch->i2];
 		for (i = 0; i < xch->chg2 && ignore; i++)
-			ignore = xdl_blankline(rec[i]->ptr, rec[i]->size, flags);
+			ignore = xdl_blankline((const char*)rec[i].ptr, rec[i].size, flags);
 
 		xch->ignore = ignore;
 	}
@@ -1020,7 +1020,7 @@ static int record_matches_regex(xrecord_t *rec, xpparam_t const *xpp) {
 	size_t i;
 
 	for (i = 0; i < xpp->ignore_regex_nr; i++)
-		if (!regexec_buf(xpp->ignore_regex[i], rec->ptr, rec->size, 1,
+		if (!regexec_buf(xpp->ignore_regex[i], (const char*) rec->ptr, rec->size, 1,
 				 &regmatch, 0))
 			return 1;
 
@@ -1033,7 +1033,7 @@ static void xdl_mark_ignorable_regex(xdchange_t *xscr, const xdfenv_t *xe,
 	xdchange_t *xch;
 
 	for (xch = xscr; xch; xch = xch->next) {
-		xrecord_t **rec;
+		xrecord_t *rec;
 		int ignore = 1;
 		long i;
 
@@ -1043,13 +1043,13 @@ static void xdl_mark_ignorable_regex(xdchange_t *xscr, const xdfenv_t *xe,
 		if (xch->ignore)
 			continue;
 
-		rec = &xe->xdf1.recs[xch->i1];
+		rec = &xe->xdf1.record.ptr[xch->i1];
 		for (i = 0; i < xch->chg1 && ignore; i++)
-			ignore = record_matches_regex(rec[i], xpp);
+			ignore = record_matches_regex(&rec[i], xpp);
 
-		rec = &xe->xdf2.recs[xch->i2];
+		rec = &xe->xdf2.record.ptr[xch->i2];
 		for (i = 0; i < xch->chg2 && ignore; i++)
-			ignore = record_matches_regex(rec[i], xpp);
+			ignore = record_matches_regex(&rec[i], xpp);
 
 		xch->ignore = ignore;
 	}
