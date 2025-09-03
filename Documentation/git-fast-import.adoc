@@ -647,7 +647,7 @@ External data format::
 +
 Here usually `<dataref>` must be either a mark reference (`:<idnum>`)
 set by a prior `blob` command, or a full 40-byte SHA-1 of an
-existing Git blob object.  If `<mode>` is `040000`` then
+existing Git blob object.  If `<mode>` is `040000` then
 `<dataref>` must be the full 40-byte SHA-1 of an existing
 Git tree object or a mark reference set with `--import-marks`.
 
