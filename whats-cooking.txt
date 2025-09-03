@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2025, #01; Tue, 2)
-X-master-at: 6ad802182101d622e6a4132f48292ddfa79e2024
-X-next-at: 4c02a37b29ea955e35380eada24af394d7169ebf
+Subject: What's cooking in git.git (Sep 2025, #02; Wed, 3)
+X-master-at: 2462961280690837670d997bde64bd4ebf8ae66d
+X-next-at: 1ba7204a041bf9fa3af3ad21a018399fff66f7b9
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2025, #01; Tue, 2)
+What's cooking in git.git (Sep 2025, #02; Wed, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,6 +16,11 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
+
+There are a few topics that have been expecting a reroll for close
+to a month.  I've moved them to the [Stalled] section below.  Let's
+tighten rules around these topics a bit so that we can keep the tree
+somewhat cleaner.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -46,7 +51,257 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[New Topics]
+
+* ds/midx-write-fixes (2025-08-30) 6 commits
+ - midx-write: simplify error cases
+ - midx-write: reenable signed comparison errors
+ - midx-write: use uint32_t for preferred_pack_idx
+ - midx-write: use cleanup when incremental midx fails
+ - midx-write: put failing response value back
+ - midx-write: only load initialized packs
+
+ Fixes multiple crashes around midx write-out codepaths.
+
+ Comments?
+ source: <pull.1965.v2.git.1756589007.gitgitgadget@gmail.com>
+
+
+* km/alias-doc-markup-fix (2025-09-01) 1 commit
+  (merged to 'next' on 2025-09-03 at 02da1fc9b3)
+ + doc: fix formatting of function-wrap shell alias
+
+ Docfix.
+
+ Will merge to 'master'.
+ source: <20250901180419.2212086-1-kyle@kemitchell.com>
+
+
+* ms/refs-exists (2025-08-25) 4 commits
+  (merged to 'next' on 2025-09-03 at c6fc4c7461)
+ + t: add test for git refs exists subcommand
+ + t1422: refactor tests to be shareable
+ + t1403: split 'show-ref --exists' tests into a separate file
+ + builtin/refs: add 'exists' subcommand
+
+ "git refs exists" that works like "git show-ref --exists" has been
+ added.
+
+ Will merge to 'master'.
+ cf. <aLbahNFrs9jchnXZ@pks.im>
+ source: <20250826064110.10540-1-meetsoni3017@gmail.com>
+
+
+* ps/gitlab-ci-disable-windows-monitoring (2025-09-02) 1 commit
+  (merged to 'next' on 2025-09-03 at f6148f5d05)
+ + gitlab-ci: disable realtime monitoring to unbreak Windows jobs
+
+ Windows "real-time monitoring" interferes with the execution of
+ tests and affects negatively in both correctness and performance,
+ which has been disabled in Gitlab CI.
+
+ Will merge to 'master'.
+ source: <20250902-b4-pks-gitlab-ci-windows-defender-v1-1-fcb1f19321aa@pks.im>
+
+
+* ps/packfile-store (2025-09-02) 16 commits
+ - packfile: refactor `get_packed_git_mru()` to work on packfile store
+ - packfile: refactor `get_all_packs()` to work on packfile store
+ - packfile: remove `get_packed_git()`
+ - packfile: move `get_multi_pack_index()` into "midx.c"
+ - packfile: introduce function to load and add packfiles
+ - packfile: refactor `install_packed_git()` to work on packfile store
+ - packfile: split up responsibilities of `reprepare_packed_git()`
+ - packfile: refactor `prepare_packed_git()` to work on packfile store
+ - packfile: reorder functions to avoid function declaration
+ - odb: move kept cache into `struct packfile_store`
+ - odb: move MRU list of packfiles into `struct packfile_store`
+ - odb: move packfile map into `struct packfile_store`
+ - odb: move initialization bit into `struct packfile_store`
+ - odb: move list of packfiles into `struct packfile_store`
+ - packfile: introduce a new `struct packfile_store`
+ - Merge branch 'ps/object-store-midx-dedup-info' into ps/packfile-store
+ (this branch uses ps/object-store-midx-dedup-info.)
+
+ Code clean-up around the in-core list of all the pack files and
+ object database(s).
+
+ Comments?
+ source: <20250902-b4-pks-packfiles-store-v3-0-6925278efeda@pks.im>
+
+
+* kh/doc-markup-fixes (2025-09-02) 2 commits
+  (merged to 'next' on 2025-09-03 at 1ba7204a04)
+ + doc: remove extra backtick for inline-verbatim
+ + doc: add missing backtick for inline-verbatim
+
+ Doc markup fixes.
+
+ Will merge to 'master'.
+ source: <cover.1756845314.git.code@khaugsbakk.name>
+
+
+* kn/refs-files-case-insensitive (2025-09-02) 2 commits
+ - refs/files: handle F/D conflicts in case-insensitive FS
+ - refs/files: use correct error type when locking fails
+
+ source: <20250902-587-git-fetch-1-fails-fetches-on-case-insensitive-repositories-v1-0-35e69bbb507d@gmail.com>
+
+
+* mm/worktree-doc-typofix (2025-09-03) 1 commit
+ - docs: fix typo in worktree.adoc 'extension'
+
+ source: <pull.1967.git.1756911040439.gitgitgadget@gmail.com>
+
+
+* ps/upload-pack-oom-protection (2025-09-02) 2 commits
+ - upload-pack: don't ACK non-commits repeatedly in protocol v2
+ - t5530: modernize tests
+
+ source: <20250903-b4-pks-upload-pack-repeated-non-commit-acks-v1-0-4e019af4dddc@pks.im>
+
+--------------------------------------------------
+[Stalled]
+
+These topics have been expecting updates for quite some time.  I'll
+eject any of them when they start to conflict with other topics in
+'seen' and may drop them from my tree when they are dormant for too
+long (let's say 8 weeks is way too long, for now).  After that, they
+can be proposed again by rerolling them in a shape that would work
+well with other topics in 'seen' (and of course 'next' and
+"master').
+
+* lc/rebase-trailer (2025-08-03) 2 commits
+ - rebase: support --trailer
+ - trailer: append trailers in-process and drop the fork to `interpret-trailers`
+
+ Expecting a reroll.
+ cf. <198826af571.62b85cb31711042.2415806544948206668@linux.beauty>
+ cf. <xmqqiki7qasu.fsf@gitster.g>
+ source: <20250803150059.402017-1-me@linux.beauty>
+
+
+* ac/deglobal-sparse-variables (2025-07-18) 3 commits
+ - environment: remove the global variable 'sparse_expect_files_outside_of_patterns'
+ - environment: move access to "core.sparsecheckoutcone" into repo_settings
+ - environment: move access to "core.sparsecheckout" into repo_settings
+ (this branch is used by ds/sparse-checkout-clean.)
+
+ Two global variables related to sparse checkout have been moved to
+ the repository settings structure.
+
+ Expecting a reroll.
+ cf. <CAE7as+bnG6KgA8X_n36pqP15bmyM6re+xEb1MOXKvZSUdJ8Arg@mail.gmail.com>
+ source: <cover.1752882401.git.ayu.chandekar@gmail.com>
+
+
+* tb/prepare-midx-pack-cleanup (2025-05-28) 5 commits
+ . midx: return a `packed_git` pointer from `prepare_midx_pack()`
+ . midx-write.c: extract inner loop from fill_packs_from_midx()
+ . midx-write.c: guard against incremental MIDXs in want_included_pack()
+ . midx: access pack names through `nth_midxed_pack_name()`
+ . Merge branch 'ps/midx-negative-packfile-cache' into tb/prepare-midx-pack-cleanup
+
+ Improvement on Multi-pack-index API.
+
+ Expecting a reroll.
+ cf. <20250530065034.GC1321283@coredump.intra.peff.net>
+ source: <cover.1748473122.git.me@ttaylorr.com>
+
+
+* cc/promisor-remote-capability (2025-07-31) 5 commits
+ - promisor-remote: use string constants for 'name' and 'url' too
+ - promisor-remote: allow a client to check fields
+ - promisor-remote: refactor how we parse advertised fields
+ - promisor-remote: allow a server to advertise more fields
+ - promisor-remote: refactor to get rid of 'struct strvec'
+
+ The "promisor-remote" capability mechanism has been updated to
+ allow the "partialCloneFilter" settings and the "token" value to be
+ communicated from the server side.
+
+ Expecting a reroll.
+ cf. <xmqqqzwvqay9.fsf@gitster.g>
+ source: <20250731072401.3817074-1-christian.couder@gmail.com>
+
+
+* ar/submodule-gitdir-tweak (2025-09-02) 11 commits
+ - fixup! t: submodules: add basic mixed gitdir path tests
+ - fixup! t: add gitdir encoding tests
+ - t: add gitdir encoding tests
+ - t: move nested gitdir tests to proper location
+ - submodule: remove validate_submodule_git_dir()
+ - submodule: encode gitdir paths to avoid conflicts
+ - strbuf: bring back is_rfc3986_unreserved
+ - t: submodules: add basic mixed gitdir path tests
+ - submodule: add gitdir path config override
+ - submodule: create new gitdirs under submodules path
+ - submodule--helper: use submodule_name_to_gitdir in add_submodule
+
+ Avoid local submodule repository directory paths overlapping with
+ each other by encoding submodule names before using them as path
+ components.
+
+ Expecting a reroll.
+ cf. <87sehk7r66.fsf@collabora.com>
+ source: <20250816213642.3517822-1-adrian.ratiu@collabora.com>
+
+--------------------------------------------------
+[Graduated to 'master']
+
+* ds/doc-ggg-pr-fork-clarify (2025-08-23) 1 commit
+  (merged to 'next' on 2025-08-25 at 71aea64ee4)
+ + doc: clarify which remotes can be used with GitGitGadget
+
+ Update the instruction to use of GGG in the MyFirstContribution
+ document to say that a GitHub PR could be made against `git/git`
+ instead of `gitgitgadget/git`.
+ source: <pull.2034.v2.git.git.1755940331248.gitgitgadget@gmail.com>
+
+
+* ja/asciidoc-doctor-verbatim-fixes (2025-08-20) 1 commit
+  (merged to 'next' on 2025-08-22 at 61fb953314)
+ + doc: fix asciidoc format compatibility in pretty-formats.adoc
+
+ Doc mark-up fix.
+ source: <20250820212319.41044-1-jn.avila@free.fr>
+
+
+* js/doc-sending-patch-via-thunderbird (2025-08-22) 1 commit
+  (merged to 'next' on 2025-08-25 at 1e63ebff8c)
+ + doc/format-patch: adjust Thunderbird MUA hint to new add-on
+
+ Doc update.
+ source: <6ec34bbc-6811-41fa-aa06-1d54fd2acb0c@kdbg.org>
+
+
+* kh/doc-config-typofix (2025-08-24) 1 commit
+  (merged to 'next' on 2025-08-25 at f82e0a4c9b)
+ + doc: config: replace backtick with apostrophe for possessive
+
+ Documentation typofix.
+ source: <3ec6a00e3046166c7adb593f38c4099921d8ada3.1756064760.git.code@khaugsbakk.name>
+
+
+* kh/doc-interpret-trailers-markup-fix (2025-08-22) 1 commit
+  (merged to 'next' on 2025-08-25 at 9bee54a64d)
+ + doc: interpret-trailers: close all pairs of single quotes
+
+ Fix missing single-quote pairs in a documentation page.
+ source: <4eac944102a846695a9f61ead39a5a86361a0532.1755875970.git.code@khaugsbakk.name>
+
+--------------------------------------------------
 [Cooking]
+
+* tc/t0450-harden (2025-08-08) 2 commits
+ - t0450: add allowlist for builtins with missing .adoc
+ - t0450: fix test for out-of-tree builds
+
+ Test updates.
+
+ Will merge to 'next'.
+ source: <20250804073002.1586332-1-toon@iotcl.com>
+
 
 * ag/doc-sendmail-gmail-example-update (2025-08-26) 1 commit
  - docs: update sendmail docs to use more secure SMTP server for Gmail
@@ -68,7 +323,16 @@ Release tarballs are available at:
  source: <20250826233525.2635432-1-davvid@gmail.com>
 
 
-* en/rust-xdiff (2025-08-22) 6 commits
+* en/rust-xdiff (2025-08-29) 15 commits
+ - xdiff: implement xdl_trim_ends() in Rust
+ - xdiff: make xdfile_t more rust friendly
+ - xdiff: delete recs field from xdfile_t
+ - xdiff: delete nrec field from xdfile_t
+ - xdiff: replace chastore with an ivec in xdfile_t
+ - xdiff: use one definition for freeing xdfile_t
+ - xdiff: make fields of xrecord_t Rust friendly
+ - xdiff: delete unnecessary fields from xrecord_t and xdfile_t
+ - xdiff/xprepare: remove superfluous forward declarations
  - ivec: create a vector type that is interoperable between C and Rust
  - github workflows: upload Cargo.lock
  - win+Meson: do allow linking with the Rust-built xdiff
@@ -79,18 +343,22 @@ Release tarballs are available at:
  Rust!
 
  Comments?
- source: <pull.1980.v3.git.git.1755921356.gitgitgadget@gmail.com>
+ source: <pull.2043.git.git.1756496539.gitgitgadget@gmail.com>
 
 
-* je/doc-checkout (2025-08-29) 5 commits
+* je/doc-checkout (2025-09-03) 6 commits
  - doc: git-checkout: clarify restoring files section
+ - doc: git-checkout: split up restoring files section
  - doc: git-checkout: deduplicate --detach explanation
- - doc: git-checkout: don't use "reset"
+ - doc: git-checkout: clarify `-b` and `-B`
  - doc: git-checkout: clarify `git checkout <branch>`
  - doc: git-checkout: clarify intro
 
  Doc updates.
- source: <pull.1962.v2.git.1756467934.gitgitgadget@gmail.com>
+
+ Expecting a (hopefully small and final) reroll.
+ cf. <07e52117-96da-4443-8974-08a22516ed75@app.fastmail.com>
+ source: <pull.1962.v3.git.1756918202.gitgitgadget@gmail.com>
 
 
 * kn/clang-format-bitfields (2025-08-26) 1 commit
@@ -159,53 +427,19 @@ Release tarballs are available at:
  source: <pull.2040.v3.git.git.1756472406487.gitgitgadget@gmail.com>
 
 
-* ds/doc-ggg-pr-fork-clarify (2025-08-23) 1 commit
-  (merged to 'next' on 2025-08-25 at 71aea64ee4)
- + doc: clarify which remotes can be used with GitGitGadget
-
- Update the instruction to use of GGG in the MyFirstContribution
- document to say that a GitHub PR could be made against `git/git`
- instead of `gitgitgadget/git`.
-
- Will merge to 'master'.
- cf. <xmqqtt1vs77x.fsf@gitster.g>
- source: <pull.2034.v2.git.git.1755940331248.gitgitgadget@gmail.com>
-
-
-* js/doc-sending-patch-via-thunderbird (2025-08-22) 1 commit
-  (merged to 'next' on 2025-08-25 at 1e63ebff8c)
- + doc/format-patch: adjust Thunderbird MUA hint to new add-on
-
- Doc update.
-
- Will merge to 'master'.
- source: <6ec34bbc-6811-41fa-aa06-1d54fd2acb0c@kdbg.org>
-
-
-* kh/doc-config-typofix (2025-08-24) 1 commit
-  (merged to 'next' on 2025-08-25 at f82e0a4c9b)
- + doc: config: replace backtick with apostrophe for possessive
-
- Documentation typofix.
-
- Will merge to 'master'.
- cf. <xmqqwm6rp2y4.fsf@gitster.g>
- source: <3ec6a00e3046166c7adb593f38c4099921d8ada3.1756064760.git.code@khaugsbakk.name>
-
-
-* rs/describe-with-lazy-queue-and-khash (2025-08-24) 1 commit
- - describe: use khash in finish_depth_computation()
+* rs/describe-with-lazy-queue-and-oidset (2025-09-02) 1 commit
+ - describe: use oidset in finish_depth_computation()
 
  Instead of scanning for the remaining items to see if there are
  still commits to be explored in the queue, use khash to remember
  which items are still on the queue (an unacceptable alternative is
  to reserve one object flag bits).
 
- Will merge to 'next'?
- source: <9110f085-aec0-42e9-9774-b153ece6284f@web.de>
+ Will merge to 'next'.
+ source: <b16aa099-b683-4a66-acd9-603cc9f0935c@web.de>
 
 
-* lo/repo-info-step-2 (2025-08-26) 3 commits
+* lo/repo-info-step-2 (2025-09-01) 3 commits
  - repo: add the field objects.format
  - repo: add the flag -z as an alias for --format=nul
  - Merge branch 'lo/repo-info' into lo/repo-info-step-2
@@ -214,9 +448,8 @@ Release tarballs are available at:
  "--format=nul", and learns to report the objects format used in the
  repository.
 
- Waiting for review responses.
- cf. <xmqqcy8frqn2.fsf@gitster.g>
- source: <20250826183205.19566-1-lucasseikioshiro@gmail.com>
+ Will merge to 'next'?
+ source: <20250901172732.98845-1-lucasseikioshiro@gmail.com>
 
 
 * jc/doc-includeif-hasconfig-remote-url-fix (2025-08-21) 1 commit
@@ -256,46 +489,16 @@ Release tarballs are available at:
  source: <20250822213500.1488064-1-jltobler@gmail.com>
 
 
-* kh/doc-interpret-trailers-markup-fix (2025-08-22) 1 commit
-  (merged to 'next' on 2025-08-25 at 9bee54a64d)
- + doc: interpret-trailers: close all pairs of single quotes
-
- Fix missing single-quote pairs in a documentation page.
-
- Will merge to 'master'.
- source: <4eac944102a846695a9f61ead39a5a86361a0532.1755875970.git.code@khaugsbakk.name>
-
-
-* ar/submodule-gitdir-tweak (2025-08-18) 10 commits
- . fixup! t: add gitdir encoding tests
- . t: add gitdir encoding tests
- . t: move nested gitdir tests to proper location
- . submodule: remove validate_submodule_git_dir()
- . submodule: encode gitdir paths to avoid conflicts
- . strbuf: bring back is_rfc3986_unreserved
- . t: submodules: add basic mixed gitdir path tests
- . submodule: add gitdir path config override
- . submodule: create new gitdirs under submodules path
- . submodule--helper: use submodule_name_to_gitdir in add_submodule
-
- Avoid local submodule repository directory paths overlapping with
- each other by encoding submodule names before using them as path
- components.
-
- Expecting a reroll.
- cf. <87sehk7r66.fsf@collabora.com>
- source: <20250816213642.3517822-1-adrian.ratiu@collabora.com>
-
-
 * je/doc-add (2025-08-29) 3 commits
- - doc: rephrase the purpose of the staging area
+  (merged to 'next' on 2025-09-02 at 6aa32994dd)
+ + doc: rephrase the purpose of the staging area
   (merged to 'next' on 2025-08-25 at 0c84501ed2)
  + doc: git-add: simplify discussion of ignored files
  + doc: git-add: clarify intro & add an example
 
  Documentation for "git add" has been updated.
 
- Will merge to 'next' and then to 'master'.
+ Will merge to 'master'.
  source: <pull.1952.v3.git.1755636370.gitgitgadget@gmail.com>
  source: <pull.1952.v4.git.1756468502.gitgitgadget@gmail.com>
 
@@ -323,16 +526,6 @@ Release tarballs are available at:
  source: <20250818111310.1283932-1-szeder.dev@gmail.com>
 
 
-* ja/asciidoc-doctor-verbatim-fixes (2025-08-20) 1 commit
-  (merged to 'next' on 2025-08-22 at 61fb953314)
- + doc: fix asciidoc format compatibility in pretty-formats.adoc
-
- Doc mark-up fix.
-
- Will merge to 'master'.
- source: <20250820212319.41044-1-jn.avila@free.fr>
-
-
 * jc/longer-disambiguation-fix (2025-08-14) 1 commit
  - abbrev: allow extending beyond 32 chars to disambiguate
 
@@ -344,46 +537,25 @@ Release tarballs are available at:
  source: <xmqqh5ya6iua.fsf_-_@gitster.g>
 
 
-* tc/t0450-harden (2025-08-12) 3 commits
- - fixup! t0450: add allowlist for builtins with missing .adoc
- - t0450: add allowlist for builtins with missing .adoc
- - t0450: fix test for out-of-tree builds
-
- Test updates.
-
- Expecting a reroll.
- cf. <xmqq8qj3rqgn.fsf@gitster.g>
- source: <20250804073002.1586332-1-toon@iotcl.com>
-
-
-* lc/rebase-trailer (2025-08-03) 2 commits
- - rebase: support --trailer
- - trailer: append trailers in-process and drop the fork to `interpret-trailers`
-
- Expecting a reroll.
- cf. <198826af571.62b85cb31711042.2415806544948206668@linux.beauty>
- cf. <xmqqiki7qasu.fsf@gitster.g>
- source: <20250803150059.402017-1-me@linux.beauty>
-
-
 * ps/object-store-midx-dedup-info (2025-08-11) 11 commits
- - midx: compute paths via their source
- - midx: stop duplicating info redundant with its owning source
- - midx: write multi-pack indices via their source
- - midx: load multi-pack indices via their source
- - midx: drop redundant `struct repository` parameter
- - odb: simplify calling `link_alt_odb_entry()`
- - odb: return newly created in-memory sources
- - odb: consistently use "dir" to refer to alternate's directory
- - odb: allow `odb_find_source()` to fail
- - odb: store locality in object database sources
- - Merge branch 'ps/object-store-midx' into ps/object-store-midx-dedup-info
+  (merged to 'next' on 2025-09-03 at 4b12427226)
+ + midx: compute paths via their source
+ + midx: stop duplicating info redundant with its owning source
+ + midx: write multi-pack indices via their source
+ + midx: load multi-pack indices via their source
+ + midx: drop redundant `struct repository` parameter
+ + odb: simplify calling `link_alt_odb_entry()`
+ + odb: return newly created in-memory sources
+ + odb: consistently use "dir" to refer to alternate's directory
+ + odb: allow `odb_find_source()` to fail
+ + odb: store locality in object database sources
+ + Merge branch 'ps/object-store-midx' into ps/object-store-midx-dedup-info
+ (this branch is used by ps/packfile-store.)
 
  Further code clean-up for multi-pack-index code paths.
 
- Will merge to 'next'?
- cf. <aKbFNq_pLasQGjbc@pks.im>
- cf. <xmqq4itrrqcg.fsf@gitster.g>
+ Will merge to 'master'.
+ cf. <aLaQWPK0Kxw8o7VV@pks.im>
  source: <20250811-b4-pks-midx-deduplicate-source-info-v3-0-e442bdf2b4ad@pks.im>
 
 
@@ -459,47 +631,3 @@ Release tarballs are available at:
 
  Will merge to 'master'.
  source: <20250730175510.987383-1-toon@iotcl.com>
-
-
-* ac/deglobal-sparse-variables (2025-07-18) 3 commits
- - environment: remove the global variable 'sparse_expect_files_outside_of_patterns'
- - environment: move access to "core.sparsecheckoutcone" into repo_settings
- - environment: move access to "core.sparsecheckout" into repo_settings
- (this branch is used by ds/sparse-checkout-clean.)
-
- Two global variables related to sparse checkout have been moved to
- the repository settings structure.
-
- Expecting a reroll.
- cf. <CAE7as+bnG6KgA8X_n36pqP15bmyM6re+xEb1MOXKvZSUdJ8Arg@mail.gmail.com>
- source: <cover.1752882401.git.ayu.chandekar@gmail.com>
-
-
-* tb/prepare-midx-pack-cleanup (2025-05-28) 5 commits
- - midx: return a `packed_git` pointer from `prepare_midx_pack()`
- - midx-write.c: extract inner loop from fill_packs_from_midx()
- - midx-write.c: guard against incremental MIDXs in want_included_pack()
- - midx: access pack names through `nth_midxed_pack_name()`
- - Merge branch 'ps/midx-negative-packfile-cache' into tb/prepare-midx-pack-cleanup
-
- Improvement on Multi-pack-index API.
-
- Expecting a reroll.
- cf. <20250530065034.GC1321283@coredump.intra.peff.net>
- source: <cover.1748473122.git.me@ttaylorr.com>
-
-
-* cc/promisor-remote-capability (2025-07-31) 5 commits
- - promisor-remote: use string constants for 'name' and 'url' too
- - promisor-remote: allow a client to check fields
- - promisor-remote: refactor how we parse advertised fields
- - promisor-remote: allow a server to advertise more fields
- - promisor-remote: refactor to get rid of 'struct strvec'
-
- The "promisor-remote" capability mechanism has been updated to
- allow the "partialCloneFilter" settings and the "token" value to be
- communicated from the server side.
-
- Expecting a reroll.
- cf. <xmqqqzwvqay9.fsf@gitster.g>
- source: <20250731072401.3817074-1-christian.couder@gmail.com>
