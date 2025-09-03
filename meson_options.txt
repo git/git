@@ -69,6 +69,8 @@ option('zlib_backend', type: 'combo', choices: ['auto', 'zlib', 'zlib-ng'], valu
   description: 'The backend used for compressing objects and other data.')
 
 # Build tweaks.
+option('with_rust', type: 'boolean', value: true,
+       description: 'Enable building with Rust, true by default.')
 option('breaking_changes', type: 'boolean', value: false,
   description: 'Enable upcoming breaking changes.')
 option('macos_use_homebrew_gettext', type: 'boolean', value: true,
