@@ -18,6 +18,7 @@ git refs list [--count=<count>] [--shell|--perl|--python|--tcl]
 		   [--contains[=<object>]] [--no-contains[=<object>]]
 		   [(--exclude=<pattern>)...] [--start-after=<marker>]
 		   [ --stdin | (<pattern>...)]
+git refs exists <ref>
 
 DESCRIPTION
 -----------
@@ -37,6 +38,12 @@ list::
 	List references in the repository with support for filtering,
 	formatting, and sorting. This subcommand is an alias for
 	linkgit:git-for-each-ref[1] and offers identical functionality.
+
+exists::
+	Check whether the given reference exists. Returns an exit code of 0 if
+	it does, 2 if it is missing, and 1 in case looking up the reference
+	failed with an error other than the reference being missing. This does
+	not verify whether the reference resolves to an actual object.
 
 OPTIONS
 -------

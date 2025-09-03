@@ -7,12 +7,16 @@
 #include "strbuf.h"
 #include "worktree.h"
 #include "for-each-ref.h"
+#include "refs/refs-internal.h"
 
 #define REFS_MIGRATE_USAGE \
 	N_("git refs migrate --ref-format=<format> [--no-reflog] [--dry-run]")
 
 #define REFS_VERIFY_USAGE \
 	N_("git refs verify [--strict] [--verbose]")
+
+#define REFS_EXISTS_USAGE \
+	N_("git refs exists <ref>")
 
 static int cmd_refs_migrate(int argc, const char **argv, const char *prefix,
 			    struct repository *repo UNUSED)
@@ -113,6 +117,48 @@ static int cmd_refs_list(int argc, const char **argv, const char *prefix,
 	return for_each_ref_core(argc, argv, prefix, repo, refs_list_usage);
 }
 
+static int cmd_refs_exists(int argc, const char **argv, const char *prefix,
+			   struct repository *repo UNUSED)
+{
+	struct strbuf unused_referent = STRBUF_INIT;
+	struct object_id unused_oid;
+	unsigned int unused_type;
+	int failure_errno = 0;
+	const char *ref;
+	int ret = 0;
+	const char * const exists_usage[] = {
+		REFS_EXISTS_USAGE,
+		NULL,
+	};
+	struct option options[] = {
+		OPT_END(),
+	};
+
+	argc = parse_options(argc, argv, prefix, options, exists_usage, 0);
+	if (argc != 1)
+		die(_("'git refs exists' requires a reference"));
+
+	ref = *argv++;
+	if (refs_read_raw_ref(get_main_ref_store(the_repository), ref,
+			      &unused_oid, &unused_referent, &unused_type,
+			      &failure_errno)) {
+		if (failure_errno == ENOENT || failure_errno == EISDIR) {
+			error(_("reference does not exist"));
+			ret = 2;
+		} else {
+			errno = failure_errno;
+			error_errno(_("failed to look up reference"));
+			ret = 1;
+		}
+
+		goto out;
+	}
+
+out:
+	strbuf_release(&unused_referent);
+	return ret;
+}
+
 int cmd_refs(int argc,
 	     const char **argv,
 	     const char *prefix,
@@ -122,6 +168,7 @@ int cmd_refs(int argc,
 		REFS_MIGRATE_USAGE,
 		REFS_VERIFY_USAGE,
 		"git refs list " COMMON_USAGE_FOR_EACH_REF,
+		REFS_EXISTS_USAGE,
 		NULL,
 	};
 	parse_opt_subcommand_fn *fn = NULL;
@@ -129,6 +176,7 @@ int cmd_refs(int argc,
 		OPT_SUBCOMMAND("migrate", &fn, cmd_refs_migrate),
 		OPT_SUBCOMMAND("verify", &fn, cmd_refs_verify),
 		OPT_SUBCOMMAND("list", &fn, cmd_refs_list),
+		OPT_SUBCOMMAND("exists", &fn, cmd_refs_exists),
 		OPT_END(),
 	};
 
