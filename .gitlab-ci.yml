@@ -119,6 +119,7 @@ build:mingw64:
   variables:
     NO_PERL: 1
   before_script:
+    - Set-MpPreference -DisableRealtimeMonitoring $true
     - ./ci/install-sdk.ps1 -directory "git-sdk"
   script:
     - git-sdk/usr/bin/bash.exe -l -c 'ci/make-test-artifacts.sh artifacts'
@@ -135,6 +136,7 @@ test:mingw64:
     - job: "build:mingw64"
       artifacts: true
   before_script:
+    - Set-MpPreference -DisableRealtimeMonitoring $true
     - git-sdk/usr/bin/bash.exe -l -c 'tar xf artifacts/artifacts.tar.gz'
     - New-Item -Path .git/info -ItemType Directory
     - New-Item .git/info/exclude -ItemType File -Value "/git-sdk"
@@ -148,6 +150,7 @@ test:mingw64:
   tags:
     - saas-windows-medium-amd64
   before_script:
+    - Set-MpPreference -DisableRealtimeMonitoring $true
     - choco install -y git meson ninja openssl
     - Import-Module $env:ChocolateyInstall\helpers\chocolateyProfile.psm1
     - refreshenv
