@@ -1,3 +1,5 @@
 [workspace]
-members = []
+members = [
+    "build-helper",
+]
 resolver = "2"
