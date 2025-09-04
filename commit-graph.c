@@ -1003,13 +1003,16 @@ static int find_commit_pos_in_graph(struct commit *item, struct commit_graph *g,
 	}
 }
 
-int repo_find_commit_pos_in_graph(struct repository *r, struct commit *c,
-				  uint32_t *pos)
+struct commit_graph *repo_find_commit_pos_in_graph(struct repository *r,
+						   struct commit *c,
+						   uint32_t *pos)
 {
 	struct commit_graph *g = prepare_commit_graph(r);
 	if (!g)
-		return 0;
-	return find_commit_pos_in_graph(c, g, pos);
+		return NULL;
+	if (!find_commit_pos_in_graph(c, g, pos))
+		return NULL;
+	return g;
 }
 
 struct commit *lookup_commit_in_graph(struct repository *repo, const struct object_id *id)
@@ -1075,9 +1078,12 @@ int parse_commit_in_graph(struct repository *r, struct commit *item)
 
 void load_commit_graph_info(struct repository *r, struct commit *item)
 {
+	struct commit_graph *g;
 	uint32_t pos;
-	if (repo_find_commit_pos_in_graph(r, item, &pos))
-		fill_commit_graph_info(item, r->objects->commit_graph, pos);
+
+	g = repo_find_commit_pos_in_graph(r, item, &pos);
+	if (g)
+		fill_commit_graph_info(item, g, pos);
 }
 
 static struct tree *load_tree_for_commit(struct commit_graph *g,
