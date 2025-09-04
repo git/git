@@ -2226,7 +2226,8 @@ static int write_commit_graph_file(struct write_commit_graph_context *ctx)
 	return 0;
 }
 
-static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
+static void split_graph_merge_strategy(struct write_commit_graph_context *ctx,
+				       struct commit_graph *graph_to_merge)
 {
 	struct commit_graph *g;
 	uint32_t num_commits;
@@ -2245,7 +2246,7 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
 		flags = ctx->opts->split_flags;
 	}
 
-	g = ctx->r->objects->commit_graph;
+	g = graph_to_merge;
 	num_commits = ctx->commits.nr;
 	if (flags == COMMIT_GRAPH_SPLIT_REPLACE)
 		ctx->num_commit_graphs_after = 1;
@@ -2297,7 +2298,7 @@ static void split_graph_merge_strategy(struct write_commit_graph_context *ctx)
 		ctx->commit_graph_filenames_after[i] = xstrdup(ctx->commit_graph_filenames_before[i]);
 
 	i = ctx->num_commit_graphs_before - 1;
-	g = ctx->r->objects->commit_graph;
+	g = graph_to_merge;
 
 	while (g) {
 		if (i < ctx->num_commit_graphs_after)
@@ -2395,9 +2396,9 @@ static void sort_and_scan_merged_commits(struct write_commit_graph_context *ctx)
 	stop_progress(&ctx->progress);
 }
 
-static void merge_commit_graphs(struct write_commit_graph_context *ctx)
+static void merge_commit_graphs(struct write_commit_graph_context *ctx,
+				struct commit_graph *g)
 {
-	struct commit_graph *g = ctx->r->objects->commit_graph;
 	uint32_t current_graph_number = ctx->num_commit_graphs_before;
 
 	while (g && current_graph_number >= ctx->num_commit_graphs_after) {
@@ -2632,12 +2633,13 @@ int write_commit_graph(struct odb_source *source,
 		goto cleanup;
 
 	if (ctx.split) {
-		split_graph_merge_strategy(&ctx);
+		split_graph_merge_strategy(&ctx, g);
 
 		if (!replace)
-			merge_commit_graphs(&ctx);
-	} else
+			merge_commit_graphs(&ctx, g);
+	} else {
 		ctx.num_commit_graphs_after = 1;
+	}
 
 	ctx.trust_generation_numbers = validate_mixed_generation_chain(g);
 
