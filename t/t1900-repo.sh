@@ -92,4 +92,16 @@ test_expect_success 'git-repo-info aborts when requesting an invalid format' '
 	test_cmp expect actual
 '
 
+test_expect_success '-z uses nul-terminated format' '
+	printf "layout.bare\nfalse\0layout.shallow\nfalse\0" >expected &&
+	git repo info -z layout.bare layout.shallow >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'git repo info uses the last requested format' '
+	echo "layout.bare=false" >expected &&
+	git repo info --format=nul -z --format=keyvalue layout.bare >actual &&
+	test_cmp expected actual
+'
+
 test_done
