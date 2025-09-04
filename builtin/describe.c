@@ -24,6 +24,7 @@
 #include "commit-slab.h"
 #include "wildmatch.h"
 #include "prio-queue.h"
+#include "oidset.h"
 
 #define MAX_TAGS	(FLAG_BITS - 1)
 #define DEFAULT_CANDIDATES 10
@@ -286,38 +287,47 @@ static void lazy_queue_clear(struct lazy_queue *queue)
 	queue->get_pending = false;
 }
 
-static bool all_have_flag(const struct lazy_queue *queue, unsigned flag)
-{
-	for (size_t i = queue->get_pending ? 1 : 0; i < queue->queue.nr; i++) {
-		struct commit *commit = queue->queue.array[i].data;
-		if (!(commit->object.flags & flag))
-			return false;
-	}
-	return true;
-}
-
 static unsigned long finish_depth_computation(struct lazy_queue *queue,
 					      struct possible_tag *best)
 {
 	unsigned long seen_commits = 0;
+	struct oidset unflagged = OIDSET_INIT;
+
+	for (size_t i = queue->get_pending ? 1 : 0; i < queue->queue.nr; i++) {
+		struct commit *commit = queue->queue.array[i].data;
+		if (!(commit->object.flags & best->flag_within))
+			oidset_insert(&unflagged, &commit->object.oid);
+	}
+
 	while (!lazy_queue_empty(queue)) {
 		struct commit *c = lazy_queue_get(queue);
 		struct commit_list *parents = c->parents;
 		seen_commits++;
 		if (c->object.flags & best->flag_within) {
-			if (all_have_flag(queue, best->flag_within))
+			if (!oidset_size(&unflagged))
 				break;
-		} else
+		} else {
+			oidset_remove(&unflagged, &c->object.oid);
 			best->depth++;
+		}
 		while (parents) {
+			unsigned seen, flag_before, flag_after;
 			struct commit *p = parents->item;
 			repo_parse_commit(the_repository, p);
-			if (!(p->object.flags & SEEN))
+			seen = p->object.flags & SEEN;
+			if (!seen)
 				lazy_queue_put(queue, p);
+			flag_before = p->object.flags & best->flag_within;
 			p->object.flags |= c->object.flags;
+			flag_after = p->object.flags & best->flag_within;
+			if (!seen && !flag_after)
+				oidset_insert(&unflagged, &p->object.oid);
+			if (seen && !flag_before && flag_after)
+				oidset_remove(&unflagged, &p->object.oid);
 			parents = parents->next;
 		}
 	}
+	oidset_clear(&unflagged);
 	return seen_commits;
 }
 
