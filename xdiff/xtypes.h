@@ -51,7 +51,7 @@ typedef struct s_xdfile {
 	ptrdiff_t dstart, dend;
 	bool *changed;
 	long *rindex;
-	long nreff;
+	size_t nreff;
 } xdfile_t;
 
 typedef struct s_xdfenv {
