@@ -22,7 +22,7 @@ do
 	done
 	ssleep 30
 
-	time nice -20 Meta/Dothem -j32 --meson --leaks CC=clang
+	time nice -20 Meta/Dothem -j32 --meson CC="clang -O2"
 
 	uptime; date
 	P=$(stamp)
