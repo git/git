@@ -938,8 +938,7 @@ cleanup:
 	return result;
 }
 
-static int fill_packs_from_midx(struct write_midx_context *ctx,
-				const char *preferred_pack_name, uint32_t flags)
+static int fill_packs_from_midx(struct write_midx_context *ctx)
 {
 	struct multi_pack_index *m;
 
@@ -947,30 +946,11 @@ static int fill_packs_from_midx(struct write_midx_context *ctx,
 		uint32_t i;
 
 		for (i = 0; i < m->num_packs; i++) {
+			if (prepare_midx_pack(ctx->repo, m,
+					      m->num_packs_in_base + i))
+				return error(_("could not load pack"));
+
 			ALLOC_GROW(ctx->info, ctx->nr + 1, ctx->alloc);
-
-			/*
-			 * If generating a reverse index, need to have
-			 * packed_git's loaded to compare their
-			 * mtimes and object count.
-			 *
-			 * If a preferred pack is specified, need to
-			 * have packed_git's loaded to ensure the chosen
-			 * preferred pack has a non-zero object count.
-			 */
-			if (flags & MIDX_WRITE_REV_INDEX ||
-			    preferred_pack_name) {
-				if (prepare_midx_pack(ctx->repo, m,
-						      m->num_packs_in_base + i)) {
-					error(_("could not load pack"));
-					return 1;
-				}
-
-				if (open_pack_index(m->packs[i]))
-					die(_("could not open index for %s"),
-					    m->packs[i]->pack_name);
-			}
-
 			fill_pack_info(&ctx->info[ctx->nr++], m->packs[i],
 				       m->pack_names[i],
 				       m->num_packs_in_base + i);
@@ -1141,8 +1121,7 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 			ctx.num_multi_pack_indexes_before++;
 			m = m->base_midx;
 		}
-	} else if (ctx.m && fill_packs_from_midx(&ctx, preferred_pack_name,
-						 flags) < 0) {
+	} else if (ctx.m && fill_packs_from_midx(&ctx)) {
 		goto cleanup;
 	}
 
@@ -1204,6 +1183,13 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 		struct packed_git *oldest = ctx.info[ctx.preferred_pack_idx].p;
 		ctx.preferred_pack_idx = 0;
 
+		/*
+		 * Attempt opening the pack index to populate num_objects.
+		 * Ignore failiures as they can be expected and are not
+		 * fatal during this selection time.
+		 */
+		open_pack_index(oldest);
+
 		if (packs_to_drop && packs_to_drop->nr)
 			BUG("cannot write a MIDX bitmap during expiration");
 
@@ -1218,6 +1204,7 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 
 			if (!oldest->num_objects || p->mtime < oldest->mtime) {
 				oldest = p;
+				open_pack_index(oldest);
 				ctx.preferred_pack_idx = i;
 			}
 		}
@@ -1241,6 +1228,11 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 
 	if (ctx.preferred_pack_idx > -1) {
 		struct packed_git *preferred = ctx.info[ctx.preferred_pack_idx].p;
+
+		if (open_pack_index(preferred))
+			die(_("failed to open preferred pack %s"),
+			    ctx.info[ctx.preferred_pack_idx].pack_name);
+
 		if (!preferred->num_objects) {
 			error(_("cannot select preferred pack %s with no objects"),
 			      preferred->pack_name);
