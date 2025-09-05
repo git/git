@@ -96,4 +96,43 @@ test_expect_success 'fetch fails' '
 	test_must_fail git -C foo fetch .. main
 '
 
+test_expect_success 'upload-pack ACKs repeated non-commit objects repeatedly (protocol v0)' '
+	commit_id=$(git rev-parse HEAD) &&
+	tree_id=$(git rev-parse HEAD^{tree}) &&
+	test-tool pkt-line pack >request <<-EOF &&
+	want $commit_id
+	0000
+	have $tree_id
+	have $tree_id
+	0000
+	EOF
+	git upload-pack --stateless-rpc . <request >actual &&
+	depacketize <actual >actual.raw &&
+	grep ^ACK actual.raw >actual.acks &&
+	cat >expect <<-EOF &&
+	ACK $tree_id
+	ACK $tree_id
+	EOF
+	test_cmp expect actual.acks
+'
+
+test_expect_success 'upload-pack ACKs repeated non-commit objects once only (protocol v2)' '
+	commit_id=$(git rev-parse HEAD) &&
+	tree_id=$(git rev-parse HEAD^{tree}) &&
+	test-tool pkt-line pack >request <<-EOF &&
+	command=fetch
+	object-format=$(test_oid algo)
+	0001
+	want $commit_id
+	have $tree_id
+	have $tree_id
+	0000
+	EOF
+	GIT_PROTOCOL=version=2 git upload-pack . <request >actual &&
+	depacketize <actual >actual.raw &&
+	grep ^ACK actual.raw >actual.acks &&
+	echo "ACK $tree_id" >expect &&
+	test_cmp expect actual.acks
+'
+
 test_done
