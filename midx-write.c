@@ -1064,7 +1064,7 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 	int bitmapped_packs_concat_len = 0;
 	int pack_name_concat_len = 0;
 	int dropped_packs = 0;
-	int result = 0;
+	int result = -1;
 	const char **keep_hashes = NULL;
 	struct chunkfile *cf;
 
@@ -1117,14 +1117,12 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 				error(_("could not load reverse index for MIDX %s"),
 				      hash_to_hex_algop(get_midx_checksum(m),
 							m->repo->hash_algo));
-				result = 1;
 				goto cleanup;
 			}
 			ctx.num_multi_pack_indexes_before++;
 			m = m->base_midx;
 		}
 	} else if (ctx.m && fill_packs_from_midx(&ctx)) {
-		result = 1;
 		goto cleanup;
 	}
 
@@ -1160,12 +1158,16 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 			 */
 			if (!want_bitmap)
 				clear_midx_files_ext(object_dir, "bitmap", NULL);
+
+			result = 0;
 			goto cleanup;
 		}
 	}
 
-	if (ctx.incremental && !ctx.nr)
+	if (ctx.incremental && !ctx.nr) {
+		result = 0;
 		goto cleanup; /* nothing to do */
+	}
 
 	if (preferred_pack_name) {
 		ctx.preferred_pack_idx = NO_PREFERRED_PACK;
@@ -1239,7 +1241,6 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 		if (!preferred->num_objects) {
 			error(_("cannot select preferred pack %s with no objects"),
 			      preferred->pack_name);
-			result = 1;
 			goto cleanup;
 		}
 	}
@@ -1278,10 +1279,8 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 			}
 		}
 
-		if (missing_drops) {
-			result = 1;
+		if (missing_drops)
 			goto cleanup;
-		}
 	}
 
 	/*
@@ -1327,7 +1326,6 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 
 	if (ctx.nr - dropped_packs == 0) {
 		error(_("no pack files to index."));
-		result = 1;
 		goto cleanup;
 	}
 
@@ -1347,14 +1345,12 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 		incr = mks_tempfile_m(midx_name.buf, 0444);
 		if (!incr) {
 			error(_("unable to create temporary MIDX layer"));
-			result = -1;
 			goto cleanup;
 		}
 
 		if (adjust_shared_perm(r, get_tempfile_path(incr))) {
 			error(_("unable to adjust shared permissions for '%s'"),
 			      get_tempfile_path(incr));
-			result = -1;
 			goto cleanup;
 		}
 
@@ -1432,7 +1428,6 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 				      midx_hash, &pdata, commits, commits_nr,
 				      flags) < 0) {
 			error(_("could not write multi-pack bitmap"));
-			result = 1;
 			clear_packing_data(&pdata);
 			free(commits);
 			goto cleanup;
@@ -1458,21 +1453,17 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 
 		if (!chainf) {
 			error_errno(_("unable to open multi-pack-index chain file"));
-			result = -1;
 			goto cleanup;
 		}
 
-		if (link_midx_to_chain(ctx.base_midx) < 0) {
-			result = -1;
+		if (link_midx_to_chain(ctx.base_midx) < 0)
 			goto cleanup;
-		}
 
 		get_split_midx_filename_ext(r->hash_algo, &final_midx_name,
 					    object_dir, midx_hash, MIDX_EXT_MIDX);
 
 		if (rename_tempfile(&incr, final_midx_name.buf) < 0) {
 			error_errno(_("unable to rename new multi-pack-index layer"));
-			result = -1;
 			goto cleanup;
 		}
 
@@ -1505,6 +1496,7 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 	clear_midx_files(r, object_dir, keep_hashes,
 			 ctx.num_multi_pack_indexes_before + 1,
 			 ctx.incremental);
+	result = 0;
 
 cleanup:
 	for (size_t i = 0; i < ctx.nr; i++) {
