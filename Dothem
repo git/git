@@ -26,7 +26,9 @@ inst_prefix=$(
 )
 
 force= with_dash= test_long= M= install= doc= notest= bootstrap= branches= jobs=
-scratch= noprove= memtrash=--memtrash with_cocci= with_leaks= with_sha256= san= clean= with_meson=
+scratch= noprove= memtrash=--memtrash with_cocci= with_leaks= with_sha256= san= 
+clean= with_meson= breaking=
+
 while	case "$1" in
 	--pedantic | --locale=* | --loose) M="$M $1" ;;
 	--force) force=$1 ;;
@@ -44,6 +46,7 @@ while	case "$1" in
 	--memtrash) memtrash=--memtrash ;;
 	--test=*) test="$1" ;;
 	--scratch) scratch=y ;;
+	--breaking) breaking=breaking ;;
 	--bootstrap) bootstrap=y ;;
 	--base=*) BUILDBASE=${1#*=} ;;
 	--branches=*) branches=${1#*=} ;;
@@ -278,7 +281,7 @@ do
 			section SANITIZE=address,undefined
 			SANITIZE=address,undefined Meta/Make $M $jobs test &&
 			Meta/Make >/dev/null distclean
-		elif test "$with_leaks$with_sha256$dotest" = test
+		elif test "$breaking$with_leaks$with_sha256$dotest" = test
 		then
 			section test
 			Meta/Make $M $noprove ${test+"$test"} $jobs $test_long \
@@ -287,20 +290,19 @@ do
 		elif test -n "$with_leaks"
 		then
 			section leaks
-			(
-				export SANITIZE=leak
-				export GIT_TEST_PASSING_SANITIZE_LEAK=true
-				Meta/Make -j16 $T CC=clang test &&
-				Meta/Make -j16 >/dev/null distclean
-			)
+			SANITIZE=leak \
+			GIT_TEST_PASSING_SANITIZE_LEAK=true \
+			Meta/Make -j16 $T CC=clang test &&
+			Meta/Make >/dev/null distclean
 		elif test -n "$with_sha256"
 		then
 			section sha256
-			(
-				export GIT_TEST_DEFAULT_HASH=sha256
-				Meta/Make -j16 $T test &&
-				Meta/Make >/dev/null distclean
-			)
+			GIT_TEST_DEFAULT_HASH=sha256 Meta/Make -j16 $T test
+		elif test -n "$breaking"
+		then
+			section breaking
+			Meta/Make -j16 WITH_BREAKING_CHANGES=YesPlease test &&
+			Meta/Make >/dev/null distclean
 		fi &&
 
 		# docs
