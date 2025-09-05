@@ -1345,13 +1345,15 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 		incr = mks_tempfile_m(midx_name.buf, 0444);
 		if (!incr) {
 			error(_("unable to create temporary MIDX layer"));
-			return -1;
+			result = -1;
+			goto cleanup;
 		}
 
 		if (adjust_shared_perm(r, get_tempfile_path(incr))) {
 			error(_("unable to adjust shared permissions for '%s'"),
 			      get_tempfile_path(incr));
-			return -1;
+			result = -1;
+			goto cleanup;
 		}
 
 		f = hashfd(r->hash_algo, get_tempfile_fd(incr),
@@ -1451,18 +1453,22 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 
 		if (!chainf) {
 			error_errno(_("unable to open multi-pack-index chain file"));
-			return -1;
+			result = -1;
+			goto cleanup;
 		}
 
-		if (link_midx_to_chain(ctx.base_midx) < 0)
-			return -1;
+		if (link_midx_to_chain(ctx.base_midx) < 0) {
+			result = -1;
+			goto cleanup;
+		}
 
 		get_split_midx_filename_ext(r->hash_algo, &final_midx_name,
 					    object_dir, midx_hash, MIDX_EXT_MIDX);
 
 		if (rename_tempfile(&incr, final_midx_name.buf) < 0) {
 			error_errno(_("unable to rename new multi-pack-index layer"));
-			return -1;
+			result = -1;
+			goto cleanup;
 		}
 
 		strbuf_release(&final_midx_name);
