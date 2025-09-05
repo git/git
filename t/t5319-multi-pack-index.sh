@@ -1100,7 +1100,10 @@ test_expect_success 'load reverse index when missing .idx, .pack' '
 		mv $idx.bak $idx &&
 
 		mv $pack $pack.bak &&
-		git cat-file --batch-check="%(objectsize:disk)" <tip
+		git cat-file --batch-check="%(objectsize:disk)" <tip &&
+
+		test_must_fail git multi-pack-index write 2>err &&
+		test_grep "could not load pack" err
 	)
 '
 

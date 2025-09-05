@@ -1122,6 +1122,7 @@ static int write_midx_internal(struct repository *r, const char *object_dir,
 			m = m->base_midx;
 		}
 	} else if (ctx.m && fill_packs_from_midx(&ctx)) {
+		result = 1;
 		goto cleanup;
 	}
 
