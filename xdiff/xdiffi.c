@@ -24,7 +24,7 @@
 
 static unsigned long get_hash(xdfile_t *xdf, long index)
 {
-	return xdf->recs[xdf->rindex[index]]->ha;
+	return xdf->recs[xdf->rindex[index]].ha;
 }
 
 #define XDL_MAX_COST_MIN 256
@@ -489,13 +489,13 @@ static void measure_split(const xdfile_t *xdf, long split,
 		m->indent = -1;
 	} else {
 		m->end_of_file = 0;
-		m->indent = get_indent(xdf->recs[split]);
+		m->indent = get_indent(&xdf->recs[split]);
 	}
 
 	m->pre_blank = 0;
 	m->pre_indent = -1;
 	for (i = split - 1; i >= 0; i--) {
-		m->pre_indent = get_indent(xdf->recs[i]);
+		m->pre_indent = get_indent(&xdf->recs[i]);
 		if (m->pre_indent != -1)
 			break;
 		m->pre_blank += 1;
@@ -508,7 +508,7 @@ static void measure_split(const xdfile_t *xdf, long split,
 	m->post_blank = 0;
 	m->post_indent = -1;
 	for (i = split + 1; i < xdf->nrec; i++) {
-		m->post_indent = get_indent(xdf->recs[i]);
+		m->post_indent = get_indent(&xdf->recs[i]);
 		if (m->post_indent != -1)
 			break;
 		m->post_blank += 1;
@@ -752,7 +752,7 @@ static inline int group_previous(xdfile_t *xdf, struct xdlgroup *g)
 static int group_slide_down(xdfile_t *xdf, struct xdlgroup *g)
 {
 	if (g->end < xdf->nrec &&
-	    recs_match(xdf->recs[g->start], xdf->recs[g->end])) {
+	    recs_match(&xdf->recs[g->start], &xdf->recs[g->end])) {
 		xdf->rchg[g->start++] = 0;
 		xdf->rchg[g->end++] = 1;
 
@@ -773,7 +773,7 @@ static int group_slide_down(xdfile_t *xdf, struct xdlgroup *g)
 static int group_slide_up(xdfile_t *xdf, struct xdlgroup *g)
 {
 	if (g->start > 0 &&
-	    recs_match(xdf->recs[g->start - 1], xdf->recs[g->end - 1])) {
+	    recs_match(&xdf->recs[g->start - 1], &xdf->recs[g->end - 1])) {
 		xdf->rchg[--g->start] = 1;
 		xdf->rchg[--g->end] = 0;
 
@@ -988,16 +988,16 @@ static void xdl_mark_ignorable_lines(xdchange_t *xscr, xdfenv_t *xe, long flags)
 
 	for (xch = xscr; xch; xch = xch->next) {
 		int ignore = 1;
-		xrecord_t **rec;
+		xrecord_t *rec;
 		long i;
 
 		rec = &xe->xdf1.recs[xch->i1];
 		for (i = 0; i < xch->chg1 && ignore; i++)
-			ignore = xdl_blankline(rec[i]->ptr, rec[i]->size, flags);
+			ignore = xdl_blankline(rec[i].ptr, rec[i].size, flags);
 
 		rec = &xe->xdf2.recs[xch->i2];
 		for (i = 0; i < xch->chg2 && ignore; i++)
-			ignore = xdl_blankline(rec[i]->ptr, rec[i]->size, flags);
+			ignore = xdl_blankline(rec[i].ptr, rec[i].size, flags);
 
 		xch->ignore = ignore;
 	}
@@ -1021,7 +1021,7 @@ static void xdl_mark_ignorable_regex(xdchange_t *xscr, const xdfenv_t *xe,
 	xdchange_t *xch;
 
 	for (xch = xscr; xch; xch = xch->next) {
-		xrecord_t **rec;
+		xrecord_t *rec;
 		int ignore = 1;
 		long i;
 
@@ -1033,11 +1033,11 @@ static void xdl_mark_ignorable_regex(xdchange_t *xscr, const xdfenv_t *xe,
 
 		rec = &xe->xdf1.recs[xch->i1];
 		for (i = 0; i < xch->chg1 && ignore; i++)
-			ignore = record_matches_regex(rec[i], xpp);
+			ignore = record_matches_regex(&rec[i], xpp);
 
 		rec = &xe->xdf2.recs[xch->i2];
 		for (i = 0; i < xch->chg2 && ignore; i++)
-			ignore = record_matches_regex(rec[i], xpp);
+			ignore = record_matches_regex(&rec[i], xpp);
 
 		xch->ignore = ignore;
 	}

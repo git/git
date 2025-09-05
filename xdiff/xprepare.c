@@ -128,7 +128,6 @@ static void xdl_free_ctx(xdfile_t *xdf)
 	xdl_free(xdf->rindex);
 	xdl_free(xdf->rchg - 1);
 	xdl_free(xdf->recs);
-	xdl_cha_free(&xdf->rcha);
 }
 
 
@@ -143,8 +142,6 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 	xdf->rchg = NULL;
 	xdf->recs = NULL;
 
-	if (xdl_cha_init(&xdf->rcha, sizeof(xrecord_t), narec / 4 + 1) < 0)
-		goto abort;
 	if (!XDL_ALLOC_ARRAY(xdf->recs, narec))
 		goto abort;
 
@@ -155,12 +152,10 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 			hav = xdl_hash_record(&cur, top, xpp->flags);
 			if (XDL_ALLOC_GROW(xdf->recs, xdf->nrec + 1, narec))
 				goto abort;
-			if (!(crec = xdl_cha_alloc(&xdf->rcha)))
-				goto abort;
+			crec = &xdf->recs[xdf->nrec++];
 			crec->ptr = prev;
 			crec->size = (long) (cur - prev);
 			crec->ha = hav;
-			xdf->recs[xdf->nrec++] = crec;
 			if (xdl_classify_record(pass, cf, crec) < 0)
 				goto abort;
 		}
@@ -260,7 +255,7 @@ static int xdl_clean_mmatch(char const *dis, long i, long s, long e) {
  */
 static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xdf2) {
 	long i, nm, nreff, mlim;
-	xrecord_t **recs;
+	xrecord_t *recs;
 	xdlclass_t *rcrec;
 	char *dis, *dis1, *dis2;
 	int need_min = !!(cf->flags & XDF_NEED_MINIMAL);
@@ -273,7 +268,7 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 	if ((mlim = xdl_bogosqrt(xdf1->nrec)) > XDL_MAX_EQLIMIT)
 		mlim = XDL_MAX_EQLIMIT;
 	for (i = xdf1->dstart, recs = &xdf1->recs[xdf1->dstart]; i <= xdf1->dend; i++, recs++) {
-		rcrec = cf->rcrecs[(*recs)->ha];
+		rcrec = cf->rcrecs[recs->ha];
 		nm = rcrec ? rcrec->len2 : 0;
 		dis1[i] = (nm == 0) ? 0: (nm >= mlim && !need_min) ? 2: 1;
 	}
@@ -281,7 +276,7 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 	if ((mlim = xdl_bogosqrt(xdf2->nrec)) > XDL_MAX_EQLIMIT)
 		mlim = XDL_MAX_EQLIMIT;
 	for (i = xdf2->dstart, recs = &xdf2->recs[xdf2->dstart]; i <= xdf2->dend; i++, recs++) {
-		rcrec = cf->rcrecs[(*recs)->ha];
+		rcrec = cf->rcrecs[recs->ha];
 		nm = rcrec ? rcrec->len1 : 0;
 		dis2[i] = (nm == 0) ? 0: (nm >= mlim && !need_min) ? 2: 1;
 	}
@@ -317,13 +312,13 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
  */
 static int xdl_trim_ends(xdfile_t *xdf1, xdfile_t *xdf2) {
 	long i, lim;
-	xrecord_t **recs1, **recs2;
+	xrecord_t *recs1, *recs2;
 
 	recs1 = xdf1->recs;
 	recs2 = xdf2->recs;
 	for (i = 0, lim = XDL_MIN(xdf1->nrec, xdf2->nrec); i < lim;
 	     i++, recs1++, recs2++)
-		if ((*recs1)->ha != (*recs2)->ha)
+		if (recs1->ha != recs2->ha)
 			break;
 
 	xdf1->dstart = xdf2->dstart = i;
@@ -331,7 +326,7 @@ static int xdl_trim_ends(xdfile_t *xdf1, xdfile_t *xdf2) {
 	recs1 = xdf1->recs + xdf1->nrec - 1;
 	recs2 = xdf2->recs + xdf2->nrec - 1;
 	for (lim -= i, i = 0; i < lim; i++, recs1--, recs2--)
-		if ((*recs1)->ha != (*recs2)->ha)
+		if (recs1->ha != recs2->ha)
 			break;
 
 	xdf1->dend = xdf1->nrec - i - 1;
