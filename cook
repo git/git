@@ -452,6 +452,7 @@ sub read_previous {
 	my $branch = $blurb;
 	my $last_empty = undef;
 	my (@section, %section, @branch, %branch, %description, @leader);
+	my (%section_description);
 	my $in_unedited_olde = 0;
 
 	if (!-r $fn) {
@@ -500,6 +501,14 @@ sub read_previous {
 			}
 			next;
 		}
+		if (defined $section &&
+		    !defined $branch &&
+		    !/^\* /) {
+			$section_description{$section} ||= "";
+			$section_description{$section} .= "$_\n";
+			next;
+		}
+
 		if (defined $section && /^\* (\S+) /) {
 			$branch = $1;
 			$last_empty = 0;
@@ -565,6 +574,7 @@ sub read_previous {
 		section_list => \@section,
 		section_data => \%section,
 		topic_description => \%description,
+		section_description => \%section_description,
 	};
 }
 
@@ -583,6 +593,11 @@ sub write_cooking {
 		print $fh '-' x 50, "\n";
 		print $fh "[$section_name]\n";
 		my $lead = "\n";
+
+		if ($cooking->{'section_description'}{$section_name}) {
+			print $fh "\n", $cooking->{'section_description'}{$section_name};
+		}
+
 		for my $topic (@{$topic_list}) {
 			my $d = $cooking->{'topic_description'}{$topic};
 
