@@ -29,6 +29,9 @@
 #define XDL_GUESS_NLINES1 256
 #define XDL_GUESS_NLINES2 20
 
+#define DISCARD 0
+#define KEEP 1
+#define INVESTIGATE 2
 
 typedef struct s_xdlclass {
 	struct s_xdlclass *next;
@@ -190,15 +193,15 @@ void xdl_free_env(xdfenv_t *xe) {
 }
 
 
-static int xdl_clean_mmatch(char const *dis, long i, long s, long e) {
+static bool xdl_clean_mmatch(uint8_t const *action, long i, long s, long e) {
 	long r, rdis0, rpdis0, rdis1, rpdis1;
 
 	/*
-	 * Limits the window the is examined during the similar-lines
-	 * scan. The loops below stops when dis[i - r] == 1 (line that
-	 * has no match), but there are corner cases where the loop
-	 * proceed all the way to the extremities by causing huge
-	 * performance penalties in case of big files.
+	 * Limits the window that is examined during the similar-lines
+	 * scan. The loops below stops when action[i - r] == KEEP
+	 * (line that has no match), but there are corner cases where
+	 * the loop proceed all the way to the extremities by causing
+	 * huge performance penalties in case of big files.
 	 */
 	if (i - s > XDL_SIMSCAN_WINDOW)
 		s = i - XDL_SIMSCAN_WINDOW;
@@ -207,40 +210,47 @@ static int xdl_clean_mmatch(char const *dis, long i, long s, long e) {
 
 	/*
 	 * Scans the lines before 'i' to find a run of lines that either
-	 * have no match (dis[j] == 0) or have multiple matches (dis[j] > 1).
-	 * Note that we always call this function with dis[i] > 1, so the
-	 * current line (i) is already a multimatch line.
+	 * have no match (action[j] == DISCARD) or have multiple matches
+	 * (action[j] == INVESTIGATE). Note that we always call this
+	 * function with action[i] == INVESTIGATE, so the current line
+	 * (i) is already a multimatch line.
 	 */
 	for (r = 1, rdis0 = 0, rpdis0 = 1; (i - r) >= s; r++) {
-		if (!dis[i - r])
+		if (action[i - r] == DISCARD)
 			rdis0++;
-		else if (dis[i - r] == 2)
+		else if (action[i - r] == INVESTIGATE)
 			rpdis0++;
-		else
+		else if (action[i - r] == KEEP)
 			break;
+		else
+			BUG("Illegal value for action[i - r]");
 	}
 	/*
-	 * If the run before the line 'i' found only multimatch lines, we
-	 * return 0 and hence we don't make the current line (i) discarded.
-	 * We want to discard multimatch lines only when they appear in the
-	 * middle of runs with nomatch lines (dis[j] == 0).
+	 * If the run before the line 'i' found only multimatch lines,
+	 * we return false and hence we don't make the current line (i)
+	 * discarded. We want to discard multimatch lines only when
+	 * they appear in the middle of runs with nomatch lines
+	 * (action[j] == DISCARD).
 	 */
 	if (rdis0 == 0)
 		return 0;
 	for (r = 1, rdis1 = 0, rpdis1 = 1; (i + r) <= e; r++) {
-		if (!dis[i + r])
+		if (action[i + r] == DISCARD)
 			rdis1++;
-		else if (dis[i + r] == 2)
+		else if (action[i + r] == INVESTIGATE)
 			rpdis1++;
-		else
+		else if (action[i + r] == KEEP)
 			break;
+		else
+			BUG("Illegal value for action[i + r]");
 	}
 	/*
-	 * If the run after the line 'i' found only multimatch lines, we
-	 * return 0 and hence we don't make the current line (i) discarded.
+	 * If the run after the line 'i' found only multimatch lines,
+	 * we return false and hence we don't make the current line (i)
+	 * discarded.
 	 */
 	if (rdis1 == 0)
-		return 0;
+		return false;
 	rdis1 += rdis0;
 	rpdis1 += rpdis0;
 
@@ -251,26 +261,38 @@ static int xdl_clean_mmatch(char const *dis, long i, long s, long e) {
 /*
  * Try to reduce the problem complexity, discard records that have no
  * matches on the other file. Also, lines that have multiple matches
- * might be potentially discarded if they happear in a run of discardable.
+ * might be potentially discarded if they appear in a run of discardable.
  */
 static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xdf2) {
 	long i, nm, nreff, mlim;
 	xrecord_t *recs;
 	xdlclass_t *rcrec;
-	char *dis, *dis1, *dis2;
-	int need_min = !!(cf->flags & XDF_NEED_MINIMAL);
+	uint8_t *action1 = NULL, *action2 = NULL;
+	bool need_min = !!(cf->flags & XDF_NEED_MINIMAL);
+	int ret = 0;
 
-	if (!XDL_CALLOC_ARRAY(dis, xdf1->nrec + xdf2->nrec + 2))
-		return -1;
-	dis1 = dis;
-	dis2 = dis1 + xdf1->nrec + 1;
+	/*
+	 * Create temporary arrays that will help us decide if
+	 * changed[i] should remain 0 or become 1.
+	 */
+	if (!XDL_CALLOC_ARRAY(action1, xdf1->nrec + 1)) {
+		ret = -1;
+		goto cleanup;
+	}
+	if (!XDL_CALLOC_ARRAY(action2, xdf2->nrec + 1)) {
+		ret = -1;
+		goto cleanup;
+	}
 
+	/*
+	 * Initialize temporary arrays with DISCARD, KEEP, or INVESTIGATE.
+	 */
 	if ((mlim = xdl_bogosqrt(xdf1->nrec)) > XDL_MAX_EQLIMIT)
 		mlim = XDL_MAX_EQLIMIT;
 	for (i = xdf1->dstart, recs = &xdf1->recs[xdf1->dstart]; i <= xdf1->dend; i++, recs++) {
 		rcrec = cf->rcrecs[recs->ha];
 		nm = rcrec ? rcrec->len2 : 0;
-		dis1[i] = (nm == 0) ? 0: (nm >= mlim && !need_min) ? 2: 1;
+		action1[i] = (nm == 0) ? DISCARD: (nm >= mlim && !need_min) ? INVESTIGATE: KEEP;
 	}
 
 	if ((mlim = xdl_bogosqrt(xdf2->nrec)) > XDL_MAX_EQLIMIT)
@@ -278,32 +300,42 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 	for (i = xdf2->dstart, recs = &xdf2->recs[xdf2->dstart]; i <= xdf2->dend; i++, recs++) {
 		rcrec = cf->rcrecs[recs->ha];
 		nm = rcrec ? rcrec->len1 : 0;
-		dis2[i] = (nm == 0) ? 0: (nm >= mlim && !need_min) ? 2: 1;
+		action2[i] = (nm == 0) ? DISCARD: (nm >= mlim && !need_min) ? INVESTIGATE: KEEP;
 	}
 
+	/*
+	 * Use temporary arrays to decide if changed[i] should remain
+	 * 0 or become 1.
+	 */
 	for (nreff = 0, i = xdf1->dstart, recs = &xdf1->recs[xdf1->dstart];
 	     i <= xdf1->dend; i++, recs++) {
-		if (dis1[i] == 1 ||
-		    (dis1[i] == 2 && !xdl_clean_mmatch(dis1, i, xdf1->dstart, xdf1->dend))) {
+		if (action1[i] == KEEP ||
+		    (action1[i] == INVESTIGATE && !xdl_clean_mmatch(action1, i, xdf1->dstart, xdf1->dend))) {
 			xdf1->rindex[nreff++] = i;
+			/* changed[i] remains 0, i.e. keep */
 		} else
 			xdf1->changed[i] = 1;
+			/* i.e. discard */
 	}
 	xdf1->nreff = nreff;
 
 	for (nreff = 0, i = xdf2->dstart, recs = &xdf2->recs[xdf2->dstart];
 	     i <= xdf2->dend; i++, recs++) {
-		if (dis2[i] == 1 ||
-		    (dis2[i] == 2 && !xdl_clean_mmatch(dis2, i, xdf2->dstart, xdf2->dend))) {
+		if (action2[i] == KEEP ||
+		    (action2[i] == INVESTIGATE && !xdl_clean_mmatch(action2, i, xdf2->dstart, xdf2->dend))) {
 			xdf2->rindex[nreff++] = i;
+			/* changed[i] remains 0, i.e. keep */
 		} else
 			xdf2->changed[i] = 1;
+			/* i.e. discard */
 	}
 	xdf2->nreff = nreff;
 
-	xdl_free(dis);
+cleanup:
+	xdl_free(action1);
+	xdl_free(action2);
 
-	return 0;
+	return ret;
 }
 
 
