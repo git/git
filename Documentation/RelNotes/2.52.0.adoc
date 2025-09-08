@@ -14,6 +14,9 @@ UI, Workflows & Features
  * A new subcommand "git repo" gives users a way to grab various
    repository characteristics.
 
+ * A new command "git last-modified" has been added to show the closest
+   ancestor commit that touched each path.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -39,6 +42,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * Discord has been added to the first contribution documentation as
    another way to ask for help.
+
+ * Inspired by Ezekiel's recent effort to showcase Rust interface, the
+   hash function implementation used to hash lines have been updated
+   to the one used for ELF symbol lookup by Glibc.
 
 
 Fixes since v2.51
@@ -129,6 +136,20 @@ including security updates, are included in this release.
    document to say that a GitHub PR could be made against `git/git`
    instead of `gitgitgadget/git`.
    (merge 37001cdbc4 ds/doc-ggg-pr-fork-clarify later to maint).
+
+ * Makefile tried to run multiple "cargo build" which would not work
+   very well; serialize their execution to work it around.
+   (merge 0eeacde50e da/cargo-serialize later to maint).
+
+ * "git repack --path-walk" lost objects in some corner cases, which
+   has been corrected.
+   (merge 93afe9b060 ds/path-walk-repack-fix later to maint).
+
+ * "git ls-files <pathspec>..." should not necessarily have to expand
+   the index fully if a sparsified directory is excluded by the
+   pathspec; the code is taught to expand the index on demand to avoid
+   this.
+   (merge 681f26bccc ds/ls-files-lazy-unsparse later to maint).
 
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
