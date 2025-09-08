@@ -1223,7 +1223,7 @@ int ref_transaction_maybe_set_rejected(struct ref_transaction *transaction,
 		return 0;
 
 	if (!transaction->rejections)
-		BUG("transaction not inititalized with failure support");
+		BUG("transaction not initialized with failure support");
 
 	/*
 	 * Don't accept generic errors, since these errors are not user
@@ -1231,6 +1231,12 @@ int ref_transaction_maybe_set_rejected(struct ref_transaction *transaction,
 	 */
 	if (err == REF_TRANSACTION_ERROR_GENERIC)
 		return 0;
+
+	/*
+	 * Remove this refname from the list of refnames used for validation
+	 */
+	string_list_remove(&transaction->refnames,
+			   transaction->updates[update_idx]->refname, 0);
 
 	transaction->updates[update_idx]->rejection_err = err;
 	ALLOC_GROW(transaction->rejections->update_indices,

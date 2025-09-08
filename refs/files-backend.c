@@ -852,6 +852,7 @@ retry:
 				goto error_return;
 			} else if (remove_dir_recursively(&ref_file,
 							  REMOVE_DIR_EMPTY_ONLY)) {
+				ret = REF_TRANSACTION_ERROR_NAME_CONFLICT;
 				if (refs_verify_refname_available(
 						    &refs->base, refname,
 						    extras, NULL, 0, err)) {
@@ -859,7 +860,6 @@ retry:
 					 * The error message set by
 					 * verify_refname_available() is OK.
 					 */
-					ret = REF_TRANSACTION_ERROR_NAME_CONFLICT;
 					goto error_return;
 				} else {
 					/*
