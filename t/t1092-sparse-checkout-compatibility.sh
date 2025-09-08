@@ -1506,6 +1506,8 @@ test_expect_success 'sparse-index is not expanded' '
 	ensure_not_expanded reset --hard &&
 	ensure_not_expanded restore -s rename-out-to-out -- deep/deeper1 &&
 
+	ensure_not_expanded ls-files deep/deeper1 &&
+
 	echo >>sparse-index/README.md &&
 	ensure_not_expanded add -A &&
 	echo >>sparse-index/extra.txt &&
@@ -1607,6 +1609,17 @@ test_expect_success 'describe tested on all' '
 	test_all_match git describe --dirty
 '
 
+test_expect_success 'ls-files filtering and expansion' '
+	init_repos &&
+
+	# This filtering will hit a sparse directory midway
+	# through the iteration.
+	test_all_match git ls-files deep &&
+
+	# This pathspec will filter the index to only a sparse
+	# directory.
+	test_all_match git ls-files folder1
+'
 
 test_expect_success 'sparse-index is not expanded: describe' '
 	init_repos &&

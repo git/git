@@ -414,13 +414,20 @@ static void show_files(struct repository *repo, struct dir_struct *dir)
 	if (!(show_cached || show_stage || show_deleted || show_modified))
 		return;
 
-	if (!show_sparse_dirs)
-		ensure_full_index(repo->index);
-
 	for (i = 0; i < repo->index->cache_nr; i++) {
 		const struct cache_entry *ce = repo->index->cache[i];
 		struct stat st;
 		int stat_err;
+
+		if (S_ISSPARSEDIR(ce->ce_mode) && !show_sparse_dirs) {
+			/*
+			 * This is the first time we've hit a sparse dir,
+			 * so expansion will leave the first 'i' entries
+			 * alone.
+			 */
+			ensure_full_index(repo->index);
+			ce = repo->index->cache[i];
+		}
 
 		construct_fullname(&fullname, repo, ce);
 
