@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2025, #02; Wed, 3)
-X-master-at: 2462961280690837670d997bde64bd4ebf8ae66d
-X-next-at: 1ba7204a041bf9fa3af3ad21a018399fff66f7b9
+Subject: What's cooking in git.git (Sep 2025, #03; Mon, 8)
+X-master-at: 4975ec3473b4bc61bc8a3df1ef29d0b7e7959e87
+X-next-at: 87641ccf932d9ff14ba9770a85800514f51c415d
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2025, #02; Wed, 3)
+What's cooking in git.git (Sep 2025, #03; Mon, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -51,20 +51,260 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* am/xdiff-hash-tweak (2025-07-28) 2 commits
+  (merged to 'next' on 2025-08-29 at 43590f0b38)
+ + xdiff: optimize xdl_hash_record_verbatim
+ + xdiff: refactor xdl_hash_record()
+
+ Inspired by Ezekiel's recent effort to showcase Rust interface, the
+ hash function implementation used to hash lines have been updated
+ to the one used for ELF symbol lookup by Glibc.
+  cf. <xmqqecsvqal6.fsf@gitster.g>
+ source: <20250728190520.10962-1-amonakov@ispras.ru>
+
+
+* da/cargo-serialize (2025-08-26) 1 commit
+  (merged to 'next' on 2025-08-29 at 5a193b1525)
+ + Makefile: build libgit-rs and libgit-sys serially
+
+ Makefile tried to run multiple "cargo build" which would not work
+ very well; serialize their execution to work it around.
+ 
+ source: <20250826233525.2635432-1-davvid@gmail.com>
+
+
+* ds/ls-files-lazy-unsparse (2025-08-15) 1 commit
+  (merged to 'next' on 2025-08-29 at a48fee2dde)
+ + ls-files: conditionally leave index sparse
+
+ "git ls-files <pathspec>..." should not necessarily have to expand
+ the index fully if a sparsified directory is excluded by the
+ pathspec; the code is taught to expand the index on demand to avoid
+ this.
+ 
+ source: <pull.1955.git.1755274373717.gitgitgadget@gmail.com>
+
+
+* ds/path-walk-repack-fix (2025-08-25) 2 commits
+  (merged to 'next' on 2025-08-29 at 13028ffb8e)
+ + path-walk: create initializer for path lists
+ + path-walk: fix setup of pending objects
+
+ "git repack --path-walk" lost objects in some corner cases, which
+ has been corrected.
+  cf. <CABPp-BHFxxGrqKc0m==TjQNjDGdO=H5Rf6EFsf2nfE1=TuraOQ@mail.gmail.com>
+ source: <pull.1956.v2.git.1756126197.gitgitgadget@gmail.com>
+
+
+* tc/last-modified (2025-08-05) 3 commits
+  (merged to 'next' on 2025-08-29 at 3f3e111189)
+ + last-modified: use Bloom filters when available
+ + t/perf: add last-modified perf script
+ + last-modified: new subcommand to show when files were last modified
+
+ A new command "git last-modified" has been added to show the closest
+ ancestor commit that touched each path.
+ 
+ source: <20250730175510.987383-1-toon@iotcl.com>
+
+--------------------------------------------------
 [New Topics]
 
-* ds/midx-write-fixes (2025-08-30) 6 commits
- - midx-write: simplify error cases
- - midx-write: reenable signed comparison errors
- - midx-write: use uint32_t for preferred_pack_idx
- - midx-write: use cleanup when incremental midx fails
- - midx-write: put failing response value back
- - midx-write: only load initialized packs
+* pw/3.0-default-initial-branch-to-main (2025-09-04) 4 commits
+ - t0613: stop setting default initial branch
+ - t9902: switch default branch name to main
+ - t4013: switch default branch name to main
+ - breaking-changes: switch default branch to main
+
+ Declare that "git init" that is not otherwise configured uses
+ 'main' as the initial branch, not 'master', starting Git 3.0.
+
+ Will merge to 'next'?
+ source: <cover.1756992089.git.phillip.wood@dunelm.org.uk>
+
+
+* rs/object-name-extend-abbrev-len-update (2025-09-04) 1 commit
+  (merged to 'next' on 2025-09-08 at 469498c610)
+ + object-name: declare pointer type of extend_abbrev_len()'s 2nd parameter
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <e0bc9a67-faa9-4218-a55a-c7d53c15cfce@web.de>
+
+
+* ps/commit-graph-per-object-source (2025-09-04) 6 commits
+ - odb: move commit-graph into the object sources
+ - commit-graph: pass graphs that are to be merged as parameter
+ - commit-graph: return commit graph from `repo_find_commit_pos_in_graph()`
+ - commit-graph: return the prepared commit graph from `prepare_commit_graph()`
+ - revision: drop explicit check for commit graph
+ - blame: drop explicit check for commit graph
+
+ Declare commit-graph is per object_source, which may not be a good idea.
+
+ cf. <cf7aeda1-297a-4805-b0ae-e379ce11bbcf@gmail.com>
+ source: <20250904-b4-pks-commit-graph-via-source-v1-0-d932c2481e1a@pks.im>
+
+
+* ps/rust-balloon (2025-09-05) 7 commits
+ - ci: enable Rust for breaking-changes jobs
+ - ci: convert "pedantic" job into full build with breaking changes
+ - BreakingChanges: announce Rust becoming mandatory
+ - rust: implement a test balloon via the "varint" subsystem
+ - help: report on whether or not Rust is enabled
+ - Makefile: introduce infrastructure to build internal Rust library
+ - meson: add infrastructure to build internal Rust library
+
+ Dip our toes a bit to (optionally) use Rust implemented helper
+ called from our C code.
+ source: <20250905-b4-pks-rust-breaking-change-v2-0-6939cbf4a0b8@pks.im>
+
+
+* kh/doc-fast-import-markup-fix (2025-09-08) 1 commit
+ - doc: fast-import: replace literal block with paragraph
+
+ Doc mark-up fix.
+
+ Will merge to 'next'.
+ source: <09aaad696895c18c6d4dda7d6a2f4b77f84f39ba.1757363213.git.code@khaugsbakk.name>
+
+
+* ms/refs-optimize (2025-09-06) 5 commits
+ - t: add test for git refs optimize subcommand
+ - t0601: refactor tests to be shareable
+ - builtin/refs: add optimize subcommand
+ - doc: factor out common option
+ - builtin/pack-refs: factor out core logic into a shared library
+
+ "git refs optimize" is added for not very well explained reason
+ despite it does the same thing as "git pack-refs"...
+
+ Expecting a reroll.
+ source: <20250906075147.1076656-1-meetsoni3017@gmail.com>
+
+
+* sj/string-list (2025-09-07) 4 commits
+ - refs: enable sign compare warnings check
+ - string-list: change "string_list_find_insert_index" return type to "size_t"
+ - string-list: replace negative index encoding with "exact_match" parameter
+ - string-list: allow passing NULL for `get_entry_index`
+
+ The "string-list" API function to find where a given string would
+ be inserted got updated so that it can use unrealistically huge
+ array index that would only fit in size_t but not int or ssize_t
+ to achieve unstated goal.
+
+ Expecting a reroll.
+ source: <aL21kDwK-zGZyJ9q@ArchLinux>
+
+--------------------------------------------------
+[Stalled]
+
+These topics have been expecting updates for quite some time.  I'll
+eject any of them when they start to conflict with other topics in
+'seen' and may drop them from my tree when they are dormant for too
+long (let's say 8 weeks is way too long, for now).  After that, they
+can be proposed again by rerolling them in a shape that would work
+well with other topics in 'seen' (and of course 'next' and
+"master').
+
+* lc/rebase-trailer (2025-08-03) 2 commits
+ - rebase: support --trailer
+ - trailer: append trailers in-process and drop the fork to `interpret-trailers`
+
+ Expecting a reroll.
+ cf. <198826af571.62b85cb31711042.2415806544948206668@linux.beauty>
+ cf. <xmqqiki7qasu.fsf@gitster.g>
+ source: <20250803150059.402017-1-me@linux.beauty>
+
+
+* ac/deglobal-sparse-variables (2025-07-18) 3 commits
+ . environment: remove the global variable 'sparse_expect_files_outside_of_patterns'
+ . environment: move access to "core.sparsecheckoutcone" into repo_settings
+ . environment: move access to "core.sparsecheckout" into repo_settings
+
+ Two global variables related to sparse checkout have been moved to
+ the repository settings structure.
+
+ Expecting a reroll.
+ cf. <CAE7as+bnG6KgA8X_n36pqP15bmyM6re+xEb1MOXKvZSUdJ8Arg@mail.gmail.com>
+ Ejected out of 'seen' for now.
+ source: <cover.1752882401.git.ayu.chandekar@gmail.com>
+
+
+* tb/prepare-midx-pack-cleanup (2025-05-28) 5 commits
+ . midx: return a `packed_git` pointer from `prepare_midx_pack()`
+ . midx-write.c: extract inner loop from fill_packs_from_midx()
+ . midx-write.c: guard against incremental MIDXs in want_included_pack()
+ . midx: access pack names through `nth_midxed_pack_name()`
+ . Merge branch 'ps/midx-negative-packfile-cache' into tb/prepare-midx-pack-cleanup
+
+ Improvement on Multi-pack-index API.
+
+ Expecting a reroll.
+ cf. <20250530065034.GC1321283@coredump.intra.peff.net>
+ source: <cover.1748473122.git.me@ttaylorr.com>
+
+
+* cc/promisor-remote-capability (2025-09-07) 7 commits
+ - promisor-remote: use string_list_split() in mark_remotes_as_accepted()
+ - promisor-remote: allow a client to check fields
+ - promisor-remote: use string_list_split() in filter_promisor_remote()
+ - promisor-remote: refactor how we parse advertised fields
+ - promisor-remote: use string constants for 'name' and 'url' too
+ - promisor-remote: allow a server to advertise more fields
+ - promisor-remote: refactor to get rid of 'struct strvec'
+
+ The "promisor-remote" capability mechanism has been updated to
+ allow the "partialCloneFilter" settings and the "token" value to be
+ communicated from the server side.
+
+ Will merge to 'next'?
+ source: <20250908053056.956907-1-christian.couder@gmail.com>
+
+
+* ar/submodule-gitdir-tweak (2025-09-02) 11 commits
+ . fixup! t: submodules: add basic mixed gitdir path tests
+ . fixup! t: add gitdir encoding tests
+ . t: add gitdir encoding tests
+ . t: move nested gitdir tests to proper location
+ . submodule: remove validate_submodule_git_dir()
+ . submodule: encode gitdir paths to avoid conflicts
+ . strbuf: bring back is_rfc3986_unreserved
+ . t: submodules: add basic mixed gitdir path tests
+ . submodule: add gitdir path config override
+ . submodule: create new gitdirs under submodules path
+ . submodule--helper: use submodule_name_to_gitdir in add_submodule
+
+ Avoid local submodule repository directory paths overlapping with
+ each other by encoding submodule names before using them as path
+ components.
+
+ Need to pick up a reroll.
+ cf.<20250908140117.262205-1-adrian.ratiu@collabora.com>
+ Breaks builds.
+ cf. https://github.com/git/git/actions/runs/17447961977/job/49546783809
+ source: <20250816213642.3517822-1-adrian.ratiu@collabora.com>
+
+--------------------------------------------------
+[Cooking]
+
+* ds/midx-write-fixes (2025-09-05) 6 commits
+  (merged to 'next' on 2025-09-08 at 74b87ce5ba)
+ + midx-write: simplify error cases
+ + midx-write: reenable signed comparison errors
+ + midx-write: use uint32_t for preferred_pack_idx
+ + midx-write: use cleanup when incremental midx fails
+ + midx-write: put failing response value back
+ + midx-write: only load initialized packs
 
  Fixes multiple crashes around midx write-out codepaths.
 
- Comments?
- source: <pull.1965.v2.git.1756589007.gitgitgadget@gmail.com>
+ Will merge to 'master'.
+ source: <pull.1965.v3.git.1757100378.gitgitgadget@gmail.com>
 
 
 * km/alias-doc-markup-fix (2025-09-01) 1 commit
@@ -141,165 +381,46 @@ Release tarballs are available at:
  source: <cover.1756845314.git.code@khaugsbakk.name>
 
 
-* kn/refs-files-case-insensitive (2025-09-02) 2 commits
+* kn/refs-files-case-insensitive (2025-09-08) 4 commits
+ - refs/files: handle D/F conflicts during locking
  - refs/files: handle F/D conflicts in case-insensitive FS
- - refs/files: use correct error type when locking fails
+ - refs/files: use correct error type when lock exists
+ - refs/files: catch conflicts on case-insensitive file-systems
 
- source: <20250902-587-git-fetch-1-fails-fetches-on-case-insensitive-repositories-v1-0-35e69bbb507d@gmail.com>
+ Deal more gracefully with directory / file conflicts when the files
+ backend is used for ref storage, by failing only the ones that are
+ involved in the conflict while allowing others.
+
+ Comments?
+ source: <20250908-587-git-fetch-1-fails-fetches-on-case-insensitive-repositories-v2-0-b2eb2459befb@gmail.com>
 
 
 * mm/worktree-doc-typofix (2025-09-03) 1 commit
  - docs: fix typo in worktree.adoc 'extension'
 
+ Docfix.
+
+ Will merge to 'next'.
  source: <pull.1967.git.1756911040439.gitgitgadget@gmail.com>
 
 
-* ps/upload-pack-oom-protection (2025-09-02) 2 commits
- - upload-pack: don't ACK non-commits repeatedly in protocol v2
- - t5530: modernize tests
+* ps/upload-pack-oom-protection (2025-09-04) 2 commits
+  (merged to 'next' on 2025-09-08 at 2b543d9b53)
+ + upload-pack: don't ACK non-commits repeatedly in protocol v2
+ + t5530: modernize tests
 
- source: <20250903-b4-pks-upload-pack-repeated-non-commit-acks-v1-0-4e019af4dddc@pks.im>
+ Will merge to 'master'.
+ source: <20250905-b4-pks-upload-pack-repeated-non-commit-acks-v2-0-d2e67f3cb94c@pks.im>
 
---------------------------------------------------
-[Stalled]
-
-These topics have been expecting updates for quite some time.  I'll
-eject any of them when they start to conflict with other topics in
-'seen' and may drop them from my tree when they are dormant for too
-long (let's say 8 weeks is way too long, for now).  After that, they
-can be proposed again by rerolling them in a shape that would work
-well with other topics in 'seen' (and of course 'next' and
-"master').
-
-* lc/rebase-trailer (2025-08-03) 2 commits
- - rebase: support --trailer
- - trailer: append trailers in-process and drop the fork to `interpret-trailers`
-
- Expecting a reroll.
- cf. <198826af571.62b85cb31711042.2415806544948206668@linux.beauty>
- cf. <xmqqiki7qasu.fsf@gitster.g>
- source: <20250803150059.402017-1-me@linux.beauty>
-
-
-* ac/deglobal-sparse-variables (2025-07-18) 3 commits
- - environment: remove the global variable 'sparse_expect_files_outside_of_patterns'
- - environment: move access to "core.sparsecheckoutcone" into repo_settings
- - environment: move access to "core.sparsecheckout" into repo_settings
- (this branch is used by ds/sparse-checkout-clean.)
-
- Two global variables related to sparse checkout have been moved to
- the repository settings structure.
-
- Expecting a reroll.
- cf. <CAE7as+bnG6KgA8X_n36pqP15bmyM6re+xEb1MOXKvZSUdJ8Arg@mail.gmail.com>
- source: <cover.1752882401.git.ayu.chandekar@gmail.com>
-
-
-* tb/prepare-midx-pack-cleanup (2025-05-28) 5 commits
- . midx: return a `packed_git` pointer from `prepare_midx_pack()`
- . midx-write.c: extract inner loop from fill_packs_from_midx()
- . midx-write.c: guard against incremental MIDXs in want_included_pack()
- . midx: access pack names through `nth_midxed_pack_name()`
- . Merge branch 'ps/midx-negative-packfile-cache' into tb/prepare-midx-pack-cleanup
-
- Improvement on Multi-pack-index API.
-
- Expecting a reroll.
- cf. <20250530065034.GC1321283@coredump.intra.peff.net>
- source: <cover.1748473122.git.me@ttaylorr.com>
-
-
-* cc/promisor-remote-capability (2025-07-31) 5 commits
- - promisor-remote: use string constants for 'name' and 'url' too
- - promisor-remote: allow a client to check fields
- - promisor-remote: refactor how we parse advertised fields
- - promisor-remote: allow a server to advertise more fields
- - promisor-remote: refactor to get rid of 'struct strvec'
-
- The "promisor-remote" capability mechanism has been updated to
- allow the "partialCloneFilter" settings and the "token" value to be
- communicated from the server side.
-
- Expecting a reroll.
- cf. <xmqqqzwvqay9.fsf@gitster.g>
- source: <20250731072401.3817074-1-christian.couder@gmail.com>
-
-
-* ar/submodule-gitdir-tweak (2025-09-02) 11 commits
- - fixup! t: submodules: add basic mixed gitdir path tests
- - fixup! t: add gitdir encoding tests
- - t: add gitdir encoding tests
- - t: move nested gitdir tests to proper location
- - submodule: remove validate_submodule_git_dir()
- - submodule: encode gitdir paths to avoid conflicts
- - strbuf: bring back is_rfc3986_unreserved
- - t: submodules: add basic mixed gitdir path tests
- - submodule: add gitdir path config override
- - submodule: create new gitdirs under submodules path
- - submodule--helper: use submodule_name_to_gitdir in add_submodule
-
- Avoid local submodule repository directory paths overlapping with
- each other by encoding submodule names before using them as path
- components.
-
- Expecting a reroll.
- cf. <87sehk7r66.fsf@collabora.com>
- source: <20250816213642.3517822-1-adrian.ratiu@collabora.com>
-
---------------------------------------------------
-[Graduated to 'master']
-
-* ds/doc-ggg-pr-fork-clarify (2025-08-23) 1 commit
-  (merged to 'next' on 2025-08-25 at 71aea64ee4)
- + doc: clarify which remotes can be used with GitGitGadget
-
- Update the instruction to use of GGG in the MyFirstContribution
- document to say that a GitHub PR could be made against `git/git`
- instead of `gitgitgadget/git`.
- source: <pull.2034.v2.git.git.1755940331248.gitgitgadget@gmail.com>
-
-
-* ja/asciidoc-doctor-verbatim-fixes (2025-08-20) 1 commit
-  (merged to 'next' on 2025-08-22 at 61fb953314)
- + doc: fix asciidoc format compatibility in pretty-formats.adoc
-
- Doc mark-up fix.
- source: <20250820212319.41044-1-jn.avila@free.fr>
-
-
-* js/doc-sending-patch-via-thunderbird (2025-08-22) 1 commit
-  (merged to 'next' on 2025-08-25 at 1e63ebff8c)
- + doc/format-patch: adjust Thunderbird MUA hint to new add-on
-
- Doc update.
- source: <6ec34bbc-6811-41fa-aa06-1d54fd2acb0c@kdbg.org>
-
-
-* kh/doc-config-typofix (2025-08-24) 1 commit
-  (merged to 'next' on 2025-08-25 at f82e0a4c9b)
- + doc: config: replace backtick with apostrophe for possessive
-
- Documentation typofix.
- source: <3ec6a00e3046166c7adb593f38c4099921d8ada3.1756064760.git.code@khaugsbakk.name>
-
-
-* kh/doc-interpret-trailers-markup-fix (2025-08-22) 1 commit
-  (merged to 'next' on 2025-08-25 at 9bee54a64d)
- + doc: interpret-trailers: close all pairs of single quotes
-
- Fix missing single-quote pairs in a documentation page.
- source: <4eac944102a846695a9f61ead39a5a86361a0532.1755875970.git.code@khaugsbakk.name>
-
---------------------------------------------------
-[Cooking]
 
 * tc/t0450-harden (2025-08-08) 2 commits
- - t0450: add allowlist for builtins with missing .adoc
- - t0450: fix test for out-of-tree builds
+  (merged to 'next' on 2025-09-04 at 19270d2f92)
+ + t0450: add allowlist for builtins with missing .adoc
+ + t0450: fix test for out-of-tree builds
 
  Test updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250804073002.1586332-1-toon@iotcl.com>
 
 
@@ -312,38 +433,29 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250826150919.5239-1-gargaditya08@live.com>
 
 
-* da/cargo-serialize (2025-08-26) 1 commit
-  (merged to 'next' on 2025-08-29 at 5a193b1525)
- + Makefile: build libgit-rs and libgit-sys serially
-
- Makefile tried to run multiple "cargo build" which would not work
- very well; serialize their execution to work it around.
-
- Will merge to 'master'.
- source: <20250826233525.2635432-1-davvid@gmail.com>
-
-
-* en/rust-xdiff (2025-08-29) 15 commits
- - xdiff: implement xdl_trim_ends() in Rust
- - xdiff: make xdfile_t more rust friendly
- - xdiff: delete recs field from xdfile_t
- - xdiff: delete nrec field from xdfile_t
- - xdiff: replace chastore with an ivec in xdfile_t
- - xdiff: use one definition for freeing xdfile_t
- - xdiff: make fields of xrecord_t Rust friendly
+* en/rust-xdiff (2025-09-07) 17 commits
+ - xdiff: change the types of dstart, dend, rchg, and rindex in xdfile_t
+ - xdiff: make xdfile_t.nreff a usize instead of long
+ - xdiff: make xdfile_t.nrec a usize instead of long
+ - xdiff: split xrecord_t.ha into line_hash and minimal_perfect_hash
+ - xdiff: make xrecord_t.size a usize instead of long
+ - xdiff: make xrecord_t.ptr a u8 instead of char
+ - xdiff: include compat/rust_types.h
+ - compat/rust_types.h: define rust primitive types
+ - xdiff: treat xdfile_t.rchg like an enum
+ - xdiff: delete chastore from xdfile_t, view with --color-words
+ - xdiff: delete fields ha, line, size in xdlclass_t in favor of an xrecord_t
+ - xdiff: delete redundant array xdfile_t.ha
+ - xdiff: delete struct diffdata_t
+ - xdiff: delete xdl_get_rec() in xemit
  - xdiff: delete unnecessary fields from xrecord_t and xdfile_t
- - xdiff/xprepare: remove superfluous forward declarations
- - ivec: create a vector type that is interoperable between C and Rust
- - github workflows: upload Cargo.lock
- - win+Meson: do allow linking with the Rust-built xdiff
- - github workflows: install rust
- - xdiff: introduce rust
- - doc: add a policy for using Rust
+ - xdiff: delete local variables and initialize/free xdfile_t directly
+ - xdiff: delete static forward declarations in xprepare
 
- Rust!
+ Rust!  Not Rust, though ;-)
 
  Comments?
- source: <pull.2043.git.git.1756496539.gitgitgadget@gmail.com>
+ source: <pull.2048.git.git.1757274320.gitgitgadget@gmail.com>
 
 
 * je/doc-checkout (2025-09-03) 6 commits
@@ -380,30 +492,21 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250827080702.GA3572995@coredump.intra.peff.net>
 
 
-* kh/you-still-use-whatchanged-fix (2025-08-29) 4 commits
+* kh/you-still-use-whatchanged-fix (2025-09-08) 8 commits
  - BreakingChanges: remove claim about whatchanged reports
  - whatchanged: remove not-even-shorter clause
  - whatchanged: tell users the git-log(1) equivalent
  - you-still-use-that??: help the user help themselves
+ - t0014: test shadowing of aliases for a sample of builtins
+ - git: allow alias-shadowing deprecated builtins
+ - git: make the two loops look more symmetric
+ - git: add `deprecated` category to --list-cmds
 
  Update "do you still use it?" message given by a command that is
  deeply deprecated and allow us to suggest alternatives.
 
  Will merge to 'next'?
- source: <cover.1756480827.git.code@khaugsbakk.name>
-
-
-* ds/ls-files-lazy-unsparse (2025-08-15) 1 commit
-  (merged to 'next' on 2025-08-29 at a48fee2dde)
- + ls-files: conditionally leave index sparse
-
- "git ls-files <pathspec>..." should not necessarily have to expand
- the index fully if a sparsified directory is excluded by the
- pathspec; the code is taught to expand the index on demand to avoid
- this.
-
- Will merge to 'master'.
- source: <pull.1955.git.1755274373717.gitgitgadget@gmail.com>
+ source: <cover.1757345711.git.code@khaugsbakk.name>
 
 
 * pc/range-diff-memory-limit (2025-08-29) 1 commit
@@ -416,7 +519,7 @@ well with other topics in 'seen' (and of course 'next' and
  source: <pull.1958.v4.git.1756483374980.gitgitgadget@gmail.com>
 
 
-* ne/alloc-free-and-null (2025-08-29) 1 commit
+* ne/alloc-free-and-null (2025-09-04) 1 commit
  - alloc: fix dangling pointer in alloc_state cleanup
 
  The clear_alloc_state() API function was not fully clearing the
@@ -424,32 +527,34 @@ well with other topics in 'seen' (and of course 'next' and
  variant that frees the structure as well, making the callers simpler.
 
  Will merge to 'next'?
- source: <pull.2040.v3.git.git.1756472406487.gitgitgadget@gmail.com>
+ source: <pull.2040.v5.git.git.1757007856062.gitgitgadget@gmail.com>
 
 
 * rs/describe-with-lazy-queue-and-oidset (2025-09-02) 1 commit
- - describe: use oidset in finish_depth_computation()
+  (merged to 'next' on 2025-09-04 at 1a473401a4)
+ + describe: use oidset in finish_depth_computation()
 
  Instead of scanning for the remaining items to see if there are
  still commits to be explored in the queue, use khash to remember
  which items are still on the queue (an unacceptable alternative is
  to reserve one object flag bits).
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <b16aa099-b683-4a66-acd9-603cc9f0935c@web.de>
 
 
-* lo/repo-info-step-2 (2025-09-01) 3 commits
- - repo: add the field objects.format
- - repo: add the flag -z as an alias for --format=nul
- - Merge branch 'lo/repo-info' into lo/repo-info-step-2
+* lo/repo-info-step-2 (2025-09-04) 3 commits
+  (merged to 'next' on 2025-09-08 at 1a58ac3835)
+ + repo: add the field objects.format
+ + repo: add the flag -z as an alias for --format=nul
+ + Merge branch 'lo/repo-info' into lo/repo-info-step-2
 
  "repo info" learns a short-hand option "-z" that is the same as
  "--format=nul", and learns to report the objects format used in the
  repository.
 
- Will merge to 'next'?
- source: <20250901172732.98845-1-lucasseikioshiro@gmail.com>
+ Will merge to 'master'.
+ source: <20250904134017.47364-1-lucasseikioshiro@gmail.com>
 
 
 * jc/doc-includeif-hasconfig-remote-url-fix (2025-08-21) 1 commit
@@ -461,31 +566,33 @@ well with other topics in 'seen' (and of course 'next' and
  source: <xmqqldnc4stv.fsf@gitster.g>
 
 
-* jk/add-i-color (2025-08-21) 4 commits
+* jk/add-i-color (2025-09-08) 4 commits
  - contrib/diff-highlight: mention interactive.diffFilter
  - add-interactive: manually fall back color config to color.ui
  - add-interactive: respect color.diff for diff coloring
- - stash: pass --no-color to diff-tree child processes
+ - stash: pass --no-color to diff plumbing child processes
 
  Some among "git add -p" and friends ignored color.diff and/or
  color.ui configuration variables, which is an old regression, which
  has been corrected.
 
  Will merge to 'next'?
- source: <20250821070740.GA3356411@coredump.intra.peff.net>
+ source: <20250908164157.GA1323487@coredump.intra.peff.net>
 
 
 * jt/de-global-bulk-checkin (2025-08-22) 4 commits
- - bulk-checkin: use repository variable from transaction
- - bulk-checkin: require transaction for index_blob_bulk_checkin()
- - bulk-checkin: remove global transaction state
- - bulk-checkin: introduce object database transaction structure
+  (merged to 'next' on 2025-09-08 at f544afcab3)
+ + bulk-checkin: use repository variable from transaction
+ + bulk-checkin: require transaction for index_blob_bulk_checkin()
+ + bulk-checkin: remove global transaction state
+ + bulk-checkin: introduce object database transaction structure
 
  The bulk-checkin code used to depend on a file-scope static
  singleton variable, which has been updated to pass an instance
  throughout the callchain.
 
- Will merge to 'next'?
+ Will merge to 'master'.
+ cf. <aLmhjw2xAbUogL1L@pks.im>
  source: <20250822213500.1488064-1-jltobler@gmail.com>
 
 
@@ -501,19 +608,6 @@ well with other topics in 'seen' (and of course 'next' and
  Will merge to 'master'.
  source: <pull.1952.v3.git.1755636370.gitgitgadget@gmail.com>
  source: <pull.1952.v4.git.1756468502.gitgitgadget@gmail.com>
-
-
-* ds/path-walk-repack-fix (2025-08-25) 2 commits
-  (merged to 'next' on 2025-08-29 at 13028ffb8e)
- + path-walk: create initializer for path lists
- + path-walk: fix setup of pending objects
-
- "git repack --path-walk" lost objects in some corner cases, which
- has been corrected.
-
- Will merge to 'master'.
- cf. <CABPp-BHFxxGrqKc0m==TjQNjDGdO=H5Rf6EFsf2nfE1=TuraOQ@mail.gmail.com>
- source: <pull.1956.v2.git.1756126197.gitgitgadget@gmail.com>
 
 
 * sg/line-log-boundary-fixes (2025-08-18) 2 commits
@@ -559,20 +653,6 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250811-b4-pks-midx-deduplicate-source-info-v3-0-e442bdf2b4ad@pks.im>
 
 
-* am/xdiff-hash-tweak (2025-07-28) 2 commits
-  (merged to 'next' on 2025-08-29 at 43590f0b38)
- + xdiff: optimize xdl_hash_record_verbatim
- + xdiff: refactor xdl_hash_record()
-
- Inspired by Ezekiel's recent effort to showcase Rust interface, the
- hash function implementation used to hash lines have been updated
- to the one used for ELF symbol lookup by Glibc.
-
- Will merge to 'master'.
- cf. <xmqqecsvqal6.fsf@gitster.g>
- source: <20250728190520.10962-1-amonakov@ispras.ru>
-
-
 * ag/send-email-imap-sent (2025-08-11) 2 commits
  - send-email: enable copying emails to an IMAP folder without actually sending them
  - send-email: add ability to send a copy of sent emails to an IMAP folder
@@ -584,7 +664,7 @@ well with other topics in 'seen' (and of course 'next' and
  source: <PN3PR01MB9597E8E33868386C997D2563B82BA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
 
 
-* ds/sparse-checkout-clean (2025-07-16) 9 commits
+* ds/sparse-checkout-clean (2025-07-16) 7 commits
  - sparse-checkout: make 'clean' clear more files
  - t: expand tests around sparse merges and clean
  - sparse-index: point users to new 'clean' action
@@ -592,17 +672,13 @@ well with other topics in 'seen' (and of course 'next' and
  - dir: add generic "walk all files" helper
  - sparse-checkout: match some 'clean' behavior
  - sparse-checkout: add basics of 'clean' command
- - sparse-checkout: remove use of the_repository
- - Merge branch 'ac/deglobal-sparse-variables' into ds/sparse-checkout-clean
- (this branch uses ac/deglobal-sparse-variables.)
 
  "git sparse-checkout" subcommand learned a new "clean" action to
  prune otherwise unused working-tree files that are outside the
  areas of interest.
 
- Needs to wait for the base topic to solidify.
- Waiting for review responses.
- cf. <xmqqzfbjqbfo.fsf@gitster.g>
+ Rebased not to depend on ac/deglobal-sparse-variables
+ Will merge to 'next'?
  source: <pull.1941.v2.git.1752716054.gitgitgadget@gmail.com>
 
 
@@ -618,16 +694,3 @@ well with other topics in 'seen' (and of course 'next' and
 
  Will merge to 'next'?
  source: <cover.1756215326.git.phillip.wood@dunelm.org.uk>
-
-
-* tc/last-modified (2025-08-05) 3 commits
-  (merged to 'next' on 2025-08-29 at 3f3e111189)
- + last-modified: use Bloom filters when available
- + t/perf: add last-modified perf script
- + last-modified: new subcommand to show when files were last modified
-
- A new command "git last-modified" is proposed to show the closest
- ancestor commit that touched each path.
-
- Will merge to 'master'.
- source: <20250730175510.987383-1-toon@iotcl.com>
