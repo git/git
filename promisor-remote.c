@@ -769,16 +769,15 @@ char *promisor_remote_reply(const char *info)
 
 void mark_promisor_remotes_as_accepted(struct repository *r, const char *remotes)
 {
-	struct strbuf **accepted_remotes = strbuf_split_str(remotes, ';', 0);
+	struct string_list accepted_remotes = STRING_LIST_INIT_DUP;
+	struct string_list_item *item;
 
-	for (size_t i = 0; accepted_remotes[i]; i++) {
-		struct promisor_remote *p;
-		char *decoded_remote;
+	string_list_split(&accepted_remotes, remotes, ";", -1);
 
-		strbuf_strip_suffix(accepted_remotes[i], ";");
-		decoded_remote = url_percent_decode(accepted_remotes[i]->buf);
+	for_each_string_list_item(item, &accepted_remotes) {
+		char *decoded_remote = url_percent_decode(item->string);
+		struct promisor_remote *p = repo_promisor_remote_find(r, decoded_remote);
 
-		p = repo_promisor_remote_find(r, decoded_remote);
 		if (p)
 			p->accepted = 1;
 		else
@@ -788,5 +787,5 @@ void mark_promisor_remotes_as_accepted(struct repository *r, const char *remotes
 		free(decoded_remote);
 	}
 
-	strbuf_list_free(accepted_remotes);
+	string_list_clear(&accepted_remotes, 0);
 }
