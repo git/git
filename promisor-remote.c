@@ -314,6 +314,12 @@ static int allow_unsanitized(char ch)
 	return ch > 32 && ch < 127;
 }
 
+/*
+ * All the fields used in "promisor-remote" protocol capability,
+ * including the mandatory "name" and "url" ones.
+ */
+static const char promisor_field_name[] = "name";
+static const char promisor_field_url[] = "url";
 static const char promisor_field_filter[] = "partialCloneFilter";
 static const char promisor_field_token[] = "token";
 
@@ -497,9 +503,9 @@ char *promisor_remote_info(struct repository *repo)
 		if (item != config_info.items)
 			strbuf_addch(&sb, ';');
 
-		strbuf_addstr(&sb, "name=");
+		strbuf_addf(&sb, "%s=", promisor_field_name);
 		strbuf_addstr_urlencode(&sb, p->name, allow_unsanitized);
-		strbuf_addstr(&sb, ",url=");
+		strbuf_addf(&sb, ",%s=", promisor_field_url);
 		strbuf_addstr_urlencode(&sb, p->url, allow_unsanitized);
 
 		if (p->filter) {
@@ -563,6 +569,15 @@ static int should_accept_remote(enum accept_promisor accept,
 	return 0;
 }
 
+static int skip_field_name_prefix(const char *elem, const char *field_name, const char **value)
+{
+	const char *p;
+	if (!skip_prefix(elem, field_name, &p) || *p != '=')
+		return 0;
+	*value = p + 1;
+	return 1;
+}
+
 static void filter_promisor_remote(struct repository *repo,
 				   struct strvec *accepted,
 				   const char *info)
@@ -610,8 +625,8 @@ static void filter_promisor_remote(struct repository *repo,
 
 		for (size_t j = 0; elems[j]; j++) {
 			strbuf_strip_suffix(elems[j], ",");
-			if (!skip_prefix(elems[j]->buf, "name=", &remote_name))
-				skip_prefix(elems[j]->buf, "url=", &remote_url);
+			if (!skip_field_name_prefix(elems[j]->buf, promisor_field_name, &remote_name))
+				skip_field_name_prefix(elems[j]->buf, promisor_field_url, &remote_url);
 		}
 
 		if (remote_name)
