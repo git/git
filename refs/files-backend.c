@@ -790,9 +790,13 @@ retry:
 			goto retry;
 		} else {
 			unable_to_lock_message(ref_file.buf, myerr, err);
-			if (myerr == EEXIST && ignore_case &&
-			    duplicate_reference_case_cmp(transaction, update))
-				ret = REF_TRANSACTION_ERROR_CASE_CONFLICT;
+			if (myerr == EEXIST) {
+				if (ignore_case && duplicate_reference_case_cmp(transaction, update))
+					ret = REF_TRANSACTION_ERROR_CASE_CONFLICT;
+				else
+					ret = REF_TRANSACTION_ERROR_CREATE_EXISTS;
+			}
+
 			goto error_return;
 		}
 	}
