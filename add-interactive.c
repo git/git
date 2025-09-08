@@ -45,6 +45,15 @@ static int check_color_config(struct repository *r, const char *var)
 		ret = -1;
 	else
 		ret = git_config_colorbool(var, value);
+
+	/*
+	 * Do not rely on want_color() to fall back to color.ui for us. It uses
+	 * the value parsed by git_color_config(), which may not have been
+	 * called by the main command.
+	 */
+	if (ret < 0 && !repo_config_get_value(r, "color.ui", &value))
+		ret = git_config_colorbool("color.ui", value);
+
 	return want_color(ret);
 }
 

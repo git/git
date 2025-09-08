@@ -1321,6 +1321,12 @@ test_expect_success 'stash accepts -U and --inter-hunk-context' '
 	test_grep "@@ -2,20 +2,20 @@" actual
 '
 
+test_expect_success 'set up base for -p color tests' '
+	echo commit >file &&
+	git commit -am "commit state" &&
+	git tag patch-base
+'
+
 for cmd in add checkout commit reset restore "stash save" "stash push"
 do
 	test_expect_success "$cmd rejects invalid context options" '
@@ -1336,6 +1342,15 @@ do
 
 		test_must_fail git $cmd --inter-hunk-context 2 2>actual &&
 		test_grep -E ".--inter-hunk-context. requires .(--interactive/)?--patch." actual
+	'
+
+	test_expect_success "$cmd falls back to color.ui" '
+		git reset --hard patch-base &&
+		echo working-tree >file &&
+		test_write_lines y |
+		force_color git -c color.ui=false $cmd -p >output.raw 2>&1 &&
+		test_decode_color <output.raw >output &&
+		test_cmp output.raw output
 	'
 done
 
