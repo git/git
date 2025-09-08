@@ -3321,6 +3321,8 @@ const char *ref_transaction_error_msg(enum ref_transaction_error err)
 		return "invalid new value provided";
 	case REF_TRANSACTION_ERROR_EXPECTED_SYMREF:
 		return "expected symref but found regular ref";
+	case REF_TRANSACTION_ERROR_CASE_CONFLICT:
+		return "reference conflict due to case-insensitive filesystem";
 	default:
 		return "unknown failure";
 	}
