@@ -53,6 +53,12 @@ test_expect_success "clone and setup child repos" '
 		cd case_sensitive &&
 		git branch branch1 &&
 		git branch bRanch1
+	) &&
+	git clone --ref-format=reftable . case_sensitive_fd &&
+	(
+		cd case_sensitive_fd &&
+		git branch foo/bar &&
+		git branch Foo
 	)
 '
 
@@ -1568,6 +1574,20 @@ test_expect_success REFFILES 'existing reference lock in repo' '
 		test_grep "error: fetching ref refs/heads/foo failed: reference already exists" err &&
 		git rev-parse refs/heads/main >expect &&
 		git rev-parse refs/heads/branch >actual &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success CASE_INSENSITIVE_FS,REFFILES 'F/D conflict on case insensitive filesystem' '
+	test_when_finished rm -rf case_insensitive &&
+	(
+		git init --bare case_insensitive &&
+		cd case_insensitive &&
+		git remote add origin -- ../case_sensitive_fd &&
+		test_must_fail git fetch -f origin "refs/heads/*:refs/heads/*" 2>err &&
+		test_grep "failed: refname conflict" err &&
+		git rev-parse refs/heads/main >expect &&
+		git rev-parse refs/heads/foo/bar >actual &&
 		test_cmp expect actual
 	)
 '
