@@ -623,10 +623,11 @@ static void filter_promisor_remote(struct repository *repo,
 				   struct strvec *accepted,
 				   const char *info)
 {
-	struct strbuf **remotes;
 	const char *accept_str;
 	enum accept_promisor accept = ACCEPT_NONE;
 	struct string_list config_info = STRING_LIST_INIT_NODUP;
+	struct string_list remote_info = STRING_LIST_INIT_DUP;
+	struct string_list_item *item;
 
 	if (!repo_config_get_string_tmp(the_repository, "promisor.acceptfromserver", &accept_str)) {
 		if (!*accept_str || !strcasecmp("None", accept_str))
@@ -652,14 +653,12 @@ static void filter_promisor_remote(struct repository *repo,
 
 	/* Parse remote info received */
 
-	remotes = strbuf_split_str(info, ';', 0);
+	string_list_split(&remote_info, info, ";", -1);
 
-	for (size_t i = 0; remotes[i]; i++) {
+	for_each_string_list_item(item, &remote_info) {
 		struct promisor_info *advertised;
 
-		strbuf_strip_suffix(remotes[i], ";");
-
-		advertised = parse_one_advertised_remote(remotes[i]->buf);
+		advertised = parse_one_advertised_remote(item->string);
 
 		if (!advertised)
 			continue;
@@ -671,7 +670,7 @@ static void filter_promisor_remote(struct repository *repo,
 	}
 
 	promisor_info_list_clear(&config_info);
-	strbuf_list_free(remotes);
+	string_list_clear(&remote_info, 0);
 }
 
 char *promisor_remote_reply(const char *info)
