@@ -300,7 +300,7 @@ static void err(struct add_p_state *s, const char *fmt, ...)
 	va_start(args, fmt);
 	fputs(s->s.error_color, stdout);
 	vprintf(fmt, args);
-	puts(s->s.reset_color);
+	puts(s->s.reset_color_interactive);
 	va_end(args);
 }
 
@@ -457,7 +457,7 @@ static int parse_diff(struct add_p_state *s, const struct pathspec *ps)
 	}
 	strbuf_complete_line(plain);
 
-	if (want_color_fd(1, -1)) {
+	if (want_color_fd(1, s->s.use_color_diff)) {
 		struct child_process colored_cp = CHILD_PROCESS_INIT;
 		const char *diff_filter = s->s.interactive_diff_filter;
 
@@ -714,7 +714,7 @@ static void render_hunk(struct add_p_state *s, struct hunk *hunk,
 		if (len)
 			strbuf_add(out, p, len);
 		else if (colored)
-			strbuf_addf(out, "%s\n", s->s.reset_color);
+			strbuf_addf(out, "%s\n", s->s.reset_color_diff);
 		else
 			strbuf_addch(out, '\n');
 	}
@@ -1107,7 +1107,7 @@ static void recolor_hunk(struct add_p_state *s, struct hunk *hunk)
 			      s->s.file_new_color :
 			      s->s.context_color);
 		strbuf_add(&s->colored, plain + current, eol - current);
-		strbuf_addstr(&s->colored, s->s.reset_color);
+		strbuf_addstr(&s->colored, s->s.reset_color_diff);
 		if (next > eol)
 			strbuf_add(&s->colored, plain + eol, next - eol);
 		current = next;
@@ -1528,8 +1528,8 @@ static int patch_update_file(struct add_p_state *s,
 						: 1));
 		printf(_(s->mode->prompt_mode[prompt_mode_type]),
 		       s->buf.buf);
-		if (*s->s.reset_color)
-			fputs(s->s.reset_color, stdout);
+		if (*s->s.reset_color_interactive)
+			fputs(s->s.reset_color_interactive, stdout);
 		fflush(stdout);
 		if (read_single_character(s) == EOF)
 			break;

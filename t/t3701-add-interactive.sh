@@ -866,6 +866,44 @@ test_expect_success 'colorized diffs respect diff.wsErrorHighlight' '
 	test_grep "old<" output
 '
 
+test_expect_success 'diff color respects color.diff' '
+	git reset --hard &&
+
+	echo old >test &&
+	git add test &&
+	echo new >test &&
+
+	printf n >n &&
+	force_color git \
+		-c color.interactive=auto \
+		-c color.interactive.prompt=blue \
+		-c color.diff=false \
+		-c color.diff.old=red \
+		add -p >output.raw 2>&1 <n &&
+	test_decode_color <output.raw >output &&
+	test_grep "BLUE.*Stage this hunk" output &&
+	test_grep ! "RED" output
+'
+
+test_expect_success 're-coloring diff without color.interactive' '
+	git reset --hard &&
+
+	test_write_lines 1 2 3 >test &&
+	git add test &&
+	test_write_lines one 2 three >test &&
+
+	test_write_lines s n n |
+	force_color git \
+		-c color.interactive=false \
+		-c color.interactive.prompt=blue \
+		-c color.diff=true \
+		-c color.diff.frag="bold magenta" \
+		add -p >output.raw 2>&1 &&
+	test_decode_color <output.raw >output &&
+	test_grep "<BOLD;MAGENTA>@@" output &&
+	test_grep ! "BLUE" output
+'
+
 test_expect_success 'diffFilter filters diff' '
 	git reset --hard &&
 
