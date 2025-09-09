@@ -468,7 +468,7 @@ int prepare_midx_pack(struct multi_pack_index *m,
 				   m->source->local);
 		if (p) {
 			install_packed_git(r, p);
-			list_add_tail(&p->mru, &r->objects->packed_git_mru);
+			list_add_tail(&p->mru, &r->objects->packfiles->mru);
 		}
 	}
 
