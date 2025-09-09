@@ -603,18 +603,19 @@ static void get_head(struct strbuf *hdr, char *arg UNUSED)
 static void get_info_packs(struct strbuf *hdr, char *arg UNUSED)
 {
 	size_t objdirlen = strlen(repo_get_object_directory(the_repository));
+	struct packfile_store *packs = the_repository->objects->packfiles;
 	struct strbuf buf = STRBUF_INIT;
 	struct packed_git *p;
 	size_t cnt = 0;
 
 	select_getanyfile(hdr);
-	for (p = get_all_packs(the_repository); p; p = p->next) {
+	for (p = packfile_store_get_packs(packs); p; p = p->next) {
 		if (p->pack_local)
 			cnt++;
 	}
 
 	strbuf_grow(&buf, cnt * 53 + 2);
-	for (p = get_all_packs(the_repository); p; p = p->next) {
+	for (p = packfile_store_get_packs(packs); p; p = p->next) {
 		if (p->pack_local)
 			strbuf_addf(&buf, "P %s\n", p->pack_name + objdirlen + 6);
 	}

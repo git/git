@@ -867,19 +867,20 @@ static int mark_packed_for_connectivity(const struct object_id *oid,
 
 static int check_pack_rev_indexes(struct repository *r, int show_progress)
 {
+	struct packfile_store *packs = r->objects->packfiles;
 	struct progress *progress = NULL;
 	uint32_t pack_count = 0;
 	int res = 0;
 
 	if (show_progress) {
-		for (struct packed_git *p = get_all_packs(r); p; p = p->next)
+		for (struct packed_git *p = packfile_store_get_packs(packs); p; p = p->next)
 			pack_count++;
 		progress = start_delayed_progress(the_repository,
 						  "Verifying reverse pack-indexes", pack_count);
 		pack_count = 0;
 	}
 
-	for (struct packed_git *p = get_all_packs(r); p; p = p->next) {
+	for (struct packed_git *p = packfile_store_get_packs(packs); p; p = p->next) {
 		int load_error = load_pack_revindex_from_disk(p);
 
 		if (load_error < 0) {
@@ -999,6 +1000,8 @@ int cmd_fsck(int argc,
 		for_each_packed_object(the_repository,
 				       mark_packed_for_connectivity, NULL, 0);
 	} else {
+		struct packfile_store *packs = the_repository->objects->packfiles;
+
 		odb_prepare_alternates(the_repository->objects);
 		for (source = the_repository->objects->sources; source; source = source->next)
 			fsck_source(source);
@@ -1009,7 +1012,7 @@ int cmd_fsck(int argc,
 			struct progress *progress = NULL;
 
 			if (show_progress) {
-				for (p = get_all_packs(the_repository); p;
+				for (p = packfile_store_get_packs(packs); p;
 				     p = p->next) {
 					if (open_pack_index(p))
 						continue;
@@ -1019,7 +1022,7 @@ int cmd_fsck(int argc,
 				progress = start_progress(the_repository,
 							  _("Checking objects"), total);
 			}
-			for (p = get_all_packs(the_repository); p;
+			for (p = packfile_store_get_packs(packs); p;
 			     p = p->next) {
 				/* verify gives error messages itself */
 				if (verify_pack(the_repository,

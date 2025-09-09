@@ -566,7 +566,8 @@ static struct pack_list * add_pack(struct packed_git *p)
 
 static struct pack_list * add_pack_file(const char *filename)
 {
-	struct packed_git *p = get_all_packs(the_repository);
+	struct packfile_store *packs = the_repository->objects->packfiles;
+	struct packed_git *p = packfile_store_get_packs(packs);
 
 	if (strlen(filename) < 40)
 		die("Bad pack filename: %s", filename);
@@ -581,7 +582,8 @@ static struct pack_list * add_pack_file(const char *filename)
 
 static void load_all(void)
 {
-	struct packed_git *p = get_all_packs(the_repository);
+	struct packfile_store *packs = the_repository->objects->packfiles;
+	struct packed_git *p = packfile_store_get_packs(packs);
 
 	while (p) {
 		add_pack(p);

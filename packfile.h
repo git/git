@@ -137,6 +137,12 @@ void packfile_store_add_pack(struct packfile_store *store,
 			     struct packed_git *pack);
 
 /*
+ * Get all packs managed by the given store, including packfiles that are
+ * referenced by multi-pack indices.
+ */
+struct packed_git *packfile_store_get_packs(struct packfile_store *store);
+
+/*
  * Open the packfile and add it to the store if it isn't yet known. Returns
  * either the newly opened packfile or the preexisting packfile. Returns a
  * `NULL` pointer in case the packfile could not be opened.
@@ -221,7 +227,6 @@ int for_each_packed_object(struct repository *repo, each_packed_object_fn cb,
 extern void (*report_garbage)(unsigned seen_bits, const char *path);
 
 struct list_head *get_packed_git_mru(struct repository *r);
-struct packed_git *get_all_packs(struct repository *r);
 
 /*
  * Give a rough count of objects in the repository. This sacrifices accuracy
