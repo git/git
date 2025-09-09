@@ -674,7 +674,7 @@ static void close_loose_object(struct odb_source *source,
 		goto out;
 
 	if (batch_fsync_enabled(FSYNC_COMPONENT_LOOSE_OBJECT))
-		fsync_loose_object_bulk_checkin(fd, filename);
+		fsync_loose_object_bulk_checkin(source->odb->transaction, fd, filename);
 	else if (fsync_object_files > 0)
 		fsync_or_die(fd, filename);
 	else
@@ -852,7 +852,7 @@ static int write_loose_object(struct odb_source *source,
 	static struct strbuf filename = STRBUF_INIT;
 
 	if (batch_fsync_enabled(FSYNC_COMPONENT_LOOSE_OBJECT))
-		prepare_loose_object_bulk_checkin();
+		prepare_loose_object_bulk_checkin(source->odb->transaction);
 
 	odb_loose_path(source, &filename, oid);
 
@@ -941,7 +941,7 @@ int stream_loose_object(struct odb_source *source,
 	int hdrlen;
 
 	if (batch_fsync_enabled(FSYNC_COMPONENT_LOOSE_OBJECT))
-		prepare_loose_object_bulk_checkin();
+		prepare_loose_object_bulk_checkin(source->odb->transaction);
 
 	/* Since oid is not determined, save tmp file to odb path. */
 	strbuf_addf(&filename, "%s/", source->path);
@@ -1253,18 +1253,26 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 	 * Call xsize_t() only when needed to avoid potentially unnecessary
 	 * die() for large files.
 	 */
-	if (type == OBJ_BLOB && path && would_convert_to_git_filter_fd(istate, path))
+	if (type == OBJ_BLOB && path && would_convert_to_git_filter_fd(istate, path)) {
 		ret = index_stream_convert_blob(istate, oid, fd, path, flags);
-	else if (!S_ISREG(st->st_mode))
+	} else if (!S_ISREG(st->st_mode)) {
 		ret = index_pipe(istate, oid, fd, type, path, flags);
-	else if ((st->st_size >= 0 && (size_t) st->st_size <= repo_settings_get_big_file_threshold(istate->repo)) ||
-		 type != OBJ_BLOB ||
-		 (path && would_convert_to_git(istate, path)))
+	} else if ((st->st_size >= 0 &&
+		    (size_t)st->st_size <= repo_settings_get_big_file_threshold(istate->repo)) ||
+		   type != OBJ_BLOB ||
+		   (path && would_convert_to_git(istate, path))) {
 		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
 				 type, path, flags);
-	else
-		ret = index_blob_bulk_checkin(oid, fd, xsize_t(st->st_size), path,
-					     flags);
+	} else {
+		struct odb_transaction *transaction;
+
+		transaction = begin_odb_transaction(the_repository->objects);
+		ret = index_blob_bulk_checkin(transaction,
+					      oid, fd, xsize_t(st->st_size),
+					      path, flags);
+		end_odb_transaction(transaction);
+	}
+
 	close(fd);
 	return ret;
 }
