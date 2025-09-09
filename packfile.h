@@ -65,6 +65,12 @@ struct packfile_store {
 	struct packed_git *packs;
 
 	/*
+	 * A map of packfile names to packed_git structs for tracking which
+	 * packs have been loaded already.
+	 */
+	struct hashmap map;
+
+	/*
 	 * Whether packfiles have already been populated with this store's
 	 * packs.
 	 */
@@ -88,20 +94,6 @@ void packfile_store_free(struct packfile_store *store);
  * free'd, so they can be re-opened at a later point in time.
  */
 void packfile_store_close(struct packfile_store *store);
-
-static inline int pack_map_entry_cmp(const void *cmp_data UNUSED,
-				     const struct hashmap_entry *entry,
-				     const struct hashmap_entry *entry2,
-				     const void *keydata)
-{
-	const char *key = keydata;
-	const struct packed_git *pg1, *pg2;
-
-	pg1 = container_of(entry, const struct packed_git, packmap_ent);
-	pg2 = container_of(entry2, const struct packed_git, packmap_ent);
-
-	return strcmp(pg1->pack_name, key ? key : pg2->pack_name);
-}
 
 struct pack_window {
 	struct pack_window *next;

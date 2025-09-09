@@ -156,12 +156,6 @@ struct object_database {
 	size_t cached_object_nr, cached_object_alloc;
 
 	/*
-	 * A map of packfiles to packed_git structs for tracking which
-	 * packs have been loaded already.
-	 */
-	struct hashmap pack_map;
-
-	/*
 	 * A fast, rough count of the number of objects in the repository.
 	 * These two fields are not meant for direct access. Use
 	 * repo_approximate_object_count() instead.
