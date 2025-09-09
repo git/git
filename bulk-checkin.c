@@ -33,7 +33,6 @@ struct bulk_checkin_packfile {
 struct odb_transaction {
 	struct object_database *odb;
 
-	int nesting;
 	struct tmp_objdir *objdir;
 	struct bulk_checkin_packfile packfile;
 };
@@ -368,12 +367,11 @@ void fsync_loose_object_bulk_checkin(struct odb_transaction *transaction,
 
 struct odb_transaction *begin_odb_transaction(struct object_database *odb)
 {
-	if (!odb->transaction) {
-		CALLOC_ARRAY(odb->transaction, 1);
-		odb->transaction->odb = odb;
-	}
+	if (odb->transaction)
+		BUG("ODB transaction already started");
 
-	odb->transaction->nesting += 1;
+	CALLOC_ARRAY(odb->transaction, 1);
+	odb->transaction->odb = odb;
 
 	return odb->transaction;
 }
@@ -389,14 +387,6 @@ void flush_odb_transaction(struct odb_transaction *transaction)
 
 void end_odb_transaction(struct odb_transaction *transaction)
 {
-	if (!transaction || transaction->nesting == 0)
-		BUG("Unbalanced ODB transaction nesting");
-
-	transaction->nesting -= 1;
-
-	if (transaction->nesting)
-		return;
-
 	flush_odb_transaction(transaction);
 	transaction->odb->transaction = NULL;
 	free(transaction);

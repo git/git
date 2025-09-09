@@ -38,9 +38,9 @@ int index_blob_bulk_checkin(struct odb_transaction *transaction,
 /*
  * Tell the object database to optimize for adding
  * multiple objects. end_odb_transaction must be called
- * to make new objects visible. Transactions can be nested,
- * and objects are only visible after the outermost transaction
- * is complete or the transaction is flushed.
+ * to make new objects visible. Only a single transaction
+ * can be pending at a time and must be ended before
+ * beginning another.
  */
 struct odb_transaction *begin_odb_transaction(struct object_database *odb);
 
@@ -53,8 +53,7 @@ void flush_odb_transaction(struct odb_transaction *transaction);
 
 /*
  * Tell the object database to make any objects from the
- * current transaction visible if this is the final nested
- * transaction.
+ * current transaction visible.
  */
 void end_odb_transaction(struct odb_transaction *transaction);
 

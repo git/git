@@ -1264,13 +1264,17 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 		ret = index_core(istate, oid, fd, xsize_t(st->st_size),
 				 type, path, flags);
 	} else {
-		struct odb_transaction *transaction;
+		struct odb_transaction *transaction = NULL;
 
-		transaction = begin_odb_transaction(the_repository->objects);
-		ret = index_blob_bulk_checkin(transaction,
+		if (!the_repository->objects->transaction)
+			transaction = begin_odb_transaction(the_repository->objects);
+
+		ret = index_blob_bulk_checkin(the_repository->objects->transaction,
 					      oid, fd, xsize_t(st->st_size),
 					      path, flags);
-		end_odb_transaction(transaction);
+
+		if (transaction)
+			end_odb_transaction(transaction);
 	}
 
 	close(fd);

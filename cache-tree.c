@@ -474,7 +474,7 @@ static int update_one(struct cache_tree *it,
 
 int cache_tree_update(struct index_state *istate, int flags)
 {
-	struct odb_transaction *transaction;
+	struct odb_transaction *transaction = NULL;
 	int skip, i;
 
 	i = verify_cache(istate, flags);
@@ -490,10 +490,16 @@ int cache_tree_update(struct index_state *istate, int flags)
 
 	trace_performance_enter();
 	trace2_region_enter("cache_tree", "update", the_repository);
-	transaction = begin_odb_transaction(the_repository->objects);
+
+	if (!the_repository->objects->transaction)
+		transaction = begin_odb_transaction(the_repository->objects);
+
 	i = update_one(istate->cache_tree, istate->cache, istate->cache_nr,
 		       "", 0, &skip, flags);
-	end_odb_transaction(transaction);
+
+	if (transaction)
+		end_odb_transaction(transaction);
+
 	trace2_region_leave("cache_tree", "update", the_repository);
 	trace_performance_leave("cache_tree_update");
 	if (i < 0)
