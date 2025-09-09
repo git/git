@@ -185,6 +185,9 @@ struct object_database {
 struct object_database *odb_new(struct repository *repo);
 void odb_clear(struct object_database *o);
 
+struct odb_transaction *odb_transaction_begin(struct object_database *odb);
+void odb_transaction_commit(struct odb_transaction *transaction);
+
 /*
  * Find source by its object directory path. Dies in case the source couldn't
  * be found.

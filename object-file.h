@@ -222,17 +222,17 @@ struct odb_transaction;
 
 /*
  * Tell the object database to optimize for adding
- * multiple objects. end_odb_transaction must be called
+ * multiple objects. object_file_transaction_end must be called
  * to make new objects visible. Only a single transaction
  * can be pending at a time and must be ended before
  * beginning another.
  */
-struct odb_transaction *begin_odb_transaction(struct object_database *odb);
+struct odb_transaction *object_file_transaction_begin(struct object_database *odb);
 
 /*
  * Tell the object database to make any objects from the
  * current transaction visible.
  */
-void end_odb_transaction(struct odb_transaction *transaction);
+void object_file_transaction_end(struct odb_transaction *transaction);
 
 #endif /* OBJECT_FILE_H */
