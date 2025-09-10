@@ -2301,6 +2301,11 @@ proc scrollval {D {koff 0}} {
     return [expr int(-($D / $scroll_D0) * max(1, $kscroll-$koff))]
 }
 
+proc precisescrollval {D {koff 0}} {
+    global kscroll
+    return [expr (-($D / 10.0) * max(1, $kscroll-$koff))]
+}
+
 proc bind_mousewheel {} {
     global canv cflist ctext
     bindall <MouseWheel> {allcanvs yview scroll [scrollval %D] units}
@@ -2319,6 +2324,25 @@ proc bind_mousewheel {} {
         bind $cflist <Alt-MouseWheel> {$cflist yview scroll [scrollval 5*%D 2] units}
         bind $cflist <Alt-Shift-MouseWheel> break
         bind $canv <Alt-Shift-MouseWheel> {$canv xview scroll [scrollval 5*%D] units}
+
+        bindall <TouchpadScroll> {
+            lassign [tk::PreciseScrollDeltas %D] deltaX deltaY
+            allcanvs yview scroll [precisescrollval $deltaY] units
+        }
+        bind $ctext <TouchpadScroll> {
+            lassign [tk::PreciseScrollDeltas %D] deltaX deltaY
+            $ctext yview scroll [precisescrollval $deltaY 2] units
+            $ctext xview scroll [precisescrollval $deltaX 2] units
+        }
+        bind $cflist <TouchpadScroll> {
+            lassign [tk::PreciseScrollDeltas %D] deltaX deltaY
+            $cflist yview scroll [precisescrollval $deltaY 2] units
+        }
+        bind $canv <TouchpadScroll> {
+            lassign [tk::PreciseScrollDeltas %D] deltaX deltaY
+            $canv xview scroll [precisescrollval $deltaX] units
+            allcanvs yview scroll [precisescrollval $deltaY] units
+        }
     }
 }
 
@@ -12596,7 +12620,7 @@ set foundbgcolor yellow
 set currentsearchhitbgcolor orange
 
 # button for popping up context menus
-if {[tk windowingsystem] eq "aqua"} {
+if {[tk windowingsystem] eq "aqua" && [package vcompare $::tcl_version 8.7] < 0} {
     set ctxbut <Button-2>
 } else {
     set ctxbut <Button-3>
