@@ -75,22 +75,29 @@ Omitting _<branch>_ detaches `HEAD` at the tip of the current branch.
 `git checkout <tree-ish> [--] <pathspec>...`::
 `git checkout <tree-ish> --pathspec-from-file=<file> [--pathspec-file-nul]`::
 
-	Overwrite both the index and the working tree with the
-	contents at the _<tree-ish>_ for the files that match the pathspec.
+	Replace the specified files and/or directories with the version from
+	the given commit or tree and add them to the index
+	(also known as "staging area").
++
+For example, `git checkout main file.txt` will replace `file.txt`
+with the version from `main`.
 
 `git checkout [-f|--ours|--theirs|-m|--conflict=<style>] [--] <pathspec>...`::
 `git checkout [-f|--ours|--theirs|-m|--conflict=<style>] --pathspec-from-file=<file> [--pathspec-file-nul]`::
 
-	Overwrite working tree with the contents in the index for the files
-	that match the pathspec.
+	Replace the specified files and/or directories with the version from
+	the index.
 +
-The index may contain unmerged entries because of a previous failed merge.
-By default, if you try to check out such an entry from the index, the
-checkout operation will fail and nothing will be checked out.
-Using `-f` will ignore these unmerged entries.  The contents from a
-specific side of the merge can be checked out of the index by
-using `--ours` or `--theirs`.  With `-m`, changes made to the working tree
-file can be discarded to re-create the original conflicted merge result.
+For example, if you check out a commit, edit `file.txt`, and then
+decide those changes were a mistake, `git checkout file.txt` will
+discard any unstaged changes to `file.txt`.
++
+This will fail if the file has a merge conflict and you haven't yet run
+`git add file.txt` (or something equivalent) to mark it as resolved.
+You can use `-f` to ignore the unmerged files instead of failing, use
+`--ours` or `--theirs` to replace them with the version from a specific
+side of the merge, or use `-m` to replace them with the original
+conflicted merge result.
 
 `git checkout (-p|--patch) [<tree-ish>] [--] [<pathspec>...]`::
 	This is similar to the previous two modes, but lets you use the
