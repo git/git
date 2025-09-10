@@ -103,7 +103,6 @@ if {[is_Windows]} {
 	set _path_sep {:}
 }
 
-set _search_path {}
 set _path_seen [dict create]
 foreach p [split $env(PATH) $_path_sep] {
 	# Keep only absolute paths, getting rid of ., empty, etc.
@@ -112,12 +111,9 @@ foreach p [split $env(PATH) $_path_sep] {
 	}
 	# Keep only the first occurence of any duplicates.
 	set norm_p [file normalize $p]
-	if {[dict exists $_path_seen $norm_p]} {
-		continue
-	}
 	dict set _path_seen $norm_p 1
-	lappend _search_path $norm_p
 }
+set _search_path [dict keys $_path_seen]
 unset _path_seen
 
 set env(PATH) [join $_search_path $_path_sep]
@@ -583,21 +579,6 @@ proc open_cmd_pipe {cmd path} {
 	return [open |$run r]
 }
 
-proc _lappend_nice {cmd_var} {
-	global _nice
-	upvar $cmd_var cmd
-
-	if {![info exists _nice]} {
-		set _nice [_which nice]
-		if {[catch {safe_exec [list $_nice git version]}]} {
-			set _nice {}
-		}
-	}
-	if {$_nice ne {}} {
-		lappend cmd $_nice
-	}
-}
-
 proc git {args} {
 	git_redir $args {}
 }
@@ -631,15 +612,14 @@ proc git_read {cmd {redir {}}} {
 	return [safe_open_command $cmdp $redir]
 }
 
+set _nice [list [_which nice]]
+if {[catch {safe_exec [list {*}$_nice git version]}]} {
+	set _nice {}
+}
+
 proc git_read_nice {cmd} {
-	global _git
-	set opt [list]
-
-	_lappend_nice opt
-
-	set cmdp [concat [list $_git] $cmd]
-
-	return [safe_open_command [concat $opt $cmdp]]
+	set cmdp [list {*}$::_nice $::_git {*}$cmd]
+	return [safe_open_command $cmdp]
 }
 
 proc git_write {cmd} {
@@ -1129,6 +1109,12 @@ citool {
 set argv0dir [file dirname [file normalize $::argv0]]
 if {![info exists env(SSH_ASKPASS)]} {
 	set env(SSH_ASKPASS) [file join $argv0dir git-gui--askpass]
+}
+if {![info exists env(GIT_ASKPASS)]} {
+	set env(GIT_ASKPASS) [file join $argv0dir git-gui--askpass]
+}
+if {![info exists env(GIT_ASK_YESNO)]} {
+	set env(GIT_ASK_YESNO) [file join $argv0dir git-gui--askyesno]
 }
 unset argv0dir
 
