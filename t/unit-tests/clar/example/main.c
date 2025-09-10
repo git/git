@@ -5,7 +5,7 @@
  * For full terms see the included COPYING file.
  */
 
-#include "clar_test.h"
+#include "clar.h"
 
 /*
  * Minimal main() for clar tests.
