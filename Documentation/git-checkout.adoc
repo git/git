@@ -20,10 +20,12 @@ git checkout (-p|--patch) [<tree-ish>] [--] [<pathspec>...]
 
 DESCRIPTION
 -----------
-Updates files in the working tree to match the version in the index
-or the specified tree.  If no pathspec was given, `git checkout` will
-also update `HEAD` to set the specified branch as the current
-branch.
+
+`git checkout` has two main modes:
+
+1. **Switch branches**, with `git checkout <branch>`
+2. **Restore a different version of a file**, for example with
+   `git checkout <commit> <filename>` or `git checkout <filename>`
 
 `git checkout [<branch>]`::
 	To prepare for working on _<branch>_, switch to it by updating
