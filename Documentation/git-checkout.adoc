@@ -12,8 +12,8 @@ git checkout [-q] [-f] [-m] [<branch>]
 git checkout [-q] [-f] [-m] --detach [<branch>]
 git checkout [-q] [-f] [-m] [--detach] <commit>
 git checkout [-q] [-f] [-m] [[-b|-B|--orphan] <new-branch>] [<start-point>]
-git checkout [-f] <tree-ish> [--] <pathspec>...
-git checkout [-f] <tree-ish> --pathspec-from-file=<file> [--pathspec-file-nul]
+git checkout <tree-ish> [--] <pathspec>...
+git checkout <tree-ish> --pathspec-from-file=<file> [--pathspec-file-nul]
 git checkout [-f|--ours|--theirs|-m|--conflict=<style>] [--] <pathspec>...
 git checkout [-f|--ours|--theirs|-m|--conflict=<style>] --pathspec-from-file=<file> [--pathspec-file-nul]
 git checkout (-p|--patch) [<tree-ish>] [--] [<pathspec>...]
@@ -72,14 +72,17 @@ uncommitted changes.
 +
 Omitting _<branch>_ detaches `HEAD` at the tip of the current branch.
 
-`git checkout [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] [--] <pathspec>...`::
-`git checkout [-f|--ours|--theirs|-m|--conflict=<style>] [<tree-ish>] --pathspec-from-file=<file> [--pathspec-file-nul]`::
+`git checkout <tree-ish> [--] <pathspec>...`::
+`git checkout <tree-ish> --pathspec-from-file=<file> [--pathspec-file-nul]`::
 
-	Overwrite the contents of the files that match the pathspec.
-	When the _<tree-ish>_ (most often a commit) is not given,
-	overwrite working tree with the contents in the index.
-	When the _<tree-ish>_ is given, overwrite both the index and
-	the working tree with the contents at the _<tree-ish>_.
+	Overwrite both the index and the working tree with the
+	contents at the _<tree-ish>_ for the files that match the pathspec.
+
+`git checkout [-f|--ours|--theirs|-m|--conflict=<style>] [--] <pathspec>...`::
+`git checkout [-f|--ours|--theirs|-m|--conflict=<style>] --pathspec-from-file=<file> [--pathspec-file-nul]`::
+
+	Overwrite working tree with the contents in the index for the files
+	that match the pathspec.
 +
 The index may contain unmerged entries because of a previous failed merge.
 By default, if you try to check out such an entry from the index, the
@@ -90,7 +93,7 @@ using `--ours` or `--theirs`.  With `-m`, changes made to the working tree
 file can be discarded to re-create the original conflicted merge result.
 
 `git checkout (-p|--patch) [<tree-ish>] [--] [<pathspec>...]`::
-	This is similar to the previous mode, but lets you use the
+	This is similar to the previous two modes, but lets you use the
 	interactive interface to show the "diff" output and choose which
 	hunks to use in the result.  See below for the description of
 	`--patch` option.
