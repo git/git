@@ -71,11 +71,11 @@ long xdl_mmfile_size(mmfile_t *mmf)
 }
 
 
-int xdl_cha_init(chastore_t *cha, long isize, long icount) {
+int xdl_cha_init(chastore_t *cha, long isize_, long icount) {
 
 	cha->head = cha->tail = NULL;
-	cha->isize = isize;
-	cha->nsize = icount * isize;
+	cha->isize_ = isize_;
+	cha->nsize = icount * isize_;
 	cha->ancur = cha->sncur = NULL;
 	cha->scurr = 0;
 
@@ -113,7 +113,7 @@ void *xdl_cha_alloc(chastore_t *cha) {
 	}
 
 	data = (char *) ancur + sizeof(chanode_t) + ancur->icurr;
-	ancur->icurr += cha->isize;
+	ancur->icurr += cha->isize_;
 
 	return data;
 }

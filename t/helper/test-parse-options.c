@@ -120,8 +120,8 @@ int cmd__parse_options(int argc, const char **argv)
 	};
 	struct string_list expect = STRING_LIST_INIT_NODUP;
 	struct string_list list = STRING_LIST_INIT_NODUP;
-	uint16_t u16 = 0;
-	int16_t i16 = 0;
+	uint16_t u16_ = 0;
+	int16_t i16_ = 0;
 
 	struct option options[] = {
 		OPT_BOOL(0, "yes", &boolean, "get a boolean"),
@@ -142,10 +142,10 @@ int cmd__parse_options(int argc, const char **argv)
 		OPT_NEGBIT(0, "neg-or4", &boolean, "same as --no-or4", 4),
 		OPT_GROUP(""),
 		OPT_INTEGER('i', "integer", &integer, "get a integer"),
-		OPT_INTEGER(0, "i16", &i16, "get a 16 bit integer"),
+		OPT_INTEGER(0, "i16", &i16_, "get a 16 bit integer"),
 		OPT_INTEGER('j', NULL, &integer, "get a integer, too"),
 		OPT_UNSIGNED('u', "unsigned", &unsigned_integer, "get an unsigned integer"),
-		OPT_UNSIGNED(0, "u16", &u16, "get a 16 bit unsigned integer"),
+		OPT_UNSIGNED(0, "u16", &u16_, "get a 16 bit unsigned integer"),
 		OPT_SET_INT(0, "set23", &integer, "set integer to 23", 23),
 		OPT_CMDMODE(0, "mode1", &integer, "set integer to 1 (cmdmode option)", 1),
 		OPT_CMDMODE(0, "mode2", &integer, "set integer to 2 (cmdmode option)", 2),
@@ -225,9 +225,9 @@ int cmd__parse_options(int argc, const char **argv)
 	}
 	show(&expect, &ret, "boolean: %d", boolean);
 	show(&expect, &ret, "integer: %d", integer);
-	show(&expect, &ret, "i16: %"PRIdMAX, (intmax_t) i16);
+	show(&expect, &ret, "i16: %"PRIdMAX, (intmax_t) i16_);
 	show(&expect, &ret, "unsigned: %lu", unsigned_integer);
-	show(&expect, &ret, "u16: %"PRIuMAX, (uintmax_t) u16);
+	show(&expect, &ret, "u16: %"PRIuMAX, (uintmax_t) u16_);
 	show(&expect, &ret, "timestamp: %"PRItime, timestamp);
 	show(&expect, &ret, "string: %s", string ? string : "(not set)");
 	show(&expect, &ret, "abbrev: %d", abbrev);
