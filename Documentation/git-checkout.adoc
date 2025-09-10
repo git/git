@@ -47,27 +47,21 @@ $ git checkout -b <branch> --track <remote>/<branch>
 Running `git checkout` without specifying a branch has no effect except
 to print out the tracking information for the current branch.
 
-`git checkout (-b|-B) <new-branch> [<start-point>]`::
+`git checkout -b <new-branch> [<start-point>]`::
 
-	Specifying `-b` causes a new branch to be created as if
-	linkgit:git-branch[1] were called and then checked out.  In
-	this case you can use the `--track` or `--no-track` options,
-	which will be passed to `git branch`.  As a convenience,
-	`--track` without `-b` implies branch creation; see the
-	description of `--track` below.
+	Create a new branch named _<new-branch>_, start it at _<start-point>_
+	(defaults to the current commit), and check out the new branch.
+	You can use the `--track` or `--no-track` options to set the branch's
+	upstream tracking information.
 +
-If `-B` is given, _<new-branch>_ is created if it doesn't exist; otherwise, it
-is reset. This is the transactional equivalent of
-+
-------------
-$ git branch -f <branch> [<start-point>]
-$ git checkout <branch>
-------------
-+
-that is to say, the branch is not reset/created unless "git checkout" is
-successful (e.g., when the branch is in use in another worktree, not
-just the current branch stays the same, but the branch is not reset to
-the start-point, either).
+This will fail if there's an error checking out _<new-branch>_, for
+example if checking out the `<start-point>` commit would overwrite your
+uncommitted changes.
+
+`git checkout -B <branch> [<start-point>]`::
+
+	The same as `-b`, except that if the branch already exists it
+	resets `_<branch>_` to the start point instead of failing.
 
 `git checkout --detach [<branch>]`::
 `git checkout [--detach] <commit>`::
@@ -157,16 +151,14 @@ of it").
 	see linkgit:git-branch[1] for details.
 
 `-B <new-branch>`::
-	Creates the branch _<new-branch>_, start it at _<start-point>_;
-	if it already exists, then reset it to _<start-point>_. And then
-	check the resulting branch out.  This is equivalent to running
-	`git branch` with `-f` followed by `git checkout` of that branch;
-	see linkgit:git-branch[1] for details.
+	The same as `-b`, except that if the branch already exists it
+	resets `_<branch>_` to the start point instead of failing.
 
 `-t`::
 `--track[=(direct|inherit)]`::
 	When creating a new branch, set up "upstream" configuration. See
-	`--track` in linkgit:git-branch[1] for details.
+	`--track` in linkgit:git-branch[1] for details. As a convenience,
+	--track without -b implies branch creation.
 +
 If no `-b` option is given, the name of the new branch will be
 derived from the remote-tracking branch, by looking at the local part of
