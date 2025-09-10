@@ -27,6 +27,8 @@ DESCRIPTION
 2. **Restore a different version of a file**, for example with
    `git checkout <commit> <filename>` or `git checkout <filename>`
 
+See ARGUMENT DISAMBIGUATION below for how Git decides which one to do.
+
 `git checkout [<branch>]`::
 	To prepare for working on _<branch>_, switch to it by updating
 	the index and the files in the working tree, and by pointing
@@ -513,14 +515,18 @@ $ git log -g -2 HEAD
 ARGUMENT DISAMBIGUATION
 -----------------------
 
-When there is only one argument given and it is not `--` (e.g. `git
-checkout abc`), and when the argument is both a valid _<tree-ish>_
-(e.g. a branch `abc` exists) and a valid _<pathspec>_ (e.g. a file
-or a directory whose name is "abc" exists), Git would usually ask
-you to disambiguate.  Because checking out a branch is so common an
-operation, however, `git checkout abc` takes "abc" as a _<tree-ish>_
-in such a situation.  Use `git checkout -- <pathspec>` if you want
-to checkout these paths out of the index.
+When you run `git checkout <something>`, Git tries to guess whether
+`<something>` is intended to be a branch, a commit, or a set of file(s),
+and then either switches to that branch or commit, or restores the
+specified files.
+
+If there's any ambiguity, Git will treat `<something>` as a branch or
+commit, but you can use the double dash `--` to force Git to treat the
+parameter as a list of files and/or directories, like this:
+
+----------
+git checkout -- file.txt
+----------
 
 EXAMPLES
 --------
