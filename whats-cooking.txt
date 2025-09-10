@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2025, #03; Mon, 8)
+Subject: What's cooking in git.git (Sep 2025, #04; Wed, 10)
 X-master-at: 4975ec3473b4bc61bc8a3df1ef29d0b7e7959e87
-X-next-at: 87641ccf932d9ff14ba9770a85800514f51c415d
+X-next-at: afdaf0ed07e9cf343775fe4d542e679c90adf6f0
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2025, #03; Mon, 8)
+What's cooking in git.git (Sep 2025, #04; Wed, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -51,154 +51,35 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* am/xdiff-hash-tweak (2025-07-28) 2 commits
-  (merged to 'next' on 2025-08-29 at 43590f0b38)
- + xdiff: optimize xdl_hash_record_verbatim
- + xdiff: refactor xdl_hash_record()
-
- Inspired by Ezekiel's recent effort to showcase Rust interface, the
- hash function implementation used to hash lines have been updated
- to the one used for ELF symbol lookup by Glibc.
-  cf. <xmqqecsvqal6.fsf@gitster.g>
- source: <20250728190520.10962-1-amonakov@ispras.ru>
-
-
-* da/cargo-serialize (2025-08-26) 1 commit
-  (merged to 'next' on 2025-08-29 at 5a193b1525)
- + Makefile: build libgit-rs and libgit-sys serially
-
- Makefile tried to run multiple "cargo build" which would not work
- very well; serialize their execution to work it around.
- 
- source: <20250826233525.2635432-1-davvid@gmail.com>
-
-
-* ds/ls-files-lazy-unsparse (2025-08-15) 1 commit
-  (merged to 'next' on 2025-08-29 at a48fee2dde)
- + ls-files: conditionally leave index sparse
-
- "git ls-files <pathspec>..." should not necessarily have to expand
- the index fully if a sparsified directory is excluded by the
- pathspec; the code is taught to expand the index on demand to avoid
- this.
- 
- source: <pull.1955.git.1755274373717.gitgitgadget@gmail.com>
-
-
-* ds/path-walk-repack-fix (2025-08-25) 2 commits
-  (merged to 'next' on 2025-08-29 at 13028ffb8e)
- + path-walk: create initializer for path lists
- + path-walk: fix setup of pending objects
-
- "git repack --path-walk" lost objects in some corner cases, which
- has been corrected.
-  cf. <CABPp-BHFxxGrqKc0m==TjQNjDGdO=H5Rf6EFsf2nfE1=TuraOQ@mail.gmail.com>
- source: <pull.1956.v2.git.1756126197.gitgitgadget@gmail.com>
-
-
-* tc/last-modified (2025-08-05) 3 commits
-  (merged to 'next' on 2025-08-29 at 3f3e111189)
- + last-modified: use Bloom filters when available
- + t/perf: add last-modified perf script
- + last-modified: new subcommand to show when files were last modified
-
- A new command "git last-modified" has been added to show the closest
- ancestor commit that touched each path.
- 
- source: <20250730175510.987383-1-toon@iotcl.com>
-
---------------------------------------------------
 [New Topics]
 
-* pw/3.0-default-initial-branch-to-main (2025-09-04) 4 commits
- - t0613: stop setting default initial branch
- - t9902: switch default branch name to main
- - t4013: switch default branch name to main
- - breaking-changes: switch default branch to main
+* jt/odb-transaction (2025-09-09) 7 commits
+ - odb: add transaction interface
+ - object-file: update naming from bulk-checkin
+ - object-file: relocate ODB transaction code
+ - bulk-checkin: drop flush_odb_transaction()
+ - builtin/update-index: end ODB transaction when --verbose is specified
+ - bulk-checkin: remove ODB transaction nesting
+ - Merge branch 'jt/de-global-bulk-checkin' into jt/odb-transaction
+ (this branch uses jt/de-global-bulk-checkin.)
 
- Declare that "git init" that is not otherwise configured uses
- 'main' as the initial branch, not 'master', starting Git 3.0.
+ Continue the work to build on the bulk-checkin infrastructure to
+ create many objects at once in a transaction and abstract it into
+ the generic object layer.
 
- Will merge to 'next'?
- source: <cover.1756992089.git.phillip.wood@dunelm.org.uk>
-
-
-* rs/object-name-extend-abbrev-len-update (2025-09-04) 1 commit
-  (merged to 'next' on 2025-09-08 at 469498c610)
- + object-name: declare pointer type of extend_abbrev_len()'s 2nd parameter
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <e0bc9a67-faa9-4218-a55a-c7d53c15cfce@web.de>
+ Comments?
+ source: <20250909191134.555689-1-jltobler@gmail.com>
 
 
-* ps/commit-graph-per-object-source (2025-09-04) 6 commits
- - odb: move commit-graph into the object sources
- - commit-graph: pass graphs that are to be merged as parameter
- - commit-graph: return commit graph from `repo_find_commit_pos_in_graph()`
- - commit-graph: return the prepared commit graph from `prepare_commit_graph()`
- - revision: drop explicit check for commit graph
- - blame: drop explicit check for commit graph
+* cc/fast-import-strip-signed-commits (2025-09-10) 2 commits
+ - fast-import: add '--signed-commits=<mode>' option
+ - gpg-interface: refactor 'enum sign_mode' parsing
 
- Declare commit-graph is per object_source, which may not be a good idea.
+ "git fast-import" learned that "--signed-commits=<how>" option that
+ corresponds to that of "git fast-export".
 
- cf. <cf7aeda1-297a-4805-b0ae-e379ce11bbcf@gmail.com>
- source: <20250904-b4-pks-commit-graph-via-source-v1-0-d932c2481e1a@pks.im>
-
-
-* ps/rust-balloon (2025-09-05) 7 commits
- - ci: enable Rust for breaking-changes jobs
- - ci: convert "pedantic" job into full build with breaking changes
- - BreakingChanges: announce Rust becoming mandatory
- - rust: implement a test balloon via the "varint" subsystem
- - help: report on whether or not Rust is enabled
- - Makefile: introduce infrastructure to build internal Rust library
- - meson: add infrastructure to build internal Rust library
-
- Dip our toes a bit to (optionally) use Rust implemented helper
- called from our C code.
- source: <20250905-b4-pks-rust-breaking-change-v2-0-6939cbf4a0b8@pks.im>
-
-
-* kh/doc-fast-import-markup-fix (2025-09-08) 1 commit
- - doc: fast-import: replace literal block with paragraph
-
- Doc mark-up fix.
-
- Will merge to 'next'.
- source: <09aaad696895c18c6d4dda7d6a2f4b77f84f39ba.1757363213.git.code@khaugsbakk.name>
-
-
-* ms/refs-optimize (2025-09-06) 5 commits
- - t: add test for git refs optimize subcommand
- - t0601: refactor tests to be shareable
- - builtin/refs: add optimize subcommand
- - doc: factor out common option
- - builtin/pack-refs: factor out core logic into a shared library
-
- "git refs optimize" is added for not very well explained reason
- despite it does the same thing as "git pack-refs"...
-
- Expecting a reroll.
- source: <20250906075147.1076656-1-meetsoni3017@gmail.com>
-
-
-* sj/string-list (2025-09-07) 4 commits
- - refs: enable sign compare warnings check
- - string-list: change "string_list_find_insert_index" return type to "size_t"
- - string-list: replace negative index encoding with "exact_match" parameter
- - string-list: allow passing NULL for `get_entry_index`
-
- The "string-list" API function to find where a given string would
- be inserted got updated so that it can use unrealistically huge
- array index that would only fit in size_t but not int or ssize_t
- to achieve unstated goal.
-
- Expecting a reroll.
- source: <aL21kDwK-zGZyJ9q@ArchLinux>
+ Comments?
+ source: <20250910080839.2142651-1-christian.couder@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -266,31 +147,115 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250908053056.956907-1-christian.couder@gmail.com>
 
 
-* ar/submodule-gitdir-tweak (2025-09-02) 11 commits
- . fixup! t: submodules: add basic mixed gitdir path tests
- . fixup! t: add gitdir encoding tests
- . t: add gitdir encoding tests
- . t: move nested gitdir tests to proper location
- . submodule: remove validate_submodule_git_dir()
- . submodule: encode gitdir paths to avoid conflicts
- . strbuf: bring back is_rfc3986_unreserved
- . t: submodules: add basic mixed gitdir path tests
- . submodule: add gitdir path config override
- . submodule: create new gitdirs under submodules path
- . submodule--helper: use submodule_name_to_gitdir in add_submodule
+* ar/submodule-gitdir-tweak (2025-09-08) 10 commits
+ - t7425: add gitdir encoding tests
+ - t7450: move nested gitdir tests to t7425
+ - submodule: remove validate_submodule_git_dir()
+ - submodule: error out if gitdir name is too long
+ - submodule: encode gitdir paths to avoid conflicts
+ - strbuf: bring back is_rfc3986_unreserved
+ - t7425: add basic mixed submodule gitdir path tests
+ - submodule: add gitdir path config override
+ - submodule: create new gitdirs under submodules path
+ - submodule--helper: use submodule_name_to_gitdir in add_submodule
 
  Avoid local submodule repository directory paths overlapping with
  each other by encoding submodule names before using them as path
  components.
-
- Need to pick up a reroll.
- cf.<20250908140117.262205-1-adrian.ratiu@collabora.com>
- Breaks builds.
- cf. https://github.com/git/git/actions/runs/17447961977/job/49546783809
- source: <20250816213642.3517822-1-adrian.ratiu@collabora.com>
+ source: <20250908140117.262205-1-adrian.ratiu@collabora.com>
 
 --------------------------------------------------
 [Cooking]
+
+* pw/3.0-default-initial-branch-to-main (2025-09-04) 4 commits
+ - t0613: stop setting default initial branch
+ - t9902: switch default branch name to main
+ - t4013: switch default branch name to main
+ - breaking-changes: switch default branch to main
+
+ Declare that "git init" that is not otherwise configured uses
+ 'main' as the initial branch, not 'master', starting Git 3.0.
+
+ Will merge to 'next'?
+ source: <cover.1756992089.git.phillip.wood@dunelm.org.uk>
+
+
+* rs/object-name-extend-abbrev-len-update (2025-09-04) 1 commit
+  (merged to 'next' on 2025-09-08 at 469498c610)
+ + object-name: declare pointer type of extend_abbrev_len()'s 2nd parameter
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <e0bc9a67-faa9-4218-a55a-c7d53c15cfce@web.de>
+
+
+* ps/commit-graph-per-object-source (2025-09-04) 6 commits
+ - odb: move commit-graph into the object sources
+ - commit-graph: pass graphs that are to be merged as parameter
+ - commit-graph: return commit graph from `repo_find_commit_pos_in_graph()`
+ - commit-graph: return the prepared commit graph from `prepare_commit_graph()`
+ - revision: drop explicit check for commit graph
+ - blame: drop explicit check for commit graph
+
+ Declare commit-graph is per object_source, which may not be a good idea.
+
+ cf. <cf7aeda1-297a-4805-b0ae-e379ce11bbcf@gmail.com>
+ source: <20250904-b4-pks-commit-graph-via-source-v1-0-d932c2481e1a@pks.im>
+
+
+* ps/rust-balloon (2025-09-08) 8 commits
+ - ci: enable Rust for breaking-changes jobs
+ - ci: convert "pedantic" job into full build with breaking changes
+ - BreakingChanges: announce Rust becoming mandatory
+ - rust: implement a test balloon via the "varint" subsystem
+ - help: report on whether or not Rust is enabled
+ - Makefile: introduce infrastructure to build internal Rust library
+ - Makefile: reorder sources after includes
+ - meson: add infrastructure to build internal Rust library
+
+ Dip our toes a bit to (optionally) use Rust implemented helper
+ called from our C code.
+ source: <20250908-b4-pks-rust-breaking-change-v3-0-1cd7189fed3b@pks.im>
+
+
+* kh/doc-fast-import-markup-fix (2025-09-08) 1 commit
+ - doc: fast-import: replace literal block with paragraph
+
+ Doc mark-up fix.
+
+ Will merge to 'next'.
+ source: <09aaad696895c18c6d4dda7d6a2f4b77f84f39ba.1757363213.git.code@khaugsbakk.name>
+
+
+* ms/refs-optimize (2025-09-06) 5 commits
+ - t: add test for git refs optimize subcommand
+ - t0601: refactor tests to be shareable
+ - builtin/refs: add optimize subcommand
+ - doc: factor out common option
+ - builtin/pack-refs: factor out core logic into a shared library
+
+ "git refs optimize" is added for not very well explained reason
+ despite it does the same thing as "git pack-refs"...
+
+ Expecting a reroll.
+ source: <20250906075147.1076656-1-meetsoni3017@gmail.com>
+
+
+* sj/string-list (2025-09-07) 4 commits
+ - refs: enable sign compare warnings check
+ - string-list: change "string_list_find_insert_index" return type to "size_t"
+ - string-list: replace negative index encoding with "exact_match" parameter
+ - string-list: allow passing NULL for `get_entry_index`
+
+ The "string-list" API function to find where a given string would
+ be inserted got updated so that it can use unrealistically huge
+ array index that would only fit in size_t but not int or ssize_t
+ to achieve unstated goal.
+
+ Expecting a reroll.
+ source: <aL21kDwK-zGZyJ9q@ArchLinux>
+
 
 * ds/midx-write-fixes (2025-09-05) 6 commits
   (merged to 'next' on 2025-09-08 at 74b87ce5ba)
@@ -344,7 +309,7 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250902-b4-pks-gitlab-ci-windows-defender-v1-1-fcb1f19321aa@pks.im>
 
 
-* ps/packfile-store (2025-09-02) 16 commits
+* ps/packfile-store (2025-09-09) 16 commits
  - packfile: refactor `get_packed_git_mru()` to work on packfile store
  - packfile: refactor `get_all_packs()` to work on packfile store
  - packfile: remove `get_packed_git()`
@@ -367,7 +332,7 @@ well with other topics in 'seen' (and of course 'next' and
  object database(s).
 
  Comments?
- source: <20250902-b4-pks-packfiles-store-v3-0-6925278efeda@pks.im>
+ source: <20250909-b4-pks-packfiles-store-v4-0-151c4ba3619f@pks.im>
 
 
 * kh/doc-markup-fixes (2025-09-02) 2 commits
@@ -391,16 +356,18 @@ well with other topics in 'seen' (and of course 'next' and
  backend is used for ref storage, by failing only the ones that are
  involved in the conflict while allowing others.
 
- Comments?
+ Expecting a reroll.
+ cf. <aL_SwghVaAXL-yeX@pks.im>
  source: <20250908-587-git-fetch-1-fails-fetches-on-case-insensitive-repositories-v2-0-b2eb2459befb@gmail.com>
 
 
 * mm/worktree-doc-typofix (2025-09-03) 1 commit
- - docs: fix typo in worktree.adoc 'extension'
+  (merged to 'next' on 2025-09-09 at afdaf0ed07)
+ + docs: fix typo in worktree.adoc 'extension'
 
  Docfix.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <pull.1967.git.1756911040439.gitgitgadget@gmail.com>
 
 
@@ -492,21 +459,20 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250827080702.GA3572995@coredump.intra.peff.net>
 
 
-* kh/you-still-use-whatchanged-fix (2025-09-08) 8 commits
+* kh/you-still-use-whatchanged-fix (2025-09-09) 7 commits
  - BreakingChanges: remove claim about whatchanged reports
  - whatchanged: remove not-even-shorter clause
  - whatchanged: tell users the git-log(1) equivalent
  - you-still-use-that??: help the user help themselves
  - t0014: test shadowing of aliases for a sample of builtins
  - git: allow alias-shadowing deprecated builtins
- - git: make the two loops look more symmetric
  - git: add `deprecated` category to --list-cmds
 
  Update "do you still use it?" message given by a command that is
  deeply deprecated and allow us to suggest alternatives.
 
  Will merge to 'next'?
- source: <cover.1757345711.git.code@khaugsbakk.name>
+ source: <cover.1757446619.git.code@khaugsbakk.name>
 
 
 * pc/range-diff-memory-limit (2025-08-29) 1 commit
@@ -586,6 +552,7 @@ well with other topics in 'seen' (and of course 'next' and
  + bulk-checkin: require transaction for index_blob_bulk_checkin()
  + bulk-checkin: remove global transaction state
  + bulk-checkin: introduce object database transaction structure
+ (this branch is used by jt/odb-transaction.)
 
  The bulk-checkin code used to depend on a file-scope static
  singleton variable, which has been updated to pass an instance
@@ -677,8 +644,9 @@ well with other topics in 'seen' (and of course 'next' and
  prune otherwise unused working-tree files that are outside the
  areas of interest.
 
- Rebased not to depend on ac/deglobal-sparse-variables
- Will merge to 'next'?
+ Waiting for review responses?
+ cf. <c3c0fbef-f395-4972-8352-dd89af6799d5@gmail.com>
+ (Rebased not to depend on ac/deglobal-sparse-variables)
  source: <pull.1941.v2.git.1752716054.gitgitgadget@gmail.com>
 
 
