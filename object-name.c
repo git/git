@@ -1857,55 +1857,35 @@ int repo_get_oid_committish(struct repository *r,
 			    const char *name,
 			    struct object_id *oid)
 {
-	struct object_context unused;
-	int ret = get_oid_with_context(r, name, GET_OID_COMMITTISH,
-				       oid, &unused);
-	object_context_release(&unused);
-	return ret;
+	return repo_get_oid_with_flags(r, name, oid, GET_OID_COMMITTISH);
 }
 
 int repo_get_oid_treeish(struct repository *r,
 			 const char *name,
 			 struct object_id *oid)
 {
-	struct object_context unused;
-	int ret = get_oid_with_context(r, name, GET_OID_TREEISH,
-				       oid, &unused);
-	object_context_release(&unused);
-	return ret;
+	return repo_get_oid_with_flags(r, name, oid, GET_OID_TREEISH);
 }
 
 int repo_get_oid_commit(struct repository *r,
 			const char *name,
 			struct object_id *oid)
 {
-	struct object_context unused;
-	int ret = get_oid_with_context(r, name, GET_OID_COMMIT,
-				       oid, &unused);
-	object_context_release(&unused);
-	return ret;
+	return repo_get_oid_with_flags(r, name, oid, GET_OID_COMMIT);
 }
 
 int repo_get_oid_tree(struct repository *r,
 		      const char *name,
 		      struct object_id *oid)
 {
-	struct object_context unused;
-	int ret = get_oid_with_context(r, name, GET_OID_TREE,
-				       oid, &unused);
-	object_context_release(&unused);
-	return ret;
+	return repo_get_oid_with_flags(r, name, oid, GET_OID_TREE);
 }
 
 int repo_get_oid_blob(struct repository *r,
 		      const char *name,
 		      struct object_id *oid)
 {
-	struct object_context unused;
-	int ret = get_oid_with_context(r, name, GET_OID_BLOB,
-				       oid, &unused);
-	object_context_release(&unused);
-	return ret;
+	return repo_get_oid_with_flags(r, name, oid, GET_OID_BLOB);
 }
 
 /* Must be called only when object_name:filename doesn't exist. */
