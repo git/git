@@ -2101,6 +2101,8 @@ subdir('bin-wrappers')
 if get_option('docs') != []
   doc_targets = []
   subdir('Documentation')
+else
+  docs_backend = 'none'
 endif
 
 subdir('contrib')
@@ -2249,6 +2251,7 @@ summary({
 
 summary({
   'csprng': csprng_backend,
+  'docs': docs_backend,
   'https': https_backend,
   'sha1': sha1_backend,
   'sha1_unsafe': sha1_unsafe_backend,
