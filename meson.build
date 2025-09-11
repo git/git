@@ -2099,10 +2099,17 @@ endif
 
 subdir('bin-wrappers')
 if get_option('docs') != []
+  doc_targets = []
   subdir('Documentation')
 endif
 
 subdir('contrib')
+
+# Note that the target is intentionally configured after including the
+# 'contrib' directory, as some tool there also have their own manpages.
+if get_option('docs') != []
+  alias_target('docs', doc_targets)
+endif
 
 exclude_from_check_headers = [
   'compat/',
