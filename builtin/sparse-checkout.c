@@ -930,6 +930,26 @@ static char const * const builtin_sparse_checkout_clean_usage[] = {
 	NULL
 };
 
+static int list_file_iterator(const char *path, const void *data)
+{
+	const char *msg = data;
+
+	printf(msg, path);
+	return 0;
+}
+
+static void list_every_file_in_dir(const char *msg,
+				   const char *directory)
+{
+	struct strbuf path = STRBUF_INIT;
+
+	strbuf_addstr(&path, directory);
+	fprintf(stderr, "list every file in %s\n", directory);
+
+	for_each_file_in_dir(&path, list_file_iterator, msg);
+	strbuf_release(&path);
+}
+
 static const char *msg_remove = N_("Removing %s\n");
 static const char *msg_would_remove = N_("Would remove %s\n");
 
@@ -940,12 +960,13 @@ static int sparse_checkout_clean(int argc, const char **argv,
 	struct strbuf full_path = STRBUF_INIT;
 	const char *msg = msg_remove;
 	size_t worktree_len;
-	int force = 0, dry_run = 0;
+	int force = 0, dry_run = 0, verbose = 0;
 	int require_force = 1;
 
 	struct option builtin_sparse_checkout_clean_options[] = {
 		OPT__DRY_RUN(&dry_run, N_("dry run")),
 		OPT__FORCE(&force, N_("force"), PARSE_OPT_NOCOMPLETE),
+		OPT__VERBOSE(&verbose, N_("report each affected file, not just directories")),
 		OPT_END(),
 	};
 
@@ -987,7 +1008,10 @@ static int sparse_checkout_clean(int argc, const char **argv,
 		if (!is_directory(full_path.buf))
 			continue;
 
-		printf(msg, ce->name);
+		if (verbose)
+			list_every_file_in_dir(msg, ce->name);
+		else
+			printf(msg, ce->name);
 
 		if (dry_run <= 0 &&
 		    remove_dir_recursively(&full_path, 0))

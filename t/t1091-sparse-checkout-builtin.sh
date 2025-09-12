@@ -1053,11 +1053,11 @@ test_expect_success 'check-rules null termination' '
 test_expect_success 'clean' '
 	git -C repo sparse-checkout set --cone deep/deeper1 &&
 	git -C repo sparse-checkout reapply &&
-	mkdir repo/deep/deeper2 repo/folder1 &&
+	mkdir -p repo/deep/deeper2 repo/folder1/extra/inside &&
 
 	# Add untracked files
 	touch repo/deep/deeper2/file &&
-	touch repo/folder1/file &&
+	touch repo/folder1/extra/inside/file &&
 
 	test_must_fail git -C repo sparse-checkout clean 2>err &&
 	grep "refusing to clean" err &&
@@ -1074,7 +1074,15 @@ test_expect_success 'clean' '
 	git -C repo sparse-checkout clean --dry-run >out &&
 	test_cmp expect out &&
 	test_path_exists repo/deep/deeper2 &&
-	test_path_exists repo/folder1 &&
+	test_path_exists repo/folder1/extra/inside/file &&
+
+	cat >expect <<-\EOF &&
+	Would remove deep/deeper2/file
+	Would remove folder1/extra/inside/file
+	EOF
+
+	git -C repo sparse-checkout clean --dry-run --verbose >out &&
+	test_cmp expect out &&
 
 	cat >expect <<-\EOF &&
 	Removing deep/deeper2/
