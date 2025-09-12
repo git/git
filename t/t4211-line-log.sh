@@ -78,6 +78,8 @@ canned_test "-L :main:a.c -L 4,18:a.c simple" multiple-overlapping
 canned_test "-L 4:a.c -L 8,12:a.c simple" multiple-superset
 canned_test "-L 8,12:a.c -L 4:a.c simple" multiple-superset
 
+canned_test "-L 10,16:b.c -L 18,26:b.c main" no-assertion-error
+
 test_bad_opts "-L" "switch.*requires a value"
 test_bad_opts "-L b.c" "argument not .start,end:file"
 test_bad_opts "-L 1:" "argument not .start,end:file"
