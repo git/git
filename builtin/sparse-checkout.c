@@ -931,6 +931,7 @@ static char const * const builtin_sparse_checkout_clean_usage[] = {
 };
 
 static const char *msg_remove = N_("Removing %s\n");
+static const char *msg_would_remove = N_("Would remove %s\n");
 
 static int sparse_checkout_clean(int argc, const char **argv,
 				   const char *prefix,
@@ -939,8 +940,12 @@ static int sparse_checkout_clean(int argc, const char **argv,
 	struct strbuf full_path = STRBUF_INIT;
 	const char *msg = msg_remove;
 	size_t worktree_len;
+	int force = 0, dry_run = 0;
+	int require_force = 1;
 
 	struct option builtin_sparse_checkout_clean_options[] = {
+		OPT__DRY_RUN(&dry_run, N_("dry run")),
+		OPT__FORCE(&force, N_("force"), PARSE_OPT_NOCOMPLETE),
 		OPT_END(),
 	};
 
@@ -953,6 +958,13 @@ static int sparse_checkout_clean(int argc, const char **argv,
 	argc = parse_options(argc, argv, prefix,
 			     builtin_sparse_checkout_clean_options,
 			     builtin_sparse_checkout_clean_usage, 0);
+
+	repo_config_get_bool(repo, "clean.requireforce", &require_force);
+	if (require_force && !force && !dry_run)
+		die(_("for safety, refusing to clean without one of --force or --dry-run"));
+
+	if (dry_run)
+		msg = msg_would_remove;
 
 	if (repo_read_index(repo) < 0)
 		die(_("failed to read index"));
@@ -977,7 +989,8 @@ static int sparse_checkout_clean(int argc, const char **argv,
 
 		printf(msg, ce->name);
 
-		if (remove_dir_recursively(&full_path, 0))
+		if (dry_run <= 0 &&
+		    remove_dir_recursively(&full_path, 0))
 			warning_errno(_("failed to remove '%s'"), ce->name);
 	}
 
