@@ -557,10 +557,10 @@ edit `~/.gitconfig` to specify your account settings:
 
 ----
 [sendemail]
-	smtpEncryption = tls
+	smtpEncryption = ssl
 	smtpServer = smtp.gmail.com
 	smtpUser = yourname@gmail.com
-	smtpServerPort = 587
+	smtpServerPort = 465
 ----
 
 Gmail does not allow using your regular password for `git send-email`.
@@ -578,10 +578,10 @@ if you want to use `OAUTHBEARER`, edit your `~/.gitconfig` file and add
 
 ----
 [sendemail]
-	smtpEncryption = tls
+	smtpEncryption = ssl
 	smtpServer = smtp.gmail.com
 	smtpUser = yourname@gmail.com
-	smtpServerPort = 587
+	smtpServerPort = 465
 	smtpAuth = OAUTHBEARER
 ----
 
