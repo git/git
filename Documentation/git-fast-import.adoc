@@ -61,10 +61,10 @@ OPTIONS
 	currently impacts only the `export-marks`, `import-marks`, and
 	`import-marks-if-exists` feature commands.
 +
-	Only enable this option if you trust the program generating the
-	fast-import stream! This option is enabled automatically for
-	remote-helpers that use the `import` capability, as they are
-	already trusted to run their own code.
+Only enable this option if you trust the program generating the
+fast-import stream! This option is enabled automatically for
+remote-helpers that use the `import` capability, as they are
+already trusted to run their own code.
 
 Options for Frontends
 ~~~~~~~~~~~~~~~~~~~~~
