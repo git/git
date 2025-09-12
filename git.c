@@ -823,9 +823,7 @@ static int run_argv(struct strvec *args)
 		 * deprecation complaint in the meantime.
 		 */
 		if (is_deprecated_command(args->v[0]) &&
-		    alias_lookup(args->v[0])) {
-			if (!handle_alias(args))
-				break;
+		    handle_alias(args)) {
 			done_alias = 1;
 			continue;
 		}
