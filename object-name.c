@@ -696,10 +696,9 @@ static inline char get_hex_char_from_oid(const struct object_id *oid,
 		return hex[oid->hash[pos >> 1] & 0xf];
 }
 
-static int extend_abbrev_len(const struct object_id *oid, void *cb_data)
+static int extend_abbrev_len(const struct object_id *oid,
+			     struct min_abbrev_data *mad)
 {
-	struct min_abbrev_data *mad = cb_data;
-
 	unsigned int i = mad->init_len;
 	while (mad->hex[i] && mad->hex[i] == get_hex_char_from_oid(oid, i))
 		i++;
