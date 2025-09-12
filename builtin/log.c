@@ -1404,6 +1404,7 @@ static void make_cover_letter(struct rev_info *rev, int use_separate_file,
 		struct range_diff_options range_diff_opts = {
 			.creation_factor = rev->creation_factor,
 			.dual_color = 1,
+			.max_memory = RANGE_DIFF_MAX_MEMORY_DEFAULT,
 			.diffopt = &opts,
 			.other_arg = &other_arg
 		};
