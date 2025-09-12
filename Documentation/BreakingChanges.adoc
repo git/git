@@ -165,6 +165,12 @@ A prerequisite for this change is that the ecosystem is ready to support the
 "reftable" format. Most importantly, alternative implementations of Git like
 JGit, libgit2 and Gitoxide need to support it.
 
+* In new repositories, the default branch name will be `main`. We have been
+  warning that the default name will change since 675704c74dd (init:
+  provide useful advice about init.defaultBranch, 2020-12-11).  The new name
+  matches the default branch name used in new repositories by many of the
+  big Git forges.
+
 === Removals
 
 * Support for grafting commits has long been superseded by git-replace(1).

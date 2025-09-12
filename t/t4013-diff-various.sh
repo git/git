@@ -5,7 +5,7 @@
 
 test_description='Various diff formatting options'
 
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
@@ -70,7 +70,7 @@ test_expect_success setup '
 	GIT_COMMITTER_DATE="2006-06-26 00:04:00 +0000" &&
 	export GIT_AUTHOR_DATE GIT_COMMITTER_DATE &&
 
-	git checkout master &&
+	git checkout main &&
 	git pull -s ours --no-rebase . side &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:05:00 +0000" &&
@@ -95,7 +95,7 @@ test_expect_success setup '
 	test_write_lines B A >dir/sub &&
 	git add dir/sub &&
 	git commit -m "Rearranged lines in dir/sub" &&
-	git checkout master &&
+	git checkout main &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
 	GIT_COMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
@@ -103,7 +103,7 @@ test_expect_success setup '
 	git checkout -b mode initial &&
 	git update-index --chmod=+x file0 &&
 	git commit -m "update mode" &&
-	git checkout -f master &&
+	git checkout -f main &&
 
 	GIT_AUTHOR_DATE="2006-06-26 00:06:00 +0000" &&
 	GIT_COMMITTER_DATE="2006-06-26 00:06:00 +0000" &&
@@ -112,12 +112,12 @@ test_expect_success setup '
 	git update-index --chmod=+x file2 &&
 	git commit -m "update mode (file2)" &&
 	git notes add -m "note" &&
-	git checkout -f master &&
+	git checkout -f main &&
 
-	# Same merge as master, but with parents reversed. Hide it in a
+	# Same merge as main, but with parents reversed. Hide it in a
 	# pseudo-ref to avoid impacting tests with --all.
 	commit=$(echo reverse |
-		 git commit-tree -p master^2 -p master^1 master^{tree}) &&
+		 git commit-tree -p main^2 -p main^1 main^{tree}) &&
 	git update-ref REVERSE $commit &&
 
 	git config diff.renames false &&
@@ -127,15 +127,15 @@ test_expect_success setup '
 
 : <<\EOF
 ! [initial] Initial
- * [master] Merge branch 'side'
+ * [main] Merge branch 'side'
   ! [rearrange] Rearranged lines in dir/sub
    ! [side] Side
 ----
   +  [rearrange] Rearranged lines in dir/sub
- -   [master] Merge branch 'side'
+ -   [main] Merge branch 'side'
  * + [side] Side
- *   [master^] Third
- *   [master~2] Second
+ *   [main^] Third
+ *   [main~2] Second
 +*++ [initial] Initial
 EOF
 
@@ -311,64 +311,64 @@ diff-tree initial mode
 diff-tree --stat initial mode
 diff-tree --summary initial mode
 
-diff-tree master
-diff-tree -m master
-diff-tree -p master
-diff-tree -p -m master
-diff-tree -c master
-diff-tree -c --abbrev master
-:noellipses diff-tree -c --abbrev master
-diff-tree --cc master
+diff-tree main
+diff-tree -m main
+diff-tree -p main
+diff-tree -p -m main
+diff-tree -c main
+diff-tree -c --abbrev main
+:noellipses diff-tree -c --abbrev main
+diff-tree --cc main
 # stat only should show the diffstat with the first parent
-diff-tree -c --stat master
-diff-tree --cc --stat master
-diff-tree -c --stat --summary master
-diff-tree --cc --stat --summary master
+diff-tree -c --stat main
+diff-tree --cc --stat main
+diff-tree -c --stat --summary main
+diff-tree --cc --stat --summary main
 # stat summary should show the diffstat and summary with the first parent
 diff-tree -c --stat --summary side
 diff-tree --cc --stat --summary side
-diff-tree --cc --shortstat master
+diff-tree --cc --shortstat main
 diff-tree --cc --summary REVERSE
 # improved by Timo's patch
-diff-tree --cc --patch-with-stat master
+diff-tree --cc --patch-with-stat main
 # improved by Timo's patch
-diff-tree --cc --patch-with-stat --summary master
+diff-tree --cc --patch-with-stat --summary main
 # this is correct
 diff-tree --cc --patch-with-stat --summary side
 
-log master
-log -p master
-log --root master
-log --root -p master
-log --patch-with-stat master
-log --root --patch-with-stat master
-log --root --patch-with-stat --summary master
+log main
+log -p main
+log --root main
+log --root -p main
+log --patch-with-stat main
+log --root --patch-with-stat main
+log --root --patch-with-stat --summary main
 # improved by Timo's patch
-log --root -c --patch-with-stat --summary master
+log --root -c --patch-with-stat --summary main
 # improved by Timo's patch
-log --root --cc --patch-with-stat --summary master
-log --no-diff-merges -p --first-parent master
-log --diff-merges=off -p --first-parent master
-log --first-parent --diff-merges=off -p master
-log -p --first-parent master
-log -p --diff-merges=first-parent master
-log --diff-merges=first-parent master
-log -m -p --first-parent master
-log -m -p master
-log --cc -m -p master
-log -c -m -p master
-log -m --raw master
-log -m --stat master
-log -SF master
-log -S F master
-log -SF -p master
-log -SF master --max-count=0
-log -SF master --max-count=1
-log -SF master --max-count=2
-log -GF master
-log -GF -p master
-log -GF -p --pickaxe-all master
-log -IA -IB -I1 -I2 -p master
+log --root --cc --patch-with-stat --summary main
+log --no-diff-merges -p --first-parent main
+log --diff-merges=off -p --first-parent main
+log --first-parent --diff-merges=off -p main
+log -p --first-parent main
+log -p --diff-merges=first-parent main
+log --diff-merges=first-parent main
+log -m -p --first-parent main
+log -m -p main
+log --cc -m -p main
+log -c -m -p main
+log -m --raw main
+log -m --stat main
+log -SF main
+log -S F main
+log -SF -p main
+log -SF main --max-count=0
+log -SF main --max-count=1
+log -SF main --max-count=2
+log -GF main
+log -GF -p main
+log -GF -p --pickaxe-all main
+log -IA -IB -I1 -I2 -p main
 log --decorate --all
 log --decorate=full --all
 log --decorate --clear-decorations --all
@@ -377,35 +377,35 @@ log --decorate=full --clear-decorations --all
 rev-list --parents HEAD
 rev-list --children HEAD
 
-whatchanged master
-:noellipses whatchanged master
-whatchanged -p master
-whatchanged --root master
-:noellipses whatchanged --root master
-whatchanged --root -p master
-whatchanged --patch-with-stat master
-whatchanged --root --patch-with-stat master
-whatchanged --root --patch-with-stat --summary master
+whatchanged main
+:noellipses whatchanged main
+whatchanged -p main
+whatchanged --root main
+:noellipses whatchanged --root main
+whatchanged --root -p main
+whatchanged --patch-with-stat main
+whatchanged --root --patch-with-stat main
+whatchanged --root --patch-with-stat --summary main
 # improved by Timo's patch
-whatchanged --root -c --patch-with-stat --summary master
+whatchanged --root -c --patch-with-stat --summary main
 # improved by Timo's patch
-whatchanged --root --cc --patch-with-stat --summary master
-whatchanged -SF master
-:noellipses whatchanged -SF master
-whatchanged -SF -p master
+whatchanged --root --cc --patch-with-stat --summary main
+whatchanged -SF main
+:noellipses whatchanged -SF main
+whatchanged -SF -p main
 
-log --patch-with-stat master -- dir/
-whatchanged --patch-with-stat master -- dir/
-log --patch-with-stat --summary master -- dir/
-whatchanged --patch-with-stat --summary master -- dir/
+log --patch-with-stat main -- dir/
+whatchanged --patch-with-stat main -- dir/
+log --patch-with-stat --summary main -- dir/
+whatchanged --patch-with-stat --summary main -- dir/
 
 show initial
 show --root initial
 show side
-show master
-show -c master
-show -m master
-show --first-parent master
+show main
+show -c main
+show -m main
+show --first-parent main
 show --stat side
 show --stat --summary side
 show --patch-with-stat side
@@ -414,22 +414,22 @@ show --patch-with-raw side
 show --patch-with-stat --summary side
 
 format-patch --stdout initial..side
-format-patch --stdout initial..master^
-format-patch --stdout initial..master
-format-patch --stdout --no-numbered initial..master
-format-patch --stdout --numbered initial..master
+format-patch --stdout initial..main^
+format-patch --stdout initial..main
+format-patch --stdout --no-numbered initial..main
+format-patch --stdout --numbered initial..main
 format-patch --attach --stdout initial..side
 format-patch --attach --stdout --suffix=.diff initial..side
-format-patch --attach --stdout initial..master^
-format-patch --attach --stdout initial..master
+format-patch --attach --stdout initial..main^
+format-patch --attach --stdout initial..main
 format-patch --inline --stdout initial..side
-format-patch --inline --stdout initial..master^
-format-patch --inline --stdout --numbered-files initial..master
-format-patch --inline --stdout initial..master
-format-patch --inline --stdout --subject-prefix=TESTCASE initial..master
+format-patch --inline --stdout initial..main^
+format-patch --inline --stdout --numbered-files initial..main
+format-patch --inline --stdout initial..main
+format-patch --inline --stdout --subject-prefix=TESTCASE initial..main
 config format.subjectprefix DIFFERENT_PREFIX
-format-patch --inline --stdout initial..master^^
-format-patch --stdout --cover-letter -n initial..master^
+format-patch --inline --stdout initial..main^^
+format-patch --stdout --cover-letter -n initial..main^
 
 diff --abbrev initial..side
 diff -U initial..side
@@ -448,13 +448,13 @@ diff --name-status dir2 dir
 diff --no-index --name-status dir2 dir
 diff --no-index --name-status -- dir2 dir
 diff --no-index dir dir3
-diff master master^ side
+diff main main^ side
 # Can't use spaces...
-diff --line-prefix=abc master master^ side
-diff --dirstat master~1 master~2
+diff --line-prefix=abc main main^ side
+diff --dirstat main~1 main~2
 diff --dirstat initial rearrange
 diff --dirstat-by-file initial rearrange
-diff --dirstat --cc master~1 master
+diff --dirstat --cc main~1 main
 # No-index --abbrev and --no-abbrev
 diff --raw initial
 :noellipses diff --raw initial
@@ -482,7 +482,7 @@ test_expect_success !WITH_BREAKING_CHANGES 'whatchanged needs --i-still-use-this
 '
 
 test_expect_success 'log -m matches pure log' '
-	git log master >result &&
+	git log main >result &&
 	process_diffs result >expected &&
 	git log -m >result &&
 	process_diffs result >actual &&
@@ -490,17 +490,17 @@ test_expect_success 'log -m matches pure log' '
 '
 
 test_expect_success 'log --diff-merges=on matches --diff-merges=separate' '
-	git log -p --diff-merges=separate master >result &&
+	git log -p --diff-merges=separate main >result &&
 	process_diffs result >expected &&
-	git log -p --diff-merges=on master >result &&
+	git log -p --diff-merges=on main >result &&
 	process_diffs result >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'log --dd matches --diff-merges=1 -p' '
-	git log --diff-merges=1 -p master >result &&
+	git log --diff-merges=1 -p main >result &&
 	process_diffs result >expected &&
-	git log --dd master >result &&
+	git log --dd main >result &&
 	process_diffs result >actual &&
 	test_cmp expected actual
 '
@@ -511,19 +511,19 @@ test_expect_success 'deny wrong log.diffMerges config' '
 '
 
 test_expect_success 'git config log.diffMerges first-parent' '
-	git log -p --diff-merges=first-parent master >result &&
+	git log -p --diff-merges=first-parent main >result &&
 	process_diffs result >expected &&
 	test_config log.diffMerges first-parent &&
-	git log -p --diff-merges=on master >result &&
+	git log -p --diff-merges=on main >result &&
 	process_diffs result >actual &&
 	test_cmp expected actual
 '
 
 test_expect_success 'git config log.diffMerges first-parent vs -m' '
-	git log -p --diff-merges=first-parent master >result &&
+	git log -p --diff-merges=first-parent main >result &&
 	process_diffs result >expected &&
 	test_config log.diffMerges first-parent &&
-	git log -p -m master >result &&
+	git log -p -m main >result &&
 	process_diffs result >actual &&
 	test_cmp expected actual
 '
@@ -572,7 +572,7 @@ test_expect_success 'diff-tree --stdin with log formatting' '
 	Third
 	Second
 	EOF
-	git rev-list master | git diff-tree --stdin --format=%s -s >actual &&
+	git rev-list main | git diff-tree --stdin --format=%s -s >actual &&
 	test_cmp expect actual
 '
 
@@ -585,16 +585,16 @@ test_expect_success 'diff-tree --stdin with pathspec' '
 
 	dir/sub
 	EOF
-	git rev-list master^ |
+	git rev-list main^ |
 	git diff-tree -r --stdin --name-only --format=%s dir >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'show A B ... -- <pathspec>' '
 	# side touches dir/sub, file0, and file3
-	# master^ touches dir/sub, and file1
-	# master^^ touches dir/sub, file0, and file2
-	git show --name-only --format="<%s>" side master^ master^^ -- dir >actual &&
+	# main^ touches dir/sub, and file1
+	# main^^ touches dir/sub, file0, and file2
+	git show --name-only --format="<%s>" side main^ main^^ -- dir >actual &&
 	cat >expect <<-\EOF &&
 	<Side>
 
@@ -610,7 +610,7 @@ test_expect_success 'show A B ... -- <pathspec>' '
 '
 
 test_expect_success 'diff -I<regex>: setup' '
-	git checkout master &&
+	git checkout main &&
 	test_seq 50 >file0 &&
 	git commit -m "Set up -I<regex> test file" file0 &&
 	test_seq 50 | sed -e "s/13/ten and three/" -e "/7\$/d" >file0 &&

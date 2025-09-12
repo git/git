@@ -9,7 +9,6 @@ run_tests=t
 
 case "$jobname" in
 linux-breaking-changes)
-	export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 	export WITH_BREAKING_CHANGES=YesPlease
 	;;
 linux-TEST-vars)
