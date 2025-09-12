@@ -17,6 +17,9 @@ UI, Workflows & Features
  * A new command "git last-modified" has been added to show the closest
    ancestor commit that touched each path.
 
+ * "git refs exists" that works like "git show-ref --exists" has been
+   added.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -46,6 +49,11 @@ Performance, Internal Implementation, Development Support etc.
  * Inspired by Ezekiel's recent effort to showcase Rust interface, the
    hash function implementation used to hash lines have been updated
    to the one used for ELF symbol lookup by Glibc.
+
+ * Instead of scanning for the remaining items to see if there are
+   still commits to be explored in the queue, use khash to remember
+   which items are still on the queue (an unacceptable alternative is
+   to reserve one object flag bits).
 
 
 Fixes since v2.51
@@ -151,6 +159,11 @@ including security updates, are included in this release.
    this.
    (merge 681f26bccc ds/ls-files-lazy-unsparse later to maint).
 
+ * Windows "real-time monitoring" interferes with the execution of
+   tests and affects negatively in both correctness and performance,
+   which has been disabled in Gitlab CI.
+   (merge 608cf5b793 ps/gitlab-ci-disable-windows-monitoring later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
    (merge cf7efa4f33 rj/t6137-cygwin-fix later to maint).
@@ -164,3 +177,8 @@ including security updates, are included in this release.
    (merge 374579c6d4 kh/doc-interpret-trailers-markup-fix later to maint).
    (merge 44dce6541c kh/doc-config-typofix later to maint).
    (merge 785628b173 js/doc-sending-patch-via-thunderbird later to maint).
+   (merge e5c27bd3d8 je/doc-add later to maint).
+   (merge 13296ac909 ps/object-store-midx-dedup-info later to maint).
+   (merge 2f4bf83ffc km/alias-doc-markup-fix later to maint).
+   (merge b0d97aac19 kh/doc-markup-fixes later to maint).
+   (merge f9a6705d9a tc/t0450-harden later to maint).
