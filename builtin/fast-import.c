@@ -188,6 +188,8 @@ static int global_argc;
 static const char **global_argv;
 static const char *global_prefix;
 
+static enum sign_mode signed_commit_mode = SIGN_VERBATIM;
+
 /* Memory pools */
 static struct mem_pool fi_mem_pool = {
 	.block_alloc = 2*1024*1024 - sizeof(struct mp_block),
@@ -2819,19 +2821,39 @@ static void parse_new_commit(const char *arg)
 	if (!committer)
 		die("Expected committer but didn't get one");
 
-	/* Process signatures (up to 2: one "sha1" and one "sha256") */
 	while (skip_prefix(command_buf.buf, "gpgsig ", &v)) {
 		struct signature_data sig = { NULL, NULL, STRBUF_INIT };
 
+		if (signed_commit_mode == SIGN_ABORT)
+			die(_("encountered signed commit; use "
+			      "--signed-commits=<mode> to handle it"));
+
 		parse_one_signature(&sig, v);
 
-		if (!strcmp(sig.hash_algo, "sha1"))
-			store_signature(&sig_sha1, &sig, "SHA-1");
-		else if (!strcmp(sig.hash_algo, "sha256"))
-			store_signature(&sig_sha256, &sig, "SHA-256");
-		else
-			BUG("parse_one_signature() returned unknown hash algo");
-
+		switch (signed_commit_mode) {
+		case SIGN_ABORT:
+			BUG("SIGN_ABORT should be handled before calling parse_one_signature()");
+			break;
+		case SIGN_WARN_VERBATIM:
+			warning(_("importing a commit signature verbatim"));
+			/* fallthru */
+		case SIGN_VERBATIM:
+			if (!strcmp(sig.hash_algo, "sha1"))
+				store_signature(&sig_sha1, &sig, "SHA-1");
+			else if (!strcmp(sig.hash_algo, "sha256"))
+				store_signature(&sig_sha256, &sig, "SHA-256");
+			else
+				die(_("parse_one_signature() returned unknown hash algo"));
+			break;
+		case SIGN_WARN_STRIP:
+			warning(_("stripping a commit signature"));
+			/* fallthru */
+		case SIGN_STRIP:
+			/* Just discard signature data */
+			strbuf_release(&sig.data);
+			free(sig.hash_algo);
+			break;
+		}
 		read_next_command();
 	}
 
@@ -3503,6 +3525,9 @@ static int parse_one_option(const char *option)
 		option_active_branches(option);
 	} else if (skip_prefix(option, "export-pack-edges=", &option)) {
 		option_export_pack_edges(option);
+	} else if (skip_prefix(option, "signed-commits=", &option)) {
+		if (parse_sign_mode(option, &signed_commit_mode))
+			usagef(_("unknown --signed-commits mode '%s'"), option);
 	} else if (!strcmp(option, "quiet")) {
 		show_stats = 0;
 		quiet = 1;
