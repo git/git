@@ -22,12 +22,12 @@ The submodule has its own history; the repository it is embedded
 in is called a superproject.
 
 On the filesystem, a submodule usually (but not always - see FORMS below)
-consists of (i) a Git directory located under the `$GIT_DIR/modules/`
+consists of (i) a Git directory located under the `$GIT_DIR/submodules/`
 directory of its superproject, (ii) a working directory inside the
 superproject's working directory, and a `.git` file at the root of
 the submodule's working directory pointing to (i).
 
-Assuming the submodule has a Git directory at `$GIT_DIR/modules/foo/`
+Assuming the submodule has a Git directory at `$GIT_DIR/submodules/foo/`
 and a working directory at `path/to/bar/`, the superproject tracks the
 submodule via a `gitlink` entry in the tree at `path/to/bar` and an entry
 in its `.gitmodules` file (see linkgit:gitmodules[5]) of the form
@@ -138,7 +138,7 @@ using older versions of Git.
 It is possible to construct these old form repositories manually.
 +
 When deinitialized or deleted (see below), the submodule's Git
-directory is automatically moved to `$GIT_DIR/modules/<name>/`
+directory is automatically moved to `$GIT_DIR/submodules/<name>/`
 of the superproject.
 
  * Deinitialized submodule: A `gitlink`, and a `.gitmodules` entry,
@@ -163,7 +163,7 @@ possible to checkout past commits without requiring fetching
 from another repository.
 +
 To completely remove a submodule, manually delete
-`$GIT_DIR/modules/<name>/`.
+`$GIT_DIR/submodules/<name>/`.
 
 ACTIVE SUBMODULES
 -----------------

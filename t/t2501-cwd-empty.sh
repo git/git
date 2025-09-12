@@ -239,7 +239,7 @@ test_submodule_removal () {
 	test "$path_status" = dir && test_status=test_must_fail
 
 	test_when_finished "git reset --hard HEAD~1" &&
-	test_when_finished "rm -rf .git/modules/my_submodule" &&
+	test_when_finished "rm -rf .git/submodules/my_submodule" &&
 
 	git checkout foo/bar/baz &&
 

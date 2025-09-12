@@ -250,6 +250,14 @@ char *gitdirname(char *);
 #define NAME_MAX 255
 #endif
 
+#ifdef NO_PATHCONF
+#ifndef _PC_NAME_MAX
+#define _PC_NAME_MAX 1 /* dummy value, only used for git_pathconf */
+#endif
+#define pathconf(a,b) git_pathconf(a,b)
+long git_pathconf(const char *path, int name);
+#endif
+
 typedef uintmax_t timestamp_t;
 #define PRItime PRIuMAX
 #define parse_timestamp strtoumax

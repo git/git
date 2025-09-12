@@ -866,7 +866,7 @@ test_expect_success 'submodule always visited' '
 '
 
 # If a submodule has a `sub/.git/` directory (rather than a file
-# pointing to the super's `.git/modules/sub`) and `core.fsmonitor`
+# pointing to the super's `.git/submodules/sub`) and `core.fsmonitor`
 # turned on in the submodule and the daemon is not yet started in
 # the submodule, and someone does a `git submodule absorbgitdirs`
 # in the super, Git will recursively invoke `git submodule--helper`
@@ -895,7 +895,7 @@ test_expect_success "submodule absorbgitdirs implicitly starts daemon" '
 	cat >expect <<-EOF &&
 	Migrating git directory of '\''dir_1/dir_2/sub'\'' from
 	'\''$cwd/dir_1/dir_2/sub/.git'\'' to
-	'\''$cwd/.git/modules/dir_1/dir_2/sub'\''
+	'\''$cwd/.git/submodules/dir_1%2fdir_2%2fsub'\''
 	EOF
 	GIT_TRACE2_EVENT="$PWD/super-sub.trace" \
 		git -C super submodule absorbgitdirs >out 2>actual &&

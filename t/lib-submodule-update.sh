@@ -161,7 +161,7 @@ replace_gitfile_with_git_dir () {
 }
 
 # Test that the .git directory in the submodule is unchanged (except for the
-# core.worktree setting, which appears only in $GIT_DIR/modules/$1/config).
+# core.worktree setting, which appears only in $GIT_DIR/submodules/$1/config).
 # Call this function before test_submodule_content as the latter might
 # write the index file leading to false positive index differences.
 #
@@ -170,23 +170,23 @@ replace_gitfile_with_git_dir () {
 test_git_directory_is_unchanged () {
 	# does core.worktree point at the right place?
 	echo "../../../$1" >expect &&
-	git -C ".git/modules/$1" config core.worktree >actual &&
+	git -C ".git/submodules/$1" config core.worktree >actual &&
 	test_cmp expect actual &&
 	# remove it temporarily before comparing, as
 	# "$1/.git/config" lacks it...
-	git -C ".git/modules/$1" config --unset core.worktree &&
-	diff -r ".git/modules/$1" "$1/.git" &&
+	git -C ".git/submodules/$1" config --unset core.worktree &&
+	diff -r ".git/submodules/$1" "$1/.git" &&
 	# ... and then restore.
-	git -C ".git/modules/$1" config core.worktree "../../../$1"
+	git -C ".git/submodules/$1" config core.worktree "../../../$1"
 }
 
 test_git_directory_exists () {
-	test -e ".git/modules/$1" &&
+	test -e ".git/submodules/$1" &&
 	if test -f sub1/.git
 	then
 		# does core.worktree point at the right place?
 		echo "../../../$1" >expect &&
-		git -C ".git/modules/$1" config core.worktree >actual &&
+		git -C ".git/submodules/$1" config core.worktree >actual &&
 		test_cmp expect actual
 	fi
 }
@@ -225,22 +225,22 @@ reset_work_tree_to () {
 reset_work_tree_to_interested () {
 	reset_work_tree_to $1 &&
 	# make the submodule git dirs available
-	if ! test -d submodule_update/.git/modules/sub1
+	if ! test -d submodule_update/.git/submodules/sub1
 	then
-		mkdir -p submodule_update/.git/modules &&
-		cp -r submodule_update_repo/.git/modules/sub1 submodule_update/.git/modules/sub1
-		GIT_WORK_TREE=. git -C submodule_update/.git/modules/sub1 config --unset core.worktree
+		mkdir -p submodule_update/.git/submodules &&
+		cp -r submodule_update_repo/.git/submodules/sub1 submodule_update/.git/submodules/sub1
+		GIT_WORK_TREE=. git -C submodule_update/.git/submodules/sub1 config --unset core.worktree
 	fi &&
-	if ! test -d submodule_update/.git/modules/sub1/modules/sub2
+	if ! test -d submodule_update/.git/submodules/sub1/submodules/sub2
 	then
-		mkdir -p submodule_update/.git/modules/sub1/modules &&
-		cp -r submodule_update_repo/.git/modules/sub1/modules/sub2 submodule_update/.git/modules/sub1/modules/sub2
+		mkdir -p submodule_update/.git/submodules/sub1/submodules &&
+		cp -r submodule_update_repo/.git/submodules/sub1/submodules/sub2 submodule_update/.git/submodules/sub1/submodules/sub2
 		# core.worktree is unset for sub2 as it is not checked out
 	fi &&
 	# indicate we are interested in the submodule:
 	git -C submodule_update config submodule.sub1.url "bogus" &&
 	# sub1 might not be checked out, so use the git dir
-	git -C submodule_update/.git/modules/sub1 config submodule.sub2.url "bogus"
+	git -C submodule_update/.git/submodules/sub1 config submodule.sub2.url "bogus"
 }
 
 # Test that the superproject contains the content according to commit "$1"
@@ -742,7 +742,7 @@ test_submodule_recursing_with_args_common () {
 			$command remove_sub1 &&
 			test_superproject_content origin/remove_sub1 &&
 			! test -e sub1 &&
-			test_must_fail git config -f .git/modules/sub1/config core.worktree
+			test_must_fail git config -f .git/submodules/sub1/config core.worktree
 		)
 	'
 	# ... absorbing a .git directory along the way.
@@ -753,7 +753,7 @@ test_submodule_recursing_with_args_common () {
 			cd submodule_update &&
 			git branch -t remove_sub1 origin/remove_sub1 &&
 			replace_gitfile_with_git_dir sub1 &&
-			rm -rf .git/modules &&
+			rm -rf .git/submodules &&
 			$command remove_sub1 &&
 			test_superproject_content origin/remove_sub1 &&
 			! test -e sub1 &&
@@ -803,8 +803,8 @@ test_submodule_recursing_with_args_common () {
 			$command no_submodule &&
 			test_superproject_content origin/no_submodule &&
 			test_path_is_missing sub1 &&
-			test_must_fail git config -f .git/modules/sub1/config core.worktree &&
-			test_must_fail git config -f .git/modules/sub1/modules/sub2/config core.worktree
+			test_must_fail git config -f .git/submodules/sub1/config core.worktree &&
+			test_must_fail git config -f .git/submodules/sub1/submodules/sub2/config core.worktree
 		)
 	'
 
@@ -937,7 +937,7 @@ test_submodule_switch_recursing_with_args () {
 			cd submodule_update &&
 			git branch -t replace_sub1_with_directory origin/replace_sub1_with_directory &&
 			replace_gitfile_with_git_dir sub1 &&
-			rm -rf .git/modules &&
+			rm -rf .git/submodules &&
 			$command replace_sub1_with_directory &&
 			test_superproject_content origin/replace_sub1_with_directory &&
 			test_git_directory_exists sub1
@@ -946,15 +946,15 @@ test_submodule_switch_recursing_with_args () {
 
 	# ... and ignored files are ignored
 	test_expect_success "$command: replace submodule with a file works ignores ignored files in submodule" '
-		test_when_finished "rm submodule_update/.git/modules/sub1/info/exclude" &&
+		test_when_finished "rm submodule_update/.git/submodules/sub1/info/exclude" &&
 		prolog &&
 		reset_work_tree_to_interested add_sub1 &&
 		(
 			cd submodule_update &&
-			rm -rf .git/modules/sub1/info &&
+			rm -rf .git/submodules/sub1/info &&
 			git branch -t replace_sub1_with_file origin/replace_sub1_with_file &&
-			mkdir .git/modules/sub1/info &&
-			echo ignored >.git/modules/sub1/info/exclude &&
+			mkdir .git/submodules/sub1/info &&
+			echo ignored >.git/submodules/sub1/info/exclude &&
 			: >sub1/ignored &&
 			$command replace_sub1_with_file &&
 			test_superproject_content origin/replace_sub1_with_file &&
@@ -1034,7 +1034,7 @@ test_submodule_forced_switch_recursing_with_args () {
 			cd submodule_update &&
 			git branch -t replace_sub1_with_directory origin/replace_sub1_with_directory &&
 			replace_gitfile_with_git_dir sub1 &&
-			rm -rf .git/modules/sub1 &&
+			rm -rf .git/submodules/sub1 &&
 			$command replace_sub1_with_directory &&
 			test_superproject_content origin/replace_sub1_with_directory &&
 			test_git_directory_exists sub1

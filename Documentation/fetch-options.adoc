@@ -215,7 +215,7 @@ ifndef::git-pull[]
 	submodule that has commits that are referenced by a newly fetched
 	superproject commit but are missing in the local submodule clone. A
 	changed submodule can be fetched as long as it is present locally e.g.
-	in `$GIT_DIR/modules/` (see linkgit:gitsubmodules[7]); if the upstream
+	in `$GIT_DIR/submodules/` (see linkgit:gitsubmodules[7]); if the upstream
 	adds a new submodule, that submodule cannot be fetched until it is
 	cloned e.g. by `git submodule update`.
 +

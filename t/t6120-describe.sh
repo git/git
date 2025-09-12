@@ -357,7 +357,7 @@ test_expect_success 'setup and absorb a submodule' '
 '
 
 test_expect_success 'describe chokes on severely broken submodules' '
-	mv .git/modules/sub1/ .git/modules/sub_moved &&
+	mv .git/submodules/sub1/ .git/submodules/sub_moved &&
 	test_must_fail git describe --dirty
 '
 
@@ -371,7 +371,7 @@ test_expect_success 'describe with --work-tree ignoring a broken submodule' '
 		cd "$TEST_DIRECTORY" &&
 		git --git-dir "$TRASH_DIRECTORY/.git" --work-tree "$TRASH_DIRECTORY" describe --broken >"$TRASH_DIRECTORY/out"
 	) &&
-	test_when_finished "mv .git/modules/sub_moved .git/modules/sub1" &&
+	test_when_finished "mv .git/submodules/sub_moved .git/submodules/sub1" &&
 	grep broken out
 '
 

@@ -1278,22 +1278,29 @@ void check_for_new_submodule_commits(struct object_id *oid)
 
 /*
  * Returns 1 if there is at least one submodule gitdir in
- * $GIT_DIR/modules and 0 otherwise. This follows
+ * $GIT_DIR/(sub)modules and 0 otherwise. This follows
  * submodule_name_to_gitdir(), which looks for submodules in
- * $GIT_DIR/modules, not $GIT_COMMON_DIR.
+ * $GIT_DIR/(sub)modules, not $GIT_COMMON_DIR.
  *
- * A submodule can be moved to $GIT_DIR/modules manually by running "git
- * submodule absorbgitdirs", or it may be initialized there by "git
- * submodule update".
+ * A submodule can be moved to $GIT_DIR/(sub)modules manually by running
+ * "git submodule absorbgitdirs", or it may be initialized there by
+ * "git submodule update".
  */
 static int repo_has_absorbed_submodules(struct repository *r)
 {
 	int ret;
 	struct strbuf buf = STRBUF_INIT;
 
+	/* check legacy path */
 	repo_git_path_append(r, &buf, "modules/");
 	ret = file_exists(buf.buf) && !is_empty_dir(buf.buf);
+	strbuf_reset(&buf);
+
+	/* new (encoded name) path */
+	repo_git_path_append(r, &buf, "submodules/");
+	ret |= file_exists(buf.buf) && !is_empty_dir(buf.buf);
 	strbuf_release(&buf);
+
 	return ret;
 }
 
@@ -2156,27 +2163,10 @@ int submodule_move_head(const char *path, const char *super_prefix,
 			if (!submodule_uses_gitfile(path))
 				absorb_git_dir_into_superproject(path,
 								 super_prefix);
-			else {
-				char *dotgit = xstrfmt("%s/.git", path);
-				char *git_dir = xstrdup(read_gitfile(dotgit));
-
-				free(dotgit);
-				if (validate_submodule_git_dir(git_dir,
-							       sub->name) < 0)
-					die(_("refusing to create/use '%s' in "
-					      "another submodule's git dir"),
-					    git_dir);
-				free(git_dir);
-			}
 		} else {
 			struct strbuf gitdir = STRBUF_INIT;
 			submodule_name_to_gitdir(&gitdir, the_repository,
 						 sub->name);
-			if (validate_submodule_git_dir(gitdir.buf,
-						       sub->name) < 0)
-				die(_("refusing to create/use '%s' in another "
-				      "submodule's git dir"),
-				    gitdir.buf);
 			connect_work_tree_and_git_dir(path, gitdir.buf, 0);
 			strbuf_release(&gitdir);
 
@@ -2256,47 +2246,6 @@ out:
 	return ret;
 }
 
-int validate_submodule_git_dir(char *git_dir, const char *submodule_name)
-{
-	size_t len = strlen(git_dir), suffix_len = strlen(submodule_name);
-	char *p;
-	int ret = 0;
-
-	if (len <= suffix_len || (p = git_dir + len - suffix_len)[-1] != '/' ||
-	    strcmp(p, submodule_name))
-		BUG("submodule name '%s' not a suffix of git dir '%s'",
-		    submodule_name, git_dir);
-
-	/*
-	 * We prevent the contents of sibling submodules' git directories to
-	 * clash.
-	 *
-	 * Example: having a submodule named `hippo` and another one named
-	 * `hippo/hooks` would result in the git directories
-	 * `.git/modules/hippo/` and `.git/modules/hippo/hooks/`, respectively,
-	 * but the latter directory is already designated to contain the hooks
-	 * of the former.
-	 */
-	for (; *p; p++) {
-		if (is_dir_sep(*p)) {
-			char c = *p;
-
-			*p = '\0';
-			if (is_git_directory(git_dir))
-				ret = -1;
-			*p = c;
-
-			if (ret < 0)
-				return error(_("submodule git dir '%s' is "
-					       "inside git dir '%.*s'"),
-					     git_dir,
-					     (int)(p - git_dir), git_dir);
-		}
-	}
-
-	return 0;
-}
-
 int validate_submodule_path(const char *path)
 {
 	char *p = xstrdup(path);
@@ -2355,9 +2304,6 @@ static void relocate_single_git_dir_into_superproject(const char *path,
 		die(_("could not lookup name for submodule '%s'"), path);
 
 	submodule_name_to_gitdir(&new_gitdir, the_repository, sub->name);
-	if (validate_submodule_git_dir(new_gitdir.buf, sub->name) < 0)
-		die(_("refusing to move '%s' into an existing git dir"),
-		    real_old_git_dir);
 	if (safe_create_leading_directories_const(the_repository, new_gitdir.buf) < 0)
 		die(_("could not create directory '%s'"), new_gitdir.buf);
 	real_new_git_dir = real_pathdup(new_gitdir.buf, 1);
@@ -2581,29 +2527,73 @@ cleanup:
 	return ret;
 }
 
+static void strbuf_addstr_case_encode(struct strbuf *dst, const char *src)
+{
+	for (; *src; src++) {
+		unsigned char c = *src;
+		if (c >= 'A' && c <= 'Z') {
+			strbuf_addch(dst, '_');
+			strbuf_addch(dst, c - 'A' + 'a');
+		} else {
+			strbuf_addch(dst, c);
+		}
+	}
+}
+
 void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
 			      const char *submodule_name)
 {
-	/*
-	 * NEEDSWORK: The current way of mapping a submodule's name to
-	 * its location in .git/modules/ has problems with some naming
-	 * schemes. For example, if a submodule is named "foo" and
-	 * another is named "foo/bar" (whether present in the same
-	 * superproject commit or not - the problem will arise if both
-	 * superproject commits have been checked out at any point in
-	 * time), or if two submodule names only have different cases in
-	 * a case-insensitive filesystem.
-	 *
-	 * There are several solutions, including encoding the path in
-	 * some way, introducing a submodule.<name>.gitdir config in
-	 * .git/config (not .gitmodules) that allows overriding what the
-	 * gitdir of a submodule would be (and teach Git, upon noticing
-	 * a clash, to automatically determine a non-clashing name and
-	 * to write such a config), or introducing a
-	 * submodule.<name>.gitdir config in .gitmodules that repo
-	 * administrators can explicitly set. Nothing has been decided,
-	 * so for now, just append the name at the end of the path.
-	 */
+	struct strbuf encoded_sub_name = STRBUF_INIT, tmp = STRBUF_INIT;
+	size_t base_len, encoded_len;
+	char *gitdir_path, *key, *p;
+	long name_max;
+
+	/* Allow config override. */
+	key = xstrfmt("submodule.%s.gitdirpath", submodule_name);
+	if (!repo_config_get_string(r, key, &gitdir_path)) {
+		strbuf_addstr(buf, gitdir_path);
+		free(key);
+		free(gitdir_path);
+		return;
+	}
+	free(key);
+
+	/* Legacy behavior: allow existing paths under modules/<name>. */
 	repo_git_path_append(r, buf, "modules/");
 	strbuf_addstr(buf, submodule_name);
+	if (!access(buf->buf, F_OK))
+		return;
+
+	/* New style (encoded) paths go under submodules/<encoded>. */
+	strbuf_reset(buf);
+	repo_git_path_append(r, buf, "submodules/");
+	base_len = buf->len;
+
+	/* URL-encode then case case-encode A to _a, B to _b and so on */
+	strbuf_addstr_urlencode(&tmp, submodule_name, is_rfc3986_unreserved);
+	strbuf_addstr_case_encode(&encoded_sub_name, tmp.buf);
+	strbuf_release(&tmp);
+	strbuf_addbuf(buf, &encoded_sub_name);
+
+	/* Ensure final path length is below NAME_MAX after encoding */
+	name_max = pathconf(buf->buf, _PC_NAME_MAX);
+	if (name_max == -1)
+		name_max = NAME_MAX;
+
+	encoded_len = buf->len - base_len;
+	if (encoded_len > name_max)
+		/*
+		 * TODO: make this smarter; instead of erroring out, maybe we could trim or
+		 * shard the gitdir names to make them fit under NAME_MAX.
+		 */
+		die(_("encoded submodule name '%s' is too long (%"PRIuMAX" bytes, limit %"PRIuMAX")"),
+		    encoded_sub_name.buf, (uintmax_t)encoded_len, (uintmax_t)name_max);
+
+	/* Trigger a BUG if these invariants do not hold */
+	p = buf->buf + buf->len - encoded_len;
+	if (buf->len <= encoded_len || p[-1] != '/' || strcmp(p, encoded_sub_name.buf))
+		BUG("encoded submodule name '%s' is not a suffix of git dir '%s'",
+		    encoded_sub_name.buf, buf->buf);
+
+	strbuf_release(&encoded_sub_name);
 }

@@ -138,11 +138,6 @@ void submodule_name_to_gitdir(struct strbuf *buf, struct repository *r,
 			      const char *submodule_name);
 
 /*
- * Make sure that no submodule's git dir is nested in a sibling submodule's.
- */
-int validate_submodule_git_dir(char *git_dir, const char *submodule_name);
-
-/*
  * Make sure that the given submodule path does not follow symlinks.
  */
 int validate_submodule_path(const char *path);

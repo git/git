@@ -87,10 +87,10 @@ test_expect_success 'index.skipHash config option' '
 	git -c protocol.file.allow=always submodule add ./ sub &&
 	git config index.skipHash false &&
 	git -C sub config index.skipHash true &&
-	rm -f .git/modules/sub/index &&
+	rm -f .git/submodules/sub/index &&
 	>sub/file &&
 	git -C sub add a &&
-	test_trailing_hash .git/modules/sub/index >hash &&
+	test_trailing_hash .git/submodules/sub/index >hash &&
 	test_cmp expect hash &&
 	git -C sub fsck
 '

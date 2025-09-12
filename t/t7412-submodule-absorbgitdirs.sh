@@ -29,13 +29,13 @@ test_expect_success 'absorb the git dir' '
 	cat >expect <<-EOF &&
 	Migrating git directory of '\''sub1'\'' from
 	'\''$cwd/sub1/.git'\'' to
-	'\''$cwd/.git/modules/sub1'\''
+	'\''$cwd/.git/submodules/sub1'\''
 	EOF
 	git submodule absorbgitdirs 2>actual &&
 	test_cmp expect actual &&
 	git fsck &&
 	test -f sub1/.git &&
-	test -d .git/modules/sub1 &&
+	test -d .git/submodules/sub1 &&
 	git status >actual.1 &&
 	git -C sub1 rev-parse HEAD >actual.2 &&
 	test_cmp expect.1 actual.1 &&
@@ -47,7 +47,7 @@ test_expect_success 'absorbing does not fail for deinitialized submodules' '
 	git submodule deinit --all &&
 	git submodule absorbgitdirs 2>err &&
 	test_must_be_empty err &&
-	test -d .git/modules/sub1 &&
+	test -d .git/submodules/sub1 &&
 	test -d sub1 &&
 	! test -e sub1/.git
 '
@@ -68,12 +68,12 @@ test_expect_success 'absorb the git dir in a nested submodule' '
 	cat >expect <<-EOF &&
 	Migrating git directory of '\''sub1/nested'\'' from
 	'\''$cwd/sub1/nested/.git'\'' to
-	'\''$cwd/.git/modules/sub1/modules/nested'\''
+	'\''$cwd/.git/submodules/sub1/submodules/nested'\''
 	EOF
 	git submodule absorbgitdirs 2>actual &&
 	test_cmp expect actual &&
 	test -f sub1/nested/.git &&
-	test -d .git/modules/sub1/modules/nested &&
+	test -d .git/submodules/sub1/submodules/nested &&
 	git status >actual.1 &&
 	git -C sub1/nested rev-parse HEAD >actual.2 &&
 	test_cmp expect.1 actual.1 &&
@@ -84,11 +84,11 @@ test_expect_success 're-setup nested submodule' '
 	# un-absorb the direct submodule, to test if the nested submodule
 	# is still correct (needs a rewrite of the gitfile only)
 	rm -rf sub1/.git &&
-	mv .git/modules/sub1 sub1/.git &&
+	mv .git/submodules/sub1 sub1/.git &&
 	GIT_WORK_TREE=. git -C sub1 config --unset core.worktree &&
 	# fixup the nested submodule
-	echo "gitdir: ../.git/modules/nested" >sub1/nested/.git &&
-	GIT_WORK_TREE=../../../nested git -C sub1/.git/modules/nested config \
+	echo "gitdir: ../.git/submodules/nested" >sub1/nested/.git &&
+	GIT_WORK_TREE=../../../nested git -C sub1/.git/submodules/nested config \
 		core.worktree "../../../nested" &&
 	# make sure this re-setup is correct
 	git status --ignore-submodules=none &&
@@ -105,13 +105,13 @@ test_expect_success 'absorb the git dir in a nested submodule' '
 	cat >expect <<-EOF &&
 	Migrating git directory of '\''sub1'\'' from
 	'\''$cwd/sub1/.git'\'' to
-	'\''$cwd/.git/modules/sub1'\''
+	'\''$cwd/.git/submodules/sub1'\''
 	EOF
 	git submodule absorbgitdirs 2>actual &&
 	test_cmp expect actual &&
 	test -f sub1/.git &&
 	test -f sub1/nested/.git &&
-	test -d .git/modules/sub1/modules/nested &&
+	test -d .git/submodules/sub1/submodules/nested &&
 	git status >actual.1 &&
 	git -C sub1/nested rev-parse HEAD >actual.2 &&
 	test_cmp expect.1 actual.1 &&
@@ -133,7 +133,7 @@ test_expect_success 'absorb the git dir outside of primary worktree' '
 	cat >expect <<-EOF &&
 	Migrating git directory of '\''sub2'\'' from
 	'\''$cwd/repo-wt/sub2/.git'\'' to
-	'\''$cwd/repo-bare.git/worktrees/repo-wt/modules/sub2'\''
+	'\''$cwd/repo-bare.git/worktrees/repo-wt/submodules/sub2'\''
 	EOF
 	git -C repo-wt submodule absorbgitdirs 2>actual &&
 	test_cmp expect actual

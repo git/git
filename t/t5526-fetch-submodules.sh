@@ -1143,7 +1143,7 @@ test_expect_success 'fetch --recurse-submodules updates name-conflicted, unpopul
 	head1=$(git -C same-name-1/submodule rev-parse HEAD) &&
 	head2=$(git -C same-name-2/submodule rev-parse HEAD) &&
 	(
-		cd same-name-downstream/.git/modules/submodule &&
+		cd same-name-downstream/.git/submodules/submodule &&
 		# The submodule has core.worktree pointing to the "git
 		# rm"-ed directory, overwrite the invalid value. See
 		# comment in get_fetch_task_from_changed() for more

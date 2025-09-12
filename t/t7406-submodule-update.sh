@@ -864,8 +864,8 @@ test_expect_success 'submodule add places git-dir in superprojects git-dir' '
 	 (cd deeper/submodule &&
 	  git log > ../../expected
 	 ) &&
-	 (cd .git/modules/deeper/submodule &&
-	  git log > ../../../../actual
+	 (cd .git/submodules/deeper%2fsubmodule &&
+	  git log > ../../../actual
 	 ) &&
 	 test_cmp expected actual
 	)
@@ -882,8 +882,8 @@ test_expect_success 'submodule update places git-dir in superprojects git-dir' '
 	 (cd deeper/submodule &&
 	  git log > ../../expected
 	 ) &&
-	 (cd .git/modules/deeper/submodule &&
-	  git log > ../../../../actual
+	 (cd .git/submodules/deeper%2fsubmodule &&
+	  git log > ../../../actual
 	 ) &&
 	 test_cmp expected actual
 	)
@@ -899,7 +899,7 @@ test_expect_success 'submodule add places git-dir in superprojects git-dir recur
 	  git commit -m "added subsubmodule" &&
 	  git push origin :
 	 ) &&
-	 (cd .git/modules/deeper/submodule/modules/subsubmodule &&
+	 (cd .git/submodules/deeper%2fsubmodule/submodules/subsubmodule &&
 	  git log > ../../../../../actual
 	 ) &&
 	 git add deeper/submodule &&
@@ -949,7 +949,7 @@ test_expect_success 'submodule update places git-dir in superprojects git-dir re
 	 (cd submodule/subsubmodule &&
 	  git log > ../../expected
 	 ) &&
-	 (cd .git/modules/submodule/modules/subsubmodule &&
+	 (cd .git/submodules/submodule/submodules/subsubmodule &&
 	  git log > ../../../../../actual
 	 ) &&
 	 test_cmp expected actual
@@ -1298,7 +1298,7 @@ test_expect_success CASE_INSENSITIVE_FS,SYMLINKS \
 	git init captain &&
 	(
 		cd captain &&
-		git submodule add --name x/y "$hook_repo_path" A/modules/x &&
+		git submodule add --name x/y "$hook_repo_path" A/submodules/x &&
 		test_tick &&
 		git commit -m add-submodule &&
 

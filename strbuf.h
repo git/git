@@ -640,6 +640,8 @@ static inline void strbuf_complete_line(struct strbuf *sb)
 
 typedef int (*char_predicate)(char ch);
 
+int is_rfc3986_unreserved(char ch);
+
 void strbuf_addstr_urlencode(struct strbuf *sb, const char *name,
 			     char_predicate allow_unencoded_fn);
 
