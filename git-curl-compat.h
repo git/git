@@ -46,6 +46,13 @@
 #endif
 
 /**
+ * curl_global_trace() was added in 8.3.0, released September 2023.
+ */
+#if LIBCURL_VERSION_NUM >= 0x080300
+#define GIT_CURL_HAVE_GLOBAL_TRACE 1
+#endif
+
+/**
  * CURLOPT_TCP_KEEPCNT was added in 8.9.0, released in July, 2024.
  */
 #if LIBCURL_VERSION_NUM >= 0x080900
