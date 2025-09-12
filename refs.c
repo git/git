@@ -653,7 +653,7 @@ char *repo_default_branch_name(struct repository *r, int quiet)
 		die(_("could not retrieve `%s`"), config_display_key);
 
 	if (!ret) {
-		ret = xstrdup("master");
+		ret = xstrdup("main");
 		if (!quiet)
 			advise_if_enabled(ADVICE_DEFAULT_BRANCH_NAME,
 					  _(default_branch_name_advice), ret);
