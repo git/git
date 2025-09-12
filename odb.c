@@ -357,6 +357,11 @@ static void free_object_directory(struct odb_source *source)
 	free(source->path);
 	odb_clear_loose_cache(source);
 	loose_object_map_clear(&source->loose_map);
+
+	free_commit_graph(source->commit_graph);
+	source->commit_graph = NULL;
+	source->commit_graph_attempted = 0;
+
 	free(source);
 }
 
@@ -1021,10 +1026,6 @@ void odb_clear(struct object_database *o)
 
 	oidmap_clear(&o->replace_map, 1);
 	pthread_mutex_destroy(&o->replace_mutex);
-
-	free_commit_graph(o->commit_graph);
-	o->commit_graph = NULL;
-	o->commit_graph_attempted = 0;
 
 	free_object_directories(o);
 	o->sources_tail = NULL;

@@ -48,10 +48,9 @@ int open_commit_graph_chain(const char *chain_file, int *fd, struct stat *st,
 int parse_commit_in_graph(struct repository *r, struct commit *item);
 
 /*
- * Fills `*pos` with the graph position of `c`, and returns 1 if `c` is
- * found in the commit-graph belonging to `r`, or 0 otherwise.
- * Initializes the commit-graph belonging to `r` if it hasn't been
- * already.
+ * Fills `*pos` with the graph position of `c`, and returns the graph `c` is
+ * found in, or NULL otherwise. Initializes the commit-graphs belonging to
+ * `r` if it hasn't been already.
  *
  * Note: this is a low-level helper that does not alter any slab data
  * associated with `c`. Useful in circumstances where the slab data is
@@ -59,8 +58,9 @@ int parse_commit_in_graph(struct repository *r, struct commit *item);
  *
  * In most cases, callers should use `parse_commit_in_graph()` instead.
  */
-int repo_find_commit_pos_in_graph(struct repository *r, struct commit *c,
-				  uint32_t *pos);
+struct commit_graph *repo_find_commit_pos_in_graph(struct repository *r,
+						   struct commit *c,
+						   uint32_t *pos);
 
 /*
  * Look up the given commit ID in the commit-graph. This will only return a
@@ -185,7 +185,7 @@ int write_commit_graph(struct odb_source *source,
 
 int verify_commit_graph(struct commit_graph *g, int flags);
 
-void close_commit_graph(struct object_database *);
+void close_commit_graph(struct odb_source *);
 void free_commit_graph(struct commit_graph *);
 
 /*
