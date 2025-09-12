@@ -1050,5 +1050,108 @@ test_expect_success 'check-rules null termination' '
 	test_cmp expect actual
 '
 
+test_expect_success 'clean' '
+	git -C repo sparse-checkout set --cone deep/deeper1 &&
+	git -C repo sparse-checkout reapply &&
+	mkdir repo/deep/deeper2 repo/folder1 &&
+
+	# Add untracked files
+	touch repo/deep/deeper2/file &&
+	touch repo/folder1/file &&
+
+	cat >expect <<-\EOF &&
+	Removing deep/deeper2/
+	Removing folder1/
+	EOF
+
+	git -C repo sparse-checkout clean >out &&
+	test_cmp expect out &&
+
+	test_path_is_missing repo/deep/deeper2 &&
+	test_path_is_missing repo/folder1
+'
+
+test_expect_success 'clean with sparse file states' '
+	test_when_finished git reset --hard &&
+	git -C repo sparse-checkout set --cone deep/deeper1 &&
+	mkdir repo/folder2 &&
+
+	# create an untracked file and a modified file
+	touch repo/folder2/file &&
+	echo dirty >repo/folder2/a &&
+
+	# First clean/reapply pass will do nothing.
+	git -C repo sparse-checkout clean >out &&
+	test_must_be_empty out &&
+	test_path_exists repo/folder2/a &&
+	test_path_exists repo/folder2/file &&
+
+	git -C repo sparse-checkout reapply 2>err &&
+	test_grep folder2 err &&
+	test_path_exists repo/folder2/a &&
+	test_path_exists repo/folder2/file &&
+
+	# Now, stage the change to the tracked file.
+	git -C repo add --sparse folder2/a &&
+
+	# Clean will continue not doing anything.
+	git -C repo sparse-checkout clean >out &&
+	test_line_count = 0 out &&
+	test_path_exists repo/folder2/a &&
+	test_path_exists repo/folder2/file &&
+
+	# But we can reapply to remove the staged change.
+	git -C repo sparse-checkout reapply 2>err &&
+	test_grep folder2 err &&
+	test_path_is_missing repo/folder2/a &&
+	test_path_exists repo/folder2/file &&
+
+	# We can clean now.
+	cat >expect <<-\EOF &&
+	Removing folder2/
+	EOF
+	git -C repo sparse-checkout clean >out &&
+	test_cmp expect out &&
+	test_path_is_missing repo/folder2 &&
+
+	# At the moment, the file is staged.
+	cat >expect <<-\EOF &&
+	M  folder2/a
+	EOF
+
+	git -C repo status -s >out &&
+	test_cmp expect out &&
+
+	# Reapply persists the modified state.
+	git -C repo sparse-checkout reapply &&
+	cat >expect <<-\EOF &&
+	M  folder2/a
+	EOF
+	git -C repo status -s >out &&
+	test_cmp expect out &&
+
+	# Committing the change leads to resolved status.
+	git -C repo commit -m "modified" &&
+	git -C repo status -s >out &&
+	test_must_be_empty out &&
+
+	# Repeat, but this time commit before reapplying.
+	mkdir repo/folder2/ &&
+	echo dirtier >repo/folder2/a &&
+	git -C repo add --sparse folder2/a &&
+	git -C repo sparse-checkout clean >out &&
+	test_must_be_empty out &&
+	test_path_exists repo/folder2/a &&
+
+	# Committing without reapplying makes it look like a deletion
+	# due to no skip-worktree bit.
+	git -C repo commit -m "dirtier" &&
+	git -C repo status -s >out &&
+	test_must_be_empty out &&
+
+	git -C repo sparse-checkout reapply &&
+	git -C repo status -s >out &&
+	test_must_be_empty out
+'
 
 test_done

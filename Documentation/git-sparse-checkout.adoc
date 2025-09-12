@@ -9,7 +9,7 @@ git-sparse-checkout - Reduce your working tree to a subset of tracked files
 SYNOPSIS
 --------
 [verse]
-'git sparse-checkout' (init | list | set | add | reapply | disable | check-rules) [<options>]
+'git sparse-checkout' (init | list | set | add | reapply | disable | check-rules | clean) [<options>]
 
 
 DESCRIPTION
@@ -110,6 +110,23 @@ The `reapply` command can also take `--[no-]cone` and `--[no-]sparse-index`
 flags, with the same meaning as the flags from the `set` command, in order
 to change which sparsity mode you are using without needing to also respecify
 all sparsity paths.
+
+'clean'::
+	Opportunistically remove files outside of the sparse-checkout
+	definition. This command requires cone mode to use recursive
+	directory matches to determine which files should be removed. A
+	file is considered for removal if it is contained within a tracked
+	directory that is outside of the sparse-checkout definition.
++
+Some special cases, such as merge conflicts or modified files outside of
+the sparse-checkout definition could lead to keeping files that would
+otherwise be removed. Resolve conflicts, stage modifications, and use
+`git sparse-checkout reapply` in conjunction with `git sparse-checkout
+clean` to resolve these cases.
++
+This command can be used to be sure the sparse index works efficiently,
+though it does not require enabling the sparse index feature via the
+`index.sparse=true` configuration.
 
 'disable'::
 	Disable the `core.sparseCheckout` config setting, and restore the
