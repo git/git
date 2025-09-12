@@ -27,6 +27,10 @@
 extern "C" {
 #endif /* #ifdef __cplusplus */
 
+#define NO 0
+#define YES 1
+#define MAYBE 2
+
 /* xpparm_t.flags */
 #define XDF_NEED_MINIMAL (1 << 0)
 

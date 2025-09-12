@@ -24,6 +24,7 @@
 #define XINCLUDE_H
 
 #include "git-compat-util.h"
+#include <compat/rust_types.h>
 #include "xmacros.h"
 #include "xdiff.h"
 #include "xtypes.h"
