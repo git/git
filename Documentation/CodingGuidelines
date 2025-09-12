@@ -650,6 +650,12 @@ For C programs:
    cases. However, it is recommended to find a more descriptive name wherever
    possible to improve the readability and maintainability of the code.
 
+ - Bit fields should be defined without a space around the colon. E.g.
+
+   unsigned my_field:1;
+   unsigned other_field:1;
+   unsigned field_with_longer_name:1;
+
 For Perl programs:
 
  - Most of the C guidelines above apply.
