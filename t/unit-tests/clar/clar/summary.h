@@ -23,10 +23,11 @@ static int clar_summary_testsuite(struct clar_summary *summary,
     int idn, const char *name, time_t timestamp,
     int test_count, int fail_count, int error_count)
 {
-	struct tm *tm = localtime(&timestamp);
+	struct tm tm;
 	char iso_dt[20];
 
-	if (strftime(iso_dt, sizeof(iso_dt), "%Y-%m-%dT%H:%M:%S", tm) == 0)
+	localtime_r(&timestamp, &tm);
+	if (strftime(iso_dt, sizeof(iso_dt), "%Y-%m-%dT%H:%M:%S", &tm) == 0)
 		return -1;
 
 	return fprintf(summary->fp, "\t<testsuite"

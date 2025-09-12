@@ -13,6 +13,11 @@ jobs:
         platform:
           - os: ubuntu-latest
             generator: Unix Makefiles
+          - os: ubuntu-latest
+            generator: Unix Makefiles
+            env:
+              CC: "clang"
+              CFLAGS: "-fsanitize=leak"
           - os: macos-latest
             generator: Unix Makefiles
           - os: windows-latest
@@ -21,15 +26,26 @@ jobs:
             generator: MSYS Makefiles
           - os: windows-latest
             generator: MinGW Makefiles
+      fail-fast: false
 
     runs-on: ${{ matrix.platform.os }}
+
+    env:
+      CC: ${{matrix.platform.env.CC}}
+      CFLAGS: ${{matrix.platform.env.CFLAGS}}
 
     steps:
     - name: Check out
       uses: actions/checkout@v2
     - name: Build
+      shell: bash
       run: |
         mkdir build
         cd build
         cmake .. -G "${{matrix.platform.generator}}"
-        cmake --build .
+        cmake --build . --verbose
+    - name: Test
+      shell: bash
+      run: |
+        cd build
+        CTEST_OUTPUT_ON_FAILURE=1 ctest --build-config Debug
