@@ -25,10 +25,10 @@
 
 
 typedef struct s_diffdata {
-	long nrec;
-	unsigned long const *ha;
-	long *rindex;
-	char *rchg;
+	usize nrec;
+	u64 const *ha;
+	usize *rindex;
+	u8 *rchg;
 } diffdata_t;
 
 typedef struct s_xdalgoenv {
