@@ -476,20 +476,17 @@ static void create_pack_file(struct upload_pack_data *pack_data,
 
 static int do_got_oid(struct upload_pack_data *data, const struct object_id *oid)
 {
-	int we_knew_they_have = 0;
 	struct object *o = parse_object_with_flags(the_repository, oid,
 						   PARSE_OBJECT_SKIP_HASH_CHECK |
 						   PARSE_OBJECT_DISCARD_TREE);
 
 	if (!o)
 		die("oops (%s)", oid_to_hex(oid));
+
 	if (o->type == OBJ_COMMIT) {
 		struct commit_list *parents;
 		struct commit *commit = (struct commit *)o;
-		if (o->flags & THEY_HAVE)
-			we_knew_they_have = 1;
-		else
-			o->flags |= THEY_HAVE;
+
 		if (!data->oldest_have || (commit->date < data->oldest_have))
 			data->oldest_have = commit->date;
 		for (parents = commit->parents;
@@ -497,11 +494,13 @@ static int do_got_oid(struct upload_pack_data *data, const struct object_id *oid
 		     parents = parents->next)
 			parents->item->object.flags |= THEY_HAVE;
 	}
-	if (!we_knew_they_have) {
-		add_object_array(o, NULL, &data->have_obj);
-		return 1;
-	}
-	return 0;
+
+	if (o->flags & THEY_HAVE)
+		return 0;
+	o->flags |= THEY_HAVE;
+
+	add_object_array(o, NULL, &data->have_obj);
+	return 1;
 }
 
 static int got_oid(struct upload_pack_data *data,
