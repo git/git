@@ -213,6 +213,7 @@ integration_tests = [
   't1460-refs-migrate.sh',
   't1461-refs-list.sh',
   't1462-refs-exists.sh',
+  't1463-refs-optimize.sh',
   't1500-rev-parse.sh',
   't1501-work-tree.sh',
   't1502-rev-parse-parseopt.sh',
