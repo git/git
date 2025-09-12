@@ -8,7 +8,6 @@
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "git-compat-util.h"
-#include "bulk-checkin.h"
 #include "config.h"
 #include "date.h"
 #include "diff.h"
@@ -3947,7 +3946,7 @@ int add_files_to_cache(struct repository *repo, const char *prefix,
 		       const struct pathspec *pathspec, char *ps_matched,
 		       int include_sparse, int flags)
 {
-	struct odb_transaction *transaction;
+	struct odb_transaction *transaction = NULL;
 	struct update_callback_data data;
 	struct rev_info rev;
 
@@ -3973,9 +3972,13 @@ int add_files_to_cache(struct repository *repo, const char *prefix,
 	 * This function is invoked from commands other than 'add', which
 	 * may not have their own transaction active.
 	 */
-	transaction = begin_odb_transaction(repo->objects);
+	if (!repo->objects->transaction)
+		transaction = odb_transaction_begin(repo->objects);
+
 	run_diff_files(&rev, DIFF_RACY_IS_MODIFIED);
-	end_odb_transaction(transaction);
+
+	if (transaction)
+		odb_transaction_commit(transaction);
 
 	release_revisions(&rev);
 	return !!data.add_errors;
