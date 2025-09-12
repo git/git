@@ -531,9 +531,25 @@ core.commentString::
 	commented, and removes them after the editor returns
 	(default '#').
 +
-If set to "auto", `git-commit` would select a character that is not
+ifndef::with-breaking-changes[]
+If set to "auto", `git-commit` will select a character that is not
 the beginning character of any line in existing commit messages.
+Support for this value is deprecated and will be removed in Git 3.0
+due to the following limitations:
 +
+--
+* It is incompatible with adding comments in a commit message
+  template. This includes the conflicts comments added to
+  the commit message by `cherry-pick`, `merge`, `rebase` and
+  `revert`.
+* It is incompatible with adding comments to the commit message
+  in the `prepare-commit-msg` hook.
+* It is incompatible with the `fixup` and `squash` commands when
+  rebasing,
+* It is not respected by `git notes`
+--
++
+endif::with-breaking-changes[]
 Note that these two variables are aliases of each other, and in modern
 versions of Git you are free to use a string (e.g., `//` or `⁑⁕⁑`) with
 `commentChar`. Versions of Git prior to v2.45.0 will ignore

@@ -208,7 +208,10 @@ extern char *excludes_file;
  */
 extern const char *comment_line_str;
 extern char *comment_line_str_to_free;
+#ifndef WITH_BREAKING_CHANGES
 extern int auto_comment_line_char;
+extern bool warn_on_auto_comment_char;
+#endif /* !WITH_BREAKING_CHANGES */
 
 # endif /* USE_THE_REPOSITORY_VARIABLE */
 #endif /* ENVIRONMENT_H */
