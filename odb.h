@@ -3,7 +3,6 @@
 
 #include "hashmap.h"
 #include "object.h"
-#include "list.h"
 #include "oidset.h"
 #include "oidmap.h"
 #include "string-list.h"
@@ -91,6 +90,7 @@ struct odb_source {
 };
 
 struct packed_git;
+struct packfile_store;
 struct cached_object_entry;
 struct odb_transaction;
 
@@ -140,19 +140,9 @@ struct object_database {
 	unsigned commit_graph_attempted : 1; /* if loading has been attempted */
 
 	/*
-	 * private data
-	 *
-	 * should only be accessed directly by packfile.c
+	 * Should only be accessed directly by packfile.c
 	 */
-
-	struct packed_git *packed_git;
-	/* A most-recently-used ordered version of the packed_git list. */
-	struct list_head packed_git_mru;
-
-	struct {
-		struct packed_git **packs;
-		unsigned flags;
-	} kept_pack_cache;
+	struct packfile_store *packfiles;
 
 	/*
 	 * This is meant to hold a *small* number of objects that you would
@@ -164,24 +154,12 @@ struct object_database {
 	size_t cached_object_nr, cached_object_alloc;
 
 	/*
-	 * A map of packfiles to packed_git structs for tracking which
-	 * packs have been loaded already.
-	 */
-	struct hashmap pack_map;
-
-	/*
 	 * A fast, rough count of the number of objects in the repository.
 	 * These two fields are not meant for direct access. Use
 	 * repo_approximate_object_count() instead.
 	 */
 	unsigned long approximate_object_count;
 	unsigned approximate_object_count_valid : 1;
-
-	/*
-	 * Whether packed_git has already been populated with this repository's
-	 * packs.
-	 */
-	unsigned packed_git_initialized : 1;
 
 	/*
 	 * Submodule source paths that will be added as additional sources to
@@ -192,6 +170,12 @@ struct object_database {
 
 struct object_database *odb_new(struct repository *repo);
 void odb_clear(struct object_database *o);
+
+/*
+ * Clear caches, reload alternates and then reload object sources so that new
+ * objects may become accessible.
+ */
+void odb_reprepare(struct object_database *o);
 
 /*
  * Find source by its object directory path. Returns a `NULL` pointer in case

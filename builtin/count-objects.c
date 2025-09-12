@@ -122,6 +122,7 @@ int cmd_count_objects(int argc,
 				      count_loose, count_cruft, NULL, NULL);
 
 	if (verbose) {
+		struct packfile_store *packs = the_repository->objects->packfiles;
 		struct packed_git *p;
 		unsigned long num_pack = 0;
 		off_t size_pack = 0;
@@ -129,7 +130,7 @@ int cmd_count_objects(int argc,
 		struct strbuf pack_buf = STRBUF_INIT;
 		struct strbuf garbage_buf = STRBUF_INIT;
 
-		for (p = get_all_packs(the_repository); p; p = p->next) {
+		for (p = packfile_store_get_packs(packs); p; p = p->next) {
 			if (!p->pack_local)
 				continue;
 			if (open_pack_index(p))

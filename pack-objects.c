@@ -86,6 +86,7 @@ struct object_entry *packlist_find(struct packing_data *pdata,
 
 static void prepare_in_pack_by_idx(struct packing_data *pdata)
 {
+	struct packfile_store *packs = pdata->repo->objects->packfiles;
 	struct packed_git **mapping, *p;
 	int cnt = 0, nr = 1U << OE_IN_PACK_BITS;
 
@@ -95,7 +96,7 @@ static void prepare_in_pack_by_idx(struct packing_data *pdata)
 	 * (i.e. in_pack_idx also zero) should return NULL.
 	 */
 	mapping[cnt++] = NULL;
-	for (p = get_all_packs(pdata->repo); p; p = p->next, cnt++) {
+	for (p = packfile_store_get_packs(packs); p; p = p->next, cnt++) {
 		if (cnt == nr) {
 			free(mapping);
 			return;

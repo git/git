@@ -450,7 +450,7 @@ static int fetch_with_fetch(struct transport *transport,
 	}
 	strbuf_release(&buf);
 
-	reprepare_packed_git(the_repository);
+	odb_reprepare(the_repository->objects);
 	return 0;
 }
 

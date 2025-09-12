@@ -287,12 +287,13 @@ static int compare_info(const void *a_, const void *b_)
 
 static void init_pack_info(struct repository *r, const char *infofile, int force)
 {
+	struct packfile_store *packs = r->objects->packfiles;
 	struct packed_git *p;
 	int stale;
 	int i;
 	size_t alloc = 0;
 
-	for (p = get_all_packs(r); p; p = p->next) {
+	for (p = packfile_store_get_packs(packs); p; p = p->next) {
 		/* we ignore things on alternate path since they are
 		 * not available to the pullers in general.
 		 */

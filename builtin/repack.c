@@ -265,10 +265,11 @@ static void existing_packs_release(struct existing_packs *existing)
 static void collect_pack_filenames(struct existing_packs *existing,
 				   const struct string_list *extra_keep)
 {
+	struct packfile_store *packs = the_repository->objects->packfiles;
 	struct packed_git *p;
 	struct strbuf buf = STRBUF_INIT;
 
-	for (p = get_all_packs(the_repository); p; p = p->next) {
+	for (p = packfile_store_get_packs(packs); p; p = p->next) {
 		int i;
 		const char *base;
 
@@ -497,10 +498,11 @@ static void init_pack_geometry(struct pack_geometry *geometry,
 			       struct existing_packs *existing,
 			       const struct pack_objects_args *args)
 {
+	struct packfile_store *packs = the_repository->objects->packfiles;
 	struct packed_git *p;
 	struct strbuf buf = STRBUF_INIT;
 
-	for (p = get_all_packs(the_repository); p; p = p->next) {
+	for (p = packfile_store_get_packs(packs); p; p = p->next) {
 		if (args->local && !p->pack_local)
 			/*
 			 * When asked to only repack local packfiles we skip
@@ -1137,11 +1139,12 @@ static int write_filtered_pack(const struct pack_objects_args *args,
 static void combine_small_cruft_packs(FILE *in, size_t combine_cruft_below_size,
 				      struct existing_packs *existing)
 {
+	struct packfile_store *packs = the_repository->objects->packfiles;
 	struct packed_git *p;
 	struct strbuf buf = STRBUF_INIT;
 	size_t i;
 
-	for (p = get_all_packs(the_repository); p; p = p->next) {
+	for (p = packfile_store_get_packs(packs); p; p = p->next) {
 		if (!(p->is_cruft && p->pack_local))
 			continue;
 
@@ -1685,7 +1688,7 @@ int cmd_repack(int argc,
 			goto cleanup;
 	}
 
-	reprepare_packed_git(the_repository);
+	odb_reprepare(the_repository->objects);
 
 	if (delete_redundant) {
 		int opts = 0;

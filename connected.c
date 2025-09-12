@@ -72,11 +72,12 @@ int check_connected(oid_iterate_fn fn, void *cb_data,
 		 * Before checking for promisor packs, be sure we have the
 		 * latest pack-files loaded into memory.
 		 */
-		reprepare_packed_git(the_repository);
+		odb_reprepare(the_repository->objects);
 		do {
+			struct packfile_store *packs = the_repository->objects->packfiles;
 			struct packed_git *p;
 
-			for (p = get_all_packs(the_repository); p; p = p->next) {
+			for (p = packfile_store_get_packs(packs); p; p = p->next) {
 				if (!p->pack_promisor)
 					continue;
 				if (find_pack_entry_one(oid, p))
