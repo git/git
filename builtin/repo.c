@@ -9,7 +9,7 @@
 #include "shallow.h"
 
 static const char *const repo_usage[] = {
-	"git repo info [--format=(keyvalue|nul)] [<key>...]",
+	"git repo info [--format=(keyvalue|nul)] [-z] [<key>...]",
 	NULL
 };
 
@@ -38,6 +38,12 @@ static int get_layout_shallow(struct repository *repo, struct strbuf *buf)
 	return 0;
 }
 
+static int get_object_format(struct repository *repo, struct strbuf *buf)
+{
+	strbuf_addstr(buf, repo->hash_algo->name);
+	return 0;
+}
+
 static int get_references_format(struct repository *repo, struct strbuf *buf)
 {
 	strbuf_addstr(buf,
@@ -49,6 +55,7 @@ static int get_references_format(struct repository *repo, struct strbuf *buf)
 static const struct field repo_info_fields[] = {
 	{ "layout.bare", get_layout_bare },
 	{ "layout.shallow", get_layout_shallow },
+	{ "object.format", get_object_format },
 	{ "references.format", get_references_format },
 };
 
@@ -112,25 +119,39 @@ static int print_fields(int argc, const char **argv,
 	return ret;
 }
 
+static int parse_format_cb(const struct option *opt,
+			   const char *arg, int unset UNUSED)
+{
+	enum output_format *format = opt->value;
+
+	if (opt->short_name == 'z')
+		*format = FORMAT_NUL_TERMINATED;
+	else if (!strcmp(arg, "nul"))
+		*format = FORMAT_NUL_TERMINATED;
+	else if (!strcmp(arg, "keyvalue"))
+		*format = FORMAT_KEYVALUE;
+	else
+		die(_("invalid format '%s'"), arg);
+
+	return 0;
+}
+
 static int repo_info(int argc, const char **argv, const char *prefix,
 		     struct repository *repo)
 {
-	const char *format_str = "keyvalue";
-	enum output_format format;
+	enum output_format format = FORMAT_KEYVALUE;
 	struct option options[] = {
-		OPT_STRING(0, "format", &format_str, N_("format"),
-			   N_("output format")),
+		OPT_CALLBACK_F(0, "format", &format, N_("format"),
+			       N_("output format"),
+			       PARSE_OPT_NONEG, parse_format_cb),
+		OPT_CALLBACK_F('z', NULL, &format, NULL,
+			       N_("synonym for --format=nul"),
+			       PARSE_OPT_NONEG | PARSE_OPT_NOARG,
+			       parse_format_cb),
 		OPT_END()
 	};
 
 	argc = parse_options(argc, argv, prefix, options, repo_usage, 0);
-
-	if (!strcmp(format_str, "keyvalue"))
-		format = FORMAT_KEYVALUE;
-	else if (!strcmp(format_str, "nul"))
-		format = FORMAT_NUL_TERMINATED;
-	else
-		die(_("invalid format '%s'"), format_str);
 
 	return print_fields(argc, argv, repo, format);
 }
