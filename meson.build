@@ -571,7 +571,6 @@ libgit_sources = [
   'usage.c',
   'userdiff.c',
   'utf8.c',
-  'varint.c',
   'version.c',
   'versioncmp.c',
   'walker.c',
@@ -590,6 +589,12 @@ libgit_sources = [
   'xdiff/xprepare.c',
   'xdiff/xutils.c',
 ]
+
+if not with_rust
+  libgit_sources += [
+    'varint.c',
+  ]
+endif
 
 libgit_sources += custom_target(
   input: 'command-list.txt',
