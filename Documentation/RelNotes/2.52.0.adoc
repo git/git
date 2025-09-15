@@ -20,6 +20,10 @@ UI, Workflows & Features
  * "git refs exists" that works like "git show-ref --exists" has been
    added.
 
+ * "repo info" learns a short-hand option "-z" that is the same as
+   "--format=nul", and learns to report the objects format used in the
+   repository.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -54,6 +58,10 @@ Performance, Internal Implementation, Development Support etc.
    still commits to be explored in the queue, use khash to remember
    which items are still on the queue (an unacceptable alternative is
    to reserve one object flag bits).
+
+ * The bulk-checkin code used to depend on a file-scope static
+   singleton variable, which has been updated to pass an instance
+   throughout the callchain.
 
 
 Fixes since v2.51
@@ -164,6 +172,11 @@ including security updates, are included in this release.
    which has been disabled in Gitlab CI.
    (merge 608cf5b793 ps/gitlab-ci-disable-windows-monitoring later to maint).
 
+ * A broken or malicious "git fetch" can say that it has the same
+   object for many many times, and the upload-pack serving it can
+   exhaust memory storing them redundantly, which has been corrected.
+   (merge 88a2dc68c8 ps/upload-pack-oom-protection later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
    (merge cf7efa4f33 rj/t6137-cygwin-fix later to maint).
@@ -182,3 +195,6 @@ including security updates, are included in this release.
    (merge 2f4bf83ffc km/alias-doc-markup-fix later to maint).
    (merge b0d97aac19 kh/doc-markup-fixes later to maint).
    (merge f9a6705d9a tc/t0450-harden later to maint).
+   (merge c25651aefd ds/midx-write-fixes later to maint).
+   (merge 069c15d256 rs/object-name-extend-abbrev-len-update later to maint).
+   (merge bf5c224537 mm/worktree-doc-typofix later to maint).
