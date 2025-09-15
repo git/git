@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2025, #05; Fri, 12)
-X-master-at: 92c87bdc406e5bcf1b516a861d609b03d99c23b7
-X-next-at: 07681ecd9b0a321cb12a8cb18dac6580ede927c4
+Subject: What's cooking in git.git (Sep 2025, #06; Mon, 15)
+X-master-at: a483264b01b977f3e65a4419103c21e6af7412a2
+X-next-at: c79095c0ca8344f5e5888328570552df95da1849
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2025, #05; Fri, 12)
+What's cooking in git.git (Sep 2025, #06; Mon, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -53,160 +53,90 @@ Release tarballs are available at:
 --------------------------------------------------
 [Graduated to 'master']
 
-* je/doc-add (2025-08-29) 3 commits
-  (merged to 'next' on 2025-09-02 at 6aa32994dd)
- + doc: rephrase the purpose of the staging area
-  (merged to 'next' on 2025-08-25 at 0c84501ed2)
- + doc: git-add: simplify discussion of ignored files
- + doc: git-add: clarify intro & add an example
+* ds/midx-write-fixes (2025-09-05) 6 commits
+  (merged to 'next' on 2025-09-08 at 74b87ce5ba)
+ + midx-write: simplify error cases
+ + midx-write: reenable signed comparison errors
+ + midx-write: use uint32_t for preferred_pack_idx
+ + midx-write: use cleanup when incremental midx fails
+ + midx-write: put failing response value back
+ + midx-write: only load initialized packs
 
- Documentation for "git add" has been updated.
- source: <pull.1952.v4.git.1756468502.gitgitgadget@gmail.com>
-
-
-* kh/doc-markup-fixes (2025-09-02) 2 commits
-  (merged to 'next' on 2025-09-03 at 1ba7204a04)
- + doc: remove extra backtick for inline-verbatim
- + doc: add missing backtick for inline-verbatim
-
- Doc markup fixes.
- source: <cover.1756845314.git.code@khaugsbakk.name>
+ Fixes multiple crashes around midx write-out codepaths.
+ 
+ source: <pull.1965.v3.git.1757100378.gitgitgadget@gmail.com>
 
 
-* km/alias-doc-markup-fix (2025-09-01) 1 commit
-  (merged to 'next' on 2025-09-03 at 02da1fc9b3)
- + doc: fix formatting of function-wrap shell alias
+* jt/de-global-bulk-checkin (2025-08-22) 4 commits
+  (merged to 'next' on 2025-09-08 at f544afcab3)
+ + bulk-checkin: use repository variable from transaction
+ + bulk-checkin: require transaction for index_blob_bulk_checkin()
+ + bulk-checkin: remove global transaction state
+ + bulk-checkin: introduce object database transaction structure
+ (this branch is used by jt/odb-transaction.)
+
+ The bulk-checkin code used to depend on a file-scope static
+ singleton variable, which has been updated to pass an instance
+ throughout the callchain.
+  cf. <aLmhjw2xAbUogL1L@pks.im>
+ source: <20250822213500.1488064-1-jltobler@gmail.com>
+
+
+* lo/repo-info-step-2 (2025-09-04) 3 commits
+  (merged to 'next' on 2025-09-08 at 1a58ac3835)
+ + repo: add the field objects.format
+ + repo: add the flag -z as an alias for --format=nul
+ + Merge branch 'lo/repo-info' into lo/repo-info-step-2
+
+ "repo info" learns a short-hand option "-z" that is the same as
+ "--format=nul", and learns to report the objects format used in the
+ repository.
+ 
+ source: <20250904134017.47364-1-lucasseikioshiro@gmail.com>
+
+
+* mm/worktree-doc-typofix (2025-09-03) 1 commit
+  (merged to 'next' on 2025-09-09 at afdaf0ed07)
+ + docs: fix typo in worktree.adoc 'extension'
 
  Docfix.
- source: <20250901180419.2212086-1-kyle@kemitchell.com>
+ 
+ source: <pull.1967.git.1756911040439.gitgitgadget@gmail.com>
 
 
-* ms/refs-exists (2025-08-25) 4 commits
-  (merged to 'next' on 2025-09-03 at c6fc4c7461)
- + t: add test for git refs exists subcommand
- + t1422: refactor tests to be shareable
- + t1403: split 'show-ref --exists' tests into a separate file
- + builtin/refs: add 'exists' subcommand
+* ps/upload-pack-oom-protection (2025-09-04) 2 commits
+  (merged to 'next' on 2025-09-08 at 2b543d9b53)
+ + upload-pack: don't ACK non-commits repeatedly in protocol v2
+ + t5530: modernize tests
 
- "git refs exists" that works like "git show-ref --exists" has been
- added.
- source: <20250826064110.10540-1-meetsoni3017@gmail.com>
-
-
-* ps/gitlab-ci-disable-windows-monitoring (2025-09-02) 1 commit
-  (merged to 'next' on 2025-09-03 at f6148f5d05)
- + gitlab-ci: disable realtime monitoring to unbreak Windows jobs
-
- Windows "real-time monitoring" interferes with the execution of
- tests and affects negatively in both correctness and performance,
- which has been disabled in Gitlab CI.
- source: <20250902-b4-pks-gitlab-ci-windows-defender-v1-1-fcb1f19321aa@pks.im>
+ A broken or malicious "git fetch" can say that it has the same
+ object for many many times, and the upload-pack serving it can
+ exhaust memory storing them redundantly, which has been corrected.
+ 
+ source: <20250905-b4-pks-upload-pack-repeated-non-commit-acks-v2-0-d2e67f3cb94c@pks.im>
 
 
-* ps/object-store-midx-dedup-info (2025-08-11) 11 commits
-  (merged to 'next' on 2025-09-03 at 4b12427226)
- + midx: compute paths via their source
- + midx: stop duplicating info redundant with its owning source
- + midx: write multi-pack indices via their source
- + midx: load multi-pack indices via their source
- + midx: drop redundant `struct repository` parameter
- + odb: simplify calling `link_alt_odb_entry()`
- + odb: return newly created in-memory sources
- + odb: consistently use "dir" to refer to alternate's directory
- + odb: allow `odb_find_source()` to fail
- + odb: store locality in object database sources
- + Merge branch 'ps/object-store-midx' into ps/object-store-midx-dedup-info
- (this branch is used by ps/packfile-store.)
+* rs/object-name-extend-abbrev-len-update (2025-09-04) 1 commit
+  (merged to 'next' on 2025-09-08 at 469498c610)
+ + object-name: declare pointer type of extend_abbrev_len()'s 2nd parameter
 
- Further code clean-up for multi-pack-index code paths.
- source: <20250811-b4-pks-midx-deduplicate-source-info-v3-0-e442bdf2b4ad@pks.im>
-
-
-* rs/describe-with-lazy-queue-and-oidset (2025-09-02) 1 commit
-  (merged to 'next' on 2025-09-04 at 1a473401a4)
- + describe: use oidset in finish_depth_computation()
-
- Instead of scanning for the remaining items to see if there are
- still commits to be explored in the queue, use khash to remember
- which items are still on the queue (an unacceptable alternative is
- to reserve one object flag bits).
- source: <b16aa099-b683-4a66-acd9-603cc9f0935c@web.de>
-
-
-* tc/t0450-harden (2025-08-08) 2 commits
-  (merged to 'next' on 2025-09-04 at 19270d2f92)
- + t0450: add allowlist for builtins with missing .adoc
- + t0450: fix test for out-of-tree builds
-
- Test updates.
- source: <20250804073002.1586332-1-toon@iotcl.com>
+ Code clean-up.
+ 
+ source: <e0bc9a67-faa9-4218-a55a-c7d53c15cfce@web.de>
 
 --------------------------------------------------
 [New Topics]
 
-* rs/get-oid-with-flags-cleanup (2025-09-10) 1 commit
- - use repo_get_oid_with_flags()
+* je/doc-push (2025-09-12) 4 commits
+ - doc: git-push: clarify "what to push"
+ - doc: git-push: clarify "where to push"
+ - doc: add an UPSTREAM BRANCHES section to pull/push/fetch
+ - doc: git-push: clarify intro
 
- Code clean-up.
-
- Will merge to 'next'.
- source: <906196ac-2fd7-4c07-9e8f-22d67b0b64f9@web.de>
-
-
-* cs/subtree-squash-split-fix (2025-09-09) 1 commit
- - contrib/subtree: fix split with squashed subtrees
-
- "git subtree" (in contrib/) did not work correctly when splitting
- squashed subtrees, which has been improved.
-
- Will merge to 'next'.
- source: <20250910031124.1807856-1-ask+git@howdoi.land>
-
-
-* ps/clar-updates (2025-09-10) 1 commit
- - t/unit-tests: update clar to fcbed04
-
- Import a newer version of the clar unit testing framework.
-
- Will merge to 'next'.
- source: <20250910-b4-pks-clar-update-v1-1-26a196237e0a@pks.im>
-
-
-* ps/config-get-color-fixes (2025-09-11) 5 commits
- - builtin/config: do not spawn pager when printing color codes
- - builtin/config: special-case retrieving colors without a key
- - builtin/config: do not die in `get_color()`
- - t1300: small style fixups
- - t1300: write test expectations in the test's body
-
- The use of "git config get" command to learn how ANSI color
- sequence is for a particular type, e.g., "git config get
- --type=color --default=reset no.such.thing", isn't very ergonomic.
+ Doc updates.
 
  Comments?
- source: <20250911-pks-config-color-v1-0-3a7c79df65b1@pks.im>
-
-
-* ps/meson-build-docs (2025-09-11) 3 commits
- - ci: don't compile whole project when testing docs with Meson
- - meson: print docs backend as part of the summary
- - meson: introduce a "docs" alias to compile documentation only
-
- The build procedure based on meson learned a target to only build
- documentation, similar to "make doc".
-
- Comments?
- source: <20250911-b4-pks-meson-docs-target-v1-0-a92c666ecef9@pks.im>
-
-
-* ps/odb-clean-stale-wrappers (2025-09-10) 1 commit
- . odb: drop deprecated wrapper functions
-
- Code clean-up.
-
- Breaks build when merged to 'seen'.
- cf. <20250910153759.GA562601@coredump.intra.peff.net>
- source: <20250910-b4-pks-odb-drop-wrappers-v1-1-6ed660cb1eec@pks.im>
+ source: <pull.1964.v2.git.1757703309.gitgitgadget@gmail.com>
 
 --------------------------------------------------
 [Stalled]
@@ -258,19 +188,20 @@ well with other topics in 'seen' (and of course 'next' and
 
 
 * cc/promisor-remote-capability (2025-09-07) 7 commits
- - promisor-remote: use string_list_split() in mark_remotes_as_accepted()
- - promisor-remote: allow a client to check fields
- - promisor-remote: use string_list_split() in filter_promisor_remote()
- - promisor-remote: refactor how we parse advertised fields
- - promisor-remote: use string constants for 'name' and 'url' too
- - promisor-remote: allow a server to advertise more fields
- - promisor-remote: refactor to get rid of 'struct strvec'
+  (merged to 'next' on 2025-09-15 at 367d83c08c)
+ + promisor-remote: use string_list_split() in mark_remotes_as_accepted()
+ + promisor-remote: allow a client to check fields
+ + promisor-remote: use string_list_split() in filter_promisor_remote()
+ + promisor-remote: refactor how we parse advertised fields
+ + promisor-remote: use string constants for 'name' and 'url' too
+ + promisor-remote: allow a server to advertise more fields
+ + promisor-remote: refactor to get rid of 'struct strvec'
 
  The "promisor-remote" capability mechanism has been updated to
  allow the "partialCloneFilter" settings and the "token" value to be
  communicated from the server side.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <20250908053056.956907-1-christian.couder@gmail.com>
 
 
@@ -294,6 +225,75 @@ well with other topics in 'seen' (and of course 'next' and
 --------------------------------------------------
 [Cooking]
 
+* rs/get-oid-with-flags-cleanup (2025-09-10) 1 commit
+  (merged to 'next' on 2025-09-15 at ff8d1faae9)
+ + use repo_get_oid_with_flags()
+
+ Code clean-up.
+
+ Will merge to 'master'.
+ source: <906196ac-2fd7-4c07-9e8f-22d67b0b64f9@web.de>
+
+
+* cs/subtree-squash-split-fix (2025-09-09) 1 commit
+  (merged to 'next' on 2025-09-15 at 4206316342)
+ + contrib/subtree: fix split with squashed subtrees
+
+ "git subtree" (in contrib/) did not work correctly when splitting
+ squashed subtrees, which has been improved.
+
+ Will merge to 'master'.
+ source: <20250910031124.1807856-1-ask+git@howdoi.land>
+
+
+* ps/clar-updates (2025-09-10) 1 commit
+  (merged to 'next' on 2025-09-15 at 73402f7652)
+ + t/unit-tests: update clar to fcbed04
+
+ Import a newer version of the clar unit testing framework.
+
+ Will merge to 'master'.
+ source: <20250910-b4-pks-clar-update-v1-1-26a196237e0a@pks.im>
+
+
+* ps/config-get-color-fixes (2025-09-11) 5 commits
+ - builtin/config: do not spawn pager when printing color codes
+ - builtin/config: special-case retrieving colors without a key
+ - builtin/config: do not die in `get_color()`
+ - t1300: small style fixups
+ - t1300: write test expectations in the test's body
+
+ The use of "git config get" command to learn how ANSI color
+ sequence is for a particular type, e.g., "git config get
+ --type=color --default=reset no.such.thing", isn't very ergonomic.
+
+ Comments?
+ source: <20250911-pks-config-color-v1-0-3a7c79df65b1@pks.im>
+
+
+* ps/meson-build-docs (2025-09-11) 3 commits
+ - ci: don't compile whole project when testing docs with Meson
+ - meson: print docs backend as part of the summary
+ - meson: introduce a "docs" alias to compile documentation only
+
+ The build procedure based on meson learned a target to only build
+ documentation, similar to "make doc".
+
+ Comments?
+ source: <20250911-b4-pks-meson-docs-target-v1-0-a92c666ecef9@pks.im>
+
+
+* ps/odb-clean-stale-wrappers (2025-09-12) 2 commits
+ - fixup! odb: drop deprecated wrapper functions
+ - odb: drop deprecated wrapper functions
+
+ Code clean-up.
+
+ Breaks build when merged to 'seen'.
+ cf. <20250910153759.GA562601@coredump.intra.peff.net>
+ source: <20250910-b4-pks-odb-drop-wrappers-v1-1-6ed660cb1eec@pks.im>
+
+
 * jt/odb-transaction (2025-09-09) 7 commits
  - odb: add transaction interface
  - object-file: update naming from bulk-checkin
@@ -302,7 +302,6 @@ well with other topics in 'seen' (and of course 'next' and
  - builtin/update-index: end ODB transaction when --verbose is specified
  - bulk-checkin: remove ODB transaction nesting
  - Merge branch 'jt/de-global-bulk-checkin' into jt/odb-transaction
- (this branch uses jt/de-global-bulk-checkin.)
 
  Continue the work to build on the bulk-checkin infrastructure to
  create many objects at once in a transaction and abstract it into
@@ -334,16 +333,6 @@ well with other topics in 'seen' (and of course 'next' and
 
  Comments?
  source: <cover.1757518141.git.phillip.wood@dunelm.org.uk>
-
-
-* rs/object-name-extend-abbrev-len-update (2025-09-04) 1 commit
-  (merged to 'next' on 2025-09-08 at 469498c610)
- + object-name: declare pointer type of extend_abbrev_len()'s 2nd parameter
-
- Code clean-up.
-
- Will merge to 'master'.
- source: <e0bc9a67-faa9-4218-a55a-c7d53c15cfce@web.de>
 
 
 * ps/commit-graph-per-object-source (2025-09-04) 6 commits
@@ -417,21 +406,6 @@ well with other topics in 'seen' (and of course 'next' and
  source: <aL21kDwK-zGZyJ9q@ArchLinux>
 
 
-* ds/midx-write-fixes (2025-09-05) 6 commits
-  (merged to 'next' on 2025-09-08 at 74b87ce5ba)
- + midx-write: simplify error cases
- + midx-write: reenable signed comparison errors
- + midx-write: use uint32_t for preferred_pack_idx
- + midx-write: use cleanup when incremental midx fails
- + midx-write: put failing response value back
- + midx-write: only load initialized packs
-
- Fixes multiple crashes around midx write-out codepaths.
-
- Will merge to 'master'.
- source: <pull.1965.v3.git.1757100378.gitgitgadget@gmail.com>
-
-
 * ps/packfile-store (2025-09-09) 16 commits
  - packfile: refactor `get_packed_git_mru()` to work on packfile store
  - packfile: refactor `get_all_packs()` to work on packfile store
@@ -457,7 +431,7 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250909-b4-pks-packfiles-store-v4-0-151c4ba3619f@pks.im>
 
 
-* kn/refs-files-case-insensitive (2025-09-08) 4 commits
+* kn/refs-files-case-insensitive (2025-09-13) 4 commits
  - refs/files: handle D/F conflicts during locking
  - refs/files: handle F/D conflicts in case-insensitive FS
  - refs/files: use correct error type when lock exists
@@ -467,28 +441,8 @@ well with other topics in 'seen' (and of course 'next' and
  backend is used for ref storage, by failing only the ones that are
  involved in the conflict while allowing others.
 
- Expecting a reroll.
- cf. <aL_SwghVaAXL-yeX@pks.im>
- source: <20250908-587-git-fetch-1-fails-fetches-on-case-insensitive-repositories-v2-0-b2eb2459befb@gmail.com>
-
-
-* mm/worktree-doc-typofix (2025-09-03) 1 commit
-  (merged to 'next' on 2025-09-09 at afdaf0ed07)
- + docs: fix typo in worktree.adoc 'extension'
-
- Docfix.
-
- Will merge to 'master'.
- source: <pull.1967.git.1756911040439.gitgitgadget@gmail.com>
-
-
-* ps/upload-pack-oom-protection (2025-09-04) 2 commits
-  (merged to 'next' on 2025-09-08 at 2b543d9b53)
- + upload-pack: don't ACK non-commits repeatedly in protocol v2
- + t5530: modernize tests
-
- Will merge to 'master'.
- source: <20250905-b4-pks-upload-pack-repeated-non-commit-acks-v2-0-d2e67f3cb94c@pks.im>
+ Comments?
+ source: <20250913-587-git-fetch-1-fails-fetches-on-case-insensitive-repositories-v3-0-195569740b57@gmail.com>
 
 
 * ag/doc-sendmail-gmail-example-update (2025-08-26) 1 commit
@@ -562,22 +516,21 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250827080702.GA3572995@coredump.intra.peff.net>
 
 
-* kh/you-still-use-whatchanged-fix (2025-09-10) 8 commits
- - fixup! git: allow alias-shadowing deprecated builtins
+* kh/you-still-use-whatchanged-fix (2025-09-14) 8 commits
  - BreakingChanges: remove claim about whatchanged reports
  - whatchanged: remove not-even-shorter clause
- - whatchanged: tell users the git-log(1) equivalent
+ - whatchanged: hint about git-log(1) and aliasing
  - you-still-use-that??: help the user help themselves
  - t0014: test shadowing of aliases for a sample of builtins
  - git: allow alias-shadowing deprecated builtins
+ - git: move seen-alias bookkeeping into handle_alias(...)
  - git: add `deprecated` category to --list-cmds
 
  Update "do you still use it?" message given by a command that is
  deeply deprecated and allow us to suggest alternatives.
 
- Expecting a (hopefully minor and final) reroll to fix the infinite recursion.
- cf. <20250911203256.GA1894340@coredump.intra.peff.net>
- source: <cover.1757446619.git.code@khaugsbakk.name>
+ Ready?
+ source: <cover.1757879060.git.code@khaugsbakk.name>
 
 
 * pc/range-diff-memory-limit (2025-08-29) 1 commit
@@ -603,20 +556,6 @@ well with other topics in 'seen' (and of course 'next' and
  source: <pull.2040.v5.git.git.1757007856062.gitgitgadget@gmail.com>
 
 
-* lo/repo-info-step-2 (2025-09-04) 3 commits
-  (merged to 'next' on 2025-09-08 at 1a58ac3835)
- + repo: add the field objects.format
- + repo: add the flag -z as an alias for --format=nul
- + Merge branch 'lo/repo-info' into lo/repo-info-step-2
-
- "repo info" learns a short-hand option "-z" that is the same as
- "--format=nul", and learns to report the objects format used in the
- repository.
-
- Will merge to 'master'.
- source: <20250904134017.47364-1-lucasseikioshiro@gmail.com>
-
-
 * jc/doc-includeif-hasconfig-remote-url-fix (2025-08-21) 1 commit
   (merged to 'next' on 2025-09-12 at 3b91910cbd)
  + config: document includeIf conditions consistently
@@ -628,34 +567,18 @@ well with other topics in 'seen' (and of course 'next' and
 
 
 * jk/add-i-color (2025-09-08) 4 commits
- - contrib/diff-highlight: mention interactive.diffFilter
- - add-interactive: manually fall back color config to color.ui
- - add-interactive: respect color.diff for diff coloring
- - stash: pass --no-color to diff plumbing child processes
+  (merged to 'next' on 2025-09-15 at 48aae5184a)
+ + contrib/diff-highlight: mention interactive.diffFilter
+ + add-interactive: manually fall back color config to color.ui
+ + add-interactive: respect color.diff for diff coloring
+ + stash: pass --no-color to diff plumbing child processes
 
  Some among "git add -p" and friends ignored color.diff and/or
  color.ui configuration variables, which is an old regression, which
  has been corrected.
 
- Will merge to 'next'.
- source: <20250908164157.GA1323487@coredump.intra.peff.net>
-
-
-* jt/de-global-bulk-checkin (2025-08-22) 4 commits
-  (merged to 'next' on 2025-09-08 at f544afcab3)
- + bulk-checkin: use repository variable from transaction
- + bulk-checkin: require transaction for index_blob_bulk_checkin()
- + bulk-checkin: remove global transaction state
- + bulk-checkin: introduce object database transaction structure
- (this branch is used by jt/odb-transaction.)
-
- The bulk-checkin code used to depend on a file-scope static
- singleton variable, which has been updated to pass an instance
- throughout the callchain.
-
  Will merge to 'master'.
- cf. <aLmhjw2xAbUogL1L@pks.im>
- source: <20250822213500.1488064-1-jltobler@gmail.com>
+ source: <20250908164157.GA1323487@coredump.intra.peff.net>
 
 
 * sg/line-log-boundary-fixes (2025-08-18) 2 commits
