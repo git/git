@@ -77,7 +77,7 @@ static void report(const char *fmt, ...)
 	 * objects invisible while a transaction is active, so flush the
 	 * transaction here before reporting a change made by update-index.
 	 */
-	flush_odb_transaction();
+	flush_odb_transaction(the_repository->objects->transaction);
 	va_start(vp, fmt);
 	vprintf(fmt, vp);
 	putchar('\n');
@@ -940,6 +940,7 @@ int cmd_update_index(int argc,
 	strbuf_getline_fn getline_fn;
 	int parseopt_state = PARSE_OPT_UNKNOWN;
 	struct repository *r = the_repository;
+	struct odb_transaction *transaction;
 	struct option options[] = {
 		OPT_BIT('q', NULL, &refresh_args.flags,
 			N_("continue refresh even when index needs update"),
@@ -1130,7 +1131,7 @@ int cmd_update_index(int argc,
 	 * Allow the object layer to optimize adding multiple objects in
 	 * a batch.
 	 */
-	begin_odb_transaction();
+	transaction = begin_odb_transaction(the_repository->objects);
 	while (ctx.argc) {
 		if (parseopt_state != PARSE_OPT_DONE)
 			parseopt_state = parse_options_step(&ctx, options,
@@ -1213,7 +1214,7 @@ int cmd_update_index(int argc,
 	/*
 	 * By now we have added all of the new objects
 	 */
-	end_odb_transaction();
+	end_odb_transaction(transaction);
 
 	if (split_index > 0) {
 		if (repo_config_get_split_index(the_repository) == 0)
