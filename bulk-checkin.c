@@ -376,15 +376,6 @@ struct odb_transaction *begin_odb_transaction(struct object_database *odb)
 	return odb->transaction;
 }
 
-void flush_odb_transaction(struct odb_transaction *transaction)
-{
-	if (!transaction)
-		return;
-
-	flush_batch_fsync(transaction);
-	flush_bulk_checkin_packfile(transaction);
-}
-
 void end_odb_transaction(struct odb_transaction *transaction)
 {
 	if (!transaction)
@@ -395,7 +386,8 @@ void end_odb_transaction(struct odb_transaction *transaction)
 	 */
 	ASSERT(transaction == transaction->odb->transaction);
 
-	flush_odb_transaction(transaction);
+	flush_batch_fsync(transaction);
+	flush_bulk_checkin_packfile(transaction);
 	transaction->odb->transaction = NULL;
 	free(transaction);
 }
