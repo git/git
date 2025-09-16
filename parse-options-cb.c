@@ -50,7 +50,7 @@ int parse_opt_expiry_date_cb(const struct option *opt, const char *arg,
 int parse_opt_color_flag_cb(const struct option *opt, const char *arg,
 			    int unset)
 {
-	int value;
+	enum git_colorbool value;
 
 	if (!arg)
 		arg = unset ? "never" : (const char *)opt->defval;

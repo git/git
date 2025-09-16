@@ -111,7 +111,7 @@ struct wt_status {
 	int amend;
 	enum commit_whence whence;
 	int nowarn;
-	int use_color;
+	enum git_colorbool use_color;
 	int no_gettext;
 	int display_comment_prefix;
 	int relative_paths;

@@ -39,7 +39,7 @@ static void init_color(struct repository *r, int use_color,
 static int check_color_config(struct repository *r, const char *var)
 {
 	const char *value;
-	int ret;
+	enum git_colorbool ret;
 
 	if (repo_config_get_value(r, var, &value))
 		ret = GIT_COLOR_UNKNOWN;

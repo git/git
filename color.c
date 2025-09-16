@@ -9,7 +9,7 @@
 #include "pager.h"
 #include "strbuf.h"
 
-static int git_use_color_default = GIT_COLOR_AUTO;
+static enum git_colorbool git_use_color_default = GIT_COLOR_AUTO;
 int color_stdout_is_tty = -1;
 
 /*
@@ -404,7 +404,7 @@ static int check_auto_color(int fd)
 	return 0;
 }
 
-int want_color_fd(int fd, int var)
+int want_color_fd(int fd, enum git_colorbool var)
 {
 	/*
 	 * NEEDSWORK: This function is sometimes used from multiple threads, and

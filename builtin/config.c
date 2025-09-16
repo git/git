@@ -568,9 +568,9 @@ static void get_color(const struct config_location_options *opts,
 }
 
 struct get_colorbool_config_data {
-	int get_colorbool_found;
-	int get_diff_color_found;
-	int get_color_ui_found;
+	enum git_colorbool get_colorbool_found;
+	enum git_colorbool get_diff_color_found;
+	enum git_colorbool get_color_ui_found;
 	const char *get_colorbool_slot;
 };
 
