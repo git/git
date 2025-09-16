@@ -599,12 +599,12 @@ static void unpack_all(void)
 		progress = start_progress(the_repository,
 					  _("Unpacking objects"), nr_objects);
 	CALLOC_ARRAY(obj_list, nr_objects);
-	transaction = begin_odb_transaction(the_repository->objects);
+	transaction = odb_transaction_begin(the_repository->objects);
 	for (i = 0; i < nr_objects; i++) {
 		unpack_one(i);
 		display_progress(progress, i + 1);
 	}
-	end_odb_transaction(transaction);
+	odb_transaction_commit(transaction);
 	stop_progress(&progress);
 
 	if (delta_list)

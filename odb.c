@@ -1051,3 +1051,13 @@ void odb_clear(struct object_database *o)
 	hashmap_clear(&o->pack_map);
 	string_list_clear(&o->submodule_source_paths, 0);
 }
+
+struct odb_transaction *odb_transaction_begin(struct object_database *odb)
+{
+	return object_file_transaction_begin(odb->sources);
+}
+
+void odb_transaction_commit(struct odb_transaction *transaction)
+{
+	object_file_transaction_commit(transaction);
+}

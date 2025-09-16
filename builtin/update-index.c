@@ -18,6 +18,7 @@
 #include "cache-tree.h"
 #include "tree-walk.h"
 #include "object-file.h"
+#include "odb.h"
 #include "refs.h"
 #include "resolve-undo.h"
 #include "parse-options.h"
@@ -1122,7 +1123,7 @@ int cmd_update_index(int argc,
 	 * Allow the object layer to optimize adding multiple objects in
 	 * a batch.
 	 */
-	transaction = begin_odb_transaction(the_repository->objects);
+	transaction = odb_transaction_begin(the_repository->objects);
 	while (ctx.argc) {
 		if (parseopt_state != PARSE_OPT_DONE)
 			parseopt_state = parse_options_step(&ctx, options,
@@ -1152,7 +1153,7 @@ int cmd_update_index(int argc,
 			 * a transaction.
 			 */
 			if (transaction && verbose) {
-				end_odb_transaction(transaction);
+				odb_transaction_commit(transaction);
 				transaction = NULL;
 			}
 
@@ -1220,7 +1221,7 @@ int cmd_update_index(int argc,
 	/*
 	 * By now we have added all of the new objects
 	 */
-	end_odb_transaction(transaction);
+	odb_transaction_commit(transaction);
 
 	if (split_index > 0) {
 		if (repo_config_get_split_index(the_repository) == 0)
