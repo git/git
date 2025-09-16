@@ -6690,20 +6690,17 @@ static void diff_flush_patch_all_file_pairs(struct diff_options *o)
 	}
 
 	if (o->emitted_symbols) {
-		if (o->color_moved) {
-			struct mem_pool entry_pool;
-			struct moved_entry_list *entry_list;
+		struct mem_pool entry_pool;
+		struct moved_entry_list *entry_list;
 
-			mem_pool_init(&entry_pool, 1024 * 1024);
-			entry_list = add_lines_to_move_detection(o,
-								 &entry_pool);
-			mark_color_as_moved(o, entry_list);
-			if (o->color_moved == COLOR_MOVED_ZEBRA_DIM)
-				dim_moved_lines(o);
+		mem_pool_init(&entry_pool, 1024 * 1024);
+		entry_list = add_lines_to_move_detection(o, &entry_pool);
+		mark_color_as_moved(o, entry_list);
+		if (o->color_moved == COLOR_MOVED_ZEBRA_DIM)
+			dim_moved_lines(o);
 
-			mem_pool_discard(&entry_pool, 0);
-			free(entry_list);
-		}
+		mem_pool_discard(&entry_pool, 0);
+		free(entry_list);
 
 		for (i = 0; i < esm.nr; i++)
 			emit_diff_symbol_from_struct(o, &esm.buf[i]);
