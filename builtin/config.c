@@ -598,6 +598,7 @@ static int get_colorbool(const struct config_location_options *opts,
 		.get_diff_color_found = GIT_COLOR_UNKNOWN,
 		.get_color_ui_found = GIT_COLOR_UNKNOWN,
 	};
+	bool result;
 
 	config_with_options(git_get_colorbool_config, &data,
 			    &opts->source, the_repository,
@@ -614,13 +615,13 @@ static int get_colorbool(const struct config_location_options *opts,
 		/* default value if none found in config */
 		data.get_colorbool_found = GIT_COLOR_AUTO;
 
-	data.get_colorbool_found = want_color(data.get_colorbool_found);
+	result = want_color(data.get_colorbool_found);
 
 	if (print) {
-		printf("%s\n", data.get_colorbool_found ? "true" : "false");
+		printf("%s\n", result ? "true" : "false");
 		return 0;
 	} else
-		return data.get_colorbool_found ? 0 : 1;
+		return result ? 0 : 1;
 }
 
 static void check_write(const struct git_config_source *source)
