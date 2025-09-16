@@ -1267,7 +1267,7 @@ int index_fd(struct index_state *istate, struct object_id *oid,
 		struct odb_transaction *transaction;
 
 		transaction = begin_odb_transaction(the_repository->objects);
-		ret = index_blob_bulk_checkin(transaction,
+		ret = index_blob_bulk_checkin(the_repository->objects->transaction,
 					      oid, fd, xsize_t(st->st_size),
 					      path, flags);
 		end_odb_transaction(transaction);
