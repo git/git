@@ -391,7 +391,7 @@ enum git_colorbool git_config_colorbool(const char *var, const char *value)
 	return GIT_COLOR_AUTO;
 }
 
-static int check_auto_color(int fd)
+static bool check_auto_color(int fd)
 {
 	static int color_stderr_is_tty = -1;
 	int *is_tty_p = fd == 1 ? &color_stdout_is_tty : &color_stderr_is_tty;
@@ -399,12 +399,12 @@ static int check_auto_color(int fd)
 		*is_tty_p = isatty(fd);
 	if (*is_tty_p || (fd == 1 && pager_in_use() && pager_use_color)) {
 		if (!is_terminal_dumb())
-			return 1;
+			return true;
 	}
-	return 0;
+	return false;
 }
 
-int want_color_fd(int fd, enum git_colorbool var)
+bool want_color_fd(int fd, enum git_colorbool var)
 {
 	/*
 	 * NEEDSWORK: This function is sometimes used from multiple threads, and

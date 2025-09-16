@@ -106,7 +106,7 @@ enum git_colorbool git_config_colorbool(const char *var, const char *value);
  * Return a boolean whether to use color, where the argument 'var' is
  * one of GIT_COLOR_UNKNOWN, GIT_COLOR_NEVER, GIT_COLOR_ALWAYS, GIT_COLOR_AUTO.
  */
-int want_color_fd(int fd, enum git_colorbool var);
+bool want_color_fd(int fd, enum git_colorbool var);
 #define want_color(colorbool) want_color_fd(1, (colorbool))
 #define want_color_stderr(colorbool) want_color_fd(2, (colorbool))
 
