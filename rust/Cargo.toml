@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "build-helper",
+    "misc",
 ]
 resolver = "2"

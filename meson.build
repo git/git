@@ -267,7 +267,7 @@ version_gen_environment.set('GIT_DATE', get_option('build_date'))
 version_gen_environment.set('GIT_USER_AGENT', get_option('user_agent'))
 version_gen_environment.set('GIT_VERSION', get_option('version'))
 
-rust_crates = []
+rust_crates = ['misc']
 
 rust_builds = []
 with_rust = get_option('with_rust')
