@@ -12,3 +12,6 @@ path = "src/lib.rs"
 crate-type = ["staticlib", "rlib"]
 
 [dependencies]
+
+[build-dependencies]
+build-helper = { path = "../build-helper" }
