@@ -369,7 +369,7 @@ bad:
 #undef OUT
 }
 
-int git_config_colorbool(const char *var, const char *value)
+enum git_colorbool git_config_colorbool(const char *var, const char *value)
 {
 	if (value) {
 		if (!strcasecmp(value, "never"))
