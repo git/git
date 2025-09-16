@@ -58,6 +58,14 @@ following in your git configuration:
 	diff = diff-highlight | less
 ---------------------------------------------
 
+If you use the interactive patch mode of `git add -p`, `git checkout
+-p`, etc, you may also want to configure it to be used there:
+
+---------------------------------------------
+[interactive]
+        diffFilter = diff-highlight
+---------------------------------------------
+
 
 Color Config
 ------------
