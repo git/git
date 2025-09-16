@@ -70,14 +70,6 @@ static void report(const char *fmt, ...)
 	if (!verbose)
 		return;
 
-	/*
-	 * It is possible, though unlikely, that a caller could use the verbose
-	 * output to synchronize with addition of objects to the object
-	 * database. The current implementation of ODB transactions leaves
-	 * objects invisible while a transaction is active, so flush the
-	 * transaction here before reporting a change made by update-index.
-	 */
-	flush_odb_transaction(the_repository->objects->transaction);
 	va_start(vp, fmt);
 	vprintf(fmt, vp);
 	putchar('\n');
@@ -1149,6 +1141,21 @@ int cmd_update_index(int argc,
 		{
 			const char *path = ctx.argv[0];
 			char *p;
+
+			/*
+			 * It is possible, though unlikely, that a caller could
+			 * use the verbose output to synchronize with addition
+			 * of objects to the object database. The current
+			 * implementation of ODB transactions leaves objects
+			 * invisible while a transaction is active, so end the
+			 * transaction here early before processing the next
+			 * update. All further updates are performed outside of
+			 * a transaction.
+			 */
+			if (transaction && verbose) {
+				end_odb_transaction(transaction);
+				transaction = NULL;
+			}
 
 			setup_work_tree();
 			p = prefix_path(prefix, prefix_length, path);
