@@ -4979,8 +4979,7 @@ void diff_setup_done(struct diff_options *options)
 	if (options->flags.follow_renames)
 		diff_check_follow_pathspec(&options->pathspec, 1);
 
-	if (!options->use_color ||
-	    (options->flags.allow_external && external_diff()))
+	if (options->flags.allow_external && external_diff())
 		options->color_moved = 0;
 
 	if (options->filter_not) {
@@ -6677,7 +6676,7 @@ static void diff_flush_patch_all_file_pairs(struct diff_options *o)
 	if (WSEH_NEW & WS_RULE_MASK)
 		BUG("WS rules bit mask overlaps with diff symbol flags");
 
-	if (o->color_moved)
+	if (o->color_moved && want_color(o->use_color))
 		o->emitted_symbols = &esm;
 
 	if (o->additional_path_headers)
