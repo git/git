@@ -12,8 +12,8 @@ struct add_p_opt {
 
 struct add_i_state {
 	struct repository *r;
-	int use_color_interactive;
-	int use_color_diff;
+	enum git_colorbool use_color_interactive;
+	enum git_colorbool use_color_diff;
 	char header_color[COLOR_MAXLEN];
 	char help_color[COLOR_MAXLEN];
 	char prompt_color[COLOR_MAXLEN];
