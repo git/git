@@ -4580,7 +4580,7 @@ static void run_diff_cmd(const struct external_diff *pgm,
 		 */
 		fill_metainfo(msg, name, other, one, two, o, p,
 			      &must_show_header,
-			      want_color(o->use_color) && !pgm);
+			      pgm ? GIT_COLOR_NEVER : o->use_color);
 		xfrm_msg = msg->len ? msg->buf : NULL;
 	}
 
