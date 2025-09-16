@@ -3093,6 +3093,7 @@ static int has_worktrees(void)
 		if (is_main_worktree(worktrees[i]))
 			continue;
 		ret = 1;
+		break;
 	}
 
 	free_worktrees(worktrees);
