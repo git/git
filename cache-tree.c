@@ -8,7 +8,6 @@
 #include "tree.h"
 #include "tree-walk.h"
 #include "cache-tree.h"
-#include "bulk-checkin.h"
 #include "object-file.h"
 #include "odb.h"
 #include "read-cache-ll.h"

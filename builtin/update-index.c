@@ -8,7 +8,6 @@
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "builtin.h"
-#include "bulk-checkin.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"

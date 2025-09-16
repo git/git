@@ -218,4 +218,20 @@ int read_loose_object(struct repository *repo,
 		      void **contents,
 		      struct object_info *oi);
 
+struct odb_transaction;
+
+/*
+ * Tell the object database to optimize for adding
+ * multiple objects. end_odb_transaction must be called
+ * to make new objects visible. If a transaction is already
+ * pending, NULL is returned.
+ */
+struct odb_transaction *begin_odb_transaction(struct object_database *odb);
+
+/*
+ * Tell the object database to make any objects from the
+ * current transaction visible.
+ */
+void end_odb_transaction(struct odb_transaction *transaction);
+
 #endif /* OBJECT_FILE_H */
