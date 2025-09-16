@@ -111,7 +111,7 @@ struct ref_format {
 	.exclude = STRVEC_INIT, \
 }
 #define REF_FORMAT_INIT {             \
-	.use_color = -1,              \
+	.use_color = GIT_COLOR_UNKNOWN, \
 }
 
 /*  Macros for checking --merged and --no-merged options */

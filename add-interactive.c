@@ -42,7 +42,7 @@ static int check_color_config(struct repository *r, const char *var)
 	int ret;
 
 	if (repo_config_get_value(r, var, &value))
-		ret = -1;
+		ret = GIT_COLOR_UNKNOWN;
 	else
 		ret = git_config_colorbool(var, value);
 
@@ -51,7 +51,8 @@ static int check_color_config(struct repository *r, const char *var)
 	 * the value parsed by git_color_config(), which may not have been
 	 * called by the main command.
 	 */
-	if (ret < 0 && !repo_config_get_value(r, "color.ui", &value))
+	if (ret == GIT_COLOR_UNKNOWN &&
+	    !repo_config_get_value(r, "color.ui", &value))
 		ret = git_config_colorbool("color.ui", value);
 
 	return want_color(ret);
@@ -130,8 +131,8 @@ void clear_add_i_state(struct add_i_state *s)
 	FREE_AND_NULL(s->interactive_diff_filter);
 	FREE_AND_NULL(s->interactive_diff_algorithm);
 	memset(s, 0, sizeof(*s));
-	s->use_color_interactive = -1;
-	s->use_color_diff = -1;
+	s->use_color_interactive = GIT_COLOR_UNKNOWN;
+	s->use_color_diff = GIT_COLOR_UNKNOWN;
 }
 
 /*

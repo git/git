@@ -57,7 +57,7 @@ static int diff_detect_rename_default;
 static int diff_indent_heuristic = 1;
 static int diff_rename_limit_default = 1000;
 static int diff_suppress_blank_empty;
-static int diff_use_color_default = -1;
+static int diff_use_color_default = GIT_COLOR_UNKNOWN;
 static int diff_color_moved_default;
 static int diff_color_moved_ws_default;
 static int diff_context_default = 3;
@@ -5259,7 +5259,7 @@ static int diff_opt_color_words(const struct option *opt,
 	struct diff_options *options = opt->value;
 
 	BUG_ON_OPT_NEG(unset);
-	options->use_color = 1;
+	options->use_color = GIT_COLOR_ALWAYS;
 	options->word_diff = DIFF_WORDS_COLOR;
 	options->word_regex = arg;
 	return 0;
@@ -5581,7 +5581,7 @@ static int diff_opt_word_diff(const struct option *opt,
 		if (!strcmp(arg, "plain"))
 			options->word_diff = DIFF_WORDS_PLAIN;
 		else if (!strcmp(arg, "color")) {
-			options->use_color = 1;
+			options->use_color = GIT_COLOR_ALWAYS;
 			options->word_diff = DIFF_WORDS_COLOR;
 		}
 		else if (!strcmp(arg, "porcelain"))

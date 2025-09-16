@@ -373,19 +373,19 @@ int git_config_colorbool(const char *var, const char *value)
 {
 	if (value) {
 		if (!strcasecmp(value, "never"))
-			return 0;
+			return GIT_COLOR_NEVER;
 		if (!strcasecmp(value, "always"))
-			return 1;
+			return GIT_COLOR_ALWAYS;
 		if (!strcasecmp(value, "auto"))
 			return GIT_COLOR_AUTO;
 	}
 
 	if (!var)
-		return -1;
+		return GIT_COLOR_UNKNOWN;
 
 	/* Missing or explicit false to turn off colorization */
 	if (!git_config_bool(var, value))
-		return 0;
+		return GIT_COLOR_NEVER;
 
 	/* any normal truth value defaults to 'auto' */
 	return GIT_COLOR_AUTO;
@@ -418,7 +418,7 @@ int want_color_fd(int fd, int var)
 	if (fd < 1 || fd >= ARRAY_SIZE(want_auto))
 		BUG("file descriptor out of range: %d", fd);
 
-	if (var < 0)
+	if (var == GIT_COLOR_UNKNOWN)
 		var = git_use_color_default;
 
 	if (var == GIT_COLOR_AUTO) {
@@ -426,7 +426,7 @@ int want_color_fd(int fd, int var)
 			want_auto[fd] = check_auto_color(fd);
 		return want_auto[fd];
 	}
-	return var;
+	return var == GIT_COLOR_ALWAYS;
 }
 
 int git_color_config(const char *var, const char *value, void *cb UNUSED)

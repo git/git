@@ -1016,7 +1016,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		status_printf_ln(s, GIT_COLOR_NORMAL, "%s", ""); /* Add new line for clarity */
 
 		saved_color_setting = s->use_color;
-		s->use_color = 0;
+		s->use_color = GIT_COLOR_NEVER;
 		committable = run_status(s->fp, index_file, prefix, 1, s);
 		s->use_color = saved_color_setting;
 		string_list_clear_func(&s->change, change_data_free);

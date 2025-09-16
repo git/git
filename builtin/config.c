@@ -594,23 +594,23 @@ static int get_colorbool(const struct config_location_options *opts,
 {
 	struct get_colorbool_config_data data = {
 		.get_colorbool_slot = var,
-		.get_colorbool_found = -1,
-		.get_diff_color_found = -1,
-		.get_color_ui_found = -1,
+		.get_colorbool_found = GIT_COLOR_UNKNOWN,
+		.get_diff_color_found = GIT_COLOR_UNKNOWN,
+		.get_color_ui_found = GIT_COLOR_UNKNOWN,
 	};
 
 	config_with_options(git_get_colorbool_config, &data,
 			    &opts->source, the_repository,
 			    &opts->options);
 
-	if (data.get_colorbool_found < 0) {
+	if (data.get_colorbool_found == GIT_COLOR_UNKNOWN) {
 		if (!strcmp(data.get_colorbool_slot, "color.diff"))
 			data.get_colorbool_found = data.get_diff_color_found;
-		if (data.get_colorbool_found < 0)
+		if (data.get_colorbool_found == GIT_COLOR_UNKNOWN)
 			data.get_colorbool_found = data.get_color_ui_found;
 	}
 
-	if (data.get_colorbool_found < 0)
+	if (data.get_colorbool_found == GIT_COLOR_UNKNOWN)
 		/* default value if none found in config */
 		data.get_colorbool_found = GIT_COLOR_AUTO;
 
