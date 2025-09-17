@@ -47,7 +47,13 @@ test_expect_success "clone and setup child repos" '
 		git config set branch.main.merge refs/heads/one
 	) &&
 	git clone . bundle &&
-	git clone . seven
+	git clone . seven &&
+	git clone --ref-format=reftable . case_sensitive &&
+	(
+		cd case_sensitive &&
+		git branch branch1 &&
+		git branch bRanch1
+	)
 '
 
 test_expect_success "fetch test" '
@@ -1524,6 +1530,20 @@ test_expect_success SYMLINKS 'clone does not get confused by a D/F conflict' '
 	git clone df-conflict clone 2>err &&
 	test_grep ! WHOOPS err &&
 	test_path_is_missing whoops
+'
+
+test_expect_success CASE_INSENSITIVE_FS,REFFILES 'existing references in a case insensitive filesystem' '
+	test_when_finished rm -rf case_insensitive &&
+	(
+		git init --bare case_insensitive &&
+		cd case_insensitive &&
+		git remote add origin -- ../case_sensitive &&
+		test_must_fail git fetch -f origin "refs/heads/*:refs/heads/*" 2>err &&
+		test_grep "You${SQ}re on a case-insensitive filesystem" err &&
+		git rev-parse refs/heads/main >expect &&
+		git rev-parse refs/heads/branch1 >actual &&
+		test_cmp expect actual
+	)
 '
 
 . "$TEST_DIRECTORY"/lib-httpd.sh
