@@ -797,9 +797,24 @@ retry:
 			goto retry;
 		} else {
 			unable_to_lock_message(ref_file.buf, myerr, err);
-			if (myerr == EEXIST && ignore_case &&
-			    transaction_has_case_conflicting_update(transaction, update))
-				ret = REF_TRANSACTION_ERROR_CASE_CONFLICT;
+			if (myerr == EEXIST) {
+				if (ignore_case &&
+				    transaction_has_case_conflicting_update(transaction, update)) {
+					/*
+					 * In case-insensitive filesystems, ensure that conflicts within a
+					 * given transaction are handled. Pre-existing refs on a
+					 * case-insensitive system will be overridden without any issue.
+					 */
+					ret = REF_TRANSACTION_ERROR_CASE_CONFLICT;
+				} else {
+					/*
+					 * Pre-existing case-conflicting reference locks should also be
+					 * specially categorized to avoid failing all batched updates.
+					 */
+					ret = REF_TRANSACTION_ERROR_CREATE_EXISTS;
+				}
+			}
+
 			goto error_return;
 		}
 	}
