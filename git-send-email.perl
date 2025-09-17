@@ -1931,6 +1931,9 @@ sub pre_process_file {
 					$in_reply_to = $1;
 				}
 			}
+			elsif (/^Reply-To: (.*)/i) {
+				$reply_to = $1;
+			}
 			elsif (/^References: (.*)/i) {
 				if (!$initial_in_reply_to || $thread) {
 					$references = $1;
