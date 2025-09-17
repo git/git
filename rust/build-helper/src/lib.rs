@@ -1,5 +1,7 @@
 use std::collections::HashMap;
+use std::io::Write;
 use std::path::PathBuf;
+use cbindgen::Config;
 
 
 fn parse_bool_from_str(value: &str) -> bool {
@@ -23,12 +25,20 @@ fn parse_bool_from_option(value: Option<&String>, default: bool) -> bool {
 /// To run tests set GIT_BUILD_DIR and run `USE_LINKING=true cargo test`
 pub struct BuildHelper {
     crate_env: HashMap<String, String>,
+    generate_header: bool,
+    file_out: PathBuf,
+    config: Config,
 }
 
 
 impl BuildHelper {
     pub fn new(crate_env: HashMap<String, String>) -> Self {
-        let it = Self {crate_env};
+        let mut it = Self {
+            crate_env,
+            generate_header: false,
+            file_out: PathBuf::default(),
+            config: Config::default(),
+        };
 
         let dir_crate = it.dir_crate();
         let dir_workspace = dir_crate.parent().unwrap();
@@ -37,6 +47,12 @@ impl BuildHelper {
         if !dir_interop.exists() {
             std::fs::create_dir(dir_interop.clone()).unwrap();
         }
+
+        let file_cbindgen = dir_workspace.join("cbindgen-template.toml");
+        it.file_out = dir_interop.join(format!("{}.h", it.crate_name()));
+
+        it.config = Config::from_file(file_cbindgen.display().to_string().as_str()).unwrap();
+        it.config.include_guard = Some(format!("{}_H", it.crate_name().to_uppercase()));
 
         it
     }
@@ -47,6 +63,16 @@ impl BuildHelper {
 
     pub fn dir_crate(&self) -> PathBuf {
         PathBuf::from(self.crate_env["CARGO_MANIFEST_DIR"].clone())
+    }
+
+    pub fn generate_header<F>(mut self, editor: F) -> Self
+    where
+        F: Fn(&mut Config)
+    {
+        self.generate_header = true;
+        editor(&mut self.config);
+
+        self
     }
 
     pub fn build(self) {
@@ -77,6 +103,22 @@ impl BuildHelper {
             }
         } else {
             println!("cargo:warning={} is not linking against C objects, `USE_LINKING=true cargo test`", self.crate_env["CARGO_PKG_NAME"]);
+        }
+
+        if self.generate_header {
+            let mut buffer = Vec::<u8>::new();
+            cbindgen::Builder::new()
+                .with_crate(dir_crate.clone())
+                .with_config(self.config)
+                .with_std_types(true)
+                .generate()
+                .expect("Unable to generate bindings")
+                .write(&mut buffer);
+
+            let mut fd = std::fs::File::create(self.file_out).unwrap();
+            fd.write(buffer.as_slice()).unwrap();
+        } else {
+            let _ = std::fs::remove_file(self.file_out);
         }
     }
 }
