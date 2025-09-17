@@ -32,7 +32,7 @@ typedef struct s_chanode {
 
 typedef struct s_chastore {
 	chanode_t *head, *tail;
-	long isize, nsize;
+	long isize_, nsize;
 	chanode_t *ancur;
 	chanode_t *sncur;
 	long scurr;
