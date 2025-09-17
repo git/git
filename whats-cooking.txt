@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2025, #06; Mon, 15)
-X-master-at: a483264b01b977f3e65a4419103c21e6af7412a2
-X-next-at: c79095c0ca8344f5e5888328570552df95da1849
+Subject: What's cooking in git.git (Sep 2025, #07; Wed, 17)
+X-master-at: 215033b3ac599432a17d58f18a92b356d98354a9
+X-next-at: 15c5d4f767f655d8c09d24948ad0ab2a5e304793
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2025, #06; Mon, 15)
+What's cooking in git.git (Sep 2025, #07; Wed, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -51,92 +51,100 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
-
-* ds/midx-write-fixes (2025-09-05) 6 commits
-  (merged to 'next' on 2025-09-08 at 74b87ce5ba)
- + midx-write: simplify error cases
- + midx-write: reenable signed comparison errors
- + midx-write: use uint32_t for preferred_pack_idx
- + midx-write: use cleanup when incremental midx fails
- + midx-write: put failing response value back
- + midx-write: only load initialized packs
-
- Fixes multiple crashes around midx write-out codepaths.
- 
- source: <pull.1965.v3.git.1757100378.gitgitgadget@gmail.com>
-
-
-* jt/de-global-bulk-checkin (2025-08-22) 4 commits
-  (merged to 'next' on 2025-09-08 at f544afcab3)
- + bulk-checkin: use repository variable from transaction
- + bulk-checkin: require transaction for index_blob_bulk_checkin()
- + bulk-checkin: remove global transaction state
- + bulk-checkin: introduce object database transaction structure
- (this branch is used by jt/odb-transaction.)
-
- The bulk-checkin code used to depend on a file-scope static
- singleton variable, which has been updated to pass an instance
- throughout the callchain.
-  cf. <aLmhjw2xAbUogL1L@pks.im>
- source: <20250822213500.1488064-1-jltobler@gmail.com>
-
-
-* lo/repo-info-step-2 (2025-09-04) 3 commits
-  (merged to 'next' on 2025-09-08 at 1a58ac3835)
- + repo: add the field objects.format
- + repo: add the flag -z as an alias for --format=nul
- + Merge branch 'lo/repo-info' into lo/repo-info-step-2
-
- "repo info" learns a short-hand option "-z" that is the same as
- "--format=nul", and learns to report the objects format used in the
- repository.
- 
- source: <20250904134017.47364-1-lucasseikioshiro@gmail.com>
-
-
-* mm/worktree-doc-typofix (2025-09-03) 1 commit
-  (merged to 'next' on 2025-09-09 at afdaf0ed07)
- + docs: fix typo in worktree.adoc 'extension'
-
- Docfix.
- 
- source: <pull.1967.git.1756911040439.gitgitgadget@gmail.com>
-
-
-* ps/upload-pack-oom-protection (2025-09-04) 2 commits
-  (merged to 'next' on 2025-09-08 at 2b543d9b53)
- + upload-pack: don't ACK non-commits repeatedly in protocol v2
- + t5530: modernize tests
-
- A broken or malicious "git fetch" can say that it has the same
- object for many many times, and the upload-pack serving it can
- exhaust memory storing them redundantly, which has been corrected.
- 
- source: <20250905-b4-pks-upload-pack-repeated-non-commit-acks-v2-0-d2e67f3cb94c@pks.im>
-
-
-* rs/object-name-extend-abbrev-len-update (2025-09-04) 1 commit
-  (merged to 'next' on 2025-09-08 at 469498c610)
- + object-name: declare pointer type of extend_abbrev_len()'s 2nd parameter
-
- Code clean-up.
- 
- source: <e0bc9a67-faa9-4218-a55a-c7d53c15cfce@web.de>
-
---------------------------------------------------
 [New Topics]
 
-* je/doc-push (2025-09-12) 4 commits
- - doc: git-push: clarify "what to push"
- - doc: git-push: clarify "where to push"
- - doc: add an UPSTREAM BRANCHES section to pull/push/fetch
- - doc: git-push: clarify intro
+* pw/add-p-hunk-splitting-fix (2025-09-15) 2 commits
+ - add-patch: update hunk splitability after editing
+ - add -p: mark split hunks as undecided
 
- Doc updates.
+ Marking a hunk 'selected' in "git add -p" and then splitting made
+ all the split pieces 'selected'; this has been changed to make them
+ all 'undecided'.
 
  Comments?
- source: <pull.1964.v2.git.1757703309.gitgitgadget@gmail.com>
+ source: <pull.1863.v2.git.1757950144.gitgitgadget@gmail.com>
+
+
+* dk/stash-apply-index (2025-09-15) 4 commits
+ - stash: honor stash.index in apply, pop modes
+ - stash: refactor private config globals
+ - t3905: remove unneeded blank line
+ - t3903: reduce dependencies on previous tests
+
+ The stash.index configuration variable canbe set to make "git stash
+ pop/apply" pretend that it was invoked with "--index".
+
+ Expecting a (hopefully small and final) reroll.
+ cf. <CALnO6CByUNHWFRYBSOpP-uD8moBrm48UW7k0MaGTUtL=bDL6GQ@mail.gmail.com>
+ source: <cover.1757982870.git.ben.knoble+github@gmail.com>
+
+
+* jk/color-variable-fixes (2025-09-16) 13 commits
+ - config: store want_color() result in a separate bool
+ - add-interactive: retain colorbool values longer
+ - color: return bool from want_color()
+ - color: use git_colorbool enum type to store colorbools
+ - pretty: use format_commit_context.auto_color as colorbool
+ - diff: stop passing ecbdata->use_color as boolean
+ - diff: pass o->use_color directly to fill_metainfo()
+ - diff: don't use diff_options.use_color as a strict bool
+ - diff: simplify color_moved check when flushing
+ - grep: don't treat grep_opt.color as a strict bool
+ - color: return enum from git_config_colorbool()
+ - color: use GIT_COLOR_* instead of numeric constants
+ - Merge branch 'jk/add-i-color' into jk/color-variable-fixes
+ (this branch uses jk/add-i-color.)
+
+ Some places in the code confused a variable that is *not* a boolean
+ to enable color but is an enum that records what the user requested
+ to do about color.  A couple of bugs of this sort have been fixed,
+ while the code has been cleaned up to prevent similar bugs in the
+ future.
+
+ Will merge to 'next'?
+ source: <20250916201036.GA612463@coredump.intra.peff.net>
+
+
+* en/xdiff-cleanup (2025-09-07) 9 commits
+ - xdiff: treat xdfile_t.rchg like an enum
+ - xdiff: delete chastore from xdfile_t, view with --color-words
+ - xdiff: delete fields ha, line, size in xdlclass_t in favor of an xrecord_t
+ - xdiff: delete redundant array xdfile_t.ha
+ - xdiff: delete struct diffdata_t
+ - xdiff: delete xdl_get_rec() in xemit
+ - xdiff: delete unnecessary fields from xrecord_t and xdfile_t
+ - xdiff: delete local variables and initialize/free xdfile_t directly
+ - xdiff: delete static forward declarations in xprepare
+ (this branch is used by en/rust-xdiff.)
+
+ A lot of code clean-up of xdiff.
+ Split out of a larger topic.
+
+ Expecting a (hopefully small and final) reroll.
+ cf. <CABPp-BH-oaV+fJ4u50oofy54ycE5oKoYJ6O1XgEt_JfDSgXvxg@mail.gmail.com>
+ source: <pull.2048.git.git.1757274320.gitgitgadget@gmail.com>
+
+
+* jc/3.0-default-initial-branch-to-main-addendum (2025-09-17) 1 commit
+ - initial branch: give hints after switching the default name
+ (this branch uses pw/3.0-default-initial-branch-to-main.)
+
+ Keep giving hint about the default initial branch name for users
+ who may be surprised after Git 3.0 switchover.
+
+ Will merge to 'next'?
+ source: <cover.1757518141.git.phillip.wood@dunelm.org.uk>
+
+
+* nb/send-email-no-dup-reply-to (2025-09-16) 1 commit
+ - send-email: don't duplicate Reply-to: in intro message
+
+ "git send-email --compose --reply-to=<address>" used to add
+ duplicated Reply-To: header, which made mailservers unhappy.  This
+ has been corrected.
+
+ Will merge to 'next'.
+ source: <175809074627.1696783.67425889158412786@noble.neil.brown.name>
 
 --------------------------------------------------
 [Stalled]
@@ -172,19 +180,27 @@ well with other topics in 'seen' (and of course 'next' and
  Ejected out of 'seen' for now.
  source: <cover.1752882401.git.ayu.chandekar@gmail.com>
 
+--------------------------------------------------
+[Cooking]
 
-* tb/prepare-midx-pack-cleanup (2025-05-28) 5 commits
- . midx: return a `packed_git` pointer from `prepare_midx_pack()`
- . midx-write.c: extract inner loop from fill_packs_from_midx()
- . midx-write.c: guard against incremental MIDXs in want_included_pack()
- . midx: access pack names through `nth_midxed_pack_name()`
- . Merge branch 'ps/midx-negative-packfile-cache' into tb/prepare-midx-pack-cleanup
+* ar/submodule-gitdir-tweak (2025-09-08) 10 commits
+ - t7425: add gitdir encoding tests
+ - t7450: move nested gitdir tests to t7425
+ - submodule: remove validate_submodule_git_dir()
+ - submodule: error out if gitdir name is too long
+ - submodule: encode gitdir paths to avoid conflicts
+ - strbuf: bring back is_rfc3986_unreserved
+ - t7425: add basic mixed submodule gitdir path tests
+ - submodule: add gitdir path config override
+ - submodule: create new gitdirs under submodules path
+ - submodule--helper: use submodule_name_to_gitdir in add_submodule
 
- Improvement on Multi-pack-index API.
+ Avoid local submodule repository directory paths overlapping with
+ each other by encoding submodule names before using them as path
+ components.
 
- Expecting a reroll.
- cf. <20250530065034.GC1321283@coredump.intra.peff.net>
- source: <cover.1748473122.git.me@ttaylorr.com>
+ Comments?
+ source: <20250908140117.262205-1-adrian.ratiu@collabora.com>
 
 
 * cc/promisor-remote-capability (2025-09-07) 7 commits
@@ -205,25 +221,19 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250908053056.956907-1-christian.couder@gmail.com>
 
 
-* ar/submodule-gitdir-tweak (2025-09-08) 10 commits
- - t7425: add gitdir encoding tests
- - t7450: move nested gitdir tests to t7425
- - submodule: remove validate_submodule_git_dir()
- - submodule: error out if gitdir name is too long
- - submodule: encode gitdir paths to avoid conflicts
- - strbuf: bring back is_rfc3986_unreserved
- - t7425: add basic mixed submodule gitdir path tests
- - submodule: add gitdir path config override
- - submodule: create new gitdirs under submodules path
- - submodule--helper: use submodule_name_to_gitdir in add_submodule
+* je/doc-push (2025-09-15) 5 commits
+ - fixup! doc: add an UPSTREAM BRANCHES section to pull/push/fetch
+ - doc: git-push: clarify "what to push"
+ - doc: git-push: clarify "where to push"
+ - doc: add an UPSTREAM BRANCHES section to pull/push/fetch
+ - doc: git-push: clarify intro
 
- Avoid local submodule repository directory paths overlapping with
- each other by encoding submodule names before using them as path
- components.
- source: <20250908140117.262205-1-adrian.ratiu@collabora.com>
+ Doc updates.
 
---------------------------------------------------
-[Cooking]
+ Expecting a reroll.
+ cf. <70034c35-8f08-4ee0-9017-7faf6f55ae14@app.fastmail.com>
+ source: <pull.1964.v2.git.1757703309.gitgitgadget@gmail.com>
+
 
 * rs/get-oid-with-flags-cleanup (2025-09-10) 1 commit
   (merged to 'next' on 2025-09-15 at ff8d1faae9)
@@ -256,7 +266,7 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250910-b4-pks-clar-update-v1-1-26a196237e0a@pks.im>
 
 
-* ps/config-get-color-fixes (2025-09-11) 5 commits
+* ps/config-get-color-fixes (2025-09-15) 5 commits
  - builtin/config: do not spawn pager when printing color codes
  - builtin/config: special-case retrieving colors without a key
  - builtin/config: do not die in `get_color()`
@@ -267,8 +277,8 @@ well with other topics in 'seen' (and of course 'next' and
  sequence is for a particular type, e.g., "git config get
  --type=color --default=reset no.such.thing", isn't very ergonomic.
 
- Comments?
- source: <20250911-pks-config-color-v1-0-3a7c79df65b1@pks.im>
+ Will merge to 'next'?
+ source: <20250915-pks-config-color-v2-0-e4290bd8d13c@pks.im>
 
 
 * ps/meson-build-docs (2025-09-11) 3 commits
@@ -283,8 +293,7 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250911-b4-pks-meson-docs-target-v1-0-a92c666ecef9@pks.im>
 
 
-* ps/odb-clean-stale-wrappers (2025-09-12) 2 commits
- - fixup! odb: drop deprecated wrapper functions
+* ps/odb-clean-stale-wrappers (2025-09-10) 1 commit
  - odb: drop deprecated wrapper functions
 
  Code clean-up.
@@ -294,7 +303,7 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250910-b4-pks-odb-drop-wrappers-v1-1-6ed660cb1eec@pks.im>
 
 
-* jt/odb-transaction (2025-09-09) 7 commits
+* jt/odb-transaction (2025-09-16) 7 commits
  - odb: add transaction interface
  - object-file: update naming from bulk-checkin
  - object-file: relocate ODB transaction code
@@ -307,8 +316,8 @@ well with other topics in 'seen' (and of course 'next' and
  create many objects at once in a transaction and abstract it into
  the generic object layer.
 
- Comments?
- source: <20250909191134.555689-1-jltobler@gmail.com>
+ Will merge to 'next'?
+ source: <20250916182938.2193476-1-jltobler@gmail.com>
 
 
 * cc/fast-import-strip-signed-commits (2025-09-12) 2 commits
@@ -318,7 +327,8 @@ well with other topics in 'seen' (and of course 'next' and
  "git fast-import" learned that "--signed-commits=<how>" option that
  corresponds to that of "git fast-export".
 
- Comments?
+ Expecting a (hopefully small and final) reroll.
+ cf. <CAP8UFD3-3zjBBHP-Y9nLO-qEyhkWhD_pxFZhk6rzrC31LanDMQ@mail.gmail.com>
  source: <20250912124042.2523683-1-christian.couder@gmail.com>
 
 
@@ -327,11 +337,12 @@ well with other topics in 'seen' (and of course 'next' and
  - t9902: switch default branch name to main
  - t4013: switch default branch name to main
  - breaking-changes: switch default branch to main
+ (this branch is used by jc/3.0-default-initial-branch-to-main-addendum.)
 
  Declare that "git init" that is not otherwise configured uses
  'main' as the initial branch, not 'master', starting Git 3.0.
 
- Comments?
+ Will merge to 'next'?
  source: <cover.1757518141.git.phillip.wood@dunelm.org.uk>
 
 
@@ -349,7 +360,7 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250904-b4-pks-commit-graph-via-source-v1-0-d932c2481e1a@pks.im>
 
 
-* ps/rust-balloon (2025-09-10) 9 commits
+* ps/rust-balloon (2025-09-15) 9 commits
  - ci: enable Rust for breaking-changes jobs
  - ci: convert "pedantic" job into full build with breaking changes
  - BreakingChanges: announce Rust becoming mandatory
@@ -363,8 +374,8 @@ well with other topics in 'seen' (and of course 'next' and
  Dip our toes a bit to (optionally) use Rust implemented helper
  called from our C code.
 
- Comments?
- source: <20250910-b4-pks-rust-breaking-change-v4-0-4a63fc69278d@pks.im>
+ Will merge to 'next'?
+ source: <20250915-b4-pks-rust-breaking-change-v5-0-dc3a32fbb216@pks.im>
 
 
 * kh/doc-fast-import-markup-fix (2025-09-08) 1 commit
@@ -391,25 +402,25 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250906075147.1076656-1-meetsoni3017@gmail.com>
 
 
-* sj/string-list (2025-09-07) 4 commits
+* sj/string-list (2025-09-17) 4 commits
  - refs: enable sign compare warnings check
  - string-list: change "string_list_find_insert_index" return type to "size_t"
  - string-list: replace negative index encoding with "exact_match" parameter
- - string-list: allow passing NULL for `get_entry_index`
+ - string-list: use bool instead of int for "exact_match"
 
  The "string-list" API function to find where a given string would
  be inserted got updated so that it can use unrealistically huge
  array index that would only fit in size_t but not int or ssize_t
  to achieve unstated goal.
 
- Expecting a reroll.
- source: <aL21kDwK-zGZyJ9q@ArchLinux>
+ Will merge to 'next'?
+ source: <aMp8yNFiXDyk2hP4@ArchLinux>
 
 
-* ps/packfile-store (2025-09-09) 16 commits
+* ps/packfile-store (2025-09-15) 16 commits
  - packfile: refactor `get_packed_git_mru()` to work on packfile store
  - packfile: refactor `get_all_packs()` to work on packfile store
- - packfile: remove `get_packed_git()`
+ - packfile: refactor `get_packed_git()` to work on packfile store
  - packfile: move `get_multi_pack_index()` into "midx.c"
  - packfile: introduce function to load and add packfiles
  - packfile: refactor `install_packed_git()` to work on packfile store
@@ -428,10 +439,11 @@ well with other topics in 'seen' (and of course 'next' and
  object database(s).
 
  Comments?
- source: <20250909-b4-pks-packfiles-store-v4-0-151c4ba3619f@pks.im>
+ cf. <aMe_Zu1osrfDnSYL@pks.im>
+ source: <20250915-b4-pks-packfiles-store-v5-0-d6340350934f@pks.im>
 
 
-* kn/refs-files-case-insensitive (2025-09-13) 4 commits
+* kn/refs-files-case-insensitive (2025-09-17) 4 commits
  - refs/files: handle D/F conflicts during locking
  - refs/files: handle F/D conflicts in case-insensitive FS
  - refs/files: use correct error type when lock exists
@@ -441,8 +453,8 @@ well with other topics in 'seen' (and of course 'next' and
  backend is used for ref storage, by failing only the ones that are
  involved in the conflict while allowing others.
 
- Comments?
- source: <20250913-587-git-fetch-1-fails-fetches-on-case-insensitive-repositories-v3-0-195569740b57@gmail.com>
+ Will merge to 'next'?
+ source: <20250917-587-git-fetch-1-fails-fetches-on-case-insensitive-repositories-v4-0-da3c74a08ed0@gmail.com>
 
 
 * ag/doc-sendmail-gmail-example-update (2025-08-26) 1 commit
@@ -455,7 +467,7 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250826150919.5239-1-gargaditya08@live.com>
 
 
-* en/rust-xdiff (2025-09-07) 17 commits
+* en/rust-xdiff (2025-09-07) 9 commits
  - xdiff: change the types of dstart, dend, rchg, and rindex in xdfile_t
  - xdiff: make xdfile_t.nreff a usize instead of long
  - xdiff: make xdfile_t.nrec a usize instead of long
@@ -464,17 +476,10 @@ well with other topics in 'seen' (and of course 'next' and
  - xdiff: make xrecord_t.ptr a u8 instead of char
  - xdiff: include compat/rust_types.h
  - compat/rust_types.h: define rust primitive types
- - xdiff: treat xdfile_t.rchg like an enum
- - xdiff: delete chastore from xdfile_t, view with --color-words
- - xdiff: delete fields ha, line, size in xdlclass_t in favor of an xrecord_t
- - xdiff: delete redundant array xdfile_t.ha
- - xdiff: delete struct diffdata_t
- - xdiff: delete xdl_get_rec() in xemit
- - xdiff: delete unnecessary fields from xrecord_t and xdfile_t
- - xdiff: delete local variables and initialize/free xdfile_t directly
- - xdiff: delete static forward declarations in xprepare
+ - Merge branch 'en/xdiff-cleanup' into en/rust-xdiff
+ (this branch uses en/xdiff-cleanup.)
 
- Rust!  Not Rust, though ;-)
+ Use Rust-friendly types in xdiff code.
 
  Comments?
  source: <pull.2048.git.git.1757274320.gitgitgadget@gmail.com>
@@ -491,7 +496,8 @@ well with other topics in 'seen' (and of course 'next' and
 
  Doc updates.
 
- Comments?
+ Will merge to 'next'?
+ cf. <236a79f4-e9a2-4335-bbff-79ae0cc67e9b@app.fastmail.com>
  source: <pull.1962.v4.git.1757531669.gitgitgadget@gmail.com>
 
 
@@ -517,19 +523,20 @@ well with other topics in 'seen' (and of course 'next' and
 
 
 * kh/you-still-use-whatchanged-fix (2025-09-14) 8 commits
- - BreakingChanges: remove claim about whatchanged reports
- - whatchanged: remove not-even-shorter clause
- - whatchanged: hint about git-log(1) and aliasing
- - you-still-use-that??: help the user help themselves
- - t0014: test shadowing of aliases for a sample of builtins
- - git: allow alias-shadowing deprecated builtins
- - git: move seen-alias bookkeeping into handle_alias(...)
- - git: add `deprecated` category to --list-cmds
+ . BreakingChanges: remove claim about whatchanged reports
+ . whatchanged: remove not-even-shorter clause
+ . whatchanged: hint about git-log(1) and aliasing
+ . you-still-use-that??: help the user help themselves
+ . t0014: test shadowing of aliases for a sample of builtins
+ . git: allow alias-shadowing deprecated builtins
+ . git: move seen-alias bookkeeping into handle_alias(...)
+ . git: add `deprecated` category to --list-cmds
 
  Update "do you still use it?" message given by a command that is
  deeply deprecated and allow us to suggest alternatives.
 
- Ready?
+ Breaks 'seen' built with WITH_BREAKING_CHANGES.
+ cf. <xmqqy0qffrri.fsf@gitster.g>
  source: <cover.1757879060.git.code@khaugsbakk.name>
 
 
@@ -572,6 +579,7 @@ well with other topics in 'seen' (and of course 'next' and
  + add-interactive: manually fall back color config to color.ui
  + add-interactive: respect color.diff for diff coloring
  + stash: pass --no-color to diff plumbing child processes
+ (this branch is used by jk/color-variable-fixes.)
 
  Some among "git add -p" and friends ignored color.diff and/or
  color.ui configuration variables, which is an old regression, which
