@@ -127,13 +127,17 @@ then
 	export GIT_TEST_DISALLOW_ABBREVIATED_OPTIONS
 fi
 
+# Explicitly set the default branch name for testing, to squelch hints
+# from "git init" during the transition period.  Should be removed
+# after we decide to remove ADVICE_DEFAULT_BRANCH_NAME
 if test -z "$WITH_BREAKING_CHANGES"
 then
-	# Explicitly set the default branch name for testing, to avoid the
-	# transitory "git init" warning under --verbose.
 	: ${GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME:=master}
-	export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+else
+	: ${GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME:=main}
 fi
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 
 ################################################################
 # It appears that people try to run tests without building...
