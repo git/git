@@ -104,4 +104,19 @@ int check_signature(struct signature_check *sigc,
 void print_signature_buffer(const struct signature_check *sigc,
 			    unsigned flags);
 
+/* Modes for --signed-tags=<mode> and --signed-commits=<mode> options. */
+enum sign_mode {
+	SIGN_ABORT,
+	SIGN_WARN_VERBATIM,
+	SIGN_VERBATIM,
+	SIGN_WARN_STRIP,
+	SIGN_STRIP,
+};
+
+/*
+ * Return 0 if `arg` can be parsed into an `enum sign_mode`. Return -1
+ * otherwise.
+ */
+int parse_sign_mode(const char *arg, enum sign_mode *mode);
+
 #endif
