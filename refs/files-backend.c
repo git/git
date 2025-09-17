@@ -906,8 +906,23 @@ retry:
 		 * If the ref did not exist and we are creating it, we have to
 		 * make sure there is no existing packed ref that conflicts
 		 * with refname. This check is deferred so that we can batch it.
+		 *
+		 * For case-insensitive filesystems, we should also check for F/D
+		 * conflicts between 'foo' and 'Foo/bar'. So let's lowercase
+		 * the refname.
 		 */
-		item = string_list_append(refnames_to_check, refname);
+		if (ignore_case) {
+			struct strbuf lower = STRBUF_INIT;
+
+			strbuf_addstr(&lower, refname);
+			strbuf_tolower(&lower);
+
+			item = string_list_append_nodup(refnames_to_check,
+							strbuf_detach(&lower, NULL));
+		} else {
+			item = string_list_append(refnames_to_check, refname);
+		}
+
 		item->util = xmalloc(sizeof(update_idx));
 		memcpy(item->util, &update_idx, sizeof(update_idx));
 	}
@@ -2832,7 +2847,7 @@ static int files_transaction_prepare(struct ref_store *ref_store,
 			       "ref_transaction_prepare");
 	size_t i;
 	int ret = 0;
-	struct string_list refnames_to_check = STRING_LIST_INIT_NODUP;
+	struct string_list refnames_to_check = STRING_LIST_INIT_DUP;
 	char *head_ref = NULL;
 	int head_type;
 	struct files_transaction_backend_data *backend_data;
