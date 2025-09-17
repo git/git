@@ -1402,7 +1402,7 @@ endif
 CFLAGS = -g -O2 -Wall
 LDFLAGS =
 CC_LD_DYNPATH = -Wl,-rpath,
-BASIC_CFLAGS = -I.
+BASIC_CFLAGS = -I. -fPIE
 BASIC_LDFLAGS =
 
 # library flags
