@@ -365,7 +365,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 	return (*argv) - orig_argv;
 }
 
-static int handle_alias(struct strvec *args)
+static int handle_alias(struct strvec *args, struct string_list *expanded_aliases)
 {
 	int envchanged = 0, ret = 0, saved_errno = errno;
 	int count, option_count;
@@ -376,6 +376,8 @@ static int handle_alias(struct strvec *args)
 	alias_command = args->v[0];
 	alias_string = alias_lookup(alias_command);
 	if (alias_string) {
+		struct string_list_item *seen;
+
 		if (args->nr == 2 && !strcmp(args->v[1], "-h"))
 			fprintf_ln(stderr, _("'%s' is aliased to '%s'"),
 				   alias_command, alias_string);
@@ -422,6 +424,25 @@ static int handle_alias(struct strvec *args)
 
 		if (!strcmp(alias_command, new_argv[0]))
 			die(_("recursive alias: %s"), alias_command);
+
+		string_list_append(expanded_aliases, alias_command);
+		seen = unsorted_string_list_lookup(expanded_aliases,
+						   new_argv[0]);
+
+		if (seen) {
+			struct strbuf sb = STRBUF_INIT;
+			for (size_t i = 0; i < expanded_aliases->nr; i++) {
+				struct string_list_item *item = &expanded_aliases->items[i];
+
+				strbuf_addf(&sb, "\n  %s", item->string);
+				if (item == seen)
+					strbuf_addstr(&sb, " <==");
+				else if (i == expanded_aliases->nr - 1)
+					strbuf_addstr(&sb, " ==>");
+			}
+			die(_("alias loop detected: expansion of '%s' does"
+			      " not terminate:%s"), expanded_aliases->items[0].string, sb.buf);
+		}
 
 		trace_argv_printf(new_argv,
 				  "trace: alias expansion: %s =>",
@@ -806,8 +827,7 @@ static void execv_dashed_external(const char **argv)
 static int run_argv(struct strvec *args)
 {
 	int done_alias = 0;
-	struct string_list cmd_list = STRING_LIST_INIT_DUP;
-	struct string_list_item *seen;
+	struct string_list expanded_aliases = STRING_LIST_INIT_DUP;
 
 	while (1) {
 		/*
@@ -859,35 +879,17 @@ static int run_argv(struct strvec *args)
 		/* .. then try the external ones */
 		execv_dashed_external(args->v);
 
-		seen = unsorted_string_list_lookup(&cmd_list, args->v[0]);
-		if (seen) {
-			struct strbuf sb = STRBUF_INIT;
-			for (size_t i = 0; i < cmd_list.nr; i++) {
-				struct string_list_item *item = &cmd_list.items[i];
-
-				strbuf_addf(&sb, "\n  %s", item->string);
-				if (item == seen)
-					strbuf_addstr(&sb, " <==");
-				else if (i == cmd_list.nr - 1)
-					strbuf_addstr(&sb, " ==>");
-			}
-			die(_("alias loop detected: expansion of '%s' does"
-			      " not terminate:%s"), cmd_list.items[0].string, sb.buf);
-		}
-
-		string_list_append(&cmd_list, args->v[0]);
-
 		/*
 		 * It could be an alias -- this works around the insanity
 		 * of overriding "git log" with "git show" by having
 		 * alias.log = show
 		 */
-		if (!handle_alias(args))
+		if (!handle_alias(args, &expanded_aliases))
 			break;
 		done_alias = 1;
 	}
 
-	string_list_clear(&cmd_list, 0);
+	string_list_clear(&expanded_aliases, 0);
 
 	return done_alias;
 }
