@@ -265,6 +265,7 @@ static int last_modified_init(struct last_modified *lm, struct repository *r,
 	lm->rev.boundary = 1;
 	lm->rev.no_commit_id = 1;
 	lm->rev.diff = 1;
+	lm->rev.diffopt.flags.no_recursive_diff_tree_combined = 1;
 	lm->rev.diffopt.flags.recursive = lm->recursive;
 	lm->rev.diffopt.flags.tree_in_recursive = lm->show_trees;
 
