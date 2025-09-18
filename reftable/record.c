@@ -675,7 +675,7 @@ static int reftable_log_record_key(const void *r, struct reftable_buf *dest)
 	const struct reftable_log_record *rec =
 		(const struct reftable_log_record *)r;
 	int len = strlen(rec->refname), err;
-	uint8_t i64[8];
+	uint8_t i64_[8];
 	uint64_t ts = 0;
 
 	reftable_buf_reset(dest);
@@ -684,9 +684,9 @@ static int reftable_log_record_key(const void *r, struct reftable_buf *dest)
 		return err;
 
 	ts = (~ts) - rec->update_index;
-	reftable_put_be64(&i64[0], ts);
+	reftable_put_be64(&i64_[0], ts);
 
-	err = reftable_buf_add(dest, i64, sizeof(i64));
+	err = reftable_buf_add(dest, i64_, sizeof(i64_));
 	if (err < 0)
 		return err;
 

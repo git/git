@@ -913,7 +913,7 @@ void *odb_read_object_peeled(struct object_database *odb,
 {
 	enum object_type type;
 	void *buffer;
-	unsigned long isize;
+	unsigned long isize_;
 	struct object_id actual_oid;
 
 	oidcpy(&actual_oid, oid);
@@ -921,11 +921,11 @@ void *odb_read_object_peeled(struct object_database *odb,
 		int ref_length = -1;
 		const char *ref_type = NULL;
 
-		buffer = odb_read_object(odb, &actual_oid, &type, &isize);
+		buffer = odb_read_object(odb, &actual_oid, &type, &isize_);
 		if (!buffer)
 			return NULL;
 		if (type == required_type) {
-			*size = isize;
+			*size = isize_;
 			if (actual_oid_return)
 				oidcpy(actual_oid_return, &actual_oid);
 			return buffer;
@@ -941,7 +941,7 @@ void *odb_read_object_peeled(struct object_database *odb,
 		}
 		ref_length = strlen(ref_type);
 
-		if (ref_length + odb->repo->hash_algo->hexsz > isize ||
+		if (ref_length + odb->repo->hash_algo->hexsz > isize_ ||
 		    memcmp(buffer, ref_type, ref_length) ||
 		    get_oid_hex_algop((char *) buffer + ref_length, &actual_oid,
 				      odb->repo->hash_algo)) {

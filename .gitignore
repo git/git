@@ -256,3 +256,7 @@ Release/
 /contrib/buildsystems/out
 /contrib/libgit-rs/target
 /contrib/libgit-sys/target
+.idea/
+/rust/target/
+/rust/Cargo.lock
+
