@@ -1083,9 +1083,20 @@ test_expect_success 'get --type=color' '
 	rm .git/config &&
 	git config ${mode_set} foo.color "red" &&
 	git config --get --type=color foo.color >actual.raw &&
+	git config get --type=color foo.color >actual-subcommand.raw &&
+	test_cmp actual.raw actual-subcommand.raw &&
 	test_decode_color <actual.raw >actual &&
 	echo "<RED>" >expect &&
 	test_cmp expect actual
+'
+
+test_expect_success 'get --type=color with default value only' '
+	git config --get-color "" "red" >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	echo "<RED>" >expect &&
+	test_cmp expect actual &&
+	git config get --type=color --default="red" "" >actual-subcommand.raw &&
+	test_cmp actual.raw actual-subcommand.raw
 '
 
 test_expect_success 'set --type=color' '

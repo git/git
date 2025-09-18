@@ -923,6 +923,8 @@ static int cmd_config_get(int argc, const char **argv, const char *prefix,
 
 	if (url)
 		ret = get_urlmatch(&location_opts, &display_opts, argv[0], url);
+	else if (display_opts.type == TYPE_COLOR && !strlen(argv[0]) && display_opts.default_value)
+		ret = get_color(&location_opts, "", display_opts.default_value);
 	else
 		ret = get_value(&location_opts, &display_opts, argv[0], value_pattern,
 				get_value_flags, flags);
