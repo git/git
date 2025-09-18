@@ -1,4 +1,24 @@
-commit 4659538844daa2849b1a9e7d6fadb96fcd26fc83
+commit eb871b8aa9aff323e484723039c9a92ab0266e060bc0ef2afb08fadda25c5ace
+Author: Thomas Rast <trast@student.ethz.ch>
+Date:   Thu Feb 28 10:50:24 2013 +0100
+
+    move within the file
+
+diff --git a/b.c b/b.c
+--- a/b.c
++++ b/b.c
+@@ -25,0 +18,9 @@
++long f(long x)
++{
++	int s = 0;
++	while (x) {
++		x /= 2;
++		s++;
++	}
++	return s;
++}
+
+commit 5526ed05c2476b56af8b7be499e8f78bd50f490740733a9ca7e1f55878fa90a9
 Author: Thomas Rast <trast@student.ethz.ch>
 Date:   Thu Feb 28 10:48:43 2013 +0100
 
@@ -18,7 +38,7 @@ diff --git a/a.c b/a.c
 +
 +/* incomplete lines are bad! */
 
-commit 100b61a6f2f720f812620a9d10afb3a960ccb73c
+commit 29f32ac3141c48b22803e5c4127b719917b67d0f8ca8c5248bebfa2a19f7da10
 Author: Thomas Rast <trast@student.ethz.ch>
 Date:   Thu Feb 28 10:48:10 2013 +0100
 
@@ -36,7 +56,7 @@ diff --git a/a.c b/a.c
 +}
 \ No newline at end of file
 
-commit a6eb82647d5d67f893da442f8f9375fd89a3b1e2
+commit ccf97b9878189c40a981da50b15713bb80a35755326320ec80900caf22ced46f
 Author: Thomas Rast <trast@student.ethz.ch>
 Date:   Thu Feb 28 10:45:16 2013 +0100
 
@@ -45,17 +65,6 @@ Date:   Thu Feb 28 10:45:16 2013 +0100
 diff --git a/a.c b/a.c
 --- a/a.c
 +++ b/a.c
-@@ -3,9 +3,9 @@
--int f(int x)
-+long f(long x)
- {
- 	int s = 0;
- 	while (x) {
- 		x >>= 1;
- 		s++;
- 	}
- 	return s;
- }
 @@ -17,5 +17,5 @@
  int main ()
  {
@@ -64,27 +73,7 @@ diff --git a/a.c b/a.c
  	return 0;
  }
 
-commit f04fb20f2c77850996cba739709acc6faecc58f7
-Author: Thomas Rast <trast@student.ethz.ch>
-Date:   Thu Feb 28 10:44:55 2013 +0100
-
-    change f()
-
-diff --git a/a.c b/a.c
---- a/a.c
-+++ b/a.c
-@@ -3,8 +3,9 @@
- int f(int x)
- {
- 	int s = 0;
- 	while (x) {
- 		x >>= 1;
- 		s++;
- 	}
-+	return s;
- }
-
-commit de4c48ae814792c02a49c4c3c0c757ae69c55f6a
+commit 1dd7e9b2b1699324b53b341e728653b913bc192a14dfea168c5b51f2b3d03592
 Author: Thomas Rast <trast@student.ethz.ch>
 Date:   Thu Feb 28 10:44:48 2013 +0100
 
@@ -93,15 +82,6 @@ Date:   Thu Feb 28 10:44:48 2013 +0100
 diff --git a/a.c b/a.c
 --- /dev/null
 +++ b/a.c
-@@ -0,0 +3,8 @@
-+int f(int x)
-+{
-+	int s = 0;
-+	while (x) {
-+		x >>= 1;
-+		s++;
-+	}
-+}
 @@ -0,0 +16,5 @@
 +int main ()
 +{
