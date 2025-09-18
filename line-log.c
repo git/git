@@ -201,7 +201,7 @@ static void range_set_difference(struct range_set *out,
 				 * b: ------|
 				 */
 				j++;
-			if (j >= b->nr || end < b->ranges[j].start) {
+			if (j >= b->nr || end <= b->ranges[j].start) {
 				/*
 				 * b exhausted, or
 				 * a:  ----|
@@ -408,7 +408,7 @@ static void diff_ranges_filter_touched(struct diff_ranges *out,
 	assert(out->target.nr == 0);
 
 	for (i = 0; i < diff->target.nr; i++) {
-		while (diff->target.ranges[i].start > rs->ranges[j].end) {
+		while (diff->target.ranges[i].start >= rs->ranges[j].end) {
 			j++;
 			if (j == rs->nr)
 				return;
@@ -939,9 +939,18 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
 		long t_cur = t_start;
 		unsigned int j_last;
 
+		/*
+		 * If a diff range touches multiple line ranges, then all
+		 * those line ranges should be shown, so take a step back if
+		 * the current line range is still in the previous diff range
+		 * (even if only partially).
+		 */
+		if (j > 0 && diff->target.ranges[j-1].end > t_start)
+			j--;
+
 		while (j < diff->target.nr && diff->target.ranges[j].end < t_start)
 			j++;
-		if (j == diff->target.nr || diff->target.ranges[j].start > t_end)
+		if (j == diff->target.nr || diff->target.ranges[j].start >= t_end)
 			continue;
 
 		/* Scan ahead to determine the last diff that falls in this range */
