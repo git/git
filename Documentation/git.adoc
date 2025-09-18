@@ -669,6 +669,10 @@ parameter, <path>.
 +
 For each path `GIT_EXTERNAL_DIFF` is called, two environment variables,
 `GIT_DIFF_PATH_COUNTER` and `GIT_DIFF_PATH_TOTAL` are set.
++
+When Git diff is called to compare two commits, four additional
+environment variables, `GIT_DIFF_ENDPOINT_A`, `GIT_DIFF_ENDPOINT_B`,
+`GIT_DIFF_PATH_A` and `GIT_DIFF_PATH_B` are set.
 
 `GIT_EXTERNAL_DIFF_TRUST_EXIT_CODE`::
 	If this Boolean environment variable is set to true then the
@@ -679,12 +683,23 @@ For each path `GIT_EXTERNAL_DIFF` is called, two environment variables,
 	is expected to return exit code 0 regardless of equality.
 	Any other exit code causes Git to report a fatal error.
 
-
 `GIT_DIFF_PATH_COUNTER`::
 	A 1-based counter incremented by one for every path.
 
 `GIT_DIFF_PATH_TOTAL`::
 	The total number of paths.
+
+`GIT_DIFF_ENDPOINT_A`::
+	The full SHA-1 object name of the source commit.
+
+`GIT_DIFF_ENDPOINT_B`::
+	The full SHA-1 object name of the destination commit.
+
+`GIT_DIFF_PATH_A`::
+	The repository path in the source endpoint, `/dev/null` if added.
+
+`GIT_DIFF_PATH_B`::
+	The repository path in the destination endpoint, `/dev/null` if deleted.
 
 other
 ~~~~~

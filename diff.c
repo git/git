@@ -46,6 +46,7 @@
 #include "setup.h"
 #include "strmap.h"
 #include "ws.h"
+#include "hash.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -4758,6 +4759,8 @@ static void run_external_diff(const struct external_diff *pgm,
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct diff_queue_struct *q = &diff_queued_diff;
 	int rc;
+	const char *path_one;
+	const char *path_two;
 
 	/*
 	 * Trivial equality is handled by diff_unmodified_pair() before
@@ -4786,6 +4789,19 @@ static void run_external_diff(const struct external_diff *pgm,
 	strvec_pushf(&cmd.env, "GIT_DIFF_PATH_COUNTER=%d",
 		     ++o->diff_path_counter);
 	strvec_pushf(&cmd.env, "GIT_DIFF_PATH_TOTAL=%d", q->nr);
+
+	if (o->endpoint.oid[0] && o->endpoint.oid[1]) {
+		strvec_pushf(&cmd.env, "GIT_DIFF_ENDPOINT_A=%s",
+			     oid_to_hex(o->endpoint.oid[0]));
+		strvec_pushf(&cmd.env, "GIT_DIFF_ENDPOINT_B=%s",
+			     oid_to_hex(o->endpoint.oid[1]));
+
+		path_one = DIFF_FILE_VALID(one) ? name : "/dev/null";
+		path_two = DIFF_FILE_VALID(two) ? (other ? other : name) : "/dev/null";
+
+		strvec_pushf(&cmd.env, "GIT_DIFF_PATH_A=%s", path_one);
+		strvec_pushf(&cmd.env, "GIT_DIFF_PATH_B=%s", path_two);
+	}
 
 	diff_free_filespec_data(one);
 	diff_free_filespec_data(two);

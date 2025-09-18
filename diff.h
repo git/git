@@ -420,6 +420,11 @@ struct diff_options {
 	 */
 	int max_depth;
 	int max_depth_valid;
+
+	/* The end-points of the diff */
+	struct {
+		const struct object_id *oid[2];
+	} endpoint;
 };
 
 unsigned diff_filter_bit(char status);

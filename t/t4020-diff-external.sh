@@ -2,21 +2,18 @@
 
 test_description='external diff interface test'
 
+GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
+export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
+
 . ./test-lib.sh
 
 test_expect_success setup '
 
-	test_tick &&
-	echo initial >file &&
-	git add file &&
-	git commit -m initial &&
+	test_commit initial file initial A &&
 
-	test_tick &&
-	echo second >file &&
+	test_commit second file second B &&
 	before=$(git hash-object file) &&
 	before=$(git rev-parse --short $before) &&
-	git add file &&
-	git commit -m second &&
 
 	test_tick &&
 	echo third >file
@@ -260,9 +257,7 @@ test_expect_success 'force diff with "diff"' '
 '
 
 test_expect_success 'GIT_EXTERNAL_DIFF with more than one changed files' '
-	echo anotherfile > file2 &&
-	git add file2 &&
-	git commit -m "added 2nd file" &&
+	test_commit "added 2nd file" file2 anotherfile C &&
 	echo modified >file2 &&
 	GIT_EXTERNAL_DIFF=echo git diff
 '
@@ -344,6 +339,97 @@ test_expect_success 'submodule diff' '
 	Subproject commit $(cd sub && git rev-parse HEAD)
 	EOF
 	test_cmp expected actual
+'
+
+test_expect_success 'setup script for export endpoints' '
+	write_script ext-diff-endpoints.sh <<-\EOF
+	printf "END_A=$GIT_DIFF_ENDPOINT_A "  >>revs_and_paths.txt &&
+	printf "END_B=$GIT_DIFF_ENDPOINT_B "  >>revs_and_paths.txt &&
+	printf "PATH_A=$GIT_DIFF_PATH_A "  >>revs_and_paths.txt &&
+	printf "PATH_B=$GIT_DIFF_PATH_B\n" >>revs_and_paths.txt
+	EOF
+'
+
+test_expect_success 'setup renamed files' '
+	git reset --hard &&
+
+	test_seq -f "Line %d" 15 > path0 &&
+	test_commit --append path0 path0 "" P0 &&
+	mv path0 path1 &&
+	git add path0 path1 &&
+	git commit -m "rename path0 to path1" &&
+	git tag P1 &&
+
+	mkdir dir &&
+	sed "s/Line 11/line 11/" <path1 >dir/path2 &&
+	rm -f path1 &&
+	git add path1 dir/path2 &&
+	git commit -m "rename path1 to dir/path2, change contents" &&
+	git tag P2 &&
+
+	git checkout -b topic P0 &&
+	sed "s/Line 12/line 12/" <path0 >path3 &&
+	rm -f path0 &&
+	git add path0 path3 &&
+	git commit -m "rename path0 to path3, change contents" &&
+	git tag T
+'
+
+check_export_endpoints () {
+	local args=
+	if test $# -gt 5
+	then
+		args="$1"
+		shift
+	else
+		args="$1 $2"
+	fi
+
+	local endpoint_a="$1"
+	local endpoint_B="$2"
+	local path_a="$3"
+	local path_b="$4"
+	local desc="$5"
+
+	test_expect_success "GIT_EXTERNAL_DIFF endpoints are commits, $desc" "
+		>revs_and_paths.txt &&
+		e1=\$(git rev-parse $endpoint_a) &&
+		e2=\$(git rev-parse $endpoint_B) &&
+		cat >expect	<<-EOF &&
+		END_A=\$e1 END_B=\$e2 PATH_A=$path_a PATH_B=$path_b
+		EOF
+
+		GIT_EXTERNAL_DIFF=./ext-diff-endpoints.sh git diff $args &&
+		test_cmp expect revs_and_paths.txt
+	"
+}
+
+# NB: inputs are tags or branches, output is always in terms of commits
+check_export_endpoints A B file file "file changed"
+check_export_endpoints B C /dev/null file2 "file added"
+check_export_endpoints C B file2 /dev/null "file deleted"
+check_export_endpoints "-R B C" C B file2 /dev/null "-R reverses diff"
+check_export_endpoints P0 P1 path0 path1 "path renamed, contents unchanged"
+check_export_endpoints P1 P2 path1 dir/path2 "path renamed and contents changed"
+check_export_endpoints "P2^^ P2^" P0 P1 path0 path1 "expression resolves to commit"
+check_export_endpoints A..B A B file file "range A..B"
+check_export_endpoints P0...P2 P0 P2 path0 dir/path2 "merge base range (base is same as left) P0...P2"
+check_export_endpoints "-R P0...P2" P2 P0 dir/path2 path0 "merge base reverse -R P0...P2"
+check_export_endpoints P2...T P0 T path0 path3 "merge-base range P2...T"
+check_export_endpoints "--merge-base P2 T" P0 T path0 path3 "--merge-base P2 T"
+check_export_endpoints main...topic P0 T path0 path3 "merge-base range on branches main...topic"
+check_export_endpoints "P0 P1 -- \"path1\"" P0 P1 /dev/null path1 "add instead of rename as a result of pathspec scope"
+check_export_endpoints "--relative=dir P1 P2" P1 P2 /dev/null path2 "--relative=dir"
+
+test_expect_success 'GIT_EXTERNAL_DIFF endpoints are trees' '
+	>revs_and_paths.txt &&
+	end_a=$(git rev-parse A^{tree}) &&
+	end_b=$(git rev-parse B^{tree}) &&
+	cat >expect	<<-EOF &&
+	END_A=$end_a END_B=$end_b PATH_A=file PATH_B=file
+	EOF
+	GIT_EXTERNAL_DIFF=./ext-diff-endpoints.sh git diff $end_a $end_b &&
+	test_cmp expect revs_and_paths.txt
 '
 
 test_done
