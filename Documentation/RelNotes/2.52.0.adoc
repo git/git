@@ -24,6 +24,13 @@ UI, Workflows & Features
    "--format=nul", and learns to report the objects format used in the
    repository.
 
+ * "core.commentChar=auto" that attempts to dynamically pick a
+   suitable comment character is non-workable, as it is too much
+   trouble to support for little benefit, and is marked as deprecated.
+
+ * "git send-email" learned to drive "git imap-send" to store already
+   sent e-mails in an IMAP folder.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -62,6 +69,19 @@ Performance, Internal Implementation, Development Support etc.
  * The bulk-checkin code used to depend on a file-scope static
    singleton variable, which has been updated to pass an instance
    throughout the callchain.
+
+ * CodingGuidelines now spells out how bitfields are to be written.
+
+ * Adjust to the way newer versions of cURL selectivel enables tracing
+   options, so that our tests can continue to work.
+   (merge 1b5a6bfff3 jk/curl-global-trace-components later to maint).
+
+ * The clear_alloc_state() API function was not fully clearing the
+   structure for reuse, but since nobody reuses it, replace it with a
+   variant that frees the structure as well, making the callers simpler.
+
+ * "git range-diff" learned a way to limit the memory consumed by
+   O(N*N) cost matrix.
 
 
 Fixes since v2.51
@@ -177,6 +197,14 @@ including security updates, are included in this release.
    exhaust memory storing them redundantly, which has been corrected.
    (merge 88a2dc68c8 ps/upload-pack-oom-protection later to maint).
 
+ * A corner case bug in "git log -L..." has been corrected.
+   (merge e3106998ff sg/line-log-boundary-fixes later to maint).
+
+ * "git rev-parse --short" and friends failed to disambiguate two
+   objects with object names that share common prefix longer than 32
+   characters, which has been fixed.
+   (merge 8655908b9e jc/longer-disambiguation-fix later to maint).
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
    (merge cf7efa4f33 rj/t6137-cygwin-fix later to maint).
@@ -198,3 +226,6 @@ including security updates, are included in this release.
    (merge c25651aefd ds/midx-write-fixes later to maint).
    (merge 069c15d256 rs/object-name-extend-abbrev-len-update later to maint).
    (merge bf5c224537 mm/worktree-doc-typofix later to maint).
+   (merge 31397bc4f7 kh/doc-fast-import-markup-fix later to maint).
+   (merge ac7096723b jc/doc-includeif-hasconfig-remote-url-fix later to maint).
+   (merge fafc9b08b8 ag/doc-sendmail-gmail-example-update later to maint).
