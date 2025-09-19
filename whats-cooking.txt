@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2025, #07; Wed, 17)
-X-master-at: 215033b3ac599432a17d58f18a92b356d98354a9
-X-next-at: 15c5d4f767f655d8c09d24948ad0ab2a5e304793
+Subject: What's cooking in git.git (Sep 2025, #08; Fri, 19)
+X-master-at: ca2559c1d630eb4f04cdee2328aaf1c768907a9e
+X-next-at: c4e3cb95175ecb4a955ccff0899fd16de0cea8e8
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2025, #07; Wed, 17)
+What's cooking in git.git (Sep 2025, #08; Fri, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -16,11 +16,6 @@ to a message that raises issues but they are no means exhaustive.  A
 topic without enough support may be discarded after a long period of
 no activity (of course they can be resubmit when new interests
 arise).
-
-There are a few topics that have been expecting a reroll for close
-to a month.  I've moved them to the [Stalled] section below.  Let's
-tighten rules around these topics a bit so that we can keep the tree
-somewhat cleaner.
 
 Copies of the source code to Git live in many repositories, and the
 following is a list of the ones I push into or their mirrors.  Some
@@ -51,7 +46,229 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
+[Graduated to 'master']
+
+* ag/doc-sendmail-gmail-example-update (2025-08-26) 1 commit
+  (merged to 'next' on 2025-09-12 at 54e0dab4b0)
+ + docs: update sendmail docs to use more secure SMTP server for Gmail
+
+ Doc update.
+ source: <20250826150919.5239-1-gargaditya08@live.com>
+
+
+* ag/send-email-imap-sent (2025-08-11) 2 commits
+  (merged to 'next' on 2025-09-12 at bb82691e0a)
+ + send-email: enable copying emails to an IMAP folder without actually sending them
+ + send-email: add ability to send a copy of sent emails to an IMAP folder
+
+ "git send-email" learned to drive "git imap-send" to store already
+ sent e-mails in an IMAP folder.
+ source: <PN3PR01MB9597E8E33868386C997D2563B82BA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
+
+
+* jc/doc-includeif-hasconfig-remote-url-fix (2025-08-21) 1 commit
+  (merged to 'next' on 2025-09-12 at 3b91910cbd)
+ + config: document includeIf conditions consistently
+
+ Doc mark-up fix.
+ source: <xmqqldnc4stv.fsf@gitster.g>
+
+
+* jc/longer-disambiguation-fix (2025-08-14) 1 commit
+  (merged to 'next' on 2025-09-12 at 4dddaa05fc)
+ + abbrev: allow extending beyond 32 chars to disambiguate
+
+ "git rev-parse --short" and friends failed to disambiguate two
+ objects with object names that share common prefix longer than 32
+ characters, which has been fixed.
+ source: <xmqqh5ya6iua.fsf_-_@gitster.g>
+
+
+* jk/curl-global-trace-components (2025-08-27) 1 commit
+  (merged to 'next' on 2025-09-12 at 37a826f245)
+ + curl: add support for curl_global_trace() components
+
+ Adjust to the way newer versions of cURL selectivel enables tracing
+ options, so that our tests can continue to work.
+ source: <20250827080702.GA3572995@coredump.intra.peff.net>
+
+
+* kh/doc-fast-import-markup-fix (2025-09-08) 1 commit
+  (merged to 'next' on 2025-09-12 at d56e1334b9)
+ + doc: fast-import: replace literal block with paragraph
+
+ Doc mark-up fix.
+ source: <09aaad696895c18c6d4dda7d6a2f4b77f84f39ba.1757363213.git.code@khaugsbakk.name>
+
+
+* kn/clang-format-bitfields (2025-08-26) 1 commit
+  (merged to 'next' on 2025-09-12 at 62dd6102f6)
+ + Documentation: note styling for bit fields
+
+ CodingGuidelines now spells out how bitfields are to be written.
+ source: <20250826121928.22317-1-karthik.188@gmail.com>
+
+
+* ne/alloc-free-and-null (2025-09-04) 1 commit
+  (merged to 'next' on 2025-09-12 at 005f763f97)
+ + alloc: fix dangling pointer in alloc_state cleanup
+
+ The clear_alloc_state() API function was not fully clearing the
+ structure for reuse, but since nobody reuses it, replace it with a
+ variant that frees the structure as well, making the callers simpler.
+ source: <pull.2040.v5.git.git.1757007856062.gitgitgadget@gmail.com>
+
+
+* pc/range-diff-memory-limit (2025-08-29) 1 commit
+  (merged to 'next' on 2025-09-12 at 022fe71829)
+ + range-diff: add configurable memory limit for cost matrix
+
+ "git range-diff" learned a way to limit the memory consumed by
+ O(N*N) cost matrix.
+ source: <pull.1958.v4.git.1756483374980.gitgitgadget@gmail.com>
+
+
+* pw/3.0-commentchar-auto-deprecation (2025-08-26) 4 commits
+  (merged to 'next' on 2025-09-12 at e6a855d738)
+ + commit: print advice when core.commentString=auto
+ + config: warn on core.commentString=auto
+ + breaking-changes: deprecate support for core.commentString=auto
+ + Merge branch 'ps/config-wo-the-repository' into pw/3.0-commentchar-auto-deprecation
+
+ "core.commentChar=auto" that attempts to dynamically pick a
+ suitable comment character is non-workable, as it is too much
+ trouble to support for little benefit, and is marked as deprecated.
+ source: <cover.1756215326.git.phillip.wood@dunelm.org.uk>
+
+
+* sg/line-log-boundary-fixes (2025-08-18) 2 commits
+  (merged to 'next' on 2025-09-12 at 0d34d3872c)
+ + line-log: show all line ranges touched by the same diff range
+ + line-log: fix assertion error
+
+ A corner case bug in "git log -L..." has been corrected.
+ source: <20250818111310.1283932-1-szeder.dev@gmail.com>
+
+--------------------------------------------------
 [New Topics]
+
+* kn/reftable-consistency-checks (2025-09-18) 9 commits
+ - fixup! reftable: check for trailing newline in 'tables.list'
+ - refs/reftable: add fsck check for checking the table name
+ - reftable: add code to facilitate consistency checks
+ - fsck: order 'fsck_msg_type' alphabetically
+ - Documentation/fsck-msgids: remove duplicate msg id
+ - reftable: ensure tables in a stack use sequential update indices
+ - reftable: check for trailing newline in 'tables.list'
+ - refs: move consistency check msg to generic layer
+ - refs: remove unused headers
+
+ The reftable backend learned to sanity check its on-disk data more
+ carefully.
+
+ Comments?
+ source: <20250918-228-reftable-introduce-consistency-checks-v3-0-271af03eb34d@gmail.com>
+
+
+* pw/rebase-i-cleanup-fix (2025-09-18) 2 commits
+ - sequencer: remove VERBATIM_MSG flag
+ - rebase -i: respect commit.cleanup when picking fixups
+
+ "git rebase -i" failed to clean-up the commit log message when the
+ command commits the final one in a chain of "fixup" commands, which
+ has been corrected.
+
+ Will merge to 'next'.
+ source: <cover.1758186038.git.phillip.wood@dunelm.org.uk>
+
+
+* tc/last-modified-recursive-fix (2025-09-18) 1 commit
+ - last-modified: fix bug when some paths remain unhandled
+
+ "git last-modified" operating in non-recursive mode used to trigger
+ a BUG(), which has been corrected.
+
+ Will merge to 'next'?
+ source: <20250918-toon-fix-last-modified-v3-1-0c3910e224f6@iotcl.com>
+
+
+* en/rust-wip (2025-09-16) 18 commits
+ - misc::varint: reimplement as test balloon for Rust
+ - misc: use BuildHelper
+ - build: new crate, misc
+ - varint: use explicit width for integers
+ - build-helper: cbindgen, let crates generate a header file
+ - build-helper: link against libgit.a and any other required C libraries
+ - build: new crate, build-helper
+ - github workflows: upload Cargo.lock
+ - win+Meson: do allow linking with the Rust-built xdiff
+ - github workflows: install rust
+ - help: report on whether or not Rust is enabled
+ - build: introduce rust
+ - BreakingChanges: announce Rust becoming mandatory
+ - doc: add a policy for using Rust
+ - make: merge reftable lib into libgit.a
+ - make: merge xdiff lib into libgit.a
+ - make: add -fPIE flag
+ - cleanup: rename variables that collide with Rust primitive type names
+
+ Expecting a reroll.
+ source: <pull.2043.v2.git.git.1758071798.gitgitgadget@gmail.com>
+
+
+* bc/sha1-256-interop-01 (2025-09-19) 10 commits
+ - fixup! docs: add documentation for loose objects
+ - t: add a prerequisite for a compatibility hash
+ - Allow specifying compatibility hash
+ - fsck: consider gpgsig headers expected in tags
+ - rev-parse: allow printing compatibility hash
+ - docs: add documentation for loose objects
+ - docs: improve ambiguous areas of pack format documentation
+ - docs: reflect actual double signature for tags
+ - docs: update offset order for pack index v3
+ - docs: update pack index v3 format
+
+ The beginning of SHA1-SHA256 interoperability work.
+
+ Comments?
+ source: <20250919010911.649831-1-sandals@crustytoothpaste.net>
+
+--------------------------------------------------
+[Stalled]
+
+These topics have been expecting updates for quite some time.  I'll
+eject any of them when they start to conflict with other topics in
+'seen' and may drop them from my tree when they are dormant for too
+long (let's say 8 weeks is way too long, for now).  After that, they
+can be proposed again by rerolling them in a shape that would work
+well with other topics in 'seen' (and of course 'next' and
+"master').
+
+* lc/rebase-trailer (2025-08-03) 2 commits
+ - rebase: support --trailer
+ - trailer: append trailers in-process and drop the fork to `interpret-trailers`
+
+ Expecting a reroll.
+ cf. <198826af571.62b85cb31711042.2415806544948206668@linux.beauty>
+ cf. <xmqqiki7qasu.fsf@gitster.g>
+ source: <20250803150059.402017-1-me@linux.beauty>
+
+
+* ac/deglobal-sparse-variables (2025-07-18) 3 commits
+ . environment: remove the global variable 'sparse_expect_files_outside_of_patterns'
+ . environment: move access to "core.sparsecheckoutcone" into repo_settings
+ . environment: move access to "core.sparsecheckout" into repo_settings
+
+ Two global variables related to sparse checkout have been moved to
+ the repository settings structure.
+
+ Expecting a reroll.
+ cf. <CAE7as+bnG6KgA8X_n36pqP15bmyM6re+xEb1MOXKvZSUdJ8Arg@mail.gmail.com>
+ Ejected out of 'seen' for now.
+ source: <cover.1752882401.git.ayu.chandekar@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * pw/add-p-hunk-splitting-fix (2025-09-15) 2 commits
  - add-patch: update hunk splitability after editing
@@ -103,11 +320,13 @@ Release tarballs are available at:
 
  Will merge to 'next'?
  source: <20250916201036.GA612463@coredump.intra.peff.net>
+ source: <20250916202408.GI612873@coredump.intra.peff.net>
 
 
-* en/xdiff-cleanup (2025-09-07) 9 commits
+* en/xdiff-cleanup (2025-09-19) 10 commits
  - xdiff: treat xdfile_t.rchg like an enum
- - xdiff: delete chastore from xdfile_t, view with --color-words
+ - xdiff: delete rchg aliasing
+ - xdiff: delete chastore from xdfile_t
  - xdiff: delete fields ha, line, size in xdlclass_t in favor of an xrecord_t
  - xdiff: delete redundant array xdfile_t.ha
  - xdiff: delete struct diffdata_t
@@ -120,9 +339,8 @@ Release tarballs are available at:
  A lot of code clean-up of xdiff.
  Split out of a larger topic.
 
- Expecting a (hopefully small and final) reroll.
- cf. <CABPp-BH-oaV+fJ4u50oofy54ycE5oKoYJ6O1XgEt_JfDSgXvxg@mail.gmail.com>
- source: <pull.2048.git.git.1757274320.gitgitgadget@gmail.com>
+ Comments?
+ source: <pull.2048.v3.git.git.1758294992.gitgitgadget@gmail.com>
 
 
 * jc/3.0-default-initial-branch-to-main-addendum (2025-09-17) 1 commit
@@ -132,56 +350,21 @@ Release tarballs are available at:
  Keep giving hint about the default initial branch name for users
  who may be surprised after Git 3.0 switchover.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <cover.1757518141.git.phillip.wood@dunelm.org.uk>
 
 
 * nb/send-email-no-dup-reply-to (2025-09-16) 1 commit
- - send-email: don't duplicate Reply-to: in intro message
+  (merged to 'next' on 2025-09-18 at d7081e00ec)
+ + send-email: don't duplicate Reply-to: in intro message
 
  "git send-email --compose --reply-to=<address>" used to add
  duplicated Reply-To: header, which made mailservers unhappy.  This
  has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <175809074627.1696783.67425889158412786@noble.neil.brown.name>
 
---------------------------------------------------
-[Stalled]
-
-These topics have been expecting updates for quite some time.  I'll
-eject any of them when they start to conflict with other topics in
-'seen' and may drop them from my tree when they are dormant for too
-long (let's say 8 weeks is way too long, for now).  After that, they
-can be proposed again by rerolling them in a shape that would work
-well with other topics in 'seen' (and of course 'next' and
-"master').
-
-* lc/rebase-trailer (2025-08-03) 2 commits
- - rebase: support --trailer
- - trailer: append trailers in-process and drop the fork to `interpret-trailers`
-
- Expecting a reroll.
- cf. <198826af571.62b85cb31711042.2415806544948206668@linux.beauty>
- cf. <xmqqiki7qasu.fsf@gitster.g>
- source: <20250803150059.402017-1-me@linux.beauty>
-
-
-* ac/deglobal-sparse-variables (2025-07-18) 3 commits
- . environment: remove the global variable 'sparse_expect_files_outside_of_patterns'
- . environment: move access to "core.sparsecheckoutcone" into repo_settings
- . environment: move access to "core.sparsecheckout" into repo_settings
-
- Two global variables related to sparse checkout have been moved to
- the repository settings structure.
-
- Expecting a reroll.
- cf. <CAE7as+bnG6KgA8X_n36pqP15bmyM6re+xEb1MOXKvZSUdJ8Arg@mail.gmail.com>
- Ejected out of 'seen' for now.
- source: <cover.1752882401.git.ayu.chandekar@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * ar/submodule-gitdir-tweak (2025-09-08) 10 commits
  - t7425: add gitdir encoding tests
@@ -221,18 +404,12 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250908053056.956907-1-christian.couder@gmail.com>
 
 
-* je/doc-push (2025-09-15) 5 commits
- - fixup! doc: add an UPSTREAM BRANCHES section to pull/push/fetch
- - doc: git-push: clarify "what to push"
- - doc: git-push: clarify "where to push"
- - doc: add an UPSTREAM BRANCHES section to pull/push/fetch
- - doc: git-push: clarify intro
+* je/doc-push (2025-09-17) 2 commits
+ - doc: git-push: rewrite refspec specification
+ - doc: git-push: create PUSH RULES section
 
  Doc updates.
-
- Expecting a reroll.
- cf. <70034c35-8f08-4ee0-9017-7faf6f55ae14@app.fastmail.com>
- source: <pull.1964.v2.git.1757703309.gitgitgadget@gmail.com>
+ source: <pull.1973.git.1758144815.gitgitgadget@gmail.com>
 
 
 * rs/get-oid-with-flags-cleanup (2025-09-10) 1 commit
@@ -266,7 +443,7 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250910-b4-pks-clar-update-v1-1-26a196237e0a@pks.im>
 
 
-* ps/config-get-color-fixes (2025-09-15) 5 commits
+* ps/config-get-color-fixes (2025-09-17) 5 commits
  - builtin/config: do not spawn pager when printing color codes
  - builtin/config: special-case retrieving colors without a key
  - builtin/config: do not die in `get_color()`
@@ -278,7 +455,7 @@ well with other topics in 'seen' (and of course 'next' and
  --type=color --default=reset no.such.thing", isn't very ergonomic.
 
  Will merge to 'next'?
- source: <20250915-pks-config-color-v2-0-e4290bd8d13c@pks.im>
+ source: <20250918-pks-config-color-v3-0-08ea618cae26@pks.im>
 
 
 * ps/meson-build-docs (2025-09-11) 3 commits
@@ -320,16 +497,15 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250916182938.2193476-1-jltobler@gmail.com>
 
 
-* cc/fast-import-strip-signed-commits (2025-09-12) 2 commits
+* cc/fast-import-strip-signed-commits (2025-09-17) 2 commits
  - fast-import: add '--signed-commits=<mode>' option
  - gpg-interface: refactor 'enum sign_mode' parsing
 
  "git fast-import" learned that "--signed-commits=<how>" option that
  corresponds to that of "git fast-export".
 
- Expecting a (hopefully small and final) reroll.
- cf. <CAP8UFD3-3zjBBHP-Y9nLO-qEyhkWhD_pxFZhk6rzrC31LanDMQ@mail.gmail.com>
- source: <20250912124042.2523683-1-christian.couder@gmail.com>
+ Will merge to 'next'?
+ source: <20250917181427.3193500-1-christian.couder@gmail.com>
 
 
 * pw/3.0-default-initial-branch-to-main (2025-09-10) 4 commits
@@ -342,7 +518,7 @@ well with other topics in 'seen' (and of course 'next' and
  Declare that "git init" that is not otherwise configured uses
  'main' as the initial branch, not 'master', starting Git 3.0.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <cover.1757518141.git.phillip.wood@dunelm.org.uk>
 
 
@@ -361,45 +537,39 @@ well with other topics in 'seen' (and of course 'next' and
 
 
 * ps/rust-balloon (2025-09-15) 9 commits
- - ci: enable Rust for breaking-changes jobs
- - ci: convert "pedantic" job into full build with breaking changes
- - BreakingChanges: announce Rust becoming mandatory
- - varint: reimplement as test balloon for Rust
- - varint: use explicit width for integers
- - help: report on whether or not Rust is enabled
- - Makefile: introduce infrastructure to build internal Rust library
- - Makefile: reorder sources after includes
- - meson: add infrastructure to build internal Rust library
+ . ci: enable Rust for breaking-changes jobs
+ . ci: convert "pedantic" job into full build with breaking changes
+ . BreakingChanges: announce Rust becoming mandatory
+ . varint: reimplement as test balloon for Rust
+ . varint: use explicit width for integers
+ . help: report on whether or not Rust is enabled
+ . Makefile: introduce infrastructure to build internal Rust library
+ . Makefile: reorder sources after includes
+ . meson: add infrastructure to build internal Rust library
 
  Dip our toes a bit to (optionally) use Rust implemented helper
  called from our C code.
 
- Will merge to 'next'?
+ Ejected for now, to give preference to en/*rust* topics.
  source: <20250915-b4-pks-rust-breaking-change-v5-0-dc3a32fbb216@pks.im>
 
 
-* kh/doc-fast-import-markup-fix (2025-09-08) 1 commit
-  (merged to 'next' on 2025-09-12 at d56e1334b9)
- + doc: fast-import: replace literal block with paragraph
-
- Doc mark-up fix.
-
- Will merge to 'master'.
- source: <09aaad696895c18c6d4dda7d6a2f4b77f84f39ba.1757363213.git.code@khaugsbakk.name>
-
-
-* ms/refs-optimize (2025-09-06) 5 commits
+* ms/refs-optimize (2025-09-19) 9 commits
  - t: add test for git refs optimize subcommand
  - t0601: refactor tests to be shareable
  - builtin/refs: add optimize subcommand
- - doc: factor out common option
+ - doc: pack-refs: factor out common options
  - builtin/pack-refs: factor out core logic into a shared library
+ - builtin/pack-refs: convert to use the generic refs_optimize() API
+ - reftable-backend: implement 'optimize' action
+ - files-backend: implement 'optimize' action
+ - refs: add a generic 'optimize' API
 
  "git refs optimize" is added for not very well explained reason
  despite it does the same thing as "git pack-refs"...
 
- Expecting a reroll.
- source: <20250906075147.1076656-1-meetsoni3017@gmail.com>
+ Comments?
+ source: <20250919082647.535213-1-meetsoni3017@gmail.com>
 
 
 * sj/string-list (2025-09-17) 4 commits
@@ -457,16 +627,6 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250917-587-git-fetch-1-fails-fetches-on-case-insensitive-repositories-v4-0-da3c74a08ed0@gmail.com>
 
 
-* ag/doc-sendmail-gmail-example-update (2025-08-26) 1 commit
-  (merged to 'next' on 2025-09-12 at 54e0dab4b0)
- + docs: update sendmail docs to use more secure SMTP server for Gmail
-
- Doc update.
-
- Will merge to 'master'.
- source: <20250826150919.5239-1-gargaditya08@live.com>
-
-
 * en/rust-xdiff (2025-09-07) 9 commits
  - xdiff: change the types of dstart, dend, rchg, and rindex in xdfile_t
  - xdiff: make xdfile_t.nreff a usize instead of long
@@ -501,76 +661,22 @@ well with other topics in 'seen' (and of course 'next' and
  source: <pull.1962.v4.git.1757531669.gitgitgadget@gmail.com>
 
 
-* kn/clang-format-bitfields (2025-08-26) 1 commit
-  (merged to 'next' on 2025-09-12 at 62dd6102f6)
- + Documentation: note styling for bit fields
-
- CodingGuidelines now spells out how bitfields are to be written.
-
- Will merge to 'master'.
- source: <20250826121928.22317-1-karthik.188@gmail.com>
-
-
-* jk/curl-global-trace-components (2025-08-27) 1 commit
-  (merged to 'next' on 2025-09-12 at 37a826f245)
- + curl: add support for curl_global_trace() components
-
- Adjust to the way newer versions of cURL selectivel enables tracing
- options, so that our tests can continue to work.
-
- Will merge to 'master'.
- source: <20250827080702.GA3572995@coredump.intra.peff.net>
-
-
-* kh/you-still-use-whatchanged-fix (2025-09-14) 8 commits
- . BreakingChanges: remove claim about whatchanged reports
- . whatchanged: remove not-even-shorter clause
- . whatchanged: hint about git-log(1) and aliasing
- . you-still-use-that??: help the user help themselves
- . t0014: test shadowing of aliases for a sample of builtins
- . git: allow alias-shadowing deprecated builtins
- . git: move seen-alias bookkeeping into handle_alias(...)
- . git: add `deprecated` category to --list-cmds
+* kh/you-still-use-whatchanged-fix (2025-09-17) 9 commits
+ - BreakingChanges: remove claim about whatchanged reports
+ - whatchanged: remove not-even-shorter clause
+ - whatchanged: hint about git-log(1) and aliasing
+ - you-still-use-that??: help the user help themselves
+ - t0014: test shadowing of aliases for a sample of builtins
+ - git: allow alias-shadowing deprecated builtins
+ - git: move seen-alias bookkeeping into handle_alias(...)
+ - git: add `deprecated` category to --list-cmds
+ - Makefile: don’t add whatchanged after it has been removed
 
  Update "do you still use it?" message given by a command that is
  deeply deprecated and allow us to suggest alternatives.
 
- Breaks 'seen' built with WITH_BREAKING_CHANGES.
- cf. <xmqqy0qffrri.fsf@gitster.g>
- source: <cover.1757879060.git.code@khaugsbakk.name>
-
-
-* pc/range-diff-memory-limit (2025-08-29) 1 commit
-  (merged to 'next' on 2025-09-12 at 022fe71829)
- + range-diff: add configurable memory limit for cost matrix
-
- "git range-diff" learned a way to limit the memory consumed by
- O(N*N) cost matrix.
-
- Will merge to 'master'.
- source: <pull.1958.v4.git.1756483374980.gitgitgadget@gmail.com>
-
-
-* ne/alloc-free-and-null (2025-09-04) 1 commit
-  (merged to 'next' on 2025-09-12 at 005f763f97)
- + alloc: fix dangling pointer in alloc_state cleanup
-
- The clear_alloc_state() API function was not fully clearing the
- structure for reuse, but since nobody reuses it, replace it with a
- variant that frees the structure as well, making the callers simpler.
-
- Will merge to 'master'.
- source: <pull.2040.v5.git.git.1757007856062.gitgitgadget@gmail.com>
-
-
-* jc/doc-includeif-hasconfig-remote-url-fix (2025-08-21) 1 commit
-  (merged to 'next' on 2025-09-12 at 3b91910cbd)
- + config: document includeIf conditions consistently
-
- Doc mark-up fix.
-
- Will merge to 'master'.
- source: <xmqqldnc4stv.fsf@gitster.g>
+ Will merge to 'next'?
+ source: <cover.1758139856.short.code@khaugsbakk.name>
 
 
 * jk/add-i-color (2025-09-08) 4 commits
@@ -589,41 +695,6 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250908164157.GA1323487@coredump.intra.peff.net>
 
 
-* sg/line-log-boundary-fixes (2025-08-18) 2 commits
-  (merged to 'next' on 2025-09-12 at 0d34d3872c)
- + line-log: show all line ranges touched by the same diff range
- + line-log: fix assertion error
-
- Fix for a corner case bug in "git log -L...".
-
- Will merge to 'master'.
- source: <20250818111310.1283932-1-szeder.dev@gmail.com>
-
-
-* jc/longer-disambiguation-fix (2025-08-14) 1 commit
-  (merged to 'next' on 2025-09-12 at 4dddaa05fc)
- + abbrev: allow extending beyond 32 chars to disambiguate
-
- "git rev-parse --short" and friends failed to disambiguate two
- objects with object names that share common prefix longer than 32
- characters.
-
- Will merge to 'master'.
- source: <xmqqh5ya6iua.fsf_-_@gitster.g>
-
-
-* ag/send-email-imap-sent (2025-08-11) 2 commits
-  (merged to 'next' on 2025-09-12 at bb82691e0a)
- + send-email: enable copying emails to an IMAP folder without actually sending them
- + send-email: add ability to send a copy of sent emails to an IMAP folder
-
- "git send-email" learned to drive "git imap-send" to store already
- sent e-mails in an IMAP folder.
-
- Will merge to 'master'.
- source: <PN3PR01MB9597E8E33868386C997D2563B82BA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
-
-
 * ds/sparse-checkout-clean (2025-09-12) 7 commits
  - t: expand tests around sparse merges and clean
  - sparse-index: point users to new 'clean' action
@@ -639,18 +710,3 @@ well with other topics in 'seen' (and of course 'next' and
 
  Will merge to 'next'?
  source: <pull.1941.v3.git.1757673011.gitgitgadget@gmail.com>
-
-
-* pw/3.0-commentchar-auto-deprecation (2025-08-26) 4 commits
-  (merged to 'next' on 2025-09-12 at e6a855d738)
- + commit: print advice when core.commentString=auto
- + config: warn on core.commentString=auto
- + breaking-changes: deprecate support for core.commentString=auto
- + Merge branch 'ps/config-wo-the-repository' into pw/3.0-commentchar-auto-deprecation
-
- Proposes to deprecate "core.commentChar=auto" that attempts to
- dynamically pick a suitable comment character, as it is too much
- trouble to support for little benefit.
-
- Will merge to 'master'.
- source: <cover.1756215326.git.phillip.wood@dunelm.org.uk>
