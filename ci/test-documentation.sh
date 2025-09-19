@@ -48,13 +48,13 @@ check_unignored_build_artifacts
 
 # Build docs with Meson and AsciiDoc
 meson setup build-asciidoc -Ddocs=html,man -Ddocs_backend=asciidoc
-meson compile -C build-asciidoc
+meson compile -C build-asciidoc docs
 check_docs build-asciidoc AsciiDoc
 rm -rf build-asciidoc
 
 # Build docs with Meson and AsciiDoctor
 meson setup build-asciidoctor -Ddocs=html,man -Ddocs_backend=asciidoctor
-meson compile -C build-asciidoctor
+meson compile -C build-asciidoctor docs
 check_docs build-asciidoctor Asciidoctor
 rm -rf build-asciidoctor
 

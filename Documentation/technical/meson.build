@@ -46,7 +46,7 @@ api_index = custom_target(
   output: 'api-index.adoc',
 )
 
-custom_target(
+doc_targets += custom_target(
   command: asciidoc_html_options,
   input: api_index,
   output: 'api-index.html',
@@ -56,7 +56,7 @@ custom_target(
 )
 
 foreach article : api_docs + articles
-  custom_target(
+  doc_targets += custom_target(
     command: asciidoc_html_options,
     input: article,
     output: fs.stem(article) + '.html',
