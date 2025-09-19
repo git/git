@@ -369,9 +369,8 @@ void close_object_store(struct object_database *o)
 		if (source->midx)
 			close_midx(source->midx);
 		source->midx = NULL;
+		close_commit_graph(source);
 	}
-
-	close_commit_graph(o);
 }
 
 void unlink_pack_path(const char *pack_name, int force_delete)

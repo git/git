@@ -62,6 +62,9 @@ struct odb_source {
 	 */
 	struct multi_pack_index *midx;
 
+	struct commit_graph *commit_graph;
+	bool commit_graph_attempted; /* if loading has been attempted */
+
 	/*
 	 * Figure out whether this is the local source of the owning
 	 * repository, which would typically be its ".git/objects" directory.
@@ -135,9 +138,6 @@ struct object_database {
 	struct oidmap replace_map;
 	unsigned replace_map_initialized : 1;
 	pthread_mutex_t replace_mutex; /* protect object replace functions */
-
-	struct commit_graph *commit_graph;
-	unsigned commit_graph_attempted : 1; /* if loading has been attempted */
 
 	/*
 	 * Should only be accessed directly by packfile.c
