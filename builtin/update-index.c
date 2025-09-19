@@ -8,7 +8,6 @@
 #define DISABLE_SIGN_COMPARE_WARNINGS
 
 #include "builtin.h"
-#include "bulk-checkin.h"
 #include "config.h"
 #include "environment.h"
 #include "gettext.h"
@@ -19,6 +18,7 @@
 #include "cache-tree.h"
 #include "tree-walk.h"
 #include "object-file.h"
+#include "odb.h"
 #include "refs.h"
 #include "resolve-undo.h"
 #include "parse-options.h"
@@ -70,14 +70,6 @@ static void report(const char *fmt, ...)
 	if (!verbose)
 		return;
 
-	/*
-	 * It is possible, though unlikely, that a caller could use the verbose
-	 * output to synchronize with addition of objects to the object
-	 * database. The current implementation of ODB transactions leaves
-	 * objects invisible while a transaction is active, so flush the
-	 * transaction here before reporting a change made by update-index.
-	 */
-	flush_odb_transaction(the_repository->objects->transaction);
 	va_start(vp, fmt);
 	vprintf(fmt, vp);
 	putchar('\n');
@@ -1131,7 +1123,7 @@ int cmd_update_index(int argc,
 	 * Allow the object layer to optimize adding multiple objects in
 	 * a batch.
 	 */
-	transaction = begin_odb_transaction(the_repository->objects);
+	transaction = odb_transaction_begin(the_repository->objects);
 	while (ctx.argc) {
 		if (parseopt_state != PARSE_OPT_DONE)
 			parseopt_state = parse_options_step(&ctx, options,
@@ -1149,6 +1141,21 @@ int cmd_update_index(int argc,
 		{
 			const char *path = ctx.argv[0];
 			char *p;
+
+			/*
+			 * It is possible, though unlikely, that a caller could
+			 * use the verbose output to synchronize with addition
+			 * of objects to the object database. The current
+			 * implementation of ODB transactions leaves objects
+			 * invisible while a transaction is active, so end the
+			 * transaction here early before processing the next
+			 * update. All further updates are performed outside of
+			 * a transaction.
+			 */
+			if (transaction && verbose) {
+				odb_transaction_commit(transaction);
+				transaction = NULL;
+			}
 
 			setup_work_tree();
 			p = prefix_path(prefix, prefix_length, path);
@@ -1214,7 +1221,7 @@ int cmd_update_index(int argc,
 	/*
 	 * By now we have added all of the new objects
 	 */
-	end_odb_transaction(transaction);
+	odb_transaction_commit(transaction);
 
 	if (split_index > 0) {
 		if (repo_config_get_split_index(the_repository) == 0)

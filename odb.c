@@ -1065,3 +1065,13 @@ void odb_reprepare(struct object_database *o)
 
 	obj_read_unlock();
 }
+
+struct odb_transaction *odb_transaction_begin(struct object_database *odb)
+{
+	return object_file_transaction_begin(odb->sources);
+}
+
+void odb_transaction_commit(struct odb_transaction *transaction)
+{
+	object_file_transaction_commit(transaction);
+}

@@ -178,8 +178,21 @@ void odb_clear(struct object_database *o);
 void odb_reprepare(struct object_database *o);
 
 /*
- * Find source by its object directory path. Returns a `NULL` pointer in case
- * the source could not be found.
+ * Starts an ODB transaction. Subsequent objects are written to the transaction
+ * and not committed until odb_transaction_commit() is invoked on the
+ * transaction. If the ODB already has a pending transaction, NULL is returned.
+ */
+struct odb_transaction *odb_transaction_begin(struct object_database *odb);
+
+/*
+ * Commits an ODB transaction making the written objects visible. If the
+ * specified transaction is NULL, the function is a no-op.
+ */
+void odb_transaction_commit(struct odb_transaction *transaction);
+
+/*
+ * Find source by its object directory path. Dies in case the source couldn't
+ * be found.
  */
 struct odb_source *odb_find_source(struct object_database *odb, const char *obj_dir);
 
