@@ -97,12 +97,12 @@ static int xdl_merge_cmp_lines(xdfenv_t *xe1, int i1, xdfenv_t *xe2, int i2,
 		int line_count, long flags)
 {
 	int i;
-	xrecord_t **rec1 = xe1->xdf2.recs + i1;
-	xrecord_t **rec2 = xe2->xdf2.recs + i2;
+	xrecord_t *rec1 = xe1->xdf2.recs + i1;
+	xrecord_t *rec2 = xe2->xdf2.recs + i2;
 
 	for (i = 0; i < line_count; i++) {
-		int result = xdl_recmatch(rec1[i]->ptr, rec1[i]->size,
-			rec2[i]->ptr, rec2[i]->size, flags);
+		int result = xdl_recmatch(rec1[i].ptr, rec1[i].size,
+			rec2[i].ptr, rec2[i].size, flags);
 		if (!result)
 			return -1;
 	}
@@ -111,7 +111,7 @@ static int xdl_merge_cmp_lines(xdfenv_t *xe1, int i1, xdfenv_t *xe2, int i2,
 
 static int xdl_recs_copy_0(int use_orig, xdfenv_t *xe, int i, int count, int needs_cr, int add_nl, char *dest)
 {
-	xrecord_t **recs;
+	xrecord_t *recs;
 	int size = 0;
 
 	recs = (use_orig ? xe->xdf1.recs : xe->xdf2.recs) + i;
@@ -119,12 +119,12 @@ static int xdl_recs_copy_0(int use_orig, xdfenv_t *xe, int i, int count, int nee
 	if (count < 1)
 		return 0;
 
-	for (i = 0; i < count; size += recs[i++]->size)
+	for (i = 0; i < count; size += recs[i++].size)
 		if (dest)
-			memcpy(dest + size, recs[i]->ptr, recs[i]->size);
+			memcpy(dest + size, recs[i].ptr, recs[i].size);
 	if (add_nl) {
-		i = recs[count - 1]->size;
-		if (i == 0 || recs[count - 1]->ptr[i - 1] != '\n') {
+		i = recs[count - 1].size;
+		if (i == 0 || recs[count - 1].ptr[i - 1] != '\n') {
 			if (needs_cr) {
 				if (dest)
 					dest[size] = '\r';
@@ -160,22 +160,22 @@ static int is_eol_crlf(xdfile_t *file, int i)
 
 	if (i < file->nrec - 1)
 		/* All lines before the last *must* end in LF */
-		return (size = file->recs[i]->size) > 1 &&
-			file->recs[i]->ptr[size - 2] == '\r';
+		return (size = file->recs[i].size) > 1 &&
+			file->recs[i].ptr[size - 2] == '\r';
 	if (!file->nrec)
 		/* Cannot determine eol style from empty file */
 		return -1;
-	if ((size = file->recs[i]->size) &&
-			file->recs[i]->ptr[size - 1] == '\n')
+	if ((size = file->recs[i].size) &&
+			file->recs[i].ptr[size - 1] == '\n')
 		/* Last line; ends in LF; Is it CR/LF? */
 		return size > 1 &&
-			file->recs[i]->ptr[size - 2] == '\r';
+			file->recs[i].ptr[size - 2] == '\r';
 	if (!i)
 		/* The only line has no eol */
 		return -1;
 	/* Determine eol from second-to-last line */
-	return (size = file->recs[i - 1]->size) > 1 &&
-		file->recs[i - 1]->ptr[size - 2] == '\r';
+	return (size = file->recs[i - 1].size) > 1 &&
+		file->recs[i - 1].ptr[size - 2] == '\r';
 }
 
 static int is_cr_needed(xdfenv_t *xe1, xdfenv_t *xe2, xdmerge_t *m)
@@ -334,22 +334,22 @@ static int recmatch(xrecord_t *rec1, xrecord_t *rec2, unsigned long flags)
 static void xdl_refine_zdiff3_conflicts(xdfenv_t *xe1, xdfenv_t *xe2, xdmerge_t *m,
 		xpparam_t const *xpp)
 {
-	xrecord_t **rec1 = xe1->xdf2.recs, **rec2 = xe2->xdf2.recs;
+	xrecord_t *rec1 = xe1->xdf2.recs, *rec2 = xe2->xdf2.recs;
 	for (; m; m = m->next) {
 		/* let's handle just the conflicts */
 		if (m->mode)
 			continue;
 
 		while(m->chg1 && m->chg2 &&
-		      recmatch(rec1[m->i1], rec2[m->i2], xpp->flags)) {
+		      recmatch(&rec1[m->i1], &rec2[m->i2], xpp->flags)) {
 			m->chg1--;
 			m->chg2--;
 			m->i1++;
 			m->i2++;
 		}
 		while (m->chg1 && m->chg2 &&
-		       recmatch(rec1[m->i1 + m->chg1 - 1],
-				rec2[m->i2 + m->chg2 - 1], xpp->flags)) {
+		       recmatch(&rec1[m->i1 + m->chg1 - 1],
+				&rec2[m->i2 + m->chg2 - 1], xpp->flags)) {
 			m->chg1--;
 			m->chg2--;
 		}
@@ -381,12 +381,12 @@ static int xdl_refine_conflicts(xdfenv_t *xe1, xdfenv_t *xe2, xdmerge_t *m,
 		 * This probably does not work outside git, since
 		 * we have a very simple mmfile structure.
 		 */
-		t1.ptr = (char *)xe1->xdf2.recs[m->i1]->ptr;
-		t1.size = xe1->xdf2.recs[m->i1 + m->chg1 - 1]->ptr
-			+ xe1->xdf2.recs[m->i1 + m->chg1 - 1]->size - t1.ptr;
-		t2.ptr = (char *)xe2->xdf2.recs[m->i2]->ptr;
-		t2.size = xe2->xdf2.recs[m->i2 + m->chg2 - 1]->ptr
-			+ xe2->xdf2.recs[m->i2 + m->chg2 - 1]->size - t2.ptr;
+		t1.ptr = (char *)xe1->xdf2.recs[m->i1].ptr;
+		t1.size = xe1->xdf2.recs[m->i1 + m->chg1 - 1].ptr
+			+ xe1->xdf2.recs[m->i1 + m->chg1 - 1].size - t1.ptr;
+		t2.ptr = (char *)xe2->xdf2.recs[m->i2].ptr;
+		t2.size = xe2->xdf2.recs[m->i2 + m->chg2 - 1].ptr
+			+ xe2->xdf2.recs[m->i2 + m->chg2 - 1].size - t2.ptr;
 		if (xdl_do_diff(&t1, &t2, xpp, &xe) < 0)
 			return -1;
 		if (xdl_change_compact(&xe.xdf1, &xe.xdf2, xpp->flags) < 0 ||
@@ -440,8 +440,8 @@ static int line_contains_alnum(const char *ptr, long size)
 static int lines_contain_alnum(xdfenv_t *xe, int i, int chg)
 {
 	for (; chg; chg--, i++)
-		if (line_contains_alnum(xe->xdf2.recs[i]->ptr,
-				xe->xdf2.recs[i]->size))
+		if (line_contains_alnum(xe->xdf2.recs[i].ptr,
+				xe->xdf2.recs[i].size))
 			return 1;
 	return 0;
 }
