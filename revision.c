@@ -3178,6 +3178,25 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	return left;
 }
 
+void setup_revisions_from_strvec(struct strvec *argv, struct rev_info *revs,
+				 struct setup_revision_opt *opt)
+{
+	struct setup_revision_opt fallback_opt;
+	int ret;
+
+	if (!opt) {
+		memset(&fallback_opt, 0, sizeof(fallback_opt));
+		opt = &fallback_opt;
+	}
+	opt->free_removed_argv_elements = 1;
+
+	ret = setup_revisions(argv->nr, argv->v, revs, opt);
+
+	for (size_t i = ret; i < argv->nr; i++)
+		free((char *)argv->v[i]);
+	argv->nr = ret;
+}
+
 static void release_revisions_cmdline(struct rev_cmdline_info *cmdline)
 {
 	unsigned int i;
