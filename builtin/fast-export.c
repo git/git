@@ -37,8 +37,6 @@ static const char *const fast_export_usage[] = {
 	NULL
 };
 
-enum sign_mode { SIGN_ABORT, SIGN_VERBATIM, SIGN_STRIP, SIGN_WARN_VERBATIM, SIGN_WARN_STRIP };
-
 static int progress;
 static enum sign_mode signed_tag_mode = SIGN_ABORT;
 static enum sign_mode signed_commit_mode = SIGN_STRIP;
@@ -59,23 +57,16 @@ static struct hashmap anonymized_seeds;
 static struct revision_sources revision_sources;
 
 static int parse_opt_sign_mode(const struct option *opt,
-				     const char *arg, int unset)
+			       const char *arg, int unset)
 {
 	enum sign_mode *val = opt->value;
+
 	if (unset)
 		return 0;
-	else if (!strcmp(arg, "abort"))
-		*val = SIGN_ABORT;
-	else if (!strcmp(arg, "verbatim") || !strcmp(arg, "ignore"))
-		*val = SIGN_VERBATIM;
-	else if (!strcmp(arg, "warn-verbatim") || !strcmp(arg, "warn"))
-		*val = SIGN_WARN_VERBATIM;
-	else if (!strcmp(arg, "warn-strip"))
-		*val = SIGN_WARN_STRIP;
-	else if (!strcmp(arg, "strip"))
-		*val = SIGN_STRIP;
-	else
+
+	if (parse_sign_mode(arg, val))
 		return error("Unknown %s mode: %s", opt->long_name, arg);
+
 	return 0;
 }
 

@@ -1125,3 +1125,20 @@ out:
 	FREE_AND_NULL(ssh_signing_key_file);
 	return ret;
 }
+
+int parse_sign_mode(const char *arg, enum sign_mode *mode)
+{
+	if (!strcmp(arg, "abort"))
+		*mode = SIGN_ABORT;
+	else if (!strcmp(arg, "verbatim") || !strcmp(arg, "ignore"))
+		*mode = SIGN_VERBATIM;
+	else if (!strcmp(arg, "warn-verbatim") || !strcmp(arg, "warn"))
+		*mode = SIGN_WARN_VERBATIM;
+	else if (!strcmp(arg, "warn-strip"))
+		*mode = SIGN_WARN_STRIP;
+	else if (!strcmp(arg, "strip"))
+		*mode = SIGN_STRIP;
+	else
+		return -1;
+	return 0;
+}
