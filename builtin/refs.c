@@ -2,6 +2,7 @@
 #include "builtin.h"
 #include "config.h"
 #include "fsck.h"
+#include "pack-refs.h"
 #include "parse-options.h"
 #include "refs.h"
 #include "strbuf.h"
@@ -13,6 +14,9 @@
 
 #define REFS_VERIFY_USAGE \
 	N_("git refs verify [--strict] [--verbose]")
+
+#define REFS_OPTIMIZE_USAGE \
+	N_("git refs optimize " PACK_REFS_OPTS)
 
 static int cmd_refs_migrate(int argc, const char **argv, const char *prefix,
 			    struct repository *repo UNUSED)
@@ -113,6 +117,17 @@ static int cmd_refs_list(int argc, const char **argv, const char *prefix,
 	return for_each_ref_core(argc, argv, prefix, repo, refs_list_usage);
 }
 
+static int cmd_refs_optimize(int argc, const char **argv, const char *prefix,
+			     struct repository *repo)
+{
+	static char const * const refs_optimize_usage[] = {
+		REFS_OPTIMIZE_USAGE,
+		NULL
+	};
+
+	return pack_refs_core(argc, argv, prefix, repo, refs_optimize_usage);
+}
+
 int cmd_refs(int argc,
 	     const char **argv,
 	     const char *prefix,
@@ -122,6 +137,7 @@ int cmd_refs(int argc,
 		REFS_MIGRATE_USAGE,
 		REFS_VERIFY_USAGE,
 		"git refs list " COMMON_USAGE_FOR_EACH_REF,
+		REFS_OPTIMIZE_USAGE,
 		NULL,
 	};
 	parse_opt_subcommand_fn *fn = NULL;
@@ -129,6 +145,7 @@ int cmd_refs(int argc,
 		OPT_SUBCOMMAND("migrate", &fn, cmd_refs_migrate),
 		OPT_SUBCOMMAND("verify", &fn, cmd_refs_verify),
 		OPT_SUBCOMMAND("list", &fn, cmd_refs_list),
+		OPT_SUBCOMMAND("optimize", &fn, cmd_refs_optimize),
 		OPT_END(),
 	};
 
