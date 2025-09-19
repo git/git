@@ -38,7 +38,7 @@ test_expect_success 'setup' '
 		ln -s "$(cd .. && pwd)/sensitive" repo/objects &&
 
 		mkdir -p "$HTTPD_URL/dumb" &&
-		ln -s "../../../.git/modules/sub/../../../repo/" "$URI" &&
+		ln -s "../../../.git/submodules/sub/../../../repo/" "$URI" &&
 
 		git add . &&
 		git commit -m "initial commit"
@@ -57,7 +57,7 @@ test_expect_success 'ambiguous transport does not lead to arbitrary file-inclusi
 	git clone malicious clone &&
 	test_must_fail git -C clone submodule update --init 2>err &&
 
-	test_path_is_missing clone/.git/modules/sub/objects/secret &&
+	test_path_is_missing clone/.git/submodules/sub/objects/secret &&
 	# We would actually expect "transport .file. not allowed" here,
 	# but due to quirks of the URL detection in Git, we mis-parse
 	# the absolute path as a bogus URL and die before that step.

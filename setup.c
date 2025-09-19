@@ -1416,7 +1416,7 @@ static int is_implicit_bare_repo(const char *path)
 	 * we are inside $GIT_DIR of a worktree of a non-embedded
 	 * submodule, whose superproject is not a bare repository.
 	 */
-	if (strstr(path, "/.git/modules/"))
+	if (strstr(path, "/.git/modules/") || strstr(path, "/.git/submodules/"))
 		return 1;
 
 	return 0;

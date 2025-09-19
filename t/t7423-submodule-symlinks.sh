@@ -49,19 +49,19 @@ test_expect_success SYMLINKS 'git restore --recurse-submodules must not be confu
 
 test_expect_success SYMLINKS 'git restore --recurse-submodules must not migrate git dir of symlinked repo' '
 	prepare_symlink_to_repo &&
-	rm -rf .git/modules &&
+	rm -rf .git/submodules &&
 	test_must_fail git restore --recurse-submodules a/sm &&
 	test_path_is_dir a/target/.git &&
-	test_path_is_missing .git/modules/a/sm &&
+	test_path_is_missing .git/submodules/a/sm &&
 	test_path_is_missing a/target/submodule_file
 '
 
 test_expect_success SYMLINKS 'git checkout -f --recurse-submodules must not migrate git dir of symlinked repo when removing submodule' '
 	prepare_symlink_to_repo &&
-	rm -rf .git/modules &&
+	rm -rf .git/submodules &&
 	test_must_fail git checkout -f --recurse-submodules initial &&
 	test_path_is_dir a/target/.git &&
-	test_path_is_missing .git/modules/a/sm
+	test_path_is_missing .git/submodules/a/sm
 '
 
 test_done

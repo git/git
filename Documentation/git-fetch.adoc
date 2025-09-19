@@ -304,7 +304,7 @@ include::config/fetch.adoc[]
 BUGS
 ----
 Using --recurse-submodules can only fetch new commits in submodules that are
-present locally e.g. in `$GIT_DIR/modules/`. If the upstream adds a new
+present locally e.g. in `$GIT_DIR/submodules/`. If the upstream adds a new
 submodule, that submodule cannot be fetched until it is cloned e.g. by `git
 submodule update`. This is expected to be fixed in a future Git version.
 

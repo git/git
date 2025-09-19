@@ -61,7 +61,7 @@ test_expect_success 'submodule add --reference uses alternates' '
 		git commit -m B-super-added &&
 		git repack -ad
 	) &&
-	test_alternate_is_used super/.git/modules/sub/objects/info/alternates super/sub
+	test_alternate_is_used super/.git/submodules/sub/objects/info/alternates super/sub
 '
 
 test_expect_success 'submodule add --reference with --dissociate does not use alternates' '
@@ -71,7 +71,7 @@ test_expect_success 'submodule add --reference with --dissociate does not use al
 		git commit -m B-super-added &&
 		git repack -ad
 	) &&
-	test_path_is_missing super/.git/modules/sub-dissociate/objects/info/alternates
+	test_path_is_missing super/.git/submodules/sub-dissociate/objects/info/alternates
 '
 
 test_expect_success 'that reference gets used with add' '
@@ -94,14 +94,14 @@ test_expect_success 'updating superproject keeps alternates' '
 	test_when_finished "rm -rf super-clone" &&
 	git clone super super-clone &&
 	git -C super-clone submodule update --init --reference ../B &&
-	test_alternate_is_used super-clone/.git/modules/sub/objects/info/alternates super-clone/sub
+	test_alternate_is_used super-clone/.git/submodules/sub/objects/info/alternates super-clone/sub
 '
 
 test_expect_success 'updating superproject with --dissociate does not keep alternates' '
 	test_when_finished "rm -rf super-clone" &&
 	git clone super super-clone &&
 	git -C super-clone submodule update --init --reference ../B --dissociate &&
-	test_path_is_missing super-clone/.git/modules/sub/objects/info/alternates
+	test_path_is_missing super-clone/.git/submodules/sub/objects/info/alternates
 '
 
 test_expect_success 'submodules use alternates when cloning a superproject' '
@@ -112,7 +112,7 @@ test_expect_success 'submodules use alternates when cloning a superproject' '
 		# test superproject has alternates setup correctly
 		test_alternate_is_used .git/objects/info/alternates . &&
 		# test submodule has correct setup
-		test_alternate_is_used .git/modules/sub/objects/info/alternates sub
+		test_alternate_is_used .git/submodules/sub/objects/info/alternates sub
 	)
 '
 
@@ -127,7 +127,7 @@ test_expect_success 'missing submodule alternate fails clone and submodule updat
 		# update of the submodule succeeds
 		test_must_fail git submodule update --init &&
 		# and we have no alternates:
-		test_path_is_missing .git/modules/sub/objects/info/alternates &&
+		test_path_is_missing .git/submodules/sub/objects/info/alternates &&
 		test_path_is_missing sub/file1
 	)
 '
@@ -142,7 +142,7 @@ test_expect_success 'ignoring missing submodule alternates passes clone and subm
 		# update of the submodule succeeds
 		git submodule update --init &&
 		# and we have no alternates:
-		test_path_is_missing .git/modules/sub/objects/info/alternates &&
+		test_path_is_missing .git/submodules/sub/objects/info/alternates &&
 		test_path_is_file sub/file1
 	)
 '
@@ -176,18 +176,18 @@ test_expect_success 'nested submodule alternate in works and is actually used' '
 		# test superproject has alternates setup correctly
 		test_alternate_is_used .git/objects/info/alternates . &&
 		# immediate submodule has alternate:
-		test_alternate_is_used .git/modules/subwithsub/objects/info/alternates subwithsub &&
+		test_alternate_is_used .git/submodules/subwithsub/objects/info/alternates subwithsub &&
 		# nested submodule also has alternate:
-		test_alternate_is_used .git/modules/subwithsub/modules/sub/objects/info/alternates subwithsub/sub
+		test_alternate_is_used .git/submodules/subwithsub/submodules/sub/objects/info/alternates subwithsub/sub
 	)
 '
 
 check_that_two_of_three_alternates_are_used() {
 	test_alternate_is_used .git/objects/info/alternates . &&
 	# immediate submodule has alternate:
-	test_alternate_is_used .git/modules/subwithsub/objects/info/alternates subwithsub &&
+	test_alternate_is_used .git/submodules/subwithsub/objects/info/alternates subwithsub &&
 	# but nested submodule has no alternate:
-	test_path_is_missing .git/modules/subwithsub/modules/sub/objects/info/alternates
+	test_path_is_missing .git/submodules/subwithsub/submodules/sub/objects/info/alternates
 }
 
 

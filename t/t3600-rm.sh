@@ -582,7 +582,7 @@ test_expect_success 'rm of a conflicted populated submodule with a .git director
 	(
 		cd submod &&
 		rm .git &&
-		cp -R ../.git/modules/sub .git &&
+		cp -R ../.git/submodules/sub .git &&
 		GIT_WORK_TREE=. git config --unset core.worktree
 	) &&
 	test_must_fail git merge conflict2 &&
@@ -617,9 +617,9 @@ test_expect_success 'rm of a populated submodule with a .git directory migrates 
 	(
 		cd submod &&
 		rm .git &&
-		cp -R ../.git/modules/sub .git &&
+		cp -R ../.git/submodules/sub .git &&
 		GIT_WORK_TREE=. git config --unset core.worktree &&
-		rm -r ../.git/modules/sub
+		rm -r ../.git/submodules/sub
 	) &&
 	git rm submod 2>output.err &&
 	test_path_is_missing submod &&
@@ -709,7 +709,7 @@ test_expect_success "rm absorbs submodule's nested .git directory" '
 	(
 		cd submod/subsubmod &&
 		rm .git &&
-		mv ../../.git/modules/sub/modules/sub .git &&
+		mv ../../.git/submodules/sub/submodules/sub .git &&
 		GIT_WORK_TREE=. git config --unset core.worktree
 	) &&
 	git rm submod 2>output.err &&

@@ -62,7 +62,7 @@ test_expect_success 'submodule is checked out after manually adding submodule wo
 test_expect_success 'checkout --recurse-submodules uses $GIT_DIR for submodules in a linked worktree' '
 	git -C main worktree add "$base_path/checkout-recurse" --detach  &&
 	git -C checkout-recurse submodule update --init &&
-	echo "gitdir: ../../main/.git/worktrees/checkout-recurse/modules/sub" >expect-gitfile &&
+	echo "gitdir: ../../main/.git/worktrees/checkout-recurse/submodules/sub" >expect-gitfile &&
 	cat checkout-recurse/sub/.git >actual-gitfile &&
 	test_cmp expect-gitfile actual-gitfile &&
 	git -C main/sub rev-parse HEAD >expect-head-main &&
@@ -73,7 +73,7 @@ test_expect_success 'checkout --recurse-submodules uses $GIT_DIR for submodules 
 	test_cmp expect-head-main actual-head-main
 '
 
-test_expect_success 'core.worktree is removed in $GIT_DIR/modules/<name>/config, not in $GIT_COMMON_DIR/modules/<name>/config' '
+test_expect_success 'core.worktree is removed in $GIT_DIR/submodules/<name>/config, not in $GIT_COMMON_DIR/submodules/<name>/config' '
 	echo "../../../sub" >expect-main &&
 	git -C main/sub config --get core.worktree >actual-main &&
 	test_cmp expect-main actual-main &&
@@ -81,14 +81,14 @@ test_expect_success 'core.worktree is removed in $GIT_DIR/modules/<name>/config,
 	git -C checkout-recurse/sub config --get core.worktree >actual-linked &&
 	test_cmp expect-linked actual-linked &&
 	git -C checkout-recurse checkout --recurse-submodules first &&
-	test_expect_code 1 git -C main/.git/worktrees/checkout-recurse/modules/sub config --get core.worktree >linked-config &&
+	test_expect_code 1 git -C main/.git/worktrees/checkout-recurse/submodules/sub config --get core.worktree >linked-config &&
 	test_must_be_empty linked-config &&
 	git -C main/sub config --get core.worktree >actual-main &&
 	test_cmp expect-main actual-main
 '
 
 test_expect_success 'unsetting core.worktree does not prevent running commands directly against the submodule repository' '
-	git -C main/.git/worktrees/checkout-recurse/modules/sub log
+	git -C main/.git/worktrees/checkout-recurse/submodules/sub log
 '
 
 test_done

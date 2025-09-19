@@ -13,6 +13,7 @@ GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-verify-submodule-gitdir-path.sh
 
 test_expect_success 'setup - enable local submodules' '
 	git config --global protocol.file.allow always
@@ -163,7 +164,7 @@ test_expect_success 'submodule add' '
 		cd addtest &&
 		git submodule add -q "$submodurl" submod >actual &&
 		test_must_be_empty actual &&
-		echo "gitdir: ../.git/modules/submod" >expect &&
+		echo "gitdir: ../.git/submodules/submod" >expect &&
 		test_cmp expect submod/.git &&
 		(
 			cd submod &&
@@ -976,21 +977,21 @@ test_expect_success 'submodule add --name allows to replace a submodule with ano
 			echo "$submodurl/repo" >expect &&
 			git config remote.origin.url >actual &&
 			test_cmp expect actual &&
-			echo "gitdir: ../.git/modules/repo" >expect &&
+			echo "gitdir: ../.git/submodules/repo" >expect &&
 			test_cmp expect .git
 		) &&
 		rm -rf repo &&
 		git rm repo &&
 		git submodule add -q --name repo_new "$submodurl/bare.git" repo >actual &&
 		test_must_be_empty actual &&
-		echo "gitdir: ../.git/modules/submod" >expect &&
+		echo "gitdir: ../.git/submodules/submod" >expect &&
 		test_cmp expect submod/.git &&
 		(
 			cd repo &&
 			echo "$submodurl/bare.git" >expect &&
 			git config remote.origin.url >actual &&
 			test_cmp expect actual &&
-			echo "gitdir: ../.git/modules/repo_new" >expect &&
+			echo "gitdir: ../.git/submodules/repo_new" >expect &&
 			test_cmp expect .git
 		) &&
 		echo "repo" >expect &&
@@ -1045,8 +1046,8 @@ test_expect_success 'recursive relative submodules stay relative' '
 	(
 		cd clone2 &&
 		git submodule update --init --recursive &&
-		echo "gitdir: ../.git/modules/sub3" >./sub3/.git_expect &&
-		echo "gitdir: ../../../.git/modules/sub3/modules/dirdir/subsub" >./sub3/dirdir/subsub/.git_expect
+		echo "gitdir: ../.git/submodules/sub3" >./sub3/.git_expect &&
+		echo "gitdir: ../../../.git/submodules/sub3/submodules/dirdir%2fsubsub" >./sub3/dirdir/subsub/.git_expect
 	) &&
 	test_cmp clone2/sub3/.git_expect clone2/sub3/.git &&
 	test_cmp clone2/sub3/dirdir/subsub/.git_expect clone2/sub3/dirdir/subsub/.git
@@ -1108,8 +1109,8 @@ test_expect_success 'submodule deinit should remove the whole submodule section 
 '
 
 test_expect_success 'submodule deinit should unset core.worktree' '
-	test_path_is_file .git/modules/example/config &&
-	test_must_fail git config -f .git/modules/example/config core.worktree
+	test_path_is_file .git/submodules/example/config &&
+	test_must_fail git config -f .git/submodules/example/config core.worktree
 '
 
 test_expect_success 'submodule deinit from subdirectory' '
@@ -1231,7 +1232,7 @@ test_expect_success 'submodule deinit absorbs .git directory if .git is a direct
 	(
 		cd init &&
 		rm .git &&
-		mv ../.git/modules/example .git &&
+		mv ../.git/submodules/example .git &&
 		GIT_WORK_TREE=. git config --unset core.worktree
 	) &&
 	git submodule deinit init &&
@@ -1503,6 +1504,14 @@ test_expect_success 'submodule add fails when name is reused' '
 		test_must_fail git submodule add ../child2-origin child 2>err &&
 		test_grep "already used for" err
 	)
+'
+
+test_expect_success 'submodule helper gitdir config overrides' '
+	verify_submodule_gitdir_path test-submodule child submodules/child &&
+	test_config -C test-submodule submodule.child.gitdirpath ".git/submodules/custom-child" &&
+	verify_submodule_gitdir_path test-submodule child submodules/custom-child &&
+	test_unconfig -C test-submodule submodule.child.gitdirpath &&
+	verify_submodule_gitdir_path test-submodule child submodules/child
 '
 
 test_done
