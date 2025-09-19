@@ -2304,6 +2304,24 @@ static timestamp_t parse_age(const char *arg)
 	return num;
 }
 
+static void overwrite_argv(int *argc, const char **argv,
+			   const char **value,
+			   const struct setup_revision_opt *opt)
+{
+	/*
+	 * Detect the case when we are overwriting ourselves. The assignment
+	 * itself would be a noop either way, but this lets us avoid corner
+	 * cases around the free() and NULL operations.
+	 */
+	if (*value != argv[*argc]) {
+		if (opt && opt->free_removed_argv_elements)
+			free((char *)argv[*argc]);
+		argv[*argc] = *value;
+		*value = NULL;
+	}
+	(*argc)++;
+}
+
 static int handle_revision_opt(struct rev_info *revs, int argc, const char **argv,
 			       int *unkc, const char **unkv,
 			       const struct setup_revision_opt* opt)
@@ -2325,7 +2343,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	    starts_with(arg, "--branches=") || starts_with(arg, "--tags=") ||
 	    starts_with(arg, "--remotes=") || starts_with(arg, "--no-walk="))
 	{
-		unkv[(*unkc)++] = arg;
+		overwrite_argv(unkc, unkv, &argv[0], opt);
 		return 1;
 	}
 
@@ -2689,7 +2707,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else {
 		int opts = diff_opt_parse(&revs->diffopt, argv, argc, revs->prefix);
 		if (!opts)
-			unkv[(*unkc)++] = arg;
+			overwrite_argv(unkc, unkv, &argv[0], opt);
 		return opts;
 	}
 
@@ -3001,7 +3019,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 
 			if (!strcmp(arg, "--stdin")) {
 				if (revs->disable_stdin) {
-					argv[left++] = arg;
+					overwrite_argv(&left, argv, &argv[i], opt);
 					continue;
 				}
 				if (revs->read_from_stdin++)
