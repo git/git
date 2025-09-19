@@ -3175,6 +3175,12 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		revs->show_notes_given = 1;
 	}
 
+	if (argv) {
+		if (opt && opt->free_removed_argv_elements)
+			free((char *)argv[left]);
+		argv[left] = NULL;
+	}
+
 	return left;
 }
 
