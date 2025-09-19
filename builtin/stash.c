@@ -956,6 +956,7 @@ static void diff_include_untracked(const struct stash_info *info, struct diff_op
 static int show_stash(int argc, const char **argv, const char *prefix,
 		      struct repository *repo UNUSED)
 {
+	struct setup_revision_opt opt = { .free_removed_argv_elements = 1 };
 	int i;
 	int ret = -1;
 	struct stash_info info = STASH_INFO_INIT;
@@ -1014,7 +1015,7 @@ static int show_stash(int argc, const char **argv, const char *prefix,
 		}
 	}
 
-	argc = setup_revisions(revision_args.nr, revision_args.v, &rev, NULL);
+	argc = setup_revisions(revision_args.nr, revision_args.v, &rev, &opt);
 	if (argc > 1)
 		goto usage;
 	if (!rev.diffopt.output_format) {

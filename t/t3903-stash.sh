@@ -1741,4 +1741,10 @@ test_expect_success 'submodules does not affect the branch recorded in stash mes
 	)
 '
 
+test_expect_success 'stash show handles --' '
+	git stash show >expect &&
+	git stash show -- >actual &&
+	test_cmp expect actual
+'
+
 test_done
