@@ -883,7 +883,9 @@ BUILT_INS += git-stage$X
 BUILT_INS += git-status$X
 BUILT_INS += git-switch$X
 BUILT_INS += git-version$X
+ifndef WITH_BREAKING_CHANGES
 BUILT_INS += git-whatchanged$X
+endif
 
 # what 'all' will build but not install in gitexecdir
 OTHER_PROGRAMS += git$X

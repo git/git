@@ -27,6 +27,20 @@ test_expect_success 'looping aliases - internal execution' '
 	test_grep "^fatal: alias loop detected: expansion of" output
 '
 
+test_expect_success 'looping aliases - deprecated builtins' '
+	test_config alias.whatchanged pack-redundant &&
+	test_config alias.pack-redundant whatchanged &&
+	cat >expect <<-EOF &&
+	${SQ}whatchanged${SQ} is aliased to ${SQ}pack-redundant${SQ}
+	${SQ}pack-redundant${SQ} is aliased to ${SQ}whatchanged${SQ}
+	fatal: alias loop detected: expansion of ${SQ}whatchanged${SQ} does not terminate:
+	  whatchanged <==
+	  pack-redundant ==>
+	EOF
+	test_must_fail git whatchanged -h 2>actual &&
+	test_cmp expect actual
+'
+
 # This test is disabled until external loops are fixed, because would block
 # the test suite for a full minute.
 #
@@ -53,6 +67,49 @@ test_expect_success 'tracing a shell alias with arguments shows trace of prepare
 	# redact platform differences
 	sed -n -e "s/^\(trace: start_command:\) .* -c /\1 SHELL -c /p" output >actual &&
 	test_cmp expect actual
+'
+
+can_alias_deprecated_builtin () {
+	cmd="$1" &&
+	# some git(1) commands will fail for `-h` (the case for
+	# git-status as of 2025-09-07)
+	test_might_fail git status -h >expect &&
+	test_file_not_empty expect &&
+	test_might_fail git -c alias."$cmd"=status "$cmd" -h >actual &&
+	test_cmp expect actual
+}
+
+test_expect_success 'can alias-shadow deprecated builtins' '
+	for cmd in $(git --list-cmds=deprecated)
+	do
+		can_alias_deprecated_builtin "$cmd" || return 1
+	done
+'
+
+test_expect_success 'can alias-shadow via two deprecated builtins' '
+	# some git(1) commands will fail... (see above)
+	test_might_fail git status -h >expect &&
+	test_file_not_empty expect &&
+	test_might_fail git -c alias.whatchanged=pack-redundant \
+		-c alias.pack-redundant=status whatchanged -h >actual &&
+	test_cmp expect actual
+'
+
+cannot_alias_regular_builtin () {
+	cmd="$1" &&
+	# some git(1) commands will fail... (see above)
+	test_might_fail git "$cmd" -h >expect &&
+	test_file_not_empty expect &&
+	test_might_fail git -c alias."$cmd"=status "$cmd" -h >actual &&
+	test_cmp expect actual
+}
+
+test_expect_success 'cannot alias-shadow a sample of regular builtins' '
+	for cmd in grep check-ref-format interpret-trailers \
+		checkout-index fast-import diagnose rev-list prune
+	do
+		cannot_alias_regular_builtin "$cmd" || return 1
+	done
 '
 
 test_done
