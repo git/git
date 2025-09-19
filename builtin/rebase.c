@@ -299,8 +299,7 @@ static int do_interactive_rebase(struct rebase_options *opts, unsigned flags)
 			     oid_to_hex(&opts->restrict_revision->object.oid));
 
 	ret = sequencer_make_script(the_repository, &todo_list.buf,
-				    make_script_args.nr, make_script_args.v,
-				    flags);
+				    &make_script_args, flags);
 	if (ret) {
 		error(_("could not generate todo list"));
 		goto cleanup;
