@@ -23,7 +23,7 @@
 #if !defined(XMACROS_H)
 #define XMACROS_H
 
-
+#include <compat/rust_types.h>
 
 
 #define XDL_MIN(a, b) ((a) < (b) ? (a): (b))
