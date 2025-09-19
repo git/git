@@ -324,11 +324,12 @@ The following options are unaffected by `--path-format`:
 	path of the current directory relative to the top-level
 	directory.
 
---show-object-format[=(storage|input|output)]::
-	Show the object format (hash algorithm) used for the repository
-	for storage inside the `.git` directory, input, or output. For
-	input, multiple algorithms may be printed, space-separated.
-	If not specified, the default is "storage".
+--show-object-format[=(storage|input|output|compat)]::
+	Show the object format (hash algorithm) used for the repository for storage
+	inside the `.git` directory, input, output, or compatibility. For input,
+	multiple algorithms may be printed, space-separated. If `compat` is
+	requested and no compatibility algorithm is enabled, prints an empty line. If
+	not specified, the default is "storage".
 
 --show-ref-format::
 	Show the reference storage format used for the repository.
