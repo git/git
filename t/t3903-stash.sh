@@ -1747,4 +1747,9 @@ test_expect_success 'stash show handles --' '
 	test_cmp expect actual
 '
 
+test_expect_success 'controlled error return on unrecognized option' '
+	test_expect_code 129 git stash show -p --invalid 2>usage &&
+	grep -e "^usage: git stash show" usage
+'
+
 test_done
