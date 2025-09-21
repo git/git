@@ -22,23 +22,14 @@
 
 #include "xinclude.h"
 
-static long xdl_get_rec(xdfile_t *xdf, long ri, char const **rec) {
-
-	*rec = xdf->recs[ri]->ptr;
-
-	return xdf->recs[ri]->size;
-}
-
 
 static int xdl_emit_record(xdfile_t *xdf, long ri, char const *pre, xdemitcb_t *ecb) {
 	long size, psize = strlen(pre);
-	char const *rec;
+	char const *rec = xdf->recs[ri]->ptr;
 
-	size = xdl_get_rec(xdf, ri, &rec);
-	if (xdl_emit_diffrec(rec, size, pre, psize, ecb) < 0) {
-
+	size = xdf->recs[ri]->size;
+	if (xdl_emit_diffrec(rec, size, pre, psize, ecb) < 0)
 		return -1;
-	}
 
 	return 0;
 }
@@ -120,8 +111,8 @@ static long def_ff(const char *rec, long len, char *buf, long sz)
 static long match_func_rec(xdfile_t *xdf, xdemitconf_t const *xecfg, long ri,
 			   char *buf, long sz)
 {
-	const char *rec;
-	long len = xdl_get_rec(xdf, ri, &rec);
+	const char *rec = xdf->recs[ri]->ptr;
+	long len = xdf->recs[ri]->size;
 	if (!xecfg->find_func)
 		return def_ff(rec, len, buf, sz);
 	return xecfg->find_func(rec, len, buf, sz, xecfg->find_func_priv);
@@ -160,8 +151,8 @@ static long get_func_line(xdfenv_t *xe, xdemitconf_t const *xecfg,
 
 static int is_empty_rec(xdfile_t *xdf, long ri)
 {
-	const char *rec;
-	long len = xdl_get_rec(xdf, ri, &rec);
+	const char *rec = xdf->recs[ri]->ptr;
+	long len = xdf->recs[ri]->size;
 
 	while (len > 0 && XDL_ISSPACE(*rec)) {
 		rec++;
