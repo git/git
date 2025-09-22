@@ -1,3 +1,3 @@
 #include "clar.h"
 
-extern const char *selftest_binary_path;
+extern const char *selftest_suite_directory;

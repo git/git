@@ -1,13 +1,13 @@
 /* clap: clar protocol, the traditional clar output format */
 
-static void clar_print_clap_init(int test_count, int suite_count, const char *suite_names)
+static void clar_print_clap_init(int test_count, int suite_count)
 {
 	(void)test_count;
 
 	if (_clar.verbosity < 0)
 		return;
 
-	printf("Loaded %d suites: %s\n", (int)suite_count, suite_names);
+	printf("Loaded %d suites:\n", (int)suite_count);
 	printf("Started (test status codes: OK='.' FAILURE='F' SKIPPED='S')\n");
 }
 
@@ -103,11 +103,10 @@ static void clar_print_clap_onabort(const char *fmt, va_list arg)
 
 /* tap: test anywhere protocol format */
 
-static void clar_print_tap_init(int test_count, int suite_count, const char *suite_names)
+static void clar_print_tap_init(int test_count, int suite_count)
 {
 	(void)test_count;
 	(void)suite_count;
-	(void)suite_names;
 	printf("TAP version 13\n");
 }
 
@@ -207,9 +206,9 @@ static void clar_print_tap_onabort(const char *fmt, va_list arg)
 		} \
 	} while (0)
 
-static void clar_print_init(int test_count, int suite_count, const char *suite_names)
+static void clar_print_init(int test_count, int suite_count)
 {
-	PRINT(init, test_count, suite_count, suite_names);
+	PRINT(init, test_count, suite_count);
 }
 
 static void clar_print_shutdown(int test_count, int suite_count, int error_count)
