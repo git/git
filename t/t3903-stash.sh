@@ -1741,4 +1741,15 @@ test_expect_success 'submodules does not affect the branch recorded in stash mes
 	)
 '
 
+test_expect_success 'stash show handles --' '
+	git stash show >expect &&
+	git stash show -- >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'controlled error return on unrecognized option' '
+	test_expect_code 129 git stash show -p --invalid 2>usage &&
+	grep -e "^usage: git stash show" usage
+'
+
 test_done

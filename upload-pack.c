@@ -913,13 +913,12 @@ static void deepen(struct upload_pack_data *data, int depth)
 }
 
 static void deepen_by_rev_list(struct upload_pack_data *data,
-			       int ac,
-			       const char **av)
+			       struct strvec *argv)
 {
 	struct commit_list *result;
 
 	disable_commit_graph(the_repository);
-	result = get_shallow_commits_by_rev_list(ac, av, SHALLOW, NOT_SHALLOW);
+	result = get_shallow_commits_by_rev_list(argv, SHALLOW, NOT_SHALLOW);
 	send_shallow(data, result);
 	free_commit_list(result);
 	send_unshallow(data);
@@ -955,7 +954,7 @@ static int send_shallow_list(struct upload_pack_data *data)
 			struct object *o = data->want_obj.objects[i].item;
 			strvec_push(&av, oid_to_hex(&o->oid));
 		}
-		deepen_by_rev_list(data, av.nr, av.v);
+		deepen_by_rev_list(data, &av);
 		strvec_clear(&av);
 		ret = 1;
 	} else {
