@@ -2215,6 +2215,7 @@ proc setoptions {} {
 }
 
 proc setttkstyle {} {
+    global theme
     eval font configure TkDefaultFont [fontflags mainfont]
     eval font configure TkTextFont [fontflags textfont]
     eval font configure TkHeadingFont [fontflags mainfont]
@@ -2224,6 +2225,10 @@ proc setttkstyle {} {
     eval font configure TkIconFont    [fontflags uifont]
     eval font configure TkMenuFont    [fontflags uifont]
     eval font configure TkSmallCaptionFont [fontflags uifont]
+
+    if {[catch {ttk::style theme use $theme} err]} {
+        set theme [ttk::style theme use]
+    }
 }
 
 # Make a menu and submenus.
@@ -12618,6 +12623,9 @@ set circleoutlinecolor $fgcolor
 set foundbgcolor yellow
 set currentsearchhitbgcolor orange
 
+set theme [ttk::style theme use]
+set themeloader {}
+
 # button for popping up context menus
 if {[tk windowingsystem] eq "aqua" && [package vcompare $::tcl_version 8.7] < 0} {
     set ctxbut <Button-2>
@@ -12701,6 +12709,8 @@ set config_variables {
     tagfgcolor
     tagoutlinecolor
     textfont
+    theme
+    themeloader
     uicolor
     uifgcolor
     uifgdisabledcolor
@@ -12800,7 +12810,10 @@ set nullid "0000000000000000000000000000000000000000"
 set nullid2 "0000000000000000000000000000000000000001"
 set nullfile "/dev/null"
 
-setttkstyle
+if {[file exists $themeloader]} {
+    source $themeloader
+}
+
 set appname "gitk"
 
 set runq {}
@@ -12916,6 +12929,7 @@ if {[tk windowingsystem] eq "win32"} {
     focus -force .
 }
 
+setttkstyle
 set_gui_colors
 
 getcommits {}
