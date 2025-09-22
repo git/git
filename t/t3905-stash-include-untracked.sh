@@ -87,7 +87,6 @@ test_expect_success 'stash save --patch --all fails' '
 
 test_expect_success 'clean up untracked/untracked file to prepare for next tests' '
 	git clean --force --quiet
-
 '
 
 test_expect_success 'stash pop after save --include-untracked leaves files untracked again' '
