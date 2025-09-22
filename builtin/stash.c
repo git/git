@@ -130,6 +130,7 @@ static struct strbuf stash_index_path = STRBUF_INIT;
 static int show_stat = 1;
 static int show_patch;
 static int show_include_untracked;
+static int use_index;
 
 /*
  * w_commit is set to the commit containing the working tree
@@ -662,7 +663,7 @@ static int apply_stash(int argc, const char **argv, const char *prefix,
 {
 	int ret = -1;
 	int quiet = 0;
-	int index = 0;
+	int index = use_index;
 	struct stash_info info = STASH_INFO_INIT;
 	struct option options[] = {
 		OPT__QUIET(&quiet, N_("be quiet, only report errors")),
@@ -759,7 +760,7 @@ static int pop_stash(int argc, const char **argv, const char *prefix,
 		     struct repository *repo UNUSED)
 {
 	int ret = -1;
-	int index = 0;
+	int index = use_index;
 	int quiet = 0;
 	struct stash_info info = STASH_INFO_INIT;
 	struct option options[] = {
@@ -862,6 +863,10 @@ static int git_stash_config(const char *var, const char *value,
 	}
 	if (!strcmp(var, "stash.showincludeuntracked")) {
 		show_include_untracked = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "stash.index")) {
+		use_index = git_config_bool(var, value);
 		return 0;
 	}
 	return git_diff_basic_config(var, value, ctx, cb);

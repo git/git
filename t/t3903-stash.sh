@@ -1595,4 +1595,41 @@ test_expect_success 'stash apply reports a locked index' '
 	)
 '
 
+test_expect_success 'stash.index=true implies --index' '
+	# setup for a few related tests
+	test_commit file base &&
+	echo index >file &&
+	git add file &&
+	echo working >file &&
+	git stash &&
+
+	test_when_finished "git reset --hard" &&
+	git -c stash.index=true stash apply &&
+	echo index >expect &&
+	git show :0:file >actual &&
+	test_cmp expect actual &&
+	echo working >expect &&
+	test_cmp expect file
+'
+
+test_expect_success 'stash.index=true overridden by --no-index' '
+	test_when_finished "git reset --hard" &&
+	git -c stash.index=true stash apply --no-index &&
+	echo base >expect &&
+	git show :0:file >actual &&
+	test_cmp expect actual &&
+	echo working >expect &&
+	test_cmp expect file
+'
+
+test_expect_success 'stash.index=false overridden by --index' '
+	test_when_finished "git reset --hard" &&
+	git -c stash.index=false stash apply --index &&
+	echo index >expect &&
+	git show :0:file >actual &&
+	test_cmp expect actual &&
+	echo working >expect &&
+	test_cmp expect file
+'
+
 test_done
