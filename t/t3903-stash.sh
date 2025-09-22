@@ -1741,4 +1741,8 @@ test_expect_success 'submodules does not affect the branch recorded in stash mes
 	)
 '
 
+test_expect_success SANITIZE_LEAK 'stash show handles -- without leaking' '
+	git stash show --
+'
+
 test_done
