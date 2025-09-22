@@ -127,6 +127,10 @@ static const char * const git_stash_save_usage[] = {
 static const char ref_stash[] = "refs/stash";
 static struct strbuf stash_index_path = STRBUF_INIT;
 
+static int show_stat = 1;
+static int show_patch;
+static int show_include_untracked;
+
 /*
  * w_commit is set to the commit containing the working tree
  * b_commit is set to the base commit
@@ -844,10 +848,6 @@ static int list_stash(int argc, const char **argv, const char *prefix,
 	strvec_push(&cp.args, "--");
 	return run_command(&cp);
 }
-
-static int show_stat = 1;
-static int show_patch;
-static int show_include_untracked;
 
 static int git_stash_config(const char *var, const char *value,
 			    const struct config_context *ctx, void *cb)
