@@ -213,7 +213,9 @@ test_expect_success 'Prohibited LF in comment' '
 	test_must_fail git config ${mode_set} --comment="a${LF}b" section.k v
 '
 
-test_expect_success 'non-match result' 'test_cmp expect .git/config'
+test_expect_success 'non-match result' '
+	test_cmp expect .git/config
+'
 
 test_expect_success 'find mixed-case key by canonical name' '
 	test_cmp_config Second sections.whatever
@@ -455,9 +457,13 @@ EOF
 	test_cmp expect .git/config
 '
 
-test_expect_success 'invalid key' 'test_must_fail git config inval.2key blabla'
+test_expect_success 'invalid key' '
+	test_must_fail git config inval.2key blabla
+'
 
-test_expect_success 'correct key' 'git config 123456.a123 987'
+test_expect_success 'correct key' '
+	git config 123456.a123 987
+'
 
 test_expect_success 'hierarchical section' '
 	git config Version.1.2.3eX.Alpha beta
@@ -490,6 +496,7 @@ test_expect_success 'working --list' '
 	git config ${mode_prefix}list > output &&
 	test_cmp expect output
 '
+
 test_expect_success '--list without repo produces empty output' '
 	git --git-dir=nonexistent config ${mode_prefix}list >output &&
 	test_must_be_empty output
@@ -887,16 +894,17 @@ test_expect_success bool '
 	    git config --bool --get bool.true$i >>result &&
 	    git config --bool --get bool.false$i >>result || return 1
 	done &&
-	test_cmp expect result'
+	test_cmp expect result
+'
 
 test_expect_success 'invalid bool (--get)' '
-
 	git config ${mode_set} bool.nobool foobar &&
-	test_must_fail git config --bool --get bool.nobool'
+	test_must_fail git config --bool --get bool.nobool
+'
 
 test_expect_success 'invalid bool (set)' '
-
-	test_must_fail git config --bool bool.nobool foobar'
+	test_must_fail git config --bool bool.nobool foobar
+'
 
 test_expect_success 'set --bool' '
 	cat >expect <<\EOF &&
@@ -999,7 +1007,8 @@ EOF
 	git config --path path.home "~/" &&
 	git config --path path.normal "/dev/null" &&
 	git config --path path.trailingtilde "foo~" &&
-	test_cmp expect .git/config'
+	test_cmp expect .git/config
+'
 
 if test_have_prereq !MINGW && test "${HOME+set}"
 then
@@ -1117,10 +1126,13 @@ EOF
 
 test_expect_success 'key with newline' '
 	test_must_fail git config ${mode_get} "key.with
-newline" 123'
+newline" 123
+'
 
-test_expect_success 'value with newline' 'git config ${mode_set} key.sub value.with\\\
-newline'
+test_expect_success 'value with newline' '
+	git config ${mode_set} key.sub value.with\\\
+newline
+'
 
 cat > .git/config <<\EOF
 [section]
@@ -1330,7 +1342,6 @@ test_expect_success 'multiple git -c appends config' '
 '
 
 test_expect_success 'last one wins: two level vars' '
-
 	# sec.var and sec.VAR are the same variable, as the first
 	# and the last level of a configuration variable name is
 	# case insensitive.
@@ -1349,7 +1360,6 @@ test_expect_success 'last one wins: two level vars' '
 '
 
 test_expect_success 'last one wins: three level vars' '
-
 	# v.a.r and v.A.r are not the same variable, as the middle
 	# level of a three-level configuration variable name is
 	# case sensitive.
