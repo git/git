@@ -9,6 +9,7 @@ GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=main
 export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY"/lib-terminal.sh
 
 for mode in legacy subcommands
 do
@@ -1097,6 +1098,14 @@ test_expect_success 'get --type=color with default value only' '
 	test_cmp expect actual &&
 	git config get --type=color --default="red" "" >actual-subcommand.raw &&
 	test_cmp actual.raw actual-subcommand.raw
+'
+
+test_expect_success TTY 'get --type=color does not use a pager' '
+	test_config core.pager "echo foobar" &&
+	test_terminal git config get --type=color --default="red" "" >actual.raw &&
+	test_decode_color <actual.raw >actual &&
+	echo "<RED>" >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'set --type=color' '
