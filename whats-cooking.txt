@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
-Subject: What's cooking in git.git (Sep 2025, #08; Fri, 19)
+Subject: What's cooking in git.git (Sep 2025, #09; Mon, 22)
 X-master-at: ca2559c1d630eb4f04cdee2328aaf1c768907a9e
-X-next-at: c4e3cb95175ecb4a955ccff0899fd16de0cea8e8
+X-next-at: b178f27e6ddfa8d515dcd445b6bf17119f962c44
 Bcc: lwn@lwn.net, gitster@pobox.com
 
-What's cooking in git.git (Sep 2025, #08; Fri, 19)
+What's cooking in git.git (Sep 2025, #09; Mon, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking in my tree.  Commits
@@ -46,111 +46,75 @@ Release tarballs are available at:
 	https://www.kernel.org/pub/software/scm/git/
 
 --------------------------------------------------
-[Graduated to 'master']
+[New Topics]
 
-* ag/doc-sendmail-gmail-example-update (2025-08-26) 1 commit
-  (merged to 'next' on 2025-09-12 at 54e0dab4b0)
- + docs: update sendmail docs to use more secure SMTP server for Gmail
+* jk/setup-revisions-freefix (2025-09-19) 6 commits
+  (merged to 'next' on 2025-09-22 at b178f27e6d)
+ + revision: retain argv NULL invariant in setup_revisions()
+ + treewide: pass strvecs around for setup_revisions_from_strvec()
+ + treewide: use setup_revisions_from_strvec() when we have a strvec
+ + revision: add wrapper to setup_revisions() from a strvec
+ + revision: manage memory ownership of argv in setup_revisions()
+ + stash: tell setup_revisions() to free our allocated strings
 
- Doc update.
- source: <20250826150919.5239-1-gargaditya08@live.com>
+ There are double frees and leaks around setup_revisions() API used
+ in "git stash show", which has been fixed, and setup_revisions()
+ API gained a wrapper to make it more ergonomic when using it with
+ strvec-manged argc/argv pairs.
 
-
-* ag/send-email-imap-sent (2025-08-11) 2 commits
-  (merged to 'next' on 2025-09-12 at bb82691e0a)
- + send-email: enable copying emails to an IMAP folder without actually sending them
- + send-email: add ability to send a copy of sent emails to an IMAP folder
-
- "git send-email" learned to drive "git imap-send" to store already
- sent e-mails in an IMAP folder.
- source: <PN3PR01MB9597E8E33868386C997D2563B82BA@PN3PR01MB9597.INDPRD01.PROD.OUTLOOK.COM>
-
-
-* jc/doc-includeif-hasconfig-remote-url-fix (2025-08-21) 1 commit
-  (merged to 'next' on 2025-09-12 at 3b91910cbd)
- + config: document includeIf conditions consistently
-
- Doc mark-up fix.
- source: <xmqqldnc4stv.fsf@gitster.g>
+ Expecting a reroll to fix t3903
+ cf. <xmqq1pnywkwv.fsf@gitster.g>
+ source: <20250919223351.GA3906184@coredump.intra.peff.net>
 
 
-* jc/longer-disambiguation-fix (2025-08-14) 1 commit
-  (merged to 'next' on 2025-09-12 at 4dddaa05fc)
- + abbrev: allow extending beyond 32 chars to disambiguate
+* js/curl-off-t-fixes (2025-09-21) 3 commits
+ - http-push: avoid new compile error
+ - imap-send: be more careful when casting to `curl_off_t`
+ - http: offer to cast `size_t` to `curl_off_t` safely
 
- "git rev-parse --short" and friends failed to disambiguate two
- objects with object names that share common prefix longer than 32
- characters, which has been fixed.
- source: <xmqqh5ya6iua.fsf_-_@gitster.g>
+ A few places where an size_t value was cast to curl_off_t without
+ checking has been updated to use the existing helper function.
 
-
-* jk/curl-global-trace-components (2025-08-27) 1 commit
-  (merged to 'next' on 2025-09-12 at 37a826f245)
- + curl: add support for curl_global_trace() components
-
- Adjust to the way newer versions of cURL selectivel enables tracing
- options, so that our tests can continue to work.
- source: <20250827080702.GA3572995@coredump.intra.peff.net>
-
-
-* kh/doc-fast-import-markup-fix (2025-09-08) 1 commit
-  (merged to 'next' on 2025-09-12 at d56e1334b9)
- + doc: fast-import: replace literal block with paragraph
-
- Doc mark-up fix.
- source: <09aaad696895c18c6d4dda7d6a2f4b77f84f39ba.1757363213.git.code@khaugsbakk.name>
-
-
-* kn/clang-format-bitfields (2025-08-26) 1 commit
-  (merged to 'next' on 2025-09-12 at 62dd6102f6)
- + Documentation: note styling for bit fields
-
- CodingGuidelines now spells out how bitfields are to be written.
- source: <20250826121928.22317-1-karthik.188@gmail.com>
-
-
-* ne/alloc-free-and-null (2025-09-04) 1 commit
-  (merged to 'next' on 2025-09-12 at 005f763f97)
- + alloc: fix dangling pointer in alloc_state cleanup
-
- The clear_alloc_state() API function was not fully clearing the
- structure for reuse, but since nobody reuses it, replace it with a
- variant that frees the structure as well, making the callers simpler.
- source: <pull.2040.v5.git.git.1757007856062.gitgitgadget@gmail.com>
-
-
-* pc/range-diff-memory-limit (2025-08-29) 1 commit
-  (merged to 'next' on 2025-09-12 at 022fe71829)
- + range-diff: add configurable memory limit for cost matrix
-
- "git range-diff" learned a way to limit the memory consumed by
- O(N*N) cost matrix.
- source: <pull.1958.v4.git.1756483374980.gitgitgadget@gmail.com>
-
-
-* pw/3.0-commentchar-auto-deprecation (2025-08-26) 4 commits
-  (merged to 'next' on 2025-09-12 at e6a855d738)
- + commit: print advice when core.commentString=auto
- + config: warn on core.commentString=auto
- + breaking-changes: deprecate support for core.commentString=auto
- + Merge branch 'ps/config-wo-the-repository' into pw/3.0-commentchar-auto-deprecation
-
- "core.commentChar=auto" that attempts to dynamically pick a
- suitable comment character is non-workable, as it is too much
- trouble to support for little benefit, and is marked as deprecated.
- source: <cover.1756215326.git.phillip.wood@dunelm.org.uk>
-
-
-* sg/line-log-boundary-fixes (2025-08-18) 2 commits
-  (merged to 'next' on 2025-09-12 at 0d34d3872c)
- + line-log: show all line ranges touched by the same diff range
- + line-log: fix assertion error
-
- A corner case bug in "git log -L..." has been corrected.
- source: <20250818111310.1283932-1-szeder.dev@gmail.com>
+ Expecting a (hopefully small) reroll to clarify log message.
+ cf. <pull.1974.git.1758457356.gitgitgadget@gmail.com>
+ source: <pull.1974.git.1758457356.gitgitgadget@gmail.com>
 
 --------------------------------------------------
-[New Topics]
+[Stalled]
+
+These topics have been expecting updates for quite some time.  I'll
+eject any of them when they start to conflict with other topics in
+'seen' and may drop them from my tree when they are dormant for too
+long (let's say 8 weeks is way too long, for now).  After that, they
+can be proposed again by rerolling them in a shape that would work
+well with other topics in 'seen' (and of course 'next' and
+"master').
+
+* lc/rebase-trailer (2025-08-03) 2 commits
+ - rebase: support --trailer
+ - trailer: append trailers in-process and drop the fork to `interpret-trailers`
+
+ Expecting a reroll.
+ cf. <198826af571.62b85cb31711042.2415806544948206668@linux.beauty>
+ cf. <xmqqiki7qasu.fsf@gitster.g>
+ source: <20250803150059.402017-1-me@linux.beauty>
+
+
+* ac/deglobal-sparse-variables (2025-07-18) 3 commits
+ . environment: remove the global variable 'sparse_expect_files_outside_of_patterns'
+ . environment: move access to "core.sparsecheckoutcone" into repo_settings
+ . environment: move access to "core.sparsecheckout" into repo_settings
+
+ Two global variables related to sparse checkout have been moved to
+ the repository settings structure.
+
+ Expecting a reroll.
+ cf. <CAE7as+bnG6KgA8X_n36pqP15bmyM6re+xEb1MOXKvZSUdJ8Arg@mail.gmail.com>
+ Ejected out of 'seen' for now.
+ source: <cover.1752882401.git.ayu.chandekar@gmail.com>
+
+--------------------------------------------------
+[Cooking]
 
 * kn/reftable-consistency-checks (2025-09-18) 9 commits
  - fixup! reftable: check for trailing newline in 'tables.list'
@@ -171,14 +135,15 @@ Release tarballs are available at:
 
 
 * pw/rebase-i-cleanup-fix (2025-09-18) 2 commits
- - sequencer: remove VERBATIM_MSG flag
- - rebase -i: respect commit.cleanup when picking fixups
+  (merged to 'next' on 2025-09-22 at 2d0aec7821)
+ + sequencer: remove VERBATIM_MSG flag
+ + rebase -i: respect commit.cleanup when picking fixups
 
  "git rebase -i" failed to clean-up the commit log message when the
  command commits the final one in a chain of "fixup" commands, which
  has been corrected.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1758186038.git.phillip.wood@dunelm.org.uk>
 
 
@@ -188,7 +153,7 @@ Release tarballs are available at:
  "git last-modified" operating in non-recursive mode used to trigger
  a BUG(), which has been corrected.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20250918-toon-fix-last-modified-v3-1-0c3910e224f6@iotcl.com>
 
 
@@ -233,42 +198,6 @@ Release tarballs are available at:
  Comments?
  source: <20250919010911.649831-1-sandals@crustytoothpaste.net>
 
---------------------------------------------------
-[Stalled]
-
-These topics have been expecting updates for quite some time.  I'll
-eject any of them when they start to conflict with other topics in
-'seen' and may drop them from my tree when they are dormant for too
-long (let's say 8 weeks is way too long, for now).  After that, they
-can be proposed again by rerolling them in a shape that would work
-well with other topics in 'seen' (and of course 'next' and
-"master').
-
-* lc/rebase-trailer (2025-08-03) 2 commits
- - rebase: support --trailer
- - trailer: append trailers in-process and drop the fork to `interpret-trailers`
-
- Expecting a reroll.
- cf. <198826af571.62b85cb31711042.2415806544948206668@linux.beauty>
- cf. <xmqqiki7qasu.fsf@gitster.g>
- source: <20250803150059.402017-1-me@linux.beauty>
-
-
-* ac/deglobal-sparse-variables (2025-07-18) 3 commits
- . environment: remove the global variable 'sparse_expect_files_outside_of_patterns'
- . environment: move access to "core.sparsecheckoutcone" into repo_settings
- . environment: move access to "core.sparsecheckout" into repo_settings
-
- Two global variables related to sparse checkout have been moved to
- the repository settings structure.
-
- Expecting a reroll.
- cf. <CAE7as+bnG6KgA8X_n36pqP15bmyM6re+xEb1MOXKvZSUdJ8Arg@mail.gmail.com>
- Ejected out of 'seen' for now.
- source: <cover.1752882401.git.ayu.chandekar@gmail.com>
-
---------------------------------------------------
-[Cooking]
 
 * pw/add-p-hunk-splitting-fix (2025-09-15) 2 commits
  - add-patch: update hunk splitability after editing
@@ -278,22 +207,22 @@ well with other topics in 'seen' (and of course 'next' and
  all the split pieces 'selected'; this has been changed to make them
  all 'undecided'.
 
- Comments?
+ Anybody wants to weign in to tiebreak on the BreakingChanges issue?
+ cf. <xmqq4it2pep0.fsf@gitster.g>
  source: <pull.1863.v2.git.1757950144.gitgitgadget@gmail.com>
 
 
-* dk/stash-apply-index (2025-09-15) 4 commits
+* dk/stash-apply-index (2025-09-21) 4 commits
  - stash: honor stash.index in apply, pop modes
  - stash: refactor private config globals
  - t3905: remove unneeded blank line
  - t3903: reduce dependencies on previous tests
 
- The stash.index configuration variable canbe set to make "git stash
+ The stash.index configuration variable can be set to make "git stash
  pop/apply" pretend that it was invoked with "--index".
 
- Expecting a (hopefully small and final) reroll.
- cf. <CALnO6CByUNHWFRYBSOpP-uD8moBrm48UW7k0MaGTUtL=bDL6GQ@mail.gmail.com>
- source: <cover.1757982870.git.ben.knoble+github@gmail.com>
+ Will merge to 'next'.
+ source: <cover.1758505011.git.ben.knoble+github@gmail.com>
 
 
 * jk/color-variable-fixes (2025-09-16) 13 commits
@@ -318,7 +247,7 @@ well with other topics in 'seen' (and of course 'next' and
  while the code has been cleaned up to prevent similar bugs in the
  future.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20250916201036.GA612463@coredump.intra.peff.net>
  source: <20250916202408.GI612873@coredump.intra.peff.net>
 
@@ -339,18 +268,19 @@ well with other topics in 'seen' (and of course 'next' and
  A lot of code clean-up of xdiff.
  Split out of a larger topic.
 
- Comments?
+ Will merge to 'next'.
  source: <pull.2048.v3.git.git.1758294992.gitgitgadget@gmail.com>
 
 
 * jc/3.0-default-initial-branch-to-main-addendum (2025-09-17) 1 commit
- - initial branch: give hints after switching the default name
+  (merged to 'next' on 2025-09-22 at dc4168c337)
+ + initial branch: give hints after switching the default name
  (this branch uses pw/3.0-default-initial-branch-to-main.)
 
  Keep giving hint about the default initial branch name for users
  who may be surprised after Git 3.0 switchover.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1757518141.git.phillip.wood@dunelm.org.uk>
 
 
@@ -382,7 +312,8 @@ well with other topics in 'seen' (and of course 'next' and
  each other by encoding submodule names before using them as path
  components.
 
- Comments?
+ Expecting a reroll.
+ cf. <87ecsf7g84.fsf@collabora.com> etc.
  source: <20250908140117.262205-1-adrian.ratiu@collabora.com>
 
 
@@ -409,6 +340,8 @@ well with other topics in 'seen' (and of course 'next' and
  - doc: git-push: create PUSH RULES section
 
  Doc updates.
+
+ Will merge to 'next'.
  source: <pull.1973.git.1758144815.gitgitgadget@gmail.com>
 
 
@@ -433,7 +366,9 @@ well with other topics in 'seen' (and of course 'next' and
  source: <20250910031124.1807856-1-ask+git@howdoi.land>
 
 
-* ps/clar-updates (2025-09-10) 1 commit
+* ps/clar-updates (2025-09-22) 2 commits
+  (merged to 'next' on 2025-09-22 at c811e8c172)
+ + t/unit-tests: update to 10e96bc
   (merged to 'next' on 2025-09-15 at 73402f7652)
  + t/unit-tests: update clar to fcbed04
 
@@ -441,9 +376,10 @@ well with other topics in 'seen' (and of course 'next' and
 
  Will merge to 'master'.
  source: <20250910-b4-pks-clar-update-v1-1-26a196237e0a@pks.im>
+ source: <20250922-pks-clar-update-v1-1-9154e7d1b7a1@pks.im>
 
 
-* ps/config-get-color-fixes (2025-09-17) 5 commits
+* ps/config-get-color-fixes (2025-09-22) 5 commits
  - builtin/config: do not spawn pager when printing color codes
  - builtin/config: special-case retrieving colors without a key
  - builtin/config: do not die in `get_color()`
@@ -454,8 +390,8 @@ well with other topics in 'seen' (and of course 'next' and
  sequence is for a particular type, e.g., "git config get
  --type=color --default=reset no.such.thing", isn't very ergonomic.
 
- Will merge to 'next'?
- source: <20250918-pks-config-color-v3-0-08ea618cae26@pks.im>
+ Will merge to 'next'.
+ source: <20250922-pks-config-color-v4-0-28b7d2697eed@pks.im>
 
 
 * ps/meson-build-docs (2025-09-11) 3 commits
@@ -466,7 +402,7 @@ well with other topics in 'seen' (and of course 'next' and
  The build procedure based on meson learned a target to only build
  documentation, similar to "make doc".
 
- Comments?
+ Will merge to 'next'.
  source: <20250911-b4-pks-meson-docs-target-v1-0-a92c666ecef9@pks.im>
 
 
@@ -493,7 +429,7 @@ well with other topics in 'seen' (and of course 'next' and
  create many objects at once in a transaction and abstract it into
  the generic object layer.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20250916182938.2193476-1-jltobler@gmail.com>
 
 
@@ -504,21 +440,22 @@ well with other topics in 'seen' (and of course 'next' and
  "git fast-import" learned that "--signed-commits=<how>" option that
  corresponds to that of "git fast-export".
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20250917181427.3193500-1-christian.couder@gmail.com>
 
 
 * pw/3.0-default-initial-branch-to-main (2025-09-10) 4 commits
- - t0613: stop setting default initial branch
- - t9902: switch default branch name to main
- - t4013: switch default branch name to main
- - breaking-changes: switch default branch to main
+  (merged to 'next' on 2025-09-22 at 01bbebdab6)
+ + t0613: stop setting default initial branch
+ + t9902: switch default branch name to main
+ + t4013: switch default branch name to main
+ + breaking-changes: switch default branch to main
  (this branch is used by jc/3.0-default-initial-branch-to-main-addendum.)
 
  Declare that "git init" that is not otherwise configured uses
  'main' as the initial branch, not 'master', starting Git 3.0.
 
- Will merge to 'next'.
+ Will merge to 'master'.
  source: <cover.1757518141.git.phillip.wood@dunelm.org.uk>
 
 
@@ -550,7 +487,7 @@ well with other topics in 'seen' (and of course 'next' and
  Dip our toes a bit to (optionally) use Rust implemented helper
  called from our C code.
 
- Ejected for now, to give preference to en/*rust* topics.
+ Retracted, to join forces in en/*rust* topic.
  source: <20250915-b4-pks-rust-breaking-change-v5-0-dc3a32fbb216@pks.im>
 
 
@@ -568,7 +505,7 @@ well with other topics in 'seen' (and of course 'next' and
  "git refs optimize" is added for not very well explained reason
  despite it does the same thing as "git pack-refs"...
 
- Comments?
+ Will merge to 'next'.
  source: <20250919082647.535213-1-meetsoni3017@gmail.com>
 
 
@@ -583,7 +520,7 @@ well with other topics in 'seen' (and of course 'next' and
  array index that would only fit in size_t but not int or ssize_t
  to achieve unstated goal.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <aMp8yNFiXDyk2hP4@ArchLinux>
 
 
@@ -608,7 +545,7 @@ well with other topics in 'seen' (and of course 'next' and
  Code clean-up around the in-core list of all the pack files and
  object database(s).
 
- Comments?
+ Expecting a reroll.
  cf. <aMe_Zu1osrfDnSYL@pks.im>
  source: <20250915-b4-pks-packfiles-store-v5-0-d6340350934f@pks.im>
 
@@ -623,7 +560,7 @@ well with other topics in 'seen' (and of course 'next' and
  backend is used for ref storage, by failing only the ones that are
  involved in the conflict while allowing others.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <20250917-587-git-fetch-1-fails-fetches-on-case-insensitive-repositories-v4-0-da3c74a08ed0@gmail.com>
 
 
@@ -641,7 +578,8 @@ well with other topics in 'seen' (and of course 'next' and
 
  Use Rust-friendly types in xdiff code.
 
- Comments?
+ Expecting a reroll.
+ cf. <CAH=ZcbA5hAM9kmO410KzVW7RXWWiwX2oJk6GGPP+6oVYatRVOw@mail.gmail.com>
  source: <pull.2048.git.git.1757274320.gitgitgadget@gmail.com>
 
 
@@ -656,7 +594,7 @@ well with other topics in 'seen' (and of course 'next' and
 
  Doc updates.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  cf. <236a79f4-e9a2-4335-bbff-79ae0cc67e9b@app.fastmail.com>
  source: <pull.1962.v4.git.1757531669.gitgitgadget@gmail.com>
 
@@ -675,7 +613,7 @@ well with other topics in 'seen' (and of course 'next' and
  Update "do you still use it?" message given by a command that is
  deeply deprecated and allow us to suggest alternatives.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <cover.1758139856.short.code@khaugsbakk.name>
 
 
@@ -708,5 +646,5 @@ well with other topics in 'seen' (and of course 'next' and
  prune otherwise unused working-tree files that are outside the
  areas of interest.
 
- Will merge to 'next'?
+ Will merge to 'next'.
  source: <pull.1941.v3.git.1757673011.gitgitgadget@gmail.com>
