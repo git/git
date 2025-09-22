@@ -11735,8 +11735,31 @@ proc prefspage_general {notebook} {
 proc prefspage_colors {notebook} {
     global bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
     global diffbgcolors
+    global themeloader
 
     set page [create_prefs_page $notebook.colors]
+
+    ttk::label $page.themesel -font mainfontbold \
+        -text [mc "Themes - change requires restart"]
+    grid $page.themesel - -sticky w -pady 10
+    ttk::label $page.themelabel -text [mc "Theme to use after restart"]
+    makedroplist $page.theme theme {*}[lsort [ttk::style theme names]]
+    grid x $page.themelabel $page.theme -sticky w
+
+    ttk::entry $page.tloadvar -textvariable themeloader
+    ttk::frame $page.tloadframe
+    ttk::label $page.tloadframe.l -text [mc "Theme definition file"]
+    ttk::button $page.tloadframe.b -text [mc "Choose..."] \
+        -command [list choose_themeloader $page]
+    pack $page.tloadframe.l $page.tloadframe.b -side left -padx 2
+    pack configure $page.tloadframe.l -padx 0
+    grid x $page.tloadframe $page.tloadvar -sticky ew
+
+    ttk::label $page.themelabel2 -text \
+        [mc "The theme definition file may affect all themes."]
+    ttk::button $page.themebut2 -text [mc "Apply theme"] \
+        -command [list updatetheme $page]
+    grid x $page.themebut2 $page.themelabel2 -sticky w
 
     ttk::label $page.cdisp -text [mc "Colors: press to choose"] -font mainfontbold
     grid $page.cdisp - -sticky w -pady 10
@@ -11878,6 +11901,34 @@ proc run_themeloader {f} {
     return [dict get $::_themefiles_seen $fn]
 }
 
+proc updatetheme {prefspage {dotheme 1}} {
+    global theme
+    global themeloader
+    if {$themeloader ne {}} {
+        if {![run_themeloader $themeloader]} {
+            set themeloader {}
+            return
+        } else {
+            $prefspage.theme configure -values \
+                [lsort [ttk::style theme names]]
+        }
+    }
+    if {$dotheme} {
+        ttk::style theme use $theme
+        set_gui_colors
+        prefspage_set_colorswatches $prefspage
+    }
+}
+
+proc choose_themeloader {prefspage} {
+    global themeloader
+    set tfile [tk_getOpenFile -title [mc "Gitk: select theme definition"] -multiple false]
+    if {$tfile ne {}} {
+        set themeloader $tfile
+        updatetheme $prefspage 0
+    }
+}
+
 proc choosecolor {v vi prefspage x} {
     global $v
 
@@ -11949,6 +12000,7 @@ proc prefscan {} {
     catch {destroy $prefstop}
     unset prefstop
     fontcan
+    setttkstyle
     set_gui_colors
 }
 
@@ -12759,7 +12811,7 @@ set nullid2 "0000000000000000000000000000000000000001"
 set nullfile "/dev/null"
 
 if {[file exists $themeloader]} {
-    if {[run_themeloader $themeloader] == 0} {
+    if {![run_themeloader $themeloader]} {
         puts stderr "Could not interpret themeloader: $themeloader"
         exit 1
     }
