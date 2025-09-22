@@ -1,49 +1,44 @@
   1) Failure:
-selftest::suite::1 [file:42]
+combined::1 [file:42]
   Function call failed: -1
 
   2) Failure:
-selftest::suite::2 [file:42]
+combined::2 [file:42]
   Expression is not true: 100 == 101
 
   3) Failure:
-selftest::suite::strings [file:42]
+combined::strings [file:42]
   String mismatch: "mismatched" != actual ("this one fails")
   'mismatched' != 'expected' (at byte 0)
 
   4) Failure:
-selftest::suite::strings_with_length [file:42]
+combined::strings_with_length [file:42]
   String mismatch: "exactly" != actual ("this one fails")
   'exa' != 'exp' (at byte 2)
 
   5) Failure:
-selftest::suite::int [file:42]
+combined::int [file:42]
   101 != value ("extra note on failing test")
   101 != 100
 
   6) Failure:
-selftest::suite::int_fmt [file:42]
+combined::int_fmt [file:42]
   022 != value
   0022 != 0144
 
   7) Failure:
-selftest::suite::bool [file:42]
+combined::bool [file:42]
   0 != value
   0 != 1
 
   8) Failure:
-selftest::suite::ptr [file:42]
-  Pointer mismatch: p1 != p2
-  0x1 != 0x2
-
-  9) Failure:
-selftest::suite::multiline_description [file:42]
+combined::multiline_description [file:42]
   Function call failed: -1
   description line 1
   description line 2
 
-  10) Failure:
-selftest::suite::null_string [file:42]
+  9) Failure:
+combined::null_string [file:42]
   String mismatch: "expected" != actual ("this one fails")
   'expected' != NULL
 

@@ -28,10 +28,6 @@
 			<failure type="assert"><![CDATA[0 != value
 0 != 1]]></failure>
 		</testcase>
-		<testcase name="ptr" classname="selftest" time="0.00">
-			<failure type="assert"><![CDATA[Pointer mismatch: p1 != p2
-0x1 != 0x2]]></failure>
-		</testcase>
 		<testcase name="multiline_description" classname="selftest" time="0.00">
 			<failure type="assert"><![CDATA[Function call failed: −1
 description line 1

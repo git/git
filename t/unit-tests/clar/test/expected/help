@@ -1,4 +1,4 @@
-Usage: selftest [options]
+Usage: combined [options]
 
 Options:
   -sname        Run only the suite with `name` (can go to individual test name)

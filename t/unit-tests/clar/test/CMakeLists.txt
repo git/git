@@ -1,5 +1,3 @@
-add_subdirectory(selftest_suite)
-
 find_package(Python COMPONENTS Interpreter REQUIRED)
 
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/clar.suite"
@@ -40,15 +38,12 @@ target_include_directories(selftest PRIVATE
 )
 target_link_libraries(selftest clar)
 
-add_test(NAME build_selftest_suite
-	COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --config "$<CONFIG>" --target selftest_suite
-)
-set_tests_properties(build_selftest_suite PROPERTIES FIXTURES_SETUP clar_test_fixture)
-
 add_test(NAME build_selftest
 	COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --config "$<CONFIG>" --target selftest
 )
 set_tests_properties(build_selftest PROPERTIES FIXTURES_SETUP clar_test_fixture)
 
-add_test(NAME selftest COMMAND "${CMAKE_CURRENT_BINARY_DIR}/selftest" "$<TARGET_FILE:selftest_suite>")
+add_subdirectory(suites)
+
+add_test(NAME selftest COMMAND "${CMAKE_CURRENT_BINARY_DIR}/selftest" $<TARGET_FILE_DIR:combined_suite>)
 set_tests_properties(selftest PROPERTIES FIXTURES_REQUIRED clar_test_fixture)

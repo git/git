@@ -11,14 +11,14 @@ static int file_size(const char *filename)
 	return -1;
 }
 
-void test_selftest_suite__cleanup(void)
+void test_combined__cleanup(void)
 {
 	cl_fixture_cleanup("test");
 
 	cl_assert(file_size("test/file") == -1);
 }
 
-void test_selftest_suite__1(void)
+void test_combined__1(void)
 {
 	cl_assert(1);
 	cl_must_pass(0);  /* 0 == success */
@@ -26,7 +26,7 @@ void test_selftest_suite__1(void)
 	cl_must_pass(-1); /* demonstrate a failing call */
 }
 
-void test_selftest_suite__2(void)
+void test_combined__2(void)
 {
 	cl_fixture_sandbox("test");
 
@@ -35,7 +35,7 @@ void test_selftest_suite__2(void)
 	cl_assert(100 == 101);
 }
 
-void test_selftest_suite__strings(void)
+void test_combined__strings(void)
 {
 	const char *actual = "expected";
 	cl_assert_equal_s("expected", actual);
@@ -43,7 +43,7 @@ void test_selftest_suite__strings(void)
 	cl_assert_equal_s_("mismatched", actual, "this one fails");
 }
 
-void test_selftest_suite__strings_with_length(void)
+void test_combined__strings_with_length(void)
 {
 	const char *actual = "expected";
 	cl_assert_equal_strn("expected_", actual, 8);
@@ -52,39 +52,32 @@ void test_selftest_suite__strings_with_length(void)
 	cl_assert_equal_strn_("exactly", actual, 3, "this one fails");
 }
 
-void test_selftest_suite__int(void)
+void test_combined__int(void)
 {
 	int value = 100;
 	cl_assert_equal_i(100, value);
 	cl_assert_equal_i_(101, value, "extra note on failing test");
 }
 
-void test_selftest_suite__int_fmt(void)
+void test_combined__int_fmt(void)
 {
 	int value = 100;
 	cl_assert_equal_i_fmt(022, value, "%04o");
 }
 
-void test_selftest_suite__bool(void)
+void test_combined__bool(void)
 {
 	int value = 100;
 	cl_assert_equal_b(1, value);       /* test equality as booleans */
 	cl_assert_equal_b(0, value);
 }
 
-void test_selftest_suite__ptr(void)
-{
-	void *p1 = (void *)0x1, *p2 = (void *)0x2;
-	cl_assert_equal_p(p1, p1); /* pointers to same object */
-	cl_assert_equal_p(p1, p2);
-}
-
-void test_selftest_suite__multiline_description(void)
+void test_combined__multiline_description(void)
 {
 	cl_must_pass_(-1, "description line 1\ndescription line 2");
 }
 
-void test_selftest_suite__null_string(void)
+void test_combined__null_string(void)
 {
 	const char *actual = NULL;
 	cl_assert_equal_s(actual, actual);
