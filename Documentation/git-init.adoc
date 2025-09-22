@@ -77,9 +77,15 @@ If this is a reinitialization, the repository will be moved to the specified pat
 `-b <branch-name>`::
 `--initial-branch=<branch-name>`::
 Use _<branch-name>_ for the initial branch in the newly created
-repository.  If not specified, fall back to the default name (currently
-`master`, but this is subject to change in the future; the name can be
-customized via the `init.defaultBranch` configuration variable).
+repository.  If not specified, fall back to the default name
+ifndef::with-breaking-changes[]
+(currently `master`, but this will change to `main` when Git 3.0 is released).
+endif::with-breaking-changes[]
+ifdef::with-breaking-changes[]
+`main`.
+endif::with-breaking-changes[]
+The default name can be customized via the `init.defaultBranch` configuration
+variable.
 
 `--shared[=(false|true|umask|group|all|world|everybody|<perm>)]`::
 

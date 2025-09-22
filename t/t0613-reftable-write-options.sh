@@ -11,16 +11,18 @@ export GIT_TEST_REFTABLE_AUTOCOMPACTION
 # Block sizes depend on the hash function, so we force SHA1 here.
 GIT_TEST_DEFAULT_HASH=sha1
 export GIT_TEST_DEFAULT_HASH
-# Block sizes also depend on the actual refs we write, so we force "master" to
-# be the default initial branch name.
-GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME=master
-export GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME
 
 . ./test-lib.sh
 
+# Block sizes depend on the actual refs we write, so, for tests
+# that check block size, we force the initial branch name to be "master".
+init_repo () {
+	git init --initial-branch master repo
+}
+
 test_expect_success 'default write options' '
 	test_when_finished "rm -rf repo" &&
-	git init repo &&
+	init_repo &&
 	(
 		cd repo &&
 		test_commit initial &&
@@ -43,7 +45,7 @@ test_expect_success 'default write options' '
 test_expect_success 'disabled reflog writes no log blocks' '
 	test_config_global core.logAllRefUpdates false &&
 	test_when_finished "rm -rf repo" &&
-	git init repo &&
+	init_repo &&
 	(
 		cd repo &&
 		test_commit initial &&
@@ -62,7 +64,7 @@ test_expect_success 'disabled reflog writes no log blocks' '
 
 test_expect_success 'many refs results in multiple blocks' '
 	test_when_finished "rm -rf repo" &&
-	git init repo &&
+	init_repo &&
 	(
 		cd repo &&
 		test_commit initial &&
@@ -115,7 +117,7 @@ test_expect_success 'tiny block size leads to error' '
 test_expect_success 'small block size leads to multiple ref blocks' '
 	test_config_global core.logAllRefUpdates false &&
 	test_when_finished "rm -rf repo" &&
-	git init repo &&
+	init_repo &&
 	(
 		cd repo &&
 		test_commit A &&
@@ -172,7 +174,7 @@ test_expect_success 'block size exceeding maximum supported size' '
 
 test_expect_success 'restart interval at every single record' '
 	test_when_finished "rm -rf repo" &&
-	git init repo &&
+	init_repo &&
 	(
 		cd repo &&
 		test_commit initial &&
@@ -212,7 +214,7 @@ test_expect_success 'restart interval exceeding maximum supported interval' '
 test_expect_success 'object index gets written by default with ref index' '
 	test_config_global core.logAllRefUpdates false &&
 	test_when_finished "rm -rf repo" &&
-	git init repo &&
+	init_repo &&
 	(
 		cd repo &&
 		test_commit initial &&
@@ -247,7 +249,7 @@ test_expect_success 'object index gets written by default with ref index' '
 test_expect_success 'object index can be disabled' '
 	test_config_global core.logAllRefUpdates false &&
 	test_when_finished "rm -rf repo" &&
-	git init repo &&
+	init_repo &&
 	(
 		cd repo &&
 		test_commit initial &&
