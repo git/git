@@ -90,7 +90,7 @@ clear_exit:
 
 	strbuf_release(&packname);
 	/* Make objects we just wrote available to ourselves */
-	reprepare_packed_git(the_repository);
+	odb_reprepare(the_repository->objects);
 }
 
 /*

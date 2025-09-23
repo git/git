@@ -694,7 +694,7 @@ static int do_oid_object_info_extended(struct object_database *odb,
 
 		/* Not a loose object; someone else may have just packed it. */
 		if (!(flags & OBJECT_INFO_QUICK)) {
-			reprepare_packed_git(odb->repo);
+			odb_reprepare(odb->repo->objects);
 			if (find_pack_entry(odb->repo, real, &e))
 				break;
 		}
@@ -1039,4 +1039,29 @@ void odb_clear(struct object_database *o)
 	o->packfiles = NULL;
 
 	string_list_clear(&o->submodule_source_paths, 0);
+}
+
+void odb_reprepare(struct object_database *o)
+{
+	struct odb_source *source;
+
+	obj_read_lock();
+
+	/*
+	 * Reprepare alt odbs, in case the alternates file was modified
+	 * during the course of this process. This only _adds_ odbs to
+	 * the linked list, so existing odbs will continue to exist for
+	 * the lifetime of the process.
+	 */
+	o->loaded_alternates = 0;
+	odb_prepare_alternates(o);
+
+	for (source = o->sources; source; source = source->next)
+		odb_clear_loose_cache(source);
+
+	o->approximate_object_count_valid = 0;
+
+	packfile_store_reprepare(o->packfiles);
+
+	obj_read_unlock();
 }
