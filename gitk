@@ -2381,7 +2381,6 @@ proc makewindow {} {
     global highlight_files gdttype
     global searchstring sstring
     global bgcolor fgcolor bglist fglist diffcolors diffbgcolors selectbgcolor
-    global uifgcolor uifgdisabledcolor
     global filesepbgcolor filesepfgcolor
     global mergecolors foundbgcolor currentsearchhitbgcolor
     global headctxmenu progresscanv progressitem progresscoords statusw
@@ -11734,7 +11733,7 @@ proc prefspage_general {notebook} {
 }
 
 proc prefspage_colors {notebook} {
-    global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
+    global bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
     global diffbgcolors
 
     set page [create_prefs_page $notebook.colors]
@@ -11781,7 +11780,7 @@ proc prefspage_colors {notebook} {
 }
 
 proc prefspage_set_colorswatches {page} {
-    global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
+    global bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
     global diffbgcolors
 
     $page.bg configure -background $bgcolor
@@ -11909,7 +11908,7 @@ proc setfg {c} {
 }
 
 proc set_gui_colors {} {
-    global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
+    global bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
     global diffbgcolors
 
     setbg $bgcolor
@@ -12508,17 +12507,11 @@ if {[tk windowingsystem] eq "aqua"} {
 
 set colors {"#00ff00" red blue magenta darkgrey brown orange}
 if {[tk windowingsystem] eq "win32"} {
-    set uicolor SystemButtonFace
-    set uifgcolor SystemButtonText
-    set uifgdisabledcolor SystemDisabledText
     set bgcolor SystemWindow
     set fgcolor SystemWindowText
     set selectbgcolor SystemHighlight
     set web_browser "cmd /c start"
 } else {
-    set uicolor grey85
-    set uifgcolor black
-    set uifgdisabledcolor "#999"
     set bgcolor white
     set fgcolor black
     set selectbgcolor gray85
@@ -12560,6 +12553,9 @@ set currentsearchhitbgcolor orange
 
 set theme [ttk::style theme use]
 set themeloader {}
+set uicolor {}
+set uifgcolor {}
+set uifgdisabledcolor {}
 
 # button for popping up context menus
 if {[tk windowingsystem] eq "aqua" && [package vcompare $::tcl_version 8.7] < 0} {
