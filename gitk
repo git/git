@@ -11741,10 +11741,6 @@ proc prefspage_colors {notebook} {
 
     ttk::label $page.cdisp -text [mc "Colors: press to choose"] -font mainfontbold
     grid $page.cdisp - -sticky w -pady 10
-    label $page.ui -padx 40 -relief sunk -background $uicolor
-    ttk::button $page.uibut -text [mc "Interface"] \
-       -command [list choosecolor uicolor {} $page [mc "interface"]]
-    grid x $page.uibut $page.ui -sticky w
     label $page.bg -padx 40 -relief sunk -background $bgcolor
     ttk::button $page.bgbut -text [mc "Background"] \
         -command [list choosecolor bgcolor {} $page [mc "background"]]
@@ -11788,7 +11784,6 @@ proc prefspage_set_colorswatches {page} {
     global uicolor bgcolor fgcolor ctext diffcolors selectbgcolor markbgcolor
     global diffbgcolors
 
-    $page.ui configure -background $uicolor
     $page.bg configure -background $bgcolor
     $page.fg configure -background $fgcolor
     $page.diffold configure -background [lindex $diffcolors 0]
