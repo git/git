@@ -135,7 +135,7 @@ struct object_database {
 	/*
 	 * private data
 	 *
-	 * should only be accessed directly by packfile.c
+	 * Should only be accessed directly by packfile.c and midx.c.
 	 */
 	struct packfile_store *packfiles;
 	/* A most-recently-used ordered version of the packed_git list. */
@@ -154,12 +154,6 @@ struct object_database {
 	 */
 	struct cached_object_entry *cached_objects;
 	size_t cached_object_nr, cached_object_alloc;
-
-	/*
-	 * A map of packfiles to packed_git structs for tracking which
-	 * packs have been loaded already.
-	 */
-	struct hashmap pack_map;
 
 	/*
 	 * A fast, rough count of the number of objects in the repository.
