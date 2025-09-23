@@ -55,54 +55,65 @@ OPTIONS[[OPTIONS]]
 
 <refspec>...::
 	Specify what destination ref to update with what source object.
-	The format of a <refspec> parameter is an optional plus
-	`+`, followed by the source object <src>, followed
-	by a colon `:`, followed by the destination ref <dst>.
 +
-The <src> is often the name of the branch you would want to push, but
-it can be any arbitrary "SHA-1 expression", such as `master~4` or
-`HEAD` (see linkgit:gitrevisions[7]).
+The format for a refspec is [+]<src>[:<dst>], for example `main`,
+`main:other`, or `HEAD^:refs/heads/main`.
 +
-The <dst> tells which ref on the remote side is updated with this
-push. Arbitrary expressions cannot be used here, an actual ref must
-be named.
-If `git push [<repository>]` without any `<refspec>` argument is set to
-update some ref at the destination with `<src>` with
-`remote.<repository>.push` configuration variable, `:<dst>` part can
-be omitted--such a push will update a ref that `<src>` normally updates
-without any `<refspec>` on the command line.  Otherwise, missing
-`:<dst>` means to update the same ref as the `<src>`.
+The `<src>` is often the name of the local branch to push, but it can be
+any arbitrary "SHA-1 expression" (see linkgit:gitrevisions[7]).
 +
-If <dst> doesn't start with `refs/` (e.g. `refs/heads/master`) we will
-try to infer where in `refs/*` on the destination <repository> it
-belongs based on the type of <src> being pushed and whether <dst>
-is ambiguous.
+The `<dst>` determines what ref to update on the remote side. It must be the
+name of a branch, tag, or other ref, not an arbitrary expression.
 +
---
-* If <dst> unambiguously refers to a ref on the <repository> remote,
-  then push to that ref.
+The `+` is optional and does the same thing as `--force`.
++
+You can write a refspec using the fully expanded form (for
+example `refs/heads/main:refs/heads/main`) which specifies the exact source
+and destination, or with a shorter form (for example `main` or
+`main:other`). Here are the rules for how refspecs are expanded,
+as well as various other special refspec forms:
++
+ *  `<src>` without a `:<dst>` means to update the same ref as the
+    `<src>`, unless the `remote.<repository>.push` configuration specifies a
+    different <dst>. For example, if `main` is a branch, then the refspec
+    `main` expands to `main:refs/heads/main`.
+ *  If `<dst>` unambiguously refers to a ref on the <repository> remote,
+    then expand it to that ref. For example, if `v1.0` is a tag on the
+    remote, then `HEAD:v1.0` expands to `HEAD:refs/tags/v1.0`.
+ *  If `<src>` resolves to a ref starting with `refs/heads/` or `refs/tags/`,
+    then prepend that to <dst>. For example, if `main` is a branch, then
+    `main:other` expands to `main:refs/heads/other`
+ *  The special refspec `:` (or `+:` to allow non-fast-forward updates)
+    directs Git to push "matching" branches: for every branch that exists on
+    the local side, the remote side is updated if a branch of the same name
+    already exists on the remote side.
+ *  <src> may contain a * to indicate a simple pattern match.
+    This works like a glob that matches any ref matching the pattern.
+    There must be only one * in both the `<src>` and `<dst>`.
+    It will map refs to the destination by replacing the * with the
+    contents matched from the source. For example, `refs/heads/*:refs/heads/*`
+    will push all branches.
+ *  A refspec starting with `^` is a negative refspec.
+    This specifies refs to exclude. A ref will be considered to
+    match if it matches at least one positive refspec, and does not
+    match any negative refspec. Negative refspecs can be pattern refspecs.
+    They must only contain a `<src>`.
+    Fully spelled out hex object names are also not supported.
+    For example, `git push origin 'refs/heads/*' '^refs/heads/dev-*'`
+    will push all branches except for those starting with `dev-`
+ *  If `<src>` is empty, it deletes the `<dst>` ref from the remote
+    repository. For example, `git push origin :dev` will
+    delete the `dev` branch.
+ *  `tag <tag>` expands to `refs/tags/<tag>:refs/tags/<tag>`.
+	This is technically a special syntax for `git push` and not a refspec,
+	since in `git push origin tag v1.0` the arguments `tag` and `v1.0`
+	are separate.
+ *  If the refspec can't be expanded unambiguously, error out
+    with an error indicating what was tried, and depending
+    on the `advice.pushUnqualifiedRefname` configuration (see
+    linkgit:git-config[1]) suggest what refs/ namespace you may have
+    wanted to push to.
 
-* If <src> resolves to a ref starting with refs/heads/ or refs/tags/,
-  then prepend that to <dst>.
-
-* Other ambiguity resolutions might be added in the future, but for
-  now any other cases will error out with an error indicating what we
-  tried, and depending on the `advice.pushUnqualifiedRefname`
-  configuration (see linkgit:git-config[1]) suggest what refs/
-  namespace you may have wanted to push to.
-
-Pushing an empty <src> allows you to delete the <dst> ref from the
-remote repository. Deletions are always accepted without a leading `+`
-in the refspec (or `--force`), except when forbidden by configuration
-or hooks. See `receive.denyDeletes` in linkgit:git-config[1] and
-`pre-receive` and `update` in linkgit:githooks[5].
-+
-The special refspec `:` (or `+:` to allow non-fast-forward updates)
-directs Git to push "matching" branches: for every branch that exists on
-the local side, the remote side is updated if a branch of the same name
-already exists on the remote side.
-+
-`tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
 Not all updates are allowed: see PUSH RULES below for the details.
 
 --all::
