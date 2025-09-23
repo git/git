@@ -73,10 +73,12 @@ struct strbuf;
  * returned from git_config_colorbool. The "auto" value can be returned from
  * config_colorbool, and will be converted by want_color() into either 0 or 1.
  */
-#define GIT_COLOR_UNKNOWN -1
-#define GIT_COLOR_NEVER  0
-#define GIT_COLOR_ALWAYS 1
-#define GIT_COLOR_AUTO   2
+enum git_colorbool {
+	GIT_COLOR_UNKNOWN = -1,
+	GIT_COLOR_NEVER = 0,
+	GIT_COLOR_ALWAYS = 1,
+	GIT_COLOR_AUTO = 2,
+};
 
 /* A default list of colors to use for commit graphs and show-branch output */
 extern const char *column_colors_ansi[];
@@ -98,13 +100,13 @@ int git_color_config(const char *var, const char *value, void *cb);
  * GIT_COLOR_ALWAYS for "always" or a positive boolean,
  * and GIT_COLOR_AUTO for "auto".
  */
-int git_config_colorbool(const char *var, const char *value);
+enum git_colorbool git_config_colorbool(const char *var, const char *value);
 
 /*
  * Return a boolean whether to use color, where the argument 'var' is
  * one of GIT_COLOR_UNKNOWN, GIT_COLOR_NEVER, GIT_COLOR_ALWAYS, GIT_COLOR_AUTO.
  */
-int want_color_fd(int fd, int var);
+bool want_color_fd(int fd, enum git_colorbool var);
 #define want_color(colorbool) want_color_fd(1, (colorbool))
 #define want_color_stderr(colorbool) want_color_fd(2, (colorbool))
 

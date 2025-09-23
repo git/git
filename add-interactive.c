@@ -20,14 +20,14 @@
 #include "prompt.h"
 #include "tree.h"
 
-static void init_color(struct repository *r, int use_color,
+static void init_color(struct repository *r, enum git_colorbool use_color,
 		       const char *section_and_slot, char *dst,
 		       const char *default_color)
 {
 	char *key = xstrfmt("color.%s", section_and_slot);
 	const char *value;
 
-	if (!use_color)
+	if (!want_color(use_color))
 		dst[0] = '\0';
 	else if (repo_config_get_value(r, key, &value) ||
 		 color_parse(value, dst))
@@ -36,13 +36,13 @@ static void init_color(struct repository *r, int use_color,
 	free(key);
 }
 
-static int check_color_config(struct repository *r, const char *var)
+static enum git_colorbool check_color_config(struct repository *r, const char *var)
 {
 	const char *value;
-	int ret;
+	enum git_colorbool ret;
 
 	if (repo_config_get_value(r, var, &value))
-		ret = -1;
+		ret = GIT_COLOR_UNKNOWN;
 	else
 		ret = git_config_colorbool(var, value);
 
@@ -51,10 +51,11 @@ static int check_color_config(struct repository *r, const char *var)
 	 * the value parsed by git_color_config(), which may not have been
 	 * called by the main command.
 	 */
-	if (ret < 0 && !repo_config_get_value(r, "color.ui", &value))
+	if (ret == GIT_COLOR_UNKNOWN &&
+	    !repo_config_get_value(r, "color.ui", &value))
 		ret = git_config_colorbool("color.ui", value);
 
-	return want_color(ret);
+	return ret;
 }
 
 void init_add_i_state(struct add_i_state *s, struct repository *r,
@@ -75,7 +76,7 @@ void init_add_i_state(struct add_i_state *s, struct repository *r,
 	init_color(r, s->use_color_interactive, "interactive.error",
 		   s->error_color, GIT_COLOR_BOLD_RED);
 	strlcpy(s->reset_color_interactive,
-		s->use_color_interactive ? GIT_COLOR_RESET : "", COLOR_MAXLEN);
+		want_color(s->use_color_interactive) ? GIT_COLOR_RESET : "", COLOR_MAXLEN);
 
 	s->use_color_diff = check_color_config(r, "color.diff");
 
@@ -92,7 +93,7 @@ void init_add_i_state(struct add_i_state *s, struct repository *r,
 	init_color(r, s->use_color_diff, "diff.new", s->file_new_color,
 		   diff_get_color(s->use_color_diff, DIFF_FILE_NEW));
 	strlcpy(s->reset_color_diff,
-		s->use_color_diff ? GIT_COLOR_RESET : "", COLOR_MAXLEN);
+		want_color(s->use_color_diff) ? GIT_COLOR_RESET : "", COLOR_MAXLEN);
 
 	FREE_AND_NULL(s->interactive_diff_filter);
 	repo_config_get_string(r, "interactive.difffilter",
@@ -130,8 +131,8 @@ void clear_add_i_state(struct add_i_state *s)
 	FREE_AND_NULL(s->interactive_diff_filter);
 	FREE_AND_NULL(s->interactive_diff_algorithm);
 	memset(s, 0, sizeof(*s));
-	s->use_color_interactive = -1;
-	s->use_color_diff = -1;
+	s->use_color_interactive = GIT_COLOR_UNKNOWN;
+	s->use_color_diff = GIT_COLOR_UNKNOWN;
 }
 
 /*
@@ -1210,7 +1211,7 @@ int run_add_i(struct repository *r, const struct pathspec *ps,
 	 * When color was asked for, use the prompt color for
 	 * highlighting, otherwise use square brackets.
 	 */
-	if (s.use_color_interactive) {
+	if (want_color(s.use_color_interactive)) {
 		data.color = s.prompt_color;
 		data.reset = s.reset_color_interactive;
 	}

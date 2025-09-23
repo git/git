@@ -568,9 +568,9 @@ static void get_color(const struct config_location_options *opts,
 }
 
 struct get_colorbool_config_data {
-	int get_colorbool_found;
-	int get_diff_color_found;
-	int get_color_ui_found;
+	enum git_colorbool get_colorbool_found;
+	enum git_colorbool get_diff_color_found;
+	enum git_colorbool get_color_ui_found;
 	const char *get_colorbool_slot;
 };
 
@@ -594,33 +594,34 @@ static int get_colorbool(const struct config_location_options *opts,
 {
 	struct get_colorbool_config_data data = {
 		.get_colorbool_slot = var,
-		.get_colorbool_found = -1,
-		.get_diff_color_found = -1,
-		.get_color_ui_found = -1,
+		.get_colorbool_found = GIT_COLOR_UNKNOWN,
+		.get_diff_color_found = GIT_COLOR_UNKNOWN,
+		.get_color_ui_found = GIT_COLOR_UNKNOWN,
 	};
+	bool result;
 
 	config_with_options(git_get_colorbool_config, &data,
 			    &opts->source, the_repository,
 			    &opts->options);
 
-	if (data.get_colorbool_found < 0) {
+	if (data.get_colorbool_found == GIT_COLOR_UNKNOWN) {
 		if (!strcmp(data.get_colorbool_slot, "color.diff"))
 			data.get_colorbool_found = data.get_diff_color_found;
-		if (data.get_colorbool_found < 0)
+		if (data.get_colorbool_found == GIT_COLOR_UNKNOWN)
 			data.get_colorbool_found = data.get_color_ui_found;
 	}
 
-	if (data.get_colorbool_found < 0)
+	if (data.get_colorbool_found == GIT_COLOR_UNKNOWN)
 		/* default value if none found in config */
 		data.get_colorbool_found = GIT_COLOR_AUTO;
 
-	data.get_colorbool_found = want_color(data.get_colorbool_found);
+	result = want_color(data.get_colorbool_found);
 
 	if (print) {
-		printf("%s\n", data.get_colorbool_found ? "true" : "false");
+		printf("%s\n", result ? "true" : "false");
 		return 0;
 	} else
-		return data.get_colorbool_found ? 0 : 1;
+		return result ? 0 : 1;
 }
 
 static void check_write(const struct git_config_source *source)

@@ -27,16 +27,16 @@ static struct keyword_entry keywords[] = {
 };
 
 /* Returns a color setting (GIT_COLOR_NEVER, etc). */
-static int use_sideband_colors(void)
+static enum git_colorbool use_sideband_colors(void)
 {
-	static int use_sideband_colors_cached = -1;
+	static enum git_colorbool use_sideband_colors_cached = GIT_COLOR_UNKNOWN;
 
 	const char *key = "color.remote";
 	struct strbuf sb = STRBUF_INIT;
 	const char *value;
 	int i;
 
-	if (use_sideband_colors_cached >= 0)
+	if (use_sideband_colors_cached != GIT_COLOR_UNKNOWN)
 		return use_sideband_colors_cached;
 
 	if (!repo_config_get_string_tmp(the_repository, key, &value))

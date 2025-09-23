@@ -148,7 +148,7 @@ void wt_status_prepare(struct repository *r, struct wt_status *s)
 	memcpy(s->color_palette, default_wt_status_colors,
 	       sizeof(default_wt_status_colors));
 	s->show_untracked_files = SHOW_NORMAL_UNTRACKED_FILES;
-	s->use_color = -1;
+	s->use_color = GIT_COLOR_UNKNOWN;
 	s->relative_paths = 1;
 	s->branch = refs_resolve_refdup(get_main_ref_store(the_repository),
 					"HEAD", 0, NULL, NULL);
@@ -1165,7 +1165,7 @@ static void wt_longstatus_print_verbose(struct wt_status *s)
 	 * before.
 	 */
 	if (s->fp != stdout) {
-		rev.diffopt.use_color = 0;
+		rev.diffopt.use_color = GIT_COLOR_NEVER;
 		wt_status_add_cut_line(s);
 	}
 	if (s->verbose > 1 && s->committable) {
@@ -2155,7 +2155,7 @@ static void wt_shortstatus_print(struct wt_status *s)
 
 static void wt_porcelain_print(struct wt_status *s)
 {
-	s->use_color = 0;
+	s->use_color = GIT_COLOR_NEVER;
 	s->relative_paths = 0;
 	s->prefix = NULL;
 	s->no_gettext = 1;
