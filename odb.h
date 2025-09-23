@@ -131,16 +131,8 @@ struct object_database {
 	struct commit_graph *commit_graph;
 	unsigned commit_graph_attempted : 1; /* if loading has been attempted */
 
-	/*
-	 * private data
-	 *
-	 * Should only be accessed directly by packfile.c and midx.c.
-	 */
+	/* Should only be accessed directly by packfile.c and midx.c. */
 	struct packfile_store *packfiles;
-	struct {
-		struct packed_git **packs;
-		unsigned flags;
-	} kept_pack_cache;
 
 	/*
 	 * This is meant to hold a *small* number of objects that you would
