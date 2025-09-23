@@ -4650,7 +4650,7 @@ static void get_object_list_path_walk(struct rev_info *revs)
 		die(_("failed to pack objects via path-walk"));
 }
 
-static void get_object_list(struct rev_info *revs, struct strvec *argv)
+static void get_object_list(struct rev_info *revs, int ac, const char **av)
 {
 	struct setup_revision_opt s_r_opt = {
 		.allow_exclude_promisor_objects = 1,
@@ -4660,7 +4660,7 @@ static void get_object_list(struct rev_info *revs, struct strvec *argv)
 	int save_warning;
 
 	save_commit_buffer = 0;
-	setup_revisions_from_strvec(argv, revs, &s_r_opt);
+	setup_revisions(ac, av, revs, &s_r_opt);
 
 	/* make sure shallows are read */
 	is_repository_shallow(the_repository);
@@ -5229,7 +5229,7 @@ int cmd_pack_objects(int argc,
 			revs.include_check = is_not_in_promisor_pack;
 			revs.include_check_obj = is_not_in_promisor_pack_obj;
 		}
-		get_object_list(&revs, &rp);
+		get_object_list(&revs, rp.nr, rp.v);
 		release_revisions(&revs);
 	}
 	cleanup_preferred_base();
