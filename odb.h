@@ -170,12 +170,6 @@ struct object_database {
 	unsigned approximate_object_count_valid : 1;
 
 	/*
-	 * Whether packed_git has already been populated with this repository's
-	 * packs.
-	 */
-	unsigned packed_git_initialized : 1;
-
-	/*
 	 * Submodule source paths that will be added as additional sources to
 	 * allow lookup of submodule objects via the main object database.
 	 */
