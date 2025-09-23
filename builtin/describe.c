@@ -580,7 +580,8 @@ static void describe_blob(const struct object_id *oid, struct strbuf *dst)
 		     NULL);
 
 	repo_init_revisions(the_repository, &revs, NULL);
-	if (setup_revisions(args.nr, args.v, &revs, NULL) > 1)
+	setup_revisions_from_strvec(&args, &revs, NULL);
+	if (args.nr > 1)
 		BUG("setup_revisions could not handle all args?");
 
 	if (prepare_revision_walk(&revs))
