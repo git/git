@@ -31,6 +31,10 @@ UI, Workflows & Features
  * "git send-email" learned to drive "git imap-send" to store already
    sent e-mails in an IMAP folder.
 
+ * The "promisor-remote" capability mechanism has been updated to
+   allow the "partialCloneFilter" settings and the "token" value to be
+   communicated from the server side.
+
 
 Performance, Internal Implementation, Development Support etc.
 --------------------------------------------------------------
@@ -205,6 +209,14 @@ including security updates, are included in this release.
    characters, which has been fixed.
    (merge 8655908b9e jc/longer-disambiguation-fix later to maint).
 
+ * Some among "git add -p" and friends ignored color.diff and/or
+   color.ui configuration variables, which is an old regression, which
+   has been corrected.
+   (merge 1092cd6435 jk/add-i-color later to maint).
+
+ * "git subtree" (in contrib/) did not work correctly when splitting
+   squashed subtrees, which has been improved.
+
  * Other code cleanup, docfix, build fix, etc.
    (merge 823d537fa7 kh/doc-git-log-markup-fix later to maint).
    (merge cf7efa4f33 rj/t6137-cygwin-fix later to maint).
@@ -229,3 +241,4 @@ including security updates, are included in this release.
    (merge 31397bc4f7 kh/doc-fast-import-markup-fix later to maint).
    (merge ac7096723b jc/doc-includeif-hasconfig-remote-url-fix later to maint).
    (merge fafc9b08b8 ag/doc-sendmail-gmail-example-update later to maint).
+   (merge a66fc22bf9 rs/get-oid-with-flags-cleanup later to maint).
