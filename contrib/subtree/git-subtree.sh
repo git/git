@@ -785,20 +785,40 @@ ensure_valid_ref_format () {
 		die "fatal: '$1' does not look like a ref"
 }
 
-# Usage: check if a commit from another subtree should be
+# Usage: should_ignore_subtree_split_commit REV
+#
+# Check if REV is a commit from another subtree and should be
 # ignored from processing for splits
 should_ignore_subtree_split_commit () {
 	assert test $# = 1
-	local rev="$1"
-	if test -n "$(git log -1 --grep="git-subtree-dir:" $rev)"
+
+	git show \
+		--no-patch \
+		--no-show-signature \
+		--format='%(trailers:key=git-subtree-dir,key=git-subtree-mainline)' \
+		"$1" |
+	(
+	have_mainline=
+	subtree_dir=
+
+	while read -r trailer val
+	do
+		case "$trailer" in
+		git-subtree-dir:)
+			subtree_dir="${val%/}" ;;
+		git-subtree-mainline:)
+			have_mainline=y ;;
+		esac
+	done
+
+	if test -n "${subtree_dir}" &&
+		test -z "${have_mainline}" &&
+		test "${subtree_dir}" != "$arg_prefix"
 	then
-		if test -z "$(git log -1 --grep="git-subtree-mainline:" $rev)" &&
-			test -z "$(git log -1 --grep="git-subtree-dir: $arg_prefix$" $rev)"
-		then
-			return 0
-		fi
+		return 0
 	fi
 	return 1
+	)
 }
 
 # Usage: process_split_commit REV PARENTS
