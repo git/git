@@ -425,8 +425,8 @@ int xdl_fall_back_diff(xdfenv_t *diff_env, xpparam_t const *xpp,
 	if (xdl_do_diff(&subfile1, &subfile2, xpp, &env) < 0)
 		return -1;
 
-	memcpy(diff_env->xdf1.rchg + line1 - 1, env.xdf1.rchg, count1);
-	memcpy(diff_env->xdf2.rchg + line2 - 1, env.xdf2.rchg, count2);
+	memcpy(diff_env->xdf1.changed + line1 - 1, env.xdf1.changed, count1);
+	memcpy(diff_env->xdf2.changed + line2 - 1, env.xdf2.changed, count2);
 
 	xdl_free_env(&env);
 

@@ -126,7 +126,7 @@ static int xdl_classify_record(unsigned int pass, xdlclassifier_t *cf, xrecord_t
 static void xdl_free_ctx(xdfile_t *xdf)
 {
 	xdl_free(xdf->rindex);
-	xdl_free(xdf->rchg - 1);
+	xdl_free(xdf->changed - 1);
 	xdl_free(xdf->recs);
 }
 
@@ -139,7 +139,7 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 	xrecord_t *crec;
 
 	xdf->rindex = NULL;
-	xdf->rchg = NULL;
+	xdf->changed = NULL;
 	xdf->recs = NULL;
 
 	if (!XDL_ALLOC_ARRAY(xdf->recs, narec))
@@ -161,7 +161,7 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 		}
 	}
 
-	if (!XDL_CALLOC_ARRAY(xdf->rchg, xdf->nrec + 2))
+	if (!XDL_CALLOC_ARRAY(xdf->changed, xdf->nrec + 2))
 		goto abort;
 
 	if ((XDF_DIFF_ALG(xpp->flags) != XDF_PATIENCE_DIFF) &&
@@ -170,7 +170,7 @@ static int xdl_prepare_ctx(unsigned int pass, mmfile_t *mf, long narec, xpparam_
 			goto abort;
 	}
 
-	xdf->rchg += 1;
+	xdf->changed += 1;
 	xdf->nreff = 0;
 	xdf->dstart = 0;
 	xdf->dend = xdf->nrec - 1;
@@ -287,7 +287,7 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 		    (dis1[i] == 2 && !xdl_clean_mmatch(dis1, i, xdf1->dstart, xdf1->dend))) {
 			xdf1->rindex[nreff++] = i;
 		} else
-			xdf1->rchg[i] = 1;
+			xdf1->changed[i] = 1;
 	}
 	xdf1->nreff = nreff;
 
@@ -297,7 +297,7 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 		    (dis2[i] == 2 && !xdl_clean_mmatch(dis2, i, xdf2->dstart, xdf2->dend))) {
 			xdf2->rindex[nreff++] = i;
 		} else
-			xdf2->rchg[i] = 1;
+			xdf2->changed[i] = 1;
 	}
 	xdf2->nreff = nreff;
 
