@@ -91,48 +91,6 @@ is ambiguous.
   configuration (see linkgit:git-config[1]) suggest what refs/
   namespace you may have wanted to push to.
 
---
-+
-The object referenced by <src> is used to update the <dst> reference
-on the remote side. Whether this is allowed depends on where in
-`refs/*` the <dst> reference lives as described in detail below, in
-those sections "update" means any modifications except deletes, which
-as noted after the next few sections are treated differently.
-+
-The `refs/heads/*` namespace will only accept commit objects, and
-updates only if they can be fast-forwarded.
-+
-The `refs/tags/*` namespace will accept any kind of object (as
-commits, trees and blobs can be tagged), and any updates to them will
-be rejected.
-+
-It's possible to push any type of object to any namespace outside of
-`refs/{tags,heads}/*`. In the case of tags and commits, these will be
-treated as if they were the commits inside `refs/heads/*` for the
-purposes of whether the update is allowed.
-+
-I.e. a fast-forward of commits and tags outside `refs/{tags,heads}/*`
-is allowed, even in cases where what's being fast-forwarded is not a
-commit, but a tag object which happens to point to a new commit which
-is a fast-forward of the commit the last tag (or commit) it's
-replacing. Replacing a tag with an entirely different tag is also
-allowed, if it points to the same commit, as well as pushing a peeled
-tag, i.e. pushing the commit that existing tag object points to, or a
-new tag object which an existing commit points to.
-+
-Tree and blob objects outside of `refs/{tags,heads}/*` will be treated
-the same way as if they were inside `refs/tags/*`, any update of them
-will be rejected.
-+
-All of the rules described above about what's not allowed as an update
-can be overridden by adding an the optional leading `+` to a refspec
-(or using `--force` command line option). The only exception to this
-is that no amount of forcing will make the `refs/heads/*` namespace
-accept a non-commit object. Hooks and configuration can also override
-or amend these rules, see e.g. `receive.denyNonFastForwards` in
-linkgit:git-config[1] and `pre-receive` and `update` in
-linkgit:githooks[5].
-+
 Pushing an empty <src> allows you to delete the <dst> ref from the
 remote repository. Deletions are always accepted without a leading `+`
 in the refspec (or `--force`), except when forbidden by configuration
@@ -145,6 +103,7 @@ the local side, the remote side is updated if a branch of the same name
 already exists on the remote side.
 +
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
+Not all updates are allowed: see PUSH RULES below for the details.
 
 --all::
 --branches::
@@ -335,14 +294,12 @@ allowing a forced update.
 
 -f::
 --force::
-	Usually, the command refuses to update a remote ref that is
-	not an ancestor of the local ref used to overwrite it.
-	Also, when `--force-with-lease` option is used, the command refuses
-	to update a remote ref whose current value does not match
-	what is expected.
+	Usually, `git push` will refuse to update a branch that is not an
+	ancestor of the commit being pushed.
 +
-This flag disables these checks, and can cause the remote repository
-to lose commits; use it with care.
+This flag disables that check, the other safety checks in PUSH RULES
+below, and the checks in --force-with-lease. It can cause the remote
+repository to lose commits; use it with care.
 +
 Note that `--force` applies to all the refs that are pushed, hence
 using it with `push.default` set to `matching` or with multiple push
@@ -513,6 +470,45 @@ reason::
 	A human-readable explanation. In the case of successfully pushed
 	refs, no explanation is needed. For a failed ref, the reason for
 	failure is described.
+
+PUSH RULES
+----------
+
+As a safety feature, the `git push` command only allows certain kinds of
+updates to prevent you from accidentally losing data on the remote.
+
+Because branches and tags are intended to be used differently, the
+safety rules for pushing to a branch are different from the rules
+for pushing to a tag. In the following rules "update" means any
+modifications except deletions and creations. Deletions and creations
+are always allowed, except when forbidden by configuration or hooks.
+
+1. If the push destination is a **branch** (`refs/heads/*`): only
+   fast-forward updates are allowed, which means the destination must be
+   an ancestor of the source commit. The source must be a commit.
+2. If the push destination is a **tag** (`refs/tags/*`): all updates will
+   be rejected. The source can be any object.
+3. If the push destination is not a branch or tag:
+   * If the source is a tree or blob object, any updates will be rejected
+   * If the source is a tag or commit object, any fast-forward update
+     is allowed, even in cases where what's being fast-forwarded is not a
+     commit, but a tag object which happens to point to a new commit which
+     is a fast-forward of the commit the last tag (or commit) it's
+     replacing. Replacing a tag with an entirely different tag is also
+     allowed, if it points to the same commit, as well as pushing a peeled
+     tag, i.e. pushing the commit that existing tag object points to, or a
+     new tag object which an existing commit points to.
+
+You can override these rules by passing `--force` or by adding the
+optional leading `+` to a refspec. The only exceptions are that no
+amount of forcing will make a branch accept a non-commit object,
+and forcing won't make the remote repository accept a push that it's
+configured to deny.
+
+Hooks and configuration can also override or amend these rules,
+see e.g. `receive.denyNonFastForwards` and `receive.denyDeletes`
+in linkgit:git-config[1] and `pre-receive` and `update` in
+linkgit:githooks[5].
 
 NOTE ABOUT FAST-FORWARDS
 ------------------------
