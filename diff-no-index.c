@@ -436,6 +436,8 @@ out:
 	for (i = 0; i < ARRAY_SIZE(to_free); i++)
 		free(to_free[i]);
 	strbuf_release(&replacement);
+	strbuf_release(&ps_match1);
+	strbuf_release(&ps_match2);
 	if (ps)
 		clear_pathspec(ps);
 	return ret;
