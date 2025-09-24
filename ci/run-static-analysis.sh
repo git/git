@@ -1,5 +1,5 @@
 #!/bin/sh
-#
+# 
 # Perform various static code analysis checks
 #
 
