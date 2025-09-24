@@ -1,5 +1,5 @@
 #!/bin/sh
-#
+#  
 # Build Git and store artifacts for testing
 #
 
