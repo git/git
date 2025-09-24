@@ -1,6 +1,6 @@
 #!/bin/sh
 
-die () {
+die () { 
 	echo "$*" >&2 
 	exit 1
 }
