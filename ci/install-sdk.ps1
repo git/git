@@ -1,4 +1,4 @@
-param(
+param( 
     [string]$directory='git-sdk', 
     [string]$url='https://github.com/git-for-windows/git-sdk-64/releases/download/ci-artifacts/git-sdk-x86_64-minimal.zip'
 )
