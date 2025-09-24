@@ -1,4 +1,4 @@
-You can configure some aspects of the GitHub Actions-based CI on a
+You can configure some aspects of the GitHub Actions-based CI on a 
 per-repository basis by setting "variables" and "secrets" from with the
 GitHub web interface. These can be found at:
 
