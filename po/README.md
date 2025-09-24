@@ -13,9 +13,9 @@ We will use XX as an alias to refer to the language translation code in
 the following paragraphs, for example we use "po/XX.po" to refer to the
 translation file for a specific language. But this doesn't mean that
 the language code has only two letters. The language code can be in one
-of two forms: "ll" or "ll\_CC". Here "ll" is the ISO 639 two-letter
+of two forms: "ll" or "ll_CC". Here "ll" is the ISO 639 two-letter
 language code and "CC" is the ISO 3166 two-letter code for country names
-and subdivisions. For example: "de" for German language code, "zh\_CN"
+and subdivisions. For example: "de" for German language code, "zh_CN"
 for Simplified Chinese language code.
 
 
@@ -126,7 +126,7 @@ you add a translation for the first time by running:
 make po-init PO_FILE=po/XX.po
 ```
 
-where XX is the locale, e.g. "de", "is", "pt\_BR", "zh\_CN", etc.
+where XX is the locale, e.g. "de", "is", "pt_BR", "zh_CN", etc.
 
 The newly generated message file "po/XX.po" is based on the core pot
 file "po/git-core.pot", so it contains only a minimal set of messages
