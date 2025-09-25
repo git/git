@@ -20,7 +20,7 @@ if get_option('docs').contains('man')
     output: 'git-contacts.xml',
   )
 
-  custom_target(
+  doc_targets += custom_target(
     command: [
       xmlto,
       '-m', '@INPUT@',
@@ -39,7 +39,7 @@ if get_option('docs').contains('man')
 endif
 
 if get_option('docs').contains('html')
-  custom_target(
+  doc_targets += custom_target(
     command: asciidoc_common_options + [
       '--backend=' + asciidoc_html,
       '--doctype=manpage',
