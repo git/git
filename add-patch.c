@@ -956,6 +956,7 @@ static int split_hunk(struct add_p_state *s, struct file_diff *file_diff,
 			* sizeof(*hunk));
 	hunk = file_diff->hunk + hunk_index;
 	hunk->splittable_into = 1;
+	hunk->use = UNDECIDED_HUNK;
 	memset(hunk + 1, 0, (splittable_into - 1) * sizeof(*hunk));
 
 	header = &hunk->header;
@@ -1057,7 +1058,7 @@ next_hunk_line:
 
 		hunk++;
 		hunk->splittable_into = 1;
-		hunk->use = hunk[-1].use;
+		hunk->use = UNDECIDED_HUNK;
 		header = &hunk->header;
 
 		header->old_count = header->new_count = context_line_count;
