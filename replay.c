@@ -11,6 +11,8 @@
 #include "strmap.h"
 #include "tree.h"
 
+#define the_repository DO_NOT_USE_THE_REPOSITORY
+
 static const char *short_commit_name(struct repository *repo,
 				     struct commit *commit)
 {
