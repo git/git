@@ -19,6 +19,7 @@ git refs list [--count=<count>] [--shell|--perl|--python|--tcl]
 		   [(--exclude=<pattern>)...] [--start-after=<marker>]
 		   [ --stdin | (<pattern>...)]
 git refs exists <ref>
+git refs optimize [--all] [--no-prune] [--auto] [--include <pattern>] [--exclude <pattern>]
 
 DESCRIPTION
 -----------
@@ -44,6 +45,11 @@ exists::
 	it does, 2 if it is missing, and 1 in case looking up the reference
 	failed with an error other than the reference being missing. This does
 	not verify whether the reference resolves to an actual object.
+
+optimize::
+	Optimizes references to improve repository performance and reduce disk
+	usage. This subcommand is an alias for linkgit:git-pack-refs[1] and
+	offers identical functionality.
 
 OPTIONS
 -------
@@ -79,6 +85,10 @@ The following options are specific to `git refs verify`:
 The following options are specific to 'git refs list':
 
 include::for-each-ref-options.adoc[]
+
+The following options are specific to 'git refs optimize':
+
+include::pack-refs-options.adoc[]
 
 KNOWN LIMITATIONS
 -----------------

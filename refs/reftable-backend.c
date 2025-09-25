@@ -1741,6 +1741,12 @@ out:
 	return ret;
 }
 
+static int reftable_be_optimize(struct ref_store *ref_store,
+				struct pack_refs_opts *opts)
+{
+	return reftable_be_pack_refs(ref_store, opts);
+}
+
 struct write_create_symref_arg {
 	struct reftable_ref_store *refs;
 	struct reftable_stack *stack;
@@ -2727,6 +2733,7 @@ struct ref_storage_be refs_be_reftable = {
 	.transaction_abort = reftable_be_transaction_abort,
 
 	.pack_refs = reftable_be_pack_refs,
+	.optimize = reftable_be_optimize,
 	.rename_ref = reftable_be_rename_ref,
 	.copy_ref = reftable_be_copy_ref,
 

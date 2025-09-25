@@ -1,12 +1,8 @@
 #!/bin/sh
-#
-# Copyright (c) 2005 Amos Waterland
-# Copyright (c) 2006 Christian Couder
-#
 
-test_description='git pack-refs should not change the branch semantic
+test_description='git refs optimize should not change the branch semantic
 
-This test runs git pack-refs and git show-ref and checks that the branch
+This test runs git refs optimize and git show-ref and checks that the branch
 semantic is still the same.
 '
 
@@ -17,4 +13,5 @@ export GIT_TEST_DEFAULT_REF_FORMAT
 
 . ./test-lib.sh
 
+pack_refs='refs optimize'
 . "$TEST_DIRECTORY"/pack-refs-tests.sh
