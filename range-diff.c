@@ -39,7 +39,7 @@ struct patch_util {
  * as struct object_id (will need to be free()d).
  */
 static int read_patches(const char *range, struct string_list *list,
-			const struct strvec *other_arg,
+			const struct strvec *log_arg,
 			unsigned int include_merges)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
@@ -69,8 +69,8 @@ static int read_patches(const char *range, struct string_list *list,
 	if (!include_merges)
 		strvec_push(&cp.args, "--no-merges");
 	strvec_push(&cp.args, range);
-	if (other_arg)
-		strvec_pushv(&cp.args, other_arg->v);
+	if (log_arg)
+		strvec_pushv(&cp.args, log_arg->v);
 	cp.out = -1;
 	cp.no_stdin = 1;
 	cp.git_cmd = 1;
@@ -594,9 +594,9 @@ int show_range_diff(const char *range1, const char *range2,
 	if (range_diff_opts->left_only && range_diff_opts->right_only)
 		res = error(_("options '%s' and '%s' cannot be used together"), "--left-only", "--right-only");
 
-	if (!res && read_patches(range1, &branch1, range_diff_opts->other_arg, include_merges))
+	if (!res && read_patches(range1, &branch1, range_diff_opts->log_arg, include_merges))
 		res = error(_("could not parse log for '%s'"), range1);
-	if (!res && read_patches(range2, &branch2, range_diff_opts->other_arg, include_merges))
+	if (!res && read_patches(range2, &branch2, range_diff_opts->log_arg, include_merges))
 		res = error(_("could not parse log for '%s'"), range2);
 
 	if (!res) {
