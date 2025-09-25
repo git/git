@@ -1311,4 +1311,25 @@ test_expect_success 'splitting previous hunk marks split hunks as undecided' '
 	test_cmp expect actual
 '
 
+test_expect_success 'splitting edited hunk' '
+	# Before the first hunk is edited it can be split into two
+	# hunks, after editing it can be split into three hunks.
+
+	write_script fake-editor.sh <<-\EOF &&
+	sed "s/^ c/-c/" "$1" >"$1.tmp" &&
+	mv "$1.tmp" "$1"
+	EOF
+
+	test_write_lines a b c d e f g h i j k l m n >file &&
+	git add file &&
+	test_write_lines A b c d E f g h i j k l M n >file &&
+	(
+		test_set_editor "$(pwd)/fake-editor.sh" &&
+		test_write_lines e K s j y n y q | git add -p file
+	) &&
+	git cat-file blob :file >actual &&
+	test_write_lines a b d e f g h i j k l M n >expect &&
+	test_cmp expect actual
+'
+
 test_done
