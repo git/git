@@ -105,7 +105,6 @@ check_push_result () {
 }
 
 test_expect_success setup '
-
 	>path1 &&
 	git add path1 &&
 	test_tick &&
@@ -117,7 +116,6 @@ test_expect_success setup '
 	test_tick &&
 	git commit -a -m second &&
 	the_commit=$(git show-ref -s --verify refs/heads/main)
-
 '
 
 for cmd in push fetch
@@ -322,104 +320,82 @@ test_expect_success 'push with pushInsteadOf and explicit pushurl (pushInsteadOf
 '
 
 test_expect_success 'push with matching heads' '
-
 	mk_test testrepo heads/main &&
 	git push testrepo : &&
 	check_push_result testrepo $the_commit heads/main
-
 '
 
 test_expect_success 'push with matching heads on the command line' '
-
 	mk_test testrepo heads/main &&
 	git push testrepo : &&
 	check_push_result testrepo $the_commit heads/main
-
 '
 
 test_expect_success 'failed (non-fast-forward) push with matching heads' '
-
 	mk_test testrepo heads/main &&
 	git push testrepo : &&
 	git commit --amend -massaged &&
 	test_must_fail git push testrepo &&
 	check_push_result testrepo $the_commit heads/main &&
 	git reset --hard $the_commit
-
 '
 
 test_expect_success 'push --force with matching heads' '
-
 	mk_test testrepo heads/main &&
 	git push testrepo : &&
 	git commit --amend -massaged &&
 	git push --force testrepo : &&
 	! check_push_result testrepo $the_commit heads/main &&
 	git reset --hard $the_commit
-
 '
 
 test_expect_success 'push with matching heads and forced update' '
-
 	mk_test testrepo heads/main &&
 	git push testrepo : &&
 	git commit --amend -massaged &&
 	git push testrepo +: &&
 	! check_push_result testrepo $the_commit heads/main &&
 	git reset --hard $the_commit
-
 '
 
 test_expect_success 'push with no ambiguity (1)' '
-
 	mk_test testrepo heads/main &&
 	git push testrepo main:main &&
 	check_push_result testrepo $the_commit heads/main
-
 '
 
 test_expect_success 'push with no ambiguity (2)' '
-
 	mk_test testrepo remotes/origin/main &&
 	git push testrepo main:origin/main &&
 	check_push_result testrepo $the_commit remotes/origin/main
-
 '
 
 test_expect_success 'push with colon-less refspec, no ambiguity' '
-
 	mk_test testrepo heads/main heads/t/main &&
 	git branch -f t/main main &&
 	git push testrepo main &&
 	check_push_result testrepo $the_commit heads/main &&
 	check_push_result testrepo $the_first_commit heads/t/main
-
 '
 
 test_expect_success 'push with weak ambiguity (1)' '
-
 	mk_test testrepo heads/main remotes/origin/main &&
 	git push testrepo main:main &&
 	check_push_result testrepo $the_commit heads/main &&
 	check_push_result testrepo $the_first_commit remotes/origin/main
-
 '
 
 test_expect_success 'push with weak ambiguity (2)' '
-
 	mk_test testrepo heads/main remotes/origin/main remotes/another/main &&
 	git push testrepo main:main &&
 	check_push_result testrepo $the_commit heads/main &&
 	check_push_result testrepo $the_first_commit remotes/origin/main remotes/another/main
-
 '
 
 test_expect_success 'push with ambiguity' '
-
 	mk_test testrepo heads/frotz tags/frotz &&
 	test_must_fail git push testrepo main:frotz &&
 	check_push_result testrepo $the_first_commit heads/frotz tags/frotz
-
 '
 
 test_expect_success 'push with onelevel ref' '
@@ -428,17 +404,14 @@ test_expect_success 'push with onelevel ref' '
 '
 
 test_expect_success 'push with colon-less refspec (1)' '
-
 	mk_test testrepo heads/frotz tags/frotz &&
 	git branch -f frotz main &&
 	git push testrepo frotz &&
 	check_push_result testrepo $the_commit heads/frotz &&
 	check_push_result testrepo $the_first_commit tags/frotz
-
 '
 
 test_expect_success 'push with colon-less refspec (2)' '
-
 	mk_test testrepo heads/frotz tags/frotz &&
 	if git show-ref --verify -q refs/heads/frotz
 	then
@@ -448,7 +421,6 @@ test_expect_success 'push with colon-less refspec (2)' '
 	git push -f testrepo frotz &&
 	check_push_result testrepo $the_commit tags/frotz &&
 	check_push_result testrepo $the_first_commit heads/frotz
-
 '
 
 test_expect_success 'push with colon-less refspec (3)' '
@@ -465,7 +437,6 @@ test_expect_success 'push with colon-less refspec (3)' '
 '
 
 test_expect_success 'push with colon-less refspec (4)' '
-
 	mk_test testrepo &&
 	if git show-ref --verify -q refs/heads/frotz
 	then
@@ -475,38 +446,34 @@ test_expect_success 'push with colon-less refspec (4)' '
 	git push testrepo frotz &&
 	check_push_result testrepo $the_commit tags/frotz &&
 	test 1 = $( cd testrepo && git show-ref | wc -l )
-
 '
 
 test_expect_success 'push head with non-existent, incomplete dest' '
-
 	mk_test testrepo &&
 	git push testrepo main:branch &&
 	check_push_result testrepo $the_commit heads/branch
-
 '
 
 test_expect_success 'push tag with non-existent, incomplete dest' '
-
 	mk_test testrepo &&
 	git tag -f v1.0 &&
 	git push testrepo v1.0:tag &&
 	check_push_result testrepo $the_commit tags/tag
-
 '
 
 test_expect_success 'push oid with non-existent, incomplete dest' '
-
 	mk_test testrepo &&
 	test_must_fail git push testrepo $(git rev-parse main):foo
-
 '
 
 test_expect_success 'push ref expression with non-existent, incomplete dest' '
-
 	mk_test testrepo &&
 	test_must_fail git push testrepo main^:branch
+'
 
+test_expect_success 'push ref expression with non-existent oid src' '
+	mk_test testrepo &&
+	test_must_fail git push testrepo $(test_oid 001):branch
 '
 
 for head in HEAD @
@@ -550,7 +517,6 @@ do
 		git checkout main &&
 		git push testrepo $head:branch &&
 		check_push_result testrepo $the_commit heads/branch
-
 	'
 
 	test_expect_success "push with config remote.*.push = $head" '
@@ -596,7 +562,6 @@ test_expect_success 'push with remote.pushdefault' '
 '
 
 test_expect_success 'push with config remote.*.pushurl' '
-
 	mk_test testrepo heads/main &&
 	git checkout main &&
 	test_config remote.there.url test2repo &&
@@ -655,7 +620,6 @@ test_expect_success 'push ignores "branch." config without subsection' '
 '
 
 test_expect_success 'push with dry-run' '
-
 	mk_test testrepo heads/main &&
 	old_commit=$(git -C testrepo show-ref -s --verify refs/heads/main) &&
 	git push --dry-run testrepo : &&
@@ -663,7 +627,6 @@ test_expect_success 'push with dry-run' '
 '
 
 test_expect_success 'push updates local refs' '
-
 	mk_test testrepo heads/main &&
 	mk_child testrepo child &&
 	(
@@ -673,11 +636,9 @@ test_expect_success 'push updates local refs' '
 		test $(git rev-parse main) = \
 			$(git rev-parse remotes/origin/main)
 	)
-
 '
 
 test_expect_success 'push updates up-to-date local refs' '
-
 	mk_test testrepo heads/main &&
 	mk_child testrepo child1 &&
 	mk_child testrepo child2 &&
@@ -689,11 +650,9 @@ test_expect_success 'push updates up-to-date local refs' '
 		test $(git rev-parse main) = \
 			$(git rev-parse remotes/origin/main)
 	)
-
 '
 
 test_expect_success 'push preserves up-to-date packed refs' '
-
 	mk_test testrepo heads/main &&
 	mk_child testrepo child &&
 	(
@@ -701,11 +660,9 @@ test_expect_success 'push preserves up-to-date packed refs' '
 		git push &&
 		! test -f .git/refs/remotes/origin/main
 	)
-
 '
 
 test_expect_success 'push does not update local refs on failure' '
-
 	mk_test testrepo heads/main &&
 	mk_child testrepo child &&
 	echo "#!/no/frobnication/today" >testrepo/.git/hooks/pre-receive &&
@@ -717,16 +674,13 @@ test_expect_success 'push does not update local refs on failure' '
 		test $(git rev-parse main) != \
 			$(git rev-parse remotes/origin/main)
 	)
-
 '
 
 test_expect_success 'allow deleting an invalid remote ref' '
-
 	mk_test testrepo heads/branch &&
 	rm -f testrepo/.git/objects/??/* &&
 	git push testrepo :refs/heads/branch &&
 	(cd testrepo && test_must_fail git rev-parse --verify refs/heads/branch)
-
 '
 
 test_expect_success 'pushing valid refs triggers post-receive and post-update hooks' '
