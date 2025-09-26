@@ -278,10 +278,10 @@ int xdl_recs_cmp(xdfile_t *xdf1, long off1, long lim1,
 	 */
 	if (off1 == lim1) {
 		for (; off2 < lim2; off2++)
-			xdf2->changed[xdf2->rindex[off2]] = 1;
+			xdf2->changed[xdf2->rindex[off2]] = true;
 	} else if (off2 == lim2) {
 		for (; off1 < lim1; off1++)
-			xdf1->changed[xdf1->rindex[off1]] = 1;
+			xdf1->changed[xdf1->rindex[off1]] = true;
 	} else {
 		xdpsplit_t spl;
 		spl.i1 = spl.i2 = 0;
@@ -753,8 +753,8 @@ static int group_slide_down(xdfile_t *xdf, struct xdlgroup *g)
 {
 	if (g->end < xdf->nrec &&
 	    recs_match(&xdf->recs[g->start], &xdf->recs[g->end])) {
-		xdf->changed[g->start++] = 0;
-		xdf->changed[g->end++] = 1;
+		xdf->changed[g->start++] = false;
+		xdf->changed[g->end++] = true;
 
 		while (xdf->changed[g->end])
 			g->end++;
@@ -774,8 +774,8 @@ static int group_slide_up(xdfile_t *xdf, struct xdlgroup *g)
 {
 	if (g->start > 0 &&
 	    recs_match(&xdf->recs[g->start - 1], &xdf->recs[g->end - 1])) {
-		xdf->changed[--g->start] = 1;
-		xdf->changed[--g->end] = 0;
+		xdf->changed[--g->start] = true;
+		xdf->changed[--g->end] = false;
 
 		while (xdf->changed[g->start - 1])
 			g->start--;
@@ -932,7 +932,7 @@ int xdl_change_compact(xdfile_t *xdf, xdfile_t *xdfo, long flags) {
 
 int xdl_build_script(xdfenv_t *xe, xdchange_t **xscr) {
 	xdchange_t *cscr = NULL, *xch;
-	char *changed1 = xe->xdf1.changed, *changed2 = xe->xdf2.changed;
+	bool *changed1 = xe->xdf1.changed, *changed2 = xe->xdf2.changed;
 	long i1, i2, l1, l2;
 
 	/*

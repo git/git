@@ -273,7 +273,7 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 
 	/*
 	 * Create temporary arrays that will help us decide if
-	 * changed[i] should remain 0 or become 1.
+	 * changed[i] should remain false, or become true.
 	 */
 	if (!XDL_CALLOC_ARRAY(action1, xdf1->nrec + 1)) {
 		ret = -1;
@@ -305,16 +305,16 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 
 	/*
 	 * Use temporary arrays to decide if changed[i] should remain
-	 * 0 or become 1.
+	 * false, or become true.
 	 */
 	for (nreff = 0, i = xdf1->dstart, recs = &xdf1->recs[xdf1->dstart];
 	     i <= xdf1->dend; i++, recs++) {
 		if (action1[i] == KEEP ||
 		    (action1[i] == INVESTIGATE && !xdl_clean_mmatch(action1, i, xdf1->dstart, xdf1->dend))) {
 			xdf1->rindex[nreff++] = i;
-			/* changed[i] remains 0, i.e. keep */
+			/* changed[i] remains false, i.e. keep */
 		} else
-			xdf1->changed[i] = 1;
+			xdf1->changed[i] = true;
 			/* i.e. discard */
 	}
 	xdf1->nreff = nreff;
@@ -324,9 +324,9 @@ static int xdl_cleanup_records(xdlclassifier_t *cf, xdfile_t *xdf1, xdfile_t *xd
 		if (action2[i] == KEEP ||
 		    (action2[i] == INVESTIGATE && !xdl_clean_mmatch(action2, i, xdf2->dstart, xdf2->dend))) {
 			xdf2->rindex[nreff++] = i;
-			/* changed[i] remains 0, i.e. keep */
+			/* changed[i] remains false, i.e. keep */
 		} else
-			xdf2->changed[i] = 1;
+			xdf2->changed[i] = true;
 			/* i.e. discard */
 	}
 	xdf2->nreff = nreff;
