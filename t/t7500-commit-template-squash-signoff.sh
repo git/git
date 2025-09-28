@@ -37,6 +37,16 @@ test_expect_success 'nonexistent template file should return error' '
 	)
 '
 
+test_expect_success 'nonexistent optional template file on command line' '
+	echo changes >> foo &&
+	git add foo &&
+	(
+		GIT_EDITOR="echo hello >\"\$1\"" &&
+		export GIT_EDITOR &&
+		git commit --template ":(optional)$PWD/notexist"
+	)
+'
+
 test_expect_success 'nonexistent template file in config should return error' '
 	test_config commit.template "$PWD"/notexist &&
 	(
