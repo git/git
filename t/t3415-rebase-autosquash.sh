@@ -486,12 +486,28 @@ test_expect_success 'fixup a fixup' '
 	test XZWY = $(git show | tr -cd W-Z)
 '
 
-test_expect_success 'fixup does not clean up commit message' '
-	oneline="#818" &&
-	git commit --allow-empty -m "$oneline" &&
-	git commit --fixup HEAD --allow-empty &&
-	git -c commit.cleanup=strip rebase -ki --autosquash HEAD~2 &&
-	test "$oneline" = "$(git show -s --format=%s)"
+test_expect_success 'pick and fixup respect commit.cleanup' '
+	git reset --hard base &&
+	test_commit --no-tag "fixup! second commit" file1 fixup &&
+	test_commit something &&
+	write_script .git/hooks/prepare-commit-msg <<-\EOF &&
+	printf "\n# Prepared\n" >> "$1"
+	EOF
+	git rebase -i --autosquash HEAD~3 &&
+	test_commit_message HEAD~1 <<-\EOF &&
+	second commit
+
+	# Prepared
+	EOF
+	test_commit_message HEAD <<-\EOF &&
+	something
+
+	# Prepared
+	EOF
+	git reset --hard something &&
+	git -c commit.cleanup=strip rebase -i --autosquash HEAD~3 &&
+	test_commit_message HEAD~1 -m "second commit" &&
+	test_commit_message HEAD -m "something"
 '
 
 test_done
