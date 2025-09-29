@@ -55,96 +55,66 @@ OPTIONS[[OPTIONS]]
 
 <refspec>...::
 	Specify what destination ref to update with what source object.
-	The format of a <refspec> parameter is an optional plus
-	`+`, followed by the source object <src>, followed
-	by a colon `:`, followed by the destination ref <dst>.
 +
-The <src> is often the name of the branch you would want to push, but
-it can be any arbitrary "SHA-1 expression", such as `master~4` or
-`HEAD` (see linkgit:gitrevisions[7]).
+The format for a refspec is [+]<src>[:<dst>], for example `main`,
+`main:other`, or `HEAD^:refs/heads/main`.
 +
-The <dst> tells which ref on the remote side is updated with this
-push. Arbitrary expressions cannot be used here, an actual ref must
-be named.
-If `git push [<repository>]` without any `<refspec>` argument is set to
-update some ref at the destination with `<src>` with
-`remote.<repository>.push` configuration variable, `:<dst>` part can
-be omitted--such a push will update a ref that `<src>` normally updates
-without any `<refspec>` on the command line.  Otherwise, missing
-`:<dst>` means to update the same ref as the `<src>`.
+The `<src>` is often the name of the local branch to push, but it can be
+any arbitrary "SHA-1 expression" (see linkgit:gitrevisions[7]).
 +
-If <dst> doesn't start with `refs/` (e.g. `refs/heads/master`) we will
-try to infer where in `refs/*` on the destination <repository> it
-belongs based on the type of <src> being pushed and whether <dst>
-is ambiguous.
+The `<dst>` determines what ref to update on the remote side. It must be the
+name of a branch, tag, or other ref, not an arbitrary expression.
 +
---
-* If <dst> unambiguously refers to a ref on the <repository> remote,
-  then push to that ref.
+The `+` is optional and does the same thing as `--force`.
++
+You can write a refspec using the fully expanded form (for
+example `refs/heads/main:refs/heads/main`) which specifies the exact source
+and destination, or with a shorter form (for example `main` or
+`main:other`). Here are the rules for how refspecs are expanded,
+as well as various other special refspec forms:
++
+ *  `<src>` without a `:<dst>` means to update the same ref as the
+    `<src>`, unless the `remote.<repository>.push` configuration specifies a
+    different <dst>. For example, if `main` is a branch, then the refspec
+    `main` expands to `main:refs/heads/main`.
+ *  If `<dst>` unambiguously refers to a ref on the <repository> remote,
+    then expand it to that ref. For example, if `v1.0` is a tag on the
+    remote, then `HEAD:v1.0` expands to `HEAD:refs/tags/v1.0`.
+ *  If `<src>` resolves to a ref starting with `refs/heads/` or `refs/tags/`,
+    then prepend that to <dst>. For example, if `main` is a branch, then
+    `main:other` expands to `main:refs/heads/other`
+ *  The special refspec `:` (or `+:` to allow non-fast-forward updates)
+    directs Git to push "matching" branches: for every branch that exists on
+    the local side, the remote side is updated if a branch of the same name
+    already exists on the remote side.
+ *  <src> may contain a * to indicate a simple pattern match.
+    This works like a glob that matches any ref matching the pattern.
+    There must be only one * in both the `<src>` and `<dst>`.
+    It will map refs to the destination by replacing the * with the
+    contents matched from the source. For example, `refs/heads/*:refs/heads/*`
+    will push all branches.
+ *  A refspec starting with `^` is a negative refspec.
+    This specifies refs to exclude. A ref will be considered to
+    match if it matches at least one positive refspec, and does not
+    match any negative refspec. Negative refspecs can be pattern refspecs.
+    They must only contain a `<src>`.
+    Fully spelled out hex object names are also not supported.
+    For example, `git push origin 'refs/heads/*' '^refs/heads/dev-*'`
+    will push all branches except for those starting with `dev-`
+ *  If `<src>` is empty, it deletes the `<dst>` ref from the remote
+    repository. For example, `git push origin :dev` will
+    delete the `dev` branch.
+ *  `tag <tag>` expands to `refs/tags/<tag>:refs/tags/<tag>`.
+	This is technically a special syntax for `git push` and not a refspec,
+	since in `git push origin tag v1.0` the arguments `tag` and `v1.0`
+	are separate.
+ *  If the refspec can't be expanded unambiguously, error out
+    with an error indicating what was tried, and depending
+    on the `advice.pushUnqualifiedRefname` configuration (see
+    linkgit:git-config[1]) suggest what refs/ namespace you may have
+    wanted to push to.
 
-* If <src> resolves to a ref starting with refs/heads/ or refs/tags/,
-  then prepend that to <dst>.
-
-* Other ambiguity resolutions might be added in the future, but for
-  now any other cases will error out with an error indicating what we
-  tried, and depending on the `advice.pushUnqualifiedRefname`
-  configuration (see linkgit:git-config[1]) suggest what refs/
-  namespace you may have wanted to push to.
-
---
-+
-The object referenced by <src> is used to update the <dst> reference
-on the remote side. Whether this is allowed depends on where in
-`refs/*` the <dst> reference lives as described in detail below, in
-those sections "update" means any modifications except deletes, which
-as noted after the next few sections are treated differently.
-+
-The `refs/heads/*` namespace will only accept commit objects, and
-updates only if they can be fast-forwarded.
-+
-The `refs/tags/*` namespace will accept any kind of object (as
-commits, trees and blobs can be tagged), and any updates to them will
-be rejected.
-+
-It's possible to push any type of object to any namespace outside of
-`refs/{tags,heads}/*`. In the case of tags and commits, these will be
-treated as if they were the commits inside `refs/heads/*` for the
-purposes of whether the update is allowed.
-+
-I.e. a fast-forward of commits and tags outside `refs/{tags,heads}/*`
-is allowed, even in cases where what's being fast-forwarded is not a
-commit, but a tag object which happens to point to a new commit which
-is a fast-forward of the commit the last tag (or commit) it's
-replacing. Replacing a tag with an entirely different tag is also
-allowed, if it points to the same commit, as well as pushing a peeled
-tag, i.e. pushing the commit that existing tag object points to, or a
-new tag object which an existing commit points to.
-+
-Tree and blob objects outside of `refs/{tags,heads}/*` will be treated
-the same way as if they were inside `refs/tags/*`, any update of them
-will be rejected.
-+
-All of the rules described above about what's not allowed as an update
-can be overridden by adding an the optional leading `+` to a refspec
-(or using `--force` command line option). The only exception to this
-is that no amount of forcing will make the `refs/heads/*` namespace
-accept a non-commit object. Hooks and configuration can also override
-or amend these rules, see e.g. `receive.denyNonFastForwards` in
-linkgit:git-config[1] and `pre-receive` and `update` in
-linkgit:githooks[5].
-+
-Pushing an empty <src> allows you to delete the <dst> ref from the
-remote repository. Deletions are always accepted without a leading `+`
-in the refspec (or `--force`), except when forbidden by configuration
-or hooks. See `receive.denyDeletes` in linkgit:git-config[1] and
-`pre-receive` and `update` in linkgit:githooks[5].
-+
-The special refspec `:` (or `+:` to allow non-fast-forward updates)
-directs Git to push "matching" branches: for every branch that exists on
-the local side, the remote side is updated if a branch of the same name
-already exists on the remote side.
-+
-`tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`.
+Not all updates are allowed: see PUSH RULES below for the details.
 
 --all::
 --branches::
@@ -335,14 +305,12 @@ allowing a forced update.
 
 -f::
 --force::
-	Usually, the command refuses to update a remote ref that is
-	not an ancestor of the local ref used to overwrite it.
-	Also, when `--force-with-lease` option is used, the command refuses
-	to update a remote ref whose current value does not match
-	what is expected.
+	Usually, `git push` will refuse to update a branch that is not an
+	ancestor of the commit being pushed.
 +
-This flag disables these checks, and can cause the remote repository
-to lose commits; use it with care.
+This flag disables that check, the other safety checks in PUSH RULES
+below, and the checks in --force-with-lease. It can cause the remote
+repository to lose commits; use it with care.
 +
 Note that `--force` applies to all the refs that are pushed, hence
 using it with `push.default` set to `matching` or with multiple push
@@ -513,6 +481,45 @@ reason::
 	A human-readable explanation. In the case of successfully pushed
 	refs, no explanation is needed. For a failed ref, the reason for
 	failure is described.
+
+PUSH RULES
+----------
+
+As a safety feature, the `git push` command only allows certain kinds of
+updates to prevent you from accidentally losing data on the remote.
+
+Because branches and tags are intended to be used differently, the
+safety rules for pushing to a branch are different from the rules
+for pushing to a tag. In the following rules "update" means any
+modifications except deletions and creations. Deletions and creations
+are always allowed, except when forbidden by configuration or hooks.
+
+1. If the push destination is a **branch** (`refs/heads/*`): only
+   fast-forward updates are allowed, which means the destination must be
+   an ancestor of the source commit. The source must be a commit.
+2. If the push destination is a **tag** (`refs/tags/*`): all updates will
+   be rejected. The source can be any object.
+3. If the push destination is not a branch or tag:
+   * If the source is a tree or blob object, any updates will be rejected
+   * If the source is a tag or commit object, any fast-forward update
+     is allowed, even in cases where what's being fast-forwarded is not a
+     commit, but a tag object which happens to point to a new commit which
+     is a fast-forward of the commit the last tag (or commit) it's
+     replacing. Replacing a tag with an entirely different tag is also
+     allowed, if it points to the same commit, as well as pushing a peeled
+     tag, i.e. pushing the commit that existing tag object points to, or a
+     new tag object which an existing commit points to.
+
+You can override these rules by passing `--force` or by adding the
+optional leading `+` to a refspec. The only exceptions are that no
+amount of forcing will make a branch accept a non-commit object,
+and forcing won't make the remote repository accept a push that it's
+configured to deny.
+
+Hooks and configuration can also override or amend these rules,
+see e.g. `receive.denyNonFastForwards` and `receive.denyDeletes`
+in linkgit:git-config[1] and `pre-receive` and `update` in
+linkgit:githooks[5].
 
 NOTE ABOUT FAST-FORWARDS
 ------------------------
